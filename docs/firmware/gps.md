@@ -273,7 +273,14 @@ than that.  The Z3801A's decoded
 heights of the held position, 28.41 m apart -- the Oncore's geoid
 separation there, −28.41 m -- where the u-blox's two heights give
 −30.0 m and gpsd's own model −32.3 m.  So an MSL height is the device's
-own: the models differ by up to 4 m at this site.  Every image selects
+own: the models differ by up to 4 m at this site.  No Z380x query
+returns the engine's ellipsoid height: in the Z3801A and Z3805A its
+one reader is the survey's averaging (Z3801A `0x4f5e6`), whose
+ellipsoid average nothing reads, and `:DIAGnostic:GPSystem:POSition:DEGRees?`
+and `:MSEConds?` post requests rather than read the record.  The
+separation is read through the console, as here; in the 58503A images
+a search for readers of the field found none, which leaves them
+unsettled.  Every image selects
 datum 49, WGS-84, with `@@Ao` in its init scripts, so latitude and
 longitude agree by datum.
 

@@ -663,7 +663,8 @@ view cannot drift apart.  The library, bottom up:
      (`docs/firmware/gps.md`, "Requests").  So a position should be
      carried as ellipsoid height and converted to an MSL receiver with
      its engine's own separation, which its decoded `@@Ba` record holds
-     (the two heights' difference).
+     (the two heights' difference) -- readable through the console,
+     not over SCPI on the Z380x.
 
 4. **Whether acknowledging from the monitor is wanted.**  Reading an
    event register says which bit latched rather than which group, and

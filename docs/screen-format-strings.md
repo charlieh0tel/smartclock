@@ -153,6 +153,11 @@ bit 5, leaving a holdover with no cause and no suffix.  Every image
 has the routine that sets bit 5 (Z3801A `0x45b28`, Z3805A `0x45af0`,
 3633 `0x45bca`, 3704 `0x45cbc`, 58503B `0x4ac66`, Z3815A `0x4f34e`);
 that their antenna-delay setters post it was read only in the Z3816A.
+On the bench 58503A (3704-C, 2026-10-10), locked, setting
+`:GPS:REFerence:ADELay` to its current value, 0, put it in holdover
+at once (`:SYNChronization:STATe?` `WAIT`); within 16 s it showed
+`Recovery: fine freq adj  [TI …]`, then `Locked to GPS: stabilizing
+frequency`, and plain `Locked to GPS` four minutes after the write.
 
 Holdover recovery sets bits 1 and 4 as `pll_normal` does (`0x47a54`,
 `0x47a62`), and bit 2 when its count of failed readings passes 5
@@ -167,6 +172,15 @@ and `: GPS receiver failure` -- so in the images that hold those two
 strings they are never shown.  `:SYNChronization:HOLDover:WAITing?` makes the same
 distinctions with `GPS`, `LIMit` and `HARDware`; the register bits do
 not make the manual one: a manual holdover sets Holding, bit 0.
+
+The same 58503A, put in holdover with `:SYNChronization:HOLDover:INITiate`,
+showed `Holdover: manually initiated` (`:SYNChronization:HOLDover:WAITing?`
+`NONE`); after `:SYNChronization:HOLDover:RECovery:INITiate` it showed
+`Holdover` and `Recovery` with no suffix for a few seconds each, then
+`fine freq adj` with its `[TI …]` reading, `Locked to GPS: stabilizing
+frequency` a minute later and plain `Locked to GPS` four minutes after
+the command.  The bench Z3801A, in power-up, refused
+`:ROSCillator:HOLDover:INITiate` with `-221, "Settings conflict"`.
 
 A 58503A recovering from a ninety-second antenna outage showed fine
 frequency adjustment and then stabilizing on its front panel, in that

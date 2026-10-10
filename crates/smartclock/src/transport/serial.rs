@@ -14,8 +14,7 @@ use crate::types::Framing;
 /// not necessarily the factory default of 9600 8N1.
 #[derive(Debug, Clone)]
 pub struct Settings {
-    /// Device path, such as `/dev/ttyUSB0`.  Prefer a
-    /// `/dev/serial/by-id/...` path, which survives re-enumeration.
+    /// Device path, such as `/dev/ttyUSB0` or `COM3`.
     pub path: String,
     /// Line rate.  The receiver stores its own, so this is not
     /// necessarily the factory default.

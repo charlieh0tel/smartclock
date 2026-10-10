@@ -67,8 +67,7 @@ use smartclock::types::Framing;
 #[command(about, version = smartclock::VERSION)]
 struct Cli {
     /// Serial device, or `tcp://host:port` for a receiver on the
-    /// network or the simulator.  Prefer a /dev/serial/by-id/... path
-    /// for a local one; /dev/ttyUSB0 does not survive re-enumeration.
+    /// network or the simulator.
     ///
     /// Required, and deliberately without a default.  A default does
     /// not fail when it is wrong: it opens whatever else is on that

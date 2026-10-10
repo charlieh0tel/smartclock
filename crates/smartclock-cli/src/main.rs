@@ -56,8 +56,7 @@ use crate::flash::chips::SplitArgs;
 #[command(about, version = smartclock::VERSION)]
 struct Cli {
     /// Serial device, or `tcp://host:port` for a receiver on the
-    /// network or the simulator.  Prefer a /dev/serial/by-id/... path
-    /// for a local one, which survives USB re-enumeration.
+    /// network or the simulator.
     ///
     /// Required, and deliberately without a default: guessing at a
     /// path means talking to whatever is on it.
@@ -395,10 +394,10 @@ fn main() -> Result<()> {
             cli.capture.as_deref(),
         );
     }
-    let device = cli.device.clone().context(
-        "--device is required and has no default; SMARTCLOCK_DEVICE works too. \
-         Try: ls -l /dev/serial/by-id/",
-    )?;
+    let device = cli
+        .device
+        .clone()
+        .context("--device is required and has no default; SMARTCLOCK_DEVICE works too")?;
     let settings = Settings {
         path: device.clone(),
         baud,

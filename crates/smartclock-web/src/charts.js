@@ -474,8 +474,15 @@ function noteAt(u, marks) {
   return near ? near.text : null;
 }
 
+// How far the note's text sits from the pointer, and how near the
+// window's edge it may come, in CSS pixels.
+const TIP_OFFSET = 12;
+const TIP_MARGIN = 4;
+
 // A note's text beside the pointer on `chart`, in the page's
-// `#note-tip`; hidden when there is none.
+// `#note-tip`; hidden when there is none.  It goes below and to the
+// right of the pointer, or to the left and above where that would
+// leave the window, so a note near the right edge can still be read.
 function noteTip(chart, text) {
   const tip = $("note-tip");
   if (!chart || text == null) {
@@ -483,10 +490,17 @@ function noteTip(chart, text) {
     return;
   }
   const box = chart.over.getBoundingClientRect();
+  const x = box.left + chart.cursor.left;
+  const y = box.top + chart.cursor.top;
   tip.textContent = text;
-  tip.style.left = `${box.left + chart.cursor.left + 12}px`;
-  tip.style.top = `${box.top + chart.cursor.top + 12}px`;
   tip.style.display = "block";
+  const { width, height } = tip.getBoundingClientRect();
+  const right = x + TIP_OFFSET;
+  const below = y + TIP_OFFSET;
+  const left = right + width > innerWidth - TIP_MARGIN ? x - TIP_OFFSET - width : right;
+  const top = below + height > innerHeight - TIP_MARGIN ? y - TIP_OFFSET - height : below;
+  tip.style.left = `${Math.max(TIP_MARGIN, left)}px`;
+  tip.style.top = `${Math.max(TIP_MARGIN, top)}px`;
 }
 
 // ----------------------------------------------------------- log axes

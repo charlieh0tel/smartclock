@@ -112,6 +112,21 @@ test("a note is marked on the charts and named when the cursor is on it", async 
   await expect(page.locator("#note-tip")).toBeHidden();
 });
 
+test("a note near the right edge is shown inside the window", async ({ page }) => {
+  await open(page, twoUnits(), "/", B);
+  await page.waitForFunction(() => charts.length > 0);
+  const edge = await page.evaluate(() => {
+    const chart = charts[0];
+    chart.cursor.left = chart.over.clientWidth - 2;
+    chart.cursor.top = 10;
+    noteTip(chart, "a note long enough to run well past the right edge of the window if it were placed to the right");
+    const r = document.getElementById("note-tip").getBoundingClientRect();
+    return { left: r.left, right: r.right, width: innerWidth };
+  });
+  expect(edge.left).toBeGreaterThanOrEqual(0);
+  expect(edge.right).toBeLessThanOrEqual(edge.width);
+});
+
 for (const path of ["/", "/compare"]) {
   test(`every chart in the ${path} stack plots the same time at the same x`, async ({ page }) => {
     // Short enough that a scrollbar appears partway down the stack as

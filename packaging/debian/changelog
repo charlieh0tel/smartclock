@@ -1,3 +1,23 @@
+smartclockmon (1.6.0-1) unstable; urgency=low
+
+  * smartclock-cli dump-pforth prints every word of a flash image's
+    pForth console, and dump-oncore its Oncore message table, request
+    scripts and polling lists, with each mode-0 record's arguments;
+    each takes --models to set several images side by side.
+    docs/firmware/pforth/ and docs/firmware/oncore/ hold the output,
+    checked by tests.
+  * read-memory, read-flash and read-eeprom find the line settings
+    themselves, taking either prompt, SCPI's or the console's, so a
+    Z3801A no longer needs --framing 7O1 to be read.
+  * The monitor says Locked to Ext when the receiver is locked to an
+    external reference, and only Locked when no recent screen says
+    which; the CLI's mode no longer claims GPS either.
+  * The Z3801 dialect reads EFC as the real it is.
+  * A note near the right edge of a web chart stays readable.
+  * Help and errors no longer advise /dev/serial/by-id paths.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Sat, 10 Oct 2026 16:36:23 -0700
+
 smartclockmon (1.5.4-1) unstable; urgency=low
 
   * smartclock-cli dump-scpi prints every command path a flash image's

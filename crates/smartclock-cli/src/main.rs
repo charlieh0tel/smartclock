@@ -408,10 +408,18 @@ fn main() -> Result<()> {
         timeout: cli.timeout,
         ..Config::default()
     };
-    // The console has its own prompt, where `*IDN?` means nothing, so
-    // only SCPI is looked for at other line settings.
+    // The console has its own prompt, where `*IDN?` means nothing, so a
+    // console read finds its line settings by either prompt instead.
     let settings = if console_read(&cli.command).is_some() {
-        settings
+        let found = console::line_settings(&settings, transport::open)
+            .with_context(|| format!("no receiver answered on {}", settings.path))?;
+        if (found.baud, found.framing) != (settings.baud, settings.framing) {
+            eprintln!(
+                "{} did not answer at {} {}; found it at {} {}",
+                settings.path, settings.baud, settings.framing, found.baud, found.framing
+            );
+        }
+        found
     } else {
         let (found, report) = answering(&settings, &config)
             .with_context(|| format!("no receiver answered on {}", settings.path))?;

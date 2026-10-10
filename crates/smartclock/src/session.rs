@@ -419,7 +419,7 @@ fn strip_echo<'a>(body: &'a str, command: &str) -> &'a str {
 
 /// Split a buffer into its body and the prompt that closes it, if a
 /// complete prompt has arrived.
-fn split_prompt(buf: &str) -> Option<(&str, Prompt)> {
+pub(crate) fn split_prompt(buf: &str) -> Option<(&str, Prompt)> {
     // A prompt is the last thing on the wire and is not newline
     // terminated, so it is whatever follows the final newline.
     let (body, tail) = match buf.rfind('\n') {

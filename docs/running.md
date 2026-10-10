@@ -280,9 +280,10 @@ queue, on every start:
     Environment=SMARTCLOCKD_FRAMING=7O1
 
 `smartclockmon` and `smartclock-cli` take `--framing 7O1` for direct
-mode and probe the same way; `smartclock-cli read-memory` (and
-`read-flash`, `read-eeprom`) does not probe, since its port is at the
-debug console, not at SCPI.
+mode and probe the same way.  `smartclock-cli read-memory` (and
+`read-flash`, `read-eeprom`), whose port may already be at the debug
+console, probes by sending an empty line and taking either prompt,
+SCPI's or the console's.
 
 Anything that differs between the ports -- the framing, and whether
 to adopt that receiver's log -- goes in the drop-ins, not in

@@ -145,7 +145,7 @@ fn identify<T: Transport>(mut session: Session<T>, probed: bool) -> Result<(Devi
 /// The settings to try: the configured ones, then the fallbacks not
 /// already tried.  Only the configured ones for a receiver on the
 /// network, where the line settings are the bridge's business.
-fn candidates(settings: &Settings) -> Vec<(BaudRate, Framing)> {
+pub(crate) fn candidates(settings: &Settings) -> Vec<(BaudRate, Framing)> {
     let configured = (settings.baud, settings.framing);
     if transport::is_network(&settings.path) {
         return vec![configured];

@@ -31,10 +31,13 @@ use std::sync::atomic::Ordering;
 use std::time::Duration;
 use std::time::Instant;
 
+use crate::attach::candidates;
 use crate::error::Error;
 use crate::session::Config;
 use crate::session::Session;
+use crate::session::split_prompt;
 use crate::transport::Transport;
+use crate::transport::serial::Settings;
 
 /// The word defined for reading, as sent.
 const READ_WORD: &str = ": rd ( addr n -- ) over + swap do i @ u. 4 +loop ;";
@@ -122,6 +125,10 @@ pub enum ConsoleError {
         /// Why the last attempt failed.
         last: Box<ConsoleError>,
     },
+
+    /// No line settings brought a prompt back for an empty line.
+    #[error("no prompt, SCPI's or the console's, at any line settings on {0}")]
+    NoLineSettings(String),
 
     /// Stopped on request, between chunks.
     #[error("stopped on request at {0:#x}")]
@@ -260,6 +267,53 @@ fn at_prompt(buffer: &[u8]) -> bool {
         let tail = &buffer[buffer.len() - PROMPT_LEN..];
         tail.starts_with(b"p4th ") && tail.ends_with(b" > ")
     }
+}
+
+/// Whether `buffer` ends at a prompt, the console's or SCPI's.
+fn at_any_prompt(buffer: &[u8]) -> bool {
+    at_prompt(buffer) || split_prompt(&String::from_utf8_lossy(buffer)).is_some()
+}
+
+/// The line settings at which `settings`' port answers an empty line
+/// with a prompt, the console's or SCPI's: the configured ones, then the
+/// fallbacks an SCPI attach tries.  A console read cannot identify the
+/// receiver with `*IDN?`, which a port already at the console does not
+/// know, so it listens for either prompt instead.  `open` opens a port.
+pub fn line_settings<T, F>(settings: &Settings, open: F) -> Result<Settings>
+where
+    T: Read + Write,
+    F: FnMut(&Settings) -> std::result::Result<T, Error>,
+{
+    line_settings_within(settings, open, PROBE_TIMEOUT)
+}
+
+/// [`line_settings`], waiting `wait` at each for a prompt.
+fn line_settings_within<T, F>(settings: &Settings, mut open: F, wait: Duration) -> Result<Settings>
+where
+    T: Read + Write,
+    F: FnMut(&Settings) -> std::result::Result<T, Error>,
+{
+    for (baud, framing) in candidates(settings) {
+        let tried = Settings {
+            baud,
+            framing,
+            ..settings.clone()
+        };
+        let mut port = open(&tried)?;
+        port.write_all(b"\r")?;
+        port.flush()?;
+        let deadline = Instant::now() + wait;
+        let mut heard = Vec::new();
+        let mut chunk = [0u8; 256];
+        while Instant::now() < deadline {
+            let n = port.read(&mut chunk)?;
+            heard.extend_from_slice(&chunk[..n]);
+            if at_any_prompt(&heard) {
+                return Ok(tried);
+            }
+        }
+    }
+    Err(ConsoleError::NoLineSettings(settings.path.clone()))
 }
 
 /// A console on a serial port.
@@ -647,10 +701,14 @@ mod tests {
     use super::back_to_scpi;
     use super::enter_installer;
     use super::exit_for;
+    use super::line_settings_within;
     use super::read_memory;
     use super::words;
     use crate::session::Config;
     use crate::transport::Transport;
+    use crate::transport::serial::Settings;
+    use crate::types::BaudRate;
+    use crate::types::Framing;
 
     /// A console that answers `<hex> @ u.` from `memory`, and anything
     /// else with a bare prompt, recording every line it was sent.  With
@@ -741,6 +799,72 @@ mod tests {
             self.reply.drain(..n);
             Ok(n)
         }
+    }
+
+    /// A port that answers an empty line with `reply`, once.
+    struct Line {
+        reply: Vec<u8>,
+        asked: bool,
+    }
+
+    impl std::io::Read for Line {
+        fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+            if !self.asked {
+                return Ok(0);
+            }
+            let n = self.reply.len().min(buf.len());
+            buf[..n].copy_from_slice(&self.reply[..n]);
+            self.reply.drain(..n);
+            Ok(n)
+        }
+    }
+
+    impl std::io::Write for Line {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.asked |= buf.contains(&b'\r');
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    /// The settings found when the port answers `reply` at 19200 7O1
+    /// and garbles everything else, starting from 19200 8N1.
+    fn found(reply: &[u8]) -> super::Result<Settings> {
+        let settings = Settings {
+            path: "/dev/null".to_owned(),
+            baud: BaudRate::B19200,
+            framing: Framing::EightNone,
+            ..Settings::default()
+        };
+        line_settings_within(
+            &settings,
+            |tried: &Settings| {
+                let right = tried.baud == BaudRate::B19200 && tried.framing == Framing::SevenOdd;
+                Ok(Line {
+                    reply: if right {
+                        reply.to_vec()
+                    } else {
+                        vec![0xf8, 0x7e, 0x80]
+                    },
+                    asked: false,
+                })
+            },
+            Duration::from_millis(20),
+        )
+    }
+
+    #[test]
+    fn a_console_read_finds_the_line_settings_by_either_prompt() {
+        for reply in [&b"scpi > "[..], b"p4th D > ", b" E-102> "] {
+            let settings = found(reply).expect("a prompt at 7O1");
+            assert_eq!(settings.framing, Framing::SevenOdd, "{reply:?}");
+        }
+        assert!(matches!(
+            found(b"garbage"),
+            Err(ConsoleError::NoLineSettings(_))
+        ));
     }
 
     #[test]

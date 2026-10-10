@@ -175,9 +175,9 @@ procedure:
 2. Read the ROM, 512 KB at address 0, and the EEPROM, 8 KB at
    `0x400000` (chip select 9, as the reset code programs it):
 
-       smartclock-cli --device /dev/<port> --framing 7O1 read-flash \
+       smartclock-cli --device <port> read-flash \
            --out rom.bin --compare third_party/firmware/z3801a-3543.bin
-       smartclock-cli --device /dev/<port> --framing 7O1 read-eeprom \
+       smartclock-cli --device <port> read-eeprom \
            --out eeprom.bin
 
    `read-flash` and `read-eeprom` are `read-memory` with those two

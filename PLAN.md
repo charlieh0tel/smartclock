@@ -624,31 +624,42 @@ view cannot drift apart.  The library, bottom up:
    those 63 stay unconfirmed until a receiver answers them.  The
    keyword table they were checked against is `docs/scpi/z3801-keywords.md`.
 
-3. **Asserting a known antenna position from the configuration.**  A
-   receiver told where it is goes straight to position hold and serves
-   time; a survey leaves the 1 PPS invalid while it runs.  A Z3805A on
-   an antenna a 58503A had already surveyed spent an hour unable to
-   serve time; asserting the position by hand took two commands.  So:
-   a position setting asserted on attach, as a geodetic position,
-   earth-centered x, y and z, or `survey` to ask for one deliberately
-   rather than inherit the last operator's setting.
+3. **Managing the receiver's position.**  Not now.  A receiver told
+   where it is goes straight to position hold and serves time; a survey
+   leaves the 1 PPS invalid while it runs.  A Z3805A on an antenna a
+   58503A had already surveyed spent an hour unable to serve time;
+   asserting the position by hand took two commands.  The receiver
+   already stores a held position, so the work is in controlling it:
 
-   - It is a control command, so it needs the same opt-in and must not
-     fire under a daemon started read-only.
-   - It is non-volatile, so a stale value outlives the configuration
-     that set it.  Holding a position also means turning off
+   - set a fixed position, from the configuration or by hand;
+   - control the startup mode -- survey on power-up or hold;
+   - start the receiver's own survey;
+   - run a 24-hour survey in the daemon, averaging the receiver's fixes
+     far longer than its own survey does, and assert the result;
+   - take a position from gpsd.
+
+   Constraints, whatever form it takes:
+
+   - Each is a control command, so it needs the same opt-in and must
+     not fire under a daemon started read-only.
+   - The position is non-volatile, so a stale value outlives the
+     configuration that set it.  Holding it means turning off
      survey-on-powerup, or the next power cycle discards it; with both
      set, a receiver whose antenna has moved never notices.  Whatever
      asserts a position must be able to release it.
-   - The 58503B's manuals give its heights above the GPS ellipsoid
-     where the 58503A's and 59551A's give mean sea level
-     (097-58503-13 3-17 and 4-5, 097-58503-12), and firmware 1.01.04
-     agrees: it surveys the Oncore's ellipsoid height, returns it from
-     `:GPS:POSition?` and sends height type 0, ellipsoid, in `@@As`.
-     An MSL mode, bit 4 of `0x1017e8`, would switch all three, but no
-     code found sets it (`docs/firmware/gps.md`).  A geodetic setting
-     must still name its datum, since the models differ.
-     Earth-centered coordinates sidestep that.
+   - Writing the antenna delay forces a holdover
+     (`docs/screen-format-strings.md`); whether `:GPS:POSition` does
+     was not checked.
+   - Datum.  Every image selects WGS-84 (`@@Ao` 49), so latitude and
+     longitude need no conversion.  Heights do: the 58503B surveys,
+     holds and reports the Oncore's ellipsoid height (`@@As` type 0),
+     the Z380x and 58503A its MSL height (type 1), and MSL is each
+     device's own geoid -- on the bench the Oncore's separation was
+     −28.4 m, the u-blox's −30.0 m and gpsd's −32.3 m
+     (`docs/firmware/gps.md`, "Requests").  So a position should be
+     carried as ellipsoid height and converted to an MSL receiver with
+     its engine's own separation, which its decoded `@@Ba` record holds
+     (the two heights' difference).
 
 4. **Whether acknowledging from the monitor is wanted.**  Reading an
    event register says which bit latched rather than which group, and

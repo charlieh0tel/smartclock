@@ -261,6 +261,22 @@ The Z380x and 3633 init scripts also set the initial position with
 them, and the 58503B ellipsoid heights, as its manual gives them
 (above).  Whether anything sets the Z3816A's bit was not checked.
 
+**On the bench, against a u-blox.**  On 2026-10-10 the 58503A, the
+Z3805A and the Z3801A held one position, surveyed by the 58503A and
+copied to the others, and a u-blox through gpsd had a 3D fix from an
+antenna at the same site.  Horizontally they agreed to 0.3 m.  The
+receivers' height was 5.0 m above the u-blox's MSL height and 35 m
+above its ellipsoid height: MSL, as above.  The u-blox's antenna is
+mounted lower than the one surveyed, so the heights agree no closer
+than that.  The Z3801A's decoded
+`@@Ba` record (`0x100d36`, read through the console) held the two
+heights of the held position, 28.41 m apart -- the Oncore's geoid
+separation there, −28.41 m -- where the u-blox's two heights give
+−30.0 m and gpsd's own model −32.3 m.  So an MSL height is the device's
+own: the models differ by up to 4 m at this site.  Every image selects
+datum 49, WGS-84, with `@@Ao` in its init scripts, so latitude and
+longitude agree by datum.
+
 **`@@Ci`.**  The Z3801A's and Z3805A's init scripts (`0x47`, `0x48`)
 open with `@@Ci`, switch I/O format, with an argument long of 0
 (Z3801A record `0x50ae8`), so format 0.  `VPCommands.pdf` defines 1,

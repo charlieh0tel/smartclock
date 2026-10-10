@@ -245,7 +245,23 @@ image that has it.
 ### `:DIAGnostic:SYSTem:PSTartup`
 
 - **Images:** all seven, with `:DIAGnostic:SYSTem:DOUTput` beside it.
-- **Read:** Z3805A, written up 2026-09-22: both answer.
+- **Handler:** a toggle (`firmware/restart.md`, "Restarting"): the
+  setter posts its structure and the query returns its cell (Z3816A
+  `0x3b372` and `0x3b3a2`, cell `0x102617`; Z3801A `0x2aaa0` and
+  `0x2aad0`, cell `0x101f4b`).  It is one of the settings saved to the
+  EEPROM when set.  At boot the root task tests the cell (Z3816A
+  `0x232da`, Z3801A `0x131ca`) and, when it is set, starts the pForth
+  console instead of the SCPI task, on every power cycle until it is
+  cleared.  The start-up clear leaves it 0 unless a saved record holds
+  1.  The way back is the console's `halt` (`firmware/console.md`,
+  "Leaving it"), which hands the port to a new SCPI task, and then
+  `:DIAGnostic:SYSTem:PSTartup 0`; `clear_nv` also clears it, with
+  every other saved setting.
+- **Read:** Z3805A, written up 2026-09-22: both answer.  Z3801A
+  3543-A, 2026-10-10: set to 1, it read back 1; after a power cycle
+  the port answered `p4th D > `; `halt` gave `scpi > `, and
+  `:DIAGnostic:SYSTem:PSTartup 0` read back 0; after another power
+  cycle the port answered `scpi > `.
 
 ### `:DIAGnostic:TCODe`
 

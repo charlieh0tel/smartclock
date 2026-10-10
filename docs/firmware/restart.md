@@ -184,21 +184,37 @@ trap, which the start-up code enables (`0x7480` into `0x10372e`, at
 `0x1463e`), sends 3's 0.0 / 0.0 through `FUN_00013e36`, which names it
 `fp operand error: `, and `0x1ec04` to the same fatal routine.
 
-The spin does not mask the PIT, which interrupts at level 5 (PICR
-`0x0542`, set by `0x220de`), and the console is its own task, `p4th`,
-created at priority 50 in every image (Z3816A `0x2b038`, a pSOS
-`t_create` through `trap #3`, from `0x23138`), below every task whose
-heartbeat `hmon` checks -- in the Z3816A `spoo` 75, `gpsm` 100, `klok`
-150, `pllp` 175 and `hmon` 200 (`0x2321a` to `0x23288`, `0x2fd36`,
-`0x209ae`).  So the spin should not starve them, nor end in the
-watchdog.  On the bench Z3801A (3543-A, 2026-10-10) `8 crash` returned
-to the prompt, and `0 crash` and `4 crash` each restarted the unit:
-the port answered `scpi > ` about 9 s after `4 crash`, too soon for the
-watchdog's nine seconds of kicks and eight of time-out, and the log
-gained `Re-boot` each time, with nothing printed first -- so the
-console's handler did not answer 0.  What resets it was not
-established; the SIM registers, RSR among them, read as zeros through
-the console.
+On the bench Z3801A (3543-A, 2026-10-10) `8 crash` returned to the
+prompt, and `0 crash` and `4 crash` each restarted the unit: the port
+answered `scpi > ` about 9 s after `4 crash`, and the log gained
+`Re-boot` each time.  Its second log (`:DIAGnostic:SLOG:READ:ALL?`)
+holds what the warm starts recorded: `Exception: p4th, vector C008, PC
+= 0001BDB6, SR = 0010, addr = 00700000` for `0 crash`, a bus error
+inside `crash`, and `Force crash from pforth, p4th` for each `4
+crash`.
+
+Both end in the watchdog.  An exception no handler claims reaches the
+common entry (`0x11924`, every vector the Z3801A's table at `0x10000`
+names): it asks for the current task's handler (`0x118fe`: the task's
+record at +0x82 when `0x103650` is set, else the default at
+`0x10364c`), and with none records the exception at `0x10099e`, prints
+it when `0x103659` is set, sets the interrupt mask to 7 (`0x11a1a`)
+and spins.  With the PIT shut out, `hmon` never runs again, so the
+watchdog fires within 8 s of the last kick -- not after the nine-second
+countdown a task that stops reporting would cost.  The console's
+handler did not claim `0 crash`'s bus error.  The logged `SR = 0010`
+has the supervisor bit clear: the console task runs in user mode, so
+the fatal routine's `move.w d1,sr` (`0x13394`, in `FUN_00013378`) is a
+privilege violation and takes the same path -- which fits `4 crash`
+restarting as fast as `0 crash`, though the violation itself was not
+seen: the warm start logged the fatal message, and the SIM registers,
+RSR among them, read as zeros through the console.
+The console is its own task, `p4th`, created at priority 50 in every
+image (Z3816A `0x2b038`, a pSOS `t_create` through `trap #3`, from
+`0x23138`), below every task whose heartbeat `hmon` checks -- in the
+Z3816A `spoo` 75, `gpsm` 100, `klok` 150, `pllp` 175 and `hmon` 200
+(`0x2321a` to `0x23288`, `0x2fd36`, `0x209ae`); with the mask raised,
+their priority does not save them.
 `master_reset` sends the GPS engine `Cf` in every image (see
 `console.md`, "Resetting the GPS engine from the console"), and `clear_nv`
 invalidates both EEPROM settings records, the first step of

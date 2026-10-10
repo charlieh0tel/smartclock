@@ -115,9 +115,9 @@ following, and how.
 - Whether the port's second open matters.
 - What PE6 drives, pulsed only on a cold start; what 3704's PWMA pin,
   low while the holdover-recovery flag is set, is wired to (`loop.md`).
-- Whether a watchdog warm start has been seen on a unit (the timeout
-  is 8 s), and what restarts a Z3801A within seconds of `0 crash` or
-  `4 crash` (`restart.md`, "The watchdog").
+- Whether the restarts after `0 crash` and `4 crash` on the bench
+  Z3801A were the watchdog's, as the masked spin they reach implies:
+  RSR could not be read (`restart.md`, "The watchdog").
 
 - What τ-block bytes +7 and +8 mean beyond the `:GPS:POSition`
   handlers' use of them, and what the ROM defaults at `0x400de` to

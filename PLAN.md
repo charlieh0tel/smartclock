@@ -647,9 +647,13 @@ view cannot drift apart.  The library, bottom up:
      survey-on-powerup, or the next power cycle discards it; with both
      set, a receiver whose antenna has moved never notices.  Whatever
      asserts a position must be able to release it.
-   - Writing the antenna delay forces a holdover
-     (`docs/screen-format-strings.md`); whether `:GPS:POSition` does
-     was not checked.
+   - Writing the antenna delay forces a holdover, and so does writing
+     the position, through a different cause: on the bench 58503A,
+     rewriting its held `:GPS:POSition` unchanged took over 5 s to
+     answer, then `Holdover: GPS 1PPS invalid` for about a minute, and
+     two more to lock (`docs/screen-format-strings.md`).  In the
+     firmware the setter only stores the position and leaves a request
+     the power-up machine reads (Z3816A `FUN_00049da2`, `0x4a774`).
    - Datum.  Every image selects WGS-84 (`@@Ao` 49), so latitude and
      longitude need no conversion.  Heights do: the 58503B surveys,
      holds and reports the Oncore's ellipsoid height (`@@As` type 0),

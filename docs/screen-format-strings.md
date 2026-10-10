@@ -173,6 +173,12 @@ strings they are never shown.  `:SYNChronization:HOLDover:WAITing?` makes the sa
 distinctions with `GPS`, `LIMit` and `HARDware`; the register bits do
 not make the manual one: a manual holdover sets Holding, bit 0.
 
+Rewriting the same 58503A's held `:GPS:POSition` with its own value
+took over 5 s to answer, then `Holdover: GPS 1PPS invalid` 12 s after
+the command, `Recovery: fine freq adj` a minute later and `Locked to
+GPS: stabilizing frequency` two minutes after that: bit 1, the
+engine's 1 PPS going invalid, not bit 5.
+
 The same 58503A, put in holdover with `:SYNChronization:HOLDover:INITiate`,
 showed `Holdover: manually initiated` (`:SYNChronization:HOLDover:WAITing?`
 `NONE`); after `:SYNChronization:HOLDover:RECovery:INITiate` it showed

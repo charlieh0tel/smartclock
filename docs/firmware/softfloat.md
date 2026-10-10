@@ -46,11 +46,11 @@ fall into the next routine, the double divide jumps to it.
 | natural log of the double on the stack | `0x609aa` | `0x60a10` | `0x64772` | `0x64c42` | `0x684e4` | `0x70dba` | `0x6c068` |
 | square root of the double on the stack | `0x618b6` | `0x6191c` | `0x6567e` | `0x65b4e` | `0x693f0` | `0x71cc6` | `0x6cf74` |
 
-`crash 7` uses two more, read rather than emulated: in the Z3801A it
+`3 crash` uses two more, read rather than emulated: in the Z3801A it
 subtracts a double from itself (`0x5d2a0`) and divides the zero by
 itself (`0x5d9d8`, into `0x5da04`).  The start-up writes
 `0x7480` to the library's control word at `0x10372e` (`0x1463e`),
 which enables the invalid-operation trap: an invalid operation sets
 bit 13 of the status word at `0x10372c` and reaches `FUN_00013e36`,
 which prints `fp operand error: ` and the routine's name and stops in
-the fatal routine (`restart.md`, "The watchdog", `crash 7`).
+the fatal routine (`restart.md`, "The watchdog", `3 crash`).

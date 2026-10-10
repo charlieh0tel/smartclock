@@ -171,31 +171,34 @@ starves `hmon` and so ends in the watchdog.  The console installs its
 own handler (`0x18b6a`), which prints the exception and returns to the
 prompt.
 
-The console word `crash n` is the same code in every image: 4 writes
-to unmapped `0x700000`, 5 writes a long to an odd address, 6 divides
-by zero -- all three answered by the console's handler -- and 8 calls
-the fatal routine (Z3801A `0x1ee7e`) with `Force crash from pforth`,
-which records it, prints `FATAL ERROR:` and `RESET to recover.`, sets
-the interrupt mask to 4 (`FUN_00013378`) and spins.  7 computes 7.0 −
-7.0 and then 0.0 / 0.0 in the floating-point library (`0x5d2a0`,
-`0x5d9d8`, Z3801A `0x1bdd2`); the start-up code's control word
-(`0x7480` into `0x10372e`, at `0x1463e`) enables the invalid-operation
-trap, so `FUN_00013e36` names it `fp operand error: ` with the
-routine's name and passes it, through `0x1ec04`, to the same fatal
-routine.  None is a way back to SCPI.
+The console word `n crash` is the same code in every image, a jump
+table on n from 0 to 4 (Z3801A `0x1bd84`; above 4 it does nothing):
+0 writes to unmapped `0x700000`, 1 writes a long to an odd address, 2
+divides by zero, 3 computes 3.0 − 3.0 and then 0.0 / 0.0 in the
+floating-point library (`softfloat.md`), and 4 calls the fatal routine
+(Z3801A `0x1ee7e`) with `Force crash from pforth`.  The fatal routine
+records the message and, with the byte at `0x103658` set, prints
+`FATAL ERROR:` and `RESET to recover.` and sets the interrupt mask to
+4 (`FUN_00013378`); then it spins.  The library's invalid-operation
+trap, which the start-up code enables (`0x7480` into `0x10372e`, at
+`0x1463e`), sends 3's 0.0 / 0.0 through `FUN_00013e36`, which names it
+`fp operand error: `, and `0x1ec04` to the same fatal routine.
 
 The spin does not mask the PIT, which interrupts at level 5 (PICR
-`0x0542`, set by `0x220de`), so the kernel's tick runs and higher
-priority tasks still preempt the spinning one.  The console is its own
-task, `p4th`, created at priority 50 in every image (Z3816A
-`0x2b038`, a pSOS `t_create` through `trap #3`, from `0x23138`).  The
-Z3816A's tasks whose heartbeats `hmon` checks all rank above it --
-`spoo` 75, `gpsm` 100, `klok` 150, `pllp` 175 and `hmon` itself 200
-(`0x2321a` to `0x23288`, `0x2fd36`, `0x209ae`) -- so a fatal stop from
-the console does not end in the watchdog: the loop, the GPS task and
-the monitor run on, and only what ranks below 50 starves, `curv` (25,
-the aging fit) and the root task's idle loop.  The SCPI task, 25, is
-already gone while the console runs.
+`0x0542`, set by `0x220de`), and the console is its own task, `p4th`,
+created at priority 50 in every image (Z3816A `0x2b038`, a pSOS
+`t_create` through `trap #3`, from `0x23138`), below every task whose
+heartbeat `hmon` checks -- in the Z3816A `spoo` 75, `gpsm` 100, `klok`
+150, `pllp` 175 and `hmon` 200 (`0x2321a` to `0x23288`, `0x2fd36`,
+`0x209ae`).  So the spin should not starve them, nor end in the
+watchdog.  On the bench Z3801A (3543-A, 2026-10-10) `8 crash` returned
+to the prompt, and `0 crash` and `4 crash` each restarted the unit:
+the port answered `scpi > ` about 9 s after `4 crash`, too soon for the
+watchdog's nine seconds of kicks and eight of time-out, and the log
+gained `Re-boot` each time, with nothing printed first -- so the
+console's handler did not answer 0.  What resets it was not
+established; the SIM registers, RSR among them, read as zeros through
+the console.
 `master_reset` sends the GPS engine `Cf` in every image (see
 `console.md`, "Resetting the GPS engine from the console"), and `clear_nv`
 invalidates both EEPROM settings records, the first step of

@@ -96,7 +96,8 @@ the images, October 2026; tried on a Z3805A and a 58503A, below).  It
 reads a hook cell and jumps through it, or executes `trap #14` when
 the cell is zero.  The interpreter's setup clears the cell and the
 console's start sets it at once, so in practice the hook runs.  The
-hook raises the console task's priority to 26, has the deferred-call
+hook sets the console task's priority to 26, down from the 50 it is
+created at (pSOS runs the higher number first), has the deferred-call
 routine run the SCPI task's creator at priority 25 -- the creator the
 root task uses at boot, which looks the task up by name and creates
 and starts it -- clears the console's task id and deletes the console
@@ -124,7 +125,7 @@ call 9 are the SCPI task's own parser buffer and the C library's
 close device 0 before deleting itself, whereas the SCPI task frees its
 buffer and closes its stream before handing over (`0x28fac` to
 `0x28fbc`).  The Z3815A's and 58503B's hooks add one call between
-raising the priority and handing back, `0x309a0` and `0x2e8de`: each
+setting the priority and handing back, `0x309a0` and `0x2e8de`: each
 passes device 0 and function code 2 to the `trap #4` device
 supervisor, a close (`de_close(0)`), so those two consoles close their
 device before they go.

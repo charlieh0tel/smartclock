@@ -186,12 +186,16 @@ routine.  None is a way back to SCPI.
 
 The spin does not mask the PIT, which interrupts at level 5 (PICR
 `0x0542`, set by `0x220de`), so the kernel's tick runs and higher
-priority tasks still preempt the spinning one.  Whether it ends in the
-watchdog depends on where the task that called the fatal routine ranks
-against the five whose heartbeats `hmon` checks.  The Z3816A creates
-`gpsm` at 100, `hmon` at 200, `pllp` at 175 and `curv` at 25
-(`0x2321a` to `0x23288`) and the SCPI task at 25 (`0x2303e`); the
-console task's priority was not read.
+priority tasks still preempt the spinning one.  The console is its own
+task, `p4th`, created at priority 50 in every image (Z3816A
+`0x2b038`, a pSOS `t_create` through `trap #3`, from `0x23138`).  The
+Z3816A's tasks whose heartbeats `hmon` checks all rank above it --
+`spoo` 75, `gpsm` 100, `klok` 150, `pllp` 175 and `hmon` itself 200
+(`0x2321a` to `0x23288`, `0x2fd36`, `0x209ae`) -- so a fatal stop from
+the console does not end in the watchdog: the loop, the GPS task and
+the monitor run on, and only what ranks below 50 starves, `curv` (25,
+the aging fit) and the root task's idle loop.  The SCPI task, 25, is
+already gone while the console runs.
 `master_reset` sends the GPS engine `Cf` in every image (see
 `console.md`, "Resetting the GPS engine from the console"), and `clear_nv`
 invalidates both EEPROM settings records, the first step of

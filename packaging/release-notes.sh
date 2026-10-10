@@ -22,7 +22,7 @@ awk '
   END { if (item != "") print item }
 ' "$changelog"
 
-printf '\nThe Windows zip is untried on a receiver and unsupported; see the Windows section of docs/running.md.\n'
+printf '\nThe Windows zip is unsupported; its programs have been tried on a receiver, though not every one of them.  See the Windows section of docs/running.md.\n'
 
 if [ -n "$previous" ]; then
     printf '\n**Full Changelog**: %s/compare/v%s...v%s\n' "$repository" "$previous" "$this"

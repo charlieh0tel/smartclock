@@ -345,7 +345,8 @@ the cable and start it after:
 `make windows` cross-builds everything for `x86_64-pc-windows-gnu`; it
 needs that Rust target (`rustup target add x86_64-pc-windows-gnu`) and mingw-w64.
 The test suite passes under Wine.  Each release carries a zip of the
-Windows programs, unsupported and untried on a receiver.  There is no
+Windows programs, unsupported; they have been tried on a receiver,
+though not every one of them.  There is no
 installer and no service: the programs run from a console.
 
 Windows has no Unix sockets, so the daemon listens on TCP alone,

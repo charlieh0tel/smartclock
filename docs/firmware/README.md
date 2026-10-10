@@ -119,8 +119,9 @@ following, and how.
   is 8 s, `restart.md`, "The watchdog").
 
 - What τ-block bytes +7 and +8 mean beyond the `:GPS:POSition`
-  handlers' use of them (`loop.md`), and what the rest of the ROM
-  defaults, `0x400de` to `0x40173`, hold.
+  handlers' use of them, and what the ROM defaults at `0x400de` to
+  `0x40173` hold beyond the survey and initial-fix cells (`loop.md`,
+  "τ and G").
 - What HQ stands for, and the units its constants assume (its
   formula is in `loop.md`, "The fit").  Nothing but the debug print
   and the copy to `0x102866` reads it.

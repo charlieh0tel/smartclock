@@ -294,7 +294,14 @@ initialization routine `FUN_00022c7c` fills that block one of two ways:
 - from ROM, `memcpy(0x102534, 0x40174, 0x19)` (`0x22dd8`, `0x22e06`),
   whose bytes at `0x40188` are `43 fa 00 00`, the float 500.0.  The same
   routine first copies a longer block of defaults, `0x400de` to
-  `0x40173`, into `0x10249e` to `0x102532`;
+  `0x40173`, into `0x10249e` to `0x102532`.  Its cells that parameter
+  structures (`restart.md`, "Restarting") name are the survey state at
+  `0x1024a8`, which the `:GPS:POSition:SURVey:STATe` setter posts
+  (default 5), and the cells `:GPS:INITial:DATE` (`0x10250e`, default
+  1961, 8, 22), `:GPS:INITial:TIME` (`0x10251a`, 10, 48, 0) and
+  `:GPS:INITial:POSition` (`0x102526` to `0x102531`, 0, 0, 0) set;
+  the rest -- small integers, single and double floats -- no structure
+  names;
 - or from the region `0x100000` to `0x100c3b`, which the start-up code
   does not clear (its clear runs from `0x100c3c`) and into which the
   pllp task keeps writing its state (`0x4b5fc`: the τ block to

@@ -301,7 +301,9 @@ initialization routine `FUN_00022c7c` fills that block one of two ways:
   1961, 8, 22), `:GPS:INITial:TIME` (`0x10251a`, 10, 48, 0) and
   `:GPS:INITial:POSition` (`0x102526` to `0x102531`, 0, 0, 0) set;
   the rest -- small integers, single and double floats -- no structure
-  names;
+  names, and a sweep for any access through an address register loaded
+  with an address in the block finds only the copy itself (`0x22cdc`)
+  and the survey state's readers;
 - or from the region `0x100000` to `0x100c3b`, which the start-up code
   does not clear (its clear runs from `0x100c3c`) and into which the
   pllp task keeps writing its state (`0x4b5fc`: the τ block to

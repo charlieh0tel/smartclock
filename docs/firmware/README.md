@@ -119,8 +119,8 @@ following, and how.
   Z3801A were the watchdog's, as the masked spin they reach implies:
   RSR could not be read (`restart.md`, "The watchdog").
 
-- What the ROM defaults at `0x400de` to `0x40173` hold beyond the
-  survey and initial-fix cells (`loop.md`, "τ and G").
+- Whether anything reaches the rest of the ROM defaults block by a
+  computed address: no reader of it was found (`loop.md`, "τ and G").
 - What HQ stands for, and the units its constants assume (its
   formula is in `loop.md`, "The fit").  Nothing but the debug print
   and the copy to `0x102866` reads it.

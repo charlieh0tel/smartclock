@@ -95,8 +95,10 @@ impl<'a, T: Transport> Control<'a, T> {
 
     /// Set the antenna cable delay.
     ///
-    /// The manual warns that changing this while locked can throw the
-    /// receiver into holdover.
+    /// Setting it puts a locked receiver into holdover, even when the
+    /// value is unchanged; it recovers by itself, on the bench 58503A in
+    /// about four minutes (docs/screen-format-strings.md, "Mode
+    /// suffixes").
     pub fn set_antenna_delay(&mut self, delay: Seconds) -> Result<()> {
         self.send_with(
             CommandId::AntennaDelaySet,

@@ -57,13 +57,41 @@ left.  "Not traced" marks what was seen but not followed.
     the pForth word `pr_adc_avg` prints each channel whose flag is set
     where 3633 printed seven fixed ones (`0x1b0ec` → `0x1b150`).  The
     word `cal` reads channel 6 instead of 3 (`0x1bf0c` → `0x1befc`).
-- **Reference valid.**  3633's `:GPS:REFerence:VALid?` (`0x2ce6c`)
-  answers `0x100f68 != 0 && 0x101393 == 0`; 3704's (`0x2d0a0`) answers
-  `(0x101394 == 1 && 0x101397 == 0) || 0x101394 == 2`, and the loop
-  tests the same byte against 2 (`0x44f54`).  What the value 2 stands
-  for was not traced.  The health task's event 0x4a, posted after 0x200
-  passes of a valid reference, also requires `0x102000 == 0` in 3704
-  (`0x2392c` → `0x23b88`).
+- **Reference state.**  Each 1 PPS reference has a 22-byte record,
+  the GPS one at `0x101394` and the external one at `0x1013aa`, kept by
+  the parser `0x4b8a2` (3633 `0x4b77e`): +0 a valid code, +1 a state, +2
+  a forced value, +3 a GPS 1 PPS fault qualifier.  The state picks the
+  status line (picker `0x4a0d4` → `0x4a1fc`):
+
+  | 3633 | 3704 | Status line |
+  | ---- | ---- | ----------- |
+  | 0 | 0 | `Invalid: GPS rcvr fail` (3704: `failed`) |
+  | 1 | 1 | `Invalid: not tracking` |
+  | 2 | 2 | `Invalid: inacc position` |
+  | -- | 3 | `Invalid: No UTC data` |
+  | 3 | 4 | `Invalid: Time RAIM error` |
+  | 4 | 5 | `Assessing stability` |
+  | 5, 6 | 6, 7 | `Questionable accuracy` |
+  | 7 | 8 | valid |
+
+  3704 never stores state 3: the branch that would choose 3 or 4 tests
+  a local set to 1 just before it (`0x4b936`) and written nowhere
+  else, so it always chooses 4.  `No UTC data` is never shown, nor the
+  track-resumed reason `[NU]`, which names state 3; the other reasons
+  3704 adds name the state the reference left, `[ER]` 0 and `[TR]` 4
+  (table at `0x4dcc2`).
+  - The valid code +0 is 1 in state 8 and 2 in states 6 and 7
+    (`0x4bc2a`), unless +2 is set, which the pForth words
+    `force_gps_1pps` and `force_ext_1pps` write: −1 forces invalid, 1
+    valid, 0 restores the state's own code.  3704's
+    `:GPS:REFerence:VALid?` (`0x2d0a0`) answers true in state 8 without
+    a 1 PPS fault and in states 6 and 7; 3633's (`0x2ce6c`) answers
+    `0x100f68 != 0 && 0x101393 == 0`.  The loop's flag `0x102872` is
+    set while +0 is 2 (`0x44f48`), where 3633's `0x102862` is set while
+    `0x100f69` is 5 (`0x44ef2`).
+  - The health task's event 0x4a, posted after 0x200 passes of a valid
+    reference, also requires `0x102000 == 0` in 3704 (`0x2392c` →
+    `0x23b88`), a byte only ever cleared.
 - **Holdover cause.**  The cause byte `0x10247f` becomes a word,
   `0x102486`, in its writers (`0x4491e` → `0x4495a`, `0x45460` →
   `0x454d4`, `0x47492` → `0x475ac`) and in the pForth word
@@ -71,11 +99,15 @@ left.  "Not traced" marks what was seen but not followed.
   event log through `0x3189a` (bit 0 as code 7, bits 1 to 7 as 0x0a to
   0x14), and `0x45c46`, which in EFC mode 2 clears bit 8 and the mode
   after 600 passes (`screen-format-strings.md` has bit 8).
-- **Status screen text.**  `Invalid: GPS rcvr fail` becomes `Invalid:
-  GPS rcvr failed`, and 3704 adds `Invalid: No UTC data` (its picker,
-  `0x4a0fe` → `0x4a266`, has nine cases where 3633's has eight).  The
-  track-resumed reasons gain `[NU]`, `[TR]` and `[ER]`.  What selects
-  `No UTC data` or `[NU]` was not traced.
+- **Measurement errors.**  3704 adds `0x10238d`, set when a
+  measurement read is replaced by a wait while a 1 PPS fault flag is
+  set and cleared when a read starts with both clear (`0x450e0`,
+  `0x45272`).  While it is set, `holdover`, `startup_pll` and
+  `pll_normal` post no `Error with measurement` message (`0x43c10`,
+  `0x444ac`, `0x44bd4`) and `pll_normal` does not choose cause bit 2
+  over bit 3; 3633 gates these on the fault flags alone.  `pll_normal`
+  also suppresses the empty-window cause bits when a read fails while
+  `0x102872` is set, where 3633 does so only after a good read.
 - **Oncore.**
   - The third request poster (`0x42dfc`, the same address in both)
     accepts record code 0x2e, `@@Cf` (set to defaults), and treats it
@@ -85,9 +117,6 @@ left.  "Not traced" marks what was seen but not followed.
   - The GPS initialization step machine (`0x468ea` → `0x46a00`, state
     `0x102494` → `0x10249e`) has the same request and wait pairs, with
     states 2 and 3 skipped and the later states 2 higher.
-  - 3633's mode bytes `0x100f68`/`0x100f69` are gone; the channel
-    status parser (`0x4b77e` → `0x4b8a2`) moves its tracking-mode
-    compares from 4, 5, 6 to 5, 6, 7 and from +2 to +1 of the entry.
   - 3633 picks its six- or eight-channel messages with code that
     special-cases entries 0x1e/0x32 and 0x29/0x34 (`0x509b6`); 3704's
     selection is in `gps.md`, "Six or eight channels".
@@ -122,9 +151,9 @@ left.  "Not traced" marks what was seen but not followed.
 
 ## Not traced
 
-The flags 3704 adds to the loop, `0x10237e`, `0x10238c`, `0x10238d`,
-`0x102870` and `0x10285c`; the reordered Oncore state bytes; the
-time-code worker (`0x13bcc` → `0x13d28`), which grows from 546 to 726
-bytes and whose Ghidra bodies run into data; and the routines 3704's
-installer adds (`0x1e70`, `0x1ebc`, `0x2096`, `0x29e6`, `0x2cb6`,
-`0x2da6`).
+What feeds the reference record's conditions from the Oncore
+messages; the time-code worker (`0x13bcc` → `0x13d28`), which grows
+from 546 to 726 bytes and whose Ghidra bodies run into data; and the
+routines 3704's installer adds (`0x1e70`, `0x1ebc`, `0x2096`, `0x29e6`,
+`0x2cb6`, `0x2da6`).  3704's `0x10285c`, set to 9 at loop start and by
+`0x45eb4`, has no reader and `0x45eb4` no caller.

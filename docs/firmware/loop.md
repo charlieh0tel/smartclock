@@ -212,8 +212,15 @@ stages nothing, so the query errors; the status screen fills its
 printer `0x4f1c8`).  The default 4.32 × 10⁻⁴ is the `432.0 us/initial
 24 hrs` a receiver shows while its fit is in mode 0 or 1.  The 58503A
 3704 (handler `0x2fb7a`, getter `0x42a70`, cell `0x1024b2`) and the
-Z3801A (`0x2ecb0`, `0x429f2`, `0x102194`) do the same.  What the
-letters stand for was not established.  In the bench logs to
+Z3801A (`0x2ecb0`, `0x429f2`, `0x102194`) do the same.  The getter's
+other two results shape the reply.  The byte 0xf9, −7, is the exponent
+of its resolution: the formatter (`0x35ea4`, through `0x349d8`) prints
+the value to 10⁻⁷ s in no more than six digits, the "100 nanoseconds"
+of 097-59551-02 5-24, so 432 µs is `+4.320E-004`.  A flag set only in
+stages 3 and 4 is the reply's second number, which the manual gives as
+1 in holdover and 0 otherwise.  Where the getter answers nothing, the
+status screen prints `--` (`0x53bac`; 3704 `0x4f0da`, Z3801A
+`0x4e2ad`).  What the letters stand for was not established.  In the bench logs to
 2026-10-11, the 58503A reported 432 µs from 2026-09-20 to 2026-10-02
 and 10.2 µs to 324 µs after it, mostly 13 to 26 µs; the Z3805A 432 µs
 to 2026-09-29, then 2.3 µs to 88 µs, mostly about 3 µs; the Z3801A

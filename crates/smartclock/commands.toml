@@ -852,7 +852,7 @@ doc = "Predicted one-day holdover time error, seconds."
   scpi = ":SYNChronization:HOLDover:TUNCertainty:PREDicted?"
   response = "real_bool"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-31"
+  cite = "097-59551-02 5-24"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":ROSCillator:HOLDover:TUNCertainty:PREDicted?"
@@ -870,7 +870,7 @@ doc = "Present holdover time error, seconds."
   scpi = ":SYNChronization:HOLDover:TUNCertainty:PRESent?"
   response = "real"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-32"
+  cite = "097-59551-02 5-24"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":ROSCillator:HOLDover:TUNCertainty:PRESent?"

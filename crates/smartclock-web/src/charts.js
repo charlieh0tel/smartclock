@@ -55,7 +55,7 @@ const HINTS = {
   holdover_predicted_s:
     "Time error predicted for the first 24 hours of holdover, from the "
     + "loop's aging fit; 432 µs until the fit has enough history "
-    + "(097-59551-02 5-31, docs/firmware/loop.md).",
+    + "(097-59551-02 5-24, docs/firmware/loop.md).",
 };
 
 // The hover text for the columns a chart draws.

@@ -55,22 +55,38 @@ agrees and the real gain is 0.63 of the assumed.  Still open for the
 Z3816A, whose image picks one of two negative values and of which the
 bench has no unit, the Z3801A and the Z3805A.
 
-*Measured on the bench Z3801A, 3543-A, 2026-10-10*: **+5.7 × 10⁻¹³
-per count**, ±4 % from the readings' scatter, count up raising the
-frequency.  Method: with the receiver in manual holdover
-(`:ROSCillator:HOLDover:INITiate`), whose EFC is the float at
-`0x1024fe` (`0x35a` off `0x1021a4`) plus an aging term (`0x102502`,
-then 0) and the oscillator-current term (`firmware/loop.md`), that
-float was set to its value ± 4096.0 with Forth's `!` from the pForth
-debug console, then restored.  `:DIAGnostic:ROSCillator:EFControl:ABSolute?`
-followed to the count (866261, 870357, 862165, 866261).  The 10 MHz
-output, on a counter subtracting 10 MHz, read +22, +27, +30, +20 and
-+18 mHz at +4096 and −27, −21, −22, −22, −21 and −27 mHz at −4096:
-means +23.4 and −23.3, a span of 46.7 mHz over 8192 counts, 4.67 ×
-10⁻⁹.  The Z3801A image assumes +6.25 × 10⁻¹³ (`firmware/loop.md`,
-"In every image"): the sign agrees and the real gain is 0.91 of it.
-The console word `efc_wr`, which writes the EFC cell itself, did not
-hold: the holdover recomputes the cell from the float each pass.
+*Measured on the bench Z3801A, 3543-A, 2026-10-10*: **+6.0 × 10⁻¹³
+per count**, count up raising the frequency.  Method: with the
+receiver in manual holdover (`:ROSCillator:HOLDover:INITiate`), whose
+EFC is the float at `0x1024fe` (`0x35a` off `0x1021a4`) plus an aging
+term (`0x102502`, then 0) and the oscillator-current term
+(`firmware/loop.md`), that float was set from the pForth debug console
+with Forth's `!` to its value (866261.625), +16384.0, its value,
+−16384.0 and its value again.
+`:DIAGnostic:ROSCillator:EFControl:ABSolute?` followed to the count
+each time.  The 10 MHz output, on an Agilent 53230A with a 1 s gate
+subtracting 10 MHz, averaged over 100 to several hundred readings
+(standard deviation 2.5 to 3.7 mHz):
+
+| EFC | Mean |
+|---|---|
+| 866261 | +0.130 mHz |
+| 882645 | +99.880 mHz |
+| 866261 | −0.176 mHz |
+| 849877 | −97.061 mHz |
+| 866261 | +0.447 mHz |
+
+Taking each step against the mean of the readings either side of it,
++16384 moved the output +99.90 mHz (6.10 × 10⁻¹³ per count) and
+−16384 moved it −97.20 mHz (5.93 × 10⁻¹³); the span, 197.10 mHz over
+32768 counts, is 6.02 × 10⁻¹³ per count.  The three readings at the
+setpoint lie within 0.62 mHz, so the two steps differ by more than
+the readings' scatter.  The Z3801A image assumes +6.25 × 10⁻¹³
+(`firmware/loop.md`, "In every image"): the sign agrees and the real
+gain is 0.96 of it.  A first try the same day at ±4096, five or six
+readings per point read by eye, gave 5.7 × 10⁻¹³.  The pForth word
+`efc_wr`, which writes the EFC cell itself, did not hold: the
+holdover recomputes the cell from the float each pass.
 
 *Changes:* whether the loop's poles sit where the derivation puts
 them (−1/(2τ)) or are scaled by the ratio of real to assumed G.

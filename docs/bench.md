@@ -8,9 +8,17 @@ daemon is the better source: `smartclock-cli --daemon ... diagnose`
 heads its report with the model, serial and firmware of whatever is
 attached, and every log row names its receiver.
 
+## Antenna feed
+
+As of 2026-10-10 the 20 dB gain block sits ahead of the distribution
+amp, feeding every bench receiver and the u-blox.  It once fed the
+Z3805A alone, as the dated results below say; when it moved is not
+recorded.
+
 ## HP Z3801A, serial 3542A01548
 
-On the bench but not connected.  Its history is in
+Connected; its EFC gain was measured on 2026-10-10
+(`docs/hardware-investigations.md`, item 2).  Its history is in
 `docs/hardware-investigations.md`, items 11 and 12.
 
 ## HP 58503A, serial 3710A01056

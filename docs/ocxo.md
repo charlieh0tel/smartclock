@@ -93,8 +93,8 @@ The Z3801A is reported to use a 10811-60161, which appears in none of
 the sources here: not among the 27 variants in `10811-90027-1`, and
 not among the six on the etoysbox page.  Van Baak measured 5.2x10^-13
 per EFC count on one, implying about ±2.7x10^-7, a third more per count
-than this unit's 3.94x10^-13.  The bench Z3801A measured +5.7x10^-13
-per count, ±4 percent (`hardware-investigations.md`, item 2).  Those
+than this unit's 3.94x10^-13.  The bench Z3801A measured +6.0x10^-13
+per count (`hardware-investigations.md`, item 2).  Those
 are two oscillators' measurements, not a specification.
 
 ## Sources

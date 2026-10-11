@@ -26,6 +26,7 @@ use smartclock::command::Spec;
 use smartclock::control::names;
 use smartclock::protocol::Message;
 use smartclock::protocol::Op;
+use smartclock::scpi::lookup;
 use smartclock::server::Held;
 use smartclock::server::Service;
 use smartclock::server::Writer;
@@ -419,20 +420,21 @@ fn well_formed(scpi: &str) -> Result<(), String> {
 /// `:GPS:SATellite:TRACking:EMANgle` while a client sends it followed
 /// by a number.
 ///
-/// So the whole string is tried first, then the part before the first
-/// space as a header with the rest as its argument.  The table's
-/// spelling is what gets sent, so a client may use any casing.
+/// So an entry carrying its argument is tried first, then the part
+/// before the first space as a header with the rest as its argument
+/// (`smartclock::scpi::lookup`).  Each keyword may be short, long or
+/// between, as the receiver takes it, and the table's spelling is what
+/// gets sent, so a client may use any casing and any form.
 fn classify(scpi: &str, dialect: Dialect) -> Option<(&'static Spec, String)> {
-    let specs = dialect.specs();
-    if let Some(spec) = specs.iter().find(|s| s.scpi.eq_ignore_ascii_case(scpi)) {
-        return Some((spec, spec.scpi.to_owned()));
+    let spec = lookup(dialect, scpi)?;
+    let argument = scpi
+        .split_once(char::is_whitespace)
+        .map_or("", |(_, argument)| argument.trim());
+    if argument.is_empty() || spec.scpi.contains(char::is_whitespace) {
+        Some((spec, spec.scpi.to_owned()))
+    } else {
+        Some((spec, format!("{} {argument}", spec.scpi)))
     }
-    let (header, argument) = scpi.split_once(char::is_whitespace)?;
-    let argument = argument.trim();
-    let spec = specs
-        .iter()
-        .find(|s| s.scpi.eq_ignore_ascii_case(header.trim()))?;
-    Some((spec, format!("{} {argument}", spec.scpi)))
 }
 
 /// Check a command's argument against what the table permits.
@@ -453,7 +455,7 @@ fn check_argument(scpi: &str, spec: &Spec) -> Result<(), String> {
     // table entry exactly, which let a command that requires a value
     // through with none -- :GPS:SATellite:TRACking:EMANgle on its own
     // passed the integer rule by never reaching it.
-    if spec.scpi.eq_ignore_ascii_case(scpi) && spec.scpi.contains(char::is_whitespace) {
+    if spec.scpi.contains(char::is_whitespace) {
         return Ok(());
     }
     let argument = scpi
@@ -587,6 +589,19 @@ mod tests {
         let class = spec.class;
         assert_eq!(class, Class::Control);
         assert_eq!(sent, ":GPS:POSition:SURVey:STATe ONCE");
+    }
+
+    #[test]
+    fn a_short_form_is_the_table_entry_and_is_sent_in_its_spelling() {
+        // A receiver takes each keyword short, long or between; a
+        // client's :SYNC:TINT? is the table's query, not an unknown
+        // command for raw passthrough.
+        let (spec, sent) = classify(":sync:tint?", HP).expect("known");
+        assert_eq!(spec.class, Class::Query);
+        assert_eq!(sent, ":SYNChronization:TINTerval?");
+        let (_, sent) = classify(":GPS:SAT:TRAC:EMAN 10", HP).expect("known with argument");
+        assert_eq!(sent, ":GPS:SATellite:TRACking:EMANgle 10");
+        assert!(classify(":SYNC:TIN?", HP).is_none());
     }
 
     #[test]

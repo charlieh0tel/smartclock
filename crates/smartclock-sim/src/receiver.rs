@@ -5,6 +5,8 @@ use std::collections::VecDeque;
 use crate::installer::Installer;
 use smartclock::command::CommandId;
 use smartclock::command::Dialect;
+use smartclock::scpi::lookup;
+use smartclock::scpi::same_header;
 use smartclock::types::EfcPercent;
 
 /// What the receiver sends back, before framing.
@@ -329,10 +331,10 @@ impl Receiver {
         if command.is_empty() {
             return Answer::silent();
         }
-        if self.garbled.iter().any(|g| g.eq_ignore_ascii_case(command)) {
+        if self.garbled.iter().any(|g| same_header(command, g)) {
             return Answer::line("#not a reading#");
         }
-        if self.refused.iter().any(|r| r.eq_ignore_ascii_case(command)) {
+        if self.refused.iter().any(|r| same_header(command, r)) {
             return self.reject(-230, "Data corrupt or stale");
         }
         if let Some(answer) = self.common(command) {
@@ -340,7 +342,7 @@ impl Receiver {
         }
         // The error queue is answered before the table, since reading it
         // is how a caller clears it.
-        if eq(command, ":SYSTem:ERRor?") {
+        if same_header(command, ":SYSTem:ERRor?") {
             let (code, message) = self
                 .errors
                 .pop_front()
@@ -355,13 +357,8 @@ impl Receiver {
                 Ok(None) => {}
             }
         }
-        let (header, argument) = split(command);
-        let found = self
-            .dialect
-            .specs()
-            .iter()
-            .find(|s| eq(s.scpi, command) || eq(s.scpi, header));
-        match found {
+        let (_, argument) = split(command);
+        match lookup(self.dialect, command) {
             Some(_) if self.refuse_everything => self.reject(-113, "Undefined header"),
             Some(spec) => self.answer(spec.id, argument),
             None => self.reject(-113, "Undefined header"),
@@ -761,10 +758,6 @@ pub(crate) fn split(command: &str) -> (&str, &str) {
         .map_or((command, ""), |(h, a)| (h, a.trim()))
 }
 
-pub(crate) fn eq(a: &str, b: &str) -> bool {
-    a.eq_ignore_ascii_case(b)
-}
-
 #[cfg(test)]
 mod tests {
     use super::Receiver;
@@ -775,6 +768,22 @@ mod tests {
     /// simulator answering from the current condition would hide: the
     /// daemon would look correct while re-recording the same transition
     /// on every pass for ever.
+    #[test]
+    fn a_keyword_is_taken_short_long_or_between_as_the_receiver_takes_it() {
+        let mut z3801 = Receiver::z3801a();
+        let long = z3801.respond(":PTIMe:TINTerval?");
+        let short = z3801.respond(":PTIME:TINT?");
+        assert!(long.accepted && short.accepted, "{short:?}");
+        assert_eq!(short.lines.len(), 1);
+        let mut hp = Receiver::default();
+        assert!(hp.respond(":sync:tint?").accepted);
+        assert_eq!(
+            hp.respond(":SYST:ERR?").lines,
+            vec!["+0,\"No error\"".to_owned()]
+        );
+        assert!(!hp.respond(":SYNC:TIN?").accepted);
+    }
+
     #[test]
     fn an_event_is_returned_once_and_then_gone() {
         let mut receiver = Receiver::default();

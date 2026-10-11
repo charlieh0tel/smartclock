@@ -3,8 +3,8 @@
 use thiserror::Error;
 
 use crate::receiver::Answer;
-use crate::receiver::eq;
 use crate::receiver::split;
+use smartclock::scpi::same_header;
 
 const FLASH_SIZE: usize = 0x80000;
 const AMD_BANK_SIZE: usize = FLASH_SIZE / 2;
@@ -120,14 +120,14 @@ impl Installer {
 
     pub(crate) fn respond(&mut self, command: &str) -> Result<Option<Answer>, InstallerError> {
         let (header, argument) = split(command);
-        if eq(header, ":SYSTem:LANGuage?") {
+        if same_header(header, ":SYSTem:LANGuage?") {
             return Ok(Some(Answer::line(if self.active {
                 "\"INSTALL\""
             } else {
                 "\"PRIMARY\""
             })));
         }
-        if eq(header, ":SYSTem:LANGuage") {
+        if same_header(header, ":SYSTem:LANGuage") {
             match argument.trim_matches('"').to_ascii_uppercase().as_str() {
                 "INSTALL" => self.active = true,
                 "PRIMARY" => self.active = !self.bootable(),
@@ -138,18 +138,18 @@ impl Installer {
         if !self.active {
             return Ok(None);
         }
-        if eq(header, ":DIAGnostic:ERASe?") {
+        if same_header(header, ":DIAGnostic:ERASe?") {
             let blank = self.flash[self.layout.primary_start()..]
                 .iter()
                 .all(|&byte| byte == 0xff);
             return Ok(Some(Answer::line(if blank { "+1" } else { "+0" })));
         }
-        if eq(header, ":DIAGnostic:ERASe") {
+        if same_header(header, ":DIAGnostic:ERASe") {
             if !self.erase_fails {
                 let start = self.layout.primary_start();
                 self.flash[start..].fill(0xff);
             }
-        } else if eq(header, ":DIAGnostic:DOWNload") {
+        } else if same_header(header, ":DIAGnostic:DOWNload") {
             self.download(argument)?;
         } else {
             return Err(InstallerError::Header);

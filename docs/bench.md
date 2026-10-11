@@ -79,6 +79,8 @@ capacitor, black, and one at the end of the row of three `147R`,
 
 ![Close-up of J17's side: the two black and one blue 56R2 that J15's side lacks](images/58503A-60001_RevC/58503a-j17-back-closeup.jpg)
 
+![J17's output stage from the other side, CR21 at the right: the two black `56R2` at the top, then a row of three `147R` and a blue `56R2`](images/58503A-60001_RevC/58503a-j17-back-detail.jpg)
+
 Its diagnostic log had been full at 222 entries, and so not
 recording, since March 2025; the entries were copied out and the log
 cleared, so it records again.  It showed nineteen holdover and relock

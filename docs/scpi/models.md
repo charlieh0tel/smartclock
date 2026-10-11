@@ -747,7 +747,7 @@ one short.
 | `:SOURce:PTIMe:TFOMerit` |  | Z3805A, Z3801A | q | q | q | q | q | q | q |
 | `:SOURce:PTIMe:TIME` | A, B | 58503A, Z3805A, Z3801A | q | q | q | q | q | q | q |
 | `:SOURce:PTIMe:TIME:STRing` | A, B | 58503A, Z3805A, Z3801A | q | q | q | q | q | q | q |
-| `:SOURce:PTIMe:TINTerval` | Z |  | q | q | q | q | q | q | q |
+| `:SOURce:PTIMe:TINTerval` | Z | Z3805A | q | q | q | q | q | q | q |
 | `:SOURce:PTIMe:TZONe` | A, B | 58503A, Z3805A, Z3801A | qs | qs | qs | qs | qs | qs | qs |
 | `:SOURce:PTIMe:UTC` |  | 58503A |  | qs | qs |  |  | qs |  |
 | `:SOURce:PULSe` |  |  | - | - | - | - | - | - | - |

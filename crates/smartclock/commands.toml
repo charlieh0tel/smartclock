@@ -826,8 +826,8 @@ doc = "1 PPS to GPS 1 PPS interval, seconds."
   scpi = ":PTIMe:TINTerval?"
   response = "real"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-8"
-  evidence = "firmware"
+  cite = "097-z3801-01 4-8; answered by a Z3805A, 3543B-A, 2026-10-11"
+  evidence = "hardware"
 
 [[command]]
 id = "tinterval_reading"

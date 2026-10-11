@@ -8,7 +8,7 @@ to regenerate; a test fails if this file and the table disagree.
 | Tree | Commands | Hardware | Firmware | Manual |
 | ---- | -------- | -------- | -------- | ------ |
 | 58503A/B, 59551A | 141 | 103 | 1 | 37 |
-| Z3801A, Z3816A | 82 | 61 | 20 | 1 |
+| Z3801A, Z3816A | 82 | 62 | 19 | 1 |
 
 **H** means the receiver answered it.  **F** means every keyword
 appears in the firmware's own keyword table, so the spelling is
@@ -104,7 +104,7 @@ anything reaching the receiver.
 | led holdover | Query | `:LED:HOLDover?` H | `:LED:HOLDover?` H |
 | ffom | Query | `:SYNChronization:FFOMerit?` H | `:PTIMe:FFOMerit?` H |
 | tfom | Query | `:SYNChronization:TFOMerit?` H | `:PTIMe:TFOMerit?` H |
-| tinterval | Query | `:SYNChronization:TINTerval?` H | `:PTIMe:TINTerval?` F |
+| tinterval | Query | `:SYNChronization:TINTerval?` H | `:PTIMe:TINTerval?` H |
 | tinterval reading | Query | `:DIAGnostic:PTIMe:TINTerval?` H (58503A) | `:DIAGnostic:PTIMe:TINTerval?` H |
 | holdover unc pred | Query | `:SYNChronization:HOLDover:TUNCertainty:PREDicted?` H | `:ROSCillator:HOLDover:TUNCertainty:PREDicted?` H |
 | holdover unc now | Query | `:SYNChronization:HOLDover:TUNCertainty:PRESent?` H | `:ROSCillator:HOLDover:TUNCertainty:PRESent?` H |

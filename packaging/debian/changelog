@@ -1,3 +1,17 @@
+smartclockmon (1.6.1-1) unstable; urgency=low
+
+  * The web view charts the receiver's predicted holdover uncertainty,
+    on a log axis, on the history and compare pages.
+  * 42 z3801 commands are confirmed on a Z3801A and one more on a
+    Z3805A; the Z3801A is listed for 16 the Z3805A had answered.
+  * Every 097-59551-02 and 097-z3801-01 citation in the command table
+    names the page of its command's entry; most named the wrong page.
+  * Firmware notes: the 58503A's 3633 and 3704 images compared, the
+    EFC gain measured on a Z3801A, the 58503A's oven-current term
+    shown applied, and the holdover prediction traced to its source.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Sat, 10 Oct 2026 22:05:22 -0700
+
 smartclockmon (1.6.0-1) unstable; urgency=low
 
   * smartclock-cli dump-pforth prints every word of a flash image's

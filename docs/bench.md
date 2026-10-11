@@ -125,6 +125,10 @@ DC-DC power module.
 
 ![The GPS engine module, bottom](images/Z3805-68001/z3805a-gps-engine-bottom.jpg)
 
+![The GPS engine module, top, its shield off](images/Z3805-68001/z3805a-gps-engine-top-unshielded.jpg)
+
+![The GPS engine module, bottom, its shield off](images/Z3805-68001/z3805a-gps-engine-bottom-unshielded.jpg)
+
 ![The three RIFA PME271 Y capacitors removed from the power supply](images/Z3805-68001/z3805a-rifa-pme271-front.jpg)
 
 ![The same, reverse](images/Z3805-68001/z3805a-rifa-pme271-back.jpg)
@@ -158,7 +162,9 @@ bench").  Both report the same 1024-week offset and, on the same day,
 the same date.  The engine is a module on the main board: a Motorola
 MC68331 with HM628128 RAM, two TN28F010 flash parts, an AT28C64B
 EEPROM, an MC68HC68T1 clock and an XCT38140FD04, its RF section under
-a shield marked 326/0816 2643686MAB.
+a shield marked 326/0816 2643686MAB.  Under the shields: on one side
+a part marked 24M01 19.09 M 9601; on the other a part marked 58M01
+9623 and a can marked 95001 624.
 
 Its diagnostic log held 225 entries, not the 222 the 58503A stops at.
 Copied out and cleared.

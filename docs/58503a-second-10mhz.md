@@ -1,10 +1,12 @@
-# The 58503A's second 10 MHz output
+# Enabling the 58503A's 10 MHz OUT B
 
 The 58503A's main board, 58503-60001 (Rev C on the bench unit), has
-two 10 MHz output jacks.  J17, "10 MHz A", is cabled to the rear
-10 MHz BNC.  J15, "10 MHz B", has its own output stage on the board,
-but three resistors in that stage are not fitted, so it is dead.
-Fitting them makes J15 a second 10 MHz output, level with the first.
+two 10 MHz output jacks.  J17, 10 MHz OUT A, is cabled to the rear
+10 MHz BNC in the stock unit.  J15, 10 MHz OUT B, has its own output
+stage on the board, but three resistors in that stage are not fitted,
+so it is dead.  Fitting them makes OUT B a second 10 MHz output, level
+with OUT A.  These are not the jacks the board marks OUT A and OUT B,
+J4 and J5, which are pulse outputs (`bench.md`).
 No parts list or service manual is known for this board; what follows
 is from the bench unit.
 
@@ -14,7 +16,7 @@ Each output has its own stage.  On the component side, behind J17 are
 Q12, Q13 (marked 2907A) and the 78M12 regulator U46; behind J15, Q8,
 Q9 and the 78M12 U45.  All of them are fitted on both.
 
-![The component side: J17 (10 MHz A, cabled) and J15, with their output stages](images/58503A-60001_RevC/58503a-j17-j15-front.jpg)
+![The component side: J17 (10 MHz OUT A, cabled) and J15 (10 MHz OUT B), with their output stages](images/58503A-60001_RevC/58503a-j17-j15-front.jpg)
 
 The 10 MHz comes from the oscillator's jack, at the lower left in
 this view of the other side, through a network of resistors and

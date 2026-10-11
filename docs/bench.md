@@ -50,8 +50,8 @@ operator found them on 2026-10-11:
 
 | Jack | Label | State |
 | ---- | ----- | ----- |
-| J17 | 10 MHz A | cabled to the rear 10 MHz BNC |
-| J15 | 10 MHz B | its output stage fitted but for three resistors (below); fitted 2026-10-11 (`58503a-second-10mhz.md`) |
+| J17 | 10 MHz A | 10 MHz OUT A, cabled to the rear 10 MHz BNC |
+| J15 | 10 MHz B | 10 MHz OUT B; its output stage lacked three resistors (below), fitted 2026-10-11 (`58503a-second-10mhz.md`) |
 | J5 | OUT B | cabled to the 1 PPS BNC |
 | J4 | OUT A | not connected |
 | J6 | none | cabled to the ALARM BNC |
@@ -74,7 +74,7 @@ empty fourth footprint, checked by eye.  No 0 Ω link was found missing.
 Each stage's black pair is in parallel, 28.1 Ω, and the two stages'
 pairs share no node (continuity, 2026-10-11).
 
-![The component side: J17 (10 MHz A, cabled) and J15, with their output stages](images/58503A-60001_RevC/58503a-j17-j15-front.jpg)
+![The component side: J17 (10 MHz OUT A, cabled) and J15 (10 MHz OUT B), with their output stages](images/58503A-60001_RevC/58503a-j17-j15-front.jpg)
 
 ![The other side: J17's output stage on the left, J15's on the right](images/58503A-60001_RevC/58503a-j17-j15-back.jpg)
 

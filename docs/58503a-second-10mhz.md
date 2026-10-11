@@ -50,11 +50,14 @@ The bench unit took Yageo RC0805JR-0756R, 56 Ω 5 % thick-film 0805s.
 ## Checking
 
 Terminate J15 and J17 each in 50 Ω and compare them on a scope,
-through cables of equal length.  On the bench unit the two read
-625.00 mV and 622.78 mV rms on average, within 0.4 %, about +9 dBm
-each.  Over about 2,000 acquisitions the delay from one to the other averaged
-211 ps, standard deviation 362 ps, so about 8 ps standard error: a
-fixed offset of about 0.2 ns, 0.8°.  Through cables of unequal length
+through cables of equal length.  On the bench unit J17 was read at
+the rear 10 MHz BNC, through its internal cable, on channel 1, and
+J15 through a jumper of about that cable's length from its SMB, on
+channel 3.  They read 625.00 mV and 622.78 mV rms on average, within
+0.4 %, about +9 dBm each.  Over about 2,000 acquisitions J15 averaged
+211 ps behind J17, standard deviation 362 ps, so about 8 ps standard
+error: a fixed offset of about 0.2 ns, 0.8°, which includes whatever
+the two paths' lengths differ by.  Through cables of unequal length
 they had read 2.8 ns apart.
 
 ![Both outputs into 50 Ω, through matched cables, at 20 ns per division](images/58503A-60001_RevC/58503a-j17-j15-scope.png)

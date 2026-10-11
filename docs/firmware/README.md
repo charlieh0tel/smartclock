@@ -152,9 +152,9 @@ following, and how.
   device a single-port unit would leave spare, but no image of a
   59551A's firmware is at hand.
 - Whether anything reads the sawtooth by stepping a pointer or
-  copying the record: the Z3816A's sweep covers every displacement
-  form (`gps.md`, "In every image"), the other images only byte
-  loads.
+  copying the record: the sweep of every image covers every
+  displacement form and every pointer into the record (`gps.md`,
+  "Where the sawtooth goes"), not those.
 
 ## Note on the disassembly
 

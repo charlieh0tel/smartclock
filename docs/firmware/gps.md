@@ -327,3 +327,17 @@ descriptors (`0x570f0`, `0x573c0`), and the other reads in the GPS
 code at those displacements are of other blocks (`0x4cff0`,
 `0x4d1d2`, `0x4f0c2`, `0x5191c`).  A reader stepping a pointer, or a
 copy of the whole record, would still escape it.
+
+The same sweep over the Z3801A, Z3805A and both 58503A images finds
+the same.  Their programs (`02 00 03 00 84 ...`, the Z380x with `85`
+for `84`, where the Z3816A's is `02 84 84 03 00 84 ...`) put the
+sawtooth one byte earlier, at record + 25, which the display reaches
+as offset `0x1a` from the T-RAIM-present flag just below the record:
+Z3801A `0x486ec`, Z3805A `0x4872e`, 3633 `0x489c0`, 3704 `0x48ae6`.
+The only other code that points into the record is the Time RAIM alarm
+machine (Z3801A `0x4affc`, Z3805A `0x4b03e`, 3633 `0x4b600`, 3704
+`0x4b754`), which reads the flag, T-RAIM on or off, the solution
+status and the T-RAIM status, never the sawtooth; no other long in
+any of the four images points into the record.  So in every image the
+sawtooth is displayed and not applied, with the same caveat for
+stepped pointers and whole-record copies.

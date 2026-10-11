@@ -48,7 +48,9 @@ known.  The two stages' black pairs share no node.
 ## Fitting them
 
 Fit 56.2 Ω 0805 resistors in the three empty footprints on J15's side.
-The bench unit took Yageo RC0805JR-0756R, 56 Ω 5 % thick-film 0805s.
+The bench unit took Yageo RC0805JR-0756R, 56 Ω 5 % thick-film 0805s,
+in place of the 1 % E96 value 56.2 Ω.  The two outputs then matched in
+amplitude within 0.4 % (below), so the exact part is not needed.
 
 ## Checking
 

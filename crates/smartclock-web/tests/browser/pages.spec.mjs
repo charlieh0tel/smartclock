@@ -8,6 +8,18 @@ import { expect, test } from "@playwright/test";
 
 import { Fake, receiver } from "./fake.mjs";
 
+// An exception a page does not catch fails the test it happened in,
+// whatever the test was checking: a chart that throws while drawing is
+// left half built, which no assertion about its title notices.
+const thrown = new WeakMap();
+test.beforeEach(({ page }) => {
+  thrown.set(page, []);
+  page.on("pageerror", (e) => thrown.get(page).push(e.message));
+});
+test.afterEach(({ page }) => {
+  expect(thrown.get(page), "uncaught exceptions in the page").toEqual([]);
+});
+
 const A = "1111A11111";
 const B = "2222A22222";
 

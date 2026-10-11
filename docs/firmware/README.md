@@ -122,9 +122,9 @@ following, and how.
 
 - Whether anything reaches the rest of the ROM defaults block by a
   computed address: no reader of it was found (`loop.md`, "τ and G").
-- What HQ stands for, and the units its constants assume (its
-  formula is in `loop.md`, "The fit").  Nothing but the debug print
-  and the copy to `0x102866` reads it.
+- What the letters HQ stand for.  It is the predicted holdover
+  uncertainty, in seconds, that `TUNCertainty:PREDicted?` and the
+  status screen report (`loop.md`, "The fit").
 - The console's `current drift = %.1e / day` (`0x2c3bf`) prints the
   float at `0x102bcc` times 5.4 × 10⁻⁸.  Nothing in the image writes
   `0x102bcc`, and it lies in the RAM the start-up code clears, so the

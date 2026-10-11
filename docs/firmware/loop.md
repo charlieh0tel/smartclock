@@ -201,8 +201,19 @@ with k = 2.5 × 10⁻⁴ and K = 345600 in mode 2, k = 5.5 × 10⁻⁵ and
 K = 259200 in modes 3 and 4 (`0x460f6` to `0x46196`, `0x461ae` to
 `0x4623e`, the common tail `0x46244` to `0x462da`); the 16 is the
 code's division by 10⁻¹¹ and then by 1.6 × 10¹².  A is an Allan-like
-deviation of the residual EFC at 2700 s.  What HQ stands for, and the
-units its constants assume, were not established.  128
+deviation of the residual EFC at 2700 s.
+
+HQ is the predicted holdover uncertainty, in seconds.  The handler
+both `:ROSCillator:` and `:SYNChronization:HOLDover:TUNCertainty:PREDicted?`
+reach (`0x3f5f2`) calls `0x46316`, which in stages 3 to 6 returns the
+long at +0x3a of the loop block, `0x102866`, HQ's copy, and in other
+stages nothing, so the query errors; the status screen fills its
+`Predict ... /initial 24 hrs` line from the same getter (`0x4ec56`,
+printer `0x4f1c8`).  The default 4.32 × 10⁻⁴ is the `432.0 us/initial
+24 hrs` a receiver shows while its fit is in mode 0 or 1.  The 58503A
+3704 (handler `0x2fb7a`, getter `0x42a70`, cell `0x1024b2`) and the
+Z3801A (`0x2ecb0`, `0x429f2`, `0x102194`) do the same.  What the
+letters stand for was not established.  128
 in units of 2700 s is 96 hours.
 
 **Back to the loop.**  `curv` then sends event 0x100 to `pllp`.  At the

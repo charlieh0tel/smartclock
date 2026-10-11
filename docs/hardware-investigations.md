@@ -34,8 +34,9 @@ the two Z3816A gains get names.
 *Open item:* G is the sensitivity the firmware *assumes*, negative on
 the Z3816A and positive on the Z3801A; neither is measured.
 
-- [ ] TODO: measure G on the Z3801A and the Z3805A as on the 58503A;
-  the Z3816A needs a unit the bench lacks.
+- [x] Z3801A, 2026-10-10 (below).
+- [ ] TODO: measure G on the Z3805A; the Z3816A needs a unit the bench
+  lacks.
 
 - With the receiver in holdover or with the loop open (a `phase_off`
   setpoint is console-only; do not use it -- instead compare EFC
@@ -53,6 +54,23 @@ holding count 0, 4.568 V, with the output 2.840 × 10⁻⁷ low.  The
 agrees and the real gain is 0.63 of the assumed.  Still open for the
 Z3816A, whose image picks one of two negative values and of which the
 bench has no unit, the Z3801A and the Z3805A.
+
+*Measured on the bench Z3801A, 3543-A, 2026-10-10*: **+5.7 × 10⁻¹³
+per count**, ±4 % from the readings' scatter, count up raising the
+frequency.  Method: with the receiver in manual holdover
+(`:ROSCillator:HOLDover:INITiate`), whose EFC is the float at
+`0x1024fe` (`0x35a` off `0x1021a4`) plus an aging term (`0x102502`,
+then 0) and the oscillator-current term (`firmware/loop.md`), that
+float was set to its value ± 4096.0 with Forth's `!` from the pForth
+debug console, then restored.  `:DIAGnostic:ROSCillator:EFControl:ABSolute?`
+followed to the count (866261, 870357, 862165, 866261).  The 10 MHz
+output, on a counter subtracting 10 MHz, read +22, +27, +30, +20 and
++18 mHz at +4096 and −27, −21, −22, −22, −21 and −27 mHz at −4096:
+means +23.4 and −23.3, a span of 46.7 mHz over 8192 counts, 4.67 ×
+10⁻⁹.  The Z3801A image assumes +6.25 × 10⁻¹³ (`firmware/loop.md`,
+"In every image"): the sign agrees and the real gain is 0.91 of it.
+The console word `efc_wr`, which writes the EFC cell itself, did not
+hold: the holdover recomputes the cell from the float each pass.
 
 *Changes:* whether the loop's poles sit where the derivation puts
 them (−1/(2τ)) or are scaled by the ratio of real to assumed G.

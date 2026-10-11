@@ -456,7 +456,7 @@ impl Receiver {
 
     /// The prompt that ends an exchange: `scpi > ` while the error
     /// queue is empty, and `E-nnn> ` while it holds anything, the
-    /// prompt reflecting the queue (097-59551-02, 5-40) until
+    /// prompt reflecting the queue (097-59551-02, 5-41) until
     /// `:SYSTem:ERRor?` or `*CLS` empties it.  Spaced as the 58503A's
     /// recorded probe has it: no space before the bracket, where
     /// `scpi > ` has one.

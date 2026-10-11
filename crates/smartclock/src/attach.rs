@@ -7,7 +7,7 @@
 //! a plain open would, and only when they get no identity are the
 //! settings these receivers are found at tried in turn: the Z3801A's
 //! port is fixed at 19200 7O1 (097-z3801-01, 1-8 and 2-10), and the
-//! 58503A's is 8N1 at 19200 or the factory 9600 (097-59551-02, 5-101).
+//! 58503A's is 8N1 at 19200 or the factory 9600 (097-59551-02, 5-80).
 //!
 //! A probe at the wrong settings reaches the receiver as garbled bytes,
 //! which it keeps as errors.  They are read off its queue, at the

@@ -35,10 +35,10 @@ const LABELS = {
 // document it, and from the command table
 // (crates/smartclock/commands.toml) for the undocumented queries.
 const HINTS = {
-  efc_percent: "Oscillator steering, percent of range (097-59551-02 5-28).",
+  efc_percent: "Oscillator steering, percent of range (097-59551-02 5-22).",
   efc_dac: "The EFC as a raw 20-bit value (undocumented query).",
   time_interval_s:
-    "Oscillator 1 PPS against GPS 1 PPS, ten-second mean (097-59551-02 5-34).",
+    "Oscillator 1 PPS against GPS 1 PPS, ten-second mean (097-59551-02 5-25).",
   temperature_c: "Inside the receiver, not the oven (undocumented query).",
   oven_current: "Rises while the oven heats (undocumented query).",
   oven_tempco:
@@ -50,8 +50,8 @@ const HINTS = {
   ffom:
     "0 stable, 1 stabilizing, 2 holdover, 3 unlocked: do not use "
     + "(097-59551-02 5-23).",
-  tracking: "Satellites tracked (097-59551-02 5-22).",
-  not_tracking: "Predicted visible but not tracked (097-59551-02 5-6).",
+  tracking: "Satellites tracked (097-59551-02 5-20).",
+  not_tracking: "Predicted visible but not tracked (097-59551-02 5-19).",
   holdover_predicted_s:
     "Time error predicted for the first 24 hours of holdover, from the "
     + "loop's aging fit; 432 µs until the fit has enough history "

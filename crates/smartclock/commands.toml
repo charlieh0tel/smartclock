@@ -31,7 +31,9 @@
 #            anything the character whitelist allows.  Given, it is checked before
 #            the command reaches the receiver, so the string path
 #            validates what the typed Control handle already does.
-# cite:      page in the dialect's manual
+# cite:      page in the dialect's manual: for 097-59551-02, the
+#            printed page of the issue in third_party/hp, not its
+#            index, which numbers the pages differently
 #
 # Sources: hp58503 from 097-59551-02 chapter 5, z3801 from 097-z3801-01
 # table 4-2, plus commands found by sweeping the receiver with candidate
@@ -52,7 +54,7 @@ doc = "Receiver identification string."
   scpi = "*IDN?"
   response = "idn"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-113"
+  cite = "097-59551-02 5-89"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = "*IDN?"
@@ -70,7 +72,7 @@ doc = "Clear event status registers and error queue."
   scpi = "*CLS"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-45"
+  cite = "097-59551-02 5-90"
   evidence = "manual"
   [command.dialect.z3801]
   scpi = "*CLS"
@@ -88,7 +90,7 @@ doc = "Run internal selftest; 0 passed."
   scpi = "*TST?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-70"
+  cite = "097-59551-02 5-54"
   evidence = "manual"
   [command.dialect.z3801]
   scpi = "*TST?"
@@ -111,7 +113,7 @@ doc = "Set standard event status enable register."
   scpi = "*ESE"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-62"
+  cite = "097-59551-02 5-50"
   evidence = "manual"
 
 [[command]]
@@ -123,7 +125,7 @@ doc = "Standard event status enable register."
   scpi = "*ESE?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-62"
+  cite = "097-59551-02 5-51"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = "*ESE?"
@@ -142,7 +144,7 @@ doc = "Read and clear standard event status register."
   scpi = "*ESR?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-64"
+  cite = "097-59551-02 5-51"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = "*ESR?"
@@ -165,7 +167,7 @@ doc = "Set service request enable register."
   scpi = "*SRE"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-47"
+  cite = "097-59551-02 5-43"
   evidence = "manual"
 
 [[command]]
@@ -177,7 +179,7 @@ doc = "Service request enable register."
   scpi = "*SRE?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-47"
+  cite = "097-59551-02 5-43"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = "*SRE?"
@@ -215,7 +217,7 @@ doc = "Averaged antenna position."
   scpi = ":GPS:POSition?"
   response = "position"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-9"
+  cite = "097-59551-02 5-10"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:POSition?"
@@ -233,7 +235,7 @@ doc = "Instantaneous antenna position."
   scpi = ":GPS:POSition:ACTual?"
   response = "position"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-11"
+  cite = "097-59551-02 5-10"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:POSition:ACTual?"
@@ -274,7 +276,7 @@ doc = "Last position-hold location."
   scpi = ":GPS:POSition:HOLD:LAST?"
   response = "position"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-13"
+  cite = "097-59551-02 5-10"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:POSition:HOLD:LAST?"
@@ -292,7 +294,7 @@ doc = "Whether the receiver is in position hold."
   scpi = ":GPS:POSition:HOLD:STATe?"
   response = "bool01"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-14"
+  cite = "097-59551-02 5-11"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:POSition:HOLD:STATe?"
@@ -311,7 +313,7 @@ doc = "Survey completion, percent."
   scpi = ":GPS:POSition:SURVey:PROGress?"
   response = "real"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-16"
+  cite = "097-59551-02 5-11"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:POSition:SURVey:PROGress?"
@@ -329,7 +331,7 @@ doc = "Survey state; 0 once position hold is attained."
   scpi = ":GPS:POSition:SURVey:STATe?"
   response = "word"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-17"
+  cite = "097-59551-02 5-12"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:POSition:SURVey:STATe?"
@@ -350,7 +352,7 @@ doc = "Begin a position survey."
   scpi = ":GPS:POSition:SURVey:STATe ONCE"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-17"
+  cite = "097-59551-02 5-11"
   evidence = "manual"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:POSition:SURVey:STATe ONCE"
@@ -369,7 +371,7 @@ doc = "Whether a survey runs at power-up."
   scpi = ":GPS:POSition:SURVey:STATe:POWerup?"
   response = "bool01"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-19"
+  cite = "097-59551-02 5-12"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:POSition:SURVey:STATe:POWerup?"
@@ -392,7 +394,7 @@ doc = "Enable or disable survey at power-up."
   scpi = ":GPS:POSition:SURVey:STATe:POWerup"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-19"
+  cite = "097-59551-02 5-12"
   evidence = "manual"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:POSition:SURVey:STATe:POWerup"
@@ -411,7 +413,7 @@ doc = "Elevation mask angle, degrees."
   scpi = ":GPS:SATellite:TRACking:EMANgle?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-21"
+  cite = "097-59551-02 5-13"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:EMANgle?"
@@ -434,7 +436,7 @@ doc = "Set elevation mask angle, degrees."
   scpi = ":GPS:SATellite:TRACking:EMANgle"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-21"
+  cite = "097-59551-02 5-13"
   evidence = "manual"
 
 [[command]]
@@ -446,7 +448,7 @@ doc = "Satellites excluded from tracking."
   scpi = ":GPS:SATellite:TRACking:IGNore?"
   response = "int_list"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-23"
+  cite = "097-59551-02 5-14"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:SATellite:TRACking:IGNore?"
@@ -467,7 +469,7 @@ doc = "Exclude satellites from tracking."
   scpi = ":GPS:SATellite:TRACking:IGNore"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-23"
+  cite = "097-59551-02 5-14"
   evidence = "manual"
 
 [[command]]
@@ -479,7 +481,7 @@ doc = "Count of ignored satellites."
   scpi = ":GPS:SATellite:TRACking:IGNore:COUNt?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-24"
+  cite = "097-59551-02 5-15"
   evidence = "hardware"
 
 [[command]]
@@ -491,7 +493,7 @@ doc = "Satellites considered for tracking."
   scpi = ":GPS:SATellite:TRACking:INCLude?"
   response = "int_list"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-23"
+  cite = "097-59551-02 5-15"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:SATellite:TRACking:INCLude?"
@@ -512,7 +514,7 @@ doc = "Include satellites for tracking."
   scpi = ":GPS:SATellite:TRACking:INCLude"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-23"
+  cite = "097-59551-02 5-14"
   evidence = "manual"
 
 [[command]]
@@ -524,7 +526,7 @@ doc = "Antenna cable delay, seconds."
   scpi = ":GPS:REFerence:ADELay?"
   response = "real"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-25"
+  cite = "097-59551-02 5-18"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:ADELay?"
@@ -545,7 +547,7 @@ doc = "Set antenna cable delay, seconds."
   scpi = ":GPS:REFerence:ADELay"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-25"
+  cite = "097-59551-02 5-17"
   evidence = "manual"
 
 [[command]]
@@ -557,7 +559,7 @@ doc = "Whether date and time are valid."
   scpi = ":GPS:REFerence:VALid?"
   response = "bool01"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-26"
+  cite = "097-59551-02 5-19"
   evidence = "hardware"
 
 [[command]]
@@ -569,7 +571,7 @@ doc = "PRNs currently tracked; 0 means none."
   scpi = ":GPS:SATellite:TRACking?"
   response = "int_list"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-22"
+  cite = "097-59551-02 5-19"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:SATellite:TRACking?"
@@ -587,7 +589,7 @@ doc = "Number of satellites tracked."
   scpi = ":GPS:SATellite:TRACking:COUNt?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-22"
+  cite = "097-59551-02 5-20"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:SATellite:TRACking:COUNt?"
@@ -605,7 +607,7 @@ doc = "PRNs the almanac predicts are visible."
   scpi = ":GPS:SATellite:VISible:PREDicted?"
   response = "int_list"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-24"
+  cite = "097-59551-02 5-19"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:SATellite:VISible:PREDicted?"
@@ -623,7 +625,7 @@ doc = "Count of predicted-visible satellites."
   scpi = ":GPS:SATellite:VISible:PREDicted:COUNt?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-24"
+  cite = "097-59551-02 5-20"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:GPSystem:SATellite:VISible:PREDicted:COUNt?"
@@ -707,7 +709,7 @@ doc = "SmartClock mode."
   scpi = ":SYNChronization:STATe?"
   response = "enum:SmartClockMode"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-27"
+  cite = "097-59551-02 5-22"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":ROSCillator:STATe?"
@@ -725,7 +727,7 @@ doc = "Oscillator EFC output, percent, -100 to +100."
   scpi = ":DIAGnostic:ROSCillator:EFControl:RELative?"
   response = "real"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-28"
+  cite = "097-59551-02 5-22"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":DIAGnostic:ROSCillator:EFControl:RELative?"
@@ -743,7 +745,7 @@ doc = "GPS Lock LED state."
   scpi = ":LED:GPSLock?"
   response = "bool01"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-29"
+  cite = "097-59551-02 5-22"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":LED:GPSLock?"
@@ -761,7 +763,7 @@ doc = "Holdover LED state."
   scpi = ":LED:HOLDover?"
   response = "bool01"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-29"
+  cite = "097-59551-02 5-23"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":LED:HOLDover?"
@@ -779,7 +781,7 @@ doc = "Frequency figure of merit."
   scpi = ":SYNChronization:FFOMerit?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-30"
+  cite = "097-59551-02 5-23"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:FFOMerit?"
@@ -797,7 +799,7 @@ doc = "Time figure of merit."
   scpi = ":SYNChronization:TFOMerit?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-33"
+  cite = "097-59551-02 5-24"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:TFOMerit?"
@@ -816,7 +818,7 @@ doc = "1 PPS to GPS 1 PPS interval, seconds."
   scpi = ":SYNChronization:TINTerval?"
   response = "real"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-34"
+  cite = "097-59551-02 5-25"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:TINTerval?"
@@ -888,7 +890,7 @@ doc = "Holdover duration, seconds, and whether in holdover."
   scpi = ":SYNChronization:HOLDover:DURation?"
   response = "real_bool"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-35"
+  cite = "097-59551-02 5-25"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":ROSCillator:HOLDover:DURation?"
@@ -906,7 +908,7 @@ doc = "Holdover duration threshold, seconds."
   scpi = ":SYNChronization:HOLDover:DURation:THReshold?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-35"
+  cite = "097-59551-02 5-26"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":ROSCillator:HOLDover:DURation:THReshold?"
@@ -929,7 +931,7 @@ doc = "Set holdover duration threshold, seconds."
   scpi = ":SYNChronization:HOLDover:DURation:THReshold"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-35"
+  cite = "097-59551-02 5-26"
   evidence = "manual"
 
 [[command]]
@@ -941,7 +943,7 @@ doc = "Whether holdover exceeded its threshold."
   scpi = ":SYNChronization:HOLDover:DURation:THReshold:EXCeeded?"
   response = "bool01"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-35"
+  cite = "097-59551-02 5-26"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":ROSCillator:HOLDover:DURation:THReshold:EXCeeded?"
@@ -959,7 +961,7 @@ doc = "Why the receiver is waiting to recover."
   scpi = ":SYNChronization:HOLDover:WAITing?"
   response = "enum:HoldoverWaitReason"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-36"
+  cite = "097-59551-02 5-27"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":ROSCillator:HOLDover:WAITing?"
@@ -980,7 +982,7 @@ doc = "Force manual holdover."
   scpi = ":SYNChronization:HOLDover:INITiate"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-36"
+  cite = "097-59551-02 5-27"
   evidence = "manual"
   [command.dialect.z3801]
   scpi = ":ROSCillator:HOLDover:INITiate"
@@ -1001,7 +1003,7 @@ doc = "Recover from manual holdover."
   scpi = ":SYNChronization:HOLDover:RECovery:INITiate"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-37"
+  cite = "097-59551-02 5-28"
   evidence = "manual"
   [command.dialect.z3801]
   scpi = ":ROSCillator:HOLDover:RECovery:INITiate"
@@ -1022,7 +1024,7 @@ doc = "Force recovery despite the TI limit."
   scpi = ":SYNChronization:HOLDover:RECovery:LIMit:IGNore"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-37"
+  cite = "097-59551-02 5-28"
   evidence = "manual"
   [command.dialect.z3801]
   scpi = ":ROSCillator:HOLDover:RECovery:LIMit:IGNore"
@@ -1043,7 +1045,7 @@ doc = "Realign output 1 PPS to GPS 1 PPS."
   scpi = ":SYNChronization:IMMediate"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-38"
+  cite = "097-59551-02 5-28"
   evidence = "manual"
   [command.dialect.z3801]
   scpi = ":PTIMe:SYNChronization:IMMediate"
@@ -1117,7 +1119,7 @@ doc = "All diagnostic log entries."
   scpi = ":DIAGnostic:LOG:READ:ALL?"
   response = "string_list"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-32"
+  cite = "097-59551-02 5-33"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":DIAGnostic:LOG:READ:ALL?"
@@ -1136,7 +1138,7 @@ doc = "Number of diagnostic log entries."
   scpi = ":DIAGnostic:LOG:COUNt?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-33"
+  cite = "097-59551-02 5-34"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":DIAGnostic:LOG:COUNt?"
@@ -1157,7 +1159,7 @@ doc = "One diagnostic log entry."
   scpi = ":DIAGnostic:LOG:READ?"
   response = "string"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-33"
+  cite = "097-59551-02 5-34"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":DIAGnostic:LOG:READ?"
@@ -1200,7 +1202,7 @@ doc = "Front-panel Alarm LED state."
   scpi = ":LED:ALARm?"
   response = "bool01"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-46"
+  cite = "097-59551-02 5-42"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":LED:ALARm?"
@@ -1218,7 +1220,7 @@ doc = "Restore factory alarm reporting conditions."
   scpi = ":STATus:PRESet:ALARm"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-45"
+  cite = "097-59551-02 5-41"
   evidence = "manual"
   [command.dialect.z3801]
   scpi = ":STATus:PRESet:ALARm"
@@ -1236,7 +1238,7 @@ doc = "Operation condition register."
   scpi = ":STATus:OPERation:CONDition?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-50"
+  cite = "097-59551-02 5-45"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":STATus:OPERation:CONDition?"
@@ -1256,7 +1258,7 @@ doc = "Operation event register."
   scpi = ":STATus:OPERation:EVENt?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-50"
+  cite = "097-59551-02 5-46"
   evidence = "hardware"
 
 [[command]]
@@ -1268,7 +1270,7 @@ doc = "Hardware condition register; EFC full-scale is bits 6 and 7."
   scpi = ":STATus:OPERation:HARDware:CONDition?"
   response = "bits:HardwareCondition"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-52"
+  cite = "097-59551-02 5-45"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":STATus:OPERation:HARDware:CONDition?"
@@ -1288,7 +1290,7 @@ doc = "Hardware event register."
   scpi = ":STATus:OPERation:HARDware:EVENt?"
   response = "bits:HardwareCondition"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-52"
+  cite = "097-59551-02 5-46"
   evidence = "hardware"
 
 [[command]]
@@ -1300,7 +1302,7 @@ doc = "Holdover condition register."
   scpi = ":STATus:OPERation:HOLDover:CONDition?"
   response = "bits:HoldoverCondition"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-54"
+  cite = "097-59551-02 5-45"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":STATus:OPERation:HOLDover:CONDition?"
@@ -1320,7 +1322,7 @@ doc = "Holdover event register."
   scpi = ":STATus:OPERation:HOLDover:EVENt?"
   response = "bits:HoldoverCondition"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-54"
+  cite = "097-59551-02 5-46"
   evidence = "hardware"
 
 [[command]]
@@ -1332,7 +1334,7 @@ doc = "Power-up condition register."
   scpi = ":STATus:OPERation:POWerup:CONDition?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-56"
+  cite = "097-59551-02 5-45"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":STATus:OPERation:POWerup:CONDition?"
@@ -1350,7 +1352,7 @@ doc = "Questionable condition register."
   scpi = ":STATus:QUEStionable:CONDition?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-58"
+  cite = "097-59551-02 5-45"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":STATus:QUEStionable:CONDition?"
@@ -1370,7 +1372,7 @@ doc = "Questionable event register."
   scpi = ":STATus:QUEStionable:EVENt?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-58"
+  cite = "097-59551-02 5-46"
   evidence = "hardware"
 
 [[command]]
@@ -1384,7 +1386,7 @@ doc = "Powerup event register."
   scpi = ":STATus:OPERation:POWerup:EVENt?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-50"
+  cite = "097-59551-02 5-46"
   evidence = "manual"
 
 [[command]]
@@ -1396,7 +1398,7 @@ doc = "Which operation conditions latch an event on a positive transition."
   scpi = ":STATus:OPERation:PTRansition?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-49"
   evidence = "hardware"
 
 [[command]]
@@ -1408,7 +1410,7 @@ doc = "Which operation conditions latch an event on a negative transition."
   scpi = ":STATus:OPERation:NTRansition?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-49"
   evidence = "hardware"
 
 [[command]]
@@ -1420,7 +1422,7 @@ doc = "Which questionable conditions latch an event on a positive transition."
   scpi = ":STATus:QUEStionable:PTRansition?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-49"
   evidence = "hardware"
 
 [[command]]
@@ -1432,7 +1434,7 @@ doc = "Which questionable conditions latch an event on a negative transition."
   scpi = ":STATus:QUEStionable:NTRansition?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-49"
   evidence = "hardware"
 
 [[command]]
@@ -1444,7 +1446,7 @@ doc = "Which hardware conditions latch an event on a positive transition."
   scpi = ":STATus:OPERation:HARDware:PTRansition?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-49"
   evidence = "hardware"
 
 [[command]]
@@ -1456,7 +1458,7 @@ doc = "Which hardware conditions latch an event on a negative transition."
   scpi = ":STATus:OPERation:HARDware:NTRansition?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-49"
   evidence = "hardware"
 
 [[command]]
@@ -1468,7 +1470,7 @@ doc = "Which holdover conditions latch an event on a positive transition."
   scpi = ":STATus:OPERation:HOLDover:PTRansition?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-49"
   evidence = "hardware"
 
 [[command]]
@@ -1480,7 +1482,7 @@ doc = "Which holdover conditions latch an event on a negative transition."
   scpi = ":STATus:OPERation:HOLDover:NTRansition?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-49"
   evidence = "hardware"
 
 [[command]]
@@ -1492,7 +1494,7 @@ doc = "Which powerup conditions latch an event on a positive transition."
   scpi = ":STATus:OPERation:POWerup:PTRansition?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-49"
   evidence = "hardware"
 
 [[command]]
@@ -1504,7 +1506,7 @@ doc = "Which powerup conditions latch an event on a negative transition."
   scpi = ":STATus:OPERation:POWerup:NTRansition?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-49"
   evidence = "hardware"
 
 [[command]]
@@ -1516,7 +1518,7 @@ doc = "Which operation events reach the alarm."
   scpi = ":STATus:OPERation:ENABle?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-47"
   evidence = "manual"
 
 [[command]]
@@ -1528,7 +1530,7 @@ doc = "Which hardware events reach the operation summary."
   scpi = ":STATus:OPERation:HARDware:ENABle?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-47"
   evidence = "manual"
 
 [[command]]
@@ -1540,7 +1542,7 @@ doc = "Which holdover events reach the operation summary."
   scpi = ":STATus:OPERation:HOLDover:ENABle?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-47"
   evidence = "manual"
 
 [[command]]
@@ -1552,7 +1554,7 @@ doc = "Which powerup events reach the operation summary."
   scpi = ":STATus:OPERation:POWerup:ENABle?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-47"
   evidence = "manual"
 
 [[command]]
@@ -1564,7 +1566,7 @@ doc = "Which questionable events reach the alarm."
   scpi = ":STATus:QUEStionable:ENABle?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-48"
+  cite = "097-59551-02 5-47"
   evidence = "manual"
 
 [[command]]
@@ -1576,7 +1578,7 @@ doc = "Total powered-on time."
   scpi = ":DIAGnostic:LIFetime:COUNt?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-71"
+  cite = "097-59551-02 5-54"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":DIAGnostic:LIFetime:COUNt?"
@@ -1597,7 +1599,7 @@ doc = "Run a subsystem selftest. Requires a subsystem parameter; a bare send is 
   scpi = ":DIAGnostic:TEST?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-71"
+  cite = "097-59551-02 5-55"
   evidence = "manual"
 
 [[command]]
@@ -1609,7 +1611,7 @@ doc = "Result of the last subsystem selftest."
   scpi = ":DIAGnostic:TEST:RESult?"
   response = "int_string"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-72"
+  cite = "097-59551-02 5-55"
   evidence = "hardware"
 
 [[command]]
@@ -1621,7 +1623,7 @@ doc = "Repeat the last response after a transmission error."
   scpi = ":DIAGnostic:QUERy:RESPonse?"
   response = "raw"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-108"
+  cite = "097-59551-02 5-85"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":DIAGnostic:QUERy:RESPonse?"
@@ -1639,7 +1641,7 @@ doc = "Time code message for the next 1 PPS."
   scpi = ":PTIMe:TCODe?"
   response = "timecode"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-73"
+  cite = "097-59551-02 5-57"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:TCODe?"
@@ -1657,7 +1659,7 @@ doc = "Time code format, F1 or F2."
   scpi = ":PTIMe:TCODe:FORMat?"
   response = "word"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-73"
+  cite = "firmware image 58503a-3704.bin, command tree; not in 097-59551-02, whose :PTIMe:TCODe? entry (5-57) describes the formats"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:TCODe:FORMat?"
@@ -1679,8 +1681,8 @@ doc = "Select time code format."
   scpi = ":PTIMe:TCODe:FORMat"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-73"
-  evidence = "manual"
+  cite = "firmware image 58503a-3704.bin, command tree; not in 097-59551-02, whose :PTIMe:TCODe? entry (5-57) describes the formats"
+  evidence = "firmware"
 
 [[command]]
 id = "date"
@@ -1691,7 +1693,7 @@ doc = "Current date."
   scpi = ":PTIMe:DATE?"
   response = "ymd"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-76"
+  cite = "097-59551-02 5-58"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:DATE?"
@@ -1710,7 +1712,7 @@ doc = "Current time."
   scpi = ":PTIMe:TIME?"
   response = "hms"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-77"
+  cite = "097-59551-02 5-58"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:TIME?"
@@ -1729,7 +1731,7 @@ doc = "Current time as a string."
   scpi = ":PTIMe:TIME:STRing?"
   response = "string"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-78"
+  cite = "097-59551-02 5-59"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:TIME:STRing?"
@@ -1748,7 +1750,7 @@ doc = "Local time zone offset from UTC."
   scpi = ":PTIMe:TZONe?"
   response = "hm"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-79"
+  cite = "097-59551-02 5-60"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:TZONe?"
@@ -1770,7 +1772,7 @@ doc = "Set local time zone offset from UTC."
   scpi = ":PTIMe:TZONe"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-79"
+  cite = "097-59551-02 5-60"
   evidence = "manual"
 
 [[command]]
@@ -1782,7 +1784,7 @@ doc = "GPS minus UTC, seconds."
   scpi = ":PTIMe:LEAPsecond:ACCumulated?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-80"
+  cite = "097-59551-02 5-62"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:LEAPsecond:ACCumulated?"
@@ -1800,7 +1802,7 @@ doc = "Date of the pending leap second."
   scpi = ":PTIMe:LEAPsecond:DATE?"
   response = "ymd"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-81"
+  cite = "097-59551-02 5-62"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:LEAPsecond:DATE?"
@@ -1819,7 +1821,7 @@ doc = "Sign and size of the pending leap second."
   scpi = ":PTIMe:LEAPsecond:DURation?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-81"
+  cite = "097-59551-02 5-63"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:LEAPsecond:DURation?"
@@ -1838,7 +1840,7 @@ doc = "Whether a leap second is pending."
   scpi = ":PTIMe:LEAPsecond:STATe?"
   response = "bool01"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-82"
+  cite = "097-59551-02 5-63"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":PTIMe:LEAPsecond:STATe?"
@@ -1857,7 +1859,7 @@ doc = "Current serial port settings."
   scpi = ":SYSTem:COMMunicate?"
   response = "word"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-100"
+  cite = "097-59551-02 5-79"
   evidence = "hardware"
 
 [[command]]
@@ -1869,7 +1871,7 @@ doc = "Port 1 baud rate."
   scpi = ":SYSTem:COMMunicate:SERial1:BAUD?"
   response = "int"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-101"
+  cite = "097-59551-02 5-80"
   evidence = "hardware"
 
 [[command]]
@@ -1885,7 +1887,7 @@ doc = "Set port 1 baud rate. Persists across power cycles. The receiver accepts 
   scpi = ":SYSTem:COMMunicate:SERial1:BAUD"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-101"
+  cite = "097-59551-02 5-80"
   evidence = "manual"
 
 [[command]]
@@ -1897,7 +1899,7 @@ doc = "Port 1 parity."
   scpi = ":SYSTem:COMMunicate:SERial1:PARity?"
   response = "word"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-104"
+  cite = "097-59551-02 5-84"
   evidence = "hardware"
 
 [[command]]
@@ -1913,7 +1915,7 @@ doc = "Set port 1 parity. Persists across power cycles."
   scpi = ":SYSTem:COMMunicate:SERial1:PARity"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-104"
+  cite = "097-59551-02 5-83"
   evidence = "manual"
 
 [[command]]
@@ -1925,7 +1927,7 @@ doc = "Port 1 software pacing."
   scpi = ":SYSTem:COMMunicate:SERial1:PACE?"
   response = "word"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-103"
+  cite = "097-59551-02 5-83"
   evidence = "hardware"
 
 [[command]]
@@ -1941,7 +1943,7 @@ doc = "Set port 1 software pacing. Persists across power cycles."
   scpi = ":SYSTem:COMMunicate:SERial1:PACE"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-103"
+  cite = "097-59551-02 5-82"
   evidence = "manual"
 
 [[command]]
@@ -1953,7 +1955,7 @@ doc = "Port 1 full duplex setting."
   scpi = ":SYSTem:COMMunicate:SERial1:FDUPlex?"
   response = "bool01"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-102"
+  cite = "097-59551-02 5-82"
   evidence = "hardware"
 
 [[command]]
@@ -1968,7 +1970,7 @@ doc = "Set port 1 full duplex. Persists across power cycles."
   scpi = ":SYSTem:COMMunicate:SERial1:FDUPlex"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-102"
+  cite = "097-59551-02 5-81"
   evidence = "manual"
 
 [[command]]
@@ -1980,7 +1982,7 @@ doc = "Restore port 1 to factory serial settings."
   scpi = ":SYSTem:COMMunicate:SERial1:PRESet"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-109"
+  cite = "097-59551-02 5-86"
   evidence = "manual"
 
 [[command]]
@@ -1995,7 +1997,7 @@ doc = "Restore all receiver settings to factory values."
   scpi = ":SYSTem:PRESet"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-111"
+  cite = "097-59551-02 5-86"
   evidence = "manual"
   [command.dialect.z3801]
   scpi = ":SYSTem:PRESet"
@@ -2028,7 +2030,7 @@ doc = "Command language, PRIMARY or INSTALL."
   scpi = ":SYSTem:LANGuage?"
   response = "string"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-116"
+  cite = "097-59551-02 5-93"
   evidence = "hardware"
   [command.dialect.z3801]
   scpi = ":SYSTem:LANGuage?"
@@ -2049,7 +2051,7 @@ doc = "Switch command language. INSTALL disables normal operation."
   scpi = ":SYSTem:LANGuage"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-116"
+  cite = "097-59551-02 5-92"
   evidence = "manual"
   [command.dialect.z3801]
   scpi = ":SYSTem:LANGuage"
@@ -2067,7 +2069,7 @@ doc = "Erase flash. Firmware download only."
   scpi = ":DIAGnostic:ERASe"
   response = "none"
   models = ["58503A", "58503B", "59551A"]
-  cite = "097-59551-02 5-115"
+  cite = "097-59551-02 5-91"
   evidence = "manual"
   [command.dialect.z3801]
   scpi = ":DIAGnostic:ERASe"

@@ -35,7 +35,7 @@ the status register structure is IEEE 488.2.
 ## The error prompt
 
 The prompt reflects the error queue, not the last command
-(097-59551-02, 5-40: `*CLS` clears "the error queue (and corresponding
+(097-59551-02, 5-41: `*CLS` clears "the error queue (and corresponding
 serial port prompt)").  On 2026-10-04 the bench Z3805A (3625A01487,
 3543B-A), with its queue empty, was sent:
 

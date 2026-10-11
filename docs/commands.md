@@ -7,7 +7,7 @@ to regenerate; a test fails if this file and the table disagree.
 
 | Tree | Commands | Hardware | Firmware | Manual |
 | ---- | -------- | -------- | -------- | ------ |
-| 58503A/B, 59551A | 141 | 103 | 0 | 38 |
+| 58503A/B, 59551A | 141 | 103 | 1 | 37 |
 | Z3801A, Z3816A | 82 | 61 | 20 | 1 |
 
 **H** means the receiver answered it.  **F** means every keyword
@@ -157,7 +157,7 @@ anything reaching the receiver.
 | query response | Query | `:DIAGnostic:QUERy:RESPonse?` H | `:DIAGnostic:QUERy:RESPonse?` H |
 | timecode | Query | `:PTIMe:TCODe?` H | `:PTIMe:TCODe?` H |
 | timecode format | Query | `:PTIMe:TCODe:FORMat?` H | `:PTIMe:TCODe:FORMat?` H |
-| timecode format set | Control | `:PTIMe:TCODe:FORMat` M |  |
+| timecode format set | Control | `:PTIMe:TCODe:FORMat` F |  |
 | date | Query | `:PTIMe:DATE?` H | `:PTIMe:DATE?` H |
 | time | Query | `:PTIMe:TIME?` H | `:PTIMe:TIME?` H |
 | time string | Query | `:PTIMe:TIME:STRing?` H | `:PTIMe:TIME:STRing?` H |

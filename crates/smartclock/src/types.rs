@@ -54,7 +54,7 @@ macro_rules! bounded_u8 {
 // not about the field, so the bound is the field's.
 bounded_u8!(Tfom, 0, 9, "time figure of merit");
 // FFOM is defined over 0 to 3 alone: stabilized, stabilizing, unlocked,
-// and one more (097-59551-02 5-25).
+// and one more (097-59551-02 5-23).
 bounded_u8!(Ffom, 0, 3, "frequency figure of merit");
 bounded_u8!(Prn, 1, 32, "PRN");
 
@@ -88,7 +88,7 @@ impl EfcPercent {
     /// `:DIAGnostic:ROSCillator:EFControl:ABSolute?` returns that value
     /// and it is 20 bits wide: 713392 gives 36.0687, exactly what
     /// `:RELative?` returned at the same moment.  `:RELative?` is
-    /// documented, range -100 to +100 percent (097-59551-02 5-39,
+    /// documented, range -100 to +100 percent (097-59551-02 5-22,
     /// 097-z3801-01 4-5); `:ABSolute?` is not, and the scale relating
     /// them was found by sweeping the receiver.
     ///
@@ -440,7 +440,7 @@ status_register!(PowerupCondition {
 ///
 /// Bit 0 is the reason this type exists.  Time Reset says the receiver
 /// stepped its own clock because its time disagreed with the
-/// satellites, which 097-59551-02 5-39 notes "could occur after an
+/// satellites, which 097-59551-02 5-40 notes "could occur after an
 /// extensive holdover period".  It is event-only -- there is no
 /// corresponding condition, so it appears in the event register or
 /// nowhere -- and it marks the one thing that invalidates every

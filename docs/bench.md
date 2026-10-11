@@ -51,7 +51,7 @@ operator found them on 2026-10-11:
 | Jack | Label | State |
 | ---- | ----- | ----- |
 | J17 | 10 MHz A | cabled to the rear 10 MHz BNC |
-| J15 | 10 MHz B | its output stage fitted but for three resistors (below) |
+| J15 | 10 MHz B | its output stage fitted but for three resistors (below); fitted 2026-10-11 (`58503a-second-10mhz.md`) |
 | J5 | OUT B | cabled to the 1 PPS BNC |
 | J4 | OUT A | not connected |
 | J6 | none | cabled to the ALARM BNC |

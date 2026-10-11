@@ -80,6 +80,32 @@ left.  "Not traced" marks what was seen but not followed.
   track-resumed reason `[NU]`, which names state 3; the other reasons
   3704 adds name the state the reference left, `[ER]` 0 and `[TR]` 4
   (table at `0x4dcc2`).
+  - What decides the states in 3704 (link watchdog `0x4bce6`; message
+    layouts from `VPCommands.pdf`):
+    - State 0, `GPS rcvr failed`, is a lost link, not a receiver
+      fault: `0x1013de` is set when more than 36 output intervals pass
+      without an `@@Ba` or `@@Ea`, or two counters (`0x1016ac`,
+      `0x1013dc`) pass their limits (`0x4bf06`), and cleared when one
+      arrives (`0x4bf88`).  The loss also posts script 0x56, which turns
+      `@@Ba`, `@@Ea` and `@@Bb` back on and sends `@@Cg` 1.
+    - State 1, `not tracking`: no channel of the latest `@@Ba` or
+      `@@Ea` (pp. 125--126) is in tracking mode 8, available for
+      position, with a satellite ID in range (`0x50182`).  Channels
+      are searched only while an `@@Ba`/`@@Ea` has arrived within 3
+      intervals (`0x100f22` = 2), `@@Cg` reports position fix mode
+      (`0x101256` = 1), and `0x1013c3` is clear; the scripts that
+      reconfigure the engine (0x52 to 0x55, 0x5a) set it for their
+      duration.
+    - State 2, `inacc position`: neither position hold (`@@At` = 1,
+      `0x100f06`) nor `0x1013c0`, which `0x50610` sets on an
+      `@@Ba`/`@@Ea` with a 3D fix (bit 5 of the receiver status) while
+      the survey runs, the same routine that averages the survey's
+      position.
+    - State 4, `Time RAIM error`: the T-RAIM machine `0x4b734` has
+      timed an `@@Bn`/`@@En` solution status ALARM (pp. 140--141) for
+      4 or more units of `0x13a04`, with T-RAIM on.  The parser's other
+      test, `0x1013c1 == 0`, never passes: `0x1013c1` is written only at
+      start-up, to 1 (`0x4c926`).
   - The valid code +0 is 1 in state 8 and 2 in states 6 and 7
     (`0x4bc2a`), unless +2 is set, which the pForth words
     `force_gps_1pps` and `force_ext_1pps` write: −1 forces invalid, 1
@@ -151,8 +177,7 @@ left.  "Not traced" marks what was seen but not followed.
 
 ## Not traced
 
-What feeds the reference record's conditions from the Oncore
-messages; the time-code worker (`0x13bcc` → `0x13d28`), which grows
+The two link counters and the units of `0x13a04`; the time-code worker (`0x13bcc` → `0x13d28`), which grows
 from 546 to 726 bytes and whose Ghidra bodies run into data; and the
 routines 3704's installer adds (`0x1e70`, `0x1ebc`, `0x2096`, `0x29e6`,
 `0x2cb6`, `0x2da6`).  3704's `0x10285c`, set to 9 at loop start and by

@@ -128,7 +128,7 @@ DC-DC power module.
 
 ![The same, reverse](images/Z3805-68001/z3805a-rifa-pme271-back.jpg)
 
-![The power supply, 58503-60002 Rev D, with the replacement capacitors fitted](images/Z3805-68001/z3805a-power-supply-top.jpg)
+![The power supply, 58503-60002 Rev D](images/Z3805-68001/z3805a-power-supply-top.jpg)
 
 ![The power supply, reverse: its part number and labels](images/Z3805-68001/z3805a-power-supply-bottom.jpg)
 

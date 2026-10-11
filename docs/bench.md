@@ -97,7 +97,7 @@ not a failing crystal.
     HEWLETT-PACKARD,Z3805A,3625A01487,3543B-A
 
 Oscillator serial 4505A05096.  Main board Z3805-68001, no revision
-marked; its flash parts are labeled Z3805-8004 Rev C.  Its jacks
+marked, serial 6E9008G, date code 3627; its flash parts are labeled Z3805-8004 Rev C.  Its jacks
 carry the same designators as the 58503A's: J4 (OUT A) and J5 (OUT B)
 go to the two rear 1 PPS outputs, J17 (10 MHz A) and J15 (10 MHz B) to
 the two rear 10 MHz outputs, and J6, J7 and J8 are not fitted.

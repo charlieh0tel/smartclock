@@ -41,8 +41,9 @@ label.  J15's lacks three parts that J17's has, all marked `56R2`,
 
 ![J17's stage, CR21 at the right: the black pair at the top, then the row of three 147R ending in the blue 56R2](images/58503A-60001_RevC/58503a-j17-back-detail.jpg)
 
-The black and blue parts differ in color, not size; why the board mixes
-them is not known.  The two stages' black pairs share no node.
+The black and blue parts differ in color, not size; possibly one is
+thick film and the other thin film.  Why the board mixes them is not
+known.  The two stages' black pairs share no node.
 
 ## Fitting them
 

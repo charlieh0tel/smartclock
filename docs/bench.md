@@ -51,7 +51,7 @@ operator found them on 2026-10-11:
 | Jack | Label | State |
 | ---- | ----- | ----- |
 | J17 | 10 MHz A | cabled to the rear 10 MHz BNC |
-| J15 | 10 MHz B | driver fitted, its 0 Ω link not |
+| J15 | 10 MHz B | driver fitted; its 0 Ω link and two resistors not (below) |
 | J5 | OUT B | cabled to the 1 PPS BNC |
 | J4 | OUT A | not connected |
 | J6 | none | cabled to the ALARM BNC |
@@ -60,6 +60,15 @@ operator found them on 2026-10-11:
 
 No 58503A firmware drives a second pulse channel or a time-tag input
 (`firmware/outputs.md`).
+
+The two 10 MHz channels, from the board's other side, J17's on the
+left and J15's on the right, are the same circuit, with three
+footprints on J15's side empty: two resistors, where J17's side has
+two fitted (one marked 2872), and one more beside them.
+
+![The 10 MHz output stages behind J17 (left) and J15 (right)](images/58503a-j17-j15-back.jpg)
+
+![Close-up: the empty footprints at the top right, on J15's side](images/58503a-j17-j15-back-closeup.jpg)
 
 Its diagnostic log had been full at 222 entries, and so not
 recording, since March 2025; the entries were copied out and the log

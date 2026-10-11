@@ -269,7 +269,8 @@ receivers' height was 5.0 m above the u-blox's MSL height and 35 m
 above its ellipsoid height: MSL, as above.  The u-blox's antenna is
 mounted lower than the one surveyed, so the heights agree no closer
 than that.  The Z3801A's decoded
-`@@Ba` record (`0x100d36`, read through the console) held the two
+`@@Ba` record (`0x100d36`, read from RAM with `smartclock-cli
+read-memory`, through the pForth debug console) held the two
 heights of the held position, 28.41 m apart -- the Oncore's geoid
 separation there, −28.41 m -- where the u-blox's two heights give
 −30.0 m and gpsd's own model −32.3 m.  So an MSL height is the device's
@@ -278,7 +279,7 @@ returns the engine's ellipsoid height: in the Z3801A and Z3805A its
 one reader is the survey's averaging (Z3801A `0x4f5e6`), whose
 ellipsoid average nothing reads, and `:DIAGnostic:GPSystem:POSition:DEGRees?`
 and `:MSEConds?` post requests rather than read the record.  The
-separation is read through the console, as here; in the 58503A images
+separation is read from RAM with `read-memory`, as here; in the 58503A images
 a search for readers of the field found none, which leaves them
 unsettled.  Every image selects
 datum 49, WGS-84, with `@@Ao` in its init scripts, so latitude and

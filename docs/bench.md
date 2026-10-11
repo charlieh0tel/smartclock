@@ -67,7 +67,7 @@ regulator U46 behind J17, Q8 and Q9 and the 78M12 U45 behind J15,
 all fitted.  From the board's other side, J17's stage on the left and
 J15's on the right, the two match but for three empty footprints on
 J15's side, where J17's side holds three resistors marked `56R2`,
-56.2 Ω, both colors 1.23 mm wide, so 0805: two side by side beside a
+56.2 Ω, both colors about 2.3 mm by 1.23 mm, so 0805: two side by side beside a
 capacitor, black, and one at the end of the row of three `147R`,
 147 Ω, blue; on J15's side that row holds the three `147R` and an
 empty fourth footprint, checked by eye.  No 0 Ω link was found missing.

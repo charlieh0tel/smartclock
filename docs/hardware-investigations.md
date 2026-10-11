@@ -218,6 +218,10 @@ has the same term, on the same current renumbered as channel 6.
 *Still open:* why the bench receiver's record shows no response to
 the oven current when its firmware applies the term.
 
+Read from the running unit on 2026-10-10: the loop's coefficient is
+−33.65 and its oven-current average live and moving
+(`firmware/console.md`, "The 58503A image").
+
 - [ ] TODO: compare the bench record against the firmware's c·s term
   (`efc.md`, "The regression").
 

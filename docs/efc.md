@@ -221,7 +221,9 @@ current, and its `EFControl:ABSolute?` reports the DAC word with the
 term in it.  This receiver's own firmware, revision 3704-C, read
 through its console, has the term too, on the same current renumbered
 as channel 6 (`firmware/console.md`, "The 58503A image").  So the term is in
-the firmware and absent from the record, and why is not settled.
+the firmware and absent from the record, and why is not settled.  The
+running unit's RAM, read on 2026-10-10, holds the coefficient, −33.65,
+and a live average of the current, 110.36 (`firmware/console.md`).
 
 ### It is not feedforward
 

@@ -515,10 +515,13 @@ conversion of the same channel 6 (`FUN_00021ca2(6)`).
 So the bench receiver's lack of response to the oven current in its
 record (`efc.md`, "The regression") is not explained by the term being
 absent, by the loop reading a default, or by the regression using a
-different current; its cause is not worked out.  The running unit's
-average at `0x101fc0`, its live flag at `0x101fc4` and the coefficient
-at `0x102014` are readable in the console with `hex 101FC0 @ .` and
-the like.
+different current; its cause is not worked out.  Nor is it a
+coefficient zeroed in RAM, which `FUN_00030ba8` does when the EEPROM
+record at `0x400080` fails its checksum: read from the running bench
+unit with `smartclock-cli read-memory` on 2026-10-10, locked, the
+coefficient at `0x102014` was −33.65, channel 6's live flag at
+`0x101fc4` set, and its average at `0x101fc0` 110.36, then 110.44
+twenty seconds later.
 
 ## In every image
 

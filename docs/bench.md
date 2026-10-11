@@ -51,7 +51,7 @@ operator found them on 2026-10-11:
 | Jack | Label | State |
 | ---- | ----- | ----- |
 | J17 | 10 MHz A | cabled to the rear 10 MHz BNC |
-| J15 | 10 MHz B | driver fitted; its 0 Ω link and two resistors not (below) |
+| J15 | 10 MHz B | its output stage fitted but for three resistors (below) |
 | J5 | OUT B | cabled to the 1 PPS BNC |
 | J4 | OUT A | not connected |
 | J6 | none | cabled to the ALARM BNC |
@@ -61,14 +61,22 @@ operator found them on 2026-10-11:
 No 58503A firmware drives a second pulse channel or a time-tag input
 (`firmware/outputs.md`).
 
-The two 10 MHz channels, from the board's other side, J17's on the
-left and J15's on the right, are the same circuit, with three
-footprints on J15's side empty: two resistors, where J17's side has
-two fitted (one marked 2872), and one more beside them.
+The two 10 MHz outputs each have their own output stage: on the
+component side, Q12 and Q13 (Q13 marked 2907A) and the 78M12
+regulator U46 behind J17, Q8 and Q9 and the 78M12 U45 behind J15,
+all fitted.  From the board's other side, J17's stage on the left and
+J15's on the right, the two match but for three empty footprints on
+J15's side, where J17's side holds three resistors marked `56R2`,
+56.2 Ω: two side by side beside a capacitor, black, and one at the
+end of the row of three `147R`, 147 Ω, blue.
 
-![The 10 MHz output stages behind J17 (left) and J15 (right)](images/58503a-j17-j15-back.jpg)
+![The component side: J17 (10 MHz A, cabled) and J15, with their output stages](images/58503A-60001_RevC/58503a-j17-j15-front.jpg)
 
-![Close-up: the empty footprints at the top right, on J15's side](images/58503a-j17-j15-back-closeup.jpg)
+![The other side: J17's output stage on the left, J15's on the right](images/58503A-60001_RevC/58503a-j17-j15-back.jpg)
+
+![Close-up of the other side: the empty footprints at the top right, on J15's side](images/58503A-60001_RevC/58503a-j17-j15-back-closeup.jpg)
+
+![Close-up of J17's side: the two black and one blue 56R2 that J15's side lacks](images/58503A-60001_RevC/58503a-j17-back-closeup.jpg)
 
 Its diagnostic log had been full at 222 entries, and so not
 recording, since March 2025; the entries were copied out and the log

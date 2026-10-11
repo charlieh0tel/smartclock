@@ -21,7 +21,9 @@ Connected; its EFC gain was measured on 2026-10-10
 (`docs/hardware-investigations.md`, item 2).  Its history is in
 `docs/hardware-investigations.md`, items 11 and 12.
 
-Power supply: BSC CV90-15357-2, for 38 to 60 V DC in.  It has RIFA
+Power supply: BSC CV90-15357-2, for 38 to 60 V DC in, substantially
+the same board as the Z3805A's (by inspection), though for a different
+input range.  It has RIFA
 capacitors too, not yet replaced.  Its flash is labeled Z3801-8007
 Rev ZB.
 

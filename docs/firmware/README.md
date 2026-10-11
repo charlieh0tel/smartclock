@@ -77,6 +77,7 @@ request scripts in `oncore/`.
 - [The ovens](ovens.md)
 - [The debug console](console.md)
 - [Restarting](restart.md)
+- [58503A 3633 against 3704](revisions.md)
 - [The floating-point library](softfloat.md)
 
 ## Summary
@@ -154,8 +155,6 @@ following, and how.
   copying the record: the Z3816A's sweep covers every displacement
   form (`gps.md`, "In every image"), the other images only byte
   loads.
-- 3704, the bench 58503A's own revision, has been compared with 3633
-  only where this document says so.
 
 ## Note on the disassembly
 

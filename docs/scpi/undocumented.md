@@ -99,6 +99,10 @@ image that has it.
 - **Handler:** returns a word from a table of eight channels
   (`0x222a6`): the value read where one has been, the image's default
   where not.  Its unit is not established.
+- **`:ALARm`:** in the 58503A images its flag (3633 `0x10225b`, 3704
+  `0x102261`) is read by the query handler and the settings table, and
+  in 3704 by an antenna current check nothing calls (`0x222f2`), so
+  setting it changes no monitoring (`../firmware/revisions.md`).
 - **Read:** 58503A 3704-C, 2026-10-09: `+2.08431E+002`.
 
 ### `:DIAGnostic:GPSystem:TIME`

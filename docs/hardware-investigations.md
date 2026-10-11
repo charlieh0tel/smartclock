@@ -592,3 +592,18 @@ response, so the firmware cannot say what the engine makes of it.
 *Changes:* closes "What a Z380x engine does with `@@Ci` format 0".
 Nothing in this project depends on it.  Not planned: tapping an engine's serial line is not worth it for
 this.
+
+## 17. The six LEDs on the 58503A's main board
+
+*Open item:* the bench 58503A's main board (58503-60001 Rev C) carries
+six LEDs, which the operator takes to be bicolor, red and green.
+Nothing here says what they show.
+
+- [ ] TODO: note each LED's color through power-up, lock, a manual
+  holdover (`:SYNChronization:HOLDover:INITiate`), recovery, an alarm,
+  and the installer and pForth debug console.
+- [ ] TODO: find what drives them in the firmware: a port the start-up
+  code sets, the DUART's output port, or a write `:DIAGnostic:OUTPut`
+  or the self-test makes.
+
+*Changes:* what can be read off an open board without a serial link.

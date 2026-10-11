@@ -97,16 +97,33 @@ not a failing crystal.
     HEWLETT-PACKARD,Z3805A,3625A01487,3543B-A
 
 Oscillator serial 4505A05096.  Main board Z3805-68001, no revision
-marked, serial 6E9008G, date code 3627; its flash parts are labeled Z3805-8004 Rev C.  Its jacks
+marked, serial 6E9008G, date code 3627.  Its four flash parts are
+labeled Z3805-80001 to -80004, Rev C, at U11 (2L), U12 (1L), U13 (2M)
+and U14 (1M).  Its jacks
 carry the same designators as the 58503A's: J4 (OUT A) and J5 (OUT B)
 go to the two rear 1 PPS outputs, J17 (10 MHz A) and J15 (10 MHz B) to
 the two rear 10 MHz outputs, and J6, J7 and J8 are not fitted.
 
 Its BTS power supply had three RIFA PME271 Y 10 nF paper capacitors
 (marked 40/100/56/C) on its DC input, a type known to crack and fail
-with age.  All
-three were replaced on 2026-10-11 with Vishay VY2472M49Y5US6TV7, 4.7 nF
-X1/Y2 ceramic.
+with age.  All three were replaced on 2026-10-11 with Vishay
+VY2472M49Y5US6TV7, 4.7 nF X1/Y2 ceramic.
+
+![The main board in place, the GPS engine module at the center](images/Z3805-68001/z3805a-main-board.jpg)
+
+![The MC68331, the XC3042 FPGA and the four flash parts, U11 to U14](images/Z3805-68001/z3805a-cpu-fpga-flash.jpg)
+
+![The board's serial, 6E9008G, and date code, 3627](images/Z3805-68001/z3805a-board-labels.jpg)
+
+![J17 (10 MHz A) and J15 (10 MHz B), both cabled](images/Z3805-68001/z3805a-10mhz-outputs.jpg)
+
+![The GPS engine module, top](images/Z3805-68001/z3805a-gps-engine-top.jpg)
+
+![The GPS engine module, bottom](images/Z3805-68001/z3805a-gps-engine-bottom.jpg)
+
+![The three RIFA PME271 Y capacitors removed from the power supply](images/Z3805-68001/z3805a-rifa-pme271-front.jpg)
+
+![The same, reverse](images/Z3805-68001/z3805a-rifa-pme271-back.jpg)
 
 Found at 9600 8N1, moved to 19200 to match the other unit.  No
 front-panel display -- the Z3801A and Z3805A never had one -- so the
@@ -130,7 +147,10 @@ A different engine from the 58503A's B4121P1115: a six-channel B1
 (`bench-sky-2026-10-03.html`, from the VP Oncore Command Reference)
 with software a year older (`firmware/gps.md`, "The engines on the
 bench").  Both report the same 1024-week offset and, on the same day,
-the same date.
+the same date.  The engine is a module on the main board: a Motorola
+MC68331 with HM628128 RAM, two TN28F010 flash parts, an AT28C64B
+EEPROM, an MC68HC68T1 clock and an XCT38140FD04, its RF section under
+a shield marked 326/0816 2643686MAB.
 
 Its diagnostic log held 225 entries, not the 222 the 58503A stops at.
 Copied out and cleared.

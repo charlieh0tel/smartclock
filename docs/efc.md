@@ -225,8 +225,25 @@ at 20:20:05, with `EFControl:ABSolute?` read every 4 s:
 Each change landed at the next update, 8 to 12 s apart, and the
 receiver stayed `LOCK`.  So it applies its -33.65 at every update, as
 the Z3816A image applies its c (`firmware/console.md`, "The 58503A image", has
-the code).  Why the record's regressions do not show it was not worked
-out.
+the code).  The record shows it too, at a longer scale.  Rebuilding the
+monitor's average from the logged readings, s <- 0.1 x fresh + 0.9 x s
+once per 10 s (the cadence the two RAM reads imply, a time constant of
+about 95 s), and regressing the EFC's change on that average's change
+over the same 20 to 25 September record, aging removed:
+
+| Lag | Pairs | dDAC / ds, counts per unit |
+| --- | ----- | -------------------------- |
+| 10 s | 41,906 | -0.5 +/- 0.5 |
+| 60 s | 6,981 | -9.6 +/- 1.1 |
+| 300 s | 1,395 | -29.1 +/- 2.6 |
+| 900 s | 463 | -35.0 +/- 5.0 |
+
+The tests above looked at the 10 s scale, where the term moves the EFC
+about 1.4 counts per update against 5.9 counts of noise in the EFC's
+change per update, and the step table took the raw reading, which the
+average follows only a tenth of the way per monitor pass.  Over one
+minute means the slope keeps growing past c beyond 15 minutes: -37
+counts per unit at an hour, -41 at two to four.
 
 ### It is not feedforward
 

@@ -219,8 +219,10 @@ has the same term, on the same current renumbered as channel 6.
 setting `:DIAGnostic:ROSCillator:TCOefficient` to 0 moved
 `EFControl:ABSolute?` by +3726 at the next update, 3728 predicted from
 the coefficient and the oven-current average read from its RAM, and
-restoring −33.65 moved it back (`efc.md`, "The regression").  Why the
-record's regressions did not show the term was not worked out.
+restoring −33.65 moved it back (`efc.md`, "The regression").  The
+record shows the term too, over 5 to 15 minutes against a rebuilt
+monitor average (−29 ± 3 counts per unit at 300 s, −35 ± 5 at 900 s);
+the earlier tests looked at 10 s, where it is under the noise.
 
 ## 11. The two Z380x units that track weakly or not at all
 

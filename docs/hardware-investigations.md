@@ -202,7 +202,7 @@ image and by 187 polls.
 The console has been used on the bench units to read their ROM and
 EEPROM, and `halt` returns the port to SCPI (item 14).
 
-## 10. A 58503A image -- done for revision 3633
+## 10. A 58503A image -- done
 
 `third_party/firmware/58503a-3633.bin`, assembled from willhb's flash dumps
 (`NOTICE`), answered the first questions (`firmware/console.md`, "The 58503A
@@ -215,15 +215,12 @@ The bench receiver's own flash, revision 3704-C, was read through its
 pForth console (`firmware/console.md`, "Reading memory through it"): its loop
 has the same term, on the same current renumbered as channel 6.
 
-*Still open:* why the bench receiver's record shows no response to
-the oven current when its firmware applies the term.
-
-Read from the running unit on 2026-10-10: the loop's coefficient is
-−33.65 and its oven-current average live and moving
-(`firmware/console.md`, "The 58503A image").
-
-- [ ] TODO: compare the bench record against the firmware's c·s term
-  (`efc.md`, "The regression").
+*Done:* the bench receiver applies the term.  On 2026-10-10, locked,
+setting `:DIAGnostic:ROSCillator:TCOefficient` to 0 moved
+`EFControl:ABSolute?` by +3726 at the next update, 3728 predicted from
+the coefficient and the oven-current average read from its RAM, and
+restoring −33.65 moved it back (`efc.md`, "The regression").  Why the
+record's regressions did not show the term was not worked out.
 
 ## 11. The two Z380x units that track weakly or not at all
 

@@ -211,19 +211,22 @@ at any cadence: the DAC does not follow the smoothed current at the
 instant either.  Over the whole record, with a linear
 aging trend fitted alongside (-11.7 counts per day), the DAC does fall
 with the smoothed current, by **-53.1 counts per unit of the
-channel**, but over hours, which is the loop correcting whatever the
-oven current stands for rather than a term applied at the update.
+channel**, over hours.
 
-So this 58503A does not apply its -33.65 the way the Z3816A image
-applies its c.  A 58503A image of revision 3633 (`firmware/console.md`, "The
-58503A image") has the term in the same form, on the same smoothed
-current, and its `EFControl:ABSolute?` reports the DAC word with the
-term in it.  This receiver's own firmware, revision 3704-C, read
-through its console, has the term too, on the same current renumbered
-as channel 6 (`firmware/console.md`, "The 58503A image").  So the term is in
-the firmware and absent from the record, and why is not settled.  The
-running unit's RAM, read on 2026-10-10, holds the coefficient, −33.65,
-and a live average of the current, 110.36 (`firmware/console.md`).
+Neither test sees the term, but the receiver applies it.  On 2026-10-10 the bench 58503A, locked, was given
+`:DIAGnostic:ROSCillator:TCOefficient 0` at 20:19:01 and -33.65 again
+at 20:20:05, with `EFControl:ABSolute?` read every 4 s:
+
+| | Before | After | Change | c x s, predicted |
+| - | ------ | ----- | ------ | ---------------- |
+| c to 0 | 708663 | 712389 | +3726 | +3728 (33.65 x 110.78) |
+| c back to -33.65 | 712364 | 708625 | -3739 | |
+
+Each change landed at the next update, 8 to 12 s apart, and the
+receiver stayed `LOCK`.  So it applies its -33.65 at every update, as
+the Z3816A image applies its c (`firmware/console.md`, "The 58503A image", has
+the code).  Why the record's regressions do not show it was not worked
+out.
 
 ### It is not feedforward
 

@@ -39,7 +39,7 @@ label.  J15's lacks three parts that J17's has, all marked `56R2`,
 
 ![J17's stage, CR21 at the right: the black pair at the top, then the row of three 147R ending in the blue 56R2](images/58503A-60001_RevC/58503a-j17-back-detail.jpg)
 
-The black and blue parts differ in type, not size; why the board mixes
+The black and blue parts differ in color, not size; why the board mixes
 them is not known.  The two stages' black pairs share no node.
 
 ## Fitting them
@@ -51,8 +51,8 @@ The bench unit took 56 Ω 5 % thick-film 0805s.
 
 Terminate J15 and J17 each in 50 Ω and compare them on a scope.  On
 the bench unit the two read 628.8 mV and 622.4 mV rms, within 1 %,
-about +9 dBm each.  The cables were of unequal length, so the 2.8 ns
-between them is not the stages' own.
+about +9 dBm each.  They were 2.8 ns apart, through cables of unequal
+length, so how much of that is the stages' own was not measured.
 
 ![Both outputs into 50 Ω](images/58503A-60001_RevC/58503a-j17-j15-scope.png)
 

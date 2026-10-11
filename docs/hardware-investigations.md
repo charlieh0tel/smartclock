@@ -541,7 +541,7 @@ scratch file:
   with the Z3805A's EFC of 45.476 %, are filed under the 58503A: the
   window up to one slow pass that PLAN.md states.
 
-## 16. What the Z380x engines do with `@@Ci` format 0 -- low priority
+## 16. What the Z380x engines do with `@@Ci` format 0 -- not planned
 
 *Open item:* the Z3801A's and Z3805A's init scripts open with `@@Ci`,
 switch I/O format, with format 0, which `VPCommands.pdf` does not
@@ -553,4 +553,5 @@ response, so the firmware cannot say what the engine makes of it.
   stays in Motorola binary, answers, or changes format.
 
 *Changes:* closes "What a Z380x engine does with `@@Ci` format 0".
-Nothing in this project depends on it.
+Nothing in this project depends on it.  Not planned: tapping an engine's serial line is not worth it for
+this.

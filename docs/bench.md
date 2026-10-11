@@ -45,6 +45,19 @@ GPS receiver, as `:DIAGnostic:IDENtification:GPSystem?` reports it:
     MANUFACTUR DATE 7D01
     OPTIONS LIST    IB
 
+Main board: 58503-60001 Rev C, marked hp.  Its output jacks, as the
+operator found them on 2026-10-11:
+
+| Jack | Label | State |
+| ---- | ----- | ----- |
+| J17 | 10 MHz A | cabled to the rear 10 MHz BNC |
+| J15 | 10 MHz B | driver fitted, its 0 Ω link not |
+| J5 | OUT B | cabled to the 1 PPS BNC |
+| J4 | OUT A | not connected |
+| J6 | none | cabled to the ALARM BNC |
+| J7 | none | not connected; function not identified |
+| J8 | none | not connected; function not identified |
+
 Its diagnostic log had been full at 222 entries, and so not
 recording, since March 2025; the entries were copied out and the log
 cleared, so it records again.  It showed nineteen holdover and relock

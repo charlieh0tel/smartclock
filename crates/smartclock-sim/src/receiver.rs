@@ -141,6 +141,10 @@ pub struct Receiver {
     pub holdover: bool,
     /// Which command tree to answer on.
     pub dialect: Dialect,
+    /// Whether what it is sent comes back.  The 58503A and the Z3805A
+    /// echo; the bench Z3801A does not, so a command with no reply
+    /// arrives as nothing but the next prompt.
+    pub echo: bool,
     /// How many commands have been answered.
     ticks: u64,
     /// What the drifting values move around.  Captured when the
@@ -239,6 +243,7 @@ impl Default for Receiver {
             hardware: 0,
             holdover: false,
             dialect: Dialect::Hp58503,
+            echo: true,
             ticks: 0,
             refuse_everything: false,
             garbled: Vec::new(),
@@ -273,8 +278,7 @@ impl Receiver {
         .settle()
     }
 
-    /// A Z3801A: its identity and its command tree.  Pair it with a
-    /// transport whose echo is off for the bench unit's framing.
+    /// A Z3801A: its identity, its command tree, and no echo.
     pub fn z3801a() -> Self {
         Self::default().as_z3801a()
     }
@@ -284,6 +288,7 @@ impl Receiver {
         Self {
             identity: "HEWLETT-PACKARD,Z3801A,0000A00000,3543-A".to_owned(),
             dialect: Dialect::Z3801,
+            echo: false,
             ..self
         }
         .settle()

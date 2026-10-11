@@ -1030,8 +1030,9 @@ fn an_error_is_attributed_to_the_command_that_caused_it() {
 #[test]
 fn a_z3801a_without_echo_is_read_as_one_with_it_is() {
     // The bench Z3801A does not echo, so every reply arrives bare and a
-    // refusal arrives as nothing but its prompt.
-    let transport = SimTransport::new(Receiver::z3801a()).with_echo(false);
+    // refusal arrives as nothing but its prompt, and the simulated one
+    // does the same without being told.
+    let transport = SimTransport::new(Receiver::z3801a());
     let mut device = Device::open(Session::new(transport, Config::default())).expect("open");
     assert_eq!(device.dialect(), Dialect::Z3801);
     let now = jiff::Timestamp::now();

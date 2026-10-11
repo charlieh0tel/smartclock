@@ -30,9 +30,10 @@ struct Cli {
     /// Report a fault: EFC near full scale, in holdover.
     #[arg(long)]
     faulty: bool,
-    /// Send nothing back of what is received, as the bench Z3801A.
-    #[arg(long)]
-    no_echo: bool,
+    /// Echo what is received, or not.  By default as the model does:
+    /// the 58503A echoes, the bench Z3801A does not.
+    #[arg(long, value_enum)]
+    echo: Option<Echo>,
     /// An error the receiver has raised by itself, as `-313,Calibration
     /// memory lost`.  May be given more than once.
     #[arg(long, value_parser = error_entry, allow_hyphen_values = true)]
@@ -41,6 +42,15 @@ struct Cli {
     /// the receiver stepped its own clock.  May be given more than once.
     #[arg(long, value_parser = event)]
     raise_event: Vec<(String, u16)>,
+}
+
+/// Whether the simulated port echoes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum Echo {
+    /// Send back each character received.
+    On,
+    /// Send back nothing but the replies and prompts.
+    Off,
 }
 
 /// The receivers the simulator can be.
@@ -61,7 +71,11 @@ fn main() -> std::io::Result<()> {
         "smartclock-sim: a{} {:?} receiver{} on {}",
         if cli.faulty { " faulty" } else { "" },
         cli.model,
-        if cli.no_echo { " without echo" } else { "" },
+        match cli.echo {
+            Some(Echo::On) => " with echo",
+            Some(Echo::Off) => " without echo",
+            None => "",
+        },
         cli.address
     );
     eprintln!("smartclock-sim: smartclockd --device tcp://{}", cli.address);
@@ -89,7 +103,11 @@ fn main() -> std::io::Result<()> {
         for (register, bits) in &cli.raise_event {
             receiver.raise_event(register, *bits);
         }
-        let transport = SimTransport::new(receiver).with_echo(!cli.no_echo);
+        let transport = SimTransport::new(receiver);
+        let transport = match cli.echo {
+            Some(echo) => transport.with_echo(echo == Echo::On),
+            None => transport,
+        };
         thread::spawn(move || {
             if let Err(e) = serve(stream, transport) {
                 eprintln!("smartclock-sim: client ended: {e}");

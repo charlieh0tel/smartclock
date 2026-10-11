@@ -60,7 +60,7 @@ started with `--listen HOST:PORT` as `--daemon tcp://HOST:PORT`.
 Without a receiver, use the simulator; every tool takes
 `tcp://host:port` for a device path:
 
-    smartclock-sim 127.0.0.1:5025            # --model z3801a --no-echo for the Z3801A's framing
+    smartclock-sim 127.0.0.1:5025            # --model z3801a for a Z3801A, which does not echo
     smartclockd     --device tcp://127.0.0.1:5025 ...
     smartclock-cli  --device tcp://127.0.0.1:5025 diagnose
 

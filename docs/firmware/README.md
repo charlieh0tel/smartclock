@@ -77,6 +77,7 @@ request scripts in `oncore/`.
 - [The ovens](ovens.md)
 - [The debug console](console.md)
 - [Restarting](restart.md)
+- [Pulse, time-tag and output commands](outputs.md)
 - [58503A 3633 against 3704](revisions.md)
 - [The floating-point library](softfloat.md)
 
@@ -107,6 +108,11 @@ request scripts in `oncore/`.
 - The firmware carries a Forth interpreter that calls itself pForth,
   whose words include the loop's diagnostics.  It is a shell over
   compiled code: no word in the image is written in Forth.
+- Every image carries the 59551A's pulse, time-tag and output
+  commands, and stores or ignores their settings: the routine that
+  would program the pulse is empty, and no 58503A image drives a
+  second pulse channel, a pulse period or a time-tag input
+  (`outputs.md`).
 
 ## What is not established
 

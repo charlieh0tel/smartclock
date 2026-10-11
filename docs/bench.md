@@ -58,6 +58,9 @@ operator found them on 2026-10-11:
 | J7 | none | not connected; function not identified |
 | J8 | none | not connected; function not identified |
 
+No 58503A firmware drives a second pulse channel or a time-tag input
+(`firmware/outputs.md`).
+
 Its diagnostic log had been full at 222 entries, and so not
 recording, since March 2025; the entries were copied out and the log
 cleared, so it records again.  It showed nineteen holdover and relock

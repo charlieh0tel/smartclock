@@ -170,24 +170,29 @@ pub(super) fn spells(written: &str, path: &str) -> bool {
     matches(&keywords) || (keywords.first() == Some(&OPTIONAL_HEADER) && matches(&keywords[1..]))
 }
 
-/// The receiver each dialect's `hardware` evidence came from: the
-/// 58503A is the only one of its dialect on the bench, and every
-/// `z3801` entry with that evidence cites the Z3805A.
-const CONFIRMED_ON: [(Dialect, &str); 2] =
-    [(Dialect::Hp58503, "58503A"), (Dialect::Z3801, "Z3805A")];
+/// The bench receivers each dialect's `hardware` evidence can come
+/// from, and whether an entry's cite must name the receiver: the
+/// 58503A is the only one of its dialect on the bench, while a `z3801`
+/// entry cites the Z3805A or the Z3801A that answered it.
+const CONFIRMED_ON: [(Dialect, &str, bool); 3] = [
+    (Dialect::Hp58503, "58503A", false),
+    (Dialect::Z3801, "Z3805A", true),
+    (Dialect::Z3801, "Z3801A", true),
+];
 
 /// The receivers that have answered the command table's entry for
 /// `path`.
 fn confirmed(path: &str) -> Vec<&'static str> {
     CONFIRMED_ON
         .into_iter()
-        .filter(|(dialect, _)| {
-            dialect
-                .specs()
-                .iter()
-                .any(|spec| spec.evidence == Evidence::Hardware && spells(spec.scpi, path))
+        .filter(|(dialect, model, cited)| {
+            dialect.specs().iter().any(|spec| {
+                spec.evidence == Evidence::Hardware
+                    && spells(spec.scpi, path)
+                    && (!cited || spec.cite.contains(model))
+            })
         })
-        .map(|(_, model)| model)
+        .map(|(_, model, _)| model)
         .collect()
 }
 

@@ -8,7 +8,7 @@ to regenerate; a test fails if this file and the table disagree.
 | Tree | Commands | Hardware | Firmware | Manual |
 | ---- | -------- | -------- | -------- | ------ |
 | 58503A/B, 59551A | 141 | 103 | 0 | 38 |
-| Z3801A, Z3816A | 82 | 19 | 62 | 1 |
+| Z3801A, Z3816A | 82 | 61 | 20 | 1 |
 
 **H** means the receiver answered it.  **F** means every keyword
 appears in the firmware's own keyword table, so the spelling is
@@ -62,78 +62,78 @@ anything reaching the receiver.
 
 | Operation | Class | 58503A/B, 59551A | Z3801A, Z3816A |
 | --------- | ----- | ---------------- | -------------- |
-| idn | Query | `*IDN?` H | `*IDN?` F |
+| idn | Query | `*IDN?` H | `*IDN?` H |
 | cls | Control | `*CLS` M | `*CLS` F |
 | selftest | Control | `*TST?` M | `*TST?` F |
 | ese set | Control | `*ESE` M |  |
-| ese | Query | `*ESE?` H | `*ESE?` F |
+| ese | Query | `*ESE?` H | `*ESE?` H |
 | esr | Control | `*ESR?` H | `*ESR?` F |
 | sre set | Control | `*SRE` M |  |
-| sre | Query | `*SRE?` H | `*SRE?` F |
-| stb | Query | `*STB?` H | `*STB?` F |
-| position avg | Query | `:GPS:POSition?` H | `:PTIMe:GPSystem:POSition?` F |
-| position actual | Query | `:GPS:POSition:ACTual?` H | `:PTIMe:GPSystem:POSition:ACTual?` F |
+| sre | Query | `*SRE?` H | `*SRE?` H |
+| stb | Query | `*STB?` H | `*STB?` H |
+| position avg | Query | `:GPS:POSition?` H | `:PTIMe:GPSystem:POSition?` H |
+| position actual | Query | `:GPS:POSition:ACTual?` H | `:PTIMe:GPSystem:POSition:ACTual?` H |
 | position set | Control | `:GPS:POSition` M | `:PTIMe:GPSystem:POSition` F |
-| position hold last | Query | `:GPS:POSition:HOLD:LAST?` H | `:PTIMe:GPSystem:POSition:HOLD:LAST?` F |
+| position hold last | Query | `:GPS:POSition:HOLD:LAST?` H | `:PTIMe:GPSystem:POSition:HOLD:LAST?` H |
 | position hold state | Query | `:GPS:POSition:HOLD:STATe?` H | `:PTIMe:GPSystem:POSition:HOLD:STATe?` H |
 | survey progress | Query | `:GPS:POSition:SURVey:PROGress?` H | `:PTIMe:GPSystem:POSition:SURVey:PROGress?` F |
-| survey state | Query | `:GPS:POSition:SURVey:STATe?` H | `:PTIMe:GPSystem:POSition:SURVey:STATe?` F |
+| survey state | Query | `:GPS:POSition:SURVey:STATe?` H | `:PTIMe:GPSystem:POSition:SURVey:STATe?` H |
 | survey once | Control | `:GPS:POSition:SURVey:STATe ONCE` M | `:PTIMe:GPSystem:POSition:SURVey:STATe ONCE` F |
 | survey powerup | Query | `:GPS:POSition:SURVey:STATe:POWerup?` H | `:PTIMe:GPSystem:POSition:SURVey:STATe:POWerup?` H |
 | survey powerup set | Control | `:GPS:POSition:SURVey:STATe:POWerup` M | `:PTIMe:GPSystem:POSition:SURVey:STATe:POWerup` F |
-| elevation mask | Query | `:GPS:SATellite:TRACking:EMANgle?` H | `:PTIMe:GPSystem:EMANgle?` F |
+| elevation mask | Query | `:GPS:SATellite:TRACking:EMANgle?` H | `:PTIMe:GPSystem:EMANgle?` H |
 | elevation mask set | Control | `:GPS:SATellite:TRACking:EMANgle` M |  |
-| sat ignore | Query | `:GPS:SATellite:TRACking:IGNore?` H | `:PTIMe:GPSystem:SATellite:TRACking:IGNore?` F |
+| sat ignore | Query | `:GPS:SATellite:TRACking:IGNore?` H | `:PTIMe:GPSystem:SATellite:TRACking:IGNore?` H |
 | sat ignore set | Control | `:GPS:SATellite:TRACking:IGNore` M |  |
 | sat ignore count | Query | `:GPS:SATellite:TRACking:IGNore:COUNt?` H |  |
-| sat include | Query | `:GPS:SATellite:TRACking:INCLude?` H | `:PTIMe:GPSystem:SATellite:TRACking:INCLude?` F |
+| sat include | Query | `:GPS:SATellite:TRACking:INCLude?` H | `:PTIMe:GPSystem:SATellite:TRACking:INCLude?` H |
 | sat include set | Control | `:GPS:SATellite:TRACking:INCLude` M |  |
-| antenna delay | Query | `:GPS:REFerence:ADELay?` H | `:PTIMe:GPSystem:ADELay?` F |
+| antenna delay | Query | `:GPS:REFerence:ADELay?` H | `:PTIMe:GPSystem:ADELay?` H |
 | antenna delay set | Control | `:GPS:REFerence:ADELay` M |  |
 | time valid | Query | `:GPS:REFerence:VALid?` H |  |
-| sat tracking | Query | `:GPS:SATellite:TRACking?` H | `:PTIMe:GPSystem:SATellite:TRACking?` F |
-| sat tracking count | Query | `:GPS:SATellite:TRACking:COUNt?` H | `:PTIMe:GPSystem:SATellite:TRACking:COUNt?` F |
-| sat visible | Query | `:GPS:SATellite:VISible:PREDicted?` H | `:PTIMe:GPSystem:SATellite:VISible:PREDicted?` F |
-| sat visible count | Query | `:GPS:SATellite:VISible:PREDicted:COUNt?` H | `:PTIMe:GPSystem:SATellite:VISible:PREDicted:COUNt?` F |
+| sat tracking | Query | `:GPS:SATellite:TRACking?` H | `:PTIMe:GPSystem:SATellite:TRACking?` H |
+| sat tracking count | Query | `:GPS:SATellite:TRACking:COUNt?` H | `:PTIMe:GPSystem:SATellite:TRACking:COUNt?` H |
+| sat visible | Query | `:GPS:SATellite:VISible:PREDicted?` H | `:PTIMe:GPSystem:SATellite:VISible:PREDicted?` H |
+| sat visible count | Query | `:GPS:SATellite:VISible:PREDicted:COUNt?` H | `:PTIMe:GPSystem:SATellite:VISible:PREDicted:COUNt?` H |
 | initial date set | Control | `:GPS:INITial:DATE` M | `:PTIMe:GPSystem:INITial:DATE` F |
 | initial time set | Control | `:GPS:INITial:TIME` M | `:PTIMe:GPSystem:INITial:TIME` F |
 | initial pos set | Control | `:GPS:INITial:POSition` M | `:PTIMe:GPSystem:INITial:POSition` F |
-| sync state | Query | `:SYNChronization:STATe?` H | `:ROSCillator:STATe?` F |
+| sync state | Query | `:SYNChronization:STATe?` H | `:ROSCillator:STATe?` H |
 | efc | Query | `:DIAGnostic:ROSCillator:EFControl:RELative?` H | `:DIAGnostic:ROSCillator:EFControl:RELative?` H |
-| led gpslock | Query | `:LED:GPSLock?` H | `:LED:GPSLock?` F |
-| led holdover | Query | `:LED:HOLDover?` H | `:LED:HOLDover?` F |
-| ffom | Query | `:SYNChronization:FFOMerit?` H | `:PTIMe:FFOMerit?` F |
+| led gpslock | Query | `:LED:GPSLock?` H | `:LED:GPSLock?` H |
+| led holdover | Query | `:LED:HOLDover?` H | `:LED:HOLDover?` H |
+| ffom | Query | `:SYNChronization:FFOMerit?` H | `:PTIMe:FFOMerit?` H |
 | tfom | Query | `:SYNChronization:TFOMerit?` H | `:PTIMe:TFOMerit?` H |
 | tinterval | Query | `:SYNChronization:TINTerval?` H | `:PTIMe:TINTerval?` F |
 | tinterval reading | Query | `:DIAGnostic:PTIMe:TINTerval?` H (58503A) | `:DIAGnostic:PTIMe:TINTerval?` H |
-| holdover unc pred | Query | `:SYNChronization:HOLDover:TUNCertainty:PREDicted?` H | `:ROSCillator:HOLDover:TUNCertainty:PREDicted?` F |
-| holdover unc now | Query | `:SYNChronization:HOLDover:TUNCertainty:PRESent?` H | `:ROSCillator:HOLDover:TUNCertainty:PRESent?` F |
-| holdover duration | Query | `:SYNChronization:HOLDover:DURation?` H | `:ROSCillator:HOLDover:DURation?` F |
-| holdover thresh | Query | `:SYNChronization:HOLDover:DURation:THReshold?` H | `:ROSCillator:HOLDover:DURation:THReshold?` F |
+| holdover unc pred | Query | `:SYNChronization:HOLDover:TUNCertainty:PREDicted?` H | `:ROSCillator:HOLDover:TUNCertainty:PREDicted?` H |
+| holdover unc now | Query | `:SYNChronization:HOLDover:TUNCertainty:PRESent?` H | `:ROSCillator:HOLDover:TUNCertainty:PRESent?` H |
+| holdover duration | Query | `:SYNChronization:HOLDover:DURation?` H | `:ROSCillator:HOLDover:DURation?` H |
+| holdover thresh | Query | `:SYNChronization:HOLDover:DURation:THReshold?` H | `:ROSCillator:HOLDover:DURation:THReshold?` H |
 | holdover thresh set | Control | `:SYNChronization:HOLDover:DURation:THReshold` M |  |
-| holdover exceeded | Query | `:SYNChronization:HOLDover:DURation:THReshold:EXCeeded?` H | `:ROSCillator:HOLDover:DURation:THReshold:EXCeeded?` F |
-| holdover waiting | Query | `:SYNChronization:HOLDover:WAITing?` H | `:ROSCillator:HOLDover:WAITing?` F |
+| holdover exceeded | Query | `:SYNChronization:HOLDover:DURation:THReshold:EXCeeded?` H | `:ROSCillator:HOLDover:DURation:THReshold:EXCeeded?` H |
+| holdover waiting | Query | `:SYNChronization:HOLDover:WAITing?` H | `:ROSCillator:HOLDover:WAITing?` H |
 | holdover initiate | Control | `:SYNChronization:HOLDover:INITiate` M | `:ROSCillator:HOLDover:INITiate` F |
 | holdover recover | Control | `:SYNChronization:HOLDover:RECovery:INITiate` M | `:ROSCillator:HOLDover:RECovery:INITiate` F |
 | holdover limit ignore | Control | `:SYNChronization:HOLDover:RECovery:LIMit:IGNore` M | `:ROSCillator:HOLDover:RECovery:LIMit:IGNore` F |
 | sync immediate | Control | `:SYNChronization:IMMediate` M | `:PTIMe:SYNChronization:IMMediate` F |
-| status screen | Query | `:SYSTem:STATus?` H | `:SYSTem:STATus?` F |
+| status screen | Query | `:SYSTem:STATus?` H | `:SYSTem:STATus?` H |
 | status screen lines | Query | `:SYSTem:STATus:LENGth?` H | `:SYSTem:STATus:LENGth?` H |
-| error | Control | `:SYSTem:ERRor?` H | `:SYSTem:ERRor?` F |
+| error | Control | `:SYSTem:ERRor?` H | `:SYSTem:ERRor?` H |
 | log read all | Query | `:DIAGnostic:LOG:READ:ALL?` H | `:DIAGnostic:LOG:READ:ALL?` H |
-| log count | Query | `:DIAGnostic:LOG:COUNt?` H | `:DIAGnostic:LOG:COUNt?` F |
-| log read | Query | `:DIAGnostic:LOG:READ?` H | `:DIAGnostic:LOG:READ?` F |
+| log count | Query | `:DIAGnostic:LOG:COUNt?` H | `:DIAGnostic:LOG:COUNt?` H |
+| log read | Query | `:DIAGnostic:LOG:READ?` H | `:DIAGnostic:LOG:READ?` H |
 | log clear | Control | `:DIAGnostic:LOG:CLEar` M | `:DIAGnostic:LOG:CLEar` F |
-| led alarm | Query | `:LED:ALARm?` H | `:LED:ALARm?` F |
+| led alarm | Query | `:LED:ALARm?` H | `:LED:ALARm?` H |
 | status preset alarm | Control | `:STATus:PRESet:ALARm` M | `:STATus:PRESet:ALARm` F |
-| oper condition | Query | `:STATus:OPERation:CONDition?` H | `:STATus:OPERation:CONDition?` F |
+| oper condition | Query | `:STATus:OPERation:CONDition?` H | `:STATus:OPERation:CONDition?` H |
 | oper event | Control | `:STATus:OPERation:EVENt?` H |  |
-| hardware condition | Query | `:STATus:OPERation:HARDware:CONDition?` H | `:STATus:OPERation:HARDware:CONDition?` F |
+| hardware condition | Query | `:STATus:OPERation:HARDware:CONDition?` H | `:STATus:OPERation:HARDware:CONDition?` H |
 | hardware event | Control | `:STATus:OPERation:HARDware:EVENt?` H |  |
-| holdover condition | Query | `:STATus:OPERation:HOLDover:CONDition?` H | `:STATus:OPERation:HOLDover:CONDition?` F |
+| holdover condition | Query | `:STATus:OPERation:HOLDover:CONDition?` H | `:STATus:OPERation:HOLDover:CONDition?` H |
 | holdover event | Control | `:STATus:OPERation:HOLDover:EVENt?` H |  |
-| powerup condition | Query | `:STATus:OPERation:POWerup:CONDition?` H | `:STATus:OPERation:POWerup:CONDition?` F |
-| quest condition | Query | `:STATus:QUEStionable:CONDition?` H | `:STATus:QUEStionable:CONDition?` F |
+| powerup condition | Query | `:STATus:OPERation:POWerup:CONDition?` H | `:STATus:OPERation:POWerup:CONDition?` H |
+| quest condition | Query | `:STATus:QUEStionable:CONDition?` H | `:STATus:QUEStionable:CONDition?` H |
 | quest event | Control | `:STATus:QUEStionable:EVENt?` H |  |
 | powerup event | Control | `:STATus:OPERation:POWerup:EVENt?` M |  |
 | oper positive transition | Query | `:STATus:OPERation:PTRansition?` H |  |
@@ -151,19 +151,19 @@ anything reaching the receiver.
 | holdover enable | Query | `:STATus:OPERation:HOLDover:ENABle?` M |  |
 | powerup enable | Query | `:STATus:OPERation:POWerup:ENABle?` M |  |
 | quest enable | Query | `:STATus:QUEStionable:ENABle?` M |  |
-| lifetime count | Query | `:DIAGnostic:LIFetime:COUNt?` H | `:DIAGnostic:LIFetime:COUNt?` F |
+| lifetime count | Query | `:DIAGnostic:LIFetime:COUNt?` H | `:DIAGnostic:LIFetime:COUNt?` H |
 | diag test | Control | `:DIAGnostic:TEST?` M |  |
 | diag test result | Query | `:DIAGnostic:TEST:RESult?` H |  |
-| query response | Query | `:DIAGnostic:QUERy:RESPonse?` H | `:DIAGnostic:QUERy:RESPonse?` F |
-| timecode | Query | `:PTIMe:TCODe?` H | `:PTIMe:TCODe?` F |
-| timecode format | Query | `:PTIMe:TCODe:FORMat?` H | `:PTIMe:TCODe:FORMat?` F |
+| query response | Query | `:DIAGnostic:QUERy:RESPonse?` H | `:DIAGnostic:QUERy:RESPonse?` H |
+| timecode | Query | `:PTIMe:TCODe?` H | `:PTIMe:TCODe?` H |
+| timecode format | Query | `:PTIMe:TCODe:FORMat?` H | `:PTIMe:TCODe:FORMat?` H |
 | timecode format set | Control | `:PTIMe:TCODe:FORMat` M |  |
 | date | Query | `:PTIMe:DATE?` H | `:PTIMe:DATE?` H |
 | time | Query | `:PTIMe:TIME?` H | `:PTIMe:TIME?` H |
 | time string | Query | `:PTIMe:TIME:STRing?` H | `:PTIMe:TIME:STRing?` H |
 | tzone | Query | `:PTIMe:TZONe?` H | `:PTIMe:TZONe?` H |
 | tzone set | Control | `:PTIMe:TZONe` M |  |
-| leap accumulated | Query | `:PTIMe:LEAPsecond:ACCumulated?` H | `:PTIMe:LEAPsecond:ACCumulated?` F |
+| leap accumulated | Query | `:PTIMe:LEAPsecond:ACCumulated?` H | `:PTIMe:LEAPsecond:ACCumulated?` H |
 | leap date | Query | `:PTIMe:LEAPsecond:DATE?` H | `:PTIMe:LEAPsecond:DATE?` H |
 | leap duration | Query | `:PTIMe:LEAPsecond:DURation?` H | `:PTIMe:LEAPsecond:DURation?` H |
 | leap state | Query | `:PTIMe:LEAPsecond:STATe?` H | `:PTIMe:LEAPsecond:STATe?` H |
@@ -178,7 +178,7 @@ anything reaching the receiver.
 | comm fduplex set | Dangerous | `:SYSTem:COMMunicate:SERial1:FDUPlex` M |  |
 | comm preset | Dangerous | `:SYSTem:COMMunicate:SERial1:PRESet` M |  |
 | system preset | Dangerous | `:SYSTem:PRESet` M | `:SYSTem:PRESet` F |
-| language | Query | `:SYSTem:LANGuage?` H | `:SYSTem:LANGuage?` F |
+| language | Query | `:SYSTem:LANGuage?` H | `:SYSTem:LANGuage?` H |
 | language set | Dangerous | `:SYSTem:LANGuage` M | `:SYSTem:LANGuage` F |
 | flash erase | Dangerous | `:DIAGnostic:ERASe` M | `:DIAGnostic:ERASe` M |
 | temperature | Query | `:DIAGnostic:TEMPerature?` H (58503A) |  |

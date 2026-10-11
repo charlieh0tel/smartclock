@@ -620,8 +620,12 @@ view cannot drift apart.  The library, bottom up:
    remains is in `docs/firmware/README.md`, "What is not established".
 
 2. **How far the z3801 dialect is confirmed.**  Of the z3801 entries,
-   19 are `evidence = "hardware"`, 62 `firmware` and one `manual`;
-   those 63 stay unconfirmed until a receiver answers them.  The
+   61 are `evidence = "hardware"`, 20 `firmware` and one `manual`;
+   those 21 stay unconfirmed until a receiver answers them.  All but
+   two of the 21 change settings, which no probe sends; the two queries
+   left, `:PTIMe:GPSystem:POSition:SURVey:PROGress?` and
+   `:PTIMe:TINTerval?`, were refused by the bench Z3801A in its state
+   then (-221, -230).  The
    keyword table they were checked against is `docs/scpi/z3801-keywords.md`.
 
 3. **Managing the receiver's position.**  Not now.  A receiver told

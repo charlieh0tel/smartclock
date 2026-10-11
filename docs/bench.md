@@ -27,7 +27,8 @@ input range.
 
 Main board serial 5UW00ME, date code 3549.  Not fitted on it: U17,
 U18, J4, J5, J6, J7, J8, J15 and the parts of the 10 MHz OUT B stage
-behind J15.  It has RIFA
+behind J15.  As built it has no 1 PPS output; the operator added one, with
+its own output buffer.  It has RIFA
 capacitors too, not yet replaced.  Its flash is labeled Z3801-8007
 Rev ZB.
 

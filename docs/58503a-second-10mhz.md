@@ -51,14 +51,15 @@ The bench unit took Yageo RC0805JR-0756R, 56 Ω 5 % thick-film 0805s.
 
 Terminate J15 and J17 each in 50 Ω and compare them on a scope,
 through cables of equal length.  On the bench unit the two read
-625.0 mV and 623.0 mV rms, within 0.3 %, about +9 dBm each.  Single
-readings of the delay between them scattered from −605 ps (at 10 ns
-per division) to +200 ps (at 50), so they are within about 0.6 ns,
-2°.  Through cables of unequal length they had read 2.8 ns apart.
+625.0 mV and 623.0 mV rms, within 0.3 %, about +9 dBm each.  Over
+about 2,000 acquisitions the delay from one to the other averaged
+211 ps, standard deviation 362 ps, so about 8 ps standard error: a
+fixed offset of about 0.2 ns, 0.8°.  Through cables of unequal length
+they had read 2.8 ns apart.
 
 ![Both outputs into 50 Ω, through matched cables](images/58503A-60001_RevC/58503a-j17-j15-scope.png)
 
-![The same at 10 ns per division](images/58503A-60001_RevC/58503a-j17-j15-scope-10ns.png)
+![The scope's statistics over about 2,000 acquisitions](images/58503A-60001_RevC/58503a-j17-j15-scope-stats.png)
 
 J15 has no panel connector: a cable from it to the rear panel is the
 user's to add.

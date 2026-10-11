@@ -102,6 +102,9 @@ carry the same designators as the 58503A's: J4 (OUT A) and J5 (OUT B)
 go to the two rear 1 PPS outputs, J17 (10 MHz A) and J15 (10 MHz B) to
 the two rear 10 MHz outputs, and J6, J7 and J8 are not fitted.
 
+Its BTS power supply has three RIFA 10 nF Y2 capacitors, a paper type
+known to crack and fail with age; not yet replaced.
+
 Found at 9600 8N1, moved to 19200 to match the other unit.  No
 front-panel display -- the Z3801A and Z3805A never had one -- so the
 serial status screen is the only status output.

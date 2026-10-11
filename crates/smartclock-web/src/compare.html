@@ -70,7 +70,9 @@ const view = new URLSearchParams(location.search);
 readRange(86400);
 
 // What is overlaid, in the order it is stacked.
-const COMPARED = ["time_interval_s", "efc_percent", "temperature_c", "tfom", "ffom"];
+const COMPARED = [
+  "time_interval_s", "efc_percent", "temperature_c", "tfom", "ffom", "holdover_predicted_s",
+];
 
 // One color per receiver, by its serial's place among all the serials
 // listed: not by the server's order, which follows when each was last

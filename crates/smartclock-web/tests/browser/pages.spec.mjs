@@ -476,6 +476,18 @@ test("a host without sensors offers none", async ({ page }) => {
   await expect(page.locator("#status .sensor")).toHaveCount(0);
 });
 
+test("the predicted holdover uncertainty is charted in microseconds on both pages", async ({ page }) => {
+  const fake = twoUnits();
+  fake.everyColumn = true;
+  await fake.install(page);
+  const title = "Predicted holdover uncertainty, µs";
+  await page.goto(`/?receiver=${B}&last=3600&columns=holdover_predicted_s`);
+  await expect(page.locator(".u-title", { hasText: title })).toBeVisible();
+  await expect(page.locator('#columns input[data-col="holdover_predicted_s"]')).toBeChecked();
+  await page.goto(`/compare?receiver=${B}&last=3600`);
+  await expect(page.locator("#charts .u-title", { hasText: title })).toBeVisible();
+});
+
 test("every series has hover text, on the history and the compare page", async ({ page }) => {
   await openAt(page, "/", "last=3600");
   const labels = await page.locator("#columns label").evaluateAll((ls) => ls.map((l) => [l.textContent, l.title]));

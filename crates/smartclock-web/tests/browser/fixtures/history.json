@@ -4731,7 +4731,8 @@
         "oven_tempco",
         "tfom",
         "ffom",
-        "not_tracking"
+        "not_tracking",
+        "holdover_predicted_s"
     ],
     "receiver": "0000A00000",
     "to": 1790544703

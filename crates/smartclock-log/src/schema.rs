@@ -301,7 +301,7 @@ pub fn has_column(conn: &Connection, table: &str, column: &str) -> rusqlite::Res
 /// Each with the tier that reads it, which decides how long a value
 /// stays current, and the command it is read with, which decides
 /// whether a unit measures it at all.
-pub const PLOTTABLE: [(&str, Tier, CommandId); 10] = [
+pub const PLOTTABLE: [(&str, Tier, CommandId); 11] = [
     ("time_interval_s", Tier::Fast, CommandId::Tinterval),
     ("efc_percent", Tier::Fast, CommandId::Efc),
     ("tracking", Tier::Medium, CommandId::SatTrackingCount),
@@ -312,6 +312,11 @@ pub const PLOTTABLE: [(&str, Tier, CommandId); 10] = [
     ("tfom", Tier::Fast, CommandId::Tfom),
     ("ffom", Tier::Fast, CommandId::Ffom),
     ("not_tracking", Tier::Medium, CommandId::SatVisibleCount),
+    (
+        "holdover_predicted_s",
+        Tier::Medium,
+        CommandId::HoldoverUncPred,
+    ),
 ];
 
 /// The columns a unit of `model` measures: those its command tree has

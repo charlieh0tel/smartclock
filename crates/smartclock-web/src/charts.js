@@ -23,6 +23,7 @@ const LABELS = {
   // HINTS quotes the manual on it.
   tracking: ["# sats tracked", 1],
   not_tracking: ["# sats not tracked", 1],
+  holdover_predicted_s: ["Predicted holdover uncertainty, µs", 1e6],
   // The host's sensors, a chart per quantity.
   "sensor:temperature": ["Sensors, temperature, C", 1],
   "sensor:humidity": ["Sensors, relative humidity, %", 1],
@@ -51,6 +52,10 @@ const HINTS = {
     + "(097-59551-02 5-23).",
   tracking: "Satellites tracked (097-59551-02 5-22).",
   not_tracking: "Predicted visible but not tracked (097-59551-02 5-6).",
+  holdover_predicted_s:
+    "Time error predicted for the first 24 hours of holdover, from the "
+    + "loop's aging fit; 432 µs until the fit has enough history "
+    + "(097-59551-02 5-31, docs/firmware/loop.md).",
 };
 
 // The hover text for the columns a chart draws.

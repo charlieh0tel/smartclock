@@ -23,7 +23,11 @@ Connected; its EFC gain was measured on 2026-10-10
 
 Power supply: BSC CV90-15357-2, for 38 to 60 V DC in, substantially
 the same board as the Z3805A's (by inspection), though for a different
-input range.  It has RIFA
+input range.
+
+Main board serial 5UW00ME, date code 3549.  Not fitted on it: U17,
+U18, J4, J5, J6, J7, J8, J15 and the parts of the 10 MHz OUT B stage
+behind J15.  It has RIFA
 capacitors too, not yet replaced.  Its flash is labeled Z3801-8007
 Rev ZB.
 

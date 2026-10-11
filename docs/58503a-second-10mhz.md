@@ -49,12 +49,13 @@ The bench unit took 56 Ω 5 % thick-film 0805s.
 
 ## Checking
 
-Terminate J15 and J17 each in 50 Ω and compare them on a scope.  On
-the bench unit the two read 628.8 mV and 622.4 mV rms, within 1 %,
-about +9 dBm each.  They were 2.8 ns apart, through cables of unequal
-length, so how much of that is the stages' own was not measured.
+Terminate J15 and J17 each in 50 Ω and compare them on a scope,
+through cables of equal length.  On the bench unit the two read
+624.9 mV and 622.8 mV rms, within 0.3 %, about +9 dBm each, and in
+phase: 0°, with no delay the scope resolved at 50 ns per division.
+Through cables of unequal length they had read 2.8 ns apart.
 
-![Both outputs into 50 Ω](images/58503A-60001_RevC/58503a-j17-j15-scope.png)
+![Both outputs into 50 Ω, through matched cables](images/58503A-60001_RevC/58503a-j17-j15-scope.png)
 
 J15 has no panel connector: a cable from it to the rear panel is the
 user's to add.

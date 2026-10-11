@@ -213,7 +213,12 @@ printer `0x4f1c8`).  The default 4.32 × 10⁻⁴ is the `432.0 us/initial
 24 hrs` a receiver shows while its fit is in mode 0 or 1.  The 58503A
 3704 (handler `0x2fb7a`, getter `0x42a70`, cell `0x1024b2`) and the
 Z3801A (`0x2ecb0`, `0x429f2`, `0x102194`) do the same.  What the
-letters stand for was not established.  128
+letters stand for was not established.  In the bench logs to
+2026-10-11, the 58503A reported 432 µs from 2026-09-20 to 2026-10-02
+and 10.2 µs to 324 µs after it, mostly 13 to 26 µs; the Z3805A 432 µs
+to 2026-09-29, then 2.3 µs to 88 µs, mostly about 3 µs; the Z3801A
+6.5 µs to 12 µs at times, and 432 µs again after its holdovers of
+2026-10-10.  128
 in units of 2700 s is 96 hours.
 
 **Back to the loop.**  `curv` then sends event 0x100 to `pllp`.  At the

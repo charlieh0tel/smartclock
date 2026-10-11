@@ -521,7 +521,15 @@ record at `0x400080` fails its checksum: read from the running bench
 unit with `smartclock-cli read-memory` on 2026-10-10, locked, the
 coefficient at `0x102014` was −33.65, channel 6's live flag at
 `0x101fc4` set, and its average at `0x101fc0` 110.36, then 110.44
-twenty seconds later.
+twenty seconds later.  Nor does the locked update cancel the term.
+Of the three sites, `0x44848` is in `startup_pll` and `0x44a54` in
+`pll_normal`'s entry, which sets B to u less c·s once when the stage
+starts; the steady update is `0x44d7c`, once every 10 calls of
+`pll_normal` (`0x10237c`) and only after a window with a measurement
+(`0x10237d`).  It reads s afresh on every call (`0x449a0`), writes u
+with c·s in it through `FUN_00023592` and to `0x1024aa`, and nothing
+else writes B (`0x44a6c`, `0x4431c`) or I (`0x44a4e`, `0x44d48`).
+How many seconds a window spans was not traced.
 
 ## In every image
 

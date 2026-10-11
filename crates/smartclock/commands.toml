@@ -33,10 +33,12 @@
 #            validates what the typed Control handle already does.
 # cite:      page in the dialect's manual: for 097-59551-02, the
 #            printed page of the issue in third_party/hp, not its
-#            index, which numbers the pages differently
+#            index, which numbers the pages differently; for
+#            097-z3801-01, the printed page of the command's row in
+#            table 4-1 or 4-2
 #
 # Sources: hp58503 from 097-59551-02 chapter 5, z3801 from 097-z3801-01
-# table 4-2, plus commands found by sweeping the receiver with candidate
+# tables 4-1 and 4-2, plus commands found by sweeping the receiver with candidate
 # paths built from the firmware keyword table.  Those are cited as
 # discovered and are marked for the model they were swept on only.
 #
@@ -60,7 +62,7 @@ doc = "Receiver identification string."
   scpi = "*IDN?"
   response = "idn"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-4; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -78,7 +80,7 @@ doc = "Clear event status registers and error queue."
   scpi = "*CLS"
   response = "none"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2"
+  cite = "097-z3801-01 4-4"
   evidence = "firmware"
 
 [[command]]
@@ -96,7 +98,7 @@ doc = "Run internal selftest; 0 passed."
   scpi = "*TST?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2"
+  cite = "097-z3801-01 4-4"
   evidence = "firmware"
 
 [[command]]
@@ -131,7 +133,7 @@ doc = "Standard event status enable register."
   scpi = "*ESE?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-4; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -150,7 +152,7 @@ doc = "Read and clear standard event status register."
   scpi = "*ESR?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2"
+  cite = "097-z3801-01 4-4"
   evidence = "firmware"
 
 [[command]]
@@ -185,7 +187,7 @@ doc = "Service request enable register."
   scpi = "*SRE?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-4; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -205,7 +207,7 @@ which is what makes it the way to watch the alarm without taking it."""
   scpi = "*STB?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-4; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -223,7 +225,7 @@ doc = "Averaged antenna position."
   scpi = ":PTIMe:GPSystem:POSition?"
   response = "position"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-6; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -282,7 +284,7 @@ doc = "Last position-hold location."
   scpi = ":PTIMe:GPSystem:POSition:HOLD:LAST?"
   response = "position"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-6; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -319,7 +321,7 @@ doc = "Survey completion, percent."
   scpi = ":PTIMe:GPSystem:POSition:SURVey:PROGress?"
   response = "real"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2"
+  cite = "097-z3801-01 4-7"
   evidence = "firmware"
 
 [[command]]
@@ -337,7 +339,7 @@ doc = "Survey state; 0 once position hold is attained."
   scpi = ":PTIMe:GPSystem:POSition:SURVey:STATe?"
   response = "word"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-7; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -419,7 +421,7 @@ doc = "Elevation mask angle, degrees."
   scpi = ":PTIMe:GPSystem:EMANgle?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-6; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -454,7 +456,7 @@ doc = "Satellites excluded from tracking."
   scpi = ":PTIMe:GPSystem:SATellite:TRACking:IGNore?"
   response = "int_list"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-7; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -499,7 +501,7 @@ doc = "Satellites considered for tracking."
   scpi = ":PTIMe:GPSystem:SATellite:TRACking:INCLude?"
   response = "int_list"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-7; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -532,7 +534,7 @@ doc = "Antenna cable delay, seconds."
   scpi = ":PTIMe:GPSystem:ADELay?"
   response = "real"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-6; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -577,7 +579,7 @@ doc = "PRNs currently tracked; 0 means none."
   scpi = ":PTIMe:GPSystem:SATellite:TRACking?"
   response = "int_list"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-7; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -595,7 +597,7 @@ doc = "Number of satellites tracked."
   scpi = ":PTIMe:GPSystem:SATellite:TRACking:COUNt?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-7; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -613,7 +615,7 @@ doc = "PRNs the almanac predicts are visible."
   scpi = ":PTIMe:GPSystem:SATellite:VISible:PREDicted?"
   response = "int_list"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-7; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -631,7 +633,7 @@ doc = "Count of predicted-visible satellites."
   scpi = ":PTIMe:GPSystem:SATellite:VISible:PREDicted:COUNt?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-7; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -715,7 +717,7 @@ doc = "SmartClock mode."
   scpi = ":ROSCillator:STATe?"
   response = "enum:SmartClockMode"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-9; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -733,7 +735,7 @@ doc = "Oscillator EFC output, percent, -100 to +100."
   scpi = ":DIAGnostic:ROSCillator:EFControl:RELative?"
   response = "real"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; a real on a Z3805A, as the handler (z3801a-3543.bin 0x2a8d0) is the 58503A's; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-5; a real on a Z3805A, as the handler (z3801a-3543.bin 0x2a8d0) is the 58503A's; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -751,7 +753,7 @@ doc = "GPS Lock LED state."
   scpi = ":LED:GPSLock?"
   response = "bool01"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-5; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -769,7 +771,7 @@ doc = "Holdover LED state."
   scpi = ":LED:HOLDover?"
   response = "bool01"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-5; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -787,7 +789,7 @@ doc = "Frequency figure of merit."
   scpi = ":PTIMe:FFOMerit?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-6; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -824,7 +826,7 @@ doc = "1 PPS to GPS 1 PPS interval, seconds."
   scpi = ":PTIMe:TINTerval?"
   response = "real"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2"
+  cite = "097-z3801-01 4-8"
   evidence = "firmware"
 
 [[command]]
@@ -860,7 +862,7 @@ doc = "Predicted one-day holdover time error, seconds."
   scpi = ":ROSCillator:HOLDover:TUNCertainty:PREDicted?"
   response = "real_bool"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-9; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -878,7 +880,7 @@ doc = "Present holdover time error, seconds."
   scpi = ":ROSCillator:HOLDover:TUNCertainty:PRESent?"
   response = "real"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-9; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -896,7 +898,7 @@ doc = "Holdover duration, seconds, and whether in holdover."
   scpi = ":ROSCillator:HOLDover:DURation?"
   response = "real_bool"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-8; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -914,7 +916,7 @@ doc = "Holdover duration threshold, seconds."
   scpi = ":ROSCillator:HOLDover:DURation:THReshold?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-9; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -949,7 +951,7 @@ doc = "Whether holdover exceeded its threshold."
   scpi = ":ROSCillator:HOLDover:DURation:THReshold:EXCeeded?"
   response = "bool01"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-9; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -967,7 +969,7 @@ doc = "Why the receiver is waiting to recover."
   scpi = ":ROSCillator:HOLDover:WAITing?"
   response = "enum:HoldoverWaitReason"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-9; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -988,7 +990,7 @@ doc = "Force manual holdover."
   scpi = ":ROSCillator:HOLDover:INITiate"
   response = "none"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2"
+  cite = "097-z3801-01 4-8"
   evidence = "firmware"
 
 [[command]]
@@ -1009,7 +1011,7 @@ doc = "Recover from manual holdover."
   scpi = ":ROSCillator:HOLDover:RECovery:INITiate"
   response = "none"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2"
+  cite = "097-z3801-01 4-8"
   evidence = "firmware"
 
 [[command]]
@@ -1030,7 +1032,7 @@ doc = "Force recovery despite the TI limit."
   scpi = ":ROSCillator:HOLDover:RECovery:LIMit:IGNore"
   response = "none"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2"
+  cite = "097-z3801-01 4-9"
   evidence = "firmware"
 
 [[command]]
@@ -1051,7 +1053,7 @@ doc = "Realign output 1 PPS to GPS 1 PPS."
   scpi = ":PTIMe:SYNChronization:IMMediate"
   response = "none"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2"
+  cite = "097-z3801-01 4-8"
   evidence = "firmware"
 
 [[command]]
@@ -1069,7 +1071,7 @@ doc = "Formatted receiver status screen."
   scpi = ":SYSTem:STATus?"
   response = "status_screen"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-11; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -1107,7 +1109,7 @@ doc = "Oldest error in the queue; removes it."
   scpi = ":SYSTem:ERRor?"
   response = "error"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-11; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -1144,7 +1146,7 @@ doc = "Number of diagnostic log entries."
   scpi = ":DIAGnostic:LOG:COUNt?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-5; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -1165,7 +1167,7 @@ doc = "One diagnostic log entry."
   scpi = ":DIAGnostic:LOG:READ?"
   response = "string"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-5; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -1190,7 +1192,7 @@ argument = { kind = "integer", min = 1, max = 222 }
   scpi = ":DIAGnostic:LOG:CLEar"
   response = "none"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2"
+  cite = "097-z3801-01 4-5"
   evidence = "firmware"
 
 [[command]]
@@ -1208,7 +1210,7 @@ doc = "Front-panel Alarm LED state."
   scpi = ":LED:ALARm?"
   response = "bool01"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-5; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -1226,7 +1228,7 @@ doc = "Restore factory alarm reporting conditions."
   scpi = ":STATus:PRESet:ALARm"
   response = "none"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2"
+  cite = "097-z3801-01 4-11"
   evidence = "firmware"
 
 [[command]]
@@ -1244,7 +1246,7 @@ doc = "Operation condition register."
   scpi = ":STATus:OPERation:CONDition?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-10; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -1276,7 +1278,7 @@ doc = "Hardware condition register; EFC full-scale is bits 6 and 7."
   scpi = ":STATus:OPERation:HARDware:CONDition?"
   response = "bits:HardwareCondition"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-10; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -1308,7 +1310,7 @@ doc = "Holdover condition register."
   scpi = ":STATus:OPERation:HOLDover:CONDition?"
   response = "bits:HoldoverCondition"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-10; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -1340,7 +1342,7 @@ doc = "Power-up condition register."
   scpi = ":STATus:OPERation:POWerup:CONDition?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-10; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -1358,7 +1360,7 @@ doc = "Questionable condition register."
   scpi = ":STATus:QUEStionable:CONDition?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-11; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -1584,7 +1586,7 @@ doc = "Total powered-on time."
   scpi = ":DIAGnostic:LIFetime:COUNt?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-5; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -1629,7 +1631,7 @@ doc = "Repeat the last response after a transmission error."
   scpi = ":DIAGnostic:QUERy:RESPonse?"
   response = "raw"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-5; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -1647,7 +1649,7 @@ doc = "Time code message for the next 1 PPS."
   scpi = ":PTIMe:TCODe?"
   response = "timecode"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-8; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -1665,7 +1667,7 @@ doc = "Time code format, F1 or F2."
   scpi = ":PTIMe:TCODe:FORMat?"
   response = "word"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-8; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -1790,7 +1792,7 @@ doc = "GPS minus UTC, seconds."
   scpi = ":PTIMe:LEAPsecond:ACCumulated?"
   response = "int"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-8; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -2003,7 +2005,7 @@ doc = "Restore all receiver settings to factory values."
   scpi = ":SYSTem:PRESet"
   response = "none"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2"
+  cite = "097-z3801-01 4-11"
   evidence = "firmware"
 
 [[command]]
@@ -2036,7 +2038,7 @@ doc = "Command language, PRIMARY or INSTALL."
   scpi = ":SYSTem:LANGuage?"
   response = "string"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2; answered by a Z3801A, 3543-A, 2026-10-10"
+  cite = "097-z3801-01 4-11; answered by a Z3801A, 3543-A, 2026-10-10"
   evidence = "hardware"
 
 [[command]]
@@ -2057,7 +2059,7 @@ doc = "Switch command language. INSTALL disables normal operation."
   scpi = ":SYSTem:LANGuage"
   response = "none"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2"
+  cite = "097-z3801-01 4-11"
   evidence = "firmware"
 
 [[command]]
@@ -2075,7 +2077,7 @@ doc = "Erase flash. Firmware download only."
   scpi = ":DIAGnostic:ERASe"
   response = "none"
   models = ["Z3801A", "Z3816A"]
-  cite = "097-z3801-01 4-2"
+  cite = "097-z3801-01 4-4"
   evidence = "manual"
 
 [[command]]

@@ -363,6 +363,7 @@ pub(crate) fn run(images: &[PathBuf], models: bool, html: bool) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
+    use smartclock::scpi::spells;
 
     use super::Entry;
     use super::entries;
@@ -451,7 +452,7 @@ mod tests {
                 trees
                     .iter()
                     .flatten()
-                    .any(|entry| super::models::spells(heading, &entry.path)),
+                    .any(|entry| spells(heading, &entry.path)),
                 "{heading} is in no image's tree"
             );
         }

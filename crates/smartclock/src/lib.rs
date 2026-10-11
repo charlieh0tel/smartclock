@@ -26,6 +26,7 @@ pub const VERSION: &str = env!("SMARTCLOCK_VERSION");
 pub mod parse;
 pub mod protocol;
 pub mod rollover;
+pub mod scpi;
 pub mod screen;
 pub mod sensors;
 pub mod server;

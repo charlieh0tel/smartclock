@@ -21,7 +21,8 @@ Connected; its EFC gain was measured on 2026-10-10
 (`docs/hardware-investigations.md`, item 2).  Its history is in
 `docs/hardware-investigations.md`, items 11 and 12.
 
-Power supply: BSC CV90-15357-2, for 38 to 60 V DC in.
+Power supply: BSC CV90-15357-2, for 38 to 60 V DC in.  It has RIFA
+capacitors too, not yet replaced.
 
 ## HP 58503A, serial 3710A01056
 

@@ -476,16 +476,34 @@ test("a host without sensors offers none", async ({ page }) => {
   await expect(page.locator("#status .sensor")).toHaveCount(0);
 });
 
-test("the predicted holdover uncertainty is charted in microseconds on both pages", async ({ page }) => {
+test("the predicted holdover uncertainty is charted in microseconds, on decades, on both pages", async ({ page }) => {
   const fake = twoUnits();
   fake.everyColumn = true;
+  // The fake answers a column it has no recording of with the first
+  // recorded one, the interval, which is negative and has no log.
+  // Positive values in its place, a few µs as a receiver reports.
+  const answer = fake.answer.bind(fake);
+  fake.answer = (endpoint, u, query) => {
+    const body = answer(endpoint, u, query);
+    for (const plot of endpoint === "history" ? body.plots ?? [] : []) {
+      if (plot.column !== "holdover_predicted_s") continue;
+      for (const [key, values] of Object.entries(plot)) {
+        if (Array.isArray(values)) plot[key] = values.map((v) => (v == null ? v : Math.abs(v) * 1e3 + 2e-6));
+      }
+    }
+    return body;
+  };
   await fake.install(page);
   const title = "Predicted holdover uncertainty, µs";
+  const logScale = () => page.evaluate(() =>
+    charts.find((c) => c.root.querySelector(".u-title")?.textContent.startsWith("Predicted"))?.scales.y.distr);
   await page.goto(`/?receiver=${B}&last=3600&columns=holdover_predicted_s`);
   await expect(page.locator(".u-title", { hasText: title })).toBeVisible();
   await expect(page.locator('#columns input[data-col="holdover_predicted_s"]')).toBeChecked();
+  await expect.poll(logScale).toBe(3);
   await page.goto(`/compare?receiver=${B}&last=3600`);
   await expect(page.locator("#charts .u-title", { hasText: title })).toBeVisible();
+  await expect.poll(logScale).toBe(3);
 });
 
 test("every series has hover text, on the history and the compare page", async ({ page }) => {

@@ -113,6 +113,12 @@ const TICK_COUNT_WEIGHT = 0.3;
 // channels, and grow if a receiver ever exceeds the pin.
 const COUNTS = { tracking: 8, not_tracking: 12, tfom: 9, ffom: 3 };
 
+// Columns drawn on a log axis.  The predicted holdover uncertainty sits
+// at 432 µs until the loop's aging fit has enough history, then a few
+// µs to a few tens: on a linear axis the plateau flattens everything
+// after it against zero.
+const LOG_COLUMNS = new Set(["holdover_predicted_s"]);
+
 function countScale(max, pinned, target) {
   const top = Math.max(pinned, Math.ceil(max) || 0, 1);
   const most = Math.max(4, target + 3);
@@ -201,6 +207,7 @@ function tickLabel(v, places) {
 // labels and width to match, so the lines and the range cannot
 // disagree.  Both empty when there is nothing to fit.
 function yAxis(col, values, height) {
+  if (LOG_COLUMNS.has(col)) return logAxis(values.filter((v) => v > 0));
   const nice = !values.length
     ? null
     : col in COUNTS
@@ -232,6 +239,27 @@ function yAxis(col, values, height) {
         : {}),
     },
     range: nice ? [nice.lo, nice.hi] : null,
+  };
+}
+
+// A y axis on decades for `values`, all positive, in the shape `yAxis`
+// returns, with the log scale it needs.  Ends on a graduation at or
+// beyond the data and names 1, 2 and 5 of each decade, as the
+// stability page's axes do.
+function logAxis(values) {
+  if (!values.length) return { axis: {}, range: null };
+  const range = [snapDown(Math.min(...values)), snapUp(Math.max(...values))];
+  // uPlot passes null for a split it has dropped.
+  const format = (v) => v?.toLocaleString(undefined, { maximumSignificantDigits: 3 }) ?? null;
+  const widest = Math.max(4, ...range.map((v) => format(v).length));
+  return {
+    axis: {
+      size: 30 + widest * 8,
+      splits: (u, axis, min, max) => graduations(u, axis, min, max) ?? range,
+      values: (u, splits) => labels(splits, format),
+    },
+    range,
+    scale: LOG,
   };
 }
 
@@ -272,7 +300,7 @@ function stackOptions(stack) {
     ],
     scales: {
       x: { time: true },
-      ...(stack.fitted.range ? { y: { range: stack.fitted.range } } : {}),
+      ...(stack.fitted.range ? { y: { ...stack.fitted.scale, range: stack.fitted.range } } : {}),
     },
     legend: stack.legend ?? { show: true, live: true },
     cursor: { drag: { x: true, y: false }, sync: { key: stack.sync, setSeries: false } },

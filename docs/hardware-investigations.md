@@ -607,3 +607,17 @@ Nothing here says what they show.
   or the self-test makes.
 
 *Changes:* what can be read off an open board without a serial link.
+
+## 18. Whether loading 10 MHz OUT B disturbs OUT A
+
+*Open item:* both 58503A 10 MHz stages take their signal from the
+oscillator through the same network (`58503a-second-10mhz.md`), so
+loading OUT B (J15) may move OUT A (J17), the receiver's reference
+output.
+
+- [ ] TODO: watch J17's amplitude and phase against a steady
+  reference, with the scope's statistics on, while J15 is open,
+  shorted and terminated in 50 Ω.  OUT B's stage has the 28.1 Ω pair
+  in series ahead of the jack, which limits the current into a short.
+
+*Changes:* whether OUT B can be used without disturbing OUT A.

@@ -67,5 +67,8 @@ they had read 2.8 ns apart.
 
 ![The scope's statistics over about 2,000 acquisitions](images/58503A-60001_RevC/58503a-j17-j15-scope-stats.png)
 
+Not yet measured: whether loading OUT B moves OUT A, the receiver's
+reference output (`hardware-investigations.md`, item 18).
+
 J15 has no panel connector: a cable from it to the rear panel is the
 user's to add.

@@ -116,10 +116,6 @@ following, and how.
 - Whether the port's second open matters.
 - What PE6 drives, pulsed only on a cold start; what 3704's PWMA pin,
   low while the holdover-recovery flag is set, is wired to (`loop.md`).
-- Whether the restarts after `0 crash` and `4 crash` on the bench
-  Z3801A were the watchdog's, as the masked spin they reach implies:
-  RSR could not be read (`restart.md`, "The watchdog").
-
 - Whether anything reaches the rest of the ROM defaults block by a
   computed address: no reader of it was found (`loop.md`, "τ and G").
 - What the letters HQ stand for.  It is the predicted holdover
@@ -151,10 +147,23 @@ following, and how.
 - What drives the 59551A's PORT 2.  DUART channel B, idle here, is the
   device a single-port unit would leave spare, but no image of a
   59551A's firmware is at hand.
-- Whether anything reads the sawtooth by stepping a pointer or
-  copying the record: the sweep of every image covers every
-  displacement form and every pointer into the record (`gps.md`,
-  "Where the sawtooth goes"), not those.
+## Checked as far as it goes
+
+Not pursued further, each with the limit of what was checked.
+
+- The sawtooth is displayed and not applied in every image: the only
+  reader of the field is the Time RAIM page (`gps.md`, "Where the
+  sawtooth goes").  A sweep cannot see a reader that steps a pointer
+  through the record or copies it whole.  Recording the 1 PPS
+  interval against the displayed sawtooth would settle it.
+- The restarts after `0 crash` and `4 crash` on the bench Z3801A were
+  warm, so neither an external nor a power-up reset, and the fault
+  path they reach spins with interrupts masked, which starves the
+  watchdog (`restart.md`, "The watchdog").  Which internal reset it
+  was is in RSR, which the reset code stores nowhere and the pForth
+  debug console, in user mode, reads as zero; reading it takes
+  supervisor access, such as the CPU's background debug port on an
+  open board.
 
 ## Note on the disassembly
 

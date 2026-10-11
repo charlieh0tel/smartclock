@@ -103,7 +103,8 @@ go to the two rear 1 PPS outputs, J17 (10 MHz A) and J15 (10 MHz B) to
 the two rear 10 MHz outputs, and J6, J7 and J8 are not fitted.
 
 Its BTS power supply had three RIFA PME271 Y 10 nF paper capacitors
-(marked 40/100/56/C), a type known to crack and fail with age.  All
+(marked 40/100/56/C) on its DC input, a type known to crack and fail
+with age.  All
 three were replaced on 2026-10-11 with Vishay VY2472M49Y5US6TV7, 4.7 nF
 X1/Y2 ceramic.
 

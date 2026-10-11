@@ -108,6 +108,9 @@ Its BTS power supply had three RIFA PME271 Y 10 nF paper capacitors
 (marked 40/100/56/C) on its DC input, a type known to crack and fail
 with age.  All three were replaced on 2026-10-11 with Vishay
 VY2472M49Y5US6TV7, 4.7 nF X1/Y2 ceramic.
+The supply is an HP board, 58503-60002 Rev D, serial 5DC01CC, date
+code 3513, carrying a Datel UWR-5/4000-D48 DC/DC converter and an AT&T
+DC-DC power module.
 
 ![The main board in place, the GPS engine module at the center](images/Z3805-68001/z3805a-main-board.jpg)
 
@@ -124,6 +127,10 @@ VY2472M49Y5US6TV7, 4.7 nF X1/Y2 ceramic.
 ![The three RIFA PME271 Y capacitors removed from the power supply](images/Z3805-68001/z3805a-rifa-pme271-front.jpg)
 
 ![The same, reverse](images/Z3805-68001/z3805a-rifa-pme271-back.jpg)
+
+![The power supply, 58503-60002 Rev D, with the replacement capacitors fitted](images/Z3805-68001/z3805a-power-supply-top.jpg)
+
+![The power supply, reverse: its part number and labels](images/Z3805-68001/z3805a-power-supply-bottom.jpg)
 
 Found at 9600 8N1, moved to 19200 to match the other unit.  No
 front-panel display -- the Z3801A and Z3805A never had one -- so the

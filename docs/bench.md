@@ -84,6 +84,8 @@ pairs share no node (continuity, 2026-10-11).
 
 ![J17's output stage from the other side, CR21 at the right: the two black `56R2` at the top, then a row of three `147R` and a blue `56R2`](images/58503A-60001_RevC/58503a-j17-back-detail.jpg)
 
+![The other side, wider: the OCXO's 10 MHz jack at the lower left, a resistor and capacitor network above it, and the two output stages at the bottom](images/58503A-60001_RevC/58503a-ocxo-feed-back.jpg)
+
 Its diagnostic log had been full at 222 entries, and so not
 recording, since March 2025; the entries were copied out and the log
 cleared, so it records again.  It showed nineteen holdover and relock

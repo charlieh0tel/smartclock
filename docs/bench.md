@@ -69,7 +69,8 @@ J15's on the right, the two match but for three empty footprints on
 J15's side, where J17's side holds three resistors marked `56R2`,
 56.2 Ω, 0603 by the operator's reading: two side by side beside a
 capacitor, black, and one at the end of the row of three `147R`,
-147 Ω, blue.  No 0 Ω link was found missing.
+147 Ω, blue; on J15's side that row holds the three `147R` and an
+empty fourth footprint, checked by eye.  No 0 Ω link was found missing.
 
 ![The component side: J17 (10 MHz A, cabled) and J15, with their output stages](images/58503A-60001_RevC/58503a-j17-j15-front.jpg)
 

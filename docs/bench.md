@@ -71,7 +71,8 @@ J15's side, where J17's side holds three resistors marked `56R2`,
 capacitor, black, and one at the end of the row of three `147R`,
 147 Ω, blue; on J15's side that row holds the three `147R` and an
 empty fourth footprint, checked by eye.  No 0 Ω link was found missing.
-The two stages' black pairs share no node (continuity, 2026-10-11).
+Each stage's black pair is in parallel, 28.1 Ω, and the two stages'
+pairs share no node (continuity, 2026-10-11).
 
 ![The component side: J17 (10 MHz A, cabled) and J15, with their output stages](images/58503A-60001_RevC/58503a-j17-j15-front.jpg)
 

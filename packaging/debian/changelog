@@ -1,3 +1,14 @@
+smartclockmon (1.6.2-1) unstable; urgency=low
+
+  * The daemon and the simulator take each SCPI keyword short, long or
+    in between, as a receiver does: :PTIME:TINT? is the table's
+    :PTIMe:TINTerval?, not a command for raw passthrough or a -113.
+    A short form with a numeric suffix, such as SER1, matches too.
+  * smartclock-sim echoes as its model does, so --model z3801a no
+    longer echoes; --echo on|off replaces --no-echo.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Sun, 11 Oct 2026 13:16:30 -0700
+
 smartclockmon (1.6.1-1) unstable; urgency=low
 
   * The web view charts the receiver's predicted holdover uncertainty,

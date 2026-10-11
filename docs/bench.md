@@ -102,8 +102,10 @@ carry the same designators as the 58503A's: J4 (OUT A) and J5 (OUT B)
 go to the two rear 1 PPS outputs, J17 (10 MHz A) and J15 (10 MHz B) to
 the two rear 10 MHz outputs, and J6, J7 and J8 are not fitted.
 
-Its BTS power supply has three RIFA 10 nF Y2 capacitors, a paper type
-known to crack and fail with age; not yet replaced.
+Its BTS power supply had three RIFA PME271 Y 10 nF paper capacitors
+(marked 40/100/56/C), a type known to crack and fail with age.  All
+three were replaced on 2026-10-11 with Vishay VY2472M49Y5US6TV7, 4.7 nF
+X1/Y2 ceramic.
 
 Found at 9600 8N1, moved to 19200 to match the other unit.  No
 front-panel display -- the Z3801A and Z3805A never had one -- so the

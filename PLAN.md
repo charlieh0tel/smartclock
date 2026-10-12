@@ -321,6 +321,24 @@ nothing.  The file is vacuumed after.  On the bench's logs, of up to
 The readers refuse an unconverted log, naming the service that
 converts it, rather than finding nothing in it.
 
+No rollups.  A chart reads every raw row in its span, about 5.7 us
+each on an AMD GX-412TC: 1.1 s for 48 h and 4.1 s for a week there.
+A per-minute table of count, sum, min and max, kept in the snapshot's
+own transaction, would cut a week to a small fraction of that, and an
+adversarial review found it workable but not small:
+- NULL-safe sums and extrema, with a non-NULL count per column.
+- A non-NULL key for rows whose receiver or mode is unknown.
+- A row count and timestamp sum, since a point sits at its rows' mean
+  time.
+- A minute-aligned bucket grid, or raw reads for the partial minutes
+  at each end.
+- A fingerprint of the rules and cadence that invalidates the table.
+- A schema bump, so an older daemon cannot append without it.
+- A backfill that does not hold up logging at startup.
+- Tests across all of the above.
+Not worth it while a week loads in seconds.  ADEV and correlation
+would read raw rows regardless.
+
 ### Poll scheduling is a link budget
 
 The status screen is about 1.6 KB: 0.94 s of wire time at 19200 8N1

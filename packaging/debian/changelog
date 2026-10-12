@@ -1,3 +1,11 @@
+smartclockmon (1.6.8-1) unstable; urgency=low
+
+  * The chart readout is laid out in aligned columns, label left and
+    value right, and a sensor's cells say the quantity and unit, so a
+    sensor's temperature and humidity are no longer both "ambient".
+
+ -- Christopher Hoover <ch@murgatroid.com>  Mon, 12 Oct 2026 11:24:22 -0700
+
 smartclockmon (1.6.7-1) unstable; urgency=low
 
   * The chart readout keeps its height as the cursor moves: at some

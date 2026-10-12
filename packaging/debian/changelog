@@ -1,3 +1,11 @@
+smartclockmon (1.6.5-1) unstable; urgency=low
+
+  * Charts load without first scanning the whole log: the daemon
+    indexes snapshots by receiver and time, which took 4 s off every
+    history read on a 1.7M-row log on a slow host.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Sun, 11 Oct 2026 20:29:34 -0700
+
 smartclockmon (1.6.4-1) unstable; urgency=low
 
   * The web view waits 60 s for a read of the logs, where it gave up

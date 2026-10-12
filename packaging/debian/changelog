@@ -1,3 +1,17 @@
+smartclockmon (1.6.3-1) unstable; urgency=low
+
+  * The package makes /var/lib/smartclockd and
+    /var/lib/smartclock-sensord at install, so a log can be put in
+    place or read before a service first starts.
+  * The 59551A's pulse, time-tag and output commands are traced: every
+    image stores or ignores them (docs/firmware/outputs.md).
+  * Enabling the 58503A's 10 MHz OUT B: three resistors on its
+    main board (docs/58503a-second-10mhz.md).
+  * Bench notes and photos of the 58503A, Z3801A and Z3805A boards,
+    engines and supplies.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Sun, 11 Oct 2026 18:30:44 -0700
+
 smartclockmon (1.6.2-1) unstable; urgency=low
 
   * The daemon and the simulator take each SCPI keyword short, long or

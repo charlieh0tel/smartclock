@@ -76,12 +76,16 @@ if (!opts.url === !opts["log-dir"] && !opts.tui && !opts.sim) {
   process.exit(2);
 }
 
-// The pages, each with the address after `?` and what shows it is drawn.
+// The pages, each with its path, what shows it is drawn, and the
+// panels to shoot, from the one holding the first selector to the one
+// holding the last; the window's worth from the top without them.
 const PAGES = [
   ["web-live.png", "/", "#charts .uplot"],
   ["web-stability.png", "/adev", ".uplot"],
   ["web-compare.png", "/compare", ".uplot"],
-  ["web-correlation.png", "/correlation", ".uplot"],
+  // The scatter and the lag are what the page is for; the two time
+  // series above them are the live page's charts again.
+  ["web-correlation.png", "/correlation", "#scatter .uplot", ["#scatter", "#lag"]],
 ];
 
 // What the correlation page sets EFC against: --against, a measure as
@@ -174,7 +178,7 @@ async function web(browser, { url, strip }) {
   const range = `receiver=${receiver.serial}&from=${to - Number(opts.span)}&to=${to}&refresh=off`;
   const page = await browser.newPage({ viewport: VIEWPORT });
   const shots = PAGES.filter(([, where]) => where !== "/compare" || receivers.length > 1);
-  for (const [file, where, drawn] of shots) {
+  for (const [file, where, drawn, panels] of shots) {
     const extra = where === "/correlation" ? await correlated(url, receivers, receiver) : "";
     await page.goto(`${url}${where}?${range}${extra ? `&${extra}` : ""}`);
     if (!strip) await page.addStyleTag({ content: "#status { display: none; }" });
@@ -184,7 +188,12 @@ async function web(browser, { url, strip }) {
     const chart = await page.locator(drawn).first().boundingBox();
     if (chart) await page.mouse.move(chart.x + chart.width * 0.6, chart.y + chart.height / 2);
     await page.waitForTimeout(SETTLE);
-    await page.screenshot({ path: path.join(OUT, file) });
+    const clip = panels && await page.evaluate(([first, last]) => {
+      const box = (sel) => document.querySelector(sel).closest(".panel").getBoundingClientRect();
+      const [a, b] = [box(first), box(last)];
+      return { x: a.x, y: a.y + scrollY, width: a.width, height: b.bottom - a.top };
+    }, panels);
+    await page.screenshot({ path: path.join(OUT, file), ...(clip ? { clip, fullPage: true } : {}) });
     console.log(file);
   }
   await page.close();

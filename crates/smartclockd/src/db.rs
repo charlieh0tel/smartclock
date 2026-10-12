@@ -139,6 +139,13 @@ impl Log {
                 schema::VERSION,
             )?;
         }
+        // Not in `schema::TABLES`: that runs before `receiver_id` is
+        // added to an older log, and the conversion above rebuilds from
+        // it, dropping any index it does not define.  Without this a
+        // reader's per-receiver range or extent scans every row.
+        self.conn.execute_batch(
+            "CREATE INDEX IF NOT EXISTS snapshot_receiver_at ON snapshot(receiver_id, at)",
+        )?;
         writer::stamp(&self.conn, schema::VERSION)?;
         Ok(())
     }
@@ -937,6 +944,40 @@ mod tests {
                 "{column} should have been added"
             );
         }
+    }
+
+    #[test]
+    fn a_log_is_indexed_by_receiver_and_time_whatever_its_age() {
+        let index = |log: &Log| -> i64 {
+            log.conn
+                .query_row(
+                    "SELECT count(*) FROM sqlite_master
+                     WHERE type = 'index' AND name = 'snapshot_receiver_at'",
+                    [],
+                    |row| row.get(0),
+                )
+                .expect("read the schema")
+        };
+        // Old enough to be rebuilt by the integer-times conversion.
+        let scratch = Scratch::new("indexed-old");
+        let conn = Connection::open(scratch.path()).expect("create the database");
+        conn.execute_batch(
+            "CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+             INSERT INTO meta VALUES ('schema', '3');
+             CREATE TABLE snapshot (id INTEGER PRIMARY KEY, at TEXT NOT NULL);",
+        )
+        .expect("write an older schema");
+        drop(conn);
+        assert_eq!(index(&Log::open(scratch.path()).expect("open")), 1);
+
+        // Current, but written before the index existed.
+        let scratch = Scratch::new("indexed-current");
+        let log = Log::open(scratch.path()).expect("open");
+        log.conn
+            .execute_batch("DROP INDEX snapshot_receiver_at")
+            .expect("drop the index");
+        drop(log);
+        assert_eq!(index(&Log::open(scratch.path()).expect("reopen")), 1);
     }
 
     #[test]

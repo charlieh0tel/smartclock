@@ -284,7 +284,10 @@ one's progress.
 Chosen over JSONL because trending means range queries over time.
 `rusqlite` with bundled SQLite, in `StateDirectory=smartclockd`
 (`/var/lib/smartclockd`).  Retention is unbounded; the timestamp index
-keeps it queryable.  JSONL is kept for raw wire transcripts:
+keeps it queryable, and a second on `(receiver_id, at)` serves the
+per-receiver range and extent every chart reads.  Without it, the
+extent alone scanned the whole table: 4 s on an AMD GX-412TC with
+1.7M rows.  JSONL is kept for raw wire transcripts:
 append-only, greppable, reusable as parser fixtures.
 
 Every timestamp we record is an integer: nanoseconds since the Unix

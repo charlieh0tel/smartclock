@@ -635,9 +635,12 @@ impl Log {
     pub fn extent(&self, receiver: i64) -> Result<(f64, f64)> {
         let extent = self.conn.query_row(
             &format!(
-                "SELECT {}, {} FROM snapshot WHERE receiver_id = ?1",
-                whole_seconds("MIN(at)"),
-                whole_seconds("MAX(at)"),
+                // Two subqueries, not MIN and MAX in one: SQLite answers
+                // each alone from an end of the (receiver_id, at) index,
+                // but together by reading every entry for the receiver.
+                "SELECT {}, {}",
+                whole_seconds("(SELECT MIN(at) FROM snapshot WHERE receiver_id = ?1)"),
+                whole_seconds("(SELECT MAX(at) FROM snapshot WHERE receiver_id = ?1)"),
             ),
             [receiver],
             |row| Ok((row.get::<_, Option<f64>>(0)?, row.get::<_, Option<f64>>(1)?)),

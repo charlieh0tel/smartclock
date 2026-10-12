@@ -402,12 +402,13 @@ async function draw(signal) {
     // Which lines this chart draws, and from which series, so the
     // shared readout can label them without reaching back into the
     // request that built it.  A line's color is said only where there
-    // are several to tell apart.  A sensor's line is named with its
+    // are several to tell apart.  A sensor's line is read out with its
     // quantity and unit, which its chart's title says but the readout
     // does not.
     chart.smartclockLines = drawing.lines.map((l, i) => ({
       column: l.column,
-      name: l.reading ?? l.name,
+      name: l.name,
+      reading: l.reading,
       series: 1 + (drawing.envelope ? 2 : 0) + i,
       color: several ? l.color : null,
     }));
@@ -465,7 +466,7 @@ function readout() {
     };
     // A cell per line: one number under a chart of several lines would
     // leave the reader guessing which line it belonged to.
-    return c.smartclockLines.map((l) => one(l.column, value(l.series), l.color, l.name));
+    return c.smartclockLines.map((l) => one(l.column, value(l.series), l.color, l.reading ?? l.name));
   });
   const note = charts.map(noteNear).find((n) => n != null);
   // Beside the pointer on the chart it is over; the others follow

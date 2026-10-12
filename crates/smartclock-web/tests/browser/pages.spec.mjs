@@ -381,6 +381,15 @@ test("a sensor keeps its color on every chart", async ({ page }) => {
   expect(colors[0]).toBe(colors[1]);
 });
 
+test("the readout names a sensor's quantity and unit", async ({ page }) => {
+  await withSensors().install(page);
+  await page.goto(`/?receiver=${B}&last=3600`);
+  await page.waitForFunction(() => charts.some((c) => c.smartclockLines[0].column === "sensor:humidity"));
+  const names = await page.locator("#readout .k").allTextContents();
+  expect(names).toContain("room temperature, C");
+  expect(names).toContain("room humidity, %RH");
+});
+
 test("the sensors can be left out, and stay out across a reload", async ({ page }) => {
   await withSensors().install(page);
   await page.goto(`/?receiver=${B}&last=3600`);

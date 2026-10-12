@@ -90,7 +90,7 @@ const PAGES = [
   // the receiver's journal below them.
   ["web-live.png", "/", "#charts .uplot", ["nav", "#charts"]],
   ["web-stability.png", "/adev", "#chart-tdev .uplot", FULL],
-  ["web-compare.png", "/compare", ".uplot"],
+  ["web-compare.png", "/compare", "#charts .uplot", ["nav", "#charts"]],
   // The receivers' stability side by side, at the foot of the page.
   ["web-compare-stability.png", "/compare", "#chart-deviation .uplot", ["#chart-deviation", "#chart-deviation"]],
   // The scatter and the lag are what the page is for; the two time

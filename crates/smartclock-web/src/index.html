@@ -469,10 +469,12 @@ function readout() {
   // the cursor's time only.
   const under = charts.find((c) => c.over.matches(":hover"));
   noteTip(under, under ? noteNear(under) : null);
+  // The note has a line of its own, there whether or not one is near,
+  // so the panel keeps its height when a note comes and goes.
   el.innerHTML =
-    `<span class="v">${at ? esc(at.toLocaleTimeString()) : "--:--:--"}</span>` +
+    `<span class="v at">${at ? esc(at.toLocaleTimeString()) : "--:--:--"}</span>` +
     cells.join("") +
-    (note ? `<span><span class="k" style="color:${NOTE}">note</span> ${esc(note)}</span>` : "");
+    `<span class="note">${note ? `<span class="k" style="color:${NOTE}">note</span> ${esc(note)}` : "&nbsp;"}</span>`;
 }
 
 function pickers(plottable) {

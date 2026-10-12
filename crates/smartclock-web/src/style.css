@@ -77,7 +77,12 @@ footer { grid-column: 1 / -1; color: var(--dim); font-size: 11px; }
            min-height: 1.4em; font-size: 12px; font-variant-numeric: tabular-nums; }
 #readout .w { color: var(--dim); }
 #readout .k { color: var(--dim); }
-#readout .v { color: var(--text); }
+/* Room for a value whether or not the cursor is on one, so the cells
+   neither shift nor rewrap, and the panels below stay put, as it moves. */
+#readout .v { color: var(--text); display: inline-block; min-width: 10ch; }
+#readout .at { min-width: 12ch; }
+#readout .note { flex-basis: 100%; white-space: nowrap; overflow: hidden;
+                 text-overflow: ellipsis; }
 /* A person's note, beside the pointer while it is on the note's line. */
 #note-tip { position: fixed; display: none; pointer-events: none; z-index: 10;
             max-width: 48ch; padding: 2px 6px; font-size: 12px;

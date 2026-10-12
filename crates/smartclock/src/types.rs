@@ -815,7 +815,7 @@ impl fmt::Display for SignalStrength {
 /// does not fail loudly -- it just produces garbage, which looks like a
 /// dead receiver.
 ///
-/// `097-59551-02` 5-101 says the 58503A accepts 1200, 2400, 9600 and
+/// `097-59551-02` 5-80 says the 58503A accepts 1200, 2400, 9600 and
 /// 19200, and 19200 is measured to be its ceiling.  The rest are here
 /// so a receiver moved to one can still be reached to move it back: a
 /// rate we cannot open is a receiver we cannot reach with anything,

@@ -322,7 +322,7 @@ converts it, rather than finding nothing in it.
 
 The status screen is about 1.6 KB: 0.94 s of wire time at 19200 8N1
 and 0.5 s of the receiver composing it, so it cannot be polled at 1 Hz
-beside anything else.  19200 is the ceiling: `097-59551-02` 5-101 lists
+beside anything else.  19200 is the ceiling: `097-59551-02` 5-80 lists
 four rates up to 19200, and the 58503A answers
 `:SYSTem:COMMunicate:SERial1:BAUD 38400` with `+0,"No error"` while
 keeping 19200.  `BaudRate` still knows 4800, 38400, 57600 and 115200,

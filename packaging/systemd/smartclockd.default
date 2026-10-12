@@ -14,7 +14,7 @@
 #SMARTCLOCKD_DEVICE=/dev/<port>
 
 # The rate the receiver is set to.  The 58503A accepts 1200, 2400, 9600
-# or 19200 (097-59551-02 5-101); 4800, 38400, 57600 and 115200 can also
+# or 19200 (097-59551-02 5-80); 4800, 38400, 57600 and 115200 can also
 # be opened, to reach a receiver something else moved there.
 #SMARTCLOCKD_BAUD=19200
 

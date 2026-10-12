@@ -176,6 +176,10 @@ DC-DC power module.
 
 ![The MC68331, the XC3042 FPGA and the four flash parts, U11 to U14](images/Z3805-68001/z3805a-cpu-fpga-flash.jpg)
 
+![The board's right side: the flash parts, the ACT11245 transceivers U19 and U20, the ABT245A transceivers U17 and U18, and J4 and J5](images/Z3805-68001/z3805a-board-right.jpg)
+
+![U17 and U18, TI 74ABT245A, beside J4 and J5](images/Z3805-68001/z3805a-pps-transceivers.jpg)
+
 ![The board's serial, 6E9008G, and date code, 3627](images/Z3805-68001/z3805a-board-labels.jpg)
 
 ![J17 (10 MHz A) and J15 (10 MHz B), both cabled](images/Z3805-68001/z3805a-10mhz-outputs.jpg)

@@ -80,11 +80,15 @@ if (!opts.url === !opts["log-dir"] && !opts.tui && !opts.sim) {
 
 // The pages, each with its path, what shows it is drawn, and the
 // panels to shoot, from the one holding the first selector to the one
-// holding the last; the window's worth from the top without them.
+// holding the last; FULL for the whole page; the window's worth from
+// the top without either.
+const FULL = "full";
 const PAGES = [
   ["web-live.png", "/", "#charts .uplot"],
-  ["web-stability.png", "/adev", ".uplot"],
+  ["web-stability.png", "/adev", "#chart-tdev .uplot", FULL],
   ["web-compare.png", "/compare", ".uplot"],
+  // The receivers' stability side by side, at the foot of the page.
+  ["web-compare-stability.png", "/compare", "#chart-deviation .uplot", ["#chart-deviation", "#chart-deviation"]],
   // The scatter and the lag are what the page is for; the two time
   // series above them are the live page's charts again.
   ["web-correlation.png", "/correlation", "#scatter .uplot", ["#scatter", "#lag"]],
@@ -192,12 +196,12 @@ async function web(browser, { url, strip }) {
     const chart = await page.locator(drawn).first().boundingBox();
     if (chart) await page.mouse.move(chart.x + chart.width * 0.6, chart.y + chart.height / 2);
     await page.waitForTimeout(SETTLE);
-    const clip = panels && await page.evaluate(([first, last]) => {
+    const clip = Array.isArray(panels) && await page.evaluate(([first, last]) => {
       const box = (sel) => document.querySelector(sel).closest(".panel").getBoundingClientRect();
       const [a, b] = [box(first), box(last)];
       return { x: a.x, y: a.y + scrollY, width: a.width, height: b.bottom - a.top };
     }, panels);
-    await page.screenshot({ path: path.join(OUT, file), ...(clip ? { clip, fullPage: true } : {}) });
+    await page.screenshot({ path: path.join(OUT, file), fullPage: panels === FULL, ...(clip ? { clip, fullPage: true } : {}) });
     console.log(file);
   }
   await page.close();

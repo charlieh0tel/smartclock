@@ -21,16 +21,38 @@ Connected; its EFC gain was measured on 2026-10-10
 (`docs/hardware-investigations.md`, item 2).  Its history is in
 `docs/hardware-investigations.md`, items 11 and 12.
 
-Power supply: BSC CV90-15357-2, for 38 to 60 V DC in, substantially
-the same board as the Z3805A's (by inspection), though for a different
-input range.
+Power supply: BSC CV90-15357-2, for 38 to 60 V DC in; the rear
+panel lists it and the BTS CV90-15357-1, for 19.5 to 30 V, and marks
+BSC.  It is substantially the same board as the Z3805A's, with the
+same Datel UWR-5/4000-D48 converter and AT&T DC-DC module, and three
+RIFA capacitors marked 10n Y2, not yet replaced.
 
 Main board serial 5UW00ME, date code 3549.  Not fitted on it: U17,
 U18, J4, J5, J6, J7, J8, J15 and the parts of the 10 MHz OUT B stage
-behind J15.  As built it has no 1 PPS output; the operator added one, with
-its own output buffer.  It has RIFA
-capacitors too, not yet replaced.  Its flash is labeled Z3801-8007
-Rev ZB.
+behind J15.  As built it has no 1 PPS output; the operator added one,
+with its own output buffer, on an SMA through the serial plate.  Its
+flash is labeled Z3801-8007 Rev ZB.
+
+Its GPS engine module's shield is marked 326/2436 2643686MAC, and its
+label 7VGN4.
+
+![The rear panel: the added 1 PPS SMA on the serial plate, and the DC input options](images/Z3801A/z3801a-rear-panel.jpg)
+
+![Inside, the oscillator at the top](images/Z3801A/z3801a-interior.jpg)
+
+![The main board](images/Z3801A/z3801a-main-board.jpg)
+
+![The GPS engine module, top](images/Z3801A/z3801a-gps-engine-top.jpg)
+
+![The GPS engine module, bottom](images/Z3801A/z3801a-gps-engine-bottom.jpg)
+
+![The GPS engine module, top, its shield off](images/Z3801A/z3801a-gps-engine-top-unshielded.jpg)
+
+![The GPS engine module, bottom, its shield off](images/Z3801A/z3801a-gps-engine-bottom-unshielded.jpg)
+
+![The power supply](images/Z3801A/z3801a-power-supply-top.jpg)
+
+![The power supply, reverse](images/Z3801A/z3801a-power-supply-bottom.jpg)
 
 ## HP 58503A, serial 3710A01056
 
@@ -95,6 +117,18 @@ pairs share no node (continuity, 2026-10-11).
 
 ![J17's output stage from the other side, CR21 at the right: the two black `56R2` at the top, then a row of three `147R` and a blue `56R2`](images/58503A-60001_RevC/58503a-j17-back-detail.jpg)
 
+![Inside the 58503A](images/58503A-60001_RevC/58503a-interior.jpg)
+
+![The 58503A's GPS engine module](images/58503A-60001_RevC/58503a-gps-engine.jpg)
+
+![The same, closer](images/58503A-60001_RevC/58503a-gps-engine-closeup.jpg)
+
+![The oscillator, HP 10811-60159, out of the receiver](images/58503A-60001_RevC/58503a-ocxo-removed.jpg)
+
+![The oscillator's label: 10811-60159, serial 3505A15217](images/58503A-60001_RevC/58503a-ocxo-label.jpg)
+
+![Both 10 MHz stages from the other side, CR21 between them](images/58503A-60001_RevC/58503a-j17-j15-back-detail.jpg)
+
 ![The other side, wider: the OCXO's 10 MHz jack at the lower left, a resistor and capacitor network above it, and the two output stages at the bottom](images/58503A-60001_RevC/58503a-ocxo-feed-back.jpg)
 
 Its diagnostic log had been full at 222 entries, and so not
@@ -119,10 +153,22 @@ Its BTS power supply had three RIFA PME271 Y 10 nF paper capacitors
 (marked 40/100/56/C) on its DC input, a type known to crack and fail
 with age.  All three were replaced on 2026-10-11 with Vishay
 VY2472M49Y5US6TV7, 4.7 nF X1/Y2 ceramic.
-The supply is Nortel's BTS supply A0696033, for 19.5 to 30 V DC in,
+The supply is Nortel's BTS supply A0696033, for 19.5 to 30 V DC in;
+the rear panel lists it and the BSC supply, Nortel A0660437, for 38 to
+60 V, and marks BTS.  It is
 built on an HP board, 58503-60002 Rev D, serial 5DC01CC, date code
-3513, carrying a Datel UWR-5/4000-D48 DC/DC converter and an AT&T
+3513, and carries a Datel UWR-5/4000-D48 DC/DC converter and an AT&T
 DC-DC power module.
+
+![The rear panel](images/Z3805-68001/z3805a-rear-panel.jpg)
+
+![The DC input options on the rear panel](images/Z3805-68001/z3805a-dc-input-label.jpg)
+
+![Inside, on 2026-09-27](images/Z3805-68001/z3805a-interior.jpg)
+
+![The main board, on 2026-09-27](images/Z3805-68001/z3805a-main-board-2026-09-27.jpg)
+
+![The GPS engine module in place, on 2026-09-27](images/Z3805-68001/z3805a-gps-engine-in-place.jpg)
 
 ![The main board in place, the GPS engine module at the center](images/Z3805-68001/z3805a-main-board.jpg)
 
@@ -139,6 +185,8 @@ DC-DC power module.
 ![The GPS engine module, top, its shield off](images/Z3805-68001/z3805a-gps-engine-top-unshielded.jpg)
 
 ![The GPS engine module, bottom, its shield off](images/Z3805-68001/z3805a-gps-engine-bottom-unshielded.jpg)
+
+![The GPS engine module's antenna input](images/Z3805-68001/z3805a-gps-engine-antenna-input.jpg)
 
 ![The three RIFA PME271 Y capacitors removed from the power supply](images/Z3805-68001/z3805a-rifa-pme271-front.jpg)
 
@@ -173,7 +221,7 @@ bench").  Both report the same 1024-week offset and, on the same day,
 the same date.  The engine is a module on the main board: a Motorola
 MC68331 with HM628128 RAM, two TN28F010 flash parts, an AT28C64B
 EEPROM, an MC68HC68T1 clock and an XCT38140FD04, its RF section under
-a shield marked 326/0816 2643686MAB.  Under the shields: on one side
+a shield marked 326/0816 2643686MAB, and its label reads 7VENR.  Under the shields: on one side
 a part marked 24M01 19.09 M 9601; on the other a part marked 58M01
 9623 and a can marked 95001 624.
 

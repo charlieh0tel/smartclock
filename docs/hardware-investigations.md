@@ -621,3 +621,23 @@ output.
   in series ahead of the jack, which limits the current into a short.
 
 *Changes:* whether OUT B can be used without disturbing OUT A.
+
+## 19. The 58503A's second 1 PPS (J4)
+
+*Open item:* the 58503A's J4 (silkscreen OUT A) is fitted but carries
+no 1 PPS.  The Z3805A, on the same layout, cables J4 and J5 to its two
+rear 1 PPS outputs.  The two boot different FPGA bitstreams, and
+no CPU code differs in a way that would drive J4
+(`firmware/outputs.md`, "The FPGA bitstreams").  On the component
+side, no part near J4 is fitted on the Z3805A and missing on the
+58503A.  There is no photo of the Z3805A's back side.
+
+- [ ] TODO: follow J4's center pin back to its buffer (U17 or U18) and
+  scope the buffer's input and output.  A pulse at the input and none
+  at J4 means a part between them is missing.  No pulse at the input
+  points to the FPGA bitstream.
+- [ ] TODO: photograph the back of both boards under J4 and J5 and
+  compare the fitted parts.
+
+*Changes:* whether the 58503A can have a second 1 PPS, and whether
+that takes parts or the Z3805A's FPGA bitstream.

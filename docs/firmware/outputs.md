@@ -56,3 +56,51 @@ from `0x3429e`), not one it makes.
 
 Not traced: what drives the alarm output, and the time-code worker's
 output path (`0x13d28`).
+
+## The FPGA bitstreams
+
+Every image carries two 3860-byte blocks, each starting `ff 20 07 86`,
+the header and length count of a Xilinx XC3000-family bitstream.  In
+the Z3805A, the loader `0x22da4` takes an index and reads that entry
+of the table at `0x21e2c`.  Each entry is a start and an end address
+(`0x22e94` to `0x22ea0`).  The table holds one entry, `0x20f18` to
+`0x21e2c`, which is the first bitstream.  The boot code at `0x22d70`
+loads index 0 and keeps it at `0x102533`; the only other caller,
+`0x18938`, reloads that stored index.  The loader drives PROGRAM with
+PORTE bit 6 and reads INIT and DONE on `0xfff90c` bit 3.  The second
+block starts right after the table, at `0x21e36`.  No table entry and
+no code address points to it.
+
+| Image | First bitstream | sha1 | Second block |
+| ----- | ------------ | ---- | ------------- |
+| 58503A 3633 | `0x1ff84` | `e8789ce4` | `0x20ea2`, `c57a94d1` |
+| 58503A 3704 | `0x1fd16` | `e8789ce4` | `0x20c34`, `c57a94d1` |
+| Z3801A 3543 | `0x1fddc` | `e8789ce4` | `0x20cfa`, `c57a94d1` |
+| Z3805A 3543B | `0x20f18` | `955494aa` | `0x21e36`, `c57a94d1` |
+| 58503B 1.01.04 | `0x2f5a8` | `3110273c` | `0x304c6`, `c57a94d1` |
+| Z3815A 4010 | `0x316a6` | `9fe2370e` | `0x325c4`, `c57a94d1` |
+| Z3816A 4001 | `0x2ffb8` | `8061d2bb` | `0x30ed6`, `c57a94d1` |
+
+The second block is the same in all seven.  The first comes in five
+designs:
+- The 58503A and the Z3801A share one, byte for byte.
+- The Z3805A's differs from it in 1868 of 3860 bytes, the 58503B's in
+  2347, the Z3816A's in 3315 and the Z3815A's in 3392.
+- The Z3815A's and the Z3816A's differ from each other in 1686.
+
+Which pins or registers a difference touches cannot be read from the
+bytes.
+
+The CPU code around the FPGA is the same in the Z3805A and the Z3801A:
+- the writes to the FPGA at `0x304000`;
+- the latch at `0x300000` (`0x184f8` to `0x1851e`, `0x4651c`);
+- the GPT setup (`0x12050` to `0x120b2`), apart from CFORC.
+
+The Z3805A alone has a second output-compare timer, OC4 (`0x1406a` to
+`0x1412c`).  It drives no pin: TCTL1 is cleared and PGP6 is an input.
+No image has a command, option or model check that enables a pulse
+output.
+
+The Z3805A drives its J4 and J5, which are cabled to its two rear
+1 PPS outputs.  The 58503A's J4 is fitted, and showed no 1 PPS on the
+bench (`../hardware-investigations.md`, item 19).

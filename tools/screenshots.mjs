@@ -90,12 +90,12 @@ const PAGES = [
   // the receiver's journal below them.
   ["web-live.png", "/", "#charts .uplot", ["nav", "#charts"]],
   ["web-stability.png", "/adev", "#chart-tdev .uplot", FULL],
-  ["web-compare.png", "/compare", "#charts .uplot", ["nav", "#charts"]],
+  ["web-compare.png", "/compare", "#chart-deviation .uplot", FULL],
   // The receivers' stability side by side, at the foot of the page.
   ["web-compare-stability.png", "/compare", "#chart-deviation .uplot", ["#chart-deviation", "#chart-deviation"]],
-  // The scatter and the lag are what the page is for; the two time
-  // series above them are the live page's charts again.
+  // The scatter and the lag, what the page is for, and the page.
   ["web-correlation.png", "/correlation", "#scatter .uplot", ["#scatter", "#lag"]],
+  ["web-correlation-page.png", "/correlation", "#scatter .uplot", FULL],
 ];
 
 // What the correlation page sets EFC against: --against, a measure as

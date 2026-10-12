@@ -78,6 +78,20 @@ const label = (c) => {
   return qualifier ? `${columnName(c)} (${qualifier})` : columnName(c);
 };
 const factor = (c) => (LABELS[c] ?? [c, 1])[1];
+
+// The widest one-sigma interval, its upper bound over its lower, a
+// deviation is plotted with.  Past it a point says less than its band
+// does, and the last one or two of a short run read as a slope that is
+// not there; the table still has them.
+const MAX_BAND = 2;
+
+// `values`, a deviation by tau, with everything from the first point
+// whose interval in `bounds` is wider than MAX_BAND left out.  An
+// interval that could not be computed is not judged.
+function untilWide(values, bounds) {
+  const cut = bounds.findIndex((b) => b && (b.lower <= 0 || b.upper / b.lower > MAX_BAND));
+  return cut < 0 ? values : values.map((v, i) => (i < cut ? v : null));
+}
 const scaled = (values, c) =>
   factor(c) === 1 ? values : values.map((v) => (v === null ? null : v * factor(c)));
 

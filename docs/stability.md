@@ -65,7 +65,9 @@ update.  A receiver still answering a value it stopped updating looks
 the same for two or three updates; the cap of three bounds that.  A curve carries its count of readings, holes
 and segments, since a mostly-holes run looks like a clean day.  Points
 below ten second differences are not emitted; the sweep stops at a
-third of the longest segment.  Long ranges are subsampled onto a
+third of the longest segment.  The pages stop drawing a curve at its
+first point whose one-sigma interval spans more than a factor of two,
+upper over lower; the table keeps every point.  Long ranges are subsampled onto a
 coarser grid, not averaged (averaging is the estimator's job), at the
 cost of short taus; the caller picks.
 

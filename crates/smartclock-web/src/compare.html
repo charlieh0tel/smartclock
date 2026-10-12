@@ -303,8 +303,12 @@ function drawDeviation(shown, curves) {
       const points = curves[serial].points;
       return [
         points.map((p) => p.tau),
-        points.map((p) => (p.modified ? p.modified.deviation : null)),
-        points.map((p) => p.deviation),
+        // Each curve ends where its band grows too wide (MAX_BAND).
+        untilWide(
+          points.map((p) => (p.modified ? p.modified.deviation : null)),
+          points.map((p) => p.modified?.bounds),
+        ),
+        untilWide(points.map((p) => p.deviation), points.map((p) => p.bounds)),
       ];
     }),
   );

@@ -238,14 +238,20 @@ function draw(points) {
   // dashed or dimmed line reads as a reference or a fit.  A point
   // the modified form lacks (it needs three whole windows) is a hole
   // in its series, which uPlot leaves as a break in the line.
+  // Each curve ends where its band grows too wide (MAX_BAND).
   const tau = points.map((p) => p.tau);
-  const modified = points.map((p) => (p.modified ? p.modified.deviation : null));
-  const time = points.map((p) => (p.modified ? p.modified.time : null));
+  const modifiedBounds = points.map((p) => p.modified?.bounds);
+  const modified = untilWide(points.map((p) => (p.modified ? p.modified.deviation : null)), modifiedBounds);
+  const time = untilWide(points.map((p) => (p.modified ? p.modified.time : null)), modifiedBounds);
+  const plain = untilWide(points.map((p) => p.deviation), points.map((p) => p.bounds));
   const mtie = points.map((p) => (p.mtie ? p.mtie.peak : null));
-  const band = (pick) => [
-    points.map((p) => bound(pick(p), "lower")),
-    points.map((p) => bound(pick(p), "upper")),
-  ];
+  const band = (pick) => {
+    const bounds = points.map(pick);
+    return [
+      untilWide(bounds.map((b) => bound(b, "lower")), bounds),
+      untilWide(bounds.map((b) => bound(b, "upper")), bounds),
+    ];
+  };
   const sigmaBands = {
     1: band((p) => p.modified?.bounds),
     2: band((p) => p.bounds),
@@ -286,7 +292,7 @@ function draw(points) {
       cursor,
       hooks: { setSeries: [followLegend(0)], draw: [shadeBands(sigmaBands)] },
     },
-    [tau, modified, points.map((p) => p.deviation)],
+    [tau, modified, plain],
     $("chart"),
   );
   resettable(chart);

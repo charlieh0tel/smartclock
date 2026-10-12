@@ -183,7 +183,7 @@ $("locked").onchange = () => {
 async function correlationWindow(signal) {
   let from, to;
   if (range.last === "all") {
-    const extent = await ask("/api/history?" + withUnit(new URLSearchParams({ columns: "efc_percent" })), signal);
+    const extent = await ask("/api/history?" + withUnit(new URLSearchParams({ columns: "efc_percent" })), signal, HISTORY_TIMEOUT);
     if (!extent.first || !(extent.last > extent.first)) return null;
     from = Math.round(extent.first);
     to = Math.round(extent.last);
@@ -231,7 +231,7 @@ async function measureOver(measure, win, signal) {
     points: win.points,
   });
   if (lockedOnly) q.set("locked", "1");
-  const got = await ask("/api/history?" + q, signal);
+  const got = await ask("/api/history?" + q, signal, HISTORY_TIMEOUT);
   const plot = got.plots.find((p) => p.column === measure.from.column);
   return plot ? bucketed(got.at, scaled(plot.mean, measure.from.column), win) : emptyGrid(win);
 }

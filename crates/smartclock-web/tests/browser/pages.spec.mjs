@@ -488,6 +488,18 @@ test("a host without sensors offers none", async ({ page }) => {
   await expect(page.locator("#status .sensor")).toHaveCount(0);
 });
 
+test("a history slower than the strip's timeout is still drawn", async ({ page }) => {
+  // A slow host takes several seconds to read days of the log; the
+  // page must wait for it rather than give up at the strip's 5 s.
+  await twoUnits().install(page);
+  await page.route("**/api/history*", async (route) => {
+    await new Promise((done) => setTimeout(done, 8000));
+    await route.fallback();
+  });
+  await page.goto(`/?receiver=${B}&last=172800`);
+  await page.waitForFunction(() => charts.length > 0, null, { timeout: 30000 });
+});
+
 test("the predicted holdover uncertainty is charted in microseconds, on decades, on both pages", async ({ page }) => {
   const fake = twoUnits();
   fake.everyColumn = true;

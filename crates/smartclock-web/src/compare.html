@@ -161,7 +161,7 @@ async function sharedWindow(serials, signal) {
     return { from: Math.round(from), to: Math.round(to) };
   }
   const extents = await Promise.all(
-    serials.map((s) => quietly(ask(historyQuery(s, null), signal), null)),
+    serials.map((s) => quietly(ask(historyQuery(s, null), signal, HISTORY_TIMEOUT), null)),
   );
   const found = extents.filter((e) => e?.first && e.last > e.first);
   if (!found.length) return null;
@@ -184,7 +184,7 @@ function historyQuery(serial, win) {
 }
 
 async function historyOf(serial, win, signal) {
-  const got = await ask(historyQuery(serial, win), signal);
+  const got = await ask(historyQuery(serial, win), signal, HISTORY_TIMEOUT);
   return { ...got, at: onGrid(got.at, win) };
 }
 

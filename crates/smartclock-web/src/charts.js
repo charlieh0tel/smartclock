@@ -423,7 +423,7 @@ async function sensorHistory(quantity, win, signal) {
     to: win.to,
     points: win.points ?? pointsFor(win.to - win.from),
   });
-  return ask("/api/sensors/history?" + q, signal);
+  return ask("/api/sensors/history?" + q, signal, HISTORY_TIMEOUT);
 }
 
 // Each quantity the log holds, its sensors' lines over `win` snapped to

@@ -133,7 +133,7 @@ function seriesQuery(cols, from, to, seconds) {
   return "/api/history?" + withUnit(q);
 }
 
-const fetchSeries = (signal, ...args) => ask(seriesQuery(...args), signal);
+const fetchSeries = (signal, ...args) => ask(seriesQuery(...args), signal, HISTORY_TIMEOUT);
 
 // Tracked and not tracked are one measurement split two ways: their
 // sum is the satellites the receiver knows about, so a chart apiece

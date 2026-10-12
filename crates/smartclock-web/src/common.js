@@ -29,6 +29,10 @@ const pill = (text, bad) => `<span class="pill${bad ? " down" : ""}">${esc(text)
 
 // How long the strip and the picker wait for the server.
 const QUICK_TIMEOUT = 5000;
+// How long a read of the logs waits: a history over days is a scan of
+// a large table, which on a slow host takes several seconds -- 6 for
+// 48 hours on a GX-412TC -- where the strip's 5 would give up on it.
+const HISTORY_TIMEOUT = 60000;
 // How often the strip polls, and how often the list of receivers is
 // read again so a unit that appears or a daemon that comes or goes
 // shows in the picker without a reload.

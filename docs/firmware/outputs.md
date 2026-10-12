@@ -71,6 +71,10 @@ PORTE bit 6 and reads INIT and DONE on `0xfff90c` bit 3.  The second
 block starts right after the table, at `0x21e36`.  No table entry and
 no code address points to it.
 
+Copies of the five designs are in `third_party/firmware/fpga/`.
+`tools/fpga/iobdump.js` prints a bitstream's I/O blocks, using the
+decoder of the XC3000 viewer at <https://github.com/Arisotura/xc3000>.
+
 | Image | First bitstream | sha1 | Second block |
 | ----- | ------------ | ---- | ------------- |
 | 58503A 3633 | `0x1ff84` | `e8789ce4` | `0x20ea2`, `c57a94d1` |

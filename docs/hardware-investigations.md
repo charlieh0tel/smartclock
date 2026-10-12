@@ -633,7 +633,7 @@ side, no part near J4 is fitted on the Z3805A and missing on the
 58503A.  There is no photo of the Z3805A's back side.  Decoded with
 an XC3000 bitstream viewer, the Z3805A's bitstream makes FPGA pin 45
 an output that the 58503A's leaves unused, and pin 14 a registered
-output where the 58503A's is direct (`firmware/outputs.md`).
+output where the 58503A's is unregistered (`firmware/outputs.md`).
 
 - [ ] TODO: follow J4's center pin back to its buffer (U17 or U18) and
   scope the buffer's input and output.  A pulse at the input and none

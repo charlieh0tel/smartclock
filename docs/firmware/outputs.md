@@ -107,12 +107,15 @@ output.
 
 Decoded with that viewer (at commit 8563397) and its PLCC84 pinout,
 the 58503A's and the Z3805A's designs set the same I/O blocks on every
-pin but two:
+pin but two.  "Registered" means the output passes through the I/O
+block's flip-flop, "unregistered" that it does not; either way the pin
+is the FPGA's, not a jack's, and a jack is reached through the board's
+drivers.
 
 | Pin | 58503A and Z3801A | Z3805A |
 | --- | ----------------- | ------ |
-| P14 | output, direct | output through the I/O block's flip-flop, fast slew |
-| P45 | unused, pull-up only | output through the I/O block's flip-flop, fast slew |
+| P14 | output, unregistered | output, registered, fast slew |
+| P45 | unused, pull-up only | output, registered, fast slew |
 
 The viewer also reports a bad clock-line multiplexer setting
 ("111111") on the Z3805A design's bottom-left and left-upper clock

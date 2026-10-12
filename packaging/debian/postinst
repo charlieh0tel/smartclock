@@ -24,4 +24,12 @@ esac
 
 #DEBHELPER#
 
+# cargo-deb restarts the units it is told of by name, but the daemon is
+# a template, so its running instances are restarted here, after the
+# daemon-reload above.  try-restart leaves a stopped one stopped: an
+# instance stopped to copy its log first is not started by the upgrade.
+if [ "$1" = "configure" ] && [ -n "$2" ] && [ -d /run/systemd/system ]; then
+    systemctl try-restart 'smartclockd@*.service' >/dev/null || true
+fi
+
 exit 0

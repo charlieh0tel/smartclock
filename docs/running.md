@@ -74,7 +74,9 @@ opens it:
     sudo -u smartclockd cp /var/lib/smartclockd/<model>-<serial>.sqlite \
         /var/lib/smartclockd/<model>-<serial>.sqlite.bak
 
-Then install the new package and restart each instance.  The readers,
+Then install the new package.  An upgrade restarts every running
+instance, and the web view, sensor service and exporter; an instance
+stopped as above stays stopped until you start it.  The readers,
 `smartclock-web` and `smartclockmon`, open a log of any schema since
 12, the first with integer timestamps; an older one they
 refuse, saying which service to start once to convert it.  Converting

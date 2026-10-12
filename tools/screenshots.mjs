@@ -86,7 +86,9 @@ if (!opts.url === !opts["log-dir"] && !opts.tui && !opts.sim) {
 // the top without either.
 const FULL = "full";
 const PAGES = [
-  ["web-live.png", "/", "#charts .uplot"],
+  // From the tabs down through the charts and their readout, without
+  // the receiver's journal below them.
+  ["web-live.png", "/", "#charts .uplot", ["nav", "#charts"]],
   ["web-stability.png", "/adev", "#chart-tdev .uplot", FULL],
   ["web-compare.png", "/compare", ".uplot"],
   // The receivers' stability side by side, at the foot of the page.

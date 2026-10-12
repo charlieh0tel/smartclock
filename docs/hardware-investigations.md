@@ -644,6 +644,12 @@ output where the 58503A's is unregistered (`firmware/outputs.md`).
 - [ ] TODO: with power off, check continuity on the 58503A from U32
   pin 45 to the input of J4's buffer.  Scope U32 pin 14 on the 58503A,
   and pins 14 and 45 on the Z3805A, for 1 PPS.
+- [ ] TODO: read U17's and U18's markings; glare hides them in the
+  Z3805A's photo.  Beside them, U20 is marked ACT11245, a TI octal bus
+  transceiver with 3-state outputs, and U19's marking ends in "45".
+  If J4's buffer is one, check its direction and output-enable pins
+  on the 58503A too: a disabled output blocks J4 whatever pin 45
+  does.
 
 *Changes:* whether the 58503A can have a second 1 PPS, and whether
 that takes parts or the Z3805A's FPGA bitstream.

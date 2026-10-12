@@ -105,6 +105,20 @@ The Z3805A alone has a second output-compare timer, OC4 (`0x1406a` to
 No image has a command, option or model check that enables a pulse
 output.
 
+Decoded with that viewer (at commit 8563397) and its PLCC84 pinout,
+the 58503A's and the Z3805A's designs set the same I/O blocks on every
+pin but two:
+
+| Pin | 58503A and Z3801A | Z3805A |
+| --- | ----------------- | ------ |
+| P14 | output, direct | output through the I/O block's flip-flop, fast slew |
+| P45 | unused, pull-up only | output through the I/O block's flip-flop, fast slew |
+
+The viewer also reports a bad clock-line multiplexer setting
+("111111") on the Z3805A design's bottom-left and left-upper clock
+lines.  It is a work in progress, and its pinout has not been checked
+against Xilinx's data book.  None of this has been checked on a board.
+
 The Z3805A drives its J4 and J5, which are cabled to its two rear
 1 PPS outputs.  The 58503A's J4 is fitted, and showed no 1 PPS on the
 bench (`../hardware-investigations.md`, item 19).

@@ -630,7 +630,10 @@ rear 1 PPS outputs.  The two boot different FPGA bitstreams, and
 no CPU code differs in a way that would drive J4
 (`firmware/outputs.md`, "The FPGA bitstreams").  On the component
 side, no part near J4 is fitted on the Z3805A and missing on the
-58503A.  There is no photo of the Z3805A's back side.
+58503A.  There is no photo of the Z3805A's back side.  Decoded with
+an XC3000 bitstream viewer, the Z3805A's bitstream makes FPGA pin 45
+an output that the 58503A's leaves unused, and pin 14 a registered
+output where the 58503A's is direct (`firmware/outputs.md`).
 
 - [ ] TODO: follow J4's center pin back to its buffer (U17 or U18) and
   scope the buffer's input and output.  A pulse at the input and none
@@ -638,6 +641,9 @@ side, no part near J4 is fitted on the Z3805A and missing on the
   points to the FPGA bitstream.
 - [ ] TODO: photograph the back of both boards under J4 and J5 and
   compare the fitted parts.
+- [ ] TODO: with power off, check continuity on the 58503A from U32
+  pin 45 to the input of J4's buffer.  Scope U32 pin 14 on the 58503A,
+  and pins 14 and 45 on the Z3805A, for 1 PPS.
 
 *Changes:* whether the 58503A can have a second 1 PPS, and whether
 that takes parts or the Z3805A's FPGA bitstream.

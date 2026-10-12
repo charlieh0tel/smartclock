@@ -27,7 +27,7 @@ BSC.  It is substantially the same board as the Z3805A's, with the
 same Datel UWR-5/4000-D48 converter and AT&T DC-DC module, and three
 RIFA capacitors marked 10n Y2, not yet replaced.
 
-Main board serial 5UW00ME, date code 3549.  Not fitted on it: U17,
+Main board Z3801-68001, serial 5UW00ME, date code 3549.  Not fitted on it: U17,
 U18, J4, J5, J6, J7, J8, J15 and the parts of the 10 MHz OUT B stage
 behind J15.  As built it has no 1 PPS output; the operator added one,
 with its own output buffer, on an SMA through the serial plate.  Its
@@ -36,23 +36,23 @@ flash is labeled Z3801-8007 Rev ZB.
 Its GPS engine module's shield is marked 326/2436 2643686MAC, and its
 label 7VGN4.
 
-![The rear panel: the added 1 PPS SMA on the serial plate, and the DC input options](images/Z3801A/z3801a-rear-panel.jpg)
+![The rear panel: the added 1 PPS SMA on the serial plate, and the DC input options](images/Z3801-68001/z3801a-rear-panel.jpg)
 
-![Inside, the oscillator at the top](images/Z3801A/z3801a-interior.jpg)
+![Inside, the oscillator at the top](images/Z3801-68001/z3801a-interior.jpg)
 
-![The main board](images/Z3801A/z3801a-main-board.jpg)
+![The main board](images/Z3801-68001/z3801a-main-board.jpg)
 
-![The GPS engine module, top](images/Z3801A/z3801a-gps-engine-top.jpg)
+![The GPS engine module, top](images/Z3801-68001/z3801a-gps-engine-top.jpg)
 
-![The GPS engine module, bottom](images/Z3801A/z3801a-gps-engine-bottom.jpg)
+![The GPS engine module, bottom](images/Z3801-68001/z3801a-gps-engine-bottom.jpg)
 
-![The GPS engine module, top, its shield off](images/Z3801A/z3801a-gps-engine-top-unshielded.jpg)
+![The GPS engine module, top, its shield off](images/Z3801-68001/z3801a-gps-engine-top-unshielded.jpg)
 
-![The GPS engine module, bottom, its shield off](images/Z3801A/z3801a-gps-engine-bottom-unshielded.jpg)
+![The GPS engine module, bottom, its shield off](images/Z3801-68001/z3801a-gps-engine-bottom-unshielded.jpg)
 
-![The power supply](images/Z3801A/z3801a-power-supply-top.jpg)
+![The power supply](images/Z3801-68001/z3801a-power-supply-top.jpg)
 
-![The power supply, reverse](images/Z3801A/z3801a-power-supply-bottom.jpg)
+![The power supply, reverse](images/Z3801-68001/z3801a-power-supply-bottom.jpg)
 
 ## HP 58503A, serial 3710A01056
 

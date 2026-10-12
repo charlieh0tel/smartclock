@@ -2,14 +2,17 @@
 // directory of logs.
 //
 //     node tools/screenshots.mjs --url http://apu-0:9980 --receiver 3710A01056
-//     node tools/screenshots.mjs --log-dir SNAPSHOT --receiver 3710A01056
+//     node tools/screenshots.mjs --log-dir DIR [--log-dir DIR ...] --receiver 3710A01056
 //     node tools/screenshots.mjs ... --tui 'ssh -t apu-0 smartclockmon --daemon /run/smartclockd/ttyUSB0/socket'
 //
 // With --log-dir, a smartclock-web of this tree (target/debug, built
-// first) serves the directory on a spare port, with its sensors.sqlite
-// if it has one, and no daemon: the history pages only.  Each page is
-// shown over the SPAN seconds up to the receiver's last reading, so a
-// snapshot gives the same pictures every time it is shot.
+// first) serves the logs on a spare port, with a sensors.sqlite if one
+// is among them, and no daemon: the history pages only, without the
+// live strip, which would say only that no daemon is attached.  Logs
+// in several directories are linked into one scratch directory, not
+// copied.  Each page is shown over the SPAN seconds up to the last
+// reading every receiver has, so logs give the same pictures every
+// time they are shot.
 // The compare page is shot only where there are two receivers or more.
 // The status page is not shot from a real receiver: it shows where the
 // receiver is, and reading it sends a query to the receiver.  --sim
@@ -25,7 +28,7 @@
 
 import { spawn, execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { mkdtempSync, mkdirSync, existsSync } from "node:fs";
+import { mkdtempSync, mkdirSync, existsSync, readdirSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
@@ -58,17 +61,18 @@ const SIM_START = 30000;
 const { values: opts } = parseArgs({
   options: {
     url: { type: "string" },
-    "log-dir": { type: "string" },
+    "log-dir": { type: "string", multiple: true },
     receiver: { type: "string" },
     span: { type: "string", default: "21600" },
     tui: { type: "string" },
     sim: { type: "boolean", default: false },
+    against: { type: "string" },
     out: { type: "string", default: path.join(ROOT, "docs/images") },
   },
 });
 const OUT = path.resolve(opts.out);
 if (!opts.url === !opts["log-dir"] && !opts.tui && !opts.sim) {
-  console.error("usage: screenshots.mjs (--url URL | --log-dir DIR) [--receiver SERIAL] [--span SECONDS] [--tui COMMAND] [--sim] [--out DIR]");
+  console.error("usage: screenshots.mjs (--url URL | --log-dir DIR) [--receiver SERIAL] [--span SECONDS] [--against MEASURE] [--tui COMMAND] [--sim] [--out DIR]");
   process.exit(2);
 }
 
@@ -77,12 +81,35 @@ const PAGES = [
   ["web-live.png", "/", "#charts .uplot"],
   ["web-stability.png", "/adev", ".uplot"],
   ["web-compare.png", "/compare", ".uplot"],
-  ["web-correlation.png", "/correlation", ".uplot", "x=sensor:temperature:ambient&y=efc_percent"],
+  ["web-correlation.png", "/correlation", ".uplot"],
 ];
 
-async function serve(logDir) {
+// What the correlation page sets EFC against: --against, a measure as
+// the page names it (`sensor:temperature:NAME`, `efc:SERIAL`), or else
+// the room's temperature where there is a sensor for it, or else
+// another receiver's EFC.
+async function correlated(url, receivers, receiver) {
+  if (opts.against) return `x=${opts.against}&y=efc_percent`;
+  const { sensors = [] } = await (await fetch(`${url}/api/sensors`)).json().catch(() => ({}));
+  const temperature = sensors.find((s) => s.quantity === "temperature");
+  const other = receivers.find((r) => r.serial !== receiver.serial);
+  const x = temperature ? `sensor:temperature:${temperature.name}` : other ? `efc:${other.serial}` : null;
+  return x ? `x=${x}&y=efc_percent` : "";
+}
+
+async function serve(logDirs) {
   execFileSync("cargo", ["build", "-q", "-p", "smartclock-web"], { cwd: ROOT, stdio: "inherit" });
   const empty = mkdtempSync(path.join(tmpdir(), "screenshots-"));
+  let logDir = logDirs[0];
+  if (logDirs.length > 1) {
+    logDir = path.join(empty, "logs");
+    mkdirSync(logDir);
+    for (const dir of logDirs) {
+      for (const name of readdirSync(dir).filter((n) => /\.sqlite(-wal|-shm)?$/.test(n))) {
+        symlinkSync(path.join(dir, name), path.join(logDir, name));
+      }
+    }
+  }
   const sensors = path.join(logDir, "sensors.sqlite");
   const server = spawn(path.join(ROOT, "target/debug/smartclock-web"), [
     "--listen", `127.0.0.1:${PORT}`, "--log-dir", logDir, "--run-dir", empty,
@@ -91,7 +118,7 @@ async function serve(logDir) {
   ], { stdio: "inherit" });
   const url = `http://127.0.0.1:${PORT}`;
   await until(url, () => true, 5000);
-  return { url, servers: [server] };
+  return { url, servers: [server], strip: false };
 }
 
 // Wait up to `ms` for the web view at `url` to list receivers that
@@ -125,7 +152,7 @@ async function simulate() {
     "--sensord", path.join(dir, "none.socket")], { stdio: "inherit" });
   const url = `http://127.0.0.1:${SIM_WEB_PORT}`;
   await until(url, (list) => list.some((r) => r.instance), SIM_START);
-  return { url, servers: [web, daemon, sim] };
+  return { url, servers: [web, daemon, sim], strip: true };
 }
 
 async function shootStatus(browser, url) {
@@ -139,16 +166,18 @@ async function shootStatus(browser, url) {
   await page.close();
 }
 
-async function web(browser, url) {
+async function web(browser, { url, strip }) {
   const receivers = await (await fetch(`${url}/api/receivers`)).json();
   const receiver = receivers.find((r) => r.serial === opts.receiver) ?? receivers[0];
   if (!receiver) throw new Error(`no receivers at ${url}`);
-  const to = Math.floor(Date.parse(receiver.last_seen) / 1000);
+  const to = Math.min(...receivers.map((r) => Math.floor(Date.parse(r.last_seen) / 1000)));
   const range = `receiver=${receiver.serial}&from=${to - Number(opts.span)}&to=${to}&refresh=off`;
   const page = await browser.newPage({ viewport: VIEWPORT });
   const shots = PAGES.filter(([, where]) => where !== "/compare" || receivers.length > 1);
-  for (const [file, where, drawn, extra] of shots) {
+  for (const [file, where, drawn] of shots) {
+    const extra = where === "/correlation" ? await correlated(url, receivers, receiver) : "";
     await page.goto(`${url}${where}?${range}${extra ? `&${extra}` : ""}`);
+    if (!strip) await page.addStyleTag({ content: "#status { display: none; }" });
     await page.waitForSelector(drawn);
     // The cursor partway across the first chart, so the readout under
     // the charts has values to show.
@@ -251,9 +280,11 @@ const browser = await chromium.launch();
 const servers = [];
 try {
   if (opts.url || opts["log-dir"]) {
-    const site = opts.url ? { url: opts.url.replace(/\/$/, ""), servers: [] } : await serve(path.resolve(opts["log-dir"]));
+    const site = opts.url
+      ? { url: opts.url.replace(/\/$/, ""), servers: [], strip: true }
+      : await serve(opts["log-dir"].map((d) => path.resolve(d)));
     servers.push(...site.servers);
-    await web(browser, site.url);
+    await web(browser, site);
   }
   if (opts.sim) {
     const site = await simulate();

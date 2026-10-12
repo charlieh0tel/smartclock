@@ -76,9 +76,12 @@ test-web:
 # The README's screenshots, into docs/images.  Give a running web view
 # or a directory of logs, and a command running the terminal monitor
 # for its screenshot; the status page is shot from the simulator.  See
-# tools/screenshots.mjs.  Needs `make web-deps` once.  For example:
-#   make screenshots SHOTS_FROM="--url http://apu-0:9980" \
-#     SHOTS_TUI="ssh -t apu-0 smartclockmon --daemon /run/smartclockd/ttyUSB0/socket"
+# tools/screenshots.mjs.  Needs `make web-deps` once.  The README's
+# were taken with:
+#   sg smartclockd -c 'make screenshots SHOTS_FROM="--log-dir /var/lib/smartclockd \
+#     --log-dir /var/lib/smartclockd/archive --receiver 3710A01056 --span 86400 \
+#     --against efc:3625A01487" \
+#     SHOTS_TUI="ssh -t apu-0 smartclockmon --daemon /run/smartclockd/ttyUSB0/socket"'
 screenshots:
 	node tools/screenshots.mjs --sim $(SHOTS_FROM) $(if $(SHOTS_TUI),--tui '$(SHOTS_TUI)')
 

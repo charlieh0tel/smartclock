@@ -6,18 +6,24 @@ over a serial port.
 
 ![The live page: a day of the 1 PPS interval, EFC and satellites of a locked 58503A](docs/images/web-live.png)
 
-| | |
+| Stability, a week | Correlation, EFC against ambient temperature |
 | - | - |
-| ![The status page: the receiver's screen beside a sky plot](docs/images/web-status.png) | ![The stability page: a week's MDEV, ADEV and TDEV with one-sigma bands](docs/images/web-stability.png) |
-| ![The compare page: three receivers on one time axis](docs/images/web-compare.png) | ![The correlation page: EFC against ambient temperature, and r as one is moved against the other](docs/images/web-correlation.png) |
-| ![The compare page: the three receivers' stability over a week, side by side](docs/images/web-compare-stability.png) | ![The correlation page, whole](docs/images/web-correlation-page.png) |
-| ![The terminal monitor's dashboard](docs/images/tui-dashboard.png) | |
+| ![The stability page: a week's MDEV, ADEV and TDEV with one-sigma bands](docs/images/web-stability.png) | ![The correlation page: EFC against ambient temperature, and r as one is moved against the other](docs/images/web-correlation.png) |
+| **Status** | **Terminal monitor** |
+| ![The status page: the receiver's screen beside a sky plot](docs/images/web-status.png) | ![The terminal monitor's dashboard](docs/images/tui-dashboard.png) |
+
+**Three receivers compared over a week**
+
+![The compare page: three receivers' stability over a week, side by side](docs/images/web-compare-stability.png)
+
+The whole pages: [compare](docs/images/web-compare.png),
+[correlation](docs/images/web-correlation-page.png).
 
 The history pages are shown from the bench's logs, without the live
 strip; the status page is shown against the simulator.  The monitor's
 position is the one the firmware starts its GPS engine at: HP, Santa
-Clara.  `make screenshots`
-takes them all again (`tools/screenshots.mjs`).
+Clara.  `make screenshots` takes them all again
+(`tools/screenshots.mjs`).
 
 ## Firmware study
 

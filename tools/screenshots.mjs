@@ -65,6 +65,8 @@ const { values: opts } = parseArgs({
     "log-dir": { type: "string", multiple: true },
     receiver: { type: "string" },
     span: { type: "string", default: "21600" },
+    // The stability pages' span, longer: a deviation wants a long run.
+    "stability-span": { type: "string" },
     tui: { type: "string" },
     sim: { type: "boolean", default: false },
     against: { type: "string" },
@@ -74,7 +76,7 @@ const { values: opts } = parseArgs({
 });
 const OUT = path.resolve(opts.out);
 if (!opts.url === !opts["log-dir"] && !opts.tui && !opts.sim) {
-  console.error("usage: screenshots.mjs (--url URL | --log-dir DIR) [--receiver SERIAL] [--span SECONDS] [--against MEASURE] [--only FILE ...] [--tui COMMAND] [--sim] [--out DIR]");
+  console.error("usage: screenshots.mjs (--url URL | --log-dir DIR) [--receiver SERIAL] [--span SECONDS] [--stability-span SECONDS] [--against MEASURE] [--only FILE ...] [--tui COMMAND] [--sim] [--out DIR]");
   process.exit(2);
 }
 
@@ -181,14 +183,15 @@ async function web(browser, { url, strip }) {
   const receiver = receivers.find((r) => r.serial === opts.receiver) ?? receivers[0];
   if (!receiver) throw new Error(`no receivers at ${url}`);
   const to = Math.min(...receivers.map((r) => Math.floor(Date.parse(r.last_seen) / 1000)));
-  const range = `receiver=${receiver.serial}&from=${to - Number(opts.span)}&to=${to}&refresh=off`;
+  const range = (span) => `receiver=${receiver.serial}&from=${to - Number(span)}&to=${to}&refresh=off`;
   const page = await browser.newPage({ viewport: VIEWPORT });
   const shots = PAGES
     .filter(([file]) => !opts.only || opts.only.includes(file))
     .filter(([, where]) => where !== "/compare" || receivers.length > 1);
   for (const [file, where, drawn, panels] of shots) {
     const extra = where === "/correlation" ? await correlated(url, receivers, receiver) : "";
-    await page.goto(`${url}${where}?${range}${extra ? `&${extra}` : ""}`);
+    const span = file.includes("stability") ? opts["stability-span"] ?? opts.span : opts.span;
+    await page.goto(`${url}${where}?${range(span)}${extra ? `&${extra}` : ""}`);
     if (!strip) await page.addStyleTag({ content: "#status { display: none; }" });
     await page.waitForSelector(drawn);
     // The cursor partway across the first chart, so the readout under

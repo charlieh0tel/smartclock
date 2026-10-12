@@ -80,7 +80,7 @@ test-web:
 # were taken with:
 #   sg smartclockd -c 'make screenshots SHOTS_FROM="--log-dir /var/lib/smartclockd \
 #     --log-dir /var/lib/smartclockd/archive --receiver 3710A01056 --span 86400 \
-#     --against efc:3625A01487" \
+#     --stability-span 604800 --against efc:3625A01487" \
 #     SHOTS_TUI="ssh -t apu-0 smartclockmon --daemon /run/smartclockd/ttyUSB0/socket"'
 #   node tools/screenshots.mjs --url http://apu-0:9980 --receiver 3710A01056 \
 #     --span 21600 --only web-correlation.png

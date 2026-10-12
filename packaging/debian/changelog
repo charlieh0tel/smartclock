@@ -1,3 +1,11 @@
+smartclockmon (1.6.6-1) unstable; urgency=low
+
+  * An upgrade restarts each running smartclockd@ instance, as it
+    already did the web view, sensor service and exporter; one stopped
+    by hand stays stopped.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Sun, 11 Oct 2026 21:27:02 -0700
+
 smartclockmon (1.6.5-1) unstable; urgency=low
 
   * Charts load without first scanning the whole log: the daemon

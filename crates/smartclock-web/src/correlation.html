@@ -122,7 +122,7 @@ function measuresOffered(listed) {
   }));
   const sensors = listed.sensors.map((s) => ({
     key: `sensor:${s.quantity}:${s.name}`,
-    name: `${s.name} ${s.quantity}, ${s.unit}`,
+    name: sensorReadingName(s.name, s.quantity, s.unit),
     from: { quantity: s.quantity, sensor: s.name },
   }));
   const others = receivers

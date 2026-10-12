@@ -449,6 +449,7 @@ async function sensorGroups(listed, win, signal) {
             at: onGrid(line.at, win),
             source: sensor?.source,
             device: sensor?.device,
+            unit: sensor?.unit,
             color: sensorColor(listed, line.name),
           };
         }),
@@ -457,6 +458,10 @@ async function sensorGroups(listed, win, signal) {
   );
   return groups.filter((g) => g && g.lines.length);
 }
+
+// A sensor reading's name where its chart's title does not say the
+// quantity and unit: one sensor can read several quantities.
+const sensorReadingName = (name, quantity, unit) => `${name} ${quantity}, ${unit}`;
 
 // A sensor's color, by its name among every sensor's, so one name is one
 // color on every chart it is on.

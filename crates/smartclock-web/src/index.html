@@ -289,6 +289,7 @@ async function draw(signal) {
     lines: group.lines.map((line, i) => ({
       column: `sensor:${group.quantity}`,
       name: line.name,
+      reading: sensorReadingName(line.name, group.quantity, line.unit),
       values: line.values,
       color: line.color,
       at: line.at,
@@ -401,10 +402,12 @@ async function draw(signal) {
     // Which lines this chart draws, and from which series, so the
     // shared readout can label them without reaching back into the
     // request that built it.  A line's color is said only where there
-    // are several to tell apart.
+    // are several to tell apart.  A sensor's line is named with its
+    // quantity and unit, which its chart's title says but the readout
+    // does not.
     chart.smartclockLines = drawing.lines.map((l, i) => ({
       column: l.column,
-      name: l.name,
+      name: l.reading ?? l.name,
       series: 1 + (drawing.envelope ? 2 : 0) + i,
       color: several ? l.color : null,
     }));

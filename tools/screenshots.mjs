@@ -21,8 +21,9 @@
 //
 // --tui runs COMMAND in a detached tmux window of a fixed size, waits
 // for it to fill, and shoots what tmux holds, colors and all, drawn
-// as text in the same browser.  The position's values are blanked:
-// where a bench is never goes into the repository.
+// as text in the same browser.  The position is replaced by the one
+// the firmware starts its GPS engine at: where a bench is never goes
+// into the repository.
 //
 // Playwright and its Chromium are the browser tests' (`make web-deps`).
 
@@ -67,12 +68,13 @@ const { values: opts } = parseArgs({
     tui: { type: "string" },
     sim: { type: "boolean", default: false },
     against: { type: "string" },
+    only: { type: "string", multiple: true },
     out: { type: "string", default: path.join(ROOT, "docs/images") },
   },
 });
 const OUT = path.resolve(opts.out);
 if (!opts.url === !opts["log-dir"] && !opts.tui && !opts.sim) {
-  console.error("usage: screenshots.mjs (--url URL | --log-dir DIR) [--receiver SERIAL] [--span SECONDS] [--against MEASURE] [--tui COMMAND] [--sim] [--out DIR]");
+  console.error("usage: screenshots.mjs (--url URL | --log-dir DIR) [--receiver SERIAL] [--span SECONDS] [--against MEASURE] [--only FILE ...] [--tui COMMAND] [--sim] [--out DIR]");
   process.exit(2);
 }
 
@@ -177,7 +179,9 @@ async function web(browser, { url, strip }) {
   const to = Math.min(...receivers.map((r) => Math.floor(Date.parse(r.last_seen) / 1000)));
   const range = `receiver=${receiver.serial}&from=${to - Number(opts.span)}&to=${to}&refresh=off`;
   const page = await browser.newPage({ viewport: VIEWPORT });
-  const shots = PAGES.filter(([, where]) => where !== "/compare" || receivers.length > 1);
+  const shots = PAGES
+    .filter(([file]) => !opts.only || opts.only.includes(file))
+    .filter(([, where]) => where !== "/compare" || receivers.length > 1);
   for (const [file, where, drawn, panels] of shots) {
     const extra = where === "/correlation" ? await correlated(url, receivers, receiver) : "";
     await page.goto(`${url}${where}?${range}${extra ? `&${extra}` : ""}`);
@@ -213,14 +217,21 @@ function tui(command) {
   }
 }
 
-// The TUI's position lines with every number in them dashed out,
+// What the TUI's position lines are given in place of the bench's: the
+// initial position the Z380x and 58503A 3633 firmware sends its GPS
+// engine, at HP in Santa Clara (docs/firmware/gps.md), in the TUI's
+// own format.
+const STAND_IN = { latitude: "+37.325600", longitude: "-121.997800", height: "+55.00" };
+
+// The TUI's position lines with their number replaced by STAND_IN's,
 // the layout kept.  The numbers in SGR escapes are left alone.
-const POSITION_LINE = /latitude|longitude|height/i;
 function hidePosition(text) {
-  return text.split("\n").map((line) => !POSITION_LINE.test(line) ? line
-    : line.split(/(\x1b\[[0-9;]*m)/).map((part) => part.startsWith("\x1b")
-      ? part : part.replace(/[+-]?\d[\d.]*/g, (n) => "-".repeat(n.length))).join(""),
-  ).join("\n");
+  return text.split("\n").map((line) => {
+    const key = Object.keys(STAND_IN).find((k) => line.includes(k));
+    if (!key) return line;
+    return line.split(/(\x1b\[[0-9;]*m)/).map((part) => part.startsWith("\x1b") ? part
+      : part.replace(/[+-]?\d[\d.]*/g, (n) => STAND_IN[key].padEnd(n.length))).join("");
+  }).join("\n");
 }
 
 // The 16 colors as the browser views draw their dark theme, and the

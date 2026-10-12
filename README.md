@@ -9,11 +9,13 @@ over a serial port.
 | | |
 | - | - |
 | ![The status page: the receiver's screen beside a sky plot](docs/images/web-status.png) | ![The stability page: MDEV, ADEV and TDEV with one-sigma bands](docs/images/web-stability.png) |
-| ![The compare page: three receivers on one time axis](docs/images/web-compare.png) | ![The correlation page: one receiver's EFC against another's, and r as one is moved against the other](docs/images/web-correlation.png) |
-| ![The terminal monitor's dashboard, the position blanked](docs/images/tui-dashboard.png) | |
+| ![The compare page: three receivers on one time axis](docs/images/web-compare.png) | ![The correlation page: EFC against ambient temperature, and r as one is moved against the other](docs/images/web-correlation.png) |
+| ![The terminal monitor's dashboard](docs/images/tui-dashboard.png) | |
 
 The history pages are shown from the bench's logs, without the live
-strip; the status page is shown against the simulator.  `make screenshots`
+strip; the status page is shown against the simulator.  The monitor's
+position is the one the firmware starts its GPS engine at: HP, Santa
+Clara.  `make screenshots`
 takes them all again (`tools/screenshots.mjs`).
 
 ## Firmware study

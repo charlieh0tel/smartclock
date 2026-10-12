@@ -75,12 +75,12 @@ test-web:
 
 # The README's screenshots, into docs/images.  Give a running web view
 # or a directory of logs, and a command running the terminal monitor
-# for its screenshot; see tools/screenshots.mjs.  Needs `make
-# web-deps` once.  For example:
+# for its screenshot; the status page is shot from the simulator.  See
+# tools/screenshots.mjs.  Needs `make web-deps` once.  For example:
 #   make screenshots SHOTS_FROM="--url http://apu-0:9980" \
 #     SHOTS_TUI="ssh -t apu-0 smartclockmon --daemon /run/smartclockd/ttyUSB0/socket"
 screenshots:
-	node tools/screenshots.mjs $(SHOTS_FROM) $(if $(SHOTS_TUI),--tui '$(SHOTS_TUI)')
+	node tools/screenshots.mjs --sim $(SHOTS_FROM) $(if $(SHOTS_TUI),--tui '$(SHOTS_TUI)')
 
 doc:
 	$(CARGO) doc --workspace --no-deps --all-features

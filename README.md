@@ -12,7 +12,7 @@ over a serial port.
 | ![The correlation page: EFC against ambient temperature](docs/images/web-correlation.png) | ![The terminal monitor's dashboard, the position blanked](docs/images/tui-dashboard.png) |
 
 The status page is shown against the simulator.  `make screenshots`
-takes the others again (`tools/screenshots.mjs`).
+takes them all again (`tools/screenshots.mjs`).
 
 ## Status
 

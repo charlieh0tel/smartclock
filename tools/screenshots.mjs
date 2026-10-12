@@ -11,8 +11,10 @@
 // shown over the SPAN seconds up to the receiver's last reading, so a
 // snapshot gives the same pictures every time it is shot.
 // The compare page is shot only where there are two receivers or more.
-// The status page is not shot: it shows where the receiver is, and
-// reading it sends a query to the receiver.
+// The status page is not shot from a real receiver: it shows where the
+// receiver is, and reading it sends a query to the receiver.  --sim
+// shoots it from the simulator instead, under a daemon and a web view
+// of this tree, each on a spare port or in a scratch directory.
 //
 // --tui runs COMMAND in a detached tmux window of a fixed size, waits
 // for it to fill, and shoots what tmux holds, colors and all, drawn
@@ -23,7 +25,7 @@
 
 import { spawn, execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { mkdtempSync, existsSync } from "node:fs";
+import { mkdtempSync, mkdirSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
@@ -46,6 +48,12 @@ const TUI_SETTLE = 20000;
 // the strip to fill, in ms.
 const SETTLE = 2000;
 const PORT = 9984;
+// The simulator's port and its web view's, for --sim.
+const SIM_PORT = 9985;
+const SIM_WEB_PORT = 9986;
+// How long the simulated receiver's daemon is given to read it and
+// list it, in ms.
+const SIM_START = 30000;
 
 const { values: opts } = parseArgs({
   options: {
@@ -54,12 +62,13 @@ const { values: opts } = parseArgs({
     receiver: { type: "string" },
     span: { type: "string", default: "21600" },
     tui: { type: "string" },
+    sim: { type: "boolean", default: false },
     out: { type: "string", default: path.join(ROOT, "docs/images") },
   },
 });
 const OUT = path.resolve(opts.out);
-if (!opts.url === !opts["log-dir"] && !opts.tui) {
-  console.error("usage: screenshots.mjs (--url URL | --log-dir DIR) [--receiver SERIAL] [--span SECONDS] [--tui COMMAND] [--out DIR]");
+if (!opts.url === !opts["log-dir"] && !opts.tui && !opts.sim) {
+  console.error("usage: screenshots.mjs (--url URL | --log-dir DIR) [--receiver SERIAL] [--span SECONDS] [--tui COMMAND] [--sim] [--out DIR]");
   process.exit(2);
 }
 
@@ -81,15 +90,53 @@ async function serve(logDir) {
     "--sensord", path.join(empty, "none.socket"),
   ], { stdio: "inherit" });
   const url = `http://127.0.0.1:${PORT}`;
-  for (let tries = 0; ; tries++) {
+  await until(url, () => true, 5000);
+  return { url, servers: [server] };
+}
+
+// Wait up to `ms` for the web view at `url` to list receivers that
+// `ready` accepts.
+async function until(url, ready, ms) {
+  for (const start = Date.now(); ; ) {
     try {
-      await fetch(`${url}/api/receivers`);
-      return { url, server };
+      if (ready(await (await fetch(`${url}/api/receivers`)).json())) return;
     } catch (e) {
-      if (tries > 50) throw e;
-      await new Promise((r) => setTimeout(r, 100));
+      if (Date.now() - start > ms) throw e;
     }
+    if (Date.now() - start > ms) throw new Error(`nothing ready at ${url}`);
+    await new Promise((r) => setTimeout(r, 200));
   }
+}
+
+// The simulator, a daemon reading it and a web view of both.
+async function simulate() {
+  execFileSync("cargo", ["build", "-q", "-p", "smartclock-sim", "-p", "smartclockd", "-p", "smartclock-web"],
+    { cwd: ROOT, stdio: "inherit" });
+  const dir = mkdtempSync(path.join(tmpdir(), "screenshots-sim-"));
+  const run = path.join(dir, "run");
+  mkdirSync(path.join(run, "sim"), { recursive: true });
+  const bin = (name) => path.join(ROOT, "target/debug", name);
+  const sim = spawn(bin("smartclock-sim"), [`127.0.0.1:${SIM_PORT}`], { stdio: "inherit" });
+  await new Promise((r) => setTimeout(r, 500));
+  const daemon = spawn(bin("smartclockd"), ["--device", `tcp://127.0.0.1:${SIM_PORT}`,
+    "--log-dir", dir, "--socket", path.join(run, "sim/socket")], { stdio: "inherit" });
+  const web = spawn(bin("smartclock-web"), ["--listen", `127.0.0.1:${SIM_WEB_PORT}`,
+    "--run-dir", run, "--log-dir", dir, "--sensor-log", path.join(dir, "none.sqlite"),
+    "--sensord", path.join(dir, "none.socket")], { stdio: "inherit" });
+  const url = `http://127.0.0.1:${SIM_WEB_PORT}`;
+  await until(url, (list) => list.some((r) => r.instance), SIM_START);
+  return { url, servers: [web, daemon, sim] };
+}
+
+async function shootStatus(browser, url) {
+  const page = await browser.newPage({ viewport: VIEWPORT });
+  await page.goto(`${url}/status`);
+  await page.click("#read");
+  await page.waitForSelector("#screen:not(.muted)", { timeout: SIM_START });
+  await page.waitForTimeout(SETTLE);
+  await page.screenshot({ path: path.join(OUT, "web-status.png") });
+  console.log("web-status.png");
+  await page.close();
 }
 
 async function web(browser, url) {
@@ -201,15 +248,20 @@ async function shootTui(browser, command) {
 }
 
 const browser = await chromium.launch();
-let server = null;
+const servers = [];
 try {
   if (opts.url || opts["log-dir"]) {
-    const site = opts.url ? { url: opts.url.replace(/\/$/, "") } : await serve(path.resolve(opts["log-dir"]));
-    server = site.server;
+    const site = opts.url ? { url: opts.url.replace(/\/$/, ""), servers: [] } : await serve(path.resolve(opts["log-dir"]));
+    servers.push(...site.servers);
     await web(browser, site.url);
+  }
+  if (opts.sim) {
+    const site = await simulate();
+    servers.push(...site.servers);
+    await shootStatus(browser, site.url);
   }
   if (opts.tui) await shootTui(browser, opts.tui);
 } finally {
   await browser.close();
-  server?.kill();
+  for (const server of servers) server.kill();
 }

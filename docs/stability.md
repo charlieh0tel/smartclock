@@ -48,9 +48,21 @@ published, and allantools 2024.06's `oadev` on a thousand-reading
 record (regeneration script beside the test) agrees to one part in 10^9
 at every tau from 1 to 200 s, with the same count of differences.
 
-The web view's query keeps a row only where interval or state changed,
-reads at most the newest 500 000 such rows (about two months), and says
-when a range held more.  A curve carries its count of readings, holes
+The web view's query reads one row per run of polls that answered
+alike -- a new run where interval or state changed -- with the run's
+first and last poll, poll count and widest gap between polls; it reads
+at most the newest 500 000 runs (about two months), and says when a
+range held more.  The receiver updates every ten seconds and is polled
+every second, so a run is normally one update.  Two or three updates
+that land on the same value make one run, though: the 58503A's interval
+is coarse, and a week held 227 such pairs and 3 triples.  Read as one reading, each
+left a hole, and the modified deviation, which needs `3 m` readings in a
+row, stopped at 2000 s where ADEV ran to 50 000.  So a run held for two
+or three update periods is that many readings, if it was measured
+throughout, in one state, polled without a miss and as often as its
+length says, and only on a receiver polled at least three times an
+update.  A receiver still answering a value it stopped updating looks
+the same for two or three updates; the cap of three bounds that.  A curve carries its count of readings, holes
 and segments, since a mostly-holes run looks like a clean day.  Points
 below ten second differences are not emitted; the sweep stops at a
 third of the longest segment.  Long ranges are subsampled onto a

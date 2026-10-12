@@ -24,6 +24,7 @@ use rusqlite::OptionalExtension as _;
 use rusqlite::Row;
 use serde::Serialize;
 use smartclock::adev::Curve;
+use smartclock::adev::Logged;
 use smartclock::adev::MAX_SAMPLES;
 use smartclock::snapshot::Tier;
 use smartclock::task::Cadence;
@@ -571,36 +572,53 @@ impl Log {
             // `at` as stored, not in whole seconds: the sub-second part
             // is what decides which grid point a reading belongs to.
             //
-            // A row is kept only where the interval or the state differs
-            // from the row before.  The receiver updates the interval
-            // every ten seconds and is polled every second, so this is
-            // the same thinning `Curve::from_readings` does, done where
-            // it saves reading nine rows in ten into memory; the state
-            // changes are kept because the run must break at them.
-            // Newest first, so the limit keeps the end of the range.
-            "SELECT at, time_interval_s, mode, holdover FROM (
-                 SELECT at, time_interval_s,
-                        COALESCE(mode, 'unknown') AS mode,
-                        COALESCE(holdover_active, 0) AS holdover,
-                        LAG(time_interval_s) OVER previous AS was_interval,
-                        LAG(COALESCE(mode, 'unknown')) OVER previous AS was_mode,
-                        LAG(COALESCE(holdover_active, 0)) OVER previous AS was_holdover
-                 FROM snapshot
-                 WHERE at >= {lower}
-                   AND at < {upper}
-                   AND receiver_id = ?1
-                   AND {MEASURED}
-                 WINDOW previous AS (ORDER BY at))
-             -- IS NOT rather than <>, so a missing interval counts as
-             -- different from a present one: a row without one still
-             -- carries the state, and a run of them is kept by its
-             -- first row.
-             WHERE was_mode IS NULL
-                OR time_interval_s IS NOT was_interval
-                OR mode <> was_mode
-                OR holdover <> was_holdover
-             ORDER BY at DESC
-             LIMIT ?4"
+            // One row per run of polls that answered alike: the
+            // receiver updates the interval every ten seconds and is
+            // polled every second, so this saves reading nine rows in
+            // ten into memory.  A run starts where the interval or the
+            // state differs from the row before, since the curve must
+            // break at a change of state; its first and last poll and
+            // how many there were say how long the value was held,
+            // which is how two updates that landed alike are told
+            // from one (`Curve::from_logged`), and its widest gap
+            // between polls says whether one was missed.  Ordered by
+            // id after `at`, so two rows at one instant still have an
+            // order.  Newest first, so the limit keeps the end of the
+            // range.
+            "SELECT MIN(at), time_interval_s, mode, holdover, COUNT(*), MAX(at),
+                    {widest} FROM (
+                 SELECT at, time_interval_s, mode, holdover,
+                        CASE WHEN starts THEN 0 ELSE at - was_at END AS gap,
+                        SUM(starts) OVER (ORDER BY at, id ROWS UNBOUNDED PRECEDING) AS run
+                 FROM (
+                     SELECT at, id, was_at, time_interval_s, mode, holdover,
+                            -- IS NOT rather than <>, so a missing
+                            -- interval counts as different from a
+                            -- present one: a row without one still
+                            -- carries the state, and a run of them is
+                            -- its own run.
+                            was_mode IS NULL
+                                OR time_interval_s IS NOT was_interval
+                                OR mode <> was_mode
+                                OR holdover <> was_holdover AS starts
+                     FROM (
+                         SELECT at, id, time_interval_s,
+                                LAG(at) OVER previous AS was_at,
+                                COALESCE(mode, 'unknown') AS mode,
+                                COALESCE(holdover_active, 0) AS holdover,
+                                LAG(time_interval_s) OVER previous AS was_interval,
+                                LAG(COALESCE(mode, 'unknown')) OVER previous AS was_mode,
+                                LAG(COALESCE(holdover_active, 0)) OVER previous AS was_holdover
+                         FROM snapshot
+                         WHERE at >= {lower}
+                           AND at < {upper}
+                           AND receiver_id = ?1
+                           AND {MEASURED}
+                         WINDOW previous AS (ORDER BY at, id))))
+             GROUP BY run
+             ORDER BY run DESC
+             LIMIT ?4",
+            widest = seconds("MAX(gap)"),
         ))?;
         // One more than the limit, to know whether there were more.
         let asked = i64::try_from(limit.saturating_add(1)).unwrap_or(i64::MAX);
@@ -610,6 +628,9 @@ impl Log {
                 row.get::<_, Option<f64>>(1)?,
                 row.get::<_, String>(2)?,
                 row.get::<_, i64>(3)? != 0,
+                row.get::<_, i64>(4)?,
+                row.get::<_, Stored>(5).ok(),
+                row.get::<_, f64>(6)?,
             ))
         })?;
 
@@ -617,11 +638,18 @@ impl Log {
         // `Curve::from_logged`.
         let mut logged = Vec::new();
         for row in rows {
-            let (at, interval, mode, holdover) = row?;
-            let Some(Stored(at)) = at else {
+            let (at, interval, mode, holdover, polls, last, widest) = row?;
+            let (Some(Stored(at)), Some(Stored(last))) = (at, last) else {
                 continue;
             };
-            logged.push((at, interval, (mode, holdover)));
+            logged.push(Logged {
+                at,
+                interval,
+                state: (mode, holdover),
+                polls: usize::try_from(polls).unwrap_or(1).max(1),
+                last,
+                widest,
+            });
         }
         let truncated = logged.len() > limit;
         logged.truncate(limit);

@@ -1,6 +1,7 @@
 //! The estimator on made-up records: gaps, holds, segments, and the
 //! identities the three statistics must satisfy.
 use super::Curve;
+use super::Logged;
 use super::MAX_SAMPLES;
 use super::Run;
 use super::Sample;
@@ -93,7 +94,7 @@ fn a_holdover_the_interval_sat_still_through_still_breaks_the_run() {
             }
         })
         .collect();
-    let curve = Curve::from_readings(&samples, &states);
+    let curve = Curve::from_readings(&samples, &states, &[]);
     assert!(curve.segments >= 2, "{} segments", curve.segments);
     for point in &curve.points {
         // The 5 us step would put tau = 1 near 3e-6.
@@ -152,9 +153,9 @@ fn a_holdover_with_no_interval_still_breaks_the_run() {
         let at = start + jiff::SignedDuration::from_secs(i);
         let jitter = 1e-9 * (i % 7) as f64;
         match i {
-            0..200 => (at, Some(jitter), State::Locked),
-            200..205 => (at, None, State::Holdover),
-            _ => (at, Some(5e-6 + jitter), State::Locked),
+            0..200 => Logged::poll(at, Some(jitter), State::Locked),
+            200..205 => Logged::poll(at, None, State::Holdover),
+            _ => Logged::poll(at, Some(5e-6 + jitter), State::Locked),
         }
     });
     let curve = Curve::from_logged(rows);
@@ -180,7 +181,7 @@ fn a_held_reading_counts_once() {
     // readings are one measurement, and counting them as ten puts
     // second differences of zero into the short taus.
     let held = run(100, |i| 1e-9 * (i / 10) as f64);
-    let keep = updates(&held);
+    let keep = updates(&held, &[]);
     assert_eq!(keep, (0..10).map(|i| i * 10).collect::<Vec<_>>());
     let once: Vec<Sample> = keep.iter().map(|&i| held[i]).collect();
     // And the spacing found is the receiver's, not the poll rate.
@@ -487,4 +488,130 @@ fn the_nearest_of_two_readings_in_a_slot_is_kept() {
             "the farther reading was kept: {point:?}"
         );
     }
+}
+
+/// One-second polls of a receiver that updates every ten seconds, the
+/// update `u` reading `value(u)`, the polls in `missed` not made, and
+/// the interval refused in the polls in `refused`.
+fn polled(
+    updates: usize,
+    value: impl Fn(usize) -> f64,
+    missed: &[usize],
+    refused: &[usize],
+) -> Vec<Logged<()>> {
+    let start = Timestamp::from_second(1_700_000_000).expect("a timestamp");
+    (0..updates * 10)
+        .filter(|i| !missed.contains(i))
+        .map(|i| {
+            let at = start + jiff::SignedDuration::from_secs(i as i64);
+            let interval = (!refused.contains(&i)).then(|| value(i / 10));
+            Logged::poll(at, interval, ())
+        })
+        .collect()
+}
+
+/// A ramp of a nanosecond an update, so that no two updates are alike,
+/// except the updates in `alike`, which repeat the one before.
+fn ramp(alike: &'static [usize]) -> impl Fn(usize) -> f64 {
+    move |u| {
+        let repeats = alike.iter().filter(|&&a| a <= u).count();
+        1e-9 * (u - repeats) as f64
+    }
+}
+
+#[test]
+fn updates_that_land_alike_are_each_a_reading() {
+    // Updates 50 and 51 repeat the one before: one value held for
+    // thirty seconds.  It is three readings, not one and two holes.
+    let curve = Curve::from_logged(polled(200, ramp(&[50, 51]), &[], &[]));
+    assert_eq!((curve.present, curve.holes), (200, 0));
+}
+
+/// Polls as the log reader hands them over: one row per run of polls
+/// that answered alike.
+fn grouped(polls: Vec<Logged<()>>) -> Vec<Logged<()>> {
+    let mut runs: Vec<Logged<()>> = Vec::new();
+    for poll in polls {
+        match runs.last_mut() {
+            Some(run) if run.interval == poll.interval => {
+                let gap = (poll.at - run.last)
+                    .total(jiff::Unit::Second)
+                    .expect("a gap");
+                run.widest = run.widest.max(gap);
+                run.polls += 1;
+                run.last = poll.at;
+            }
+            _ => runs.push(poll),
+        }
+    }
+    runs
+}
+
+#[test]
+fn runs_of_polls_read_as_their_polls_do() {
+    // The curve must be the one the polls themselves give.
+    let polls = polled(200, ramp(&[50]), &[], &[]);
+    let (whole, runs) = (
+        Curve::from_logged(polls.clone()),
+        Curve::from_logged(grouped(polls)),
+    );
+    assert_eq!((runs.present, runs.holes), (200, 0));
+    assert_eq!((whole.present, whole.holes), (200, 0));
+}
+
+#[test]
+fn a_poll_missed_inside_a_run_is_seen() {
+    // Seventeen polls over twenty seconds average out to about one a
+    // second; the three missed in the middle still show.
+    let polls = polled(200, ramp(&[51]), &[505, 506, 507], &[]);
+    assert_eq!(Curve::from_logged(grouped(polls)).present, 199);
+}
+
+#[test]
+fn the_newest_value_is_read_as_the_others_are() {
+    // The last two updates alike, with no next value to end them.
+    let polls = polled(200, ramp(&[199]), &[], &[]);
+    assert_eq!(Curve::from_logged(polls.clone()).present, 200);
+    assert_eq!(Curve::from_logged(grouped(polls)).present, 200);
+}
+
+#[test]
+fn a_receiver_polled_about_as_often_as_it_updates_is_read_as_polled() {
+    // Updates every second, polls every two: a value seen twice is a
+    // slow poll as likely as two updates, and is one reading.
+    let start = Timestamp::from_second(1_700_000_000).expect("a timestamp");
+    let polls: Vec<Logged<()>> = (0..300i64)
+        .map(|i| {
+            let value = if i == 100 { 99 } else { i };
+            let at = start + jiff::SignedDuration::from_secs(2 * i);
+            Logged::poll(at, Some(1e-9 * value as f64), ())
+        })
+        .collect();
+    assert_eq!(Curve::from_logged(polls).present, 299);
+}
+
+#[test]
+fn a_value_held_past_a_few_updates_is_one_reading() {
+    // Ten updates alike: the receiver stopped updating, and counting
+    // the hold as ten readings would be ten perfect ones.
+    let alike: &'static [usize] = &[50, 51, 52, 53, 54, 55, 56, 57, 58];
+    let curve = Curve::from_logged(polled(200, ramp(alike), &[], &[]));
+    assert_eq!(curve.present, 191);
+}
+
+#[test]
+fn a_hold_across_a_missed_poll_is_one_reading() {
+    // Polls 505 to 507 not made: the receiver may have updated to
+    // another value and back unseen, so the hold says nothing.
+    let curve = Curve::from_logged(polled(200, ramp(&[51]), &[505, 506, 507], &[]));
+    assert_eq!(curve.present, 199);
+}
+
+#[test]
+fn a_refused_interval_is_not_a_reading() {
+    // The interval refused through update 51: the stand-in repeats the
+    // last value, which the receiver did not measure again.
+    let refused: Vec<usize> = (510..520).collect();
+    let curve = Curve::from_logged(polled(200, ramp(&[51]), &[], &refused));
+    assert_eq!(curve.present, 199);
 }

@@ -93,6 +93,41 @@ pub struct Sample {
     pub interval: f64,
 }
 
+/// A row of the log as [`Curve::from_logged`] reads it: a run of polls
+/// that answered alike, from `at` to `last`.
+#[derive(Debug, Clone)]
+pub struct Logged<S> {
+    /// The run's first poll.
+    pub at: Timestamp,
+    /// The interval, in seconds; `None` where the receiver refused it.
+    pub interval: Option<f64>,
+    /// The receiver's state, which a run must not be joined across a
+    /// change of.
+    pub state: S,
+    /// How many polls the run holds, one or more.
+    pub polls: usize,
+    /// The run's last poll.
+    pub last: Timestamp,
+    /// The longest gap between two of the run's polls, in seconds; 0
+    /// for a run of one.  A poll missed inside a long run shows here
+    /// and not in its count and span, which average it away.
+    pub widest: f64,
+}
+
+impl<S> Logged<S> {
+    /// One poll on its own.
+    pub fn poll(at: Timestamp, interval: Option<f64>, state: S) -> Self {
+        Self {
+            at,
+            interval,
+            state,
+            polls: 1,
+            last: at,
+            widest: 0.0,
+        }
+    }
+}
+
 /// One point of the deviation curve.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Point {
@@ -592,8 +627,8 @@ impl Curve {
     ///
     /// A range too long to grid at full rate is gridded more coarsely;
     /// see [`MAX_SAMPLES`].
-    fn from_readings<S: PartialEq>(samples: &[Sample], states: &[S]) -> Self {
-        let keep = updates(samples);
+    fn from_readings<S: PartialEq>(samples: &[Sample], states: &[S], fresh: &[bool]) -> Self {
+        let keep = updates(samples, fresh);
         let kept: Vec<Sample> = keep.iter().map(|&i| samples[i]).collect();
         // broken[k]: the state changed somewhere after kept reading k-1
         // and up to kept reading k.
@@ -608,7 +643,8 @@ impl Curve {
     }
 
     /// As `Curve::from_readings`, for rows as the log holds them,
-    /// with the interval possibly missing.
+    /// with the interval possibly missing, each standing for a run of
+    /// polls that answered alike.
     ///
     /// A row without an interval is still evidence of the receiver's
     /// state: a holdover during which the interval was refused lies
@@ -617,19 +653,38 @@ impl Curve {
     /// the reading before, which `updates` drops as a reading while
     /// its state still counts.  One before any reading has nothing to
     /// repeat and is left out.
-    pub fn from_logged<S: PartialEq>(
-        rows: impl IntoIterator<Item = (Timestamp, Option<f64>, S)>,
-    ) -> Self {
+    ///
+    /// A value held for two or three of the receiver's updates is that
+    /// many readings: two updates that land on the same value answer
+    /// alike, and a 58503A's interval is coarse enough that a week
+    /// held 227 such pairs and 3 triples.  Read as one reading, each
+    /// left a hole, and the modified deviation, which needs `3 m`
+    /// readings in a row, ended where the holes came closer together
+    /// than that.  See [`repeated_updates`].
+    pub fn from_logged<S: PartialEq>(rows: impl IntoIterator<Item = Logged<S>>) -> Self {
         let mut samples: Vec<Sample> = Vec::new();
-        let mut states = Vec::new();
-        for (at, interval, state) in rows {
-            let Some(interval) = interval.or_else(|| samples.last().map(|s| s.interval)) else {
+        let mut kept: Vec<Logged<S>> = Vec::new();
+        for row in rows {
+            let Some(interval) = row.interval.or_else(|| samples.last().map(|s| s.interval)) else {
                 continue;
             };
-            samples.push(Sample { at, interval });
-            states.push(state);
+            samples.push(Sample {
+                at: row.at,
+                interval,
+            });
+            kept.push(row);
         }
-        Self::from_readings(&samples, &states)
+        let mut readings: Vec<(Sample, &S, bool)> = samples
+            .iter()
+            .zip(&kept)
+            .map(|(sample, row)| (*sample, &row.state, false))
+            .collect();
+        readings.extend(repeated_updates(&samples, &kept));
+        readings.sort_by_key(|(sample, _, _)| sample.at);
+        let samples: Vec<Sample> = readings.iter().map(|(sample, _, _)| *sample).collect();
+        let states: Vec<&S> = readings.iter().map(|(_, state, _)| *state).collect();
+        let fresh: Vec<bool> = readings.iter().map(|(_, _, fresh)| *fresh).collect();
+        Self::from_readings(&samples, &states, &fresh)
     }
 
     /// Measure a set of readings, splitting them where `discontinuous`
@@ -677,24 +732,153 @@ fn stride(readings: usize) -> usize {
 /// so every triple inside one update reads as perfect stability and
 /// `sigma_y` at the shortest taus is dragged toward nothing.
 ///
-/// Two consecutive updates that happen to land on the same value are
-/// merged with them, which loses one sample and leaves a hole the
-/// estimator already knows how to skip.  At the resolution these are
-/// reported to -- 0.1 ns against a typical step of some nanoseconds --
-/// that is rare enough to prefer over keeping the repeats.
+/// Two consecutive updates that land on the same value look like one
+/// held value; [`repeated_updates`] finds them and marks them `fresh`,
+/// which keeps them whatever their value.
 /// Returns the indices to keep, so a caller holding anything alongside
 /// the readings -- the mode and holdover flag that decide where a run
 /// is cut -- can drop the same ones and stay in step.
-fn updates(samples: &[Sample]) -> Vec<usize> {
+fn updates(samples: &[Sample], fresh: &[bool]) -> Vec<usize> {
     let mut keep: Vec<usize> = Vec::with_capacity(samples.len());
     let mut held: Option<f64> = None;
     for (i, sample) in samples.iter().enumerate() {
-        if held != Some(sample.interval) {
+        if held != Some(sample.interval) || fresh.get(i).copied().unwrap_or(false) {
             held = Some(sample.interval);
             keep.push(i);
         }
     }
     keep
+}
+
+/// The most updates in a row one held value is taken to stand for.
+///
+/// A value held longer than this is not taken for updates that landed
+/// alike: the receiver had stopped updating, and counting it as many
+/// readings would put second differences of zero into the curve.  At a
+/// 58503A's resolution, three alike in a row came three times in a
+/// week and four would come about once a year.
+const MAX_REPEATED_UPDATES: usize = 3;
+
+/// How far a held value's length may be from a whole number of update
+/// periods, in periods, and be taken for that many updates.
+const UPDATE_TOLERANCE: f64 = 0.25;
+
+/// How far apart two polls may be, in poll periods, and still be
+/// consecutive: further, and one was missed, and the receiver may have
+/// updated unseen.
+const POLL_TOLERANCE: f64 = 1.5;
+
+/// The fewest polls an update period must span for a held value to be
+/// taken for several updates.  A receiver polled about as often as it
+/// updates shows its updates as changes of value already, and a held
+/// value there is more likely a slow or missed poll than updates alike.
+const MIN_POLLS_PER_UPDATE: f64 = 3.0;
+
+/// The readings a held value stands for beyond its first: for each
+/// value held for `n` of the receiver's update periods, `n` from two to
+/// [`MAX_REPEATED_UPDATES`], `n - 1` more, one update period apart,
+/// with the value's state.
+///
+/// Only a value that was measured throughout, in one state, and polled
+/// without a miss, as often as its length says it should have been: a
+/// stand-in for a refused interval holds the last value without the
+/// receiver having measured it again, a change of state is a boundary
+/// the run breaks at anyway, and across a missed poll the receiver may
+/// have updated to another value unseen.  The newest value, which has
+/// no next one to end it, is taken to end a poll after its last.
+///
+/// What the log cannot show is a receiver that went on answering a
+/// value it had stopped updating: two or three updates of that look
+/// exactly like updates that landed alike.  [`MAX_REPEATED_UPDATES`]
+/// bounds what such a stall can add.
+///
+/// The update period is the median length of a held value and the poll
+/// period the median spacing of the polls, both from the rows
+/// themselves.
+fn repeated_updates<'a, S: PartialEq>(
+    samples: &[Sample],
+    rows: &'a [Logged<S>],
+) -> Vec<(Sample, &'a S, bool)> {
+    let seconds =
+        |from: Timestamp, to: Timestamp| (to - from).total(jiff::Unit::Second).unwrap_or(f64::NAN);
+    let median = |mut values: Vec<f64>| {
+        values.retain(|v| v.is_finite() && *v > 0.0);
+        values.sort_by(f64::total_cmp);
+        values.get(values.len() / 2).copied()
+    };
+    // Within a row where it holds several polls, or else between rows.
+    let within: Vec<f64> = rows
+        .iter()
+        .filter(|row| row.polls > 1)
+        .map(|row| seconds(row.at, row.last) / (row.polls - 1) as f64)
+        .collect();
+    let between = rows
+        .windows(2)
+        .map(|w| seconds(w[0].last, w[1].at))
+        .collect();
+    let Some(poll) = median(within).or_else(|| median(between)) else {
+        return Vec::new();
+    };
+    let keep = updates(samples, &[]);
+    let Some(update) = median(
+        keep.windows(2)
+            .map(|w| seconds(samples[w[0]].at, samples[w[1]].at))
+            .collect(),
+    ) else {
+        return Vec::new();
+    };
+    if update < MIN_POLLS_PER_UPDATE * poll {
+        return Vec::new();
+    }
+    let consecutive = |gap: f64| gap <= POLL_TOLERANCE * poll;
+    let mut more = Vec::new();
+    for (k, &first) in keep.iter().enumerate() {
+        let next = keep.get(k + 1).copied();
+        let held = &rows[first..next.unwrap_or(rows.len())];
+        let Some(end) = (match next {
+            Some(next) => {
+                consecutive(seconds(rows[next - 1].last, rows[next].at)).then(|| samples[next].at)
+            }
+            None => held
+                .last()
+                .map(|row| row.last + jiff::SignedDuration::from_secs_f64(poll)),
+        }) else {
+            continue;
+        };
+        let length = seconds(samples[first].at, end);
+        let polls: usize = held.iter().map(|row| row.polls).sum();
+        let polled = held.iter().all(|row| consecutive(row.widest))
+            && held
+                .windows(2)
+                .all(|pair| consecutive(seconds(pair[0].last, pair[1].at)))
+            && (polls as f64 - length / poll).abs() <= POLL_TOLERANCE;
+        let alike = held
+            .iter()
+            .all(|row| row.interval.is_some() && row.state == rows[first].state);
+        let periods = length / update;
+        let count = periods.round();
+        if !(polled && alike && (periods - count).abs() <= UPDATE_TOLERANCE) {
+            continue;
+        }
+        #[expect(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            reason = "rounded, and checked against a small bound before use"
+        )]
+        let count = count.max(0.0) as usize;
+        if !(2..=MAX_REPEATED_UPDATES).contains(&count) {
+            continue;
+        }
+        for step in 1..count {
+            let at = samples[first].at + jiff::SignedDuration::from_secs_f64(update * step as f64);
+            let reading = Sample {
+                at,
+                interval: samples[first].interval,
+            };
+            more.push((reading, &rows[first].state, true));
+        }
+    }
+    more
 }
 
 /// The interval between readings, in seconds, taken from the readings

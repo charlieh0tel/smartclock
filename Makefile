@@ -17,7 +17,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web doc docs check-pages clean deb release release-notes install-service
+.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages clean deb release release-notes install-service
 
 all: build
 
@@ -72,6 +72,15 @@ web-deps:
 test-web:
 	$(CARGO) build -p smartclock-web
 	cd $(WEB_TESTS) && npm test
+
+# The README's screenshots, into docs/images.  Give a running web view
+# or a directory of logs, and a command running the terminal monitor
+# for its screenshot; see tools/screenshots.mjs.  Needs `make
+# web-deps` once.  For example:
+#   make screenshots SHOTS_FROM="--url http://apu-0:9980" \
+#     SHOTS_TUI="ssh -t apu-0 smartclockmon --daemon /run/smartclockd/ttyUSB0/socket"
+screenshots:
+	node tools/screenshots.mjs $(SHOTS_FROM) $(if $(SHOTS_TUI),--tui '$(SHOTS_TUI)')
 
 doc:
 	$(CARGO) doc --workspace --no-deps --all-features

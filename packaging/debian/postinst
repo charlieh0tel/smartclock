@@ -14,6 +14,11 @@ configure)
     if getent group dialout >/dev/null; then
         adduser smartclockd dialout || true
     fi
+    # The units' StateDirectory= makes these only when a service first
+    # starts; made here, with the same owner and mode, a log can be put
+    # in place, or read, before then.
+    install -d -o smartclockd -g smartclockd -m 0750 \
+        /var/lib/smartclockd /var/lib/smartclock-sensord
     ;;
 esac
 

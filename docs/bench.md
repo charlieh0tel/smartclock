@@ -24,8 +24,9 @@ Connected; its EFC gain was measured on 2026-10-10
 Power supply: BSC CV90-15357-2, for 38 to 60 V DC in; the rear
 panel lists it and the BTS CV90-15357-1, for 19.5 to 30 V, and marks
 BSC.  It is substantially the same board as the Z3805A's, with the
-same Datel UWR-5/4000-D48 converter and AT&T DC-DC module, and three
-RIFA capacitors marked 10n Y2, not yet replaced.
+same Datel UWR-5/4000-D48 converter and AT&T DC-DC module, and the
+same three RIFA PME271 Y 10 nF capacitors on its DC input, not yet
+replaced.
 
 Main board Z3801-68001, serial 5UW00ME, date code 3549.  Not fitted on it: U17,
 U18, J4, J5, J6, J7, J8, J15 and the parts of the 10 MHz OUT B stage
@@ -141,7 +142,7 @@ not a failing crystal.
 
     HEWLETT-PACKARD,Z3805A,3625A01487,3543B-A
 
-Oscillator serial 4505A05096.  Main board Z3805-68001, no revision
+Oscillator serial 3505A05096, from its label.  Main board Z3805-68001, no revision
 marked, serial 6E9008G, date code 3627.  Its four flash parts are
 labeled Z3805-80001 to -80004, Rev C, at U11 (2L), U12 (1L), U13 (2M)
 and U14 (1M).  Its jacks

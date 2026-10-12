@@ -72,16 +72,19 @@ footer { grid-column: 1 / -1; color: var(--dim); font-size: 11px; }
 .uplot { width: 100% !important; }
 /* The journal is three tables of mostly text in one panel, so it
    scrolls on its own rather than pushing the chart off the screen. */
-/* One readout for the whole stack, since the cursor is one cursor. */
-#readout { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: baseline;
-           min-height: 1.4em; font-size: 12px; font-variant-numeric: tabular-nums; }
+/* One readout for the whole stack, since the cursor is one cursor.  A
+   grid of equal cells, label left and value right, so the values line
+   up in columns and the row count does not change as the cursor moves
+   and the values change width, which would move the panels below. */
+#readout { display: grid; grid-template-columns: repeat(auto-fill, minmax(36ch, 1fr));
+           gap: 2px 24px; min-height: 1.4em; font-size: 12px;
+           font-variant-numeric: tabular-nums; }
+#readout > span { display: flex; justify-content: space-between; gap: 1ch;
+                  min-width: 0; white-space: nowrap; }
 #readout .w { color: var(--dim); }
-#readout .k { color: var(--dim); }
-/* Room for a value whether or not the cursor is on one, so the cells
-   neither shift nor rewrap, and the panels below stay put, as it moves. */
-#readout .v { color: var(--text); display: inline-block; min-width: 10ch; }
-#readout .at { min-width: 12ch; }
-#readout .note { flex-basis: 100%; white-space: nowrap; overflow: hidden;
+#readout .k { color: var(--dim); overflow: hidden; text-overflow: ellipsis; }
+#readout .v { color: var(--text); }
+#readout .note { grid-column: 1 / -1; display: block; overflow: hidden;
                  text-overflow: ellipsis; }
 /* A person's note, beside the pointer while it is on the note's line. */
 #note-tip { position: fixed; display: none; pointer-events: none; z-index: 10;

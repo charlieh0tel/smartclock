@@ -472,7 +472,7 @@ function readout() {
   // The note has a line of its own, there whether or not one is near,
   // so the panel keeps its height when a note comes and goes.
   el.innerHTML =
-    `<span class="v at">${at ? esc(at.toLocaleTimeString()) : "--:--:--"}</span>` +
+    `<span class="v">${at ? esc(at.toLocaleTimeString()) : "--:--:--"}</span>` +
     cells.join("") +
     `<span class="note">${note ? `<span class="k" style="color:${NOTE}">note</span> ${esc(note)}` : "&nbsp;"}</span>`;
 }

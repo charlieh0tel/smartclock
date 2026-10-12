@@ -15,6 +15,31 @@ amp, feeding every bench receiver and the u-blox.  It once fed the
 Z3805A alone, as the dated results below say; when it moved is not
 recorded.
 
+The gain block came out on the afternoon of 2026-10-11.  Since then
+there are two distribution amps of the same make and model, each
+taking antenna power from one port.  One is fed by a pinwheel antenna
+over RG-174, the other by a Taoglas antenna with integrated RG-174 of
+about the same length.  The 58503A is on one amp, through a short
+RG-174 lead; the u-blox NEO-M8T is on the other.
+
+On 2026-10-12 the antennas were swapped between the two amps' inputs,
+each with its own feedline, the amps' outputs and receiver leads
+unchanged.  Over 30 minutes either side of the swap (06:04 to 06:35
+and 06:41 to 07:11 UTC):
+
+| Receiver | On the Taoglas | On the pinwheel |
+| -------- | -------------- | --------------- |
+| u-blox, GPS satellites used at 10° and above | 9.9 | 9.2 |
+| u-blox, mean (median) C/N0 of those, dB-Hz | 38.5 (41) | 38.2 (41) |
+| 58503A, satellites tracked | 5.6 | 3.1 |
+| 58503A, mean signal reading of those | 27.9 | 23.5 |
+
+The u-blox read the two antennas within 0.3 dB.  The 58503A tracked
+more on the Taoglas, but on either it is well short of the 6 to 7
+satellites and signal reading of about 68 it held through 14:00 local
+on 2026-10-11 with the gain block ahead of it.  The 58503A's signal
+reading is its status screen's, whose scale is not documented.
+
 ## HP Z3801A, serial 3542A01548
 
 Connected; its EFC gain was measured on 2026-10-10

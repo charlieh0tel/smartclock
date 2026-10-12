@@ -1,3 +1,12 @@
+smartclockmon (1.6.4-1) unstable; urgency=low
+
+  * The web view waits 60 s for a read of the logs, where it gave up
+    after 5: a long history on a slow host drew nothing.
+  * The Compare tab is hidden while the logs hold fewer than two
+    receivers.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Sun, 11 Oct 2026 18:58:30 -0700
+
 smartclockmon (1.6.3-1) unstable; urgency=low
 
   * The package makes /var/lib/smartclockd and

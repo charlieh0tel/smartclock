@@ -1,3 +1,16 @@
+smartclockmon (1.6.9-1) unstable; urgency=low
+
+  * The modified deviation reaches as far as the plain one: two or
+    three of the receiver's updates that land on the same value count
+    as that many readings, where each pair left a hole and cut the
+    curve short.  On a week of a 58503A, MDEV now reaches 20000 s
+    where it stopped at 2000.
+  * The stability and compare pages stop drawing a curve where its
+    one-sigma band spans more than a factor of two; the table keeps
+    every point.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Mon, 12 Oct 2026 16:35:54 -0700
+
 smartclockmon (1.6.8-1) unstable; urgency=low
 
   * The chart readout is laid out in aligned columns, label left and

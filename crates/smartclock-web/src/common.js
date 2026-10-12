@@ -178,6 +178,12 @@ async function listReceivers() {
   const list = await getJson("/api/receivers");
   if (list.error || !Array.isArray(list)) return;
   receivers = list;
+  // Compare sets receivers against each other; with one or none it only
+  // repeats the live and stability pages.  Read again with the list, so
+  // the tab comes back when a second receiver's log appears.
+  for (const link of document.querySelectorAll('nav a[href*="/compare"]')) {
+    link.hidden = list.length < 2;
+  }
   if (unit === null && list.length) {
     const asked = new URLSearchParams(location.search).get("receiver");
     unit = (list.find((r) => r.serial === asked) ?? list[0]).serial;

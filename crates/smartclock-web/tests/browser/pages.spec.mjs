@@ -488,6 +488,20 @@ test("a host without sensors offers none", async ({ page }) => {
   await expect(page.locator("#status .sensor")).toHaveCount(0);
 });
 
+test("the compare tab is hidden with one receiver", async ({ page }) => {
+  await open(page, new Fake([receiver(A, MODE[A], 111)]), "/");
+  await expect(page.locator("#about")).toContainText(A);
+  // Present but hidden, not merely missing.
+  await expect(page.locator('nav a[href*="/compare"]')).toHaveCount(1);
+  await expect(page.locator('nav a[href*="/compare"]')).toBeHidden();
+});
+
+test("the compare tab shows with two receivers", async ({ page }) => {
+  await open(page, twoUnits(), "/");
+  await expect(page.locator("#about")).toContainText(A);
+  await expect(page.locator('nav a[href*="/compare"]')).toBeVisible();
+});
+
 test("a history slower than the strip's timeout is still drawn", async ({ page }) => {
   // A slow host takes several seconds to read days of the log; the
   // page must wait for it rather than give up at the strip's 5 s.

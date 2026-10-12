@@ -140,9 +140,11 @@ cannot be fetched, the page says so instead of showing an empty
 frame.
 
 `/compare` overlays every receiver the logs hold over one range: 1 PPS
-TI, EFC, temperature, TFOM and FFOM a chart each with a line per
-receiver, the host's sensors below them a chart per quantity, and the
+TI, EFC, temperature, TFOM, FFOM and the predicted holdover uncertainty
+a chart each with a line per receiver, the host's sensors below them a chart per quantity, and the
 receivers' MDEV (solid) and ADEV (dashed) curves on one plot.
+Its tab is hidden while the logs hold fewer than two receivers, and
+comes back when a second appears.
 A checkbox per receiver chooses which are drawn, ticked at first for
 every one with readings in the range, and each receiver keeps one
 color.  Each 1 PPS TI is against that receiver's own GPS solution, so

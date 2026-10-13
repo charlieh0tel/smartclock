@@ -156,9 +156,9 @@ range longer than one measurement reads says it covers the newest
 part.
 
 `/correlation` sets two measures against each other over one range:
-the chosen receiver's EFC, internal temperature or 1 PPS TI, any of
-the host's sensors, or another receiver's EFC.  Each is charted
-against time, then Y against X with its least-squares line, then r as
+the chosen receiver's EFC, internal temperature, oven current or 1
+PPS TI, any of the host's sensors, or another receiver's EFC.  Each is
+charted against time, then Y against X with its least-squares line, then r as
 Y is moved against X, a bucket at a time, two hours either way, so a
 peak, marked with its r and r², says which leads and by how much.  The figures are r,
 r², both also in the scatter's title, r of the bucket-to-bucket

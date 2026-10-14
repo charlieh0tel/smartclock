@@ -73,6 +73,9 @@ regulators on the output bracket, the -15 V one an LM7915.
 
 ![The 58503A's original power supply, Power-One MAP55-4003, out of the receiver: the outputs at the left, AC input at the right](images/58503A-60001_RevC/58503a-power-supply.jpg)
 
+Its parts, numbered on the photo:
+[`map55-4003.html`](https://htmlpreview.github.io/?https://github.com/charlieh0tel/smartclockmon/blob/main/docs/map55-4003.html).
+
 ## HP Z3801A, serial 3542A01548
 
 Connected; its EFC gain was measured on 2026-10-10

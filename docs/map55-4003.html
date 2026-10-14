@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAP55-4003 Parts Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: the photo with numbered pins beside the list they key, then
+   the ratings and safety cards.  One column below 860 px. */
+:root {
+  --bg: #eef0ee; --panel: #ffffff; --ink: #1b2320; --muted: #5a6661; --line: #d3d9d6;
+  --pri: #c8401f; --sec: #1f7a6c; --other: #a26a00; --ring: #ffffff;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121715; --panel: #1b2220; --ink: #e4ebe8; --muted: #9aa7a2; --line: #2e3834;
+    --pri: #ff7650; --sec: #4cc3ae; --other: #e6ac3a; --ring: #121715; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121715; --panel: #1b2220; --ink: #e4ebe8; --muted: #9aa7a2; --line: #2e3834;
+  --pri: #ff7650; --sec: #4cc3ae; --other: #e6ac3a; --ring: #121715; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 "IBM Plex Sans", system-ui, sans-serif; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 48px; display: grid; gap: 20px; }
+header h1 { font-size: 1.6rem; margin: 0; text-wrap: balance; font-weight: 600; }
+header p { margin: 4px 0 0; color: var(--muted); }
+a { color: inherit; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.tag { font: 600 11px/1 "IBM Plex Mono", monospace; letter-spacing: .06em; text-transform: uppercase; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+.main { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .main { grid-template-columns: 1fr; } }
+.photo { position: relative; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); line-height: 0; }
+.photo img { width: 100%; height: auto; display: block; }
+.pin { position: absolute; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 50%;
+  border: 2px solid var(--ring); color: #fff; font: 600 13px/26px "IBM Plex Mono", monospace; text-align: center;
+  cursor: pointer; box-shadow: 0 1px 4px rgba(0, 0, 0, .5); padding: 0; }
+.pri { background: var(--pri); } .sec { background: var(--sec); } .other { background: var(--other); }
+.pin:focus-visible, .pin.on { outline: 3px solid #fff; outline-offset: 2px; transform: translate(-50%, -50%) scale(1.2); }
+@media (max-width: 520px) { .pin { width: 22px; height: 22px; font-size: 11px; line-height: 18px; } }
+#list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+#list li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+#list li.on { border-color: var(--ink); }
+.n { width: 24px; height: 24px; border-radius: 50%; color: #fff; font: 600 12px/24px "IBM Plex Mono", monospace; text-align: center; }
+#list b { display: block; font-weight: 600; }
+#list span { color: var(--muted); font-size: 14px; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; }
+.card h2 { font: 600 12px/1.4 "IBM Plex Mono", monospace; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 8px; color: var(--muted); }
+.card p { margin: 0 0 8px; }
+.card p:last-child { margin: 0; }
+.warn { border-left: 3px solid var(--pri); }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 14px; width: 100%; }
+th, td { text-align: left; padding: 3px 10px 3px 0; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Power-One MAP55-4003</h1>
+    <p>The HP 58503A's original power supply (serial 3710A01056), out of the receiver.  It hiccups at startup; the receiver has run on a replacement of the same model since 2026-10-01.  See <a href="bench.md#power-supplies"><code>bench.md</code>, "Power supplies"</a>.</p>
+    <div class="tags"><span class="tag">Date code 07/97</span><span class="tag">+5 / +15 / −5 / −15 V</span><span class="tag">55 W flyback</span><span class="tag">Assembled in Dominican Republic</span></div>
+  </header>
+
+  <div class="legend">
+    <span><i class="pri"></i>Primary side (mains)</span>
+    <span><i class="sec"></i>Secondary side</span>
+    <span><i class="other"></i>Not identified, or not part of the supply</span>
+  </div>
+
+  <div class="main">
+    <div class="photo" id="photo">
+      <img src="images/58503A-60001_RevC/58503a-power-supply.jpg"
+           onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/charlieh0tel/smartclockmon/main/docs/images/58503A-60001_RevC/58503a-power-supply.jpg'"
+           alt="Top view of the MAP55-4003 open-frame supply: outputs at the left, AC input at the right, a 100 ohm test load on the output connector">
+    </div>
+    <ol id="list"></ol>
+  </div>
+
+  <div class="notes">
+    <div class="card">
+      <h2>Ratings</h2>
+      <p>From Bel's MAP55 data sheet, BCD.00564_H (2024), for the MAP55-4003G7 that succeeds it.</p>
+      <div class="scroll">
+        <table>
+          <tr><th>Output</th><th>Rated</th><th>Peak</th><th>Setting</th></tr>
+          <tr><td>+5 V, adj. 4.7–5.6 V</td><td>6 A</td><td>8 A</td><td>5.0–5.2 V</td></tr>
+          <tr><td>+15 V</td><td>2.5 A</td><td>3.5 A</td><td>14.6–15.4 V</td></tr>
+          <tr><td>−5 V</td><td>0.5 A</td><td>1 A</td><td>−4.8 to −5.2 V</td></tr>
+          <tr><td>−15 V</td><td>0.5 A</td><td>1 A</td><td>−14.4 to −15.6 V</td></tr>
+        </table>
+      </div>
+      <p>55 W continuous; 90–132 or 175–264 V AC in.</p>
+    </div>
+    <div class="card">
+      <h2>Minimum load</h2>
+      <p>0.50 A on the main channel, +5 V: "all multiple output models, main channel only".  Its regulation figures are for loads from 20% to 100%.</p>
+      <p>Tested out of the receiver, the supply needs at least 0.50 A drawn from +5 V: 10 Ω or less.</p>
+    </div>
+    <div class="card warn">
+      <h2>Safety</h2>
+      <p>Everything right of the transformer is mains-referenced.  Probe it through an isolation transformer or with a differential probe.  Discharge the 400 V capacitors, 3 and 4, before touching the primary.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// Each pin: its position on the photo in percent, its side, title and
+// description.
+const items = [
+  { x: 56.7, y: 36.6, c: "pri", t: "Small electrolytic, primary side",
+    d: "Between the transformer and the switch's clamp bar; the only primary-side capacitor of its size on the top side.  Its circuit is not traced." },
+  { x: 67.5, y: 28.6, c: "pri", t: "Primary switch",
+    d: "A three-lead MOSFET under the clamp bar, held to the chassis, pinned S-D-G from the right.  The PWM controller is a separate IC, not on the top side." },
+  { x: 64.4, y: 50.0, c: "pri", t: "Bulk capacitor, 47 µF 400 V, about 18 mm",
+    d: "On the rectified mains.  Holds a charge after unplugging." },
+  { x: 76.5, y: 46.4, c: "pri", t: "Bulk capacitor, 100 µF 400 V, 85 °C, 22 mm",
+    d: "On the rectified mains with 3." },
+  { x: 48.9, y: 52.6, c: "pri", t: "Transformer, FS9709K, 07/97",
+    d: "Its brown adhesive has flowed onto the pads beside it, with a dark blob at the pin corner." },
+  { x: 34.2, y: 53.6, c: "sec", t: "Output rectifiers and linear regulators",
+    d: "On the output bracket.  −5 V and −15 V come from LM79xx linear regulators, the −15 V one an LM7915; +15 V has no linear regulator." },
+  { x: 22.5, y: 32.0, c: "sec", t: "Output filter capacitors, 12 mm",
+    d: "Values not read." },
+  { x: 12.4, y: 56.7, c: "other", t: "Test load, 100 Ω 5 W, on +15 V",
+    d: "Not part of the supply." },
+  { x: 74.5, y: 63.9, c: "pri", t: "AC input and fuse, 2 A 250 V",
+    d: "Live whenever the supply is plugged in." },
+  { x: 47.4, y: 30.9, c: "other", t: "Toroid",
+    d: "A red magnet-wire winding with a white wire looped once through it, beside a TO-92 pair and a green film capacitor.  Current-sense or gate-drive transformer; not identified." },
+];
+const photo = document.getElementById("photo"), list = document.getElementById("list");
+function select(i) {
+  document.querySelectorAll(".on").forEach((e) => e.classList.remove("on"));
+  document.querySelectorAll(`[data-i="${i}"]`).forEach((e) => e.classList.add("on"));
+}
+items.forEach((it, i) => {
+  const pin = document.createElement("button");
+  pin.className = `pin ${it.c}`;
+  pin.textContent = i + 1;
+  pin.dataset.i = i;
+  pin.style.left = `${it.x}%`;
+  pin.style.top = `${it.y}%`;
+  pin.setAttribute("aria-label", `${i + 1}: ${it.t}`);
+  pin.onclick = () => { select(i); list.children[i].scrollIntoView({ block: "nearest", behavior: "smooth" }); };
+  photo.appendChild(pin);
+  const li = document.createElement("li");
+  li.dataset.i = i;
+  li.innerHTML = `<div class="n ${it.c}">${i + 1}</div><div><b></b><span></span></div>`;
+  li.querySelector("b").textContent = it.t;
+  li.querySelector("span").textContent = it.d;
+  li.onclick = () => select(i);
+  list.appendChild(li);
+});
+</script>
+</body>
+</html>

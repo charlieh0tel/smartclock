@@ -40,6 +40,39 @@ satellites and signal reading of about 68 it held through 14:00 local
 on 2026-10-11 with the gain block ahead of it.  The 58503A's signal
 reading is its status screen's, whose scale is not documented.
 
+## Power supplies
+
+| Receiver | Supply | Input | State |
+| -------- | ------ | ----- | ----- |
+| Z3801A 3542A01548 | BSC CV90-15357-2 | 38 to 60 V DC | three RIFA PME271 Y capacitors on its DC input, not yet replaced |
+| Z3805A 3625A01487 | Nortel BTS A0696033, on HP board 58503-60002 Rev D | 19.5 to 30 V DC | its three RIFA capacitors replaced 2026-10-11 |
+| 58503A 3710A01056 | Power-One MAP55-4003, date code 07/97 | AC mains | replaced 2026-10-01 with the same model; the original hiccups at startup |
+
+The two Z380x supplies are substantially the same board, each with a
+Datel UWR-5/4000-D48 converter and an AT&T DC-DC module; their own
+sections below give the details.
+
+The 58503A's is an open-frame quad-output flyback.  Bel's MAP55 data
+sheet (BCD.00564_H, 2024, for the MAP55-4003G7 that succeeds it) rates
+it:
+
+| Output | Rated | Peak | Setting |
+| ------ | ----- | ---- | ------- |
+| +5 V, adjustable 4.7 to 5.6 V | 6 A | 8 A | 5.0 to 5.2 V |
+| +15 V | 2.5 A | 3.5 A | 14.6 to 15.4 V |
+| -5 V | 0.5 A | 1 A | -4.8 to -5.2 V |
+| -15 V | 0.5 A | 1 A | -14.4 to -15.6 V |
+
+55 W continuous, and 90 to 132 or 175 to 264 V AC in.  It needs a
+minimum load of 0.50 A on the main channel, +5 V, "all multiple
+output models, main channel only".  Its
+regulation figures are for loads from 20% to 100%.  So a bench test of the
+supply out of the receiver needs at least 0.50 A drawn from +5 V,
+10 Ω or less.  The -5 V and -15 V outputs come from LM79xx linear
+regulators on the output bracket, the -15 V one an LM7915.
+
+![The 58503A's original power supply, Power-One MAP55-4003, out of the receiver: the outputs at the left, AC input at the right](images/58503A-60001_RevC/58503a-power-supply.jpg)
+
 ## HP Z3801A, serial 3542A01548
 
 Connected; its EFC gain was measured on 2026-10-10
@@ -103,6 +136,8 @@ GPS receiver, as `:DIAGnostic:IDENtification:GPSystem?` reports it:
     SERIAL #   SSG0220999
     MANUFACTUR DATE 7D01
     OPTIONS LIST    IB
+
+Power supply: Power-One MAP55-4003 ("Power supplies", above).
 
 Main board: 58503-60001 Rev C, marked hp.  Its output jacks, as the
 operator found them on 2026-10-11:

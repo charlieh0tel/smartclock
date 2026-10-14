@@ -523,6 +523,20 @@ test("a history slower than the strip's timeout is still drawn", async ({ page }
   await page.waitForFunction(() => charts.length > 0, null, { timeout: 30000 });
 });
 
+test("the footer gives each fact its own line", async ({ page }) => {
+  const fake = twoUnits();
+  const answer = fake.answer.bind(fake);
+  fake.answer = (endpoint, u, query) =>
+    endpoint === "facts"
+      ? [
+          { key: "ocxo.model", value: "10811-60159", since: "2026-09-21T12:00:00Z" },
+          { key: "ocxo.serial", value: "3505A15217", since: "2026-09-21T12:00:00Z" },
+        ]
+      : answer(endpoint, u, query);
+  await open(page, fake, "/");
+  await expect(page.locator("#facts > div")).toHaveText([/^ocxo\.model 10811-60159 /, /^ocxo\.serial 3505A15217 /]);
+});
+
 test("the predicted holdover uncertainty is charted in microseconds, on decades, on both pages", async ({ page }) => {
   const fake = twoUnits();
   fake.everyColumn = true;

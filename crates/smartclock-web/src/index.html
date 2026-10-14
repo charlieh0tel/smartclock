@@ -653,12 +653,16 @@ async function loadAbout(signal) {
 }
 
 // What a person recorded the unit is made of, in the footer: each
-// fact at its current value, since when.
+// fact at its current value, since when, a line each.
 async function loadFacts(signal) {
   const facts = await ask("/api/facts?" + withUnit(new URLSearchParams()), signal);
-  $("facts").textContent = facts
-    .map((f) => `${f.key} ${f.value} (since ${new Date(f.since).toLocaleDateString()})`)
-    .join("  --  ");
+  $("facts").replaceChildren(
+    ...facts.map((f) => {
+      const line = document.createElement("div");
+      line.textContent = `${f.key} ${f.value} (since ${new Date(f.since).toLocaleDateString()})`;
+      return line;
+    }),
+  );
 }
 
 // Each part reports its own failure in its own place, so a daemon that

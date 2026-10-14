@@ -1,3 +1,10 @@
+smartclockmon (1.6.11-1) unstable; urgency=low
+
+  * The live page gives each of a receiver's facts its own line in
+    the footer, where they ran together on one.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Tue, 13 Oct 2026 17:14:54 -0700
+
 smartclockmon (1.6.10-1) unstable; urgency=low
 
   * The correlation page offers the receiver's oven current, so it

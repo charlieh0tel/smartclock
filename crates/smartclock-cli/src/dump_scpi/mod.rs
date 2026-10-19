@@ -245,6 +245,20 @@ impl Entry {
             if self.setter.is_some() { " (set)" } else { "" }
         )
     }
+
+    /// The path, then its query handler's and its setter's addresses,
+    /// `-` for one it lacks: input for naming the handlers in a
+    /// disassembler.
+    fn handler_line(&self) -> String {
+        let address =
+            |handler: Option<u32>| handler.map_or("-".to_owned(), |at| format!("{at:#x}"));
+        format!(
+            "{} {} {}",
+            self.path,
+            address(self.query),
+            address(self.setter)
+        )
+    }
 }
 
 /// Every path the tree under `list` holds, prefixed by `prefix`.
@@ -339,9 +353,10 @@ fn entries(bytes: &[u8]) -> Result<Vec<Entry>> {
     Ok(entries)
 }
 
-/// Print one image's paths, one a line; with `models`, the trees of
-/// all of them side by side, as Markdown or with `html` as a page.
-pub(crate) fn run(images: &[PathBuf], models: bool, html: bool) -> Result<()> {
+/// Print one image's paths, one a line, with `handlers` each followed
+/// by its handlers' addresses; with `models`, the trees of all of them
+/// side by side, as Markdown or with `html` as a page.
+pub(crate) fn run(images: &[PathBuf], models: bool, html: bool, handlers: bool) -> Result<()> {
     if models {
         let trees = image::load_all(images, entries)?;
         if html {
@@ -355,7 +370,11 @@ pub(crate) fn run(images: &[PathBuf], models: bool, html: bool) -> Result<()> {
         bail!("give one image, or --models and any number");
     };
     for entry in image::load(image, entries)? {
-        println!("{}", entry.line());
+        if handlers {
+            println!("{}", entry.handler_line());
+        } else {
+            println!("{}", entry.line());
+        }
     }
     Ok(())
 }
@@ -395,6 +414,26 @@ mod tests {
                 .expect("the tree is in the repository");
             let read = dump(&image).expect("the image has a tree");
             assert_eq!(read, held.lines().collect::<Vec<_>>(), "{name}");
+        }
+    }
+
+    /// The handlers docs/firmware/interval.md, "In every image", found
+    /// by reading the Z3805A 3543B's code, are the ones the tree gives.
+    #[test]
+    fn handler_lines_give_the_handlers_the_firmware_notes_found() {
+        let root = format!("{}/../..", env!("CARGO_MANIFEST_DIR"));
+        let image = std::fs::read(format!("{root}/third_party/firmware/z3805a-3543b.bin"))
+            .expect("the image is in the repository");
+        let lines: Vec<String> = entries(&image)
+            .expect("the image has a tree")
+            .iter()
+            .map(Entry::handler_line)
+            .collect();
+        for wanted in [
+            ":SOURce:SYNChronization:TINTerval 0x300b2 -",
+            ":DIAGnostic:PTIMe:TINTerval 0x2b896 -",
+        ] {
+            assert!(lines.iter().any(|line| line == wanted), "{wanted}");
         }
     }
 

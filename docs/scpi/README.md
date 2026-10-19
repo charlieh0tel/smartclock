@@ -5,6 +5,12 @@ image in `third_party/firmware/`, as `smartclock-cli dump-scpi IMAGE`
 prints it.  A test regenerates each and fails if it differs from the
 file here, so the files and the images cannot drift apart.
 
+`dump-scpi --handlers IMAGE` follows each path with its query
+handler's and its setter's addresses, `-` for one it lacks, to name
+them in a disassembler (`docs/firmware/README.md`, "Decompiling with
+Ghidra").  A test checks two against the handlers the firmware notes
+found by reading the code.
+
 A path here means the parser knows it, not that a receiver answers it.
 Nothing here was sent to a receiver.
 

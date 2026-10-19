@@ -175,6 +175,11 @@ enum Command {
         /// of Markdown (docs/scpi/models.html).
         #[arg(long, requires = "models")]
         html: bool,
+        /// Follow each path with its query handler's and its setter's
+        /// addresses, `-` for one it lacks, to name them in a
+        /// disassembler (tools/ghidra/).
+        #[arg(long, conflicts_with = "models")]
+        handlers: bool,
     },
     /// Print every word a flash image's pForth console knows, from its
     /// dictionary and its diagnostic table (docs/firmware/pforth/README.md).
@@ -350,9 +355,10 @@ fn main() -> Result<()> {
         images,
         models,
         html,
+        handlers,
     } = &cli.command
     {
-        return dump_scpi::run(images, *models, *html);
+        return dump_scpi::run(images, *models, *html, *handlers);
     }
     if let Command::DumpPforth { images, models } = &cli.command {
         return dump_pforth::run(images, *models);
@@ -1034,7 +1040,8 @@ fn through_daemon(socket: &Path, command: &Command) -> Result<()> {
             images,
             models,
             html,
-        } => dump_scpi::run(images, *models, *html),
+            handlers,
+        } => dump_scpi::run(images, *models, *html, *handlers),
         Command::DumpPforth { images, models } => dump_pforth::run(images, *models),
         Command::DumpOncore { images, models } => dump_oncore::run(images, *models),
         Command::Probe { .. } | Command::Sweep { .. } => anyhow::bail!(

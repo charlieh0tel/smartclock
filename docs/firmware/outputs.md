@@ -133,10 +133,27 @@ collector, "goes on and off with the Alarm indicator"; if the
 Z3805A's does too, it hangs off latch bit 2 in hardware, since no
 code drives a pin from `status_summary` but the latch.  The other
 pins the firmware drives: PWMA, which follows the holdover threshold
-alone; the DUART's OP2, which `hmon_task` toggles every `0x70`
-passes, a heartbeat; and OP7, set on a self-test failure by three
+alone; the DUART's OP2, the board's heartbeat LED (below); and OP7, set on a self-test failure by three
 `_with_lamp` routines nothing calls (`duart_output_bits`).  Which one
 the connector is needs the board or a unit.
+
+### The heartbeat
+
+One LED of the bank on the board is a heartbeat (the owner,
+2026-10-20).  Every image drives it the same way: `hmon_task` counts
+its passes, one every ten 1024 Hz ticks (`restart.md`), and every
+`0x70`, about 1.09 s, flips a DUART output bit through the
+output-port routine (`duart_output_bits`, `0x1e126`, in the Z3805A),
+so the LED changes state about every 1.1 s.  The bit differs by
+generation:
+
+| Images | Bit | Toggle |
+| ------ | --- | ------ |
+| 58503A 3633, 3704; Z3801A 3543; Z3805A 3543B | OP2 (mask 4) | `0x239c6`, `0x23c22`, `0x2372e`, `0x2486a` |
+| 58503B 1.01.04 | OP3 (mask 8) | `0x3353e` |
+| Z3815A 4010, Z3816A 4001 | OP6 (mask `0x40`) | `0x36cfa`, `0x33e5c` |
+
+A stopped or steady heartbeat means `hmon` has stopped running.
 `:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded?` returns
 the flag.
 

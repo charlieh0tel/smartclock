@@ -602,6 +602,9 @@ Nothing here says what they show.
 - [ ] TODO: note each LED's color through power-up, lock, a manual
   holdover (`:SYNChronization:HOLDover:INITiate`), recovery, an alarm,
   and the installer and pForth debug console.
+One is a heartbeat (the owner, 2026-10-20): the firmware flips DUART
+OP2 about every 1.1 s (`firmware/outputs.md`, "The heartbeat").
+
 - [ ] TODO: find what drives them in the firmware: a port the start-up
   code sets, the DUART's output port, or a write `:DIAGnostic:OUTPut`
   or the self-test makes.

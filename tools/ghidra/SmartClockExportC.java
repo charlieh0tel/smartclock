@@ -168,6 +168,10 @@ public class SmartClockExportC extends GhidraScript {
 			__builtin_memcpy((char *)&__b + sizeof __b - sizeof __v, &__v, sizeof __v); __b; })
 		#define __ghidra_as(type, v) ({ unsigned long long __a = __ghidra_bits(v); type __r; \
 			__builtin_memcpy(&__r, (char *)&__a + sizeof __a - sizeof __r, sizeof __r); __r; })
+		#define __ghidra_shl(x, n) ({ __typeof__((x) + 0) __x = (x); unsigned int __n = (n); \
+			__n >= 8 * sizeof __x ? (__typeof__(__x))0 : __x << __n; })
+		#define __ghidra_shr(x, n) ({ __typeof__((x) + 0) __x = (x); unsigned int __n = (n); \
+			__n >= 8 * sizeof __x ? (__x < 0 ? (__typeof__(__x))-1 : (__typeof__(__x))0) : __x >> __n; })
 		#define __ghidra_mask(n) ((n) >= 8 ? ~0ULL : (1ULL << (8 * (n))) - 1)
 		#define __ghidra_concat(y, a, b) \
 			((__ghidra_bits(a) << (8 * (y))) | (__ghidra_bits(b) & __ghidra_mask(y)))
@@ -248,7 +252,7 @@ public class SmartClockExportC extends GhidraScript {
 						}
 					}
 					else {
-						functions.append(reinterpretingCasts(c));
+						functions.append(registerShifts(reinterpretingCasts(c)));
 						collectGlobals(results.getHighFunction(), referenced);
 						String stack = stackArguments(results.getHighFunction());
 						if (stack != null) {
@@ -1300,11 +1304,12 @@ public class SmartClockExportC extends GhidraScript {
 			pointers.add(pointer.group(1) != null ? pointer.group(1) : pointer.group(2));
 		}
 		List<int[]> casts = new ArrayList<>();
+		boolean[] code = code(c);
 		Matcher cast = CAST.matcher(c);
 		while (cast.find()) {
 			String type = cast.group(1);
 			char before = cast.start() == 0 ? ' ' : c.charAt(cast.start() - 1);
-			if ((FLOATING.contains(type) || INTEGERS.contains(type))
+			if (code[cast.start()] && (FLOATING.contains(type) || INTEGERS.contains(type))
 				&& !Character.isJavaIdentifierPart(before) && before != ')' && before != ']') {
 				casts.add(new int[] { cast.start(), cast.end() });
 			}
@@ -1328,6 +1333,184 @@ public class SmartClockExportC extends GhidraScript {
 			}
 		}
 		return out.toString();
+	}
+
+	/** Which of c's characters are code: not in a comment, a string or a character constant. */
+	private static boolean[] code(String c) {
+		boolean[] code = new boolean[c.length()];
+		int i = 0;
+		while (i < c.length()) {
+			if (c.startsWith("/*", i)) {
+				int close = c.indexOf(COMMENT_END, i + 2);
+				i = close < 0 ? c.length() : close + COMMENT_END.length();
+			}
+			else if (c.startsWith("//", i)) {
+				int close = c.indexOf('\n', i);
+				i = close < 0 ? c.length() : close;
+			}
+			else if (c.charAt(i) == '"' || c.charAt(i) == '\'') {
+				char quote = c.charAt(i);
+				i++;
+				while (i < c.length() && c.charAt(i) != quote) {
+					i += c.charAt(i) == '\\' ? 2 : 1;
+				}
+				i++;
+			}
+			else {
+				code[i++] = true;
+			}
+		}
+		return code;
+	}
+
+	/** A shift, its operator the group. */
+	private static final Pattern SHIFT = Pattern.compile("(<<|>>) ");
+	private static final Pattern LITERAL = Pattern.compile("^(?:0x[0-9a-fA-F]+|[0-9]+)[uUlL]*$");
+	/** Operators of lower precedence than a shift, which end its operands. */
+	private static final String LOWER = "=<>&^|?:,;{";
+
+	/**
+	 * c with each shift by a count that is not a literal made
+	 * __ghidra_shl(x, n) or __ghidra_shr(x, n): the decompiler's shift,
+	 * like the 68k's by a register (x << (n & 0x3f), modulo 64), gives 0
+	 * for a count as wide as x or wider, or every bit the sign for an
+	 * arithmetic shift right, where C leaves it undefined.  Shifts are
+	 * rewritten last first, so a count's own are done before it; one
+	 * whose left operand is itself a shift is left, as rewriting it would
+	 * change their grouping.
+	 */
+	private static String registerShifts(String c) {
+		List<Integer> operators = new ArrayList<>();
+		boolean[] code = code(c);
+		Matcher shift = SHIFT.matcher(c);
+		while (shift.find()) {
+			if (code[shift.start()]) {
+				operators.add(shift.start());
+			}
+		}
+		StringBuilder out = new StringBuilder(c);
+		for (int k = operators.size() - 1; k >= 0; k--) {
+			int operator = operators.get(k);
+			int countStart = operator + 3;
+			int countEnd = rightOperandEnd(out, countStart);
+			while (countEnd > countStart && Character.isWhitespace(out.charAt(countEnd - 1))) {
+				countEnd--;
+			}
+			String count = out.substring(countStart, countEnd).strip();
+			if (count.isEmpty() || LITERAL.matcher(count).matches()) {
+				continue;
+			}
+			int start = leftOperandStart(out, operator);
+			if (start < 0) {
+				continue;
+			}
+			while (start < operator && Character.isWhitespace(out.charAt(start))) {
+				start++;
+			}
+			String left = out.substring(start, operator).strip();
+			if (left.isEmpty()) {
+				continue;
+			}
+			String macro = out.charAt(operator) == '<' ? "__ghidra_shl(" : "__ghidra_shr(";
+			out.replace(start, countEnd, macro + left + ", " + count + ")");
+		}
+		return out.toString();
+	}
+
+	/**
+	 * Where the right operand of a shift that starts at start ends: on
+	 * past brackets to the nearest operator of lower precedence, or as
+	 * low, or an unmatched closing bracket.
+	 */
+	private static int rightOperandEnd(CharSequence c, int start) {
+		int depth = 0;
+		boolean operand = false;
+		for (int i = start; i < c.length(); i++) {
+			char ch = c.charAt(i);
+			if (ch == '"' || ch == '\'') {
+				int close = i + 1;
+				while (close < c.length() && c.charAt(close) != ch) {
+					close += c.charAt(close) == '\\' ? 2 : 1;
+				}
+				i = close;
+				operand = true;
+			}
+			else if (ch == '(' || ch == '[') {
+				depth++;
+				operand = false;
+			}
+			else if (ch == ')' || ch == ']') {
+				if (depth == 0) {
+					return i;
+				}
+				depth--;
+				operand = true;
+			}
+			else if (depth == 0 && (LOWER.indexOf(ch) >= 0
+				&& !(ch == '>' && i > 0 && c.charAt(i - 1) == '-') && !(ch == '&' && !operand)
+				|| ch == '!' && i + 1 < c.length() && c.charAt(i + 1) == '=')) {
+				return i;
+			}
+			else if (Character.isJavaIdentifierPart(ch)) {
+				operand = true;
+			}
+			else if (!Character.isWhitespace(ch)) {
+				operand = false;
+			}
+		}
+		return c.length();
+	}
+
+	/**
+	 * Where the left operand of the shift at operator starts: back past
+	 * brackets to the nearest operator of lower precedence, an unmatched
+	 * opening bracket or the start of a statement; -1 if it is another
+	 * shift, whose grouping the rewrite would change.
+	 */
+	private static int leftOperandStart(CharSequence c, int operator) {
+		int i = operator - 1;
+		int depth = 0;
+		while (i >= 0) {
+			char ch = c.charAt(i);
+			if (ch == ')' || ch == ']') {
+				depth++;
+			}
+			else if (ch == '(' || ch == '[') {
+				if (depth == 0) {
+					return i + 1;
+				}
+				depth--;
+			}
+			else if (depth == 0) {
+				if ((ch == '<' || ch == '>') && i > 0 && c.charAt(i - 1) == ch) {
+					return -1;
+				}
+				// a binary & ends it; a unary one, after an operator, is the operand's
+				if (LOWER.indexOf(ch) >= 0 && !(ch == '>' && i > 0 && c.charAt(i - 1) == '-')
+					&& !(ch == '&' && unaryAt(c, i))) {
+					return i + 1;
+				}
+				if (ch == 'n' && i >= 5 && c.subSequence(i - 5, i + 1).toString().equals("return")
+					&& (i < 6 || !Character.isJavaIdentifierPart(c.charAt(i - 6)))) {
+					return i + 1;
+				}
+			}
+			i--;
+		}
+		return 0;
+	}
+
+	/** Whether the & at i is unary: what precedes it is an operator, not an operand. */
+	private static boolean unaryAt(CharSequence c, int i) {
+		int j = i - 1;
+		while (j >= 0 && Character.isWhitespace(c.charAt(j))) {
+			j--;
+		}
+		if (j < 0) {
+			return true;
+		}
+		char before = c.charAt(j);
+		return !(Character.isJavaIdentifierPart(before) || before == ')' || before == ']');
 	}
 
 	/**

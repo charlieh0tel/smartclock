@@ -518,7 +518,12 @@ implicit conversions that remain, a double assigned to an `undefined8`
 or an integer passed as a float, and wraps each the same way, leaving a
 literal to convert; it reports any it could not, and without gcc leaves
 them.  A float or double result is in D0 or D0:D1 whatever its
-prototype's source, never FP0.
+prototype's source, never FP0.  A shift by a count that is not a
+literal is `__ghidra_shl(x, n)` or `__ghidra_shr(x, n)`: the
+decompiler's shift, like the 68k's by a register (which it writes
+`x << (n & 0x3f)`, modulo 64), gives 0 for a count as wide as `x` or
+wider, or every bit the sign shifting a negative value right, where C
+leaves it undefined and gcc may test the bit modulo 32.
 
 `tools/firmware/rebuild_link.py` links it into a rebuilt image: each
 piece of assembly at its own address, where it must be, and is, the

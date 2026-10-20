@@ -44,6 +44,8 @@ extern code *UNRECOVERED_JUMPTABLE;
 #define NAN __builtin_nanf("")
 #define __ghidra_bits(v) ({ __typeof__((v) + 0) __v = (v); unsigned long long __b = 0; 	__builtin_memcpy((char *)&__b + sizeof __b - sizeof __v, &__v, sizeof __v); __b; })
 #define __ghidra_as(type, v) ({ unsigned long long __a = __ghidra_bits(v); type __r; 	__builtin_memcpy(&__r, (char *)&__a + sizeof __a - sizeof __r, sizeof __r); __r; })
+#define __ghidra_shl(x, n) ({ __typeof__((x) + 0) __x = (x); unsigned int __n = (n); 	__n >= 8 * sizeof __x ? (__typeof__(__x))0 : __x << __n; })
+#define __ghidra_shr(x, n) ({ __typeof__((x) + 0) __x = (x); unsigned int __n = (n); 	__n >= 8 * sizeof __x ? (__x < 0 ? (__typeof__(__x))-1 : (__typeof__(__x))0) : __x >> __n; })
 #define __ghidra_mask(n) ((n) >= 8 ? ~0ULL : (1ULL << (8 * (n))) - 1)
 #define __ghidra_concat(y, a, b) 	((__ghidra_bits(a) << (8 * (y))) | (__ghidra_bits(b) & __ghidra_mask(y)))
 #define __ghidra_sub(y, v, n) ((__ghidra_bits(v) >> (8 * (n))) & __ghidra_mask(y))
@@ -9262,12 +9264,12 @@ int round_shift_right(int param_1,uint param_2)
 {
   int iVar1;
   
-  iVar1 = 1 << (param_2 - 1 & 0x3f);
+  iVar1 = __ghidra_shl(1, (param_2 - 1 & 0x3f));
   if (param_1 < 0) {
-    iVar1 = -(iVar1 - param_1 >> (param_2 & 0x3f));
+    iVar1 = -(__ghidra_shr(iVar1 - param_1, (param_2 & 0x3f)));
   }
   else {
-    iVar1 = param_1 + iVar1 >> (param_2 & 0x3f);
+    iVar1 = __ghidra_shr(param_1 + iVar1, (param_2 & 0x3f));
   }
   return iVar1;
 }
@@ -10265,7 +10267,7 @@ ulonglong double_abs(ulonglong param_1)
 uint rotate_left(uint param_1,byte param_2)
 
 {
-  return param_1 << (param_2 & 0x3f) | param_1 >> 0x20 - (param_2 & 0x3f);
+  return __ghidra_shl(param_1, (param_2 & 0x3f)) | __ghidra_shr(param_1, 0x20 - (param_2 & 0x3f));
 }
 
 
@@ -41830,8 +41832,8 @@ LAB_00027148:
         if ((short)uVar11 <= sVar9) {
           return 0xffffffec;
         }
-        if (((short)uVar11 + -1 << (0x20U - (int)local_e & 0x3f) & uVar12) == 0) {
-          uVar12 = (int)sVar9 | uVar12 << (int)local_e;
+        if ((__ghidra_shl((short)uVar11 + -1, (0x20U - (int)local_e & 0x3f)) & uVar12) == 0) {
+          uVar12 = (int)sVar9 | __ghidra_shl(uVar12, (int)local_e);
           bVar4 = false;
         }
         else {
@@ -42967,13 +42969,13 @@ int16_t status_set_bit(status_model *status,int condition,int value)
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00028264)[(short)iVar3]) {
     case 10:
-      status_event_set(status,status->registers[sVar1],1 << ((int)sVar2 & 0x3fU));
+      status_event_set(status,status->registers[sVar1],__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x20:
-      status_condition_set(status,status->registers[sVar1],1 << ((int)sVar2 & 0x3fU));
+      status_condition_set(status,status->registers[sVar1],__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x36:
-      status_condition_clear(status,status->registers[sVar1],1 << ((int)sVar2 & 0x3fU));
+      status_condition_clear(status,status->registers[sVar1],__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x50:
       iVar5 = error_queue_push(status->queue,(int)sVar1,value);
@@ -43009,16 +43011,16 @@ void status_apply_condition(int param_1,int param_2,undefined4 param_3)
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00028326)[(short)iVar3]) {
     case 10:
-      status_event_set(param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),1 << ((int)sVar2 & 0x3fU)
+      status_event_set(param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU))
                       );
       break;
     case 0x20:
       status_condition_set
-                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),1 << ((int)sVar2 & 0x3fU));
+                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x36:
       status_condition_clear
-                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),1 << ((int)sVar2 & 0x3fU));
+                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x4c:
       error_queue_push(*(undefined4 *)(param_1 + 6),(int)sVar1,param_3);
@@ -43072,7 +43074,7 @@ void status_condition_bit_get(int param_1,int param_2,uint *param_3)
   int iVar1;
   
   iVar1 = *(int *)(param_1 + 10);
-  *param_3 = (uint)((1 << ((int)*(short *)(iVar1 + 4 + param_2 * 6) & 0x3fU) &
+  *param_3 = (uint)((__ghidra_shl(1, ((int)*(short *)(iVar1 + 4 + param_2 * 6) & 0x3fU)) &
                     (int)**(short **)(param_1 + 0x12 + *(short *)(iVar1 + 2 + param_2 * 6) * 4)) !=
                    0);
   if (*(short *)(iVar1 + param_2 * 6) == 2) {
@@ -47668,7 +47670,7 @@ undefined4 satellite_number_valid(byte param_1)
 bool satellite_in_mask(char param_1,uint param_2)
 
 {
-  return (param_2 & 1 << (param_1 - 1U & 0x3f)) != 0;
+  return (param_2 & __ghidra_shl(1, (param_1 - 1U & 0x3f))) != 0;
 }
 
 
@@ -47684,7 +47686,7 @@ bool satellite_mask_add(char param_1,uint *param_2)
   
   cVar1 = satellite_number_valid(param_1);
   if (cVar1 != '\0') {
-    *param_2 = 1 << (param_1 - 1U & 0x3f) | *param_2;
+    *param_2 = __ghidra_shl(1, (param_1 - 1U & 0x3f)) | *param_2;
   }
   return cVar1 != '\0';
 }
@@ -47702,7 +47704,7 @@ bool satellite_mask_remove(char param_1,uint *param_2)
   
   cVar1 = satellite_number_valid(param_1);
   if (cVar1 != '\0') {
-    *param_2 = ~(1 << (param_1 - 1U & 0x3f)) & *param_2;
+    *param_2 = ~(__ghidra_shl(1, (param_1 - 1U & 0x3f))) & *param_2;
   }
   return cVar1 != '\0';
 }
@@ -52579,7 +52581,7 @@ uint sign_extend_bits(uint param_1,byte param_2)
   }
   else if ((param_2 < 0x20) && (param_2 != 0)) {
     uVar2 = (uint)param_2;
-    uVar1 = 1 << (uVar2 - 1 & 0x3f);
+    uVar1 = __ghidra_shl(1, (uVar2 - 1 & 0x3f));
     if ((uVar1 & param_1) != 0) {
       for (; (int)uVar2 < 0x20; uVar2 = uVar2 + 1) {
         uVar1 = uVar1 * 2;
@@ -53676,7 +53678,7 @@ char nv_save(byte param_1)
       }
       else {
         uVar7 = *(uint *)((int)__ghidra_bits(psVar1->value) + cVar5 * 4) &
-                *(uint *)(&DAT_000314b2 + (uVar4 & 0xff) * 4) | uVar7 << (uVar4 & 0x3f);
+                *(uint *)(&DAT_000314b2 + (uVar4 & 0xff) * 4) | __ghidra_shl(uVar7, (uVar4 & 0x3f));
       }
       bVar6 = cVar8 + bVar6;
       puVar11 = puVar10;
@@ -53699,7 +53701,7 @@ char nv_save(byte param_1)
       }
       bVar6 = (char)uVar4 + bVar6;
       uVar7 = *(uint *)(&DAT_000314b2 + (uVar4 & 0xff) * 4) & (int)(char)psVar2->value[cVar5] |
-              uVar7 << (uVar4 & 0x3f);
+              __ghidra_shl(uVar7, (uVar4 & 0x3f));
       puVar11 = puVar10;
     }
   }
@@ -62131,7 +62133,7 @@ int satellite_in_set(satellite_kind kind,uint8_t id,uint32_t mask)
     if (kind == SATELLITE_PSEUDOLITE) {
       id = id - 0x20;
     }
-    if ((mask & 1 << (id - 1 & 0x3f)) != 0) {
+    if ((mask & __ghidra_shl(1, (id - 1 & 0x3f))) != 0) {
       return 1;
     }
   }
@@ -63204,7 +63206,7 @@ int status_screen_tfom(byte param_1,int param_2,char *param_3)
 bool bit_is_set(short param_1,short param_2)
 
 {
-  return ((int)param_1 & 1 << ((int)param_2 & 0x3fU)) != 0;
+  return ((int)param_1 & __ghidra_shl(1, ((int)param_2 & 0x3fU))) != 0;
 }
 
 
@@ -66304,10 +66306,10 @@ void satellite_add_to_set(satellite_kind kind,uint8_t id,uint32_t *mask)
 
 {
   if (kind == SATELLITE_GPS) {
-    *mask = 1 << (id - 1 & 0x3f) | *mask;
+    *mask = __ghidra_shl(1, (id - 1 & 0x3f)) | *mask;
   }
   else {
-    *(byte *)mask = (byte)(1 << (id - 0x21 & 0x3f)) | *(byte *)mask;
+    *(byte *)mask = (byte)(__ghidra_shl(1, (id - 0x21 & 0x3f))) | *(byte *)mask;
   }
   return;
 }
@@ -76474,17 +76476,17 @@ ulonglong float_raise(uint code,...)
             if ((uVar4 & 1) == 0) {
               in_stack_0000000c = in_stack_0000000c & 0xfffff | 0x100000;
               if (sVar6 < 0x20) {
-                uVar7 = 0xffffffff >> (in_stack_00000008 & 0x3f);
-                uVar2 = in_stack_0000000c << 0x20 - (in_stack_00000008 & 0x3f) |
-                        in_stack_0000000c >> (in_stack_00000008 & 0x3f);
-                uVar5 = in_stack_00000010 << 0x20 - (in_stack_00000008 & 0x3f) |
-                        in_stack_00000010 >> (in_stack_00000008 & 0x3f);
+                uVar7 = __ghidra_shr(0xffffffff, (in_stack_00000008 & 0x3f));
+                uVar2 = __ghidra_shl(in_stack_0000000c, 0x20 - (in_stack_00000008 & 0x3f)) |
+                        __ghidra_shr(in_stack_0000000c, (in_stack_00000008 & 0x3f));
+                uVar5 = __ghidra_shl(in_stack_00000010, 0x20 - (in_stack_00000008 & 0x3f)) |
+                        __ghidra_shr(in_stack_00000010, (in_stack_00000008 & 0x3f));
                 uVar3 = uVar7 & uVar2;
                 uVar4 = ~uVar7;
                 in_stack_0000000c = uVar4 & uVar2 | uVar7 & uVar5;
-                in_stack_00000010 = uVar4 & uVar5 | in_stack_00000014 >> (in_stack_00000008 & 0x3f);
-                if (((uVar4 << (in_stack_00000008 & 0x3f) |
-                     uVar4 >> 0x20 - (in_stack_00000008 & 0x3f)) & in_stack_00000014) != 0) {
+                in_stack_00000010 = uVar4 & uVar5 | __ghidra_shr(in_stack_00000014, (in_stack_00000008 & 0x3f));
+                if (((__ghidra_shl(uVar4, (in_stack_00000008 & 0x3f)) |
+                     __ghidra_shr(uVar4, 0x20 - (in_stack_00000008 & 0x3f))) & in_stack_00000014) != 0) {
                   in_stack_00000010 = in_stack_00000010 | 1;
                 }
               }
@@ -76493,16 +76495,16 @@ ulonglong float_raise(uint code,...)
                 if (sVar6 != 0x20) {
                   if (0x37 < sVar6) goto LAB_0005eafe;
                   uVar5 = (uint)(ushort)(sVar6 - 0x20);
-                  uVar7 = 0xffffffff >> (uVar5 & 0x3f);
-                  uVar3 = in_stack_0000000c << 0x20 - (uVar5 & 0x3f) |
-                          in_stack_0000000c >> (uVar5 & 0x3f);
-                  uVar2 = in_stack_00000010 << 0x20 - (uVar5 & 0x3f) |
-                          in_stack_00000010 >> (uVar5 & 0x3f);
+                  uVar7 = __ghidra_shr(0xffffffff, (uVar5 & 0x3f));
+                  uVar3 = __ghidra_shl(in_stack_0000000c, 0x20 - (uVar5 & 0x3f)) |
+                          __ghidra_shr(in_stack_0000000c, (uVar5 & 0x3f));
+                  uVar2 = __ghidra_shl(in_stack_00000010, 0x20 - (uVar5 & 0x3f)) |
+                          __ghidra_shr(in_stack_00000010, (uVar5 & 0x3f));
                   in_stack_0000000c = uVar7 & uVar3;
                   uVar4 = ~uVar7;
                   in_stack_00000010 = uVar4 & uVar3 | uVar7 & uVar2;
-                  uVar3 = uVar4 & uVar2 | in_stack_00000014 >> (uVar5 & 0x3f);
-                  if (((uVar4 << (uVar5 & 0x3f) | uVar4 >> 0x20 - (uVar5 & 0x3f)) &
+                  uVar3 = uVar4 & uVar2 | __ghidra_shr(in_stack_00000014, (uVar5 & 0x3f));
+                  if (((__ghidra_shl(uVar4, (uVar5 & 0x3f)) | __ghidra_shr(uVar4, 0x20 - (uVar5 & 0x3f))) &
                       in_stack_00000014) != 0) {
                     uVar3 = uVar3 | 1;
                   }
@@ -76524,12 +76526,12 @@ ulonglong float_raise(uint code,...)
             }
             else if (sVar6 < 0x19) {
               uVar3 = in_stack_0000000c & 0x7fffff | 0x800000;
-              uVar4 = uVar3 >> (in_stack_00000008 & 0x3f);
-              in_stack_0000000c = ~(-1 << (in_stack_00000008 & 0x3f));
+              uVar4 = __ghidra_shr(uVar3, (in_stack_00000008 & 0x3f));
+              in_stack_0000000c = ~(__ghidra_shl(-1, (in_stack_00000008 & 0x3f)));
               uVar3 = in_stack_0000000c & uVar3;
-              uVar3 = uVar3 << 0x20 - (in_stack_00000008 & 0x3f) |
-                      uVar3 >> (in_stack_00000008 & 0x3f) |
-                      in_stack_00000010 >> (in_stack_00000008 & 0x3f);
+              uVar3 = __ghidra_shl(uVar3, 0x20 - (in_stack_00000008 & 0x3f)) |
+                      __ghidra_shr(uVar3, (in_stack_00000008 & 0x3f)) |
+                      __ghidra_shr(in_stack_00000010, (in_stack_00000008 & 0x3f));
               in_stack_0000000c = in_stack_0000000c & in_stack_00000010;
               if (in_stack_0000000c != 0) {
                 uVar3 = uVar3 | 1;
@@ -77237,11 +77239,11 @@ void double_to_digits(uint param_1,uint param_2,uint param_3,int *param_4,uint *
         uVar6 = uVar6 + 1;
       }
       if ((int)uVar6 < 0) {
-        local_1e = param_2 << (uVar6 + 0x20 & 0x3f);
-        uVar4 = param_2 >> (-uVar6 & 0x3f);
+        local_1e = __ghidra_shl(param_2, (uVar6 + 0x20 & 0x3f));
+        uVar4 = __ghidra_shr(param_2, (-uVar6 & 0x3f));
       }
       else {
-        uVar4 = param_2 << (uVar6 & 0x3f);
+        uVar4 = __ghidra_shl(param_2, (uVar6 & 0x3f));
         local_1e = 0;
       }
       uVar6 = uVar6 + 0x20;
@@ -77251,8 +77253,8 @@ void double_to_digits(uint param_1,uint param_2,uint param_3,int *param_4,uint *
       for (uVar3 = 0x80000; (uVar3 & uVar4) == 0; uVar3 = uVar3 >> 1) {
         uVar6 = uVar6 + 1;
       }
-      uVar4 = param_2 >> (0x20 - uVar6 & 0x3f) | uVar4 << (uVar6 & 0x3f);
-      local_1e = param_2 << (uVar6 & 0x3f);
+      uVar4 = __ghidra_shr(param_2, (0x20 - uVar6 & 0x3f)) | __ghidra_shl(uVar4, (uVar6 & 0x3f));
+      local_1e = __ghidra_shl(param_2, (uVar6 & 0x3f));
     }
     uVar6 = (uVar6 - 1) * -0x100000;
   }
@@ -77361,7 +77363,7 @@ LAB_0005f65a:
       local_6 = -((short)uVar8 >> 5) + 3;
     }
     else {
-      uVar6 = 1 << ((int)(short)local_8 - 1U & 0x3f);
+      uVar6 = __ghidra_shl(1, ((int)(short)local_8 - 1U & 0x3f));
     }
     uVar6 = local_1a[local_6] & uVar6;
     if (uVar6 != 0) {
@@ -77380,19 +77382,19 @@ LAB_0005f74e:
       }
     }
     else if ((short)uVar8 < 0x20) {
-      local_1a[0] = local_1a[1] >> (int)(short)local_8 |
-                    local_1a[0] << (0x20U - (int)(short)local_8 & 0x3f);
-      local_1a[1] = local_1a[2] >> (int)(short)local_8 |
-                    local_1a[1] << (0x20U - (int)(short)local_8 & 0x3f);
+      local_1a[0] = __ghidra_shr(local_1a[1], (int)(short)local_8) |
+                    __ghidra_shl(local_1a[0], (0x20U - (int)(short)local_8 & 0x3f));
+      local_1a[1] = __ghidra_shr(local_1a[2], (int)(short)local_8) |
+                    __ghidra_shl(local_1a[1], (0x20U - (int)(short)local_8 & 0x3f));
     }
     else {
       if (0x40 < (short)uVar8) {
-        uVar3 = local_1a[0] >> (int)(short)local_8;
+        uVar3 = __ghidra_shr(local_1a[0], (int)(short)local_8);
         goto LAB_0005f74e;
       }
-      local_1a[1] = local_1a[0] << (0x20U - (int)(short)local_8 & 0x3f) |
-                    local_1a[1] >> (int)(short)local_8;
-      local_1a[0] = local_1a[0] >> (int)(short)local_8;
+      local_1a[1] = __ghidra_shl(local_1a[0], (0x20U - (int)(short)local_8 & 0x3f)) |
+                    __ghidra_shr(local_1a[1], (int)(short)local_8);
+      local_1a[0] = __ghidra_shr(local_1a[0], (int)(short)local_8);
     }
     if (uVar6 != 0) {
       local_1a[1] = local_1a[1] + 1;
@@ -78043,7 +78045,7 @@ LAB_0005febe:
           do {
             pbVar20 = pbVar20 + -1;
             *pbVar20 = local_18[local_c & (uint)local_8];
-            local_8 = (char *)((int)((int)local_8 >> 1 & 0x7fffffffU) >> local_10);
+            local_8 = (char *)(__ghidra_shr((int)((int)local_8 >> 1 & 0x7fffffffU), local_10));
           } while (local_8 != (char *)0x0);
         }
         if ((uVar17 & 0x40) != 0) {
@@ -78409,7 +78411,7 @@ double log(double x)
             for (uVar3 = __ghidra_piece(unsigned int, x, 4); 0 < (int)uVar3; uVar3 = uVar3 * 2) {
               uVar6 = uVar6 + 1;
             }
-            uVar3 = __ghidra_piece(unsigned int, x, 4) << (uVar6 & 0x3f);
+            uVar3 = __ghidra_shl(__ghidra_piece(unsigned int, x, 4), (uVar6 & 0x3f));
             __ghidra_piece(unsigned int, local_14, 0) = uVar3 >> 0xc | __ghidra_piece(unsigned int, x, 0);
             __ghidra_piece(unsigned int, local_14, 4) = uVar3 << 0x14;
             uVar6 = uVar6 + 0x14;
@@ -78419,8 +78421,8 @@ double log(double x)
             for (iVar5 = __ghidra_piece(unsigned int, x, 0) << 0xc; 0 < iVar5; iVar5 = iVar5 * 2) {
               uVar6 = uVar6 + 1;
             }
-            __ghidra_piece(unsigned int, local_14, 0) = __ghidra_piece(unsigned int, x, 4) >> (0x20 - uVar6 & 0x3f) | __ghidra_piece(unsigned int, x, 0) << (uVar6 & 0x3f);
-            __ghidra_piece(unsigned int, local_14, 4) = __ghidra_piece(unsigned int, x, 4) << (uVar6 & 0x3f);
+            __ghidra_piece(unsigned int, local_14, 0) = __ghidra_shr(__ghidra_piece(unsigned int, x, 4), (0x20 - uVar6 & 0x3f)) | __ghidra_shl(__ghidra_piece(unsigned int, x, 0), (uVar6 & 0x3f));
+            __ghidra_piece(unsigned int, local_14, 4) = __ghidra_shl(__ghidra_piece(unsigned int, x, 4), (uVar6 & 0x3f));
           }
           iVar5 = ((__ghidra_piece(unsigned int, x, 0) >> 0x14) - 0x3fd) - uVar6;
         }
@@ -78503,13 +78505,13 @@ double modf(double value,double *iptr)
       if (sVar1 < 0x35) {
         uVar3 = -sVar1 + 0x35;
         if ((short)uVar3 < 0x20) {
-          dVar4 = __ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, value, 0),-1 << (uVar3 & 0x3f) & __ghidra_piece(unsigned int, value, 4)));
+          dVar4 = __ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, value, 0),__ghidra_shl(-1, (uVar3 & 0x3f)) & __ghidra_piece(unsigned int, value, 4)));
         }
         else {
           dVar4 = __ghidra_as(double, ((ulonglong)__ghidra_piece(unsigned int, value, 0) << 0x20));
           uVar3 = -sVar1 + 0x15;
           if (uVar3 != 0) {
-            dVar4 = __ghidra_as(double, ((ulonglong)(-1 << (uVar3 & 0x3f) & __ghidra_piece(unsigned int, value, 0)) << 0x20));
+            dVar4 = __ghidra_as(double, ((ulonglong)(__ghidra_shl(-1, (uVar3 & 0x3f)) & __ghidra_piece(unsigned int, value, 0)) << 0x20));
           }
         }
       }
@@ -78554,7 +78556,7 @@ undefined4 double_is_integer(uint param_1,uint param_2,uint *param_3)
   }
   else if ((int)uVar3 < 0x35) {
     if ((int)uVar3 < 0x20) {
-      uVar3 = 1 << (uVar3 & 0x3f);
+      uVar3 = __ghidra_shl(1, (uVar3 & 0x3f));
       if ((uVar3 - 1 & param_2) != 0) {
         return 0;
       }
@@ -78564,7 +78566,7 @@ undefined4 double_is_integer(uint param_1,uint param_2,uint *param_3)
       if (param_2 != 0) {
         return 0;
       }
-      uVar3 = 1 << (iVar1 + 0x413U & 0x3f);
+      uVar3 = __ghidra_shl(1, (iVar1 + 0x413U & 0x3f));
       if ((uVar3 - 1 & param_1) != 0) {
         return 0;
       }
@@ -78596,12 +78598,12 @@ undefined8 double_truncate_sixteenths(uint param_1,uint param_2)
   uVar2 = iVar1 + 0x42f;
   if (0 < (int)uVar2) {
     if ((int)uVar2 < 0x21) {
-      local_8 = -1 << (uVar2 & 0x3f) & param_2;
+      local_8 = __ghidra_shl(-1, (uVar2 & 0x3f)) & param_2;
     }
     else {
       local_8 = 0;
       if ((int)uVar2 < 0x35) {
-        local_c = -1 << (iVar1 + 0x40fU & 0x3f) & param_1;
+        local_c = __ghidra_shl(-1, (iVar1 + 0x40fU & 0x3f)) & param_1;
       }
       else {
         local_c = 0;
@@ -79045,7 +79047,7 @@ double sqrt(double x)
           for (uVar3 = __ghidra_piece(unsigned int, x, 4); 0 < (int)uVar3; uVar3 = uVar3 * 2) {
             uVar4 = uVar4 + 1;
           }
-          __ghidra_piece(unsigned int, local_1c, 4) = __ghidra_piece(unsigned int, x, 4) << (uVar4 & 0x3f);
+          __ghidra_piece(unsigned int, local_1c, 4) = __ghidra_shl(__ghidra_piece(unsigned int, x, 4), (uVar4 & 0x3f));
           __ghidra_piece(unsigned int, local_1c, 0) = __ghidra_piece(unsigned int, local_1c, 4) >> 0xc | __ghidra_piece(unsigned int, local_1c, 0);
           __ghidra_piece(unsigned int, local_1c, 4) = __ghidra_piece(unsigned int, local_1c, 4) << 0x14;
           uVar4 = uVar4 + 0x14;
@@ -79055,8 +79057,8 @@ double sqrt(double x)
           for (iVar2 = __ghidra_piece(unsigned int, x, 0) << 0xc; 0 < iVar2; iVar2 = iVar2 * 2) {
             uVar4 = uVar4 + 1;
           }
-          __ghidra_piece(unsigned int, local_1c, 0) = __ghidra_piece(unsigned int, x, 4) >> (0x20 - uVar4 & 0x3f) | __ghidra_piece(unsigned int, local_1c, 0) << (uVar4 & 0x3f);
-          __ghidra_piece(unsigned int, local_1c, 4) = __ghidra_piece(unsigned int, x, 4) << (uVar4 & 0x3f);
+          __ghidra_piece(unsigned int, local_1c, 0) = __ghidra_shr(__ghidra_piece(unsigned int, x, 4), (0x20 - uVar4 & 0x3f)) | __ghidra_shl(__ghidra_piece(unsigned int, local_1c, 0), (uVar4 & 0x3f));
+          __ghidra_piece(unsigned int, local_1c, 4) = __ghidra_shl(__ghidra_piece(unsigned int, x, 4), (uVar4 & 0x3f));
         }
         iVar2 = (uVar1 - 0x3fd) - uVar4;
       }
@@ -86599,15 +86601,15 @@ undefined2 installer_status_set_bit(int param_1,int param_2,undefined4 param_3)
     switch((&WORD_installer__00105f12)[(short)iVar3]) {
     case 10:
       installer_status_event_set
-                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),1 << ((int)sVar2 & 0x3fU));
+                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x20:
       installer_status_condition_set
-                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),1 << ((int)sVar2 & 0x3fU));
+                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x36:
       installer_status_condition_clear
-                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),1 << ((int)sVar2 & 0x3fU));
+                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x50:
       uVar5 = installer_error_queue_push(*(undefined4 *)(param_1 + 6),(int)sVar1,param_3);
@@ -86643,15 +86645,15 @@ void installer_status_apply_condition(int param_1,int param_2,undefined4 param_3
     switch((&WORD_installer__00105fd4)[(short)iVar3]) {
     case 10:
       installer_status_event_set
-                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),1 << ((int)sVar2 & 0x3fU));
+                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x20:
       installer_status_condition_set
-                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),1 << ((int)sVar2 & 0x3fU));
+                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x36:
       installer_status_condition_clear
-                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),1 << ((int)sVar2 & 0x3fU));
+                (param_1,*(undefined4 *)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x4c:
       installer_error_queue_push(*(undefined4 *)(param_1 + 6),(int)sVar1,param_3);
@@ -86999,14 +87001,14 @@ LAB_installer__00108cf2:
         }
         uVar3 = param_3 & 0xfffff | 0x100000;
         if (sVar6 < 0x20) {
-          uVar7 = 0xffffffff >> (param_2 & 0x3f);
-          uVar3 = uVar3 << 0x20 - (param_2 & 0x3f) | uVar3 >> (param_2 & 0x3f);
-          uVar4 = param_4 << 0x20 - (param_2 & 0x3f) | param_4 >> (param_2 & 0x3f);
+          uVar7 = __ghidra_shr(0xffffffff, (param_2 & 0x3f));
+          uVar3 = __ghidra_shl(uVar3, 0x20 - (param_2 & 0x3f)) | __ghidra_shr(uVar3, (param_2 & 0x3f));
+          uVar4 = __ghidra_shl(param_4, 0x20 - (param_2 & 0x3f)) | __ghidra_shr(param_4, (param_2 & 0x3f));
           uVar5 = uVar7 & uVar3;
           uVar2 = ~uVar7;
           uVar3 = uVar2 & uVar3 | uVar7 & uVar4;
-          param_4 = uVar2 & uVar4 | param_5 >> (param_2 & 0x3f);
-          if (((uVar2 << (param_2 & 0x3f) | uVar2 >> 0x20 - (param_2 & 0x3f)) & param_5) != 0) {
+          param_4 = uVar2 & uVar4 | __ghidra_shr(param_5, (param_2 & 0x3f));
+          if (((__ghidra_shl(uVar2, (param_2 & 0x3f)) | __ghidra_shr(uVar2, 0x20 - (param_2 & 0x3f))) & param_5) != 0) {
             param_4 = param_4 | 1;
           }
         }
@@ -87015,14 +87017,14 @@ LAB_installer__00108cf2:
           if (sVar6 != 0x20) {
             if (0x37 < sVar6) goto LAB_installer__00108e6a;
             uVar7 = (uint)(ushort)(sVar6 - 0x20);
-            uVar8 = 0xffffffff >> (uVar7 & 0x3f);
-            uVar5 = uVar3 << 0x20 - (uVar7 & 0x3f) | uVar3 >> (uVar7 & 0x3f);
-            uVar4 = param_4 << 0x20 - (uVar7 & 0x3f) | param_4 >> (uVar7 & 0x3f);
+            uVar8 = __ghidra_shr(0xffffffff, (uVar7 & 0x3f));
+            uVar5 = __ghidra_shl(uVar3, 0x20 - (uVar7 & 0x3f)) | __ghidra_shr(uVar3, (uVar7 & 0x3f));
+            uVar4 = __ghidra_shl(param_4, 0x20 - (uVar7 & 0x3f)) | __ghidra_shr(param_4, (uVar7 & 0x3f));
             uVar3 = uVar8 & uVar5;
             uVar2 = ~uVar8;
             param_4 = uVar2 & uVar5 | uVar8 & uVar4;
-            uVar5 = uVar2 & uVar4 | param_5 >> (uVar7 & 0x3f);
-            if (((uVar2 << (uVar7 & 0x3f) | uVar2 >> 0x20 - (uVar7 & 0x3f)) & param_5) != 0) {
+            uVar5 = uVar2 & uVar4 | __ghidra_shr(param_5, (uVar7 & 0x3f));
+            if (((__ghidra_shl(uVar2, (uVar7 & 0x3f)) | __ghidra_shr(uVar2, 0x20 - (uVar7 & 0x3f))) & param_5) != 0) {
               uVar5 = uVar5 | 1;
             }
           }
@@ -87048,11 +87050,11 @@ LAB_installer__00108cf2:
         }
         if (sVar6 < 0x19) {
           uVar5 = param_3 & 0x7fffff | 0x800000;
-          uVar4 = uVar5 >> (param_2 & 0x3f);
-          uVar2 = ~(-1 << (param_2 & 0x3f));
+          uVar4 = __ghidra_shr(uVar5, (param_2 & 0x3f));
+          uVar2 = ~(__ghidra_shl(-1, (param_2 & 0x3f)));
           uVar5 = uVar2 & uVar5;
-          uVar3 = uVar5 << 0x20 - (param_2 & 0x3f) | uVar5 >> (param_2 & 0x3f) |
-                  param_4 >> (param_2 & 0x3f);
+          uVar3 = __ghidra_shl(uVar5, 0x20 - (param_2 & 0x3f)) | __ghidra_shr(uVar5, (param_2 & 0x3f)) |
+                  __ghidra_shr(param_4, (param_2 & 0x3f));
           if ((uVar2 & param_4) != 0) {
             uVar3 = uVar3 | 1;
           }
@@ -87497,11 +87499,11 @@ void installer_double_to_digits
         uVar6 = uVar6 + 1;
       }
       if ((int)uVar6 < 0) {
-        local_1e = param_2 << (uVar6 + 0x20 & 0x3f);
-        uVar4 = param_2 >> (-uVar6 & 0x3f);
+        local_1e = __ghidra_shl(param_2, (uVar6 + 0x20 & 0x3f));
+        uVar4 = __ghidra_shr(param_2, (-uVar6 & 0x3f));
       }
       else {
-        uVar4 = param_2 << (uVar6 & 0x3f);
+        uVar4 = __ghidra_shl(param_2, (uVar6 & 0x3f));
         local_1e = 0;
       }
       uVar6 = uVar6 + 0x20;
@@ -87511,8 +87513,8 @@ void installer_double_to_digits
       for (uVar3 = 0x80000; (uVar3 & uVar4) == 0; uVar3 = uVar3 >> 1) {
         uVar6 = uVar6 + 1;
       }
-      uVar4 = param_2 >> (0x20 - uVar6 & 0x3f) | uVar4 << (uVar6 & 0x3f);
-      local_1e = param_2 << (uVar6 & 0x3f);
+      uVar4 = __ghidra_shr(param_2, (0x20 - uVar6 & 0x3f)) | __ghidra_shl(uVar4, (uVar6 & 0x3f));
+      local_1e = __ghidra_shl(param_2, (uVar6 & 0x3f));
     }
     uVar6 = (uVar6 - 1) * -0x100000;
   }
@@ -87621,7 +87623,7 @@ LAB_installer__00109802:
       local_6 = -((short)uVar8 >> 5) + 3;
     }
     else {
-      uVar6 = 1 << ((int)(short)local_8 - 1U & 0x3f);
+      uVar6 = __ghidra_shl(1, ((int)(short)local_8 - 1U & 0x3f));
     }
     uVar6 = local_1a[local_6] & uVar6;
     if (uVar6 != 0) {
@@ -87640,19 +87642,19 @@ LAB_installer__001098f6:
       }
     }
     else if ((short)uVar8 < 0x20) {
-      local_1a[0] = local_1a[1] >> (int)(short)local_8 |
-                    local_1a[0] << (0x20U - (int)(short)local_8 & 0x3f);
-      local_1a[1] = local_1a[2] >> (int)(short)local_8 |
-                    local_1a[1] << (0x20U - (int)(short)local_8 & 0x3f);
+      local_1a[0] = __ghidra_shr(local_1a[1], (int)(short)local_8) |
+                    __ghidra_shl(local_1a[0], (0x20U - (int)(short)local_8 & 0x3f));
+      local_1a[1] = __ghidra_shr(local_1a[2], (int)(short)local_8) |
+                    __ghidra_shl(local_1a[1], (0x20U - (int)(short)local_8 & 0x3f));
     }
     else {
       if (0x40 < (short)uVar8) {
-        uVar3 = local_1a[0] >> (int)(short)local_8;
+        uVar3 = __ghidra_shr(local_1a[0], (int)(short)local_8);
         goto LAB_installer__001098f6;
       }
-      local_1a[1] = local_1a[0] << (0x20U - (int)(short)local_8 & 0x3f) |
-                    local_1a[1] >> (int)(short)local_8;
-      local_1a[0] = local_1a[0] >> (int)(short)local_8;
+      local_1a[1] = __ghidra_shl(local_1a[0], (0x20U - (int)(short)local_8 & 0x3f)) |
+                    __ghidra_shr(local_1a[1], (int)(short)local_8);
+      local_1a[0] = __ghidra_shr(local_1a[0], (int)(short)local_8);
     }
     if (uVar6 != 0) {
       local_1a[1] = local_1a[1] + 1;
@@ -88304,7 +88306,7 @@ LAB_installer__0010a066:
           do {
             pbVar20 = pbVar20 + -1;
             *pbVar20 = local_18[local_c & (uint)local_8];
-            local_8 = (char *)((int)((int)local_8 >> 1 & 0x7fffffffU) >> local_10);
+            local_8 = (char *)(__ghidra_shr((int)((int)local_8 >> 1 & 0x7fffffffU), local_10));
           } while (local_8 != (char *)0x0);
         }
         if ((uVar17 & 0x40) != 0) {

@@ -2,7 +2,9 @@
 # for SmartClockSetup.java.  Tab-separated: address, function or label,
 # name, the source that gives it, and optionally a note saying what it
 # is or does, a C prototype or a label's type, and a function's calling
-# convention.  Only the Z3805A's own column of a note's table, or a
+# convention.  A "local" row instead gives the function at its address a
+# stack variable: its name, and "TYPE @ OFFSET", Ghidra's offset from the
+# stack pointer at entry, in the prototype field.  Only the Z3805A's own column of a note's table, or a
 # statement about this image, counts; an address a note gives for
 # another image does not carry over.
 #
@@ -1511,3 +1513,10 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 # the decompiled C names these tables and cells
 0x12b32	label	dither_table	context	random_dither's 128 bytes, read from both ends by the top bits of a random number	char[128]
 0x101d90	label	log_cursor	context	the event log's next entry in its page buffer	log_entry *
+#
+# the record sprintf and vsprintf hand doprnt for sprintf_put, at fp-16,
+# docs/firmware/structures.md, "sprintf's output"
+0x60896	local	output	structures.md	sprintf's record for sprintf_put	sprintf_output @ -0x14
+0x608fe	local	output	structures.md	vsprintf's record for sprintf_put	sprintf_output @ -0x14
+installer::0x10aa3e	local	output	structures.md	installer_sprintf's record for sprintf_put	sprintf_output @ -0x14
+installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for sprintf_put	sprintf_output @ -0x14

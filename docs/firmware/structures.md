@@ -674,3 +674,13 @@ restored, but only their descriptors refer to them.  In
 `fconf_regs[3]` (`counter_set_sync`, `0x40a84`) while counting the
 count down.
 
+## sprintf's output
+
+`sprintf` (`0x60896`) and `vsprintf` keep an 8-byte record on their
+own stacks, `sprintf_output`, and pass it to `doprnt` (`0x5fb0c`),
+which passes it untouched to `sprintf_put` (`0x608c4`): the cursor in
+the caller's buffer at `+4`, which `sprintf_put` writes at and advances,
+and which the caller ends with a NUL.  Nothing reads `+0`.  The
+decompiler, given no type for it, splits the record into two locals,
+which a compiler need not keep adjacent; the names file types it
+(`local` rows).

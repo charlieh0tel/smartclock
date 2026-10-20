@@ -687,18 +687,24 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1215 run, 535 agree, 588 reach the kernel
-     or a peripheral and are skipped, and 92 differ -- some in gcc's
-     callees, some where the decompiler is wrong, such as the SCPI
-     `*ESE` handler, which reads its record from the third argument
-     where the C takes the first.
+     original reads them: of 1212 run, 603 agree, 545 reach the kernel
+     or a peripheral and are skipped, and 64 differ, in the function or
+     in gcc's callees.
      Unicorn has no CPU32 and the 68020 stands in: the image uses none
      of the CPU32's own instructions (`tbl`, `lpstop`, `bgnd`; a scan of
      its words finds none), and none of the 68020's the CPU32 lacks.
   5. Replace, check, repeat, making the C readable and idiomatic as
      each function is taken: names for locals, real types, loops and
      structures in place of pointer arithmetic, the decompiler's
-     idioms (CONCAT, SUB, pieces, unaff_ registers) undone.
+     idioms (CONCAT, SUB, pieces, unaff_ registers) undone.  Started
+     with what the harness found across many functions at once: every
+     SCPI handler now has the prototype `scpi_call_handler` calls it
+     with, `(parameters, response, call)`, where each showed only the
+     arguments it reads, so that its image copy read a third argument
+     the harness never gave (92 differing to 78); and the record
+     `sprintf` and `vsprintf` give `doprnt`, which the decompiler split
+     into two locals gcc laid apart, is typed by a `local` row in the
+     names file (78 to 64).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

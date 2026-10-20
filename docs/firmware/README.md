@@ -327,7 +327,13 @@ overlay is written `installer::0x...`.  A row's fields are the address,
 with `run` or `read` for how a routine was confirmed, or `context` for a
 name read from its callers -- and then, each optional, a note saying
 what it is or does, a C function's prototype or a label's type, and a
-function's calling convention.
+function's calling convention.  A `local` row instead types a function's
+stack variable, which the decompiler would otherwise split or leave
+untyped: its name, and `TYPE @ OFFSET` in the prototype field, Ghidra's
+offset from the stack pointer at entry (`sprintf_output`,
+`structures.md`).  Every SCPI handler takes what `scpi_call_handler`
+gives it, `int NAME(void *parameters, void *response, void *call)`,
+unless its row gives a prototype.
 
 The convention is `key=value` pairs, which the names file's header sets
 out: its kind (`c`, `register`, `exception`, `pforth`, `psos-service`,

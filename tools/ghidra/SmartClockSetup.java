@@ -12,10 +12,10 @@
 //       C declarations of the firmware's structures, parsed into the
 //       program before the names, so that names can use them.
 //   names=tools/ghidra/names/IMAGE.tsv
-//       address, "function" or "label", name, source, and optionally
-//       a note saying what it is or does, a function's C prototype or a
-//       label's data type, and a function's calling convention,
-//       tab-separated; an address in the installer's overlay is written
+//       address, "function", "label" or "local", name, source, and
+//       optionally a note saying what it is or does, a function's C
+//       prototype, a label's data type or a local's "TYPE @ OFFSET",
+//       and a function's calling convention, tab-separated; an address in the installer's overlay is written
 //       installer::0x....  The names file's header sets out the
 //       convention's keys.  A register prototype is built from its in
 //       and out, at confidence run, read or documented only.  A
@@ -114,6 +114,8 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Parameter;
 import ghidra.program.model.listing.ParameterImpl;
 import ghidra.program.model.listing.ReturnParameterImpl;
+import ghidra.program.model.listing.StackFrame;
+import ghidra.program.model.listing.Variable;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -171,6 +173,8 @@ public class SmartClockSetup extends GhidraScript {
 	private static final String COMMENT = "#";
 	private static final String NO_HANDLER = "-";
 	private static final String FUNCTION = "function";
+	/** A names row giving a function's stack variable a type. */
+	private static final String LOCAL = "local";
 	/**
 	 * Stack offsets are from SP at entry, where the return address occupies
 	 * 0..3; arguments start at 4, each in a slot of at least 2 bytes.
@@ -492,6 +496,9 @@ public class SmartClockSetup extends GhidraScript {
 						recordSignature(function, convention);
 					}
 				}
+				else if (fields[1].equals(LOCAL)) {
+					applyLocal(address, fields[2], field(fields, PROTOTYPE_FIELD), line);
+				}
 				else {
 					label(address, fields[2], counts);
 					if (fields.length > PROTOTYPE_FIELD && !fields[PROTOTYPE_FIELD].isBlank()) {
@@ -508,11 +515,13 @@ public class SmartClockSetup extends GhidraScript {
 					Address handler = toAddr(Long.decode(fields[1]));
 					nameFunction(handler, "scpi_query_" + path, false, counts);
 					describe(handler, "the query handler for " + fields[0] + "?");
+					applyHandlerPrototype(handler);
 				}
 				if (!fields[2].equals(NO_HANDLER)) {
 					Address handler = toAddr(Long.decode(fields[2]));
 					nameFunction(handler, "scpi_set_" + path, false, counts);
 					describe(handler, "the setter for " + fields[0]);
+					applyHandlerPrototype(handler);
 				}
 			}
 			default -> {
@@ -587,6 +596,28 @@ public class SmartClockSetup extends GhidraScript {
 		else {
 			label(address, name, counts);
 		}
+	}
+
+	/**
+	 * What scpi_call_handler (0x29642 in the Z3805A 3543B) passes every
+	 * handler it calls through a node's slot: the parsed parameters, from
+	 * +10 of its call record, the room it took in the arena for a query's
+	 * response, and the call record.  A handler reads only what it needs,
+	 * so its own body shows fewer.
+	 */
+	private static final String HANDLER_PARAMETERS = "(void *parameters, void *response, void *call)";
+
+	/**
+	 * Gives the SCPI handler at address the handlers' prototype, unless
+	 * the names file gave its function one.
+	 */
+	private void applyHandlerPrototype(Address address) throws Exception {
+		Function function = getFunctionAt(address);
+		if (function.getSignatureSource() == SourceType.IMPORTED
+			|| function.getSignatureSource() == SourceType.USER_DEFINED) {
+			return;
+		}
+		applyPrototype(address, "int " + function.getName() + HANDLER_PARAMETERS);
 	}
 
 	/**
@@ -741,20 +772,49 @@ public class SmartClockSetup extends GhidraScript {
 	}
 
 	private void applyDataType(Address address, String declaration) throws Exception {
+		DataType type = parseType(declaration);
+		clearListing(address, address.add(type.getLength() - 1));
+		createData(address, type);
+	}
+
+	/** The type a declaration such as "foo *" names, from the header's. */
+	private DataType parseType(String declaration) throws Exception {
 		DataTypeManager types = currentProgram.getDataTypeManager();
-		DataType type;
 		try {
-			type = new DataTypeParser(types, types, null, AllowedDataTypes.ALL)
+			return new DataTypeParser(types, types, null, AllowedDataTypes.ALL)
 					.parse(declaration.strip());
 		}
 		catch (InvalidDataTypeException e) {
-			type = namedPointer(types, declaration.strip());
+			DataType type = namedPointer(types, declaration.strip());
 			if (type == null) {
 				throw e;
 			}
+			return type;
 		}
-		clearListing(address, address.add(type.getLength() - 1));
-		createData(address, type);
+	}
+
+	/**
+	 * Gives the function at address a stack variable name, of the type
+	 * and at the stack offset "TYPE @ OFFSET" says, Ghidra's offset from
+	 * the stack pointer at entry; the variables it overlaps are cleared.
+	 */
+	private void applyLocal(Address address, String name, String declaration, String line)
+			throws Exception {
+		Function function = getFunctionAt(address);
+		String[] parts = declaration.split("@");
+		if (function == null || parts.length != 2) {
+			throw new IllegalArgumentException("a local needs a function and TYPE @ OFFSET: " + line);
+		}
+		DataType type = parseType(parts[0]);
+		int offset = Integer.decode(parts[1].strip());
+		StackFrame frame = function.getStackFrame();
+		for (Variable variable : frame.getStackVariables()) {
+			int start = variable.getStackOffset();
+			if (start < offset + type.getLength() && offset < start + variable.getLength()) {
+				frame.clearVariable(start);
+			}
+		}
+		frame.createVariable(name, offset, type, SourceType.IMPORTED);
 	}
 
 	/**

@@ -199,6 +199,14 @@ typedef int printf_function(char *format, ...);
 /* qsort's comparator. */
 typedef int qsort_compare_function(void *a, void *b);
 
+/* What sprintf and vsprintf hand doprnt to pass to sprintf_put, on
+ * their own stacks: sprintf_put writes at cursor and advances it.
+ * Nothing reads unused. */
+typedef struct sprintf_output {
+	uint32_t unused;
+	char *cursor;
+} sprintf_output;
+
 typedef struct scpi_numeric_param {
 	scpi_param_type type; /* SCPI_PARAM_NUMERIC */
 	uint8_t last_index;   /* +0x01: values less one */

@@ -81,6 +81,7 @@ request scripts in `oncore/`.
 - [58503A 3633 against 3704](revisions.md)
 - [The floating-point library](softfloat.md)
 - [The C library](libc.md)
+- [The real-time kernel](psos.md)
 
 ## Summary
 
@@ -222,7 +223,10 @@ its late copy of the table over the case bodies and decodes code from
 the wrong cases.  Starting from the real cases and following their
 flow, the script clears what overlaps each real instruction and
 disassembles it, rebuilds the owning function's body and records the
-targets as a decompiler jump-table override.
+targets as a decompiler jump-table override.  It removes the case
+labels analysis put at its late reading's targets; one that had become
+a function's name gives the function back its default name rather than
+deleting it, since deleting a function's name deletes the function.
 
 It ends flow at the two instructions that do not come back, by pointing
 each one's fall-through at itself, which the C shows as a loop with a
@@ -240,7 +244,8 @@ nothing, and more than 20 is refused as a rule gone wrong.
 
 Names come from what the project has established.  `names/IMAGE.tsv`
 holds those the notes give for that image, each row citing its note:
-the float and C libraries (`softfloat.md`, `libc.md`), the interval's
+the float and C libraries (`softfloat.md`, `libc.md`), the kernel's
+service calls (`psos.md`), the interval's
 routine and cells (`interval.md`), the SCPI task and the installer's
 entry (`restart.md`), the console's hook (`console.md`).  An address a
 note gives only for another image is not carried over.  SCPI handlers

@@ -82,10 +82,13 @@ import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.JumpTable;
+import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceManager;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolTable;
 
 public class SmartClockSetup extends GhidraScript {
 
@@ -182,6 +185,9 @@ public class SmartClockSetup extends GhidraScript {
 	private static final int FRAME_SEARCH_BYTES = 0x1000;
 	/** How far past a table to repair flow through the case bodies. */
 	private static final int CASE_BODY_WINDOW = 0x400;
+	/** The namespace analysis puts a switch's case labels in, and their prefix. */
+	private static final String SWITCH_NAMESPACE_PREFIX = "switchD_";
+	private static final String CASE_LABEL_PREFIX = "caseD_";
 	/** Upper limit on a table with no bound check found. */
 	private static final int MAX_UNBOUNDED_CASES = 256;
 
@@ -426,6 +432,11 @@ public class SmartClockSetup extends GhidraScript {
 		}
 		SourceType source = function.getSymbol().getSource();
 		if (source == SourceType.DEFAULT || (curated && source == SourceType.IMPORTED)) {
+			for (Symbol label : currentProgram.getSymbolTable().getSymbols(address)) {
+				if (label.getName().equals(name) && !label.equals(function.getSymbol())) {
+					label.delete();
+				}
+			}
 			function.setName(name, SourceType.IMPORTED);
 			counts[NameCount.NAMED.ordinal()]++;
 		}
@@ -928,7 +939,7 @@ public class SmartClockSetup extends GhidraScript {
 			for (int i = 0; i < recovered.targets().size(); i++) {
 				createData(recovered.table().add(i * 2L), WordDataType.dataType);
 			}
-			createLabel(recovered.table(), "switchD_" + jmp, true, SourceType.USER_DEFINED);
+			createLabel(recovered.table(), SWITCH_NAMESPACE_PREFIX + jmp, true, SourceType.USER_DEFINED);
 			for (Address target : recovered.targets()) {
 				references.addMemoryReference(jmp, target, RefType.COMPUTED_JUMP,
 					SourceType.USER_DEFINED, 0);
@@ -1170,6 +1181,7 @@ public class SmartClockSetup extends GhidraScript {
 
 	/** Records each switch's targets as a decompiler jump-table override. */
 	private void overrideSwitches(List<Switch> switches) throws Exception {
+		int stale = 0;
 		for (Switch recovered : switches) {
 			Function function = switchFunction(recovered.jmp());
 			if (function == null) {
@@ -1178,6 +1190,51 @@ public class SmartClockSetup extends GhidraScript {
 			}
 			new JumpTable(recovered.jmp(), new ArrayList<>(recovered.targets()), true, 0)
 					.writeOverride(function);
+			stale += removeStaleCases(recovered);
 		}
+		if (stale > 0) {
+			println("stale case labels " + (List.of(getScriptArgs()).contains(DRY_RUN)
+					? "found: " : "removed: ") + stale);
+		}
+	}
+
+	/**
+	 * Removes the case labels analysis put at targets of its late reading of
+	 * a switch's table, which are not the switch's cases.  Such a label can
+	 * be another function's name, and deleting a function's name deletes
+	 * the function, so that function is given back its default name in the
+	 * global namespace instead.  With dry-run, only counts.  Returns how
+	 * many were removed or given back.
+	 */
+	private int removeStaleCases(Switch recovered) throws Exception {
+		SymbolTable symbols = currentProgram.getSymbolTable();
+		Namespace namespace = symbols.getNamespace(SWITCH_NAMESPACE_PREFIX + recovered.jmp(),
+			currentProgram.getGlobalNamespace());
+		if (namespace == null) {
+			return 0;
+		}
+		List<Symbol> stale = new ArrayList<>();
+		for (Symbol symbol : symbols.getSymbols(namespace)) {
+			if (symbol.getName().startsWith(CASE_LABEL_PREFIX)
+					&& !recovered.targets().contains(symbol.getAddress())) {
+				stale.add(symbol);
+			}
+		}
+		if (List.of(getScriptArgs()).contains(DRY_RUN)) {
+			return stale.size();
+		}
+		for (Symbol symbol : stale) {
+			Function function = getFunctionAt(symbol.getAddress());
+			if (function != null && function.getSymbol().equals(symbol)) {
+				function.setParentNamespace(currentProgram.getGlobalNamespace());
+				function.setName(null, SourceType.DEFAULT);
+				println("function at " + symbol.getAddress() + " was named " + symbol.getName()
+					+ "; given back its default name");
+			}
+			else {
+				symbol.delete();
+			}
+		}
+		return stale.size();
 	}
 }

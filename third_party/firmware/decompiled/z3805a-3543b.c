@@ -4580,7 +4580,7 @@ void FUN_00012bb4(void)
     if (DAT_00100002 == 1) {
       memcpy(&DAT_00101e70,(void *)0x100934,0x19);
       sVar2 = 0x155;
-      puVar5 = &DAT_00100c6a;
+      puVar5 = (undefined4 *)&DAT_00100c6a;
       puVar7 = (undefined4 *)&DAT_00100004;
       do {
         puVar6 = puVar7 + 1;
@@ -4853,7 +4853,7 @@ void root_task(void)
   enter_supervisor();
   FUN_00012004('\x01');
   DAT_001037dc = 1;
-  FUN_00030f10();
+  eeprom_init();
   status_init();
   FUN_0003167c();
   if (_DAT_00100c34 != 0) {
@@ -5768,7 +5768,7 @@ uint FUN_00013c50(void)
   }
   if (DAT_001038ad != '\0') {
     DAT_001038ab = 0;
-    bVar6 = FUN_00013a48(_DAT_00102198);
+    bVar6 = FUN_00013a48(tfom);
     FUN_00042a18(&local_8);
     if (DAT_00101ece == '\0') {
       cVar8 = '0';
@@ -15329,14 +15329,12 @@ void diag_sync_imm(void)
 void diag_loop_time(int param_1)
 
 {
-  DAT_00101e84 = integer_to_float(param_1);
+  max_loop_time = integer_to_float(param_1);
   return;
 }
 
 
 /* 0001b310 */
-
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
 void diag_pll_rep(void)
 
@@ -15345,16 +15343,17 @@ void diag_pll_rep(void)
   double dVar1;
   byte local_6 [2];
   
-  printf("start ptr = %d    stop_ptr = %d\r\n",(uint)DAT_001021ac,(uint)DAT_001021ad);
-  float_to_integer(DAT_00101e84);
+  printf("start ptr = %d    stop_ptr = %d\r\n",(uint)efc_history.start_ptr,
+         (uint)efc_history.stop_ptr);
+  float_to_integer(max_loop_time);
   printf("max loop time = %d\r\n");
   FUN_00042a18(local_6);
   printf("ffom = %1d\r\n",(uint)local_6[0]);
-  dVar1 = float_to_double(_DAT_00102198);
+  dVar1 = float_to_double(tfom);
   printf("tfom = %.1e secs\r\n",dVar1);
-  dVar1 = float_to_double(*(float *)(&DAT_001021b6 + (uint)DAT_001021ad * 4));
+  dVar1 = float_to_double(efc_history.averages[efc_history.stop_ptr]);
   printf("last efc average = %.1f\r\n",dVar1);
-  f = float_multiply(_DAT_001024fe,5.4e-08);
+  f = float_multiply(efc_history.drift,5.4e-08);
   dVar1 = float_to_double(f);
   printf("current drift = %.1e / day\r\n",dVar1);
   return;
@@ -15373,9 +15372,9 @@ void diag_efc_rep(void)
   
   iVar2 = 0;
   do {
-    uVar1 = (uint)(byte)(&DAT_001022b6)[iVar2];
-    dVar3 = float_to_double(*(float *)(&DAT_001021b6 + iVar2 * 4));
-    dVar4 = float_to_double(*(float *)(&DAT_001022f6 + iVar2 * 4));
+    uVar1 = (uint)efc_history.weights[iVar2];
+    dVar3 = float_to_double(efc_history.averages[iVar2]);
+    dVar4 = float_to_double(efc_history.times[iVar2]);
     printf("%f %.1f %d\r\n",dVar4,dVar3,uVar1);
     iVar2 = iVar2 + 1;
   } while (iVar2 < 0x40);
@@ -15877,7 +15876,7 @@ void diag_efc_wr(uint param_1)
   float a;
   
   a = unsigned_to_float(param_1);
-  DAT_00102194 = float_multiply(a,16.0);
+  efc = float_multiply(a,16.0);
   return;
 }
 
@@ -15889,7 +15888,7 @@ void diag_pr_efc(void)
 {
   double dVar1;
   
-  dVar1 = float_to_double(DAT_00102194);
+  dVar1 = float_to_double(efc);
   printf("efc = %5f\r\n",dVar1);
   return;
 }
@@ -16725,7 +16724,7 @@ void diag_cal(uint param_1)
   fVar4 = 0.0;
   for (uVar3 = 0; uVar3 < param_1; uVar3 = uVar3 + 10) {
     bVar2 = adc_read('\x03');
-    f = DAT_00102194;
+    f = efc;
     i = (uint)bVar2;
     dVar5 = integer_to_double(i);
     double_add_in_place((double *)&uStack_24,dVar5);
@@ -17154,7 +17153,7 @@ void FUN_0001d922(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-undefined8 FUN_0001d93e(void)
+undefined8 duart_init(void)
 
 {
   byte bVar1;
@@ -17215,30 +17214,30 @@ undefined8 FUN_0001d93e(void)
   while (bVar1 = DUART_SRB_CSRB, (bVar1 & 1) != 0) {
     bVar1 = DUART_RBB_TBB;
   }
-  uVar2 = psos_create_x("drtR",0,0,(ulong *)&DAT_00103102);
+  uVar2 = psos_create_x("drtR",0,0,(ulong *)&drtR_exchange);
   if ((char)uVar2 != '\0') {
     sprintf(acStack_64,"Unable to create drtR: %X",(char)uVar2);
     fatal_error(acStack_64);
   }
   _DAT_0010310a = 0;
-  _DAT_0010310e = _DAT_00103102;
+  _DAT_0010310e = drtR_exchange;
   _DAT_00103112 = 0;
   _DAT_00103116 = 0;
-  uVar2 = psos_send_x(_DAT_00103102,&DAT_0010310a);
+  uVar2 = psos_send_x(drtR_exchange,&DAT_0010310a);
   if ((char)uVar2 != '\0') {
     sprintf(acStack_64,"Unable to initialize drtR: %X",(char)uVar2);
     fatal_error(acStack_64);
   }
-  uVar2 = psos_create_x("drtW",0,0,(ulong *)&DAT_00103106);
+  uVar2 = psos_create_x("drtW",0,0,(ulong *)&drtW_exchange);
   if ((char)uVar2 != '\0') {
     sprintf(acStack_64,"Unable to create drtW: %X",(char)uVar2);
     fatal_error(acStack_64);
   }
   _DAT_00103122 = 0;
-  _DAT_00103126 = _DAT_00103106;
+  _DAT_00103126 = drtW_exchange;
   _DAT_0010312a = 0;
   _DAT_0010312e = 0;
-  uVar2 = psos_send_x(_DAT_00103106,&DAT_00103122);
+  uVar2 = psos_send_x(drtW_exchange,&DAT_00103122);
   if ((char)uVar2 != '\0') {
     sprintf(acStack_64,"Unable to initialize drtW: %X",(char)uVar2);
     fatal_error(acStack_64);
@@ -19035,9 +19034,7 @@ void primary_user_64(void)
 
 /* 0001fc20 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-undefined8 FUN_0001fc20(void)
+undefined8 sci_unlock(void)
 
 {
   undefined4 in_D0;
@@ -19049,11 +19046,11 @@ undefined8 FUN_0001fc20(void)
   
   if ((char)in_D0 == '\x01') {
     message = &DAT_00103170;
-    uVar2 = _DAT_0010316c;
+    uVar2 = sciW_exchange;
   }
   else {
     message = &DAT_00103154;
-    uVar2 = _DAT_00103150;
+    uVar2 = sciR_exchange;
   }
   uVar1 = psos_my_pid();
   if (uVar1 == *(ulong *)(message + 8)) {
@@ -19085,9 +19082,7 @@ undefined8 FUN_0001fc20(void)
 
 /* 0001fd0e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-undefined8 FUN_0001fd0e(void)
+undefined8 sci_lock(void)
 
 {
   undefined4 in_D0;
@@ -19099,11 +19094,11 @@ undefined8 FUN_0001fd0e(void)
   
   if ((char)in_D0 == '\x01') {
     buffer = &DAT_00103170;
-    uVar2 = _DAT_0010316c;
+    uVar2 = sciW_exchange;
   }
   else {
     buffer = &DAT_00103154;
-    uVar2 = _DAT_00103150;
+    uVar2 = sciR_exchange;
   }
   uVar1 = psos_my_pid();
   if (uVar1 == *(ulong *)(buffer + 8)) {
@@ -19126,7 +19121,7 @@ undefined8 FUN_0001fd0e(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-undefined8 FUN_0001fdb6(void)
+undefined8 sci_init(void)
 
 {
   word wVar1;
@@ -19163,30 +19158,30 @@ undefined8 FUN_0001fdb6(void)
   } while (iVar3 < 100000);
   wVar1 = SCSR;
   wVar1 = SCDR;
-  uVar2 = psos_create_x("sciR",0,0,(ulong *)&DAT_00103150);
+  uVar2 = psos_create_x("sciR",0,0,(ulong *)&sciR_exchange);
   if ((uVar2 & 0xff) != 0) {
     sprintf(acStack_64,"Unable to create sciR: %X",(char)uVar2);
     fatal_error(acStack_64);
   }
   _DAT_00103154 = 0;
-  _DAT_00103158 = _DAT_00103150;
+  _DAT_00103158 = sciR_exchange;
   _DAT_0010315c = 0;
   _DAT_00103160 = 0;
-  uVar2 = psos_send_x(_DAT_00103150,&DAT_00103154);
+  uVar2 = psos_send_x(sciR_exchange,&DAT_00103154);
   if ((uVar2 & 0xff) != 0) {
     sprintf(acStack_64,"Unable to initialize sciR: %X",(char)uVar2);
     fatal_error(acStack_64);
   }
-  uVar2 = psos_create_x("sciW",0,0,(ulong *)&DAT_0010316c);
+  uVar2 = psos_create_x("sciW",0,0,(ulong *)&sciW_exchange);
   if ((uVar2 & 0xff) != 0) {
     sprintf(acStack_64,"Unable to create sciW: %X",(char)uVar2);
     fatal_error(acStack_64);
   }
   _DAT_00103170 = 0;
-  _DAT_00103174 = _DAT_0010316c;
+  _DAT_00103174 = sciW_exchange;
   _DAT_00103178 = 0;
   _DAT_0010317c = 0;
-  uVar2 = psos_send_x(_DAT_0010316c,&DAT_00103170);
+  uVar2 = psos_send_x(sciW_exchange,&DAT_00103170);
   if ((uVar2 & 0xff) != 0) {
     sprintf(acStack_64,"Unable to initialize sciW: %X",(char)uVar2);
     fatal_error(acStack_64);
@@ -19320,9 +19315,9 @@ void FUN_00020152(void)
 
 {
   if (DAT_0010329c == '\0') {
-    FUN_0001fd0e();
+    sci_lock();
     FUN_0001f76c();
-    FUN_0001fc20();
+    sci_unlock();
   }
   return;
 }
@@ -19349,10 +19344,10 @@ void FUN_000201b0(undefined1 param_1)
   
   local_6 = param_1;
   local_5 = 0;
-  FUN_0001fd0e();
+  sci_lock();
   if (unaff_D7b < '\x01') {
     FUN_0001f76c(&local_6);
-    FUN_0001fc20();
+    sci_unlock();
   }
   return;
 }
@@ -19941,7 +19936,7 @@ uint FUN_00020c96(ulong param_1)
   uVar1 = psos_ident("spoo",(ulong *)0x0,(uchar *)0x0);
   uVar2 = (uint)((char)uVar1 == '\0');
   if (uVar2 == 0) {
-    uVar1 = psos_create_x("spoo",2,5,(ulong *)&DAT_001032f8);
+    uVar1 = psos_create_x("spoo",2,5,(ulong *)&spoo_exchange);
     uVar2 = uVar1 & 0xff;
   }
   if (uVar2 == 0) {
@@ -19964,8 +19959,6 @@ uint FUN_00020c96(ulong param_1)
 
 
 /* 00020d66 */
-
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
 uint FUN_00020d66(code *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4)
 
@@ -19992,7 +19985,7 @@ uint FUN_00020d66(code *param_1,undefined4 param_2,undefined4 param_3,undefined4
     local_10 = param_2;
     local_c = param_3;
     local_8 = param_4;
-    uVar2 = psos_send_x(_DAT_001032f8,auStack_1c);
+    uVar2 = psos_send_x(spoo_exchange,auStack_1c);
     uVar1 = uVar2 & 0xff;
   }
   return uVar1;
@@ -20038,7 +20031,7 @@ void FUN_00020e4e(void)
   do {
     do {
       while( true ) {
-        uVar1 = psos_request_x(_DAT_001032f8,(void *)0x103702,0,0x400);
+        uVar1 = psos_request_x(spoo_exchange,(void *)0x103702,0,0x400);
         _DAT_0010371a = uVar1 & 0xff;
         DAT_001009b6 = DAT_001009b6 + '\x01';
         if (_DAT_0010371a != 0) break;
@@ -21002,7 +20995,7 @@ void FUN_0002421c(void)
   int iVar2;
   double dVar3;
   
-  dVar3 = float_to_double(DAT_00102194);
+  dVar3 = float_to_double(efc);
   iVar1 = FUN_0001223c(dVar3);
   if (iVar1 < 0) {
 LAB_0002423a:
@@ -21073,8 +21066,8 @@ void FUN_000242f0(void)
 {
   int iVar1;
   
-  iVar1 = float_compare(DAT_00102194,52428.0);
-  if ((-1 < iVar1) && (iVar1 = float_compare(DAT_00102194,996132.0), iVar1 < 1)) {
+  iVar1 = float_compare(efc,52428.0);
+  if ((-1 < iVar1) && (iVar1 = float_compare(efc,996132.0), iVar1 < 1)) {
     DAT_00101cf6 = 0;
     if (DAT_00101cf5 == '\0') {
       DAT_00101cf6 = 0;
@@ -27592,7 +27585,7 @@ undefined4 scpi_query_DIAGnostic_ROSCillator_EFControl_RELative(undefined4 param
   float fVar1;
   double dVar2;
   
-  fVar1 = (float)FUN_00029a62(DAT_00102194);
+  fVar1 = (float)FUN_00029a62(efc);
   fVar1 = float_add(fVar1,-524288.0);
   fVar1 = float_divide(fVar1,524288.0);
   dVar2 = float_to_double(fVar1);
@@ -27611,7 +27604,7 @@ undefined4 scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute(undefined4 param
   float f;
   int iVar1;
   
-  f = (float)FUN_00029a62(DAT_00102194);
+  f = (float)FUN_00029a62(efc);
   iVar1 = float_to_integer(f);
   *param_2 = iVar1;
   return 0;
@@ -32076,8 +32069,6 @@ void scpi_query_RSST(undefined4 param_1,undefined4 param_2,int param_3)
 
 /* 0003005a */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 undefined4 scpi_query_SOURce_PTIMe_FFOMerit(short *param_1,ushort *param_2,int param_3)
 
 {
@@ -32095,7 +32086,7 @@ undefined4 scpi_query_SOURce_PTIMe_FFOMerit(short *param_1,ushort *param_2,int p
     uVar2 = (ushort)local_6[0];
   }
   else {
-    uVar2 = FUN_00013a48(_DAT_00102198);
+    uVar2 = FUN_00013a48(tfom);
   }
   *param_2 = uVar2;
   return 0;
@@ -32859,7 +32850,7 @@ void FUN_00030b66(int param_1)
     _DAT_00101d04 = param_1;
     _DAT_00101d08 = _DAT_00101d08 + 1;
     if (DAT_00102162 == '\x06') {
-      _DAT_00101d00 = DAT_00102194;
+      _DAT_00101d00 = efc;
     }
     FUN_00030ab4();
   }
@@ -33014,22 +33005,22 @@ void FUN_00030f08(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_00030f10(void)
+void eeprom_init(void)
 
 {
   ulong uVar1;
   char acStack_54 [80];
   
-  uVar1 = psos_create_x("eepx",0,0,(ulong *)&DAT_00101d18);
+  uVar1 = psos_create_x("eepx",0,0,(ulong *)&eepx_exchange);
   if ((char)uVar1 != '\0') {
     sprintf(acStack_54,"Unable to create eepx: %X",uVar1 & 0xff);
     fatal_error(acStack_54);
   }
   _DAT_00101d1c = 0;
-  _DAT_00101d20 = _DAT_00101d18;
+  _DAT_00101d20 = eepx_exchange;
   _DAT_00101d24 = 0;
   _DAT_00101d28 = 0;
-  uVar1 = psos_send_x(_DAT_00101d18,&DAT_00101d1c);
+  uVar1 = psos_send_x(eepx_exchange,&DAT_00101d1c);
   if ((char)uVar1 != '\0') {
     sprintf(acStack_54,"Unable to initialize eepx: %X",uVar1 & 0xff);
     fatal_error(acStack_54);
@@ -33042,7 +33033,7 @@ void FUN_00030f10(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-char FUN_00030fae(void)
+char eeprom_lock(void)
 
 {
   ulong uVar1;
@@ -33059,7 +33050,7 @@ char FUN_00030fae(void)
         _DAT_00101d28 = _DAT_00101d28 + 1;
         return '\0';
       }
-      uVar2 = psos_request_x(_DAT_00101d18,&DAT_00101d1c,0,0x2800);
+      uVar2 = psos_request_x(eepx_exchange,&DAT_00101d1c,0,0x2800);
       cVar3 = (char)uVar2;
       if (cVar3 == '\0') {
         _DAT_00101d24 = uVar1;
@@ -33085,7 +33076,7 @@ char FUN_00030fae(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_0003105e(void)
+void eeprom_unlock(void)
 
 {
   ulong uVar1;
@@ -33098,10 +33089,10 @@ void FUN_0003105e(void)
     if (uVar1 == _DAT_00101d24) {
       if (_DAT_00101d28 == 0) {
         _DAT_00101d24 = 0;
-        if (_DAT_00101d20 != _DAT_00101d18) {
+        if (_DAT_00101d20 != eepx_exchange) {
           fatal_error("eepx semaphore has been corrupted");
         }
-        uVar1 = psos_send_x(_DAT_00101d18,&DAT_00101d1c);
+        uVar1 = psos_send_x(eepx_exchange,&DAT_00101d1c);
         if ((char)uVar1 != '\0') {
           sprintf(acStack_56,"Unable to release eepx token: %X",uVar1 & 0xff);
           fatal_error(acStack_56);
@@ -33136,7 +33127,7 @@ bool FUN_00031128(char *param_1,char param_2)
   
   bVar2 = false;
   iVar3 = 5;
-  cVar1 = FUN_00030fae();
+  cVar1 = eeprom_lock();
   if (cVar1 == '\0') {
     for (; (!bVar2 && (0 < iVar3)); iVar3 = iVar3 + -1) {
       *param_1 = param_2;
@@ -33147,7 +33138,7 @@ bool FUN_00031128(char *param_1,char param_2)
       }
     }
     DAT_00101d34 = 0;
-    FUN_0003105e();
+    eeprom_unlock();
     if (bVar2 == false) {
       status_happening('I');
     }
@@ -33179,7 +33170,7 @@ bool FUN_0003119e(char *param_1,char *param_2,ushort param_3)
   
   if (((param_3 != 0) &&
       (pcVar1 = param_1 + (param_3 - 1), ((uint)param_1 & 0xffffffc0) == ((uint)pcVar1 & 0xffffffc0)
-      )) && (cVar4 = FUN_00030fae(), cVar4 == '\0')) {
+      )) && (cVar4 = eeprom_lock(), cVar4 == '\0')) {
     bVar3 = false;
     DAT_00101d34 = 1;
     for (iVar5 = 5; (bVar3 == false && (0 < iVar5)); iVar5 = iVar5 + -1) {
@@ -33207,7 +33198,7 @@ bool FUN_0003119e(char *param_1,char *param_2,ushort param_3)
       }
     }
     DAT_00101d34 = 0;
-    FUN_0003105e();
+    eeprom_unlock();
     return bVar3;
   }
   return false;
@@ -35834,7 +35825,7 @@ undefined8 FUN_00041244(uint param_1,undefined4 param_2)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_0004137e(void)
+void efc_history_update(void)
 
 {
   float fVar1;
@@ -35867,42 +35858,42 @@ void FUN_0004137e(void)
   case 8:
     DAT_00102182 = '\x01';
     _DAT_0010219c = 0x39e27e0f;
-    _DAT_00102506 = DAT_00102194;
+    efc_history.field_35a = efc;
     break;
   case 0x1e:
-    if (DAT_001021ae == '\x01') {
+    if (efc_history.field_002 == '\x01') {
       DAT_00102182 = '\x03';
     }
     break;
   case 0x30:
     fVar1 = adc_average(CONCAT22(CONCAT11(3,uVar12),uVar9));
     if ((DAT_00102162 == '\x06') || ((DAT_00102162 == '\x05' && (DAT_0010216e != '\x01')))) {
-      if (uRam001021b4 == 0) {
-        fRam001024f6 = 0.0;
+      if (efc_history.summed_count == 0) {
+        efc_history.efc_sum = 0.0;
       }
       fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
-      fVar1 = float_subtract_reversed(fVar1,DAT_00102194);
-      float_add_in_place((float *)0x1024f6,fVar1);
-      uRam001021b4 = uRam001021b4 + 1;
+      fVar1 = float_subtract_reversed(fVar1,efc);
+      float_add_in_place(&efc_history.efc_sum,fVar1);
+      efc_history.summed_count = efc_history.summed_count + 1;
     }
-    else if (uRam001021b4 == 0) {
+    else if (efc_history.summed_count == 0) {
       fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
-      fVar1 = float_subtract_reversed(fVar1,DAT_00102194);
-      float_add_in_place((float *)0x1024f6,fVar1);
+      fVar1 = float_subtract_reversed(fVar1,efc);
+      float_add_in_place(&efc_history.efc_sum,fVar1);
     }
-    uRam001021b0 = uRam001021b0 + 1;
-    if (uRam001021b0 < 0xa8c) {
+    efc_history.sample_count = efc_history.sample_count + 1;
+    if (efc_history.sample_count < 0xa8c) {
       return;
     }
-    if (uRam001021b4 == 0) {
+    if (efc_history.summed_count == 0) {
       if (DAT_00102541 != '\0') {
-        dVar6 = float_to_double(_DAT_00102198);
+        dVar6 = float_to_double(tfom);
         uVar3 = FUN_000136f6(0,0,0,(short)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
         fVar1 = unsigned_to_float(uVar3);
         fVar1 = float_divide(fVar1,2700.0);
         fVar1 = float_divide(fVar1,32.0);
         dVar6 = float_to_double(fVar1);
-        fVar1 = float_divide(fRam001024f6,2700.0);
+        fVar1 = float_divide(efc_history.efc_sum,2700.0);
         dVar7 = float_to_double(fVar1);
         debug_sprintf(acStack_68,"e_avg= %.1f time= %f weight= %d log= %.2f  tfom= %.1e\r\n",dVar7,
                       dVar6);
@@ -35910,23 +35901,23 @@ void FUN_0004137e(void)
       }
     }
     else {
-      if (((uRam001021b4 < 0x2a3) && (uRam001021b4 != 0)) ||
+      if (((efc_history.summed_count < 0x2a3) && (efc_history.summed_count != 0)) ||
          (puVar2 = (undefined *)FUN_000136f6(), puVar2 < &UNK_00002a30)) {
-        (&DAT_001022b6)[DAT_001021ad] = 1;
+        efc_history.weights[efc_history.stop_ptr] = '\x01';
       }
-      else if (uRam001021b4 == 0xa8c) {
-        (&DAT_001022b6)[DAT_001021ad] = 3;
+      else if (efc_history.summed_count == 0xa8c) {
+        efc_history.weights[efc_history.stop_ptr] = '\x03';
       }
-      else if (0x2a2 < uRam001021b4) {
-        (&DAT_001022b6)[DAT_001021ad] = 2;
+      else if (0x2a2 < efc_history.summed_count) {
+        efc_history.weights[efc_history.stop_ptr] = '\x02';
       }
-      fVar1 = unsigned_to_float((uint)uRam001021b4);
-      fVar1 = float_divide_reversed(fVar1,fRam001024f6);
-      *(float *)(&DAT_001021b6 + (uint)DAT_001021ad * 4) = fVar1;
+      fVar1 = unsigned_to_float((uint)efc_history.summed_count);
+      fVar1 = float_divide_reversed(fVar1,efc_history.efc_sum);
+      efc_history.averages[efc_history.stop_ptr] = fVar1;
       uVar3 = FUN_000136f6();
       fVar1 = unsigned_to_float(uVar3);
       fVar1 = float_divide(fVar1,2700.0);
-      *(float *)(&DAT_001022f6 + (uint)DAT_001021ad * 4) = fVar1;
+      efc_history.times[efc_history.stop_ptr] = fVar1;
       iVar4 = float_compare(1.0,fVar1);
       if (iVar4 < 0) {
         fVar5 = float_add(fVar1,-1.0);
@@ -35953,33 +35944,33 @@ void FUN_0004137e(void)
                                           uVar13));
         dVar6 = double_add(-1.0,(double)CONCAT44(extraout_A0,extraout_A1));
         fVar5 = double_to_float(dVar6);
-        *(float *)(&DAT_001023f6 + (uint)DAT_001021ad * 4) = fVar5;
+        efc_history.logs[efc_history.stop_ptr] = fVar5;
       }
       else {
-        *(undefined4 *)(&DAT_001023f6 + (uint)DAT_001021ad * 4) = 0xbf800000;
+        efc_history.logs[efc_history.stop_ptr] = -1.0;
       }
       if (DAT_00102541 != '\0') {
-        dVar6 = float_to_double(_DAT_00102198);
+        dVar6 = float_to_double(tfom);
         uVar9 = (undefined2)((ulonglong)dVar6 >> 0x20);
         uVar12 = SUB81(dVar6,0);
-        dVar6 = float_to_double(*(float *)(&DAT_001023f6 + (uint)DAT_001021ad * 4));
-        uVar3 = (uint)(byte)(&DAT_001022b6)[DAT_001021ad];
+        dVar6 = float_to_double(efc_history.logs[efc_history.stop_ptr]);
+        uVar3 = (uint)efc_history.weights[efc_history.stop_ptr];
         fVar1 = float_divide(fVar1,32.0);
         dVar7 = float_to_double(fVar1);
-        dVar8 = float_to_double(*(float *)(&DAT_001021b6 + (uint)DAT_001021ad * 4));
+        dVar8 = float_to_double(efc_history.averages[efc_history.stop_ptr]);
         debug_sprintf(acStack_68,"e_avg= %.1f time= %f weight= %d log= %.2f tfom= %.1e\r\n",dVar8,
                       dVar7,uVar3,dVar6,uVar9,uVar12);
         task_dmessage(acStack_68);
       }
-      DAT_001021ad = DAT_001021ad + 1 & 0x3f;
-      if (DAT_001021ad == DAT_001021ac) {
-        DAT_001021ac = DAT_001021ac + 1 & 0x3f;
+      efc_history.stop_ptr = efc_history.stop_ptr + 1 & 0x3f;
+      if (efc_history.stop_ptr == efc_history.start_ptr) {
+        efc_history.start_ptr = efc_history.start_ptr + 1 & 0x3f;
       }
       FUN_0004172a();
     }
-    uRam001021b0 = 0;
-    uRam001021b4 = 0;
-    fRam001024f6 = 0.0;
+    efc_history.sample_count = 0;
+    efc_history.summed_count = 0;
+    efc_history.efc_sum = 0.0;
   }
   return;
 }
@@ -36006,9 +35997,9 @@ void FUN_0004173e(void)
   
   uVar1 = psos_get_v(0x100,0,(ulong *)0x0);
   if ((char)uVar1 == '\0') {
-    _DAT_00102506 = _DAT_00101fea;
-    DAT_0010250a = _DAT_00101fee;
-    DAT_0010250e = _DAT_00101ff2;
+    efc_history.field_35a = _DAT_00101fea;
+    efc_history.field_35e = _DAT_00101fee;
+    efc_history.field_362 = _DAT_00101ff2;
     _DAT_0010219c = _DAT_00101ffe;
   }
   return;
@@ -36063,10 +36054,10 @@ void FUN_000417c6(void)
   FUN_00041d30(&DAT_00101fd8);
   iVar5 = 0;
   do {
-    if (1 < (byte)(&DAT_001022b6)[iVar5]) {
+    if (1 < efc_history.weights[iVar5]) {
       iVar4 = iVar4 + 1;
     }
-    if ((&DAT_001022b6)[iVar5] != '\0') {
+    if (efc_history.weights[iVar5] != '\0') {
       iVar6 = iVar6 + 1;
     }
     iVar5 = iVar5 + 1;
@@ -36183,25 +36174,25 @@ undefined4 FUN_00041a42(int param_1)
   FUN_00041d30();
   for (uVar3 = *(uint *)(param_1 + 0xe); uVar1 = *(int *)(param_1 + 0xe) - 0x20U & 0x3f,
       fVar2 = fVar5, uVar3 != uVar1; uVar3 = uVar3 - 1 & 0x3f) {
-    fVar5 = float_add(fVar5,*(float *)(&DAT_001021b6 + uVar3 * 4));
+    fVar5 = float_add(fVar5,efc_history.averages[uVar3]);
   }
   for (; uVar1 != *(uint *)(param_1 + 0xe); uVar1 = uVar1 - 1 & 0x3f) {
-    fVar5 = float_subtract(fVar5,*(float *)(&DAT_001021b6 + uVar1 * 4));
-    fVar2 = float_add(fVar2,*(float *)(&DAT_001021b6 + uVar1 * 4));
+    fVar5 = float_subtract(fVar5,efc_history.averages[uVar1]);
+    fVar2 = float_add(fVar2,efc_history.averages[uVar1]);
   }
   fVar5 = float_divide(fVar5,1024.0);
   *(float *)(param_1 + 0x16) = fVar5;
   *(undefined4 *)(param_1 + 0x1a) = 0;
-  fVar5 = float_add(*(float *)(&DAT_001022f6 + *(int *)(param_1 + 0xe) * 4),-32.5);
+  fVar5 = float_add(efc_history.times[*(int *)(param_1 + 0xe)],-32.5);
   fVar5 = float_multiply(fVar5,*(float *)(param_1 + 0x16));
   fVar2 = float_divide(fVar2,64.0);
   fVar5 = float_subtract(fVar2,fVar5);
   *(float *)(param_1 + 0x12) = fVar5;
   iVar4 = 0;
   do {
-    fVar5 = float_multiply(*(float *)(param_1 + 0x16),*(float *)(&DAT_001022f6 + iVar4 * 4));
+    fVar5 = float_multiply(*(float *)(param_1 + 0x16),efc_history.times[iVar4]);
     fVar5 = float_add(fVar5,*(float *)(param_1 + 0x12));
-    fVar5 = float_subtract_reversed(fVar5,*(float *)(&DAT_001021b6 + iVar4 * 4));
+    fVar5 = float_subtract_reversed(fVar5,efc_history.averages[iVar4]);
     fVar5 = float_multiply(fVar5,fVar5);
     a = float_add(a,fVar5);
     iVar4 = iVar4 + 1;
@@ -36224,9 +36215,9 @@ undefined4 FUN_00041ba0(int param_1)
 {
   undefined4 uVar1;
   undefined1 local_22 [2];
-  undefined *local_20;
-  undefined *local_1c;
-  undefined *local_18;
+  undefined4 local_20;
+  undefined4 local_1c;
+  undefined4 local_18;
   undefined4 local_14;
   undefined4 local_10;
   undefined4 local_c;
@@ -36235,9 +36226,9 @@ undefined4 FUN_00041ba0(int param_1)
   local_8 = 0;
   FUN_00041d30(param_1);
   local_22[0] = *(undefined1 *)(param_1 + 1);
-  local_20 = &DAT_001022f6;
-  local_1c = &DAT_001021b6;
-  local_18 = &DAT_001022b6;
+  local_20 = 0x1022f6;
+  local_1c = 0x1021b6;
+  local_18 = 0x1022b6;
   uVar1 = FUN_00042390(local_22,1);
   *(undefined4 *)(param_1 + 0x12) = local_10;
   *(undefined4 *)(param_1 + 0x16) = local_14;
@@ -36262,9 +36253,9 @@ bool FUN_00041c20(int param_1)
   fVar2 = 0.0;
   iVar1 = 0;
   do {
-    if (*(byte *)(param_1 + 1) <= (byte)(&DAT_001022b6)[iVar1]) {
+    if (*(byte *)(param_1 + 1) <= efc_history.weights[iVar1]) {
       i = i + 1;
-      fVar2 = float_add(fVar2,*(float *)(&DAT_001021b6 + iVar1 * 4));
+      fVar2 = float_add(fVar2,efc_history.averages[iVar1]);
     }
     iVar1 = iVar1 + 1;
   } while (iVar1 < 0x40);
@@ -36331,19 +36322,19 @@ void FUN_00041d30(int param_1)
   *(undefined4 *)(param_1 + 6) = 0;
   iVar4 = 0;
   do {
-    if (*(byte *)(param_1 + 1) <= (byte)(&DAT_001022b6)[iVar4]) {
+    if (*(byte *)(param_1 + 1) <= efc_history.weights[iVar4]) {
       fVar1 = unsigned_to_float(*(uint *)(param_1 + 6));
-      iVar2 = float_compare(fVar1,*(float *)(&DAT_001022f6 + iVar4 * 4));
+      iVar2 = float_compare(fVar1,efc_history.times[iVar4]);
       if ((iVar2 < 0) || (*(int *)(param_1 + 6) == 0)) {
         *(int *)(param_1 + 0xe) = iVar4;
-        uVar3 = float_to_unsigned(*(float *)(&DAT_001022f6 + iVar4 * 4));
+        uVar3 = float_to_unsigned(efc_history.times[iVar4]);
         *(uint *)(param_1 + 6) = uVar3;
       }
       fVar1 = unsigned_to_float(*(uint *)(param_1 + 2));
-      iVar2 = float_compare(fVar1,*(float *)(&DAT_001022f6 + iVar4 * 4));
+      iVar2 = float_compare(fVar1,efc_history.times[iVar4]);
       if ((0 < iVar2) || (*(int *)(param_1 + 2) == 0)) {
         *(int *)(param_1 + 10) = iVar4;
-        uVar3 = float_to_unsigned(*(float *)(&DAT_001022f6 + iVar4 * 4));
+        uVar3 = float_to_unsigned(efc_history.times[iVar4]);
         *(uint *)(param_1 + 2) = uVar3;
       }
     }
@@ -36363,11 +36354,10 @@ void FUN_00041dcc(int param_1,float *param_2)
   
   fVar1 = unsigned_to_float(*(uint *)(param_1 + 6));
   fVar1 = float_multiply(fVar1,*(float *)(param_1 + 0x16));
-  b = float_multiply(*(float *)(param_1 + 0x1a),
-                     *(float *)(&DAT_001023f6 + *(int *)(param_1 + 0xe) * 4));
+  b = float_multiply(*(float *)(param_1 + 0x1a),efc_history.logs[*(int *)(param_1 + 0xe)]);
   fVar1 = float_add(fVar1,b);
   *param_2 = fVar1;
-  fVar1 = float_subtract(*(float *)(&DAT_001021b6 + *(int *)(param_1 + 0xe) * 4),*param_2);
+  fVar1 = float_subtract(efc_history.averages[*(int *)(param_1 + 0xe)],*param_2);
   *(float *)(param_1 + 0x12) = fVar1;
   return;
 }
@@ -36387,16 +36377,16 @@ undefined4 FUN_00041e32(int param_1)
   double dVar4;
   double b;
   undefined1 local_1e [2];
-  undefined *local_1c;
-  undefined *local_18;
-  undefined *local_14;
+  undefined4 local_1c;
+  undefined4 local_18;
+  undefined4 local_14;
   float local_10;
   float local_8;
   
   local_1e[0] = *(undefined1 *)(param_1 + 1);
-  local_1c = &DAT_001022f6;
-  local_18 = &DAT_001021b6;
-  local_14 = &DAT_001022b6;
+  local_1c = 0x1022f6;
+  local_18 = 0x1021b6;
+  local_14 = 0x1022b6;
   uVar1 = FUN_00042390(local_1e,1);
   fVar2 = unsigned_to_float(*(int *)(param_1 + 6) - *(int *)(param_1 + 2));
   fVar2 = float_multiply(fVar2,local_10);
@@ -36410,8 +36400,8 @@ undefined4 FUN_00041e32(int param_1)
     dVar4 = double_multiply(10.0,dVar4);
     fVar2 = double_to_float(dVar4);
   }
-  fVar2 = float_divide(fVar2,*(float *)(&DAT_001021b6 + *(int *)(param_1 + 0xe) * 4));
-  fVar2 = float_subtract(fVar2,*(float *)(&DAT_001021b6 + *(int *)(param_1 + 10) * 4));
+  fVar2 = float_divide(fVar2,efc_history.averages[*(int *)(param_1 + 0xe)]);
+  fVar2 = float_subtract(fVar2,efc_history.averages[*(int *)(param_1 + 10)]);
   *(float *)(param_1 + 0x1e) = fVar2;
   *(float *)(param_1 + 0x1a) = fVar2;
   *(float *)(param_1 + 0x22) = local_8;
@@ -36496,26 +36486,26 @@ void FUN_00042092(int param_1,undefined4 param_2)
   int iVar2;
   float local_11e [64];
   undefined1 local_1e [2];
-  undefined *local_1c;
+  undefined4 local_1c;
   float *local_18;
-  undefined *local_14;
+  undefined4 local_14;
   undefined4 local_10;
   undefined4 local_c;
   undefined4 local_8;
   
   iVar2 = 0;
   do {
-    if (*(byte *)(param_1 + 1) <= (byte)(&DAT_001022b6)[iVar2]) {
-      fVar1 = float_multiply(*(float *)(param_1 + 0x1a),*(float *)(&DAT_001023f6 + iVar2 * 4));
-      fVar1 = float_subtract_reversed(fVar1,*(float *)(&DAT_001021b6 + iVar2 * 4));
+    if (*(byte *)(param_1 + 1) <= efc_history.weights[iVar2]) {
+      fVar1 = float_multiply(*(float *)(param_1 + 0x1a),efc_history.logs[iVar2]);
+      fVar1 = float_subtract_reversed(fVar1,efc_history.averages[iVar2]);
       local_11e[iVar2] = fVar1;
     }
     iVar2 = iVar2 + 1;
   } while (iVar2 < 0x40);
   local_1e[0] = *(undefined1 *)(param_1 + 1);
-  local_1c = &DAT_001022f6;
+  local_1c = 0x1022f6;
   local_18 = local_11e;
-  local_14 = &DAT_001022b6;
+  local_14 = 0x1022b6;
   FUN_00042390(local_1e,param_2);
   *(undefined4 *)(param_1 + 0x22) = local_8;
   *(undefined4 *)(param_1 + 0x12) = local_c;
@@ -36777,21 +36767,19 @@ void FUN_00042644(char *param_1)
   
   fVar4 = 0.0;
   i = 0;
-  fVar2 = float_multiply(*(float *)(param_1 + 0x16),
-                         *(float *)(&DAT_001022f6 + *(int *)(param_1 + 10) * 4));
+  fVar2 = float_multiply(*(float *)(param_1 + 0x16),efc_history.times[*(int *)(param_1 + 10)]);
   fVar2 = float_add(fVar2,*(float *)(param_1 + 0x12));
-  fVar3 = float_multiply(*(float *)(param_1 + 0x1a),
-                         *(float *)(&DAT_001023f6 + *(int *)(param_1 + 10) * 4));
+  fVar3 = float_multiply(*(float *)(param_1 + 0x1a),efc_history.logs[*(int *)(param_1 + 10)]);
   fVar2 = float_add(fVar2,fVar3);
-  local_14 = float_subtract_reversed(fVar2,*(float *)(&DAT_001021b6 + *(int *)(param_1 + 10) * 4));
+  local_14 = float_subtract_reversed(fVar2,efc_history.averages[*(int *)(param_1 + 10)]);
   uVar1 = *(uint *)(param_1 + 10);
   while (uVar1 = uVar1 + 1 & 0x3f, uVar1 != (*(int *)(param_1 + 0xe) + 1U & 0x3f)) {
     i = i + 1;
-    fVar2 = float_multiply(*(float *)(param_1 + 0x16),*(float *)(&DAT_001022f6 + uVar1 * 4));
+    fVar2 = float_multiply(*(float *)(param_1 + 0x16),efc_history.times[uVar1]);
     fVar2 = float_add(fVar2,*(float *)(param_1 + 0x12));
-    fVar3 = float_multiply(*(float *)(param_1 + 0x1a),*(float *)(&DAT_001023f6 + uVar1 * 4));
+    fVar3 = float_multiply(*(float *)(param_1 + 0x1a),efc_history.logs[uVar1]);
     fVar2 = float_add(fVar2,fVar3);
-    fVar2 = float_subtract_reversed(fVar2,*(float *)(&DAT_001021b6 + uVar1 * 4));
+    fVar2 = float_subtract_reversed(fVar2,efc_history.averages[uVar1]);
     fVar3 = float_subtract(fVar2,local_14);
     dVar5 = float_to_double(fVar3);
     dVar6 = float_to_double(fVar3);
@@ -36865,15 +36853,13 @@ LAB_0004298e:
 
 /* 0004299c */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-undefined4 FUN_0004299c(undefined4 *param_1,undefined1 *param_2)
+undefined4 FUN_0004299c(float *param_1,undefined1 *param_2)
 
 {
   undefined4 uVar1;
   
   if ((DAT_00102162 == '\x03') || (DAT_00102162 == '\x04')) {
-    *param_1 = _DAT_00102198;
+    *param_1 = tfom;
     *param_2 = 0xf9;
     uVar1 = 1;
   }
@@ -37667,7 +37653,7 @@ undefined1 FUN_00043888(void)
   fVar1 = float_subtract(fVar1,b);
   fVar1 = float_divide(fVar1,825.0);
   fVar1 = float_divide(fVar1,_DAT_00102554);
-  fVar1 = float_add(fVar1,DAT_00102194);
+  fVar1 = float_add(fVar1,efc);
   iVar2 = float_compare(fVar1,0.0);
   if (((-1 < iVar2) && (iVar2 = float_compare(1.04856e+06,fVar1), -1 < iVar2)) &&
      (9 < _DAT_0010205a)) {
@@ -37839,13 +37825,13 @@ undefined1 FUN_00043a90(char param_1)
   if (DAT_00102172 != 0 && iVar3 != 0) {
 override_jmp_00043ae6_case_0:
     FUN_00043804();
-    if (ABS(_DAT_00102506) == 0.0) {
+    if (ABS(efc_history.field_35a) == 0.0) {
       fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
-      _DAT_00102506 = float_subtract_reversed(fVar1,DAT_00102194);
+      efc_history.field_35a = float_subtract_reversed(fVar1,efc);
     }
     _DAT_0010204a = 0x3109705f;
     if (DAT_00102182 == '\x03') {
-      if ((DAT_001021ad + 1U & 0x3f) == DAT_001021ac) {
+      if ((efc_history.stop_ptr + 1 & 0x3f) == efc_history.start_ptr) {
         _DAT_0010204a = 0x28d07fff;
       }
       else {
@@ -37903,10 +37889,10 @@ override_jmp_00043ae6_case_0:
   fVar2 = float_multiply(_DAT_0010219c,2.0);
   fVar2 = float_divide(fVar2,7.46496e+09);
   fVar2 = float_multiply(fVar2,(float)CONCAT31(CONCAT21(CONCAT11(uVar5,uVar10),uVar11),uVar12));
-  _DAT_00102198 = float_multiply(fVar2,0.5);
-  iVar3 = float_compare(1e-06,_DAT_00102198);
+  tfom = float_multiply(fVar2,0.5);
+  iVar3 = float_compare(1e-06,tfom);
   if (0 < iVar3) {
-    _DAT_00102198 = 1e-06;
+    tfom = 1e-06;
   }
   u = FUN_000136f6();
   fVar2 = unsigned_to_float(u);
@@ -37915,8 +37901,8 @@ override_jmp_00043ae6_case_0:
   fVar2 = double_to_float(dVar7);
   iVar3 = float_compare(fVar2,1.0);
   if (iVar3 < 1) {
-    fVar2 = float_multiply(DAT_0010250a,fVar2);
-    fVar2 = float_add(fVar2,_DAT_00102506);
+    fVar2 = float_multiply((float)efc_history.field_35e,fVar2);
+    fVar2 = float_add(fVar2,efc_history.field_35a);
     uVar5 = (undefined1)((uint)fVar2 >> 0x18);
     uVar10 = (undefined1)((uint)fVar2 >> 0x10);
     uVar11 = (undefined1)((uint)fVar2 >> 8);
@@ -37935,7 +37921,7 @@ override_jmp_00043ae6_case_0:
     uVar12 = (undefined1)((ulonglong)dVar7 >> 0x10);
     uVar13 = (undefined1)((ulonglong)dVar7 >> 8);
     uVar14 = SUB81(dVar7,0);
-    dVar7 = float_to_double(DAT_0010250e);
+    dVar7 = float_to_double((float)efc_history.field_362);
     dVar7 = double_multiply((double)CONCAT71(CONCAT61(CONCAT51(CONCAT41(CONCAT31(CONCAT21(uVar8,
                                                   uVar5),uVar10),uVar11),uVar12),uVar13),uVar14),
                             dVar7);
@@ -37946,8 +37932,8 @@ override_jmp_00043ae6_case_0:
     uVar12 = (undefined1)((ulonglong)dVar7 >> 0x10);
     uVar13 = (undefined1)((ulonglong)dVar7 >> 8);
     uVar14 = SUB81(dVar7,0);
-    fVar2 = float_multiply(DAT_0010250a,fVar2);
-    fVar2 = float_add(fVar2,_DAT_00102506);
+    fVar2 = float_multiply((float)efc_history.field_35e,fVar2);
+    fVar2 = float_add(fVar2,efc_history.field_35a);
     dVar7 = float_to_double(fVar2);
     dVar7 = double_add(dVar7,(double)CONCAT71(CONCAT61(CONCAT51(CONCAT41(CONCAT31(CONCAT21(uVar8,
                                                   uVar5),uVar10),uVar11),uVar12),uVar13),uVar14));
@@ -37965,7 +37951,7 @@ override_jmp_00043ae6_case_0:
     fVar2 = double_to_float(dVar7);
     uVar5 = SUB41(fVar2,0);
   }
-  DAT_00102194 = (float)FUN_0002426e(uVar5);
+  efc = (float)FUN_0002426e(uVar5);
   if ((DAT_00102046 != 10) && (DAT_00102046 != 0)) {
     fVar2 = unsigned_to_float((uint)DAT_00102046);
     fVar2 = float_divide_reversed(fVar2,10.0);
@@ -37980,7 +37966,7 @@ override_jmp_00043ae6_case_0:
     dVar7 = float_to_double(fVar1);
     uVar8 = (undefined2)((ulonglong)dVar7 >> 0x20);
     uVar9 = SUB82(dVar7,0);
-    iVar3 = float_to_integer(DAT_00102194);
+    iVar3 = float_to_integer(efc);
     debug_sprintf(acStack_74,"%d/%d/%d %02d:%02d:%02d efc= %d ti= %.1f hold= 0 curr= %.2f\r\n",
                   (uint)bStack_a,(uint)bStack_9,(uint)uStack_c,(uint)uStack_8._1_1_,
                   (uint)uStack_8._2_1_,(uint)(byte)uStack_8,(short)iVar3,uVar8,uVar9,uVar5,uVar10);
@@ -38239,7 +38225,7 @@ char FUN_0004429e(char param_1)
     DAT_00102512 = 0.0;
     DAT_0010205e = 0.0;
     fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,local_74);
-    DAT_00102516 = float_subtract_reversed(fVar1,DAT_00102194);
+    DAT_00102516 = float_subtract_reversed(fVar1,efc);
     DAT_00102062 = 0.0;
     DAT_0010206b = 0;
     DAT_0010206a = 0;
@@ -38317,23 +38303,23 @@ char FUN_0004429e(char param_1)
             DAT_0010216e = '\x03';
           }
           else {
-            _DAT_00102198 = 0x358637bd;
-            DAT_001021ae = 1;
+            tfom = 1e-06;
+            efc_history.field_002 = '\x01';
             DAT_0010216e = '\x02';
           }
           break;
         case 0x7a:
-          if ((DAT_001021ad == '\x03') && (DAT_001021ac == '\0')) {
+          if ((efc_history.stop_ptr == '\x03') && (efc_history.start_ptr == '\0')) {
             DAT_0010216e = '\x03';
           }
           break;
         case 0x98:
-          fVar1 = float_add(DAT_00101e84,-5.0);
+          fVar1 = float_add(max_loop_time,-5.0);
           iVar2 = float_compare(fVar1,DAT_0010251a);
           if (iVar2 < 1) {
             if (cVar4 != '\x02') {
-              DAT_0010251a = DAT_00101e84;
-              fVar1 = float_add(DAT_00101e84,-5.0);
+              DAT_0010251a = max_loop_time;
+              fVar1 = float_add(max_loop_time,-5.0);
               fVar1 = float_divide_reversed(fVar1,1.0);
               uVar6 = (undefined2)((uint)fVar1 >> 0x10);
               uVar7 = (undefined1)((uint)fVar1 >> 8);
@@ -38385,9 +38371,9 @@ char FUN_0004429e(char param_1)
       uVar6 = (undefined2)((uint)fVar1 >> 0x10);
       uVar7 = (undefined1)((uint)fVar1 >> 8);
       uVar8 = SUB41(fVar1,0);
-      fVar1 = float_multiply(DAT_0010250e,2700.0);
+      fVar1 = float_multiply((float)efc_history.field_362,2700.0);
       fVar1 = float_divide(fVar1,(float)CONCAT31(CONCAT21(uVar6,uVar7),uVar8));
-      a = float_add(fVar1,DAT_0010250a);
+      a = float_add(fVar1,(float)efc_history.field_35e);
       iVar2 = float_compare(a,DAT_00102564);
       fVar1 = DAT_00102564;
       if ((iVar2 < 1) && (iVar2 = float_compare(-DAT_00102564,a), fVar1 = a, 0 < iVar2)) {
@@ -38407,7 +38393,7 @@ char FUN_0004429e(char param_1)
       uVar8 = SUB41(fVar1,0);
       fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,local_74);
       fVar1 = float_add((float)CONCAT31(CONCAT21(uVar6,uVar7),uVar8),fVar1);
-      DAT_00102194 = (float)FUN_0002426e(SUB41(fVar1,0));
+      efc = (float)FUN_0002426e(SUB41(fVar1,0));
       if (DAT_00102541 != '\0') {
         get_date_time((ulong *)&local_c,&uStack_8);
         dVar5 = float_to_double(local_74);
@@ -38417,7 +38403,7 @@ char FUN_0004429e(char param_1)
         uVar6 = (undefined2)iVar2;
         fVar1 = float_multiply(DAT_00102062,1e+09);
         dVar5 = float_to_double(fVar1);
-        iVar2 = float_to_integer(DAT_00102194);
+        iVar2 = float_to_integer(efc);
         debug_sprintf(acStack_70,"%d/%d/%d %02d:%02d:%02d efc= %d ti= %.1f loop= %d curr= %.2f\r\n",
                       (uint)local_a,(uint)local_9,(uint)local_c,(uint)uStack_8._1_1_,
                       (uint)uStack_8._2_1_,(uint)(byte)uStack_8,iVar2,dVar5,uVar6,uVar7,uVar8);
@@ -38467,7 +38453,7 @@ undefined1 interval_average(char param_1)
   undefined1 local_7a;
   char acStack_79 [101];
   char *local_14;
-  undefined *local_10;
+  efc_ring *local_10;
   ushort local_c;
   byte local_a;
   byte local_9;
@@ -38475,25 +38461,25 @@ undefined1 interval_average(char param_1)
   
   local_7a = 0;
   local_14 = &DAT_00102170;
-  local_10 = &DAT_001021ac;
+  local_10 = &efc_history;
   fVar1 = adc_average(CONCAT22(CONCAT11(3,in_stack_ffffff59),(short)((uint)unaff_D2 >> 0x10)));
   if ((param_1 == '\0') || ('\x01' < *local_14)) {
     DAT_0010217a = 0;
-    _DAT_00102198 = 0x358637bd;
+    tfom = 1e-06;
     DAT_00102062 = 0.0;
     DAT_0010206b = 0;
     DAT_0010206a = 0;
     DAT_0010206c = '\0';
     FUN_00044fbc('\0',(undefined4 *)0x0);
     *local_14 = '\x01';
-    _DAT_0010206e = float_divide(DAT_0010255c,DAT_00101e84);
-    fVar2 = float_divide(DAT_00102560,DAT_00101e84);
-    fVar2 = float_divide(fVar2,DAT_00101e84);
+    _DAT_0010206e = float_divide(DAT_0010255c,max_loop_time);
+    fVar2 = float_divide(DAT_00102560,max_loop_time);
+    fVar2 = float_divide(fVar2,max_loop_time);
     _DAT_00102072 = float_divide(fVar2,4.0);
-    _DAT_00102076 = float_divide(29.75,DAT_00101e84);
+    _DAT_00102076 = float_divide(29.75,max_loop_time);
     DAT_0010205e = 0.0;
     fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
-    DAT_00102516 = float_subtract_reversed(fVar1,DAT_00102194);
+    DAT_00102516 = float_subtract_reversed(fVar1,efc);
     _DAT_001021a8 = 0x322bcc77;
   }
   else {
@@ -38557,9 +38543,9 @@ undefined1 interval_average(char param_1)
       uVar6 = (undefined2)((uint)fVar2 >> 0x10);
       uVar7 = (undefined1)((uint)fVar2 >> 8);
       uVar8 = SUB41(fVar2,0);
-      fVar2 = float_multiply(*(float *)(local_10 + 0x362),2700.0);
+      fVar2 = float_multiply((float)local_10->field_362,2700.0);
       fVar2 = float_divide(fVar2,(float)CONCAT31(CONCAT21(uVar6,uVar7),uVar8));
-      a = float_add(fVar2,*(float *)(local_10 + 0x35e));
+      a = float_add(fVar2,(float)local_10->field_35e);
       iVar3 = float_compare(a,DAT_00102564);
       fVar2 = DAT_00102564;
       if ((iVar3 < 1) && (iVar3 = float_compare(-DAT_00102564,a), fVar2 = a, 0 < iVar3)) {
@@ -38579,17 +38565,17 @@ undefined1 interval_average(char param_1)
       uVar8 = SUB41(fVar2,0);
       fVar2 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
       fVar2 = float_add((float)CONCAT31(CONCAT21(uVar6,uVar7),uVar8),fVar2);
-      DAT_00102194 = (float)FUN_0002426e(SUB41(fVar2,0));
+      efc = (float)FUN_0002426e(SUB41(fVar2,0));
       if (DAT_00102541 != '\0') {
         get_date_time((ulong *)&local_c,&uStack_8);
         dVar5 = float_to_double(fVar1);
         uVar7 = (undefined1)((ulonglong)dVar5 >> 0x20);
         uVar8 = SUB81(dVar5,0);
-        iVar3 = float_to_integer(DAT_00101e84);
+        iVar3 = float_to_integer(max_loop_time);
         uVar6 = (undefined2)iVar3;
         fVar1 = float_multiply(DAT_00102062,1e+09);
         dVar5 = float_to_double(fVar1);
-        iVar3 = float_to_integer(DAT_00102194);
+        iVar3 = float_to_integer(efc);
         debug_sprintf(acStack_79,"%d/%d/%d %02d:%02d:%02d efc= %d ti= %.1f loop= %d curr= %.2f\r\n",
                       (uint)local_a,(uint)local_9,(uint)local_c,(uint)uStack_8._1_1_,
                       (uint)uStack_8._2_1_,(uint)(byte)uStack_8,iVar3,dVar5,uVar6,uVar7,uVar8);
@@ -38708,7 +38694,7 @@ char FUN_00044fbc(char param_1,undefined4 *param_2)
     DAT_0010207a = 0;
     interval_reading_flag = '\0';
   }
-  FUN_0004137e();
+  efc_history_update();
   cVar1 = interval_reading_flag;
   if (param_2 != (undefined4 *)0x0) {
     fVar2 = double_to_float((double)CONCAT44(interval_reading,DAT_00101fa0));
@@ -38777,7 +38763,7 @@ void FUN_0004513c(void)
     DAT_0010207a = 0;
     interval_reading_flag = '\0';
   }
-  FUN_0004137e();
+  efc_history_update();
   return;
 }
 
@@ -38853,10 +38839,10 @@ LAB_0004536e:
           }
         }
         fVar1 = float_multiply(_DAT_0010217e,DAT_00102558);
-        fVar1 = float_subtract_reversed(fVar1,DAT_00102194);
-        DAT_00102194 = (float)FUN_0002426e(SUB41(fVar1,0));
+        fVar1 = float_subtract_reversed(fVar1,efc);
+        efc = (float)FUN_0002426e(SUB41(fVar1,0));
         if (DAT_00102541 != '\0') {
-          iVar2 = float_to_integer(DAT_00102194);
+          iVar2 = float_to_integer(efc);
           uVar6 = (undefined1)iVar2;
           fVar1 = float_multiply(_DAT_0010217e,1e+09);
           dVar5 = float_to_double(fVar1);
@@ -39092,11 +39078,11 @@ LAB_00045812:
              ((uint)scpi_value_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold <=
               DAT_0010252a)) {
             fVar2 = float_multiply(_DAT_00102154,DAT_00102558);
-            fVar2 = float_add(fVar2,DAT_00102194);
-            DAT_00102194 = (float)FUN_0002426e(SUB41(fVar2,0));
+            fVar2 = float_add(fVar2,efc);
+            efc = (float)FUN_0002426e(SUB41(fVar2,0));
             DAT_0010217a = 1;
             if (DAT_00102541 != '\0') {
-              iVar1 = float_to_integer(DAT_00102194);
+              iVar1 = float_to_integer(efc);
               uVar9 = (undefined1)iVar1;
               fVar2 = float_multiply(_DAT_00102154,1e+09);
               dVar6 = float_to_double(fVar2);
@@ -39402,7 +39388,6 @@ void FUN_00045ce4(char param_1)
 
 /* 00045e8e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 undefined1 FUN_00045e8e(char param_1)
@@ -39419,9 +39404,9 @@ undefined1 FUN_00045e8e(char param_1)
   
   uVar5 = 0;
   if ((param_1 == '\0') || ('\a' < DAT_00102165)) {
-    memset(&DAT_001021ac,0,0x366);
+    memset(&efc_history,0,0x366);
     DAT_00102182 = 0;
-    DAT_001021ae = 0;
+    efc_history.field_002 = '\0';
     DAT_00102160 = '\0';
     DAT_00102165 = '\0';
   }
@@ -39458,7 +39443,7 @@ undefined1 FUN_00045e8e(char param_1)
     case 0xb8:
       cVar3 = FUN_000451c2();
       if (cVar3 == '\x01') {
-        _DAT_00102198 = 0x3a83126f;
+        tfom = 0.001;
         DAT_00102165 = '\x05';
         DAT_00102179 = 0;
       }
@@ -39469,7 +39454,7 @@ undefined1 FUN_00045e8e(char param_1)
     case 0xea:
       cVar3 = FUN_0004538c();
       if (cVar3 == '\x01') {
-        _DAT_00102198 = 0x360637bd;
+        tfom = 2e-06;
         if ((DAT_00102550 != '\0') && (DAT_00101b6f == '\0')) {
           uVar4 = FUN_000110fa((char)DAT_00100d38);
           FUN_00010b00((short)DAT_00100d3c,uVar4);
@@ -40704,7 +40689,7 @@ void FUN_000473d2(void)
   DAT_00102162 = 0;
   DAT_00102188 = 0;
   DAT_00102182 = 0;
-  DAT_00102194 = FUN_0002426e(_DAT_00101d00);
+  efc = (float)FUN_0002426e(_DAT_00101d00);
   DAT_0010251a = 0x43160000;
   DAT_00101e76 = 1;
   DAT_00102173 = 0;
@@ -40712,7 +40697,7 @@ void FUN_000473d2(void)
   DAT_00102175 = 0;
   DAT_00102533 = 1;
   DAT_0010258e = 0;
-  _DAT_00102198 = 0x3f800000;
+  tfom = 1.0;
   DAT_00102536 = 0;
   DAT_00102550 = 0;
   DAT_00102551 = 0;
@@ -41079,7 +41064,7 @@ LAB_00047940:
     memcpy((void *)0x100934,&DAT_00101e70,0x19);
     sVar4 = 0x155;
     puVar6 = (undefined4 *)&DAT_00100004;
-    puVar8 = &DAT_00100c6a;
+    puVar8 = (undefined4 *)&DAT_00100c6a;
     do {
       puVar7 = puVar8 + 1;
       puVar5 = puVar6 + 1;
@@ -41334,7 +41319,7 @@ void FUN_0004816c(double param_1,char *param_2)
 
 /* 00048224 */
 
-void FUN_00048224(void)
+void gps_print_best_combinations(void)
 
 {
   float fVar1;
@@ -41366,9 +41351,7 @@ void FUN_00048224(void)
 
 /* 00048300 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-void FUN_00048300(void)
+void gps_print_extension(void)
 
 {
   float fVar1;
@@ -41377,36 +41360,43 @@ void FUN_00048300(void)
   
   psos_pause(1);
   console_write("\r\n");
-  fVar1 = unsigned_to_float((uint)_DAT_00100fb6);
+  fVar1 = unsigned_to_float((uint)oncore_extension.tdop);
   fVar1 = float_divide(fVar1,10.0);
   float_to_double(fVar1);
-  fVar1 = unsigned_to_float((uint)_DAT_00100fb4);
+  fVar1 = unsigned_to_float((uint)oncore_extension.vdop);
   fVar1 = float_divide(fVar1,10.0);
   float_to_double(fVar1);
-  fVar1 = unsigned_to_float((uint)_DAT_00100fb2);
+  fVar1 = unsigned_to_float((uint)oncore_extension.hdop);
   fVar1 = float_divide(fVar1,10.0);
   float_to_double(fVar1);
-  fVar1 = unsigned_to_float((uint)_DAT_00100fb0);
+  fVar1 = unsigned_to_float((uint)oncore_extension.pdop);
   fVar1 = float_divide(fVar1,10.0);
   dVar2 = float_to_double(fVar1);
-  fVar1 = unsigned_to_float((uint)_DAT_00100fae);
+  fVar1 = unsigned_to_float((uint)oncore_extension.gdop);
   fVar1 = float_divide(fVar1,10.0);
   dVar3 = float_to_double(fVar1);
   printf("GDOP: %6.1f  PDOP: %6.1f  HDOP: %6.1f VDOP: %6.1f TDOP: %6.1f\r\n",dVar3,dVar2);
-  printf("MAG VAR: %4d VEL: n %5d e %5d u %5d AGE: %5d\r\n",(int)_DAT_00100fb8,(int)_DAT_00100fba,
-         (int)_DAT_00100fbc,(int)_DAT_00100fbe,(uint)_SUB_00100fc0);
-  printf("ECEF POSITION: x %11d y %11d z %11d\r\n",_DAT_00100fc2,_DAT_00100fc6,_DAT_00100fca);
-  printf("URA PER CHANNEL: 1= %2d  2= %2d  3= %2d  4= %2d  5= %2d  6= %2d\r\n",(uint)DAT_00100fce,
-         (uint)DAT_00100fcf,(uint)DAT_00100fd0,(uint)DAT_00100fd1,(uint)DAT_00100fd2,
-         (uint)DAT_00100fd3);
+  printf("MAG VAR: %4d VEL: n %5d e %5d u %5d AGE: %5d\r\n",(int)oncore_extension.magnetic_variation
+         ,(int)oncore_extension.velocity_north,(int)oncore_extension.velocity_east,
+         (int)oncore_extension.velocity_up,(uint)oncore_extension.correction_age);
+  printf("ECEF POSITION: x %11d y %11d z %11d\r\n",oncore_extension.ecef_x,oncore_extension.ecef_y,
+         oncore_extension.ecef_z);
+  printf("URA PER CHANNEL: 1= %2d  2= %2d  3= %2d  4= %2d  5= %2d  6= %2d\r\n",
+         (uint)oncore_extension.ura[0],(uint)oncore_extension.ura[1],(uint)oncore_extension.ura[2],
+         (uint)oncore_extension.ura[3],(uint)oncore_extension.ura[4],(uint)oncore_extension.ura[5]);
   console_write("Least Squares Sym Matrix elements\r\n");
-  printf("  %2d  %2d  %2d  %2d\r\n",(int)_DAT_00100fd4,(int)_DAT_00100fd6,(int)_DAT_00100fd8,
-         (int)_DAT_00100fda);
-  printf("   X  %2d  %2d  %2d\r\n",(int)_DAT_00100fdc,(int)_DAT_00100fde,(int)_DAT_00100fe0);
-  printf("   X   X  %2d  %2d\r\n",(int)_DAT_00100fe2,(int)_DAT_00100fe4);
-  printf("   X   X   X  %2d\r\n",(int)_DAT_00100fe6);
-  printf("RECEIVER CLOCK BIAS: %6d  RECEIVER OSC OFFSET: %5d\r\n",(int)_DAT_00100fe8,
-         (uint)_DAT_00100fea);
+  printf("  %2d  %2d  %2d  %2d\r\n",(int)oncore_extension.least_squares_inverse[0],
+         (int)oncore_extension.least_squares_inverse[1],
+         (int)oncore_extension.least_squares_inverse[2],
+         (int)oncore_extension.least_squares_inverse[3]);
+  printf("   X  %2d  %2d  %2d\r\n",(int)oncore_extension.least_squares_inverse[4],
+         (int)oncore_extension.least_squares_inverse[5],
+         (int)oncore_extension.least_squares_inverse[6]);
+  printf("   X   X  %2d  %2d\r\n",(int)oncore_extension.least_squares_inverse[7],
+         (int)oncore_extension.least_squares_inverse[8]);
+  printf("   X   X   X  %2d\r\n",(int)oncore_extension.least_squares_inverse[9]);
+  printf("RECEIVER CLOCK BIAS: %6d  RECEIVER OSC OFFSET: %5d\r\n",(int)oncore_extension.clock_bias,
+         (uint)oncore_extension.oscillator_offset);
   console_write("\r\n");
   return;
 }
@@ -41416,7 +41406,7 @@ void FUN_00048300(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_000484de(void)
+void gps_print_time_raim(void)
 
 {
   byte bVar1;
@@ -41583,7 +41573,7 @@ void FUN_000484de(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_000487f6(void)
+void gps_print_pseudorange_corrections(void)
 
 {
   byte bVar1;
@@ -41665,7 +41655,7 @@ void FUN_00048964(char param_1,char *param_2)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_000489a0(void)
+void gps_print_instrument_state(void)
 
 {
   int iVar1;
@@ -41694,24 +41684,24 @@ void FUN_000489a0(void)
   console_write(
                "\r\n------------------------- Instrument State Settings --------------------------\r\n"
                );
-  if (DAT_00100c6e._2_1_ < '\0') {
+  if (oncore_gmt_offset.minutes < '\0') {
     local_6 = '-';
-    cVar3 = -DAT_00100c6e._2_1_;
+    cVar3 = -oncore_gmt_offset.minutes;
   }
   else {
-    cVar3 = DAT_00100c6e._2_1_;
-    if (DAT_00100c6e._0_1_ == '\0') {
+    cVar3 = oncore_gmt_offset.minutes;
+    if (oncore_gmt_offset.sign == '\0') {
       local_6 = '+';
     }
     else {
       local_6 = '-';
     }
   }
-  printf("TIME   %02d:%02d:%02d    GMT CORR  %c%02dh:%02dm%24s",DAT_00100c6a._1_1_,
-         (uint)DAT_00100c6a._2_1_,(uint)(byte)DAT_00100c6a,(int)local_6,(uint)DAT_00100c6e._1_1_,
-         (int)cVar3,&DAT_0004d10b);
-  printf("DATE   %02d/%02d/%04d\r\n",(uint)DAT_00100c72._0_1_,(ushort)(byte)DAT_00100c72,
-         (char)_DAT_00100c74);
+  printf("TIME   %02d:%02d:%02d    GMT CORR  %c%02dh:%02dm%24s",oncore_time.hour,
+         (uint)oncore_time.minute,(uint)oncore_time.second,(int)local_6,
+         (uint)oncore_gmt_offset.hours,(int)cVar3,&DAT_0004d10b);
+  printf("DATE   %02d/%02d/%04d\r\n",(uint)oncore_date.month,(ushort)oncore_date.day,
+         (char)oncore_date.year);
   FUN_00048964(DAT_00100d1e,local_a0);
   iVar1 = (int)DAT_00100d33 - 4;
   if ((uint)(int)DAT_00100d33 < 4 || iVar1 == 0) {
@@ -41768,24 +41758,25 @@ void FUN_000489a0(void)
   printf("FIX ALG    %-17s%33sOPER   %s\r\n",pcVar7,&DAT_0004d10b,local_10);
   console_write("\r\nHold Position _____________________________   ");
   console_write("Initial Position _______________\r\n");
-  FUN_000480c2(local_a0,_DAT_00100d10,'\x01');
-  FUN_000480c2(local_20,_DAT_00100c76,'\x01');
-  printf("LAT        %s  = %+10d ms   %s  = %+10d ms\r\n",(short)local_a0,(char)_DAT_00100d10,
-         local_20,_DAT_00100c76);
-  FUN_000480c2(local_a0,_DAT_00100d14,'\0');
-  FUN_000480c2(local_20,_DAT_00100c7a,'\0');
-  printf("LON        %s  = %+10d ms   %s  = %+10d ms\r\n",local_a0,_DAT_00100d14,local_20,
-         _DAT_00100c7a);
+  FUN_000480c2(local_a0,oncore_hold_position.latitude,'\x01');
+  FUN_000480c2(local_20,oncore_position.latitude,'\x01');
+  printf("LAT        %s  = %+10d ms   %s  = %+10d ms\r\n",(short)local_a0,
+         (char)oncore_hold_position.latitude,local_20,oncore_position.latitude);
+  FUN_000480c2(local_a0,oncore_hold_position.longitude,'\0');
+  FUN_000480c2(local_20,oncore_position.longitude,'\0');
+  printf("LON        %s  = %+10d ms   %s  = %+10d ms\r\n",local_a0,oncore_hold_position.longitude,
+         local_20,oncore_position.longitude);
   if (SUB_00100d1c == '\0') {
-    sprintf(local_a0,"%+8d cm",_DAT_00100d18);
+    sprintf(local_a0,"%+8d cm",oncore_hold_position.height);
     local_20[0] = '\0';
   }
   else {
     local_a0[0] = '\0';
-    sprintf(local_20,"%+8d cm",_DAT_00100d18);
+    sprintf(local_20,"%+8d cm",oncore_hold_position.height);
   }
-  printf("GPS HGT           %11s%24s%+8d cm\r\n",local_a0,&DAT_0004d10b,_DAT_00100c7e);
-  printf("MSL HGT           %11s%24s%+8d cm\r\n",(char)local_20,&DAT_0004d10b,_DAT_00100c82);
+  printf("GPS HGT           %11s%24s%+8d cm\r\n",local_a0,&DAT_0004d10b,oncore_position.height_gps);
+  printf("MSL HGT           %11s%24s%+8d cm\r\n",(char)local_20,&DAT_0004d10b,
+         oncore_position.height_msl);
   console_write("\r\nSatellite Options _________________________   ");
   console_write("PRNs Ignored ___________________\r\n");
   local_a = &DAT_00100c96;
@@ -41824,9 +41815,9 @@ void FUN_000489a0(void)
   local_41 = 0;
   local_61 = 0;
   local_81 = 0;
-  printf("ELEV MASK  %-2d%33s%s\r\n",(uint)DAT_00100c86,&DAT_0004d10b,local_a0);
-  iVar1 = (int)DAT_00100c87 - 2;
-  if ((uint)(int)DAT_00100c87 < 2 || iVar1 == 0) {
+  printf("ELEV MASK  %-2d%33s%s\r\n",(uint)oncore_mask_angle,&DAT_0004d10b,local_a0);
+  iVar1 = (int)(char)oncore_satellite_select - 2;
+  if ((uint)(int)(char)oncore_satellite_select < 2 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00048d00)[(short)iVar1]) {
     case 6:
@@ -41895,8 +41886,8 @@ void FUN_000489a0(void)
     }
   }
   printf("UTC CORR   %-19s                LEAP SEC  %-12s\r\n");
-  printf("1PPS OFFS  %9d ns   POS FIX THR %3d\r\n",_DAT_00100d2a,(uint)DAT_00100d34);
-  printf("CABLE DLY     %6d ns   DIF OUT THR %3d s\r\n",(short)_DAT_00100d2e,DAT_00100d35);
+  printf("1PPS OFFS  %9d ns   POS FIX THR %3d\r\n",oncore_pps_offset,(uint)DAT_00100d34);
+  printf("CABLE DLY     %6d ns   DIF OUT THR %3d s\r\n",(short)oncore_pps_cable_delay,DAT_00100d35);
   return;
 }
 
@@ -41905,7 +41896,7 @@ void FUN_000489a0(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_00048ea0(void)
+void gps_print_average(void)
 
 {
   undefined4 uVar1;
@@ -41949,17 +41940,17 @@ void FUN_00048ea0(void)
 
 /* 00048fac */
 
-void FUN_00048fac(void)
+void gps_print_visibility(void)
 
 {
   int iVar1;
   int iVar2;
   
   psos_pause(1);
-  printf("Visible Sats: %2d\r\n",(uint)DAT_00100d7c);
+  printf("Visible Sats: %2d\r\n",(uint)oncore_visibility);
   console_write("\r\n");
   console_write("PN Code ID    Doppler    Elevation     Azimuth    Health\r\n");
-  for (iVar2 = 0; iVar2 < (int)(uint)DAT_00100d7c; iVar2 = iVar2 + 1) {
+  for (iVar2 = 0; iVar2 < (int)(uint)oncore_visibility; iVar2 = iVar2 + 1) {
     iVar1 = iVar2 * 10;
     printf("   %2d          %5d         %2d          %3d        %02X\r\n",
            (uint)(byte)(&DAT_00100d7e)[iVar1],(int)*(short *)(&DAT_00100d80 + iVar2 * 10),
@@ -41972,7 +41963,7 @@ void FUN_00048fac(void)
 
 /* 00049054 */
 
-int FUN_00049054(byte *param_1)
+int gps_print_status(byte *param_1)
 
 {
   int iVar1;
@@ -42108,7 +42099,7 @@ void FUN_00049210(void)
 
 /* 000493c0 */
 
-void FUN_000493c0(void)
+void gps_print_id(void)
 
 {
   psos_pause(1);
@@ -43444,7 +43435,7 @@ void FUN_0004a636(undefined1 *param_1)
   *(undefined4 *)(param_1 + 0x12) = _interval_reading_flag;
   *(undefined4 *)(param_1 + 0x16) = _interval_mean;
   *(undefined2 *)(param_1 + 0x1a) = _interval_mean_flag;
-  *(undefined4 *)(param_1 + 4) = _DAT_00102198;
+  *(float *)(param_1 + 4) = tfom;
   cVar1 = (char)param_1;
   uVar5 = FUN_00042a18(cVar1 + '\b');
   param_1[9] = uVar5;
@@ -43492,8 +43483,8 @@ void FUN_0004a636(undefined1 *param_1)
   param_1[0x10a] = DAT_00100fa4;
   param_1[0xf7] = DAT_00100d76;
   param_1[0x109] = DAT_00100d26;
-  *(undefined4 *)(param_1 + 0x10c) = _DAT_00100d2e;
-  param_1[0x110] = DAT_00100c86;
+  *(long *)(param_1 + 0x10c) = oncore_pps_cable_delay;
+  param_1[0x110] = oncore_mask_angle;
   param_1[0x111] = DAT_00100d1e;
   *(undefined4 *)(param_1 + 0x124) = DAT_00101170;
   *(long *)(param_1 + 0x128) = scpi_value_DOUGlas_DURation;
@@ -43525,9 +43516,9 @@ void FUN_0004a636(undefined1 *param_1)
   }
   else {
     *(undefined1 **)(param_1 + 0x114) = &DAT_0004d10b;
-    *(undefined4 *)(param_1 + 0x118) = _DAT_00100d10;
-    *(undefined4 *)(param_1 + 0x11c) = _DAT_00100d14;
-    *(undefined4 *)(param_1 + 0x120) = _DAT_00100d18;
+    *(long *)(param_1 + 0x118) = oncore_hold_position.latitude;
+    *(long *)(param_1 + 0x11c) = oncore_hold_position.longitude;
+    *(long *)(param_1 + 0x120) = oncore_hold_position.height;
   }
   return;
 }
@@ -45179,10 +45170,10 @@ void gpsm_task(void)
               }
               break;
             case 0x98:
-              FUN_0004c572(uStack_a2._2_2_,
-                           (undefined4 *)
-                           CONCAT31(CONCAT21(uStack_9c,(char)((ushort)uStack_9a >> 8)),
-                                    (char)uStack_9a),uStack_a2._0_1_);
+              gps_console_request(uStack_a2._2_2_,
+                                  (undefined4 *)
+                                  CONCAT31(CONCAT21(uStack_9c,(char)((ushort)uStack_9a >> 8)),
+                                           (char)uStack_9a),uStack_a2._0_1_);
             }
             bVar8 = (byte)&uStack_aa;
             FUN_0004b9e6('\0',(int)&uStack_aa);
@@ -45266,7 +45257,7 @@ LAB_0004c17a:
             }
           }
           else {
-            FUN_0004c572(sVar2,(undefined4 *)(psVar1 + 2),uStack_a2._0_1_);
+            gps_console_request(sVar2,(undefined4 *)(psVar1 + 2),uStack_a2._0_1_);
 LAB_0004c1e6:
             ppuStack_90 = ppuStack_90 + 1;
           }
@@ -45375,7 +45366,7 @@ void FUN_0004c4e8(void)
 
 /* 0004c572 */
 
-void FUN_0004c572(short param_1,undefined4 *param_2,undefined1 param_3)
+void gps_console_request(short param_1,undefined4 *param_2,undefined1 param_3)
 
 {
   if ((int)param_1 - 0x31U < 0x15) {
@@ -45385,31 +45376,31 @@ void FUN_0004c572(short param_1,undefined4 *param_2,undefined1 param_3)
       FUN_0004a636(&DAT_0010142c);
       break;
     case 1:
-      FUN_00049054(&DAT_00100d38);
+      gps_print_status(&DAT_00100d38);
       break;
     case 2:
-      FUN_00048fac();
+      gps_print_visibility();
       break;
     case 3:
-      FUN_00048300();
+      gps_print_extension();
       break;
     case 4:
-      FUN_00048224();
+      gps_print_best_combinations();
       break;
     case 5:
-      FUN_000493c0();
+      gps_print_id();
       break;
     case 6:
-      FUN_0004c9e2();
+      gps_print_1pps();
       break;
     case 7:
-      FUN_000489a0();
+      gps_print_instrument_state();
       break;
     case 8:
-      FUN_000484de();
+      gps_print_time_raim();
       break;
     case 9:
-      FUN_00048ea0();
+      gps_print_average();
       break;
     case 10:
       DAT_00101170 = 0;
@@ -45671,7 +45662,7 @@ void FUN_0004c940(undefined4 param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_0004c9e2(void)
+void gps_print_1pps(void)
 
 {
   undefined4 uVar1;
@@ -46022,7 +46013,7 @@ void FUN_0004efb4(undefined4 param_1)
 {
   undefined4 uVar1;
   
-  uVar1 = FUN_0004ef8e(param_1,&DAT_00100d18);
+  uVar1 = FUN_0004ef8e(param_1,0x100d18);
   FUN_0004ef54(uVar1,&SUB_00100d1c);
   return;
 }
@@ -46267,8 +46258,8 @@ undefined4 FUN_0004f1f8(undefined1 *param_1,uint *param_2)
   else {
     bVar6 = 0;
     local_8 = 0;
-    bVar4 = DAT_00100d7c;
-    if (0xb < DAT_00100d7c) {
+    bVar4 = oncore_visibility;
+    if (0xb < oncore_visibility) {
       bVar4 = 0xc;
     }
     for (; bVar6 < bVar4; bVar6 = bVar6 + 1) {

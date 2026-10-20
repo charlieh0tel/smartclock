@@ -1,10 +1,11 @@
 # Structures
 
-The firmware's data structures, as the code that uses them shows them,
-in the Z3805A 3543B image.  `tools/ghidra/types/smartclock.h` declares
-them for Ghidra, a field named only where this note gives the code that
-shows what it is; `tools/ghidra/names/z3805a-3543b.tsv` names and types
-their instances.
+The firmware's data structures and named globals, as the code that
+uses them shows them, in the Z3805A 3543B image.
+`tools/ghidra/types/smartclock.h` declares the structures for Ghidra, a
+field named only where this note gives the code that shows what it is;
+`tools/ghidra/names/z3805a-3543b.tsv` names and types their instances
+and the globals.
 
 ## The tasks and exchanges
 
@@ -109,3 +110,90 @@ and returns the sum and its complement, which a record keeps in those
 two bytes.  It is called on the EEPROM's records at `0x400000` (16
 bytes), `0x400010` (48), `0x400060` (32) and `0x400080` (64), and on
 `0x94e` bytes of RAM from `0x100000`.
+
+## Globals the console prints
+
+The console's print words label what they print, so the firmware names
+its own globals; the format and the word that prints each are the
+evidence.
+
+The GPS engine's data, each record filled by a message's decoders in
+the GPS task's message table (`oncore/z3805a-3543b.txt`), its fields
+those of the message in the VP Oncore reference
+(`third_party/motorola/VPCommands.pdf`), in the message's order:
+
+| Record | Type | Message | Fields | Printed after |
+| ------ | ---- | ------- | ------ | ------------- |
+| `oncore_time`, `0x100c6b` | `oncore_time_of_day` | `@@Aa` | hour, minute, second | `TIME` |
+| `oncore_gmt_offset`, `0x100c6e` | `oncore_gmt_offset` | `@@Ab` | sign, hours, minutes | `GMT CORR` |
+| `oncore_date`, `0x100c72` | `oncore_date_fields` | `@@Ac` | month, day, a word of year | `DATE` |
+| `oncore_position`, `0x100c76` | `oncore_position_fields` | `@@Ad`, `@@Ae`, `@@Af` | latitude, longitude (mas), GPS and MSL heights (cm) | `LAT`, `LON`, `GPS HGT`, `MSL HGT` |
+| `oncore_mask_angle`, `0x100c86` | byte | `@@Ag` | | `ELEV MASK` |
+| `oncore_satellite_select`, `0x100c87` | byte | `@@Ah` | | `SELECTION` |
+| `oncore_hold_position`, `0x100d10` | `oncore_hold_position_fields` | `@@As` | latitude, longitude, height | `POS HOLD` |
+| `oncore_pps_offset`, `0x100d2a` | long | `@@Ay` | | `1PPS OFFS` |
+| `oncore_pps_cable_delay`, `0x100d2e` | long | `@@Az` | | `CABLE DLY` |
+| `oncore_visibility`, `0x100d7c` | | `@@Bb` | | `Visible Sats` |
+| `oncore_extension`, `0x100fae` | `oncore_extension_fields` | `@@Bk` | five DOPs, magnetic variation, velocity north, east and up, correction age, ECEF x, y and z, six URAs, the ten elements of the least-squares A-1 matrix, clock bias, oscillator offset | the DOP, `VEL`, `ECEF`, `URA` and clock lines |
+
+The print shows latitude and longitude as "ms"; the reference's unit is
+the milliarcsecond.  `@@As`'s height goes through a decoder of its own
+(`0x4efb4`), not to a fixed cell, but is printed from `+0x08`.
+`@@Bk`'s 62 bytes of data fill `0x100fae`--`0x100feb` exactly, and
+`gps_print_extension` prints the matrix as the triangle the reference
+numbers it in.
+
+The PLL's EFC history, `efc_history` at `0x1021ac` (`efc_ring`, `0x366`
+bytes, cleared as one with `memset`), is a ring of 64 averages of the
+EFC.  `efc_history_update` (`0x4137e`) adds the EFC, less the temperature coefficient
+(`:DIAG:ROSC:TCO`) times an ADC reading, to `efc_sum` each sample in
+some states, counting `summed_count`, and each 2700 samples
+(`sample_count`) stores an entry at `stop_ptr` and advances it, pushing
+`start_ptr` on when the ring is full.  Its debug message names the
+arrays: "e_avg= %.1f time= %f weight= %d log= %.2f tfom= %.1e".
+
+| Offset | Field | Shown by |
+| ------ | ----- | -------- |
+| `+0x000`, `+0x001` | `start_ptr`, `stop_ptr` | `pll_rep`'s `start ptr`, `stop_ptr`; the ring's indexes, `& 0x3f` |
+| `+0x004` | `sample_count` | counted to 2700 |
+| `+0x008` | `summed_count` | the samples summed |
+| `+0x00a` | `averages[64]` | `e_avg`, `efc_sum / summed_count`; `pll_rep`'s `last efc average` |
+| `+0x10a` | `weights[64]` | `weight`, 1 to 3 by `summed_count` |
+| `+0x14a` | `times[64]` | `time` |
+| `+0x24a` | `logs[64]` | `log`, -1 when `time` is at most 1 |
+| `+0x34a` | `efc_sum` | the sum |
+| `+0x352` | `drift` | `pll_rep`'s `current drift`, times `5.4e-8`, per day |
+
+The PLL's other values `pll_rep` and `pr_efc` print: `tfom`
+(`0x102198`, a float, "tfom = %.1e secs"), `max_loop_time`
+(`0x101e84`, a float) and `efc` (`0x102194`, a float).
+
+The other exchanges, from their `create_x` calls, and the routines
+whose messages name them:
+
+| Exchange | Id kept at | Created by | Taken and given back by |
+| -------- | ---------- | ---------- | ----------------------- |
+| `drtR`, `drtW` | `0x103102`, `0x103106` | `duart_init` (`0x1d93e`) | |
+| `sciR`, `sciW` | `0x103150`, `0x10316c` | `sci_init` (`0x1fdb6`) | `sci_lock` (`0x1fd0e`), `sci_unlock` (`0x1fc20`): "Unable to acquire/release SCI token" |
+| `eepx` | `0x101d18` | `eeprom_init` (`0x30f10`) | `eeprom_lock` (`0x30fae`), `eeprom_unlock` (`0x3105e`): "Unable to acquire/release eepx token" |
+| `spoo` | `0x1032f8` | | |
+
+The GPS print words do not print: each leaves a code in the mailbox at
+`0x10256c`, which `0x470aa` turns into a request to the GPS task,
+sent with `gpsx_send`.  The GPS task gives requests `0x31` to `0x45`
+to `gps_console_request` (`0x4c572`), whose cases print the pages:
+
+| Word | Code | Request | Printer |
+| ---- | ---- | ------- | ------- |
+| `print_stat` | 1 | `0x32` | `gps_print_status` (`0x49054`) |
+| `print_vis` | `0xf` | `0x33` | `gps_print_visibility` (`0x48fac`) |
+| `print_ext_msg` | `0x12` | `0x34` | `gps_print_extension` (`0x48300`) |
+| `print_bc` | `0x10` | `0x35` | `gps_print_best_combinations` (`0x48224`), "xDOP ... VALID COMBOS" |
+| `pr_gps_id` | `0x13` | `0x36` | `gps_print_id` (`0x493c0`) |
+| `pr_1pps` | `0x14` | `0x37` | `gps_print_1pps` (`0x4c9e2`) |
+| `pr_gps_istate` | `0x1e` | `0x38` | `gps_print_instrument_state` (`0x489a0`), "Instrument State Settings" |
+| `pr_time_raim` | `0x15` | `0x39` | `gps_print_time_raim` (`0x484de`) |
+| `pr_avg` | `0x1d` | `0x3a` | `gps_print_average` (`0x48ea0`) |
+
+`gps_print_pseudorange_corrections` (`0x487f6`) prints "Pseudorange
+Correction Status"; what calls it is not traced.

@@ -281,3 +281,45 @@
 0x101ed2	label	scpi_value_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold	structures.md: the descriptor's value	long
 0x34336	label	scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	scpi_numeric_param
 0x101eda	label	scpi_value_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	structures.md: the descriptor's value	long
+#
+# globals the console's print words label, docs/firmware/structures.md
+0x100c6b	label	oncore_time	structures.md: @@Aa's decoders; printed after TIME	oncore_time_of_day
+0x100c6e	label	oncore_gmt_offset	structures.md: @@Ab's decoders; printed after GMT CORR	oncore_gmt_offset
+0x100c72	label	oncore_date	structures.md: @@Ac's decoders; printed after DATE	oncore_date_fields
+0x100c76	label	oncore_position	structures.md: @@Ad, @@Ae and @@Af's decoders; printed after LAT, LON, GPS HGT and MSL HGT	oncore_position_fields
+0x100d10	label	oncore_hold_position	structures.md: @@As's decoders; printed after POS HOLD	oncore_hold_position_fields
+0x100fae	label	oncore_extension	structures.md: @@Bk's decoder; the DOP, VEL, ECEF, URA and clock lines	oncore_extension_fields
+0x1021ac	label	efc_history	structures.md: pll_rep's start ptr and stop_ptr, efc_rep's 64 entries; cleared as one	efc_ring
+0x100c86	label	oncore_mask_angle	structures.md: @@Ag's decoder; printed after ELEV MASK	byte
+0x100c87	label	oncore_satellite_select	structures.md: @@Ah's decoder; printed after SELECTION	byte
+0x100d2a	label	oncore_pps_offset	structures.md: @@Ay's decoder; printed after 1PPS OFFS	long
+0x100d2e	label	oncore_pps_cable_delay	structures.md: @@Az's decoder; printed after CABLE DLY	long
+0x100d7c	label	oncore_visibility	structures.md: @@Bb's decoder; printed after Visible Sats
+0x103102	label	drtR_exchange	structures.md: create_x("drtR")	long
+0x103106	label	drtW_exchange	structures.md: create_x("drtW")	long
+0x101d18	label	eepx_exchange	structures.md: create_x("eepx")	long
+0x103150	label	sciR_exchange	structures.md: create_x("sciR")	long
+0x10316c	label	sciW_exchange	structures.md: create_x("sciW")	long
+0x1032f8	label	spoo_exchange	structures.md: create_x("spoo")	long
+0x102198	label	tfom	structures.md: pll_rep's tfom, in seconds	float
+0x101e84	label	max_loop_time	structures.md: pll_rep's max loop time	float
+0x102194	label	efc	structures.md: pr_efc's efc	float
+0x1d93e	function	duart_init	structures.md: creates drtR and drtW, "Unable to create drtR"
+0x1fdb6	function	sci_init	structures.md: creates sciR and sciW, "Unable to create sciR"
+0x1fd0e	function	sci_lock	structures.md: "Unable to acquire SCI token"
+0x1fc20	function	sci_unlock	structures.md: "Unable to release SCI token"
+0x30f10	function	eeprom_init	structures.md: creates eepx, "Unable to create eepx"
+0x30fae	function	eeprom_lock	structures.md: "Unable to acquire eepx token"
+0x3105e	function	eeprom_unlock	structures.md: "Unable to release eepx token"
+0x4c572	function	gps_console_request	structures.md: the GPS task's switch on the console's requests 0x31 to 0x45
+0x49054	function	gps_print_status	structures.md: print_stat's request, 0x32
+0x48fac	function	gps_print_visibility	structures.md: print_vis's request, 0x33; Visible Sats
+0x48300	function	gps_print_extension	structures.md: print_ext_msg's request, 0x34; @@Bk's data
+0x48224	function	gps_print_best_combinations	structures.md: print_bc's request, 0x35; xDOP VALID COMBOS
+0x493c0	function	gps_print_id	structures.md: pr_gps_id's request, 0x36
+0x4c9e2	function	gps_print_1pps	structures.md: pr_1pps's request, 0x37
+0x489a0	function	gps_print_instrument_state	structures.md: pr_gps_istate's request, 0x38; Instrument State Settings
+0x484de	function	gps_print_time_raim	structures.md: pr_time_raim's request, 0x39; Time RAIM Status
+0x48ea0	function	gps_print_average	structures.md: pr_avg's request, 0x3a; AVG LAT, LON, HGT
+0x487f6	function	gps_print_pseudorange_corrections	structures.md: Pseudorange Correction Status
+0x4137e	function	efc_history_update	structures.md: sums the EFC and stores each 2700 samples an entry of efc_history

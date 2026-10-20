@@ -75,7 +75,7 @@
 {"address":"000125e2","name":"power_of_ten_double","note":"10 to a power clamped to plus or minus 30, from the table of doubles at 0x12704; called by nothing","convention":"unknown"}
 {"address":"00012984","name":"tfom_table_index","note":"tfom_code's bisection of the table at 0x129fc","convention":"unknown"}
 {"address":"000129d0","name":"power_of_ten_float","note":"10 to a power clamped to plus or minus 30, from the table of floats at 0x12a74; called by nothing","convention":"unknown"}
-{"address":"00012af2","name":"random_dither","note":"a small signed random value: rand, shaped by the table at 0x12ab0","convention":"unknown"}
+{"address":"00012af2","name":"random_dither","note":"a small signed random value: rand, shaped by dither_table","convention":"unknown"}
 {"address":"00012bb2","name":"start_nothing","note":"does nothing; primary_start calls it between gpt_init and system_init","convention":"unknown"}
 {"address":"00012bb4","name":"system_init","note":"the start-up's setup: status, NV settings restored, debug flags, the battery-backed RAM's checksum and the reset's cause","convention":"unknown"}
 {"address":"00012d6e","name":"primary_start","note":"the reset's path: services the watchdog, sets the QSM and GPT up, runs system_init and starts the kernel with trap #6","convention":"unknown"}
@@ -1592,7 +1592,7 @@
 {"address":"0005f1d6","name":"double_to_digits_multiply","note":"double_to_digits's product of two 64-bit numbers, one a power of ten from 0x5f864","convention":"unknown"}
 {"address":"0005f3ba","name":"double_to_digits","note":"a double's decimal digits, sign and exponent, significant or after the point; the formatting engine's","convention":"unknown"}
 {"address":"0005fad6","name":"next_decimal_digit","note":"'0' plus *n % 10, dividing *n by ten; the formatting engine's","convention":"unknown"}
-{"address":"0005fb0c","name":"format","note":"the formatting engine under sprintf","convention":"unknown"}
+{"address":"0005fb0c","name":"doprnt","note":"the formatting engine under sprintf, by the classic C library's name for it","convention":"unknown"}
 {"address":"00060896","name":"sprintf","convention":"unknown"}
 {"address":"000608c4","name":"sprintf_put","note":"copies the engine's output into sprintf's buffer","convention":"unknown"}
 {"address":"000608fe","name":"vsprintf","convention":"unknown"}
@@ -1747,6 +1747,6 @@
 {"address":"installer::0010937e","name":"installer_double_to_digits_multiply","note":"the installer's double_to_digits_multiply","convention":"unknown"}
 {"address":"installer::00109562","name":"installer_double_to_digits","note":"the installer's double_to_digits","convention":"unknown"}
 {"address":"installer::00109c7e","name":"installer_next_decimal_digit","note":"the installer's next_decimal_digit","convention":"unknown"}
-{"address":"installer::00109cb4","name":"installer_format","note":"the installer's format","convention":"unknown"}
+{"address":"installer::00109cb4","name":"installer_doprnt","note":"the installer's doprnt","convention":"unknown"}
 {"address":"installer::0010aa3e","name":"installer_sprintf","note":"the installer's sprintf","convention":"unknown"}
 {"address":"installer::0010aaa6","name":"installer_vsprintf","note":"the installer's vsprintf","convention":"unknown"}

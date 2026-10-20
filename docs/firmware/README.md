@@ -476,9 +476,13 @@ since a routine can fall into the next.  A global with a structure's
 type reads as `foo.bar`, a pointer to one as `foo->bar`; a piece of a
 variable the decompiler writes as `x._4_4_` becomes a cast at its
 offset.  A thunk is a comment, since the decompiler gives it its
-target's name.  The C does not yet compile: the calls whose argument
-counts or results disagree with their callees' signatures are left
-(PLAN.md, "Next").
+target's name, and one named otherwise an alias of its target.  The
+whole file compiles to an object (`make check-decompiled`, whose flags
+add `-fno-builtin -fno-tree-loop-distribute-patterns`, since the image's
+C library has no `puts`, `strlen` or `strcmp` for gcc to call).  A link
+would need gcc's soft-float helpers, the symbols
+`z3805a-3543b.symbols.ld` places, and the 11 views of a caller's frame
+or a register the decompiler leaves as externs (PLAN.md, "Next").
 
 In the Z3805A 3543B image this gives 1752 functions, and every one but
 the ten thunks decompiles.  136 switches are recovered; `0x24ff2` and `0x25140`, a

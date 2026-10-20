@@ -642,12 +642,16 @@ view cannot drift apart.  The library, bottom up:
 
   Steps, in order:
 
-  1. The C compiles (`m68k-linux-gnu-gcc -std=gnu17 -mcpu=cpu32
-     -fno-toplevel-reorder`, int/pointer conversions warnings only).
-     Done for the routines that are not C: they are assembly, the
-     image's own bytes (`make check-decompiled`).  Left: some 225
-     calls whose argument counts or results disagree with their
-     callees' signatures, to fix in the names file's prototypes.
+  1. The C compiles.  Done: `make check-decompiled` compiles the whole
+     file to an object, every function defined, and confirms its
+     assembly is the image's own bytes.  The calls that disagreed with
+     their callees were fixed in the names file's prototypes, from each
+     callee's body and the bytes its callers push.  What the object
+     still needs from a link: gcc's soft-float helpers (libgcc, or the
+     image's own routines under their names), the made symbols
+     `z3805a-3543b.symbols.ld` places, and 11 views of a caller's frame
+     or a register (`stack0x...`), mostly variadic functions reading
+     their arguments, which need `va_list` -- the first work of step 5.
   2. Bridges between gcc's C and the rest: gcc widens `char` and
      `short` arguments to 4-byte slots where the original passes 2, and
      the assembly takes its arguments in registers, so each call across

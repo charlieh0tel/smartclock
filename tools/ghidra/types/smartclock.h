@@ -187,13 +187,25 @@ typedef enum __attribute__((packed)) oncore_raim_status {
 
 /* A numeric SCPI parameter's descriptor, in ROM; its small tables sit
  * just before it.  0x2c bytes. */
+/* A numeric descriptor's validate: the new value, its index, the
+ * bounds and step for it, and the request's source; its result is the
+ * value as validated. */
+typedef long scpi_validate_function(void *value, int index, void *minimum, void *maximum,
+	void *step, int source);
+
+/* printf's shape, for the routines that take one to print with. */
+typedef int printf_function(char *format, ...);
+
+/* qsort's comparator. */
+typedef int qsort_compare_function(void *a, void *b);
+
 typedef struct scpi_numeric_param {
 	scpi_param_type type; /* SCPI_PARAM_NUMERIC */
 	uint8_t last_index;   /* +0x01: values less one */
 	int8_t *nv_widths; /* +0x02: bits in the NV register; negative, signed */
 	void *minimum;        /* +0x06: the least value accepted */
 	void *maximum;        /* +0x0a: the greatest */
-	void *validate;       /* +0x0e: validate_num's check; clamp_to_limits */
+	scpi_validate_function *validate; /* +0x0e: validate_num's check; clamp_to_limits */
 	void *changed;        /* +0x12: called as each value is stored */
 	void *value;          /* +0x16: the current value, in RAM */
 	void *done;           /* +0x1a: called once they are stored */
@@ -572,7 +584,7 @@ typedef struct gps_state {
 	uint8_t status_monitor_enabled;
 	uint8_t status_monitor_state;       /* 0 disabled, 1 standby, 2 recovery */
 	uint32_t status_monitor_time;       /* uptime of the last fresh @@Ba */
-	uint8_t status_last_time[4];        /* the last @@Ba's time bytes */
+	uint32_t status_last_time;          /* the last @@Ba's time bytes, compared as one */
 	uint8_t status_repeat_count;        /* @@Ba with the same time in a row */
 	uint8_t status_monitor_timed_out;
 	uint8_t status_monitor_failed;

@@ -145,13 +145,12 @@ public class SmartClockExportC extends GhidraScript {
 		typedef unsigned long long unkfloat6;
 		typedef unsigned long long unkfloat7;
 		typedef int code();
-		typedef _Bool bool;
 		#define true 1
 		#define false 0
 		extern code *UNRECOVERED_JUMPTABLE;
 		#define INFINITY __builtin_inff()
 		#define NAN __builtin_nanf("")
-		#define __ghidra_bits(v) ({ __typeof__(v) __v = (v); unsigned long long __b = 0; \
+		#define __ghidra_bits(v) ({ __typeof__((v) + 0) __v = (v); unsigned long long __b = 0; \
 			__builtin_memcpy((char *)&__b + sizeof __b - sizeof __v, &__v, sizeof __v); __b; })
 		#define __ghidra_mask(n) ((n) >= 8 ? ~0ULL : (1ULL << (8 * (n))) - 1)
 		#define __ghidra_concat(y, a, b) \
@@ -171,6 +170,7 @@ public class SmartClockExportC extends GhidraScript {
 		typedef struct __attribute__((packed)) { unsigned long long v : 40; } __ghidra_u5;
 		typedef struct __attribute__((packed)) { unsigned long long v : 48; } __ghidra_u6;
 		typedef struct __attribute__((packed)) { unsigned long long v : 56; } __ghidra_u7;
+		#define ABS(x) ((x) < 0 ? -(x) : (x))
 		#define __m68k_trap(n) __asm__ volatile ("trap #" #n)
 		static inline unsigned char bcdAdjust(unsigned char v) { return v; }
 		""";
@@ -201,16 +201,22 @@ public class SmartClockExportC extends GhidraScript {
 					break;
 				}
 				if (function.isThunk()) {
+					String target = function.getThunkedFunction(true).getName();
 					functions.append("\n/* ").append(function.getEntryPoint()).append(" */\n")
-						.append("/* a thunk to ").append(function.getThunkedFunction(true).getName())
-						.append(", whose name the decompiler gives it */\n");
+						.append("/* a thunk to ").append(target).append(" */\n");
+					if (!function.getName().equals(target)) {
+						functions.append("__asm__(\".set ").append(function.getName()).append(", ")
+							.append(target).append("\");\n");
+						prototypes.add("int " + function.getName() + "();");
+					}
 					continue;
 				}
 				DecompileResults results =
 					decompiler.decompileFunction(function, TIMEOUT_SECONDS, monitor);
 				functions.append("\n/* ").append(function.getEntryPoint()).append(" */\n");
 				if (results.decompileCompleted()) {
-					String c = pieces(notC(function, results.getDecompiledFunction().getC()));
+					String c = indexedFunctions(identifiers(pieces(notC(function,
+						results.getDecompiledFunction().getC()))));
 					if (notCMacro(function) != null) {
 						functions.append(READING).append(c).append("\n#endif\n")
 							.append(assembly(function, declared, madeSymbols));
@@ -231,7 +237,7 @@ public class SmartClockExportC extends GhidraScript {
 				}
 			}
 			writeAdjustments(writer);
-			writeReferencedGlobals(writer, referenced, declared, used);
+			writeReferencedGlobals(writer, referenced, declared, used, functions.toString());
 			writeNamedByAddress(writer, functions, declared, used);
 			writeSymbols(new File(base(output) + SYMBOLS_SUFFIX), madeSymbols);
 			writer.println();
@@ -455,14 +461,16 @@ public class SmartClockExportC extends GhidraScript {
 	 * address, so that the object's references are to the image's own.
 	 */
 	private void writeReferencedGlobals(PrintWriter writer, Map<String, HighSymbol> referenced,
-			Map<String, String> declared, Map<String, DataType> used) {
+			Map<String, String> declared, Map<String, DataType> used, String text) {
 		writer.println();
 		for (HighSymbol symbol : referenced.values()) {
 			String name = symbol.getName();
 			if (symbol.isGlobal() && IDENTIFIER.matcher(name).matches() && !declared.containsKey(name)
 				&& currentProgram.getFunctionManager().getFunctionAt(address(symbol)) == null) {
-				writer.println(externFor(address(symbol))
-					+ declaration(better(symbol.getDataType(), used.get(name)), name) + "; /* "
+				String declaration = text.contains("(*" + name + ")(") ? "code *" + name
+					: name.startsWith("PTR_") ? "undefined4 *" + name
+					: declaration(better(symbol.getDataType(), used.get(name)), name);
+				writer.println(externFor(address(symbol)) + declaration + "; /* "
 					+ address(symbol) + " */");
 				declared.put(name, address(symbol).toString());
 			}
@@ -508,16 +516,21 @@ public class SmartClockExportC extends GhidraScript {
 	private void writeNamedByAddress(PrintWriter writer, CharSequence functions,
 			Map<String, String> declared, Map<String, DataType> used) {
 		Map<String, String> found = new TreeMap<>();
+		String text = functions.toString();
 		Matcher named = NAMED_BY_ADDRESS.matcher(functions);
 		while (named.find()) {
 			String name = named.group(0);
 			String prefix = named.group(1);
 			String type = prefix.startsWith("s_") ? "char"
-				: prefix.startsWith("PTR_") ? "void *" : PREFIX_TYPES.get(prefix);
+				: prefix.startsWith("PTR_") ? "undefined4 *" : PREFIX_TYPES.get(prefix);
+			if (type != null && text.contains("(*" + name + ")(")) {
+				type = "code *";
+			}
 			if (type != null && !declared.containsKey(name)
 				&& getFunction(name) == null) {
 				DataType seen = used.get(name);
 				found.put(name, prefix.startsWith("s_") ? "char " + name + "[]"
+					: "code *".equals(type) ? type + name
 					: seen != null && !Undefined.isUndefined(seen) ? declaration(seen, name)
 					: type + " " + name);
 				declared.put(name, named.group(2));
@@ -947,6 +960,41 @@ public class SmartClockExportC extends GhidraScript {
 			lower = lower.substring(0, 2);
 		}
 		return "%" + lower + (index ? size : "");
+	}
+
+	/** A name followed by a subscript. */
+	private static final Pattern SUBSCRIPTED = Pattern.compile("\\b([A-Za-z_]\\w*)\\[");
+
+	/**
+	 * c with each function's name that the decompiler subscripts, a table
+	 * it addresses from the function's own address, made a char pointer
+	 * there.
+	 */
+	private String indexedFunctions(String c) {
+		Matcher subscripted = SUBSCRIPTED.matcher(c);
+		StringBuilder out = new StringBuilder();
+		while (subscripted.find()) {
+			String name = subscripted.group(1);
+			boolean function = !getGlobalFunctions(name).isEmpty();
+			subscripted.appendReplacement(out, Matcher.quoteReplacement(
+				function ? "((char *)" + name + ")[" : subscripted.group()));
+		}
+		subscripted.appendTail(out);
+		return out.toString();
+	}
+
+	/** A string's label with characters an identifier cannot hold, from its text. */
+	private static final Pattern STRING_LABEL = Pattern.compile("\\bs_[\\w<>]*[<>][\\w<>]*");
+
+	/** c with each string's label made an identifier: its < and > as _. */
+	private static String identifiers(String c) {
+		Matcher label = STRING_LABEL.matcher(c);
+		StringBuilder out = new StringBuilder();
+		while (label.find()) {
+			label.appendReplacement(out, Matcher.quoteReplacement(label.group().replaceAll("[<>]", "_")));
+		}
+		label.appendTail(out);
+		return out.toString();
 	}
 
 	/** Where a C comment ends. */

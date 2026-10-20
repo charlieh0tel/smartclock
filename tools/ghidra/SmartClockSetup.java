@@ -100,6 +100,7 @@ import ghidra.program.model.data.Enum;
 import ghidra.program.model.data.EnumDataType;
 import ghidra.program.model.data.FunctionDefinitionDataType;
 import ghidra.program.model.data.ParameterDefinition;
+import ghidra.program.model.data.InvalidDataTypeException;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.data.SignedByteDataType;
 import ghidra.program.model.data.TerminatedStringDataType;
@@ -741,10 +742,40 @@ public class SmartClockSetup extends GhidraScript {
 
 	private void applyDataType(Address address, String declaration) throws Exception {
 		DataTypeManager types = currentProgram.getDataTypeManager();
-		DataType type = new DataTypeParser(types, types, null, AllowedDataTypes.ALL)
-				.parse(declaration.strip());
+		DataType type;
+		try {
+			type = new DataTypeParser(types, types, null, AllowedDataTypes.ALL)
+					.parse(declaration.strip());
+		}
+		catch (InvalidDataTypeException e) {
+			type = namedPointer(types, declaration.strip());
+			if (type == null) {
+				throw e;
+			}
+		}
 		clearListing(address, address.add(type.getLength() - 1));
 		createData(address, type);
+	}
+
+	/**
+	 * A pointer to a type the header defines by name, as "name *", which
+	 * the data type parser does not find when the type is a function
+	 * typedef; null if declaration is not that.
+	 */
+	private static DataType namedPointer(DataTypeManager types, String declaration) {
+		int stars = declaration.length() - declaration.replaceFirst("[\\s*]+$", "").length();
+		String name = declaration.replaceFirst("[\\s*]+$", "");
+		long pointers = declaration.chars().filter(c -> c == '*').count();
+		List<DataType> found = new ArrayList<>();
+		types.findDataTypes(name, found);
+		if (stars == 0 || pointers == 0 || found.isEmpty()) {
+			return null;
+		}
+		DataType type = found.get(0);
+		for (long i = 0; i < pointers; i++) {
+			type = new PointerDataType(type, types);
+		}
+		return type;
 	}
 
 	/** Adds name as a label at address, unless it is there already. */

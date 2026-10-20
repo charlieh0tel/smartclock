@@ -647,13 +647,19 @@ view cannot drift apart.  The library, bottom up:
      assembly is the image's own bytes.  The calls that disagreed with
      their callees were fixed in the names file's prototypes, from each
      callee's body and the bytes its callers push.  What the object
-     still needs from a link: gcc's soft-float helpers (libgcc, or the
-     image's own routines under their names), the made symbols
+     still needs from a link: a few of gcc's helpers -- 20 float
+     comparisons the decompiler wrote as C operators and two 64-bit
+     divisions, which the image's own float_compare and 64-bit routines
+     can stand in for -- the made symbols
      `z3805a-3543b.symbols.ld` places, and 11 views of a caller's frame
      or a register (`stack0x...`), mostly variadic functions reading
      their arguments, which need `va_list` -- the first work of step 5.
-  2. Bridges between gcc's C and the rest: gcc widens `char` and
-     `short` arguments to 4-byte slots where the original passes 2, and
+  2. Bridges between gcc's C and the rest.  Until they exist C reaches
+     the assembly through `int NAME();`, which promotes a float argument
+     to double (gcc's `__extendsfdf2`, 232 calls) and reads a float
+     result as an int: the soft-float routines most of all need real
+     prototypes and wrappers.  gcc widens `char` and `short` arguments
+     to 4-byte slots where the original passes 2, and
      the assembly takes its arguments in registers, so each call across
      needs a generated wrapper, from the conventions the sidecar
      records.  The kernel internals' `undetermined` conventions must be

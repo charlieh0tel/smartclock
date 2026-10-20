@@ -480,7 +480,8 @@ target's name, and one named otherwise an alias of its target.  The
 whole file compiles to an object (`make check-decompiled`, whose flags
 add `-fno-builtin -fno-tree-loop-distribute-patterns`, since the image's
 C library has no `puts`, `strlen` or `strcmp` for gcc to call).  A link
-would need gcc's soft-float helpers, the symbols
+would need a few of gcc's helpers (float comparisons written as C
+operators, two 64-bit divisions), the symbols
 `z3805a-3543b.symbols.ld` places, and the 11 views of a caller's frame
 or a register the decompiler leaves as externs (PLAN.md, "Next").
 

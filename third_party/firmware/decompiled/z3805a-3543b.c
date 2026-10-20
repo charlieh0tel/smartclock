@@ -6600,7 +6600,7 @@ LAB_00000a22:
 __asm__(
 	"	.globl boot_reset\n"
 	"	.type boot_reset, @function\n"
-	"	.section .text.boot_reset.550,\"ax\",@progbits\n"
+	"	.pushsection .text.boot_reset.550,\"ax\",@progbits\n"
 	"boot_reset:\n"
 	"	move #0x2700,%sr\n"
 	"	movea.l #0x0,%a0\n"
@@ -6970,6 +6970,7 @@ __asm__(
 	"	move.b #0x40,(DUART_STOP_ROPBC).l\n"
 	"	ori.b #0x40,(__ghidra_10ab2e).l\n"
 	"	.size boot_reset, .-boot_reset\n"
+	"	.popsection\n"
 );
 
 /* 00000a58 */
@@ -7006,7 +7007,7 @@ __exception void boot_trap_11(void)
 __asm__(
 	"	.globl boot_trap_11\n"
 	"	.type boot_trap_11, @function\n"
-	"	.section .text.boot_trap_11.a58,\"ax\",@progbits\n"
+	"	.pushsection .text.boot_trap_11.a58,\"ax\",@progbits\n"
 	"boot_trap_11:\n"
 	"	move #0x2700,%sr\n"
 	"	movea.l #0x0,%a0\n"
@@ -7026,6 +7027,7 @@ __asm__(
 	"	movec %a1,%vbr\n"
 	"	jmp (__ghidra_10135c).l\n"
 	"	.size boot_trap_11, .-boot_trap_11\n"
+	"	.popsection\n"
 );
 
 /* 00000aa0 */
@@ -7114,7 +7116,7 @@ __regcall void mutex_init(int name /* d0 */,void *mutex /* a1 */)
 __asm__(
 	"	.globl mutex_init\n"
 	"	.type mutex_init, @function\n"
-	"	.section .text.mutex_init.10400,\"ax\",@progbits\n"
+	"	.pushsection .text.mutex_init.10400,\"ax\",@progbits\n"
 	"mutex_init:\n"
 	"	movem.l %a0/%d2/%d1,-(%sp)\n"
 	"	moveq #0x15,%d7\n"
@@ -7136,6 +7138,7 @@ __asm__(
 	"	moveq #0x3,%d7\n"
 	"	bra.b .Lg_10430\n"
 	"	.size mutex_init, .-mutex_init\n"
+	"	.popsection\n"
 );
 
 /* 0001043a */
@@ -7179,7 +7182,7 @@ __regcall int mutex_acquire(void *mutex /* a1 */)
 __asm__(
 	"	.globl mutex_acquire\n"
 	"	.type mutex_acquire, @function\n"
-	"	.section .text.mutex_acquire.1043a,\"ax\",@progbits\n"
+	"	.pushsection .text.mutex_acquire.1043a,\"ax\",@progbits\n"
 	"mutex_acquire:\n"
 	"	movem.l %a2/%a0/%d1/%d0,-(%sp)\n"
 	"	moveq #0x0,%d0\n"
@@ -7208,6 +7211,7 @@ __asm__(
 	"	addq.l #0x1,(0xc,%a1)\n"
 	"	bra.b .Lg_10470\n"
 	"	.size mutex_acquire, .-mutex_acquire\n"
+	"	.popsection\n"
 );
 
 /* 00010484 */
@@ -7248,7 +7252,7 @@ __regcall int mutex_release(void *mutex /* a1 */)
 __asm__(
 	"	.globl mutex_release\n"
 	"	.type mutex_release, @function\n"
-	"	.section .text.mutex_release.10484,\"ax\",@progbits\n"
+	"	.pushsection .text.mutex_release.10484,\"ax\",@progbits\n"
 	"mutex_release:\n"
 	"	movem.l %a0/%d0,-(%sp)\n"
 	"	moveq #0x0,%d7\n"
@@ -7279,6 +7283,7 @@ __asm__(
 	"	.byte 0xc1,0x88 | exg D0,A0\n"
 	"	.byte 0x4e,0x75 | rts\n"
 	"	.size mutex_release, .-mutex_release\n"
+	"	.popsection\n"
 );
 
 /* 000104d2 */
@@ -7307,7 +7312,7 @@ __regcall void mutex_clear(void *mutex /* a1 */)
 __asm__(
 	"	.globl mutex_clear\n"
 	"	.type mutex_clear, @function\n"
-	"	.section .text.mutex_clear.104d2,\"ax\",@progbits\n"
+	"	.pushsection .text.mutex_clear.104d2,\"ax\",@progbits\n"
 	"mutex_clear:\n"
 	"	movem.l %a1/%d1/%d0,-(%sp)\n"
 	"	moveq #0x5,%d0\n"
@@ -7318,6 +7323,7 @@ __asm__(
 	"	movem.l (%sp)+,%d0/%d1/%a1\n"
 	"	rts\n"
 	"	.size mutex_clear, .-mutex_clear\n"
+	"	.popsection\n"
 );
 
 /* 000104e6 */
@@ -8759,7 +8765,7 @@ __exception undefined8 primary_default_exception(void)
 __asm__(
 	"	.globl primary_default_exception\n"
 	"	.type primary_default_exception, @function\n"
-	"	.section .text.primary_default_exception.11924,\"ax\",@progbits\n"
+	"	.pushsection .text.primary_default_exception.11924,\"ax\",@progbits\n"
 	"primary_default_exception:\n"
 	"	subq.l #0x4,%sp\n"
 	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
@@ -8775,6 +8781,7 @@ __asm__(
 	"	addq.l #0x4,%sp\n"
 	"	bsr.l print_exception\n"
 	"	.size primary_default_exception, .-primary_default_exception\n"
+	"	.popsection\n"
 );
 
 /* 00011942 */
@@ -8891,7 +8898,7 @@ __exception void primary_user_66(void)
 __asm__(
 	"	.globl primary_user_66\n"
 	"	.type primary_user_66, @function\n"
-	"	.section .text.primary_user_66.11f82,\"ax\",@progbits\n"
+	"	.pushsection .text.primary_user_66.11f82,\"ax\",@progbits\n"
 	"primary_user_66:\n"
 	"	movem.l %a6/%a5/%a1/%a0/%d1/%d0,-(%sp)\n"
 	"	move.l %a3,-(%sp)\n"
@@ -8932,6 +8939,7 @@ __asm__(
 	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5/%a6\n"
 	"	trap #0x5\n"
 	"	.size primary_user_66, .-primary_user_66\n"
+	"	.popsection\n"
 );
 
 /* 00012004 */
@@ -9582,7 +9590,7 @@ __exception void primary_user_81(void)
 __asm__(
 	"	.globl primary_user_81\n"
 	"	.type primary_user_81, @function\n"
-	"	.section .text.primary_user_81.12e04,\"ax\",@progbits\n"
+	"	.pushsection .text.primary_user_81.12e04,\"ax\",@progbits\n"
 	"primary_user_81:\n"
 	"	andi.w #-0x101,(TFLG1).l\n"
 	"	addq.b #0x1,(internal_pps_count).l\n"
@@ -9595,6 +9603,7 @@ __asm__(
 	".Lg_12e22:\n"
 	"	trap #0x5\n"
 	"	.size primary_user_81, .-primary_user_81\n"
+	"	.popsection\n"
 );
 
 /* 00012e24 */
@@ -9864,7 +9873,7 @@ __regcall undefined4 stack_fill(void)
 __asm__(
 	"	.globl stack_fill\n"
 	"	.type stack_fill, @function\n"
-	"	.section .text.stack_fill.13258,\"ax\",@progbits\n"
+	"	.pushsection .text.stack_fill.13258,\"ax\",@progbits\n"
 	"stack_fill:\n"
 	"	movem.l %a1/%d0,-(%sp)\n"
 	"	move.l (0x3a,%a0),%d0\n"
@@ -9899,6 +9908,7 @@ __asm__(
 	"	movem.l (%sp)+,%d0/%a1\n"
 	"	rts\n"
 	"	.size stack_fill, .-stack_fill\n"
+	"	.popsection\n"
 );
 
 /* 000132b8 */
@@ -9929,7 +9939,7 @@ __regcall void region_find_segment(void)
 __asm__(
 	"	.globl region_find_segment\n"
 	"	.type region_find_segment, @function\n"
-	"	.section .text.region_find_segment.132b8,\"ax\",@progbits\n"
+	"	.pushsection .text.region_find_segment.132b8,\"ax\",@progbits\n"
 	"region_find_segment:\n"
 	"	movem.l %a2/%d1,-(%sp)\n"
 	"	movea.l (0x20,%a0),%a1\n"
@@ -9948,6 +9958,7 @@ __asm__(
 	"	movem.l (%sp)+,%d1/%a2\n"
 	"	rts\n"
 	"	.size region_find_segment, .-region_find_segment\n"
+	"	.popsection\n"
 );
 
 /* 000132da */
@@ -9985,7 +9996,7 @@ __regcall undefined8 stack_unused_count(void)
 __asm__(
 	"	.globl stack_unused_count\n"
 	"	.type stack_unused_count, @function\n"
-	"	.section .text.stack_unused_count.132da,\"ax\",@progbits\n"
+	"	.pushsection .text.stack_unused_count.132da,\"ax\",@progbits\n"
 	"stack_unused_count:\n"
 	"	sub.l %a1,%d0\n"
 	"	move.l %d0,%d1\n"
@@ -10000,6 +10011,7 @@ __asm__(
 	".Lg_132f2:\n"
 	"	rts\n"
 	"	.size stack_unused_count, .-stack_unused_count\n"
+	"	.popsection\n"
 );
 
 /* 000132f4 */
@@ -10126,12 +10138,13 @@ __exception undefined2 primary_trap_7(void)
 __asm__(
 	"	.globl primary_trap_7\n"
 	"	.type primary_trap_7, @function\n"
-	"	.section .text.primary_trap_7.1341a,\"ax\",@progbits\n"
+	"	.pushsection .text.primary_trap_7.1341a,\"ax\",@progbits\n"
 	"primary_trap_7:\n"
 	"	move.w (%sp),%d0\n"
 	"	ori.w #0x2000,(%sp)\n"
 	"	rte\n"
 	"	.size primary_trap_7, .-primary_trap_7\n"
+	"	.popsection\n"
 );
 
 /* 00013422 */
@@ -10242,7 +10255,7 @@ __regcall void clock_record_checksum(char *record /* a6 */)
 __asm__(
 	"	.globl clock_record_checksum\n"
 	"	.type clock_record_checksum, @function\n"
-	"	.section .text.clock_record_checksum.134a8,\"ax\",@progbits\n"
+	"	.pushsection .text.clock_record_checksum.134a8,\"ax\",@progbits\n"
 	"clock_record_checksum:\n"
 	"	lea (0x2,%a6),%a0\n"
 	"	lea (0x33,%a6),%a1\n"
@@ -10259,6 +10272,7 @@ __asm__(
 	"	move %d6,%sr\n"
 	"	rts\n"
 	"	.size clock_record_checksum, .-clock_record_checksum\n"
+	"	.popsection\n"
 );
 
 /* 000134ca */
@@ -10285,7 +10299,7 @@ __regcall void clock_record_sum(char *record /* a6 */)
 __asm__(
 	"	.globl clock_record_sum\n"
 	"	.type clock_record_sum, @function\n"
-	"	.section .text.clock_record_sum.134ca,\"ax\",@progbits\n"
+	"	.pushsection .text.clock_record_sum.134ca,\"ax\",@progbits\n"
 	"clock_record_sum:\n"
 	"	lea (0x2,%a6),%a0\n"
 	"	lea (0x33,%a6),%a1\n"
@@ -10302,6 +10316,7 @@ __asm__(
 	"	cmp.w (%a6),%d1\n"
 	"	rts\n"
 	"	.size clock_record_sum, .-clock_record_sum\n"
+	"	.popsection\n"
 );
 
 /* 000134e8 */
@@ -10400,7 +10415,7 @@ LAB_000135ba:
 __asm__(
 	"	.globl clock_record_advance\n"
 	"	.type clock_record_advance, @function\n"
-	"	.section .text.clock_record_advance.13502,\"ax\",@progbits\n"
+	"	.pushsection .text.clock_record_advance.13502,\"ax\",@progbits\n"
 	"clock_record_advance:\n"
 	"	move %sr,%d6\n"
 	"	ori #0x700,%sr\n"
@@ -10475,6 +10490,7 @@ __asm__(
 	".Lg_135ee:\n"
 	"	rts\n"
 	"	.size clock_record_advance, .-clock_record_advance\n"
+	"	.popsection\n"
 );
 
 /* 000135f0 */
@@ -10536,7 +10552,7 @@ __regcall void clock_record_advance_utc(char *record /* a6 */)
 __asm__(
 	"	.globl clock_record_advance_utc\n"
 	"	.type clock_record_advance_utc, @function\n"
-	"	.section .text.clock_record_advance_utc.135f0,\"ax\",@progbits\n"
+	"	.pushsection .text.clock_record_advance_utc.135f0,\"ax\",@progbits\n"
 	"clock_record_advance_utc:\n"
 	"	move %sr,%d6\n"
 	"	ori #0x700,%sr\n"
@@ -10605,6 +10621,7 @@ __asm__(
 	"	.byte 0x13,0xfc,0x00,0x01,0x00,0x10,0x25,0x43 | move.b #0x1,(0x00102543).l\n"
 	"	.byte 0x4e,0x75 | rts\n"
 	"	.size clock_record_advance_utc, .-clock_record_advance_utc\n"
+	"	.popsection\n"
 );
 
 /* 000136d6 */
@@ -10801,7 +10818,7 @@ __regcall void clock_record_store(char *record /* a6 */,int date /* d0 */,int ti
 __asm__(
 	"	.globl clock_record_store\n"
 	"	.type clock_record_store, @function\n"
-	"	.section .text.clock_record_store.1380c,\"ax\",@progbits\n"
+	"	.pushsection .text.clock_record_store.1380c,\"ax\",@progbits\n"
 	"clock_record_store:\n"
 	"	andi.l #0xffffff,%d1\n"
 	"	move.l %d1,%d7\n"
@@ -10851,6 +10868,7 @@ __asm__(
 	".Lg_13880:\n"
 	"	rts\n"
 	"	.size clock_record_store, .-clock_record_store\n"
+	"	.popsection\n"
 );
 
 /* 00013882 */
@@ -10887,7 +10905,7 @@ __regcall void clock_record_derive(char *record /* a6 */)
 __asm__(
 	"	.globl clock_record_derive\n"
 	"	.type clock_record_derive, @function\n"
-	"	.section .text.clock_record_derive.13882,\"ax\",@progbits\n"
+	"	.pushsection .text.clock_record_derive.13882,\"ax\",@progbits\n"
 	"clock_record_derive:\n"
 	"	link.w %a4,#-0x8\n"
 	"	movem.l %d2,-(%sp)\n"
@@ -10920,6 +10938,7 @@ __asm__(
 	"	unlk %a4\n"
 	"	rts\n"
 	"	.size clock_record_derive, .-clock_record_derive\n"
+	"	.popsection\n"
 );
 
 /* 000138e4 */
@@ -10949,7 +10968,7 @@ __regcall void clock_set_leap_year(char *february /* a0 */,int year /* d7 */)
 __asm__(
 	"	.globl clock_set_leap_year\n"
 	"	.type clock_set_leap_year, @function\n"
-	"	.section .text.clock_set_leap_year.138e4,\"ax\",@progbits\n"
+	"	.pushsection .text.clock_set_leap_year.138e4,\"ax\",@progbits\n"
 	"clock_set_leap_year:\n"
 	"	clr.w %d7\n"
 	"	move.b #0x1c,(%a0)\n"
@@ -10970,6 +10989,7 @@ __asm__(
 	".Lg_13906:\n"
 	"	rts\n"
 	"	.size clock_set_leap_year, .-clock_set_leap_year\n"
+	"	.popsection\n"
 );
 
 /* 00013908 */
@@ -11417,7 +11437,7 @@ __exception undefined8 primary_user_86(void)
 __asm__(
 	"	.globl primary_user_86\n"
 	"	.type primary_user_86, @function\n"
-	"	.section .text.primary_user_86.14020,\"ax\",@progbits\n"
+	"	.pushsection .text.primary_user_86.14020,\"ax\",@progbits\n"
 	"primary_user_86:\n"
 	"	movem.l %a6/%a5/%a1/%a0/%d1/%d0,-(%sp)\n"
 	"	tst.w (__ghidra_100bd2).l\n"
@@ -11439,6 +11459,7 @@ __asm__(
 	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5/%a6\n"
 	"	rte\n"
 	"	.size primary_user_86, .-primary_user_86\n"
+	"	.popsection\n"
 );
 
 /* 0001406a */
@@ -11521,7 +11542,7 @@ __exception undefined8 primary_user_87(void)
 __asm__(
 	"	.globl primary_user_87\n"
 	"	.type primary_user_87, @function\n"
-	"	.section .text.primary_user_87.140e4,\"ax\",@progbits\n"
+	"	.pushsection .text.primary_user_87.140e4,\"ax\",@progbits\n"
 	"primary_user_87:\n"
 	"	movem.l %a6/%a5/%a1/%a0/%d1/%d0,-(%sp)\n"
 	"	tst.w (__ghidra_100bd0).l\n"
@@ -11543,6 +11564,7 @@ __asm__(
 	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5/%a6\n"
 	"	rte\n"
 	"	.size primary_user_87, .-primary_user_87\n"
+	"	.popsection\n"
 );
 
 /* 0001412e */
@@ -11633,10 +11655,11 @@ __exception void primary_spurious_interrupt(void)
 __asm__(
 	"	.globl primary_spurious_interrupt\n"
 	"	.type primary_spurious_interrupt, @function\n"
-	"	.section .text.primary_spurious_interrupt.144c8,\"ax\",@progbits\n"
+	"	.pushsection .text.primary_spurious_interrupt.144c8,\"ax\",@progbits\n"
 	"primary_spurious_interrupt:\n"
 	"	rte\n"
 	"	.size primary_spurious_interrupt, .-primary_spurious_interrupt\n"
+	"	.popsection\n"
 );
 
 /* 000144ca */
@@ -11861,7 +11884,7 @@ LAB_000148e6:
 __asm__(
 	"	.globl primary_reset\n"
 	"	.type primary_reset, @function\n"
-	"	.section .text.primary_reset.144ca,\"ax\",@progbits\n"
+	"	.pushsection .text.primary_reset.144ca,\"ax\",@progbits\n"
 	"primary_reset:\n"
 	"	move.b #0xcc,(SYPCR).l\n"
 	"	move.w #0x2bff,(CSPAR0).l\n"
@@ -12187,6 +12210,7 @@ __asm__(
 	".Lg_14970:\n"
 	"	jmp (.Lg_14970,%pc)\n"
 	"	.size primary_reset, .-primary_reset\n"
+	"	.popsection\n"
 );
 
 /* 00014974 */
@@ -12208,13 +12232,14 @@ __exception void primary_trap_11(void)
 __asm__(
 	"	.globl primary_trap_11\n"
 	"	.type primary_trap_11, @function\n"
-	"	.section .text.primary_trap_11.14974,\"ax\",@progbits\n"
+	"	.pushsection .text.primary_trap_11.14974,\"ax\",@progbits\n"
 	"primary_trap_11:\n"
 	"	move #0x2700,%sr\n"
 	"	jsr (shutdown).l\n"
 	"	movea.l (__ghidra_ac).w,%a0\n"
 	"	jmp (%a0)\n"
 	"	.size primary_trap_11, .-primary_trap_11\n"
+	"	.popsection\n"
 );
 
 /* 00014984 */
@@ -12458,7 +12483,7 @@ LAB_000148e6:
 __asm__(
 	"	.globl primary_trap_12\n"
 	"	.type primary_trap_12, @function\n"
-	"	.section .text.primary_trap_12.14984,\"ax\",@progbits\n"
+	"	.pushsection .text.primary_trap_12.14984,\"ax\",@progbits\n"
 	"primary_trap_12:\n"
 	"	move #0x2700,%sr\n"
 	"	jsr (shutdown).l\n"
@@ -12469,6 +12494,7 @@ __asm__(
 	"	movea.l (primary_vectors).l,%sp\n"
 	"	jmp (%a0)\n"
 	"	.size primary_trap_12, .-primary_trap_12\n"
+	"	.popsection\n"
 );
 
 /* 000149a8 */
@@ -12717,7 +12743,7 @@ __exception void kernel_dispatch_service(undefined2 param_1)
 __asm__(
 	"	.globl kernel_dispatch_service\n"
 	"	.type kernel_dispatch_service, @function\n"
-	"	.section .text.kernel_dispatch_service.14b26,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_dispatch_service.14b26,\"ax\",@progbits\n"
 	"kernel_dispatch_service:\n"
 	"	movem.l %a6/%a5/%d6,-(%sp)\n"
 	"	movea.l (__ghidra_14ac2:w,%pc),%a5\n"
@@ -12786,6 +12812,7 @@ __asm__(
 	"	bra.w kernel_service_37\n"
 	"	bra.w kernel_service_38\n"
 	"	.size kernel_dispatch_service, .-kernel_dispatch_service\n"
+	"	.popsection\n"
 );
 
 /* 00014c0a */
@@ -12824,7 +12851,7 @@ __exception void kernel_dispatch_io(char function /* d7 */,int device /* d0 */)
 __asm__(
 	"	.globl kernel_dispatch_io\n"
 	"	.type kernel_dispatch_io, @function\n"
-	"	.section .text.kernel_dispatch_io.14c0a,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_dispatch_io.14c0a,\"ax\",@progbits\n"
 	"kernel_dispatch_io:\n"
 	"	movem.l %a6/%a5/%d6,-(%sp)\n"
 	"	movea.l (__ghidra_14ac2:w,%pc),%a5\n"
@@ -12871,6 +12898,7 @@ __asm__(
 	"	movem.l (%sp)+,%d6/%a5/%a6\n"
 	"	rte\n"
 	"	.size kernel_dispatch_io, .-kernel_dispatch_io\n"
+	"	.popsection\n"
 );
 
 /* 00014c7a */
@@ -13013,7 +13041,7 @@ __naked void kernel_switch_task(void)
 __asm__(
 	"	.globl kernel_switch_task\n"
 	"	.type kernel_switch_task, @function\n"
-	"	.section .text.kernel_switch_task.14c7a,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_switch_task.14c7a,\"ax\",@progbits\n"
 	"kernel_switch_task:\n"
 	".Lg_14c7a:\n"
 	"	ori #0x700,%sr\n"
@@ -13045,6 +13073,7 @@ __asm__(
 	"	movem.l (%sp)+,%d6/%a5/%a6\n"
 	"	rte\n"
 	"	.size kernel_switch_task, .-kernel_switch_task\n"
+	"	.popsection\n"
 );
 
 /* 00014cc6 */
@@ -13121,7 +13150,7 @@ LAB_00014d58:
 __asm__(
 	"	.globl kernel_process_ticks\n"
 	"	.type kernel_process_ticks, @function\n"
-	"	.section .text.kernel_process_ticks.14cc6,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_process_ticks.14cc6,\"ax\",@progbits\n"
 	"kernel_process_ticks:\n"
 	"	bsr.w kernel_advance_date\n"
 	"	movem.l %a3/%a2,-(%sp)\n"
@@ -13201,6 +13230,7 @@ __asm__(
 	"	movea.l (%sp)+,%a3\n"
 	"	rts\n"
 	"	.size kernel_process_ticks, .-kernel_process_ticks\n"
+	"	.popsection\n"
 );
 
 /* 00014da2 */
@@ -13224,12 +13254,13 @@ __regcall void kernel_service_0(void)
 __asm__(
 	"	.globl kernel_service_0\n"
 	"	.type kernel_service_0, @function\n"
-	"	.section .text.kernel_service_0.14da2,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_service_0.14da2,\"ax\",@progbits\n"
 	"kernel_service_0:\n"
 	"	move.w #0x3300,%d7\n"
 	"	move.b (__ghidra_14b21:w,%pc),%d7\n"
 	"	rts\n"
 	"	.size kernel_service_0, .-kernel_service_0\n"
+	"	.popsection\n"
 );
 
 /* 00014dac */
@@ -13318,7 +13349,7 @@ __regcall void kernel_create(void)
 __asm__(
 	"	.globl kernel_create\n"
 	"	.type kernel_create, @function\n"
-	"	.section .text.kernel_create.14dac,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_create.14dac,\"ax\",@progbits\n"
 	"kernel_create:\n"
 	"	movem.l %a3/%a2/%d5/%d4/%d3,-(%sp)\n"
 	"	tst.b %d2\n"
@@ -13415,6 +13446,7 @@ __asm__(
 	"	movem.l (%sp)+,%d3/%d4/%d5/%a2/%a3\n"
 	"	rts\n"
 	"	.size kernel_create, .-kernel_create\n"
+	"	.popsection\n"
 );
 
 /* 00014ea0 */
@@ -13453,7 +13485,7 @@ __regcall void kernel_start(void)
 __asm__(
 	"	.globl kernel_start\n"
 	"	.type kernel_start, @function\n"
-	"	.section .text.kernel_start.14ea0,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_start.14ea0,\"ax\",@progbits\n"
 	"kernel_start:\n"
 	"	movea.l (%a6),%a5\n"
 	"	bsr.w kernel_check_task\n"
@@ -13478,6 +13510,7 @@ __asm__(
 	".Lg_14ed0:\n"
 	"	rts\n"
 	"	.size kernel_start, .-kernel_start\n"
+	"	.popsection\n"
 );
 
 /* 00014ed2 */
@@ -13514,7 +13547,7 @@ __regcall void kernel_ident(void)
 __asm__(
 	"	.globl kernel_ident\n"
 	"	.type kernel_ident, @function\n"
-	"	.section .text.kernel_ident.14ed2,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_ident.14ed2,\"ax\",@progbits\n"
 	"kernel_ident:\n"
 	"	tst.l %d0\n"
 	"	bne.b .Lg_14eda\n"
@@ -13536,6 +13569,7 @@ __asm__(
 	".Lg_14ef6:\n"
 	"	rts\n"
 	"	.size kernel_ident, .-kernel_ident\n"
+	"	.popsection\n"
 );
 
 /* 00014ef8 */
@@ -13630,7 +13664,7 @@ LAB_00014fce:
 __asm__(
 	"	.globl kernel_delete\n"
 	"	.type kernel_delete, @function\n"
-	"	.section .text.kernel_delete.14ef8,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_delete.14ef8,\"ax\",@progbits\n"
 	"kernel_delete:\n"
 	"	movea.l (%a6),%a5\n"
 	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
@@ -13729,6 +13763,7 @@ __asm__(
 	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
 	"	rts\n"
 	"	.size kernel_delete, .-kernel_delete\n"
+	"	.popsection\n"
 );
 
 /* 00015004 */
@@ -13769,7 +13804,7 @@ __regcall void kernel_suspend(void)
 __asm__(
 	"	.globl kernel_suspend\n"
 	"	.type kernel_suspend, @function\n"
-	"	.section .text.kernel_suspend.15004,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_suspend.15004,\"ax\",@progbits\n"
 	"kernel_suspend:\n"
 	"	movea.l (%a6),%a5\n"
 	"	bsr.w kernel_check_task\n"
@@ -13792,6 +13827,7 @@ __asm__(
 	".Lg_15036:\n"
 	"	rts\n"
 	"	.size kernel_suspend, .-kernel_suspend\n"
+	"	.popsection\n"
 );
 
 /* 00015038 */
@@ -13829,7 +13865,7 @@ __regcall void kernel_resume(void)
 __asm__(
 	"	.globl kernel_resume\n"
 	"	.type kernel_resume, @function\n"
-	"	.section .text.kernel_resume.15038,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_resume.15038,\"ax\",@progbits\n"
 	"kernel_resume:\n"
 	"	movea.l (%a6),%a5\n"
 	"	move %sr,%d6\n"
@@ -13862,6 +13898,7 @@ __asm__(
 	".Lg_15078:\n"
 	"	rts\n"
 	"	.size kernel_resume, .-kernel_resume\n"
+	"	.popsection\n"
 );
 
 /* 0001507a */
@@ -13916,7 +13953,7 @@ LAB_000150ae:
 __asm__(
 	"	.globl kernel_priority\n"
 	"	.type kernel_priority, @function\n"
-	"	.section .text.kernel_priority.1507a,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_priority.1507a,\"ax\",@progbits\n"
 	"kernel_priority:\n"
 	"	move.w %d1,-(%sp)\n"
 	"	movea.l (%a6),%a5\n"
@@ -13959,6 +13996,7 @@ __asm__(
 	"	move.w (%sp)+,%d1\n"
 	"	rts\n"
 	"	.size kernel_priority, .-kernel_priority\n"
+	"	.popsection\n"
 );
 
 /* 000150da */
@@ -14004,10 +14042,11 @@ __regcall void kernel_allocate_segment(void)
 __asm__(
 	"	.globl kernel_allocate_segment\n"
 	"	.type kernel_allocate_segment, @function\n"
-	"	.section .text.kernel_allocate_segment.150da,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_allocate_segment.150da,\"ax\",@progbits\n"
 	"kernel_allocate_segment:\n"
 	"	movea.l (%a6),%a5\n"
 	"	.size kernel_allocate_segment, .-kernel_allocate_segment\n"
+	"	.popsection\n"
 );
 
 /* 000150dc */
@@ -14050,7 +14089,7 @@ __naked void kernel_allocate_for_task(void)
 __asm__(
 	"	.globl kernel_allocate_for_task\n"
 	"	.type kernel_allocate_for_task, @function\n"
-	"	.section .text.kernel_allocate_for_task.150dc,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_allocate_for_task.150dc,\"ax\",@progbits\n"
 	"kernel_allocate_for_task:\n"
 	"	movem.l %a2/%a1/%d4/%d3/%d2/%d1,-(%sp)\n"
 	"	bsr.w kernel_allocate\n"
@@ -14081,6 +14120,7 @@ __asm__(
 	"	movem.l (%sp)+,%d1/%d2/%d3/%d4/%a1/%a2\n"
 	"	rts\n"
 	"	.size kernel_allocate_for_task, .-kernel_allocate_for_task\n"
+	"	.popsection\n"
 );
 
 /* 00015130 */
@@ -14211,10 +14251,11 @@ LAB_00015206:
 __asm__(
 	"	.globl kernel_free_segment\n"
 	"	.type kernel_free_segment, @function\n"
-	"	.section .text.kernel_free_segment.15130,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_free_segment.15130,\"ax\",@progbits\n"
 	"kernel_free_segment:\n"
 	"	movea.l (%a6),%a5\n"
 	"	.size kernel_free_segment, .-kernel_free_segment\n"
+	"	.popsection\n"
 );
 
 /* 00015132 */
@@ -14344,7 +14385,7 @@ LAB_00015206:
 __asm__(
 	"	.globl kernel_free_for_task\n"
 	"	.type kernel_free_for_task, @function\n"
-	"	.section .text.kernel_free_for_task.15132,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_free_for_task.15132,\"ax\",@progbits\n"
 	"kernel_free_for_task:\n"
 	"	movem.l %a5/%a3/%a2/%a1/%a0/%d4/%d3/%d2/%d1,-(%sp)\n"
 	"	suba.w #0x12,%a0\n"
@@ -14474,6 +14515,7 @@ __asm__(
 	"	movem.l (%sp)+,%d1/%d2/%d3/%d4/%a0/%a1/%a2/%a3/%a5\n"
 	"	rts\n"
 	"	.size kernel_free_for_task, .-kernel_free_for_task\n"
+	"	.popsection\n"
 );
 
 /* 00015268 */
@@ -14520,7 +14562,7 @@ LAB_00015288:
 __asm__(
 	"	.globl kernel_allocate\n"
 	"	.type kernel_allocate, @function\n"
-	"	.section .text.kernel_allocate.15268,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_allocate.15268,\"ax\",@progbits\n"
 	"kernel_allocate:\n"
 	"	addi.l #0x13,%d1\n"
 	"	bclr.l #0x0,%d1\n"
@@ -14550,6 +14592,7 @@ __asm__(
 	".Lg_1529a:\n"
 	"	rts\n"
 	"	.size kernel_allocate, .-kernel_allocate\n"
+	"	.popsection\n"
 );
 
 /* 0001529c */
@@ -14620,7 +14663,7 @@ __naked void kernel_region_allocate(void)
 __asm__(
 	"	.globl kernel_region_allocate\n"
 	"	.type kernel_region_allocate, @function\n"
-	"	.section .text.kernel_region_allocate.1529c,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_region_allocate.1529c,\"ax\",@progbits\n"
 	"kernel_region_allocate:\n"
 	"	move.l %d1,-(%sp)\n"
 	"	cmp.l (0x34,%a6,%d6.w*0x1),%d1\n"
@@ -14684,6 +14727,7 @@ __asm__(
 	"	movem.l (%sp)+,%d1\n"
 	"	rts\n"
 	"	.size kernel_region_allocate, .-kernel_region_allocate\n"
+	"	.popsection\n"
 );
 
 /* 00015324 */
@@ -14738,7 +14782,7 @@ __regcall void kernel_service_10(void)
 __asm__(
 	"	.globl kernel_service_10\n"
 	"	.type kernel_service_10, @function\n"
-	"	.section .text.kernel_service_10.15324,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_service_10.15324,\"ax\",@progbits\n"
 	"kernel_service_10:\n"
 	"	move.l %a2,-(%sp)\n"
 	"	suba.w %a2,%a2\n"
@@ -14746,6 +14790,7 @@ __asm__(
 	"	.reloc ., R_68K_PC8, kernel_service_16+0x6-1\n"
 	"	.byte 0\n"
 	"	.size kernel_service_10, .-kernel_service_10\n"
+	"	.popsection\n"
 );
 
 /* 0001532a */
@@ -14798,7 +14843,7 @@ __regcall void kernel_service_16(void)
 __asm__(
 	"	.globl kernel_service_16\n"
 	"	.type kernel_service_16, @function\n"
-	"	.section .text.kernel_service_16.1532a,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_service_16.1532a,\"ax\",@progbits\n"
 	"kernel_service_16:\n"
 	"	move.l %a2,-(%sp)\n"
 	"	movea.w #0x1,%a2\n"
@@ -14838,6 +14883,7 @@ __asm__(
 	"	movea.l (%sp)+,%a2\n"
 	"	rts\n"
 	"	.size kernel_service_16, .-kernel_service_16\n"
+	"	.popsection\n"
 );
 
 /* 0001537a */
@@ -14863,11 +14909,12 @@ __regcall char kernel_service_none(void)
 __asm__(
 	"	.globl kernel_service_none\n"
 	"	.type kernel_service_none, @function\n"
-	"	.section .text.kernel_service_none.1537a,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_service_none.1537a,\"ax\",@progbits\n"
 	"kernel_service_none:\n"
 	"	clr.b %d7\n"
 	"	rts\n"
 	"	.size kernel_service_none, .-kernel_service_none\n"
+	"	.popsection\n"
 );
 
 /* 0001537e */
@@ -14920,7 +14967,7 @@ __regcall void kernel_create_x(void)
 __asm__(
 	"	.globl kernel_create_x\n"
 	"	.type kernel_create_x, @function\n"
-	"	.section .text.kernel_create_x.1537e,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_create_x.1537e,\"ax\",@progbits\n"
 	"kernel_create_x:\n"
 	"	moveq #0x1,%d7\n"
 	"	move.l (0x18,%a6),%d6\n"
@@ -14954,6 +15001,7 @@ __asm__(
 	".Lg_153de:\n"
 	"	rts\n"
 	"	.size kernel_create_x, .-kernel_create_x\n"
+	"	.popsection\n"
 );
 
 /* 000153e0 */
@@ -15008,7 +15056,7 @@ __regcall void kernel_service_21(void)
 __asm__(
 	"	.globl kernel_service_21\n"
 	"	.type kernel_service_21, @function\n"
-	"	.section .text.kernel_service_21.153e0,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_service_21.153e0,\"ax\",@progbits\n"
 	"kernel_service_21:\n"
 	"	move.l (0x14,%a6),%d6\n"
 	"	beq.b .Lg_153f4\n"
@@ -15052,6 +15100,7 @@ __asm__(
 	".Lg_15434:\n"
 	"	rts\n"
 	"	.size kernel_service_21, .-kernel_service_21\n"
+	"	.popsection\n"
 );
 
 /* 00015436 */
@@ -15115,7 +15164,7 @@ LAB_000154a0:
 __asm__(
 	"	.globl kernel_delete_x\n"
 	"	.type kernel_delete_x, @function\n"
-	"	.section .text.kernel_delete_x.15436,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_delete_x.15436,\"ax\",@progbits\n"
 	"kernel_delete_x:\n"
 	"	move.l %a2,-(%sp)\n"
 	"	movea.l (%a6),%a5\n"
@@ -15163,6 +15212,7 @@ __asm__(
 	"	movea.l (%sp)+,%a2\n"
 	"	rts\n"
 	"	.size kernel_delete_x, .-kernel_delete_x\n"
+	"	.popsection\n"
 );
 
 /* 000154ae */
@@ -15276,7 +15326,7 @@ LAB_00015576:
 __asm__(
 	"	.globl kernel_service_18\n"
 	"	.type kernel_service_18, @function\n"
-	"	.section .text.kernel_service_18.154ae,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_service_18.154ae,\"ax\",@progbits\n"
 	"kernel_service_18:\n"
 	"	movea.l (%a6),%a5\n"
 	"	move %sr,%d6\n"
@@ -15375,6 +15425,7 @@ __asm__(
 	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%a2/%a3\n"
 	"	rts\n"
 	"	.size kernel_service_18, .-kernel_service_18\n"
+	"	.popsection\n"
 );
 
 /* 00015592 */
@@ -15508,7 +15559,7 @@ LAB_00015606:
 __asm__(
 	"	.globl kernel_jam_x\n"
 	"	.type kernel_jam_x, @function\n"
-	"	.section .text.kernel_jam_x.15592,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_jam_x.15592,\"ax\",@progbits\n"
 	"kernel_jam_x:\n"
 	"	movea.l (%a6),%a5\n"
 	"	movem.l %a4/%a3/%a2/%d5/%d4/%d3,-(%sp)\n"
@@ -15517,6 +15568,7 @@ __asm__(
 	"	.reloc ., R_68K_PC8, kernel_send_for_task+0x6-1\n"
 	"	.byte 0\n"
 	"	.size kernel_jam_x, .-kernel_jam_x\n"
+	"	.popsection\n"
 );
 
 /* 0001559c */
@@ -15642,10 +15694,11 @@ LAB_00015606:
 __asm__(
 	"	.globl kernel_send_x\n"
 	"	.type kernel_send_x, @function\n"
-	"	.section .text.kernel_send_x.1559c,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_send_x.1559c,\"ax\",@progbits\n"
 	"kernel_send_x:\n"
 	"	movea.l (%a6),%a5\n"
 	"	.size kernel_send_x, .-kernel_send_x\n"
+	"	.popsection\n"
 );
 
 /* 0001559e */
@@ -15767,7 +15820,7 @@ LAB_00015606:
 __asm__(
 	"	.globl kernel_send_for_task\n"
 	"	.type kernel_send_for_task, @function\n"
-	"	.section .text.kernel_send_for_task.1559e,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_send_for_task.1559e,\"ax\",@progbits\n"
 	"kernel_send_for_task:\n"
 	"	movem.l %a4/%a3/%a2/%d5/%d4/%d3,-(%sp)\n"
 	"	suba.l %a4,%a4\n"
@@ -15887,6 +15940,7 @@ __asm__(
 	"	movem.l (%sp)+,%d3/%d4/%d5/%a2/%a3/%a4\n"
 	"	rts\n"
 	"	.size kernel_send_for_task, .-kernel_send_for_task\n"
+	"	.popsection\n"
 );
 
 /* 000156ac */
@@ -15928,7 +15982,7 @@ __naked void kernel_copy_message(void)
 __asm__(
 	"	.globl kernel_copy_message\n"
 	"	.type kernel_copy_message, @function\n"
-	"	.section .text.kernel_copy_message.156ac,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_copy_message.156ac,\"ax\",@progbits\n"
 	"kernel_copy_message:\n"
 	"	move %sr,%d6\n"
 	"	ori #0x700,%sr\n"
@@ -15947,6 +16001,7 @@ __asm__(
 	".Lg_156d4:\n"
 	"	rts\n"
 	"	.size kernel_copy_message, .-kernel_copy_message\n"
+	"	.popsection\n"
 );
 
 /* 000156d6 */
@@ -16070,7 +16125,7 @@ LAB_000157c4:
 __asm__(
 	"	.globl kernel_request_x\n"
 	"	.type kernel_request_x, @function\n"
-	"	.section .text.kernel_request_x.156d6,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_request_x.156d6,\"ax\",@progbits\n"
 	"kernel_request_x:\n"
 	"	movem.l %a2/%d5/%d4/%d3,-(%sp)\n"
 	"	movea.l (%a6),%a5\n"
@@ -16175,6 +16230,7 @@ __asm__(
 	"	movem.l (%sp)+,%d3/%d4/%d5/%a2\n"
 	"	rts\n"
 	"	.size kernel_request_x, .-kernel_request_x\n"
+	"	.popsection\n"
 );
 
 /* 000157e2 */
@@ -16240,7 +16296,7 @@ __regcall void kernel_signal_v(void)
 __asm__(
 	"	.globl kernel_signal_v\n"
 	"	.type kernel_signal_v, @function\n"
-	"	.section .text.kernel_signal_v.157e2,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_signal_v.157e2,\"ax\",@progbits\n"
 	"kernel_signal_v:\n"
 	"	movea.l (%a6),%a5\n"
 	"	move %sr,%d6\n"
@@ -16250,6 +16306,7 @@ __asm__(
 	"	.byte 0\n"
 	"	lea (0x8c,%a6),%a5\n"
 	"	.size kernel_signal_v, .-kernel_signal_v\n"
+	"	.popsection\n"
 );
 
 /* 000157f0 */
@@ -16313,7 +16370,7 @@ __naked void kernel_signal_task(void)
 __asm__(
 	"	.globl kernel_signal_task\n"
 	"	.type kernel_signal_task, @function\n"
-	"	.section .text.kernel_signal_task.157f0,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_signal_task.157f0,\"ax\",@progbits\n"
 	"kernel_signal_task:\n"
 	"	move.w %d1,-(%sp)\n"
 	"	bsr.w kernel_check_task\n"
@@ -16360,6 +16417,7 @@ __asm__(
 	"	move.w (%sp)+,%d1\n"
 	"	rts\n"
 	"	.size kernel_signal_task, .-kernel_signal_task\n"
+	"	.popsection\n"
 );
 
 /* 0001585a */
@@ -16400,10 +16458,11 @@ __regcall void kernel_get_v(void)
 __asm__(
 	"	.globl kernel_get_v\n"
 	"	.type kernel_get_v, @function\n"
-	"	.section .text.kernel_get_v.1585a,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_get_v.1585a,\"ax\",@progbits\n"
 	"kernel_get_v:\n"
 	"	clr.b %d7\n"
 	"	.size kernel_get_v, .-kernel_get_v\n"
+	"	.popsection\n"
 );
 
 /* 0001585c */
@@ -16463,7 +16522,7 @@ __regcall void kernel_wait_v(void)
 __asm__(
 	"	.globl kernel_wait_v\n"
 	"	.type kernel_wait_v, @function\n"
-	"	.section .text.kernel_wait_v.1585c,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_wait_v.1585c,\"ax\",@progbits\n"
 	"kernel_wait_v:\n"
 	"	move.l %a2,-(%sp)\n"
 	"	movea.l (%a6),%a5\n"
@@ -16519,6 +16578,7 @@ __asm__(
 	"	movea.l (%sp)+,%a2\n"
 	"	rts\n"
 	"	.size kernel_wait_v, .-kernel_wait_v\n"
+	"	.popsection\n"
 );
 
 /* 000158da */
@@ -16549,7 +16609,7 @@ __regcall byte kernel_mode(void)
 __asm__(
 	"	.globl kernel_mode\n"
 	"	.type kernel_mode, @function\n"
-	"	.section .text.kernel_mode.158da,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_mode.158da,\"ax\",@progbits\n"
 	"kernel_mode:\n"
 	"	movea.l (%a6),%a5\n"
 	"	move.b (0x11,%a5),%d6\n"
@@ -16564,6 +16624,7 @@ __asm__(
 	"	clr.b %d7\n"
 	"	rts\n"
 	"	.size kernel_mode, .-kernel_mode\n"
+	"	.popsection\n"
 );
 
 /* 000158f6 */
@@ -16587,13 +16648,14 @@ __regcall undefined2 kernel_service_33(undefined2 param_1)
 __asm__(
 	"	.globl kernel_service_33\n"
 	"	.type kernel_service_33, @function\n"
-	"	.section .text.kernel_service_33.158f6,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_service_33.158f6,\"ax\",@progbits\n"
 	"kernel_service_33:\n"
 	"	move.w (0x10,%sp),%d0\n"
 	"	ori.w #0x2000,(0x10,%sp)\n"
 	"	clr.w %d7\n"
 	"	rts\n"
 	"	.size kernel_service_33, .-kernel_service_33\n"
+	"	.popsection\n"
 );
 
 /* 00015904 */
@@ -16630,7 +16692,7 @@ __regcall void kernel_pause(void)
 __asm__(
 	"	.globl kernel_pause\n"
 	"	.type kernel_pause, @function\n"
-	"	.section .text.kernel_pause.15904,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_pause.15904,\"ax\",@progbits\n"
 	"kernel_pause:\n"
 	"	movea.l (%a6),%a5\n"
 	"	ori #0x700,%sr\n"
@@ -16649,6 +16711,7 @@ __asm__(
 	"	clr.b %d7\n"
 	"	rts\n"
 	"	.size kernel_pause, .-kernel_pause\n"
+	"	.popsection\n"
 );
 
 /* 0001592e */
@@ -16693,7 +16756,7 @@ __regcall void kernel_service_29(void)
 __asm__(
 	"	.globl kernel_service_29\n"
 	"	.type kernel_service_29, @function\n"
-	"	.section .text.kernel_service_29.1592e,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_service_29.1592e,\"ax\",@progbits\n"
 	"kernel_service_29:\n"
 	"	addq.l #0x1,(0x6c,%a6)\n"
 	"	move %sr,%d6\n"
@@ -16722,6 +16785,7 @@ __asm__(
 	"	clr.b %d7\n"
 	"	rts\n"
 	"	.size kernel_service_29, .-kernel_service_29\n"
+	"	.popsection\n"
 );
 
 /* 00015974 */
@@ -16752,7 +16816,7 @@ __regcall undefined8 kernel_service_30(void)
 __asm__(
 	"	.globl kernel_service_30\n"
 	"	.type kernel_service_30, @function\n"
-	"	.section .text.kernel_service_30.15974,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_service_30.15974,\"ax\",@progbits\n"
 	"kernel_service_30:\n"
 	".Lg_15974:\n"
 	"	move.l (0x72,%a6),%d1\n"
@@ -16772,6 +16836,7 @@ __asm__(
 	".Lg_1599c:\n"
 	"	rts\n"
 	"	.size kernel_service_30, .-kernel_service_30\n"
+	"	.popsection\n"
 );
 
 /* 0001599e */
@@ -16818,7 +16883,7 @@ __regcall void kernel_service_31(void)
 __asm__(
 	"	.globl kernel_service_31\n"
 	"	.type kernel_service_31, @function\n"
-	"	.section .text.kernel_service_31.1599e,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_service_31.1599e,\"ax\",@progbits\n"
 	"kernel_service_31:\n"
 	"	move.l %d1,%d7\n"
 	"	cmpi.b #0x3c,%d7\n"
@@ -16866,6 +16931,7 @@ __asm__(
 	".Lg_15a0e:\n"
 	"	rts\n"
 	"	.size kernel_service_31, .-kernel_service_31\n"
+	"	.popsection\n"
 );
 
 /* 00015a10 */
@@ -16910,7 +16976,7 @@ __regcall undefined8 kernel_service_35(void)
 __asm__(
 	"	.globl kernel_service_35\n"
 	"	.type kernel_service_35, @function\n"
-	"	.section .text.kernel_service_35.15a10,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_service_35.15a10,\"ax\",@progbits\n"
 	"kernel_service_35:\n"
 	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
 	"	clr.w (0x8,%a0)\n"
@@ -16935,6 +17001,7 @@ __asm__(
 	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
 	"	rts\n"
 	"	.size kernel_service_35, .-kernel_service_35\n"
+	"	.popsection\n"
 );
 
 /* 00015a50 */
@@ -16964,7 +17031,7 @@ __regcall void kernel_service_36(void)
 __asm__(
 	"	.globl kernel_service_36\n"
 	"	.type kernel_service_36, @function\n"
-	"	.section .text.kernel_service_36.15a50,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_service_36.15a50,\"ax\",@progbits\n"
 	"kernel_service_36:\n"
 	"	moveq #0x1,%d7\n"
 	"	cmp.l (0x4,%a0),%d0\n"
@@ -16982,6 +17049,7 @@ __asm__(
 	".Lg_15a74:\n"
 	"	rts\n"
 	"	.size kernel_service_36, .-kernel_service_36\n"
+	"	.popsection\n"
 );
 
 /* 00015a76 */
@@ -17014,7 +17082,7 @@ __regcall void kernel_service_37(void)
 __asm__(
 	"	.globl kernel_service_37\n"
 	"	.type kernel_service_37, @function\n"
-	"	.section .text.kernel_service_37.15a76,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_service_37.15a76,\"ax\",@progbits\n"
 	"kernel_service_37:\n"
 	"	moveq #0x1,%d7\n"
 	"	cmp.l (0x4,%a0),%d0\n"
@@ -17036,6 +17104,7 @@ __asm__(
 	".Lg_15aa0:\n"
 	"	rts\n"
 	"	.size kernel_service_37, .-kernel_service_37\n"
+	"	.popsection\n"
 );
 
 /* 00015aa2 */
@@ -17067,7 +17136,7 @@ __regcall void kernel_service_38(void)
 __asm__(
 	"	.globl kernel_service_38\n"
 	"	.type kernel_service_38, @function\n"
-	"	.section .text.kernel_service_38.15aa2,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_service_38.15aa2,\"ax\",@progbits\n"
 	"kernel_service_38:\n"
 	"	moveq #0x1,%d7\n"
 	"	cmpa.l (-0x8,%a1),%a0\n"
@@ -17082,6 +17151,7 @@ __asm__(
 	".Lg_15abe:\n"
 	"	rts\n"
 	"	.size kernel_service_38, .-kernel_service_38\n"
+	"	.popsection\n"
 );
 
 /* 00015ac0 */
@@ -17128,7 +17198,7 @@ __naked void kernel_advance_date(void)
 __asm__(
 	"	.globl kernel_advance_date\n"
 	"	.type kernel_advance_date, @function\n"
-	"	.section .text.kernel_advance_date.15ac0,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_advance_date.15ac0,\"ax\",@progbits\n"
 	"kernel_advance_date:\n"
 	"	move.l %d7,-(%sp)\n"
 	"	move %sr,%d6\n"
@@ -17160,6 +17230,7 @@ __asm__(
 	"	move.l (%sp)+,%d7\n"
 	"	rts\n"
 	"	.size kernel_advance_date, .-kernel_advance_date\n"
+	"	.popsection\n"
 );
 
 /* 00015b10 */
@@ -17190,7 +17261,7 @@ __naked void kernel_set_leap_year(void)
 __asm__(
 	"	.globl kernel_set_leap_year\n"
 	"	.type kernel_set_leap_year, @function\n"
-	"	.section .text.kernel_set_leap_year.15b10,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_set_leap_year.15b10,\"ax\",@progbits\n"
 	"kernel_set_leap_year:\n"
 	"	move.l %d6,%d7\n"
 	"	clr.w %d7\n"
@@ -17212,6 +17283,7 @@ __asm__(
 	".Lg_15b38:\n"
 	"	rts\n"
 	"	.size kernel_set_leap_year, .-kernel_set_leap_year\n"
+	"	.popsection\n"
 );
 
 /* 00015b3a */
@@ -17237,7 +17309,7 @@ __regcall void * kernel_check_task(int task /* a0 */,void *running /* a5 */)
 __asm__(
 	"	.globl kernel_check_task\n"
 	"	.type kernel_check_task, @function\n"
-	"	.section .text.kernel_check_task.15b3a,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_check_task.15b3a,\"ax\",@progbits\n"
 	"kernel_check_task:\n"
 	"	move.l %a0,%d6\n"
 	"	beq.b .Lg_15b68\n"
@@ -17264,6 +17336,7 @@ __asm__(
 	".Lg_15b6a:\n"
 	"	rts\n"
 	"	.size kernel_check_task, .-kernel_check_task\n"
+	"	.popsection\n"
 );
 
 /* 00015b6c */
@@ -17286,7 +17359,7 @@ __regcall void kernel_check_exchange(int exchange /* a0 */,void *running /* a5 *
 __asm__(
 	"	.globl kernel_check_exchange\n"
 	"	.type kernel_check_exchange, @function\n"
-	"	.section .text.kernel_check_exchange.15b6c,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_check_exchange.15b6c,\"ax\",@progbits\n"
 	"kernel_check_exchange:\n"
 	"	move.l (0x18,%a0),%d6\n"
 	"	swap %d6\n"
@@ -17309,6 +17382,7 @@ __asm__(
 	".Lg_15b94:\n"
 	"	rts\n"
 	"	.size kernel_check_exchange, .-kernel_check_exchange\n"
+	"	.popsection\n"
 );
 
 /* 00015b96 */
@@ -17331,7 +17405,7 @@ __regcall void kernel_check_segment(void *segment /* a0 */)
 __asm__(
 	"	.globl kernel_check_segment\n"
 	"	.type kernel_check_segment, @function\n"
-	"	.section .text.kernel_check_segment.15b96,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_check_segment.15b96,\"ax\",@progbits\n"
 	"kernel_check_segment:\n"
 	"	clr.l %d7\n"
 	"	move.w (0x10,%a0),%d7\n"
@@ -17342,6 +17416,7 @@ __asm__(
 	".Lg_15ba8:\n"
 	"	rts\n"
 	"	.size kernel_check_segment, .-kernel_check_segment\n"
+	"	.popsection\n"
 );
 
 /* 00015baa */
@@ -17375,13 +17450,14 @@ __naked void kernel_timer_cancel(void)
 __asm__(
 	"	.globl kernel_timer_cancel\n"
 	"	.type kernel_timer_cancel, @function\n"
-	"	.section .text.kernel_timer_cancel.15baa,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_timer_cancel.15baa,\"ax\",@progbits\n"
 	"kernel_timer_cancel:\n"
 	"	tst.b (0x12,%a2)\n"
 	"	.byte 0x6f | ble.b 0x00015bdc\n"
 	"	.reloc ., R_68K_PC8, kernel_timer_unlink+0x2c-1\n"
 	"	.byte 0\n"
 	"	.size kernel_timer_cancel, .-kernel_timer_cancel\n"
+	"	.popsection\n"
 );
 
 /* 00015bb0 */
@@ -17414,7 +17490,7 @@ __naked undefined4 kernel_timer_unlink(void)
 __asm__(
 	"	.globl kernel_timer_unlink\n"
 	"	.type kernel_timer_unlink, @function\n"
-	"	.section .text.kernel_timer_unlink.15bb0,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_timer_unlink.15bb0,\"ax\",@progbits\n"
 	"kernel_timer_unlink:\n"
 	"	movem.l %a3/%d0,-(%sp)\n"
 	"	move %sr,%d6\n"
@@ -17433,6 +17509,7 @@ __asm__(
 	"	movea.l (%sp)+,%a3\n"
 	"	rts\n"
 	"	.size kernel_timer_unlink, .-kernel_timer_unlink\n"
+	"	.popsection\n"
 );
 
 /* 00015bde */
@@ -17491,7 +17568,7 @@ __naked void kernel_timer_insert(void)
 __asm__(
 	"	.globl kernel_timer_insert\n"
 	"	.type kernel_timer_insert, @function\n"
-	"	.section .text.kernel_timer_insert.15bde,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_timer_insert.15bde,\"ax\",@progbits\n"
 	"kernel_timer_insert:\n"
 	"	movem.l %a4/%a2/%d2,-(%sp)\n"
 	"	subq.l #0x1,%d0\n"
@@ -17533,6 +17610,7 @@ __asm__(
 	"	movem.l (%sp)+,%d2/%a2/%a4\n"
 	"	rts\n"
 	"	.size kernel_timer_insert, .-kernel_timer_insert\n"
+	"	.popsection\n"
 );
 
 /* 00015c4c */
@@ -17573,13 +17651,14 @@ __naked void kernel_make_ready(void)
 __asm__(
 	"	.globl kernel_make_ready\n"
 	"	.type kernel_make_ready, @function\n"
-	"	.section .text.kernel_make_ready.15c4c,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_make_ready.15c4c,\"ax\",@progbits\n"
 	"kernel_make_ready:\n"
 	"	andi.w #0x4,(0x12,%a2)\n"
 	"	.byte 0x66 | bne.b 0x00015c94\n"
 	"	.reloc ., R_68K_PC8, kernel_ready_insert+0x40-1\n"
 	"	.byte 0\n"
 	"	.size kernel_make_ready, .-kernel_make_ready\n"
+	"	.popsection\n"
 );
 
 /* 00015c54 */
@@ -17615,7 +17694,7 @@ __naked void kernel_ready_insert(void)
 __asm__(
 	"	.globl kernel_ready_insert\n"
 	"	.type kernel_ready_insert, @function\n"
-	"	.section .text.kernel_ready_insert.15c54,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_ready_insert.15c54,\"ax\",@progbits\n"
 	"kernel_ready_insert:\n"
 	"	movem.l %a5/%d1,-(%sp)\n"
 	"	move.b (0x10,%a2),%d1\n"
@@ -17642,6 +17721,7 @@ __asm__(
 	"	movea.l (%sp)+,%a5\n"
 	"	rts\n"
 	"	.size kernel_ready_insert, .-kernel_ready_insert\n"
+	"	.popsection\n"
 );
 
 /* 00015c96 */
@@ -17670,7 +17750,7 @@ __naked void kernel_queue_remove(void)
 __asm__(
 	"	.globl kernel_queue_remove\n"
 	"	.type kernel_queue_remove, @function\n"
-	"	.section .text.kernel_queue_remove.15c96,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_queue_remove.15c96,\"ax\",@progbits\n"
 	"kernel_queue_remove:\n"
 	"	move.l %a1,-(%sp)\n"
 	"	move.l (%a5),%d6\n"
@@ -17727,6 +17807,7 @@ __asm__(
 	"	.byte 0x01\n"
 	"	.byte 0xee\n"
 	"	.size kernel_queue_remove, .-kernel_queue_remove\n"
+	"	.popsection\n"
 );
 
 /* 00015cd8 */
@@ -17905,7 +17986,7 @@ __exception void kernel_init(void)
 __asm__(
 	"	.globl kernel_init\n"
 	"	.type kernel_init, @function\n"
-	"	.section .text.kernel_init.15cd8,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_init.15cd8,\"ax\",@progbits\n"
 	"kernel_init:\n"
 	"	movea.l (__ghidra_14ac2:w,%pc),%a0\n"
 	"	movea.l (%a0),%a0\n"
@@ -18067,6 +18148,7 @@ __asm__(
 	"	lea (0xdead).l,%a0\n"
 	"	stop #0x0\n"
 	"	.size kernel_init, .-kernel_init\n"
+	"	.popsection\n"
 );
 
 /* 00015ece */
@@ -18135,7 +18217,7 @@ __naked void kernel_region_init(void)
 __asm__(
 	"	.globl kernel_region_init\n"
 	"	.type kernel_region_init, @function\n"
-	"	.section .text.kernel_region_init.15ece,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_region_init.15ece,\"ax\",@progbits\n"
 	"kernel_region_init:\n"
 	"	move.l (0x4,%a0),%d1\n"
 	"	sub.l %a3,%d1\n"
@@ -18201,6 +18283,7 @@ __asm__(
 	"	.byte 0x60\n"
 	"	.byte 0xfa\n"
 	"	.size kernel_region_init, .-kernel_region_init\n"
+	"	.popsection\n"
 );
 
 /* 00015f8a */
@@ -18329,7 +18412,7 @@ __exception void kernel_return_from_interrupt(ushort param_1)
 __asm__(
 	"	.globl kernel_return_from_interrupt\n"
 	"	.type kernel_return_from_interrupt, @function\n"
-	"	.section .text.kernel_return_from_interrupt.15f8a,\"ax\",@progbits\n"
+	"	.pushsection .text.kernel_return_from_interrupt.15f8a,\"ax\",@progbits\n"
 	"kernel_return_from_interrupt:\n"
 	"	addq.l #0x8,%sp\n"
 	"	movem.l %a6/%a5/%d6,-(%sp)\n"
@@ -18424,6 +18507,7 @@ __asm__(
 	"	move.l %d6,-(%sp)\n"
 	"	bra.w kernel_switch_task\n"
 	"	.size kernel_return_from_interrupt, .-kernel_return_from_interrupt\n"
+	"	.popsection\n"
 );
 
 /* 0001606c */
@@ -19392,7 +19476,7 @@ __regcall void psos_call(void)
 __asm__(
 	"	.globl psos_call\n"
 	"	.type psos_call, @function\n"
-	"	.section .text.psos_call.16f1e,\"ax\",@progbits\n"
+	"	.pushsection .text.psos_call.16f1e,\"ax\",@progbits\n"
 	"psos_call:\n"
 	"	move.b %d7,-(%sp)\n"
 	"	trap #0x3\n"
@@ -19407,6 +19491,7 @@ __asm__(
 	"	addq.l #0x2,%sp\n"
 	"	rts\n"
 	"	.size psos_call, .-psos_call\n"
+	"	.popsection\n"
 );
 
 /* 00016f36 */
@@ -19437,7 +19522,7 @@ __regcall int psos_io_call(char function /* d7 */,int device /* d0 */)
 __asm__(
 	"	.globl psos_io_call\n"
 	"	.type psos_io_call, @function\n"
-	"	.section .text.psos_io_call.16f36,\"ax\",@progbits\n"
+	"	.pushsection .text.psos_io_call.16f36,\"ax\",@progbits\n"
 	"psos_io_call:\n"
 	"	move.w %d0,-(%sp)\n"
 	"	move.b %d7,(0x1,%sp)\n"
@@ -19453,6 +19538,7 @@ __asm__(
 	"	addq.l #0x2,%sp\n"
 	"	rts\n"
 	"	.size psos_io_call, .-psos_io_call\n"
+	"	.popsection\n"
 );
 
 /* 00016f50 */
@@ -19482,7 +19568,7 @@ __naked int psos_pack_name(void)
 __asm__(
 	"	.globl psos_pack_name\n"
 	"	.type psos_pack_name, @function\n"
-	"	.section .text.psos_pack_name.16f50,\"ax\",@progbits\n"
+	"	.pushsection .text.psos_pack_name.16f50,\"ax\",@progbits\n"
 	"psos_pack_name:\n"
 	"	move.l (0x8,%a6),%d0\n"
 	"	beq.b .Lg_16f66\n"
@@ -19503,6 +19589,7 @@ __asm__(
 	"	.byte 0x2e,0x1f | move.l (SP)+,D7\n"
 	"	.byte 0x4e,0x75 | rts\n"
 	"	.size psos_pack_name, .-psos_pack_name\n"
+	"	.popsection\n"
 );
 
 /* 00016f74 */
@@ -21499,7 +21586,7 @@ __pforth void forth_abort(forth_user_end user,long *sp,char *input)
 __asm__(
 	"	.globl forth_abort\n"
 	"	.type forth_abort, @function\n"
-	"	.section .text.forth_abort.18ed6,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_abort.18ed6,\"ax\",@progbits\n"
 	"forth_abort:\n"
 	"	movea.l (-0x4,%a5),%sp\n"
 	"	movea.l (-0x8,%a5),%a6\n"
@@ -21514,6 +21601,7 @@ __asm__(
 	"	bra.w forth_interpret\n"
 	"	.byte 0x20,0x3f,0x53,0x74,0x61,0x63,0x6b,0x20,0x65,0x6d,0x70,0x74,0x79,0x0d,0x0a,0x00\n"
 	"	.size forth_abort, .-forth_abort\n"
+	"	.popsection\n"
 );
 
 /* 00018f0e */
@@ -21602,14 +21690,15 @@ LAB_00018ec8:
 __asm__(
 	"	.globl forth_interpret\n"
 	"	.type forth_interpret, @function\n"
-	"	.section .text.forth_interpret.18eb0,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_interpret.18eb0,\"ax\",@progbits\n"
 	".Lg_18eb0:\n"
 	"	move.l #0x18e80,%d0\n"
 	"	bsr.w forth_print_string\n"
 	"	move.l (-0x22,%a5),%d0\n"
 	"	bsr.w forth_print_string\n"
 	"	move.l #0x18e89,%d0\n"
-	"	.section .text.forth_interpret.18efe,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.forth_interpret.18efe,\"ax\",@progbits\n"
 	"	.byte 0x20,0x3f,0x53,0x74,0x61,0x63,0x6b,0x20,0x65,0x6d,0x70,0x74,0x79,0x0d,0x0a,0x00\n"
 	"forth_interpret:\n"
 	".Lg_18f0e:\n"
@@ -21652,6 +21741,7 @@ __asm__(
 	"	bsr.w forth_parse_number\n"
 	"	bra.b .Lg_18f0e\n"
 	"	.size forth_interpret, .-forth_interpret\n"
+	"	.popsection\n"
 );
 
 /* 00018f68 */
@@ -21730,14 +21820,16 @@ LAB_00018f92:
 __asm__(
 	"	.globl forth_parse_number\n"
 	"	.type forth_parse_number, @function\n"
-	"	.section .text.forth_parse_number.18ec8,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_parse_number.18ec8,\"ax\",@progbits\n"
 	".Lg_18ec8:\n"
 	"	bsr.w forth_print_string\n"
 	"	move.l #0x18ddf,%d0\n"
 	"	bsr.w forth_print_string\n"
-	"	.section .text.forth_parse_number.18efe,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.forth_parse_number.18efe,\"ax\",@progbits\n"
 	"	.byte 0x20,0x3f,0x53,0x74,0x61,0x63,0x6b,0x20,0x65,0x6d,0x70,0x74,0x79,0x0d,0x0a,0x00\n"
-	"	.section .text.forth_parse_number.18f68,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.forth_parse_number.18f68,\"ax\",@progbits\n"
 	"forth_parse_number:\n"
 	"	clr.l %d0\n"
 	"	clr.l %d1\n"
@@ -21792,6 +21884,7 @@ __asm__(
 	"	move.l #0x18faa,%d0\n"
 	"	jmp (.Lg_18ec8:w,%pc)\n"
 	"	.size forth_parse_number, .-forth_parse_number\n"
+	"	.popsection\n"
 );
 
 /* 00018fcc */
@@ -21837,7 +21930,7 @@ __pforth void forth_find(forth_user_end user /* a5 */)
 __asm__(
 	"	.globl forth_find\n"
 	"	.type forth_find, @function\n"
-	"	.section .text.forth_find.18fcc,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_find.18fcc,\"ax\",@progbits\n"
 	"forth_find:\n"
 	"	movem.l %a1/%d2,-(%sp)\n"
 	"	move.l (-0x16,%a5),%d1\n"
@@ -21868,6 +21961,7 @@ __asm__(
 	"	movem.l (%sp)+,%d2/%a1\n"
 	"	rts\n"
 	"	.size forth_find, .-forth_find\n"
+	"	.popsection\n"
 );
 
 /* 00019018 */
@@ -21890,7 +21984,7 @@ __pforth void forth_align(void *dp /* a4 */)
 __asm__(
 	"	.globl forth_align\n"
 	"	.type forth_align, @function\n"
-	"	.section .text.forth_align.19018,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_align.19018,\"ax\",@progbits\n"
 	"forth_align:\n"
 	"	exg %d0,%a4\n"
 	"	addq.w #0x1,%d0\n"
@@ -21898,6 +21992,7 @@ __asm__(
 	"	exg %d0,%a4\n"
 	"	rts\n"
 	"	.size forth_align, .-forth_align\n"
+	"	.popsection\n"
 );
 
 /* 00019024 */
@@ -21927,7 +22022,7 @@ __pforth void forth_digit(void)
 __asm__(
 	"	.globl forth_digit\n"
 	"	.type forth_digit, @function\n"
-	"	.section .text.forth_digit.19024,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_digit.19024,\"ax\",@progbits\n"
 	"forth_digit:\n"
 	"	andi.w #0x7f,%d0\n"
 	"	lea (__ghidra_18de2:w,%pc),%a1\n"
@@ -21941,6 +22036,7 @@ __asm__(
 	"	andi #0xfb,%ccr\n"
 	"	rts\n"
 	"	.size forth_digit, .-forth_digit\n"
+	"	.popsection\n"
 );
 
 /* 00019042 */
@@ -21965,7 +22061,7 @@ __pforth undefined4 forth_is_space(char *input /* a3 */)
 __asm__(
 	"	.globl forth_is_space\n"
 	"	.type forth_is_space, @function\n"
-	"	.section .text.forth_is_space.19042,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_is_space.19042,\"ax\",@progbits\n"
 	"forth_is_space:\n"
 	"	movem.l %a0/%d0,-(%sp)\n"
 	"	clr.w %d0\n"
@@ -21984,6 +22080,7 @@ __asm__(
 	"	movem.l (%sp)+,%d0/%a0\n"
 	"	rts\n"
 	"	.size forth_is_space, .-forth_is_space\n"
+	"	.popsection\n"
 );
 
 /* 0001906c */
@@ -22016,7 +22113,7 @@ __pforth void forth_skip_spaces(char *input /* a3 */)
 __asm__(
 	"	.globl forth_skip_spaces\n"
 	"	.type forth_skip_spaces, @function\n"
-	"	.section .text.forth_skip_spaces.1906c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_skip_spaces.1906c,\"ax\",@progbits\n"
 	"forth_skip_spaces:\n"
 	".Lg_1906c:\n"
 	"	.byte 0x61 | bsr.b 0x00019042\n"
@@ -22048,6 +22145,7 @@ __asm__(
 	"	.byte 0x58\n"
 	"	.byte 0xff\n"
 	"	.size forth_skip_spaces, .-forth_skip_spaces\n"
+	"	.popsection\n"
 );
 
 /* 00019096 */
@@ -22085,7 +22183,7 @@ __pforth void forth_build_prompt(forth_user_end user /* a5 */)
 __asm__(
 	"	.globl forth_build_prompt\n"
 	"	.type forth_build_prompt, @function\n"
-	"	.section .text.forth_build_prompt.19096,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_build_prompt.19096,\"ax\",@progbits\n"
 	"forth_build_prompt:\n"
 	"	movem.l %a0/%d1,-(%sp)\n"
 	"	move.l (-0x26,%a5),(__ghidra_100b14).l\n"
@@ -22108,6 +22206,7 @@ __asm__(
 	"	movem.l (%sp)+,%d1/%a0\n"
 	"	rts\n"
 	"	.size forth_build_prompt, .-forth_build_prompt\n"
+	"	.popsection\n"
 );
 
 /* 000190e8 */
@@ -22138,7 +22237,7 @@ __pforth undefined4 forth_read_line(forth_user_end user /* a5 */,char *input /* 
 __asm__(
 	"	.globl forth_read_line\n"
 	"	.type forth_read_line, @function\n"
-	"	.section .text.forth_read_line.190e8,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_read_line.190e8,\"ax\",@progbits\n"
 	"forth_read_line:\n"
 	"	movem.l %d7/%d2/%d0,-(%sp)\n"
 	"	movea.l (-0x1e,%a5),%a1\n"
@@ -22152,6 +22251,7 @@ __asm__(
 	"	movem.l (%sp)+,%d0/%d2/%d7\n"
 	"	rts\n"
 	"	.size forth_read_line, .-forth_read_line\n"
+	"	.popsection\n"
 );
 
 /* 0001910e */
@@ -22191,7 +22291,7 @@ __pforth void forth_parse_word(forth_user_end user /* a5 */,char *input /* a3 */
 __asm__(
 	"	.globl forth_parse_word\n"
 	"	.type forth_parse_word, @function\n"
-	"	.section .text.forth_parse_word.1910e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_parse_word.1910e,\"ax\",@progbits\n"
 	"forth_parse_word:\n"
 	"	move.l %a0,-(%sp)\n"
 	"	bsr.w forth_input_buffer\n"
@@ -22205,6 +22305,7 @@ __asm__(
 	"	movea.l (%sp)+,%a0\n"
 	"	rts\n"
 	"	.size forth_parse_word, .-forth_parse_word\n"
+	"	.popsection\n"
 );
 
 /* 0001912a */
@@ -22236,7 +22337,7 @@ __pforth void forth_refill(forth_user_end user /* a5 */,char *input /* a3 */)
 __asm__(
 	"	.globl forth_refill\n"
 	"	.type forth_refill, @function\n"
-	"	.section .text.forth_refill.1912a,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_refill.1912a,\"ax\",@progbits\n"
 	"forth_refill:\n"
 	".Lg_1912a:\n"
 	"	bsr.w forth_skip_spaces\n"
@@ -22256,6 +22357,7 @@ __asm__(
 	".Lg_1914e:\n"
 	"	rts\n"
 	"	.size forth_refill, .-forth_refill\n"
+	"	.popsection\n"
 );
 
 /* 00019150 */
@@ -22283,7 +22385,7 @@ __pforth void forth_print_string(char *s /* d0 */,forth_user_end user /* a5 */)
 __asm__(
 	"	.globl forth_print_string\n"
 	"	.type forth_print_string, @function\n"
-	"	.section .text.forth_print_string.19150,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_print_string.19150,\"ax\",@progbits\n"
 	"forth_print_string:\n"
 	"	movem.l %a1/%a0/%d1,-(%sp)\n"
 	"	movea.l %d0,%a0\n"
@@ -22297,6 +22399,7 @@ __asm__(
 	"	movem.l (%sp)+,%d1/%a0/%a1\n"
 	"	rts\n"
 	"	.size forth_print_string, .-forth_print_string\n"
+	"	.popsection\n"
 );
 
 /* 0001916e */
@@ -22325,7 +22428,7 @@ __pforth char * forth_input_buffer(forth_user_end user /* a5 */)
 __asm__(
 	"	.globl forth_input_buffer\n"
 	"	.type forth_input_buffer, @function\n"
-	"	.section .text.forth_input_buffer.1916e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_input_buffer.1916e,\"ax\",@progbits\n"
 	"forth_input_buffer:\n"
 	"	move.l (-0x1e,%a5),%d0\n"
 	"	bne.w .Lg_19180\n"
@@ -22335,6 +22438,7 @@ __asm__(
 	".Lg_19180:\n"
 	"	rts\n"
 	"	.size forth_input_buffer, .-forth_input_buffer\n"
+	"	.popsection\n"
 );
 
 /* 00019182 */
@@ -22357,11 +22461,12 @@ __pforth void forth_over(long *sp)
 __asm__(
 	"	.globl forth_over\n"
 	"	.type forth_over, @function\n"
-	"	.section .text.forth_over.19182,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_over.19182,\"ax\",@progbits\n"
 	"forth_over:\n"
 	"	move.l (0x4,%a6),-(%a6)\n"
 	"	rts\n"
 	"	.size forth_over, .-forth_over\n"
+	"	.popsection\n"
 );
 
 /* 00019188 */
@@ -22386,7 +22491,7 @@ __pforth void forth_abs(long *sp)
 __asm__(
 	"	.globl forth_abs\n"
 	"	.type forth_abs, @function\n"
-	"	.section .text.forth_abs.19188,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_abs.19188,\"ax\",@progbits\n"
 	"forth_abs:\n"
 	"	tst.w (%a6)\n"
 	"	bge.b .Lg_1918e\n"
@@ -22394,6 +22499,7 @@ __asm__(
 	".Lg_1918e:\n"
 	"	rts\n"
 	"	.size forth_abs, .-forth_abs\n"
+	"	.popsection\n"
 );
 
 /* 00019190 */
@@ -22418,7 +22524,7 @@ __pforth void forth_max(long *sp)
 __asm__(
 	"	.globl forth_max\n"
 	"	.type forth_max, @function\n"
-	"	.section .text.forth_max.19190,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_max.19190,\"ax\",@progbits\n"
 	"forth_max:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	cmp.l (%a6),%d0\n"
@@ -22427,6 +22533,7 @@ __asm__(
 	".Lg_19198:\n"
 	"	rts\n"
 	"	.size forth_max, .-forth_max\n"
+	"	.popsection\n"
 );
 
 /* 0001919a */
@@ -22451,7 +22558,7 @@ __pforth void forth_min(long *sp)
 __asm__(
 	"	.globl forth_min\n"
 	"	.type forth_min, @function\n"
-	"	.section .text.forth_min.1919a,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_min.1919a,\"ax\",@progbits\n"
 	"forth_min:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	cmp.l (%a6),%d0\n"
@@ -22460,6 +22567,7 @@ __asm__(
 	".Lg_191a2:\n"
 	"	rts\n"
 	"	.size forth_min, .-forth_min\n"
+	"	.popsection\n"
 );
 
 /* 000191a4 */
@@ -22482,12 +22590,13 @@ __pforth void forth_fetch(long *sp)
 __asm__(
 	"	.globl forth_fetch\n"
 	"	.type forth_fetch, @function\n"
-	"	.section .text.forth_fetch.191a4,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_fetch.191a4,\"ax\",@progbits\n"
 	"forth_fetch:\n"
 	"	movea.l (%a6),%a0\n"
 	"	move.l (%a0),(%a6)\n"
 	"	rts\n"
 	"	.size forth_fetch, .-forth_fetch\n"
+	"	.popsection\n"
 );
 
 /* 000191aa */
@@ -22510,12 +22619,13 @@ __pforth void forth_store(long *sp)
 __asm__(
 	"	.globl forth_store\n"
 	"	.type forth_store, @function\n"
-	"	.section .text.forth_store.191aa,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_store.191aa,\"ax\",@progbits\n"
 	"forth_store:\n"
 	"	movea.l (%a6)+,%a0\n"
 	"	move.l (%a6)+,(%a0)\n"
 	"	rts\n"
 	"	.size forth_store, .-forth_store\n"
+	"	.popsection\n"
 );
 
 /* 000191b0 */
@@ -22538,7 +22648,7 @@ __pforth void forth_w_fetch(long *sp)
 __asm__(
 	"	.globl forth_w_fetch\n"
 	"	.type forth_w_fetch, @function\n"
-	"	.section .text.forth_w_fetch.191b0,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_w_fetch.191b0,\"ax\",@progbits\n"
 	"forth_w_fetch:\n"
 	"	movea.l (%a6),%a0\n"
 	"	moveq #0x0,%d0\n"
@@ -22546,6 +22656,7 @@ __asm__(
 	"	move.l %d0,(%a6)\n"
 	"	rts\n"
 	"	.size forth_w_fetch, .-forth_w_fetch\n"
+	"	.popsection\n"
 );
 
 /* 000191ba */
@@ -22568,13 +22679,14 @@ __pforth void forth_w_store(long *sp)
 __asm__(
 	"	.globl forth_w_store\n"
 	"	.type forth_w_store, @function\n"
-	"	.section .text.forth_w_store.191ba,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_w_store.191ba,\"ax\",@progbits\n"
 	"forth_w_store:\n"
 	"	movea.l (%a6)+,%a0\n"
 	"	move.l (%a6)+,%d0\n"
 	"	move.w %d0,(%a0)\n"
 	"	rts\n"
 	"	.size forth_w_store, .-forth_w_store\n"
+	"	.popsection\n"
 );
 
 /* 000191c2 */
@@ -22597,7 +22709,7 @@ __pforth void forth_c_fetch(long *sp)
 __asm__(
 	"	.globl forth_c_fetch\n"
 	"	.type forth_c_fetch, @function\n"
-	"	.section .text.forth_c_fetch.191c2,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_c_fetch.191c2,\"ax\",@progbits\n"
 	"forth_c_fetch:\n"
 	"	movea.l (%a6),%a0\n"
 	"	moveq #0x0,%d0\n"
@@ -22605,6 +22717,7 @@ __asm__(
 	"	move.l %d0,(%a6)\n"
 	"	rts\n"
 	"	.size forth_c_fetch, .-forth_c_fetch\n"
+	"	.popsection\n"
 );
 
 /* 000191cc */
@@ -22627,13 +22740,14 @@ __pforth void forth_c_store(long *sp)
 __asm__(
 	"	.globl forth_c_store\n"
 	"	.type forth_c_store, @function\n"
-	"	.section .text.forth_c_store.191cc,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_c_store.191cc,\"ax\",@progbits\n"
 	"forth_c_store:\n"
 	"	movea.l (%a6)+,%a0\n"
 	"	move.l (%a6)+,%d0\n"
 	"	move.b %d0,(%a0)\n"
 	"	rts\n"
 	"	.size forth_c_store, .-forth_c_store\n"
+	"	.popsection\n"
 );
 
 /* 000191d4 */
@@ -22656,11 +22770,12 @@ __pforth void forth_negate(long *sp)
 __asm__(
 	"	.globl forth_negate\n"
 	"	.type forth_negate, @function\n"
-	"	.section .text.forth_negate.191d4,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_negate.191d4,\"ax\",@progbits\n"
 	"forth_negate:\n"
 	"	neg.l (%a6)\n"
 	"	rts\n"
 	"	.size forth_negate, .-forth_negate\n"
+	"	.popsection\n"
 );
 
 /* 000191d8 */
@@ -22684,13 +22799,14 @@ __pforth void forth_here(forth_user_end user,long *sp,void *dp)
 __asm__(
 	"	.globl forth_here\n"
 	"	.type forth_here, @function\n"
-	"	.section .text.forth_here.191d8,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_here.191d8,\"ax\",@progbits\n"
 	"forth_here:\n"
 	"	lea (-0x12,%a5),%a0\n"
 	"	move.l %a0,-(%a6)\n"
 	"	move.l %a4,(%a0)\n"
 	"	rts\n"
 	"	.size forth_here, .-forth_here\n"
+	"	.popsection\n"
 );
 
 /* 000191e2 */
@@ -22712,7 +22828,7 @@ __pforth void forth_greater_r(long *sp)
 __asm__(
 	"	.globl forth_greater_r\n"
 	"	.type forth_greater_r, @function\n"
-	"	.section .text.forth_greater_r.191e2,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_greater_r.191e2,\"ax\",@progbits\n"
 	"forth_greater_r:\n"
 	"	move.l (%a6)+,-(%sp)\n"
 	"	movea.l (%sp),%a0\n"
@@ -22720,6 +22836,7 @@ __asm__(
 	"	move.l %a0,(0x4,%sp)\n"
 	"	rts\n"
 	"	.size forth_greater_r, .-forth_greater_r\n"
+	"	.popsection\n"
 );
 
 /* 000191f0 */
@@ -22746,7 +22863,7 @@ __pforth void forth_r_greater(long *sp)
 __asm__(
 	"	.globl forth_r_greater\n"
 	"	.type forth_r_greater, @function\n"
-	"	.section .text.forth_r_greater.191f0,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_r_greater.191f0,\"ax\",@progbits\n"
 	"forth_r_greater:\n"
 	"	move.l (%sp)+,-(%a6)\n"
 	"	movea.l (%a6),%a0\n"
@@ -22754,6 +22871,7 @@ __asm__(
 	"	move.l %a0,(%sp)\n"
 	"	rts\n"
 	"	.size forth_r_greater, .-forth_r_greater\n"
+	"	.popsection\n"
 );
 
 /* 000191fa */
@@ -22791,7 +22909,7 @@ __pforth void forth_fill(long *sp)
 __asm__(
 	"	.globl forth_fill\n"
 	"	.type forth_fill, @function\n"
-	"	.section .text.forth_fill.191fa,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_fill.191fa,\"ax\",@progbits\n"
 	"forth_fill:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	move.l (%a6)+,%d1\n"
@@ -22804,6 +22922,7 @@ __asm__(
 	".Lg_1920a:\n"
 	"	rts\n"
 	"	.size forth_fill, .-forth_fill\n"
+	"	.popsection\n"
 );
 
 /* 0001920c */
@@ -22826,13 +22945,14 @@ __pforth void forth_pick(long *sp)
 __asm__(
 	"	.globl forth_pick\n"
 	"	.type forth_pick, @function\n"
-	"	.section .text.forth_pick.1920c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_pick.1920c,\"ax\",@progbits\n"
 	"forth_pick:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	asl.l #0x2,%d0\n"
 	"	move.l (0x0,%a6,%d0.l*0x1),-(%a6)\n"
 	"	rts\n"
 	"	.size forth_pick, .-forth_pick\n"
+	"	.popsection\n"
 );
 
 /* 00019216 */
@@ -22855,11 +22975,12 @@ __pforth void forth_comma(long *sp,void *dp)
 __asm__(
 	"	.globl forth_comma\n"
 	"	.type forth_comma, @function\n"
-	"	.section .text.forth_comma.19216,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_comma.19216,\"ax\",@progbits\n"
 	"forth_comma:\n"
 	"	move.l (%a6)+,(%a4)+\n"
 	"	rts\n"
 	"	.size forth_comma, .-forth_comma\n"
+	"	.popsection\n"
 );
 
 /* 0001921a */
@@ -22882,12 +23003,13 @@ __pforth void forth_w_comma(long *sp,void *dp)
 __asm__(
 	"	.globl forth_w_comma\n"
 	"	.type forth_w_comma, @function\n"
-	"	.section .text.forth_w_comma.1921a,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_w_comma.1921a,\"ax\",@progbits\n"
 	"forth_w_comma:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	move.w %d0,(%a4)+\n"
 	"	rts\n"
 	"	.size forth_w_comma, .-forth_w_comma\n"
+	"	.popsection\n"
 );
 
 /* 00019220 */
@@ -22910,12 +23032,13 @@ __pforth void forth_c_comma(long *sp,void *dp)
 __asm__(
 	"	.globl forth_c_comma\n"
 	"	.type forth_c_comma, @function\n"
-	"	.section .text.forth_c_comma.19220,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_c_comma.19220,\"ax\",@progbits\n"
 	"forth_c_comma:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	move.b %d0,(%a4)+\n"
 	"	rts\n"
 	"	.size forth_c_comma, .-forth_c_comma\n"
+	"	.popsection\n"
 );
 
 /* 00019226 */
@@ -22943,7 +23066,7 @@ __pforth void forth_rot(long *sp)
 __asm__(
 	"	.globl forth_rot\n"
 	"	.type forth_rot, @function\n"
-	"	.section .text.forth_rot.19226,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_rot.19226,\"ax\",@progbits\n"
 	"forth_rot:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	move.l (%a6)+,%d1\n"
@@ -22953,6 +23076,7 @@ __asm__(
 	"	move.l %d2,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_rot, .-forth_rot\n"
+	"	.popsection\n"
 );
 
 /* 00019234 */
@@ -22982,7 +23106,7 @@ __pforth void forth_minus_rot(long *sp)
 __asm__(
 	"	.globl forth_minus_rot\n"
 	"	.type forth_minus_rot, @function\n"
-	"	.section .text.forth_minus_rot.19234,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_minus_rot.19234,\"ax\",@progbits\n"
 	"forth_minus_rot:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	move.l (%a6)+,%d1\n"
@@ -22992,6 +23116,7 @@ __asm__(
 	"	move.l %d1,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_minus_rot, .-forth_minus_rot\n"
+	"	.popsection\n"
 );
 
 /* 00019242 */
@@ -23013,11 +23138,12 @@ __pforth void forth_allot(long *sp,void *dp)
 __asm__(
 	"	.globl forth_allot\n"
 	"	.type forth_allot, @function\n"
-	"	.section .text.forth_allot.19242,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_allot.19242,\"ax\",@progbits\n"
 	"forth_allot:\n"
 	"	adda.l (%a6)+,%a4\n"
 	"	rts\n"
 	"	.size forth_allot, .-forth_allot\n"
+	"	.popsection\n"
 );
 
 /* 00019246 */
@@ -23044,13 +23170,14 @@ __pforth void forth_swap(long *sp)
 __asm__(
 	"	.globl forth_swap\n"
 	"	.type forth_swap, @function\n"
-	"	.section .text.forth_swap.19246,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_swap.19246,\"ax\",@progbits\n"
 	"forth_swap:\n"
 	"	move.l (%a6),%d0\n"
 	"	move.l (0x4,%a6),(%a6)\n"
 	"	move.l %d0,(0x4,%a6)\n"
 	"	rts\n"
 	"	.size forth_swap, .-forth_swap\n"
+	"	.popsection\n"
 );
 
 /* 00019252 */
@@ -23073,11 +23200,12 @@ __pforth void forth_dup(long *sp)
 __asm__(
 	"	.globl forth_dup\n"
 	"	.type forth_dup, @function\n"
-	"	.section .text.forth_dup.19252,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_dup.19252,\"ax\",@progbits\n"
 	"forth_dup:\n"
 	"	move.l (%a6),-(%a6)\n"
 	"	rts\n"
 	"	.size forth_dup, .-forth_dup\n"
+	"	.popsection\n"
 );
 
 /* 00019256 */
@@ -23105,7 +23233,7 @@ __pforth void forth_2dup(long *sp)
 __asm__(
 	"	.globl forth_2dup\n"
 	"	.type forth_2dup, @function\n"
-	"	.section .text.forth_2dup.19256,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_2dup.19256,\"ax\",@progbits\n"
 	"forth_2dup:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	move.l (%a6),%d1\n"
@@ -23114,6 +23242,7 @@ __asm__(
 	"	move.l %d0,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_2dup, .-forth_2dup\n"
+	"	.popsection\n"
 );
 
 /* 00019262 */
@@ -23144,7 +23273,7 @@ __pforth void forth_2swap(long *sp)
 __asm__(
 	"	.globl forth_2swap\n"
 	"	.type forth_2swap, @function\n"
-	"	.section .text.forth_2swap.19262,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_2swap.19262,\"ax\",@progbits\n"
 	"forth_2swap:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	move.l (%a6)+,%d1\n"
@@ -23156,6 +23285,7 @@ __asm__(
 	"	move.l %d2,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_2swap, .-forth_2swap\n"
+	"	.popsection\n"
 );
 
 /* 00019274 */
@@ -23188,7 +23318,7 @@ __pforth void forth_paren(char *input)
 __asm__(
 	"	.globl forth_paren\n"
 	"	.type forth_paren, @function\n"
-	"	.section .text.forth_paren.19274,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_paren.19274,\"ax\",@progbits\n"
 	"forth_paren:\n"
 	".Lg_19274:\n"
 	"	move.b (%a3)+,%d0\n"
@@ -23201,6 +23331,7 @@ __asm__(
 	"	bsr.w forth_refill\n"
 	"	bra.b .Lg_19274\n"
 	"	.size forth_paren, .-forth_paren\n"
+	"	.popsection\n"
 );
 
 /* 0001928c */
@@ -23229,7 +23360,7 @@ __pforth void forth_halt(void)
 __asm__(
 	"	.globl forth_halt\n"
 	"	.type forth_halt, @function\n"
-	"	.section .text.forth_halt.1928c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_halt.1928c,\"ax\",@progbits\n"
 	"forth_halt:\n"
 	"	move.l (console_halt_hook_cell).l,%d0\n"
 	"	beq.b .Lg_19298\n"
@@ -23239,6 +23370,7 @@ __asm__(
 	"	trap #0xe\n"
 	"	rts\n"
 	"	.size forth_halt, .-forth_halt\n"
+	"	.popsection\n"
 );
 
 /* 0001929c */
@@ -23261,11 +23393,12 @@ __pforth void forth_false(long *sp)
 __asm__(
 	"	.globl forth_false\n"
 	"	.type forth_false, @function\n"
-	"	.section .text.forth_false.1929c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_false.1929c,\"ax\",@progbits\n"
 	"forth_false:\n"
 	"	clr.l -(%a6)\n"
 	"	rts\n"
 	"	.size forth_false, .-forth_false\n"
+	"	.popsection\n"
 );
 
 /* 000192a0 */
@@ -23288,11 +23421,12 @@ __pforth void forth_true(long *sp)
 __asm__(
 	"	.globl forth_true\n"
 	"	.type forth_true, @function\n"
-	"	.section .text.forth_true.192a0,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_true.192a0,\"ax\",@progbits\n"
 	"forth_true:\n"
 	"	move.l #-0x1,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_true, .-forth_true\n"
+	"	.popsection\n"
 );
 
 /* 000192a8 */
@@ -23315,12 +23449,13 @@ __pforth void forth_or(long *sp)
 __asm__(
 	"	.globl forth_or\n"
 	"	.type forth_or, @function\n"
-	"	.section .text.forth_or.192a8,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_or.192a8,\"ax\",@progbits\n"
 	"forth_or:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	or.l %d0,(%a6)\n"
 	"	rts\n"
 	"	.size forth_or, .-forth_or\n"
+	"	.popsection\n"
 );
 
 /* 000192ae */
@@ -23343,12 +23478,13 @@ __pforth void forth_and(long *sp)
 __asm__(
 	"	.globl forth_and\n"
 	"	.type forth_and, @function\n"
-	"	.section .text.forth_and.192ae,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_and.192ae,\"ax\",@progbits\n"
 	"forth_and:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	and.l %d0,(%a6)\n"
 	"	rts\n"
 	"	.size forth_and, .-forth_and\n"
+	"	.popsection\n"
 );
 
 /* 000192b4 */
@@ -23371,11 +23507,12 @@ __pforth void forth_not(long *sp)
 __asm__(
 	"	.globl forth_not\n"
 	"	.type forth_not, @function\n"
-	"	.section .text.forth_not.192b4,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_not.192b4,\"ax\",@progbits\n"
 	"forth_not:\n"
 	"	not.l (%a6)\n"
 	"	rts\n"
 	"	.size forth_not, .-forth_not\n"
+	"	.popsection\n"
 );
 
 /* 000192b8 */
@@ -23398,12 +23535,13 @@ __pforth void forth_xor(long *sp)
 __asm__(
 	"	.globl forth_xor\n"
 	"	.type forth_xor, @function\n"
-	"	.section .text.forth_xor.192b8,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_xor.192b8,\"ax\",@progbits\n"
 	"forth_xor:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	eor.l %d0,(%a6)\n"
 	"	rts\n"
 	"	.size forth_xor, .-forth_xor\n"
+	"	.popsection\n"
 );
 
 /* 000192be */
@@ -23433,7 +23571,7 @@ __pforth void forth_equal(long *sp)
 __asm__(
 	"	.globl forth_equal\n"
 	"	.type forth_equal, @function\n"
-	"	.section .text.forth_equal.192be,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_equal.192be,\"ax\",@progbits\n"
 	"forth_equal:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	cmp.l (%a6),%d0\n"
@@ -23444,6 +23582,7 @@ __asm__(
 	"	move.l #-0x1,(%a6)\n"
 	"	rts\n"
 	"	.size forth_equal, .-forth_equal\n"
+	"	.popsection\n"
 );
 
 /* 000192d0 */
@@ -23473,7 +23612,7 @@ __pforth void forth_greater(long *sp)
 __asm__(
 	"	.globl forth_greater\n"
 	"	.type forth_greater, @function\n"
-	"	.section .text.forth_greater.192d0,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_greater.192d0,\"ax\",@progbits\n"
 	"forth_greater:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	cmp.l (%a6),%d0\n"
@@ -23484,6 +23623,7 @@ __asm__(
 	"	.reloc ., R_68K_PC8, forth_equal+0x6-1\n"
 	"	.byte 0\n"
 	"	.size forth_greater, .-forth_greater\n"
+	"	.popsection\n"
 );
 
 /* 000192d8 */
@@ -23513,7 +23653,7 @@ __pforth void forth_less(long *sp)
 __asm__(
 	"	.globl forth_less\n"
 	"	.type forth_less, @function\n"
-	"	.section .text.forth_less.192d8,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_less.192d8,\"ax\",@progbits\n"
 	"forth_less:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	cmp.l (%a6),%d0\n"
@@ -23524,6 +23664,7 @@ __asm__(
 	"	.reloc ., R_68K_PC8, forth_equal+0x6-1\n"
 	"	.byte 0\n"
 	"	.size forth_less, .-forth_less\n"
+	"	.popsection\n"
 );
 
 /* 000192e0 */
@@ -23550,7 +23691,7 @@ __pforth void forth_0_less(long *sp)
 __asm__(
 	"	.globl forth_0_less\n"
 	"	.type forth_0_less, @function\n"
-	"	.section .text.forth_0_less.192e0,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_0_less.192e0,\"ax\",@progbits\n"
 	"forth_0_less:\n"
 	"	tst.l (%a6)\n"
 	"	.byte 0x6b | bmi.b 0x000192c8\n"
@@ -23560,6 +23701,7 @@ __asm__(
 	"	.reloc ., R_68K_PC8, forth_equal+0x6-1\n"
 	"	.byte 0\n"
 	"	.size forth_0_less, .-forth_0_less\n"
+	"	.popsection\n"
 );
 
 /* 000192e6 */
@@ -23586,7 +23728,7 @@ __pforth void forth_0_equal(long *sp)
 __asm__(
 	"	.globl forth_0_equal\n"
 	"	.type forth_0_equal, @function\n"
-	"	.section .text.forth_0_equal.192e6,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_0_equal.192e6,\"ax\",@progbits\n"
 	"forth_0_equal:\n"
 	"	tst.l (%a6)\n"
 	"	.byte 0x67 | beq.b 0x000192c8\n"
@@ -23596,6 +23738,7 @@ __asm__(
 	"	.reloc ., R_68K_PC8, forth_equal+0x6-1\n"
 	"	.byte 0\n"
 	"	.size forth_0_equal, .-forth_0_equal\n"
+	"	.popsection\n"
 );
 
 /* 000192ec */
@@ -23622,7 +23765,7 @@ __pforth void forth_0_greater(long *sp)
 __asm__(
 	"	.globl forth_0_greater\n"
 	"	.type forth_0_greater, @function\n"
-	"	.section .text.forth_0_greater.192ec,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_0_greater.192ec,\"ax\",@progbits\n"
 	"forth_0_greater:\n"
 	"	tst.l (%a6)\n"
 	"	.byte 0x67 | beq.b 0x000192c4\n"
@@ -23635,6 +23778,7 @@ __asm__(
 	"	.reloc ., R_68K_PC8, forth_equal+0xa-1\n"
 	"	.byte 0\n"
 	"	.size forth_0_greater, .-forth_0_greater\n"
+	"	.popsection\n"
 );
 
 /* 000192f4 */
@@ -23659,7 +23803,7 @@ __pforth void forth_query_dup(long *sp)
 __asm__(
 	"	.globl forth_query_dup\n"
 	"	.type forth_query_dup, @function\n"
-	"	.section .text.forth_query_dup.192f4,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_query_dup.192f4,\"ax\",@progbits\n"
 	"forth_query_dup:\n"
 	"	move.l (%a6),%d0\n"
 	"	beq.b .Lg_192fa\n"
@@ -23667,6 +23811,7 @@ __asm__(
 	".Lg_192fa:\n"
 	"	rts\n"
 	"	.size forth_query_dup, .-forth_query_dup\n"
+	"	.popsection\n"
 );
 
 /* 000192fc */
@@ -23705,7 +23850,7 @@ __pforth void forth_cmove(long *sp)
 __asm__(
 	"	.globl forth_cmove\n"
 	"	.type forth_cmove, @function\n"
-	"	.section .text.forth_cmove.192fc,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_cmove.192fc,\"ax\",@progbits\n"
 	"forth_cmove:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	movea.l (%a6)+,%a0\n"
@@ -23718,6 +23863,7 @@ __asm__(
 	".Lg_1930c:\n"
 	"	rts\n"
 	"	.size forth_cmove, .-forth_cmove\n"
+	"	.popsection\n"
 );
 
 /* 0001930e */
@@ -23759,7 +23905,7 @@ __pforth void forth_cmove_greater(long *sp)
 __asm__(
 	"	.globl forth_cmove_greater\n"
 	"	.type forth_cmove_greater, @function\n"
-	"	.section .text.forth_cmove_greater.1930e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_cmove_greater.1930e,\"ax\",@progbits\n"
 	"forth_cmove_greater:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	movea.l (%a6)+,%a0\n"
@@ -23775,6 +23921,7 @@ __asm__(
 	"	dbf %d0,.Lg_1931c\n"
 	"	rts\n"
 	"	.size forth_cmove_greater, .-forth_cmove_greater\n"
+	"	.popsection\n"
 );
 
 /* 00019324 */
@@ -23796,11 +23943,12 @@ __pforth void forth_2drop(long *sp)
 __asm__(
 	"	.globl forth_2drop\n"
 	"	.type forth_2drop, @function\n"
-	"	.section .text.forth_2drop.19324,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_2drop.19324,\"ax\",@progbits\n"
 	"forth_2drop:\n"
 	"	addq.l #0x8,%a6\n"
 	"	rts\n"
 	"	.size forth_2drop, .-forth_2drop\n"
+	"	.popsection\n"
 );
 
 /* 00019328 */
@@ -23822,11 +23970,12 @@ __pforth void forth_drop(long *sp)
 __asm__(
 	"	.globl forth_drop\n"
 	"	.type forth_drop, @function\n"
-	"	.section .text.forth_drop.19328,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_drop.19328,\"ax\",@progbits\n"
 	"forth_drop:\n"
 	"	addq.l #0x4,%a6\n"
 	"	rts\n"
 	"	.size forth_drop, .-forth_drop\n"
+	"	.popsection\n"
 );
 
 /* 0001932c */
@@ -23849,7 +23998,7 @@ __pforth void forth_depth(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_depth\n"
 	"	.type forth_depth, @function\n"
-	"	.section .text.forth_depth.1932c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_depth.1932c,\"ax\",@progbits\n"
 	"forth_depth:\n"
 	"	move.l (-0x8,%a5),%d0\n"
 	"	sub.l %a6,%d0\n"
@@ -23857,6 +24006,7 @@ __asm__(
 	"	move.l %d0,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_depth, .-forth_depth\n"
+	"	.popsection\n"
 );
 
 /* 00019338 */
@@ -23900,7 +24050,7 @@ __pforth undefined2 forth_compile_code(void *dp /* a4 */)
 __asm__(
 	"	.globl forth_compile_code\n"
 	"	.type forth_compile_code, @function\n"
-	"	.section .text.forth_compile_code.19338,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_compile_code.19338,\"ax\",@progbits\n"
 	"forth_compile_code:\n"
 	"	move %ccr,-(%sp)\n"
 	"	move.w %d0,-(%sp)\n"
@@ -23916,6 +24066,7 @@ __asm__(
 	"	move.w (%sp)+,%d0\n"
 	"	rtr\n"
 	"	.size forth_compile_code, .-forth_compile_code\n"
+	"	.popsection\n"
 );
 
 /* 0001934e */
@@ -23941,7 +24092,7 @@ __pforth undefined4 forth_resolve_branch(long *sp /* a6 */,void *dp /* a4 */)
 __asm__(
 	"	.globl forth_resolve_branch\n"
 	"	.type forth_resolve_branch, @function\n"
-	"	.section .text.forth_resolve_branch.1934e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_resolve_branch.1934e,\"ax\",@progbits\n"
 	"forth_resolve_branch:\n"
 	"	move %ccr,-(%sp)\n"
 	"	move.l %d0,-(%sp)\n"
@@ -23952,6 +24103,7 @@ __asm__(
 	"	move.l (%sp)+,%d0\n"
 	"	rtr\n"
 	"	.size forth_resolve_branch, .-forth_resolve_branch\n"
+	"	.popsection\n"
 );
 
 /* 00019360 */
@@ -23979,7 +24131,7 @@ __pforth undefined4 forth_resolve_forward(long *sp /* a6 */,void *dp /* a4 */)
 __asm__(
 	"	.globl forth_resolve_forward\n"
 	"	.type forth_resolve_forward, @function\n"
-	"	.section .text.forth_resolve_forward.19360,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_resolve_forward.19360,\"ax\",@progbits\n"
 	"forth_resolve_forward:\n"
 	"	move %ccr,-(%sp)\n"
 	"	movem.l %a0/%d0,-(%sp)\n"
@@ -23991,6 +24143,7 @@ __asm__(
 	"	movem.l (%sp)+,%d0/%a0\n"
 	"	rtr\n"
 	"	.size forth_resolve_forward, .-forth_resolve_forward\n"
+	"	.popsection\n"
 );
 
 /* 00019378 */
@@ -24039,7 +24192,7 @@ __pforth void forth_check_pairs(long *sp /* a6 */)
 __asm__(
 	"	.globl forth_check_pairs\n"
 	"	.type forth_check_pairs, @function\n"
-	"	.section .text.forth_check_pairs.19378,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_check_pairs.19378,\"ax\",@progbits\n"
 	"forth_check_pairs:\n"
 	"	cmp.l (%a6)+,%d0\n"
 	"	beq.b .Lg_1938c\n"
@@ -24050,6 +24203,7 @@ __asm__(
 	".Lg_1938c:\n"
 	"	rts\n"
 	"	.size forth_check_pairs, .-forth_check_pairs\n"
+	"	.popsection\n"
 );
 
 /* 0001938e */
@@ -24073,7 +24227,7 @@ __pforth void forth_unlink_latest(forth_user_end user /* a5 */,void *dp /* a4 */
 __asm__(
 	"	.globl forth_unlink_latest\n"
 	"	.type forth_unlink_latest, @function\n"
-	"	.section .text.forth_unlink_latest.1938e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_unlink_latest.1938e,\"ax\",@progbits\n"
 	"forth_unlink_latest:\n"
 	"	movea.l (-0x12,%a5),%a4\n"
 	"	movea.l (-0x16,%a5),%a0\n"
@@ -24160,6 +24314,7 @@ __asm__(
 	"	.byte 0x00\n"
 	"	.byte 0xff\n"
 	"	.size forth_unlink_latest, .-forth_unlink_latest\n"
+	"	.popsection\n"
 );
 
 /* 0001943e */
@@ -24185,7 +24340,7 @@ __pforth void forth_do(long *sp,void *dp)
 __asm__(
 	"	.globl forth_do\n"
 	"	.type forth_do, @function\n"
-	"	.section .text.forth_do.1943e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_do.1943e,\"ax\",@progbits\n"
 	"forth_do:\n"
 	"	movea.l #0x1939c,%a0\n"
 	"	bsr.w forth_compile_code\n"
@@ -24194,6 +24349,7 @@ __asm__(
 	"	move.l #0x1942d,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_do, .-forth_do\n"
+	"	.popsection\n"
 );
 
 /* 00019454 */
@@ -24220,7 +24376,7 @@ __pforth void forth_query_do(long *sp,void *dp)
 __asm__(
 	"	.globl forth_query_do\n"
 	"	.type forth_query_do, @function\n"
-	"	.section .text.forth_query_do.19454,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_query_do.19454,\"ax\",@progbits\n"
 	"forth_query_do:\n"
 	"	movea.l #0x193a4,%a0\n"
 	"	bsr.w forth_compile_code\n"
@@ -24235,6 +24391,7 @@ __asm__(
 	"	.byte 0x94\n"
 	"	.byte 0x2d,0x4e,0x75,0x22,0x6c,0x6f,0x6f,0x70,0x22,0x20,0x6f,0x72,0x20,0x22,0x2b,0x6c,0x6f,0x6f,0x70,0x22,0x0d,0x0a,0x00\n"
 	"	.size forth_query_do, .-forth_query_do\n"
+	"	.popsection\n"
 );
 
 /* 00019488 */
@@ -24269,7 +24426,7 @@ __pforth void forth_plus_loop(void)
 __asm__(
 	"	.globl forth_plus_loop\n"
 	"	.type forth_plus_loop, @function\n"
-	"	.section .text.forth_plus_loop.19488,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_plus_loop.19488,\"ax\",@progbits\n"
 	"forth_plus_loop:\n"
 	"	move.l #0x19474,%d1\n"
 	"	move.l #0x1942d,%d0\n"
@@ -24280,6 +24437,7 @@ __asm__(
 	"	.reloc ., R_68K_PC8, forth_loop+0x1a-1\n"
 	"	.byte 0\n"
 	"	.size forth_plus_loop, .-forth_plus_loop\n"
+	"	.popsection\n"
 );
 
 /* 000194a4 */
@@ -24313,7 +24471,7 @@ __pforth void forth_loop(long *sp)
 __asm__(
 	"	.globl forth_loop\n"
 	"	.type forth_loop, @function\n"
-	"	.section .text.forth_loop.194a4,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_loop.194a4,\"ax\",@progbits\n"
 	"forth_loop:\n"
 	"	move.l #0x19474,%d1\n"
 	"	move.l #0x1942d,%d0\n"
@@ -24340,6 +24498,7 @@ __asm__(
 	"	.byte 0x00\n"
 	"	.byte 0xff\n"
 	"	.size forth_loop, .-forth_loop\n"
+	"	.popsection\n"
 );
 
 /* 000194e6 */
@@ -24364,7 +24523,7 @@ __pforth void forth_if(long *sp,void *dp)
 __asm__(
 	"	.globl forth_if\n"
 	"	.type forth_if, @function\n"
-	"	.section .text.forth_if.194e6,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_if.194e6,\"ax\",@progbits\n"
 	"forth_if:\n"
 	"	movea.l #0x193f4,%a0\n"
 	"	bsr.w forth_compile_code\n"
@@ -24382,6 +24541,7 @@ __asm__(
 	"	.byte 0x00\n"
 	"	.byte 0xff\n"
 	"	.size forth_if, .-forth_if\n"
+	"	.popsection\n"
 );
 
 /* 00019504 */
@@ -24408,7 +24568,7 @@ __pforth void forth_else(long *sp,void *dp)
 __asm__(
 	"	.globl forth_else\n"
 	"	.type forth_else, @function\n"
-	"	.section .text.forth_else.19504,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_else.19504,\"ax\",@progbits\n"
 	"forth_else:\n"
 	"	move.l #0x194fa,%d1\n"
 	"	move.l #0x194de,%d0\n"
@@ -24420,6 +24580,7 @@ __asm__(
 	"	move.l #0x194de,-(%a6)\n"
 	"	.byte 0x4e,0x75,0x22,0x74,0x68,0x65,0x6e,0x22,0x20,0x6f,0x72,0x20,0x22,0x65,0x6e,0x64,0x69,0x66,0x22,0x0d,0x0a,0x00\n"
 	"	.size forth_else, .-forth_else\n"
+	"	.popsection\n"
 );
 
 /* 00019540 */
@@ -24446,7 +24607,7 @@ __pforth void forth_endif(void)
 __asm__(
 	"	.globl forth_endif\n"
 	"	.type forth_endif, @function\n"
-	"	.section .text.forth_endif.19540,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_endif.19540,\"ax\",@progbits\n"
 	"forth_endif:\n"
 	"	move.l #0x1952c,%d1\n"
 	"	move.l #0x194de,%d0\n"
@@ -24464,6 +24625,7 @@ __asm__(
 	"	.byte 0x0a\n"
 	"	.byte 0x00\n"
 	"	.size forth_endif, .-forth_endif\n"
+	"	.popsection\n"
 );
 
 /* 00019560 */
@@ -24487,7 +24649,7 @@ __pforth void forth_begin(long *sp,void *dp)
 __asm__(
 	"	.globl forth_begin\n"
 	"	.type forth_begin, @function\n"
-	"	.section .text.forth_begin.19560,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_begin.19560,\"ax\",@progbits\n"
 	"forth_begin:\n"
 	"	move.l %a4,-(%a6)\n"
 	"	move.l #0x19556,-(%a6)\n"
@@ -24503,6 +24665,7 @@ __asm__(
 	"	.byte 0x0a\n"
 	"	.byte 0x00\n"
 	"	.size forth_begin, .-forth_begin\n"
+	"	.popsection\n"
 );
 
 /* 00019574 */
@@ -24528,7 +24691,7 @@ __pforth void forth_while(long *sp,void *dp)
 __asm__(
 	"	.globl forth_while\n"
 	"	.type forth_while, @function\n"
-	"	.section .text.forth_while.19574,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_while.19574,\"ax\",@progbits\n"
 	"forth_while:\n"
 	"	move.l #0x1956a,%d1\n"
 	"	move.l #0x19556,%d0\n"
@@ -24553,6 +24716,7 @@ __asm__(
 	"	.byte 0x00\n"
 	"	.byte 0xff\n"
 	"	.size forth_while, .-forth_while\n"
+	"	.popsection\n"
 );
 
 /* 000195a4 */
@@ -24582,7 +24746,7 @@ __pforth void forth_repeat(void)
 __asm__(
 	"	.globl forth_repeat\n"
 	"	.type forth_repeat, @function\n"
-	"	.section .text.forth_repeat.195a4,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_repeat.195a4,\"ax\",@progbits\n"
 	"forth_repeat:\n"
 	"	move.l #0x19598,%d1\n"
 	"	move.l #0x1956a,%d0\n"
@@ -24604,6 +24768,7 @@ __asm__(
 	"	.byte 0x0a\n"
 	"	.byte 0x00\n"
 	"	.size forth_repeat, .-forth_repeat\n"
+	"	.popsection\n"
 );
 
 /* 000195d6 */
@@ -24631,7 +24796,7 @@ __pforth void forth_again(void)
 __asm__(
 	"	.globl forth_again\n"
 	"	.type forth_again, @function\n"
-	"	.section .text.forth_again.195d6,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_again.195d6,\"ax\",@progbits\n"
 	"forth_again:\n"
 	"	move.l #0x195cc,%d1\n"
 	"	move.l #0x19556,%d0\n"
@@ -24651,6 +24816,7 @@ __asm__(
 	"	.byte 0x0a\n"
 	"	.byte 0x00\n"
 	"	.size forth_again, .-forth_again\n"
+	"	.popsection\n"
 );
 
 /* 00019600 */
@@ -24678,7 +24844,7 @@ __pforth void forth_until(void)
 __asm__(
 	"	.globl forth_until\n"
 	"	.type forth_until, @function\n"
-	"	.section .text.forth_until.19600,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_until.19600,\"ax\",@progbits\n"
 	"forth_until:\n"
 	"	move.l #0x195f6,%d1\n"
 	"	move.l #0x19556,%d0\n"
@@ -24688,6 +24854,7 @@ __asm__(
 	"	bsr.w forth_resolve_branch\n"
 	"	rts\n"
 	"	.size forth_until, .-forth_until\n"
+	"	.popsection\n"
 );
 
 /* 00019620 */
@@ -24709,11 +24876,12 @@ __pforth void forth_leave(void)
 __asm__(
 	"	.globl forth_leave\n"
 	"	.type forth_leave, @function\n"
-	"	.section .text.forth_leave.19620,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_leave.19620,\"ax\",@progbits\n"
 	"forth_leave:\n"
 	"	move.l (%sp),(0x4,%sp)\n"
 	"	rts\n"
 	"	.size forth_leave, .-forth_leave\n"
+	"	.popsection\n"
 );
 
 /* 00019626 */
@@ -24738,11 +24906,12 @@ __pforth void forth_k(long *sp)
 __asm__(
 	"	.globl forth_k\n"
 	"	.type forth_k, @function\n"
-	"	.section .text.forth_k.19626,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_k.19626,\"ax\",@progbits\n"
 	"forth_k:\n"
 	"	move.l (0x14,%sp),-(%a6)\n"
 	"	rts\n"
 	"	.size forth_k, .-forth_k\n"
+	"	.popsection\n"
 );
 
 /* 0001962c */
@@ -24767,11 +24936,12 @@ __pforth void forth_j(long *sp)
 __asm__(
 	"	.globl forth_j\n"
 	"	.type forth_j, @function\n"
-	"	.section .text.forth_j.1962c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_j.1962c,\"ax\",@progbits\n"
 	"forth_j:\n"
 	"	move.l (0xc,%sp),-(%a6)\n"
 	"	rts\n"
 	"	.size forth_j, .-forth_j\n"
+	"	.popsection\n"
 );
 
 /* 00019632 */
@@ -24796,11 +24966,12 @@ __pforth void forth_i(long *sp)
 __asm__(
 	"	.globl forth_i\n"
 	"	.type forth_i, @function\n"
-	"	.section .text.forth_i.19632,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_i.19632,\"ax\",@progbits\n"
 	"forth_i:\n"
 	"	move.l (0x4,%sp),-(%a6)\n"
 	"	rts\n"
 	"	.size forth_i, .-forth_i\n"
+	"	.popsection\n"
 );
 
 /* 00019638 */
@@ -24826,7 +24997,7 @@ __pforth void forth_colon(forth_user_end user,long *sp,void *dp)
 __asm__(
 	"	.globl forth_colon\n"
 	"	.type forth_colon, @function\n"
-	"	.section .text.forth_colon.19638,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_colon.19638,\"ax\",@progbits\n"
 	"forth_colon:\n"
 	"	move.l %a4,(-0x12,%a5)\n"
 	"	move.w #0x1,(-0xa,%a5)\n"
@@ -24836,6 +25007,7 @@ __asm__(
 	"	move.l #0x19638,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_colon, .-forth_colon\n"
+	"	.popsection\n"
 );
 
 /* 00019652 */
@@ -24887,7 +25059,7 @@ __pforth void forth_semicolon(forth_user_end user,long *sp,void *dp)
 __asm__(
 	"	.globl forth_semicolon\n"
 	"	.type forth_semicolon, @function\n"
-	"	.section .text.forth_semicolon.19652,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_semicolon.19652,\"ax\",@progbits\n"
 	"forth_semicolon:\n"
 	"	move.l (%a6)+,%d1\n"
 	"	cmpi.l #0x19638,%d1\n"
@@ -24905,6 +25077,7 @@ __asm__(
 	"	move.l %a4,(-0x12,%a5)\n"
 	"	rts\n"
 	"	.size forth_semicolon, .-forth_semicolon\n"
+	"	.popsection\n"
 );
 
 /* 00019688 */
@@ -24956,10 +25129,11 @@ __pforth void forth_parse_create_header(void)
 __asm__(
 	"	.globl forth_parse_create_header\n"
 	"	.type forth_parse_create_header, @function\n"
-	"	.section .text.forth_parse_create_header.19688,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_parse_create_header.19688,\"ax\",@progbits\n"
 	"forth_parse_create_header:\n"
 	"	bsr.w forth_parse_word\n"
 	"	.size forth_parse_create_header, .-forth_parse_create_header\n"
+	"	.popsection\n"
 );
 
 /* 0001968c */
@@ -25007,7 +25181,7 @@ __pforth void forth_create_header(forth_user_end user /* a5 */,void *dp /* a4 */
 __asm__(
 	"	.globl forth_create_header\n"
 	"	.type forth_create_header, @function\n"
-	"	.section .text.forth_create_header.1968c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_create_header.1968c,\"ax\",@progbits\n"
 	"forth_create_header:\n"
 	"	bsr.w forth_align\n"
 	"	movem.l %a2/%a1/%d2,-(%sp)\n"
@@ -25026,6 +25200,7 @@ __asm__(
 	"	movem.l (%sp)+,%d2/%a1/%a2\n"
 	"	rts\n"
 	"	.size forth_create_header, .-forth_create_header\n"
+	"	.popsection\n"
 );
 
 /* 000196b8 */
@@ -25057,7 +25232,7 @@ __pforth void forth_variable(forth_user_end user,void *dp)
 __asm__(
 	"	.globl forth_variable\n"
 	"	.type forth_variable, @function\n"
-	"	.section .text.forth_variable.196b8,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_variable.196b8,\"ax\",@progbits\n"
 	"forth_variable:\n"
 	"	move.l #0x60008,%d3\n"
 	"	.byte 0x61 | bsr.b 0x00019688\n"
@@ -25071,6 +25246,7 @@ __asm__(
 	"	move.l %a4,(-0x12,%a5)\n"
 	"	rts\n"
 	"	.size forth_variable, .-forth_variable\n"
+	"	.popsection\n"
 );
 
 /* 000196d8 */
@@ -25101,7 +25277,7 @@ __pforth void forth_create(forth_user_end user,void *dp)
 __asm__(
 	"	.globl forth_create\n"
 	"	.type forth_create, @function\n"
-	"	.section .text.forth_create.196d8,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_create.196d8,\"ax\",@progbits\n"
 	"forth_create:\n"
 	"	move.l #0x60008,%d3\n"
 	"	.byte 0x61 | bsr.b 0x00019688\n"
@@ -25114,6 +25290,7 @@ __asm__(
 	"	move.l %a4,(-0x12,%a5)\n"
 	"	rts\n"
 	"	.size forth_create, .-forth_create\n"
+	"	.popsection\n"
 );
 
 /* 000196f6 */
@@ -25144,11 +25321,12 @@ __pforth void forth_constant(void)
 __asm__(
 	"	.globl forth_constant\n"
 	"	.type forth_constant, @function\n"
-	"	.section .text.forth_constant.196f6,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_constant.196f6,\"ax\",@progbits\n"
 	"forth_constant:\n"
 	"	move.l #0x60008,%d3\n"
 	"	jsr (forth_parse_create_header:w,%pc)\n"
 	"	.size forth_constant, .-forth_constant\n"
+	"	.popsection\n"
 );
 
 /* 00019700 */
@@ -25175,7 +25353,7 @@ __pforth void forth_compile_constant(forth_user_end user /* a5 */,long *sp /* a6
 __asm__(
 	"	.globl forth_compile_constant\n"
 	"	.type forth_compile_constant, @function\n"
-	"	.section .text.forth_compile_constant.19700,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_compile_constant.19700,\"ax\",@progbits\n"
 	"forth_compile_constant:\n"
 	"	move.w #0x2d3c,(%a4)+\n"
 	"	move.l (%a6)+,(%a4)+\n"
@@ -25183,6 +25361,7 @@ __asm__(
 	"	move.l %a4,(-0x12,%a5)\n"
 	"	rts\n"
 	"	.size forth_compile_constant, .-forth_compile_constant\n"
+	"	.popsection\n"
 );
 
 /* 00019710 */
@@ -25215,7 +25394,7 @@ __pforth void forth_literal(long *sp,void *dp)
 __asm__(
 	"	.globl forth_literal\n"
 	"	.type forth_literal, @function\n"
-	"	.section .text.forth_literal.19710,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_literal.19710,\"ax\",@progbits\n"
 	"forth_literal:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	cmpi.l #0x7f,%d0\n"
@@ -25233,6 +25412,7 @@ __asm__(
 	".Lg_19738:\n"
 	"	rts\n"
 	"	.size forth_literal, .-forth_literal\n"
+	"	.popsection\n"
 );
 
 /* 0001973a */
@@ -25280,7 +25460,7 @@ __pforth void forth_mod(long *sp)
 __asm__(
 	"	.globl forth_mod\n"
 	"	.type forth_mod, @function\n"
-	"	.section .text.forth_mod.1973a,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_mod.1973a,\"ax\",@progbits\n"
 	"forth_mod:\n"
 	"	move.l (%a6)+,%d1\n"
 	"	beq.w forth_slash+0xe\n"
@@ -25289,6 +25469,7 @@ __asm__(
 	"	move.l %d1,(%a6)\n"
 	"	rts\n"
 	"	.size forth_mod, .-forth_mod\n"
+	"	.popsection\n"
 );
 
 /* 0001974a */
@@ -25336,7 +25517,7 @@ __pforth void forth_slash_mod(long *sp)
 __asm__(
 	"	.globl forth_slash_mod\n"
 	"	.type forth_slash_mod, @function\n"
-	"	.section .text.forth_slash_mod.1974a,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_slash_mod.1974a,\"ax\",@progbits\n"
 	"forth_slash_mod:\n"
 	"	move.l (%a6)+,%d1\n"
 	"	beq.w forth_slash+0xe\n"
@@ -25346,6 +25527,7 @@ __asm__(
 	"	move.l %d0,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_slash_mod, .-forth_slash_mod\n"
+	"	.popsection\n"
 );
 
 /* 0001975c */
@@ -25394,7 +25576,7 @@ __pforth void forth_star_slash_mod(long *sp)
 __asm__(
 	"	.globl forth_star_slash_mod\n"
 	"	.type forth_star_slash_mod, @function\n"
-	"	.section .text.forth_star_slash_mod.1975c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_star_slash_mod.1975c,\"ax\",@progbits\n"
 	"forth_star_slash_mod:\n"
 	"	move.l (%a6)+,-(%sp)\n"
 	"	beq.w forth_slash+0xe\n"
@@ -25406,6 +25588,7 @@ __asm__(
 	"	move.l %d0,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_star_slash_mod, .-forth_star_slash_mod\n"
+	"	.popsection\n"
 );
 
 /* 00019774 */
@@ -25454,7 +25637,7 @@ __pforth void forth_star_slash(long *sp)
 __asm__(
 	"	.globl forth_star_slash\n"
 	"	.type forth_star_slash, @function\n"
-	"	.section .text.forth_star_slash.19774,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_star_slash.19774,\"ax\",@progbits\n"
 	"forth_star_slash:\n"
 	"	move.l (%a6)+,-(%sp)\n"
 	"	beq.w forth_slash+0xe\n"
@@ -25465,6 +25648,7 @@ __asm__(
 	"	move.l %d0,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_star_slash, .-forth_star_slash\n"
+	"	.popsection\n"
 );
 
 /* 0001978a */
@@ -25512,7 +25696,7 @@ __pforth void forth_slash(long *sp)
 __asm__(
 	"	.globl forth_slash\n"
 	"	.type forth_slash, @function\n"
-	"	.section .text.forth_slash.1978a,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_slash.1978a,\"ax\",@progbits\n"
 	"forth_slash:\n"
 	"	move.l (%a6)+,%d1\n"
 	"	beq.b .Lg_19798\n"
@@ -25528,6 +25712,7 @@ __asm__(
 	"	.byte 0x28,0x64,0x69,0x76,0x69,0x64,0x65,0x20,0x62,0x79,0x20,0x7a,0x65,0x72,0x6f,0x0d,0x0a,0x00\n"
 	"	.byte 0xff\n"
 	"	.size forth_slash, .-forth_slash\n"
+	"	.popsection\n"
 );
 
 /* 000197b4 */
@@ -25566,7 +25751,7 @@ __pforth void forth_star(long *sp)
 __asm__(
 	"	.globl forth_star\n"
 	"	.type forth_star, @function\n"
-	"	.section .text.forth_star.197b4,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_star.197b4,\"ax\",@progbits\n"
 	"forth_star:\n"
 	"	clr.l %d5\n"
 	"	move.l (%a6)+,%d0\n"
@@ -25587,6 +25772,7 @@ __asm__(
 	"	move.l %d1,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_star, .-forth_star\n"
+	"	.popsection\n"
 );
 
 /* 000197da */
@@ -25615,7 +25801,7 @@ __pforth undefined8 forth_multiply(void)
 __asm__(
 	"	.globl forth_multiply\n"
 	"	.type forth_multiply, @function\n"
-	"	.section .text.forth_multiply.197da,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_multiply.197da,\"ax\",@progbits\n"
 	"forth_multiply:\n"
 	"	movem.l %d3/%d2,-(%sp)\n"
 	"	move.w %d0,%d2\n"
@@ -25632,6 +25818,7 @@ __asm__(
 	"	movem.l (%sp)+,%d2/%d3\n"
 	"	rts\n"
 	"	.size forth_multiply, .-forth_multiply\n"
+	"	.popsection\n"
 );
 
 /* 000197fa */
@@ -25662,7 +25849,7 @@ __pforth int forth_divide_signed(void)
 __asm__(
 	"	.globl forth_divide_signed\n"
 	"	.type forth_divide_signed, @function\n"
-	"	.section .text.forth_divide_signed.197fa,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_divide_signed.197fa,\"ax\",@progbits\n"
 	"forth_divide_signed:\n"
 	"	movem.l %d4/%d3/%d2,-(%sp)\n"
 	"	move.l %d0,%d2\n"
@@ -25689,6 +25876,7 @@ __asm__(
 	"	movem.l (%sp)+,%d2/%d3/%d4\n"
 	"	rts\n"
 	"	.size forth_divide_signed, .-forth_divide_signed\n"
+	"	.popsection\n"
 );
 
 /* 00019828 */
@@ -25736,7 +25924,7 @@ LAB_00019830:
 __asm__(
 	"	.globl forth_divide_unsigned\n"
 	"	.type forth_divide_unsigned, @function\n"
-	"	.section .text.forth_divide_unsigned.19828,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_divide_unsigned.19828,\"ax\",@progbits\n"
 	"forth_divide_unsigned:\n"
 	"	movem.l %d3/%d2,-(%sp)\n"
 	"	clr.l %d2\n"
@@ -25754,6 +25942,7 @@ __asm__(
 	"	movem.l (%sp)+,%d2/%d3\n"
 	"	rts\n"
 	"	.size forth_divide_unsigned, .-forth_divide_unsigned\n"
+	"	.popsection\n"
 );
 
 /* 0001984c */
@@ -25782,7 +25971,7 @@ __pforth undefined8 forth_divide_short(void)
 __asm__(
 	"	.globl forth_divide_short\n"
 	"	.type forth_divide_short, @function\n"
-	"	.section .text.forth_divide_short.1984c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_divide_short.1984c,\"ax\",@progbits\n"
 	"forth_divide_short:\n"
 	"	movem.l %d3/%d2,-(%sp)\n"
 	"	clr.l %d2\n"
@@ -25803,6 +25992,7 @@ __asm__(
 	"	movem.l (%sp)+,%d2/%d3\n"
 	"	rts\n"
 	"	.size forth_divide_short, .-forth_divide_short\n"
+	"	.popsection\n"
 );
 
 /* 00019874 */
@@ -25825,12 +26015,13 @@ __pforth void forth_minus(long *sp)
 __asm__(
 	"	.globl forth_minus\n"
 	"	.type forth_minus, @function\n"
-	"	.section .text.forth_minus.19874,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_minus.19874,\"ax\",@progbits\n"
 	"forth_minus:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	sub.l %d0,(%a6)\n"
 	"	rts\n"
 	"	.size forth_minus, .-forth_minus\n"
+	"	.popsection\n"
 );
 
 /* 0001987a */
@@ -25853,12 +26044,13 @@ __pforth void forth_plus(long *sp)
 __asm__(
 	"	.globl forth_plus\n"
 	"	.type forth_plus, @function\n"
-	"	.section .text.forth_plus.1987a,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_plus.1987a,\"ax\",@progbits\n"
 	"forth_plus:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	add.l %d0,(%a6)\n"
 	"	rts\n"
 	"	.size forth_plus, .-forth_plus\n"
+	"	.popsection\n"
 );
 
 /* 00019880 */
@@ -25881,13 +26073,14 @@ __pforth void forth_plus_store(long *sp)
 __asm__(
 	"	.globl forth_plus_store\n"
 	"	.type forth_plus_store, @function\n"
-	"	.section .text.forth_plus_store.19880,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_plus_store.19880,\"ax\",@progbits\n"
 	"forth_plus_store:\n"
 	"	movea.l (%a6)+,%a0\n"
 	"	move.l (%a6)+,%d0\n"
 	"	add.l %d0,(%a0)\n"
 	"	rts\n"
 	"	.size forth_plus_store, .-forth_plus_store\n"
+	"	.popsection\n"
 );
 
 /* 00019888 */
@@ -25910,11 +26103,12 @@ __pforth void forth_1_plus(long *sp)
 __asm__(
 	"	.globl forth_1_plus\n"
 	"	.type forth_1_plus, @function\n"
-	"	.section .text.forth_1_plus.19888,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_1_plus.19888,\"ax\",@progbits\n"
 	"forth_1_plus:\n"
 	"	addq.l #0x1,(%a6)\n"
 	"	rts\n"
 	"	.size forth_1_plus, .-forth_1_plus\n"
+	"	.popsection\n"
 );
 
 /* 0001988c */
@@ -25937,11 +26131,12 @@ __pforth void forth_1_minus(long *sp)
 __asm__(
 	"	.globl forth_1_minus\n"
 	"	.type forth_1_minus, @function\n"
-	"	.section .text.forth_1_minus.1988c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_1_minus.1988c,\"ax\",@progbits\n"
 	"forth_1_minus:\n"
 	"	subq.l #0x1,(%a6)\n"
 	"	rts\n"
 	"	.size forth_1_minus, .-forth_1_minus\n"
+	"	.popsection\n"
 );
 
 /* 00019890 */
@@ -25964,11 +26159,12 @@ __pforth void forth_2_plus(long *sp)
 __asm__(
 	"	.globl forth_2_plus\n"
 	"	.type forth_2_plus, @function\n"
-	"	.section .text.forth_2_plus.19890,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_2_plus.19890,\"ax\",@progbits\n"
 	"forth_2_plus:\n"
 	"	addq.l #0x2,(%a6)\n"
 	"	rts\n"
 	"	.size forth_2_plus, .-forth_2_plus\n"
+	"	.popsection\n"
 );
 
 /* 00019894 */
@@ -25991,11 +26187,12 @@ __pforth void forth_2_minus(long *sp)
 __asm__(
 	"	.globl forth_2_minus\n"
 	"	.type forth_2_minus, @function\n"
-	"	.section .text.forth_2_minus.19894,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_2_minus.19894,\"ax\",@progbits\n"
 	"forth_2_minus:\n"
 	"	subq.l #0x2,(%a6)\n"
 	"	rts\n"
 	"	.size forth_2_minus, .-forth_2_minus\n"
+	"	.popsection\n"
 );
 
 /* 00019898 */
@@ -26018,13 +26215,14 @@ __pforth void forth_2_slash(long *sp)
 __asm__(
 	"	.globl forth_2_slash\n"
 	"	.type forth_2_slash, @function\n"
-	"	.section .text.forth_2_slash.19898,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_2_slash.19898,\"ax\",@progbits\n"
 	"forth_2_slash:\n"
 	"	move.l (%a6),%d0\n"
 	"	asr.l #0x1,%d0\n"
 	"	move.l %d0,(%a6)\n"
 	"	rts\n"
 	"	.size forth_2_slash, .-forth_2_slash\n"
+	"	.popsection\n"
 );
 
 /* 000198a0 */
@@ -26047,13 +26245,14 @@ __pforth void forth_2_star(long *sp)
 __asm__(
 	"	.globl forth_2_star\n"
 	"	.type forth_2_star, @function\n"
-	"	.section .text.forth_2_star.198a0,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_2_star.198a0,\"ax\",@progbits\n"
 	"forth_2_star:\n"
 	"	move.l (%a6),%d0\n"
 	"	asl.l #0x1,%d0\n"
 	"	move.l %d0,(%a6)\n"
 	"	rts\n"
 	"	.size forth_2_star, .-forth_2_star\n"
+	"	.popsection\n"
 );
 
 /* 000198a8 */
@@ -26076,7 +26275,7 @@ __pforth void forth_less_less(long *sp)
 __asm__(
 	"	.globl forth_less_less\n"
 	"	.type forth_less_less, @function\n"
-	"	.section .text.forth_less_less.198a8,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_less_less.198a8,\"ax\",@progbits\n"
 	"forth_less_less:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	move.l (%a6),%d1\n"
@@ -26084,6 +26283,7 @@ __asm__(
 	"	move.l %d1,(%a6)\n"
 	"	rts\n"
 	"	.size forth_less_less, .-forth_less_less\n"
+	"	.popsection\n"
 );
 
 /* 000198b2 */
@@ -26106,7 +26306,7 @@ __pforth void forth_greater_greater(long *sp)
 __asm__(
 	"	.globl forth_greater_greater\n"
 	"	.type forth_greater_greater, @function\n"
-	"	.section .text.forth_greater_greater.198b2,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_greater_greater.198b2,\"ax\",@progbits\n"
 	"forth_greater_greater:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	move.l (%a6),%d1\n"
@@ -26114,6 +26314,7 @@ __asm__(
 	"	move.l %d1,(%a6)\n"
 	"	rts\n"
 	"	.size forth_greater_greater, .-forth_greater_greater\n"
+	"	.popsection\n"
 );
 
 /* 000198bc */
@@ -26141,7 +26342,7 @@ __pforth void forth_emit(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_emit\n"
 	"	.type forth_emit, @function\n"
-	"	.section .text.forth_emit.198bc,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_emit.198bc,\"ax\",@progbits\n"
 	"forth_emit:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	movea.l (-0x22,%a5),%a0\n"
@@ -26151,6 +26352,7 @@ __asm__(
 	"	jsr (forth_print_string:w,%pc)\n"
 	"	rts\n"
 	"	.size forth_emit, .-forth_emit\n"
+	"	.popsection\n"
 );
 
 /* 000198d0 */
@@ -26179,13 +26381,14 @@ __pforth void forth_space(void)
 __asm__(
 	"	.globl forth_space\n"
 	"	.type forth_space, @function\n"
-	"	.section .text.forth_space.198d0,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_space.198d0,\"ax\",@progbits\n"
 	"forth_space:\n"
 	"	moveq #0x20,%d0\n"
 	"	.byte 0x60 | bra.b 0x000198be\n"
 	"	.reloc ., R_68K_PC8, forth_emit+0x2-1\n"
 	"	.byte 0\n"
 	"	.size forth_space, .-forth_space\n"
+	"	.popsection\n"
 );
 
 /* 000198d4 */
@@ -26225,7 +26428,7 @@ __pforth void forth_spaces(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_spaces\n"
 	"	.type forth_spaces, @function\n"
-	"	.section .text.forth_spaces.198d4,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_spaces.198d4,\"ax\",@progbits\n"
 	"forth_spaces:\n"
 	"	move.l (%a6)+,%d3\n"
 	"	subq.l #0x1,%d3\n"
@@ -26241,6 +26444,7 @@ __asm__(
 	".Lg_198f0:\n"
 	"	rts\n"
 	"	.size forth_spaces, .-forth_spaces\n"
+	"	.popsection\n"
 );
 
 /* 000198f2 */
@@ -26265,12 +26469,13 @@ __pforth void forth_cr(void)
 __asm__(
 	"	.globl forth_cr\n"
 	"	.type forth_cr, @function\n"
-	"	.section .text.forth_cr.198f2,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_cr.198f2,\"ax\",@progbits\n"
 	"forth_cr:\n"
 	"	move.l #0x18ddf,%d0\n"
 	"	jsr (forth_print_string:w,%pc)\n"
 	"	rts\n"
 	"	.size forth_cr, .-forth_cr\n"
+	"	.popsection\n"
 );
 
 /* 000198fe */
@@ -26325,7 +26530,7 @@ __pforth void forth_dot_quote(forth_user_end user,void *dp,char *input)
 __asm__(
 	"	.globl forth_dot_quote\n"
 	"	.type forth_dot_quote, @function\n"
-	"	.section .text.forth_dot_quote.198fe,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_dot_quote.198fe,\"ax\",@progbits\n"
 	"forth_dot_quote:\n"
 	"	movea.l (-0x22,%a5),%a1\n"
 	"	cmpi.b #0x20,(%a3)\n"
@@ -26357,6 +26562,7 @@ __asm__(
 	"	jsr (forth_print_string:w,%pc)\n"
 	"	rts\n"
 	"	.size forth_dot_quote, .-forth_dot_quote\n"
+	"	.popsection\n"
 );
 
 /* 00019948 */
@@ -26382,7 +26588,7 @@ __pforth void forth_paren_dot_quote_close_paren(void)
 __asm__(
 	"	.globl forth_paren_dot_quote_close_paren\n"
 	"	.type forth_paren_dot_quote_close_paren, @function\n"
-	"	.section .text.forth_paren_dot_quote_close_paren.19948,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_paren_dot_quote_close_paren.19948,\"ax\",@progbits\n"
 	"forth_paren_dot_quote_close_paren:\n"
 	"	move.l (%sp)+,%d0\n"
 	"	jsr (forth_print_string:w,%pc)\n"
@@ -26393,6 +26599,7 @@ __asm__(
 	"	move.l %d2,-(%sp)\n"
 	"	rts\n"
 	"	.size forth_paren_dot_quote_close_paren, .-forth_paren_dot_quote_close_paren\n"
+	"	.popsection\n"
 );
 
 /* 0001995a */
@@ -26420,7 +26627,7 @@ __pforth void forth_digit_char(void)
 __asm__(
 	"	.globl forth_digit_char\n"
 	"	.type forth_digit_char, @function\n"
-	"	.section .text.forth_digit_char.1995a,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_digit_char.1995a,\"ax\",@progbits\n"
 	"forth_digit_char:\n"
 	"	cmpi.b #0x9,%d1\n"
 	"	bgt.b .Lg_19966\n"
@@ -26430,6 +26637,7 @@ __asm__(
 	"	addi.b #0x37,%d1\n"
 	"	rts\n"
 	"	.size forth_digit_char, .-forth_digit_char\n"
+	"	.popsection\n"
 );
 
 /* 0001996c */
@@ -26463,7 +26671,7 @@ __pforth void forth_print_number(forth_user_end user /* a5 */,long *sp /* a6 */)
 __asm__(
 	"	.globl forth_print_number\n"
 	"	.type forth_print_number, @function\n"
-	"	.section .text.forth_print_number.1996c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_print_number.1996c,\"ax\",@progbits\n"
 	"forth_print_number:\n"
 	"	movea.l (-0x22,%a5),%a0\n"
 	".Lg_19970:\n"
@@ -26473,6 +26681,7 @@ __asm__(
 	"	bsr.w forth_print_string\n"
 	"	rts\n"
 	"	.size forth_print_number, .-forth_print_number\n"
+	"	.popsection\n"
 );
 
 /* 0001997e */
@@ -26512,7 +26721,7 @@ __pforth void forth_u_dot(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_u_dot\n"
 	"	.type forth_u_dot, @function\n"
-	"	.section .text.forth_u_dot.1997e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_u_dot.1997e,\"ax\",@progbits\n"
 	"forth_u_dot:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	clr.b -(%a6)\n"
@@ -26531,6 +26740,7 @@ __asm__(
 	"	.byte 0\n"
 	"	rts\n"
 	"	.size forth_u_dot, .-forth_u_dot\n"
+	"	.popsection\n"
 );
 
 /* 0001999a */
@@ -26575,7 +26785,7 @@ __pforth void forth_u_dot_x(long *sp)
 __asm__(
 	"	.globl forth_u_dot_x\n"
 	"	.type forth_u_dot_x, @function\n"
-	"	.section .text.forth_u_dot_x.1999a,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_u_dot_x.1999a,\"ax\",@progbits\n"
 	"forth_u_dot_x:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	clr.b -(%a6)\n"
@@ -26598,6 +26808,7 @@ __asm__(
 	"	.byte 0\n"
 	"	rts\n"
 	"	.size forth_u_dot_x, .-forth_u_dot_x\n"
+	"	.popsection\n"
 );
 
 /* 000199c4 */
@@ -26641,7 +26852,7 @@ __pforth void forth_dot(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_dot\n"
 	"	.type forth_dot, @function\n"
-	"	.section .text.forth_dot.199c4,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_dot.199c4,\"ax\",@progbits\n"
 	"forth_dot:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	clr.b -(%a6)\n"
@@ -26667,6 +26878,7 @@ __asm__(
 	"	.byte 0\n"
 	"	rts\n"
 	"	.size forth_dot, .-forth_dot\n"
+	"	.popsection\n"
 );
 
 /* 000199ee */
@@ -26707,7 +26919,7 @@ __pforth void forth_dot_s(long *sp)
 __asm__(
 	"	.globl forth_dot_s\n"
 	"	.type forth_dot_s, @function\n"
-	"	.section .text.forth_dot_s.199ee,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_dot_s.199ee,\"ax\",@progbits\n"
 	"forth_dot_s:\n"
 	"	jsr (forth_depth:w,%pc)\n"
 	"	move.l (%a6)+,%d1\n"
@@ -26730,6 +26942,7 @@ __asm__(
 	"	bsr.w forth_print_string\n"
 	"	bra.b .Lg_19a0a\n"
 	"	.size forth_dot_s, .-forth_dot_s\n"
+	"	.popsection\n"
 );
 
 /* 00019b98 */
@@ -26772,7 +26985,7 @@ __pforth void forth_sin(long *sp)
 __asm__(
 	"	.globl forth_sin\n"
 	"	.type forth_sin, @function\n"
-	"	.section .text.forth_sin.19b98,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_sin.19b98,\"ax\",@progbits\n"
 	"forth_sin:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	clr.l %d1\n"
@@ -26808,6 +27021,7 @@ __asm__(
 	"	move.l %d0,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_sin, .-forth_sin\n"
+	"	.popsection\n"
 );
 
 /* 00019bf0 */
@@ -26831,12 +27045,13 @@ __pforth void forth_cos(long *sp)
 __asm__(
 	"	.globl forth_cos\n"
 	"	.type forth_cos, @function\n"
-	"	.section .text.forth_cos.19bf0,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_cos.19bf0,\"ax\",@progbits\n"
 	"forth_cos:\n"
 	"	addi.l #0x5a,(%a6)\n"
 	"	jsr (forth_sin:w,%pc)\n"
 	"	rts\n"
 	"	.size forth_cos, .-forth_cos\n"
+	"	.popsection\n"
 );
 
 /* 00019bfc */
@@ -26859,11 +27074,12 @@ __pforth void forth_decimal(forth_user_end user)
 __asm__(
 	"	.globl forth_decimal\n"
 	"	.type forth_decimal, @function\n"
-	"	.section .text.forth_decimal.19bfc,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_decimal.19bfc,\"ax\",@progbits\n"
 	"forth_decimal:\n"
 	"	move.l #0xa,(-0xe,%a5)\n"
 	"	rts\n"
 	"	.size forth_decimal, .-forth_decimal\n"
+	"	.popsection\n"
 );
 
 /* 00019c06 */
@@ -26886,11 +27102,12 @@ __pforth void forth_hex(forth_user_end user)
 __asm__(
 	"	.globl forth_hex\n"
 	"	.type forth_hex, @function\n"
-	"	.section .text.forth_hex.19c06,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_hex.19c06,\"ax\",@progbits\n"
 	"forth_hex:\n"
 	"	move.l #0x10,(-0xe,%a5)\n"
 	"	rts\n"
 	"	.size forth_hex, .-forth_hex\n"
+	"	.popsection\n"
 );
 
 /* 00019c10 */
@@ -26913,12 +27130,13 @@ __pforth void forth_base(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_base\n"
 	"	.type forth_base, @function\n"
-	"	.section .text.forth_base.19c10,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_base.19c10,\"ax\",@progbits\n"
 	"forth_base:\n"
 	"	lea (-0xe,%a5),%a0\n"
 	"	move.l %a0,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_base, .-forth_base\n"
+	"	.popsection\n"
 );
 
 /* 00019c18 */
@@ -26941,13 +27159,14 @@ __pforth void forth_state(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_state\n"
 	"	.type forth_state, @function\n"
-	"	.section .text.forth_state.19c18,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_state.19c18,\"ax\",@progbits\n"
 	"forth_state:\n"
 	"	clr.l %d0\n"
 	"	move.w (-0xa,%a5),%d0\n"
 	"	move.l %d0,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_state, .-forth_state\n"
+	"	.popsection\n"
 );
 
 /* 00019c22 */
@@ -26999,7 +27218,7 @@ __pforth void forth_tick(long *sp)
 __asm__(
 	"	.globl forth_tick\n"
 	"	.type forth_tick, @function\n"
-	"	.section .text.forth_tick.19c22,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_tick.19c22,\"ax\",@progbits\n"
 	"forth_tick:\n"
 	"	jsr (forth_parse_word:w,%pc)\n"
 	"	jsr (forth_find:w,%pc)\n"
@@ -27008,6 +27227,7 @@ __asm__(
 	"	move.l %a2,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_tick, .-forth_tick\n"
+	"	.popsection\n"
 );
 
 /* 00019c38 */
@@ -27059,7 +27279,7 @@ __pforth void forth_bracket_tick_close_bracket(void *dp)
 __asm__(
 	"	.globl forth_bracket_tick_close_bracket\n"
 	"	.type forth_bracket_tick_close_bracket, @function\n"
-	"	.section .text.forth_bracket_tick_close_bracket.19c38,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_bracket_tick_close_bracket.19c38,\"ax\",@progbits\n"
 	"forth_bracket_tick_close_bracket:\n"
 	"	jsr (forth_parse_word:w,%pc)\n"
 	"	jsr (forth_find:w,%pc)\n"
@@ -27069,6 +27289,7 @@ __asm__(
 	"	move.l %a2,(%a4)+\n"
 	"	rts\n"
 	"	.size forth_bracket_tick_close_bracket, .-forth_bracket_tick_close_bracket\n"
+	"	.popsection\n"
 );
 
 /* 00019c52 */
@@ -27091,11 +27312,12 @@ __pforth void forth_bracket(forth_user_end user)
 __asm__(
 	"	.globl forth_bracket\n"
 	"	.type forth_bracket, @function\n"
-	"	.section .text.forth_bracket.19c52,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_bracket.19c52,\"ax\",@progbits\n"
 	"forth_bracket:\n"
 	"	clr.w (-0xa,%a5)\n"
 	"	rts\n"
 	"	.size forth_bracket, .-forth_bracket\n"
+	"	.popsection\n"
 );
 
 /* 00019c58 */
@@ -27118,12 +27340,13 @@ __pforth void forth_close_bracket(forth_user_end user)
 __asm__(
 	"	.globl forth_close_bracket\n"
 	"	.type forth_close_bracket, @function\n"
-	"	.section .text.forth_close_bracket.19c58,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_close_bracket.19c58,\"ax\",@progbits\n"
 	"forth_close_bracket:\n"
 	"	move.w #0x1,(-0xa,%a5)\n"
 	"	.byte 0x4e,0x75,0x20,0x69,0x73,0x20,0x66,0x65,0x6e,0x63,0x65,0x64,0x0d,0x0a,0x00\n"
 	"	.byte 0xff\n"
 	"	.size forth_close_bracket, .-forth_close_bracket\n"
+	"	.popsection\n"
 );
 
 /* 00019c6e */
@@ -27181,7 +27404,7 @@ __pforth void forth_forget(forth_user_end user,void *dp)
 __asm__(
 	"	.globl forth_forget\n"
 	"	.type forth_forget, @function\n"
-	"	.section .text.forth_forget.19c6e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_forget.19c6e,\"ax\",@progbits\n"
 	"forth_forget:\n"
 	"	jsr (forth_parse_word:w,%pc)\n"
 	"	jsr (forth_find:w,%pc)\n"
@@ -27198,6 +27421,7 @@ __asm__(
 	"	move.l #0x19c60,%d0\n"
 	"	jmp (forth_parse_number-0xa0:w,%pc)\n"
 	"	.size forth_forget, .-forth_forget\n"
+	"	.popsection\n"
 );
 
 /* 00019ca0 */
@@ -27223,7 +27447,7 @@ __pforth void forth_startup(forth_user_end user,void *dp)
 __asm__(
 	"	.globl forth_startup\n"
 	"	.type forth_startup, @function\n"
-	"	.section .text.forth_startup.19ca0,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_startup.19ca0,\"ax\",@progbits\n"
 	"forth_startup:\n"
 	"	movea.l (__ghidra_1009f2).l,%a4\n"
 	"	move.l %a4,(-0x12,%a5)\n"
@@ -27231,6 +27455,7 @@ __asm__(
 	"	move.l (__ghidra_1009ee).l,(-0x16,%a5)\n"
 	"	rts\n"
 	"	.size forth_startup, .-forth_startup\n"
+	"	.popsection\n"
 );
 
 /* 00019cbc */
@@ -27306,7 +27531,7 @@ __pforth void forth_words(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_words\n"
 	"	.type forth_words, @function\n"
-	"	.section .text.forth_words.19cbc,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_words.19cbc,\"ax\",@progbits\n"
 	"forth_words:\n"
 	"	movea.l (-0x16,%a5),%a0\n"
 	"	move.l (%a6)+,%d3\n"
@@ -27350,6 +27575,7 @@ __asm__(
 	"	bsr.w forth_print_string\n"
 	"	rts\n"
 	"	.size forth_words, .-forth_words\n"
+	"	.popsection\n"
 );
 
 /* 00019d2e */
@@ -27372,11 +27598,12 @@ __pforth void forth_root(long *sp)
 __asm__(
 	"	.globl forth_root\n"
 	"	.type forth_root, @function\n"
-	"	.section .text.forth_root.19d2e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_root.19d2e,\"ax\",@progbits\n"
 	"forth_root:\n"
 	"	move.l #0x100b10,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_root, .-forth_root\n"
+	"	.popsection\n"
 );
 
 /* 00019d36 */
@@ -27404,7 +27631,7 @@ __pforth void forth_my_pid(long *sp)
 __asm__(
 	"	.globl forth_my_pid\n"
 	"	.type forth_my_pid, @function\n"
-	"	.section .text.forth_my_pid.19d36,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_my_pid.19d36,\"ax\",@progbits\n"
 	"forth_my_pid:\n"
 	"	move.l %a0,-(%sp)\n"
 	"	clr.l %d0\n"
@@ -27414,6 +27641,7 @@ __asm__(
 	"	movea.l (%sp)+,%a0\n"
 	"	rts\n"
 	"	.size forth_my_pid, .-forth_my_pid\n"
+	"	.popsection\n"
 );
 
 /* 00019d46 */
@@ -27440,7 +27668,7 @@ __pforth void forth_query_caret_C(void)
 __asm__(
 	"	.globl forth_query_caret_C\n"
 	"	.type forth_query_caret_C, @function\n"
-	"	.section .text.forth_query_caret_C.19d46,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_query_caret_C.19d46,\"ax\",@progbits\n"
 	"forth_query_caret_C:\n"
 	"	move.w #0x800,%d1\n"
 	"	move.w (boot_vectors).w,%d2\n"
@@ -27450,6 +27678,7 @@ __asm__(
 	"	beq.w forth_true\n"
 	"	bra.w forth_false\n"
 	"	.size forth_query_caret_C, .-forth_query_caret_C\n"
+	"	.popsection\n"
 );
 
 /* 00019d5e */
@@ -27478,7 +27707,7 @@ __pforth short forth_expect(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_expect\n"
 	"	.type forth_expect, @function\n"
-	"	.section .text.forth_expect.19d5e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_expect.19d5e,\"ax\",@progbits\n"
 	"forth_expect:\n"
 	"	move.l %a1,-(%sp)\n"
 	"	move.l (%a6)+,%d2\n"
@@ -27490,7 +27719,8 @@ __asm__(
 	"	movea.l (%sp)+,%a1\n"
 	"	rts\n"
 	"	.size forth_expect, .-forth_expect\n"
-	"	.section .text.forth_expect.19dce,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.forth_expect.19dce,\"ax\",@progbits\n"
 	"	.byte 0x20\n"
 	"	.byte 0x6d\n"
 	"	.byte 0xff\n"
@@ -27525,7 +27755,8 @@ __asm__(
 	"	.byte 0x00\n"
 	"	.byte 0x00\n"
 	"	.byte 0x00\n"
-	"	.section .text.forth_expect.19edc,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.forth_expect.19edc,\"ax\",@progbits\n"
 	"	.byte 0x70\n"
 	"	.byte 0x53\n"
 	"	.byte 0x4f\n"
@@ -27538,7 +27769,8 @@ __asm__(
 	"	.byte 0x72\n"
 	"	.byte 0x00\n"
 	"	.byte 0x20,0x66,0x72,0x6f,0x6d,0x20,0x66,0x75,0x6e,0x63,0x74,0x69,0x6f,0x6e,0x00\n"
-	"	.section .text.forth_expect.19f42,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.forth_expect.19f42,\"ax\",@progbits\n"
 	"	.byte 0x20\n"
 	"	.byte 0x1f\n"
 	"	.byte 0x32\n"
@@ -27632,6 +27864,7 @@ __asm__(
 	"	moveq #0x4,%d7\n"
 	"	jsr (psos_call).l\n"
 	"	rts\n"
+	"	.popsection\n"
 );
 
 /* 00019d74 */
@@ -27656,12 +27889,13 @@ __pforth void forth_type(long *sp)
 __asm__(
 	"	.globl forth_type\n"
 	"	.type forth_type, @function\n"
-	"	.section .text.forth_type.19d74,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_type.19d74,\"ax\",@progbits\n"
 	"forth_type:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	jsr (forth_print_string:w,%pc)\n"
 	"	rts\n"
 	"	.size forth_type, .-forth_type\n"
+	"	.popsection\n"
 );
 
 /* 00019d7c */
@@ -27701,7 +27935,7 @@ __pforth void forth_word(forth_user_end user,long *sp,char *input)
 __asm__(
 	"	.globl forth_word\n"
 	"	.type forth_word, @function\n"
-	"	.section .text.forth_word.19d7c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_word.19d7c,\"ax\",@progbits\n"
 	"forth_word:\n"
 	"	bsr.w forth_input_buffer\n"
 	"	move.l (%a6)+,%d0\n"
@@ -27727,6 +27961,7 @@ __asm__(
 	"	clr.b (%a0)\n"
 	"	rts\n"
 	"	.size forth_word, .-forth_word\n"
+	"	.popsection\n"
 );
 
 /* 00019dae */
@@ -27757,7 +27992,7 @@ __pforth void forth_count(long *sp)
 __asm__(
 	"	.globl forth_count\n"
 	"	.type forth_count, @function\n"
-	"	.section .text.forth_count.19dae,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_count.19dae,\"ax\",@progbits\n"
 	"forth_count:\n"
 	"	movea.l (%a6),%a0\n"
 	"	move.l %a0,%d0\n"
@@ -27769,6 +28004,7 @@ __asm__(
 	"	move.l %a0,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_count, .-forth_count\n"
+	"	.popsection\n"
 );
 
 /* 00019dc2 */
@@ -27791,11 +28027,12 @@ __pforth void forth_tib(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_tib\n"
 	"	.type forth_tib, @function\n"
-	"	.section .text.forth_tib.19dc2,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_tib.19dc2,\"ax\",@progbits\n"
 	"forth_tib:\n"
 	"	move.l (-0x1e,%a5),-(%a6)\n"
 	"	rts\n"
 	"	.size forth_tib, .-forth_tib\n"
+	"	.popsection\n"
 );
 
 /* 00019dc8 */
@@ -27818,7 +28055,7 @@ __pforth void forth_pad(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_pad\n"
 	"	.type forth_pad, @function\n"
-	"	.section .text.forth_pad.19dc8,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_pad.19dc8,\"ax\",@progbits\n"
 	"forth_pad:\n"
 	"	move.l (-0x22,%a5),-(%a6)\n"
 	"	rts\n"
@@ -27857,6 +28094,7 @@ __asm__(
 	"	.byte 0x00\n"
 	"	.byte 0x00\n"
 	"	.size forth_pad, .-forth_pad\n"
+	"	.popsection\n"
 );
 
 /* 00019df0 */
@@ -27881,12 +28119,13 @@ __pforth void forth_does_greater(void)
 __asm__(
 	"	.globl forth_does_greater\n"
 	"	.type forth_does_greater, @function\n"
-	"	.section .text.forth_does_greater.19df0,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_does_greater.19df0,\"ax\",@progbits\n"
 	"forth_does_greater:\n"
 	"	movea.l #0x19dce,%a0\n"
 	"	bsr.w forth_compile_code\n"
 	"	rts\n"
 	"	.size forth_does_greater, .-forth_does_greater\n"
+	"	.popsection\n"
 );
 
 /* 00019dfc */
@@ -27911,7 +28150,7 @@ __pforth void forth_recurse(forth_user_end user,void *dp)
 __asm__(
 	"	.globl forth_recurse\n"
 	"	.type forth_recurse, @function\n"
-	"	.section .text.forth_recurse.19dfc,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_recurse.19dfc,\"ax\",@progbits\n"
 	"forth_recurse:\n"
 	"	bsr.w forth_align\n"
 	"	move.w #0x4eb9,(%a4)+\n"
@@ -27919,6 +28158,7 @@ __asm__(
 	"	move.l (0x4,%a0),(%a4)+\n"
 	"	rts\n"
 	"	.size forth_recurse, .-forth_recurse\n"
+	"	.popsection\n"
 );
 
 /* 00019e0e */
@@ -27941,7 +28181,7 @@ __pforth void forth_immediate(forth_user_end user)
 __asm__(
 	"	.globl forth_immediate\n"
 	"	.type forth_immediate, @function\n"
-	"	.section .text.forth_immediate.19e0e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_immediate.19e0e,\"ax\",@progbits\n"
 	"forth_immediate:\n"
 	"	movea.l (-0x16,%a5),%a0\n"
 	"	move.w (0xa,%a0),%d0\n"
@@ -27949,6 +28189,7 @@ __asm__(
 	"	move.w %d0,(0xa,%a0)\n"
 	"	rts\n"
 	"	.size forth_immediate, .-forth_immediate\n"
+	"	.popsection\n"
 );
 
 /* 00019e20 */
@@ -27971,12 +28212,13 @@ __pforth void forth_fence(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_fence\n"
 	"	.type forth_fence, @function\n"
-	"	.section .text.forth_fence.19e20,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_fence.19e20,\"ax\",@progbits\n"
 	"forth_fence:\n"
 	"	lea (-0x1a,%a5),%a0\n"
 	"	move.l %a0,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_fence, .-forth_fence\n"
+	"	.popsection\n"
 );
 
 /* 00019e28 */
@@ -27999,11 +28241,12 @@ __pforth void forth_unfence(forth_user_end user)
 __asm__(
 	"	.globl forth_unfence\n"
 	"	.type forth_unfence, @function\n"
-	"	.section .text.forth_unfence.19e28,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_unfence.19e28,\"ax\",@progbits\n"
 	"forth_unfence:\n"
 	"	move.l #0x1ad0e,(-0x1a,%a5)\n"
 	"	rts\n"
 	"	.size forth_unfence, .-forth_unfence\n"
+	"	.popsection\n"
 );
 
 /* 00019e32 */
@@ -28038,7 +28281,7 @@ __pforth void forth_number(long *sp)
 __asm__(
 	"	.globl forth_number\n"
 	"	.type forth_number, @function\n"
-	"	.section .text.forth_number.19e32,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_number.19e32,\"ax\",@progbits\n"
 	"forth_number:\n"
 	"	move.l %a1,-(%sp)\n"
 	"	movea.l (%a6)+,%a1\n"
@@ -28053,6 +28296,7 @@ __asm__(
 	"	movea.l (%sp)+,%a1\n"
 	"	rts\n"
 	"	.size forth_number, .-forth_number\n"
+	"	.popsection\n"
 );
 
 /* 00019e4c */
@@ -28127,7 +28371,7 @@ __pforth undefined1 forth_0x(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_0x\n"
 	"	.type forth_0x, @function\n"
-	"	.section .text.forth_0x.19e4c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_0x.19e4c,\"ax\",@progbits\n"
 	"forth_0x:\n"
 	"	bsr.w forth_parse_word\n"
 	"	movea.l (-0x22,%a5),%a0\n"
@@ -28157,6 +28401,7 @@ __asm__(
 	".Lg_19e86:\n"
 	"	rts\n"
 	"	.size forth_0x, .-forth_0x\n"
+	"	.popsection\n"
 );
 
 /* 00019e88 */
@@ -28179,13 +28424,14 @@ __pforth void forth_execute(long *sp)
 __asm__(
 	"	.globl forth_execute\n"
 	"	.type forth_execute, @function\n"
-	"	.section .text.forth_execute.19e88,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_execute.19e88,\"ax\",@progbits\n"
 	"forth_execute:\n"
 	"	movea.l (%a6)+,%a0\n"
 	"	movea.l (%a0),%a0\n"
 	"	jsr (%a0)\n"
 	"	rts\n"
 	"	.size forth_execute, .-forth_execute\n"
+	"	.popsection\n"
 );
 
 /* 00019e90 */
@@ -28274,7 +28520,7 @@ __pforth undefined8 forth_watch(forth_user_end user,long *sp,void *dp,char *inpu
 __asm__(
 	"	.globl forth_watch\n"
 	"	.type forth_watch, @function\n"
-	"	.section .text.forth_watch.19e90,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_watch.19e90,\"ax\",@progbits\n"
 	"forth_watch:\n"
 	"	movea.l (%a6)+,%a0\n"
 	"	movea.l (%a0),%a0\n"
@@ -28297,6 +28543,7 @@ __asm__(
 	"	movem.l (0x100b28).l,%d0/%d1/%d2/%d3/%d4/%d5/%d6/%d7/%a0/%a1/%a2/%a3/%a4/%a5\n"
 	"	rts\n"
 	"	.size forth_watch, .-forth_watch\n"
+	"	.popsection\n"
 );
 
 /* 00019ed0 */
@@ -28341,7 +28588,7 @@ __pforth void forth_psos_call(forth_user_end user,long *sp,void *dp)
 __asm__(
 	"	.globl forth_psos_call\n"
 	"	.type forth_psos_call, @function\n"
-	"	.section .text.forth_psos_call.19ed0,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_psos_call.19ed0,\"ax\",@progbits\n"
 	"forth_psos_call:\n"
 	"	jsr (psos_call).l\n"
 	"	tst.b %d7\n"
@@ -28470,6 +28717,7 @@ __asm__(
 	"	.byte 0x4e\n"
 	"	.byte 0x75\n"
 	"	.size forth_psos_call, .-forth_psos_call\n"
+	"	.popsection\n"
 );
 
 /* 00019fa6 */
@@ -28538,7 +28786,7 @@ __pforth void forth_spawn(forth_user_end user,long *sp,void *dp)
 __asm__(
 	"	.globl forth_spawn\n"
 	"	.type forth_spawn, @function\n"
-	"	.section .text.forth_spawn.19fa6,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_spawn.19fa6,\"ax\",@progbits\n"
 	"forth_spawn:\n"
 	"	jsr (forth_parse_word:w,%pc)\n"
 	"	jsr (forth_find:w,%pc)\n"
@@ -28576,6 +28824,7 @@ __asm__(
 	"	movem.l (%sp)+,%a0/%a1\n"
 	"	rts\n"
 	"	.size forth_spawn, .-forth_spawn\n"
+	"	.popsection\n"
 );
 
 /* 0001a01c */
@@ -28605,7 +28854,7 @@ __pforth int forth_pack_name(forth_user_end user /* a5 */)
 __asm__(
 	"	.globl forth_pack_name\n"
 	"	.type forth_pack_name, @function\n"
-	"	.section .text.forth_pack_name.1a01c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_pack_name.1a01c,\"ax\",@progbits\n"
 	"forth_pack_name:\n"
 	"	move.l %a0,-(%sp)\n"
 	"	movea.l (-0x22,%a5),%a0\n"
@@ -28631,6 +28880,7 @@ __asm__(
 	"	movea.l (%sp)+,%a0\n"
 	"	rts\n"
 	"	.size forth_pack_name, .-forth_pack_name\n"
+	"	.popsection\n"
 );
 
 /* 0001a03c */
@@ -28653,7 +28903,7 @@ __pforth void forth_space_if_zero(void)
 __asm__(
 	"	.globl forth_space_if_zero\n"
 	"	.type forth_space_if_zero, @function\n"
-	"	.section .text.forth_space_if_zero.1a03c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_space_if_zero.1a03c,\"ax\",@progbits\n"
 	"forth_space_if_zero:\n"
 	"	bne.b .Lg_1a042\n"
 	"	move.b #0x20,%d0\n"
@@ -28665,6 +28915,7 @@ __asm__(
 	"	.byte 0x20,0x76,0x65,0x72,0x73,0x69,0x6f,0x6e,0x20,0x49 | movea.l ([0x73696f6e,A6],0x2049),A0\n"
 	"	.byte 0x44,0x3a,0x00,0xff | neg.b (0xff,PC)\n"
 	"	.size forth_space_if_zero, .-forth_space_if_zero\n"
+	"	.popsection\n"
 );
 
 /* 0001a056 */
@@ -28697,7 +28948,7 @@ __pforth void forth_ver(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_ver\n"
 	"	.type forth_ver, @function\n"
-	"	.section .text.forth_ver.1a056,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_ver.1a056,\"ax\",@progbits\n"
 	"forth_ver:\n"
 	"	move.l #0x18dc6,%d0\n"
 	"	bsr.w forth_print_string\n"
@@ -28713,6 +28964,7 @@ __asm__(
 	"	move.l (%a6)+,(-0xe,%a5)\n"
 	"	rts\n"
 	"	.size forth_ver, .-forth_ver\n"
+	"	.popsection\n"
 );
 
 /* 0001a08c */
@@ -28743,7 +28995,7 @@ __pforth void forth_ident(long *sp)
 __asm__(
 	"	.globl forth_ident\n"
 	"	.type forth_ident, @function\n"
-	"	.section .text.forth_ident.1a08c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_ident.1a08c,\"ax\",@progbits\n"
 	"forth_ident:\n"
 	"	move.l %a0,-(%sp)\n"
 	"	bsr.w forth_parse_word\n"
@@ -28756,6 +29008,7 @@ __asm__(
 	"	movea.l (%sp)+,%a0\n"
 	"	rts\n"
 	"	.size forth_ident, .-forth_ident\n"
+	"	.popsection\n"
 );
 
 /* 0001a0a0 */
@@ -28781,7 +29034,7 @@ __pforth void forth_delete(long *sp)
 __asm__(
 	"	.globl forth_delete\n"
 	"	.type forth_delete, @function\n"
-	"	.section .text.forth_delete.1a0a0,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_delete.1a0a0,\"ax\",@progbits\n"
 	"forth_delete:\n"
 	"	move.l %a0,-(%sp)\n"
 	"	movea.l (%a6)+,%a0\n"
@@ -28790,6 +29043,7 @@ __asm__(
 	"	movea.l (%sp)+,%a0\n"
 	"	rts\n"
 	"	.size forth_delete, .-forth_delete\n"
+	"	.popsection\n"
 );
 
 /* 0001a0ae */
@@ -28815,7 +29069,7 @@ __pforth void forth_suspend(long *sp)
 __asm__(
 	"	.globl forth_suspend\n"
 	"	.type forth_suspend, @function\n"
-	"	.section .text.forth_suspend.1a0ae,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_suspend.1a0ae,\"ax\",@progbits\n"
 	"forth_suspend:\n"
 	"	move.l %a0,-(%sp)\n"
 	"	movea.l (%a6)+,%a0\n"
@@ -28824,6 +29078,7 @@ __asm__(
 	"	movea.l (%sp)+,%a0\n"
 	"	rts\n"
 	"	.size forth_suspend, .-forth_suspend\n"
+	"	.popsection\n"
 );
 
 /* 0001a0bc */
@@ -28849,7 +29104,7 @@ __pforth void forth_resume(long *sp)
 __asm__(
 	"	.globl forth_resume\n"
 	"	.type forth_resume, @function\n"
-	"	.section .text.forth_resume.1a0bc,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_resume.1a0bc,\"ax\",@progbits\n"
 	"forth_resume:\n"
 	"	move.l %a0,-(%sp)\n"
 	"	movea.l (%a6)+,%a0\n"
@@ -28858,6 +29113,7 @@ __asm__(
 	"	movea.l (%sp)+,%a0\n"
 	"	rts\n"
 	"	.size forth_resume, .-forth_resume\n"
+	"	.popsection\n"
 );
 
 /* 0001a0ca */
@@ -28885,7 +29141,7 @@ __pforth void forth_priority(long *sp)
 __asm__(
 	"	.globl forth_priority\n"
 	"	.type forth_priority, @function\n"
-	"	.section .text.forth_priority.1a0ca,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_priority.1a0ca,\"ax\",@progbits\n"
 	"forth_priority:\n"
 	"	move.l %a0,-(%sp)\n"
 	"	move.l (%a6)+,%d0\n"
@@ -28897,6 +29153,7 @@ __asm__(
 	"	movea.l (%sp)+,%a0\n"
 	"	rts\n"
 	"	.size forth_priority, .-forth_priority\n"
+	"	.popsection\n"
 );
 
 /* 0001a0e2 */
@@ -28922,7 +29179,7 @@ __pforth void forth_jam_x(long *sp)
 __asm__(
 	"	.globl forth_jam_x\n"
 	"	.type forth_jam_x, @function\n"
-	"	.section .text.forth_jam_x.1a0e2,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_jam_x.1a0e2,\"ax\",@progbits\n"
 	"forth_jam_x:\n"
 	"	movem.l %a1/%a0,-(%sp)\n"
 	"	movea.l (%a6)+,%a1\n"
@@ -28932,6 +29189,7 @@ __asm__(
 	"	movem.l (%sp)+,%a0/%a1\n"
 	"	rts\n"
 	"	.size forth_jam_x, .-forth_jam_x\n"
+	"	.popsection\n"
 );
 
 /* 0001a0f8 */
@@ -28964,7 +29222,7 @@ __pforth void forth_create_x(long *sp)
 __asm__(
 	"	.globl forth_create_x\n"
 	"	.type forth_create_x, @function\n"
-	"	.section .text.forth_create_x.1a0f8,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_create_x.1a0f8,\"ax\",@progbits\n"
 	"forth_create_x:\n"
 	"	move.l %a0,-(%sp)\n"
 	"	bsr.w forth_parse_word\n"
@@ -28980,6 +29238,7 @@ __asm__(
 	"	bsr.w forth_compile_constant\n"
 	"	rts\n"
 	"	.size forth_create_x, .-forth_create_x\n"
+	"	.popsection\n"
 );
 
 /* 0001a11e */
@@ -29005,7 +29264,7 @@ __pforth void forth_delete_x(long *sp)
 __asm__(
 	"	.globl forth_delete_x\n"
 	"	.type forth_delete_x, @function\n"
-	"	.section .text.forth_delete_x.1a11e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_delete_x.1a11e,\"ax\",@progbits\n"
 	"forth_delete_x:\n"
 	"	move.l %a0,-(%sp)\n"
 	"	movea.l (%a6)+,%a0\n"
@@ -29014,6 +29273,7 @@ __asm__(
 	"	movea.l (%sp)+,%a0\n"
 	"	rts\n"
 	"	.size forth_delete_x, .-forth_delete_x\n"
+	"	.popsection\n"
 );
 
 /* 0001a12e */
@@ -29039,7 +29299,7 @@ __pforth void forth_send_x(long *sp)
 __asm__(
 	"	.globl forth_send_x\n"
 	"	.type forth_send_x, @function\n"
-	"	.section .text.forth_send_x.1a12e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_send_x.1a12e,\"ax\",@progbits\n"
 	"forth_send_x:\n"
 	"	movem.l %a1/%a0,-(%sp)\n"
 	"	movea.l (%a6)+,%a1\n"
@@ -29049,6 +29309,7 @@ __asm__(
 	"	movem.l (%sp)+,%a0/%a1\n"
 	"	rts\n"
 	"	.size forth_send_x, .-forth_send_x\n"
+	"	.popsection\n"
 );
 
 /* 0001a144 */
@@ -29074,7 +29335,7 @@ __pforth void forth_request_x(long *sp)
 __asm__(
 	"	.globl forth_request_x\n"
 	"	.type forth_request_x, @function\n"
-	"	.section .text.forth_request_x.1a144,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_request_x.1a144,\"ax\",@progbits\n"
 	"forth_request_x:\n"
 	"	movem.l %a1/%a0,-(%sp)\n"
 	"	move.l (%a6)+,%d0\n"
@@ -29086,6 +29347,7 @@ __asm__(
 	"	movem.l (%sp)+,%a0/%a1\n"
 	"	rts\n"
 	"	.size forth_request_x, .-forth_request_x\n"
+	"	.popsection\n"
 );
 
 /* 0001a15e */
@@ -29111,7 +29373,7 @@ __pforth void forth_signal_v(long *sp)
 __asm__(
 	"	.globl forth_signal_v\n"
 	"	.type forth_signal_v, @function\n"
-	"	.section .text.forth_signal_v.1a15e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_signal_v.1a15e,\"ax\",@progbits\n"
 	"forth_signal_v:\n"
 	"	movem.l %a0,-(%sp)\n"
 	"	move.l (%a6)+,%d1\n"
@@ -29122,6 +29384,7 @@ __asm__(
 	"	movem.l (%sp)+,%a0\n"
 	"	rts\n"
 	"	.size forth_signal_v, .-forth_signal_v\n"
+	"	.popsection\n"
 );
 
 /* 0001a176 */
@@ -29149,7 +29412,7 @@ __pforth void forth_wait_v(long *sp)
 __asm__(
 	"	.globl forth_wait_v\n"
 	"	.type forth_wait_v, @function\n"
-	"	.section .text.forth_wait_v.1a176,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_wait_v.1a176,\"ax\",@progbits\n"
 	"forth_wait_v:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	move.l (%a6)+,%d2\n"
@@ -29160,6 +29423,7 @@ __asm__(
 	"	move.l %d1,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_wait_v, .-forth_wait_v\n"
+	"	.popsection\n"
 );
 
 /* 0001a18c */
@@ -29184,7 +29448,7 @@ __pforth void forth_get_v(long *sp)
 __asm__(
 	"	.globl forth_get_v\n"
 	"	.type forth_get_v, @function\n"
-	"	.section .text.forth_get_v.1a18c,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_get_v.1a18c,\"ax\",@progbits\n"
 	"forth_get_v:\n"
 	"	move.l (%a6)+,%d2\n"
 	"	move.l (%a6)+,%d1\n"
@@ -29194,6 +29458,7 @@ __asm__(
 	"	clr.w -(%a6)\n"
 	"	rts\n"
 	"	.size forth_get_v, .-forth_get_v\n"
+	"	.popsection\n"
 );
 
 /* 0001a19a */
@@ -29216,13 +29481,14 @@ __pforth long forth_pause(long *sp)
 __asm__(
 	"	.globl forth_pause\n"
 	"	.type forth_pause, @function\n"
-	"	.section .text.forth_pause.1a19a,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_pause.1a19a,\"ax\",@progbits\n"
 	"forth_pause:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	moveq #0x1c,%d7\n"
 	"	trap #0x3\n"
 	"	rts\n"
 	"	.size forth_pause, .-forth_pause\n"
+	"	.popsection\n"
 );
 
 /* 0001a1a2 */
@@ -29246,7 +29512,7 @@ __pforth void forth_mode(long *sp)
 __asm__(
 	"	.globl forth_mode\n"
 	"	.type forth_mode, @function\n"
-	"	.section .text.forth_mode.1a1a2,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_mode.1a1a2,\"ax\",@progbits\n"
 	"forth_mode:\n"
 	"	move.l (%a6)+,%d1\n"
 	"	move.l (%a6)+,%d0\n"
@@ -29256,6 +29522,7 @@ __asm__(
 	"	move.l %d0,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_mode, .-forth_mode\n"
+	"	.popsection\n"
 );
 
 /* 0001a1b4 */
@@ -29315,7 +29582,7 @@ __pforth void forth_psos_io_call(long *sp)
 __asm__(
 	"	.globl forth_psos_io_call\n"
 	"	.type forth_psos_io_call, @function\n"
-	"	.section .text.forth_psos_io_call.1a1b4,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_psos_io_call.1a1b4,\"ax\",@progbits\n"
 	"forth_psos_io_call:\n"
 	"	movem.l %d7/%d0,-(%a6)\n"
 	"	trap #0x4\n"
@@ -29341,6 +29608,7 @@ __asm__(
 	"	move.l #0x18ddf,%d0\n"
 	"	bra.w forth_parse_number-0xa0\n"
 	"	.size forth_psos_io_call, .-forth_psos_io_call\n"
+	"	.popsection\n"
 );
 
 /* 0001a21e */
@@ -29363,7 +29631,7 @@ __pforth void forth_dev_init(long *sp)
 __asm__(
 	"	.globl forth_dev_init\n"
 	"	.type forth_dev_init, @function\n"
-	"	.section .text.forth_dev_init.1a21e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_dev_init.1a21e,\"ax\",@progbits\n"
 	"forth_dev_init:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	moveq #0x0,%d7\n"
@@ -29372,6 +29640,7 @@ __asm__(
 	"	.byte 0\n"
 	"	rts\n"
 	"	.size forth_dev_init, .-forth_dev_init\n"
+	"	.popsection\n"
 );
 
 /* 0001a226 */
@@ -29394,7 +29663,7 @@ __pforth void forth_dev_open(long *sp)
 __asm__(
 	"	.globl forth_dev_open\n"
 	"	.type forth_dev_open, @function\n"
-	"	.section .text.forth_dev_open.1a226,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_dev_open.1a226,\"ax\",@progbits\n"
 	"forth_dev_open:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	moveq #0x1,%d7\n"
@@ -29403,6 +29672,7 @@ __asm__(
 	"	.byte 0\n"
 	"	rts\n"
 	"	.size forth_dev_open, .-forth_dev_open\n"
+	"	.popsection\n"
 );
 
 /* 0001a22e */
@@ -29425,7 +29695,7 @@ __pforth void forth_dev_close(long *sp)
 __asm__(
 	"	.globl forth_dev_close\n"
 	"	.type forth_dev_close, @function\n"
-	"	.section .text.forth_dev_close.1a22e,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_dev_close.1a22e,\"ax\",@progbits\n"
 	"forth_dev_close:\n"
 	"	move.l (%a6)+,%d0\n"
 	"	moveq #0x2,%d7\n"
@@ -29434,6 +29704,7 @@ __asm__(
 	"	.byte 0\n"
 	"	rts\n"
 	"	.size forth_dev_close, .-forth_dev_close\n"
+	"	.popsection\n"
 );
 
 /* 0001a236 */
@@ -29460,7 +29731,7 @@ __pforth void forth_dev_read(long *sp)
 __asm__(
 	"	.globl forth_dev_read\n"
 	"	.type forth_dev_read, @function\n"
-	"	.section .text.forth_dev_read.1a236,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_dev_read.1a236,\"ax\",@progbits\n"
 	"forth_dev_read:\n"
 	"	movem.l %a1,-(%sp)\n"
 	"	move.l (%a6)+,%d2\n"
@@ -29472,6 +29743,7 @@ __asm__(
 	"	movem.l (%sp)+,%a1\n"
 	"	rts\n"
 	"	.size forth_dev_read, .-forth_dev_read\n"
+	"	.popsection\n"
 );
 
 /* 0001a250 */
@@ -29498,7 +29770,7 @@ __pforth void forth_dev_write(long *sp)
 __asm__(
 	"	.globl forth_dev_write\n"
 	"	.type forth_dev_write, @function\n"
-	"	.section .text.forth_dev_write.1a250,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_dev_write.1a250,\"ax\",@progbits\n"
 	"forth_dev_write:\n"
 	"	movem.l %a1/%a0,-(%sp)\n"
 	"	move.l (%a6)+,%d2\n"
@@ -29510,6 +29782,7 @@ __asm__(
 	"	movem.l (%sp)+,%a0/%a1\n"
 	"	rts\n"
 	"	.size forth_dev_write, .-forth_dev_write\n"
+	"	.popsection\n"
 );
 
 /* 0001a26a */
@@ -29532,7 +29805,7 @@ __pforth void forth_dev_ctrl(long *sp)
 __asm__(
 	"	.globl forth_dev_ctrl\n"
 	"	.type forth_dev_ctrl, @function\n"
-	"	.section .text.forth_dev_ctrl.1a26a,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_dev_ctrl.1a26a,\"ax\",@progbits\n"
 	"forth_dev_ctrl:\n"
 	"	move.l (%a6)+,%d2\n"
 	"	move.l (%a6)+,%d0\n"
@@ -29541,6 +29814,7 @@ __asm__(
 	"	bsr.w forth_psos_io_call\n"
 	"	rts\n"
 	"	.size forth_dev_ctrl, .-forth_dev_ctrl\n"
+	"	.popsection\n"
 );
 
 /* 0001a278 */
@@ -29569,7 +29843,7 @@ __pforth void forth_store_iodev(forth_user_end user,long *sp)
 __asm__(
 	"	.globl forth_store_iodev\n"
 	"	.type forth_store_iodev, @function\n"
-	"	.section .text.forth_store_iodev.1a278,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_store_iodev.1a278,\"ax\",@progbits\n"
 	"forth_store_iodev:\n"
 	"	move.w (-0x28,%a5),%d0\n"
 	"	moveq #0x2,%d7\n"
@@ -29584,6 +29858,7 @@ __asm__(
 	"	move.w %d0,(-0x28,%a5)\n"
 	"	rts\n"
 	"	.size forth_store_iodev, .-forth_store_iodev\n"
+	"	.popsection\n"
 );
 
 /* 0001ad20 */
@@ -29606,11 +29881,12 @@ __pforth void forth_user(long *sp)
 __asm__(
 	"	.globl forth_user\n"
 	"	.type forth_user, @function\n"
-	"	.section .text.forth_user.1ad20,\"ax\",@progbits\n"
+	"	.pushsection .text.forth_user.1ad20,\"ax\",@progbits\n"
 	"forth_user:\n"
 	"	move.l #0x1ad0e,-(%a6)\n"
 	"	rts\n"
 	"	.size forth_user, .-forth_user\n"
+	"	.popsection\n"
 );
 
 /* 0001ad28 */
@@ -29721,13 +29997,14 @@ __regcall void pforth_link_word(void *word /* a4 */)
 __asm__(
 	"	.globl pforth_link_word\n"
 	"	.type pforth_link_word, @function\n"
-	"	.section .text.pforth_link_word.1ae36,\"ax\",@progbits\n"
+	"	.pushsection .text.pforth_link_word.1ae36,\"ax\",@progbits\n"
 	"pforth_link_word:\n"
 	"	move.l %a4,%d0\n"
 	"	move.l (__ghidra_1009ee).l,(%a4)+\n"
 	"	move.l %d0,(__ghidra_1009ee).l\n"
 	"	rts\n"
 	"	.size pforth_link_word, .-pforth_link_word\n"
+	"	.popsection\n"
 );
 
 /* 0001ae46 */
@@ -29790,11 +30067,12 @@ __regcall int string_device_open(void)
 __asm__(
 	"	.globl string_device_open\n"
 	"	.type string_device_open, @function\n"
-	"	.section .text.string_device_open.1af80,\"ax\",@progbits\n"
+	"	.pushsection .text.string_device_open.1af80,\"ax\",@progbits\n"
 	"string_device_open:\n"
 	"	moveq #0x0,%d7\n"
 	"	rts\n"
 	"	.size string_device_open, .-string_device_open\n"
+	"	.popsection\n"
 );
 
 /* 0001af84 */
@@ -29818,12 +30096,13 @@ __regcall int string_device_init(void)
 __asm__(
 	"	.globl string_device_init\n"
 	"	.type string_device_init, @function\n"
-	"	.section .text.string_device_init.1af84,\"ax\",@progbits\n"
+	"	.pushsection .text.string_device_init.1af84,\"ax\",@progbits\n"
 	"string_device_init:\n"
 	"	moveq #0x0,%d7\n"
 	"	move.l %d7,(__ghidra_100ba8).l\n"
 	"	rts\n"
 	"	.size string_device_init, .-string_device_init\n"
+	"	.popsection\n"
 );
 
 /* 0001af8e */
@@ -29848,12 +30127,13 @@ __regcall int string_device_control(char *string /* d2 */)
 __asm__(
 	"	.globl string_device_control\n"
 	"	.type string_device_control, @function\n"
-	"	.section .text.string_device_control.1af8e,\"ax\",@progbits\n"
+	"	.pushsection .text.string_device_control.1af8e,\"ax\",@progbits\n"
 	"string_device_control:\n"
 	"	move.l %d2,(__ghidra_100ba8).l\n"
 	"	moveq #0x0,%d7\n"
 	"	rts\n"
 	"	.size string_device_control, .-string_device_control\n"
+	"	.popsection\n"
 );
 
 /* 0001af98 */
@@ -29904,7 +30184,7 @@ __regcall void console_read_from_string(void)
 __asm__(
 	"	.globl console_read_from_string\n"
 	"	.type console_read_from_string, @function\n"
-	"	.section .text.console_read_from_string.1af98,\"ax\",@progbits\n"
+	"	.pushsection .text.console_read_from_string.1af98,\"ax\",@progbits\n"
 	"console_read_from_string:\n"
 	"	movem.l %a0/%d1,-(%sp)\n"
 	"	move.l (__ghidra_100ba8).l,%d1\n"
@@ -29929,6 +30209,7 @@ __asm__(
 	"	jsr (psos_call).l\n"
 	"	bra.b .Lg_1afc0\n"
 	"	.size console_read_from_string, .-console_read_from_string\n"
+	"	.popsection\n"
 );
 
 /* 0001afd6 */
@@ -32203,7 +32484,7 @@ __regcall void drtb_unlock(char write /* d0 */)
 __asm__(
 	"	.globl drtb_unlock\n"
 	"	.type drtb_unlock, @function\n"
-	"	.section .text.drtb_unlock.1d906,\"ax\",@progbits\n"
+	"	.pushsection .text.drtb_unlock.1d906,\"ax\",@progbits\n"
 	"drtb_unlock:\n"
 	"	move.l %a1,-(%sp)\n"
 	"	lea (0x10310a).l,%a1\n"
@@ -32215,6 +32496,7 @@ __asm__(
 	"	movea.l (%sp)+,%a1\n"
 	"	rts\n"
 	"	.size drtb_unlock, .-drtb_unlock\n"
+	"	.popsection\n"
 );
 
 /* 0001d922 */
@@ -32241,7 +32523,7 @@ __regcall void drtb_lock(char write /* d0 */)
 __asm__(
 	"	.globl drtb_lock\n"
 	"	.type drtb_lock, @function\n"
-	"	.section .text.drtb_lock.1d922,\"ax\",@progbits\n"
+	"	.pushsection .text.drtb_lock.1d922,\"ax\",@progbits\n"
 	"drtb_lock:\n"
 	"	move.l %a1,-(%sp)\n"
 	"	lea (0x10310a).l,%a1\n"
@@ -32253,6 +32535,7 @@ __asm__(
 	"	movea.l (%sp)+,%a1\n"
 	"	rts\n"
 	"	.size drtb_lock, .-drtb_lock\n"
+	"	.popsection\n"
 );
 
 /* 0001d93e */
@@ -33318,7 +33601,7 @@ __exception void primary_user_67(void)
 __asm__(
 	"	.globl primary_user_67\n"
 	"	.type primary_user_67, @function\n"
-	"	.section .text.primary_user_67.1eaf4,\"ax\",@progbits\n"
+	"	.pushsection .text.primary_user_67.1eaf4,\"ax\",@progbits\n"
 	"primary_user_67:\n"
 	"	movem.l %a6/%a5/%a1/%a0/%d1/%d0,-(%sp)\n"
 	"	move.l %a2,-(%sp)\n"
@@ -33381,6 +33664,7 @@ __asm__(
 	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5/%a6\n"
 	"	trap #0x5\n"
 	"	.size primary_user_67, .-primary_user_67\n"
+	"	.popsection\n"
 );
 
 /* 0001ebbc */
@@ -34348,7 +34632,7 @@ __exception void primary_user_64(void)
 __asm__(
 	"	.globl primary_user_64\n"
 	"	.type primary_user_64, @function\n"
-	"	.section .text.primary_user_64.1f988,\"ax\",@progbits\n"
+	"	.pushsection .text.primary_user_64.1f988,\"ax\",@progbits\n"
 	"primary_user_64:\n"
 	"	link.w %a6,#-0x2\n"
 	"	movem.l %a5/%a1/%a0/%d1/%d0,-(%sp)\n"
@@ -34562,6 +34846,7 @@ __asm__(
 	"	unlk %a6\n"
 	"	trap #0x5\n"
 	"	.size primary_user_64, .-primary_user_64\n"
+	"	.popsection\n"
 );
 
 /* 0001fc20 */
@@ -35280,11 +35565,12 @@ __regcall int qspi_control(void)
 __asm__(
 	"	.globl qspi_control\n"
 	"	.type qspi_control, @function\n"
-	"	.section .text.qspi_control.208fa,\"ax\",@progbits\n"
+	"	.pushsection .text.qspi_control.208fa,\"ax\",@progbits\n"
 	"qspi_control:\n"
 	"	moveq #0x0,%d7\n"
 	"	rts\n"
 	"	.size qspi_control, .-qspi_control\n"
+	"	.popsection\n"
 );
 
 /* 000208fe */
@@ -35306,11 +35592,12 @@ __regcall int qspi_open(void)
 __asm__(
 	"	.globl qspi_open\n"
 	"	.type qspi_open, @function\n"
-	"	.section .text.qspi_open.208fe,\"ax\",@progbits\n"
+	"	.pushsection .text.qspi_open.208fe,\"ax\",@progbits\n"
 	"qspi_open:\n"
 	"	moveq #0x0,%d7\n"
 	"	rts\n"
 	"	.size qspi_open, .-qspi_open\n"
+	"	.popsection\n"
 );
 
 /* 00020902 */
@@ -35415,7 +35702,7 @@ __exception void primary_user_65(void)
 __asm__(
 	"	.globl primary_user_65\n"
 	"	.type primary_user_65, @function\n"
-	"	.section .text.primary_user_65.20a10,\"ax\",@progbits\n"
+	"	.pushsection .text.primary_user_65.20a10,\"ax\",@progbits\n"
 	"primary_user_65:\n"
 	"	link.w %a6,#-0x2\n"
 	"	movem.l %a5/%a1/%a0/%d1/%d0,-(%sp)\n"
@@ -35445,6 +35732,7 @@ __asm__(
 	"	unlk %a6\n"
 	"	trap #0x5\n"
 	"	.size primary_user_65, .-primary_user_65\n"
+	"	.popsection\n"
 );
 
 /* 00020a62 */
@@ -35476,7 +35764,7 @@ __regcall void qspi_transfer_raw(char device /* d0 */,void *buffers /* a1 */,sho
 __asm__(
 	"	.globl qspi_transfer_raw\n"
 	"	.type qspi_transfer_raw, @function\n"
-	"	.section .text.qspi_transfer_raw.20a62,\"ax\",@progbits\n"
+	"	.pushsection .text.qspi_transfer_raw.20a62,\"ax\",@progbits\n"
 	"qspi_transfer_raw:\n"
 	"	movem.l %a1/%d0,-(%sp)\n"
 	"	jsr (qspi_acquire:w,%pc)\n"
@@ -35501,6 +35789,7 @@ __asm__(
 	"	bne.b .Lg_20aa6\n"
 	"	rts\n"
 	"	.size qspi_transfer_raw, .-qspi_transfer_raw\n"
+	"	.popsection\n"
 );
 
 /* 00020ab0 */
@@ -35528,7 +35817,7 @@ __regcall void qspi_device_write(char device /* d0 */,void *buffers /* a0 */,sho
 __asm__(
 	"	.globl qspi_device_write\n"
 	"	.type qspi_device_write, @function\n"
-	"	.section .text.qspi_device_write.20ab0,\"ax\",@progbits\n"
+	"	.pushsection .text.qspi_device_write.20ab0,\"ax\",@progbits\n"
 	"qspi_device_write:\n"
 	"	clr.b -(%sp)\n"
 	"	move.w %d2,-(%sp)\n"
@@ -35540,6 +35829,7 @@ __asm__(
 	"	lea (0xa,%sp),%sp\n"
 	"	rts\n"
 	"	.size qspi_device_write, .-qspi_device_write\n"
+	"	.popsection\n"
 );
 
 /* 00020acc */
@@ -37311,7 +37601,7 @@ LAB_00024d6c:
 __asm__(
 	"	.globl scpi_round_decimal\n"
 	"	.type scpi_round_decimal, @function\n"
-	"	.section .text.scpi_round_decimal.24d42,\"ax\",@progbits\n"
+	"	.pushsection .text.scpi_round_decimal.24d42,\"ax\",@progbits\n"
 	"scpi_round_decimal:\n"
 	"	addq.l #0x2,%a2\n"
 	"	lea (0x0,%a2,%d0.w*0x1),%a1\n"
@@ -37343,6 +37633,7 @@ __asm__(
 	".Lg_24d86:\n"
 	"	rts\n"
 	"	.size scpi_round_decimal, .-scpi_round_decimal\n"
+	"	.popsection\n"
 );
 
 /* 00024d88 */
@@ -37412,7 +37703,7 @@ __regcall void scpi_decimal_to_text_unused(char *record /* a0 */,char *text /* a
 __asm__(
 	"	.globl scpi_decimal_to_text_unused\n"
 	"	.type scpi_decimal_to_text_unused, @function\n"
-	"	.section .text.scpi_decimal_to_text_unused.24d88,\"ax\",@progbits\n"
+	"	.pushsection .text.scpi_decimal_to_text_unused.24d88,\"ax\",@progbits\n"
 	"scpi_decimal_to_text_unused:\n"
 	"	lea (0x12,%a0),%a2\n"
 	"	tst.w (%a0)+\n"
@@ -37463,6 +37754,7 @@ __asm__(
 	"	clr.b (%a1)\n"
 	"	rts\n"
 	"	.size scpi_decimal_to_text_unused, .-scpi_decimal_to_text_unused\n"
+	"	.popsection\n"
 );
 
 /* 00024e18 */
@@ -37636,7 +37928,7 @@ LAB_00024e22:
 __asm__(
 	"	.globl scpi_double_to_decimal\n"
 	"	.type scpi_double_to_decimal, @function\n"
-	"	.section .text.scpi_double_to_decimal.24e0e,\"ax\",@progbits\n"
+	"	.pushsection .text.scpi_double_to_decimal.24e0e,\"ax\",@progbits\n"
 	".Lg_24e0e:\n"
 	"	move.w #-0x8,%d0\n"
 	"	ori #0xff,%ccr\n"
@@ -37823,7 +38115,8 @@ __asm__(
 	"	andi #0x0,%ccr\n"
 	"	rts\n"
 	"	.size scpi_double_to_decimal, .-scpi_double_to_decimal\n"
-	"	.section .text.scpi_double_to_decimal.25016,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.scpi_double_to_decimal.25016,\"ax\",@progbits\n"
 	"	.byte 0x00,0x04\n"
 	"	.byte 0x00,0x03\n"
 	"	.byte 0x00,0x02\n"
@@ -37840,6 +38133,7 @@ __asm__(
 	"	.byte 0x00,0x00\n"
 	"	.byte 0x00,0x00\n"
 	"	.byte 0x00,0x00\n"
+	"	.popsection\n"
 );
 
 /* 0002507a */
@@ -38071,7 +38365,7 @@ LAB_000251da:
 __asm__(
 	"	.globl scpi_bcd_to_double\n"
 	"	.type scpi_bcd_to_double, @function\n"
-	"	.section .text.scpi_bcd_to_double.24fb4,\"ax\",@progbits\n"
+	"	.pushsection .text.scpi_bcd_to_double.24fb4,\"ax\",@progbits\n"
 	".Lg_24fb4:\n"
 	"	mulu.w #0x2710,%d0\n"
 	"	move.b (%a0)+,%d7\n"
@@ -38354,6 +38648,7 @@ __asm__(
 	"	add.l %d7,%d0\n"
 	"	lea (0x256ae).l,%a1\n"
 	"	.size scpi_bcd_to_double, .-scpi_bcd_to_double\n"
+	"	.popsection\n"
 );
 
 /* 000251e4 */
@@ -38425,7 +38720,7 @@ __regcall double scpi_scale_by_power_of_ten(double value /* d0 */,short *exponen
 __asm__(
 	"	.globl scpi_scale_by_power_of_ten\n"
 	"	.type scpi_scale_by_power_of_ten, @function\n"
-	"	.section .text.scpi_scale_by_power_of_ten.251e4,\"ax\",@progbits\n"
+	"	.pushsection .text.scpi_scale_by_power_of_ten.251e4,\"ax\",@progbits\n"
 	"scpi_scale_by_power_of_ten:\n"
 	"	tst.w (-0xa,%a0)\n"
 	"	beq.b .Lg_251ee\n"
@@ -38476,6 +38771,7 @@ __asm__(
 	"	ori #0xff,%ccr\n"
 	"	rts\n"
 	"	.size scpi_scale_by_power_of_ten, .-scpi_scale_by_power_of_ten\n"
+	"	.popsection\n"
 );
 
 /* 000252bc */
@@ -38640,7 +38936,7 @@ LAB_00025410:
 __asm__(
 	"	.globl scpi_double_multiply\n"
 	"	.type scpi_double_multiply, @function\n"
-	"	.section .text.scpi_double_multiply.2525e,\"ax\",@progbits\n"
+	"	.pushsection .text.scpi_double_multiply.2525e,\"ax\",@progbits\n"
 	".Lg_2525e:\n"
 	"	moveq #-0x2,%d2\n"
 	"	ori #0xff,%ccr\n"
@@ -38885,6 +39181,7 @@ __asm__(
 	"	suba.w #0x10,%a0\n"
 	"	bra.b .Lg_25410\n"
 	"	.size scpi_double_multiply, .-scpi_double_multiply\n"
+	"	.popsection\n"
 );
 
 /* 00025468 */
@@ -38956,7 +39253,7 @@ __naked undefined8 scpi_double_multiply_short(void)
 __asm__(
 	"	.globl scpi_double_multiply_short\n"
 	"	.type scpi_double_multiply_short, @function\n"
-	"	.section .text.scpi_double_multiply_short.25468,\"ax\",@progbits\n"
+	"	.pushsection .text.scpi_double_multiply_short.25468,\"ax\",@progbits\n"
 	"scpi_double_multiply_short:\n"
 	"	swap %d0\n"
 	"	lsr.l #0x5,%d0\n"
@@ -38997,6 +39294,7 @@ __asm__(
 	"	bcc.w scpi_double_multiply+0x154\n"
 	"	bra.w scpi_double_multiply+0x138\n"
 	"	.size scpi_double_multiply_short, .-scpi_double_multiply_short\n"
+	"	.popsection\n"
 );
 
 /* 000254ba */
@@ -39063,7 +39361,7 @@ __regcall int scpi_number_to_bcd(char *number /* a0 */,short scale /* d0 */,char
 __asm__(
 	"	.globl scpi_number_to_bcd\n"
 	"	.type scpi_number_to_bcd, @function\n"
-	"	.section .text.scpi_number_to_bcd.254fe,\"ax\",@progbits\n"
+	"	.pushsection .text.scpi_number_to_bcd.254fe,\"ax\",@progbits\n"
 	"scpi_number_to_bcd:\n"
 	"	ext.l %d0\n"
 	"	move.w (0x12,%a0),%d1\n"
@@ -39089,6 +39387,7 @@ __asm__(
 	"	moveq #-0x1,%d0\n"
 	"	rts\n"
 	"	.size scpi_number_to_bcd, .-scpi_number_to_bcd\n"
+	"	.popsection\n"
 );
 
 /* 0002553a */
@@ -66061,7 +66360,7 @@ __exception void primary_trap_1(void)
 __asm__(
 	"	.globl primary_trap_1\n"
 	"	.type primary_trap_1, @function\n"
-	"	.section .text.primary_trap_1.510e8,\"ax\",@progbits\n"
+	"	.pushsection .text.primary_trap_1.510e8,\"ax\",@progbits\n"
 	"primary_trap_1:\n"
 	"	tst.l %d0\n"
 	"	bne.l .Lg_510fa\n"
@@ -66072,6 +66371,7 @@ __asm__(
 	".Lg_510fe:\n"
 	"	rte\n"
 	"	.size primary_trap_1, .-primary_trap_1\n"
+	"	.popsection\n"
 );
 
 /* 00051100 */
@@ -66178,13 +66478,14 @@ __regcall void float_subtract_in_place(float *x /* a0 */,float y /* d1 */)
 __asm__(
 	"	.globl float_subtract_in_place\n"
 	"	.type float_subtract_in_place, @function\n"
-	"	.section .text.float_subtract_in_place.5d080,\"ax\",@progbits\n"
+	"	.pushsection .text.float_subtract_in_place.5d080,\"ax\",@progbits\n"
 	"float_subtract_in_place:\n"
 	"	move.l (%a0),%d0\n"
 	"	bsr.w float_subtract\n"
 	"	move.l %d0,(%a0)\n"
 	"	rts\n"
 	"	.size float_subtract_in_place, .-float_subtract_in_place\n"
+	"	.popsection\n"
 );
 
 /* 0005d08a */
@@ -66211,13 +66512,14 @@ __regcall void float_add_in_place(float *x /* a0 */,float y /* d1 */)
 __asm__(
 	"	.globl float_add_in_place\n"
 	"	.type float_add_in_place, @function\n"
-	"	.section .text.float_add_in_place.5d08a,\"ax\",@progbits\n"
+	"	.pushsection .text.float_add_in_place.5d08a,\"ax\",@progbits\n"
 	"float_add_in_place:\n"
 	"	move.l (%a0),%d0\n"
 	"	bsr.w float_add\n"
 	"	move.l %d0,(%a0)\n"
 	"	rts\n"
 	"	.size float_add_in_place, .-float_add_in_place\n"
+	"	.popsection\n"
 );
 
 /* 0005d094 */
@@ -66385,10 +66687,11 @@ LAB_0005d1fe:
 __asm__(
 	"	.globl float_subtract_reversed\n"
 	"	.type float_subtract_reversed, @function\n"
-	"	.section .text.float_subtract_reversed.5d094,\"ax\",@progbits\n"
+	"	.pushsection .text.float_subtract_reversed.5d094,\"ax\",@progbits\n"
 	"float_subtract_reversed:\n"
 	"	exg %d0,%d1\n"
 	"	.size float_subtract_reversed, .-float_subtract_reversed\n"
+	"	.popsection\n"
 );
 
 /* 0005d096 */
@@ -66556,7 +66859,7 @@ LAB_0005d1fe:
 __asm__(
 	"	.globl float_subtract\n"
 	"	.type float_subtract, @function\n"
-	"	.section .text.float_subtract.5d01c,\"ax\",@progbits\n"
+	"	.pushsection .text.float_subtract.5d01c,\"ax\",@progbits\n"
 	".Lg_5d01c:\n"
 	"	tst.l %d3\n"
 	"	beq.w float_add+0x134\n"
@@ -66594,7 +66897,8 @@ __asm__(
 	"	jsr (float_raise).l\n"
 	"	addq.l #0x8,%sp\n"
 	"	bra.w float_add+0x13e\n"
-	"	.section .text.float_subtract.5d096,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.float_subtract.5d096,\"ax\",@progbits\n"
 	"float_subtract:\n"
 	"	movem.l %a3/%d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
 	"	move.l %d0,%d2\n"
@@ -66612,6 +66916,7 @@ __asm__(
 	"	moveq #0x0,%d0\n"
 	"	bra.w float_add+0x13e\n"
 	"	.size float_subtract, .-float_subtract\n"
+	"	.popsection\n"
 );
 
 /* 0005d0ba */
@@ -66775,7 +67080,7 @@ LAB_0005d1fe:
 __asm__(
 	"	.globl float_add\n"
 	"	.type float_add, @function\n"
-	"	.section .text.float_add.5d0ba,\"ax\",@progbits\n"
+	"	.pushsection .text.float_add.5d0ba,\"ax\",@progbits\n"
 	"float_add:\n"
 	"	movem.l %a3/%d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
 	"	move.l %d0,%d2\n"
@@ -66944,6 +67249,7 @@ __asm__(
 	"	addq.l #0x4,%sp\n"
 	"	bra.b .Lg_5d226\n"
 	"	.size float_add, .-float_add\n"
+	"	.popsection\n"
 );
 
 /* 0005d2e2 */
@@ -66969,7 +67275,7 @@ __regcall void double_subtract_in_place(double *x /* a0 */,double y /* d0 */)
 __asm__(
 	"	.globl double_subtract_in_place\n"
 	"	.type double_subtract_in_place, @function\n"
-	"	.section .text.double_subtract_in_place.5d2e2,\"ax\",@progbits\n"
+	"	.pushsection .text.double_subtract_in_place.5d2e2,\"ax\",@progbits\n"
 	"double_subtract_in_place:\n"
 	"	move.l %a0,-(%sp)\n"
 	"	movem.l (%a0),%a0/%a1\n"
@@ -66982,6 +67288,7 @@ __asm__(
 	"	.byte 0x22\n"
 	"	.byte 0x18\n"
 	"	.size double_subtract_in_place, .-double_subtract_in_place\n"
+	"	.popsection\n"
 );
 
 /* 0005d2f8 */
@@ -67007,7 +67314,7 @@ __regcall double double_subtract_pointer(double a /* d0 */,double *b /* a1 */)
 __asm__(
 	"	.globl double_subtract_pointer\n"
 	"	.type double_subtract_pointer, @function\n"
-	"	.section .text.double_subtract_pointer.5d2f8,\"ax\",@progbits\n"
+	"	.pushsection .text.double_subtract_pointer.5d2f8,\"ax\",@progbits\n"
 	"double_subtract_pointer:\n"
 	"	movea.l (%a1)+,%a0\n"
 	"	movea.l (%a1)+,%a1\n"
@@ -67017,6 +67324,7 @@ __asm__(
 	"	.byte 0x4e\n"
 	"	.byte 0x71\n"
 	"	.size double_subtract_pointer, .-double_subtract_pointer\n"
+	"	.popsection\n"
 );
 
 /* 0005d306 */
@@ -67333,11 +67641,12 @@ LAB_0005d63e:
 __asm__(
 	"	.globl double_subtract_reversed_pointers\n"
 	"	.type double_subtract_reversed_pointers, @function\n"
-	"	.section .text.double_subtract_reversed_pointers.5d306,\"ax\",@progbits\n"
+	"	.pushsection .text.double_subtract_reversed_pointers.5d306,\"ax\",@progbits\n"
 	"double_subtract_reversed_pointers:\n"
 	"	move.l (%a0)+,%d0\n"
 	"	move.l (%a0)+,%d1\n"
 	"	.size double_subtract_reversed_pointers, .-double_subtract_reversed_pointers\n"
+	"	.popsection\n"
 );
 
 /* 0005d30a */
@@ -67654,11 +67963,12 @@ LAB_0005d63e:
 __asm__(
 	"	.globl double_subtract_reversed_pointer\n"
 	"	.type double_subtract_reversed_pointer, @function\n"
-	"	.section .text.double_subtract_reversed_pointer.5d30a,\"ax\",@progbits\n"
+	"	.pushsection .text.double_subtract_reversed_pointer.5d30a,\"ax\",@progbits\n"
 	"double_subtract_reversed_pointer:\n"
 	"	movea.l (%a1)+,%a0\n"
 	"	movea.l (%a1)+,%a1\n"
 	"	.size double_subtract_reversed_pointer, .-double_subtract_reversed_pointer\n"
+	"	.popsection\n"
 );
 
 /* 0005d30e */
@@ -67973,7 +68283,7 @@ LAB_0005d2c6:
 __asm__(
 	"	.globl double_subtract_reversed\n"
 	"	.type double_subtract_reversed, @function\n"
-	"	.section .text.double_subtract_reversed.5d250,\"ax\",@progbits\n"
+	"	.pushsection .text.double_subtract_reversed.5d250,\"ax\",@progbits\n"
 	".Lg_5d250:\n"
 	"	tst.l %d2\n"
 	"	bne.b .Lg_5d258\n"
@@ -68040,15 +68350,18 @@ __asm__(
 	"	tst.l %d3\n"
 	"	bne.b .Lg_5d2bc\n"
 	"	bra.b .Lg_5d292\n"
-	"	.section .text.double_subtract_reversed.5d2f4,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.double_subtract_reversed.5d2f4,\"ax\",@progbits\n"
 	"	.byte 0x20\n"
 	"	.byte 0x18\n"
 	"	.byte 0x22\n"
 	"	.byte 0x18\n"
-	"	.section .text.double_subtract_reversed.5d304,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.double_subtract_reversed.5d304,\"ax\",@progbits\n"
 	"	.byte 0x4e\n"
 	"	.byte 0x71\n"
-	"	.section .text.double_subtract_reversed.5d30e,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.double_subtract_reversed.5d30e,\"ax\",@progbits\n"
 	"double_subtract_reversed:\n"
 	"	movem.l %d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
 	"	move.l %d0,%d2\n"
@@ -68076,6 +68389,7 @@ __asm__(
 	"	.reloc ., R_68K_PC8, double_add+0x16-1\n"
 	"	.byte 0\n"
 	"	.size double_subtract_reversed, .-double_subtract_reversed\n"
+	"	.popsection\n"
 );
 
 /* 0005d338 */
@@ -68101,7 +68415,7 @@ __regcall void double_add_in_place(double *x /* a0 */,double y /* d0 */)
 __asm__(
 	"	.globl double_add_in_place\n"
 	"	.type double_add_in_place, @function\n"
-	"	.section .text.double_add_in_place.5d338,\"ax\",@progbits\n"
+	"	.pushsection .text.double_add_in_place.5d338,\"ax\",@progbits\n"
 	"double_add_in_place:\n"
 	"	move.l %a0,-(%sp)\n"
 	"	movem.l (%a0),%a0/%a1\n"
@@ -68110,6 +68424,7 @@ __asm__(
 	"	movem.l %d0/%d1,(%a0)\n"
 	"	rts\n"
 	"	.size double_add_in_place, .-double_add_in_place\n"
+	"	.popsection\n"
 );
 
 /* 0005d34a */
@@ -68423,11 +68738,12 @@ LAB_0005d63e:
 __asm__(
 	"	.globl double_add_pointers\n"
 	"	.type double_add_pointers, @function\n"
-	"	.section .text.double_add_pointers.5d34a,\"ax\",@progbits\n"
+	"	.pushsection .text.double_add_pointers.5d34a,\"ax\",@progbits\n"
 	"double_add_pointers:\n"
 	"	move.l (%a0)+,%d0\n"
 	"	move.l (%a0)+,%d1\n"
 	"	.size double_add_pointers, .-double_add_pointers\n"
+	"	.popsection\n"
 );
 
 /* 0005d34e */
@@ -68737,11 +69053,12 @@ LAB_0005d63e:
 __asm__(
 	"	.globl double_add_pointer\n"
 	"	.type double_add_pointer, @function\n"
-	"	.section .text.double_add_pointer.5d34e,\"ax\",@progbits\n"
+	"	.pushsection .text.double_add_pointer.5d34e,\"ax\",@progbits\n"
 	"double_add_pointer:\n"
 	"	movea.l (%a1)+,%a0\n"
 	"	movea.l (%a1)+,%a1\n"
 	"	.size double_add_pointer, .-double_add_pointer\n"
+	"	.popsection\n"
 );
 
 /* 0005d352 */
@@ -69048,7 +69365,7 @@ LAB_0005d63e:
 __asm__(
 	"	.globl double_add\n"
 	"	.type double_add, @function\n"
-	"	.section .text.double_add.5d352,\"ax\",@progbits\n"
+	"	.pushsection .text.double_add.5d352,\"ax\",@progbits\n"
 	"double_add:\n"
 	"	movem.l %d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
 	"	move.l %d0,%d2\n"
@@ -69378,6 +69695,7 @@ __asm__(
 	"	.byte 0xc1\n"
 	"	.byte 0x41\n"
 	"	.size double_add, .-double_add\n"
+	"	.popsection\n"
 );
 
 /* 0005d65c */
@@ -69427,7 +69745,7 @@ __regcall int float_compare(float a /* d0 */,float b /* d1 */)
 __asm__(
 	"	.globl float_compare\n"
 	"	.type float_compare, @function\n"
-	"	.section .text.float_compare.5d65c,\"ax\",@progbits\n"
+	"	.pushsection .text.float_compare.5d65c,\"ax\",@progbits\n"
 	"float_compare:\n"
 	"	cmpi.l #-0x80000000,%d0\n"
 	"	bne.b .Lg_5d666\n"
@@ -69479,6 +69797,7 @@ __asm__(
 	"	.byte 0xc3\n"
 	"	.byte 0x89\n"
 	"	.size float_compare, .-float_compare\n"
+	"	.popsection\n"
 );
 
 /* 0005d6c6 */
@@ -69548,7 +69867,7 @@ __regcall int double_compare(double a /* d0 */,double b /* a0 */)
 __asm__(
 	"	.globl double_compare\n"
 	"	.type double_compare, @function\n"
-	"	.section .text.double_compare.5d6c6,\"ax\",@progbits\n"
+	"	.pushsection .text.double_compare.5d6c6,\"ax\",@progbits\n"
 	"double_compare:\n"
 	"	movem.l %d3/%d2,-(%sp)\n"
 	"	move.l %a0,%d2\n"
@@ -69627,6 +69946,7 @@ __asm__(
 	"	moveq #0x0,%d0\n"
 	"	bra.b .Lg_5d748\n"
 	"	.size double_compare, .-double_compare\n"
+	"	.popsection\n"
 );
 
 /* 0005d7da */
@@ -69653,13 +69973,14 @@ __regcall void float_divide_in_place(float *x /* a0 */,float y /* d1 */)
 __asm__(
 	"	.globl float_divide_in_place\n"
 	"	.type float_divide_in_place, @function\n"
-	"	.section .text.float_divide_in_place.5d7da,\"ax\",@progbits\n"
+	"	.pushsection .text.float_divide_in_place.5d7da,\"ax\",@progbits\n"
 	"float_divide_in_place:\n"
 	"	move.l (%a0),%d0\n"
 	"	bsr.w float_divide\n"
 	"	move.l %d0,(%a0)\n"
 	"	rts\n"
 	"	.size float_divide_in_place, .-float_divide_in_place\n"
+	"	.popsection\n"
 );
 
 /* 0005d7e4 */
@@ -69836,10 +70157,11 @@ LAB_0005d7ae:
 __asm__(
 	"	.globl float_divide_reversed\n"
 	"	.type float_divide_reversed, @function\n"
-	"	.section .text.float_divide_reversed.5d7e4,\"ax\",@progbits\n"
+	"	.pushsection .text.float_divide_reversed.5d7e4,\"ax\",@progbits\n"
 	"float_divide_reversed:\n"
 	"	exg %d0,%d1\n"
 	"	.size float_divide_reversed, .-float_divide_reversed\n"
+	"	.popsection\n"
 );
 
 /* 0005d7e6 */
@@ -70016,7 +70338,7 @@ LAB_0005d7ae:
 __asm__(
 	"	.globl float_divide\n"
 	"	.type float_divide, @function\n"
-	"	.section .text.float_divide.5d764,\"ax\",@progbits\n"
+	"	.pushsection .text.float_divide.5d764,\"ax\",@progbits\n"
 	".Lg_5d764:\n"
 	"	move.l %d0,-(%sp)\n"
 	"	clr.w -(%sp)\n"
@@ -70064,7 +70386,8 @@ __asm__(
 	"	jsr (float_raise).l\n"
 	"	addq.l #0x4,%sp\n"
 	"	bra.w .Lg_5d930\n"
-	"	.section .text.float_divide.5d7e6,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.float_divide.5d7e6,\"ax\",@progbits\n"
 	"float_divide:\n"
 	"	movem.l %d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
 	"	move.l #0x7f800000,%d5\n"
@@ -70267,6 +70590,7 @@ __asm__(
 	"	addq.l #0x4,%sp\n"
 	"	bra.b .Lg_5d938\n"
 	"	.size float_divide, .-float_divide\n"
+	"	.popsection\n"
 );
 
 /* 0005da3e */
@@ -70292,7 +70616,7 @@ __regcall void double_divide_in_place(double *x /* a0 */,double y /* d0 */)
 __asm__(
 	"	.globl double_divide_in_place\n"
 	"	.type double_divide_in_place, @function\n"
-	"	.section .text.double_divide_in_place.5da3e,\"ax\",@progbits\n"
+	"	.pushsection .text.double_divide_in_place.5da3e,\"ax\",@progbits\n"
 	"double_divide_in_place:\n"
 	"	move.l %a0,-(%sp)\n"
 	"	movem.l (%a0),%a0/%a1\n"
@@ -70309,6 +70633,7 @@ __asm__(
 	"	.byte 0x22\n"
 	"	.byte 0x59\n"
 	"	.size double_divide_in_place, .-double_divide_in_place\n"
+	"	.popsection\n"
 );
 
 /* 0005da58 */
@@ -70334,7 +70659,7 @@ __regcall double double_divide(double a /* d0 */,double b /* a0 */)
 __asm__(
 	"	.globl double_divide\n"
 	"	.type double_divide, @function\n"
-	"	.section .text.double_divide.5da58,\"ax\",@progbits\n"
+	"	.pushsection .text.double_divide.5da58,\"ax\",@progbits\n"
 	"double_divide:\n"
 	"	exg %d0,%a0\n"
 	"	exg %d1,%a1\n"
@@ -70342,6 +70667,7 @@ __asm__(
 	"	.byte 0x4e\n"
 	"	.byte 0x71\n"
 	"	.size double_divide, .-double_divide\n"
+	"	.popsection\n"
 );
 
 /* 0005da62 */
@@ -70502,11 +70828,12 @@ LAB_0005db84:
 __asm__(
 	"	.globl double_divide_reversed_pointers\n"
 	"	.type double_divide_reversed_pointers, @function\n"
-	"	.section .text.double_divide_reversed_pointers.5da62,\"ax\",@progbits\n"
+	"	.pushsection .text.double_divide_reversed_pointers.5da62,\"ax\",@progbits\n"
 	"double_divide_reversed_pointers:\n"
 	"	move.l (%a0)+,%d0\n"
 	"	move.l (%a0)+,%d1\n"
 	"	.size double_divide_reversed_pointers, .-double_divide_reversed_pointers\n"
+	"	.popsection\n"
 );
 
 /* 0005da66 */
@@ -70661,11 +70988,12 @@ LAB_0005db84:
 __asm__(
 	"	.globl double_divide_reversed_pointer\n"
 	"	.type double_divide_reversed_pointer, @function\n"
-	"	.section .text.double_divide_reversed_pointer.5da66,\"ax\",@progbits\n"
+	"	.pushsection .text.double_divide_reversed_pointer.5da66,\"ax\",@progbits\n"
 	"double_divide_reversed_pointer:\n"
 	"	movea.l (%a1)+,%a0\n"
 	"	movea.l (%a1)+,%a1\n"
 	"	.size double_divide_reversed_pointer, .-double_divide_reversed_pointer\n"
+	"	.popsection\n"
 );
 
 /* 0005da6a */
@@ -70822,7 +71150,7 @@ LAB_0005db84:
 __asm__(
 	"	.globl double_divide_reversed\n"
 	"	.type double_divide_reversed, @function\n"
-	"	.section .text.double_divide_reversed.5d992,\"ax\",@progbits\n"
+	"	.pushsection .text.double_divide_reversed.5d992,\"ax\",@progbits\n"
 	".Lg_5d992:\n"
 	"	tst.l %d1\n"
 	"	bne.w .Lg_5da98\n"
@@ -70893,7 +71221,8 @@ __asm__(
 	"	movem.l (%sp)+,%d2/%d3\n"
 	"	addq.w #0x1,%d6\n"
 	"	bra.w .Lg_5dac6\n"
-	"	.section .text.double_divide_reversed.5da50,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.double_divide_reversed.5da50,\"ax\",@progbits\n"
 	"	.byte 0x20\n"
 	"	.byte 0x18\n"
 	"	.byte 0x22\n"
@@ -70902,10 +71231,12 @@ __asm__(
 	"	.byte 0x59\n"
 	"	.byte 0x22\n"
 	"	.byte 0x59\n"
-	"	.section .text.double_divide_reversed.5da60,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.double_divide_reversed.5da60,\"ax\",@progbits\n"
 	"	.byte 0x4e\n"
 	"	.byte 0x71\n"
-	"	.section .text.double_divide_reversed.5da6a,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.double_divide_reversed.5da6a,\"ax\",@progbits\n"
 	"double_divide_reversed:\n"
 	"	movem.l %d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
 	"	move.l %d0,%d2\n"
@@ -71054,6 +71385,7 @@ __asm__(
 	"	addq.l #0x4,%sp\n"
 	"	bra.b .Lg_5db84\n"
 	"	.size double_divide_reversed, .-double_divide_reversed\n"
+	"	.popsection\n"
 );
 
 /* 0005dbde */
@@ -71173,7 +71505,7 @@ __regcall void double_divide_next_word(void)
 __asm__(
 	"	.globl double_divide_next_word\n"
 	"	.type double_divide_next_word, @function\n"
-	"	.section .text.double_divide_next_word.5dbfe,\"ax\",@progbits\n"
+	"	.pushsection .text.double_divide_next_word.5dbfe,\"ax\",@progbits\n"
 	"double_divide_next_word:\n"
 	"	swap %d4\n"
 	"	swap %d5\n"
@@ -71181,6 +71513,7 @@ __asm__(
 	"	tst.l %d0\n"
 	"	beq.w double_divide_first_word+0x1e\n"
 	"	.size double_divide_next_word, .-double_divide_next_word\n"
+	"	.popsection\n"
 );
 
 /* 0005dc0a */
@@ -71262,7 +71595,7 @@ __regcall void double_divide_first_word(void)
 __asm__(
 	"	.globl double_divide_first_word\n"
 	"	.type double_divide_first_word, @function\n"
-	"	.section .text.double_divide_first_word.5dc0a,\"ax\",@progbits\n"
+	"	.pushsection .text.double_divide_first_word.5dc0a,\"ax\",@progbits\n"
 	"double_divide_first_word:\n"
 	"	swap %d2\n"
 	"	divu.w %d2,%d0\n"
@@ -71329,6 +71662,7 @@ __asm__(
 	".Lg_5dc98:\n"
 	"	rts\n"
 	"	.size double_divide_first_word, .-double_divide_first_word\n"
+	"	.popsection\n"
 );
 
 /* 0005dcd2 */
@@ -71418,7 +71752,7 @@ LAB_0005dd4e:
 __asm__(
 	"	.globl double_to_float\n"
 	"	.type double_to_float, @function\n"
-	"	.section .text.double_to_float.5dc9a,\"ax\",@progbits\n"
+	"	.pushsection .text.double_to_float.5dc9a,\"ax\",@progbits\n"
 	".Lg_5dc9a:\n"
 	"	moveq #0x0,%d0\n"
 	"	bra.w .Lg_5dd4e\n"
@@ -71519,6 +71853,7 @@ __asm__(
 	"	addq.l #0x4,%sp\n"
 	"	bra.b .Lg_5dd4e\n"
 	"	.size double_to_float, .-double_to_float\n"
+	"	.popsection\n"
 );
 
 /* 0005ddde */
@@ -71582,7 +71917,7 @@ __regcall int double_to_integer(double d /* d0 */)
 __asm__(
 	"	.globl double_to_integer\n"
 	"	.type double_to_integer, @function\n"
-	"	.section .text.double_to_integer.5dd9c,\"ax\",@progbits\n"
+	"	.pushsection .text.double_to_integer.5dd9c,\"ax\",@progbits\n"
 	".Lg_5dd9c:\n"
 	"	pea (0x42000).l\n"
 	"	jsr (float_raise).l\n"
@@ -71656,6 +71991,7 @@ __asm__(
 	"	move.l #-0x80000000,%d0\n"
 	"	bra.b .Lg_5de36\n"
 	"	.size double_to_integer, .-double_to_integer\n"
+	"	.popsection\n"
 );
 
 /* 0005de9e */
@@ -71708,7 +72044,7 @@ __regcall uint double_to_unsigned(double d /* d0 */)
 __asm__(
 	"	.globl double_to_unsigned\n"
 	"	.type double_to_unsigned, @function\n"
-	"	.section .text.double_to_unsigned.5de5a,\"ax\",@progbits\n"
+	"	.pushsection .text.double_to_unsigned.5de5a,\"ax\",@progbits\n"
 	".Lg_5de5a:\n"
 	"	bgt.b .Lg_5de60\n"
 	"	tst.l %d1\n"
@@ -71768,6 +72104,7 @@ __asm__(
 	"	moveq #0x0,%d0\n"
 	"	bra.b .Lg_5dee4\n"
 	"	.size double_to_unsigned, .-double_to_unsigned\n"
+	"	.popsection\n"
 );
 
 /* 0005df24 */
@@ -71824,7 +72161,7 @@ __regcall double float_to_double(float f /* d0 */)
 __asm__(
 	"	.globl float_to_double\n"
 	"	.type float_to_double, @function\n"
-	"	.section .text.float_to_double.5def0,\"ax\",@progbits\n"
+	"	.pushsection .text.float_to_double.5def0,\"ax\",@progbits\n"
 	".Lg_5def0:\n"
 	"	beq.b .Lg_5df1a\n"
 	"	move.l %d1,%d0\n"
@@ -71884,6 +72221,7 @@ __asm__(
 	"	addq.w #0x4,%sp\n"
 	"	rts\n"
 	"	.size float_to_double, .-float_to_double\n"
+	"	.popsection\n"
 );
 
 /* 0005dfbc */
@@ -71947,7 +72285,7 @@ LAB_0005df9e:
 __asm__(
 	"	.globl float_to_integer\n"
 	"	.type float_to_integer, @function\n"
-	"	.section .text.float_to_integer.5df88,\"ax\",@progbits\n"
+	"	.pushsection .text.float_to_integer.5df88,\"ax\",@progbits\n"
 	".Lg_5df88:\n"
 	"	beq.b .Lg_5df9e\n"
 	"	move.l %d2,-(%sp)\n"
@@ -72006,6 +72344,7 @@ __asm__(
 	"	moveq #0x0,%d0\n"
 	"	bra.b .Lg_5e014\n"
 	"	.size float_to_integer, .-float_to_integer\n"
+	"	.popsection\n"
 );
 
 /* 0005e04e */
@@ -72046,7 +72385,7 @@ __regcall uint float_to_unsigned(float f /* d0 */)
 __asm__(
 	"	.globl float_to_unsigned\n"
 	"	.type float_to_unsigned, @function\n"
-	"	.section .text.float_to_unsigned.5e01c,\"ax\",@progbits\n"
+	"	.pushsection .text.float_to_unsigned.5e01c,\"ax\",@progbits\n"
 	".Lg_5e01c:\n"
 	"	cmpi.l #0x7f800000,%d0\n"
 	"	ble.b .Lg_5e038\n"
@@ -72084,6 +72423,7 @@ __asm__(
 	"	movea.l (%sp)+,%a0\n"
 	"	bra.b .Lg_5e078\n"
 	"	.size float_to_unsigned, .-float_to_unsigned\n"
+	"	.popsection\n"
 );
 
 /* 0005e08e */
@@ -72153,7 +72493,7 @@ __regcall double integer_to_double(int i /* d0 */)
 __asm__(
 	"	.globl integer_to_double\n"
 	"	.type integer_to_double, @function\n"
-	"	.section .text.integer_to_double.5e086,\"ax\",@progbits\n"
+	"	.pushsection .text.integer_to_double.5e086,\"ax\",@progbits\n"
 	".Lg_5e086:\n"
 	"	moveq #0x0,%d0\n"
 	"	move.l %d0,%d1\n"
@@ -72218,6 +72558,7 @@ __asm__(
 	"	movem.l (%sp)+,%d4/%d5\n"
 	"	rts\n"
 	"	.size integer_to_double, .-integer_to_double\n"
+	"	.popsection\n"
 );
 
 /* 0005e108 */
@@ -72280,7 +72621,7 @@ __regcall double unsigned_to_double(uint u /* d0 */)
 __asm__(
 	"	.globl unsigned_to_double\n"
 	"	.type unsigned_to_double, @function\n"
-	"	.section .text.unsigned_to_double.5e100,\"ax\",@progbits\n"
+	"	.pushsection .text.unsigned_to_double.5e100,\"ax\",@progbits\n"
 	".Lg_5e100:\n"
 	"	moveq #0x0,%d0\n"
 	"	move.l %d0,%d1\n"
@@ -72338,6 +72679,7 @@ __asm__(
 	"	move.l (%sp)+,%d4\n"
 	"	rts\n"
 	"	.size unsigned_to_double, .-unsigned_to_double\n"
+	"	.popsection\n"
 );
 
 /* 0005e168 */
@@ -72419,7 +72761,7 @@ __regcall float integer_to_float(int i /* d0 */)
 __asm__(
 	"	.globl integer_to_float\n"
 	"	.type integer_to_float, @function\n"
-	"	.section .text.integer_to_float.5e168,\"ax\",@progbits\n"
+	"	.pushsection .text.integer_to_float.5e168,\"ax\",@progbits\n"
 	"integer_to_float:\n"
 	"	movea.l %d2,%a1\n"
 	"	movem.l %d4/%d3,-(%sp)\n"
@@ -72496,6 +72838,7 @@ __asm__(
 	"	addq.l #0x4,%sp\n"
 	"	bra.b .Lg_5e1f6\n"
 	"	.size integer_to_float, .-integer_to_float\n"
+	"	.popsection\n"
 );
 
 /* 0005e20e */
@@ -72576,7 +72919,7 @@ __regcall float unsigned_to_float(uint u /* d0 */)
 __asm__(
 	"	.globl unsigned_to_float\n"
 	"	.type unsigned_to_float, @function\n"
-	"	.section .text.unsigned_to_float.5e20e,\"ax\",@progbits\n"
+	"	.pushsection .text.unsigned_to_float.5e20e,\"ax\",@progbits\n"
 	"unsigned_to_float:\n"
 	"	movea.l %d2,%a0\n"
 	"	movea.l %d3,%a1\n"
@@ -72652,6 +72995,7 @@ __asm__(
 	"	addq.l #0x4,%sp\n"
 	"	bra.b .Lg_5e29a\n"
 	"	.size unsigned_to_float, .-unsigned_to_float\n"
+	"	.popsection\n"
 );
 
 /* 0005e316 */
@@ -72678,13 +73022,14 @@ __regcall void float_multiply_in_place(float *x /* a0 */,float y /* d1 */)
 __asm__(
 	"	.globl float_multiply_in_place\n"
 	"	.type float_multiply_in_place, @function\n"
-	"	.section .text.float_multiply_in_place.5e316,\"ax\",@progbits\n"
+	"	.pushsection .text.float_multiply_in_place.5e316,\"ax\",@progbits\n"
 	"float_multiply_in_place:\n"
 	"	move.l (%a0),%d0\n"
 	"	bsr.w float_multiply\n"
 	"	move.l %d0,(%a0)\n"
 	"	rts\n"
 	"	.size float_multiply_in_place, .-float_multiply_in_place\n"
+	"	.popsection\n"
 );
 
 /* 0005e320 */
@@ -72819,7 +73164,7 @@ LAB_0005e41a:
 __asm__(
 	"	.globl float_multiply\n"
 	"	.type float_multiply, @function\n"
-	"	.section .text.float_multiply.5e2b2,\"ax\",@progbits\n"
+	"	.pushsection .text.float_multiply.5e2b2,\"ax\",@progbits\n"
 	".Lg_5e2b2:\n"
 	"	move.l %d0,-(%sp)\n"
 	"	clr.w -(%sp)\n"
@@ -72863,7 +73208,8 @@ __asm__(
 	".Lg_5e310:\n"
 	"	move.l %d1,%d0\n"
 	"	bra.w .Lg_5e41a\n"
-	"	.section .text.float_multiply.5e320,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.float_multiply.5e320,\"ax\",@progbits\n"
 	"float_multiply:\n"
 	"	movem.l %d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
 	"	move.l #0x7f800000,%d3\n"
@@ -73005,6 +73351,7 @@ __asm__(
 	"	addq.l #0x4,%sp\n"
 	"	bra.b .Lg_5e422\n"
 	"	.size float_multiply, .-float_multiply\n"
+	"	.popsection\n"
 );
 
 /* 0005e5e6 */
@@ -73030,7 +73377,7 @@ __regcall void double_multiply_in_place(double *x /* a0 */,double y /* d0 */)
 __asm__(
 	"	.globl double_multiply_in_place\n"
 	"	.type double_multiply_in_place, @function\n"
-	"	.section .text.double_multiply_in_place.5e5e6,\"ax\",@progbits\n"
+	"	.pushsection .text.double_multiply_in_place.5e5e6,\"ax\",@progbits\n"
 	"double_multiply_in_place:\n"
 	"	move.l %a0,-(%sp)\n"
 	"	movem.l (%a0),%a0/%a1\n"
@@ -73039,6 +73386,7 @@ __asm__(
 	"	movem.l %d0/%d1,(%a0)\n"
 	"	rts\n"
 	"	.size double_multiply_in_place, .-double_multiply_in_place\n"
+	"	.popsection\n"
 );
 
 /* 0005e5f8 */
@@ -73309,11 +73657,12 @@ LAB_0005e77c:
 __asm__(
 	"	.globl double_multiply_pointers\n"
 	"	.type double_multiply_pointers, @function\n"
-	"	.section .text.double_multiply_pointers.5e5f8,\"ax\",@progbits\n"
+	"	.pushsection .text.double_multiply_pointers.5e5f8,\"ax\",@progbits\n"
 	"double_multiply_pointers:\n"
 	"	move.l (%a0)+,%d0\n"
 	"	move.l (%a0)+,%d1\n"
 	"	.size double_multiply_pointers, .-double_multiply_pointers\n"
+	"	.popsection\n"
 );
 
 /* 0005e5fc */
@@ -73578,11 +73927,12 @@ LAB_0005e77c:
 __asm__(
 	"	.globl double_multiply_pointer\n"
 	"	.type double_multiply_pointer, @function\n"
-	"	.section .text.double_multiply_pointer.5e5fc,\"ax\",@progbits\n"
+	"	.pushsection .text.double_multiply_pointer.5e5fc,\"ax\",@progbits\n"
 	"double_multiply_pointer:\n"
 	"	movea.l (%a1)+,%a0\n"
 	"	movea.l (%a1)+,%a1\n"
 	"	.size double_multiply_pointer, .-double_multiply_pointer\n"
+	"	.popsection\n"
 );
 
 /* 0005e600 */
@@ -73846,7 +74196,7 @@ LAB_0005e77c:
 __asm__(
 	"	.globl double_multiply\n"
 	"	.type double_multiply, @function\n"
-	"	.section .text.double_multiply.5e476,\"ax\",@progbits\n"
+	"	.pushsection .text.double_multiply.5e476,\"ax\",@progbits\n"
 	".Lg_5e476:\n"
 	"	swap %d0\n"
 	"	lsr.l #0x5,%d0\n"
@@ -74002,7 +74352,8 @@ __asm__(
 	"	tst.l %d3\n"
 	"	bne.w .Lg_5e63a\n"
 	"	bra.b .Lg_5e58e\n"
-	"	.section .text.double_multiply.5e600,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.double_multiply.5e600,\"ax\",@progbits\n"
 	"double_multiply:\n"
 	"	movem.l %d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
 	"	move.l %d0,%d2\n"
@@ -74243,7 +74594,8 @@ __asm__(
 	".Lg_5e81a:\n"
 	"	bra.b .Lg_5e7d6\n"
 	"	.size double_multiply, .-double_multiply\n"
-	"	.section .text.double_multiply.5e82c,\"ax\",@progbits\n"
+	"	.popsection\n"
+	"	.pushsection .text.double_multiply.5e82c,\"ax\",@progbits\n"
 	".Lg_5e82c:\n"
 	"	pea (0xc0200).l\n"
 	"	jsr (float_raise).l\n"
@@ -74251,6 +74603,7 @@ __asm__(
 	"	.byte 0x60 | bra.b 0x0005e7d6\n"
 	"	.reloc ., R_68K_PC8, .Lg_5e7d6-1\n"
 	"	.byte 0\n"
+	"	.popsection\n"
 );
 
 /* 0005e81c */
@@ -74303,7 +74656,7 @@ __naked undefined8 float_normalize(uint param_1)
 __asm__(
 	"	.globl float_normalize\n"
 	"	.type float_normalize, @function\n"
-	"	.section .text.float_normalize.5e83c,\"ax\",@progbits\n"
+	"	.pushsection .text.float_normalize.5e83c,\"ax\",@progbits\n"
 	"float_normalize:\n"
 	"	link.w %a6,#0x0\n"
 	"	movem.l %d3/%d2/%d1/%d0,-(%sp)\n"
@@ -74336,6 +74689,7 @@ __asm__(
 	"	unlk %a6\n"
 	"	rts\n"
 	"	.size float_normalize, .-float_normalize\n"
+	"	.popsection\n"
 );
 
 /* 0005e882 */
@@ -74392,7 +74746,7 @@ __naked undefined8 double_normalize(undefined2 param_1,uint param_2)
 __asm__(
 	"	.globl double_normalize\n"
 	"	.type double_normalize, @function\n"
-	"	.section .text.double_normalize.5e882,\"ax\",@progbits\n"
+	"	.pushsection .text.double_normalize.5e882,\"ax\",@progbits\n"
 	"double_normalize:\n"
 	"	link.w %a6,#0x0\n"
 	"	movem.l %d5/%d4/%d3/%d2/%d1/%d0,-(%sp)\n"
@@ -74479,6 +74833,7 @@ __asm__(
 	"	unlk %a6\n"
 	"	rts\n"
 	"	.size double_normalize, .-double_normalize\n"
+	"	.popsection\n"
 );
 
 /* 0005e93c */
@@ -77881,7 +78236,7 @@ __exception void installer_kernel_dispatch_service(undefined2 param_1)
 __asm__(
 	"	.globl installer_kernel_dispatch_service\n"
 	"	.type installer_kernel_dispatch_service, @function\n"
-	"	.section .text.installer_kernel_dispatch_service.10152c,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_dispatch_service.10152c,\"ax\",@progbits\n"
 	"installer_kernel_dispatch_service:\n"
 	"	movem.l %a6/%a5/%d6,-(%sp)\n"
 	"	movea.l (__ghidra_1014c8:w,%pc),%a5\n"
@@ -77950,6 +78305,7 @@ __asm__(
 	"	bra.w installer_kernel_service_37\n"
 	"	bra.w installer_kernel_service_38\n"
 	"	.size installer_kernel_dispatch_service, .-installer_kernel_dispatch_service\n"
+	"	.popsection\n"
 );
 
 /* installer::00101610 */
@@ -77991,7 +78347,7 @@ __exception void installer_kernel_dispatch_io(char function /* d7 */,int device 
 __asm__(
 	"	.globl installer_kernel_dispatch_io\n"
 	"	.type installer_kernel_dispatch_io, @function\n"
-	"	.section .text.installer_kernel_dispatch_io.101610,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_dispatch_io.101610,\"ax\",@progbits\n"
 	"installer_kernel_dispatch_io:\n"
 	"	movem.l %a6/%a5/%d6,-(%sp)\n"
 	"	movea.l (__ghidra_1014c8:w,%pc),%a5\n"
@@ -78038,6 +78394,7 @@ __asm__(
 	"	movem.l (%sp)+,%d6/%a5/%a6\n"
 	"	rte\n"
 	"	.size installer_kernel_dispatch_io, .-installer_kernel_dispatch_io\n"
+	"	.popsection\n"
 );
 
 /* installer::00101680 */
@@ -78179,7 +78536,7 @@ __naked void installer_kernel_switch_task(void)
 __asm__(
 	"	.globl installer_kernel_switch_task\n"
 	"	.type installer_kernel_switch_task, @function\n"
-	"	.section .text.installer_kernel_switch_task.101680,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_switch_task.101680,\"ax\",@progbits\n"
 	"installer_kernel_switch_task:\n"
 	".Lg_101680:\n"
 	"	ori #0x700,%sr\n"
@@ -78211,6 +78568,7 @@ __asm__(
 	"	movem.l (%sp)+,%d6/%a5/%a6\n"
 	"	rte\n"
 	"	.size installer_kernel_switch_task, .-installer_kernel_switch_task\n"
+	"	.popsection\n"
 );
 
 /* installer::001016cc */
@@ -78286,7 +78644,7 @@ LAB_installer__0010175e:
 __asm__(
 	"	.globl installer_kernel_process_ticks\n"
 	"	.type installer_kernel_process_ticks, @function\n"
-	"	.section .text.installer_kernel_process_ticks.1016cc,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_process_ticks.1016cc,\"ax\",@progbits\n"
 	"installer_kernel_process_ticks:\n"
 	"	bsr.w installer_kernel_advance_date\n"
 	"	movem.l %a3/%a2,-(%sp)\n"
@@ -78366,6 +78724,7 @@ __asm__(
 	"	movea.l (%sp)+,%a3\n"
 	"	rts\n"
 	"	.size installer_kernel_process_ticks, .-installer_kernel_process_ticks\n"
+	"	.popsection\n"
 );
 
 /* installer::001017a8 */
@@ -78389,12 +78748,13 @@ __regcall void installer_kernel_service_0(void)
 __asm__(
 	"	.globl installer_kernel_service_0\n"
 	"	.type installer_kernel_service_0, @function\n"
-	"	.section .text.installer_kernel_service_0.1017a8,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_service_0.1017a8,\"ax\",@progbits\n"
 	"installer_kernel_service_0:\n"
 	"	move.w #0x3300,%d7\n"
 	"	move.b (__ghidra_101527:w,%pc),%d7\n"
 	"	rts\n"
 	"	.size installer_kernel_service_0, .-installer_kernel_service_0\n"
+	"	.popsection\n"
 );
 
 /* installer::001017b2 */
@@ -78483,7 +78843,7 @@ __regcall void installer_kernel_create(void)
 __asm__(
 	"	.globl installer_kernel_create\n"
 	"	.type installer_kernel_create, @function\n"
-	"	.section .text.installer_kernel_create.1017b2,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_create.1017b2,\"ax\",@progbits\n"
 	"installer_kernel_create:\n"
 	"	movem.l %a3/%a2/%d5/%d4/%d3,-(%sp)\n"
 	"	tst.b %d2\n"
@@ -78580,6 +78940,7 @@ __asm__(
 	"	movem.l (%sp)+,%d3/%d4/%d5/%a2/%a3\n"
 	"	rts\n"
 	"	.size installer_kernel_create, .-installer_kernel_create\n"
+	"	.popsection\n"
 );
 
 /* installer::001018a6 */
@@ -78617,7 +78978,7 @@ __regcall void installer_kernel_start(void)
 __asm__(
 	"	.globl installer_kernel_start\n"
 	"	.type installer_kernel_start, @function\n"
-	"	.section .text.installer_kernel_start.1018a6,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_start.1018a6,\"ax\",@progbits\n"
 	"installer_kernel_start:\n"
 	"	movea.l (%a6),%a5\n"
 	"	bsr.w installer_kernel_check_task\n"
@@ -78642,6 +79003,7 @@ __asm__(
 	".Lg_1018d6:\n"
 	"	rts\n"
 	"	.size installer_kernel_start, .-installer_kernel_start\n"
+	"	.popsection\n"
 );
 
 /* installer::001018d8 */
@@ -78678,7 +79040,7 @@ __regcall void installer_kernel_ident(void)
 __asm__(
 	"	.globl installer_kernel_ident\n"
 	"	.type installer_kernel_ident, @function\n"
-	"	.section .text.installer_kernel_ident.1018d8,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_ident.1018d8,\"ax\",@progbits\n"
 	"installer_kernel_ident:\n"
 	"	tst.l %d0\n"
 	"	bne.b .Lg_1018e0\n"
@@ -78700,6 +79062,7 @@ __asm__(
 	".Lg_1018fc:\n"
 	"	rts\n"
 	"	.size installer_kernel_ident, .-installer_kernel_ident\n"
+	"	.popsection\n"
 );
 
 /* installer::001018fe */
@@ -78797,7 +79160,7 @@ LAB_installer__001019d4:
 __asm__(
 	"	.globl installer_kernel_delete\n"
 	"	.type installer_kernel_delete, @function\n"
-	"	.section .text.installer_kernel_delete.1018fe,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_delete.1018fe,\"ax\",@progbits\n"
 	"installer_kernel_delete:\n"
 	"	movea.l (%a6),%a5\n"
 	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
@@ -78896,6 +79259,7 @@ __asm__(
 	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
 	"	rts\n"
 	"	.size installer_kernel_delete, .-installer_kernel_delete\n"
+	"	.popsection\n"
 );
 
 /* installer::00101a0a */
@@ -78936,7 +79300,7 @@ __regcall void installer_kernel_suspend(void)
 __asm__(
 	"	.globl installer_kernel_suspend\n"
 	"	.type installer_kernel_suspend, @function\n"
-	"	.section .text.installer_kernel_suspend.101a0a,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_suspend.101a0a,\"ax\",@progbits\n"
 	"installer_kernel_suspend:\n"
 	"	movea.l (%a6),%a5\n"
 	"	bsr.w installer_kernel_check_task\n"
@@ -78959,6 +79323,7 @@ __asm__(
 	".Lg_101a3c:\n"
 	"	rts\n"
 	"	.size installer_kernel_suspend, .-installer_kernel_suspend\n"
+	"	.popsection\n"
 );
 
 /* installer::00101a3e */
@@ -78996,7 +79361,7 @@ __regcall void installer_kernel_resume(void)
 __asm__(
 	"	.globl installer_kernel_resume\n"
 	"	.type installer_kernel_resume, @function\n"
-	"	.section .text.installer_kernel_resume.101a3e,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_resume.101a3e,\"ax\",@progbits\n"
 	"installer_kernel_resume:\n"
 	"	movea.l (%a6),%a5\n"
 	"	move %sr,%d6\n"
@@ -79029,6 +79394,7 @@ __asm__(
 	".Lg_101a7e:\n"
 	"	rts\n"
 	"	.size installer_kernel_resume, .-installer_kernel_resume\n"
+	"	.popsection\n"
 );
 
 /* installer::00101a80 */
@@ -79083,7 +79449,7 @@ LAB_installer__00101ab4:
 __asm__(
 	"	.globl installer_kernel_priority\n"
 	"	.type installer_kernel_priority, @function\n"
-	"	.section .text.installer_kernel_priority.101a80,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_priority.101a80,\"ax\",@progbits\n"
 	"installer_kernel_priority:\n"
 	"	move.w %d1,-(%sp)\n"
 	"	movea.l (%a6),%a5\n"
@@ -79126,6 +79492,7 @@ __asm__(
 	"	move.w (%sp)+,%d1\n"
 	"	rts\n"
 	"	.size installer_kernel_priority, .-installer_kernel_priority\n"
+	"	.popsection\n"
 );
 
 /* installer::00101ae0 */
@@ -79171,10 +79538,11 @@ __regcall void installer_kernel_allocate_segment(void)
 __asm__(
 	"	.globl installer_kernel_allocate_segment\n"
 	"	.type installer_kernel_allocate_segment, @function\n"
-	"	.section .text.installer_kernel_allocate_segment.101ae0,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_allocate_segment.101ae0,\"ax\",@progbits\n"
 	"installer_kernel_allocate_segment:\n"
 	"	movea.l (%a6),%a5\n"
 	"	.size installer_kernel_allocate_segment, .-installer_kernel_allocate_segment\n"
+	"	.popsection\n"
 );
 
 /* installer::00101ae2 */
@@ -79216,7 +79584,7 @@ __naked void installer_kernel_allocate_for_task(void)
 __asm__(
 	"	.globl installer_kernel_allocate_for_task\n"
 	"	.type installer_kernel_allocate_for_task, @function\n"
-	"	.section .text.installer_kernel_allocate_for_task.101ae2,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_allocate_for_task.101ae2,\"ax\",@progbits\n"
 	"installer_kernel_allocate_for_task:\n"
 	"	movem.l %a2/%a1/%d4/%d3/%d2/%d1,-(%sp)\n"
 	"	bsr.w installer_kernel_allocate\n"
@@ -79247,6 +79615,7 @@ __asm__(
 	"	movem.l (%sp)+,%d1/%d2/%d3/%d4/%a1/%a2\n"
 	"	rts\n"
 	"	.size installer_kernel_allocate_for_task, .-installer_kernel_allocate_for_task\n"
+	"	.popsection\n"
 );
 
 /* installer::00101b36 */
@@ -79377,10 +79746,11 @@ LAB_installer__00101c0c:
 __asm__(
 	"	.globl installer_kernel_free_segment\n"
 	"	.type installer_kernel_free_segment, @function\n"
-	"	.section .text.installer_kernel_free_segment.101b36,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_free_segment.101b36,\"ax\",@progbits\n"
 	"installer_kernel_free_segment:\n"
 	"	movea.l (%a6),%a5\n"
 	"	.size installer_kernel_free_segment, .-installer_kernel_free_segment\n"
+	"	.popsection\n"
 );
 
 /* installer::00101b38 */
@@ -79509,7 +79879,7 @@ LAB_installer__00101c0c:
 __asm__(
 	"	.globl installer_kernel_free_for_task\n"
 	"	.type installer_kernel_free_for_task, @function\n"
-	"	.section .text.installer_kernel_free_for_task.101b38,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_free_for_task.101b38,\"ax\",@progbits\n"
 	"installer_kernel_free_for_task:\n"
 	"	movem.l %a5/%a3/%a2/%a1/%a0/%d4/%d3/%d2/%d1,-(%sp)\n"
 	"	suba.w #0x12,%a0\n"
@@ -79639,6 +80009,7 @@ __asm__(
 	"	movem.l (%sp)+,%d1/%d2/%d3/%d4/%a0/%a1/%a2/%a3/%a5\n"
 	"	rts\n"
 	"	.size installer_kernel_free_for_task, .-installer_kernel_free_for_task\n"
+	"	.popsection\n"
 );
 
 /* installer::00101c6e */
@@ -79684,7 +80055,7 @@ LAB_installer__00101c8e:
 __asm__(
 	"	.globl installer_kernel_allocate\n"
 	"	.type installer_kernel_allocate, @function\n"
-	"	.section .text.installer_kernel_allocate.101c6e,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_allocate.101c6e,\"ax\",@progbits\n"
 	"installer_kernel_allocate:\n"
 	"	addi.l #0x13,%d1\n"
 	"	bclr.l #0x0,%d1\n"
@@ -79714,6 +80085,7 @@ __asm__(
 	".Lg_101ca0:\n"
 	"	rts\n"
 	"	.size installer_kernel_allocate, .-installer_kernel_allocate\n"
+	"	.popsection\n"
 );
 
 /* installer::00101ca2 */
@@ -79784,7 +80156,7 @@ __naked void installer_kernel_region_allocate(void)
 __asm__(
 	"	.globl installer_kernel_region_allocate\n"
 	"	.type installer_kernel_region_allocate, @function\n"
-	"	.section .text.installer_kernel_region_allocate.101ca2,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_region_allocate.101ca2,\"ax\",@progbits\n"
 	"installer_kernel_region_allocate:\n"
 	"	move.l %d1,-(%sp)\n"
 	"	cmp.l (0x34,%a6,%d6.w*0x1),%d1\n"
@@ -79848,6 +80220,7 @@ __asm__(
 	"	movem.l (%sp)+,%d1\n"
 	"	rts\n"
 	"	.size installer_kernel_region_allocate, .-installer_kernel_region_allocate\n"
+	"	.popsection\n"
 );
 
 /* installer::00101d2a */
@@ -79902,7 +80275,7 @@ __regcall void installer_kernel_service_10(void)
 __asm__(
 	"	.globl installer_kernel_service_10\n"
 	"	.type installer_kernel_service_10, @function\n"
-	"	.section .text.installer_kernel_service_10.101d2a,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_service_10.101d2a,\"ax\",@progbits\n"
 	"installer_kernel_service_10:\n"
 	"	move.l %a2,-(%sp)\n"
 	"	suba.w %a2,%a2\n"
@@ -79910,6 +80283,7 @@ __asm__(
 	"	.reloc ., R_68K_PC8, installer_kernel_service_16+0x6-1\n"
 	"	.byte 0\n"
 	"	.size installer_kernel_service_10, .-installer_kernel_service_10\n"
+	"	.popsection\n"
 );
 
 /* installer::00101d30 */
@@ -79962,7 +80336,7 @@ __regcall void installer_kernel_service_16(void)
 __asm__(
 	"	.globl installer_kernel_service_16\n"
 	"	.type installer_kernel_service_16, @function\n"
-	"	.section .text.installer_kernel_service_16.101d30,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_service_16.101d30,\"ax\",@progbits\n"
 	"installer_kernel_service_16:\n"
 	"	move.l %a2,-(%sp)\n"
 	"	movea.w #0x1,%a2\n"
@@ -80002,6 +80376,7 @@ __asm__(
 	"	movea.l (%sp)+,%a2\n"
 	"	rts\n"
 	"	.size installer_kernel_service_16, .-installer_kernel_service_16\n"
+	"	.popsection\n"
 );
 
 /* installer::00101d80 */
@@ -80027,11 +80402,12 @@ __regcall char installer_kernel_service_none(void)
 __asm__(
 	"	.globl installer_kernel_service_none\n"
 	"	.type installer_kernel_service_none, @function\n"
-	"	.section .text.installer_kernel_service_none.101d80,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_service_none.101d80,\"ax\",@progbits\n"
 	"installer_kernel_service_none:\n"
 	"	clr.b %d7\n"
 	"	rts\n"
 	"	.size installer_kernel_service_none, .-installer_kernel_service_none\n"
+	"	.popsection\n"
 );
 
 /* installer::00101d84 */
@@ -80084,7 +80460,7 @@ __regcall void installer_kernel_create_x(void)
 __asm__(
 	"	.globl installer_kernel_create_x\n"
 	"	.type installer_kernel_create_x, @function\n"
-	"	.section .text.installer_kernel_create_x.101d84,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_create_x.101d84,\"ax\",@progbits\n"
 	"installer_kernel_create_x:\n"
 	"	moveq #0x1,%d7\n"
 	"	move.l (0x18,%a6),%d6\n"
@@ -80118,6 +80494,7 @@ __asm__(
 	".Lg_101de4:\n"
 	"	rts\n"
 	"	.size installer_kernel_create_x, .-installer_kernel_create_x\n"
+	"	.popsection\n"
 );
 
 /* installer::00101de6 */
@@ -80172,7 +80549,7 @@ __regcall void installer_kernel_service_21(void)
 __asm__(
 	"	.globl installer_kernel_service_21\n"
 	"	.type installer_kernel_service_21, @function\n"
-	"	.section .text.installer_kernel_service_21.101de6,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_service_21.101de6,\"ax\",@progbits\n"
 	"installer_kernel_service_21:\n"
 	"	move.l (0x14,%a6),%d6\n"
 	"	beq.b .Lg_101dfa\n"
@@ -80216,6 +80593,7 @@ __asm__(
 	".Lg_101e3a:\n"
 	"	rts\n"
 	"	.size installer_kernel_service_21, .-installer_kernel_service_21\n"
+	"	.popsection\n"
 );
 
 /* installer::00101e3c */
@@ -80279,7 +80657,7 @@ LAB_installer__00101ea6:
 __asm__(
 	"	.globl installer_kernel_delete_x\n"
 	"	.type installer_kernel_delete_x, @function\n"
-	"	.section .text.installer_kernel_delete_x.101e3c,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_delete_x.101e3c,\"ax\",@progbits\n"
 	"installer_kernel_delete_x:\n"
 	"	move.l %a2,-(%sp)\n"
 	"	movea.l (%a6),%a5\n"
@@ -80327,6 +80705,7 @@ __asm__(
 	"	movea.l (%sp)+,%a2\n"
 	"	rts\n"
 	"	.size installer_kernel_delete_x, .-installer_kernel_delete_x\n"
+	"	.popsection\n"
 );
 
 /* installer::00101eb4 */
@@ -80440,7 +80819,7 @@ LAB_installer__00101f7c:
 __asm__(
 	"	.globl installer_kernel_service_18\n"
 	"	.type installer_kernel_service_18, @function\n"
-	"	.section .text.installer_kernel_service_18.101eb4,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_service_18.101eb4,\"ax\",@progbits\n"
 	"installer_kernel_service_18:\n"
 	"	movea.l (%a6),%a5\n"
 	"	move %sr,%d6\n"
@@ -80539,6 +80918,7 @@ __asm__(
 	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%a2/%a3\n"
 	"	rts\n"
 	"	.size installer_kernel_service_18, .-installer_kernel_service_18\n"
+	"	.popsection\n"
 );
 
 /* installer::00101f98 */
@@ -80672,7 +81052,7 @@ LAB_installer__0010200c:
 __asm__(
 	"	.globl installer_kernel_jam_x\n"
 	"	.type installer_kernel_jam_x, @function\n"
-	"	.section .text.installer_kernel_jam_x.101f98,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_jam_x.101f98,\"ax\",@progbits\n"
 	"installer_kernel_jam_x:\n"
 	"	movea.l (%a6),%a5\n"
 	"	movem.l %a4/%a3/%a2/%d5/%d4/%d3,-(%sp)\n"
@@ -80681,6 +81061,7 @@ __asm__(
 	"	.reloc ., R_68K_PC8, installer_kernel_send_for_task+0x6-1\n"
 	"	.byte 0\n"
 	"	.size installer_kernel_jam_x, .-installer_kernel_jam_x\n"
+	"	.popsection\n"
 );
 
 /* installer::00101fa2 */
@@ -80806,10 +81187,11 @@ LAB_installer__0010200c:
 __asm__(
 	"	.globl installer_kernel_send_x\n"
 	"	.type installer_kernel_send_x, @function\n"
-	"	.section .text.installer_kernel_send_x.101fa2,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_send_x.101fa2,\"ax\",@progbits\n"
 	"installer_kernel_send_x:\n"
 	"	movea.l (%a6),%a5\n"
 	"	.size installer_kernel_send_x, .-installer_kernel_send_x\n"
+	"	.popsection\n"
 );
 
 /* installer::00101fa4 */
@@ -80930,7 +81312,7 @@ LAB_installer__0010200c:
 __asm__(
 	"	.globl installer_kernel_send_for_task\n"
 	"	.type installer_kernel_send_for_task, @function\n"
-	"	.section .text.installer_kernel_send_for_task.101fa4,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_send_for_task.101fa4,\"ax\",@progbits\n"
 	"installer_kernel_send_for_task:\n"
 	"	movem.l %a4/%a3/%a2/%d5/%d4/%d3,-(%sp)\n"
 	"	suba.l %a4,%a4\n"
@@ -81050,6 +81432,7 @@ __asm__(
 	"	movem.l (%sp)+,%d3/%d4/%d5/%a2/%a3/%a4\n"
 	"	rts\n"
 	"	.size installer_kernel_send_for_task, .-installer_kernel_send_for_task\n"
+	"	.popsection\n"
 );
 
 /* installer::001020b2 */
@@ -81091,7 +81474,7 @@ __naked void installer_kernel_copy_message(void)
 __asm__(
 	"	.globl installer_kernel_copy_message\n"
 	"	.type installer_kernel_copy_message, @function\n"
-	"	.section .text.installer_kernel_copy_message.1020b2,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_copy_message.1020b2,\"ax\",@progbits\n"
 	"installer_kernel_copy_message:\n"
 	"	move %sr,%d6\n"
 	"	ori #0x700,%sr\n"
@@ -81110,6 +81493,7 @@ __asm__(
 	".Lg_1020da:\n"
 	"	rts\n"
 	"	.size installer_kernel_copy_message, .-installer_kernel_copy_message\n"
+	"	.popsection\n"
 );
 
 /* installer::001020dc */
@@ -81233,7 +81617,7 @@ LAB_installer__001021ca:
 __asm__(
 	"	.globl installer_kernel_request_x\n"
 	"	.type installer_kernel_request_x, @function\n"
-	"	.section .text.installer_kernel_request_x.1020dc,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_request_x.1020dc,\"ax\",@progbits\n"
 	"installer_kernel_request_x:\n"
 	"	movem.l %a2/%d5/%d4/%d3,-(%sp)\n"
 	"	movea.l (%a6),%a5\n"
@@ -81338,6 +81722,7 @@ __asm__(
 	"	movem.l (%sp)+,%d3/%d4/%d5/%a2\n"
 	"	rts\n"
 	"	.size installer_kernel_request_x, .-installer_kernel_request_x\n"
+	"	.popsection\n"
 );
 
 /* installer::001021e8 */
@@ -81403,7 +81788,7 @@ __regcall void installer_kernel_signal_v(void)
 __asm__(
 	"	.globl installer_kernel_signal_v\n"
 	"	.type installer_kernel_signal_v, @function\n"
-	"	.section .text.installer_kernel_signal_v.1021e8,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_signal_v.1021e8,\"ax\",@progbits\n"
 	"installer_kernel_signal_v:\n"
 	"	movea.l (%a6),%a5\n"
 	"	move %sr,%d6\n"
@@ -81413,6 +81798,7 @@ __asm__(
 	"	.byte 0\n"
 	"	lea (0x8c,%a6),%a5\n"
 	"	.size installer_kernel_signal_v, .-installer_kernel_signal_v\n"
+	"	.popsection\n"
 );
 
 /* installer::001021f6 */
@@ -81475,7 +81861,7 @@ __naked void installer_kernel_signal_task(void)
 __asm__(
 	"	.globl installer_kernel_signal_task\n"
 	"	.type installer_kernel_signal_task, @function\n"
-	"	.section .text.installer_kernel_signal_task.1021f6,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_signal_task.1021f6,\"ax\",@progbits\n"
 	"installer_kernel_signal_task:\n"
 	"	move.w %d1,-(%sp)\n"
 	"	bsr.w installer_kernel_check_task\n"
@@ -81522,6 +81908,7 @@ __asm__(
 	"	move.w (%sp)+,%d1\n"
 	"	rts\n"
 	"	.size installer_kernel_signal_task, .-installer_kernel_signal_task\n"
+	"	.popsection\n"
 );
 
 /* installer::00102260 */
@@ -81562,10 +81949,11 @@ __regcall void installer_kernel_get_v(void)
 __asm__(
 	"	.globl installer_kernel_get_v\n"
 	"	.type installer_kernel_get_v, @function\n"
-	"	.section .text.installer_kernel_get_v.102260,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_get_v.102260,\"ax\",@progbits\n"
 	"installer_kernel_get_v:\n"
 	"	clr.b %d7\n"
 	"	.size installer_kernel_get_v, .-installer_kernel_get_v\n"
+	"	.popsection\n"
 );
 
 /* installer::00102262 */
@@ -81625,7 +82013,7 @@ __regcall void installer_kernel_wait_v(void)
 __asm__(
 	"	.globl installer_kernel_wait_v\n"
 	"	.type installer_kernel_wait_v, @function\n"
-	"	.section .text.installer_kernel_wait_v.102262,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_wait_v.102262,\"ax\",@progbits\n"
 	"installer_kernel_wait_v:\n"
 	"	move.l %a2,-(%sp)\n"
 	"	movea.l (%a6),%a5\n"
@@ -81681,6 +82069,7 @@ __asm__(
 	"	movea.l (%sp)+,%a2\n"
 	"	rts\n"
 	"	.size installer_kernel_wait_v, .-installer_kernel_wait_v\n"
+	"	.popsection\n"
 );
 
 /* installer::001022e0 */
@@ -81711,7 +82100,7 @@ __regcall byte installer_kernel_mode(void)
 __asm__(
 	"	.globl installer_kernel_mode\n"
 	"	.type installer_kernel_mode, @function\n"
-	"	.section .text.installer_kernel_mode.1022e0,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_mode.1022e0,\"ax\",@progbits\n"
 	"installer_kernel_mode:\n"
 	"	movea.l (%a6),%a5\n"
 	"	move.b (0x11,%a5),%d6\n"
@@ -81726,6 +82115,7 @@ __asm__(
 	"	clr.b %d7\n"
 	"	rts\n"
 	"	.size installer_kernel_mode, .-installer_kernel_mode\n"
+	"	.popsection\n"
 );
 
 /* installer::001022fc */
@@ -81749,13 +82139,14 @@ __regcall undefined2 installer_kernel_service_33(undefined2 param_1)
 __asm__(
 	"	.globl installer_kernel_service_33\n"
 	"	.type installer_kernel_service_33, @function\n"
-	"	.section .text.installer_kernel_service_33.1022fc,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_service_33.1022fc,\"ax\",@progbits\n"
 	"installer_kernel_service_33:\n"
 	"	move.w (0x10,%sp),%d0\n"
 	"	ori.w #0x2000,(0x10,%sp)\n"
 	"	clr.w %d7\n"
 	"	rts\n"
 	"	.size installer_kernel_service_33, .-installer_kernel_service_33\n"
+	"	.popsection\n"
 );
 
 /* installer::0010230a */
@@ -81792,7 +82183,7 @@ __regcall void installer_kernel_pause(void)
 __asm__(
 	"	.globl installer_kernel_pause\n"
 	"	.type installer_kernel_pause, @function\n"
-	"	.section .text.installer_kernel_pause.10230a,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_pause.10230a,\"ax\",@progbits\n"
 	"installer_kernel_pause:\n"
 	"	movea.l (%a6),%a5\n"
 	"	ori #0x700,%sr\n"
@@ -81811,6 +82202,7 @@ __asm__(
 	"	clr.b %d7\n"
 	"	rts\n"
 	"	.size installer_kernel_pause, .-installer_kernel_pause\n"
+	"	.popsection\n"
 );
 
 /* installer::00102334 */
@@ -81855,7 +82247,7 @@ __regcall void installer_kernel_service_29(void)
 __asm__(
 	"	.globl installer_kernel_service_29\n"
 	"	.type installer_kernel_service_29, @function\n"
-	"	.section .text.installer_kernel_service_29.102334,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_service_29.102334,\"ax\",@progbits\n"
 	"installer_kernel_service_29:\n"
 	"	addq.l #0x1,(0x6c,%a6)\n"
 	"	move %sr,%d6\n"
@@ -81884,6 +82276,7 @@ __asm__(
 	"	clr.b %d7\n"
 	"	rts\n"
 	"	.size installer_kernel_service_29, .-installer_kernel_service_29\n"
+	"	.popsection\n"
 );
 
 /* installer::0010237a */
@@ -81914,7 +82307,7 @@ __regcall undefined8 installer_kernel_service_30(void)
 __asm__(
 	"	.globl installer_kernel_service_30\n"
 	"	.type installer_kernel_service_30, @function\n"
-	"	.section .text.installer_kernel_service_30.10237a,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_service_30.10237a,\"ax\",@progbits\n"
 	"installer_kernel_service_30:\n"
 	".Lg_10237a:\n"
 	"	move.l (0x72,%a6),%d1\n"
@@ -81934,6 +82327,7 @@ __asm__(
 	".Lg_1023a2:\n"
 	"	rts\n"
 	"	.size installer_kernel_service_30, .-installer_kernel_service_30\n"
+	"	.popsection\n"
 );
 
 /* installer::001023a4 */
@@ -81980,7 +82374,7 @@ __regcall void installer_kernel_service_31(void)
 __asm__(
 	"	.globl installer_kernel_service_31\n"
 	"	.type installer_kernel_service_31, @function\n"
-	"	.section .text.installer_kernel_service_31.1023a4,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_service_31.1023a4,\"ax\",@progbits\n"
 	"installer_kernel_service_31:\n"
 	"	move.l %d1,%d7\n"
 	"	cmpi.b #0x3c,%d7\n"
@@ -82028,6 +82422,7 @@ __asm__(
 	".Lg_102414:\n"
 	"	rts\n"
 	"	.size installer_kernel_service_31, .-installer_kernel_service_31\n"
+	"	.popsection\n"
 );
 
 /* installer::00102416 */
@@ -82072,7 +82467,7 @@ __regcall undefined8 installer_kernel_service_35(void)
 __asm__(
 	"	.globl installer_kernel_service_35\n"
 	"	.type installer_kernel_service_35, @function\n"
-	"	.section .text.installer_kernel_service_35.102416,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_service_35.102416,\"ax\",@progbits\n"
 	"installer_kernel_service_35:\n"
 	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
 	"	clr.w (0x8,%a0)\n"
@@ -82097,6 +82492,7 @@ __asm__(
 	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
 	"	rts\n"
 	"	.size installer_kernel_service_35, .-installer_kernel_service_35\n"
+	"	.popsection\n"
 );
 
 /* installer::00102456 */
@@ -82126,7 +82522,7 @@ __regcall void installer_kernel_service_36(void)
 __asm__(
 	"	.globl installer_kernel_service_36\n"
 	"	.type installer_kernel_service_36, @function\n"
-	"	.section .text.installer_kernel_service_36.102456,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_service_36.102456,\"ax\",@progbits\n"
 	"installer_kernel_service_36:\n"
 	"	moveq #0x1,%d7\n"
 	"	cmp.l (0x4,%a0),%d0\n"
@@ -82144,6 +82540,7 @@ __asm__(
 	".Lg_10247a:\n"
 	"	rts\n"
 	"	.size installer_kernel_service_36, .-installer_kernel_service_36\n"
+	"	.popsection\n"
 );
 
 /* installer::0010247c */
@@ -82176,7 +82573,7 @@ __regcall void installer_kernel_service_37(void)
 __asm__(
 	"	.globl installer_kernel_service_37\n"
 	"	.type installer_kernel_service_37, @function\n"
-	"	.section .text.installer_kernel_service_37.10247c,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_service_37.10247c,\"ax\",@progbits\n"
 	"installer_kernel_service_37:\n"
 	"	moveq #0x1,%d7\n"
 	"	cmp.l (0x4,%a0),%d0\n"
@@ -82198,6 +82595,7 @@ __asm__(
 	".Lg_1024a6:\n"
 	"	rts\n"
 	"	.size installer_kernel_service_37, .-installer_kernel_service_37\n"
+	"	.popsection\n"
 );
 
 /* installer::001024a8 */
@@ -82229,7 +82627,7 @@ __regcall void installer_kernel_service_38(void)
 __asm__(
 	"	.globl installer_kernel_service_38\n"
 	"	.type installer_kernel_service_38, @function\n"
-	"	.section .text.installer_kernel_service_38.1024a8,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_service_38.1024a8,\"ax\",@progbits\n"
 	"installer_kernel_service_38:\n"
 	"	moveq #0x1,%d7\n"
 	"	cmpa.l (-0x8,%a1),%a0\n"
@@ -82244,6 +82642,7 @@ __asm__(
 	".Lg_1024c4:\n"
 	"	rts\n"
 	"	.size installer_kernel_service_38, .-installer_kernel_service_38\n"
+	"	.popsection\n"
 );
 
 /* installer::001024c6 */
@@ -82289,7 +82688,7 @@ __naked void installer_kernel_advance_date(void)
 __asm__(
 	"	.globl installer_kernel_advance_date\n"
 	"	.type installer_kernel_advance_date, @function\n"
-	"	.section .text.installer_kernel_advance_date.1024c6,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_advance_date.1024c6,\"ax\",@progbits\n"
 	"installer_kernel_advance_date:\n"
 	"	move.l %d7,-(%sp)\n"
 	"	move %sr,%d6\n"
@@ -82321,6 +82720,7 @@ __asm__(
 	"	move.l (%sp)+,%d7\n"
 	"	rts\n"
 	"	.size installer_kernel_advance_date, .-installer_kernel_advance_date\n"
+	"	.popsection\n"
 );
 
 /* installer::00102516 */
@@ -82351,7 +82751,7 @@ __naked void installer_kernel_set_leap_year(void)
 __asm__(
 	"	.globl installer_kernel_set_leap_year\n"
 	"	.type installer_kernel_set_leap_year, @function\n"
-	"	.section .text.installer_kernel_set_leap_year.102516,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_set_leap_year.102516,\"ax\",@progbits\n"
 	"installer_kernel_set_leap_year:\n"
 	"	move.l %d6,%d7\n"
 	"	clr.w %d7\n"
@@ -82373,6 +82773,7 @@ __asm__(
 	".Lg_10253e:\n"
 	"	rts\n"
 	"	.size installer_kernel_set_leap_year, .-installer_kernel_set_leap_year\n"
+	"	.popsection\n"
 );
 
 /* installer::00102540 */
@@ -82398,7 +82799,7 @@ __regcall void * installer_kernel_check_task(int task /* a0 */,void *running /* 
 __asm__(
 	"	.globl installer_kernel_check_task\n"
 	"	.type installer_kernel_check_task, @function\n"
-	"	.section .text.installer_kernel_check_task.102540,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_check_task.102540,\"ax\",@progbits\n"
 	"installer_kernel_check_task:\n"
 	"	move.l %a0,%d6\n"
 	"	beq.b .Lg_10256e\n"
@@ -82425,6 +82826,7 @@ __asm__(
 	".Lg_102570:\n"
 	"	rts\n"
 	"	.size installer_kernel_check_task, .-installer_kernel_check_task\n"
+	"	.popsection\n"
 );
 
 /* installer::00102572 */
@@ -82447,7 +82849,7 @@ __regcall void installer_kernel_check_exchange(int exchange /* a0 */,void *runni
 __asm__(
 	"	.globl installer_kernel_check_exchange\n"
 	"	.type installer_kernel_check_exchange, @function\n"
-	"	.section .text.installer_kernel_check_exchange.102572,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_check_exchange.102572,\"ax\",@progbits\n"
 	"installer_kernel_check_exchange:\n"
 	"	move.l (0x18,%a0),%d6\n"
 	"	swap %d6\n"
@@ -82470,6 +82872,7 @@ __asm__(
 	".Lg_10259a:\n"
 	"	rts\n"
 	"	.size installer_kernel_check_exchange, .-installer_kernel_check_exchange\n"
+	"	.popsection\n"
 );
 
 /* installer::0010259c */
@@ -82492,7 +82895,7 @@ __regcall void installer_kernel_check_segment(void *segment /* a0 */)
 __asm__(
 	"	.globl installer_kernel_check_segment\n"
 	"	.type installer_kernel_check_segment, @function\n"
-	"	.section .text.installer_kernel_check_segment.10259c,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_check_segment.10259c,\"ax\",@progbits\n"
 	"installer_kernel_check_segment:\n"
 	"	clr.l %d7\n"
 	"	move.w (0x10,%a0),%d7\n"
@@ -82503,6 +82906,7 @@ __asm__(
 	".Lg_1025ae:\n"
 	"	rts\n"
 	"	.size installer_kernel_check_segment, .-installer_kernel_check_segment\n"
+	"	.popsection\n"
 );
 
 /* installer::001025b0 */
@@ -82536,13 +82940,14 @@ __naked void installer_kernel_timer_cancel(void)
 __asm__(
 	"	.globl installer_kernel_timer_cancel\n"
 	"	.type installer_kernel_timer_cancel, @function\n"
-	"	.section .text.installer_kernel_timer_cancel.1025b0,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_timer_cancel.1025b0,\"ax\",@progbits\n"
 	"installer_kernel_timer_cancel:\n"
 	"	tst.b (0x12,%a2)\n"
 	"	.byte 0x6f | ble.b 0x001025e2\n"
 	"	.reloc ., R_68K_PC8, installer_kernel_timer_unlink+0x2c-1\n"
 	"	.byte 0\n"
 	"	.size installer_kernel_timer_cancel, .-installer_kernel_timer_cancel\n"
+	"	.popsection\n"
 );
 
 /* installer::001025b6 */
@@ -82575,7 +82980,7 @@ __naked undefined4 installer_kernel_timer_unlink(void)
 __asm__(
 	"	.globl installer_kernel_timer_unlink\n"
 	"	.type installer_kernel_timer_unlink, @function\n"
-	"	.section .text.installer_kernel_timer_unlink.1025b6,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_timer_unlink.1025b6,\"ax\",@progbits\n"
 	"installer_kernel_timer_unlink:\n"
 	"	movem.l %a3/%d0,-(%sp)\n"
 	"	move %sr,%d6\n"
@@ -82594,6 +82999,7 @@ __asm__(
 	"	movea.l (%sp)+,%a3\n"
 	"	rts\n"
 	"	.size installer_kernel_timer_unlink, .-installer_kernel_timer_unlink\n"
+	"	.popsection\n"
 );
 
 /* installer::001025e4 */
@@ -82652,7 +83058,7 @@ __naked void installer_kernel_timer_insert(void)
 __asm__(
 	"	.globl installer_kernel_timer_insert\n"
 	"	.type installer_kernel_timer_insert, @function\n"
-	"	.section .text.installer_kernel_timer_insert.1025e4,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_timer_insert.1025e4,\"ax\",@progbits\n"
 	"installer_kernel_timer_insert:\n"
 	"	movem.l %a4/%a2/%d2,-(%sp)\n"
 	"	subq.l #0x1,%d0\n"
@@ -82694,6 +83100,7 @@ __asm__(
 	"	movem.l (%sp)+,%d2/%a2/%a4\n"
 	"	rts\n"
 	"	.size installer_kernel_timer_insert, .-installer_kernel_timer_insert\n"
+	"	.popsection\n"
 );
 
 /* installer::00102652 */
@@ -82734,13 +83141,14 @@ __naked void installer_kernel_make_ready(void)
 __asm__(
 	"	.globl installer_kernel_make_ready\n"
 	"	.type installer_kernel_make_ready, @function\n"
-	"	.section .text.installer_kernel_make_ready.102652,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_make_ready.102652,\"ax\",@progbits\n"
 	"installer_kernel_make_ready:\n"
 	"	andi.w #0x4,(0x12,%a2)\n"
 	"	.byte 0x66 | bne.b 0x0010269a\n"
 	"	.reloc ., R_68K_PC8, installer_kernel_ready_insert+0x40-1\n"
 	"	.byte 0\n"
 	"	.size installer_kernel_make_ready, .-installer_kernel_make_ready\n"
+	"	.popsection\n"
 );
 
 /* installer::0010265a */
@@ -82776,7 +83184,7 @@ __naked void installer_kernel_ready_insert(void)
 __asm__(
 	"	.globl installer_kernel_ready_insert\n"
 	"	.type installer_kernel_ready_insert, @function\n"
-	"	.section .text.installer_kernel_ready_insert.10265a,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_ready_insert.10265a,\"ax\",@progbits\n"
 	"installer_kernel_ready_insert:\n"
 	"	movem.l %a5/%d1,-(%sp)\n"
 	"	move.b (0x10,%a2),%d1\n"
@@ -82803,6 +83211,7 @@ __asm__(
 	"	movea.l (%sp)+,%a5\n"
 	"	rts\n"
 	"	.size installer_kernel_ready_insert, .-installer_kernel_ready_insert\n"
+	"	.popsection\n"
 );
 
 /* installer::0010269c */
@@ -82831,7 +83240,7 @@ __naked void installer_kernel_queue_remove(void)
 __asm__(
 	"	.globl installer_kernel_queue_remove\n"
 	"	.type installer_kernel_queue_remove, @function\n"
-	"	.section .text.installer_kernel_queue_remove.10269c,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_queue_remove.10269c,\"ax\",@progbits\n"
 	"installer_kernel_queue_remove:\n"
 	"	move.l %a1,-(%sp)\n"
 	"	move.l (%a5),%d6\n"
@@ -82888,6 +83297,7 @@ __asm__(
 	"	.byte 0x01\n"
 	"	.byte 0xee\n"
 	"	.size installer_kernel_queue_remove, .-installer_kernel_queue_remove\n"
+	"	.popsection\n"
 );
 
 /* installer::001026de */
@@ -83068,7 +83478,7 @@ __exception void installer_kernel_init(void)
 __asm__(
 	"	.globl installer_kernel_init\n"
 	"	.type installer_kernel_init, @function\n"
-	"	.section .text.installer_kernel_init.1026de,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_init.1026de,\"ax\",@progbits\n"
 	"installer_kernel_init:\n"
 	"	movea.l (__ghidra_1014c8:w,%pc),%a0\n"
 	"	movea.l (%a0),%a0\n"
@@ -83230,6 +83640,7 @@ __asm__(
 	"	lea (0xdead).l,%a0\n"
 	"	stop #0x0\n"
 	"	.size installer_kernel_init, .-installer_kernel_init\n"
+	"	.popsection\n"
 );
 
 /* installer::001028d4 */
@@ -83298,7 +83709,7 @@ __naked void installer_kernel_region_init(void)
 __asm__(
 	"	.globl installer_kernel_region_init\n"
 	"	.type installer_kernel_region_init, @function\n"
-	"	.section .text.installer_kernel_region_init.1028d4,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_region_init.1028d4,\"ax\",@progbits\n"
 	"installer_kernel_region_init:\n"
 	"	move.l (0x4,%a0),%d1\n"
 	"	sub.l %a3,%d1\n"
@@ -83364,6 +83775,7 @@ __asm__(
 	"	.byte 0x60\n"
 	"	.byte 0xfa\n"
 	"	.size installer_kernel_region_init, .-installer_kernel_region_init\n"
+	"	.popsection\n"
 );
 
 /* installer::00102990 */
@@ -83492,7 +83904,7 @@ __exception void installer_kernel_return_from_interrupt(ushort param_1)
 __asm__(
 	"	.globl installer_kernel_return_from_interrupt\n"
 	"	.type installer_kernel_return_from_interrupt, @function\n"
-	"	.section .text.installer_kernel_return_from_interrupt.102990,\"ax\",@progbits\n"
+	"	.pushsection .text.installer_kernel_return_from_interrupt.102990,\"ax\",@progbits\n"
 	"installer_kernel_return_from_interrupt:\n"
 	"	addq.l #0x8,%sp\n"
 	"	movem.l %a6/%a5/%d6,-(%sp)\n"
@@ -83587,6 +83999,7 @@ __asm__(
 	"	move.l %d6,-(%sp)\n"
 	"	bra.w installer_kernel_switch_task\n"
 	"	.size installer_kernel_return_from_interrupt, .-installer_kernel_return_from_interrupt\n"
+	"	.popsection\n"
 );
 
 /* installer::00102a72 */

@@ -134,9 +134,9 @@ DECOMPILED_CFLAGS = -std=gnu17 -mcpu=cpu32 -O1 -fno-toplevel-reorder -fno-builti
 	-fno-tree-loop-distribute-patterns -w \
 	-Wno-error=int-conversion -Wno-error=incompatible-pointer-types
 check-decompiled:
-	$(M68K_CC) $(DECOMPILED_CFLAGS) -c -o /dev/null third_party/firmware/decompiled/z3805a-3543b.c
-	python3 tools/firmware/decompiled_check.py \
-		third_party/firmware/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin
+	$(M68K_CC) $(DECOMPILED_CFLAGS) -c -o target/decompiled.o third_party/firmware/decompiled/z3805a-3543b.c
+	python3 tools/firmware/decompiled_check.py third_party/firmware/decompiled/z3805a-3543b.c \
+		third_party/firmware/z3805a-3543b.bin target/decompiled.o
 
 clean:
 	$(CARGO) clean

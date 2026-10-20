@@ -12,9 +12,12 @@ installer the boot code unpacks from its records (docs/firmware/restart.md,
 
     python3 tools/firmware/decompiled_check.py \\
         third_party/firmware/decompiled/z3805a-3543b.c \\
-        third_party/firmware/z3805a-3543b.bin
+        third_party/firmware/z3805a-3543b.bin [OBJECT]
 
-Needs m68k-linux-gnu binutils.  Exits nonzero on any difference.
+Given OBJECT, the whole file compiled, it also requires each piece's
+section there to be the same size as assembled alone: that gcc's own
+code did not land in one.  Needs m68k-linux-gnu binutils.  Exits
+nonzero on any difference.
 """
 
 import collections
@@ -82,6 +85,16 @@ def addresses(c_path, obj):
     return values, installer
 
 
+def piece_sizes(obj):
+    """Each piece section's size in an object."""
+    sizes = {}
+    for line in run(TOOLS + 'readelf', '-SW', obj).splitlines():
+        piece = re.match(r'^\s*\[\s*\d+\] (\.text\.\w+\.[0-9a-f]+)\s+\S+\s+\S+\s+\S+\s+([0-9a-f]+)', line)
+        if piece:
+            sizes[piece.group(1)] = int(piece.group(2), 16)
+    return sizes
+
+
 def main():
     c_path, image_path = sys.argv[1], sys.argv[2]
     c = open(c_path).read()
@@ -145,6 +158,12 @@ def main():
             identical += 1
     routines = len({name for name, _ in pieces})
     print(f'pieces identical: {identical}, differing: {differing}; routines: {routines}')
+    if len(sys.argv) > 3:
+        alone, whole = piece_sizes(obj), piece_sizes(sys.argv[3])
+        grown = sorted(name for name in alone if whole.get(name) != alone[name])
+        print(f'pieces the same size in {sys.argv[3]}: {len(alone) - len(grown)} of {len(alone)}'
+              + (f', not {grown[:5]}' if grown else ''))
+        differing += len(grown)
     return 1 if differing else 0
 
 

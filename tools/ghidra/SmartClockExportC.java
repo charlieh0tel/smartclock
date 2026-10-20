@@ -663,6 +663,7 @@ public class SmartClockExportC extends GhidraScript {
 			pieceStarts.add(range.getMinAddress());
 		}
 		boolean inEntryPiece = false;
+		boolean inPiece = false;
 		for (String line : lines) {
 			int tab = line.indexOf('\t');
 			Address at = currentProgram.getAddressFactory().getAddress(line.substring(0, tab));
@@ -671,7 +672,11 @@ public class SmartClockExportC extends GhidraScript {
 					out.append(quoted("\t.size " + name + ", .-" + name));
 					inEntryPiece = false;
 				}
-				out.append(quoted("\t.section " + pieceSection(name, at) + ",\"ax\",@progbits"));
+				if (inPiece) {
+					out.append(quoted("\t.popsection"));
+				}
+				out.append(quoted("\t.pushsection " + pieceSection(name, at) + ",\"ax\",@progbits"));
+				inPiece = true;
 			}
 			if (at.equals(function.getEntryPoint())) {
 				out.append(quoted(name + ":"));
@@ -687,13 +692,17 @@ public class SmartClockExportC extends GhidraScript {
 		if (inEntryPiece) {
 			out.append(quoted("\t.size " + name + ", .-" + name));
 		}
+		if (inPiece) {
+			out.append(quoted("\t.popsection"));
+		}
 		return out.append(");\n").toString();
 	}
 
 	/**
 	 * The section of one contiguous piece of a routine, named for the
 	 * routine and the piece's address: a routine whose code lies about
-	 * another's is in pieces, each linked where the linker puts it.
+	 * another's is in pieces, each linked where the linker puts it.  Each
+	 * is pushed and popped, so that gcc's own code stays in its section.
 	 */
 	static String pieceSection(String name, Address at) {
 		return ".text." + name + "." + Long.toHexString(at.getOffset());

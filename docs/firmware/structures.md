@@ -124,8 +124,8 @@ those of the message in the VP Oncore reference
 
 | Record | Type | Message | Fields | Printed after |
 | ------ | ---- | ------- | ------ | ------------- |
-| `oncore_time`, `0x100c6b` | `oncore_time_of_day` | `@@Aa` | hour, minute, second | `TIME` |
-| `oncore_gmt_offset`, `0x100c6e` | `oncore_gmt_offset` | `@@Ab` | sign, hours, minutes | `GMT CORR` |
+| `oncore_time`, `0x100c6b` | `oncore_time_fields` | `@@Aa` | hour, minute, second | `TIME` |
+| `oncore_gmt_offset`, `0x100c6e` | `oncore_gmt_offset_fields` | `@@Ab` | sign, hours, minutes | `GMT CORR` |
 | `oncore_date`, `0x100c72` | `oncore_date_fields` | `@@Ac` | month, day, a word of year | `DATE` |
 | `oncore_position`, `0x100c76` | `oncore_position_fields` | `@@Ad`, `@@Ae`, `@@Af` | latitude, longitude (mas), GPS and MSL heights (cm) | `LAT`, `LON`, `GPS HGT`, `MSL HGT` |
 | `oncore_mask_angle`, `0x100c86` | byte | `@@Ag` | | `ELEV MASK` |

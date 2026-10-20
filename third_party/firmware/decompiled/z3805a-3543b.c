@@ -1,5 +1,341 @@
 /* z3805a-3543b.bin, 68000:BE:32:CPU32 */
 
+#pragma pack(push, 1)
+typedef unsigned char   undefined;
+
+typedef unsigned char    byte;
+typedef unsigned char    uchar;
+typedef unsigned int    uint;
+typedef unsigned long    ulong;
+typedef unsigned char    undefined1;
+typedef unsigned short    undefined2;
+typedef unsigned int    undefined4;
+typedef unsigned long long    undefined6;
+typedef unsigned long long    undefined8;
+typedef unsigned short    ushort;
+typedef unsigned short    word;
+typedef struct efc_ring efc_ring, *Pefc_ring;
+
+struct efc_ring {
+    uchar start_ptr;
+    uchar stop_ptr;
+    uchar field_002;
+    uchar field_003;
+    ushort sample_count;
+    short field_006;
+    ushort summed_count;
+    float averages[64];
+    uchar weights[64];
+    float times[64];
+    float logs[64];
+    float efc_sum;
+    long field_34e;
+    float drift;
+    long field_356;
+    float field_35a;
+    long field_35e;
+    long field_362;
+};
+
+typedef struct forth_user forth_user, *Pforth_user;
+
+struct forth_user {
+    short iodev;
+    undefined4 field1_0x2; /* not known */
+    char *pad;
+    char *tib;
+    void *fence;
+    void *latest;
+    void *here;
+    long base;
+    short state;
+    long *stack_base;
+    void *return_stack_base;
+};
+
+typedef struct forth_user *forth_user_end;
+
+typedef struct oncore_date_fields oncore_date_fields, *Poncore_date_fields;
+
+struct oncore_date_fields {
+    uchar month;
+    uchar day;
+    ushort year;
+};
+
+typedef struct oncore_extension_fields oncore_extension_fields, *Poncore_extension_fields;
+
+struct oncore_extension_fields {
+    ushort gdop;
+    ushort pdop;
+    ushort hdop;
+    ushort vdop;
+    ushort tdop;
+    short magnetic_variation;
+    short velocity_north;
+    short velocity_east;
+    short velocity_up;
+    ushort correction_age;
+    long ecef_x;
+    long ecef_y;
+    long ecef_z;
+    uchar ura[6];
+    short least_squares_inverse[10];
+    short clock_bias;
+    ushort oscillator_offset;
+};
+
+typedef struct oncore_gmt_offset_fields oncore_gmt_offset_fields, *Poncore_gmt_offset_fields;
+
+struct oncore_gmt_offset_fields {
+    uchar sign;
+    uchar hours;
+    char minutes;
+};
+
+typedef struct oncore_hold_position_fields oncore_hold_position_fields, *Poncore_hold_position_fields;
+
+struct oncore_hold_position_fields {
+    long latitude;
+    long longitude;
+    long height;
+};
+
+typedef struct oncore_position_fields oncore_position_fields, *Poncore_position_fields;
+
+struct oncore_position_fields {
+    long latitude;
+    long longitude;
+    long height_gps;
+    long height_msl;
+};
+
+typedef struct oncore_time_fields oncore_time_fields, *Poncore_time_fields;
+
+struct oncore_time_fields {
+    uchar hour;
+    uchar minute;
+    uchar second;
+};
+
+typedef struct scpi_numeric_param scpi_numeric_param, *Pscpi_numeric_param;
+
+struct scpi_numeric_param {
+    short field_00;
+    void *table_02;
+    void *minimum;
+    void *maximum;
+    void *convert;
+    void *field_12;
+    void *value;
+    void *field_1a;
+    short field_1e;
+    short field_20;
+    void *field_22;
+    char is_integer;
+    char field_27;
+    void *table_28;
+};
+
+typedef struct status_condition status_condition, *Pstatus_condition;
+
+struct status_condition {
+    short kind;
+    short register_index;
+    short bit;
+};
+
+typedef struct status_model status_model, *Pstatus_model;
+
+typedef struct status_register status_register, *Pstatus_register;
+
+struct status_model {
+    short register_count;
+    void *output;
+    void *queue;
+    struct status_condition *conditions;
+    long field_0e;
+    struct status_register *registers[7];
+};
+
+struct status_register {
+    short field_00;
+    short field_02;
+    short field_04;
+    short field_06;
+    short field_08;
+    struct status_register *parent;
+    short parent_bit;
+};
+
+#pragma pack(pop)
+
+extern void *boot_vectors; /* 00000000 */
+extern void *primary_vectors; /* 00010000 */
+extern ushort status_register_setup_table; /* 0002f7ac */
+extern status_condition status_conditions[57]; /* 0002f838 */
+extern scpi_numeric_param scpi_param_SAMPle_INTeger; /* 000334de */
+extern scpi_numeric_param scpi_param_SAMPle_IARR; /* 0003354e */
+extern scpi_numeric_param scpi_param_SAMPle_FLOat; /* 0003367a */
+extern scpi_numeric_param scpi_param_SAMPle_FARR; /* 000336da */
+extern scpi_numeric_param scpi_param_SOURce_PULSe_CONTinuous_PERiod; /* 000339b4 */
+extern scpi_numeric_param scpi_param_SOURce_ROSCillator_LIMit_THReshold; /* 00033e20 */
+extern scpi_numeric_param scpi_param_SOURce_ROSCillator_HOLDover_LIMit_THReshold; /* 00033e5e */
+extern scpi_numeric_param scpi_param_DIAGnostic_ROSCillator_TCOefficient; /* 00033e9c */
+extern scpi_numeric_param scpi_param_DOUGlas_DURation; /* 00033eda */
+extern scpi_numeric_param scpi_param_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold; /* 00033f18 */
+extern scpi_numeric_param scpi_param_SOURce_GPSystem_EMANgle; /* 00033f56 */
+extern scpi_numeric_param scpi_param_SOURce_GPSystem_ADELay; /* 00033f94 */
+extern scpi_numeric_param scpi_param_DIAGnostic_TOFFset; /* 00033fd2 */
+extern scpi_numeric_param scpi_param_KENneth_PREDicted_DURation; /* 0003409c */
+extern scpi_numeric_param scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold; /* 000342f8 */
+extern scpi_numeric_param scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; /* 00034336 */
+extern oncore_time_fields oncore_time; /* 00100c6b */
+extern oncore_gmt_offset_fields oncore_gmt_offset; /* 00100c6e */
+extern oncore_date_fields oncore_date; /* 00100c72 */
+extern oncore_position_fields oncore_position; /* 00100c76 */
+extern byte oncore_mask_angle; /* 00100c86 */
+extern byte oncore_satellite_select; /* 00100c87 */
+extern oncore_hold_position_fields oncore_hold_position; /* 00100d10 */
+extern long oncore_pps_offset; /* 00100d2a */
+extern long oncore_pps_cable_delay; /* 00100d2e */
+extern oncore_extension_fields oncore_extension; /* 00100fae */
+extern float scpi_value_DIAGnostic_ROSCillator_TCOefficient; /* 00101d0c */
+extern float scpi_value_DIAGnostic_TOFFset; /* 00101d10 */
+extern long eepx_exchange; /* 00101d18 */
+extern long scpi_value_SAMPle_INTeger; /* 00101de4 */
+extern long scpi_value_SAMPle_IARR; /* 00101de8 */
+extern float scpi_value_SAMPle_FLOat; /* 00101e18 */
+extern float scpi_value_SAMPle_FARR; /* 00101e1c */
+extern float max_loop_time; /* 00101e84 */
+extern long scpi_value_SOURce_GPSystem_EMANgle; /* 00101e8c */
+extern long scpi_value_SOURce_GPSystem_ADELay; /* 00101e90 */
+extern long scpi_value_DOUGlas_DURation; /* 00101e94 */
+extern long scpi_value_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold; /* 00101e9a */
+extern float scpi_value_SOURce_ROSCillator_LIMit_THReshold; /* 00101e9e */
+extern float scpi_value_SOURce_ROSCillator_HOLDover_LIMit_THReshold; /* 00101ea2 */
+extern long scpi_value_KENneth_PREDicted_DURation; /* 00101ec2 */
+extern long scpi_value_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold; /* 00101ed2 */
+extern long scpi_value_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; /* 00101eda */
+extern long scpi_value_SOURce_PULSe_CONTinuous_PERiod; /* 00101f26 */
+extern float efc; /* 00102194 */
+extern float tfom; /* 00102198 */
+extern efc_ring efc_history; /* 001021ac */
+extern char status_ready; /* 00102eb7 */
+extern status_model * status_object; /* 00102eb8 */
+extern long drtR_exchange; /* 00103102 */
+extern long drtW_exchange; /* 00103106 */
+extern long sciR_exchange; /* 00103150 */
+extern long sciW_exchange; /* 0010316c */
+extern long spoo_exchange; /* 001032f8 */
+extern byte DUART_MR1A_MR2A; /* 00200001 */
+extern byte DUART_SRA_CSRA; /* 00200003 */
+extern byte DUART_CRA; /* 00200005 */
+extern byte DUART_RBA_TBA; /* 00200007 */
+extern byte DUART_IPCR_ACR; /* 00200009 */
+extern byte DUART_ISR_IMR; /* 0020000b */
+extern byte DUART_CUR_CTUR; /* 0020000d */
+extern byte DUART_CLR_CTLR; /* 0020000f */
+extern byte DUART_MR1B_MR2B; /* 00200011 */
+extern byte DUART_SRB_CSRB; /* 00200013 */
+extern byte DUART_CRB; /* 00200015 */
+extern byte DUART_RBB_TBB; /* 00200017 */
+extern byte DUART_IVR; /* 00200019 */
+extern byte DUART_IP_OPCR; /* 0020001b */
+extern byte DUART_START_SOPBC; /* 0020001d */
+extern byte DUART_STOP_ROPBC; /* 0020001f */
+extern word GPTMCR; /* 00fff900 */
+extern word GPT_ICR; /* 00fff904 */
+extern byte DDRGP; /* 00fff906 */
+extern byte PORTGP; /* 00fff907 */
+extern byte OC1M; /* 00fff908 */
+extern byte OC1D; /* 00fff909 */
+extern word TCNT; /* 00fff90a */
+extern byte PACTL; /* 00fff90c */
+extern byte PACNT; /* 00fff90d */
+extern word TIC1; /* 00fff90e */
+extern word TIC2; /* 00fff910 */
+extern word TIC3; /* 00fff912 */
+extern word TOC1; /* 00fff914 */
+extern word TOC2; /* 00fff916 */
+extern word TOC3; /* 00fff918 */
+extern word TOC4; /* 00fff91a */
+extern word TI4_O5; /* 00fff91c */
+extern byte TCTL1; /* 00fff91e */
+extern byte TCTL2; /* 00fff91f */
+extern byte TMSK1; /* 00fff920 */
+extern byte TMSK2; /* 00fff921 */
+extern byte TFLG1; /* 00fff922 */
+extern byte TFLG2; /* 00fff923 */
+extern byte CFORC; /* 00fff924 */
+extern byte PWMC; /* 00fff925 */
+extern byte PWMA; /* 00fff926 */
+extern byte PWMB; /* 00fff927 */
+extern word PWMCNT; /* 00fff928 */
+extern byte PWMBUFA; /* 00fff92a */
+extern byte PWMBUFB; /* 00fff92b */
+extern word PRESCL; /* 00fff92c */
+extern word SIMCR; /* 00fffa00 */
+extern word SIMTR; /* 00fffa02 */
+extern word SYNCR; /* 00fffa04 */
+extern byte RSR; /* 00fffa07 */
+extern word SIMTRE; /* 00fffa08 */
+extern byte PORTE0; /* 00fffa11 */
+extern byte PORTE1; /* 00fffa13 */
+extern byte DDRE; /* 00fffa15 */
+extern byte PEPAR; /* 00fffa17 */
+extern byte PORTF0; /* 00fffa19 */
+extern byte PORTF1; /* 00fffa1b */
+extern byte DDRF; /* 00fffa1d */
+extern byte PFPAR; /* 00fffa1f */
+extern byte SYPCR; /* 00fffa21 */
+extern word PICR; /* 00fffa22 */
+extern word PITR; /* 00fffa24 */
+extern byte SWSR; /* 00fffa27 */
+extern byte PORTC; /* 00fffa41 */
+extern word CSPAR0; /* 00fffa44 */
+extern word CSPAR1; /* 00fffa46 */
+extern word CSBARBT; /* 00fffa48 */
+extern word CSORBT; /* 00fffa4a */
+extern word CSBAR0; /* 00fffa4c */
+extern word CSOR0; /* 00fffa4e */
+extern word CSBAR1; /* 00fffa50 */
+extern word CSOR1; /* 00fffa52 */
+extern word CSBAR2; /* 00fffa54 */
+extern word CSOR2; /* 00fffa56 */
+extern word CSBAR3; /* 00fffa58 */
+extern word CSOR3; /* 00fffa5a */
+extern word CSBAR4; /* 00fffa5c */
+extern word CSOR4; /* 00fffa5e */
+extern word CSBAR5; /* 00fffa60 */
+extern word CSOR5; /* 00fffa62 */
+extern word CSBAR6; /* 00fffa64 */
+extern word CSOR6; /* 00fffa66 */
+extern word CSBAR7; /* 00fffa68 */
+extern word CSOR7; /* 00fffa6a */
+extern word CSBAR8; /* 00fffa6c */
+extern word CSOR8; /* 00fffa6e */
+extern word CSBAR9; /* 00fffa70 */
+extern word CSOR9; /* 00fffa72 */
+extern word CSBAR10; /* 00fffa74 */
+extern word CSOR10; /* 00fffa76 */
+extern word QSMCR; /* 00fffc00 */
+extern word QTEST; /* 00fffc02 */
+extern byte QILR; /* 00fffc04 */
+extern byte QIVR; /* 00fffc05 */
+extern word SCCR0; /* 00fffc08 */
+extern word SCCR1; /* 00fffc0a */
+extern word SCSR; /* 00fffc0c */
+extern word SCDR; /* 00fffc0e */
+extern byte PORTQS; /* 00fffc15 */
+extern byte PQSPAR; /* 00fffc16 */
+extern byte DDRQS; /* 00fffc17 */
+extern word SPCR0; /* 00fffc18 */
+extern word SPCR1; /* 00fffc1a */
+extern word SPCR2; /* 00fffc1c */
+extern byte SPCR3; /* 00fffc1e */
+extern byte SPSR; /* 00fffc1f */
+
 /* 00000400 */
 
 void FUN_00000400(void)

@@ -283,8 +283,8 @@
 0x101eda	label	scpi_value_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	structures.md: the descriptor's value	long
 #
 # globals the console's print words label, docs/firmware/structures.md
-0x100c6b	label	oncore_time	structures.md: @@Aa's decoders; printed after TIME	oncore_time_of_day
-0x100c6e	label	oncore_gmt_offset	structures.md: @@Ab's decoders; printed after GMT CORR	oncore_gmt_offset
+0x100c6b	label	oncore_time	structures.md: @@Aa's decoders; printed after TIME	oncore_time_fields
+0x100c6e	label	oncore_gmt_offset	structures.md: @@Ab's decoders; printed after GMT CORR	oncore_gmt_offset_fields
 0x100c72	label	oncore_date	structures.md: @@Ac's decoders; printed after DATE	oncore_date_fields
 0x100c76	label	oncore_position	structures.md: @@Ad, @@Ae and @@Af's decoders; printed after LAT, LON, GPS HGT and MSL HGT	oncore_position_fields
 0x100d10	label	oncore_hold_position	structures.md: @@As's decoders; printed after POS HOLD	oncore_hold_position_fields

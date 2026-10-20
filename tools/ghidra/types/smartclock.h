@@ -60,18 +60,18 @@ typedef struct status_model {
  * reference (third_party/motorola/VPCommands.pdf) gives it. */
 
 /* @@Aa, time of day. */
-typedef struct oncore_time_of_day {
+typedef struct oncore_time_fields {
 	unsigned char hour;
 	unsigned char minute;
 	unsigned char second;
-} oncore_time_of_day;
+} oncore_time_fields;
 
 /* @@Ab, GMT offset. */
-typedef struct oncore_gmt_offset {
+typedef struct oncore_gmt_offset_fields {
 	unsigned char sign;     /* 0 positive, 0xff negative */
 	unsigned char hours;
 	signed char minutes;    /* the printer also takes a negative one as negative */
-} oncore_gmt_offset;
+} oncore_gmt_offset_fields;
 
 /* @@Ac, date. */
 typedef struct oncore_date_fields {

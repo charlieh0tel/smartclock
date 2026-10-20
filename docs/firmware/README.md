@@ -362,9 +362,15 @@ only copied into a local buffer whose address escapes, as the `pllc`
 requests' are.  A signature from the names file or given by hand is
 kept.
 
-**ExportC** writes every function's C, in address order.
+**ExportC** writes every function's C, in address order, after the
+program's structures (packed, as the image lays them out) and an
+`extern` for each named, typed global with its address, so the file
+stands alone: a global with a structure's type reads as `foo.bar`, a
+pointer to one as `foo->bar`.  The declarations compile, taking `long`
+as 32 bits, as on the 68000; a global still accessed as
+`DAT_00100c6e._2_1_` is a record that has no type yet.
 
-In the Z3805A 3543B image this gives 1752 functions, 1448 of them before
+In the Z3805A 3543B image this gives 1754 functions, 1448 of them before
 the names, and every one decompiles.  137 switches are recovered;
 `0x24ff2` and `0x25140`, a `jmp (d8,PC,D6.w)` with no table load, are
 not.  About half the functions are named.  The output is

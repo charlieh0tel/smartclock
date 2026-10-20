@@ -198,7 +198,7 @@
 0x1009c2	label	clock_date	context: get_date_time's date
 0x1009be	label	clock_time	context: get_date_time's time
 0x1009e7	label	clock_invalid	context: get_date_time reports no date or time while set
-0x2410e	function	adc_average	context: diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a default when there is no reading	float adc_average(unsigned long channel) @ D0
+0x2410e	function	adc_average	context: diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a default when there is no reading	float adc_average(unsigned char channel) @ D0
 0x1043a	function	mutex_acquire	context: recursive lock, owner at +8, count at +0xc, a token through request_x when not already owned
 0x10484	function	mutex_release	context: drops the count, or the owner and the token through send_x
 0x10502	function	mutex_lock	context: mutex_acquire on its argument

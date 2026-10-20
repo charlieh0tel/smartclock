@@ -15527,45 +15527,29 @@ void diag_pr_adc_avg(void)
 
 {
   float fVar1;
-  undefined4 unaff_A2;
   double dVar2;
-  undefined1 uVar3;
-  undefined2 uVar4;
-  undefined1 in_stack_fffffff7;
   
-  fVar1 = adc_average((uint)CONCAT12(in_stack_fffffff7,(short)((uint)unaff_A2 >> 0x10)));
+  fVar1 = adc_average('\0');
   dVar2 = float_to_double(fVar1);
-  uVar4 = 1;
-  uVar3 = 0x1e;
-  printf("Temperature: %.2f\r\n",(short)((ulonglong)dVar2 >> 0x20),SUB81(dVar2,0));
-  fVar1 = adc_average(CONCAT22(CONCAT11(4,uVar3),uVar4));
+  printf("Temperature: %.2f\r\n",dVar2);
+  fVar1 = adc_average('\x04');
   dVar2 = float_to_double(fVar1);
-  uVar4 = 1;
-  uVar3 = 0x3a;
-  printf("5V: %.2f\r\n",(short)((ulonglong)dVar2 >> 0x20),SUB81(dVar2,0));
-  fVar1 = adc_average(CONCAT22(CONCAT11(2,uVar3),uVar4));
+  printf("5V: %.2f\r\n",dVar2);
+  fVar1 = adc_average('\x02');
   dVar2 = float_to_double(fVar1);
-  uVar4 = 1;
-  uVar3 = 0x56;
-  printf("+15V: %.2f\r\n",(short)((ulonglong)dVar2 >> 0x20),SUB81(dVar2,0));
-  fVar1 = adc_average(CONCAT22(CONCAT11(6,uVar3),uVar4));
+  printf("+15V: %.2f\r\n",dVar2);
+  fVar1 = adc_average('\x06');
   dVar2 = float_to_double(fVar1);
-  uVar4 = 1;
-  uVar3 = 0x72;
-  printf("-15V: %.2f\r\n",(short)((ulonglong)dVar2 >> 0x20),SUB81(dVar2,0));
-  fVar1 = adc_average(CONCAT22(CONCAT11(5,uVar3),uVar4));
+  printf("-15V: %.2f\r\n",dVar2);
+  fVar1 = adc_average('\x05');
   dVar2 = float_to_double(fVar1);
-  uVar4 = 1;
-  uVar3 = 0x8e;
-  printf("Oven: %.2f\r\n",(short)((ulonglong)dVar2 >> 0x20),SUB81(dVar2,0));
-  fVar1 = adc_average(CONCAT22(CONCAT11(1,uVar3),uVar4));
+  printf("Oven: %.2f\r\n",dVar2);
+  fVar1 = adc_average('\x01');
   dVar2 = float_to_double(fVar1);
-  uVar4 = 1;
-  uVar3 = 0xaa;
-  printf("Double oven: %.2f\r\n",(short)((ulonglong)dVar2 >> 0x20),SUB81(dVar2,0));
-  fVar1 = adc_average(CONCAT22(CONCAT11(3,uVar3),uVar4));
+  printf("Double oven: %.2f\r\n",dVar2);
+  fVar1 = adc_average('\x03');
   dVar2 = float_to_double(fVar1);
-  printf("Oven current: %.2f\r\n",(short)((ulonglong)dVar2 >> 0x20),SUB81(dVar2,0));
+  printf("Oven current: %.2f\r\n",dVar2);
   return;
 }
 
@@ -21098,12 +21082,9 @@ void FUN_00023d80(void)
   float fVar2;
   undefined1 uVar4;
   undefined1 uVar5;
-  undefined4 unaff_D2;
   double dVar6;
-  undefined2 uVar7;
   char acStack_54 [80];
   
-  uVar7 = (undefined2)((uint)unaff_D2 >> 0x10);
   iVar1 = DAT_00101cf2 - 7;
   if (6 < DAT_00101cf2 && iVar1 != 0) goto LAB_000240f0;
                     /* WARNING: Switch is manually overridden */
@@ -21114,7 +21095,7 @@ void FUN_00023d80(void)
     goto LAB_000240e6;
   case 0x1c:
     uVar4 = FUN_0001f32e();
-    FUN_00023c5a(0x32);
+    FUN_00023c5a(0x32,uVar4);
     cVar3 = FUN_00023d28(0x101c32,4.5,5.5,5);
     if (cVar3 == '\0') {
       if (cRam00101c60 != '\0') {
@@ -21124,7 +21105,7 @@ void FUN_00023d80(void)
       }
     }
     else if (cRam00101c60 == '\0') {
-      fVar2 = adc_average(CONCAT22(CONCAT11(4,uVar4),uVar7));
+      fVar2 = adc_average('\x04');
       dVar6 = float_to_double(fVar2);
       log_write(0x94,(char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
       dVar6 = float_to_double(fVar2);
@@ -21137,7 +21118,7 @@ void FUN_00023d80(void)
     break;
   case 0xce:
     uVar4 = FUN_0001f356();
-    FUN_00023c5a(0xa2);
+    FUN_00023c5a(0xa2,uVar4);
     if ((DAT_00101b71 == '\0') || (cVar3 = FUN_00023d28(0x101ba2,-1e+37,6.8,5), cVar3 == '\0')) {
       if (DAT_00101bd0 != '\0') {
         task_debug_message("Secondary oven voltage is now within tolerance\r\n");
@@ -21146,7 +21127,7 @@ void FUN_00023d80(void)
       }
     }
     else if (DAT_00101bd0 == '\0') {
-      fVar2 = adc_average(CONCAT22(CONCAT11(1,uVar4),uVar7));
+      fVar2 = adc_average('\x01');
       dVar6 = float_to_double(fVar2);
       log_write(0xfb,(char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
       dVar6 = float_to_double(fVar2);
@@ -21163,7 +21144,7 @@ void FUN_00023d80(void)
     goto LAB_000240e6;
   case 0x19c:
     uVar4 = FUN_0001f406();
-    FUN_00023c5a(0xd2);
+    FUN_00023c5a(0xd2,uVar4);
     cVar3 = FUN_00023d28(0x101bd2,14.0,16.0,5);
     if (cVar3 == '\0') {
       if (cRam00101c00 != '\0') {
@@ -21173,7 +21154,7 @@ void FUN_00023d80(void)
       }
     }
     else if (cRam00101c00 == '\0') {
-      fVar2 = adc_average(CONCAT22(CONCAT11(2,uVar4),uVar7));
+      fVar2 = adc_average('\x02');
       dVar6 = float_to_double(fVar2);
       log_write(0x9e,(char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
       dVar6 = float_to_double(fVar2);
@@ -21186,7 +21167,7 @@ void FUN_00023d80(void)
     break;
   case 0x24e:
     uVar4 = FUN_0001f42e();
-    FUN_00023c5a(0x92);
+    FUN_00023c5a(0x92,uVar4);
     cVar3 = FUN_00023d28(0x101c92,-16.0,-14.0,5);
     if (cVar3 == '\0') {
       if (cRam00101cc0 != '\0') {
@@ -21196,7 +21177,7 @@ void FUN_00023d80(void)
       }
     }
     else if (cRam00101cc0 == '\0') {
-      fVar2 = adc_average(CONCAT22(CONCAT11(6,uVar4),uVar7));
+      fVar2 = adc_average('\x06');
       dVar6 = float_to_double(fVar2);
       log_write(8,(char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
       dVar6 = float_to_double(fVar2);
@@ -21230,14 +21211,14 @@ LAB_000240f0:
 
 /* WARNING: Unknown calling convention */
 
-float adc_average(ulong channel)
+float adc_average(uchar channel)
 
 {
   int iVar1;
   float fVar2;
   
-  iVar1 = (channel >> 0x18) - 6;
-  if (channel >> 0x18 < 6 || iVar1 == 0) {
+  iVar1 = channel - 6;
+  if (channel < 6 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00024136)[(short)iVar1]) {
     case 0xe:
@@ -21297,10 +21278,8 @@ bool FUN_000241cc(void)
 {
   float a;
   int iVar1;
-  undefined4 unaff_D2;
-  undefined1 in_stack_fffffffb;
   
-  a = adc_average(CONCAT22(CONCAT11(1,in_stack_fffffffb),(short)((uint)unaff_D2 >> 0x10)));
+  a = adc_average('\x01');
   iVar1 = float_compare(a,1.5);
   return 0 < iVar1;
 }
@@ -21313,10 +21292,8 @@ bool FUN_000241f4(void)
 {
   float a;
   int iVar1;
-  undefined4 unaff_D2;
-  undefined1 in_stack_fffffffb;
   
-  a = adc_average(CONCAT22(CONCAT11(5,in_stack_fffffffb),(short)((uint)unaff_D2 >> 0x10)));
+  a = adc_average('\x05');
   iVar1 = float_compare(a,-2.0);
   return iVar1 < 0;
 }
@@ -36169,21 +36146,14 @@ void efc_history_update(void)
   uint uVar3;
   int iVar4;
   float fVar5;
-  undefined4 unaff_D2;
   undefined4 extraout_A0;
   undefined4 extraout_A1;
   double dVar6;
   double dVar7;
   double dVar8;
-  undefined2 uVar9;
-  undefined2 uVar10;
-  undefined2 uVar11;
-  undefined1 uVar12;
-  undefined1 uVar13;
+  double dVar9;
   char acStack_68 [100];
   
-  uVar9 = (undefined2)((uint)unaff_D2 >> 0x10);
-  uVar12 = 0xa0;
   FUN_0004173e();
   iVar4 = (int)DAT_00102182 - 3;
   if (2 < (uint)(int)DAT_00102182 && iVar4 != 0) {
@@ -36202,7 +36172,7 @@ void efc_history_update(void)
     }
     break;
   case 0x30:
-    fVar1 = adc_average(CONCAT22(CONCAT11(3,uVar12),uVar9));
+    fVar1 = adc_average('\x03');
     if ((DAT_00102162 == '\x06') || ((DAT_00102162 == '\x05' && (DAT_0010216e != '\x01')))) {
       if (efc_history.summed_count == 0) {
         efc_history.efc_sum = 0.0;
@@ -36224,7 +36194,7 @@ void efc_history_update(void)
     if (efc_history.summed_count == 0) {
       if (DAT_00102541 != '\0') {
         dVar6 = float_to_double(tfom);
-        uVar3 = FUN_000136f6(0,0,0,(short)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
+        uVar3 = FUN_000136f6(0,0,0,dVar6);
         fVar1 = unsigned_to_float(uVar3);
         fVar1 = float_divide(fVar1,2700.0);
         fVar1 = float_divide(fVar1,32.0);
@@ -36260,24 +36230,12 @@ void efc_history_update(void)
         fVar5 = float_divide_reversed(fVar5,fVar1);
         dVar6 = float_to_double(fVar5);
         dVar6 = log(dVar6);
-        uVar9 = (undefined2)((ulonglong)dVar6 >> 0x30);
-        uVar10 = (undefined2)((ulonglong)dVar6 >> 0x20);
-        uVar11 = (undefined2)((ulonglong)dVar6 >> 0x10);
-        uVar12 = (undefined1)((ulonglong)dVar6 >> 8);
-        uVar13 = SUB81(dVar6,0);
-        dVar6 = float_to_double(fVar1);
-        dVar6 = double_multiply((double)CONCAT71(CONCAT61(CONCAT42(CONCAT22(uVar9,uVar10),uVar11),
-                                                          uVar12),uVar13),dVar6);
-        uVar9 = (undefined2)((ulonglong)dVar6 >> 0x30);
-        uVar10 = (undefined2)((ulonglong)dVar6 >> 0x20);
-        uVar11 = (undefined2)((ulonglong)dVar6 >> 0x10);
-        uVar12 = (undefined1)((ulonglong)dVar6 >> 8);
-        uVar13 = SUB81(dVar6,0);
+        dVar7 = float_to_double(fVar1);
+        dVar6 = double_multiply(dVar6,dVar7);
         fVar5 = float_add(fVar1,-1.0);
-        dVar6 = float_to_double(fVar5);
-        dVar6 = log(dVar6);
-        double_add(dVar6,(double)CONCAT71(CONCAT61(CONCAT42(CONCAT22(uVar9,uVar10),uVar11),uVar12),
-                                          uVar13));
+        dVar7 = float_to_double(fVar5);
+        dVar7 = log(dVar7);
+        double_add(dVar7,dVar6);
         dVar6 = double_add(-1.0,(double)CONCAT44(extraout_A0,extraout_A1));
         fVar5 = double_to_float(dVar6);
         efc_history.logs[efc_history.stop_ptr] = fVar5;
@@ -36287,15 +36245,13 @@ void efc_history_update(void)
       }
       if (DAT_00102541 != '\0') {
         dVar6 = float_to_double(tfom);
-        uVar9 = (undefined2)((ulonglong)dVar6 >> 0x20);
-        uVar12 = SUB81(dVar6,0);
-        dVar6 = float_to_double(efc_history.logs[efc_history.stop_ptr]);
+        dVar7 = float_to_double(efc_history.logs[efc_history.stop_ptr]);
         uVar3 = (uint)efc_history.weights[efc_history.stop_ptr];
         fVar1 = float_divide(fVar1,32.0);
-        dVar7 = float_to_double(fVar1);
-        dVar8 = float_to_double(efc_history.averages[efc_history.stop_ptr]);
-        debug_sprintf(acStack_68,"e_avg= %.1f time= %f weight= %d log= %.2f tfom= %.1e\r\n",dVar8,
-                      dVar7,uVar3,dVar6,uVar9,uVar12);
+        dVar8 = float_to_double(fVar1);
+        dVar9 = float_to_double(efc_history.averages[efc_history.stop_ptr]);
+        debug_sprintf(acStack_68,"e_avg= %.1f time= %f weight= %d log= %.2f tfom= %.1e\r\n",dVar9,
+                      dVar8,uVar3,dVar7,dVar6);
         task_dmessage(acStack_68);
       }
       efc_history.stop_ptr = efc_history.stop_ptr + 1 & 0x3f;
@@ -38134,7 +38090,6 @@ undefined1 FUN_00043a90(char param_1)
   int iVar3;
   uint u;
   undefined1 uVar5;
-  undefined4 unaff_D2;
   undefined1 uVar6;
   double dVar7;
   undefined2 uVar8;
@@ -38143,7 +38098,6 @@ undefined1 FUN_00043a90(char param_1)
   undefined1 uVar11;
   undefined1 uVar12;
   undefined1 uVar13;
-  undefined1 in_stack_ffffff67;
   undefined1 uVar14;
   char acStack_74 [100];
   float fStack_10;
@@ -38153,7 +38107,7 @@ undefined1 FUN_00043a90(char param_1)
   undefined4 uStack_8;
   
   uVar6 = 0;
-  fVar1 = adc_average(CONCAT22(CONCAT11(3,in_stack_ffffff67),(short)((uint)unaff_D2 >> 0x10)));
+  fVar1 = adc_average('\x03');
   if ((param_1 == '\0') || ('\x01' < DAT_00102172)) {
     DAT_00102172 = '\0';
   }
@@ -38535,12 +38489,10 @@ char FUN_0004429e(char param_1)
   int iVar2;
   uint u;
   float a;
-  undefined4 unaff_D2;
   char cVar4;
   double dVar5;
   undefined2 uVar6;
   undefined1 uVar7;
-  undefined1 in_stack_ffffff53;
   undefined1 uVar8;
   float local_88;
   float local_84;
@@ -38555,7 +38507,7 @@ char FUN_0004429e(char param_1)
   undefined4 uStack_8;
   
   cVar4 = '\0';
-  local_74 = adc_average(CONCAT22(CONCAT11(3,in_stack_ffffff53),(short)((uint)unaff_D2 >> 0x10)));
+  local_74 = adc_average('\x03');
   if ((param_1 == '\0') || ('\x03' < DAT_0010216e)) {
     DAT_0010217a = 0;
     DAT_00102512 = 0.0;
@@ -38778,11 +38730,9 @@ undefined1 interval_average(char param_1)
   int iVar3;
   uint u;
   float a;
-  undefined4 unaff_D2;
   double dVar5;
   undefined2 uVar6;
   undefined1 uVar7;
-  undefined1 in_stack_ffffff59;
   undefined1 uVar8;
   float local_82;
   float local_7e;
@@ -38798,7 +38748,7 @@ undefined1 interval_average(char param_1)
   local_7a = 0;
   local_14 = &DAT_00102170;
   local_10 = &efc_history;
-  fVar1 = adc_average(CONCAT22(CONCAT11(3,in_stack_ffffff59),(short)((uint)unaff_D2 >> 0x10)));
+  fVar1 = adc_average('\x03');
   if ((param_1 == '\0') || ('\x01' < *local_14)) {
     DAT_0010217a = 0;
     tfom = 1e-06;

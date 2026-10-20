@@ -74,7 +74,7 @@ typedef short int16_t;
 struct efc_ring {
     uint8_t start_ptr;
     uint8_t stop_ptr;
-    uint8_t field_002;
+    uint8_t loop_settled;
     uint8_t field_003;
     uint16_t sample_count;
     int16_t field_006;
@@ -87,9 +87,9 @@ struct efc_ring {
     int32_t field_34e;
     float drift;
     int32_t field_356;
-    float field_35a;
-    int32_t field_35e;
-    int32_t field_362;
+    float fit_a;
+    float fit_b;
+    float fit_c;
 };
 
 typedef struct exception_record exception_record, *Pexception_record;
@@ -128,7 +128,7 @@ typedef struct fpga_bit fpga_bit, *Pfpga_bit;
 struct fpga_bit {
     uint8_t reg;
     uint8_t mask;
-    uint8_t field_2;
+    uint8_t is_flag;
     uint8_t field_3;
 };
 
@@ -611,7 +611,8 @@ struct log_entry {
 typedef struct log_page log_page, *Plog_page;
 
 struct log_page {
-    uint32_t field_00;
+    uint16_t write_count;
+    uint16_t checksum;
     struct log_entry entries[3];
 };
 
@@ -786,11 +787,12 @@ struct scpi_numeric_param {
     void *value;
     void *done;
     uint16_t flags;
-    uint16_t field_20;
-    void *field_22;
+    uint8_t gps_request;
+    uint8_t field_21;
+    void *group_cell;
     uint8_t is_integer;
     uint8_t field_27;
-    void *table_28;
+    void *steps;
 };
 
 typedef struct scpi_setting_param scpi_setting_param, *Pscpi_setting_param;
@@ -799,15 +801,15 @@ struct scpi_setting_param {
     enum scpi_param_type type;
     uint8_t last_index;
     int8_t *nv_widths;
-    uint16_t field_06;
+    int8_t maximum;
+    uint8_t field_07;
     void *changed;
     uint8_t *value;
     void *done;
     uint16_t flags;
-    int16_t field_16;
-    void *field_18;
-    uint8_t field_1c;
-    uint8_t field_1d;
+    uint8_t gps_request;
+    uint8_t field_17;
+    void *group_cell;
 };
 
 typedef struct status_condition status_condition, *Pstatus_condition;
@@ -823,11 +825,11 @@ typedef struct status_model status_model, *Pstatus_model;
 typedef struct status_register status_register, *Pstatus_register;
 
 struct status_register {
-    int16_t field_00;
-    int16_t field_02;
-    int16_t field_04;
-    int16_t field_06;
-    int16_t field_08;
+    uint16_t condition;
+    uint16_t negative_transition;
+    uint16_t positive_transition;
+    uint16_t enable;
+    uint16_t event;
     struct status_register *parent;
     int16_t parent_bit;
 };
@@ -28043,7 +28045,7 @@ float scpi_numeric_get(scpi_numeric_param *param,int index,int16_t which,int16_t
     local_c = *(undefined4 *)((int)pvVar1 + index * 4);
     local_8 = (float)(*param->validate)(&local_c,index,(void *)((int)param->minimum + index * 4),
                                         (void *)((int)param->maximum + index * 4),
-                                        (void *)((int)param->table_28 + index * 8),0);
+                                        (void *)((int)param->steps + index * 8),0);
   }
   else {
     local_8 = *(float *)((int)param->value + index * 4);
@@ -36843,7 +36845,7 @@ int log_read(int param_1,char *param_2,char *param_3)
     }
     iVar4 = 0;
     if (local_14 != log_page_number) {
-      iVar4 = log_page_read((byte)((ulonglong)lVar6 >> 0x20),&log_page_buffer.field_00);
+      iVar4 = log_page_read((byte)((ulonglong)lVar6 >> 0x20),(undefined4 *)&log_page_buffer);
       log_page_number = (int16_t)((ulonglong)lVar6 >> 0x20);
       if (iVar4 != 0) {
         log_page_clear(&log_page_buffer);
@@ -38918,7 +38920,7 @@ void fpga_fields_to_registers(int param_1,int param_2)
   bVar5 = 0;
   do {
     uVar3 = (uint)bVar5;
-    if (fpga_bit_table[uVar3].field_2 == 1) {
+    if (fpga_bit_table[uVar3].is_flag == 1) {
       if (*(char *)(param_1 + uVar3) != '\0') {
         bVar2 = fpga_bit_table[uVar3].reg;
         uVar4 = fpga_bit_table[uVar3].mask;
@@ -39359,10 +39361,10 @@ void efc_history_update(void)
   case 8:
     pll.aging_state = 1;
     pll.predicted_uncertainty = 0.000432;
-    pll.efc_history.field_35a = pll.efc;
+    pll.efc_history.fit_a = pll.efc;
     break;
   case 0x1e:
-    if (pll.efc_history.field_002 == 1) {
+    if (pll.efc_history.loop_settled == 1) {
       pll.aging_state = 3;
     }
     break;
@@ -39491,9 +39493,9 @@ void aging_fit_collect(void)
   
   uVar1 = psos_get_v(0x100,0,(ulong *)0x0);
   if ((char)uVar1 == '\0') {
-    pll.efc_history.field_35a = _DAT_00101fea;
-    pll.efc_history.field_35e = _DAT_00101fee;
-    pll.efc_history.field_362 = _DAT_00101ff2;
+    pll.efc_history.fit_a = _DAT_00101fea;
+    pll.efc_history.fit_b = _DAT_00101fee;
+    pll.efc_history.fit_c = _DAT_00101ff2;
     pll.predicted_uncertainty = _DAT_00101ffe;
   }
   return;
@@ -41494,9 +41496,9 @@ undefined1 holdover(char param_1)
   if ((char)pll.holdover_state != 0 && iVar3 != 0) {
 override_jmp_00043ae6_case_0:
     holdover_ti_reset();
-    if (ABS(pll.efc_history.field_35a) == 0.0) {
+    if (ABS(pll.efc_history.fit_a) == 0.0) {
       fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
-      pll.efc_history.field_35a = float_subtract_reversed(fVar1,pll.efc);
+      pll.efc_history.fit_a = float_subtract_reversed(fVar1,pll.efc);
     }
     _DAT_0010204a = 0x3109705f;
     if (pll.aging_state == 3) {
@@ -41570,8 +41572,8 @@ override_jmp_00043ae6_case_0:
   fVar2 = double_to_float(dVar7);
   iVar3 = float_compare(fVar2,1.0);
   if (iVar3 < 1) {
-    fVar2 = float_multiply((float)pll.efc_history.field_35e,fVar2);
-    fVar2 = float_add(fVar2,pll.efc_history.field_35a);
+    fVar2 = float_multiply(pll.efc_history.fit_b,fVar2);
+    fVar2 = float_add(fVar2,pll.efc_history.fit_a);
     uVar5 = (undefined1)((uint)fVar2 >> 0x18);
     uVar13 = (undefined1)((uint)fVar2 >> 0x10);
     uVar14 = (undefined1)((uint)fVar2 >> 8);
@@ -41590,7 +41592,7 @@ override_jmp_00043ae6_case_0:
     uVar15 = (undefined1)((ulonglong)dVar7 >> 0x10);
     uVar16 = (undefined1)((ulonglong)dVar7 >> 8);
     uVar17 = SUB81(dVar7,0);
-    dVar7 = float_to_double((float)pll.efc_history.field_362);
+    dVar7 = float_to_double(pll.efc_history.fit_c);
     dVar7 = double_multiply((double)CONCAT71(CONCAT61(CONCAT51(CONCAT41(CONCAT31(CONCAT21(uVar8,
                                                   uVar5),uVar13),uVar14),uVar15),uVar16),uVar17),
                             dVar7);
@@ -41601,8 +41603,8 @@ override_jmp_00043ae6_case_0:
     uVar15 = (undefined1)((ulonglong)dVar7 >> 0x10);
     uVar16 = (undefined1)((ulonglong)dVar7 >> 8);
     uVar17 = SUB81(dVar7,0);
-    fVar2 = float_multiply((float)pll.efc_history.field_35e,fVar2);
-    fVar2 = float_add(fVar2,pll.efc_history.field_35a);
+    fVar2 = float_multiply(pll.efc_history.fit_b,fVar2);
+    fVar2 = float_add(fVar2,pll.efc_history.fit_a);
     dVar7 = float_to_double(fVar2);
     dVar7 = double_add(dVar7,(double)CONCAT71(CONCAT61(CONCAT51(CONCAT41(CONCAT31(CONCAT21(uVar8,
                                                   uVar5),uVar13),uVar14),uVar15),uVar16),uVar17));
@@ -42014,7 +42016,7 @@ char startup_pll(char param_1)
           }
           else {
             pll.tfom = 1e-06;
-            pll.efc_history.field_002 = 1;
+            pll.efc_history.loop_settled = 1;
             pll.startup_state = 2;
           }
           break;
@@ -42081,9 +42083,9 @@ char startup_pll(char param_1)
       uVar7 = (undefined2)((uint)fVar1 >> 0x10);
       uVar10 = (undefined1)((uint)fVar1 >> 8);
       uVar11 = SUB41(fVar1,0);
-      fVar1 = float_multiply((float)pll.efc_history.field_362,2700.0);
+      fVar1 = float_multiply(pll.efc_history.fit_c,2700.0);
       fVar1 = float_divide(fVar1,(float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11));
-      a = float_add(fVar1,(float)pll.efc_history.field_35e);
+      a = float_add(fVar1,pll.efc_history.fit_b);
       iVar2 = float_compare(a,DAT_00102564);
       fVar1 = DAT_00102564;
       if ((iVar2 < 1) && (iVar2 = float_compare(-DAT_00102564,a), fVar1 = a, 0 < iVar2)) {
@@ -43231,7 +43233,7 @@ undefined1 powerup(char param_1)
   if ((param_1 == '\0') || ('\a' < (char)pll.powerup_state)) {
     memset(&pll.efc_history,0,0x366);
     pll.aging_state = 0;
-    pll.efc_history.field_002 = 0;
+    pll.efc_history.loop_settled = 0;
     DAT_00102160 = '\0';
     pll.powerup_state = 0;
   }

@@ -21,7 +21,9 @@ CHECK_FIELD(scpi_numeric_param, flags, 0x1e);
 CHECK_FIELD(scpi_setting_param, flags, 0x14);
 CHECK_FIELD(scpi_numeric_param, value, 0x16);
 CHECK_FIELD(scpi_numeric_param, is_integer, 0x26);
-CHECK_FIELD(scpi_numeric_param, table_28, 0x28);
+CHECK_FIELD(scpi_numeric_param, steps, 0x28);
+CHECK_FIELD(scpi_numeric_param, gps_request, 0x20);
+CHECK_FIELD(scpi_numeric_param, group_cell, 0x22);
 
 CHECK_SIZE(status_register, 16);
 CHECK_FIELD(status_register, parent, 0x0a);
@@ -66,7 +68,7 @@ CHECK_FIELD(oncore_extension_fields, oscillator_offset, 0x100fea - 0x100fae);
 /* The EFC history: memset(&efc_history, 0, 0x366) at 0x1021ac. */
 CHECK_SIZE(efc_ring, 0x366);
 CHECK_FIELD(efc_ring, stop_ptr, 0x1021ad - 0x1021ac);
-CHECK_FIELD(efc_ring, field_002, 0x1021ae - 0x1021ac);
+CHECK_FIELD(efc_ring, loop_settled, 0x1021ae - 0x1021ac);
 CHECK_FIELD(efc_ring, sample_count, 0x1021b0 - 0x1021ac);
 CHECK_FIELD(efc_ring, summed_count, 0x1021b4 - 0x1021ac);
 CHECK_FIELD(efc_ring, averages, 0x1021b6 - 0x1021ac);
@@ -75,9 +77,9 @@ CHECK_FIELD(efc_ring, times, 0x1022f6 - 0x1021ac);
 CHECK_FIELD(efc_ring, logs, 0x1023f6 - 0x1021ac);
 CHECK_FIELD(efc_ring, efc_sum, 0x1024f6 - 0x1021ac);
 CHECK_FIELD(efc_ring, drift, 0x1024fe - 0x1021ac);
-CHECK_FIELD(efc_ring, field_35a, 0x102506 - 0x1021ac);
-CHECK_FIELD(efc_ring, field_35e, 0x10250a - 0x1021ac);
-CHECK_FIELD(efc_ring, field_362, 0x10250e - 0x1021ac);
+CHECK_FIELD(efc_ring, fit_a, 0x102506 - 0x1021ac);
+CHECK_FIELD(efc_ring, fit_b, 0x10250a - 0x1021ac);
+CHECK_FIELD(efc_ring, fit_c, 0x10250e - 0x1021ac);
 
 /* The GPS task's state, memset(&gps, 0, 0x55a) at 0x100c6a, with each
  * message's record at the cell its decoder fills. */
@@ -246,7 +248,11 @@ CHECK_SIZE(oncore_raim_status, 1);
 /* nv_settings at 0x101e8a, each field where its descriptor's value
  * points, and the two descriptors' sizes. */
 CHECK_SIZE(nv_settings_fields, 0xc5);
-CHECK_SIZE(scpi_setting_param, 0x33ca8 - 0x33c8a);
+/* each is followed by the next descriptor's widths */
+CHECK_SIZE(scpi_setting_param, 0x33ca8 - 0x33c8a - 2);
+CHECK_FIELD(scpi_setting_param, maximum, 0x06);
+CHECK_FIELD(scpi_setting_param, gps_request, 0x16);
+CHECK_FIELD(scpi_setting_param, group_cell, 0x18);
 CHECK_FIELD(scpi_setting_param, value, 0xc);
 CHECK_FIELD(nv_settings_fields, elevation_mask, 0x101e8c - 0x101e8a);
 CHECK_FIELD(nv_settings_fields, douglas_duration_infinite, 0x101e98 - 0x101e8a);

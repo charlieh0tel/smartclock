@@ -325,6 +325,7 @@ Its other named fields, by the routines that use them:
 | Offset | Field | Shown by |
 | ------ | ----- | -------- |
 | `+0x000`, `+0x001` | `start_ptr`, `stop_ptr` | `pll_rep`'s `start ptr`, `stop_ptr`; the ring's indexes, `& 0x3f` |
+| `+0x002` | `loop_settled` | set by `startup_pll` when it settles with no aging fit yet; `efc_history_update` then takes `aging_state` to 3 |
 | `+0x004` | `sample_count` | counted to 2700 |
 | `+0x008` | `summed_count` | the samples summed |
 | `+0x00a` | `averages[64]` | `e_avg`, `efc_sum / summed_count`; `pll_rep`'s `last efc average` |
@@ -333,6 +334,7 @@ Its other named fields, by the routines that use them:
 | `+0x24a` | `logs[64]` | `log`, -1 when `time` is at most 1 |
 | `+0x34a` | `efc_sum` | the sum |
 | `+0x352` | `drift` | `pll_rep`'s `current drift`, times `5.4e-8`, per day |
+| `+0x35a` to `+0x362` | `fit_a`, `fit_b`, `fit_c` | the curv task's aging fit, a + b·y + c·ln y (`loop.md`, "The aging fit"), which `aging_fit_collect` copies in and `holdover` and `startup_pll` predict the EFC from |
 
 ### Others
 
@@ -476,7 +478,11 @@ registers are the firmware's own `fconf_regs` (`0x101fa9`), four of
 them: "old_addr, fconf_regs[1] = %x" is `fpga_read` (`0x4076a`), which
 puts a register number in `fconf_regs[1]`'s address bits to read it.
 `fpga_bit_table` (`0x41310`) gives each bit `fpga_set_bit` takes its
-register and mask.  The time-interval counter's routines are each
+register and mask, and each of its six entries an `is_flag` byte:
+`fpga_fields_to_registers` sets a flag's mask for a nonzero value and
+ORs any other's value in.  Entry 4 is `fconf_regs[1]`'s address bits,
+`0xf8`, which `fpga_read` uses, and entry 5 `fconf_regs[3]`'s low two,
+which `counter_set_sync` sets.  The time-interval counter's routines are each
 given `interval_reading` (`0x101f9c`) and `counter_configuration`
 (`0x101fae`): `counter_arm` (`0x40c6a`) reloads `fconf_regs` from the
 configuration's first four bytes and re-arms the FPGA;
@@ -577,7 +583,7 @@ The first table (`nv_numeric_params`, `0x32d5e`) holds 21
 parameters" above, a long a value; a descriptor's `+1` is its values
 less one and `+2` (`nv_widths`) each value's bits in the record,
 negative for a signed one.  The second (`nv_setting_params`,
-`0x32db2`) holds 18 `scpi_setting_param`s, `0x1e` bytes, for the
+`0x32db2`) holds 18 `scpi_setting_param`s, `0x1c` bytes, for the
 switches and choices, a byte a value at `+0xc`, mostly one bit wide.
 Among them are the five status registers' transition masks and seven
 enables (`*ESE`, `*SRE`, `:STATus ... ENABle`), the time zone, the
@@ -633,9 +639,24 @@ at `0x400000` (`scpi_param_saved_in_record`, `0x43042`).
 
 The setting descriptor, `scpi_setting_param`, has the same `type`,
 `last_index` and `nv_widths`, its `changed` and `done` hooks at `+8`
-and `+0x10`, its value at `+0xc` and its `flags` at `+0x14`.  Both
-kinds point at `0x101f9a` (`+0x22`, `+0x18`), which nothing else
-refers to; what it is was not traced.
+and `+0x10`, its value at `+0xc` and its `flags` at `+0x14`, and a
+byte `maximum` at `+6`, above which `toggle_change` refuses a value.
+Each descriptor's `nv_widths` lie just before it, so the two bytes
+after a setting descriptor are the next one's widths, not its own.
+
+Both kinds carry a `gps_request` (`+0x16`, `+0x20`): what
+`pll_scpi_send_to_loop` sends `gpsx_exchange` when the value changes,
+an Oncore message table entry below `0x31` -- 6 `@@Ag` for the
+elevation mask, `0xc` `@@Am` for the ignored satellites, `0x19` `@@Az`
+for the antenna delay, `0x28` `@@Bn` for the Time RAIM limit -- or the
+GPS task's own request above, `0x4f` for the position and `0x51` for
+`:DOUGlas:STATe`; `0xff` sends nothing.  Both point a `group_cell`
+(`+0x22`, `+0x18`) at one of four words by command group: `0x101f92`
+`:SAMPle`, `0x101f94` `:PULSe`, `0x101f98` `:STATus` and `0x101f9a`
+the rest.  No code reads the pointer but `scpi_numeric_get_double`,
+which nothing calls, and nothing refers to the words.  A numeric
+descriptor's `steps` (`+0x28`) give `validate` each value's step: 8
+bytes a value, whose routine at `+4` returns it.
 
 In `nv_settings`, the bytes at `+0x0f`, `+0x1f`, `+0x47` and `+0x9b`
 are padding: nothing refers to them, and each comes before a long.

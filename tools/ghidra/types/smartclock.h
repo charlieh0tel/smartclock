@@ -198,20 +198,21 @@ typedef struct scpi_numeric_param {
 	void *value;          /* +0x16: the current value, in RAM */
 	void *done;           /* +0x1a: called once they are stored */
 	uint16_t flags; /* +0x1e: 2 saved in the NV register, 4 at 0x400000 */
-	uint16_t field_20;
-	void *field_22;
+	uint8_t gps_request;  /* +0x20: as scpi_setting_param's */
+	uint8_t field_21;
+	void *group_cell;     /* +0x22: as scpi_setting_param's; scpi_numeric_get_double alone reads it */
 	uint8_t is_integer;   /* +0x26: 0 float, 1 integer, 2 or 3 several */
 	uint8_t field_27;
-	void *table_28;
+	void *steps;          /* +0x28: 8 bytes a value, whose routine at +4 gives validate the step */
 } scpi_numeric_param;
 
 /* One status register of the SCPI status tree.  16 bytes. */
 typedef struct status_register {
-	int16_t field_00;
-	int16_t field_02;
-	int16_t field_04;
-	int16_t field_06;
-	int16_t field_08;
+	uint16_t condition;           /* +0x00 */
+	uint16_t negative_transition; /* +0x02: falling conditions that become events */
+	uint16_t positive_transition; /* +0x04: rising ones */
+	uint16_t enable;              /* +0x06: events reported to the parent */
+	uint16_t event;               /* +0x08: latched, cleared as read */
 	struct status_register *parent; /* +0x0a: the register it reports into */
 	int16_t parent_bit;             /* +0x0e: at this bit */
 } status_register;
@@ -231,7 +232,7 @@ typedef struct status_model {
 	void *output;                  /* +0x02: set for the top register */
 	void *queue;                   /* +0x06: built with room for 30 */
 	status_condition *conditions;  /* +0x0a */
-	int32_t field_0e;
+	int32_t field_0e;              /* +0x0e: status_create's last argument, 0; nothing reads it */
 	status_register *registers[7]; /* +0x12 */
 } status_model;
 
@@ -305,22 +306,22 @@ typedef struct oncore_extension_fields {
 typedef struct efc_ring {
 	uint8_t start_ptr;     /* +0x000: the oldest entry */
 	uint8_t stop_ptr;      /* +0x001: the next to fill */
-	uint8_t field_002;
-	uint8_t field_003;
+	uint8_t loop_settled;  /* +0x002: startup_pll sets it on settling without a fit; aging_state then goes to 3 */
+	uint8_t field_003;     /* nothing refers to it */
 	uint16_t sample_count; /* +0x004: samples toward this entry, to 2700 */
-	int16_t field_006;
+	int16_t field_006;     /* nothing refers to it */
 	uint16_t summed_count; /* +0x008: of those, summed */
 	float averages[64];    /* +0x00a: e_avg, efc_sum / summed_count */
 	uint8_t weights[64];   /* +0x10a: weight, 1 to 3 */
 	float times[64];       /* +0x14a: time */
 	float logs[64];        /* +0x24a: log */
 	float efc_sum; /* +0x34a: the EFC, less its temperature correction, summed */
-	int32_t field_34e;
+	int32_t field_34e; /* nothing refers to it */
 	float drift; /* +0x352: pll_rep's current drift, times 5.4e-8 per day */
-	int32_t field_356;
-	float field_35a;
-	int32_t field_35e;
-	int32_t field_362;
+	int32_t field_356; /* nothing refers to it */
+	float fit_a; /* +0x35a: the curv task's aging fit a + b y + c ln y, y = samples / 2700 */
+	float fit_b; /* +0x35e */
+	float fit_c; /* +0x362 */
 } efc_ring;
 
 /* @@Ba, the position/status/data message: one channel's status. */
@@ -659,7 +660,7 @@ typedef struct gps_statistics {
 	uint16_t received_errors;
 	uint16_t jam_errors;
 	uint16_t successes;        /* Success */
-	uint16_t field_0e;
+	uint16_t field_0e;         /* no response code counts it and nothing prints it */
 	uint16_t rejects;          /* Reject */
 	uint16_t timeouts;         /* Timeout */
 	uint16_t busy;             /* Busy */
@@ -719,7 +720,8 @@ typedef struct log_entry {
 
 /* A page of the event log, three entries, as log_read loads it. */
 typedef struct log_page {
-	uint32_t field_00;
+	uint16_t write_count; /* +0x00: incremented by each log_page_write */
+	uint16_t checksum;    /* +0x02: log_page_checksum's byte sum and its complement */
 	log_entry entries[3];
 } log_page;
 
@@ -728,7 +730,7 @@ typedef struct log_page {
 typedef struct fpga_bit {
 	uint8_t reg;
 	uint8_t mask;
-	uint8_t field_2;
+	uint8_t is_flag; /* 1: fpga_fields_to_registers sets mask for a nonzero value; 0: ORs the value in */
 	uint8_t field_3;
 } fpga_bit;
 
@@ -754,15 +756,15 @@ typedef struct scpi_setting_param {
 	scpi_param_type type; /* SCPI_PARAM_SETTING */
 	uint8_t last_index;   /* +0x01: values less one */
 	int8_t *nv_widths;    /* +0x02: each value's bits in the NV register */
-	uint16_t field_06;
+	int8_t maximum;       /* +0x06: toggle_change refuses a value above it */
+	uint8_t field_07;
 	void *changed;        /* +0x08: called as the value is stored */
 	uint8_t *value;       /* +0x0c: the current value, a byte each */
 	void *done;           /* +0x10: called once it is */
 	uint16_t flags;       /* +0x14: as scpi_numeric_param's */
-	int16_t field_16;
-	void *field_18;
-	uint8_t field_1c;
-	uint8_t field_1d;
+	uint8_t gps_request;  /* +0x16: what pll_scpi_send_to_loop sends gpsx_exchange, 0xff none */
+	uint8_t field_17;
+	void *group_cell;     /* +0x18: 0x101f92 to 0x101f9a by command group; no code reads it */
 } scpi_setting_param;
 
 /* The settings nv_save keeps in the NV register and nv_restore loads:

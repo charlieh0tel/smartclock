@@ -27,7 +27,11 @@
 // not fit the default convention (one at an offset not a multiple of 4,
 // or narrower than 4), or if an earlier run gave it stack parameters.  A
 // signature from the names file or given by hand is kept, and so is one
-// with register parameters.  "dry-run" counts without changing anything.
+// with register parameters; but a kept stack signature is checked
+// against its callers' pushes, and reported where its parameters do not
+// match them (a double may span two pushed longs, and pushes past the
+// last parameter, a variadic call's or ones the function ignores, are
+// not compared).  "dry-run" counts without changing anything.
 //
 //@category SmartClock
 
@@ -76,12 +80,16 @@ public class SmartClockStackParameters extends GhidraScript {
 		int changed = 0;
 		int unchanged = 0;
 		List<Function> failing = new ArrayList<>();
+		List<Function> disagreeing = new ArrayList<>();
 		try {
 			for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
 				if (monitor.isCancelled()) {
 					break;
 				}
 				if (!eligible(function)) {
+					if (keptStackSignature(function) && !agrees(function, callerLayout(function))) {
+						disagreeing.add(function);
+					}
 					continue;
 				}
 				Map<Integer, Integer> arguments = callerLayout(function);
@@ -119,10 +127,15 @@ public class SmartClockStackParameters extends GhidraScript {
 		finally {
 			decompiler.dispose();
 		}
-		println((dryRun ? "would change " : "changed ") + changed + ", already right "
-			+ unchanged + ", still failing " + failing.size());
+		println((dryRun ? "would change " : "changed ") + changed + ", unchanged "
+			+ unchanged + " (set earlier), still failing " + failing.size());
 		for (Function function : failing) {
 			println("  " + function.getEntryPoint() + " " + function.getName());
+		}
+		println("kept signatures that disagree with their callers: " + disagreeing.size());
+		for (Function function : disagreeing) {
+			println("  " + function.getEntryPoint() + " " + function.getSignature().getPrototypeString()
+				+ ": callers push " + describe(callerLayout(function)));
 		}
 	}
 
@@ -131,15 +144,54 @@ public class SmartClockStackParameters extends GhidraScript {
 	 * hand, or it has register parameters, or it is a thunk.
 	 */
 	private static boolean eligible(Function function) {
-		if (function.isThunk() || function.isExternal()) {
-			return false;
-		}
+		return own(function) && !kept(function) && stackOnly(function);
+	}
+
+	/** True if the function's signature is kept and has only stack parameters. */
+	private static boolean keptStackSignature(Function function) {
+		return own(function) && kept(function) && stackOnly(function);
+	}
+
+	/** True if the function is not a thunk of, or external to, another. */
+	private static boolean own(Function function) {
+		return !function.isThunk() && !function.isExternal();
+	}
+
+	/** True if the signature came from the names file or by hand. */
+	private static boolean kept(Function function) {
 		SourceType source = function.getSignatureSource();
-		if (source == SourceType.IMPORTED || source == SourceType.USER_DEFINED) {
-			return false;
-		}
+		return source == SourceType.IMPORTED || source == SourceType.USER_DEFINED;
+	}
+
+	private static boolean stackOnly(Function function) {
 		for (Parameter parameter : function.getParameters()) {
 			if (!parameter.isStackVariable()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * True if each parameter is one pushed argument of its size, or
+	 * consecutive pushed longs that together make it up, or if no callers
+	 * agree on a layout to compare with.
+	 */
+	private static boolean agrees(Function function, Map<Integer, Integer> pushed) {
+		if (pushed == null) {
+			return true;
+		}
+		for (Parameter parameter : function.getParameters()) {
+			int offset = parameter.getStackOffset();
+			int covered = 0;
+			while (covered < parameter.getLength()) {
+				Integer size = pushed.get(offset + covered);
+				if (size == null || (covered > 0 && size != DEFAULT_SLOT)) {
+					return false;
+				}
+				covered += size;
+			}
+			if (covered != parameter.getLength()) {
 				return false;
 			}
 		}

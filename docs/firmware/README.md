@@ -360,7 +360,11 @@ decompiler's types for them are committed.  The decompiler's own list
 of a function's stack inputs is not used: it drops an argument that is
 only copied into a local buffer whose address escapes, as the `pllc`
 requests' are.  A signature from the names file or given by hand is
-kept.
+kept, but checked: one whose parameters do not match its callers'
+pushes is reported (a double may span two pushed longs; pushes past
+the last parameter, a variadic call's or ones the function ignores,
+are not compared).  "Unchanged (set earlier)" counts the functions an
+earlier run gave parameters that still match.
 
 **ExportC** writes every function's C, in address order, after the
 program's structures (packed, as the image lays them out) and an

@@ -481,7 +481,11 @@ routine that is not C and whose prototype has every argument and its
 result in registers is declared under that prototype as an assembler
 label, `c_NAME`: a generated wrapper that moves the arguments from
 gcc's stack into the routine's registers and its result into D0, D0:D1
-or A0.  The
+or A0.  `tools/firmware/bridge_check.py` runs each wrapper in Unicorn
+against its routine called directly, from the registers the sidecar
+names: of the 85, 67 give the same result and RAM and keep gcc's
+callee-saved registers, 11 reach the kernel or a peripheral and are
+skipped, and 7 (the installer's) are not run.  The
 whole file compiles to an object (`make check-decompiled`, whose flags
 add `-fno-builtin -fno-tree-loop-distribute-patterns`, since the image's
 C library has no `puts`, `strlen` or `strcmp` for gcc to call).  A link

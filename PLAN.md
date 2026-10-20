@@ -672,7 +672,15 @@ view cannot drift apart.  The library, bottom up:
      descriptors, tables -- at its own addresses, which the code names
      absolutely, and places the rebuilt functions around it.
   4. The emulator harness: a function's original and rebuilt code on
-     the same inputs and memory.
+     the same inputs and memory.  Started with the bridges:
+     `tools/firmware/bridge_check.py` (Unicorn, run with uv) calls each
+     wrapper as gcc would and its routine from its registers, from the
+     same RAM, and requires the same result and RAM and gcc's
+     callee-saved registers kept; 67 of 85 agree, none disagree.
+     Unicorn has no CPU32 and the 68020 stands in: the image uses none
+     of the CPU32's own instructions (`tbl`, `lpstop`, `bgnd`; a scan of
+     its words finds none), and none of the 68020's the CPU32 lacks.  Next it runs gcc's compiled C
+     of a function against the image's, once step 3 links one.
   5. Replace, check, repeat, making the C readable and idiomatic as
      each function is taken: names for locals, real types, loops and
      structures in place of pointer arithmetic, the decompiler's

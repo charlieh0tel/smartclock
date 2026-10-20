@@ -128,8 +128,9 @@ M68K_CC ?= m68k-linux-gnu-gcc
 check-types:
 	$(M68K_CC) -mcpu=cpu32 -fsyntax-only tools/ghidra/types/check-layout.c
 
-# Fail if the decompiled C does not compile, or its assembly is not the
-# image's own bytes.  Needs an m68k gcc and binutils; not part of ci.
+# Fail if the decompiled C does not compile, its assembly is not the
+# image's own bytes, or a bridge disagrees with its routine.  Needs an m68k
+# gcc and binutils, and uv; not part of ci.
 DECOMPILED_CFLAGS = -std=gnu17 -mcpu=cpu32 -O1 -fno-toplevel-reorder -fno-builtin \
 	-fno-tree-loop-distribute-patterns -w \
 	-Wno-error=int-conversion -Wno-error=incompatible-pointer-types
@@ -137,6 +138,8 @@ check-decompiled:
 	$(M68K_CC) $(DECOMPILED_CFLAGS) -c -o target/decompiled.o third_party/firmware/decompiled/z3805a-3543b.c
 	python3 tools/firmware/decompiled_check.py third_party/firmware/decompiled/z3805a-3543b.c \
 		third_party/firmware/z3805a-3543b.bin target/decompiled.o
+	uv run -q tools/firmware/bridge_check.py third_party/firmware/decompiled/z3805a-3543b.c \
+		third_party/firmware/z3805a-3543b.bin
 
 clean:
 	$(CARGO) clean

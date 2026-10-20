@@ -189,7 +189,10 @@ The 58503A (3633, 3704) and Z3801A write the same values at matching
 places.  The 58503B, Z3815A and Z3816A do not: the last two write
 OP7 at three places of their own (`0x24e24`, `0x2495c` and on), and
 their bank was not traced.  The polarity is the inference above, not
-an observation: a unit or the board's LED circuit settles it.
+an observation: a unit or the board's LED circuit settles it.  The
+owner recalls the heartbeat as the bank's most inboard LED
+(2026-10-20); if the bank runs in bit order, OP7 is the outboard
+end, but that is not established.
 `:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded?` returns
 the flag.
 

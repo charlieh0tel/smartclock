@@ -329,6 +329,17 @@ stack.  Ghidra's 68000 convention returns a float or double in the FPU
 register FP0, but these images have no FPU and return one in D0 or
 D0:D1, so every function returning one has its return annotated.
 
+`types/smartclock.h` declares the structures (`structures.md`), parsed
+into the program before the names so a row may use them: a label's
+row may give its data type, `gps_state` or `uint8_t[6]`.  The header and
+the firmware's own prototypes use `<stdint.h>`'s types, the header
+defining them, since Ghidra's C parser reads no includes; a published
+API keeps its own spelling, the C library's and pSOS's.  The script
+then makes `uint8_t` and `int8_t` Ghidra's `byte` and `sbyte`: the
+decompiler prints a char type's constants as characters, so
+`fpga_set_bit('\x01','\b')`, and these two's as numbers,
+`fpga_set_bit(1,8)`.
+
 **Installer** unpacks the records the boot code copies to RAM, after
 its vector table, into an overlay named `installer`, writable so that
 cells the installer changes do not fold, and makes a function at its

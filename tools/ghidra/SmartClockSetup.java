@@ -69,11 +69,14 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeConflictHandler;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.FunctionDefinitionDataType;
 import ghidra.program.model.data.ParameterDefinition;
 import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.SignedByteDataType;
 import ghidra.program.model.data.TerminatedStringDataType;
+import ghidra.program.model.data.TypedefDataType;
 import ghidra.program.model.data.WordDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Data;
@@ -198,6 +201,10 @@ public class SmartClockSetup extends GhidraScript {
 	/** The namespace analysis puts a switch's case labels in, and their prefix. */
 	private static final String SWITCH_NAMESPACE_PREFIX = "switchD_";
 	private static final String CASE_LABEL_PREFIX = "caseD_";
+	/** <stdint.h>'s byte types, and the Ghidra types that print as numbers. */
+	private static final Map<String, DataType> BYTE_TYPES = Map.of(
+		"uint8_t", ByteDataType.dataType,
+		"int8_t", SignedByteDataType.dataType);
 	/** Upper limit on a table with no bound check found. */
 	private static final int MAX_UNBOUNDED_CASES = 256;
 
@@ -339,6 +346,7 @@ public class SmartClockSetup extends GhidraScript {
 			if (arg.startsWith(TYPES + "=")) {
 				String header = Files.readString(Path.of(arg.substring(TYPES.length() + 1)));
 				new CParser(currentProgram.getDataTypeManager(), true, null).parse(header);
+				bindByteTypes();
 				println("types parsed from " + arg.substring(TYPES.length() + 1));
 			}
 		}
@@ -545,6 +553,20 @@ public class SmartClockSetup extends GhidraScript {
 	}
 
 	/** Types the data at address as declaration, a type the program knows, as "status_model *". */
+	/**
+	 * Makes the header's uint8_t and int8_t Ghidra's byte and sbyte.  The
+	 * header defines them as unsigned and signed char, as C does, but the
+	 * decompiler prints a char type's constants as characters ('\b' for 8)
+	 * and these two's as numbers.
+	 */
+	private void bindByteTypes() {
+		DataTypeManager types = currentProgram.getDataTypeManager();
+		for (Map.Entry<String, DataType> binding : BYTE_TYPES.entrySet()) {
+			types.addDataType(new TypedefDataType(binding.getKey(), binding.getValue()),
+				DataTypeConflictHandler.REPLACE_HANDLER);
+		}
+	}
+
 	private void applyDataType(Address address, String declaration) throws Exception {
 		DataTypeManager types = currentProgram.getDataTypeManager();
 		DataType type = new DataTypeParser(types, types, null, AllowedDataTypes.ALL)

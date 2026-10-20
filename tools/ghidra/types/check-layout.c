@@ -140,3 +140,41 @@ CHECK_FIELD(pll_state, fine_state, 0x17);
 CHECK_FIELD(pll_state, efc, 0x102194 - 0x102162);
 CHECK_FIELD(pll_state, tfom, 0x102198 - 0x102162);
 CHECK_FIELD(pll_state, efc_history, 0x1021ac - 0x102162);
+
+/* Records the printf calls name. */
+CHECK_SIZE(oncore_receiver_id, 277);
+CHECK_FIELD(oncore_receiver_id, software_part_number, 0x10107b - 0x101059);
+CHECK_FIELD(oncore_receiver_id, software_version, 0x101096 - 0x101059);
+CHECK_FIELD(oncore_receiver_id, model_number, 0x1010e7 - 0x101059);
+CHECK_FIELD(oncore_receiver_id, options, 0x101153 - 0x101059);
+CHECK_FIELD(gps_state, correction_average, 0x100f52 - 0x100c6a);
+CHECK_FIELD(gps_state, correction_deviation, 0x100f5a - 0x100c6a);
+CHECK_FIELD(pll_state, fine_index, 0x10217b - 0x102162);
+CHECK_FIELD(pll_state, fine_d, 0x10217e - 0x102162);
+CHECK_SIZE(gps_statistics, 0x36);
+CHECK_FIELD(gps_statistics, successes, 0x1017c8 - 0x1017bc);
+CHECK_FIELD(gps_statistics, rejects, 0x1017cc - 0x1017bc);
+CHECK_FIELD(gps_statistics, t_retries, 0x1017e2 - 0x1017bc);
+CHECK_FIELD(gps_statistics, raim_detected, 0x1017e4 - 0x1017bc);
+CHECK_FIELD(gps_statistics, raim_alarms, 0x1017e6 - 0x1017bc);
+CHECK_FIELD(gps_statistics, unknown_response, 0x1017e8 - 0x1017bc);
+CHECK_FIELD(gps_statistics, checksum_errors, 0x1017ec - 0x1017bc);
+CHECK_FIELD(gps_statistics, command_monitor_failures, 0x1017ee - 0x1017bc);
+CHECK_FIELD(gps_statistics, status_monitor_failures, 0x1017f0 - 0x1017bc);
+CHECK_SIZE(exception_record, 0x1009b0 - 0x10099e);
+CHECK_FIELD(exception_record, name, 0x10099f - 0x10099e);
+CHECK_FIELD(exception_record, sr, 0x1009a4 - 0x10099e);
+CHECK_FIELD(exception_record, pc, 0x1009a6 - 0x10099e);
+CHECK_FIELD(exception_record, vector, 0x1009aa - 0x10099e);
+CHECK_FIELD(exception_record, address, 0x1009ac - 0x10099e);
+/* The pool: five entries from 0x10372a to 0x1037ac. */
+CHECK_SIZE(klok_entry, (0x1037ac - 0x10372a) / 5);
+CHECK_FIELD(klok_entry, function, 5 * 4);
+CHECK_FIELD(klok_entry, event_class, 6 * 4);
+/* log_read: entry n's fields at 0x101d98, 0x101d9c, 0x101da0, ... + n * 0x14. */
+CHECK_SIZE(log_page, 0x101dd4 - 0x101d94);
+CHECK_SIZE(log_entry, 0x14);
+CHECK_FIELD(log_page, entries, 0x101d98 - 0x101d94);
+CHECK_FIELD(log_entry, format, 0x101da0 - 0x101d98);
+CHECK_FIELD(log_entry, argument_1, 0x101da4 - 0x101d98);
+CHECK_SIZE(fpga_bit, 4);

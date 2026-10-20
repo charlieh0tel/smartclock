@@ -154,6 +154,42 @@ generation:
 | Z3815A 4010, Z3816A 4001 | OP6 (mask `0x40`) | `0x36cfc`, `0x33e5e` |
 
 A stopped or steady heartbeat means `hmon` has stopped running.
+
+### The rest of the bank
+
+The bank is six LEDs (the owner, 2026-10-20), and the DUART's output
+port has six general-purpose bits, OP2 to OP7: `duart_init` clears
+the OPCR, so none carries a counter or a status, and
+`duart_output_bits` masks with `0xfc`.  The power-on code uses them
+as a self-test display.  An SC2681's output pins are the complement
+of its output port register (OPR), so setting a bit (`SOPBC`,
+`0x20001d`) drives the pin low and resetting it (`ROPBC`, `0x20001f`)
+drives it high.  The code reads as if an LED lights on a high pin:
+
+| Bit | Lit when | Written at (Z3805A) |
+| --- | -------- | ------------------- |
+| OP2 | the heartbeat, flipping | `hmon_task` (`0x2487a`) |
+| OP3 | the boot code entered the installer, the flash checksums or vector 43 having sent it there | `0x754`, right after the reset code's `SOPBC = 0xff` at `0x746` |
+| OP4 | the reset code's CPU test failed (`0x100c24`) | `0x147b8`; the boot code's at `0x8f4` |
+| OP5 | its RAM test failed (`0x100c26`) | `0x148ee`; `0xa2a` |
+| OP6 | its DUART test failed, `duart_early_init`'s IVR and loopback checks (`0x100c2e`) | `0x1490c`; `0xa48` |
+| OP7 | a QSPI, interpolator or internal-reference test failed, through the three `selftest_*_with_lamp` routines, which nothing calls here | `0x18cb6`, `0x18d06`, `0x18d30` |
+
+Reset sets every bit, `SOPBC = 0xff`, and each failed test resets its
+own and records it in a mask (`0x100c30`; the boot code's
+`0x10ab2e`), which `duart_init` writes back whole (`ROPBC` the mask,
+`SOPBC` its complement), so a failure stays lit after start-up.  A
+hardware reset clears the OPR, which drives every pin high until the
+reset code runs: all six would light for a moment at power-on.  The
+installer writes the port nowhere, so OP3 stays lit while it runs.
+OP0 and OP1, which the two routines `duart_op0_set` and
+`duart_op1_set` drive, have no callers.
+
+The 58503A (3633, 3704) and Z3801A write the same values at matching
+places.  The 58503B, Z3815A and Z3816A do not: the last two write
+OP7 at three places of their own (`0x24e24`, `0x2495c` and on), and
+their bank was not traced.  The polarity is the inference above, not
+an observation: a unit or the board's LED circuit settles it.
 `:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded?` returns
 the flag.
 

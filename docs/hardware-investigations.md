@@ -603,7 +603,10 @@ Nothing here says what they show.
   holdover (`:SYNChronization:HOLDover:INITiate`), recovery, an alarm,
   and the installer and pForth debug console.
 One is a heartbeat (the owner, 2026-10-20): the firmware flips DUART
-OP2 about every 1.1 s (`firmware/outputs.md`, "The heartbeat").
+OP2 about every 1.1 s.  The firmware reads as if the six are the
+DUART's OP2 to OP7: heartbeat, installer running, and the CPU, RAM,
+DUART and later self-test failures (`firmware/outputs.md`, "The rest
+of the bank").
 
 - [ ] TODO: find what drives them in the firmware: a port the start-up
   code sets, the DUART's output port, or a write `:DIAGnostic:OUTPut`

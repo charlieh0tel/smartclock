@@ -674,6 +674,20 @@ restored, but only their descriptors refer to them.  In
 `fconf_regs[3]` (`counter_set_sync`, `0x40a84`) while counting the
 count down.
 
+## A date and time
+
+`datetime_add` (`0x11396`) and `datetime_subtract` (`0x11428`) take
+two 8-byte records, `packed_datetime`: a time, its hours, minutes and
+seconds in the low three bytes of the long at `+0`, and at `+4` a date,
+which `date_to_days` (`0x10f46`) makes a day count and `days_to_date`
+(`0x10e72`) makes again.  The first record is what to add or take
+away, its `+4` a count of days; the second is changed in place,
+carrying seconds into minutes, hours and days.  Their callers --
+`utc_to_gps`, `gps_to_utc`, `utc_to_local`, `local_to_utc`,
+`leap_event_schedule_utc` -- keep both records on their stacks; the
+names file types them (`local` rows), since the decompiler splits each
+into two longs.
+
 ## sprintf's output
 
 `sprintf` (`0x60896`) and `vsprintf` keep an 8-byte record on their

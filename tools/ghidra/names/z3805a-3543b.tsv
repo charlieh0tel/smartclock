@@ -431,6 +431,8 @@
 0x1009d2	label	gps_time	structures.md	get_gps_time's; hour << 16 | minute << 8 | second	uint32_t
 0x10de4	function	day_of_year	structures.md	the es message's %03d, from a packed date	int16_t day_of_year(uint32_t date)
 0x11a2a	function	exception_name	structures.md	the "%s: %s" of an exception; "Oooh! That tickles. I don't know that vector."	char * exception_name(uint16_t vector)
+0x11b8c	label	reset_to_recover_text	read	"\r\nRESET to recover.", which print_exception ends a report with; its NUL is the first byte of exception_names, and exception_name reads that table from 12 bytes in, so it is bytes, not a string, to keep the C reading the ROM	byte[20]
+0x11ba0	label	exception_names	read	the name of each exception vector from 2, bus error, to 58, PMMU access violation, which exception_name indexes by the vector offset less 8	char *[57]
 #
 # batch 3, the most-called unnamed functions, by their code and callers
 0x29ade	function	scpi_query_failed	context	72 SCPI queries call it with -0x20; reports it through status_report_from and zeroes the reply's length at +4
@@ -485,7 +487,7 @@
 0x40d34	function	counter_read	context	interval.md's one reading: the coarse count plus (interpolator_read - +0x18) / +0x1c, times 1e-7, less the configuration's double at +4, into *reading	void counter_read(interval_reading_fields *reading, counter_configuration_fields *configuration)
 0x29b82	function	scpi_console_port	context	returns 0x29e18, the console port's object: two routines, then the "E%+04d> " and "scpi > " prompts; queries compare a request's source with it
 0x29bce	function	console_port_read	context	the first of the console port's routines; the SCPI input loop reads characters with it
-0x11396	function	datetime_add	context	adds the first packed time and date to the second, carrying seconds, minutes, hours and days; klok adds an entry's period to its time
+0x11396	function	datetime_add	context	adds the first packed time and date to the second, carrying seconds, minutes, hours and days; klok adds an entry's period to its time	void datetime_add(packed_datetime *change, packed_datetime *value)
 0x10f46	function	date_to_days	context	a packed date as a day count, for datetime_add
 0x10e72	function	days_to_date	context	a day count as a packed date, for datetime_add
 0x139ce	function	get_gps_utc_offset	context	returns gps_utc_offset_valid and stores gps_utc_offset; the es message's leap value and leap_gps_time	uint8_t get_gps_utc_offset(int16_t *seconds)
@@ -1061,7 +1063,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x10c34	function	klok_insert_sorted	context	inserts an entry into the clock list in time order
 0x10db6	function	is_leap_year	context	1 for a leap year, by the Gregorian rule
 0x11152	function	time_to_seconds	context	a packed time as seconds; the same code as hms_to_seconds, a second copy
-0x11428	function	datetime_subtract	context	subtracts a time from a date and time, borrowing through the date
+0x11428	function	datetime_subtract	context	subtracts a time from a date and time, borrowing through the date	void datetime_subtract(packed_datetime *change, packed_datetime *value)
 0x114b4	function	datetime_compare	context	compares two dates and times: by days, then by seconds
 0x11700	function	utc_to_local	context	applies nv_settings.time_zone's hours and minutes to a date and time
 0x13368	function	enter_supervisor_mode	context	C's wrapper for enter_supervisor	uint16_t enter_supervisor_mode(void)
@@ -1533,3 +1535,16 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x60f5e	local	y_high	read	a double the code adds to or reads whole by its address	double @ -0x28
 0x60f5e	local	high_part	read	a double the code adds to or reads whole by its address	double @ -0x10
 0x6191c	local	quarter	read	a double the code adds to or reads whole by its address	double @ -0xc
+#
+# the records datetime_add and datetime_subtract take, which the decompiler
+# splits into two longs; docs/firmware/structures.md, "A date and time"
+0x10656	local	change	read	what to add or take away	packed_datetime @ -0xe
+0x10656	local	value	read	the date and time it is changed in	packed_datetime @ -0x24
+0x114fa	local	change	read	what to add or take away	packed_datetime @ -0xe
+0x114fa	local	value	read	the date and time it is changed in	packed_datetime @ -0x16
+0x11580	local	change	read	what to add or take away	packed_datetime @ -0xe
+0x11580	local	value	read	the date and time it is changed in	packed_datetime @ -0x16
+0x11700	local	change	read	what to add or take away	packed_datetime @ -0x18
+0x11700	local	value	read	the date and time it is changed in	packed_datetime @ -0x20
+0x117b6	local	change	read	what to add or take away	packed_datetime @ -0x18
+0x117b6	local	value	read	the date and time it is changed in	packed_datetime @ -0x20

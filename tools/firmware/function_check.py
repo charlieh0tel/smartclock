@@ -33,7 +33,7 @@ import sys
 import tempfile
 from dataclasses import dataclass
 
-from unicorn import UC_PROT_EXEC, UC_PROT_READ
+from unicorn import UC_PROT_EXEC, UC_PROT_READ, UcError
 
 from harness import (
     CASES,
@@ -120,6 +120,18 @@ def result(function: Function, types: Types, run: Run) -> int | None:
     return value
 
 
+def same_text(m: Machine, function: Function, a: int, b: int) -> bool:
+    """Whether two char pointer results point at the same text: gcc's copy
+    of a function returns its own copy of a literal, where the image's
+    returns the ROM's."""
+    if function.result != "char *":
+        return False
+    try:
+        return m.string(a) == m.string(b)
+    except (UcError, ValueError):
+        return False
+
+
 def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int):
     """Yields (description, outcome) for each case: outcome None if gcc's
     copy agrees with the image's, else what differs."""
@@ -139,7 +151,7 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
             continue
         differences = []
         wanted, got = result(function, types, original), result(function, types, gcc)
-        if wanted != got:
+        if wanted != got and not same_text(m, function, wanted, got):
             differences.append(f"result {got:x}, image's {wanted:x}")
         ram_differs = ram_difference(original, gcc)
         if ram_differs:

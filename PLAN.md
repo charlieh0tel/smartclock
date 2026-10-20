@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1212 run, 609 agree, 545 reach the kernel
-     or a peripheral and are skipped, and 58 differ, in the function or
+     original reads them: of 1212 run, 614 agree, 545 reach the kernel
+     or a peripheral and are skipped, and 53 differ, in the function or
      in gcc's callees.
      Unicorn has no CPU32 and the 68020 stands in: the image uses none
      of the CPU32's own instructions (`tbl`, `lpstop`, `bgnd`; a scan of
@@ -712,7 +712,14 @@ view cannot drift apart.  The library, bottom up:
      (`__ghidra_as`, `__ghidra_bits`), so `sqrt`, `frexp`, `modf` and
      the EFC queries agree (64 to 59); and a shift by a count that is
      not a literal is defined for every count, as the decompiler's is
-     (59 to 58).
+     (59 to 58).  Then the date and time records `datetime_add` takes,
+     split as `sprintf`'s was, the vector names `exception_name` reads
+     from 12 bytes into a string whose NUL is the table's first byte,
+     and a string result compared by its text, gcc's copy returning its
+     own copy of a literal (58 to 53).  Left as they are:
+     `int64_divide` and `uint64_divide`, called by nothing, which on a
+     quotient too wide for 32 bits return the dividend's low long, as
+     `divs.l` leaves it, where the C truncates the quotient.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

@@ -25,6 +25,9 @@ CHECK_FIELD(scpi_numeric_param, steps, 0x28);
 CHECK_FIELD(scpi_numeric_param, gps_request, 0x20);
 CHECK_FIELD(scpi_numeric_param, group_cell, 0x22);
 
+CHECK_SIZE(packed_datetime, 8);
+CHECK_FIELD(packed_datetime, date, 4);
+
 CHECK_SIZE(sprintf_output, 8);
 CHECK_FIELD(sprintf_output, cursor, 4);
 

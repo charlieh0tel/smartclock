@@ -199,6 +199,15 @@ typedef int printf_function(char *format, ...);
 /* qsort's comparator. */
 typedef int qsort_compare_function(void *a, void *b);
 
+/* A date and time as datetime_add and datetime_subtract take them: the
+ * time's hours, minutes and seconds in its low three bytes, and the date
+ * packed as date_to_days reads it, or, in their first argument, a count
+ * of days to add or take away. */
+typedef struct packed_datetime {
+	uint32_t time;
+	uint32_t date;
+} packed_datetime;
+
 /* What sprintf and vsprintf hand doprnt to pass to sprintf_put, on
  * their own stacks: sprintf_put writes at cursor and advances it.
  * Nothing reads unused. */

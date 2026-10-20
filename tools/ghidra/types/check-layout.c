@@ -178,3 +178,7 @@ CHECK_FIELD(log_page, entries, 0x101d98 - 0x101d94);
 CHECK_FIELD(log_entry, format, 0x101da0 - 0x101d98);
 CHECK_FIELD(log_entry, argument_1, 0x101da4 - 0x101d98);
 CHECK_SIZE(fpga_bit, 4);
+/* interpolator_calibrate reads and writes param[0] to param[8]. */
+CHECK_SIZE(interpolator_calibration, 9);
+CHECK_FIELD(interpolator_calibration, result_valid, 4);
+CHECK_FIELD(interpolator_calibration, reading_high, 8);

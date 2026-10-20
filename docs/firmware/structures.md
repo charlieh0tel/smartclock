@@ -409,3 +409,24 @@ The others:
 | `get_gps_date`, `get_gps_time` (`0x136e6`, `0x136ee`) | the T1 time code | `gps_date` (`0x1009d6`), `gps_time` (`0x1009d2`) |
 | `day_of_year` (`0x10de4`) | the es message's `%03d` | |
 | `exception_name` (`0x11a2a`) | an exception's "%s: %s" | "Oooh! That tickles. I don't know that vector." past 0xe8 |
+
+## The interpolator calibration
+
+`interpolator_calibrate` (`0x40248`) is the time-interval counter's
+interpolator calibration that `ovens.md` ("What `hdac` is not")
+describes in the Z3816A.  It is given an `interpolator_calibration`,
+9 bytes, at `interpolator_calibration_state` (`0x101fce`), or a copy on
+one caller's stack:
+
+| Offset | Field | Shown by |
+| ------ | ----- | -------- |
+| `+0` | `initialized` | set the first time, with both DACs at `0x1f` |
+| `+1` | `calibrated` | set when the readings fit |
+| `+2`, `+3` | `hdac_2`, `hdac_3` | written to HDAC channels 2 and 3 (`hdac_set`), stepped until they fit |
+| `+4` | `result_valid` | set when a result is kept |
+| `+5`, `+6` | `result_hdac_2`, `result_hdac_3` | `+2` and `+3` copied when the spread is 200, or 199 or 201 |
+| `+7`, `+8` | `reading_low`, `reading_high` | `interpolator_measure(0)`, wanted 1 to 25, and `(1)`, wanted 201 to 225 |
+
+`interpolator_measure` (`0x40030`) pulses the FPGA bits for one
+measurement and returns `interpolator_read` (`0x40c56`), the complement
+of FPGA register `0x10`.

@@ -412,6 +412,20 @@ struct gps_statistics {
     uint16_t status_monitor_failures;
 };
 
+typedef struct interpolator_calibration interpolator_calibration, *Pinterpolator_calibration;
+
+struct interpolator_calibration {
+    uint8_t initialized;
+    uint8_t calibrated;
+    uint8_t hdac_2;
+    uint8_t hdac_3;
+    uint8_t result_valid;
+    uint8_t result_hdac_2;
+    uint8_t result_hdac_3;
+    uint8_t reading_low;
+    uint8_t reading_high;
+};
+
 typedef struct klok_entry klok_entry, *Pklok_entry;
 
 struct klok_entry {
@@ -542,8 +556,11 @@ extern uint8_t watchdog_gps; /* 001009b3 */
 extern uint8_t watchdog_pll; /* 001009b4 */
 extern uint8_t watchdog_monitor; /* 001009b5 */
 extern uint8_t watchdog_spool; /* 001009b6 */
+extern uint32_t uptime; /* 001009ba */
 extern uint32_t gps_time; /* 001009d2 */
 extern uint32_t gps_date; /* 001009d6 */
+extern uint8_t selftest_abort; /* 00100c42 */
+extern uint8_t selftest_running; /* 00100c43 */
 extern gps_state gps; /* 00100c6a */
 extern uint8_t gps_last_issued_bytes[20]; /* 00101266 */
 extern uint8_t * gps_print_cursor; /* 00101390 */
@@ -583,10 +600,13 @@ extern char idn_serial[18]; /* 00101f7a */
 extern char idn_suffix; /* 00101f8c */
 extern int16_t log_entry_count; /* 00101f8e */
 extern uint8_t fconf_regs[6]; /* 00101fa9 */
+extern interpolator_calibration interpolator_calibration_state; /* 00101fce */
 extern float fine_y0; /* 00102154 */
 extern pll_state pll; /* 00102162 */
 extern uint8_t status_summary; /* 00102544 */
 extern uint8_t gps_ack_code; /* 00102584 */
+extern uint8_t gps_ack_ready; /* 00102585 */
+extern uint8_t gps_ack_awaited; /* 00102586 */
 extern int32_t psos_supervisor_stack_size; /* 00102674 */
 extern int16_t task_count; /* 0010271c */
 extern uint8_t status_request_service; /* 00102eb6 */
@@ -5356,7 +5376,7 @@ void FUN_00012bb4(void)
   }
   FUN_00024984();
   FUN_00013ee4();
-  FUN_00018404();
+  selftest_init();
   FUN_00030c1e();
   return;
 }
@@ -6088,12 +6108,12 @@ uint32_t get_gps_time(void)
 
 /* 000136f6 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
 
-undefined4 FUN_000136f6(void)
+uint32_t get_uptime(void)
 
 {
-  return _DAT_001009ba;
+  return uptime;
 }
 
 
@@ -6270,7 +6290,7 @@ void FUN_00013908(short param_1)
   _DAT_001009da = 0x1f001f1e;
   _DAT_001009de = 0x1f1e1f1f;
   _DAT_001009e2 = 0x1e1f1e1f;
-  _DAT_001009ba = 0;
+  uptime = 0;
   gps_time = 0;
   gps_date = _DAT_00101d04;
   FUN_000138e4();
@@ -11070,16 +11090,16 @@ void FUN_000178e0(char param_1)
   char cVar2;
   
   if (param_1 == '\x01') {
-    iVar1 = FUN_000183ce();
+    iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       FUN_000406c8();
     }
   }
-  cVar2 = FUN_000182d4(param_1);
+  cVar2 = selftest_may_report(param_1);
   if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c3a != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      FUN_0001833c((uint)(_DAT_00100c3a & 1),"Interpolator: A, MRC mode",'\0');
+      selftest_report_fail((uint)(_DAT_00100c3a & 1),"Interpolator: A, MRC mode",'\0');
     }
   }
   return;
@@ -11098,16 +11118,16 @@ void FUN_00017946(char param_1)
   char cVar2;
   
   if (param_1 == '\x01') {
-    iVar1 = FUN_000183ce();
+    iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       FUN_000184a4();
     }
   }
-  cVar2 = FUN_000182d4(param_1);
+  cVar2 = selftest_may_report(param_1);
   if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c46 != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      FUN_0001833c((uint)(_DAT_00100c46 & 1),"Internal reference: ",'\0');
+      selftest_report_fail((uint)(_DAT_00100c46 & 1),"Internal reference: ",'\0');
     }
   }
   return;
@@ -11129,21 +11149,21 @@ void FUN_000179ac(char param_1)
   char acStack_40 [60];
   
   if (param_1 == '\x01') {
-    iVar1 = FUN_000183ce();
+    iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       FUN_00018c48();
     }
   }
-  cVar2 = FUN_000182d4(param_1);
+  cVar2 = selftest_may_report(param_1);
   if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c26 != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
       FUN_00018396(_DAT_00100c28,(short)acStack_51,0x10);
       sprintf(acStack_40,"%s %s","System RAM: D15-D0:",acStack_51);
-      FUN_0001833c((uint)(_DAT_00100c26 & 1),acStack_40,'\0');
+      selftest_report_fail((uint)(_DAT_00100c26 & 1),acStack_40,'\0');
       FUN_00018396(_DAT_00100c2a,acStack_64,0x12);
       sprintf(acStack_40,"%s %s","System RAM: adr line A18-A1:",acStack_64);
-      FUN_0001833c((uint)(_DAT_00100c26 & 2),acStack_40,'\0');
+      selftest_report_fail((uint)(_DAT_00100c26 & 2),acStack_40,'\0');
     }
   }
   return;
@@ -11163,17 +11183,17 @@ void FUN_00017a96(char param_1)
   char acStack_40 [60];
   
   if (param_1 == '\x01') {
-    iVar1 = FUN_000183ce();
+    iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       FUN_0001749e();
     }
   }
-  cVar2 = FUN_000182d4(param_1);
+  cVar2 = selftest_may_report(param_1);
   if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c24 != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
       sprintf(acStack_40,"%s","CPU:");
-      FUN_0001833c((uint)(_DAT_00100c24 & 1),acStack_40,'\0');
+      selftest_report_fail((uint)(_DAT_00100c24 & 1),acStack_40,'\0');
     }
   }
   return;
@@ -11193,17 +11213,17 @@ void FUN_00017b16(char param_1)
   char acStack_40 [60];
   
   if (param_1 == '\x01') {
-    iVar1 = FUN_000183ce();
+    iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       FUN_00018c74();
     }
   }
-  cVar2 = FUN_000182d4(param_1);
+  cVar2 = selftest_may_report(param_1);
   if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c34 != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
       sprintf(acStack_40,"%s","EEPROM:");
-      FUN_0001833c((uint)(_DAT_00100c34 & 1),acStack_40,'\0');
+      selftest_report_fail((uint)(_DAT_00100c34 & 1),acStack_40,'\0');
     }
   }
   return;
@@ -11221,19 +11241,19 @@ void FUN_00017b96(char param_1)
   char cVar2;
   
   if (param_1 == '\x01') {
-    iVar1 = FUN_000183ce();
+    iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       FUN_00018c8e();
     }
   }
-  cVar2 = FUN_000182d4(param_1);
+  cVar2 = selftest_may_report(param_1);
   if (((cVar2 != '\0') && (param_1 == '\x01')) && (DAT_00100c48 != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      FUN_0001833c((uint)(DAT_00100c48 & 2),"QSPI: ADC",'\0');
-      FUN_0001833c((uint)(DAT_00100c48 & 4),"QSPI: Hex DAC",'\0');
-      FUN_0001833c((uint)(DAT_00100c48 & 0x40),"QSPI: FPGA",'\0');
-      FUN_0001833c((uint)(DAT_00100c48 & 0x80),"QSPI: EFC",'\0');
+      selftest_report_fail((uint)(DAT_00100c48 & 2),"QSPI: ADC",'\0');
+      selftest_report_fail((uint)(DAT_00100c48 & 4),"QSPI: Hex DAC",'\0');
+      selftest_report_fail((uint)(DAT_00100c48 & 0x40),"QSPI: FPGA",'\0');
+      selftest_report_fail((uint)(DAT_00100c48 & 0x80),"QSPI: EFC",'\0');
     }
   }
   return;
@@ -11252,16 +11272,16 @@ void FUN_00017c3e(char param_1)
   char cVar2;
   
   if (param_1 == '\x01') {
-    iVar1 = FUN_000183ce();
+    iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       FUN_00040f98();
     }
   }
-  cVar2 = FUN_000182d4(param_1);
+  cVar2 = selftest_may_report(param_1);
   if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c36 != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      FUN_0001833c((uint)(_DAT_00100c36 & 1),"FPGA: counters not preset",'\0');
+      selftest_report_fail((uint)(_DAT_00100c36 & 1),"FPGA: counters not preset",'\0');
     }
   }
   return;
@@ -11278,7 +11298,7 @@ void FUN_00017ca4(char param_1)
   int iVar1;
   
   if (param_1 == '\x01') {
-    iVar1 = FUN_000183ce();
+    iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       FUN_000184ee();
     }
@@ -11299,21 +11319,21 @@ void FUN_00017cbe(char param_1)
   char cVar2;
   
   if (param_1 == '\x01') {
-    iVar1 = FUN_000183ce();
+    iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       FUN_0001e650();
     }
   }
-  cVar2 = FUN_000182d4(param_1);
+  cVar2 = selftest_may_report(param_1);
   if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c2e != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      FUN_0001833c((uint)(_DAT_00100c2e & 1),"UART: register read/write",'\0');
-      FUN_0001833c((uint)(_DAT_00100c2e & 2),"UART: counter",'\0');
-      FUN_0001833c((uint)(_DAT_00100c2e & 4),"UART: channel A data",'\0');
-      FUN_0001833c((uint)(_DAT_00100c2e & 8),"UART: channel A timeout",'\0');
-      FUN_0001833c((uint)(_DAT_00100c2e & 0x10),"UART: channel B data",'\0');
-      FUN_0001833c((uint)(_DAT_00100c2e & 0x20),"UART: channel B timeout",'\0');
+      selftest_report_fail((uint)(_DAT_00100c2e & 1),"UART: register read/write",'\0');
+      selftest_report_fail((uint)(_DAT_00100c2e & 2),"UART: counter",'\0');
+      selftest_report_fail((uint)(_DAT_00100c2e & 4),"UART: channel A data",'\0');
+      selftest_report_fail((uint)(_DAT_00100c2e & 8),"UART: channel A timeout",'\0');
+      selftest_report_fail((uint)(_DAT_00100c2e & 0x10),"UART: channel B data",'\0');
+      selftest_report_fail((uint)(_DAT_00100c2e & 0x20),"UART: channel B timeout",'\0');
     }
   }
   return;
@@ -11331,28 +11351,28 @@ void FUN_00017d94(char param_1)
   char cVar1;
   
   if (param_1 == '\x01') {
-    FUN_000183ce();
+    selftest_aborted();
   }
-  cVar1 = FUN_000182d4(param_1);
+  cVar1 = selftest_may_report(param_1);
   if (((cVar1 != '\0') && (param_1 == '\x01')) && (_DAT_00100c38 != 0)) {
     cVar1 = debug_is_enabled();
     if (cVar1 != '\0') {
-      FUN_0001833c((uint)(_DAT_00100c38 & 1),"GPS: Channel 1 Correlation",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 2),"GPS: Channel 2 Correlation",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 4),"GPS: Channel 3 Correlation",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 8),"GPS: Channel 4 Correlation",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 0x10),"GPS: Channel 5 Correlation",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 0x20),"GPS: Channel 6 Correlation",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 0x40),"GPS: 1 KHz Presence",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 0x80),"GPS: ROM LSByte",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 0x100),"GPS: ROM MSByte",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 0x200),"GPS: RAM LSByte",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 0x400),"GPS: RAM MSByte",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 0x800),"GPS: EEPROM",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 0x1000),"GPS: DCXO SPI Comm",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 0x2000),"GPS: RTC Comm & Time",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 0x4000),"GPS: SW problem",'\0');
-      FUN_0001833c((uint)(_DAT_00100c38 & 0x8000),"GPS: Engine timeout",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 1),"GPS: Channel 1 Correlation",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 2),"GPS: Channel 2 Correlation",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 4),"GPS: Channel 3 Correlation",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 8),"GPS: Channel 4 Correlation",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 0x10),"GPS: Channel 5 Correlation",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 0x20),"GPS: Channel 6 Correlation",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 0x40),"GPS: 1 KHz Presence",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 0x80),"GPS: ROM LSByte",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 0x100),"GPS: ROM MSByte",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 0x200),"GPS: RAM LSByte",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 0x400),"GPS: RAM MSByte",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 0x800),"GPS: EEPROM",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 0x1000),"GPS: DCXO SPI Comm",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 0x2000),"GPS: RTC Comm & Time",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 0x4000),"GPS: SW problem",'\0');
+      selftest_report_fail((uint)(_DAT_00100c38 & 0x8000),"GPS: Engine timeout",'\0');
     }
   }
   return;
@@ -11371,18 +11391,18 @@ void FUN_00017f2c(char param_1)
   char cVar2;
   
   if (param_1 == '\x01') {
-    iVar1 = FUN_000183ce();
+    iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       FUN_00018546();
     }
   }
-  cVar2 = FUN_000182d4(param_1);
+  cVar2 = selftest_may_report(param_1);
   if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c44 != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      FUN_0001833c((uint)(_DAT_00100c44 & 1),"POWER: 5V",'\0');
-      FUN_0001833c((uint)(_DAT_00100c44 & 2),"POWER: 15V",'\0');
-      FUN_0001833c((uint)(_DAT_00100c44 & 4),"POWER: -15V",'\0');
+      selftest_report_fail((uint)(_DAT_00100c44 & 1),"POWER: 5V",'\0');
+      selftest_report_fail((uint)(_DAT_00100c44 & 2),"POWER: 15V",'\0');
+      selftest_report_fail((uint)(_DAT_00100c44 & 4),"POWER: -15V",'\0');
     }
   }
   return;
@@ -11391,20 +11411,20 @@ void FUN_00017f2c(char param_1)
 
 /* 000182c4 */
 
-void FUN_000182c4(void)
+void selftest_begin(void)
 
 {
-  DAT_00100c42 = 0;
+  selftest_abort = 0;
   return;
 }
 
 
 /* 000182cc */
 
-void FUN_000182cc(void)
+void selftest_end(void)
 
 {
-  DAT_00100c42 = 0;
+  selftest_abort = 0;
   return;
 }
 
@@ -11413,10 +11433,10 @@ void FUN_000182cc(void)
 
 /* WARNING: Unknown calling convention */
 
-bool FUN_000182d4(char param_1)
+bool selftest_may_report(char param_1)
 
 {
-  return param_1 == '\0' || DAT_00100c42 == '\0';
+  return param_1 == '\0' || selftest_abort == 0;
 }
 
 
@@ -11424,20 +11444,20 @@ bool FUN_000182d4(char param_1)
 
 /* WARNING: Unknown calling convention */
 
-void FUN_000182ec(char param_1)
+void selftest_execute(char param_1)
 
 {
   code *pcVar1;
   
-  DAT_00100c43 = 1;
+  selftest_running = 1;
   watchdog_pll = watchdog_pll + 1;
   pcVar1 = (code *)(&PTR_LAB_00018458)[param_1];
-  FUN_000182c4();
+  selftest_begin();
   (*pcVar1)();
   (*pcVar1)();
-  FUN_000182cc();
+  selftest_end();
   watchdog_pll = watchdog_pll + 1;
-  DAT_00100c43 = 0;
+  selftest_running = 0;
   return;
 }
 
@@ -11457,7 +11477,7 @@ char debug_is_enabled(void)
 
 /* WARNING: Unknown calling convention */
 
-void FUN_0001833c(int param_1,char *param_2,char param_3)
+void selftest_report_fail(int param_1,char *param_2,char param_3)
 
 {
   int iVar1;
@@ -11465,7 +11485,7 @@ void FUN_0001833c(int param_1,char *param_2,char param_3)
   char acStack_54 [80];
   
   if (param_1 != 0) {
-    iVar1 = FUN_000183ce();
+    iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       sprintf(acStack_54,"%s %s",param_2,"FAIL");
       if (param_3 == '\0') {
@@ -11499,10 +11519,10 @@ void FUN_00018396(uint param_1,int param_2,int param_3)
 
 /* 000183ce */
 
-bool FUN_000183ce(void)
+bool selftest_aborted(void)
 
 {
-  return DAT_00100c42 != '\0';
+  return selftest_abort != 0;
 }
 
 
@@ -11519,7 +11539,7 @@ void FUN_000183de(uint param_1)
     if (param_1 <= uVar2) {
       return;
     }
-    iVar1 = FUN_000183ce();
+    iVar1 = selftest_aborted();
     if (iVar1 != 0) break;
     psos_pause(1);
     uVar2 = uVar2 + 1;
@@ -11530,11 +11550,11 @@ void FUN_000183de(uint param_1)
 
 /* 00018404 */
 
-void FUN_00018404(void)
+void selftest_init(void)
 
 {
-  DAT_00100c43 = 0;
-  DAT_00100c42 = 0;
+  selftest_running = 0;
+  selftest_abort = 0;
   DAT_00100c58 = 1;
   return;
 }
@@ -11542,18 +11562,18 @@ void FUN_00018404(void)
 
 /* 0001841a */
 
-undefined1 FUN_0001841a(void)
+undefined1 selftest_abort_wait(void)
 
 {
   undefined1 uVar1;
   
-  if (DAT_00100c43 == '\0') {
+  if (selftest_running == 0) {
     uVar1 = 0;
   }
   else {
     uVar1 = 1;
-    DAT_00100c42 = 1;
-    while (DAT_00100c43 != '\0') {
+    selftest_abort = 1;
+    while (selftest_running != 0) {
       psos_pause(1);
     }
   }
@@ -11656,7 +11676,7 @@ void FUN_00018600(char param_1)
   if (param_1 != '\0') {
     _DAT_00100c34 = 0;
   }
-  DAT_00100c43 = 1;
+  selftest_running = 1;
   for (; *ppuVar4 != (undefined *)0x0; ppuVar4 = ppuVar4 + 2) {
     param2 = (*(code *)*ppuVar4)();
     if (param2 != 0) {
@@ -11677,7 +11697,7 @@ void FUN_00018600(char param_1)
   FUN_000177fa();
   DAT_00100c5a = (uint)_DAT_00100c32;
   DAT_00100c66 = 0;
-  DAT_00100c43 = 0;
+  selftest_running = 0;
   if (DAT_00100c58 == '\0') {
     log_event(0x17);
   }
@@ -11869,7 +11889,7 @@ void FUN_000189f2(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_00018a74(byte param_1)
+void selftest_run(byte param_1)
 
 {
   DAT_00100c66 = param_1;
@@ -11881,63 +11901,63 @@ void FUN_00018a74(byte param_1)
                     /* WARNING: Switch is manually overridden */
     switch(param_1) {
     case 0:
-      FUN_000182ec('\0');
+      selftest_execute('\0');
       DAT_00100c5a = (uint)_DAT_00100c32;
       break;
     case 1:
-      FUN_000182ec('\x01');
+      selftest_execute('\x01');
       DAT_00100c5a = 0;
       break;
     case 2:
-      FUN_000182ec('\x02');
+      selftest_execute('\x02');
       DAT_00100c5a = (uint)_DAT_00100c24;
       break;
     case 3:
-      FUN_000182ec('\x03');
+      selftest_execute('\x03');
       DAT_00100c5a = (uint)_DAT_00100c26;
       DAT_00100c5e = (uint)_DAT_00100c28;
       DAT_00100c62 = _DAT_00100c2a;
       break;
     case 4:
-      FUN_000182ec('\x04');
+      selftest_execute('\x04');
       DAT_00100c5a = (uint)_DAT_00100c34;
       break;
     case 5:
-      FUN_000182ec('\x05');
+      selftest_execute('\x05');
       DAT_00100c5a = (uint)_DAT_00100c2e;
       break;
     case 6:
-      FUN_000182ec('\x06');
+      selftest_execute('\x06');
       DAT_00100c5a = (uint)DAT_00100c48;
       break;
     case 7:
-      FUN_000182ec('\a');
+      selftest_execute('\a');
       DAT_00100c5a = (uint)_DAT_00100c36;
       break;
     case 8:
-      FUN_000182ec('\b');
+      selftest_execute('\b');
       DAT_00100c5a = (uint)_DAT_00100c3a;
       break;
     case 9:
-      FUN_000182ec('\t');
+      selftest_execute('\t');
       DAT_00100c5a = (uint)_DAT_00100c46;
       break;
     case 10:
-      FUN_000182ec('\n');
+      selftest_execute('\n');
       DAT_00100c5a = (uint)_DAT_00100c38;
       break;
     case 0xb:
-      FUN_000182ec('\v');
+      selftest_execute('\v');
       DAT_00100c5a = (uint)_DAT_00100c44;
       break;
     case 0xc:
-      FUN_000182ec('\f');
+      selftest_execute('\f');
       DAT_00100c5a = (uint)_DAT_00100c3a;
       DAT_00100c5e = (uint)DAT_00100c3d;
       DAT_00100c62 = (uint)DAT_00100c3c;
       break;
     case 0xd:
-      FUN_000182ec('\r');
+      selftest_execute('\r');
       DAT_00100c5a = (uint)_DAT_00100c3a;
       DAT_00100c5e = (uint)_DAT_00100c3e;
       DAT_00100c62 = (uint)_DAT_00100c40;
@@ -11958,7 +11978,7 @@ void FUN_00018c48(void)
   int iVar1;
   uint16_t sr;
   
-  iVar1 = FUN_000183ce();
+  iVar1 = selftest_aborted();
   if (iVar1 == 0) {
     sr = set_interrupt_mask(0x700);
     FUN_00017628();
@@ -21931,7 +21951,7 @@ undefined1 gps_pps_check(void)
   bVar3 = false;
   if (gps.field_52a[0x12] == 0) {
     if ((DAT_00101cfa == '\0') || (0xe < DAT_00101cf9)) {
-      if ((DAT_00100c43 == '\0') && ((pll.field_3b0[0x22] != 0 && (DAT_00101b6c == '\0')))) {
+      if ((selftest_running == 0) && ((pll.field_3b0[0x22] != 0 && (DAT_00101b6c == '\0')))) {
         if (gps_pps_counting != 0) {
           bVar2 = PACNT;
           cVar1 = bVar2 - gps_pps_last_count;
@@ -22020,7 +22040,7 @@ undefined1 internal_pps_check(void)
 {
   char cVar1;
   
-  if (((DAT_00100c43 == '\0') && (pll.field_3b0[0x22] != 0)) && (DAT_00101b6c == '\0')) {
+  if (((selftest_running == 0) && (pll.field_3b0[0x22] != 0)) && (DAT_00101b6c == '\0')) {
     if (internal_pps_started != 0) {
       cVar1 = internal_pps_count - internal_pps_last_count;
       internal_pps_last_count = internal_pps_count;
@@ -23981,21 +24001,22 @@ int FUN_00026ab6(int *param_1,undefined2 *param_2)
   short local_6;
   
   *(undefined4 *)(*(int *)((int)param_1 + 10) + 10) = 0;
-  iVar2 = FUN_00026ee0(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
+  iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
   if ((iVar2 == 4) &&
-     (iVar2 = FUN_00026ee0(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe)), iVar2 == 3)) {
+     (iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe)), iVar2 == 3))
+  {
     iVar4 = -0x36;
     goto LAB_00026e5a;
   }
   if (iVar2 == 0xc) {
     FUN_00027efe(*(undefined4 *)((int)param_1 + 6),*(undefined4 *)((int)param_1 + 0x12));
-    iVar2 = FUN_00026ee0(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
+    iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
     if (0x12 < iVar2) {
 LAB_00026b6e:
       while (iVar2 == 0x15) {
         iVar4 = FUN_00027e9e(auStack_2c,*(undefined4 *)((int)param_1 + 6));
         if (iVar4 != 0) goto LAB_00026e5a;
-        iVar2 = FUN_00026ee0(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
+        iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
       }
       if (0x12 < iVar2) {
         iVar4 = FUN_00027d80(auStack_2c,*(int **)((int)param_1 + 10),&local_2e,&local_32,
@@ -24003,9 +24024,9 @@ LAB_00026b6e:
                              *(undefined4 *)((int)param_1 + 0xe),unaff_D5);
 LAB_00026bae:
         if (iVar4 != 0) goto LAB_00026e5a;
-        iVar2 = FUN_00026ee0(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
+        iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
         if (iVar2 != 4) goto LAB_00026e12;
-        iVar2 = FUN_00026ee0(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
+        iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
         if (iVar2 != 2) {
           if (iVar2 != 1) {
             if ((0xc < iVar2) && (iVar2 < 0x14)) {
@@ -24054,14 +24075,14 @@ LAB_00026d2a:
                 if (iVar4 != 0) goto LAB_00026e5a;
                 local_2e = *unaff_D7 + local_2e;
                 local_32 = (undefined4 *)*local_32;
-                iVar2 = FUN_00026ee0(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
+                iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
                 if (iVar2 == 4) {
-                  iVar2 = FUN_00026ee0(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
+                  iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
                 }
                 if (iVar2 != 9) goto LAB_00026e12;
-                iVar2 = FUN_00026ee0(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
+                iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
                 if (iVar2 == 4) {
-                  iVar2 = FUN_00026ee0(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
+                  iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
                 }
                 if ((iVar2 < 0xd) || (0x13 < iVar2)) goto LAB_00026e12;
               } while( true );
@@ -24079,7 +24100,7 @@ LAB_00026b32:
   else {
     if (0x12 < iVar2) goto LAB_00026b6e;
     if (iVar2 == 10) {
-      iVar2 = FUN_00026ee0(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
+      iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
       if ((iVar2 != 0x13) && (iVar2 != 0x14)) goto LAB_00026b32;
       iVar4 = FUN_00027f10(auStack_2c,*(int **)((int)param_1 + 10),&local_2e,(int *)&local_32,0,
                            (ushort)(iVar2 == 0x14),*(undefined4 *)((int)param_1 + 0xe),
@@ -24118,7 +24139,7 @@ LAB_00026e5a:
     iVar3 = FUN_0002839c(iVar4);
     if (iVar3 == 0) {
       while ((3 < iVar2 || (iVar2 < 1))) {
-        iVar2 = FUN_00026ee0(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
+        iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
       }
       if (iVar2 == 1) {
         *param_2 = 0;
@@ -24137,7 +24158,7 @@ LAB_00026e5a:
 
 /* 00026ee0 */
 
-undefined4 FUN_00026ee0(undefined4 *param_1,ushort *param_2,undefined4 param_3)
+undefined4 scpi_scan_token(undefined4 *param_1,ushort *param_2,undefined4 param_3)
 
 {
   code *pcVar1;
@@ -26030,7 +26051,7 @@ undefined4 FUN_0002979c(int param_1,int param_2,int param_3,byte param_4)
   undefined4 uVar1;
   
   if ((param_2 < param_1) || (param_3 < param_2)) {
-    FUN_0002bf00(9,param_4);
+    status_report_from(9,param_4);
     uVar1 = 0;
   }
   else {
@@ -26292,13 +26313,13 @@ int return_zero(void)
 
 /* WARNING: Unknown calling convention */
 
-undefined4 FUN_00029ade(char param_1,int param_2)
+undefined4 scpi_query_failed(char param_1,int param_2)
 
 {
   int iVar1;
   
   iVar1 = return_zero();
-  FUN_0002bf00((short)param_1,(byte)iVar1);
+  status_report_from((short)param_1,(byte)iVar1);
   *(undefined2 *)(param_2 + 4) = 0;
   return 0;
 }
@@ -26815,7 +26836,7 @@ undefined4 scpi_set_common_CLS(undefined4 param_1,undefined4 param_2,int param_3
 void scpi_query_CALA(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade(-0x20,param_3);
+  scpi_query_failed(-0x20,param_3);
   return;
 }
 
@@ -26825,7 +26846,7 @@ void scpi_query_CALA(undefined4 param_1,undefined4 param_2,int param_3)
 void scpi_query_CEQU(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade(-0x20,param_3);
+  scpi_query_failed(-0x20,param_3);
   return;
 }
 
@@ -26863,7 +26884,7 @@ undefined4 scpi_query_common_ESE(undefined4 param_1,short *param_2)
   FUN_00028474(status_object,1,param_2);
   if (_DAT_00101ee2 != *param_2) {
     iVar1 = return_zero();
-    FUN_0002bf00(0xe,(byte)iVar1);
+    status_report_from(0xe,(byte)iVar1);
   }
   return 0;
 }
@@ -26910,7 +26931,7 @@ undefined4 scpi_query_common_IDN(undefined4 param_1,short *param_2)
 void scpi_query_RWHO(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade(-0x20,param_3);
+  scpi_query_failed(-0x20,param_3);
   return;
 }
 
@@ -26972,7 +26993,7 @@ undefined4 scpi_query_common_SRE(undefined4 param_1,short *param_2)
   FUN_00028474(status_object,0,param_2);
   if (DAT_00101ede != *param_2) {
     iVar1 = return_zero();
-    FUN_0002bf00(0xe,(byte)iVar1);
+    status_report_from(0xe,(byte)iVar1);
   }
   return 0;
 }
@@ -27036,7 +27057,7 @@ undefined4 scpi_query_STATus_OPERation_CONDition(short *param_1,undefined4 param
 void scpi_query_RAST(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade(-0x20,param_3);
+  scpi_query_failed(-0x20,param_3);
   return;
 }
 
@@ -27116,7 +27137,7 @@ undefined4 scpi_query_STATus_OPERation_ENABle(short *param_1,ushort *param_2)
   FUN_00028474(status_object,(int)*param_1,param_2);
   if ((uint)*param_2 != (&DAT_00101ede)[*param_1]) {
     iVar1 = return_zero();
-    FUN_0002bf00(0xe,(byte)iVar1);
+    status_report_from(0xe,(byte)iVar1);
   }
   return 0;
 }
@@ -27159,7 +27180,7 @@ undefined4 scpi_query_STATus_OPERation_PTRansition(short *param_1,ushort *param_
   FUN_000288c2(status_object,(int)*param_1,param_2);
   if ((uint)*param_2 != *(uint *)(*param_1 * 4 + 0x101ef2)) {
     iVar1 = return_zero();
-    FUN_0002bf00(0xe,(byte)iVar1);
+    status_report_from(0xe,(byte)iVar1);
   }
   return 0;
 }
@@ -27202,7 +27223,7 @@ undefined4 scpi_query_STATus_OPERation_NTRansition(short *param_1,ushort *param_
   FUN_000288d8(status_object,(int)*param_1,param_2);
   if ((uint)*param_2 != *(uint *)(*param_1 * 4 + 0x101f06)) {
     iVar1 = return_zero();
-    FUN_0002bf00(0xe,(byte)iVar1);
+    status_report_from(0xe,(byte)iVar1);
   }
   return 0;
 }
@@ -27267,7 +27288,7 @@ undefined4 scpi_query_STATus_OPERation_HARDware_ENABle(int param_1,ushort *param
   FUN_00028474(status_object,(int)*(short *)(param_1 + 2),param_2);
   if ((uint)*param_2 != (&DAT_00101ede)[*(short *)(param_1 + 2)]) {
     iVar1 = return_zero();
-    FUN_0002bf00(0xe,(byte)iVar1);
+    status_report_from(0xe,(byte)iVar1);
   }
   return 0;
 }
@@ -27312,7 +27333,7 @@ undefined4 scpi_query_STATus_OPERation_HARDware_PTRansition(int param_1,ushort *
   FUN_000288c2(status_object,(int)*(short *)(param_1 + 2),param_2);
   if ((uint)*param_2 != *(uint *)(*(short *)(param_1 + 2) * 4 + 0x101ef2)) {
     iVar1 = return_zero();
-    FUN_0002bf00(0xe,(byte)iVar1);
+    status_report_from(0xe,(byte)iVar1);
   }
   return 0;
 }
@@ -27357,7 +27378,7 @@ undefined4 scpi_query_STATus_OPERation_HARDware_NTRansition(int param_1,ushort *
   FUN_000288d8(status_object,(int)*(short *)(param_1 + 2),param_2);
   if ((uint)*param_2 != *(uint *)(*(short *)(param_1 + 2) * 4 + 0x101f06)) {
     iVar1 = return_zero();
-    FUN_0002bf00(0xe,(byte)iVar1);
+    status_report_from(0xe,(byte)iVar1);
   }
   return 0;
 }
@@ -27413,7 +27434,7 @@ undefined4 scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe(undefined2 *par
     }
     uVar4 = CONCAT22(0xd,(ushort)bVar1 << 8);
   }
-  FUN_0002bf00((short)((uint)uVar4 >> 0x10),(byte)((uint)uVar4 >> 8));
+  status_report_from((short)((uint)uVar4 >> 0x10),(byte)((uint)uVar4 >> 8));
   return 0;
 }
 
@@ -27439,7 +27460,7 @@ scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe(short *param_1,short *pa
     }
     cVar2 = '\r';
   }
-  uVar1 = FUN_00029ade(cVar2,param_3);
+  uVar1 = scpi_query_failed(cVar2,param_3);
   return uVar1;
 }
 
@@ -27467,7 +27488,7 @@ undefined4 scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold(short *para
     }
     sVar3 = 0xd;
   }
-  FUN_0002bf00(sVar3,(byte)iVar1);
+  status_report_from(sVar3,(byte)iVar1);
   return 0;
 }
 
@@ -27501,7 +27522,7 @@ scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold(short *param_1,int *
     }
     cVar4 = '\r';
   }
-  uVar3 = FUN_00029ade(cVar4,param_3);
+  uVar3 = scpi_query_failed(cVar4,param_3);
   return uVar3;
 }
 
@@ -27528,7 +27549,7 @@ scpi_query_SOURce_GPSystem_POSition_ACTual(undefined4 param_1,undefined2 *param_
   cVar3 = FUN_0004f3b2((short)&local_1c,(short)&local_18,(short)&local_14);
   set_interrupt_mask(sr);
   if (cVar3 == '\0') {
-    uVar2 = FUN_00029ade('\f',param_3);
+    uVar2 = scpi_query_failed('\f',param_3);
   }
   else {
     FUN_00047e32((short)local_1c,(short)&local_10,(char)local_e,(short)&dStack_c);
@@ -27582,7 +27603,7 @@ undefined4 scpi_query_DIAGnostic_GPSystem_POSition_MSEConds(int param_1,int *par
     *param_2 = local_8;
     return 0;
   }
-  uVar2 = FUN_00029ade('\t',param_3);
+  uVar2 = scpi_query_failed('\t',param_3);
   return uVar2;
 }
 
@@ -27648,7 +27669,7 @@ undefined4 scpi_query_DIAGnostic_GPSystem_TIME(undefined4 param_1,ushort *param_
   cVar2 = FUN_0004f3de(&uStack_c,(short)&local_8);
   set_interrupt_mask(sr);
   if (cVar2 == '\0') {
-    uVar1 = FUN_00029ade('\f',param_3);
+    uVar1 = scpi_query_failed('\f',param_3);
   }
   else {
     *param_2 = (ushort)local_b;
@@ -27706,7 +27727,7 @@ scpi_query_DIAGnostic_IDENtification_GPSystem(undefined4 param_1,undefined4 *par
   undefined4 uVar1;
   
   if (gps.receiver_id_received == 0) {
-    uVar1 = FUN_00029ade('\f',param_3);
+    uVar1 = scpi_query_failed('\f',param_3);
   }
   else {
     *param_2 = 0x101059;
@@ -27756,7 +27777,7 @@ undefined4 scpi_set_DIAGnostic_IDENtification_HARDware(int param_1)
     iVar2 = return_zero();
     uVar5 = CONCAT22(10,(ushort)(byte)iVar2 << 8);
   }
-  FUN_0002bf00((short)((uint)uVar5 >> 0x10),(byte)((uint)uVar5 >> 8));
+  status_report_from((short)((uint)uVar5 >> 0x10),(byte)((uint)uVar5 >> 8));
   return 0;
 }
 
@@ -27796,7 +27817,7 @@ undefined4 scpi_set_DIAGnostic_IDENtification_MODel(int param_1)
     iVar2 = return_zero();
     uVar6 = CONCAT22(10,(ushort)(byte)iVar2 << 8);
   }
-  FUN_0002bf00((short)((uint)uVar6 >> 0x10),(byte)((uint)uVar6 >> 8));
+  status_report_from((short)((uint)uVar6 >> 0x10),(byte)((uint)uVar6 >> 8));
   return 0;
 }
 
@@ -27836,7 +27857,7 @@ undefined4 scpi_set_DIAGnostic_IDENtification_SERial(int param_1)
     iVar2 = return_zero();
     uVar6 = CONCAT22(10,(ushort)(byte)iVar2 << 8);
   }
-  FUN_0002bf00((short)((uint)uVar6 >> 0x10),(byte)((uint)uVar6 >> 8));
+  status_report_from((short)((uint)uVar6 >> 0x10),(byte)((uint)uVar6 >> 8));
   return 0;
 }
 
@@ -27879,7 +27900,7 @@ undefined4 scpi_set_DIAGnostic_LOG_CLEar(int param_1)
       iVar1 = return_zero();
       uVar3 = CONCAT22(0xe,(ushort)(byte)iVar1 << 8);
     }
-    FUN_0002bf00((short)((uint)uVar3 >> 0x10),(byte)((uint)uVar3 >> 8));
+    status_report_from((short)((uint)uVar3 >> 0x10),(byte)((uint)uVar3 >> 8));
   }
   return 0;
 }
@@ -27896,7 +27917,7 @@ undefined4 scpi_set_DIAGnostic_SLOG_CLEar(void)
   sVar2 = FUN_0003305e();
   if (sVar2 != 0) {
     iVar1 = return_zero();
-    FUN_0002bf00(0x10,(byte)iVar1);
+    status_report_from(0x10,(byte)iVar1);
   }
   return 0;
 }
@@ -27919,7 +27940,7 @@ undefined4 scpi_query_DIAGnostic_LOG_COUNt(short *param_1,short *param_2,int par
     sVar3 = (short)iVar1;
   }
   if (sVar3 < 0) {
-    uVar2 = FUN_00029ade('\x0e',param_3);
+    uVar2 = scpi_query_failed('\x0e',param_3);
   }
   else {
     *param_2 = sVar3;
@@ -28042,7 +28063,7 @@ undefined4 scpi_query_DIAGnostic_LOG_READ(short *param_1,int *param_2,int param_
   if (0 < sVar4) {
     if (param_1[1] != -1) {
       if ((param_1[2] < 1) || (sVar4 < param_1[2])) {
-        uVar3 = FUN_00029ade('\t',param_3);
+        uVar3 = scpi_query_failed('\t',param_3);
         return uVar3;
       }
       sVar4 = param_1[2];
@@ -28061,7 +28082,7 @@ undefined4 scpi_query_DIAGnostic_LOG_READ(short *param_1,int *param_2,int param_
       return 0;
     }
   }
-  uVar3 = FUN_00029ade('\x0e',param_3);
+  uVar3 = scpi_query_failed('\x0e',param_3);
   return uVar3;
 }
 
@@ -28105,7 +28126,7 @@ undefined4 scpi_set_DIAGnostic_LOG_WRITe(int param_1)
       iVar1 = return_zero();
       uVar3 = CONCAT22(0xe,(ushort)(byte)iVar1 << 8);
     }
-    FUN_0002bf00((short)((uint)uVar3 >> 0x10),(byte)((uint)uVar3 >> 8));
+    status_report_from((short)((uint)uVar3 >> 0x10),(byte)((uint)uVar3 >> 8));
   }
   return 0;
 }
@@ -28192,7 +28213,7 @@ undefined4 scpi_query_DIAGnostic_PTIMe_TINTerval(undefined4 param_1,float *param
   sr = set_interrupt_mask(0x100);
   if (interval_reading_flag == '\0') {
     set_interrupt_mask(sr);
-    uVar3 = FUN_00029ade('\f',param_3);
+    uVar3 = scpi_query_failed('\f',param_3);
   }
   else {
     fVar2 = double_to_float((double)CONCAT44(interval_reading,DAT_00101fa0));
@@ -28295,7 +28316,7 @@ undefined4 scpi_set_DIAGnostic_SER1_EGResponse(void)
 void scpi_query_DIAGnostic_SER1_EGResponse(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade(-0x20,param_3);
+  scpi_query_failed(-0x20,param_3);
   return;
 }
 
@@ -28388,7 +28409,7 @@ undefined4 scpi_set_DIAGnostic_STATus_ERRor(int param_1)
     iVar1 = return_zero();
     iVar1 = (uint)CONCAT21(*(undefined2 *)(param_1 + 2),(char)iVar1) << 8;
   }
-  FUN_0002bf00((short)((uint)iVar1 >> 0x10),(byte)((uint)iVar1 >> 8));
+  status_report_from((short)((uint)iVar1 >> 0x10),(byte)((uint)iVar1 >> 8));
   return 0;
 }
 
@@ -28402,7 +28423,7 @@ undefined4 scpi_set_DIAGnostic_STATus_HAPPening(int param_1)
   
   if ((*(short *)(param_1 + 2) < 0) || (0x38 < *(short *)(param_1 + 2))) {
     iVar1 = return_zero();
-    FUN_0002bf00(9,(byte)iVar1);
+    status_report_from(9,(byte)iVar1);
   }
   else {
     status_happening((char)*(undefined2 *)(param_1 + 2) + '\x16');
@@ -28652,7 +28673,7 @@ undefined4 status_report(short param_1)
 
 /* WARNING: Unknown calling convention */
 
-int FUN_0002bf00(short param_1,byte param_2)
+int status_report_from(short param_1,byte param_2)
 
 {
   short sVar2;
@@ -28689,7 +28710,7 @@ undefined4 scpi_set_OUTPut_PIN1_DELay(void)
 void scpi_query_OUTPut_PIN1_DELay(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -28699,7 +28720,7 @@ void scpi_query_OUTPut_PIN1_DELay(undefined4 param_1,undefined4 param_2,int para
 void scpi_query_R1PO(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -28712,7 +28733,7 @@ undefined4 scpi_set_OUTPut_PIN1_DELay_ALIGnment(void)
   int iVar1;
   
   iVar1 = return_zero();
-  FUN_0002bf00(3,(byte)iVar1);
+  status_report_from(3,(byte)iVar1);
   return 0;
 }
 
@@ -28722,7 +28743,7 @@ undefined4 scpi_set_OUTPut_PIN1_DELay_ALIGnment(void)
 void scpi_query_OUTPut_PIN1_DELay_ALIGnment(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -28732,7 +28753,7 @@ void scpi_query_OUTPut_PIN1_DELay_ALIGnment(undefined4 param_1,undefined4 param_
 void scpi_query_REAL(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -28751,7 +28772,7 @@ undefined4 scpi_set_OUTPut_PIN1_FREQuency(void)
 void scpi_query_OUTPut_PIN1_FREQuency(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -28761,7 +28782,7 @@ void scpi_query_OUTPut_PIN1_FREQuency(undefined4 param_1,undefined4 param_2,int 
 void scpi_query_RFOU(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -28771,7 +28792,7 @@ void scpi_query_RFOU(undefined4 param_1,undefined4 param_2,int param_3)
 void scpi_query_RSSU(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade(-0x20,param_3);
+  scpi_query_failed(-0x20,param_3);
   return;
 }
 
@@ -28837,7 +28858,7 @@ undefined4 scpi_query_SOURce_GPSystem_ADELay(int16_t *param_1,float *param_2)
 void scpi_query_RACD(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -28889,7 +28910,7 @@ undefined4 scpi_set_SOURce_GPSystem_INITial_DATE(int param_1)
     pllc_request_d(&DAT_000337e4,2,iVar2 + 0x102a0e,(byte)uVar1);
   }
   else {
-    FUN_0002bf00(8,(byte)uVar1);
+    status_report_from(8,(byte)uVar1);
   }
   return 0;
 }
@@ -28914,7 +28935,7 @@ undefined4 scpi_set_SOURce_GPSystem_INITial_TIME(int param_1)
     pllc_request_d(&DAT_0003382c,2,iVar2 + 0x102a0e,(byte)uVar1);
   }
   else {
-    FUN_0002bf00(8,(byte)uVar1);
+    status_report_from(8,(byte)uVar1);
   }
   return 0;
 }
@@ -28971,11 +28992,11 @@ undefined4 scpi_set_SOURce_GPSystem_INITial_POSition(int param_1,undefined4 para
       fVar6 = 0.0;
       if (*(int *)(param_1 + 0xe) != 0) {
         iVar2 = return_zero();
-        FUN_0002bf00(9,(byte)iVar2);
+        status_report_from(9,(byte)iVar2);
       }
       if ((*(uint *)(param_1 + 0x16) & 0x7fffffff) != 0) {
         iVar2 = return_zero();
-        FUN_0002bf00(9,(byte)iVar2);
+        status_report_from(9,(byte)iVar2);
       }
     }
     else {
@@ -29005,11 +29026,11 @@ undefined4 scpi_set_SOURce_GPSystem_INITial_POSition(int param_1,undefined4 para
       fVar6 = 0.0;
       if (*(int *)(param_1 + 0x2a) != 0) {
         iVar2 = return_zero();
-        FUN_0002bf00(9,(byte)iVar2);
+        status_report_from(9,(byte)iVar2);
       }
       if ((*(uint *)(param_1 + 0x32) & 0x7fffffff) != 0) {
         iVar2 = return_zero();
-        FUN_0002bf00(9,(byte)iVar2);
+        status_report_from(9,(byte)iVar2);
       }
     }
     else {
@@ -29053,7 +29074,7 @@ undefined4 scpi_set_SOURce_GPSystem_INITial_POSition(int param_1,undefined4 para
   }
   else {
     iVar1 = return_zero();
-    FUN_0002bf00(8,(byte)iVar1);
+    status_report_from(8,(byte)iVar1);
   }
   return 0;
 }
@@ -29094,7 +29115,7 @@ undefined4 scpi_set_SOURce_GPSystem_POSition(int param_1)
            (*(short *)(param_1 + 0x1c) != -1)) ||
           ((*(short *)(param_1 + 0x20) != -1 || (*(short *)(param_1 + 0x28) != -1)))))) ||
         (*(short *)(param_1 + 0x30) != -1)) || (*(short *)(param_1 + 0x38) != -1)) {
-      FUN_0002bf00(1,bVar1);
+      status_report_from(1,bVar1);
       return 0;
     }
     if (*(short *)(param_1 + 2) == 2) {
@@ -29102,7 +29123,7 @@ undefined4 scpi_set_SOURce_GPSystem_POSition(int param_1)
     }
     else {
       if (DAT_00101e77 == '\0') {
-        FUN_0002bf00(8,bVar1);
+        status_report_from(8,bVar1);
         return 0;
       }
       if ((DAT_00101ea7 == '\0') && (gps.average_count != 0)) {
@@ -29118,7 +29139,7 @@ undefined4 scpi_set_SOURce_GPSystem_POSition(int param_1)
        (((*(short *)(param_1 + 0x20) == -1 || (*(short *)(param_1 + 0x1c) == -1)) ||
         ((*(short *)(param_1 + 0x14) == -1 ||
          ((*(short *)(param_1 + 0xc) == -1 || (*(short *)(param_1 + 4) == -1)))))))) {
-      FUN_0002bf00(2,bVar1);
+      status_report_from(2,bVar1);
       return 0;
     }
     local_24 = 1;
@@ -29133,10 +29154,10 @@ undefined4 scpi_set_SOURce_GPSystem_POSition(int param_1)
       bVar4 = 0;
       fVar5 = 0.0;
       if (*(int *)(param_1 + 0xe) != 0) {
-        FUN_0002bf00(9,bVar1);
+        status_report_from(9,bVar1);
       }
       if ((*(uint *)(param_1 + 0x16) & 0x7fffffff) != 0) {
-        FUN_0002bf00(9,bVar1);
+        status_report_from(9,bVar1);
       }
     }
     else {
@@ -29158,10 +29179,10 @@ undefined4 scpi_set_SOURce_GPSystem_POSition(int param_1)
       bVar4 = 0;
       fVar5 = 0.0;
       if (*(int *)(param_1 + 0x2a) != 0) {
-        FUN_0002bf00(9,bVar1);
+        status_report_from(9,bVar1);
       }
       if ((*(uint *)(param_1 + 0x32) & 0x7fffffff) != 0) {
-        FUN_0002bf00(9,bVar1);
+        status_report_from(9,bVar1);
       }
     }
     else {
@@ -29225,7 +29246,7 @@ undefined4 scpi_query_SOURce_GPSystem_POSition(undefined4 param_1,undefined2 *pa
   cVar4 = return_byte(DAT_00101ea7);
   if (cVar4 == '\0') {
     if (DAT_00101e77 == '\0') {
-      uVar1 = FUN_00029ade('\f',param_3);
+      uVar1 = scpi_query_failed('\f',param_3);
       return uVar1;
     }
     uVar8 = (undefined1)((uint)&local_1c >> 0x18);
@@ -29340,7 +29361,7 @@ undefined4 scpi_query_SOURce_GPSystem_POSition_HOLD_LAST(undefined4 param_1,unde
 void scpi_query_RLOC(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -29363,7 +29384,7 @@ undefined4 scpi_query_SOURce_GPSystem_POSition_HOLD_STATe(undefined4 param_1,sho
 void scpi_query_RPHS(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -29427,7 +29448,7 @@ undefined4 scpi_query_DOUGlas_PROGress(undefined4 param_1,int *param_2,int param
   cVar3 = FUN_0004f4ca(((ushort)uVar1 & 0xff) * 0x11a + 0x272a);
   set_interrupt_mask(sr);
   if (cVar3 == '\0') {
-    uVar2 = FUN_00029ade('\b',param_3);
+    uVar2 = scpi_query_failed('\b',param_3);
   }
   else {
     *param_2 = (uVar1 & 0xff) * 0x11a + 0x10272a;
@@ -29442,7 +29463,7 @@ undefined4 scpi_query_DOUGlas_PROGress(undefined4 param_1,int *param_2,int param
 void scpi_query_RSPR(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -29473,7 +29494,7 @@ undefined4 scpi_set_DOUGlas_STATe(void)
 void scpi_query_IPSU(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -29692,7 +29713,7 @@ scpi_query_SOURce_GPSystem_SATellite_TRACking(undefined4 param_1,int *param_2,in
   cVar3 = FUN_0004f28e((char)&local_9,(char)&local_8,(short)&local_e,(char)&local_a,uVar6);
   if (cVar3 == '\0') {
     set_interrupt_mask(sr);
-    uVar2 = FUN_00029ade('\f',param_3);
+    uVar2 = scpi_query_failed('\f',param_3);
   }
   else {
     set_interrupt_mask(sr);
@@ -29731,7 +29752,7 @@ scpi_query_SOURce_GPSystem_SATellite_TRACking_COUNt(undefined4 param_1,short *pa
   cVar2 = FUN_0004f28e(&local_6,(short)&local_5,0,0);
   if (cVar2 == '\0') {
     set_interrupt_mask(sr);
-    uVar1 = FUN_00029ade('\f',param_3);
+    uVar1 = scpi_query_failed('\f',param_3);
   }
   else {
     set_interrupt_mask(sr);
@@ -29747,7 +29768,7 @@ scpi_query_SOURce_GPSystem_SATellite_TRACking_COUNt(undefined4 param_1,short *pa
 void scpi_query_RTSA(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -29778,7 +29799,7 @@ undefined4 scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore(int param_1)
   }
   if (bVar4) {
     iVar1 = return_zero();
-    FUN_0002bf00(9,(byte)iVar1);
+    status_report_from(9,(byte)iVar1);
   }
   else {
     iVar1 = return_zero();
@@ -29877,7 +29898,7 @@ scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe
   uVar1 = *param_1;
   cVar3 = FUN_0002d148((byte)param_1[2]);
   if (cVar3 == '\0') {
-    uVar2 = FUN_00029ade('\t',param_3);
+    uVar2 = scpi_query_failed('\t',param_3);
   }
   else {
     cVar3 = FUN_0002d160((char)param_1[2],_DAT_00101eb6);
@@ -29919,7 +29940,7 @@ undefined4 scpi_set_SOURce_GPSystem_SATellite_TRACking_INCLude(int param_1)
   }
   if (bVar4) {
     iVar1 = return_zero();
-    FUN_0002bf00(9,(byte)iVar1);
+    status_report_from(9,(byte)iVar1);
   }
   else {
     iVar1 = return_zero();
@@ -30000,7 +30021,7 @@ scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted(undefined4 param_1,uint *
   cVar3 = FUN_0004f1f8((short)&local_8,(char)&local_c,uVar5);
   if (cVar3 == '\0') {
     set_interrupt_mask(sr);
-    uVar2 = FUN_00029ade('\f',param_3);
+    uVar2 = scpi_query_failed('\f',param_3);
   }
   else {
     set_interrupt_mask(sr);
@@ -30035,7 +30056,7 @@ scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt
   cVar2 = FUN_0004f1f8(0xfa,0);
   if (cVar2 == '\0') {
     set_interrupt_mask(sr);
-    uVar1 = FUN_00029ade('\f',param_3);
+    uVar1 = scpi_query_failed('\f',param_3);
   }
   else {
     set_interrupt_mask(sr);
@@ -30090,7 +30111,7 @@ undefined4 scpi_query_LED_ALARm(undefined4 param_1,short *param_2)
 void scpi_query_LED_ALARm_MINor(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -30328,7 +30349,7 @@ undefined4 scpi_set_SOURce_PTIMe_PPS_EDGE(void)
   int iVar1;
   
   iVar1 = return_zero();
-  FUN_0002bf00(3,(byte)iVar1);
+  status_report_from(3,(byte)iVar1);
   return 0;
 }
 
@@ -30338,7 +30359,7 @@ undefined4 scpi_set_SOURce_PTIMe_PPS_EDGE(void)
 undefined4 scpi_query_SOURce_PTIMe_PPS_EDGE(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return 0;
 }
 
@@ -30351,7 +30372,7 @@ undefined4 scpi_set_SOURce_PULSe_REFerence_EDGE(void)
   int iVar1;
   
   iVar1 = return_zero();
-  FUN_0002bf00(3,(byte)iVar1);
+  status_report_from(3,(byte)iVar1);
   return 0;
 }
 
@@ -30361,7 +30382,7 @@ undefined4 scpi_set_SOURce_PULSe_REFerence_EDGE(void)
 undefined4 scpi_query_SOURce_PULSe_REFerence_EDGE(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return 0;
 }
 
@@ -30385,7 +30406,7 @@ undefined4 scpi_query_SOURce_PTIMe_DATE(undefined4 param_1,undefined2 *param_2,i
     uVar2 = 0;
   }
   else {
-    uVar2 = FUN_00029ade('\f',param_3);
+    uVar2 = scpi_query_failed('\f',param_3);
   }
   return uVar2;
 }
@@ -30406,7 +30427,7 @@ scpi_query_SOURce_PTIMe_LEAPsecond_ACCumulated(undefined4 param_1,undefined2 *pa
   cVar2 = FUN_000139ce(&local_6);
   set_interrupt_mask(sr);
   if (cVar2 == '\0') {
-    uVar1 = FUN_00029ade('\f',param_3);
+    uVar1 = scpi_query_failed('\f',param_3);
   }
   else {
     *param_2 = local_6;
@@ -30449,7 +30470,7 @@ scpi_query_SOURce_PTIMe_LEAPsecond_DATE(undefined4 param_1,undefined2 *param_2,i
   uVar2 = _DAT_00101ec6;
   set_interrupt_mask(sr);
   if (uVar1 == 0) {
-    uVar2 = FUN_00029ade('\f',param_3);
+    uVar2 = scpi_query_failed('\f',param_3);
   }
   else {
     local_8 = (undefined2)((uint)uVar2 >> 0x10);
@@ -30482,7 +30503,7 @@ scpi_query_SOURce_PTIMe_LEAPsecond_DURation(undefined4 param_1,undefined2 *param
   uVar1 = (undefined2)_leap_minute_length;
   set_interrupt_mask(sr);
   if (uVar2 == 0) {
-    uVar3 = FUN_00029ade('\f',param_3);
+    uVar3 = scpi_query_failed('\f',param_3);
   }
   else {
     *param_2 = uVar1;
@@ -30507,7 +30528,7 @@ undefined4 scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime(undefined4 param_1,int *pa
   sprintf((char *)((uVar1 & 0xff) * 0x11a + 0x10272a),"#H%08X",param2);
   *param_2 = (uVar1 & 0xff) * 0x11a + 0x10272a;
   if (param2 == 0) {
-    uVar2 = FUN_00029ade('\f',param_3);
+    uVar2 = scpi_query_failed('\f',param_3);
   }
   else {
     uVar2 = 0;
@@ -30544,7 +30565,7 @@ undefined4 scpi_query_SOURce_PTIMe_TCODe(undefined4 param_1,undefined2 *param_2,
     psos_get_v(0x20,1,&uStack_8);
     cVar3 = tcode_request(DAT_00101f4b);
     if (cVar3 == '\0') {
-      uVar2 = FUN_00029ade('\f',param_3);
+      uVar2 = scpi_query_failed('\f',param_3);
       return uVar2;
     }
     psos_wait_v(0x20,0,0,&uStack_8);
@@ -30570,13 +30591,13 @@ undefined4 scpi_query_RTCM(int param_1,undefined2 *param_2,int param_3)
     return_zero();
     uVar2 = FUN_00029b08(*(undefined2 *)(param_1 + 2),0);
     if ((uVar2 & 2) == 0) {
-      uVar3 = FUN_00029ade('\0',param_3);
+      uVar3 = scpi_query_failed('\0',param_3);
       return uVar3;
     }
     psos_get_v(0x20,1,&uStack_8);
     cVar4 = tcode_request(1);
     if (cVar4 == '\0') {
-      uVar3 = FUN_00029ade('\f',param_3);
+      uVar3 = scpi_query_failed('\f',param_3);
       return uVar3;
     }
     psos_wait_v(0x20,0,0,&uStack_8);
@@ -30649,7 +30670,7 @@ undefined4 scpi_query_SOURce_PTIMe_TIME(undefined4 param_1,ushort *param_2,int p
     uVar2 = 0;
   }
   else {
-    uVar2 = FUN_00029ade('\f',param_3);
+    uVar2 = scpi_query_failed('\f',param_3);
   }
   return uVar2;
 }
@@ -30692,7 +30713,7 @@ undefined4 FUN_0002e0d8(char param_1,char param_2,undefined1 *param_3,undefined1
 void scpi_query_RTAD(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -30713,7 +30734,7 @@ undefined4 scpi_query_SOURce_PTIMe_TIME_STRing(undefined4 param_1,int *param_2,i
   if ((char)iVar2 == '\0') {
     cVar4 = FUN_00049e5a(local_8,(char *)((uVar1 & 0xff) * 0x11a + 0x10272a));
     if (cVar4 == '\0') {
-      uVar3 = FUN_00029ade('\x0e',param_3);
+      uVar3 = scpi_query_failed('\x0e',param_3);
     }
     else {
       *param_2 = (uVar1 & 0xff) * 0x11a + 0x10272a;
@@ -30721,7 +30742,7 @@ undefined4 scpi_query_SOURce_PTIMe_TIME_STRing(undefined4 param_1,int *param_2,i
     }
   }
   else {
-    uVar3 = FUN_00029ade('\f',param_3);
+    uVar3 = scpi_query_failed('\f',param_3);
   }
   return uVar3;
 }
@@ -30782,7 +30803,7 @@ undefined4 scpi_query_SOURce_PTIMe_TZONe(undefined4 param_1,short *param_2)
 void scpi_query_RTZO(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -31133,7 +31154,7 @@ void FUN_0002e6c0(int param_1)
 
 /* 0002e6fc */
 
-void FUN_0002e6fc(undefined4 *param_1)
+void skip_spaces(undefined4 *param_1)
 
 {
   char *pcVar1;
@@ -31355,7 +31376,7 @@ int FUN_0002e8ee(int *param_1,uint param_2,undefined4 *param_3,undefined4 *param
     if (*(char *)*param_1 != ' ') {
       return -0x15;
     }
-    FUN_0002e6fc(param_1);
+    skip_spaces(param_1);
     if (*(char *)*param_1 != '1') {
       return -0x15;
     }
@@ -31367,7 +31388,7 @@ int FUN_0002e8ee(int *param_1,uint param_2,undefined4 *param_3,undefined4 *param
     if (*(char *)*param_1 != ' ') {
       return -0x15;
     }
-    FUN_0002e6fc(param_1);
+    skip_spaces(param_1);
     if (*(char *)*param_1 != '1') {
       if (*(char *)*param_1 != '2') {
         return -0x15;
@@ -31385,7 +31406,7 @@ LAB_0002e9ce:
     if (*(char *)*param_1 != ' ') {
       return -0x15;
     }
-    FUN_0002e6fc(param_1);
+    skip_spaces(param_1);
     pcVar1 = (char *)*param_1;
     if (*pcVar1 != '1') {
       if (*pcVar1 != '2') {
@@ -31407,7 +31428,7 @@ LAB_0002e9e2:
     if (*(char *)*param_1 != ' ') {
       return -0x15;
     }
-    FUN_0002e6fc(param_1);
+    skip_spaces(param_1);
     if (*(char *)*param_1 != '1') {
       if (*(char *)*param_1 != '2') {
         if (*(char *)*param_1 != '3') {
@@ -31432,17 +31453,17 @@ LAB_0002eade:
     if (*(char *)*param_1 != ' ') {
       return -0x15;
     }
-    FUN_0002e6fc(param_1);
+    skip_spaces(param_1);
     if (*(char *)*param_1 != '1') {
       return -0x15;
     }
     *param_1 = *param_1 + 1;
-    FUN_0002e6fc(param_1);
+    skip_spaces(param_1);
     if (*(char *)*param_1 != ',') {
       return -0x15;
     }
     *param_1 = *param_1 + 1;
-    FUN_0002e6fc(param_1);
+    skip_spaces(param_1);
     cVar2 = *(char *)*param_1;
     goto joined_r0x0002ea94;
   case 0x138:
@@ -31450,18 +31471,18 @@ LAB_0002eade:
     if (*(char *)*param_1 != ' ') {
       return -0x15;
     }
-    FUN_0002e6fc(param_1);
+    skip_spaces(param_1);
     if (*(char *)*param_1 != '1') {
       if (*(char *)*param_1 != '2') {
         return -0x15;
       }
       *param_1 = *param_1 + 1;
-      FUN_0002e6fc(param_1);
+      skip_spaces(param_1);
       if (*(char *)*param_1 != ',') {
         return -0x15;
       }
       *param_1 = *param_1 + 1;
-      FUN_0002e6fc(param_1);
+      skip_spaces(param_1);
       cVar2 = *(char *)*param_1;
 joined_r0x0002eb60:
       if (cVar2 != '1') {
@@ -31473,12 +31494,12 @@ joined_r0x0002eb60:
       return 0;
     }
     *param_1 = *param_1 + 1;
-    FUN_0002e6fc(param_1);
+    skip_spaces(param_1);
     if (*(char *)*param_1 != ',') {
       return -0x15;
     }
     *param_1 = *param_1 + 1;
-    FUN_0002e6fc(param_1);
+    skip_spaces(param_1);
     cVar2 = *(char *)*param_1;
 joined_r0x0002ea94:
     if (cVar2 != '2') {
@@ -31494,19 +31515,19 @@ LAB_0002ea48:
       return -0x15;
     }
     *param_1 = *param_1 + 1;
-    FUN_0002e6fc(param_1);
+    skip_spaces(param_1);
     if (*(char *)*param_1 != '1') {
       if (*(char *)*param_1 != '2') {
         if (*(char *)*param_1 != '3') {
           return -0x15;
         }
         *param_1 = *param_1 + 1;
-        FUN_0002e6fc(param_1);
+        skip_spaces(param_1);
         if (*(char *)*param_1 != ',') {
           return -0x15;
         }
         *param_1 = *param_1 + 1;
-        FUN_0002e6fc(param_1);
+        skip_spaces(param_1);
         if (*(char *)*param_1 != '1') {
           return -0x15;
         }
@@ -31516,22 +31537,22 @@ LAB_0002ea48:
         return 0;
       }
       *param_1 = *param_1 + 1;
-      FUN_0002e6fc(param_1);
+      skip_spaces(param_1);
       if (*(char *)*param_1 != ',') {
         return -0x15;
       }
       *param_1 = *param_1 + 1;
-      FUN_0002e6fc(param_1);
+      skip_spaces(param_1);
       cVar2 = *(char *)*param_1;
       goto joined_r0x0002eb60;
     }
     *param_1 = *param_1 + 1;
-    FUN_0002e6fc(param_1);
+    skip_spaces(param_1);
     if (*(char *)*param_1 != ',') {
       return -0x15;
     }
     *param_1 = *param_1 + 1;
-    FUN_0002e6fc(param_1);
+    skip_spaces(param_1);
     if (*(char *)*param_1 != '2') {
       if (*(char *)*param_1 != '3') {
         return -0x15;
@@ -31571,7 +31592,7 @@ int FUN_0002eba8(char *param_1,undefined4 param_2,undefined4 param_3)
   } while (cVar1 != '\0');
   local_6c = local_68;
   FUN_0002e6c0(local_6c);
-  FUN_0002e6fc(&local_6c);
+  skip_spaces(&local_6c);
   FUN_0002e714(&local_6c);
   FUN_0002e730(&local_6c);
   cVar1 = FUN_0002e882(&local_6c,local_74,&local_70);
@@ -31832,7 +31853,7 @@ undefined4 scpi_query_ROBin(int param_1,undefined1 *param_2,int param_3)
     uVar3 = 0;
   }
   else {
-    uVar3 = FUN_00029ade('\v',param_3);
+    uVar3 = scpi_query_failed('\v',param_3);
   }
   return uVar3;
 }
@@ -31856,7 +31877,7 @@ undefined4 scpi_set_ROBin_CLEar(short *param_1)
     }
     else {
       iVar1 = return_zero();
-      FUN_0002bf00(0xb,(byte)iVar1);
+      status_report_from(0xb,(byte)iVar1);
     }
   }
   return 0;
@@ -31885,7 +31906,7 @@ undefined4 scpi_query_ROBin_MEMory_OVERflow_COUNt(short *param_1,undefined4 *par
   else {
     iVar2 = FUN_0002eba8((short)*(undefined4 *)(param_1 + 1),(char)local_c,auStack_8);
     if (iVar2 != 0) {
-      uVar3 = FUN_00029ade('\v',param_3);
+      uVar3 = scpi_query_failed('\v',param_3);
       return uVar3;
     }
     *param_2 = 1;
@@ -31945,7 +31966,7 @@ undefined4 scpi_query_ROBin_POINts(short *param_1,undefined4 *param_2,int param_
   else {
     iVar3 = FUN_0002eba8((short)*(undefined4 *)(param_1 + 1),(char)local_c,auStack_8);
     if (iVar3 != 0) {
-      uVar2 = FUN_00029ade('\v',param_3);
+      uVar2 = scpi_query_failed('\v',param_3);
       return uVar2;
     }
     *param_2 = 1;
@@ -31999,10 +32020,10 @@ undefined4 scpi_query_ROBin_TSTamp(int param_1,undefined1 *param_2,int param_3)
       FUN_00029a68(param_2,DAT_00101f48,(byte)uVar2);
       return 0;
     }
-    uVar3 = FUN_00029ade('\t',param_3);
+    uVar3 = scpi_query_failed('\t',param_3);
   }
   else {
-    uVar3 = FUN_00029ade('\v',param_3);
+    uVar3 = scpi_query_failed('\v',param_3);
   }
   return uVar3;
 }
@@ -32016,7 +32037,7 @@ undefined4 scpi_set_SENSe_TST1_EDGE(void)
   int iVar1;
   
   iVar1 = return_zero();
-  FUN_0002bf00(3,(byte)iVar1);
+  status_report_from(3,(byte)iVar1);
   return 0;
 }
 
@@ -32026,7 +32047,7 @@ undefined4 scpi_set_SENSe_TST1_EDGE(void)
 undefined4 scpi_query_SENSe_TST1_EDGE(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return 0;
 }
 
@@ -32385,7 +32406,7 @@ void scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1
                (undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -32395,7 +32416,7 @@ void scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1
 void scpi_query_RAT1(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -32405,7 +32426,7 @@ void scpi_query_RAT1(undefined4 param_1,undefined4 param_2,int param_3)
 void scpi_query_RAT3(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -32437,7 +32458,7 @@ void scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis
                (undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -32447,7 +32468,7 @@ void scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis
 void scpi_query_RAT2(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -32477,7 +32498,7 @@ undefined4 scpi_set_SOURce_ROSCillator_HOLDover_INITiate(void)
 void scpi_query_FMHO(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -32593,7 +32614,7 @@ undefined4 scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate(void)
 void scpi_query_RMHO(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -32626,7 +32647,7 @@ undefined4 scpi_query_KENneth_PREDicted(undefined4 param_1,int param_2,int param
   cVar2 = FUN_000429c6(param_2,&local_6,(short)&local_5);
   set_interrupt_mask(sr);
   if (cVar2 == '\0') {
-    uVar1 = FUN_00029ade('\f',param_3);
+    uVar1 = scpi_query_failed('\f',param_3);
   }
   else {
     *(short *)(param_2 + 4) = (short)local_6;
@@ -32679,7 +32700,7 @@ undefined4 scpi_query_KENneth_PRESent(undefined4 param_1,int param_2,int param_3
   cVar2 = FUN_0004299c(param_2,(short)local_6);
   set_interrupt_mask(sr);
   if (cVar2 == '\0') {
-    uVar1 = FUN_00029ade('\b',param_3);
+    uVar1 = scpi_query_failed('\b',param_3);
   }
   else {
     *(short *)(param_2 + 4) = (short)local_6[0];
@@ -32798,7 +32819,7 @@ undefined4 scpi_query_SOURce_ROSCillator_STATe(undefined4 param_1,undefined2 *pa
 void scpi_query_RSST(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -32816,7 +32837,7 @@ undefined4 scpi_query_SOURce_PTIMe_FFOMerit(short *param_1,ushort *param_2,int p
   if (*param_1 == 0) {
     cVar3 = get_ffom(local_6);
     if (cVar3 == '\0') {
-      uVar1 = FUN_00029ade('\f',param_3);
+      uVar1 = scpi_query_failed('\f',param_3);
       return uVar1;
     }
     uVar2 = (ushort)local_6[0];
@@ -32842,7 +32863,7 @@ undefined4 scpi_query_SOURce_PTIMe_TINTerval(undefined4 param_1,undefined4 *para
   sr = set_interrupt_mask(0x100);
   if (interval_mean_flag == '\0') {
     set_interrupt_mask(sr);
-    uVar1 = FUN_00029ade('\f',param_3);
+    uVar1 = scpi_query_failed('\f',param_3);
   }
   else {
     *param_2 = _interval_mean;
@@ -32887,7 +32908,7 @@ undefined4 scpi_query_SYSTem_COMMunicate(undefined4 param_1,undefined2 *param_2,
 void scpi_query_SYSTem_COMMunicate_SER1_ADDRess(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -33183,7 +33204,7 @@ undefined4 scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(short *param_1)
     case 0x10:
       if (*param_1 == 0) {
         iVar1 = return_zero();
-        FUN_0002bf00(0xb,(byte)iVar1);
+        status_report_from(0xb,(byte)iVar1);
         return 0;
       }
       unaff_D2b = 3;
@@ -33332,7 +33353,7 @@ undefined4 scpi_query_DANA(undefined4 param_1,undefined2 *param_2,int param_3)
 void scpi_query_REQU(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -33391,7 +33412,7 @@ undefined4 scpi_set_SYSTem_LANGuage(int param_1,undefined4 param_2,int param_3)
       pcVar5 = pcVar5 + 1;
     } while (cVar1 == cVar3);
     iVar2 = return_zero();
-    FUN_0002bf00(0xb,(byte)iVar2);
+    status_report_from(0xb,(byte)iVar2);
   }
   return 0;
 }
@@ -33448,7 +33469,7 @@ undefined4 scpi_query_SYSTem_PRINt(undefined4 param_1,undefined2 *param_2,int pa
 void scpi_query_RVST(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
-  FUN_00029ade('\x03',param_3);
+  scpi_query_failed('\x03',param_3);
   return;
 }
 
@@ -33645,7 +33666,7 @@ undefined4 FUN_00030c60(undefined4 param_1,byte param_2)
     local_44 = record_checksum(&local_44,0x40);
     cVar1 = FUN_0003124a(&DAT_00400080,&local_44,0x40);
     if (cVar1 == '\0') {
-      FUN_0002bf00(0x10,param_2);
+      status_report_from(0x10,param_2);
       return 0;
     }
   }
@@ -33721,7 +33742,7 @@ bool FUN_00030dea(byte param_1)
   local_14 = record_checksum(&local_14,0x10);
   cVar1 = FUN_0003124a(0x400000,&local_14,0x10);
   if (cVar1 == '\0') {
-    FUN_0002bf00(0x10,param_1);
+    status_report_from(0x10,param_1);
   }
   return cVar1 != '\0';
 }
@@ -34089,7 +34110,7 @@ char FUN_00031536(byte param_1)
     cVar1 = FUN_000313a4((byte)iVar2,(short *)0x101d4e);
     if (cVar1 != '\0') {
       if (cVar1 == -2) {
-        FUN_0002bf00(0x10,param_1);
+        status_report_from(0x10,param_1);
       }
       break;
     }
@@ -34520,7 +34541,7 @@ void FUN_00031ff8(char param_1,byte param_2)
     message = "Value too large, set to max limit\r\n";
   }
   task_dmessage(message);
-  FUN_0002bf00(9,param_2);
+  status_report_from(9,param_2);
   return;
 }
 
@@ -34963,7 +34984,7 @@ void FUN_0003282c(void)
       }
       FUN_000327f4(bVar2);
       FUN_0003293a(2);
-      FUN_0002bf00(0x11,2);
+      status_report_from(0x11,2);
     }
     else {
       FUN_000327f4(0);
@@ -35123,7 +35144,7 @@ char FUN_0003293a(byte param_1)
     if (DAT_001037dc != '\0') {
       log_event(0x18);
     }
-    FUN_0002bf00(0x10,param_1);
+    status_report_from(0x10,param_1);
   }
   return cVar4;
 }
@@ -35536,16 +35557,16 @@ void FUN_00040000(undefined1 *param_1)
 
 /* 00040030 */
 
-void FUN_00040030(char param_1)
+void interpolator_measure(uint8_t mode)
 
 {
-  fpga_set_bit(3,param_1);
+  fpga_set_bit(3,mode);
   fpga_set_bit(1,8);
   fpga_set_bit(2,1);
   fpga_set_bit(1,0);
   fpga_set_bit(2,0);
   FUN_0004091a(1);
-  FUN_00040c56();
+  interpolator_read();
   return;
 }
 
@@ -35679,90 +35700,92 @@ undefined4 FUN_000401c4(void)
 
 /* 00040248 */
 
-char FUN_00040248(char *param_1)
+uint8_t interpolator_calibrate(interpolator_calibration *calibration)
 
 {
-  char cVar1;
+  uint8_t uVar1;
   byte bVar2;
   byte bVar3;
-  char cVar4;
-  int iVar5;
-  char unaff_D3b;
+  int iVar4;
+  uint8_t unaff_D3b;
+  char cVar5;
   
-  FUN_000401c4((char)param_1);
-  if (*param_1 == '\0') {
-    *param_1 = '\x01';
-    param_1[2] = '\x1f';
-    param_1[3] = '\x1f';
+  FUN_000401c4((char)calibration);
+  if (calibration->initialized == 0) {
+    calibration->initialized = 1;
+    calibration->hdac_2 = 0x1f;
+    calibration->hdac_3 = 0x1f;
   }
-  hdac_set(param_1[2],2);
-  hdac_set(param_1[3],3);
-  cVar1 = FUN_00040030('\0');
-  param_1[7] = cVar1;
-  bVar2 = FUN_00040030('\x01');
-  param_1[8] = bVar2;
-  bVar3 = param_1[7];
-  iVar5 = (uint)bVar2 - (uint)bVar3;
-  if ((((iVar5 == 200) && (bVar3 != 0)) && (bVar3 < 0x1a)) && ((200 < bVar2 && (bVar2 < 0xe2)))) {
-    param_1[1] = '\x01';
-    unaff_D3b = '\x01';
+  hdac_set(calibration->hdac_2,2);
+  hdac_set(calibration->hdac_3,3);
+  uVar1 = interpolator_measure(0);
+  calibration->reading_low = uVar1;
+  bVar2 = interpolator_measure(1);
+  calibration->reading_high = bVar2;
+  bVar3 = calibration->reading_low;
+  iVar4 = (uint)bVar2 - (uint)bVar3;
+  if ((((iVar4 == 200) && (bVar3 != 0)) && (bVar3 < 0x1a)) && ((200 < bVar2 && (bVar2 < 0xe2)))) {
+    calibration->calibrated = 1;
+    unaff_D3b = 1;
   }
   else {
-    if (((byte)param_1[8] < 0xc9) || (0xe1 < (byte)param_1[8])) {
-      cVar1 = FUN_000400b0(param_1[3],0,0x3f,0xc9,0xe1,&LAB_00040096);
-      param_1[3] = cVar1;
+    if ((calibration->reading_high < 0xc9) || (0xe1 < calibration->reading_high)) {
+      uVar1 = FUN_000400b0(calibration->hdac_3,0,0x3f,0xc9,0xe1,&LAB_00040096);
+      calibration->hdac_3 = uVar1;
     }
-    bVar3 = FUN_00040030('\0');
-    param_1[7] = bVar3;
+    bVar3 = interpolator_measure(0);
+    calibration->reading_low = bVar3;
     if ((bVar3 == 0) || (0x19 < bVar3)) {
-      cVar1 = FUN_000400b0(param_1[2],0,0x3f,1,0x19,&LAB_0004007e);
-      param_1[2] = cVar1;
+      uVar1 = FUN_000400b0(calibration->hdac_2,0,0x3f,1,0x19,&LAB_0004007e);
+      calibration->hdac_2 = uVar1;
     }
-    cVar1 = FUN_00040030('\0');
-    param_1[7] = cVar1;
-    cVar1 = FUN_0004012e(param_1[3],0,0x3f,param_1[7] - 0x3c,param_1[7] - 0x34,&LAB_00040096);
-    param_1[3] = cVar1;
-    cVar1 = FUN_00040030('\x01');
-    param_1[8] = cVar1;
-    cVar1 = FUN_00040030('\0');
-    param_1[7] = cVar1;
-    cVar1 = '\x14';
-    while (cVar1 != '\0') {
-      cVar4 = FUN_0004018e(((uint)(byte)param_1[8] - (uint)(byte)param_1[7]) + -200,param_1[2]);
-      param_1[2] = cVar4;
-      cVar1 = cVar1 + -1;
-      if (((byte)param_1[8] < 0xc9) || (0xe1 < (byte)param_1[8])) {
-        cVar4 = FUN_0004012e(param_1[3],0,0x3f,0xc9,0xe1,&LAB_00040096);
-        param_1[3] = cVar4;
+    uVar1 = interpolator_measure(0);
+    calibration->reading_low = uVar1;
+    uVar1 = FUN_0004012e(calibration->hdac_3,0,0x3f,calibration->reading_low - 0x3c,
+                         calibration->reading_low - 0x34,&LAB_00040096);
+    calibration->hdac_3 = uVar1;
+    uVar1 = interpolator_measure(1);
+    calibration->reading_high = uVar1;
+    uVar1 = interpolator_measure(0);
+    calibration->reading_low = uVar1;
+    cVar5 = '\x14';
+    while (cVar5 != '\0') {
+      uVar1 = FUN_0004018e(((uint)calibration->reading_high - (uint)calibration->reading_low) + -200
+                           ,calibration->hdac_2);
+      calibration->hdac_2 = uVar1;
+      cVar5 = cVar5 + -1;
+      if ((calibration->reading_high < 0xc9) || (0xe1 < calibration->reading_high)) {
+        uVar1 = FUN_0004012e(calibration->hdac_3,0,0x3f,0xc9,0xe1,&LAB_00040096);
+        calibration->hdac_3 = uVar1;
       }
-      cVar4 = FUN_00040030('\x01');
-      param_1[8] = cVar4;
-      bVar3 = FUN_00040030('\0');
-      param_1[7] = bVar3;
-      iVar5 = (uint)(byte)param_1[8] - (uint)bVar3;
-      if (iVar5 == 200) {
-        cVar1 = '\0';
-        param_1[1] = '\x01';
-        unaff_D3b = '\x01';
-        param_1[5] = param_1[2];
-        param_1[6] = param_1[3];
-        param_1[4] = '\x01';
+      uVar1 = interpolator_measure(1);
+      calibration->reading_high = uVar1;
+      bVar3 = interpolator_measure(0);
+      calibration->reading_low = bVar3;
+      iVar4 = (uint)calibration->reading_high - (uint)bVar3;
+      if (iVar4 == 200) {
+        cVar5 = '\0';
+        calibration->calibrated = 1;
+        unaff_D3b = 1;
+        calibration->result_hdac_2 = calibration->hdac_2;
+        calibration->result_hdac_3 = calibration->hdac_3;
+        calibration->result_valid = 1;
       }
       else {
-        unaff_D3b = '\0';
+        unaff_D3b = 0;
       }
     }
-    if (unaff_D3b == '\0') {
-      if ((iVar5 == 199) || (iVar5 == 0xc9)) {
-        param_1[1] = '\x01';
-        unaff_D3b = '\x01';
-        param_1[5] = param_1[2];
-        param_1[6] = param_1[3];
-        param_1[4] = '\x01';
+    if (unaff_D3b == 0) {
+      if ((iVar4 == 199) || (iVar4 == 0xc9)) {
+        calibration->calibrated = 1;
+        unaff_D3b = 1;
+        calibration->result_hdac_2 = calibration->hdac_2;
+        calibration->result_hdac_3 = calibration->hdac_3;
+        calibration->result_valid = 1;
       }
       else {
-        *param_1 = '\0';
-        param_1[1] = '\0';
+        calibration->initialized = 0;
+        calibration->calibrated = 0;
       }
     }
   }
@@ -35786,9 +35809,9 @@ undefined1 FUN_0004047c(char *param_1)
   FUN_000401c4();
   hdac_set(param_1[2],2);
   hdac_set(param_1[3],3);
-  cVar1 = FUN_00040030('\0');
+  cVar1 = interpolator_measure(0);
   param_1[7] = cVar1;
-  bVar2 = FUN_00040030('\x01');
+  bVar2 = interpolator_measure(1);
   param_1[8] = bVar2;
   if ((((param_1[7] == '\0') || (0x19 < (byte)param_1[7])) || (bVar2 < 0xc9)) || (0xe1 < bVar2)) {
     if (param_1[4] == '\0') {
@@ -35798,9 +35821,9 @@ undefined1 FUN_0004047c(char *param_1)
     param_1[3] = param_1[6];
     hdac_set(param_1[2],2);
     hdac_set(param_1[3],3);
-    cVar1 = FUN_00040030('\0');
+    cVar1 = interpolator_measure(0);
     param_1[7] = cVar1;
-    bVar2 = FUN_00040030('\x01');
+    bVar2 = interpolator_measure(1);
     param_1[8] = bVar2;
     if (param_1[7] == '\0') {
       return unaff_D2b;
@@ -35835,9 +35858,9 @@ void FUN_00040556(char *param_1)
   }
   hdac_set(param_1[2],2);
   hdac_set(param_1[3],3);
-  cVar1 = FUN_00040030('\0');
+  cVar1 = interpolator_measure(0);
   param_1[7] = cVar1;
-  cVar1 = FUN_00040030('\x01');
+  cVar1 = interpolator_measure(1);
   param_1[8] = cVar1;
   return;
 }
@@ -35848,7 +35871,7 @@ void FUN_00040556(char *param_1)
 void FUN_000405bc(int param_1,int param_2)
 
 {
-  char cVar1;
+  uint8_t uVar1;
   int iVar2;
   
   if (DAT_00101fa8 == '\0') {
@@ -35857,18 +35880,20 @@ void FUN_000405bc(int param_1,int param_2)
   if ((*(char *)(param_1 + 9) == '\0') &&
      ((*(char *)(param_2 + 0xe) == '\x03' ||
       ((*(char *)(param_2 + 0xe) == '\x01' && (*(char *)(param_2 + 0xf) == '\x02')))))) {
-    cVar1 = '\0';
+    uVar1 = 0;
     iVar2 = 0;
-    while (((iVar2 < 0x14 && (DAT_00101fa8 != '\0')) && (cVar1 == '\0'))) {
+    while (((iVar2 < 0x14 && (DAT_00101fa8 != '\0')) && (uVar1 == 0))) {
       iVar2 = iVar2 + 1;
-      cVar1 = FUN_00040248(&DAT_00101fce);
-      if (cVar1 == '\0') {
-        cVar1 = FUN_0004047c(&DAT_00101fce);
+      uVar1 = interpolator_calibrate(&interpolator_calibration_state);
+      if (uVar1 == 0) {
+        uVar1 = FUN_0004047c(&interpolator_calibration_state);
       }
     }
-    if (DAT_00101fcf == '\x01') {
-      *(uint *)(param_2 + 0x18) = (uint)DAT_00101fd5;
-      *(uint *)(param_2 + 0x1c) = (uint)DAT_00101fd6 - (uint)DAT_00101fd5;
+    if (interpolator_calibration_state.calibrated == 1) {
+      *(uint *)(param_2 + 0x18) = (uint)interpolator_calibration_state.reading_low;
+      *(uint *)(param_2 + 0x1c) =
+           (uint)interpolator_calibration_state.reading_high -
+           (uint)interpolator_calibration_state.reading_low;
       *(undefined1 *)(param_2 + 0xf) = 1;
     }
     else {
@@ -35883,27 +35908,27 @@ void FUN_000405bc(int param_1,int param_2)
 
 /* 00040670 */
 
-char FUN_00040670(void)
+uint8_t FUN_00040670(void)
 
 {
-  char cVar1;
+  uint8_t uVar1;
   int iVar2;
-  undefined1 auStack_e [10];
+  interpolator_calibration iStack_e;
   
   DAT_00100c3c = 0;
   iVar2 = 0;
   do {
-    FUN_00040000(auStack_e);
-    cVar1 = FUN_00040248(auStack_e);
+    FUN_00040000(&iStack_e);
+    uVar1 = interpolator_calibrate(&iStack_e);
     iVar2 = iVar2 + 1;
-    if (cVar1 != '\0') break;
+    if (uVar1 != 0) break;
   } while (iVar2 < 0x14);
   DAT_00100c3d = (undefined1)iVar2;
-  if (cVar1 == '\0') {
+  if (uVar1 == 0) {
     DAT_00100c3c = 1;
-    cVar1 = FUN_0004047c(auStack_e);
+    uVar1 = FUN_0004047c(&iStack_e);
   }
-  return cVar1;
+  return uVar1;
 }
 
 
@@ -35929,17 +35954,17 @@ void FUN_000406c8(void)
 void FUN_000406e2(void)
 
 {
-  char local_e [2];
-  undefined1 local_c;
-  undefined1 local_b;
+  uint8_t local_e [2];
+  uint8_t local_c;
+  uint8_t local_b;
   byte local_7;
   byte local_6;
   
   FUN_00040000(local_e);
-  local_e[0] = DAT_00101fce;
-  if (DAT_00101fce != '\0') {
-    local_c = DAT_00101fd0;
-    local_b = DAT_00101fd1;
+  local_e[0] = interpolator_calibration_state.initialized;
+  if (interpolator_calibration_state.initialized != 0) {
+    local_c = interpolator_calibration_state.hdac_2;
+    local_b = interpolator_calibration_state.hdac_3;
   }
   FUN_00040556(local_e);
   _DAT_00100c3a = 0;
@@ -36244,7 +36269,7 @@ void FUN_00040c06(void)
 
 /* 00040c56 */
 
-uint FUN_00040c56(void)
+uint interpolator_read(void)
 
 {
   byte bVar1;
@@ -36313,7 +36338,7 @@ void FUN_00040d34(double *param_1,int param_2)
         uVar3 = FUN_00040c06();
         dVar4 = (double)FUN_0004119c(uVar3);
         *param_1 = dVar4;
-        bVar2 = FUN_00040c56();
+        bVar2 = interpolator_read();
         dVar4 = integer_to_double((uint)bVar2 - *(int *)(param_2 + 0x18));
         a = integer_to_double(*(int *)(param_2 + 0x1c));
         dVar4 = double_divide_reversed(a,dVar4);
@@ -36415,7 +36440,7 @@ void FUN_00040f76(void)
 
 {
   FUN_00040ed8(0x101fae);
-  FUN_00040000(&DAT_00101fce);
+  FUN_00040000(&interpolator_calibration_state);
   DAT_00101fa8 = 1;
   return;
 }
@@ -36551,9 +36576,10 @@ void efc_history_update(void)
 {
   float fVar1;
   undefined *puVar2;
-  uint uVar3;
+  uint32_t uVar3;
   int iVar4;
   float fVar5;
+  uint param4;
   undefined4 extraout_A0;
   undefined4 extraout_A1;
   double dVar6;
@@ -36607,7 +36633,7 @@ void efc_history_update(void)
         dVar6 = float_to_double(pll.tfom);
         dVar9 = 0.0;
         iVar4 = 0;
-        uVar3 = FUN_000136f6();
+        uVar3 = get_uptime();
         fVar1 = unsigned_to_float(uVar3);
         fVar1 = float_divide(fVar1,2700.0);
         fVar1 = float_divide(fVar1,32.0);
@@ -36621,7 +36647,7 @@ void efc_history_update(void)
     }
     else {
       if (((pll.efc_history.summed_count < 0x2a3) && (pll.efc_history.summed_count != 0)) ||
-         (puVar2 = (undefined *)FUN_000136f6(), puVar2 < &UNK_00002a30)) {
+         (puVar2 = (undefined *)get_uptime(), puVar2 < &UNK_00002a30)) {
         pll.efc_history.weights[pll.efc_history.stop_ptr] = 1;
       }
       else if (pll.efc_history.summed_count == 0xa8c) {
@@ -36633,7 +36659,7 @@ void efc_history_update(void)
       fVar1 = unsigned_to_float((uint)pll.efc_history.summed_count);
       fVar1 = float_divide_reversed(fVar1,pll.efc_history.efc_sum);
       pll.efc_history.averages[pll.efc_history.stop_ptr] = fVar1;
-      uVar3 = FUN_000136f6();
+      uVar3 = get_uptime();
       fVar1 = unsigned_to_float(uVar3);
       fVar1 = float_divide(fVar1,2700.0);
       pll.efc_history.times[pll.efc_history.stop_ptr] = fVar1;
@@ -36659,12 +36685,12 @@ void efc_history_update(void)
       if (DAT_00102541 != '\0') {
         dVar6 = float_to_double(pll.tfom);
         dVar7 = float_to_double(pll.efc_history.logs[pll.efc_history.stop_ptr]);
-        uVar3 = (uint)pll.efc_history.weights[pll.efc_history.stop_ptr];
+        param4 = (uint)pll.efc_history.weights[pll.efc_history.stop_ptr];
         fVar1 = float_divide(fVar1,32.0);
         dVar8 = float_to_double(fVar1);
         dVar9 = float_to_double(pll.efc_history.averages[pll.efc_history.stop_ptr]);
         debug_sprintf(acStack_68,"e_avg= %.1f time= %f weight= %d log= %.2f tfom= %.1e\r\n",dVar9,
-                      dVar8,uVar3,dVar7,dVar6);
+                      dVar8,param4,dVar7,dVar6);
         task_dmessage(acStack_68);
       }
       pll.efc_history.stop_ptr = pll.efc_history.stop_ptr + 1 & 0x3f;
@@ -38106,7 +38132,7 @@ void FUN_000432bc(undefined4 param_1,char *param_2)
         return;
       }
       if (local_5 != '\0') {
-        FUN_0002bf00((short)local_5,DAT_00102017);
+        status_report_from((short)local_5,DAT_00102017);
       }
     }
     FUN_0004306a();
@@ -38164,7 +38190,7 @@ void FUN_000433b6(int *param_1,char param_2)
   else {
     DAT_0010254e = '\0';
     if (param_2 == '\0') {
-      FUN_0002bf00(6,DAT_00102017);
+      status_report_from(6,DAT_00102017);
     }
     FUN_0004306a();
     psos_signal_v(DAT_00102018,0x20);
@@ -38216,7 +38242,7 @@ void FUN_00043482(char param_1,byte param_2)
   
   cVar1 = FUN_0002f34e('\0',param_2,(short)param_1,(short)(&DAT_00101ede)[param_1]);
   if (cVar1 == '\0') {
-    FUN_0002bf00(0xe,param_2);
+    status_report_from(0xe,param_2);
   }
   return;
 }
@@ -38232,7 +38258,7 @@ void FUN_000434c2(char param_1,byte param_2)
   cVar1 = FUN_0002f34e('\x01',param_2,(short)param_1,
                        (short)*(undefined4 *)(&DAT_00101efa + param_1 * 4));
   if (cVar1 == '\0') {
-    FUN_0002bf00(0xe,param_2);
+    status_report_from(0xe,param_2);
   }
   return;
 }
@@ -38248,7 +38274,7 @@ void FUN_00043504(char param_1,byte param_2)
   cVar1 = FUN_0002f34e('\x02',param_2,(short)param_1,
                        (short)*(undefined4 *)(&DAT_00101f0e + param_1 * 4));
   if (cVar1 == '\0') {
-    FUN_0002bf00(0xe,param_2);
+    status_report_from(0xe,param_2);
   }
   return;
 }
@@ -38502,7 +38528,7 @@ undefined1 FUN_00043a90(char param_1)
   char cVar4;
   float fVar2;
   int iVar3;
-  uint u;
+  uint32_t u;
   undefined1 uVar5;
   undefined1 uVar6;
   double dVar7;
@@ -38545,7 +38571,7 @@ override_jmp_00043ae6_case_0:
         _DAT_0010204a = 0x3109705f;
       }
     }
-    FUN_00044fbc('\0',(undefined4 *)0x0);
+    interval_next_reading('\0',(undefined4 *)0x0);
     get_date_time((uint32_t *)(pll.field_3b0 + 0x10),(uint32_t *)(pll.field_3b0 + 0xc));
     pll.field_001[0xf] = 1;
     DAT_00102048 = 0;
@@ -38566,7 +38592,7 @@ override_jmp_00043ae6_case_0:
     FUN_00045ce4('\x01');
     status_happening('.');
   }
-  cVar4 = FUN_00044fbc('\0',&fStack_10);
+  cVar4 = interval_next_reading('\0',&fStack_10);
   if (cVar4 == '\0') {
     if ((gps_pps_dead == 0) && (internal_pps_dead == 0)) {
       task_dmessage("holdover - Error with measurement\r\n");
@@ -38601,7 +38627,7 @@ override_jmp_00043ae6_case_0:
   if (0 < iVar3) {
     pll.tfom = 1e-06;
   }
-  u = FUN_000136f6();
+  u = get_uptime();
   fVar2 = unsigned_to_float(u);
   dVar7 = float_to_double(fVar2);
   dVar7 = double_divide_reversed(2700.0,dVar7);
@@ -38785,7 +38811,7 @@ char FUN_00043f9a(char param_1)
   iVar2 = (int)(char)pll.recovery_state - 5;
   if (4 < (uint)(int)(char)pll.recovery_state && iVar2 != 0) {
 override_jmp_00043ff8_case_0:
-    unaff_D3b = FUN_00044fbc('\0',&local_8);
+    unaff_D3b = interval_next_reading('\0',&local_8);
     if (unaff_D3b == '\0') {
       task_dmessage("holdover recovery - Error with measurement\r\n");
       DAT_00102047 = DAT_00102047 + 1;
@@ -38818,7 +38844,7 @@ override_jmp_00043ff8_case_0:
     }
     goto LAB_0004411a;
   case 0x7e:
-    unaff_D3b = FUN_00044fbc('\x01',&local_8);
+    unaff_D3b = interval_next_reading('\x01',&local_8);
     pll.field_013[1] = pll.field_013[1] - 1;
     if ((pll.field_013[1] != 0) || (cVar4 = FUN_00047078(), cVar4 != '\0')) goto LAB_0004411a;
     cVar4 = FUN_00043f18();
@@ -38828,7 +38854,7 @@ override_jmp_00043ff8_case_0:
     }
     break;
   case 0xb2:
-    unaff_D3b = FUN_00044fbc('\x01',&local_8);
+    unaff_D3b = interval_next_reading('\x01',&local_8);
     if ((pll.field_020[0xd] == 0) && (pll.field_020[0xe] != 0)) {
       pll.recovery_state = 5;
     }
@@ -38838,7 +38864,7 @@ override_jmp_00043ff8_case_0:
     }
     goto LAB_0004411a;
   case 0xea:
-    unaff_D3b = FUN_00044fbc('\0',&local_8);
+    unaff_D3b = interval_next_reading('\0',&local_8);
     cVar4 = FUN_00047078();
     if (cVar4 != '\0') goto LAB_0004411a;
     cVar4 = FUN_00043f18();
@@ -38919,7 +38945,6 @@ char FUN_0004429e(char param_1)
   char cVar4;
   int iVar2;
   uint32_t uVar3;
-  uint u;
   float a;
   char cVar5;
   double dVar6;
@@ -38959,11 +38984,11 @@ char FUN_0004429e(char param_1)
     DAT_0010206a = 0;
     DAT_0010206c = '\0';
     DAT_00102066 = 0;
-    FUN_00044fbc('\0',(undefined4 *)0x0);
+    interval_next_reading('\0',(undefined4 *)0x0);
     pll.field_001[0xb] = 1;
   }
   else {
-    cVar4 = FUN_00044fbc('\0',&local_88);
+    cVar4 = interval_next_reading('\0',&local_88);
     if (cVar4 == '\0') {
       if ((internal_pps_dead == 0) && (gps_pps_dead == 0)) {
         task_dmessage("startup_pll - Error with measurement\r\n");
@@ -39094,8 +39119,8 @@ char FUN_0004429e(char param_1)
       uVar11 = SUB41(fVar1,0);
       fVar1 = float_multiply(local_78,local_84);
       pll.field_3b0._0_4_ = float_add((float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11),fVar1);
-      u = FUN_000136f6();
-      fVar1 = unsigned_to_float(u);
+      uVar3 = get_uptime();
+      fVar1 = unsigned_to_float(uVar3);
       uVar7 = (undefined2)((uint)fVar1 >> 0x10);
       uVar10 = (undefined1)((uint)fVar1 >> 8);
       uVar11 = SUB41(fVar1,0);
@@ -39176,7 +39201,6 @@ undefined1 interval_average(char param_1)
   char cVar5;
   int iVar3;
   uint32_t uVar4;
-  uint u;
   float a;
   double dVar6;
   undefined2 uVar7;
@@ -39209,7 +39233,7 @@ undefined1 interval_average(char param_1)
     DAT_0010206b = 0;
     DAT_0010206a = 0;
     DAT_0010206c = '\0';
-    FUN_00044fbc('\0',(undefined4 *)0x0);
+    interval_next_reading('\0',(undefined4 *)0x0);
     *local_14 = 1;
     _DAT_0010206e = float_divide(DAT_0010255c,max_loop_time);
     fVar2 = float_divide(DAT_00102560,max_loop_time);
@@ -39225,7 +39249,7 @@ undefined1 interval_average(char param_1)
     pll.field_03a[0xf] = 0x77;
   }
   else {
-    cVar5 = FUN_00044fbc('\0',&local_82);
+    cVar5 = interval_next_reading('\0',&local_82);
     if (cVar5 == '\0') {
       if ((internal_pps_dead == 0) && (gps_pps_dead == 0)) {
         task_dmessage("pll_normal - Error with measurement\r\n");
@@ -39280,8 +39304,8 @@ undefined1 interval_average(char param_1)
       uVar11 = SUB41(fVar2,0);
       fVar2 = float_multiply(_DAT_00102076,local_7e);
       pll.field_3b0._0_4_ = float_add((float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11),fVar2);
-      u = FUN_000136f6();
-      fVar2 = unsigned_to_float(u);
+      uVar4 = get_uptime();
+      fVar2 = unsigned_to_float(uVar4);
       uVar7 = (undefined2)((uint)fVar2 >> 0x10);
       uVar10 = (undefined1)((uint)fVar2 >> 8);
       uVar11 = SUB41(fVar2,0);
@@ -39424,7 +39448,7 @@ undefined1 FUN_00044f5e(float param_1)
 
 /* WARNING: Unknown calling convention */
 
-char FUN_00044fbc(char param_1,undefined4 *param_2)
+char interval_next_reading(char param_1,undefined4 *param_2)
 
 {
   char cVar1;
@@ -39540,17 +39564,17 @@ char FUN_000451c2(void)
     case 0xc:
       goto override_jmp_000451fa_case_0;
     case 0x1e:
-      FUN_00044fbc('\x01',(undefined4 *)0x0);
+      interval_next_reading('\x01',(undefined4 *)0x0);
       pll.field_016 = 2;
       break;
     case 0x30:
-      FUN_00044fbc('\0',(undefined4 *)0x0);
+      interval_next_reading('\0',(undefined4 *)0x0);
       pll.field_016 = 3;
       pll.field_01a[0] = 0;
       pll.field_01a[1] = 0;
       break;
     case 0x44:
-      cVar3 = FUN_00044fbc('\0',&pll.fine_d);
+      cVar3 = interval_next_reading('\0',&pll.fine_d);
       if (cVar3 == '\0') {
         task_dmessage("coarse - Error with measurement 1\r\n");
         pll.field_01a = (uint8_t  [2])((short)pll.field_01a + 1);
@@ -39610,7 +39634,7 @@ LAB_0004536e:
   else {
     pll.field_016 = 0;
 override_jmp_000451fa_case_0:
-    FUN_00044fbc('\x02',(undefined4 *)0x0);
+    interval_next_reading('\x02',(undefined4 *)0x0);
     pll.field_016 = 1;
   }
   if (cVar4 == '\x02') {
@@ -39682,15 +39706,15 @@ char FUN_0004538c(void)
       FUN_000450c4('\0');
       break;
     case 2:
-      FUN_00044fbc('\x01',(undefined4 *)0x0);
+      interval_next_reading('\x01',(undefined4 *)0x0);
       pll.fine_state = 3;
       break;
     case 3:
-      FUN_00044fbc('\0',(undefined4 *)0x0);
+      interval_next_reading('\0',(undefined4 *)0x0);
       pll.fine_state = 4;
       break;
     case 4:
-      FUN_00044fbc('\x01',(undefined4 *)0x0);
+      interval_next_reading('\x01',(undefined4 *)0x0);
       pll.fine_state = 5;
       pll.field_01a[0] = 0;
       pll.field_01a[1] = 0;
@@ -39703,7 +39727,7 @@ char FUN_0004538c(void)
       break;
     case 5:
       if (pll.fine_index < 0x33) {
-        cVar3 = FUN_00044fbc('\0',&pll.fine_d);
+        cVar3 = interval_next_reading('\0',&pll.fine_d);
         if (cVar3 == '\0') {
           task_dmessage("fine - Error with measurement 1\r\n");
           pll.field_01a = (uint8_t  [2])((short)pll.field_01a + 1);
@@ -39783,7 +39807,7 @@ char FUN_0004538c(void)
         }
       }
       else {
-        FUN_00044fbc('\0',(undefined4 *)0x0);
+        interval_next_reading('\0',(undefined4 *)0x0);
         pll.fine_state = 6;
         pll.fine_index = 1;
         fVar2 = unsigned_to_float(1);
@@ -39890,7 +39914,7 @@ LAB_00045812:
       FUN_000450c4('\x01');
       break;
     case 7:
-      FUN_00044fbc('\0',(undefined4 *)0x0);
+      interval_next_reading('\0',(undefined4 *)0x0);
       pll.field_01a[0] = 0;
       pll.field_01a[1] = 0;
       pll.fine_state = 8;
@@ -39925,7 +39949,7 @@ LAB_00045812:
       FUN_000450c4('\0');
       break;
     case 9:
-      FUN_00044fbc('\x01',(undefined4 *)0x0);
+      interval_next_reading('\x01',(undefined4 *)0x0);
       pll.fine_index = pll.fine_index - 1;
       if (pll.fine_index == 0) {
         cVar4 = '\x01';
@@ -39935,7 +39959,7 @@ LAB_00045812:
   else {
     pll.fine_state = 0;
 switchD_000453f0_caseD_0:
-    FUN_00044fbc('\0',(undefined4 *)0x0);
+    interval_next_reading('\0',(undefined4 *)0x0);
     pll.field_01a[0] = 0;
     pll.field_01a[1] = 0;
     pll.fine_state = 1;
@@ -40189,7 +40213,7 @@ undefined1 FUN_00045e8e(char param_1)
     case 0x10:
       goto override_jmp_00045f06_case_0;
     case 0x26:
-      FUN_00044fbc('\x01',(undefined4 *)0x0);
+      interval_next_reading('\x01',(undefined4 *)0x0);
       cVar3 = FUN_000241f4();
       if (cVar3 != '\0') {
         pll.field_001[2] = 2;
@@ -40199,12 +40223,12 @@ undefined1 FUN_00045e8e(char param_1)
       }
       break;
     case 0x56:
-      FUN_00044fbc('\x01',(undefined4 *)0x0);
+      interval_next_reading('\x01',(undefined4 *)0x0);
       pll.field_001[2] = 3;
       status_happening('$');
       break;
     case 0x74:
-      FUN_00044fbc('\x01',(undefined4 *)0x0);
+      interval_next_reading('\x01',(undefined4 *)0x0);
       pll.field_001[3] = 0;
       if ((((DAT_00102550 != '\0') && (internal_pps_dead == 0)) &&
           ((pll.field_001[0x10] & 0x20) == 0)) && ('\r' < (char)pll.field_020[6])) {
@@ -40247,7 +40271,7 @@ undefined1 FUN_00045e8e(char param_1)
       }
       break;
     case 0x166:
-      FUN_00044fbc('\x01',(undefined4 *)0x0);
+      interval_next_reading('\x01',(undefined4 *)0x0);
       pll.field_001[1] = pll.field_001[1] - 1;
       if (pll.field_001[1] == 0) {
         cVar3 = FUN_00047078();
@@ -40264,7 +40288,7 @@ undefined1 FUN_00045e8e(char param_1)
       }
       break;
     case 0x1a6:
-      FUN_00044fbc('\x01',(undefined4 *)0x0);
+      interval_next_reading('\x01',(undefined4 *)0x0);
       if ((pll.field_020[0xd] == 0) && (pll.field_020[0xe] != 0)) {
         uVar5 = 1;
       }
@@ -40349,7 +40373,7 @@ undefined1 FUN_00046188(char param_1)
       FUN_000450c4('\0');
       break;
     case 0x78:
-      cVar3 = FUN_00044fbc('\0',(undefined4 *)0x0);
+      cVar3 = interval_next_reading('\0',(undefined4 *)0x0);
       if (cVar3 == '\0') {
         if (internal_pps_dead == 0) {
           pll.field_001[0x10] = pll.field_001[0x10] | 4;
@@ -40393,7 +40417,7 @@ void FUN_00046290(void)
 
 {
   byte bVar2;
-  uint uVar1;
+  uint32_t uVar1;
   int local_14 [3];
   undefined4 local_8;
   
@@ -40403,7 +40427,7 @@ void FUN_00046290(void)
   if (bVar2 <= DAT_0010258c) {
     bVar2 = bVar2 + 0x10;
   }
-  uVar1 = FUN_000136f6();
+  uVar1 = get_uptime();
   if (uVar1 < _DAT_00102594) {
     _DAT_00102594 = 0;
   }
@@ -40554,7 +40578,7 @@ byte FUN_000464de(void)
 
 /* 00046524 */
 
-void FUN_00046524(void)
+void pll_stage_status(void)
 
 {
   int iVar1;
@@ -40623,13 +40647,13 @@ override_jmp_000465c6_case_7:
 
 /* 00046620 */
 
-char FUN_00046620(void)
+uint8_t gps_ack_received(void)
 
 {
-  if (DAT_00102585 != '\0') {
-    DAT_00102586 = 0;
+  if (gps_ack_ready != 0) {
+    gps_ack_awaited = 0;
   }
-  return DAT_00102585;
+  return gps_ack_ready;
 }
 
 
@@ -40652,7 +40676,7 @@ undefined1 gpsx_send(undefined2 param_1,undefined1 param_2,int param_3,char para
   undefined *local_10;
   
   uVar3 = 0;
-  if (DAT_00102586 == '\0') {
+  if (gps_ack_awaited == 0) {
     iVar2 = 0;
     do {
       *(undefined4 *)(&DAT_001025ac + iVar2 * 4) = *(undefined4 *)(param_3 + iVar2 * 4);
@@ -40667,8 +40691,8 @@ undefined1 gpsx_send(undefined2 param_1,undefined1 param_2,int param_3,char para
     local_10 = &DAT_001025ac;
     uVar1 = psos_send_x(gpsx_exchange,&local_1e);
     if ((char)uVar1 == '\0') {
-      DAT_00102586 = param_4;
-      DAT_00102585 = 0;
+      gps_ack_awaited = param_4;
+      gps_ack_ready = 0;
       gps_ack_code = 1;
       uVar3 = 1;
       _DAT_00102598 = _DAT_00102598 + 1;
@@ -40702,7 +40726,7 @@ void FUN_000466ca(void)
   if (cVar3 == '\0') {
     _DAT_00100c38 = 0x4000;
   }
-  if (DAT_00102586 != '\0') {
+  if (gps_ack_awaited != 0) {
     for (cVar3 = -0x7e;
         (uVar1 = psos_request_x(plla_exchange,auStack_2e,1,0), (char)uVar1 != '\0' &&
         (cVar3 != '\0')); cVar3 = cVar3 + -1) {
@@ -40719,7 +40743,7 @@ void FUN_000466ca(void)
       _DAT_00100c38 = 0x8000;
     }
   }
-  DAT_00102586 = '\0';
+  gps_ack_awaited = 0;
   if (_DAT_00100c38 == 0) {
     for (cVar3 = '\x14';
         (cVar2 = gpsx_send(0x4a,0,(int)auStack_14,'\x05'), cVar2 == '\0' && (cVar3 != '\0'));
@@ -40730,7 +40754,7 @@ void FUN_000466ca(void)
     if (cVar3 == '\0') {
       _DAT_00100c38 = 0x4000;
     }
-    if (DAT_00102586 != '\0') {
+    if (gps_ack_awaited != 0) {
       for (cVar3 = '\x1e';
           (uVar1 = psos_request_x(plla_exchange,auStack_2e,1,0), (char)uVar1 != '\0' &&
           (cVar3 != '\0')); cVar3 = cVar3 + -1) {
@@ -40748,7 +40772,7 @@ void FUN_000466ca(void)
       }
     }
   }
-  DAT_00102586 = 0;
+  gps_ack_awaited = 0;
   return;
 }
 
@@ -40782,7 +40806,7 @@ switchD_0004688c_caseD_0:
   case 0:
     goto switchD_0004688c_caseD_0;
   case 1:
-    cVar1 = FUN_00046620();
+    cVar1 = gps_ack_received();
     if (cVar1 != '\0') {
       if (gps_ack_code == 0) {
         pll.field_020[6] = 2;
@@ -40804,7 +40828,7 @@ switchD_0004688c_caseD_0:
     }
     break;
   case 3:
-    cVar1 = FUN_00046620();
+    cVar1 = gps_ack_received();
     if (cVar1 != '\0') {
       if (gps_ack_code == 0) {
         pll.field_020[6] = 4;
@@ -40826,7 +40850,7 @@ switchD_0004688c_caseD_0:
     }
     break;
   case 5:
-    cVar1 = FUN_00046620();
+    cVar1 = gps_ack_received();
     if (cVar1 != '\0') {
       if (gps_ack_code == 0) {
         pll.field_020[6] = 6;
@@ -40848,7 +40872,7 @@ switchD_0004688c_caseD_0:
     }
     break;
   case 7:
-    cVar1 = FUN_00046620();
+    cVar1 = gps_ack_received();
     if (cVar1 != '\0') {
       if (gps_ack_code == 0) {
         pll.field_020[6] = 8;
@@ -40870,7 +40894,7 @@ switchD_0004688c_caseD_0:
     }
     break;
   case 9:
-    cVar1 = FUN_00046620();
+    cVar1 = gps_ack_received();
     if (cVar1 != '\0') {
       if (gps_ack_code == 0) {
         if (DAT_00101ea7 == '\0') {
@@ -40900,7 +40924,7 @@ switchD_0004688c_caseD_0:
     }
     break;
   case 0xb:
-    cVar1 = FUN_00046620();
+    cVar1 = gps_ack_received();
     if (cVar1 != '\0') {
       if (gps_ack_code == 0) {
         status_happening('\x1c');
@@ -40923,7 +40947,7 @@ switchD_0004688c_caseD_0:
     }
     break;
   case 0xd:
-    cVar1 = FUN_00046620();
+    cVar1 = gps_ack_received();
     if (cVar1 != '\0') {
       if (gps_ack_code == 0) {
         status_happening('\x1d');
@@ -40979,7 +41003,7 @@ switchD_0004688c_caseD_0:
     }
     goto LAB_00046d06;
   case 0x10:
-    cVar1 = FUN_00046620();
+    cVar1 = gps_ack_received();
     if (cVar1 == '\0') {
       return;
     }
@@ -41044,7 +41068,7 @@ void FUN_00046d98(void)
       }
       break;
     case 0x3e:
-      cVar2 = FUN_00046620();
+      cVar2 = gps_ack_received();
       if (cVar2 != '\0') {
         if (gps_ack_code == 0) {
           FUN_000463c2();
@@ -41137,7 +41161,7 @@ override_jmp_00046eb8_case_0:
     }
     break;
   case 0x80:
-    cVar5 = FUN_00046620();
+    cVar5 = gps_ack_received();
     if (cVar5 == '\0') {
       return;
     }
@@ -41156,7 +41180,7 @@ LAB_00046efe:
     }
     break;
   case 0xcc:
-    cVar5 = FUN_00046620();
+    cVar5 = gps_ack_received();
     if (cVar5 == '\0') {
       return;
     }
@@ -41190,7 +41214,7 @@ LAB_00046efe:
     }
     break;
   case 0x18c:
-    cVar5 = FUN_00046620();
+    cVar5 = gps_ack_received();
     if (cVar5 == '\0') {
       return;
     }
@@ -41391,8 +41415,8 @@ undefined1 FUN_000471fc(char param_1)
     case 0xc:
       goto override_jmp_00047258_case_0;
     case 0x54:
-      FUN_00044fbc('\x01',(undefined4 *)0x0);
-      cVar2 = FUN_00046620();
+      interval_next_reading('\x01',(undefined4 *)0x0);
+      cVar2 = gps_ack_received();
       if (cVar2 == '\0') {
         pll.field_020[5] = pll.field_020[5] + 1;
         if (0x1e < pll.field_020[5]) {
@@ -41408,7 +41432,7 @@ undefined1 FUN_000471fc(char param_1)
       }
       break;
     case 0x9c:
-      FUN_00044fbc('\x01',(undefined4 *)0x0);
+      interval_next_reading('\x01',(undefined4 *)0x0);
       cVar2 = gpsx_send(0x4a,0,(int)auStack_14,'\x05');
       if (cVar2 == '\0') {
         pll.field_020[5] = pll.field_020[5] + 1;
@@ -41423,8 +41447,8 @@ undefined1 FUN_000471fc(char param_1)
       }
       break;
     case 0xe4:
-      FUN_00044fbc('\x01',(undefined4 *)0x0);
-      cVar2 = FUN_00046620();
+      interval_next_reading('\x01',(undefined4 *)0x0);
+      cVar2 = gps_ack_received();
       if (cVar2 == '\0') {
         pll.field_020[5] = pll.field_020[5] + 1;
         if (0x1e < pll.field_020[5]) {
@@ -41451,7 +41475,7 @@ undefined1 FUN_000471fc(char param_1)
       pll.field_020[4] = 5;
       break;
     case 0x14c:
-      FUN_00018a74(_DAT_00102590);
+      selftest_run(_DAT_00102590);
       DAT_0010258d = 0;
       FUN_000433fc(0xa4);
       uVar3 = 1;
@@ -41459,7 +41483,7 @@ undefined1 FUN_000471fc(char param_1)
   }
   else {
 override_jmp_00047258_case_0:
-    FUN_00044fbc('\x01',(undefined4 *)0x0);
+    interval_next_reading('\x01',(undefined4 *)0x0);
     cVar2 = gpsx_send(0x45,0,(int)auStack_14,'\x05');
     if (cVar2 == '\0') {
       pll.field_020[5] = pll.field_020[5] + 1;
@@ -41528,12 +41552,12 @@ void FUN_00047466(void)
   pll.field_3b0[0x21] = uVar1;
   pll.field_3b0[0x22] = uVar2;
   pll.field_3b0[0x23] = 1;
-  if (DAT_00102586 != '\0') {
-    if (DAT_00102585 == '\0') {
+  if (gps_ack_awaited != 0) {
+    if (gps_ack_ready == 0) {
       DAT_00102587 = 1;
     }
     else {
-      DAT_00102586 = '\0';
+      gps_ack_awaited = 0;
     }
   }
   pll.stage = 1;
@@ -41595,8 +41619,8 @@ void pllp_task(void)
   gps_ack_code = 1;
   DAT_0010254e = 0;
   DAT_0010254f = 0;
-  DAT_00102585 = '\0';
-  DAT_00102586 = '\0';
+  gps_ack_ready = 0;
+  gps_ack_awaited = 0;
   local_22 = 0;
   DAT_00102587 = '\0';
   DAT_00102588 = 0;
@@ -41647,7 +41671,7 @@ void pllp_task(void)
     FUN_00024976();
     FUN_00018600(local_6);
   }
-  FUN_00046524();
+  pll_stage_status();
   es_enabled = 1;
   pll.field_3b0[0x23] = 1;
   do {
@@ -41665,12 +41689,12 @@ void pllp_task(void)
     else {
       bVar2 = false;
       local_22 = pll.stage;
-      if (DAT_00102586 == '\x05') {
-        if (DAT_00102585 == '\0') {
+      if (gps_ack_awaited == 5) {
+        if (gps_ack_ready == 0) {
           DAT_00102587 = '\x01';
         }
         else {
-          DAT_00102586 = '\0';
+          gps_ack_awaited = 0;
         }
       }
       pll.field_3b0[0x24] = 0;
@@ -41699,7 +41723,7 @@ LAB_00047758:
     case 0x12:
       if (!bVar2) {
         _DAT_00102546 = 0;
-        FUN_00046524();
+        pll_stage_status();
         task_dmessage("PLL powerup\r\n");
       }
       cVar11 = FUN_00045e8e(bVar2);
@@ -41713,7 +41737,7 @@ LAB_000477b2:
       break;
     case 0x54:
       if (bVar2 == false) {
-        FUN_00046524();
+        pll_stage_status();
         task_dmessage("Went into powerup recovery\r\n");
         DAT_0010258e = 1;
       }
@@ -41728,7 +41752,7 @@ LAB_0004782e:
       break;
     case 0x92:
       if (bVar2 == false) {
-        FUN_00046524();
+        pll_stage_status();
         task_dmessage("Went into holdover\r\n");
       }
       cVar11 = FUN_00043a90(bVar2);
@@ -41737,7 +41761,7 @@ LAB_0004782e:
     case 0xc0:
       if (bVar2 == false) {
         _DAT_00102546 = 1;
-        FUN_00046524();
+        pll_stage_status();
         task_dmessage("Went into holdover recovery\r\n");
       }
       cVar11 = FUN_00043f9a(bVar2);
@@ -41749,7 +41773,7 @@ LAB_0004782e:
     case 0x100:
       if (bVar2 == false) {
         _DAT_00102546 = 1;
-        FUN_00046524();
+        pll_stage_status();
         task_dmessage("Went into PLL startup\r\n");
       }
       cVar11 = FUN_0004429e(bVar2);
@@ -41762,7 +41786,7 @@ LAB_0004782e:
       break;
     case 0x146:
       if (bVar2 == false) {
-        FUN_00046524();
+        pll_stage_status();
         task_dmessage("Went into PLL normal\r\n");
       }
       cVar11 = interval_average(bVar2);
@@ -41772,7 +41796,7 @@ LAB_0004782e:
       break;
     case 0x172:
       if (bVar2 == false) {
-        FUN_00046524();
+        pll_stage_status();
         pll.field_3b0[0x23] = 0;
         task_dmessage("Went into Diag\r\n");
       }
@@ -41783,20 +41807,20 @@ LAB_0004782e:
       break;
     case 0x19e:
       if (bVar2 == false) {
-        FUN_00046524();
+        pll_stage_status();
         task_dmessage("Went into Idle\r\n");
       }
       goto LAB_00047940;
     case 0x1b2:
       if (bVar2 == false) {
-        FUN_00046524();
+        pll_stage_status();
         task_dmessage("Went into fatal error\r\n");
       }
 LAB_00047940:
       psos_pause(0x400);
     }
     pll.field_3b0[0x20] = FUN_000407fa();
-    pll.field_3b0._28_4_ = FUN_000136f6();
+    pll.field_3b0._28_4_ = get_uptime();
     watchdog_pll = watchdog_pll + 1;
     FUN_00046470();
     if (DAT_00102542 != '\0') {
@@ -41810,20 +41834,20 @@ LAB_00047940:
         DAT_001025a8 = DAT_001025a8 + 1;
       }
       if (local_18 == '\x01') {
-        if (DAT_00102586 == '\0') {
+        if (gps_ack_awaited == 0) {
           DAT_001025a4 = DAT_001025a4 + 1;
         }
         gps_ack_code = local_17;
-        DAT_00102585 = '\x01';
+        gps_ack_ready = 1;
         _DAT_00102582 = 0;
         if (DAT_00102587 == '\0') {
-          if (DAT_00102586 == '\x04') {
-            DAT_00102586 = '\0';
+          if (gps_ack_awaited == 4) {
+            gps_ack_awaited = 0;
             task_dmessage("GPS command completed\r\n");
           }
         }
         else {
-          DAT_00102586 = '\0';
+          gps_ack_awaited = 0;
           DAT_00102587 = '\0';
         }
       }
@@ -41835,28 +41859,28 @@ LAB_00047940:
       }
       DAT_0010259c = DAT_0010259c + 1;
     }
-    if (DAT_00102586 != '\0') {
+    if (gps_ack_awaited != 0) {
       _DAT_00102582 = _DAT_00102582 + 1;
-      if ((_DAT_00102582 < 0xb) || (DAT_00102585 == '\0')) {
+      if ((_DAT_00102582 < 0xb) || (gps_ack_ready == 0)) {
         if (0x4b0 < _DAT_00102582) {
           gps_ack_code = 8;
-          DAT_00102585 = '\x01';
+          gps_ack_ready = 1;
           _DAT_00102582 = 0;
           task_dmessage("GPS acknowledgment timed out\r\n");
           if (DAT_00102587 == '\0') {
-            if (DAT_00102586 == '\x04') {
-              DAT_00102586 = '\0';
+            if (gps_ack_awaited == 4) {
+              gps_ack_awaited = 0;
               task_dmessage("GPS command completed\r\n");
             }
           }
           else {
-            DAT_00102586 = '\0';
+            gps_ack_awaited = 0;
             DAT_00102587 = '\0';
           }
         }
       }
       else {
-        DAT_00102586 = '\0';
+        gps_ack_awaited = 0;
       }
     }
     FUN_00046838();
@@ -41864,7 +41888,7 @@ LAB_00047940:
       FUN_00046e70();
     }
     FUN_00046d98();
-    if ((DAT_0010256c != '\0') && (DAT_00102586 == '\0')) {
+    if ((DAT_0010256c != '\0') && (gps_ack_awaited == 0)) {
       FUN_000470aa();
     }
     FUN_00043340();
@@ -44731,9 +44755,9 @@ bool FUN_0004aff2(uint *param_1,int *param_2)
 
 {
   uint uVar1;
-  uint uVar2;
+  uint32_t uVar2;
   
-  uVar2 = FUN_000136f6();
+  uVar2 = get_uptime();
   uVar1 = *param_1;
   if (uVar1 <= uVar2) {
     *param_2 = uVar2 - *param_1;
@@ -44748,50 +44772,50 @@ bool FUN_0004aff2(uint *param_1,int *param_2)
 
 /* 0004b01e */
 
-int FUN_0004b01e(void)
+uint32_t FUN_0004b01e(void)
 
 {
-  int iVar1;
+  uint32_t uVar1;
   short sVar2;
   char cVar3;
   uint uStack_8;
   
   if ((((gps.raim.raim_on != 1) || (gps.field_2f8[2] == 0)) || (gps.raim.raim_status == 2)) ||
-     (iVar1 = 1, gps.raim.solution_status == 2)) {
-    iVar1 = 0;
+     (uVar1 = 1, gps.raim.solution_status == 2)) {
+    uVar1 = 0;
   }
-  if (((char)iVar1 == '\0') ||
-     (iVar1 = (int)(char)gps.field_52a[0x11] - 3,
-     2 < (uint)(int)(char)gps.field_52a[0x11] && iVar1 != 0)) {
+  if (((char)uVar1 == '\0') ||
+     (uVar1 = (int)(char)gps.field_52a[0x11] - 3,
+     2 < (uint)(int)(char)gps.field_52a[0x11] && uVar1 != 0)) {
     gps.field_52a[0x11] = 0;
   }
   else {
-    sVar2 = (short)iVar1;
-    iVar1 = CONCAT22((short)((uint)iVar1 >> 0x10),(&WORD_0004b08c)[sVar2]);
+    sVar2 = (short)uVar1;
+    uVar1 = CONCAT22((short)(uVar1 >> 0x10),(&WORD_0004b08c)[sVar2]);
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0004b08c)[sVar2]) {
     case 8:
       if (gps.raim.solution_status != 0) {
         gps.field_52a[0x11] = 2;
-        iRam00101b4e = FUN_000136f6();
+        uRam00101b4e = get_uptime();
         gps_counts.raim_detected = gps_counts.raim_detected + 1;
-        return iRam00101b4e;
+        return uRam00101b4e;
       }
       break;
     case 0x22:
       if (gps.raim.solution_status != 1) {
-        return iVar1;
+        return uVar1;
       }
       gps.field_52a[0x11] = 2;
-      iRam00101b4e = FUN_000136f6();
+      uRam00101b4e = get_uptime();
       gps_counts.raim_detected = gps_counts.raim_detected + 1;
-      return iRam00101b4e;
+      return uRam00101b4e;
     case 0x3e:
       if (gps.raim.solution_status != 0) {
         cVar3 = FUN_0004aff2(0x101b4e,&uStack_8);
         if (cVar3 == '\0') {
-          iRam00101b4e = FUN_000136f6();
-          return iRam00101b4e;
+          uRam00101b4e = get_uptime();
+          return uRam00101b4e;
         }
         if (uStack_8 < 4) {
           return uStack_8 - 4;
@@ -44803,12 +44827,12 @@ int FUN_0004b01e(void)
       break;
     case 0x72:
       if (gps.raim.solution_status != 0) {
-        return iVar1;
+        return uVar1;
       }
     }
     gps.field_52a[0x11] = 1;
   }
-  return iVar1;
+  return uVar1;
 }
 
 
@@ -44892,7 +44916,7 @@ void FUN_0004b168(char param_1,undefined1 param_2)
                     /* WARNING: Switch is manually overridden */
     switch(gps.field_52a[2]) {
     default:
-      gps.field_52a._4_4_ = FUN_000136f6();
+      gps.field_52a._4_4_ = get_uptime();
       gps.field_52a[2] = 5;
       break;
     case 5:
@@ -45019,7 +45043,7 @@ LAB_0004b4d2:
       else if (gps.field_52a[0x1e] != 0) {
         gps.field_52a[0x1f] = 1;
         gps_counts.command_monitor_failures = gps_counts.command_monitor_failures + 1;
-        gps.field_52a._26_4_ = FUN_000136f6();
+        gps.field_52a._26_4_ = get_uptime();
         gps.field_52a[0x15] = 2;
       }
       break;
@@ -45055,7 +45079,7 @@ LAB_0004b4d2:
             }
           }
         }
-        gps.field_52a._26_4_ = FUN_000136f6();
+        gps.field_52a._26_4_ = get_uptime();
         gps.field_52a[0x15] = 2;
       }
     }
@@ -45076,7 +45100,7 @@ LAB_0004b4d2:
       gps.field_52a[0x29] = 0xff;
       gps.field_52a[0x2a] = 0;
       DAT_00101b54 = '\0';
-      gps.field_52a._34_4_ = FUN_000136f6();
+      gps.field_52a._34_4_ = get_uptime();
       puVar3 = &DAT_00101b55;
       break;
     case 0x2a:
@@ -45087,7 +45111,7 @@ LAB_0004b4d2:
           if ((DAT_00101b54 == '\0') && (DAT_00101b55 == '\0')) {
             if (cVar4 == '\0') {
               DAT_00101b54 = '\0';
-              gps.field_52a._34_4_ = FUN_000136f6();
+              gps.field_52a._34_4_ = get_uptime();
             }
           }
           else {
@@ -45095,7 +45119,7 @@ LAB_0004b4d2:
               gps.field_52a[0x2c] = 0;
               gps.field_0cc[0] = 1;
               DAT_00101b54 = '\0';
-              gps.field_52a._34_4_ = FUN_000136f6();
+              gps.field_52a._34_4_ = get_uptime();
               gps.field_52a[0x2b] = 0;
               if (gps.status._4_4_ == gps.field_52a._38_4_) {
                 gps.field_52a[0x2a] = gps.field_52a[0x2a] + 1;
@@ -45147,7 +45171,7 @@ LAB_0004b4d2:
       gps.field_52a[0x29] = 0xff;
       gps.field_52a[0x2a] = 0;
       DAT_00101b54 = '\0';
-      gps.field_52a._34_4_ = FUN_000136f6();
+      gps.field_52a._34_4_ = get_uptime();
       DAT_00101b55 = '\0';
       puVar3 = &DAT_0010142a;
     }
@@ -45320,7 +45344,7 @@ undefined4 FUN_0004b9a6(short param_1,undefined4 param_2)
 
 /* WARNING: Unknown calling convention */
 
-bool FUN_0004b9e6(char param_1,int param_2)
+bool gps_count_response(char param_1,int param_2)
 
 {
   int iVar1;
@@ -45611,7 +45635,7 @@ void FUN_0004bc74(char param_1,int param_2,int param_3)
     while( true ) {
       *(undefined1 *)((int)piVar2 + -2) = 2;
       *(undefined4 *)((int)piVar2 + -6) = 0x4bcaa;
-      FUN_0004b9e6(*(char *)((int)piVar2 + -2),*piVar2);
+      gps_count_response(*(char *)((int)piVar2 + -2),*piVar2);
       piVar3 = piVar2 + 1;
 LAB_0004bcac:
       piVar2 = (int *)((int)piVar3 + -4);
@@ -45638,14 +45662,14 @@ LAB_0004bcac:
       }
       else {
         FUN_0004bb4e();
-        FUN_0004b9e6('\x05',(int)auStack_1e);
+        gps_count_response('\x05',(int)auStack_1e);
       }
     }
     FUN_0004baba();
   }
   else {
 LAB_0004bd18:
-    FUN_0004b9e6('\x05',param_2);
+    gps_count_response('\x05',param_2);
   }
   return;
 }
@@ -45872,7 +45896,7 @@ void gpsm_task(void)
   char cStack_8a;
   byte bStack_89;
   undefined1 auStack_88 [80];
-  undefined4 uStack_38;
+  uint32_t uStack_38;
   char local_34;
   char local_33;
   char cStack_32;
@@ -45884,7 +45908,7 @@ void gpsm_task(void)
   byte bStack_10;
   char cStack_f;
   undefined1 local_e;
-  undefined4 local_c;
+  uint32_t local_c;
   uint local_8;
   
   FUN_0004bf3a();
@@ -45899,12 +45923,12 @@ void gpsm_task(void)
       gps_counts.received = gps_counts.received + 1;
       cVar6 = FUN_0004bc58(local_d6);
       if (cVar6 == '\0') {
-        FUN_0004b9e6('\x03',(int)auStack_de);
+        gps_count_response('\x03',(int)auStack_de);
       }
       else {
         cVar6 = FUN_0004bdba(local_d4,local_d2);
         if (cVar6 == '\x03') {
-          FUN_0004b9e6('\x04',(int)auStack_de);
+          gps_count_response('\x04',(int)auStack_de);
         }
         else {
           FUN_0004bc74(DAT_0010139c,(int)auStack_de,(int)&uStack_aa);
@@ -45992,7 +46016,7 @@ void gpsm_task(void)
                                            (char)uStack_9a),uStack_a2._0_1_);
             }
             bVar8 = (byte)&uStack_aa;
-            FUN_0004b9e6('\0',(int)&uStack_aa);
+            gps_count_response('\0',(int)&uStack_aa);
           }
 LAB_0004c17a:
           gps_last_command = &uStack_aa;
@@ -46007,7 +46031,7 @@ LAB_0004c17a:
         }
         if (*ppuStack_90 == (undefined *)0x0) {
           bVar8 = (byte)&uStack_aa;
-          FUN_0004b9e6('\0',(int)&uStack_aa);
+          gps_count_response('\0',(int)&uStack_aa);
           DAT_0010139c = '\0';
         }
         else {
@@ -46029,7 +46053,7 @@ LAB_0004c17a:
               if (sVar5 < 0) goto LAB_0004c1e6;
               if (cStack_9e == '\0') {
                 bVar8 = (byte)&uStack_aa;
-                FUN_0004b9e6('\x06',(int)&uStack_aa);
+                gps_count_response('\x06',(int)&uStack_aa);
                 pcVar9 = " // command not supported //\n";
                 pcVar10 = &gps_last_issued;
                 do {
@@ -46041,7 +46065,7 @@ LAB_0004c17a:
               }
               else {
                 bVar8 = (byte)&uStack_aa;
-                FUN_0004b9e6('\a',(int)&uStack_aa);
+                gps_count_response('\a',(int)&uStack_aa);
                 pcVar9 = " // query form not supported //\n";
                 pcVar10 = &gps_last_issued;
                 do {
@@ -46063,7 +46087,7 @@ LAB_0004c17a:
                      CONCAT31(CONCAT21(CONCAT11(sVar5 >> 0xf,sVar5 >> 0xf),
                                        (char)((ushort)sVar5 >> 8)),bVar7));
               FUN_0001e18a(&DAT_001011c6,sVar5);
-              uStack_38 = FUN_000136f6();
+              uStack_38 = get_uptime();
               bStack_10 = bStack_10 + 1;
               gps_counts.commands_sent = gps_counts.commands_sent + 1;
               FUN_0004fdca(&DAT_001011c6,bVar7,&gps_last_issued);
@@ -46090,7 +46114,7 @@ LAB_0004c1e6:
           else {
             gps.field_52a[0x1e] = 1;
             bVar8 = (byte)&uStack_aa;
-            FUN_0004b9e6('\b',(int)&uStack_aa);
+            gps_count_response('\b',(int)&uStack_aa);
             DAT_0010139c = '\0';
           }
         }
@@ -46112,7 +46136,7 @@ LAB_0004c1e6:
                                    (ushort)bStack_2a);
               if (cVar6 == '\x01') {
                 gps.field_52a[0x1e] = 1;
-                FUN_0004b9e6('\x01',(int)&uStack_aa);
+                gps_count_response('\x01',(int)&uStack_aa);
                 DAT_0010139c = '\0';
               }
               else {
@@ -46142,7 +46166,7 @@ LAB_0004c1e6:
         ((uint)(int)DAT_001011c5 <= local_8)))) {
       FUN_0004a636(0x2c);
       FUN_0004a8ea(&DAT_0010142c,'\x01',console_write,printf);
-      local_c = FUN_000136f6();
+      local_c = get_uptime();
       if (DAT_001011c5 < '\0') {
         cVar6 = DAT_001011c5 >> 7;
         iVar4 = abs(CONCAT31(CONCAT21(CONCAT11(cVar6,cVar6),cVar6),DAT_001011c5));

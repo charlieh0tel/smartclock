@@ -160,6 +160,10 @@ the image, so no more ours than the image is; machine output, named
 where the project's notes and tables establish a name, not reviewed.
 
   z3805a-3543b.c     Z3805A 3543B, every function in address order.
+  z3805a-3543b.conventions.jsonl
+                     the same functions, one JSON object a line: each
+                     one's note and calling convention, from the names
+                     file and the scripts, or "unknown".
 
 The Ghidra project those were exported from, in `firmware/ghidra/`, as a
 Ghidra archive, derived from the images the same way:

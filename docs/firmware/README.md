@@ -325,21 +325,36 @@ overlay is written `installer::0x...`.  A row's fields are the address,
 `function` or `label`, the name and its source -- the note it cites,
 with `run` or `read` for how a routine was confirmed, or `context` for a
 name read from its callers -- and then, each optional, a note saying
-what it is or does, a function's prototype or a label's type, and a
-function's comment.  A function's note, comment and source make the
-comment the decompiler prints above its C; `context` is left out.
+what it is or does, a C function's prototype or a label's type, and a
+function's calling convention.
 
-Every routine that is not a C function says so in that comment, and how
-it is called, since its C cannot: what it reads in which registers and
-what it returns where.  The names file gives the comment for the
-floating-point library's register routines, the SCPI number engine, the
-kernel's services and its internal routines (for most of these only
-that they are not C, so far), the binding's `psos_call`, `psos_io_call`
-and `psos_pack_name`, and `mutex_acquire` and `mutex_release`.
-`SmartClockForth.java` adds a line to the comment of each routine of the
-pForth kernel that uses its registers, and `SmartClockSetup.java` one to
-each exception handler's, naming the vectors that enter it and how it
-returns, unless the comment says already that the routine is not C.
+The convention is `key=value` pairs, which the names file's header sets
+out: its kind (`c`, `register`, `exception`, `pforth`, `psos-service`,
+`other` or `undetermined`), a confidence (`run`, `read`, `documented`,
+`derived` or `assumed`, strongest first, with `KEY.confidence` for one
+key weaker than the rest), the registers `in` and `out` with their
+types and names, `returns=ccr` for the condition codes, the `error`
+values, the registers it `preserves` and its `family`.  A function
+without one is unknown.  At `run`, `read` or `documented`, the
+function's prototype is built from `in` and `out`, so its C shows its
+real arguments; below that, it gets only the comment and the tag, so
+the C never shows guessed ones.  A prototype field takes no `@`: the
+registers go in the convention.
+
+A function's note, its convention's line and its source make the
+comment the decompiler prints above its C, `context` left out.  Every
+function that is not C opens that line "Not a C function", with its
+kind and confidence, and carries the Ghidra tag `not-c`.
+`SmartClockForth.java` gives each routine of the pForth kernel that uses
+its registers the convention `pforth`, and `SmartClockSetup.java` each
+exception handler `exception`, naming the vectors that enter it and how
+it returns, unless the names file gives one.  `SmartClockExportC.java`
+writes them all beside the C, in
+`third_party/firmware/decompiled/z3805a-3543b.conventions.jsonl`: one
+JSON object a line for every function, its address, name, note and
+convention, with its lists split into register, type and name, or
+`"convention":"unknown"`.  `jq 'select(.convention != "unknown" and
+.confidence != "run")'` lists what is left to confirm.
 
 SCPI handlers are named `scpi_query_PATH` and `scpi_set_PATH`, console
 words `forth_WORD` and `diag_WORD`, and each has a note saying so -- the

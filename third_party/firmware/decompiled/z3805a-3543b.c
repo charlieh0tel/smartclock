@@ -3667,47 +3667,51 @@ void FUN_00010400(void)
 
 /* 0001043a */
 
+/* WARNING: Unknown calling convention */
 /* recursive lock, owner at +8, count at +0xc, a token through request_x when not already owned
-   Not a C function: the mutex in A1.  Takes it for the running task, waiting if another holds it,
-   or counts one more hold if the task holds it already.  Returns the error in D7, 0x80 for a nested
-   hold.  Preserves D0, D1, A0 and A2. */
+   Not a C function (register; read): its arguments and results in registers.  In: A1 void *mutex.
+   Out: D7 int error.  Error: D7 0x80 nested hold.  Preserves: D0, D1, A0, A2. */
 
-undefined8 mutex_acquire(void)
+int mutex_acquire(void *mutex)
 
 {
-  undefined4 in_D0;
-  undefined4 in_D1;
+  int iVar1;
   int extraout_A0;
   int extraout_A1;
   int extraout_A1_00;
-  bool bVar1;
+  bool bVar2;
   
   psos_call();
   if (extraout_A0 == *(int *)(extraout_A1 + 8)) {
+    iVar1 = 0x80;
     *(int *)(extraout_A1 + 0xc) = *(int *)(extraout_A1 + 0xc) + 1;
   }
-  else if (*(int *)(extraout_A1 + 4) != 0) {
-    bVar1 = false;
+  else if (*(int *)(extraout_A1 + 4) == 0) {
+    iVar1 = 1;
+  }
+  else {
+    iVar1 = 0x18;
+    bVar2 = false;
     psos_call();
-    if (bVar1) {
+    if (bVar2) {
       *(int *)(extraout_A1_00 + 8) = extraout_A0;
     }
   }
-  return CONCAT44(in_D0,in_D1);
+  return iVar1;
 }
 
 
 /* 00010484 */
 
+/* WARNING: Unknown calling convention */
 /* drops the count, or the owner and the token through send_x
-   Not a C function: the mutex in A1.  Releases one hold, freeing the mutex at the last.  Returns
-   the error in D7, 2 if the running task does not hold it, 0x80 if holds remain.  Preserves D0 and
-   A0. */
+   Not a C function (register; read): its arguments and results in registers.  In: A1 void *mutex.
+   Out: D7 int error.  Error: D7 2 not held, D7 0x80 holds remain.  Preserves: D0, A0. */
 
-undefined4 mutex_release(void)
+int mutex_release(void *mutex)
 
 {
-  undefined4 in_D0;
+  int iVar1;
   int extraout_A0;
   int extraout_A1;
   
@@ -3715,13 +3719,18 @@ undefined4 mutex_release(void)
   if (extraout_A0 == *(int *)(extraout_A1 + 8)) {
     if (*(int *)(extraout_A1 + 0xc) == 0) {
       *(undefined4 *)(extraout_A1 + 8) = 0;
+      iVar1 = 0x17;
       psos_call();
     }
     else {
+      iVar1 = 0x80;
       *(int *)(extraout_A1 + 0xc) = *(int *)(extraout_A1 + 0xc) + -1;
     }
   }
-  return in_D0;
+  else {
+    iVar1 = 2;
+  }
+  return iVar1;
 }
 
 
@@ -3769,10 +3778,10 @@ int mutex_create(char *name,void *mutex)
 int mutex_lock(void *mutex)
 
 {
-  int unaff_D7;
+  int iVar1;
   
-  mutex_acquire();
-  return unaff_D7;
+  iVar1 = mutex_acquire(mutex);
+  return iVar1;
 }
 
 
@@ -3783,10 +3792,10 @@ int mutex_lock(void *mutex)
 int mutex_unlock(void *mutex)
 
 {
-  int unaff_D7;
+  int iVar1;
   
-  mutex_release();
-  return unaff_D7;
+  iVar1 = mutex_release(mutex);
+  return iVar1;
 }
 
 
@@ -6183,8 +6192,6 @@ byte FUN_0001339e(ulong param_1,byte param_2)
 /* 000133e2 */
 
 /* absolute value of the float on the stack
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
    softfloat.md */
 
 float float_absolute_on_stack(float f)
@@ -7950,24 +7957,26 @@ void primary_trap_3(undefined2 param_1)
 /* 00014ab2 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* WARNING: Unknown calling convention */
 /* Not a C function: an exception handler, entered by the processor through the primary table's
    vector 36 (trap_4), not called. */
 
-void primary_trap_4(void)
+void primary_trap_4(char function,int device)
 
 {
   int *piVar1;
-  ushort in_D0w;
-  ushort unaff_D7w;
+  ushort uVar2;
+  undefined1 unaff_0000001e;
   
-  if (unaff_D7w < 6) {
+  uVar2 = (ushort)device;
+  if (CONCAT11(unaff_0000001e,function) < 6) {
     piVar1 = (int *)(psos_config + 0x30);
     if (*piVar1 != 0) {
       *(short *)(psos_config + 0x24) = *(short *)(psos_config + 0x24) + 1;
-      in_D0w = (**(code **)(*piVar1 + 4))();
+      uVar2 = (**(code **)(*piVar1 + 4))();
       *(short *)(psos_config + 0x24) = *(short *)(psos_config + 0x24) + -1;
     }
-    if (in_D0w >> 8 <= _DAT_0010266e) {
+    if (uVar2 >> 8 <= _DAT_0010266e) {
       return;
     }
   }
@@ -8162,9 +8171,8 @@ void primary_trap_5(ushort param_1)
 
 /* trap #3: the service in D7, 0 to 0x26, through the bra.w table at 0x14b6e; error 0x55 for any
    other
-   Not a C function: the trap #3 handler: the service in D7, its arguments in D0 to D3, A0 and A1.
-   Calls the service's handler through the table at 0x14b6e and returns with rte, the error in D7.b
-   and the results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (exception; documented): entered by the processor, not called.  In: D7 char
+   service, D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_dispatch_service(undefined2 param_1)
@@ -8319,26 +8327,28 @@ void kernel_dispatch_service(undefined2 param_1)
 /* 00014c0a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* WARNING: Unknown calling convention */
 /* trap #4: I/O function 0 to 5 in D7, the device in D0's high byte
-   Not a C function: the trap #4 handler: the I/O function, 0 to 5, in D7 and the device in the high
-   byte of D0.  Returns with rte (psos.md).
+   Not a C function (exception; documented): entered by the processor, not called.  In: D7 char
+   function, D0 int device.
    psos.md */
 
-void kernel_dispatch_io(void)
+void kernel_dispatch_io(char function,int device)
 
 {
   int *piVar1;
-  ushort in_D0w;
-  ushort unaff_D7w;
+  ushort uVar2;
+  undefined1 unaff_0000001e;
   
-  if (unaff_D7w < 6) {
+  uVar2 = (ushort)device;
+  if (CONCAT11(unaff_0000001e,function) < 6) {
     piVar1 = (int *)(psos_config + 0x30);
     if (*piVar1 != 0) {
       *(short *)(psos_config + 0x24) = *(short *)(psos_config + 0x24) + 1;
-      in_D0w = (**(code **)(*piVar1 + 4))();
+      uVar2 = (**(code **)(*piVar1 + 4))();
       *(short *)(psos_config + 0x24) = *(short *)(psos_config + 0x24) + -1;
     }
-    if (in_D0w >> 8 <= _DAT_0010266e) {
+    if (uVar2 >> 8 <= _DAT_0010266e) {
       return;
     }
   }
@@ -8350,8 +8360,8 @@ void kernel_dispatch_io(void)
 
 /* on the way out of the kernel: runs pending ticks, saves the running task's registers in its
    record and switches to the first ready
-   Not a C function: branched to from the service dispatch on its way out, never called: saves the
-   running task's registers in its record and resumes the first ready task with rte.
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
    psos.md */
 
 void kernel_switch_task(void)
@@ -8485,8 +8495,7 @@ void kernel_switch_task(void)
 
 /* one clock tick: advances the date, runs the tick hook, wakes the tasks whose delays expire and
    ends the running task's time slice
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_process_ticks(void)
@@ -8554,10 +8563,9 @@ LAB_00014d58:
 /* 00014da2 */
 
 /* service 0
-   Not a C function: the kernel's handler for service 0, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_service_0(void)
@@ -8570,10 +8578,9 @@ void kernel_service_0(void)
 /* 00014dac */
 
 /* service 1, psos_create
-   Not a C function: the kernel's handler for service 1, psos_create's, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_create(void)
@@ -8652,22 +8659,23 @@ void kernel_create(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* service 2, psos_start
-   Not a C function: the kernel's handler for service 2, psos_start's, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_start(void)
 
 {
-  int extraout_A0;
+  int in_A0;
+  void *pvVar1;
   undefined4 extraout_A1;
+  undefined4 *unaff_A6;
   undefined1 in_ZF;
   
-  kernel_check_task();
-  if (((bool)in_ZF) && (*(char *)(extraout_A0 + 0x13) < '\0')) {
-    *(undefined4 *)(extraout_A0 + 0x3e) = extraout_A1;
+  pvVar1 = kernel_check_task(in_A0,(void *)*unaff_A6);
+  if (((bool)in_ZF) && (*(char *)((int)pvVar1 + 0x13) < '\0')) {
+    *(undefined4 *)((int)pvVar1 + 0x3e) = extraout_A1;
     kernel_make_ready();
     if (_DAT_00102682 != (code *)0x0) {
       (*_DAT_00102682)();
@@ -8680,10 +8688,9 @@ void kernel_start(void)
 /* 00014ed2 */
 
 /* service 3, psos_ident
-   Not a C function: the kernel's handler for service 3, psos_ident's, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_ident(void)
@@ -8709,10 +8716,9 @@ void kernel_ident(void)
 /* 00014ef8 */
 
 /* service 4, psos_delete
-   Not a C function: the kernel's handler for service 4, psos_delete's, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 undefined8 kernel_delete(void)
@@ -8721,13 +8727,13 @@ undefined8 kernel_delete(void)
   int iVar1;
   int *piVar2;
   short unaff_D7w;
-  int *extraout_A0;
-  int *extraout_A0_00;
+  int in_A0;
   int *piVar3;
-  int extraout_A0_01;
+  int *extraout_A0;
+  int extraout_A0_00;
   int *extraout_A1;
   int *piVar4;
-  int *unaff_A6;
+  undefined4 *unaff_A6;
   undefined8 *puVar5;
   undefined1 in_ZF;
   bool bVar6;
@@ -8735,10 +8741,10 @@ undefined8 kernel_delete(void)
   undefined1 local_10 [16];
   
   puVar5 = (undefined8 *)local_10;
-  kernel_check_task();
+  piVar3 = kernel_check_task(in_A0,(void *)*unaff_A6);
   if (((bool)in_ZF) &&
-     ((piVar3 = extraout_A0, DAT_00102692 == (int *)0x0 ||
-      ((**(code **)(*DAT_00102692 + 8))(), piVar3 = extraout_A0_00, unaff_D7w == 0)))) {
+     ((DAT_00102692 == (int *)0x0 ||
+      ((**(code **)(*DAT_00102692 + 8))(), piVar3 = extraout_A0, unaff_D7w == 0)))) {
     if (piVar3 == (int *)*unaff_A6) {
       iVar1 = unaff_A6[8];
       puVar5 = (undefined8 *)(iVar1 + -0x28);
@@ -8762,14 +8768,14 @@ undefined8 kernel_delete(void)
       if (!bVar6) {
         piVar3[7] = *extraout_A1;
         *extraout_A1 = unaff_A6[7];
-        unaff_A6[7] = (int)extraout_A1;
+        unaff_A6[7] = extraout_A1;
       }
     }
     while (bVar6 = piVar3[8] == 0, !bVar6) {
       *(undefined4 *)((int)puVar5 + -4) = 0x14fac;
       kernel_free_for_task();
       if (!bVar6) {
-        piVar3[8] = *(int *)(extraout_A0_01 + -0x12);
+        piVar3[8] = *(int *)(extraout_A0_00 + -0x12);
       }
     }
     piVar2 = unaff_A6 + -9;
@@ -8781,7 +8787,7 @@ undefined8 kernel_delete(void)
     piVar4[0xc] = piVar3[0xc];
 LAB_00014fce:
     piVar3[0xc] = unaff_A6[4];
-    unaff_A6[4] = (int)piVar3;
+    unaff_A6[4] = piVar3;
     *(undefined4 *)((int)puVar5 + -4) = 0x14fea;
     kernel_signal_task();
     if (DAT_00102686 != (code *)0x0) {
@@ -8796,33 +8802,30 @@ LAB_00014fce:
 /* 00015004 */
 
 /* service 5, psos_suspend
-   Not a C function: the kernel's handler for service 5, psos_suspend's, reached from trap #3
-   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
-   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_suspend(void)
 
 {
-  int extraout_A0;
-  int extraout_A0_00;
-  int iVar1;
+  int in_A0;
+  void *pvVar1;
+  void *extraout_A0;
+  undefined4 *unaff_A6;
   undefined1 in_ZF;
   
-  kernel_check_task();
+  pvVar1 = kernel_check_task(in_A0,(void *)*unaff_A6);
   if ((bool)in_ZF) {
-    if (*(byte *)(extraout_A0 + 0x13) == 0) {
+    if (*(byte *)((int)pvVar1 + 0x13) == 0) {
       kernel_queue_remove();
-      iVar1 = extraout_A0_00;
+      pvVar1 = extraout_A0;
     }
-    else {
-      iVar1 = extraout_A0;
-      if ((*(byte *)(extraout_A0 + 0x13) & 4) != 0) {
-        return;
-      }
+    else if ((*(byte *)((int)pvVar1 + 0x13) & 4) != 0) {
+      return;
     }
-    *(byte *)(iVar1 + 0x13) = *(byte *)(iVar1 + 0x13) | 4;
+    *(byte *)((int)pvVar1 + 0x13) = *(byte *)((int)pvVar1 + 0x13) | 4;
   }
   return;
 }
@@ -8832,24 +8835,25 @@ void kernel_suspend(void)
 
 /* WARNING: Removing unreachable block (ram,0x00015042) */
 /* service 6, psos_resume
-   Not a C function: the kernel's handler for service 6, psos_resume's, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_resume(void)
 
 {
   byte bVar1;
-  int extraout_A0;
-  bool bVar2;
+  int in_A0;
+  void *pvVar2;
+  undefined4 *unaff_A6;
+  bool bVar3;
   
-  bVar2 = true;
-  kernel_check_task();
-  if (((bVar2) &&
-      (bVar1 = *(byte *)(extraout_A0 + 0x13) & 0xfb, (*(byte *)(extraout_A0 + 0x13) & 4) != 0)) &&
-     (*(byte *)(extraout_A0 + 0x13) = bVar1, bVar1 == 0)) {
+  bVar3 = true;
+  pvVar2 = kernel_check_task(in_A0,(void *)*unaff_A6);
+  if (((bVar3) &&
+      (bVar1 = *(byte *)((int)pvVar2 + 0x13) & 0xfb, (*(byte *)((int)pvVar2 + 0x13) & 4) != 0)) &&
+     (*(byte *)((int)pvVar2 + 0x13) = bVar1, bVar1 == 0)) {
     kernel_make_ready();
   }
   return;
@@ -8859,59 +8863,55 @@ void kernel_resume(void)
 /* 0001507a */
 
 /* service 7, psos_priority
-   Not a C function: the kernel's handler for service 7, psos_priority's, reached from trap #3
-   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
-   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-ushort kernel_priority(void)
+void kernel_priority(void)
 
 {
-  ushort uVar1;
-  short sVar2;
-  ushort uVar3;
+  short extraout_D0w;
+  short sVar1;
   short in_D1w;
-  ushort extraout_D1w;
-  int extraout_A0;
-  bool bVar4;
+  int in_A0;
+  void *pvVar2;
+  undefined4 *unaff_A6;
+  bool bVar3;
   
-  bVar4 = in_D1w == 0;
-  uVar1 = kernel_check_task();
-  if (!bVar4) {
-    return uVar1;
+  bVar3 = in_D1w == 0;
+  pvVar2 = kernel_check_task(in_A0,(void *)*unaff_A6);
+  if (!bVar3) {
+    return;
   }
-  uVar3 = (ushort)*(byte *)(extraout_A0 + 0x10);
-  if (uVar1 == 0) {
-    return uVar3;
+  if (extraout_D0w == 0) {
+    return;
   }
-  sVar2 = uVar3 + uVar1;
-  if (!SCARRY2(uVar3,uVar1)) {
-    if (sVar2 < 1) {
-      sVar2 = 1;
+  sVar1 = (ushort)*(byte *)((int)pvVar2 + 0x10) + extraout_D0w;
+  if (!SCARRY2((ushort)*(byte *)((int)pvVar2 + 0x10),extraout_D0w)) {
+    if (sVar1 < 1) {
+      sVar1 = 1;
       goto LAB_000150ae;
     }
-    if (sVar2 < 0x100) goto LAB_000150ae;
+    if (sVar1 < 0x100) goto LAB_000150ae;
   }
-  sVar2 = 0xff;
+  sVar1 = 0xff;
 LAB_000150ae:
-  *(char *)(extraout_A0 + 0x10) = (char)sVar2;
-  if (*(char *)(extraout_A0 + 0x13) == '\0') {
+  *(char *)((int)pvVar2 + 0x10) = (char)sVar1;
+  if (*(char *)((int)pvVar2 + 0x13) == '\0') {
     kernel_queue_remove();
     kernel_ready_insert();
-    uVar3 = extraout_D1w;
   }
-  return uVar3;
+  return;
 }
 
 
 /* 000150da */
 
 /* service 8: kernel_allocate_for_task for the running task
-   Not a C function: the kernel's handler for service 8, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_allocate_segment(void)
@@ -8947,8 +8947,7 @@ void kernel_allocate_segment(void)
 
 /* for the task in A5, allocates from a region through kernel_allocate, or queues the task to wait,
    with a timeout, when it cannot; kernel_create calls it too
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_allocate_for_task(void)
@@ -8982,10 +8981,9 @@ void kernel_allocate_for_task(void)
 /* 00015130 */
 
 /* service 9: kernel_free_for_task for the running task
-   Not a C function: the kernel's handler for service 9, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_free_segment(void)
@@ -8997,6 +8995,7 @@ void kernel_free_segment(void)
   ushort uVar4;
   uint uVar5;
   short sVar6;
+  int in_A0;
   int *extraout_A0;
   undefined4 extraout_A0_00;
   int *piVar7;
@@ -9006,7 +9005,7 @@ void kernel_free_segment(void)
   bool bVar9;
   
   iVar1 = *unaff_A6;
-  kernel_check_segment();
+  kernel_check_segment((void *)(in_A0 + -0x12));
   if (!(bool)in_ZF) {
     return;
   }
@@ -9105,8 +9104,7 @@ LAB_00015206:
 
 /* checks a segment by kernel_check_segment and frees it, then satisfies the tasks waiting for
    memory; kernel_delete calls it
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_free_for_task(void)
@@ -9118,6 +9116,7 @@ void kernel_free_for_task(void)
   ushort uVar4;
   uint uVar5;
   short sVar6;
+  int in_A0;
   int *extraout_A0;
   undefined4 extraout_A0_00;
   int *piVar7;
@@ -9128,7 +9127,7 @@ void kernel_free_for_task(void)
   undefined1 in_ZF;
   bool bVar10;
   
-  kernel_check_segment();
+  kernel_check_segment((void *)(in_A0 + -0x12));
   if (!(bool)in_ZF) {
     return;
   }
@@ -9227,8 +9226,7 @@ LAB_00015206:
 
 /* allocates D1 bytes from region 0 or 1 as D2 selects, falling back to the other, and links it to
    the task's list
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_allocate(void)
@@ -9266,8 +9264,7 @@ LAB_00015288:
 /* 0001529c */
 
 /* first fit from region D6's free list, stamping the segment 0xe1d0
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_region_allocate(void)
@@ -9331,40 +9328,40 @@ void kernel_region_allocate(void)
 
 /* WARNING: Removing unreachable block (ram,0x00015346) */
 /* service 10
-   Not a C function: the kernel's handler for service 10, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_service_10(void)
 
 {
-  int iVar1;
-  int *piVar2;
+  void *running;
+  int *piVar1;
   int *extraout_A0;
   int in_A1;
+  void *segment;
   int extraout_A1;
-  int *piVar3;
-  int *unaff_A6;
-  bool bVar4;
+  int *piVar2;
+  undefined4 *unaff_A6;
+  bool bVar3;
   
-  bVar4 = in_A1 == 0;
-  iVar1 = *unaff_A6;
-  kernel_check_task();
-  if (bVar4) {
-    bVar4 = true;
-    kernel_check_segment();
-    if (bVar4) {
-      piVar2 = (int *)(iVar1 + 0x20);
+  bVar3 = in_A1 == 0;
+  running = (void *)*unaff_A6;
+  kernel_check_task(in_A1,running);
+  if (bVar3) {
+    bVar3 = true;
+    kernel_check_segment(segment);
+    if (bVar3) {
+      piVar1 = (int *)((int)running + 0x20);
       do {
-        piVar3 = piVar2;
-        piVar2 = (int *)*piVar3;
-        if (piVar2 == (int *)0x0) {
+        piVar2 = piVar1;
+        piVar1 = (int *)*piVar2;
+        if (piVar1 == (int *)0x0) {
           return;
         }
-      } while (extraout_A0 != piVar2);
-      *piVar3 = *extraout_A0;
+      } while (extraout_A0 != piVar1);
+      *piVar2 = *extraout_A0;
       *extraout_A0 = *(int *)(extraout_A1 + 0x20);
       *(int **)(extraout_A1 + 0x20) = extraout_A0;
     }
@@ -9376,40 +9373,41 @@ void kernel_service_10(void)
 /* 0001532a */
 
 /* service 16
-   Not a C function: the kernel's handler for service 16, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_service_16(void)
 
 {
   int *piVar1;
-  int extraout_A0;
-  int *extraout_A0_00;
+  void *pvVar2;
+  int *extraout_A0;
   int in_A1;
+  void *segment;
   int extraout_A1;
-  int *piVar2;
-  bool bVar3;
+  int *piVar3;
+  undefined4 *unaff_A6;
+  bool bVar4;
   
-  bVar3 = in_A1 == 0;
-  kernel_check_task();
-  if (bVar3) {
-    bVar3 = false;
-    kernel_check_segment();
-    if (bVar3) {
-      piVar1 = (int *)(extraout_A0 + 0x20);
+  bVar4 = in_A1 == 0;
+  pvVar2 = kernel_check_task(in_A1,(void *)*unaff_A6);
+  if (bVar4) {
+    bVar4 = false;
+    kernel_check_segment(segment);
+    if (bVar4) {
+      piVar1 = (int *)((int)pvVar2 + 0x20);
       do {
-        piVar2 = piVar1;
-        piVar1 = (int *)*piVar2;
+        piVar3 = piVar1;
+        piVar1 = (int *)*piVar3;
         if (piVar1 == (int *)0x0) {
           return;
         }
-      } while (extraout_A0_00 != piVar1);
-      *piVar2 = *extraout_A0_00;
-      *extraout_A0_00 = *(int *)(extraout_A1 + 0x20);
-      *(int **)(extraout_A1 + 0x20) = extraout_A0_00;
+      } while (extraout_A0 != piVar1);
+      *piVar3 = *extraout_A0;
+      *extraout_A0 = *(int *)(extraout_A1 + 0x20);
+      *(int **)(extraout_A1 + 0x20) = extraout_A0;
     }
   }
   return;
@@ -9418,25 +9416,28 @@ void kernel_service_16(void)
 
 /* 0001537a */
 
+/* WARNING: Unknown calling convention */
 /* services 11 to 15, 17 and 34: clears D7 and returns
-   Not a C function: the handler for services 11 to 15, 17 and 34, reached from trap #3 through
-   kernel_dispatch_service: clears D7.b, so the call succeeds and does nothing.
+   Not a C function (psos-service; read): a pSOS kernel service, reached from trap #3 through the
+   kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  Out: D7
+   char error.
    psos.md */
 
-void kernel_service_none(void)
+char kernel_service_none(void)
 
 {
-  return;
+  uint unaff_D7;
+  
+  return (char)(unkfloat1)(float)(unaff_D7 & 0xffffff00);
 }
 
 
 /* 0001537e */
 
 /* service 20, psos_create_x
-   Not a C function: the kernel's handler for service 20, psos_create_x's, reached from trap #3
-   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
-   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_create_x(void)
@@ -9479,45 +9480,44 @@ void kernel_create_x(void)
 
 /* WARNING: Removing unreachable block (ram,0x00015402) */
 /* service 21
-   Not a C function: the kernel's handler for service 21, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_service_21(void)
 
 {
-  int iVar1;
-  byte *pbVar2;
+  int exchange;
+  byte *pbVar1;
   int in_D0;
   undefined4 *extraout_A0;
-  undefined4 *puVar3;
-  int unaff_A6;
-  bool bVar4;
+  undefined4 *puVar2;
+  undefined4 *unaff_A6;
+  bool bVar3;
   
-  iVar1 = *(int *)(unaff_A6 + 0x14);
+  exchange = unaff_A6[5];
   while( true ) {
-    if (iVar1 == 0) {
+    if (exchange == 0) {
       return;
     }
-    if (in_D0 == *(int *)(iVar1 + 0x14)) break;
-    iVar1 = *(int *)(iVar1 + 0x1c);
+    if (in_D0 == *(int *)(exchange + 0x14)) break;
+    exchange = *(int *)(exchange + 0x1c);
   }
-  bVar4 = true;
-  kernel_check_exchange();
-  if (!bVar4) {
+  bVar3 = true;
+  kernel_check_exchange(exchange,(void *)*unaff_A6);
+  if (!bVar3) {
     return;
   }
   do {
-    puVar3 = (undefined4 *)*extraout_A0;
+    puVar2 = (undefined4 *)*extraout_A0;
     do {
-      if (extraout_A0 == puVar3) {
+      if (extraout_A0 == puVar2) {
         return;
       }
-      pbVar2 = (byte *)((int)puVar3 + 0x13);
-      puVar3 = (undefined4 *)*puVar3;
-    } while ((*pbVar2 & 0x20) != 0);
+      pbVar1 = (byte *)((int)puVar2 + 0x13);
+      puVar2 = (undefined4 *)*puVar2;
+    } while ((*pbVar1 & 0x20) != 0);
   } while( true );
 }
 
@@ -9525,27 +9525,27 @@ void kernel_service_21(void)
 /* 00015436 */
 
 /* service 22, psos_delete_x
-   Not a C function: the kernel's handler for service 22, psos_delete_x's, reached from trap #3
-   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
-   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_delete_x(void)
 
 {
   undefined4 uVar1;
+  int in_A0;
   undefined4 *extraout_A0;
   undefined4 *puVar2;
   undefined4 *extraout_A0_00;
   int unaff_A2;
   undefined4 *puVar3;
   undefined4 *puVar4;
-  int unaff_A6;
+  undefined4 *unaff_A6;
   bool bVar5;
   
   bVar5 = unaff_A2 == 0;
-  kernel_check_exchange();
+  kernel_check_exchange(in_A0,(void *)*unaff_A6);
   if (bVar5) {
     *(undefined1 *)((int)extraout_A0 + 0x11) = 0xfe;
     puVar3 = (undefined4 *)*extraout_A0;
@@ -9558,11 +9558,11 @@ void kernel_delete_x(void)
       puVar2 = extraout_A0_00;
     }
     if (puVar2[2] != 0) {
-      uVar1 = *(undefined4 *)(unaff_A6 + 0x1c);
-      *(undefined4 *)(unaff_A6 + 0x1c) = puVar2[2];
+      uVar1 = unaff_A6[7];
+      unaff_A6[7] = puVar2[2];
       *(undefined4 *)puVar2[3] = uVar1;
     }
-    puVar3 = (undefined4 *)(unaff_A6 + -8);
+    puVar3 = unaff_A6 + -2;
     do {
       puVar4 = puVar3;
       puVar3 = (undefined4 *)puVar4[7];
@@ -9570,8 +9570,8 @@ void kernel_delete_x(void)
     } while (puVar3 != puVar2);
     puVar4[7] = puVar2[7];
 LAB_000154a0:
-    puVar2[7] = *(undefined4 *)(unaff_A6 + 0x18);
-    *(undefined4 **)(unaff_A6 + 0x18) = puVar2;
+    puVar2[7] = unaff_A6[6];
+    unaff_A6[6] = puVar2;
   }
   return;
 }
@@ -9581,10 +9581,9 @@ LAB_000154a0:
 
 /* WARNING: Removing unreachable block (ram,0x000154b8) */
 /* service 18
-   Not a C function: the kernel's handler for service 18, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 ushort kernel_service_18(void)
@@ -9603,6 +9602,7 @@ ushort kernel_service_18(void)
   int iVar8;
   int iVar9;
   int iVar10;
+  int in_A0;
   int extraout_A0;
   int extraout_A0_00;
   int extraout_A0_01;
@@ -9611,11 +9611,11 @@ ushort kernel_service_18(void)
   int extraout_A1_00;
   int *piVar11;
   int *unaff_A3;
-  int unaff_A6;
+  undefined4 *unaff_A6;
   bool bVar12;
   
   bVar12 = true;
-  uVar3 = kernel_check_exchange();
+  uVar3 = kernel_check_exchange(in_A0,(void *)*unaff_A6);
   if ((bVar12) && (*(int *)(extraout_A1 + 4) == 0)) {
     iVar7 = *(int *)(extraout_A0 + 4);
     *(int *)extraout_A0 = extraout_A0;
@@ -9677,8 +9677,8 @@ ushort kernel_service_18(void)
         }
         else {
 LAB_00015576:
-          *unaff_A3 = *(int *)(unaff_A6 + 0x1c);
-          *(int **)(unaff_A6 + 0x1c) = unaff_A3;
+          *unaff_A3 = unaff_A6[7];
+          unaff_A6[7] = unaff_A3;
         }
       }
     }
@@ -9691,17 +9691,17 @@ LAB_00015576:
 
 /* WARNING: Removing unreachable block (ram,0x000155ac) */
 /* service 19, psos_jam_x: kernel_send_for_task's body with A4 set, which send_x clears
-   Not a C function: the kernel's handler for service 19, psos_jam_x's, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_jam_x(void)
 
 {
-  int iVar1;
-  int *piVar2;
+  void *running;
+  int *piVar1;
+  int iVar2;
   int iVar3;
   undefined4 uVar4;
   undefined4 uVar5;
@@ -9716,12 +9716,12 @@ void kernel_jam_x(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  int *unaff_A6;
+  undefined4 *unaff_A6;
   bool bVar11;
   
-  iVar1 = *unaff_A6;
+  running = (void *)*unaff_A6;
   bVar11 = true;
-  kernel_check_exchange();
+  kernel_check_exchange(in_A0,running);
   if (bVar11) {
     piVar8 = extraout_A0;
     piVar10 = (int *)0x0;
@@ -9729,11 +9729,11 @@ void kernel_jam_x(void)
       if (*(int **)(extraout_A1 + 4) != extraout_A0) {
         return;
       }
-      piVar2 = (int *)(iVar1 + 0x1c);
+      piVar1 = (int *)((int)running + 0x1c);
       do {
-        piVar9 = piVar2;
-        piVar2 = (int *)*piVar9;
-        bVar11 = piVar2 == (int *)0x0;
+        piVar9 = piVar1;
+        piVar1 = (int *)*piVar9;
+        bVar11 = piVar1 == (int *)0x0;
         if (bVar11) {
           kernel_copy_message();
           piVar8 = extraout_A0_00;
@@ -9742,18 +9742,18 @@ void kernel_jam_x(void)
           }
           goto LAB_00015606;
         }
-        piVar10 = piVar2 + 2;
-      } while ((((extraout_A0 != (int *)piVar2[1]) ||
-                (piVar10 = piVar2 + 3, *(int *)(extraout_A1 + 8) != piVar2[2])) ||
-               (piVar10 = piVar2 + 4, *(int *)(extraout_A1 + 0xc) != piVar2[3])) ||
-              ((piVar10 = piVar2 + 5, *(int *)(extraout_A1 + 0x10) != piVar2[4] ||
-               (piVar10 = piVar2 + 6, *(int *)(extraout_A1 + 0x14) != piVar2[5]))));
-      *piVar9 = *piVar2;
-      piVar10 = piVar2;
+        piVar10 = piVar1 + 2;
+      } while ((((extraout_A0 != (int *)piVar1[1]) ||
+                (piVar10 = piVar1 + 3, *(int *)(extraout_A1 + 8) != piVar1[2])) ||
+               (piVar10 = piVar1 + 4, *(int *)(extraout_A1 + 0xc) != piVar1[3])) ||
+              ((piVar10 = piVar1 + 5, *(int *)(extraout_A1 + 0x10) != piVar1[4] ||
+               (piVar10 = piVar1 + 6, *(int *)(extraout_A1 + 0x14) != piVar1[5]))));
+      *piVar9 = *piVar1;
+      piVar10 = piVar1;
     }
 LAB_00015606:
-    piVar2 = (int *)*piVar8;
-    if (piVar8 == piVar2) {
+    piVar1 = (int *)*piVar8;
+    if (piVar8 == piVar1) {
       *(char *)((int)piVar8 + 0x21) = *(char *)((int)piVar8 + 0x21) + '\x01';
       if ((piVar10 != (int *)0x0) ||
          (((bVar11 = true, *(char *)((int)piVar8 + 0x12) == '\0' ||
@@ -9770,10 +9770,10 @@ LAB_00015606:
           }
         }
         else {
-          iVar1 = piVar8[2];
+          iVar2 = piVar8[2];
           piVar8[2] = (int)piVar10;
-          *piVar10 = iVar1;
-          if (iVar1 != 0) {
+          *piVar10 = iVar2;
+          if (iVar2 != 0) {
             return;
           }
         }
@@ -9784,27 +9784,27 @@ LAB_00015606:
       }
     }
     else {
-      iVar1 = *piVar2;
-      *piVar8 = iVar1;
-      *(int **)(iVar1 + 4) = piVar8;
-      if ('\0' < *(char *)((int)piVar2 + 0x12)) {
+      iVar2 = *piVar1;
+      *piVar8 = iVar2;
+      *(int **)(iVar2 + 4) = piVar8;
+      if ('\0' < *(char *)((int)piVar1 + 0x12)) {
         kernel_timer_unlink();
       }
       kernel_make_ready();
-      iVar1 = *(int *)((int)piVar2 + 0x72);
+      iVar2 = *(int *)((int)piVar1 + 0x72);
       iVar3 = *(int *)(extraout_A1_00 + 4);
       uVar4 = *(undefined4 *)(extraout_A1_00 + 8);
       uVar5 = *(undefined4 *)(extraout_A1_00 + 0xc);
       uVar6 = *(undefined4 *)(extraout_A1_00 + 0x10);
       uVar7 = *(undefined4 *)(extraout_A1_00 + 0x14);
-      *(int *)(iVar1 + 4) = iVar3;
-      *(undefined4 *)(iVar1 + 8) = uVar4;
-      *(undefined4 *)(iVar1 + 0xc) = uVar5;
-      *(undefined4 *)(iVar1 + 0x10) = uVar6;
-      *(undefined4 *)(iVar1 + 0x14) = uVar7;
+      *(int *)(iVar2 + 4) = iVar3;
+      *(undefined4 *)(iVar2 + 8) = uVar4;
+      *(undefined4 *)(iVar2 + 0xc) = uVar5;
+      *(undefined4 *)(iVar2 + 0x10) = uVar6;
+      *(undefined4 *)(iVar2 + 0x14) = uVar7;
       if (iVar3 != 0) {
-        *piVar10 = piVar2[7];
-        piVar2[7] = (int)piVar10;
+        *piVar10 = piVar1[7];
+        piVar1[7] = (int)piVar10;
       }
     }
   }
@@ -9818,22 +9818,23 @@ LAB_00015606:
 /* WARNING: Removing unreachable block (ram,0x00015680) */
 /* WARNING: Removing unreachable block (ram,0x00015692) */
 /* service 23, psos_send_x: kernel_send_for_task for the running task
-   Not a C function: the kernel's handler for service 23, psos_send_x's, reached from trap #3
-   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
-   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_send_x(void)
 
 {
-  int iVar1;
-  int *piVar2;
+  void *running;
+  int *piVar1;
+  int iVar2;
   int iVar3;
   undefined4 uVar4;
   undefined4 uVar5;
   undefined4 uVar6;
   undefined4 uVar7;
+  int in_A0;
   int *extraout_A0;
   int *extraout_A0_00;
   int *extraout_A0_01;
@@ -9842,12 +9843,12 @@ void kernel_send_x(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  int *unaff_A6;
+  undefined4 *unaff_A6;
   bool bVar11;
   
-  iVar1 = *unaff_A6;
+  running = (void *)*unaff_A6;
   bVar11 = true;
-  kernel_check_exchange();
+  kernel_check_exchange(in_A0,running);
   if (bVar11) {
     piVar8 = extraout_A0;
     piVar10 = (int *)0x0;
@@ -9855,11 +9856,11 @@ void kernel_send_x(void)
       if (*(int **)(extraout_A1 + 4) != extraout_A0) {
         return;
       }
-      piVar2 = (int *)(iVar1 + 0x1c);
+      piVar1 = (int *)((int)running + 0x1c);
       do {
-        piVar9 = piVar2;
-        piVar2 = (int *)*piVar9;
-        bVar11 = piVar2 == (int *)0x0;
+        piVar9 = piVar1;
+        piVar1 = (int *)*piVar9;
+        bVar11 = piVar1 == (int *)0x0;
         if (bVar11) {
           kernel_copy_message();
           piVar8 = extraout_A0_00;
@@ -9868,18 +9869,18 @@ void kernel_send_x(void)
           }
           goto LAB_00015606;
         }
-        piVar10 = piVar2 + 2;
-      } while ((((extraout_A0 != (int *)piVar2[1]) ||
-                (piVar10 = piVar2 + 3, *(int *)(extraout_A1 + 8) != piVar2[2])) ||
-               (piVar10 = piVar2 + 4, *(int *)(extraout_A1 + 0xc) != piVar2[3])) ||
-              ((piVar10 = piVar2 + 5, *(int *)(extraout_A1 + 0x10) != piVar2[4] ||
-               (piVar10 = piVar2 + 6, *(int *)(extraout_A1 + 0x14) != piVar2[5]))));
-      *piVar9 = *piVar2;
-      piVar10 = piVar2;
+        piVar10 = piVar1 + 2;
+      } while ((((extraout_A0 != (int *)piVar1[1]) ||
+                (piVar10 = piVar1 + 3, *(int *)(extraout_A1 + 8) != piVar1[2])) ||
+               (piVar10 = piVar1 + 4, *(int *)(extraout_A1 + 0xc) != piVar1[3])) ||
+              ((piVar10 = piVar1 + 5, *(int *)(extraout_A1 + 0x10) != piVar1[4] ||
+               (piVar10 = piVar1 + 6, *(int *)(extraout_A1 + 0x14) != piVar1[5]))));
+      *piVar9 = *piVar1;
+      piVar10 = piVar1;
     }
 LAB_00015606:
-    piVar2 = (int *)*piVar8;
-    if (piVar8 == piVar2) {
+    piVar1 = (int *)*piVar8;
+    if (piVar8 == piVar1) {
       *(char *)((int)piVar8 + 0x21) = *(char *)((int)piVar8 + 0x21) + '\x01';
       if ((piVar10 != (int *)0x0) ||
          (((bVar11 = true, *(char *)((int)piVar8 + 0x12) == '\0' ||
@@ -9900,27 +9901,27 @@ LAB_00015606:
       }
     }
     else {
-      iVar1 = *piVar2;
-      *piVar8 = iVar1;
-      *(int **)(iVar1 + 4) = piVar8;
-      if ('\0' < *(char *)((int)piVar2 + 0x12)) {
+      iVar2 = *piVar1;
+      *piVar8 = iVar2;
+      *(int **)(iVar2 + 4) = piVar8;
+      if ('\0' < *(char *)((int)piVar1 + 0x12)) {
         kernel_timer_unlink();
       }
       kernel_make_ready();
-      iVar1 = *(int *)((int)piVar2 + 0x72);
+      iVar2 = *(int *)((int)piVar1 + 0x72);
       iVar3 = *(int *)(extraout_A1_00 + 4);
       uVar4 = *(undefined4 *)(extraout_A1_00 + 8);
       uVar5 = *(undefined4 *)(extraout_A1_00 + 0xc);
       uVar6 = *(undefined4 *)(extraout_A1_00 + 0x10);
       uVar7 = *(undefined4 *)(extraout_A1_00 + 0x14);
-      *(int *)(iVar1 + 4) = iVar3;
-      *(undefined4 *)(iVar1 + 8) = uVar4;
-      *(undefined4 *)(iVar1 + 0xc) = uVar5;
-      *(undefined4 *)(iVar1 + 0x10) = uVar6;
-      *(undefined4 *)(iVar1 + 0x14) = uVar7;
+      *(int *)(iVar2 + 4) = iVar3;
+      *(undefined4 *)(iVar2 + 8) = uVar4;
+      *(undefined4 *)(iVar2 + 0xc) = uVar5;
+      *(undefined4 *)(iVar2 + 0x10) = uVar6;
+      *(undefined4 *)(iVar2 + 0x14) = uVar7;
       if (iVar3 != 0) {
-        *piVar10 = piVar2[7];
-        piVar2[7] = (int)piVar10;
+        *piVar10 = piVar1[7];
+        piVar1[7] = (int)piVar10;
       }
     }
   }
@@ -9935,8 +9936,7 @@ LAB_00015606:
 /* WARNING: Removing unreachable block (ram,0x00015692) */
 /* gives a message to the first task waiting at the exchange, or queues it in a buffer by
    kernel_copy_message; kernel_delete calls it
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_send_for_task(void)
@@ -9949,6 +9949,7 @@ void kernel_send_for_task(void)
   undefined4 uVar5;
   undefined4 uVar6;
   undefined4 uVar7;
+  int in_A0;
   int *extraout_A0;
   int *extraout_A0_00;
   int *extraout_A0_01;
@@ -9957,11 +9958,11 @@ void kernel_send_for_task(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  int unaff_A5;
+  void *unaff_A5;
   bool bVar11;
   
   bVar11 = true;
-  kernel_check_exchange();
+  kernel_check_exchange(in_A0,unaff_A5);
   if (bVar11) {
     piVar8 = extraout_A0;
     piVar10 = (int *)0x0;
@@ -9969,7 +9970,7 @@ void kernel_send_for_task(void)
       if (*(int **)(extraout_A1 + 4) != extraout_A0) {
         return;
       }
-      piVar1 = (int *)(unaff_A5 + 0x1c);
+      piVar1 = (int *)((int)unaff_A5 + 0x1c);
       do {
         piVar9 = piVar1;
         piVar1 = (int *)*piVar9;
@@ -10045,8 +10046,7 @@ LAB_00015606:
 /* 000156ac */
 
 /* takes a buffer from the free list and copies the message's 20 bytes into it
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_copy_message(void)
@@ -10081,22 +10081,23 @@ void kernel_copy_message(void)
 
 /* WARNING: Removing unreachable block (ram,0x000156e4) */
 /* service 24, psos_request_x
-   Not a C function: the kernel's handler for service 24, psos_request_x's, reached from trap #3
-   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
-   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_request_x(void)
 
 {
+  int *running;
   int *piVar1;
-  int *piVar2;
+  undefined4 *puVar2;
   int iVar3;
   int iVar4;
   int iVar5;
   int iVar6;
   int iVar7;
+  int in_A0;
   int *extraout_A0;
   int *piVar8;
   int *extraout_A0_00;
@@ -10104,13 +10105,13 @@ void kernel_request_x(void)
   int iVar9;
   int extraout_A1_00;
   int *piVar10;
-  int *unaff_A6;
+  undefined4 *unaff_A6;
   bool bVar11;
   undefined8 uVar12;
   
-  piVar1 = (int *)*unaff_A6;
+  running = (int *)*unaff_A6;
   bVar11 = true;
-  uVar12 = kernel_check_exchange();
+  uVar12 = kernel_check_exchange(in_A0,running);
   piVar8 = extraout_A0;
   iVar9 = extraout_A1;
   if (bVar11) {
@@ -10120,21 +10121,21 @@ void kernel_request_x(void)
       if ((char)uVar12 != '\0') {
         return;
       }
-      piVar10 = (int *)piVar1[1];
-      iVar3 = *piVar1;
+      piVar10 = (int *)running[1];
+      iVar3 = *running;
       *piVar10 = iVar3;
       *(int **)(iVar3 + 4) = piVar10;
-      *(int *)((int)piVar1 + 0x72) = iVar9;
+      *(int *)((int)running + 0x72) = iVar9;
       if (*(char *)(piVar8 + 4) == '\0') {
-        *piVar1 = (int)piVar8;
-        piVar10 = (int *)piVar8[1];
-        piVar8[1] = (int)piVar1;
-        *piVar10 = (int)piVar1;
-        piVar1[1] = (int)piVar10;
+        *running = (int)piVar8;
+        puVar2 = (undefined4 *)piVar8[1];
+        piVar8[1] = (int)running;
+        *puVar2 = running;
+        running[1] = (int)puVar2;
 LAB_000157c4:
-        *(undefined2 *)((int)piVar1 + 0x12) = 0xff20;
+        *(undefined2 *)((int)running + 0x12) = 0xff20;
         if ((int)((ulonglong)uVar12 >> 0x20) == 0) {
-          *(undefined1 *)((int)piVar1 + 0x12) = 0;
+          *(undefined1 *)((int)running + 0x12) = 0;
           return;
         }
         kernel_timer_insert();
@@ -10142,17 +10143,17 @@ LAB_000157c4:
       }
       piVar10 = piVar8;
       do {
-        piVar2 = (int *)*piVar10;
-        if (piVar8 == piVar2) break;
+        piVar1 = (int *)*piVar10;
+        if (piVar8 == piVar1) break;
         piVar10 = piVar8;
-      } while (((*(byte *)((int)piVar2 + 0x13) & 0x20) == 0) ||
-              (piVar10 = piVar2, *(byte *)(piVar1 + 4) <= *(byte *)(piVar2 + 4)));
+      } while (((*(byte *)((int)piVar1 + 0x13) & 0x20) == 0) ||
+              (piVar10 = piVar1, *(byte *)(running + 4) <= *(byte *)(piVar1 + 4)));
       if (piVar8[2] == 0) {
-        *piVar1 = (int)piVar2;
-        piVar8 = (int *)piVar2[1];
-        piVar2[1] = (int)piVar1;
-        piVar1[1] = (int)piVar8;
-        *piVar8 = (int)piVar1;
+        *running = (int)piVar1;
+        puVar2 = (undefined4 *)piVar1[1];
+        piVar1[1] = (int)running;
+        running[1] = (int)puVar2;
+        *puVar2 = running;
         goto LAB_000157c4;
       }
       uVar12 = kernel_ready_insert();
@@ -10177,11 +10178,11 @@ LAB_000157c4:
     *(int *)(iVar9 + 0x14) = iVar7;
     if (iVar3 == 0) {
       *piVar10 = unaff_A6[7];
-      unaff_A6[7] = (int)piVar10;
+      unaff_A6[7] = piVar10;
     }
     else {
-      *piVar10 = piVar1[7];
-      piVar1[7] = (int)piVar10;
+      *piVar10 = running[7];
+      running[7] = (int)piVar10;
     }
   }
   return;
@@ -10192,10 +10193,9 @@ LAB_000157c4:
 
 /* WARNING: Removing unreachable block (ram,0x000157ec) */
 /* service 25, psos_signal_v
-   Not a C function: the kernel's handler for service 25, psos_signal_v's, reached from trap #3
-   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
-   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_signal_v(void)
@@ -10205,24 +10205,25 @@ void kernel_signal_v(void)
   short in_D1w;
   ushort extraout_D1w;
   ushort uVar2;
-  int extraout_A0;
+  int in_A0;
+  void *pvVar3;
   int *unaff_A6;
-  bool bVar3;
+  bool bVar4;
   
-  bVar3 = in_D1w == 0;
-  kernel_check_task();
-  if (bVar3) {
-    uVar1 = *(ushort *)(extraout_A0 + 0x18) | extraout_D1w & 0x7fff;
-    *(ushort *)(extraout_A0 + 0x18) = uVar1;
-    uVar2 = *(ushort *)(extraout_A0 + 0x16);
+  bVar4 = in_D1w == 0;
+  pvVar3 = kernel_check_task(in_A0,(void *)*unaff_A6);
+  if (bVar4) {
+    uVar1 = *(ushort *)((int)pvVar3 + 0x18) | extraout_D1w & 0x7fff;
+    *(ushort *)((int)pvVar3 + 0x18) = uVar1;
+    uVar2 = *(ushort *)((int)pvVar3 + 0x16);
     if (uVar2 != 0) {
       uVar1 = uVar2 ^ uVar1;
-      *(ushort *)(extraout_A0 + 0x18) = uVar1 & *(ushort *)(extraout_A0 + 0x18);
+      *(ushort *)((int)pvVar3 + 0x18) = uVar1 & *(ushort *)((int)pvVar3 + 0x18);
       uVar1 = uVar2 & uVar1;
       if (uVar1 != 0) {
         if (-1 < (short)uVar1) {
-          *(ushort *)(extraout_A0 + 0x16) = uVar1;
-          *(ushort *)(extraout_A0 + 0x54) = uVar1 ^ uVar2 | *(ushort *)(extraout_A0 + 0x54);
+          *(ushort *)((int)pvVar3 + 0x16) = uVar1;
+          *(ushort *)((int)pvVar3 + 0x54) = uVar1 ^ uVar2 | *(ushort *)((int)pvVar3 + 0x54);
           return;
         }
         if (uVar2 == uVar1) {
@@ -10230,13 +10231,13 @@ void kernel_signal_v(void)
         }
         uVar2 = uVar1 ^ uVar2;
       }
-      *(ushort *)(extraout_A0 + 0x54) = uVar2 | *(ushort *)(extraout_A0 + 0x54);
-      *(undefined2 *)(extraout_A0 + 0x16) = 0;
-      if ('\0' < *(char *)(extraout_A0 + 0x12)) {
+      *(ushort *)((int)pvVar3 + 0x54) = uVar2 | *(ushort *)((int)pvVar3 + 0x54);
+      *(undefined2 *)((int)pvVar3 + 0x16) = 0;
+      if ('\0' < *(char *)((int)pvVar3 + 0x12)) {
         kernel_timer_unlink();
       }
       kernel_make_ready();
-      if (extraout_A0 == *unaff_A6) {
+      if (pvVar3 == (void *)*unaff_A6) {
         *(undefined1 *)((int)unaff_A6 + 0x8b) = 0;
       }
     }
@@ -10249,8 +10250,7 @@ void kernel_signal_v(void)
 
 /* checks the task by kernel_check_task, ORs the events in D1 into its pending word at +0x18 and, if
    they satisfy the wait at +0x16, wakes it; kernel_signal_v and kernel_delete call it
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_signal_task(void)
@@ -10260,24 +10260,26 @@ void kernel_signal_task(void)
   short in_D1w;
   ushort extraout_D1w;
   ushort uVar2;
-  int extraout_A0;
+  int in_A0;
+  void *pvVar3;
+  void *unaff_A5;
   int *unaff_A6;
-  bool bVar3;
+  bool bVar4;
   
-  bVar3 = in_D1w == 0;
-  kernel_check_task();
-  if (bVar3) {
-    uVar1 = *(ushort *)(extraout_A0 + 0x18) | extraout_D1w & 0x7fff;
-    *(ushort *)(extraout_A0 + 0x18) = uVar1;
-    uVar2 = *(ushort *)(extraout_A0 + 0x16);
+  bVar4 = in_D1w == 0;
+  pvVar3 = kernel_check_task(in_A0,unaff_A5);
+  if (bVar4) {
+    uVar1 = *(ushort *)((int)pvVar3 + 0x18) | extraout_D1w & 0x7fff;
+    *(ushort *)((int)pvVar3 + 0x18) = uVar1;
+    uVar2 = *(ushort *)((int)pvVar3 + 0x16);
     if (uVar2 != 0) {
       uVar1 = uVar2 ^ uVar1;
-      *(ushort *)(extraout_A0 + 0x18) = uVar1 & *(ushort *)(extraout_A0 + 0x18);
+      *(ushort *)((int)pvVar3 + 0x18) = uVar1 & *(ushort *)((int)pvVar3 + 0x18);
       uVar1 = uVar2 & uVar1;
       if (uVar1 != 0) {
         if (-1 < (short)uVar1) {
-          *(ushort *)(extraout_A0 + 0x16) = uVar1;
-          *(ushort *)(extraout_A0 + 0x54) = uVar1 ^ uVar2 | *(ushort *)(extraout_A0 + 0x54);
+          *(ushort *)((int)pvVar3 + 0x16) = uVar1;
+          *(ushort *)((int)pvVar3 + 0x54) = uVar1 ^ uVar2 | *(ushort *)((int)pvVar3 + 0x54);
           return;
         }
         if (uVar2 == uVar1) {
@@ -10285,13 +10287,13 @@ void kernel_signal_task(void)
         }
         uVar2 = uVar1 ^ uVar2;
       }
-      *(ushort *)(extraout_A0 + 0x54) = uVar2 | *(ushort *)(extraout_A0 + 0x54);
-      *(undefined2 *)(extraout_A0 + 0x16) = 0;
-      if ('\0' < *(char *)(extraout_A0 + 0x12)) {
+      *(ushort *)((int)pvVar3 + 0x54) = uVar2 | *(ushort *)((int)pvVar3 + 0x54);
+      *(undefined2 *)((int)pvVar3 + 0x16) = 0;
+      if ('\0' < *(char *)((int)pvVar3 + 0x12)) {
         kernel_timer_unlink();
       }
       kernel_make_ready();
-      if (extraout_A0 == *unaff_A6) {
+      if (pvVar3 == (void *)*unaff_A6) {
         *(undefined1 *)((int)unaff_A6 + 0x8b) = 0;
       }
     }
@@ -10306,10 +10308,9 @@ void kernel_signal_task(void)
 /* WARNING: Removing unreachable block (ram,0x000158d0) */
 /* WARNING: Removing unreachable block (ram,0x000158ca) */
 /* service 27, psos_get_v: clears D7, then kernel_wait_v
-   Not a C function: the kernel's handler for service 27, psos_get_v's, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_get_v(void)
@@ -10336,10 +10337,9 @@ void kernel_get_v(void)
 /* 0001585c */
 
 /* service 26, psos_wait_v
-   Not a C function: the kernel's handler for service 26, psos_wait_v's, reached from trap #3
-   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
-   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_wait_v(void)
@@ -10388,10 +10388,9 @@ void kernel_wait_v(void)
 /* 000158da */
 
 /* service 32, psos_mode
-   Not a C function: the kernel's handler for service 32, psos_mode's, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 byte kernel_mode(void)
@@ -10411,10 +10410,9 @@ byte kernel_mode(void)
 /* 000158f6 */
 
 /* service 33
-   Not a C function: the kernel's handler for service 33, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 undefined2 kernel_service_33(undefined2 param_1)
@@ -10427,10 +10425,9 @@ undefined2 kernel_service_33(undefined2 param_1)
 /* 00015904 */
 
 /* service 28, psos_pause
-   Not a C function: the kernel's handler for service 28, psos_pause's, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_pause(void)
@@ -10456,10 +10453,9 @@ void kernel_pause(void)
 /* 0001592e */
 
 /* service 29
-   Not a C function: the kernel's handler for service 29, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_service_29(void)
@@ -10493,10 +10489,9 @@ void kernel_service_29(void)
 /* 00015974 */
 
 /* service 30
-   Not a C function: the kernel's handler for service 30, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 undefined8 kernel_service_30(void)
@@ -10516,10 +10511,9 @@ undefined8 kernel_service_30(void)
 /* 0001599e */
 
 /* service 31
-   Not a C function: the kernel's handler for service 31, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_service_31(void)
@@ -10555,10 +10549,9 @@ void kernel_service_31(void)
 /* 00015a10 */
 
 /* service 35
-   Not a C function: the kernel's handler for service 35, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 undefined8 kernel_service_35(void)
@@ -10592,10 +10585,9 @@ undefined8 kernel_service_35(void)
 /* 00015a50 */
 
 /* service 36
-   Not a C function: the kernel's handler for service 36, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_service_36(void)
@@ -10614,10 +10606,9 @@ void kernel_service_36(void)
 /* 00015a76 */
 
 /* service 37
-   Not a C function: the kernel's handler for service 37, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_service_37(void)
@@ -10639,10 +10630,9 @@ void kernel_service_37(void)
 /* 00015aa2 */
 
 /* service 38
-   Not a C function: the kernel's handler for service 38, reached from trap #3 through
-   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
-   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void kernel_service_38(void)
@@ -10664,8 +10654,7 @@ void kernel_service_38(void)
 
 /* each 24 hours of the kernel's clock: the next day, month and year, by the days-in-month table at
    0x79 in the configuration
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_advance_date(void)
@@ -10703,8 +10692,7 @@ void kernel_advance_date(void)
 /* 00015b10 */
 
 /* February's days in that table, 28 or 29 by the Gregorian rule
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_set_leap_year(void)
@@ -10726,28 +10714,31 @@ void kernel_set_leap_year(void)
 
 /* 00015b3a */
 
+/* WARNING: Unknown calling convention */
 /* the task ID in A0, or the running task for 0: error 2 bad ID, 1 deleted, 3 another group's
-   Not a C function: an internal routine of the pSOS kernel, called with bsr: the task ID in A0,
-   zero for the running task, which A5 holds.  Returns the task's record in A0, or the error in D7:
-   2 a bad ID, 1 a deleted task, 3 another group's (psos.md).
+   Not a C function (register; read): its arguments and results in registers.  In: A0 int task, A5
+   void *running.  Out: A0 void *record.  Error: D7 2 bad ID, D7 1 deleted, D7 3 another group.
    psos.md */
 
-void kernel_check_task(void)
+void * kernel_check_task(int task,void *running)
 
 {
-  return;
+  if (task != 0) {
+    running = (void *)task;
+  }
+  return running;
 }
 
 
 /* 00015b6c */
 
+/* WARNING: Unknown calling convention */
 /* the exchange ID in A0: error 2 bad ID, 1 deleted, 3 another group's
-   Not a C function: an internal routine of the pSOS kernel, called with bsr: the exchange ID in A0,
-   the running task in A5.  Returns the error in D7: 2 a bad ID, 1 a deleted exchange, 3 another
-   group's (psos.md).
+   Not a C function (register; read): its arguments and results in registers.  In: A0 int exchange,
+   A5 void *running.  Error: D7 2 bad ID, D7 1 deleted, D7 3 another group.
    psos.md */
 
-void kernel_check_exchange(void)
+void kernel_check_exchange(int exchange,void *running)
 
 {
   return;
@@ -10756,12 +10747,13 @@ void kernel_check_exchange(void)
 
 /* 00015b96 */
 
+/* WARNING: Unknown calling convention */
 /* error 5 unless the segment carries kernel_region_allocate's 0xe1d0
-   Not a C function: an internal routine of the pSOS kernel, called with bsr: the segment in A0.
-   Returns D7 zero, or 5 if the segment lacks kernel_region_allocate's 0xe1d0 (psos.md).
+   Not a C function (register; read): its arguments and results in registers.  In: A0 void *segment.
+   Error: D7 5 bad segment.
    psos.md */
 
-void kernel_check_segment(void)
+void kernel_check_segment(void *segment)
 
 {
   return;
@@ -10771,8 +10763,7 @@ void kernel_check_segment(void)
 /* 00015baa */
 
 /* kernel_timer_unlink, if the task in A2 is in the timer list
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_timer_cancel(void)
@@ -10798,8 +10789,7 @@ void kernel_timer_cancel(void)
 /* 00015bb0 */
 
 /* removes the task in A2 from the delta timer list, giving its remaining ticks to the next
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 undefined4 kernel_timer_unlink(void)
@@ -10824,8 +10814,7 @@ undefined4 kernel_timer_unlink(void)
 /* 00015bde */
 
 /* puts the running task in the delta timer list D0 ticks out
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_timer_insert(void)
@@ -10876,8 +10865,7 @@ void kernel_timer_insert(void)
 /* 00015c4c */
 
 /* clears the task's wait state and, unless suspended, kernel_ready_insert
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_make_ready(void)
@@ -10910,8 +10898,7 @@ void kernel_make_ready(void)
 /* 00015c54 */
 
 /* inserts the task in A2 in the ready queue by priority and resets its time slice
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_ready_insert(void)
@@ -10939,8 +10926,7 @@ void kernel_ready_insert(void)
 /* 00015c96 */
 
 /* unlinks the task in A5 from its queue
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_queue_remove(void)
@@ -10964,8 +10950,7 @@ void kernel_queue_remove(void)
 /* WARNING: Unknown calling convention */
 /* trap #6: carves the configuration's memory into task records (0xb2 bytes), exchanges (0x22) and
    message buffers (0x18), and starts the kernel
-   Not a C function: the trap #6 handler, which starts the kernel: builds its records from the
-   configuration in A6 and never returns.
+   Not a C function (exception; read): entered by the processor, not called.
    psos.md */
 
 void kernel_init(void)
@@ -11134,8 +11119,7 @@ void kernel_init(void)
 /* 00015ece */
 
 /* sets up regions 0 and 1 from the configuration
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void kernel_region_init(void)
@@ -11196,8 +11180,7 @@ void kernel_region_init(void)
 /* 00015f8a */
 
 /* trap #5: an interrupt handler's exit, switching tasks if it made a higher one ready
-   Not a C function: the trap #5 handler, which every interrupt handler ends with in place of rte:
-   switches tasks if the interrupt made a higher-priority one ready, and returns with rte.
+   Not a C function (exception; read): entered by the processor, not called.
    psos.md */
 
 void kernel_return_from_interrupt(ushort param_1)
@@ -12234,9 +12217,8 @@ void FUN_00016ee6(void)
 /* 00016f1e */
 
 /* trap #3, the service in D7, the error back in D7
-   Not a C function: the binding's trap #3: the service in D7.b and its arguments in D0 to D3, A0
-   and A1, as the stub loaded them.  Returns D7 zero, or the service and its error in D7.w with the
-   condition codes set; results stay in D0 to D2, A0 and A1.
+   Not a C function (register; read): its arguments and results in registers.  In: D7 char service,
+   D0, D1, D2, D3, A0, A1.  Out: D7 int error.  Returns: ccr.
    psos.md */
 
 void psos_call(void)
@@ -12254,42 +12236,46 @@ void psos_call(void)
 
 /* 00016f36 */
 
+/* WARNING: Unknown calling convention */
 /* trap #4, the function in D7, the device in D0's high byte
-   Not a C function: the binding's trap #4: the I/O function in D7.b and the device in the high byte
-   of D0.w.  Returns D7 zero, or the error in D7.w with the device and function above it.
+   Not a C function (register; read): its arguments and results in registers.  In: D7 char function,
+   D0 int device.  Out: D7 int error.  Returns: ccr.
    psos.md */
 
-void psos_io_call(void)
+int psos_io_call(char function,int device)
 
 {
-  char unaff_D7b;
+  undefined3 unaff_0000001c;
+  undefined2 local_2;
   
+  local_2 = CONCAT11((char)((uint)device >> 8),function);
   __m68k_trap(4);
-  if (unaff_D7b != '\0') {
-    return;
+  if (function != '\0') {
+    return (uint)local_2 << 0x10 | CONCAT31(unaff_0000001c,function) & 0xffff;
   }
-  return;
+  return 0;
 }
 
 
 /* 00016f50 */
 
+/* WARNING: Unknown calling convention */
 /* packs a 4-character name into D0
-   Not a C function: reads the name its calling stub was given, at 8(A6) in the stub's frame, and
-   returns its four characters packed in D0, zero for none.  Uses A0.
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.  Out: D0 int name.
    psos.md */
 
-undefined4 psos_pack_name(void)
+int psos_pack_name(void)
 
 {
-  undefined4 uVar1;
+  int iVar1;
   int unaff_A6;
   
-  uVar1 = 0;
-  if (*(undefined4 **)(unaff_A6 + 8) != (undefined4 *)0x0) {
-    uVar1 = **(undefined4 **)(unaff_A6 + 8);
+  iVar1 = 0;
+  if (*(int **)(unaff_A6 + 8) != (int *)0x0) {
+    iVar1 = **(int **)(unaff_A6 + 8);
   }
-  return uVar1;
+  return iVar1;
 }
 
 
@@ -12804,8 +12790,10 @@ ulong psos_service_31(ulong a,ulong b,ulong c)
 ulong psos_io_init(ulong device)
 
 {
-  psos_io_call();
-  return 0;
+  ulong uVar1;
+  
+  uVar1 = psos_io_call('\0',device);
+  return uVar1;
 }
 
 
@@ -12817,8 +12805,10 @@ ulong psos_io_init(ulong device)
 ulong psos_io_open(ulong device,ulong a)
 
 {
-  psos_io_call();
-  return 1;
+  ulong uVar1;
+  
+  uVar1 = psos_io_call('\x01',device);
+  return uVar1;
 }
 
 
@@ -12830,38 +12820,50 @@ ulong psos_io_open(ulong device,ulong a)
 ulong psos_io_close(ulong device)
 
 {
-  psos_io_call();
-  return 2;
+  ulong uVar1;
+  
+  uVar1 = psos_io_call('\x02',device);
+  return uVar1;
 }
 
 
 /* 00017416 */
 
-/* WARNING: Removing unreachable block (ram,0x00017436) */
-/* WARNING: Removing unreachable block (ram,0x0001743c) */
 /* I/O function 3, dev_read, expect
    psos.md */
 
 ulong psos_io_read(ulong device,void *buffer,ulong *length)
 
 {
-  psos_io_call();
-  return 3;
+  ulong uVar1;
+  ulong uVar2;
+  
+  uVar1 = *length;
+  uVar2 = psos_io_call('\x03',device);
+  if ((uVar2 == 0) && (length != (ulong *)0x0)) {
+    *length = uVar1;
+  }
+  return uVar2;
 }
 
 
 /* 00017448 */
 
-/* WARNING: Removing unreachable block (ram,0x00017468) */
-/* WARNING: Removing unreachable block (ram,0x0001746e) */
 /* I/O function 4, dev_write
    psos.md */
 
 ulong psos_io_write(ulong device,void *buffer,ulong *length)
 
 {
-  psos_io_call();
-  return 4;
+  ulong uVar1;
+  ulong uVar2;
+  
+  uVar1 = *length;
+  uVar2 = psos_io_call('\x04',device);
+  if ((uVar2 == 0) && (length != (ulong *)0x0)) {
+    *length = uVar1;
+  }
+  return uVar2;
 }
 
 
@@ -12873,8 +12875,10 @@ ulong psos_io_write(ulong device,void *buffer,ulong *length)
 ulong psos_io_control(ulong device,ulong a,ulong b)
 
 {
-  psos_io_call();
-  return 5;
+  ulong uVar1;
+  
+  uVar1 = psos_io_call('\x05',device);
+  return uVar1;
 }
 
 
@@ -14584,10 +14588,10 @@ void forth_refill(forth_user_end user,char *input)
 
 /* WARNING: Unknown calling convention */
 /* writes the string in D0 to iodev; type's work
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; documented): a routine of the pForth console's kernel, which runs with
+   the data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input
+   in A3.  In: D0 char *s.
+   console.md */
 
 ulonglong forth_print_string(char *s,forth_user_end user)
 
@@ -20880,7 +20884,14 @@ LAB_0001d8ca:
 void FUN_0001d906(void)
 
 {
-  mutex_release();
+  char in_D0b;
+  uint32_t *mutex;
+  
+  mutex = &drtR_status;
+  if (in_D0b != '\0') {
+    mutex = &drtW_status;
+  }
+  mutex_release(mutex);
   return;
 }
 
@@ -20890,7 +20901,14 @@ void FUN_0001d906(void)
 void FUN_0001d922(void)
 
 {
-  mutex_acquire();
+  char in_D0b;
+  uint32_t *mutex;
+  
+  mutex = &drtR_status;
+  if (in_D0b != '\0') {
+    mutex = &drtW_status;
+  }
+  mutex_acquire(mutex);
   return;
 }
 
@@ -21106,16 +21124,16 @@ void FUN_0001ddd6(void)
 void FUN_0001ddf6(undefined1 param_1)
 
 {
-  char unaff_D7b;
+  int iVar1;
   undefined1 local_6;
   undefined1 local_5;
   
   local_6 = param_1;
   local_5 = 0;
-  mutex_acquire();
-  if (unaff_D7b < '\x01') {
+  iVar1 = mutex_acquire(&drtW_status);
+  if ((char)iVar1 < '\x01') {
     drtb_puts(&local_6);
-    mutex_release();
+    mutex_release(&drtW_status);
   }
   return;
 }
@@ -21233,10 +21251,10 @@ void printf_polled(char *format,...)
 bool FUN_0001df6e(void)
 
 {
-  char unaff_D7b;
+  int iVar1;
   
-  mutex_acquire();
-  return '\0' < unaff_D7b;
+  iVar1 = mutex_acquire(&drtW_status);
+  return '\0' < (char)iVar1;
 }
 
 
@@ -25400,15 +25418,15 @@ LAB_00024d6c:
 
 /* 00024e18 */
 
+/* WARNING: Unknown calling convention */
 /* the double in D0:D1 as a sign word, ASCII digits, D7 and two more, and the exponent of 0.d1d2...,
    into the record at A0
-   Not a C function: the double in D0:D1, how many digits in D7, the record to fill in A0 (a sign
-   word, the digits as ASCII, the exponent of 0.d1d2... as a word).  Returns with the condition
-   codes cleared, or all set and -8 in D0.w for a subnormal, infinite or NaN double.  D0 to D7 and
-   A0 and A1 are not preserved.
+   Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double
+   value, D7 short digits, A0 char *record.  Returns: ccr.  Error: D0.w -8 subnormal, infinite or
+   NaN.
    docs/scpi/README.md, run */
 
-uint scpi_double_to_decimal(void)
+uint scpi_double_to_decimal(double value,short digits,char *record)
 
 {
   undefined1 uVar1;
@@ -25418,221 +25436,274 @@ uint scpi_double_to_decimal(void)
   uint uVar5;
   uint uVar6;
   uint uVar7;
-  uint in_D0;
-  uint uVar8;
-  int iVar9;
-  ushort uVar10;
-  int in_D1;
-  uint uVar11;
+  ushort uVar8;
+  uint uVar9;
+  uint uVar10;
+  int iVar11;
   ushort uVar12;
-  short sVar13;
-  byte bVar14;
-  ushort unaff_D7w;
-  undefined2 *in_A0;
+  ushort uVar13;
+  short sVar14;
+  byte bVar15;
   undefined4 *extraout_A0;
-  undefined4 *puVar15;
+  undefined4 *puVar16;
   short extraout_A1w;
-  short sVar16;
-  bool bVar17;
+  short extraout_A1w_00;
+  short sVar17;
   bool bVar18;
-  longlong lVar19;
+  bool bVar19;
+  double dVar20;
   
-  if (in_D0 == 0) {
-    if (in_D1 == 0) {
-      *in_A0 = 0;
+  uVar9 = (uint)((ulonglong)value >> 0x20);
+  iVar11 = SUB84(value,0);
+  if (uVar9 == 0) {
+    if (iVar11 == 0) {
+      record[0] = '\0';
+      record[1] = '\0';
 LAB_00024e22:
-      *(undefined4 *)(in_A0 + 1) = 0x30303030;
-      *(undefined4 *)(in_A0 + 3) = 0x30303030;
-      *(undefined4 *)(in_A0 + 5) = 0x30303030;
-      *(undefined4 *)(in_A0 + 7) = 0x30303030;
-      in_A0[9] = 0;
+      builtin_strncpy(record + 2,"0000000000000000",0x11);
+      record[0x13] = '\0';
       return 0x30303030;
     }
   }
   else {
-    if ((int)in_D0 < 0) {
-      *in_A0 = 1;
-      in_D0 = in_D0 & 0x7fffffff;
-      if (in_D0 == 0) goto LAB_00024e22;
+    if ((longlong)value < 0) {
+      record[0] = '\0';
+      record[1] = '\x01';
+      uVar9 = uVar9 & 0x7fffffff;
+      if (((ulonglong)value & 0x7fffffff00000000) == 0) goto LAB_00024e22;
     }
     else {
-      *in_A0 = 0;
+      record[0] = '\0';
+      record[1] = '\0';
     }
-    uVar12 = ((ushort)(in_D0 >> 0x10) & 0x7ff0) >> 4;
-    if ((uVar12 != 0) && (sVar16 = uVar12 - 0x3ff, sVar16 < 0x400)) {
-      sVar13 = 0x4d10;
-      if (sVar16 < 0) {
-        sVar13 = 0x4d11;
+    dVar20 = (double)CONCAT44(uVar9,iVar11);
+    uVar13 = ((ushort)(uVar9 >> 0x10) & 0x7ff0) >> 4;
+    if ((uVar13 != 0) && (sVar17 = uVar13 - 0x3ff, sVar17 < 0x400)) {
+      sVar14 = 0x4d10;
+      if (sVar17 < 0) {
+        sVar14 = 0x4d11;
       }
-      uVar12 = (short)((uint)((int)sVar16 * (int)sVar13) >> 0x10) + 0x41;
-      if (((int)((uint)uVar12 << 0x10) < 0) || (0x80 < (short)uVar12)) {
-        scpi_double_multiply();
+      sVar17 = (short)((uint)((int)sVar17 * (int)sVar14) >> 0x10);
+      uVar13 = sVar17 + 0x41;
+      if (((int)((uint)uVar13 << 0x10) < 0) || (0x80 < (short)uVar13)) {
+        sVar17 = (short)(sVar17 + 1) >> 6;
+        if (sVar17 < 0) {
+          sVar17 = sVar17 + 1;
+        }
+        sVar17 = (4 - sVar17) * 8;
+        dVar20 = scpi_double_multiply
+                           ((double)CONCAT44(uVar9,iVar11),
+                            (double)CONCAT44(*(undefined4 *)(&DAT_00025b36 + sVar17),
+                                             *(undefined4 *)(&DAT_00025b3a + sVar17)));
+        sVar17 = extraout_A1w >> 6;
+        if (sVar17 < 0) {
+          sVar17 = sVar17 + 1;
+        }
+        uVar13 = extraout_A1w + sVar17 * -0x40 + 0x40;
       }
-      lVar19 = scpi_double_multiply();
-      uVar8 = (uint)((ulonglong)lVar19 >> 0x20);
-      uVar11 = (uint)lVar19;
-      sVar16 = extraout_A1w + 1;
-      if ((0x3fb99999ffffffff < lVar19) || (0x99999999 < uVar11)) {
-        if (uVar8 != 0x3ff00000) {
-          uVar10 = (ushort)((ulonglong)lVar19 >> 0x30);
-          uVar12 = (uVar10 >> 4) - 0x3fb;
-          uVar8 = (uVar10 & 0xffff000f | 0x10) << 0x10 | uVar8 & 0xffff;
-          bVar14 = (byte)uVar12;
-          while (bVar14 != 0) {
-            bVar17 = CARRY4(uVar11,uVar11);
-            uVar11 = uVar11 * 2;
-            uVar8 = uVar8 * 2 + (uint)bVar17;
-            bVar14 = (char)uVar12 - 1;
-            uVar12 = (ushort)bVar14;
+      iVar11 = (int)((ulonglong)dVar20 >> 0x20);
+      sVar17 = uVar13 * 8;
+      if ((*(int *)(&DAT_0002572e + sVar17) <= iVar11) &&
+         ((*(int *)(&DAT_0002572e + sVar17) < iVar11 ||
+          (*(uint *)(&DAT_00025732 + sVar17) <= SUB84(dVar20,0))))) {
+        sVar17 = sVar17 + 8;
+      }
+      sVar17 = 0x200 - (sVar17 + -0x200);
+      dVar20 = scpi_double_multiply
+                         (dVar20,(double)CONCAT44(*(undefined4 *)(&DAT_0002572e + sVar17),
+                                                  *(undefined4 *)(&DAT_00025732 + sVar17)));
+      uVar9 = SUB84(dVar20,0);
+      sVar17 = extraout_A1w_00 + 1;
+      if ((0x3fb99999ffffffff < (longlong)dVar20) || (0x99999999 < uVar9)) {
+        if ((int)((ulonglong)dVar20 >> 0x20) != 0x3ff00000) {
+          uVar12 = (ushort)((ulonglong)dVar20 >> 0x30);
+          uVar13 = (uVar12 >> 4) - 0x3fb;
+          uVar8 = (ushort)((ulonglong)dVar20 >> 0x20);
+          uVar10 = (CONCAT22(uVar8,uVar12) & 0xffff000f | 0x10) << 0x10 | (uint)uVar8;
+          bVar15 = (byte)uVar13;
+          while (bVar15 != 0) {
+            bVar18 = CARRY4(uVar9,uVar9);
+            uVar9 = uVar9 * 2;
+            uVar10 = uVar10 * 2 + (uint)bVar18;
+            bVar15 = (char)uVar13 - 1;
+            uVar13 = (ushort)bVar15;
           }
-          *(short *)(extraout_A0 + 4) = sVar16;
-          if ((sVar16 < 1) || (0xf < (short)unaff_D7w)) {
-            sVar16 = 0xf;
-            puVar15 = extraout_A0;
+          *(short *)(extraout_A0 + 4) = sVar17;
+          if ((sVar17 < 1) || (0xf < digits)) {
+            sVar17 = 0xf;
+            puVar16 = extraout_A0;
           }
           else {
-            bVar14 = (byte)unaff_D7w;
-            uVar1 = (undefined1)(unaff_D7w >> 8);
-            puVar15 = extraout_A0;
-            if ((unaff_D7w & 1) == 0) {
-              sVar16 = CONCAT11(uVar1,(bVar14 >> 1) << 1 | bVar14 & 1) + 1;
+            bVar15 = (byte)digits;
+            uVar1 = (undefined1)((ushort)digits >> 8);
+            puVar16 = extraout_A0;
+            if ((digits & 1U) == 0) {
+              sVar17 = CONCAT11(uVar1,(bVar15 >> 1) << 1 | bVar15 & 1) + 1;
             }
             else {
-              sVar16 = CONCAT11(uVar1,(bVar14 >> 1) << 1 | bVar14 & 1);
+              sVar17 = CONCAT11(uVar1,(bVar15 >> 1) << 1 | bVar15 & 1);
             }
           }
           do {
-            bVar17 = CARRY4(uVar11,uVar11);
-            uVar2 = uVar11 * 2;
-            bVar18 = CARRY4(uVar11 * 4,uVar11);
-            uVar6 = uVar11 * 5;
-            uVar3 = uVar11 * 10;
-            uVar4 = uVar11 * 0x14;
-            uVar5 = uVar11 * 0x28;
-            uVar7 = uVar11 * 0x32;
-            uVar11 = uVar11 * 100;
-            iVar9 = (((uVar8 * 5 + (uint)bVar17 * 2 + (uint)CARRY4(uVar2,uVar2) + (uint)bVar18) * 2
-                     + (uint)CARRY4(uVar6,uVar6)) * 5 + (uint)CARRY4(uVar3,uVar3) * 2 +
-                     (uint)CARRY4(uVar4,uVar4) + (uint)CARRY4(uVar5,uVar3)) * 2 +
-                    (uint)CARRY4(uVar7,uVar7);
-            uVar10 = (ushort)((uint)iVar9 >> 0x10);
-            uVar12 = (ushort)((uint)(iVar9 * 0x10000) >> 0x10);
-            uVar8 = (CONCAT22(uVar12,uVar10) & 0xffff00ff) << 0x10 | (uint)uVar12;
-            *(undefined2 *)puVar15 =
-                 *(undefined2 *)((int)&DAT_00025c82 + (int)(short)((uVar10 >> 8) * 2));
-            sVar16 = sVar16 + -2;
-            puVar15 = (undefined4 *)((int)puVar15 + 2);
-          } while (-1 < sVar16);
-          return uVar8;
+            bVar18 = CARRY4(uVar9,uVar9);
+            uVar2 = uVar9 * 2;
+            bVar19 = CARRY4(uVar9 * 4,uVar9);
+            uVar6 = uVar9 * 5;
+            uVar3 = uVar9 * 10;
+            uVar4 = uVar9 * 0x14;
+            uVar5 = uVar9 * 0x28;
+            uVar7 = uVar9 * 0x32;
+            uVar9 = uVar9 * 100;
+            iVar11 = (((uVar10 * 5 + (uint)bVar18 * 2 + (uint)CARRY4(uVar2,uVar2) + (uint)bVar19) *
+                       2 + (uint)CARRY4(uVar6,uVar6)) * 5 + (uint)CARRY4(uVar3,uVar3) * 2 +
+                      (uint)CARRY4(uVar4,uVar4) + (uint)CARRY4(uVar5,uVar3)) * 2 +
+                     (uint)CARRY4(uVar7,uVar7);
+            uVar12 = (ushort)((uint)iVar11 >> 0x10);
+            uVar13 = (ushort)((uint)(iVar11 * 0x10000) >> 0x10);
+            uVar10 = (CONCAT22(uVar13,uVar12) & 0xffff00ff) << 0x10 | (uint)uVar13;
+            *(undefined2 *)puVar16 =
+                 *(undefined2 *)((int)&DAT_00025c82 + (int)(short)((uVar12 >> 8) * 2));
+            sVar17 = sVar17 + -2;
+            puVar16 = (undefined4 *)((int)puVar16 + 2);
+          } while (-1 < sVar17);
+          return uVar10;
         }
-        sVar16 = extraout_A1w + 2;
+        sVar17 = extraout_A1w_00 + 2;
       }
       *extraout_A0 = 0x31303030;
       extraout_A0[1] = 0x30303030;
       extraout_A0[2] = 0x30303030;
       extraout_A0[3] = 0x30303030;
-      *(short *)(extraout_A0 + 4) = sVar16;
+      *(short *)(extraout_A0 + 4) = sVar17;
       return 0x30303030;
     }
   }
-  return 0xfff8;
+  return CONCAT22((short)(uVar9 >> 0x10),0xfff8);
 }
 
 
 /* 0002507a */
 
+/* WARNING: Unknown calling convention */
 /* the 16 BCD digits as a 64-bit integer, normalized, then scaled by scpi_scale_by_power_of_ten
-   Not a C function: the BCD record in A0.  Returns the double in D0:D1 with the condition codes
-   cleared, or all set and -9 in D0.w out of range.  Falls into scpi_scale_by_power_of_ten.  D2 to
-   D7 and A0 and A1 are not preserved.
+   Not a C function (register; run): its arguments and results in registers.  In: A0 char *bcd.
+   Out: D0:D1 double.  Returns: ccr.  Error: D0.w -9 out of range.
    docs/scpi/README.md, run, as scpi_number_to_double */
 
-undefined8 scpi_bcd_to_double(void)
+double scpi_bcd_to_double(char *bcd)
 
 {
   short sVar1;
   uint uVar2;
   uint uVar3;
-  uint uVar4;
+  int iVar4;
   uint uVar5;
   uint uVar6;
-  short sVar7;
-  ushort uVar8;
-  short *in_A0;
-  byte *pbVar9;
-  undefined *puVar10;
+  uint uVar7;
+  short sVar8;
+  short sVar9;
+  ushort uVar10;
+  byte *pbVar11;
+  undefined *puVar12;
   undefined *extraout_A1;
-  bool bVar11;
-  undefined8 uVar12;
+  bool bVar13;
+  double dVar14;
+  double a;
   
-  pbVar9 = (byte *)(in_A0 + 1);
-  if (*pbVar9 == 0) {
-    return 0;
+  pbVar11 = (byte *)(bcd + 2);
+  if (*pbVar11 == 0) {
+    return 0.0;
   }
-  if (*(int *)(in_A0 + 3) == 0) {
-    if (in_A0[2] == 0) {
-      uVar12 = scpi_scale_by_power_of_ten();
-      return uVar12;
+  if (*(int *)(bcd + 6) == 0) {
+    uVar5 = (uint)(ushort)((ushort)*(byte *)((int)&PTR_PTR_00025b7e +
+                                            (int)(short)(ushort)(byte)bcd[3]) +
+                          (ushort)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)*pbVar11) *
+                          100);
+    if (*(short *)(bcd + 4) == 0) {
+      iVar4 = uVar5 << 7;
+      uVar10 = *(ushort *)
+                ((int)&switchD_00024ff2::switchdataD_00025016 +
+                (int)(short)((ushort)((uint)iVar4 >> 0x10) & 0x1e));
+      dVar14 = scpi_scale_by_power_of_ten
+                         ((double)((ulonglong)
+                                   ((uint)(ushort)((0x40b - uVar10) * 0x10) * 0x10000 +
+                                   (iVar4 << (uVar10 & 0x3f))) << 0x20),(short *)(bcd + 10),
+                          (double *)&LAB_00025706_8);
+      return dVar14;
     }
-    switch((ushort)((uint)*(byte *)((int)&PTR_PTR_00025b7e +
-                                   (int)(short)(ushort)*(byte *)((int)in_A0 + 5)) +
-                    (uint)*(byte *)((int)&PTR_PTR_00025b7e +
-                                   (int)(short)(ushort)*(byte *)(in_A0 + 2)) * 100 +
-                    (uint)(ushort)((ushort)*(byte *)((int)&PTR_PTR_00025b7e +
-                                                    (int)(short)(ushort)*(byte *)((int)in_A0 + 3)) +
-                                  (ushort)*(byte *)((int)&PTR_PTR_00025b7e +
-                                                   (int)(short)(ushort)*pbVar9) * 100) * 10000 >>
-                   0x16) & 0x1e) {
+    uVar5 = (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)(byte)bcd[5]) +
+            (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)(byte)bcd[4]) * 100 +
+            uVar5 * 10000;
+    uVar6 = uVar5 >> 6;
+    uVar7 = uVar5 * 0x4000000;
+    uVar10 = (ushort)(uVar5 >> 0x16) & 0x1e;
+    switch(uVar10) {
     case 0:
+      bVar13 = CARRY4(uVar7,uVar7);
+      uVar7 = uVar5 * 0x8000000;
+      uVar6 = uVar6 * 2 + (uint)bVar13;
     case 2:
+      bVar13 = CARRY4(uVar7,uVar7);
+      uVar7 = uVar7 * 2;
+      uVar6 = uVar6 * 2 + (uint)bVar13;
     case 4:
     case 6:
+      bVar13 = CARRY4(uVar7,uVar7);
+      uVar7 = uVar7 * 2;
+      uVar6 = uVar6 * 2 + (uint)bVar13;
     case 8:
     case 10:
     case 0xc:
     case 0xe:
+      bVar13 = CARRY4(uVar7,uVar7);
+      uVar7 = uVar7 * 2;
+      uVar6 = uVar6 * 2 + (uint)bVar13;
     default:
-      uVar12 = scpi_scale_by_power_of_ten();
-      return uVar12;
+      dVar14 = scpi_scale_by_power_of_ten
+                         ((double)CONCAT44((uint)(ushort)((0x418 - *(short *)((int)&switchD_00024ff2
+                                                                                    ::
+                                                  switchdataD_00025016 + (int)(short)uVar10)) * 0x10
+                                                  ) * 0x10000 + uVar6,uVar7),(short *)(bcd + 10),
+                          (double *)&LAB_000256ee);
+      return dVar14;
     }
   }
-  uVar6 = (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)*(byte *)((int)in_A0 + 5)) +
-          (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)*(byte *)(in_A0 + 2)) * 100 +
-          (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)*(byte *)((int)in_A0 + 3)) *
-          10000 + (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)*pbVar9) * 1000000;
-  uVar2 = (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)*(byte *)((int)in_A0 + 9)) +
-          (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)*(byte *)(in_A0 + 4)) * 100 +
-          (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)*(byte *)((int)in_A0 + 7)) *
-          10000 + (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)*(byte *)(in_A0 + 3))
-                  * 1000000;
-  uVar5 = ((uVar6 & 0xffff) * 0x5f5e >> 0x10) + (uVar6 >> 0x10) * 0x5f5e;
-  uVar4 = uVar5 * 0x10000000 | ((uVar6 & 0xffff) * 0x5f5e0000 >> 0x10) << 0xc;
-  uVar3 = uVar6 * 0x100 + uVar4;
-  uVar5 = (uVar6 >> 0x18) + (uVar5 >> 4) + (uint)CARRY4(uVar6 * 0x100,uVar4);
-  uVar6 = uVar2 + uVar3;
-  if (CARRY4(uVar2,uVar3)) {
-    uVar5 = uVar5 + 1;
+  uVar5 = (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)(byte)bcd[5]) +
+          (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)(byte)bcd[4]) * 100 +
+          (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)(byte)bcd[3]) * 10000 +
+          (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)*pbVar11) * 1000000;
+  uVar7 = (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)(byte)bcd[9]) +
+          (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)(byte)bcd[8]) * 100 +
+          (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)(byte)bcd[7]) * 10000 +
+          (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)(byte)bcd[6]) * 1000000;
+  uVar6 = ((uVar5 & 0xffff) * 0x5f5e >> 0x10) + (uVar5 >> 0x10) * 0x5f5e;
+  uVar3 = uVar6 * 0x10000000 | ((uVar5 & 0xffff) * 0x5f5e0000 >> 0x10) << 0xc;
+  uVar2 = uVar5 * 0x100 + uVar3;
+  uVar6 = (uVar5 >> 0x18) + (uVar6 >> 4) + (uint)CARRY4(uVar5 * 0x100,uVar3);
+  uVar5 = uVar7 + uVar2;
+  if (CARRY4(uVar7,uVar2)) {
+    uVar6 = uVar6 + 1;
   }
-  uVar8 = (ushort)(uVar5 >> 0x10) & 0x3e;
-  switch(uVar8) {
+  uVar10 = (ushort)(uVar6 >> 0x10) & 0x3e;
+  switch(uVar10) {
   case 0:
-    bVar11 = CARRY4(uVar6,uVar6);
-    uVar6 = uVar6 * 2;
-    uVar5 = uVar5 * 2 + (uint)bVar11;
+    bVar13 = CARRY4(uVar5,uVar5);
+    uVar5 = uVar5 * 2;
+    uVar6 = uVar6 * 2 + (uint)bVar13;
     goto LAB_000251ce;
   case 2:
 LAB_000251ce:
-    bVar11 = CARRY4(uVar6,uVar6);
-    uVar6 = uVar6 * 2;
-    uVar5 = uVar5 * 2 + (uint)bVar11;
+    bVar13 = CARRY4(uVar5,uVar5);
+    uVar5 = uVar5 * 2;
+    uVar6 = uVar6 * 2 + (uint)bVar13;
     goto LAB_000251d2;
   case 4:
     goto LAB_000251d2;
   case 6:
 LAB_000251d2:
-    bVar11 = CARRY4(uVar6,uVar6);
-    uVar6 = uVar6 * 2;
-    uVar5 = uVar5 * 2 + (uint)bVar11;
+    bVar13 = CARRY4(uVar5,uVar5);
+    uVar5 = uVar5 * 2;
+    uVar6 = uVar6 * 2 + (uint)bVar13;
     goto LAB_000251d6;
   case 8:
     goto LAB_000251d6;
@@ -25642,9 +25713,9 @@ LAB_000251d2:
     goto LAB_000251d6;
   case 0xe:
 LAB_000251d6:
-    bVar11 = CARRY4(uVar6,uVar6);
-    uVar6 = uVar6 * 2;
-    uVar5 = uVar5 * 2 + (uint)bVar11;
+    bVar13 = CARRY4(uVar5,uVar5);
+    uVar5 = uVar5 * 2;
+    uVar6 = uVar6 * 2 + (uint)bVar13;
     goto LAB_000251da;
   case 0x10:
     goto LAB_000251da;
@@ -25692,238 +25763,275 @@ LAB_000251d6:
     break;
   case 0x3c:
   }
-  uVar2 = uVar5 & 1;
-  uVar5 = uVar5 >> 1;
-  uVar6 = (uint)(uVar2 != 0) << 0x1f | uVar6 >> 1;
+  uVar7 = uVar6 & 1;
+  uVar6 = uVar6 >> 1;
+  uVar5 = (uint)(uVar7 != 0) << 0x1f | uVar5 >> 1;
 LAB_000251da:
-  uVar5 = (uint)*(ushort *)(&DAT_00025144 + (short)uVar8) * 0x10000 + uVar5;
-  puVar10 = &DAT_000256ae;
-  if (*in_A0 != 0) {
-    uVar5 = uVar5 | 0x80000000;
+  uVar6 = (uint)*(ushort *)(&DAT_00025144 + (short)uVar10) * 0x10000 + uVar6;
+  puVar12 = &DAT_000256ae;
+  if (*(short *)bcd != 0) {
+    uVar6 = uVar6 | 0x80000000;
   }
-  sVar1 = in_A0[5];
-  uVar12 = CONCAT44(uVar5,uVar6);
-  if ((-0x136 < sVar1) && (uVar12 = CONCAT44(uVar5,uVar6), sVar1 < 0x136)) {
-    uVar8 = sVar1 + 0x40;
-    if (((int)((uint)uVar8 << 0x10) < 0) || (0x80 < (short)uVar8)) {
-      sVar7 = sVar1 >> 6;
-      scpi_double_multiply();
-      if (sVar7 < 0) {
-        sVar7 = sVar7 + 1;
+  a = (double)CONCAT44(uVar6,uVar5);
+  sVar1 = *(short *)(bcd + 10);
+  dVar14 = (double)CONCAT44(uVar6,uVar5);
+  if ((-0x136 < sVar1) && (dVar14 = (double)CONCAT44(uVar6,uVar5), sVar1 < 0x136)) {
+    uVar10 = sVar1 + 0x40;
+    if (((int)((uint)uVar10 << 0x10) < 0) || (0x80 < (short)uVar10)) {
+      sVar9 = sVar1 >> 6;
+      sVar8 = sVar9;
+      if (sVar9 < 0) {
+        sVar8 = sVar9 + 1;
       }
-      uVar8 = sVar1 + sVar7 * -0x40 + 0x40;
-      puVar10 = extraout_A1;
+      sVar8 = (sVar8 + 4) * 8;
+      a = scpi_double_multiply
+                    ((double)CONCAT44(uVar6,uVar5),
+                     (double)CONCAT44(*(undefined4 *)(&DAT_00025b36 + sVar8),
+                                      *(undefined4 *)(&DAT_00025b3a + sVar8)));
+      if (sVar9 < 0) {
+        sVar9 = sVar9 + 1;
+      }
+      uVar10 = sVar1 + sVar9 * -0x40 + 0x40;
+      puVar12 = extraout_A1;
     }
-    bVar11 = *(int *)(puVar10 + (short)(uVar8 << 3) + 4) == 0;
-    uVar12 = scpi_double_multiply();
-    if (!bVar11) {
-      return uVar12;
+    bVar13 = *(int *)(puVar12 + (short)(uVar10 << 3) + 4) == 0;
+    dVar14 = scpi_double_multiply
+                       (a,(double)CONCAT44(*(undefined4 *)(puVar12 + (short)(uVar10 << 3)),
+                                           *(int *)(puVar12 + (short)(uVar10 << 3) + 4)));
+    if (!bVar13) {
+      return dVar14;
     }
   }
-  return CONCAT44(CONCAT22((short)((ulonglong)uVar12 >> 0x30),0xfff7),(int)uVar12);
+  return (double)CONCAT44(CONCAT22((short)((ulonglong)dVar14 >> 0x30),0xfff7),SUB84(dVar14,0));
 }
 
 
 /* 000251e4 */
 
+/* WARNING: Unknown calling convention */
 /* the double in D0:D1 times 10 to the word at A0 less 16, by the tables at 0x256ae and 0x25b36; the
    sign from the word 10 bytes before; -9 beyond 309
-   Not a C function: the double in D0:D1, A0 at the exponent word (the sign word 10 bytes before
-   it), the table of powers of ten in A1.  Returns D0:D1 times 10 to the exponent less 16, with the
-   condition codes cleared, or all set and -9 in D0.w beyond 309.  D2 to D7 and A0 and A1 are not
-   preserved.
+   Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double
+   value, A0 short *exponent, A1 double *powers.  Out: D0:D1 double.  Returns: ccr.  Error: D0.w -9
+   beyond 309.
    docs/scpi/README.md, run */
 
-undefined * scpi_scale_by_power_of_ten(void)
+double scpi_scale_by_power_of_ten(double value,short *exponent,double *powers)
 
 {
-  short sVar1;
-  undefined *puVar2;
-  short sVar3;
-  short *in_A0;
-  int in_A1;
-  int extraout_A1;
-  bool bVar4;
+  int iVar1;
+  short sVar2;
+  uint uVar3;
+  undefined4 uVar4;
+  short sVar5;
+  short sVar6;
+  double *extraout_A1;
+  bool bVar7;
+  double dVar8;
+  double a;
   
-  sVar1 = *in_A0;
-  if ((-0x136 < sVar1) && (sVar1 < 0x136)) {
-    sVar3 = sVar1 + 0x40;
-    if ((sVar3 < 0) || (0x80 < sVar3)) {
-      sVar3 = sVar1 >> 6;
-      scpi_double_multiply();
-      if (sVar3 < 0) {
-        sVar3 = sVar3 + 1;
+  uVar3 = (uint)((ulonglong)value >> 0x20);
+  uVar4 = SUB84(value,0);
+  if (exponent[-5] != 0) {
+    uVar3 = uVar3 | 0x80000000;
+  }
+  a = (double)CONCAT44(uVar3,uVar4);
+  sVar2 = *exponent;
+  dVar8 = (double)CONCAT44(uVar3,uVar4);
+  if ((-0x136 < sVar2) && (dVar8 = (double)CONCAT44(uVar3,uVar4), sVar2 < 0x136)) {
+    sVar6 = sVar2 + 0x40;
+    if ((sVar6 < 0) || (0x80 < sVar6)) {
+      sVar5 = sVar2 >> 6;
+      sVar6 = sVar5;
+      if (sVar5 < 0) {
+        sVar6 = sVar5 + 1;
       }
-      sVar3 = sVar1 + sVar3 * -0x40 + 0x40;
-      in_A1 = extraout_A1;
+      sVar6 = (sVar6 + 4) * 8;
+      a = scpi_double_multiply
+                    ((double)CONCAT44(uVar3,uVar4),
+                     (double)CONCAT44(*(undefined4 *)(&DAT_00025b36 + sVar6),
+                                      *(undefined4 *)(&DAT_00025b3a + sVar6)));
+      if (sVar5 < 0) {
+        sVar5 = sVar5 + 1;
+      }
+      sVar6 = sVar2 + sVar5 * -0x40 + 0x40;
+      powers = extraout_A1;
     }
-    bVar4 = *(int *)(in_A1 + 4 + (int)(short)(sVar3 << 3)) == 0;
-    puVar2 = (undefined *)scpi_double_multiply();
-    if (!bVar4) {
-      return puVar2;
+    iVar1 = *(int *)((int)powers + (short)(sVar6 << 3) + 4);
+    bVar7 = iVar1 == 0;
+    dVar8 = scpi_double_multiply
+                      (a,(double)CONCAT44(*(undefined4 *)((int)powers + (int)(short)(sVar6 << 3)),
+                                          iVar1));
+    if (!bVar7) {
+      return dVar8;
     }
   }
-  return &UNK_0000fff7;
+  return (double)CONCAT44(CONCAT22((short)((ulonglong)dVar8 >> 0x30),0xfff7),SUB84(dVar8,0));
 }
 
 
 /* 000252bc */
 
+/* WARNING: Unknown calling convention */
 /* D0:D1 times D2:D3, the engine's own IEEE multiply
-   Not a C function: multiplies D0:D1 by D2:D3, both doubles, into D0:D1.  Returns with the
-   condition codes cleared, or all set and -2 in D2 for underflow or -1 for overflow.  A0 is
-   preserved; D2 to D7 are not.
+   Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a,
+   D2:D3 double b.  Out: D0:D1 double.  Returns: ccr.  Error: D2 -2 underflow, D2 -1 overflow.
+   Preserves: A0.
    docs/scpi/README.md, run */
 
-undefined8 scpi_double_multiply(void)
+double scpi_double_multiply(double a,double b)
 
 {
   int iVar1;
   int iVar2;
   ushort uVar3;
   uint uVar4;
-  uint in_D0;
   ushort uVar5;
-  uint in_D1;
-  uint uVar6;
-  uint unaff_D2;
   ushort uVar7;
-  uint unaff_D3;
-  ushort uVar8;
-  uint uVar9;
-  uint uVar10;
-  uint uVar11;
+  uint uVar6;
+  uint uVar8;
+  ushort uVar9;
+  ushort uVar10;
+  ushort uVar11;
   uint uVar12;
   uint uVar13;
   uint uVar14;
   uint uVar15;
-  bool bVar16;
-  undefined8 uVar17;
+  uint uVar16;
+  uint uVar17;
+  uint uVar18;
+  bool bVar19;
+  double dVar20;
   
-  if (in_D0 == 0) {
-    return 0;
+  uVar13 = (uint)((ulonglong)b >> 0x20);
+  uVar17 = SUB84(b,0);
+  uVar8 = (uint)((ulonglong)a >> 0x20);
+  uVar6 = SUB84(a,0);
+  if (uVar8 == 0) {
+    return 0.0;
   }
-  uVar5 = (ushort)(in_D0 >> 0x10);
-  if (unaff_D2 == 0) {
-    return 0;
+  uVar7 = (ushort)((ulonglong)a >> 0x30);
+  if (uVar13 == 0) {
+    return 0.0;
   }
-  uVar7 = (ushort)(unaff_D2 >> 0x10);
-  uVar15 = (CONCAT22(uVar7,uVar7) & 0x80007ff0) + (CONCAT22(uVar5,uVar5) & 0x80007ff0);
-  uVar3 = uVar7 & 0xf | 0x10;
-  uVar10 = CONCAT22((short)unaff_D2,uVar7) & 0xffff000f | 0x10;
-  uVar7 = uVar5 & 0xf | 0x10;
-  uVar6 = CONCAT22((short)in_D0,uVar5) & 0xffff000f | 0x10;
-  if (in_D1 == 0) {
-    if (unaff_D3 == 0) {
-      if (((uVar10 | uVar6) & 0x1f0000) == 0) {
-        uVar11 = ((uVar6 << 0x10 | in_D0 & 0xffff) >> 5) *
-                 ((uVar10 << 0x10 | unaff_D2 & 0xffff) >> 5);
-        uVar6 = uVar11 * 0x200000;
-        uVar9 = (uVar11 >> 0x10) << 5;
-        uVar10 = uVar9 | (uVar11 & 0xffff) >> 0xb;
-        if ((uVar9 & 0x100000) == 0) {
-          bVar16 = CARRY4(uVar6,uVar6);
-          uVar6 = uVar11 * 0x400000;
-          uVar10 = uVar10 * 2 + (uint)bVar16;
-          uVar15 = uVar15 - 0x10;
+  uVar10 = (ushort)((ulonglong)b >> 0x30);
+  uVar18 = (CONCAT22(uVar10,uVar10) & 0x80007ff0) + (CONCAT22(uVar7,uVar7) & 0x80007ff0);
+  uVar5 = (ushort)((ulonglong)a >> 0x20);
+  uVar9 = (ushort)((ulonglong)b >> 0x20);
+  uVar3 = uVar10 & 0xf | 0x10;
+  uVar12 = CONCAT22(uVar9,uVar10) & 0xffff000f | 0x10;
+  uVar10 = uVar7 & 0xf | 0x10;
+  uVar14 = CONCAT22(uVar5,uVar7) & 0xffff000f | 0x10;
+  if (uVar6 == 0) {
+    if (uVar17 == 0) {
+      if (((uVar12 | uVar14) & 0x1f0000) == 0) {
+        uVar17 = ((uVar14 << 0x10 | uVar8 & 0xffff) >> 5) *
+                 ((uVar12 << 0x10 | uVar13 & 0xffff) >> 5);
+        uVar8 = uVar17 * 0x200000;
+        uVar13 = (uVar17 >> 0x10) << 5;
+        uVar6 = uVar13 | (uVar17 & 0xffff) >> 0xb;
+        if ((uVar13 & 0x100000) == 0) {
+          bVar19 = CARRY4(uVar8,uVar8);
+          uVar8 = uVar17 * 0x400000;
+          uVar6 = uVar6 * 2 + (uint)bVar19;
+          uVar18 = uVar18 - 0x10;
         }
         goto LAB_00025410;
       }
-      if ((unaff_D2 & 0x1f) == 0) {
-        uVar17 = scpi_double_multiply_short();
-        return uVar17;
+      if (((ulonglong)b & 0x1f00000000) == 0) {
+        dVar20 = (double)scpi_double_multiply_short();
+        return dVar20;
       }
     }
-    if ((in_D0 & 0x1f) == 0) {
-      uVar17 = scpi_double_multiply_short();
-      return uVar17;
+    if (((ulonglong)a & 0x1f00000000) == 0) {
+      dVar20 = (double)scpi_double_multiply_short();
+      return dVar20;
     }
   }
-  if ((unaff_D3 == 0) && ((unaff_D2 & 0x1f) == 0)) {
-    uVar17 = scpi_double_multiply_short();
-    return uVar17;
+  if ((uVar17 == 0) && (((ulonglong)b & 0x1f00000000) == 0)) {
+    dVar20 = (double)scpi_double_multiply_short();
+    return dVar20;
   }
-  uVar9 = (unaff_D3 & 0xffff) * (in_D1 & 0xffff);
-  uVar6 = (unaff_D3 >> 0x10) * (in_D1 & 0xffff) + (uVar9 >> 0x10);
-  uVar10 = (in_D1 >> 0x10) * (unaff_D3 & 0xffff);
-  iVar1 = uVar10 + uVar6;
-  uVar5 = (ushort)((uint)iVar1 >> 0x10);
-  uVar4 = in_D1 >> 0x10;
-  uVar6 = (unaff_D3 >> 0x10) * uVar4 +
-          (CONCAT22(uVar5,(ushort)CARRY4(uVar10,uVar6)) << 0x10 | (uint)uVar5);
-  uVar11 = (in_D0 & 0xffff) * (unaff_D3 & 0xffff);
-  uVar10 = uVar11 + uVar6;
-  uVar12 = (unaff_D2 & 0xffff) * (in_D1 & 0xffff);
-  iVar2 = uVar12 + uVar10;
-  uVar5 = (ushort)iVar2 | (ushort)iVar1 | (ushort)uVar9;
-  uVar8 = (ushort)((uint)iVar2 >> 0x10);
-  uVar6 = (uint)uVar7 * (unaff_D3 & 0xffff) +
-          (CONCAT22(uVar8,(ushort)CARRY4(uVar11,uVar6) + (ushort)CARRY4(uVar12,uVar10)) << 0x10 |
-          (uint)uVar8);
-  uVar12 = (in_D0 & 0xffff) * (unaff_D3 >> 0x10);
-  uVar10 = uVar12 + uVar6;
-  uVar13 = (uint)uVar3 * (in_D1 & 0xffff);
-  uVar9 = uVar13 + uVar10;
-  uVar14 = (unaff_D2 & 0xffff) * uVar4;
-  uVar11 = uVar14 + uVar9;
+  uVar12 = (uVar17 & 0xffff) * (uVar6 & 0xffff);
+  uVar13 = (uVar17 >> 0x10) * (uVar6 & 0xffff) + (uVar12 >> 0x10);
+  uVar14 = (uVar6 >> 0x10) * (uVar17 & 0xffff);
+  iVar1 = uVar14 + uVar13;
+  uVar7 = (ushort)((uint)iVar1 >> 0x10);
+  uVar4 = uVar6 >> 0x10;
+  uVar13 = (uVar17 >> 0x10) * uVar4 +
+           (CONCAT22(uVar7,(ushort)CARRY4(uVar14,uVar13)) << 0x10 | (uint)uVar7);
+  uVar15 = (uint)uVar5 * (uVar17 & 0xffff);
+  uVar14 = uVar15 + uVar13;
+  uVar16 = (uint)uVar9 * (uVar6 & 0xffff);
+  iVar2 = uVar16 + uVar14;
+  uVar7 = (ushort)iVar2 | (ushort)iVar1 | (ushort)uVar12;
+  uVar11 = (ushort)((uint)iVar2 >> 0x10);
+  uVar13 = (uint)uVar10 * (uVar17 & 0xffff) +
+           (CONCAT22(uVar11,(ushort)CARRY4(uVar15,uVar13) + (ushort)CARRY4(uVar16,uVar14)) << 0x10 |
+           (uint)uVar11);
+  uVar15 = (uint)uVar5 * (uVar17 >> 0x10);
+  uVar14 = uVar15 + uVar13;
+  uVar16 = (uint)uVar3 * (uVar6 & 0xffff);
+  uVar6 = uVar16 + uVar14;
+  uVar12 = uVar9 * uVar4 + uVar6;
   uVar6 = uVar4 * uVar3 +
-          (unaff_D3 >> 0x10) * (uint)uVar7 +
-          CONCAT22((ushort)CARRY4(uVar12,uVar6) + (ushort)CARRY4(uVar13,uVar10) +
-                   (ushort)CARRY4(uVar14,uVar9),(short)(uVar11 >> 0x10));
-  uVar10 = (unaff_D2 & 0xffff) * (in_D0 & 0xffff);
-  iVar1 = uVar10 + uVar6;
-  uVar8 = (ushort)((uint)iVar1 >> 0x10);
-  uVar9 = iVar1 * 0x10000 | uVar11 & 0xffff;
-  iVar1 = (unaff_D2 & 0xffff) * (uint)uVar7 +
-          (in_D0 & 0xffff) * (uint)uVar3 +
-          (CONCAT22(uVar8,(ushort)CARRY4(uVar10,uVar6)) << 0x10 | (uint)uVar8);
-  uVar10 = (uint)uVar7 * (uint)uVar3 * 0x10000 + iVar1;
-  if ((uVar10 & 0x2000000) == 0) {
-    uVar15 = uVar15 - 0x10;
+          (uVar17 >> 0x10) * (uint)uVar10 +
+          CONCAT22((ushort)CARRY4(uVar15,uVar13) + (ushort)CARRY4(uVar16,uVar14) +
+                   (ushort)CARRY4(uVar9 * uVar4,uVar6),(short)(uVar12 >> 0x10));
+  uVar17 = (uint)uVar9 * (uVar8 & 0xffff);
+  iVar1 = uVar17 + uVar6;
+  uVar5 = (ushort)((uint)iVar1 >> 0x10);
+  uVar13 = iVar1 * 0x10000 | uVar12 & 0xffff;
+  iVar1 = (uint)uVar9 * (uint)uVar10 +
+          (uVar8 & 0xffff) * (uint)uVar3 +
+          (CONCAT22(uVar5,(ushort)CARRY4(uVar17,uVar6)) << 0x10 | (uint)uVar5);
+  uVar6 = (uint)uVar10 * (uint)uVar3 * 0x10000 + iVar1;
+  if ((uVar6 & 0x2000000) == 0) {
+    uVar18 = uVar18 - 0x10;
     iVar2 = 4;
-    uVar6 = iVar1 * 0x10000000 | uVar9 >> 4;
-    uVar9 = uVar9 * 2;
+    uVar8 = iVar1 * 0x10000000 | uVar13 >> 4;
+    uVar13 = uVar13 * 2;
   }
   else {
     iVar2 = 5;
-    uVar6 = iVar1 * 0x8000000 | uVar9 >> 5;
+    uVar8 = iVar1 * 0x8000000 | uVar13 >> 5;
   }
-  uVar10 = uVar10 >> iVar2;
-  if (((uVar9 & 0x10) != 0) &&
-     ((CONCAT11((char)(uVar5 >> 8),(byte)uVar9 & 0xf | (byte)uVar5) != 0 || ((uVar6 & 1) != 0)))) {
-    bVar16 = uVar6 == 0xffffffff;
-    uVar6 = uVar6 + 1;
-    if (bVar16) {
-      uVar10 = uVar10 + 1;
+  uVar6 = uVar6 >> iVar2;
+  if (((uVar13 & 0x10) != 0) &&
+     ((CONCAT11((char)(uVar7 >> 8),(byte)uVar13 & 0xf | (byte)uVar7) != 0 || ((uVar8 & 1) != 0)))) {
+    bVar19 = uVar8 == 0xffffffff;
+    uVar8 = uVar8 + 1;
+    if (bVar19) {
+      uVar6 = uVar6 + 1;
     }
-    if ((uVar10 & 0x200000) != 0) {
-      uVar10 = uVar10 >> 1;
-      uVar15 = uVar15 + 0x10;
+    if ((uVar6 & 0x200000) != 0) {
+      uVar6 = uVar6 >> 1;
+      uVar18 = uVar18 + 0x10;
     }
   }
 LAB_00025410:
-  uVar9 = uVar15;
-  if ((int)uVar15 < 0) {
-    uVar9 = uVar15 & 0xffff;
+  uVar13 = uVar18;
+  if ((int)uVar18 < 0) {
+    uVar13 = uVar18 & 0xffff;
   }
-  iVar1 = uVar9 - 0x3ff0;
+  iVar1 = uVar13 - 0x3ff0;
   if (iVar1 < 0) {
-    return CONCAT44(uVar10,uVar6);
+    return (double)CONCAT44(uVar6,uVar8);
   }
   if (0x7fd0 < (ushort)iVar1) {
-    return CONCAT44(uVar10,uVar6);
+    return (double)CONCAT44(uVar6,uVar8);
   }
-  uVar5 = (ushort)((uint)iVar1 >> 0x10);
-  return CONCAT44((CONCAT22(uVar5,(ushort)(uVar15 >> 0x10) | (ushort)iVar1) << 0x10 | (uint)uVar5) +
-                  uVar10,uVar6);
+  uVar7 = (ushort)((uint)iVar1 >> 0x10);
+  return (double)CONCAT44((CONCAT22(uVar7,(ushort)(uVar18 >> 0x10) | (ushort)iVar1) << 0x10 |
+                          (uint)uVar7) + uVar6,uVar8);
 }
 
 
 /* 00025468 */
 
 /* scpi_double_multiply's path for an operand whose mantissa fits in 16 bits
-   Not a C function: a piece of scpi_double_multiply, which branches here when an operand's mantissa
-   fits in 16 bits and returns through it; never called.
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
    docs/scpi/README.md, read */
 
 undefined8 scpi_double_multiply_short(void)
@@ -25988,18 +26096,19 @@ undefined8 scpi_double_multiply_short(void)
 /* as a double
    docs/scpi/README.md, run */
 
-undefined4 scpi_number_to_double(undefined4 param_1,undefined8 *param_2,short param_3)
+undefined4 scpi_number_to_double(char *param_1,double *param_2,short param_3)
 
 {
   bool bVar1;
-  undefined8 uVar2;
+  double dVar2;
+  char acStack_30 [20];
   
   bVar1 = param_3 == 0;
-  scpi_number_to_bcd();
+  scpi_number_to_bcd(param_1,param_3,acStack_30);
   if (bVar1) {
-    uVar2 = scpi_bcd_to_double();
+    dVar2 = scpi_bcd_to_double(acStack_30);
     if (!bVar1) {
-      *param_2 = uVar2;
+      *param_2 = dVar2;
       return 0;
     }
   }
@@ -26009,37 +26118,35 @@ undefined4 scpi_number_to_double(undefined4 param_1,undefined8 *param_2,short pa
 
 /* 000254fe */
 
+/* WARNING: Unknown calling convention */
 /* a parsed number at A0 packed into the BCD record at A1, its exponent plus D0 plus 16 at +0xa; -1
    beyond 309
-   Not a C function: the parsed number in A0, a further power of ten in D0.w, the BCD record to fill
-   in A1.  Returns 0 in D0, or -1 for an exponent beyond 309.  D1, A0 and A1 are not preserved.
+   Not a C function (register; read): its arguments and results in registers.  In: A0 char *number,
+   D0 short scale, A1 char *bcd.  Out: D0 int status.  Error: D0 -1 exponent beyond 309.
    docs/scpi/README.md, read */
 
-undefined4 scpi_number_to_bcd(void)
+int scpi_number_to_bcd(char *number,short scale,char *bcd)
 
 {
   int iVar1;
-  short in_D0w;
   short sVar2;
-  char *in_A0;
-  undefined2 *in_A1;
   byte *pbVar3;
   
-  iVar1 = (int)*(short *)(in_A0 + 0x12) + (int)in_D0w + 0x10;
+  iVar1 = (int)*(short *)(number + 0x12) + (int)scale + 0x10;
   if ((iVar1 < 0x136) && (-0x136 < iVar1)) {
-    in_A1[5] = (short)iVar1;
-    *in_A1 = *(undefined2 *)in_A0;
+    *(short *)(bcd + 10) = (short)iVar1;
+    *(undefined2 *)bcd = *(undefined2 *)number;
     sVar2 = 7;
-    pbVar3 = (byte *)(in_A1 + 1);
+    pbVar3 = (byte *)(bcd + 2);
     do {
-      *pbVar3 = in_A0[3] | in_A0[2] << 4;
+      *pbVar3 = number[3] | number[2] << 4;
       sVar2 = sVar2 + -1;
       pbVar3 = pbVar3 + 1;
-      in_A0 = in_A0 + 2;
+      number = number + 2;
     } while (sVar2 != -1);
     return 0;
   }
-  return 0xffffffff;
+  return -1;
 }
 
 
@@ -26061,6 +26168,7 @@ scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,shor
   undefined1 *puVar4;
   undefined1 *puVar5;
   bool bVar6;
+  char cStack_1c;
   char local_1b;
   undefined1 local_1a;
   undefined1 auStack_19 [15];
@@ -26073,7 +26181,7 @@ scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,shor
       return 1;
     }
     bVar6 = param_4 == 0;
-    scpi_double_to_decimal();
+    scpi_double_to_decimal((double)CONCAT44(param_1,param_2),param_4,&cStack_1c);
     if (bVar6) {
       return 1;
     }
@@ -52298,8 +52406,8 @@ undefined4 FUN_00051158(void)
 
 /* WARNING: Unknown calling convention */
 /* *A0 -= D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: A0 float *x, D1
+   float y.
    softfloat.md, libc.md */
 
 void float_subtract_in_place(float *x,float y)
@@ -52318,8 +52426,8 @@ void float_subtract_in_place(float *x,float y)
 
 /* WARNING: Unknown calling convention */
 /* *A0 += D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: A0 float *x, D1
+   float y.
    softfloat.md, libc.md */
 
 void float_add_in_place(float *x,float y)
@@ -52341,8 +52449,8 @@ void float_add_in_place(float *x,float y)
 /* WARNING: Removing unreachable block (ram,0x0005d048) */
 /* WARNING: Unknown calling convention */
 /* D1 - D0
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; documented): its arguments and results in registers.  In: D0 float a,
+   D1 float b.  Out: D0 float.
    softfloat.md */
 
 float float_subtract_reversed(float a,float b)
@@ -52499,8 +52607,8 @@ LAB_0005d1fe:
 /* WARNING: Removing unreachable block (ram,0x0005d048) */
 /* WARNING: Unknown calling convention */
 /* D0 - D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; documented): its arguments and results in registers.  In: D0 float a,
+   D1 float b.  Out: D0 float.
    softfloat.md */
 
 float float_subtract(float a,float b)
@@ -52657,8 +52765,8 @@ LAB_0005d1fe:
 /* WARNING: Removing unreachable block (ram,0x0005d048) */
 /* WARNING: Unknown calling convention */
 /* D0 + D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; documented): its arguments and results in registers.  In: D0 float a,
+   D1 float b.  Out: D0 float.
    softfloat.md */
 
 float float_add(float a,float b)
@@ -52808,8 +52916,8 @@ LAB_0005d1fe:
 
 /* WARNING: Unknown calling convention */
 /* *A0 -= D0:D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: A0 double *x,
+   D0:D1 double y.
    libc.md */
 
 void double_subtract_in_place(double *x,double y)
@@ -52827,8 +52935,8 @@ void double_subtract_in_place(double *x,double y)
 
 /* WARNING: Unknown calling convention */
 /* D0:D1 - *A1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
+   double *b.  Out: D0:D1 double.
    libc.md */
 
 double double_subtract_pointer(double a,double *b)
@@ -52845,8 +52953,8 @@ double double_subtract_pointer(double a,double *b)
 
 /* WARNING: Unknown calling convention */
 /* *A1 - *A0
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: A0 double *a, A1
+   double *b.  Out: D0:D1 double.
    libc.md */
 
 double double_subtract_reversed_pointers(double *a,double *b)
@@ -53150,8 +53258,8 @@ LAB_0005d63e:
 
 /* WARNING: Unknown calling convention */
 /* *A1 - D0:D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
+   double *b.  Out: D0:D1 double.
    libc.md */
 
 double double_subtract_reversed_pointer(double a,double *b)
@@ -53455,8 +53563,8 @@ LAB_0005d63e:
 
 /* WARNING: Unknown calling convention */
 /* A0:A1 - D0:D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a,
+   A0:A1 double b.  Out: D0:D1 double.
    libc.md */
 
 double double_subtract_reversed(double a,double b)
@@ -53762,8 +53870,8 @@ LAB_0005d2c6:
 
 /* WARNING: Unknown calling convention */
 /* *A0 += D0:D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: A0 double *x,
+   D0:D1 double y.
    libc.md */
 
 void double_add_in_place(double *x,double y)
@@ -53781,8 +53889,8 @@ void double_add_in_place(double *x,double y)
 
 /* WARNING: Unknown calling convention */
 /* *A0 + *A1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: A0 double *a, A1
+   double *b.  Out: D0:D1 double.
    libc.md */
 
 double double_add_pointers(double *a,double *b)
@@ -54083,8 +54191,8 @@ LAB_0005d63e:
 
 /* WARNING: Unknown calling convention */
 /* D0:D1 + *A1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
+   double *b.  Out: D0:D1 double.
    libc.md */
 
 double double_add_pointer(double a,double *b)
@@ -54385,8 +54493,8 @@ LAB_0005d63e:
 
 /* WARNING: Unknown calling convention */
 /* D0:D1 + A0:A1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
+   double a, A0:A1 double b.  Out: D0:D1 double.
    softfloat.md */
 
 double double_add(double a,double b)
@@ -54685,8 +54793,8 @@ LAB_0005d63e:
 
 /* WARNING: Unknown calling convention */
 /* compare D0 with D1; 1, 0 or -1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; documented): its arguments and results in registers.  In: D0 float a,
+   D1 float b.  Out: D0 int.
    softfloat.md */
 
 int float_compare(float a,float b)
@@ -54727,8 +54835,8 @@ int float_compare(float a,float b)
 
 /* WARNING: Unknown calling convention */
 /* negative when A0:A1 < D0:D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
+   double a, A0:A1 double b.  Out: D0 int.
    softfloat.md */
 
 int double_compare(double a,double b)
@@ -54789,8 +54897,8 @@ int double_compare(double a,double b)
 
 /* WARNING: Unknown calling convention */
 /* *A0 /= D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: A0 float *x, D1
+   float y.
    softfloat.md, libc.md */
 
 void float_divide_in_place(float *x,float y)
@@ -54810,8 +54918,8 @@ void float_divide_in_place(float *x,float y)
 /* WARNING: Removing unreachable block (ram,0x0005d888) */
 /* WARNING: Unknown calling convention */
 /* D1 / D0
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; documented): its arguments and results in registers.  In: D0 float a,
+   D1 float b.  Out: D0 float.
    softfloat.md */
 
 float float_divide_reversed(float a,float b)
@@ -54975,8 +55083,8 @@ LAB_0005d7ae:
 /* WARNING: Removing unreachable block (ram,0x0005d888) */
 /* WARNING: Unknown calling convention */
 /* D0 / D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; documented): its arguments and results in registers.  In: D0 float a,
+   D1 float b.  Out: D0 float.
    softfloat.md */
 
 float float_divide(float a,float b)
@@ -55139,8 +55247,8 @@ LAB_0005d7ae:
 
 /* WARNING: Unknown calling convention */
 /* *A0 /= D0:D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: A0 double *x,
+   D0:D1 double y.
    libc.md */
 
 void double_divide_in_place(double *x,double y)
@@ -55158,8 +55266,8 @@ void double_divide_in_place(double *x,double y)
 
 /* WARNING: Unknown calling convention */
 /* D0:D1 / A0:A1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
+   double a, A0:A1 double b.  Out: D0:D1 double.
    softfloat.md */
 
 double double_divide(double a,double b)
@@ -55176,8 +55284,8 @@ double double_divide(double a,double b)
 
 /* WARNING: Unknown calling convention */
 /* *A1 / *A0
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: A0 double *a, A1
+   double *b.  Out: D0:D1 double.
    libc.md */
 
 double double_divide_reversed_pointers(double *a,double *b)
@@ -55328,8 +55436,8 @@ LAB_0005db84:
 
 /* WARNING: Unknown calling convention */
 /* *A1 / D0:D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
+   double *b.  Out: D0:D1 double.
    libc.md */
 
 double double_divide_reversed_pointer(double a,double *b)
@@ -55473,8 +55581,8 @@ LAB_0005db84:
 
 /* WARNING: Unknown calling convention */
 /* A0:A1 / D0:D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
+   double a, A0:A1 double b.  Out: D0:D1 double.
    softfloat.md */
 
 double double_divide_reversed(double a,double b)
@@ -55650,8 +55758,8 @@ uint double_divide_by_zero(void)
 
 /* WARNING: Removing unreachable block (ram,0x0005dc10) */
 /* each further quotient word, three in all
-   Not a C function: a helper of the double divides, which pass the dividend and divisor in D0 to
-   D3: each further 16 bits of the quotient.
+   Not a C function (register; derived): its arguments and results in registers.  In: D0, D1, D2,
+   D3.
    softfloat.md, read */
 
 void double_divide_next_word(void)
@@ -55726,8 +55834,8 @@ void double_divide_next_word(void)
 
 /* WARNING: Removing unreachable block (ram,0x0005dc10) */
 /* the double divides' first 16-bit quotient word
-   Not a C function: a helper of the double divides, which pass the dividend and divisor in D0 to
-   D3: the first 16 bits of the quotient.
+   Not a C function (register; derived): its arguments and results in registers.  In: D0, D1, D2,
+   D3.
    softfloat.md, read */
 
 void double_divide_first_word(void)
@@ -55800,8 +55908,8 @@ void double_divide_first_word(void)
 
 /* WARNING: Unknown calling convention */
 /* double to float
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
+   double d.  Out: D0 float.
    softfloat.md */
 
 float double_to_float(double d)
@@ -55879,8 +55987,8 @@ LAB_0005dd4e:
 
 /* WARNING: Unknown calling convention */
 /* double to signed integer
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double d.
+   Out: D0 int.
    libc.md */
 
 int double_to_integer(double d)
@@ -55933,8 +56041,8 @@ int double_to_integer(double d)
 
 /* WARNING: Unknown calling convention */
 /* double to unsigned integer
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double d.
+   Out: D0 unsigned int.
    libc.md */
 
 uint double_to_unsigned(double d)
@@ -55977,8 +56085,8 @@ uint double_to_unsigned(double d)
 
 /* WARNING: Unknown calling convention */
 /* float to double, in D0:D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; documented): its arguments and results in registers.  In: D0 float f.
+   Out: D0:D1 double.
    softfloat.md */
 
 double float_to_double(float f)
@@ -56026,8 +56134,8 @@ double float_to_double(float f)
 
 /* WARNING: Unknown calling convention */
 /* float to signed integer
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: D0 float f.  Out:
+   D0 int.
    softfloat.md, libc.md */
 
 int float_to_integer(float f)
@@ -56081,8 +56189,8 @@ LAB_0005df9e:
 
 /* WARNING: Unknown calling convention */
 /* float to unsigned integer
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: D0 float f.  Out:
+   D0 unsigned int.
    softfloat.md, libc.md */
 
 uint float_to_unsigned(float f)
@@ -56112,8 +56220,8 @@ uint float_to_unsigned(float f)
 
 /* WARNING: Unknown calling convention */
 /* signed integer to double
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: D0 int i.  Out:
+   D0:D1 double.
    libc.md */
 
 double integer_to_double(int i)
@@ -56174,8 +56282,8 @@ double integer_to_double(int i)
 
 /* WARNING: Unknown calling convention */
 /* unsigned integer to double
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: D0 unsigned int u.
+   Out: D0:D1 double.
    softfloat.md, libc.md */
 
 double unsigned_to_double(uint u)
@@ -56229,8 +56337,8 @@ double unsigned_to_double(uint u)
 
 /* WARNING: Unknown calling convention */
 /* signed integer to float
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: D0 int i.  Out: D0
+   float.
    softfloat.md, libc.md */
 
 float integer_to_float(int i)
@@ -56302,8 +56410,8 @@ float integer_to_float(int i)
 
 /* WARNING: Unknown calling convention */
 /* unsigned integer to float
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: D0 unsigned int u.
+   Out: D0 float.
    softfloat.md, libc.md */
 
 float unsigned_to_float(uint u)
@@ -56374,8 +56482,8 @@ float unsigned_to_float(uint u)
 
 /* WARNING: Unknown calling convention */
 /* *A0 *= D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: A0 float *x, D1
+   float y.
    libc.md */
 
 void float_multiply_in_place(float *x,float y)
@@ -56394,8 +56502,8 @@ void float_multiply_in_place(float *x,float y)
 
 /* WARNING: Unknown calling convention */
 /* D0 x D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; documented): its arguments and results in registers.  In: D0 float a,
+   D1 float b.  Out: D0 float.
    softfloat.md */
 
 float float_multiply(float a,float b)
@@ -56518,8 +56626,8 @@ LAB_0005e41a:
 
 /* WARNING: Unknown calling convention */
 /* *A0 *= D0:D1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: A0 double *x,
+   D0:D1 double y.
    libc.md */
 
 void double_multiply_in_place(double *x,double y)
@@ -56537,8 +56645,8 @@ void double_multiply_in_place(double *x,double y)
 
 /* WARNING: Unknown calling convention */
 /* *A0 x *A1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: A0 double *a, A1
+   double *b.  Out: D0:D1 double.
    libc.md */
 
 double double_multiply_pointers(double *a,double *b)
@@ -56800,8 +56908,8 @@ LAB_0005e77c:
 
 /* WARNING: Unknown calling convention */
 /* D0:D1 x *A1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
+   double *b.  Out: D0:D1 double.
    libc.md */
 
 double double_multiply_pointer(double a,double *b)
@@ -57057,8 +57165,8 @@ LAB_0005e77c:
 
 /* WARNING: Unknown calling convention */
 /* D0:D1 x A0:A1
-   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives.
+   Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
+   double a, A0:A1 double b.  Out: D0:D1 double.
    softfloat.md */
 
 double double_multiply(double a,double b)
@@ -57326,8 +57434,8 @@ void double_multiply_operand_error(void)
 
 /* WARNING: Unknown calling convention */
 /* shifts an unpacked mantissa on the caller's stack until bit 23 is set, adjusting its exponent
-   Not a C function: a helper of the floating-point library: normalizes the unpacked mantissa and
-   exponent in its own argument slots on the stack, which its caller reads back.
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
    softfloat.md, read */
 
 undefined8 float_normalize(uint param_1)
@@ -57356,8 +57464,8 @@ undefined8 float_normalize(uint param_1)
 /* 0005e882 */
 
 /* the same over 64 bits
-   Not a C function: the 64-bit float_normalize: normalizes the unpacked mantissa and exponent in
-   its own argument slots on the stack, which its caller reads back.
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
    softfloat.md, read */
 
 undefined8 double_normalize(undefined2 param_1,uint param_2)
@@ -60631,25 +60739,28 @@ void installer_kernel_dispatch_service(undefined2 param_1)
 
 /* installer::001014b8 */
 
-void installer_kernel_dispatch_io(void)
+/* WARNING: Unknown calling convention */
+
+void installer_kernel_dispatch_io(char function,int device)
 
 {
   int *piVar1;
   int iVar2;
   short *psVar3;
-  ushort in_D0w;
-  ushort unaff_D7w;
+  ushort uVar4;
+  undefined1 unaff_0000001e;
   
+  uVar4 = (ushort)device;
   piVar1 = *(int **)PTR_PTR_installer__001014c8;
-  if (unaff_D7w < 6) {
+  if (CONCAT11(unaff_0000001e,function) < 6) {
     iVar2 = *(int *)(*piVar1 + 0x30);
     if (iVar2 != 0) {
       psVar3 = (short *)(*piVar1 + 0x24);
       *psVar3 = *psVar3 + 1;
-      in_D0w = (**(code **)(iVar2 + 4))();
+      uVar4 = (**(code **)(iVar2 + 4))();
       *(short *)(*piVar1 + 0x24) = *(short *)(*piVar1 + 0x24) + -1;
     }
-    if (in_D0w >> 8 <= *(ushort *)((int)piVar1 + 0x22)) {
+    if (uVar4 >> 8 <= *(ushort *)((int)piVar1 + 0x22)) {
       return;
     }
   }
@@ -60947,9 +61058,8 @@ void installer_kernel_return_from_interrupt(ushort param_1)
 /* installer::0010152c */
 
 /* the installer's copy of kernel_dispatch_service, at 0x14b26 plus 0xeca06, byte for byte
-   Not a C function: the trap #3 handler: the service in D7, its arguments in D0 to D3, A0 and A1.
-   Calls the service's handler through the table at installer::0x101574 and returns with rte, the
-   error in D7.b and the results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (exception; documented): entered by the processor, not called.  In: D7 char
+   service, D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_dispatch_service(undefined2 param_1)
@@ -61103,30 +61213,32 @@ void installer_kernel_dispatch_service(undefined2 param_1)
 
 /* installer::00101610 */
 
+/* WARNING: Unknown calling convention */
 /* the installer's copy of kernel_dispatch_io, at 0x14c0a plus 0xeca06, byte for byte
-   Not a C function: the trap #4 handler: the I/O function, 0 to 5, in D7 and the device in the high
-   byte of D0.  Returns with rte (psos.md).
+   Not a C function (exception; documented): entered by the processor, not called.  In: D7 char
+   function, D0 int device.
    psos.md */
 
-void installer_kernel_dispatch_io(void)
+void installer_kernel_dispatch_io(char function,int device)
 
 {
   int *piVar1;
   int iVar2;
   short *psVar3;
-  ushort in_D0w;
-  ushort unaff_D7w;
+  ushort uVar4;
+  undefined1 unaff_0000001e;
   
+  uVar4 = (ushort)device;
   piVar1 = *(int **)PTR_PTR_installer__001014c8;
-  if (unaff_D7w < 6) {
+  if (CONCAT11(unaff_0000001e,function) < 6) {
     iVar2 = *(int *)(*piVar1 + 0x30);
     if (iVar2 != 0) {
       psVar3 = (short *)(*piVar1 + 0x24);
       *psVar3 = *psVar3 + 1;
-      in_D0w = (**(code **)(iVar2 + 4))();
+      uVar4 = (**(code **)(iVar2 + 4))();
       *(short *)(*piVar1 + 0x24) = *(short *)(*piVar1 + 0x24) + -1;
     }
-    if (in_D0w >> 8 <= *(ushort *)((int)piVar1 + 0x22)) {
+    if (uVar4 >> 8 <= *(ushort *)((int)piVar1 + 0x22)) {
       return;
     }
   }
@@ -61137,8 +61249,8 @@ void installer_kernel_dispatch_io(void)
 /* installer::00101680 */
 
 /* the installer's copy of kernel_switch_task, at 0x14c7a plus 0xeca06, byte for byte
-   Not a C function: branched to from the service dispatch on its way out, never called: saves the
-   running task's registers in its record and resumes the first ready task with rte.
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
    psos.md */
 
 void installer_kernel_switch_task(void)
@@ -61271,8 +61383,7 @@ void installer_kernel_switch_task(void)
 /* installer::001016cc */
 
 /* the installer's copy of kernel_process_ticks, at 0x14cc6 plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_process_ticks(void)
@@ -61340,10 +61451,9 @@ LAB_installer__0010175e:
 /* installer::001017a8 */
 
 /* the installer's copy of kernel_service_0, at 0x14da2 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 0, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_service_0(void)
@@ -61356,10 +61466,9 @@ void installer_kernel_service_0(void)
 /* installer::001017b2 */
 
 /* the installer's copy of kernel_create, at 0x14dac plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 1, psos_create's, reached from the installer's
-   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
-   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_create(void)
@@ -61437,22 +61546,23 @@ void installer_kernel_create(void)
 /* installer::001018a6 */
 
 /* the installer's copy of kernel_start, at 0x14ea0 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 2, psos_start's, reached from the installer's
-   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
-   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_start(void)
 
 {
-  int extraout_A0;
+  int in_A0;
+  void *pvVar1;
   undefined4 extraout_A1;
+  undefined4 *unaff_A6;
   undefined1 in_ZF;
   
-  installer_kernel_check_task();
-  if (((bool)in_ZF) && (*(char *)(extraout_A0 + 0x13) < '\0')) {
-    *(undefined4 *)(extraout_A0 + 0x3e) = extraout_A1;
+  pvVar1 = installer_kernel_check_task(in_A0,(void *)*unaff_A6);
+  if (((bool)in_ZF) && (*(char *)((int)pvVar1 + 0x13) < '\0')) {
+    *(undefined4 *)((int)pvVar1 + 0x3e) = extraout_A1;
     installer_kernel_make_ready();
     if (*(code **)(*(int *)PTR_PTR_installer__001014c8 + 0x36) != (code *)0x0) {
       (**(code **)(*(int *)PTR_PTR_installer__001014c8 + 0x36))();
@@ -61465,10 +61575,9 @@ void installer_kernel_start(void)
 /* installer::001018d8 */
 
 /* the installer's copy of kernel_ident, at 0x14ed2 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 3, psos_ident's, reached from the installer's
-   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
-   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_ident(void)
@@ -61494,10 +61603,9 @@ void installer_kernel_ident(void)
 /* installer::001018fe */
 
 /* the installer's copy of kernel_delete, at 0x14ef8 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 4, psos_delete's, reached from the installer's
-   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
-   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 undefined8 installer_kernel_delete(void)
@@ -61507,13 +61615,13 @@ undefined8 installer_kernel_delete(void)
   int *piVar2;
   code *pcVar3;
   short unaff_D7w;
-  int *extraout_A0;
-  int *extraout_A0_00;
+  int in_A0;
   int *piVar4;
-  int extraout_A0_01;
+  int *extraout_A0;
+  int extraout_A0_00;
   int *extraout_A1;
   int *piVar5;
-  int *unaff_A6;
+  undefined4 *unaff_A6;
   undefined8 *puVar6;
   undefined1 in_ZF;
   bool bVar7;
@@ -61521,11 +61629,11 @@ undefined8 installer_kernel_delete(void)
   undefined1 local_10 [16];
   
   puVar6 = (undefined8 *)local_10;
-  installer_kernel_check_task();
+  piVar4 = installer_kernel_check_task(in_A0,(void *)*unaff_A6);
   if (((bool)in_ZF) &&
-     ((piVar4 = extraout_A0, *(int **)(*(int *)PTR_PTR_installer__001014c8 + 0x46) == (int *)0x0 ||
+     ((*(int **)(*(int *)PTR_PTR_installer__001014c8 + 0x46) == (int *)0x0 ||
       ((**(code **)(**(int **)(*(int *)PTR_PTR_installer__001014c8 + 0x46) + 8))(),
-      piVar4 = extraout_A0_00, unaff_D7w == 0)))) {
+      piVar4 = extraout_A0, unaff_D7w == 0)))) {
     if (piVar4 == (int *)*unaff_A6) {
       iVar1 = unaff_A6[8];
       puVar6 = (undefined8 *)(iVar1 + -0x28);
@@ -61549,14 +61657,14 @@ undefined8 installer_kernel_delete(void)
       if (!bVar7) {
         piVar4[7] = *extraout_A1;
         *extraout_A1 = unaff_A6[7];
-        unaff_A6[7] = (int)extraout_A1;
+        unaff_A6[7] = extraout_A1;
       }
     }
     while (bVar7 = piVar4[8] == 0, !bVar7) {
       *(undefined4 *)((int)puVar6 + -4) = 0x1019b2;
       installer_kernel_free_for_task();
       if (!bVar7) {
-        piVar4[8] = *(int *)(extraout_A0_01 + -0x12);
+        piVar4[8] = *(int *)(extraout_A0_00 + -0x12);
       }
     }
     piVar2 = unaff_A6 + -9;
@@ -61568,7 +61676,7 @@ undefined8 installer_kernel_delete(void)
     piVar5[0xc] = piVar4[0xc];
 LAB_installer__001019d4:
     piVar4[0xc] = unaff_A6[4];
-    unaff_A6[4] = (int)piVar4;
+    unaff_A6[4] = piVar4;
     *(undefined4 *)((int)puVar6 + -4) = 0x1019f0;
     installer_kernel_signal_task();
     pcVar3 = *(code **)(*(int *)PTR_PTR_installer__001014c8 + 0x3a);
@@ -61584,33 +61692,30 @@ LAB_installer__001019d4:
 /* installer::00101a0a */
 
 /* the installer's copy of kernel_suspend, at 0x15004 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 5, psos_suspend's, reached from the
-   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
-   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_suspend(void)
 
 {
-  int extraout_A0;
-  int extraout_A0_00;
-  int iVar1;
+  int in_A0;
+  void *pvVar1;
+  void *extraout_A0;
+  undefined4 *unaff_A6;
   undefined1 in_ZF;
   
-  installer_kernel_check_task();
+  pvVar1 = installer_kernel_check_task(in_A0,(void *)*unaff_A6);
   if ((bool)in_ZF) {
-    if (*(byte *)(extraout_A0 + 0x13) == 0) {
+    if (*(byte *)((int)pvVar1 + 0x13) == 0) {
       installer_kernel_queue_remove();
-      iVar1 = extraout_A0_00;
+      pvVar1 = extraout_A0;
     }
-    else {
-      iVar1 = extraout_A0;
-      if ((*(byte *)(extraout_A0 + 0x13) & 4) != 0) {
-        return;
-      }
+    else if ((*(byte *)((int)pvVar1 + 0x13) & 4) != 0) {
+      return;
     }
-    *(byte *)(iVar1 + 0x13) = *(byte *)(iVar1 + 0x13) | 4;
+    *(byte *)((int)pvVar1 + 0x13) = *(byte *)((int)pvVar1 + 0x13) | 4;
   }
   return;
 }
@@ -61620,24 +61725,25 @@ void installer_kernel_suspend(void)
 
 /* WARNING: Removing unreachable block (ram,0x00101a48) */
 /* the installer's copy of kernel_resume, at 0x15038 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 6, psos_resume's, reached from the installer's
-   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
-   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_resume(void)
 
 {
   byte bVar1;
-  int extraout_A0;
-  bool bVar2;
+  int in_A0;
+  void *pvVar2;
+  undefined4 *unaff_A6;
+  bool bVar3;
   
-  bVar2 = true;
-  installer_kernel_check_task();
-  if (((bVar2) &&
-      (bVar1 = *(byte *)(extraout_A0 + 0x13) & 0xfb, (*(byte *)(extraout_A0 + 0x13) & 4) != 0)) &&
-     (*(byte *)(extraout_A0 + 0x13) = bVar1, bVar1 == 0)) {
+  bVar3 = true;
+  pvVar2 = installer_kernel_check_task(in_A0,(void *)*unaff_A6);
+  if (((bVar3) &&
+      (bVar1 = *(byte *)((int)pvVar2 + 0x13) & 0xfb, (*(byte *)((int)pvVar2 + 0x13) & 4) != 0)) &&
+     (*(byte *)((int)pvVar2 + 0x13) = bVar1, bVar1 == 0)) {
     installer_kernel_make_ready();
   }
   return;
@@ -61647,59 +61753,55 @@ void installer_kernel_resume(void)
 /* installer::00101a80 */
 
 /* the installer's copy of kernel_priority, at 0x1507a plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 7, psos_priority's, reached from the
-   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
-   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-ushort installer_kernel_priority(void)
+void installer_kernel_priority(void)
 
 {
-  ushort uVar1;
-  short sVar2;
-  ushort uVar3;
+  short extraout_D0w;
+  short sVar1;
   short in_D1w;
-  ushort extraout_D1w;
-  int extraout_A0;
-  bool bVar4;
+  int in_A0;
+  void *pvVar2;
+  undefined4 *unaff_A6;
+  bool bVar3;
   
-  bVar4 = in_D1w == 0;
-  uVar1 = installer_kernel_check_task();
-  if (!bVar4) {
-    return uVar1;
+  bVar3 = in_D1w == 0;
+  pvVar2 = installer_kernel_check_task(in_A0,(void *)*unaff_A6);
+  if (!bVar3) {
+    return;
   }
-  uVar3 = (ushort)*(byte *)(extraout_A0 + 0x10);
-  if (uVar1 == 0) {
-    return uVar3;
+  if (extraout_D0w == 0) {
+    return;
   }
-  sVar2 = uVar3 + uVar1;
-  if (!SCARRY2(uVar3,uVar1)) {
-    if (sVar2 < 1) {
-      sVar2 = 1;
+  sVar1 = (ushort)*(byte *)((int)pvVar2 + 0x10) + extraout_D0w;
+  if (!SCARRY2((ushort)*(byte *)((int)pvVar2 + 0x10),extraout_D0w)) {
+    if (sVar1 < 1) {
+      sVar1 = 1;
       goto LAB_installer__00101ab4;
     }
-    if (sVar2 < 0x100) goto LAB_installer__00101ab4;
+    if (sVar1 < 0x100) goto LAB_installer__00101ab4;
   }
-  sVar2 = 0xff;
+  sVar1 = 0xff;
 LAB_installer__00101ab4:
-  *(char *)(extraout_A0 + 0x10) = (char)sVar2;
-  if (*(char *)(extraout_A0 + 0x13) == '\0') {
+  *(char *)((int)pvVar2 + 0x10) = (char)sVar1;
+  if (*(char *)((int)pvVar2 + 0x13) == '\0') {
     installer_kernel_queue_remove();
     installer_kernel_ready_insert();
-    uVar3 = extraout_D1w;
   }
-  return uVar3;
+  return;
 }
 
 
 /* installer::00101ae0 */
 
 /* the installer's copy of kernel_allocate_segment, at 0x150da plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 8, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_allocate_segment(void)
@@ -61734,8 +61836,7 @@ void installer_kernel_allocate_segment(void)
 /* installer::00101ae2 */
 
 /* the installer's copy of kernel_allocate_for_task, at 0x150dc plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_allocate_for_task(void)
@@ -61769,10 +61870,9 @@ void installer_kernel_allocate_for_task(void)
 /* installer::00101b36 */
 
 /* the installer's copy of kernel_free_segment, at 0x15130 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 9, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_free_segment(void)
@@ -61784,6 +61884,7 @@ void installer_kernel_free_segment(void)
   ushort uVar4;
   uint uVar5;
   short sVar6;
+  int in_A0;
   int *extraout_A0;
   undefined4 extraout_A0_00;
   int *piVar7;
@@ -61793,7 +61894,7 @@ void installer_kernel_free_segment(void)
   bool bVar9;
   
   iVar1 = *unaff_A6;
-  installer_kernel_check_segment();
+  installer_kernel_check_segment((void *)(in_A0 + -0x12));
   if (!(bool)in_ZF) {
     return;
   }
@@ -61891,8 +61992,7 @@ LAB_installer__00101c0c:
 /* installer::00101b38 */
 
 /* the installer's copy of kernel_free_for_task, at 0x15132 plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_free_for_task(void)
@@ -61904,6 +62004,7 @@ void installer_kernel_free_for_task(void)
   ushort uVar4;
   uint uVar5;
   short sVar6;
+  int in_A0;
   int *extraout_A0;
   undefined4 extraout_A0_00;
   int *piVar7;
@@ -61914,7 +62015,7 @@ void installer_kernel_free_for_task(void)
   undefined1 in_ZF;
   bool bVar10;
   
-  installer_kernel_check_segment();
+  installer_kernel_check_segment((void *)(in_A0 + -0x12));
   if (!(bool)in_ZF) {
     return;
   }
@@ -62012,8 +62113,7 @@ LAB_installer__00101c0c:
 /* installer::00101c6e */
 
 /* the installer's copy of kernel_allocate, at 0x15268 plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_allocate(void)
@@ -62051,8 +62151,7 @@ LAB_installer__00101c8e:
 /* installer::00101ca2 */
 
 /* the installer's copy of kernel_region_allocate, at 0x1529c plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_region_allocate(void)
@@ -62116,40 +62215,40 @@ void installer_kernel_region_allocate(void)
 
 /* WARNING: Removing unreachable block (ram,0x00101d4c) */
 /* the installer's copy of kernel_service_10, at 0x15324 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 10, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_service_10(void)
 
 {
-  int iVar1;
-  int *piVar2;
+  void *running;
+  int *piVar1;
   int *extraout_A0;
   int in_A1;
+  void *segment;
   int extraout_A1;
-  int *piVar3;
-  int *unaff_A6;
-  bool bVar4;
+  int *piVar2;
+  undefined4 *unaff_A6;
+  bool bVar3;
   
-  bVar4 = in_A1 == 0;
-  iVar1 = *unaff_A6;
-  installer_kernel_check_task();
-  if (bVar4) {
-    bVar4 = true;
-    installer_kernel_check_segment();
-    if (bVar4) {
-      piVar2 = (int *)(iVar1 + 0x20);
+  bVar3 = in_A1 == 0;
+  running = (void *)*unaff_A6;
+  installer_kernel_check_task(in_A1,running);
+  if (bVar3) {
+    bVar3 = true;
+    installer_kernel_check_segment(segment);
+    if (bVar3) {
+      piVar1 = (int *)((int)running + 0x20);
       do {
-        piVar3 = piVar2;
-        piVar2 = (int *)*piVar3;
-        if (piVar2 == (int *)0x0) {
+        piVar2 = piVar1;
+        piVar1 = (int *)*piVar2;
+        if (piVar1 == (int *)0x0) {
           return;
         }
-      } while (extraout_A0 != piVar2);
-      *piVar3 = *extraout_A0;
+      } while (extraout_A0 != piVar1);
+      *piVar2 = *extraout_A0;
       *extraout_A0 = *(int *)(extraout_A1 + 0x20);
       *(int **)(extraout_A1 + 0x20) = extraout_A0;
     }
@@ -62161,40 +62260,41 @@ void installer_kernel_service_10(void)
 /* installer::00101d30 */
 
 /* the installer's copy of kernel_service_16, at 0x1532a plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 16, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_service_16(void)
 
 {
   int *piVar1;
-  int extraout_A0;
-  int *extraout_A0_00;
+  void *pvVar2;
+  int *extraout_A0;
   int in_A1;
+  void *segment;
   int extraout_A1;
-  int *piVar2;
-  bool bVar3;
+  int *piVar3;
+  undefined4 *unaff_A6;
+  bool bVar4;
   
-  bVar3 = in_A1 == 0;
-  installer_kernel_check_task();
-  if (bVar3) {
-    bVar3 = false;
-    installer_kernel_check_segment();
-    if (bVar3) {
-      piVar1 = (int *)(extraout_A0 + 0x20);
+  bVar4 = in_A1 == 0;
+  pvVar2 = installer_kernel_check_task(in_A1,(void *)*unaff_A6);
+  if (bVar4) {
+    bVar4 = false;
+    installer_kernel_check_segment(segment);
+    if (bVar4) {
+      piVar1 = (int *)((int)pvVar2 + 0x20);
       do {
-        piVar2 = piVar1;
-        piVar1 = (int *)*piVar2;
+        piVar3 = piVar1;
+        piVar1 = (int *)*piVar3;
         if (piVar1 == (int *)0x0) {
           return;
         }
-      } while (extraout_A0_00 != piVar1);
-      *piVar2 = *extraout_A0_00;
-      *extraout_A0_00 = *(int *)(extraout_A1 + 0x20);
-      *(int **)(extraout_A1 + 0x20) = extraout_A0_00;
+      } while (extraout_A0 != piVar1);
+      *piVar3 = *extraout_A0;
+      *extraout_A0 = *(int *)(extraout_A1 + 0x20);
+      *(int **)(extraout_A1 + 0x20) = extraout_A0;
     }
   }
   return;
@@ -62203,25 +62303,28 @@ void installer_kernel_service_16(void)
 
 /* installer::00101d80 */
 
+/* WARNING: Unknown calling convention */
 /* the installer's copy of kernel_service_none, at 0x1537a plus 0xeca06, byte for byte
-   Not a C function: the handler for services 11 to 15, 17 and 34, reached from the installer's trap
-   #3 through installer_kernel_dispatch_service: clears D7.b, so the call succeeds and does nothing.
+   Not a C function (psos-service; read): a pSOS kernel service, reached from trap #3 through the
+   kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  Out: D7
+   char error.
    psos.md */
 
-void installer_kernel_service_none(void)
+char installer_kernel_service_none(void)
 
 {
-  return;
+  uint unaff_D7;
+  
+  return (char)(unkfloat1)(float)(unaff_D7 & 0xffffff00);
 }
 
 
 /* installer::00101d84 */
 
 /* the installer's copy of kernel_create_x, at 0x1537e plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 20, psos_create_x's, reached from the
-   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
-   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_create_x(void)
@@ -62264,45 +62367,44 @@ void installer_kernel_create_x(void)
 
 /* WARNING: Removing unreachable block (ram,0x00101e08) */
 /* the installer's copy of kernel_service_21, at 0x153e0 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 21, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_service_21(void)
 
 {
-  int iVar1;
-  byte *pbVar2;
+  int exchange;
+  byte *pbVar1;
   int in_D0;
   undefined4 *extraout_A0;
-  undefined4 *puVar3;
-  int unaff_A6;
-  bool bVar4;
+  undefined4 *puVar2;
+  undefined4 *unaff_A6;
+  bool bVar3;
   
-  iVar1 = *(int *)(unaff_A6 + 0x14);
+  exchange = unaff_A6[5];
   while( true ) {
-    if (iVar1 == 0) {
+    if (exchange == 0) {
       return;
     }
-    if (in_D0 == *(int *)(iVar1 + 0x14)) break;
-    iVar1 = *(int *)(iVar1 + 0x1c);
+    if (in_D0 == *(int *)(exchange + 0x14)) break;
+    exchange = *(int *)(exchange + 0x1c);
   }
-  bVar4 = true;
-  installer_kernel_check_exchange();
-  if (!bVar4) {
+  bVar3 = true;
+  installer_kernel_check_exchange(exchange,(void *)*unaff_A6);
+  if (!bVar3) {
     return;
   }
   do {
-    puVar3 = (undefined4 *)*extraout_A0;
+    puVar2 = (undefined4 *)*extraout_A0;
     do {
-      if (extraout_A0 == puVar3) {
+      if (extraout_A0 == puVar2) {
         return;
       }
-      pbVar2 = (byte *)((int)puVar3 + 0x13);
-      puVar3 = (undefined4 *)*puVar3;
-    } while ((*pbVar2 & 0x20) != 0);
+      pbVar1 = (byte *)((int)puVar2 + 0x13);
+      puVar2 = (undefined4 *)*puVar2;
+    } while ((*pbVar1 & 0x20) != 0);
   } while( true );
 }
 
@@ -62310,27 +62412,27 @@ void installer_kernel_service_21(void)
 /* installer::00101e3c */
 
 /* the installer's copy of kernel_delete_x, at 0x15436 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 22, psos_delete_x's, reached from the
-   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
-   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_delete_x(void)
 
 {
   undefined4 uVar1;
+  int in_A0;
   undefined4 *extraout_A0;
   undefined4 *puVar2;
   undefined4 *extraout_A0_00;
   int unaff_A2;
   undefined4 *puVar3;
   undefined4 *puVar4;
-  int unaff_A6;
+  undefined4 *unaff_A6;
   bool bVar5;
   
   bVar5 = unaff_A2 == 0;
-  installer_kernel_check_exchange();
+  installer_kernel_check_exchange(in_A0,(void *)*unaff_A6);
   if (bVar5) {
     *(undefined1 *)((int)extraout_A0 + 0x11) = 0xfe;
     puVar3 = (undefined4 *)*extraout_A0;
@@ -62343,11 +62445,11 @@ void installer_kernel_delete_x(void)
       puVar2 = extraout_A0_00;
     }
     if (puVar2[2] != 0) {
-      uVar1 = *(undefined4 *)(unaff_A6 + 0x1c);
-      *(undefined4 *)(unaff_A6 + 0x1c) = puVar2[2];
+      uVar1 = unaff_A6[7];
+      unaff_A6[7] = puVar2[2];
       *(undefined4 *)puVar2[3] = uVar1;
     }
-    puVar3 = (undefined4 *)(unaff_A6 + -8);
+    puVar3 = unaff_A6 + -2;
     do {
       puVar4 = puVar3;
       puVar3 = (undefined4 *)puVar4[7];
@@ -62355,8 +62457,8 @@ void installer_kernel_delete_x(void)
     } while (puVar3 != puVar2);
     puVar4[7] = puVar2[7];
 LAB_installer__00101ea6:
-    puVar2[7] = *(undefined4 *)(unaff_A6 + 0x18);
-    *(undefined4 **)(unaff_A6 + 0x18) = puVar2;
+    puVar2[7] = unaff_A6[6];
+    unaff_A6[6] = puVar2;
   }
   return;
 }
@@ -62366,10 +62468,9 @@ LAB_installer__00101ea6:
 
 /* WARNING: Removing unreachable block (ram,0x00101ebe) */
 /* the installer's copy of kernel_service_18, at 0x154ae plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 18, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 ushort installer_kernel_service_18(void)
@@ -62388,6 +62489,7 @@ ushort installer_kernel_service_18(void)
   int iVar8;
   int iVar9;
   int iVar10;
+  int in_A0;
   int extraout_A0;
   int extraout_A0_00;
   int extraout_A0_01;
@@ -62396,11 +62498,11 @@ ushort installer_kernel_service_18(void)
   int extraout_A1_00;
   int *piVar11;
   int *unaff_A3;
-  int unaff_A6;
+  undefined4 *unaff_A6;
   bool bVar12;
   
   bVar12 = true;
-  uVar3 = installer_kernel_check_exchange();
+  uVar3 = installer_kernel_check_exchange(in_A0,(void *)*unaff_A6);
   if ((bVar12) && (*(int *)(extraout_A1 + 4) == 0)) {
     iVar7 = *(int *)(extraout_A0 + 4);
     *(int *)extraout_A0 = extraout_A0;
@@ -62462,8 +62564,8 @@ ushort installer_kernel_service_18(void)
         }
         else {
 LAB_installer__00101f7c:
-          *unaff_A3 = *(int *)(unaff_A6 + 0x1c);
-          *(int **)(unaff_A6 + 0x1c) = unaff_A3;
+          *unaff_A3 = unaff_A6[7];
+          unaff_A6[7] = unaff_A3;
         }
       }
     }
@@ -62476,17 +62578,17 @@ LAB_installer__00101f7c:
 
 /* WARNING: Removing unreachable block (ram,0x00101fb2) */
 /* the installer's copy of kernel_jam_x, at 0x15592 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 19, psos_jam_x's, reached from the installer's
-   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
-   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_jam_x(void)
 
 {
-  int iVar1;
-  int *piVar2;
+  void *running;
+  int *piVar1;
+  int iVar2;
   int iVar3;
   undefined4 uVar4;
   undefined4 uVar5;
@@ -62501,12 +62603,12 @@ void installer_kernel_jam_x(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  int *unaff_A6;
+  undefined4 *unaff_A6;
   bool bVar11;
   
-  iVar1 = *unaff_A6;
+  running = (void *)*unaff_A6;
   bVar11 = true;
-  installer_kernel_check_exchange();
+  installer_kernel_check_exchange(in_A0,running);
   if (bVar11) {
     piVar8 = extraout_A0;
     piVar10 = (int *)0x0;
@@ -62514,11 +62616,11 @@ void installer_kernel_jam_x(void)
       if (*(int **)(extraout_A1 + 4) != extraout_A0) {
         return;
       }
-      piVar2 = (int *)(iVar1 + 0x1c);
+      piVar1 = (int *)((int)running + 0x1c);
       do {
-        piVar9 = piVar2;
-        piVar2 = (int *)*piVar9;
-        bVar11 = piVar2 == (int *)0x0;
+        piVar9 = piVar1;
+        piVar1 = (int *)*piVar9;
+        bVar11 = piVar1 == (int *)0x0;
         if (bVar11) {
           installer_kernel_copy_message();
           piVar8 = extraout_A0_00;
@@ -62527,18 +62629,18 @@ void installer_kernel_jam_x(void)
           }
           goto LAB_installer__0010200c;
         }
-        piVar10 = piVar2 + 2;
-      } while ((((extraout_A0 != (int *)piVar2[1]) ||
-                (piVar10 = piVar2 + 3, *(int *)(extraout_A1 + 8) != piVar2[2])) ||
-               (piVar10 = piVar2 + 4, *(int *)(extraout_A1 + 0xc) != piVar2[3])) ||
-              ((piVar10 = piVar2 + 5, *(int *)(extraout_A1 + 0x10) != piVar2[4] ||
-               (piVar10 = piVar2 + 6, *(int *)(extraout_A1 + 0x14) != piVar2[5]))));
-      *piVar9 = *piVar2;
-      piVar10 = piVar2;
+        piVar10 = piVar1 + 2;
+      } while ((((extraout_A0 != (int *)piVar1[1]) ||
+                (piVar10 = piVar1 + 3, *(int *)(extraout_A1 + 8) != piVar1[2])) ||
+               (piVar10 = piVar1 + 4, *(int *)(extraout_A1 + 0xc) != piVar1[3])) ||
+              ((piVar10 = piVar1 + 5, *(int *)(extraout_A1 + 0x10) != piVar1[4] ||
+               (piVar10 = piVar1 + 6, *(int *)(extraout_A1 + 0x14) != piVar1[5]))));
+      *piVar9 = *piVar1;
+      piVar10 = piVar1;
     }
 LAB_installer__0010200c:
-    piVar2 = (int *)*piVar8;
-    if (piVar8 == piVar2) {
+    piVar1 = (int *)*piVar8;
+    if (piVar8 == piVar1) {
       *(char *)((int)piVar8 + 0x21) = *(char *)((int)piVar8 + 0x21) + '\x01';
       if ((piVar10 != (int *)0x0) ||
          (((bVar11 = true, *(char *)((int)piVar8 + 0x12) == '\0' ||
@@ -62555,10 +62657,10 @@ LAB_installer__0010200c:
           }
         }
         else {
-          iVar1 = piVar8[2];
+          iVar2 = piVar8[2];
           piVar8[2] = (int)piVar10;
-          *piVar10 = iVar1;
-          if (iVar1 != 0) {
+          *piVar10 = iVar2;
+          if (iVar2 != 0) {
             return;
           }
         }
@@ -62569,27 +62671,27 @@ LAB_installer__0010200c:
       }
     }
     else {
-      iVar1 = *piVar2;
-      *piVar8 = iVar1;
-      *(int **)(iVar1 + 4) = piVar8;
-      if ('\0' < *(char *)((int)piVar2 + 0x12)) {
+      iVar2 = *piVar1;
+      *piVar8 = iVar2;
+      *(int **)(iVar2 + 4) = piVar8;
+      if ('\0' < *(char *)((int)piVar1 + 0x12)) {
         installer_kernel_timer_unlink();
       }
       installer_kernel_make_ready();
-      iVar1 = *(int *)((int)piVar2 + 0x72);
+      iVar2 = *(int *)((int)piVar1 + 0x72);
       iVar3 = *(int *)(extraout_A1_00 + 4);
       uVar4 = *(undefined4 *)(extraout_A1_00 + 8);
       uVar5 = *(undefined4 *)(extraout_A1_00 + 0xc);
       uVar6 = *(undefined4 *)(extraout_A1_00 + 0x10);
       uVar7 = *(undefined4 *)(extraout_A1_00 + 0x14);
-      *(int *)(iVar1 + 4) = iVar3;
-      *(undefined4 *)(iVar1 + 8) = uVar4;
-      *(undefined4 *)(iVar1 + 0xc) = uVar5;
-      *(undefined4 *)(iVar1 + 0x10) = uVar6;
-      *(undefined4 *)(iVar1 + 0x14) = uVar7;
+      *(int *)(iVar2 + 4) = iVar3;
+      *(undefined4 *)(iVar2 + 8) = uVar4;
+      *(undefined4 *)(iVar2 + 0xc) = uVar5;
+      *(undefined4 *)(iVar2 + 0x10) = uVar6;
+      *(undefined4 *)(iVar2 + 0x14) = uVar7;
       if (iVar3 != 0) {
-        *piVar10 = piVar2[7];
-        piVar2[7] = (int)piVar10;
+        *piVar10 = piVar1[7];
+        piVar1[7] = (int)piVar10;
       }
     }
   }
@@ -62603,22 +62705,23 @@ LAB_installer__0010200c:
 /* WARNING: Removing unreachable block (ram,0x00102086) */
 /* WARNING: Removing unreachable block (ram,0x00102098) */
 /* the installer's copy of kernel_send_x, at 0x1559c plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 23, psos_send_x's, reached from the
-   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
-   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_send_x(void)
 
 {
-  int iVar1;
-  int *piVar2;
+  void *running;
+  int *piVar1;
+  int iVar2;
   int iVar3;
   undefined4 uVar4;
   undefined4 uVar5;
   undefined4 uVar6;
   undefined4 uVar7;
+  int in_A0;
   int *extraout_A0;
   int *extraout_A0_00;
   int *extraout_A0_01;
@@ -62627,12 +62730,12 @@ void installer_kernel_send_x(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  int *unaff_A6;
+  undefined4 *unaff_A6;
   bool bVar11;
   
-  iVar1 = *unaff_A6;
+  running = (void *)*unaff_A6;
   bVar11 = true;
-  installer_kernel_check_exchange();
+  installer_kernel_check_exchange(in_A0,running);
   if (bVar11) {
     piVar8 = extraout_A0;
     piVar10 = (int *)0x0;
@@ -62640,11 +62743,11 @@ void installer_kernel_send_x(void)
       if (*(int **)(extraout_A1 + 4) != extraout_A0) {
         return;
       }
-      piVar2 = (int *)(iVar1 + 0x1c);
+      piVar1 = (int *)((int)running + 0x1c);
       do {
-        piVar9 = piVar2;
-        piVar2 = (int *)*piVar9;
-        bVar11 = piVar2 == (int *)0x0;
+        piVar9 = piVar1;
+        piVar1 = (int *)*piVar9;
+        bVar11 = piVar1 == (int *)0x0;
         if (bVar11) {
           installer_kernel_copy_message();
           piVar8 = extraout_A0_00;
@@ -62653,18 +62756,18 @@ void installer_kernel_send_x(void)
           }
           goto LAB_installer__0010200c;
         }
-        piVar10 = piVar2 + 2;
-      } while ((((extraout_A0 != (int *)piVar2[1]) ||
-                (piVar10 = piVar2 + 3, *(int *)(extraout_A1 + 8) != piVar2[2])) ||
-               (piVar10 = piVar2 + 4, *(int *)(extraout_A1 + 0xc) != piVar2[3])) ||
-              ((piVar10 = piVar2 + 5, *(int *)(extraout_A1 + 0x10) != piVar2[4] ||
-               (piVar10 = piVar2 + 6, *(int *)(extraout_A1 + 0x14) != piVar2[5]))));
-      *piVar9 = *piVar2;
-      piVar10 = piVar2;
+        piVar10 = piVar1 + 2;
+      } while ((((extraout_A0 != (int *)piVar1[1]) ||
+                (piVar10 = piVar1 + 3, *(int *)(extraout_A1 + 8) != piVar1[2])) ||
+               (piVar10 = piVar1 + 4, *(int *)(extraout_A1 + 0xc) != piVar1[3])) ||
+              ((piVar10 = piVar1 + 5, *(int *)(extraout_A1 + 0x10) != piVar1[4] ||
+               (piVar10 = piVar1 + 6, *(int *)(extraout_A1 + 0x14) != piVar1[5]))));
+      *piVar9 = *piVar1;
+      piVar10 = piVar1;
     }
 LAB_installer__0010200c:
-    piVar2 = (int *)*piVar8;
-    if (piVar8 == piVar2) {
+    piVar1 = (int *)*piVar8;
+    if (piVar8 == piVar1) {
       *(char *)((int)piVar8 + 0x21) = *(char *)((int)piVar8 + 0x21) + '\x01';
       if ((piVar10 != (int *)0x0) ||
          (((bVar11 = true, *(char *)((int)piVar8 + 0x12) == '\0' ||
@@ -62685,27 +62788,27 @@ LAB_installer__0010200c:
       }
     }
     else {
-      iVar1 = *piVar2;
-      *piVar8 = iVar1;
-      *(int **)(iVar1 + 4) = piVar8;
-      if ('\0' < *(char *)((int)piVar2 + 0x12)) {
+      iVar2 = *piVar1;
+      *piVar8 = iVar2;
+      *(int **)(iVar2 + 4) = piVar8;
+      if ('\0' < *(char *)((int)piVar1 + 0x12)) {
         installer_kernel_timer_unlink();
       }
       installer_kernel_make_ready();
-      iVar1 = *(int *)((int)piVar2 + 0x72);
+      iVar2 = *(int *)((int)piVar1 + 0x72);
       iVar3 = *(int *)(extraout_A1_00 + 4);
       uVar4 = *(undefined4 *)(extraout_A1_00 + 8);
       uVar5 = *(undefined4 *)(extraout_A1_00 + 0xc);
       uVar6 = *(undefined4 *)(extraout_A1_00 + 0x10);
       uVar7 = *(undefined4 *)(extraout_A1_00 + 0x14);
-      *(int *)(iVar1 + 4) = iVar3;
-      *(undefined4 *)(iVar1 + 8) = uVar4;
-      *(undefined4 *)(iVar1 + 0xc) = uVar5;
-      *(undefined4 *)(iVar1 + 0x10) = uVar6;
-      *(undefined4 *)(iVar1 + 0x14) = uVar7;
+      *(int *)(iVar2 + 4) = iVar3;
+      *(undefined4 *)(iVar2 + 8) = uVar4;
+      *(undefined4 *)(iVar2 + 0xc) = uVar5;
+      *(undefined4 *)(iVar2 + 0x10) = uVar6;
+      *(undefined4 *)(iVar2 + 0x14) = uVar7;
       if (iVar3 != 0) {
-        *piVar10 = piVar2[7];
-        piVar2[7] = (int)piVar10;
+        *piVar10 = piVar1[7];
+        piVar1[7] = (int)piVar10;
       }
     }
   }
@@ -62719,8 +62822,7 @@ LAB_installer__0010200c:
 /* WARNING: Removing unreachable block (ram,0x00102086) */
 /* WARNING: Removing unreachable block (ram,0x00102098) */
 /* the installer's copy of kernel_send_for_task, at 0x1559e plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_send_for_task(void)
@@ -62733,6 +62835,7 @@ void installer_kernel_send_for_task(void)
   undefined4 uVar5;
   undefined4 uVar6;
   undefined4 uVar7;
+  int in_A0;
   int *extraout_A0;
   int *extraout_A0_00;
   int *extraout_A0_01;
@@ -62741,11 +62844,11 @@ void installer_kernel_send_for_task(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  int unaff_A5;
+  void *unaff_A5;
   bool bVar11;
   
   bVar11 = true;
-  installer_kernel_check_exchange();
+  installer_kernel_check_exchange(in_A0,unaff_A5);
   if (bVar11) {
     piVar8 = extraout_A0;
     piVar10 = (int *)0x0;
@@ -62753,7 +62856,7 @@ void installer_kernel_send_for_task(void)
       if (*(int **)(extraout_A1 + 4) != extraout_A0) {
         return;
       }
-      piVar1 = (int *)(unaff_A5 + 0x1c);
+      piVar1 = (int *)((int)unaff_A5 + 0x1c);
       do {
         piVar9 = piVar1;
         piVar1 = (int *)*piVar9;
@@ -62829,8 +62932,7 @@ LAB_installer__0010200c:
 /* installer::001020b2 */
 
 /* the installer's copy of kernel_copy_message, at 0x156ac plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_copy_message(void)
@@ -62865,22 +62967,23 @@ void installer_kernel_copy_message(void)
 
 /* WARNING: Removing unreachable block (ram,0x001020ea) */
 /* the installer's copy of kernel_request_x, at 0x156d6 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 24, psos_request_x's, reached from the
-   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
-   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_request_x(void)
 
 {
+  int *running;
   int *piVar1;
-  int *piVar2;
+  undefined4 *puVar2;
   int iVar3;
   int iVar4;
   int iVar5;
   int iVar6;
   int iVar7;
+  int in_A0;
   int *extraout_A0;
   int *piVar8;
   int *extraout_A0_00;
@@ -62888,13 +62991,13 @@ void installer_kernel_request_x(void)
   int iVar9;
   int extraout_A1_00;
   int *piVar10;
-  int *unaff_A6;
+  undefined4 *unaff_A6;
   bool bVar11;
   undefined8 uVar12;
   
-  piVar1 = (int *)*unaff_A6;
+  running = (int *)*unaff_A6;
   bVar11 = true;
-  uVar12 = installer_kernel_check_exchange();
+  uVar12 = installer_kernel_check_exchange(in_A0,running);
   piVar8 = extraout_A0;
   iVar9 = extraout_A1;
   if (bVar11) {
@@ -62904,21 +63007,21 @@ void installer_kernel_request_x(void)
       if ((char)uVar12 != '\0') {
         return;
       }
-      piVar10 = (int *)piVar1[1];
-      iVar3 = *piVar1;
+      piVar10 = (int *)running[1];
+      iVar3 = *running;
       *piVar10 = iVar3;
       *(int **)(iVar3 + 4) = piVar10;
-      *(int *)((int)piVar1 + 0x72) = iVar9;
+      *(int *)((int)running + 0x72) = iVar9;
       if (*(char *)(piVar8 + 4) == '\0') {
-        *piVar1 = (int)piVar8;
-        piVar10 = (int *)piVar8[1];
-        piVar8[1] = (int)piVar1;
-        *piVar10 = (int)piVar1;
-        piVar1[1] = (int)piVar10;
+        *running = (int)piVar8;
+        puVar2 = (undefined4 *)piVar8[1];
+        piVar8[1] = (int)running;
+        *puVar2 = running;
+        running[1] = (int)puVar2;
 LAB_installer__001021ca:
-        *(undefined2 *)((int)piVar1 + 0x12) = 0xff20;
+        *(undefined2 *)((int)running + 0x12) = 0xff20;
         if ((int)((ulonglong)uVar12 >> 0x20) == 0) {
-          *(undefined1 *)((int)piVar1 + 0x12) = 0;
+          *(undefined1 *)((int)running + 0x12) = 0;
           return;
         }
         installer_kernel_timer_insert();
@@ -62926,17 +63029,17 @@ LAB_installer__001021ca:
       }
       piVar10 = piVar8;
       do {
-        piVar2 = (int *)*piVar10;
-        if (piVar8 == piVar2) break;
+        piVar1 = (int *)*piVar10;
+        if (piVar8 == piVar1) break;
         piVar10 = piVar8;
-      } while (((*(byte *)((int)piVar2 + 0x13) & 0x20) == 0) ||
-              (piVar10 = piVar2, *(byte *)(piVar1 + 4) <= *(byte *)(piVar2 + 4)));
+      } while (((*(byte *)((int)piVar1 + 0x13) & 0x20) == 0) ||
+              (piVar10 = piVar1, *(byte *)(running + 4) <= *(byte *)(piVar1 + 4)));
       if (piVar8[2] == 0) {
-        *piVar1 = (int)piVar2;
-        piVar8 = (int *)piVar2[1];
-        piVar2[1] = (int)piVar1;
-        piVar1[1] = (int)piVar8;
-        *piVar8 = (int)piVar1;
+        *running = (int)piVar1;
+        puVar2 = (undefined4 *)piVar1[1];
+        piVar1[1] = (int)running;
+        running[1] = (int)puVar2;
+        *puVar2 = running;
         goto LAB_installer__001021ca;
       }
       uVar12 = installer_kernel_ready_insert();
@@ -62961,11 +63064,11 @@ LAB_installer__001021ca:
     *(int *)(iVar9 + 0x14) = iVar7;
     if (iVar3 == 0) {
       *piVar10 = unaff_A6[7];
-      unaff_A6[7] = (int)piVar10;
+      unaff_A6[7] = piVar10;
     }
     else {
-      *piVar10 = piVar1[7];
-      piVar1[7] = (int)piVar10;
+      *piVar10 = running[7];
+      running[7] = (int)piVar10;
     }
   }
   return;
@@ -62976,10 +63079,9 @@ LAB_installer__001021ca:
 
 /* WARNING: Removing unreachable block (ram,0x001021f2) */
 /* the installer's copy of kernel_signal_v, at 0x157e2 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 25, psos_signal_v's, reached from the
-   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
-   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_signal_v(void)
@@ -62989,24 +63091,25 @@ void installer_kernel_signal_v(void)
   short in_D1w;
   ushort extraout_D1w;
   ushort uVar2;
-  int extraout_A0;
+  int in_A0;
+  void *pvVar3;
   int *unaff_A6;
-  bool bVar3;
+  bool bVar4;
   
-  bVar3 = in_D1w == 0;
-  installer_kernel_check_task();
-  if (bVar3) {
-    uVar1 = *(ushort *)(extraout_A0 + 0x18) | extraout_D1w & 0x7fff;
-    *(ushort *)(extraout_A0 + 0x18) = uVar1;
-    uVar2 = *(ushort *)(extraout_A0 + 0x16);
+  bVar4 = in_D1w == 0;
+  pvVar3 = installer_kernel_check_task(in_A0,(void *)*unaff_A6);
+  if (bVar4) {
+    uVar1 = *(ushort *)((int)pvVar3 + 0x18) | extraout_D1w & 0x7fff;
+    *(ushort *)((int)pvVar3 + 0x18) = uVar1;
+    uVar2 = *(ushort *)((int)pvVar3 + 0x16);
     if (uVar2 != 0) {
       uVar1 = uVar2 ^ uVar1;
-      *(ushort *)(extraout_A0 + 0x18) = uVar1 & *(ushort *)(extraout_A0 + 0x18);
+      *(ushort *)((int)pvVar3 + 0x18) = uVar1 & *(ushort *)((int)pvVar3 + 0x18);
       uVar1 = uVar2 & uVar1;
       if (uVar1 != 0) {
         if (-1 < (short)uVar1) {
-          *(ushort *)(extraout_A0 + 0x16) = uVar1;
-          *(ushort *)(extraout_A0 + 0x54) = uVar1 ^ uVar2 | *(ushort *)(extraout_A0 + 0x54);
+          *(ushort *)((int)pvVar3 + 0x16) = uVar1;
+          *(ushort *)((int)pvVar3 + 0x54) = uVar1 ^ uVar2 | *(ushort *)((int)pvVar3 + 0x54);
           return;
         }
         if (uVar2 == uVar1) {
@@ -63014,13 +63117,13 @@ void installer_kernel_signal_v(void)
         }
         uVar2 = uVar1 ^ uVar2;
       }
-      *(ushort *)(extraout_A0 + 0x54) = uVar2 | *(ushort *)(extraout_A0 + 0x54);
-      *(undefined2 *)(extraout_A0 + 0x16) = 0;
-      if ('\0' < *(char *)(extraout_A0 + 0x12)) {
+      *(ushort *)((int)pvVar3 + 0x54) = uVar2 | *(ushort *)((int)pvVar3 + 0x54);
+      *(undefined2 *)((int)pvVar3 + 0x16) = 0;
+      if ('\0' < *(char *)((int)pvVar3 + 0x12)) {
         installer_kernel_timer_unlink();
       }
       installer_kernel_make_ready();
-      if (extraout_A0 == *unaff_A6) {
+      if (pvVar3 == (void *)*unaff_A6) {
         *(undefined1 *)((int)unaff_A6 + 0x8b) = 0;
       }
     }
@@ -63032,8 +63135,7 @@ void installer_kernel_signal_v(void)
 /* installer::001021f6 */
 
 /* the installer's copy of kernel_signal_task, at 0x157f0 plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_signal_task(void)
@@ -63043,24 +63145,26 @@ void installer_kernel_signal_task(void)
   short in_D1w;
   ushort extraout_D1w;
   ushort uVar2;
-  int extraout_A0;
+  int in_A0;
+  void *pvVar3;
+  void *unaff_A5;
   int *unaff_A6;
-  bool bVar3;
+  bool bVar4;
   
-  bVar3 = in_D1w == 0;
-  installer_kernel_check_task();
-  if (bVar3) {
-    uVar1 = *(ushort *)(extraout_A0 + 0x18) | extraout_D1w & 0x7fff;
-    *(ushort *)(extraout_A0 + 0x18) = uVar1;
-    uVar2 = *(ushort *)(extraout_A0 + 0x16);
+  bVar4 = in_D1w == 0;
+  pvVar3 = installer_kernel_check_task(in_A0,unaff_A5);
+  if (bVar4) {
+    uVar1 = *(ushort *)((int)pvVar3 + 0x18) | extraout_D1w & 0x7fff;
+    *(ushort *)((int)pvVar3 + 0x18) = uVar1;
+    uVar2 = *(ushort *)((int)pvVar3 + 0x16);
     if (uVar2 != 0) {
       uVar1 = uVar2 ^ uVar1;
-      *(ushort *)(extraout_A0 + 0x18) = uVar1 & *(ushort *)(extraout_A0 + 0x18);
+      *(ushort *)((int)pvVar3 + 0x18) = uVar1 & *(ushort *)((int)pvVar3 + 0x18);
       uVar1 = uVar2 & uVar1;
       if (uVar1 != 0) {
         if (-1 < (short)uVar1) {
-          *(ushort *)(extraout_A0 + 0x16) = uVar1;
-          *(ushort *)(extraout_A0 + 0x54) = uVar1 ^ uVar2 | *(ushort *)(extraout_A0 + 0x54);
+          *(ushort *)((int)pvVar3 + 0x16) = uVar1;
+          *(ushort *)((int)pvVar3 + 0x54) = uVar1 ^ uVar2 | *(ushort *)((int)pvVar3 + 0x54);
           return;
         }
         if (uVar2 == uVar1) {
@@ -63068,13 +63172,13 @@ void installer_kernel_signal_task(void)
         }
         uVar2 = uVar1 ^ uVar2;
       }
-      *(ushort *)(extraout_A0 + 0x54) = uVar2 | *(ushort *)(extraout_A0 + 0x54);
-      *(undefined2 *)(extraout_A0 + 0x16) = 0;
-      if ('\0' < *(char *)(extraout_A0 + 0x12)) {
+      *(ushort *)((int)pvVar3 + 0x54) = uVar2 | *(ushort *)((int)pvVar3 + 0x54);
+      *(undefined2 *)((int)pvVar3 + 0x16) = 0;
+      if ('\0' < *(char *)((int)pvVar3 + 0x12)) {
         installer_kernel_timer_unlink();
       }
       installer_kernel_make_ready();
-      if (extraout_A0 == *unaff_A6) {
+      if (pvVar3 == (void *)*unaff_A6) {
         *(undefined1 *)((int)unaff_A6 + 0x8b) = 0;
       }
     }
@@ -63089,10 +63193,9 @@ void installer_kernel_signal_task(void)
 /* WARNING: Removing unreachable block (ram,0x001022d6) */
 /* WARNING: Removing unreachable block (ram,0x001022d0) */
 /* the installer's copy of kernel_get_v, at 0x1585a plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 27, psos_get_v's, reached from the installer's
-   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
-   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_get_v(void)
@@ -63119,10 +63222,9 @@ void installer_kernel_get_v(void)
 /* installer::00102262 */
 
 /* the installer's copy of kernel_wait_v, at 0x1585c plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 26, psos_wait_v's, reached from the
-   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
-   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_wait_v(void)
@@ -63171,10 +63273,9 @@ void installer_kernel_wait_v(void)
 /* installer::001022e0 */
 
 /* the installer's copy of kernel_mode, at 0x158da plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 32, psos_mode's, reached from the installer's
-   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
-   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 byte installer_kernel_mode(void)
@@ -63194,10 +63295,9 @@ byte installer_kernel_mode(void)
 /* installer::001022fc */
 
 /* the installer's copy of kernel_service_33, at 0x158f6 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 33, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 undefined2 installer_kernel_service_33(undefined2 param_1)
@@ -63210,10 +63310,9 @@ undefined2 installer_kernel_service_33(undefined2 param_1)
 /* installer::0010230a */
 
 /* the installer's copy of kernel_pause, at 0x15904 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 28, psos_pause's, reached from the installer's
-   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
-   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_pause(void)
@@ -63239,10 +63338,9 @@ void installer_kernel_pause(void)
 /* installer::00102334 */
 
 /* the installer's copy of kernel_service_29, at 0x1592e plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 29, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_service_29(void)
@@ -63276,10 +63374,9 @@ void installer_kernel_service_29(void)
 /* installer::0010237a */
 
 /* the installer's copy of kernel_service_30, at 0x15974 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 30, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 undefined8 installer_kernel_service_30(void)
@@ -63299,10 +63396,9 @@ undefined8 installer_kernel_service_30(void)
 /* installer::001023a4 */
 
 /* the installer's copy of kernel_service_31, at 0x1599e plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 31, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_service_31(void)
@@ -63338,10 +63434,9 @@ void installer_kernel_service_31(void)
 /* installer::00102416 */
 
 /* the installer's copy of kernel_service_35, at 0x15a10 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 35, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 undefined8 installer_kernel_service_35(void)
@@ -63375,10 +63470,9 @@ undefined8 installer_kernel_service_35(void)
 /* installer::00102456 */
 
 /* the installer's copy of kernel_service_36, at 0x15a50 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 36, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_service_36(void)
@@ -63397,10 +63491,9 @@ void installer_kernel_service_36(void)
 /* installer::0010247c */
 
 /* the installer's copy of kernel_service_37, at 0x15a76 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 37, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_service_37(void)
@@ -63422,10 +63515,9 @@ void installer_kernel_service_37(void)
 /* installer::001024a8 */
 
 /* the installer's copy of kernel_service_38, at 0x15aa2 plus 0xeca06, byte for byte
-   Not a C function: the kernel's handler for service 38, reached from the installer's trap #3
-   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
-   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md).
+   Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
+   the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
+   D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 void installer_kernel_service_38(void)
@@ -63446,8 +63538,7 @@ void installer_kernel_service_38(void)
 /* installer::001024c6 */
 
 /* the installer's copy of kernel_advance_date, at 0x15ac0 plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_advance_date(void)
@@ -63485,8 +63576,7 @@ void installer_kernel_advance_date(void)
 /* installer::00102516 */
 
 /* the installer's copy of kernel_set_leap_year, at 0x15b10 plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_set_leap_year(void)
@@ -63508,28 +63598,31 @@ void installer_kernel_set_leap_year(void)
 
 /* installer::00102540 */
 
+/* WARNING: Unknown calling convention */
 /* the installer's copy of kernel_check_task, at 0x15b3a plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr: the task ID in A0,
-   zero for the running task, which A5 holds.  Returns the task's record in A0, or the error in D7:
-   2 a bad ID, 1 a deleted task, 3 another group's (psos.md).
+   Not a C function (register; read): its arguments and results in registers.  In: A0 int task, A5
+   void *running.  Out: A0 void *record.  Error: D7 2 bad ID, D7 1 deleted, D7 3 another group.
    psos.md */
 
-void installer_kernel_check_task(void)
+void * installer_kernel_check_task(int task,void *running)
 
 {
-  return;
+  if (task != 0) {
+    running = (void *)task;
+  }
+  return running;
 }
 
 
 /* installer::00102572 */
 
+/* WARNING: Unknown calling convention */
 /* the installer's copy of kernel_check_exchange, at 0x15b6c plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr: the exchange ID in A0,
-   the running task in A5.  Returns the error in D7: 2 a bad ID, 1 a deleted exchange, 3 another
-   group's (psos.md).
+   Not a C function (register; read): its arguments and results in registers.  In: A0 int exchange,
+   A5 void *running.  Error: D7 2 bad ID, D7 1 deleted, D7 3 another group.
    psos.md */
 
-void installer_kernel_check_exchange(void)
+void installer_kernel_check_exchange(int exchange,void *running)
 
 {
   return;
@@ -63538,12 +63631,13 @@ void installer_kernel_check_exchange(void)
 
 /* installer::0010259c */
 
+/* WARNING: Unknown calling convention */
 /* the installer's copy of kernel_check_segment, at 0x15b96 plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr: the segment in A0.
-   Returns D7 zero, or 5 if the segment lacks installer_kernel_region_allocate's 0xe1d0 (psos.md).
+   Not a C function (register; read): its arguments and results in registers.  In: A0 void *segment.
+   Error: D7 5 bad segment.
    psos.md */
 
-void installer_kernel_check_segment(void)
+void installer_kernel_check_segment(void *segment)
 
 {
   return;
@@ -63553,8 +63647,7 @@ void installer_kernel_check_segment(void)
 /* installer::001025b0 */
 
 /* the installer's copy of kernel_timer_cancel, at 0x15baa plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_timer_cancel(void)
@@ -63580,8 +63673,7 @@ void installer_kernel_timer_cancel(void)
 /* installer::001025b6 */
 
 /* the installer's copy of kernel_timer_unlink, at 0x15bb0 plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 undefined4 installer_kernel_timer_unlink(void)
@@ -63606,8 +63698,7 @@ undefined4 installer_kernel_timer_unlink(void)
 /* installer::001025e4 */
 
 /* the installer's copy of kernel_timer_insert, at 0x15bde plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_timer_insert(void)
@@ -63658,8 +63749,7 @@ void installer_kernel_timer_insert(void)
 /* installer::00102652 */
 
 /* the installer's copy of kernel_make_ready, at 0x15c4c plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_make_ready(void)
@@ -63692,8 +63782,7 @@ void installer_kernel_make_ready(void)
 /* installer::0010265a */
 
 /* the installer's copy of kernel_ready_insert, at 0x15c54 plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_ready_insert(void)
@@ -63721,8 +63810,7 @@ void installer_kernel_ready_insert(void)
 /* installer::0010269c */
 
 /* the installer's copy of kernel_queue_remove, at 0x15c96 plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_queue_remove(void)
@@ -63744,8 +63832,7 @@ void installer_kernel_queue_remove(void)
 
 /* WARNING: Removing unreachable block (ram,0x001028ac) */
 /* the installer's copy of kernel_init, at 0x15cd8 plus 0xeca06, byte for byte
-   Not a C function: the trap #6 handler, which starts the kernel: builds its records from the
-   configuration in A6 and never returns.
+   Not a C function (exception; read): entered by the processor, not called.
    psos.md */
 
 void installer_kernel_init(void)
@@ -63917,8 +64004,7 @@ void installer_kernel_init(void)
 /* installer::001028d4 */
 
 /* the installer's copy of kernel_region_init, at 0x15ece plus 0xeca06, byte for byte
-   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md).
+   Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
 void installer_kernel_region_init(void)
@@ -63979,8 +64065,7 @@ void installer_kernel_region_init(void)
 /* installer::00102990 */
 
 /* the installer's copy of kernel_return_from_interrupt, at 0x15f8a plus 0xeca06, byte for byte
-   Not a C function: the trap #5 handler, which every interrupt handler ends with in place of rte:
-   switches tasks if the interrupt made a higher-priority one ready, and returns with rte.
+   Not a C function (exception; read): entered by the processor, not called.
    psos.md */
 
 void installer_kernel_return_from_interrupt(ushort param_1)

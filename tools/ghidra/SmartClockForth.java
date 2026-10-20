@@ -17,7 +17,8 @@
 // keeps them and gains the rest; one with stack parameters is a C
 // function and is left alone.  Each one not C, whichever registers it
 // uses, also has a line added to its comment saying so, unless the
-// comment already does.
+// comment already does, and its convention recorded for the sidecar, as
+// SmartClockSetup.java records the names file's, unless it has one.
 //
 // Argument: dry-run, to report the functions without changing them.
 //
@@ -51,6 +52,7 @@ import ghidra.program.model.listing.Parameter;
 import ghidra.program.model.listing.ParameterImpl;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.util.StringPropertyMap;
 
 public class SmartClockForth extends GhidraScript {
 
@@ -68,6 +70,11 @@ public class SmartClockForth extends GhidraScript {
 	private static final String DRY_RUN = "dry-run";
 	private static final String KERNEL_PREFIX = "forth_";
 	private static final int LINK_A6 = 0x4e56;
+	/** Where SmartClockSetup.java keeps the conventions, and the tag it gives one not C. */
+	private static final String CONVENTION_MAP = "SmartClock.convention";
+	private static final String NOT_C_TAG = "not-c";
+	private static final String CONVENTION =
+		"{\"convention\":\"pforth\",\"confidence\":\"assumed\",\"family\":\"pforth\"}";
 	/** How a comment says its function is not C. */
 	private static final String NOT_C_MARK = "Not a C function";
 	private static final String NOT_C = NOT_C_MARK + ": a routine of the pForth console's "
@@ -102,6 +109,11 @@ public class SmartClockForth extends GhidraScript {
 			new KernelRegister("A6", "sp", LONG_POINTER),
 			new KernelRegister("A4", "dp", VOID_POINTER),
 			new KernelRegister("A3", "input", CHAR_POINTER));
+		StringPropertyMap conventions =
+			currentProgram.getUsrPropertyManager().getStringPropertyMap(CONVENTION_MAP);
+		if (conventions == null) {
+			conventions = currentProgram.getUsrPropertyManager().createStringPropertyMap(CONVENTION_MAP);
+		}
 		AddressSet kernel = kernelSpan();
 		println("kernel span " + kernel.getMinAddress() + " - " + kernel.getMaxAddress());
 		int changed = 0;
@@ -116,6 +128,10 @@ public class SmartClockForth extends GhidraScript {
 			}
 			else if (!dryRun && !comment.contains(NOT_C_MARK)) {
 				function.setComment(comment + "\n" + NOT_C);
+			}
+			if (!dryRun && conventions.getString(function.getEntryPoint()) == null) {
+				conventions.add(function.getEntryPoint(), CONVENTION);
+				function.addTag(NOT_C_TAG);
 			}
 			Map<String, KernelRegister> used = usedRegisters(function, registers);
 			for (Parameter existing : function.getParameters()) {

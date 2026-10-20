@@ -14,11 +14,14 @@
 //   names=tools/ghidra/names/IMAGE.tsv
 //       address, "function" or "label", name, source, and optionally
 //       a note saying what it is or does, a function's C prototype or a
-//       label's data type, and a function's comment, such as how a routine
-//       that is not C is called, tab-separated; an address in the
-//       installer's overlay is written installer::0x....  A function's
-//       note, comment and source make the comment the decompiler prints
-//       above its C:
+//       label's data type, and a function's calling convention,
+//       tab-separated; an address in the installer's overlay is written
+//       installer::0x....  The names file's header sets out the
+//       convention's keys.  A register prototype is built from its in
+//       and out, at confidence run, read or documented only.  A
+//       function's note, its convention and its source make the comment
+//       the decompiler prints above its C; the convention is kept as JSON,
+//       and the note too, for SmartClockExportC.java's sidecar:
 //       names the firmware notes establish.  These replace names the
 //       other two gave, but not names given by hand.
 //   scpi=FILE
@@ -67,10 +70,12 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.LongStream;
 
@@ -111,6 +116,7 @@ import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.JumpTable;
+import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.Reference;
@@ -179,8 +185,45 @@ public class SmartClockSetup extends GhidraScript {
 	private static final int NOTE_FIELD = 4;
 	/** Its optional sixth: a function's C prototype, or a label's data type. */
 	private static final int PROTOTYPE_FIELD = 5;
-	/** Its optional seventh: a function's comment, such as how a routine that is not C is called. */
-	private static final int COMMENT_FIELD = 6;
+	/** Its optional seventh: a function's calling convention, as key=value pairs. */
+	private static final int CONVENTION_FIELD = 6;
+	/** The convention's pairs, and each pair's key and value. */
+	private static final String PAIR_SEPARATOR = "; ";
+	private static final String ITEM_SEPARATOR = ", ";
+	/** The convention's keys, in the order the comment gives them. */
+	private static final List<String> CONVENTION_KEYS = List.of("convention", "confidence", "in",
+		"out", "returns", "error", "preserves", "family");
+	/** A key's own confidence: KEY.confidence. */
+	private static final String CONFIDENCE_SUFFIX = ".confidence";
+	private static final String CONFIDENCE = "confidence";
+	private static final String KIND = "convention";
+	/** The kinds of convention, and what each means; c and unknown are not "not C". */
+	private static final Map<String, String> KINDS = Map.of(
+		"c", "",
+		"register", "its arguments and results in registers",
+		"exception", "entered by the processor, not called",
+		"pforth", "a routine of the pForth console's kernel, which runs with the data stack in "
+			+ "A6, the end of the user area in A5, the dictionary pointer in A4 and the input in A3",
+		"psos-service", "a pSOS kernel service, reached from trap #3 through the kernel's "
+			+ "dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1",
+		"other", "neither C nor one of the usual kinds; the note says how it is called",
+		"undetermined", "how it is called is not yet set out");
+	private static final String C = "c";
+	/** The confidences, strongest first; only the first three build a prototype. */
+	private static final List<String> CONFIDENCES =
+		List.of("run", "read", "documented", "derived", "assumed");
+	private static final Set<String> TRUSTED = Set.of("run", "read", "documented");
+	/** A register, or a pair of them high first, with an optional width. */
+	private static final Pattern REGISTER =
+		Pattern.compile("^([DA][0-7](?::[DA][0-7])?)(\\.[bwl])?$");
+	/** Where the conventions and notes are kept for SmartClockExportC.java. */
+	private static final String CONVENTION_MAP = "SmartClock.convention";
+	private static final String NOTE_MAP = "SmartClock.note";
+	/** The tag every function that is not C carries. */
+	private static final String NOT_C_TAG = "not-c";
+	/** What the exception handlers' recorded convention says. */
+	private static final String EXCEPTION_CONVENTION =
+		"{\"convention\":\"exception\",\"confidence\":\"derived\",\"family\":\"exception\"}";
 	/** A source that is no citation: the name was read from the function's callers. */
 	private static final String CONTEXT = "context";
 	/** How a comment says its function is not C, which the comments added later look for. */
@@ -424,12 +467,22 @@ public class SmartClockSetup extends GhidraScript {
 				}
 				if (fields[1].equals(FUNCTION)) {
 					nameFunction(address, fields[2], true, counts);
-					if (fields.length > PROTOTYPE_FIELD && !fields[PROTOTYPE_FIELD].isBlank()) {
-						applyPrototype(address, fields[PROTOTYPE_FIELD]);
+					Map<String, String> convention = parseConvention(field(fields, CONVENTION_FIELD),
+						line);
+					String prototype = field(fields, PROTOTYPE_FIELD);
+					if (prototype.contains("@")) {
+						throw new IllegalArgumentException(
+							"registers go in the convention's in and out, not the prototype: " + line);
+					}
+					String built = prototypeFor(fields[2], prototype, convention, line);
+					if (built != null) {
+						applyPrototype(address, built);
 					}
 					Function function = getFunctionAt(address);
 					if (function != null) {
-						function.setComment(functionComment(fields));
+						function.setComment(functionComment(fields, convention));
+						record(function, convention.isEmpty() ? null : conventionJson(convention),
+							field(fields, NOTE_FIELD));
 					}
 				}
 				else {
@@ -985,6 +1038,9 @@ public class SmartClockSetup extends GhidraScript {
 				function.setComment(existing + "\n"
 					+ vectorComment(prefix, targets, vector, defaultHandler));
 			}
+			if (propertyMap(CONVENTION_MAP).getString(function.getEntryPoint()) == null) {
+				record(function, EXCEPTION_CONVENTION, "");
+			}
 		}
 	}
 
@@ -999,22 +1055,281 @@ public class SmartClockSetup extends GhidraScript {
 		}
 	}
 
+	/** The field at index, or "" past the row's end. */
+	private static String field(String[] fields, int index) {
+		return fields.length > index ? fields[index] : "";
+	}
+
 	/**
-	 * A names-file function's comment: its note, its comment and its
-	 * source, each on its own line; the source is left out when it is only
-	 * the function's callers.
+	 * A names-file function's comment: its note, its convention's line if
+	 * it is not C, and its source, each on its own line; the source is left
+	 * out when it is only the function's callers.
 	 */
-	private static String functionComment(String[] fields) {
+	private static String functionComment(String[] fields, Map<String, String> convention) {
 		List<String> lines = new ArrayList<>();
-		for (int field : new int[] { NOTE_FIELD, COMMENT_FIELD }) {
-			if (fields.length > field && !fields[field].isBlank()) {
-				lines.add(fields[field]);
-			}
+		String note = field(fields, NOTE_FIELD);
+		if (!note.isBlank()) {
+			lines.add(note);
+		}
+		String rendered = renderConvention(convention);
+		if (rendered != null) {
+			lines.add(rendered);
 		}
 		if (!fields[SOURCE_FIELD].equals(CONTEXT)) {
 			lines.add(fields[SOURCE_FIELD]);
 		}
 		return String.join("\n", lines);
+	}
+
+	/**
+	 * The convention's key=value pairs, checked: every key known, the kind
+	 * and every confidence one of theirs.  Empty for no convention.
+	 */
+	private static Map<String, String> parseConvention(String text, String line) {
+		Map<String, String> convention = new LinkedHashMap<>();
+		if (text.isBlank()) {
+			return convention;
+		}
+		for (String pair : text.split(PAIR_SEPARATOR)) {
+			int equals = pair.indexOf('=');
+			String key = equals < 0 ? pair : pair.substring(0, equals).strip();
+			String value = equals < 0 ? "" : pair.substring(equals + 1).strip();
+			String base = key.endsWith(CONFIDENCE_SUFFIX)
+					? key.substring(0, key.length() - CONFIDENCE_SUFFIX.length())
+					: key;
+			if (!CONVENTION_KEYS.contains(base) || value.isEmpty()
+					|| (key.equals(KIND) && !KINDS.containsKey(value))
+					|| ((key.equals(CONFIDENCE) || key.endsWith(CONFIDENCE_SUFFIX))
+						&& !CONFIDENCES.contains(value))) {
+				throw new IllegalArgumentException("bad convention pair \"" + pair + "\": " + line);
+			}
+			convention.put(key, value);
+		}
+		if (!convention.containsKey(KIND) || !convention.containsKey(CONFIDENCE)) {
+			throw new IllegalArgumentException("a convention needs its kind and confidence: "
+				+ line);
+		}
+		return convention;
+	}
+
+	/** True if the convention says the function is not C. */
+	private static boolean notC(Map<String, String> convention) {
+		return convention.containsKey(KIND) && !convention.get(KIND).equals(C);
+	}
+
+	/** The comment's line for a function that is not C, or null for one that is. */
+	private static String renderConvention(Map<String, String> convention) {
+		if (!notC(convention)) {
+			return null;
+		}
+		StringBuilder line = new StringBuilder(NOT_C + " (" + convention.get(KIND) + "; "
+			+ convention.get(CONFIDENCE) + "): " + KINDS.get(convention.get(KIND)) + ".");
+		for (String key : CONVENTION_KEYS.subList(2, CONVENTION_KEYS.size() - 1)) {
+			if (convention.containsKey(key)) {
+				String own = convention.get(key + CONFIDENCE_SUFFIX);
+				line.append("  ").append(Character.toUpperCase(key.charAt(0)))
+					.append(key.substring(1)).append(own == null ? "" : " (" + own + ")")
+					.append(": ").append(convention.get(key)).append(".");
+			}
+		}
+		return line.toString();
+	}
+
+	/** The confidence of one key: its own, or the convention's. */
+	private static String confidenceOf(Map<String, String> convention, String key) {
+		return convention.getOrDefault(key + CONFIDENCE_SUFFIX, convention.get(CONFIDENCE));
+	}
+
+	/**
+	 * The prototype to apply: a C function's own, with out's register for
+	 * its result if one is given; for one not C, one built from in and out
+	 * when every item has a type and both are trusted; otherwise null.
+	 */
+	private static String prototypeFor(String name, String prototype,
+			Map<String, String> convention, String line) {
+		if (!notC(convention)) {
+			if (prototype.isBlank()) {
+				return null;
+			}
+			String out = convention.get("out");
+			if (out == null || !TRUSTED.contains(confidenceOf(convention, "out"))) {
+				return prototype;
+			}
+			return prototype + " @ " + out.split(" ")[0];
+		}
+		if (!prototype.isBlank()) {
+			throw new IllegalArgumentException(
+				"a function that is not C takes its prototype from in and out: " + line);
+		}
+		if (!convention.containsKey("in") && !convention.containsKey("out")) {
+			return null;
+		}
+		for (String key : List.of("in", "out")) {
+			if (convention.containsKey(key) && !TRUSTED.contains(confidenceOf(convention, key))) {
+				return null;
+			}
+		}
+		List<String> arguments = new ArrayList<>();
+		for (String item : items(convention.get("in"))) {
+			String[] parts = registerItem(item);
+			if (parts == null) {
+				return null;
+			}
+			arguments.add(parts[1] + " @ " + parts[0]);
+		}
+		String returned = "void";
+		String returnRegister = "";
+		List<String> outs = items(convention.get("out"));
+		if (outs.size() > 1) {
+			return null;
+		}
+		if (outs.size() == 1) {
+			// A result's item is its register, its type and optionally a name.
+			String[] words = outs.get(0).strip().split("\\s+", 2);
+			Matcher register = REGISTER.matcher(words[0]);
+			if (!register.matches() || words.length < 2) {
+				return null;
+			}
+			String type = words[1].strip();
+			returned = type.contains(" ") ? type.replaceFirst("\\s*\\b\\w+$", "").strip() : type;
+			returnRegister = " @ " + register.group(1);
+		}
+		return returned + " " + name + "(" + (arguments.isEmpty() ? "void"
+			: String.join(", ", arguments)) + ")" + returnRegister;
+	}
+
+	/** A list's items, none for an absent key. */
+	private static List<String> items(String list) {
+		return list == null ? List.of() : List.of(list.split(ITEM_SEPARATOR));
+	}
+
+	/**
+	 * An item "REGISTER TYPE NAME" as its register, without a width, and
+	 * "TYPE NAME"; null if it has no register or no type and name.
+	 */
+	private static String[] registerItem(String item) {
+		String[] words = item.strip().split("\\s+", 2);
+		Matcher register = REGISTER.matcher(words[0]);
+		if (!register.matches() || words.length < 2 || !words[1].strip().contains(" ")) {
+			return null;
+		}
+		return new String[] { register.group(1), words[1].strip() };
+	}
+
+	/** The convention as a JSON object, its lists split into items. */
+	private static String conventionJson(Map<String, String> convention) {
+		List<String> members = new ArrayList<>();
+		for (Map.Entry<String, String> pair : convention.entrySet()) {
+			String key = pair.getKey();
+			String value = pair.getValue();
+			String json;
+			switch (key) {
+				case "in", "out" -> json = itemsJson(value, false);
+				case "error" -> json = itemsJson(value, true);
+				case "preserves" -> json = "[" + String.join(",", items(value).stream()
+					.map(SmartClockSetup::jsonString).toList()) + "]";
+				default -> json = jsonString(value);
+			}
+			members.add(jsonString(key) + ":" + json);
+		}
+		return "{" + String.join(",", members) + "}";
+	}
+
+	/**
+	 * Items as JSON objects: an in or out item's register, type and name,
+	 * an error item's register, value and meaning; each part only if given.
+	 */
+	private static String itemsJson(String list, boolean error) {
+		List<String> objects = new ArrayList<>();
+		for (String item : items(list)) {
+			String[] words = item.strip().split("\\s+");
+			List<String> members = new ArrayList<>();
+			int next = 0;
+			if (REGISTER.matcher(words[0]).matches()) {
+				members.add("\"register\":" + jsonString(words[0]));
+				next = 1;
+			}
+			if (error) {
+				if (next < words.length) {
+					members.add("\"value\":" + jsonString(words[next]));
+				}
+				if (next + 1 < words.length) {
+					members.add("\"meaning\":" + jsonString(String.join(" ",
+						List.of(words).subList(next + 1, words.length))));
+				}
+			}
+			else if (words.length - next == 1) {
+				members.add("\"type\":" + jsonString(words[next]));
+			}
+			else if (words.length - next > 1) {
+				// A pointer's stars, written against the name, belong to the type.
+				String name = words[words.length - 1];
+				String stars = name.replaceFirst("^(\\**).*$", "$1");
+				members.add("\"type\":" + jsonString(String.join(" ",
+					List.of(words).subList(next, words.length - 1)) + (stars.isEmpty() ? "" : " " + stars)));
+				members.add("\"name\":" + jsonString(name.substring(stars.length())));
+			}
+			objects.add("{" + String.join(",", members) + "}");
+		}
+		return "[" + String.join(",", objects) + "]";
+	}
+
+	/** text as a JSON string. */
+	private static String jsonString(String text) {
+		StringBuilder json = new StringBuilder("\"");
+		for (char c : text.toCharArray()) {
+			switch (c) {
+				case '"' -> json.append("\\\"");
+				case '\\' -> json.append("\\\\");
+				case '\n' -> json.append("\\n");
+				default -> {
+					if (c < ' ') {
+						json.append(String.format("\\u%04x", (int) c));
+					}
+					else {
+						json.append(c);
+					}
+				}
+			}
+		}
+		return json.append('"').toString();
+	}
+
+	/**
+	 * Keeps the function's convention, as JSON, and its note for the
+	 * sidecar, and tags it if it is not C.  With no convention, any kept
+	 * from before is dropped and the tag removed: a later script that
+	 * knows its family records it again.
+	 */
+	private void record(Function function, String conventionJson, String note) throws Exception {
+		Address entry = function.getEntryPoint();
+		StringPropertyMap conventions = propertyMap(CONVENTION_MAP);
+		if (conventionJson == null) {
+			conventions.remove(entry);
+			function.removeTag(NOT_C_TAG);
+		}
+		else {
+			conventions.add(entry, conventionJson);
+			if (conventionJson.contains("\"convention\":\"" + C + "\"")) {
+				function.removeTag(NOT_C_TAG);
+			}
+			else {
+				function.addTag(NOT_C_TAG);
+			}
+		}
+		StringPropertyMap notes = propertyMap(NOTE_MAP);
+		if (note.isBlank()) {
+			notes.remove(entry);
+		}
+		else {
+			notes.add(entry, note);
+		}
+	}
+
+	/** The program's string property map name, made if it is not there. */
+	private StringPropertyMap propertyMap(String name) throws Exception {
+		StringPropertyMap map = currentProgram.getUsrPropertyManager().getStringPropertyMap(name);
+		return map != null ? map : currentProgram.getUsrPropertyManager().createStringPropertyMap(name);
 	}
 
 	/**

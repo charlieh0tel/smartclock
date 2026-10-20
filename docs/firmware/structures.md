@@ -239,7 +239,8 @@ at `0x101e98` is 1 or the count is below `:DOUGlas:DURation`.  The print shows l
 reference's unit is the milliarcsecond.  `@@As`'s height goes through
 a decoder of its own (`0x4efb4`) rather than the table's cell, which
 stores it at `hold_position.height` and its type at
-`hold_height_type`.
+`hold_height_type`.  `gps_print_extension` prints the matrix as the
+triangle the reference numbers it in.
 
 `gps_receiver_status_update` keeps the receiver status the holdover
 code reports: `status_code` is 1 while the PPS is dead, 2 after a
@@ -262,8 +263,7 @@ after a reset that was neither external nor a power-up, as
 The members of `gps` and `pll` still named `field_` and an offset,
 and the pad bytes of the descriptors and `fpga_bit_table`, are bytes
 no instruction refers to but these copies and the clears: the gaps
-between the Oncore cells the decoders fill, and padding.  `gps_print_extension` prints the matrix
-as the triangle the reference numbers it in.
+between the Oncore cells the decoders fill, and padding.
 
 Whether the original was one structure or one source file's statics,
 which a compiler can lay out together and reach through a base

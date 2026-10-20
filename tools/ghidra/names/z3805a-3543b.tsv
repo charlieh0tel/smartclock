@@ -653,3 +653,29 @@
 0x5e882	function	double_normalize	softfloat.md, read: the same over 64 bits
 0x5dc0a	function	double_divide_first_word	softfloat.md, read: the double divides' first 16-bit quotient word
 0x5dbfe	function	double_divide_next_word	softfloat.md, read: each further quotient word, three in all
+#
+# the pForth kernel's internal routines, console.md
+0x18f68	function	forth_parse_number	console.md: converts pad in base through forth_digit, or prints ": not found"; interpret and number call it
+0x18fcc	function	forth_find	console.md: looks pad up from the latest word down, skipping hidden ones; interpret, tick, forget call it
+0x19018	function	forth_align	console.md: rounds A4, the dictionary pointer, up to even
+0x19024	function	forth_digit	console.md: a character's digit value by the table at 0x18de2, Z set if below base
+0x19042	function	forth_is_space	console.md: Z set if the character at A3 is a space by the table at 0x18de2
+0x1906c	function	forth_skip_spaces	console.md: advances A3 past spaces with forth_is_space
+0x19096	function	forth_build_prompt	console.md: the prompt at 0x100b14: p4th, the base's letter, then > or >> while compiling (console.md)
+0x190e8	function	forth_read_line	console.md: reads a line from iodev with trap #4, or through the kernel
+0x1910e	function	forth_parse_word	console.md: refills and copies the next word into pad
+0x1912a	function	forth_refill	console.md: skips spaces and, at the input's end, prints the prompt and reads a line
+0x1916e	function	forth_input_buffer	console.md: tib, or one from the kernel when there is none
+0x19338	function	forth_compile_code	console.md: copies a run of code words into the dictionary, up to a zero
+0x1934e	function	forth_resolve_branch	console.md: patches a branch's offset; loop, until, again, repeat
+0x19378	function	forth_check_pairs	console.md: "ERROR: Mismatched " and the word, then aborts, when a control word's tag does not match
+0x1938e	function	forth_unlink_latest	console.md: latest = *latest: drops the word being defined
+0x1968c	function	forth_create_header	console.md: links a new word to latest, with its name from pad
+0x19700	function	forth_compile_constant	console.md: compiles code that pushes a value and returns, for create_x and spawn
+0x197da	function	forth_multiply	console.md: 32 by 32-bit multiply from 16-bit halves; * calls it
+0x197fa	function	forth_divide_signed	console.md: signed divide over forth_divide_unsigned; /, mod, /mod, */ call it
+0x19828	function	forth_divide_unsigned	console.md: 32-bit shift-and-subtract divide
+0x1984c	function	forth_divide_short	console.md: 32 by 16-bit divide, quotient and remainder, for printing numbers
+0x1995a	function	forth_digit_char	console.md: a digit as 0-9 or A-Z
+0x1996c	function	forth_print_number	console.md: copies the digits built on the stack into pad and prints them; . and u. call it
+0x1a03c	function	forth_space_if_zero	console.md: a zero byte, Z set, becomes a space; spawn pads a task's name with it

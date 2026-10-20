@@ -12380,7 +12380,7 @@ void forth_abort(forth_user_end user,long *sp,char *input)
   pcVar2[1] = '\0';
   if (ADJ(user)->state != 0) {
     *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-    FUN_0001938e(user,unaff_A4);
+    forth_unlink_latest(user,unaff_A4);
   }
   ADJ(user)->state = 0;
   ADJ(user)->base = 10;
@@ -12423,15 +12423,15 @@ LAB_00018ec8:
       pcVar2[1] = '\0';
       if (ADJ(user)->state != 0) {
         *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-        FUN_0001938e(user,dp);
+        forth_unlink_latest(user,dp);
       }
       ADJ(user)->state = 0;
       ADJ(user)->base = 10;
       forth_interpret(user,sp_00,dp);
       return;
     }
-    FUN_0001910e(user,unaff_A3);
-    FUN_00018fcc(user);
+    forth_parse_word(user,unaff_A3);
+    forth_find(user);
     if ((bool)uVar6) {
       if (ADJ(user)->state == 0) {
         if ((extraout_D1 & 1) != 0) {
@@ -12462,7 +12462,7 @@ LAB_00018ec8:
       (*extraout_A0)();
       goto code_r0x00018f0e;
     }
-    FUN_00018f68(user,sp);
+    forth_parse_number(user,sp);
   } while( true );
 }
 
@@ -12471,7 +12471,7 @@ LAB_00018ec8:
 
 /* WARNING: Unknown calling convention */
 
-undefined4 FUN_00018f68(forth_user_end user,long *sp)
+undefined4 forth_parse_number(forth_user_end user,long *sp)
 
 {
   void *pvVar1;
@@ -12496,7 +12496,7 @@ undefined4 FUN_00018f68(forth_user_end user,long *sp)
   if (cVar4 != '-') goto LAB_00018f92;
   bVar8 = in_A0[1] == '\0';
   do {
-    uVar9 = FUN_00019024();
+    uVar9 = forth_digit();
     iVar5 = (int)((ulonglong)uVar9 >> 0x20);
     if (!bVar8) {
       forth_print_string(ADJ(user)->pad,user);
@@ -12509,7 +12509,7 @@ undefined4 FUN_00018f68(forth_user_end user,long *sp)
       pcVar2[1] = '\0';
       if (ADJ(user)->state != 0) {
         *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-        FUN_0001938e(user,unaff_A4);
+        forth_unlink_latest(user,unaff_A4);
       }
       ADJ(user)->state = 0;
       ADJ(user)->base = 10;
@@ -12538,7 +12538,7 @@ LAB_00018f92:
 
 /* WARNING: Unknown calling convention */
 
-void FUN_00018fcc(forth_user_end user)
+void forth_find(forth_user_end user)
 
 {
   char cVar1;
@@ -12572,7 +12572,7 @@ void FUN_00018fcc(forth_user_end user)
 
 /* WARNING: Unknown calling convention */
 
-void FUN_00019018(void *dp)
+void forth_align(void *dp)
 
 {
   return;
@@ -12581,7 +12581,7 @@ void FUN_00019018(void *dp)
 
 /* 00019024 */
 
-void FUN_00019024(void)
+void forth_digit(void)
 
 {
   ushort in_D0w;
@@ -12599,7 +12599,7 @@ void FUN_00019024(void)
 
 /* WARNING: Unknown calling convention */
 
-undefined4 FUN_00019042(char *input)
+undefined4 forth_is_space(char *input)
 
 {
   undefined4 in_D0;
@@ -12612,13 +12612,13 @@ undefined4 FUN_00019042(char *input)
 
 /* WARNING: Unknown calling convention */
 
-void FUN_0001906c(char *input)
+void forth_skip_spaces(char *input)
 
 {
   undefined1 in_ZF;
   
   do {
-    FUN_00019042(input);
+    forth_is_space(input);
     if (!(bool)in_ZF) {
       return;
     }
@@ -12634,7 +12634,7 @@ void FUN_0001906c(char *input)
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
-void FUN_00019096(forth_user_end user)
+void forth_build_prompt(forth_user_end user)
 
 {
   int iVar1;
@@ -12659,7 +12659,7 @@ void FUN_00019096(forth_user_end user)
 
 /* WARNING: Unknown calling convention */
 
-undefined4 FUN_000190e8(forth_user_end user,char *input)
+undefined4 forth_read_line(forth_user_end user,char *input)
 
 {
   undefined4 in_D0;
@@ -12678,7 +12678,7 @@ undefined4 FUN_000190e8(forth_user_end user,char *input)
 
 /* WARNING: Unknown calling convention */
 
-void FUN_0001910e(forth_user_end user,char *input)
+void forth_parse_word(forth_user_end user,char *input)
 
 {
   char cVar1;
@@ -12686,14 +12686,14 @@ void FUN_0001910e(forth_user_end user,char *input)
   char *extraout_A0;
   bool bVar3;
   
-  FUN_0001916e(user);
-  FUN_0001912a(user,input);
+  forth_input_buffer(user);
+  forth_refill(user,input);
   pcVar2 = ADJ(user)->pad;
   do {
     cVar1 = *input;
     *pcVar2 = cVar1;
     bVar3 = cVar1 == '\0';
-    FUN_00019042(input + 1);
+    forth_is_space(input + 1);
     pcVar2 = extraout_A0;
     input = input + 1;
   } while (!bVar3);
@@ -12706,17 +12706,17 @@ void FUN_0001910e(forth_user_end user,char *input)
 
 /* WARNING: Unknown calling convention */
 
-void FUN_0001912a(forth_user_end user,char *input)
+void forth_refill(forth_user_end user,char *input)
 
 {
   while( true ) {
-    FUN_0001906c(input);
+    forth_skip_spaces(input);
     if (*input != '\0') break;
     if (((forth_user *)(user + -0x28))->iodev == 0) {
-      FUN_00019096(user);
+      forth_build_prompt(user);
       forth_print_string(&DAT_00100b14,user);
     }
-    FUN_000190e8(user,input);
+    forth_read_line(user,input);
   }
   return;
 }
@@ -12745,7 +12745,7 @@ ulonglong forth_print_string(char *s,forth_user_end user)
 
 /* WARNING: Unknown calling convention */
 
-char * FUN_0001916e(forth_user_end user)
+char * forth_input_buffer(forth_user_end user)
 
 {
   char *pcVar1;
@@ -13137,7 +13137,7 @@ void forth_paren(char *input)
     while( true ) {
       cVar1 = *input;
       if (cVar1 != '\0') break;
-      FUN_0001912a(unaff_A5,input);
+      forth_refill(unaff_A5,input);
     }
     input = input + 1;
   } while (cVar1 != ')');
@@ -13449,7 +13449,7 @@ void forth_depth(forth_user_end user,long *sp)
 
 /* WARNING: Unknown calling convention */
 
-undefined2 FUN_00019338(void *dp)
+undefined2 forth_compile_code(void *dp)
 
 {
   short sVar1;
@@ -13481,7 +13481,7 @@ undefined2 FUN_00019338(void *dp)
 
 /* WARNING: Unknown calling convention */
 
-undefined4 FUN_0001934e(long *sp,void *dp)
+undefined4 forth_resolve_branch(long *sp,void *dp)
 
 {
   undefined4 in_D0;
@@ -13495,7 +13495,7 @@ undefined4 FUN_0001934e(long *sp,void *dp)
 
 /* WARNING: Unknown calling convention */
 
-void FUN_00019378(long *sp)
+void forth_check_pairs(long *sp)
 
 {
   void *pvVar1;
@@ -13517,7 +13517,7 @@ void FUN_00019378(long *sp)
     pcVar2[1] = '\0';
     if (ADJ(unaff_A5)->state != 0) {
       *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-      FUN_0001938e(unaff_A5,unaff_A4);
+      forth_unlink_latest(unaff_A5,unaff_A4);
     }
     ADJ(unaff_A5)->state = 0;
     ADJ(unaff_A5)->base = 10;
@@ -13532,7 +13532,7 @@ void FUN_00019378(long *sp)
 
 /* WARNING: Unknown calling convention */
 
-void FUN_0001938e(forth_user_end user,void *dp)
+void forth_unlink_latest(forth_user_end user,void *dp)
 
 {
   ADJ(user)->latest = *(void **)ADJ(user)->latest;
@@ -13547,7 +13547,7 @@ void FUN_0001938e(forth_user_end user,void *dp)
 void forth_do(long *sp,void *dp)
 
 {
-  FUN_00019338(dp);
+  forth_compile_code(dp);
   sp[-1] = (long)dp;
   sp[-2] = (long)dp;
   sp[-3] = (long)&UNK_0001942d;
@@ -13562,9 +13562,9 @@ void forth_do(long *sp,void *dp)
 void forth_query_do(long *sp,void *dp)
 
 {
-  FUN_00019338(dp);
+  forth_compile_code(dp);
   sp[-1] = (long)dp;
-  FUN_00019338(dp);
+  forth_compile_code(dp);
   sp[-2] = (long)dp;
   sp[-3] = (long)&UNK_0001942d;
   return;
@@ -13580,11 +13580,11 @@ void forth_plus_loop(void)
   long *unaff_A6;
   undefined1 uVar1;
   
-  FUN_00019378(unaff_A6);
-  FUN_00019338(unaff_A4);
+  forth_check_pairs(unaff_A6);
+  forth_compile_code(unaff_A4);
   uVar1 = *unaff_A6 == unaff_A6[1];
-  FUN_0001934e(unaff_A6,unaff_A4);
-  FUN_00019338(unaff_A4);
+  forth_resolve_branch(unaff_A6,unaff_A4);
+  forth_compile_code(unaff_A4);
   if (!(bool)uVar1) {
     func_0x00019360();
     return;
@@ -13603,11 +13603,11 @@ void forth_loop(long *sp)
   void *unaff_A4;
   undefined1 uVar1;
   
-  FUN_00019378(sp);
-  FUN_00019338(unaff_A4);
+  forth_check_pairs(sp);
+  forth_compile_code(unaff_A4);
   uVar1 = *sp == sp[1];
-  FUN_0001934e(sp,unaff_A4);
-  FUN_00019338(unaff_A4);
+  forth_resolve_branch(sp,unaff_A4);
+  forth_compile_code(unaff_A4);
   if (!(bool)uVar1) {
     func_0x00019360();
     return;
@@ -13623,7 +13623,7 @@ void forth_loop(long *sp)
 void forth_if(long *sp,void *dp)
 
 {
-  FUN_00019338(dp);
+  forth_compile_code(dp);
   sp[-1] = (long)dp;
   sp[-2] = (long)&UNK_000194de;
   return;
@@ -13637,8 +13637,8 @@ void forth_if(long *sp,void *dp)
 void forth_else(long *sp,void *dp)
 
 {
-  FUN_00019378(sp);
-  FUN_00019338(dp);
+  forth_check_pairs(sp);
+  forth_compile_code(dp);
   func_0x00019360();
   sp[-1] = (long)dp;
   sp[-2] = (long)&UNK_000194de;
@@ -13653,7 +13653,7 @@ void forth_endif(void)
 {
   long *unaff_A6;
   
-  FUN_00019378(unaff_A6);
+  forth_check_pairs(unaff_A6);
   func_0x00019360();
   return;
 }
@@ -13679,8 +13679,8 @@ void forth_begin(long *sp,void *dp)
 void forth_while(long *sp,void *dp)
 
 {
-  FUN_00019378(sp);
-  FUN_00019338(dp);
+  forth_check_pairs(sp);
+  forth_compile_code(dp);
   sp[-1] = (long)dp;
   sp[-2] = (long)&UNK_0001956a;
   return;
@@ -13695,10 +13695,10 @@ void forth_repeat(void)
   void *unaff_A4;
   long *unaff_A6;
   
-  FUN_00019378(unaff_A6);
-  FUN_00019338(unaff_A4);
+  forth_check_pairs(unaff_A6);
+  forth_compile_code(unaff_A4);
   forth_swap(unaff_A6);
-  FUN_0001934e(unaff_A6,unaff_A4);
+  forth_resolve_branch(unaff_A6,unaff_A4);
   func_0x00019360();
   return;
 }
@@ -13712,9 +13712,9 @@ void forth_again(void)
   void *unaff_A4;
   long *unaff_A6;
   
-  FUN_00019378(unaff_A6);
-  FUN_00019338(unaff_A4);
-  FUN_0001934e(unaff_A6,unaff_A4);
+  forth_check_pairs(unaff_A6);
+  forth_compile_code(unaff_A4);
+  forth_resolve_branch(unaff_A6,unaff_A4);
   return;
 }
 
@@ -13727,9 +13727,9 @@ void forth_until(void)
   void *unaff_A4;
   long *unaff_A6;
   
-  FUN_00019378(unaff_A6);
-  FUN_00019338(unaff_A4);
-  FUN_0001934e(unaff_A6,unaff_A4);
+  forth_check_pairs(unaff_A6);
+  forth_compile_code(unaff_A4);
+  forth_resolve_branch(unaff_A6,unaff_A4);
   return;
 }
 
@@ -13824,7 +13824,7 @@ void forth_semicolon(forth_user_end user,long *sp,void *dp)
     pcVar2[1] = '\0';
     if (ADJ(user)->state != 0) {
       *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-      FUN_0001938e(user,dp);
+      forth_unlink_latest(user,dp);
     }
     ADJ(user)->state = 0;
     ADJ(user)->base = 10;
@@ -13834,7 +13834,7 @@ void forth_semicolon(forth_user_end user,long *sp,void *dp)
   ADJ(user)->state = 0;
   puVar3 = (ushort *)((int)ADJ(user)->latest + 10);
   *puVar3 = *puVar3 & 0xfffd;
-  FUN_00019018(dp);
+  forth_align(dp);
   *(undefined2 *)dp = 0x4e75;
   ADJ(user)->here = (void *)((int)dp + 2);
   return;
@@ -13845,7 +13845,7 @@ void forth_semicolon(forth_user_end user,long *sp,void *dp)
 
 /* WARNING: Unknown calling convention */
 
-void FUN_0001968c(forth_user_end user,void *dp)
+void forth_create_header(forth_user_end user,void *dp)
 
 {
   void *pvVar1;
@@ -13856,7 +13856,7 @@ void FUN_0001968c(forth_user_end user,void *dp)
   char *dp_00;
   char *pcVar4;
   
-  FUN_00019018(dp);
+  forth_align(dp);
   pvVar1 = ADJ(user)->latest;
   ADJ(user)->latest = dp;
   *(void **)dp = pvVar1;
@@ -13871,7 +13871,7 @@ void FUN_0001968c(forth_user_end user,void *dp)
     pcVar3 = pcVar3 + 1;
     pcVar4 = dp_00;
   } while (cVar2 != '\0');
-  FUN_00019018(dp_00);
+  forth_align(dp_00);
   *extraout_A1 = dp_00;
   return;
 }
@@ -13940,7 +13940,7 @@ void forth_constant(void)
 
 /* WARNING: Unknown calling convention */
 
-void FUN_00019700(forth_user_end user,long *sp,void *dp)
+void forth_compile_constant(forth_user_end user,long *sp,void *dp)
 
 {
   *(undefined2 *)dp = 0x2d3c;
@@ -13988,7 +13988,7 @@ void forth_mod(long *sp)
   forth_user_end unaff_A5;
   
   if (*sp != 0) {
-    FUN_000197fa();
+    forth_divide_signed();
     sp[1] = extraout_D1;
     return;
   }
@@ -14001,7 +14001,7 @@ void forth_mod(long *sp)
   pcVar2[1] = '\0';
   if (ADJ(unaff_A5)->state != 0) {
     *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-    FUN_0001938e(unaff_A5,unaff_A4);
+    forth_unlink_latest(unaff_A5,unaff_A4);
   }
   ADJ(unaff_A5)->state = 0;
   ADJ(unaff_A5)->base = 10;
@@ -14025,7 +14025,7 @@ void forth_slash_mod(long *sp)
   undefined8 uVar3;
   
   if (*sp != 0) {
-    uVar3 = FUN_000197fa();
+    uVar3 = forth_divide_signed();
     *(undefined8 *)sp = uVar3;
     return;
   }
@@ -14038,7 +14038,7 @@ void forth_slash_mod(long *sp)
   pcVar2[1] = '\0';
   if (ADJ(unaff_A5)->state != 0) {
     *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-    FUN_0001938e(unaff_A5,unaff_A4);
+    forth_unlink_latest(unaff_A5,unaff_A4);
   }
   ADJ(unaff_A5)->state = 0;
   ADJ(unaff_A5)->base = 10;
@@ -14063,7 +14063,7 @@ void forth_star_slash_mod(long *sp)
   
   if (*sp != 0) {
     forth_star(sp + 1);
-    uVar3 = FUN_000197fa();
+    uVar3 = forth_divide_signed();
     *(undefined8 *)sp = uVar3;
     return;
   }
@@ -14076,7 +14076,7 @@ void forth_star_slash_mod(long *sp)
   pcVar2[1] = '\0';
   if (ADJ(unaff_A5)->state != 0) {
     *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-    FUN_0001938e(unaff_A5,unaff_A4);
+    forth_unlink_latest(unaff_A5,unaff_A4);
   }
   ADJ(unaff_A5)->state = 0;
   ADJ(unaff_A5)->base = 10;
@@ -14101,7 +14101,7 @@ void forth_star_slash(long *sp)
   
   if (*sp != 0) {
     forth_star(sp + 1);
-    lVar3 = FUN_000197fa();
+    lVar3 = forth_divide_signed();
     sp[1] = lVar3;
     return;
   }
@@ -14114,7 +14114,7 @@ void forth_star_slash(long *sp)
   pcVar2[1] = '\0';
   if (ADJ(unaff_A5)->state != 0) {
     *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-    FUN_0001938e(unaff_A5,unaff_A4);
+    forth_unlink_latest(unaff_A5,unaff_A4);
   }
   ADJ(unaff_A5)->state = 0;
   ADJ(unaff_A5)->base = 10;
@@ -14138,7 +14138,7 @@ void forth_slash(long *sp)
   forth_user_end unaff_A5;
   
   if (*sp != 0) {
-    lVar3 = FUN_000197fa();
+    lVar3 = forth_divide_signed();
     sp[1] = lVar3;
     return;
   }
@@ -14151,7 +14151,7 @@ void forth_slash(long *sp)
   pcVar2[1] = '\0';
   if (ADJ(unaff_A5)->state != 0) {
     *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-    FUN_0001938e(unaff_A5,unaff_A4);
+    forth_unlink_latest(unaff_A5,unaff_A4);
   }
   ADJ(unaff_A5)->state = 0;
   ADJ(unaff_A5)->base = 10;
@@ -14178,7 +14178,7 @@ void forth_star(long *sp)
   if (sp[1] < 0) {
     uVar2 = ~uVar2;
   }
-  FUN_000197da();
+  forth_multiply();
   iVar1 = extraout_D1;
   if ((int)uVar2 < 0) {
     iVar1 = -extraout_D1;
@@ -14190,7 +14190,7 @@ void forth_star(long *sp)
 
 /* 000197da */
 
-undefined8 FUN_000197da(void)
+undefined8 forth_multiply(void)
 
 {
   uint in_D0;
@@ -14205,14 +14205,14 @@ undefined8 FUN_000197da(void)
 
 /* 000197fa */
 
-int FUN_000197fa(void)
+int forth_divide_signed(void)
 
 {
   uint in_D0;
   int iVar1;
   uint in_D1;
   
-  iVar1 = FUN_00019828();
+  iVar1 = forth_divide_unsigned();
   if ((int)(in_D1 ^ in_D0) < 0) {
     iVar1 = -CONCAT22((short)((uint)iVar1 >> 0x10),(short)iVar1 + 1);
   }
@@ -14222,7 +14222,7 @@ int FUN_000197fa(void)
 
 /* 00019828 */
 
-undefined8 FUN_00019828(void)
+undefined8 forth_divide_unsigned(void)
 
 {
   uint uVar1;
@@ -14256,7 +14256,7 @@ LAB_00019830:
 
 /* 0001984c */
 
-undefined8 FUN_0001984c(void)
+undefined8 forth_divide_short(void)
 
 {
   uint in_D0;
@@ -14514,7 +14514,7 @@ void forth_dot_quote(forth_user_end user,void *dp,char *input)
     pcVar2 = pcVar2 + 1;
     pcVar3 = dp_00;
   } while (cVar1 != '\0');
-  FUN_00019018(dp_00);
+  forth_align(dp_00);
   return;
 }
 
@@ -14534,7 +14534,7 @@ void forth_paren_dot_quote_close_paren(void)
 
 /* 0001995a */
 
-void FUN_0001995a(void)
+void forth_digit_char(void)
 
 {
   char in_D1b;
@@ -14550,7 +14550,7 @@ void FUN_0001995a(void)
 
 /* WARNING: Unknown calling convention */
 
-void FUN_0001996c(forth_user_end user,long *sp)
+void forth_print_number(forth_user_end user,long *sp)
 
 {
   char cVar1;
@@ -14585,14 +14585,14 @@ void forth_u_dot(forth_user_end user,long *sp)
   puVar3 = (undefined1 *)((int)sp + 3);
   do {
     puVar2 = puVar3;
-    FUN_0001984c();
-    iVar1 = FUN_0001995a();
+    forth_divide_short();
+    iVar1 = forth_digit_char();
     puVar3 = puVar2 + -1;
     *puVar3 = extraout_D1b;
   } while (iVar1 != 0);
   sp_00 = (long *)(puVar2 + -2);
   *(undefined1 *)sp_00 = 0x20;
-  FUN_0001996c(user,sp_00);
+  forth_print_number(user,sp_00);
   return;
 }
 
@@ -14616,7 +14616,7 @@ void forth_u_dot_x(long *sp)
   puVar1 = (undefined1 *)((int)sp + 3);
   do {
     puVar4 = puVar1;
-    uVar2 = FUN_0001995a();
+    uVar2 = forth_digit_char();
     puVar4[-1] = extraout_D1b;
     if (uVar2 >> 4 == 0) break;
     sVar3 = sVar3 + -1;
@@ -14626,7 +14626,7 @@ void forth_u_dot_x(long *sp)
   puVar4[-3] = 0x78;
   puVar4[-4] = 0x30;
   puVar4[-5] = 0x20;
-  FUN_0001996c(unaff_A5,(long *)(puVar4 + -5));
+  forth_print_number(unaff_A5,(long *)(puVar4 + -5));
   return;
 }
 
@@ -14649,8 +14649,8 @@ void forth_dot(forth_user_end user,long *sp)
   puVar4 = (undefined1 *)((int)sp + 3);
   do {
     puVar3 = puVar4;
-    FUN_0001984c();
-    iVar2 = FUN_0001995a();
+    forth_divide_short();
+    iVar2 = forth_digit_char();
     puVar4 = puVar3 + -1;
     *puVar4 = extraout_D1b;
   } while (iVar2 != 0);
@@ -14659,7 +14659,7 @@ void forth_dot(forth_user_end user,long *sp)
     *puVar4 = 0x2d;
   }
   puVar4[-1] = 0x20;
-  FUN_0001996c(user,(long *)(puVar4 + -1));
+  forth_print_number(user,(long *)(puVar4 + -1));
   return;
 }
 
@@ -14803,8 +14803,8 @@ void forth_tick(long *sp)
   forth_user_end unaff_A5;
   undefined1 in_ZF;
   
-  FUN_0001910e(unaff_A5,unaff_A3);
-  FUN_00018fcc(unaff_A5);
+  forth_parse_word(unaff_A5,unaff_A3);
+  forth_find(unaff_A5);
   if ((bool)in_ZF) {
     sp[-1] = unaff_A2 + 4;
     return;
@@ -14819,7 +14819,7 @@ void forth_tick(long *sp)
   pcVar2[1] = '\0';
   if (ADJ(unaff_A5)->state != 0) {
     *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-    FUN_0001938e(unaff_A5,unaff_A4);
+    forth_unlink_latest(unaff_A5,unaff_A4);
   }
   ADJ(unaff_A5)->state = 0;
   ADJ(unaff_A5)->base = 10;
@@ -14843,8 +14843,8 @@ void forth_bracket_tick_close_bracket(void *dp)
   forth_user_end unaff_A5;
   undefined1 in_ZF;
   
-  FUN_0001910e(unaff_A5,unaff_A3);
-  FUN_00018fcc(unaff_A5);
+  forth_parse_word(unaff_A5,unaff_A3);
+  forth_find(unaff_A5);
   if ((bool)in_ZF) {
     *(undefined2 *)dp = 0x2d3c;
     *(int *)((int)dp + 2) = unaff_A2 + 4;
@@ -14860,7 +14860,7 @@ void forth_bracket_tick_close_bracket(void *dp)
   pcVar2[1] = '\0';
   if (ADJ(unaff_A5)->state != 0) {
     *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-    FUN_0001938e(unaff_A5,dp);
+    forth_unlink_latest(unaff_A5,dp);
   }
   ADJ(unaff_A5)->state = 0;
   ADJ(unaff_A5)->base = 10;
@@ -14907,8 +14907,8 @@ void forth_forget(forth_user_end user,void *dp)
   char *unaff_A3;
   undefined1 in_ZF;
   
-  FUN_0001910e(user,unaff_A3);
-  FUN_00018fcc(user);
+  forth_parse_word(user,unaff_A3);
+  forth_find(user);
   if ((bool)in_ZF) {
     if (ADJ(user)->fence < unaff_A2) {
       ADJ(user)->latest = (void *)*unaff_A2;
@@ -14931,7 +14931,7 @@ void forth_forget(forth_user_end user,void *dp)
   pcVar2[1] = '\0';
   if (ADJ(user)->state != 0) {
     *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-    FUN_0001938e(user,dp);
+    forth_unlink_latest(user,dp);
   }
   ADJ(user)->state = 0;
   ADJ(user)->base = 10;
@@ -15108,10 +15108,10 @@ void forth_word(forth_user_end user,long *sp,char *input)
   char *extraout_A0;
   char *pcVar3;
   
-  FUN_0001916e(user);
+  forth_input_buffer(user);
   *sp = (long)ADJ(user)->pad;
-  while (cVar2 = FUN_0001906c(input), pcVar3 = extraout_A0, *input == '\0') {
-    FUN_000190e8(user,input);
+  while (cVar2 = forth_skip_spaces(input), pcVar3 = extraout_A0, *input == '\0') {
+    forth_read_line(user,input);
   }
   while( true ) {
     cVar1 = *input;
@@ -15176,7 +15176,7 @@ void forth_does_greater(void)
 {
   void *unaff_A4;
   
-  FUN_00019338(unaff_A4);
+  forth_compile_code(unaff_A4);
   return;
 }
 
@@ -15188,7 +15188,7 @@ void forth_does_greater(void)
 void forth_recurse(forth_user_end user,void *dp)
 
 {
-  FUN_00019018(dp);
+  forth_align(dp);
   *(undefined2 *)dp = 0x4eb9;
   *(undefined4 *)((int)dp + 2) = *(undefined4 *)((int)ADJ(user)->latest + 4);
   return;
@@ -15246,11 +15246,11 @@ void forth_number(long *sp)
   
   bVar1 = in_A1 == 0;
   do {
-    FUN_00019042(unaff_A3);
+    forth_is_space(unaff_A3);
     if (!bVar1) break;
     bVar1 = *extraout_A1 == '\0';
   } while (!bVar1);
-  FUN_00018f68(unaff_A5,sp + 1);
+  forth_parse_number(unaff_A5,sp + 1);
   return;
 }
 
@@ -15274,7 +15274,7 @@ undefined1 forth_0x(forth_user_end user,long *sp)
   bool bVar6;
   undefined8 uVar7;
   
-  FUN_0001910e(user,unaff_A3);
+  forth_parse_word(user,unaff_A3);
   pcVar5 = ADJ(user)->pad;
   iVar4 = 0;
   cVar2 = *pcVar5;
@@ -15294,7 +15294,7 @@ undefined1 forth_0x(forth_user_end user,long *sp)
       }
       return uVar3;
     }
-    uVar7 = FUN_00019024();
+    uVar7 = forth_digit();
     if (!bVar6) break;
     iVar4 = (int)uVar7 << 4;
     iVar4 = CONCAT31((int3)((uint)iVar4 >> 8),(byte)((ulonglong)uVar7 >> 0x20) | (byte)iVar4);
@@ -15310,7 +15310,7 @@ undefined1 forth_0x(forth_user_end user,long *sp)
   pcVar5[1] = '\0';
   if (ADJ(user)->state != 0) {
     *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-    FUN_0001938e(user,unaff_A4);
+    forth_unlink_latest(user,unaff_A4);
   }
   ADJ(user)->state = 0;
   ADJ(user)->base = 10;
@@ -15459,24 +15459,24 @@ void forth_spawn(forth_user_end user,long *sp,void *dp)
   long *plVar5;
   undefined1 in_ZF;
   
-  FUN_0001910e(user,unaff_A3);
-  FUN_00018fcc(user);
+  forth_parse_word(user,unaff_A3);
+  forth_find(user);
   if ((bool)in_ZF) {
     lVar1 = *sp;
-    FUN_00019018(dp);
+    forth_align(dp);
     *(undefined2 *)dp = 7;
     *(void **)((int)dp + 2) = dp;
     *(short *)((int)dp + 6) = (short)lVar1;
     *(undefined4 *)((int)dp + 8) = extraout_A0;
     psos_call();
-    FUN_0001910e(user,unaff_A3);
+    forth_parse_word(user,unaff_A3);
     uVar4 = func_0x0001a01c();
     *(undefined4 *)((int)dp + 0xc) = uVar4;
     forth_psos_call(user,sp + 3,dp);
     plVar5 = sp + 2;
     *plVar5 = extraout_A0_00;
-    FUN_0001968c(user,dp);
-    FUN_00019700(user,plVar5,dp);
+    forth_create_header(user,dp);
+    forth_compile_constant(user,plVar5,dp);
     ADJ(user)->fence = ADJ(user)->latest;
     forth_psos_call(user,plVar5,dp);
     return;
@@ -15491,7 +15491,7 @@ void forth_spawn(forth_user_end user,long *sp,void *dp)
   pcVar3[1] = '\0';
   if (ADJ(user)->state != 0) {
     *(undefined4 *)((int)pvVar2 + -4) = 0x18eee;
-    FUN_0001938e(user,dp);
+    forth_unlink_latest(user,dp);
   }
   ADJ(user)->state = 0;
   ADJ(user)->base = 10;
@@ -15502,7 +15502,7 @@ void forth_spawn(forth_user_end user,long *sp,void *dp)
 
 /* 0001a03c */
 
-void FUN_0001a03c(void)
+void forth_space_if_zero(void)
 
 {
   return;
@@ -15543,7 +15543,7 @@ void forth_ident(long *sp)
   void *unaff_A4;
   forth_user_end unaff_A5;
   
-  FUN_0001910e(unaff_A5,unaff_A3);
+  forth_parse_word(unaff_A5,unaff_A3);
   func_0x0001a01c();
   forth_psos_call(unaff_A5,sp,unaff_A4);
   sp[-1] = extraout_A0;
@@ -15640,12 +15640,12 @@ void forth_create_x(long *sp)
   void *unaff_A4;
   forth_user_end unaff_A5;
   
-  FUN_0001910e(unaff_A5,unaff_A3);
+  forth_parse_word(unaff_A5,unaff_A3);
   func_0x0001a01c();
   forth_psos_call(unaff_A5,sp + 2,unaff_A4);
   sp[1] = extraout_A0;
-  FUN_0001968c(unaff_A5,unaff_A4);
-  FUN_00019700(unaff_A5,sp + 1,unaff_A4);
+  forth_create_header(unaff_A5,unaff_A4);
+  forth_compile_constant(unaff_A5,sp + 1,unaff_A4);
   return;
 }
 
@@ -15805,7 +15805,7 @@ void forth_psos_io_call(long *sp)
   pcVar2[1] = '\0';
   if (ADJ(unaff_A5)->state != 0) {
     *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
-    FUN_0001938e(unaff_A5,unaff_A4);
+    forth_unlink_latest(unaff_A5,unaff_A4);
   }
   ADJ(unaff_A5)->state = 0;
   ADJ(unaff_A5)->base = 10;
@@ -15986,20 +15986,20 @@ undefined4 FUN_0001ad8a(char *param_1,undefined4 param_2,int param_3,short param
     *(char **)pcVar6 = dp;
     iVar2 = param_3;
     while ((short)iVar2 != 0) {
-      iVar2 = FUN_00019338(dp);
+      iVar2 = forth_compile_code(dp);
     }
     dp[0] = 'N';
     dp[1] = -0x47;
     pcVar6 = dp + 6;
     *(undefined4 *)(dp + 2) = param_2;
     if (param_3 != 0) {
-      sVar4 = FUN_00019338(pcVar6);
+      sVar4 = forth_compile_code(pcVar6);
       *(short *)(dp + 4) = sVar4 << 2;
     }
-    if ((0 < param_4) && (sVar4 = FUN_00019338(pcVar6), 1 < sVar4)) {
-      FUN_00019338(pcVar6);
+    if ((0 < param_4) && (sVar4 = forth_compile_code(pcVar6), 1 < sVar4)) {
+      forth_compile_code(pcVar6);
     }
-    FUN_00019338(pcVar6);
+    forth_compile_code(pcVar6);
     uVar3 = 0;
     unique0x1000008f = pcVar6;
   }

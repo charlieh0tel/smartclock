@@ -63,6 +63,23 @@ The words that show each user variable name it:
 `-0x26` to `-0x23` are not read by any word.  `0x19150` writes the
 string in D0 to `iodev` with I/O function 4, which is `type`'s work.
 
+The words share a few internal routines, named for what they do (Z3805A
+3543B): `forth_refill` (`0x1912a`) skips spaces (`forth_skip_spaces`,
+`forth_is_space`) and, at the end of the input, prints the prompt
+`forth_build_prompt` (`0x19096`) makes -- `p4th`, the base's letter,
+then `>`, or `>>` while compiling -- and reads a line
+(`forth_read_line`); `forth_parse_word` (`0x1910e`) copies the next
+word into `pad`; `forth_find` (`0x18fcc`) looks it up from the latest
+word down, skipping hidden ones; `forth_parse_number` (`0x18f68`)
+converts it in `base` through `forth_digit`, or prints `: not found`.
+Defining and compiling use `forth_create_header` (`0x1968c`),
+`forth_align`, `forth_compile_code`, `forth_compile_constant`,
+`forth_resolve_branch` and `forth_check_pairs` ("ERROR: Mismatched");
+the arithmetic, `forth_multiply`, `forth_divide_signed` and
+`_unsigned` and `forth_divide_short`; printing a number,
+`forth_digit_char` and `forth_print_number`; `spawn` pads a task's
+name with spaces through `forth_space_if_zero`.
+
 ## Getting to it
 
 `:SYSTem:LANGuage` is the way in.  097-59551-02 4-15 documents two

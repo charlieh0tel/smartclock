@@ -11,9 +11,11 @@ and the globals.
 m68k compiler (`m68k-linux-gnu-gcc`, or `M68K_CC`) and fails if a
 structure's size or a named field's offset is not the one given here,
 an offset read from the image written as the difference of its
-addresses.  The header packs its structures, but every one has the
-same layout unpacked under the 68000's 2-byte alignment: they are what
-a 68000 compiler lays out, not byte layouts that happen to fit.
+addresses.  The header packs its structures.  Every one but the GPS
+task's records has the same layout unpacked, under the 68000's 2-byte
+alignment: they are what a 68000 compiler lays out, not byte layouts
+that happen to fit.  The GPS task's are not ("The GPS task's state",
+below).
 
 ## The tasks and exchanges
 
@@ -125,40 +127,93 @@ The console's print words label what they print, so the firmware names
 its own globals; the format and the word that prints each are the
 evidence.
 
-The GPS engine's data, each record filled by a message's decoders in
-the GPS task's message table (`oncore/z3805a-3543b.txt`), its fields
-those of the message in the VP Oncore reference
-(`third_party/motorola/VPCommands.pdf`), in the message's order:
+### The GPS task's state
 
-| Record | Type | Message | Fields | Printed after |
-| ------ | ---- | ------- | ------ | ------------- |
-| `oncore_time`, `0x100c6b` | `oncore_time_fields` | `@@Aa` | hour, minute, second | `TIME` |
-| `oncore_gmt_offset`, `0x100c6e` | `oncore_gmt_offset_fields` | `@@Ab` | sign, hours, minutes | `GMT CORR` |
-| `oncore_date`, `0x100c72` | `oncore_date_fields` | `@@Ac` | month, day, a word of year | `DATE` |
-| `oncore_position`, `0x100c76` | `oncore_position_fields` | `@@Ad`, `@@Ae`, `@@Af` | latitude, longitude (mas), GPS and MSL heights (cm) | `LAT`, `LON`, `GPS HGT`, `MSL HGT` |
-| `oncore_mask_angle`, `0x100c86` | byte | `@@Ag` | | `ELEV MASK` |
-| `oncore_satellite_select`, `0x100c87` | byte | `@@Ah` | | `SELECTION` |
-| `oncore_hold_position`, `0x100d10` | `oncore_hold_position_fields` | `@@As` | latitude, longitude, height | `POS HOLD` |
-| `oncore_pps_offset`, `0x100d2a` | long | `@@Ay` | | `1PPS OFFS` |
-| `oncore_pps_cable_delay`, `0x100d2e` | long | `@@Az` | | `CABLE DLY` |
-| `oncore_visibility`, `0x100d7c` | | `@@Bb` | | `Visible Sats` |
-| `oncore_extension`, `0x100fae` | `oncore_extension_fields` | `@@Bk` | five DOPs, magnetic variation, velocity north, east and up, correction age, ECEF x, y and z, six URAs, the ten elements of the least-squares A-1 matrix, clock bias, oscillator offset | the DOP, `VEL`, `ECEF`, `URA` and clock lines |
+`gps` (`0x100c6a`, `gps_state`, `0x55a` bytes) holds what the GPS
+task's decoders store of each Oncore message and the task's own state
+after them.  It is cleared as one, `memset(&gps, 0, 0x55a)`, and 27
+functions address it through a base register, at offsets `0x1` to
+`0x556`.  Each message's record sits at the cell the message table
+(`oncore/z3805a-3543b.txt`) gives its decoder, in the table's order;
+its fields are the VP Oncore reference's
+(`third_party/motorola/VPCommands.pdf`), in the message's order.  A
+decoder copies a field, a byte, word or long, or runs a field table
+through `0x4f02a`, a byte code: n copies n bytes, `00` skips a RAM
+byte, `0x85` writes a sign byte for the next, `0x83` writes 0 for a
+byte it drops, `0x82` drops one, `0xc0` and up repeat the group to
+`0x81` that many times less `0x100`, and `0x80` ends.  The tables pad
+some messages so their words and longs fall on even addresses.
 
-The print shows latitude and longitude as "ms"; the reference's unit is
-the milliarcsecond.  `@@As`'s height goes through a decoder of its own
-(`0x4efb4`), not to a fixed cell, but is printed from `+0x08`.
-`@@Bk`'s 62 bytes of data fill `0x100fae`--`0x100feb` exactly, and
-`gps_print_extension` prints the matrix as the triangle the reference
-numbers it in.
+| Offset | Member | Message | Printed after |
+| ------ | ------ | ------- | ------------- |
+| `+0x001` | `time`: hour, minute, second | `@@Aa` | `TIME` |
+| `+0x004` | `gmt_offset`: sign, hours, minutes | `@@Ab` | `GMT CORR` |
+| `+0x008` | `date`: month, day, a word of year | `@@Ac` | `DATE` |
+| `+0x00c` | `position`: latitude, longitude (mas), GPS and MSL heights (cm) | `@@Ad`, `@@Ae`, `@@Af` | `LAT`, `LON`, `GPS HGT`, `MSL HGT` |
+| `+0x01c`, `+0x01d` | `mask_angle`, `satellite_select` | `@@Ag`, `@@Ah` | `ELEV MASK`, `SELECTION` |
+| `+0x01e` | `manual_satellites[6]`, by channel (the decoder `0x4efd6` stores at channel - 1) | `@@Ai` | |
+| `+0x024`--`+0x02a` | `xdop_type`, `xdop_hysteresis`, `xdop_threshold`, `hdop_threshold` | `@@Aj`, `@@Ak`, `@@Al`, `@@AC` | |
+| `+0x02c` | `ignored_satellites`, a bit a satellite | `@@Am` | |
+| `+0x08e` | `almanac_update` | `@@An` | |
+| `+0x0a4`, `+0x0a5` | `ionospheric_correction`, `fix_algorithm` | `@@Aq`, `@@Ar` | `FIX ALG` |
+| `+0x0a6` | `hold_position`: latitude, longitude, height | `@@As` | `POS HOLD` |
+| `+0x0b4` | `position_hold` | `@@At` | |
+| `+0x0bb`, `+0x0bc` | `altitude_hold`, `utc_time` | `@@Av`, `@@Aw` | |
+| `+0x0be` | `epoch_offset`, ms | `@@Ax` | |
+| `+0x0c0`, `+0x0c4` | `pps_offset`, `pps_cable_delay` | `@@Ay`, `@@Az` | `1PPS OFFS`, `CABLE DLY` |
+| `+0x0c9` | `application_type` | `@@AB` | `APPL` |
+| `+0x0ca`, `+0x0cb` | `position_fix_threshold`, `differential_output_threshold` | `@@AD` | `POS FIX THR`, `DIF OUT THR` |
+| `+0x0ce` | `status`, 63 bytes (table `0x50fd2`): date, time, fraction, position, velocity, heading, DOP, counts, six channels' satellite, mode, signal and status, and the receiver status | `@@Ba` | `print_stat`'s page |
+| `+0x110` | `visibility_received`, which `@@Bb`'s decoder sets | | |
+| `+0x112` | `visibility`: a count, then 12 satellites of 10 bytes (table `0x50fd8`): satellite, Doppler, elevation, azimuth, health | `@@Bb` | `Visible Sats` |
+| `+0x18d` | `xdop_table`, copied as it comes (`0x50fe2`): type, count, mode, 9 combinations of an xDOP and six satellites | `@@Bc` | `xDOP TYPE` |
+| `+0x1da` | `almanac`: the RAM's and the EEPROM's valid flag, week, time, count and satellites | `@@Bd` | |
+| `+0x2a8` | `corrections`, 64 bytes (table `0x50ff6`): the time, then six channels' satellite, range and rate corrections and issue of data | `@@Ce` | `GPS TIME`, the pseudorange page |
+| `+0x2fb` | `raim`, 63 bytes (table `0x50fe6`): rate, on, alarm limit, 1PPS mode and rate, the time to the next pulse, pulse status and sync, solution and RAIM status, sigma, sawtooth, six channels' time estimates | `@@Bn` | `SAWT ERR`, the Time RAIM page |
+| `+0x33a`, `+0x33c` | `leap_second_pending`, `self_test` (14 bits kept) | `@@Bj`, `@@Ca` | |
+| `+0x344` | `extension`, 62 bytes: five DOPs, magnetic variation, velocity north, east and up, correction age, ECEF x, y and z, six URAs, the ten elements of the least-squares A-1 matrix, clock bias, oscillator offset | `@@Bk` | the DOP, `VEL`, `ECEF`, `URA` and clock lines |
+| `+0x3ec` | `fix_mode` | `@@Cg` | |
+| `+0x3ee`, `+0x3ef` | `receiver_id_received`, which `@@Cj`'s decoder sets; `receiver_id`, ten lines, each line's CR made a NUL and its LF dropped (table `0x51004`) | `@@Cj` | |
+| `+0x506` | `average_count` | | |
+| `+0x50a`--`+0x522` | `average_latitude`, `_longitude`, `_height_gps`, `_height_msl`, doubles | | `AVG LAT`, `LON`, `HGT` |
 
-The PLL's EFC history, `efc_history` at `0x1021ac` (`efc_ring`, `0x366`
-bytes, cleared as one with `memset`), is a ring of 64 averages of the
-EFC.  `efc_history_update` (`0x4137e`) adds the EFC, less the temperature coefficient
-(`:DIAG:ROSC:TCO`) times an ADC reading, to `efc_sum` each sample in
-some states, counting `summed_count`, and each 2700 samples
-(`sample_count`) stores an entry at `stop_ptr` and advances it, pushing
-`start_ptr` on when the ring is full.  Its debug message names the
-arrays: "e_avg= %.1f time= %f weight= %d log= %.2f tfom= %.1e".
+`@@Ba`'s decoder `0x4f59a`, in fix mode, adds its latitude, longitude
+and heights to the averages, counting `average_count`, while position
+hold is off, bit 5 of the receiver status is set, and either the byte
+at `0x101e98` is 1 or the count is below `:DOUGlas:DURation`.  The print shows latitude and longitude as "ms"; the
+reference's unit is the milliarcsecond.  `@@As`'s height goes through
+a decoder of its own (`0x4efb4`), not to a fixed cell, but is printed
+from `hold_position.height`.  `gps_print_extension` prints the matrix
+as the triangle the reference numbers it in.
+
+Whether the original was one structure or one source file's statics,
+which a compiler can lay out together and reach through a base
+register in the same way, the code cannot say.  Its records are byte
+layouts, not a compiler's: `@@Ba`'s is 63 bytes, and `@@Bc`'s and
+`@@Bn`'s begin at odd addresses, with words at odd offsets within them
+that a 68000 compiler would pad.  The header packs it, and
+`check-layout.c` checks every member's offset that a decoder or a
+print gives.
+
+### The loop's state
+
+`pll` (`0x102162`, `pll_state`, `0x3d6` bytes) is the loop's state
+block (`../screen-format-strings.md`, "Mode suffixes"): its stage at
+`+0`, the manual flag at `+0x12`, the recovery and fine sub-states at
+`+0x15` and `+0x17`.  It is cleared as one, `memset(&pll, 0, 0x3d6)`,
+and ends where `interval_mean` begins.  `pr_efc` prints `efc`
+(`+0x32`, a float) and `pll_rep` `tfom` (`+0x36`, a float, "tfom =
+%.1e secs"); `max_loop_time` (`0x101e84`, a float) is outside it.
+
+The EFC history, `pll.efc_history` (`+0x4a`, `efc_ring`, `0x366`
+bytes, cleared as one with `memset` too), is a ring of 64 averages of
+the EFC.  `efc_history_update` (`0x4137e`) adds the EFC, less the
+temperature coefficient (`:DIAG:ROSC:TCO`) times an ADC reading, to
+`efc_sum` each sample in some states, counting `summed_count`, and
+each 2700 samples (`sample_count`) stores an entry at `stop_ptr` and
+advances it, pushing `start_ptr` on when the ring is full.  Its debug
+message names the arrays: "e_avg= %.1f time= %f weight= %d log= %.2f
+tfom= %.1e".
 
 | Offset | Field | Shown by |
 | ------ | ----- | -------- |
@@ -172,9 +227,7 @@ arrays: "e_avg= %.1f time= %f weight= %d log= %.2f tfom= %.1e".
 | `+0x34a` | `efc_sum` | the sum |
 | `+0x352` | `drift` | `pll_rep`'s `current drift`, times `5.4e-8`, per day |
 
-The PLL's other values `pll_rep` and `pr_efc` print: `tfom`
-(`0x102198`, a float, "tfom = %.1e secs"), `max_loop_time`
-(`0x101e84`, a float) and `efc` (`0x102194`, a float).
+### Others
 
 The other exchanges, from their `create_x` calls, and the routines
 whose messages name them:

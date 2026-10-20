@@ -1079,3 +1079,185 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x313a4	function	log_page_write	context	writes an event log page to EEPROM at 0x400d40 if it has changed, its count incremented and checksummed
 0x31bf6	function	log_flush	context	writes the current event log page
 0x31c42	function	log_append	context	adds an entry with its date and time to the event log, writing the page; reports event space past 180 entries
+#
+# the start-up, the clock and unused helpers
+0x1052e	function	mutex_owner	context	a mutex's owner, at +8
+0x10538	function	idle_count	context	the count of free CPU cycles os_report_cpu prints
+0x10946	function	klok_entry_state	context	0 if an entry is on the clock list, 1 if on the free list, -1 if on neither
+0x10e3a	function	time_packed_to_seconds	context	a packed time as seconds; a third copy of hms_to_seconds, called by nothing
+0x11032	function	days_in_month	context	the days in a month, 28 or 29 for February by is_leap_year
+0x11076	function	date_normalize	context	carries a date's overflowing months and days into the next
+0x11300	function	time_next_second	context	advances a time by a second, the minute 59 or 61 seconds long at a pending leap second's 23:59
+0x114fa	function	utc_to_gps	context	applies the GPS-UTC offset the other way, UTC to GPS time; called by nothing
+0x117b6	function	local_to_utc	context	takes nv_settings.time_zone off a date and time; called by nothing
+0x118a8	function	exception_hook_reset	context	clears the exception hook and its per-task switch
+0x118fe	function	exception_hook_get	context	the exception hook: the running task's, at +0x82 of its record, or the global one
+0x12026	function	qsm_init	context	sets the QSM up: QSMCR, QILR and QIVR, the QS port's pins and directions
+0x12050	function	gpt_init	context	sets the GPT up: GPTMCR, GPT_ICR, its port, output compares and pulse accumulator
+0x120e6	function	int_abs	context	an int's magnitude; called by nothing
+0x1211a	function	int_clamp	context	a value clamped between two bounds; called by nothing
+0x1213a	function	crc16_ccitt	context	the reflected CRC-16, polynomial 0x8408 from 0xffff, over bytes; called by nothing
+0x1219a	function	isqrt16	context	a 16-bit integer square root; called by nothing
+0x12206	function	round_shift_right	context	an int shifted right with rounding, half away from zero; called by nothing
+0x122d0	function	round_divide	context	an int divided with rounding, half away from zero; called by nothing
+0x125e2	function	power_of_ten_double	context	10 to a power clamped to plus or minus 30, from the table of doubles at 0x12704; called by nothing
+0x129d0	function	power_of_ten_float	context	10 to a power clamped to plus or minus 30, from the table of floats at 0x12a74; called by nothing
+0x12bb4	function	system_init	context	the start-up's setup: status, NV settings restored, debug flags, the battery-backed RAM's checksum and the reset's cause
+0x12d6e	function	primary_start	context	the reset's path: services the watchdog, sets the QSM and GPT up, runs system_init and starts the kernel with trap #6
+0x12db6	function	pps_interrupt	context	the 1PPS interrupt's work: ticks the clock, updates the time code and posts the time to pps_exchange
+0x12e6c	function	pps_interrupt_stop	context	stops the 1PPS interrupt, clearing its GPT enable and flag
+0x1321a	function	stack_measure	context	a task's supervisor and user stacks, each the used part of its size, for stack_usage_report
+0x132da	function	stack_unused_count	context	counts the 0xabcd fill left at the bottom of a stack, A1 its bottom and D0 its top		convention=register; confidence=read; in=A1, D0; family=stack
+0x13258	function	stack_fill	context	fills a new task's stacks with 0xabcd, the task record in A0		convention=register; confidence=read; in=A0; family=stack
+0x132b8	function	region_find_segment	context	finds the memory segment that holds an address, A0 the region and D0 the address		convention=register; confidence=read; in=A0, D0; family=stack
+0x1339e	function	task_set_priority	context	sets a task's priority, returning the old
+0x133f2	function	double_abs	context	a double's magnitude; called by nothing
+0x13406	function	rotate_left	context	a long rotated left
+0x13448	function	sleep_seconds	context	pauses for a float number of seconds, at 1024 ticks a second, at least one tick; called by nothing
+0x134ca	function	clock_record_sum	context	clock_record_checksum's loop, A6 the record		convention=register; confidence=read; in=A6 char *record; family=clock
+0x134e8	function	clock_tick	context	advances the clock a second and checksums its record
+0x13502	function	clock_record_advance	context	adds a second to the clock record at A6, carrying through the minute, hour and date and applying a pending leap second		convention=register; confidence=read; in=A6 char *record; family=clock
+#
+# the clock, the kernel's reports and the self-tests
+0x135f0	function	clock_record_advance_utc	context	adds a second to the clock record's UTC pair at +0x1a and +0x1e, carrying through the date by its month table		convention=register; confidence=read; in=A6 char *record; family=clock
+0x13782	function	clock_record_refresh	context	recomputes the clock record's local time from its UTC and checksums it, in supervisor mode
+0x13908	function	clock_init	context	sets the clock record up: its month tables, uptime and time zero, the date from the lifetime record, a 60-second minute
+0x13ee4	function	timecode_init	context	clears the time code's and the ES message's state
+0x13fa6	function	timecode_schedule	context	sets output compare 3 to fire a time code character a delay after the 1PPS capture
+0x1406a	function	es_schedule	context	sets output compare 4 to fire an ES message character a delay after the 1PPS capture
+0x149a8	function	program_exit	context	runs the atexit functions and reports "Prog end, returned" with the code; never returns
+0x149bc	function	program_end_report	context	builds "Prog end, returned N" and stops with fatal_error_with_code
+0x160de	function	object_name	context	a task's or exchange's four-character name, from its record at +0x14
+0x16280	function	os_report_region_line	context	prints one memory region's line of the kernel report
+0x162b2	function	region_segment_containing	context	the segment of a region that holds an address
+0x164f2	function	timer_ticks_until	context	the ticks until a task's delay expires: the sum of the delta list's ticks up to it
+0x16540	function	task_table_build	context	snapshots the kernel's tasks and their states into task_table for the reports
+0x16730	function	ready_queue_position	context	a task's place in the ready queue; -1 if it is not there
+0x169fa	function	exchange_id_valid	context	1 if an exchange ID is one, by the swapped address its record holds; called by nothing
+0x16a20	function	task_id_valid	context	1 if a task ID is one, by the complemented address its record holds; called by nothing
+0x16ee6	function	task_count_tick	context	counts a tick to the running task, at +0xae of its record; called by nothing
+0x17628	function	ram_pattern_test	context	the RAM self-test's pattern pass, saving and restoring each block around 0xaaaaaaaa and its complement
+0x17750	function	rom_lane_checksum	context	sums a ROM's even and odd byte lanes, one checksum for each chip; called by nothing
+0x17ca4	function	selftest_lamps	context	runs the lamp test unless the self-test has been aborted
+0x18396	function	format_binary	context	a number as a string of binary digits
+0x183de	function	selftest_delay	context	pauses so many ticks, stopping if the self-test is aborted
+0x184a4	function	internal_pps_test	context	counts the internal 1PPS over 1024 ticks; fails unless one to three came
+0x184ee	function	lamp_test	context	lights every lamp, then none, then each in turn, then restores them
+0x18546	function	supplies_test	context	checks the 5 V, +15 V and -15 V supplies within 10 percent
+0x187aa	function	qspi_hex_dac_test	context	writes three words to QSPI device 2, the hex DAC, reads them back shifted and compares
+0x18890	function	qspi_adc_test	context	reads QSPI device 1, the ADC, and checks its status bits
+0x18918	function	fpga_load_test	context	loads the FPGA and checks it
+0x1895e	function	qspi_efc_test	context	writes 0x5555 and 0xaaaa to QSPI device 7, the EFC DAC, and reads each back
+0x189f2	function	qspi_tests_run	context	runs the ADC, hex DAC, FPGA and EFC tests with interrupts held off, a failure bit for each
+0x1876c	function	shift_right_36	context	shifts three 12-bit words right one bit as a 36-bit number
+0x18c48	function	ram_pattern_test_locked	context	ram_pattern_test with interrupts held off, unless the self-test is aborted
+0x18c8e	function	selftest_qspi_run	context	clears the QSPI failure bits and runs the tests
+0x18c9c	function	selftest_qspi_with_lamp	context	the QSPI tests, lighting the failure lamp on a failure; called by nothing
+0x18cec	function	selftest_interpolator_with_lamp	context	the interpolator test, lighting the failure lamp on a failure; called by nothing
+0x18d16	function	selftest_internal_reference_with_lamp	context	the internal 1PPS test, lighting the failure lamp on a failure; called by nothing
+#
+# the serial drivers and the self-test's DUART and lamp tests
+0x18d40	function	lamp_test_command	context	runs the lamp test and returns 0; called by nothing
+0x1af98	function	console_read_from_string	console.md	reads a line into the buffer at A1, D2 long, from the string at 0x100ba8 while one is set, else from the console device		convention=register; confidence=read; in=A1, D2; family=pforth
+0x1d572	function	gp_port_select	context	sets GP port bits 2 to 4 to a selection 0 to 6
+0x1d594	function	duartb_mode_from_settings	context	DUART channel B's mode bits from the serial settings: parity, data bits, stop bits
+0x1d632	function	duartb_baud_from_settings	context	DUART channel B's baud rate code from the serial settings
+0x1d906	function	drtb_unlock	context	releases channel B's read or write mutex, D0 choosing		convention=register; confidence=read; in=D0 char write; family=drtb
+0x1d922	function	drtb_lock	context	takes channel B's read or write mutex, D0 choosing		convention=register; confidence=read; in=D0 char write; family=drtb
+0x1dc7e	function	duartb_reconfigure	context	resets DUART channel B and applies the serial settings' mode and baud rate
+0x1dd98	function	drtb_write	context	the console device's write: drtb_puts under the write lock
+0x1ddd6	function	drtb_read	context	the console device's read: drtb_gets
+0x1ddf6	function	drtb_putc	context	writes a character to channel B under the write lock
+0x1de32	function	drtb_send_async	context	queues a block for channel B to send by interrupt
+0x1debc	function	console_read	context	reads from the console, device 0, and its last status
+0x1df6e	function	drtb_try_lock_write	context	1 if channel B's write mutex is held by another
+0x1df8a	function	drtb_release_for_timecode	context	closes the console device so that channel B can send the time code
+0x1dfe6	function	duart_op0_set	context	sets or clears the DUART's output port bit 0
+0x1e02c	function	duart_op1_set	context	sets or clears the DUART's output port bit 1
+0x1e574	function	duart_counter_test	context	the DUART self-test's counter and timer test
+0x1e650	function	duart_test	context	the DUART self-test: its interrupt vector register, its counter, both channels' loopbacks
+0x1e6be	function	duart_test_rx_a	context	the loopback test's receive on channel A: compares with the next expected character
+0x1e6e2	function	duart_test_rx_b	context	the loopback test's receive on channel B
+0x1e706	function	duart_test_tx_a	context	the loopback test's transmit on channel A: sends the next character, or stops at the end
+0x1e736	function	duart_test_tx_b	context	the loopback test's transmit on channel B
+0x1e9ca	function	duarta_tx_interrupt	context	sends the next byte to the GPS engine, signaling the GPS task 0x800 once the message is out
+0x1ebbc	function	duart_stop	context	resets both DUART channels and masks its interrupts
+0x1ebe4	function	duartb_loopback_check	context	sends "DUART" through channel B in local loopback and checks each character back
+0x1ecae	function	duart_early_init	context	at reset: tests the DUART's interrupt vector register and sets channel B up for the console
+0x1ef90	function	debug_printf_polled	context	formats and writes to the console by polling, when debug output is on; called by nothing
+0x1f62e	function	hdac_update	context	sends the hex DAC's three shadow words to QSPI device 2
+0x1f6ca	function	sci_baud_set	context	the SCI's baud rate from a code
+0x1f71a	function	sci_putc_polled	context	waits for the SCI's transmitter and writes a character, with the parity bit if set
+0x1fffa	function	sci_reconfigure	context	resets the SCI and applies the serial settings' baud rate and mode
+0x20152	function	sci_write	context	the SCI device's write: sci_puts under its lock
+0x20190	function	sci_read	context	the SCI device's read: sci_gets
+0x201b0	function	sci_putc	context	writes a character to the SCI under its lock
+0x201e0	function	sci_send_async	context	queues a block for the SCI to send by interrupt
+0x2021a	function	sci_port_write	context	writes a string to the SCI device, 3
+0x2023c	function	sci_printf	context	formats into 160 bytes and writes to the SCI device; called by nothing
+0x202c0	function	sci_puts_polled	context	writes a string to the SCI by polling, in supervisor mode
+0x202f6	function	sci_printf_polled	context	formats into 80 bytes and writes to the SCI by polling; called by nothing
+#
+# the QSPI driver, the 1PPS monitors and the SCPI parser
+0x20578	function	qspi_queue_setup	context	writes a QSPI device's transfer into the QSM's queue RAM and command words, by the device's number
+0x2081e	function	qspi_start	context	sets a transfer up and starts it, or releases the QSPI, and waits until it is done
+0x20902	function	qspi_init	context	clears the QSM's queue RAM and sets SPCR0 to SPCR3 up
+0x20a62	function	qspi_transfer_raw	context	takes the QSPI and runs a transfer, D0 the device, A1 the buffers and D2 the count		convention=register; confidence=read; in=D0 char device, A1 void *buffers, D2 short count; family=qspi
+0x23980	function	fpga_verify	context	fpga_verify_chip for chip 0 or 1
+0x241cc	function	double_oven_warmed_up	context	1 once the double oven's ADC reads above 1.5; called by nothing
+0x2442c	function	exception_record_clear	context	clears the last exception and the crash message
+0x2458c	function	gps_pps_monitor_reset	context	clears the GPS 1PPS monitor's state
+0x2470c	function	internal_pps_monitor_reset	context	clears the internal 1PPS monitor's state
+0x24984	function	pps_monitors_reset	context	clears both 1PPS monitors
+0x26a80	function	scpi_context_init	context	fills a parser context's eight fields; called by nothing
+0x26ab6	function	scpi_parse_message_unit	context	parses one program message unit: its header, then its parameters, token by token
+0x27388	function	scpi_skip_to_terminator	context	reads characters until a message terminator
+0x273cc	function	scpi_scan_number	context	scans a decimal number's digits, point and exponent into a parsed number
+0x2766e	function	scpi_scan_exponent	context	scans a number's exponent after its E
+0x277d2	function	scpi_char_upper	context	a letter in upper case, by the parser's character classes
+0x279d6	function	scpi_suffix_compare_tail	context	how much of a token's end matches a unit's name
+0x27a0c	function	scpi_multiplier_exponent	context	a unit multiplier's power of ten, from the table at 0x27b2e; -128 for none
+0x27b62	function	scpi_keyword_compare	context	compares a token with a keyword's short and long forms
+0x27baa	function	scpi_node_find	context	finds a keyword in a child list, by bisection
+0x27c22	function	scpi_node_find_with_defaults	context	finds a keyword, else follows the default nodes, recording their suffixes
+0x27c94	function	scpi_node_find_numbered	context	finds a keyword with its numeric suffix stripped and kept
+0x27e9e	function	scpi_header_step	context	moves the path one keyword down a compound header
+0x27efe	function	scpi_path_reset	context	sets a header path back to a root list
+0x27f7e	function	scpi_trg_defined	context	looks _TRG up in a list: whether the common list defines it
+0x28160	function	status_destroy	context	frees the status model's queue and registers; called by nothing
+0x2839c	function	condition_is_command_error	context	1 for a negative condition of the error kind with a code from -199 to -100, a command error
+0x283d2	function	status_condition_bit_get	context	a condition's bit in its register's condition word, inverted for kind 2
+0x28474	function	status_register_get_enable	context	a status register's enable mask, as the :ENABle? and *ESE? queries read it
+0x2851a	function	status_clear_events	context	reads every register's event word, clearing them, for *CLS
+0x2854a	function	error_queue_clear	context	empties the error queue, for *CLS
+0x2856c	function	error_queue_read	context	takes the oldest error from the queue
+#
+# the error queue, the parser's arena and SCPI helpers
+0x28588	function	error_queue_create	context	allocates the error queue ring with room for so many entries
+0x2869e	function	error_queue_pop	context	takes the oldest error and its message, prompting again once the queue is empty; 0 when empty
+0x28712	function	error_queue_destroy	context	frees the error queue
+0x2889a	function	status_register_set_ptr	structures.md's status registers	sets a register's positive transition filter, for :PTRansition
+0x288ae	function	status_register_set_ntr	structures.md's status registers	sets a register's negative transition filter, for :NTRansition
+0x288c2	function	status_register_get_ptr	structures.md's status registers	a register's positive transition filter, for :PTRansition?
+0x288d8	function	status_register_get_ntr	structures.md's status registers	a register's negative transition filter, for :NTRansition?
+0x29642	function	scpi_call_handler	context	calls a node's handler, giving it room in the arena for its parameters
+0x29690	function	scpi_format_response	context	writes a response's items through their formatters
+0x29700	function	arena_alloc	context	takes so many bytes, rounded up to even, from an arena; 0 if it is full
+0x2972c	function	arena_remaining	context	the bytes left in an arena, and its next free byte
+0x29742	function	arena_take	context	takes so many bytes, rounded up to even, from a buffer
+0x2975e	function	arena_current	context	an arena's next free byte
+0x29766	function	arena_set	context	sets an arena's next free byte
+0x29770	function	arena_init	context	makes an arena of a buffer of so many bytes
+0x29a24	function	copy_longs_locked	context	copies so many longs with interrupts held off
+0x29a68	function	robin_store	context	stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36
+0x29b08	function	rtcm_supported	context	0: RTCM corrections are not supported
+0x29b96	function	scpi_console_read	context	reads up to so many characters from the console, marking the input ended at its end
+0x29cc6	function	scpi_input_ended	context	marks the SCPI input ended
+0x29cd0	function	scpi_console_putc	context	writes a character to the console, keeping it in the echo buffer, or CR LF for an end
+0x29d50	function	status_byte_set_bits	context	the status output object's method: sets bits in the status byte and updates RQS
+0x29d62	function	status_byte_clear_bits	context	the status output object's method: clears bits in the status byte and updates RQS
+0x29d76	function	status_sre_set	context	the status output object's method: sets the service request enable and updates RQS
+0x2b578	function	log_print	context	prints the event log, its status and each entry, through the callbacks given
+0x2d148	function	satellite_number_valid	context	1 for a satellite number from 1 to 32
+0x2d160	function	satellite_in_mask	context	1 if a satellite's bit is set in a mask
+0x2d17a	function	satellite_mask_add	context	sets a valid satellite's bit in a mask

@@ -3861,7 +3861,9 @@ int mutex_unlock(void *mutex)
 
 /* 0001052e */
 
-undefined4 FUN_0001052e(int param_1)
+/* a mutex's owner, at +8 */
+
+undefined4 mutex_owner(int param_1)
 
 {
   return *(undefined4 *)(param_1 + 8);
@@ -3871,8 +3873,9 @@ undefined4 FUN_0001052e(int param_1)
 /* 00010538 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the count of free CPU cycles os_report_cpu prints */
 
-undefined4 FUN_00010538(void)
+undefined4 idle_count(void)
 
 {
   return _DAT_001037cc;
@@ -4157,7 +4160,9 @@ klok_entry * klok_find(short param_1)
 
 /* 00010946 */
 
-int FUN_00010946(klok_entry *param_1)
+/* 0 if an entry is on the clock list, 1 if on the free list, -1 if on neither */
+
+int klok_entry_state(klok_entry *param_1)
 
 {
   int iVar1;
@@ -4407,7 +4412,9 @@ int16_t day_of_year(uint32_t date)
 
 /* 00010e3a */
 
-int FUN_00010e3a(uint param_1)
+/* a packed time as seconds; a third copy of hms_to_seconds, called by nothing */
+
+int time_packed_to_seconds(uint param_1)
 
 {
   return (param_1 >> 0x10 & 0xff) * 0xe10 + (param_1 >> 8 & 0xff) * 0x3c + (param_1 & 0xff);
@@ -4508,7 +4515,9 @@ int date_to_mjd(uint param_1)
 
 /* 00011032 */
 
-undefined1 FUN_00011032(ushort param_1,byte param_2)
+/* the days in a month, 28 or 29 for February by is_leap_year */
+
+undefined1 days_in_month(ushort param_1,byte param_2)
 
 {
   char cVar1;
@@ -4539,7 +4548,9 @@ undefined1 FUN_00011032(ushort param_1,byte param_2)
 
 /* 00011076 */
 
-undefined4 FUN_00011076(uint param_1)
+/* carries a date's overflowing months and days into the next */
+
+undefined4 date_normalize(uint param_1)
 
 {
   ushort uVar1;
@@ -4556,7 +4567,7 @@ undefined4 FUN_00011076(uint param_1)
   }
   while( true ) {
     bVar4 = (byte)uVar3;
-    bVar2 = FUN_00011032(uVar1,bVar4);
+    bVar2 = days_in_month(uVar1,bVar4);
     bVar6 = (byte)uVar5;
     if (bVar6 <= bVar2) break;
     uVar5 = (uint)(byte)(bVar6 - bVar2);
@@ -4718,7 +4729,9 @@ int leap_gps_time(void)
 
 /* 00011300 */
 
-void FUN_00011300(uint32_t *param_1,undefined4 *param_2)
+/* advances a time by a second, the minute 59 or 61 seconds long at a pending leap second's 23:59 */
+
+void time_next_second(uint32_t *param_1,undefined4 *param_2)
 
 {
   undefined4 uVar1;
@@ -4756,7 +4769,7 @@ void FUN_00011300(uint32_t *param_1,undefined4 *param_2)
   }
   if (0x17 < local_8._1_1_) {
     local_8._1_3_ = CONCAT12(local_8._1_1_ - 0x18,local_8._2_2_);
-    uVar4 = FUN_00011076(*param_1 + 1);
+    uVar4 = date_normalize(*param_1 + 1);
     *param_1 = uVar4;
   }
   *param_2 = local_8;
@@ -4877,7 +4890,9 @@ int datetime_compare(undefined4 *param_1,undefined4 *param_2)
 
 /* 000114fa */
 
-void FUN_000114fa(undefined4 *param_1,undefined4 *param_2)
+/* applies the GPS-UTC offset the other way, UTC to GPS time; called by nothing */
+
+void utc_to_gps(undefined4 *param_1,undefined4 *param_2)
 
 {
   uint8_t uVar1;
@@ -5068,7 +5083,9 @@ void utc_to_local(undefined4 *param_1,undefined4 *param_2)
 
 /* 000117b6 */
 
-void FUN_000117b6(undefined4 *param_1,undefined4 *param_2)
+/* takes nv_settings.time_zone off a date and time; called by nothing */
+
+void local_to_utc(undefined4 *param_1,undefined4 *param_2)
 
 {
   char cVar1;
@@ -5114,8 +5131,9 @@ void FUN_000117b6(undefined4 *param_1,undefined4 *param_2)
 /* 000118a8 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* clears the exception hook and its per-task switch */
 
-void FUN_000118a8(void)
+void exception_hook_reset(void)
 
 {
   DAT_001037d4 = 0;
@@ -5127,8 +5145,9 @@ void FUN_000118a8(void)
 /* 000118fe */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the exception hook: the running task's, at +0x82 of its record, or the global one */
 
-int FUN_000118fe(void)
+int exception_hook_get(void)
 
 {
   ulong uVar1;
@@ -5172,7 +5191,7 @@ __exception undefined8 primary_default_exception(void)
   
   uVar4 = (undefined2)((uint)in_D0 >> 0x10);
   uVar6 = (undefined2)in_D0;
-  iVar2 = FUN_000118fe();
+  iVar2 = exception_hook_get();
   if (iVar2 != 0) {
     return CONCAT44(CONCAT22(uVar4,uVar6),in_D1);
   }
@@ -5315,7 +5334,7 @@ __exception void primary_user_66(void)
   DAT_001037da = DAT_001037da + 1;
   if (0x3ff < DAT_001037da) {
     if (internal_pps_dead != 0) {
-      FUN_00012db6();
+      pps_interrupt();
     }
     DAT_001037da = 0;
   }
@@ -5350,7 +5369,9 @@ void periodic_interrupt_enable(char param_1)
 
 /* 00012026 */
 
-void FUN_00012026(void)
+/* sets the QSM up: QSMCR, QILR and QIVR, the QS port's pins and directions */
+
+void qsm_init(void)
 
 {
   QSMCR = 8;
@@ -5364,7 +5385,9 @@ void FUN_00012026(void)
 
 /* 00012050 */
 
-void FUN_00012050(void)
+/* sets the GPT up: GPTMCR, GPT_ICR, its port, output compares and pulse accumulator */
+
+void gpt_init(void)
 
 {
   byte bVar1;
@@ -5407,14 +5430,16 @@ void shutdown(void)
   bVar2 = SPSR;
   SPSR = 0;
   SCCR1 = 0;
-  FUN_0001ebbc();
+  duart_stop();
   return;
 }
 
 
 /* 000120e6 */
 
-int FUN_000120e6(int param_1)
+/* an int's magnitude; called by nothing */
+
+int int_abs(int param_1)
 
 {
   if (param_1 < 0) {
@@ -5426,7 +5451,9 @@ int FUN_000120e6(int param_1)
 
 /* 0001211a */
 
-int FUN_0001211a(int param_1,int param_2,int param_3)
+/* a value clamped between two bounds; called by nothing */
+
+int int_clamp(int param_1,int param_2,int param_3)
 
 {
   if ((param_1 <= param_3) && (param_3 = param_1, param_1 < param_2)) {
@@ -5439,8 +5466,9 @@ int FUN_0001211a(int param_1,int param_2,int param_3)
 /* 0001213a */
 
 /* WARNING: Unknown calling convention */
+/* the reflected CRC-16, polynomial 0x8408 from 0xffff, over bytes; called by nothing */
 
-undefined4 FUN_0001213a(byte *param_1,short param_2)
+undefined4 crc16_ccitt(byte *param_1,short param_2)
 
 {
   uint uVar1;
@@ -5476,7 +5504,9 @@ undefined4 FUN_0001213a(byte *param_1,short param_2)
 
 /* 0001219a */
 
-ushort FUN_0001219a(uint param_1)
+/* a 16-bit integer square root; called by nothing */
+
+ushort isqrt16(uint param_1)
 
 {
   ushort uVar1;
@@ -5536,7 +5566,9 @@ code_r0x000121f4:
 
 /* 00012206 */
 
-int FUN_00012206(int param_1,uint param_2)
+/* an int shifted right with rounding, half away from zero; called by nothing */
+
+int round_shift_right(int param_1,uint param_2)
 
 {
   int iVar1;
@@ -5590,7 +5622,9 @@ int double_round_to_long(double param_1)
 
 /* 000122d0 */
 
-int FUN_000122d0(int param_1,int param_2)
+/* an int divided with rounding, half away from zero; called by nothing */
+
+int round_divide(int param_1,int param_2)
 
 {
   if (param_1 < 0) {
@@ -5667,8 +5701,10 @@ undefined4 FUN_0001258a(uint param_1,uint param_2)
 /* 000125e2 */
 
 /* WARNING: Unknown calling convention */
+/* 10 to a power clamped to plus or minus 30, from the table of doubles at 0x12704; called by
+   nothing */
 
-undefined8 FUN_000125e2(short param_1)
+undefined8 power_of_ten_double(short param_1)
 
 {
   if (param_1 < -0x1e) {
@@ -5711,8 +5747,10 @@ undefined4 tfom_table_index(uint param_1)
 /* 000129d0 */
 
 /* WARNING: Unknown calling convention */
+/* 10 to a power clamped to plus or minus 30, from the table of floats at 0x12a74; called by nothing
+    */
 
-undefined4 FUN_000129d0(short param_1)
+undefined4 power_of_ten_float(short param_1)
 
 {
   if (param_1 < -0x1e) {
@@ -5761,8 +5799,10 @@ void FUN_00012bb2(void)
 /* 00012bb4 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the start-up's setup: status, NV settings restored, debug flags, the battery-backed RAM's
+   checksum and the reset's cause */
 
-void FUN_00012bb4(void)
+void system_init(void)
 
 {
   undefined3 uVar2;
@@ -5790,7 +5830,7 @@ void FUN_00012bb4(void)
   debug_enabled = nv_settings.debug_output;
   DAT_001037de = nv_settings.debug_output;
   FUN_00030a3e();
-  FUN_00013908(_DAT_00100c34);
+  clock_init(_DAT_00100c34);
   cVar6 = '\0';
   do {
     (&dmes_gpsm)[cVar6] = 1;
@@ -5857,13 +5897,13 @@ void FUN_00012bb4(void)
     PORTE0 = bVar4 | 0x40;
   }
   if (DAT_001037df == '\0') {
-    FUN_0002442c();
+    exception_record_clear();
   }
   else {
     log_reset_cause();
   }
-  FUN_00024984();
-  FUN_00013ee4();
+  pps_monitors_reset();
+  timecode_init();
   selftest_init();
   FUN_00030c1e();
   return;
@@ -5872,16 +5912,19 @@ void FUN_00012bb4(void)
 
 /* 00012d6e */
 
-void FUN_00012d6e(void)
+/* the reset's path: services the watchdog, sets the QSM and GPT up, runs system_init and starts the
+   kernel with trap #6 */
+
+void primary_start(void)
 
 {
-  FUN_000118a8();
+  exception_hook_reset();
   SWSR = 0x55;
   SWSR = 0xaa;
-  FUN_00012026();
-  FUN_00012050();
+  qsm_init();
+  gpt_init();
   FUN_00012bb2();
-  FUN_00012bb4();
+  system_init();
   FUN_00051038();
   SWSR = 0x55;
   SWSR = 0xaa;
@@ -5893,14 +5936,16 @@ void FUN_00012d6e(void)
 /* 00012db6 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the 1PPS interrupt's work: ticks the clock, updates the time code and posts the time to
+   pps_exchange */
 
-undefined8 FUN_00012db6(void)
+undefined8 pps_interrupt(void)
 
 {
   undefined4 in_D0;
   undefined4 in_D1;
   
-  FUN_000134e8();
+  clock_tick();
   DAT_001037d8 = 0;
   timecode_update();
   _DAT_00100bb4 = get_gps_time();
@@ -5927,7 +5972,7 @@ __exception void primary_user_81(void)
   internal_pps_count = internal_pps_count + 1;
   DAT_001037da = 0;
   if (internal_pps_dead == 0) {
-    FUN_00012db6();
+    pps_interrupt();
   }
   do {
                     /* trap #5: kernel return from interrupt; does not come back */
@@ -5953,7 +5998,9 @@ undefined4 pps_init(void)
 
 /* 00012e6c */
 
-undefined4 FUN_00012e6c(void)
+/* stops the 1PPS interrupt, clearing its GPT enable and flag */
+
+undefined4 pps_interrupt_stop(void)
 
 {
   ushort uVar1;
@@ -6135,14 +6182,16 @@ void root_task(void)
 
 /* 0001321a */
 
-undefined4 FUN_0001321a(undefined4 param_1,undefined8 *param_2)
+/* a task's supervisor and user stacks, each the used part of its size, for stack_usage_report */
+
+undefined4 stack_measure(undefined4 param_1,undefined8 *param_2)
 
 {
   undefined8 uVar1;
   
-  uVar1 = FUN_000132da();
+  uVar1 = stack_unused_count();
   param_2[1] = uVar1;
-  uVar1 = FUN_000132da();
+  uVar1 = stack_unused_count();
   *param_2 = uVar1;
   return 0;
 }
@@ -6150,7 +6199,10 @@ undefined4 FUN_0001321a(undefined4 param_1,undefined8 *param_2)
 
 /* 00013258 */
 
-undefined4 FUN_00013258(void)
+/* fills a new task's stacks with 0xabcd, the task record in A0
+   Not a C function (register; read): its arguments and results in registers.  In: A0. */
+
+__regcall undefined4 stack_fill(void)
 
 {
   undefined4 in_D0;
@@ -6163,7 +6215,7 @@ undefined4 FUN_00013258(void)
   
   *(undefined4 *)(in_A0 + 0x8a) = *(undefined4 *)(in_A0 + 0x3a);
   *(undefined4 *)(in_A0 + 0x8e) = *(undefined4 *)(in_A0 + 0x36);
-  FUN_000132b8();
+  region_find_segment();
   if (extraout_A1 != 0) {
     puVar3 = (undefined2 *)(extraout_A1 + 0x12);
     *(undefined2 **)(extraout_A0 + 0x92) = puVar3;
@@ -6193,7 +6245,10 @@ undefined4 FUN_00013258(void)
 
 /* 000132b8 */
 
-void FUN_000132b8(void)
+/* finds the memory segment that holds an address, A0 the region and D0 the address
+   Not a C function (register; read): its arguments and results in registers.  In: A0, D0. */
+
+__regcall void region_find_segment(void)
 
 {
   int in_D0;
@@ -6213,7 +6268,10 @@ void FUN_000132b8(void)
 
 /* 000132da */
 
-undefined8 FUN_000132da(void)
+/* counts the 0xabcd fill left at the bottom of a stack, A1 its bottom and D0 its top
+   Not a C function (register; read): its arguments and results in registers.  In: A1, D0. */
+
+__regcall undefined8 stack_unused_count(void)
 
 {
   int iVar1;
@@ -6253,7 +6311,7 @@ void stack_usage_report(undefined4 param_1)
   uint local_58;
   char acStack_54 [80];
   
-  iVar1 = FUN_0001321a(param_1,&local_64);
+  iVar1 = stack_measure(param_1,&local_64);
   if (iVar1 == 0) {
     sprintf(acStack_54,"User: %5u of %5u b   Supv: %5u of %5u b\r\n",local_64,local_60,local_5c,
             local_58);
@@ -6293,8 +6351,9 @@ undefined2 set_interrupt_mask(uint16_t sr)
 /* 0001339e */
 
 /* WARNING: Unknown calling convention */
+/* sets a task's priority, returning the old */
 
-byte FUN_0001339e(ulong param_1,byte param_2)
+byte task_set_priority(ulong param_1,byte param_2)
 
 {
   byte local_6 [2];
@@ -6319,7 +6378,9 @@ float float_absolute_on_stack(float f)
 
 /* 000133f2 */
 
-ulonglong FUN_000133f2(ulonglong param_1)
+/* a double's magnitude; called by nothing */
+
+ulonglong double_abs(ulonglong param_1)
 
 {
   return param_1 & 0x7fffffffffffffff;
@@ -6328,7 +6389,9 @@ ulonglong FUN_000133f2(ulonglong param_1)
 
 /* 00013406 */
 
-uint FUN_00013406(uint param_1,byte param_2)
+/* a long rotated left */
+
+uint rotate_left(uint param_1,byte param_2)
 
 {
   return param_1 << (param_2 & 0x3f) | param_1 >> 0x20 - (param_2 & 0x3f);
@@ -6394,7 +6457,10 @@ void busy_wait(uint param_1)
 
 /* 00013448 */
 
-void FUN_00013448(float param_1)
+/* pauses for a float number of seconds, at 1024 ticks a second, at least one tick; called by
+   nothing */
+
+void sleep_seconds(float param_1)
 
 {
   int iVar1;
@@ -6449,27 +6515,32 @@ __regcall void clock_record_checksum(char *record __asm("a6"))
 
 /* 000134ca */
 
-void FUN_000134ca(void)
+/* clock_record_checksum's loop, A6 the record
+   Not a C function (register; read): its arguments and results in registers.  In: A6 char *record.
+    */
+
+__regcall void clock_record_sum(char *record __asm("a6"))
 
 {
-  uint uVar1;
-  int unaff_A6;
+  char *pcVar1;
   
-  uVar1 = unaff_A6 + 2;
+  pcVar1 = record + 2;
   do {
-    uVar1 = uVar1 + 1;
-  } while (uVar1 < unaff_A6 + 0x33U);
+    pcVar1 = pcVar1 + 1;
+  } while (pcVar1 < record + 0x33);
   return;
 }
 
 
 /* 000134e8 */
 
-void FUN_000134e8(void)
+/* advances the clock a second and checksums its record */
+
+void clock_tick(void)
 
 {
-  FUN_000135f0();
-  FUN_00013502();
+  clock_record_advance_utc((char *)0x1009b8);
+  clock_record_advance((char *)0x1009b8);
   clock_record_checksum((char *)0x1009b8);
   return;
 }
@@ -6478,8 +6549,12 @@ void FUN_000134e8(void)
 /* 00013502 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* adds a second to the clock record at A6, carrying through the minute, hour and date and applying
+   a pending leap second
+   Not a C function (register; read): its arguments and results in registers.  In: A6 char *record.
+    */
 
-void FUN_00013502(void)
+__regcall void clock_record_advance(char *record __asm("a6"))
 
 {
   undefined4 uVar1;
@@ -6491,57 +6566,56 @@ void FUN_00013502(void)
   undefined3 uVar7;
   int iVar8;
   undefined4 uVar9;
-  int unaff_A6;
   
-  *(int *)(unaff_A6 + 2) = *(int *)(unaff_A6 + 2) + 1;
-  uVar1 = *(undefined4 *)(unaff_A6 + 6);
+  *(int *)(record + 2) = *(int *)(record + 2) + 1;
+  uVar1 = *(undefined4 *)(record + 6);
   cVar2 = (char)uVar1 + '\x01';
   iVar8 = CONCAT31((int3)((uint)uVar1 >> 8),cVar2);
-  if (*(char *)(unaff_A6 + 0x2e) <= cVar2) {
+  if (record[0x2e] <= cVar2) {
     if (DAT_00100bc8 != '\0') {
       DAT_00100bc8 = '\0';
       DAT_00102542 = 1;
       leap_settings_clear();
-      if (*(char *)(unaff_A6 + 0x2e) == ';') {
-        *(short *)(unaff_A6 + 0x30) = *(short *)(unaff_A6 + 0x30) + -1;
+      if (record[0x2e] == ';') {
+        *(short *)(record + 0x30) = *(short *)(record + 0x30) + -1;
       }
-      else if (*(char *)(unaff_A6 + 0x2e) == '=') {
-        *(short *)(unaff_A6 + 0x30) = *(short *)(unaff_A6 + 0x30) + 1;
+      else if (record[0x2e] == '=') {
+        *(short *)(record + 0x30) = *(short *)(record + 0x30) + 1;
       }
     }
-    *(undefined1 *)(unaff_A6 + 0x2e) = 0x3c;
+    record[0x2e] = '<';
     sVar4 = (short)((uint)uVar1 >> 8) * 0x100 + 0x100;
     iVar8 = CONCAT22((short)((uint)uVar1 >> 0x10),sVar4);
     if (sVar4 == 0x3c00) {
       cVar2 = (char)((uint)uVar1 >> 0x10) + '\x01';
       uVar5 = CONCAT11((char)((uint)uVar1 >> 0x18),cVar2);
       if (cVar2 == '\x18') {
-        *(uint *)(unaff_A6 + 6) = (uint)(ushort)(uVar5 - 0x18) << 0x10;
-        uVar1 = *(undefined4 *)(unaff_A6 + 10);
+        *(uint *)(record + 6) = (uint)(ushort)(uVar5 - 0x18) << 0x10;
+        uVar1 = *(undefined4 *)(record + 10);
         bVar3 = (char)uVar1 + 1;
         uVar7 = (undefined3)((uint)uVar1 >> 8);
         uVar9 = CONCAT31(uVar7,bVar3);
-        if (*(byte *)(unaff_A6 + 0xd + (int)(short)((ushort)((uint)uVar1 >> 8) & 0xff)) < bVar3) {
+        if ((byte)record[(short)((ushort)((uint)uVar1 >> 8) & 0xff) + 0xd] < bVar3) {
           sVar4 = (short)CONCAT31(uVar7,1) + 0x100;
           uVar6 = (undefined2)((uint)uVar1 >> 0x10);
           uVar9 = CONCAT22(uVar6,sVar4);
           if (sVar4 == 0xd01) {
-            uVar9 = clock_set_leap_year((char *)(unaff_A6 + 0xf),CONCAT22(uVar6,0x101) + 0x10000);
+            uVar9 = clock_set_leap_year(record + 0xf,CONCAT22(uVar6,0x101) + 0x10000);
           }
         }
-        *(undefined4 *)(unaff_A6 + 10) = uVar9;
+        *(undefined4 *)(record + 10) = uVar9;
         goto LAB_000135ba;
       }
       iVar8 = (uint)uVar5 << 0x10;
     }
   }
-  *(int *)(unaff_A6 + 6) = iVar8;
+  *(int *)(record + 6) = iVar8;
 LAB_000135ba:
-  if ((DAT_00100bc9 != '\0') && (*(int *)(unaff_A6 + 6) == _DAT_00100bca)) {
+  if ((DAT_00100bc9 != '\0') && (*(int *)(record + 6) == _DAT_00100bca)) {
     DAT_00100bc9 = '\0';
     DAT_00102542 = 1;
     leap_settings_clear();
-    *(short *)(unaff_A6 + 0x30) = _DAT_00100bce + *(short *)(unaff_A6 + 0x30);
+    *(short *)(record + 0x30) = _DAT_00100bce + *(short *)(record + 0x30);
   }
   return;
 }
@@ -6549,7 +6623,12 @@ LAB_000135ba:
 
 /* 000135f0 */
 
-void FUN_000135f0(void)
+/* adds a second to the clock record's UTC pair at +0x1a and +0x1e, carrying through the date by its
+   month table
+   Not a C function (register; read): its arguments and results in registers.  In: A6 char *record.
+    */
+
+__regcall void clock_record_advance_utc(char *record __asm("a6"))
 
 {
   undefined4 uVar1;
@@ -6561,36 +6640,35 @@ void FUN_000135f0(void)
   undefined3 uVar7;
   int iVar8;
   undefined4 uVar9;
-  int unaff_A6;
   
-  uVar1 = *(undefined4 *)(unaff_A6 + 0x1a);
+  uVar1 = *(undefined4 *)(record + 0x1a);
   cVar2 = (char)uVar1 + '\x01';
   iVar8 = CONCAT31((int3)((uint)uVar1 >> 8),cVar2);
-  if ((*(char *)(unaff_A6 + 0x2e) <= cVar2) &&
+  if ((record[0x2e] <= cVar2) &&
      (sVar4 = (short)((uint)uVar1 >> 8) * 0x100 + 0x100,
      iVar8 = CONCAT22((short)((uint)uVar1 >> 0x10),sVar4), sVar4 == 0x3c00)) {
     cVar2 = (char)((uint)uVar1 >> 0x10) + '\x01';
     uVar5 = CONCAT11((char)((uint)uVar1 >> 0x18),cVar2);
     if (cVar2 == '\x18') {
-      *(uint *)(unaff_A6 + 0x1a) = (uint)(ushort)(uVar5 - 0x18) << 0x10;
-      uVar1 = *(undefined4 *)(unaff_A6 + 0x1e);
+      *(uint *)(record + 0x1a) = (uint)(ushort)(uVar5 - 0x18) << 0x10;
+      uVar1 = *(undefined4 *)(record + 0x1e);
       bVar3 = (char)uVar1 + 1;
       uVar7 = (undefined3)((uint)uVar1 >> 8);
       uVar9 = CONCAT31(uVar7,bVar3);
-      if (*(byte *)(unaff_A6 + 0x21 + (int)(short)((ushort)((uint)uVar1 >> 8) & 0xff)) < bVar3) {
+      if ((byte)record[(short)((ushort)((uint)uVar1 >> 8) & 0xff) + 0x21] < bVar3) {
         sVar4 = (short)CONCAT31(uVar7,1) + 0x100;
         uVar6 = (undefined2)((uint)uVar1 >> 0x10);
         uVar9 = CONCAT22(uVar6,sVar4);
         if (sVar4 == 0xd01) {
-          uVar9 = clock_set_leap_year((char *)(unaff_A6 + 0x23),CONCAT22(uVar6,0x101) + 0x10000);
+          uVar9 = clock_set_leap_year(record + 0x23,CONCAT22(uVar6,0x101) + 0x10000);
         }
       }
-      *(undefined4 *)(unaff_A6 + 0x1e) = uVar9;
+      *(undefined4 *)(record + 0x1e) = uVar9;
       return;
     }
     iVar8 = (uint)uVar5 << 0x10;
   }
-  *(int *)(unaff_A6 + 0x1a) = iVar8;
+  *(int *)(record + 0x1a) = iVar8;
   return;
 }
 
@@ -6702,7 +6780,9 @@ bool get_gps_datetime(uint32_t *param_1,uint32_t *param_2)
 
 /* 00013782 */
 
-void FUN_00013782(void)
+/* recomputes the clock record's local time from its UTC and checksums it, in supervisor mode */
+
+void clock_record_refresh(void)
 
 {
   enter_supervisor();
@@ -6835,15 +6915,17 @@ __regcall void clock_set_leap_year(char *february __asm("a0"),int year __asm("d7
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* sets the clock record up: its month tables, uptime and time zero, the date from the lifetime
+   record, a 60-second minute */
 
-void FUN_00013908(short param_1)
+void clock_init(short param_1)
 
 {
   bool bVar1;
   
   bVar1 = param_1 == 0;
   if (bVar1) {
-    FUN_000134ca();
+    clock_record_sum((char *)0x1009b8);
     if (bVar1) goto LAB_00013974;
   }
   _DAT_001009c6 = 0x1f001f1e;
@@ -6956,7 +7038,7 @@ char tcode_request(byte param_1)
     bVar2 = false;
   }
   cVar1 = '\0';
-  if ((bVar2) && (cVar1 = FUN_0001df8a(), cVar1 != '\0')) {
+  if ((bVar2) && (cVar1 = drtb_release_for_timecode(), cVar1 != '\0')) {
     tcode_pending = 1;
   }
   return cVar1;
@@ -7053,7 +7135,7 @@ void es_build(uint32_t param_1,uint param_2)
             (uint)status_summary);
     es_length = 0x12;
   }
-  FUN_0001406a(0x28f5);
+  es_schedule(0x28f5);
   return;
 }
 
@@ -7141,7 +7223,7 @@ uint timecode_update(void)
       case 0x8e:
         local_10 = get_clock_date();
         uStack_c = get_clock_time();
-        FUN_00011300(&local_10,&uStack_c);
+        time_next_second(&local_10,&uStack_c);
         if (tcode_format == 1) {
           sprintf(tcode_message,"rtcm? %u,T2%04d%02d%02d%02d%02d%02d%01d%01d%1c%1c%1c",0xffffffff,
                   (uint)local_10._0_2_,(uint)local_10._2_1_,local_10 & 0xff,(uint)uStack_c._1_1_,
@@ -7170,7 +7252,7 @@ uint timecode_update(void)
       tcode_length = 0;
     }
     if (tcode_length != 0) {
-      uVar3 = FUN_00013fa6(0x28f5);
+      uVar3 = timecode_schedule(0x28f5);
     }
     tcode_pending = 0;
   }
@@ -7180,7 +7262,9 @@ uint timecode_update(void)
 
 /* 00013ee4 */
 
-void FUN_00013ee4(void)
+/* clears the time code's and the ES message's state */
+
+void timecode_init(void)
 
 {
   tcode_length = 0;
@@ -7195,8 +7279,9 @@ void FUN_00013ee4(void)
 /* 00013fa6 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* sets output compare 3 to fire a time code character a delay after the 1PPS capture */
 
-void FUN_00013fa6(uint param_1)
+void timecode_schedule(uint param_1)
 
 {
   uint uVar1;
@@ -7222,7 +7307,7 @@ void FUN_00013fa6(uint param_1)
       if (tcode_length == 0) {
         return;
       }
-      FUN_0001de32(tcode_message,tcode_length);
+      drtb_send_async(tcode_message,tcode_length);
       return;
     }
     _DAT_00100bd2 = _DAT_00100bd2 + -1;
@@ -7250,7 +7335,7 @@ __exception undefined8 primary_user_86(void)
   
   if (_DAT_00100bd2 == 0) {
     if (tcode_length != 0) {
-      FUN_0001de32(tcode_message,tcode_length);
+      drtb_send_async(tcode_message,tcode_length);
     }
     uVar1 = Ram00fff922;
     Ram00fff922 = uVar1 & 0xdfff;
@@ -7269,8 +7354,9 @@ __exception undefined8 primary_user_86(void)
 /* 0001406a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* sets output compare 4 to fire an ES message character a delay after the 1PPS capture */
 
-void FUN_0001406a(uint param_1)
+void es_schedule(uint param_1)
 
 {
   uint uVar1;
@@ -7296,7 +7382,7 @@ void FUN_0001406a(uint param_1)
       if (es_length == 0) {
         return;
       }
-      FUN_000201e0(es_message,es_length);
+      sci_send_async(es_message,es_length);
       return;
     }
     _DAT_00100bd0 = _DAT_00100bd0 + -1;
@@ -7324,7 +7410,7 @@ __exception undefined8 primary_user_87(void)
   
   if (_DAT_00100bd0 == 0) {
     if (es_length != 0) {
-      FUN_000201e0(es_message,es_length);
+      sci_send_async(es_message,es_length);
     }
     uVar1 = Ram00fff922;
     Ram00fff922 = uVar1 & 0xbfff;
@@ -7609,7 +7695,7 @@ LAB_000148e6:
     DAT_00100c30 = DAT_00100c30 | 0x20;
   }
   *(undefined4 *)(puVar14 + -1) = 0x14904;
-  FUN_0001ecae();
+  duart_early_init();
   if (_DAT_00100c2e != 0) {
     DUART_STOP_ROPBC = 0x40;
     DAT_00100c30 = DAT_00100c30 | 0x40;
@@ -7627,9 +7713,9 @@ LAB_000148e6:
   DAT_0010ffee = 0;
   DAT_0010ffea = 0;
   DAT_0010ffe6 = 0x14964;
-  DAT_0010fff2 = FUN_00012d6e();
+  DAT_0010fff2 = primary_start();
   DAT_0010ffee = 0x1496e;
-  FUN_000149a8();
+  program_exit();
   do {
                     /* WARNING: Do nothing block with infinite loop */
   } while( true );
@@ -7859,7 +7945,7 @@ LAB_000148e6:
     DAT_00100c30 = DAT_00100c30 | 0x20;
   }
   *(undefined4 *)(puVar16 + -1) = 0x14904;
-  FUN_0001ecae();
+  duart_early_init();
   if (_DAT_00100c2e != 0) {
     DUART_STOP_ROPBC = 0x40;
     DAT_00100c30 = DAT_00100c30 | 0x40;
@@ -7877,9 +7963,9 @@ LAB_000148e6:
   DAT_0010ffee = 0;
   DAT_0010ffea = 0;
   DAT_0010ffe6 = 0x14964;
-  DAT_0010fff2 = FUN_00012d6e();
+  DAT_0010fff2 = primary_start();
   DAT_0010ffee = 0x1496e;
-  FUN_000149a8();
+  program_exit();
   do {
                     /* WARNING: Do nothing block with infinite loop */
   } while( true );
@@ -7888,11 +7974,13 @@ LAB_000148e6:
 
 /* 000149a8 */
 
-void FUN_000149a8(undefined4 param_1)
+/* runs the atexit functions and reports "Prog end, returned" with the code; never returns */
+
+void program_exit(undefined4 param_1)
 
 {
   call_atexit_functions();
-  FUN_000149bc(param_1);
+  program_end_report(param_1);
   do {
                     /* WARNING: Do nothing block with infinite loop */
   } while( true );
@@ -7901,7 +7989,9 @@ void FUN_000149a8(undefined4 param_1)
 
 /* 000149bc */
 
-void FUN_000149bc(uint param_1)
+/* builds "Prog end, returned N" and stops with fatal_error_with_code */
+
+void program_end_report(uint param_1)
 
 {
   uint uVar1;
@@ -11445,7 +11535,7 @@ void os_report_cpu(code *param_1)
 {
   int iVar1;
   
-  iVar1 = FUN_00010538();
+  iVar1 = idle_count();
   (*param_1)("Free CPU cycles: count 0x%08X, approx %2d%%\r\n",iVar1,
              (uint)(&UNK_0007a120 + iVar1 * 0xac) / 1000000);
   return;
@@ -11475,7 +11565,9 @@ char * task_name(void *task)
 
 /* 000160de */
 
-undefined * FUN_000160de(int param_1)
+/* a task's or exchange's four-character name, from its record at +0x14 */
+
+undefined * object_name(int param_1)
 
 {
   undefined *puVar1;
@@ -11534,7 +11626,7 @@ void os_report_exchange(undefined4 *param_1,code *param_2)
   else {
     sprintf(acStack_2c,"%d",(uint)*(byte *)(param_1 + 8));
   }
-  uVar2 = FUN_000160de(param_1,pcVar3,puVar4,acStack_2c,*(undefined1 *)((int)param_1 + 0x21));
+  uVar2 = object_name(param_1,pcVar3,puVar4,acStack_2c,*(undefined1 *)((int)param_1 + 0x21));
   (*param_2)("0x%07x  %4s  %4s %4s  %3s    %d    ",param_1,uVar2);
   task = (undefined4 *)*param_1;
   while (task != param_1) {
@@ -11602,7 +11694,9 @@ char * task_status_name(int param_1)
 
 /* 00016280 */
 
-void FUN_00016280(undefined4 param_1,undefined4 *param_2,code *param_3)
+/* prints one memory region's line of the kernel report */
+
+void os_report_region_line(undefined4 param_1,undefined4 *param_2,code *param_3)
 
 {
   (*param_3)("%4s 0x%08x %7d   0x%08x  0x%08x  0x%08x 0x%04x\r\n",param_1,param_2,param_2[3],
@@ -11613,7 +11707,9 @@ void FUN_00016280(undefined4 param_1,undefined4 *param_2,code *param_3)
 
 /* 000162b2 */
 
-undefined4 * FUN_000162b2(int param_1,int param_2)
+/* the segment of a region that holds an address */
+
+undefined4 * region_segment_containing(int param_1,int param_2)
 
 {
   undefined4 *puVar1;
@@ -11669,7 +11765,7 @@ void os_report_process(void *param_1,char *param_2,int param_3,undefined4 param_
     unaff_D6 = puVar9[3] + unaff_D6;
   }
   iVar5 = *(int *)((int)param_1 + 0x3a);
-  iVar3 = FUN_000162b2(param_1,*(undefined4 *)((int)param_1 + 0x36));
+  iVar3 = region_segment_containing(param_1,*(undefined4 *)((int)param_1 + 0x36));
   if (iVar3 != 0) {
     uVar6 = (*(int *)((int)param_1 + 0x8a) - *(int *)((int)param_1 + 0x8e)) - 4;
     if (uVar6 == 0) {
@@ -11725,7 +11821,7 @@ LAB_0001639a:
           (*param_5)(&DAT_00051382,&DAT_000512e6);
           goto LAB_000164c2;
         }
-        uVar4 = FUN_000160de(piVar8[1]);
+        uVar4 = object_name(piVar8[1]);
         (*param_5)(&DAT_00051382,uVar4);
         piVar8 = (int *)*piVar8;
       } while (piVar8 == (int *)0x0);
@@ -11743,7 +11839,9 @@ LAB_000164c2:
 
 /* 000164f2 */
 
-int FUN_000164f2(int param_1)
+/* the ticks until a task's delay expires: the sum of the delta list's ticks up to it */
+
+int timer_ticks_until(int param_1)
 
 {
   int iVar1;
@@ -11765,8 +11863,9 @@ int FUN_000164f2(int param_1)
 /* 00016540 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* snapshots the kernel's tasks and their states into task_table for the reports */
 
-int FUN_00016540(void)
+int task_table_build(void)
 
 {
   int iVar1;
@@ -11907,7 +12006,9 @@ void os_report_exchange_summary(code *param_1)
 
 /* 00016730 */
 
-int FUN_00016730(undefined4 *param_1)
+/* a task's place in the ready queue; -1 if it is not there */
+
+int ready_queue_position(undefined4 *param_1)
 
 {
   int iVar1;
@@ -11950,9 +12051,9 @@ int os_report_processes(code *param_1)
     for (iVar6 = 1; iVar6 < task_count; iVar6 = iVar6 + 1) {
       if ((char)(&DAT_001026b6)[iVar6 * 6] == iVar5) {
         iVar1 = *(int *)(&task_table + iVar6 * 6);
-        uVar3 = FUN_00016730(iVar1);
+        uVar3 = ready_queue_position(iVar1);
         if (iVar5 == 1) {
-          uVar4 = FUN_000164f2(iVar1);
+          uVar4 = timer_ticks_until(iVar1);
         }
         else {
           uVar4 = (uint)*(ushort *)(iVar1 + 0x1a);
@@ -12070,7 +12171,9 @@ LAB_000169e4:
 
 /* 000169fa */
 
-undefined4 FUN_000169fa(uint param_1)
+/* 1 if an exchange ID is one, by the swapped address its record holds; called by nothing */
+
+undefined4 exchange_id_valid(uint param_1)
 
 {
   undefined4 uVar1;
@@ -12088,7 +12191,9 @@ undefined4 FUN_000169fa(uint param_1)
 
 /* 00016a20 */
 
-undefined4 FUN_00016a20(uint param_1)
+/* 1 if a task ID is one, by the complemented address its record holds; called by nothing */
+
+undefined4 task_id_valid(uint param_1)
 
 {
   undefined4 uVar1;
@@ -12116,7 +12221,7 @@ void os_process_report(undefined1 param_1)
   printf("%s","=================================================================\r\n");
   printf("%s","\r\n");
   os_report_cpu(printf);
-  task_count = FUN_00016540();
+  task_count = task_table_build();
   printf("%s","\r\n");
   os_report_processes(printf);
   os_report_process_summary(printf);
@@ -12147,7 +12252,7 @@ void os_memory_report(undefined1 param_1)
   
   printf("%s","\r\n");
   printf("%s","=================================================================\r\n");
-  task_count = FUN_00016540();
+  task_count = task_table_build();
   printf("%s","\r\n");
   printf("%s","Process  Memseg size(bytes)     next        last    neighbor   key\r\n");
   for (iVar2 = 0; iVar2 < task_count; iVar2 = iVar2 + 1) {
@@ -12157,7 +12262,7 @@ void os_memory_report(undefined1 param_1)
       pcVar5 = printf;
       puVar4 = puVar3;
       pcVar1 = task_name(task);
-      FUN_00016280(pcVar1,puVar4,pcVar5);
+      os_report_region_line(pcVar1,puVar4,pcVar5);
     }
   }
   iVar2 = 0;
@@ -12167,7 +12272,7 @@ void os_memory_report(undefined1 param_1)
       printf(">> Free memory - region: %d\r\n",iVar2);
     }
     for (; puVar3 != (undefined4 *)0x0; puVar3 = (undefined4 *)*puVar3) {
-      FUN_00016280("****",puVar3,printf);
+      os_report_region_line("****",puVar3,printf);
     }
     iVar2 = iVar2 + 1;
   } while (iVar2 < 2);
@@ -12245,7 +12350,7 @@ void task_stack_report(undefined1 param_1)
   printf("%s","\r\n");
   printf("%s","=================================================================\r\n");
   printf("%s","\r\n");
-  task_count = FUN_00016540();
+  task_count = task_table_build();
   printf("%s","    pid   name     USP   size            SSP   size\r\n");
   for (sVar2 = 0; uVar1 = (ushort)unaff_D2, sVar2 < task_count; sVar2 = sVar2 + 1) {
     task = *(void **)(&task_table + sVar2 * 6);
@@ -12343,7 +12448,9 @@ void psos_debug_output(char param_1)
 
 /* 00016ee6 */
 
-void FUN_00016ee6(void)
+/* counts a tick to the running task, at +0xae of its record; called by nothing */
+
+void task_count_tick(void)
 
 {
   *(int *)(*psos_config + 0xae) = *(int *)(*psos_config + 0xae) + 1;
@@ -13039,8 +13146,10 @@ undefined4 FUN_0001749e(void)
 /* 00017628 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the RAM self-test's pattern pass, saving and restoring each block around 0xaaaaaaaa and its
+   complement */
 
-void FUN_00017628(void)
+void ram_pattern_test(void)
 
 {
   undefined2 uVar1;
@@ -13165,7 +13274,9 @@ void FUN_00017628(void)
 
 /* 00017750 */
 
-uint FUN_00017750(byte *param_1,short param_2)
+/* sums a ROM's even and odd byte lanes, one checksum for each chip; called by nothing */
+
+uint rom_lane_checksum(byte *param_1,short param_2)
 
 {
   ushort uVar1;
@@ -13315,7 +13426,7 @@ void selftest_internal_reference(char param_1)
   if (param_1 == '\x01') {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
-      FUN_000184a4();
+      internal_pps_test();
     }
   }
   cVar2 = selftest_may_report(param_1);
@@ -13348,17 +13459,17 @@ void selftest_ram(char param_1)
   if (param_1 == '\x01') {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
-      FUN_00018c48();
+      ram_pattern_test_locked();
     }
   }
   cVar2 = selftest_may_report(param_1);
   if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c26 != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      FUN_00018396(_DAT_00100c28,(short)acStack_51,0x10);
+      format_binary(_DAT_00100c28,(short)acStack_51,0x10);
       sprintf(acStack_40,"%s %s","System RAM: D15-D0:",acStack_51);
       selftest_report_fail((uint)(_DAT_00100c26 & 1),acStack_40,'\0');
-      FUN_00018396(_DAT_00100c2a,acStack_64,0x12);
+      format_binary(_DAT_00100c2a,acStack_64,0x12);
       sprintf(acStack_40,"%s %s","System RAM: adr line A18-A1:",acStack_64);
       selftest_report_fail((uint)(_DAT_00100c26 & 2),acStack_40,'\0');
     }
@@ -13446,7 +13557,7 @@ void selftest_qspi(char param_1)
   if (param_1 == '\x01') {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
-      FUN_00018c8e();
+      selftest_qspi_run();
     }
   }
   cVar2 = selftest_may_report(param_1);
@@ -13496,8 +13607,9 @@ void selftest_fpga(char param_1)
 /* 00017ca4 */
 
 /* WARNING: Unknown calling convention */
+/* runs the lamp test unless the self-test has been aborted */
 
-void FUN_00017ca4(char param_1)
+void selftest_lamps(char param_1)
 
 {
   int iVar1;
@@ -13505,7 +13617,7 @@ void FUN_00017ca4(char param_1)
   if (param_1 == '\x01') {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
-      FUN_000184ee();
+      lamp_test();
     }
   }
   return;
@@ -13528,7 +13640,7 @@ void selftest_uart(char param_1)
   if (param_1 == '\x01') {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
-      FUN_0001e650();
+      duart_test();
     }
   }
   cVar2 = selftest_may_report(param_1);
@@ -13604,7 +13716,7 @@ void selftest_power(char param_1)
   if (param_1 == '\x01') {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
-      FUN_00018546();
+      supplies_test();
     }
   }
   cVar2 = selftest_may_report(param_1);
@@ -13723,7 +13835,9 @@ void selftest_report_fail(int param_1,char *param_2,char param_3)
 
 /* 00018396 */
 
-void FUN_00018396(uint param_1,int param_2,int param_3)
+/* a number as a string of binary digits */
+
+void format_binary(uint param_1,int param_2,int param_3)
 
 {
   int iVar1;
@@ -13750,7 +13864,9 @@ bool selftest_aborted(void)
 
 /* 000183de */
 
-void FUN_000183de(uint param_1)
+/* pauses so many ticks, stopping if the self-test is aborted */
+
+void selftest_delay(uint param_1)
 
 {
   int iVar1;
@@ -13810,8 +13926,9 @@ undefined1 selftest_abort_wait(void)
 /* 000184a4 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* counts the internal 1PPS over 1024 ticks; fails unless one to three came */
 
-void FUN_000184a4(void)
+void internal_pps_test(void)
 
 {
   uint8_t uVar1;
@@ -13829,7 +13946,9 @@ void FUN_000184a4(void)
 
 /* 000184ee */
 
-void FUN_000184ee(void)
+/* lights every lamp, then none, then each in turn, then restores them */
+
+void lamp_test(void)
 
 {
   ushort uVar1;
@@ -13854,8 +13973,9 @@ void FUN_000184ee(void)
 /* 00018546 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* checks the 5 V, +15 V and -15 V supplies within 10 percent */
 
-void FUN_00018546(void)
+void supplies_test(void)
 
 {
   float fVar1;
@@ -13899,7 +14019,7 @@ void selftest_print_failure(char param_1)
   undefined **ppuVar4;
   char acStack_12 [14];
   
-  ppuVar4 = &PTR_FUN_000186b0;
+  ppuVar4 = &PTR_lamp_test_command_000186b0;
   DAT_00100c58 = '\x01';
   if (param_1 != '\0') {
     _DAT_00100c34 = 0;
@@ -13935,7 +14055,9 @@ void selftest_print_failure(char param_1)
 
 /* 0001876c */
 
-ushort FUN_0001876c(ushort *param_1)
+/* shifts three 12-bit words right one bit as a 36-bit number */
+
+ushort shift_right_36(ushort *param_1)
 
 {
   ushort uVar1;
@@ -13959,7 +14081,9 @@ ushort FUN_0001876c(ushort *param_1)
 
 /* 000187aa */
 
-undefined1 FUN_000187aa(void)
+/* writes three words to QSPI device 2, the hex DAC, reads them back shifted and compares */
+
+undefined1 qspi_hex_dac_test(void)
 
 {
   uint uVar1;
@@ -13976,7 +14100,7 @@ undefined1 FUN_000187aa(void)
   local_18[2] = 0x456;
   qspi_send(2,local_18,3);
   qspi_transfer(2,&local_c,3);
-  FUN_0001876c(local_18 + 3);
+  shift_right_36(local_18 + 3);
   uVar1 = 0;
   do {
     if (local_18[uVar1] != local_18[uVar1 + 3]) {
@@ -13989,7 +14113,7 @@ undefined1 FUN_000187aa(void)
   local_18[2] = 0xcba;
   qspi_send(2,local_18,3);
   qspi_transfer(2,&local_c,3);
-  FUN_0001876c(local_18 + 3);
+  shift_right_36(local_18 + 3);
   uVar1 = 0;
   do {
     if (local_18[uVar1] != local_18[uVar1 + 3]) {
@@ -13997,14 +14121,16 @@ undefined1 FUN_000187aa(void)
     }
     uVar1 = uVar1 + 1;
   } while (uVar1 < 3);
-  FUN_0001f62e();
+  hdac_update();
   return uVar2;
 }
 
 
 /* 00018890 */
 
-undefined4 FUN_00018890(void)
+/* reads QSPI device 1, the ADC, and checks its status bits */
+
+undefined4 qspi_adc_test(void)
 
 {
   undefined2 extraout_D0u;
@@ -14036,7 +14162,9 @@ LAB_00018910:
 
 /* 00018918 */
 
-undefined1 FUN_00018918(void)
+/* loads the FPGA and checks it */
+
+undefined1 fpga_load_test(void)
 
 {
   char cVar1;
@@ -14047,7 +14175,7 @@ undefined1 FUN_00018918(void)
     uVar2 = 0;
   }
   else {
-    uVar2 = FUN_00023980(0,'\0');
+    uVar2 = fpga_verify(0,'\0');
   }
   return uVar2;
 }
@@ -14055,7 +14183,9 @@ undefined1 FUN_00018918(void)
 
 /* 0001895e */
 
-bool FUN_0001895e(void)
+/* writes 0x5555 and 0xaaaa to QSPI device 7, the EFC DAC, and reads each back */
+
+bool qspi_efc_test(void)
 
 {
   bool bVar1;
@@ -14079,32 +14209,34 @@ bool FUN_0001895e(void)
 
 /* 000189f2 */
 
-void FUN_000189f2(void)
+/* runs the ADC, hex DAC, FPGA and EFC tests with interrupts held off, a failure bit for each */
+
+void qspi_tests_run(void)
 
 {
   uint16_t uVar1;
   char cVar2;
   
   uVar1 = set_interrupt_mask(0x700);
-  cVar2 = FUN_00018890();
+  cVar2 = qspi_adc_test();
   if (cVar2 == '\0') {
     DAT_00100c48 = DAT_00100c48 | 2;
   }
   set_interrupt_mask(uVar1);
   uVar1 = set_interrupt_mask(0x700);
-  cVar2 = FUN_000187aa();
+  cVar2 = qspi_hex_dac_test();
   if (cVar2 == '\0') {
     DAT_00100c48 = DAT_00100c48 | 4;
   }
   set_interrupt_mask(uVar1);
   uVar1 = set_interrupt_mask(0x700);
-  cVar2 = FUN_00018918();
+  cVar2 = fpga_load_test();
   if (cVar2 == '\0') {
     DAT_00100c48 = DAT_00100c48 | 0x40;
   }
   set_interrupt_mask(uVar1);
   uVar1 = set_interrupt_mask(0x700);
-  cVar2 = FUN_0001895e();
+  cVar2 = qspi_efc_test();
   if (cVar2 == '\0') {
     DAT_00100c48 = DAT_00100c48 | 0x80;
   }
@@ -14201,7 +14333,9 @@ void selftest_run(byte param_1)
 
 /* 00018c48 */
 
-void FUN_00018c48(void)
+/* ram_pattern_test with interrupts held off, unless the self-test is aborted */
+
+void ram_pattern_test_locked(void)
 
 {
   int iVar1;
@@ -14210,7 +14344,7 @@ void FUN_00018c48(void)
   iVar1 = selftest_aborted();
   if (iVar1 == 0) {
     sr = set_interrupt_mask(0x700);
-    FUN_00017628();
+    ram_pattern_test();
     set_interrupt_mask(sr);
   }
   return;
@@ -14235,22 +14369,26 @@ void FUN_00018c74(void)
 
 /* 00018c8e */
 
-void FUN_00018c8e(void)
+/* clears the QSPI failure bits and runs the tests */
+
+void selftest_qspi_run(void)
 
 {
   DAT_00100c48 = 0;
-  FUN_000189f2();
+  qspi_tests_run();
   return;
 }
 
 
 /* 00018c9c */
 
-short FUN_00018c9c(void)
+/* the QSPI tests, lighting the failure lamp on a failure; called by nothing */
+
+short selftest_qspi_with_lamp(void)
 
 {
   DAT_00100c48 = 0;
-  FUN_000189f2();
+  qspi_tests_run();
   if (DAT_00100c48 != 0) {
     duart_output_bits(0x80,0);
   }
@@ -14261,8 +14399,9 @@ short FUN_00018c9c(void)
 /* 00018cec */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the interpolator test, lighting the failure lamp on a failure; called by nothing */
 
-short FUN_00018cec(void)
+short selftest_interpolator_with_lamp(void)
 
 {
   _DAT_00100c3a = 0;
@@ -14277,12 +14416,13 @@ short FUN_00018cec(void)
 /* 00018d16 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the internal 1PPS test, lighting the failure lamp on a failure; called by nothing */
 
-short FUN_00018d16(void)
+short selftest_internal_reference_with_lamp(void)
 
 {
   _DAT_00100c46 = 0;
-  FUN_000184a4();
+  internal_pps_test();
   if (_DAT_00100c46 != 0) {
     duart_output_bits(0x80,0);
   }
@@ -14292,10 +14432,12 @@ short FUN_00018d16(void)
 
 /* 00018d40 */
 
-undefined4 FUN_00018d40(void)
+/* runs the lamp test and returns 0; called by nothing */
+
+undefined4 lamp_test_command(void)
 
 {
-  FUN_000184ee();
+  lamp_test();
   return 0;
 }
 
@@ -18615,8 +18757,12 @@ undefined4 console_task_create(void)
 /* 0001af98 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* reads a line into the buffer at A1, D2 long, from the string at 0x100ba8 while one is set, else
+   from the console device
+   Not a C function (register; read): its arguments and results in registers.  In: A1, D2.
+   console.md */
 
-void FUN_0001af98(void)
+__regcall void console_read_from_string(void)
 
 {
   char cVar1;
@@ -20626,8 +20772,9 @@ void diag_words_define(void)
 /* 0001d572 */
 
 /* WARNING: Unknown calling convention */
+/* sets GP port bits 2 to 4 to a selection 0 to 6 */
 
-int FUN_0001d572(char param_1)
+int gp_port_select(char param_1)
 
 {
   byte bVar1;
@@ -20645,7 +20792,9 @@ int FUN_0001d572(char param_1)
 
 /* 0001d594 */
 
-void FUN_0001d594(void)
+/* DUART channel B's mode bits from the serial settings: parity, data bits, stop bits */
+
+void duartb_mode_from_settings(void)
 
 {
   DAT_00102ed7 = DAT_00102ed7 & 0xe0;
@@ -20683,7 +20832,9 @@ void FUN_0001d594(void)
 
 /* 0001d632 */
 
-void FUN_0001d632(void)
+/* DUART channel B's baud rate code from the serial settings */
+
+void duartb_baud_from_settings(void)
 
 {
   int iVar1;
@@ -20796,7 +20947,7 @@ undefined4 drtb_getc(void)
   DAT_00102feb = cVar2;
   if ((((DAT_001030f8 & 0x20) != 0) && (uVar3 = 0, 0x10 < (byte)(cVar2 - DAT_00102fea))) &&
      (DAT_001030f8 = DAT_001030f8 & 0xdf, DAT_001030fc != '\0')) {
-    FUN_0001ddf6(0x11);
+    drtb_putc(0x11);
     uVar3 = extraout_var;
   }
   return CONCAT31(uVar3,uVar1);
@@ -20894,14 +21045,16 @@ LAB_0001d8ca:
 
 /* 0001d906 */
 
-void FUN_0001d906(void)
+/* releases channel B's read or write mutex, D0 choosing
+   Not a C function (register; read): its arguments and results in registers.  In: D0 char write. */
+
+__regcall void drtb_unlock(char write __asm("d0"))
 
 {
-  char in_D0b;
   uint32_t *mutex;
   
   mutex = &drtR_status;
-  if (in_D0b != '\0') {
+  if (write != '\0') {
     mutex = &drtW_status;
   }
   mutex_release(mutex);
@@ -20911,14 +21064,16 @@ void FUN_0001d906(void)
 
 /* 0001d922 */
 
-void FUN_0001d922(void)
+/* takes channel B's read or write mutex, D0 choosing
+   Not a C function (register; read): its arguments and results in registers.  In: D0 char write. */
+
+__regcall void drtb_lock(char write __asm("d0"))
 
 {
-  char in_D0b;
   uint32_t *mutex;
   
   mutex = &drtR_status;
-  if (in_D0b != '\0') {
+  if (write != '\0') {
     mutex = &drtW_status;
   }
   mutex_acquire(mutex);
@@ -20962,10 +21117,10 @@ undefined8 duart_init(void)
   DUART_MR1A_MR2A = 7;
   DAT_00102ed7 = 0;
   DAT_00102ed8 = 0;
-  FUN_0001d594();
+  duartb_mode_from_settings();
   DAT_00102ed2 = 0xbb;
   DUART_SRA_CSRA = 0xbb;
-  FUN_0001d632();
+  duartb_baud_from_settings();
   DAT_00102ed3 = 0xa0;
   DUART_IPCR_ACR = 0xa0;
   DUART_IVR = 0x43;
@@ -20978,7 +21133,7 @@ undefined8 duart_init(void)
   DUART_CUR_CTUR = DAT_00102ed5;
   DUART_CLR_CTLR = DAT_00102ed6;
   DAT_00102edc = 0;
-  FUN_0001d572('\0');
+  gp_port_select('\0');
   DAT_00102ed4 = 0x22;
   DUART_ISR_IMR = 0x22;
   DUART_CRA = 5;
@@ -21046,7 +21201,7 @@ undefined8 duart_init(void)
     _DAT_0010313c = (code *)&UNK_0001d570;
   }
   else {
-    _DAT_0010313c = FUN_0001ddf6;
+    _DAT_0010313c = drtb_putc;
   }
   return CONCAT44(in_D0,in_D1);
 }
@@ -21055,8 +21210,9 @@ undefined8 duart_init(void)
 /* 0001dc7e */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* resets DUART channel B and applies the serial settings' mode and baud rate */
 
-uint FUN_0001dc7e(void)
+uint duartb_reconfigure(void)
 
 {
   byte bVar1;
@@ -21075,8 +21231,8 @@ uint FUN_0001dc7e(void)
   }
   DUART_CRB = 0x20;
   DUART_CRB = 0x30;
-  FUN_0001d594();
-  uVar3 = FUN_0001d632();
+  duartb_mode_from_settings();
+  uVar3 = duartb_baud_from_settings();
   DUART_CRB = 4;
   uVar2 = (undefined3)(uVar3 >> 8);
   if (DAT_00101f5c == '\0') {
@@ -21098,7 +21254,7 @@ uint FUN_0001dc7e(void)
     _DAT_0010313c = (code *)&UNK_0001d570;
   }
   else {
-    _DAT_0010313c = FUN_0001ddf6;
+    _DAT_0010313c = drtb_putc;
   }
   DAT_00102ed4 = DAT_00102ed4 | 0x30;
   DUART_ISR_IMR = DAT_00102ed4;
@@ -21110,13 +21266,15 @@ uint FUN_0001dc7e(void)
 
 /* 0001dd98 */
 
-void FUN_0001dd98(void)
+/* the console device's write: drtb_puts under the write lock */
+
+void drtb_write(void)
 
 {
   if (DAT_0010313a == '\0') {
-    FUN_0001d922();
+    drtb_lock('\x01');
     drtb_puts();
-    FUN_0001d906();
+    drtb_unlock('\x01');
   }
   return;
 }
@@ -21124,7 +21282,9 @@ void FUN_0001dd98(void)
 
 /* 0001ddd6 */
 
-void FUN_0001ddd6(void)
+/* the console device's read: drtb_gets */
+
+void drtb_read(void)
 
 {
   drtb_gets();
@@ -21134,7 +21294,9 @@ void FUN_0001ddd6(void)
 
 /* 0001ddf6 */
 
-void FUN_0001ddf6(undefined1 param_1)
+/* writes a character to channel B under the write lock */
+
+void drtb_putc(undefined1 param_1)
 
 {
   int iVar1;
@@ -21156,8 +21318,9 @@ void FUN_0001ddf6(undefined1 param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* queues a block for channel B to send by interrupt */
 
-void FUN_0001de32(undefined4 param_1,undefined1 param_2)
+void drtb_send_async(undefined4 param_1,undefined1 param_2)
 
 {
   if (((DAT_0010313a != '\0') && (DAT_001030ff == '\0')) && (DAT_00103100 == '\0')) {
@@ -21202,7 +21365,9 @@ void printf(char *format,...)
 
 /* 0001debc */
 
-ulong FUN_0001debc(void *param_1,ulong param_2,undefined1 *param_3)
+/* reads from the console, device 0, and its last status */
+
+ulong console_read(void *param_1,ulong param_2,undefined1 *param_3)
 
 {
   psos_io_read(0,param_1,&param_2);
@@ -21263,7 +21428,9 @@ void printf_polled(char *format,...)
 
 /* 0001df6e */
 
-bool FUN_0001df6e(void)
+/* 1 if channel B's write mutex is held by another */
+
+bool drtb_try_lock_write(void)
 
 {
   int iVar1;
@@ -21275,12 +21442,14 @@ bool FUN_0001df6e(void)
 
 /* 0001df8a */
 
-undefined1 FUN_0001df8a(void)
+/* closes the console device so that channel B can send the time code */
+
+undefined1 drtb_release_for_timecode(void)
 
 {
   char cVar1;
   
-  if (((DAT_001030f8 & 0x80) == 0) && (cVar1 = FUN_0001df6e(), cVar1 == '\0')) {
+  if (((DAT_001030f8 & 0x80) == 0) && (cVar1 = drtb_try_lock_write(), cVar1 == '\0')) {
     DAT_0010313a = 1;
     psos_io_close(1);
     return 1;
@@ -21292,8 +21461,9 @@ undefined1 FUN_0001df8a(void)
 /* 0001dfe6 */
 
 /* WARNING: Unknown calling convention */
+/* sets or clears the DUART's output port bit 0 */
 
-void FUN_0001dfe6(char param_1)
+void duart_op0_set(char param_1)
 
 {
   uint16_t sr;
@@ -21315,8 +21485,9 @@ void FUN_0001dfe6(char param_1)
 /* 0001e02c */
 
 /* WARNING: Unknown calling convention */
+/* sets or clears the DUART's output port bit 1 */
 
-void FUN_0001e02c(char param_1)
+void duart_op1_set(char param_1)
 
 {
   uint16_t sr;
@@ -21563,8 +21734,9 @@ void duart_loopback_test_b(void)
 /* 0001e574 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the DUART self-test's counter and timer test */
 
-void FUN_0001e574(void)
+void duart_counter_test(void)
 
 {
   byte bVar1;
@@ -21590,7 +21762,7 @@ void FUN_0001e574(void)
   DAT_00102ed6 = 0xff;
   DUART_CUR_CTUR = 0xff;
   DUART_CLR_CTLR = 0xff;
-  FUN_0001339e(0,local_6[0]);
+  task_set_priority(0,local_6[0]);
   if ((0xf8cc < CONCAT11(bVar1,bVar2)) || (CONCAT11(bVar1,bVar2) < 0xf533)) {
     _DAT_00100c2e = _DAT_00100c2e | 2;
   }
@@ -21601,8 +21773,9 @@ void FUN_0001e574(void)
 /* 0001e650 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the DUART self-test: its interrupt vector register, its counter, both channels' loopbacks */
 
-void FUN_0001e650(void)
+void duart_test(void)
 
 {
   byte bVar1;
@@ -21623,7 +21796,7 @@ void FUN_0001e650(void)
   DUART_IVR = 0x43;
   set_interrupt_mask(sr);
   if (_DAT_00100c2e == 0) {
-    FUN_0001e574();
+    duart_counter_test();
     duart_loopback_test_a();
     duart_loopback_test_b();
   }
@@ -21634,8 +21807,9 @@ void FUN_0001e650(void)
 /* 0001e6be */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the loopback test's receive on channel A: compares with the next expected character */
 
-void FUN_0001e6be(void)
+void duart_test_rx_a(void)
 
 {
   byte bVar1;
@@ -21654,8 +21828,9 @@ void FUN_0001e6be(void)
 /* 0001e6e2 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the loopback test's receive on channel B */
 
-void FUN_0001e6e2(void)
+void duart_test_rx_b(void)
 
 {
   byte bVar1;
@@ -21674,8 +21849,9 @@ void FUN_0001e6e2(void)
 /* 0001e706 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the loopback test's transmit on channel A: sends the next character, or stops at the end */
 
-void FUN_0001e706(void)
+void duart_test_tx_a(void)
 
 {
   if (*_DAT_00103142 == 0) {
@@ -21693,8 +21869,9 @@ void FUN_0001e706(void)
 /* 0001e736 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the loopback test's transmit on channel B */
 
-void FUN_0001e736(void)
+void duart_test_tx_b(void)
 
 {
   if (*_DAT_00103142 == 0) {
@@ -21836,8 +22013,9 @@ byte duartb_isr(void)
 /* 0001e9ca */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* sends the next byte to the GPS engine, signaling the GPS task 0x800 once the message is out */
 
-void FUN_0001e9ca(void)
+void duarta_tx_interrupt(void)
 
 {
   if (_DAT_00102fe4 == 0) {
@@ -21921,17 +22099,17 @@ __exception void primary_user_67(void)
     }
     bVar1 = DUART_ISR_IMR;
     if ((DAT_00102ed4 & bVar1 & 1) != 0) {
-      FUN_0001e9ca();
+      duarta_tx_interrupt();
     }
   }
   else {
     bVar1 = DUART_ISR_IMR;
     if ((DAT_00102ed4 & bVar1 & 2) != 0) {
-      FUN_0001e6be();
+      duart_test_rx_a();
     }
     bVar1 = DUART_ISR_IMR;
     if ((DAT_00102ed4 & bVar1 & 1) != 0) {
-      FUN_0001e706();
+      duart_test_tx_a();
     }
   }
   if (DAT_001030fb == '\0') {
@@ -21947,11 +22125,11 @@ __exception void primary_user_67(void)
   else {
     bVar1 = DUART_ISR_IMR;
     if ((DAT_00102ed4 & bVar1 & 0x20) != 0) {
-      FUN_0001e6e2();
+      duart_test_rx_b();
     }
     bVar1 = DUART_ISR_IMR;
     if ((DAT_00102ed4 & bVar1 & 0x10) != 0) {
-      FUN_0001e736();
+      duart_test_tx_b();
     }
   }
   do {
@@ -21963,7 +22141,9 @@ __exception void primary_user_67(void)
 
 /* 0001ebbc */
 
-void FUN_0001ebbc(void)
+/* resets both DUART channels and masks its interrupts */
+
+void duart_stop(void)
 
 {
   DUART_CRA = 2;
@@ -21978,8 +22158,9 @@ void FUN_0001ebbc(void)
 /* 0001ebe4 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* sends "DUART" through channel B in local loopback and checks each character back */
 
-void FUN_0001ebe4(void)
+void duartb_loopback_check(void)
 
 {
   char *pcVar1;
@@ -22025,8 +22206,9 @@ void FUN_0001ebe4(void)
 /* 0001ecae */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* at reset: tests the DUART's interrupt vector register and sets channel B up for the console */
 
-void FUN_0001ecae(void)
+void duart_early_init(void)
 
 {
   byte bVar1;
@@ -22048,7 +22230,7 @@ void FUN_0001ecae(void)
     DUART_MR1B_MR2B = 7;
     DUART_SRB_CSRB = 0xbb;
     DUART_IPCR_ACR = 0xa0;
-    FUN_0001ebe4();
+    duartb_loopback_check();
   }
   return;
 }
@@ -22109,7 +22291,9 @@ int debug_write(char *param_1)
 
 /* 0001ef90 */
 
-int FUN_0001ef90(char *param_1)
+/* formats and writes to the console by polling, when debug output is on; called by nothing */
+
+int debug_printf_polled(char *param_1)
 
 {
   int iVar1;
@@ -22564,7 +22748,9 @@ void hdac_write_all(byte param_1,byte param_2,byte param_3,byte param_4,byte par
 
 /* 0001f62e */
 
-void FUN_0001f62e(void)
+/* sends the hex DAC's three shadow words to QSPI device 2 */
+
+void hdac_update(void)
 
 {
   qspi_send(2,hdac_shadow,3);
@@ -22590,8 +22776,9 @@ void efc_write(undefined2 param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* the SCI's baud rate from a code */
 
-void FUN_0001f6ca(char param_1)
+void sci_baud_set(char param_1)
 
 {
   int iVar1;
@@ -22629,8 +22816,9 @@ LAB_0001f70c:
 /* 0001f71a */
 
 /* WARNING: Unknown calling convention */
+/* waits for the SCI's transmitter and writes a character, with the parity bit if set */
 
-ushort FUN_0001f71a(char param_1)
+ushort sci_putc_polled(char param_1)
 
 {
   word wVar1;
@@ -22705,7 +22893,7 @@ undefined4 sci_getc(void)
   DAT_00103189 = cVar2;
   if ((((DAT_00103294 & 0x20) != 0) && (uVar3 = 0, 0x10 < (byte)(cVar2 - DAT_00103188))) &&
      (DAT_00103294 = DAT_00103294 & 0xdf, DAT_00103297 != '\0')) {
-    FUN_0001f71a('\x11');
+    sci_putc_polled('\x11');
     uVar3 = extraout_var;
   }
   return CONCAT31(uVar3,uVar1);
@@ -22859,7 +23047,7 @@ __exception void primary_user_64(void)
       }
       if (((byte)(DAT_00103189 - DAT_00103188) < 0x40) &&
          (DAT_00103294 = DAT_00103294 | 0x20, DAT_00103297 != '\0')) {
-        FUN_0001f71a('\x13');
+        sci_putc_polled('\x13');
       }
       uVar3 = psos_signal_v(_DAT_0010315c,0x40);
       if ((char)uVar3 != '\0') {
@@ -23017,7 +23205,7 @@ undefined8 sci_init(void)
   int iVar3;
   char acStack_64 [80];
   
-  FUN_0001f6ca(DAT_00101f52);
+  sci_baud_set(DAT_00101f52);
   if (DAT_00101f53 == '\0') {
     DAT_00103299 = 0;
     DAT_00103298 = 0;
@@ -23088,7 +23276,7 @@ undefined8 sci_init(void)
     _DAT_001032a0 = (code *)&USHORT_0001f6c8;
   }
   else {
-    _DAT_001032a0 = FUN_000201b0;
+    _DAT_001032a0 = sci_putc;
   }
   return CONCAT44(in_D0,in_D1);
 }
@@ -23097,8 +23285,9 @@ undefined8 sci_init(void)
 /* 0001fffa */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* resets the SCI and applies the serial settings' baud rate and mode */
 
-uint FUN_0001fffa(void)
+uint sci_reconfigure(void)
 
 {
   word wVar1;
@@ -23123,7 +23312,7 @@ uint FUN_0001fffa(void)
   while ((0 < (int)puVar7 && (wVar1 = SCSR, (wVar1 & 0x80) == 0))) {
     puVar7 = puVar7 + -1;
   }
-  FUN_0001f6ca(DAT_00101f52);
+  sci_baud_set(DAT_00101f52);
   iVar6 = (int)DAT_00101f53 - 3;
   if ((uint)(int)DAT_00101f53 < 3 || iVar6 == 0) {
     sVar5 = (short)iVar6;
@@ -23165,7 +23354,7 @@ LAB_000200ce:
   uVar4 = (uint3)((uint)iVar6 >> 8);
   if (DAT_00101f54 == '\0') {
     if ((DAT_00103297 != '\0') && (iVar6 = (uint)uVar4 << 8, (DAT_00103294 & 0x20) != 0)) {
-      iVar6 = FUN_0001f71a('\x11');
+      iVar6 = sci_putc_polled('\x11');
     }
     DAT_00103297 = 0;
     bVar3 = false;
@@ -23173,7 +23362,7 @@ LAB_000200ce:
   }
   else {
     if ((DAT_00103297 == '\0') && (iVar6 = (uint)uVar4 << 8, (DAT_00103294 & 0x20) != 0)) {
-      iVar6 = FUN_0001f71a('\x13');
+      iVar6 = sci_putc_polled('\x13');
     }
     DAT_00103297 = 1;
     bVar3 = true;
@@ -23186,7 +23375,7 @@ LAB_000200ce:
     _DAT_001032a0 = (code *)&USHORT_0001f6c8;
   }
   else {
-    _DAT_001032a0 = FUN_000201b0;
+    _DAT_001032a0 = sci_putc;
   }
   wVar1 = SCCR1;
   SCCR1 = wVar1 | 0xac;
@@ -23197,7 +23386,9 @@ LAB_000200ce:
 
 /* 00020152 */
 
-void FUN_00020152(void)
+/* the SCI device's write: sci_puts under its lock */
+
+void sci_write(void)
 
 {
   if (DAT_0010329c == '\0') {
@@ -23211,7 +23402,9 @@ void FUN_00020152(void)
 
 /* 00020190 */
 
-void FUN_00020190(void)
+/* the SCI device's read: sci_gets */
+
+void sci_read(void)
 
 {
   sci_gets();
@@ -23221,7 +23414,9 @@ void FUN_00020190(void)
 
 /* 000201b0 */
 
-void FUN_000201b0(undefined1 param_1)
+/* writes a character to the SCI under its lock */
+
+void sci_putc(undefined1 param_1)
 
 {
   char unaff_D7b;
@@ -23243,8 +23438,9 @@ void FUN_000201b0(undefined1 param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* queues a block for the SCI to send by interrupt */
 
-void FUN_000201e0(undefined4 param_1,undefined1 param_2)
+void sci_send_async(undefined4 param_1,undefined1 param_2)
 
 {
   word wVar1;
@@ -23262,7 +23458,9 @@ void FUN_000201e0(undefined4 param_1,undefined1 param_2)
 
 /* 0002021a */
 
-ulong FUN_0002021a(void *param_1)
+/* writes a string to the SCI device, 3 */
+
+ulong sci_port_write(void *param_1)
 
 {
   ulong local_8;
@@ -23274,20 +23472,24 @@ ulong FUN_0002021a(void *param_1)
 
 /* 0002023c */
 
-void FUN_0002023c(char *param_1)
+/* formats into 160 bytes and writes to the SCI device; called by nothing */
+
+void sci_printf(char *param_1)
 
 {
   char acStack_a4 [160];
   
   vsprintf(acStack_a4,param_1,&stack0x00000008);
-  FUN_0002021a(acStack_a4);
+  sci_port_write(acStack_a4);
   return;
 }
 
 
 /* 000202c0 */
 
-int FUN_000202c0(char *param_1)
+/* writes a string to the SCI by polling, in supervisor mode */
+
+int sci_puts_polled(char *param_1)
 
 {
   int iVar1;
@@ -23295,7 +23497,7 @@ int FUN_000202c0(char *param_1)
   iVar1 = 0;
   enter_supervisor();
   for (; *param_1 != '\0'; param_1 = param_1 + 1) {
-    FUN_0001f71a(*param_1);
+    sci_putc_polled(*param_1);
     iVar1 = iVar1 + 1;
   }
   return iVar1;
@@ -23304,13 +23506,15 @@ int FUN_000202c0(char *param_1)
 
 /* 000202f6 */
 
-void FUN_000202f6(char *param_1)
+/* formats into 80 bytes and writes to the SCI by polling; called by nothing */
+
+void sci_printf_polled(char *param_1)
 
 {
   char acStack_54 [80];
   
   vsprintf(acStack_54,param_1,&stack0x00000008);
-  FUN_000202c0(acStack_54);
+  sci_puts_polled(acStack_54);
   return;
 }
 
@@ -23341,9 +23545,11 @@ void qspi_release(void)
 /* 00020578 */
 
 /* WARNING: Unknown calling convention */
+/* writes a QSPI device's transfer into the QSM's queue RAM and command words, by the device's
+   number */
 
 undefined4
-FUN_00020578(byte param_1,undefined2 *param_2,ushort param_3,char param_4,undefined2 *param_5)
+qspi_queue_setup(byte param_1,undefined2 *param_2,ushort param_3,char param_4,undefined2 *param_5)
 
 {
   uint uVar1;
@@ -23533,15 +23739,16 @@ override_jmp_000205c0_case_3:
 /* 0002081e */
 
 /* WARNING: Unknown calling convention */
+/* sets a transfer up and starts it, or releases the QSPI, and waits until it is done */
 
-void FUN_0002081e(byte param_1,undefined2 *param_2,ushort param_3,char param_4)
+void qspi_start(byte param_1,undefined2 *param_2,ushort param_3,char param_4)
 
 {
   char cVar1;
   word local_8 [2];
   
   DAT_001032f3 = '\0';
-  cVar1 = FUN_00020578(param_1,param_2,param_3,param_4,local_8);
+  cVar1 = qspi_queue_setup(param_1,param_2,param_3,param_4,local_8);
   if (cVar1 == '\0') {
     SPCR1 = local_8[0];
   }
@@ -23593,7 +23800,9 @@ void FUN_000208fa(void)
 
 /* 00020902 */
 
-undefined8 FUN_00020902(void)
+/* clears the QSM's queue RAM and sets SPCR0 to SPCR3 up */
+
+undefined8 qspi_init(void)
 
 {
   undefined4 in_D0;
@@ -23689,22 +23898,21 @@ __exception void primary_user_65(void)
 /* 00020a62 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* takes the QSPI and runs a transfer, D0 the device, A1 the buffers and D2 the count
+   Not a C function (register; read): its arguments and results in registers.  In: D0 char device,
+   A1 void *buffers, D2 short count. */
 
-void FUN_00020a62(void)
+__regcall void qspi_transfer_raw(char device __asm("d0"),void *buffers __asm("a1"),short count __asm("d2"))
 
 {
-  byte in_D0b;
-  ushort unaff_D2w;
-  undefined4 *in_A1;
-  
   qspi_acquire();
-  _DAT_001032ec = in_A1[1];
-  _DAT_001032f0 = unaff_D2w;
-  if (in_D0b == 0xc) {
+  _DAT_001032ec = *(undefined4 *)((int)buffers + 4);
+  _DAT_001032f0 = count;
+  if (device == 0xc) {
     _DAT_001032f0 = 1;
   }
   DAT_001032f2 = '\x01';
-  FUN_0002081e(in_D0b,(undefined2 *)*in_A1,unaff_D2w,'\x01');
+  qspi_start(device,*(undefined2 **)buffers,count,'\x01');
   do {
   } while (DAT_001032f2 != '\0');
   return;
@@ -23760,7 +23968,7 @@ void qspi_send(byte param_1,undefined2 *param_2,ushort param_3)
   if ((bVar2 & 0x80) != 0) {
     qspi_isr();
   }
-  cVar3 = FUN_00020578(param_1,param_2,param_3,'\0',&local_8);
+  cVar3 = qspi_queue_setup(param_1,param_2,param_3,'\0',&local_8);
   if (cVar3 == '\0') {
     SPCR1 = local_8;
     do {
@@ -23801,7 +24009,7 @@ void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3)
   if ((bVar2 & 0x80) != 0) {
     qspi_isr();
   }
-  cVar3 = FUN_00020578(param_1,(undefined2 *)*param_2,param_3,'\x01',&local_8);
+  cVar3 = qspi_queue_setup(param_1,(undefined2 *)*param_2,param_3,'\x01',&local_8);
   if (cVar3 == '\0') {
     SPCR1 = local_8;
     do {
@@ -24547,8 +24755,9 @@ bool fpga_verify_chip(byte param_1,char param_2,byte param_3)
 /* 00023980 */
 
 /* WARNING: Unknown calling convention */
+/* fpga_verify_chip for chip 0 or 1 */
 
-undefined1 FUN_00023980(byte param_1,char param_2)
+undefined1 fpga_verify(byte param_1,char param_2)
 
 {
   undefined1 uVar1;
@@ -24885,7 +25094,9 @@ float adc_average(adc_channel channel)
 
 /* 000241cc */
 
-bool FUN_000241cc(void)
+/* 1 once the double oven's ADC reads above 1.5; called by nothing */
+
+bool double_oven_warmed_up(void)
 
 {
   float a;
@@ -25060,7 +25271,9 @@ void watchdog_report(void)
 
 /* 0002442c */
 
-void FUN_0002442c(void)
+/* clears the last exception and the crash message */
+
+void exception_record_clear(void)
 
 {
   FUN_00033114();
@@ -25118,7 +25331,9 @@ void log_reset_cause(void)
 
 /* 0002458c */
 
-void FUN_0002458c(void)
+/* clears the GPS 1PPS monitor's state */
+
+void gps_pps_monitor_reset(void)
 
 {
   DAT_00101cf9 = 0;
@@ -25220,7 +25435,9 @@ undefined1 gps_pps_check(void)
 
 /* 0002470c */
 
-void FUN_0002470c(void)
+/* clears the internal 1PPS monitor's state */
+
+void internal_pps_monitor_reset(void)
 
 {
   internal_pps_dead = 0;
@@ -25403,11 +25620,13 @@ void counter_reset(void)
 
 /* 00024984 */
 
-void FUN_00024984(void)
+/* clears both 1PPS monitors */
+
+void pps_monitors_reset(void)
 
 {
-  FUN_0002458c();
-  FUN_0002470c();
+  gps_pps_monitor_reset();
+  internal_pps_monitor_reset();
   DAT_00101b71 = 0;
   return;
 }
@@ -26485,7 +26704,7 @@ undefined4 scpi_parse_choice(short *param_1,undefined4 param_2,short *param_3,in
   }
   else {
     while (*(int *)(iVar1 + sVar4 * 4) != 0) {
-      sVar3 = FUN_00027b62(param_1 + 1,(int)*param_1,*(undefined4 *)(iVar1 + sVar4 * 4));
+      sVar3 = scpi_keyword_compare(param_1 + 1,(int)*param_1,*(undefined4 *)(iVar1 + sVar4 * 4));
       if (sVar3 == 0) {
         if (param_4[1] == 0) {
           *param_3 = sVar4;
@@ -27473,10 +27692,12 @@ int scpi_format_float_resolution(int param_1,float *param_2)
 
 /* 00026a80 */
 
+/* fills a parser context's eight fields; called by nothing */
+
 undefined4
-FUN_00026a80(undefined4 *param_1,undefined4 param_2,undefined2 param_3,undefined4 param_4,
-            undefined4 param_5,undefined4 param_6,undefined4 param_7,undefined4 param_8,
-            undefined4 param_9)
+scpi_context_init(undefined4 *param_1,undefined4 param_2,undefined2 param_3,undefined4 param_4,
+                 undefined4 param_5,undefined4 param_6,undefined4 param_7,undefined4 param_8,
+                 undefined4 param_9)
 
 {
   *param_1 = param_2;
@@ -27493,7 +27714,9 @@ FUN_00026a80(undefined4 *param_1,undefined4 param_2,undefined2 param_3,undefined
 
 /* 00026ab6 */
 
-int FUN_00026ab6(int *param_1,undefined2 *param_2)
+/* parses one program message unit: its header, then its parameters, token by token */
+
+int scpi_parse_message_unit(int *param_1,undefined2 *param_2)
 
 {
   code *pcVar1;
@@ -27517,12 +27740,12 @@ int FUN_00026ab6(int *param_1,undefined2 *param_2)
     goto LAB_00026e5a;
   }
   if (iVar2 == 0xc) {
-    FUN_00027efe(*(undefined4 *)((int)param_1 + 6),*(undefined4 *)((int)param_1 + 0x12));
+    scpi_path_reset(*(undefined4 *)((int)param_1 + 6),*(undefined4 *)((int)param_1 + 0x12));
     iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
     if (0x12 < iVar2) {
 LAB_00026b6e:
       while (iVar2 == 0x15) {
-        iVar4 = FUN_00027e9e(auStack_2c,*(undefined4 *)((int)param_1 + 6));
+        iVar4 = scpi_header_step(auStack_2c,*(undefined4 *)((int)param_1 + 6));
         if (iVar4 != 0) goto LAB_00026e5a;
         iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
       }
@@ -27644,7 +27867,7 @@ LAB_00026e5a:
     iVar4 = iVar2;
   }
   if (((-0x3c < iVar4) && (iVar4 != -0xc)) && (iVar4 != -0xd)) {
-    iVar3 = FUN_0002839c(iVar4);
+    iVar3 = condition_is_command_error(iVar4);
     if (iVar3 == 0) {
       while ((3 < iVar2 || (iVar2 < 1))) {
         iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
@@ -27731,7 +27954,7 @@ LAB_00026fb6:
   case 0x12:
     *param_2 = 0;
 LAB_0002704a:
-    uVar7 = FUN_000273cc(param_2,1,(int)(short)uVar8,param_1);
+    uVar7 = scpi_scan_number(param_2,1,(int)(short)uVar8,param_1);
     break;
   default:
     goto LAB_00027380;
@@ -27938,7 +28161,9 @@ LAB_000272a6:
 
 /* 00027388 */
 
-void FUN_00027388(undefined4 *param_1)
+/* reads characters until a message terminator */
+
+void scpi_skip_to_terminator(undefined4 *param_1)
 
 {
   code *pcVar1;
@@ -27957,8 +28182,9 @@ void FUN_00027388(undefined4 *param_1)
 /* 000273cc */
 
 /* WARNING: Type propagation algorithm not settling */
+/* scans a decimal number's digits, point and exponent into a parsed number */
 
-int FUN_000273cc(int param_1,short param_2,short param_3,undefined4 *param_4)
+int scpi_scan_number(int param_1,short param_2,short param_3,undefined4 *param_4)
 
 {
   short sVar1;
@@ -28056,7 +28282,7 @@ LAB_00027568:
     cVar5 = (&LAB_000277ec)[param_3];
   }
   *(undefined2 *)(param_1 + 0x14) = 0;
-  iVar3 = FUN_0002766e((int)param_3,param_1,param_4);
+  iVar3 = scpi_scan_exponent((int)param_3,param_1,param_4);
   if (iVar3 != 0) {
     return iVar3;
   }
@@ -28076,7 +28302,7 @@ LAB_00027568:
       if (0xc < sVar8) {
         return -0x35;
       }
-      uVar4 = FUN_000277d2((int)param_3);
+      uVar4 = scpi_char_upper((int)param_3);
       *(undefined1 *)(param_1 + 0x16 + (int)sVar8) = uVar4;
       param_3 = (*(code *)*param_4)(param_4);
       sVar8 = sVar8 + 1;
@@ -28104,7 +28330,9 @@ joined_r0x00027514:
 
 /* 0002766e */
 
-undefined4 FUN_0002766e(short param_1,int param_2,undefined4 *param_3)
+/* scans a number's exponent after its E */
+
+undefined4 scpi_scan_exponent(short param_1,int param_2,undefined4 *param_3)
 
 {
   bool bVar1;
@@ -28112,7 +28340,7 @@ undefined4 FUN_0002766e(short param_1,int param_2,undefined4 *param_3)
   short sVar3;
   char cVar4;
   
-  sVar2 = FUN_000277d2((int)param_1);
+  sVar2 = scpi_char_upper((int)param_1);
   if (sVar2 != 0x45) {
 LAB_000276d0:
     (**(code **)(param_3[1] + 0xc))(param_3);
@@ -28175,7 +28403,9 @@ LAB_00027728:
 
 /* 000277d2 */
 
-uint FUN_000277d2(uint param_1)
+/* a letter in upper case, by the parser's character classes */
+
+uint scpi_char_upper(uint param_1)
 
 {
   if ((&LAB_000277ec)[param_1] == '\0') {
@@ -28232,7 +28462,9 @@ undefined4 FUN_0002797a(int *param_1,int param_2,short *param_3)
 
 /* 000279d6 */
 
-short FUN_000279d6(int param_1,short param_2,int param_3)
+/* how much of a token's end matches a unit's name */
+
+short scpi_suffix_compare_tail(int param_1,short param_2,int param_3)
 
 {
   short sVar1;
@@ -28251,7 +28483,9 @@ short FUN_000279d6(int param_1,short param_2,int param_3)
 
 /* 00027a0c */
 
-undefined4 FUN_00027a0c(undefined2 param_1,short param_2)
+/* a unit multiplier's power of ten, from the table at 0x27b2e; -128 for none */
+
+undefined4 scpi_multiplier_exponent(undefined2 param_1,short param_2)
 
 {
   undefined4 in_D0;
@@ -28292,7 +28526,7 @@ short scpi_match_suffix(short param_1,char *param_2,int param_3,short *param_4)
       if (*(int *)(param_3 + sVar1 * 6) == 0) {
         return 0;
       }
-      sVar2 = FUN_000279d6(param_2,(int)param_1,*(undefined4 *)(param_3 + sVar1 * 6));
+      sVar2 = scpi_suffix_compare_tail(param_2,(int)param_1,*(undefined4 *)(param_3 + sVar1 * 6));
     } while ((sVar2 == 0) || (2 < (int)param_1 - (int)sVar2));
     if (param_1 == sVar2) break;
     if (*(short *)(param_3 + 4 + sVar1 * 6) == -0x80) {
@@ -28300,7 +28534,7 @@ short scpi_match_suffix(short param_1,char *param_2,int param_3,short *param_4)
       if (sVar2 + 1 < (int)param_1) {
         sVar3 = (short)param_2[1] + sVar3 * 0x100;
       }
-      cVar4 = FUN_00027a0c(0,sVar3);
+      cVar4 = scpi_multiplier_exponent(0,sVar3);
       *param_4 = (short)cVar4;
       if (cVar4 != -0x80) {
 LAB_00027a86:
@@ -28349,7 +28583,9 @@ undefined4 scpi_apply_suffix(int param_1,int param_2)
 
 /* 00027b62 */
 
-undefined4 FUN_00027b62(char *param_1,short param_2,char *param_3)
+/* compares a token with a keyword's short and long forms */
+
+undefined4 scpi_keyword_compare(char *param_1,short param_2,char *param_3)
 
 {
   char cVar1;
@@ -28385,7 +28621,9 @@ LAB_00027ba2:
 
 /* 00027baa */
 
-undefined4 FUN_00027baa(int param_1,short *param_2)
+/* finds a keyword in a child list, by bisection */
+
+undefined4 scpi_node_find(int param_1,short *param_2)
 
 {
   char cVar1;
@@ -28434,7 +28672,9 @@ LAB_00027c12:
 
 /* 00027c22 */
 
-int FUN_00027c22(int *param_1,undefined4 param_2)
+/* finds a keyword, else follows the default nodes, recording their suffixes */
+
+int scpi_node_find_with_defaults(int *param_1,undefined4 param_2)
 
 {
   undefined2 uVar1;
@@ -28442,7 +28682,7 @@ int FUN_00027c22(int *param_1,undefined4 param_2)
   int iVar3;
   int iVar4;
   
-  iVar3 = FUN_00027baa(*param_1,param_2);
+  iVar3 = scpi_node_find(*param_1,param_2);
   if (iVar3 == 0) {
     iVar4 = *param_1;
     uVar1 = *(undefined2 *)(param_1 + 1);
@@ -28460,7 +28700,7 @@ LAB_00027c88:
       }
       iVar4 = *(int *)(iVar3 + 4);
       if (iVar4 == 0) goto LAB_00027c88;
-      iVar3 = FUN_00027baa(iVar4,param_2);
+      iVar3 = scpi_node_find(iVar4,param_2);
     } while (iVar3 == 0);
   }
   return iVar3;
@@ -28469,7 +28709,9 @@ LAB_00027c88:
 
 /* 00027c94 */
 
-int FUN_00027c94(int param_1,short *param_2,undefined4 param_3)
+/* finds a keyword with its numeric suffix stripped and kept */
+
+int scpi_node_find_numbered(int param_1,short *param_2,undefined4 param_3)
 
 {
   short sVar1;
@@ -28500,7 +28742,7 @@ int FUN_00027c94(int param_1,short *param_2,undefined4 param_3)
   }
   *(undefined1 *)((int)param_2 + sVar6 + 2) = 0x2a;
   *param_2 = sVar6 + 1;
-  iVar2 = FUN_00027c22(param_1,param_2,param_3);
+  iVar2 = scpi_node_find_with_defaults(param_1,param_2,param_3);
   if (iVar2 != 0) {
     if (sVar1 < 1) {
       sVar6 = *(short *)(param_1 + 4);
@@ -28520,7 +28762,7 @@ int FUN_00027c94(int param_1,short *param_2,undefined4 param_3)
     return 0;
   }
   *param_2 = sVar6;
-  iVar5 = FUN_00027c22(param_1,param_2,param_3);
+  iVar5 = scpi_node_find_with_defaults(param_1,param_2,param_3);
   if (iVar5 == 0) {
     return 0;
   }
@@ -28556,9 +28798,9 @@ FUN_00027d80(undefined4 param_1,int *param_2,short *param_3,undefined4 *param_4,
   for (sVar5 = 0; sVar5 < local_16; sVar5 = sVar5 + 1) {
     local_14[sVar5] = *(undefined2 *)((int)param_5 + sVar5 * 2 + 6);
   }
-  iVar2 = FUN_00027c22(&local_1a,param_1,param_9);
+  iVar2 = scpi_node_find_with_defaults(&local_1a,param_1,param_9);
   if (iVar2 != 0) goto LAB_00027e0c;
-  iVar2 = FUN_00027c94(&local_1a,param_1,param_9);
+  iVar2 = scpi_node_find_numbered(&local_1a,param_1,param_9);
   if (iVar2 == 0) {
     uVar3 = 0xffffffe0;
   }
@@ -28601,16 +28843,18 @@ LAB_00027e0c:
 
 /* 00027e9e */
 
-undefined4 FUN_00027e9e(undefined4 param_1,int *param_2,undefined4 param_3)
+/* moves the path one keyword down a compound header */
+
+undefined4 scpi_header_step(undefined4 param_1,int *param_2,undefined4 param_3)
 
 {
   short sVar1;
   int iVar2;
   undefined4 uVar3;
   
-  iVar2 = FUN_00027c22(param_2,param_1,param_3);
+  iVar2 = scpi_node_find_with_defaults(param_2,param_1,param_3);
   if (iVar2 == 0) {
-    iVar2 = FUN_00027c94(param_2,param_1,param_3);
+    iVar2 = scpi_node_find_numbered(param_2,param_1,param_3);
     if (iVar2 == 0) {
       return 0xffffffe0;
     }
@@ -28634,7 +28878,9 @@ undefined4 FUN_00027e9e(undefined4 param_1,int *param_2,undefined4 param_3)
 
 /* 00027efe */
 
-void FUN_00027efe(undefined4 *param_1,undefined4 param_2)
+/* sets a header path back to a root list */
+
+void scpi_path_reset(undefined4 *param_1,undefined4 param_2)
 
 {
   *param_1 = param_2;
@@ -28655,7 +28901,7 @@ FUN_00027f10(undefined4 param_1,int *param_2,undefined2 *param_3,int *param_4,un
   undefined4 uVar3;
   int iVar4;
   
-  iVar2 = FUN_00027baa(param_8,param_1);
+  iVar2 = scpi_node_find(param_8,param_1);
   if (iVar2 == 0) {
     uVar3 = 0xffffffe0;
   }
@@ -28685,7 +28931,9 @@ FUN_00027f10(undefined4 param_1,int *param_2,undefined2 *param_3,int *param_4,un
 
 /* 00027f7e */
 
-int FUN_00027f7e(undefined4 param_1,ushort *param_2)
+/* looks _TRG up in a list: whether the common list defines it */
+
+int scpi_trg_defined(undefined4 param_1,ushort *param_2)
 
 {
   char cVar1;
@@ -28704,7 +28952,7 @@ int FUN_00027f7e(undefined4 param_1,ushort *param_2)
     pcVar4 = pcVar4 + 1;
   } while (cVar1 != '\0');
   local_18 = 4;
-  iVar2 = FUN_00027baa(param_1,&local_18);
+  iVar2 = scpi_node_find(param_1,&local_18);
   if (iVar2 != 0) {
     *param_2 = (ushort)(*(int *)(iVar2 + 8) == 0);
   }
@@ -28832,7 +29080,9 @@ LAB_0002810c:
 
 /* 00028160 */
 
-void FUN_00028160(short *param_1)
+/* frees the status model's queue and registers; called by nothing */
+
+void status_destroy(short *param_1)
 
 {
   int iVar1;
@@ -28981,7 +29231,9 @@ void status_clear_bit(status_model *param_1,int param_2)
 
 /* 0002839c */
 
-undefined4 FUN_0002839c(int param_1)
+/* 1 for a negative condition of the error kind with a code from -199 to -100, a command error */
+
+undefined4 condition_is_command_error(int param_1)
 
 {
   undefined4 uVar1;
@@ -29000,7 +29252,9 @@ undefined4 FUN_0002839c(int param_1)
 
 /* 000283d2 */
 
-void FUN_000283d2(int param_1,int param_2,uint *param_3)
+/* a condition's bit in its register's condition word, inverted for kind 2 */
+
+void status_condition_bit_get(int param_1,int param_2,uint *param_3)
 
 {
   int iVar1;
@@ -29040,7 +29294,9 @@ void status_register_set_enable(int param_1,int param_2,ushort param_3)
 
 /* 00028474 */
 
-void FUN_00028474(int param_1,int param_2,ushort *param_3)
+/* a status register's enable mask, as the :ENABle? and *ESE? queries read it */
+
+void status_register_get_enable(int param_1,int param_2,ushort *param_3)
 
 {
   int iVar1;
@@ -29098,7 +29354,9 @@ void status_read_condition(int param_1,int param_2,undefined2 *param_3)
 
 /* 0002851a */
 
-undefined4 FUN_0002851a(short *param_1)
+/* reads every register's event word, clearing them, for *CLS */
+
+undefined4 status_clear_events(short *param_1)
 
 {
   short sVar1;
@@ -29114,7 +29372,9 @@ undefined4 FUN_0002851a(short *param_1)
 
 /* 0002854a */
 
-void FUN_0002854a(int param_1,undefined4 param_2)
+/* empties the error queue, for *CLS */
+
+void error_queue_clear(int param_1,undefined4 param_2)
 
 {
   undefined1 auStack_8 [4];
@@ -29126,7 +29386,9 @@ void FUN_0002854a(int param_1,undefined4 param_2)
 
 /* 0002856c */
 
-void FUN_0002856c(int param_1,undefined4 param_2,undefined4 param_3)
+/* takes the oldest error from the queue */
+
+void error_queue_read(int param_1,undefined4 param_2,undefined4 param_3)
 
 {
   FUN_0002869e(*(undefined4 *)(param_1 + 6),param_2,param_3);
@@ -29348,7 +29610,7 @@ FUN_000292d6(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undef
   
   FUN_00029770(param_3,param_4,&local_3c);
   local_34 = FUN_0002975e(local_3c);
-  local_30 = FUN_00027f7e(param_6,&local_2c);
+  local_30 = scpi_trg_defined(param_6,&local_2c);
   local_6a = param_1;
   local_66 = param_2;
   local_62 = param_7;
@@ -29357,20 +29619,20 @@ FUN_000292d6(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undef
   local_56 = param_6;
   local_48 = 0;
   local_46 = param_9;
-  FUN_00026a80(auStack_26,param_1,0,auStack_92,&local_7c,local_3c,local_38,param_5,param_6);
+  scpi_context_init(auStack_26,param_1,0,auStack_92,&local_7c,local_3c,local_38,param_5,param_6);
   local_3e = 1;
   bVar1 = false;
 LAB_0002937c:
   if (local_3e != 0) {
     local_52 = '\0';
-    FUN_00027efe(auStack_92,param_5);
+    scpi_path_reset(auStack_92,param_5);
     FUN_00029766(local_34,local_3c);
   }
   if (bVar1) {
-    FUN_00027388(param_1);
+    scpi_skip_to_terminator(param_1);
     bVar1 = false;
   }
-  iVar2 = FUN_00026ab6(auStack_26,&local_3e);
+  iVar2 = scpi_parse_message_unit(auStack_26,&local_3e);
   if (iVar2 != 0) goto LAB_000294de;
   do {
     unaff_D3 = FUN_00029642(&local_7c,auStack_6e);
@@ -29416,14 +29678,14 @@ LAB_000294de:
           }
           else if (iVar2 != -0xe) {
             status_clear_bit(param_7,iVar2);
-            iVar2 = FUN_0002839c(iVar2);
+            iVar2 = condition_is_command_error(iVar2);
             if (iVar2 != 0) {
               bVar1 = true;
             }
           }
           if (local_42 != 0) {
             status_clear_bit(param_7,local_42);
-            iVar2 = FUN_0002839c(local_42);
+            iVar2 = condition_is_command_error(local_42);
             if (iVar2 != 0) {
               bVar1 = true;
             }
@@ -29438,11 +29700,11 @@ LAB_000294de:
     }
     else if (unaff_D3 != -0x3e) {
       if (unaff_D3 == -0x3d) {
-        FUN_00027efe(auStack_92,param_5);
+        scpi_path_reset(auStack_92,param_5);
       }
       else if (unaff_D3 != -0x3c) {
         status_clear_bit(param_7,unaff_D3);
-        iVar3 = FUN_0002839c(unaff_D3);
+        iVar3 = condition_is_command_error(unaff_D3);
         if ((iVar3 != 0) && (local_3e == 0)) {
           bVar1 = true;
         }
@@ -29463,7 +29725,7 @@ LAB_000294de:
   }
   else {
     status_clear_bit(param_7,iVar2);
-    iVar3 = FUN_0002839c(iVar2);
+    iVar3 = condition_is_command_error(iVar2);
     if (iVar3 != 0) {
       bVar1 = true;
       FUN_00029e34(&local_7c,iVar2);
@@ -30020,7 +30282,7 @@ int console_port_read(void)
         console_write(&DAT_00102c56);
       }
       _DAT_00102c4e = &DAT_00102b4e;
-      iVar2 = FUN_0001debc(&DAT_00102b4e,0xff,(short)local_6);
+      iVar2 = console_read(&DAT_00102b4e,0xff,(short)local_6);
       pcVar3 = &DAT_00102b4e + iVar2;
       _DAT_00102c52 = pcVar3;
     }
@@ -30426,9 +30688,9 @@ undefined4 scpi_set_common_CLS(undefined4 param_1,undefined4 param_2,int param_3
 {
   int local_8;
   
-  FUN_0002851a(status_object);
+  status_clear_events(status_object);
   do {
-    FUN_0002854a(*(undefined4 *)(param_3 + 0x1a),&local_8);
+    error_queue_clear(*(undefined4 *)(param_3 + 0x1a),&local_8);
   } while (local_8 != 0);
   return 0;
 }
@@ -30489,7 +30751,7 @@ undefined4 scpi_query_common_ESE(undefined4 param_1,short *param_2)
 {
   int iVar1;
   
-  FUN_00028474(status_object,1,param_2);
+  status_register_get_enable(status_object,1,param_2);
   if (nv_settings.status_enable[1] != (int)*param_2) {
     iVar1 = return_zero();
     status_report_from(0xe,(byte)iVar1);
@@ -30615,7 +30877,7 @@ undefined4 scpi_query_common_SRE(undefined4 param_1,short *param_2)
 {
   int iVar1;
   
-  FUN_00028474(status_object,0,param_2);
+  status_register_get_enable(status_object,0,param_2);
   if (nv_settings.status_enable[0] != (int)*param_2) {
     iVar1 = return_zero();
     status_report_from(0xe,(byte)iVar1);
@@ -30783,7 +31045,7 @@ undefined4 scpi_query_STATus_OPERation_ENABle(short *param_1,ushort *param_2)
 {
   int iVar1;
   
-  FUN_00028474(status_object,(int)*param_1,param_2);
+  status_register_get_enable(status_object,(int)*param_1,param_2);
   if ((uint)*param_2 != nv_settings.status_enable[*param_1]) {
     iVar1 = return_zero();
     status_report_from(0xe,(byte)iVar1);
@@ -30954,7 +31216,7 @@ undefined4 scpi_query_STATus_OPERation_HARDware_ENABle(int param_1,ushort *param
 {
   int iVar1;
   
-  FUN_00028474(status_object,(int)*(short *)(param_1 + 2),param_2);
+  status_register_get_enable(status_object,(int)*(short *)(param_1 + 2),param_2);
   if ((uint)*param_2 != nv_settings.status_enable[*(short *)(param_1 + 2)]) {
     iVar1 = return_zero();
     status_report_from(0xe,(byte)iVar1);
@@ -37482,7 +37744,7 @@ undefined4 scpi_query_DANA(undefined4 param_1,undefined2 *param_2,int param_3)
   undefined *local_8;
   
   local_8 = (undefined *)0x0;
-  FUN_0002856c(*(undefined4 *)(param_3 + 0x1a),&local_c,&local_8);
+  error_queue_read(*(undefined4 *)(param_3 + 0x1a),&local_c,&local_8);
   *param_2 = (short)local_c;
   if (local_8 == (undefined *)0x0) {
     local_8 = (undefined *)error_message_lookup(local_c);
@@ -39467,7 +39729,7 @@ undefined4 nv_load_slot(void)
           *(uint *)((int)psVar1->value + cVar9 * 4) = uVar6;
         }
         else {
-          uVar6 = FUN_00013406(uVar6,bVar8);
+          uVar6 = rotate_left(uVar6,bVar8);
           if (psVar1->nv_widths[cVar9] < 0) {
             uVar5 = FUN_0003145a(*(uint *)(&DAT_000314b2 + (uVar5 & 0xff) * 4) & uVar6,bVar8);
           }
@@ -39494,7 +39756,7 @@ undefined4 nv_load_slot(void)
           cVar7 = '\0';
         }
         cVar7 = bVar8 + cVar7;
-        uVar6 = FUN_00013406(uVar6,bVar8);
+        uVar6 = rotate_left(uVar6,bVar8);
         psVar2->value[cVar9] =
              (byte)*(undefined4 *)(&DAT_000314b2 + (uVar5 & 0xff) * 4) & (byte)uVar6;
         puVar12 = puVar11;

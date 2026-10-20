@@ -449,11 +449,11 @@ pointer to one as `foo->bar`.  The declarations compile, taking `long`
 as 32 bits, as on the 68000; a global still accessed as
 `DAT_00100c6e._2_1_` is a record that has no type yet.
 
-In the Z3805A 3543B image this gives 1823 functions, and every one
+In the Z3805A 3543B image this gives 1824 functions, and every one
 decompiles.  137 switches are recovered; `0x24ff2` and `0x25140`, a
 `jmp (d8,PC,D6.w)` with no table load, are not, and need not be: each
 enters an unrolled run of shifts part way, all of it code already
-(`docs/scpi/README.md`).  1160 of the functions are named.  The output
+(`docs/scpi/README.md`).  1161 of the functions are named.  The output
 is `third_party/firmware/decompiled/z3805a-3543b.c`.
 
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,

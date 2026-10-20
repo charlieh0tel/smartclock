@@ -402,18 +402,18 @@
 {"address":"00018d40","name":"FUN_00018d40","convention":"unknown"}
 {"address":"00018ed6","name":"forth_abort","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00018f0e","name":"forth_interpret","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"00018f68","name":"forth_parse_number","note":"converts pad in base through forth_digit, or prints \": not found\"; interpret and number call it","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"00018fcc","name":"forth_find","note":"looks pad up from the latest word down, skipping hidden ones; interpret, tick, forget call it","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"00019018","name":"forth_align","note":"rounds A4, the dictionary pointer, up to even","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"00019024","name":"forth_digit","note":"a character's digit value by the table at 0x18de2, Z set if below base","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"00019042","name":"forth_is_space","note":"Z set if the character at A3 is a space by the table at 0x18de2","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"0001906c","name":"forth_skip_spaces","note":"advances A3 past spaces with forth_is_space","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"00019096","name":"forth_build_prompt","note":"the prompt at 0x100b14: p4th, the base's letter, then > or >> while compiling (console.md)","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"000190e8","name":"forth_read_line","note":"reads a line from iodev with trap #4, or through the kernel","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"0001910e","name":"forth_parse_word","note":"refills and copies the next word into pad","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"0001912a","name":"forth_refill","note":"skips spaces and, at the input's end, prints the prompt and reads a line","convention":"pforth","confidence":"assumed","family":"pforth"}
+{"address":"00018f68","name":"forth_parse_number","note":"converts pad in base through forth_digit, or prints \": not found\"; interpret and number call it","convention":"pforth","confidence":"read","family":"pforth"}
+{"address":"00018fcc","name":"forth_find","note":"looks pad up from the latest word down, skipping hidden ones; interpret, tick, forget call it","convention":"pforth","confidence":"read","family":"pforth"}
+{"address":"00019018","name":"forth_align","note":"rounds A4, the dictionary pointer, up to even","convention":"pforth","confidence":"read","in":[{"register":"A4"}],"family":"pforth"}
+{"address":"00019024","name":"forth_digit","note":"a character's digit value by the table at 0x18de2, Z set if below base","convention":"pforth","confidence":"read","in":[{"register":"D0"},{"register":"D2"}],"family":"pforth"}
+{"address":"00019042","name":"forth_is_space","note":"Z set if the character at A3 is a space by the table at 0x18de2","convention":"pforth","confidence":"read","in":[{"register":"A3"}],"family":"pforth"}
+{"address":"0001906c","name":"forth_skip_spaces","note":"advances A3 past spaces with forth_is_space","convention":"pforth","confidence":"read","in":[{"register":"A3"}],"family":"pforth"}
+{"address":"00019096","name":"forth_build_prompt","note":"the prompt at 0x100b14: p4th, the base's letter, then > or >> while compiling (console.md)","convention":"pforth","confidence":"read","family":"pforth"}
+{"address":"000190e8","name":"forth_read_line","note":"reads a line from iodev with trap #4, or through the kernel","convention":"pforth","confidence":"read","family":"pforth"}
+{"address":"0001910e","name":"forth_parse_word","note":"refills and copies the next word into pad","convention":"pforth","confidence":"read","family":"pforth"}
+{"address":"0001912a","name":"forth_refill","note":"skips spaces and, at the input's end, prints the prompt and reads a line","convention":"pforth","confidence":"read","family":"pforth"}
 {"address":"00019150","name":"forth_print_string","note":"writes the string in D0 to iodev; type's work","convention":"pforth","confidence":"documented","in":[{"register":"D0","type":"char *","name":"s"}],"family":"pforth"}
-{"address":"0001916e","name":"forth_input_buffer","note":"tib, or one from the kernel when there is none","convention":"pforth","confidence":"assumed","family":"pforth"}
+{"address":"0001916e","name":"forth_input_buffer","note":"tib, or one from the kernel when there is none","convention":"pforth","confidence":"read","family":"pforth"}
 {"address":"00019182","name":"forth_over","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019188","name":"forth_abs","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019190","name":"forth_max","convention":"pforth","confidence":"assumed","family":"pforth"}
@@ -460,10 +460,10 @@
 {"address":"00019324","name":"forth_2drop","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019328","name":"forth_drop","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001932c","name":"forth_depth","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"00019338","name":"forth_compile_code","note":"copies a run of code words into the dictionary, up to a zero","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"0001934e","name":"forth_resolve_branch","note":"patches a branch's offset; loop, until, again, repeat","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"00019378","name":"forth_check_pairs","note":"\"ERROR: Mismatched \" and the word, then aborts, when a control word's tag does not match","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"0001938e","name":"forth_unlink_latest","note":"latest = *latest: drops the word being defined","convention":"pforth","confidence":"assumed","family":"pforth"}
+{"address":"00019338","name":"forth_compile_code","note":"copies a run of code words into the dictionary, up to a zero","convention":"pforth","confidence":"read","in":[{"register":"A0"}],"family":"pforth"}
+{"address":"0001934e","name":"forth_resolve_branch","note":"patches a branch's offset; loop, until, again, repeat","convention":"pforth","confidence":"read","family":"pforth"}
+{"address":"00019378","name":"forth_check_pairs","note":"\"ERROR: Mismatched \" and the word, then aborts, when a control word's tag does not match","convention":"pforth","confidence":"read","in":[{"register":"D0"}],"family":"pforth"}
+{"address":"0001938e","name":"forth_unlink_latest","note":"latest = *latest: drops the word being defined","convention":"pforth","confidence":"read","family":"pforth"}
 {"address":"0001943e","name":"forth_do","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019454","name":"forth_query_do","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019488","name":"forth_plus_loop","convention":"pforth","confidence":"assumed","family":"pforth"}
@@ -482,11 +482,11 @@
 {"address":"00019632","name":"forth_i","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019638","name":"forth_colon","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019652","name":"forth_semicolon","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"0001968c","name":"forth_create_header","note":"links a new word to latest, with its name from pad","convention":"pforth","confidence":"assumed","family":"pforth"}
+{"address":"0001968c","name":"forth_create_header","note":"links a new word to latest, with its name from pad","convention":"pforth","confidence":"read","family":"pforth"}
 {"address":"000196b8","name":"forth_variable","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"000196d8","name":"forth_create","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"000196f6","name":"forth_constant","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"00019700","name":"forth_compile_constant","note":"compiles code that pushes a value and returns, for create_x and spawn","convention":"pforth","confidence":"assumed","family":"pforth"}
+{"address":"00019700","name":"forth_compile_constant","note":"compiles code that pushes a value and returns, for create_x and spawn","convention":"pforth","confidence":"read","family":"pforth"}
 {"address":"00019710","name":"forth_literal","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001973a","name":"forth_mod","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001974a","name":"forth_slash_mod","convention":"pforth","confidence":"assumed","family":"pforth"}
@@ -494,10 +494,10 @@
 {"address":"00019774","name":"forth_star_slash","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001978a","name":"forth_slash","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"000197b4","name":"forth_star","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"000197da","name":"forth_multiply","note":"32 by 32-bit multiply from 16-bit halves; * calls it","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"000197fa","name":"forth_divide_signed","note":"signed divide over forth_divide_unsigned; /, mod, /mod, */ call it","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"00019828","name":"forth_divide_unsigned","note":"32-bit shift-and-subtract divide","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"0001984c","name":"forth_divide_short","note":"32 by 16-bit divide, quotient and remainder, for printing numbers","convention":"pforth","confidence":"assumed","family":"pforth"}
+{"address":"000197da","name":"forth_multiply","note":"32 by 32-bit multiply from 16-bit halves; * calls it","convention":"pforth","confidence":"read","in":[{"register":"D0"},{"register":"D1"}],"family":"pforth"}
+{"address":"000197fa","name":"forth_divide_signed","note":"signed divide over forth_divide_unsigned; /, mod, /mod, */ call it","convention":"pforth","confidence":"read","in":[{"register":"D0"},{"register":"D1"}],"family":"pforth"}
+{"address":"00019828","name":"forth_divide_unsigned","note":"32-bit shift-and-subtract divide","convention":"pforth","confidence":"read","in":[{"register":"D0"},{"register":"D1"}],"family":"pforth"}
+{"address":"0001984c","name":"forth_divide_short","note":"32 by 16-bit divide, quotient and remainder, for printing numbers","convention":"pforth","confidence":"read","in":[{"register":"D0"},{"register":"D1"}],"family":"pforth"}
 {"address":"00019874","name":"forth_minus","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001987a","name":"forth_plus","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019880","name":"forth_plus_store","convention":"pforth","confidence":"assumed","family":"pforth"}
@@ -515,8 +515,8 @@
 {"address":"000198f2","name":"forth_cr","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"000198fe","name":"forth_dot_quote","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019948","name":"forth_paren_dot_quote_close_paren","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"0001995a","name":"forth_digit_char","note":"a digit as 0-9 or A-Z","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"0001996c","name":"forth_print_number","note":"copies the digits built on the stack into pad and prints them; . and u. call it","convention":"pforth","confidence":"assumed","family":"pforth"}
+{"address":"0001995a","name":"forth_digit_char","note":"a digit as 0-9 or A-Z","convention":"pforth","confidence":"read","in":[{"register":"D1"}],"family":"pforth"}
+{"address":"0001996c","name":"forth_print_number","note":"copies the digits built on the stack into pad and prints them; . and u. call it","convention":"pforth","confidence":"read","family":"pforth"}
 {"address":"0001997e","name":"forth_u_dot","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001999a","name":"forth_u_dot_x","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"000199c4","name":"forth_dot","convention":"pforth","confidence":"assumed","family":"pforth"}
@@ -554,7 +554,7 @@
 {"address":"00019e90","name":"forth_watch","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019ed0","name":"forth_psos_call","note":"the console words' service call, reporting an error","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019fa6","name":"forth_spawn","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"0001a03c","name":"forth_space_if_zero","note":"a zero byte, Z set, becomes a space; spawn pads a task's name with it","convention":"pforth","confidence":"assumed","family":"pforth"}
+{"address":"0001a03c","name":"forth_space_if_zero","note":"a zero byte, Z set, becomes a space; spawn pads a task's name with it","convention":"pforth","confidence":"read","in":[{"register":"D0"}],"family":"pforth"}
 {"address":"0001a056","name":"forth_ver","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001a08c","name":"forth_ident","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001a0a0","name":"forth_delete","convention":"pforth","confidence":"assumed","family":"pforth"}
@@ -809,8 +809,9 @@
 {"address":"000247d4","name":"hmon_task","note":"root_task starts hmon here","convention":"unknown"}
 {"address":"00024976","name":"FUN_00024976","convention":"unknown"}
 {"address":"00024984","name":"FUN_00024984","convention":"unknown"}
-{"address":"00024d42","name":"FUN_00024d42","convention":"unknown"}
-{"address":"00024e18","name":"scpi_double_to_decimal","note":"the double in D0:D1 as a sign word, ASCII digits, D7 and two more, and the exponent of 0.d1d2..., into the record at A0","convention":"register","confidence":"run","in":[{"register":"D0:D1","type":"double","name":"value"},{"register":"D7","type":"short","name":"digits"},{"register":"A0","type":"char *","name":"record"}],"returns":"ccr","error":[{"register":"D0.w","value":"-8","meaning":"subnormal"},{"value":"infinite","meaning":"or NaN"}],"family":"scpi-engine"}
+{"address":"00024d42","name":"scpi_round_decimal","note":"rounds the decimal record at A2 to D0.w digits: adds 5 at that digit and carries left, a carry off the front writing 1 and raising the exponent, and fills the digits after with 0","convention":"register","confidence":"read","in":[{"register":"A2","type":"char *","name":"record"},{"register":"D0","type":"short","name":"digits"}],"family":"scpi-engine"}
+{"address":"00024d88","name":"scpi_decimal_to_text_unused","note":"writes the decimal record at A0 as NR3 text at A1, D0.w digits: the sign, the first digit, a point, the rest, E and the exponent by the digit pairs at 0x25c82; nothing calls it","convention":"register","confidence":"read","in":[{"register":"A0","type":"char *","name":"record"},{"register":"A1","type":"char *","name":"text"},{"register":"D0","type":"short","name":"digits"}],"family":"scpi-engine"}
+{"address":"00024e18","name":"scpi_double_to_decimal","note":"the double in D0:D1 as a sign word, ASCII digits, D7 and two more, and the exponent of 0.d1d2..., into the record at A0; Z is set on failure, for a subnormal, infinite or NaN double, and its caller reads nothing else, though D0.w holds -8","convention":"register","confidence":"run","in":[{"register":"D0:D1","type":"double","name":"value"},{"register":"D7","type":"short","name":"digits"},{"register":"A0","type":"char *","name":"record"}],"returns":"ccr","family":"scpi-engine"}
 {"address":"0002507a","name":"scpi_bcd_to_double","note":"the 16 BCD digits as a 64-bit integer, normalized, then scaled by scpi_scale_by_power_of_ten","convention":"register","confidence":"run","in":[{"register":"A0","type":"char *","name":"bcd"}],"out":[{"register":"D0:D1","type":"double"}],"returns":"ccr","error":[{"register":"D0.w","value":"-9","meaning":"out of range"}],"family":"scpi-engine"}
 {"address":"000251e4","name":"scpi_scale_by_power_of_ten","note":"the double in D0:D1 times 10 to the word at A0 less 16, by the tables at 0x256ae and 0x25b36; the sign from the word 10 bytes before; -9 beyond 309","convention":"register","confidence":"run","in":[{"register":"D0:D1","type":"double","name":"value"},{"register":"A0","type":"short *","name":"exponent"},{"register":"A1","type":"double *","name":"powers"}],"out":[{"register":"D0:D1","type":"double"}],"returns":"ccr","error":[{"register":"D0.w","value":"-9","meaning":"beyond 309"}],"family":"scpi-engine"}
 {"address":"000252bc","name":"scpi_double_multiply","note":"D0:D1 times D2:D3, the engine's own IEEE multiply","convention":"register","confidence":"run","in":[{"register":"D0:D1","type":"double","name":"a"},{"register":"D2:D3","type":"double","name":"b"}],"out":[{"register":"D0:D1","type":"double"}],"returns":"ccr","error":[{"register":"D2","value":"-2","meaning":"underflow"},{"register":"D2","value":"-1","meaning":"overflow"}],"preserves":["A0"],"family":"scpi-engine"}

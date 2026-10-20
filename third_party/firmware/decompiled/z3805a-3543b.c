@@ -14282,10 +14282,10 @@ LAB_00018ec8:
 
 /* WARNING: Unknown calling convention */
 /* converts pad in base through forth_digit, or prints ": not found"; interpret and number call it
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.
+   console.md */
 
 undefined4 forth_parse_number(forth_user_end user,long *sp)
 
@@ -14354,10 +14354,10 @@ LAB_00018f92:
 
 /* WARNING: Unknown calling convention */
 /* looks pad up from the latest word down, skipping hidden ones; interpret, tick, forget call it
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.
+   console.md */
 
 void forth_find(forth_user_end user)
 
@@ -14393,10 +14393,10 @@ void forth_find(forth_user_end user)
 
 /* WARNING: Unknown calling convention */
 /* rounds A4, the dictionary pointer, up to even
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  In: A4.
+   console.md */
 
 void forth_align(void *dp)
 
@@ -14408,10 +14408,10 @@ void forth_align(void *dp)
 /* 00019024 */
 
 /* a character's digit value by the table at 0x18de2, Z set if below base
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  In: D0, D2.
+   console.md */
 
 void forth_digit(void)
 
@@ -14431,10 +14431,10 @@ void forth_digit(void)
 
 /* WARNING: Unknown calling convention */
 /* Z set if the character at A3 is a space by the table at 0x18de2
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  In: A3.
+   console.md */
 
 undefined4 forth_is_space(char *input)
 
@@ -14449,10 +14449,10 @@ undefined4 forth_is_space(char *input)
 
 /* WARNING: Unknown calling convention */
 /* advances A3 past spaces with forth_is_space
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  In: A3.
+   console.md */
 
 void forth_skip_spaces(char *input)
 
@@ -14476,10 +14476,10 @@ void forth_skip_spaces(char *input)
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* the prompt at 0x100b14: p4th, the base's letter, then > or >> while compiling (console.md)
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.
+   console.md */
 
 void forth_build_prompt(forth_user_end user)
 
@@ -14506,10 +14506,10 @@ void forth_build_prompt(forth_user_end user)
 
 /* WARNING: Unknown calling convention */
 /* reads a line from iodev with trap #4, or through the kernel
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.
+   console.md */
 
 undefined4 forth_read_line(forth_user_end user,char *input)
 
@@ -14530,10 +14530,10 @@ undefined4 forth_read_line(forth_user_end user,char *input)
 
 /* WARNING: Unknown calling convention */
 /* refills and copies the next word into pad
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.
+   console.md */
 
 void forth_parse_word(forth_user_end user,char *input)
 
@@ -14563,10 +14563,10 @@ void forth_parse_word(forth_user_end user,char *input)
 
 /* WARNING: Unknown calling convention */
 /* skips spaces and, at the input's end, prints the prompt and reads a line
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.
+   console.md */
 
 void forth_refill(forth_user_end user,char *input)
 
@@ -14612,10 +14612,10 @@ ulonglong forth_print_string(char *s,forth_user_end user)
 
 /* WARNING: Unknown calling convention */
 /* tib, or one from the kernel when there is none
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.
+   console.md */
 
 char * forth_input_buffer(forth_user_end user)
 
@@ -15506,10 +15506,10 @@ void forth_depth(forth_user_end user,long *sp)
 
 /* WARNING: Unknown calling convention */
 /* copies a run of code words into the dictionary, up to a zero
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  In: A0.
+   console.md */
 
 undefined2 forth_compile_code(void *dp)
 
@@ -15543,10 +15543,10 @@ undefined2 forth_compile_code(void *dp)
 
 /* WARNING: Unknown calling convention */
 /* patches a branch's offset; loop, until, again, repeat
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.
+   console.md */
 
 undefined4 forth_resolve_branch(long *sp,void *dp)
 
@@ -15562,10 +15562,10 @@ undefined4 forth_resolve_branch(long *sp,void *dp)
 
 /* WARNING: Unknown calling convention */
 /* "ERROR: Mismatched " and the word, then aborts, when a control word's tag does not match
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  In: D0.
+   console.md */
 
 void forth_check_pairs(long *sp)
 
@@ -15604,10 +15604,10 @@ void forth_check_pairs(long *sp)
 
 /* WARNING: Unknown calling convention */
 /* latest = *latest: drops the word being defined
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.
+   console.md */
 
 void forth_unlink_latest(forth_user_end user,void *dp)
 
@@ -16000,10 +16000,10 @@ void forth_semicolon(forth_user_end user,long *sp,void *dp)
 
 /* WARNING: Unknown calling convention */
 /* links a new word to latest, with its name from pad
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.
+   console.md */
 
 void forth_create_header(forth_user_end user,void *dp)
 
@@ -16113,10 +16113,10 @@ void forth_constant(void)
 
 /* WARNING: Unknown calling convention */
 /* compiles code that pushes a value and returns, for create_x and spawn
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.
+   console.md */
 
 void forth_compile_constant(forth_user_end user,long *sp,void *dp)
 
@@ -16397,10 +16397,10 @@ void forth_star(long *sp)
 /* 000197da */
 
 /* 32 by 32-bit multiply from 16-bit halves; * calls it
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  In: D0, D1.
+   console.md */
 
 undefined8 forth_multiply(void)
 
@@ -16418,10 +16418,10 @@ undefined8 forth_multiply(void)
 /* 000197fa */
 
 /* signed divide over forth_divide_unsigned; /, mod, /mod, */ call it
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  In: D0, D1.
+   console.md */
 
 int forth_divide_signed(void)
 
@@ -16441,10 +16441,10 @@ int forth_divide_signed(void)
 /* 00019828 */
 
 /* 32-bit shift-and-subtract divide
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  In: D0, D1.
+   console.md */
 
 undefined8 forth_divide_unsigned(void)
 
@@ -16481,10 +16481,10 @@ LAB_00019830:
 /* 0001984c */
 
 /* 32 by 16-bit divide, quotient and remainder, for printing numbers
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  In: D0, D1.
+   console.md */
 
 undefined8 forth_divide_short(void)
 
@@ -16836,10 +16836,10 @@ void forth_paren_dot_quote_close_paren(void)
 /* 0001995a */
 
 /* a digit as 0-9 or A-Z
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  In: D1.
+   console.md */
 
 void forth_digit_char(void)
 
@@ -16857,10 +16857,10 @@ void forth_digit_char(void)
 
 /* WARNING: Unknown calling convention */
 /* copies the digits built on the stack into pad and prints them; . and u. call it
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.
+   console.md */
 
 void forth_print_number(forth_user_end user,long *sp)
 
@@ -17965,10 +17965,10 @@ void forth_spawn(forth_user_end user,long *sp,void *dp)
 /* 0001a03c */
 
 /* a zero byte, Z set, becomes a space; spawn pads a task's name with it
-   console.md
-   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
-   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
-   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  In: D0.
+   console.md */
 
 void forth_space_if_zero(void)
 
@@ -25375,24 +25375,29 @@ void FUN_00024984(void)
 
 /* 00024d42 */
 
-void FUN_00024d42(void)
+/* WARNING: Unknown calling convention */
+/* rounds the decimal record at A2 to D0.w digits: adds 5 at that digit and carries left, a carry
+   off the front writing 1 and raising the exponent, and fills the digits after with 0
+   Not a C function (register; read): its arguments and results in registers.  In: A2 char *record,
+   D0 short digits.
+   docs/scpi/README.md, read */
+
+void scpi_round_decimal(char *record,short digits)
 
 {
-  short in_D0w;
   short sVar1;
   char *pcVar2;
-  int unaff_A2;
   char *pcVar3;
   
-  pcVar3 = (char *)(unaff_A2 + 2);
-  pcVar2 = pcVar3 + in_D0w;
+  pcVar3 = record + 2;
+  pcVar2 = pcVar3 + digits;
   *pcVar2 = *pcVar2 + '\x05';
   do {
     if (*pcVar2 < ':') {
 LAB_00024d6c:
-      sVar1 = -in_D0w + 0xf;
-      pcVar2 = pcVar3 + in_D0w;
-      if (-0x10 < -in_D0w) {
+      sVar1 = -digits + 0xf;
+      pcVar2 = pcVar3 + digits;
+      if (-0x10 < -digits) {
         do {
           *pcVar2 = '0';
           sVar1 = sVar1 + -1;
@@ -25404,9 +25409,9 @@ LAB_00024d6c:
     *pcVar2 = *pcVar2 + -10;
     if (pcVar3 == pcVar2) {
       *pcVar3 = '1';
-      *(short *)(unaff_A2 + 0x12) = *(short *)(unaff_A2 + 0x12) + 1;
-      if (in_D0w == 0) {
-        in_D0w = 1;
+      *(short *)(record + 0x12) = *(short *)(record + 0x12) + 1;
+      if (digits == 0) {
+        digits = 1;
       }
       goto LAB_00024d6c;
     }
@@ -25416,14 +25421,77 @@ LAB_00024d6c:
 }
 
 
+/* 00024d88 */
+
+/* WARNING: Unknown calling convention */
+/* writes the decimal record at A0 as NR3 text at A1, D0.w digits: the sign, the first digit, a
+   point, the rest, E and the exponent by the digit pairs at 0x25c82; nothing calls it
+   Not a C function (register; read): its arguments and results in registers.  In: A0 char *record,
+   A1 char *text, D0 short digits.
+   docs/scpi/README.md, read */
+
+void scpi_decimal_to_text_unused(char *record,char *text,short digits)
+
+{
+  char *pcVar1;
+  short sVar2;
+  char *pcVar3;
+  char *pcVar4;
+  byte *pbVar5;
+  
+  if (*(short *)record == 0) {
+    *text = ' ';
+  }
+  else {
+    *text = '-';
+  }
+  text[1] = record[2];
+  text[2] = '.';
+  sVar2 = digits + -2;
+  pcVar3 = record + 3;
+  pcVar1 = text + 3;
+  do {
+    pcVar4 = pcVar1;
+    *pcVar4 = *pcVar3;
+    sVar2 = sVar2 + -1;
+    pcVar3 = pcVar3 + 1;
+    pcVar1 = pcVar4 + 1;
+  } while (sVar2 != -1);
+  pcVar4[1] = 'E';
+  sVar2 = *(short *)(record + 0x12) + -1;
+  if (*(short *)(record + 0x12) < 1) {
+    pcVar4[2] = '-';
+    sVar2 = -sVar2;
+  }
+  else {
+    pcVar4[2] = '+';
+  }
+  if (99 < sVar2) {
+    if (0x134 < sVar2) {
+      sVar2 = 0x135;
+    }
+    *pcVar4 = 'E';
+    pbVar5 = (byte *)(pcVar4 + 2);
+    pcVar4[1] = pcVar4[2];
+    *pbVar5 = (byte)((int)sVar2 / 100);
+    *pbVar5 = *pbVar5 | 0x30;
+    sVar2 = sVar2 + (short)((int)sVar2 / 100) * -100;
+  }
+  pcVar4[3] = *(char *)((int)&DAT_00025c82 + (int)(short)(sVar2 * 2));
+  pcVar4[4] = *(char *)((int)&DAT_00025c82 + (short)(sVar2 * 2) + 1);
+  pcVar4[5] = '\0';
+  return;
+}
+
+
 /* 00024e18 */
 
 /* WARNING: Unknown calling convention */
 /* the double in D0:D1 as a sign word, ASCII digits, D7 and two more, and the exponent of 0.d1d2...,
-   into the record at A0
+   into the record at A0; Z is set on failure, for a subnormal, infinite or NaN double, and its
+   caller reads nothing else, though D0.w holds -8
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double
-   value, D7 short digits, A0 char *record.  Returns: ccr.  Error: D0.w -8 subnormal, infinite or
-   NaN.
+   value, D7 short digits, A0 char *record.  Returns: ccr.
    docs/scpi/README.md, run */
 
 uint scpi_double_to_decimal(double value,short digits,char *record)
@@ -26191,7 +26259,7 @@ scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,shor
         sVar2 = param_4;
       }
       if (sVar2 < 0x10) {
-        FUN_00024d42();
+        scpi_round_decimal(&cStack_1c,sVar2);
         sVar2 = local_a - param_6;
         if (sVar2 == 0 || local_a < param_6) goto LAB_0002568a;
         if (sVar2 <= param_4) {

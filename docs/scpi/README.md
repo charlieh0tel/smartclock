@@ -125,8 +125,13 @@ multiply it by 10 to the exponent less 16, from tables of powers of ten
 (`0x256ae`, single steps from 10^-64 to 10^64, and `0x25b36`, steps of
 10^64).  `scpi_double_to_decimal` goes the other way, estimating the
 exponent from the binary one by log10(2), as `0x4d10` / 65536, scaling
-into [0.1, 1) and taking two digits more than asked, to round.  Both
+into [0.1, 1) and taking two digits more than asked, to round; it sets
+Z on failure, which is all `scpi_real_to_text` reads of its result, and
+`scpi_round_decimal` then rounds the record to the digits wanted.  Both
 multiply by `scpi_double_multiply`, the engine's own IEEE multiply.
+`scpi_decimal_to_text_unused` (`0x24d88`), which would write such a
+record as NR3 text, is called by nothing: `scpi_real_to_text` writes its
+own.
 The two jumps `SmartClockSetup.java` reports as unrecognized switch
 shapes, at `0x24ff2` and `0x25140`, are in this engine: each enters an
 unrolled run of shifts part way, to shift by a count, and every

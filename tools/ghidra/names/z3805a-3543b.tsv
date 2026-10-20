@@ -671,30 +671,30 @@
 0x5dbfe	function	double_divide_next_word	softfloat.md, read	each further quotient word, three in all		convention=register; confidence=derived; in=D0, D1, D2, D3; family=softfloat
 #
 # the pForth kernel's internal routines, console.md
-0x18f68	function	forth_parse_number	console.md	converts pad in base through forth_digit, or prints ": not found"; interpret and number call it
-0x18fcc	function	forth_find	console.md	looks pad up from the latest word down, skipping hidden ones; interpret, tick, forget call it
-0x19018	function	forth_align	console.md	rounds A4, the dictionary pointer, up to even
-0x19024	function	forth_digit	console.md	a character's digit value by the table at 0x18de2, Z set if below base
-0x19042	function	forth_is_space	console.md	Z set if the character at A3 is a space by the table at 0x18de2
-0x1906c	function	forth_skip_spaces	console.md	advances A3 past spaces with forth_is_space
-0x19096	function	forth_build_prompt	console.md	the prompt at 0x100b14: p4th, the base's letter, then > or >> while compiling (console.md)
-0x190e8	function	forth_read_line	console.md	reads a line from iodev with trap #4, or through the kernel
-0x1910e	function	forth_parse_word	console.md	refills and copies the next word into pad
-0x1912a	function	forth_refill	console.md	skips spaces and, at the input's end, prints the prompt and reads a line
-0x1916e	function	forth_input_buffer	console.md	tib, or one from the kernel when there is none
-0x19338	function	forth_compile_code	console.md	copies a run of code words into the dictionary, up to a zero
-0x1934e	function	forth_resolve_branch	console.md	patches a branch's offset; loop, until, again, repeat
-0x19378	function	forth_check_pairs	console.md	"ERROR: Mismatched " and the word, then aborts, when a control word's tag does not match
-0x1938e	function	forth_unlink_latest	console.md	latest = *latest: drops the word being defined
-0x1968c	function	forth_create_header	console.md	links a new word to latest, with its name from pad
-0x19700	function	forth_compile_constant	console.md	compiles code that pushes a value and returns, for create_x and spawn
-0x197da	function	forth_multiply	console.md	32 by 32-bit multiply from 16-bit halves; * calls it
-0x197fa	function	forth_divide_signed	console.md	signed divide over forth_divide_unsigned; /, mod, /mod, */ call it
-0x19828	function	forth_divide_unsigned	console.md	32-bit shift-and-subtract divide
-0x1984c	function	forth_divide_short	console.md	32 by 16-bit divide, quotient and remainder, for printing numbers
-0x1995a	function	forth_digit_char	console.md	a digit as 0-9 or A-Z
-0x1996c	function	forth_print_number	console.md	copies the digits built on the stack into pad and prints them; . and u. call it
-0x1a03c	function	forth_space_if_zero	console.md	a zero byte, Z set, becomes a space; spawn pads a task's name with it
+0x18f68	function	forth_parse_number	console.md	converts pad in base through forth_digit, or prints ": not found"; interpret and number call it		convention=pforth; confidence=read; family=pforth
+0x18fcc	function	forth_find	console.md	looks pad up from the latest word down, skipping hidden ones; interpret, tick, forget call it		convention=pforth; confidence=read; family=pforth
+0x19018	function	forth_align	console.md	rounds A4, the dictionary pointer, up to even		convention=pforth; confidence=read; in=A4; family=pforth
+0x19024	function	forth_digit	console.md	a character's digit value by the table at 0x18de2, Z set if below base		convention=pforth; confidence=read; in=D0, D2; family=pforth
+0x19042	function	forth_is_space	console.md	Z set if the character at A3 is a space by the table at 0x18de2		convention=pforth; confidence=read; in=A3; family=pforth
+0x1906c	function	forth_skip_spaces	console.md	advances A3 past spaces with forth_is_space		convention=pforth; confidence=read; in=A3; family=pforth
+0x19096	function	forth_build_prompt	console.md	the prompt at 0x100b14: p4th, the base's letter, then > or >> while compiling (console.md)		convention=pforth; confidence=read; family=pforth
+0x190e8	function	forth_read_line	console.md	reads a line from iodev with trap #4, or through the kernel		convention=pforth; confidence=read; family=pforth
+0x1910e	function	forth_parse_word	console.md	refills and copies the next word into pad		convention=pforth; confidence=read; family=pforth
+0x1912a	function	forth_refill	console.md	skips spaces and, at the input's end, prints the prompt and reads a line		convention=pforth; confidence=read; family=pforth
+0x1916e	function	forth_input_buffer	console.md	tib, or one from the kernel when there is none		convention=pforth; confidence=read; family=pforth
+0x19338	function	forth_compile_code	console.md	copies a run of code words into the dictionary, up to a zero		convention=pforth; confidence=read; in=A0; family=pforth
+0x1934e	function	forth_resolve_branch	console.md	patches a branch's offset; loop, until, again, repeat		convention=pforth; confidence=read; family=pforth
+0x19378	function	forth_check_pairs	console.md	"ERROR: Mismatched " and the word, then aborts, when a control word's tag does not match		convention=pforth; confidence=read; in=D0; family=pforth
+0x1938e	function	forth_unlink_latest	console.md	latest = *latest: drops the word being defined		convention=pforth; confidence=read; family=pforth
+0x1968c	function	forth_create_header	console.md	links a new word to latest, with its name from pad		convention=pforth; confidence=read; family=pforth
+0x19700	function	forth_compile_constant	console.md	compiles code that pushes a value and returns, for create_x and spawn		convention=pforth; confidence=read; family=pforth
+0x197da	function	forth_multiply	console.md	32 by 32-bit multiply from 16-bit halves; * calls it		convention=pforth; confidence=read; in=D0, D1; family=pforth
+0x197fa	function	forth_divide_signed	console.md	signed divide over forth_divide_unsigned; /, mod, /mod, */ call it		convention=pforth; confidence=read; in=D0, D1; family=pforth
+0x19828	function	forth_divide_unsigned	console.md	32-bit shift-and-subtract divide		convention=pforth; confidence=read; in=D0, D1; family=pforth
+0x1984c	function	forth_divide_short	console.md	32 by 16-bit divide, quotient and remainder, for printing numbers		convention=pforth; confidence=read; in=D0, D1; family=pforth
+0x1995a	function	forth_digit_char	console.md	a digit as 0-9 or A-Z		convention=pforth; confidence=read; in=D1; family=pforth
+0x1996c	function	forth_print_number	console.md	copies the digits built on the stack into pad and prints them; . and u. call it		convention=pforth; confidence=read; family=pforth
+0x1a03c	function	forth_space_if_zero	console.md	a zero byte, Z set, becomes a space; spawn pads a task's name with it		convention=pforth; confidence=read; in=D0; family=pforth
 #
 # the pSOS kernel, psos.md; services by the table at 0x14b6e
 0x14b26	function	kernel_dispatch_service	psos.md	trap #3: the service in D7, 0 to 0x26, through the bra.w table at 0x14b6e; error 0x55 for any other		convention=exception; confidence=documented; in=D7 char service, D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
@@ -835,7 +835,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x25d70	function	scpi_parse_string	docs/scpi/README.md, read	the string's pointer and length
 0x27ae4	function	scpi_apply_suffix	docs/scpi/README.md, read	matches the token's units suffix against the node's table, setting its scale and unit; -9 if none is allowed, -31 if unknown
 0x27a2a	function	scpi_match_suffix	docs/scpi/README.md, read	scans the 6-byte unit table, text and exponent, allowing a two-character multiplier before the unit
-0x24e18	function	scpi_double_to_decimal	docs/scpi/README.md, run	the double in D0:D1 as a sign word, ASCII digits, D7 and two more, and the exponent of 0.d1d2..., into the record at A0		convention=register; confidence=run; in=D0:D1 double value, D7 short digits, A0 char *record; returns=ccr; error=D0.w -8 subnormal, infinite or NaN; family=scpi-engine
+0x24e18	function	scpi_double_to_decimal	docs/scpi/README.md, run	the double in D0:D1 as a sign word, ASCII digits, D7 and two more, and the exponent of 0.d1d2..., into the record at A0; Z is set on failure, for a subnormal, infinite or NaN double, and its caller reads nothing else, though D0.w holds -8		convention=register; confidence=run; in=D0:D1 double value, D7 short digits, A0 char *record; returns=ccr; family=scpi-engine
+0x24d42	function	scpi_round_decimal	docs/scpi/README.md, read	rounds the decimal record at A2 to D0.w digits: adds 5 at that digit and carries left, a carry off the front writing 1 and raising the exponent, and fills the digits after with 0		convention=register; confidence=read; in=A2 char *record, D0 short digits; family=scpi-engine
+0x24d88	function	scpi_decimal_to_text_unused	docs/scpi/README.md, read	writes the decimal record at A0 as NR3 text at A1, D0.w digits: the sign, the first digit, a point, the rest, E and the exponent by the digit pairs at 0x25c82; nothing calls it		convention=register; confidence=read; in=A0 char *record, A1 char *text, D0 short digits; family=scpi-engine
 0x254fe	function	scpi_number_to_bcd	docs/scpi/README.md, read	a parsed number at A0 packed into the BCD record at A1, its exponent plus D0 plus 16 at +0xa; -1 beyond 309		convention=register; confidence=read; in=A0 char *number, D0 short scale, A1 char *bcd; out=D0 int status; error=D0 -1 exponent beyond 309; family=scpi-engine
 0x2507a	function	scpi_bcd_to_double	docs/scpi/README.md, run, as scpi_number_to_double	the 16 BCD digits as a 64-bit integer, normalized, then scaled by scpi_scale_by_power_of_ten		convention=register; confidence=run; in=A0 char *bcd; out=D0:D1 double; returns=ccr; error=D0.w -9 out of range; family=scpi-engine
 0x251e4	function	scpi_scale_by_power_of_ten	docs/scpi/README.md, run	the double in D0:D1 times 10 to the word at A0 less 16, by the tables at 0x256ae and 0x25b36; the sign from the word 10 bytes before; -9 beyond 309		convention=register; confidence=run; in=D0:D1 double value, A0 short *exponent, A1 double *powers; out=D0:D1 double; returns=ccr; error=D0.w -9 beyond 309; family=scpi-engine

@@ -17,7 +17,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types check-decompiled clean deb release release-notes install-service
+.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types check-decompiled report-decompiled clean deb release release-notes install-service
 
 all: build
 
@@ -129,17 +129,26 @@ check-types:
 	$(M68K_CC) -mcpu=cpu32 -fsyntax-only tools/ghidra/types/check-layout.c
 
 # Fail if the decompiled C does not compile, its assembly is not the
-# image's own bytes, or a bridge disagrees with its routine.  Needs an m68k
+# image's own bytes, alone or linked, or a bridge disagrees with its
+# routine.  Needs an m68k
 # gcc and binutils, and uv; not part of ci.
-DECOMPILED_CFLAGS = -std=gnu17 -mcpu=cpu32 -O1 -fno-toplevel-reorder -fno-builtin \
+DECOMPILED_CFLAGS = -std=gnu17 -mcpu=cpu32 -O1 -fno-toplevel-reorder -fno-builtin -ffunction-sections \
 	-fno-tree-loop-distribute-patterns -w \
 	-Wno-error=int-conversion -Wno-error=incompatible-pointer-types
 check-decompiled:
 	$(M68K_CC) $(DECOMPILED_CFLAGS) -c -o target/decompiled.o third_party/firmware/decompiled/z3805a-3543b.c
 	python3 tools/firmware/decompiled_check.py third_party/firmware/decompiled/z3805a-3543b.c \
 		third_party/firmware/z3805a-3543b.bin target/decompiled.o
-	uv run -q tools/firmware/bridge_check.py third_party/firmware/decompiled/z3805a-3543b.c \
-		third_party/firmware/z3805a-3543b.bin
+	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" uv run -q tools/firmware/rebuild_link.py \
+		third_party/firmware/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin
+	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" uv run -q tools/firmware/bridge_check.py \
+		third_party/firmware/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin
+
+# How many of the decompiled C functions, as gcc compiles them, agree with
+# the image's own in the emulator; a measure, never a failure.
+report-decompiled:
+	DECOMPILED_CFLAGS="$(DECOMPILED_CFLAGS)" uv run -q tools/firmware/function_check.py \
+		third_party/firmware/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin
 
 clean:
 	$(CARGO) clean

@@ -354,7 +354,12 @@ writes them all beside the C, in
 `third_party/firmware/decompiled/z3805a-3543b.conventions.jsonl`: one
 JSON object a line for every function, its address, name, note and
 convention, with its lists split into register, type and name, or
-`"convention":"unknown"`.
+`"convention":"unknown"`, and, for a function whose arguments are all on
+the stack, `"stack"`: each one's offset from the stack pointer at entry
+and its size, from the decompiler's prototype.  The original packs a
+`char` or `short` in 2 bytes, or several into one long (`format_date`
+takes its date so), where gcc gives each 4; the emulator harness lays
+the image's arguments from it.
 
 A function that is not C is not written as C.  Its decompiled C stays
 in the file for reading, under `#if 0`, its signature led by a macro
@@ -488,11 +493,24 @@ callee-saved registers, 11 reach the kernel or a peripheral and are
 skipped, and 7 (the installer's) are not run.  The
 whole file compiles to an object (`make check-decompiled`, whose flags
 add `-fno-builtin -fno-tree-loop-distribute-patterns`, since the image's
-C library has no `puts`, `strlen` or `strcmp` for gcc to call).  A link
-would need a few of gcc's helpers (float comparisons written as C
-operators, two 64-bit divisions), the symbols
-`z3805a-3543b.symbols.ld` places, and the 11 views of a caller's frame
-or a register the decompiler leaves as externs (PLAN.md, "Next").
+C library has no `puts`, `strlen` or `strcmp` for gcc to call).  The
+decompiler's views of the stack at entry, `stack0xN`, are macros N + 4
+above gcc's frame pointer, which is how the printf family reaches its
+variable arguments; a view into a routine's own frame, or of a
+register, has no C to stand for, and is an extern at `0xfffff000`, which
+the harness leaves unmapped, so that a use faults there.
+
+`tools/firmware/rebuild_link.py` links it into a rebuilt image: each
+piece of assembly at its own address, where it must be, and is, the
+image's bytes, and gcc's code -- the C, the bridges, its constants -- at
+`0x400000`, with libgcc for the float comparisons the decompiler wrote
+as operators.  A C function the assembly calls is the image's own copy,
+`__image_NAME`, so that the original's callers keep the original's
+callees and argument layout until a function is replaced; gcc's C calls
+gcc's.  `tools/firmware/function_check.py` (`make report-decompiled`)
+then calls each C function's image copy and gcc's copy in Unicorn, from
+the same RAM, and compares result and RAM: a measure of the decompiled
+C, not a gate (PLAN.md, "A rebuild that runs, in readable C").
 
 In the Z3805A 3543B image this gives 1752 functions, and every one but
 the ten thunks decompiles.  136 switches are recovered; `0x24ff2` and `0x25140`, a

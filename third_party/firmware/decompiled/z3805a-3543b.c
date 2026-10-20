@@ -4434,18 +4434,31 @@ extern uint uRam00100b90;
 __asm__(".set uRam00100b90, 0x00100b90");
 extern uint32_t uRam00101b4e;
 __asm__(".set uRam00101b4e, 0x00101b4e");
-/* the caller's frame and the registers, which have no address */
+/*
+ * The decompiler's views of the stack at entry: stack0xN the bytes N
+ * above the return address, so N + 4 above gcc's frame pointer.  A view
+ * below the return address, into the routine's own frame, or of a
+ * register has no C to stand for it: it is at an address the emulator
+ * harness leaves unmapped, so that a use faults there, until its
+ * function is rewritten.
+ */
 extern undefined4 register0x0000003c;
-extern undefined4 stack0x00000000;
-extern undefined4 stack0x00000008;
-extern undefined4 stack0x0000000c;
-extern undefined4 stack0x00000010;
-extern undefined4 stack0x00000014;
+__asm__(".set register0x0000003c, 0xfffff000");
+#define stack0x00000000 (*(undefined4 *)((char *)__builtin_frame_address(0) + 4))
+#define stack0x00000008 (*(undefined4 *)((char *)__builtin_frame_address(0) + 12))
+#define stack0x0000000c (*(undefined4 *)((char *)__builtin_frame_address(0) + 16))
+#define stack0x00000010 (*(undefined4 *)((char *)__builtin_frame_address(0) + 20))
+#define stack0x00000014 (*(undefined4 *)((char *)__builtin_frame_address(0) + 24))
 extern undefined4 stack0xffffffd2;
+__asm__(".set stack0xffffffd2, 0xfffff000");
 extern undefined4 stack0xffffffd4;
+__asm__(".set stack0xffffffd4, 0xfffff000");
 extern undefined4 stack0xffffffd6;
+__asm__(".set stack0xffffffd6, 0xfffff000");
 extern undefined4 stack0xfffffffc;
+__asm__(".set stack0xfffffffc, 0xfffff000");
 extern undefined4 unique0x1000008f;
+__asm__(".set unique0x1000008f, 0xfffff000");
 
 void boot_duartb_loopback_check(void);
 void boot_duart_early_init(void);

@@ -4,9 +4,10 @@
 // vocabulary; an extern and a .set to its address for every global the
 // C names; a prototype for every function; then every function in
 // address order.  Beside it, with .conventions.jsonl for .c, one JSON
-// object a line for every function: its address and name, its note and
-// the calling convention SmartClockSetup.java and SmartClockForth.java
-// recorded, or "unknown"; and with .symbols.ld, a linker script placing
+// object a line for every function: its address and name, its note, the
+// calling convention SmartClockSetup.java and SmartClockForth.java
+// recorded, or "unknown", and where its stack arguments are; and with
+// .symbols.ld, a linker script placing
 // the symbols the assembly makes for addresses in no routine.
 //
 // A function that is not C is its decompiled C under #if 0, for
@@ -67,6 +68,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighGlobal;
 import ghidra.program.model.pcode.HighSymbol;
+import ghidra.program.model.pcode.LocalSymbolMap;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.SourceType;
@@ -237,6 +239,10 @@ public class SmartClockExportC extends GhidraScript {
 					else {
 						functions.append(c);
 						collectGlobals(results.getHighFunction(), referenced);
+						String stack = stackArguments(results.getHighFunction());
+						if (stack != null) {
+							stackLayouts.put(function.getEntryPoint(), stack);
+						}
 						collectUsedTypes(results.getCCodeMarkup(), used);
 						prototypes.add(signature(c));
 					}
@@ -272,7 +278,7 @@ public class SmartClockExportC extends GhidraScript {
 
 	/**
 	 * One line a function: {"address", "name", "note"?, then the recorded
-	 * convention's members}.  Returns how many had a convention recorded.
+	 * convention's members, then "stack"?}.  Returns how many had a convention recorded.
 	 */
 	private int writeConventions(File sidecar) throws Exception {
 		StringPropertyMap conventions =
@@ -296,11 +302,42 @@ public class SmartClockExportC extends GhidraScript {
 				if (note != null) {
 					line.append(",\"note\":").append(jsonString(note));
 				}
-				line.append(",").append(convention, 1, convention.length());
-				writer.println(line);
+				line.append(",").append(convention, 1, convention.length() - 1);
+				String stack = stackLayouts.get(function.getEntryPoint());
+				if (stack != null) {
+					line.append(",\"stack\":").append(stack);
+				}
+				writer.println(line.append("}"));
 			}
 		}
 		return recorded;
+	}
+
+	/** Each C function's stack arguments, as stackArguments gives them. */
+	private final Map<Address, String> stackLayouts = new HashMap<>();
+
+	/**
+	 * Where a decompiled function's arguments are, if each is on the
+	 * stack: a JSON list of each one's offset from the stack pointer at
+	 * entry, where the return address is, and its size, from the
+	 * decompiler's prototype, which holds the arguments it found as well
+	 * as those set.  Null if it has none or one is elsewhere.
+	 */
+	private static String stackArguments(HighFunction high) {
+		LocalSymbolMap symbols = high.getLocalSymbolMap();
+		if (symbols.getNumParams() == 0) {
+			return null;
+		}
+		List<String> items = new ArrayList<>();
+		for (int i = 0; i < symbols.getNumParams(); i++) {
+			VariableStorage storage = symbols.getParamSymbol(i).getStorage();
+			if (!storage.isStackStorage()) {
+				return null;
+			}
+			items.add("{\"offset\":" + storage.getStackOffset() + ",\"size\":"
+				+ storage.size() + "}");
+		}
+		return "[" + String.join(",", items) + "]";
 	}
 
 	/**
@@ -700,11 +737,32 @@ public class SmartClockExportC extends GhidraScript {
 			writer.println("__asm__(\".set " + global.getKey() + ", 0x"
 				+ declared.get(global.getKey()) + "\");");
 		}
-		writer.println("/* the caller's frame and the registers, which have no address */");
-		for (String declaration : frames.values()) {
-			writer.println("extern " + declaration + ";");
+		writer.println("/*");
+		writer.println(" * The decompiler's views of the stack at entry: stack0xN the bytes N");
+		writer.println(" * above the return address, so N + 4 above gcc's frame pointer.  A view");
+		writer.println(" * below the return address, into the routine's own frame, or of a");
+		writer.println(" * register has no C to stand for it: it is at an address the emulator");
+		writer.println(" * harness leaves unmapped, so that a use faults there, until its");
+		writer.println(" * function is rewritten.");
+		writer.println(" */");
+		for (Map.Entry<String, String> view : frames.entrySet()) {
+			String name = view.getKey();
+			long offset = name.startsWith(STACK_VIEW) ? Long.parseLong(name.substring(STACK_VIEW.length()), 16) : -1;
+			if (offset >= 0 && offset < Integer.MAX_VALUE) {
+				writer.println("#define " + name + " (*(undefined4 *)((char *)__builtin_frame_address(0) + "
+					+ (offset + RETURN_ADDRESS_BYTES) + "))");
+			}
+			else {
+				writer.println("extern " + view.getValue() + ";");
+				writer.println("__asm__(\".set " + name + ", 0x" + Long.toHexString(UNEXPRESSED) + "\");");
+			}
 		}
 	}
+
+	/** The prefix of the decompiler's name for a view of the stack at entry. */
+	private static final String STACK_VIEW = "stack0x";
+	/** Where a view with no C stands: unmapped in the emulator harness. */
+	private static final long UNEXPRESSED = 0xfffff000L;
 
 	/**
 	 * The decompiler's piece of a variable, v._n_m_: the m bytes n bytes

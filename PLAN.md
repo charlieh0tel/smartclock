@@ -650,10 +650,11 @@ view cannot drift apart.  The library, bottom up:
      still needs from a link: a few of gcc's helpers -- 20 float
      comparisons the decompiler wrote as C operators and two 64-bit
      divisions, which the image's own float_compare and 64-bit routines
-     can stand in for -- the made symbols
-     `z3805a-3543b.symbols.ld` places, and 11 views of a caller's frame
-     or a register (`stack0x...`), mostly variadic functions reading
-     their arguments, which need `va_list` -- the first work of step 5.
+     can stand in for, or libgcc, which the link uses -- and the made
+     symbols `z3805a-3543b.symbols.ld` places.  The decompiler's views
+     of the caller's arguments (`stack0xN`) are read from gcc's frame
+     pointer; its views into a function's own frame or a register fault
+     in the harness until the function is rewritten.
   2. Bridges between gcc's C and the rest.  Started: a routine whose
      arguments and result Setup put in registers, from a convention
      with every item typed, gets a real prototype naming a generated
@@ -670,17 +671,30 @@ view cannot drift apart.  The library, bottom up:
      `undetermined` conventions must be settled first.
   3. A link that keeps the ROM's data -- strings, the SCPI tree,
      descriptors, tables -- at its own addresses, which the code names
-     absolutely, and places the rebuilt functions around it.
+     absolutely, and places the rebuilt functions around it.  Done for
+     the harness: `tools/firmware/rebuild_link.py` puts every piece of
+     assembly at its address, all 413 the image's bytes, and gcc's code
+     at `0x400000`; the ROM's data and its original C stay where they
+     are, and the assembly calls the original C (`__image_NAME`).  A
+     link for the board, gcc's C in the ROM's free space and the
+     original C gone, waits on the replaced functions.
   4. The emulator harness: a function's original and rebuilt code on
-     the same inputs and memory.  Started with the bridges:
+     the same inputs and memory.  Done, as `tools/firmware/harness.py`.
      `tools/firmware/bridge_check.py` (Unicorn, run with uv) calls each
      wrapper as gcc would and its routine from its registers, from the
      same RAM, and requires the same result and RAM and gcc's
      callee-saved registers kept; 67 of 85 agree, none disagree.
+     `tools/firmware/function_check.py` (`make report-decompiled`) does
+     the same for each C function, the image's copy against gcc's, the
+     image's arguments where the sidecar's `stack` layout says the
+     original reads them: of 1215 run, 535 agree, 588 reach the kernel
+     or a peripheral and are skipped, and 92 differ -- some in gcc's
+     callees, some where the decompiler is wrong, such as the SCPI
+     `*ESE` handler, which reads its record from the third argument
+     where the C takes the first.
      Unicorn has no CPU32 and the 68020 stands in: the image uses none
      of the CPU32's own instructions (`tbl`, `lpstop`, `bgnd`; a scan of
-     its words finds none), and none of the 68020's the CPU32 lacks.  Next it runs gcc's compiled C
-     of a function against the image's, once step 3 links one.
+     its words finds none), and none of the 68020's the CPU32 lacks.
   5. Replace, check, repeat, making the C readable and idiomatic as
      each function is taken: names for locals, real types, loops and
      structures in place of pointer arithmetic, the decompiler's

@@ -17,7 +17,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages clean deb release release-notes install-service
+.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types clean deb release release-notes install-service
 
 all: build
 
@@ -119,6 +119,14 @@ docs:
 # Needs Chrome; not part of ci.
 check-pages:
 	./tools/check-pages.sh
+
+# Fail if a structure tools/ghidra/types/smartclock.h declares for
+# Ghidra does not have the size and offsets the image shows.  Needs an
+# m68k compiler, so that int, long and pointers are the target's; not
+# part of ci.
+M68K_CC ?= m68k-linux-gnu-gcc
+check-types:
+	$(M68K_CC) -mcpu=cpu32 -fsyntax-only tools/ghidra/types/check-layout.c
 
 clean:
 	$(CARGO) clean

@@ -1,8 +1,10 @@
 /* The SmartClock firmware's structures, as the code that uses them shows
  * them, for SmartClockSetup.java's types= argument.  A field is named
  * only where docs/firmware/structures.md gives the code that shows what
- * it is; the rest are field_NN, by offset.  Packed: these are byte
- * layouts read from the image, not what a compiler would lay out. */
+ * it is; the rest are field_NN, by offset.  Packed, so that the layout
+ * is the image's whatever the host compiler; the 68000's own alignment,
+ * 2 bytes, gives the same, and check-layout.c checks it with an m68k
+ * compiler ("make check-types"). */
 
 #pragma pack(1)
 

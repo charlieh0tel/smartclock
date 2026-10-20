@@ -7,6 +7,14 @@ field named only where this note gives the code that shows what it is;
 `tools/ghidra/names/z3805a-3543b.tsv` names and types their instances
 and the globals.
 
+`make check-types` compiles `tools/ghidra/types/check-layout.c` with an
+m68k compiler (`m68k-linux-gnu-gcc`, or `M68K_CC`) and fails if a
+structure's size or a named field's offset is not the one given here,
+an offset read from the image written as the difference of its
+addresses.  The header packs its structures, but every one has the
+same layout unpacked under the 68000's 2-byte alignment: they are what
+a 68000 compiler lays out, not byte layouts that happen to fit.
+
 ## The tasks and exchanges
 
 `0x1304a` is the root task.  It stores its own id (`psos_my_pid`) in

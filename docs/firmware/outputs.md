@@ -126,6 +126,14 @@ with condition `0x2e` (`:STATus:OPERation:HOLDover` bit 3, "Exceeding
 User-Threshold"), and cleared on regaining lock.  With it,
 `pwma_force_level` forces the PWMA pin low, and releases it on lock,
 as `loop.md` records for 3704; what the pin drives was not traced.
+
+The Z3805A also has a rear-panel TTL alarm output (its owner,
+2026-10-20).  097-58503-12 (2-11) says the 58503B's, a TTL open
+collector, "goes on and off with the Alarm indicator"; if the
+Z3805A's does too, it hangs off latch bit 2 in hardware, since no
+code writes an alarm pin apart from the latch.  The firmware's only
+other candidate is PWMA, which follows the holdover threshold alone.
+Which it is needs the board or a unit.
 `:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded?` returns
 the flag.
 

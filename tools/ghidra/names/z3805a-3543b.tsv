@@ -208,3 +208,76 @@
 0x29e7e	function	request_and_wait	context: raises a variable, send_x_retry, waits on the variable
 0x22d4a	function	debug_message	context: task_debug_message when with_task_name is set, else debug_write; callers push the flag with move.b	void debug_message(char *message, char with_task_name)
 0x1ef74	function	debug_write	context: writes through 0x1df12 while debug_enabled
+0x319a2	function	log_event	context: log_write of one of 27 fixed messages by code, "Log cleared", "Power on", "Survey mode started"...	int log_event(unsigned char code)
+0x18334	function	debug_is_enabled	context: returns debug_enabled	char debug_is_enabled(void)
+0x29a18	function	return_byte	context: returns its argument; the LED and DOUGlas queries call it	char return_byte(char b)
+0x40756	function	fpga_write	context: writes a byte to FPGA register reg at 0x304000 (interval.md: the FPGA port)	void fpga_write(unsigned char reg, unsigned char value)
+0x409a4	function	fpga_set_bit	context: sets or clears a bit in fpga_shadow, register and mask from fpga_bit_table, then fpga_write	void fpga_set_bit(unsigned char bit, char on)
+0x20b8a	function	qspi_transfer	context: waits for SPCR1 and SPSR, runs a QSPI transfer, copies the receive RAM at 0xfffd00 out
+0x1f2c0	function	adc_read	context: sends 0xc000 | channel << 11 to device 1 minor 1 and returns the reply shifted down 2; diag_adc_read and diag_cal call it	int adc_read(unsigned char channel)
+0x1df12	function	console_write_polled	context: in supervisor mode, writes the string a character at a time through 0x1d680; debug_write uses it	int console_write_polled(char *s)
+0x101fa9	label	fpga_shadow	context: fpga_set_bit's copy of the FPGA registers
+0x41310	label	fpga_bit_table	context: fpga_set_bit's register and mask for each bit
+#
+# structures and the functions they show, docs/firmware/structures.md
+0x102eb8	label	status_object	structures.md: status_init passes its address to status_create	status_model *
+0x102eb7	label	status_ready	structures.md: status_init sets it; status_report does nothing without it	char
+0x2f838	label	status_conditions	structures.md: status_create's condition table, status_set_bit's entries	status_condition[57]
+0x2f7ac	label	status_register_setup_table	structures.md: status_init's 22-byte entries, one a register, for status_register_setup
+0x2f480	function	status_init	structures.md: builds status_object with status_create, sets each register up, sets status_ready
+0x280ea	function	status_create	structures.md: allocates the status model and its registers, builds the queue
+0x2819c	function	status_register_setup	structures.md: one register's fields and its parent
+0x2820a	function	status_set_bit	structures.md: sets a condition's register bit through status_conditions	short status_set_bit(status_model *status, int condition, int value)
+0x28388	function	status_clear_bit	structures.md: status_set_bit with 0
+0x2be9c	function	status_report	structures.md: puts a code into the status system once status_ready
+0x2f53c	function	status_happening	structures.md: :DIAG:STAT:HAPP passes it a condition, 0 to 0x38
+0x298fc	function	scpi_numeric_get	structures.md: a parameter's value, or its minimum or maximum, from its descriptor	float scpi_numeric_get(scpi_numeric_param *param, int index, short which, short bound) @ D0
+0x2982c	function	scpi_numeric_set	structures.md: sends a parameter's new value, or its minimum or maximum, to pllc
+0x1304a	function	root_task	structures.md: stores its own task id in task_root, sets up the status system, creates the exchanges and tasks and starts them
+0x4bf4a	function	gpsm_task	structures.md: root_task starts gpsm here
+0x247d4	function	hmon_task	structures.md: root_task starts hmon here
+0x47528	function	pllp_task	structures.md: root_task starts pllp here
+0x41784	function	curv_task	structures.md: root_task starts curv here
+0x1037fc	label	gpsx_exchange	structures.md: root_task's create_x("gpsx")
+0x103800	label	plla_exchange	structures.md: root_task's create_x("plla")
+0x103804	label	pllc_exchange	structures.md: root_task's create_x("pllc"); the SCPI setters' requests go here
+0x29ec2	function	pllc_request_a	structures.md: request_and_wait to pllc_exchange; the five differ in the message fields they fill
+0x29ef6	function	pllc_request_b	structures.md: request_and_wait to pllc_exchange
+0x29f24	function	pllc_request_c	structures.md: request_and_wait to pllc_exchange, with a value through a pointer
+0x29f60	function	pllc_request_d	structures.md: request_and_wait to pllc_exchange
+0x29f94	function	pllc_request_e	structures.md: request_and_wait to pllc_exchange
+0x46636	function	gpsx_send	structures.md: copies four longs and sends them to gpsx_exchange
+0x3082e	function	record_checksum	structures.md: the sum and its complement of an EEPROM record's bytes after the first two	unsigned short record_checksum(void *record, unsigned short length)
+0x1f53a	function	hdac_set	structures.md: a 6-bit value into one half of an hdac word, written with device1_write; hdac_write leads here
+0x334de	label	scpi_param_SAMPle_INTeger	structures.md: the descriptor scpi_numeric_get and _set are given for SAMPle_INTeger	scpi_numeric_param
+0x101de4	label	scpi_value_SAMPle_INTeger	structures.md: the descriptor's value	long
+0x3354e	label	scpi_param_SAMPle_IARR	structures.md: the descriptor scpi_numeric_get and _set are given for SAMPle_IARR	scpi_numeric_param
+0x101de8	label	scpi_value_SAMPle_IARR	structures.md: the descriptor's value	long
+0x3367a	label	scpi_param_SAMPle_FLOat	structures.md: the descriptor scpi_numeric_get and _set are given for SAMPle_FLOat	scpi_numeric_param
+0x101e18	label	scpi_value_SAMPle_FLOat	structures.md: the descriptor's value	float
+0x336da	label	scpi_param_SAMPle_FARR	structures.md: the descriptor scpi_numeric_get and _set are given for SAMPle_FARR	scpi_numeric_param
+0x101e1c	label	scpi_value_SAMPle_FARR	structures.md: the descriptor's value	float
+0x339b4	label	scpi_param_SOURce_PULSe_CONTinuous_PERiod	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_PULSe_CONTinuous_PERiod	scpi_numeric_param
+0x101f26	label	scpi_value_SOURce_PULSe_CONTinuous_PERiod	structures.md: the descriptor's value	long
+0x33e20	label	scpi_param_SOURce_ROSCillator_LIMit_THReshold	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_ROSCillator_LIMit_THReshold	scpi_numeric_param
+0x101e9e	label	scpi_value_SOURce_ROSCillator_LIMit_THReshold	structures.md: the descriptor's value	float
+0x33e5e	label	scpi_param_SOURce_ROSCillator_HOLDover_LIMit_THReshold	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_ROSCillator_HOLDover_LIMit_THReshold	scpi_numeric_param
+0x101ea2	label	scpi_value_SOURce_ROSCillator_HOLDover_LIMit_THReshold	structures.md: the descriptor's value	float
+0x33e9c	label	scpi_param_DIAGnostic_ROSCillator_TCOefficient	structures.md: the descriptor scpi_numeric_get and _set are given for DIAGnostic_ROSCillator_TCOefficient	scpi_numeric_param
+0x101d0c	label	scpi_value_DIAGnostic_ROSCillator_TCOefficient	structures.md: the descriptor's value	float
+0x33eda	label	scpi_param_DOUGlas_DURation	structures.md: the descriptor scpi_numeric_get and _set are given for DOUGlas_DURation	scpi_numeric_param
+0x101e94	label	scpi_value_DOUGlas_DURation	structures.md: the descriptor's value	long
+0x33f18	label	scpi_param_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold	scpi_numeric_param
+0x101e9a	label	scpi_value_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold	structures.md: the descriptor's value	long
+0x33f56	label	scpi_param_SOURce_GPSystem_EMANgle	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_GPSystem_EMANgle	scpi_numeric_param
+0x101e8c	label	scpi_value_SOURce_GPSystem_EMANgle	structures.md: the descriptor's value	long
+0x33f94	label	scpi_param_SOURce_GPSystem_ADELay	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_GPSystem_ADELay	scpi_numeric_param
+0x101e90	label	scpi_value_SOURce_GPSystem_ADELay	structures.md: the descriptor's value	long
+0x33fd2	label	scpi_param_DIAGnostic_TOFFset	structures.md: the descriptor scpi_numeric_get and _set are given for DIAGnostic_TOFFset	scpi_numeric_param
+0x101d10	label	scpi_value_DIAGnostic_TOFFset	structures.md: the descriptor's value	float
+0x3409c	label	scpi_param_KENneth_PREDicted_DURation	structures.md: the descriptor scpi_numeric_get and _set are given for KENneth_PREDicted_DURation	scpi_numeric_param
+0x101ec2	label	scpi_value_KENneth_PREDicted_DURation	structures.md: the descriptor's value	long
+0x342f8	label	scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold	structures.md: the descriptor scpi_numeric_get and _set are given for DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold	scpi_numeric_param
+0x101ed2	label	scpi_value_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold	structures.md: the descriptor's value	long
+0x34336	label	scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	scpi_numeric_param
+0x101eda	label	scpi_value_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	structures.md: the descriptor's value	long

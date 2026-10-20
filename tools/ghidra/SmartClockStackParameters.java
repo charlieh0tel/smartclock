@@ -1,40 +1,57 @@
-// Repairs functions the decompiler rejects with "Cannot properly adjust
-// input varnodes".  This compiler pushes a char or short argument in a
-// 2-byte slot, so arguments sit at 2-byte-aligned stack offsets, while
-// Ghidra's 68000 compiler spec assumes 4-byte slots and infers inputs
-// that overlap.  Each failing function is first given no parameters, in
-// custom storage, which the decompiler accepts; the stack inputs it then
-// reports (in_stack_*) become the parameters, at their real offsets and
-// with the types it inferred.  A function left with no parameters in
-// custom storage, by an earlier run, is inferred again.
+// Gives functions the stack parameters their instructions read.  This
+// compiler pushes a char or short argument in a 2-byte slot, its value at
+// the slot's start, and the argument after it 2 bytes on
+// (docs/firmware/README.md, "The calling convention"); Ghidra's 68000
+// convention puts every argument in a 4-byte slot and a small value at
+// its end, so where a function takes a char or short its parameters are
+// misplaced, and some do not decompile at all ("Cannot properly adjust
+// input varnodes").
 //
-// With the argument "all", a function the decompiler accepts is
-// repaired the same way when its parameters are misplaced: when the C
-// picks bytes out of one (param_N._0_1_), a char or short read where
-// Ghidra put a 4-byte argument.  Only a signature Ghidra made up is
-// replaced; one from the names file or given by hand is kept.  With
-// "dry-run" as well, the functions are counted, not changed.
+// The parameters' layout comes from the callers where they agree: a call
+// site's pushes, last first, give each argument's slot (move.b and clr.b
+// a 2-byte slot holding a byte at its start, .w 2 bytes, .l and pea 4),
+// and the call is used only when the stack it pops afterwards adds up.
+// Without such a caller, the layout comes from the stack references
+// analysis puts on the function's own instructions, relative to SP at
+// entry and so the same with a frame or without: each read at offset 4
+// or above is an argument, sized by the instruction (.b 1, .w 2, .l 4;
+// an address taken, 4), reads that overlap are one argument, and a lone
+// byte or word read at the end of a 4-byte slot is taken as part of a
+// 4-byte argument, an int the function reads only the low part of.  They go into custom storage at those
+// offsets and sizes, typed by size only; the decompiler's types for them
+// are then committed.  The decompiler's own list of stack inputs is not
+// used: it drops an argument that is only copied into a local buffer
+// whose address escapes.
+//
+// A function is given them if it does not decompile, if its arguments do
+// not fit the default convention (one at an offset not a multiple of 4,
+// or narrower than 4), or if an earlier run gave it stack parameters.  A
+// signature from the names file or given by hand is kept, and so is one
+// with register parameters.  "dry-run" counts without changing anything.
 //
 //@category SmartClock
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Map;
+import java.util.TreeMap;
 
 import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.decompiler.DecompileOptions;
 import ghidra.app.decompiler.DecompileResults;
 import ghidra.app.script.GhidraScript;
+import ghidra.program.model.data.Undefined;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
+import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Parameter;
 import ghidra.program.model.listing.ParameterImpl;
 import ghidra.program.model.listing.VariableStorage;
-import ghidra.program.model.pcode.HighFunction;
-import ghidra.program.model.pcode.HighSymbol;
+import ghidra.program.model.pcode.HighFunctionDBUtil;
+import ghidra.program.model.pcode.HighFunctionDBUtil.ReturnCommitOption;
+import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.StackReference;
 
 public class SmartClockStackParameters extends GhidraScript {
 
@@ -44,76 +61,260 @@ public class SmartClockStackParameters extends GhidraScript {
 	 * 0..3; arguments start at 4.
 	 */
 	private static final int FIRST_ARGUMENT_OFFSET = 4;
-	private static final String FAILURE = "Cannot properly adjust input varnodes";
-	private static final String ALL = "all";
+	/** The default convention's slot, which every argument then fills. */
+	private static final int DEFAULT_SLOT = 4;
+	/** The size given an argument whose address is taken rather than read. */
+	private static final int ADDRESS_TAKEN_SIZE = 4;
 	private static final String DRY_RUN = "dry-run";
-	/** A parameter the C picks bytes out of, as param_2._0_1_. */
-	private static final Pattern PARTIAL_PARAMETER = Pattern.compile("\\bparam_\\d+\\._\\d+_\\d+_");
 
 	@Override
 	protected void run() throws Exception {
+		boolean dryRun = List.of(getScriptArgs()).contains(DRY_RUN);
 		DecompInterface decompiler = new DecompInterface();
 		decompiler.setOptions(new DecompileOptions());
 		decompiler.openProgram(currentProgram);
-		List<String> args = List.of(getScriptArgs());
-		boolean all = args.contains(ALL);
-		boolean dryRun = args.contains(DRY_RUN);
-		int repaired = 0;
-		int misplaced = 0;
-		List<Function> remaining = new ArrayList<>();
+		int changed = 0;
+		int unchanged = 0;
+		List<Function> failing = new ArrayList<>();
 		try {
 			for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
 				if (monitor.isCancelled()) {
 					break;
 				}
-				boolean emptied = function.hasCustomVariableStorage()
-						&& function.getParameterCount() == 0;
+				if (!eligible(function)) {
+					continue;
+				}
+				Map<Integer, Integer> arguments = callerLayout(function);
+				if (arguments == null) {
+					arguments = stackArguments(function);
+				}
+				boolean earlier = function.hasCustomVariableStorage();
+				boolean misfit = arguments.entrySet().stream()
+						.anyMatch(a -> a.getKey() % DEFAULT_SLOT != 0 || a.getValue() < DEFAULT_SLOT);
+				boolean fails = !earlier && !misfit
+						&& !decompile(decompiler, function).decompileCompleted();
+				if (!earlier && !misfit && !fails) {
+					continue;
+				}
+				if (earlier && matches(function, arguments)) {
+					unchanged++;
+					continue;
+				}
+				changed++;
+				println(function.getEntryPoint() + " " + function.getName() + ": "
+					+ describe(arguments) + (dryRun ? " (dry run)" : ""));
+				if (dryRun) {
+					continue;
+				}
+				setParameters(function, arguments);
 				DecompileResults results = decompile(decompiler, function);
-				boolean failed = !results.decompileCompleted()
-						&& results.getErrorMessage().contains(FAILURE);
-				boolean partial = all && results.decompileCompleted()
-						&& function.getSignatureSource() == SourceType.DEFAULT
-						&& !function.hasCustomVariableStorage()
-						&& PARTIAL_PARAMETER.matcher(results.getDecompiledFunction().getC()).find();
-				if (!emptied && !failed && !partial) {
-					continue;
-				}
-				if (partial) {
-					misplaced++;
-					if (dryRun) {
-						continue;
-					}
-				}
-				setParameters(function, List.of());
-				results = decompile(decompiler, function);
 				if (!results.decompileCompleted()) {
-					remaining.add(function);
+					failing.add(function);
 					continue;
 				}
-				List<Parameter> parameters = stackInputs(results.getHighFunction());
-				setParameters(function, parameters);
-				if (!decompile(decompiler, function).decompileCompleted()) {
-					println(function.getEntryPoint() + ": inferred parameters rejected; none kept");
-					setParameters(function, List.of());
-				}
-				else {
-					println(function.getEntryPoint() + ": " + parameters.size()
-						+ " stack parameters");
-				}
-				repaired++;
+				HighFunctionDBUtil.commitParamsToDatabase(results.getHighFunction(), true,
+					ReturnCommitOption.NO_COMMIT, SourceType.ANALYSIS);
 			}
 		}
 		finally {
 			decompiler.dispose();
 		}
-		if (all) {
-			println((dryRun ? "misplaced parameters found: " : "misplaced parameters repaired: ")
-				+ misplaced);
-		}
-		println("repaired " + repaired + ", still failing " + remaining.size());
-		for (Function function : remaining) {
+		println((dryRun ? "would change " : "changed ") + changed + ", already right "
+			+ unchanged + ", still failing " + failing.size());
+		for (Function function : failing) {
 			println("  " + function.getEntryPoint() + " " + function.getName());
 		}
+	}
+
+	/**
+	 * True unless the function's signature came from the names file or by
+	 * hand, or it has register parameters, or it is a thunk.
+	 */
+	private static boolean eligible(Function function) {
+		if (function.isThunk() || function.isExternal()) {
+			return false;
+		}
+		SourceType source = function.getSignatureSource();
+		if (source == SourceType.IMPORTED || source == SourceType.USER_DEFINED) {
+			return false;
+		}
+		for (Parameter parameter : function.getParameters()) {
+			if (!parameter.isStackVariable()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * The arguments the function's instructions read, offset to size, from
+	 * the stack references on them; overlapping reads are merged.
+	 */
+	private Map<Integer, Integer> stackArguments(Function function) {
+		TreeMap<Integer, Integer> reads = new TreeMap<>();
+		for (Instruction instruction : currentProgram.getListing()
+				.getInstructions(function.getBody(), true)) {
+			for (Reference reference : instruction.getReferencesFrom()) {
+				if (!(reference instanceof StackReference stack)) {
+					continue;
+				}
+				int offset = stack.getStackOffset();
+				if (offset < FIRST_ARGUMENT_OFFSET || reference.getReferenceType().isWrite()) {
+					continue;
+				}
+				reads.merge(offset, readSize(instruction), Math::max);
+			}
+		}
+		TreeMap<Integer, Integer> merged = new TreeMap<>();
+		for (Map.Entry<Integer, Integer> read : reads.entrySet()) {
+			int offset = read.getKey();
+			int size = read.getValue();
+			int slot = offset - (offset - FIRST_ARGUMENT_OFFSET) % DEFAULT_SLOT;
+			Map.Entry<Integer, Integer> previous = merged.lastEntry();
+			boolean slotEmpty = previous == null
+					|| previous.getKey() + previous.getValue() <= slot;
+			if (offset + size == slot + DEFAULT_SLOT && offset != slot && slotEmpty) {
+				offset = slot;
+				size = DEFAULT_SLOT;
+			}
+			if (previous != null && offset < previous.getKey() + previous.getValue()) {
+				int end = Math.max(previous.getKey() + previous.getValue(), offset + size);
+				merged.put(previous.getKey(), end - previous.getKey());
+			}
+			else {
+				merged.put(offset, size);
+			}
+		}
+		return merged;
+	}
+
+	/**
+	 * The argument layout the function's callers push, offset to size, if
+	 * every caller whose pushes add up to what it pops agrees, and there is
+	 * one; null otherwise.
+	 */
+	private Map<Integer, Integer> callerLayout(Function function) {
+		Map<Integer, Integer> layout = null;
+		for (Reference reference : getReferencesTo(function.getEntryPoint())) {
+			if (!reference.getReferenceType().isCall()) {
+				continue;
+			}
+			Instruction call = getInstructionAt(reference.getFromAddress());
+			Map<Integer, Integer> pushed = pushedArguments(call);
+			if (pushed == null) {
+				continue;
+			}
+			if (layout != null && !layout.equals(pushed)) {
+				return null;
+			}
+			layout = pushed;
+		}
+		return layout;
+	}
+
+	/**
+	 * The arguments pushed before call, offset to size, or null unless the
+	 * stack popped after it is exactly what they occupy.
+	 */
+	private static Map<Integer, Integer> pushedArguments(Instruction call) {
+		if (call == null) {
+			return null;
+		}
+		List<int[]> pushes = new ArrayList<>();
+		for (Instruction before = call.getPrevious(); before != null;
+				before = before.getPrevious()) {
+			int[] push = push(before);
+			if (push == null) {
+				break;
+			}
+			pushes.add(push);
+		}
+		int popped = popped(call.getNext());
+		int total = pushes.stream().mapToInt(p -> p[0]).sum();
+		if (pushes.isEmpty() || popped != total) {
+			return null;
+		}
+		Map<Integer, Integer> layout = new TreeMap<>();
+		int offset = FIRST_ARGUMENT_OFFSET;
+		for (int[] push : pushes) {
+			layout.put(offset, push[1]);
+			offset += push[0];
+		}
+		return layout;
+	}
+
+	/** An instruction's push onto the stack as {slot, value size}, or null. */
+	private static int[] push(Instruction instruction) {
+		String text = instruction.toString();
+		String mnemonic = instruction.getMnemonicString();
+		if (mnemonic.equals("pea")) {
+			return new int[] { 4, 4 };
+		}
+		if (!text.endsWith("-(SP)") || !(mnemonic.startsWith("move.") || mnemonic.startsWith("clr."))) {
+			return null;
+		}
+		if (mnemonic.endsWith(".b")) {
+			return new int[] { 2, 1 };
+		}
+		if (mnemonic.endsWith(".w")) {
+			return new int[] { 2, 2 };
+		}
+		return mnemonic.endsWith(".l") ? new int[] { 4, 4 } : null;
+	}
+
+	/** The bytes the instruction after a call pops, or 0 if it pops none. */
+	private static int popped(Instruction instruction) {
+		if (instruction == null) {
+			return 0;
+		}
+		String text = instruction.toString();
+		java.util.regex.Matcher addq =
+			java.util.regex.Pattern.compile("^addq\\.[wl] #?(0x)?([0-9a-f]+),SP$").matcher(text);
+		if (addq.find()) {
+			return Integer.parseInt(addq.group(2), addq.group(1) == null ? 10 : 16);
+		}
+		java.util.regex.Matcher lea =
+			java.util.regex.Pattern.compile("^lea \\((0x)?([0-9a-f]+),SP\\),SP$").matcher(text);
+		if (lea.find()) {
+			return Integer.parseInt(lea.group(2), lea.group(1) == null ? 10 : 16);
+		}
+		return 0;
+	}
+
+	/** The size an instruction reads, from its mnemonic's suffix. */
+	private static int readSize(Instruction instruction) {
+		String mnemonic = instruction.getMnemonicString();
+		if (mnemonic.endsWith(".b")) {
+			return 1;
+		}
+		if (mnemonic.endsWith(".w")) {
+			return 2;
+		}
+		return mnemonic.endsWith(".l") ? 4 : ADDRESS_TAKEN_SIZE;
+	}
+
+	/** True if the function's parameters already have these offsets and sizes. */
+	private static boolean matches(Function function, Map<Integer, Integer> arguments) {
+		Parameter[] parameters = function.getParameters();
+		if (parameters.length != arguments.size()) {
+			return false;
+		}
+		int i = 0;
+		for (Map.Entry<Integer, Integer> argument : arguments.entrySet()) {
+			Parameter parameter = parameters[i++];
+			if (parameter.getStackOffset() != argument.getKey()
+					|| parameter.getLength() != argument.getValue()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static String describe(Map<Integer, Integer> arguments) {
+		StringBuilder text = new StringBuilder();
+		arguments.forEach((offset, size) -> text.append(text.isEmpty() ? "" : ", ")
+				.append(offset).append(':').append(size));
+		return text.isEmpty() ? "no arguments" : text.toString();
 	}
 
 	private DecompileResults decompile(DecompInterface decompiler, Function function) {
@@ -121,39 +322,16 @@ public class SmartClockStackParameters extends GhidraScript {
 		return decompiler.decompileFunction(function, TIMEOUT_SECONDS, monitor);
 	}
 
-	private static void setParameters(Function function, List<Parameter> parameters)
+	private void setParameters(Function function, Map<Integer, Integer> arguments)
 			throws Exception {
+		List<Parameter> parameters = new ArrayList<>();
+		for (Map.Entry<Integer, Integer> argument : arguments.entrySet()) {
+			parameters.add(new ParameterImpl("param_" + (parameters.size() + 1),
+				Undefined.getUndefinedDataType(argument.getValue()),
+				new VariableStorage(currentProgram, argument.getKey(), argument.getValue()),
+				currentProgram, SourceType.ANALYSIS));
+		}
 		function.updateFunction(null, null, parameters,
 			FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.ANALYSIS);
-	}
-
-	/**
-	 * Returns the decompiler's stack inputs at argument offsets, lowest
-	 * offset first, as parameters.  An input overlapping the one before it
-	 * is dropped.
-	 */
-	private List<Parameter> stackInputs(HighFunction high) throws Exception {
-		List<HighSymbol> inputs = new ArrayList<>();
-		Iterator<HighSymbol> symbols = high.getLocalSymbolMap().getSymbols();
-		while (symbols.hasNext()) {
-			HighSymbol symbol = symbols.next();
-			VariableStorage storage = symbol.getStorage();
-			if (storage.isStackStorage() && storage.getStackOffset() >= FIRST_ARGUMENT_OFFSET) {
-				inputs.add(symbol);
-			}
-		}
-		inputs.sort(Comparator.comparingInt(s -> s.getStorage().getStackOffset()));
-		List<Parameter> parameters = new ArrayList<>();
-		int end = FIRST_ARGUMENT_OFFSET;
-		for (HighSymbol input : inputs) {
-			int offset = input.getStorage().getStackOffset();
-			if (offset < end) {
-				continue;
-			}
-			parameters.add(new ParameterImpl("param_" + (parameters.size() + 1),
-				input.getDataType(), input.getStorage(), currentProgram, SourceType.ANALYSIS));
-			end = offset + input.getSize();
-		}
-		return parameters;
 	}
 }

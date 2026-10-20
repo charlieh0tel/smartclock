@@ -82,6 +82,7 @@ request scripts in `oncore/`.
 - [The floating-point library](softfloat.md)
 - [The C library](libc.md)
 - [The real-time kernel](psos.md)
+- [Structures](structures.md)
 
 ## Summary
 
@@ -246,8 +247,8 @@ returned is not established.
 
 Ghidra cannot model this convention: its 68000 language justifies a
 small value to the end of its slot, a property of the language, not of
-a convention a program can add.  Hence `SmartClockStackParameters.java
-all`, below, which pins each argument's bytes in custom storage.
+a convention a program can add.  Hence `SmartClockStackParameters.java`,
+below, which pins each argument's bytes in custom storage.
 
 ## Decompiling with Ghidra
 
@@ -261,11 +262,12 @@ again.  In order:
    Z3801A 3543 and Z3805A 3543B (`restart.md`, "Forced installer entry
    with an unusable primary").
 3. `SmartClockSetup.java` again, now over the installer too, with
+   `types=tools/ghidra/types/smartclock.h`,
    `names=tools/ghidra/names/IMAGE.tsv`, `scpi=FILE` from
    `smartclock-cli dump-scpi --handlers IMAGE` and
    `pforth=docs/firmware/pforth/IMAGE.txt`.
 4. `SmartClockForth.java`.
-5. `SmartClockStackParameters.java all`.
+5. `SmartClockStackParameters.java`.
 6. `SmartClockExportC.java FILE`.
 
 **Setup** makes the ROM read-only, so values loaded from it fold to
@@ -343,20 +345,22 @@ takes those registers as parameters -- `sp`, `user`, `dp`, `input` --
 with `user` a pointer to the end of a `forth_user` structure, so
 `*(A5 - 0xe)` reads as `ADJ(user)->base`.
 
-**StackParameters** repairs functions the decompiler rejects with
-"Cannot properly adjust input varnodes".  This compiler pushes a char
-or short argument in a 2-byte slot, while Ghidra's 68000 compiler spec
-assumes 4-byte slots and infers overlapping inputs.  Each such function
-gets the stack inputs the decompiler reports once it has no
-parameters, in custom storage at their real offsets.  With `all` it
-does the same for a function that decompiles but whose C picks bytes
-out of a parameter (`param_2._0_1_`): a `char` or `short` where Ghidra
-put a 4-byte argument, and every argument after it misplaced.  Only a
-signature Ghidra made up is replaced.  Custom storage pins each value's
-bytes, which a calling convention cannot: Ghidra's 68000 convention
-puts a small value at the end of its slot, where this compiler puts it
-at the start, and that is a property of the whole language, not of a
-convention a program can add.
+**StackParameters** gives functions the stack parameters their code
+uses, where Ghidra's default convention misplaces them (see "The
+calling convention", above) or the decompiler rejects a function
+("Cannot properly adjust input varnodes").  The layout comes from the
+callers where their pushes agree and add up to what they pop -- a
+`move.b` or `clr.b` push a 2-byte slot holding a byte at its start --
+and otherwise from the stack references on the function's own
+instructions, sized by each instruction; a lone byte or word read at
+the end of a 4-byte slot is taken as part of a 4-byte `int`.  The
+parameters go into custom storage at those offsets and sizes, which
+pins each value's bytes as no calling convention here can, and the
+decompiler's types for them are committed.  The decompiler's own list
+of a function's stack inputs is not used: it drops an argument that is
+only copied into a local buffer whose address escapes, as the `pllc`
+requests' are.  A signature from the names file or given by hand is
+kept.
 
 **ExportC** writes every function's C, in address order.
 

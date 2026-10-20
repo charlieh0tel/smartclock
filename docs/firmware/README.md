@@ -476,7 +476,12 @@ since a routine can fall into the next.  A global with a structure's
 type reads as `foo.bar`, a pointer to one as `foo->bar`; a piece of a
 variable the decompiler writes as `x._4_4_` becomes a cast at its
 offset.  A thunk is a comment, since the decompiler gives it its
-target's name, and one named otherwise an alias of its target.  The
+target's name, and one named otherwise an alias of its target.  A
+routine that is not C and whose prototype has every argument and its
+result in registers is declared under that prototype as an assembler
+label, `c_NAME`: a generated wrapper that moves the arguments from
+gcc's stack into the routine's registers and its result into D0, D0:D1
+or A0.  The
 whole file compiles to an object (`make check-decompiled`, whose flags
 add `-fno-builtin -fno-tree-loop-distribute-patterns`, since the image's
 C library has no `puts`, `strlen` or `strcmp` for gcc to call).  A link

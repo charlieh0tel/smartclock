@@ -134,7 +134,7 @@
 #
 # the real-time kernel, docs/firmware/psos.md; the console's words name
 # the services
-0x16f1e	function	psos_call	psos.md	trap #3, the service in D7, the error back in D7		convention=register; confidence=read; in=D7 char service, D0, D1, D2, D3, A0, A1; out=D7 int error; returns=ccr; family=psos-binding
+0x16f1e	function	psos_call	psos.md	trap #3, the service in D7, the error back in D7		convention=register; confidence=read; in=D7 char service, D0 int d0, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1; out=D7 int error; returns=ccr; family=psos-binding
 0x16f36	function	psos_io_call	psos.md	trap #4, the function in D7, the device in D0's high byte		convention=register; confidence=read; in=D7 char function, D0 int device; out=D7 int error; returns=ccr; family=psos-binding
 0x16f50	function	psos_pack_name	psos.md	packs a 4-character name into D0		convention=other; confidence=read; out=D0 int name; family=psos-binding
 0x13422	function	enter_supervisor	psos.md	trap #7; returns the caller's status register in D0	uint16_t enter_supervisor(void)
@@ -1107,9 +1107,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x12db6	function	pps_interrupt	context	the 1PPS interrupt's work: ticks the clock, updates the time code and posts the time to pps_exchange
 0x12e6c	function	pps_interrupt_stop	context	stops the 1PPS interrupt, clearing its GPT enable and flag
 0x1321a	function	stack_measure	context	a task's supervisor and user stacks, each the used part of its size, for stack_usage_report
-0x132da	function	stack_unused_count	context	counts the 0xabcd fill left at the bottom of a stack, A1 its bottom and D0 its top		convention=register; confidence=read; in=A1, D0; family=stack
-0x13258	function	stack_fill	context	fills a new task's stacks with 0xabcd, the task record in A0		convention=register; confidence=read; in=A0; family=stack
-0x132b8	function	region_find_segment	context	finds the memory segment that holds an address, A0 the region and D0 the address		convention=register; confidence=read; in=A0, D0; family=stack
+0x132da	function	stack_usage	context	measures a stack from A1, its bottom, to D0, its top: the bytes above the 0xabcd fill left at its bottom back in D0, its size in D1		convention=register; confidence=read; in=A1 uint16_t *bottom, D0 char *top; out=D0 int used, D1 int size; family=stack
+0x13258	function	stack_fill	context	fills a new task's stacks with 0xabcd, the task record in A0		convention=register; confidence=read; in=A0 void *task; family=stack
+0x132b8	function	region_find_segment	context	finds the memory segment that holds an address, A0 the region and D0 the address, the segment back in A1, zero if none		convention=register; confidence=read; in=A0 void *region, D0 char *address; out=A1 void *segment; family=stack
 0x1339e	function	task_set_priority	context	sets a task's priority, returning the old
 0x133f2	function	double_abs	context	a double's magnitude; called by nothing
 0x13406	function	rotate_left	context	a long rotated left

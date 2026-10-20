@@ -44,6 +44,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.AbstractStringDataType;
 import ghidra.program.model.data.Array;
 import ghidra.program.model.data.Composite;
@@ -61,10 +62,12 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionIterator;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighGlobal;
 import ghidra.program.model.pcode.HighSymbol;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
@@ -182,6 +185,7 @@ public class SmartClockExportC extends GhidraScript {
 		decompiler.setOptions(new DecompileOptions());
 		decompiler.openProgram(currentProgram);
 		int written = 0;
+		int bridged = 0;
 		int failed = 0;
 		try (PrintWriter writer = new PrintWriter(output)) {
 			writer.println("/* " + currentProgram.getName() + ", "
@@ -220,7 +224,15 @@ public class SmartClockExportC extends GhidraScript {
 					if (notCMacro(function) != null) {
 						functions.append(READING).append(c).append("\n#endif\n")
 							.append(assembly(function, declared, madeSymbols));
-						prototypes.add("int " + function.getName() + "();");
+						Bridge bridge = bridge(function);
+						if (bridge == null) {
+							prototypes.add("int " + function.getName() + "();");
+						}
+						else {
+							prototypes.add(bridge.prototype());
+							functions.append(bridge.assembly());
+							bridged++;
+						}
 					}
 					else {
 						functions.append(c);
@@ -254,6 +266,7 @@ public class SmartClockExportC extends GhidraScript {
 		File sidecar = new File(base(output) + SIDECAR_SUFFIX);
 		int recorded = writeConventions(sidecar);
 		println("decompiled " + written + ", failed " + failed + " -> " + output);
+		println("bridged for C: " + bridged);
 		println("conventions recorded for " + recorded + " -> " + sidecar);
 	}
 
@@ -380,6 +393,136 @@ public class SmartClockExportC extends GhidraScript {
 	/** The signed C type that holds so many bytes. */
 	private static String signedOf(int bytes) {
 		return bytes == 1 ? "signed char" : bytes == 2 ? "short" : bytes <= 4 ? "int" : "long long";
+	}
+
+	/** A routine's C prototype and the wrapper that calls it from gcc's convention. */
+	private record Bridge(String prototype, String assembly) {}
+
+	/** The prefix of a wrapper's symbol: c_ and the routine's name. */
+	private static final String BRIDGE_PREFIX = "c_";
+	/** The registers gcc's callee saves, which a routine of another convention may not. */
+	private static final String SAVED = "%d2-%d7/%a2-%a6";
+	/** Bytes the wrapper pushes saving SAVED, and the return address under them. */
+	private static final int SAVED_BYTES = 11 * 4;
+	private static final int RETURN_ADDRESS_BYTES = 4;
+	/** gcc's stack slot for an argument narrower than it. */
+	private static final int SLOT = 4;
+
+	/**
+	 * The C prototype and wrapper for a routine that takes its arguments
+	 * and gives its result in registers, from the prototype Setup gave it
+	 * from its convention: the prototype names the wrapper, c_NAME, by an
+	 * assembler label, and the wrapper saves what gcc's callee must, loads
+	 * each argument from gcc's stack slot into its register, calls the
+	 * routine and leaves its result where gcc takes it.  Null unless every
+	 * argument and the result are in registers.
+	 */
+	private Bridge bridge(Function function) {
+		if (!function.hasCustomVariableStorage()) {
+			return null;
+		}
+		String name = function.getName();
+		List<String> parameters = new ArrayList<>();
+		StringBuilder load = new StringBuilder();
+		int offset = SAVED_BYTES + RETURN_ADDRESS_BYTES;
+		for (Parameter parameter : function.getParameters()) {
+			List<String> registers = registers(parameter.getVariableStorage());
+			int size = parameter.getLength();
+			if (registers == null) {
+				return null;
+			}
+			parameters.add(declaration(parameter.getDataType(), parameter.getName()));
+			if (registers.size() == 2 && size == 8) {
+				load.append(line("move.l (" + offset + ",%sp),%" + registers.get(0)))
+					.append(line("move.l (" + (offset + 4) + ",%sp),%" + registers.get(1)));
+			}
+			else if (registers.size() == 1 && size <= SLOT) {
+				// gcc promotes a narrow argument to int in its slot, so the
+				// register gets it extended, as the original's moveq does
+				if (size < SLOT && registers.get(0).startsWith("a")) {
+					return null;
+				}
+				load.append(line("move.l (" + offset + ",%sp),%" + registers.get(0)));
+			}
+			else {
+				return null;
+			}
+			offset += Math.max(size, SLOT);
+		}
+		Parameter returned = function.getReturn();
+		DataType resultType = returned.getDataType();
+		String result = declaration(resultType, "").strip();
+		StringBuilder give = new StringBuilder();
+		if (resultType.getLength() > 0 && !"void".equals(resultType.getName())) {
+			List<String> registers = registers(returned.getVariableStorage());
+			int size = resultType.getLength();
+			if (registers == null) {
+				return null;
+			}
+			if (size == 8 && registers.size() == 2) {
+				if (!registers.equals(List.of("d0", "d1"))) {
+					give.append(line("move.l %" + registers.get(0) + ",-(%sp)"))
+						.append(line("move.l %" + registers.get(1) + ",%d1"))
+						.append(line("move.l (%sp)+,%d0"));
+				}
+			}
+			else if (registers.size() == 1 && size <= SLOT) {
+				if (!registers.get(0).equals("d0")) {
+					give.append(line("move.l %" + registers.get(0) + ",%d0"));
+				}
+				DataType base = resultType instanceof TypeDef typedef
+					? typedef.getBaseDataType() : resultType;
+				boolean signed = base instanceof AbstractIntegerDataType integer
+					&& integer.isSigned();
+				give.append(size == 1 ? line(signed ? "extb.l %d0" : "and.l #0xff,%d0")
+					: size == 2 ? line(signed ? "ext.l %d0" : "and.l #0xffff,%d0")
+					: "");
+				if (base instanceof Pointer) {
+					give.append(line("move.l %d0,%a0"));
+				}
+			}
+			else {
+				return null;
+			}
+		}
+		String wrapper = BRIDGE_PREFIX + name;
+		String prototype = result + (result.endsWith("*") ? "" : " ") + name + "("
+			+ (parameters.isEmpty() ? "void" : String.join(", ", parameters)) + ") __asm__(\""
+			+ wrapper + "\");";
+		StringBuilder assembly = new StringBuilder("/* ").append(name)
+			.append(" from gcc's convention: its arguments from the stack into its registers */\n")
+			.append("__asm__(\n")
+			.append(quoted("\t.pushsection .text." + wrapper + ",\"ax\",@progbits"))
+			.append(quoted("\t.globl " + wrapper)).append(quoted("\t.type " + wrapper + ", @function"))
+			.append(quoted(wrapper + ":"))
+			.append(quoted("\tmovem.l " + SAVED + ",-(%sp)"));
+		for (String part : (load.toString() + line("jsr " + name) + give
+				+ line("movem.l (%sp)+," + SAVED) + line("rts")).split("\n")) {
+			assembly.append(quoted(part));
+		}
+		assembly.append(quoted("\t.size " + wrapper + ", .-" + wrapper))
+			.append(quoted("\t.popsection")).append(");\n");
+		return new Bridge(prototype, assembly.toString());
+	}
+
+	private static String line(String instruction) {
+		return "\t" + instruction + "\n";
+	}
+
+	/**
+	 * The registers storage is in, lower case and whole, a pair high
+	 * register first; null if any part of it is not a register.
+	 */
+	private List<String> registers(VariableStorage storage) {
+		List<String> registers = new ArrayList<>();
+		for (Varnode varnode : storage.getVarnodes()) {
+			Register register = currentProgram.getRegister(varnode);
+			if (register == null) {
+				return null;
+			}
+			registers.add(register.getBaseRegister().getName().toLowerCase());
+		}
+		return registers.isEmpty() ? null : registers;
 	}
 
 	/** The macro for the function's kind if its recorded convention is not C, else null. */
@@ -1172,7 +1315,8 @@ public class SmartClockExportC extends GhidraScript {
 		if (type instanceof AbstractStringDataType) {
 			return "char " + name + "[]";
 		}
-		return type.getDisplayName() + " " + name;
+		String display = type.getDisplayName();
+		return display + (display.endsWith("*") ? "" : " ") + name;
 	}
 
 	/**

@@ -654,16 +654,20 @@ view cannot drift apart.  The library, bottom up:
      `z3805a-3543b.symbols.ld` places, and 11 views of a caller's frame
      or a register (`stack0x...`), mostly variadic functions reading
      their arguments, which need `va_list` -- the first work of step 5.
-  2. Bridges between gcc's C and the rest.  Until they exist C reaches
-     the assembly through `int NAME();`, which promotes a float argument
-     to double (gcc's `__extendsfdf2`, 232 calls) and reads a float
-     result as an int: the soft-float routines most of all need real
-     prototypes and wrappers.  gcc widens `char` and `short` arguments
-     to 4-byte slots where the original passes 2, and
-     the assembly takes its arguments in registers, so each call across
-     needs a generated wrapper, from the conventions the sidecar
-     records.  The kernel internals' `undetermined` conventions must be
-     settled first.
+  2. Bridges between gcc's C and the rest.  Started: a routine whose
+     arguments and result Setup put in registers, from a convention
+     with every item typed, gets a real prototype naming a generated
+     wrapper, `c_NAME`, which saves gcc's callee-saved registers, loads
+     each argument from gcc's 4-byte slot (gcc promotes a `char` or
+     `short` to a whole int there) and calls the routine; 85 routines,
+     the soft-float ones among them, so C calls the image's own float
+     arithmetic without promoting a float to double.  Left: 10 calls
+     into routines a wrapper of this kind cannot reach -- `stack_usage`
+     returns two values, `forth_compile_code` is Forth's, the rest an
+     exception entry or a kernel's -- and the other direction,
+     assembly calling C, where the original passes a `char` or `short`
+     in 2 bytes where gcc reads 4.  The kernel internals'
+     `undetermined` conventions must be settled first.
   3. A link that keeps the ROM's data -- strings, the SCPI tree,
      descriptors, tables -- at its own addresses, which the code names
      absolutely, and places the rebuilt functions around it.

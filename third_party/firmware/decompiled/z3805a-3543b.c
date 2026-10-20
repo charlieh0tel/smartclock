@@ -1906,8 +1906,8 @@ extern byte DAT_0010ae59; /* 0010ae59 */
 extern byte DAT_0010ae5a; /* 0010ae5a */
 extern byte DAT_0010ae5b; /* 0010ae5b */
 extern undefined DAT_0010ae5c; /* 0010ae5c */
-extern byte * DAT_0010af5c; /* 0010af5c */
-extern byte * DAT_0010af60; /* 0010af60 */
+extern byte *DAT_0010af5c; /* 0010af5c */
+extern byte *DAT_0010af60; /* 0010af60 */
 extern short DAT_0010af64; /* 0010af64 */
 extern char DAT_0010af66; /* 0010af66 */
 extern char DAT_0010af67; /* 0010af67 */
@@ -1923,8 +1923,8 @@ extern ulong DAT_0010af82; /* 0010af82 */
 extern ulong DAT_0010af9a; /* 0010af9a */
 extern char DAT_0010afaa; /* 0010afaa */
 extern undefined DAT_0010afac; /* 0010afac */
-extern byte * DAT_0010afb2; /* 0010afb2 */
-extern char * DAT_0010afb6; /* 0010afb6 */
+extern byte *DAT_0010afb2; /* 0010afb2 */
+extern char *DAT_0010afb6; /* 0010afb6 */
 extern int DAT_0010afe0; /* 0010afe0 */
 extern char DAT_0010afe4; /* 0010afe4 */
 extern char DAT_0010afe6; /* 0010afe6 */
@@ -2203,7 +2203,7 @@ extern undefined klok_mutex; /* 001037b4 */
 extern undefined log_mutex; /* 00101d36 */
 extern undefined nv_records; /* 004000c0 */
 extern undefined nv_settings_defaults; /* 00030966 */
-extern int * psos_config; /* 0010264c */
+extern int *psos_config; /* 0010264c */
 extern uint8_t reference_valid_override_request; /* 00100c68 */
 extern word switchD_000205c0; /* 000205c4 */
 extern undefined task_table; /* 001026b8 */
@@ -3998,19 +3998,19 @@ extern short _DAT_00100c44;
 __asm__(".set _DAT_00100c44, 0x00100c44");
 extern short _DAT_00100c46;
 __asm__(".set _DAT_00100c46, 0x00100c46");
-extern undefined4 * _DAT_00101420;
+extern undefined4 *_DAT_00101420;
 __asm__(".set _DAT_00101420, 0x00101420");
-extern undefined4 * _DAT_00101424;
+extern undefined4 *_DAT_00101424;
 __asm__(".set _DAT_00101424, 0x00101424");
-extern undefined * _DAT_0010155c;
+extern undefined *_DAT_0010155c;
 __asm__(".set _DAT_0010155c, 0x0010155c");
-extern undefined * _DAT_0010199a;
+extern undefined *_DAT_0010199a;
 __asm__(".set _DAT_0010199a, 0x0010199a");
-extern undefined * _DAT_0010199e;
+extern undefined *_DAT_0010199e;
 __asm__(".set _DAT_0010199e, 0x0010199e");
-extern undefined * _DAT_00101b46;
+extern undefined *_DAT_00101b46;
 __asm__(".set _DAT_00101b46, 0x00101b46");
-extern undefined * _DAT_00101b4a;
+extern undefined *_DAT_00101b4a;
 __asm__(".set _DAT_00101b4a, 0x00101b4a");
 extern uint _DAT_00101d00;
 __asm__(".set _DAT_00101d00, 0x00101d00");
@@ -4132,7 +4132,7 @@ extern undefined4 _DAT_0010266e;
 __asm__(".set _DAT_0010266e, 0x0010266e");
 extern code *_DAT_00102682;
 __asm__(".set _DAT_00102682, 0x00102682");
-extern undefined4 * _DAT_0010268e;
+extern undefined4 *_DAT_0010268e;
 __asm__(".set _DAT_0010268e, 0x0010268e");
 extern uint _DAT_00102720;
 __asm__(".set _DAT_00102720, 0x00102720");
@@ -4142,9 +4142,9 @@ extern int _DAT_00102b46;
 __asm__(".set _DAT_00102b46, 0x00102b46");
 extern short _DAT_00102b4a;
 __asm__(".set _DAT_00102b4a, 0x00102b4a");
-extern undefined * _DAT_00102c4e;
+extern undefined *_DAT_00102c4e;
 __asm__(".set _DAT_00102c4e, 0x00102c4e");
-extern undefined * _DAT_00102c52;
+extern undefined *_DAT_00102c52;
 __asm__(".set _DAT_00102c52, 0x00102c52");
 extern undefined4 _DAT_00102d64;
 __asm__(".set _DAT_00102d64, 0x00102d64");
@@ -4154,13 +4154,13 @@ extern undefined4 _DAT_00102d6c;
 __asm__(".set _DAT_00102d6c, 0x00102d6c");
 extern undefined4 _DAT_00102d70;
 __asm__(".set _DAT_00102d70, 0x00102d70");
-extern undefined * _DAT_00102fe0;
+extern undefined *_DAT_00102fe0;
 __asm__(".set _DAT_00102fe0, 0x00102fe0");
 extern short _DAT_00102fe4;
 __asm__(".set _DAT_00102fe4, 0x00102fe4");
-extern char * _DAT_001030ec;
+extern char *_DAT_001030ec;
 __asm__(".set _DAT_001030ec, 0x001030ec");
-extern undefined * _DAT_001030f0;
+extern undefined *_DAT_001030f0;
 __asm__(".set _DAT_001030f0, 0x001030f0");
 extern short _DAT_001030f4;
 __asm__(".set _DAT_001030f4, 0x001030f4");
@@ -4178,9 +4178,9 @@ extern undefined4 _DAT_0010312e;
 __asm__(".set _DAT_0010312e, 0x0010312e");
 extern code *_DAT_0010313c;
 __asm__(".set _DAT_0010313c, 0x0010313c");
-extern char * _DAT_00103142;
+extern char *_DAT_00103142;
 __asm__(".set _DAT_00103142, 0x00103142");
-extern char * _DAT_00103146;
+extern char *_DAT_00103146;
 __asm__(".set _DAT_00103146, 0x00103146");
 extern uint32_t _DAT_00103158;
 __asm__(".set _DAT_00103158, 0x00103158");
@@ -4194,15 +4194,15 @@ extern undefined4 _DAT_00103178;
 __asm__(".set _DAT_00103178, 0x00103178");
 extern undefined4 _DAT_0010317c;
 __asm__(".set _DAT_0010317c, 0x0010317c");
-extern undefined * _DAT_0010328a;
+extern undefined *_DAT_0010328a;
 __asm__(".set _DAT_0010328a, 0x0010328a");
-extern undefined * _DAT_0010328e;
+extern undefined *_DAT_0010328e;
 __asm__(".set _DAT_0010328e, 0x0010328e");
 extern undefined4 _DAT_0010329e;
 __asm__(".set _DAT_0010329e, 0x0010329e");
 extern code *_DAT_001032a0;
 __asm__(".set _DAT_001032a0, 0x001032a0");
-extern undefined2 * _DAT_001032ec;
+extern undefined2 *_DAT_001032ec;
 __asm__(".set _DAT_001032ec, 0x001032ec");
 extern ushort _DAT_001032f0;
 __asm__(".set _DAT_001032f0, 0x001032f0");
@@ -4332,7 +4332,7 @@ extern void * pvRam00100b98;
 __asm__(".set pvRam00100b98, 0x00100b98");
 extern undefined4 ram0x001009ee;
 __asm__(".set ram0x001009ee, 0x001009ee");
-extern char * ram0x001009f2;
+extern char *ram0x001009f2;
 __asm__(".set ram0x001009f2, 0x001009f2");
 extern undefined4 ram0x00400001;
 __asm__(".set ram0x00400001, 0x00400001");
@@ -4453,10 +4453,10 @@ int boot_reset();
 int boot_trap_11();
 undefined4 boot_unpack_installer(void);
 undefined1 * boot_memcpy(undefined1 *param_1,undefined1 *param_2,int param_3);
-int mutex_init();
-int mutex_acquire();
-int mutex_release();
-int mutex_clear();
+void mutex_init(int name, void *mutex) __asm__("c_mutex_init");
+int mutex_acquire(void *mutex) __asm__("c_mutex_acquire");
+int mutex_release(void *mutex) __asm__("c_mutex_release");
+void mutex_clear(void *mutex) __asm__("c_mutex_clear");
 int mutex_create(char *name,void *mutex);
 int mutex_lock(void *mutex);
 int mutex_unlock(void *mutex);
@@ -4530,9 +4530,9 @@ void system_init(void);
 void primary_start(void);
 undefined8 pps_interrupt(void);
 int primary_user_81();
-undefined4 pps_init(void);
-undefined4 pps_interrupt_stop(void);
-undefined4 pps_wait_time(undefined4 *param_1,undefined4 *param_2,int param_3);
+int pps_init(void);
+int pps_interrupt_stop(void);
+int pps_wait_time(undefined4 *param_1,undefined4 *param_2,int param_3);
 void enter_installer(void);
 void scpi_task_start(void);
 void console_halt_hook(void);
@@ -4540,9 +4540,9 @@ void console_init(void);
 undefined4 klok_take_pending(void);
 void root_task(void);
 undefined4 stack_measure(undefined4 param_1,undefined8 *param_2);
-int stack_fill();
-int region_find_segment();
-int stack_unused_count();
+void stack_fill(void *task) __asm__("c_stack_fill");
+void *region_find_segment(void *region, char *address) __asm__("c_region_find_segment");
+int stack_usage();
 void stack_usage_report(undefined4 param_1);
 uint16_t enter_supervisor_mode(void);
 uint16_t set_interrupt_mask(uint16_t sr);
@@ -4554,11 +4554,11 @@ int primary_trap_7();
 uint16_t enter_supervisor(void);
 void busy_wait(uint param_1);
 void sleep_seconds(float param_1);
-int clock_record_checksum();
-int clock_record_sum();
+void clock_record_checksum(char *record) __asm__("c_clock_record_checksum");
+void clock_record_sum(char *record) __asm__("c_clock_record_sum");
 void clock_tick(void);
-int clock_record_advance();
-int clock_record_advance_utc();
+void clock_record_advance(char *record) __asm__("c_clock_record_advance");
+void clock_record_advance_utc(char *record) __asm__("c_clock_record_advance_utc");
 uint32_t get_clock_date(void);
 uint32_t get_clock_time(void);
 uint32_t get_gps_date(void);
@@ -4569,9 +4569,9 @@ bool get_gps_datetime(uint32_t *param_1,uint32_t *param_2);
 void clock_record_refresh(void);
 int set_timedate_unflagged(uint32_t date,uint32_t time);
 int set_timedate(uint32_t date,uint32_t time);
-int clock_record_store();
-int clock_record_derive();
-int clock_set_leap_year();
+void clock_record_store(char *record, int date, int time, int mark) __asm__("c_clock_record_store");
+void clock_record_derive(char *record) __asm__("c_clock_record_derive");
+void clock_set_leap_year(char *february, int year) __asm__("c_clock_set_leap_year");
 void clock_init(short param_1);
 uint8_t time_valid(void);
 void set_gps_utc_offset(undefined2 param_1);
@@ -4598,7 +4598,7 @@ int primary_trap_4();
 int primary_trap_6();
 int primary_trap_5();
 int kernel_dispatch_service();
-int kernel_dispatch_io();
+void kernel_dispatch_io(char function, int device) __asm__("c_kernel_dispatch_io");
 int kernel_switch_task();
 int kernel_process_ticks();
 int kernel_service_0();
@@ -4617,7 +4617,7 @@ int kernel_allocate();
 int kernel_region_allocate();
 int kernel_service_10();
 int kernel_service_16();
-int kernel_service_none();
+char kernel_service_none(void) __asm__("c_kernel_service_none");
 int kernel_create_x();
 int kernel_service_21();
 int kernel_delete_x();
@@ -4643,9 +4643,9 @@ int kernel_service_37();
 int kernel_service_38();
 int kernel_advance_date();
 int kernel_set_leap_year();
-int kernel_check_task();
-int kernel_check_exchange();
-int kernel_check_segment();
+void *kernel_check_task(int task, void *running) __asm__("c_kernel_check_task");
+void kernel_check_exchange(int exchange, void *running) __asm__("c_kernel_check_exchange");
+void kernel_check_segment(void *segment) __asm__("c_kernel_check_segment");
 int kernel_timer_cancel();
 int kernel_timer_unlink();
 int kernel_timer_insert();
@@ -4680,9 +4680,9 @@ void task_stack_info(int param_1,undefined4 *param_2,undefined4 *param_3,int *pa
 void task_stack_report(undefined1 param_1);
 void psos_debug_output(char param_1);
 void task_count_tick(void);
-int psos_call();
-int psos_io_call();
-int psos_pack_name();
+int psos_call(char service, int d0, int d1, int d2, int d3, void *a0, void *a1) __asm__("c_psos_call");
+int psos_io_call(char function, int device) __asm__("c_psos_io_call");
+int psos_pack_name(void) __asm__("c_psos_pack_name");
 ulong psos_create(char *name,ulong a,ulong priority,ulong stack_a,ulong stack_b,void *e,ulong *task);
 ulong psos_start(ulong task,void *entry);
 ulong psos_ident(char *name,ulong *id,uchar *b);
@@ -4780,7 +4780,7 @@ int forth_build_prompt();
 int forth_read_line();
 int forth_parse_word();
 int forth_refill();
-int forth_print_string();
+void forth_print_string(char *s, forth_user_end user) __asm__("c_forth_print_string");
 int forth_input_buffer();
 int forth_over();
 int forth_abs();
@@ -4924,7 +4924,7 @@ int forth_execute();
 int forth_watch();
 int forth_psos_call();
 int forth_spawn();
-int forth_pack_name();
+int forth_pack_name(forth_user_end user) __asm__("c_forth_pack_name");
 int forth_space_if_zero();
 int forth_ver();
 int forth_ident();
@@ -4953,13 +4953,13 @@ int forth_store_iodev();
 int forth_user();
 void pforth_dictionary_init(int size);
 undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,short param_4);
-int pforth_link_word();
+void pforth_link_word(void *word) __asm__("c_pforth_link_word");
 void console_set_halt_hook(void *param_1);
 void console_set_device(undefined2 param_1);
 undefined4 console_task_create(void);
-int string_device_open();
-int string_device_init();
-int string_device_control();
+int string_device_open(void) __asm__("c_string_device_open");
+int string_device_init(void) __asm__("c_string_device_init");
+int string_device_control(char *string) __asm__("c_string_device_control");
 int console_read_from_string();
 uint diag_adc_read(byte param_1);
 void diag_adc_temp(void);
@@ -5059,8 +5059,8 @@ byte duartb_putc_polled(byte param_1);
 int drtb_puts(char *param_1);
 undefined4 drtb_getc(void);
 int drtb_gets(byte *param_1,int param_2);
-int drtb_unlock();
-int drtb_lock();
+void drtb_unlock(char write) __asm__("c_drtb_unlock");
+void drtb_lock(char write) __asm__("c_drtb_lock");
 undefined8 duart_init(void);
 void duartb_reconfigure(void);
 void drtb_write(void);
@@ -5142,13 +5142,13 @@ undefined4
 qspi_queue_setup(byte param_1,undefined2 *param_2,ushort param_3,char param_4,undefined2 *param_5);
 void qspi_start(byte param_1,undefined2 *param_2,ushort param_3,char param_4);
 void qspi_acquire(void);
-int qspi_control();
-int qspi_open();
+int qspi_control(void) __asm__("c_qspi_control");
+int qspi_open(void) __asm__("c_qspi_open");
 undefined8 qspi_init(void);
 void qspi_isr(void);
 int primary_user_65();
-int qspi_transfer_raw();
-int qspi_device_write();
+void qspi_transfer_raw(char device, void *buffers, short count) __asm__("c_qspi_transfer_raw");
+void qspi_device_write(char device, void *buffers, short count) __asm__("c_qspi_device_write");
 void qspi_write(byte param_1,void *param_2,undefined4 param_3);
 void qspi_read(byte param_1,void *param_2,undefined4 param_3);
 void qspi_send(byte param_1,undefined2 *param_2,ushort param_3);
@@ -5188,15 +5188,15 @@ undefined1 internal_pps_check(void);
 void hmon_task(void);
 void counter_reset(void);
 void pps_monitors_reset(void);
-int scpi_round_decimal();
-int scpi_decimal_to_text_unused();
-int scpi_double_to_decimal();
-int scpi_bcd_to_double();
-int scpi_scale_by_power_of_ten();
-int scpi_double_multiply();
+void scpi_round_decimal(char *record, short digits) __asm__("c_scpi_round_decimal");
+void scpi_decimal_to_text_unused(char *record, char *text, short digits) __asm__("c_scpi_decimal_to_text_unused");
+void scpi_double_to_decimal(double value, short digits, char *record) __asm__("c_scpi_double_to_decimal");
+double scpi_bcd_to_double(char *bcd) __asm__("c_scpi_bcd_to_double");
+double scpi_scale_by_power_of_ten(double value, short *exponent, double *powers) __asm__("c_scpi_scale_by_power_of_ten");
+double scpi_double_multiply(double a, double b) __asm__("c_scpi_double_multiply");
 int scpi_double_multiply_short();
 undefined4 scpi_number_to_double(char *param_1,double *param_2,short param_3);
-int scpi_number_to_bcd();
+int scpi_number_to_bcd(char *number, short scale, char *bcd) __asm__("c_scpi_number_to_bcd");
 undefined4
 scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,short param_5,
                  short param_6,char param_7);
@@ -6040,50 +6040,50 @@ int primary_trap_1();
 undefined8 longjmp(undefined4 *param_1,undefined4 param_2);
 undefined4 setjmp(undefined4 *param_1);
 undefined4 primary_unpack_records(void);
-int float_subtract_in_place();
-int float_add_in_place();
-int float_subtract_reversed();
-int float_subtract();
-int float_add();
-int double_subtract_in_place();
-int double_subtract_pointer();
-int double_subtract_reversed_pointers();
-int double_subtract_reversed_pointer();
-int double_subtract_reversed();
-int double_add_in_place();
-int double_add_pointers();
-int double_add_pointer();
-int double_add();
-int float_compare();
-int double_compare();
-int float_divide_in_place();
-int float_divide_reversed();
-int float_divide();
-int double_divide_in_place();
-int double_divide();
-int double_divide_reversed_pointers();
-int double_divide_reversed_pointer();
-int double_divide_reversed();
+void float_subtract_in_place(float *x, float y) __asm__("c_float_subtract_in_place");
+void float_add_in_place(float *x, float y) __asm__("c_float_add_in_place");
+float float_subtract_reversed(float a, float b) __asm__("c_float_subtract_reversed");
+float float_subtract(float a, float b) __asm__("c_float_subtract");
+float float_add(float a, float b) __asm__("c_float_add");
+void double_subtract_in_place(double *x, double y) __asm__("c_double_subtract_in_place");
+double double_subtract_pointer(double a, double *b) __asm__("c_double_subtract_pointer");
+double double_subtract_reversed_pointers(double *a, double *b) __asm__("c_double_subtract_reversed_pointers");
+double double_subtract_reversed_pointer(double a, double *b) __asm__("c_double_subtract_reversed_pointer");
+double double_subtract_reversed(double a, double b) __asm__("c_double_subtract_reversed");
+void double_add_in_place(double *x, double y) __asm__("c_double_add_in_place");
+double double_add_pointers(double *a, double *b) __asm__("c_double_add_pointers");
+double double_add_pointer(double a, double *b) __asm__("c_double_add_pointer");
+double double_add(double a, double b) __asm__("c_double_add");
+int float_compare(float a, float b) __asm__("c_float_compare");
+int double_compare(double a, double b) __asm__("c_double_compare");
+void float_divide_in_place(float *x, float y) __asm__("c_float_divide_in_place");
+float float_divide_reversed(float a, float b) __asm__("c_float_divide_reversed");
+float float_divide(float a, float b) __asm__("c_float_divide");
+void double_divide_in_place(double *x, double y) __asm__("c_double_divide_in_place");
+double double_divide(double a, double b) __asm__("c_double_divide");
+double double_divide_reversed_pointers(double *a, double *b) __asm__("c_double_divide_reversed_pointers");
+double double_divide_reversed_pointer(double a, double *b) __asm__("c_double_divide_reversed_pointer");
+double double_divide_reversed(double a, double b) __asm__("c_double_divide_reversed");
 ulonglong double_divide_operand_error(void);
 undefined8 double_divide_by_zero(void);
 int double_divide_next_word();
 int double_divide_first_word();
-int double_to_float();
-int double_to_integer();
-int double_to_unsigned();
-int float_to_double();
-int float_to_integer();
-int float_to_unsigned();
-int integer_to_double();
-int unsigned_to_double();
-int integer_to_float();
-int unsigned_to_float();
-int float_multiply_in_place();
-int float_multiply();
-int double_multiply_in_place();
-int double_multiply_pointers();
-int double_multiply_pointer();
-int double_multiply();
+float double_to_float(double d) __asm__("c_double_to_float");
+int double_to_integer(double d) __asm__("c_double_to_integer");
+uint double_to_unsigned(double d) __asm__("c_double_to_unsigned");
+double float_to_double(float f) __asm__("c_float_to_double");
+int float_to_integer(float f) __asm__("c_float_to_integer");
+uint float_to_unsigned(float f) __asm__("c_float_to_unsigned");
+double integer_to_double(int i) __asm__("c_integer_to_double");
+double unsigned_to_double(uint u) __asm__("c_unsigned_to_double");
+float integer_to_float(int i) __asm__("c_integer_to_float");
+float unsigned_to_float(uint u) __asm__("c_unsigned_to_float");
+void float_multiply_in_place(float *x, float y) __asm__("c_float_multiply_in_place");
+float float_multiply(float a, float b) __asm__("c_float_multiply");
+void double_multiply_in_place(double *x, double y) __asm__("c_double_multiply_in_place");
+double double_multiply_pointers(double *a, double *b) __asm__("c_double_multiply_pointers");
+double double_multiply_pointer(double a, double *b) __asm__("c_double_multiply_pointer");
+double double_multiply(double a, double b) __asm__("c_double_multiply");
 ulonglong double_multiply_operand_error(void);
 int float_normalize();
 int double_normalize();
@@ -6147,7 +6147,7 @@ void installer_entry(void);
 void installer_program_exit(uint param_1);
 void installer_program_end_report(uint value);
 int installer_kernel_dispatch_service();
-int installer_kernel_dispatch_io();
+void installer_kernel_dispatch_io(char function, int device) __asm__("c_installer_kernel_dispatch_io");
 int installer_kernel_switch_task();
 int installer_kernel_process_ticks();
 int installer_kernel_service_0();
@@ -6166,7 +6166,7 @@ int installer_kernel_allocate();
 int installer_kernel_region_allocate();
 int installer_kernel_service_10();
 int installer_kernel_service_16();
-int installer_kernel_service_none();
+char installer_kernel_service_none(void) __asm__("c_installer_kernel_service_none");
 int installer_kernel_create_x();
 int installer_kernel_service_21();
 int installer_kernel_delete_x();
@@ -6192,9 +6192,9 @@ int installer_kernel_service_37();
 int installer_kernel_service_38();
 int installer_kernel_advance_date();
 int installer_kernel_set_leap_year();
-int installer_kernel_check_task();
-int installer_kernel_check_exchange();
-int installer_kernel_check_segment();
+void *installer_kernel_check_task(int task, void *running) __asm__("c_installer_kernel_check_task");
+void installer_kernel_check_exchange(int exchange, void *running) __asm__("c_installer_kernel_check_exchange");
+void installer_kernel_check_segment(void *segment) __asm__("c_installer_kernel_check_segment");
 int installer_kernel_timer_cancel();
 int installer_kernel_timer_unlink();
 int installer_kernel_timer_insert();
@@ -7092,20 +7092,29 @@ undefined1 * boot_memcpy(undefined1 *param_1,undefined1 *param_2,int param_3)
 __regcall void mutex_init(int name /* d0 */,void *mutex /* a1 */)
 
 {
-  undefined4 extraout_A0;
+  int d0;
+  int d0_00;
+  int in_D1;
+  int d1;
+  int unaff_D2;
+  int unaff_D3;
+  void *in_A0;
+  void *a0;
+  void *a0_00;
+  void *a1;
   void *mutex_00;
-  int extraout_A1;
+  void *a1_00;
   bool bVar1;
   
   bVar1 = false;
-  psos_call();
+  psos_call('\x15',name,in_D1,unaff_D2,unaff_D3,in_A0,mutex);
   if (!bVar1) {
     bVar1 = false;
-    psos_call();
+    psos_call('\x14',d0,0,0,unaff_D3,a0,a1);
     if (bVar1) {
       mutex_clear(mutex_00);
-      *(undefined4 *)(extraout_A1 + 4) = extraout_A0;
-      psos_call();
+      *(void **)((int)a1_00 + 4) = a0_00;
+      psos_call('\x17',d0_00,d1,0,unaff_D3,a0_00,a1_00);
     }
   }
   return;
@@ -7140,6 +7149,21 @@ __asm__(
 	"	.size mutex_init, .-mutex_init\n"
 	"	.popsection\n"
 );
+/* mutex_init from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_mutex_init,\"ax\",@progbits\n"
+	"	.globl c_mutex_init\n"
+	"	.type c_mutex_init, @function\n"
+	"c_mutex_init:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%a1\n"
+	"	jsr mutex_init\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_mutex_init, .-c_mutex_init\n"
+	"	.popsection\n"
+);
 
 /* 0001043a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -7152,26 +7176,29 @@ __asm__(
 __regcall int mutex_acquire(void *mutex /* a1 */)
 
 {
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
   int iVar1;
+  void *in_A0;
   int extraout_A0;
+  void *a1;
   int extraout_A1;
-  int extraout_A1_00;
   bool bVar2;
   
-  psos_call();
-  if (extraout_A0 == *(int *)(extraout_A1 + 8)) {
-    iVar1 = 0x80;
-    *(int *)(extraout_A1 + 0xc) = *(int *)(extraout_A1 + 0xc) + 1;
+  iVar1 = psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,mutex);
+  if (extraout_A0 == *(int *)((int)a1 + 8)) {
+    iVar1 = CONCAT22((short)((uint)iVar1 >> 0x10),0x80);
+    *(int *)((int)a1 + 0xc) = *(int *)((int)a1 + 0xc) + 1;
   }
-  else if (*(int *)(extraout_A1 + 4) == 0) {
+  else if (*(void **)((int)a1 + 4) == (void *)0x0) {
     iVar1 = 1;
   }
   else {
-    iVar1 = 0x18;
     bVar2 = false;
-    psos_call();
+    iVar1 = psos_call('\x18',0,0,unaff_D2,unaff_D3,*(void **)((int)a1 + 4),a1);
     if (bVar2) {
-      *(int *)(extraout_A1_00 + 8) = extraout_A0;
+      *(int *)(extraout_A1 + 8) = extraout_A0;
     }
   }
   return iVar1;
@@ -7213,6 +7240,21 @@ __asm__(
 	"	.size mutex_acquire, .-mutex_acquire\n"
 	"	.popsection\n"
 );
+/* mutex_acquire from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_mutex_acquire,\"ax\",@progbits\n"
+	"	.globl c_mutex_acquire\n"
+	"	.type c_mutex_acquire, @function\n"
+	"c_mutex_acquire:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a1\n"
+	"	jsr mutex_acquire\n"
+	"	move.l %d7,%d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_mutex_acquire, .-c_mutex_acquire\n"
+	"	.popsection\n"
+);
 
 /* 00010484 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -7225,20 +7267,25 @@ __asm__(
 __regcall int mutex_release(void *mutex /* a1 */)
 
 {
+  int in_D1;
+  int d1;
+  int unaff_D2;
+  int unaff_D3;
   int iVar1;
+  void *in_A0;
   int extraout_A0;
-  int extraout_A1;
+  void *a1;
   
-  psos_call();
-  if (extraout_A0 == *(int *)(extraout_A1 + 8)) {
-    if (*(int *)(extraout_A1 + 0xc) == 0) {
-      *(undefined4 *)(extraout_A1 + 8) = 0;
-      iVar1 = 0x17;
-      psos_call();
+  iVar1 = psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,mutex);
+  if (extraout_A0 == *(int *)((int)a1 + 8)) {
+    if (*(int *)((int)a1 + 0xc) == 0) {
+      *(undefined4 *)((int)a1 + 8) = 0;
+      iVar1 = psos_call('\x17',*(int *)((int)a1 + 4),d1,unaff_D2,unaff_D3,
+                        (void *)*(int *)((int)a1 + 4),a1);
     }
     else {
-      iVar1 = 0x80;
-      *(int *)(extraout_A1 + 0xc) = *(int *)(extraout_A1 + 0xc) + -1;
+      iVar1 = CONCAT22((short)((uint)iVar1 >> 0x10),0x80);
+      *(int *)((int)a1 + 0xc) = *(int *)((int)a1 + 0xc) + -1;
     }
   }
   else {
@@ -7285,6 +7332,21 @@ __asm__(
 	"	.size mutex_release, .-mutex_release\n"
 	"	.popsection\n"
 );
+/* mutex_release from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_mutex_release,\"ax\",@progbits\n"
+	"	.globl c_mutex_release\n"
+	"	.type c_mutex_release, @function\n"
+	"c_mutex_release:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a1\n"
+	"	jsr mutex_release\n"
+	"	move.l %d7,%d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_mutex_release, .-c_mutex_release\n"
+	"	.popsection\n"
+);
 
 /* 000104d2 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -7323,6 +7385,20 @@ __asm__(
 	"	movem.l (%sp)+,%d0/%d1/%a1\n"
 	"	rts\n"
 	"	.size mutex_clear, .-mutex_clear\n"
+	"	.popsection\n"
+);
+/* mutex_clear from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_mutex_clear,\"ax\",@progbits\n"
+	"	.globl c_mutex_clear\n"
+	"	.type c_mutex_clear, @function\n"
+	"c_mutex_clear:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a1\n"
+	"	jsr mutex_clear\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_mutex_clear, .-c_mutex_clear\n"
 	"	.popsection\n"
 );
 
@@ -9548,6 +9624,9 @@ undefined8 pps_interrupt(void)
 {
   undefined4 in_D0;
   undefined4 in_D1;
+  int d1;
+  int unaff_D2;
+  int unaff_D3;
   
   clock_tick();
   DAT_001037d8 = 0;
@@ -9555,7 +9634,8 @@ undefined8 pps_interrupt(void)
   _DAT_00100bb4 = get_gps_time();
   _DAT_00100bb8 = get_gps_date();
   if (pps_exchange != 0) {
-    psos_call();
+    psos_call('\x12',pps_exchange & 0xffffff00,d1,unaff_D2,unaff_D3,(void *)pps_exchange,
+              (void *)0x100bac);
   }
   return CONCAT44(in_D0,in_D1);
 }
@@ -9608,16 +9688,30 @@ __asm__(
 
 /* 00012e24 */
 
-/* WARNING: Removing unreachable block (ram,0x00012e44) */
 /* "Pps_init error %#04x" prints its result
    structures.md */
 
-undefined4 pps_init(void)
+int pps_init(void)
 
 {
+  ushort uVar1;
+  int unaff_D3;
+  int iVar2;
+  void *in_A0;
+  uint32_t extraout_A0;
+  void *in_A1;
+  
   pps_exchange = 0;
-  psos_call();
-  return 0x14;
+  iVar2 = psos_call('\x14',0x31707073,0,0,unaff_D3,in_A0,in_A1);
+  if (iVar2 == 0) {
+    pps_exchange = extraout_A0;
+    mutex_clear((void *)0x100bac);
+    uVar1 = Ram00fff922;
+    Ram00fff922 = uVar1 & 0xfeff;
+    uVar1 = Ram00fff920;
+    Ram00fff920 = uVar1 | 0x100;
+  }
+  return iVar2;
 }
 
 
@@ -9625,24 +9719,27 @@ undefined4 pps_init(void)
 
 /* stops the 1PPS interrupt, clearing its GPT enable and flag */
 
-undefined4 pps_interrupt_stop(void)
+int pps_interrupt_stop(void)
 
 {
   ushort uVar1;
-  undefined4 uVar2;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  int iVar2;
+  void *in_A1;
   
   if (pps_exchange == 0) {
-    uVar2 = 4;
+    iVar2 = 4;
   }
   else {
-    psos_call();
-    uVar2 = 0x16;
+    iVar2 = psos_call('\x16',pps_exchange,in_D1,unaff_D2,unaff_D3,(void *)pps_exchange,in_A1);
     uVar1 = Ram00fff922;
     Ram00fff922 = uVar1 & 0xfeff;
     uVar1 = Ram00fff920;
     Ram00fff920 = uVar1 & 0xfeff;
   }
-  return uVar2;
+  return iVar2;
 }
 
 
@@ -9651,25 +9748,25 @@ undefined4 pps_interrupt_stop(void)
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* waits up to 1200 ticks on pps_exchange for the next 1PPS and returns its time and date */
 
-undefined4 pps_wait_time(undefined4 *param_1,undefined4 *param_2,int param_3)
+int pps_wait_time(undefined4 *param_1,undefined4 *param_2,int param_3)
 
 {
-  undefined4 uVar1;
+  int unaff_D2;
+  int unaff_D3;
+  int iVar1;
   
-  if (param_3 == 0) {
-    uVar1 = 0;
-    if (param_1 != (undefined4 *)0x0) {
-      *param_1 = _DAT_00100bb4;
-    }
-    if (param_2 != (undefined4 *)0x0) {
-      *param_2 = _DAT_00100bb8;
-    }
+  if ((param_3 != 0) &&
+     (iVar1 = psos_call('\x18',0x4b0,0,unaff_D2,unaff_D3,(void *)pps_exchange,(void *)0x100bac),
+     iVar1 != 0)) {
+    return iVar1;
   }
-  else {
-    psos_call();
-    uVar1 = 0x18;
+  if (param_1 != (undefined4 *)0x0) {
+    *param_1 = _DAT_00100bb4;
   }
-  return uVar1;
+  if (param_2 != (undefined4 *)0x0) {
+    *param_2 = _DAT_00100bb8;
+  }
+  return 0;
 }
 
 
@@ -9814,9 +9911,9 @@ undefined4 stack_measure(undefined4 param_1,undefined8 *param_2)
 {
   undefined8 uVar1;
   
-  uVar1 = stack_unused_count();
+  uVar1 = stack_usage();
   param_2[1] = uVar1;
-  uVar1 = stack_unused_count();
+  uVar1 = stack_usage();
   *param_2 = uVar1;
   return 0;
 }
@@ -9826,46 +9923,44 @@ undefined4 stack_measure(undefined4 param_1,undefined8 *param_2)
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* fills a new task's stacks with 0xabcd, the task record in A0
-   Not a C function (register; read): its arguments and results in registers.  In: A0. */
+   Not a C function (register; read): its arguments and results in registers.  In: A0 void *task. */
 
-__regcall undefined4 stack_fill(void)
+__regcall void stack_fill(void *task /* a0 */)
 
 {
-  undefined4 in_D0;
   uint uVar1;
-  int in_A0;
   int extraout_A0;
-  int extraout_A1;
-  undefined2 *puVar3;
+  void *pvVar3;
+  undefined2 *puVar4;
   ushort uVar2;
   
-  *(undefined4 *)(in_A0 + 0x8a) = *(undefined4 *)(in_A0 + 0x3a);
-  *(undefined4 *)(in_A0 + 0x8e) = *(undefined4 *)(in_A0 + 0x36);
-  region_find_segment();
-  if (extraout_A1 != 0) {
-    puVar3 = (undefined2 *)(extraout_A1 + 0x12);
-    *(undefined2 **)(extraout_A0 + 0x92) = puVar3;
-    uVar1 = (*(int *)(extraout_A0 + 0x8e) - (int)puVar3 >> 1) - 2;
+  *(undefined4 *)((int)task + 0x8a) = *(undefined4 *)((int)task + 0x3a);
+  *(char **)((int)task + 0x8e) = *(char **)((int)task + 0x36);
+  pvVar3 = region_find_segment(task,*(char **)((int)task + 0x36));
+  if (pvVar3 != (void *)0x0) {
+    puVar4 = (undefined2 *)((int)pvVar3 + 0x12);
+    *(undefined2 **)(extraout_A0 + 0x92) = puVar4;
+    uVar1 = (*(int *)(extraout_A0 + 0x8e) - (int)puVar4 >> 1) - 2;
     if (-1 < (int)uVar1) {
       do {
-        *puVar3 = 0xabcd;
+        *puVar4 = 0xabcd;
         uVar2 = (short)uVar1 - 1;
         uVar1 = (uint)uVar2;
-        puVar3 = puVar3 + 1;
+        puVar4 = puVar4 + 1;
       } while (uVar2 != 0xffff);
     }
-    puVar3 = (undefined2 *)(*(int *)(extraout_A0 + 0x8e) + 4);
-    uVar1 = (*(int *)(extraout_A0 + 0x8a) - (int)puVar3 >> 1) - 2;
+    puVar4 = (undefined2 *)(*(int *)(extraout_A0 + 0x8e) + 4);
+    uVar1 = (*(int *)(extraout_A0 + 0x8a) - (int)puVar4 >> 1) - 2;
     if (-1 < (int)uVar1) {
       do {
-        *puVar3 = 0xabcd;
+        *puVar4 = 0xabcd;
         uVar2 = (short)uVar1 - 1;
         uVar1 = (uint)uVar2;
-        puVar3 = puVar3 + 1;
+        puVar4 = puVar4 + 1;
       } while (uVar2 != 0xffff);
     }
   }
-  return in_D0;
+  return;
 }
 
 
@@ -9910,28 +10005,43 @@ __asm__(
 	"	.size stack_fill, .-stack_fill\n"
 	"	.popsection\n"
 );
+/* stack_fill from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_stack_fill,\"ax\",@progbits\n"
+	"	.globl c_stack_fill\n"
+	"	.type c_stack_fill, @function\n"
+	"c_stack_fill:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	jsr stack_fill\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_stack_fill, .-c_stack_fill\n"
+	"	.popsection\n"
+);
 
 /* 000132b8 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* finds the memory segment that holds an address, A0 the region and D0 the address
-   Not a C function (register; read): its arguments and results in registers.  In: A0, D0. */
+/* finds the memory segment that holds an address, A0 the region and D0 the address, the segment
+   back in A1, zero if none
+   Not a C function (register; read): its arguments and results in registers.  In: A0 void *region,
+   D0 char *address.  Out: A1 void *segment. */
 
-__regcall void region_find_segment(void)
+/* out A1 void *segment */
+__regcall void * region_find_segment(void *region /* a0 */,char *address /* d0 */)
 
 {
-  int in_D0;
-  int in_A0;
   int *piVar1;
   
-  piVar1 = *(int **)(in_A0 + 0x20);
-  while ((in_D0 < (int)piVar1 || (piVar1[3] + (int)piVar1 < in_D0))) {
+  piVar1 = *(int **)((int)region + 0x20);
+  while (((int)address < (int)piVar1 || (piVar1[3] + (int)piVar1 < (int)address))) {
     piVar1 = (int *)*piVar1;
     if (piVar1 == (int *)0x0) {
-      return;
+      return (void *)0x0;
     }
   }
-  return;
+  return piVar1;
 }
 
 
@@ -9960,14 +10070,34 @@ __asm__(
 	"	.size region_find_segment, .-region_find_segment\n"
 	"	.popsection\n"
 );
+/* region_find_segment from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_region_find_segment,\"ax\",@progbits\n"
+	"	.globl c_region_find_segment\n"
+	"	.type c_region_find_segment, @function\n"
+	"c_region_find_segment:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%d0\n"
+	"	jsr region_find_segment\n"
+	"	move.l %a1,%d0\n"
+	"	move.l %d0,%a0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_region_find_segment, .-c_region_find_segment\n"
+	"	.popsection\n"
+);
 
 /* 000132da */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* counts the 0xabcd fill left at the bottom of a stack, A1 its bottom and D0 its top
-   Not a C function (register; read): its arguments and results in registers.  In: A1, D0. */
+/* measures a stack from A1, its bottom, to D0, its top: the bytes above the 0xabcd fill left at its
+   bottom back in D0, its size in D1
+   Not a C function (register; read): its arguments and results in registers.  In: A1 uint16_t
+   *bottom, D0 char *top.  Out: D0 int used, D1 int size. */
 
-__regcall undefined8 stack_unused_count(void)
+/* out D0 int used, D1 int size */
+__regcall undefined8 stack_usage(void)
 
 {
   int iVar1;
@@ -9994,10 +10124,10 @@ __regcall undefined8 stack_unused_count(void)
 
 #endif
 __asm__(
-	"	.globl stack_unused_count\n"
-	"	.type stack_unused_count, @function\n"
-	"	.pushsection .text.stack_unused_count.132da,\"ax\",@progbits\n"
-	"stack_unused_count:\n"
+	"	.globl stack_usage\n"
+	"	.type stack_usage, @function\n"
+	"	.pushsection .text.stack_usage.132da,\"ax\",@progbits\n"
+	"stack_usage:\n"
 	"	sub.l %a1,%d0\n"
 	"	move.l %d0,%d1\n"
 	"	beq.w .Lg_132f2\n"
@@ -10010,7 +10140,7 @@ __asm__(
 	"	asl.l #0x1,%d0\n"
 	".Lg_132f2:\n"
 	"	rts\n"
-	"	.size stack_unused_count, .-stack_unused_count\n"
+	"	.size stack_usage, .-stack_usage\n"
 	"	.popsection\n"
 );
 
@@ -10274,6 +10404,20 @@ __asm__(
 	"	.size clock_record_checksum, .-clock_record_checksum\n"
 	"	.popsection\n"
 );
+/* clock_record_checksum from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_clock_record_checksum,\"ax\",@progbits\n"
+	"	.globl c_clock_record_checksum\n"
+	"	.type c_clock_record_checksum, @function\n"
+	"c_clock_record_checksum:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a6\n"
+	"	jsr clock_record_checksum\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_clock_record_checksum, .-c_clock_record_checksum\n"
+	"	.popsection\n"
+);
 
 /* 000134ca */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -10316,6 +10460,20 @@ __asm__(
 	"	cmp.w (%a6),%d1\n"
 	"	rts\n"
 	"	.size clock_record_sum, .-clock_record_sum\n"
+	"	.popsection\n"
+);
+/* clock_record_sum from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_clock_record_sum,\"ax\",@progbits\n"
+	"	.globl c_clock_record_sum\n"
+	"	.type c_clock_record_sum, @function\n"
+	"c_clock_record_sum:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a6\n"
+	"	jsr clock_record_sum\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_clock_record_sum, .-c_clock_record_sum\n"
 	"	.popsection\n"
 );
 
@@ -10492,6 +10650,20 @@ __asm__(
 	"	.size clock_record_advance, .-clock_record_advance\n"
 	"	.popsection\n"
 );
+/* clock_record_advance from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_clock_record_advance,\"ax\",@progbits\n"
+	"	.globl c_clock_record_advance\n"
+	"	.type c_clock_record_advance, @function\n"
+	"c_clock_record_advance:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a6\n"
+	"	jsr clock_record_advance\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_clock_record_advance, .-c_clock_record_advance\n"
+	"	.popsection\n"
+);
 
 /* 000135f0 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -10621,6 +10793,20 @@ __asm__(
 	"	.byte 0x13,0xfc,0x00,0x01,0x00,0x10,0x25,0x43 | move.b #0x1,(0x00102543).l\n"
 	"	.byte 0x4e,0x75 | rts\n"
 	"	.size clock_record_advance_utc, .-clock_record_advance_utc\n"
+	"	.popsection\n"
+);
+/* clock_record_advance_utc from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_clock_record_advance_utc,\"ax\",@progbits\n"
+	"	.globl c_clock_record_advance_utc\n"
+	"	.type c_clock_record_advance_utc, @function\n"
+	"c_clock_record_advance_utc:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a6\n"
+	"	jsr clock_record_advance_utc\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_clock_record_advance_utc, .-c_clock_record_advance_utc\n"
 	"	.popsection\n"
 );
 
@@ -10870,6 +11056,23 @@ __asm__(
 	"	.size clock_record_store, .-clock_record_store\n"
 	"	.popsection\n"
 );
+/* clock_record_store from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_clock_record_store,\"ax\",@progbits\n"
+	"	.globl c_clock_record_store\n"
+	"	.type c_clock_record_store, @function\n"
+	"c_clock_record_store:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a6\n"
+	"	move.l (52,%sp),%d0\n"
+	"	move.l (56,%sp),%d1\n"
+	"	move.l (60,%sp),%d2\n"
+	"	jsr clock_record_store\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_clock_record_store, .-c_clock_record_store\n"
+	"	.popsection\n"
+);
 
 /* 00013882 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -10940,6 +11143,20 @@ __asm__(
 	"	.size clock_record_derive, .-clock_record_derive\n"
 	"	.popsection\n"
 );
+/* clock_record_derive from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_clock_record_derive,\"ax\",@progbits\n"
+	"	.globl c_clock_record_derive\n"
+	"	.type c_clock_record_derive, @function\n"
+	"c_clock_record_derive:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a6\n"
+	"	jsr clock_record_derive\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_clock_record_derive, .-c_clock_record_derive\n"
+	"	.popsection\n"
+);
 
 /* 000138e4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -10989,6 +11206,21 @@ __asm__(
 	".Lg_13906:\n"
 	"	rts\n"
 	"	.size clock_set_leap_year, .-clock_set_leap_year\n"
+	"	.popsection\n"
+);
+/* clock_set_leap_year from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_clock_set_leap_year,\"ax\",@progbits\n"
+	"	.globl c_clock_set_leap_year\n"
+	"	.type c_clock_set_leap_year, @function\n"
+	"c_clock_set_leap_year:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%d7\n"
+	"	jsr clock_set_leap_year\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_clock_set_leap_year, .-c_clock_set_leap_year\n"
 	"	.popsection\n"
 );
 
@@ -12898,6 +13130,21 @@ __asm__(
 	"	movem.l (%sp)+,%d6/%a5/%a6\n"
 	"	rte\n"
 	"	.size kernel_dispatch_io, .-kernel_dispatch_io\n"
+	"	.popsection\n"
+);
+/* kernel_dispatch_io from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_kernel_dispatch_io,\"ax\",@progbits\n"
+	"	.globl c_kernel_dispatch_io\n"
+	"	.type c_kernel_dispatch_io, @function\n"
+	"c_kernel_dispatch_io:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d7\n"
+	"	move.l (52,%sp),%d0\n"
+	"	jsr kernel_dispatch_io\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_kernel_dispatch_io, .-c_kernel_dispatch_io\n"
 	"	.popsection\n"
 );
 
@@ -14914,6 +15161,21 @@ __asm__(
 	"	clr.b %d7\n"
 	"	rts\n"
 	"	.size kernel_service_none, .-kernel_service_none\n"
+	"	.popsection\n"
+);
+/* kernel_service_none from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_kernel_service_none,\"ax\",@progbits\n"
+	"	.globl c_kernel_service_none\n"
+	"	.type c_kernel_service_none, @function\n"
+	"c_kernel_service_none:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	jsr kernel_service_none\n"
+	"	move.l %d7,%d0\n"
+	"	extb.l %d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_kernel_service_none, .-c_kernel_service_none\n"
 	"	.popsection\n"
 );
 
@@ -17338,6 +17600,23 @@ __asm__(
 	"	.size kernel_check_task, .-kernel_check_task\n"
 	"	.popsection\n"
 );
+/* kernel_check_task from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_kernel_check_task,\"ax\",@progbits\n"
+	"	.globl c_kernel_check_task\n"
+	"	.type c_kernel_check_task, @function\n"
+	"c_kernel_check_task:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%a5\n"
+	"	jsr kernel_check_task\n"
+	"	move.l %a0,%d0\n"
+	"	move.l %d0,%a0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_kernel_check_task, .-c_kernel_check_task\n"
+	"	.popsection\n"
+);
 
 /* 00015b6c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -17384,6 +17663,21 @@ __asm__(
 	"	.size kernel_check_exchange, .-kernel_check_exchange\n"
 	"	.popsection\n"
 );
+/* kernel_check_exchange from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_kernel_check_exchange,\"ax\",@progbits\n"
+	"	.globl c_kernel_check_exchange\n"
+	"	.type c_kernel_check_exchange, @function\n"
+	"c_kernel_check_exchange:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%a5\n"
+	"	jsr kernel_check_exchange\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_kernel_check_exchange, .-c_kernel_check_exchange\n"
+	"	.popsection\n"
+);
 
 /* 00015b96 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -17416,6 +17710,20 @@ __asm__(
 	".Lg_15ba8:\n"
 	"	rts\n"
 	"	.size kernel_check_segment, .-kernel_check_segment\n"
+	"	.popsection\n"
+);
+/* kernel_check_segment from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_kernel_check_segment,\"ax\",@progbits\n"
+	"	.globl c_kernel_check_segment\n"
+	"	.type c_kernel_check_segment, @function\n"
+	"c_kernel_check_segment:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	jsr kernel_check_segment\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_kernel_check_segment, .-c_kernel_check_segment\n"
 	"	.popsection\n"
 );
 
@@ -19455,20 +19763,22 @@ void task_count_tick(void)
 
 /* trap #3, the service in D7, the error back in D7
    Not a C function (register; read): its arguments and results in registers.  In: D7 char service,
-   D0, D1, D2, D3, A0, A1.  Out: D7 int error.  Returns: ccr.
+   D0 int d0, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1.  Out: D7 int error.
+   Returns: ccr.
    psos.md */
 
 /* out D7 int error; returns ccr */
-__regcall void psos_call(void)
+__regcall int psos_call(char service /* d7 */,int d0 /* d0 */,int d1 /* d1 */,int d2 /* d2 */,int d3 /* d3 */,void *a0 /* a0 */,void *a1 /* a1 */)
 
 {
-  char unaff_D7b;
+  undefined2 local_2;
   
   __m68k_trap(3);
-  if (unaff_D7b != '\0') {
-    return;
+  if (service != '\0') {
+    local_2 = CONCAT11(service,service);
+    return (uint)local_2;
   }
-  return;
+  return 0;
 }
 
 
@@ -19491,6 +19801,27 @@ __asm__(
 	"	addq.l #0x2,%sp\n"
 	"	rts\n"
 	"	.size psos_call, .-psos_call\n"
+	"	.popsection\n"
+);
+/* psos_call from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_psos_call,\"ax\",@progbits\n"
+	"	.globl c_psos_call\n"
+	"	.type c_psos_call, @function\n"
+	"c_psos_call:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d7\n"
+	"	move.l (52,%sp),%d0\n"
+	"	move.l (56,%sp),%d1\n"
+	"	move.l (60,%sp),%d2\n"
+	"	move.l (64,%sp),%d3\n"
+	"	move.l (68,%sp),%a0\n"
+	"	move.l (72,%sp),%a1\n"
+	"	jsr psos_call\n"
+	"	move.l %d7,%d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_psos_call, .-c_psos_call\n"
 	"	.popsection\n"
 );
 
@@ -19538,6 +19869,22 @@ __asm__(
 	"	addq.l #0x2,%sp\n"
 	"	rts\n"
 	"	.size psos_io_call, .-psos_io_call\n"
+	"	.popsection\n"
+);
+/* psos_io_call from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_psos_io_call,\"ax\",@progbits\n"
+	"	.globl c_psos_io_call\n"
+	"	.type c_psos_io_call, @function\n"
+	"c_psos_io_call:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d7\n"
+	"	move.l (52,%sp),%d0\n"
+	"	jsr psos_io_call\n"
+	"	move.l %d7,%d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_psos_io_call, .-c_psos_io_call\n"
 	"	.popsection\n"
 );
 
@@ -19591,20 +19938,39 @@ __asm__(
 	"	.size psos_pack_name, .-psos_pack_name\n"
 	"	.popsection\n"
 );
+/* psos_pack_name from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_psos_pack_name,\"ax\",@progbits\n"
+	"	.globl c_psos_pack_name\n"
+	"	.type c_psos_pack_name, @function\n"
+	"c_psos_pack_name:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	jsr psos_pack_name\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_psos_pack_name, .-c_psos_pack_name\n"
+	"	.popsection\n"
+);
 
 /* 00016f74 */
 
-/* WARNING: Removing unreachable block (ram,0x00016f9c) */
-/* WARNING: Removing unreachable block (ram,0x00016fa2) */
 /* service 1, spawn's create
    psos.md */
 
 ulong psos_create(char *name,ulong a,ulong priority,ulong stack_a,ulong stack_b,void *e,ulong *task)
 
 {
-  psos_pack_name();
-  psos_call();
-  return 1;
+  int d0;
+  ulong uVar1;
+  ulong extraout_A0;
+  void *a1;
+  
+  d0 = psos_pack_name();
+  uVar1 = psos_call('\x01',d0,a,priority,CONCAT22(__ghidra_piece(unsigned short, stack_a, 2),__ghidra_piece(unsigned short, stack_b, 2)),e,a1);
+  if ((uVar1 == 0) && (task != (ulong *)0x0)) {
+    *task = extraout_A0;
+  }
+  return uVar1;
 }
 
 
@@ -19616,8 +19982,14 @@ ulong psos_create(char *name,ulong a,ulong priority,ulong stack_a,ulong stack_b,
 ulong psos_start(ulong task,void *entry)
 
 {
-  psos_call();
-  return 2;
+  int in_D0;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  
+  uVar1 = psos_call('\x02',in_D0,in_D1,unaff_D2,unaff_D3,(void *)task,entry);
+  return uVar1;
 }
 
 
@@ -19629,22 +20001,29 @@ ulong psos_start(ulong task,void *entry)
 ulong psos_ident(char *name,ulong *id,uchar *b)
 
 {
-  uchar uVar1;
+  int d0;
+  uchar extraout_D0b;
+  int d1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *a0;
   ulong extraout_A0;
+  void *a1;
   bool bVar2;
   
-  psos_pack_name();
+  d0 = psos_pack_name();
   bVar2 = false;
-  uVar1 = psos_call();
+  uVar1 = psos_call('\x03',d0,d1,unaff_D2,unaff_D3,a0,a1);
   if (bVar2) {
     if (id != (ulong *)0x0) {
       *id = extraout_A0;
     }
     if (b != (uchar *)0x0) {
-      *b = uVar1;
+      *b = extraout_D0b;
     }
   }
-  return 3;
+  return uVar1;
 }
 
 
@@ -19657,9 +20036,14 @@ ulong psos_ident(char *name,ulong *id,uchar *b)
 ulong psos_my_pid(void)
 
 {
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  void *in_A0;
   ulong extraout_A0;
+  void *in_A1;
   
-  psos_call();
+  psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
   return extraout_A0;
 }
 
@@ -19672,8 +20056,15 @@ ulong psos_my_pid(void)
 ulong psos_delete(ulong task)
 
 {
-  psos_call();
-  return 4;
+  int in_D0;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A1;
+  
+  uVar1 = psos_call('\x04',in_D0,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1);
+  return uVar1;
 }
 
 
@@ -19685,8 +20076,15 @@ ulong psos_delete(ulong task)
 ulong psos_suspend(ulong task)
 
 {
-  psos_call();
-  return 5;
+  int in_D0;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A1;
+  
+  uVar1 = psos_call('\x05',in_D0,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1);
+  return uVar1;
 }
 
 
@@ -19698,8 +20096,15 @@ ulong psos_suspend(ulong task)
 ulong psos_resume(ulong task)
 
 {
-  psos_call();
-  return 6;
+  int in_D0;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A1;
+  
+  uVar1 = psos_call('\x06',in_D0,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1);
+  return uVar1;
 }
 
 
@@ -19711,13 +20116,18 @@ ulong psos_resume(ulong task)
 ulong psos_priority(ulong task,ulong priority,uchar *old)
 
 {
-  uchar uVar1;
+  uchar extraout_D0b;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A1;
   
-  uVar1 = psos_call();
+  uVar1 = psos_call('\a',priority,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1);
   if (old != (uchar *)0x0) {
-    *old = uVar1;
+    *old = extraout_D0b;
   }
-  return 7;
+  return uVar1;
 }
 
 
@@ -19729,8 +20139,15 @@ ulong psos_priority(ulong task,ulong priority,uchar *old)
 ulong psos_pause(ulong a)
 
 {
-  psos_call();
-  return 0x1c;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A0;
+  void *in_A1;
+  
+  uVar1 = psos_call('\x1c',a,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
+  return uVar1;
 }
 
 
@@ -19742,13 +20159,18 @@ ulong psos_pause(ulong a)
 ulong psos_mode(ulong a,ulong b,uchar *old)
 
 {
-  uchar uVar1;
+  uchar extraout_D0b;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A0;
+  void *in_A1;
   
-  uVar1 = psos_call();
+  uVar1 = psos_call(' ',a,b,unaff_D2,unaff_D3,in_A0,in_A1);
   if (old != (uchar *)0x0) {
-    *old = uVar1;
+    *old = extraout_D0b;
   }
-  return 0x20;
+  return uVar1;
 }
 
 
@@ -19771,15 +20193,21 @@ void psos_service_33(void)
 
 /* 000170c0 */
 
-/* WARNING: Removing unreachable block (ram,0x000170e2) */
-/* WARNING: Removing unreachable block (ram,0x000170e8) */
 /* psos.md */
 
 ulong psos_service_8(ulong a,ulong b,ulong c,ulong d,ulong *out)
 
 {
-  psos_call();
-  return 8;
+  ulong uVar1;
+  void *in_A0;
+  ulong extraout_A0;
+  void *in_A1;
+  
+  uVar1 = psos_call('\b',d,a,b,c,in_A0,in_A1);
+  if ((uVar1 == 0) && (out != (ulong *)0x0)) {
+    *out = extraout_A0;
+  }
+  return uVar1;
 }
 
 
@@ -19790,8 +20218,15 @@ ulong psos_service_8(ulong a,ulong b,ulong c,ulong d,ulong *out)
 ulong psos_service_9(ulong a)
 
 {
-  psos_call();
-  return 9;
+  int in_D0;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A1;
+  
+  uVar1 = psos_call('\t',in_D0,in_D1,unaff_D2,unaff_D3,(void *)a,in_A1);
+  return uVar1;
 }
 
 
@@ -19802,8 +20237,14 @@ ulong psos_service_9(ulong a)
 ulong psos_service_10(ulong a,ulong b)
 
 {
-  psos_call();
-  return 10;
+  int in_D0;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  
+  uVar1 = psos_call('\n',in_D0,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b);
+  return uVar1;
 }
 
 
@@ -19814,8 +20255,14 @@ ulong psos_service_10(ulong a,ulong b)
 ulong psos_service_16(ulong a,ulong b)
 
 {
-  psos_call();
-  return 0x10;
+  int in_D0;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  
+  uVar1 = psos_call('\x10',in_D0,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b);
+  return uVar1;
 }
 
 
@@ -19826,13 +20273,17 @@ ulong psos_service_16(ulong a,ulong b)
 ulong psos_service_35(ulong a,ulong b,ulong c,ulong *out)
 
 {
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
   ulong extraout_A0;
+  void *in_A1;
   
-  psos_call();
+  uVar1 = psos_call('#',b,c,unaff_D2,unaff_D3,(void *)a,in_A1);
   if (out != (ulong *)0x0) {
     *out = extraout_A0;
   }
-  return 0x23;
+  return uVar1;
 }
 
 
@@ -19843,22 +20294,36 @@ ulong psos_service_35(ulong a,ulong b,ulong c,ulong *out)
 ulong psos_service_36(ulong a,ulong b)
 
 {
-  psos_call();
-  return 0x24;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A1;
+  
+  uVar1 = psos_call('$',b,in_D1,unaff_D2,unaff_D3,(void *)a,in_A1);
+  return uVar1;
 }
 
 
 /* 0001718a */
 
-/* WARNING: Removing unreachable block (ram,0x000171a2) */
-/* WARNING: Removing unreachable block (ram,0x000171a8) */
 /* psos.md */
 
 ulong psos_service_37(ulong a,ulong b,ulong *out)
 
 {
-  psos_call();
-  return 0x25;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A1;
+  ulong extraout_A1;
+  
+  uVar1 = psos_call('%',b,in_D1,unaff_D2,unaff_D3,(void *)a,in_A1);
+  if ((uVar1 == 0) && (out != (ulong *)0x0)) {
+    *out = extraout_A1;
+  }
+  return uVar1;
 }
 
 
@@ -19869,24 +20334,38 @@ ulong psos_service_37(ulong a,ulong b,ulong *out)
 ulong psos_service_38(ulong a,ulong b)
 
 {
-  psos_call();
-  return 0x26;
+  int in_D0;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  
+  uVar1 = psos_call('&',in_D0,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b);
+  return uVar1;
 }
 
 
 /* 000171ce */
 
-/* WARNING: Removing unreachable block (ram,0x000171ec) */
-/* WARNING: Removing unreachable block (ram,0x000171f2) */
 /* service 20, create_x
    psos.md */
 
 ulong psos_create_x(char *name,ulong a,ulong b,ulong *exchange)
 
 {
-  psos_pack_name();
-  psos_call();
-  return 0x14;
+  int d0;
+  int unaff_D3;
+  ulong uVar1;
+  void *a0;
+  ulong extraout_A0;
+  void *a1;
+  
+  d0 = psos_pack_name();
+  uVar1 = psos_call('\x14',d0,a,b,unaff_D3,a0,a1);
+  if ((uVar1 == 0) && (exchange != (ulong *)0x0)) {
+    *exchange = extraout_A0;
+  }
+  return uVar1;
 }
 
 
@@ -19897,15 +20376,21 @@ ulong psos_create_x(char *name,ulong a,ulong b,ulong *exchange)
 ulong psos_service_21(char *name,ulong *out1,ulong *out2,ulong *out3)
 
 {
+  int d0;
+  int d1;
   ulong extraout_D1;
   ulong unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *a0;
   ulong extraout_A0;
-  bool bVar1;
+  void *a1;
+  bool bVar2;
   
-  psos_pack_name();
-  bVar1 = false;
-  psos_call();
-  if (bVar1) {
+  d0 = psos_pack_name();
+  bVar2 = false;
+  uVar1 = psos_call('\x15',d0,d1,unaff_D2,unaff_D3,a0,a1);
+  if (bVar2) {
     if (out1 != (ulong *)0x0) {
       *out1 = extraout_A0;
     }
@@ -19916,7 +20401,7 @@ ulong psos_service_21(char *name,ulong *out1,ulong *out2,ulong *out3)
       *out3 = unaff_D2;
     }
   }
-  return 0x15;
+  return uVar1;
 }
 
 
@@ -19928,8 +20413,15 @@ ulong psos_service_21(char *name,ulong *out1,ulong *out2,ulong *out3)
 ulong psos_delete_x(ulong exchange)
 
 {
-  psos_call();
-  return 0x16;
+  int in_D0;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A1;
+  
+  uVar1 = psos_call('\x16',in_D0,in_D1,unaff_D2,unaff_D3,(void *)exchange,in_A1);
+  return uVar1;
 }
 
 
@@ -19941,8 +20433,14 @@ ulong psos_delete_x(ulong exchange)
 ulong psos_send_x(ulong exchange,void *message)
 
 {
-  psos_call();
-  return 0x17;
+  int in_D0;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  
+  uVar1 = psos_call('\x17',in_D0,in_D1,unaff_D2,unaff_D3,(void *)exchange,message);
+  return uVar1;
 }
 
 
@@ -19954,8 +20452,14 @@ ulong psos_send_x(ulong exchange,void *message)
 ulong psos_jam_x(ulong exchange,void *message)
 
 {
-  psos_call();
-  return 0x13;
+  int in_D0;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  
+  uVar1 = psos_call('\x13',in_D0,in_D1,unaff_D2,unaff_D3,(void *)exchange,message);
+  return uVar1;
 }
 
 
@@ -19966,21 +20470,25 @@ ulong psos_jam_x(ulong exchange,void *message)
 ulong psos_service_18(ulong a,ulong b,ulong c,uchar *out1,uchar *out2)
 
 {
-  uchar uVar1;
+  uchar extraout_D0b;
+  int in_D1;
   uchar extraout_D1b;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
   bool bVar2;
   
   bVar2 = false;
-  uVar1 = psos_call();
+  uVar1 = psos_call('\x12',c,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b);
   if (bVar2) {
     if (out1 != (uchar *)0x0) {
-      *out1 = uVar1;
+      *out1 = extraout_D0b;
     }
     if (out2 != (uchar *)0x0) {
       *out2 = extraout_D1b;
     }
   }
-  return 0x12;
+  return uVar1;
 }
 
 
@@ -19992,8 +20500,12 @@ ulong psos_service_18(ulong a,ulong b,ulong c,uchar *out1,uchar *out2)
 ulong psos_request_x(ulong exchange,void *buffer,ulong a,ulong b)
 
 {
-  psos_call();
-  return 0x18;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  
+  uVar1 = psos_call('\x18',b,a,unaff_D2,unaff_D3,(void *)exchange,buffer);
+  return uVar1;
 }
 
 
@@ -20005,8 +20517,14 @@ ulong psos_request_x(ulong exchange,void *buffer,ulong a,ulong b)
 ulong psos_signal_v(ulong variable,ulong value)
 
 {
-  psos_call();
-  return 0x19;
+  int in_D0;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A1;
+  
+  uVar1 = psos_call('\x19',in_D0,value,unaff_D2,unaff_D3,(void *)variable,in_A1);
+  return uVar1;
 }
 
 
@@ -20019,12 +20537,16 @@ ulong psos_wait_v(ulong a,ulong b,ulong c,ulong *out)
 
 {
   ulong extraout_D1;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A0;
+  void *in_A1;
   
-  psos_call();
+  uVar1 = psos_call('\x1a',c,a,b,unaff_D3,in_A0,in_A1);
   if (out != (ulong *)0x0) {
     *out = extraout_D1;
   }
-  return 0x1a;
+  return uVar1;
 }
 
 
@@ -20036,13 +20558,18 @@ ulong psos_wait_v(ulong a,ulong b,ulong c,ulong *out)
 ulong psos_get_v(ulong a,ulong b,ulong *out)
 
 {
+  int in_D0;
   ulong extraout_D1;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A0;
+  void *in_A1;
   
-  psos_call();
+  uVar1 = psos_call('\x1b',in_D0,a,b,unaff_D3,in_A0,in_A1);
   if (out != (ulong *)0x0) {
     *out = extraout_D1;
   }
-  return 0x1b;
+  return uVar1;
 }
 
 
@@ -20054,8 +20581,16 @@ ulong psos_get_v(ulong a,ulong b,ulong *out)
 ulong psos_service_29(void)
 
 {
-  psos_call();
-  return 0x1d;
+  int in_D0;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A0;
+  void *in_A1;
+  
+  uVar1 = psos_call('\x1d',in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
+  return uVar1;
 }
 
 
@@ -20066,20 +20601,27 @@ ulong psos_service_29(void)
 ulong psos_service_30(ulong *out1,ulong *out2,ushort *out3)
 
 {
-  ushort unaff_D2w;
-  undefined8 uVar1;
+  int in_D0;
+  ulong extraout_D0;
+  int in_D1;
+  ulong extraout_D1;
+  int unaff_D2;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A0;
+  void *in_A1;
   
-  uVar1 = psos_call();
+  uVar1 = psos_call('\x1e',in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
   if (out1 != (ulong *)0x0) {
-    *out1 = (ulong)((ulonglong)uVar1 >> 0x20);
+    *out1 = extraout_D0;
   }
   if (out2 != (ulong *)0x0) {
-    *out2 = (ulong)uVar1;
+    *out2 = extraout_D1;
   }
   if (out3 != (ushort *)0x0) {
-    *out3 = unaff_D2w;
+    *out3 = (ushort)unaff_D2;
   }
-  return 0x1e;
+  return uVar1;
 }
 
 
@@ -20090,8 +20632,13 @@ ulong psos_service_30(ulong *out1,ulong *out2,ushort *out3)
 ulong psos_service_31(ulong a,ulong b,ulong c)
 
 {
-  psos_call();
-  return 0x1f;
+  int unaff_D3;
+  ulong uVar1;
+  void *in_A0;
+  void *in_A1;
+  
+  uVar1 = psos_call('\x1f',a,b,c,unaff_D3,in_A0,in_A1);
+  return uVar1;
 }
 
 
@@ -22222,14 +22769,18 @@ __pforth undefined4 forth_read_line(forth_user_end user /* a5 */,char *input /* 
 
 {
   undefined4 in_D0;
-  undefined4 uVar1;
+  undefined4 extraout_D0;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
   
   if (-1 < ((forth_user_area *)(user + -0x28))->iodev) {
     __m68k_trap(4);
     return in_D0;
   }
-  uVar1 = psos_call();
-  return uVar1;
+  psos_call('\x04',(uint)(ushort)((forth_user_area *)(user + -0x28))->iodev,in_D1,unaff_D2,unaff_D3,
+            (void *)0x0,ADJ(user)->tib);
+  return extraout_D0;
 }
 
 
@@ -22372,11 +22923,17 @@ __asm__(
 __pforth void forth_print_string(char *s /* d0 */,forth_user_end user /* a5 */)
 
 {
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  void *in_A1;
+  
   if (-1 < ((forth_user_area *)(user + -0x28))->iodev) {
     __m68k_trap(4);
     return;
   }
-  psos_call();
+  psos_call('\x04',(uint)(ushort)((forth_user_area *)(user + -0x28))->iodev,in_D1,unaff_D2,unaff_D3,
+            (void *)0x0,in_A1);
   return;
 }
 
@@ -22401,6 +22958,21 @@ __asm__(
 	"	.size forth_print_string, .-forth_print_string\n"
 	"	.popsection\n"
 );
+/* forth_print_string from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_forth_print_string,\"ax\",@progbits\n"
+	"	.globl c_forth_print_string\n"
+	"	.type c_forth_print_string, @function\n"
+	"c_forth_print_string:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%a5\n"
+	"	jsr forth_print_string\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_forth_print_string, .-c_forth_print_string\n"
+	"	.popsection\n"
+);
 
 /* 0001916e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -22411,16 +22983,18 @@ __asm__(
    A3.
    console.md */
 
-__pforth char * forth_input_buffer(forth_user_end user /* a5 */)
+__pforth void forth_input_buffer(forth_user_end user /* a5 */)
 
 {
-  char *pcVar1;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
+  void *in_A1;
   
-  pcVar1 = ADJ(user)->tib;
-  if (pcVar1 == (char *)0x0) {
-    pcVar1 = (char *)psos_call();
+  if (ADJ(user)->tib == (char *)0x0) {
+    psos_call('\x04',0,in_D1,unaff_D2,unaff_D3,(void *)0x0,in_A1);
   }
-  return pcVar1;
+  return;
 }
 
 
@@ -27689,17 +28263,20 @@ __asm__(
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
-__pforth short forth_expect(forth_user_end user,long *sp)
+__pforth void forth_expect(forth_user_end user,long *sp)
 
 {
-  short sVar1;
+  undefined4 in_D0;
+  int in_D1;
+  int unaff_D3;
   
   if (-1 < ((forth_user_area *)(user + -0x28))->iodev) {
     __m68k_trap(4);
-    return ((forth_user_area *)(user + -0x28))->iodev;
+    return;
   }
-  sVar1 = psos_call();
-  return sVar1;
+  psos_call('\x04',CONCAT22((short)((uint)in_D0 >> 0x10),((forth_user_area *)(user + -0x28))->iodev)
+            ,in_D1,*sp,unaff_D3,(void *)0x0,(void *)sp[1]);
+  return;
 }
 
 
@@ -28558,23 +29135,30 @@ __asm__(
 __pforth void forth_psos_call(forth_user_end user,long *sp,void *dp)
 
 {
+  int in_D0;
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
   byte bVar1;
-  uint unaff_D7;
+  char unaff_D7b;
+  uint uVar2;
+  void *in_A0;
+  void *in_A1;
   char *unaff_A3;
   uint *sp_00;
   
-  psos_call();
-  if ((char)unaff_D7 < '\x01') {
+  uVar2 = psos_call(unaff_D7b,in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
+  if ((char)uVar2 < '\x01') {
     return;
   }
   sp_00 = (uint *)(sp + -1);
-  *sp_00 = unaff_D7 & 0xff;
+  *sp_00 = uVar2 & 0xff;
   forth_print_string("pSOS error",user);
   forth_dot(user,(long *)sp_00);
-  bVar1 = (byte)((unaff_D7 & 0xffff) >> 8);
+  bVar1 = (byte)((uVar2 & 0xffff) >> 8);
   if ((bVar1 < 0x27) && (bVar1 != 0)) {
     sp_00 = (uint *)(sp + -2);
-    *sp_00 = (unaff_D7 & 0xffff) >> 8;
+    *sp_00 = (uVar2 & 0xffff) >> 8;
     forth_print_string(" from function",user);
     forth_dot(user,(long *)sp_00);
   }
@@ -28731,53 +29315,56 @@ __asm__(
 __pforth void forth_spawn(forth_user_end user,long *sp,void *dp)
 
 {
-  long lVar1;
-  void *pvVar2;
-  char *pcVar3;
-  int iVar4;
+  int d2;
+  void *pvVar1;
+  char *pcVar2;
+  int iVar3;
+  int d1;
   undefined4 extraout_A0;
   long extraout_A0_00;
+  void *a1;
   char *unaff_A3;
-  long *plVar5;
+  long *plVar4;
   undefined1 in_ZF;
   
   forth_parse_word(user,unaff_A3);
   forth_find(user);
   if ((bool)in_ZF) {
-    lVar1 = *sp;
+    iVar3 = *sp;
+    d2 = sp[1];
     forth_align(dp);
     *(undefined2 *)dp = 7;
     *(void **)((int)dp + 2) = dp;
-    *(short *)((int)dp + 6) = (short)lVar1;
+    *(short *)((int)dp + 6) = (short)iVar3;
     *(undefined4 *)((int)dp + 8) = extraout_A0;
-    psos_call();
+    psos_call('\a',0,d1,d2,iVar3,(void *)0x0,a1);
     forth_parse_word(user,unaff_A3);
-    iVar4 = forth_pack_name(user);
-    *(int *)((int)dp + 0xc) = iVar4;
+    iVar3 = forth_pack_name(user);
+    *(int *)((int)dp + 0xc) = iVar3;
     forth_psos_call(user,sp + 3,dp);
-    plVar5 = sp + 2;
-    *plVar5 = extraout_A0_00;
+    plVar4 = sp + 2;
+    *plVar4 = extraout_A0_00;
     forth_create_header(user,dp);
-    forth_compile_constant(user,plVar5,dp);
+    forth_compile_constant(user,plVar4,dp);
     ADJ(user)->fence = ADJ(user)->latest;
-    forth_psos_call(user,plVar5,dp);
+    forth_psos_call(user,plVar4,dp);
     return;
   }
   forth_print_string(ADJ(user)->pad,user);
   forth_print_string(": not found\r\n",user);
   forth_print_string("\r\n",user);
-  pvVar2 = ADJ(user)->return_stack_base;
-  plVar5 = ADJ(user)->stack_base;
-  pcVar3 = ADJ(user)->tib;
-  pcVar3[0] = '\0';
-  pcVar3[1] = '\0';
+  pvVar1 = ADJ(user)->return_stack_base;
+  plVar4 = ADJ(user)->stack_base;
+  pcVar2 = ADJ(user)->tib;
+  pcVar2[0] = '\0';
+  pcVar2[1] = '\0';
   if (ADJ(user)->state != 0) {
-    *(undefined4 *)((int)pvVar2 + -4) = 0x18eee;
+    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
     forth_unlink_latest(user,dp);
   }
   ADJ(user)->state = 0;
   ADJ(user)->base = 10;
-  forth_interpret(user,plVar5,dp);
+  forth_interpret(user,plVar4,dp);
   return;
 }
 
@@ -28880,6 +29467,20 @@ __asm__(
 	"	movea.l (%sp)+,%a0\n"
 	"	rts\n"
 	"	.size forth_pack_name, .-forth_pack_name\n"
+	"	.popsection\n"
+);
+/* forth_pack_name from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_forth_pack_name,\"ax\",@progbits\n"
+	"	.globl c_forth_pack_name\n"
+	"	.type c_forth_pack_name, @function\n"
+	"c_forth_pack_name:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a5\n"
+	"	jsr forth_pack_name\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_forth_pack_name, .-c_forth_pack_name\n"
 	"	.popsection\n"
 );
 
@@ -30006,6 +30607,20 @@ __asm__(
 	"	.size pforth_link_word, .-pforth_link_word\n"
 	"	.popsection\n"
 );
+/* pforth_link_word from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_pforth_link_word,\"ax\",@progbits\n"
+	"	.globl c_pforth_link_word\n"
+	"	.type c_pforth_link_word, @function\n"
+	"c_pforth_link_word:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a4\n"
+	"	jsr pforth_link_word\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_pforth_link_word, .-c_pforth_link_word\n"
+	"	.popsection\n"
+);
 
 /* 0001ae46 */
 
@@ -30074,6 +30689,20 @@ __asm__(
 	"	.size string_device_open, .-string_device_open\n"
 	"	.popsection\n"
 );
+/* string_device_open from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_string_device_open,\"ax\",@progbits\n"
+	"	.globl c_string_device_open\n"
+	"	.type c_string_device_open, @function\n"
+	"c_string_device_open:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	jsr string_device_open\n"
+	"	move.l %d7,%d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_string_device_open, .-c_string_device_open\n"
+	"	.popsection\n"
+);
 
 /* 0001af84 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -30102,6 +30731,20 @@ __asm__(
 	"	move.l %d7,(__ghidra_100ba8).l\n"
 	"	rts\n"
 	"	.size string_device_init, .-string_device_init\n"
+	"	.popsection\n"
+);
+/* string_device_init from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_string_device_init,\"ax\",@progbits\n"
+	"	.globl c_string_device_init\n"
+	"	.type c_string_device_init, @function\n"
+	"c_string_device_init:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	jsr string_device_init\n"
+	"	move.l %d7,%d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_string_device_init, .-c_string_device_init\n"
 	"	.popsection\n"
 );
 
@@ -30135,6 +30778,21 @@ __asm__(
 	"	.size string_device_control, .-string_device_control\n"
 	"	.popsection\n"
 );
+/* string_device_control from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_string_device_control,\"ax\",@progbits\n"
+	"	.globl c_string_device_control\n"
+	"	.type c_string_device_control, @function\n"
+	"c_string_device_control:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d2\n"
+	"	jsr string_device_control\n"
+	"	move.l %d7,%d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_string_device_control, .-c_string_device_control\n"
+	"	.popsection\n"
+);
 
 /* 0001af98 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -30149,14 +30807,16 @@ __regcall void console_read_from_string(void)
 
 {
   char cVar1;
+  int in_D0;
   int unaff_D2;
   uint uVar2;
+  int unaff_D3;
   char *pcVar4;
   char *in_A1;
   ushort uVar3;
   
   if ((_DAT_00100ba8 == (char *)0x0) || (*_DAT_00100ba8 == '\0')) {
-    psos_call();
+    psos_call('\x05',in_D0,(int)_DAT_00100ba8,unaff_D2,unaff_D3,(void *)0x0,in_A1);
   }
   else {
     uVar2 = unaff_D2 - 1;
@@ -32498,6 +33158,20 @@ __asm__(
 	"	.size drtb_unlock, .-drtb_unlock\n"
 	"	.popsection\n"
 );
+/* drtb_unlock from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_drtb_unlock,\"ax\",@progbits\n"
+	"	.globl c_drtb_unlock\n"
+	"	.type c_drtb_unlock, @function\n"
+	"c_drtb_unlock:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	jsr drtb_unlock\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_drtb_unlock, .-c_drtb_unlock\n"
+	"	.popsection\n"
+);
 
 /* 0001d922 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -32535,6 +33209,20 @@ __asm__(
 	"	movea.l (%sp)+,%a1\n"
 	"	rts\n"
 	"	.size drtb_lock, .-drtb_lock\n"
+	"	.popsection\n"
+);
+/* drtb_lock from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_drtb_lock,\"ax\",@progbits\n"
+	"	.globl c_drtb_lock\n"
+	"	.type c_drtb_lock, @function\n"
+	"c_drtb_lock:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	jsr drtb_lock\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_drtb_lock, .-c_drtb_lock\n"
 	"	.popsection\n"
 );
 
@@ -35572,6 +36260,20 @@ __asm__(
 	"	.size qspi_control, .-qspi_control\n"
 	"	.popsection\n"
 );
+/* qspi_control from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_qspi_control,\"ax\",@progbits\n"
+	"	.globl c_qspi_control\n"
+	"	.type c_qspi_control, @function\n"
+	"c_qspi_control:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	jsr qspi_control\n"
+	"	move.l %d7,%d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_qspi_control, .-c_qspi_control\n"
+	"	.popsection\n"
+);
 
 /* 000208fe */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -35597,6 +36299,20 @@ __asm__(
 	"	moveq #0x0,%d7\n"
 	"	rts\n"
 	"	.size qspi_open, .-qspi_open\n"
+	"	.popsection\n"
+);
+/* qspi_open from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_qspi_open,\"ax\",@progbits\n"
+	"	.globl c_qspi_open\n"
+	"	.type c_qspi_open, @function\n"
+	"c_qspi_open:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	jsr qspi_open\n"
+	"	move.l %d7,%d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_qspi_open, .-c_qspi_open\n"
 	"	.popsection\n"
 );
 
@@ -35791,6 +36507,22 @@ __asm__(
 	"	.size qspi_transfer_raw, .-qspi_transfer_raw\n"
 	"	.popsection\n"
 );
+/* qspi_transfer_raw from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_qspi_transfer_raw,\"ax\",@progbits\n"
+	"	.globl c_qspi_transfer_raw\n"
+	"	.type c_qspi_transfer_raw, @function\n"
+	"c_qspi_transfer_raw:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%a1\n"
+	"	move.l (56,%sp),%d2\n"
+	"	jsr qspi_transfer_raw\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_qspi_transfer_raw, .-c_qspi_transfer_raw\n"
+	"	.popsection\n"
+);
 
 /* 00020ab0 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -35829,6 +36561,22 @@ __asm__(
 	"	lea (0xa,%sp),%sp\n"
 	"	rts\n"
 	"	.size qspi_device_write, .-qspi_device_write\n"
+	"	.popsection\n"
+);
+/* qspi_device_write from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_qspi_device_write,\"ax\",@progbits\n"
+	"	.globl c_qspi_device_write\n"
+	"	.type c_qspi_device_write, @function\n"
+	"c_qspi_device_write:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%a0\n"
+	"	move.l (56,%sp),%d2\n"
+	"	jsr qspi_device_write\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_qspi_device_write, .-c_qspi_device_write\n"
 	"	.popsection\n"
 );
 
@@ -37635,6 +38383,21 @@ __asm__(
 	"	.size scpi_round_decimal, .-scpi_round_decimal\n"
 	"	.popsection\n"
 );
+/* scpi_round_decimal from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_scpi_round_decimal,\"ax\",@progbits\n"
+	"	.globl c_scpi_round_decimal\n"
+	"	.type c_scpi_round_decimal, @function\n"
+	"c_scpi_round_decimal:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a2\n"
+	"	move.l (52,%sp),%d0\n"
+	"	jsr scpi_round_decimal\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_scpi_round_decimal, .-c_scpi_round_decimal\n"
+	"	.popsection\n"
+);
 
 /* 00024d88 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -37754,6 +38517,22 @@ __asm__(
 	"	clr.b (%a1)\n"
 	"	rts\n"
 	"	.size scpi_decimal_to_text_unused, .-scpi_decimal_to_text_unused\n"
+	"	.popsection\n"
+);
+/* scpi_decimal_to_text_unused from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_scpi_decimal_to_text_unused,\"ax\",@progbits\n"
+	"	.globl c_scpi_decimal_to_text_unused\n"
+	"	.type c_scpi_decimal_to_text_unused, @function\n"
+	"c_scpi_decimal_to_text_unused:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%a1\n"
+	"	move.l (56,%sp),%d0\n"
+	"	jsr scpi_decimal_to_text_unused\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_scpi_decimal_to_text_unused, .-c_scpi_decimal_to_text_unused\n"
 	"	.popsection\n"
 );
 
@@ -38133,6 +38912,23 @@ __asm__(
 	"	.byte 0x00,0x00\n"
 	"	.byte 0x00,0x00\n"
 	"	.byte 0x00,0x00\n"
+	"	.popsection\n"
+);
+/* scpi_double_to_decimal from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_scpi_double_to_decimal,\"ax\",@progbits\n"
+	"	.globl c_scpi_double_to_decimal\n"
+	"	.type c_scpi_double_to_decimal, @function\n"
+	"c_scpi_double_to_decimal:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	move.l (56,%sp),%d7\n"
+	"	move.l (60,%sp),%a0\n"
+	"	jsr scpi_double_to_decimal\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_scpi_double_to_decimal, .-c_scpi_double_to_decimal\n"
 	"	.popsection\n"
 );
 
@@ -38650,6 +39446,20 @@ __asm__(
 	"	.size scpi_bcd_to_double, .-scpi_bcd_to_double\n"
 	"	.popsection\n"
 );
+/* scpi_bcd_to_double from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_scpi_bcd_to_double,\"ax\",@progbits\n"
+	"	.globl c_scpi_bcd_to_double\n"
+	"	.type c_scpi_bcd_to_double, @function\n"
+	"c_scpi_bcd_to_double:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	jsr scpi_bcd_to_double\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_scpi_bcd_to_double, .-c_scpi_bcd_to_double\n"
+	"	.popsection\n"
+);
 
 /* 000251e4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -38771,6 +39581,23 @@ __asm__(
 	"	ori #0xff,%ccr\n"
 	"	rts\n"
 	"	.size scpi_scale_by_power_of_ten, .-scpi_scale_by_power_of_ten\n"
+	"	.popsection\n"
+);
+/* scpi_scale_by_power_of_ten from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_scpi_scale_by_power_of_ten,\"ax\",@progbits\n"
+	"	.globl c_scpi_scale_by_power_of_ten\n"
+	"	.type c_scpi_scale_by_power_of_ten, @function\n"
+	"c_scpi_scale_by_power_of_ten:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	move.l (56,%sp),%a0\n"
+	"	move.l (60,%sp),%a1\n"
+	"	jsr scpi_scale_by_power_of_ten\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_scpi_scale_by_power_of_ten, .-c_scpi_scale_by_power_of_ten\n"
 	"	.popsection\n"
 );
 
@@ -39183,6 +40010,23 @@ __asm__(
 	"	.size scpi_double_multiply, .-scpi_double_multiply\n"
 	"	.popsection\n"
 );
+/* scpi_double_multiply from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_scpi_double_multiply,\"ax\",@progbits\n"
+	"	.globl c_scpi_double_multiply\n"
+	"	.type c_scpi_double_multiply, @function\n"
+	"c_scpi_double_multiply:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	move.l (56,%sp),%d2\n"
+	"	move.l (60,%sp),%d3\n"
+	"	jsr scpi_double_multiply\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_scpi_double_multiply, .-c_scpi_double_multiply\n"
+	"	.popsection\n"
+);
 
 /* 00025468 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -39387,6 +40231,22 @@ __asm__(
 	"	moveq #-0x1,%d0\n"
 	"	rts\n"
 	"	.size scpi_number_to_bcd, .-scpi_number_to_bcd\n"
+	"	.popsection\n"
+);
+/* scpi_number_to_bcd from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_scpi_number_to_bcd,\"ax\",@progbits\n"
+	"	.globl c_scpi_number_to_bcd\n"
+	"	.type c_scpi_number_to_bcd, @function\n"
+	"c_scpi_number_to_bcd:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%d0\n"
+	"	move.l (56,%sp),%a1\n"
+	"	jsr scpi_number_to_bcd\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_scpi_number_to_bcd, .-c_scpi_number_to_bcd\n"
 	"	.popsection\n"
 );
 
@@ -66487,6 +67347,21 @@ __asm__(
 	"	.size float_subtract_in_place, .-float_subtract_in_place\n"
 	"	.popsection\n"
 );
+/* float_subtract_in_place from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_float_subtract_in_place,\"ax\",@progbits\n"
+	"	.globl c_float_subtract_in_place\n"
+	"	.type c_float_subtract_in_place, @function\n"
+	"c_float_subtract_in_place:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	jsr float_subtract_in_place\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_float_subtract_in_place, .-c_float_subtract_in_place\n"
+	"	.popsection\n"
+);
 
 /* 0005d08a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -66519,6 +67394,21 @@ __asm__(
 	"	move.l %d0,(%a0)\n"
 	"	rts\n"
 	"	.size float_add_in_place, .-float_add_in_place\n"
+	"	.popsection\n"
+);
+/* float_add_in_place from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_float_add_in_place,\"ax\",@progbits\n"
+	"	.globl c_float_add_in_place\n"
+	"	.type c_float_add_in_place, @function\n"
+	"c_float_add_in_place:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	jsr float_add_in_place\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_float_add_in_place, .-c_float_add_in_place\n"
 	"	.popsection\n"
 );
 
@@ -66691,6 +67581,21 @@ __asm__(
 	"float_subtract_reversed:\n"
 	"	exg %d0,%d1\n"
 	"	.size float_subtract_reversed, .-float_subtract_reversed\n"
+	"	.popsection\n"
+);
+/* float_subtract_reversed from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_float_subtract_reversed,\"ax\",@progbits\n"
+	"	.globl c_float_subtract_reversed\n"
+	"	.type c_float_subtract_reversed, @function\n"
+	"c_float_subtract_reversed:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	jsr float_subtract_reversed\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_float_subtract_reversed, .-c_float_subtract_reversed\n"
 	"	.popsection\n"
 );
 
@@ -66916,6 +67821,21 @@ __asm__(
 	"	moveq #0x0,%d0\n"
 	"	bra.w float_add+0x13e\n"
 	"	.size float_subtract, .-float_subtract\n"
+	"	.popsection\n"
+);
+/* float_subtract from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_float_subtract,\"ax\",@progbits\n"
+	"	.globl c_float_subtract\n"
+	"	.type c_float_subtract, @function\n"
+	"c_float_subtract:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	jsr float_subtract\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_float_subtract, .-c_float_subtract\n"
 	"	.popsection\n"
 );
 
@@ -67251,6 +68171,21 @@ __asm__(
 	"	.size float_add, .-float_add\n"
 	"	.popsection\n"
 );
+/* float_add from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_float_add,\"ax\",@progbits\n"
+	"	.globl c_float_add\n"
+	"	.type c_float_add, @function\n"
+	"c_float_add:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	jsr float_add\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_float_add, .-c_float_add\n"
+	"	.popsection\n"
+);
 
 /* 0005d2e2 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -67290,6 +68225,22 @@ __asm__(
 	"	.size double_subtract_in_place, .-double_subtract_in_place\n"
 	"	.popsection\n"
 );
+/* double_subtract_in_place from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_subtract_in_place,\"ax\",@progbits\n"
+	"	.globl c_double_subtract_in_place\n"
+	"	.type c_double_subtract_in_place, @function\n"
+	"c_double_subtract_in_place:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%d0\n"
+	"	move.l (56,%sp),%d1\n"
+	"	jsr double_subtract_in_place\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_subtract_in_place, .-c_double_subtract_in_place\n"
+	"	.popsection\n"
+);
 
 /* 0005d2f8 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -67324,6 +68275,22 @@ __asm__(
 	"	.byte 0x4e\n"
 	"	.byte 0x71\n"
 	"	.size double_subtract_pointer, .-double_subtract_pointer\n"
+	"	.popsection\n"
+);
+/* double_subtract_pointer from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_subtract_pointer,\"ax\",@progbits\n"
+	"	.globl c_double_subtract_pointer\n"
+	"	.type c_double_subtract_pointer, @function\n"
+	"c_double_subtract_pointer:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	move.l (56,%sp),%a1\n"
+	"	jsr double_subtract_pointer\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_subtract_pointer, .-c_double_subtract_pointer\n"
 	"	.popsection\n"
 );
 
@@ -67648,6 +68615,21 @@ __asm__(
 	"	.size double_subtract_reversed_pointers, .-double_subtract_reversed_pointers\n"
 	"	.popsection\n"
 );
+/* double_subtract_reversed_pointers from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_subtract_reversed_pointers,\"ax\",@progbits\n"
+	"	.globl c_double_subtract_reversed_pointers\n"
+	"	.type c_double_subtract_reversed_pointers, @function\n"
+	"c_double_subtract_reversed_pointers:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%a1\n"
+	"	jsr double_subtract_reversed_pointers\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_subtract_reversed_pointers, .-c_double_subtract_reversed_pointers\n"
+	"	.popsection\n"
+);
 
 /* 0005d30a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -67968,6 +68950,22 @@ __asm__(
 	"	movea.l (%a1)+,%a0\n"
 	"	movea.l (%a1)+,%a1\n"
 	"	.size double_subtract_reversed_pointer, .-double_subtract_reversed_pointer\n"
+	"	.popsection\n"
+);
+/* double_subtract_reversed_pointer from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_subtract_reversed_pointer,\"ax\",@progbits\n"
+	"	.globl c_double_subtract_reversed_pointer\n"
+	"	.type c_double_subtract_reversed_pointer, @function\n"
+	"c_double_subtract_reversed_pointer:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	move.l (56,%sp),%a1\n"
+	"	jsr double_subtract_reversed_pointer\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_subtract_reversed_pointer, .-c_double_subtract_reversed_pointer\n"
 	"	.popsection\n"
 );
 
@@ -68391,6 +69389,23 @@ __asm__(
 	"	.size double_subtract_reversed, .-double_subtract_reversed\n"
 	"	.popsection\n"
 );
+/* double_subtract_reversed from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_subtract_reversed,\"ax\",@progbits\n"
+	"	.globl c_double_subtract_reversed\n"
+	"	.type c_double_subtract_reversed, @function\n"
+	"c_double_subtract_reversed:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	move.l (56,%sp),%a0\n"
+	"	move.l (60,%sp),%a1\n"
+	"	jsr double_subtract_reversed\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_subtract_reversed, .-c_double_subtract_reversed\n"
+	"	.popsection\n"
+);
 
 /* 0005d338 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -68424,6 +69439,22 @@ __asm__(
 	"	movem.l %d0/%d1,(%a0)\n"
 	"	rts\n"
 	"	.size double_add_in_place, .-double_add_in_place\n"
+	"	.popsection\n"
+);
+/* double_add_in_place from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_add_in_place,\"ax\",@progbits\n"
+	"	.globl c_double_add_in_place\n"
+	"	.type c_double_add_in_place, @function\n"
+	"c_double_add_in_place:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%d0\n"
+	"	move.l (56,%sp),%d1\n"
+	"	jsr double_add_in_place\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_add_in_place, .-c_double_add_in_place\n"
 	"	.popsection\n"
 );
 
@@ -68745,6 +69776,21 @@ __asm__(
 	"	.size double_add_pointers, .-double_add_pointers\n"
 	"	.popsection\n"
 );
+/* double_add_pointers from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_add_pointers,\"ax\",@progbits\n"
+	"	.globl c_double_add_pointers\n"
+	"	.type c_double_add_pointers, @function\n"
+	"c_double_add_pointers:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%a1\n"
+	"	jsr double_add_pointers\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_add_pointers, .-c_double_add_pointers\n"
+	"	.popsection\n"
+);
 
 /* 0005d34e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -69058,6 +70104,22 @@ __asm__(
 	"	movea.l (%a1)+,%a0\n"
 	"	movea.l (%a1)+,%a1\n"
 	"	.size double_add_pointer, .-double_add_pointer\n"
+	"	.popsection\n"
+);
+/* double_add_pointer from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_add_pointer,\"ax\",@progbits\n"
+	"	.globl c_double_add_pointer\n"
+	"	.type c_double_add_pointer, @function\n"
+	"c_double_add_pointer:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	move.l (56,%sp),%a1\n"
+	"	jsr double_add_pointer\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_add_pointer, .-c_double_add_pointer\n"
 	"	.popsection\n"
 );
 
@@ -69697,6 +70759,23 @@ __asm__(
 	"	.size double_add, .-double_add\n"
 	"	.popsection\n"
 );
+/* double_add from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_add,\"ax\",@progbits\n"
+	"	.globl c_double_add\n"
+	"	.type c_double_add, @function\n"
+	"c_double_add:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	move.l (56,%sp),%a0\n"
+	"	move.l (60,%sp),%a1\n"
+	"	jsr double_add\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_add, .-c_double_add\n"
+	"	.popsection\n"
+);
 
 /* 0005d65c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -69797,6 +70876,21 @@ __asm__(
 	"	.byte 0xc3\n"
 	"	.byte 0x89\n"
 	"	.size float_compare, .-float_compare\n"
+	"	.popsection\n"
+);
+/* float_compare from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_float_compare,\"ax\",@progbits\n"
+	"	.globl c_float_compare\n"
+	"	.type c_float_compare, @function\n"
+	"c_float_compare:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	jsr float_compare\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_float_compare, .-c_float_compare\n"
 	"	.popsection\n"
 );
 
@@ -69948,6 +71042,23 @@ __asm__(
 	"	.size double_compare, .-double_compare\n"
 	"	.popsection\n"
 );
+/* double_compare from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_compare,\"ax\",@progbits\n"
+	"	.globl c_double_compare\n"
+	"	.type c_double_compare, @function\n"
+	"c_double_compare:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	move.l (56,%sp),%a0\n"
+	"	move.l (60,%sp),%a1\n"
+	"	jsr double_compare\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_compare, .-c_double_compare\n"
+	"	.popsection\n"
+);
 
 /* 0005d7da */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -69980,6 +71091,21 @@ __asm__(
 	"	move.l %d0,(%a0)\n"
 	"	rts\n"
 	"	.size float_divide_in_place, .-float_divide_in_place\n"
+	"	.popsection\n"
+);
+/* float_divide_in_place from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_float_divide_in_place,\"ax\",@progbits\n"
+	"	.globl c_float_divide_in_place\n"
+	"	.type c_float_divide_in_place, @function\n"
+	"c_float_divide_in_place:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	jsr float_divide_in_place\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_float_divide_in_place, .-c_float_divide_in_place\n"
 	"	.popsection\n"
 );
 
@@ -70161,6 +71287,21 @@ __asm__(
 	"float_divide_reversed:\n"
 	"	exg %d0,%d1\n"
 	"	.size float_divide_reversed, .-float_divide_reversed\n"
+	"	.popsection\n"
+);
+/* float_divide_reversed from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_float_divide_reversed,\"ax\",@progbits\n"
+	"	.globl c_float_divide_reversed\n"
+	"	.type c_float_divide_reversed, @function\n"
+	"c_float_divide_reversed:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	jsr float_divide_reversed\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_float_divide_reversed, .-c_float_divide_reversed\n"
 	"	.popsection\n"
 );
 
@@ -70592,6 +71733,21 @@ __asm__(
 	"	.size float_divide, .-float_divide\n"
 	"	.popsection\n"
 );
+/* float_divide from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_float_divide,\"ax\",@progbits\n"
+	"	.globl c_float_divide\n"
+	"	.type c_float_divide, @function\n"
+	"c_float_divide:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	jsr float_divide\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_float_divide, .-c_float_divide\n"
+	"	.popsection\n"
+);
 
 /* 0005da3e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -70635,6 +71791,22 @@ __asm__(
 	"	.size double_divide_in_place, .-double_divide_in_place\n"
 	"	.popsection\n"
 );
+/* double_divide_in_place from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_divide_in_place,\"ax\",@progbits\n"
+	"	.globl c_double_divide_in_place\n"
+	"	.type c_double_divide_in_place, @function\n"
+	"c_double_divide_in_place:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%d0\n"
+	"	move.l (56,%sp),%d1\n"
+	"	jsr double_divide_in_place\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_divide_in_place, .-c_double_divide_in_place\n"
+	"	.popsection\n"
+);
 
 /* 0005da58 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -70667,6 +71839,23 @@ __asm__(
 	"	.byte 0x4e\n"
 	"	.byte 0x71\n"
 	"	.size double_divide, .-double_divide\n"
+	"	.popsection\n"
+);
+/* double_divide from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_divide,\"ax\",@progbits\n"
+	"	.globl c_double_divide\n"
+	"	.type c_double_divide, @function\n"
+	"c_double_divide:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	move.l (56,%sp),%a0\n"
+	"	move.l (60,%sp),%a1\n"
+	"	jsr double_divide\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_divide, .-c_double_divide\n"
 	"	.popsection\n"
 );
 
@@ -70835,6 +72024,21 @@ __asm__(
 	"	.size double_divide_reversed_pointers, .-double_divide_reversed_pointers\n"
 	"	.popsection\n"
 );
+/* double_divide_reversed_pointers from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_divide_reversed_pointers,\"ax\",@progbits\n"
+	"	.globl c_double_divide_reversed_pointers\n"
+	"	.type c_double_divide_reversed_pointers, @function\n"
+	"c_double_divide_reversed_pointers:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%a1\n"
+	"	jsr double_divide_reversed_pointers\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_divide_reversed_pointers, .-c_double_divide_reversed_pointers\n"
+	"	.popsection\n"
+);
 
 /* 0005da66 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -70993,6 +72197,22 @@ __asm__(
 	"	movea.l (%a1)+,%a0\n"
 	"	movea.l (%a1)+,%a1\n"
 	"	.size double_divide_reversed_pointer, .-double_divide_reversed_pointer\n"
+	"	.popsection\n"
+);
+/* double_divide_reversed_pointer from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_divide_reversed_pointer,\"ax\",@progbits\n"
+	"	.globl c_double_divide_reversed_pointer\n"
+	"	.type c_double_divide_reversed_pointer, @function\n"
+	"c_double_divide_reversed_pointer:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	move.l (56,%sp),%a1\n"
+	"	jsr double_divide_reversed_pointer\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_divide_reversed_pointer, .-c_double_divide_reversed_pointer\n"
 	"	.popsection\n"
 );
 
@@ -71385,6 +72605,23 @@ __asm__(
 	"	addq.l #0x4,%sp\n"
 	"	bra.b .Lg_5db84\n"
 	"	.size double_divide_reversed, .-double_divide_reversed\n"
+	"	.popsection\n"
+);
+/* double_divide_reversed from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_divide_reversed,\"ax\",@progbits\n"
+	"	.globl c_double_divide_reversed\n"
+	"	.type c_double_divide_reversed, @function\n"
+	"c_double_divide_reversed:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	move.l (56,%sp),%a0\n"
+	"	move.l (60,%sp),%a1\n"
+	"	jsr double_divide_reversed\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_divide_reversed, .-c_double_divide_reversed\n"
 	"	.popsection\n"
 );
 
@@ -71855,6 +73092,21 @@ __asm__(
 	"	.size double_to_float, .-double_to_float\n"
 	"	.popsection\n"
 );
+/* double_to_float from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_to_float,\"ax\",@progbits\n"
+	"	.globl c_double_to_float\n"
+	"	.type c_double_to_float, @function\n"
+	"c_double_to_float:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	jsr double_to_float\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_to_float, .-c_double_to_float\n"
+	"	.popsection\n"
+);
 
 /* 0005ddde */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -71993,6 +73245,21 @@ __asm__(
 	"	.size double_to_integer, .-double_to_integer\n"
 	"	.popsection\n"
 );
+/* double_to_integer from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_to_integer,\"ax\",@progbits\n"
+	"	.globl c_double_to_integer\n"
+	"	.type c_double_to_integer, @function\n"
+	"c_double_to_integer:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	jsr double_to_integer\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_to_integer, .-c_double_to_integer\n"
+	"	.popsection\n"
+);
 
 /* 0005de9e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -72104,6 +73371,21 @@ __asm__(
 	"	moveq #0x0,%d0\n"
 	"	bra.b .Lg_5dee4\n"
 	"	.size double_to_unsigned, .-double_to_unsigned\n"
+	"	.popsection\n"
+);
+/* double_to_unsigned from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_to_unsigned,\"ax\",@progbits\n"
+	"	.globl c_double_to_unsigned\n"
+	"	.type c_double_to_unsigned, @function\n"
+	"c_double_to_unsigned:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	jsr double_to_unsigned\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_to_unsigned, .-c_double_to_unsigned\n"
 	"	.popsection\n"
 );
 
@@ -72221,6 +73503,20 @@ __asm__(
 	"	addq.w #0x4,%sp\n"
 	"	rts\n"
 	"	.size float_to_double, .-float_to_double\n"
+	"	.popsection\n"
+);
+/* float_to_double from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_float_to_double,\"ax\",@progbits\n"
+	"	.globl c_float_to_double\n"
+	"	.type c_float_to_double, @function\n"
+	"c_float_to_double:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	jsr float_to_double\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_float_to_double, .-c_float_to_double\n"
 	"	.popsection\n"
 );
 
@@ -72346,6 +73642,20 @@ __asm__(
 	"	.size float_to_integer, .-float_to_integer\n"
 	"	.popsection\n"
 );
+/* float_to_integer from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_float_to_integer,\"ax\",@progbits\n"
+	"	.globl c_float_to_integer\n"
+	"	.type c_float_to_integer, @function\n"
+	"c_float_to_integer:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	jsr float_to_integer\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_float_to_integer, .-c_float_to_integer\n"
+	"	.popsection\n"
+);
 
 /* 0005e04e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -72423,6 +73733,20 @@ __asm__(
 	"	movea.l (%sp)+,%a0\n"
 	"	bra.b .Lg_5e078\n"
 	"	.size float_to_unsigned, .-float_to_unsigned\n"
+	"	.popsection\n"
+);
+/* float_to_unsigned from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_float_to_unsigned,\"ax\",@progbits\n"
+	"	.globl c_float_to_unsigned\n"
+	"	.type c_float_to_unsigned, @function\n"
+	"c_float_to_unsigned:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	jsr float_to_unsigned\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_float_to_unsigned, .-c_float_to_unsigned\n"
 	"	.popsection\n"
 );
 
@@ -72560,6 +73884,20 @@ __asm__(
 	"	.size integer_to_double, .-integer_to_double\n"
 	"	.popsection\n"
 );
+/* integer_to_double from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_integer_to_double,\"ax\",@progbits\n"
+	"	.globl c_integer_to_double\n"
+	"	.type c_integer_to_double, @function\n"
+	"c_integer_to_double:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	jsr integer_to_double\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_integer_to_double, .-c_integer_to_double\n"
+	"	.popsection\n"
+);
 
 /* 0005e108 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -72679,6 +74017,20 @@ __asm__(
 	"	move.l (%sp)+,%d4\n"
 	"	rts\n"
 	"	.size unsigned_to_double, .-unsigned_to_double\n"
+	"	.popsection\n"
+);
+/* unsigned_to_double from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_unsigned_to_double,\"ax\",@progbits\n"
+	"	.globl c_unsigned_to_double\n"
+	"	.type c_unsigned_to_double, @function\n"
+	"c_unsigned_to_double:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	jsr unsigned_to_double\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_unsigned_to_double, .-c_unsigned_to_double\n"
 	"	.popsection\n"
 );
 
@@ -72840,6 +74192,20 @@ __asm__(
 	"	.size integer_to_float, .-integer_to_float\n"
 	"	.popsection\n"
 );
+/* integer_to_float from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_integer_to_float,\"ax\",@progbits\n"
+	"	.globl c_integer_to_float\n"
+	"	.type c_integer_to_float, @function\n"
+	"c_integer_to_float:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	jsr integer_to_float\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_integer_to_float, .-c_integer_to_float\n"
+	"	.popsection\n"
+);
 
 /* 0005e20e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -72997,6 +74363,20 @@ __asm__(
 	"	.size unsigned_to_float, .-unsigned_to_float\n"
 	"	.popsection\n"
 );
+/* unsigned_to_float from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_unsigned_to_float,\"ax\",@progbits\n"
+	"	.globl c_unsigned_to_float\n"
+	"	.type c_unsigned_to_float, @function\n"
+	"c_unsigned_to_float:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	jsr unsigned_to_float\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_unsigned_to_float, .-c_unsigned_to_float\n"
+	"	.popsection\n"
+);
 
 /* 0005e316 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -73029,6 +74409,21 @@ __asm__(
 	"	move.l %d0,(%a0)\n"
 	"	rts\n"
 	"	.size float_multiply_in_place, .-float_multiply_in_place\n"
+	"	.popsection\n"
+);
+/* float_multiply_in_place from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_float_multiply_in_place,\"ax\",@progbits\n"
+	"	.globl c_float_multiply_in_place\n"
+	"	.type c_float_multiply_in_place, @function\n"
+	"c_float_multiply_in_place:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	jsr float_multiply_in_place\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_float_multiply_in_place, .-c_float_multiply_in_place\n"
 	"	.popsection\n"
 );
 
@@ -73353,6 +74748,21 @@ __asm__(
 	"	.size float_multiply, .-float_multiply\n"
 	"	.popsection\n"
 );
+/* float_multiply from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_float_multiply,\"ax\",@progbits\n"
+	"	.globl c_float_multiply\n"
+	"	.type c_float_multiply, @function\n"
+	"c_float_multiply:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	jsr float_multiply\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_float_multiply, .-c_float_multiply\n"
+	"	.popsection\n"
+);
 
 /* 0005e5e6 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -73386,6 +74796,22 @@ __asm__(
 	"	movem.l %d0/%d1,(%a0)\n"
 	"	rts\n"
 	"	.size double_multiply_in_place, .-double_multiply_in_place\n"
+	"	.popsection\n"
+);
+/* double_multiply_in_place from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_multiply_in_place,\"ax\",@progbits\n"
+	"	.globl c_double_multiply_in_place\n"
+	"	.type c_double_multiply_in_place, @function\n"
+	"c_double_multiply_in_place:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%d0\n"
+	"	move.l (56,%sp),%d1\n"
+	"	jsr double_multiply_in_place\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_multiply_in_place, .-c_double_multiply_in_place\n"
 	"	.popsection\n"
 );
 
@@ -73664,6 +75090,21 @@ __asm__(
 	"	.size double_multiply_pointers, .-double_multiply_pointers\n"
 	"	.popsection\n"
 );
+/* double_multiply_pointers from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_multiply_pointers,\"ax\",@progbits\n"
+	"	.globl c_double_multiply_pointers\n"
+	"	.type c_double_multiply_pointers, @function\n"
+	"c_double_multiply_pointers:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%a1\n"
+	"	jsr double_multiply_pointers\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_multiply_pointers, .-c_double_multiply_pointers\n"
+	"	.popsection\n"
+);
 
 /* 0005e5fc */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -73932,6 +75373,22 @@ __asm__(
 	"	movea.l (%a1)+,%a0\n"
 	"	movea.l (%a1)+,%a1\n"
 	"	.size double_multiply_pointer, .-double_multiply_pointer\n"
+	"	.popsection\n"
+);
+/* double_multiply_pointer from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_multiply_pointer,\"ax\",@progbits\n"
+	"	.globl c_double_multiply_pointer\n"
+	"	.type c_double_multiply_pointer, @function\n"
+	"c_double_multiply_pointer:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	move.l (56,%sp),%a1\n"
+	"	jsr double_multiply_pointer\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_multiply_pointer, .-c_double_multiply_pointer\n"
 	"	.popsection\n"
 );
 
@@ -74603,6 +76060,23 @@ __asm__(
 	"	.byte 0x60 | bra.b 0x0005e7d6\n"
 	"	.reloc ., R_68K_PC8, .Lg_5e7d6-1\n"
 	"	.byte 0\n"
+	"	.popsection\n"
+);
+/* double_multiply from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_double_multiply,\"ax\",@progbits\n"
+	"	.globl c_double_multiply\n"
+	"	.type c_double_multiply, @function\n"
+	"c_double_multiply:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	move.l (52,%sp),%d1\n"
+	"	move.l (56,%sp),%a0\n"
+	"	move.l (60,%sp),%a1\n"
+	"	jsr double_multiply\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_double_multiply, .-c_double_multiply\n"
 	"	.popsection\n"
 );
 
@@ -78396,6 +79870,21 @@ __asm__(
 	"	.size installer_kernel_dispatch_io, .-installer_kernel_dispatch_io\n"
 	"	.popsection\n"
 );
+/* installer_kernel_dispatch_io from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_installer_kernel_dispatch_io,\"ax\",@progbits\n"
+	"	.globl c_installer_kernel_dispatch_io\n"
+	"	.type c_installer_kernel_dispatch_io, @function\n"
+	"c_installer_kernel_dispatch_io:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d7\n"
+	"	move.l (52,%sp),%d0\n"
+	"	jsr installer_kernel_dispatch_io\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_installer_kernel_dispatch_io, .-c_installer_kernel_dispatch_io\n"
+	"	.popsection\n"
+);
 
 /* installer::00101680 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -80407,6 +81896,21 @@ __asm__(
 	"	clr.b %d7\n"
 	"	rts\n"
 	"	.size installer_kernel_service_none, .-installer_kernel_service_none\n"
+	"	.popsection\n"
+);
+/* installer_kernel_service_none from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_installer_kernel_service_none,\"ax\",@progbits\n"
+	"	.globl c_installer_kernel_service_none\n"
+	"	.type c_installer_kernel_service_none, @function\n"
+	"c_installer_kernel_service_none:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	jsr installer_kernel_service_none\n"
+	"	move.l %d7,%d0\n"
+	"	extb.l %d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_installer_kernel_service_none, .-c_installer_kernel_service_none\n"
 	"	.popsection\n"
 );
 
@@ -82828,6 +84332,23 @@ __asm__(
 	"	.size installer_kernel_check_task, .-installer_kernel_check_task\n"
 	"	.popsection\n"
 );
+/* installer_kernel_check_task from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_installer_kernel_check_task,\"ax\",@progbits\n"
+	"	.globl c_installer_kernel_check_task\n"
+	"	.type c_installer_kernel_check_task, @function\n"
+	"c_installer_kernel_check_task:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%a5\n"
+	"	jsr installer_kernel_check_task\n"
+	"	move.l %a0,%d0\n"
+	"	move.l %d0,%a0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_installer_kernel_check_task, .-c_installer_kernel_check_task\n"
+	"	.popsection\n"
+);
 
 /* installer::00102572 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -82874,6 +84395,21 @@ __asm__(
 	"	.size installer_kernel_check_exchange, .-installer_kernel_check_exchange\n"
 	"	.popsection\n"
 );
+/* installer_kernel_check_exchange from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_installer_kernel_check_exchange,\"ax\",@progbits\n"
+	"	.globl c_installer_kernel_check_exchange\n"
+	"	.type c_installer_kernel_check_exchange, @function\n"
+	"c_installer_kernel_check_exchange:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%a5\n"
+	"	jsr installer_kernel_check_exchange\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_installer_kernel_check_exchange, .-c_installer_kernel_check_exchange\n"
+	"	.popsection\n"
+);
 
 /* installer::0010259c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -82906,6 +84442,20 @@ __asm__(
 	".Lg_1025ae:\n"
 	"	rts\n"
 	"	.size installer_kernel_check_segment, .-installer_kernel_check_segment\n"
+	"	.popsection\n"
+);
+/* installer_kernel_check_segment from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_installer_kernel_check_segment,\"ax\",@progbits\n"
+	"	.globl c_installer_kernel_check_segment\n"
+	"	.type c_installer_kernel_check_segment, @function\n"
+	"c_installer_kernel_check_segment:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	jsr installer_kernel_check_segment\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_installer_kernel_check_segment, .-c_installer_kernel_check_segment\n"
 	"	.popsection\n"
 );
 

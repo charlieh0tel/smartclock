@@ -35,7 +35,8 @@ RAM = 0x100000
 RECORDS = 0xbbd
 # each routine's piece is a section .text.NAME.ADDRESS
 PIECE = re.compile(r'^\s*\[\s*\d+\] \.text\.(\w+)\.([0-9a-f]+)\s')
-RELOCATIONS = re.compile(r"^Relocation section '\.rela\.text\.(\w+\.[0-9a-f]+)'")
+RELOCATIONS = re.compile(r"^Relocation section '\.rela(\S*)'")
+PIECE_NAME = re.compile(r'^\.text\.(\w+\.[0-9a-f]+)$')
 FIELD_BYTES = {'R_68K_32': 4, 'R_68K_PC32': 4, 'R_68K_16': 2, 'R_68K_PC16': 2,
                'R_68K_8': 1, 'R_68K_PC8': 1}
 
@@ -124,7 +125,8 @@ def main():
     for line in run(TOOLS + 'readelf', '-rW', obj).splitlines():
         header = RELOCATIONS.match(line)
         if header:
-            section = header.group(1)
+            piece = PIECE_NAME.match(header.group(1))
+            section = piece.group(1) if piece else None
             continue
         fields = line.split()
         if section and len(fields) >= 5 and fields[2] in FIELD_BYTES:

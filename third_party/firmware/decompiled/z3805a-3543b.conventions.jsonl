@@ -1262,7 +1262,7 @@
 {"address":"00030ab4","name":"FUN_00030ab4","convention":"unknown"}
 {"address":"00030b66","name":"FUN_00030b66","convention":"unknown"}
 {"address":"00030c1e","name":"FUN_00030c1e","convention":"unknown"}
-{"address":"00030c60","name":"FUN_00030c60","convention":"unknown"}
+{"address":"00030c60","name":"save_calibration_block","note":"rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs from it, reporting status 0x10 if the EEPROM write fails","convention":"unknown"}
 {"address":"00030d2e","name":"FUN_00030d2e","convention":"unknown"}
 {"address":"00030dea","name":"FUN_00030dea","convention":"unknown"}
 {"address":"00030f08","name":"FUN_00030f08","convention":"unknown"}
@@ -1291,16 +1291,16 @@
 {"address":"00031c42","name":"FUN_00031c42","convention":"unknown"}
 {"address":"00031ff8","name":"report_clamped","note":"\"Value too small, set to min limit\" or \"too large, set to max limit\", and status_report_from(9)","convention":"unknown"}
 {"address":"0003202a","name":"FUN_0003202a","convention":"unknown"}
-{"address":"0003209c","name":"FUN_0003209c","convention":"unknown"}
+{"address":"0003209c","name":"clamp_float","note":"clamps a float to its minimum and maximum, reporting each clamp; 1 if it clamped","convention":"unknown"}
 {"address":"00032104","name":"FUN_00032104","convention":"unknown"}
-{"address":"0003217e","name":"FUN_0003217e","convention":"unknown"}
+{"address":"0003217e","name":"round_float_to_step","note":"rounds a float to the nearest multiple of its step, half away from zero, the step a thousand times coarser beyond 1e9 steps","convention":"unknown"}
 {"address":"000322aa","name":"FUN_000322aa","convention":"unknown"}
 {"address":"000322b4","name":"clamp_to_limits","note":"clamps *value to *min and *max, reporting through report_clamped","convention":"unknown"}
-{"address":"0003232c","name":"FUN_0003232c","convention":"unknown"}
-{"address":"0003233a","name":"FUN_0003233a","convention":"unknown"}
+{"address":"0003232c","name":"mask_to_limits","note":"a register's new value ANDed with its maximum, the mask of the bits it has","convention":"unknown"}
+{"address":"0003233a","name":"clamp_to_step_and_limits","note":"rounds a value down to the step its descriptor gives, then clamps it to its minimum and maximum, reporting each clamp","convention":"unknown"}
 {"address":"000323b2","name":"FUN_000323b2","convention":"unknown"}
 {"address":"000323d6","name":"FUN_000323d6","convention":"unknown"}
-{"address":"000323fa","name":"FUN_000323fa","convention":"unknown"}
+{"address":"000323fa","name":"clamp_float_to_step_and_limits","note":"clamps a float to its minimum and maximum and rounds it to its step","convention":"unknown"}
 {"address":"0003244a","name":"FUN_0003244a","convention":"unknown"}
 {"address":"00032596","name":"FUN_00032596","convention":"unknown"}
 {"address":"000326d2","name":"FUN_000326d2","convention":"unknown"}
@@ -1387,8 +1387,8 @@
 {"address":"000429c6","name":"FUN_000429c6","convention":"unknown"}
 {"address":"00042a18","name":"get_ffom","note":"the time code's f; pll_rep's \"ffom = %1d\"","convention":"unknown"}
 {"address":"00042b18","name":"FUN_00042b18","convention":"unknown"}
-{"address":"00042b1a","name":"FUN_00042b1a","convention":"unknown"}
-{"address":"00042b1c","name":"FUN_00042b1c","convention":"unknown"}
+{"address":"00042b1a","name":"pulse_program","note":"a bare rts in this image: what pulse_settings_done hands it goes no further here, and no code reads the pulse settings by address but it and the SCPI queries; whatever programs the pulse output reads them some other way, through the descriptors or a copy","convention":"unknown"}
+{"address":"00042b1c","name":"pulse_settings_done","note":"hands the pulse start time, date, state and period from nv_settings to pulse_program","convention":"unknown"}
 {"address":"00042b8a","name":"FUN_00042b8a","convention":"unknown"}
 {"address":"00042bc4","name":"toggle_change","note":"applies a change to a PLL setting that toggles, refusing a value above its maximum","convention":"unknown"}
 {"address":"00042c10","name":"validate_num","note":"the firmware's own name, \"pll_scpi: validate_num() -- too many in multiple\": each new value through its descriptor's validate, into pll_scpi_validated","convention":"unknown"}
@@ -1403,7 +1403,7 @@
 {"address":"00043340","name":"pll_scpi_receive","note":"takes a request from pllc_exchange and handles it","convention":"unknown"}
 {"address":"000433b6","name":"FUN_000433b6","convention":"unknown"}
 {"address":"000433fc","name":"FUN_000433fc","convention":"unknown"}
-{"address":"00043466","name":"FUN_00043466","convention":"unknown"}
+{"address":"00043466","name":"questionable_user_done","note":"reports status event M when the user bit is set and N when it is cleared","convention":"unknown"}
 {"address":"00043482","name":"FUN_00043482","convention":"unknown"}
 {"address":"000434c2","name":"FUN_000434c2","convention":"unknown"}
 {"address":"00043504","name":"FUN_00043504","convention":"unknown"}
@@ -1427,7 +1427,7 @@
 {"address":"000451c2","name":"coarse","note":"the power-up step that sets the oscillator's frequency coarsely","convention":"unknown"}
 {"address":"0004538c","name":"fine","note":"the power-up step that adjusts the frequency finely, through its sync and slew sub-states","convention":"unknown"}
 {"address":"00045a24","name":"FUN_00045a24","convention":"unknown"}
-{"address":"00045b02","name":"FUN_00045b02","convention":"unknown"}
+{"address":"00045b02","name":"antenna_delay_done","note":"clears bit 5 of pll's byte at +0x11 once the antenna delay changes","convention":"unknown"}
 {"address":"00045b70","name":"pll_mode","note":"the status screen's mode accessor, from pll.stage and pll.manual; the HOLDover queries and HOLD:INIT test it","convention":"unknown"}
 {"address":"00045bb8","name":"pll_powerup_step","note":"the power-up sub-state, as the status screen's suffix index","convention":"unknown"}
 {"address":"00045c18","name":"FUN_00045c18","convention":"unknown"}

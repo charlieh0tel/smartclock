@@ -865,3 +865,15 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x26768	function	scpi_format_resolution_array	docs/scpi/README.md, read	comma-separated, by scpi_format_double_resolution, a resolution for each
 0x267c0	function	scpi_format_array	docs/scpi/README.md, read	by its kind, a block, a double array or a short array
 0x26816	function	scpi_format_resolution_array_record	docs/scpi/README.md, read	by its kind, a block or a resolution array, then the record's release callback
+#
+# the SCPI settings' descriptor callbacks, and the helpers they use
+0x3232c	function	mask_to_limits	scpi_param_STATus_ENABle, PTRansition, NTRansition: validate	a register's new value ANDed with its maximum, the mask of the bits it has
+0x3233a	function	clamp_to_step_and_limits	scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore, nv_param_leap_date: validate	rounds a value down to the step its descriptor gives, then clamps it to its minimum and maximum, reporting each clamp
+0x323fa	function	clamp_float_to_step_and_limits	scpi_param_SAMPle_FLOat, FARR, SOURce_ROSCillator_LIMit_THReshold: validate	clamps a float to its minimum and maximum and rounds it to its step
+0x3209c	function	clamp_float	context	clamps a float to its minimum and maximum, reporting each clamp; 1 if it clamped
+0x3217e	function	round_float_to_step	context	rounds a float to the nearest multiple of its step, half away from zero, the step a thousand times coarser beyond 1e9 steps
+0x42b1c	function	pulse_settings_done	scpi_param_SOURce_PULSe_CONTinuous_STATe, PERiod, STARt_TIME and DATE: done	hands the pulse start time, date, state and period from nv_settings to pulse_program
+0x42b1a	function	pulse_program	context	a bare rts in this image: what pulse_settings_done hands it goes no further here, and no code reads the pulse settings by address but it and the SCPI queries; whatever programs the pulse output reads them some other way, through the descriptors or a copy
+0x43466	function	questionable_user_done	scpi_param_STATus_QUEStionable_USER: done	reports status event M when the user bit is set and N when it is cleared
+0x45b02	function	antenna_delay_done	scpi_param_SOURce_GPSystem_ADELay: done	clears bit 5 of pll's byte at +0x11 once the antenna delay changes
+0x30c60	function	save_calibration_block	scpi_param_DIAGnostic_ROSCillator_TCOefficient: done; interval.md's calibration block	rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs from it, reporting status 0x10 if the EEPROM write fails

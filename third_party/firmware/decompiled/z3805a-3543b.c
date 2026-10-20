@@ -32603,8 +32603,9 @@ undefined4 scpi_set_SOURce_GPSystem_INITial_POSition(int param_1,undefined4 para
       local_18[2] = 0x426ffefa;
       uVar8 = (undefined2)*(undefined4 *)(param_3 + 0x12);
       iVar2 = return_zero();
-      fVar6 = (float)FUN_000323fa((short)param_1 + 0x16,0,(char)local_18 + '\x04',local_18 + 2,
-                                  &local_34,(ushort)iVar2 & 0xff,uVar8);
+      fVar6 = (float)clamp_float_to_step_and_limits
+                               ((short)param_1 + 0x16,0,(char)local_18 + '\x04',local_18 + 2,
+                                &local_34,(ushort)iVar2 & 0xff,uVar8);
     }
     dVar7 = float_to_double(fVar6);
     FUN_00047eb0(&local_42,(ushort)iVar1,bVar5,(int)((ulonglong)dVar7 >> 0x20),SUB84(dVar7,0));
@@ -32637,8 +32638,9 @@ undefined4 scpi_set_SOURce_GPSystem_INITial_POSition(int param_1,undefined4 para
       local_18[2] = 0x426ffefa;
       uVar8 = (undefined2)*(undefined4 *)(param_3 + 0x12);
       iVar2 = return_zero();
-      fVar6 = (float)FUN_000323fa((short)param_1 + 0x32,0,(char)local_18 + '\x04',local_18 + 2,
-                                  &local_34,(ushort)iVar2 & 0xff,uVar8);
+      fVar6 = (float)clamp_float_to_step_and_limits
+                               ((short)param_1 + 0x32,0,(char)local_18 + '\x04',local_18 + 2,
+                                &local_34,(ushort)iVar2 & 0xff,uVar8);
     }
     dVar7 = float_to_double(fVar6);
     FUN_00047eb0(&local_3e,(ushort)iVar1,bVar5,(int)((ulonglong)dVar7 >> 0x20),SUB84(dVar7,0));
@@ -32761,8 +32763,9 @@ undefined4 scpi_set_SOURce_GPSystem_POSition(int param_1)
                               (short)&local_24,bVar1);
       local_18[1] = 0;
       local_18[2] = 0x426ffefa;
-      fVar5 = (float)FUN_000323fa(param_1 + 0x16,0,local_18 + 1,local_18 + 2,&local_34,
-                                  (ushort)uVar2 & 0xff);
+      fVar5 = (float)clamp_float_to_step_and_limits
+                               (param_1 + 0x16,0,local_18 + 1,local_18 + 2,&local_34,
+                                (ushort)uVar2 & 0xff);
     }
     dVar6 = float_to_double(fVar5);
     FUN_00047eb0(&local_40,(ushort)iVar3,bVar4,(int)((ulonglong)dVar6 >> 0x20),SUB84(dVar6,0));
@@ -32786,8 +32789,9 @@ undefined4 scpi_set_SOURce_GPSystem_POSition(int param_1)
                               (short)&local_24,bVar1);
       local_18[1] = 0;
       local_18[2] = 0x426ffefa;
-      fVar5 = (float)FUN_000323fa(param_1 + 0x32,0,local_18 + 1,local_18 + 2,&local_34,
-                                  (ushort)uVar2 & 0xff);
+      fVar5 = (float)clamp_float_to_step_and_limits
+                               (param_1 + 0x32,0,local_18 + 1,local_18 + 2,&local_34,
+                                (ushort)uVar2 & 0xff);
     }
     dVar6 = float_to_double(fVar5);
     FUN_00047eb0(&local_3c,(ushort)iVar3,bVar4,(int)((ulonglong)dVar6 >> 0x20),SUB84(dVar6,0));
@@ -35943,7 +35947,7 @@ int status_init(void)
       bVar4 = bVar4 + 1;
     } while (bVar4 < 7);
     FUN_0002f3d0();
-    FUN_00043466();
+    questionable_user_done();
     status_ready = '\x01';
     iVar1 = 0;
   }
@@ -37568,8 +37572,11 @@ bool FUN_00030c1e(void)
 /* 00030c60 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs
+   from it, reporting status 0x10 if the EEPROM write fails
+   scpi_param_DIAGnostic_ROSCillator_TCOefficient: done; interval.md's calibration block */
 
-undefined4 FUN_00030c60(undefined4 param_1,byte param_2)
+undefined4 save_calibration_block(undefined4 param_1,byte param_2)
 
 {
   char cVar1;
@@ -38540,8 +38547,9 @@ undefined4 FUN_0003202a(float *param_1,short param_2)
 /* 0003209c */
 
 /* WARNING: Unknown calling convention */
+/* clamps a float to its minimum and maximum, reporting each clamp; 1 if it clamped */
 
-undefined4 FUN_0003209c(float *param_1,float *param_2,float *param_3,float *param_4,byte param_5)
+undefined4 clamp_float(float *param_1,float *param_2,float *param_3,float *param_4,byte param_5)
 
 {
   int iVar1;
@@ -38607,7 +38615,10 @@ FUN_00032104(double *param_1,undefined4 *param_2,double *param_3,double *param_4
 
 /* 0003217e */
 
-void FUN_0003217e(float *param_1,float *param_2)
+/* rounds a float to the nearest multiple of its step, half away from zero, the step a thousand
+   times coarser beyond 1e9 steps */
+
+void round_float_to_step(float *param_1,float *param_2)
 
 {
   float fVar1;
@@ -38691,7 +38702,10 @@ int clamp_to_limits(int *param_1,undefined4 param_2,int *param_3,int *param_4,in
 
 /* 0003232c */
 
-uint FUN_0003232c(uint *param_1)
+/* a register's new value ANDed with its maximum, the mask of the bits it has
+   scpi_param_STATus_ENABle, PTRansition, NTRansition: validate */
+
+uint mask_to_limits(uint *param_1)
 
 {
   uint *in_stack_00000014;
@@ -38702,8 +38716,13 @@ uint FUN_0003232c(uint *param_1)
 
 /* 0003233a */
 
-uint FUN_0003233a(uint *param_1,undefined4 param_2,uint *param_3,uint *param_4,int param_5,
-                 byte param_6)
+/* rounds a value down to the step its descriptor gives, then clamps it to its minimum and maximum,
+   reporting each clamp
+   scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore, nv_param_leap_date: validate */
+
+uint clamp_to_step_and_limits
+               (uint *param_1,undefined4 param_2,uint *param_3,uint *param_4,int param_5,
+               byte param_6)
 
 {
   uint uVar1;
@@ -38759,16 +38778,20 @@ float FUN_000323d6(float *param_1,float *param_2)
 
 /* 000323fa */
 
-void FUN_000323fa(float *param_1,undefined4 param_2,float *param_3,float *param_4,int param_5,
-                 byte param_6)
+/* clamps a float to its minimum and maximum and rounds it to its step
+   scpi_param_SAMPle_FLOat, FARR, SOURce_ROSCillator_LIMit_THReshold: validate */
+
+void clamp_float_to_step_and_limits
+               (float *param_1,undefined4 param_2,float *param_3,float *param_4,int param_5,
+               byte param_6)
 
 {
   float local_c;
   undefined4 local_8;
   
-  FUN_0003209c(param_1,&local_c,param_3,param_4,param_6);
+  clamp_float(param_1,&local_c,param_3,param_4,param_6);
   local_8 = (**(code **)(param_5 + 4))(param_5,&local_c,param_2);
-  FUN_0003217e(&local_c,&local_8);
+  round_float_to_step(&local_c,&local_8);
   return;
 }
 
@@ -38787,7 +38810,7 @@ void FUN_0003244a(float *param_1,undefined4 param_2,float *param_3,float *param_
   double dStack_14;
   double local_c;
   
-  FUN_0003209c(param_1,&local_18,param_3,param_4,param_6);
+  clamp_float(param_1,&local_18,param_3,param_4,param_6);
   f = (float)(**(code **)(param_5 + 4))(param_5,&local_18,param_2);
   local_c = float_to_double(local_18);
   dVar3 = float_to_double(f);
@@ -41685,7 +41708,11 @@ void FUN_00042b18(undefined1 param_1)
 
 /* 00042b1a */
 
-void FUN_00042b1a(undefined4 param_1,undefined4 param_2,undefined1 param_3,undefined4 param_4)
+/* a bare rts in this image: what pulse_settings_done hands it goes no further here, and no code
+   reads the pulse settings by address but it and the SCPI queries; whatever programs the pulse
+   output reads them some other way, through the descriptors or a copy */
+
+void pulse_program(undefined4 param_1,undefined4 param_2,undefined1 param_3,undefined4 param_4)
 
 {
   return;
@@ -41694,7 +41721,10 @@ void FUN_00042b1a(undefined4 param_1,undefined4 param_2,undefined1 param_3,undef
 
 /* 00042b1c */
 
-void FUN_00042b1c(void)
+/* hands the pulse start time, date, state and period from nv_settings to pulse_program
+   scpi_param_SOURce_PULSe_CONTinuous_STATe, PERiod, STARt_TIME and DATE: done */
+
+void pulse_settings_done(void)
 
 {
   undefined4 local_c;
@@ -41702,10 +41732,10 @@ void FUN_00042b1c(void)
   local_c = CONCAT31(CONCAT21((short)nv_settings.pulse_start_time[0],
                               (char)nv_settings.pulse_start_time[1]),
                      (char)nv_settings.pulse_start_time[2]) & 0xffffff;
-  FUN_00042b1a(local_c,CONCAT31(CONCAT21((short)nv_settings.pulse_start_date[0],
-                                         (char)nv_settings.pulse_start_date[1]),
-                                (char)nv_settings.pulse_start_date[2]),nv_settings.pulse_state,
-               nv_settings.pulse_period);
+  pulse_program(local_c,CONCAT31(CONCAT21((short)nv_settings.pulse_start_date[0],
+                                          (char)nv_settings.pulse_start_date[1]),
+                                 (char)nv_settings.pulse_start_date[2]),nv_settings.pulse_state,
+                nv_settings.pulse_period);
   return;
 }
 
@@ -42270,7 +42300,10 @@ void FUN_000433fc(int *param_1)
 
 /* 00043466 */
 
-void FUN_00043466(void)
+/* reports status event M when the user bit is set and N when it is cleared
+   scpi_param_STATus_QUEStionable_USER: done */
+
+void questionable_user_done(void)
 
 {
   char cVar1;
@@ -42363,7 +42396,7 @@ void FUN_00043546(char param_1,byte param_2)
         bVar4 = bVar4 + 1;
       } while (bVar4 < 7);
       nv_settings.questionable_user = 0;
-      FUN_00043466((short)param_1,0);
+      questionable_user_done((short)param_1,0);
     }
   }
   bVar4 = 2;
@@ -44066,7 +44099,10 @@ void FUN_00045a24(void)
 
 /* 00045b02 */
 
-void FUN_00045b02(void)
+/* clears bit 5 of pll's byte at +0x11 once the antenna delay changes
+   scpi_param_SOURce_GPSystem_ADELay: done */
+
+void antenna_delay_done(void)
 
 {
   pll.field_001[0x10] = pll.field_001[0x10] & 0xdf;

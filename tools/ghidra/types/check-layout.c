@@ -183,3 +183,8 @@ CHECK_SIZE(interpolator_calibration, 9);
 CHECK_FIELD(interpolator_calibration, result_valid, 4);
 CHECK_FIELD(interpolator_calibration, reading_high, 8);
 CHECK_FIELD(gps_state, raim_option, 0x558);
+/* The packed enums are bytes, as the fields they type. */
+CHECK_SIZE(pll_stage, 1);
+CHECK_SIZE(adc_channel, 1);
+CHECK_SIZE(oncore_channel_mode, 1);
+CHECK_SIZE(oncore_raim_status, 1);

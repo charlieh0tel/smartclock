@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
+import java.util.stream.LongStream;
 
 import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
 import ghidra.app.cmd.function.CreateFunctionCmd;
@@ -67,10 +68,13 @@ import ghidra.app.util.cparser.C.CParserUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.AbstractIntegerDataType;
+import ghidra.program.model.data.ArchiveType;
 import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeConflictHandler;
 import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.Enum;
+import ghidra.program.model.data.EnumDataType;
 import ghidra.program.model.data.FunctionDefinitionDataType;
 import ghidra.program.model.data.ParameterDefinition;
 import ghidra.program.model.data.PointerDataType;
@@ -201,6 +205,8 @@ public class SmartClockSetup extends GhidraScript {
 	/** The namespace analysis puts a switch's case labels in, and their prefix. */
 	private static final String SWITCH_NAMESPACE_PREFIX = "switchD_";
 	private static final String CASE_LABEL_PREFIX = "caseD_";
+	/** The sizes sizeEnums tries, smallest first. */
+	private static final List<Integer> ENUM_SIZES = List.of(1, 2, 4);
 	/** <stdint.h>'s byte types, and the Ghidra types that print as numbers. */
 	private static final Map<String, DataType> BYTE_TYPES = Map.of(
 		"uint8_t", ByteDataType.dataType,
@@ -347,6 +353,7 @@ public class SmartClockSetup extends GhidraScript {
 				String header = Files.readString(Path.of(arg.substring(TYPES.length() + 1)));
 				new CParser(currentProgram.getDataTypeManager(), true, null).parse(header);
 				bindByteTypes();
+				sizeEnums();
 				println("types parsed from " + arg.substring(TYPES.length() + 1));
 			}
 		}
@@ -565,6 +572,45 @@ public class SmartClockSetup extends GhidraScript {
 			types.addDataType(new TypedefDataType(binding.getKey(), binding.getValue()),
 				DataTypeConflictHandler.REPLACE_HANDLER);
 		}
+	}
+
+	/**
+	 * Sizes each enum to the smallest of 1, 2 or 4 bytes that holds its
+	 * values, as gcc does an enum the header declares
+	 * __attribute__((packed)).  Ghidra's C parser makes every enum 4 bytes
+	 * and has no syntax for another size, and these are mostly bytes.  The
+	 * header's structures are packed, so they lay out again around the new
+	 * size.
+	 */
+	private void sizeEnums() {
+		DataTypeManager types = currentProgram.getDataTypeManager();
+		List<Enum> enums = new ArrayList<>();
+		types.getAllDataTypes().forEachRemaining(type -> {
+			if (type instanceof Enum e && e.getSourceArchive().getArchiveType() == ArchiveType.PROGRAM) {
+				enums.add(e);
+			}
+		});
+		for (Enum e : enums) {
+			long min = Math.min(0, LongStream.of(e.getValues()).min().orElse(0));
+			long max = LongStream.of(e.getValues()).max().orElse(0);
+			int size = ENUM_SIZES.stream().filter(n -> fits(min, max, n)).findFirst().orElse(4);
+			if (size == e.getLength()) {
+				continue;
+			}
+			EnumDataType sized = new EnumDataType(e.getCategoryPath(), e.getName(), size);
+			for (String name : e.getNames()) {
+				sized.add(name, e.getValue(name), e.getComment(name));
+			}
+			types.addDataType(sized, DataTypeConflictHandler.REPLACE_HANDLER);
+		}
+	}
+
+	/** True if every value from min to max fits in a size-byte integer. */
+	private static boolean fits(long min, long max, int size) {
+		long bits = size * 8L;
+		return min < 0
+				? min >= -(1L << (bits - 1)) && max < (1L << (bits - 1))
+				: max < (1L << bits);
 	}
 
 	private void applyDataType(Address address, String declaration) throws Exception {

@@ -19,6 +19,139 @@ typedef short int16_t;
 typedef unsigned long uint32_t;
 typedef long int32_t;
 
+/* The firmware's coded values.  Packed, so that gcc makes each the
+ * smallest integer that holds its values, a byte for all of these;
+ * SmartClockSetup.java sizes them so in Ghidra, whose C parser makes
+ * every enum 4 bytes. */
+
+/* The loop's stage, pll.stage: the console's "PLL state: " strings
+ * (docs/firmware/loop.md, "The stages"). */
+typedef enum __attribute__((packed)) pll_stage {
+	PLL_STAGE_INVALID = 0,
+	PLL_STAGE_POWERUP = 1,
+	PLL_STAGE_POWERUP_RECOVERY = 2,
+	PLL_STAGE_HOLDOVER = 3,
+	PLL_STAGE_HOLDOVER_RECOVERY = 4,
+	PLL_STAGE_STARTUP_PLL = 5,
+	PLL_STAGE_NORMAL_PLL = 6,
+	PLL_STAGE_DIAG = 7,
+	PLL_STAGE_IDLE = 8,
+	PLL_STAGE_FATAL_ERROR = 9
+} pll_stage;
+
+/* An ADC channel, by the console words that read and average them.  The
+ * firmware prints channel 3 as "Oven current" (pr_adc_avg), "Antenna
+ * current" (adc_ant_curr) and :DIAG:ROSC:CURR?. */
+typedef enum __attribute__((packed)) adc_channel {
+	ADC_TEMPERATURE = 0,
+	ADC_DOUBLE_OVEN = 1,
+	ADC_PLUS_15V = 2,
+	ADC_CURRENT = 3,
+	ADC_5V = 4,
+	ADC_OVEN = 5,
+	ADC_MINUS_15V = 6
+} adc_channel;
+
+/* Which satellite IDs: satellite_id_valid's ranges. */
+typedef enum __attribute__((packed)) satellite_kind {
+	SATELLITE_GPS = 0,        /* 1 to 32 */
+	SATELLITE_PSEUDOLITE = 1, /* 33 to 37 */
+	SATELLITE_ANY = 2         /* 1 to 37 */
+} satellite_kind;
+
+/* Which list satellite_list_limits gives the limits of. */
+typedef enum __attribute__((packed)) satellite_list {
+	SATELLITE_LIST_TRACKING = 0,            /* :SAT:TRAC?, six channels */
+	SATELLITE_LIST_TRACKING_PSEUDOLITES = 1,
+	SATELLITE_LIST_VISIBLE = 2,             /* :SAT:VIS:PRED?, twelve */
+	SATELLITE_LIST_ALL = 3                  /* the ignore and include lists */
+} satellite_list;
+
+/* The VP Oncore reference's codes (third_party/motorola/VPCommands.pdf). */
+
+/* @@Ba: a channel's tracking mode. */
+typedef enum __attribute__((packed)) oncore_channel_mode {
+	ONCORE_CODE_SEARCH = 0,
+	ONCORE_CODE_ACQUIRE = 1,
+	ONCORE_AGC_SET = 2,
+	ONCORE_FREQUENCY_ACQUIRE = 3,
+	ONCORE_BIT_SYNC_DETECT = 4,
+	ONCORE_MESSAGE_SYNC_DETECT = 5,
+	ONCORE_SATELLITE_TIME_AVAILABLE = 6,
+	ONCORE_EPHEMERIS_ACQUIRE = 7,
+	ONCORE_AVAILABLE_FOR_POSITION = 8
+} oncore_channel_mode;
+
+/* @@Ba: which DOP it gives. */
+typedef enum __attribute__((packed)) oncore_dop_type {
+	ONCORE_DOP_PDOP = 0, /* in 3D mode */
+	ONCORE_DOP_HDOP = 1  /* in 2D mode */
+} oncore_dop_type;
+
+/* @@Aj and @@Bc: the xDOP type. */
+typedef enum __attribute__((packed)) oncore_xdop_type {
+	ONCORE_XDOP_GDOP = 0,
+	ONCORE_XDOP_PDOP = 1,
+	ONCORE_XDOP_HDOP = 2,
+	ONCORE_XDOP_VDOP = 3,
+	ONCORE_XDOP_TDOP = 4
+} oncore_xdop_type;
+
+/* @@Bb: a satellite's health. */
+typedef enum __attribute__((packed)) oncore_health {
+	ONCORE_HEALTHY = 0,
+	ONCORE_HEALTHY_REMOVED = 1,
+	ONCORE_UNHEALTHY = 2,
+	ONCORE_UNHEALTHY_REMOVED = 3
+} oncore_health;
+
+/* @@Aw: the time the engine reports. */
+typedef enum __attribute__((packed)) oncore_time_mode {
+	ONCORE_TIME_GPS = 0,
+	ONCORE_TIME_UTC = 1
+} oncore_time_mode;
+
+/* @@Cg: fix or idle. */
+typedef enum __attribute__((packed)) oncore_fix_mode {
+	ONCORE_IDLE = 0,
+	ONCORE_POSITION_FIX = 1
+} oncore_fix_mode;
+
+/* @@Bj: the leap second pending. */
+typedef enum __attribute__((packed)) oncore_leap_pending {
+	ONCORE_NO_LEAP_SECOND = 0,
+	ONCORE_LEAP_SECOND_ADD = 1,
+	ONCORE_LEAP_SECOND_SUBTRACT = 2
+} oncore_leap_pending;
+
+/* @@Bn: the 1PPS control mode. */
+typedef enum __attribute__((packed)) oncore_pps_mode {
+	ONCORE_PPS_OFF = 0,
+	ONCORE_PPS_ON = 1,
+	ONCORE_PPS_WHEN_TRACKING = 2, /* tracking at least one satellite */
+	ONCORE_PPS_WHEN_RAIM_OK = 3   /* Time RAIM confirms the alarm limit */
+} oncore_pps_mode;
+
+/* @@Bn: what the pulse is referenced to; the reverse of @@Aw's codes. */
+typedef enum __attribute__((packed)) oncore_pulse_sync {
+	ONCORE_PULSE_UTC = 0,
+	ONCORE_PULSE_GPS = 1
+} oncore_pulse_sync;
+
+/* @@Bn: the Time RAIM solution. */
+typedef enum __attribute__((packed)) oncore_raim_solution {
+	ONCORE_RAIM_OK = 0,
+	ONCORE_RAIM_ALARM = 1,
+	ONCORE_RAIM_UNKNOWN = 2
+} oncore_raim_solution;
+
+/* @@Bn: what Time RAIM can do. */
+typedef enum __attribute__((packed)) oncore_raim_status {
+	ONCORE_RAIM_DETECT_AND_ISOLATE = 0,
+	ONCORE_RAIM_DETECT_ONLY = 1,
+	ONCORE_RAIM_NEITHER = 2
+} oncore_raim_status;
+
 /* A numeric SCPI parameter's descriptor, in ROM; its small tables sit
  * just before it.  0x2c bytes. */
 typedef struct scpi_numeric_param {
@@ -159,7 +292,7 @@ typedef struct efc_ring {
 /* @@Ba, the position/status/data message: one channel's status. */
 typedef struct oncore_channel_status {
 	uint8_t satellite;
-	uint8_t mode;   /* 0 code search .. 8 available for position */
+	oncore_channel_mode mode;
 	uint8_t signal_strength;
 	uint8_t status; /* bit 7 used for the fix */
 } oncore_channel_status;
@@ -184,7 +317,7 @@ typedef struct oncore_status_fields {
 	uint16_t heading;   /* tenths of a degree */
 	uint16_t dop;       /* tenths */
 	uint8_t pad_22;
-	uint8_t dop_type;   /* 0 PDOP, 1 HDOP */
+	oncore_dop_type dop_type;
 	uint8_t visible_count;
 	uint8_t tracked_count;
 	oncore_channel_status channels[6];
@@ -200,7 +333,7 @@ typedef struct oncore_visible_satellite {
 	uint8_t elevation; /* degrees */
 	uint8_t pad_5;
 	uint16_t azimuth;  /* degrees */
-	uint8_t health;    /* 0 healthy .. 3 unhealthy and removed */
+	oncore_health health;
 	uint8_t pad_9;
 } oncore_visible_satellite;
 
@@ -219,7 +352,7 @@ typedef struct oncore_xdop_combination {
 
 /* @@Bc, the xDOP table, copied as it arrives (0x50fe2). */
 typedef struct oncore_xdop_table_fields {
-	uint8_t type; /* 0 GDOP .. 4 TDOP */
+	oncore_xdop_type type;
 	uint8_t count;
 	uint8_t mode; /* best 4, or 6 or 8 in view */
 	oncore_xdop_combination combinations[9];
@@ -270,11 +403,11 @@ typedef struct oncore_raim_fields {
 	uint8_t rate;
 	uint8_t raim_on;
 	uint8_t pad_02;
-	uint16_t alarm_limit;    /* 100 ns */
-	uint8_t pps_mode;
+	uint16_t alarm_limit; /* 100 ns */
+	oncore_pps_mode pps_mode;
 	uint8_t pad_06;
 	int32_t pps_rate;
-	uint8_t next_month;      /* the time to the next pulse */
+	uint8_t next_month;   /* the time to the next pulse */
 	uint8_t next_day;
 	uint16_t next_year;
 	uint8_t pad_0f;
@@ -282,11 +415,11 @@ typedef struct oncore_raim_fields {
 	uint8_t next_minute;
 	uint8_t next_second;
 	uint8_t pulse_status;
-	uint8_t pulse_sync;      /* 0 UTC, 1 GPS */
-	uint8_t solution_status; /* 0 OK, 1 alarm, 2 unknown */
-	uint8_t raim_status;
-	uint16_t sigma;          /* ns */
-	int8_t sawtooth;         /* ns, of the next pulse */
+	oncore_pulse_sync pulse_sync;
+	oncore_raim_solution solution_status;
+	oncore_raim_status raim_status;
+	uint16_t sigma;       /* ns */
+	int8_t sawtooth;      /* ns, of the next pulse */
 	uint8_t pad_1a;
 	oncore_raim_channel channels[6];
 } oncore_raim_fields;
@@ -321,7 +454,7 @@ typedef struct gps_state {
 	uint8_t mask_angle;                        /* @@Ag */
 	uint8_t satellite_select;                  /* @@Ah */
 	uint8_t manual_satellites[6];              /* @@Ai, by channel */
-	uint8_t xdop_type;                         /* @@Aj */
+	oncore_xdop_type xdop_type;                /* @@Aj */
 	uint8_t field_025;
 	uint16_t xdop_hysteresis;                  /* @@Ak */
 	uint16_t xdop_threshold;                   /* @@Al, 3D to 2D */
@@ -337,7 +470,7 @@ typedef struct gps_state {
 	uint8_t position_hold;                     /* @@At */
 	uint8_t field_0b5[0xbb - 0xb5];
 	uint8_t altitude_hold;                     /* @@Av */
-	uint8_t utc_time;                          /* @@Aw: 0 GPS, 1 UTC */
+	oncore_time_mode utc_time;                 /* @@Aw */
 	uint8_t field_0bd;
 	int16_t epoch_offset;                      /* @@Ax, ms */
 	int32_t pps_offset;                        /* @@Ay */
@@ -362,13 +495,13 @@ typedef struct gps_state {
 	double correction_deviation;               /* m, printed STD DEV */
 	uint8_t field_2f8[0x2fb - 0x2f8];
 	oncore_raim_fields raim;                   /* @@Bn */
-	uint8_t leap_second_pending;               /* @@Bj */
+	oncore_leap_pending leap_second_pending;   /* @@Bj */
 	uint8_t field_33b;
 	uint16_t self_test;                        /* @@Ca, failed tests */
 	uint8_t field_33e[0x344 - 0x33e];
 	oncore_extension_fields extension;         /* @@Bk */
 	uint8_t field_382[0x3ec - 0x382];
-	uint8_t fix_mode;                          /* @@Cg: 0 idle, 1 fix */
+	oncore_fix_mode fix_mode;                  /* @@Cg */
 	uint8_t field_3ed;
 	uint8_t receiver_id_received;              /* set by @@Cj's decoder */
 	oncore_receiver_id receiver_id;            /* @@Cj */
@@ -379,7 +512,7 @@ typedef struct gps_state {
 	double average_height_gps;
 	double average_height_msl;
 	uint8_t field_52a[0x558 - 0x52a];
-	uint8_t raim_option;                         /* its options list has an I */
+	uint8_t raim_option; /* its options list has an I */
 	uint8_t field_559;
 } gps_state;
 
@@ -387,7 +520,7 @@ typedef struct gps_state {
  * shows (docs/screen-format-strings.md, "Mode suffixes") and the PLL's
  * values.  Cleared as one, memset(&pll, 0, 0x3d6). */
 typedef struct pll_state {
-	uint8_t stage;          /* 1 powerup .. 6 normal pll */
+	pll_stage stage;
 	uint8_t field_001[0x12 - 0x01];
 	uint8_t manual;         /* +0x12 */
 	uint8_t field_013[2];

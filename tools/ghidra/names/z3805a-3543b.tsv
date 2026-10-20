@@ -198,7 +198,7 @@
 0x1009c2	label	clock_date	context: get_date_time's date
 0x1009be	label	clock_time	context: get_date_time's time
 0x1009e7	label	clock_invalid	context: get_date_time reports no date or time while set
-0x2410e	function	adc_average	context: diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a default when there is no reading	float adc_average(uint8_t channel) @ D0
+0x2410e	function	adc_average	context: diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a default when there is no reading	float adc_average(adc_channel channel) @ D0
 0x1043a	function	mutex_acquire	context: recursive lock, owner at +8, count at +0xc, a token through request_x when not already owned
 0x10484	function	mutex_release	context: drops the count, or the owner and the token through send_x
 0x10502	function	mutex_lock	context: mutex_acquire on its argument
@@ -214,7 +214,7 @@
 0x40756	function	fpga_write	context: writes a byte to FPGA register reg at 0x304000 (interval.md: the FPGA port)	void fpga_write(uint8_t reg, uint8_t value)
 0x409a4	function	fpga_set_bit	context: sets or clears a bit in fconf_regs, register and mask from fpga_bit_table, then fpga_write	void fpga_set_bit(uint8_t bit, uint8_t on)
 0x20b8a	function	qspi_transfer	context: waits for SPCR1 and SPSR, runs a QSPI transfer, copies the receive RAM at 0xfffd00 out
-0x1f2c0	function	adc_read	context: sends 0xc000 | channel << 11 to device 1 minor 1 and returns the reply shifted down 2; diag_adc_read and diag_cal call it	int adc_read(uint8_t channel)
+0x1f2c0	function	adc_read	context: sends 0xc000 | channel << 11 to device 1 minor 1 and returns the reply shifted down 2; diag_adc_read and diag_cal call it	int adc_read(adc_channel channel)
 0x1df12	function	console_write_polled	context: in supervisor mode, writes the string a character at a time through 0x1d680; debug_write uses it	int console_write_polled(char *s)
 0x101fa9	label	fconf_regs	the firmware's own name, "old_addr, fconf_regs[1] = %x" printing 0x101faa; context: fpga_set_bit's copy of the FPGA registers	uint8_t[4]
 0x41310	label	fpga_bit_table	context: fpga_set_bit's register and mask for each bit	fpga_bit[6]
@@ -469,8 +469,8 @@
 0x3124a	function	eeprom_write	context: writes data split at 64-byte page boundaries with eeprom_write_page; happening 'I' on a failure
 0x3119e	function	eeprom_write_page	context: writes within one 64-byte EEPROM page under eeprom_lock, five tries
 0x110fa	function	oncore_date_pack	context: @@Ba's month, day and year into year << 16 | month << 8 | day
-0x495e2	function	satellite_in_set	context: bit prn - 1 of a mask, or prn - 0x21 for the second kind
-0x4f1a6	function	satellite_add_to_set	context: sets bit prn - 1 of a mask, or prn - 0x21 for the second kind
+0x495e2	function	satellite_in_set	context: bit prn - 1 of a mask, or prn - 0x21 for the second kind	int satellite_in_set(satellite_kind kind, uint8_t id, uint32_t mask)
+0x4f1a6	function	satellite_add_to_set	context: sets bit prn - 1 of a mask, or prn - 0x21 for the second kind	void satellite_add_to_set(satellite_kind kind, uint8_t id, uint32_t *mask)
 0x2d226	function	satellites_in_mask	context: lists the PRNs whose bits are set; the SAT:TRAC:IGN? and INCL? queries
 0x4aff2	function	uptime_elapsed	context: get_uptime() less *start into *elapsed, restarting *start if the clock went back
 0x4513c	function	interval_wait_reading	context: the wait half of interval_next_reading: the FPGA's reading, or a wait while a 1PPS is dead; updates the EFC history
@@ -492,12 +492,12 @@
 0x10138c	label	gps_response_cursor	context: where gps_receive stores the next byte	uint8_t *
 0x101394	label	gps_receive_state	context: gps_receive's state; 7 when a message is complete	uint8_t
 0x20b0c	function	qspi_send	context: qspi_transfer without the copy back from receive RAM
-0x4f0d6	function	satellite_id_valid	context: kind 0 accepts 1 to 32, kind 1 33 to 37, the VP reference's pseudolites, kind 2 either
+0x4f0d6	function	satellite_id_valid	context: kind 0 accepts 1 to 32, kind 1 33 to 37, the VP reference's pseudolites, kind 2 either	int satellite_id_valid(satellite_kind kind, uint8_t id)
 0x4f8fc	function	gps_message_supported	context: @@Bn, message 0x28, needs the receiver ID and its Time RAIM option, gps.raim_option; any other is supported
 0x4f8b6	function	gps_parse_options	context: sets gps.raim_option when the receiver ID's "OPTIONS LIST " has an I
 0x49b88	function	format_si	context: formats a double with an SI prefix from "pnum kMG" by its exponent / 3; "ANT DLY %s"
 0x101fae	label	counter_configuration	context: the configuration counter_calibrate, counter_arm and counter_read are given: fconf_regs' four values at +0, the calibration double at +4, the interpolator's offset and scale at +0x18 and +0x1c
-0x2d1cc	function	satellite_list_limits	context: the ID count, the most listed and the ID base for satellites_in_mask: kind 0 :SAT:TRAC? (32, 6), 1 its pseudolites (5, 6, from 0x20), 2 :SAT:VIS:PRED? (32, 12), 3 the ignore and include lists (32, 32)
+0x2d1cc	function	satellite_list_limits	context: the ID count, the most listed and the ID base for satellites_in_mask: kind 0 :SAT:TRAC? (32, 6), 1 its pseudolites (5, 6, from 0x20), 2 :SAT:VIS:PRED? (32, 12), 3 the ignore and include lists (32, 32)	void satellite_list_limits(satellite_list kind, uint8_t *id_count, uint8_t *max_listed, uint8_t *id_base)
 0x3293a	function	nv_save	structures.md: packs the settings into a 0x80-byte NV register record and writes it to slot nv_slot when it differs; "Warning: Entire nv register is being used"
 0x3282c	function	nv_restore	structures.md: loads slot 0, else slot 1, else copies nv_settings_defaults over nv_settings, erases the older slot and saves
 0x32bc2	function	nv_load_slot	structures.md: loads the settings from slot nv_slot when its record is good

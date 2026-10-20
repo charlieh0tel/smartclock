@@ -339,7 +339,13 @@ API keeps its own spelling, the C library's and pSOS's.  The script
 then makes `uint8_t` and `int8_t` Ghidra's `byte` and `sbyte`: the
 decompiler prints a char type's constants as characters, so
 `fpga_set_bit('\x01','\b')`, and these two's as numbers,
-`fpga_set_bit(1,8)`.
+`fpga_set_bit(1,8)`.  The header's coded values are enums, declared
+`__attribute__((packed))` so gcc makes each the smallest integer that
+holds its values; Ghidra's parser makes every enum 4 bytes, so the
+script resizes each to 1, 2 or 4 bytes the same way, and the packed
+structures lay out again around it.  A field or argument with an
+enum's type prints its values by name: `pll.stage ==
+PLL_STAGE_HOLDOVER`, `adc_average(ADC_5V)`.
 
 **Installer** unpacks the records the boot code copies to RAM, after
 its vector table, into an overlay named `installer`, writable so that

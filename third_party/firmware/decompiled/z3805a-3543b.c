@@ -15,6 +15,16 @@ typedef unsigned long long    undefined6;
 typedef unsigned long long    undefined8;
 typedef unsigned short    ushort;
 typedef unsigned short    word;
+typedef enum adc_channel {
+    ADC_TEMPERATURE=0,
+    ADC_DOUBLE_OVEN=1,
+    ADC_PLUS_15V=2,
+    ADC_CURRENT=3,
+    ADC_5V=4,
+    ADC_OVEN=5,
+    ADC_MINUS_15V=6
+} adc_channel;
+
 typedef struct efc_ring efc_ring, *Pefc_ring;
 
 typedef byte uint8_t;
@@ -96,7 +106,20 @@ typedef struct oncore_date_fields oncore_date_fields, *Poncore_date_fields;
 
 typedef struct oncore_position_fields oncore_position_fields, *Poncore_position_fields;
 
+typedef enum oncore_xdop_type {
+    ONCORE_XDOP_GDOP=0,
+    ONCORE_XDOP_PDOP=1,
+    ONCORE_XDOP_HDOP=2,
+    ONCORE_XDOP_VDOP=3,
+    ONCORE_XDOP_TDOP=4
+} oncore_xdop_type;
+
 typedef struct oncore_hold_position_fields oncore_hold_position_fields, *Poncore_hold_position_fields;
+
+typedef enum oncore_time_mode {
+    ONCORE_TIME_GPS=0,
+    ONCORE_TIME_UTC=1
+} oncore_time_mode;
 
 typedef struct oncore_status_fields oncore_status_fields, *Poncore_status_fields;
 
@@ -110,11 +133,27 @@ typedef struct oncore_corrections_fields oncore_corrections_fields, *Poncore_cor
 
 typedef struct oncore_raim_fields oncore_raim_fields, *Poncore_raim_fields;
 
+typedef enum oncore_leap_pending {
+    ONCORE_NO_LEAP_SECOND=0,
+    ONCORE_LEAP_SECOND_ADD=1,
+    ONCORE_LEAP_SECOND_SUBTRACT=2
+} oncore_leap_pending;
+
 typedef struct oncore_extension_fields oncore_extension_fields, *Poncore_extension_fields;
+
+typedef enum oncore_fix_mode {
+    ONCORE_IDLE=0,
+    ONCORE_POSITION_FIX=1
+} oncore_fix_mode;
 
 typedef struct oncore_receiver_id oncore_receiver_id, *Poncore_receiver_id;
 
 typedef sbyte int8_t;
+
+typedef enum oncore_dop_type {
+    ONCORE_DOP_PDOP=0,
+    ONCORE_DOP_HDOP=1
+} oncore_dop_type;
 
 typedef struct oncore_channel_status oncore_channel_status, *Poncore_channel_status;
 
@@ -126,7 +165,50 @@ typedef struct oncore_almanac oncore_almanac, *Poncore_almanac;
 
 typedef struct oncore_correction_channel oncore_correction_channel, *Poncore_correction_channel;
 
+typedef enum oncore_pps_mode {
+    ONCORE_PPS_OFF=0,
+    ONCORE_PPS_ON=1,
+    ONCORE_PPS_WHEN_TRACKING=2,
+    ONCORE_PPS_WHEN_RAIM_OK=3
+} oncore_pps_mode;
+
+typedef enum oncore_pulse_sync {
+    ONCORE_PULSE_UTC=0,
+    ONCORE_PULSE_GPS=1
+} oncore_pulse_sync;
+
+typedef enum oncore_raim_solution {
+    ONCORE_RAIM_OK=0,
+    ONCORE_RAIM_ALARM=1,
+    ONCORE_RAIM_UNKNOWN=2
+} oncore_raim_solution;
+
+typedef enum oncore_raim_status {
+    ONCORE_RAIM_DETECT_AND_ISOLATE=0,
+    ONCORE_RAIM_DETECT_ONLY=1,
+    ONCORE_RAIM_NEITHER=2
+} oncore_raim_status;
+
 typedef struct oncore_raim_channel oncore_raim_channel, *Poncore_raim_channel;
+
+typedef enum oncore_channel_mode {
+    ONCORE_CODE_SEARCH=0,
+    ONCORE_CODE_ACQUIRE=1,
+    ONCORE_AGC_SET=2,
+    ONCORE_FREQUENCY_ACQUIRE=3,
+    ONCORE_BIT_SYNC_DETECT=4,
+    ONCORE_MESSAGE_SYNC_DETECT=5,
+    ONCORE_SATELLITE_TIME_AVAILABLE=6,
+    ONCORE_EPHEMERIS_ACQUIRE=7,
+    ONCORE_AVAILABLE_FOR_POSITION=8
+} oncore_channel_mode;
+
+typedef enum oncore_health {
+    ONCORE_HEALTHY=0,
+    ONCORE_HEALTHY_REMOVED=1,
+    ONCORE_UNHEALTHY=2,
+    ONCORE_UNHEALTHY_REMOVED=3
+} oncore_health;
 
 struct oncore_gmt_offset_fields {
     uint8_t sign;
@@ -157,7 +239,7 @@ struct oncore_visible_satellite {
     uint8_t elevation;
     uint8_t pad_5;
     uint16_t azimuth;
-    uint8_t health;
+    enum oncore_health health;
     uint8_t pad_9;
 };
 
@@ -210,7 +292,7 @@ struct oncore_time_fields {
 
 struct oncore_channel_status {
     uint8_t satellite;
-    uint8_t mode;
+    enum oncore_channel_mode mode;
     uint8_t signal_strength;
     uint8_t status;
 };
@@ -232,7 +314,7 @@ struct oncore_status_fields {
     uint16_t heading;
     uint16_t dop;
     uint8_t pad_22;
-    uint8_t dop_type;
+    enum oncore_dop_type dop_type;
     uint8_t visible_count;
     uint8_t tracked_count;
     struct oncore_channel_status channels[6];
@@ -283,7 +365,7 @@ struct oncore_raim_fields {
     uint8_t raim_on;
     uint8_t pad_02;
     uint16_t alarm_limit;
-    uint8_t pps_mode;
+    enum oncore_pps_mode pps_mode;
     uint8_t pad_06;
     int32_t pps_rate;
     uint8_t next_month;
@@ -294,9 +376,9 @@ struct oncore_raim_fields {
     uint8_t next_minute;
     uint8_t next_second;
     uint8_t pulse_status;
-    uint8_t pulse_sync;
-    uint8_t solution_status;
-    uint8_t raim_status;
+    enum oncore_pulse_sync pulse_sync;
+    enum oncore_raim_solution solution_status;
+    enum oncore_raim_status raim_status;
     uint16_t sigma;
     int8_t sawtooth;
     uint8_t pad_1a;
@@ -304,7 +386,7 @@ struct oncore_raim_fields {
 };
 
 struct oncore_xdop_table_fields {
-    uint8_t type;
+    enum oncore_xdop_type type;
     uint8_t count;
     uint8_t mode;
     struct oncore_xdop_combination combinations[9];
@@ -320,7 +402,7 @@ struct gps_state {
     uint8_t mask_angle;
     uint8_t satellite_select;
     uint8_t manual_satellites[6];
-    uint8_t xdop_type;
+    enum oncore_xdop_type xdop_type;
     uint8_t field_025;
     uint16_t xdop_hysteresis;
     uint16_t xdop_threshold;
@@ -336,7 +418,7 @@ struct gps_state {
     uint8_t position_hold;
     uint8_t field_0b5[6];
     uint8_t altitude_hold;
-    uint8_t utc_time;
+    enum oncore_time_mode utc_time;
     uint8_t field_0bd;
     int16_t epoch_offset;
     int32_t pps_offset;
@@ -361,13 +443,13 @@ struct gps_state {
     double correction_deviation;
     uint8_t field_2f8[3];
     struct oncore_raim_fields raim;
-    uint8_t leap_second_pending;
+    enum oncore_leap_pending leap_second_pending;
     uint8_t field_33b;
     uint16_t self_test;
     uint8_t field_33e[6];
     struct oncore_extension_fields extension;
     uint8_t field_382[106];
-    uint8_t fix_mode;
+    enum oncore_fix_mode fix_mode;
     uint8_t field_3ed;
     uint8_t receiver_id_received;
     struct oncore_receiver_id receiver_id;
@@ -457,10 +539,23 @@ struct log_page {
     struct log_entry entries[3];
 };
 
+typedef enum pll_stage {
+    PLL_STAGE_INVALID=0,
+    PLL_STAGE_POWERUP=1,
+    PLL_STAGE_POWERUP_RECOVERY=2,
+    PLL_STAGE_HOLDOVER=3,
+    PLL_STAGE_HOLDOVER_RECOVERY=4,
+    PLL_STAGE_STARTUP_PLL=5,
+    PLL_STAGE_NORMAL_PLL=6,
+    PLL_STAGE_DIAG=7,
+    PLL_STAGE_IDLE=8,
+    PLL_STAGE_FATAL_ERROR=9
+} pll_stage;
+
 typedef struct pll_state pll_state, *Ppll_state;
 
 struct pll_state {
-    uint8_t stage;
+    enum pll_stage stage;
     uint8_t field_001[17];
     uint8_t manual;
     uint8_t field_013[2];
@@ -478,6 +573,19 @@ struct pll_state {
     struct efc_ring efc_history;
     uint8_t field_3b0[38];
 };
+
+typedef enum satellite_kind {
+    SATELLITE_GPS=0,
+    SATELLITE_PSEUDOLITE=1,
+    SATELLITE_ANY=2
+} satellite_kind;
+
+typedef enum satellite_list {
+    SATELLITE_LIST_TRACKING=0,
+    SATELLITE_LIST_TRACKING_PSEUDOLITES=1,
+    SATELLITE_LIST_VISIBLE=2,
+    SATELLITE_LIST_ALL=3
+} satellite_list;
 
 typedef struct scpi_numeric_param scpi_numeric_param, *Pscpi_numeric_param;
 
@@ -6447,7 +6555,7 @@ void es_build(uint32_t param_1,uint param_2)
       uVar5 = uVar6 | 6;
     }
   }
-  if ((pll.stage == 3) || (pll.stage == 4)) {
+  if ((pll.stage == PLL_STAGE_HOLDOVER) || (pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)) {
     uVar5 = uVar5 | 0x10;
   }
   cStack_7 = (char)param_2;
@@ -15821,14 +15929,15 @@ undefined1 diag_adc_read(byte param_1)
 
 {
   undefined1 uVar1;
+  adc_channel channel;
   
   if ((param_1 & 1) == 0) {
-    param_1 = param_1 >> 1;
+    channel = param_1 >> 1;
   }
   else {
-    param_1 = (byte)((int)(uint)param_1 >> 1) | 4;
+    channel = (adc_channel)((int)(uint)param_1 >> 1) | ADC_5V;
   }
-  uVar1 = adc_read(param_1);
+  uVar1 = adc_read(channel);
   return uVar1;
 }
 
@@ -15946,25 +16055,25 @@ void diag_pr_adc_avg(void)
   float fVar1;
   double dVar2;
   
-  fVar1 = adc_average(0);
+  fVar1 = adc_average(ADC_TEMPERATURE);
   dVar2 = float_to_double(fVar1);
   printf("Temperature: %.2f\r\n",dVar2);
-  fVar1 = adc_average(4);
+  fVar1 = adc_average(ADC_5V);
   dVar2 = float_to_double(fVar1);
   printf("5V: %.2f\r\n",dVar2);
-  fVar1 = adc_average(2);
+  fVar1 = adc_average(ADC_PLUS_15V);
   dVar2 = float_to_double(fVar1);
   printf("+15V: %.2f\r\n",dVar2);
-  fVar1 = adc_average(6);
+  fVar1 = adc_average(ADC_MINUS_15V);
   dVar2 = float_to_double(fVar1);
   printf("-15V: %.2f\r\n",dVar2);
-  fVar1 = adc_average(5);
+  fVar1 = adc_average(ADC_OVEN);
   dVar2 = float_to_double(fVar1);
   printf("Oven: %.2f\r\n",dVar2);
-  fVar1 = adc_average(1);
+  fVar1 = adc_average(ADC_DOUBLE_OVEN);
   dVar2 = float_to_double(fVar1);
   printf("Double oven: %.2f\r\n",dVar2);
-  fVar1 = adc_average(3);
+  fVar1 = adc_average(ADC_CURRENT);
   dVar2 = float_to_double(fVar1);
   printf("Oven current: %.2f\r\n",dVar2);
   return;
@@ -17019,7 +17128,7 @@ void diag_pr_pll(void)
   char acStack_54 [80];
   
   console_write("PLL state: ");
-  if (9 < pll.stage) {
+  if (PLL_STAGE_FATAL_ERROR < pll.stage) {
     pcVar3 = "unknown";
     pcVar4 = acStack_54;
     do {
@@ -17032,7 +17141,7 @@ void diag_pr_pll(void)
   }
                     /* WARNING: Switch is manually overridden */
   switch(pll.stage) {
-  case 0:
+  case PLL_STAGE_INVALID:
     pcVar3 = "invalid";
     pcVar4 = acStack_54;
     do {
@@ -17042,7 +17151,7 @@ void diag_pr_pll(void)
       pcVar4 = pcVar4 + 1;
     } while (cVar1 != '\0');
     break;
-  case 1:
+  case PLL_STAGE_POWERUP:
     pcVar3 = "powerup";
     pcVar4 = acStack_54;
     do {
@@ -17085,7 +17194,7 @@ void diag_pr_pll(void)
       strcat(acStack_54,": unknown");
     }
     break;
-  case 2:
+  case PLL_STAGE_POWERUP_RECOVERY:
     pcVar3 = "powerup recovery";
     pcVar4 = acStack_54;
     do {
@@ -17095,7 +17204,7 @@ void diag_pr_pll(void)
       pcVar4 = pcVar4 + 1;
     } while (cVar1 != '\0');
     break;
-  case 3:
+  case PLL_STAGE_HOLDOVER:
     pcVar3 = "holdover";
     pcVar4 = acStack_54;
     do {
@@ -17105,7 +17214,7 @@ void diag_pr_pll(void)
       pcVar4 = pcVar4 + 1;
     } while (cVar1 != '\0');
     break;
-  case 4:
+  case PLL_STAGE_HOLDOVER_RECOVERY:
     pcVar3 = "holdover recovery";
     pcVar4 = acStack_54;
     do {
@@ -17142,7 +17251,7 @@ override_jmp_0001bc52_case_2:
       strcat(acStack_54,": unknown");
     }
     break;
-  case 5:
+  case PLL_STAGE_STARTUP_PLL:
     pcVar3 = "startup pll";
     pcVar4 = acStack_54;
     do {
@@ -17152,7 +17261,7 @@ override_jmp_0001bc52_case_2:
       pcVar4 = pcVar4 + 1;
     } while (cVar1 != '\0');
     break;
-  case 6:
+  case PLL_STAGE_NORMAL_PLL:
     pcVar3 = "normal pll";
     pcVar4 = acStack_54;
     do {
@@ -17162,7 +17271,7 @@ override_jmp_0001bc52_case_2:
       pcVar4 = pcVar4 + 1;
     } while (cVar1 != '\0');
     break;
-  case 7:
+  case PLL_STAGE_DIAG:
     pcVar3 = "diag";
     pcVar4 = acStack_54;
     do {
@@ -17198,7 +17307,7 @@ override_jmp_0001bc52_case_2:
       strcat(acStack_54,": unknown");
     }
     break;
-  case 8:
+  case PLL_STAGE_IDLE:
     pcVar3 = "idle";
     pcVar4 = acStack_54;
     do {
@@ -17208,7 +17317,7 @@ override_jmp_0001bc52_case_2:
       pcVar4 = pcVar4 + 1;
     } while (cVar1 != '\0');
     break;
-  case 9:
+  case PLL_STAGE_FATAL_ERROR:
     pcVar3 = "fatal error";
     pcVar4 = acStack_54;
     do {
@@ -17463,7 +17572,7 @@ void diag_cal(uint param_1)
   uStack_8 = 0;
   fVar4 = 0.0;
   for (uVar3 = 0; uVar3 < param_1; uVar3 = uVar3 + 10) {
-    bVar2 = adc_read(3);
+    bVar2 = adc_read(ADC_CURRENT);
     f = pll.efc;
     i = (uint)bVar2;
     dVar6 = integer_to_double(i);
@@ -19180,7 +19289,7 @@ void fatal_error(char *message)
 
 /* WARNING: Unknown calling convention */
 
-int adc_read(uint8_t channel)
+int adc_read(adc_channel channel)
 
 {
   ushort *local_10;
@@ -19206,7 +19315,7 @@ float read_adc_temp(void)
   byte bVar2;
   float fVar1;
   
-  bVar2 = adc_read(0);
+  bVar2 = adc_read(ADC_TEMPERATURE);
   fVar1 = unsigned_to_float((uint)bVar2);
   fVar1 = float_multiply(fVar1,0.273);
   return fVar1;
@@ -19223,7 +19332,7 @@ float read_adc_5v(void)
   byte bVar2;
   float fVar1;
   
-  bVar2 = adc_read(4);
+  bVar2 = adc_read(ADC_5V);
   fVar1 = unsigned_to_float((uint)bVar2);
   fVar1 = float_multiply(fVar1,0.0242);
   return fVar1;
@@ -19245,8 +19354,8 @@ float read_adc_doven(void)
   undefined1 uVar5;
   undefined1 uStack_9;
   
-  bVar2 = adc_read(1);
-  bVar3 = adc_read(4);
+  bVar2 = adc_read(ADC_DOUBLE_OVEN);
+  bVar3 = adc_read(ADC_5V);
   fVar1 = unsigned_to_float((uint)bVar2);
   fVar1 = float_multiply(fVar1,0.0743);
   uVar4 = (undefined1)((uint)fVar1 >> 0x18);
@@ -19275,8 +19384,8 @@ float read_adc_oven(void)
   undefined1 uVar5;
   undefined1 uStack_9;
   
-  bVar2 = adc_read(5);
-  bVar3 = adc_read(4);
+  bVar2 = adc_read(ADC_OVEN);
+  bVar3 = adc_read(ADC_5V);
   fVar1 = unsigned_to_float((uint)bVar2);
   fVar1 = float_multiply(fVar1,0.0743);
   uVar4 = (undefined1)((uint)fVar1 >> 0x18);
@@ -19300,7 +19409,7 @@ float read_adc_p15v(void)
   byte bVar2;
   float fVar1;
   
-  bVar2 = adc_read(2);
+  bVar2 = adc_read(ADC_PLUS_15V);
   fVar1 = unsigned_to_float((uint)bVar2);
   fVar1 = float_multiply(fVar1,0.0763);
   return fVar1;
@@ -19322,8 +19431,8 @@ float read_adc_m15v(void)
   undefined1 uVar5;
   undefined1 uStack_9;
   
-  bVar2 = adc_read(6);
-  bVar3 = adc_read(4);
+  bVar2 = adc_read(ADC_MINUS_15V);
+  bVar3 = adc_read(ADC_5V);
   fVar1 = unsigned_to_float((uint)bVar2);
   fVar1 = float_multiply(fVar1,0.0438);
   uVar4 = (undefined1)((uint)fVar1 >> 0x18);
@@ -19347,7 +19456,7 @@ float read_adc_osc_curr(void)
   byte bVar2;
   float fVar1;
   
-  bVar2 = adc_read(3);
+  bVar2 = adc_read(ADC_CURRENT);
   fVar1 = unsigned_to_float((uint)bVar2);
   fVar1 = float_multiply(fVar1,250.0);
   fVar1 = float_divide(fVar1,255.0);
@@ -19365,7 +19474,7 @@ float read_adc_ant_curr(void)
   byte bVar2;
   float fVar1;
   
-  bVar2 = adc_read(3);
+  bVar2 = adc_read(ADC_CURRENT);
   fVar1 = unsigned_to_float((uint)bVar2);
   fVar1 = float_multiply(fVar1,250.0);
   fVar1 = float_divide(fVar1,255.0);
@@ -21545,7 +21654,7 @@ void FUN_00023d80(void)
       }
     }
     else if (cRam00101c60 == '\0') {
-      fVar2 = adc_average(4);
+      fVar2 = adc_average(ADC_5V);
       dVar6 = float_to_double(fVar2);
       log_write(0x94,(char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
       dVar6 = float_to_double(fVar2);
@@ -21566,7 +21675,7 @@ void FUN_00023d80(void)
       }
     }
     else if (DAT_00101bd0 == '\0') {
-      fVar2 = adc_average(1);
+      fVar2 = adc_average(ADC_DOUBLE_OVEN);
       dVar6 = float_to_double(fVar2);
       log_write(0xfb,(char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
       dVar6 = float_to_double(fVar2);
@@ -21593,7 +21702,7 @@ void FUN_00023d80(void)
       }
     }
     else if (cRam00101c00 == '\0') {
-      fVar2 = adc_average(2);
+      fVar2 = adc_average(ADC_PLUS_15V);
       dVar6 = float_to_double(fVar2);
       log_write(0x9e,(char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
       dVar6 = float_to_double(fVar2);
@@ -21615,7 +21724,7 @@ void FUN_00023d80(void)
       }
     }
     else if (cRam00101cc0 == '\0') {
-      fVar2 = adc_average(6);
+      fVar2 = adc_average(ADC_MINUS_15V);
       dVar6 = float_to_double(fVar2);
       log_write(8,(char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
       dVar6 = float_to_double(fVar2);
@@ -21649,7 +21758,7 @@ LAB_000240f0:
 
 /* WARNING: Unknown calling convention */
 
-float adc_average(uint8_t channel)
+float adc_average(adc_channel channel)
 
 {
   int iVar1;
@@ -21717,7 +21826,7 @@ bool FUN_000241cc(void)
   float a;
   int iVar1;
   
-  a = adc_average(1);
+  a = adc_average(ADC_DOUBLE_OVEN);
   iVar1 = float_compare(a,1.5);
   return 0 < iVar1;
 }
@@ -21731,7 +21840,7 @@ bool FUN_000241f4(void)
   float a;
   int iVar1;
   
-  a = adc_average(5);
+  a = adc_average(ADC_OVEN);
   iVar1 = float_compare(a,-2.0);
   return iVar1 < 0;
 }
@@ -29630,33 +29739,34 @@ bool FUN_0002d1a2(char param_1,uint *param_2)
 
 /* WARNING: Unknown calling convention */
 
-void satellite_list_limits(char param_1,undefined1 *param_2,undefined1 *param_3,undefined1 *param_4)
+void satellite_list_limits
+               (satellite_list kind,uint8_t *id_count,uint8_t *max_listed,uint8_t *id_base)
 
 {
   int iVar1;
   
-  iVar1 = (int)param_1 - 3;
-  if ((uint)(int)param_1 < 3 || iVar1 == 0) {
+  iVar1 = (int)(char)kind - 3;
+  if ((uint)(int)(char)kind < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0002d1f6)[(short)iVar1]) {
     case 8:
-      *param_2 = 0x20;
-      *param_3 = 6;
+      *id_count = 0x20;
+      *max_listed = 6;
       break;
     case 0x12:
-      *param_2 = 5;
-      *param_3 = 6;
-      *param_4 = 0x20;
+      *id_count = 5;
+      *max_listed = 6;
+      *id_base = 0x20;
       return;
     case 0x20:
-      *param_2 = 0x20;
-      *param_3 = 0xc;
+      *id_count = 0x20;
+      *max_listed = 0xc;
       break;
     case 0x2a:
-      *param_2 = 0x20;
-      *param_3 = *param_2;
+      *id_count = 0x20;
+      *max_listed = *id_count;
     }
-    *param_4 = 0;
+    *id_base = 0;
   }
   return;
 }
@@ -29708,7 +29818,7 @@ scpi_query_SOURce_GPSystem_SATellite_TRACking(undefined4 param_1,int *param_2,in
   byte local_9;
   byte local_8;
   byte local_7;
-  undefined1 uStack_6;
+  uint8_t uStack_6;
   byte local_5;
   
   uVar6 = (undefined2)((uint)*(undefined4 *)(param_3 + 0x12) >> 0x10);
@@ -29721,10 +29831,10 @@ scpi_query_SOURce_GPSystem_SATellite_TRACking(undefined4 param_1,int *param_2,in
   }
   else {
     set_interrupt_mask(sr);
-    satellite_list_limits('\0',&local_7,&uStack_6,&local_5);
+    satellite_list_limits(SATELLITE_LIST_TRACKING,&local_7,&uStack_6,&local_5);
     bVar4 = satellites_in_mask(local_e,local_7,(short *)((uVar1 & 0xff) * 0x40 + 0x10295e),local_9,
                                local_5);
-    satellite_list_limits('\x01',&local_7,&uStack_6,&local_5);
+    satellite_list_limits(SATELLITE_LIST_TRACKING_PSEUDOLITES,&local_7,&uStack_6,&local_5);
     bVar5 = satellites_in_mask((uint)local_a,local_7,
                                (short *)((uint)bVar4 * 2 + (uVar1 & 0xff) * 0x40 + 0x10295e),local_8
                                ,local_5);
@@ -29827,7 +29937,7 @@ undefined4 scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore(undefined4 param
   byte local_6 [2];
   
   uVar1 = return_zero();
-  satellite_list_limits('\x03',&local_8,&local_7,local_6);
+  satellite_list_limits(SATELLITE_LIST_ALL,&local_8,&local_7,local_6);
   bVar2 = satellites_in_mask(_DAT_00101eb6,local_8,(short *)((uVar1 & 0xff) * 0x40 + 0x10295e),
                              local_7,local_6[0]);
   *param_2 = (uint)bVar2;
@@ -29866,7 +29976,7 @@ scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_COUNt(undefined4 param_1,us
   byte local_7;
   byte local_6 [2];
   
-  satellite_list_limits('\x03',&local_8,&local_7,local_6);
+  satellite_list_limits(SATELLITE_LIST_ALL,&local_8,&local_7,local_6);
   bVar1 = satellites_in_mask(_DAT_00101eb6,local_8,(short *)0x0,local_7,local_6[0]);
   *param_2 = (ushort)bVar1;
   return 0;
@@ -29968,7 +30078,7 @@ undefined4 scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude(undefined4 para
   byte local_6 [2];
   
   uVar1 = return_zero();
-  satellite_list_limits('\x03',&local_8,&local_7,local_6);
+  satellite_list_limits(SATELLITE_LIST_ALL,&local_8,&local_7,local_6);
   bVar2 = satellites_in_mask(~_DAT_00101eb6,local_8,(short *)((uVar1 & 0xff) * 0x40 + 0x10295e),
                              local_7,local_6[0]);
   *param_2 = (uint)bVar2;
@@ -29994,7 +30104,7 @@ scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude_COUNt(undefined4 param_1,u
   byte local_7;
   byte local_6 [2];
   
-  satellite_list_limits('\x03',&local_8,&local_7,local_6);
+  satellite_list_limits(SATELLITE_LIST_ALL,&local_8,&local_7,local_6);
   bVar1 = satellites_in_mask(~_DAT_00101eb6,local_8,(short *)0x0,local_7,local_6[0]);
   *param_2 = (ushort)bVar1;
   return 0;
@@ -30016,7 +30126,7 @@ scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted(undefined4 param_1,uint *
   uint local_c;
   byte local_8;
   byte local_7;
-  undefined1 uStack_6;
+  uint8_t uStack_6;
   byte local_5;
   
   uVar5 = (undefined2)((uint)*(undefined4 *)(param_3 + 0x12) >> 0x10);
@@ -30029,7 +30139,7 @@ scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted(undefined4 param_1,uint *
   }
   else {
     set_interrupt_mask(sr);
-    satellite_list_limits('\x02',&local_7,&uStack_6,&local_5);
+    satellite_list_limits(SATELLITE_LIST_VISIBLE,&local_7,&uStack_6,&local_5);
     bVar4 = satellites_in_mask(local_c,local_7,(short *)((uVar1 & 0xff) * 0x40 + 0x10295e),local_8,
                                local_5);
     *param_2 = (uint)bVar4;
@@ -33610,7 +33720,7 @@ void FUN_00030b66(int param_1)
   if (_DAT_00101d04 != param_1) {
     _DAT_00101d04 = param_1;
     _DAT_00101d08 = _DAT_00101d08 + 1;
-    if (pll.stage == 6) {
+    if (pll.stage == PLL_STAGE_NORMAL_PLL) {
       _DAT_00101d00 = pll.efc;
     }
     FUN_00030ab4();
@@ -36614,8 +36724,9 @@ void efc_history_update(void)
     }
     break;
   case 0x30:
-    fVar1 = adc_average(3);
-    if ((pll.stage == 6) || ((pll.stage == 5 && (pll.field_001[0xb] != 1)))) {
+    fVar1 = adc_average(ADC_CURRENT);
+    if ((pll.stage == PLL_STAGE_NORMAL_PLL) ||
+       ((pll.stage == PLL_STAGE_STARTUP_PLL && (pll.field_001[0xb] != 1)))) {
       if (pll.efc_history.summed_count == 0) {
         pll.efc_history.efc_sum = 0.0;
       }
@@ -37596,7 +37707,7 @@ undefined4 FUN_0004299c(float *param_1,undefined1 *param_2)
 {
   undefined4 uVar1;
   
-  if ((pll.stage == 3) || (pll.stage == 4)) {
+  if ((pll.stage == PLL_STAGE_HOLDOVER) || (pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)) {
     *param_1 = pll.tfom;
     *param_2 = 0xf9;
     uVar1 = 1;
@@ -37615,13 +37726,14 @@ undefined4 FUN_000429c6(uint8_t *param_1,undefined1 *param_2,undefined1 *param_3
 {
   undefined4 uVar1;
   
-  if ((pll.stage == 3) || (pll.stage == 4)) {
+  if ((pll.stage == PLL_STAGE_HOLDOVER) || (pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)) {
     *param_3 = 1;
   }
   else {
     *param_3 = 0;
   }
-  if ((((pll.stage == 5) || (pll.stage == 6)) || (pll.stage == 3)) || (pll.stage == 4)) {
+  if ((((pll.stage == PLL_STAGE_STARTUP_PLL) || (pll.stage == PLL_STAGE_NORMAL_PLL)) ||
+      (pll.stage == PLL_STAGE_HOLDOVER)) || (pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)) {
     *(undefined4 *)param_1 = pll.field_03a._0_4_;
     *param_2 = 0xf9;
     uVar1 = 1;
@@ -38440,7 +38552,7 @@ byte FUN_0004397a(void)
   byte bVar2;
   uint8_t code;
   
-  if (pll.stage != 4) {
+  if (pll.stage != PLL_STAGE_HOLDOVER_RECOVERY) {
     pll.field_3b0[0x18] = 0;
     pll.field_3b0[0x19] = 0;
     pll.field_3b0[0x1a] = 0;
@@ -38452,9 +38564,9 @@ byte FUN_0004397a(void)
   else {
     pll.manual = 1;
   }
-  pll.stage = 3;
+  pll.stage = PLL_STAGE_HOLDOVER;
   if (pll.field_3b0._24_4_ != 0) {
-    pll.stage = 3;
+    pll.stage = PLL_STAGE_HOLDOVER;
     return pll.field_001[0x10] & 1;
   }
   if ((pll.field_001[0x10] & 1) != 0) {
@@ -38555,7 +38667,7 @@ undefined1 FUN_00043a90(char param_1)
   undefined4 uStack_8;
   
   uVar6 = 0;
-  fVar1 = adc_average(3);
+  fVar1 = adc_average(ADC_CURRENT);
   if ((param_1 == '\0') || ('\x01' < (char)pll.field_001[0xf])) {
     pll.field_001[0xf] = 0;
   }
@@ -38975,7 +39087,7 @@ char FUN_0004429e(char param_1)
   undefined4 uStack_8;
   
   cVar5 = '\0';
-  local_74 = adc_average(3);
+  local_74 = adc_average(ADC_CURRENT);
   if ((param_1 == '\0') || ('\x03' < (char)pll.field_001[0xb])) {
     pll.field_018 = 0;
     pll.field_3b0[0] = 0;
@@ -39231,7 +39343,7 @@ undefined1 interval_average(char param_1)
   local_7a = 0;
   local_14 = pll.field_001 + 0xd;
   local_10 = 0x1021ac;
-  fVar1 = adc_average(3);
+  fVar1 = adc_average(ADC_CURRENT);
   if ((param_1 == '\0') || ('\x01' < (char)*local_14)) {
     pll.field_018 = 0;
     pll.tfom = 1e-06;
@@ -39847,7 +39959,7 @@ char FUN_0004538c(void)
       fVar2 = double_to_float((double)CONCAT44(interval_reading._0_4_,interval_reading._4_4_));
       float_subtract_in_place(&pll.fine_d,fVar2);
       float_multiply_in_place(&pll.fine_d,0.02);
-      if (pll.stage == 1) {
+      if (pll.stage == PLL_STAGE_POWERUP) {
 LAB_00045812:
         fVar2 = float_absolute_on_stack(fine_y0);
         iVar1 = float_compare(fVar2,2e-09);
@@ -40051,7 +40163,7 @@ undefined1 FUN_00045bb8(void)
   undefined1 uVar2;
   
   uVar2 = 0;
-  if ((pll.stage == 1) &&
+  if ((pll.stage == PLL_STAGE_POWERUP) &&
      (iVar1 = (char)pll.field_001[2] + -7, (int)(char)pll.field_001[2] - 1U < 6 || iVar1 == 0)) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00045bec)[(short)iVar1]) {
@@ -40088,7 +40200,7 @@ undefined1 FUN_00045c18(void)
   undefined1 uVar1;
   
   uVar1 = 0;
-  if ((pll.stage == 4) && (pll.recovery_state == 1)) {
+  if ((pll.stage == PLL_STAGE_HOLDOVER_RECOVERY) && (pll.recovery_state == 1)) {
     if (((char)pll.fine_state < '\a') || ('\t' < (char)pll.fine_state)) {
       uVar1 = 1;
     }
@@ -40105,7 +40217,7 @@ undefined1 FUN_00045c18(void)
 undefined1 FUN_00045c48(void)
 
 {
-  if (pll.stage == 3) {
+  if (pll.stage == PLL_STAGE_HOLDOVER) {
     if (((pll.field_001[0x10] & 0x10) != 0) || ((pll.field_001[0x10] & 4) != 0)) {
       return 0x10;
     }
@@ -40495,7 +40607,7 @@ void FUN_000463c2(void)
   int iVar1;
   int iVar2;
   
-  if (gps.leap_second_pending == 0) {
+  if (gps.leap_second_pending == ONCORE_NO_LEAP_SECOND) {
     if (leap_pending != 0) {
       FUN_0004637a();
       nv_save(4);
@@ -40503,10 +40615,10 @@ void FUN_000463c2(void)
     }
   }
   else {
-    if (gps.leap_second_pending == 1) {
+    if (gps.leap_second_pending == ONCORE_LEAP_SECOND_ADD) {
       iVar2 = 0x3d;
     }
-    else if (gps.leap_second_pending == 2) {
+    else if (gps.leap_second_pending == ONCORE_LEAP_SECOND_SUBTRACT) {
       iVar2 = 0x3b;
     }
     else {
@@ -41154,8 +41266,8 @@ override_jmp_00046eb8_case_0:
   case 0x10:
     goto override_jmp_00046eb8_case_0;
   case 0x28:
-    if (((gps.utc_time != 1) || (DAT_00101f4c == '\0')) &&
-       ((gps.utc_time != 0 || (DAT_00101f4c != '\0')))) {
+    if (((gps.utc_time != ONCORE_TIME_UTC) || (DAT_00101f4c == '\0')) &&
+       ((gps.utc_time != ONCORE_TIME_GPS || (DAT_00101f4c != '\0')))) {
       pll.field_020[0xc] = 2;
       return;
     }
@@ -41180,7 +41292,7 @@ LAB_00046efe:
     pll.field_020[0xc] = 4;
     break;
   case 0x98:
-    auStack_14[0] = (uint)(gps.utc_time == 0);
+    auStack_14[0] = (uint)(gps.utc_time == ONCORE_TIME_GPS);
     cVar5 = gpsx_send(0x4e,0,(int)auStack_14,'\x02');
     if (cVar5 != '\0') {
       pll.field_020[0xc] = 5;
@@ -41204,7 +41316,7 @@ LAB_00046efe:
       uVar7 = (undefined1)uVar3;
       sVar4 = FUN_00011152(uStack_1a);
       sVar4 = (short)iStack_18 * 0x5180 + (CONCAT11(uVar6,uVar7) - sVar4);
-      if (gps.utc_time == 1) {
+      if (gps.utc_time == ONCORE_TIME_UTC) {
         sVar4 = -sVar4;
       }
       set_gps_utc_offset(sVar4);
@@ -41214,7 +41326,7 @@ LAB_00046efe:
     pll.field_020[0xc] = 1;
     goto LAB_0004706a;
   case 0x15c:
-    auStack_14[0] = (uint)(gps.utc_time == 0);
+    auStack_14[0] = (uint)(gps.utc_time == ONCORE_TIME_GPS);
     cVar5 = gpsx_send(0x16,0,(int)auStack_14,'\x02');
     if (cVar5 != '\0') {
       pll.field_020[0xc] = 7;
@@ -41516,7 +41628,7 @@ void FUN_000473d2(void)
 
 {
   memset(&pll,0,0x3d6);
-  pll.stage = 0;
+  pll.stage = PLL_STAGE_INVALID;
   pll.field_020[6] = 0;
   pll.field_020[0] = 0;
   pll.efc = (float)FUN_0002426e(_DAT_00101d00);
@@ -41567,7 +41679,7 @@ void FUN_00047466(void)
       gps_ack_awaited = 0;
     }
   }
-  pll.stage = 1;
+  pll.stage = PLL_STAGE_POWERUP;
   return;
 }
 
@@ -41609,7 +41721,7 @@ void pllp_task(void)
   gps_state *pgVar8;
   pll_state *ppVar10;
   char cVar11;
-  uint8_t local_22;
+  pll_stage local_22;
   undefined1 auStack_20 [8];
   char local_18;
   uint8_t local_17;
@@ -41628,7 +41740,7 @@ void pllp_task(void)
   DAT_0010254f = 0;
   gps_ack_ready = 0;
   gps_ack_awaited = 0;
-  local_22 = 0;
+  local_22 = PLL_STAGE_INVALID;
   DAT_00102587 = '\0';
   DAT_00102588 = 0;
   DAT_00102589 = 0;
@@ -41643,8 +41755,8 @@ void pllp_task(void)
   interval_mean_flag = 0;
   DAT_00102552 = 0;
   FUN_000474c2(0xff);
-  if (pll.stage == 0) {
-    pll.stage = 1;
+  if (pll.stage == PLL_STAGE_INVALID) {
+    pll.stage = PLL_STAGE_POWERUP;
     if (DAT_00100002 == 1) {
       status_happening('\x19');
       log_event(1);
@@ -41659,8 +41771,8 @@ void pllp_task(void)
   }
   else {
     pll.field_001[0] = pll.stage;
-    if (pll.stage != 1) {
-      pll.stage = 2;
+    if (pll.stage != PLL_STAGE_POWERUP) {
+      pll.stage = PLL_STAGE_POWERUP_RECOVERY;
     }
     log_event(2);
   }
@@ -41674,7 +41786,7 @@ void pllp_task(void)
   DAT_001025a0 = 0;
   DAT_001025a8 = 0;
   watchdog_pll = watchdog_pll + 1;
-  if (pll.stage == 1) {
+  if (pll.stage == PLL_STAGE_POWERUP) {
     FUN_00024976();
     FUN_00018600(local_6);
   }
@@ -41684,11 +41796,11 @@ void pllp_task(void)
   do {
     if (DAT_00102540 != '\0') {
       FUN_00047466();
-      local_22 = 0;
+      local_22 = PLL_STAGE_INVALID;
       DAT_00102540 = '\0';
     }
     if (DAT_0010258d != '\0') {
-      pll.stage = 7;
+      pll.stage = PLL_STAGE_DIAG;
     }
     if (pll.stage == local_22) {
       bVar2 = true;
@@ -41722,7 +41834,7 @@ LAB_00047758:
     }
     iVar1 = (char)pll.stage + -9;
     if (7 < (int)(char)pll.stage - 1U && iVar1 != 0) {
-      pll.stage = 1;
+      pll.stage = PLL_STAGE_POWERUP;
       goto LAB_00047940;
     }
                     /* WARNING: Switch is manually overridden */
@@ -41736,7 +41848,7 @@ LAB_00047758:
       cVar11 = FUN_00045e8e(bVar2);
       if (cVar11 == '\x01') {
 LAB_000477b2:
-        pll.stage = 5;
+        pll.stage = PLL_STAGE_STARTUP_PLL;
       }
       else if (cVar11 == '\x02') {
         FUN_00047466();
@@ -41751,7 +41863,7 @@ LAB_000477b2:
       cVar11 = FUN_00046188(bVar2);
       if (cVar11 == '\x01') {
 LAB_0004782e:
-        pll.stage = 4;
+        pll.stage = PLL_STAGE_HOLDOVER_RECOVERY;
       }
       else if (cVar11 == '\x02') {
         FUN_0004397a();
@@ -41785,7 +41897,7 @@ LAB_0004782e:
       }
       cVar11 = FUN_0004429e(bVar2);
       if (cVar11 == '\x01') {
-        pll.stage = 6;
+        pll.stage = PLL_STAGE_NORMAL_PLL;
       }
       else if (cVar11 == '\x02') {
         FUN_0004397a();
@@ -42703,7 +42815,7 @@ void gps_print_instrument_state(void)
   console_write("\r\nCorrection Factors and Thresholds _________   ");
   console_write("General Status _________________\r\n");
   FUN_00048964(gps.utc_time,local_a0);
-  if (gps.utc_time == 0) {
+  if (gps.utc_time == ONCORE_TIME_GPS) {
     strcat(local_a0," (GPS time)");
   }
   iVar2 = (int)(char)gps.leap_second_pending - 2;
@@ -42949,58 +43061,60 @@ void gps_print_id(void)
 
 /* 00049474 */
 
-void FUN_00049474(byte *param_1,uint *param_2)
+void FUN_00049474(uint8_t *param_1,uint *param_2)
 
 {
+  uint8_t id;
   byte bVar1;
   char cVar2;
   char cVar3;
-  byte *pbVar4;
+  uint8_t *puVar4;
   int iVar5;
-  uint *puVar6;
+  uint32_t *mask;
   
   memset(param_2,0,0x2a);
   cVar2 = FUN_0004f1f8((int)param_2 + 0x26,param_2);
   cVar3 = FUN_0004f28e((int)param_2 + 0x27,param_2 + 10,param_2 + 1,param_2 + 3);
-  if ((cVar2 != '\0') && (pbVar4 = param_1, cVar3 != '\0')) {
-    for (; pbVar4 < param_1 + 0x18; pbVar4 = pbVar4 + 4) {
-      bVar1 = *pbVar4;
-      cVar2 = satellite_id_valid('\0',bVar1);
+  if ((cVar2 != '\0') && (puVar4 = param_1, cVar3 != '\0')) {
+    for (; puVar4 < param_1 + 0x18; puVar4 = puVar4 + 4) {
+      id = *puVar4;
+      cVar2 = satellite_id_valid(SATELLITE_GPS,id);
       if (cVar2 == '\0') {
-        cVar2 = satellite_id_valid('\x01',bVar1);
+        cVar2 = satellite_id_valid(SATELLITE_PSEUDOLITE,id);
         if ((cVar2 != '\0') &&
-           (satellite_add_to_set('\x01',bVar1,(uint *)((int)param_2 + 0xd)), '\0' < (char)pbVar4[1])
-           ) {
-          if ((char)pbVar4[1] < '\x05') {
-            puVar6 = (uint *)((int)param_2 + 0x23);
+           (satellite_add_to_set(SATELLITE_PSEUDOLITE,id,(uint32_t *)((int)param_2 + 0xd)),
+           '\0' < (char)puVar4[1])) {
+          if ((char)puVar4[1] < '\x05') {
+            mask = (uint32_t *)((int)param_2 + 0x23);
           }
-          else if ((char)pbVar4[1] < '\a') {
-            puVar6 = param_2 + 9;
+          else if ((char)puVar4[1] < '\a') {
+            mask = param_2 + 9;
           }
           else {
-            puVar6 = (uint *)((int)param_2 + 0x25);
+            mask = (uint32_t *)((int)param_2 + 0x25);
           }
-          iVar5 = CONCAT13(1,(uint3)bVar1 << 8);
+          iVar5 = CONCAT13(1,(uint3)id << 8);
           goto LAB_00049570;
         }
       }
       else {
-        satellite_add_to_set('\0',bVar1,param_2 + 2);
-        if ('\0' < (char)pbVar4[1]) {
-          if ((char)pbVar4[1] < '\x05') {
-            puVar6 = (uint *)((int)param_2 + 0x16);
-            iVar5 = (uint)bVar1 << 8;
+        satellite_add_to_set(SATELLITE_GPS,id,param_2 + 2);
+        if ('\0' < (char)puVar4[1]) {
+          if ((char)puVar4[1] < '\x05') {
+            mask = (uint32_t *)((int)param_2 + 0x16);
+            iVar5 = (uint)id << 8;
           }
-          else if ((char)pbVar4[1] < '\a') {
-            puVar6 = (uint *)((int)param_2 + 0x1a);
-            iVar5 = (uint)bVar1 << 8;
+          else if ((char)puVar4[1] < '\a') {
+            mask = (uint32_t *)((int)param_2 + 0x1a);
+            iVar5 = (uint)id << 8;
           }
           else {
-            puVar6 = (uint *)((int)param_2 + 0x1e);
-            iVar5 = (uint)bVar1 << 8;
+            mask = (uint32_t *)((int)param_2 + 0x1e);
+            iVar5 = (uint)id << 8;
           }
 LAB_00049570:
-          satellite_add_to_set((char)((uint)iVar5 >> 0x18),(char)((uint)iVar5 >> 8),puVar6);
+          satellite_add_to_set
+                    ((satellite_kind)((uint)iVar5 >> 0x18),(uint8_t)((uint)iVar5 >> 8),mask);
         }
       }
     }
@@ -43026,14 +43140,14 @@ LAB_00049570:
 
 /* WARNING: Unknown calling convention */
 
-undefined4 satellite_in_set(char param_1,char param_2,uint param_3)
+undefined4 satellite_in_set(satellite_kind kind,uint8_t id,uint32_t mask)
 
 {
-  if (param_2 != '\0') {
-    if (param_1 == '\x01') {
-      param_2 = param_2 + -0x20;
+  if (id != 0) {
+    if (kind == SATELLITE_PSEUDOLITE) {
+      id = id - 0x20;
     }
-    if ((param_3 & 1 << (param_2 - 1U & 0x3f)) != 0) {
+    if ((mask & 1 << (id - 1 & 0x3f)) != 0) {
       return 1;
     }
   }
@@ -43104,7 +43218,7 @@ void FUN_00049688(char param_1,byte param_2,int param_3,int param_4,undefined1 *
   char cVar2;
   undefined4 uVar1;
   
-  cVar2 = satellite_id_valid('\x02',param_2);
+  cVar2 = satellite_id_valid(SATELLITE_ANY,param_2);
   if (cVar2 == '\0') {
     *param_5 = 0;
     return;
@@ -43125,21 +43239,24 @@ void FUN_00049688(char param_1,byte param_2,int param_3,int param_4,undefined1 *
       *param_5 = 4;
       return;
     }
-    cVar2 = satellite_in_set('\0',param_2,*(uint *)(param_3 + 0x16));
+    cVar2 = satellite_in_set(SATELLITE_GPS,param_2,*(uint32_t *)(param_3 + 0x16));
     if ((cVar2 != '\0') ||
-       (cVar2 = satellite_in_set('\x01',param_2,(uint)*(byte *)(param_3 + 0x23)), cVar2 != '\0')) {
+       (cVar2 = satellite_in_set(SATELLITE_PSEUDOLITE,param_2,(uint)*(byte *)(param_3 + 0x23)),
+       cVar2 != '\0')) {
       *param_5 = 5;
       return;
     }
-    cVar2 = satellite_in_set('\0',param_2,*(uint *)(param_3 + 0x1a));
+    cVar2 = satellite_in_set(SATELLITE_GPS,param_2,*(uint32_t *)(param_3 + 0x1a));
     if ((cVar2 != '\0') ||
-       (cVar2 = satellite_in_set('\x01',param_2,(uint)*(byte *)(param_3 + 0x24)), cVar2 != '\0')) {
+       (cVar2 = satellite_in_set(SATELLITE_PSEUDOLITE,param_2,(uint)*(byte *)(param_3 + 0x24)),
+       cVar2 != '\0')) {
       *param_5 = 6;
       return;
     }
-    cVar2 = satellite_in_set('\0',param_2,*(uint *)(param_3 + 0x1e));
+    cVar2 = satellite_in_set(SATELLITE_GPS,param_2,*(uint32_t *)(param_3 + 0x1e));
     if ((cVar2 != '\0') ||
-       (cVar2 = satellite_in_set('\x01',param_2,(uint)*(byte *)(param_3 + 0x25)), cVar2 != '\0')) {
+       (cVar2 = satellite_in_set(SATELLITE_PSEUDOLITE,param_2,(uint)*(byte *)(param_3 + 0x25)),
+       cVar2 != '\0')) {
       *param_5 = 7;
       return;
     }
@@ -43177,8 +43294,8 @@ LAB_000497a6:
 
 /* WARNING: Unknown calling convention */
 
-byte * FUN_000497c8(char param_1,byte param_2,int param_3,byte *param_4,int param_5,byte *param_6,
-                   char *param_7)
+uint8_t * FUN_000497c8(char param_1,byte param_2,int param_3,byte *param_4,int param_5,byte *param_6
+                      ,char *param_7)
 
 {
   undefined3 uVar1;
@@ -43187,24 +43304,24 @@ byte * FUN_000497c8(char param_1,byte param_2,int param_3,byte *param_4,int para
   uint uVar2;
   char cVar5;
   char cVar6;
-  byte bVar7;
-  byte *pbVar3;
+  uint8_t uVar7;
+  uint8_t *puVar3;
   short sVar8;
+  uint8_t id;
   byte bVar9;
-  char *pcVar10;
-  char *pcVar11;
+  uint8_t *puVar10;
+  uint8_t *puVar11;
   undefined4 *puVar12;
   undefined1 *puVar13;
-  char *pcVar14;
-  bool bVar15;
+  bool bVar14;
   uint local_2e;
-  char local_2a [24];
+  uint8_t local_2a [24];
   char local_12;
-  byte *local_10;
+  uint8_t *local_10;
   undefined4 uStack_c;
   undefined4 uStack_8;
   
-  pbVar3 = param_6 + (uint)param_2 * 8;
+  puVar3 = param_6 + (uint)param_2 * 8;
   sVar8 = 7;
   puVar12 = &uStack_c;
   puVar13 = &DAT_0004e016;
@@ -43214,7 +43331,7 @@ byte * FUN_000497c8(char param_1,byte param_2,int param_3,byte *param_4,int para
     puVar12 = (undefined4 *)((int)puVar12 + 1);
     puVar13 = puVar13 + 1;
   } while (sVar8 != -1);
-  local_10 = pbVar3;
+  local_10 = puVar3;
   if (param_1 == '\x01') {
     local_2e = *(uint *)(param_3 + 4);
     bVar9 = *(byte *)(param_3 + 0xc);
@@ -43225,82 +43342,82 @@ byte * FUN_000497c8(char param_1,byte param_2,int param_3,byte *param_4,int para
     bVar4 = count_bits(bVar9);
     uVar2 = (uint)bVar4;
     bVar4 = count_bits();
-    pbVar3 = (byte *)(uVar2 + bVar4);
-    if (0xc < (int)pbVar3) {
+    puVar3 = (uint8_t *)(uVar2 + bVar4);
+    if (0xc < (int)puVar3) {
       local_2e = *(uint *)(param_3 + 8) & local_2e;
-      pcVar11 = local_2a;
-      for (pcVar14 = (char *)(param_5 + 4);
-          pcVar14 < (char *)(param_5 + (uint)*(byte *)(param_5 + 2) * 10 + 4);
-          pcVar14 = pcVar14 + 10) {
-        cVar6 = satellite_in_set('\0',*pcVar14,local_2e);
-        pcVar10 = pcVar11;
+      puVar11 = local_2a;
+      for (puVar3 = (uint8_t *)(param_5 + 4);
+          puVar3 < (uint8_t *)(param_5 + (uint)*(byte *)(param_5 + 2) * 10 + 4);
+          puVar3 = puVar3 + 10) {
+        cVar6 = satellite_in_set(SATELLITE_GPS,*puVar3,local_2e);
+        puVar10 = puVar11;
         if (cVar6 == '\0') {
-          *pcVar11 = *pcVar14;
-          pcVar10 = pcVar11 + 2;
-          pcVar11[1] = pcVar14[4];
+          *puVar11 = *puVar3;
+          puVar10 = puVar11 + 2;
+          puVar11[1] = puVar3[4];
         }
-        pcVar11 = pcVar10;
+        puVar11 = puVar10;
       }
-      qsort(local_2a,(int)pcVar11 - (int)local_2a >> 1,2,FUN_00049794);
+      qsort(local_2a,(int)puVar11 - (int)local_2a >> 1,2,FUN_00049794);
       cVar6 = count_bits(bVar9);
       cVar5 = count_bits();
       local_12 = '\f' - (cVar6 + cVar5);
       uVar1 = 0;
       while( true ) {
-        pbVar3 = (byte *)CONCAT31(uVar1,local_12);
+        puVar3 = (uint8_t *)CONCAT31(uVar1,local_12);
         cVar6 = local_12 + -1;
-        bVar15 = local_12 == '\0';
+        bVar14 = local_12 == '\0';
         local_12 = cVar6;
-        if (bVar15) break;
-        pcVar11 = pcVar11 + -2;
-        satellite_add_to_set('\0',*pcVar11,&local_2e);
+        if (bVar14) break;
+        puVar11 = puVar11 + -2;
+        satellite_add_to_set(SATELLITE_GPS,*puVar11,&local_2e);
         uVar1 = extraout_var;
       }
     }
   }
   *param_7 = '\0';
-  bVar4 = 1;
+  id = 1;
   do {
     if ((local_10 <= param_6) || ((local_2e == 0 && (bVar9 == 0)))) {
       for (; param_6 < local_10; param_6 = param_6 + 8) {
         *(undefined4 *)param_6 = uStack_c;
         *(undefined4 *)(param_6 + 4) = uStack_8;
       }
-      return pbVar3;
+      return puVar3;
     }
-    if (bVar4 == 0x21) {
+    if (id == 0x21) {
       local_2e = (uint)bVar9;
       bVar9 = 0;
     }
-    pbVar3 = (byte *)0x0;
+    puVar3 = (uint8_t *)0x0;
     if ((local_2e & 1) != 0) {
-      *param_6 = bVar4;
-      pbVar3 = param_4;
+      *param_6 = id;
+      puVar3 = param_4;
       if (param_1 == '\x01') {
-        for (; pbVar3 < param_4 + 0x18; pbVar3 = pbVar3 + 4) {
-          if (bVar4 == *pbVar3) {
-            *(ushort *)(param_6 + 2) = (ushort)pbVar3[2];
+        for (; puVar3 < param_4 + 0x18; puVar3 = puVar3 + 4) {
+          if (id == *puVar3) {
+            *(ushort *)(param_6 + 2) = (ushort)puVar3[2];
             break;
           }
         }
       }
       else {
-        cVar6 = satellite_in_set('\0',bVar4,*(uint *)(param_3 + 0x12));
+        cVar6 = satellite_in_set(SATELLITE_GPS,id,*(uint32_t *)(param_3 + 0x12));
         if ((cVar6 == '\0') &&
-           (cVar6 = satellite_in_set('\x01',bVar4,(uint)*(byte *)(param_3 + 0x22)), cVar6 == '\0'))
-        {
-          bVar7 = 0;
+           (cVar6 = satellite_in_set(SATELLITE_PSEUDOLITE,id,(uint)*(byte *)(param_3 + 0x22)),
+           cVar6 == '\0')) {
+          uVar7 = 0;
         }
         else {
-          bVar7 = 1;
+          uVar7 = 1;
         }
-        param_6[1] = bVar7;
+        param_6[1] = uVar7;
       }
-      pbVar3 = (byte *)FUN_00049688(param_1,bVar4,param_3,param_5,param_6 + 4);
+      puVar3 = (uint8_t *)FUN_00049688(param_1,id,param_3,param_5,param_6 + 4);
       *param_7 = *param_7 + '\x01';
       param_6 = param_6 + 8;
     }
-    bVar4 = bVar4 + 1;
+    id = id + 1;
     local_2e = local_2e >> 1;
   } while( true );
 }
@@ -44238,32 +44355,33 @@ override_jmp_0004a55c_case_0:
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_0004a636(uint8_t *param_1)
+void FUN_0004a636(pll_stage *param_1)
 
 {
   char cVar1;
   uint8_t uVar2;
   uint8_t uVar3;
+  uint8_t uVar4;
   uint16_t sr;
-  uint8_t uVar7;
-  int iVar4;
-  undefined4 uVar5;
-  undefined1 uVar8;
-  undefined2 uVar6;
+  pll_stage pVar8;
+  int iVar5;
+  undefined4 uVar6;
   undefined1 uVar9;
+  undefined2 uVar7;
   undefined1 uVar10;
-  uint32_t local_e;
-  uint32_t local_a;
+  undefined1 uVar11;
+  undefined4 local_e;
+  undefined4 local_a;
   undefined1 auStack_6 [2];
   
   sr = set_interrupt_mask(0x100);
   *param_1 = pll.stage;
-  uVar7 = holdover_duration();
-  param_1[1] = uVar7;
-  uVar7 = FUN_00045bb8();
-  param_1[2] = uVar7;
-  uVar7 = FUN_00045c18();
-  param_1[3] = uVar7;
+  pVar8 = holdover_duration();
+  param_1[1] = pVar8;
+  pVar8 = FUN_00045bb8();
+  param_1[2] = pVar8;
+  pVar8 = FUN_00045c18();
+  param_1[3] = pVar8;
   *(undefined4 *)(param_1 + 10) = interval_reading._0_4_;
   *(undefined4 *)(param_1 + 0xe) = interval_reading._4_4_;
   *(undefined4 *)(param_1 + 0x12) = _interval_reading_flag;
@@ -44271,47 +44389,47 @@ void FUN_0004a636(uint8_t *param_1)
   *(undefined2 *)(param_1 + 0x1a) = _interval_mean_flag;
   *(float *)(param_1 + 4) = pll.tfom;
   cVar1 = (char)param_1;
-  uVar7 = get_ffom(cVar1 + '\b');
-  param_1[9] = uVar7;
-  uVar7 = FUN_0004299c((short)(param_1 + 0x26),cVar1 + '+');
-  param_1[0x2a] = uVar7;
-  uVar7 = FUN_000429c6((short)(param_1 + 0x2c),(short)(param_1 + 0x31),(short)auStack_6);
-  param_1[0x30] = uVar7;
-  uVar7 = FUN_00045c48();
-  param_1[0x1c] = uVar7;
+  pVar8 = get_ffom(cVar1 + '\b');
+  param_1[9] = pVar8;
+  pVar8 = FUN_0004299c((short)(param_1 + 0x26),cVar1 + '+');
+  param_1[0x2a] = pVar8;
+  pVar8 = FUN_000429c6((short)(param_1 + 0x2c),(short)(param_1 + 0x31),(short)auStack_6);
+  param_1[0x30] = pVar8;
+  pVar8 = FUN_00045c48();
+  param_1[0x1c] = pVar8;
   *(undefined4 *)(param_1 + 0x22) = pll.field_3b0._24_4_;
   param_1[0x1d] = DAT_00101ea6;
   *(float *)(param_1 + 0x1e) = scpi_value_SOURce_ROSCillator_HOLDover_LIMit_THReshold;
   *(undefined4 *)(param_1 + 0x100) = _DAT_00101eba;
   *(undefined4 *)(param_1 + 0x104) = _DAT_00101ebe;
-  iVar4 = get_date_time(&local_a,&local_e);
-  if ((char)iVar4 == '\0') {
-    param_1[0x108] = 1;
-    *(uint32_t *)(param_1 + 0xf8) = local_e;
-    *(uint32_t *)(param_1 + 0xfc) = local_a;
+  iVar5 = get_date_time(&local_a,&local_e);
+  if ((char)iVar5 == '\0') {
+    param_1[0x108] = PLL_STAGE_POWERUP;
+    *(undefined4 *)(param_1 + 0xf8) = local_e;
+    *(undefined4 *)(param_1 + 0xfc) = local_a;
   }
   else {
-    param_1[0x108] = 0;
-    uVar7 = gps.status.hour;
-    uVar2 = gps.status.minute;
-    uVar3 = gps.status.second;
+    param_1[0x108] = PLL_STAGE_INVALID;
+    uVar2 = gps.status.hour;
+    uVar3 = gps.status.minute;
+    uVar4 = gps.status.second;
     param_1[0xf8] = gps.status.pad_04;
-    param_1[0xf9] = uVar7;
-    param_1[0xfa] = uVar2;
-    param_1[0xfb] = uVar3;
-    uVar5 = oncore_date_pack((char)gps.status.year);
-    *(undefined4 *)(param_1 + 0xfc) = uVar5;
+    param_1[0xf9] = uVar2;
+    param_1[0xfa] = uVar3;
+    param_1[0xfb] = uVar4;
+    uVar6 = oncore_date_pack((char)gps.status.year);
+    *(undefined4 *)(param_1 + 0xfc) = uVar6;
     FUN_00011700((short)(param_1 + 0xfc),cVar1 + -8);
   }
   param_1[0xef] = pll.field_3b0[0x25];
   FUN_0004b168('\0',0);
-  uVar9 = 4;
-  uVar10 = 0x70;
-  uVar8 = FUN_0004b420();
-  FUN_0004b168('\x01',uVar8);
+  uVar10 = 4;
+  uVar11 = 0x70;
+  uVar9 = FUN_0004b420();
+  FUN_0004b168('\x01',uVar9);
   param_1[0x112] = DAT_00101e98;
-  uVar6 = FUN_0002f626(uVar10);
-  *(undefined2 *)(param_1 + 300) = uVar6;
+  uVar7 = FUN_0002f626(uVar11);
+  *(undefined2 *)(param_1 + 300) = uVar7;
   set_interrupt_mask(sr);
   param_1[0xf6] = gps.fix_mode;
   param_1[0xf0] = gps.field_52a[0];
@@ -44328,15 +44446,16 @@ void FUN_0004a636(uint8_t *param_1)
   param_1[0x111] = gps.position_hold;
   *(uint32_t *)(param_1 + 0x124) = gps.average_count;
   *(int32_t *)(param_1 + 0x128) = scpi_value_DOUGlas_DURation;
-  FUN_00049474(0xd5e,(short)(param_1 + 0x32),uVar9);
+  FUN_00049474(0xd5e,(short)(param_1 + 0x32),uVar10);
   FUN_000497c8('\0',0xc,(int)(param_1 + 0x32),&gps.status.channels[0].satellite,0x100d7a,
                param_1 + 0x5c,(char *)(param_1 + 0xed));
   FUN_000497c8('\x01',6,(int)(param_1 + 0x32),&gps.status.channels[0].satellite,0x100d7a,
                param_1 + 0xbc,(char *)(param_1 + 0xee));
   param_1[0xec] = gps.field_0cc[0];
-  if (param_1[0x111] == 0) {
-    if ((*(int *)(param_1 + 0x124) == 0) || (param_1[0x112] == 1)) {
-      if (param_1[0x112] == 0) {
+  if (param_1[0x111] == PLL_STAGE_INVALID) {
+    if ((*(undefined4 *)(param_1 + 0x124) == PLL_STAGE_INVALID) ||
+       (param_1[0x112] == PLL_STAGE_POWERUP)) {
+      if (param_1[0x112] == PLL_STAGE_INVALID) {
         *(char **)(param_1 + 0x114) = "INIT ";
       }
       else {
@@ -44348,15 +44467,15 @@ void FUN_0004a636(uint8_t *param_1)
     }
     else {
       *(char **)(param_1 + 0x114) = "AVG ";
-      iVar4 = double_to_integer((double)CONCAT44(gps.average_latitude._0_4_,
+      uVar6 = double_to_integer((double)CONCAT44(gps.average_latitude._0_4_,
                                                  gps.average_latitude._4_4_));
-      *(int *)(param_1 + 0x118) = iVar4;
-      iVar4 = double_to_integer((double)CONCAT44(gps.average_longitude._0_4_,
+      *(undefined4 *)(param_1 + 0x118) = uVar6;
+      uVar6 = double_to_integer((double)CONCAT44(gps.average_longitude._0_4_,
                                                  gps.average_longitude._4_4_));
-      *(int *)(param_1 + 0x11c) = iVar4;
-      iVar4 = double_to_integer((double)CONCAT44(gps.average_height_msl._0_4_,
+      *(undefined4 *)(param_1 + 0x11c) = uVar6;
+      uVar6 = double_to_integer((double)CONCAT44(gps.average_height_msl._0_4_,
                                                  gps.average_height_msl._4_4_));
-      *(int *)(param_1 + 0x120) = iVar4;
+      *(undefined4 *)(param_1 + 0x120) = uVar6;
     }
   }
   else {
@@ -44789,8 +44908,9 @@ uint32_t FUN_0004b01e(void)
   char cVar3;
   uint uStack_8;
   
-  if ((((gps.raim.raim_on != 1) || (gps.field_2f8[2] == 0)) || (gps.raim.raim_status == 2)) ||
-     (uVar1 = 1, gps.raim.solution_status == 2)) {
+  if ((((gps.raim.raim_on != 1) || (gps.field_2f8[2] == 0)) ||
+      (gps.raim.raim_status == ONCORE_RAIM_NEITHER)) ||
+     (uVar1 = 1, gps.raim.solution_status == ONCORE_RAIM_UNKNOWN)) {
     uVar1 = 0;
   }
   if (((char)uVar1 == '\0') ||
@@ -44804,7 +44924,7 @@ uint32_t FUN_0004b01e(void)
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0004b08c)[sVar2]) {
     case 8:
-      if (gps.raim.solution_status != 0) {
+      if (gps.raim.solution_status != ONCORE_RAIM_OK) {
         gps.field_52a[0x11] = 2;
         uRam00101b4e = get_uptime();
         gps_counts.raim_detected = gps_counts.raim_detected + 1;
@@ -44812,7 +44932,7 @@ uint32_t FUN_0004b01e(void)
       }
       break;
     case 0x22:
-      if (gps.raim.solution_status != 1) {
+      if (gps.raim.solution_status != ONCORE_RAIM_ALARM) {
         return uVar1;
       }
       gps.field_52a[0x11] = 2;
@@ -44820,7 +44940,7 @@ uint32_t FUN_0004b01e(void)
       gps_counts.raim_detected = gps_counts.raim_detected + 1;
       return uRam00101b4e;
     case 0x3e:
-      if (gps.raim.solution_status != 0) {
+      if (gps.raim.solution_status != ONCORE_RAIM_OK) {
         cVar3 = uptime_elapsed(0x101b4e,&uStack_8);
         if (cVar3 == '\0') {
           uRam00101b4e = get_uptime();
@@ -44835,7 +44955,7 @@ uint32_t FUN_0004b01e(void)
       }
       break;
     case 0x72:
-      if (gps.raim.solution_status != 0) {
+      if (gps.raim.solution_status != ONCORE_RAIM_OK) {
         return uVar1;
       }
     }
@@ -44891,7 +45011,7 @@ void FUN_0004b168(char param_1,undefined1 param_2)
     bVar2 = true;
   }
   bVar7 = false;
-  if (gps.fix_mode == 1) {
+  if (gps.fix_mode == ONCORE_POSITION_FIX) {
     for (bVar6 = 1; (!bVar7 && (bVar6 < 7)); bVar6 = bVar6 + 1) {
       cVar4 = FUN_0004f118(bVar6);
       bVar7 = cVar4 != '\0';
@@ -44901,8 +45021,8 @@ void FUN_0004b168(char param_1,undefined1 param_2)
     bVar1 = true;
   }
   FUN_0004b01e();
-  if ((gps_pps_dead == 0) || (gps.field_52a[1] = 1, pll.field_3b0[0x25] == 0 && gps.fix_mode != 1))
-  {
+  if ((gps_pps_dead == 0) ||
+     (gps.field_52a[1] = 1, pll.field_3b0[0x25] == 0 && gps.fix_mode != ONCORE_POSITION_FIX)) {
     gps.field_52a[1] = 0;
   }
   uVar5 = 0;
@@ -45093,8 +45213,8 @@ LAB_0004b4d2:
       }
     }
   }
-  if (((gps.field_52a[0x20] != 1) || (gps.fix_mode != 1)) || (bVar2 = true, gps.field_0cc[1] == 0))
-  {
+  if (((gps.field_52a[0x20] != 1) || (gps.fix_mode != ONCORE_POSITION_FIX)) ||
+     (bVar2 = true, gps.field_0cc[1] == 0)) {
     bVar2 = false;
   }
   iVar1 = (int)(char)gps.field_52a[0x21] - 2;
@@ -46965,15 +47085,15 @@ LAB_0004f0c4:
 
 /* WARNING: Unknown calling convention */
 
-undefined4 satellite_id_valid(char param_1,byte param_2)
+undefined4 satellite_id_valid(satellite_kind kind,uint8_t id)
 
 {
   int iVar1;
   byte bVar2;
   byte bVar3;
   
-  iVar1 = (int)param_1 - 2;
-  if (1 < (uint)(int)param_1 && iVar1 != 0) {
+  iVar1 = (int)(char)kind - 2;
+  if (1 < (uint)(int)(char)kind && iVar1 != 0) {
     return 0;
   }
                     /* WARNING: Switch is manually overridden */
@@ -46990,7 +47110,7 @@ undefined4 satellite_id_valid(char param_1,byte param_2)
   }
   bVar2 = 0x25;
 LAB_0004f102:
-  if ((bVar3 <= param_2) && (param_2 <= bVar2)) {
+  if ((bVar3 <= id) && (id <= bVar2)) {
     return 1;
   }
   return 0;
@@ -47007,9 +47127,9 @@ uint8_t FUN_0004f118(byte param_1)
   
   poVar1 = gps.status.channels + (param_1 - 1);
   if ((gps.field_0cc[0] != 0) &&
-     (((cVar2 = satellite_id_valid('\0',poVar1->satellite), cVar2 != '\0' ||
-       (cVar2 = satellite_id_valid('\x01',poVar1->satellite), cVar2 != '\0')) &&
-      (gps.status.channels[param_1 - 1].mode == 8)))) {
+     (((cVar2 = satellite_id_valid(SATELLITE_GPS,poVar1->satellite), cVar2 != '\0' ||
+       (cVar2 = satellite_id_valid(SATELLITE_PSEUDOLITE,poVar1->satellite), cVar2 != '\0')) &&
+      (gps.status.channels[param_1 - 1].mode == ONCORE_AVAILABLE_FOR_POSITION)))) {
     return poVar1->satellite;
   }
   return 0;
@@ -47049,7 +47169,7 @@ void FUN_0004f18c(void)
   
   bVar1 = 1;
   do {
-    gps.status.channels[bVar1 - 1].mode = 0;
+    gps.status.channels[bVar1 - 1].mode = ONCORE_CODE_SEARCH;
     bVar1 = bVar1 + 1;
   } while (bVar1 < 7);
   return;
@@ -47060,14 +47180,14 @@ void FUN_0004f18c(void)
 
 /* WARNING: Unknown calling convention */
 
-void satellite_add_to_set(char param_1,char param_2,uint *param_3)
+void satellite_add_to_set(satellite_kind kind,uint8_t id,uint32_t *mask)
 
 {
-  if (param_1 == '\0') {
-    *param_3 = 1 << (param_2 - 1U & 0x3f) | *param_3;
+  if (kind == SATELLITE_GPS) {
+    *mask = 1 << (id - 1 & 0x3f) | *mask;
   }
   else {
-    *(byte *)param_3 = (byte)(1 << (param_2 - 0x21U & 0x3f)) | *(byte *)param_3;
+    *(byte *)mask = (byte)(1 << (id - 0x21 & 0x3f)) | *(byte *)mask;
   }
   return;
 }
@@ -47092,42 +47212,42 @@ char count_bits(uint param_1)
 
 /* 0004f1f8 */
 
-undefined4 FUN_0004f1f8(undefined1 *param_1,uint *param_2)
+undefined4 FUN_0004f1f8(undefined1 *param_1,uint32_t *param_2)
 
 {
-  byte bVar1;
-  char cVar3;
-  byte bVar4;
-  undefined1 uVar5;
-  undefined4 uVar2;
-  byte bVar6;
-  uint local_8;
+  uint8_t id;
+  char cVar2;
+  byte bVar3;
+  undefined1 uVar4;
+  undefined4 uVar1;
+  byte bVar5;
+  uint32_t local_8;
   
   if (gps.visibility_received == 0) {
-    uVar2 = 0;
+    uVar1 = 0;
   }
   else {
-    bVar6 = 0;
+    bVar5 = 0;
     local_8 = 0;
-    bVar4 = gps.visibility.count;
+    bVar3 = gps.visibility.count;
     if (0xb < gps.visibility.count) {
-      bVar4 = 0xc;
+      bVar3 = 0xc;
     }
-    for (; bVar6 < bVar4; bVar6 = bVar6 + 1) {
-      bVar1 = gps.visibility.satellites[bVar6].satellite;
-      cVar3 = satellite_id_valid('\0',bVar1);
-      if (cVar3 != '\0') {
-        satellite_add_to_set('\0',bVar1,&local_8);
+    for (; bVar5 < bVar3; bVar5 = bVar5 + 1) {
+      id = gps.visibility.satellites[bVar5].satellite;
+      cVar2 = satellite_id_valid(SATELLITE_GPS,id);
+      if (cVar2 != '\0') {
+        satellite_add_to_set(SATELLITE_GPS,id,&local_8);
       }
     }
-    uVar5 = count_bits(local_8);
-    *param_1 = uVar5;
-    if (param_2 != (uint *)0x0) {
+    uVar4 = count_bits(local_8);
+    *param_1 = uVar4;
+    if (param_2 != (uint32_t *)0x0) {
       *param_2 = local_8;
     }
-    uVar2 = 1;
+    uVar1 = 1;
   }
-  return uVar2;
+  return uVar1;
 }
 
 
@@ -47137,12 +47257,12 @@ undefined4
 FUN_0004f28e(undefined1 *param_1,undefined1 *param_2,undefined4 *param_3,undefined1 *param_4)
 
 {
-  byte bVar2;
-  undefined1 uVar3;
+  byte id;
+  undefined1 uVar2;
   undefined4 uVar1;
-  byte bVar4;
-  undefined2 uVar5;
-  undefined1 uVar6;
+  byte bVar3;
+  undefined2 uVar4;
+  undefined1 uVar5;
   undefined4 local_a;
   undefined1 local_6 [2];
   
@@ -47152,26 +47272,26 @@ FUN_0004f28e(undefined1 *param_1,undefined1 *param_2,undefined4 *param_3,undefin
   else {
     local_a = 0;
     local_6[0] = 0;
-    for (bVar4 = 1; bVar4 < 7; bVar4 = bVar4 + 1) {
-      bVar2 = FUN_0004f118(bVar4);
-      if (bVar2 != 0) {
-        if (0x20 < bVar2) {
-          uVar5 = (undefined2)((uint)local_6 >> 0x10);
-          uVar3 = (undefined1)((uint)local_6 >> 8);
-          uVar6 = SUB41(local_6,0);
+    for (bVar3 = 1; bVar3 < 7; bVar3 = bVar3 + 1) {
+      id = FUN_0004f118(bVar3);
+      if (id != 0) {
+        if (0x20 < id) {
+          uVar4 = (undefined2)((uint)local_6 >> 0x10);
+          uVar2 = (undefined1)((uint)local_6 >> 8);
+          uVar5 = SUB41(local_6,0);
         }
         else {
-          uVar5 = (undefined2)((uint)&local_a >> 0x10);
-          uVar3 = (undefined1)((uint)&local_a >> 8);
-          uVar6 = SUB41(&local_a,0);
+          uVar4 = (undefined2)((uint)&local_a >> 0x10);
+          uVar2 = (undefined1)((uint)&local_a >> 8);
+          uVar5 = SUB41(&local_a,0);
         }
-        satellite_add_to_set(0x20 < bVar2,bVar2,(uint *)CONCAT31(CONCAT21(uVar5,uVar3),uVar6));
+        satellite_add_to_set(0x20 < id,id,(uint32_t *)CONCAT31(CONCAT21(uVar4,uVar2),uVar5));
       }
     }
-    uVar3 = count_bits((char)local_a);
-    *param_1 = uVar3;
-    uVar3 = count_bits(local_6[0]);
-    *param_2 = uVar3;
+    uVar2 = count_bits((char)local_a);
+    *param_1 = uVar2;
+    uVar2 = count_bits(local_6[0]);
+    *param_2 = uVar2;
     if (param_3 != (undefined4 *)0x0) {
       *param_3 = local_a;
     }
@@ -47373,7 +47493,7 @@ undefined4 FUN_0004f4ca(char *param_1)
 undefined4 FUN_0004f59a(undefined4 param_1,undefined4 param_2)
 
 {
-  if (gps.fix_mode == 1) {
+  if (gps.fix_mode == ONCORE_POSITION_FIX) {
     param_1 = oncore_decode_fields(param_1,param_2,&DAT_00050fd2);
     FUN_0004b168('\0',0);
     if ((gps.position_hold == 0) &&

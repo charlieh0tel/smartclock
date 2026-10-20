@@ -286,9 +286,11 @@ is no `scanf`; input is parsed by the SCPI parser and two `atoi` calls.
 
 `gps_last_command` (`0x1017f2`) points at the last command record,
 whose `+8`, `+0xa` and `+0xc` the page prints as `Sender`, `Cmd #` and
-its kind; `gps_last_issued` (`0x101216`) is printed after `(none
-issued)`, and `gps_last_issued_bytes`, 20 bytes from `0x101266`, in
-hex.
+its kind; `gps_last_program_message` (`0x101216`) is the "Last Rcvr
+Prgm Msg", `(none issued)` when empty, and `gps_response_buffer`, 20
+bytes from `0x101266`, the "Response Buffer", in hex.  `gps_receive`
+(`0x4b846`) frames the engine's messages into it from their `@`,
+through `gps_response_cursor`, counting frame errors.
 
 **The receiver ID**, `gps.receiver_id` (`oncore_receiver_id`), takes its
 fields from `gps_print_id`: `Copyright Notice`, `Software P/N`,
@@ -363,10 +365,21 @@ data area and is `psos_supervisor_stack_size` (`+0x28`) long.
 **Others.**  `*IDN?` prints `idn_model` and `idn_serial` (`0x101f68`,
 `0x101f7a`, 18 bytes each) and `idn_suffix` (`0x101f8c`) after
 `3543B-`: `3543B-A` on the bench (`../bench.md`).  The FPGA's shadow
-registers are the firmware's own `fconf_regs` (`0x101fa9`): "old_addr,
-fconf_regs[1] = %x" is `fpga_read` (`0x4076a`), which puts a register
-number in `fconf_regs[1]`'s address bits to read it.  `fpga_bit_table`
-(`0x41310`) gives each bit `fpga_set_bit` takes its register and mask.
+registers are the firmware's own `fconf_regs` (`0x101fa9`), four of
+them: "old_addr, fconf_regs[1] = %x" is `fpga_read` (`0x4076a`), which
+puts a register number in `fconf_regs[1]`'s address bits to read it.
+`fpga_bit_table` (`0x41310`) gives each bit `fpga_set_bit` takes its
+register and mask.  The time-interval counter's routines are each
+given `interval_reading` (a double) and `counter_configuration`
+(`0x101fae`): `counter_arm` (`0x40c6a`) reloads `fconf_regs` from the
+configuration's first four bytes and re-arms the FPGA;
+`counter_calibrate` (`0x405bc`) runs `interpolator_calibrate` and keeps
+`reading_low` and the spread at the configuration's `+0x18` and
+`+0x1c`; `counter_read` (`0x40d34`) is `interval.md`'s "One reading",
+the interpolator's part `(interpolator_read() - +0x18) / +0x1c` and
+the calibration double the configuration's `+4`.  `interval_next_reading`
+is `interval_wait_reading` (`0x4513c`), then `interval_rearm`
+(`0x450c4`).
 "mask angle ack failure: %02X" and eight like it print `gps_ack_code`
 (`0x102584`); "Unable to initialize eepx: %X" and the like print
 `eepx_status`, `drtR_status`, `drtW_status`, `sciR_status` and
@@ -430,3 +443,21 @@ one caller's stack:
 `interpolator_measure` (`0x40030`) pulses the FPGA bits for one
 measurement and returns `interpolator_read` (`0x40c56`), the complement
 of FPGA register `0x10`.
+
+## The NV register
+
+The settings the SCPI setters keep, `nv_settings` (`0x101e8a`, `0xc5`
+bytes, the `scpi_value_` cells among them), are saved to the EEPROM as
+the "NV register": two records of `0x80` bytes, `nv_records` at
+`0x4000c0`, used in turn.  `nv_save` (`0x3293a`) builds a record --
+`"S"`, a sequence number one past the stored record's at `+4`,
+`"3543B"`, then the fields of 21 settings and 18 more, from descriptor
+tables at `0x32d5e` and `0x32db2`, packed into longs, then `0xff`
+("Warning: Entire nv register is being used" when they do not fit),
+with `nv_checksum` (`0x328e0`) over bytes 8 to `0x7f` -- and writes it
+to slot `nv_slot` (`0x101f62`) when `nv_record_differs` (`0x3290e`)
+says it changed.  `nv_restore` (`0x3282c`) loads slot 0, else slot 1
+(`nv_load_slot`, `0x32bc2`); when neither is good it copies
+`nv_settings_defaults` (`0x30966`) over the settings, takes the slot
+with the older sequence number, erases it (`nv_slot_erase`, `0x327f4`)
+and saves.  `clear_nv` erases both slots.

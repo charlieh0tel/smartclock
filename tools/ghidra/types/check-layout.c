@@ -182,3 +182,4 @@ CHECK_SIZE(fpga_bit, 4);
 CHECK_SIZE(interpolator_calibration, 9);
 CHECK_FIELD(interpolator_calibration, result_valid, 4);
 CHECK_FIELD(interpolator_calibration, reading_high, 8);
+CHECK_FIELD(gps_state, raim_option, 0x558);

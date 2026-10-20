@@ -63,7 +63,7 @@
 0x448fc	function	interval_average	interval.md: counts readings to ten and stores the mean
 0x102538	label	interval_mean	interval.md: mean of ten one-second readings
 0x10253c	label	interval_mean_flag	interval.md: the mean's flag
-0x101f9c	label	interval_reading	interval.md: latest one-second reading
+0x101f9c	label	interval_reading	interval.md: latest one-second reading	double
 0x101fa4	label	interval_reading_flag	interval.md: the reading's flag
 #
 # the console, docs/firmware/console.md
@@ -216,7 +216,7 @@
 0x20b8a	function	qspi_transfer	context: waits for SPCR1 and SPSR, runs a QSPI transfer, copies the receive RAM at 0xfffd00 out
 0x1f2c0	function	adc_read	context: sends 0xc000 | channel << 11 to device 1 minor 1 and returns the reply shifted down 2; diag_adc_read and diag_cal call it	int adc_read(uint8_t channel)
 0x1df12	function	console_write_polled	context: in supervisor mode, writes the string a character at a time through 0x1d680; debug_write uses it	int console_write_polled(char *s)
-0x101fa9	label	fconf_regs	the firmware's own name, "old_addr, fconf_regs[1] = %x" printing 0x101faa; context: fpga_set_bit's copy of the FPGA registers	uint8_t[6]
+0x101fa9	label	fconf_regs	the firmware's own name, "old_addr, fconf_regs[1] = %x" printing 0x101faa; context: fpga_set_bit's copy of the FPGA registers	uint8_t[4]
 0x41310	label	fpga_bit_table	context: fpga_set_bit's register and mask for each bit	fpga_bit[6]
 #
 # structures and the functions they show, docs/firmware/structures.md
@@ -321,7 +321,7 @@
 0x1009b6	label	watchdog_spool	structures.md: the watchdog line's spool	uint8_t
 0x1017bc	label	gps_counts	structures.md: the GPS Process Monitor page's counters, memset as one	gps_statistics
 0x1017f2	label	gps_last_command	structures.md: "Sender: %-5s Cmd #: %-2d (%s)" reads +8, +0xa and +0xc through it	void *
-0x101216	label	gps_last_issued	structures.md: printed with %s after "(none issued)"
+0x101216	label	gps_last_program_message	structures.md: the GPS Process Monitor's "Last Rcvr Prgm Msg", "(none issued)" when empty
 0x101b6e	label	gps_pps_dead	structures.md: set with "GPS 1pps signal is dead", cleared with "is ok"	uint8_t
 0x101cfb	label	gps_pps_counting	structures.md: set when gps_pps_check starts the pulse accumulator	uint8_t
 0x101cfc	label	gps_pps_last_count	structures.md: PACNT at the last check; "short gate, count %d" prints PACNT less it	uint8_t
@@ -384,8 +384,8 @@
 0x31bd0	function	log_page_free_entry	structures.md: the first entry of a page with no format
 0x4ca6c	function	gps_print_process_monitor	structures.md: "GPS Process Monitor", gps_counts
 0x4076a	function	fpga_read	structures.md: sets the register in fconf_regs[1]'s address bits, reads 0x304000, restores them; "old_addr, fconf_regs[1] = %x"	uint8_t fpga_read(uint8_t reg)
-0x101266	label	gps_last_issued_bytes	structures.md: gps_print_process_monitor prints them %hx, 0x101266 to 0x10127a	uint8_t[20]
-0x101390	label	gps_print_cursor	structures.md: gps_print_process_monitor walks gps_last_issued_bytes with it	uint8_t *
+0x101266	label	gps_response_buffer	structures.md: the GPS Process Monitor's "Response Buffer", printed %hx; gps_receive frames bytes from the engine into it	uint8_t[20]
+0x101390	label	gps_print_cursor	structures.md: gps_print_process_monitor walks gps_response_buffer with it	uint8_t *
 #
 # functions the console words and SCPI handlers name, by calling them alone
 0x1f308	function	read_adc_temp	structures.md: adc_temp's and :DIAG:TEMP?'s reading, "Temperature: %f": channel 0 times 0.273	float read_adc_temp(void) @ D0
@@ -411,7 +411,7 @@
 0x3281a	function	clear_nv	structures.md: the clear_nv word's
 0x40a64	function	sync_request	structures.md: the clk_synch and sync_imm words': stores a mode and a time and sets two states to 2
 0x45b70	function	holdover_duration	structures.md: :SOUR:ROSC:HOLD:DUR? and HOLD:INIT, by pll.stage
-0x4c918	function	clear_gps_debug	structures.md: the clr_gps_debug word's: clears gps_counts, gps_last_command and gps_last_issued
+0x4c918	function	clear_gps_debug	structures.md: the clr_gps_debug word's: clears gps_counts, gps_last_command and gps_last_program_message
 0x330ee	function	log_count	structures.md: "Log status: %-3d entries"; sets *full when more than 31	int log_count(uint8_t *full)
 0x101f8e	label	log_entry_count	structures.md: log_count returns it	int16_t
 0x12e24	function	pps_init	structures.md: "Pps_init error %#04x" prints its result
@@ -456,3 +456,55 @@
 0x40c56	function	interpolator_read	context: the complement of FPGA register 0x10
 
 0x101fce	label	interpolator_calibration_state	context: the record interpolator_calibrate is given, besides a copy on one caller's stack	interpolator_calibration
+#
+# batch 4
+0x4a42c	function	bit_is_set	context: value & 1 << bit
+0x4f1da	function	count_bits	context: counts a word's set bits
+0x4f02a	function	oncore_decode_fields	structures.md: the field-table byte code the GPS task's decoders run
+0x480c2	function	format_angle	context: an angle in mas as N, S, E or W by its sign and whether it is a latitude, then degrees and minutes
+0x47e32	function	mas_to_dms	context: mas into degrees (/ 3600000), minutes (/ 60000) and seconds (the rest / 1000.0); the position queries
+0x322b4	function	clamp_to_limits	context: clamps *value to *min and *max, reporting through report_clamped
+0x31ff8	function	report_clamped	context: "Value too small, set to min limit" or "too large, set to max limit", and status_report_from(9)
+0x2979c	function	scpi_check_range	context: reports 9 when value is outside min..max; *ESE, *SRE and the STATus ENABle and transition setters
+0x3124a	function	eeprom_write	context: writes data split at 64-byte page boundaries with eeprom_write_page; happening 'I' on a failure
+0x3119e	function	eeprom_write_page	context: writes within one 64-byte EEPROM page under eeprom_lock, five tries
+0x110fa	function	oncore_date_pack	context: @@Ba's month, day and year into year << 16 | month << 8 | day
+0x495e2	function	satellite_in_set	context: bit prn - 1 of a mask, or prn - 0x21 for the second kind
+0x4f1a6	function	satellite_add_to_set	context: sets bit prn - 1 of a mask, or prn - 0x21 for the second kind
+0x2d226	function	satellites_in_mask	context: lists the PRNs whose bits are set; the SAT:TRAC:IGN? and INCL? queries
+0x4aff2	function	uptime_elapsed	context: get_uptime() less *start into *elapsed, restarting *start if the clock went back
+0x4513c	function	interval_wait_reading	context: the wait half of interval_next_reading: the FPGA's reading, or a wait while a 1PPS is dead; updates the EFC history
+0x450c4	function	interval_rearm	context: the other half of interval_next_reading: counter_calibrate, or sync_request(3, 1) for mode 2, then counter_arm
+0x405bc	function	counter_calibrate	context: runs interpolator_calibrate when the configuration asks, then stores reading_low and the spread at its +0x18 and +0x1c	void counter_calibrate(double *reading, void *configuration)
+0x40c6a	function	counter_arm	context: reloads fconf_regs[0..3] from the configuration and re-arms the FPGA	void counter_arm(double *reading, void *configuration)
+0x40d34	function	counter_read	context: interval.md's one reading: the coarse count plus (interpolator_read - +0x18) / +0x1c, times 1e-7, less the configuration's double at +4, into *reading	void counter_read(double *reading, void *configuration)
+0x29b82	function	scpi_console_port	context: returns 0x29e18, the console port's object: two routines, then the "E%+04d> " and "scpi > " prompts; queries compare a request's source with it
+0x29bce	function	console_port_read	context: the first of the console port's routines; the SCPI input loop reads characters with it
+0x11396	function	datetime_add	context: adds the first packed time and date to the second, carrying seconds, minutes, hours and days; klok adds an entry's period to its time
+0x10f46	function	date_to_days	context: a packed date as a day count, for datetime_add
+0x10e72	function	days_to_date	context: a day count as a packed date, for datetime_add
+0x139ce	function	get_gps_utc_offset	context: returns gps_utc_offset_valid and stores gps_utc_offset; the es message's leap value and leap_gps_time	uint8_t get_gps_utc_offset(int16_t *seconds)
+0x139a2	function	set_gps_utc_offset	context: sets gps_utc_offset, from D1, and gps_utc_offset_valid; 0x46e70 computes it from the engine's GPS and UTC times
+0x1009e8	label	gps_utc_offset	context: GPS less UTC in seconds: days times 86400 plus the difference of two times of day, negated in UTC mode	int16_t
+0x1009ea	label	gps_utc_offset_valid	context: set_gps_utc_offset sets it; the clock's start clears it	uint8_t
+0x4b79a	function	gps_response_reset	context: points gps_response_cursor at gps_response_buffer and clears gps_receive_state
+0x4b846	function	gps_receive	context: reads bytes from the engine and frames its messages from their @ into gps_response_buffer, counting frame errors
+0x10138c	label	gps_response_cursor	context: where gps_receive stores the next byte	uint8_t *
+0x101394	label	gps_receive_state	context: gps_receive's state; 7 when a message is complete	uint8_t
+0x20b0c	function	qspi_send	context: qspi_transfer without the copy back from receive RAM
+0x4f0d6	function	satellite_id_valid	context: kind 0 accepts 1 to 32, kind 1 33 to 37, the VP reference's pseudolites, kind 2 either
+0x4f8fc	function	gps_message_supported	context: @@Bn, message 0x28, needs the receiver ID and its Time RAIM option, gps.raim_option; any other is supported
+0x4f8b6	function	gps_parse_options	context: sets gps.raim_option when the receiver ID's "OPTIONS LIST " has an I
+0x49b88	function	format_si	context: formats a double with an SI prefix from "pnum kMG" by its exponent / 3; "ANT DLY %s"
+0x101fae	label	counter_configuration	context: the configuration counter_calibrate, counter_arm and counter_read are given: fconf_regs' four values at +0, the calibration double at +4, the interpolator's offset and scale at +0x18 and +0x1c
+0x2d1cc	function	satellite_list_limits	context: the ID count, the most listed and the ID base for satellites_in_mask: kind 0 :SAT:TRAC? (32, 6), 1 its pseudolites (5, 6, from 0x20), 2 :SAT:VIS:PRED? (32, 12), 3 the ignore and include lists (32, 32)
+0x3293a	function	nv_save	structures.md: packs the settings into a 0x80-byte NV register record and writes it to slot nv_slot when it differs; "Warning: Entire nv register is being used"
+0x3282c	function	nv_restore	structures.md: loads slot 0, else slot 1, else copies nv_settings_defaults over nv_settings, erases the older slot and saves
+0x32bc2	function	nv_load_slot	structures.md: loads the settings from slot nv_slot when its record is good
+0x328e0	function	nv_checksum	structures.md: the sum of a record's bytes 8 to 0x7f
+0x3290e	function	nv_record_differs	structures.md: compares two records, nonzero when they differ
+0x327f4	function	nv_slot_erase	structures.md: clear_nv erases slots 0 and 1 with it
+0x101f62	label	nv_slot	structures.md: the slot nv_load_slot and nv_save use, 0 or 1	uint8_t
+0x101e8a	label	nv_settings	structures.md: the saved settings, 0xc5 bytes, the scpi_value_ cells among them
+0x30966	label	nv_settings_defaults	structures.md: nv_restore copies them over nv_settings when no slot loads
+0x4000c0	label	nv_records	structures.md: the EEPROM's two NV register records, 0x80 bytes each: "S", a sequence number at +4, "3543B", the packed settings, a checksum

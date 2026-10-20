@@ -378,7 +378,9 @@ typedef struct gps_state {
 	double average_longitude;
 	double average_height_gps;
 	double average_height_msl;
-	uint8_t field_52a[0x55a - 0x52a];
+	uint8_t field_52a[0x558 - 0x52a];
+	uint8_t raim_option;                         /* its options list has an I */
+	uint8_t field_559;
 } gps_state;
 
 /* The disciplining loop's state block: the stage the status screen

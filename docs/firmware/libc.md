@@ -71,6 +71,26 @@ one negates a negative operand first and the other does not.
 `0x5d30e`, run, is the double subtract: A0:A1 − D0:D1, negating D0:D1
 and adding, so it raises `add64`'s code, below.
 
+## Entry points
+
+Each double operation has entries that fetch its operands, all run in
+the emulator.  Before its main entry, which takes D0:D1 and A0:A1,
+are one that loads A0:A1 from the pointer in A1, and one before that
+which also loads D0:D1 from the pointer in A0; an in-place entry
+loads A0:A1 from the pointer in A0 and stores the result back there.
+The float operations have in-place entries alike, `*A0` with D1.
+
+| Operation | Main | `*A0`, `*A1` | D0:D1, `*A1` | In place, `*A0` and D0:D1 |
+| --------- | ---- | ------------ | ------------ | ------------------------- |
+| add | `0x5d352` | `0x5d34a` | `0x5d34e` | `0x5d338` |
+| subtract, A0:A1 − D0:D1 | `0x5d30e` | `0x5d306`, `*A1` − `*A0` | `0x5d30a`, `*A1` − D0:D1 | `0x5d2e2`, `*A0` − D0:D1 |
+| multiply | `0x5e600` | `0x5e5f8` | `0x5e5fc` | `0x5e5e6` |
+| divide, A0:A1 ÷ D0:D1 | `0x5da6a` | `0x5da62`, `*A1` ÷ `*A0` | `0x5da66`, `*A1` ÷ D0:D1 | `0x5da3e`, `*A0` ÷ D0:D1 |
+
+`0x5d2f8` swaps its operands to give D0:D1 − `*A1`, and `0x5da58` to
+give D0:D1 ÷ A0:A1.  The float in-place entries are add `0x5d08a`,
+subtract `0x5d080`, multiply `0x5e316` and divide `0x5d7da`.
+
 ## Exception codes
 
 Each float routine passes `0x5e93c` a code naming itself and the

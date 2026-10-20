@@ -13,9 +13,11 @@
 // 0x0 to 0x3ff, to the start of RAM and points VBR at it; the overlay
 // holds that copy too.
 //
-// Boot code calls into plain RAM, which an overlay does not serve, so
-// each installer function is also labeled at its plain RAM address.  Run
-// again after renaming installer functions to carry the names over.
+// Boot code jumps into plain RAM, which an overlay does not serve; the
+// jump is marked a call, so the decompiler shows func_0xADDRESS there.
+// The installer's functions are not labeled at their plain addresses: the
+// primary keeps its own data at those addresses, and a label there would
+// name the primary's data after installer code.
 //
 //@category SmartClock
 
@@ -51,8 +53,8 @@ public class SmartClockInstaller extends GhidraScript {
 		long entry = Long.decode(args[1]);
 		MemoryBlock existing = currentProgram.getMemory().getBlock(OVERLAY);
 		if (existing != null) {
-			println("overlay " + OVERLAY + " exists; labels and calls refreshed only");
-			mirrorLabels(existing);
+			println("overlay " + OVERLAY + " exists; calls refreshed only");
+			removeMirroredLabels(existing);
 			callIntoInstaller(existing);
 			return;
 		}
@@ -78,14 +80,13 @@ public class SmartClockInstaller extends GhidraScript {
 			}
 		}
 		analyzeChanges(currentProgram);
-		mirrorLabels(block);
 		callIntoInstaller(block);
 	}
 
 	/**
 	 * Marks jumps from outside the overlay to an installer function's plain
-	 * RAM address as calls that return, so the decompiler shows a call to
-	 * the labeled function rather than flowing into RAM it has no code for.
+	 * RAM address as calls that return, so the decompiler shows a call
+	 * rather than flowing into RAM it has no code for.
 	 * The boot code enters the installer by such a jump and never comes
 	 * back, so the call is a tail call.
 	 */
@@ -146,20 +147,23 @@ public class SmartClockInstaller extends GhidraScript {
 		}
 	}
 
-	/** Labels each installer function at its plain RAM address too, for boot code's calls. */
-	private void mirrorLabels(MemoryBlock block) throws Exception {
+	/**
+	 * Removes the labels an earlier version of this script put at each
+	 * installer function's plain RAM address, which named the primary's
+	 * data there after installer code.
+	 */
+	private void removeMirroredLabels(MemoryBlock block) throws Exception {
 		int count = 0;
 		for (Function function : currentProgram.getFunctionManager()
 				.getFunctions(new AddressSet(block.getStart(), block.getEnd()), true)) {
 			Address plain = toAddr(function.getEntryPoint().getOffset());
-			for (Symbol stale : currentProgram.getSymbolTable().getSymbols(plain)) {
-				if (stale.getSource() == SourceType.USER_DEFINED) {
-					stale.delete();
+			for (Symbol symbol : currentProgram.getSymbolTable().getSymbols(plain)) {
+				if (symbol.getName().equals(function.getName())) {
+					symbol.delete();
+					count++;
 				}
 			}
-			createLabel(plain, function.getName(), true, SourceType.USER_DEFINED);
-			count++;
 		}
-		println("installer functions: " + count);
+		println("mirrored labels removed: " + count);
 	}
 }

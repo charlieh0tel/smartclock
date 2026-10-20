@@ -6,33 +6,52 @@
 #
 # An optional fifth field is the function's C prototype.
 #
-# float library, docs/firmware/softfloat.md; operands in D0 and D1
-0x5d096	function	float_subtract	softfloat.md: D0 - D1
-0x5d094	function	float_subtract_reversed	softfloat.md: D1 - D0
-0x5d0ba	function	float_add	softfloat.md: D0 + D1
-0x5e320	function	float_multiply	softfloat.md: D0 x D1
-0x5d7e6	function	float_divide	softfloat.md: D0 / D1
-0x5d7e4	function	float_divide_reversed	softfloat.md: D1 / D0
-0x133e2	function	float_absolute_on_stack	softfloat.md: absolute value of the float on the stack
-0x5d65c	function	float_compare	softfloat.md: compare D0 with D1
-0x5e20e	function	unsigned_to_float	softfloat.md, libc.md: unsigned integer to float
-0x5e168	function	integer_to_float	softfloat.md, libc.md: signed integer to float
-0x5dfbc	function	float_to_integer	softfloat.md, libc.md: float to signed integer
-0x5e04e	function	float_to_unsigned	softfloat.md, libc.md: float to unsigned integer
-0x5df24	function	float_to_double	softfloat.md: float to double, in D0:D1
-0x5e108	function	unsigned_to_double	softfloat.md, libc.md: unsigned integer to double
-0x5dcd2	function	double_to_float	softfloat.md: double to float
-0x5d7da	function	float_divide_in_place	softfloat.md: divide the float at A0 by D1, in place
-0x5d08a	function	float_add_in_place	softfloat.md: add D1 to the float at A0, in place
-0x5d080	function	float_subtract_in_place	softfloat.md: subtract D1 from the float at A0, in place
-0x5d352	function	double_add	softfloat.md: double D0:D1 + double A0:A1
-0x5e600	function	double_multiply	softfloat.md: double D0:D1 x double A0:A1
-0x5da6a	function	double_divide_reversed	softfloat.md: double A0:A1 / double D0:D1
-0x5da58	function	double_divide	softfloat.md: double D0:D1 / double A0:A1
-0x60f5e	function	pow	softfloat.md, libc.md: pow	double pow(double x, double y)
-0x5d6c6	function	double_compare	softfloat.md: compare doubles, negative when A0:A1 < D0:D1
-0x60a10	function	log	softfloat.md, libc.md: natural log	double log(double x)
-0x6191c	function	sqrt	softfloat.md, libc.md: square root	double sqrt(double x)
+# float library, docs/firmware/softfloat.md and libc.md; register
+# conversions annotated "@ REGISTER", a pair high register first
+0x5d0ba	function	float_add	softfloat.md: D0 + D1	float float_add(float a @ D0, float b @ D1) @ D0
+0x5d096	function	float_subtract	softfloat.md: D0 - D1	float float_subtract(float a @ D0, float b @ D1) @ D0
+0x5d094	function	float_subtract_reversed	softfloat.md: D1 - D0	float float_subtract_reversed(float a @ D0, float b @ D1) @ D0
+0x5e320	function	float_multiply	softfloat.md: D0 x D1	float float_multiply(float a @ D0, float b @ D1) @ D0
+0x5d7e6	function	float_divide	softfloat.md: D0 / D1	float float_divide(float a @ D0, float b @ D1) @ D0
+0x5d7e4	function	float_divide_reversed	softfloat.md: D1 / D0	float float_divide_reversed(float a @ D0, float b @ D1) @ D0
+0x5d65c	function	float_compare	softfloat.md: compare D0 with D1; 1, 0 or -1	int float_compare(float a @ D0, float b @ D1) @ D0
+0x5d08a	function	float_add_in_place	softfloat.md, libc.md: *A0 += D1	void float_add_in_place(float *x @ A0, float y @ D1)
+0x5d080	function	float_subtract_in_place	softfloat.md, libc.md: *A0 -= D1	void float_subtract_in_place(float *x @ A0, float y @ D1)
+0x5e316	function	float_multiply_in_place	libc.md: *A0 *= D1	void float_multiply_in_place(float *x @ A0, float y @ D1)
+0x5d7da	function	float_divide_in_place	softfloat.md, libc.md: *A0 /= D1	void float_divide_in_place(float *x @ A0, float y @ D1)
+0x133e2	function	float_absolute_on_stack	softfloat.md: absolute value of the float on the stack	float float_absolute_on_stack(float f) @ D0
+0x5e168	function	integer_to_float	softfloat.md, libc.md: signed integer to float	float integer_to_float(int i @ D0) @ D0
+0x5e20e	function	unsigned_to_float	softfloat.md, libc.md: unsigned integer to float	float unsigned_to_float(unsigned int u @ D0) @ D0
+0x5dfbc	function	float_to_integer	softfloat.md, libc.md: float to signed integer	int float_to_integer(float f @ D0) @ D0
+0x5e04e	function	float_to_unsigned	softfloat.md, libc.md: float to unsigned integer	unsigned int float_to_unsigned(float f @ D0) @ D0
+0x5df24	function	float_to_double	softfloat.md: float to double, in D0:D1	double float_to_double(float f @ D0) @ D0:D1
+0x5e08e	function	integer_to_double	libc.md: signed integer to double	double integer_to_double(int i @ D0) @ D0:D1
+0x5e108	function	unsigned_to_double	softfloat.md, libc.md: unsigned integer to double	double unsigned_to_double(unsigned int u @ D0) @ D0:D1
+0x5dcd2	function	double_to_float	softfloat.md: double to float	float double_to_float(double d @ D0:D1) @ D0
+0x5ddde	function	double_to_integer	libc.md: double to signed integer	int double_to_integer(double d @ D0:D1) @ D0
+0x5de9e	function	double_to_unsigned	libc.md: double to unsigned integer	unsigned int double_to_unsigned(double d @ D0:D1) @ D0
+0x5d352	function	double_add	softfloat.md: D0:D1 + A0:A1	double double_add(double a @ D0:D1, double b @ A0:A1) @ D0:D1
+0x5d34a	function	double_add_pointers	libc.md: *A0 + *A1	double double_add_pointers(double *a @ A0, double *b @ A1) @ D0:D1
+0x5d34e	function	double_add_pointer	libc.md: D0:D1 + *A1	double double_add_pointer(double a @ D0:D1, double *b @ A1) @ D0:D1
+0x5d338	function	double_add_in_place	libc.md: *A0 += D0:D1	void double_add_in_place(double *x @ A0, double y @ D0:D1)
+0x5d30e	function	double_subtract_reversed	libc.md: A0:A1 - D0:D1	double double_subtract_reversed(double a @ D0:D1, double b @ A0:A1) @ D0:D1
+0x5d306	function	double_subtract_reversed_pointers	libc.md: *A1 - *A0	double double_subtract_reversed_pointers(double *a @ A0, double *b @ A1) @ D0:D1
+0x5d30a	function	double_subtract_reversed_pointer	libc.md: *A1 - D0:D1	double double_subtract_reversed_pointer(double a @ D0:D1, double *b @ A1) @ D0:D1
+0x5d2f8	function	double_subtract_pointer	libc.md: D0:D1 - *A1	double double_subtract_pointer(double a @ D0:D1, double *b @ A1) @ D0:D1
+0x5d2e2	function	double_subtract_in_place	libc.md: *A0 -= D0:D1	void double_subtract_in_place(double *x @ A0, double y @ D0:D1)
+0x5e600	function	double_multiply	softfloat.md: D0:D1 x A0:A1	double double_multiply(double a @ D0:D1, double b @ A0:A1) @ D0:D1
+0x5e5f8	function	double_multiply_pointers	libc.md: *A0 x *A1	double double_multiply_pointers(double *a @ A0, double *b @ A1) @ D0:D1
+0x5e5fc	function	double_multiply_pointer	libc.md: D0:D1 x *A1	double double_multiply_pointer(double a @ D0:D1, double *b @ A1) @ D0:D1
+0x5e5e6	function	double_multiply_in_place	libc.md: *A0 *= D0:D1	void double_multiply_in_place(double *x @ A0, double y @ D0:D1)
+0x5da58	function	double_divide	softfloat.md: D0:D1 / A0:A1	double double_divide(double a @ D0:D1, double b @ A0:A1) @ D0:D1
+0x5da6a	function	double_divide_reversed	softfloat.md: A0:A1 / D0:D1	double double_divide_reversed(double a @ D0:D1, double b @ A0:A1) @ D0:D1
+0x5da62	function	double_divide_reversed_pointers	libc.md: *A1 / *A0	double double_divide_reversed_pointers(double *a @ A0, double *b @ A1) @ D0:D1
+0x5da66	function	double_divide_reversed_pointer	libc.md: *A1 / D0:D1	double double_divide_reversed_pointer(double a @ D0:D1, double *b @ A1) @ D0:D1
+0x5da3e	function	double_divide_in_place	libc.md: *A0 /= D0:D1	void double_divide_in_place(double *x @ A0, double y @ D0:D1)
+0x5d6c6	function	double_compare	softfloat.md: negative when A0:A1 < D0:D1	int double_compare(double a @ D0:D1, double b @ A0:A1) @ D0
+0x60f5e	function	pow	softfloat.md, libc.md: pow	double pow(double x, double y) @ D0:D1
+0x60a10	function	log	softfloat.md, libc.md: natural log	double log(double x) @ D0:D1
+0x6191c	function	sqrt	softfloat.md, libc.md: square root	double sqrt(double x) @ D0:D1
 #
 # restart, docs/firmware/restart.md
 0x120aa	function	shutdown	restart.md: Shutdown
@@ -53,9 +72,6 @@
 0x29fce	function	scpi_task_create	console.md: creator of the SCPI task
 #
 # the rest of the float library, docs/firmware/libc.md
-0x5e08e	function	integer_to_double	libc.md: signed integer to double
-0x5ddde	function	double_to_integer	libc.md: double to signed integer
-0x5de9e	function	double_to_unsigned	libc.md: double to unsigned integer
 0x5e93c	function	float_raise	libc.md: raises a floating-point exception
 0x1038b0	label	float_status	libc.md: floating-point status word
 0x1038b2	label	float_control	libc.md: floating-point control word
@@ -88,14 +104,13 @@
 0x608c4	function	sprintf_put	libc.md: copies the engine's output into sprintf's buffer
 0x608fe	function	vsprintf	libc.md	int vsprintf(char *s, char *format, void *arg)
 0x1de96	function	printf	libc.md	void printf(char *format, ...)
-0x6092a	function	fabs	libc.md	double fabs(double x)
-0x6098a	function	frexp	libc.md	double frexp(double value, int *exp)
-0x60d94	function	modf	libc.md	double modf(double value, double *iptr)
+0x6092a	function	fabs	libc.md	double fabs(double x) @ D0:D1
+0x6098a	function	frexp	libc.md	double frexp(double value, int *exp) @ D0:D1
+0x60d94	function	modf	libc.md	double modf(double value, double *iptr) @ D0:D1
 0x10393a	label	errno	libc.md: log sets it to 34, ERANGE
 0x5ecf0	function	call_atexit_functions	libc.md
 0x1038b4	label	atexit_functions	libc.md
 0x103934	label	atexit_count	libc.md
-0x5d30e	function	double_subtract_reversed	libc.md: A0:A1 - D0:D1
 0x1412e	function	float_exception_report	libc.md	void float_exception_report(unsigned int code)
 0x100bd4	label	float_exception_message	libc.md: length-prefixed
 0x5dbde	function	double_divide_operand_error	libc.md: exception code 0xe2000

@@ -238,25 +238,36 @@ function calls.  It does this in one pass, since removing one function
 leaves its callees looking stray; `dry-run` reports them and removes
 nothing, and more than 20 is refused as a rule gone wrong.
 
-Names come from what the project has established, and a name replaces
-only one Ghidra made up.  `names/IMAGE.tsv` holds those the notes give
-for that image, each row citing its note, some with a C prototype: the
-float and C libraries (`softfloat.md`, `libc.md`), the interval's routine and cells (`interval.md`), the
-SCPI task and the installer's entry (`restart.md`), the console's hook
-(`console.md`).  An address a note gives only for another image is not
-carried over.  SCPI handlers are named `scpi_query_PATH` and
-`scpi_set_PATH`, console words `forth_WORD` and `diag_WORD`.  A table
-vouches that its entries are code, so the script disassembles each,
-and splits a function whose body ran into it.
+Names come from what the project has established.  `names/IMAGE.tsv`
+holds those the notes give for that image, each row citing its note:
+the float and C libraries (`softfloat.md`, `libc.md`), the interval's
+routine and cells (`interval.md`), the SCPI task and the installer's
+entry (`restart.md`), the console's hook (`console.md`).  An address a
+note gives only for another image is not carried over.  SCPI handlers
+are named `scpi_query_PATH` and `scpi_set_PATH`, console words
+`forth_WORD` and `diag_WORD`.  A name replaces one Ghidra made up, and
+one from the names file also one these tables gave, but none replaces a
+name given by hand.  A table vouches that its entries are code, so the
+script disassembles each, and splits a function whose body ran into
+it.
+
+A row may give a C prototype, which types the function's arguments at
+every call.  The float library passes its operands in registers, which
+C cannot say, so a prototype may put a value in registers with `@`:
+`float float_add(float a @ D0, float b @ D1) @ D0`, a double in a pair,
+high register first, `@ D0:D1`.  An argument without `@` goes on the
+stack.  Ghidra's 68000 convention returns a float or double in the FPU
+register FP0, but these images have no FPU and return one in D0 or
+D0:D1, so every function returning one has its return annotated.
 
 **Installer** unpacks the records the boot code copies to RAM, after
 its vector table, into an overlay named `installer`, writable so that
 cells the installer changes do not fold, and makes a function at its
-entry and at each vector's handler.  Boot code calls into plain RAM,
-which the overlay does not serve, so each installer function is also
-labeled at its plain address, and the boot code's jump into the
-installer is marked a call.  The decompiler names a call by a function,
-not a label, so that call still reads `func_0x0010135c`.
+entry and at each vector's handler.  Boot code jumps into plain RAM,
+which the overlay does not serve; the jump is marked a call, so it
+reads `func_0x0010135c` rather than flowing into RAM with no code.  The
+installer's functions are not labeled at their plain addresses: the
+primary keeps its own data there.
 
 **StackParameters** repairs functions the decompiler rejects with
 "Cannot properly adjust input varnodes".  This compiler pushes a char

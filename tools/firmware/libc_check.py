@@ -78,6 +78,23 @@ ADDRESSES = {
     "double_to_integer": 0x5DDDE,
     "double_to_unsigned": 0x5DE9E,
     "double_subtract_reversed": 0x5D30E,
+    "float_add_in_place": 0x5D08A,
+    "float_subtract_in_place": 0x5D080,
+    "float_multiply_in_place": 0x5E316,
+    "float_divide_in_place": 0x5D7DA,
+    "double_add_in_place": 0x5D338,
+    "double_add_pointers": 0x5D34A,
+    "double_add_pointer": 0x5D34E,
+    "double_subtract_in_place": 0x5D2E2,
+    "double_subtract_pointer": 0x5D2F8,
+    "double_subtract_reversed_pointers": 0x5D306,
+    "double_subtract_reversed_pointer": 0x5D30A,
+    "double_multiply_in_place": 0x5E5E6,
+    "double_multiply_pointers": 0x5E5F8,
+    "double_multiply_pointer": 0x5E5FC,
+    "double_divide_in_place": 0x5DA3E,
+    "double_divide_reversed_pointers": 0x5DA62,
+    "double_divide_reversed_pointer": 0x5DA66,
 }
 
 RAND_SEED = 0x103936
@@ -147,6 +164,62 @@ def double_words(value: float) -> tuple[int, int]:
 
 def from_double_words(high: int, low: int) -> float:
     return struct.unpack(">d", struct.pack(">II", high, low))[0]
+
+
+def double_buffer(m: Machine, value: float) -> int:
+    return m.buffer(struct.pack(">d", value))
+
+
+def read_double(m: Machine, at: int) -> float:
+    return struct.unpack(">d", m.read(at, 8))[0]
+
+
+def entry_checks(m: Machine):
+    """The in-place and pointer entries of the float and double routines."""
+    x, y = 6.0, 1.5
+    for name, operation in (
+        ("float_add_in_place", float.__add__),
+        ("float_subtract_in_place", float.__sub__),
+        ("float_multiply_in_place", float.__mul__),
+        ("float_divide_in_place", float.__truediv__),
+    ):
+        at = m.buffer(struct.pack(">f", x))
+        m.call(name, d1=float_bits(y), a0=at)
+        got = struct.unpack(">f", m.read(at, 4))[0]
+        yield name, f"*x={x}, y={y}", got == operation(x, y)
+
+    y_high, y_low = double_words(y)
+    for name, operation in (
+        ("double_add_in_place", float.__add__),
+        ("double_subtract_in_place", float.__sub__),
+        ("double_multiply_in_place", float.__mul__),
+        ("double_divide_in_place", float.__truediv__),
+    ):
+        at = double_buffer(m, x)
+        m.call(name, d0=y_high, d1=y_low, a0=at)
+        yield name, f"*x={x}, y={y}", read_double(m, at) == operation(x, y)
+
+    # Both operands by pointer, a in A0 and b in A1.
+    for name, operation in (
+        ("double_add_pointers", lambda a, b: a + b),
+        ("double_multiply_pointers", lambda a, b: a * b),
+        ("double_subtract_reversed_pointers", lambda a, b: b - a),
+        ("double_divide_reversed_pointers", lambda a, b: b / a),
+    ):
+        got = from_double_words(*m.call(name, a0=double_buffer(m, x), a1=double_buffer(m, y)))
+        yield name, f"*a={x}, *b={y}", got == operation(x, y)
+
+    # a in D0:D1, b by pointer in A1.
+    x_high, x_low = double_words(x)
+    for name, operation in (
+        ("double_add_pointer", lambda a, b: a + b),
+        ("double_multiply_pointer", lambda a, b: a * b),
+        ("double_subtract_pointer", lambda a, b: a - b),
+        ("double_subtract_reversed_pointer", lambda a, b: b - a),
+        ("double_divide_reversed_pointer", lambda a, b: b / a),
+    ):
+        got = from_double_words(*m.call(name, d0=x_high, d1=x_low, a1=double_buffer(m, y)))
+        yield name, f"a={x}, *b={y}", got == operation(x, y)
 
 
 def checks(m: Machine):
@@ -284,7 +357,7 @@ def main() -> int:
     with open(sys.argv[1], "rb") as image:
         machine = Machine(image.read())
     failed = 0
-    for routine, description, passed in checks(machine):
+    for routine, description, passed in [*checks(machine), *entry_checks(machine)]:
         print(f"{'ok' if passed else 'FAIL'} {routine} {description}")
         failed += not passed
     print(f"{failed} failed")

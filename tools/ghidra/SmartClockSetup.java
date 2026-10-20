@@ -49,6 +49,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -65,12 +66,19 @@ import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.FunctionDefinitionDataType;
+import ghidra.program.model.data.ParameterDefinition;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.data.TerminatedStringDataType;
 import ghidra.program.model.data.WordDataType;
 import ghidra.program.model.listing.Data;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.listing.ParameterImpl;
+import ghidra.program.model.listing.ReturnParameterImpl;
+import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.JumpTable;
@@ -85,7 +93,7 @@ public class SmartClockSetup extends GhidraScript {
 	private record Region(String name, long base, long size, boolean io) {}
 
 	/** A named register: absolute address and width in bytes (1 or 2). */
-	private record Register(long address, String name, int size) {}
+	private record PeripheralRegister(long address, String name, int size) {}
 
 	/** A recovered switch: the jmp, its table, and each case target in index order. */
 	private record Switch(Address jmp, Address table, List<Address> targets) {}
@@ -113,6 +121,14 @@ public class SmartClockSetup extends GhidraScript {
 	private static final String COMMENT = "#";
 	private static final String NO_HANDLER = "-";
 	private static final String FUNCTION = "function";
+	/**
+	 * Stack offsets are from SP at entry, where the return address occupies
+	 * 0..3; arguments start at 4, each in a slot of at least 2 bytes.
+	 */
+	private static final int FIRST_ARGUMENT_OFFSET = 4;
+	private static final int STACK_SLOT_MINIMUM = 2;
+	/** A register annotation in a prototype: "@ D0" or "@ D0:D1". */
+	private static final Pattern ANNOTATION = Pattern.compile("\\s*@\\s*[A-Za-z0-9:]+");
 	/** The names file's optional fifth field: a C prototype. */
 	private static final int PROTOTYPE_FIELD = 4;
 	/** How far from a named entry to repair flow when it does not disassemble. */
@@ -180,66 +196,66 @@ public class SmartClockSetup extends GhidraScript {
 		new Region("QSM", 0xfffc00, 0x150, true),
 	};
 
-	private static final Register[] REGISTERS = {
+	private static final PeripheralRegister[] REGISTERS = {
 		// GPT, MC68331UM Table D-2
-		new Register(0xfff900, "GPTMCR", 2), new Register(0xfff904, "GPT_ICR", 2),
-		new Register(0xfff906, "DDRGP", 1), new Register(0xfff907, "PORTGP", 1),
-		new Register(0xfff908, "OC1M", 1), new Register(0xfff909, "OC1D", 1),
-		new Register(0xfff90a, "TCNT", 2), new Register(0xfff90c, "PACTL", 1),
-		new Register(0xfff90d, "PACNT", 1), new Register(0xfff90e, "TIC1", 2),
-		new Register(0xfff910, "TIC2", 2), new Register(0xfff912, "TIC3", 2),
-		new Register(0xfff914, "TOC1", 2), new Register(0xfff916, "TOC2", 2),
-		new Register(0xfff918, "TOC3", 2), new Register(0xfff91a, "TOC4", 2),
-		new Register(0xfff91c, "TI4_O5", 2), new Register(0xfff91e, "TCTL1", 1),
-		new Register(0xfff91f, "TCTL2", 1), new Register(0xfff920, "TMSK1", 1),
-		new Register(0xfff921, "TMSK2", 1), new Register(0xfff922, "TFLG1", 1),
-		new Register(0xfff923, "TFLG2", 1), new Register(0xfff924, "CFORC", 1),
-		new Register(0xfff925, "PWMC", 1), new Register(0xfff926, "PWMA", 1),
-		new Register(0xfff927, "PWMB", 1), new Register(0xfff928, "PWMCNT", 2),
-		new Register(0xfff92a, "PWMBUFA", 1), new Register(0xfff92b, "PWMBUFB", 1),
-		new Register(0xfff92c, "PRESCL", 2),
+		new PeripheralRegister(0xfff900, "GPTMCR", 2), new PeripheralRegister(0xfff904, "GPT_ICR", 2),
+		new PeripheralRegister(0xfff906, "DDRGP", 1), new PeripheralRegister(0xfff907, "PORTGP", 1),
+		new PeripheralRegister(0xfff908, "OC1M", 1), new PeripheralRegister(0xfff909, "OC1D", 1),
+		new PeripheralRegister(0xfff90a, "TCNT", 2), new PeripheralRegister(0xfff90c, "PACTL", 1),
+		new PeripheralRegister(0xfff90d, "PACNT", 1), new PeripheralRegister(0xfff90e, "TIC1", 2),
+		new PeripheralRegister(0xfff910, "TIC2", 2), new PeripheralRegister(0xfff912, "TIC3", 2),
+		new PeripheralRegister(0xfff914, "TOC1", 2), new PeripheralRegister(0xfff916, "TOC2", 2),
+		new PeripheralRegister(0xfff918, "TOC3", 2), new PeripheralRegister(0xfff91a, "TOC4", 2),
+		new PeripheralRegister(0xfff91c, "TI4_O5", 2), new PeripheralRegister(0xfff91e, "TCTL1", 1),
+		new PeripheralRegister(0xfff91f, "TCTL2", 1), new PeripheralRegister(0xfff920, "TMSK1", 1),
+		new PeripheralRegister(0xfff921, "TMSK2", 1), new PeripheralRegister(0xfff922, "TFLG1", 1),
+		new PeripheralRegister(0xfff923, "TFLG2", 1), new PeripheralRegister(0xfff924, "CFORC", 1),
+		new PeripheralRegister(0xfff925, "PWMC", 1), new PeripheralRegister(0xfff926, "PWMA", 1),
+		new PeripheralRegister(0xfff927, "PWMB", 1), new PeripheralRegister(0xfff928, "PWMCNT", 2),
+		new PeripheralRegister(0xfff92a, "PWMBUFA", 1), new PeripheralRegister(0xfff92b, "PWMBUFB", 1),
+		new PeripheralRegister(0xfff92c, "PRESCL", 2),
 		// SIM, MC68331UM Table D-3
-		new Register(0xfffa00, "SIMCR", 2), new Register(0xfffa02, "SIMTR", 2),
-		new Register(0xfffa04, "SYNCR", 2), new Register(0xfffa07, "RSR", 1),
-		new Register(0xfffa08, "SIMTRE", 2), new Register(0xfffa11, "PORTE0", 1),
-		new Register(0xfffa13, "PORTE1", 1), new Register(0xfffa15, "DDRE", 1),
-		new Register(0xfffa17, "PEPAR", 1), new Register(0xfffa19, "PORTF0", 1),
-		new Register(0xfffa1b, "PORTF1", 1), new Register(0xfffa1d, "DDRF", 1),
-		new Register(0xfffa1f, "PFPAR", 1), new Register(0xfffa21, "SYPCR", 1),
-		new Register(0xfffa22, "PICR", 2), new Register(0xfffa24, "PITR", 2),
-		new Register(0xfffa27, "SWSR", 1), new Register(0xfffa41, "PORTC", 1),
-		new Register(0xfffa44, "CSPAR0", 2), new Register(0xfffa46, "CSPAR1", 2),
-		new Register(0xfffa48, "CSBARBT", 2), new Register(0xfffa4a, "CSORBT", 2),
-		new Register(0xfffa4c, "CSBAR0", 2), new Register(0xfffa4e, "CSOR0", 2),
-		new Register(0xfffa50, "CSBAR1", 2), new Register(0xfffa52, "CSOR1", 2),
-		new Register(0xfffa54, "CSBAR2", 2), new Register(0xfffa56, "CSOR2", 2),
-		new Register(0xfffa58, "CSBAR3", 2), new Register(0xfffa5a, "CSOR3", 2),
-		new Register(0xfffa5c, "CSBAR4", 2), new Register(0xfffa5e, "CSOR4", 2),
-		new Register(0xfffa60, "CSBAR5", 2), new Register(0xfffa62, "CSOR5", 2),
-		new Register(0xfffa64, "CSBAR6", 2), new Register(0xfffa66, "CSOR6", 2),
-		new Register(0xfffa68, "CSBAR7", 2), new Register(0xfffa6a, "CSOR7", 2),
-		new Register(0xfffa6c, "CSBAR8", 2), new Register(0xfffa6e, "CSOR8", 2),
-		new Register(0xfffa70, "CSBAR9", 2), new Register(0xfffa72, "CSOR9", 2),
-		new Register(0xfffa74, "CSBAR10", 2), new Register(0xfffa76, "CSOR10", 2),
+		new PeripheralRegister(0xfffa00, "SIMCR", 2), new PeripheralRegister(0xfffa02, "SIMTR", 2),
+		new PeripheralRegister(0xfffa04, "SYNCR", 2), new PeripheralRegister(0xfffa07, "RSR", 1),
+		new PeripheralRegister(0xfffa08, "SIMTRE", 2), new PeripheralRegister(0xfffa11, "PORTE0", 1),
+		new PeripheralRegister(0xfffa13, "PORTE1", 1), new PeripheralRegister(0xfffa15, "DDRE", 1),
+		new PeripheralRegister(0xfffa17, "PEPAR", 1), new PeripheralRegister(0xfffa19, "PORTF0", 1),
+		new PeripheralRegister(0xfffa1b, "PORTF1", 1), new PeripheralRegister(0xfffa1d, "DDRF", 1),
+		new PeripheralRegister(0xfffa1f, "PFPAR", 1), new PeripheralRegister(0xfffa21, "SYPCR", 1),
+		new PeripheralRegister(0xfffa22, "PICR", 2), new PeripheralRegister(0xfffa24, "PITR", 2),
+		new PeripheralRegister(0xfffa27, "SWSR", 1), new PeripheralRegister(0xfffa41, "PORTC", 1),
+		new PeripheralRegister(0xfffa44, "CSPAR0", 2), new PeripheralRegister(0xfffa46, "CSPAR1", 2),
+		new PeripheralRegister(0xfffa48, "CSBARBT", 2), new PeripheralRegister(0xfffa4a, "CSORBT", 2),
+		new PeripheralRegister(0xfffa4c, "CSBAR0", 2), new PeripheralRegister(0xfffa4e, "CSOR0", 2),
+		new PeripheralRegister(0xfffa50, "CSBAR1", 2), new PeripheralRegister(0xfffa52, "CSOR1", 2),
+		new PeripheralRegister(0xfffa54, "CSBAR2", 2), new PeripheralRegister(0xfffa56, "CSOR2", 2),
+		new PeripheralRegister(0xfffa58, "CSBAR3", 2), new PeripheralRegister(0xfffa5a, "CSOR3", 2),
+		new PeripheralRegister(0xfffa5c, "CSBAR4", 2), new PeripheralRegister(0xfffa5e, "CSOR4", 2),
+		new PeripheralRegister(0xfffa60, "CSBAR5", 2), new PeripheralRegister(0xfffa62, "CSOR5", 2),
+		new PeripheralRegister(0xfffa64, "CSBAR6", 2), new PeripheralRegister(0xfffa66, "CSOR6", 2),
+		new PeripheralRegister(0xfffa68, "CSBAR7", 2), new PeripheralRegister(0xfffa6a, "CSOR7", 2),
+		new PeripheralRegister(0xfffa6c, "CSBAR8", 2), new PeripheralRegister(0xfffa6e, "CSOR8", 2),
+		new PeripheralRegister(0xfffa70, "CSBAR9", 2), new PeripheralRegister(0xfffa72, "CSOR9", 2),
+		new PeripheralRegister(0xfffa74, "CSBAR10", 2), new PeripheralRegister(0xfffa76, "CSOR10", 2),
 		// QSM, MC68331UM Table D-13
-		new Register(0xfffc00, "QSMCR", 2), new Register(0xfffc02, "QTEST", 2),
-		new Register(0xfffc04, "QILR", 1), new Register(0xfffc05, "QIVR", 1),
-		new Register(0xfffc08, "SCCR0", 2), new Register(0xfffc0a, "SCCR1", 2),
-		new Register(0xfffc0c, "SCSR", 2), new Register(0xfffc0e, "SCDR", 2),
-		new Register(0xfffc15, "PORTQS", 1), new Register(0xfffc16, "PQSPAR", 1),
-		new Register(0xfffc17, "DDRQS", 1), new Register(0xfffc18, "SPCR0", 2),
-		new Register(0xfffc1a, "SPCR1", 2), new Register(0xfffc1c, "SPCR2", 2),
-		new Register(0xfffc1e, "SPCR3", 1), new Register(0xfffc1f, "SPSR", 1),
+		new PeripheralRegister(0xfffc00, "QSMCR", 2), new PeripheralRegister(0xfffc02, "QTEST", 2),
+		new PeripheralRegister(0xfffc04, "QILR", 1), new PeripheralRegister(0xfffc05, "QIVR", 1),
+		new PeripheralRegister(0xfffc08, "SCCR0", 2), new PeripheralRegister(0xfffc0a, "SCCR1", 2),
+		new PeripheralRegister(0xfffc0c, "SCSR", 2), new PeripheralRegister(0xfffc0e, "SCDR", 2),
+		new PeripheralRegister(0xfffc15, "PORTQS", 1), new PeripheralRegister(0xfffc16, "PQSPAR", 1),
+		new PeripheralRegister(0xfffc17, "DDRQS", 1), new PeripheralRegister(0xfffc18, "SPCR0", 2),
+		new PeripheralRegister(0xfffc1a, "SPCR1", 2), new PeripheralRegister(0xfffc1c, "SPCR2", 2),
+		new PeripheralRegister(0xfffc1e, "SPCR3", 1), new PeripheralRegister(0xfffc1f, "SPSR", 1),
 		// 68681 DUART on an 8-bit port at odd addresses: register n at 2n+1.
 		// Read and write names differ; both are given where they do.
-		new Register(0x200001, "DUART_MR1A_MR2A", 1), new Register(0x200003, "DUART_SRA_CSRA", 1),
-		new Register(0x200005, "DUART_CRA", 1), new Register(0x200007, "DUART_RBA_TBA", 1),
-		new Register(0x200009, "DUART_IPCR_ACR", 1), new Register(0x20000b, "DUART_ISR_IMR", 1),
-		new Register(0x20000d, "DUART_CUR_CTUR", 1), new Register(0x20000f, "DUART_CLR_CTLR", 1),
-		new Register(0x200011, "DUART_MR1B_MR2B", 1), new Register(0x200013, "DUART_SRB_CSRB", 1),
-		new Register(0x200015, "DUART_CRB", 1), new Register(0x200017, "DUART_RBB_TBB", 1),
-		new Register(0x200019, "DUART_IVR", 1), new Register(0x20001b, "DUART_IP_OPCR", 1),
-		new Register(0x20001d, "DUART_START_SOPBC", 1), new Register(0x20001f, "DUART_STOP_ROPBC", 1),
+		new PeripheralRegister(0x200001, "DUART_MR1A_MR2A", 1), new PeripheralRegister(0x200003, "DUART_SRA_CSRA", 1),
+		new PeripheralRegister(0x200005, "DUART_CRA", 1), new PeripheralRegister(0x200007, "DUART_RBA_TBA", 1),
+		new PeripheralRegister(0x200009, "DUART_IPCR_ACR", 1), new PeripheralRegister(0x20000b, "DUART_ISR_IMR", 1),
+		new PeripheralRegister(0x20000d, "DUART_CUR_CTUR", 1), new PeripheralRegister(0x20000f, "DUART_CLR_CTLR", 1),
+		new PeripheralRegister(0x200011, "DUART_MR1B_MR2B", 1), new PeripheralRegister(0x200013, "DUART_SRB_CSRB", 1),
+		new PeripheralRegister(0x200015, "DUART_CRB", 1), new PeripheralRegister(0x200017, "DUART_RBB_TBB", 1),
+		new PeripheralRegister(0x200019, "DUART_IVR", 1), new PeripheralRegister(0x20001b, "DUART_IP_OPCR", 1),
+		new PeripheralRegister(0x20001d, "DUART_START_SOPBC", 1), new PeripheralRegister(0x20001f, "DUART_STOP_ROPBC", 1),
 	};
 
 	/** CPU32 vector names, MC68331UM Table 5-2; others are named by number. */
@@ -418,16 +434,76 @@ public class SmartClockSetup extends GhidraScript {
 		}
 	}
 
-	/** Gives the function at address the C prototype prototype, as the notes establish it. */
+	/**
+	 * Gives the function at address the C prototype prototype, as the
+	 * notes establish it.  A prototype with register annotations --
+	 * "float f(float a @ D0, double b @ A0:A1) @ D0", a pair high
+	 * register first -- puts each annotated value in those registers, in
+	 * custom storage, and each argument without one on the stack, in
+	 * order from the return address up; one without any takes the default
+	 * convention.  Ghidra's default returns a float or double in FP0, but
+	 * these images have no FPU and return them in D0 or D0:D1, so a
+	 * function returning one needs its return annotated.
+	 */
 	private void applyPrototype(Address address, String prototype) throws Exception {
-		FunctionDefinitionDataType signature =
-			CParserUtils.parseSignature((DataTypeManagerService) null, currentProgram, prototype, false);
+		FunctionDefinitionDataType signature = CParserUtils.parseSignature(
+			(DataTypeManagerService) null, currentProgram, ANNOTATION.matcher(prototype).replaceAll(""),
+			false);
 		if (signature == null) {
 			throw new IllegalArgumentException("cannot parse prototype at " + address + ": "
 				+ prototype);
 		}
-		new ApplyFunctionSignatureCmd(address, signature, SourceType.IMPORTED)
-				.applyTo(currentProgram, monitor);
+		if (!prototype.contains("@")) {
+			new ApplyFunctionSignatureCmd(address, signature, SourceType.IMPORTED)
+					.applyTo(currentProgram, monitor);
+			return;
+		}
+		int open = prototype.indexOf('(');
+		int close = prototype.lastIndexOf(')');
+		String[] declared = prototype.substring(open + 1, close).split(",");
+		ParameterDefinition[] types = signature.getArguments();
+		List<Parameter> parameters = new ArrayList<>();
+		int stackOffset = FIRST_ARGUMENT_OFFSET;
+		for (int i = 0; i < types.length; i++) {
+			DataType type = types[i].getDataType();
+			VariableStorage storage;
+			if (declared[i].contains("@")) {
+				storage = registerStorage(declared[i], address);
+			}
+			else {
+				int size = Math.max(type.getLength(), STACK_SLOT_MINIMUM);
+				storage = new VariableStorage(currentProgram, stackOffset, type.getLength());
+				stackOffset += size + (size & 1);
+			}
+			parameters.add(new ParameterImpl(types[i].getName(), type, storage, currentProgram,
+				SourceType.IMPORTED));
+		}
+		String returned = prototype.substring(close + 1);
+		ReturnParameterImpl result = returned.contains("@")
+				? new ReturnParameterImpl(signature.getReturnType(),
+					registerStorage(returned, address), currentProgram)
+				: new ReturnParameterImpl(signature.getReturnType(), currentProgram);
+		getFunctionAt(address).updateFunction(null, result, parameters,
+			FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.IMPORTED);
+	}
+
+	/** The registers after the "@" in declaration, as storage. */
+	private VariableStorage registerStorage(String declaration, Address address)
+			throws Exception {
+		int at = declaration.indexOf('@');
+		if (at < 0) {
+			throw new IllegalArgumentException("no register for " + declaration.strip() + " at "
+				+ address);
+		}
+		List<Register> registers = new ArrayList<>();
+		for (String name : declaration.substring(at + 1).strip().split(":")) {
+			Register register = currentProgram.getRegister(name.strip());
+			if (register == null) {
+				throw new IllegalArgumentException("no register " + name + " at " + address);
+			}
+			registers.add(register);
+		}
+		return new VariableStorage(currentProgram, registers.toArray(new Register[0]));
 	}
 
 	/** Adds name as a label at address, unless it is there already. */
@@ -646,7 +722,7 @@ public class SmartClockSetup extends GhidraScript {
 	}
 
 	private void labelRegisters() throws Exception {
-		for (Register register : REGISTERS) {
+		for (PeripheralRegister register : REGISTERS) {
 			Address address = toAddr(register.address());
 			createLabel(address, register.name(), true, SourceType.USER_DEFINED);
 			DataType type = register.size() == 2 ? WordDataType.dataType : ByteDataType.dataType;

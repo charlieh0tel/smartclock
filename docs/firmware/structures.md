@@ -256,7 +256,12 @@ miss.  `gps_print_process_monitor` prints both.
 `pllp_task` copies the whole of `gps`, `0x155` longs, to
 battery-backed RAM at `0x100004`, and `system_init` copies it back
 after a reset that was neither external nor a power-up, as
-`loop.md` describes for 3704's blocks.  `gps_print_extension` prints the matrix
+`loop.md` describes for 3704's blocks.
+
+The members of `gps` and `pll` still named `field_` and an offset,
+and the pad bytes of the descriptors and `fpga_bit_table`, are bytes
+no instruction refers to but these copies and the clears: the gaps
+between the Oncore cells the decoders fill, and padding.  `gps_print_extension` prints the matrix
 as the triangle the reference numbers it in.
 
 Whether the original was one structure or one source file's statics,

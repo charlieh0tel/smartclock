@@ -57,23 +57,23 @@
 0x120aa	function	shutdown	restart.md: Shutdown
 0x2a04a	function	scpi_task	restart.md: SCPI task
 0x12f2c	function	enter_installer	restart.md: calls trap #11, the installer entry
-0x102c62	label	scpi_language	restart.md: language byte, 0 PFORTH, 1 INSTALL
+0x102c62	label	scpi_language	restart.md: language byte, 0 PFORTH, 1 INSTALL	uint8_t
 #
 # the interval, docs/firmware/interval.md, "In every image"
 0x448fc	function	interval_average	interval.md: counts readings to ten and stores the mean
-0x102538	label	interval_mean	interval.md: mean of ten one-second readings
-0x10253c	label	interval_mean_flag	interval.md: the mean's flag
+0x102538	label	interval_mean	interval.md: mean of ten one-second readings	float
+0x10253c	label	interval_mean_flag	interval.md: the mean's flag	uint8_t
 0x101f9c	label	interval_reading	interval.md: latest one-second reading	interval_reading_fields
 #
 # the console, docs/firmware/console.md
 0x12f50	function	console_halt_hook	console.md: hook halt runs
-0x1009fe	label	console_halt_hook_cell	console.md: hook cell
+0x1009fe	label	console_halt_hook_cell	console.md: hook cell	void *
 0x29fce	function	scpi_task_create	console.md: creator of the SCPI task
 #
 # the rest of the float library, docs/firmware/libc.md
 0x5e93c	function	float_raise	libc.md: raises a floating-point exception
-0x1038b0	label	float_status	libc.md: floating-point status word
-0x1038b2	label	float_control	libc.md: floating-point control word
+0x1038b0	label	float_status	libc.md: floating-point status word	uint16_t
+0x1038b2	label	float_control	libc.md: floating-point control word	uint16_t
 #
 # C library, docs/firmware/libc.md
 0x5ec9e	function	abs	libc.md	int abs(int j)
@@ -89,10 +89,10 @@
 0x5efc4	function	qsort_range	libc.md: sorts a range by qsort's comparator and size
 0x5ef86	function	qsort_swap	libc.md
 0x5efa0	function	qsort_rotate	libc.md
-0x103940	label	qsort_compare	libc.md: qsort's comparator
-0x103944	label	qsort_size	libc.md: qsort's element size
+0x103940	label	qsort_compare	libc.md: qsort's comparator	void *
+0x103944	label	qsort_size	libc.md: qsort's element size	uint32_t
 0x5f102	function	rand	libc.md	int rand(void)
-0x103936	label	rand_seed	libc.md
+0x103936	label	rand_seed	libc.md	uint32_t
 0x5f128	function	strcat	libc.md	char * strcat(char *s1, char *s2)
 0x5f140	function	strchr	libc.md	char * strchr(char *s, int c)
 0x5f15a	function	strncmp	libc.md	int strncmp(char *s1, char *s2, unsigned int n)
@@ -106,10 +106,10 @@
 0x6092a	function	fabs	libc.md	double fabs(double x) @ D0:D1
 0x6098a	function	frexp	libc.md	double frexp(double value, int *exp) @ D0:D1
 0x60d94	function	modf	libc.md	double modf(double value, double *iptr) @ D0:D1
-0x10393a	label	errno	libc.md: log sets it to 34, ERANGE
+0x10393a	label	errno	libc.md: log sets it to 34, ERANGE	int32_t
 0x5ecf0	function	call_atexit_functions	libc.md
 0x1038b4	label	atexit_functions	libc.md
-0x103934	label	atexit_count	libc.md
+0x103934	label	atexit_count	libc.md	uint16_t
 0x1412e	function	float_exception_report	libc.md	void float_exception_report(uint32_t code)
 0x100bd4	label	float_exception_message	libc.md: length-prefixed
 0x5dbde	function	double_divide_operand_error	libc.md: exception code 0xe2000
@@ -174,34 +174,34 @@
 0x1f176	function	fatal_error	context: keeps the message and task name at crash_message, prints them and "RESET to recover.", then hangs	void fatal_error(char *message)
 0x29ada	function	return_zero	context: returns 0; most SCPI query handlers call it	int return_zero(void)
 0x3195a	function	log_write	context: appends to the diagnostic log under its lock; :DIAG:LOG:WRIT and log_send call it
-0x1037dd	label	debug_enabled	context: gates every debug_ and task_debug_ output
-0x10094e	label	crash_message	context: fatal_error's message and task name, 80 characters
+0x1037dd	label	debug_enabled	context: gates every debug_ and task_debug_ output	uint8_t
+0x10094e	label	crash_message	context: fatal_error's message and task name, 80 characters	char[80]
 0x1f056	function	task_dmessage	context: the calling task's message, printed only while its dmes_ flag is set	void task_dmessage(char *message)
-0x1037e0	label	task_gpsm	context: task id paired with dmes_gpsm in task_dmessage
-0x1037e4	label	task_hmon	context: task id paired with dmes_hmon in task_dmessage
-0x10371e	label	task_klok	context: task id paired with dmes_klok; its creator stores the klok task's id here
-0x1037ec	label	task_pllp	context: task id paired with dmes_pllp in task_dmessage
-0x1037f0	label	task_root	context: task id paired with dmes_root in task_dmessage
-0x1037f4	label	task_scpi	context: task id paired with dmes_scpi; scpi_task_create stores the scpi task's id here
-0x1032f4	label	task_spoo	context: task id paired with dmes_spoo in task_dmessage
-0x1037f8	label	task_curv	context: task id paired with dmes_curv in task_dmessage
-0x103808	label	dmes_gpsm	context: set by the console's dmes_gpsm
-0x10380c	label	dmes_hmon	context: set by the console's dmes_hmon
-0x103810	label	dmes_klok	context: set by the console's dmes_klok
-0x103814	label	dmes_pllp	context: set by the console's dmes_pllp
-0x103818	label	dmes_root	context: set by the console's dmes_root
-0x10381c	label	dmes_scpi	context: set by the console's dmes_scpi
-0x103820	label	dmes_spoo	context: set by the console's dmes_spoo
-0x103824	label	dmes_curv	context: set by the console's dmes_curv
+0x1037e0	label	task_gpsm	context: task id paired with dmes_gpsm in task_dmessage	uint32_t
+0x1037e4	label	task_hmon	context: task id paired with dmes_hmon in task_dmessage	uint32_t
+0x10371e	label	task_klok	context: task id paired with dmes_klok; its creator stores the klok task's id here	uint32_t
+0x1037ec	label	task_pllp	context: task id paired with dmes_pllp in task_dmessage	uint32_t
+0x1037f0	label	task_root	context: task id paired with dmes_root in task_dmessage	uint32_t
+0x1037f4	label	task_scpi	context: task id paired with dmes_scpi; scpi_task_create stores the scpi task's id here	uint32_t
+0x1032f4	label	task_spoo	context: task id paired with dmes_spoo in task_dmessage	uint32_t
+0x1037f8	label	task_curv	context: task id paired with dmes_curv in task_dmessage	uint32_t
+0x103808	label	dmes_gpsm	context: set by the console's dmes_gpsm	uint32_t
+0x10380c	label	dmes_hmon	context: set by the console's dmes_hmon	uint32_t
+0x103810	label	dmes_klok	context: set by the console's dmes_klok	uint32_t
+0x103814	label	dmes_pllp	context: set by the console's dmes_pllp	uint32_t
+0x103818	label	dmes_root	context: set by the console's dmes_root	uint32_t
+0x10381c	label	dmes_scpi	context: set by the console's dmes_scpi	uint32_t
+0x103820	label	dmes_spoo	context: set by the console's dmes_spoo	uint32_t
+0x103824	label	dmes_curv	context: set by the console's dmes_curv	uint32_t
 0x136fe	function	get_date_time	context: :PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns valid unless clock_invalid	int get_date_time(uint32_t *date, uint32_t *time)
-0x1009c2	label	clock_date	context: get_date_time's date
-0x1009be	label	clock_time	context: get_date_time's time
-0x1009e7	label	clock_invalid	context: get_date_time reports no date or time while set
+0x1009c2	label	clock_date	context: get_date_time's date	uint32_t
+0x1009be	label	clock_time	context: get_date_time's time	uint32_t
+0x1009e7	label	clock_invalid	context: get_date_time reports no date or time while set	uint8_t
 0x2410e	function	adc_average	context: diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a default when there is no reading	float adc_average(adc_channel channel) @ D0
 0x1043a	function	mutex_acquire	context: recursive lock, owner at +8, count at +0xc, a token through request_x when not already owned
 0x10484	function	mutex_release	context: drops the count, or the owner and the token through send_x
-0x10502	function	mutex_lock	context: mutex_acquire on its argument
-0x10518	function	mutex_unlock	context: mutex_release on its argument
+0x10502	function	mutex_lock	context: mutex_acquire on its argument	int mutex_lock(void *mutex)
+0x10518	function	mutex_unlock	context: mutex_release on its argument	int mutex_unlock(void *mutex)
 0x101d36	label	log_mutex	context: log_write locks it
 0x29e56	function	send_x_retry	context: send_x, pausing and retrying until it succeeds	void send_x_retry(uint32_t exchange, void *message, uint32_t ticks)
 0x29e7e	function	request_and_wait	context: raises a variable, send_x_retry, waits on the variable
@@ -310,7 +310,7 @@
 0x1009b6	label	watchdog_spool	structures.md: the watchdog line's spool	uint8_t
 0x1017bc	label	gps_counts	structures.md: the GPS Process Monitor page's counters, memset as one	gps_statistics
 0x1017f2	label	gps_last_command	structures.md: "Sender: %-5s Cmd #: %-2d (%s)" reads +8, +0xa and +0xc through it	void *
-0x101216	label	gps_last_program_message	structures.md: the GPS Process Monitor's "Last Rcvr Prgm Msg", "(none issued)" when empty
+0x101216	label	gps_last_program_message	structures.md: the GPS Process Monitor's "Last Rcvr Prgm Msg", "(none issued)" when empty	char[80]
 0x101b6e	label	gps_pps_dead	structures.md: set with "GPS 1pps signal is dead", cleared with "is ok"	uint8_t
 0x101cfb	label	gps_pps_counting	structures.md: set when gps_pps_check starts the pulse accumulator	uint8_t
 0x101cfc	label	gps_pps_last_count	structures.md: PACNT at the last check; "short gate, count %d" prints PACNT less it	uint8_t
@@ -319,11 +319,11 @@
 0x101cfe	label	internal_pps_last_count	structures.md: internal_pps_count at the last check	uint8_t
 0x101b6f	label	internal_pps_dead	structures.md: set with "Internal 1pps signal is dead", cleared with "is ok"	uint8_t
 0x101cf8	label	internal_pps_started	structures.md: set on internal_pps_check's first pass	uint8_t
-0x101d1c	label	eepx_status	structures.md: "Unable to initialize eepx: %X", "Unable to acquire eepx token: %X"
-0x10310a	label	drtR_status	structures.md: "Unable to initialize drtR: %X"
-0x103122	label	drtW_status	structures.md: "Unable to initialize drtW: %X"
-0x103154	label	sciR_status	structures.md: "Unable to initialize sciR: %X", "Unable to acquire SCI token: %X"
-0x103170	label	sciW_status	structures.md: "Unable to initialize sciW: %X"
+0x101d1c	label	eepx_status	structures.md: "Unable to initialize eepx: %X", "Unable to acquire eepx token: %X"	uint32_t
+0x10310a	label	drtR_status	structures.md: "Unable to initialize drtR: %X"	uint32_t
+0x103122	label	drtW_status	structures.md: "Unable to initialize drtW: %X"	uint32_t
+0x103154	label	sciR_status	structures.md: "Unable to initialize sciR: %X", "Unable to acquire SCI token: %X"	uint32_t
+0x103170	label	sciW_status	structures.md: "Unable to initialize sciW: %X"	uint32_t
 0x101d94	label	log_page_buffer	structures.md: log_read loads a page here and formats its entries	log_page
 0x101dd4	label	log_page_number	structures.md: the page log_page_buffer holds	int16_t
 0x102eb6	label	status_request_service	structures.md: the time code's r, the Status Byte's request-for-service summary	uint8_t
@@ -336,7 +336,7 @@
 0x10264c	label	psos_config	structures.md: memcpy'd from ROM 0x5122a, 0x62 bytes; its first long is the data area the supervisor stack starts 200 bytes into
 0x102674	label	psos_supervisor_stack_size	structures.md: ">> pSOS system supervisor stack:" divides by it	int32_t
 0x1026b8	label	task_table	structures.md: task_stack_report's tasks, six bytes each, the task first
-0x10271c	label	task_count	structures.md: task_stack_report's count of task_table	int16_t
+0x10271c	label	task_count	structures.md: task_stack_report's count of task_table	int32_t
 0x1032fd	label	deferred_text	structures.md: deferred_vprintf's buffer, which deferred_flush prints	char[1025]
 0x1036fe	label	deferred_end	structures.md: deferred_vprintf's write offset into deferred_text	int16_t
 0x103700	label	deferred_start	structures.md: deferred_flush's read offset into deferred_text	int16_t
@@ -538,5 +538,13 @@
 0x102016	label	pll_scpi_index	structures.md: the request's value index, or its last for several	uint8_t
 0x102017	label	pll_scpi_source	structures.md: the request's source, which status_report_from and nv_save are given	uint8_t
 0x10201c	label	pll_scpi_setting	structures.md: the new byte finish_scpi_cmd stores into a setting	uint8_t
-0x102020	label	pll_scpi_values	structures.md: the request's values, which validate_num checks
-0x102030	label	pll_scpi_validated	structures.md: validate_num's results, which finish_scpi_cmd stores
+0x102020	label	pll_scpi_values	structures.md: the request's values, which validate_num checks	uint32_t[4]
+0x102030	label	pll_scpi_validated	structures.md: validate_num's results, which finish_scpi_cmd stores	uint32_t[4]
+0x109ae	function	klok_task_create	context: psos_create("klok") into task_klok, then psos_start(task_klok, klok_task); "Pps_init error", "Clk_go error"
+0x10b1e	function	klok_task	context: klok_task_create starts the klok task here
+0x20c96	function	spoo_task_create	context: psos_create("spoo") into task_spoo, then psos_start(task_spoo, spoo_task)
+0x20e4e	function	spoo_task	context: spoo_task_create starts the spoo task here; it takes requests from spoo_exchange
+
+0x104e6	function	mutex_create	structures.md: packs the name and creates the mutex as an exchange of that name; "klok" for klok_mutex, "logr" for log_mutex	int mutex_create(char *name, void *mutex)
+0x3167c	function	log_init	structures.md: creates log_mutex, "logr", and finds the event log's page to write next among 0x4b
+0x100bc4	label	pps_exchange	structures.md: pps_init creates the "1pps" exchange with create_x, service 20, and keeps its id here	uint32_t

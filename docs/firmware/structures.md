@@ -35,6 +35,27 @@ three exchanges and four tasks, and starts each task at its entry:
 | task `pllp` | priority `0xaf` | `0x1037ec` | `0x47528` |
 | task `curv` | priority `0x19` | `0x1037f8` | `0x41784` |
 
+Three more tasks are created elsewhere, each by its own routine, with
+`psos_create`'s last argument the cell that receives the task's id and
+`psos_start` given the entry:
+
+| Task | Created by | Id kept at | Started at |
+| ---- | ---------- | ---------- | ---------- |
+| `klok` | `klok_task_create` (`0x109ae`) | `task_klok`, `0x10371e` | `klok_task`, `0x10b1e` |
+| `spoo` | `spoo_task_create` (`0x20c96`) | `task_spoo`, `0x1032f4` | `spoo_task`, `0x20e4e` |
+| `scpi` | `scpi_task_create` (`0x29fce`) | `task_scpi`, `0x1037f4` | `scpi_task` |
+
+These are the tasks `:DIAGnostic:OS:PROCess?` lists
+(`../scpi/undocumented.md`, "`:DIAGnostic:OS`"), with pSOS's own `ROOT`
+and `IDLE`.  Of the exchanges it lists, `1pps` is created by
+`pps_init` (`0x12e24`), straight through the kernel, service 20 with
+the name `'1pps'` in D0, into `pps_exchange` (`0x100bc4`); `logr` is the
+event log's mutex, `log_mutex`, which `log_init` (`0x3167c`) creates
+with `mutex_create` (`0x104e6`), as `klok_task_create` does `klok_mutex`
+under the name `klok`.  A mutex is an exchange of its name, which
+`mutex_lock` and `mutex_unlock` (`0x10502`, `0x10518`) take and give
+back.
+
 The SCPI setters' requests go to `pllc`: five routines,
 `0x29ec2`--`0x29f94`, fill a message on their stack and pass its address
 to `request_and_wait` with the exchange, which `0x43340` receives

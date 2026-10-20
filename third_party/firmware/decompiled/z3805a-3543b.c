@@ -798,6 +798,7 @@ extern scpi_numeric_param scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THRe
 extern scpi_numeric_param scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; /* 00034336 */
 extern scpi_numeric_param nv_param_field_b8; /* 00034374 */
 extern fpga_bit fpga_bit_table[6]; /* 00041310 */
+extern char crash_message[80]; /* 0010094e */
 extern exception_record last_exception; /* 0010099e */
 extern uint8_t watchdog_clock; /* 001009b2 */
 extern uint8_t watchdog_gps; /* 001009b3 */
@@ -805,13 +806,19 @@ extern uint8_t watchdog_pll; /* 001009b4 */
 extern uint8_t watchdog_monitor; /* 001009b5 */
 extern uint8_t watchdog_spool; /* 001009b6 */
 extern uint32_t uptime; /* 001009ba */
+extern uint32_t clock_time; /* 001009be */
+extern uint32_t clock_date; /* 001009c2 */
 extern uint32_t gps_time; /* 001009d2 */
 extern uint32_t gps_date; /* 001009d6 */
+extern uint8_t clock_invalid; /* 001009e7 */
 extern int16_t gps_utc_offset; /* 001009e8 */
 extern uint8_t gps_utc_offset_valid; /* 001009ea */
+extern void * console_halt_hook_cell; /* 001009fe */
+extern uint32_t pps_exchange; /* 00100bc4 */
 extern uint8_t selftest_abort; /* 00100c42 */
 extern uint8_t selftest_running; /* 00100c43 */
 extern gps_state gps; /* 00100c6a */
+extern char gps_last_program_message[80]; /* 00101216 */
 extern uint8_t gps_response_buffer[20]; /* 00101266 */
 extern uint8_t * gps_response_cursor; /* 0010138c */
 extern uint8_t * gps_print_cursor; /* 00101390 */
@@ -829,6 +836,7 @@ extern uint8_t internal_pps_last_count; /* 00101cfe */
 extern float scpi_value_DIAGnostic_ROSCillator_TCOefficient; /* 00101d0c */
 extern float scpi_value_DIAGnostic_TOFFset; /* 00101d10 */
 extern uint32_t eepx_exchange; /* 00101d18 */
+extern uint32_t eepx_status; /* 00101d1c */
 extern log_page log_page_buffer; /* 00101d94 */
 extern int16_t log_page_number; /* 00101dd4 */
 extern int32_t scpi_value_SAMPle_INTeger; /* 00101de4 */
@@ -850,32 +858,58 @@ extern void * pll_scpi_param; /* 00102012 */
 extern uint8_t pll_scpi_index; /* 00102016 */
 extern uint8_t pll_scpi_source; /* 00102017 */
 extern uint8_t pll_scpi_setting; /* 0010201c */
+extern uint32_t pll_scpi_values[4]; /* 00102020 */
+extern uint32_t pll_scpi_validated[4]; /* 00102030 */
 extern float fine_y0; /* 00102154 */
 extern pll_state pll; /* 00102162 */
+extern float interval_mean; /* 00102538 */
+extern uint8_t interval_mean_flag; /* 0010253c */
 extern uint8_t status_summary; /* 00102544 */
 extern uint8_t gps_ack_code; /* 00102584 */
 extern uint8_t gps_ack_ready; /* 00102585 */
 extern uint8_t gps_ack_awaited; /* 00102586 */
 extern int32_t psos_supervisor_stack_size; /* 00102674 */
-extern int16_t task_count; /* 0010271c */
+extern int32_t task_count; /* 0010271c */
+extern uint8_t scpi_language; /* 00102c62 */
 extern uint8_t status_request_service; /* 00102eb6 */
 extern char status_ready; /* 00102eb7 */
 extern status_model * status_object; /* 00102eb8 */
 extern uint32_t drtR_exchange; /* 00103102 */
 extern uint32_t drtW_exchange; /* 00103106 */
+extern uint32_t drtR_status; /* 0010310a */
+extern uint32_t drtW_status; /* 00103122 */
 extern uint16_t hdac_shadow[3]; /* 0010314a */
 extern uint32_t sciR_exchange; /* 00103150 */
+extern uint32_t sciR_status; /* 00103154 */
 extern uint32_t sciW_exchange; /* 0010316c */
+extern uint32_t sciW_status; /* 00103170 */
+extern uint32_t task_spoo; /* 001032f4 */
 extern uint32_t spoo_exchange; /* 001032f8 */
 extern char deferred_text[1025]; /* 001032fd */
 extern int16_t deferred_end; /* 001036fe */
 extern int16_t deferred_start; /* 00103700 */
+extern uint32_t task_klok; /* 0010371e */
 extern klok_entry * klok_entries; /* 00103722 */
 extern klok_entry * klok_free; /* 00103726 */
 extern klok_entry klok_pool[5]; /* 0010372a */
+extern uint8_t debug_enabled; /* 001037dd */
+extern uint32_t task_gpsm; /* 001037e0 */
+extern uint32_t task_hmon; /* 001037e4 */
+extern uint32_t task_pllp; /* 001037ec */
+extern uint32_t task_root; /* 001037f0 */
+extern uint32_t task_scpi; /* 001037f4 */
+extern uint32_t task_curv; /* 001037f8 */
 extern uint32_t gpsx_exchange; /* 001037fc */
 extern uint32_t plla_exchange; /* 00103800 */
 extern uint32_t pllc_exchange; /* 00103804 */
+extern uint32_t dmes_gpsm; /* 00103808 */
+extern uint32_t dmes_hmon; /* 0010380c */
+extern uint32_t dmes_klok; /* 00103810 */
+extern uint32_t dmes_pllp; /* 00103814 */
+extern uint32_t dmes_root; /* 00103818 */
+extern uint32_t dmes_scpi; /* 0010381c */
+extern uint32_t dmes_spoo; /* 00103820 */
+extern uint32_t dmes_curv; /* 00103824 */
 extern uint8_t es_ascii; /* 00103830 */
 extern uint8_t es_enabled; /* 00103831 */
 extern char es_message[60]; /* 00103832 */
@@ -884,6 +918,13 @@ extern char tcode_message[60]; /* 0010386f */
 extern uint8_t tcode_length; /* 001038ab */
 extern uint8_t tcode_format; /* 001038ac */
 extern uint8_t tcode_pending; /* 001038ad */
+extern uint16_t float_status; /* 001038b0 */
+extern uint16_t float_control; /* 001038b2 */
+extern uint16_t atexit_count; /* 00103934 */
+extern uint32_t rand_seed; /* 00103936 */
+extern int32_t errno; /* 0010393a */
+extern void * qsort_compare; /* 00103940 */
+extern uint32_t qsort_size; /* 00103944 */
 extern byte DUART_MR1A_MR2A; /* 00200001 */
 extern byte DUART_SRA_CSRA; /* 00200003 */
 extern byte DUART_CRA; /* 00200005 */
@@ -3691,32 +3732,38 @@ undefined8 FUN_000104d2(void)
 
 /* 000104e6 */
 
-void FUN_000104e6(void)
+int mutex_create(char *name,void *mutex)
 
 {
+  int unaff_D7;
+  
   psos_pack_name();
   FUN_00010400();
-  return;
+  return unaff_D7;
 }
 
 
 /* 00010502 */
 
-void mutex_lock(void)
+int mutex_lock(void *mutex)
 
 {
+  int unaff_D7;
+  
   mutex_acquire();
-  return;
+  return unaff_D7;
 }
 
 
 /* 00010518 */
 
-void mutex_unlock(void)
+int mutex_unlock(void *mutex)
 
 {
+  int unaff_D7;
+  
   mutex_release();
-  return;
+  return unaff_D7;
 }
 
 
@@ -4038,7 +4085,7 @@ int FUN_00010946(klok_entry *param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-uint FUN_000109ae(ulong param_1)
+uint klok_task_create(ulong param_1)
 
 {
   ulong uVar1;
@@ -4069,15 +4116,15 @@ uint FUN_000109ae(ulong param_1)
     pkVar2[-1].next = (klok_entry *)0x0;
   }
   if (param2 == 0) {
-    uVar1 = psos_create("klok",0,param_1,0x100,0x10,(void *)0x0,(ulong *)&task_klok);
+    uVar1 = psos_create("klok",0,param_1,0x100,0x10,(void *)0x0,&task_klok);
     param2 = uVar1 & 0xff;
   }
   if (param2 == 0) {
-    uVar1 = psos_start(_task_klok,&LAB_00010b1e);
+    uVar1 = psos_start(task_klok,klok_task);
     param2 = uVar1 & 0xff;
   }
   if (param2 == 0) {
-    param2 = FUN_000104e6("klok",&klok_mutex);
+    param2 = mutex_create("klok",&klok_mutex);
   }
   else {
     debug_sprintf(acStack_54,"Clk_go error %#04x\r\n",param2);
@@ -4095,6 +4142,25 @@ void FUN_00010b00(undefined4 param_1,undefined4 param_2)
   set_timedate(param_2,param_1);
   FUN_00030b66(param_2);
   return;
+}
+
+
+/* 00010b1e */
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+
+void klok_task(void)
+
+{
+  psos_service_33();
+  do {
+    FUN_00012e9e(0x1037ac,0x1037b0,1);
+    _DAT_001037cc = FUN_0001303c();
+    if (klok_entries != (klok_entry *)0x0) {
+      FUN_00010b62();
+    }
+    watchdog_clock = watchdog_clock + 1;
+  } while( true );
 }
 
 
@@ -4970,7 +5036,7 @@ undefined8 primary_default_exception(void)
       pcVar5 = pcVar5 + 1;
     } while (cVar1 != '\0');
   }
-  if (debug_enabled != '\0') {
+  if (debug_enabled != 0) {
     printf_polled("\r\n");
     uVar4 = exception_name(in_stack_0000000a);
     printf_polled("%s: %s",0x99f,uVar4);
@@ -5026,7 +5092,7 @@ void FUN_00011942(ushort param_1,uint32_t param_2,ushort param_3,uint32_t param_
       pcVar4 = pcVar4 + 1;
     } while (cVar1 != '\0');
   }
-  if (debug_enabled != '\0') {
+  if (debug_enabled != 0) {
     printf_polled("\r\n");
     uVar3 = exception_name(param_3);
     printf_polled("%s: %s",0x99f,uVar3);
@@ -5547,7 +5613,7 @@ void FUN_00012bb4(void)
   FUN_00013908(_DAT_00100c34);
   cVar6 = '\0';
   do {
-    *(undefined4 *)(&dmes_gpsm + cVar6 * 4) = 1;
+    (&dmes_gpsm)[cVar6] = 1;
     cVar6 = cVar6 + '\x01';
   } while (cVar6 < '\t');
   sVar5 = record_checksum(&DAT_00100000,0x94e);
@@ -5661,7 +5727,7 @@ undefined8 FUN_00012db6(void)
   timecode_update();
   _DAT_00100bb4 = get_gps_time();
   _DAT_00100bb8 = get_gps_date();
-  if (_DAT_00100bc4 != 0) {
+  if (pps_exchange != 0) {
     psos_call();
   }
   return CONCAT44(in_D0,in_D1);
@@ -5692,12 +5758,11 @@ void primary_user_81(void)
 /* 00012e24 */
 
 /* WARNING: Removing unreachable block (ram,0x00012e44) */
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
 undefined4 pps_init(void)
 
 {
-  _DAT_00100bc4 = 0;
+  pps_exchange = 0;
   psos_call();
   return 0x14;
 }
@@ -5705,15 +5770,13 @@ undefined4 pps_init(void)
 
 /* 00012e6c */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 undefined4 FUN_00012e6c(void)
 
 {
   ushort uVar1;
   undefined4 uVar2;
   
-  if (_DAT_00100bc4 == 0) {
+  if (pps_exchange == 0) {
     uVar2 = 4;
   }
   else {
@@ -5836,13 +5899,13 @@ void root_task(void)
 {
   psos_debug_output(DAT_001037de);
   _DAT_0010382c = 0;
-  _task_root = psos_my_pid();
+  task_root = psos_my_pid();
   enter_supervisor();
   FUN_00012004('\x01');
   DAT_001037dc = 1;
   eeprom_init();
   status_init();
-  FUN_0003167c();
+  log_init();
   if (_DAT_00100c34 != 0) {
     FUN_000315e8(4);
     FUN_0003305e();
@@ -5850,13 +5913,13 @@ void root_task(void)
   psos_create_x("gpsx",0,0,&gpsx_exchange);
   psos_create_x("plla",0,0,&plla_exchange);
   psos_create_x("pllc",2,8,&pllc_exchange);
-  psos_create("gpsm",0,100,0,0x400,(void *)0x0,(ulong *)&task_gpsm);
+  psos_create("gpsm",0,100,0,0x400,(void *)0x0,&task_gpsm);
   psos_create("hmon",0,200,0,0x400,(void *)0x0,&task_hmon);
   psos_create("pllp",0,0xaf,0,0x400,(void *)0x0,&task_pllp);
   psos_create("curv",0,0x19,0,0x400,(void *)0x0,&task_curv);
-  FUN_00020c96(0x4b);
-  FUN_000109ae(0x96);
-  psos_start(_task_gpsm,gpsm_task);
+  spoo_task_create(0x4b);
+  klok_task_create(0x96);
+  psos_start(task_gpsm,gpsm_task);
   psos_start(task_hmon,hmon_task);
   psos_start(task_pllp,pllp_task);
   psos_start(task_curv,curv_task);
@@ -6306,25 +6369,23 @@ void FUN_000135f0(void)
 
 /* 000136d6 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention -- yet parameter storage is locked */
 
 uint32_t get_clock_date(void)
 
 {
-  return _clock_date;
+  return clock_date;
 }
 
 
 /* 000136de */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention -- yet parameter storage is locked */
 
 uint32_t get_clock_time(void)
 
 {
-  return _clock_time;
+  return clock_time;
 }
 
 
@@ -6363,21 +6424,19 @@ uint32_t get_uptime(void)
 
 /* 000136fe */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 int get_date_time(uint32_t *date,uint32_t *time)
 
 {
   uint32_t uVar1;
   
-  uVar1 = _clock_time;
+  uVar1 = clock_time;
   if (date != (uint32_t *)0x0) {
-    *date = _clock_date;
+    *date = clock_date;
   }
   if (time != (uint32_t *)0x0) {
     *time = uVar1;
   }
-  return (uint)(clock_invalid == '\0');
+  return (uint)(clock_invalid == 0);
 }
 
 
@@ -6395,7 +6454,7 @@ bool FUN_00013740(uint32_t *param_1,uint32_t *param_2)
   if (param_2 != (uint32_t *)0x0) {
     *param_2 = uVar1;
   }
-  return clock_invalid == '\0';
+  return clock_invalid == 0;
 }
 
 
@@ -6555,7 +6614,7 @@ LAB_00013974:
 
 /* 0001399a */
 
-undefined1 time_valid(void)
+uint8_t time_valid(void)
 
 {
   return clock_invalid;
@@ -7266,11 +7325,11 @@ LAB_000148e6:
   FUN_00051158();
   DAT_0010fffa = 0;
   DAT_0010fff6 = 0;
-  _float_control = 0x7480;
-  _float_status = 0;
-  _atexit_count = 0;
-  _errno = 0;
-  _rand_seed = 1;
+  float_control = 0x7480;
+  float_status = 0;
+  atexit_count = 0;
+  errno = 0;
+  rand_seed = 1;
   DAT_0010fff2 = 0;
   DAT_0010ffee = 0;
   DAT_0010ffea = 0;
@@ -7511,11 +7570,11 @@ LAB_000148e6:
   FUN_00051158();
   DAT_0010fffa = 0;
   DAT_0010fff6 = 0;
-  _float_control = 0x7480;
-  _float_status = 0;
-  _atexit_count = 0;
-  _errno = 0;
-  _rand_seed = 1;
+  float_control = 0x7480;
+  float_status = 0;
+  atexit_count = 0;
+  errno = 0;
+  rand_seed = 1;
   DAT_0010fff2 = 0;
   DAT_0010ffee = 0;
   DAT_0010ffea = 0;
@@ -10027,7 +10086,7 @@ void FUN_0001660a(code *param_1)
   for (iVar5 = *(int *)(psos_config + 0x10); iVar5 != 0; iVar5 = *(int *)(iVar5 + 0x30)) {
     iVar1 = iVar1 + 1;
   }
-  (*param_1)(acStack_38,_task_count,iVar1,_DAT_00102720);
+  (*param_1)(acStack_38,task_count,iVar1,_DAT_00102720);
   return;
 }
 
@@ -10131,7 +10190,7 @@ int FUN_0001675a(code *param_1)
   iVar5 = 0;
   do {
     bVar2 = false;
-    for (iVar6 = 1; iVar6 < _task_count; iVar6 = iVar6 + 1) {
+    for (iVar6 = 1; iVar6 < task_count; iVar6 = iVar6 + 1) {
       if ((char)(&DAT_001026b6)[iVar6 * 6] == iVar5) {
         iVar1 = *(int *)(&task_table + iVar6 * 6);
         uVar3 = FUN_00016730(iVar1);
@@ -10187,7 +10246,7 @@ void FUN_00016828(code *param_1)
   local_3a = 0;
   local_4a[1] = 0;
   local_4a[0] = 0;
-  for (iVar3 = 0; iVar3 < _task_count; iVar3 = iVar3 + 1) {
+  for (iVar3 = 0; iVar3 < task_count; iVar3 = iVar3 + 1) {
     for (puVar5 = *(undefined4 **)(*(int *)(&task_table + iVar3 * 6) + 0x20);
         puVar5 != (undefined4 *)0x0; puVar5 = (undefined4 *)*puVar5) {
       uVar1 = *(ushort *)(puVar5 + 4);
@@ -10288,8 +10347,6 @@ undefined4 FUN_00016a20(uint param_1)
 
 /* 00016a4c */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void os_process_report(undefined1 param_1)
 
 {
@@ -10297,7 +10354,7 @@ void os_process_report(undefined1 param_1)
   printf("%s","=================================================================\r\n");
   printf("%s","\r\n");
   FUN_0001606c(printf);
-  _task_count = FUN_00016540();
+  task_count = FUN_00016540();
   printf("%s","\r\n");
   FUN_0001675a(printf);
   FUN_0001660a(printf);
@@ -10313,8 +10370,6 @@ void os_process_report(undefined1 param_1)
 
 /* 00016ace */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void os_memory_report(undefined1 param_1)
 
 {
@@ -10327,10 +10382,10 @@ void os_memory_report(undefined1 param_1)
   
   printf("%s","\r\n");
   printf("%s","=================================================================\r\n");
-  _task_count = FUN_00016540();
+  task_count = FUN_00016540();
   printf("%s","\r\n");
   printf("%s","Process  Memseg size(bytes)     next        last    neighbor   key\r\n");
-  for (iVar2 = 0; iVar2 < _task_count; iVar2 = iVar2 + 1) {
+  for (iVar2 = 0; iVar2 < task_count; iVar2 = iVar2 + 1) {
     task = *(void **)(&task_table + iVar2 * 6);
     for (puVar3 = *(undefined4 **)((int)task + 0x20); puVar3 != (undefined4 *)0x0;
         puVar3 = (undefined4 *)*puVar3) {
@@ -10393,8 +10448,6 @@ void FUN_00016bb6(int param_1,undefined4 *param_2,undefined4 *param_3,int *param
 
 /* 00016c44 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void task_stack_report(undefined1 param_1)
 
 {
@@ -10421,9 +10474,9 @@ void task_stack_report(undefined1 param_1)
   printf("%s","\r\n");
   printf("%s","=================================================================\r\n");
   printf("%s","\r\n");
-  _task_count = FUN_00016540();
+  task_count = FUN_00016540();
   printf("%s","    pid   name     USP   size            SSP   size\r\n");
-  for (sVar2 = 0; uVar1 = (ushort)unaff_D2, sVar2 < _task_count; sVar2 = sVar2 + 1) {
+  for (sVar2 = 0; uVar1 = (ushort)unaff_D2, sVar2 < task_count; sVar2 = sVar2 + 1) {
     task = *(void **)(&task_table + sVar2 * 6);
     FUN_00016bb6(task,&local_14,&local_8,&local_18,&local_10,&local_c,&local_1c);
     if ((local_18 != 0) || (local_1c != 0)) {
@@ -13094,15 +13147,13 @@ void forth_paren(char *input)
 
 /* 0001928c */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void forth_halt(void)
 
 {
-  if (_console_halt_hook_cell != (code *)0x0) {
+  if (console_halt_hook_cell != (void *)0x0) {
                     /* WARNING: Could not recover jumptable at 0x00019296. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-    (*_console_halt_hook_cell)();
+    (*console_halt_hook_cell)();
     return;
   }
   __m68k_trap(0xe);
@@ -15973,12 +16024,10 @@ void FUN_0001ae36(void)
 
 /* 0001ae46 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-void FUN_0001ae46(undefined4 param_1)
+void FUN_0001ae46(void *param_1)
 
 {
-  _console_halt_hook_cell = param_1;
+  console_halt_hook_cell = param_1;
   return;
 }
 
@@ -17493,110 +17542,94 @@ void diag_dmessage(char *param_1)
 
 /* 0001be18 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-void diag_dmes_gpsm(undefined4 param_1)
+void diag_dmes_gpsm(uint32_t param_1)
 
 {
-  _dmes_gpsm = param_1;
+  dmes_gpsm = param_1;
   return;
 }
 
 
 /* 0001be22 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-void diag_dmes_hmon(undefined4 param_1)
+void diag_dmes_hmon(uint32_t param_1)
 
 {
-  _dmes_hmon = param_1;
+  dmes_hmon = param_1;
   return;
 }
 
 
 /* 0001be2c */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-void diag_dmes_klok(undefined4 param_1)
+void diag_dmes_klok(uint32_t param_1)
 
 {
-  _dmes_klok = param_1;
+  dmes_klok = param_1;
   return;
 }
 
 
 /* 0001be36 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-void diag_dmes_pllp(undefined4 param_1)
+void diag_dmes_pllp(uint32_t param_1)
 
 {
-  _dmes_pllp = param_1;
+  dmes_pllp = param_1;
   return;
 }
 
 
 /* 0001be40 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-void diag_dmes_root(undefined4 param_1)
+void diag_dmes_root(uint32_t param_1)
 
 {
-  _dmes_root = param_1;
+  dmes_root = param_1;
   return;
 }
 
 
 /* 0001be4a */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-void diag_dmes_scpi(undefined4 param_1)
+void diag_dmes_scpi(uint32_t param_1)
 
 {
-  _dmes_scpi = param_1;
+  dmes_scpi = param_1;
   return;
 }
 
 
 /* 0001be54 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-void diag_dmes_spoo(undefined4 param_1)
+void diag_dmes_spoo(uint32_t param_1)
 
 {
-  _dmes_spoo = param_1;
+  dmes_spoo = param_1;
   return;
 }
 
 
 /* 0001be5e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-void diag_dmes_curv(undefined4 param_1)
+void diag_dmes_curv(uint32_t param_1)
 
 {
-  _dmes_curv = param_1;
+  dmes_curv = param_1;
   return;
 }
 
 
 /* 0001be68 */
 
-void diag_dmes_all(undefined4 param_1)
+void diag_dmes_all(uint32_t param_1)
 
 {
   char cVar1;
   
   cVar1 = '\0';
   do {
-    *(undefined4 *)(&dmes_gpsm + cVar1 * 4) = param_1;
+    (&dmes_gpsm)[cVar1] = param_1;
     cVar1 = cVar1 + '\x01';
   } while (cVar1 < '\t');
   return;
@@ -18200,7 +18233,7 @@ undefined8 duart_init(void)
     sprintf(acStack_64,"Unable to create drtR: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
-  _drtR_status = 0;
+  drtR_status = 0;
   _DAT_0010310e = drtR_exchange;
   _DAT_00103112 = 0;
   _DAT_00103116 = 0;
@@ -18214,7 +18247,7 @@ undefined8 duart_init(void)
     sprintf(acStack_64,"Unable to create drtW: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
-  _drtW_status = 0;
+  drtW_status = 0;
   _DAT_00103126 = drtW_exchange;
   _DAT_0010312a = 0;
   _DAT_0010312e = 0;
@@ -18557,7 +18590,7 @@ undefined1 FUN_0001e18a(undefined4 param_1,undefined2 param_2)
   
   uVar2 = 0;
   uVar1 = psos_my_pid();
-  if (uVar1 == _task_gpsm) {
+  if (uVar1 == task_gpsm) {
     psos_get_v(0x800,0,(ulong *)0x0);
     _DAT_00102fe0 = param_1;
     _DAT_00102fe4 = param_2;
@@ -18889,8 +18922,6 @@ void FUN_0001e736(void)
 
 /* 0001e766 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 uint FUN_0001e766(void)
 
 {
@@ -18905,8 +18936,8 @@ uint FUN_0001e766(void)
     bVar1 = DUART_RBA_TBA;
     DAT_00102edd = DAT_00102edd + 1;
     *(byte *)(in_D0 + 0x102edf) = bVar1;
-    if (_task_gpsm != 0) {
-      in_D0 = psos_signal_v(_task_gpsm,0x4000);
+    if (task_gpsm != 0) {
+      in_D0 = psos_signal_v(task_gpsm,0x4000);
       if ((char)in_D0 != '\0') {
         fatal_error("DUARTA isr signaling SIG_SIQ");
         in_D0 = extraout_D0;
@@ -19018,7 +19049,7 @@ void FUN_0001e9ca(void)
   if (_DAT_00102fe4 == 0) {
     DAT_00102ed4 = DAT_00102ed4 & 0xfe;
     DUART_ISR_IMR = DAT_00102ed4;
-    psos_signal_v(_task_gpsm,0x800);
+    psos_signal_v(task_gpsm,0x800);
   }
   else {
     DUART_RBA_TBA = *_DAT_00102fe0;
@@ -19068,8 +19099,8 @@ void FUN_0001ea10(void)
   if ((DAT_001030f7 != '\0') && (DAT_001030f6 == '\0')) {
     DAT_001030f7 = '\0';
     DAT_0010313a = 0;
-    if (_task_scpi != 0) {
-      psos_signal_v(_task_scpi,0x20);
+    if (task_scpi != 0) {
+      psos_signal_v(task_scpi,0x20);
     }
   }
   DAT_00103100 = 0;
@@ -19245,7 +19276,7 @@ int debug_sprintf(char *s,char *format,...)
 {
   int iVar1;
   
-  if (debug_enabled == '\0') {
+  if (debug_enabled == 0) {
     *s = '\0';
     iVar1 = 0;
   }
@@ -19264,7 +19295,7 @@ int debug_write(char *param_1)
   int iVar1;
   
   iVar1 = 0;
-  if (debug_enabled != '\0') {
+  if (debug_enabled != 0) {
     iVar1 = console_write_polled(param_1);
   }
   return iVar1;
@@ -19280,7 +19311,7 @@ int FUN_0001ef90(char *param_1)
   char acStack_54 [80];
   
   iVar1 = 0;
-  if (debug_enabled != '\0') {
+  if (debug_enabled != 0) {
     vsprintf(acStack_54,param_1,&stack0x00000008);
     iVar1 = console_write_polled(acStack_54);
   }
@@ -19295,7 +19326,7 @@ void debug_printf(char *format,...)
 {
   char acStack_54 [80];
   
-  if (debug_enabled != '\0') {
+  if (debug_enabled != 0) {
     vsprintf(acStack_54,format,&stack0x00000008);
     console_write(acStack_54);
   }
@@ -19313,7 +19344,7 @@ void task_debug_message(char *message)
   void *local_a;
   uchar auStack_6 [2];
   
-  if (debug_enabled != '\0') {
+  if (debug_enabled != 0) {
     uVar1 = psos_ident((char *)0x0,(ulong *)&local_a,auStack_6);
     if ((uVar1 & 0xff) != 0) {
       fatal_error("dmessage");
@@ -19327,8 +19358,6 @@ void task_debug_message(char *message)
 
 /* 0001f056 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void task_dmessage(char *message)
 
 {
@@ -19338,20 +19367,20 @@ void task_dmessage(char *message)
   void *local_a;
   uchar auStack_6 [2];
   
-  if (debug_enabled != '\0') {
+  if (debug_enabled != 0) {
     uVar2 = psos_ident((char *)0x0,(ulong *)&local_a,auStack_6);
     if ((uVar2 & 0xff) != 0) {
       fatal_error("dmessage");
     }
     bVar1 = false;
-    if (((((((local_a == _task_gpsm) && (_dmes_gpsm != 0)) ||
-           ((local_a == task_hmon && (_dmes_hmon != 0)))) ||
-          ((local_a == _task_klok && (_dmes_klok != 0)))) ||
-         ((local_a == task_pllp && (_dmes_pllp != 0)))) ||
-        ((((local_a == _task_root && (_dmes_root != 0)) ||
-          ((local_a == _task_scpi && (_dmes_scpi != 0)))) ||
-         ((local_a == _task_spoo && (_dmes_spoo != 0)))))) ||
-       ((local_a == task_curv && (_dmes_curv != 0)))) {
+    if (((((((local_a == (void *)task_gpsm) && (dmes_gpsm != 0)) ||
+           ((local_a == (void *)task_hmon && (dmes_hmon != 0)))) ||
+          ((local_a == (void *)task_klok && (dmes_klok != 0)))) ||
+         ((local_a == (void *)task_pllp && (dmes_pllp != 0)))) ||
+        ((((local_a == (void *)task_root && (dmes_root != 0)) ||
+          ((local_a == (void *)task_scpi && (dmes_scpi != 0)))) ||
+         ((local_a == (void *)task_spoo && (dmes_spoo != 0)))))) ||
+       ((local_a == (void *)task_curv && (dmes_curv != 0)))) {
       bVar1 = true;
     }
     if (bVar1) {
@@ -19376,24 +19405,24 @@ void fatal_error(char *message)
   undefined2 uVar6;
   void *local_8;
   
-  strncpy(&crash_message,message,0x50);
-  DAT_0010099d = 0;
+  strncpy(crash_message,message,0x50);
+  crash_message[0x4f] = '\0';
   if (DAT_001037dc != '\0') {
     uVar2 = psos_ident((char *)0x0,(ulong *)&local_8,(uchar *)0x0);
     if ((char)uVar2 == '\0') {
       uVar4 = 0xffffffff;
-      pcVar3 = &crash_message;
+      pcVar3 = crash_message;
       do {
         uVar4 = uVar4 + 1;
         cVar1 = *pcVar3;
         pcVar3 = pcVar3 + 1;
       } while (cVar1 != '\0');
       if (uVar4 < 0x4a) {
-        strcat(&crash_message,", ");
+        strcat(crash_message,", ");
         pcVar3 = task_name(local_8);
-        strcat(&crash_message,pcVar3);
+        strcat(crash_message,pcVar3);
       }
-      if (debug_enabled != '\0') {
+      if (debug_enabled != 0) {
         uVar5 = 1;
         uVar6 = 0xf252;
         pcVar3 = task_name(local_8);
@@ -20039,7 +20068,7 @@ undefined8 sci_unlock(void)
   ulong uVar1;
   undefined4 in_D1;
   uint32_t exchange;
-  undefined *message;
+  uint32_t *message;
   char acStack_64 [80];
   
   if ((char)in_D0 == '\x01') {
@@ -20051,10 +20080,10 @@ undefined8 sci_unlock(void)
     exchange = sciR_exchange;
   }
   uVar1 = psos_my_pid();
-  if (uVar1 == *(ulong *)(message + 8)) {
-    if (*(int *)(message + 0xc) == 0) {
-      *(undefined4 *)(message + 8) = 0;
-      if (exchange != *(ulong *)(message + 4)) {
+  if (uVar1 == message[2]) {
+    if (message[3] == 0) {
+      message[2] = 0;
+      if (exchange != message[1]) {
         fatal_error("SCI semaphore has been corrupted.");
       }
       uVar1 = psos_send_x(exchange,message);
@@ -20063,11 +20092,11 @@ undefined8 sci_unlock(void)
         fatal_error(acStack_64);
       }
     }
-    else if (*(int *)(message + 0xc) < 0) {
+    else if ((int)message[3] < 0) {
       fatal_error("SCI semaphore count is < 0.");
     }
     else {
-      *(int *)(message + 0xc) = *(int *)(message + 0xc) + -1;
+      message[3] = message[3] - 1;
     }
   }
   else {
@@ -20088,7 +20117,7 @@ undefined8 sci_lock(void)
   ulong uVar2;
   undefined4 in_D1;
   uint32_t exchange;
-  undefined *buffer;
+  uint32_t *buffer;
   char acStack_64 [80];
   
   if ((char)in_D0 == '\x01') {
@@ -20100,8 +20129,8 @@ undefined8 sci_lock(void)
     exchange = sciR_exchange;
   }
   uVar1 = psos_my_pid();
-  if (uVar1 == *(ulong *)(buffer + 8)) {
-    *(int *)(buffer + 0xc) = *(int *)(buffer + 0xc) + 1;
+  if (uVar1 == buffer[2]) {
+    buffer[3] = buffer[3] + 1;
   }
   else {
     uVar2 = psos_request_x(exchange,buffer,0,0);
@@ -20109,8 +20138,8 @@ undefined8 sci_lock(void)
       sprintf(acStack_64,"Unable to acquire SCI token: %X",uVar2 & 0xff);
       fatal_error(acStack_64);
     }
-    *(ulong *)(buffer + 8) = uVar1;
-    *(undefined4 *)(buffer + 0xc) = 0;
+    buffer[2] = uVar1;
+    buffer[3] = 0;
   }
   return CONCAT44(in_D0,in_D1);
 }
@@ -20162,7 +20191,7 @@ undefined8 sci_init(void)
     sprintf(acStack_64,"Unable to create sciR: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
-  _sciR_status = 0;
+  sciR_status = 0;
   _DAT_00103158 = sciR_exchange;
   _DAT_0010315c = 0;
   _DAT_00103160 = 0;
@@ -20176,7 +20205,7 @@ undefined8 sci_init(void)
     sprintf(acStack_64,"Unable to create sciW: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
-  _sciW_status = 0;
+  sciW_status = 0;
   _DAT_00103174 = sciW_exchange;
   _DAT_00103178 = 0;
   _DAT_0010317c = 0;
@@ -20923,9 +20952,7 @@ void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3)
 
 /* 00020c96 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-uint FUN_00020c96(ulong param_1)
+uint spoo_task_create(ulong param_1)
 
 {
   ulong uVar1;
@@ -20939,11 +20966,11 @@ uint FUN_00020c96(ulong param_1)
     param2 = uVar1 & 0xff;
   }
   if (param2 == 0) {
-    uVar1 = psos_create("spoo",0,param_1,0x600,0x10,(void *)0x0,(ulong *)&task_spoo);
+    uVar1 = psos_create("spoo",0,param_1,0x600,0x10,(void *)0x0,&task_spoo);
     param2 = uVar1 & 0xff;
   }
   if (param2 == 0) {
-    uVar1 = psos_start(_task_spoo,FUN_00020e4e);
+    uVar1 = psos_start(task_spoo,spoo_task);
     param2 = uVar1 & 0xff;
   }
   if (param2 == 0) {
@@ -21019,7 +21046,7 @@ int deferred_vprintf(char *format,void *arguments)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_00020e4e(void)
+void spoo_task(void)
 
 {
   ulong uVar1;
@@ -22113,7 +22140,7 @@ void FUN_0002442c(void)
 {
   FUN_00033114();
   last_exception.pending = 0;
-  crash_message = 0;
+  crash_message[0] = '\0';
   return;
 }
 
@@ -22145,19 +22172,19 @@ void FUN_00024440(void)
     }
     FUN_00033238(local_c,local_8,local_5c);
   }
-  if (crash_message != '\0') {
-    strncpy(local_5c,&crash_message,0x50);
+  if (crash_message[0] != '\0') {
+    strncpy(local_5c,crash_message,0x50);
     local_d = 0;
     FUN_00033238(local_c,local_8,local_5c);
   }
-  if (((_DAT_001009b0 == 0) && (crash_message == '\0')) && (last_exception.pending == 0)) {
+  if (((_DAT_001009b0 == 0) && (crash_message[0] == '\0')) && (last_exception.pending == 0)) {
     sprintf(local_5c,"Watchdog timeout: clk %1d gps %4d mon %4d pll %1d spl %1d",
             (uint)watchdog_clock,(uint)watchdog_gps,(uint)watchdog_monitor,(uint)watchdog_pll,
             (uint)watchdog_spool);
     FUN_00033238(local_c,local_8,local_5c);
   }
   last_exception.pending = 0;
-  crash_message = 0;
+  crash_message[0] = '\0';
   return;
 }
 
@@ -26982,8 +27009,6 @@ void pllc_request_e(undefined4 param_1,undefined1 param_2,undefined4 *param_3,un
 
 /* 00029fce */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 uint scpi_task_create(ulong param_1)
 
 {
@@ -26996,10 +27021,10 @@ uint scpi_task_create(ulong param_1)
     uVar2 = 0xffffffff;
   }
   else {
-    uVar1 = psos_create("scpi",0,param_1,0x300,0x400,(void *)0x0,(ulong *)&task_scpi);
+    uVar1 = psos_create("scpi",0,param_1,0x300,0x400,(void *)0x0,&task_scpi);
     uVar2 = uVar1 & 0xff;
     if (uVar2 == 0) {
-      uVar1 = psos_start(_task_scpi,scpi_task);
+      uVar1 = psos_start(task_scpi,scpi_task);
       uVar2 = uVar1 & 0xff;
     }
   }
@@ -27028,11 +27053,11 @@ void scpi_task(void)
       FUN_000292d6(iVar2,iVar2,local_8,2000,&DAT_00053034,0x526f6,status_object,0);
       psos_service_9(local_8);
       (**(code **)(*(int *)(iVar2 + 4) + 4))(iVar2);
-      if (scpi_language == '\0') {
+      if (scpi_language == 0) {
         psos_priority(0,0x33,(uchar *)0x0);
         FUN_00020d66(FUN_00012faa,0,0,0);
       }
-      else if (scpi_language == '\x01') {
+      else if (scpi_language == 1) {
         enter_installer();
       }
       psos_delete(0);
@@ -28674,7 +28699,7 @@ undefined4 scpi_set_DIAGnostic_SYSTem_DOUTput(int param_1)
 {
   int iVar1;
   
-  debug_enabled = (char)*(undefined2 *)(param_1 + 2);
+  debug_enabled = (uint8_t)*(undefined2 *)(param_1 + 2);
   iVar1 = return_zero();
   pllc_request_a(&scpi_param_DIAGnostic_SYSTem_DOUTput,0,(char)*(undefined2 *)(param_1 + 2),
                  (char)iVar1);
@@ -33078,21 +33103,19 @@ undefined4 scpi_query_SOURce_PTIMe_FFOMerit(short *param_1,ushort *param_2,int p
 
 /* 000300b2 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-undefined4 scpi_query_SOURce_PTIMe_TINTerval(undefined4 param_1,undefined4 *param_2,int param_3)
+undefined4 scpi_query_SOURce_PTIMe_TINTerval(undefined4 param_1,float *param_2,int param_3)
 
 {
   uint16_t sr;
   undefined4 uVar1;
   
   sr = set_interrupt_mask(0x100);
-  if (interval_mean_flag == '\0') {
+  if (interval_mean_flag == 0) {
     set_interrupt_mask(sr);
     uVar1 = scpi_query_failed('\f',param_3);
   }
   else {
-    *param_2 = _interval_mean;
+    *param_2 = interval_mean;
     *(undefined2 *)(param_2 + 1) = 0xfff6;
     set_interrupt_mask(sr);
     uVar1 = 0;
@@ -33999,7 +34022,7 @@ void eeprom_init(void)
     sprintf(acStack_54,"Unable to create eepx: %X",uVar1 & 0xff);
     fatal_error(acStack_54);
   }
-  _eepx_status = 0;
+  eepx_status = 0;
   _DAT_00101d20 = eepx_exchange;
   _DAT_00101d24 = 0;
   _DAT_00101d28 = 0;
@@ -34365,10 +34388,10 @@ int FUN_000315e8(byte param_1)
 {
   int iVar1;
   
-  iVar1 = mutex_lock(0x36);
+  iVar1 = mutex_lock(&log_mutex);
   if (iVar1 == 0) {
     iVar1 = FUN_00031536(param_1);
-    mutex_unlock(0x1d36);
+    mutex_unlock(&log_mutex);
   }
   return iVar1;
 }
@@ -34384,7 +34407,7 @@ int FUN_0003161a(int param_1,byte param_2)
 {
   int iVar1;
   
-  iVar1 = mutex_lock(0x36);
+  iVar1 = mutex_lock(&log_mutex);
   if (iVar1 == 0) {
     if (param_1 == _DAT_00101dd8) {
       iVar1 = FUN_00031536(param_2);
@@ -34392,7 +34415,7 @@ int FUN_0003161a(int param_1,byte param_2)
     else {
       iVar1 = 0xff;
     }
-    mutex_unlock(0x36);
+    mutex_unlock(&log_mutex);
   }
   return iVar1;
 }
@@ -34416,14 +34439,14 @@ int FUN_00031662(undefined1 *param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-int FUN_0003167c(void)
+int log_init(void)
 
 {
   int iVar1;
   int iVar2;
   
-  iVar1 = FUN_000104e6(0x37,0x36);
-  if ((iVar1 == 0) && (iVar1 = mutex_lock(0x36), iVar1 == 0)) {
+  iVar1 = mutex_create("logr",&log_mutex);
+  if ((iVar1 == 0) && (iVar1 = mutex_lock(&log_mutex), iVar1 == 0)) {
     DAT_00101dd7 = 0;
     _DAT_00101dd8 = 0xffff;
     log_page_number = -1;
@@ -34448,7 +34471,7 @@ LAB_00031708:
     if (0xb4 < _DAT_00101dd8) {
       status_happening(' ');
     }
-    iVar1 = mutex_unlock(0x36);
+    iVar1 = mutex_unlock(&log_mutex);
   }
   return iVar1;
 }
@@ -37954,14 +37977,12 @@ void FUN_00042bc4(undefined1 *param_1)
 
 /* 00042c10 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void validate_num(void)
 
 {
-  int iVar1;
-  undefined4 uVar2;
-  uint uVar3;
+  uint32_t uVar1;
+  uint uVar2;
+  int iVar3;
   byte bVar4;
   
   if ((*(char *)((int)pll_scpi_param + 0x26) == '\x02') ||
@@ -37973,23 +37994,22 @@ void validate_num(void)
       fatal_error("pll_scpi: validate_num() -- multiple cmd/desc disagree");
     }
     for (bVar4 = 0; (int)(uint)bVar4 <= (int)(char)pll_scpi_index; bVar4 = bVar4 + 1) {
-      uVar3 = (uint)bVar4;
-      iVar1 = uVar3 * 4;
-      uVar2 = (**(code **)((int)pll_scpi_param + 0xe))
-                        (&pll_scpi_values + iVar1,uVar3,*(int *)((int)pll_scpi_param + 6) + iVar1,
-                         *(int *)((int)pll_scpi_param + 10) + iVar1,
-                         *(int *)((int)pll_scpi_param + 0x28) + uVar3 * 8,(int)(char)pll_scpi_source
+      uVar2 = (uint)bVar4;
+      uVar1 = (**(code **)((int)pll_scpi_param + 0xe))
+                        (pll_scpi_values + uVar2,uVar2,*(int *)((int)pll_scpi_param + 6) + uVar2 * 4
+                         ,*(int *)((int)pll_scpi_param + 10) + uVar2 * 4,
+                         *(int *)((int)pll_scpi_param + 0x28) + uVar2 * 8,(int)(char)pll_scpi_source
                         );
-      *(undefined4 *)(&pll_scpi_validated + (uint)bVar4 * 4) = uVar2;
+      pll_scpi_validated[bVar4] = uVar1;
     }
   }
   else {
-    iVar1 = (int)(char)pll_scpi_index;
-    _pll_scpi_validated =
+    iVar3 = (int)(char)pll_scpi_index;
+    pll_scpi_validated[0] =
          (**(code **)((int)pll_scpi_param + 0xe))
-                   (&pll_scpi_values,iVar1,*(int *)((int)pll_scpi_param + 6) + iVar1 * 4,
-                    *(int *)((int)pll_scpi_param + 10) + iVar1 * 4,
-                    *(int *)((int)pll_scpi_param + 0x28) + iVar1 * 8,(int)(char)pll_scpi_source);
+                   (pll_scpi_values,iVar3,*(int *)((int)pll_scpi_param + 6) + iVar3 * 4,
+                    *(int *)((int)pll_scpi_param + 10) + iVar3 * 4,
+                    *(int *)((int)pll_scpi_param + 0x28) + iVar3 * 8,(int)(char)pll_scpi_source);
   }
   return;
 }
@@ -38086,15 +38106,15 @@ undefined4 FUN_00042dc4(undefined1 param_1,undefined1 *param_2)
     if (local_14 < 5) {
       if (local_14 < 3) {
         if (local_14 == 0) {
-          _DAT_00102002 = _pll_scpi_validated;
-          _DAT_00102006 = _DAT_00102034;
-          _DAT_0010200a = _DAT_00102038;
+          _DAT_00102002 = pll_scpi_validated[0];
+          _DAT_00102006 = pll_scpi_validated[1];
+          _DAT_0010200a = pll_scpi_validated[2];
         }
         else {
           if (local_14 != 2) goto LAB_0004300c;
-          _DAT_00102002 = _DAT_00102034;
-          _DAT_00102006 = _DAT_00102038;
-          _DAT_0010200a = _pll_scpi_validated;
+          _DAT_00102002 = pll_scpi_validated[1];
+          _DAT_00102006 = pll_scpi_validated[2];
+          _DAT_0010200a = pll_scpi_validated[0];
         }
         goto LAB_00042fca;
       }
@@ -38102,7 +38122,7 @@ undefined4 FUN_00042dc4(undefined1 param_1,undefined1 *param_2)
     }
     else if (local_14 < 0xc) {
       if (local_14 == 5) {
-        _DAT_00102002 = _pll_scpi_validated;
+        _DAT_00102002 = pll_scpi_validated[0];
         _DAT_00102006 = 1;
         goto LAB_00042fca;
       }
@@ -38113,12 +38133,12 @@ undefined4 FUN_00042dc4(undefined1 param_1,undefined1 *param_2)
       if (local_14 != 0x13) goto LAB_0004300c;
       goto LAB_00042ed2;
     }
-    _DAT_00102002 = _pll_scpi_validated;
+    _DAT_00102002 = pll_scpi_validated[0];
   }
   else if (local_14 < 0x4f) {
     if (local_14 < 0x28) {
       if ((local_14 != 0x18) && (local_14 != 0x19)) goto LAB_0004300c;
-      _DAT_00102002 = _pll_scpi_validated;
+      _DAT_00102002 = pll_scpi_validated[0];
     }
     else if (local_14 == 0x28) {
       if (((pll_scpi_index != 0) || (nv_settings.douglas_state == 0)) &&
@@ -38129,12 +38149,12 @@ undefined4 FUN_00042dc4(undefined1 param_1,undefined1 *param_2)
       _DAT_00102002 = 1;
       _DAT_0010200e = 1;
       if (*(char *)pll_scpi_param == '\x01') {
-        _DAT_00102006 = (int32_t)(char)pll_scpi_setting;
+        _DAT_00102006 = (uint32_t)(char)pll_scpi_setting;
         _DAT_0010200a = nv_settings.raim_threshold[(char)pll_scpi_index];
       }
       else {
-        _DAT_00102006 = (int32_t)(char)nv_settings.raim_state[(char)pll_scpi_index];
-        _DAT_0010200a = _pll_scpi_validated;
+        _DAT_00102006 = (uint32_t)(char)nv_settings.raim_state[(char)pll_scpi_index];
+        _DAT_0010200a = pll_scpi_validated[0];
       }
     }
     else if (local_14 != 0x31) goto LAB_0004300c;
@@ -38142,15 +38162,15 @@ undefined4 FUN_00042dc4(undefined1 param_1,undefined1 *param_2)
   else if (local_14 < 0x53) {
     if (local_14 == 0x4f) {
 LAB_00042f24:
-      _DAT_00102002 = _pll_scpi_validated;
-      _DAT_00102006 = _DAT_00102034;
-      _DAT_0010200a = _DAT_00102038;
+      _DAT_00102002 = pll_scpi_validated[0];
+      _DAT_00102006 = pll_scpi_validated[1];
+      _DAT_0010200a = pll_scpi_validated[2];
       _DAT_0010200e = 1;
     }
     else {
       if (local_14 != 0x51) goto LAB_0004300c;
 LAB_00042ed2:
-      _DAT_00102002 = (int32_t)(char)pll_scpi_setting;
+      _DAT_00102002 = (uint32_t)(char)pll_scpi_setting;
       if ((nv_settings.douglas_state == 0) || (pll_scpi_setting != 0)) {
         if ((nv_settings.douglas_state == 0) && (pll_scpi_setting != 0)) {
           DAT_00102040 = 4;
@@ -38222,8 +38242,6 @@ ushort scpi_param_saved_in_record(void)
 
 /* 0004306a */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void finish_scpi_cmd(void)
 
 {
@@ -38249,14 +38267,14 @@ void finish_scpi_cmd(void)
       if ((*(char *)((int)pll_scpi_param + 0x26) == '\x02') ||
          (*(char *)((int)pll_scpi_param + 0x26) == '\x03')) {
         for (bVar3 = 0; (int)(uint)bVar3 <= (int)(char)pll_scpi_index; bVar3 = bVar3 + 1) {
-          *(undefined4 *)(*(int *)((int)pll_scpi_param + 0x16) + (uint)bVar3 * 4) =
-               *(undefined4 *)(&pll_scpi_validated + (uint)bVar3 * 4);
+          *(uint32_t *)(*(int *)((int)pll_scpi_param + 0x16) + (uint)bVar3 * 4) =
+               pll_scpi_validated[bVar3];
           (**(code **)((int)pll_scpi_param + 0x12))(unaff_D3b,bVar3,pll_scpi_source);
         }
       }
       else {
-        *(undefined4 *)(*(int *)((int)pll_scpi_param + 0x16) + (char)pll_scpi_index * 4) =
-             _pll_scpi_validated;
+        *(uint32_t *)(*(int *)((int)pll_scpi_param + 0x16) + (char)pll_scpi_index * 4) =
+             pll_scpi_validated[0];
         (**(code **)((int)pll_scpi_param + 0x12))
                   (unaff_D3b,(short)(char)pll_scpi_index,pll_scpi_source);
       }
@@ -38293,8 +38311,6 @@ void finish_scpi_cmd(void)
 
 /* 000431f4 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void FUN_000431f4(int param_1)
 
 {
@@ -38303,7 +38319,7 @@ void FUN_000431f4(int param_1)
   
   pll_scpi_source = *(uint8_t *)(param_1 + 0xd);
   if (pll_scpi_source == 0) {
-    DAT_00102018 = _task_scpi;
+    DAT_00102018 = task_scpi;
   }
   pll_scpi_index = *(uint8_t *)(param_1 + 0xc);
   pll_scpi_param = *(void **)(param_1 + 8);
@@ -38326,19 +38342,18 @@ void FUN_000431f4(int param_1)
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00043262)[(short)iVar1]) {
     case 8:
-      _pll_scpi_values = *(undefined4 *)(param_1 + 0x14);
+      pll_scpi_values[0] = *(uint32_t *)(param_1 + 0x14);
       break;
     case 0x10:
-      _pll_scpi_values = *(undefined4 *)(param_1 + 0x10);
+      pll_scpi_values[0] = *(uint32_t *)(param_1 + 0x10);
       break;
     case 0x18:
-      _pll_scpi_values = *(undefined4 *)(param_1 + 0x10);
-      uRam00102024 = *(undefined4 *)(param_1 + 0x14);
+      pll_scpi_values[0] = *(uint32_t *)(param_1 + 0x10);
+      pll_scpi_values[1] = *(uint32_t *)(param_1 + 0x14);
       break;
     case 0x26:
       for (bVar2 = 0; (int)(uint)bVar2 <= (int)(char)pll_scpi_index; bVar2 = bVar2 + 1) {
-        *(undefined4 *)(&pll_scpi_values + (uint)bVar2 * 4) =
-             *(undefined4 *)(*(int *)(param_1 + 0x10) + (uint)bVar2 * 4);
+        pll_scpi_values[bVar2] = *(uint32_t *)(*(int *)(param_1 + 0x10) + (uint)bVar2 * 4);
       }
       goto override_jmp_0004322e_case_3;
     }
@@ -38965,7 +38980,7 @@ override_jmp_00043ae6_case_0:
   if (DAT_00102046 != 10) goto LAB_00043ee6;
   pll.field_001[0x10] = pll.field_001[0x10] & 0xe9;
   interval_mean_flag = 1;
-  _interval_mean = _DAT_00102042;
+  interval_mean = _DAT_00102042;
   if ((pll.field_013[0] == 0) && (nv_settings.holdover_limit_state == 0)) {
     uVar5 = FUN_00043916();
     cVar4 = FUN_0004391e(uVar5);
@@ -39174,7 +39189,6 @@ LAB_0004411a:
 
 /* 0004429e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 char FUN_0004429e(char param_1)
@@ -39241,7 +39255,7 @@ char FUN_0004429e(char param_1)
         float_add_in_place(&DAT_00102062,local_88);
         DAT_0010206b = DAT_0010206b + 1;
       }
-      else if (debug_enabled != '\0') {
+      else if (debug_enabled != 0) {
         get_date_time((uint32_t *)&local_c,&uStack_8);
         fVar1 = float_multiply(local_88,1e+09);
         dVar6 = float_to_double(fVar1);
@@ -39273,7 +39287,7 @@ char FUN_0004429e(char param_1)
         fVar1 = unsigned_to_float((uint)DAT_0010206b);
         float_divide_in_place(&DAT_00102062,fVar1);
         interval_mean_flag = 1;
-        _interval_mean = DAT_00102062;
+        interval_mean = DAT_00102062;
       }
       iVar2 = (char)pll.field_001[0xb] + -3;
       if ((int)(char)pll.field_001[0xb] - 1U < 2 || iVar2 == 0) {
@@ -39502,7 +39516,7 @@ undefined1 interval_average(char param_1)
         float_add_in_place(&DAT_00102062,local_82);
         DAT_0010206b = DAT_0010206b + 1;
       }
-      else if (debug_enabled != '\0') {
+      else if (debug_enabled != 0) {
         get_date_time((uint32_t *)&local_c,&uStack_8);
         fVar2 = float_multiply(local_82,1e+09);
         dVar6 = float_to_double(fVar2);
@@ -39533,7 +39547,7 @@ undefined1 interval_average(char param_1)
         fVar2 = unsigned_to_float((uint)DAT_0010206b);
         float_divide_in_place(&DAT_00102062,fVar2);
         interval_mean_flag = 1;
-        _interval_mean = DAT_00102062;
+        interval_mean = DAT_00102062;
       }
       local_7e = float_subtract(DAT_00102062,DAT_0010254a);
       fVar2 = float_subtract(1.0,_DAT_00102076);
@@ -44509,7 +44523,7 @@ void FUN_0004a636(pll_stage *param_1)
   *(undefined4 *)(param_1 + 10) = interval_reading.value._0_4_;
   *(undefined4 *)(param_1 + 0xe) = interval_reading.value._4_4_;
   *(undefined4 *)(param_1 + 0x12) = interval_reading._8_4_;
-  *(undefined4 *)(param_1 + 0x16) = _interval_mean;
+  *(float *)(param_1 + 0x16) = interval_mean;
   *(undefined2 *)(param_1 + 0x1a) = _interval_mean_flag;
   *(float *)(param_1 + 4) = pll.tfom;
   cVar1 = (char)param_1;
@@ -46305,7 +46319,7 @@ LAB_0004c17a:
                 bVar8 = (byte)&uStack_aa;
                 gps_count_response('\x06',(int)&uStack_aa);
                 pcVar9 = " // command not supported //\n";
-                pcVar10 = &gps_last_program_message;
+                pcVar10 = gps_last_program_message;
                 do {
                   cVar6 = *pcVar9;
                   *pcVar10 = cVar6;
@@ -46317,7 +46331,7 @@ LAB_0004c17a:
                 bVar8 = (byte)&uStack_aa;
                 gps_count_response('\a',(int)&uStack_aa);
                 pcVar9 = " // query form not supported //\n";
-                pcVar10 = &gps_last_program_message;
+                pcVar10 = gps_last_program_message;
                 do {
                   cVar6 = *pcVar9;
                   *pcVar10 = cVar6;
@@ -46340,8 +46354,8 @@ LAB_0004c17a:
               uStack_38 = get_uptime();
               bStack_10 = bStack_10 + 1;
               gps_counts.commands_sent = gps_counts.commands_sent + 1;
-              FUN_0004fdca(&DAT_001011c6,bVar7,&gps_last_program_message);
-              FUN_0004c66e(&uStack_aa,&gps_last_program_message);
+              FUN_0004fdca(&DAT_001011c6,bVar7,gps_last_program_message);
+              FUN_0004c66e(&uStack_aa,gps_last_program_message);
               if ((&DAT_0004feec)[sVar2 * 0x38] == '\0') goto LAB_0004c1e6;
               DAT_0010139c = '\x02';
             }
@@ -46717,7 +46731,7 @@ void clear_gps_debug(void)
 {
   memset(&gps_counts,0,0x36);
   gps_last_command = (void *)0x0;
-  gps_last_program_message = 0;
+  gps_last_program_message[0] = '\0';
   FUN_0004c65e();
   return;
 }
@@ -46876,11 +46890,11 @@ void gps_print_process_monitor(void)
            pcVar4);
   }
   console_write("Last Rcvr Prgm Msg:   ");
-  if (gps_last_program_message == '\0') {
+  if (gps_last_program_message[0] == '\0') {
     console_write("(none issued)\r\n");
   }
   else {
-    printf("%s\r\n",&gps_last_program_message);
+    printf("%s\r\n",gps_last_program_message);
   }
   console_write("Response Buffer:  ");
   local_2d[0] = '\0';
@@ -48360,7 +48374,6 @@ void float_add_in_place(float *x,float y)
 /* WARNING: Removing unreachable block (ram,0x0005d20e) */
 /* WARNING: Removing unreachable block (ram,0x0005d042) */
 /* WARNING: Removing unreachable block (ram,0x0005d048) */
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 float float_subtract_reversed(float a,float b)
@@ -48483,8 +48496,8 @@ LAB_0005d06c:
     }
   }
   else {
-    _float_status = _float_status | 0x200;
-    if ((float_control & 2) != 0) goto LAB_0005d1fe;
+    float_status = float_status | 0x200;
+    if ((float_control._0_1_ & 2) != 0) goto LAB_0005d1fe;
   }
   fVar7 = (float)(uVar5 + (int)fVar7);
   if ((int)fVar7 < 0) {
@@ -48494,7 +48507,7 @@ LAB_0005d06c:
     }
     return (float)((uint)fVar8 | 0x80000000);
   }
-  if ((uVar4 == 0) || (_float_status = _float_status | 0x200, (float_control & 2) == 0)) {
+  if ((uVar4 == 0) || (float_status = float_status | 0x200, (float_control._0_1_ & 2) == 0)) {
     if (!bVar1) {
       fVar7 = (float)((int)fVar7 + -0x800000);
     }
@@ -48515,7 +48528,6 @@ LAB_0005d1fe:
 /* WARNING: Removing unreachable block (ram,0x0005d20e) */
 /* WARNING: Removing unreachable block (ram,0x0005d042) */
 /* WARNING: Removing unreachable block (ram,0x0005d048) */
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 float float_subtract(float a,float b)
@@ -48638,8 +48650,8 @@ LAB_0005d06c:
     }
   }
   else {
-    _float_status = _float_status | 0x200;
-    if ((float_control & 2) != 0) goto LAB_0005d1fe;
+    float_status = float_status | 0x200;
+    if ((float_control._0_1_ & 2) != 0) goto LAB_0005d1fe;
   }
   fVar7 = (float)(uVar5 + (int)fVar7);
   if ((int)fVar7 < 0) {
@@ -48649,7 +48661,7 @@ LAB_0005d06c:
     }
     return (float)((uint)fVar8 | 0x80000000);
   }
-  if ((uVar4 == 0) || (_float_status = _float_status | 0x200, (float_control & 2) == 0)) {
+  if ((uVar4 == 0) || (float_status = float_status | 0x200, (float_control._0_1_ & 2) == 0)) {
     if (!bVar1) {
       fVar7 = (float)((int)fVar7 + -0x800000);
     }
@@ -48670,7 +48682,6 @@ LAB_0005d1fe:
 /* WARNING: Removing unreachable block (ram,0x0005d20e) */
 /* WARNING: Removing unreachable block (ram,0x0005d042) */
 /* WARNING: Removing unreachable block (ram,0x0005d048) */
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 float float_add(float a,float b)
@@ -48789,8 +48800,8 @@ LAB_0005d06c:
     }
   }
   else {
-    _float_status = _float_status | 0x200;
-    if ((float_control & 2) != 0) goto LAB_0005d1fe;
+    float_status = float_status | 0x200;
+    if ((float_control._0_1_ & 2) != 0) goto LAB_0005d1fe;
   }
   fVar6 = (float)(uVar4 + (int)fVar6);
   if ((int)fVar6 < 0) {
@@ -48800,7 +48811,7 @@ LAB_0005d06c:
     }
     return (float)((uint)fVar7 | 0x80000000);
   }
-  if ((uVar3 == 0) || (_float_status = _float_status | 0x200, (float_control & 2) == 0)) {
+  if ((uVar3 == 0) || (float_status = float_status | 0x200, (float_control._0_1_ & 2) == 0)) {
     if (!bVar1) {
       fVar6 = (float)((int)fVar6 + -0x800000);
     }
@@ -48847,7 +48858,6 @@ double double_subtract_pointer(double a,double *b)
 
 /* 0005d306 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 double double_subtract_reversed_pointers(double *a,double *b)
@@ -48972,8 +48982,8 @@ LAB_0005d2c6:
     else {
       if (uVar14 != 0x20) {
         if (0x37 < (short)uVar14) {
-          if ((float_control & 2) == 0) {
-            _float_status = _float_status | 0x200;
+          if ((float_control._0_1_ & 2) == 0) {
+            float_status = float_status | 0x200;
             return (double)CONCAT44(uVar10 & 0xffff0000 | uVar2 & 0xffefffff,uVar4);
           }
           goto LAB_0005d484;
@@ -49010,9 +49020,9 @@ LAB_0005d2c6:
       }
     }
     if (uVar6 != 0) {
-      uVar14 = _float_status | 0x200;
-      if ((float_control & 2) != 0) goto LAB_0005d484;
-      _float_status = uVar14;
+      uVar14 = float_status | 0x200;
+      if ((float_control._0_1_ & 2) != 0) goto LAB_0005d484;
+      float_status = uVar14;
       if ((CARRY4(uVar6,uVar6)) &&
          (((((uVar6 & 0x7fffffff) != 0 || ((uVar12 & 1) != 0)) &&
            (bVar16 = uVar12 == 0xffffffff, uVar12 = uVar12 + 1, bVar16)) &&
@@ -49044,16 +49054,16 @@ LAB_0005d2c6:
 LAB_0005d5ae:
     if (0 < (short)uVar14) {
       if (uVar3 != 0) {
-        uVar8 = _float_status | 0x200;
-        if ((float_control & 2) != 0) {
+        uVar8 = float_status | 0x200;
+        if ((float_control._0_1_ & 2) != 0) {
 LAB_0005d484:
-          _float_status = _float_status | 0x200;
+          float_status = float_status | 0x200;
           dVar18 = (double)float_raise(0x80200);
           return dVar18;
         }
         bVar17 = CARRY4(uVar3,uVar3);
         uVar3 = uVar3 * 2;
-        _float_status = uVar8;
+        float_status = uVar8;
         if (((bVar17) &&
             (((uVar3 != 0 || (((uVar12 & 1) != 0 && ((uVar12 & 1) != 0)))) &&
              (bVar17 = uVar12 == 0xffffffff, uVar12 = uVar12 + 1, bVar17)))) &&
@@ -49149,7 +49159,6 @@ LAB_0005d63e:
 
 /* 0005d30a */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 double double_subtract_reversed_pointer(double a,double *b)
@@ -49274,8 +49283,8 @@ LAB_0005d2c6:
     else {
       if (uVar14 != 0x20) {
         if (0x37 < (short)uVar14) {
-          if ((float_control & 2) == 0) {
-            _float_status = _float_status | 0x200;
+          if ((float_control._0_1_ & 2) == 0) {
+            float_status = float_status | 0x200;
             return (double)CONCAT44(uVar10 & 0xffff0000 | uVar2 & 0xffefffff,uVar4);
           }
           goto LAB_0005d484;
@@ -49312,9 +49321,9 @@ LAB_0005d2c6:
       }
     }
     if (uVar7 != 0) {
-      uVar14 = _float_status | 0x200;
-      if ((float_control & 2) != 0) goto LAB_0005d484;
-      _float_status = uVar14;
+      uVar14 = float_status | 0x200;
+      if ((float_control._0_1_ & 2) != 0) goto LAB_0005d484;
+      float_status = uVar14;
       if ((CARRY4(uVar7,uVar7)) &&
          (((((uVar7 & 0x7fffffff) != 0 || ((uVar5 & 1) != 0)) &&
            (bVar16 = uVar5 == 0xffffffff, uVar5 = uVar5 + 1, bVar16)) &&
@@ -49346,16 +49355,16 @@ LAB_0005d2c6:
 LAB_0005d5ae:
     if (0 < (short)uVar14) {
       if (uVar3 != 0) {
-        uVar8 = _float_status | 0x200;
-        if ((float_control & 2) != 0) {
+        uVar8 = float_status | 0x200;
+        if ((float_control._0_1_ & 2) != 0) {
 LAB_0005d484:
-          _float_status = _float_status | 0x200;
+          float_status = float_status | 0x200;
           dVar18 = (double)float_raise(0x80200);
           return dVar18;
         }
         bVar17 = CARRY4(uVar3,uVar3);
         uVar3 = uVar3 * 2;
-        _float_status = uVar8;
+        float_status = uVar8;
         if (((bVar17) &&
             (((uVar3 != 0 || (((uVar5 & 1) != 0 && ((uVar5 & 1) != 0)))) &&
              (bVar17 = uVar5 == 0xffffffff, uVar5 = uVar5 + 1, bVar17)))) &&
@@ -49451,7 +49460,6 @@ LAB_0005d63e:
 
 /* 0005d30e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 double double_subtract_reversed(double a,double b)
@@ -49553,8 +49561,8 @@ double double_subtract_reversed(double a,double b)
         else {
           if (uVar15 != 0x20) {
             if (0x37 < (short)uVar15) {
-              if ((float_control & 2) == 0) {
-                _float_status = _float_status | 0x200;
+              if ((float_control._0_1_ & 2) == 0) {
+                float_status = float_status | 0x200;
                 return (double)CONCAT44(uVar6 & 0xffff0000 | uVar4 & 0xffefffff,uVar7);
               }
               goto LAB_0005d484;
@@ -49591,9 +49599,9 @@ double double_subtract_reversed(double a,double b)
           }
         }
         if (uVar3 != 0) {
-          uVar15 = _float_status | 0x200;
-          if ((float_control & 2) != 0) goto LAB_0005d484;
-          _float_status = uVar15;
+          uVar15 = float_status | 0x200;
+          if ((float_control._0_1_ & 2) != 0) goto LAB_0005d484;
+          float_status = uVar15;
           if (((CARRY4(uVar3,uVar3)) &&
               ((((uVar3 & 0x7fffffff) != 0 || ((uVar12 & 1) != 0)) &&
                (bVar17 = uVar12 == 0xffffffff, uVar12 = uVar12 + 1, bVar17)))) &&
@@ -49625,16 +49633,16 @@ double double_subtract_reversed(double a,double b)
 LAB_0005d5ae:
         if (0 < (short)uVar15) {
           if (uVar5 != 0) {
-            uVar9 = _float_status | 0x200;
-            if ((float_control & 2) != 0) {
+            uVar9 = float_status | 0x200;
+            if ((float_control._0_1_ & 2) != 0) {
 LAB_0005d484:
-              _float_status = _float_status | 0x200;
+              float_status = float_status | 0x200;
               dVar1 = (double)float_raise();
               return dVar1;
             }
             bVar18 = CARRY4(uVar5,uVar5);
             uVar5 = uVar5 * 2;
-            _float_status = uVar9;
+            float_status = uVar9;
             if (((bVar18) &&
                 (((uVar5 != 0 || (((uVar12 & 1) != 0 && ((uVar12 & 1) != 0)))) &&
                  (bVar18 = uVar12 == 0xffffffff, uVar12 = uVar12 + 1, bVar18)))) &&
@@ -49770,7 +49778,6 @@ void double_add_in_place(double *x,double y)
 
 /* 0005d34a */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 double double_add_pointers(double *a,double *b)
@@ -49892,8 +49899,8 @@ LAB_0005d2c6:
     else {
       if (uVar14 != 0x20) {
         if (0x37 < (short)uVar14) {
-          if ((float_control & 2) == 0) {
-            _float_status = _float_status | 0x200;
+          if ((float_control._0_1_ & 2) == 0) {
+            float_status = float_status | 0x200;
             return (double)CONCAT44(uVar11 & 0xffff0000 | uVar2 & 0xffefffff,uVar4);
           }
           goto LAB_0005d484;
@@ -49930,9 +49937,9 @@ LAB_0005d2c6:
       }
     }
     if (uVar7 != 0) {
-      uVar14 = _float_status | 0x200;
-      if ((float_control & 2) != 0) goto LAB_0005d484;
-      _float_status = uVar14;
+      uVar14 = float_status | 0x200;
+      if ((float_control._0_1_ & 2) != 0) goto LAB_0005d484;
+      float_status = uVar14;
       if ((CARRY4(uVar7,uVar7)) &&
          (((((uVar7 & 0x7fffffff) != 0 || ((uVar5 & 1) != 0)) &&
            (bVar16 = uVar5 == 0xffffffff, uVar5 = uVar5 + 1, bVar16)) &&
@@ -49964,16 +49971,16 @@ LAB_0005d2c6:
 LAB_0005d5ae:
     if (0 < (short)uVar14) {
       if (uVar3 != 0) {
-        uVar9 = _float_status | 0x200;
-        if ((float_control & 2) != 0) {
+        uVar9 = float_status | 0x200;
+        if ((float_control._0_1_ & 2) != 0) {
 LAB_0005d484:
-          _float_status = _float_status | 0x200;
+          float_status = float_status | 0x200;
           dVar18 = (double)float_raise(0x80200);
           return dVar18;
         }
         bVar17 = CARRY4(uVar3,uVar3);
         uVar3 = uVar3 * 2;
-        _float_status = uVar9;
+        float_status = uVar9;
         if (((bVar17) &&
             (((uVar3 != 0 || (((uVar5 & 1) != 0 && ((uVar5 & 1) != 0)))) &&
              (bVar17 = uVar5 == 0xffffffff, uVar5 = uVar5 + 1, bVar17)))) &&
@@ -50069,7 +50076,6 @@ LAB_0005d63e:
 
 /* 0005d34e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 double double_add_pointer(double a,double *b)
@@ -50190,8 +50196,8 @@ LAB_0005d2c6:
     else {
       if (uVar14 != 0x20) {
         if (0x37 < (short)uVar14) {
-          if ((float_control & 2) == 0) {
-            _float_status = _float_status | 0x200;
+          if ((float_control._0_1_ & 2) == 0) {
+            float_status = float_status | 0x200;
             return (double)CONCAT44(uVar7 & 0xffff0000 | uVar3 & 0xffefffff,uVar8);
           }
           goto LAB_0005d484;
@@ -50228,9 +50234,9 @@ LAB_0005d2c6:
       }
     }
     if (uVar2 != 0) {
-      uVar14 = _float_status | 0x200;
-      if ((float_control & 2) != 0) goto LAB_0005d484;
-      _float_status = uVar14;
+      uVar14 = float_status | 0x200;
+      if ((float_control._0_1_ & 2) != 0) goto LAB_0005d484;
+      float_status = uVar14;
       if ((CARRY4(uVar2,uVar2)) &&
          (((((uVar2 & 0x7fffffff) != 0 || ((uVar4 & 1) != 0)) &&
            (bVar16 = uVar4 == 0xffffffff, uVar4 = uVar4 + 1, bVar16)) &&
@@ -50262,16 +50268,16 @@ LAB_0005d2c6:
 LAB_0005d5ae:
     if (0 < (short)uVar14) {
       if (uVar5 != 0) {
-        uVar9 = _float_status | 0x200;
-        if ((float_control & 2) != 0) {
+        uVar9 = float_status | 0x200;
+        if ((float_control._0_1_ & 2) != 0) {
 LAB_0005d484:
-          _float_status = _float_status | 0x200;
+          float_status = float_status | 0x200;
           dVar19 = (double)float_raise();
           return dVar19;
         }
         bVar17 = CARRY4(uVar5,uVar5);
         uVar5 = uVar5 * 2;
-        _float_status = uVar9;
+        float_status = uVar9;
         if (((bVar17) &&
             (((uVar5 != 0 || (((uVar4 & 1) != 0 && ((uVar4 & 1) != 0)))) &&
              (bVar17 = uVar4 == 0xffffffff, uVar4 = uVar4 + 1, bVar17)))) &&
@@ -50368,7 +50374,6 @@ LAB_0005d63e:
 
 /* 0005d352 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 double double_add(double a,double b)
@@ -50487,8 +50492,8 @@ LAB_0005d2c6:
     else {
       if (uVar12 != 0x20) {
         if (0x37 < (short)uVar12) {
-          if ((float_control & 2) == 0) {
-            _float_status = _float_status | 0x200;
+          if ((float_control._0_1_ & 2) == 0) {
+            float_status = float_status | 0x200;
             return (double)CONCAT44(uVar6 & 0xffff0000 | uVar3 & 0xffefffff,uVar13);
           }
           goto LAB_0005d484;
@@ -50525,9 +50530,9 @@ LAB_0005d2c6:
       }
     }
     if (uVar2 != 0) {
-      uVar12 = _float_status | 0x200;
-      if ((float_control & 2) != 0) goto LAB_0005d484;
-      _float_status = uVar12;
+      uVar12 = float_status | 0x200;
+      if ((float_control._0_1_ & 2) != 0) goto LAB_0005d484;
+      float_status = uVar12;
       if ((CARRY4(uVar2,uVar2)) &&
          (((((uVar2 & 0x7fffffff) != 0 || ((uVar4 & 1) != 0)) &&
            (bVar15 = uVar4 == 0xffffffff, uVar4 = uVar4 + 1, bVar15)) &&
@@ -50559,16 +50564,16 @@ LAB_0005d2c6:
 LAB_0005d5ae:
     if (0 < (short)uVar12) {
       if (uVar5 != 0) {
-        uVar7 = _float_status | 0x200;
-        if ((float_control & 2) != 0) {
+        uVar7 = float_status | 0x200;
+        if ((float_control._0_1_ & 2) != 0) {
 LAB_0005d484:
-          _float_status = _float_status | 0x200;
+          float_status = float_status | 0x200;
           dVar18 = (double)float_raise();
           return dVar18;
         }
         bVar16 = CARRY4(uVar5,uVar5);
         uVar5 = uVar5 * 2;
-        _float_status = uVar7;
+        float_status = uVar7;
         if (((bVar16) &&
             (((uVar5 != 0 || (((uVar4 & 1) != 0 && ((uVar4 & 1) != 0)))) &&
              (bVar16 = uVar4 == 0xffffffff, uVar4 = uVar4 + 1, bVar16)))) &&
@@ -50778,7 +50783,6 @@ void float_divide_in_place(float *x,float y)
 /* 0005d7e4 */
 
 /* WARNING: Removing unreachable block (ram,0x0005d888) */
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 float float_divide_reversed(float a,float b)
@@ -50907,7 +50911,7 @@ LAB_0005d982:
         }
         if (sVar18 < 0x47e1) {
           if (uVar12 != 0) {
-            _float_status = _float_status | 0x200;
+            float_status = float_status | 0x200;
           }
           fVar4 = (float)((uVar13 + (uint)(ushort)((sVar18 + -0x3800) * 8) * 0x10000) - 0x800000);
         }
@@ -50940,7 +50944,6 @@ LAB_0005d7ae:
 /* 0005d7e6 */
 
 /* WARNING: Removing unreachable block (ram,0x0005d888) */
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 float float_divide(float a,float b)
@@ -51069,7 +51072,7 @@ LAB_0005d982:
         }
         if (sVar18 < 0x47e1) {
           if (uVar12 != 0) {
-            _float_status = _float_status | 0x200;
+            float_status = float_status | 0x200;
           }
           fVar4 = (float)(uVar13 + (uint)(ushort)((sVar18 + -0x3800) * 8) * 0x10000 + -0x800000);
         }
@@ -51130,7 +51133,6 @@ double double_divide(double a,double b)
 
 /* 0005da62 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 double double_divide_reversed_pointers(double *a,double *b)
@@ -51241,8 +51243,8 @@ LAB_0005d9b8:
   }
   else {
     if ((uVar8 & 3) != 0) {
-      _float_status = _float_status | 0x200;
-      if ((float_control & 2) != 0) {
+      float_status = float_status | 0x200;
+      if ((float_control._0_1_ & 2) != 0) {
         dVar12 = (double)float_raise(0xe0200);
         return dVar12;
       }
@@ -51279,7 +51281,6 @@ LAB_0005db84:
 
 /* 0005da66 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 double double_divide_reversed_pointer(double a,double *b)
@@ -51383,8 +51384,8 @@ LAB_0005d9b8:
   }
   else {
     if ((uVar8 & 3) != 0) {
-      _float_status = _float_status | 0x200;
-      if ((float_control & 2) != 0) {
+      float_status = float_status | 0x200;
+      if ((float_control._0_1_ & 2) != 0) {
         dVar12 = (double)float_raise();
         return dVar12;
       }
@@ -51421,7 +51422,6 @@ LAB_0005db84:
 
 /* 0005da6a */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 double double_divide_reversed(double a,double b)
@@ -51525,8 +51525,8 @@ LAB_0005d9b8:
   }
   else {
     if ((uVar9 & 3) != 0) {
-      _float_status = _float_status | 0x200;
-      if ((float_control & 2) != 0) {
+      float_status = float_status | 0x200;
+      if ((float_control._0_1_ & 2) != 0) {
         dVar12 = (double)float_raise();
         return dVar12;
       }
@@ -51731,7 +51731,6 @@ void FUN_0005dc0a(void)
 
 /* 0005dcd2 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 float double_to_float(double d)
@@ -51768,8 +51767,8 @@ float double_to_float(double d)
       }
       else {
         if (uVar3 != 0) {
-          _float_status = _float_status | 0x200;
-          if ((float_control & 2) != 0) {
+          float_status = float_status | 0x200;
+          if ((float_control._0_1_ & 2) != 0) {
             fVar6 = (float)float_raise(0x30200);
             goto LAB_0005dd4e;
           }
@@ -52129,7 +52128,6 @@ double unsigned_to_double(uint u)
 
 /* 0005e168 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 float integer_to_float(int i)
@@ -52171,8 +52169,8 @@ float integer_to_float(int i)
       uVar3 = uVar3 >> (uVar4 & 0x3f);
       uVar6 = uVar6 << 0x10 - (uVar4 & 0x3f) | uVar6 >> (uVar4 & 0x3f);
       if (uVar6 != 0) {
-        _float_status = _float_status | 0x200;
-        if ((float_control & 2) != 0) {
+        float_status = float_status | 0x200;
+        if ((float_control._0_1_ & 2) != 0) {
           fVar2 = (float)float_raise(0xf0200);
           return fVar2;
         }
@@ -52199,7 +52197,6 @@ float integer_to_float(int i)
 
 /* 0005e20e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 float unsigned_to_float(uint u)
@@ -52237,8 +52234,8 @@ float unsigned_to_float(uint u)
       uVar4 = u >> (uVar3 & 0x3f);
       uVar6 = uVar6 << 0x10 - (uVar3 & 0x3f) | uVar6 >> (uVar3 & 0x3f);
       if (uVar6 != 0) {
-        _float_status = _float_status | 0x200;
-        if ((float_control & 2) != 0) {
+        float_status = float_status | 0x200;
+        if ((float_control._0_1_ & 2) != 0) {
           fVar2 = (float)float_raise(0x130200);
           return fVar2;
         }
@@ -52284,7 +52281,6 @@ void float_multiply_in_place(float *x,float y)
 
 /* 0005e320 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 float float_multiply(float a,float b)
@@ -52377,7 +52373,8 @@ LAB_0005e2f0:
             sVar14 = sVar14 + 0x10;
           }
           if (sVar14 < 0x47e1) {
-            if ((uVar7 != 0) && (_float_status = _float_status | 0x200, (float_control & 2) != 0)) {
+            if ((uVar7 != 0) &&
+               (float_status = float_status | 0x200, (float_control._0_1_ & 2) != 0)) {
               fVar6 = (float)float_raise(0xb0200);
               return fVar6;
             }
@@ -52419,7 +52416,6 @@ void double_multiply_in_place(double *x,double y)
 
 /* 0005e5f8 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 double double_multiply_pointers(double *a,double *b)
@@ -52643,8 +52639,8 @@ LAB_0005e77c:
   else {
     bVar14 = (byte)uVar19;
     if (bVar14 != 0) {
-      _float_status = _float_status | 0x200;
-      if ((float_control & 2) != 0) {
+      float_status = float_status | 0x200;
+      if ((float_control._0_1_ & 2) != 0) {
         dVar24 = (double)float_raise(0xc0200);
         return dVar24;
       }
@@ -52679,7 +52675,6 @@ LAB_0005e77c:
 
 /* 0005e5fc */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 double double_multiply_pointer(double a,double *b)
@@ -52897,8 +52892,8 @@ LAB_0005e77c:
   else {
     bVar15 = (byte)uVar18;
     if (bVar15 != 0) {
-      _float_status = _float_status | 0x200;
-      if ((float_control & 2) != 0) {
+      float_status = float_status | 0x200;
+      if ((float_control._0_1_ & 2) != 0) {
         dVar23 = (double)float_raise();
         return dVar23;
       }
@@ -52933,7 +52928,6 @@ LAB_0005e77c:
 
 /* 0005e600 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 
 double double_multiply(double a,double b)
@@ -53150,8 +53144,8 @@ LAB_0005e77c:
   else {
     bVar13 = (byte)uVar17;
     if (bVar13 != 0) {
-      _float_status = _float_status | 0x200;
-      if ((float_control & 2) != 0) {
+      float_status = float_status | 0x200;
+      if ((float_control._0_1_ & 2) != 0) {
         dVar23 = (double)float_raise();
         return dVar23;
       }
@@ -53268,7 +53262,6 @@ undefined8 FUN_0005e882(undefined2 param_1,uint param_2)
 /* 0005e93c */
 
 /* WARNING: Type propagation algorithm not settling */
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
 void float_raise(uint param_1,uint param_2,uint param_3,uint param_4,uint param_5)
 
@@ -53289,16 +53282,16 @@ void float_raise(uint param_1,uint param_2,uint param_3,uint param_4,uint param_
         if ((param_1 & 0x800) == 0) {
           if ((param_1 & 0x400) == 0) {
             if ((((param_1 & 0x200) != 0) || ((param_1 & 0x80) == 0)) ||
-               (_float_status = _float_status | 0x280, (DAT_001038b3 & 0x80) != 0))
+               (float_status = float_status | 0x280, ((byte)float_control & 0x80) != 0))
             goto LAB_0005ec8c;
-            bVar1 = float_control & 2;
+            bVar1 = float_control._0_1_ & 2;
           }
           else {
-            _float_status = _float_status | 0x400;
+            float_status = float_status | 0x400;
             if ((uVar6 & 0x80) != 0) {
-              _errno = 0x22;
+              errno = 0x22;
             }
-            bVar1 = float_control & 4;
+            bVar1 = float_control._0_1_ & 4;
           }
           goto joined_r0x0005ebd0;
         }
@@ -53335,7 +53328,7 @@ void float_raise(uint param_1,uint param_2,uint param_3,uint param_4,uint param_
           if (param_4 == 0) {
             return;
           }
-          _float_status = _float_status | 0x200;
+          float_status = float_status | 0x200;
         }
         else if (sVar5 < 0x19) {
           uVar3 = ~(-1 << (param_2 & 0x3f));
@@ -53348,33 +53341,33 @@ void float_raise(uint param_1,uint param_2,uint param_3,uint param_4,uint param_
           if (uVar6 == 0) {
             return;
           }
-          _float_status = _float_status | 0x200;
+          float_status = float_status | 0x200;
         }
         else {
 LAB_0005eafe:
           if ((param_1 & 0x800000) != 0) {
-            _errno = 0x22;
+            errno = 0x22;
           }
         }
-        _float_status = _float_status | 0xa00;
-        bVar1 = float_control & 8;
+        float_status = float_status | 0xa00;
+        bVar1 = float_control._0_1_ & 8;
       }
       else {
-        _float_status = _float_status | 0x1200;
+        float_status = float_status | 0x1200;
         if ((uVar6 & 0x80) != 0) {
-          _errno = 0x22;
+          errno = 0x22;
         }
-        bVar1 = float_control & 0x10;
+        bVar1 = float_control._0_1_ & 0x10;
       }
       if (bVar1 != 0) goto LAB_0005ec8c;
-      bVar1 = float_control & 2;
+      bVar1 = float_control._0_1_ & 2;
     }
     else {
-      _float_status = _float_status | 0x2000;
+      float_status = float_status | 0x2000;
       if ((uVar6 & 0x80) != 0) {
-        _errno = 0x21;
+        errno = 0x21;
       }
-      bVar1 = float_control & 0x20;
+      bVar1 = float_control._0_1_ & 0x20;
     }
   }
   else {
@@ -53387,8 +53380,8 @@ LAB_0005eafe:
     if (param_2 != 0) {
       return;
     }
-    _float_status = _float_status | 0x2000;
-    bVar1 = float_control & 0x20;
+    float_status = float_status | 0x2000;
+    bVar1 = float_control._0_1_ & 0x20;
   }
 joined_r0x0005ebd0:
   if (bVar1 == 0) {
@@ -53414,14 +53407,12 @@ int abs(int j)
 
 /* 0005ecda */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void call_atexit_functions(void)
 
 {
-  while (0 < _atexit_count) {
-    _atexit_count = _atexit_count + -1;
-    (**(code **)(&atexit_functions + _atexit_count * 4))();
+  while (0 < (short)atexit_count) {
+    atexit_count = atexit_count - 1;
+    (**(code **)(&atexit_functions + (short)atexit_count * 4))();
   }
   return;
 }
@@ -53429,14 +53420,12 @@ void call_atexit_functions(void)
 
 /* 0005ecf0 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void call_atexit_functions(void)
 
 {
-  while (0 < _atexit_count) {
-    _atexit_count = _atexit_count + -1;
-    (**(code **)(&atexit_functions + _atexit_count * 4))();
+  while (0 < (short)atexit_count) {
+    atexit_count = atexit_count - 1;
+    (**(code **)(&atexit_functions + (short)atexit_count * 4))();
   }
   return;
 }
@@ -53575,67 +53564,61 @@ void * memset(void *s,int c,uint n)
 
 /* 0005ef86 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void qsort_swap(undefined1 *param_1,undefined1 *param_2)
 
 {
   undefined1 uVar1;
-  int iVar2;
+  uint32_t uVar2;
   
-  iVar2 = _qsort_size;
+  uVar2 = qsort_size;
   do {
     uVar1 = *param_1;
     *param_1 = *param_2;
     *param_2 = uVar1;
-    iVar2 = iVar2 + -1;
+    uVar2 = uVar2 - 1;
     param_1 = param_1 + 1;
     param_2 = param_2 + 1;
-  } while (iVar2 != 0);
+  } while (uVar2 != 0);
   return;
 }
 
 
 /* 0005efa0 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void qsort_rotate(undefined1 *param_1,undefined1 *param_2,undefined1 *param_3)
 
 {
   undefined1 uVar1;
-  int iVar2;
+  uint32_t uVar2;
   
-  iVar2 = _qsort_size;
+  uVar2 = qsort_size;
   do {
     uVar1 = *param_1;
     *param_1 = *param_3;
     *param_3 = *param_2;
     *param_2 = uVar1;
-    iVar2 = iVar2 + -1;
+    uVar2 = uVar2 - 1;
     param_1 = param_1 + 1;
     param_2 = param_2 + 1;
     param_3 = param_3 + 1;
-  } while (iVar2 != 0);
+  } while (uVar2 != 0);
   return;
 }
 
 
 /* 0005efc4 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void qsort_range(uint param_1,uint param_2)
 
 {
-  uint uVar1;
+  uint32_t uVar1;
   int iVar2;
   uint uVar3;
   uint uVar4;
   uint uVar5;
   uint uVar6;
   
-  uVar1 = _qsort_size;
+  uVar1 = qsort_size;
 LAB_0005efd6:
   if (param_2 - param_1 <= uVar1) {
     return;
@@ -53647,7 +53630,7 @@ LAB_0005efd6:
 LAB_0005effa:
   do {
     if (uVar6 < uVar5) {
-      iVar2 = (*_qsort_compare)(uVar6,uVar5);
+      iVar2 = (*qsort_compare)(uVar6,uVar5);
       if (iVar2 == 0) {
         uVar5 = uVar5 - uVar1;
         qsort_swap(uVar6,uVar5);
@@ -53660,7 +53643,7 @@ LAB_0005f070:
       }
     }
     while (uVar4 < uVar3) {
-      iVar2 = (*_qsort_compare)(uVar4,uVar3);
+      iVar2 = (*qsort_compare)(uVar4,uVar3);
       if (iVar2 == 0) {
         uVar4 = uVar1 + uVar4;
         qsort_swap(uVar4,uVar3);
@@ -53700,13 +53683,11 @@ LAB_0005f070:
 
 /* 0005f0cc */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void qsort(void *base,uint nmemb,uint size,void *compar)
 
 {
-  _qsort_compare = compar;
-  _qsort_size = size;
+  qsort_compare = compar;
+  qsort_size = size;
   qsort_range(base,(void *)((int)base + size * nmemb));
   return;
 }
@@ -53714,7 +53695,6 @@ void qsort(void *base,uint nmemb,uint size,void *compar)
 
 /* 0005f102 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention -- yet parameter storage is locked */
 
 int rand(void)
@@ -53722,8 +53702,8 @@ int rand(void)
 {
   int iVar1;
   
-  iVar1 = (int)_rand_seed * 0x41c64e6d;
-  _rand_seed = &UNK_00003039 + iVar1;
+  iVar1 = rand_seed * 0x41c64e6d;
+  rand_seed = (uint32_t)(&UNK_00003039 + iVar1);
   return (uint)(&UNK_00003039 + iVar1) >> 0x10 & 0x7fff;
 }
 
@@ -55104,8 +55084,6 @@ LAB_000609ca:
 
 /* 00060a10 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 double log(double x)
 
 {
@@ -55142,7 +55120,7 @@ double log(double x)
       local_14._4_4_ = SUB84(local_14,0);
       if (bVar1 && bVar2) {
         local_14 = -INFINITY;
-        _errno = 0x22;
+        errno = 0x22;
       }
       pdVar7 = (double *)&local_14;
     }
@@ -55353,19 +55331,17 @@ undefined8 FUN_00060efa(uint param_1,uint param_2)
 
 /* 00060f5e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 double pow(double x,double y)
 
 {
   ushort uVar1;
-  ushort uVar2;
+  bool bVar2;
   bool bVar3;
   bool bVar4;
-  bool bVar5;
+  ulonglong uVar5;
   ulonglong uVar6;
-  ulonglong uVar7;
-  ushort uVar8;
+  uint16_t uVar7;
+  uint16_t uVar8;
   int iVar9;
   int iVar10;
   undefined8 *puVar11;
@@ -55395,13 +55371,13 @@ double pow(double x,double y)
   iVar10 = 2;
   local_50 = INFINITY;
   if (((x._0_4_ & 0x7ff00000) != 0x7ff00000) ||
-     (bVar3 = true, x._4_4_ == 0 && ((ulonglong)x & 0xfffff00000000) == 0)) {
-    bVar3 = false;
+     (bVar2 = true, x._4_4_ == 0 && ((ulonglong)x & 0xfffff00000000) == 0)) {
+    bVar2 = false;
   }
-  if ((bVar3) ||
+  if ((bVar2) ||
      (((y._0_4_ & 0x7ff00000) == 0x7ff00000 &&
       (y._4_4_ != 0 || ((ulonglong)y & 0xfffff00000000) != 0)))) {
-    if (bVar3) {
+    if (bVar2) {
       puVar11 = &local_60;
     }
     else {
@@ -55413,29 +55389,29 @@ double pow(double x,double y)
     local_48 = local_48;
   }
   else {
-    bVar3 = x._4_4_ != 0;
-    bVar4 = ((ulonglong)x & 0x7fffffff00000000) != 0;
-    bVar5 = ((ulonglong)y & 0x7fffffff00000000) != 0;
-    if ((y._4_4_ != 0 || bVar5) && (bVar3 || bVar4)) {
-      if (((x._0_4_ & 0x7fffffff) != 0x7ff00000) || (bVar3 = false, x._4_4_ != 0)) {
+    bVar2 = x._4_4_ != 0;
+    bVar3 = ((ulonglong)x & 0x7fffffff00000000) != 0;
+    bVar4 = ((ulonglong)y & 0x7fffffff00000000) != 0;
+    if ((y._4_4_ != 0 || bVar4) && (bVar2 || bVar3)) {
+      if (((x._0_4_ & 0x7fffffff) != 0x7ff00000) || (bVar2 = false, x._4_4_ != 0)) {
+        bVar2 = true;
+      }
+      if (((y._0_4_ & 0x7fffffff) != 0x7ff00000) || (bVar3 = false, y._4_4_ != 0)) {
         bVar3 = true;
       }
-      if (((y._0_4_ & 0x7fffffff) != 0x7ff00000) || (bVar4 = false, y._4_4_ != 0)) {
-        bVar4 = true;
-      }
-      if (bVar4 && bVar3) {
+      if (bVar3 && bVar2) {
         iVar10 = 1;
       }
-      else if (bVar3) {
+      else if (bVar2) {
         if (((ulonglong)x & 0x8000000000000000) != 0) {
           iVar9 = double_compare(-1.0,x);
           if (iVar9 != 0) {
-            uVar6 = (ulonglong)local_48 & 0x8000000000000000;
+            uVar5 = (ulonglong)local_48 & 0x8000000000000000;
             if (((ulonglong)local_48 & 0x8000000000000000) != 0) {
               iVar9 = double_compare(-1.0,x);
               if (0 < iVar9) goto LAB_000610fa;
             }
-            if (uVar6 == 0) {
+            if (uVar5 == 0) {
               iVar9 = double_compare(-1.0,x);
               if (iVar9 < 0) goto LAB_000610fa;
             }
@@ -55445,18 +55421,18 @@ double pow(double x,double y)
           local_50._0_4_ = 0x3ff00000;
           goto LAB_0006122a;
         }
+        uVar5 = (ulonglong)y & 0x8000000000000000;
         uVar6 = (ulonglong)y & 0x8000000000000000;
-        uVar7 = (ulonglong)y & 0x8000000000000000;
         iVar9 = double_compare(1.0,x);
         if (iVar9 == 0) {
           pdVar12 = &x;
           goto LAB_000611e2;
         }
-        if (uVar6 != 0) {
+        if (uVar5 != 0) {
           iVar9 = double_compare(1.0,x);
           if (0 < iVar9) goto LAB_00061224;
         }
-        if (uVar7 == 0) {
+        if (uVar6 == 0) {
           iVar9 = double_compare(1.0,x);
           local_60 = local_60;
           local_48 = local_48;
@@ -55465,7 +55441,7 @@ double pow(double x,double y)
       }
       else if (((ulonglong)y & 0x8000000000000000) == 0) {
         if (((ulonglong)x & 0x8000000000000000) != 0) {
-          if (bVar4) {
+          if (bVar3) {
             iVar9 = FUN_00060e68(y,&local_68);
             if (iVar9 == 0) {
               iVar10 = 3;
@@ -55492,9 +55468,9 @@ LAB_0006122a:
         local_48 = local_48;
       }
     }
-    else if ((bVar3 || bVar4) ||
-            ((y._4_4_ != 0 || bVar5 && (((ulonglong)y & 0x8000000000000000) == 0)))) {
-      if (bVar3 || bVar4) {
+    else if ((bVar2 || bVar3) ||
+            ((y._4_4_ != 0 || bVar4 && (((ulonglong)y & 0x8000000000000000) == 0)))) {
+      if (bVar2 || bVar3) {
         uVar16 = 0x3ff00000;
       }
       else {
@@ -55570,13 +55546,13 @@ LAB_000611e2:
   dVar13 = double_add_pointer(dVar13,&dStack_38);
   dStack_30 = double_add_pointer(dVar13,(double *)&local_50);
   dVar13 = integer_to_double(local_64 * 0x10 - iVar10);
-  uVar1 = _float_control;
-  uVar8 = _float_status;
+  uVar8 = float_control;
+  uVar7 = float_status;
   local_60._0_4_ = (int)((ulonglong)dVar13 >> 0x20);
   local_60._4_4_ = SUB84(dVar13,0);
   local_60 = (double)CONCAT44(local_60._0_4_ + -0x400000,local_60._4_4_);
-  _float_status = 0;
-  _float_control = _float_control & 0xc5ff;
+  float_status = 0;
+  float_control = float_control & 0xc5ff;
   dStack_28 = (double)FUN_00060efa(y);
   dStack_20 = double_subtract_reversed_pointers(&dStack_28,&y);
   dVar13 = double_multiply_pointers(&y,&dStack_30);
@@ -55609,7 +55585,7 @@ LAB_000611e2:
   dVar13 = (double)FUN_00060efa((int)((ulonglong)dVar13 >> 0x20),SUB84(dVar13,0));
   dVar13 = double_multiply(16.0,dVar13);
   iVar10 = double_to_integer(dVar13);
-  if ((_float_status & 0x2000) == 0) {
+  if ((float_status & 0x2000) == 0) {
     if (((ulonglong)local_48 & 0x8000000000000000) == 0) {
       iVar10 = iVar10 + 1;
       double_add_in_place((double *)&local_48,-0.0625);
@@ -55633,28 +55609,28 @@ LAB_000611e2:
     dVar13 = double_add_pointer(dVar13,(double *)(&UNK_0006184c + iVar10 * 8));
     local_50._0_4_ = (uint)((ulonglong)dVar13 >> 0x20);
     iVar10 = iVar9 + (local_50._0_4_ >> 0x14);
-    uVar16 = (uint)_float_status;
-    _float_control = uVar1;
+    uVar16 = (uint)float_status;
+    float_control = uVar8;
     local_50 = dVar13;
-    if ((((_float_status & 0x1800) == 0) && (0 < iVar10)) && (iVar10 < 0x7ff)) {
-      uVar2 = _float_status & 0x200;
-      _float_status = uVar8;
-      if ((uVar2 != 0) && (_float_status = uVar8 | 0x200, (uVar1 & 0x200) != 0)) {
+    if ((((float_status & 0x1800) == 0) && (0 < iVar10)) && (iVar10 < 0x7ff)) {
+      uVar1 = float_status & 0x200;
+      float_status = uVar7;
+      if ((uVar1 != 0) && (float_status = uVar7 | 0x200, (uVar8 & 0x200) != 0)) {
         local_50 = (double)float_raise(0xe00200);
       }
       local_50 = (double)CONCAT44(iVar9 * 0x100000 + local_50._0_4_,local_50._4_4_);
       goto LAB_000617c6;
     }
-    if (((_float_status & 0x800) == 0) && (0 < iVar10)) {
-      uVar1 = _float_status & 0x1000;
-      _float_status = uVar8;
+    if (((float_status & 0x800) == 0) && (0 < iVar10)) {
+      uVar1 = float_status & 0x1000;
+      float_status = uVar7;
       if ((uVar1 != 0) || (0x7fe < iVar10)) goto LAB_00061608;
       uVar16 = uVar16 | 0xe00000;
       goto LAB_00061780;
     }
     local_50._4_4_ = SUB84(dVar13,0);
     iVar10 = 1 - iVar10;
-    _float_status = uVar8;
+    float_status = uVar7;
     uVar16 = local_50._0_4_;
     uVar14 = local_50._4_4_;
   }

@@ -23625,7 +23625,7 @@ LAB_00024d6c:
 
 /* 00024e18 */
 
-uint FUN_00024e18(void)
+uint scpi_double_to_decimal(void)
 
 {
   undefined1 uVar1;
@@ -23683,9 +23683,9 @@ LAB_00024e22:
       }
       uVar12 = (short)((uint)((int)sVar16 * (int)sVar13) >> 0x10) + 0x41;
       if (((int)((uint)uVar12 << 0x10) < 0) || (0x80 < (short)uVar12)) {
-        FUN_000252bc();
+        scpi_double_multiply();
       }
-      lVar19 = FUN_000252bc();
+      lVar19 = scpi_double_multiply();
       uVar8 = (uint)((ulonglong)lVar19 >> 0x20);
       uVar11 = (uint)lVar19;
       sVar16 = extraout_A1w + 1;
@@ -23758,7 +23758,7 @@ LAB_00024e22:
 
 /* 0002507a */
 
-undefined8 FUN_0002507a(void)
+undefined8 scpi_bcd_to_double(void)
 
 {
   short sVar1;
@@ -23782,7 +23782,7 @@ undefined8 FUN_0002507a(void)
   }
   if (*(int *)(in_A0 + 3) == 0) {
     if (in_A0[2] == 0) {
-      uVar12 = FUN_000251e4();
+      uVar12 = scpi_scale_by_power_of_ten();
       return uVar12;
     }
     switch((ushort)((uint)*(byte *)((int)&PTR_PTR_00025b7e +
@@ -23803,7 +23803,7 @@ undefined8 FUN_0002507a(void)
     case 0xc:
     case 0xe:
     default:
-      uVar12 = FUN_000251e4();
+      uVar12 = scpi_scale_by_power_of_ten();
       return uVar12;
     }
   }
@@ -23918,7 +23918,7 @@ LAB_000251da:
     uVar8 = sVar1 + 0x40;
     if (((int)((uint)uVar8 << 0x10) < 0) || (0x80 < (short)uVar8)) {
       sVar7 = sVar1 >> 6;
-      FUN_000252bc();
+      scpi_double_multiply();
       if (sVar7 < 0) {
         sVar7 = sVar7 + 1;
       }
@@ -23926,7 +23926,7 @@ LAB_000251da:
       puVar10 = extraout_A1;
     }
     bVar11 = *(int *)(puVar10 + (short)(uVar8 << 3) + 4) == 0;
-    uVar12 = FUN_000252bc();
+    uVar12 = scpi_double_multiply();
     if (!bVar11) {
       return uVar12;
     }
@@ -23937,7 +23937,7 @@ LAB_000251da:
 
 /* 000251e4 */
 
-undefined * FUN_000251e4(void)
+undefined * scpi_scale_by_power_of_ten(void)
 
 {
   short sVar1;
@@ -23953,7 +23953,7 @@ undefined * FUN_000251e4(void)
     sVar3 = sVar1 + 0x40;
     if ((sVar3 < 0) || (0x80 < sVar3)) {
       sVar3 = sVar1 >> 6;
-      FUN_000252bc();
+      scpi_double_multiply();
       if (sVar3 < 0) {
         sVar3 = sVar3 + 1;
       }
@@ -23961,7 +23961,7 @@ undefined * FUN_000251e4(void)
       in_A1 = extraout_A1;
     }
     bVar4 = *(int *)(in_A1 + 4 + (int)(short)(sVar3 << 3)) == 0;
-    puVar2 = (undefined *)FUN_000252bc();
+    puVar2 = (undefined *)scpi_double_multiply();
     if (!bVar4) {
       return puVar2;
     }
@@ -23972,7 +23972,7 @@ undefined * FUN_000251e4(void)
 
 /* 000252bc */
 
-undefined8 FUN_000252bc(void)
+undefined8 scpi_double_multiply(void)
 
 {
   int iVar1;
@@ -24027,17 +24027,17 @@ undefined8 FUN_000252bc(void)
         goto LAB_00025410;
       }
       if ((unaff_D2 & 0x1f) == 0) {
-        uVar17 = FUN_00025468();
+        uVar17 = scpi_double_multiply_short();
         return uVar17;
       }
     }
     if ((in_D0 & 0x1f) == 0) {
-      uVar17 = FUN_00025468();
+      uVar17 = scpi_double_multiply_short();
       return uVar17;
     }
   }
   if ((unaff_D3 == 0) && ((unaff_D2 & 0x1f) == 0)) {
-    uVar17 = FUN_00025468();
+    uVar17 = scpi_double_multiply_short();
     return uVar17;
   }
   uVar9 = (unaff_D3 & 0xffff) * (in_D1 & 0xffff);
@@ -24118,7 +24118,7 @@ LAB_00025410:
 
 /* 00025468 */
 
-undefined8 FUN_00025468(void)
+undefined8 scpi_double_multiply_short(void)
 
 {
   int iVar1;
@@ -24177,16 +24177,16 @@ undefined8 FUN_00025468(void)
 
 /* 000254ba */
 
-undefined4 FUN_000254ba(undefined4 param_1,undefined8 *param_2,short param_3)
+undefined4 scpi_number_to_double(undefined4 param_1,undefined8 *param_2,short param_3)
 
 {
   bool bVar1;
   undefined8 uVar2;
   
   bVar1 = param_3 == 0;
-  FUN_000254fe();
+  scpi_number_to_bcd();
   if (bVar1) {
-    uVar2 = FUN_0002507a();
+    uVar2 = scpi_bcd_to_double();
     if (!bVar1) {
       *param_2 = uVar2;
       return 0;
@@ -24198,7 +24198,7 @@ undefined4 FUN_000254ba(undefined4 param_1,undefined8 *param_2,short param_3)
 
 /* 000254fe */
 
-undefined4 FUN_000254fe(void)
+undefined4 scpi_number_to_bcd(void)
 
 {
   int iVar1;
@@ -24231,8 +24231,8 @@ undefined4 FUN_000254fe(void)
 /* WARNING: Unknown calling convention */
 
 undefined4
-FUN_0002553a(int param_1,int param_2,undefined1 *param_3,short param_4,short param_5,short param_6,
-            char param_7)
+scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,short param_5,
+                 short param_6,char param_7)
 
 {
   byte bVar1;
@@ -24253,7 +24253,7 @@ FUN_0002553a(int param_1,int param_2,undefined1 *param_3,short param_4,short par
       return 1;
     }
     bVar6 = param_4 == 0;
-    FUN_00024e18();
+    scpi_double_to_decimal();
     if (bVar6) {
       return 1;
     }
@@ -24359,7 +24359,7 @@ LAB_00025618:
 
 /* 00025d70 */
 
-undefined4 FUN_00025d70(undefined2 *param_1,undefined4 param_2,undefined4 *param_3)
+undefined4 scpi_parse_string(undefined2 *param_1,undefined4 param_2,undefined4 *param_3)
 
 {
   *param_3 = *(undefined4 *)(param_1 + 1);
@@ -24370,7 +24370,7 @@ undefined4 FUN_00025d70(undefined2 *param_1,undefined4 param_2,undefined4 *param
 
 /* 00025d8c */
 
-undefined4 FUN_00025d8c(short *param_1,undefined4 param_2,undefined2 *param_3)
+undefined4 scpi_parse_boolean(short *param_1,undefined4 param_2,undefined2 *param_3)
 
 {
   char cVar1;
@@ -24409,14 +24409,14 @@ undefined4 FUN_00025d8c(short *param_1,undefined4 param_2,undefined2 *param_3)
 
 /* 00025de0 */
 
-undefined4 FUN_00025de0(int param_1,undefined4 param_2,undefined2 *param_3)
+undefined4 scpi_parse_boolean_number(int param_1,undefined4 param_2,undefined2 *param_3)
 
 {
   undefined4 uVar1;
   undefined2 local_6;
   
   if (*(short *)(param_1 + 0x14) == 0) {
-    FUN_0002632c(param_1,&local_6,0);
+    scpi_number_to_boolean(param_1,&local_6,0);
     *param_3 = local_6;
     uVar1 = 0;
   }
@@ -24429,7 +24429,7 @@ undefined4 FUN_00025de0(int param_1,undefined4 param_2,undefined2 *param_3)
 
 /* 00025e42 */
 
-undefined4 FUN_00025e42(short *param_1,undefined4 param_2,short *param_3,int *param_4)
+undefined4 scpi_parse_choice(short *param_1,undefined4 param_2,short *param_3,int *param_4)
 
 {
   int iVar1;
@@ -24463,14 +24463,14 @@ undefined4 FUN_00025e42(short *param_1,undefined4 param_2,short *param_3,int *pa
 
 /* 00025ea6 */
 
-int FUN_00025ea6(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
+int scpi_parse_short(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
 
 {
   int iVar1;
   
-  iVar1 = FUN_00027ae4(param_1,param_4);
+  iVar1 = scpi_apply_suffix(param_1,param_4);
   if (iVar1 == 0) {
-    iVar1 = FUN_0002609a(param_1,param_3,(int)*(short *)(param_1 + 0x22));
+    iVar1 = scpi_number_to_short(param_1,param_3,(int)*(short *)(param_1 + 0x22));
     *(undefined2 *)(param_3 + 2) = *(undefined2 *)(param_1 + 0x24);
   }
   return iVar1;
@@ -24479,14 +24479,14 @@ int FUN_00025ea6(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
 
 /* 00025ee6 */
 
-int FUN_00025ee6(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
+int scpi_parse_unsigned_short(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
 
 {
   int iVar1;
   
-  iVar1 = FUN_00027ae4(param_1,param_4);
+  iVar1 = scpi_apply_suffix(param_1,param_4);
   if (iVar1 == 0) {
-    iVar1 = FUN_00026140(param_1,param_3,(int)*(short *)(param_1 + 0x22));
+    iVar1 = scpi_number_to_unsigned_short(param_1,param_3,(int)*(short *)(param_1 + 0x22));
     *(undefined2 *)(param_3 + 2) = *(undefined2 *)(param_1 + 0x24);
   }
   return iVar1;
@@ -24495,14 +24495,14 @@ int FUN_00025ee6(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
 
 /* 00025f26 */
 
-int FUN_00025f26(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
+int scpi_parse_long(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
 
 {
   int iVar1;
   
-  iVar1 = FUN_00027ae4(param_1,param_4);
+  iVar1 = scpi_apply_suffix(param_1,param_4);
   if (iVar1 == 0) {
-    iVar1 = FUN_000261e4(param_1,param_3,(int)*(short *)(param_1 + 0x22));
+    iVar1 = scpi_number_to_long(param_1,param_3,(int)*(short *)(param_1 + 0x22));
     *(undefined2 *)(param_3 + 4) = *(undefined2 *)(param_1 + 0x24);
   }
   return iVar1;
@@ -24511,14 +24511,14 @@ int FUN_00025f26(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
 
 /* 00025f66 */
 
-int FUN_00025f66(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
+int scpi_parse_unsigned_long(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
 
 {
   int iVar1;
   
-  iVar1 = FUN_00027ae4(param_1,param_4);
+  iVar1 = scpi_apply_suffix(param_1,param_4);
   if (iVar1 == 0) {
-    iVar1 = FUN_0002628a(param_1,param_3,(int)*(short *)(param_1 + 0x22));
+    iVar1 = scpi_number_to_unsigned_long(param_1,param_3,(int)*(short *)(param_1 + 0x22));
     *(undefined2 *)(param_3 + 4) = *(undefined2 *)(param_1 + 0x24);
   }
   return iVar1;
@@ -24527,7 +24527,7 @@ int FUN_00025f66(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
 
 /* 00025fa6 */
 
-int FUN_00025fa6(int param_1,undefined4 param_2,float *param_3,undefined4 param_4)
+int scpi_parse_float(int param_1,undefined4 param_2,float *param_3,undefined4 param_4)
 
 {
   int iVar1;
@@ -24536,9 +24536,9 @@ int FUN_00025fa6(int param_1,undefined4 param_2,float *param_3,undefined4 param_
   undefined4 local_c;
   undefined4 local_8;
   
-  iVar1 = FUN_00027ae4(param_1,param_4);
+  iVar1 = scpi_apply_suffix(param_1,param_4);
   if (iVar1 == 0) {
-    iVar1 = FUN_000254ba(param_1,&local_c,(int)*(short *)(param_1 + 0x22));
+    iVar1 = scpi_number_to_double(param_1,&local_c,(int)*(short *)(param_1 + 0x22));
     if (iVar1 == 0) {
       a = fabs((double)CONCAT44(local_c,local_8));
       iVar1 = double_compare(a,9.9e+37);
@@ -24557,15 +24557,15 @@ int FUN_00025fa6(int param_1,undefined4 param_2,float *param_3,undefined4 param_
 
 /* 0002602e */
 
-int FUN_0002602e(int param_1,undefined4 param_2,double *param_3,undefined4 param_4)
+int scpi_parse_double(int param_1,undefined4 param_2,double *param_3,undefined4 param_4)
 
 {
   int iVar1;
   double a;
   
-  iVar1 = FUN_00027ae4(param_1,param_4);
+  iVar1 = scpi_apply_suffix(param_1,param_4);
   if (iVar1 == 0) {
-    iVar1 = FUN_000254ba(param_1,param_3,(int)*(short *)(param_1 + 0x22));
+    iVar1 = scpi_number_to_double(param_1,param_3,(int)*(short *)(param_1 + 0x22));
     if (iVar1 == 0) {
       a = fabs(*param_3);
       iVar1 = double_compare(a,9.9e+37);
@@ -24582,7 +24582,7 @@ int FUN_0002602e(int param_1,undefined4 param_2,double *param_3,undefined4 param
 
 /* 0002609a */
 
-undefined4 FUN_0002609a(short *param_1,ushort *param_2,short param_3)
+undefined4 scpi_number_to_short(short *param_1,ushort *param_2,short param_3)
 
 {
   int iVar1;
@@ -24630,7 +24630,7 @@ LAB_00026132:
 
 /* 00026140 */
 
-undefined4 FUN_00026140(int param_1,short *param_2,short param_3)
+undefined4 scpi_number_to_unsigned_short(int param_1,short *param_2,short param_3)
 
 {
   int iVar1;
@@ -24676,7 +24676,7 @@ LAB_000261cc:
 
 /* 000261e4 */
 
-undefined4 FUN_000261e4(short *param_1,uint *param_2,short param_3)
+undefined4 scpi_number_to_long(short *param_1,uint *param_2,short param_3)
 
 {
   int iVar1;
@@ -24725,7 +24725,7 @@ undefined4 FUN_000261e4(short *param_1,uint *param_2,short param_3)
 
 /* 0002628a */
 
-undefined4 FUN_0002628a(int param_1,int *param_2,short param_3)
+undefined4 scpi_number_to_unsigned_long(int param_1,int *param_2,short param_3)
 
 {
   int iVar1;
@@ -24771,7 +24771,7 @@ LAB_00026316:
 
 /* 0002632c */
 
-void FUN_0002632c(int param_1,ushort *param_2,short param_3)
+void scpi_number_to_boolean(int param_1,ushort *param_2,short param_3)
 
 {
   int iVar1;
@@ -24794,7 +24794,7 @@ void FUN_0002632c(int param_1,ushort *param_2,short param_3)
 
 /* 0002636e */
 
-undefined4 FUN_0002636e(int param_1,undefined4 *param_2)
+undefined4 scpi_format_text(int param_1,undefined4 *param_2)
 
 {
   char cVar1;
@@ -24815,7 +24815,7 @@ undefined4 FUN_0002636e(int param_1,undefined4 *param_2)
 
 /* 0002639e */
 
-undefined4 FUN_0002639e(int param_1,undefined4 *param_2)
+undefined4 scpi_format_string(int param_1,undefined4 *param_2)
 
 {
   char *pcVar1;
@@ -24835,7 +24835,7 @@ undefined4 FUN_0002639e(int param_1,undefined4 *param_2)
 
 /* 0002640c */
 
-undefined4 FUN_0002640c(int param_1,short *param_2)
+undefined4 scpi_format_boolean(int param_1,short *param_2)
 
 {
   undefined1 uVar1;
@@ -24853,7 +24853,7 @@ undefined4 FUN_0002640c(int param_1,short *param_2)
 
 /* 00026438 */
 
-undefined4 FUN_00026438(int param_1,short *param_2)
+undefined4 scpi_format_counted_text(int param_1,short *param_2)
 
 {
   (**(code **)(*(int *)(param_1 + 4) + 0x18))(param_1,*(undefined4 *)(param_2 + 1),(int)*param_2);
@@ -24863,7 +24863,7 @@ undefined4 FUN_00026438(int param_1,short *param_2)
 
 /* 00026460 */
 
-undefined4 FUN_00026460(int param_1,short *param_2,int *param_3)
+undefined4 scpi_format_choice(int param_1,short *param_2,int *param_3)
 
 {
   char cVar1;
@@ -24919,7 +24919,7 @@ LAB_000264a4:
 
 /* 000264e0 */
 
-undefined8 FUN_000264e0(uint param_1,int param_2,short *param_3)
+undefined8 scpi_unsigned_to_digits(uint param_1,int param_2,short *param_3)
 
 {
   undefined4 uVar1;
@@ -24946,7 +24946,7 @@ LAB_0002651c:
 
 /* 00026522 */
 
-int FUN_00026522(int param_1,int *param_2)
+int scpi_format_long(int param_1,int *param_2)
 
 {
   int iVar1;
@@ -24959,7 +24959,7 @@ int FUN_00026522(int param_1,int *param_2)
   if (!bVar2) {
     iVar1 = -iVar1;
   }
-  iVar1 = FUN_000264e0(iVar1,auStack_18,&local_6);
+  iVar1 = scpi_unsigned_to_digits(iVar1,auStack_18,&local_6);
   if (iVar1 == 0) {
     if (bVar2) {
       local_6 = local_6 + -1;
@@ -24978,27 +24978,27 @@ int FUN_00026522(int param_1,int *param_2)
 
 /* 000265a2 */
 
-void FUN_000265a2(undefined4 param_1,short *param_2)
+void scpi_format_short(undefined4 param_1,short *param_2)
 
 {
   int local_8;
   
   local_8 = (int)*param_2;
-  FUN_00026522(param_1,&local_8);
+  scpi_format_long(param_1,&local_8);
   return;
 }
 
 
 /* 000265c2 */
 
-int FUN_000265c2(int param_1,undefined4 *param_2)
+int scpi_format_unsigned_long(int param_1,undefined4 *param_2)
 
 {
   int iVar1;
   undefined1 auStack_18 [18];
   short local_6;
   
-  iVar1 = FUN_000264e0(*param_2,auStack_18,&local_6);
+  iVar1 = scpi_unsigned_to_digits(*param_2,auStack_18,&local_6);
   if (iVar1 == 0) {
     local_6 = local_6 + -1;
     auStack_18[local_6] = 0x2b;
@@ -25011,20 +25011,20 @@ int FUN_000265c2(int param_1,undefined4 *param_2)
 
 /* 0002661c */
 
-void FUN_0002661c(undefined4 param_1,ushort *param_2)
+void scpi_format_unsigned_short(undefined4 param_1,ushort *param_2)
 
 {
   uint local_8;
   
   local_8 = (uint)*param_2;
-  FUN_000265c2(param_1,&local_8);
+  scpi_format_unsigned_long(param_1,&local_8);
   return;
 }
 
 
 /* 0002663e */
 
-undefined4 FUN_0002663e(int param_1,undefined4 *param_2)
+undefined4 scpi_format_block(int param_1,undefined4 *param_2)
 
 {
   char cVar1;
@@ -25033,7 +25033,7 @@ undefined4 FUN_0002663e(int param_1,undefined4 *param_2)
   char acStack_1a [20];
   short local_6;
   
-  iVar2 = FUN_000264e0(*param_2,acStack_1a,&local_6);
+  iVar2 = scpi_unsigned_to_digits(*param_2,acStack_1a,&local_6);
   if (iVar2 == 0) {
     cVar1 = (char)local_6;
     local_6 = local_6 + -1;
@@ -25054,7 +25054,7 @@ undefined4 FUN_0002663e(int param_1,undefined4 *param_2)
 
 /* 000266d0 */
 
-int FUN_000266d0(int param_1,int *param_2)
+int scpi_format_double_array(int param_1,int *param_2)
 
 {
   int iVar1;
@@ -25072,7 +25072,7 @@ int FUN_000266d0(int param_1,int *param_2)
     if (iVar3 != 0) {
       (**(code **)(*(int *)(param_1 + 4) + 0x14))(param_1,0x2c);
     }
-    iVar2 = FUN_00026870(param_1,iVar4);
+    iVar2 = scpi_format_double(param_1,iVar4);
     if (iVar2 != 0) break;
     iVar3 = iVar3 + 1;
     iVar4 = iVar4 + 8;
@@ -25083,7 +25083,7 @@ int FUN_000266d0(int param_1,int *param_2)
 
 /* 0002671c */
 
-int FUN_0002671c(int param_1,int *param_2)
+int scpi_format_short_array(int param_1,int *param_2)
 
 {
   int iVar1;
@@ -25101,7 +25101,7 @@ int FUN_0002671c(int param_1,int *param_2)
     if (iVar3 != 0) {
       (**(code **)(*(int *)(param_1 + 4) + 0x14))(param_1,0x2c);
     }
-    iVar2 = FUN_000265a2(param_1,iVar4);
+    iVar2 = scpi_format_short(param_1,iVar4);
     if (iVar2 != 0) break;
     iVar3 = iVar3 + 1;
     iVar4 = iVar4 + 2;
@@ -25112,7 +25112,7 @@ int FUN_0002671c(int param_1,int *param_2)
 
 /* 00026768 */
 
-int FUN_00026768(int param_1,int *param_2)
+int scpi_format_resolution_array(int param_1,int *param_2)
 
 {
   int iVar1;
@@ -25132,7 +25132,7 @@ int FUN_00026768(int param_1,int *param_2)
     if (iVar3 != 0) {
       (**(code **)(*(int *)(param_1 + 4) + 0x14))(param_1,0x2c);
     }
-    iVar2 = FUN_000269a6(param_1,iVar5,iVar4);
+    iVar2 = scpi_format_double_resolution(param_1,iVar5,iVar4);
     if (iVar2 != 0) break;
     iVar3 = iVar3 + 1;
     iVar5 = iVar5 + 8;
@@ -25144,7 +25144,7 @@ int FUN_00026768(int param_1,int *param_2)
 
 /* 000267c0 */
 
-undefined4 FUN_000267c0(undefined4 param_1,char *param_2)
+undefined4 scpi_format_array(undefined4 param_1,char *param_2)
 
 {
   int iVar1;
@@ -25155,13 +25155,13 @@ undefined4 FUN_000267c0(undefined4 param_1,char *param_2)
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_000267e0)[(short)iVar1]) {
     case 6:
-      uVar2 = FUN_0002663e(param_1,*(undefined4 *)(param_2 + 2));
+      uVar2 = scpi_format_block(param_1,*(undefined4 *)(param_2 + 2));
       break;
     case 0x14:
-      uVar2 = FUN_000266d0(param_1,*(undefined4 *)(param_2 + 2));
+      uVar2 = scpi_format_double_array(param_1,*(undefined4 *)(param_2 + 2));
       break;
     case 0x22:
-      uVar2 = FUN_0002671c(param_1,*(undefined4 *)(param_2 + 2));
+      uVar2 = scpi_format_short_array(param_1,*(undefined4 *)(param_2 + 2));
     }
   }
   else {
@@ -25173,7 +25173,7 @@ undefined4 FUN_000267c0(undefined4 param_1,char *param_2)
 
 /* 00026816 */
 
-undefined4 FUN_00026816(undefined4 param_1,char *param_2)
+undefined4 scpi_format_resolution_array_record(undefined4 param_1,char *param_2)
 
 {
   int iVar1;
@@ -25184,10 +25184,10 @@ undefined4 FUN_00026816(undefined4 param_1,char *param_2)
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00026838)[(short)iVar1]) {
     case 4:
-      uVar2 = FUN_0002663e(param_1,*(undefined4 *)(param_2 + 2));
+      uVar2 = scpi_format_block(param_1,*(undefined4 *)(param_2 + 2));
       break;
     case 0x14:
-      uVar2 = FUN_00026768(param_1,*(undefined4 *)(param_2 + 2));
+      uVar2 = scpi_format_resolution_array(param_1,*(undefined4 *)(param_2 + 2));
     }
   }
   else {
@@ -25200,13 +25200,13 @@ undefined4 FUN_00026816(undefined4 param_1,char *param_2)
 
 /* 00026870 */
 
-int FUN_00026870(int param_1,int *param_2)
+int scpi_format_double(int param_1,int *param_2)
 
 {
   int iVar1;
   undefined1 auStack_1c [24];
   
-  iVar1 = FUN_0002553a(*param_2,param_2[1],auStack_1c,0xf,3,-0x134,'\x01');
+  iVar1 = scpi_real_to_text(*param_2,param_2[1],auStack_1c,0xf,3,-0x134,'\x01');
   if (iVar1 == 0) {
     (**(code **)(*(int *)(param_1 + 4) + 0x18))(param_1,auStack_1c,0x16);
     iVar1 = 0;
@@ -25217,7 +25217,7 @@ int FUN_00026870(int param_1,int *param_2)
 
 /* 000268c4 */
 
-int FUN_000268c4(int param_1,float *param_2)
+int scpi_format_float(int param_1,float *param_2)
 
 {
   int iVar1;
@@ -25229,7 +25229,7 @@ int FUN_000268c4(int param_1,float *param_2)
   dVar2 = float_to_double(*param_2);
   local_1c = SUB84(dVar2,0);
   local_20 = (int)((ulonglong)dVar2 >> 0x20);
-  iVar1 = FUN_0002553a(local_20,local_1c,auStack_18,6,3,-0x134,'\x01');
+  iVar1 = scpi_real_to_text(local_20,local_1c,auStack_18,6,3,-0x134,'\x01');
   if (iVar1 == 0) {
     (**(code **)(*(int *)(param_1 + 4) + 0x18))(param_1,auStack_18,0xd);
     iVar1 = 0;
@@ -25240,7 +25240,7 @@ int FUN_000268c4(int param_1,float *param_2)
 
 /* 0002692c */
 
-int FUN_0002692c(int param_1,int *param_2)
+int scpi_format_double_precision(int param_1,int *param_2)
 
 {
   char cVar1;
@@ -25258,8 +25258,8 @@ int FUN_0002692c(int param_1,int *param_2)
     uVar5 = 0xfecc0100;
     sVar4 = *(short *)((int)param_2 + 10);
   }
-  iVar2 = FUN_0002553a(*param_2,param_2[1],acStack_1c,sVar4,3,(short)((uint)uVar5 >> 0x10),
-                       (char)((uint)uVar5 >> 8));
+  iVar2 = scpi_real_to_text(*param_2,param_2[1],acStack_1c,sVar4,3,(short)((uint)uVar5 >> 0x10),
+                            (char)((uint)uVar5 >> 8));
   if (iVar2 == 0) {
     iVar2 = -1;
     pcVar3 = acStack_1c;
@@ -25277,7 +25277,7 @@ int FUN_0002692c(int param_1,int *param_2)
 
 /* 000269a6 */
 
-int FUN_000269a6(int param_1,int *param_2,short *param_3)
+int scpi_format_double_resolution(int param_1,int *param_2,short *param_3)
 
 {
   char cVar1;
@@ -25285,7 +25285,7 @@ int FUN_000269a6(int param_1,int *param_2,short *param_3)
   char *pcVar3;
   char acStack_1c [24];
   
-  iVar2 = FUN_0002553a(*param_2,param_2[1],acStack_1c,0xf,3,*param_3,'\x01');
+  iVar2 = scpi_real_to_text(*param_2,param_2[1],acStack_1c,0xf,3,*param_3,'\x01');
   if (iVar2 == 0) {
     iVar2 = -1;
     pcVar3 = acStack_1c;
@@ -25303,7 +25303,7 @@ int FUN_000269a6(int param_1,int *param_2,short *param_3)
 
 /* 00026a06 */
 
-int FUN_00026a06(int param_1,float *param_2)
+int scpi_format_float_resolution(int param_1,float *param_2)
 
 {
   char cVar1;
@@ -25317,7 +25317,7 @@ int FUN_00026a06(int param_1,float *param_2)
   dVar4 = float_to_double(*param_2);
   local_1c = SUB84(dVar4,0);
   local_20 = (int)((ulonglong)dVar4 >> 0x20);
-  iVar2 = FUN_0002553a(local_20,local_1c,acStack_18,6,3,*(short *)(param_2 + 1),'\x01');
+  iVar2 = scpi_real_to_text(local_20,local_1c,acStack_18,6,3,*(short *)(param_2 + 1),'\x01');
   if (iVar2 == 0) {
     iVar2 = -1;
     pcVar3 = acStack_18;
@@ -26130,7 +26130,7 @@ undefined4 FUN_00027a0c(undefined2 param_1,short param_2)
 
 /* 00027a2a */
 
-short FUN_00027a2a(short param_1,char *param_2,int param_3,short *param_4)
+short scpi_match_suffix(short param_1,char *param_2,int param_3,short *param_4)
 
 {
   short sVar1;
@@ -26174,7 +26174,7 @@ LAB_00027a86:
 
 /* 00027ae4 */
 
-undefined4 FUN_00027ae4(int param_1,int param_2)
+undefined4 scpi_apply_suffix(int param_1,int param_2)
 
 {
   short sVar1;
@@ -26187,7 +26187,8 @@ undefined4 FUN_00027ae4(int param_1,int param_2)
     if (param_2 == 0) {
       return 0xfffffff7;
     }
-    sVar1 = FUN_00027a2a((int)*(short *)(param_1 + 0x14),param_1 + 0x16,param_2,param_1 + 0x22);
+    sVar1 = scpi_match_suffix((int)*(short *)(param_1 + 0x14),param_1 + 0x16,param_2,param_1 + 0x22)
+    ;
     *(short *)(param_1 + 0x24) = sVar1;
     if (sVar1 == 0) {
       return 0xffffffe1;
@@ -44833,7 +44834,7 @@ void format_si(int param_1,int param_2,char param_3,byte param_4,char *param_5,c
   if (param_4 == 0) {
     param_4 = 0xf;
   }
-  iVar2 = FUN_0002553a(param_1,param_2,param_6,(ushort)param_4,2,(short)param_3,'\0');
+  iVar2 = scpi_real_to_text(param_1,param_2,param_6,(ushort)param_4,2,(short)param_3,'\0');
   if (iVar2 == 0) {
     pcVar3 = strchr(param_6,0x45);
     *pcVar3 = '\0';

@@ -799,3 +799,51 @@ installer::0x10269c	function	installer_kernel_queue_remove	psos.md: the installe
 installer::0x1026de	function	installer_kernel_init	psos.md: the installer's copy of kernel_init, at 0x15cd8 plus 0xeca06, byte for byte
 installer::0x1028d4	function	installer_kernel_region_init	psos.md: the installer's copy of kernel_region_init, at 0x15ece plus 0xeca06, byte for byte
 installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md: the installer's copy of kernel_return_from_interrupt, at 0x15f8a plus 0xeca06, byte for byte
+#
+# the SCPI parser's parameters and responses, docs/scpi/README.md
+0x2609a	function	scpi_number_to_short	docs/scpi/README.md, run: a parsed number as a signed 16-bit value, -11 out of range
+0x26140	function	scpi_number_to_unsigned_short	docs/scpi/README.md, run: its magnitude as an unsigned 16-bit value
+0x261e4	function	scpi_number_to_long	docs/scpi/README.md, run: as a signed 32-bit value
+0x2628a	function	scpi_number_to_unsigned_long	docs/scpi/README.md, run: its magnitude as an unsigned 32-bit value
+0x254ba	function	scpi_number_to_double	docs/scpi/README.md, run: as a double
+0x2632c	function	scpi_number_to_boolean	docs/scpi/README.md, read: nonzero after rounding
+0x25ea6	function	scpi_parse_short	docs/scpi/README.md, read: the suffix by scpi_apply_suffix, then scpi_number_to_short
+0x25ee6	function	scpi_parse_unsigned_short	docs/scpi/README.md, read: the suffix, then scpi_number_to_unsigned_short
+0x25f26	function	scpi_parse_long	docs/scpi/README.md, read: the suffix, then scpi_number_to_long
+0x25f66	function	scpi_parse_unsigned_long	docs/scpi/README.md, read: the suffix, then scpi_number_to_unsigned_long
+0x25fa6	function	scpi_parse_float	docs/scpi/README.md, read: the suffix, then a float within 9.9e37, else -11
+0x2602e	function	scpi_parse_double	docs/scpi/README.md, read: the suffix, then a double within 9.9e37, else -11
+0x25d8c	function	scpi_parse_boolean	docs/scpi/README.md, read: ON as 1, OFF as 0
+0x25de0	function	scpi_parse_boolean_number	docs/scpi/README.md, read: a number as a boolean by scpi_number_to_boolean; -9 with a suffix
+0x25e42	function	scpi_parse_choice	docs/scpi/README.md, read: the index of the keyword in the node's list, or the value mapped to it; -28 with no list, -27 for no match
+0x25d70	function	scpi_parse_string	docs/scpi/README.md, read: the string's pointer and length
+0x27ae4	function	scpi_apply_suffix	docs/scpi/README.md, read: matches the token's units suffix against the node's table, setting its scale and unit; -9 if none is allowed, -31 if unknown
+0x27a2a	function	scpi_match_suffix	docs/scpi/README.md, read: scans the 6-byte unit table, text and exponent, allowing a two-character multiplier before the unit
+0x24e18	function	scpi_double_to_decimal	docs/scpi/README.md, run: the double in D0:D1 as a sign word, ASCII digits, D7 and two more, and the exponent of 0.d1d2..., into the record at A0
+0x254fe	function	scpi_number_to_bcd	docs/scpi/README.md, read: a parsed number at A0 packed into the BCD record at A1, its exponent plus D0 plus 16 at +0xa; -1 beyond 309
+0x2507a	function	scpi_bcd_to_double	docs/scpi/README.md, run, as scpi_number_to_double: the 16 BCD digits as a 64-bit integer, normalized, then scaled by scpi_scale_by_power_of_ten
+0x251e4	function	scpi_scale_by_power_of_ten	docs/scpi/README.md, run: the double in D0:D1 times 10 to the word at A0 less 16, by the tables at 0x256ae and 0x25b36; the sign from the word 10 bytes before; -9 beyond 309
+0x252bc	function	scpi_double_multiply	docs/scpi/README.md, run: D0:D1 times D2:D3, the engine's own IEEE multiply
+0x25468	function	scpi_double_multiply_short	docs/scpi/README.md, read: scpi_double_multiply's path for an operand whose mantissa fits in 16 bits
+0x2553a	function	scpi_real_to_text	docs/scpi/README.md, run: a double as NR3 text, so many significant digits and no digit below the resolution given; -308 keeps them all
+0x264e0	function	scpi_unsigned_to_digits	docs/scpi/README.md, read: decimal digits right-aligned in a 17-byte buffer, -40 if they do not fit
+0x2636e	function	scpi_format_text	docs/scpi/README.md, read: a string as it is
+0x2639e	function	scpi_format_string	docs/scpi/README.md, read: a string in double quotes, each quote doubled
+0x26438	function	scpi_format_counted_text	docs/scpi/README.md, read: text of a given length; returns -90 always, for a reason not known
+0x2640c	function	scpi_format_boolean	docs/scpi/README.md, read: 0 or 1
+0x26460	function	scpi_format_choice	docs/scpi/README.md, read: the keyword for the value, from the node's list
+0x26522	function	scpi_format_long	docs/scpi/README.md, read: + or -, then the digits
+0x265a2	function	scpi_format_short	docs/scpi/README.md, read: through scpi_format_long
+0x265c2	function	scpi_format_unsigned_long	docs/scpi/README.md, read: + and the digits
+0x2661c	function	scpi_format_unsigned_short	docs/scpi/README.md, read: through scpi_format_unsigned_long
+0x26870	function	scpi_format_double	docs/scpi/README.md, read: 15 significant digits by scpi_real_to_text
+0x268c4	function	scpi_format_float	docs/scpi/README.md, read: 6 significant digits by scpi_real_to_text
+0x269a6	function	scpi_format_double_resolution	docs/scpi/README.md, read: 15 digits to the resolution given
+0x26a06	function	scpi_format_float_resolution	docs/scpi/README.md, read: 6 digits to the resolution the value carries
+0x2692c	function	scpi_format_double_precision	docs/scpi/README.md, read: a double whose record gives either its digits or its resolution
+0x2663e	function	scpi_format_block	docs/scpi/README.md, read: a definite-length block, #, the count of length digits, the length, then the data
+0x2671c	function	scpi_format_short_array	docs/scpi/README.md, read: comma-separated, by scpi_format_short
+0x266d0	function	scpi_format_double_array	docs/scpi/README.md, read: comma-separated, by scpi_format_double
+0x26768	function	scpi_format_resolution_array	docs/scpi/README.md, read: comma-separated, by scpi_format_double_resolution, a resolution for each
+0x267c0	function	scpi_format_array	docs/scpi/README.md, read: by its kind, a block, a double array or a short array
+0x26816	function	scpi_format_resolution_array_record	docs/scpi/README.md, read: by its kind, a block or a resolution array, then the record's release callback

@@ -16,5 +16,8 @@
 /crates/smartclock-web/tests/browser/playwright-report
 
 
+# Bytecode from tools/firmware/app_check.py importing libc_check.py.
+__pycache__/
+
 # Local scratch that should outlive a reboot, unlike /tmp.
 /tmp

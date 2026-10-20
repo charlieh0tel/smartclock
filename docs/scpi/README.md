@@ -94,6 +94,49 @@ image.
 | [Z3815A 4010](z3815a-4010.txt) | 965 | 680 | 552 | `0x6cd16` |
 | [58503B 1.01.04](58503b-1.01.04.txt) | 831 | 525 | 477 | `0x68316` |
 
+## Parameters and responses
+
+Each handler converts its parameters and writes its response through a
+small library beside the parser (Z3805A 3543B, `0x25d70` to `0x26a06`).
+A numeric parameter arrives parsed: a sign word, then its digits' values
+from `+2`, the exponent at `+0x12` and its units suffix at `+0x14`.
+`scpi_apply_suffix` matches the suffix against the node's unit table,
+allowing a two-character multiplier before the unit; then
+`scpi_number_to_short`, `_unsigned_short`, `_long`, `_unsigned_long`
+or `_double` converts it, the unsigned ones taking the magnitude and
+dropping the sign, each answering -11 out of range.  `scpi_parse_boolean`
+takes `ON` and `OFF`, `scpi_parse_boolean_number` a number, and
+`scpi_parse_choice` a keyword from the node's list.
+
+A response goes to a writer whose method table puts a character (at
+`+0x14`) or a counted string (`+0x18`).  `scpi_format_long` and its kind
+write integers with their sign, `scpi_format_string` a quoted string
+with each `"` doubled, `scpi_format_block` a definite-length block, and
+the arrays their elements separated by commas.  Every real goes through
+`scpi_real_to_text`, which writes NR3, `+1.23456E+002`, to so many
+significant digits and no digit below a resolution, a power of ten:
+-308 keeps every digit, 0 rounds to units.
+
+Under both is a decimal engine of its own (`0x24e18` to `0x2553a`),
+taking its arguments in registers.  `scpi_number_to_bcd` packs a parsed
+number's 16 digits two to a byte, and `scpi_bcd_to_double` makes them a
+64-bit integer, normalizes it and has `scpi_scale_by_power_of_ten`
+multiply it by 10 to the exponent less 16, from tables of powers of ten
+(`0x256ae`, single steps from 10^-64 to 10^64, and `0x25b36`, steps of
+10^64).  `scpi_double_to_decimal` goes the other way, estimating the
+exponent from the binary one by log10(2), as `0x4d10` / 65536, scaling
+into [0.1, 1) and taking two digits more than asked, to round.  Both
+multiply by `scpi_double_multiply`, the engine's own IEEE multiply.
+The two jumps `SmartClockSetup.java` reports as unrecognized switch
+shapes, at `0x24ff2` and `0x25140`, are in this engine: each enters an
+unrolled run of shifts part way, to shift by a count, and every
+instruction it can reach is already disassembled.
+
+The converters, `scpi_real_to_text` and the engine are run on known values by
+`tools/firmware/app_check.py`:
+
+    uv run tools/firmware/app_check.py third_party/firmware/z3805a-3543b.bin
+
 ## Between images
 
 Counted by path, ignoring handlers.

@@ -95,6 +95,10 @@ ADDRESSES = {
     "double_divide_in_place": 0x5DA3E,
     "double_divide_reversed_pointers": 0x5DA62,
     "double_divide_reversed_pointer": 0x5DA66,
+    "double_is_integer": 0x60E68,
+    "double_truncate_sixteenths": 0x60EFA,
+    "next_decimal_digit": 0x5FAD6,
+    "double_to_digits": 0x5F3BA,
 }
 
 RAND_SEED = 0x103936
@@ -340,6 +344,32 @@ def checks(m: Machine):
     high, low = double_words(3e9)
     got = m.call("double_to_unsigned", d0=high, d1=low)[0]
     yield "double_to_unsigned", "3e9", got == 3_000_000_000
+
+    # pow's helpers: whether its argument is an integer, and odd, and its
+    # argument truncated to sixteenths.
+    for value, integer, odd in ((3.0, 1, 1), (4.0, 1, 0), (2.5, 0, 0), (-5.0, 1, 1), (1e30, 1, 0)):
+        flag = m.buffer(b"\0" * 4)
+        got = m.call("double_is_integer", *double_words(value), flag)[0]
+        got_odd = struct.unpack(">I", m.read(flag, 4))[0]
+        yield "double_is_integer", f"{value}", (got, got_odd) == (integer, odd)
+    for value in (3.14159, -2.71828, 0.1, 100.03, 0.03):
+        got = from_double_words(*m.call("double_truncate_sixteenths", *double_words(value)))
+        yield "double_truncate_sixteenths", f"{value}", got == math.trunc(value * 16) / 16
+
+    # The formatting engine's: a decimal digit off a number, and a double's
+    # digits with its exponent, the first digit's power of ten plus one --
+    # that many significant digits when the last argument is 1, as %e
+    # wants, that many after the point when 0, as %f does.
+    for value in (1234, 9, 0, 1000000007):
+        at = m.buffer(struct.pack(">I", value))
+        digit = m.call("next_decimal_digit", at)[0]
+        rest = struct.unpack(">I", m.read(at, 4))[0]
+        yield "next_decimal_digit", f"{value}", (digit, rest) == (ord("0") + value % 10, value // 10)
+    for value, digits, wanted, wanted_exponent in ((123.456, 3, b"123", 3), (0.00125, 4, b"13", -2)):
+        exponent, sign, out = m.buffer(b"\0" * 4), m.buffer(b"\0" * 4), m.buffer()
+        m.call("double_to_digits", *double_words(value), digits, exponent, sign, out, value > 1)
+        got_exponent = signed(struct.unpack(">I", m.read(exponent, 4))[0])
+        yield "double_to_digits", f"{value}", (m.string(out), got_exponent) == (wanted, wanted_exponent)
 
     for a, d in ((3.0, 1.0), (1.0, 3.0), (-2.5, 0.5)):
         a_high, a_low = double_words(a)

@@ -53,6 +53,15 @@ the same code, by the match above.  The signed integer to double, and
 the double to integer pair, are in `libc.md`.  The pow, natural log
 and square root rows are the C library's `pow`, `log` and `sqrt`.
 
+Inside the library, read in the Z3805A 3543B only: `float_normalize`
+and `double_normalize` (`0x5e83c`, `0x5e882`) shift an unpacked
+mantissa on the caller's stack until its top bit is set, adjusting the
+exponent beside it, for the subnormal operands of the multiplies,
+divides and float to double; the double divides call
+`double_divide_first_word` (`0x5dc0a`) once and
+`double_divide_next_word` (`0x5dbfe`) three times, each giving 16 bits
+of the quotient.
+
 `3 crash` uses two more, read rather than emulated: in the Z3801A it
 subtracts a double from itself (`0x5d2a0`) and divides the zero by
 itself (`0x5d9d8`, into `0x5da04`).  The start-up writes

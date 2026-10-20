@@ -60,7 +60,7 @@
 0x102c62	label	scpi_language	restart.md: language byte, 0 PFORTH, 1 INSTALL	uint8_t
 #
 # the interval, docs/firmware/interval.md, "In every image"
-0x448fc	function	interval_average	interval.md: counts readings to ten and stores the mean
+0x448fc	function	pll_normal	the firmware's own name, "pll_normal - Error with measurement"; interval.md's averaging routine, which counts readings to ten and stores the mean
 0x102538	label	interval_mean	interval.md: mean of ten one-second readings	float
 0x10253c	label	interval_mean_flag	interval.md: the mean's flag	uint8_t
 0x101f9c	label	interval_reading	interval.md: latest one-second reading	interval_reading_fields
@@ -397,7 +397,7 @@
 0x31128	function	eeprom_write_byte	structures.md: the wr_eeprom word's: writes a byte, polls until it reads back, retries five times
 0x3281a	function	clear_nv	structures.md: the clear_nv word's
 0x40a64	function	sync_request	structures.md: the clk_synch and sync_imm words': stores a mode and a time and sets two states to 2
-0x45b70	function	holdover_duration	structures.md: :SOUR:ROSC:HOLD:DUR? and HOLD:INIT, by pll.stage
+0x45b70	function	pll_mode	screen-format-strings.md, "Mode suffixes": the status screen's mode accessor, from pll.stage and pll.manual; the HOLDover queries and HOLD:INIT test it
 0x4c918	function	clear_gps_debug	structures.md: the clr_gps_debug word's: clears gps_counts, gps_last_command and gps_last_program_message
 0x330ee	function	log_count	structures.md: "Log status: %-3d entries"; sets *full when more than 31	int log_count(uint8_t *full)
 0x101f8e	label	log_entry_count	structures.md: log_count returns it	int16_t
@@ -548,3 +548,108 @@
 0x104e6	function	mutex_create	structures.md: packs the name and creates the mutex as an exchange of that name; "klok" for klok_mutex, "logr" for log_mutex	int mutex_create(char *name, void *mutex)
 0x3167c	function	log_init	structures.md: creates log_mutex, "logr", and finds the event log's page to write next among 0x4b
 0x100bc4	label	pps_exchange	structures.md: pps_init creates the "1pps" exchange with create_x, service 20, and keeps its id here	uint32_t
+#
+# batch 5, by the strings they print
+0x42bc4	function	toggle_change	the firmware's own name, "pll_scpi: toggle_change() -- new value > max value"
+0x42d02	function	validate_or_doaction	the firmware's own name, "pll_scpi: validate_or_doaction() -- unknown structure type"
+0x431f4	function	get_setup_vars	the firmware's own name, "pll_scpi: get_setup_vars() -- unknown structure type"
+0x43a90	function	holdover	loop.md's stage; "holdover - Error with measurement"
+0x43f9a	function	holdover_recovery	loop.md's stage; "holdover recovery - Error with measurement"
+0x4429e	function	startup_pll	loop.md's stage; "startup_pll - Error with measurement"
+0x451c2	function	coarse	loop.md's power-up step; "coarse - Error with measurement 1"
+0x4538c	function	fine	loop.md's power-up step and its sub-states; "fine - Error with measurement 1", "fine-sync", "fine-slew"
+0x10540	function	clk_do	the firmware's own name, "Clk_do: out of event buffers"
+0x1d6ba	function	drtb_puts	the firmware's own name, "wait_v SIG_SOQ error in _drtb_puts"
+0x1d74a	function	drtb_getc	"wait_v SIG_SIQ error in getc", DUART channel B
+0x1e18a	function	drta_send_message	the firmware's own name, "wait_v SIG_SOQA error in drta_send_message"
+0x1e238	function	drta_get_byte	the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine with it
+0x1f76c	function	sci_puts	the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts"
+0x1f7d0	function	sci_getc	"wait_v SIG_SIQ_SCI error in getc"
+0x17a96	function	selftest_cpu	the self-test table 0x18458's entry 2; "CPU:"
+0x179ac	function	selftest_ram	entry 3; "System RAM: D15-D0:", "adr line A18-A1:"
+0x17b16	function	selftest_eeprom	entry 4; "EEPROM:"
+0x17cbe	function	selftest_uart	entry 5; "UART: register read/write", "channel A data"
+0x17b96	function	selftest_qspi	entry 6; "QSPI: ADC", "Hex DAC", "FPGA", "EFC"
+0x17c3e	function	selftest_fpga	entry 7; "FPGA: counters not preset"
+0x178e0	function	selftest_interpolator	entry 8; "Interpolator: A, MRC mode"
+0x17946	function	selftest_internal_reference	entry 9; "Internal reference:"
+0x17d94	function	selftest_gps	entry 10; "GPS: Channel 1 Correlation" .. "GPS: Engine timeout", @@Ca's bits
+0x17f2c	function	selftest_power	entry 11; "POWER: 5V", "15V", "-15V"
+0x18600	function	selftest_print_failure	"FAIL:", "%s, error code: %02X"
+0x1606c	function	os_report_cpu	"Free CPU cycles: count 0x%08X, approx %2d%%"; os_process_report calls it
+0x16118	function	os_report_exchange	an exchange's line, "fifo", "prio"
+0x161f6	function	task_status_name	"susp", "paus", "vblk", "xblk", "mblk", "spwn"
+0x162d4	function	os_report_process	a process's line, ">> RESOURCES:", ">> EVENTS: W(0x%04x) S(0x%04x)"
+0x1660a	function	os_report_process_summary	"%d Process(s) (%d avail); Total time: %-d ticks."
+0x1665e	function	os_report_exchanges	"xid   XNAME  TYPE  ACC  maxQ  Qlen BLOCKED"
+0x166b0	function	os_report_exchange_summary	"%d Exchange(s) (%d avail).", "%d Msg buffer(s)"
+0x1675a	function	os_report_processes	"pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CP"
+0x16828	function	os_report_regions	"Region strt       end  min     max    pend   USED"
+0x16bb6	function	task_stack_info	"no system stack found"; task_stack_report's per-task stacks
+0x132f4	function	stack_usage_report	"User: %5u of %5u b   Supv: %5u of %5u b"
+0x1e766	function	duarta_isr	"DUARTA isr signaling SIG_SIQ"
+0x1e7f6	function	duartb_isr	"DUARTB isr signaling SIGINTR", "SIG_SIQ"
+0x22d70	function	fpga_setup	"setup fpga"
+0x22da4	function	fpga_program	"FPGA programmed", "ERROR: FPGA programming failed", "FPGA INIT did not go high"; outputs.md's loader
+0x23d80	function	hmon_check_supplies	"5V is out of tolerance, value: %.2f", "Secondary oven voltage", "15V", "-15V"
+0x2437a	function	watchdog_report	"watchdog: clock: %4d gps: %4d pll: %4d mon: %4d spool %4d"
+0x1b7ee	function	print_gps_init_state	"Gen GPS state:", "start", "init ack", .. "survey", "done"
+0x1b99c	function	print_leap_check_state	"Leap chk state:", "leap start", "leap pending send", "leap wait"
+0x1ba32	function	print_fine_state	": fine start" .. ": fine fine slew", ": fine unknown"
+0x11942	function	print_exception	"%s: %s", ": PC = %#8x, SR = %#04x", ", address = %#8x", "RESET to recover."
+0x4c940	function	gps_print_command_log	"GPS Receiver Command Log", "Task  ID  Command     Date and Time Issued"
+0x4c754	function	gps_print_command	a command log line, "SCPI1", "GPSc", "GPSs"
+0x46838	function	gps_init_sequence	the states print_gps_init_state names, each with its "... ack failure: %02X"
+0x46d98	function	gps_leap_sequence	the states print_leap_check_state names; "leap pending ack failure: %02X"
+0x46394	function	leap_event_delete	"Error in deleting old leapsecond event"
+0x463c2	function	leap_event_create	"Error in creating leapsecond event"
+0x44f5e	function	sync_perform	"Peforming sync"
+0x45bb8	function	pll_powerup_step	screen-format-strings.md's ladder: the power-up sub-state's suffix index
+0x4a8ea	function	status_screen	"Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status"
+0x49db0	function	status_screen_sync	"Synchronized to UTC", "Synchronized to GPS Time", "Assessing stability"
+0x4a518	function	status_screen_mode_suffix	screen-format-strings.md's mode suffixes, ": OCXO warm-up" .. ": leap second determination", "[TI %9.9s]"
+0x4a29c	function	status_screen_tfom	"TFOM     %d%13sFFOM    %2s", "1PPS TI %s", "HOLD THR %s", "Holdover Uncertainty"
+0x49fcc	function	status_screen_position	"ANT DLY  %s", "Position", "Survey:", "% complete", "Suspended:"
+0x47f14	function	format_dms	"%c%4d:%02d:%06.3f", degrees, minutes and seconds
+0x47fb6	function	format_dms_precise	"%c%4d:%02d:%06.7f"
+0x48964	function	enabled_string	"Enabled", "Disabled"
+0x29b0e	function	scpi_prompt	"scpi > ", "E%+04d> "
+0x31ba2	function	log_first_satellite	log_write("First satellite tracked at %04d%02d%02d.%02d:%02d:%02d")
+0x3305e	function	log_clear	"Log cleared"
+0x2b4c2	function	log_status	"Log status: Error", "Empty", "One entry", "%-3d entries", "Full"
+0x1d7e4	function	drtb_gets	context: reads a line of up to the given length from DUART channel B; "DRTB receiver error"
+0x1f868	function	sci_gets	context: reads a line of up to the given length from the SCI; "SCI receiver error ocurred"
+0x1ea10	function	duartb_transmit_interrupt	context: with channel B's queue empty, disables its transmit interrupt and signals the writer; "DUARTB isr signaling SIG_SOQ"
+0x1e2c0	function	duart_loopback_test_a	context: puts channel A in local loopback and sends "DUART test string"; sets the UART self-test's bit 8 at 0x100c2e if it fails
+0x1e41a	function	duart_loopback_test_b	context: the same for channel B
+0x20874	function	qspi_acquire	context: waits in the QSPI owner queue while it is busy; "wait_v SIG_QSPI"
+0x2050c	function	qspi_release	context: signals the next task in the QSPI owner queue; "SPI isr signaling SPI owner"
+0x20972	function	qspi_isr	context: the transfer's end: copies the QSPI receive RAM out and hands the QSPI on
+0x22fc6	function	fpga_verify_first	context: reads the FPGA's configuration back over QSPI device 0xc and checks it against the image under a mask; "first: inv read"
+0x23304	function	fpga_verify_odd	context: the same for the odd frames; "odd: inv read"
+0x2353a	function	fpga_verify_even	context: the same for the even frames; "even: inv read"
+0x2384a	function	fpga_verify_chip	context: verifies one chip through the port F lines; "chip %1d failed compare"
+0x242f0	function	hmon_check_efc	context: "EFC near end of range" when pll.efc stays outside 52428 to 996132, 5% to 95% of 2^20, five checks
+0x24440	function	log_reset_cause	context: logs the last reset's cause with the time: "Exception: %s, vector %04X, PC = %08X" or "Watchdog timeout: clk %1d ..."
+0x46e70	function	gps_leap_ack	context: the leap second's acknowledgement step; "Error in leapsecond ack"; sets the GPS-UTC offset
+0x471fc	function	gps_diag_sequence	context: the GPS diagnostic reset and test; "Error in DIAG GPS RST ack", "TST ack"
+0x417c6	function	aging_fit	loop.md's aging fit, in curv: "failed line fit", "pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f", "HQ= %.1e mode= %d"
+0x40556	function	interpolator_sample	context: sets HDAC channels 2 and 3 and takes both interpolator readings; "First-time interp test."
+0x49a6e	function	format_satellite_cell	context: a satellite's status screen cell: "%2d %3d", "Ignore", "Not OK", "Acq"
+0x49e5a	function	format_time	context: a packed time as "%02d:%02d:%02d", or "--:--:--"
+0x49eb4	function	format_date	context: a date as "%02d %s %04d", or "-- --- ----"
+0x49f30	function	status_screen_time	context: the screen's time with its reference, "GPS", "UTC", "LOCL GPS" or "LOCAL"
+0x4816c	function	format_duration	context: seconds as "%02d:%02d:%04.1f [%s]"
+0x49210	function	gps_debug_status	context: gps.status as the "gs: %02d:%02d:%02d.%09d,..." debug line
+0x3313c	function	log_entry_text	context: one of 32 log entries as "Log %03d:%04d%02d%02d.%02d:%02d:%02d", or "Unused"
+#
+# the C library's helpers, libc.md
+0x60e68	function	double_is_integer	libc.md, run: whether a double is an integer, and through the pointer whether it is odd; pow's
+0x60efa	function	double_truncate_sixteenths	libc.md, run: a double truncated to a multiple of 1/16; pow's
+0x5fad6	function	next_decimal_digit	libc.md, run: '0' plus *n % 10, dividing *n by ten; the formatting engine's
+0x5f3ba	function	double_to_digits	libc.md, run: a double's decimal digits, sign and exponent, significant or after the point; the formatting engine's
+0x5f1d6	function	double_to_digits_multiply	libc.md, read: double_to_digits's product of two 64-bit numbers, one a power of ten from 0x5f864
+0x5e83c	function	float_normalize	softfloat.md, read: shifts an unpacked mantissa on the caller's stack until bit 23 is set, adjusting its exponent
+0x5e882	function	double_normalize	softfloat.md, read: the same over 64 bits
+0x5dc0a	function	double_divide_first_word	softfloat.md, read: the double divides' first 16-bit quotient word
+0x5dbfe	function	double_divide_next_word	softfloat.md, read: each further quotient word, three in all

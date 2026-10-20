@@ -442,7 +442,7 @@ The others:
 | `eeprom_write_byte` (`0x31128`) | `wr_eeprom` | writes a byte and polls until it reads back, five tries |
 | `clear_nv` (`0x3281a`), `clear_gps_debug` (`0x4c918`) | `clear_nv`, `clr_gps_debug` | the latter clears `gps_counts` and the last command |
 | `sync_request` (`0x40a64`) | `clk_synch`, `sync_imm` | stores a mode and a time and sets two states to 2 |
-| `holdover_duration` (`0x45b70`) | `:SOUR:ROSC:HOLD:DUR?`, `HOLD:INIT` | by `pll.stage` |
+| `pll_mode` (`0x45b70`) | `:SOUR:ROSC:HOLD:DUR?`, `HOLD:INIT` | the status screen's mode accessor (`../screen-format-strings.md`, "Mode suffixes"), from `pll.stage` and `pll.manual` |
 | `log_count` (`0x330ee`) | "Log status: %-3d entries" | `log_entry_count` (`0x101f8e`); full past 31 |
 | `pps_init` (`0x12e24`), `set_timedate` (`0x137d8`) | "Pps_init error %#04x", "set_timedate error: %2X" | the firmware's own names |
 | `gps_seconds` (`0x111cc`) | the T1 time code's `#H%08X` | seconds since 1980 from a packed date and time |

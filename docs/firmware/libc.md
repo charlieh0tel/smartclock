@@ -52,6 +52,11 @@ remainder.
 | `0x5ecf0` | runs the `atexit` functions | read: calls the functions in the table at `0x1038b4`, last first, counting down `0x103934` |
 | `0x5e93c` | raises a floating-point exception | read: every float routine calls it with a code, below, on an invalid operand, an overflow or a division by zero; it sets the cause in the status word at `0x1038b0` and traps if the control word at `0x1038b2` enables it (`softfloat.md`) |
 | `0x1412e` | reports a floating-point exception | read: builds the message from the code, below, in the length-prefixed buffer at `0x100bd4`, hands it to `0x1eefc` and stops |
+| `0x60e68` | whether a double is an integer | run; and, through its third argument, whether it is odd: `pow`'s test for a negative base |
+| `0x60efa` | a double truncated to sixteenths | run; clears the mantissa below 1/16: `pow` splits its argument with it |
+| `0x5fad6` | the next decimal digit | run; returns `'0'` plus `*n % 10` and divides `*n` by ten: the formatting engine's integers |
+| `0x5f3ba` | a double's decimal digits | run; the digits, the sign and the exponent, the first digit's power of ten plus one: so many significant digits for 1, as `%e` wants, or after the point for 0, as `%f` does |
+| `0x5f1d6` | its 64 by 64-bit multiply | read: two 64-bit numbers into a 128-bit product, one a power of ten from the table at `0x5f864` |
 
 The conversions in `softfloat.md` that it gives in pairs, two routines
 to a line, differ by sign, which the emulator confirms: of each pair,

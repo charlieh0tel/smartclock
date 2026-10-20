@@ -1,8 +1,10 @@
 # Names for the Z3805A 3543B image that the firmware notes establish,
-# for SmartClockNames.java.  Tab-separated: address, function or label,
+# for SmartClockSetup.java.  Tab-separated: address, function or label,
 # name, and the note that gives it.  Only the Z3805A's own column of a
 # note's table, or a statement about this image, counts; an address a
 # note gives for another image does not carry over.
+#
+# An optional fifth field is the function's C prototype.
 #
 # float library, docs/firmware/softfloat.md; operands in D0 and D1
 0x5d096	function	float_subtract	softfloat.md: D0 - D1
@@ -13,12 +15,12 @@
 0x5d7e4	function	float_divide_reversed	softfloat.md: D1 / D0
 0x133e2	function	float_absolute_on_stack	softfloat.md: absolute value of the float on the stack
 0x5d65c	function	float_compare	softfloat.md: compare D0 with D1
-0x5e20e	function	integer_to_float_a	softfloat.md: integer to float (one of two the note does not tell apart)
-0x5e168	function	integer_to_float_b	softfloat.md: integer to float (one of two the note does not tell apart)
-0x5dfbc	function	float_to_integer_a	softfloat.md: float to integer (one of two the note does not tell apart)
-0x5e04e	function	float_to_integer_b	softfloat.md: float to integer (one of two the note does not tell apart)
+0x5e20e	function	unsigned_to_float	softfloat.md, libc.md: unsigned integer to float
+0x5e168	function	integer_to_float	softfloat.md, libc.md: signed integer to float
+0x5dfbc	function	float_to_integer	softfloat.md, libc.md: float to signed integer
+0x5e04e	function	float_to_unsigned	softfloat.md, libc.md: float to unsigned integer
 0x5df24	function	float_to_double	softfloat.md: float to double, in D0:D1
-0x5e108	function	integer_to_double	softfloat.md: integer to double
+0x5e108	function	unsigned_to_double	softfloat.md, libc.md: unsigned integer to double
 0x5dcd2	function	double_to_float	softfloat.md: double to float
 0x5d7da	function	float_divide_in_place	softfloat.md: divide the float at A0 by D1, in place
 0x5d08a	function	float_add_in_place	softfloat.md: add D1 to the float at A0, in place
@@ -27,10 +29,10 @@
 0x5e600	function	double_multiply	softfloat.md: double D0:D1 x double A0:A1
 0x5da6a	function	double_divide_reversed	softfloat.md: double A0:A1 / double D0:D1
 0x5da58	function	double_divide	softfloat.md: double D0:D1 / double A0:A1
-0x60f5e	function	double_power	softfloat.md: pow(x, y), doubles on the stack
+0x60f5e	function	pow	softfloat.md, libc.md: pow	double pow(double x, double y)
 0x5d6c6	function	double_compare	softfloat.md: compare doubles, negative when A0:A1 < D0:D1
-0x60a10	function	double_log	softfloat.md: natural log of the double on the stack
-0x6191c	function	double_square_root	softfloat.md: square root of the double on the stack
+0x60a10	function	log	softfloat.md, libc.md: natural log	double log(double x)
+0x6191c	function	sqrt	softfloat.md, libc.md: square root	double sqrt(double x)
 #
 # restart, docs/firmware/restart.md
 0x120aa	function	shutdown	restart.md: Shutdown
@@ -49,3 +51,46 @@
 0x12f50	function	console_halt_hook	console.md: hook halt runs
 0x1009fe	label	console_halt_hook_cell	console.md: hook cell
 0x29fce	function	scpi_task_create	console.md: creator of the SCPI task
+#
+# the rest of the float library, docs/firmware/libc.md
+0x5e08e	function	integer_to_double	libc.md: signed integer to double
+0x5ddde	function	double_to_integer	libc.md: double to signed integer
+0x5de9e	function	double_to_unsigned	libc.md: double to unsigned integer
+0x5e93c	function	float_raise	libc.md: raises a floating-point exception
+0x1038b0	label	float_status	libc.md: floating-point status word
+0x1038b2	label	float_control	libc.md: floating-point control word
+#
+# C library, docs/firmware/libc.md
+0x5ec9e	function	abs	libc.md	int abs(int j)
+0x5ef02	function	labs	libc.md	long labs(long j)
+0x5ecfa	function	atoi	libc.md	int atoi(char *s)
+0x5ed98	label	ctype_table	libc.md: indexed from 0x5ed99, bit 2 digit, bit 3 space
+0x5eea2	function	div	libc.md: quotient in D0, remainder in D1
+0x5eed2	function	ldiv	libc.md: quotient in D0, remainder in D1
+0x5ef12	function	memcmp	libc.md	int memcmp(void *s1, void *s2, unsigned int n)
+0x5ef48	function	memcpy	libc.md	void * memcpy(void *s1, void *s2, unsigned int n)
+0x5ef66	function	memset	libc.md	void * memset(void *s, int c, unsigned int n)
+0x5f0cc	function	qsort	libc.md	void qsort(void *base, unsigned int nmemb, unsigned int size, void *compar)
+0x5efc4	function	qsort_range	libc.md: sorts a range by qsort's comparator and size
+0x5ef86	function	qsort_swap	libc.md
+0x5efa0	function	qsort_rotate	libc.md
+0x103940	label	qsort_compare	libc.md: qsort's comparator
+0x103944	label	qsort_size	libc.md: qsort's element size
+0x5f102	function	rand	libc.md	int rand(void)
+0x103936	label	rand_seed	libc.md
+0x5f128	function	strcat	libc.md	char * strcat(char *s1, char *s2)
+0x5f140	function	strchr	libc.md	char * strchr(char *s, int c)
+0x5f15a	function	strncmp	libc.md	int strncmp(char *s1, char *s2, unsigned int n)
+0x5f190	function	strncpy	libc.md	char * strncpy(char *s1, char *s2, unsigned int n)
+0x5f1be	function	toupper	libc.md	int toupper(int c)
+0x5fb0c	function	format	libc.md: the formatting engine under sprintf
+0x60896	function	sprintf	libc.md	int sprintf(char *s, char *format, ...)
+0x608c4	function	sprintf_put	libc.md: copies the engine's output into sprintf's buffer
+0x608fe	function	vsprintf	libc.md	int vsprintf(char *s, char *format, void *arg)
+0x1de96	function	printf	libc.md	void printf(char *format, ...)
+0x6098a	function	frexp	libc.md	double frexp(double value, int *exp)
+0x60d94	function	modf	libc.md	double modf(double value, double *iptr)
+0x10393a	label	errno	libc.md: log sets it to 34, ERANGE
+0x5ecf0	function	call_atexit_functions	libc.md
+0x1038b4	label	atexit_functions	libc.md
+0x103934	label	atexit_count	libc.md

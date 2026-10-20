@@ -80,6 +80,7 @@ request scripts in `oncore/`.
 - [Pulse, time-tag and output commands](outputs.md)
 - [58503A 3633 against 3704](revisions.md)
 - [The floating-point library](softfloat.md)
+- [The C library](libc.md)
 
 ## Summary
 
@@ -239,8 +240,8 @@ nothing, and more than 20 is refused as a rule gone wrong.
 
 Names come from what the project has established, and a name replaces
 only one Ghidra made up.  `names/IMAGE.tsv` holds those the notes give
-for that image, each row citing its note: the float library
-(`softfloat.md`), the interval's routine and cells (`interval.md`), the
+for that image, each row citing its note, some with a C prototype: the
+float and C libraries (`softfloat.md`, `libc.md`), the interval's routine and cells (`interval.md`), the
 SCPI task and the installer's entry (`restart.md`), the console's hook
 (`console.md`).  An address a note gives only for another image is not
 carried over.  SCPI handlers are named `scpi_query_PATH` and

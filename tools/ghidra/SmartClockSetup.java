@@ -9,8 +9,10 @@
 //       report the functions in data that would be removed, and do not
 //       remove them; everything else is applied.
 //   names=tools/ghidra/names/IMAGE.tsv
-//       address, "function" or "label", name and source, tab-separated:
-//       names the firmware notes establish.
+//       address, "function" or "label", name, source and, for a
+//       function, optionally its C prototype, tab-separated: names the
+//       firmware notes establish.  These replace names the other two
+//       gave, but not names given by hand.
 //   scpi=FILE
 //       smartclock-cli dump-scpi --handlers IMAGE: a path, its query
 //       handler and its setter, "-" for none; named scpi_query_PATH and
@@ -50,15 +52,19 @@ import java.util.Set;
 import java.util.Map;
 import java.util.TreeMap;
 
+import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.script.GhidraScript;
+import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.PseudoInstruction;
+import ghidra.app.util.cparser.C.CParserUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.FunctionDefinitionDataType;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.data.TerminatedStringDataType;
 import ghidra.program.model.data.WordDataType;
@@ -107,6 +113,8 @@ public class SmartClockSetup extends GhidraScript {
 	private static final String COMMENT = "#";
 	private static final String NO_HANDLER = "-";
 	private static final String FUNCTION = "function";
+	/** The names file's optional fifth field: a C prototype. */
+	private static final int PROTOTYPE_FIELD = 4;
 	/** How far from a named entry to repair flow when it does not disassemble. */
 	private static final int ENTRY_WINDOW = 0x400;
 
@@ -321,7 +329,10 @@ public class SmartClockSetup extends GhidraScript {
 				String[] fields = line.split("\t");
 				Address address = toAddr(Long.decode(fields[0]));
 				if (fields[1].equals(FUNCTION)) {
-					nameFunction(address, fields[2], counts);
+					nameFunction(address, fields[2], true, counts);
+					if (fields.length > PROTOTYPE_FIELD && !fields[PROTOTYPE_FIELD].isBlank()) {
+						applyPrototype(address, fields[PROTOTYPE_FIELD]);
+					}
 				}
 				else {
 					label(address, fields[2], counts);
@@ -333,16 +344,19 @@ public class SmartClockSetup extends GhidraScript {
 						? "common_" + fields[0].substring(1)
 						: fields[0].substring(1)).replace(':', '_');
 				if (!fields[1].equals(NO_HANDLER)) {
-					nameFunction(toAddr(Long.decode(fields[1])), "scpi_query_" + path, counts);
+					nameFunction(toAddr(Long.decode(fields[1])), "scpi_query_" + path, false,
+						counts);
 				}
 				if (!fields[2].equals(NO_HANDLER)) {
-					nameFunction(toAddr(Long.decode(fields[2])), "scpi_set_" + path, counts);
+					nameFunction(toAddr(Long.decode(fields[2])), "scpi_set_" + path, false,
+						counts);
 				}
 			}
 			default -> {
 				String[] fields = line.split(" ");
 				String prefix = fields[0].equals("kernel") ? "forth_" : "diag_";
-				nameFunction(toAddr(Long.decode(fields[2])), prefix + spell(fields[1]), counts);
+				nameFunction(toAddr(Long.decode(fields[2])), prefix + spell(fields[1]), false,
+					counts);
 			}
 		}
 	}
@@ -369,10 +383,13 @@ public class SmartClockSetup extends GhidraScript {
 	 * Names the function at address, an entry a table in the image vouches
 	 * for.  If there is none, one is made: through what analysis left in
 	 * the way, and splitting a function whose body ran into it.  A function
-	 * Ghidra named is renamed; one named otherwise gets the name as a
-	 * further label.
+	 * Ghidra named is renamed, and with curated so is one these arguments
+	 * named, on this run or an earlier one; one named otherwise, by hand,
+	 * gets the name as a further label.  The SCPI and pForth names a
+	 * curated name displaces come back as labels when they are applied.
 	 */
-	private void nameFunction(Address address, String name, int[] counts) throws Exception {
+	private void nameFunction(Address address, String name, boolean curated, int[] counts)
+			throws Exception {
 		Function function = getFunctionAt(address);
 		if (function == null) {
 			if (getInstructionAt(address) == null) {
@@ -391,13 +408,26 @@ public class SmartClockSetup extends GhidraScript {
 		if (function.getName().equals(name)) {
 			return;
 		}
-		if (function.getSymbol().getSource() == SourceType.DEFAULT) {
+		SourceType source = function.getSymbol().getSource();
+		if (source == SourceType.DEFAULT || (curated && source == SourceType.IMPORTED)) {
 			function.setName(name, SourceType.IMPORTED);
 			counts[NameCount.NAMED.ordinal()]++;
 		}
 		else {
 			label(address, name, counts);
 		}
+	}
+
+	/** Gives the function at address the C prototype prototype, as the notes establish it. */
+	private void applyPrototype(Address address, String prototype) throws Exception {
+		FunctionDefinitionDataType signature =
+			CParserUtils.parseSignature((DataTypeManagerService) null, currentProgram, prototype, false);
+		if (signature == null) {
+			throw new IllegalArgumentException("cannot parse prototype at " + address + ": "
+				+ prototype);
+		}
+		new ApplyFunctionSignatureCmd(address, signature, SourceType.IMPORTED)
+				.applyTo(currentProgram, monitor);
 	}
 
 	/** Adds name as a label at address, unless it is there already. */

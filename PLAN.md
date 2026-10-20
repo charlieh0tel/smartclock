@@ -629,6 +629,13 @@ view cannot drift apart.  The library, bottom up:
   without bound.
 - **Bench work:** the open items in `docs/hardware-investigations.md`,
   each with its TODO.
+- **Decompiled C: routines that are not C as assembly.**  A routine
+  whose convention is not C appears in
+  `third_party/firmware/decompiled/` as its disassembly, under its note
+  and convention line, unless C with `__naked` and gcc's `__asm("reg")`
+  parameters says it naturally.  A result in the condition codes, as
+  `forth_is_space` gives, is one it cannot.  Decided; not yet done
+  (`docs/firmware/README.md`, "Decompiling with Ghidra").
 - **Editing notes from the web view**, through the daemon socket.
   Needs POST bodies in `smartclock-http`, `/api/notes` returning each
   note's `id`, and edit requests keyed by it.

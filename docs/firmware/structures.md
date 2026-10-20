@@ -244,6 +244,29 @@ advances it, pushing `start_ptr` on when the ring is full.  Its debug
 message names the arrays: "e_avg= %.1f time= %f weight= %d log= %.2f
 tfom= %.1e".
 
+Its other named fields, by the routines that use them:
+
+| Offset | Field | Use |
+| ------ | ----- | --- |
+| `+0x01` | `previous_stage` | `pllp_task`'s copy of `stage` |
+| `+0x03` | `powerup_state` | `powerup`'s sub-state, the ladder of `../screen-format-strings.md` |
+| `+0x06` | `reference_check_state` | `pll_check_reference`'s sub-state |
+| `+0x0c`, `+0x0e`, `+0x10` | `startup_state`, `normal_state`, `holdover_state` | `startup_pll`'s, `pll_normal`'s and `holdover`'s sub-states |
+| `+0x11` | `hold_causes` | why the loop holds over, a set of `pll_hold_cause` bits as the console's `pr_hold_cause` prints them: manual 1, GPS 2, TI error 4, TI limit exceeded 8, hardware failure 0x10, temporary mode 0x20, 1PPS selection 0x40 |
+| `+0x16` | `coarse_state` | `coarse`'s sub-state |
+| `+0x18` | `frequency_adjusted` | set when `fine` applies a frequency correction; `holdover_limit_exceeded` counts the limit exceeded while it is |
+| `+0x1a` | `fine_retries` | `fine`'s failed attempts, a word; it gives up past 9 |
+| `+0x24`, `+0x25` | `gps_diag_state`, `gps_diag_substate` | `gps_diag_sequence`'s |
+| `+0x26` | `gps_init_state` | `gps_init_sequence`'s, which `powerup` waits past 13 for |
+| `+0x2b` | `leap_check_state` | `gps_leap_sequence`'s |
+| `+0x3a` | `predicted_uncertainty` | a float from the curv task's aging fit; `:KENneth:PREDicted?` returns it |
+| `+0x46` | `frequency_tolerance` | a float, 1e-8 at first: the offset `fine` accepts, and the rate the holdover limit grows by |
+| `+0x3b8` | `loop_time_constant` | a float, 150 s at first and at most `max_loop_time` |
+| `+0x3c4` to `+0x3c6` | `led_gps_lock`, `led_holdover`, `led_tmh_valid` | the lamps, as `:LED:GPSLock?`, `:HOLDover?` and `:TMHValid?` read them and `leds_update` writes them |
+| `+0x3c8` | `holdover_duration` | `:ROSCillator:HOLDover:DURation?` |
+| `+0x3cc`, `+0x3d0` | `reference_uptime`, `reference_seconds` | the uptime and the FPGA's seconds count `clock_set_from_reference` sets the clock from |
+| `+0x3d4` | `sync_requested` | `sync_perform` syncs whatever the TI while it is set, then clears it |
+
 | Offset | Field | Shown by |
 | ------ | ----- | -------- |
 | `+0x000`, `+0x001` | `start_ptr`, `stop_ptr` | `pll_rep`'s `start ptr`, `stop_ptr`; the ring's indexes, `& 0x3f` |

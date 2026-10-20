@@ -39,6 +39,20 @@ typedef enum __attribute__((packed)) pll_stage {
 	PLL_STAGE_FATAL_ERROR = 9
 } pll_stage;
 
+/* Why the loop holds over, pll.hold_causes, a set of these bits: the
+ * console's pr_hold_cause prints each as "Holdover due to ..."
+ * (docs/firmware/loop.md).  enter_holdover logs a code for each, and
+ * holdover_waiting_reason answers :HOLDover:WAITing? with one. */
+typedef enum __attribute__((packed)) pll_hold_cause {
+	HOLD_CAUSE_MANUAL = 0x01,
+	HOLD_CAUSE_GPS = 0x02,
+	HOLD_CAUSE_TI_ERROR = 0x04,
+	HOLD_CAUSE_TI_LIMIT_EXCEEDED = 0x08,
+	HOLD_CAUSE_HARDWARE_FAILURE = 0x10,
+	HOLD_CAUSE_TEMPORARY_MODE = 0x20,
+	HOLD_CAUSE_1PPS_SELECTION = 0x40
+} pll_hold_cause;
+
 /* An ADC channel, by the console words that read and average them.  The
  * firmware prints channel 3 as "Oven current" (pr_adc_avg), "Antenna
  * current" (adc_ant_curr) and :DIAG:ROSC:CURR?. */
@@ -540,22 +554,53 @@ typedef struct gps_state {
  * values.  Cleared as one, memset(&pll, 0, 0x3d6). */
 typedef struct pll_state {
 	pll_stage stage;
-	uint8_t field_001[0x12 - 0x01];
-	uint8_t manual;         /* +0x12 */
+	pll_stage previous_stage;     /* +0x01: pllp_task's copy of stage */
+	uint8_t field_002;
+	uint8_t powerup_state;        /* +0x03: powerup's sub-state, screen-format-strings.md's ladder */
+	uint8_t field_004[2];
+	uint8_t reference_check_state; /* +0x06: pll_check_reference's */
+	uint8_t field_007[5];
+	uint8_t startup_state;        /* +0x0c: startup_pll's */
+	uint8_t field_00d;
+	uint8_t normal_state;         /* +0x0e: pll_normal's */
+	uint8_t field_00f;
+	uint8_t holdover_state;       /* +0x10: holdover's */
+	pll_hold_cause hold_causes;   /* +0x11: a set of pll_hold_cause bits */
+	uint8_t manual;               /* +0x12 */
 	uint8_t field_013[2];
-	uint8_t recovery_state; /* +0x15 */
-	uint8_t field_016;
-	uint8_t fine_state;     /* +0x17 */
-	uint8_t field_018;
-	uint8_t fine_index;     /* fine acquisition's "i= %d" */
-	uint8_t field_01a[2];
-	float fine_d;           /* fine acquisition's "d = %f" */
-	uint8_t field_020[0x32 - 0x20];
-	float efc;              /* pr_efc's efc */
-	float tfom;             /* pll_rep's tfom, s */
-	uint8_t field_03a[0x4a - 0x3a];
+	uint8_t recovery_state;       /* +0x15 */
+	uint8_t coarse_state;         /* +0x16: coarse's */
+	uint8_t fine_state;           /* +0x17 */
+	uint8_t frequency_adjusted;   /* +0x18: fine applied a frequency correction */
+	uint8_t fine_index;           /* fine acquisition's "i= %d" */
+	uint16_t fine_retries;        /* +0x1a: fine's failed attempts, given up past 9 */
+	float fine_d;                 /* fine acquisition's "d = %f" */
+	uint8_t field_020[4];
+	uint8_t gps_diag_state;       /* +0x24: gps_diag_sequence's */
+	uint8_t gps_diag_substate;    /* +0x25 */
+	uint8_t gps_init_state;       /* +0x26: gps_init_sequence's, print_gps_init_state's */
+	uint8_t field_027[4];
+	uint8_t leap_check_state;     /* +0x2b: gps_leap_sequence's, print_leap_check_state's */
+	uint8_t field_02c[6];
+	float efc;                    /* pr_efc's efc */
+	float tfom;                   /* pll_rep's tfom, s */
+	float predicted_uncertainty;  /* +0x3a: the curv fit's, :KENneth:PREDicted? */
+	uint8_t field_03e[8];
+	float frequency_tolerance;    /* +0x46: 1e-8 at first; fine's bound, holdover's limit per second */
 	efc_ring efc_history;
-	uint8_t field_3b0[0x3d6 - 0x3b0];
+	uint8_t field_3b0[8];
+	float loop_time_constant;     /* +0x3b8: 150 s at first, at most max_loop_time */
+	uint8_t field_3bc[8];
+	uint8_t led_gps_lock;         /* +0x3c4: :LED:GPSLock? */
+	uint8_t led_holdover;         /* +0x3c5: :LED:HOLDover? */
+	uint8_t led_tmh_valid;        /* +0x3c6: :LED:TMHValid? */
+	uint8_t field_3c7;
+	uint32_t holdover_duration;   /* +0x3c8: :ROSCillator:HOLDover:DURation? */
+	uint32_t reference_uptime;    /* +0x3cc: the uptime clock_set_from_reference counts from */
+	uint8_t reference_seconds;    /* +0x3d0: the FPGA's seconds count with it */
+	uint8_t field_3d1[3];
+	uint8_t sync_requested;       /* +0x3d4: sync_perform syncs whatever the TI, then clears it */
+	uint8_t field_3d5;
 } pll_state;
 
 /* The GPS link's counters, which the "GPS Process Monitor" page

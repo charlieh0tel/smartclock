@@ -93,6 +93,7 @@ import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.ArchiveType;
 import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.data.DataTypeConflictHandler;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.Enum;
@@ -639,12 +640,30 @@ public class SmartClockSetup extends GhidraScript {
 				SourceType.IMPORTED));
 		}
 		String returned = prototype.substring(close + 1);
+		DataType returnType = signature.getReturnType();
 		ReturnParameterImpl result = returned.contains("@")
-				? new ReturnParameterImpl(signature.getReturnType(),
-					registerStorage(returned, address), currentProgram)
-				: new ReturnParameterImpl(signature.getReturnType(), currentProgram);
+				? new ReturnParameterImpl(returnType, registerStorage(returned, address),
+					currentProgram)
+				: new ReturnParameterImpl(returnType, resultStorage(returnType, address),
+					currentProgram);
 		getFunctionAt(address).updateFunction(null, result, parameters,
 			FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.IMPORTED);
+	}
+
+	/**
+	 * Where a C function returns a result of type: nowhere for void, else
+	 * D0, its low word or byte for a short or char, or D0:D1 for eight
+	 * bytes, as the image's calls take it.  Custom
+	 * storage, which a narrow argument needs, gives a result none of its
+	 * own, which the decompiler would read as void.
+	 */
+	private VariableStorage resultStorage(DataType type, Address address) throws Exception {
+		if (type == null || type.getLength() <= 0 || type instanceof VoidDataType) {
+			return VariableStorage.VOID_STORAGE;
+		}
+		int length = type.getLength();
+		return registerStorage("@ " + (length > STACK_SLOT ? "D0:D1" : length == 2 ? "D0w"
+			: length == 1 ? "D0b" : "D0"), address);
 	}
 
 	/** The registers after the "@" in declaration, as storage. */

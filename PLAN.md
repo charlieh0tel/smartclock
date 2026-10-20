@@ -630,8 +630,8 @@ view cannot drift apart.  The library, bottom up:
 - **Bench work:** the open items in `docs/hardware-investigations.md`,
   each with its TODO.
 - **A rebuild that runs, in readable C.**  Decided 2026-10-20: the
-  goal is C a person can read and change that gcc builds into firmware
-  that runs, not a byte-identical rebuild, which would need the
+  goal is idiomatic C a person can read and change that gcc builds into
+  firmware that runs, not a byte-identical rebuild, which would need the
   original compiler, unknown (`docs/firmware/README.md`, "The calling
   convention").  The way there is one function at a time from the
   original image, which runs: recompile one function with gcc, link it
@@ -659,8 +659,10 @@ view cannot drift apart.  The library, bottom up:
      absolutely, and places the rebuilt functions around it.
   4. The emulator harness: a function's original and rebuilt code on
      the same inputs and memory.
-  5. Replace, check, repeat, making the C readable as each function is
-     taken: names for locals, types, the decompiler's idioms undone.
+  5. Replace, check, repeat, making the C readable and idiomatic as
+     each function is taken: names for locals, real types, loops and
+     structures in place of pointer arithmetic, the decompiler's
+     idioms (CONCAT, SUB, pieces, unaff_ registers) undone.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

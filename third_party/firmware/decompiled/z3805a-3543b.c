@@ -1513,7 +1513,7 @@ extern undefined DAT_00061b94; /* 00061b94 */
 extern undefined DAT_00061b9c; /* 00061b9c */
 extern undefined DAT_00061ba4; /* 00061ba4 */
 extern undefined DAT_00061bac; /* 00061bac */
-extern short DAT_00100000; /* 00100000 */
+extern uint16_t DAT_00100000; /* 00100000 */
 extern undefined DAT_00100002; /* 00100002 */
 extern undefined4 DAT_00100004; /* 00100004 */
 extern undefined DAT_0010055e; /* 0010055e */
@@ -1939,7 +1939,7 @@ extern undefined4 DAT_0010fffa; /* 0010fffa */
 extern volatile undefined DAT_00300000; /* 00300000 */
 extern volatile undefined DAT_00304000; /* 00304000 */
 extern volatile undefined DAT_00306000; /* 00306000 */
-extern short DAT_00400000; /* 00400000 */
+extern uint16_t DAT_00400000; /* 00400000 */
 extern undefined1 DAT_00400002; /* 00400002 */
 extern undefined1 DAT_00400003; /* 00400003 */
 extern undefined1 DAT_00400004; /* 00400004 */
@@ -1947,7 +1947,7 @@ extern undefined1 DAT_00400005; /* 00400005 */
 extern undefined1 DAT_00400006; /* 00400006 */
 extern undefined1 DAT_00400007; /* 00400007 */
 extern undefined1 DAT_00400008; /* 00400008 */
-extern short DAT_00400010; /* 00400010 */
+extern uint16_t DAT_00400010; /* 00400010 */
 extern undefined DAT_00400012; /* 00400012 */
 extern undefined DAT_00400024; /* 00400024 */
 extern char DAT_00400036; /* 00400036 */
@@ -4229,7 +4229,7 @@ extern undefined4 _DAT_0010b0be;
 __asm__(".set _DAT_0010b0be, 0x0010b0be");
 extern undefined4 _DAT_0010b0c2;
 __asm__(".set _DAT_0010b0c2, 0x0010b0c2");
-extern short _DAT_00400060;
+extern uint16_t _DAT_00400060;
 __asm__(".set _DAT_00400060, 0x00400060");
 extern undefined4 _DAT_00400062;
 __asm__(".set _DAT_00400062, 0x00400062");
@@ -4237,7 +4237,7 @@ extern undefined4 _DAT_00400066;
 __asm__(".set _DAT_00400066, 0x00400066");
 extern uint _DAT_0040006a;
 __asm__(".set _DAT_0040006a, 0x0040006a");
-extern short _DAT_00400080;
+extern uint16_t _DAT_00400080;
 __asm__(".set _DAT_00400080, 0x00400080");
 extern float _DAT_00400082;
 __asm__(".set _DAT_00400082, 0x00400082");
@@ -4518,7 +4518,7 @@ int region_find_segment();
 int stack_unused_count();
 void stack_usage_report(undefined4 param_1);
 void enter_supervisor_mode(void);
-undefined2 set_interrupt_mask(uint16_t sr);
+uint16_t set_interrupt_mask(uint16_t sr);
 byte task_set_priority(ulong param_1,byte param_2);
 float float_absolute_on_stack(float f);
 ulonglong double_abs(ulonglong param_1);
@@ -4930,7 +4930,7 @@ int string_device_open();
 int string_device_init();
 int string_device_control();
 int console_read_from_string();
-undefined1 diag_adc_read(byte param_1);
+uint diag_adc_read(byte param_1);
 void diag_adc_temp(void);
 void diag_adc_5v(void);
 void diag_adc_p15v(void);
@@ -5651,8 +5651,8 @@ undefined4 scpi_set_SYSTem_PRESet(void);
 undefined4 scpi_query_SYSTem_PRINt(undefined4 param_1,undefined2 *param_2,int param_3);
 void scpi_query_RVST(undefined4 param_1,undefined4 param_2,int param_3);
 undefined4 scpi_query_SYSTem_PRINt_LENGth(undefined4 param_1,ushort *param_2);
-undefined2 record_checksum(void *record,uint16_t length);
-undefined1 lifetime_record_read(void);
+uint16_t record_checksum(void *record,uint16_t length);
+undefined4 lifetime_record_read(void);
 undefined4 lifetime_record_write(void);
 void lifetime_update(int param_1);
 bool calibration_block_read(void);
@@ -5677,7 +5677,7 @@ int log_entry_total(undefined1 *param_1);
 int log_init(void);
 int log_read(int param_1,char *param_2,char *param_3);
 int log_write(undefined4 param_1,undefined4 param_2,undefined4 param_3);
-undefined4 log_event(uint8_t code);
+int log_event(uint8_t code);
 void log_first_satellite(undefined4 param_1,undefined4 param_2);
 void log_page_clear(void *param_1);
 uint log_page_free_entry(int param_1);
@@ -5732,7 +5732,7 @@ void reset_record_count(void);
 undefined4 log_entry_text(int param_1,char *param_2,char *param_3);
 undefined4 reset_record_write(undefined4 param_1,undefined4 param_2,char *param_3);
 void interpolator_calibration_init(undefined1 *param_1);
-void interpolator_measure(uint8_t mode);
+uint8_t interpolator_measure(uint8_t mode);
 char dac_search_bisect(char param_1,byte param_2,byte param_3,byte param_4,byte param_5,
                       undefined *param_6);
 byte dac_search_step(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,
@@ -5747,11 +5747,11 @@ uint8_t interpolator_selftest_calibrate(void);
 void interpolator_selftest(void);
 void interpolator_sample_test(void);
 void fpga_write(uint8_t reg,uint8_t value);
-undefined1 fpga_read(uint8_t reg);
+uint8_t fpga_read(uint8_t reg);
 bool fpga_bit_test(byte param_1,char param_2);
 char fpga_read_seconds(void);
 void fpga_address_sweep_debug(void);
-undefined1 counter_wait_ready(byte param_1);
+undefined4 counter_wait_ready(byte param_1);
 void fpga_set_bit(uint8_t bit,uint8_t on);
 void fpga_set_field(byte param_1,byte param_2);
 void sync_request(uint8_t param_1,int32_t param_2);
@@ -5823,7 +5823,7 @@ void holdover_ti_add(float param_1);
 undefined1 holdover_correction_valid(void);
 undefined4 holdover_ti_max(void);
 undefined4 holdover_limit_exceeded(float param_1);
-pll_hold_cause enter_holdover(void);
+uint enter_holdover(void);
 undefined1 holdover(char param_1);
 undefined4 clock_check_against_gps(void);
 char holdover_recovery(char param_1);
@@ -5888,7 +5888,7 @@ void gps_print_status(oncore_status_fields *status);
 void gps_debug_status(void);
 void gps_print_id(void);
 void satellite_sets_build(uint8_t *param_1,uint *param_2);
-undefined4 satellite_in_set(satellite_kind kind,uint8_t id,uint32_t mask);
+int satellite_in_set(satellite_kind kind,uint8_t id,uint32_t mask);
 undefined1 satellite_track_class(int param_1);
 void satellite_elevation_azimuth(int param_1,undefined1 *param_2);
 void satellite_status(char param_1,byte param_2,int param_3,int param_4,undefined1 *param_5);
@@ -5969,7 +5969,7 @@ void oncore_as_height_decode(undefined4 param_1);
 byte * oncore_ai_decode(byte *param_1,int param_2);
 ushort * word_copy_14_bits(ushort *param_1,ushort *param_2);
 byte * oncore_decode_fields(byte *param_1,byte *param_2,char *param_3);
-undefined4 satellite_id_valid(satellite_kind kind,uint8_t id);
+int satellite_id_valid(satellite_kind kind,uint8_t id);
 uint8_t channel_position_satellite(byte param_1);
 undefined4 satellite_used_for_position(char param_1);
 void channels_reset(void);
@@ -7258,12 +7258,10 @@ __asm__(
    Not a C function (register; read): its arguments and results in registers.  In: A1 void *mutex.
     */
 
-__regcall undefined8 mutex_clear(void *mutex /* a1 */)
+__regcall void mutex_clear(void *mutex /* a1 */)
 
 {
-  undefined4 in_D0;
   short sVar1;
-  undefined4 in_D1;
   
   sVar1 = 5;
   do {
@@ -7271,7 +7269,7 @@ __regcall undefined8 mutex_clear(void *mutex /* a1 */)
     sVar1 = sVar1 + -1;
     mutex = (undefined4 *)((int)mutex + 4);
   } while (sVar1 != -1);
-  return CONCAT44(in_D0,in_D1);
+  return;
 }
 
 
@@ -8661,22 +8659,22 @@ __exception undefined8 primary_default_exception(void)
   int iVar2;
   void *task;
   char *pcVar3;
-  undefined2 uVar4;
   undefined4 in_D1;
-  char *pcVar5;
+  char *pcVar4;
   undefined2 in_stack_00000000;
   uint in_stack_00000002;
   ushort in_stack_00000006;
   undefined2 in_stack_00000008;
   ushort in_stack_0000000a;
   uint32_t in_stack_0000000c;
+  undefined2 uVar5;
   undefined2 uVar6;
   
-  uVar4 = (undefined2)((uint)in_D0 >> 0x10);
+  uVar5 = (undefined2)((uint)in_D0 >> 0x10);
   uVar6 = (undefined2)in_D0;
   iVar2 = exception_hook_get();
   if (iVar2 != 0) {
-    return CONCAT44(CONCAT22(uVar4,uVar6),in_D1);
+    return CONCAT44(CONCAT22(uVar5,uVar6),in_D1);
   }
   print_exception(in_stack_00000000,in_stack_00000002,in_stack_00000006,
                   CONCAT22(in_stack_00000008,in_stack_0000000a));
@@ -8693,18 +8691,18 @@ __exception undefined8 primary_default_exception(void)
   if (DAT_001037dc != '\0') {
     task = (void *)psos_my_pid();
     pcVar3 = task_name(task);
-    pcVar5 = last_exception.name;
+    pcVar4 = last_exception.name;
     do {
       cVar1 = *pcVar3;
-      *pcVar5 = cVar1;
+      *pcVar4 = cVar1;
       pcVar3 = pcVar3 + 1;
-      pcVar5 = pcVar5 + 1;
+      pcVar4 = pcVar4 + 1;
     } while (cVar1 != '\0');
   }
   if (debug_enabled != 0) {
     printf_polled("\r\n");
-    uVar4 = exception_name(in_stack_0000000a);
-    printf_polled("%s: %s",0x99f,uVar4);
+    pcVar3 = exception_name(in_stack_0000000a);
+    printf_polled("%s: %s",0x99f,(short)pcVar3);
     printf_polled(": PC = %#8x, SR = %#04x",CONCAT22(in_stack_00000006,in_stack_00000008),
                   in_stack_00000002 & 0xffff);
     if ((in_stack_0000000a & 0xf000) != 0) {
@@ -8756,8 +8754,7 @@ void print_exception(ushort param_1,uint32_t param_2,ushort param_3,uint32_t par
   char cVar1;
   void *task;
   char *pcVar2;
-  undefined2 uVar3;
-  char *pcVar4;
+  char *pcVar3;
   
   last_exception.pending = 1;
   last_exception.name[0] = '\0';
@@ -8773,18 +8770,18 @@ void print_exception(ushort param_1,uint32_t param_2,ushort param_3,uint32_t par
   if (DAT_001037dc != '\0') {
     task = (void *)psos_my_pid();
     pcVar2 = task_name(task);
-    pcVar4 = last_exception.name;
+    pcVar3 = last_exception.name;
     do {
       cVar1 = *pcVar2;
-      *pcVar4 = cVar1;
+      *pcVar3 = cVar1;
       pcVar2 = pcVar2 + 1;
-      pcVar4 = pcVar4 + 1;
+      pcVar3 = pcVar3 + 1;
     } while (cVar1 != '\0');
   }
   if (debug_enabled != 0) {
     printf_polled("\r\n");
-    uVar3 = exception_name(param_3);
-    printf_polled("%s: %s",0x99f,uVar3);
+    pcVar2 = exception_name(param_3);
+    printf_polled("%s: %s",0x99f,(short)pcVar2);
     printf_polled(": PC = %#8x, SR = %#04x",param_2,(uint)param_1);
     if ((param_3 & 0xf000) != 0) {
       printf_polled(", address = %#8x",(short)param_4);
@@ -9371,13 +9368,14 @@ void system_init(void)
   undefined2 uVar3;
   byte bVar4;
   pll_state *ppVar5;
-  short sVar6;
-  char cVar7;
-  gps_state *pgVar8;
-  pll_state *ppVar10;
-  undefined4 *puVar11;
+  uint16_t uVar6;
+  short sVar7;
+  char cVar8;
+  gps_state *pgVar9;
+  pll_state *ppVar11;
   undefined4 *puVar12;
-  oncore_gmt_offset_fields *poVar9;
+  undefined4 *puVar13;
+  oncore_gmt_offset_fields *poVar10;
   
   DAT_001037dc = 0;
   status_ready = '\0';
@@ -9392,51 +9390,51 @@ void system_init(void)
   DAT_001037de = nv_settings.debug_output;
   lifetime_record_read();
   clock_init(_DAT_00100c34);
-  cVar7 = '\0';
+  cVar8 = '\0';
   do {
-    (&dmes_gpsm)[cVar7] = 1;
-    cVar7 = cVar7 + '\x01';
-  } while (cVar7 < '\t');
-  sVar6 = record_checksum(&DAT_00100000,0x94e);
-  if ((sVar6 == DAT_00100000) && (bVar4 = RSR, (bVar4 & 0xc0) == 0)) {
+    (&dmes_gpsm)[cVar8] = 1;
+    cVar8 = cVar8 + '\x01';
+  } while (cVar8 < '\t');
+  uVar6 = record_checksum(&DAT_00100000,0x94e);
+  if ((uVar6 == DAT_00100000) && (bVar4 = RSR, (bVar4 & 0xc0) == 0)) {
     if (_DAT_00100002 == 1) {
       memcpy(&DAT_00101e70,(void *)0x100934,0x19);
-      sVar6 = 0x155;
-      pgVar8 = &gps;
-      puVar12 = &DAT_00100004;
+      sVar7 = 0x155;
+      pgVar9 = &gps;
+      puVar13 = &DAT_00100004;
       do {
-        puVar11 = puVar12 + 1;
-        poVar9 = &pgVar8->gmt_offset;
-        uVar2 = (undefined3)*puVar12;
-        pgVar8->field_000 = (char)((uint)*puVar12 >> 0x18);
-        (pgVar8->time).hour = (char)((uint3)uVar2 >> 0x10);
-        (pgVar8->time).minute = (char)((uint3)uVar2 >> 8);
-        (pgVar8->time).second = (char)uVar2;
-        sVar6 = sVar6 + -1;
-        pgVar8 = (gps_state *)poVar9;
-        puVar12 = puVar11;
-      } while (sVar6 != -1);
-      uVar3 = *(undefined2 *)puVar11;
-      poVar9->sign = (char)((ushort)uVar3 >> 8);
-      poVar9->hours = (char)uVar3;
-      sVar6 = 0xf4;
+        puVar12 = puVar13 + 1;
+        poVar10 = &pgVar9->gmt_offset;
+        uVar2 = (undefined3)*puVar13;
+        pgVar9->field_000 = (char)((uint)*puVar13 >> 0x18);
+        (pgVar9->time).hour = (char)((uint3)uVar2 >> 0x10);
+        (pgVar9->time).minute = (char)((uint3)uVar2 >> 8);
+        (pgVar9->time).second = (char)uVar2;
+        sVar7 = sVar7 + -1;
+        pgVar9 = (gps_state *)poVar10;
+        puVar13 = puVar12;
+      } while (sVar7 != -1);
+      uVar3 = *(undefined2 *)puVar12;
+      poVar10->sign = (char)((ushort)uVar3 >> 8);
+      poVar10->hours = (char)uVar3;
+      sVar7 = 0xf4;
       ppVar5 = &pll;
-      puVar12 = (undefined4 *)&DAT_0010055e;
+      puVar13 = (undefined4 *)&DAT_0010055e;
       do {
-        ppVar10 = ppVar5;
-        puVar11 = puVar12 + 1;
-        uVar1 = *puVar12;
-        ppVar10->stage = (char)((uint)uVar1 >> 0x18);
-        ppVar10->previous_stage = (char)((uint)uVar1 >> 0x10);
-        ppVar10->powerup_countdown = (char)((uint)uVar1 >> 8);
-        ppVar10->powerup_state = (char)uVar1;
-        sVar6 = sVar6 + -1;
-        ppVar5 = (pll_state *)&ppVar10->powerup_reference_lost;
-        puVar12 = puVar11;
-      } while (sVar6 != -1);
-      uVar3 = *(undefined2 *)puVar11;
-      ppVar10->powerup_reference_lost = (char)((ushort)uVar3 >> 8);
-      ppVar10->field_005 = (char)uVar3;
+        ppVar11 = ppVar5;
+        puVar12 = puVar13 + 1;
+        uVar1 = *puVar13;
+        ppVar11->stage = (char)((uint)uVar1 >> 0x18);
+        ppVar11->previous_stage = (char)((uint)uVar1 >> 0x10);
+        ppVar11->powerup_countdown = (char)((uint)uVar1 >> 8);
+        ppVar11->powerup_state = (char)uVar1;
+        sVar7 = sVar7 + -1;
+        ppVar5 = (pll_state *)&ppVar11->powerup_reference_lost;
+        puVar13 = puVar12;
+      } while (sVar7 != -1);
+      uVar3 = *(undefined2 *)puVar12;
+      ppVar11->powerup_reference_lost = (char)((ushort)uVar3 >> 8);
+      ppVar11->field_005 = (char)uVar3;
       _DAT_00100002 = 1;
       DAT_001037df = '\x01';
     }
@@ -10011,10 +10009,10 @@ void enter_supervisor_mode(void)
 /* sets SR's interrupt mask from the argument, returns the old SR
    psos.md */
 
-undefined2 set_interrupt_mask(uint16_t sr)
+uint16_t set_interrupt_mask(uint16_t sr)
 
 {
-  undefined2 uVar1;
+  uint16_t uVar1;
   
   uVar1 = enter_supervisor();
   return uVar1;
@@ -10300,6 +10298,7 @@ __regcall void clock_record_advance(char *record /* a6 */)
   undefined2 uVar6;
   undefined3 uVar7;
   int iVar8;
+  undefined4 extraout_D0;
   undefined4 uVar9;
   
   *(int *)(record + 2) = *(int *)(record + 2) + 1;
@@ -10335,7 +10334,8 @@ __regcall void clock_record_advance(char *record /* a6 */)
           uVar6 = (undefined2)((uint)uVar1 >> 0x10);
           uVar9 = CONCAT22(uVar6,sVar4);
           if (sVar4 == 0xd01) {
-            uVar9 = clock_set_leap_year(record + 0xf,CONCAT22(uVar6,0x101) + 0x10000);
+            clock_set_leap_year(record + 0xf,CONCAT22(uVar6,0x101) + 0x10000);
+            uVar9 = extraout_D0;
           }
         }
         *(undefined4 *)(record + 10) = uVar9;
@@ -10456,6 +10456,7 @@ __regcall void clock_record_advance_utc(char *record /* a6 */)
   undefined2 uVar6;
   undefined3 uVar7;
   int iVar8;
+  undefined4 extraout_D0;
   undefined4 uVar9;
   
   uVar1 = *(undefined4 *)(record + 0x1a);
@@ -10477,7 +10478,8 @@ __regcall void clock_record_advance_utc(char *record /* a6 */)
         uVar6 = (undefined2)((uint)uVar1 >> 0x10);
         uVar9 = CONCAT22(uVar6,sVar4);
         if (sVar4 == 0xd01) {
-          uVar9 = clock_set_leap_year(record + 0x23,CONCAT22(uVar6,0x101) + 0x10000);
+          clock_set_leap_year(record + 0x23,CONCAT22(uVar6,0x101) + 0x10000);
+          uVar9 = extraout_D0;
         }
       }
       *(undefined4 *)(record + 0x1e) = uVar9;
@@ -10730,20 +10732,20 @@ __regcall void clock_record_store(char *record /* a6 */,int date /* d0 */,int ti
 
 {
   uint uVar1;
-  undefined8 uVar2;
+  undefined4 extraout_D0;
+  undefined4 extraout_D1;
   
   uVar1 = time & 0xffffff;
   if (((((byte)uVar1 < 0x3c) && ((byte)(uVar1 >> 8) < 0x3c)) && ((byte)(uVar1 >> 0x10) < 0x18)) &&
      ((((char)date != '\0' && ((ushort)((ushort)date >> 8) != 0)) && ((byte)((uint)date >> 8) < 0xd)
       ))) {
-    uVar2 = clock_set_leap_year(record + 0x23,date);
-    if ((byte)record[(short)((ushort)((ulonglong)uVar2 >> 0x20) >> 8) + 0x21] <
-        (byte)((ulonglong)uVar2 >> 0x20)) {
+    clock_set_leap_year(record + 0x23,date);
+    if ((byte)record[(short)((ushort)extraout_D0 >> 8) + 0x21] < (byte)extraout_D0) {
       clock_set_leap_year(record + 0x23,*(int *)(record + 0x1e));
     }
     else {
-      *(int *)(record + 0x1a) = (int)uVar2;
-      *(int *)(record + 0x1e) = (int)((ulonglong)uVar2 >> 0x20);
+      *(undefined4 *)(record + 0x1a) = extraout_D1;
+      *(undefined4 *)(record + 0x1e) = extraout_D0;
       if (mark != 0) {
         record[0x2f] = '\x01';
       }
@@ -15120,22 +15122,20 @@ __asm__(
    psos.md */
 
 /* out D7 char error */
-__regcall ushort kernel_service_18(void)
+__regcall void kernel_service_18(void)
 
 {
   int iVar1;
-  byte bVar2;
-  ushort uVar3;
-  ushort uVar4;
-  char cVar5;
+  undefined2 extraout_D0w;
+  undefined2 uVar2;
+  char cVar3;
+  byte bVar4;
   char extraout_D1b;
-  ushort extraout_D1w;
-  ushort extraout_D1w_00;
-  char cVar6;
+  char cVar5;
+  int iVar6;
   int iVar7;
   int iVar8;
   int iVar9;
-  int iVar10;
   int in_A0;
   int extraout_A0;
   int extraout_A0_00;
@@ -15143,71 +15143,68 @@ __regcall ushort kernel_service_18(void)
   int extraout_A0_02;
   int extraout_A1;
   int extraout_A1_00;
-  int *piVar11;
+  int *piVar10;
   int *unaff_A3;
   undefined4 *unaff_A6;
-  bool bVar12;
+  bool bVar11;
   
-  bVar12 = true;
-  uVar3 = kernel_check_exchange(in_A0,(void *)*unaff_A6);
-  if ((bVar12) && (*(int *)(extraout_A1 + 4) == 0)) {
-    iVar7 = *(int *)(extraout_A0 + 4);
+  bVar11 = true;
+  kernel_check_exchange(in_A0,(void *)*unaff_A6);
+  if ((bVar11) && (*(int *)(extraout_A1 + 4) == 0)) {
+    iVar6 = *(int *)(extraout_A0 + 4);
     *(int *)extraout_A0 = extraout_A0;
     *(int *)(extraout_A0 + 4) = extraout_A0;
-    uVar4 = uVar3;
-    uVar3 = 0;
-    iVar8 = extraout_A0;
-    while (iVar8 != iVar7) {
-      if ('\0' < *(char *)(iVar7 + 0x12)) {
+    bVar4 = 0;
+    uVar2 = extraout_D0w;
+    iVar7 = extraout_A0;
+    while (iVar7 != iVar6) {
+      if ('\0' < *(char *)(iVar6 + 0x12)) {
         kernel_timer_unlink();
       }
-      iVar1 = *(int *)(iVar7 + 4);
-      uVar4 = kernel_make_ready();
-      unaff_A3 = *(int **)(iVar7 + 0x72);
-      iVar7 = *(int *)(extraout_A1_00 + 8);
-      iVar8 = *(int *)(extraout_A1_00 + 0xc);
-      iVar9 = *(int *)(extraout_A1_00 + 0x10);
-      iVar10 = *(int *)(extraout_A1_00 + 0x14);
+      iVar1 = *(int *)(iVar6 + 4);
+      uVar2 = kernel_make_ready();
+      unaff_A3 = *(int **)(iVar6 + 0x72);
+      iVar6 = *(int *)(extraout_A1_00 + 8);
+      iVar7 = *(int *)(extraout_A1_00 + 0xc);
+      iVar8 = *(int *)(extraout_A1_00 + 0x10);
+      iVar9 = *(int *)(extraout_A1_00 + 0x14);
       unaff_A3[1] = *(int *)(extraout_A1_00 + 4);
-      unaff_A3[2] = iVar7;
-      unaff_A3[3] = iVar8;
-      unaff_A3[4] = iVar9;
-      unaff_A3[5] = iVar10;
-      uVar3 = (ushort)(byte)(extraout_D1b + 1);
-      iVar8 = extraout_A0_00;
-      iVar7 = iVar1;
+      unaff_A3[2] = iVar6;
+      unaff_A3[3] = iVar7;
+      unaff_A3[4] = iVar8;
+      unaff_A3[5] = iVar9;
+      bVar4 = extraout_D1b + 1;
+      iVar7 = extraout_A0_00;
+      iVar6 = iVar1;
     }
-    cVar6 = (byte)uVar4 - (byte)uVar3;
-    if ((byte)uVar3 <= (byte)uVar4 && cVar6 != '\0') {
-      bVar12 = cVar6 == '\0';
-      cVar5 = kernel_copy_message();
-      uVar3 = extraout_D1w;
-      iVar7 = extraout_A0_01;
-      if (bVar12) {
+    cVar5 = (byte)uVar2 - bVar4;
+    if (bVar4 <= (byte)uVar2 && cVar5 != '\0') {
+      bVar11 = cVar5 == '\0';
+      cVar3 = kernel_copy_message();
+      iVar6 = extraout_A0_01;
+      if (bVar11) {
         while( true ) {
-          cVar6 = cVar6 + -1;
-          bVar12 = cVar6 == '\0';
-          if (bVar12) break;
-          cVar5 = kernel_copy_message();
-          uVar3 = extraout_D1w_00;
-          if (!bVar12) goto LAB_00015576;
+          cVar5 = cVar5 + -1;
+          bVar11 = cVar5 == '\0';
+          if (bVar11) break;
+          cVar3 = kernel_copy_message();
+          if (!bVar11) goto LAB_00015576;
           *unaff_A3 = (int)unaff_A3;
-          iVar7 = extraout_A0_02;
+          iVar6 = extraout_A0_02;
         }
-        bVar2 = cVar5 + *(char *)(iVar7 + 0x21);
-        if ((*(char *)(iVar7 + 0x12) == '\0') || (bVar2 <= *(byte *)(iVar7 + 0x20))) {
-          *(byte *)(iVar7 + 0x21) = bVar2;
-          piVar11 = *(int **)(iVar7 + 0xc);
-          if (piVar11 == (int *)0x0) {
-            piVar11 = (int *)(iVar7 + 8);
+        bVar4 = cVar3 + *(char *)(iVar6 + 0x21);
+        if ((*(char *)(iVar6 + 0x12) == '\0') || (bVar4 <= *(byte *)(iVar6 + 0x20))) {
+          *(byte *)(iVar6 + 0x21) = bVar4;
+          piVar10 = *(int **)(iVar6 + 0xc);
+          if (piVar10 == (int *)0x0) {
+            piVar10 = (int *)(iVar6 + 8);
           }
-          iVar8 = *piVar11;
-          *unaff_A3 = iVar8;
-          if (iVar8 == 0) {
-            *(int **)(iVar7 + 0xc) = unaff_A3;
+          iVar7 = *piVar10;
+          *unaff_A3 = iVar7;
+          if (iVar7 == 0) {
+            *(int **)(iVar6 + 0xc) = unaff_A3;
           }
-          *piVar11 = (int)unaff_A3;
-          uVar3 = (ushort)(byte)((char)uVar3 + cVar5);
+          *piVar10 = (int)unaff_A3;
         }
         else {
 LAB_00015576:
@@ -15217,7 +15214,7 @@ LAB_00015576:
       }
     }
   }
-  return uVar3;
+  return;
 }
 
 
@@ -15915,6 +15912,8 @@ __regcall void kernel_request_x(void)
   int *running;
   int *piVar1;
   undefined4 *puVar2;
+  undefined4 extraout_D0;
+  undefined4 extraout_D1;
   int iVar3;
   int iVar4;
   int iVar5;
@@ -15934,7 +15933,8 @@ __regcall void kernel_request_x(void)
   
   running = (int *)*unaff_A6;
   bVar11 = true;
-  uVar12 = kernel_check_exchange(in_A0,running);
+  kernel_check_exchange(in_A0,running);
+  uVar12 = CONCAT44(extraout_D0,extraout_D1);
   piVar8 = extraout_A0;
   iVar9 = extraout_A1;
   if (bVar11) {
@@ -22206,18 +22206,15 @@ __asm__(
    in A3.  In: D0 char *s.
    console.md */
 
-__pforth ulonglong forth_print_string(char *s /* d0 */,forth_user_end user /* a5 */)
+__pforth void forth_print_string(char *s /* d0 */,forth_user_end user /* a5 */)
 
 {
-  undefined4 in_D1;
-  ulonglong uVar1;
-  
   if (-1 < ((forth_user_area *)(user + -0x28))->iodev) {
     __m68k_trap(4);
-    return (ulonglong)CONCAT24(((forth_user_area *)(user + -0x28))->iodev,in_D1);
+    return;
   }
-  uVar1 = psos_call();
-  return uVar1;
+  psos_call();
+  return;
 }
 
 
@@ -29876,10 +29873,10 @@ __asm__(
 
 /* the pForth diagnostic word adc_read */
 
-undefined1 diag_adc_read(byte param_1)
+uint diag_adc_read(byte param_1)
 
 {
-  undefined1 uVar1;
+  uint uVar1;
   adc_channel channel;
   
   if ((param_1 & 1) == 0) {
@@ -29889,7 +29886,7 @@ undefined1 diag_adc_read(byte param_1)
     channel = (adc_channel)((int)(uint)param_1 >> 1) | ADC_5V;
   }
   uVar1 = adc_read(channel);
-  return uVar1;
+  return uVar1 & 0xff;
 }
 
 
@@ -31647,9 +31644,9 @@ void diag_cal(uint param_1)
 
 {
   float f;
-  byte bVar2;
+  uint uVar1;
   uint i;
-  float fVar1;
+  float fVar2;
   ushort uVar3;
   float fVar4;
   int iVar5;
@@ -31684,16 +31681,16 @@ void diag_cal(uint param_1)
   uStack_8 = 0;
   fVar4 = 0.0;
   for (uVar3 = 0; uVar3 < param_1; uVar3 = uVar3 + 10) {
-    bVar2 = adc_read(ADC_CURRENT);
+    uVar1 = adc_read(ADC_CURRENT);
     f = pll.efc;
-    i = (uint)bVar2;
+    i = uVar1 & 0xff;
     dVar6 = integer_to_double(i);
     double_add_in_place((double *)&uStack_24,dVar6);
     dVar6 = float_to_double(f);
     double_add_in_place((double *)&uStack_1c,dVar6);
-    fVar1 = unsigned_to_float((uint)(ushort)bVar2);
-    fVar1 = float_multiply(fVar1,f);
-    dVar6 = float_to_double(fVar1);
+    fVar2 = unsigned_to_float((uint)(ushort)(byte)uVar1);
+    fVar2 = float_multiply(fVar2,f);
+    dVar6 = float_to_double(fVar2);
     double_add_in_place((double *)&uStack_14,dVar6);
     dVar6 = integer_to_double(i * i);
     double_add_in_place((double *)&uStack_c,dVar6);
@@ -31703,7 +31700,7 @@ void diag_cal(uint param_1)
     uVar12 = (undefined1)((uint)iVar5 >> 8);
     uVar13 = (undefined1)iVar5;
     dVar6 = float_to_double(f);
-    printf("curr= %d efc= %.1f, sec remaining= %d\r\n",(uint)(ushort)bVar2,dVar6,
+    printf("curr= %d efc= %.1f, sec remaining= %d\r\n",(uint)(ushort)(byte)uVar1,dVar6,
            CONCAT31(CONCAT21(uVar9,uVar12),uVar13));
     psos_pause(10000);
   }
@@ -33651,13 +33648,13 @@ int adc_read(adc_channel channel)
 float read_adc_temp(void)
 
 {
-  byte bVar2;
-  float fVar1;
+  uint uVar1;
+  float fVar2;
   
-  bVar2 = adc_read(ADC_TEMPERATURE);
-  fVar1 = unsigned_to_float((uint)bVar2);
-  fVar1 = float_multiply(fVar1,0.273);
-  return fVar1;
+  uVar1 = adc_read(ADC_TEMPERATURE);
+  fVar2 = unsigned_to_float(uVar1 & 0xff);
+  fVar2 = float_multiply(fVar2,0.273);
+  return fVar2;
 }
 
 
@@ -33670,13 +33667,13 @@ float read_adc_temp(void)
 float read_adc_5v(void)
 
 {
-  byte bVar2;
-  float fVar1;
+  uint uVar1;
+  float fVar2;
   
-  bVar2 = adc_read(ADC_5V);
-  fVar1 = unsigned_to_float((uint)bVar2);
-  fVar1 = float_multiply(fVar1,0.0242);
-  return fVar1;
+  uVar1 = adc_read(ADC_5V);
+  fVar2 = unsigned_to_float(uVar1 & 0xff);
+  fVar2 = float_multiply(fVar2,0.0242);
+  return fVar2;
 }
 
 
@@ -33689,26 +33686,26 @@ float read_adc_5v(void)
 float read_adc_doven(void)
 
 {
-  byte bVar2;
-  byte bVar3;
-  float fVar1;
+  uint uVar1;
+  uint uVar2;
+  float fVar3;
   undefined1 uVar4;
   undefined1 uStack_b;
   undefined1 uVar5;
   undefined1 uStack_9;
   
-  bVar2 = adc_read(ADC_DOUBLE_OVEN);
-  bVar3 = adc_read(ADC_5V);
-  fVar1 = unsigned_to_float((uint)bVar2);
-  fVar1 = float_multiply(fVar1,0.0743);
-  uVar4 = (undefined1)((uint)fVar1 >> 0x18);
-  uStack_b = (undefined1)((uint)fVar1 >> 0x10);
-  uVar5 = (undefined1)((uint)fVar1 >> 8);
-  uStack_9 = SUB41(fVar1,0);
-  fVar1 = unsigned_to_float((uint)bVar3);
-  fVar1 = float_multiply(fVar1,-0.0472);
-  fVar1 = float_add((float)CONCAT31(CONCAT21(CONCAT11(uVar4,uStack_b),uVar5),uStack_9),fVar1);
-  return fVar1;
+  uVar1 = adc_read(ADC_DOUBLE_OVEN);
+  uVar2 = adc_read(ADC_5V);
+  fVar3 = unsigned_to_float(uVar1 & 0xff);
+  fVar3 = float_multiply(fVar3,0.0743);
+  uVar4 = (undefined1)((uint)fVar3 >> 0x18);
+  uStack_b = (undefined1)((uint)fVar3 >> 0x10);
+  uVar5 = (undefined1)((uint)fVar3 >> 8);
+  uStack_9 = SUB41(fVar3,0);
+  fVar3 = unsigned_to_float(uVar2 & 0xff);
+  fVar3 = float_multiply(fVar3,-0.0472);
+  fVar3 = float_add((float)CONCAT31(CONCAT21(CONCAT11(uVar4,uStack_b),uVar5),uStack_9),fVar3);
+  return fVar3;
 }
 
 
@@ -33721,26 +33718,26 @@ float read_adc_doven(void)
 float read_adc_oven(void)
 
 {
-  byte bVar2;
-  byte bVar3;
-  float fVar1;
+  uint uVar1;
+  uint uVar2;
+  float fVar3;
   undefined1 uVar4;
   undefined1 uStack_b;
   undefined1 uVar5;
   undefined1 uStack_9;
   
-  bVar2 = adc_read(ADC_OVEN);
-  bVar3 = adc_read(ADC_5V);
-  fVar1 = unsigned_to_float((uint)bVar2);
-  fVar1 = float_multiply(fVar1,0.0743);
-  uVar4 = (undefined1)((uint)fVar1 >> 0x18);
-  uStack_b = (undefined1)((uint)fVar1 >> 0x10);
-  uVar5 = (undefined1)((uint)fVar1 >> 8);
-  uStack_9 = SUB41(fVar1,0);
-  fVar1 = unsigned_to_float((uint)bVar3);
-  fVar1 = float_multiply(fVar1,-0.0472);
-  fVar1 = float_add((float)CONCAT31(CONCAT21(CONCAT11(uVar4,uStack_b),uVar5),uStack_9),fVar1);
-  return fVar1;
+  uVar1 = adc_read(ADC_OVEN);
+  uVar2 = adc_read(ADC_5V);
+  fVar3 = unsigned_to_float(uVar1 & 0xff);
+  fVar3 = float_multiply(fVar3,0.0743);
+  uVar4 = (undefined1)((uint)fVar3 >> 0x18);
+  uStack_b = (undefined1)((uint)fVar3 >> 0x10);
+  uVar5 = (undefined1)((uint)fVar3 >> 8);
+  uStack_9 = SUB41(fVar3,0);
+  fVar3 = unsigned_to_float(uVar2 & 0xff);
+  fVar3 = float_multiply(fVar3,-0.0472);
+  fVar3 = float_add((float)CONCAT31(CONCAT21(CONCAT11(uVar4,uStack_b),uVar5),uStack_9),fVar3);
+  return fVar3;
 }
 
 
@@ -33753,13 +33750,13 @@ float read_adc_oven(void)
 float read_adc_p15v(void)
 
 {
-  byte bVar2;
-  float fVar1;
+  uint uVar1;
+  float fVar2;
   
-  bVar2 = adc_read(ADC_PLUS_15V);
-  fVar1 = unsigned_to_float((uint)bVar2);
-  fVar1 = float_multiply(fVar1,0.0763);
-  return fVar1;
+  uVar1 = adc_read(ADC_PLUS_15V);
+  fVar2 = unsigned_to_float(uVar1 & 0xff);
+  fVar2 = float_multiply(fVar2,0.0763);
+  return fVar2;
 }
 
 
@@ -33772,26 +33769,26 @@ float read_adc_p15v(void)
 float read_adc_m15v(void)
 
 {
-  byte bVar2;
-  byte bVar3;
-  float fVar1;
+  uint uVar1;
+  uint uVar2;
+  float fVar3;
   undefined1 uVar4;
   undefined1 uStack_b;
   undefined1 uVar5;
   undefined1 uStack_9;
   
-  bVar2 = adc_read(ADC_MINUS_15V);
-  bVar3 = adc_read(ADC_5V);
-  fVar1 = unsigned_to_float((uint)bVar2);
-  fVar1 = float_multiply(fVar1,0.0438);
-  uVar4 = (undefined1)((uint)fVar1 >> 0x18);
-  uStack_b = (undefined1)((uint)fVar1 >> 0x10);
-  uVar5 = (undefined1)((uint)fVar1 >> 8);
-  uStack_9 = SUB41(fVar1,0);
-  fVar1 = unsigned_to_float((uint)bVar3);
-  fVar1 = float_multiply(fVar1,-0.084);
-  fVar1 = float_add((float)CONCAT31(CONCAT21(CONCAT11(uVar4,uStack_b),uVar5),uStack_9),fVar1);
-  return fVar1;
+  uVar1 = adc_read(ADC_MINUS_15V);
+  uVar2 = adc_read(ADC_5V);
+  fVar3 = unsigned_to_float(uVar1 & 0xff);
+  fVar3 = float_multiply(fVar3,0.0438);
+  uVar4 = (undefined1)((uint)fVar3 >> 0x18);
+  uStack_b = (undefined1)((uint)fVar3 >> 0x10);
+  uVar5 = (undefined1)((uint)fVar3 >> 8);
+  uStack_9 = SUB41(fVar3,0);
+  fVar3 = unsigned_to_float(uVar2 & 0xff);
+  fVar3 = float_multiply(fVar3,-0.084);
+  fVar3 = float_add((float)CONCAT31(CONCAT21(CONCAT11(uVar4,uStack_b),uVar5),uStack_9),fVar3);
+  return fVar3;
 }
 
 
@@ -33804,14 +33801,14 @@ float read_adc_m15v(void)
 float read_adc_osc_curr(void)
 
 {
-  byte bVar2;
-  float fVar1;
+  uint uVar1;
+  float fVar2;
   
-  bVar2 = adc_read(ADC_CURRENT);
-  fVar1 = unsigned_to_float((uint)bVar2);
-  fVar1 = float_multiply(fVar1,250.0);
-  fVar1 = float_divide(fVar1,255.0);
-  return fVar1;
+  uVar1 = adc_read(ADC_CURRENT);
+  fVar2 = unsigned_to_float(uVar1 & 0xff);
+  fVar2 = float_multiply(fVar2,250.0);
+  fVar2 = float_divide(fVar2,255.0);
+  return fVar2;
 }
 
 
@@ -33824,14 +33821,14 @@ float read_adc_osc_curr(void)
 float read_adc_ant_curr(void)
 
 {
-  byte bVar2;
-  float fVar1;
+  uint uVar1;
+  float fVar2;
   
-  bVar2 = adc_read(ADC_CURRENT);
-  fVar1 = unsigned_to_float((uint)bVar2);
-  fVar1 = float_multiply(fVar1,250.0);
-  fVar1 = float_divide(fVar1,255.0);
-  return fVar1;
+  uVar1 = adc_read(ADC_CURRENT);
+  fVar2 = unsigned_to_float(uVar1 & 0xff);
+  fVar2 = float_multiply(fVar2,250.0);
+  fVar2 = float_divide(fVar2,255.0);
+  return fVar2;
 }
 
 
@@ -37404,7 +37401,7 @@ __asm__(
    docs/scpi/README.md, run */
 
 /* returns ccr */
-__regcall uint scpi_double_to_decimal(double value /* d0 */,short digits /* d7 */,char *record /* a0 */)
+__regcall void scpi_double_to_decimal(double value /* d0 */,short digits /* d7 */,char *record /* a0 */)
 
 {
   undefined1 uVar1;
@@ -37440,7 +37437,7 @@ __regcall uint scpi_double_to_decimal(double value /* d0 */,short digits /* d7 *
 LAB_00024e22:
       builtin_strncpy(record + 2,"0000000000000000",0x11);
       record[0x13] = '\0';
-      return 0x30303030;
+      return;
     }
   }
   else {
@@ -37544,7 +37541,7 @@ LAB_00024e22:
             sVar17 = sVar17 + -2;
             puVar16 = (undefined4 *)((int)puVar16 + 2);
           } while (-1 < sVar17);
-          return uVar10;
+          return;
         }
         sVar17 = extraout_A1w_00 + 2;
       }
@@ -37553,10 +37550,10 @@ LAB_00024e22:
       extraout_A0[2] = 0x30303030;
       extraout_A0[3] = 0x30303030;
       *(short *)(extraout_A0 + 4) = sVar17;
-      return 0x30303030;
+      return;
     }
   }
-  return CONCAT22((short)(uVar9 >> 0x10),0xfff8);
+  return;
 }
 
 
@@ -50596,10 +50593,10 @@ undefined4 scpi_query_SYSTem_PRINt_LENGth(undefined4 param_1,ushort *param_2)
 /* the sum and its complement of an EEPROM record's bytes after the first two
    structures.md */
 
-undefined2 record_checksum(void *record,uint16_t length)
+uint16_t record_checksum(void *record,uint16_t length)
 
 {
-  undefined2 uVar1;
+  uint16_t uVar1;
   byte bVar2;
   ushort uVar3;
   char *pcVar4;
@@ -50626,31 +50623,35 @@ undefined2 record_checksum(void *record,uint16_t length)
 /* reads the lifetime record from EEPROM 0x400060, or sets its defaults: 1994-01-01 and the EFC at
    mid-scale */
 
-undefined1 lifetime_record_read(void)
+undefined4 lifetime_record_read(void)
 
 {
-  short sVar1;
-  undefined1 uVar2;
+  undefined2 extraout_D0u;
+  uint16_t uVar2;
+  undefined1 uVar3;
+  uint uVar1;
   
-  sVar1 = record_checksum(&DAT_00400060,0x20);
-  if (sVar1 == _DAT_00400060) {
+  uVar2 = record_checksum(&DAT_00400060,0x20);
+  uVar1 = CONCAT22(extraout_D0u,uVar2);
+  if (uVar2 == _DAT_00400060) {
     _DAT_00101d04 = _DAT_00400062;
     _DAT_00101d08 = _DAT_00400066;
-    if ((_DAT_0040006a & 0xe8000000) == 0xe8000000) {
+    uVar1 = _DAT_0040006a & 0xe8000000;
+    if (uVar1 == 0xe8000000) {
       _DAT_00101d00 = 0x49000000;
     }
     else {
       _DAT_00101d00 = _DAT_0040006a;
     }
-    uVar2 = 1;
+    uVar3 = 1;
   }
   else {
     _DAT_00101d04 = 0x7ca0101;
     _DAT_00101d08 = 0;
     _DAT_00101d00 = 0x49000000;
-    uVar2 = 0;
+    uVar3 = 0;
   }
-  return uVar2;
+  return CONCAT31((int3)(uVar1 >> 8),uVar3);
 }
 
 
@@ -50665,7 +50666,7 @@ undefined4 lifetime_record_write(void)
 {
   int iVar1;
   undefined4 uVar2;
-  undefined2 local_24;
+  uint16_t local_24;
   undefined4 local_22;
   undefined4 local_1e;
   undefined4 local_1a;
@@ -50745,10 +50746,10 @@ void lifetime_update(int param_1)
 bool calibration_block_read(void)
 
 {
-  short sVar1;
+  uint16_t uVar1;
   
-  sVar1 = record_checksum(&DAT_00400080,0x40);
-  if (sVar1 != _DAT_00400080) {
+  uVar1 = record_checksum(&DAT_00400080,0x40);
+  if (uVar1 != _DAT_00400080) {
     scpi_value_DIAGnostic_TOFFset = 0.0;
     scpi_value_DIAGnostic_ROSCillator_TCOefficient = 0.0;
   }
@@ -50756,7 +50757,7 @@ bool calibration_block_read(void)
     scpi_value_DIAGnostic_TOFFset = _DAT_00400086;
     scpi_value_DIAGnostic_ROSCillator_TCOefficient = _DAT_00400082;
   }
-  return sVar1 == _DAT_00400080;
+  return uVar1 == _DAT_00400080;
 }
 
 
@@ -50771,7 +50772,7 @@ undefined4 save_calibration_block(undefined4 param_1,byte param_2)
 
 {
   char cVar1;
-  undefined2 local_44;
+  uint16_t local_44;
   float local_42;
   float local_3e;
   
@@ -50801,12 +50802,12 @@ undefined2 parameter_record_read(void)
 
 {
   undefined1 uVar2;
-  short sVar3;
+  uint16_t uVar3;
   void *pvVar1;
   bool bVar4;
   
-  sVar3 = record_checksum(&DAT_00400000,0x10);
-  bVar4 = sVar3 != DAT_00400000;
+  uVar3 = record_checksum(&DAT_00400000,0x10);
+  bVar4 = uVar3 != DAT_00400000;
   if (bVar4) {
     memcpy((void *)0x101f58,&DAT_00030a34,9);
     pvVar1 = memcpy((void *)0x101f50,&DAT_00030a2c,6);
@@ -50838,7 +50839,7 @@ bool save_parameter_record(byte param_1)
 
 {
   char cVar1;
-  undefined2 local_14;
+  uint16_t local_14;
   undefined1 local_12;
   undefined1 local_11;
   undefined1 local_10;
@@ -51491,100 +51492,100 @@ int log_write(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 /* log_write of one of 27 fixed messages by code, "Log cleared", "Power on", "Survey mode
    started"... */
 
-undefined4 log_event(uint8_t code)
+int log_event(uint8_t code)
 
 {
-  undefined4 uVar1;
+  int iVar1;
   
   if (code < 0x1b) {
                     /* WARNING: Switch is manually overridden */
     switch(code) {
     case 0:
-      uVar1 = log_write("Log cleared");
+      iVar1 = log_write("Log cleared");
       break;
     case 1:
-      uVar1 = log_write("Power on");
+      iVar1 = log_write("Power on");
       break;
     case 2:
-      uVar1 = log_write("Re-boot");
+      iVar1 = log_write("Re-boot");
       break;
     case 3:
-      uVar1 = log_write("Survey mode started");
+      iVar1 = log_write("Survey mode started");
       break;
     case 4:
-      uVar1 = log_write("Position hold mode started");
+      iVar1 = log_write("Position hold mode started");
       break;
     case 5:
-      uVar1 = log_write("EXT lock started");
+      iVar1 = log_write("EXT lock started");
       break;
     case 6:
-      uVar1 = log_write("GPS lock started");
+      iVar1 = log_write("GPS lock started");
       break;
     case 7:
-      uVar1 = log_write("Holdover started, manual");
+      iVar1 = log_write("Holdover started, manual");
       break;
     case 8:
-      uVar1 = log_write("Holdover started, EXT");
+      iVar1 = log_write("Holdover started, EXT");
       break;
     case 9:
-      uVar1 = log_write("Holdover started, invalid EXT 1PPS");
+      iVar1 = log_write("Holdover started, invalid EXT 1PPS");
       break;
     case 10:
-      uVar1 = log_write("Holdover started, GPS");
+      iVar1 = log_write("Holdover started, GPS");
       break;
     case 0xb:
-      uVar1 = log_write("Holdover started, invalid GPS 1PPS");
+      iVar1 = log_write("Holdover started, invalid GPS 1PPS");
       break;
     case 0xc:
-      uVar1 = log_write("Holdover started, not tracking GPS");
+      iVar1 = log_write("Holdover started, not tracking GPS");
       break;
     case 0xd:
-      uVar1 = log_write("Holdover started, GPS RAIM alarm");
+      iVar1 = log_write("Holdover started, GPS RAIM alarm");
       break;
     case 0xe:
-      uVar1 = log_write("Holdover started, GPS alarm");
+      iVar1 = log_write("Holdover started, GPS alarm");
       break;
     case 0xf:
-      uVar1 = log_write("Holdover started, HW error");
+      iVar1 = log_write("Holdover started, HW error");
       break;
     case 0x10:
-      uVar1 = log_write("Holdover started, TI error");
+      iVar1 = log_write("Holdover started, TI error");
       break;
     case 0x11:
-      uVar1 = log_write("Holdover started, TI limit exceeded");
+      iVar1 = log_write("Holdover started, TI limit exceeded");
       break;
     case 0x12:
-      uVar1 = log_write("Holdover started, temporary");
+      iVar1 = log_write("Holdover started, temporary");
       break;
     case 0x13:
-      uVar1 = log_write("Holdover started, selecting 1PPS");
+      iVar1 = log_write("Holdover started, selecting 1PPS");
       break;
     case 0x14:
-      uVar1 = log_write("Holdover started");
+      iVar1 = log_write("Holdover started");
       break;
     case 0x15:
-      uVar1 = log_write("Output specifications exceeded");
+      iVar1 = log_write("Output specifications exceeded");
       break;
     case 0x16:
-      uVar1 = log_write("Hardware failure");
+      iVar1 = log_write("Hardware failure");
       break;
     case 0x17:
-      uVar1 = log_write("Self-test failed");
+      iVar1 = log_write("Self-test failed");
       break;
     case 0x18:
-      uVar1 = log_write("EEPROM save failed");
+      iVar1 = log_write("EEPROM save failed");
       break;
     case 0x19:
-      uVar1 = log_write("Clk_do: out of event buffers");
+      iVar1 = log_write("Clk_do: out of event buffers");
       break;
     case 0x1a:
-      uVar1 = log_write("System preset");
+      iVar1 = log_write("System preset");
     }
   }
   else {
-    uVar1 = 0xfd;
+    iVar1 = 0xfd;
   }
-  return uVar1;
+  return iVar1;
 }
 
 
@@ -52527,12 +52528,12 @@ void idn_model_default(void)
 undefined1 identification_record_read(void)
 
 {
-  short sVar2;
+  uint16_t uVar2;
   int iVar1;
   undefined1 uVar3;
   
-  sVar2 = record_checksum(&DAT_00400010,0x30);
-  if (sVar2 == DAT_00400010) {
+  uVar2 = record_checksum(&DAT_00400010,0x30);
+  if (uVar2 == DAT_00400010) {
     iVar1 = strncmp((char *)0x400037,"S",3);
     if (iVar1 == 0) {
       strncpy(idn_model,&DAT_00400012,0x12);
@@ -52563,7 +52564,7 @@ undefined4 identification_record_write(void)
 {
   int iVar1;
   undefined4 uVar2;
-  undefined2 local_34;
+  uint16_t local_34;
   char acStack_32 [18];
   char acStack_20 [18];
   char local_e;
@@ -52816,17 +52817,19 @@ void interpolator_calibration_init(undefined1 *param_1)
 
 /* pulses the FPGA bits for a measurement and returns interpolator_read */
 
-void interpolator_measure(uint8_t mode)
+uint8_t interpolator_measure(uint8_t mode)
 
 {
+  uint8_t uVar1;
+  
   fpga_set_bit(3,mode);
   fpga_set_bit(1,8);
   fpga_set_bit(2,1);
   fpga_set_bit(1,0);
   fpga_set_bit(2,0);
   counter_wait_ready(1);
-  interpolator_read();
-  return;
+  uVar1 = interpolator_read();
+  return uVar1;
 }
 
 
@@ -52970,12 +52973,11 @@ undefined4 interpolator_prepare(void)
 uint8_t interpolator_calibrate(interpolator_calibration *calibration)
 
 {
-  uint8_t uVar1;
-  byte bVar2;
-  byte bVar3;
-  int iVar4;
+  byte bVar1;
+  uint8_t uVar2;
+  int iVar3;
   uint8_t unaff_D3b;
-  char cVar5;
+  char cVar4;
   
   interpolator_prepare((char)calibration);
   if (calibration->initialized == 0) {
@@ -52985,53 +52987,53 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
   }
   hdac_set(calibration->hdac_2,2);
   hdac_set(calibration->hdac_3,3);
-  uVar1 = interpolator_measure(0);
-  calibration->reading_low = uVar1;
-  bVar2 = interpolator_measure(1);
-  calibration->reading_high = bVar2;
-  bVar3 = calibration->reading_low;
-  iVar4 = (uint)bVar2 - (uint)bVar3;
-  if ((((iVar4 == 200) && (bVar3 != 0)) && (bVar3 < 0x1a)) && ((200 < bVar2 && (bVar2 < 0xe2)))) {
+  uVar2 = interpolator_measure(0);
+  calibration->reading_low = uVar2;
+  uVar2 = interpolator_measure(1);
+  calibration->reading_high = uVar2;
+  bVar1 = calibration->reading_low;
+  iVar3 = (uint)uVar2 - (uint)bVar1;
+  if ((((iVar3 == 200) && (bVar1 != 0)) && (bVar1 < 0x1a)) && ((200 < uVar2 && (uVar2 < 0xe2)))) {
     calibration->calibrated = 1;
     unaff_D3b = 1;
   }
   else {
     if ((calibration->reading_high < 0xc9) || (0xe1 < calibration->reading_high)) {
-      uVar1 = dac_search_bisect(calibration->hdac_3,0,0x3f,0xc9,0xe1,&LAB_00040096);
-      calibration->hdac_3 = uVar1;
+      uVar2 = dac_search_bisect(calibration->hdac_3,0,0x3f,0xc9,0xe1,&LAB_00040096);
+      calibration->hdac_3 = uVar2;
     }
-    bVar3 = interpolator_measure(0);
-    calibration->reading_low = bVar3;
-    if ((bVar3 == 0) || (0x19 < bVar3)) {
-      uVar1 = dac_search_bisect(calibration->hdac_2,0,0x3f,1,0x19,&LAB_0004007e);
-      calibration->hdac_2 = uVar1;
+    uVar2 = interpolator_measure(0);
+    calibration->reading_low = uVar2;
+    if ((uVar2 == 0) || (0x19 < uVar2)) {
+      uVar2 = dac_search_bisect(calibration->hdac_2,0,0x3f,1,0x19,&LAB_0004007e);
+      calibration->hdac_2 = uVar2;
     }
-    uVar1 = interpolator_measure(0);
-    calibration->reading_low = uVar1;
-    uVar1 = dac_search_step(calibration->hdac_3,0,0x3f,calibration->reading_low - 0x3c,
+    uVar2 = interpolator_measure(0);
+    calibration->reading_low = uVar2;
+    uVar2 = dac_search_step(calibration->hdac_3,0,0x3f,calibration->reading_low - 0x3c,
                             calibration->reading_low - 0x34,&LAB_00040096);
-    calibration->hdac_3 = uVar1;
-    uVar1 = interpolator_measure(1);
-    calibration->reading_high = uVar1;
-    uVar1 = interpolator_measure(0);
-    calibration->reading_low = uVar1;
-    cVar5 = '\x14';
-    while (cVar5 != '\0') {
-      uVar1 = hdac_nudge(((uint)calibration->reading_high - (uint)calibration->reading_low) + -200,
+    calibration->hdac_3 = uVar2;
+    uVar2 = interpolator_measure(1);
+    calibration->reading_high = uVar2;
+    uVar2 = interpolator_measure(0);
+    calibration->reading_low = uVar2;
+    cVar4 = '\x14';
+    while (cVar4 != '\0') {
+      uVar2 = hdac_nudge(((uint)calibration->reading_high - (uint)calibration->reading_low) + -200,
                          calibration->hdac_2);
-      calibration->hdac_2 = uVar1;
-      cVar5 = cVar5 + -1;
+      calibration->hdac_2 = uVar2;
+      cVar4 = cVar4 + -1;
       if ((calibration->reading_high < 0xc9) || (0xe1 < calibration->reading_high)) {
-        uVar1 = dac_search_step(calibration->hdac_3,0,0x3f,0xc9,0xe1,&LAB_00040096);
-        calibration->hdac_3 = uVar1;
+        uVar2 = dac_search_step(calibration->hdac_3,0,0x3f,0xc9,0xe1,&LAB_00040096);
+        calibration->hdac_3 = uVar2;
       }
-      uVar1 = interpolator_measure(1);
-      calibration->reading_high = uVar1;
-      bVar3 = interpolator_measure(0);
-      calibration->reading_low = bVar3;
-      iVar4 = (uint)calibration->reading_high - (uint)bVar3;
-      if (iVar4 == 200) {
-        cVar5 = '\0';
+      uVar2 = interpolator_measure(1);
+      calibration->reading_high = uVar2;
+      uVar2 = interpolator_measure(0);
+      calibration->reading_low = uVar2;
+      iVar3 = (uint)calibration->reading_high - (uint)uVar2;
+      if (iVar3 == 200) {
+        cVar4 = '\0';
         calibration->calibrated = 1;
         unaff_D3b = 1;
         calibration->result_hdac_2 = calibration->hdac_2;
@@ -53043,7 +53045,7 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
       }
     }
     if (unaff_D3b == 0) {
-      if ((iVar4 == 199) || (iVar4 == 0xc9)) {
+      if ((iVar3 == 199) || (iVar3 == 0xc9)) {
         calibration->calibrated = 1;
         unaff_D3b = 1;
         calibration->result_hdac_2 = calibration->hdac_2;
@@ -53068,8 +53070,7 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
 undefined1 interpolator_verify(char *param_1)
 
 {
-  char cVar1;
-  byte bVar2;
+  uint8_t uVar1;
   undefined1 unaff_D2b;
   
   if (*param_1 == '\0') {
@@ -53079,11 +53080,11 @@ undefined1 interpolator_verify(char *param_1)
   interpolator_prepare();
   hdac_set(param_1[2],2);
   hdac_set(param_1[3],3);
-  cVar1 = interpolator_measure(0);
-  param_1[7] = cVar1;
-  bVar2 = interpolator_measure(1);
-  param_1[8] = bVar2;
-  if ((((param_1[7] == '\0') || (0x19 < (byte)param_1[7])) || (bVar2 < 0xc9)) || (0xe1 < bVar2)) {
+  uVar1 = interpolator_measure(0);
+  param_1[7] = uVar1;
+  uVar1 = interpolator_measure(1);
+  param_1[8] = uVar1;
+  if ((((param_1[7] == '\0') || (0x19 < (byte)param_1[7])) || (uVar1 < 0xc9)) || (0xe1 < uVar1)) {
     if (param_1[4] == '\0') {
       return unaff_D2b;
     }
@@ -53091,20 +53092,20 @@ undefined1 interpolator_verify(char *param_1)
     param_1[3] = param_1[6];
     hdac_set(param_1[2],2);
     hdac_set(param_1[3],3);
-    cVar1 = interpolator_measure(0);
-    param_1[7] = cVar1;
-    bVar2 = interpolator_measure(1);
-    param_1[8] = bVar2;
+    uVar1 = interpolator_measure(0);
+    param_1[7] = uVar1;
+    uVar1 = interpolator_measure(1);
+    param_1[8] = uVar1;
     if (param_1[7] == '\0') {
       return unaff_D2b;
     }
     if (0x19 < (byte)param_1[7]) {
       return unaff_D2b;
     }
-    if (bVar2 < 0xc9) {
+    if (uVar1 < 0xc9) {
       return unaff_D2b;
     }
-    if (0xe1 < bVar2) {
+    if (0xe1 < uVar1) {
       return unaff_D2b;
     }
   }
@@ -53120,7 +53121,7 @@ undefined1 interpolator_verify(char *param_1)
 void interpolator_sample(char *param_1)
 
 {
-  char cVar1;
+  uint8_t uVar1;
   
   interpolator_prepare();
   if (*param_1 == '\0') {
@@ -53130,10 +53131,10 @@ void interpolator_sample(char *param_1)
   }
   hdac_set(param_1[2],2);
   hdac_set(param_1[3],3);
-  cVar1 = interpolator_measure(0);
-  param_1[7] = cVar1;
-  cVar1 = interpolator_measure(1);
-  param_1[8] = cVar1;
+  uVar1 = interpolator_measure(0);
+  param_1[7] = uVar1;
+  uVar1 = interpolator_measure(1);
+  param_1[8] = uVar1;
   return;
 }
 
@@ -53274,10 +53275,10 @@ void fpga_write(uint8_t reg,uint8_t value)
    fconf_regs[1] = %x"
    structures.md */
 
-undefined1 fpga_read(uint8_t reg)
+uint8_t fpga_read(uint8_t reg)
 
 {
-  undefined1 uVar1;
+  uint8_t uVar1;
   uint8_t uVar2;
   
   uVar2 = fconf_regs[1];
@@ -53298,10 +53299,10 @@ undefined1 fpga_read(uint8_t reg)
 bool fpga_bit_test(byte param_1,char param_2)
 
 {
-  byte bVar1;
+  uint8_t uVar1;
   
-  bVar1 = fpga_read(param_2);
-  return (param_1 & bVar1) != 0;
+  uVar1 = fpga_read(param_2);
+  return (param_1 & uVar1) != 0;
 }
 
 
@@ -53312,21 +53313,21 @@ bool fpga_bit_test(byte param_1,char param_2)
 char fpga_read_seconds(void)
 
 {
-  byte bVar1;
-  byte bVar2;
+  uint8_t uVar1;
+  uint8_t uVar2;
   char cVar3;
   int iVar4;
   char cVar5;
   
-  bVar1 = fpga_read(0);
-  bVar2 = fpga_read(0);
-  cVar3 = (char)((int)(uint)bVar1 >> 4);
-  cVar5 = (char)((int)(uint)bVar2 >> 4);
+  uVar1 = fpga_read(0);
+  uVar2 = fpga_read(0);
+  cVar3 = (char)((int)(uint)uVar1 >> 4);
+  cVar5 = (char)((int)(uint)uVar2 >> 4);
   for (iVar4 = 0x14; (cVar3 != cVar5 && (0 < iVar4)); iVar4 = iVar4 + -1) {
-    bVar1 = fpga_read(0);
-    bVar2 = fpga_read(0);
-    cVar3 = (char)((int)(uint)bVar1 >> 4);
-    cVar5 = (char)((int)(uint)bVar2 >> 4);
+    uVar1 = fpga_read(0);
+    uVar2 = fpga_read(0);
+    cVar3 = (char)((int)(uint)uVar1 >> 4);
+    cVar5 = (char)((int)(uint)uVar2 >> 4);
   }
   return cVar3;
 }
@@ -53366,33 +53367,37 @@ void fpga_address_sweep_debug(void)
 /* polls FPGA register 0 for a bit, up to 512 times 10 ticks, giving up and disarming the reading if
    a 1PPS dies */
 
-undefined1 counter_wait_ready(byte param_1)
+undefined4 counter_wait_ready(byte param_1)
 
 {
   bool bVar1;
-  byte bVar2;
-  short sVar3;
-  undefined1 uVar4;
+  undefined3 extraout_var;
+  uint8_t uVar3;
+  short sVar4;
+  undefined1 uVar5;
+  uint uVar2;
   
-  sVar3 = 0x200;
+  sVar4 = 0x200;
   bVar1 = true;
-  uVar4 = 0;
+  uVar5 = 0;
   do {
-    bVar2 = fpga_read(0);
+    uVar3 = fpga_read(0);
+    uVar2 = CONCAT31(extraout_var,uVar3);
     while( true ) {
       if ((((!bVar1) || (gps_pps_dead != 0)) || (internal_pps_dead != 0)) ||
-         ((interval_reading.armed == 0 || (sVar3 == 0)))) {
-        if ((sVar3 == 0) || ((gps_pps_dead != 0 || (internal_pps_dead != 0)))) {
+         ((interval_reading.armed == 0 || (sVar4 == 0)))) {
+        if ((sVar4 == 0) || ((gps_pps_dead != 0 || (internal_pps_dead != 0)))) {
           interval_reading.armed = 0;
         }
-        return uVar4;
+        return CONCAT31((int3)(uVar2 >> 8),uVar5);
       }
-      if ((param_1 & bVar2) == 0) break;
+      uVar2 = (uint)((param_1 & uVar3) != 0);
+      if (uVar2 == 0) break;
       bVar1 = false;
-      uVar4 = 1;
+      uVar5 = 1;
     }
     psos_pause(10);
-    sVar3 = sVar3 + -1;
+    sVar4 = sVar4 + -1;
   } while( true );
 }
 
@@ -53526,12 +53531,12 @@ LAB_00040b90:
 byte fpga_read_byte(char param_1)
 
 {
-  char cVar1;
-  byte bVar2;
+  uint8_t uVar1;
+  uint8_t uVar2;
   
-  cVar1 = fpga_read(param_1 + 1);
-  bVar2 = fpga_read(param_1);
-  return bVar2 & 0xf | cVar1 << 4;
+  uVar1 = fpga_read(param_1 + 1);
+  uVar2 = fpga_read(param_1);
+  return uVar2 & 0xf | uVar1 << 4;
 }
 
 
@@ -54515,8 +54520,11 @@ uint fit_log_search(int param_1,undefined4 param_2)
   float fVar1;
   undefined4 uVar2;
   uint uVar3;
+  undefined4 extraout_D0;
   uint uVar4;
   int iVar5;
+  undefined4 extraout_D0_00;
+  undefined4 extraout_D0_01;
   uint uVar6;
   float local_2c;
   float local_28;
@@ -54531,7 +54539,8 @@ uint fit_log_search(int param_1,undefined4 param_2)
   uVar3 = fit_log_residuals(param_1,param_2);
   local_28 = *(float *)(param_1 + 0x22);
   local_1c = *(undefined4 *)(param_1 + 0x1a);
-  local_18 = float_add_in_place((float *)(param_1 + 0x1a),*(float *)(param_1 + 0x1e));
+  float_add_in_place((float *)(param_1 + 0x1a),*(float *)(param_1 + 0x1e));
+  local_18 = extraout_D0;
   uVar4 = fit_log_residuals(param_1,param_2);
   uVar4 = uVar4 | uVar3;
   local_24 = *(float *)(param_1 + 0x22);
@@ -54547,7 +54556,8 @@ uint fit_log_search(int param_1,undefined4 param_2)
     while ((iVar5 = float_compare(local_28,local_24), 0 < iVar5 && (uVar4 == 0))) {
       local_20 = local_1c;
       local_1c = local_18;
-      local_18 = float_subtract_in_place((float *)(param_1 + 0x1a),*(float *)(param_1 + 0x1e));
+      float_subtract_in_place((float *)(param_1 + 0x1a),*(float *)(param_1 + 0x1e));
+      local_18 = extraout_D0_01;
       uVar4 = fit_log_residuals(param_1,param_2);
       local_2c = local_28;
       local_28 = local_24;
@@ -54558,7 +54568,8 @@ uint fit_log_search(int param_1,undefined4 param_2)
     while (iVar5 = float_compare(local_24,local_28), iVar5 < 0) {
       local_20 = local_1c;
       local_1c = local_18;
-      local_18 = float_add_in_place((float *)(param_1 + 0x1a),*(float *)(param_1 + 0x1e));
+      float_add_in_place((float *)(param_1 + 0x1a),*(float *)(param_1 + 0x1e));
+      local_18 = extraout_D0_00;
       uVar3 = fit_log_residuals(param_1,param_2);
       uVar4 = uVar3 | uVar4;
       local_2c = local_28;
@@ -55912,11 +55923,11 @@ undefined4 holdover_limit_exceeded(float param_1)
    each fault bit at pll +0x11, the GPS receiver's status for bit 1
    loop.md's holdover stage */
 
-pll_hold_cause enter_holdover(void)
+uint enter_holdover(void)
 
 {
   int iVar1;
-  pll_hold_cause pVar2;
+  uint uVar2;
   uint8_t code;
   
   if (pll.stage != PLL_STAGE_HOLDOVER_RECOVERY) {
@@ -55934,7 +55945,7 @@ pll_hold_cause enter_holdover(void)
   pll.stage = PLL_STAGE_HOLDOVER;
   if (pll.holdover_duration != 0) {
     pll.stage = PLL_STAGE_HOLDOVER;
-    return pll.hold_causes & HOLD_CAUSE_MANUAL;
+    return pll.hold_causes & 0xffffff01;
   }
   if ((pll.hold_causes & HOLD_CAUSE_MANUAL) !=
       ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
@@ -56019,8 +56030,8 @@ override_jmp_000439f2_case_1:
     }
   }
 LAB_00043a88:
-  pVar2 = log_event(code);
-  return pVar2;
+  uVar2 = log_event(code);
+  return uVar2;
 }
 
 
@@ -60652,55 +60663,55 @@ void satellite_sets_build(uint8_t *param_1,uint *param_2)
 {
   uint8_t id;
   byte bVar1;
-  char cVar2;
   char cVar3;
-  uint8_t *puVar4;
-  int iVar5;
+  char cVar4;
+  int iVar2;
+  uint8_t *puVar5;
   uint32_t *mask;
   
   memset(param_2,0,0x2a);
-  cVar2 = visible_satellites((int)param_2 + 0x26,param_2);
-  cVar3 = satellites_in_use((int)param_2 + 0x27,param_2 + 10,param_2 + 1,param_2 + 3);
-  if ((cVar2 != '\0') && (puVar4 = param_1, cVar3 != '\0')) {
-    for (; puVar4 < param_1 + 0x18; puVar4 = puVar4 + 4) {
-      id = *puVar4;
-      cVar2 = satellite_id_valid(SATELLITE_GPS,id);
-      if (cVar2 == '\0') {
-        cVar2 = satellite_id_valid(SATELLITE_PSEUDOLITE,id);
-        if ((cVar2 != '\0') &&
+  cVar3 = visible_satellites((int)param_2 + 0x26,param_2);
+  cVar4 = satellites_in_use((int)param_2 + 0x27,param_2 + 10,param_2 + 1,param_2 + 3);
+  if ((cVar3 != '\0') && (puVar5 = param_1, cVar4 != '\0')) {
+    for (; puVar5 < param_1 + 0x18; puVar5 = puVar5 + 4) {
+      id = *puVar5;
+      iVar2 = satellite_id_valid(SATELLITE_GPS,id);
+      if ((char)iVar2 == '\0') {
+        iVar2 = satellite_id_valid(SATELLITE_PSEUDOLITE,id);
+        if (((char)iVar2 != '\0') &&
            (satellite_add_to_set(SATELLITE_PSEUDOLITE,id,(uint32_t *)((int)param_2 + 0xd)),
-           '\0' < (char)puVar4[1])) {
-          if ((char)puVar4[1] < '\x05') {
+           '\0' < (char)puVar5[1])) {
+          if ((char)puVar5[1] < '\x05') {
             mask = (uint32_t *)((int)param_2 + 0x23);
           }
-          else if ((char)puVar4[1] < '\a') {
+          else if ((char)puVar5[1] < '\a') {
             mask = param_2 + 9;
           }
           else {
             mask = (uint32_t *)((int)param_2 + 0x25);
           }
-          iVar5 = CONCAT13(1,(uint3)id << 8);
+          iVar2 = CONCAT13(1,(uint3)id << 8);
           goto LAB_00049570;
         }
       }
       else {
         satellite_add_to_set(SATELLITE_GPS,id,param_2 + 2);
-        if ('\0' < (char)puVar4[1]) {
-          if ((char)puVar4[1] < '\x05') {
+        if ('\0' < (char)puVar5[1]) {
+          if ((char)puVar5[1] < '\x05') {
             mask = (uint32_t *)((int)param_2 + 0x16);
-            iVar5 = (uint)id << 8;
+            iVar2 = (uint)id << 8;
           }
-          else if ((char)puVar4[1] < '\a') {
+          else if ((char)puVar5[1] < '\a') {
             mask = (uint32_t *)((int)param_2 + 0x1a);
-            iVar5 = (uint)id << 8;
+            iVar2 = (uint)id << 8;
           }
           else {
             mask = (uint32_t *)((int)param_2 + 0x1e);
-            iVar5 = (uint)id << 8;
+            iVar2 = (uint)id << 8;
           }
 LAB_00049570:
           satellite_add_to_set
-                    ((satellite_kind)((uint)iVar5 >> 0x18),(uint8_t)((uint)iVar5 >> 8),mask);
+                    ((satellite_kind)((uint)iVar2 >> 0x18),(uint8_t)((uint)iVar2 >> 8),mask);
         }
       }
     }
@@ -60727,7 +60738,7 @@ LAB_00049570:
 /* WARNING: Unknown calling convention */
 /* bit prn - 1 of a mask, or prn - 0x21 for the second kind */
 
-undefined4 satellite_in_set(satellite_kind kind,uint8_t id,uint32_t mask)
+int satellite_in_set(satellite_kind kind,uint8_t id,uint32_t mask)
 
 {
   if (id != 0) {
@@ -60807,53 +60818,54 @@ void satellite_elevation_azimuth(int param_1,undefined1 *param_2)
 void satellite_status(char param_1,byte param_2,int param_3,int param_4,undefined1 *param_5)
 
 {
-  char cVar2;
-  undefined4 uVar1;
+  int iVar1;
+  undefined4 uVar2;
+  char cVar3;
   
-  cVar2 = satellite_id_valid(SATELLITE_ANY,param_2);
-  if (cVar2 == '\0') {
+  iVar1 = satellite_id_valid(SATELLITE_ANY,param_2);
+  if ((char)iVar1 == '\0') {
     *param_5 = 0;
     return;
   }
   if (param_2 < 0x21) {
-    uVar1 = satellite_find(param_2,param_4);
+    uVar2 = satellite_find(param_2,param_4);
   }
   else {
-    uVar1 = 0;
+    uVar2 = 0;
   }
   if (param_1 != '\x01') {
-    cVar2 = satellite_track_class(uVar1);
-    if (cVar2 == '\x03') {
+    cVar3 = satellite_track_class(uVar2);
+    if (cVar3 == '\x03') {
       *param_5 = 3;
       return;
     }
-    if (cVar2 == '\x02') {
+    if (cVar3 == '\x02') {
       *param_5 = 4;
       return;
     }
-    cVar2 = satellite_in_set(SATELLITE_GPS,param_2,*(uint32_t *)(param_3 + 0x16));
-    if ((cVar2 != '\0') ||
-       (cVar2 = satellite_in_set(SATELLITE_PSEUDOLITE,param_2,(uint)*(byte *)(param_3 + 0x23)),
-       cVar2 != '\0')) {
+    iVar1 = satellite_in_set(SATELLITE_GPS,param_2,*(uint32_t *)(param_3 + 0x16));
+    if (((char)iVar1 != '\0') ||
+       (iVar1 = satellite_in_set(SATELLITE_PSEUDOLITE,param_2,(uint)*(byte *)(param_3 + 0x23)),
+       (char)iVar1 != '\0')) {
       *param_5 = 5;
       return;
     }
-    cVar2 = satellite_in_set(SATELLITE_GPS,param_2,*(uint32_t *)(param_3 + 0x1a));
-    if ((cVar2 != '\0') ||
-       (cVar2 = satellite_in_set(SATELLITE_PSEUDOLITE,param_2,(uint)*(byte *)(param_3 + 0x24)),
-       cVar2 != '\0')) {
+    iVar1 = satellite_in_set(SATELLITE_GPS,param_2,*(uint32_t *)(param_3 + 0x1a));
+    if (((char)iVar1 != '\0') ||
+       (iVar1 = satellite_in_set(SATELLITE_PSEUDOLITE,param_2,(uint)*(byte *)(param_3 + 0x24)),
+       (char)iVar1 != '\0')) {
       *param_5 = 6;
       return;
     }
-    cVar2 = satellite_in_set(SATELLITE_GPS,param_2,*(uint32_t *)(param_3 + 0x1e));
-    if ((cVar2 != '\0') ||
-       (cVar2 = satellite_in_set(SATELLITE_PSEUDOLITE,param_2,(uint)*(byte *)(param_3 + 0x25)),
-       cVar2 != '\0')) {
+    iVar1 = satellite_in_set(SATELLITE_GPS,param_2,*(uint32_t *)(param_3 + 0x1e));
+    if (((char)iVar1 != '\0') ||
+       (iVar1 = satellite_in_set(SATELLITE_PSEUDOLITE,param_2,(uint)*(byte *)(param_3 + 0x25)),
+       (char)iVar1 != '\0')) {
       *param_5 = 7;
       return;
     }
   }
-  satellite_elevation_azimuth((char)uVar1,param_5);
+  satellite_elevation_azimuth((char)uVar2,param_5);
   return;
 }
 
@@ -60896,20 +60908,21 @@ uint8_t * satellite_status_list
 {
   undefined3 uVar1;
   undefined3 extraout_var;
-  byte bVar4;
+  byte bVar5;
   uint uVar2;
-  char cVar5;
   char cVar6;
-  uint8_t uVar7;
-  uint8_t *puVar3;
-  short sVar8;
+  char cVar7;
+  int iVar3;
+  uint8_t uVar8;
+  uint8_t *puVar4;
+  short sVar9;
   uint8_t id;
-  byte bVar9;
-  uint8_t *puVar10;
+  byte bVar10;
   uint8_t *puVar11;
-  undefined4 *puVar12;
-  undefined1 *puVar13;
-  bool bVar14;
+  uint8_t *puVar12;
+  undefined4 *puVar13;
+  undefined1 *puVar14;
+  bool bVar15;
   uint local_2e;
   uint8_t local_2a [24];
   char local_12;
@@ -60917,56 +60930,56 @@ uint8_t * satellite_status_list
   undefined4 uStack_c;
   undefined4 uStack_8;
   
-  puVar3 = param_6 + (uint)param_2 * 8;
-  sVar8 = 7;
-  puVar12 = &uStack_c;
-  puVar13 = &DAT_0004e016;
+  puVar4 = param_6 + (uint)param_2 * 8;
+  sVar9 = 7;
+  puVar13 = &uStack_c;
+  puVar14 = &DAT_0004e016;
   do {
-    *(undefined1 *)puVar12 = *puVar13;
-    sVar8 = sVar8 + -1;
-    puVar12 = (undefined4 *)((int)puVar12 + 1);
-    puVar13 = puVar13 + 1;
-  } while (sVar8 != -1);
-  local_10 = puVar3;
+    *(undefined1 *)puVar13 = *puVar14;
+    sVar9 = sVar9 + -1;
+    puVar13 = (undefined4 *)((int)puVar13 + 1);
+    puVar14 = puVar14 + 1;
+  } while (sVar9 != -1);
+  local_10 = puVar4;
   if (param_1 == '\x01') {
     local_2e = *(uint *)(param_3 + 4);
-    bVar9 = *(byte *)(param_3 + 0xc);
+    bVar10 = *(byte *)(param_3 + 0xc);
   }
   else {
     local_2e = *(uint *)(param_3 + 0xe);
-    bVar9 = *(byte *)(param_3 + 0x22);
-    bVar4 = count_bits(bVar9);
-    uVar2 = (uint)bVar4;
-    bVar4 = count_bits();
-    puVar3 = (uint8_t *)(uVar2 + bVar4);
-    if (0xc < (int)puVar3) {
+    bVar10 = *(byte *)(param_3 + 0x22);
+    bVar5 = count_bits(bVar10);
+    uVar2 = (uint)bVar5;
+    bVar5 = count_bits();
+    puVar4 = (uint8_t *)(uVar2 + bVar5);
+    if (0xc < (int)puVar4) {
       local_2e = *(uint *)(param_3 + 8) & local_2e;
-      puVar11 = local_2a;
-      for (puVar3 = (uint8_t *)(param_5 + 4);
-          puVar3 < (uint8_t *)(param_5 + (uint)*(byte *)(param_5 + 2) * 10 + 4);
-          puVar3 = puVar3 + 10) {
-        cVar6 = satellite_in_set(SATELLITE_GPS,*puVar3,local_2e);
-        puVar10 = puVar11;
-        if (cVar6 == '\0') {
-          *puVar11 = *puVar3;
-          puVar10 = puVar11 + 2;
-          puVar11[1] = puVar3[4];
+      puVar12 = local_2a;
+      for (puVar4 = (uint8_t *)(param_5 + 4);
+          puVar4 < (uint8_t *)(param_5 + (uint)*(byte *)(param_5 + 2) * 10 + 4);
+          puVar4 = puVar4 + 10) {
+        iVar3 = satellite_in_set(SATELLITE_GPS,*puVar4,local_2e);
+        puVar11 = puVar12;
+        if ((char)iVar3 == '\0') {
+          *puVar12 = *puVar4;
+          puVar11 = puVar12 + 2;
+          puVar12[1] = puVar4[4];
         }
-        puVar11 = puVar10;
+        puVar12 = puVar11;
       }
-      qsort(local_2a,(int)puVar11 - (int)local_2a >> 1,2,satellite_compare);
-      cVar6 = count_bits(bVar9);
-      cVar5 = count_bits();
-      local_12 = '\f' - (cVar6 + cVar5);
+      qsort(local_2a,(int)puVar12 - (int)local_2a >> 1,2,satellite_compare);
+      cVar6 = count_bits(bVar10);
+      cVar7 = count_bits();
+      local_12 = '\f' - (cVar6 + cVar7);
       uVar1 = 0;
       while( true ) {
-        puVar3 = (uint8_t *)CONCAT31(uVar1,local_12);
+        puVar4 = (uint8_t *)CONCAT31(uVar1,local_12);
         cVar6 = local_12 + -1;
-        bVar14 = local_12 == '\0';
+        bVar15 = local_12 == '\0';
         local_12 = cVar6;
-        if (bVar14) break;
-        puVar11 = puVar11 + -2;
-        satellite_add_to_set(SATELLITE_GPS,*puVar11,&local_2e);
+        if (bVar15) break;
+        puVar12 = puVar12 + -2;
+        satellite_add_to_set(SATELLITE_GPS,*puVar12,&local_2e);
         uVar1 = extraout_var;
       }
     }
@@ -60974,42 +60987,42 @@ uint8_t * satellite_status_list
   *param_7 = '\0';
   id = 1;
   do {
-    if ((local_10 <= param_6) || ((local_2e == 0 && (bVar9 == 0)))) {
+    if ((local_10 <= param_6) || ((local_2e == 0 && (bVar10 == 0)))) {
       for (; param_6 < local_10; param_6 = param_6 + 8) {
         *(undefined4 *)param_6 = uStack_c;
         *(undefined4 *)(param_6 + 4) = uStack_8;
       }
-      return puVar3;
+      return puVar4;
     }
     if (id == 0x21) {
-      local_2e = (uint)bVar9;
-      bVar9 = 0;
+      local_2e = (uint)bVar10;
+      bVar10 = 0;
     }
-    puVar3 = (uint8_t *)0x0;
+    puVar4 = (uint8_t *)0x0;
     if ((local_2e & 1) != 0) {
       *param_6 = id;
-      puVar3 = param_4;
+      puVar4 = param_4;
       if (param_1 == '\x01') {
-        for (; puVar3 < param_4 + 0x18; puVar3 = puVar3 + 4) {
-          if (id == *puVar3) {
-            *(ushort *)(param_6 + 2) = (ushort)puVar3[2];
+        for (; puVar4 < param_4 + 0x18; puVar4 = puVar4 + 4) {
+          if (id == *puVar4) {
+            *(ushort *)(param_6 + 2) = (ushort)puVar4[2];
             break;
           }
         }
       }
       else {
-        cVar6 = satellite_in_set(SATELLITE_GPS,id,*(uint32_t *)(param_3 + 0x12));
-        if ((cVar6 == '\0') &&
-           (cVar6 = satellite_in_set(SATELLITE_PSEUDOLITE,id,(uint)*(byte *)(param_3 + 0x22)),
-           cVar6 == '\0')) {
-          uVar7 = 0;
+        iVar3 = satellite_in_set(SATELLITE_GPS,id,*(uint32_t *)(param_3 + 0x12));
+        if (((char)iVar3 == '\0') &&
+           (iVar3 = satellite_in_set(SATELLITE_PSEUDOLITE,id,(uint)*(byte *)(param_3 + 0x22)),
+           (char)iVar3 == '\0')) {
+          uVar8 = 0;
         }
         else {
-          uVar7 = 1;
+          uVar8 = 1;
         }
-        param_6[1] = uVar7;
+        param_6[1] = uVar8;
       }
-      puVar3 = (uint8_t *)satellite_status(param_1,id,param_3,param_5,param_6 + 4);
+      puVar4 = (uint8_t *)satellite_status(param_1,id,param_3,param_5,param_6 + 4);
       *param_7 = *param_7 + '\x01';
       param_6 = param_6 + 8;
     }
@@ -64829,7 +64842,7 @@ LAB_0004f0c4:
 /* WARNING: Unknown calling convention */
 /* kind 0 accepts 1 to 32, kind 1 33 to 37, the VP reference's pseudolites, kind 2 either */
 
-undefined4 satellite_id_valid(satellite_kind kind,uint8_t id)
+int satellite_id_valid(satellite_kind kind,uint8_t id)
 
 {
   int iVar1;
@@ -64869,12 +64882,12 @@ uint8_t channel_position_satellite(byte param_1)
 
 {
   oncore_channel_status *poVar1;
-  char cVar2;
+  int iVar2;
   
   poVar1 = gps.status.channels + (param_1 - 1);
   if ((gps.status_received != 0) &&
-     (((cVar2 = satellite_id_valid(SATELLITE_GPS,poVar1->satellite), cVar2 != '\0' ||
-       (cVar2 = satellite_id_valid(SATELLITE_PSEUDOLITE,poVar1->satellite), cVar2 != '\0')) &&
+     (((iVar2 = satellite_id_valid(SATELLITE_GPS,poVar1->satellite), (char)iVar2 != '\0' ||
+       (iVar2 = satellite_id_valid(SATELLITE_PSEUDOLITE,poVar1->satellite), (char)iVar2 != '\0')) &&
       (gps.status.channels[param_1 - 1].mode == ONCORE_AVAILABLE_FOR_POSITION)))) {
     return poVar1->satellite;
   }
@@ -64970,15 +64983,15 @@ undefined4 visible_satellites(undefined1 *param_1,uint32_t *param_2)
 
 {
   uint8_t id;
-  char cVar2;
+  int iVar1;
   byte bVar3;
   undefined1 uVar4;
-  undefined4 uVar1;
+  undefined4 uVar2;
   byte bVar5;
   uint32_t local_8;
   
   if (gps.visibility_received == 0) {
-    uVar1 = 0;
+    uVar2 = 0;
   }
   else {
     bVar5 = 0;
@@ -64989,8 +65002,8 @@ undefined4 visible_satellites(undefined1 *param_1,uint32_t *param_2)
     }
     for (; bVar5 < bVar3; bVar5 = bVar5 + 1) {
       id = gps.visibility.satellites[bVar5].satellite;
-      cVar2 = satellite_id_valid(SATELLITE_GPS,id);
-      if (cVar2 != '\0') {
+      iVar1 = satellite_id_valid(SATELLITE_GPS,id);
+      if ((char)iVar1 != '\0') {
         satellite_add_to_set(SATELLITE_GPS,id,&local_8);
       }
     }
@@ -64999,9 +65012,9 @@ undefined4 visible_satellites(undefined1 *param_1,uint32_t *param_2)
     if (param_2 != (uint32_t *)0x0) {
       *param_2 = local_8;
     }
-    uVar1 = 1;
+    uVar2 = 1;
   }
-  return uVar1;
+  return uVar2;
 }
 
 
@@ -80074,22 +80087,20 @@ __asm__(
    psos.md */
 
 /* out D7 char error */
-__regcall ushort installer_kernel_service_18(void)
+__regcall void installer_kernel_service_18(void)
 
 {
   int iVar1;
-  byte bVar2;
-  ushort uVar3;
-  ushort uVar4;
-  char cVar5;
+  undefined2 extraout_D0w;
+  undefined2 uVar2;
+  char cVar3;
+  byte bVar4;
   char extraout_D1b;
-  ushort extraout_D1w;
-  ushort extraout_D1w_00;
-  char cVar6;
+  char cVar5;
+  int iVar6;
   int iVar7;
   int iVar8;
   int iVar9;
-  int iVar10;
   int in_A0;
   int extraout_A0;
   int extraout_A0_00;
@@ -80097,71 +80108,68 @@ __regcall ushort installer_kernel_service_18(void)
   int extraout_A0_02;
   int extraout_A1;
   int extraout_A1_00;
-  int *piVar11;
+  int *piVar10;
   int *unaff_A3;
   undefined4 *unaff_A6;
-  bool bVar12;
+  bool bVar11;
   
-  bVar12 = true;
-  uVar3 = installer_kernel_check_exchange(in_A0,(void *)*unaff_A6);
-  if ((bVar12) && (*(int *)(extraout_A1 + 4) == 0)) {
-    iVar7 = *(int *)(extraout_A0 + 4);
+  bVar11 = true;
+  installer_kernel_check_exchange(in_A0,(void *)*unaff_A6);
+  if ((bVar11) && (*(int *)(extraout_A1 + 4) == 0)) {
+    iVar6 = *(int *)(extraout_A0 + 4);
     *(int *)extraout_A0 = extraout_A0;
     *(int *)(extraout_A0 + 4) = extraout_A0;
-    uVar4 = uVar3;
-    uVar3 = 0;
-    iVar8 = extraout_A0;
-    while (iVar8 != iVar7) {
-      if ('\0' < *(char *)(iVar7 + 0x12)) {
+    bVar4 = 0;
+    uVar2 = extraout_D0w;
+    iVar7 = extraout_A0;
+    while (iVar7 != iVar6) {
+      if ('\0' < *(char *)(iVar6 + 0x12)) {
         installer_kernel_timer_unlink();
       }
-      iVar1 = *(int *)(iVar7 + 4);
-      uVar4 = installer_kernel_make_ready();
-      unaff_A3 = *(int **)(iVar7 + 0x72);
-      iVar7 = *(int *)(extraout_A1_00 + 8);
-      iVar8 = *(int *)(extraout_A1_00 + 0xc);
-      iVar9 = *(int *)(extraout_A1_00 + 0x10);
-      iVar10 = *(int *)(extraout_A1_00 + 0x14);
+      iVar1 = *(int *)(iVar6 + 4);
+      uVar2 = installer_kernel_make_ready();
+      unaff_A3 = *(int **)(iVar6 + 0x72);
+      iVar6 = *(int *)(extraout_A1_00 + 8);
+      iVar7 = *(int *)(extraout_A1_00 + 0xc);
+      iVar8 = *(int *)(extraout_A1_00 + 0x10);
+      iVar9 = *(int *)(extraout_A1_00 + 0x14);
       unaff_A3[1] = *(int *)(extraout_A1_00 + 4);
-      unaff_A3[2] = iVar7;
-      unaff_A3[3] = iVar8;
-      unaff_A3[4] = iVar9;
-      unaff_A3[5] = iVar10;
-      uVar3 = (ushort)(byte)(extraout_D1b + 1);
-      iVar8 = extraout_A0_00;
-      iVar7 = iVar1;
+      unaff_A3[2] = iVar6;
+      unaff_A3[3] = iVar7;
+      unaff_A3[4] = iVar8;
+      unaff_A3[5] = iVar9;
+      bVar4 = extraout_D1b + 1;
+      iVar7 = extraout_A0_00;
+      iVar6 = iVar1;
     }
-    cVar6 = (byte)uVar4 - (byte)uVar3;
-    if ((byte)uVar3 <= (byte)uVar4 && cVar6 != '\0') {
-      bVar12 = cVar6 == '\0';
-      cVar5 = installer_kernel_copy_message();
-      uVar3 = extraout_D1w;
-      iVar7 = extraout_A0_01;
-      if (bVar12) {
+    cVar5 = (byte)uVar2 - bVar4;
+    if (bVar4 <= (byte)uVar2 && cVar5 != '\0') {
+      bVar11 = cVar5 == '\0';
+      cVar3 = installer_kernel_copy_message();
+      iVar6 = extraout_A0_01;
+      if (bVar11) {
         while( true ) {
-          cVar6 = cVar6 + -1;
-          bVar12 = cVar6 == '\0';
-          if (bVar12) break;
-          cVar5 = installer_kernel_copy_message();
-          uVar3 = extraout_D1w_00;
-          if (!bVar12) goto LAB_installer__00101f7c;
+          cVar5 = cVar5 + -1;
+          bVar11 = cVar5 == '\0';
+          if (bVar11) break;
+          cVar3 = installer_kernel_copy_message();
+          if (!bVar11) goto LAB_installer__00101f7c;
           *unaff_A3 = (int)unaff_A3;
-          iVar7 = extraout_A0_02;
+          iVar6 = extraout_A0_02;
         }
-        bVar2 = cVar5 + *(char *)(iVar7 + 0x21);
-        if ((*(char *)(iVar7 + 0x12) == '\0') || (bVar2 <= *(byte *)(iVar7 + 0x20))) {
-          *(byte *)(iVar7 + 0x21) = bVar2;
-          piVar11 = *(int **)(iVar7 + 0xc);
-          if (piVar11 == (int *)0x0) {
-            piVar11 = (int *)(iVar7 + 8);
+        bVar4 = cVar3 + *(char *)(iVar6 + 0x21);
+        if ((*(char *)(iVar6 + 0x12) == '\0') || (bVar4 <= *(byte *)(iVar6 + 0x20))) {
+          *(byte *)(iVar6 + 0x21) = bVar4;
+          piVar10 = *(int **)(iVar6 + 0xc);
+          if (piVar10 == (int *)0x0) {
+            piVar10 = (int *)(iVar6 + 8);
           }
-          iVar8 = *piVar11;
-          *unaff_A3 = iVar8;
-          if (iVar8 == 0) {
-            *(int **)(iVar7 + 0xc) = unaff_A3;
+          iVar7 = *piVar10;
+          *unaff_A3 = iVar7;
+          if (iVar7 == 0) {
+            *(int **)(iVar6 + 0xc) = unaff_A3;
           }
-          *piVar11 = (int)unaff_A3;
-          uVar3 = (ushort)(byte)((char)uVar3 + cVar5);
+          *piVar10 = (int)unaff_A3;
         }
         else {
 LAB_installer__00101f7c:
@@ -80171,7 +80179,7 @@ LAB_installer__00101f7c:
       }
     }
   }
-  return uVar3;
+  return;
 }
 
 
@@ -80868,6 +80876,8 @@ __regcall void installer_kernel_request_x(void)
   int *running;
   int *piVar1;
   undefined4 *puVar2;
+  undefined4 extraout_D0;
+  undefined4 extraout_D1;
   int iVar3;
   int iVar4;
   int iVar5;
@@ -80887,7 +80897,8 @@ __regcall void installer_kernel_request_x(void)
   
   running = (int *)*unaff_A6;
   bVar11 = true;
-  uVar12 = installer_kernel_check_exchange(in_A0,running);
+  installer_kernel_check_exchange(in_A0,running);
+  uVar12 = CONCAT44(extraout_D0,extraout_D1);
   piVar8 = extraout_A0;
   iVar9 = extraout_A1;
   if (bVar11) {

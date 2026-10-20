@@ -185,3 +185,97 @@ Ghidra resolves the table address of this compiler's switch idiom,
 late.  The table starts at the `jmp`'s base, and offsets are taken
 from there.  Case bodies reached only through such a table stay
 undisassembled until disassembly is forced at the resolved targets.
+
+## Decompiling with Ghidra
+
+Four GhidraScripts in `tools/ghidra/` take an image imported raw at
+address zero as `68000:BE:32:CPU32` to C, under `analyzeHeadless
+-postScript` or ghidra-mcp's `run_ghidra_script`.  Each is safe to run
+again.  In order:
+
+1. `SmartClockSetup.java`.
+2. `SmartClockInstaller.java RECORDS ENTRY`: `0xbbc 0x10135c` for the
+   Z3801A 3543 and Z3805A 3543B (`restart.md`, "Forced installer entry
+   with an unusable primary").
+3. `SmartClockSetup.java` again, now over the installer too, with
+   `names=tools/ghidra/names/IMAGE.tsv`, `scpi=FILE` from
+   `smartclock-cli dump-scpi --handlers IMAGE` and
+   `pforth=docs/firmware/pforth/IMAGE.txt`.
+4. `SmartClockStackParameters.java`.
+5. `SmartClockExportC.java FILE`.
+
+**Setup** makes the ROM read-only, so values loaded from it fold to
+constants; maps RAM, the DUART, EEPROM, the CS4 and CS5 ranges and the
+GPT, SIM and QSM, the I/O ones volatile; labels the on-chip registers
+from MC68331UM Tables D-2, D-3 and D-13 and the DUART's; types both
+vector tables, the boot one at `0x0` and the primary's at `0x10000`,
+and makes a function at each handler; and types the string tables,
+removing the code analysis decoded in them (a 0x61, `a`, is a `bsr`, so
+code begun in a string "calls" on through the table).
+
+It recovers the switches.  The bound check before a table is a `cmpi`,
+`cmpa`, `subq` or `subi` and a `bhi`.  After `subq #k` or `subi #k`
+the index runs from -k to 0, so the `move.w` displacement points 2k
+bytes into the table: the "twelve bytes late" above.  Analysis types
+its late copy of the table over the case bodies and decodes code from
+the wrong cases.  Starting from the real cases and following their
+flow, the script clears what overlaps each real instruction and
+disassembles it, rebuilds the owning function's body and records the
+targets as a decompiler jump-table override.
+
+It ends flow at the two instructions that do not come back, by pointing
+each one's fall-through at itself, which the C shows as a loop with a
+comment: `stop`, which ends failure paths, and `trap #5`, which ends
+every interrupt handler in the primary and the installer in place of
+`rte` -- the pSOS kernel's return from interrupt, read from those
+handlers rather than documented.  It clears word and long data at odd
+addresses, which the 68000 cannot read, and resumes flow such data or
+stray code blocked, clearing only what is in no function.  It removes
+unnamed functions made in data: one at an odd address, or one whose
+own code reaches an odd address or bytes that do not decode, that no
+function calls.  It does this in one pass, since removing one function
+leaves its callees looking stray; `dry-run` reports them and removes
+nothing, and more than 20 is refused as a rule gone wrong.
+
+Names come from what the project has established, and a name replaces
+only one Ghidra made up.  `names/IMAGE.tsv` holds those the notes give
+for that image, each row citing its note: the float library
+(`softfloat.md`), the interval's routine and cells (`interval.md`), the
+SCPI task and the installer's entry (`restart.md`), the console's hook
+(`console.md`).  An address a note gives only for another image is not
+carried over.  SCPI handlers are named `scpi_query_PATH` and
+`scpi_set_PATH`, console words `forth_WORD` and `diag_WORD`.  A table
+vouches that its entries are code, so the script disassembles each,
+and splits a function whose body ran into it.
+
+**Installer** unpacks the records the boot code copies to RAM, after
+its vector table, into an overlay named `installer`, writable so that
+cells the installer changes do not fold, and makes a function at its
+entry and at each vector's handler.  Boot code calls into plain RAM,
+which the overlay does not serve, so each installer function is also
+labeled at its plain address, and the boot code's jump into the
+installer is marked a call.  The decompiler names a call by a function,
+not a label, so that call still reads `func_0x0010135c`.
+
+**StackParameters** repairs functions the decompiler rejects with
+"Cannot properly adjust input varnodes".  This compiler pushes a char
+or short argument in a 2-byte slot, while Ghidra's 68000 compiler spec
+assumes 4-byte slots and infers overlapping inputs.  Each such function
+gets the stack inputs the decompiler reports once it has no
+parameters, in custom storage at their real offsets.
+
+**ExportC** writes every function's C, in address order.
+
+In the Z3805A 3543B image this gives 1752 functions, 1448 of them before
+the names, and every one decompiles.  137 switches are recovered;
+`0x24ff2` and `0x25140`, a `jmp (d8,PC,D6.w)` with no table load, are
+not.  About half the functions are named.  The output is
+`third_party/firmware/decompiled/z3805a-3543b.c`.
+
+The project is kept as `third_party/firmware/ghidra/smartclock.gar`,
+a Ghidra archive: restore it (File, Restore Project, or ghidra-mcp's
+`restore_project`) to work on it, and archive it over that file after
+work worth keeping.  The scripts rebuild everything in it from the
+image but names given by hand.  An exception in a script does not roll
+back what it did, so save the program before each script that changes
+it.

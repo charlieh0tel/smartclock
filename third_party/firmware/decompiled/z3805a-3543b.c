@@ -3474,40 +3474,40 @@ klok_entry * FUN_00010540(undefined4 *param_1)
 
 {
   klok_entry **ppkVar1;
-  int iVar2;
-  klok_entry *pkVar3;
-  uint32_t *puVar4;
+  uint param2;
+  klok_entry *pkVar2;
+  uint32_t *puVar3;
   char acStack_54 [80];
   
-  iVar2 = mutex_lock(&klok_mutex);
-  pkVar3 = klok_free;
-  if (iVar2 == 0) {
+  param2 = mutex_lock(&klok_mutex);
+  pkVar2 = klok_free;
+  if (param2 == 0) {
     if (klok_free == (klok_entry *)0x0) {
       task_dmessage("Clk_do: out of event buffers");
       log_event(0x19);
-      pkVar3 = (klok_entry *)0x0;
+      pkVar2 = (klok_entry *)0x0;
     }
     else {
-      puVar4 = &klok_free->time;
+      puVar3 = &klok_free->time;
       ppkVar1 = &klok_free->next;
       klok_free = klok_free->next;
       *ppkVar1 = (klok_entry *)*param_1;
-      *puVar4 = param_1[1];
-      pkVar3->date = param_1[2];
-      pkVar3->period_time = param_1[3];
-      pkVar3->period_date = param_1[4];
-      pkVar3->function = (void *)param_1[5];
-      pkVar3->event_class = *(int16_t *)(param_1 + 6);
-      FUN_00010c34(0x22,pkVar3);
+      *puVar3 = param_1[1];
+      pkVar2->date = param_1[2];
+      pkVar2->period_time = param_1[3];
+      pkVar2->period_date = param_1[4];
+      pkVar2->function = (void *)param_1[5];
+      pkVar2->event_class = *(int16_t *)(param_1 + 6);
+      FUN_00010c34(0x22,pkVar2);
     }
     mutex_unlock(&klok_mutex);
   }
   else {
-    debug_sprintf(acStack_54,"Clk_do: error %#04x\r\n",0x7c,iVar2);
+    debug_sprintf(acStack_54,"Clk_do: error %#04x\r\n",param2);
     task_dmessage(acStack_54);
-    pkVar3 = (klok_entry *)0x0;
+    pkVar2 = (klok_entry *)0x0;
   }
-  return pkVar3;
+  return pkVar2;
 }
 
 
@@ -3691,7 +3691,7 @@ void klok_print_entries(void)
         uVar2 = pkVar4->period_time;
         debug_printf("period:\t%02d/%02d/%04d\t%2d:%2d:%2d\r\n",uVar1 >> 8 & 0xff,uVar1 & 0xff,
                      uVar1 >> 0x10,uVar2 >> 0x10 & 0xff,uVar2 >> 8 & 0xff,uVar2 & 0xff);
-        debug_printf("function address:\t%8X\r\n",pkVar4->function);
+        debug_printf("function address:\t%8X\r\n",(uint)pkVar4->function);
         debug_printf("event class:\t%d\r\n",(int)pkVar4->event_class);
       }
     }
@@ -3770,48 +3770,48 @@ uint FUN_000109ae(ulong param_1)
 
 {
   ulong uVar1;
-  uint uVar2;
-  klok_entry *pkVar3;
+  uint param2;
+  klok_entry *pkVar2;
   char acStack_54 [80];
   
   uVar1 = psos_ident("klok",(ulong *)0x0,(uchar *)0x0);
-  uVar2 = (uint)((char)uVar1 == '\0');
-  if (uVar2 == 0) {
-    uVar2 = pps_init();
-    if (uVar2 != 0) {
-      debug_sprintf(acStack_54,"Pps_init error %#04x\r\n",uVar2);
+  param2 = (uint)((char)uVar1 == '\0');
+  if (param2 == 0) {
+    param2 = pps_init();
+    if (param2 != 0) {
+      debug_sprintf(acStack_54,"Pps_init error %#04x\r\n",param2);
       task_dmessage(acStack_54);
     }
   }
-  if (uVar2 == 0) {
+  if (param2 == 0) {
     psos_service_31(_DAT_00101d04,0,0);
     klok_entries = (klok_entry *)0x0;
     klok_free = klok_pool;
-    for (pkVar3 = klok_pool; pkVar3 < (klok_entry *)0x1037ac; pkVar3 = pkVar3 + 1) {
-      pkVar3->period_date = 0;
-      pkVar3->date = 0;
-      pkVar3->period_time = 0;
-      pkVar3->time = 0;
-      pkVar3->next = pkVar3 + 1;
+    for (pkVar2 = klok_pool; pkVar2 < (klok_entry *)0x1037ac; pkVar2 = pkVar2 + 1) {
+      pkVar2->period_date = 0;
+      pkVar2->date = 0;
+      pkVar2->period_time = 0;
+      pkVar2->time = 0;
+      pkVar2->next = pkVar2 + 1;
     }
-    pkVar3[-1].next = (klok_entry *)0x0;
+    pkVar2[-1].next = (klok_entry *)0x0;
   }
-  if (uVar2 == 0) {
+  if (param2 == 0) {
     uVar1 = psos_create("klok",0,param_1,0x100,0x10,(void *)0x0,(ulong *)&task_klok);
-    uVar2 = uVar1 & 0xff;
+    param2 = uVar1 & 0xff;
   }
-  if (uVar2 == 0) {
+  if (param2 == 0) {
     uVar1 = psos_start(_task_klok,&LAB_00010b1e);
-    uVar2 = uVar1 & 0xff;
+    param2 = uVar1 & 0xff;
   }
-  if (uVar2 == 0) {
-    uVar2 = FUN_000104e6("klok",&klok_mutex);
+  if (param2 == 0) {
+    param2 = FUN_000104e6("klok",&klok_mutex);
   }
   else {
-    debug_sprintf(acStack_54,"Clk_go error %#04x\r\n",uVar2);
+    debug_sprintf(acStack_54,"Clk_go error %#04x\r\n",param2);
   }
   task_dmessage(acStack_54);
-  return uVar2;
+  return param2;
 }
 
 
@@ -5719,10 +5719,10 @@ void FUN_000132f4(undefined4 param_1)
 
 {
   int iVar1;
-  undefined4 local_64;
-  undefined4 local_60;
-  undefined4 local_5c;
-  undefined4 local_58;
+  uint local_64;
+  uint local_60;
+  uint local_5c;
+  uint local_58;
   char acStack_54 [80];
   
   iVar1 = FUN_0001321a(param_1,&local_64);
@@ -6471,16 +6471,14 @@ uint timecode_update(void)
   uint32_t uVar1;
   uint32_t uVar2;
   uint uVar3;
-  byte bVar9;
-  char cVar10;
+  byte bVar5;
+  char cVar6;
+  uint param3;
   int iVar4;
-  int iVar5;
-  int iVar6;
-  uint uVar7;
-  int iVar8;
-  char cVar11;
-  char cVar12;
-  char *pcVar13;
+  uchar param10;
+  uchar param12;
+  uchar param11;
+  char *pcVar7;
   undefined4 local_10;
   undefined4 uStack_c;
   byte local_8;
@@ -6494,29 +6492,29 @@ uint timecode_update(void)
   }
   if (tcode_pending != 0) {
     tcode_length = 0;
-    bVar9 = tfom_code(pll.tfom);
+    bVar5 = tfom_code(pll.tfom);
     get_ffom(&local_8);
     if (leap_pending == 0) {
-      cVar11 = '0';
+      param10 = '0';
     }
     else if (_leap_minute_length == 0x3b) {
-      cVar11 = '-';
+      param10 = '-';
     }
     else {
-      cVar11 = '+';
+      param10 = '+';
     }
     if (status_request_service == 0) {
-      cVar12 = '0';
+      param11 = '0';
     }
     else {
-      cVar12 = '1';
+      param11 = '1';
     }
-    cVar10 = time_valid();
-    if (cVar10 == '\0') {
-      cVar10 = '1';
+    cVar6 = time_valid();
+    if (cVar6 == '\0') {
+      param12 = '1';
     }
     else {
-      cVar10 = '0';
+      param12 = '0';
     }
     uVar3 = (int)(char)tcode_format - 2;
     if ((uint)(int)(char)tcode_format < 2 || uVar3 == 0) {
@@ -6525,23 +6523,21 @@ uint timecode_update(void)
       case 6:
         uVar1 = get_gps_date();
         uVar2 = get_gps_time();
-        iVar4 = (int)cVar10;
-        iVar5 = (int)cVar12;
-        iVar6 = (int)cVar11;
         uVar3 = (uint)local_8;
-        uVar7 = (uint)bVar9;
-        iVar8 = gps_seconds(uVar1,uVar2);
-        sprintf(tcode_message,"T1#H%08X%01d%01d%1c%1c%1c",iVar8 + 1,uVar7,uVar3,iVar6,iVar5,iVar4);
-        bVar9 = tcode_checksum(tcode_message);
-        sprintf(acStack_7,"%02X",(uint)bVar9);
+        param3 = (uint)bVar5;
+        iVar4 = gps_seconds(uVar1,uVar2);
+        sprintf(tcode_message,"T1#H%08X%01d%01d%1c%1c%1c",iVar4 + 1,param3,uVar3,param10,param11,
+                param12);
+        bVar5 = tcode_checksum(tcode_message);
+        sprintf(acStack_7,"%02X",(uint)bVar5);
         strcat(tcode_message,acStack_7);
         uVar3 = 0xffffffff;
-        pcVar13 = tcode_message;
+        pcVar7 = tcode_message;
         do {
           uVar3 = uVar3 + 1;
-          cVar11 = *pcVar13;
-          pcVar13 = pcVar13 + 1;
-        } while (cVar11 != '\0');
+          cVar6 = *pcVar7;
+          pcVar7 = pcVar7 + 1;
+        } while (cVar6 != '\0');
         tcode_length = (uint8_t)uVar3;
         break;
       case 0x8e:
@@ -6551,24 +6547,24 @@ uint timecode_update(void)
         if (tcode_format == 1) {
           sprintf(tcode_message,"rtcm? %u,T2%04d%02d%02d%02d%02d%02d%01d%01d%1c%1c%1c",0xffffffff,
                   (uint)local_10._0_2_,(uint)local_10._2_1_,local_10 & 0xff,(uint)uStack_c._1_1_,
-                  (uint)uStack_c._2_1_,uStack_c & 0xff,(uint)bVar9,(uint)local_8,(int)cVar11,
-                  (int)cVar12,(int)cVar10);
+                  (uint)uStack_c._2_1_,uStack_c & 0xff,(uint)bVar5,(uint)local_8,param10,param11,
+                  param12);
         }
         else {
           sprintf(tcode_message,"T2%04d%02d%02d%02d%02d%02d%01d%01d%1c%1c%1c",(uint)local_10._0_2_,
                   (uint)local_10._2_1_,local_10 & 0xff,(uint)uStack_c._1_1_,(uint)uStack_c._2_1_,
-                  uStack_c & 0xff,(uint)bVar9,(uint)local_8,(int)cVar11,(int)cVar12,(int)cVar10);
+                  uStack_c & 0xff,(uint)bVar5,(uint)local_8,param10,param11,param12);
         }
-        bVar9 = tcode_checksum(tcode_message);
-        sprintf(acStack_7,"%02X",(uint)bVar9);
+        bVar5 = tcode_checksum(tcode_message);
+        sprintf(acStack_7,"%02X",(uint)bVar5);
         strcat(tcode_message,acStack_7);
         uVar3 = 0xffffffff;
-        pcVar13 = tcode_message;
+        pcVar7 = tcode_message;
         do {
           uVar3 = uVar3 + 1;
-          cVar11 = *pcVar13;
-          pcVar13 = pcVar13 + 1;
-        } while (cVar11 != '\0');
+          cVar6 = *pcVar7;
+          pcVar7 = pcVar7 + 1;
+        } while (cVar6 != '\0');
         tcode_length = (uint8_t)uVar3;
       }
     }
@@ -10040,18 +10036,18 @@ undefined4 FUN_00016a20(uint param_1)
 void os_process_report(undefined1 param_1)
 
 {
-  printf("%s",&DAT_000512e6);
+  printf("%s","\r\n");
   printf("%s","=================================================================\r\n");
-  printf("%s",&DAT_000512e6);
+  printf("%s","\r\n");
   FUN_0001606c(printf);
   _task_count = FUN_00016540();
-  printf("%s",&DAT_000512e6);
+  printf("%s","\r\n");
   FUN_0001675a(printf);
   FUN_0001660a(printf);
-  printf("%s",&DAT_000512e6);
+  printf("%s","\r\n");
   FUN_0001665e(printf);
   FUN_000166b0(printf);
-  printf("%s",&DAT_000512e6);
+  printf("%s","\r\n");
   FUN_00016828(printf);
   printf("%s","=================================================================\r\n");
   return;
@@ -10072,10 +10068,10 @@ void os_memory_report(undefined1 param_1)
   undefined4 *puVar4;
   code *pcVar5;
   
-  printf("%s",&DAT_000512e6);
+  printf("%s","\r\n");
   printf("%s","=================================================================\r\n");
   _task_count = FUN_00016540();
-  printf("%s",&DAT_000512e6);
+  printf("%s","\r\n");
   printf("%s","Process  Memseg size(bytes)     next        last    neighbor   key\r\n");
   for (iVar2 = 0; iVar2 < _task_count; iVar2 = iVar2 + 1) {
     task = *(void **)(&task_table + iVar2 * 6);
@@ -10098,7 +10094,7 @@ void os_memory_report(undefined1 param_1)
     }
     iVar2 = iVar2 + 1;
   } while (iVar2 < 2);
-  printf("%s",&DAT_000512e6);
+  printf("%s","\r\n");
   FUN_00016828(printf);
   printf("%s","=================================================================\r\n");
   return;
@@ -10146,88 +10142,88 @@ void task_stack_report(undefined1 param_1)
 
 {
   void *task;
-  uint uVar1;
-  char *pcVar2;
+  uint param5;
+  char *param2;
   uint unaff_D2;
-  ushort uVar3;
-  short sVar4;
+  ushort uVar1;
+  short sVar2;
+  short *param6;
+  short *psVar3;
+  short *psVar4;
+  uint param4;
   short *psVar5;
-  short *psVar6;
-  short *psVar7;
-  int iVar8;
-  short *psVar9;
-  uint uVar10;
-  uint uVar11;
+  uint param7;
+  uint param8;
   uint local_1c;
   uint local_18;
-  int local_14;
-  int local_10;
+  uint local_14;
+  uint local_10;
   short *local_c;
   short *local_8;
   
-  printf("%s",&DAT_000512e6);
+  printf("%s","\r\n");
   printf("%s","=================================================================\r\n");
-  printf("%s",&DAT_000512e6);
+  printf("%s","\r\n");
   _task_count = FUN_00016540();
   printf("%s","    pid   name     USP   size            SSP   size\r\n");
-  for (sVar4 = 0; uVar3 = (ushort)unaff_D2, sVar4 < _task_count; sVar4 = sVar4 + 1) {
-    task = *(void **)(&task_table + sVar4 * 6);
+  for (sVar2 = 0; uVar1 = (ushort)unaff_D2, sVar2 < _task_count; sVar2 = sVar2 + 1) {
+    task = *(void **)(&task_table + sVar2 * 6);
     FUN_00016bb6(task,&local_14,&local_8,&local_18,&local_10,&local_c,&local_1c);
     if ((local_18 != 0) || (local_1c != 0)) {
-      uVar3 = 0;
+      uVar1 = 0;
       unaff_D2 = 0;
       if (local_18 != 0) {
-        psVar6 = (short *)(local_14 - local_18);
+        psVar3 = (short *)(local_14 - local_18);
         do {
-          psVar9 = psVar6 + 1;
-          if (local_8 <= psVar6) goto LAB_00016d16;
-          psVar6 = psVar9;
-        } while (*psVar9 == -0x5433);
-        uVar3 = (ushort)((uint)((local_14 - (int)psVar9) * 100) / local_18);
+          psVar5 = psVar3 + 1;
+          if (local_8 <= psVar3) goto LAB_00016d16;
+          psVar3 = psVar5;
+        } while (*psVar5 == -0x5433);
+        uVar1 = (ushort)(((local_14 - (int)psVar5) * 100) / local_18);
       }
 LAB_00016d16:
       if (local_1c != 0) {
-        psVar6 = (short *)(local_10 - local_1c);
+        psVar3 = (short *)(local_10 - local_1c);
         do {
-          psVar9 = psVar6 + 1;
-          if (local_c <= psVar6) goto LAB_00016d52;
-          psVar6 = psVar9;
-        } while (*psVar9 == -0x5433);
-        unaff_D2 = (uint)((local_10 - (int)psVar9) * 100) / local_1c & 0xffff;
+          psVar5 = psVar3 + 1;
+          if (local_c <= psVar3) goto LAB_00016d52;
+          psVar3 = psVar5;
+        } while (*psVar5 == -0x5433);
+        unaff_D2 = ((local_10 - (int)psVar5) * 100) / local_1c & 0xffff;
       }
 LAB_00016d52:
-      uVar1 = (uint)uVar3;
-      iVar8 = local_18 + 4;
-      psVar6 = local_8;
-      psVar9 = local_c;
-      uVar10 = local_1c;
-      uVar11 = unaff_D2;
-      pcVar2 = task_name(task);
-      printf("$%08X %4s $%08X $%-5X %3u%% $%08X $%-5X %3u%%\r\n",task,pcVar2,psVar6,iVar8,uVar1,
-             psVar9,uVar10,uVar11);
+      param5 = (uint)uVar1;
+      param4 = local_18 + 4;
+      psVar3 = local_8;
+      psVar5 = local_c;
+      param7 = local_1c;
+      param8 = unaff_D2;
+      param2 = task_name(task);
+      printf("$%08X %4s $%08X $%-5X %3u%% $%08X $%-5X %3u%%\r\n",(uint)task,param2,(uint)psVar3,
+             param4,param5,(uint)psVar5,param7,param8);
       printf("               $%08X (TOS)       $%08X (TOS)\r\n",local_14,local_10);
     }
   }
   local_1c = psos_supervisor_stack_size;
   if (psos_supervisor_stack_size != 0) {
-    psVar5 = (short *)(psos_config + 200);
-    psVar6 = (short *)(psos_supervisor_stack_size + (int)psVar5);
-    psVar9 = psVar5;
+    param6 = (short *)(psos_config + 200);
+    psVar3 = (short *)(psos_supervisor_stack_size + (int)param6);
+    psVar5 = param6;
     do {
-      psVar7 = psVar9;
-      if (psVar6 <= psVar7) goto LAB_00016dfc;
-      psVar9 = psVar7 + 1;
-    } while (*psVar7 == 0);
-    uVar3 = 100 - (short)((uint)(((int)psVar7 - (int)psVar5) * 100) /
+      psVar4 = psVar5;
+      if (psVar3 <= psVar4) goto LAB_00016dfc;
+      psVar5 = psVar4 + 1;
+    } while (*psVar4 == 0);
+    uVar1 = 100 - (short)((uint)(((int)psVar4 - (int)param6) * 100) /
                          (uint)psos_supervisor_stack_size);
 LAB_00016dfc:
     printf("\r\n>> pSOS system supervisor stack:\r\n");
-    printf("$%08X %4s $%08X $%-5X %3u%% $%08X $%-5X %3u%%\r\n",0,"pSOS",0,0,0,psVar5,local_1c,
-           (uint)uVar3);
-    printf("               $%08X (TOS)       $%08X (TOS)\r\n",0,psVar6);
+    printf("$%08X %4s $%08X $%-5X %3u%% $%08X $%-5X %3u%%\r\n",0,"pSOS",0,0,0,(uint)param6,local_1c,
+           (uint)uVar1);
+    printf("               $%08X (TOS)       $%08X (TOS)\r\n",0,(uint)psVar3);
   }
-  printf("%s",&DAT_000512e6);
-  printf("%s",&DAT_000512e6);
+  printf("%s","\r\n");
+  printf("%s","\r\n");
   printf("%s","=================================================================\r\n");
   return;
 }
@@ -11128,8 +11124,8 @@ void FUN_000179ac(char param_1)
 {
   int iVar1;
   char cVar2;
-  undefined1 auStack_64 [19];
-  undefined1 auStack_51 [17];
+  char acStack_64 [19];
+  char acStack_51 [17];
   char acStack_40 [60];
   
   if (param_1 == '\x01') {
@@ -11142,11 +11138,11 @@ void FUN_000179ac(char param_1)
   if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c26 != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      FUN_00018396(_DAT_00100c28,(short)auStack_51,0x10);
-      sprintf(acStack_40,"%s %s","System RAM: D15-D0:",auStack_51);
+      FUN_00018396(_DAT_00100c28,(short)acStack_51,0x10);
+      sprintf(acStack_40,"%s %s","System RAM: D15-D0:",acStack_51);
       FUN_0001833c((uint)(_DAT_00100c26 & 1),acStack_40,'\0');
-      FUN_00018396(_DAT_00100c2a,auStack_64,0x12);
-      sprintf(acStack_40,"%s %s","System RAM: adr line A18-A1:",auStack_64);
+      FUN_00018396(_DAT_00100c2a,acStack_64,0x12);
+      sprintf(acStack_40,"%s %s","System RAM: adr line A18-A1:",acStack_64);
       FUN_0001833c((uint)(_DAT_00100c26 & 2),acStack_40,'\0');
     }
   }
@@ -11176,7 +11172,7 @@ void FUN_00017a96(char param_1)
   if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c24 != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      sprintf(acStack_40,"%s",0x7e);
+      sprintf(acStack_40,"%s","CPU:");
       FUN_0001833c((uint)(_DAT_00100c24 & 1),acStack_40,'\0');
     }
   }
@@ -11206,7 +11202,7 @@ void FUN_00017b16(char param_1)
   if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c34 != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      sprintf(acStack_40,"%s",0x83);
+      sprintf(acStack_40,"%s","EEPROM:");
       FUN_0001833c((uint)(_DAT_00100c34 & 1),acStack_40,'\0');
     }
   }
@@ -11461,7 +11457,7 @@ char debug_is_enabled(void)
 
 /* WARNING: Unknown calling convention */
 
-void FUN_0001833c(int param_1,undefined4 param_2,char param_3)
+void FUN_0001833c(int param_1,char *param_2,char param_3)
 
 {
   int iVar1;
@@ -11471,7 +11467,7 @@ void FUN_0001833c(int param_1,undefined4 param_2,char param_3)
   if (param_1 != 0) {
     iVar1 = FUN_000183ce();
     if (iVar1 == 0) {
-      sprintf(acStack_54,"%s %s",param_2,&DAT_00018496);
+      sprintf(acStack_54,"%s %s",param_2,"FAIL");
       if (param_3 == '\0') {
         format = "%s\r\n";
       }
@@ -11649,32 +11645,32 @@ void FUN_00018600(char param_1)
 
 {
   char cVar1;
-  int iVar2;
+  uint param2;
+  char *pcVar2;
   char *pcVar3;
-  char *pcVar4;
-  undefined **ppuVar5;
+  undefined **ppuVar4;
   char acStack_12 [14];
   
-  ppuVar5 = &PTR_FUN_000186b0;
+  ppuVar4 = &PTR_FUN_000186b0;
   DAT_00100c58 = '\x01';
   if (param_1 != '\0') {
     _DAT_00100c34 = 0;
   }
   DAT_00100c43 = 1;
-  for (; *ppuVar5 != (undefined *)0x0; ppuVar5 = ppuVar5 + 2) {
-    iVar2 = (*(code *)*ppuVar5)();
-    if (iVar2 != 0) {
+  for (; *ppuVar4 != (undefined *)0x0; ppuVar4 = ppuVar4 + 2) {
+    param2 = (*(code *)*ppuVar4)();
+    if (param2 != 0) {
       DAT_00100c58 = '\0';
-      pcVar3 = "FAIL: ";
-      pcVar4 = acStack_12;
+      pcVar2 = "FAIL: ";
+      pcVar3 = acStack_12;
       do {
-        cVar1 = *pcVar3;
-        *pcVar4 = cVar1;
+        cVar1 = *pcVar2;
+        *pcVar3 = cVar1;
+        pcVar2 = pcVar2 + 1;
         pcVar3 = pcVar3 + 1;
-        pcVar4 = pcVar4 + 1;
       } while (cVar1 != '\0');
-      strcat(acStack_12,ppuVar5[1]);
-      debug_printf("%s, error code: %02X\r\n",acStack_12,iVar2);
+      strcat(acStack_12,ppuVar4[1]);
+      debug_printf("%s, error code: %02X\r\n",acStack_12,param2);
     }
     watchdog_pll = watchdog_pll + 1;
   }
@@ -15819,11 +15815,11 @@ void diag_adc_temp(void)
 
 {
   float f;
-  double dVar1;
+  double param1;
   
   f = read_adc_temp();
-  dVar1 = float_to_double(f);
-  printf("Temperature: %f\r\n",dVar1);
+  param1 = float_to_double(f);
+  printf("Temperature: %f\r\n",param1);
   return;
 }
 
@@ -15834,11 +15830,11 @@ void diag_adc_5v(void)
 
 {
   float f;
-  double dVar1;
+  double param1;
   
   f = read_adc_5v();
-  dVar1 = float_to_double(f);
-  printf("5V reading: %f\r\n",dVar1);
+  param1 = float_to_double(f);
+  printf("5V reading: %f\r\n",param1);
   return;
 }
 
@@ -15849,11 +15845,11 @@ void diag_adc_p15v(void)
 
 {
   float f;
-  double dVar1;
+  double param1;
   
   f = read_adc_p15v();
-  dVar1 = float_to_double(f);
-  printf("+15V reading: %f\r\n",dVar1);
+  param1 = float_to_double(f);
+  printf("+15V reading: %f\r\n",param1);
   return;
 }
 
@@ -15864,11 +15860,11 @@ void diag_adc_m15v(void)
 
 {
   float f;
-  double dVar1;
+  double param1;
   
   f = read_adc_m15v();
-  dVar1 = float_to_double(f);
-  printf("-15V reading: %f\r\n",dVar1);
+  param1 = float_to_double(f);
+  printf("-15V reading: %f\r\n",param1);
   return;
 }
 
@@ -15879,11 +15875,11 @@ void diag_adc_oven(void)
 
 {
   float f;
-  double dVar1;
+  double param1;
   
   f = read_adc_oven();
-  dVar1 = float_to_double(f);
-  printf("Oven: %f\r\n",dVar1);
+  param1 = float_to_double(f);
+  printf("Oven: %f\r\n",param1);
   return;
 }
 
@@ -15894,11 +15890,11 @@ void diag_adc_doven(void)
 
 {
   float f;
-  double dVar1;
+  double param1;
   
   f = read_adc_doven();
-  dVar1 = float_to_double(f);
-  printf("Double oven: %f\r\n",dVar1);
+  param1 = float_to_double(f);
+  printf("Double oven: %f\r\n",param1);
   return;
 }
 
@@ -15909,11 +15905,11 @@ void diag_adc_ant_curr(void)
 
 {
   float f;
-  double dVar1;
+  double param1;
   
   f = read_adc_ant_curr();
-  dVar1 = float_to_double(f);
-  printf("Antenna current: %f\r\n",dVar1);
+  param1 = float_to_double(f);
+  printf("Antenna current: %f\r\n",param1);
   return;
 }
 
@@ -16056,14 +16052,15 @@ void diag_loop_time(int param_1)
 void diag_pll_rep(void)
 
 {
+  int param1;
   float f;
   double dVar1;
   byte local_6 [2];
   
   printf("start ptr = %d    stop_ptr = %d\r\n",(uint)pll.efc_history.start_ptr,
          (uint)pll.efc_history.stop_ptr);
-  float_to_integer(max_loop_time);
-  printf("max loop time = %d\r\n");
+  param1 = float_to_integer(max_loop_time);
+  printf("max loop time = %d\r\n",param1);
   get_ffom(local_6);
   printf("ffom = %1d\r\n",(uint)local_6[0]);
   dVar1 = float_to_double(pll.tfom);
@@ -16082,19 +16079,19 @@ void diag_pll_rep(void)
 void diag_efc_rep(void)
 
 {
-  uint uVar1;
-  int iVar2;
-  double dVar3;
-  double dVar4;
+  uint param3;
+  int iVar1;
+  double param2;
+  double param1;
   
-  iVar2 = 0;
+  iVar1 = 0;
   do {
-    uVar1 = (uint)pll.efc_history.weights[iVar2];
-    dVar3 = float_to_double(pll.efc_history.averages[iVar2]);
-    dVar4 = float_to_double(pll.efc_history.times[iVar2]);
-    printf("%f %.1f %d\r\n",dVar4,dVar3,uVar1);
-    iVar2 = iVar2 + 1;
-  } while (iVar2 < 0x40);
+    param3 = (uint)pll.efc_history.weights[iVar1];
+    param2 = float_to_double(pll.efc_history.averages[iVar1]);
+    param1 = float_to_double(pll.efc_history.times[iVar1]);
+    printf("%f %.1f %d\r\n",param1,param2,param3);
+    iVar1 = iVar1 + 1;
+  } while (iVar1 < 0x40);
   return;
 }
 
@@ -16603,10 +16600,10 @@ void diag_efc_wr(uint param_1)
 void diag_pr_efc(void)
 
 {
-  double dVar1;
+  double param1;
   
-  dVar1 = float_to_double(pll.efc);
-  printf("efc = %5f\r\n",dVar1);
+  param1 = float_to_double(pll.efc);
+  printf("efc = %5f\r\n",param1);
   return;
 }
 
@@ -17410,17 +17407,19 @@ void diag_cal(uint param_1)
   float fVar1;
   ushort uVar3;
   float fVar4;
+  int iVar5;
   undefined4 extraout_A0;
   undefined4 extraout_A0_00;
   undefined4 extraout_A1;
   undefined4 extraout_A1_00;
-  double dVar5;
   double dVar6;
   undefined4 uVar7;
-  undefined2 uVar8;
-  undefined1 uVar9;
-  char cVar10;
-  undefined1 uVar11;
+  undefined4 uVar8;
+  undefined2 uVar9;
+  undefined2 uVar10;
+  undefined2 uVar11;
+  undefined1 uVar12;
+  undefined1 uVar13;
   undefined4 uStack_24;
   undefined4 uStack_20;
   undefined4 uStack_1c;
@@ -17443,50 +17442,57 @@ void diag_cal(uint param_1)
     bVar2 = adc_read(3);
     f = pll.efc;
     i = (uint)bVar2;
-    dVar5 = integer_to_double(i);
-    double_add_in_place((double *)&uStack_24,dVar5);
-    dVar5 = float_to_double(f);
-    double_add_in_place((double *)&uStack_1c,dVar5);
+    dVar6 = integer_to_double(i);
+    double_add_in_place((double *)&uStack_24,dVar6);
+    dVar6 = float_to_double(f);
+    double_add_in_place((double *)&uStack_1c,dVar6);
     fVar1 = unsigned_to_float((uint)(ushort)bVar2);
     fVar1 = float_multiply(fVar1,f);
-    dVar5 = float_to_double(fVar1);
-    double_add_in_place((double *)&uStack_14,dVar5);
-    dVar5 = integer_to_double(i * i);
-    double_add_in_place((double *)&uStack_c,dVar5);
+    dVar6 = float_to_double(fVar1);
+    double_add_in_place((double *)&uStack_14,dVar6);
+    dVar6 = integer_to_double(i * i);
+    double_add_in_place((double *)&uStack_c,dVar6);
     fVar4 = float_add(fVar4,1.0);
-    cVar10 = (char)param_1 - (char)uVar3;
-    dVar5 = float_to_double(f);
-    printf("curr= %d efc= %.1f, sec remaining= %d\r\n",(uint)(ushort)bVar2,
-           (int)((ulonglong)dVar5 >> 0x20),SUB82(dVar5,0),cVar10);
+    iVar5 = param_1 - uVar3;
+    uVar9 = (undefined2)((uint)iVar5 >> 0x10);
+    uVar12 = (undefined1)((uint)iVar5 >> 8);
+    uVar13 = (undefined1)iVar5;
+    dVar6 = float_to_double(f);
+    printf("curr= %d efc= %.1f, sec remaining= %d\r\n",(uint)(ushort)bVar2,dVar6,
+           CONCAT31(CONCAT21(uVar9,uVar12),uVar13));
     psos_pause(10000);
   }
   printf("now do a least square line fit to data...\r\n");
-  dVar5 = float_to_double(fVar4);
-  dVar5 = double_multiply_pointer(dVar5,(double *)&uStack_14);
-  uVar8 = (undefined2)((ulonglong)dVar5 >> 0x10);
-  uVar9 = (undefined1)((ulonglong)dVar5 >> 8);
-  uVar11 = SUB81(dVar5,0);
+  dVar6 = float_to_double(fVar4);
+  dVar6 = double_multiply_pointer(dVar6,(double *)&uStack_14);
+  uVar9 = (undefined2)((ulonglong)dVar6 >> 0x30);
+  uVar10 = (undefined2)((ulonglong)dVar6 >> 0x20);
+  uVar11 = (undefined2)((ulonglong)dVar6 >> 0x10);
+  uVar12 = (undefined1)((ulonglong)dVar6 >> 8);
+  uVar13 = SUB81(dVar6,0);
   double_multiply_pointers((double *)&uStack_1c,(double *)&uStack_24);
-  dVar5 = double_subtract_reversed
-                    ((double)CONCAT71(CONCAT61(CONCAT42((int)((ulonglong)dVar5 >> 0x20),uVar8),uVar9
-                                              ),uVar11),(double)CONCAT44(extraout_A0,extraout_A1));
-  uVar8 = (undefined2)((ulonglong)dVar5 >> 0x10);
-  uVar9 = (undefined1)((ulonglong)dVar5 >> 8);
-  uVar11 = SUB81(dVar5,0);
+  dVar6 = double_subtract_reversed
+                    ((double)CONCAT71(CONCAT61(CONCAT42(CONCAT22(uVar9,uVar10),uVar11),uVar12),
+                                      uVar13),(double)CONCAT44(extraout_A0,extraout_A1));
+  uVar9 = (undefined2)((ulonglong)dVar6 >> 0x30);
+  uVar10 = (undefined2)((ulonglong)dVar6 >> 0x20);
+  uVar11 = (undefined2)((ulonglong)dVar6 >> 0x10);
+  uVar12 = (undefined1)((ulonglong)dVar6 >> 8);
+  uVar13 = SUB81(dVar6,0);
   dVar6 = float_to_double(fVar4);
   dVar6 = double_multiply_pointer(dVar6,(double *)&uStack_c);
-  uVar7 = SUB84(dVar6,0);
+  uVar7 = (undefined4)((ulonglong)dVar6 >> 0x20);
+  uVar8 = SUB84(dVar6,0);
   double_multiply_pointers((double *)&uStack_24,(double *)&uStack_24);
   dVar6 = double_subtract_reversed
-                    ((double)CONCAT44((int)((ulonglong)dVar6 >> 0x20),uVar7),
-                     (double)CONCAT44(extraout_A0_00,extraout_A1_00));
-  dVar5 = double_divide_reversed
-                    (dVar6,(double)CONCAT71(CONCAT61(CONCAT42((int)((ulonglong)dVar5 >> 0x20),uVar8)
-                                                     ,uVar9),uVar11));
-  fVar4 = double_to_float(dVar5);
+                    ((double)CONCAT44(uVar7,uVar8),(double)CONCAT44(extraout_A0_00,extraout_A1_00));
+  dVar6 = double_divide_reversed
+                    (dVar6,(double)CONCAT71(CONCAT61(CONCAT42(CONCAT22(uVar9,uVar10),uVar11),uVar12)
+                                            ,uVar13));
+  fVar4 = double_to_float(dVar6);
   fVar4 = float_multiply(fVar4,0.98039216);
-  dVar5 = float_to_double(fVar4);
-  printf("tempco = %f\r\n",(short)((ulonglong)dVar5 >> 0x20),SUB81(dVar5,0));
+  dVar6 = float_to_double(fVar4);
+  printf("tempco = %f\r\n",dVar6);
   return;
 }
 
@@ -17555,15 +17561,15 @@ void diag_fp_u(void)
 
 {
   float f;
-  double dVar1;
-  double dVar2;
-  double dVar3;
+  double param3;
+  double param2;
+  double param1;
   
   f = float_multiply(1e-20,2e-20);
-  dVar1 = float_to_double(f);
-  dVar2 = float_to_double(2e-20);
-  dVar3 = float_to_double(1e-20);
-  printf("%.1f * %.1f = %.1f\r\n",dVar3,dVar2,dVar1);
+  param3 = float_to_double(f);
+  param2 = float_to_double(2e-20);
+  param1 = float_to_double(1e-20);
+  printf("%.1f * %.1f = %.1f\r\n",param1,param2,param3);
   return;
 }
 
@@ -17933,7 +17939,7 @@ undefined8 duart_init(void)
   }
   uVar2 = psos_create_x("drtR",0,0,(ulong *)&drtR_exchange);
   if ((char)uVar2 != '\0') {
-    sprintf(acStack_64,"Unable to create drtR: %X",(char)uVar2);
+    sprintf(acStack_64,"Unable to create drtR: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
   _drtR_status = 0;
@@ -17942,12 +17948,12 @@ undefined8 duart_init(void)
   _DAT_00103116 = 0;
   uVar2 = psos_send_x(drtR_exchange,&drtR_status);
   if ((char)uVar2 != '\0') {
-    sprintf(acStack_64,"Unable to initialize drtR: %X",(char)uVar2);
+    sprintf(acStack_64,"Unable to initialize drtR: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
   uVar2 = psos_create_x("drtW",0,0,(ulong *)&drtW_exchange);
   if ((char)uVar2 != '\0') {
-    sprintf(acStack_64,"Unable to create drtW: %X",(char)uVar2);
+    sprintf(acStack_64,"Unable to create drtW: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
   _drtW_status = 0;
@@ -17956,7 +17962,7 @@ undefined8 duart_init(void)
   _DAT_0010312e = 0;
   uVar2 = psos_send_x(drtW_exchange,&drtW_status);
   if ((char)uVar2 != '\0') {
-    sprintf(acStack_64,"Unable to initialize drtW: %X",(char)uVar2);
+    sprintf(acStack_64,"Unable to initialize drtW: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
   _DAT_00102fe0 = &DAT_0001ed2c;
@@ -18962,7 +18968,7 @@ void FUN_0001ecae(void)
 
 /* 0001eefc */
 
-void FUN_0001eefc(char *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4)
+void FUN_0001eefc(char *param_1,undefined4 param_2,undefined4 param_3,uint param_4)
 
 {
   char acStack_68 [100];
@@ -19045,7 +19051,7 @@ void task_debug_message(char *message)
 
 {
   ulong uVar1;
-  char *pcVar2;
+  char *param1;
   void *local_a;
   uchar auStack_6 [2];
   
@@ -19054,8 +19060,8 @@ void task_debug_message(char *message)
     if ((uVar1 & 0xff) != 0) {
       fatal_error("dmessage");
     }
-    pcVar2 = task_name(local_a);
-    debug_printf("%s: %s",pcVar2,message);
+    param1 = task_name(local_a);
+    debug_printf("%s: %s",param1,message);
   }
   return;
 }
@@ -19070,7 +19076,7 @@ void task_dmessage(char *message)
 {
   bool bVar1;
   ulong uVar2;
-  char *pcVar3;
+  char *param1;
   void *local_a;
   uchar auStack_6 [2];
   
@@ -19091,8 +19097,8 @@ void task_dmessage(char *message)
       bVar1 = true;
     }
     if (bVar1) {
-      pcVar3 = task_name(local_a);
-      debug_printf("%s: %s",pcVar3,message);
+      param1 = task_name(local_a);
+      debug_printf("%s: %s",param1,message);
     }
   }
   return;
@@ -19109,6 +19115,7 @@ void fatal_error(char *message)
   char *pcVar3;
   uint uVar4;
   undefined2 uVar5;
+  undefined2 uVar6;
   void *local_8;
   
   strncpy(&crash_message,message,0x50);
@@ -19129,9 +19136,10 @@ void fatal_error(char *message)
         strcat(&crash_message,pcVar3);
       }
       if (debug_enabled != '\0') {
-        uVar5 = 0xf252;
+        uVar5 = 1;
+        uVar6 = 0xf252;
         pcVar3 = task_name(local_8);
-        printf_polled("%s: %s",(short)pcVar3,uVar5);
+        printf_polled("%s: %s",pcVar3,(char *)CONCAT22(uVar5,uVar6));
         printf_polled("%s\r\nRESET to recover.\r\n",message);
         psos_pause(10);
       }
@@ -19770,30 +19778,30 @@ undefined8 sci_unlock(void)
 
 {
   undefined4 in_D0;
+  ulong param2;
   ulong uVar1;
-  ulong uVar2;
   undefined4 in_D1;
   undefined *message;
   char acStack_64 [80];
   
   if ((char)in_D0 == '\x01') {
     message = &sciW_status;
-    uVar2 = sciW_exchange;
+    uVar1 = sciW_exchange;
   }
   else {
     message = &sciR_status;
-    uVar2 = sciR_exchange;
+    uVar1 = sciR_exchange;
   }
-  uVar1 = psos_my_pid();
-  if (uVar1 == *(ulong *)(message + 8)) {
+  param2 = psos_my_pid();
+  if (param2 == *(ulong *)(message + 8)) {
     if (*(int *)(message + 0xc) == 0) {
       *(undefined4 *)(message + 8) = 0;
-      if (uVar2 != *(ulong *)(message + 4)) {
+      if (uVar1 != *(ulong *)(message + 4)) {
         fatal_error("SCI semaphore has been corrupted.");
       }
-      uVar2 = psos_send_x(uVar2,message);
-      if ((uVar2 & 0xff) != 0) {
-        sprintf(acStack_64,"Unable to release SCI token: %X",uVar2 & 0xff);
+      uVar1 = psos_send_x(uVar1,message);
+      if ((uVar1 & 0xff) != 0) {
+        sprintf(acStack_64,"Unable to release SCI token: %X",uVar1 & 0xff);
         fatal_error(acStack_64);
       }
     }
@@ -19805,7 +19813,7 @@ undefined8 sci_unlock(void)
     }
   }
   else {
-    sprintf(acStack_64,"sci_close and not owner (pid): %X",uVar1);
+    sprintf(acStack_64,"sci_close and not owner (pid): %X",param2);
     task_debug_message(acStack_64);
   }
   return CONCAT44(in_D0,in_D1);
@@ -19892,7 +19900,7 @@ undefined8 sci_init(void)
   wVar1 = SCDR;
   uVar2 = psos_create_x("sciR",0,0,(ulong *)&sciR_exchange);
   if ((uVar2 & 0xff) != 0) {
-    sprintf(acStack_64,"Unable to create sciR: %X",(char)uVar2);
+    sprintf(acStack_64,"Unable to create sciR: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
   _sciR_status = 0;
@@ -19901,12 +19909,12 @@ undefined8 sci_init(void)
   _DAT_00103160 = 0;
   uVar2 = psos_send_x(sciR_exchange,&sciR_status);
   if ((uVar2 & 0xff) != 0) {
-    sprintf(acStack_64,"Unable to initialize sciR: %X",(char)uVar2);
+    sprintf(acStack_64,"Unable to initialize sciR: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
   uVar2 = psos_create_x("sciW",0,0,(ulong *)&sciW_exchange);
   if ((uVar2 & 0xff) != 0) {
-    sprintf(acStack_64,"Unable to create sciW: %X",(char)uVar2);
+    sprintf(acStack_64,"Unable to create sciW: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
   _sciW_status = 0;
@@ -19915,7 +19923,7 @@ undefined8 sci_init(void)
   _DAT_0010317c = 0;
   uVar2 = psos_send_x(sciW_exchange,&sciW_status);
   if ((uVar2 & 0xff) != 0) {
-    sprintf(acStack_64,"Unable to initialize sciW: %X",(char)uVar2);
+    sprintf(acStack_64,"Unable to initialize sciW: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
   _DAT_0010328e = &DAT_00020336;
@@ -20662,31 +20670,31 @@ uint FUN_00020c96(ulong param_1)
 
 {
   ulong uVar1;
-  uint uVar2;
+  uint param2;
   char acStack_54 [80];
   
   uVar1 = psos_ident("spoo",(ulong *)0x0,(uchar *)0x0);
-  uVar2 = (uint)((char)uVar1 == '\0');
-  if (uVar2 == 0) {
+  param2 = (uint)((char)uVar1 == '\0');
+  if (param2 == 0) {
     uVar1 = psos_create_x("spoo",2,5,(ulong *)&spoo_exchange);
-    uVar2 = uVar1 & 0xff;
+    param2 = uVar1 & 0xff;
   }
-  if (uVar2 == 0) {
+  if (param2 == 0) {
     uVar1 = psos_create("spoo",0,param_1,0x600,0x10,(void *)0x0,(ulong *)&task_spoo);
-    uVar2 = uVar1 & 0xff;
+    param2 = uVar1 & 0xff;
   }
-  if (uVar2 == 0) {
+  if (param2 == 0) {
     uVar1 = psos_start(_task_spoo,FUN_00020e4e);
-    uVar2 = uVar1 & 0xff;
+    param2 = uVar1 & 0xff;
   }
-  if (uVar2 == 0) {
+  if (param2 == 0) {
     DAT_001032fc = 1;
   }
   else {
-    sprintf(acStack_54,"Spool_go error %#04x",uVar2);
+    sprintf(acStack_54,"Spool_go error %#04x",param2);
     fatal_error(acStack_54);
   }
-  return uVar2;
+  return param2;
 }
 
 
@@ -20778,15 +20786,15 @@ void FUN_00020e4e(void)
 void deferred_flush(void)
 
 {
-  int extraout_D0;
+  int iVar1;
   
   while( true ) {
     if (deferred_end <= deferred_start) {
       return;
     }
-    printf("%s\r\n",deferred_text + deferred_start);
-    if (extraout_D0 < 0) break;
-    deferred_start = (short)extraout_D0 + -1 + deferred_start;
+    iVar1 = printf("%s\r\n",deferred_text + deferred_start);
+    if (iVar1 < 0) break;
+    deferred_start = (short)iVar1 + -1 + deferred_start;
   }
   return;
 }
@@ -20978,13 +20986,13 @@ undefined1 FUN_00022da4(byte param_1,char param_2)
 bool FUN_00022fc6(byte *param_1,byte *param_2,char param_3)
 
 {
-  byte *pbVar1;
-  byte *pbVar2;
-  bool bVar3;
+  byte *param3;
+  byte *param2;
+  bool bVar1;
   int local_64;
-  short *local_60;
-  short *local_5c;
-  short local_58 [2];
+  ushort *local_60;
+  ushort *local_5c;
+  ushort local_58 [2];
   char acStack_54 [80];
   
   local_60 = local_58 + 1;
@@ -20996,63 +21004,63 @@ bool FUN_00022fc6(byte *param_1,byte *param_2,char param_3)
   else {
     qspi_read(0xc,&local_60,0xb);
   }
-  bVar3 = (*param_2 & (*param_1 ^ ~(byte)local_58[0])) == 0;
-  pbVar2 = param_1 + 1;
-  pbVar1 = param_2 + 1;
-  if (bVar3) {
-    for (local_64 = 0; (bVar3 != false && (local_64 < 5)); local_64 = local_64 + 1) {
+  bVar1 = (*param_2 & (*param_1 ^ ~(byte)local_58[0])) == 0;
+  param2 = param_1 + 1;
+  param3 = param_2 + 1;
+  if (bVar1) {
+    for (local_64 = 0; (bVar1 != false && (local_64 < 5)); local_64 = local_64 + 1) {
       if (param_3 == '\0') {
         qspi_transfer(0xc,&local_60,0x10);
       }
       else {
         qspi_read(0xc,&local_60,0x10);
       }
-      if ((*pbVar1 & (*pbVar2 ^ ~(byte)((ushort)local_58[0] >> 8))) != 0) {
-        bVar3 = false;
+      if ((*param3 & (*param2 ^ ~(byte)(local_58[0] >> 8))) != 0) {
+        bVar1 = false;
       }
-      if (bVar3 == false) {
-        debug_sprintf(acStack_54,"first: inv read: %04hX config: %02hX mask: %02hX\r\n",
-                      ~(byte)local_58[0],(ushort)*pbVar2,(ushort)*pbVar1);
+      if (bVar1 == false) {
+        debug_sprintf(acStack_54,"first: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58[0]
+                      ,(ushort)*param2,(ushort)*param3);
         debug_message(acStack_54,param_3);
       }
-      if ((pbVar1[1] & (pbVar2[1] ^ ~(byte)local_58[0])) != 0) {
-        bVar3 = false;
+      if ((param3[1] & (param2[1] ^ ~(byte)local_58[0])) != 0) {
+        bVar1 = false;
       }
-      if (bVar3 == false) {
-        debug_sprintf(acStack_54,"first: inv read: %04hX config: %02hX mask: %02hX\r\n",
-                      ~(byte)local_58[0],(ushort)pbVar2[1],(ushort)pbVar1[1]);
+      if (bVar1 == false) {
+        debug_sprintf(acStack_54,"first: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58[0]
+                      ,(ushort)param2[1],(ushort)param3[1]);
         debug_message(acStack_54,param_3);
       }
-      pbVar2 = pbVar2 + 2;
-      pbVar1 = pbVar1 + 2;
+      param2 = param2 + 2;
+      param3 = param3 + 2;
     }
   }
   else {
-    debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",
-                  ~(byte)local_58[0],(ushort)*param_1,(ushort)*param_2);
+    debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+                  (ushort)*param_1,(ushort)*param_2);
     debug_message(acStack_54,param_3);
-    pbVar1 = param_2 + 1;
-    pbVar2 = param_1 + 1;
+    param3 = param_2 + 1;
+    param2 = param_1 + 1;
   }
-  if (bVar3 != false) {
+  if (bVar1 != false) {
     if (param_3 == '\0') {
       qspi_transfer(0xc,&local_60,8);
     }
     else {
       qspi_read(0xc,&local_60,8);
     }
-    if ((*pbVar1 & (*pbVar2 ^ ~(byte)local_58[0])) != 0) {
-      bVar3 = false;
+    if ((*param3 & (*param2 ^ ~(byte)local_58[0])) != 0) {
+      bVar1 = false;
     }
-    if (bVar3 == false) {
-      debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",
-                    ~(byte)local_58[0],(ushort)*pbVar2,(ushort)*pbVar1);
+    if (bVar1 == false) {
+      debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+                    (ushort)*param2,(ushort)*param3);
       debug_message(acStack_54,param_3);
     }
-    pbVar2 = pbVar2 + 1;
-    pbVar1 = pbVar1 + 1;
+    param2 = param2 + 1;
+    param3 = param3 + 1;
   }
-  if (bVar3 != false) {
+  if (bVar1 != false) {
     if (param_3 == '\0') {
       qspi_transfer(0xc,&local_60,10);
     }
@@ -21060,31 +21068,31 @@ bool FUN_00022fc6(byte *param_1,byte *param_2,char param_3)
       qspi_read(0xc,&local_60,10);
     }
     local_58[0] = local_58[0] << 6;
-    if ((*pbVar1 & (*pbVar2 ^ ~(byte)((ushort)local_58[0] >> 8))) != 0) {
-      bVar3 = false;
+    if ((*param3 & (*param2 ^ ~(byte)(local_58[0] >> 8))) != 0) {
+      bVar1 = false;
     }
-    if (bVar3 == false) {
-      debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",
-                    ~(byte)local_58[0],(ushort)*pbVar2,(ushort)*pbVar1);
+    if (bVar1 == false) {
+      debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+                    (ushort)*param2,(ushort)*param3);
       debug_message(acStack_54,param_3);
     }
-    pbVar2 = pbVar2 + 1;
-    pbVar1 = pbVar1 + 1;
-    if ((*pbVar1 & (*pbVar2 ^ ~(byte)local_58[0]) & 0xc0) != 0) {
-      bVar3 = false;
+    param2 = param2 + 1;
+    param3 = param3 + 1;
+    if ((*param3 & (*param2 ^ ~(byte)local_58[0]) & 0xc0) != 0) {
+      bVar1 = false;
     }
-    if (bVar3 == false) {
-      debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",
-                    ~(byte)local_58[0],(ushort)*pbVar2,(ushort)*pbVar1);
+    if (bVar1 == false) {
+      debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+                    (ushort)*param2,(ushort)*param3);
       debug_message(acStack_54,param_3);
     }
   }
-  if (bVar3 == false) {
-    debug_sprintf(acStack_54,"first: config_ptr: %08X mask_ptr: %08X\r\n",0xbb,(short)pbVar2,
-                  (short)pbVar1);
+  if (bVar1 == false) {
+    debug_sprintf(acStack_54,"first: config_ptr: %08X mask_ptr: %08X\r\n",(uint)param2,(uint)param3)
+    ;
     debug_message(acStack_54,param_3);
   }
-  return bVar3;
+  return bVar1;
 }
 
 
@@ -21097,9 +21105,9 @@ bool FUN_00023304(byte *param_1,byte *param_2,char param_3)
 {
   bool bVar1;
   int iVar2;
-  short *local_60;
-  short *local_5c;
-  short local_58 [2];
+  ushort *local_60;
+  ushort *local_5c;
+  ushort local_58 [2];
   char acStack_54 [80];
   
   bVar1 = true;
@@ -21113,20 +21121,20 @@ bool FUN_00023304(byte *param_1,byte *param_2,char param_3)
     else {
       qspi_read(0xc,&local_60,0x10);
     }
-    if ((*param_2 & (*param_1 ^ ~(byte)((ushort)local_58[0] >> 8))) != 0) {
+    if ((*param_2 & (*param_1 ^ ~(byte)(local_58[0] >> 8))) != 0) {
       bVar1 = false;
     }
     if (!bVar1) {
-      debug_sprintf(acStack_54,"odd: inv read: %04hX config: %02hX mask: %02hX\r\n",
-                    ~(byte)local_58[0],(ushort)*param_1,(ushort)*param_2);
+      debug_sprintf(acStack_54,"odd: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58[0],
+                    (ushort)*param_1,(ushort)*param_2);
       debug_message(acStack_54,param_3);
     }
     if ((param_2[1] & (param_1[1] ^ ~(byte)local_58[0])) != 0) {
       bVar1 = false;
     }
     if (bVar1 == false) {
-      debug_sprintf(acStack_54,"odd: inv read: %04hX config: %02hX mask: %02hX\r\n",
-                    ~(byte)local_58[0],(ushort)param_1[1],(ushort)param_2[1]);
+      debug_sprintf(acStack_54,"odd: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58[0],
+                    (ushort)param_1[1],(ushort)param_2[1]);
       debug_message(acStack_54,param_3);
     }
     param_1 = param_1 + 2;
@@ -21140,12 +21148,12 @@ bool FUN_00023304(byte *param_1,byte *param_2,char param_3)
       qspi_read(0xc,&local_60,10);
     }
     local_58[0] = local_58[0] << 6;
-    if ((*param_2 & (*param_1 ^ ~(byte)((ushort)local_58[0] >> 8))) != 0) {
+    if ((*param_2 & (*param_1 ^ ~(byte)(local_58[0] >> 8))) != 0) {
       bVar1 = false;
     }
     if (bVar1 == false) {
-      debug_sprintf(acStack_54,"odd: inv read: %02hX config: %02hX mask: %02hX\r\n",
-                    ~(byte)local_58[0],(ushort)*param_1,(ushort)*param_2);
+      debug_sprintf(acStack_54,"odd: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+                    (ushort)*param_1,(ushort)*param_2);
       debug_message(acStack_54,param_3);
     }
     param_1 = param_1 + 1;
@@ -21154,14 +21162,14 @@ bool FUN_00023304(byte *param_1,byte *param_2,char param_3)
       bVar1 = false;
     }
     if (bVar1 == false) {
-      debug_sprintf(acStack_54,"odd: inv read: %02hX config: %02hX mask: %02hX\r\n",
-                    ~(byte)local_58[0],(ushort)*param_1,(ushort)*param_2);
+      debug_sprintf(acStack_54,"odd: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+                    (ushort)*param_1,(ushort)*param_2);
       debug_message(acStack_54,param_3);
     }
   }
   if (bVar1 == false) {
-    debug_sprintf(acStack_54,"odd: config_ptr: %08X mask_ptr: %08X\r\n",0x46,(short)param_1,
-                  (short)param_2);
+    debug_sprintf(acStack_54,"odd: config_ptr: %08X mask_ptr: %08X\r\n",(uint)param_1,(uint)param_2)
+    ;
     debug_message(acStack_54,param_3);
   }
   return bVar1;
@@ -21177,13 +21185,13 @@ bool FUN_0002353a(byte *param_1,byte *param_2,char param_3)
 {
   bool bVar1;
   int iVar2;
-  byte *pbVar3;
-  byte *pbVar4;
-  bool bVar5;
-  bool bVar6;
-  short *local_60;
-  short *local_5c;
-  short local_58 [2];
+  byte *param3;
+  byte *param2;
+  bool bVar3;
+  bool bVar4;
+  ushort *local_60;
+  ushort *local_5c;
+  ushort local_58 [2];
   char acStack_54 [80];
   
   local_60 = local_58 + 1;
@@ -21195,21 +21203,21 @@ bool FUN_0002353a(byte *param_1,byte *param_2,char param_3)
   else {
     qspi_read(0xc,&local_60,0xc);
   }
-  bVar5 = (*param_2 & (*param_1 ^ ~(byte)((ushort)local_58[0] >> 8)) & 0xf) == 0;
-  if (!bVar5) {
-    debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",
-                  ~(byte)local_58[0],(ushort)*param_1,(ushort)*param_2);
+  bVar3 = (*param_2 & (*param_1 ^ ~(byte)(local_58[0] >> 8)) & 0xf) == 0;
+  if (!bVar3) {
+    debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+                  (ushort)*param_1,(ushort)*param_2);
     debug_message(acStack_54,param_3);
   }
-  bVar6 = (param_2[1] & (param_1[1] ^ ~(byte)local_58[0])) == 0;
-  bVar1 = bVar6 && bVar5;
-  pbVar3 = param_2 + 2;
-  pbVar4 = param_1 + 2;
-  if (bVar6 && bVar5) {
+  bVar4 = (param_2[1] & (param_1[1] ^ ~(byte)local_58[0])) == 0;
+  bVar1 = bVar4 && bVar3;
+  param3 = param_2 + 2;
+  param2 = param_1 + 2;
+  if (bVar4 && bVar3) {
     iVar2 = 0;
     while( true ) {
-      pbVar4 = param_1 + 2;
-      pbVar3 = param_2 + 2;
+      param2 = param_1 + 2;
+      param3 = param_2 + 2;
       if ((bVar1 == false) || (4 < iVar2)) break;
       if (param_3 == '\0') {
         qspi_transfer(0xc,&local_60,0x10);
@@ -21217,30 +21225,30 @@ bool FUN_0002353a(byte *param_1,byte *param_2,char param_3)
       else {
         qspi_read(0xc,&local_60,0x10);
       }
-      if ((*pbVar3 & (*pbVar4 ^ ~(byte)((ushort)local_58[0] >> 8))) != 0) {
+      if ((*param3 & (*param2 ^ ~(byte)(local_58[0] >> 8))) != 0) {
         bVar1 = false;
       }
       if (bVar1 == false) {
-        debug_sprintf(acStack_54,"even: inv read: %04hX config: %02hX mask: %02hX\r\n",
-                      ~(byte)local_58[0],(ushort)*pbVar4,(ushort)*pbVar3);
+        debug_sprintf(acStack_54,"even: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58[0],
+                      (ushort)*param2,(ushort)*param3);
         debug_message(acStack_54,param_3);
       }
       if ((param_2[3] & (param_1[3] ^ ~(byte)local_58[0])) != 0) {
         bVar1 = false;
       }
       if (bVar1 == false) {
-        debug_sprintf(acStack_54,"even: inv read: %04hX config: %02hX mask: %02hX\r\n",
-                      ~(byte)local_58[0],(ushort)param_1[3],(ushort)param_2[3]);
+        debug_sprintf(acStack_54,"even: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58[0],
+                      (ushort)param_1[3],(ushort)param_2[3]);
         debug_message(acStack_54,param_3);
       }
       iVar2 = iVar2 + 1;
-      param_2 = pbVar3;
-      param_1 = pbVar4;
+      param_2 = param3;
+      param_1 = param2;
     }
   }
   else {
-    debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",
-                  ~(byte)local_58[0],(ushort)param_1[1],(ushort)param_2[1]);
+    debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+                  (ushort)param_1[1],(ushort)param_2[1]);
     debug_message(acStack_54,param_3);
   }
   if (bVar1 != false) {
@@ -21251,28 +21259,27 @@ bool FUN_0002353a(byte *param_1,byte *param_2,char param_3)
       qspi_read(0xc,&local_60,0xe);
     }
     local_58[0] = local_58[0] << 2;
-    if ((*pbVar3 & (*pbVar4 ^ ~(byte)((ushort)local_58[0] >> 8))) != 0) {
+    if ((*param3 & (*param2 ^ ~(byte)(local_58[0] >> 8))) != 0) {
       bVar1 = false;
     }
     if (bVar1 == false) {
-      debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",
-                    ~(byte)local_58[0],(ushort)*pbVar4,(ushort)*pbVar3);
+      debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+                    (ushort)*param2,(ushort)*param3);
       debug_message(acStack_54,param_3);
     }
-    if ((pbVar3[1] & (pbVar4[1] ^ ~(byte)local_58[0]) & 0xfc) != 0) {
+    if ((param3[1] & (param2[1] ^ ~(byte)local_58[0]) & 0xfc) != 0) {
       bVar1 = false;
     }
     if (bVar1 == false) {
-      debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",
-                    ~(byte)local_58[0],(ushort)pbVar4[1],(ushort)pbVar3[1]);
+      debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+                    (ushort)param2[1],(ushort)param3[1]);
       debug_message(acStack_54,param_3);
     }
-    pbVar4 = pbVar4 + 2;
-    pbVar3 = pbVar3 + 2;
+    param2 = param2 + 2;
+    param3 = param3 + 2;
   }
   if (bVar1 == false) {
-    debug_sprintf(acStack_54,"even: config_ptr: %08X mask_ptr: %08X\r\n",0xd1,(short)pbVar4,
-                  (short)pbVar3);
+    debug_sprintf(acStack_54,"even: config_ptr: %08X mask_ptr: %08X\r\n",(uint)param2,(uint)param3);
     debug_message(acStack_54,param_3);
   }
   return bVar1;
@@ -21341,12 +21348,12 @@ bool FUN_0002384a(byte param_1,char param_2,byte param_3)
       }
     }
     if (bVar2 == false) {
-      debug_sprintf(acStack_54,"chip: %1d frame: %d\r\n",(ushort)param_3,(char)uVar5 + -1);
+      debug_sprintf(acStack_54,"chip: %1d frame: %d\r\n",(uint)param_3,uVar5 - 1);
       debug_message(acStack_54,param_2);
     }
   }
   if (bVar2 == false) {
-    debug_sprintf(acStack_54,"chip %1d failed compare\r\n",param_3);
+    debug_sprintf(acStack_54,"chip %1d failed compare\r\n",(uint)param_3);
     debug_message(acStack_54,param_2);
   }
   return bVar2;
@@ -21518,8 +21525,7 @@ void FUN_00023d80(void)
       dVar6 = float_to_double(fVar2);
       log_write(0x94,(char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
       dVar6 = float_to_double(fVar2);
-      debug_sprintf(acStack_54,"5V is out of tolerance, value: %.2f\r\n",0xb8,
-                    (char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
+      debug_sprintf(acStack_54,"5V is out of tolerance, value: %.2f\r\n",dVar6);
       task_debug_message(acStack_54);
       status_happening(':');
       cRam00101c60 = '\x01';
@@ -21540,8 +21546,7 @@ void FUN_00023d80(void)
       dVar6 = float_to_double(fVar2);
       log_write(0xfb,(char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
       dVar6 = float_to_double(fVar2);
-      debug_sprintf(acStack_54,"Secondary oven voltage is out of tolerance, value: %.2f\r\n",0x33,
-                    (char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
+      debug_sprintf(acStack_54,"Secondary oven voltage is out of tolerance, value: %.2f\r\n",dVar6);
       task_debug_message(acStack_54);
       status_happening('>');
       DAT_00101bd0 = '\x01';
@@ -21568,8 +21573,7 @@ void FUN_00023d80(void)
       dVar6 = float_to_double(fVar2);
       log_write(0x9e,(char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
       dVar6 = float_to_double(fVar2);
-      debug_sprintf(acStack_54,"15V is out of tolerance, value: %.2f\r\n",0xc3,
-                    (char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
+      debug_sprintf(acStack_54,"15V is out of tolerance, value: %.2f\r\n",dVar6);
       task_debug_message(acStack_54);
       status_happening('6');
       cRam00101c00 = '\x01';
@@ -21591,8 +21595,7 @@ void FUN_00023d80(void)
       dVar6 = float_to_double(fVar2);
       log_write(8,(char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
       dVar6 = float_to_double(fVar2);
-      debug_sprintf(acStack_54,"-15V is out of tolerance, value: %.2f\r\n",0x2e,
-                    (char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
+      debug_sprintf(acStack_54,"-15V is out of tolerance, value: %.2f\r\n",dVar6);
       task_debug_message(acStack_54);
       status_happening('8');
       cRam00101cc0 = '\x01';
@@ -21873,13 +21876,13 @@ void FUN_00024440(void)
   local_5c[0] = '\0';
   if (last_exception.pending != 0) {
     if ((last_exception.vector & 0xf000) == 0) {
-      sprintf(local_5c,"Exception: %s, vector %04X, PC = %08X, SR = %04X",0x10099f,
+      sprintf(local_5c,"Exception: %s, vector %04X, PC = %08X, SR = %04X",last_exception.name,
               (uint)last_exception.vector,last_exception.pc,(uint)last_exception.sr);
     }
     else {
-      sprintf(local_5c,"Exception: %s, vector %04X, PC = %08X, SR = %04X, addr = %08X",0x10099f,
-              (uint)last_exception.vector,last_exception.pc,(uint)last_exception.sr,
-              last_exception.address);
+      sprintf(local_5c,"Exception: %s, vector %04X, PC = %08X, SR = %04X, addr = %08X",
+              last_exception.name,(uint)last_exception.vector,last_exception.pc,
+              (uint)last_exception.sr,last_exception.address);
     }
     FUN_00033238(local_c,local_8,local_5c);
   }
@@ -26878,19 +26881,17 @@ undefined4 scpi_query_common_ESR(undefined4 param_1,undefined4 param_2)
 
 /* 0002a2ca */
 
-undefined4 scpi_query_common_IDN(undefined4 param_1,short *param_2,int param_3)
+undefined4 scpi_query_common_IDN(undefined4 param_1,short *param_2)
 
 {
   char cVar1;
   uint uVar2;
   short sVar3;
   char *pcVar4;
-  undefined4 uVar5;
   
-  uVar5 = *(undefined4 *)(param_3 + 0x12);
   uVar2 = return_zero();
   sprintf((char *)((uVar2 & 0xff) * 0x11a + 0x10272a),"HEWLETT-PACKARD,%s,%s,%s-%c",idn_model,
-          idn_serial,"3543B",(int)idn_suffix,uVar5);
+          idn_serial,"3543B",idn_suffix);
   pcVar4 = (char *)((uVar2 & 0xff) * 0x11a + 0x10272a);
   *(char **)(param_2 + 1) = pcVar4;
   sVar3 = -1;
@@ -30497,21 +30498,21 @@ undefined4 scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime(undefined4 param_1,int *pa
 
 {
   uint uVar1;
-  int iVar2;
-  undefined4 uVar3;
+  uint param2;
+  undefined4 uVar2;
   
-  uVar3 = *(undefined4 *)(param_3 + 0x12);
+  uVar2 = *(undefined4 *)(param_3 + 0x12);
   uVar1 = return_zero();
-  iVar2 = leap_gps_time(uVar3);
-  sprintf((char *)((uVar1 & 0xff) * 0x11a + 0x10272a),"#H%08X",(char)iVar2);
+  param2 = leap_gps_time(uVar2);
+  sprintf((char *)((uVar1 & 0xff) * 0x11a + 0x10272a),"#H%08X",param2);
   *param_2 = (uVar1 & 0xff) * 0x11a + 0x10272a;
-  if (iVar2 == 0) {
-    uVar3 = FUN_00029ade('\f',param_3);
+  if (param2 == 0) {
+    uVar2 = FUN_00029ade('\f',param_3);
   }
   else {
-    uVar3 = 0;
+    uVar2 = 0;
   }
-  return uVar3;
+  return uVar2;
 }
 
 
@@ -34221,8 +34222,6 @@ int log_read(int param_1,char *param_2,char *param_3)
   longlong lVar6;
   int local_14;
   int local_10;
-  byte bStack_7;
-  undefined1 uStack_6;
   
   param_1 = param_1 + -1;
   iVar4 = mutex_lock(&log_mutex);
@@ -34256,10 +34255,9 @@ int log_read(int param_1,char *param_2,char *param_3)
             "First satellite tracked at %04d%02d%02d.%02d:%02d:%02d") {
           uVar1 = log_page_buffer.entries[local_10].argument_1;
           uVar2 = log_page_buffer.entries[local_10].argument_2;
-          uStack_6 = (undefined1)(uVar2 >> 8);
-          bStack_7 = (byte)(uVar2 >> 0x10);
           sprintf(param_2,"First satellite tracked at %04d%02d%02d.%02d:%02d:%02d",uVar1 >> 0x10,
-                  uVar1 >> 8 & 0xff,uVar1 & 0xff,(ushort)bStack_7,uStack_6,uVar2 & 0xff);
+                  uVar1 >> 8 & 0xff,uVar1 & 0xff,uVar2 >> 0x10 & 0xff,uVar2 >> 8 & 0xff,uVar2 & 0xff
+                 );
         }
         else {
           sprintf(param_2,log_page_buffer.entries[local_10].format,
@@ -34270,10 +34268,8 @@ int log_read(int param_1,char *param_2,char *param_3)
       if (param_3 != (char *)0x0) {
         uVar2 = log_page_buffer.entries[local_10].date;
         uVar1 = log_page_buffer.entries[local_10].time;
-        uStack_6 = (undefined1)(uVar1 >> 8);
-        bStack_7 = (byte)(uVar1 >> 0x10);
         sprintf(param_3,"Log %03d:%04d%02d%02d.%02d:%02d:%02d",param_1 + 1,uVar2 >> 0x10,
-                uVar2 >> 8 & 0xff,uVar2 & 0xff,(ushort)bStack_7,uStack_6,uVar1 & 0xff);
+                uVar2 >> 8 & 0xff,uVar2 & 0xff,uVar1 >> 0x10 & 0xff,uVar1 >> 8 & 0xff,uVar1 & 0xff);
       }
     }
     else {
@@ -34287,7 +34283,7 @@ int log_read(int param_1,char *param_2,char *param_3)
         } while (cVar3 != '\0');
       }
       if (param_3 != (char *)0x0) {
-        sprintf(param_3,"Log %03d:00000000.00:00:00",0x68,param_1 + 1);
+        sprintf(param_3,"Log %03d:00000000.00:00:00",param_1 + 1);
       }
     }
     mutex_unlock(&log_mutex);
@@ -35442,7 +35438,6 @@ undefined4 FUN_0003313c(int param_1,char *param_2,char *param_3)
   int iVar3;
   undefined4 uVar5;
   char *pcVar6;
-  byte bStack_a;
   
   uVar5 = 0;
   param_1 = param_1 + -1;
@@ -35468,7 +35463,7 @@ LAB_00033166:
       } while (cVar4 != '\0');
     }
     if (param_3 != (char *)0x0) {
-      sprintf(param_3,"Log %03d:00000000.00:00:00",(byte)param_1 + 1);
+      sprintf(param_3,"Log %03d:00000000.00:00:00",param_1 + 1);
     }
   }
   else {
@@ -35480,9 +35475,8 @@ LAB_00033166:
     uVar2 = *(uint *)(iVar3 + 0x4001c8);
     uVar1 = *(uint *)(iVar3 + 0x4001c4);
     if (param_3 != (char *)0x0) {
-      bStack_a = (byte)(uVar1 >> 8);
       sprintf(param_3,"Log %03d:%04d%02d%02d.%02d:%02d:%02d",param_1 + 1,uVar2 >> 0x10,
-              uVar2 >> 8 & 0xff,uVar2 & 0xff,uVar1 >> 0x10 & 0xff,(ushort)bStack_a,(char)uVar1);
+              uVar2 >> 8 & 0xff,uVar2 & 0xff,uVar1 >> 0x10 & 0xff,uVar1 >> 8 & 0xff,uVar1 & 0xff);
     }
   }
   return uVar5;
@@ -36611,15 +36605,17 @@ void efc_history_update(void)
     if (pll.efc_history.summed_count == 0) {
       if (DAT_00102541 != '\0') {
         dVar6 = float_to_double(pll.tfom);
-        uVar3 = FUN_000136f6(0,0,0,dVar6);
+        dVar9 = 0.0;
+        iVar4 = 0;
+        uVar3 = FUN_000136f6();
         fVar1 = unsigned_to_float(uVar3);
         fVar1 = float_divide(fVar1,2700.0);
         fVar1 = float_divide(fVar1,32.0);
-        dVar6 = float_to_double(fVar1);
-        fVar1 = float_divide(pll.efc_history.efc_sum,2700.0);
         dVar7 = float_to_double(fVar1);
-        debug_sprintf(acStack_68,"e_avg= %.1f time= %f weight= %d log= %.2f  tfom= %.1e\r\n",dVar7,
-                      dVar6);
+        fVar1 = float_divide(pll.efc_history.efc_sum,2700.0);
+        dVar8 = float_to_double(fVar1);
+        debug_sprintf(acStack_68,"e_avg= %.1f time= %f weight= %d log= %.2f  tfom= %.1e\r\n",dVar8,
+                      dVar7,iVar4,dVar9,dVar6);
         task_dmessage(acStack_68);
       }
     }
@@ -36742,15 +36738,15 @@ void FUN_000417c6(void)
   uint uVar1;
   uint uVar2;
   float fVar3;
+  int param2;
   int iVar4;
   int iVar5;
-  int iVar6;
-  double dVar7;
-  double dVar8;
+  double dVar6;
+  double param3;
+  undefined4 uVar7;
+  undefined4 uVar8;
   undefined4 uVar9;
   undefined4 uVar10;
-  undefined4 uVar11;
-  undefined4 uVar12;
   char *message;
   undefined1 uStack_7e;
   undefined1 local_7d;
@@ -36760,30 +36756,30 @@ void FUN_000417c6(void)
   float local_5c;
   char acStack_54 [80];
   
-  iVar4 = 0;
-  iVar6 = 0;
+  param2 = 0;
+  iVar5 = 0;
   DAT_00101fd9 = 2;
   FUN_00041d30(&DAT_00101fd8);
-  iVar5 = 0;
+  iVar4 = 0;
   do {
-    if (1 < pll.efc_history.weights[iVar5]) {
-      iVar4 = iVar4 + 1;
+    if (1 < pll.efc_history.weights[iVar4]) {
+      param2 = param2 + 1;
     }
-    if (pll.efc_history.weights[iVar5] != 0) {
-      iVar6 = iVar6 + 1;
+    if (pll.efc_history.weights[iVar4] != 0) {
+      iVar5 = iVar5 + 1;
     }
-    iVar5 = iVar5 + 1;
-  } while (iVar5 < 0x40);
-  if ((iVar4 == 0x40) && (0x80 < _DAT_00101fde)) {
+    iVar4 = iVar4 + 1;
+  } while (iVar4 < 0x40);
+  if ((param2 == 0x40) && (0x80 < _DAT_00101fde)) {
     DAT_00101fd9 = 2;
     uVar1 = FUN_00041a42(&DAT_00101fd8);
     DAT_00101fd8 = 4;
     FUN_00042644(&DAT_00101fd8);
   }
-  else if ((_DAT_00101fda < 0x81) || (iVar4 < 3)) {
-    if (iVar4 < 6) {
-      if (iVar6 < 10) {
-        if (iVar6 < 3) {
+  else if ((_DAT_00101fda < 0x81) || (param2 < 3)) {
+    if (param2 < 6) {
+      if (iVar5 < 10) {
+        if (iVar5 < 3) {
           DAT_00101fd9 = 1;
           uVar1 = FUN_00041c20(&DAT_00101fd8);
         }
@@ -36791,7 +36787,7 @@ void FUN_000417c6(void)
           DAT_00101fd9 = 1;
           uVar1 = FUN_00041ba0(&DAT_00101fd8);
         }
-        DAT_00101fd8 = iVar6 >= 3;
+        DAT_00101fd8 = iVar5 >= 3;
         _DAT_00101ffe = 0.000432;
       }
       else {
@@ -36802,8 +36798,8 @@ void FUN_000417c6(void)
         uVar1 = uVar1 | uVar2;
         DAT_00101fd8 = 3;
         fVar3 = float_multiply(_DAT_00101ffa,0.75);
-        iVar6 = float_compare(fVar3,local_5c);
-        if ((0 < iVar6) || (iVar4 < 0x10)) {
+        iVar5 = float_compare(fVar3,local_5c);
+        if ((0 < iVar5) || (param2 < 0x10)) {
           _DAT_00101fea = local_6c;
           _DAT_00101fee = local_68;
           _DAT_00101ff2 = local_64;
@@ -36821,8 +36817,8 @@ void FUN_000417c6(void)
       uVar1 = uVar1 | uVar2;
       DAT_00101fd8 = 3;
       fVar3 = float_multiply(_DAT_00101ffa,0.75);
-      iVar6 = float_compare(fVar3,local_5c);
-      if ((0 < iVar6) || (iVar4 < 0x10)) {
+      iVar5 = float_compare(fVar3,local_5c);
+      if ((0 < iVar5) || (param2 < 0x10)) {
         _DAT_00101fea = local_6c;
         _DAT_00101fee = local_68;
         _DAT_00101ff2 = local_64;
@@ -36843,21 +36839,20 @@ void FUN_000417c6(void)
       message = "failed line fit\r\n";
     }
     else {
-      dVar7 = float_to_double(_DAT_00101ffa);
-      uVar11 = (undefined4)((ulonglong)dVar7 >> 0x20);
-      uVar12 = SUB84(dVar7,0);
-      dVar7 = float_to_double(_DAT_00101ff2);
-      uVar9 = (undefined4)((ulonglong)dVar7 >> 0x20);
-      uVar10 = SUB84(dVar7,0);
-      dVar7 = float_to_double(_DAT_00101fee);
-      dVar8 = float_to_double(_DAT_00101fea);
-      debug_sprintf(acStack_54,"pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f\r\n",iVar4,dVar8,dVar7,
-                    uVar9,uVar10,uVar11,uVar12);
+      dVar6 = float_to_double(_DAT_00101ffa);
+      uVar9 = (undefined4)((ulonglong)dVar6 >> 0x20);
+      uVar10 = SUB84(dVar6,0);
+      dVar6 = float_to_double(_DAT_00101ff2);
+      uVar7 = (undefined4)((ulonglong)dVar6 >> 0x20);
+      uVar8 = SUB84(dVar6,0);
+      dVar6 = float_to_double(_DAT_00101fee);
+      param3 = float_to_double(_DAT_00101fea);
+      debug_sprintf(acStack_54,"pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f\r\n",param2,param3,dVar6,
+                    (double)CONCAT44(uVar7,uVar8),(double)CONCAT44(uVar9,uVar10));
       task_dmessage(acStack_54);
       uVar1 = (uint)DAT_00101fd8;
-      dVar7 = float_to_double(_DAT_00101ffe);
-      debug_sprintf(acStack_54,"HQ= %.1e mode= %d\r\n",(int)((ulonglong)dVar7 >> 0x20),
-                    SUB84(dVar7,0),uVar1);
+      dVar6 = float_to_double(_DAT_00101ffe);
+      debug_sprintf(acStack_54,"HQ= %.1e mode= %d\r\n",dVar6,uVar1);
       message = acStack_54;
     }
     task_dmessage(message);
@@ -38513,11 +38508,14 @@ undefined1 FUN_00043a90(char param_1)
   double dVar7;
   undefined2 uVar8;
   undefined2 uVar9;
-  undefined1 uVar10;
-  undefined1 uVar11;
-  undefined1 uVar12;
+  undefined2 uVar10;
+  undefined2 uVar11;
+  undefined2 uVar12;
   undefined1 uVar13;
   undefined1 uVar14;
+  undefined1 uVar15;
+  undefined1 uVar16;
+  undefined1 uVar17;
   char acStack_74 [100];
   float fStack_10;
   ushort uStack_c;
@@ -38586,18 +38584,18 @@ override_jmp_00043ae6_case_0:
   }
   fVar2 = unsigned_to_float(pll.field_3b0._24_4_);
   uVar5 = (undefined1)((uint)fVar2 >> 0x18);
-  uVar10 = (undefined1)((uint)fVar2 >> 0x10);
-  uVar11 = (undefined1)((uint)fVar2 >> 8);
-  uVar12 = SUB41(fVar2,0);
+  uVar13 = (undefined1)((uint)fVar2 >> 0x10);
+  uVar14 = (undefined1)((uint)fVar2 >> 8);
+  uVar15 = SUB41(fVar2,0);
   fVar2 = unsigned_to_float(pll.field_3b0._24_4_);
-  fVar2 = float_multiply((float)CONCAT31(CONCAT21(CONCAT11(uVar5,uVar10),uVar11),uVar12),fVar2);
+  fVar2 = float_multiply((float)CONCAT31(CONCAT21(CONCAT11(uVar5,uVar13),uVar14),uVar15),fVar2);
   uVar5 = (undefined1)((uint)fVar2 >> 0x18);
-  uVar10 = (undefined1)((uint)fVar2 >> 0x10);
-  uVar11 = (undefined1)((uint)fVar2 >> 8);
-  uVar12 = SUB41(fVar2,0);
+  uVar13 = (undefined1)((uint)fVar2 >> 0x10);
+  uVar14 = (undefined1)((uint)fVar2 >> 8);
+  uVar15 = SUB41(fVar2,0);
   fVar2 = float_multiply((float)pll.field_03a._0_4_,2.0);
   fVar2 = float_divide(fVar2,7.46496e+09);
-  fVar2 = float_multiply(fVar2,(float)CONCAT31(CONCAT21(CONCAT11(uVar5,uVar10),uVar11),uVar12));
+  fVar2 = float_multiply(fVar2,(float)CONCAT31(CONCAT21(CONCAT11(uVar5,uVar13),uVar14),uVar15));
   pll.tfom = float_multiply(fVar2,0.5);
   iVar3 = float_compare(1e-06,pll.tfom);
   if (0 < iVar3) {
@@ -38613,11 +38611,11 @@ override_jmp_00043ae6_case_0:
     fVar2 = float_multiply((float)pll.efc_history.field_35e,fVar2);
     fVar2 = float_add(fVar2,pll.efc_history.field_35a);
     uVar5 = (undefined1)((uint)fVar2 >> 0x18);
-    uVar10 = (undefined1)((uint)fVar2 >> 0x10);
-    uVar11 = (undefined1)((uint)fVar2 >> 8);
-    uVar12 = SUB41(fVar2,0);
+    uVar13 = (undefined1)((uint)fVar2 >> 0x10);
+    uVar14 = (undefined1)((uint)fVar2 >> 8);
+    uVar15 = SUB41(fVar2,0);
     fVar2 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
-    fVar2 = float_add((float)CONCAT31(CONCAT21(CONCAT11(uVar5,uVar10),uVar11),uVar12),fVar2);
+    fVar2 = float_add((float)CONCAT31(CONCAT21(CONCAT11(uVar5,uVar13),uVar14),uVar15),fVar2);
     uVar5 = SUB41(fVar2,0);
   }
   else {
@@ -38625,38 +38623,38 @@ override_jmp_00043ae6_case_0:
     dVar7 = log(dVar7);
     uVar8 = (undefined2)((ulonglong)dVar7 >> 0x30);
     uVar5 = (undefined1)((ulonglong)dVar7 >> 0x28);
-    uVar10 = (undefined1)((ulonglong)dVar7 >> 0x20);
-    uVar11 = (undefined1)((ulonglong)dVar7 >> 0x18);
-    uVar12 = (undefined1)((ulonglong)dVar7 >> 0x10);
-    uVar13 = (undefined1)((ulonglong)dVar7 >> 8);
-    uVar14 = SUB81(dVar7,0);
+    uVar13 = (undefined1)((ulonglong)dVar7 >> 0x20);
+    uVar14 = (undefined1)((ulonglong)dVar7 >> 0x18);
+    uVar15 = (undefined1)((ulonglong)dVar7 >> 0x10);
+    uVar16 = (undefined1)((ulonglong)dVar7 >> 8);
+    uVar17 = SUB81(dVar7,0);
     dVar7 = float_to_double((float)pll.efc_history.field_362);
     dVar7 = double_multiply((double)CONCAT71(CONCAT61(CONCAT51(CONCAT41(CONCAT31(CONCAT21(uVar8,
-                                                  uVar5),uVar10),uVar11),uVar12),uVar13),uVar14),
+                                                  uVar5),uVar13),uVar14),uVar15),uVar16),uVar17),
                             dVar7);
     uVar8 = (undefined2)((ulonglong)dVar7 >> 0x30);
     uVar5 = (undefined1)((ulonglong)dVar7 >> 0x28);
-    uVar10 = (undefined1)((ulonglong)dVar7 >> 0x20);
-    uVar11 = (undefined1)((ulonglong)dVar7 >> 0x18);
-    uVar12 = (undefined1)((ulonglong)dVar7 >> 0x10);
-    uVar13 = (undefined1)((ulonglong)dVar7 >> 8);
-    uVar14 = SUB81(dVar7,0);
+    uVar13 = (undefined1)((ulonglong)dVar7 >> 0x20);
+    uVar14 = (undefined1)((ulonglong)dVar7 >> 0x18);
+    uVar15 = (undefined1)((ulonglong)dVar7 >> 0x10);
+    uVar16 = (undefined1)((ulonglong)dVar7 >> 8);
+    uVar17 = SUB81(dVar7,0);
     fVar2 = float_multiply((float)pll.efc_history.field_35e,fVar2);
     fVar2 = float_add(fVar2,pll.efc_history.field_35a);
     dVar7 = float_to_double(fVar2);
     dVar7 = double_add(dVar7,(double)CONCAT71(CONCAT61(CONCAT51(CONCAT41(CONCAT31(CONCAT21(uVar8,
-                                                  uVar5),uVar10),uVar11),uVar12),uVar13),uVar14));
+                                                  uVar5),uVar13),uVar14),uVar15),uVar16),uVar17));
     uVar8 = (undefined2)((ulonglong)dVar7 >> 0x30);
     uVar5 = (undefined1)((ulonglong)dVar7 >> 0x28);
-    uVar10 = (undefined1)((ulonglong)dVar7 >> 0x20);
-    uVar11 = (undefined1)((ulonglong)dVar7 >> 0x18);
-    uVar12 = (undefined1)((ulonglong)dVar7 >> 0x10);
-    uVar13 = (undefined1)((ulonglong)dVar7 >> 8);
-    uVar14 = SUB81(dVar7,0);
+    uVar13 = (undefined1)((ulonglong)dVar7 >> 0x20);
+    uVar14 = (undefined1)((ulonglong)dVar7 >> 0x18);
+    uVar15 = (undefined1)((ulonglong)dVar7 >> 0x10);
+    uVar16 = (undefined1)((ulonglong)dVar7 >> 8);
+    uVar17 = SUB81(dVar7,0);
     fVar2 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
     dVar7 = float_to_double(fVar2);
     dVar7 = double_add(dVar7,(double)CONCAT71(CONCAT61(CONCAT51(CONCAT41(CONCAT31(CONCAT21(uVar8,
-                                                  uVar5),uVar10),uVar11),uVar12),uVar13),uVar14));
+                                                  uVar5),uVar13),uVar14),uVar15),uVar16),uVar17));
     fVar2 = double_to_float(dVar7);
     uVar5 = SUB41(fVar2,0);
   }
@@ -38669,16 +38667,27 @@ override_jmp_00043ae6_case_0:
   if (DAT_00102541 != '\0') {
     get_date_time((uint32_t *)&uStack_c,&uStack_8);
     dVar7 = float_to_double(fVar1);
-    uVar5 = (undefined1)((ulonglong)dVar7 >> 0x20);
-    uVar10 = SUB81(dVar7,0);
+    uVar12 = (undefined2)((ulonglong)dVar7 >> 0x30);
+    uVar5 = (undefined1)((ulonglong)dVar7 >> 0x28);
+    uVar13 = (undefined1)((ulonglong)dVar7 >> 0x20);
+    uVar14 = (undefined1)((ulonglong)dVar7 >> 0x18);
+    uVar15 = (undefined1)((ulonglong)dVar7 >> 0x10);
+    uVar16 = (undefined1)((ulonglong)dVar7 >> 8);
+    uVar17 = SUB81(dVar7,0);
     fVar1 = float_multiply(_DAT_00102042,1e+09);
     dVar7 = float_to_double(fVar1);
-    uVar8 = (undefined2)((ulonglong)dVar7 >> 0x20);
-    uVar9 = SUB82(dVar7,0);
+    uVar8 = (undefined2)((ulonglong)dVar7 >> 0x30);
+    uVar9 = (undefined2)((ulonglong)dVar7 >> 0x20);
+    uVar10 = (undefined2)((ulonglong)dVar7 >> 0x10);
+    uVar11 = SUB82(dVar7,0);
     iVar3 = float_to_integer(pll.efc);
     debug_sprintf(acStack_74,"%d/%d/%d %02d:%02d:%02d efc= %d ti= %.1f hold= 0 curr= %.2f\r\n",
                   (uint)bStack_a,(uint)bStack_9,(uint)uStack_c,(uint)uStack_8._1_1_,
-                  (uint)uStack_8._2_1_,(uint)(byte)uStack_8,(short)iVar3,uVar8,uVar9,uVar5,uVar10);
+                  (uint)uStack_8._2_1_,(uint)(byte)uStack_8,iVar3,
+                  (double)CONCAT62(CONCAT42(CONCAT22(uVar8,uVar9),uVar10),uVar11),
+                  (double)CONCAT71(CONCAT61(CONCAT51(CONCAT41(CONCAT31(CONCAT21(uVar12,uVar5),uVar13
+                                                                      ),uVar14),uVar15),uVar16),
+                                   uVar17));
     task_dmessage(acStack_74);
   }
   if (internal_pps_dead != 0) {
@@ -38915,8 +38924,13 @@ char FUN_0004429e(char param_1)
   char cVar5;
   double dVar6;
   undefined2 uVar7;
-  undefined1 uVar8;
-  undefined1 uVar9;
+  undefined2 uVar8;
+  undefined2 uVar9;
+  undefined1 uVar10;
+  undefined1 uVar11;
+  undefined2 uVar12;
+  undefined1 uVar13;
+  undefined1 uVar14;
   float local_88;
   float local_84;
   float local_80;
@@ -38969,7 +38983,7 @@ char FUN_0004429e(char param_1)
         dVar6 = float_to_double(fVar1);
         debug_sprintf(acStack_70,"%d/%d/%d %02d:%02d:%02d TI result: %.1fns\r\n",(uint)local_a,
                       (uint)local_9,(uint)local_c,(uint)uStack_8._1_1_,(uint)uStack_8._2_1_,
-                      (ushort)(byte)uStack_8,(char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
+                      (uint)(byte)uStack_8,dVar6);
         task_dmessage(acStack_70);
       }
       if ((((DAT_00102550 != '\0') && (cVar4 = FUN_00047078(), cVar4 == '\0')) &&
@@ -39036,15 +39050,15 @@ char FUN_0004429e(char param_1)
               fVar1 = float_add(max_loop_time,-5.0);
               fVar1 = float_divide_reversed(fVar1,1.0);
               uVar7 = (undefined2)((uint)fVar1 >> 0x10);
-              uVar8 = (undefined1)((uint)fVar1 >> 8);
-              uVar9 = SUB41(fVar1,0);
+              uVar10 = (undefined1)((uint)fVar1 >> 8);
+              uVar11 = SUB41(fVar1,0);
               fVar1 = float_divide(-1.0,(float)pll.field_3b0._8_4_);
-              fVar1 = float_add((float)CONCAT31(CONCAT21(uVar7,uVar8),uVar9),fVar1);
+              fVar1 = float_add((float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11),fVar1);
               uVar7 = (undefined2)((uint)fVar1 >> 0x10);
-              uVar8 = (undefined1)((uint)fVar1 >> 8);
-              uVar9 = SUB41(fVar1,0);
+              uVar10 = (undefined1)((uint)fVar1 >> 8);
+              uVar11 = SUB41(fVar1,0);
               fVar1 = float_multiply(DAT_0010255c,(float)pll.field_3b0._0_4_);
-              fVar1 = float_multiply(fVar1,(float)CONCAT31(CONCAT21(uVar7,uVar8),uVar9));
+              fVar1 = float_multiply(fVar1,(float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11));
               float_add_in_place(&DAT_0010205e,fVar1);
               cVar5 = '\x01';
             }
@@ -39054,15 +39068,15 @@ char FUN_0004429e(char param_1)
             fVar1 = float_add((float)pll.field_3b0._8_4_,-5.0);
             fVar1 = float_divide_reversed(fVar1,1.0);
             uVar7 = (undefined2)((uint)fVar1 >> 0x10);
-            uVar8 = (undefined1)((uint)fVar1 >> 8);
-            uVar9 = SUB41(fVar1,0);
+            uVar10 = (undefined1)((uint)fVar1 >> 8);
+            uVar11 = SUB41(fVar1,0);
             fVar1 = float_divide(-1.0,(float)pll.field_3b0._8_4_);
-            fVar1 = float_add((float)CONCAT31(CONCAT21(uVar7,uVar8),uVar9),fVar1);
+            fVar1 = float_add((float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11),fVar1);
             uVar7 = (undefined2)((uint)fVar1 >> 0x10);
-            uVar8 = (undefined1)((uint)fVar1 >> 8);
-            uVar9 = SUB41(fVar1,0);
+            uVar10 = (undefined1)((uint)fVar1 >> 8);
+            uVar11 = SUB41(fVar1,0);
             fVar1 = float_multiply(DAT_0010255c,(float)pll.field_3b0._0_4_);
-            fVar1 = float_multiply(fVar1,(float)CONCAT31(CONCAT21(uVar7,uVar8),uVar9));
+            fVar1 = float_multiply(fVar1,(float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11));
             float_add_in_place(&DAT_0010205e,fVar1);
           }
         }
@@ -39076,17 +39090,17 @@ char FUN_0004429e(char param_1)
       fVar1 = float_subtract(1.0,local_78);
       fVar1 = float_multiply(fVar1,(float)pll.field_3b0._0_4_);
       uVar7 = (undefined2)((uint)fVar1 >> 0x10);
-      uVar8 = (undefined1)((uint)fVar1 >> 8);
-      uVar9 = SUB41(fVar1,0);
+      uVar10 = (undefined1)((uint)fVar1 >> 8);
+      uVar11 = SUB41(fVar1,0);
       fVar1 = float_multiply(local_78,local_84);
-      pll.field_3b0._0_4_ = float_add((float)CONCAT31(CONCAT21(uVar7,uVar8),uVar9),fVar1);
+      pll.field_3b0._0_4_ = float_add((float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11),fVar1);
       u = FUN_000136f6();
       fVar1 = unsigned_to_float(u);
       uVar7 = (undefined2)((uint)fVar1 >> 0x10);
-      uVar8 = (undefined1)((uint)fVar1 >> 8);
-      uVar9 = SUB41(fVar1,0);
+      uVar10 = (undefined1)((uint)fVar1 >> 8);
+      uVar11 = SUB41(fVar1,0);
       fVar1 = float_multiply((float)pll.efc_history.field_362,2700.0);
-      fVar1 = float_divide(fVar1,(float)CONCAT31(CONCAT21(uVar7,uVar8),uVar9));
+      fVar1 = float_divide(fVar1,(float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11));
       a = float_add(fVar1,(float)pll.efc_history.field_35e);
       iVar2 = float_compare(a,DAT_00102564);
       fVar1 = DAT_00102564;
@@ -39103,24 +39117,31 @@ char FUN_0004429e(char param_1)
       fVar1 = float_add(fVar1,(float)pll.field_3b0._4_4_);
       fVar1 = float_add(fVar1,DAT_0010205e);
       uVar7 = (undefined2)((uint)fVar1 >> 0x10);
-      uVar8 = (undefined1)((uint)fVar1 >> 8);
-      uVar9 = SUB41(fVar1,0);
+      uVar10 = (undefined1)((uint)fVar1 >> 8);
+      uVar11 = SUB41(fVar1,0);
       fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,local_74);
-      fVar1 = float_add((float)CONCAT31(CONCAT21(uVar7,uVar8),uVar9),fVar1);
+      fVar1 = float_add((float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11),fVar1);
       pll.efc = (float)FUN_0002426e(SUB41(fVar1,0));
       if (DAT_00102541 != '\0') {
         get_date_time((uint32_t *)&local_c,&uStack_8);
         dVar6 = float_to_double(local_74);
-        uVar8 = (undefined1)((ulonglong)dVar6 >> 0x20);
-        uVar9 = SUB81(dVar6,0);
+        uVar9 = (undefined2)((ulonglong)dVar6 >> 0x30);
+        uVar10 = (undefined1)((ulonglong)dVar6 >> 0x28);
+        uVar11 = (undefined1)((ulonglong)dVar6 >> 0x20);
+        uVar12 = (undefined2)((ulonglong)dVar6 >> 0x10);
+        uVar13 = (undefined1)((ulonglong)dVar6 >> 8);
+        uVar14 = SUB81(dVar6,0);
         iVar2 = float_to_integer((float)pll.field_3b0._8_4_);
-        uVar7 = (undefined2)iVar2;
+        uVar7 = (undefined2)((uint)iVar2 >> 0x10);
+        uVar8 = (undefined2)iVar2;
         fVar1 = float_multiply(DAT_00102062,1e+09);
         dVar6 = float_to_double(fVar1);
         iVar2 = float_to_integer(pll.efc);
         debug_sprintf(acStack_70,"%d/%d/%d %02d:%02d:%02d efc= %d ti= %.1f loop= %d curr= %.2f\r\n",
                       (uint)local_a,(uint)local_9,(uint)local_c,(uint)uStack_8._1_1_,
-                      (uint)uStack_8._2_1_,(uint)(byte)uStack_8,iVar2,dVar6,uVar7,uVar8,uVar9);
+                      (uint)uStack_8._2_1_,(uint)(byte)uStack_8,iVar2,dVar6,CONCAT22(uVar7,uVar8),
+                      (double)CONCAT71(CONCAT61(CONCAT42(CONCAT31(CONCAT21(uVar9,uVar10),uVar11),
+                                                         uVar12),uVar13),uVar14));
         task_dmessage(acStack_70);
       }
       DAT_00102062 = 0.0;
@@ -39159,8 +39180,13 @@ undefined1 interval_average(char param_1)
   float a;
   double dVar6;
   undefined2 uVar7;
-  undefined1 uVar8;
-  undefined1 uVar9;
+  undefined2 uVar8;
+  undefined2 uVar9;
+  undefined1 uVar10;
+  undefined1 uVar11;
+  undefined2 uVar12;
+  undefined1 uVar13;
+  undefined1 uVar14;
   float local_82;
   float local_7e;
   undefined1 local_7a;
@@ -39219,7 +39245,7 @@ undefined1 interval_average(char param_1)
         dVar6 = float_to_double(fVar2);
         debug_sprintf(acStack_79,"%d/%d/%d %02d:%02d:%02d TI result: %.1fns\r\n",(uint)local_a,
                       (uint)local_9,(uint)local_c,(uint)uStack_8._1_1_,(uint)uStack_8._2_1_,
-                      (ushort)(byte)uStack_8,(char)((ulonglong)dVar6 >> 0x20),SUB81(dVar6,0));
+                      (uint)(byte)uStack_8,dVar6);
         task_dmessage(acStack_79);
       }
       if ((((DAT_00102550 != '\0') && (cVar5 = FUN_00047078(), cVar5 == '\0')) &&
@@ -39250,17 +39276,17 @@ undefined1 interval_average(char param_1)
       fVar2 = float_subtract(1.0,_DAT_00102076);
       fVar2 = float_multiply(fVar2,(float)pll.field_3b0._0_4_);
       uVar7 = (undefined2)((uint)fVar2 >> 0x10);
-      uVar8 = (undefined1)((uint)fVar2 >> 8);
-      uVar9 = SUB41(fVar2,0);
+      uVar10 = (undefined1)((uint)fVar2 >> 8);
+      uVar11 = SUB41(fVar2,0);
       fVar2 = float_multiply(_DAT_00102076,local_7e);
-      pll.field_3b0._0_4_ = float_add((float)CONCAT31(CONCAT21(uVar7,uVar8),uVar9),fVar2);
+      pll.field_3b0._0_4_ = float_add((float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11),fVar2);
       u = FUN_000136f6();
       fVar2 = unsigned_to_float(u);
       uVar7 = (undefined2)((uint)fVar2 >> 0x10);
-      uVar8 = (undefined1)((uint)fVar2 >> 8);
-      uVar9 = SUB41(fVar2,0);
+      uVar10 = (undefined1)((uint)fVar2 >> 8);
+      uVar11 = SUB41(fVar2,0);
       fVar2 = float_multiply(*(float *)(local_10 + 0x362),2700.0);
-      fVar2 = float_divide(fVar2,(float)CONCAT31(CONCAT21(uVar7,uVar8),uVar9));
+      fVar2 = float_divide(fVar2,(float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11));
       a = float_add(fVar2,*(float *)(local_10 + 0x35e));
       iVar3 = float_compare(a,DAT_00102564);
       fVar2 = DAT_00102564;
@@ -39277,24 +39303,31 @@ undefined1 interval_average(char param_1)
       fVar2 = float_add(fVar2,(float)pll.field_3b0._4_4_);
       fVar2 = float_add(fVar2,DAT_0010205e);
       uVar7 = (undefined2)((uint)fVar2 >> 0x10);
-      uVar8 = (undefined1)((uint)fVar2 >> 8);
-      uVar9 = SUB41(fVar2,0);
+      uVar10 = (undefined1)((uint)fVar2 >> 8);
+      uVar11 = SUB41(fVar2,0);
       fVar2 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
-      fVar2 = float_add((float)CONCAT31(CONCAT21(uVar7,uVar8),uVar9),fVar2);
+      fVar2 = float_add((float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11),fVar2);
       pll.efc = (float)FUN_0002426e(SUB41(fVar2,0));
       if (DAT_00102541 != '\0') {
         get_date_time((uint32_t *)&local_c,&uStack_8);
         dVar6 = float_to_double(fVar1);
-        uVar8 = (undefined1)((ulonglong)dVar6 >> 0x20);
-        uVar9 = SUB81(dVar6,0);
+        uVar9 = (undefined2)((ulonglong)dVar6 >> 0x30);
+        uVar10 = (undefined1)((ulonglong)dVar6 >> 0x28);
+        uVar11 = (undefined1)((ulonglong)dVar6 >> 0x20);
+        uVar12 = (undefined2)((ulonglong)dVar6 >> 0x10);
+        uVar13 = (undefined1)((ulonglong)dVar6 >> 8);
+        uVar14 = SUB81(dVar6,0);
         iVar3 = float_to_integer(max_loop_time);
-        uVar7 = (undefined2)iVar3;
+        uVar7 = (undefined2)((uint)iVar3 >> 0x10);
+        uVar8 = (undefined2)iVar3;
         fVar1 = float_multiply(DAT_00102062,1e+09);
         dVar6 = float_to_double(fVar1);
         iVar3 = float_to_integer(pll.efc);
         debug_sprintf(acStack_79,"%d/%d/%d %02d:%02d:%02d efc= %d ti= %.1f loop= %d curr= %.2f\r\n",
                       (uint)local_a,(uint)local_9,(uint)local_c,(uint)uStack_8._1_1_,
-                      (uint)uStack_8._2_1_,(uint)(byte)uStack_8,iVar3,dVar6,uVar7,uVar8,uVar9);
+                      (uint)uStack_8._2_1_,(uint)(byte)uStack_8,iVar3,dVar6,CONCAT22(uVar7,uVar8),
+                      (double)CONCAT71(CONCAT61(CONCAT42(CONCAT31(CONCAT21(uVar9,uVar10),uVar11),
+                                                         uVar12),uVar13),uVar14));
         task_dmessage(acStack_79);
       }
       DAT_00102062 = 0.0;
@@ -39493,8 +39526,10 @@ char FUN_000451c2(void)
   float fVar1;
   int iVar2;
   char cVar4;
-  double dVar5;
+  double param2;
+  undefined2 uVar5;
   undefined1 uVar6;
+  undefined1 uVar7;
   char acStack_54 [80];
   
   cVar4 = '\0';
@@ -39558,11 +39593,13 @@ LAB_0004536e:
         pll.efc = (float)FUN_0002426e(SUB41(fVar1,0));
         if (DAT_00102541 != '\0') {
           iVar2 = float_to_integer(pll.efc);
-          uVar6 = (undefined1)iVar2;
+          uVar5 = (undefined2)((uint)iVar2 >> 0x10);
+          uVar6 = (undefined1)((uint)iVar2 >> 8);
+          uVar7 = (undefined1)iVar2;
           fVar1 = float_multiply(pll.fine_d,1e+09);
-          dVar5 = float_to_double(fVar1);
-          debug_sprintf(acStack_54,"d = %f, efc =  %d\r\n",(short)((ulonglong)dVar5 >> 0x20),
-                        SUB81(dVar5,0),uVar6);
+          param2 = float_to_double(fVar1);
+          debug_sprintf(acStack_54,"d = %f, efc =  %d\r\n",param2,
+                        CONCAT31(CONCAT21(uVar5,uVar6),uVar7));
           task_dmessage(acStack_54);
         }
         FUN_000450c4('\x02');
@@ -39599,8 +39636,13 @@ char FUN_0004538c(void)
   double dVar6;
   undefined4 uVar7;
   undefined2 uVar8;
-  undefined1 uVar9;
-  undefined1 uVar10;
+  undefined2 uVar9;
+  undefined2 uVar10;
+  undefined1 uVar11;
+  undefined1 uVar12;
+  undefined2 uVar13;
+  undefined1 uVar14;
+  undefined1 uVar15;
   char acStack_54 [80];
   
   cVar5 = '\0';
@@ -39693,10 +39735,10 @@ char FUN_0004538c(void)
           fVar2 = unsigned_to_float((uint)pll.fine_index);
           fVar2 = float_multiply(fVar2,_DAT_00102148);
           uVar8 = (undefined2)((uint)fVar2 >> 0x10);
-          uVar9 = (undefined1)((uint)fVar2 >> 8);
-          uVar10 = SUB41(fVar2,0);
+          uVar11 = (undefined1)((uint)fVar2 >> 8);
+          uVar12 = SUB41(fVar2,0);
           fVar2 = float_multiply(_DAT_00102144,_DAT_00102144);
-          fine_y0 = float_subtract(fVar2,(float)CONCAT31(CONCAT21(uVar8,uVar9),uVar10));
+          fine_y0 = float_subtract(fVar2,(float)CONCAT31(CONCAT21(uVar8,uVar11),uVar12));
           if (ABS(fine_y0) == 0.0) {
             fine_y0 = 0.0;
           }
@@ -39704,30 +39746,37 @@ char FUN_0004538c(void)
             fVar2 = unsigned_to_float((uint)pll.fine_index);
             fVar2 = float_multiply(fVar2,_DAT_00102150);
             uVar8 = (undefined2)((uint)fVar2 >> 0x10);
-            uVar9 = (undefined1)((uint)fVar2 >> 8);
-            uVar10 = SUB41(fVar2,0);
+            uVar11 = (undefined1)((uint)fVar2 >> 8);
+            uVar12 = SUB41(fVar2,0);
             fVar2 = float_multiply(_DAT_00102144,_DAT_0010214c);
-            fVar2 = float_subtract(fVar2,(float)CONCAT31(CONCAT21(uVar8,uVar9),uVar10));
+            fVar2 = float_subtract(fVar2,(float)CONCAT31(CONCAT21(uVar8,uVar11),uVar12));
             fine_y0 = float_divide(fVar2,fine_y0);
           }
           fVar2 = float_multiply(_DAT_00102144,fine_y0);
           fVar2 = float_subtract_reversed(fVar2,_DAT_0010214c);
           uVar8 = (undefined2)((uint)fVar2 >> 0x10);
-          uVar9 = (undefined1)((uint)fVar2 >> 8);
-          uVar10 = SUB41(fVar2,0);
+          uVar11 = (undefined1)((uint)fVar2 >> 8);
+          uVar12 = SUB41(fVar2,0);
           fVar2 = unsigned_to_float((uint)pll.fine_index);
-          _DAT_00102158 = float_divide((float)CONCAT31(CONCAT21(uVar8,uVar9),uVar10),fVar2);
+          _DAT_00102158 = float_divide((float)CONCAT31(CONCAT21(uVar8,uVar11),uVar12),fVar2);
           if (DAT_00102541 != '\0') {
             dVar6 = float_to_double(_DAT_00102158);
-            uVar9 = (undefined1)((ulonglong)dVar6 >> 0x20);
-            uVar10 = SUB81(dVar6,0);
+            uVar10 = (undefined2)((ulonglong)dVar6 >> 0x30);
+            uVar11 = (undefined1)((ulonglong)dVar6 >> 0x28);
+            uVar12 = (undefined1)((ulonglong)dVar6 >> 0x20);
+            uVar13 = (undefined2)((ulonglong)dVar6 >> 0x10);
+            uVar14 = (undefined1)((ulonglong)dVar6 >> 8);
+            uVar15 = SUB81(dVar6,0);
             dVar6 = float_to_double(fine_y0);
             uVar7 = (undefined4)((ulonglong)dVar6 >> 0x20);
-            uVar8 = SUB82(dVar6,0);
+            uVar8 = (undefined2)((ulonglong)dVar6 >> 0x10);
+            uVar9 = SUB82(dVar6,0);
             dVar6 = float_to_double(pll.fine_d);
             dVar6 = double_multiply(1000000000.0,dVar6);
             debug_sprintf(acStack_54,"i= %d, ti= %.1f, y0= %.2e, x0= %.2e\r\n",(uint)pll.fine_index,
-                          dVar6,uVar7,uVar8,uVar9,uVar10);
+                          dVar6,(double)CONCAT62(CONCAT42(uVar7,uVar8),uVar9),
+                          (double)CONCAT71(CONCAT61(CONCAT42(CONCAT31(CONCAT21(uVar10,uVar11),uVar12
+                                                                     ),uVar13),uVar14),uVar15));
             task_dmessage(acStack_54);
           }
           pll.fine_index = pll.fine_index + 1;
@@ -39801,11 +39850,13 @@ LAB_00045812:
             pll.field_018 = 1;
             if (DAT_00102541 != '\0') {
               iVar1 = float_to_integer(pll.efc);
-              uVar9 = (undefined1)iVar1;
+              uVar8 = (undefined2)((uint)iVar1 >> 0x10);
+              uVar11 = (undefined1)((uint)iVar1 >> 8);
+              uVar12 = (undefined1)iVar1;
               fVar2 = float_multiply(fine_y0,1e+09);
               dVar6 = float_to_double(fVar2);
-              debug_sprintf(acStack_54,"y0 = %f, efc =  %d\r\n",(short)((ulonglong)dVar6 >> 0x20),
-                            SUB81(dVar6,0),uVar9);
+              debug_sprintf(acStack_54,"y0 = %f, efc =  %d\r\n",dVar6,
+                            CONCAT31(CONCAT21(uVar8,uVar11),uVar12));
               task_dmessage(acStack_54);
             }
             fVar2 = double_to_float((double)CONCAT44(interval_reading,DAT_00101fa0));
@@ -40738,7 +40789,9 @@ switchD_0004688c_caseD_0:
       }
       else {
         pll.field_020[6] = 0;
-        debug_sprintf(acStack_54,"gps init ack failure: %02X\r\n",gps_ack_code);
+        cVar1 = (char)gps_ack_code >> 7;
+        debug_sprintf(acStack_54,"gps init ack failure: %02X\r\n",
+                      CONCAT31(CONCAT21(CONCAT11(cVar1,cVar1),cVar1),gps_ack_code));
         task_dmessage(acStack_54);
       }
     }
@@ -40758,7 +40811,9 @@ switchD_0004688c_caseD_0:
       }
       else {
         pll.field_020[6] = 2;
-        debug_sprintf(acStack_54,"utc corr ack failure: %02X\r\n",gps_ack_code);
+        cVar1 = (char)gps_ack_code >> 7;
+        debug_sprintf(acStack_54,"utc corr ack failure: %02X\r\n",
+                      CONCAT31(CONCAT21(CONCAT11(cVar1,cVar1),cVar1),gps_ack_code));
         task_dmessage(acStack_54);
       }
     }
@@ -40778,7 +40833,9 @@ switchD_0004688c_caseD_0:
       }
       else {
         pll.field_020[6] = 4;
-        debug_sprintf(acStack_54,"mask angle ack failure: %02X\r\n",gps_ack_code);
+        cVar1 = (char)gps_ack_code >> 7;
+        debug_sprintf(acStack_54,"mask angle ack failure: %02X\r\n",
+                      CONCAT31(CONCAT21(CONCAT11(cVar1,cVar1),cVar1),gps_ack_code));
         task_dmessage(acStack_54);
       }
     }
@@ -40798,7 +40855,9 @@ switchD_0004688c_caseD_0:
       }
       else {
         pll.field_020[6] = 6;
-        debug_sprintf(acStack_54,"ant delay ack failure: %02X\r\n",gps_ack_code);
+        cVar1 = (char)gps_ack_code >> 7;
+        debug_sprintf(acStack_54,"ant delay ack failure: %02X\r\n",
+                      CONCAT31(CONCAT21(CONCAT11(cVar1,cVar1),cVar1),gps_ack_code));
         task_dmessage(acStack_54);
       }
     }
@@ -40823,7 +40882,9 @@ switchD_0004688c_caseD_0:
       }
       else {
         pll.field_020[6] = 8;
-        debug_sprintf(acStack_54,"sat ign ack failure: %02X\r\n",gps_ack_code);
+        cVar1 = (char)gps_ack_code >> 7;
+        debug_sprintf(acStack_54,"sat ign ack failure: %02X\r\n",
+                      CONCAT31(CONCAT21(CONCAT11(cVar1,cVar1),cVar1),gps_ack_code));
         task_dmessage(acStack_54);
       }
     }
@@ -40847,7 +40908,9 @@ switchD_0004688c_caseD_0:
       }
       else {
         pll.field_020[6] = 10;
-        debug_sprintf(acStack_54,"pos location ack failure: %02X\r\n",gps_ack_code);
+        cVar1 = (char)gps_ack_code >> 7;
+        debug_sprintf(acStack_54,"pos location ack failure: %02X\r\n",
+                      CONCAT31(CONCAT21(CONCAT11(cVar1,cVar1),cVar1),gps_ack_code));
         task_dmessage(acStack_54);
       }
     }
@@ -40868,7 +40931,9 @@ switchD_0004688c_caseD_0:
       }
       else {
         pll.field_020[6] = 0xc;
-        debug_sprintf(acStack_54,"disable pos hold ack failure: %02X\r\n",gps_ack_code);
+        cVar1 = (char)gps_ack_code >> 7;
+        debug_sprintf(acStack_54,"disable pos hold ack failure: %02X\r\n",
+                      CONCAT31(CONCAT21(CONCAT11(cVar1,cVar1),cVar1),gps_ack_code));
         task_dmessage(acStack_54);
       }
     }
@@ -40926,7 +40991,9 @@ switchD_0004688c_caseD_0:
         return;
       }
       pll.field_020[6] = 0xf;
-      debug_sprintf(acStack_54,"set survey location ack failure: %02X\r\n",gps_ack_code);
+      cVar1 = (char)gps_ack_code >> 7;
+      debug_sprintf(acStack_54,"set survey location ack failure: %02X\r\n",
+                    CONCAT31(CONCAT21(CONCAT11(cVar1,cVar1),cVar1),gps_ack_code));
       task_dmessage(acStack_54);
       return;
     }
@@ -40987,7 +41054,9 @@ void FUN_00046d98(void)
         }
         else {
           pll.field_020[0xb] = 1;
-          debug_sprintf(acStack_54,"leap pending ack failure: %02X\r\n",gps_ack_code);
+          debug_sprintf(acStack_54,"leap pending ack failure: %02X\r\n",
+                        CONCAT31(CONCAT21((char)gps_ack_code >> 7,(char)gps_ack_code >> 7),
+                                 gps_ack_code));
           task_dmessage(acStack_54);
         }
       }
@@ -41948,43 +42017,39 @@ void FUN_00047fb6(char *param_1,char param_2)
 
 {
   int iVar1;
-  char cVar4;
+  uchar param2;
   uint uVar2;
   uint uVar3;
-  double dVar5;
+  double dVar4;
   uint in_stack_00000008;
   undefined4 in_stack_0000000c;
-  undefined4 local_c;
-  undefined4 local_8;
   
   iVar1 = double_compare(0.0,(double)CONCAT44(in_stack_00000008,in_stack_0000000c));
   if (iVar1 < 0) {
     if (param_2 == '\0') {
-      cVar4 = 'W';
+      param2 = 'W';
     }
     else {
-      cVar4 = 'S';
+      param2 = 'S';
     }
     in_stack_00000008 = in_stack_00000008 ^ 0x80000000;
   }
   else if (param_2 == '\0') {
-    cVar4 = 'E';
+    param2 = 'E';
   }
   else {
-    cVar4 = 'N';
+    param2 = 'N';
   }
-  dVar5 = double_divide_reversed_pointer(3600000.0,(double *)&stack0x00000008);
-  uVar2 = double_to_unsigned(dVar5);
-  dVar5 = integer_to_double((uVar2 & 0xff) * 3600000);
-  double_subtract_in_place((double *)&stack0x00000008,dVar5);
-  dVar5 = double_divide_reversed_pointer(60000.0,(double *)&stack0x00000008);
-  uVar3 = double_to_unsigned(dVar5);
-  dVar5 = integer_to_double((uVar3 & 0xff) * 60000);
-  double_subtract_in_place((double *)&stack0x00000008,dVar5);
-  dVar5 = double_divide_reversed_pointer(1000.0,(double *)&stack0x00000008);
-  local_8 = SUB84(dVar5,0);
-  local_c = (undefined4)((ulonglong)dVar5 >> 0x20);
-  sprintf(param_1,"%c%4d:%02d:%06.7f",(int)cVar4,uVar2 & 0xff,uVar3 & 0xff,local_c,local_8);
+  dVar4 = double_divide_reversed_pointer(3600000.0,(double *)&stack0x00000008);
+  uVar2 = double_to_unsigned(dVar4);
+  dVar4 = integer_to_double((uVar2 & 0xff) * 3600000);
+  double_subtract_in_place((double *)&stack0x00000008,dVar4);
+  dVar4 = double_divide_reversed_pointer(60000.0,(double *)&stack0x00000008);
+  uVar3 = double_to_unsigned(dVar4);
+  dVar4 = integer_to_double((uVar3 & 0xff) * 60000);
+  double_subtract_in_place((double *)&stack0x00000008,dVar4);
+  dVar4 = double_divide_reversed_pointer(1000.0,(double *)&stack0x00000008);
+  sprintf(param_1,"%c%4d:%02d:%06.7f",param2,uVar2 & 0xff,uVar3 & 0xff,dVar4);
   return;
 }
 
@@ -41997,32 +42062,32 @@ void FUN_000480c2(char *param_1,int param_2,char param_3)
 
 {
   int iVar1;
-  char cVar4;
+  uchar param2;
   uint uVar2;
   float fVar3;
-  double dVar5;
+  double param5;
   
   if (param_2 < 0) {
     if (param_3 == '\0') {
-      cVar4 = 'W';
+      param2 = 'W';
     }
     else {
-      cVar4 = 'S';
+      param2 = 'S';
     }
     param_2 = -param_2;
   }
   else if (param_3 == '\0') {
-    cVar4 = 'E';
+    param2 = 'E';
   }
   else {
-    cVar4 = 'N';
+    param2 = 'N';
   }
   iVar1 = param_2 + (param_2 / 3600000 & 0xffU) * -3600000;
   uVar2 = iVar1 / 60000;
   fVar3 = integer_to_float(iVar1 + (uVar2 & 0xff) * -60000);
   fVar3 = float_divide(fVar3,1000.0);
-  dVar5 = float_to_double(fVar3);
-  sprintf(param_1,"%c%4d:%02d:%06.3f",(int)cVar4,param_2 / 3600000 & 0xff,uVar2 & 0xff,dVar5);
+  param5 = float_to_double(fVar3);
+  sprintf(param_1,"%c%4d:%02d:%06.3f",param2,param_2 / 3600000 & 0xff,uVar2 & 0xff,param5);
   return;
 }
 
@@ -42036,21 +42101,21 @@ void FUN_0004816c(double param_1,char *param_2)
   float f;
   undefined8 uVar2;
   undefined8 uVar3;
-  double dVar4;
-  undefined5 uVar5;
-  undefined4 uVar6;
-  undefined *puVar7;
+  double param4;
+  undefined5 uVar4;
+  undefined4 uVar5;
+  char *param5;
   
-  uVar6 = 0x15180;
+  uVar5 = 0x15180;
   iVar1 = double_to_integer(param_1);
-  uVar5 = ldiv();
-  uVar2 = ldiv((int)uVar5,0xe10,iVar1,uVar6);
+  uVar4 = ldiv();
+  uVar2 = ldiv((int)uVar4,0xe10,iVar1,uVar5);
   uVar3 = ldiv((int)uVar2,0x3c);
   f = integer_to_float((int)uVar3);
-  puVar7 = (&PTR_DAT_0004cf80)[(byte)((char)((uint5)uVar5 >> 0x20) + 1)];
-  dVar4 = float_to_double(f);
+  param5 = (&PTR_DAT_0004cf80)[(byte)((char)((uint5)uVar4 >> 0x20) + 1)];
+  param4 = float_to_double(f);
   sprintf(param_2,"%02d:%02d:%04.1f [%s]",(uint)((ulonglong)uVar2 >> 0x20) & 0xff,
-          (uint)((ulonglong)uVar3 >> 0x20) & 0xff,dVar4,puVar7);
+          (uint)((ulonglong)uVar3 >> 0x20) & 0xff,param4,param5);
   return;
 }
 
@@ -42063,7 +42128,7 @@ void gps_print_best_combinations(void)
   float fVar1;
   char cVar2;
   char cVar3;
-  double dVar4;
+  double param1;
   
   psos_pause(1);
   console_write("\r\n");
@@ -42073,11 +42138,11 @@ void gps_print_best_combinations(void)
   for (cVar2 = '\0'; (int)cVar2 < (int)(uint)gps.xdop_table.count; cVar2 = cVar2 + '\x01') {
     fVar1 = integer_to_float((int)(short)gps.xdop_table.combinations[cVar2].xdop);
     fVar1 = float_divide(fVar1,10.0);
-    dVar4 = float_to_double(fVar1);
-    printf(" %4.1f    ",dVar4);
+    param1 = float_to_double(fVar1);
+    printf(" %4.1f    ",param1);
     cVar3 = '\0';
     do {
-      printf("  %2d");
+      printf("  %2d",(uint)gps.xdop_table.combinations[cVar2].satellites[cVar3]);
       cVar3 = cVar3 + '\x01';
     } while (cVar3 < '\x06');
     console_write("\r\n");
@@ -42093,27 +42158,31 @@ void gps_print_extension(void)
 
 {
   float fVar1;
-  double dVar2;
-  double dVar3;
+  double param5;
+  double param4;
+  double param3;
+  double param2;
+  double param1;
   
   psos_pause(1);
   console_write("\r\n");
   fVar1 = unsigned_to_float((uint)gps.extension.tdop);
   fVar1 = float_divide(fVar1,10.0);
-  float_to_double(fVar1);
+  param5 = float_to_double(fVar1);
   fVar1 = unsigned_to_float((uint)gps.extension.vdop);
   fVar1 = float_divide(fVar1,10.0);
-  float_to_double(fVar1);
+  param4 = float_to_double(fVar1);
   fVar1 = unsigned_to_float((uint)gps.extension.hdop);
   fVar1 = float_divide(fVar1,10.0);
-  float_to_double(fVar1);
+  param3 = float_to_double(fVar1);
   fVar1 = unsigned_to_float((uint)gps.extension.pdop);
   fVar1 = float_divide(fVar1,10.0);
-  dVar2 = float_to_double(fVar1);
+  param2 = float_to_double(fVar1);
   fVar1 = unsigned_to_float((uint)gps.extension.gdop);
   fVar1 = float_divide(fVar1,10.0);
-  dVar3 = float_to_double(fVar1);
-  printf("GDOP: %6.1f  PDOP: %6.1f  HDOP: %6.1f VDOP: %6.1f TDOP: %6.1f\r\n",dVar3,dVar2);
+  param1 = float_to_double(fVar1);
+  printf("GDOP: %6.1f  PDOP: %6.1f  HDOP: %6.1f VDOP: %6.1f TDOP: %6.1f\r\n",param1,param2,param3,
+         param4,param5);
   printf("MAG VAR: %4d VEL: n %5d e %5d u %5d AGE: %5d\r\n",(int)gps.extension.magnetic_variation,
          (int)gps.extension.velocity_north,(int)gps.extension.velocity_east,
          (int)gps.extension.velocity_up,(uint)gps.extension.correction_age);
@@ -42146,10 +42215,10 @@ void gps_print_time_raim(void)
   byte bVar1;
   int iVar2;
   bool bVar3;
-  char cVar4;
-  byte bVar5;
-  undefined2 uVar7;
-  char *pcVar6;
+  char *pcVar4;
+  char *pcVar5;
+  char cVar6;
+  byte bVar7;
   undefined1 uVar8;
   char acStack_12 [10];
   uint32_t local_8;
@@ -42163,34 +42232,34 @@ void gps_print_time_raim(void)
   else {
     printf("--------------------- Time RAIM Status ----------------------\r\n");
     if (gps.raim.raim_on == 1) {
-      uVar8 = 0xc;
+      pcVar4 = "On";
     }
     else {
-      uVar8 = 0xf;
+      pcVar4 = "Off";
     }
-    printf("MODE       %-3s",uVar8);
+    printf("MODE       %-3s",pcVar4);
     iVar2 = (int)(char)gps.field_52a[0x11] - 3;
     if ((uint)(int)(char)gps.field_52a[0x11] < 3 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
       switch((&WORD_0004856a)[(short)iVar2]) {
       case 8:
-        uVar8 = 0x13;
+        pcVar4 = "Inactive";
         break;
       case 0x10:
-        uVar8 = 0x1c;
+        pcVar4 = "OK";
         break;
       case 0x18:
-        uVar8 = 0x1f;
+        pcVar4 = "Alarm Detected";
         break;
       case 0x20:
-        uVar8 = 0x2e;
+        pcVar4 = "Alarm";
       }
     }
     else {
-      uVar8 = 0x34;
+      pcVar4 = "?";
     }
-    printf("%17sAssessment: %-14s\r\n",0xd10b,uVar8);
-    printf("%31s# Alarms:   %d   (%d detected)\r\n",&DAT_0004d10b,(uint)gps_counts.raim_alarms,
+    printf("%17sAssessment: %-14s\r\n","",pcVar4);
+    printf("%31s# Alarms:   %d   (%d detected)\r\n","",(uint)gps_counts.raim_alarms,
            (uint)gps_counts.raim_detected);
     console_write("\r\nTime Solution _____________________   1PPS Pulse ____________\r\n");
     iVar2 = (int)(char)gps.raim.solution_status - 2;
@@ -42198,101 +42267,101 @@ void gps_print_time_raim(void)
                     /* WARNING: Switch is manually overridden */
       switch((&WORD_000485e8)[(short)iVar2]) {
       case 6:
-        uVar7 = 0xd41c;
+        pcVar4 = "OK";
         break;
       case 0xe:
-        uVar7 = 0xd4b5;
+        pcVar4 = "** ALARM **";
         break;
       case 0x16:
-        uVar7 = 0xd4c1;
+        pcVar4 = "Unknown";
       }
     }
     else {
-      uVar7 = 0xd434;
+      pcVar4 = "?";
     }
     if (gps.raim.pulse_status == 0) {
-      uVar8 = 0xf;
+      pcVar5 = "Off";
     }
     else {
-      uVar8 = 0xc;
+      pcVar5 = "On";
     }
-    printf("STATUS     %-24s   STATUS    %s\r\n",uVar7,uVar8);
+    printf("STATUS     %-24s   STATUS    %s\r\n",pcVar4,pcVar5);
     iVar2 = (int)(char)gps.raim.raim_status - 2;
     if ((uint)(int)(char)gps.raim.raim_status < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
       switch((&WORD_00048642)[(short)iVar2]) {
       case 6:
-        pcVar6 = "Detection/Isolation";
+        pcVar4 = "Detection/Isolation";
         break;
       case 0xe:
-        pcVar6 = "Detection Only";
+        pcVar4 = "Detection Only";
         break;
       case 0x16:
-        pcVar6 = "Unavailable";
+        pcVar4 = "Unavailable";
       }
     }
     else {
-      pcVar6 = "?";
+      pcVar4 = "?";
     }
     iVar2 = (int)(char)gps.raim.pps_mode - 3;
     if ((uint)(int)(char)gps.raim.pps_mode < 3 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
       switch((&WORD_0004867a)[(short)iVar2]) {
       case 8:
-        uVar8 = 0x1a;
+        pcVar5 = "Always Off";
         break;
       case 0x10:
-        uVar8 = 0x25;
+        pcVar5 = "Always On";
         break;
       case 0x18:
-        uVar8 = 0x2f;
+        pcVar5 = "When Tracking";
         break;
       case 0x20:
-        uVar8 = 0x3d;
+        pcVar5 = "When Time RAIM OK";
       }
     }
     else {
-      uVar8 = 0x34;
+      pcVar5 = "?";
     }
-    printf("\r\nRAIM MODE  %-24s   OUTPUT    %s\r\n",(short)pcVar6,uVar8);
+    printf("\r\nRAIM MODE  %-24s   OUTPUT    %s\r\n",pcVar4,pcVar5);
     iVar2 = gps.raim.pulse_sync - 2;
     if (gps.raim.pulse_sync < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
       switch((&WORD_000486c8)[(short)iVar2]) {
       case 6:
-        pcVar6 = "UTC";
+        pcVar4 = "UTC";
         break;
       case 0xe:
-        pcVar6 = "GPS";
+        pcVar4 = "GPS";
         break;
       case 0x16:
-        pcVar6 = "Epoch";
+        pcVar4 = "Epoch";
       }
     }
-    sprintf(acStack_12,"%d ns",(char)gps.raim.alarm_limit * 'd');
-    printf("ALARM LIM  %-24s   TIME REF  %s\r\n",acStack_12,pcVar6);
+    sprintf(acStack_12,"%d ns",(uint)gps.raim.alarm_limit * 100);
+    printf("ALARM LIM  %-24s   TIME REF  %s\r\n",acStack_12,pcVar4);
     sprintf(acStack_12,"%d ns",(uint)gps.raim.sigma);
     printf("SIGMA EST  %-24s   SAWT ERR  %+d ns\r\n",acStack_12,(int)gps.raim.sawtooth);
     console_write("\r\nFractional Time Estimates ___________________________________\r\n");
     console_write("\r\nCh    PRN    Time (ns)\r\n");
     console_write("----------------------\r\n");
-    bVar5 = 0;
+    bVar7 = 0;
     do {
-      bVar1 = gps.raim.channels[bVar5].satellite;
+      bVar1 = gps.raim.channels[bVar7].satellite;
       if (bVar1 != 0) {
-        cVar4 = FUN_0004f162(bVar1);
-        if (cVar4 == '\0') {
-          uVar7 = 0xd647;
+        cVar6 = FUN_0004f162(bVar1);
+        if (cVar6 == '\0') {
+          pcVar4 = " ";
         }
         else {
-          uVar7 = 0xd645;
+          pcVar4 = "*";
         }
-        local_8 = gps.raim.channels[bVar5].time_estimate;
-        printf(" %d     %2d%s   %9d\r\n",bVar5 + 1,(uint)bVar1,uVar7,(char)local_8);
+        local_8 = gps.raim.channels[bVar7].time_estimate;
+        printf(" %d     %2d%s   %9d\r\n",bVar7 + 1,(uint)bVar1,pcVar4,local_8);
         bVar3 = true;
       }
-      bVar5 = bVar5 + 1;
-    } while (bVar5 < 6);
+      bVar7 = bVar7 + 1;
+    } while (bVar7 < 6);
     if (!bVar3) {
       return;
     }
@@ -42309,12 +42378,13 @@ void gps_print_pseudorange_corrections(void)
 
 {
   byte bVar1;
+  uint param5;
   float fVar2;
   byte bVar3;
   double dVar4;
-  double dVar5;
+  double param3;
   undefined4 local_1e;
-  undefined1 auStack_16 [18];
+  char acStack_16 [18];
   
   psos_pause(1);
   console_write("\r\n");
@@ -42322,8 +42392,8 @@ void gps_print_pseudorange_corrections(void)
   dVar4 = unsigned_to_double(gps.corrections.time);
   dVar4 = double_divide_reversed(10.0,dVar4);
   local_1e = (undefined4)((ulonglong)dVar4 >> 0x20);
-  FUN_0004816c(local_1e,SUB84(dVar4,0),auStack_16);
-  printf("\r\nGPS TIME    %8.1f / %s\r\n",local_1e,SUB84(dVar4,0),auStack_16);
+  FUN_0004816c(local_1e,SUB84(dVar4,0),acStack_16);
+  printf("\r\nGPS TIME    %8.1f / %s\r\n",dVar4,acStack_16);
   console_write("----------------------------------------------\r\n");
   console_write("Ch     PRN    Range (m)     Rate (m/s)   Eph #\r\n");
   console_write("----------------------------------------------\r\n");
@@ -42331,20 +42401,22 @@ void gps_print_pseudorange_corrections(void)
   do {
     bVar1 = gps.corrections.channels[bVar3].satellite;
     if (bVar1 != 0) {
+      param5 = (uint)gps.corrections.channels[bVar3].issue_of_data;
       fVar2 = integer_to_float((int)gps.corrections.channels[bVar3].rate_correction);
       fVar2 = float_divide(fVar2,1000.0);
       dVar4 = float_to_double(fVar2);
       fVar2 = integer_to_float(gps.corrections.channels[bVar3].range_correction);
       fVar2 = float_divide(fVar2,100.0);
-      dVar5 = float_to_double(fVar2);
-      printf(" %d      %2d    %9.2f       %6.3f      %3d\r\n",bVar3 + 1,(uint)bVar1,dVar5,dVar4);
+      param3 = float_to_double(fVar2);
+      printf(" %d      %2d    %9.2f       %6.3f      %3d\r\n",bVar3 + 1,(uint)bVar1,param3,dVar4,
+             param5);
     }
     bVar3 = bVar3 + 1;
   } while (bVar3 < 6);
   console_write("\r\nDerived Statistics ___________________________\r\n");
-  printf("AVG  %.2f m    STD DEV  %.2f m\r\n",gps.correction_average._0_4_,
-         gps.correction_average._4_4_,gps.correction_deviation._0_4_,gps.correction_deviation._4_4_)
-  ;
+  printf("AVG  %.2f m    STD DEV  %.2f m\r\n",
+         (double)CONCAT44(gps.correction_average._0_4_,gps.correction_average._4_4_),
+         (double)CONCAT44(gps.correction_deviation._0_4_,gps.correction_deviation._4_4_));
   return;
 }
 
@@ -42398,19 +42470,18 @@ void gps_print_instrument_state(void)
   char *pcVar7;
   char *pcVar8;
   double dVar9;
-  undefined1 *puVar10;
   char local_a0 [31];
   undefined1 local_81;
-  undefined1 local_80 [31];
+  char local_80 [31];
   undefined1 local_61;
-  undefined1 local_60 [31];
+  char local_60 [31];
   undefined1 local_41;
-  undefined1 local_40 [32];
+  char local_40 [32];
   char local_20 [16];
   char *local_10;
   byte local_c;
   undefined4 local_a;
-  char local_6;
+  uchar local_6;
   
   psos_pause(1);
   console_write(
@@ -42429,9 +42500,10 @@ void gps_print_instrument_state(void)
       local_6 = '-';
     }
   }
-  printf("TIME   %02d:%02d:%02d    GMT CORR  %c%02dh:%02dm%24s",gps.time.hour,(uint)gps.time.minute,
-         (uint)gps.time.second,(int)local_6,(uint)gps.gmt_offset.hours,(int)iVar4,&DAT_0004d10b);
-  printf("DATE   %02d/%02d/%04d\r\n",(uint)gps.date.month,(ushort)gps.date.day,(char)gps.date.year);
+  printf("TIME   %02d:%02d:%02d    GMT CORR  %c%02dh:%02dm%24s",(uint)gps.time.hour,
+         (uint)gps.time.minute,(uint)gps.time.second,local_6,(uint)gps.gmt_offset.hours,(int)iVar4,
+         "");
+  printf("DATE   %02d/%02d/%04d\r\n",(uint)gps.date.month,(uint)gps.date.day,(uint)gps.date.year);
   FUN_00048964(gps.position_hold,local_a0);
   iVar2 = (int)(char)gps.application_type - 4;
   if ((uint)(int)(char)gps.application_type < 4 || iVar2 == 0) {
@@ -42456,7 +42528,7 @@ void gps_print_instrument_state(void)
   else {
     pcVar8 = "?";
   }
-  printf("\r\nPOS HOLD   %-8s%42sAPPL   %s\r\n",local_a0,&DAT_0004d10b,pcVar8);
+  printf("\r\nPOS HOLD   %-8s%42sAPPL   %s\r\n",local_a0,"",pcVar8);
   iVar2 = (char)gps.fix_algorithm + -1;
   if ((char)gps.fix_algorithm == 0 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
@@ -42485,13 +42557,13 @@ void gps_print_instrument_state(void)
   else {
     local_10 = "?";
   }
-  printf("FIX ALG    %-17s%33sOPER   %s\r\n",pcVar8,&DAT_0004d10b,local_10);
+  printf("FIX ALG    %-17s%33sOPER   %s\r\n",pcVar8,"",local_10);
   console_write("\r\nHold Position _____________________________   ");
   console_write("Initial Position _______________\r\n");
   FUN_000480c2(local_a0,gps.hold_position.latitude,'\x01');
   FUN_000480c2(local_20,gps.position.latitude,'\x01');
-  printf("LAT        %s  = %+10d ms   %s  = %+10d ms\r\n",(short)local_a0,
-         (char)gps.hold_position.latitude,local_20,gps.position.latitude);
+  printf("LAT        %s  = %+10d ms   %s  = %+10d ms\r\n",local_a0,gps.hold_position.latitude,
+         local_20,gps.position.latitude);
   FUN_000480c2(local_a0,gps.hold_position.longitude,'\0');
   FUN_000480c2(local_20,gps.position.longitude,'\0');
   printf("LON        %s  = %+10d ms   %s  = %+10d ms\r\n",local_a0,gps.hold_position.longitude,
@@ -42504,15 +42576,14 @@ void gps_print_instrument_state(void)
     local_a0[0] = '\0';
     sprintf(local_20,"%+8d cm",gps.hold_position.height);
   }
-  printf("GPS HGT           %11s%24s%+8d cm\r\n",local_a0,&DAT_0004d10b,gps.position.height_gps);
-  printf("MSL HGT           %11s%24s%+8d cm\r\n",(char)local_20,&DAT_0004d10b,
-         gps.position.height_msl);
+  printf("GPS HGT           %11s%24s%+8d cm\r\n",local_a0,"",gps.position.height_gps);
+  printf("MSL HGT           %11s%24s%+8d cm\r\n",local_20,"",gps.position.height_msl);
   console_write("\r\nSatellite Options _________________________   ");
   console_write("PRNs Ignored ___________________\r\n");
   local_a = 0x100c96;
-  local_40[0] = 0;
-  local_60[0] = 0;
-  local_80[0] = 0;
+  local_40[0] = '\0';
+  local_60[0] = '\0';
+  local_80[0] = '\0';
   local_a0[0] = '\0';
   uVar5 = gps.ignored_satellites;
   for (bVar6 = 1; (uVar5 != 0 && (bVar6 < 0x21)); bVar6 = bVar6 + 1) {
@@ -42545,7 +42616,7 @@ void gps_print_instrument_state(void)
   local_41 = 0;
   local_61 = 0;
   local_81 = 0;
-  printf("ELEV MASK  %-2d%33s%s\r\n",(uint)gps.mask_angle,&DAT_0004d10b,local_a0);
+  printf("ELEV MASK  %-2d%33s%s\r\n",(uint)gps.mask_angle,"",local_a0);
   iVar2 = (int)(char)gps.satellite_select - 2;
   if ((uint)(int)(char)gps.satellite_select < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
@@ -42563,7 +42634,7 @@ void gps_print_instrument_state(void)
   else {
     pcVar8 = "?";
   }
-  printf("SELECTION  %-14s%21s%s\r\n",pcVar8,&DAT_0004d10b,local_80);
+  printf("SELECTION  %-14s%21s%s\r\n",pcVar8,"",local_80);
   iVar2 = (int)(char)gps.xdop_type - 4;
   if ((uint)(int)(char)gps.xdop_type < 4 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
@@ -42587,17 +42658,17 @@ void gps_print_instrument_state(void)
   else {
     pcVar8 = "?";
   }
-  puVar10 = local_60;
+  pcVar7 = local_60;
   fVar3 = unsigned_to_float((uint)gps.xdop_hysteresis);
   fVar3 = float_divide(fVar3,10.0);
   dVar9 = float_to_double(fVar3);
-  printf("DOP TYPE   %-4s           DOP HYST     %4.1f   %s\r\n",pcVar8,dVar9,puVar10);
+  printf("DOP TYPE   %-4s           DOP HYST     %4.1f   %s\r\n",pcVar8,dVar9,pcVar7);
   FUN_00048964(gps.ionospheric_correction,local_a0);
-  puVar10 = local_40;
+  pcVar8 = local_40;
   fVar3 = unsigned_to_float((uint)gps.xdop_threshold);
   fVar3 = float_divide(fVar3,10.0);
   dVar9 = float_to_double(fVar3);
-  printf("ION CORR   %-8s       DOP 3D/2D    %4.1f   %s\r\n",local_a0,dVar9,puVar10);
+  printf("ION CORR   %-8s       DOP 3D/2D    %4.1f   %s\r\n",local_a0,dVar9,pcVar8);
   console_write("\r\nCorrection Factors and Thresholds _________   ");
   console_write("General Status _________________\r\n");
   FUN_00048964(gps.utc_time,local_a0);
@@ -42609,16 +42680,22 @@ void gps_print_instrument_state(void)
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00048e42)[(short)iVar2]) {
     case 6:
+      pcVar8 = "None pending";
       break;
     case 0xe:
+      pcVar8 = "+1 pending";
       break;
     case 0x16:
+      pcVar8 = "-1 pending";
     }
   }
-  printf("UTC CORR   %-19s                LEAP SEC  %-12s\r\n");
+  else {
+    pcVar8 = "?";
+  }
+  printf("UTC CORR   %-19s                LEAP SEC  %-12s\r\n",local_a0,pcVar8);
   printf("1PPS OFFS  %9d ns   POS FIX THR %3d\r\n",gps.pps_offset,(uint)gps.position_fix_threshold);
-  printf("CABLE DLY     %6d ns   DIF OUT THR %3d s\r\n",(short)gps.pps_cable_delay,
-         gps.differential_output_threshold);
+  printf("CABLE DLY     %6d ns   DIF OUT THR %3d s\r\n",gps.pps_cable_delay,
+         (uint)gps.differential_output_threshold);
   return;
 }
 
@@ -42628,43 +42705,39 @@ void gps_print_instrument_state(void)
 void gps_print_average(void)
 
 {
-  undefined4 uVar1;
+  byte bVar1;
   byte bVar2;
-  double dVar3;
-  char *pcVar4;
-  undefined2 uVar5;
-  undefined2 uVar6;
+  double param1;
+  char *format;
   char acStack_54 [80];
   
+  bVar2 = 0;
   psos_pause(1);
   console_write("\r\n");
-  uVar6 = (undefined2)gps.average_latitude._4_4_;
-  uVar5 = (undefined2)gps.average_latitude._0_4_;
-  pcVar4 = acStack_54;
-  FUN_00047fb6(pcVar4,'\x01');
-  printf("AVG LAT  %+3.6f = %s\r\n",gps.average_latitude._0_4_,gps.average_latitude._4_4_,acStack_54
-         ,pcVar4,uVar5,uVar6);
-  uVar1 = gps.average_longitude._0_4_;
-  uVar5 = (undefined2)gps.average_longitude._4_4_;
-  pcVar4 = acStack_54;
-  FUN_00047fb6(pcVar4,'\0');
-  printf("AVG LON  %+3.6f = %s\r\n",gps.average_longitude._0_4_,gps.average_longitude._4_4_,
-         acStack_54,pcVar4,uVar1,uVar5);
-  dVar3 = double_divide_reversed_pointer(100.0,&gps.average_height_msl);
-  printf("AVG HGT  %+3.6f\r\n",dVar3);
+  FUN_00047fb6(acStack_54,'\x01');
+  printf("AVG LAT  %+3.6f = %s\r\n",
+         (double)CONCAT44(gps.average_latitude._0_4_,gps.average_latitude._4_4_),acStack_54);
+  FUN_00047fb6(acStack_54,'\0');
+  printf("AVG LON  %+3.6f = %s\r\n",
+         (double)CONCAT44(gps.average_longitude._0_4_,gps.average_longitude._4_4_),acStack_54);
+  param1 = double_divide_reversed_pointer(100.0,&gps.average_height_msl);
+  printf("AVG HGT  %+3.6f\r\n",param1);
   if (gps.position_hold == 0) {
-    printf("N %11d\r\n");
-    pcVar4 = "Averaging: ON ";
+    printf("N %11d\r\n",gps.average_count);
+    format = "Averaging: ON ";
   }
   else {
-    pcVar4 = "Averaging: OFF";
+    format = "Averaging: OFF";
   }
-  printf(pcVar4);
-  bVar2 = 0;
+  printf(format);
+  bVar1 = 0;
   do {
-    bVar2 = bVar2 + 1;
-  } while (bVar2 < 6);
-  printf("  Sats with bit 7: %2d\r\n");
+    if ((gps.status.channels[bVar1].status & 0x80) != 0) {
+      bVar2 = bVar2 + 1;
+    }
+    bVar1 = bVar1 + 1;
+  } while (bVar1 < 6);
+  printf("  Sats with bit 7: %2d\r\n",(uint)bVar2);
   return;
 }
 
@@ -42718,14 +42791,12 @@ void gps_print_status(oncore_status_fields *status)
   fVar2 = integer_to_float(status->height_msl);
   fVar2 = float_divide(fVar2,100.0);
   dVar4 = float_to_double(fVar2);
-  printf("HGT (msl)%18.2f\tTRACK SATS   %d\r\n",(int)((ulonglong)dVar4 >> 0x20),SUB84(dVar4,0),uVar1
-        );
+  printf("HGT (msl)%18.2f\tTRACK SATS   %d\r\n",dVar4,uVar1);
   uVar1 = (uint)status->receiver_status;
   fVar2 = integer_to_float(status->height_gps);
   fVar2 = float_divide(fVar2,100.0);
   dVar4 = float_to_double(fVar2);
-  printf("HGT (gps)%18.2f\tRX STATUS   %02X\r\n",(int)((ulonglong)dVar4 >> 0x20),SUB84(dVar4,0),
-         uVar1);
+  printf("HGT (gps)%18.2f\tRX STATUS   %02X\r\n",dVar4,uVar1);
   if (status->pad_22 == 0) {
     fVar2 = unsigned_to_float((uint)status->dop);
     fVar2 = float_divide(fVar2,10.0);
@@ -42831,16 +42902,16 @@ void gps_print_id(void)
   psos_pause(1);
   console_write("\r\n\r\nGPS Receiver Identification\r\n");
   console_write("-----------------------------------------------------\r\n");
-  printf("Model Number:       %s\r\n",0x1010e7);
-  printf("Serial Number:      %s\r\n",0x10111d);
-  printf("Manufacture Date:   %s\r\n",0x101138);
-  printf("Installed Options:  %s\r\n\r\n",0x101153);
-  printf("Hardware P/N:       %s\r\n",0x101102);
-  printf("Software P/N:       %s\r\n",0x10107b);
-  printf("Software Version:   %s\r\n",0x101096);
-  printf("Software Revision:  %s\r\n",0x1010b1);
-  printf("Software Date:      %s\r\n\r\n",0x1010cc);
-  printf("Copyright Notice:   %s\r\n",0x101059);
+  printf("Model Number:       %s\r\n",gps.receiver_id.model_number);
+  printf("Serial Number:      %s\r\n",gps.receiver_id.serial_number);
+  printf("Manufacture Date:   %s\r\n",gps.receiver_id.manufacture_date);
+  printf("Installed Options:  %s\r\n\r\n",gps.receiver_id.options);
+  printf("Hardware P/N:       %s\r\n",gps.receiver_id.hardware_part_number);
+  printf("Software P/N:       %s\r\n",gps.receiver_id.software_part_number);
+  printf("Software Version:   %s\r\n",gps.receiver_id.software_version);
+  printf("Software Revision:  %s\r\n",gps.receiver_id.software_revision);
+  printf("Software Date:      %s\r\n\r\n",gps.receiver_id.software_date);
+  printf("Copyright Notice:   %s\r\n",gps.receiver_id.copyright);
   return;
 }
 
@@ -43331,7 +43402,7 @@ void FUN_00049b06(int param_1,char *param_2)
   float fVar2;
   char *pcVar3;
   char *pcVar4;
-  double dVar5;
+  double param2;
   char acStack_22 [21];
   char acStack_d [9];
   
@@ -43346,8 +43417,8 @@ void FUN_00049b06(int param_1,char *param_2)
     pcVar4 = pcVar4 + 1;
   } while (cVar1 != '\0');
   strcat(acStack_d,"HGT");
-  dVar5 = float_to_double(fVar2);
-  sprintf(acStack_22,"%+9.2f m  (MSL)",dVar5);
+  param2 = float_to_double(fVar2);
+  sprintf(acStack_22,"%+9.2f m  (MSL)",param2);
   sprintf(param_2,"%-15s%s",acStack_d,acStack_22);
   return;
 }
@@ -43464,38 +43535,39 @@ void FUN_00049b88(int param_1,int param_2,char param_3,byte param_4,char *param_
 void FUN_00049d14(uint param_1,char *param_2)
 
 {
-  ushort uVar1;
-  undefined2 uVar2;
-  char cVar3;
-  char cVar4;
-  char *pcVar5;
-  ulonglong uVar6;
+  char cVar1;
+  ushort uVar2;
+  undefined2 uVar3;
+  uchar param5;
+  uchar param3;
+  char *pcVar4;
+  ulonglong uVar5;
   
   if (param_1 < 3600000) {
     if (param_1 < 0xe10) {
-      cVar4 = 'm';
-      cVar3 = 's';
-      uVar2 = 0x3c;
-      uVar1 = 1;
+      param3 = 'm';
+      param5 = 's';
+      uVar3 = 0x3c;
+      uVar2 = 1;
     }
     else {
-      cVar4 = 'h';
-      cVar3 = 'm';
-      uVar2 = 0xe10;
-      uVar1 = 0x3c;
+      param3 = 'h';
+      param5 = 'm';
+      uVar3 = 0xe10;
+      uVar2 = 0x3c;
     }
-    uVar6 = ldiv(param_1,uVar2);
-    sprintf(param_2,"%3d%c %02d%c",(int)((uVar6 & 0xffff0000ffff) >> 0x20),(int)cVar4,
-            (uint)(uVar6 & 0xffff0000ffff) / (uint)uVar1,(int)cVar3);
+    uVar5 = ldiv(param_1,uVar3);
+    sprintf(param_2,"%3d%c %02d%c",(int)((uVar5 & 0xffff0000ffff) >> 0x20),param3,
+            (uint)(uVar5 & 0xffff0000ffff) / (uint)uVar2,param5);
   }
   else {
-    pcVar5 = "1000+ hr";
+    pcVar4 = "1000+ hr";
     do {
-      cVar3 = *pcVar5;
-      *param_2 = cVar3;
-      pcVar5 = pcVar5 + 1;
+      cVar1 = *pcVar4;
+      *param_2 = cVar1;
+      pcVar4 = pcVar4 + 1;
       param_2 = param_2 + 1;
-    } while (cVar3 != '\0');
+    } while (cVar1 != '\0');
   }
   return;
 }
@@ -43611,7 +43683,7 @@ undefined4 FUN_00049eb4(ushort param_1,byte param_2,byte param_3,char *param_4)
     uVar2 = 0;
   }
   else {
-    sprintf(param_4,"%02d %s %04d",(uint)param_3,*(undefined4 *)(&DAT_0004cfce + (uint)param_2 * 4),
+    sprintf(param_4,"%02d %s %04d",(uint)param_3,*(char **)(&DAT_0004cfce + (uint)param_2 * 4),
             (uint)param_1);
     uVar2 = 1;
   }
@@ -43625,35 +43697,35 @@ void FUN_00049f30(int param_1,char *param_2)
 
 {
   undefined4 uVar1;
-  char *pcVar2;
-  undefined1 *puVar3;
+  char *param2;
+  char *param4;
   char acStack_1a [9];
   char acStack_11 [13];
   
   if ((*(int *)(param_1 + 0x100) == 0) && (*(int *)(param_1 + 0x104) == 0)) {
     if (*(char *)(param_1 + 0x109) == '\0') {
-      pcVar2 = "GPS";
+      param2 = "GPS";
     }
     else {
-      pcVar2 = "UTC";
+      param2 = "UTC";
     }
   }
   else if (*(char *)(param_1 + 0x109) == '\0') {
-    pcVar2 = "LOCL GPS";
+    param2 = "LOCL GPS";
   }
   else {
-    pcVar2 = "LOCAL";
+    param2 = "LOCAL";
   }
   FUN_00049e5a(*(uint *)(param_1 + 0xf8),acStack_1a);
   uVar1 = *(undefined4 *)(param_1 + 0xfc);
   FUN_00049eb4((ushort)((uint)uVar1 >> 0x10),(byte)((uint)uVar1 >> 8),(byte)uVar1,acStack_11);
   if (*(char *)(param_1 + 0x108) == '\0') {
-    puVar3 = &DAT_0004e1e0;
+    param4 = "[?]";
   }
   else {
-    puVar3 = &DAT_0004d10b;
+    param4 = "";
   }
-  sprintf(param_2,"%-9.9s%8s %3s %11s",pcVar2,acStack_1a,puVar3,acStack_11);
+  sprintf(param_2,"%-9.9s%8s %3s %11s",param2,acStack_1a,param4,acStack_11);
   return;
 }
 
@@ -46254,9 +46326,9 @@ undefined4 FUN_0004c754(int param_1,char *param_2)
   uint uVar2;
   int iVar3;
   undefined4 uVar4;
-  undefined1 *puVar5;
-  undefined *puVar6;
-  char *pcVar7;
+  char *param9;
+  char *param6;
+  char *param2;
   short local_2e;
   char local_2c;
   undefined4 local_2a;
@@ -46290,37 +46362,37 @@ undefined4 FUN_0004c754(int param_1,char *param_2)
                     /* WARNING: Switch is manually overridden */
       switch((&WORD_0004c7d4)[(short)iVar3]) {
       case 8:
-        pcVar7 = "SCPI1";
+        param2 = "SCPI1";
         break;
       case 0x10:
-        pcVar7 = "PLL";
+        param2 = "PLL";
         break;
       case 0x18:
-        pcVar7 = "GPSc";
+        param2 = "GPSc";
         break;
       case 0x20:
-        pcVar7 = "GPSs";
+        param2 = "GPSs";
       }
     }
     else {
-      pcVar7 = "?";
+      param2 = "?";
     }
     if (uStack_26._2_1_ == '\0') {
-      puVar5 = &DAT_0004e950;
+      param9 = "e";
     }
     else {
-      puVar5 = &DAT_0004d647;
+      param9 = " ";
     }
     if (uStack_26._1_1_ == '\0') {
-      puVar6 = &DAT_0004e94c;
+      param6 = "c";
     }
     else {
-      puVar6 = &DAT_0004e94e;
+      param6 = "q";
     }
     local_2e = (short)((uint)uVar4 >> 0x10);
-    sprintf(param_2,"%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s",pcVar7,(int)local_2e,
-            (&PTR_DAT_0004fece)[local_2a._0_2_ * 0xe],(int)&local_2a + 2,puVar6,acStack_1a,acStack_e
-            ,puVar5);
+    sprintf(param_2,"%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s",param2,(int)local_2e,
+            (&PTR_DAT_0004fece)[local_2a._0_2_ * 0xe],(char *)((int)&local_2a + 2),param6,acStack_1a
+            ,acStack_e,param9);
     uVar4 = 1;
   }
   return uVar4;
@@ -46386,7 +46458,7 @@ void FUN_0004c940(undefined4 param_1)
 {
   char cVar1;
   byte bVar2;
-  undefined1 auStack_32 [46];
+  char acStack_32 [46];
   
   psos_pause(1);
   console_write("\r\n");
@@ -46395,9 +46467,9 @@ void FUN_0004c940(undefined4 param_1)
   console_write("Task  ID  Command     Date and Time Issued\r\n");
   console_write("---------------------------------------------\r\n");
   for (bVar2 = 0; bVar2 < 0x14; bVar2 = bVar2 + 1) {
-    cVar1 = FUN_0004c754(param_1,auStack_32);
+    cVar1 = FUN_0004c754(param_1,acStack_32);
     if (cVar1 != '\x01') break;
-    printf("%s\r\n",auStack_32);
+    printf("%s\r\n",acStack_32);
   }
   if (bVar2 == 0) {
     console_write("(no commands were issued since last read)\r\n\r\n");
@@ -46472,22 +46544,21 @@ void gps_print_process_monitor(void)
   console_write("--------------------------------");
   console_write("              ----------------\r\n");
   printf("%-9s  %5d   %6s  %5d%14s%-9s  %5d\r\n","Msgs Rcvd",(uint)gps_counts.received,"Errors",
-         (uint)gps_counts.received_errors,&DAT_0004d10b,"Resp Read",(uint)gps_counts.responses_read)
-  ;
+         (uint)gps_counts.received_errors,"","Resp Read",(uint)gps_counts.responses_read);
   printf("%-9s  %5d   %6s  %5d%14s%-9s  %5d\r\n","Msgs Sent",(uint)gps_counts.sent,"Errors",
-         (uint)gps_counts.sent_errors,&DAT_0004d10b,"Cmds Sent",(uint)gps_counts.commands_sent);
+         (uint)gps_counts.sent_errors,"","Cmds Sent",(uint)gps_counts.commands_sent);
   printf("%-9s  %5d   %6s  %5d%16s%-7s  %5d\r\n","Msgs Jam",(uint)gps_counts.jammed,"Errors",
-         (uint)gps_counts.jam_errors,&DAT_0004d10b,"E Retry",(uint)gps_counts.e_retries);
-  printf("%48s%-7s  %5d\r\n",&DAT_0004d10b,"T Retry",(uint)gps_counts.t_retries);
+         (uint)gps_counts.jam_errors,"","E Retry",(uint)gps_counts.e_retries);
+  printf("%48s%-7s  %5d\r\n","","T Retry",(uint)gps_counts.t_retries);
   console_write("Execution Status:                             Response Errors:\r\n");
   printf("%-9s  %5d","Success",(uint)gps_counts.successes);
   console_write("\r\n");
   printf("%-9s  %5d   %-6s  %5d%14s%-9s  %5d\r\n","Reject",(uint)gps_counts.rejects,"? Cmd",
-         (uint)gps_counts.unknown_command,&DAT_0004d10b,"? Resp",(uint)gps_counts.unknown_response);
+         (uint)gps_counts.unknown_command,"","? Resp",(uint)gps_counts.unknown_response);
   printf("%-9s  %5d   %-6s  %5d%14s%-9s  %5d\r\n","Timeout",(uint)gps_counts.timeouts,"? Sndr",
-         (uint)gps_counts.unknown_sender,&DAT_0004d10b,"Frame",(uint)gps_counts.frame_errors);
+         (uint)gps_counts.unknown_sender,"","Frame",(uint)gps_counts.frame_errors);
   printf("%-9s  %5d   %-6s  %5d%14s%-9s  %5d\r\n","Busy",(uint)gps_counts.busy,"No Cmd",
-         (uint)gps_counts.no_command,&DAT_0004d10b,"Cksum",(uint)gps_counts.checksum_errors);
+         (uint)gps_counts.no_command,"","Cksum",(uint)gps_counts.checksum_errors);
   printf("%-9s  %5d   %-6s  %5d\r\n","Abort",(uint)gps_counts.aborts,"No Qry",
          (uint)gps_counts.no_query);
   console_write("\r\nLast Valid pSOS Msg:  ");
@@ -46543,7 +46614,7 @@ void gps_print_process_monitor(void)
   local_2d[0] = '\0';
   for (gps_print_cursor = gps_last_issued_bytes; gps_print_cursor < (uint8_t *)0x10127a;
       gps_print_cursor = gps_print_cursor + 1) {
-    sprintf(local_32,"%hx",(uint)*gps_print_cursor);
+    sprintf(local_32,"%hx",(ushort)*gps_print_cursor);
     pcVar5 = local_32;
     uVar3 = 0xffffffff;
     pcVar4 = pcVar5;
@@ -47229,7 +47300,7 @@ undefined4 FUN_0004f4ca(char *param_1)
   int iVar1;
   undefined4 uVar2;
   float fVar3;
-  double dVar4;
+  double param2;
   
   if ((gps.position_hold == 0) && (DAT_00101e98 == '\0')) {
     u = scpi_value_DOUGlas_DURation;
@@ -47255,8 +47326,8 @@ undefined4 FUN_0004f4ca(char *param_1)
         fVar3 = 0.1;
       }
     }
-    dVar4 = float_to_double(fVar3);
-    sprintf(param_1,"%+.1f",dVar4);
+    param2 = float_to_double(fVar3);
+    sprintf(param_1,"%+.1f",param2);
     uVar2 = 1;
   }
   else {

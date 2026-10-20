@@ -268,7 +268,8 @@ again.  In order:
    `pforth=docs/firmware/pforth/IMAGE.txt`.
 4. `SmartClockForth.java`.
 5. `SmartClockStackParameters.java`.
-6. `SmartClockExportC.java FILE`.
+6. `SmartClockFormatStrings.java`.
+7. `SmartClockExportC.java FILE`.
 
 **Setup** makes the ROM read-only, so values loaded from it fold to
 constants; maps RAM, the DUART, EEPROM, the CS4 and CS5 ranges and the
@@ -377,7 +378,20 @@ the last parameter, a variadic call's or ones the function ignores,
 are not compared).  "Unchanged (set earlier)" counts the functions an
 earlier run gave parameters that still match.
 
-**ExportC** writes every function's C, in address order, after the
+**FormatStrings** runs Ghidra's own "Variadic Function Signature
+Override" analyzer, which reads the format string at each call to a
+function whose name contains `printf` and that takes a `char *` and
+varargs -- `printf`, `sprintf`, `debug_printf`, `debug_sprintf`,
+`printf_polled` -- and overrides the call's signature with the types
+the format gives.  Without it a variadic argument has no type: an
+address passed to `%s` prints as a number, `printf("Copyright Notice:
+%s", 0x101059)` rather than `gps.receiver_id.copyright`, and a double
+as its two halves.
+
+5. `SmartClockStackParameters.java`.
+6. `SmartClockFormatStrings.java`.
+7. `SmartClockExportC.java FILE`.
+, in address order, after the
 program's structures (packed, as the image lays them out) and an
 `extern` for each named, typed global with its address, so the file
 stands alone: a global with a structure's type reads as `foo.bar`, a

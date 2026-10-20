@@ -57150,7 +57150,7 @@ void FUN_installer__00100c96(void)
   FUN_installer__001083b6();
   SWSR = 0x55;
   SWSR = 0xaa;
-  thunk_FUN_installer__001026de();
+  installer_kernel_init();
   return;
 }
 
@@ -57361,7 +57361,7 @@ void FUN_installer__001013c2(uint param_1)
 
 /* installer::001014b4 */
 
-void thunk_FUN_installer__0010152c(undefined2 param_1)
+void installer_kernel_dispatch_service(undefined2 param_1)
 
 {
   int *piVar1;
@@ -57424,7 +57424,7 @@ void thunk_FUN_installer__0010152c(undefined2 param_1)
     return;
   }
   while (uVar9 = (undefined4)uVar15, piVar1[0x1b] != 0) {
-    uVar15 = FUN_installer__001016cc();
+    uVar15 = installer_kernel_process_ticks();
     in_A0 = extraout_A0_00;
     in_A1 = extraout_A1_00;
   }
@@ -57496,7 +57496,7 @@ void thunk_FUN_installer__0010152c(undefined2 param_1)
     *(undefined4 *)(puVar13 + -6) = *(undefined4 *)(iVar2 + 0x46);
     *(undefined4 *)(puVar13 + -8) = *(undefined4 *)(iVar2 + 0x4a);
     *(undefined4 *)(puVar13 + -10) = *(undefined4 *)(iVar2 + 0x66);
-    FUN_installer__00101680();
+    installer_kernel_switch_task();
     return;
   }
   *(short *)(piVar1 + 9) = *(short *)(piVar1 + 9) + -1;
@@ -57512,7 +57512,7 @@ void thunk_FUN_installer__0010152c(undefined2 param_1)
 
 /* installer::001014b8 */
 
-void thunk_FUN_installer__00101610(void)
+void installer_kernel_dispatch_io(void)
 
 {
   int *piVar1;
@@ -57542,7 +57542,7 @@ void thunk_FUN_installer__00101610(void)
 
 /* WARNING: Removing unreachable block (ram,0x001028ac) */
 
-void thunk_FUN_installer__001026de(void)
+void installer_kernel_init(void)
 
 {
   undefined4 *puVar1;
@@ -57621,7 +57621,7 @@ void thunk_FUN_installer__001026de(void)
       (**(code **)(iVar10 + 4))();
     }
     puVar11[-1] = 0x1027cc;
-    FUN_installer__001028d4();
+    installer_kernel_region_init();
     *(undefined4 *)((int)piVar2 + 0x7a) = 0x1f001f1e;
     *(undefined4 *)((int)piVar2 + 0x7e) = 0x1f1e1f1f;
     *(undefined4 *)((int)piVar2 + 0x82) = 0x1e1f1e1f;
@@ -57630,7 +57630,7 @@ void thunk_FUN_installer__001026de(void)
     *(undefined4 *)((int)piVar2 + 0x72) = 0;
     *(undefined4 *)((int)piVar2 + 0x76) = DAT_installer__00101528;
     puVar11[-1] = 0x1027fa;
-    FUN_installer__00102516();
+    installer_kernel_set_leap_year();
     *(undefined1 *)((int)piVar2 + 0x8a) = 0;
     *(undefined4 *)((int)piVar2 + 0x86) = *(undefined4 *)(extraout_A0 + 0x1e);
     piVar2[2] = 0;
@@ -57660,14 +57660,14 @@ void thunk_FUN_installer__001026de(void)
     }
     piVar2[0xc] = iVar10;
     puVar11[-1] = 0x10288a;
-    FUN_installer__001017b2();
+    installer_kernel_create();
     if ((char)iVar6 == '\0') {
       puVar11[-1] = 0x102896;
-      FUN_installer__001018a6();
+      installer_kernel_start();
       puVar11[-1] = 0x1028a8;
-      FUN_installer__001017b2();
+      installer_kernel_create();
       puVar11[-1] = 0x1028ba;
-      FUN_installer__001018a6();
+      installer_kernel_start();
       *(ushort *)(extraout_A0_01 + 0x11) = *(ushort *)(extraout_A0_01 + 0x11) | 0x2000;
       *(undefined1 *)(extraout_A0_01 + 4) = 0;
       *extraout_A0_01 = 0;
@@ -57698,7 +57698,7 @@ void thunk_FUN_installer__001026de(void)
       *(undefined4 *)((int)puVar11 + -0xc) = *(undefined4 *)(iVar6 + 0x46);
       *(undefined4 *)((int)puVar11 + -0x10) = *(undefined4 *)(iVar6 + 0x4a);
       *(undefined4 *)((int)puVar11 + -0x14) = *(undefined4 *)(iVar6 + 0x66);
-      FUN_installer__00101680();
+      installer_kernel_switch_task();
       return;
     }
   }
@@ -57710,7 +57710,7 @@ void thunk_FUN_installer__001026de(void)
 
 /* installer::001014c0 */
 
-void thunk_FUN_installer__00102990(ushort param_1)
+void installer_kernel_return_from_interrupt(ushort param_1)
 
 {
   int *piVar1;
@@ -57751,7 +57751,7 @@ void thunk_FUN_installer__00102990(ushort param_1)
     *(short *)(piVar1 + 9) = *(short *)(piVar1 + 9) + 1;
     iVar2 = *piVar1;
     while (piVar1[0x1b] != 0) {
-      uVar11 = FUN_installer__001016cc();
+      uVar11 = installer_kernel_process_ticks();
       in_A0 = extraout_A0;
       in_A1 = extraout_A1;
     }
@@ -57816,7 +57816,7 @@ void thunk_FUN_installer__00102990(ushort param_1)
       *(undefined4 *)(puVar9 + -6) = *(undefined4 *)(iVar2 + 0x46);
       *(undefined4 *)(puVar9 + -8) = *(undefined4 *)(iVar2 + 0x4a);
       *(undefined4 *)(puVar9 + -10) = *(undefined4 *)(iVar2 + 0x66);
-      FUN_installer__00101680();
+      installer_kernel_switch_task();
       return;
     }
     *(short *)(piVar1 + 9) = *(short *)(piVar1 + 9) + -1;
@@ -57827,7 +57827,7 @@ void thunk_FUN_installer__00102990(ushort param_1)
 
 /* installer::0010152c */
 
-void FUN_installer__0010152c(undefined2 param_1)
+void installer_kernel_dispatch_service(undefined2 param_1)
 
 {
   int *piVar1;
@@ -57890,7 +57890,7 @@ void FUN_installer__0010152c(undefined2 param_1)
     return;
   }
   while (uVar9 = (undefined4)uVar15, piVar1[0x1b] != 0) {
-    uVar15 = FUN_installer__001016cc();
+    uVar15 = installer_kernel_process_ticks();
     in_A0 = extraout_A0_00;
     in_A1 = extraout_A1_00;
   }
@@ -57962,7 +57962,7 @@ void FUN_installer__0010152c(undefined2 param_1)
     *(undefined4 *)(puVar13 + -6) = *(undefined4 *)(iVar2 + 0x46);
     *(undefined4 *)(puVar13 + -8) = *(undefined4 *)(iVar2 + 0x4a);
     *(undefined4 *)(puVar13 + -10) = *(undefined4 *)(iVar2 + 0x66);
-    FUN_installer__00101680();
+    installer_kernel_switch_task();
     return;
   }
   *(short *)(piVar1 + 9) = *(short *)(piVar1 + 9) + -1;
@@ -57978,7 +57978,7 @@ void FUN_installer__0010152c(undefined2 param_1)
 
 /* installer::00101610 */
 
-void FUN_installer__00101610(void)
+void installer_kernel_dispatch_io(void)
 
 {
   int *piVar1;
@@ -58006,7 +58006,7 @@ void FUN_installer__00101610(void)
 
 /* installer::00101680 */
 
-void FUN_installer__00101680(void)
+void installer_kernel_switch_task(void)
 
 {
   undefined2 *puVar1;
@@ -58047,7 +58047,7 @@ void FUN_installer__00101680(void)
   
   uVar12 = CONCAT44(in_D0,in_D1);
   while (uVar8 = (undefined4)uVar12, unaff_A6[0x1b] != 0) {
-    uVar12 = FUN_installer__001016cc();
+    uVar12 = installer_kernel_process_ticks();
     in_A0 = extraout_A0;
     in_A1 = extraout_A1;
   }
@@ -58119,7 +58119,7 @@ void FUN_installer__00101680(void)
     *(undefined4 *)(puVar10 + -6) = *(undefined4 *)(iVar3 + 0x46);
     *(undefined4 *)(puVar10 + -8) = *(undefined4 *)(iVar3 + 0x4a);
     *(undefined4 *)(puVar10 + -10) = *(undefined4 *)(iVar3 + 0x66);
-    FUN_installer__00101680();
+    installer_kernel_switch_task();
     return;
   }
   *(short *)(unaff_A6 + 9) = *(short *)(unaff_A6 + 9) + -1;
@@ -58135,7 +58135,7 @@ void FUN_installer__00101680(void)
 
 /* installer::001016cc */
 
-void FUN_installer__001016cc(void)
+void installer_kernel_process_ticks(void)
 
 {
   int iVar1;
@@ -58146,7 +58146,7 @@ void FUN_installer__001016cc(void)
   int *unaff_A5;
   int unaff_A6;
   
-  FUN_installer__001024c6();
+  installer_kernel_advance_date();
   if (*(int *)(unaff_A6 + 0x30) != 0) {
     (**(code **)(*(int *)(unaff_A6 + 0x30) + 4))();
   }
@@ -58161,8 +58161,8 @@ LAB_installer__0010175e:
            sVar5 == 0)) &&
           (*(undefined2 *)((int)unaff_A5 + 0x1a) = 0, *(char *)((int)unaff_A5 + 0x13) == '\0')) &&
          (*(byte *)(unaff_A5 + 4) <= *(byte *)(*unaff_A5 + 0x10))) {
-        FUN_installer__0010269c();
-        FUN_installer__00102652();
+        installer_kernel_queue_remove();
+        installer_kernel_make_ready();
       }
       return;
     }
@@ -58183,7 +58183,7 @@ LAB_installer__0010175e:
       if (iVar1 != 0) {
         *(int *)(iVar1 + 0xc) = unaff_A6;
       }
-      FUN_installer__00102652();
+      installer_kernel_make_ready();
       goto LAB_installer__001016e2;
     }
     iVar1 = uVar3 - *(uint *)(unaff_A6 + 0x6c);
@@ -58199,7 +58199,7 @@ LAB_installer__0010175e:
 
 /* installer::001017a8 */
 
-void FUN_installer__001017a8(void)
+void installer_kernel_service_0(void)
 
 {
   return;
@@ -58208,7 +58208,7 @@ void FUN_installer__001017a8(void)
 
 /* installer::001017b2 */
 
-void FUN_installer__001017b2(void)
+void installer_kernel_create(void)
 
 {
   int iVar1;
@@ -58229,7 +58229,7 @@ void FUN_installer__001017b2(void)
   if ((unaff_D2b != '\0') && (iVar2 = unaff_A6[4], iVar2 != 0)) {
     *(undefined4 *)(iVar2 + 0x20) = 0;
     if ((in_A0 == (ushort *)0x0) || ((uint)*in_A0 <= (unaff_D3 & 0xffff))) {
-      uVar3 = FUN_installer__00101ae2();
+      uVar3 = installer_kernel_allocate_for_task();
       puVar5 = (undefined2 *)((unaff_D3 >> 0x10) * 2 + extraout_A0);
       puVar7 = puVar5 + (unaff_D3 & 0xffff);
       if (unaff_D7b == '\0') {
@@ -58282,17 +58282,17 @@ void FUN_installer__001017b2(void)
 
 /* installer::001018a6 */
 
-void FUN_installer__001018a6(void)
+void installer_kernel_start(void)
 
 {
   int extraout_A0;
   undefined4 extraout_A1;
   undefined1 in_ZF;
   
-  FUN_installer__00102540();
+  installer_kernel_check_task();
   if (((bool)in_ZF) && (*(char *)(extraout_A0 + 0x13) < '\0')) {
     *(undefined4 *)(extraout_A0 + 0x3e) = extraout_A1;
-    FUN_installer__00102652();
+    installer_kernel_make_ready();
     if (*(code **)(*(int *)PTR_PTR_installer__001014c8 + 0x36) != (code *)0x0) {
       (**(code **)(*(int *)PTR_PTR_installer__001014c8 + 0x36))();
     }
@@ -58303,7 +58303,7 @@ void FUN_installer__001018a6(void)
 
 /* installer::001018d8 */
 
-void FUN_installer__001018d8(void)
+void installer_kernel_ident(void)
 
 {
   int in_D0;
@@ -58325,7 +58325,7 @@ void FUN_installer__001018d8(void)
 
 /* installer::001018fe */
 
-undefined8 FUN_installer__001018fe(void)
+undefined8 installer_kernel_delete(void)
 
 {
   int iVar1;
@@ -58346,7 +58346,7 @@ undefined8 FUN_installer__001018fe(void)
   undefined1 local_10 [16];
   
   puVar6 = (undefined8 *)local_10;
-  FUN_installer__00102540();
+  installer_kernel_check_task();
   if (((bool)in_ZF) &&
      ((piVar4 = extraout_A0, *(int **)(*(int *)PTR_PTR_installer__001014c8 + 0x46) == (int *)0x0 ||
       ((**(code **)(**(int **)(*(int *)PTR_PTR_installer__001014c8 + 0x46) + 8))(),
@@ -58367,10 +58367,10 @@ undefined8 FUN_installer__001018fe(void)
     }
     *(undefined1 *)((int)piVar4 + 0x13) = 0xff;
     *(undefined4 *)((int)puVar6 + -4) = 0x101976;
-    FUN_installer__001025b0();
+    installer_kernel_timer_cancel();
     while (bVar7 = piVar4[7] == 0, !bVar7) {
       *(undefined4 *)((int)puVar6 + -4) = 0x10198a;
-      FUN_installer__00101fa4();
+      installer_kernel_send_for_task();
       if (!bVar7) {
         piVar4[7] = *extraout_A1;
         *extraout_A1 = unaff_A6[7];
@@ -58379,7 +58379,7 @@ undefined8 FUN_installer__001018fe(void)
     }
     while (bVar7 = piVar4[8] == 0, !bVar7) {
       *(undefined4 *)((int)puVar6 + -4) = 0x1019b2;
-      FUN_installer__00101b38();
+      installer_kernel_free_for_task();
       if (!bVar7) {
         piVar4[8] = *(int *)(extraout_A0_01 + -0x12);
       }
@@ -58395,7 +58395,7 @@ LAB_installer__001019d4:
     piVar4[0xc] = unaff_A6[4];
     unaff_A6[4] = (int)piVar4;
     *(undefined4 *)((int)puVar6 + -4) = 0x1019f0;
-    FUN_installer__001021f6();
+    installer_kernel_signal_task();
     pcVar3 = *(code **)(*(int *)PTR_PTR_installer__001014c8 + 0x3a);
     if (pcVar3 != (code *)0x0) {
       *(undefined4 *)((int)puVar6 + -4) = 0x101a02;
@@ -58408,7 +58408,7 @@ LAB_installer__001019d4:
 
 /* installer::00101a0a */
 
-void FUN_installer__00101a0a(void)
+void installer_kernel_suspend(void)
 
 {
   int extraout_A0;
@@ -58416,10 +58416,10 @@ void FUN_installer__00101a0a(void)
   int iVar1;
   undefined1 in_ZF;
   
-  FUN_installer__00102540();
+  installer_kernel_check_task();
   if ((bool)in_ZF) {
     if (*(byte *)(extraout_A0 + 0x13) == 0) {
-      FUN_installer__0010269c();
+      installer_kernel_queue_remove();
       iVar1 = extraout_A0_00;
     }
     else {
@@ -58438,7 +58438,7 @@ void FUN_installer__00101a0a(void)
 
 /* WARNING: Removing unreachable block (ram,0x00101a48) */
 
-void FUN_installer__00101a3e(void)
+void installer_kernel_resume(void)
 
 {
   byte bVar1;
@@ -58446,11 +58446,11 @@ void FUN_installer__00101a3e(void)
   bool bVar2;
   
   bVar2 = true;
-  FUN_installer__00102540();
+  installer_kernel_check_task();
   if (((bVar2) &&
       (bVar1 = *(byte *)(extraout_A0 + 0x13) & 0xfb, (*(byte *)(extraout_A0 + 0x13) & 4) != 0)) &&
      (*(byte *)(extraout_A0 + 0x13) = bVar1, bVar1 == 0)) {
-    FUN_installer__00102652();
+    installer_kernel_make_ready();
   }
   return;
 }
@@ -58458,7 +58458,7 @@ void FUN_installer__00101a3e(void)
 
 /* installer::00101a80 */
 
-ushort FUN_installer__00101a80(void)
+ushort installer_kernel_priority(void)
 
 {
   ushort uVar1;
@@ -58470,7 +58470,7 @@ ushort FUN_installer__00101a80(void)
   bool bVar4;
   
   bVar4 = in_D1w == 0;
-  uVar1 = FUN_installer__00102540();
+  uVar1 = installer_kernel_check_task();
   if (!bVar4) {
     return uVar1;
   }
@@ -58490,8 +58490,8 @@ ushort FUN_installer__00101a80(void)
 LAB_installer__00101ab4:
   *(char *)(extraout_A0 + 0x10) = (char)sVar2;
   if (*(char *)(extraout_A0 + 0x13) == '\0') {
-    FUN_installer__0010269c();
-    FUN_installer__0010265a();
+    installer_kernel_queue_remove();
+    installer_kernel_ready_insert();
     uVar3 = extraout_D1w;
   }
   return uVar3;
@@ -58500,7 +58500,7 @@ LAB_installer__00101ab4:
 
 /* installer::00101ae0 */
 
-void FUN_installer__00101ae0(void)
+void installer_kernel_allocate_segment(void)
 
 {
   undefined4 *puVar1;
@@ -58511,9 +58511,9 @@ void FUN_installer__00101ae0(void)
   undefined1 in_ZF;
   
   puVar1 = (undefined4 *)*unaff_A6;
-  FUN_installer__00101c6e();
+  installer_kernel_allocate();
   if ((!(bool)in_ZF) && (unaff_D3b == '\0')) {
-    iVar3 = FUN_installer__0010269c();
+    iVar3 = installer_kernel_queue_remove();
     *(undefined1 *)((int)puVar1 + 0x13) = 0x40;
     *puVar1 = unaff_A6 + 0x19;
     piVar2 = (int *)unaff_A6[0x1a];
@@ -58522,7 +58522,7 @@ void FUN_installer__00101ae0(void)
     puVar1[1] = piVar2;
     if (iVar3 != 0) {
       *(undefined1 *)((int)puVar1 + 0x12) = 0xff;
-      FUN_installer__001025e4();
+      installer_kernel_timer_insert();
     }
   }
   return;
@@ -58531,7 +58531,7 @@ void FUN_installer__00101ae0(void)
 
 /* installer::00101ae2 */
 
-void FUN_installer__00101ae2(void)
+void installer_kernel_allocate_for_task(void)
 
 {
   undefined4 *puVar1;
@@ -58541,9 +58541,9 @@ void FUN_installer__00101ae2(void)
   int unaff_A6;
   undefined1 in_ZF;
   
-  FUN_installer__00101c6e();
+  installer_kernel_allocate();
   if ((!(bool)in_ZF) && (unaff_D3b == '\0')) {
-    iVar2 = FUN_installer__0010269c();
+    iVar2 = installer_kernel_queue_remove();
     *(undefined1 *)((int)unaff_A5 + 0x13) = 0x40;
     *unaff_A5 = unaff_A6 + 100;
     puVar1 = *(undefined4 **)(unaff_A6 + 0x68);
@@ -58552,7 +58552,7 @@ void FUN_installer__00101ae2(void)
     unaff_A5[1] = (int)puVar1;
     if (iVar2 != 0) {
       *(undefined1 *)((int)unaff_A5 + 0x12) = 0xff;
-      FUN_installer__001025e4();
+      installer_kernel_timer_insert();
     }
   }
   return;
@@ -58561,7 +58561,7 @@ void FUN_installer__00101ae2(void)
 
 /* installer::00101b36 */
 
-void FUN_installer__00101b36(void)
+void installer_kernel_free_segment(void)
 
 {
   int iVar1;
@@ -58579,7 +58579,7 @@ void FUN_installer__00101b36(void)
   bool bVar9;
   
   iVar1 = *unaff_A6;
-  FUN_installer__0010259c();
+  installer_kernel_check_segment();
   if (!(bool)in_ZF) {
     return;
   }
@@ -58655,14 +58655,14 @@ LAB_installer__00101c0c:
            ((char)(uVar4 & 3) == *(char *)((int)piVar8 + 0x59))) &&
           (uVar5 = *(uint *)((int)unaff_A6 + sVar6 + 0x44),
           bVar9 = *(uint *)((int)piVar8 + 0x52) == uVar5, *(uint *)((int)piVar8 + 0x52) < uVar5)) &&
-         (FUN_installer__00101c6e(), bVar9)) {
+         (installer_kernel_allocate(), bVar9)) {
         *(undefined4 *)((int)piVar8 + 0x6e) = extraout_A0_00;
         piVar7 = (int *)*piVar8;
         puVar3 = (undefined4 *)piVar8[1];
         *puVar3 = piVar7;
         piVar7[1] = (int)puVar3;
-        FUN_installer__001025b0();
-        FUN_installer__00102652();
+        installer_kernel_timer_cancel();
+        installer_kernel_make_ready();
         piVar8 = piVar7;
       }
       else {
@@ -58676,7 +58676,7 @@ LAB_installer__00101c0c:
 
 /* installer::00101b38 */
 
-void FUN_installer__00101b38(void)
+void installer_kernel_free_for_task(void)
 
 {
   int iVar1;
@@ -58695,7 +58695,7 @@ void FUN_installer__00101b38(void)
   undefined1 in_ZF;
   bool bVar10;
   
-  FUN_installer__0010259c();
+  installer_kernel_check_segment();
   if (!(bool)in_ZF) {
     return;
   }
@@ -58771,14 +58771,14 @@ LAB_installer__00101c0c:
            ((char)(uVar4 & 3) == *(char *)((int)puVar9 + 0x59))) &&
           (uVar5 = *(uint *)(unaff_A6 + 0x44 + (int)sVar6),
           bVar10 = *(uint *)((int)puVar9 + 0x52) == uVar5, *(uint *)((int)puVar9 + 0x52) < uVar5))
-         && (FUN_installer__00101c6e(), bVar10)) {
+         && (installer_kernel_allocate(), bVar10)) {
         *(undefined4 *)((int)puVar9 + 0x6e) = extraout_A0_00;
         puVar2 = (undefined4 *)*puVar9;
         puVar9 = (undefined4 *)puVar9[1];
         *puVar9 = puVar2;
         puVar2[1] = puVar9;
-        FUN_installer__001025b0();
-        FUN_installer__00102652();
+        installer_kernel_timer_cancel();
+        installer_kernel_make_ready();
         puVar9 = puVar2;
       }
       else {
@@ -58792,7 +58792,7 @@ LAB_installer__00101c0c:
 
 /* installer::00101c6e */
 
-void FUN_installer__00101c6e(void)
+void installer_kernel_allocate(void)
 
 {
   char unaff_D2b;
@@ -58804,7 +58804,7 @@ void FUN_installer__00101c6e(void)
   
   if (unaff_D2b < '\x02') {
     bVar2 = true;
-    FUN_installer__00101ca2();
+    installer_kernel_region_allocate();
     puVar1 = extraout_A0;
     if (bVar2) goto LAB_installer__00101c8e;
     if (unaff_D2b != '\0') {
@@ -58812,7 +58812,7 @@ void FUN_installer__00101c6e(void)
     }
   }
   bVar2 = false;
-  FUN_installer__00101ca2();
+  installer_kernel_region_allocate();
   puVar1 = extraout_A0_00;
   if (!bVar2) {
     return;
@@ -58826,7 +58826,7 @@ LAB_installer__00101c8e:
 
 /* installer::00101ca2 */
 
-void FUN_installer__00101ca2(void)
+void installer_kernel_region_allocate(void)
 
 {
   int *piVar1;
@@ -58887,7 +58887,7 @@ void FUN_installer__00101ca2(void)
 
 /* WARNING: Removing unreachable block (ram,0x00101d4c) */
 
-void FUN_installer__00101d2a(void)
+void installer_kernel_service_10(void)
 
 {
   int iVar1;
@@ -58901,10 +58901,10 @@ void FUN_installer__00101d2a(void)
   
   bVar4 = in_A1 == 0;
   iVar1 = *unaff_A6;
-  FUN_installer__00102540();
+  installer_kernel_check_task();
   if (bVar4) {
     bVar4 = true;
-    FUN_installer__0010259c();
+    installer_kernel_check_segment();
     if (bVar4) {
       piVar2 = (int *)(iVar1 + 0x20);
       do {
@@ -58925,7 +58925,7 @@ void FUN_installer__00101d2a(void)
 
 /* installer::00101d30 */
 
-void FUN_installer__00101d30(void)
+void installer_kernel_service_16(void)
 
 {
   int *piVar1;
@@ -58937,10 +58937,10 @@ void FUN_installer__00101d30(void)
   bool bVar3;
   
   bVar3 = in_A1 == 0;
-  FUN_installer__00102540();
+  installer_kernel_check_task();
   if (bVar3) {
     bVar3 = false;
-    FUN_installer__0010259c();
+    installer_kernel_check_segment();
     if (bVar3) {
       piVar1 = (int *)(extraout_A0 + 0x20);
       do {
@@ -58961,7 +58961,7 @@ void FUN_installer__00101d30(void)
 
 /* installer::00101d80 */
 
-void FUN_installer__00101d80(void)
+void installer_kernel_service_none(void)
 
 {
   return;
@@ -58970,7 +58970,7 @@ void FUN_installer__00101d80(void)
 
 /* installer::00101d84 */
 
-void FUN_installer__00101d84(void)
+void installer_kernel_create_x(void)
 
 {
   int iVar1;
@@ -59010,7 +59010,7 @@ void FUN_installer__00101d84(void)
 
 /* WARNING: Removing unreachable block (ram,0x00101e08) */
 
-void FUN_installer__00101de6(void)
+void installer_kernel_service_21(void)
 
 {
   int iVar1;
@@ -59030,7 +59030,7 @@ void FUN_installer__00101de6(void)
     iVar1 = *(int *)(iVar1 + 0x1c);
   }
   bVar4 = true;
-  FUN_installer__00102572();
+  installer_kernel_check_exchange();
   if (!bVar4) {
     return;
   }
@@ -59049,7 +59049,7 @@ void FUN_installer__00101de6(void)
 
 /* installer::00101e3c */
 
-void FUN_installer__00101e3c(void)
+void installer_kernel_delete_x(void)
 
 {
   undefined4 uVar1;
@@ -59063,7 +59063,7 @@ void FUN_installer__00101e3c(void)
   bool bVar5;
   
   bVar5 = unaff_A2 == 0;
-  FUN_installer__00102572();
+  installer_kernel_check_exchange();
   if (bVar5) {
     *(undefined1 *)((int)extraout_A0 + 0x11) = 0xfe;
     puVar3 = (undefined4 *)*extraout_A0;
@@ -59071,8 +59071,8 @@ void FUN_installer__00101e3c(void)
     while (puVar2 != puVar3) {
       *(undefined1 *)((int)puVar3 + 0x6d) = 1;
       puVar3 = (undefined4 *)*puVar3;
-      FUN_installer__001025b0();
-      FUN_installer__00102652();
+      installer_kernel_timer_cancel();
+      installer_kernel_make_ready();
       puVar2 = extraout_A0_00;
     }
     if (puVar2[2] != 0) {
@@ -59099,7 +59099,7 @@ LAB_installer__00101ea6:
 
 /* WARNING: Removing unreachable block (ram,0x00101ebe) */
 
-ushort FUN_installer__00101eb4(void)
+ushort installer_kernel_service_18(void)
 
 {
   int iVar1;
@@ -59127,7 +59127,7 @@ ushort FUN_installer__00101eb4(void)
   bool bVar12;
   
   bVar12 = true;
-  uVar3 = FUN_installer__00102572();
+  uVar3 = installer_kernel_check_exchange();
   if ((bVar12) && (*(int *)(extraout_A1 + 4) == 0)) {
     iVar7 = *(int *)(extraout_A0 + 4);
     *(int *)extraout_A0 = extraout_A0;
@@ -59137,10 +59137,10 @@ ushort FUN_installer__00101eb4(void)
     iVar8 = extraout_A0;
     while (iVar8 != iVar7) {
       if ('\0' < *(char *)(iVar7 + 0x12)) {
-        FUN_installer__001025b6();
+        installer_kernel_timer_unlink();
       }
       iVar1 = *(int *)(iVar7 + 4);
-      uVar4 = FUN_installer__00102652();
+      uVar4 = installer_kernel_make_ready();
       unaff_A3 = *(int **)(iVar7 + 0x72);
       iVar7 = *(int *)(extraout_A1_00 + 8);
       iVar8 = *(int *)(extraout_A1_00 + 0xc);
@@ -59158,7 +59158,7 @@ ushort FUN_installer__00101eb4(void)
     cVar6 = (byte)uVar4 - (byte)uVar3;
     if ((byte)uVar3 <= (byte)uVar4 && cVar6 != '\0') {
       bVar12 = cVar6 == '\0';
-      cVar5 = FUN_installer__001020b2();
+      cVar5 = installer_kernel_copy_message();
       uVar3 = extraout_D1w;
       iVar7 = extraout_A0_01;
       if (bVar12) {
@@ -59166,7 +59166,7 @@ ushort FUN_installer__00101eb4(void)
           cVar6 = cVar6 + -1;
           bVar12 = cVar6 == '\0';
           if (bVar12) break;
-          cVar5 = FUN_installer__001020b2();
+          cVar5 = installer_kernel_copy_message();
           uVar3 = extraout_D1w_00;
           if (!bVar12) goto LAB_installer__00101f7c;
           *unaff_A3 = (int)unaff_A3;
@@ -59203,7 +59203,7 @@ LAB_installer__00101f7c:
 
 /* WARNING: Removing unreachable block (ram,0x00101fb2) */
 
-void FUN_installer__00101f98(void)
+void installer_kernel_jam_x(void)
 
 {
   int iVar1;
@@ -59227,7 +59227,7 @@ void FUN_installer__00101f98(void)
   
   iVar1 = *unaff_A6;
   bVar11 = true;
-  FUN_installer__00102572();
+  installer_kernel_check_exchange();
   if (bVar11) {
     piVar8 = extraout_A0;
     piVar10 = (int *)0x0;
@@ -59241,7 +59241,7 @@ void FUN_installer__00101f98(void)
         piVar2 = (int *)*piVar9;
         bVar11 = piVar2 == (int *)0x0;
         if (bVar11) {
-          FUN_installer__001020b2();
+          installer_kernel_copy_message();
           piVar8 = extraout_A0_00;
           if (!bVar11) {
             return;
@@ -59265,7 +59265,7 @@ LAB_installer__0010200c:
          (((bVar11 = true, *(char *)((int)piVar8 + 0x12) == '\0' ||
            (bVar11 = *(byte *)(piVar8 + 8) == *(byte *)((int)piVar8 + 0x21),
            *(byte *)((int)piVar8 + 0x21) <= *(byte *)(piVar8 + 8))) &&
-          (FUN_installer__001020b2(), piVar8 = extraout_A0_01, bVar11)))) {
+          (installer_kernel_copy_message(), piVar8 = extraout_A0_01, bVar11)))) {
         if (in_A0 == 0) {
           *piVar10 = 0;
           if ((undefined4 *)piVar8[3] == (undefined4 *)0x0) {
@@ -59294,9 +59294,9 @@ LAB_installer__0010200c:
       *piVar8 = iVar1;
       *(int **)(iVar1 + 4) = piVar8;
       if ('\0' < *(char *)((int)piVar2 + 0x12)) {
-        FUN_installer__001025b6();
+        installer_kernel_timer_unlink();
       }
-      FUN_installer__00102652();
+      installer_kernel_make_ready();
       iVar1 = *(int *)((int)piVar2 + 0x72);
       iVar3 = *(int *)(extraout_A1_00 + 4);
       uVar4 = *(undefined4 *)(extraout_A1_00 + 8);
@@ -59324,7 +59324,7 @@ LAB_installer__0010200c:
 /* WARNING: Removing unreachable block (ram,0x00102086) */
 /* WARNING: Removing unreachable block (ram,0x00102098) */
 
-void FUN_installer__00101fa2(void)
+void installer_kernel_send_x(void)
 
 {
   int iVar1;
@@ -59347,7 +59347,7 @@ void FUN_installer__00101fa2(void)
   
   iVar1 = *unaff_A6;
   bVar11 = true;
-  FUN_installer__00102572();
+  installer_kernel_check_exchange();
   if (bVar11) {
     piVar8 = extraout_A0;
     piVar10 = (int *)0x0;
@@ -59361,7 +59361,7 @@ void FUN_installer__00101fa2(void)
         piVar2 = (int *)*piVar9;
         bVar11 = piVar2 == (int *)0x0;
         if (bVar11) {
-          FUN_installer__001020b2();
+          installer_kernel_copy_message();
           piVar8 = extraout_A0_00;
           if (!bVar11) {
             return;
@@ -59385,7 +59385,7 @@ LAB_installer__0010200c:
          (((bVar11 = true, *(char *)((int)piVar8 + 0x12) == '\0' ||
            (bVar11 = *(byte *)(piVar8 + 8) == *(byte *)((int)piVar8 + 0x21),
            *(byte *)((int)piVar8 + 0x21) <= *(byte *)(piVar8 + 8))) &&
-          (FUN_installer__001020b2(), piVar8 = extraout_A0_01, bVar11)))) {
+          (installer_kernel_copy_message(), piVar8 = extraout_A0_01, bVar11)))) {
         *piVar10 = 0;
         if ((undefined4 *)piVar8[3] == (undefined4 *)0x0) {
           piVar8[2] = (int)piVar10;
@@ -59404,9 +59404,9 @@ LAB_installer__0010200c:
       *piVar8 = iVar1;
       *(int **)(iVar1 + 4) = piVar8;
       if ('\0' < *(char *)((int)piVar2 + 0x12)) {
-        FUN_installer__001025b6();
+        installer_kernel_timer_unlink();
       }
-      FUN_installer__00102652();
+      installer_kernel_make_ready();
       iVar1 = *(int *)((int)piVar2 + 0x72);
       iVar3 = *(int *)(extraout_A1_00 + 4);
       uVar4 = *(undefined4 *)(extraout_A1_00 + 8);
@@ -59434,7 +59434,7 @@ LAB_installer__0010200c:
 /* WARNING: Removing unreachable block (ram,0x00102086) */
 /* WARNING: Removing unreachable block (ram,0x00102098) */
 
-void FUN_installer__00101fa4(void)
+void installer_kernel_send_for_task(void)
 
 {
   int *piVar1;
@@ -59456,7 +59456,7 @@ void FUN_installer__00101fa4(void)
   bool bVar11;
   
   bVar11 = true;
-  FUN_installer__00102572();
+  installer_kernel_check_exchange();
   if (bVar11) {
     piVar8 = extraout_A0;
     piVar10 = (int *)0x0;
@@ -59470,7 +59470,7 @@ void FUN_installer__00101fa4(void)
         piVar1 = (int *)*piVar9;
         bVar11 = piVar1 == (int *)0x0;
         if (bVar11) {
-          FUN_installer__001020b2();
+          installer_kernel_copy_message();
           piVar8 = extraout_A0_00;
           if (!bVar11) {
             return;
@@ -59494,7 +59494,7 @@ LAB_installer__0010200c:
          (((bVar11 = true, *(char *)((int)piVar8 + 0x12) == '\0' ||
            (bVar11 = *(byte *)(piVar8 + 8) == *(byte *)((int)piVar8 + 0x21),
            *(byte *)((int)piVar8 + 0x21) <= *(byte *)(piVar8 + 8))) &&
-          (FUN_installer__001020b2(), piVar8 = extraout_A0_01, bVar11)))) {
+          (installer_kernel_copy_message(), piVar8 = extraout_A0_01, bVar11)))) {
         *piVar10 = 0;
         if ((undefined4 *)piVar8[3] == (undefined4 *)0x0) {
           piVar8[2] = (int)piVar10;
@@ -59513,9 +59513,9 @@ LAB_installer__0010200c:
       *piVar8 = iVar2;
       *(int **)(iVar2 + 4) = piVar8;
       if ('\0' < *(char *)((int)piVar1 + 0x12)) {
-        FUN_installer__001025b6();
+        installer_kernel_timer_unlink();
       }
-      FUN_installer__00102652();
+      installer_kernel_make_ready();
       iVar2 = *(int *)((int)piVar1 + 0x72);
       iVar3 = *(int *)(extraout_A1_00 + 4);
       uVar4 = *(undefined4 *)(extraout_A1_00 + 8);
@@ -59539,7 +59539,7 @@ LAB_installer__0010200c:
 
 /* installer::001020b2 */
 
-void FUN_installer__001020b2(void)
+void installer_kernel_copy_message(void)
 
 {
   undefined4 *puVar1;
@@ -59571,7 +59571,7 @@ void FUN_installer__001020b2(void)
 
 /* WARNING: Removing unreachable block (ram,0x001020ea) */
 
-void FUN_installer__001020dc(void)
+void installer_kernel_request_x(void)
 
 {
   int *piVar1;
@@ -59594,7 +59594,7 @@ void FUN_installer__001020dc(void)
   
   piVar1 = (int *)*unaff_A6;
   bVar11 = true;
-  uVar12 = FUN_installer__00102572();
+  uVar12 = installer_kernel_check_exchange();
   piVar8 = extraout_A0;
   iVar9 = extraout_A1;
   if (bVar11) {
@@ -59621,7 +59621,7 @@ LAB_installer__001021ca:
           *(undefined1 *)((int)piVar1 + 0x12) = 0;
           return;
         }
-        FUN_installer__001025e4();
+        installer_kernel_timer_insert();
         return;
       }
       piVar10 = piVar8;
@@ -59639,7 +59639,7 @@ LAB_installer__001021ca:
         *piVar8 = (int)piVar1;
         goto LAB_installer__001021ca;
       }
-      uVar12 = FUN_installer__0010265a();
+      uVar12 = installer_kernel_ready_insert();
       piVar8 = extraout_A0_00;
       iVar9 = extraout_A1_00;
     }
@@ -59676,7 +59676,7 @@ LAB_installer__001021ca:
 
 /* WARNING: Removing unreachable block (ram,0x001021f2) */
 
-void FUN_installer__001021e8(void)
+void installer_kernel_signal_v(void)
 
 {
   ushort uVar1;
@@ -59688,7 +59688,7 @@ void FUN_installer__001021e8(void)
   bool bVar3;
   
   bVar3 = in_D1w == 0;
-  FUN_installer__00102540();
+  installer_kernel_check_task();
   if (bVar3) {
     uVar1 = *(ushort *)(extraout_A0 + 0x18) | extraout_D1w & 0x7fff;
     *(ushort *)(extraout_A0 + 0x18) = uVar1;
@@ -59711,9 +59711,9 @@ void FUN_installer__001021e8(void)
       *(ushort *)(extraout_A0 + 0x54) = uVar2 | *(ushort *)(extraout_A0 + 0x54);
       *(undefined2 *)(extraout_A0 + 0x16) = 0;
       if ('\0' < *(char *)(extraout_A0 + 0x12)) {
-        FUN_installer__001025b6();
+        installer_kernel_timer_unlink();
       }
-      FUN_installer__00102652();
+      installer_kernel_make_ready();
       if (extraout_A0 == *unaff_A6) {
         *(undefined1 *)((int)unaff_A6 + 0x8b) = 0;
       }
@@ -59725,7 +59725,7 @@ void FUN_installer__001021e8(void)
 
 /* installer::001021f6 */
 
-void FUN_installer__001021f6(void)
+void installer_kernel_signal_task(void)
 
 {
   ushort uVar1;
@@ -59737,7 +59737,7 @@ void FUN_installer__001021f6(void)
   bool bVar3;
   
   bVar3 = in_D1w == 0;
-  FUN_installer__00102540();
+  installer_kernel_check_task();
   if (bVar3) {
     uVar1 = *(ushort *)(extraout_A0 + 0x18) | extraout_D1w & 0x7fff;
     *(ushort *)(extraout_A0 + 0x18) = uVar1;
@@ -59760,9 +59760,9 @@ void FUN_installer__001021f6(void)
       *(ushort *)(extraout_A0 + 0x54) = uVar2 | *(ushort *)(extraout_A0 + 0x54);
       *(undefined2 *)(extraout_A0 + 0x16) = 0;
       if ('\0' < *(char *)(extraout_A0 + 0x12)) {
-        FUN_installer__001025b6();
+        installer_kernel_timer_unlink();
       }
-      FUN_installer__00102652();
+      installer_kernel_make_ready();
       if (extraout_A0 == *unaff_A6) {
         *(undefined1 *)((int)unaff_A6 + 0x8b) = 0;
       }
@@ -59778,7 +59778,7 @@ void FUN_installer__001021f6(void)
 /* WARNING: Removing unreachable block (ram,0x001022d6) */
 /* WARNING: Removing unreachable block (ram,0x001022d0) */
 
-void FUN_installer__00102260(void)
+void installer_kernel_get_v(void)
 
 {
   ushort *puVar1;
@@ -59801,7 +59801,7 @@ void FUN_installer__00102260(void)
 
 /* installer::00102262 */
 
-void FUN_installer__00102262(void)
+void installer_kernel_wait_v(void)
 
 {
   int *piVar1;
@@ -59836,7 +59836,7 @@ void FUN_installer__00102262(void)
         *(undefined1 *)((int)piVar1 + 0x12) = 0;
       }
       else {
-        FUN_installer__001025e4();
+        installer_kernel_timer_insert();
       }
     }
   }
@@ -59846,7 +59846,7 @@ void FUN_installer__00102262(void)
 
 /* installer::001022e0 */
 
-byte FUN_installer__001022e0(void)
+byte installer_kernel_mode(void)
 
 {
   byte bVar1;
@@ -59862,7 +59862,7 @@ byte FUN_installer__001022e0(void)
 
 /* installer::001022fc */
 
-undefined2 FUN_installer__001022fc(undefined2 param_1)
+undefined2 installer_kernel_service_33(undefined2 param_1)
 
 {
   return param_1;
@@ -59871,7 +59871,7 @@ undefined2 FUN_installer__001022fc(undefined2 param_1)
 
 /* installer::0010230a */
 
-void FUN_installer__0010230a(void)
+void installer_kernel_pause(void)
 
 {
   int iVar1;
@@ -59879,13 +59879,13 @@ void FUN_installer__0010230a(void)
   int *unaff_A6;
   
   iVar1 = *unaff_A6;
-  iVar2 = FUN_installer__0010269c();
+  iVar2 = installer_kernel_queue_remove();
   if (iVar2 == 0) {
-    FUN_installer__0010265a();
+    installer_kernel_ready_insert();
   }
   else {
     *(undefined1 *)(iVar1 + 0x12) = 0xff;
-    FUN_installer__001025e4();
+    installer_kernel_timer_insert();
   }
   return;
 }
@@ -59893,7 +59893,7 @@ void FUN_installer__0010230a(void)
 
 /* installer::00102334 */
 
-void FUN_installer__00102334(void)
+void installer_kernel_service_29(void)
 
 {
   undefined4 uVar1;
@@ -59923,14 +59923,14 @@ void FUN_installer__00102334(void)
 
 /* installer::0010237a */
 
-undefined8 FUN_installer__0010237a(void)
+undefined8 installer_kernel_service_30(void)
 
 {
   uint extraout_D1;
   int unaff_A6;
   
   do {
-    FUN_installer__001024c6();
+    installer_kernel_advance_date();
   } while (extraout_D1 != *(uint *)(unaff_A6 + 0x72));
   return CONCAT44(*(undefined4 *)(unaff_A6 + 0x76),
                   (uint)(byte)*(undefined2 *)(unaff_A6 + 0x70) << 0x18 | extraout_D1);
@@ -59939,7 +59939,7 @@ undefined8 FUN_installer__0010237a(void)
 
 /* installer::001023a4 */
 
-void FUN_installer__001023a4(void)
+void installer_kernel_service_31(void)
 
 {
   ushort in_D0w;
@@ -59952,10 +59952,10 @@ void FUN_installer__001023a4(void)
       ((byte)((uint)in_D1 >> 0x10) < 0x18)) &&
      (((unaff_D2w < *(ushort *)(unaff_A6 + 0x86) && ((char)in_D0w != '\0')) &&
       ((in_D0w >> 8 != 0 && ((byte)(in_D0w >> 8) < 0xd)))))) {
-    uVar1 = FUN_installer__00102516();
+    uVar1 = installer_kernel_set_leap_year();
     if (*(byte *)(unaff_A6 + 0x79 + (int)(short)((ushort)((ulonglong)uVar1 >> 0x20) >> 8)) <
         (byte)((ulonglong)uVar1 >> 0x20)) {
-      FUN_installer__00102516();
+      installer_kernel_set_leap_year();
     }
     else {
       *(ushort *)(unaff_A6 + 0x70) = unaff_D2w;
@@ -59971,7 +59971,7 @@ void FUN_installer__001023a4(void)
 
 /* installer::00102416 */
 
-undefined8 FUN_installer__00102416(void)
+undefined8 installer_kernel_service_35(void)
 
 {
   int in_D0;
@@ -60001,7 +60001,7 @@ undefined8 FUN_installer__00102416(void)
 
 /* installer::00102456 */
 
-void FUN_installer__00102456(void)
+void installer_kernel_service_36(void)
 
 {
   int in_D0;
@@ -60016,7 +60016,7 @@ void FUN_installer__00102456(void)
 
 /* installer::0010247c */
 
-void FUN_installer__0010247c(void)
+void installer_kernel_service_37(void)
 
 {
   int iVar1;
@@ -60034,7 +60034,7 @@ void FUN_installer__0010247c(void)
 
 /* installer::001024a8 */
 
-void FUN_installer__001024a8(void)
+void installer_kernel_service_38(void)
 
 {
   int *in_A0;
@@ -60051,7 +60051,7 @@ void FUN_installer__001024a8(void)
 
 /* installer::001024c6 */
 
-void FUN_installer__001024c6(void)
+void installer_kernel_advance_date(void)
 
 {
   undefined4 uVar1;
@@ -60074,7 +60074,7 @@ void FUN_installer__001024c6(void)
       iVar6 = CONCAT22(uVar4,sVar3);
       if (sVar3 == 0xd01) {
         iVar6 = CONCAT22(uVar4,0x101) + 0x10000;
-        FUN_installer__00102516();
+        installer_kernel_set_leap_year();
       }
     }
     *(int *)(unaff_A6 + 0x76) = iVar6;
@@ -60085,7 +60085,7 @@ void FUN_installer__001024c6(void)
 
 /* installer::00102516 */
 
-void FUN_installer__00102516(void)
+void installer_kernel_set_leap_year(void)
 
 {
   uint uVar1;
@@ -60104,7 +60104,7 @@ void FUN_installer__00102516(void)
 
 /* installer::00102540 */
 
-void FUN_installer__00102540(void)
+void installer_kernel_check_task(void)
 
 {
   return;
@@ -60113,7 +60113,7 @@ void FUN_installer__00102540(void)
 
 /* installer::00102572 */
 
-void FUN_installer__00102572(void)
+void installer_kernel_check_exchange(void)
 
 {
   return;
@@ -60122,7 +60122,7 @@ void FUN_installer__00102572(void)
 
 /* installer::0010259c */
 
-void FUN_installer__0010259c(void)
+void installer_kernel_check_segment(void)
 
 {
   return;
@@ -60131,7 +60131,7 @@ void FUN_installer__0010259c(void)
 
 /* installer::001025b0 */
 
-void FUN_installer__001025b0(void)
+void installer_kernel_timer_cancel(void)
 
 {
   int iVar1;
@@ -60153,7 +60153,7 @@ void FUN_installer__001025b0(void)
 
 /* installer::001025b6 */
 
-undefined4 FUN_installer__001025b6(void)
+undefined4 installer_kernel_timer_unlink(void)
 
 {
   int iVar1;
@@ -60174,7 +60174,7 @@ undefined4 FUN_installer__001025b6(void)
 
 /* installer::001025e4 */
 
-void FUN_installer__001025e4(void)
+void installer_kernel_timer_insert(void)
 
 {
   int iVar1;
@@ -60221,7 +60221,7 @@ void FUN_installer__001025e4(void)
 
 /* installer::00102652 */
 
-void FUN_installer__00102652(void)
+void installer_kernel_make_ready(void)
 
 {
   undefined4 *puVar1;
@@ -60250,7 +60250,7 @@ void FUN_installer__00102652(void)
 
 /* installer::0010265a */
 
-void FUN_installer__0010265a(void)
+void installer_kernel_ready_insert(void)
 
 {
   undefined4 *puVar1;
@@ -60274,7 +60274,7 @@ void FUN_installer__0010265a(void)
 
 /* installer::0010269c */
 
-void FUN_installer__0010269c(void)
+void installer_kernel_queue_remove(void)
 
 {
   int iVar1;
@@ -60293,7 +60293,7 @@ void FUN_installer__0010269c(void)
 
 /* WARNING: Removing unreachable block (ram,0x001028ac) */
 
-void FUN_installer__001026de(void)
+void installer_kernel_init(void)
 
 {
   undefined4 *puVar1;
@@ -60372,7 +60372,7 @@ void FUN_installer__001026de(void)
       (**(code **)(iVar10 + 4))();
     }
     puVar11[-1] = 0x1027cc;
-    FUN_installer__001028d4();
+    installer_kernel_region_init();
     *(undefined4 *)((int)piVar2 + 0x7a) = 0x1f001f1e;
     *(undefined4 *)((int)piVar2 + 0x7e) = 0x1f1e1f1f;
     *(undefined4 *)((int)piVar2 + 0x82) = 0x1e1f1e1f;
@@ -60381,7 +60381,7 @@ void FUN_installer__001026de(void)
     *(undefined4 *)((int)piVar2 + 0x72) = 0;
     *(undefined4 *)((int)piVar2 + 0x76) = DAT_installer__00101528;
     puVar11[-1] = 0x1027fa;
-    FUN_installer__00102516();
+    installer_kernel_set_leap_year();
     *(undefined1 *)((int)piVar2 + 0x8a) = 0;
     *(undefined4 *)((int)piVar2 + 0x86) = *(undefined4 *)(extraout_A0 + 0x1e);
     piVar2[2] = 0;
@@ -60411,14 +60411,14 @@ void FUN_installer__001026de(void)
     }
     piVar2[0xc] = iVar10;
     puVar11[-1] = 0x10288a;
-    FUN_installer__001017b2();
+    installer_kernel_create();
     if ((char)iVar6 == '\0') {
       puVar11[-1] = 0x102896;
-      FUN_installer__001018a6();
+      installer_kernel_start();
       puVar11[-1] = 0x1028a8;
-      FUN_installer__001017b2();
+      installer_kernel_create();
       puVar11[-1] = 0x1028ba;
-      FUN_installer__001018a6();
+      installer_kernel_start();
       *(ushort *)(extraout_A0_01 + 0x11) = *(ushort *)(extraout_A0_01 + 0x11) | 0x2000;
       *(undefined1 *)(extraout_A0_01 + 4) = 0;
       *extraout_A0_01 = 0;
@@ -60449,7 +60449,7 @@ void FUN_installer__001026de(void)
       *(undefined4 *)((int)puVar11 + -0xc) = *(undefined4 *)(iVar6 + 0x46);
       *(undefined4 *)((int)puVar11 + -0x10) = *(undefined4 *)(iVar6 + 0x4a);
       *(undefined4 *)((int)puVar11 + -0x14) = *(undefined4 *)(iVar6 + 0x66);
-      FUN_installer__00101680();
+      installer_kernel_switch_task();
       return;
     }
   }
@@ -60461,7 +60461,7 @@ void FUN_installer__001026de(void)
 
 /* installer::001028d4 */
 
-void FUN_installer__001028d4(void)
+void installer_kernel_region_init(void)
 
 {
   undefined4 *puVar1;
@@ -60518,7 +60518,7 @@ void FUN_installer__001028d4(void)
 
 /* installer::00102990 */
 
-void FUN_installer__00102990(ushort param_1)
+void installer_kernel_return_from_interrupt(ushort param_1)
 
 {
   int *piVar1;
@@ -60559,7 +60559,7 @@ void FUN_installer__00102990(ushort param_1)
     *(short *)(piVar1 + 9) = *(short *)(piVar1 + 9) + 1;
     iVar2 = *piVar1;
     while (piVar1[0x1b] != 0) {
-      uVar11 = FUN_installer__001016cc();
+      uVar11 = installer_kernel_process_ticks();
       in_A0 = extraout_A0;
       in_A1 = extraout_A1;
     }
@@ -60624,7 +60624,7 @@ void FUN_installer__00102990(ushort param_1)
       *(undefined4 *)(puVar9 + -6) = *(undefined4 *)(iVar2 + 0x46);
       *(undefined4 *)(puVar9 + -8) = *(undefined4 *)(iVar2 + 0x4a);
       *(undefined4 *)(puVar9 + -10) = *(undefined4 *)(iVar2 + 0x66);
-      FUN_installer__00101680();
+      installer_kernel_switch_task();
       return;
     }
     *(short *)(piVar1 + 9) = *(short *)(piVar1 + 9) + -1;

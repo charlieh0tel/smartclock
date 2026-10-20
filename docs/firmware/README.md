@@ -319,7 +319,8 @@ holds those the notes give for that image, each row citing its note:
 the float and C libraries (`softfloat.md`, `libc.md`), the kernel's
 service calls (`psos.md`), the interval's
 routine and cells (`interval.md`), the SCPI task and the installer's
-entry (`restart.md`), the console's hook (`console.md`).  An address a
+entry (`restart.md`), the console's hook (`console.md`).  An address in
+the installer's overlay is written `installer::0x...`.  An address a
 note gives only for another image is not carried over.  SCPI handlers
 are named `scpi_query_PATH` and `scpi_set_PATH`, console words
 `forth_WORD` and `diag_WORD`.  A name replaces one Ghidra made up, and
@@ -415,7 +416,7 @@ as 32 bits, as on the 68000; a global still accessed as
 In the Z3805A 3543B image this gives 1823 functions, and every one
 decompiles.  137 switches are recovered;
 `0x24ff2` and `0x25140`, a `jmp (d8,PC,D6.w)` with no table load, are
-not.  1056 of the functions are named.  The output is
+not.  1114 of the functions are named.  The output is
 `third_party/firmware/decompiled/z3805a-3543b.c`.
 
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,

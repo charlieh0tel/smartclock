@@ -13,7 +13,8 @@
 //       program before the names, so that names can use them.
 //   names=tools/ghidra/names/IMAGE.tsv
 //       address, "function" or "label", name, source and optionally a
-//       function's C prototype or a label's data type, tab-separated:
+//       function's C prototype or a label's data type, tab-separated; an
+//       address in the installer's overlay is written installer::0x...:
 //       names the firmware notes establish.  These replace names the
 //       other two gave, but not names given by hand.
 //   scpi=FILE
@@ -42,8 +43,8 @@
 // points 2k bytes into the table, and there are k + 1 cases.  After
 // cmpi #n it runs 0..n.
 //
-// The kernel's service dispatch, in the primary image and in the boot
-// image's copy:
+// The kernel's service dispatch, in the primary image and in the
+// installer's copy:
 //
 //     cmpi.w  #n,D7
 //     bhi     error
@@ -400,7 +401,10 @@ public class SmartClockSetup extends GhidraScript {
 		switch (kind) {
 			case NAMES -> {
 				String[] fields = line.split("\t");
-				Address address = toAddr(Long.decode(fields[0]));
+				Address address = toAddr(fields[0]);
+				if (address == null) {
+					throw new IllegalArgumentException("unparsable address: " + line);
+				}
 				if (fields[1].equals(FUNCTION)) {
 					nameFunction(address, fields[2], true, counts);
 					if (fields.length > PROTOTYPE_FIELD && !fields[PROTOTYPE_FIELD].isBlank()) {

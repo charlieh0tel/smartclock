@@ -30,7 +30,10 @@ calling `0x16f1e`, which makes the trap and turns D7 into the result,
 and on success storing results through its pointer arguments.  A stub
 that takes a name passes it through `0x16f50`, which packs four
 characters into D0.  The I/O stubs, from `0x173ca`, call `0x16f36`.
-The installer has its own copy of the binding, from `0x102a72`.
+The installer has its own copy of the binding, from `0x102a72`, and of
+the kernel: byte for byte the primary's, `0xeca06` higher, from
+`installer::0x10152c`, but for one absolute address.  Its routines carry
+the primary's names with `installer_` before them.
 
 ## Inside the kernel
 

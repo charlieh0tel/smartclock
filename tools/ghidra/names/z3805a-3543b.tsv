@@ -739,3 +739,63 @@
 0x15cd8	function	kernel_init	psos.md: trap #6: carves the configuration's memory into task records (0xb2 bytes), exchanges (0x22) and message buffers (0x18), and starts the kernel
 0x15ece	function	kernel_region_init	psos.md: sets up regions 0 and 1 from the configuration
 0x15f8a	function	kernel_return_from_interrupt	psos.md: trap #5: an interrupt handler's exit, switching tasks if it made a higher one ready
+#
+# the installer's copy of the pSOS kernel, psos.md
+installer::0x10152c	function	installer_kernel_dispatch_service	psos.md: the installer's copy of kernel_dispatch_service, at 0x14b26 plus 0xeca06, byte for byte
+installer::0x101610	function	installer_kernel_dispatch_io	psos.md: the installer's copy of kernel_dispatch_io, at 0x14c0a plus 0xeca06, byte for byte
+installer::0x101680	function	installer_kernel_switch_task	psos.md: the installer's copy of kernel_switch_task, at 0x14c7a plus 0xeca06, byte for byte
+installer::0x1016cc	function	installer_kernel_process_ticks	psos.md: the installer's copy of kernel_process_ticks, at 0x14cc6 plus 0xeca06, byte for byte
+installer::0x1017a8	function	installer_kernel_service_0	psos.md: the installer's copy of kernel_service_0, at 0x14da2 plus 0xeca06, byte for byte
+installer::0x1017b2	function	installer_kernel_create	psos.md: the installer's copy of kernel_create, at 0x14dac plus 0xeca06, byte for byte
+installer::0x1018a6	function	installer_kernel_start	psos.md: the installer's copy of kernel_start, at 0x14ea0 plus 0xeca06, byte for byte
+installer::0x1018d8	function	installer_kernel_ident	psos.md: the installer's copy of kernel_ident, at 0x14ed2 plus 0xeca06, byte for byte
+installer::0x1018fe	function	installer_kernel_delete	psos.md: the installer's copy of kernel_delete, at 0x14ef8 plus 0xeca06, byte for byte
+installer::0x101a0a	function	installer_kernel_suspend	psos.md: the installer's copy of kernel_suspend, at 0x15004 plus 0xeca06, byte for byte
+installer::0x101a3e	function	installer_kernel_resume	psos.md: the installer's copy of kernel_resume, at 0x15038 plus 0xeca06, byte for byte
+installer::0x101a80	function	installer_kernel_priority	psos.md: the installer's copy of kernel_priority, at 0x1507a plus 0xeca06, byte for byte
+installer::0x101ae0	function	installer_kernel_allocate_segment	psos.md: the installer's copy of kernel_allocate_segment, at 0x150da plus 0xeca06, byte for byte
+installer::0x101ae2	function	installer_kernel_allocate_for_task	psos.md: the installer's copy of kernel_allocate_for_task, at 0x150dc plus 0xeca06, byte for byte
+installer::0x101b36	function	installer_kernel_free_segment	psos.md: the installer's copy of kernel_free_segment, at 0x15130 plus 0xeca06, byte for byte
+installer::0x101b38	function	installer_kernel_free_for_task	psos.md: the installer's copy of kernel_free_for_task, at 0x15132 plus 0xeca06, byte for byte
+installer::0x101c6e	function	installer_kernel_allocate	psos.md: the installer's copy of kernel_allocate, at 0x15268 plus 0xeca06, byte for byte
+installer::0x101ca2	function	installer_kernel_region_allocate	psos.md: the installer's copy of kernel_region_allocate, at 0x1529c plus 0xeca06, byte for byte
+installer::0x101d2a	function	installer_kernel_service_10	psos.md: the installer's copy of kernel_service_10, at 0x15324 plus 0xeca06, byte for byte
+installer::0x101d30	function	installer_kernel_service_16	psos.md: the installer's copy of kernel_service_16, at 0x1532a plus 0xeca06, byte for byte
+installer::0x101d80	function	installer_kernel_service_none	psos.md: the installer's copy of kernel_service_none, at 0x1537a plus 0xeca06, byte for byte
+installer::0x101d84	function	installer_kernel_create_x	psos.md: the installer's copy of kernel_create_x, at 0x1537e plus 0xeca06, byte for byte
+installer::0x101de6	function	installer_kernel_service_21	psos.md: the installer's copy of kernel_service_21, at 0x153e0 plus 0xeca06, byte for byte
+installer::0x101e3c	function	installer_kernel_delete_x	psos.md: the installer's copy of kernel_delete_x, at 0x15436 plus 0xeca06, byte for byte
+installer::0x101eb4	function	installer_kernel_service_18	psos.md: the installer's copy of kernel_service_18, at 0x154ae plus 0xeca06, byte for byte
+installer::0x101f98	function	installer_kernel_jam_x	psos.md: the installer's copy of kernel_jam_x, at 0x15592 plus 0xeca06, byte for byte
+installer::0x101fa2	function	installer_kernel_send_x	psos.md: the installer's copy of kernel_send_x, at 0x1559c plus 0xeca06, byte for byte
+installer::0x101fa4	function	installer_kernel_send_for_task	psos.md: the installer's copy of kernel_send_for_task, at 0x1559e plus 0xeca06, byte for byte
+installer::0x1020b2	function	installer_kernel_copy_message	psos.md: the installer's copy of kernel_copy_message, at 0x156ac plus 0xeca06, byte for byte
+installer::0x1020dc	function	installer_kernel_request_x	psos.md: the installer's copy of kernel_request_x, at 0x156d6 plus 0xeca06, byte for byte
+installer::0x1021e8	function	installer_kernel_signal_v	psos.md: the installer's copy of kernel_signal_v, at 0x157e2 plus 0xeca06, byte for byte
+installer::0x1021f6	function	installer_kernel_signal_task	psos.md: the installer's copy of kernel_signal_task, at 0x157f0 plus 0xeca06, byte for byte
+installer::0x102260	function	installer_kernel_get_v	psos.md: the installer's copy of kernel_get_v, at 0x1585a plus 0xeca06, byte for byte
+installer::0x102262	function	installer_kernel_wait_v	psos.md: the installer's copy of kernel_wait_v, at 0x1585c plus 0xeca06, byte for byte
+installer::0x1022e0	function	installer_kernel_mode	psos.md: the installer's copy of kernel_mode, at 0x158da plus 0xeca06, byte for byte
+installer::0x1022fc	function	installer_kernel_service_33	psos.md: the installer's copy of kernel_service_33, at 0x158f6 plus 0xeca06, byte for byte
+installer::0x10230a	function	installer_kernel_pause	psos.md: the installer's copy of kernel_pause, at 0x15904 plus 0xeca06, byte for byte
+installer::0x102334	function	installer_kernel_service_29	psos.md: the installer's copy of kernel_service_29, at 0x1592e plus 0xeca06, byte for byte
+installer::0x10237a	function	installer_kernel_service_30	psos.md: the installer's copy of kernel_service_30, at 0x15974 plus 0xeca06, byte for byte
+installer::0x1023a4	function	installer_kernel_service_31	psos.md: the installer's copy of kernel_service_31, at 0x1599e plus 0xeca06, byte for byte
+installer::0x102416	function	installer_kernel_service_35	psos.md: the installer's copy of kernel_service_35, at 0x15a10 plus 0xeca06, byte for byte
+installer::0x102456	function	installer_kernel_service_36	psos.md: the installer's copy of kernel_service_36, at 0x15a50 plus 0xeca06, byte for byte
+installer::0x10247c	function	installer_kernel_service_37	psos.md: the installer's copy of kernel_service_37, at 0x15a76 plus 0xeca06, byte for byte
+installer::0x1024a8	function	installer_kernel_service_38	psos.md: the installer's copy of kernel_service_38, at 0x15aa2 plus 0xeca06, byte for byte
+installer::0x1024c6	function	installer_kernel_advance_date	psos.md: the installer's copy of kernel_advance_date, at 0x15ac0 plus 0xeca06, byte for byte
+installer::0x102516	function	installer_kernel_set_leap_year	psos.md: the installer's copy of kernel_set_leap_year, at 0x15b10 plus 0xeca06, byte for byte
+installer::0x102540	function	installer_kernel_check_task	psos.md: the installer's copy of kernel_check_task, at 0x15b3a plus 0xeca06, byte for byte
+installer::0x102572	function	installer_kernel_check_exchange	psos.md: the installer's copy of kernel_check_exchange, at 0x15b6c plus 0xeca06, byte for byte
+installer::0x10259c	function	installer_kernel_check_segment	psos.md: the installer's copy of kernel_check_segment, at 0x15b96 plus 0xeca06, byte for byte
+installer::0x1025b0	function	installer_kernel_timer_cancel	psos.md: the installer's copy of kernel_timer_cancel, at 0x15baa plus 0xeca06, byte for byte
+installer::0x1025b6	function	installer_kernel_timer_unlink	psos.md: the installer's copy of kernel_timer_unlink, at 0x15bb0 plus 0xeca06, byte for byte
+installer::0x1025e4	function	installer_kernel_timer_insert	psos.md: the installer's copy of kernel_timer_insert, at 0x15bde plus 0xeca06, byte for byte
+installer::0x102652	function	installer_kernel_make_ready	psos.md: the installer's copy of kernel_make_ready, at 0x15c4c plus 0xeca06, byte for byte
+installer::0x10265a	function	installer_kernel_ready_insert	psos.md: the installer's copy of kernel_ready_insert, at 0x15c54 plus 0xeca06, byte for byte
+installer::0x10269c	function	installer_kernel_queue_remove	psos.md: the installer's copy of kernel_queue_remove, at 0x15c96 plus 0xeca06, byte for byte
+installer::0x1026de	function	installer_kernel_init	psos.md: the installer's copy of kernel_init, at 0x15cd8 plus 0xeca06, byte for byte
+installer::0x1028d4	function	installer_kernel_region_init	psos.md: the installer's copy of kernel_region_init, at 0x15ece plus 0xeca06, byte for byte
+installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md: the installer's copy of kernel_return_from_interrupt, at 0x15f8a plus 0xeca06, byte for byte

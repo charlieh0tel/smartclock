@@ -156,7 +156,7 @@
 {"address":"000122f6","name":"FUN_000122f6","convention":"unknown"}
 {"address":"0001258a","name":"FUN_0001258a","convention":"unknown"}
 {"address":"000125e2","name":"FUN_000125e2","convention":"unknown"}
-{"address":"00012984","name":"FUN_00012984","convention":"unknown"}
+{"address":"00012984","name":"tfom_table_index","note":"tfom_code's bisection of the table at 0x129fc","convention":"unknown"}
 {"address":"000129d0","name":"FUN_000129d0","convention":"unknown"}
 {"address":"00012af2","name":"FUN_00012af2","convention":"unknown"}
 {"address":"00012bb2","name":"FUN_00012bb2","convention":"unknown"}
@@ -703,7 +703,7 @@
 {"address":"0001e02c","name":"FUN_0001e02c","convention":"unknown"}
 {"address":"0001e126","name":"FUN_0001e126","convention":"unknown"}
 {"address":"0001e18a","name":"drta_send_message","note":"sends a message to the GPS engine on DUART channel A","convention":"unknown"}
-{"address":"0001e222","name":"FUN_0001e222","convention":"unknown"}
+{"address":"0001e222","name":"duarta_rx_pending","note":"1 if DUART channel A's receive ring is not empty","convention":"unknown"}
 {"address":"0001e238","name":"drta_get_byte","note":"reads a byte from the GPS engine on DUART channel A, waiting for one","convention":"unknown"}
 {"address":"0001e2c0","name":"duart_loopback_test_a","note":"puts channel A in local loopback and sends \"DUART test string\"; sets the UART self-test's bit 8 at 0x100c2e if it fails","convention":"unknown"}
 {"address":"0001e41a","name":"duart_loopback_test_b","note":"the same for channel B","convention":"unknown"}
@@ -1383,8 +1383,8 @@
 {"address":"00042390","name":"FUN_00042390","convention":"unknown"}
 {"address":"00042626","name":"FUN_00042626","convention":"unknown"}
 {"address":"00042644","name":"FUN_00042644","convention":"unknown"}
-{"address":"0004299c","name":"FUN_0004299c","convention":"unknown"}
-{"address":"000429c6","name":"FUN_000429c6","convention":"unknown"}
+{"address":"0004299c","name":"kenneth_present_get","note":"for :KENneth:PRESent?: in holdover or its recovery, pll.tfom, resolution 1e-7","convention":"unknown"}
+{"address":"000429c6","name":"kenneth_predicted_get","note":"for :KENneth:PREDicted?: from startup PLL on, the float at pll +0x3a, resolution 1e-7, and whether in holdover","convention":"unknown"}
 {"address":"00042a18","name":"get_ffom","note":"the time code's f; pll_rep's \"ffom = %1d\"","convention":"unknown"}
 {"address":"00042b18","name":"FUN_00042b18","convention":"unknown"}
 {"address":"00042b1a","name":"pulse_program","note":"a bare rts in this image: what pulse_settings_done hands it goes no further here, and no code reads the pulse settings by address but it and the SCPI queries; whatever programs the pulse output reads them some other way, through the descriptors or a copy","convention":"unknown"}
@@ -1430,8 +1430,8 @@
 {"address":"00045b02","name":"antenna_delay_done","note":"clears bit 5 of pll's byte at +0x11 once the antenna delay changes","convention":"unknown"}
 {"address":"00045b70","name":"pll_mode","note":"the status screen's mode accessor, from pll.stage and pll.manual; the HOLDover queries and HOLD:INIT test it","convention":"unknown"}
 {"address":"00045bb8","name":"pll_powerup_suffix_index","note":"the power-up sub-state, as the status screen's suffix index","convention":"unknown"}
-{"address":"00045c18","name":"FUN_00045c18","convention":"unknown"}
-{"address":"00045c48","name":"FUN_00045c48","convention":"unknown"}
+{"address":"00045c18","name":"recovery_suffix_index","note":"in holdover recovery's first state: 1 fine freq adj, 2 phase alignment; pll_powerup_suffix_index's companion","convention":"unknown"}
+{"address":"00045c48","name":"holdover_waiting_reason","note":"for :HOLDover:WAITing?: which fault bit holds the loop in holdover, 0x10, 2 or 8","convention":"unknown"}
 {"address":"00045c8e","name":"FUN_00045c8e","convention":"unknown"}
 {"address":"00045c90","name":"FUN_00045c90","convention":"unknown"}
 {"address":"00045c92","name":"FUN_00045c92","convention":"unknown"}
@@ -1477,20 +1477,20 @@
 {"address":"00049054","name":"gps_print_status","note":"print_stat's request, 0x32","convention":"unknown"}
 {"address":"00049210","name":"gps_debug_status","note":"gps.status as the \"gs: %02d:%02d:%02d.%09d,...\" debug line","convention":"unknown"}
 {"address":"000493c0","name":"gps_print_id","note":"pr_gps_id's request, 0x36","convention":"unknown"}
-{"address":"00049474","name":"FUN_00049474","convention":"unknown"}
+{"address":"00049474","name":"satellite_sets_build","note":"for status_snapshot: the sets of GPS and pseudolite satellites, by band of signal level","convention":"unknown"}
 {"address":"000495e2","name":"satellite_in_set","note":"bit prn - 1 of a mask, or prn - 0x21 for the second kind","convention":"unknown"}
-{"address":"00049612","name":"FUN_00049612","convention":"unknown"}
-{"address":"00049654","name":"FUN_00049654","convention":"unknown"}
-{"address":"00049688","name":"FUN_00049688","convention":"unknown"}
+{"address":"00049612","name":"satellite_track_class","note":"a track record's class, 1 to 3","convention":"unknown"}
+{"address":"00049654","name":"satellite_elevation_azimuth","note":"a satellite's elevation and azimuth, valid below 91 and 360","convention":"unknown"}
+{"address":"00049688","name":"satellite_status","note":"for status_snapshot: a satellite's status code for the screen","convention":"unknown"}
 {"address":"00049794","name":"FUN_00049794","convention":"unknown"}
-{"address":"000497c8","name":"FUN_000497c8","convention":"unknown"}
-{"address":"000499f2","name":"FUN_000499f2","convention":"unknown"}
-{"address":"00049a26","name":"FUN_00049a26","convention":"unknown"}
-{"address":"00049a3c","name":"FUN_00049a3c","convention":"unknown"}
+{"address":"000497c8","name":"satellite_status_list","note":"for status_snapshot: the screen's list of satellites, built and sorted","convention":"unknown"}
+{"address":"000499f2","name":"format_satellite_number","note":"a satellite number as %2d, or blanks for none","convention":"unknown"}
+{"address":"00049a26","name":"mark_flag","note":"writes * for a set flag","convention":"unknown"}
+{"address":"00049a3c","name":"format_level","note":"a level as %3d, or blanks when negative","convention":"unknown"}
 {"address":"00049a6e","name":"format_satellite_cell","note":"a satellite's status screen cell: \"%2d %3d\", \"Ignore\", \"Not OK\", \"Acq\"","convention":"unknown"}
-{"address":"00049b06","name":"FUN_00049b06","convention":"unknown"}
+{"address":"00049b06","name":"status_screen_height","note":"the status screen's height line, HGT and %+9.2f m (MSL)","convention":"unknown"}
 {"address":"00049b88","name":"format_si","note":"formats a double with an SI prefix from \"pnum kMG\" by its exponent / 3; \"ANT DLY %s\"","convention":"unknown"}
-{"address":"00049d14","name":"FUN_00049d14","convention":"unknown"}
+{"address":"00049d14","name":"format_duration_short","note":"a duration as minutes and seconds or hours and minutes, or 1000+ hr","convention":"unknown"}
 {"address":"00049db0","name":"status_screen_sync","note":"the status screen's synchronization line","convention":"unknown"}
 {"address":"00049e5a","name":"format_time","note":"a packed time as \"%02d:%02d:%02d\", or \"--:--:--\"","convention":"unknown"}
 {"address":"00049eb4","name":"format_date","note":"a date as \"%02d %s %04d\", or \"-- --- ----\"","convention":"unknown"}
@@ -1503,50 +1503,50 @@
 {"address":"0004a4c0","name":"FUN_0004a4c0","convention":"unknown"}
 {"address":"0004a4ec","name":"FUN_0004a4ec","convention":"unknown"}
 {"address":"0004a518","name":"status_screen_mode_suffix","note":"the status screen's suffix for the power-up sub-state","convention":"unknown"}
-{"address":"0004a636","name":"FUN_0004a636","convention":"unknown"}
+{"address":"0004a636","name":"status_snapshot","note":"gathers the loop's stage, mode and suffix indexes, the TI, TFOM, FFOM, holdover, time zone, date and satellites into a record, under a raised interrupt mask","convention":"unknown"}
 {"address":"0004a8ea","name":"status_screen","note":"prints the receiver status screen","convention":"unknown"}
 {"address":"0004afd6","name":"FUN_0004afd6","convention":"unknown"}
 {"address":"0004aff2","name":"uptime_elapsed","note":"get_uptime() less *start into *elapsed, restarting *start if the clock went back","convention":"unknown"}
-{"address":"0004b01e","name":"FUN_0004b01e","convention":"unknown"}
-{"address":"0004b112","name":"FUN_0004b112","convention":"unknown"}
-{"address":"0004b168","name":"FUN_0004b168","convention":"unknown"}
+{"address":"0004b01e","name":"raim_monitor","note":"the RAIM alarm's state machine, counting raim_detected","convention":"unknown"}
+{"address":"0004b112","name":"gps_receiver_status_reset","note":"sets the receiver's status codes back to 2 and every channel back to code search","convention":"unknown"}
+{"address":"0004b168","name":"gps_receiver_status_update","note":"sets the GPS receiver's status code, which enter_holdover reports, from its fix mode, the satellites in use, position hold and RAIM","convention":"unknown"}
 {"address":"0004b420","name":"FUN_0004b420","convention":"unknown"}
-{"address":"0004b426","name":"FUN_0004b426","convention":"unknown"}
-{"address":"0004b46e","name":"FUN_0004b46e","convention":"unknown"}
+{"address":"0004b426","name":"command_monitor_init","note":"clears the command monitor's state and reports status event G","convention":"unknown"}
+{"address":"0004b46e","name":"command_monitor","note":"watches for commands the receiver does not answer, counting command_monitor_failures and resending after a time","convention":"unknown"}
 {"address":"0004b79a","name":"gps_response_reset","note":"points gps_response_cursor at gps_response_buffer and clears gps_receive_state","convention":"unknown"}
-{"address":"0004b7ac","name":"FUN_0004b7ac","convention":"unknown"}
+{"address":"0004b7ac","name":"gps_response_lookup","note":"a response's two-character ID to its index among 49, counting unknown_response","convention":"unknown"}
 {"address":"0004b846","name":"gps_receive","note":"reads bytes from the engine and frames its messages from their @ into gps_response_buffer, counting frame errors","convention":"unknown"}
-{"address":"0004b9a6","name":"FUN_0004b9a6","convention":"unknown"}
+{"address":"0004b9a6","name":"gps_response_timed_out","note":"1 once more time has passed than the message's timeout","convention":"unknown"}
 {"address":"0004b9e6","name":"gps_count_response","note":"counts a GPS response by its kind in gps_counts: successes, rejects, aborts, unknown_sender, unknown_command, busy and the rest","convention":"unknown"}
-{"address":"0004baaa","name":"FUN_0004baaa","convention":"unknown"}
-{"address":"0004baba","name":"FUN_0004baba","convention":"unknown"}
-{"address":"0004bb02","name":"FUN_0004bb02","convention":"unknown"}
-{"address":"0004bb4e","name":"FUN_0004bb4e","convention":"unknown"}
-{"address":"0004bb9a","name":"FUN_0004bb9a","convention":"unknown"}
-{"address":"0004bbb0","name":"FUN_0004bbb0","convention":"unknown"}
-{"address":"0004bbd6","name":"FUN_0004bbd6","convention":"unknown"}
+{"address":"0004baaa","name":"request_ring_clear","note":"empties the ring of pending GPS requests, 26-byte entries at 0x10139e to 0x10141f","convention":"unknown"}
+{"address":"0004baba","name":"request_ring_put","note":"adds a request to the ring; 0 if it is full","convention":"unknown"}
+{"address":"0004bb02","name":"request_ring_get","note":"takes the oldest request from the ring; 0 if it is empty","convention":"unknown"}
+{"address":"0004bb4e","name":"request_ring_unput","note":"takes back the newest request from the ring","convention":"unknown"}
+{"address":"0004bb9a","name":"request_ring_empty","note":"1 if the request ring is empty","convention":"unknown"}
+{"address":"0004bbb0","name":"request_ring_full","note":"1 if the request ring is full","convention":"unknown"}
+{"address":"0004bbd6","name":"request_ring_contains","note":"1 if a request with the ID is waiting in the ring","convention":"unknown"}
 {"address":"0004bc1c","name":"FUN_0004bc1c","convention":"unknown"}
-{"address":"0004bc58","name":"FUN_0004bc58","convention":"unknown"}
-{"address":"0004bc74","name":"FUN_0004bc74","convention":"unknown"}
-{"address":"0004bd2c","name":"FUN_0004bd2c","convention":"unknown"}
-{"address":"0004bdba","name":"FUN_0004bdba","convention":"unknown"}
-{"address":"0004be04","name":"FUN_0004be04","convention":"unknown"}
-{"address":"0004bef6","name":"FUN_0004bef6","convention":"unknown"}
-{"address":"0004bf3a","name":"FUN_0004bf3a","convention":"unknown"}
+{"address":"0004bc58","name":"request_kind_valid","note":"1 for request kinds 1 to 4","convention":"unknown"}
+{"address":"0004bc74","name":"gps_request_queue","note":"queues a new request: the step index 0x45 flushes the ring, others are queued unless one is waiting already","convention":"unknown"}
+{"address":"0004bd2c","name":"gps_request_post","note":"builds a request, its kind, index and arguments, and sends it to the GPS task's exchange","convention":"unknown"}
+{"address":"0004bdba","name":"gps_request_class","note":"a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3 otherwise","convention":"unknown"}
+{"address":"0004be04","name":"gps_script_lookup","note":"a script index from 0x47 on to its script, the first also resetting gps","convention":"unknown"}
+{"address":"0004bef6","name":"gps_init","note":"clears gps and resets the receiver status and the command monitor","convention":"unknown"}
+{"address":"0004bf3a","name":"gps_link_reset","note":"resets the response framing and empties the request ring","convention":"unknown"}
 {"address":"0004bf4a","name":"gpsm_task","note":"root_task starts gpsm here","convention":"unknown"}
-{"address":"0004c4e8","name":"FUN_0004c4e8","convention":"unknown"}
+{"address":"0004c4e8","name":"raim_request_arguments","note":"the RAIM request's four arguments: 1, raim_state and raim_threshold for position hold or not, then 1","convention":"unknown"}
 {"address":"0004c572","name":"gps_console_request","note":"the GPS task's switch on the console's requests 0x31 to 0x45","convention":"unknown"}
-{"address":"0004c65e","name":"FUN_0004c65e","convention":"unknown"}
-{"address":"0004c66e","name":"FUN_0004c66e","convention":"unknown"}
+{"address":"0004c65e","name":"command_log_clear","note":"empties the GPS Receiver Command Log ring at 0x1017f6","convention":"unknown"}
+{"address":"0004c66e","name":"command_log_add","note":"adds an entry to the GPS Receiver Command Log, with its date and time","convention":"unknown"}
 {"address":"0004c754","name":"gps_print_command","note":"prints one entry of the GPS receiver command log","convention":"unknown"}
-{"address":"0004c870","name":"FUN_0004c870","convention":"unknown"}
+{"address":"0004c870","name":"status_snapshot_update","note":"takes a status snapshot into 0x101560 for each @@Ea, and at 03:14:07 or 06:28:15 exactly into 0x10168e as well, with a copy of the command log","convention":"unknown"}
 {"address":"0004c918","name":"clear_gps_debug","note":"the clr_gps_debug word's: clears gps_counts, gps_last_command and gps_last_program_message","convention":"unknown"}
 {"address":"0004c940","name":"gps_print_command_log","note":"prints the GPS receiver command log","convention":"unknown"}
 {"address":"0004c9e2","name":"gps_print_1pps","note":"pr_1pps's request, 0x37","convention":"unknown"}
 {"address":"0004ca6c","name":"gps_print_process_monitor","note":"\"GPS Process Monitor\", gps_counts","convention":"unknown"}
-{"address":"0004ee8c","name":"FUN_0004ee8c","convention":"unknown"}
-{"address":"0004eeac","name":"FUN_0004eeac","convention":"unknown"}
-{"address":"0004eec2","name":"FUN_0004eec2","convention":"unknown"}
+{"address":"0004ee8c","name":"long_array_get","note":"a long from an array by index","convention":"unknown"}
+{"address":"0004eeac","name":"long_array_set","note":"stores a long into an array by index","convention":"unknown"}
+{"address":"0004eec2","name":"long_array_get_byte","note":"a long's low byte from an array by index, stored and the pointer advanced","convention":"unknown"}
 {"address":"0004eee0","name":"FUN_0004eee0","convention":"unknown"}
 {"address":"0004ef02","name":"FUN_0004ef02","convention":"unknown"}
 {"address":"0004ef3a","name":"FUN_0004ef3a","convention":"unknown"}
@@ -1558,14 +1558,14 @@
 {"address":"0004f002","name":"FUN_0004f002","convention":"unknown"}
 {"address":"0004f02a","name":"oncore_decode_fields","note":"the field-table byte code the GPS task's decoders run","convention":"unknown"}
 {"address":"0004f0d6","name":"satellite_id_valid","note":"kind 0 accepts 1 to 32, kind 1 33 to 37, the VP reference's pseudolites, kind 2 either","convention":"unknown"}
-{"address":"0004f118","name":"FUN_0004f118","convention":"unknown"}
-{"address":"0004f162","name":"FUN_0004f162","convention":"unknown"}
-{"address":"0004f18c","name":"FUN_0004f18c","convention":"unknown"}
+{"address":"0004f118","name":"channel_position_satellite","note":"a channel's satellite if it is valid and used for position, else 0","convention":"unknown"}
+{"address":"0004f162","name":"satellite_used_for_position","note":"1 if a channel uses the satellite for position","convention":"unknown"}
+{"address":"0004f18c","name":"channels_reset","note":"sets every channel's mode to code search","convention":"unknown"}
 {"address":"0004f1a6","name":"satellite_add_to_set","note":"sets bit prn - 1 of a mask, or prn - 0x21 for the second kind","convention":"unknown"}
 {"address":"0004f1da","name":"count_bits","note":"counts a word's set bits","convention":"unknown"}
-{"address":"0004f1f8","name":"FUN_0004f1f8","convention":"unknown"}
+{"address":"0004f1f8","name":"visible_satellites","note":"the set and count of visible GPS satellites, from gps.visibility","convention":"unknown"}
 {"address":"0004f28e","name":"FUN_0004f28e","convention":"unknown"}
-{"address":"0004f32c","name":"FUN_0004f32c","convention":"unknown"}
+{"address":"0004f32c","name":"satellite_find","note":"finds a satellite by ID in a table of 10-byte entries, by bisection","convention":"unknown"}
 {"address":"0004f39a","name":"FUN_0004f39a","convention":"unknown"}
 {"address":"0004f3b2","name":"FUN_0004f3b2","convention":"unknown"}
 {"address":"0004f3de","name":"FUN_0004f3de","convention":"unknown"}
@@ -1579,14 +1579,14 @@
 {"address":"0004f842","name":"FUN_0004f842","convention":"unknown"}
 {"address":"0004f85c","name":"FUN_0004f85c","convention":"unknown"}
 {"address":"0004f87e","name":"FUN_0004f87e","convention":"unknown"}
-{"address":"0004f8a0","name":"FUN_0004f8a0","convention":"unknown"}
+{"address":"0004f8a0","name":"oncore_checksum","note":"the XOR of a message's bytes","convention":"unknown"}
 {"address":"0004f8b6","name":"gps_parse_options","note":"sets gps.raim_option when the receiver ID's \"OPTIONS LIST \" has an I","convention":"unknown"}
 {"address":"0004f8fc","name":"gps_message_supported","note":"@@Bn, message 0x28, needs the receiver ID and its Time RAIM option, gps.raim_option; any other is supported","convention":"unknown"}
-{"address":"0004f932","name":"FUN_0004f932","convention":"unknown"}
-{"address":"0004faa2","name":"FUN_0004faa2","convention":"unknown"}
-{"address":"0004fb54","name":"FUN_0004fb54","convention":"unknown"}
+{"address":"0004f932","name":"gps_request_build","note":"builds a request's text: @@, its ID, then each argument through the message's encoders","convention":"unknown"}
+{"address":"0004faa2","name":"gps_response_decode","note":"runs a response's decoders from the table at 0x4feee, with preemption off, and hands @@Ea's time to status_snapshot_update","convention":"unknown"}
+{"address":"0004fb54","name":"bytes_equal_n","note":"1 if two byte strings have the same nonzero length and bytes","convention":"unknown"}
 {"address":"0004fb86","name":"FUN_0004fb86","convention":"unknown"}
-{"address":"0004fdca","name":"FUN_0004fdca","convention":"unknown"}
+{"address":"0004fdca","name":"gps_message_to_text","note":"a message as text for the log: @@, its ID, the rest in hex, <cr><lf>","convention":"unknown"}
 {"address":"00051038","name":"FUN_00051038","convention":"unknown"}
 {"address":"000510aa","name":"FUN_000510aa","convention":"unknown"}
 {"address":"000510d2","name":"FUN_000510d2","convention":"unknown"}

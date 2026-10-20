@@ -74,7 +74,12 @@ image that has it.
   during holdover" (097-59551-02,
   `:SYNChronization:HOLDover:TUNCertainty`).  Both read a state byte
   (`0x102476`): `:PRESent?` answers only in states 3 and 4, and
-  `:PREDicted?` in 3 to 6, its second field 1 in 3 and 4.
+  `:PREDicted?` in 3 to 6, its second field 1 in 3 and 4.  In the
+  Z3805A 3543B the byte is the loop's stage, `pll` at `0x102162`,
+  whose 3 to 6 are holdover, holdover recovery, startup PLL and normal
+  PLL (`../firmware/loop.md`): `kenneth_present_get` (`0x4299c`)
+  answers with `pll.tfom` and `kenneth_predicted_get` (`0x429c6`) with
+  the float at `pll` `+0x3a`, both to a resolution of 10^-7.
 - **Read:** on 2026-10-09; the Z3805A's two replies were not read
   together:
 

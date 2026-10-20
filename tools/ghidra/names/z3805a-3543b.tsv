@@ -945,3 +945,60 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x410fa	function	int64_add	context	adds two 64-bit numbers
 0x4111e	function	int64_negate	context	negates a 64-bit number
 0x4119c	function	int64_to_double	context	a signed 64-bit number as a double, through 2^32 at 0x41300
+#
+# the GPS task's routines, gps.md
+0x4baaa	function	request_ring_clear	gps.md, "Requests"	empties the ring of pending GPS requests, 26-byte entries at 0x10139e to 0x10141f
+0x4baba	function	request_ring_put	gps.md, "Requests"	adds a request to the ring; 0 if it is full
+0x4bb02	function	request_ring_get	gps.md, "Requests"	takes the oldest request from the ring; 0 if it is empty
+0x4bb4e	function	request_ring_unput	context	takes back the newest request from the ring
+0x4bb9a	function	request_ring_empty	context	1 if the request ring is empty
+0x4bbb0	function	request_ring_full	context	1 if the request ring is full
+0x4bbd6	function	request_ring_contains	context	1 if a request with the ID is waiting in the ring
+0x4bd2c	function	gps_request_post	gps.md, "Requests"	builds a request, its kind, index and arguments, and sends it to the GPS task's exchange
+0x4bc58	function	request_kind_valid	context	1 for request kinds 1 to 4
+0x4be04	function	gps_script_lookup	context	a script index from 0x47 on to its script, the first also resetting gps
+0x4bdba	function	gps_request_class	context	a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3 otherwise
+0x4bc74	function	gps_request_queue	context	queues a new request: the step index 0x45 flushes the ring, others are queued unless one is waiting already
+0x4f932	function	gps_request_build	context	builds a request's text: @@, its ID, then each argument through the message's encoders
+0x4faa2	function	gps_response_decode	context	runs a response's decoders from the table at 0x4feee, with preemption off, and hands @@Ea's time to status_snapshot_update
+0x4b7ac	function	gps_response_lookup	context	a response's two-character ID to its index among 49, counting unknown_response
+0x4b9a6	function	gps_response_timed_out	context	1 once more time has passed than the message's timeout
+0x4f8a0	function	oncore_checksum	context	the XOR of a message's bytes
+0x4fdca	function	gps_message_to_text	context	a message as text for the log: @@, its ID, the rest in hex, <cr><lf>
+0x4bef6	function	gps_init	structures.md's gps	clears gps and resets the receiver status and the command monitor
+0x4bf3a	function	gps_link_reset	context	resets the response framing and empties the request ring
+0x4b01e	function	raim_monitor	context	the RAIM alarm's state machine, counting raim_detected
+0x4b168	function	gps_receiver_status_update	context	sets the GPS receiver's status code, which enter_holdover reports, from its fix mode, the satellites in use, position hold and RAIM
+0x4b112	function	gps_receiver_status_reset	context	sets the receiver's status codes back to 2 and every channel back to code search
+0x4b46e	function	command_monitor	context	watches for commands the receiver does not answer, counting command_monitor_failures and resending after a time
+0x4b426	function	command_monitor_init	context	clears the command monitor's state and reports status event G
+0x4c4e8	function	raim_request_arguments	context	the RAIM request's four arguments: 1, raim_state and raim_threshold for position hold or not, then 1
+0x4c65e	function	command_log_clear	context	empties the GPS Receiver Command Log ring at 0x1017f6
+0x4c66e	function	command_log_add	context	adds an entry to the GPS Receiver Command Log, with its date and time
+0x4c870	function	status_snapshot_update	context	takes a status snapshot into 0x101560 for each @@Ea, and at 03:14:07 or 06:28:15 exactly into 0x10168e as well, with a copy of the command log
+0x4f118	function	channel_position_satellite	context	a channel's satellite if it is valid and used for position, else 0
+0x4f162	function	satellite_used_for_position	context	1 if a channel uses the satellite for position
+0x4f18c	function	channels_reset	context	sets every channel's mode to code search
+0x4f1f8	function	visible_satellites	context	the set and count of visible GPS satellites, from gps.visibility
+0x4f32c	function	satellite_find	context	finds a satellite by ID in a table of 10-byte entries, by bisection
+0x49654	function	satellite_elevation_azimuth	context	a satellite's elevation and azimuth, valid below 91 and 360
+0x49474	function	satellite_sets_build	context	for status_snapshot: the sets of GPS and pseudolite satellites, by band of signal level
+0x49688	function	satellite_status	context	for status_snapshot: a satellite's status code for the screen
+0x49612	function	satellite_track_class	context	a track record's class, 1 to 3
+0x497c8	function	satellite_status_list	context	for status_snapshot: the screen's list of satellites, built and sorted
+0x4a636	function	status_snapshot	context	gathers the loop's stage, mode and suffix indexes, the TI, TFOM, FFOM, holdover, time zone, date and satellites into a record, under a raised interrupt mask
+0x45c18	function	recovery_suffix_index	screen-format-strings.md, "Mode suffixes"	in holdover recovery's first state: 1 fine freq adj, 2 phase alignment; pll_powerup_suffix_index's companion
+0x45c48	function	holdover_waiting_reason	context	for :HOLDover:WAITing?: which fault bit holds the loop in holdover, 0x10, 2 or 8
+0x4299c	function	kenneth_present_get	undocumented.md, ":KENneth"	for :KENneth:PRESent?: in holdover or its recovery, pll.tfom, resolution 1e-7
+0x429c6	function	kenneth_predicted_get	undocumented.md, ":KENneth"	for :KENneth:PREDicted?: from startup PLL on, the float at pll +0x3a, resolution 1e-7, and whether in holdover
+0x49b06	function	status_screen_height	context	the status screen's height line, HGT and %+9.2f m (MSL)
+0x49d14	function	format_duration_short	context	a duration as minutes and seconds or hours and minutes, or 1000+ hr
+0x499f2	function	format_satellite_number	context	a satellite number as %2d, or blanks for none
+0x49a3c	function	format_level	context	a level as %3d, or blanks when negative
+0x49a26	function	mark_flag	context	writes * for a set flag
+0x12984	function	tfom_table_index	context	tfom_code's bisection of the table at 0x129fc
+0x1e222	function	duarta_rx_pending	context	1 if DUART channel A's receive ring is not empty
+0x4ee8c	function	long_array_get	context	a long from an array by index
+0x4eeac	function	long_array_set	context	stores a long into an array by index
+0x4eec2	function	long_array_get_byte	context	a long's low byte from an array by index, stored and the pointer advanced
+0x4fb54	function	bytes_equal_n	context	1 if two byte strings have the same nonzero length and bytes

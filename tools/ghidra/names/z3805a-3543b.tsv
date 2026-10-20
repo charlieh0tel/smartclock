@@ -237,9 +237,9 @@
 0x247d4	function	hmon_task	structures.md: root_task starts hmon here
 0x47528	function	pllp_task	structures.md: root_task starts pllp here
 0x41784	function	curv_task	structures.md: root_task starts curv here
-0x1037fc	label	gpsx_exchange	structures.md: root_task's create_x("gpsx")
-0x103800	label	plla_exchange	structures.md: root_task's create_x("plla")
-0x103804	label	pllc_exchange	structures.md: root_task's create_x("pllc"); the SCPI setters' requests go here
+0x1037fc	label	gpsx_exchange	structures.md: root_task's create_x("gpsx")	uint32_t
+0x103800	label	plla_exchange	structures.md: root_task's create_x("plla")	uint32_t
+0x103804	label	pllc_exchange	structures.md: root_task's create_x("pllc"); the SCPI setters' requests go here	uint32_t
 0x29ec2	function	pllc_request_a	structures.md: request_and_wait to pllc_exchange; the five differ in the message fields they fill
 0x29ef6	function	pllc_request_b	structures.md: request_and_wait to pllc_exchange
 0x29f24	function	pllc_request_c	structures.md: request_and_wait to pllc_exchange, with a value through a pointer
@@ -274,12 +274,12 @@
 # globals the console's print words label, docs/firmware/structures.md
 0x100c6a	label	gps	structures.md: memset(&gps, 0, 0x55a); the cells the Oncore messages' decoders fill, and the GPS task's state	gps_state
 0x102162	label	pll	structures.md: memset(&pll, 0, 0x3d6); the loop's stage, efc, tfom and EFC history	pll_state
-0x103102	label	drtR_exchange	structures.md: create_x("drtR")	int32_t
-0x103106	label	drtW_exchange	structures.md: create_x("drtW")	int32_t
-0x101d18	label	eepx_exchange	structures.md: create_x("eepx")	int32_t
-0x103150	label	sciR_exchange	structures.md: create_x("sciR")	int32_t
-0x10316c	label	sciW_exchange	structures.md: create_x("sciW")	int32_t
-0x1032f8	label	spoo_exchange	structures.md: create_x("spoo")	int32_t
+0x103102	label	drtR_exchange	structures.md: create_x("drtR")	uint32_t
+0x103106	label	drtW_exchange	structures.md: create_x("drtW")	uint32_t
+0x101d18	label	eepx_exchange	structures.md: create_x("eepx")	uint32_t
+0x103150	label	sciR_exchange	structures.md: create_x("sciR")	uint32_t
+0x10316c	label	sciW_exchange	structures.md: create_x("sciW")	uint32_t
+0x1032f8	label	spoo_exchange	structures.md: create_x("spoo")	uint32_t
 0x101e84	label	max_loop_time	structures.md: pll_rep's max loop time	float
 0x1d93e	function	duart_init	structures.md: creates drtR and drtW, "Unable to create drtR"
 0x1fdb6	function	sci_init	structures.md: creates sciR and sciW, "Unable to create sciR"
@@ -527,3 +527,16 @@
 0x342ba	label	scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe	structures.md: nv_save's second table	scpi_setting_param
 0x32d5e	label	nv_numeric_params	structures.md: nv_save's first table, 21 numeric descriptors	scpi_numeric_param *[21]
 0x32db2	label	nv_setting_params	structures.md: nv_save's second table, 18 setting descriptors	scpi_setting_param *[18]
+0x42c10	function	validate_num	structures.md: the firmware's own name, "pll_scpi: validate_num() -- too many in multiple": each new value through its descriptor's validate, into pll_scpi_validated
+0x4306a	function	finish_scpi_cmd	structures.md: the firmware's own name, "pll_scpi: finish_scpi_cmd() -- unknown structure type": stores the values by the descriptor's type, calls its hooks, and saves
+0x432bc	function	pll_scpi_command	structures.md: the pllc task's handling of one request: checks it, validate_num, reports, finish_scpi_cmd
+0x43340	function	pll_scpi_receive	structures.md: takes a request from pllc_exchange and handles it
+0x4301a	function	scpi_param_saved_in_nv	structures.md: the descriptor's flags & 2; finish_scpi_cmd then calls nv_save
+0x43042	function	scpi_param_saved_in_record	structures.md: the descriptor's flags & 4; finish_scpi_cmd then calls 0x30dea, which writes the record at 0x400000
+0x40a84	function	counter_set_sync	structures.md: sets fconf_regs[3]'s low two bits to counter_arm's sync_kind
+0x102012	label	pll_scpi_param	structures.md: the descriptor of the request finish_scpi_cmd is finishing	void *
+0x102016	label	pll_scpi_index	structures.md: the request's value index, or its last for several	uint8_t
+0x102017	label	pll_scpi_source	structures.md: the request's source, which status_report_from and nv_save are given	uint8_t
+0x10201c	label	pll_scpi_setting	structures.md: the new byte finish_scpi_cmd stores into a setting	uint8_t
+0x102020	label	pll_scpi_values	structures.md: the request's values, which validate_num checks
+0x102030	label	pll_scpi_validated	structures.md: validate_num's results, which finish_scpi_cmd stores

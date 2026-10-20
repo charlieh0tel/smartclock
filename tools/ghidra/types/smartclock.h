@@ -77,6 +77,14 @@ typedef enum __attribute__((packed)) counter_error {
 	COUNTER_CALIBRATION_FAILURE = 0x10
 } counter_error;
 
+/* A SCPI parameter descriptor's structure, its first byte, which the
+ * pllc task's finish_scpi_cmd switches on; it accepts 2 and 3 and does
+ * nothing with them. */
+typedef enum __attribute__((packed)) scpi_param_type {
+	SCPI_PARAM_NUMERIC = 0, /* scpi_numeric_param */
+	SCPI_PARAM_SETTING = 1  /* scpi_setting_param */
+} scpi_param_type;
+
 /* The VP Oncore reference's codes (third_party/motorola/VPCommands.pdf). */
 
 /* @@Ba: a channel's tracking mode. */
@@ -165,19 +173,19 @@ typedef enum __attribute__((packed)) oncore_raim_status {
 /* A numeric SCPI parameter's descriptor, in ROM; its small tables sit
  * just before it.  0x2c bytes. */
 typedef struct scpi_numeric_param {
-	uint8_t field_00;
-	uint8_t last_index; /* +0x01: values less one */
-	int8_t *nv_widths;  /* +0x02: each value's bits in the NV register; negative, signed */
-	void *minimum;      /* +0x06: the least value accepted */
-	void *maximum;      /* +0x0a: the greatest */
-	void *convert;      /* +0x0e: called by scpi_numeric_get */
-	void *field_12;
-	void *value;        /* +0x16: the current value, in RAM */
-	void *field_1a;
-	int16_t field_1e;
-	int16_t field_20;
+	scpi_param_type type; /* SCPI_PARAM_NUMERIC */
+	uint8_t last_index;   /* +0x01: values less one */
+	int8_t *nv_widths; /* +0x02: bits in the NV register; negative, signed */
+	void *minimum;        /* +0x06: the least value accepted */
+	void *maximum;        /* +0x0a: the greatest */
+	void *validate;       /* +0x0e: validate_num's check; clamp_to_limits */
+	void *changed;        /* +0x12: called as each value is stored */
+	void *value;          /* +0x16: the current value, in RAM */
+	void *done;           /* +0x1a: called once they are stored */
+	uint16_t flags; /* +0x1e: 2 saved in the NV register, 4 at 0x400000 */
+	uint16_t field_20;
 	void *field_22;
-	uint8_t is_integer; /* +0x26: the value is an int, not a float */
+	uint8_t is_integer;   /* +0x26: 0 float, 1 integer, 2 or 3 several */
 	uint8_t field_27;
 	void *table_28;
 } scpi_numeric_param;
@@ -653,14 +661,14 @@ typedef struct interpolator_calibration {
 /* A SCPI setting's descriptor, in ROM, the switches and choices nv_save
  * saves: 0x1e bytes. */
 typedef struct scpi_setting_param {
-	uint8_t field_00;
-	uint8_t last_index; /* +0x01: values less one */
-	int8_t *nv_widths;  /* +0x02: each value's bits in the NV register */
+	scpi_param_type type; /* SCPI_PARAM_SETTING */
+	uint8_t last_index;   /* +0x01: values less one */
+	int8_t *nv_widths;    /* +0x02: each value's bits in the NV register */
 	uint16_t field_06;
-	void *field_08;
-	uint8_t *value;     /* +0x0c: the current value, a byte each */
-	void *field_10;
-	int16_t field_14;
+	void *changed;        /* +0x08: called as the value is stored */
+	uint8_t *value;       /* +0x0c: the current value, a byte each */
+	void *done;           /* +0x10: called once it is */
+	uint16_t flags;       /* +0x14: as scpi_numeric_param's */
 	int16_t field_16;
 	void *field_18;
 	uint8_t field_1c;
@@ -672,29 +680,29 @@ typedef struct scpi_setting_param {
  * at it, named by the SCPI command whose setter is given that descriptor.
  * 0xc5 bytes. */
 typedef struct nv_settings_fields {
-	uint8_t field_00[2];
+	uint8_t field_00[2];                    /* no code refers to them */
 	int32_t elevation_mask;                 /* :GPS:EMANgle */
 	int32_t antenna_delay;                  /* :GPS:ADELay */
 	int32_t douglas_duration;               /* :DOUGlas:DURation */
 	uint8_t douglas_duration_infinite;      /* :DOUGlas:DURation INFinity */
-	uint8_t field_0f;
+	uint8_t pad_0f;
 	int32_t holdover_status_threshold;      /* :ROSC:HOLD:DUR:STAT:THR */
 	float limit_threshold;                  /* :ROSC:LIMit:THReshold */
 	float holdover_limit_threshold;         /* :ROSC:HOLD:LIMit:THReshold */
 	uint8_t holdover_limit_state;           /* :ROSC:HOLD:LIMit:STATe */
 	uint8_t douglas_state;                  /* :DOUGlas:STATe */
-	uint8_t field_1e;                       /* saved; no setter */
-	uint8_t field_1f;
-	int32_t position[3];                    /* :GPS:POSition, mas, mas, cm */
+	uint8_t field_1e; /* only its descriptor refers to it */
+	uint8_t pad_1f;
+	int32_t position[3]; /* :GPS:POSition, mas, mas, cm */
 	uint32_t ignored_satellites;            /* :GPS:SAT:TRAC:IGNore */
-	int32_t time_zone[2];                   /* :PTIMe:TZONe, hours, minutes */
-	int32_t prediction_duration;            /* :KENneth:PREDicted:DURation */
+	int32_t time_zone[2]; /* :PTIMe:TZONe, hours, minutes */
+	int32_t prediction_duration; /* :KENneth:PREDicted:DURation */
 	uint32_t leap_date;                     /* a packed date */
 	int32_t leap_minute_length;             /* 59 for a second removed */
 	uint8_t leap_pending;
-	uint8_t raim_state[2];                  /* :DIAG:GPS:POS:HOLD:RAIM:STATe */
-	uint8_t field_47;
-	int32_t raim_threshold[2];              /* :DIAG:GPS:POS:HOLD:RAIM:THR */
+	uint8_t raim_state[2]; /* :DIAG:GPS:POS:HOLD:RAIM:STATe */
+	uint8_t pad_47;
+	int32_t raim_threshold[2]; /* :DIAG:GPS:POS:HOLD:RAIM:THR */
 	int32_t holdover_measurement_threshold; /* :ROSC:HOLD:DUR:MEAS:THR */
 	uint32_t status_enable[7];              /* *ESE, *SRE, :STATus ENABle */
 	uint32_t status_positive_transition[5]; /* :STATus PTRansition */
@@ -702,12 +710,12 @@ typedef struct nv_settings_fields {
 	uint8_t questionable_user;              /* :STAT:QUES:...:USER */
 	uint8_t serial_restricted;              /* :DIAG:SER1:RESTricted */
 	uint8_t pulse_state;                    /* :PULSe:CONTinuous:STATe */
-	uint8_t field_9b;
+	uint8_t pad_9b;
 	int32_t pulse_period;                   /* :PULSe:CONTinuous:PERiod */
 	int32_t pulse_start_time[3];            /* :PULSe:STARt:TIME */
 	int32_t pulse_start_date[3];            /* :PULSe:STARt:DATE */
-	int32_t field_b8;                       /* saved, 16 bits; no setter */
-	uint8_t field_bc;                       /* saved; no setter */
+	int32_t field_b8; /* 0 to 50000; only its descriptor */
+	uint8_t field_bc; /* only its descriptor refers to it */
 	uint8_t output_state;                   /* :OUTPut:STATe */
 	uint8_t format_data;                    /* :FORMat:DATA */
 	uint8_t memory_save;                    /* :ROBin:MEMory:SAVE */
@@ -721,11 +729,11 @@ typedef struct nv_settings_fields {
 /* A time-interval reading, interval_reading, as counter_read leaves it.
  * 13 bytes. */
 typedef struct interval_reading_fields {
-	double value;         /* s; SCPI's NaN, 9.91e37, on an error */
-	uint8_t valid;        /* the :DIAG query's flag */
+	double value;  /* s; SCPI's NaN, 9.91e37, on an error */
+	uint8_t valid; /* the :DIAG query's flag */
 	counter_error errors;
-	uint16_t tag;         /* 0xfff6, which the :DIAG query returns with it */
-	uint8_t armed;        /* clear, the routines report a measurement aborted */
+	uint16_t tag;  /* 0xfff6, which the :DIAG query returns with it */
+	uint8_t armed; /* clear, the routines report a measurement aborted */
 } interval_reading_fields;
 
 /* The time-interval counter's configuration, counter_configuration, which
@@ -733,17 +741,17 @@ typedef struct interval_reading_fields {
  * a state go in pairs: a state of 2 asks for the work, 1 says it is done.
  * 0x20 bytes, interpolator_calibration_state after them. */
 typedef struct counter_configuration_fields {
-	uint8_t fpga_registers[4];   /* counter_arm copies them into fconf_regs */
+	uint8_t fpga_registers[4]; /* counter_arm copies them into fconf_regs */
 	double calibration;          /* s, which counter_read subtracts */
 	uint8_t registers_mode;      /* 1: load fpga_registers ... */
 	uint8_t registers_state;     /* ... when this is 2 */
 	uint8_t calibrate_mode;      /* 3: always calibrate; 1: ... */
 	uint8_t calibrate_state;     /* ... when this is 2 */
-	uint8_t field_10;
-	uint8_t field_11;
-	uint8_t field_12;
-	uint8_t field_13;
-	int32_t field_14;            /* counted down while field_10 and _11 are 2 */
+	uint8_t sync_mode;           /* 2: counter_arm syncs ... */
+	uint8_t sync_state; /* ... when this is 2; sync_request sets both */
+	uint8_t sync_kind; /* sync_request's first; into fconf_regs[3] */
+	uint8_t pad_13;
+	int32_t sync_count;          /* sync_request's second; counted down */
 	int32_t interpolator_offset; /* reading_low, subtracted from the reading */
 	int32_t interpolator_scale;  /* the spread it is divided by */
 } counter_configuration_fields;

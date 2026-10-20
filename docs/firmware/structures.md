@@ -90,11 +90,17 @@ given one.
 
 | Offset | Field | Shown by |
 | ------ | ----- | -------- |
-| `+0x06` | the minimum | the queries' `MINimum` reads through it; `:GPS:EMANgle`'s is 0 |
-| `+0x0a` | the maximum | `MAXimum` reads through it; `:GPS:EMANgle`'s is 89 |
-| `+0x0e` | a conversion routine | `scpi_numeric_get` calls it with the value |
-| `+0x16` | the current value, in RAM | `scpi_numeric_get` reads it |
-| `+0x26` | the value is an integer | `scpi_numeric_get` converts an integer to float for the reply |
+| `+0x00` | `type`, `SCPI_PARAM_NUMERIC` (0) | `finish_scpi_cmd` switches on it (below) |
+| `+0x01` | `last_index`, the values less one | `validate_num`, `nv_save` |
+| `+0x02` | `nv_widths`, each value's bits in the NV register | `nv_save` ("The NV register") |
+| `+0x06` | `minimum` | the queries' `MINimum` reads through it; `:GPS:EMANgle`'s is 0 |
+| `+0x0a` | `maximum` | `MAXimum` reads through it; `:GPS:EMANgle`'s is 89 |
+| `+0x0e` | `validate` | `validate_num` checks each new value with it, given the minimum and maximum; `clamp_to_limits` for most; `scpi_numeric_get` passes it the bounds for `MINimum` and `MAXimum` |
+| `+0x12` | `changed` | `finish_scpi_cmd` calls it as each value is stored; for most a bare `rts` (`0x12af0`) |
+| `+0x16` | `value`, the current value, in RAM | `scpi_numeric_get` reads it; `finish_scpi_cmd` stores it |
+| `+0x1a` | `done` | `finish_scpi_cmd` calls it once the values are stored |
+| `+0x1e` | `flags` | 2: `finish_scpi_cmd` calls `nv_save`; 4: it writes the EEPROM record at `0x400000` (`0x30dea`) |
+| `+0x26` | `is_integer`: 0 a float, 1 an integer, 2 or 3 several | `scpi_numeric_get` converts an integer to float for the reply; `validate_num` takes 2 and 3 as several values |
 
 | Descriptor | Parameter | Minimum | Maximum | Value |
 | ---------- | --------- | ------- | ------- | ----- |
@@ -504,4 +510,41 @@ them are pairs of a mode and a state: `counter_arm` loads the registers
 when `registers_mode` is 1 and `registers_state` 2, and sets the state
 to 1; `counter_calibrate` calibrates when `calibrate_mode` is 3, or 1
 with `calibrate_state` 2; a third pair at `+0x10` counts `+0x14` down.
+
+## The pllc task's SCPI requests
+
+A setter does not store its new value: it sends the descriptor and the
+value to the `pllc` exchange, and the loop task takes the request there
+(`pll_scpi_receive`, `0x43340`) and handles it (`pll_scpi_command`,
+`0x432bc`) with the firmware's own `validate_num` and
+`finish_scpi_cmd`, which its messages name ("pll_scpi: validate_num()
+-- too many in multiple", "pll_scpi: finish_scpi_cmd() -- unknown
+structure type").  The request's descriptor, value index, source and
+values are kept in `pll_scpi_param`, `pll_scpi_index`,
+`pll_scpi_source` and `pll_scpi_values` (`0x102012` to `0x102020`).
+`validate_num` (`0x42c10`) runs each value through the descriptor's
+`validate` into `pll_scpi_validated` (`0x102030`).  `finish_scpi_cmd`
+(`0x4306a`) switches on the descriptor's `type`: a numeric one's values
+are stored through its `value`, its `changed` hook called for each and
+its `done` hook once; a setting's byte, `pll_scpi_setting`, is stored
+and its `changed` and `done` hooks called; types 2 and 3 store nothing.
+It then saves by the descriptor's `flags`: bit 2 calls `nv_save`
+(`scpi_param_saved_in_nv`, `0x4301a`), bit 4 writes the EEPROM record
+at `0x400000` (`scpi_param_saved_in_record`, `0x43042`).
+
+The setting descriptor, `scpi_setting_param`, has the same `type`,
+`last_index` and `nv_widths`, its `changed` and `done` hooks at `+8`
+and `+0x10`, its value at `+0xc` and its `flags` at `+0x14`.  Both
+kinds point at `0x101f9a` (`+0x22`, `+0x18`), which nothing else
+refers to; what it is was not traced.
+
+In `nv_settings`, the bytes at `+0x0f`, `+0x1f`, `+0x47` and `+0x9b`
+are padding: nothing refers to them, and each comes before a long.
+`field_1e`, `field_b8` (0 to 50000) and `field_bc` are saved and
+restored, but only their descriptors refer to them.  In
+`counter_configuration` the third mode and state are the clock sync's:
+`sync_request` sets `sync_mode` and `sync_state` to 2 with a
+`sync_kind` and a `sync_count`, and `counter_arm` writes the kind into
+`fconf_regs[3]` (`counter_set_sync`, `0x40a84`) while counting the
+count down.
 

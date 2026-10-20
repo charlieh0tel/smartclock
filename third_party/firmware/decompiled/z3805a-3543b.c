@@ -38,11 +38,11 @@ struct counter_configuration_fields {
     uint8_t registers_state;
     uint8_t calibrate_mode;
     uint8_t calibrate_state;
-    uint8_t field_10;
-    uint8_t field_11;
-    uint8_t field_12;
-    uint8_t field_13;
-    int32_t field_14;
+    uint8_t sync_mode;
+    uint8_t sync_state;
+    uint8_t sync_kind;
+    uint8_t pad_13;
+    int32_t sync_count;
     int32_t interpolator_offset;
     int32_t interpolator_scale;
 };
@@ -582,14 +582,14 @@ struct nv_settings_fields {
     int32_t antenna_delay;
     int32_t douglas_duration;
     uint8_t douglas_duration_infinite;
-    uint8_t field_0f;
+    uint8_t pad_0f;
     int32_t holdover_status_threshold;
     float limit_threshold;
     float holdover_limit_threshold;
     uint8_t holdover_limit_state;
     uint8_t douglas_state;
     uint8_t field_1e;
-    uint8_t field_1f;
+    uint8_t pad_1f;
     int32_t position[3];
     uint32_t ignored_satellites;
     int32_t time_zone[2];
@@ -598,7 +598,7 @@ struct nv_settings_fields {
     int32_t leap_minute_length;
     uint8_t leap_pending;
     uint8_t raim_state[2];
-    uint8_t field_47;
+    uint8_t pad_47;
     int32_t raim_threshold[2];
     int32_t holdover_measurement_threshold;
     uint32_t status_enable[7];
@@ -607,7 +607,7 @@ struct nv_settings_fields {
     uint8_t questionable_user;
     uint8_t serial_restricted;
     uint8_t pulse_state;
-    uint8_t field_9b;
+    uint8_t pad_9b;
     int32_t pulse_period;
     int32_t pulse_start_time[3];
     int32_t pulse_start_date[3];
@@ -673,18 +673,23 @@ typedef enum satellite_list {
 
 typedef struct scpi_numeric_param scpi_numeric_param, *Pscpi_numeric_param;
 
+typedef enum scpi_param_type {
+    SCPI_PARAM_NUMERIC=0,
+    SCPI_PARAM_SETTING=1
+} scpi_param_type;
+
 struct scpi_numeric_param {
-    uint8_t field_00;
+    enum scpi_param_type type;
     uint8_t last_index;
     int8_t *nv_widths;
     void *minimum;
     void *maximum;
-    void *convert;
-    void *field_12;
+    void *validate;
+    void *changed;
     void *value;
-    void *field_1a;
-    int16_t field_1e;
-    int16_t field_20;
+    void *done;
+    uint16_t flags;
+    uint16_t field_20;
     void *field_22;
     uint8_t is_integer;
     uint8_t field_27;
@@ -694,14 +699,14 @@ struct scpi_numeric_param {
 typedef struct scpi_setting_param scpi_setting_param, *Pscpi_setting_param;
 
 struct scpi_setting_param {
-    uint8_t field_00;
+    enum scpi_param_type type;
     uint8_t last_index;
     int8_t *nv_widths;
     uint16_t field_06;
-    void *field_08;
+    void *changed;
     uint8_t *value;
-    void *field_10;
-    int16_t field_14;
+    void *done;
+    uint16_t flags;
     int16_t field_16;
     void *field_18;
     uint8_t field_1c;
@@ -823,7 +828,7 @@ extern uint8_t gps_pps_gate; /* 00101cfd */
 extern uint8_t internal_pps_last_count; /* 00101cfe */
 extern float scpi_value_DIAGnostic_ROSCillator_TCOefficient; /* 00101d0c */
 extern float scpi_value_DIAGnostic_TOFFset; /* 00101d10 */
-extern int32_t eepx_exchange; /* 00101d18 */
+extern uint32_t eepx_exchange; /* 00101d18 */
 extern log_page log_page_buffer; /* 00101d94 */
 extern int16_t log_page_number; /* 00101dd4 */
 extern int32_t scpi_value_SAMPle_INTeger; /* 00101de4 */
@@ -841,6 +846,10 @@ extern interval_reading_fields interval_reading; /* 00101f9c */
 extern uint8_t fconf_regs[4]; /* 00101fa9 */
 extern counter_configuration_fields counter_configuration; /* 00101fae */
 extern interpolator_calibration interpolator_calibration_state; /* 00101fce */
+extern void * pll_scpi_param; /* 00102012 */
+extern uint8_t pll_scpi_index; /* 00102016 */
+extern uint8_t pll_scpi_source; /* 00102017 */
+extern uint8_t pll_scpi_setting; /* 0010201c */
 extern float fine_y0; /* 00102154 */
 extern pll_state pll; /* 00102162 */
 extern uint8_t status_summary; /* 00102544 */
@@ -852,18 +861,21 @@ extern int16_t task_count; /* 0010271c */
 extern uint8_t status_request_service; /* 00102eb6 */
 extern char status_ready; /* 00102eb7 */
 extern status_model * status_object; /* 00102eb8 */
-extern int32_t drtR_exchange; /* 00103102 */
-extern int32_t drtW_exchange; /* 00103106 */
+extern uint32_t drtR_exchange; /* 00103102 */
+extern uint32_t drtW_exchange; /* 00103106 */
 extern uint16_t hdac_shadow[3]; /* 0010314a */
-extern int32_t sciR_exchange; /* 00103150 */
-extern int32_t sciW_exchange; /* 0010316c */
-extern int32_t spoo_exchange; /* 001032f8 */
+extern uint32_t sciR_exchange; /* 00103150 */
+extern uint32_t sciW_exchange; /* 0010316c */
+extern uint32_t spoo_exchange; /* 001032f8 */
 extern char deferred_text[1025]; /* 001032fd */
 extern int16_t deferred_end; /* 001036fe */
 extern int16_t deferred_start; /* 00103700 */
 extern klok_entry * klok_entries; /* 00103722 */
 extern klok_entry * klok_free; /* 00103726 */
 extern klok_entry klok_pool[5]; /* 0010372a */
+extern uint32_t gpsx_exchange; /* 001037fc */
+extern uint32_t plla_exchange; /* 00103800 */
+extern uint32_t pllc_exchange; /* 00103804 */
 extern uint8_t es_ascii; /* 00103830 */
 extern uint8_t es_enabled; /* 00103831 */
 extern char es_message[60]; /* 00103832 */
@@ -5837,7 +5849,7 @@ void root_task(void)
   }
   psos_create_x("gpsx",0,0,&gpsx_exchange);
   psos_create_x("plla",0,0,&plla_exchange);
-  psos_create_x("pllc",2,8,(ulong *)&pllc_exchange);
+  psos_create_x("pllc",2,8,&pllc_exchange);
   psos_create("gpsm",0,100,0,0x400,(void *)0x0,(ulong *)&task_gpsm);
   psos_create("hmon",0,200,0,0x400,(void *)0x0,&task_hmon);
   psos_create("pllp",0,0xaf,0,0x400,(void *)0x0,&task_pllp);
@@ -18183,7 +18195,7 @@ undefined8 duart_init(void)
   while (bVar1 = DUART_SRB_CSRB, (bVar1 & 1) != 0) {
     bVar1 = DUART_RBB_TBB;
   }
-  uVar2 = psos_create_x("drtR",0,0,(ulong *)&drtR_exchange);
+  uVar2 = psos_create_x("drtR",0,0,&drtR_exchange);
   if ((char)uVar2 != '\0') {
     sprintf(acStack_64,"Unable to create drtR: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
@@ -18197,7 +18209,7 @@ undefined8 duart_init(void)
     sprintf(acStack_64,"Unable to initialize drtR: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
-  uVar2 = psos_create_x("drtW",0,0,(ulong *)&drtW_exchange);
+  uVar2 = psos_create_x("drtW",0,0,&drtW_exchange);
   if ((char)uVar2 != '\0') {
     sprintf(acStack_64,"Unable to create drtW: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
@@ -20024,28 +20036,28 @@ undefined8 sci_unlock(void)
 
 {
   undefined4 in_D0;
-  ulong param2;
   ulong uVar1;
   undefined4 in_D1;
+  uint32_t exchange;
   undefined *message;
   char acStack_64 [80];
   
   if ((char)in_D0 == '\x01') {
     message = &sciW_status;
-    uVar1 = sciW_exchange;
+    exchange = sciW_exchange;
   }
   else {
     message = &sciR_status;
-    uVar1 = sciR_exchange;
+    exchange = sciR_exchange;
   }
-  param2 = psos_my_pid();
-  if (param2 == *(ulong *)(message + 8)) {
+  uVar1 = psos_my_pid();
+  if (uVar1 == *(ulong *)(message + 8)) {
     if (*(int *)(message + 0xc) == 0) {
       *(undefined4 *)(message + 8) = 0;
-      if (uVar1 != *(ulong *)(message + 4)) {
+      if (exchange != *(ulong *)(message + 4)) {
         fatal_error("SCI semaphore has been corrupted.");
       }
-      uVar1 = psos_send_x(uVar1,message);
+      uVar1 = psos_send_x(exchange,message);
       if ((uVar1 & 0xff) != 0) {
         sprintf(acStack_64,"Unable to release SCI token: %X",uVar1 & 0xff);
         fatal_error(acStack_64);
@@ -20059,7 +20071,7 @@ undefined8 sci_unlock(void)
     }
   }
   else {
-    sprintf(acStack_64,"sci_close and not owner (pid): %X",param2);
+    sprintf(acStack_64,"sci_close and not owner (pid): %X",uVar1);
     task_debug_message(acStack_64);
   }
   return CONCAT44(in_D0,in_D1);
@@ -20075,23 +20087,24 @@ undefined8 sci_lock(void)
   ulong uVar1;
   ulong uVar2;
   undefined4 in_D1;
+  uint32_t exchange;
   undefined *buffer;
   char acStack_64 [80];
   
   if ((char)in_D0 == '\x01') {
     buffer = &sciW_status;
-    uVar2 = sciW_exchange;
+    exchange = sciW_exchange;
   }
   else {
     buffer = &sciR_status;
-    uVar2 = sciR_exchange;
+    exchange = sciR_exchange;
   }
   uVar1 = psos_my_pid();
   if (uVar1 == *(ulong *)(buffer + 8)) {
     *(int *)(buffer + 0xc) = *(int *)(buffer + 0xc) + 1;
   }
   else {
-    uVar2 = psos_request_x(uVar2,buffer,0,0);
+    uVar2 = psos_request_x(exchange,buffer,0,0);
     if ((uVar2 & 0xff) != 0) {
       sprintf(acStack_64,"Unable to acquire SCI token: %X",uVar2 & 0xff);
       fatal_error(acStack_64);
@@ -20144,7 +20157,7 @@ undefined8 sci_init(void)
   } while (iVar3 < 100000);
   wVar1 = SCSR;
   wVar1 = SCDR;
-  uVar2 = psos_create_x("sciR",0,0,(ulong *)&sciR_exchange);
+  uVar2 = psos_create_x("sciR",0,0,&sciR_exchange);
   if ((uVar2 & 0xff) != 0) {
     sprintf(acStack_64,"Unable to create sciR: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
@@ -20158,7 +20171,7 @@ undefined8 sci_init(void)
     sprintf(acStack_64,"Unable to initialize sciR: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
-  uVar2 = psos_create_x("sciW",0,0,(ulong *)&sciW_exchange);
+  uVar2 = psos_create_x("sciW",0,0,&sciW_exchange);
   if ((uVar2 & 0xff) != 0) {
     sprintf(acStack_64,"Unable to create sciW: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
@@ -20922,7 +20935,7 @@ uint FUN_00020c96(ulong param_1)
   uVar1 = psos_ident("spoo",(ulong *)0x0,(uchar *)0x0);
   param2 = (uint)((char)uVar1 == '\0');
   if (param2 == 0) {
-    uVar1 = psos_create_x("spoo",2,5,(ulong *)&spoo_exchange);
+    uVar1 = psos_create_x("spoo",2,5,&spoo_exchange);
     param2 = uVar1 & 0xff;
   }
   if (param2 == 0) {
@@ -26400,9 +26413,9 @@ float scpi_numeric_get(scpi_numeric_param *param,int index,int16_t which,int16_t
       pvVar1 = param->maximum;
     }
     local_c = *(undefined4 *)((int)pvVar1 + index * 4);
-    local_8 = (float)(*param->convert)(&local_c,index,(void *)((int)param->minimum + index * 4),
-                                       (void *)((int)param->maximum + index * 4),
-                                       (void *)((int)param->table_28 + index * 8),0);
+    local_8 = (float)(*param->validate)(&local_c,index,(void *)((int)param->minimum + index * 4),
+                                        (void *)((int)param->maximum + index * 4),
+                                        (void *)((int)param->table_28 + index * 8),0);
   }
   else {
     local_8 = *(float *)((int)param->value + index * 4);
@@ -26856,8 +26869,6 @@ void request_and_wait(uint32_t param_1,void *param_2)
 
 /* 00029ec2 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
 void pllc_request_a(undefined4 param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4)
 
 {
@@ -26873,14 +26884,12 @@ void pllc_request_a(undefined4 param_1,undefined1 param_2,undefined1 param_3,und
   local_10 = param_2;
   local_d = param_3;
   local_f = param_4;
-  request_and_wait(_pllc_exchange,auStack_1c);
+  request_and_wait(pllc_exchange,auStack_1c);
   return;
 }
 
 
 /* 00029ef6 */
-
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
 void pllc_request_b(undefined4 param_1,undefined1 param_2,undefined1 param_3)
 
@@ -26895,14 +26904,12 @@ void pllc_request_b(undefined4 param_1,undefined1 param_2,undefined1 param_3)
   local_14 = param_1;
   local_10 = param_2;
   local_f = param_3;
-  request_and_wait(_pllc_exchange,auStack_1c);
+  request_and_wait(pllc_exchange,auStack_1c);
   return;
 }
 
 
 /* 00029f24 */
-
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
 void pllc_request_c(undefined4 param_1,undefined1 param_2,undefined4 param_3,undefined4 *param_4,
                    undefined1 param_5)
@@ -26922,14 +26929,12 @@ void pllc_request_c(undefined4 param_1,undefined1 param_2,undefined4 param_3,und
   local_f = param_5;
   local_c = param_3;
   local_8 = *param_4;
-  request_and_wait(_pllc_exchange,auStack_1c);
+  request_and_wait(pllc_exchange,auStack_1c);
   return;
 }
 
 
 /* 00029f60 */
-
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
 void pllc_request_d(undefined4 param_1,undefined1 param_2,undefined4 param_3,undefined1 param_4)
 
@@ -26946,14 +26951,12 @@ void pllc_request_d(undefined4 param_1,undefined1 param_2,undefined4 param_3,und
   local_10 = param_2;
   local_f = param_4;
   local_c = param_3;
-  request_and_wait(_pllc_exchange,auStack_1c);
+  request_and_wait(pllc_exchange,auStack_1c);
   return;
 }
 
 
 /* 00029f94 */
-
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
 void pllc_request_e(undefined4 param_1,undefined1 param_2,undefined4 *param_3,undefined1 param_4)
 
@@ -26972,7 +26975,7 @@ void pllc_request_e(undefined4 param_1,undefined1 param_2,undefined4 *param_3,un
   local_f = param_4;
   uStack_c = *param_3;
   uStack_8 = param_3[1];
-  request_and_wait(_pllc_exchange,auStack_1c);
+  request_and_wait(pllc_exchange,auStack_1c);
   return;
 }
 
@@ -33991,7 +33994,7 @@ void eeprom_init(void)
   ulong uVar1;
   char acStack_54 [80];
   
-  uVar1 = psos_create_x("eepx",0,0,(ulong *)&eepx_exchange);
+  uVar1 = psos_create_x("eepx",0,0,&eepx_exchange);
   if ((char)uVar1 != '\0') {
     sprintf(acStack_54,"Unable to create eepx: %X",uVar1 & 0xff);
     fatal_error(acStack_54);
@@ -36373,10 +36376,10 @@ void FUN_00040a0e(byte param_1,byte param_2)
 void sync_request(uint8_t param_1,int32_t param_2)
 
 {
-  counter_configuration.field_12 = param_1;
-  counter_configuration.field_14 = param_2;
-  counter_configuration.field_10 = 2;
-  counter_configuration.field_11 = 2;
+  counter_configuration.sync_kind = param_1;
+  counter_configuration.sync_count = param_2;
+  counter_configuration.sync_mode = 2;
+  counter_configuration.sync_state = 2;
   return;
 }
 
@@ -36385,7 +36388,7 @@ void sync_request(uint8_t param_1,int32_t param_2)
 
 /* WARNING: Unknown calling convention */
 
-void FUN_00040a84(byte param_1)
+void counter_set_sync(byte param_1)
 
 {
   fconf_regs[3] = fconf_regs[3] & 0xfc;
@@ -36524,11 +36527,11 @@ void counter_arm(interval_reading_fields *reading,counter_configuration_fields *
     FUN_00040a0e(0,0);
     fpga_set_bit(2,0);
     FUN_00040a0e(4,0);
-    if ((configuration->field_10 == 2) && (configuration->field_11 == 2)) {
-      FUN_00040a84(configuration->field_12);
-      configuration->field_14 = configuration->field_14 + -1;
-      if (configuration->field_14 < 1) {
-        configuration->field_11 = 1;
+    if ((configuration->sync_mode == 2) && (configuration->sync_state == 2)) {
+      counter_set_sync(configuration->sync_kind);
+      configuration->sync_count = configuration->sync_count + -1;
+      if (configuration->sync_count < 1) {
+        configuration->sync_state = 1;
       }
     }
     fpga_set_bit(1,0);
@@ -37920,13 +37923,13 @@ void FUN_00042b1c(void)
 void FUN_00042b8a(undefined1 *param_1)
 
 {
-  if (DAT_00102012 == &DAT_00041348) {
+  if (pll_scpi_param == &DAT_00041348) {
     *param_1 = 1;
   }
   else {
     *param_1 = 0;
   }
-  (**(code **)(DAT_00102012 + 2))((int)DAT_00102016,(int)DAT_00102017);
+  (**(code **)((int)pll_scpi_param + 2))((int)(char)pll_scpi_index,(int)(char)pll_scpi_source);
   return;
 }
 
@@ -37936,10 +37939,11 @@ void FUN_00042b8a(undefined1 *param_1)
 void FUN_00042bc4(undefined1 *param_1)
 
 {
-  if (*(char *)(DAT_00102012 + 6) < DAT_0010201c) {
+  if (*(char *)((int)pll_scpi_param + 6) < (char)pll_scpi_setting) {
     fatal_error("pll_scpi: toggle_change() -- new value > max value");
   }
-  else if (*(char *)(*(int *)(DAT_00102012 + 0xc) + (int)DAT_00102016) != DAT_0010201c) {
+  else if (*(uint8_t *)(*(int *)((int)pll_scpi_param + 0xc) + (int)(char)pll_scpi_index) !=
+           pll_scpi_setting) {
     *param_1 = 1;
     return;
   }
@@ -37952,7 +37956,7 @@ void FUN_00042bc4(undefined1 *param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_00042c10(void)
+void validate_num(void)
 
 {
   int iVar1;
@@ -37960,30 +37964,32 @@ void FUN_00042c10(void)
   uint uVar3;
   byte bVar4;
   
-  if ((*(char *)(DAT_00102012 + 0x26) == '\x02') || (*(char *)(DAT_00102012 + 0x26) == '\x03')) {
-    if ('\x04' < DAT_00102016) {
+  if ((*(char *)((int)pll_scpi_param + 0x26) == '\x02') ||
+     (*(char *)((int)pll_scpi_param + 0x26) == '\x03')) {
+    if ('\x04' < (char)pll_scpi_index) {
       fatal_error("pll_scpi: validate_num() -- too many in multiple");
     }
-    if (DAT_00102016 != *(char *)(DAT_00102012 + 1)) {
+    if (pll_scpi_index != *(uint8_t *)((int)pll_scpi_param + 1)) {
       fatal_error("pll_scpi: validate_num() -- multiple cmd/desc disagree");
     }
-    for (bVar4 = 0; (int)(uint)bVar4 <= (int)DAT_00102016; bVar4 = bVar4 + 1) {
+    for (bVar4 = 0; (int)(uint)bVar4 <= (int)(char)pll_scpi_index; bVar4 = bVar4 + 1) {
       uVar3 = (uint)bVar4;
       iVar1 = uVar3 * 4;
-      uVar2 = (**(code **)(DAT_00102012 + 0xe))
-                        (iVar1 + 0x102020,uVar3,*(int *)(DAT_00102012 + 6) + iVar1,
-                         *(int *)(DAT_00102012 + 10) + iVar1,
-                         *(int *)(DAT_00102012 + 0x28) + uVar3 * 8,(int)DAT_00102017);
-      *(undefined4 *)(&DAT_00102030 + (uint)bVar4 * 4) = uVar2;
+      uVar2 = (**(code **)((int)pll_scpi_param + 0xe))
+                        (&pll_scpi_values + iVar1,uVar3,*(int *)((int)pll_scpi_param + 6) + iVar1,
+                         *(int *)((int)pll_scpi_param + 10) + iVar1,
+                         *(int *)((int)pll_scpi_param + 0x28) + uVar3 * 8,(int)(char)pll_scpi_source
+                        );
+      *(undefined4 *)(&pll_scpi_validated + (uint)bVar4 * 4) = uVar2;
     }
   }
   else {
-    iVar1 = (int)DAT_00102016;
-    _DAT_00102030 =
-         (**(code **)(DAT_00102012 + 0xe))
-                   (0x102020,iVar1,*(int *)(DAT_00102012 + 6) + iVar1 * 4,
-                    *(int *)(DAT_00102012 + 10) + iVar1 * 4,
-                    *(int *)(DAT_00102012 + 0x28) + iVar1 * 8,(int)DAT_00102017);
+    iVar1 = (int)(char)pll_scpi_index;
+    _pll_scpi_validated =
+         (**(code **)((int)pll_scpi_param + 0xe))
+                   (&pll_scpi_values,iVar1,*(int *)((int)pll_scpi_param + 6) + iVar1 * 4,
+                    *(int *)((int)pll_scpi_param + 10) + iVar1 * 4,
+                    *(int *)((int)pll_scpi_param + 0x28) + iVar1 * 8,(int)(char)pll_scpi_source);
   }
   return;
 }
@@ -37998,12 +38004,12 @@ void FUN_00042d02(undefined1 *param_1,undefined4 param_2)
   char *message;
   
   *param_1 = 0;
-  if (DAT_00102012[1] < DAT_00102016) {
+  if (*(char *)((int)pll_scpi_param + 1) < (char)pll_scpi_index) {
     message = "pll_scpi: validate_or_doaction() -- setup index > max index";
   }
   else {
-    iVar1 = (int)*DAT_00102012 - 3;
-    if ((uint)(int)*DAT_00102012 < 3 || iVar1 == 0) {
+    iVar1 = (int)*(char *)pll_scpi_param - 3;
+    if ((uint)(int)*(char *)pll_scpi_param < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
       switch((&WORD_00042d3c)[(short)iVar1]) {
       case 8:
@@ -38015,7 +38021,7 @@ void FUN_00042d02(undefined1 *param_1,undefined4 param_2)
         return;
       case 0x1c:
         *param_1 = 1;
-        FUN_00042c10();
+        validate_num();
       }
       return;
     }
@@ -38033,15 +38039,14 @@ undefined4 FUN_00042d78(void)
 {
   ushort uVar1;
   
-  if (DAT_00102012->field_00 == 1) {
-    uVar1 = DAT_00102012->field_14;
+  if (*(char *)pll_scpi_param == '\x01') {
+    uVar1 = *(ushort *)((int)pll_scpi_param + 0x14);
   }
   else {
-    uVar1._0_1_ = DAT_00102012[1].field_00;
-    uVar1._1_1_ = DAT_00102012[1].last_index;
+    uVar1 = *(ushort *)((int)pll_scpi_param + 0x1e);
   }
   if ((uVar1 & 1) != 0) {
-    if ((DAT_0010201c == '\0') || (DAT_00102012 != &scpi_param_DOUGlas_STATe)) {
+    if ((pll_scpi_setting == 0) || (pll_scpi_param != &scpi_param_DOUGlas_STATe)) {
       return 1;
     }
     if (nv_settings.douglas_state == 0) {
@@ -38069,11 +38074,11 @@ undefined4 FUN_00042dc4(undefined1 param_1,undefined1 *param_2)
   undefined1 local_12;
   undefined *local_10;
   
-  if (*DAT_00102012 == '\x01') {
-    cVar2 = DAT_00102012[0x16];
+  if (*(char *)pll_scpi_param == '\x01') {
+    cVar2 = *(char *)((int)pll_scpi_param + 0x16);
   }
   else {
-    cVar2 = DAT_00102012[0x20];
+    cVar2 = *(char *)((int)pll_scpi_param + 0x20);
   }
   local_14 = (short)cVar2;
   *param_2 = 0;
@@ -38081,7 +38086,7 @@ undefined4 FUN_00042dc4(undefined1 param_1,undefined1 *param_2)
     if (local_14 < 5) {
       if (local_14 < 3) {
         if (local_14 == 0) {
-          _DAT_00102002 = _DAT_00102030;
+          _DAT_00102002 = _pll_scpi_validated;
           _DAT_00102006 = _DAT_00102034;
           _DAT_0010200a = _DAT_00102038;
         }
@@ -38089,7 +38094,7 @@ undefined4 FUN_00042dc4(undefined1 param_1,undefined1 *param_2)
           if (local_14 != 2) goto LAB_0004300c;
           _DAT_00102002 = _DAT_00102034;
           _DAT_00102006 = _DAT_00102038;
-          _DAT_0010200a = _DAT_00102030;
+          _DAT_0010200a = _pll_scpi_validated;
         }
         goto LAB_00042fca;
       }
@@ -38097,7 +38102,7 @@ undefined4 FUN_00042dc4(undefined1 param_1,undefined1 *param_2)
     }
     else if (local_14 < 0xc) {
       if (local_14 == 5) {
-        _DAT_00102002 = _DAT_00102030;
+        _DAT_00102002 = _pll_scpi_validated;
         _DAT_00102006 = 1;
         goto LAB_00042fca;
       }
@@ -38108,28 +38113,28 @@ undefined4 FUN_00042dc4(undefined1 param_1,undefined1 *param_2)
       if (local_14 != 0x13) goto LAB_0004300c;
       goto LAB_00042ed2;
     }
-    _DAT_00102002 = _DAT_00102030;
+    _DAT_00102002 = _pll_scpi_validated;
   }
   else if (local_14 < 0x4f) {
     if (local_14 < 0x28) {
       if ((local_14 != 0x18) && (local_14 != 0x19)) goto LAB_0004300c;
-      _DAT_00102002 = _DAT_00102030;
+      _DAT_00102002 = _pll_scpi_validated;
     }
     else if (local_14 == 0x28) {
-      if (((DAT_00102016 != '\0') || (nv_settings.douglas_state == 0)) &&
-         ((DAT_00102016 != '\x01' || (nv_settings.douglas_state != 0)))) {
+      if (((pll_scpi_index != 0) || (nv_settings.douglas_state == 0)) &&
+         ((pll_scpi_index != 1 || (nv_settings.douglas_state != 0)))) {
         *param_2 = 0;
         return 0;
       }
       _DAT_00102002 = 1;
       _DAT_0010200e = 1;
-      if (*DAT_00102012 == '\x01') {
-        _DAT_00102006 = (int32_t)DAT_0010201c;
-        _DAT_0010200a = nv_settings.raim_threshold[DAT_00102016];
+      if (*(char *)pll_scpi_param == '\x01') {
+        _DAT_00102006 = (int32_t)(char)pll_scpi_setting;
+        _DAT_0010200a = nv_settings.raim_threshold[(char)pll_scpi_index];
       }
       else {
-        _DAT_00102006 = (int32_t)(char)nv_settings.raim_state[DAT_00102016];
-        _DAT_0010200a = _DAT_00102030;
+        _DAT_00102006 = (int32_t)(char)nv_settings.raim_state[(char)pll_scpi_index];
+        _DAT_0010200a = _pll_scpi_validated;
       }
     }
     else if (local_14 != 0x31) goto LAB_0004300c;
@@ -38137,7 +38142,7 @@ undefined4 FUN_00042dc4(undefined1 param_1,undefined1 *param_2)
   else if (local_14 < 0x53) {
     if (local_14 == 0x4f) {
 LAB_00042f24:
-      _DAT_00102002 = _DAT_00102030;
+      _DAT_00102002 = _pll_scpi_validated;
       _DAT_00102006 = _DAT_00102034;
       _DAT_0010200a = _DAT_00102038;
       _DAT_0010200e = 1;
@@ -38145,9 +38150,9 @@ LAB_00042f24:
     else {
       if (local_14 != 0x51) goto LAB_0004300c;
 LAB_00042ed2:
-      _DAT_00102002 = (int32_t)DAT_0010201c;
-      if ((nv_settings.douglas_state == 0) || (DAT_0010201c != '\0')) {
-        if ((nv_settings.douglas_state == 0) && (DAT_0010201c != '\0')) {
+      _DAT_00102002 = (int32_t)(char)pll_scpi_setting;
+      if ((nv_settings.douglas_state == 0) || (pll_scpi_setting != 0)) {
+        if ((nv_settings.douglas_state == 0) && (pll_scpi_setting != 0)) {
           DAT_00102040 = 4;
         }
       }
@@ -38183,16 +38188,16 @@ LAB_0004300c:
 
 /* 0004301a */
 
-ushort FUN_0004301a(void)
+ushort scpi_param_saved_in_nv(void)
 
 {
   ushort uVar1;
   
-  if (*DAT_00102012 == '\x01') {
-    uVar1 = *(ushort *)(DAT_00102012 + 0x14);
+  if (*(char *)pll_scpi_param == '\x01') {
+    uVar1 = *(ushort *)((int)pll_scpi_param + 0x14);
   }
   else {
-    uVar1 = *(ushort *)(DAT_00102012 + 0x1e);
+    uVar1 = *(ushort *)((int)pll_scpi_param + 0x1e);
   }
   return uVar1 & 2;
 }
@@ -38200,16 +38205,16 @@ ushort FUN_0004301a(void)
 
 /* 00043042 */
 
-ushort FUN_00043042(void)
+ushort scpi_param_saved_in_record(void)
 
 {
   ushort uVar1;
   
-  if (*DAT_00102012 == '\x01') {
-    uVar1 = *(ushort *)(DAT_00102012 + 0x14);
+  if (*(char *)pll_scpi_param == '\x01') {
+    uVar1 = *(ushort *)((int)pll_scpi_param + 0x14);
   }
   else {
-    uVar1 = *(ushort *)(DAT_00102012 + 0x1e);
+    uVar1 = *(ushort *)((int)pll_scpi_param + 0x1e);
   }
   return uVar1 & 4;
 }
@@ -38219,52 +38224,56 @@ ushort FUN_00043042(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 
-void FUN_0004306a(void)
+void finish_scpi_cmd(void)
 
 {
-  char *pcVar1;
+  void *pvVar1;
   int iVar2;
   byte bVar3;
   undefined1 unaff_D3b;
   char cVar4;
   
-  pcVar1 = DAT_00102012;
-  iVar2 = (int)*DAT_00102012 - 3;
-  if ((uint)(int)*DAT_00102012 < 3 || iVar2 == 0) {
+  pvVar1 = pll_scpi_param;
+  iVar2 = (int)*(char *)pll_scpi_param - 3;
+  if ((uint)(int)*(char *)pll_scpi_param < 3 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00043090)[(short)iVar2]) {
     case 8:
-      *(undefined1 *)(*(int *)(DAT_00102012 + 0xc) + (int)DAT_00102016) = DAT_0010201c;
-      (**(code **)(pcVar1 + 8))(unaff_D3b,(short)DAT_00102016,DAT_00102017);
-      (**(code **)(pcVar1 + 0x10))((int)DAT_00102016,(int)(char)DAT_00102017);
+      *(uint8_t *)(*(int *)((int)pll_scpi_param + 0xc) + (int)(char)pll_scpi_index) =
+           pll_scpi_setting;
+      (**(code **)((int)pvVar1 + 8))(unaff_D3b,(short)(char)pll_scpi_index,pll_scpi_source);
+      (**(code **)((int)pvVar1 + 0x10))((int)(char)pll_scpi_index,(int)(char)pll_scpi_source);
     case 0x50:
       break;
     case 0x54:
-      if ((DAT_00102012[0x26] == '\x02') || (DAT_00102012[0x26] == '\x03')) {
-        for (bVar3 = 0; (int)(uint)bVar3 <= (int)DAT_00102016; bVar3 = bVar3 + 1) {
-          *(undefined4 *)(*(int *)(DAT_00102012 + 0x16) + (uint)bVar3 * 4) =
-               *(undefined4 *)(&DAT_00102030 + (uint)bVar3 * 4);
-          (**(code **)(DAT_00102012 + 0x12))(unaff_D3b,bVar3,DAT_00102017);
+      if ((*(char *)((int)pll_scpi_param + 0x26) == '\x02') ||
+         (*(char *)((int)pll_scpi_param + 0x26) == '\x03')) {
+        for (bVar3 = 0; (int)(uint)bVar3 <= (int)(char)pll_scpi_index; bVar3 = bVar3 + 1) {
+          *(undefined4 *)(*(int *)((int)pll_scpi_param + 0x16) + (uint)bVar3 * 4) =
+               *(undefined4 *)(&pll_scpi_validated + (uint)bVar3 * 4);
+          (**(code **)((int)pll_scpi_param + 0x12))(unaff_D3b,bVar3,pll_scpi_source);
         }
       }
       else {
-        *(undefined4 *)(*(int *)(DAT_00102012 + 0x16) + DAT_00102016 * 4) = _DAT_00102030;
-        (**(code **)(DAT_00102012 + 0x12))(unaff_D3b,(short)DAT_00102016,DAT_00102017);
+        *(undefined4 *)(*(int *)((int)pll_scpi_param + 0x16) + (char)pll_scpi_index * 4) =
+             _pll_scpi_validated;
+        (**(code **)((int)pll_scpi_param + 0x12))
+                  (unaff_D3b,(short)(char)pll_scpi_index,pll_scpi_source);
       }
-      (**(code **)(DAT_00102012 + 0x1a))();
+      (**(code **)((int)pll_scpi_param + 0x1a))();
     case 0xea:
     }
   }
   else {
     fatal_error("pll_scpi: finish_scpi_cmd() -- unknown structure type");
   }
-  iVar2 = FUN_0004301a();
+  iVar2 = scpi_param_saved_in_nv();
   if (iVar2 != 0) {
-    nv_save(DAT_00102017);
+    nv_save(pll_scpi_source);
   }
-  iVar2 = FUN_00043042();
+  iVar2 = scpi_param_saved_in_record();
   if (iVar2 != 0) {
-    FUN_00030dea(DAT_00102017);
+    FUN_00030dea(pll_scpi_source);
   }
   if (DAT_00102040 == '\x03') {
     log_event(3);
@@ -38292,43 +38301,43 @@ void FUN_000431f4(int param_1)
   int iVar1;
   byte bVar2;
   
-  DAT_00102017 = *(char *)(param_1 + 0xd);
-  if (DAT_00102017 == '\0') {
+  pll_scpi_source = *(uint8_t *)(param_1 + 0xd);
+  if (pll_scpi_source == 0) {
     DAT_00102018 = _task_scpi;
   }
-  DAT_00102016 = *(char *)(param_1 + 0xc);
-  DAT_00102012 = *(char **)(param_1 + 8);
-  iVar1 = (int)*DAT_00102012 - 3;
-  if (2 < (uint)(int)*DAT_00102012 && iVar1 != 0) {
+  pll_scpi_index = *(uint8_t *)(param_1 + 0xc);
+  pll_scpi_param = *(void **)(param_1 + 8);
+  iVar1 = (int)*(char *)pll_scpi_param - 3;
+  if (2 < (uint)(int)*(char *)pll_scpi_param && iVar1 != 0) {
     fatal_error("pll_scpi: get_setup_vars() -- unknown structure type");
     return;
   }
                     /* WARNING: Switch is manually overridden */
   switch((&WORD_00043238)[(short)iVar1]) {
   case 8:
-    DAT_0010201c = *(undefined1 *)(param_1 + 0xf);
+    pll_scpi_setting = *(uint8_t *)(param_1 + 0xf);
   case 0xe:
     return;
   case 0x12:
-    iVar1 = (int)DAT_00102012[0x26] - 3;
-    if (2 < (uint)(int)DAT_00102012[0x26] && iVar1 != 0) {
+    iVar1 = (int)*(char *)((int)pll_scpi_param + 0x26) - 3;
+    if (2 < (uint)(int)*(char *)((int)pll_scpi_param + 0x26) && iVar1 != 0) {
       return;
     }
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00043262)[(short)iVar1]) {
     case 8:
-      uRam00102020 = *(undefined4 *)(param_1 + 0x14);
+      _pll_scpi_values = *(undefined4 *)(param_1 + 0x14);
       break;
     case 0x10:
-      uRam00102020 = *(undefined4 *)(param_1 + 0x10);
+      _pll_scpi_values = *(undefined4 *)(param_1 + 0x10);
       break;
     case 0x18:
-      uRam00102020 = *(undefined4 *)(param_1 + 0x10);
+      _pll_scpi_values = *(undefined4 *)(param_1 + 0x10);
       uRam00102024 = *(undefined4 *)(param_1 + 0x14);
       break;
     case 0x26:
-      for (bVar2 = 0; (int)(uint)bVar2 <= (int)DAT_00102016; bVar2 = bVar2 + 1) {
-        *(undefined4 *)((uint)bVar2 * 4 + 0x102020) =
+      for (bVar2 = 0; (int)(uint)bVar2 <= (int)(char)pll_scpi_index; bVar2 = bVar2 + 1) {
+        *(undefined4 *)(&pll_scpi_values + (uint)bVar2 * 4) =
              *(undefined4 *)(*(int *)(param_1 + 0x10) + (uint)bVar2 * 4);
       }
       goto override_jmp_0004322e_case_3;
@@ -38343,7 +38352,7 @@ override_jmp_0004322e_case_3:
 
 /* 000432bc */
 
-void FUN_000432bc(undefined4 param_1,char *param_2)
+void pll_scpi_command(undefined4 param_1,char *param_2)
 
 {
   char cVar1;
@@ -38356,7 +38365,7 @@ void FUN_000432bc(undefined4 param_1,char *param_2)
     DAT_00102040 = 0;
     cVar1 = FUN_00042d78();
     if (cVar1 != '\0') {
-      if ((DAT_00102017 == 0) || (DAT_00102017 == 5)) {
+      if ((pll_scpi_source == 0) || (pll_scpi_source == 5)) {
         cVar1 = FUN_00042dc4(2,&local_5);
         *param_2 = cVar1;
       }
@@ -38364,10 +38373,10 @@ void FUN_000432bc(undefined4 param_1,char *param_2)
         return;
       }
       if (local_5 != '\0') {
-        status_report_from((short)local_5,DAT_00102017);
+        status_report_from((short)local_5,pll_scpi_source);
       }
     }
-    FUN_0004306a();
+    finish_scpi_cmd();
   }
   return;
 }
@@ -38375,9 +38384,7 @@ void FUN_000432bc(undefined4 param_1,char *param_2)
 
 /* 00043340 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-
-void FUN_00043340(void)
+void pll_scpi_receive(void)
 
 {
   char cVar1;
@@ -38386,11 +38393,11 @@ void FUN_00043340(void)
   
   if (DAT_0010254e == '\0') {
     if (DAT_0010254f == '\0') {
-      uVar2 = psos_request_x(_pllc_exchange,auStack_1c,1,0);
+      uVar2 = psos_request_x(pllc_exchange,auStack_1c,1,0);
       if ((uVar2 & 0xff) != 0) {
         return;
       }
-      FUN_000432bc(auStack_1c,&DAT_0010254e);
+      pll_scpi_command(auStack_1c,&DAT_0010254e);
       cVar1 = '\0';
       if (DAT_0010254e != '\0') {
         return;
@@ -38422,9 +38429,9 @@ void FUN_000433b6(int *param_1,char param_2)
   else {
     DAT_0010254e = '\0';
     if (param_2 == '\0') {
-      status_report_from(6,DAT_00102017);
+      status_report_from(6,pll_scpi_source);
     }
-    FUN_0004306a();
+    finish_scpi_cmd();
     psos_signal_v(DAT_00102018,0x20);
   }
   return;
@@ -42127,7 +42134,7 @@ LAB_00047940:
     if ((DAT_0010256c != '\0') && (gps_ack_awaited == 0)) {
       FUN_000470aa();
     }
-    FUN_00043340();
+    pll_scpi_receive();
     memcpy((void *)0x100934,&DAT_00101e70,0x19);
     sVar5 = 0x155;
     puVar7 = (undefined4 *)&DAT_00100004;

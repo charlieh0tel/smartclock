@@ -1204,7 +1204,7 @@ __exception void boot_reset(void)
       sVar8 = 0;
       sVar9 = 0;
       sVar7 = -2;
-      pcVar3 = FUN_00040000;
+      pcVar3 = interpolator_calibration_init;
       do {
         pcVar11 = pcVar3;
         sVar8 = (ushort)(byte)pcVar11[2] + (ushort)(byte)*pcVar11 + sVar8;
@@ -3175,7 +3175,7 @@ undefined4 FUN_0000867c(void)
       ppuVar6 = ppuVar6 + 0x2000;
       iVar4 = iVar4 + 1;
     } while (iVar4 < 8);
-    pcVar7 = FUN_00040000;
+    pcVar7 = interpolator_calibration_init;
                     /* WARNING: Read-only address (ram,0x0004aaaa) is written */
                     /* WARNING: Read-only address (ram,0x00045554) is written */
                     /* WARNING: Read-only address (ram,0x0004aaaa) is written */
@@ -3194,8 +3194,8 @@ undefined4 FUN_0000867c(void)
     while ((!bVar2 && (iVar1 = iVar4 + -1, 0 < iVar4))) {
       iVar4 = iVar1;
       if (((primary_vectors._0_2_ & 0xa000) != 0) &&
-         ((((primary_vectors._0_2_ & 0xa0) != 0 && ((_FUN_00040000 & 0xa000) != 0)) &&
-          ((_FUN_00040000 & 0xa0) != 0)))) {
+         ((((primary_vectors._0_2_ & 0xa0) != 0 && ((_interpolator_calibration_init & 0xa000) != 0))
+          && ((_interpolator_calibration_init & 0xa0) != 0)))) {
         bVar2 = true;
       }
     }
@@ -3876,7 +3876,9 @@ klok_entry * clk_do(undefined4 *param_1)
 
 /* 000105ee */
 
-undefined4 FUN_000105ee(undefined4 param_1,int param_2)
+/* queues the clock event for a 59- or 61-second minute, in GPS time */
+
+undefined4 leap_event_schedule_gps(undefined4 param_1,int param_2)
 
 {
   short sVar1;
@@ -3920,8 +3922,10 @@ override_jmp_00010626_case_1:
 /* 00010656 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* queues the clock event for a 59- or 61-second minute, converted to UTC with the GPS-UTC offset as
+   it will be */
 
-undefined4 FUN_00010656(undefined4 param_1,int param_2)
+undefined4 leap_event_schedule_utc(undefined4 param_1,int param_2)
 
 {
   uint8_t uVar2;
@@ -3964,7 +3968,7 @@ undefined4 FUN_00010656(undefined4 param_1,int param_2)
     local_6 = -local_6;
   }
   local_a = 0;
-  local_e = FUN_00011186((int)local_6);
+  local_e = seconds_to_hms((int)local_6);
   if (bVar6) {
     datetime_add(&local_e,&local_24);
   }
@@ -3991,14 +3995,16 @@ undefined4 FUN_00010656(undefined4 param_1,int param_2)
 
 /* 0001075a */
 
-void FUN_0001075a(undefined4 param_1,undefined4 param_2)
+/* queues the leap second's clock event, in GPS time or in UTC as nv_settings.gps_utc says */
+
+void leap_event_schedule(undefined4 param_1,undefined4 param_2)
 
 {
   if (nv_settings.gps_utc == 0) {
-    FUN_00010656(param_1,param_2);
+    leap_event_schedule_utc(param_1,param_2);
   }
   else {
-    FUN_000105ee(param_1,param_2);
+    leap_event_schedule_gps(param_1,param_2);
   }
   return;
 }
@@ -4006,7 +4012,10 @@ void FUN_0001075a(undefined4 param_1,undefined4 param_2)
 
 /* 00010786 */
 
-int FUN_00010786(klok_entry *param_1)
+/* under klok_mutex, unlinks an entry from the clock list and returns it to the free list; -3 for a
+   pointer outside the pool */
+
+int klok_cancel(klok_entry *param_1)
 
 {
   int iVar1;
@@ -4073,8 +4082,9 @@ void klok_print_entries(void)
 /* 000108fe */
 
 /* WARNING: Unknown calling convention */
+/* under klok_mutex, the first entry of the clock list of a class */
 
-klok_entry * FUN_000108fe(short param_1)
+klok_entry * klok_find(short param_1)
 
 {
   int iVar1;
@@ -4185,7 +4195,9 @@ uint klok_task_create(ulong param_1)
 
 /* 00010b00 */
 
-void FUN_00010b00(undefined4 param_1,undefined4 param_2)
+/* sets the date and time, then lifetime_update */
+
+void clock_set(undefined4 param_1,undefined4 param_2)
 
 {
   set_timedate(param_2,param_1);
@@ -4409,7 +4421,9 @@ int date_to_days(uint param_1)
 
 /* 00010fbc */
 
-int FUN_00010fbc(uint param_1)
+/* a date as its Modified Julian Day: 1994-01-01 is 49353; the days before each month at 0x1186a */
+
+int date_to_mjd(uint param_1)
 
 {
   byte bVar1;
@@ -4530,7 +4544,9 @@ undefined4 oncore_date_pack(undefined4 param_1)
 
 /* 0001111e */
 
-int FUN_0001111e(uint param_1)
+/* hours, minutes and seconds as seconds */
+
+int hms_to_seconds(uint param_1)
 
 {
   return (param_1 & 0xff) + (param_1 >> 8 & 0xff) * 0x3c + (param_1 >> 0x10 & 0xff) * 0xe10;
@@ -4548,7 +4564,9 @@ int FUN_00011152(uint param_1)
 
 /* 00011186 */
 
-uint FUN_00011186(uint param_1)
+/* seconds as hours, minutes and seconds */
+
+uint seconds_to_hms(uint param_1)
 
 {
   undefined4 local_8;
@@ -4810,11 +4828,11 @@ void FUN_000114fa(undefined4 *param_1,undefined4 *param_2)
     local_6 = 0;
   }
   if (local_6 < 1) {
-    local_e = FUN_00011186(-(int)local_6);
+    local_e = seconds_to_hms(-(int)local_6);
     FUN_00011428(&local_e,&local_16);
   }
   else {
-    local_e = FUN_00011186((int)local_6);
+    local_e = seconds_to_hms((int)local_6);
     datetime_add(&local_e,&local_16);
   }
   *param_1 = local_12;
@@ -4825,7 +4843,9 @@ void FUN_000114fa(undefined4 *param_1,undefined4 *param_2)
 
 /* 00011580 */
 
-void FUN_00011580(undefined4 *param_1,undefined4 *param_2)
+/* applies the GPS-UTC offset to a date and time */
+
+void gps_to_utc(undefined4 *param_1,undefined4 *param_2)
 
 {
   uint8_t uVar1;
@@ -4843,11 +4863,11 @@ void FUN_00011580(undefined4 *param_1,undefined4 *param_2)
     local_6 = 0;
   }
   if (local_6 < 1) {
-    local_e = FUN_00011186(-(int)local_6);
+    local_e = seconds_to_hms(-(int)local_6);
     datetime_add(&local_e,&local_16);
   }
   else {
-    local_e = FUN_00011186((int)local_6);
+    local_e = seconds_to_hms((int)local_6);
     FUN_00011428(&local_e,&local_16);
   }
   *param_1 = local_12;
@@ -4858,7 +4878,9 @@ void FUN_00011580(undefined4 *param_1,undefined4 *param_2)
 
 /* 00011606 */
 
-undefined4 FUN_00011606(void)
+/* the end of the coming quarter, when a leap second may come: Mar 31, Jun 30, Sep 30 or Dec 31 */
+
+undefined4 leap_opportunity_date(void)
 
 {
   uint uVar1;
@@ -4904,7 +4926,9 @@ LAB_00011672:
 
 /* 00011680 */
 
-undefined1 FUN_00011680(void)
+/* 1 at 23:59:46 or later, in UTC, on the last day of a quarter */
+
+undefined1 leap_second_near(void)
 
 {
   undefined1 uVar1;
@@ -4915,9 +4939,9 @@ undefined1 FUN_00011680(void)
   byte local_5;
   
   uVar1 = 0;
-  FUN_00013740(&local_c,&uStack_8);
+  get_gps_datetime(&local_c,&uStack_8);
   if (nv_settings.gps_utc == 0) {
-    FUN_00011580(&local_c,&uStack_8);
+    gps_to_utc(&local_c,&uStack_8);
   }
   local_c = local_c & 0xffff;
   if (((((local_c == 799) || (local_c == 0x61e)) || (local_c == 0x91e)) || (local_c == 0xc1f)) &&
@@ -6262,7 +6286,9 @@ void enter_supervisor(void)
 
 /* 00013428 */
 
-void FUN_00013428(uint param_1)
+/* spins 729 empty loops for each count */
+
+void busy_wait(uint param_1)
 
 {
   ushort uVar1;
@@ -6314,23 +6340,26 @@ void FUN_00013448(float param_1)
 
 /* 000134a8 */
 
-void FUN_000134a8(void)
+/* sums the clock record from +2 to +0x32 and stores the sum and its complement
+   Not a C function (register; read): its arguments and results in registers.  In: A6 char *record.
+    */
+
+__regcall void clock_record_checksum(char *record __asm("a6"))
 
 {
   byte bVar1;
-  byte *pbVar2;
-  byte *unaff_A6;
-  byte *pbVar3;
+  char *pcVar2;
+  char *pcVar3;
   
   bVar1 = 0;
-  pbVar3 = unaff_A6 + 2;
+  pcVar3 = record + 2;
   do {
-    pbVar2 = pbVar3 + 1;
-    bVar1 = *pbVar3 + bVar1;
-    pbVar3 = pbVar2;
-  } while (pbVar2 < unaff_A6 + 0x33);
-  unaff_A6[1] = bVar1;
-  *unaff_A6 = ~bVar1;
+    pcVar2 = pcVar3 + 1;
+    bVar1 = *pcVar3 + bVar1;
+    pcVar3 = pcVar2;
+  } while (pcVar2 < record + 0x33);
+  record[1] = bVar1;
+  *record = ~bVar1;
   return;
 }
 
@@ -6358,7 +6387,7 @@ void FUN_000134e8(void)
 {
   FUN_000135f0();
   FUN_00013502();
-  FUN_000134a8();
+  clock_record_checksum((char *)0x1009b8);
   return;
 }
 
@@ -6375,15 +6404,16 @@ void FUN_00013502(void)
   byte bVar3;
   short sVar4;
   ushort uVar5;
-  undefined3 uVar6;
-  int iVar7;
-  undefined4 uVar8;
+  undefined2 uVar6;
+  undefined3 uVar7;
+  int iVar8;
+  undefined4 uVar9;
   int unaff_A6;
   
   *(int *)(unaff_A6 + 2) = *(int *)(unaff_A6 + 2) + 1;
   uVar1 = *(undefined4 *)(unaff_A6 + 6);
   cVar2 = (char)uVar1 + '\x01';
-  iVar7 = CONCAT31((int3)((uint)uVar1 >> 8),cVar2);
+  iVar8 = CONCAT31((int3)((uint)uVar1 >> 8),cVar2);
   if (*(char *)(unaff_A6 + 0x2e) <= cVar2) {
     if (DAT_00100bc8 != '\0') {
       DAT_00100bc8 = '\0';
@@ -6398,7 +6428,7 @@ void FUN_00013502(void)
     }
     *(undefined1 *)(unaff_A6 + 0x2e) = 0x3c;
     sVar4 = (short)((uint)uVar1 >> 8) * 0x100 + 0x100;
-    iVar7 = CONCAT22((short)((uint)uVar1 >> 0x10),sVar4);
+    iVar8 = CONCAT22((short)((uint)uVar1 >> 0x10),sVar4);
     if (sVar4 == 0x3c00) {
       cVar2 = (char)((uint)uVar1 >> 0x10) + '\x01';
       uVar5 = CONCAT11((char)((uint)uVar1 >> 0x18),cVar2);
@@ -6406,20 +6436,23 @@ void FUN_00013502(void)
         *(uint *)(unaff_A6 + 6) = (uint)(ushort)(uVar5 - 0x18) << 0x10;
         uVar1 = *(undefined4 *)(unaff_A6 + 10);
         bVar3 = (char)uVar1 + 1;
-        uVar6 = (undefined3)((uint)uVar1 >> 8);
-        uVar8 = CONCAT31(uVar6,bVar3);
-        if ((*(byte *)(unaff_A6 + 0xd + (int)(short)((ushort)((uint)uVar1 >> 8) & 0xff)) < bVar3) &&
-           (sVar4 = (short)CONCAT31(uVar6,1) + 0x100,
-           uVar8 = CONCAT22((short)((uint)uVar1 >> 0x10),sVar4), sVar4 == 0xd01)) {
-          uVar8 = FUN_000138e4();
+        uVar7 = (undefined3)((uint)uVar1 >> 8);
+        uVar9 = CONCAT31(uVar7,bVar3);
+        if (*(byte *)(unaff_A6 + 0xd + (int)(short)((ushort)((uint)uVar1 >> 8) & 0xff)) < bVar3) {
+          sVar4 = (short)CONCAT31(uVar7,1) + 0x100;
+          uVar6 = (undefined2)((uint)uVar1 >> 0x10);
+          uVar9 = CONCAT22(uVar6,sVar4);
+          if (sVar4 == 0xd01) {
+            uVar9 = clock_set_leap_year((char *)(unaff_A6 + 0xf),CONCAT22(uVar6,0x101) + 0x10000);
+          }
         }
-        *(undefined4 *)(unaff_A6 + 10) = uVar8;
+        *(undefined4 *)(unaff_A6 + 10) = uVar9;
         goto LAB_000135ba;
       }
-      iVar7 = (uint)uVar5 << 0x10;
+      iVar8 = (uint)uVar5 << 0x10;
     }
   }
-  *(int *)(unaff_A6 + 6) = iVar7;
+  *(int *)(unaff_A6 + 6) = iVar8;
 LAB_000135ba:
   if ((DAT_00100bc9 != '\0') && (*(int *)(unaff_A6 + 6) == _DAT_00100bca)) {
     DAT_00100bc9 = '\0';
@@ -6441,36 +6474,40 @@ void FUN_000135f0(void)
   byte bVar3;
   short sVar4;
   ushort uVar5;
-  undefined3 uVar6;
-  int iVar7;
-  undefined4 uVar8;
+  undefined2 uVar6;
+  undefined3 uVar7;
+  int iVar8;
+  undefined4 uVar9;
   int unaff_A6;
   
   uVar1 = *(undefined4 *)(unaff_A6 + 0x1a);
   cVar2 = (char)uVar1 + '\x01';
-  iVar7 = CONCAT31((int3)((uint)uVar1 >> 8),cVar2);
+  iVar8 = CONCAT31((int3)((uint)uVar1 >> 8),cVar2);
   if ((*(char *)(unaff_A6 + 0x2e) <= cVar2) &&
      (sVar4 = (short)((uint)uVar1 >> 8) * 0x100 + 0x100,
-     iVar7 = CONCAT22((short)((uint)uVar1 >> 0x10),sVar4), sVar4 == 0x3c00)) {
+     iVar8 = CONCAT22((short)((uint)uVar1 >> 0x10),sVar4), sVar4 == 0x3c00)) {
     cVar2 = (char)((uint)uVar1 >> 0x10) + '\x01';
     uVar5 = CONCAT11((char)((uint)uVar1 >> 0x18),cVar2);
     if (cVar2 == '\x18') {
       *(uint *)(unaff_A6 + 0x1a) = (uint)(ushort)(uVar5 - 0x18) << 0x10;
       uVar1 = *(undefined4 *)(unaff_A6 + 0x1e);
       bVar3 = (char)uVar1 + 1;
-      uVar6 = (undefined3)((uint)uVar1 >> 8);
-      uVar8 = CONCAT31(uVar6,bVar3);
-      if ((*(byte *)(unaff_A6 + 0x21 + (int)(short)((ushort)((uint)uVar1 >> 8) & 0xff)) < bVar3) &&
-         (sVar4 = (short)CONCAT31(uVar6,1) + 0x100,
-         uVar8 = CONCAT22((short)((uint)uVar1 >> 0x10),sVar4), sVar4 == 0xd01)) {
-        uVar8 = FUN_000138e4();
+      uVar7 = (undefined3)((uint)uVar1 >> 8);
+      uVar9 = CONCAT31(uVar7,bVar3);
+      if (*(byte *)(unaff_A6 + 0x21 + (int)(short)((ushort)((uint)uVar1 >> 8) & 0xff)) < bVar3) {
+        sVar4 = (short)CONCAT31(uVar7,1) + 0x100;
+        uVar6 = (undefined2)((uint)uVar1 >> 0x10);
+        uVar9 = CONCAT22(uVar6,sVar4);
+        if (sVar4 == 0xd01) {
+          uVar9 = clock_set_leap_year((char *)(unaff_A6 + 0x23),CONCAT22(uVar6,0x101) + 0x10000);
+        }
       }
-      *(undefined4 *)(unaff_A6 + 0x1e) = uVar8;
+      *(undefined4 *)(unaff_A6 + 0x1e) = uVar9;
       return;
     }
-    iVar7 = (uint)uVar5 << 0x10;
+    iVar8 = (uint)uVar5 << 0x10;
   }
-  *(int *)(unaff_A6 + 0x1a) = iVar7;
+  *(int *)(unaff_A6 + 0x1a) = iVar8;
   return;
 }
 
@@ -6562,7 +6599,9 @@ int get_date_time(uint32_t *date,uint32_t *time)
 
 /* 00013740 */
 
-bool FUN_00013740(uint32_t *param_1,uint32_t *param_2)
+/* gps_date and gps_time through pointers; 1 if the clock is valid */
+
+bool get_gps_datetime(uint32_t *param_1,uint32_t *param_2)
 
 {
   uint32_t uVar1;
@@ -6584,21 +6623,25 @@ void FUN_00013782(void)
 
 {
   enter_supervisor();
-  FUN_00013882();
-  FUN_000134a8();
+  clock_record_derive((char *)0x1009b8);
+  clock_record_checksum((char *)0x1009b8);
   return;
 }
 
 
 /* 000137a4 */
 
-void FUN_000137a4(void)
+/* set_timedate's twin: sets the clock record's date and time without marking it set */
+
+void set_timedate_unflagged(int param_1)
 
 {
+  int time;
+  
   enter_supervisor();
-  FUN_0001380c();
-  FUN_00013882();
-  FUN_000134a8();
+  clock_record_store((char *)0x1009b8,param_1,time,0);
+  clock_record_derive((char *)0x1009b8);
+  clock_record_checksum((char *)0x1009b8);
   return;
 }
 
@@ -6608,42 +6651,45 @@ void FUN_000137a4(void)
 /* the set_time word's, "set_timedate error: %2X"
    structures.md */
 
-void set_timedate(void)
+void set_timedate(int param_1)
 
 {
+  int time;
+  
   enter_supervisor();
-  FUN_0001380c();
-  FUN_00013882();
-  FUN_000134a8();
+  clock_record_store((char *)0x1009b8,param_1,time,1);
+  clock_record_derive((char *)0x1009b8);
+  clock_record_checksum((char *)0x1009b8);
   return;
 }
 
 
 /* 0001380c */
 
-void FUN_0001380c(void)
+/* checks a date and time and stores them in the clock record, marking it set if D2 says so
+   Not a C function (register; read): its arguments and results in registers.  In: A6 char *record,
+   D0 int date, D1 int time, D2 int mark. */
+
+__regcall void clock_record_store(char *record __asm("a6"),int date __asm("d0"),int time __asm("d1"),int mark __asm("d2"))
 
 {
   uint uVar1;
-  ushort in_D0w;
-  uint in_D1;
-  int unaff_D2;
-  int unaff_A6;
   undefined8 uVar2;
   
-  uVar1 = in_D1 & 0xffffff;
+  uVar1 = time & 0xffffff;
   if (((((byte)uVar1 < 0x3c) && ((byte)(uVar1 >> 8) < 0x3c)) && ((byte)(uVar1 >> 0x10) < 0x18)) &&
-     ((((char)in_D0w != '\0' && (in_D0w >> 8 != 0)) && ((byte)(in_D0w >> 8) < 0xd)))) {
-    uVar2 = FUN_000138e4();
-    if (*(byte *)(unaff_A6 + 0x21 + (int)(short)((ushort)((ulonglong)uVar2 >> 0x20) >> 8)) <
+     ((((char)date != '\0' && ((ushort)((ushort)date >> 8) != 0)) && ((byte)((uint)date >> 8) < 0xd)
+      ))) {
+    uVar2 = clock_set_leap_year(record + 0x23,date);
+    if ((byte)record[(short)((ushort)((ulonglong)uVar2 >> 0x20) >> 8) + 0x21] <
         (byte)((ulonglong)uVar2 >> 0x20)) {
-      FUN_000138e4();
+      clock_set_leap_year(record + 0x23,*(int *)(record + 0x1e));
     }
     else {
-      *(int *)(unaff_A6 + 0x1a) = (int)uVar2;
-      *(int *)(unaff_A6 + 0x1e) = (int)((ulonglong)uVar2 >> 0x20);
-      if (unaff_D2 != 0) {
-        *(undefined1 *)(unaff_A6 + 0x2f) = 1;
+      *(int *)(record + 0x1a) = (int)uVar2;
+      *(int *)(record + 0x1e) = (int)((ulonglong)uVar2 >> 0x20);
+      if (mark != 0) {
+        record[0x2f] = '\x01';
       }
     }
   }
@@ -6653,43 +6699,50 @@ void FUN_0001380c(void)
 
 /* 00013882 */
 
-void FUN_00013882(void)
+/* reads the clock record's date and time until two reads agree, converts them and stores the result
+   at +6 and +0xa
+   Not a C function (register; read): its arguments and results in registers.  In: A6 char *record.
+    */
+
+__regcall void clock_record_derive(char *record __asm("a6"))
 
 {
   int iVar1;
-  int unaff_A6;
-  undefined4 local_c;
+  int local_c;
   int local_8;
   
   do {
     do {
-      iVar1 = *(int *)(unaff_A6 + 0x1a);
-      local_c = *(undefined4 *)(unaff_A6 + 0x1e);
-    } while (iVar1 != *(int *)(unaff_A6 + 0x1a));
+      iVar1 = *(int *)(record + 0x1a);
+      local_c = *(int *)(record + 0x1e);
+    } while (iVar1 != *(int *)(record + 0x1a));
     local_8 = iVar1;
     FUN_00011700(&local_c,&local_8);
-  } while (iVar1 != *(int *)(unaff_A6 + 0x1a));
-  *(int *)(unaff_A6 + 6) = local_8;
-  *(undefined4 *)(unaff_A6 + 10) = local_c;
-  FUN_000138e4();
+  } while (iVar1 != *(int *)(record + 0x1a));
+  *(int *)(record + 6) = local_8;
+  *(int *)(record + 10) = local_c;
+  clock_set_leap_year(record + 0xf,local_c);
   return;
 }
 
 
 /* 000138e4 */
 
-void FUN_000138e4(void)
+/* sets February's days at A0, 28 or 29 by the Gregorian rule for the year in D7's high word;
+   kernel_set_leap_year's copy
+   Not a C function (register; read): its arguments and results in registers.  In: A0 char
+   *february, D7 int year. */
+
+__regcall void clock_set_leap_year(char *february __asm("a0"),int year __asm("d7"))
 
 {
   uint uVar1;
-  uint unaff_D7;
-  char *in_A0;
   
-  *in_A0 = '\x1c';
-  if (((short)((unaff_D7 >> 0x10) << 0xe) == 0) &&
-     ((uVar1 = (unaff_D7 >> 0x12) % 0x19, (short)uVar1 != 0 ||
-      ((short)(((unaff_D7 >> 0x12) / 0x19 << 0x10 | uVar1) >> 2) == 0)))) {
-    *in_A0 = *in_A0 + '\x01';
+  *february = '\x1c';
+  if (((short)(((uint)year >> 0x10) << 0xe) == 0) &&
+     ((uVar1 = ((uint)year >> 0x12) % 0x19, (short)uVar1 != 0 ||
+      ((short)((((uint)year >> 0x12) / 0x19 << 0x10 | uVar1) >> 2) == 0)))) {
+    *february = *february + '\x01';
   }
   return;
 }
@@ -6719,14 +6772,14 @@ void FUN_00013908(short param_1)
   uptime = 0;
   gps_time = 0;
   gps_date = _DAT_00101d04;
-  FUN_000138e4();
-  FUN_00013882();
+  clock_set_leap_year((char *)0x1009db,_DAT_00101d04);
+  clock_record_derive((char *)0x1009b8);
   DAT_001009e6 = 0x3c;
   gps_utc_offset = 0;
   gps_utc_offset_valid = 0;
 LAB_00013974:
   clock_invalid = 0;
-  FUN_000134a8();
+  clock_record_checksum((char *)0x1009b8);
   DAT_00100bc8 = 0;
   DAT_00100bc9 = 0;
   _DAT_00100bca = 0;
@@ -6760,7 +6813,7 @@ void set_gps_utc_offset(undefined2 param_1)
   enter_supervisor();
   gps_utc_offset_valid = 1;
   gps_utc_offset = extraout_D1w;
-  FUN_000134a8();
+  clock_record_checksum((char *)0x1009b8);
   return;
 }
 
@@ -13084,8 +13137,9 @@ void FUN_000177cc(void)
 /* 000177fa */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the self-test's failure flags as bits; reports status event 4 on a failure and 5 on none */
 
-void FUN_000177fa(void)
+void selftest_summary(void)
 
 {
   char cVar1;
@@ -13785,7 +13839,7 @@ void selftest_print_failure(char param_1)
     }
     watchdog_pll = watchdog_pll + 1;
   }
-  FUN_000177fa();
+  selftest_summary();
   DAT_00100c5a = (uint)_DAT_00100c32;
   DAT_00100c66 = 0;
   selftest_running = 0;
@@ -23886,7 +23940,7 @@ undefined1 fpga_program(byte param_1,char param_2)
     DDRF = bVar3 & 0xf7;
     if (bVar4) {
       if (param_2 == '\0') {
-        FUN_00013428(1);
+        busy_wait(1);
       }
       else {
         psos_pause(1);
@@ -23922,7 +23976,7 @@ undefined1 fpga_program(byte param_1,char param_2)
         }
       }
       if (param_2 == '\0') {
-        FUN_00013428(2);
+        busy_wait(2);
       }
       else {
         psos_pause(2);
@@ -24708,7 +24762,9 @@ bool FUN_000241cc(void)
 
 /* 000241f4 */
 
-bool FUN_000241f4(void)
+/* 1 once the oven ADC reads below -2.0; powerup's warm-up test */
+
+bool oven_warmed_up(void)
 
 {
   float a;
@@ -24752,7 +24808,9 @@ LAB_0002425e:
 
 /* 0002426e */
 
-float FUN_0002426e(float param_1)
+/* clamps the EFC to 0 to 1048560, reporting event B when clamped and C when back in range */
+
+float efc_clamp(float param_1)
 
 {
   int iVar1;
@@ -25191,11 +25249,13 @@ void hmon_task(void)
 
 /* 00024976 */
 
-void FUN_00024976(void)
+/* sets the FPGA up again and reloads the counter's registers */
+
+void counter_reset(void)
 
 {
   fpga_setup();
-  FUN_00040ea2();
+  counter_load_registers();
   return;
 }
 
@@ -37473,8 +37533,10 @@ undefined1 FUN_00030a3e(void)
 /* 00030ab4 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* writes the 32-byte checksummed lifetime record at EEPROM 0x400060, the date, its count and the
+   EFC, when it has changed */
 
-undefined4 FUN_00030ab4(void)
+undefined4 lifetime_record_write(void)
 
 {
   int iVar1;
@@ -37534,13 +37596,13 @@ void lifetime_update(int param_1)
     if (pll.stage == PLL_STAGE_NORMAL_PLL) {
       _DAT_00101d00 = pll.efc;
     }
-    FUN_00030ab4();
+    lifetime_record_write();
   }
-  iVar1 = FUN_000108fe(2);
-  if ((iVar1 != 0) && (iVar1 = FUN_00010786((short)iVar1), iVar1 != 0)) {
+  iVar1 = klok_find(2);
+  if ((iVar1 != 0) && (iVar1 = klok_cancel((short)iVar1), iVar1 != 0)) {
     task_dmessage("Error in deleting old lifetime event\r\n");
   }
-  FUN_00013740((short)auStack_16,(short)auStack_1a);
+  get_gps_datetime((short)auStack_16,(short)auStack_1a);
   local_12[0] = 0x30000;
   datetime_add(local_12,auStack_1a);
   local_a = &LAB_00030b30;
@@ -37637,8 +37699,11 @@ undefined2 FUN_00030d2e(void)
 /* 00030dea */
 
 /* WARNING: Unknown calling convention */
+/* writes the 16-byte checksummed parameter record at EEPROM 0x400000, reporting status 0x10 if it
+   fails
+   structures.md */
 
-bool FUN_00030dea(byte param_1)
+bool save_parameter_record(byte param_1)
 
 {
   char cVar1;
@@ -39543,7 +39608,9 @@ undefined4 FUN_00033238(undefined4 param_1,undefined4 param_2,char *param_3)
 
 /* 00040000 */
 
-void FUN_00040000(undefined1 *param_1)
+/* clears the interpolator calibration, both DACs at 0x1f */
+
+void interpolator_calibration_init(undefined1 *param_1)
 
 {
   *param_1 = 0;
@@ -39571,7 +39638,7 @@ void interpolator_measure(uint8_t mode)
   fpga_set_bit(2,1);
   fpga_set_bit(1,0);
   fpga_set_bit(2,0);
-  FUN_0004091a(1);
+  counter_wait_ready(1);
   interpolator_read();
   return;
 }
@@ -39582,9 +39649,10 @@ void interpolator_measure(uint8_t mode)
 /* WARNING: Removing unreachable block (ram,0x00040102) */
 /* WARNING: Removing unreachable block (ram,0x0004011a) */
 /* WARNING: Unknown calling convention */
+/* halves a DAC's range, up to 10 times, until a measurement falls in a window */
 
-char FUN_000400b0(char param_1,byte param_2,byte param_3,byte param_4,byte param_5,
-                 undefined *param_6)
+char dac_search_bisect(char param_1,byte param_2,byte param_3,byte param_4,byte param_5,
+                      undefined *param_6)
 
 {
   byte bVar2;
@@ -39624,9 +39692,10 @@ LAB_0004011c:
 /* 0004012e */
 
 /* WARNING: Unknown calling convention */
+/* moves a DAC a step at a time, up to 20, until a measurement falls in a window */
 
-byte FUN_0004012e(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,
-                 undefined *param_6)
+byte dac_search_step(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,
+                    undefined *param_6)
 
 {
   byte bVar1;
@@ -39660,8 +39729,9 @@ byte FUN_0004012e(byte param_1,byte param_2,byte param_3,byte param_4,byte param
 /* 0004018e */
 
 /* WARNING: Unknown calling convention */
+/* moves hex DAC channel 2 one step against a sign */
 
-byte FUN_0004018e(int param_1,byte param_2)
+byte hdac_nudge(int param_1,byte param_2)
 
 {
   if ((param_2 != 0) && (param_2 < 0x3f)) {
@@ -39682,7 +39752,9 @@ byte FUN_0004018e(int param_1,byte param_2)
 
 /* 000401c4 */
 
-undefined4 FUN_000401c4(void)
+/* loads any pending FPGA registers and sets the fields for an interpolator measurement */
+
+undefined4 interpolator_prepare(void)
 
 {
   int iVar1;
@@ -39697,9 +39769,9 @@ undefined4 FUN_000401c4(void)
     counter_configuration.registers_state = 1;
   }
   fpga_set_bit(1,8);
-  FUN_00040a0e(0,3);
+  fpga_set_field(0,3);
   fpga_set_bit(2,0);
-  FUN_00040a0e(4,0);
+  fpga_set_field(4,0);
   return 1;
 }
 
@@ -39719,7 +39791,7 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
   uint8_t unaff_D3b;
   char cVar5;
   
-  FUN_000401c4((char)calibration);
+  interpolator_prepare((char)calibration);
   if (calibration->initialized == 0) {
     calibration->initialized = 1;
     calibration->hdac_2 = 0x1f;
@@ -39739,19 +39811,19 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
   }
   else {
     if ((calibration->reading_high < 0xc9) || (0xe1 < calibration->reading_high)) {
-      uVar1 = FUN_000400b0(calibration->hdac_3,0,0x3f,0xc9,0xe1,&LAB_00040096);
+      uVar1 = dac_search_bisect(calibration->hdac_3,0,0x3f,0xc9,0xe1,&LAB_00040096);
       calibration->hdac_3 = uVar1;
     }
     bVar3 = interpolator_measure(0);
     calibration->reading_low = bVar3;
     if ((bVar3 == 0) || (0x19 < bVar3)) {
-      uVar1 = FUN_000400b0(calibration->hdac_2,0,0x3f,1,0x19,&LAB_0004007e);
+      uVar1 = dac_search_bisect(calibration->hdac_2,0,0x3f,1,0x19,&LAB_0004007e);
       calibration->hdac_2 = uVar1;
     }
     uVar1 = interpolator_measure(0);
     calibration->reading_low = uVar1;
-    uVar1 = FUN_0004012e(calibration->hdac_3,0,0x3f,calibration->reading_low - 0x3c,
-                         calibration->reading_low - 0x34,&LAB_00040096);
+    uVar1 = dac_search_step(calibration->hdac_3,0,0x3f,calibration->reading_low - 0x3c,
+                            calibration->reading_low - 0x34,&LAB_00040096);
     calibration->hdac_3 = uVar1;
     uVar1 = interpolator_measure(1);
     calibration->reading_high = uVar1;
@@ -39759,12 +39831,12 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
     calibration->reading_low = uVar1;
     cVar5 = '\x14';
     while (cVar5 != '\0') {
-      uVar1 = FUN_0004018e(((uint)calibration->reading_high - (uint)calibration->reading_low) + -200
-                           ,calibration->hdac_2);
+      uVar1 = hdac_nudge(((uint)calibration->reading_high - (uint)calibration->reading_low) + -200,
+                         calibration->hdac_2);
       calibration->hdac_2 = uVar1;
       cVar5 = cVar5 + -1;
       if ((calibration->reading_high < 0xc9) || (0xe1 < calibration->reading_high)) {
-        uVar1 = FUN_0004012e(calibration->hdac_3,0,0x3f,0xc9,0xe1,&LAB_00040096);
+        uVar1 = dac_search_step(calibration->hdac_3,0,0x3f,0xc9,0xe1,&LAB_00040096);
         calibration->hdac_3 = uVar1;
       }
       uVar1 = interpolator_measure(1);
@@ -39804,7 +39876,10 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
 
 /* 0004047c */
 
-undefined1 FUN_0004047c(char *param_1)
+/* sets both DACs, measures both ends of the interpolator against [1, 25] and [201, 225], and
+   retries with the saved DACs if they fail */
+
+undefined1 interpolator_verify(char *param_1)
 
 {
   char cVar1;
@@ -39815,7 +39890,7 @@ undefined1 FUN_0004047c(char *param_1)
     return 0;
   }
   param_1[1] = '\0';
-  FUN_000401c4();
+  interpolator_prepare();
   hdac_set(param_1[2],2);
   hdac_set(param_1[3],3);
   cVar1 = interpolator_measure(0);
@@ -39861,7 +39936,7 @@ void interpolator_sample(char *param_1)
 {
   char cVar1;
   
-  FUN_000401c4();
+  interpolator_prepare();
   if (*param_1 == '\0') {
     param_1[2] = '\x1f';
     param_1[3] = '\x1f';
@@ -39900,7 +39975,7 @@ void counter_calibrate(interval_reading_fields *reading,counter_configuration_fi
       iVar2 = iVar2 + 1;
       uVar1 = interpolator_calibrate(&interpolator_calibration_state);
       if (uVar1 == 0) {
-        uVar1 = FUN_0004047c(&interpolator_calibration_state);
+        uVar1 = interpolator_verify(&interpolator_calibration_state);
       }
     }
     if (interpolator_calibration_state.calibrated == 1) {
@@ -39932,7 +40007,7 @@ uint8_t FUN_00040670(void)
   DAT_00100c3c = 0;
   iVar2 = 0;
   do {
-    FUN_00040000(&iStack_e);
+    interpolator_calibration_init(&iStack_e);
     uVar1 = interpolator_calibrate(&iStack_e);
     iVar2 = iVar2 + 1;
     if (uVar1 != 0) break;
@@ -39940,7 +40015,7 @@ uint8_t FUN_00040670(void)
   DAT_00100c3d = (undefined1)iVar2;
   if (uVar1 == 0) {
     DAT_00100c3c = 1;
-    uVar1 = FUN_0004047c(&iStack_e);
+    uVar1 = interpolator_verify(&iStack_e);
   }
   return uVar1;
 }
@@ -39974,7 +40049,7 @@ void FUN_000406e2(void)
   byte local_7;
   byte local_6;
   
-  FUN_00040000(local_e);
+  interpolator_calibration_init(local_e);
   local_e[0] = interpolator_calibration_state.initialized;
   if (interpolator_calibration_state.initialized != 0) {
     local_c = interpolator_calibration_state.hdac_2;
@@ -40040,7 +40115,9 @@ bool FUN_000407d4(byte param_1,char param_2)
 
 /* 000407fa */
 
-char FUN_000407fa(void)
+/* FPGA register 0's high nibble, read until two reads agree: a count of seconds modulo 16 */
+
+char fpga_read_seconds(void)
 
 {
   byte bVar1;
@@ -40078,7 +40155,7 @@ void FUN_0004085e(void)
     debug_sprintf(acStack_54,"old_addr, fconf_regs[1] = %x %x \r\n",(uint)bVar1,(uint)fconf_regs[1])
     ;
     task_dmessage(acStack_54);
-    FUN_000407fa();
+    fpga_read_seconds();
     debug_sprintf(acStack_54,"old_addr, fconf_regs[1] = %x %x \r\n",(uint)bVar1,(uint)fconf_regs[1])
     ;
     task_dmessage(acStack_54);
@@ -40092,8 +40169,10 @@ void FUN_0004085e(void)
 /* 0004091a */
 
 /* WARNING: Unknown calling convention */
+/* polls FPGA register 0 for a bit, up to 512 times 10 ticks, giving up and disarming the reading if
+   a 1PPS dies */
 
-undefined1 FUN_0004091a(byte param_1)
+undefined1 counter_wait_ready(byte param_1)
 
 {
   bool bVar1;
@@ -40148,8 +40227,9 @@ void fpga_set_bit(uint8_t bit,uint8_t on)
 /* 00040a0e */
 
 /* WARNING: Unknown calling convention */
+/* sets one fpga_bit_table field in its register's image and writes the register */
 
-void FUN_00040a0e(byte param_1,byte param_2)
+void fpga_set_field(byte param_1,byte param_2)
 
 {
   uint uVar1;
@@ -40199,7 +40279,9 @@ void counter_set_sync(byte param_1)
 
 /* 00040afe */
 
-void FUN_00040afe(int param_1,int param_2)
+/* builds the four FPGA register images from field values, by fpga_bit_table */
+
+void fpga_fields_to_registers(int param_1,int param_2)
 
 {
   byte *pbVar1;
@@ -40245,8 +40327,9 @@ LAB_00040b90:
 /* 00040ba6 */
 
 /* WARNING: Unknown calling convention */
+/* a byte from two FPGA registers' low nibbles */
 
-byte FUN_00040ba6(char param_1)
+byte fpga_read_byte(char param_1)
 
 {
   char cVar1;
@@ -40265,15 +40348,17 @@ void FUN_00040bda(undefined4 param_1,undefined4 param_2)
 {
   undefined8 uVar1;
   
-  uVar1 = FUN_0004111e(0,0x555555);
-  FUN_000410fa(param_1,param_2,uVar1);
+  uVar1 = int64_negate(0,0x555555);
+  int64_add(param_1,param_2,uVar1);
   return;
 }
 
 
 /* 00040c06 */
 
-void FUN_00040c06(void)
+/* the counter's count from FPGA registers 0x16 to 0x12, offset by 0x555555 */
+
+void counter_read_raw(void)
 
 {
   undefined1 uVar1;
@@ -40281,7 +40366,7 @@ void FUN_00040c06(void)
   
   bVar2 = 0x16;
   do {
-    uVar1 = FUN_00040ba6(bVar2);
+    uVar1 = fpga_read_byte(bVar2);
     bVar2 = bVar2 - 2;
   } while (0x11 < bVar2);
   FUN_00040bda(0,uVar1);
@@ -40298,7 +40383,7 @@ uint interpolator_read(void)
 {
   byte bVar1;
   
-  bVar1 = FUN_00040ba6('\x10');
+  bVar1 = fpga_read_byte('\x10');
   return ~(uint)bVar1;
 }
 
@@ -40326,9 +40411,9 @@ void counter_arm(interval_reading_fields *reading,counter_configuration_fields *
       configuration->registers_state = 1;
     }
     fpga_set_bit(1,8);
-    FUN_00040a0e(0,0);
+    fpga_set_field(0,0);
     fpga_set_bit(2,0);
-    FUN_00040a0e(4,0);
+    fpga_set_field(4,0);
     if ((configuration->sync_mode == 2) && (configuration->sync_state == 2)) {
       counter_set_sync(configuration->sync_kind);
       configuration->sync_count = configuration->sync_count + -1;
@@ -40360,12 +40445,12 @@ void counter_read(interval_reading_fields *reading,counter_configuration_fields 
     reading->errors = reading->errors | COUNTER_MEASUREMENT_ABORTED;
   }
   if (reading->errors == 0) {
-    cVar1 = FUN_0004091a(2);
+    cVar1 = counter_wait_ready(2);
     if (cVar1 != '\0') {
-      cVar1 = FUN_0004091a(1);
+      cVar1 = counter_wait_ready(1);
       if (cVar1 != '\0') {
-        uVar3 = FUN_00040c06();
-        dVar4 = (double)FUN_0004119c(uVar3);
+        uVar3 = counter_read_raw();
+        dVar4 = (double)int64_to_double(uVar3);
         reading->value = dVar4;
         bVar2 = interpolator_read();
         dVar4 = integer_to_double((uint)bVar2 - configuration->interpolator_offset);
@@ -40408,7 +40493,9 @@ LAB_00040e2e:
 
 /* 00040ea2 */
 
-int FUN_00040ea2(void)
+/* writes counter_configuration's four FPGA registers to the FPGA */
+
+int counter_load_registers(void)
 
 {
   int iVar1;
@@ -40430,7 +40517,9 @@ int FUN_00040ea2(void)
 
 /* 00040ed8 */
 
-void FUN_00040ed8(int param_1)
+/* the counter configuration's defaults, and the interval reading marked invalid */
+
+void counter_configuration_init(int param_1)
 
 {
   int iVar1;
@@ -40447,8 +40536,8 @@ void FUN_00040ed8(int param_1)
   local_a[3] = 1;
   local_a[4] = 0;
   local_a[5] = 0;
-  FUN_00040afe(local_a,param_1);
-  FUN_00040afe(local_a,fconf_regs);
+  fpga_fields_to_registers(local_a,param_1);
+  fpga_fields_to_registers(local_a,fconf_regs);
   *(undefined4 *)(param_1 + 4) = 0x3fd9999a;
   *(undefined4 *)(param_1 + 8) = 0xdbb8f8da;
   *(undefined4 *)(param_1 + 0x1c) = 200;
@@ -40465,11 +40554,14 @@ void FUN_00040ed8(int param_1)
 
 /* 00040f76 */
 
-void FUN_00040f76(void)
+/* sets the counter configuration and interpolator calibration to their defaults and arms the
+   reading */
+
+void counter_init(void)
 
 {
-  FUN_00040ed8(&counter_configuration);
-  FUN_00040000(&interpolator_calibration_state);
+  counter_configuration_init(&counter_configuration);
+  interpolator_calibration_init(&interpolator_calibration_state);
   interval_reading.armed = 1;
   return;
 }
@@ -40485,7 +40577,7 @@ void FUN_00040f98(void)
   longlong lVar1;
   
   fpga_set_bit(1,8);
-  lVar1 = FUN_00040c06();
+  lVar1 = counter_read_raw();
   _DAT_00100c36 = (ushort)(lVar1 != 0);
   return;
 }
@@ -40493,7 +40585,9 @@ void FUN_00040f98(void)
 
 /* 000410fa */
 
-undefined8 FUN_000410fa(int param_1,uint param_2,int param_3,uint param_4)
+/* adds two 64-bit numbers */
+
+undefined8 int64_add(int param_1,uint param_2,int param_3,uint param_4)
 
 {
   return CONCAT44(param_1 + param_3 + (uint)CARRY4(param_2,param_4),param_2 + param_4);
@@ -40502,7 +40596,9 @@ undefined8 FUN_000410fa(int param_1,uint param_2,int param_3,uint param_4)
 
 /* 0004111e */
 
-undefined8 FUN_0004111e(int param_1,int param_2)
+/* negates a 64-bit number */
+
+undefined8 int64_negate(int param_1,int param_2)
 
 {
   return CONCAT44(-(param_1 + (uint)(-param_2 != 0)),-param_2);
@@ -40544,7 +40640,9 @@ undefined4 FUN_0004117e(uint param_1,ulonglong param_2)
 
 /* 0004119c */
 
-double FUN_0004119c(uint param_1,uint param_2)
+/* a signed 64-bit number as a double, through 2^32 at 0x41300 */
+
+double int64_to_double(uint param_1,uint param_2)
 
 {
   undefined8 uVar1;
@@ -40558,7 +40656,7 @@ double FUN_0004119c(uint param_1,uint param_2)
     double_add_in_place(&dStack_c,dVar2);
   }
   else {
-    uVar1 = FUN_0004111e(param_1,param_2);
+    uVar1 = int64_negate(param_1,param_2);
     dStack_c = unsigned_to_double((uint)uVar1);
     dVar2 = unsigned_to_double((uint)((ulonglong)uVar1 >> 0x20));
     dVar2 = double_multiply_pointer(dVar2,(double *)&UNK_00041300);
@@ -40592,7 +40690,7 @@ undefined8 FUN_00041244(uint param_1,undefined4 param_2)
   uVar2 = double_to_unsigned((double)CONCAT44(param_1,param_2));
   uVar4 = CONCAT44(u,uVar2);
   if (iVar1 < 0) {
-    uVar4 = FUN_0004111e(u,uVar2);
+    uVar4 = int64_negate(u,uVar2);
   }
   return uVar4;
 }
@@ -42117,7 +42215,7 @@ void finish_scpi_cmd(void)
   }
   iVar2 = scpi_param_saved_in_record();
   if (iVar2 != 0) {
-    FUN_00030dea(pll_scpi_source);
+    save_parameter_record(pll_scpi_source);
   }
   if (DAT_00102040 == '\x03') {
     log_event(3);
@@ -42793,7 +42891,7 @@ override_jmp_00043ae6_case_0:
     fVar2 = double_to_float(dVar7);
     uVar5 = SUB41(fVar2,0);
   }
-  pll.efc = (float)FUN_0002426e(uVar5);
+  pll.efc = (float)efc_clamp(uVar5);
   if ((DAT_00102046 != 10) && (DAT_00102046 != 0)) {
     fVar2 = unsigned_to_float((uint)DAT_00102046);
     fVar2 = float_divide_reversed(fVar2,10.0);
@@ -42879,7 +42977,7 @@ undefined4 clock_check_against_gps(void)
   int local_c;
   int local_8;
   
-  cVar3 = FUN_00013740(&local_c,&local_8);
+  cVar3 = get_gps_datetime(&local_c,&local_8);
   if (((cVar3 == '\0') && (iVar1 = oncore_date_pack(gps.status._0_4_), iVar1 == local_c)) &&
      (local_8 == gps.status._4_4_)) {
     DAT_00102552 = false;
@@ -42889,7 +42987,7 @@ undefined4 clock_check_against_gps(void)
     bVar4 = DAT_00102552 != '\0';
     if (bVar4) {
       uVar2 = oncore_date_pack(gps.status._0_4_);
-      FUN_00010b00(gps.status._4_4_,uVar2);
+      clock_set(gps.status._4_4_,uVar2);
       status_happening('L');
     }
     DAT_00102552 = !bVar4;
@@ -43009,7 +43107,7 @@ LAB_0004411a:
     cVar3 = '\x02';
   }
   if (cVar3 == '\x01') {
-    cVar4 = FUN_00011680();
+    cVar4 = leap_second_near();
     if (cVar4 == '\0') {
       uVar5 = get_gps_utc_offset((int16_t *)0x0);
       if (uVar5 == 0) {
@@ -43262,7 +43360,7 @@ char startup_pll(char param_1)
       uVar11 = SUB41(fVar1,0);
       fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,local_74);
       fVar1 = float_add((float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11),fVar1);
-      pll.efc = (float)FUN_0002426e(SUB41(fVar1,0));
+      pll.efc = (float)efc_clamp(SUB41(fVar1,0));
       if (DAT_00102541 != '\0') {
         get_date_time((uint32_t *)&local_c,&uStack_8);
         dVar6 = float_to_double(local_74);
@@ -43450,7 +43548,7 @@ undefined1 pll_normal(char param_1)
       uVar11 = SUB41(fVar2,0);
       fVar2 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
       fVar2 = float_add((float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11),fVar2);
-      pll.efc = (float)FUN_0002426e(SUB41(fVar2,0));
+      pll.efc = (float)efc_clamp(SUB41(fVar2,0));
       if (DAT_00102541 != '\0') {
         get_date_time((uint32_t *)&local_c,&uStack_8);
         dVar6 = float_to_double(fVar1);
@@ -43751,7 +43849,7 @@ LAB_0004536e:
         }
         fVar1 = float_multiply(pll.fine_d,DAT_00102558);
         fVar1 = float_subtract_reversed(fVar1,pll.efc);
-        pll.efc = (float)FUN_0002426e(SUB41(fVar1,0));
+        pll.efc = (float)efc_clamp(SUB41(fVar1,0));
         if (DAT_00102541 != '\0') {
           iVar2 = float_to_integer(pll.efc);
           uVar5 = (undefined2)((uint)iVar2 >> 0x10);
@@ -44012,7 +44110,7 @@ LAB_00045812:
              ((uint)nv_settings.holdover_measurement_threshold <= (uint)pll.field_3b0._24_4_)) {
             fVar2 = float_multiply(fine_y0,DAT_00102558);
             fVar2 = float_add(fVar2,pll.efc);
-            pll.efc = (float)FUN_0002426e(SUB41(fVar2,0));
+            pll.efc = (float)efc_clamp(SUB41(fVar2,0));
             pll.field_018 = 1;
             if (DAT_00102541 != '\0') {
               iVar1 = float_to_integer(pll.efc);
@@ -44371,7 +44469,7 @@ undefined1 powerup(char param_1)
       goto override_jmp_00045f06_case_0;
     case 0x26:
       interval_next_reading('\x01',(undefined4 *)0x0);
-      cVar3 = FUN_000241f4();
+      cVar3 = oven_warmed_up();
       if (cVar3 != '\0') {
         pll.field_001[2] = 2;
         bVar2 = PORTGP;
@@ -44410,9 +44508,9 @@ undefined1 powerup(char param_1)
         pll.tfom = 2e-06;
         if ((DAT_00102550 != '\0') && (internal_pps_dead == 0)) {
           uVar4 = oncore_date_pack((char)gps.status.year);
-          FUN_00010b00(gps.status._6_2_,uVar4);
+          clock_set(gps.status._6_2_,uVar4);
           status_happening('&');
-          cVar3 = FUN_00011680();
+          cVar3 = leap_second_near();
           if (cVar3 == '\0') {
             pll.field_001[2] = 7;
             pll.field_020[0xd] = 1;
@@ -44510,7 +44608,7 @@ undefined1 pll_check_reference(char param_1)
     case 0x28:
       interval_wait_reading();
       if (interval_reading.valid == 0) {
-        FUN_00024976();
+        counter_reset();
         pll.field_001[5] = 2;
         uVar4 = 0;
       }
@@ -44582,7 +44680,7 @@ void clock_set_from_reference(void)
   int local_14 [3];
   undefined4 local_8;
   
-  bVar2 = FUN_000407fa();
+  bVar2 = fpga_read_seconds();
   bVar2 = bVar2 & 0xf;
   DAT_0010258c = DAT_0010258c & 0xf;
   if (bVar2 <= DAT_0010258c) {
@@ -44600,9 +44698,9 @@ void clock_set_from_reference(void)
     local_14[0] = 0x3b;
   }
   local_14[1] = 0;
-  FUN_00013740(&local_8,local_14 + 2);
+  get_gps_datetime(&local_8,local_14 + 2);
   datetime_add(local_14,local_14 + 2);
-  FUN_000137a4(local_8,local_14[2]);
+  set_timedate_unflagged(local_8,local_14[2]);
   return;
 }
 
@@ -44631,9 +44729,9 @@ void leap_event_delete(void)
 {
   int iVar1;
   
-  iVar1 = FUN_000108fe(1);
+  iVar1 = klok_find(1);
   if (iVar1 != 0) {
-    iVar1 = FUN_00010786((short)iVar1);
+    iVar1 = klok_cancel((short)iVar1);
     if (iVar1 != 0) {
       task_debug_message("Error in deleting old leapsecond event\r\n");
     }
@@ -44670,7 +44768,7 @@ void leap_event_create(void)
     else {
       iVar2 = 0x3c;
     }
-    uVar1 = FUN_00011606();
+    uVar1 = leap_opportunity_date();
     if (((nv_settings.leap_pending == 0) || (iVar2 != nv_settings.leap_minute_length)) ||
        (uVar1 != nv_settings.leap_date)) {
       nv_settings.leap_pending = 1;
@@ -44679,7 +44777,7 @@ void leap_event_create(void)
       nv_save(4);
     }
     leap_event_delete();
-    iVar2 = FUN_0001075a((short)uVar1,(char)iVar2);
+    iVar2 = leap_event_schedule((short)uVar1,(char)iVar2);
     if (iVar2 == 0) {
       task_debug_message("Error in creating leapsecond event\r\n");
     }
@@ -45372,14 +45470,14 @@ LAB_00046efe:
       return;
     }
     if (gps_ack_code == 0) {
-      FUN_00013740((short)auStack_20,(char)auStack_1c);
-      uVar2 = FUN_00010fbc(gps.status.year);
+      get_gps_datetime((short)auStack_20,(char)auStack_1c);
+      uVar2 = date_to_mjd(gps.status.year);
       uVar3 = (undefined2)((uint)uVar2 >> 0x10);
       uVar6 = (undefined1)((uint)uVar2 >> 8);
       uVar7 = (undefined1)uVar2;
       iStack_18 = date_to_days(uStack_1e);
       iStack_18 = CONCAT31(CONCAT21(uVar3,uVar6),uVar7) - iStack_18;
-      uVar3 = FUN_0001111e(gps.status.second);
+      uVar3 = hms_to_seconds(gps.status.second);
       uVar6 = (undefined1)((ushort)uVar3 >> 8);
       uVar7 = (undefined1)uVar3;
       sVar4 = FUN_00011152(uStack_1a);
@@ -45703,7 +45801,7 @@ void pll_init(void)
   pll.stage = PLL_STAGE_INVALID;
   pll.field_020[6] = 0;
   pll.field_020[0] = 0;
-  pll.efc = (float)FUN_0002426e(_DAT_00101d00);
+  pll.efc = (float)efc_clamp(_DAT_00101d00);
   pll.field_3b0[8] = 0x43;
   pll.field_3b0[9] = 0x16;
   pll.field_3b0[10] = 0;
@@ -45853,7 +45951,7 @@ void pllp_task(void)
     log_event(2);
   }
   DAT_0010254a = 0;
-  FUN_00040f76();
+  counter_init();
   FUN_00045c8e();
   FUN_00045c90();
   _DAT_00102598 = 0;
@@ -45863,7 +45961,7 @@ void pllp_task(void)
   DAT_001025a8 = 0;
   watchdog_pll = watchdog_pll + 1;
   if (pll.stage == PLL_STAGE_POWERUP) {
-    FUN_00024976();
+    counter_reset();
     selftest_print_failure(local_6);
   }
   pll_stage_status();
@@ -46014,7 +46112,7 @@ LAB_0004782e:
 LAB_00047940:
       psos_pause(0x400);
     }
-    pll.field_3b0[0x20] = FUN_000407fa();
+    pll.field_3b0[0x20] = fpga_read_seconds();
     pll.field_3b0._28_4_ = get_uptime();
     watchdog_pll = watchdog_pll + 1;
     status_summary_update();

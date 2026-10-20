@@ -97,15 +97,15 @@
 {"address":"0001052e","name":"FUN_0001052e","convention":"unknown"}
 {"address":"00010538","name":"FUN_00010538","convention":"unknown"}
 {"address":"00010540","name":"clk_do","note":"queues an event for the clock task","convention":"unknown"}
-{"address":"000105ee","name":"FUN_000105ee","convention":"unknown"}
-{"address":"00010656","name":"FUN_00010656","convention":"unknown"}
-{"address":"0001075a","name":"FUN_0001075a","convention":"unknown"}
-{"address":"00010786","name":"FUN_00010786","convention":"unknown"}
+{"address":"000105ee","name":"leap_event_schedule_gps","note":"queues the clock event for a 59- or 61-second minute, in GPS time","convention":"unknown"}
+{"address":"00010656","name":"leap_event_schedule_utc","note":"queues the clock event for a 59- or 61-second minute, converted to UTC with the GPS-UTC offset as it will be","convention":"unknown"}
+{"address":"0001075a","name":"leap_event_schedule","note":"queues the leap second's clock event, in GPS time or in UTC as nv_settings.gps_utc says","convention":"unknown"}
+{"address":"00010786","name":"klok_cancel","note":"under klok_mutex, unlinks an entry from the clock list and returns it to the free list; -3 for a pointer outside the pool","convention":"unknown"}
 {"address":"000107ee","name":"klok_print_entries","note":"\"at:\", \"period:\", \"function address:\", \"event class:\" for each klok entry","convention":"unknown"}
-{"address":"000108fe","name":"FUN_000108fe","convention":"unknown"}
+{"address":"000108fe","name":"klok_find","note":"under klok_mutex, the first entry of the clock list of a class","convention":"unknown"}
 {"address":"00010946","name":"FUN_00010946","convention":"unknown"}
 {"address":"000109ae","name":"klok_task_create","note":"psos_create(\"klok\") into task_klok, then psos_start(task_klok, klok_task); \"Pps_init error\", \"Clk_go error\"","convention":"unknown"}
-{"address":"00010b00","name":"FUN_00010b00","convention":"unknown"}
+{"address":"00010b00","name":"clock_set","note":"sets the date and time, then lifetime_update","convention":"unknown"}
 {"address":"00010b1e","name":"klok_task","note":"klok_task_create starts the klok task here","convention":"unknown"}
 {"address":"00010b62","name":"FUN_00010b62","convention":"unknown"}
 {"address":"00010c10","name":"FUN_00010c10","convention":"unknown"}
@@ -116,14 +116,14 @@
 {"address":"00010e3a","name":"FUN_00010e3a","convention":"unknown"}
 {"address":"00010e72","name":"days_to_date","note":"a day count as a packed date, for datetime_add","convention":"unknown"}
 {"address":"00010f46","name":"date_to_days","note":"a packed date as a day count, for datetime_add","convention":"unknown"}
-{"address":"00010fbc","name":"FUN_00010fbc","convention":"unknown"}
+{"address":"00010fbc","name":"date_to_mjd","note":"a date as its Modified Julian Day: 1994-01-01 is 49353; the days before each month at 0x1186a","convention":"unknown"}
 {"address":"00011032","name":"FUN_00011032","convention":"unknown"}
 {"address":"00011076","name":"FUN_00011076","convention":"unknown"}
 {"address":"000110d6","name":"FUN_000110d6","convention":"unknown"}
 {"address":"000110fa","name":"oncore_date_pack","note":"@@Ba's month, day and year into year << 16 | month << 8 | day","convention":"unknown"}
-{"address":"0001111e","name":"FUN_0001111e","convention":"unknown"}
+{"address":"0001111e","name":"hms_to_seconds","note":"hours, minutes and seconds as seconds","convention":"unknown"}
 {"address":"00011152","name":"FUN_00011152","convention":"unknown"}
-{"address":"00011186","name":"FUN_00011186","convention":"unknown"}
+{"address":"00011186","name":"seconds_to_hms","note":"seconds as hours, minutes and seconds","convention":"unknown"}
 {"address":"000111cc","name":"gps_seconds","note":"the T1 time code's #H%08X, seconds since 1980 from a date and time","convention":"unknown"}
 {"address":"00011284","name":"leap_gps_time","note":":PTIM:LEAP:GPST?'s \"#H%08X\", from nv_settings.leap_pending and leap_minute_length","convention":"unknown"}
 {"address":"00011300","name":"FUN_00011300","convention":"unknown"}
@@ -131,9 +131,9 @@
 {"address":"00011428","name":"FUN_00011428","convention":"unknown"}
 {"address":"000114b4","name":"FUN_000114b4","convention":"unknown"}
 {"address":"000114fa","name":"FUN_000114fa","convention":"unknown"}
-{"address":"00011580","name":"FUN_00011580","convention":"unknown"}
-{"address":"00011606","name":"FUN_00011606","convention":"unknown"}
-{"address":"00011680","name":"FUN_00011680","convention":"unknown"}
+{"address":"00011580","name":"gps_to_utc","note":"applies the GPS-UTC offset to a date and time","convention":"unknown"}
+{"address":"00011606","name":"leap_opportunity_date","note":"the end of the coming quarter, when a leap second may come: Mar 31, Jun 30, Sep 30 or Dec 31","convention":"unknown"}
+{"address":"00011680","name":"leap_second_near","note":"1 at 23:59:46 or later, in UTC, on the last day of a quarter","convention":"unknown"}
 {"address":"00011700","name":"FUN_00011700","convention":"unknown"}
 {"address":"000117b6","name":"FUN_000117b6","convention":"unknown"}
 {"address":"000118a8","name":"FUN_000118a8","convention":"unknown"}
@@ -186,9 +186,9 @@
 {"address":"00013406","name":"FUN_00013406","convention":"unknown"}
 {"address":"0001341a","name":"primary_trap_7","convention":"exception","confidence":"derived","family":"exception"}
 {"address":"00013422","name":"enter_supervisor","note":"trap #7; returns the caller's status register in D0","convention":"unknown"}
-{"address":"00013428","name":"FUN_00013428","convention":"unknown"}
+{"address":"00013428","name":"busy_wait","note":"spins 729 empty loops for each count","convention":"unknown"}
 {"address":"00013448","name":"FUN_00013448","convention":"unknown"}
-{"address":"000134a8","name":"FUN_000134a8","convention":"unknown"}
+{"address":"000134a8","name":"clock_record_checksum","note":"sums the clock record from +2 to +0x32 and stores the sum and its complement","convention":"register","confidence":"read","in":[{"register":"A6","type":"char *","name":"record"}],"family":"clock"}
 {"address":"000134ca","name":"FUN_000134ca","convention":"unknown"}
 {"address":"000134e8","name":"FUN_000134e8","convention":"unknown"}
 {"address":"00013502","name":"FUN_00013502","convention":"unknown"}
@@ -199,13 +199,13 @@
 {"address":"000136ee","name":"get_gps_time","note":"returns gps_time","convention":"unknown"}
 {"address":"000136f6","name":"get_uptime","note":"returns uptime; efc_history_update divides it by 2700 for an entry's time","convention":"unknown"}
 {"address":"000136fe","name":"get_date_time","note":":PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns valid unless clock_invalid","convention":"unknown"}
-{"address":"00013740","name":"FUN_00013740","convention":"unknown"}
+{"address":"00013740","name":"get_gps_datetime","note":"gps_date and gps_time through pointers; 1 if the clock is valid","convention":"unknown"}
 {"address":"00013782","name":"FUN_00013782","convention":"unknown"}
-{"address":"000137a4","name":"FUN_000137a4","convention":"unknown"}
+{"address":"000137a4","name":"set_timedate_unflagged","note":"set_timedate's twin: sets the clock record's date and time without marking it set","convention":"unknown"}
 {"address":"000137d8","name":"set_timedate","note":"the set_time word's, \"set_timedate error: %2X\"","convention":"unknown"}
-{"address":"0001380c","name":"FUN_0001380c","convention":"unknown"}
-{"address":"00013882","name":"FUN_00013882","convention":"unknown"}
-{"address":"000138e4","name":"FUN_000138e4","convention":"unknown"}
+{"address":"0001380c","name":"clock_record_store","note":"checks a date and time and stores them in the clock record, marking it set if D2 says so","convention":"register","confidence":"read","in":[{"register":"A6","type":"char *","name":"record"},{"register":"D0","type":"int","name":"date"},{"register":"D1","type":"int","name":"time"},{"register":"D2","type":"int","name":"mark"}],"family":"clock"}
+{"address":"00013882","name":"clock_record_derive","note":"reads the clock record's date and time until two reads agree, converts them and stores the result at +6 and +0xa","convention":"register","confidence":"read","in":[{"register":"A6","type":"char *","name":"record"}],"family":"clock"}
+{"address":"000138e4","name":"clock_set_leap_year","note":"sets February's days at A0, 28 or 29 by the Gregorian rule for the year in D7's high word; kernel_set_leap_year's copy","convention":"register","confidence":"read","in":[{"register":"A0","type":"char *","name":"february"},{"register":"D7","type":"int","name":"year"}],"family":"clock"}
 {"address":"00013908","name":"FUN_00013908","convention":"unknown"}
 {"address":"0001399a","name":"time_valid","note":"the time code's v is 0 when it returns nonzero","convention":"unknown"}
 {"address":"000139a2","name":"set_gps_utc_offset","note":"sets gps_utc_offset, from D1, and gps_utc_offset_valid; 0x46e70 computes it from the engine's GPS and UTC times","convention":"unknown"}
@@ -359,7 +359,7 @@
 {"address":"00017750","name":"FUN_00017750","convention":"unknown"}
 {"address":"000177ac","name":"FUN_000177ac","convention":"unknown"}
 {"address":"000177cc","name":"FUN_000177cc","convention":"unknown"}
-{"address":"000177fa","name":"FUN_000177fa","convention":"unknown"}
+{"address":"000177fa","name":"selftest_summary","note":"the self-test's failure flags as bits; reports status event 4 on a failure and 5 on none","convention":"unknown"}
 {"address":"000178e0","name":"selftest_interpolator","note":"the self-test of the time interpolator","convention":"unknown"}
 {"address":"00017946","name":"selftest_internal_reference","note":"the self-test of the internal reference","convention":"unknown"}
 {"address":"000179ac","name":"selftest_ram","note":"the self-test of system RAM, its data and address lines","convention":"unknown"}
@@ -794,9 +794,9 @@
 {"address":"00023d80","name":"hmon_check_supplies","note":"checks the supplies and the secondary oven voltage against their tolerances, reporting each that leaves or returns","convention":"unknown"}
 {"address":"0002410e","name":"adc_average","note":"diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a default when there is no reading","convention":"c","confidence":"documented","out":[{"register":"D0","type":"float"}]}
 {"address":"000241cc","name":"FUN_000241cc","convention":"unknown"}
-{"address":"000241f4","name":"FUN_000241f4","convention":"unknown"}
+{"address":"000241f4","name":"oven_warmed_up","note":"1 once the oven ADC reads below -2.0; powerup's warm-up test","convention":"unknown"}
 {"address":"0002421c","name":"FUN_0002421c","convention":"unknown"}
-{"address":"0002426e","name":"FUN_0002426e","convention":"unknown"}
+{"address":"0002426e","name":"efc_clamp","note":"clamps the EFC to 0 to 1048560, reporting event B when clamped and C when back in range","convention":"unknown"}
 {"address":"000242de","name":"FUN_000242de","convention":"unknown"}
 {"address":"000242f0","name":"hmon_check_efc","note":"\"EFC near end of range\" when pll.efc stays outside 52428 to 996132, 5% to 95% of 2^20, five checks","convention":"unknown"}
 {"address":"0002437a","name":"watchdog_report","note":"prints the tasks' watchdog counts","convention":"unknown"}
@@ -807,7 +807,7 @@
 {"address":"0002470c","name":"FUN_0002470c","convention":"unknown"}
 {"address":"0002471a","name":"internal_pps_check","note":"\"Internal 1pps signal is dead\", \"count %d\"","convention":"unknown"}
 {"address":"000247d4","name":"hmon_task","note":"root_task starts hmon here","convention":"unknown"}
-{"address":"00024976","name":"FUN_00024976","convention":"unknown"}
+{"address":"00024976","name":"counter_reset","note":"sets the FPGA up again and reloads the counter's registers","convention":"unknown"}
 {"address":"00024984","name":"FUN_00024984","convention":"unknown"}
 {"address":"00024d42","name":"scpi_round_decimal","note":"rounds the decimal record at A2 to D0.w digits: adds 5 at that digit and carries left, a carry off the front writing 1 and raising the exponent, and fills the digits after with 0","convention":"register","confidence":"read","in":[{"register":"A2","type":"char *","name":"record"},{"register":"D0","type":"short","name":"digits"}],"family":"scpi-engine"}
 {"address":"00024d88","name":"scpi_decimal_to_text_unused","note":"writes the decimal record at A0 as NR3 text at A1, D0.w digits: the sign, the first digit, a point, the rest, E and the exponent by the digit pairs at 0x25c82; nothing calls it","convention":"register","confidence":"read","in":[{"register":"A0","type":"char *","name":"record"},{"register":"A1","type":"char *","name":"text"},{"register":"D0","type":"short","name":"digits"}],"family":"scpi-engine"}
@@ -1259,12 +1259,12 @@
 {"address":"00030800","name":"scpi_query_SYSTem_PRINt_LENGth","convention":"unknown"}
 {"address":"0003082e","name":"record_checksum","note":"the sum and its complement of an EEPROM record's bytes after the first two","convention":"unknown"}
 {"address":"00030a3e","name":"FUN_00030a3e","convention":"unknown"}
-{"address":"00030ab4","name":"FUN_00030ab4","convention":"unknown"}
+{"address":"00030ab4","name":"lifetime_record_write","note":"writes the 32-byte checksummed lifetime record at EEPROM 0x400060, the date, its count and the EFC, when it has changed","convention":"unknown"}
 {"address":"00030b66","name":"lifetime_update","note":"on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules its clock event","convention":"unknown"}
 {"address":"00030c1e","name":"FUN_00030c1e","convention":"unknown"}
 {"address":"00030c60","name":"save_calibration_block","note":"rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs from it, reporting status 0x10 if the EEPROM write fails","convention":"unknown"}
 {"address":"00030d2e","name":"FUN_00030d2e","convention":"unknown"}
-{"address":"00030dea","name":"FUN_00030dea","convention":"unknown"}
+{"address":"00030dea","name":"save_parameter_record","note":"writes the 16-byte checksummed parameter record at EEPROM 0x400000, reporting status 0x10 if it fails","convention":"unknown"}
 {"address":"00030f08","name":"FUN_00030f08","convention":"unknown"}
 {"address":"00030f10","name":"eeprom_init","note":"creates eepx, \"Unable to create eepx\"","convention":"unknown"}
 {"address":"00030fae","name":"eeprom_lock","note":"\"Unable to acquire eepx token\"","convention":"unknown"}
@@ -1324,14 +1324,14 @@
 {"address":"00033114","name":"FUN_00033114","convention":"unknown"}
 {"address":"0003313c","name":"log_entry_text","note":"one of 32 log entries as \"Log %03d:%04d%02d%02d.%02d:%02d:%02d\", or \"Unused\"","convention":"unknown"}
 {"address":"00033238","name":"FUN_00033238","convention":"unknown"}
-{"address":"00040000","name":"FUN_00040000","convention":"unknown"}
+{"address":"00040000","name":"interpolator_calibration_init","note":"clears the interpolator calibration, both DACs at 0x1f","convention":"unknown"}
 {"address":"00040030","name":"interpolator_measure","note":"pulses the FPGA bits for a measurement and returns interpolator_read","convention":"unknown"}
-{"address":"000400b0","name":"FUN_000400b0","convention":"unknown"}
-{"address":"0004012e","name":"FUN_0004012e","convention":"unknown"}
-{"address":"0004018e","name":"FUN_0004018e","convention":"unknown"}
-{"address":"000401c4","name":"FUN_000401c4","convention":"unknown"}
+{"address":"000400b0","name":"dac_search_bisect","note":"halves a DAC's range, up to 10 times, until a measurement falls in a window","convention":"unknown"}
+{"address":"0004012e","name":"dac_search_step","note":"moves a DAC a step at a time, up to 20, until a measurement falls in a window","convention":"unknown"}
+{"address":"0004018e","name":"hdac_nudge","note":"moves hex DAC channel 2 one step against a sign","convention":"unknown"}
+{"address":"000401c4","name":"interpolator_prepare","note":"loads any pending FPGA registers and sets the fields for an interpolator measurement","convention":"unknown"}
 {"address":"00040248","name":"interpolator_calibrate","note":"sets HDAC channels 2 and 3 until interpolator_measure gives 1 to 25 and 201 to 225, 200 apart; ovens.md's Z3816A 0x43b56","convention":"unknown"}
-{"address":"0004047c","name":"FUN_0004047c","convention":"unknown"}
+{"address":"0004047c","name":"interpolator_verify","note":"sets both DACs, measures both ends of the interpolator against [1, 25] and [201, 225], and retries with the saved DACs if they fail","convention":"unknown"}
 {"address":"00040556","name":"interpolator_sample","note":"sets HDAC channels 2 and 3 and takes both interpolator readings; \"First-time interp test.\"","convention":"unknown"}
 {"address":"000405bc","name":"counter_calibrate","note":"runs interpolator_calibrate when the configuration asks, then stores reading_low and the spread at its +0x18 and +0x1c","convention":"unknown"}
 {"address":"00040670","name":"FUN_00040670","convention":"unknown"}
@@ -1340,30 +1340,30 @@
 {"address":"00040756","name":"fpga_write","note":"writes a byte to FPGA register reg at 0x304000 (interval.md: the FPGA port)","convention":"unknown"}
 {"address":"0004076a","name":"fpga_read","note":"sets the register in fconf_regs[1]'s address bits, reads 0x304000, restores them; \"old_addr, fconf_regs[1] = %x\"","convention":"unknown"}
 {"address":"000407d4","name":"FUN_000407d4","convention":"unknown"}
-{"address":"000407fa","name":"FUN_000407fa","convention":"unknown"}
+{"address":"000407fa","name":"fpga_read_seconds","note":"FPGA register 0's high nibble, read until two reads agree: a count of seconds modulo 16","convention":"unknown"}
 {"address":"0004085e","name":"FUN_0004085e","convention":"unknown"}
-{"address":"0004091a","name":"FUN_0004091a","convention":"unknown"}
+{"address":"0004091a","name":"counter_wait_ready","note":"polls FPGA register 0 for a bit, up to 512 times 10 ticks, giving up and disarming the reading if a 1PPS dies","convention":"unknown"}
 {"address":"000409a4","name":"fpga_set_bit","note":"sets or clears a bit in fconf_regs, register and mask from fpga_bit_table, then fpga_write","convention":"unknown"}
-{"address":"00040a0e","name":"FUN_00040a0e","convention":"unknown"}
+{"address":"00040a0e","name":"fpga_set_field","note":"sets one fpga_bit_table field in its register's image and writes the register","convention":"unknown"}
 {"address":"00040a64","name":"sync_request","note":"the clk_synch and sync_imm words': stores a mode and a time and sets two states to 2","convention":"unknown"}
 {"address":"00040a84","name":"counter_set_sync","note":"sets fconf_regs[3]'s low two bits to counter_arm's sync_kind","convention":"unknown"}
-{"address":"00040afe","name":"FUN_00040afe","convention":"unknown"}
-{"address":"00040ba6","name":"FUN_00040ba6","convention":"unknown"}
+{"address":"00040afe","name":"fpga_fields_to_registers","note":"builds the four FPGA register images from field values, by fpga_bit_table","convention":"unknown"}
+{"address":"00040ba6","name":"fpga_read_byte","note":"a byte from two FPGA registers' low nibbles","convention":"unknown"}
 {"address":"00040bda","name":"FUN_00040bda","convention":"unknown"}
-{"address":"00040c06","name":"FUN_00040c06","convention":"unknown"}
+{"address":"00040c06","name":"counter_read_raw","note":"the counter's count from FPGA registers 0x16 to 0x12, offset by 0x555555","convention":"unknown"}
 {"address":"00040c56","name":"interpolator_read","note":"the complement of FPGA register 0x10","convention":"unknown"}
 {"address":"00040c6a","name":"counter_arm","note":"reloads fconf_regs[0..3] from the configuration and re-arms the FPGA","convention":"unknown"}
 {"address":"00040d34","name":"counter_read","note":"interval.md's one reading: the coarse count plus (interpolator_read - +0x18) / +0x1c, times 1e-7, less the configuration's double at +4, into *reading","convention":"unknown"}
-{"address":"00040ea2","name":"FUN_00040ea2","convention":"unknown"}
-{"address":"00040ed8","name":"FUN_00040ed8","convention":"unknown"}
-{"address":"00040f76","name":"FUN_00040f76","convention":"unknown"}
+{"address":"00040ea2","name":"counter_load_registers","note":"writes counter_configuration's four FPGA registers to the FPGA","convention":"unknown"}
+{"address":"00040ed8","name":"counter_configuration_init","note":"the counter configuration's defaults, and the interval reading marked invalid","convention":"unknown"}
+{"address":"00040f76","name":"counter_init","note":"sets the counter configuration and interpolator calibration to their defaults and arms the reading","convention":"unknown"}
 {"address":"00040f98","name":"FUN_00040f98","convention":"unknown"}
-{"address":"000410fa","name":"FUN_000410fa","convention":"unknown"}
-{"address":"0004111e","name":"FUN_0004111e","convention":"unknown"}
+{"address":"000410fa","name":"int64_add","note":"adds two 64-bit numbers","convention":"unknown"}
+{"address":"0004111e","name":"int64_negate","note":"negates a 64-bit number","convention":"unknown"}
 {"address":"00041132","name":"FUN_00041132","convention":"unknown"}
 {"address":"0004115c","name":"FUN_0004115c","convention":"unknown"}
 {"address":"0004117e","name":"FUN_0004117e","convention":"unknown"}
-{"address":"0004119c","name":"FUN_0004119c","convention":"unknown"}
+{"address":"0004119c","name":"int64_to_double","note":"a signed 64-bit number as a double, through 2^32 at 0x41300","convention":"unknown"}
 {"address":"00041244","name":"FUN_00041244","convention":"unknown"}
 {"address":"0004137e","name":"efc_history_update","note":"sums the EFC and stores each 2700 samples an entry of efc_history","convention":"unknown"}
 {"address":"0004172a","name":"curv_signal","note":"signals the curv task, event 0x100","convention":"unknown"}

@@ -900,3 +900,48 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x433b6	function	pll_scpi_complete	context	once the reply flag is set: clears it, reports failure, finishes the SCPI command and signals its task; otherwise counts
 0x433fc	function	gps_diag_complete	context	once the reply flag is set: clears it and signals the waiting task; otherwise counts
 0x30b66	function	lifetime_update	context	on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules its clock event
+#
+# the clock, the leap second and the counter, under the PLL task
+0x1075a	function	leap_event_schedule	context	queues the leap second's clock event, in GPS time or in UTC as nv_settings.gps_utc says
+0x105ee	function	leap_event_schedule_gps	context	queues the clock event for a 59- or 61-second minute, in GPS time
+0x10656	function	leap_event_schedule_utc	context	queues the clock event for a 59- or 61-second minute, converted to UTC with the GPS-UTC offset as it will be
+0x10786	function	klok_cancel	context	under klok_mutex, unlinks an entry from the clock list and returns it to the free list; -3 for a pointer outside the pool
+0x108fe	function	klok_find	context	under klok_mutex, the first entry of the clock list of a class
+0x10b00	function	clock_set	context	sets the date and time, then lifetime_update
+0x10fbc	function	date_to_mjd	context	a date as its Modified Julian Day: 1994-01-01 is 49353; the days before each month at 0x1186a
+0x1111e	function	hms_to_seconds	context	hours, minutes and seconds as seconds
+0x11186	function	seconds_to_hms	context	seconds as hours, minutes and seconds
+0x11580	function	gps_to_utc	context	applies the GPS-UTC offset to a date and time
+0x11606	function	leap_opportunity_date	context	the end of the coming quarter, when a leap second may come: Mar 31, Jun 30, Sep 30 or Dec 31
+0x11680	function	leap_second_near	context	1 at 23:59:46 or later, in UTC, on the last day of a quarter
+0x13740	function	get_gps_datetime	context	gps_date and gps_time through pointers; 1 if the clock is valid
+0x137a4	function	set_timedate_unflagged	context	set_timedate's twin: sets the clock record's date and time without marking it set
+0x13428	function	busy_wait	context	spins 729 empty loops for each count
+0x1380c	function	clock_record_store	context	checks a date and time and stores them in the clock record, marking it set if D2 says so		convention=register; confidence=read; in=A6 char *record, D0 int date, D1 int time, D2 int mark; family=clock
+0x13882	function	clock_record_derive	context	reads the clock record's date and time until two reads agree, converts them and stores the result at +6 and +0xa		convention=register; confidence=read; in=A6 char *record; family=clock
+0x134a8	function	clock_record_checksum	context	sums the clock record from +2 to +0x32 and stores the sum and its complement		convention=register; confidence=read; in=A6 char *record; family=clock
+0x138e4	function	clock_set_leap_year	context	sets February's days at A0, 28 or 29 by the Gregorian rule for the year in D7's high word; kernel_set_leap_year's copy		convention=register; confidence=read; in=A0 char *february, D7 int year; family=clock
+0x177fa	function	selftest_summary	context	the self-test's failure flags as bits; reports status event 4 on a failure and 5 on none
+0x241f4	function	oven_warmed_up	context	1 once the oven ADC reads below -2.0; powerup's warm-up test
+0x2426e	function	efc_clamp	context	clamps the EFC to 0 to 1048560, reporting event B when clamped and C when back in range
+0x24976	function	counter_reset	context	sets the FPGA up again and reloads the counter's registers
+0x30ab4	function	lifetime_record_write	context	writes the 32-byte checksummed lifetime record at EEPROM 0x400060, the date, its count and the EFC, when it has changed
+0x30dea	function	save_parameter_record	structures.md	writes the 16-byte checksummed parameter record at EEPROM 0x400000, reporting status 0x10 if it fails
+0x40f76	function	counter_init	context	sets the counter configuration and interpolator calibration to their defaults and arms the reading
+0x40ed8	function	counter_configuration_init	context	the counter configuration's defaults, and the interval reading marked invalid
+0x40000	function	interpolator_calibration_init	context	clears the interpolator calibration, both DACs at 0x1f
+0x40ea2	function	counter_load_registers	context	writes counter_configuration's four FPGA registers to the FPGA
+0x40a0e	function	fpga_set_field	context	sets one fpga_bit_table field in its register's image and writes the register
+0x40afe	function	fpga_fields_to_registers	context	builds the four FPGA register images from field values, by fpga_bit_table
+0x40ba6	function	fpga_read_byte	context	a byte from two FPGA registers' low nibbles
+0x407fa	function	fpga_read_seconds	context	FPGA register 0's high nibble, read until two reads agree: a count of seconds modulo 16
+0x4091a	function	counter_wait_ready	context	polls FPGA register 0 for a bit, up to 512 times 10 ticks, giving up and disarming the reading if a 1PPS dies
+0x401c4	function	interpolator_prepare	context	loads any pending FPGA registers and sets the fields for an interpolator measurement
+0x4047c	function	interpolator_verify	context	sets both DACs, measures both ends of the interpolator against [1, 25] and [201, 225], and retries with the saved DACs if they fail
+0x400b0	function	dac_search_bisect	context	halves a DAC's range, up to 10 times, until a measurement falls in a window
+0x4012e	function	dac_search_step	context	moves a DAC a step at a time, up to 20, until a measurement falls in a window
+0x4018e	function	hdac_nudge	context	moves hex DAC channel 2 one step against a sign
+0x40c06	function	counter_read_raw	context	the counter's count from FPGA registers 0x16 to 0x12, offset by 0x555555
+0x410fa	function	int64_add	context	adds two 64-bit numbers
+0x4111e	function	int64_negate	context	negates a 64-bit number
+0x4119c	function	int64_to_double	context	a signed 64-bit number as a double, through 2^32 at 0x41300

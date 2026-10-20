@@ -91,9 +91,27 @@ The status model:
 A register, 16 bytes, has its parent register at `+0x0a` and the bit
 it reports into there at `+0x0e`, both set by `status_register_setup`
 from its entry; `+0x00`, `+0x06` and `+0x08` are cleared there and
-`+0x02` and `+0x04` set from the entry.  Which of these is the
-condition, event, enable and transition register of the SCPI model is
-not yet worked out.
+`+0x02` and `+0x04` set from the entry.  They are the SCPI model's
+words: `+0x00` the condition, `+0x02` the negative transition filter,
+`+0x04` the positive transition filter, `+0x06` the enable and `+0x08`
+the event.  `status_condition_set` (`0x27fe8`) makes events of the
+condition bits that rise through `+0x04`, `status_condition_clear`
+(`0x28044`) of those that fall through `+0x02`, and `status_propagate`
+(`0x280a4`) sets the parent's bit while the event and enable words
+share one.
+
+The seven registers, by the index the SCPI handlers pass, which the
+`:STATus` subtree's nodes carry at `+34`:
+
+| Register | SCPI |
+| -------- | ---- |
+| 0 | the Status Byte, `*STB?` and `*SRE` |
+| 1 | the Standard Event register, `*ESR?` and `*ESE` |
+| 2 | `:STATus:OPERation` |
+| 3 | `:STATus:QUEStionable` |
+| 4 | `:STATus:OPERation:POWERup` |
+| 5 | `:STATus:OPERation:HOLDover` |
+| 6 | `:STATus:OPERation:HARDware` |
 
 A condition, an entry of `status_conditions` (`0x2f838`), is 6 bytes:
 a kind, a register and a bit.  `status_set_bit` (`0x2820a`) looks the
@@ -369,8 +387,8 @@ second message, `es_message` (`0x103832`, `es_build` at `0x13a6a`):
 `%02d%03d%02d%02d%02d%02d%02X%02X` -- the year, day of the year, time,
 a leap value, status bits and `status_summary` -- as digits or, when
 the `es_ascii` console word has set `es_ascii` (`0x103830`), as ASCII.
-`status_summary` (`0x102544`) folds groups of status register 6's
-condition bits into six.
+`status_summary` (`0x102544`) folds groups of the
+`:STATus:OPERation:HARDware` condition bits, register 6, into six.
 
 **The 1PPS monitors** run in `hmon`.  `gps_pps_check` (`0x245a6`)
 counts the GPS 1PPS with the pulse accumulator `PACNT`: each check

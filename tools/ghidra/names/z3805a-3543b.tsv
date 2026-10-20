@@ -1052,3 +1052,30 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1dee6	function	scpi_port_open	context	opens the SCPI port, device 0
 0x29b42	function	scpi_session_init	context	clears the SCPI input, opens the port and prompts
 0x29d98	function	status_update_rqs	context	sets or clears RQS, 0x40, in the status byte from the service request enable
+#
+# routines several tasks share
+0x10c10	function	list_unlink	context	removes an item from a singly linked list; -2 if it is not there
+0x10c68	function	list_push	context	pushes an item onto a singly linked list
+0x10c34	function	klok_insert_sorted	context	inserts an entry into the clock list in time order
+0x10db6	function	is_leap_year	context	1 for a leap year, by the Gregorian rule
+0x11152	function	time_to_seconds	context	a packed time as seconds; the same code as hms_to_seconds, a second copy
+0x11428	function	datetime_subtract	context	subtracts a time from a date and time, borrowing through the date
+0x114b4	function	datetime_compare	context	compares two dates and times: by days, then by seconds
+0x11700	function	utc_to_local	context	applies nv_settings.time_zone's hours and minutes to a date and time
+0x13368	function	enter_supervisor_mode	context	C's wrapper for enter_supervisor
+0x1d680	function	duartb_putc_polled	context	waits for DUART channel B's transmitter and writes a character
+0x1eefc	function	fatal_error_with_code	context	a length-prefixed message and ", %08X" with a code, to fatal_error
+0x20d66	function	spoo_run	context	calls a function directly, or posts it to the spooler task's exchange while the spooler runs
+0x27fca	function	status_event_set	structures.md's status registers	ORs bits into a register's event word and propagates
+0x27fe8	function	status_condition_set	structures.md's status registers	sets condition bits; those rising through the positive transition mask become events
+0x28044	function	status_condition_clear	structures.md's status registers	clears condition bits; those falling through the negative transition mask become events
+0x280a4	function	status_propagate	structures.md's status registers	sets or clears a register's summary bit in its parent from its event and enable words
+0x282ce	function	status_apply_condition	structures.md's status registers	applies a condition by its kind: event set, condition set, condition clear, or the error queue
+0x285d4	function	error_queue_push	context	adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full
+0x288ee	function	error_message_lookup	context	an error code's message, from the table at 0x28910
+0x2f626	function	status_hardware_condition	structures.md's status registers	the :STATus:OPERation:HARDware condition, register 6, which status_summary folds
+0x29e3c	function	status_prompt_refresh	context	prompts again when the status object that changed is the main one; a method of the status output object
+0x3137a	function	log_page_checksum	context	an event log page's checksum: the sum of its 0x3c bytes and its complement
+0x313a4	function	log_page_write	context	writes an event log page to EEPROM at 0x400d40 if it has changed, its count incremented and checksummed
+0x31bf6	function	log_flush	context	writes the current event log page
+0x31c42	function	log_append	context	adds an entry with its date and time to the event log, writing the page; reports event space past 180 entries

@@ -629,13 +629,23 @@ view cannot drift apart.  The library, bottom up:
   without bound.
 - **Bench work:** the open items in `docs/hardware-investigations.md`,
   each with its TODO.
-- **Decompiled C: routines that are not C as assembly.**  A routine
-  whose convention is not C appears in
-  `third_party/firmware/decompiled/` as its disassembly, under its note
-  and convention line, unless C with `__naked` and gcc's `__asm("reg")`
-  parameters says it naturally.  A result in the condition codes, as
-  `forth_is_space` gives, is one it cannot.  Decided; not yet done
-  (`docs/firmware/README.md`, "Decompiling with Ghidra").
+- **Decompiled C that gcc compiles.**  The goal: the whole of
+  `third_party/firmware/decompiled/z3805a-3543b.c` compiles with
+  `m68k-linux-gnu-gcc -std=gnu17 -mcpu=cpu32 -fno-toplevel-reorder
+  -Wno-error=int-conversion -Wno-error=incompatible-pointer-types`,
+  and its assembly is the image's own bytes.  Done: every routine that
+  is not C is assembly, translated from Ghidra's operands, all 395 of
+  them the image's bytes with every relocation resolved at the image's
+  addresses (`make check-decompiled`); gcc's m68k port has no register
+  parameters, so C could not have said them.  Left: the C's calls whose
+  argument counts or results disagree with their callees' signatures,
+  some 225 errors, to be fixed in the names file's prototypes rather
+  than by loosening the compiler.  Known limits, by design: C calls the
+  assembly through `int NAME();`, which compiles but does not pass
+  register arguments, so the file is a compilable reference, not a
+  working rebuild; that would need bridges for each register
+  convention.  `bcdAdjust` is a stub, and the decompiler's views of
+  the caller's frame (`stack0x...`) are externs with no address.
 - **Editing notes from the web view**, through the daemon socket.
   Needs POST bodies in `smartclock-http`, `/api/notes` returning each
   note's `id`, and edit requests keyed by it.

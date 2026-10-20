@@ -252,10 +252,11 @@ below, which pins each argument's bytes in custom storage.
 
 ## Decompiling with Ghidra
 
-Five GhidraScripts in `tools/ghidra/` take an image imported raw at
+Six GhidraScripts in `tools/ghidra/` take an image imported raw at
 address zero as `68000:BE:32:CPU32` to C, under `analyzeHeadless
--postScript` or ghidra-mcp's `run_ghidra_script`.  Each is safe to run
-again.  In order:
+-postScript` or ghidra-mcp's `run_ghidra_script`.  Each is meant to be
+run again over its own earlier output; their dry-run modes cover only
+part of what they change.  In order:
 
 1. `SmartClockSetup.java`.
 2. `SmartClockInstaller.java RECORDS ENTRY`: `0xbbc 0x10135c` for the
@@ -355,21 +356,29 @@ JSON object a line for every function, its address, name, note and
 convention, with its lists split into register, type and name, or
 `"convention":"unknown"`.
 
-The exporter also rewrites the signature line of each function that is
-not C, so that the C says so as far as C can.  A macro for its kind
-leads it -- `__pforth`, `__regcall` (register routines and kernel
-services), `__exception`, or `__naked` for `other` and `undetermined` --
-each gcc's `__attribute__((naked))`, `__exception` with `interrupt` too,
-defined at the head of the file.  Each parameter in a register carries
-gcc's m68k `__asm("d0")`, where the convention is `run`, `read` or
-`documented`.  A comment after the line gives what C cannot say: its
-results, condition codes, errors and preserved registers.  Ghidra's
-"Unknown calling convention" warning is dropped from these; it remains
-on C functions whose narrow stack arguments were given storage of their
-own, where it means only that.
-
-    __regcall double scpi_double_multiply(double a __asm("d0"),double b __asm("d2")) /* out D0:D1 double; returns ccr; error D2 -2 underflow, D2 -1 overflow; preserves A0 */  `jq 'select(.convention != "unknown" and
-.confidence != "run")'` lists what is left to confirm.
+A function that is not C is not written as C.  Its decompiled C stays
+in the file for reading, under `#if 0`, its signature led by a macro
+for its kind (`__pforth`, `__regcall`, `__exception` or `__naked`), each
+parameter's register in a comment, and a comment line before it with
+what C cannot say: its results, condition codes, errors and preserved
+registers.  After it comes the routine itself as a top-level
+`__asm__`, translated from Ghidra's operands into gas's m68k syntax: a
+local label at each address in it an operand names, the routine or
+global at each address outside, and for any other address a symbol
+`__ghidra_ADDRESS` that `z3805a-3543b.symbols.ld` places, since gas
+gives a PC-relative operand its short form only against a symbol it
+does not know.  A short branch to another routine is its opcode byte
+and an explicit `R_68K_PC8` relocation, a few instructions gas cannot
+spell are their bytes, and a routine whose code lies about another's
+is in pieces, each a section `.text.NAME.ADDRESS`.  Each piece carries
+the bytes after it up to the next routine, at most 256, which are its
+tables.  C calls these routines through `int NAME();`.
+`tools/firmware/decompiled_check.py` (`make check-decompiled`)
+assembles them alone and compares every piece with the image, every
+relocated field resolved at the image's own addresses: all 395
+routines, in 413 pieces, are the image's bytes.  `jq 'select(.convention
+!= "unknown" and .confidence != "run")'` over the sidecar lists what is
+left to confirm.
 
 SCPI handlers are named `scpi_query_PATH` and `scpi_set_PATH`, console
 words `forth_WORD` and `diag_WORD`, and each has a note saying so -- the
@@ -421,7 +430,7 @@ primary keeps its own data there.
 (`console.md`, "The kernel's registers"): each function in the span of
 the `forth_` words that uses A6, A5, A4 or A3, and has no frame,
 takes those registers as parameters -- `sp`, `user`, `dp`, `input` --
-with `user` a pointer to the end of a `forth_user` structure, so
+with `user` a pointer to the end of a `forth_user_area` structure, so
 `*(A5 - 0xe)` reads as `ADJ(user)->base`.
 
 **StackParameters** gives functions the stack parameters their code
@@ -455,22 +464,27 @@ address passed to `%s` prints as a number, `printf("Copyright Notice:
 %s", 0x101059)` rather than `gps.receiver_id.copyright`, and a double
 as its two halves.
 
-5. `SmartClockStackParameters.java`.
-6. `SmartClockFormatStrings.java`.
-7. `SmartClockExportC.java FILE`.
-, in address order, after the
-program's structures (packed, as the image lays them out) and an
-`extern` for each named, typed global with its address, so the file
-stands alone: a global with a structure's type reads as `foo.bar`, a
-pointer to one as `foo->bar`.  The declarations compile, taking `long`
-as 32 bits, as on the 68000; a global still accessed as
-`DAT_00100c6e._2_1_` is a record that has no type yet.
+**ExportC** writes every function's C, in address order, after the
+program's structures (packed, as the image lays them out, enums too,
+each type's size asserted), the decompiler's own vocabulary (its
+`CONCAT`, `SUB`, `ZEXT` and `SEXT` operations, `code`, `undefined3`),
+an `extern` and a `.set` to its address for every global the C names,
+`volatile` in the peripherals' blocks, and a prototype for every
+function, so that the file stands alone for `m68k-linux-gnu-gcc
+-std=gnu17 -mcpu=cpu32 -fno-toplevel-reorder`: top-level order matters,
+since a routine can fall into the next.  A global with a structure's
+type reads as `foo.bar`, a pointer to one as `foo->bar`; a piece of a
+variable the decompiler writes as `x._4_4_` becomes a cast at its
+offset.  A thunk is a comment, since the decompiler gives it its
+target's name.  The C does not yet compile: the calls whose argument
+counts or results disagree with their callees' signatures are left
+(PLAN.md, "Next").
 
-In the Z3805A 3543B image this gives 1749 functions, and every one
-decompiles.  136 switches are recovered; `0x24ff2` and `0x25140`, a
+In the Z3805A 3543B image this gives 1752 functions, and every one but
+the ten thunks decompiles.  136 switches are recovered; `0x24ff2` and `0x25140`, a
 `jmp (d8,PC,D6.w)` with no table load, are not, and need not be: each
 enters an unrolled run of shifts part way, all of it code already
-(`docs/scpi/README.md`).  1749 of the functions are named.  The output
+(`docs/scpi/README.md`).  1752 of the functions are named.  The output
 is `third_party/firmware/decompiled/z3805a-3543b.c`.
 
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,

@@ -1461,7 +1461,7 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x1af8e	function	string_device_control	console.md	the console string device's control: sets the string console_read_from_string reads		convention=register; confidence=read; in=D2 char *string; out=D7 int error; family=device
 0x208fa	function	qspi_control	psos.md	the QSPI device's control: does nothing		convention=register; confidence=read; out=D7 int error; family=device
 0x208fe	function	qspi_open	psos.md	the QSPI device's open and close: do nothing		convention=register; confidence=read; out=D7 int error; family=device
-0x20ab0	function	qspi_write	psos.md	the QSPI device's write: queues for the QSPI, then runs the transfer		convention=register; confidence=read; in=D0 char device, A0 void *buffers, D2 short count; family=device
+0x20ab0	function	qspi_device_write	psos.md	the QSPI device's write: queues for the QSPI, then runs the transfer		convention=register; confidence=read; in=D0 char device, A0 void *buffers, D2 short count; family=device
 0x278f4	function	scpi_parameter_match	context	finds the next parameter descriptor that takes a parameter of the kind, marking optional ones it passes 0xffff
 0x2797a	function	scpi_parameters_finish	context	marks the descriptors left 0xffff, omitted, unless one is required
 0x27d80	function	scpi_header_resolve	context	resolves a command header to its node and handler, through defaults and numeric suffixes, and takes room for its parameters
@@ -1502,3 +1502,8 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 # setjmp's partner
 0x51100	function	longjmp	context	restores the registers setjmp saved, its status register through trap #1, and returns to its caller with the value given
 0x100c68	label	reference_valid_override_request	context	1 forces the GPS reference valid, 0xff invalid; gps_init clears it and no code sets it, so only a memory write, as from the pForth console, does
+#
+# pForth kernel subroutines Ghidra had not made functions
+0x19360	function	forth_resolve_forward	console.md	patches a forward branch at the address on the data stack to land here: its word before it gets here less it, plus 2; if, else, while		convention=pforth; confidence=read; preserves=all; family=pforth
+0x19688	function	forth_parse_create_header	console.md	forth_parse_word, then falls into forth_create_header, four bytes on		convention=pforth; confidence=read; in=D3; family=pforth
+0x1a01c	function	forth_pack_name	console.md	the first four characters of the word in pad, a NUL made a space, packed into D0 for the kernel		convention=pforth; confidence=read; out=D0 int name; family=pforth

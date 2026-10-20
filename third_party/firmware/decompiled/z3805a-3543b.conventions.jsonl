@@ -380,6 +380,7 @@
 {"address":"0001932c","name":"forth_depth","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019338","name":"forth_compile_code","note":"copies a run of code words into the dictionary, up to a zero","convention":"pforth","confidence":"read","in":[{"register":"A0"}],"family":"pforth"}
 {"address":"0001934e","name":"forth_resolve_branch","note":"patches a branch's offset; loop, until, again, repeat","convention":"pforth","confidence":"read","family":"pforth"}
+{"address":"00019360","name":"forth_resolve_forward","note":"patches a forward branch at the address on the data stack to land here: its word before it gets here less it, plus 2; if, else, while","convention":"pforth","confidence":"read","preserves":["all"],"family":"pforth"}
 {"address":"00019378","name":"forth_check_pairs","note":"\"ERROR: Mismatched \" and the word, then aborts, when a control word's tag does not match","convention":"pforth","confidence":"read","in":[{"register":"D0"}],"family":"pforth"}
 {"address":"0001938e","name":"forth_unlink_latest","note":"latest = *latest: drops the word being defined","convention":"pforth","confidence":"read","family":"pforth"}
 {"address":"0001943e","name":"forth_do","convention":"pforth","confidence":"assumed","family":"pforth"}
@@ -400,6 +401,7 @@
 {"address":"00019632","name":"forth_i","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019638","name":"forth_colon","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019652","name":"forth_semicolon","convention":"pforth","confidence":"assumed","family":"pforth"}
+{"address":"00019688","name":"forth_parse_create_header","note":"forth_parse_word, then falls into forth_create_header, four bytes on","convention":"pforth","confidence":"read","in":[{"register":"D3"}],"family":"pforth"}
 {"address":"0001968c","name":"forth_create_header","note":"links a new word to latest, with its name from pad","convention":"pforth","confidence":"read","family":"pforth"}
 {"address":"000196b8","name":"forth_variable","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"000196d8","name":"forth_create","convention":"pforth","confidence":"assumed","family":"pforth"}
@@ -472,6 +474,7 @@
 {"address":"00019e90","name":"forth_watch","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019ed0","name":"forth_psos_call","note":"the console words' service call, reporting an error","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"00019fa6","name":"forth_spawn","convention":"pforth","confidence":"assumed","family":"pforth"}
+{"address":"0001a01c","name":"forth_pack_name","note":"the first four characters of the word in pad, a NUL made a space, packed into D0 for the kernel","convention":"pforth","confidence":"read","out":[{"register":"D0","type":"int","name":"name"}],"family":"pforth"}
 {"address":"0001a03c","name":"forth_space_if_zero","note":"a zero byte, Z set, becomes a space; spawn pads a task's name with it","convention":"pforth","confidence":"read","in":[{"register":"D0"}],"family":"pforth"}
 {"address":"0001a056","name":"forth_ver","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001a08c","name":"forth_ident","convention":"pforth","confidence":"assumed","family":"pforth"}
@@ -692,7 +695,7 @@
 {"address":"00020972","name":"qspi_isr","note":"the transfer's end: copies the QSPI receive RAM out and hands the QSPI on","convention":"unknown"}
 {"address":"00020a10","name":"primary_user_65","convention":"exception","confidence":"derived","family":"exception"}
 {"address":"00020a62","name":"qspi_transfer_raw","note":"takes the QSPI and runs a transfer, D0 the device, A1 the buffers and D2 the count","convention":"register","confidence":"read","in":[{"register":"D0","type":"char","name":"device"},{"register":"A1","type":"void *","name":"buffers"},{"register":"D2","type":"short","name":"count"}],"family":"qspi"}
-{"address":"00020ab0","name":"qspi_write","note":"the QSPI device's write: queues for the QSPI, then runs the transfer","convention":"register","confidence":"read","in":[{"register":"D0","type":"char","name":"device"},{"register":"A0","type":"void *","name":"buffers"},{"register":"D2","type":"short","name":"count"}],"family":"device"}
+{"address":"00020ab0","name":"qspi_device_write","note":"the QSPI device's write: queues for the QSPI, then runs the transfer","convention":"register","confidence":"read","in":[{"register":"D0","type":"char","name":"device"},{"register":"A0","type":"void *","name":"buffers"},{"register":"D2","type":"short","name":"count"}],"family":"device"}
 {"address":"00020acc","name":"qspi_write","note":"psos_io_write to device 0x100 | n; hdac_write_all writes device 2, efc_write device 7","convention":"unknown"}
 {"address":"00020aec","name":"qspi_read","note":"psos_io_read to device 0x100 | n","convention":"unknown"}
 {"address":"00020b0c","name":"qspi_send","note":"qspi_transfer without the copy back from receive RAM","convention":"unknown"}

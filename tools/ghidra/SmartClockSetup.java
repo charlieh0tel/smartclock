@@ -484,7 +484,7 @@ public class SmartClockSetup extends GhidraScript {
 					}
 					Function function = getFunctionAt(address);
 					if (function != null) {
-						function.setComment(functionComment(fields, convention));
+						function.setComment(commentText(functionComment(fields, convention)));
 						record(function, convention.isEmpty() ? null : conventionJson(convention),
 							field(fields, NOTE_FIELD));
 						recordSignature(function, convention);
@@ -1037,11 +1037,11 @@ public class SmartClockSetup extends GhidraScript {
 			}
 			String existing = function.getComment();
 			if (existing == null) {
-				function.setComment(vectorComment(prefix, targets, vector, defaultHandler));
+				function.setComment(commentText(vectorComment(prefix, targets, vector, defaultHandler)));
 			}
 			else if (!existing.contains(NOT_C)) {
 				function.setComment(existing + "\n"
-					+ vectorComment(prefix, targets, vector, defaultHandler));
+					+ commentText(vectorComment(prefix, targets, vector, defaultHandler)));
 			}
 			if (propertyMap(CONVENTION_MAP).getString(function.getEntryPoint()) == null) {
 				record(function, EXCEPTION_CONVENTION, "");
@@ -1051,13 +1051,23 @@ public class SmartClockSetup extends GhidraScript {
 
 	/**
 	 * Gives the function at address the comment note, if it has none: a
-	 * name from the names file, applied first, keeps its own.
+	 * name from the names file, applied first, keeps its own.  One an
+	 * earlier run left with a bare comment end is written again.
 	 */
 	private void describe(Address address, String note) {
 		Function function = getFunctionAt(address);
-		if (function != null && function.getComment() == null) {
-			function.setComment(note);
+		if (function != null
+			&& (function.getComment() == null || function.getComment().contains(COMMENT_END))) {
+			function.setComment(commentText(note));
 		}
+	}
+
+	/** The end of a C comment, which a Forth word's name can hold: * / is one. */
+	private static final String COMMENT_END = "*/";
+
+	/** text with each comment end broken, so that the exported C's comment holds it. */
+	private static String commentText(String text) {
+		return text.replace(COMMENT_END, "*\\/");
 	}
 
 	/** The field at index, or "" past the row's end. */

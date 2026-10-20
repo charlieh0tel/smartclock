@@ -17,7 +17,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types clean deb release release-notes install-service
+.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types check-decompiled clean deb release release-notes install-service
 
 all: build
 
@@ -127,6 +127,12 @@ check-pages:
 M68K_CC ?= m68k-linux-gnu-gcc
 check-types:
 	$(M68K_CC) -mcpu=cpu32 -fsyntax-only tools/ghidra/types/check-layout.c
+
+# Fail if the decompiled C's assembly is not the image's own bytes.
+# Needs m68k binutils; not part of ci.
+check-decompiled:
+	python3 tools/firmware/decompiled_check.py \
+		third_party/firmware/decompiled/z3805a-3543b.c third_party/firmware/z3805a-3543b.bin
 
 clean:
 	$(CARGO) clean

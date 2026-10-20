@@ -63,7 +63,9 @@ public class SmartClockForth extends GhidraScript {
 	private record KernelRegister(String register, String name, DataType type) {}
 
 	private static final CategoryPath CATEGORY = new CategoryPath("/pforth");
-	private static final String USER_AREA = "forth_user";
+	private static final String USER_AREA = "forth_user_area";
+	/** The user area's earlier name, which the user word's routine, forth_user, shadowed in C. */
+	private static final String FORMER_USER_AREA = "forth_user";
 	private static final String USER_POINTER = "forth_user_end";
 	/** A5 points this far past the start of the user area. */
 	private static final int USER_AREA_SIZE = 0x28;
@@ -164,6 +166,10 @@ public class SmartClockForth extends GhidraScript {
 	/** The user area structure and the pointer to its end that A5 holds. */
 	private DataType userPointer() throws Exception {
 		DataTypeManager types = currentProgram.getDataTypeManager();
+		DataType former = types.getDataType(CATEGORY, FORMER_USER_AREA);
+		if (former != null && types.getDataType(CATEGORY, USER_AREA) == null) {
+			former.setName(USER_AREA);
+		}
 		StructureDataType area = new StructureDataType(CATEGORY, USER_AREA, USER_AREA_SIZE, types);
 		for (Field field : FIELDS) {
 			area.replaceAtOffset(field.offset(), field.type(), field.type().getLength(),

@@ -1,15 +1,188 @@
 /* z3805a-3543b.bin, 68000:BE:32:CPU32 */
 
 /*
- * A function that is not C has its signature rewritten: a macro for its
- * kind, gcc's m68k __asm("d0") on each parameter in a register where its
- * convention is trusted, and a comment after it for what C cannot say.
+ * A function that is not C is its decompiled C under #if 0, for
+ * reading, then the routine itself in assembly.  The macro for its
+ * kind leads the signature; each parameter's register is in a comment.
  * Its comment, and z3805a-3543b.conventions.jsonl, give the whole of it.
  */
 #define __naked     __attribute__((naked))
 #define __regcall   __naked  /* arguments and results in registers */
 #define __pforth    __naked  /* A6 data stack, A5 user area's end, A4 dictionary, A3 input */
 #define __exception __attribute__((naked, interrupt)) /* entered by the processor */
+
+/*
+ * The decompiler's vocabulary, for m68k-linux-gnu-gcc -std=gnu17.
+ * CONCATxy joins an x-byte and a y-byte value; SUBxy(v, n) is the
+ * y bytes of an x-byte value n bytes up from its least significant
+ * end, taken from its bits whatever its type.
+ */
+typedef unsigned int undefined3;
+typedef unsigned long long undefined5;
+typedef unsigned long long undefined7;
+typedef int int3;
+typedef unsigned int uint3;
+typedef long long int5;
+typedef long long int6;
+typedef long long int7;
+typedef unsigned long long uint5;
+typedef unsigned long long uint6;
+typedef unsigned long long uint7;
+typedef long long longlong;
+typedef unsigned long long ulonglong;
+typedef unsigned char unkfloat1;
+typedef unsigned short unkfloat2;
+typedef unsigned int unkfloat3;
+typedef unsigned long long unkfloat5;
+typedef unsigned long long unkfloat6;
+typedef unsigned long long unkfloat7;
+typedef int code();
+typedef _Bool bool;
+#define true 1
+#define false 0
+extern code *UNRECOVERED_JUMPTABLE;
+#define INFINITY __builtin_inff()
+#define NAN __builtin_nanf("")
+#define __ghidra_bits(v) ({ __typeof__(v) __v = (v); unsigned long long __b = 0; 	__builtin_memcpy((char *)&__b + sizeof __b - sizeof __v, &__v, sizeof __v); __b; })
+#define __ghidra_mask(n) ((n) >= 8 ? ~0ULL : (1ULL << (8 * (n))) - 1)
+#define __ghidra_concat(y, a, b) 	((__ghidra_bits(a) << (8 * (y))) | (__ghidra_bits(b) & __ghidra_mask(y)))
+#define __ghidra_sub(y, v, n) ((__ghidra_bits(v) >> (8 * (n))) & __ghidra_mask(y))
+#define CARRY1(a, b) ((unsigned char)((a) + (b)) < (unsigned char)(a))
+#define CARRY2(a, b) ((unsigned short)((a) + (b)) < (unsigned short)(a))
+#define CARRY4(a, b) ((unsigned int)((a) + (b)) < (unsigned int)(a))
+#define SCARRY1(a, b) ({ signed char __r; __builtin_add_overflow((signed char)(a), (signed char)(b), &__r); })
+#define SCARRY2(a, b) ({ short __r; __builtin_add_overflow((short)(a), (short)(b), &__r); })
+#define SCARRY4(a, b) ({ int __r; __builtin_add_overflow((int)(a), (int)(b), &__r); })
+#define SBORROW1(a, b) ({ signed char __r; __builtin_sub_overflow((signed char)(a), (signed char)(b), &__r); })
+#define SBORROW2(a, b) ({ short __r; __builtin_sub_overflow((short)(a), (short)(b), &__r); })
+#define SBORROW4(a, b) ({ int __r; __builtin_sub_overflow((int)(a), (int)(b), &__r); })
+#define __ghidra_piece(type, v, n) (*(type *)((char *)&(v) + (n)))
+typedef struct __attribute__((packed)) { unsigned int v : 24; } __ghidra_u3;
+typedef struct __attribute__((packed)) { unsigned long long v : 40; } __ghidra_u5;
+typedef struct __attribute__((packed)) { unsigned long long v : 48; } __ghidra_u6;
+typedef struct __attribute__((packed)) { unsigned long long v : 56; } __ghidra_u7;
+#define __m68k_trap(n) __asm__ volatile ("trap #" #n)
+static inline unsigned char bcdAdjust(unsigned char v) { return v; }
+#define CONCAT11(a, b) ((unsigned short)__ghidra_concat(1, a, b))
+#define SUB11(v, n) ((unsigned char)__ghidra_sub(1, v, n))
+#define CONCAT12(a, b) ((unsigned int)__ghidra_concat(2, a, b))
+#define ZEXT12(v) ((unsigned short)(unsigned char)(v))
+#define SEXT12(v) ((short)(signed char)(v))
+#define CONCAT13(a, b) ((unsigned int)__ghidra_concat(3, a, b))
+#define ZEXT13(v) ((unsigned int)(unsigned char)(v))
+#define SEXT13(v) ((int)(signed char)(v))
+#define CONCAT14(a, b) ((unsigned long long)__ghidra_concat(4, a, b))
+#define ZEXT14(v) ((unsigned int)(unsigned char)(v))
+#define SEXT14(v) ((int)(signed char)(v))
+#define CONCAT15(a, b) ((unsigned long long)__ghidra_concat(5, a, b))
+#define ZEXT15(v) ((unsigned long long)(unsigned char)(v))
+#define SEXT15(v) ((long long)(signed char)(v))
+#define CONCAT16(a, b) ((unsigned long long)__ghidra_concat(6, a, b))
+#define ZEXT16(v) ((unsigned long long)(unsigned char)(v))
+#define SEXT16(v) ((long long)(signed char)(v))
+#define CONCAT17(a, b) ((unsigned long long)__ghidra_concat(7, a, b))
+#define ZEXT17(v) ((unsigned long long)(unsigned char)(v))
+#define SEXT17(v) ((long long)(signed char)(v))
+#define ZEXT18(v) ((unsigned long long)(unsigned char)(v))
+#define SEXT18(v) ((long long)(signed char)(v))
+#define CONCAT21(a, b) ((unsigned int)__ghidra_concat(1, a, b))
+#define SUB21(v, n) ((unsigned char)__ghidra_sub(1, v, n))
+#define CONCAT22(a, b) ((unsigned int)__ghidra_concat(2, a, b))
+#define SUB22(v, n) ((unsigned short)__ghidra_sub(2, v, n))
+#define CONCAT23(a, b) ((unsigned long long)__ghidra_concat(3, a, b))
+#define ZEXT23(v) ((unsigned int)(unsigned short)(v))
+#define SEXT23(v) ((int)(short)(v))
+#define CONCAT24(a, b) ((unsigned long long)__ghidra_concat(4, a, b))
+#define ZEXT24(v) ((unsigned int)(unsigned short)(v))
+#define SEXT24(v) ((int)(short)(v))
+#define CONCAT25(a, b) ((unsigned long long)__ghidra_concat(5, a, b))
+#define ZEXT25(v) ((unsigned long long)(unsigned short)(v))
+#define SEXT25(v) ((long long)(short)(v))
+#define CONCAT26(a, b) ((unsigned long long)__ghidra_concat(6, a, b))
+#define ZEXT26(v) ((unsigned long long)(unsigned short)(v))
+#define SEXT26(v) ((long long)(short)(v))
+#define ZEXT27(v) ((unsigned long long)(unsigned short)(v))
+#define SEXT27(v) ((long long)(short)(v))
+#define ZEXT28(v) ((unsigned long long)(unsigned short)(v))
+#define SEXT28(v) ((long long)(short)(v))
+#define CONCAT31(a, b) ((unsigned int)__ghidra_concat(1, a, b))
+#define SUB31(v, n) ((unsigned char)__ghidra_sub(1, v, n))
+#define CONCAT32(a, b) ((unsigned long long)__ghidra_concat(2, a, b))
+#define SUB32(v, n) ((unsigned short)__ghidra_sub(2, v, n))
+#define CONCAT33(a, b) ((unsigned long long)__ghidra_concat(3, a, b))
+#define SUB33(v, n) ((unsigned int)__ghidra_sub(3, v, n))
+#define CONCAT34(a, b) ((unsigned long long)__ghidra_concat(4, a, b))
+#define ZEXT34(v) ((unsigned int)(unsigned int)(v))
+#define SEXT34(v) ((int)(int)(v))
+#define CONCAT35(a, b) ((unsigned long long)__ghidra_concat(5, a, b))
+#define ZEXT35(v) ((unsigned long long)(unsigned int)(v))
+#define SEXT35(v) ((long long)(int)(v))
+#define ZEXT36(v) ((unsigned long long)(unsigned int)(v))
+#define SEXT36(v) ((long long)(int)(v))
+#define ZEXT37(v) ((unsigned long long)(unsigned int)(v))
+#define SEXT37(v) ((long long)(int)(v))
+#define ZEXT38(v) ((unsigned long long)(unsigned int)(v))
+#define SEXT38(v) ((long long)(int)(v))
+#define CONCAT41(a, b) ((unsigned long long)__ghidra_concat(1, a, b))
+#define SUB41(v, n) ((unsigned char)__ghidra_sub(1, v, n))
+#define CONCAT42(a, b) ((unsigned long long)__ghidra_concat(2, a, b))
+#define SUB42(v, n) ((unsigned short)__ghidra_sub(2, v, n))
+#define CONCAT43(a, b) ((unsigned long long)__ghidra_concat(3, a, b))
+#define SUB43(v, n) ((unsigned int)__ghidra_sub(3, v, n))
+#define CONCAT44(a, b) ((unsigned long long)__ghidra_concat(4, a, b))
+#define SUB44(v, n) ((unsigned int)__ghidra_sub(4, v, n))
+#define ZEXT45(v) ((unsigned long long)(unsigned int)(v))
+#define SEXT45(v) ((long long)(int)(v))
+#define ZEXT46(v) ((unsigned long long)(unsigned int)(v))
+#define SEXT46(v) ((long long)(int)(v))
+#define ZEXT47(v) ((unsigned long long)(unsigned int)(v))
+#define SEXT47(v) ((long long)(int)(v))
+#define ZEXT48(v) ((unsigned long long)(unsigned int)(v))
+#define SEXT48(v) ((long long)(int)(v))
+#define CONCAT51(a, b) ((unsigned long long)__ghidra_concat(1, a, b))
+#define SUB51(v, n) ((unsigned char)__ghidra_sub(1, v, n))
+#define CONCAT52(a, b) ((unsigned long long)__ghidra_concat(2, a, b))
+#define SUB52(v, n) ((unsigned short)__ghidra_sub(2, v, n))
+#define CONCAT53(a, b) ((unsigned long long)__ghidra_concat(3, a, b))
+#define SUB53(v, n) ((unsigned int)__ghidra_sub(3, v, n))
+#define SUB54(v, n) ((unsigned int)__ghidra_sub(4, v, n))
+#define SUB55(v, n) ((unsigned long long)__ghidra_sub(5, v, n))
+#define ZEXT56(v) ((unsigned long long)(unsigned long long)(v))
+#define SEXT56(v) ((long long)(long long)(v))
+#define ZEXT57(v) ((unsigned long long)(unsigned long long)(v))
+#define SEXT57(v) ((long long)(long long)(v))
+#define ZEXT58(v) ((unsigned long long)(unsigned long long)(v))
+#define SEXT58(v) ((long long)(long long)(v))
+#define CONCAT61(a, b) ((unsigned long long)__ghidra_concat(1, a, b))
+#define SUB61(v, n) ((unsigned char)__ghidra_sub(1, v, n))
+#define CONCAT62(a, b) ((unsigned long long)__ghidra_concat(2, a, b))
+#define SUB62(v, n) ((unsigned short)__ghidra_sub(2, v, n))
+#define SUB63(v, n) ((unsigned int)__ghidra_sub(3, v, n))
+#define SUB64(v, n) ((unsigned int)__ghidra_sub(4, v, n))
+#define SUB65(v, n) ((unsigned long long)__ghidra_sub(5, v, n))
+#define SUB66(v, n) ((unsigned long long)__ghidra_sub(6, v, n))
+#define ZEXT67(v) ((unsigned long long)(unsigned long long)(v))
+#define SEXT67(v) ((long long)(long long)(v))
+#define ZEXT68(v) ((unsigned long long)(unsigned long long)(v))
+#define SEXT68(v) ((long long)(long long)(v))
+#define CONCAT71(a, b) ((unsigned long long)__ghidra_concat(1, a, b))
+#define SUB71(v, n) ((unsigned char)__ghidra_sub(1, v, n))
+#define SUB72(v, n) ((unsigned short)__ghidra_sub(2, v, n))
+#define SUB73(v, n) ((unsigned int)__ghidra_sub(3, v, n))
+#define SUB74(v, n) ((unsigned int)__ghidra_sub(4, v, n))
+#define SUB75(v, n) ((unsigned long long)__ghidra_sub(5, v, n))
+#define SUB76(v, n) ((unsigned long long)__ghidra_sub(6, v, n))
+#define SUB77(v, n) ((unsigned long long)__ghidra_sub(7, v, n))
+#define ZEXT78(v) ((unsigned long long)(unsigned long long)(v))
+#define SEXT78(v) ((long long)(long long)(v))
+#define SUB81(v, n) ((unsigned char)__ghidra_sub(1, v, n))
+#define SUB82(v, n) ((unsigned short)__ghidra_sub(2, v, n))
+#define SUB83(v, n) ((unsigned int)__ghidra_sub(3, v, n))
+#define SUB84(v, n) ((unsigned int)__ghidra_sub(4, v, n))
+#define SUB85(v, n) ((unsigned long long)__ghidra_sub(5, v, n))
+#define SUB86(v, n) ((unsigned long long)__ghidra_sub(6, v, n))
+#define SUB87(v, n) ((unsigned long long)__ghidra_sub(7, v, n))
+#define SUB88(v, n) ((unsigned long long)__ghidra_sub(8, v, n))
 
 #pragma pack(push, 1)
 typedef unsigned char   undefined;
@@ -26,7 +199,7 @@ typedef unsigned long long    undefined6;
 typedef unsigned long long    undefined8;
 typedef unsigned short    ushort;
 typedef unsigned short    word;
-typedef enum adc_channel {
+typedef enum __attribute__((packed)) adc_channel {
     ADC_TEMPERATURE=0,
     ADC_DOUBLE_OVEN=1,
     ADC_PLUS_15V=2,
@@ -58,7 +231,7 @@ struct counter_configuration_fields {
     int32_t interpolator_scale;
 };
 
-typedef enum counter_error {
+typedef enum __attribute__((packed)) counter_error {
     COUNTER_GATE_FAILURE=1,
     COUNTER_RESULT_UNCOMPUTABLE=4,
     COUNTER_MEASUREMENT_ABORTED=8,
@@ -105,9 +278,9 @@ struct exception_record {
     uint32_t address;
 };
 
-typedef struct forth_user forth_user, *Pforth_user;
+typedef struct forth_user_area forth_user_area, *Pforth_user_area;
 
-struct forth_user {
+struct forth_user_area {
     short iodev;
     undefined4 field1_0x2; /* not known */
     char *pad;
@@ -121,7 +294,7 @@ struct forth_user {
     void *return_stack_base;
 };
 
-typedef struct forth_user *forth_user_end;
+typedef struct forth_user_area *forth_user_end;
 
 typedef struct fpga_bit fpga_bit, *Pfpga_bit;
 
@@ -142,7 +315,7 @@ typedef struct oncore_date_fields oncore_date_fields, *Poncore_date_fields;
 
 typedef struct oncore_position_fields oncore_position_fields, *Poncore_position_fields;
 
-typedef enum oncore_xdop_type {
+typedef enum __attribute__((packed)) oncore_xdop_type {
     ONCORE_XDOP_GDOP=0,
     ONCORE_XDOP_PDOP=1,
     ONCORE_XDOP_HDOP=2,
@@ -152,7 +325,7 @@ typedef enum oncore_xdop_type {
 
 typedef struct oncore_hold_position_fields oncore_hold_position_fields, *Poncore_hold_position_fields;
 
-typedef enum oncore_time_mode {
+typedef enum __attribute__((packed)) oncore_time_mode {
     ONCORE_TIME_GPS=0,
     ONCORE_TIME_UTC=1
 } oncore_time_mode;
@@ -169,7 +342,7 @@ typedef struct oncore_corrections_fields oncore_corrections_fields, *Poncore_cor
 
 typedef struct oncore_raim_fields oncore_raim_fields, *Poncore_raim_fields;
 
-typedef enum oncore_leap_pending {
+typedef enum __attribute__((packed)) oncore_leap_pending {
     ONCORE_NO_LEAP_SECOND=0,
     ONCORE_LEAP_SECOND_ADD=1,
     ONCORE_LEAP_SECOND_SUBTRACT=2
@@ -177,7 +350,7 @@ typedef enum oncore_leap_pending {
 
 typedef struct oncore_extension_fields oncore_extension_fields, *Poncore_extension_fields;
 
-typedef enum oncore_fix_mode {
+typedef enum __attribute__((packed)) oncore_fix_mode {
     ONCORE_IDLE=0,
     ONCORE_POSITION_FIX=1
 } oncore_fix_mode;
@@ -186,7 +359,7 @@ typedef struct oncore_receiver_id oncore_receiver_id, *Poncore_receiver_id;
 
 typedef sbyte int8_t;
 
-typedef enum oncore_dop_type {
+typedef enum __attribute__((packed)) oncore_dop_type {
     ONCORE_DOP_PDOP=0,
     ONCORE_DOP_HDOP=1
 } oncore_dop_type;
@@ -201,25 +374,25 @@ typedef struct oncore_almanac oncore_almanac, *Poncore_almanac;
 
 typedef struct oncore_correction_channel oncore_correction_channel, *Poncore_correction_channel;
 
-typedef enum oncore_pps_mode {
+typedef enum __attribute__((packed)) oncore_pps_mode {
     ONCORE_PPS_OFF=0,
     ONCORE_PPS_ON=1,
     ONCORE_PPS_WHEN_TRACKING=2,
     ONCORE_PPS_WHEN_RAIM_OK=3
 } oncore_pps_mode;
 
-typedef enum oncore_pulse_sync {
+typedef enum __attribute__((packed)) oncore_pulse_sync {
     ONCORE_PULSE_UTC=0,
     ONCORE_PULSE_GPS=1
 } oncore_pulse_sync;
 
-typedef enum oncore_raim_solution {
+typedef enum __attribute__((packed)) oncore_raim_solution {
     ONCORE_RAIM_OK=0,
     ONCORE_RAIM_ALARM=1,
     ONCORE_RAIM_UNKNOWN=2
 } oncore_raim_solution;
 
-typedef enum oncore_raim_status {
+typedef enum __attribute__((packed)) oncore_raim_status {
     ONCORE_RAIM_DETECT_AND_ISOLATE=0,
     ONCORE_RAIM_DETECT_ONLY=1,
     ONCORE_RAIM_NEITHER=2
@@ -227,7 +400,7 @@ typedef enum oncore_raim_status {
 
 typedef struct oncore_raim_channel oncore_raim_channel, *Poncore_raim_channel;
 
-typedef enum oncore_channel_mode {
+typedef enum __attribute__((packed)) oncore_channel_mode {
     ONCORE_CODE_SEARCH=0,
     ONCORE_CODE_ACQUIRE=1,
     ONCORE_AGC_SET=2,
@@ -239,7 +412,7 @@ typedef enum oncore_channel_mode {
     ONCORE_AVAILABLE_FOR_POSITION=8
 } oncore_channel_mode;
 
-typedef enum oncore_health {
+typedef enum __attribute__((packed)) oncore_health {
     ONCORE_HEALTHY=0,
     ONCORE_HEALTHY_REMOVED=1,
     ONCORE_UNHEALTHY=2,
@@ -665,7 +838,7 @@ struct nv_settings_fields {
     uint8_t debug_output;
 };
 
-typedef enum pll_hold_cause {
+typedef enum __attribute__((packed)) pll_hold_cause {
     HOLD_CAUSE_MANUAL=1,
     HOLD_CAUSE_GPS=2,
     HOLD_CAUSE_TI_ERROR=4,
@@ -676,7 +849,7 @@ typedef enum pll_hold_cause {
     HOLD_CAUSE_GPS_COMMAND_MONITOR=128
 } pll_hold_cause;
 
-typedef enum pll_stage {
+typedef enum __attribute__((packed)) pll_stage {
     PLL_STAGE_INVALID=0,
     PLL_STAGE_POWERUP=1,
     PLL_STAGE_POWERUP_RECOVERY=2,
@@ -756,13 +929,13 @@ struct pll_state {
     uint8_t field_3d5;
 };
 
-typedef enum satellite_kind {
+typedef enum __attribute__((packed)) satellite_kind {
     SATELLITE_GPS=0,
     SATELLITE_PSEUDOLITE=1,
     SATELLITE_ANY=2
 } satellite_kind;
 
-typedef enum satellite_list {
+typedef enum __attribute__((packed)) satellite_list {
     SATELLITE_LIST_TRACKING=0,
     SATELLITE_LIST_TRACKING_PSEUDOLITES=1,
     SATELLITE_LIST_VISIBLE=2,
@@ -771,7 +944,7 @@ typedef enum satellite_list {
 
 typedef struct scpi_numeric_param scpi_numeric_param, *Pscpi_numeric_param;
 
-typedef enum scpi_param_type {
+typedef enum __attribute__((packed)) scpi_param_type {
     SCPI_PARAM_NUMERIC=0,
     SCPI_PARAM_SETTING=1
 } scpi_param_type;
@@ -844,6 +1017,64 @@ struct status_model {
 };
 
 #pragma pack(pop)
+
+/* each type's size in the image, which gcc's layout must give */
+_Static_assert(sizeof(adc_channel) == 1, "adc_channel");
+_Static_assert(sizeof(counter_configuration_fields) == 32, "counter_configuration_fields");
+_Static_assert(sizeof(counter_error) == 1, "counter_error");
+_Static_assert(sizeof(efc_ring) == 870, "efc_ring");
+_Static_assert(sizeof(exception_record) == 18, "exception_record");
+_Static_assert(sizeof(forth_user_area) == 40, "forth_user_area");
+_Static_assert(sizeof(fpga_bit) == 4, "fpga_bit");
+_Static_assert(sizeof(gps_state) == 1370, "gps_state");
+_Static_assert(sizeof(gps_statistics) == 54, "gps_statistics");
+_Static_assert(sizeof(interpolator_calibration) == 9, "interpolator_calibration");
+_Static_assert(sizeof(interval_reading_fields) == 13, "interval_reading_fields");
+_Static_assert(sizeof(klok_entry) == 26, "klok_entry");
+_Static_assert(sizeof(log_entry) == 20, "log_entry");
+_Static_assert(sizeof(log_page) == 64, "log_page");
+_Static_assert(sizeof(nv_settings_fields) == 197, "nv_settings_fields");
+_Static_assert(sizeof(oncore_almanac) == 8, "oncore_almanac");
+_Static_assert(sizeof(oncore_almanac_status_fields) == 16, "oncore_almanac_status_fields");
+_Static_assert(sizeof(oncore_channel_mode) == 1, "oncore_channel_mode");
+_Static_assert(sizeof(oncore_channel_status) == 4, "oncore_channel_status");
+_Static_assert(sizeof(oncore_correction_channel) == 10, "oncore_correction_channel");
+_Static_assert(sizeof(oncore_corrections_fields) == 64, "oncore_corrections_fields");
+_Static_assert(sizeof(oncore_date_fields) == 4, "oncore_date_fields");
+_Static_assert(sizeof(oncore_dop_type) == 1, "oncore_dop_type");
+_Static_assert(sizeof(oncore_extension_fields) == 62, "oncore_extension_fields");
+_Static_assert(sizeof(oncore_fix_mode) == 1, "oncore_fix_mode");
+_Static_assert(sizeof(oncore_gmt_offset_fields) == 3, "oncore_gmt_offset_fields");
+_Static_assert(sizeof(oncore_health) == 1, "oncore_health");
+_Static_assert(sizeof(oncore_hold_position_fields) == 12, "oncore_hold_position_fields");
+_Static_assert(sizeof(oncore_leap_pending) == 1, "oncore_leap_pending");
+_Static_assert(sizeof(oncore_position_fields) == 16, "oncore_position_fields");
+_Static_assert(sizeof(oncore_pps_mode) == 1, "oncore_pps_mode");
+_Static_assert(sizeof(oncore_pulse_sync) == 1, "oncore_pulse_sync");
+_Static_assert(sizeof(oncore_raim_channel) == 6, "oncore_raim_channel");
+_Static_assert(sizeof(oncore_raim_fields) == 63, "oncore_raim_fields");
+_Static_assert(sizeof(oncore_raim_solution) == 1, "oncore_raim_solution");
+_Static_assert(sizeof(oncore_raim_status) == 1, "oncore_raim_status");
+_Static_assert(sizeof(oncore_receiver_id) == 277, "oncore_receiver_id");
+_Static_assert(sizeof(oncore_status_fields) == 63, "oncore_status_fields");
+_Static_assert(sizeof(oncore_time_fields) == 3, "oncore_time_fields");
+_Static_assert(sizeof(oncore_time_mode) == 1, "oncore_time_mode");
+_Static_assert(sizeof(oncore_visibility_fields) == 122, "oncore_visibility_fields");
+_Static_assert(sizeof(oncore_visible_satellite) == 10, "oncore_visible_satellite");
+_Static_assert(sizeof(oncore_xdop_combination) == 8, "oncore_xdop_combination");
+_Static_assert(sizeof(oncore_xdop_table_fields) == 75, "oncore_xdop_table_fields");
+_Static_assert(sizeof(oncore_xdop_type) == 1, "oncore_xdop_type");
+_Static_assert(sizeof(pll_hold_cause) == 1, "pll_hold_cause");
+_Static_assert(sizeof(pll_stage) == 1, "pll_stage");
+_Static_assert(sizeof(pll_state) == 982, "pll_state");
+_Static_assert(sizeof(satellite_kind) == 1, "satellite_kind");
+_Static_assert(sizeof(satellite_list) == 1, "satellite_list");
+_Static_assert(sizeof(scpi_numeric_param) == 44, "scpi_numeric_param");
+_Static_assert(sizeof(scpi_param_type) == 1, "scpi_param_type");
+_Static_assert(sizeof(scpi_setting_param) == 28, "scpi_setting_param");
+_Static_assert(sizeof(status_condition) == 6, "status_condition");
+_Static_assert(sizeof(status_model) == 46, "status_model");
+_Static_assert(sizeof(status_register) == 16, "status_register");
 
 extern void *boot_vectors; /* 00000000 */
 extern void *primary_vectors; /* 00010000 */
@@ -1024,113 +1255,4988 @@ extern uint32_t rand_seed; /* 00103936 */
 extern int32_t errno; /* 0010393a */
 extern void * qsort_compare; /* 00103940 */
 extern uint32_t qsort_size; /* 00103944 */
-extern byte DUART_MR1A_MR2A; /* 00200001 */
-extern byte DUART_SRA_CSRA; /* 00200003 */
-extern byte DUART_CRA; /* 00200005 */
-extern byte DUART_RBA_TBA; /* 00200007 */
-extern byte DUART_IPCR_ACR; /* 00200009 */
-extern byte DUART_ISR_IMR; /* 0020000b */
-extern byte DUART_CUR_CTUR; /* 0020000d */
-extern byte DUART_CLR_CTLR; /* 0020000f */
-extern byte DUART_MR1B_MR2B; /* 00200011 */
-extern byte DUART_SRB_CSRB; /* 00200013 */
-extern byte DUART_CRB; /* 00200015 */
-extern byte DUART_RBB_TBB; /* 00200017 */
-extern byte DUART_IVR; /* 00200019 */
-extern byte DUART_IP_OPCR; /* 0020001b */
-extern byte DUART_START_SOPBC; /* 0020001d */
-extern byte DUART_STOP_ROPBC; /* 0020001f */
-extern word GPTMCR; /* 00fff900 */
-extern word GPT_ICR; /* 00fff904 */
-extern byte DDRGP; /* 00fff906 */
-extern byte PORTGP; /* 00fff907 */
-extern byte OC1M; /* 00fff908 */
-extern byte OC1D; /* 00fff909 */
-extern word TCNT; /* 00fff90a */
-extern byte PACTL; /* 00fff90c */
-extern byte PACNT; /* 00fff90d */
-extern word TIC1; /* 00fff90e */
-extern word TIC2; /* 00fff910 */
-extern word TIC3; /* 00fff912 */
-extern word TOC1; /* 00fff914 */
-extern word TOC2; /* 00fff916 */
-extern word TOC3; /* 00fff918 */
-extern word TOC4; /* 00fff91a */
-extern word TI4_O5; /* 00fff91c */
-extern byte TCTL1; /* 00fff91e */
-extern byte TCTL2; /* 00fff91f */
-extern byte TMSK1; /* 00fff920 */
-extern byte TMSK2; /* 00fff921 */
-extern byte TFLG1; /* 00fff922 */
-extern byte TFLG2; /* 00fff923 */
-extern byte CFORC; /* 00fff924 */
-extern byte PWMC; /* 00fff925 */
-extern byte PWMA; /* 00fff926 */
-extern byte PWMB; /* 00fff927 */
-extern word PWMCNT; /* 00fff928 */
-extern byte PWMBUFA; /* 00fff92a */
-extern byte PWMBUFB; /* 00fff92b */
-extern word PRESCL; /* 00fff92c */
-extern word SIMCR; /* 00fffa00 */
-extern word SIMTR; /* 00fffa02 */
-extern word SYNCR; /* 00fffa04 */
-extern byte RSR; /* 00fffa07 */
-extern word SIMTRE; /* 00fffa08 */
-extern byte PORTE0; /* 00fffa11 */
-extern byte PORTE1; /* 00fffa13 */
-extern byte DDRE; /* 00fffa15 */
-extern byte PEPAR; /* 00fffa17 */
-extern byte PORTF0; /* 00fffa19 */
-extern byte PORTF1; /* 00fffa1b */
-extern byte DDRF; /* 00fffa1d */
-extern byte PFPAR; /* 00fffa1f */
-extern byte SYPCR; /* 00fffa21 */
-extern word PICR; /* 00fffa22 */
-extern word PITR; /* 00fffa24 */
-extern byte SWSR; /* 00fffa27 */
-extern byte PORTC; /* 00fffa41 */
-extern word CSPAR0; /* 00fffa44 */
-extern word CSPAR1; /* 00fffa46 */
-extern word CSBARBT; /* 00fffa48 */
-extern word CSORBT; /* 00fffa4a */
-extern word CSBAR0; /* 00fffa4c */
-extern word CSOR0; /* 00fffa4e */
-extern word CSBAR1; /* 00fffa50 */
-extern word CSOR1; /* 00fffa52 */
-extern word CSBAR2; /* 00fffa54 */
-extern word CSOR2; /* 00fffa56 */
-extern word CSBAR3; /* 00fffa58 */
-extern word CSOR3; /* 00fffa5a */
-extern word CSBAR4; /* 00fffa5c */
-extern word CSOR4; /* 00fffa5e */
-extern word CSBAR5; /* 00fffa60 */
-extern word CSOR5; /* 00fffa62 */
-extern word CSBAR6; /* 00fffa64 */
-extern word CSOR6; /* 00fffa66 */
-extern word CSBAR7; /* 00fffa68 */
-extern word CSOR7; /* 00fffa6a */
-extern word CSBAR8; /* 00fffa6c */
-extern word CSOR8; /* 00fffa6e */
-extern word CSBAR9; /* 00fffa70 */
-extern word CSOR9; /* 00fffa72 */
-extern word CSBAR10; /* 00fffa74 */
-extern word CSOR10; /* 00fffa76 */
-extern word QSMCR; /* 00fffc00 */
-extern word QTEST; /* 00fffc02 */
-extern byte QILR; /* 00fffc04 */
-extern byte QIVR; /* 00fffc05 */
-extern word SCCR0; /* 00fffc08 */
-extern word SCCR1; /* 00fffc0a */
-extern word SCSR; /* 00fffc0c */
-extern word SCDR; /* 00fffc0e */
-extern byte PORTQS; /* 00fffc15 */
-extern byte PQSPAR; /* 00fffc16 */
-extern byte DDRQS; /* 00fffc17 */
-extern word SPCR0; /* 00fffc18 */
-extern word SPCR1; /* 00fffc1a */
-extern word SPCR2; /* 00fffc1c */
-extern byte SPCR3; /* 00fffc1e */
-extern byte SPSR; /* 00fffc1f */
+extern volatile byte DUART_MR1A_MR2A; /* 00200001 */
+extern volatile byte DUART_SRA_CSRA; /* 00200003 */
+extern volatile byte DUART_CRA; /* 00200005 */
+extern volatile byte DUART_RBA_TBA; /* 00200007 */
+extern volatile byte DUART_IPCR_ACR; /* 00200009 */
+extern volatile byte DUART_ISR_IMR; /* 0020000b */
+extern volatile byte DUART_CUR_CTUR; /* 0020000d */
+extern volatile byte DUART_CLR_CTLR; /* 0020000f */
+extern volatile byte DUART_MR1B_MR2B; /* 00200011 */
+extern volatile byte DUART_SRB_CSRB; /* 00200013 */
+extern volatile byte DUART_CRB; /* 00200015 */
+extern volatile byte DUART_RBB_TBB; /* 00200017 */
+extern volatile byte DUART_IVR; /* 00200019 */
+extern volatile byte DUART_IP_OPCR; /* 0020001b */
+extern volatile byte DUART_START_SOPBC; /* 0020001d */
+extern volatile byte DUART_STOP_ROPBC; /* 0020001f */
+extern volatile word GPTMCR; /* 00fff900 */
+extern volatile word GPT_ICR; /* 00fff904 */
+extern volatile byte DDRGP; /* 00fff906 */
+extern volatile byte PORTGP; /* 00fff907 */
+extern volatile byte OC1M; /* 00fff908 */
+extern volatile byte OC1D; /* 00fff909 */
+extern volatile word TCNT; /* 00fff90a */
+extern volatile byte PACTL; /* 00fff90c */
+extern volatile byte PACNT; /* 00fff90d */
+extern volatile word TIC1; /* 00fff90e */
+extern volatile word TIC2; /* 00fff910 */
+extern volatile word TIC3; /* 00fff912 */
+extern volatile word TOC1; /* 00fff914 */
+extern volatile word TOC2; /* 00fff916 */
+extern volatile word TOC3; /* 00fff918 */
+extern volatile word TOC4; /* 00fff91a */
+extern volatile word TI4_O5; /* 00fff91c */
+extern volatile byte TCTL1; /* 00fff91e */
+extern volatile byte TCTL2; /* 00fff91f */
+extern volatile byte TMSK1; /* 00fff920 */
+extern volatile byte TMSK2; /* 00fff921 */
+extern volatile byte TFLG1; /* 00fff922 */
+extern volatile byte TFLG2; /* 00fff923 */
+extern volatile byte CFORC; /* 00fff924 */
+extern volatile byte PWMC; /* 00fff925 */
+extern volatile byte PWMA; /* 00fff926 */
+extern volatile byte PWMB; /* 00fff927 */
+extern volatile word PWMCNT; /* 00fff928 */
+extern volatile byte PWMBUFA; /* 00fff92a */
+extern volatile byte PWMBUFB; /* 00fff92b */
+extern volatile word PRESCL; /* 00fff92c */
+extern volatile word SIMCR; /* 00fffa00 */
+extern volatile word SIMTR; /* 00fffa02 */
+extern volatile word SYNCR; /* 00fffa04 */
+extern volatile byte RSR; /* 00fffa07 */
+extern volatile word SIMTRE; /* 00fffa08 */
+extern volatile byte PORTE0; /* 00fffa11 */
+extern volatile byte PORTE1; /* 00fffa13 */
+extern volatile byte DDRE; /* 00fffa15 */
+extern volatile byte PEPAR; /* 00fffa17 */
+extern volatile byte PORTF0; /* 00fffa19 */
+extern volatile byte PORTF1; /* 00fffa1b */
+extern volatile byte DDRF; /* 00fffa1d */
+extern volatile byte PFPAR; /* 00fffa1f */
+extern volatile byte SYPCR; /* 00fffa21 */
+extern volatile word PICR; /* 00fffa22 */
+extern volatile word PITR; /* 00fffa24 */
+extern volatile byte SWSR; /* 00fffa27 */
+extern volatile byte PORTC; /* 00fffa41 */
+extern volatile word CSPAR0; /* 00fffa44 */
+extern volatile word CSPAR1; /* 00fffa46 */
+extern volatile word CSBARBT; /* 00fffa48 */
+extern volatile word CSORBT; /* 00fffa4a */
+extern volatile word CSBAR0; /* 00fffa4c */
+extern volatile word CSOR0; /* 00fffa4e */
+extern volatile word CSBAR1; /* 00fffa50 */
+extern volatile word CSOR1; /* 00fffa52 */
+extern volatile word CSBAR2; /* 00fffa54 */
+extern volatile word CSOR2; /* 00fffa56 */
+extern volatile word CSBAR3; /* 00fffa58 */
+extern volatile word CSOR3; /* 00fffa5a */
+extern volatile word CSBAR4; /* 00fffa5c */
+extern volatile word CSOR4; /* 00fffa5e */
+extern volatile word CSBAR5; /* 00fffa60 */
+extern volatile word CSOR5; /* 00fffa62 */
+extern volatile word CSBAR6; /* 00fffa64 */
+extern volatile word CSOR6; /* 00fffa66 */
+extern volatile word CSBAR7; /* 00fffa68 */
+extern volatile word CSOR7; /* 00fffa6a */
+extern volatile word CSBAR8; /* 00fffa6c */
+extern volatile word CSOR8; /* 00fffa6e */
+extern volatile word CSBAR9; /* 00fffa70 */
+extern volatile word CSOR9; /* 00fffa72 */
+extern volatile word CSBAR10; /* 00fffa74 */
+extern volatile word CSOR10; /* 00fffa76 */
+extern volatile word QSMCR; /* 00fffc00 */
+extern volatile word QTEST; /* 00fffc02 */
+extern volatile byte QILR; /* 00fffc04 */
+extern volatile byte QIVR; /* 00fffc05 */
+extern volatile word SCCR0; /* 00fffc08 */
+extern volatile word SCCR1; /* 00fffc0a */
+extern volatile word SCSR; /* 00fffc0c */
+extern volatile word SCDR; /* 00fffc0e */
+extern volatile byte PORTQS; /* 00fffc15 */
+extern volatile byte PQSPAR; /* 00fffc16 */
+extern volatile byte DDRQS; /* 00fffc17 */
+extern volatile word SPCR0; /* 00fffc18 */
+extern volatile word SPCR1; /* 00fffc1a */
+extern volatile word SPCR2; /* 00fffc1c */
+extern volatile byte SPCR3; /* 00fffc1e */
+extern volatile byte SPSR; /* 00fffc1f */
+
+#define ADJ(p) _Generic((p), forth_user_end: (forth_user_area *)((char *)(p) - 40))
+
+extern undefined DAT_00001388; /* 00001388 */
+extern undefined DAT_00002580; /* 00002580 */
+extern undefined DAT_000028f5; /* 000028f5 */
+extern undefined DAT_00003c19; /* 00003c19 */
+extern undefined DAT_00004b00; /* 00004b00 */
+extern undefined DAT_0000ea60; /* 0000ea60 */
+extern undefined1 DAT_00010cb0; /* 00010cb0 */
+extern undefined1 DAT_00010cca; /* 00010cca */
+extern undefined2 DAT_0001186c; /* 0001186c */
+extern undefined DAT_00011882; /* 00011882 */
+extern undefined2 DAT_00011884; /* 00011884 */
+extern undefined DAT_0001189c; /* 0001189c */
+extern undefined DAT_0001234c; /* 0001234c */
+extern undefined4 DAT_00012614; /* 00012614 */
+extern undefined4 DAT_00012618; /* 00012618 */
+extern undefined4 DAT_00012704; /* 00012704 */
+extern undefined4 DAT_000129fc; /* 000129fc */
+extern undefined4 DAT_00012a74; /* 00012a74 */
+extern undefined4 DAT_00012ab0; /* 00012ab0 */
+extern undefined DAT_00017fe0; /* 00017fe0 */
+extern undefined DAT_0001ed2c; /* 0001ed2c */
+extern undefined DAT_00020336; /* 00020336 */
+extern undefined DAT_00021e3b; /* 00021e3b */
+extern undefined DAT_00021e48; /* 00021e48 */
+extern undefined2 DAT_00025c82; /* 00025c82 */
+extern undefined DAT_000279ca; /* 000279ca */
+extern undefined2 DAT_00027b2e; /* 00027b2e */
+extern undefined2 DAT_00028910; /* 00028910 */
+extern undefined DAT_00029636; /* 00029636 */
+extern undefined DAT_0002963a; /* 0002963a */
+extern undefined DAT_0002963e; /* 0002963e */
+extern undefined DAT_0002acb6; /* 0002acb6 */
+extern undefined DAT_0002be7d; /* 0002be7d */
+extern undefined DAT_0002bf30; /* 0002bf30 */
+extern undefined DAT_0002d918; /* 0002d918 */
+extern undefined DAT_0002d91a; /* 0002d91a */
+extern undefined DAT_00030816; /* 00030816 */
+extern undefined DAT_000308b6; /* 000308b6 */
+extern undefined DAT_0003094c; /* 0003094c */
+extern undefined DAT_00030a2c; /* 00030a2c */
+extern undefined DAT_00030a34; /* 00030a34 */
+extern undefined1 DAT_00030cec; /* 00030cec */
+extern undefined DAT_000314b2; /* 000314b2 */
+extern undefined DAT_00032704; /* 00032704 */
+extern undefined DAT_00032e26; /* 00032e26 */
+extern undefined DAT_00032ff5; /* 00032ff5 */
+extern undefined DAT_000333a0; /* 000333a0 */
+extern undefined DAT_000333be; /* 000333be */
+extern undefined DAT_00033490; /* 00033490 */
+extern undefined DAT_000334b0; /* 000334b0 */
+extern undefined DAT_000337e4; /* 000337e4 */
+extern undefined DAT_0003382c; /* 0003382c */
+extern undefined DAT_00033898; /* 00033898 */
+extern undefined DAT_0003393a; /* 0003393a */
+extern undefined DAT_00033d20; /* 00033d20 */
+extern undefined DAT_00033d3e; /* 00033d3e */
+extern undefined DAT_0004132a; /* 0004132a */
+extern undefined DAT_00041330; /* 00041330 */
+extern undefined DAT_00041336; /* 00041336 */
+extern undefined DAT_0004133c; /* 0004133c */
+extern undefined DAT_00041342; /* 00041342 */
+extern undefined DAT_00041348; /* 00041348 */
+extern undefined DAT_0004134e; /* 0004134e */
+extern undefined DAT_00041354; /* 00041354 */
+extern undefined DAT_0004135a; /* 0004135a */
+extern undefined DAT_00041360; /* 00041360 */
+extern undefined DAT_00041366; /* 00041366 */
+extern undefined DAT_0004136c; /* 0004136c */
+extern undefined DAT_00041372; /* 00041372 */
+extern undefined DAT_00041378; /* 00041378 */
+extern undefined DAT_0004cfce; /* 0004cfce */
+extern undefined1 DAT_0004d10b; /* 0004d10b */
+extern undefined1 DAT_0004e016; /* 0004e016 */
+extern undefined DAT_0004fed2; /* 0004fed2 */
+extern undefined DAT_0004fee8; /* 0004fee8 */
+extern undefined2 DAT_0004feea; /* 0004feea */
+extern undefined DAT_0004feec; /* 0004feec */
+extern undefined DAT_00050cca; /* 00050cca */
+extern undefined DAT_00050d32; /* 00050d32 */
+extern undefined DAT_00050da6; /* 00050da6 */
+extern undefined DAT_00050dba; /* 00050dba */
+extern undefined DAT_00050dce; /* 00050dce */
+extern undefined DAT_00050dde; /* 00050dde */
+extern undefined DAT_00050df2; /* 00050df2 */
+extern undefined DAT_00050e72; /* 00050e72 */
+extern undefined DAT_00050e96; /* 00050e96 */
+extern undefined DAT_00050eb6; /* 00050eb6 */
+extern undefined DAT_00050ede; /* 00050ede */
+extern undefined DAT_00050f12; /* 00050f12 */
+extern undefined DAT_00050f26; /* 00050f26 */
+extern undefined DAT_00050f3a; /* 00050f3a */
+extern undefined DAT_00050f5a; /* 00050f5a */
+extern undefined DAT_00050f72; /* 00050f72 */
+extern undefined DAT_00050f8a; /* 00050f8a */
+extern undefined DAT_00050fa2; /* 00050fa2 */
+extern undefined DAT_00050fce; /* 00050fce */
+extern undefined DAT_00050fd2; /* 00050fd2 */
+extern undefined DAT_00050fd8; /* 00050fd8 */
+extern undefined DAT_00050fe2; /* 00050fe2 */
+extern undefined DAT_00050fe4; /* 00050fe4 */
+extern undefined DAT_00050fe6; /* 00050fe6 */
+extern undefined DAT_00051002; /* 00051002 */
+extern undefined DAT_00051004; /* 00051004 */
+extern undefined DAT_0005122a; /* 0005122a */
+extern undefined DAT_000512cd; /* 000512cd */
+extern undefined DAT_000512d2; /* 000512d2 */
+extern undefined DAT_000512e6; /* 000512e6 */
+extern undefined DAT_00051382; /* 00051382 */
+extern undefined DAT_00051385; /* 00051385 */
+extern undefined DAT_0005171a; /* 0005171a */
+extern undefined DAT_00053034; /* 00053034 */
+extern undefined DAT_0005ed99; /* 0005ed99 */
+extern undefined DAT_0005f860; /* 0005f860 */
+extern undefined DAT_0005f864; /* 0005f864 */
+extern undefined DAT_0005f938; /* 0005f938 */
+extern undefined DAT_0005f96e; /* 0005f96e */
+extern undefined DAT_0005f972; /* 0005f972 */
+extern undefined DAT_0005fa46; /* 0005fa46 */
+extern undefined DAT_00060868; /* 00060868 */
+extern undefined DAT_0006086a; /* 0006086a */
+extern undefined DAT_0006086c; /* 0006086c */
+extern undefined DAT_00060890; /* 00060890 */
+extern undefined DAT_00060d48; /* 00060d48 */
+extern undefined DAT_00060d50; /* 00060d50 */
+extern undefined DAT_00060d58; /* 00060d58 */
+extern undefined DAT_00060d60; /* 00060d60 */
+extern undefined DAT_00060d68; /* 00060d68 */
+extern undefined DAT_00060d70; /* 00060d70 */
+extern undefined DAT_00060d78; /* 00060d78 */
+extern undefined DAT_00060d80; /* 00060d80 */
+extern undefined4 DAT_00060d88; /* 00060d88 */
+extern undefined DAT_000617e4; /* 000617e4 */
+extern undefined DAT_000617ec; /* 000617ec */
+extern undefined DAT_000617f4; /* 000617f4 */
+extern undefined DAT_000617fc; /* 000617fc */
+extern undefined DAT_00061804; /* 00061804 */
+extern undefined DAT_0006180c; /* 0006180c */
+extern undefined DAT_00061814; /* 00061814 */
+extern undefined DAT_0006181c; /* 0006181c */
+extern undefined DAT_00061824; /* 00061824 */
+extern undefined DAT_0006182c; /* 0006182c */
+extern undefined DAT_00061834; /* 00061834 */
+extern undefined DAT_0006183c; /* 0006183c */
+extern undefined DAT_000618d4; /* 000618d4 */
+extern undefined DAT_00061b94; /* 00061b94 */
+extern undefined DAT_00061b9c; /* 00061b9c */
+extern undefined DAT_00061ba4; /* 00061ba4 */
+extern undefined DAT_00061bac; /* 00061bac */
+extern short DAT_00100000; /* 00100000 */
+extern undefined DAT_00100002; /* 00100002 */
+extern undefined4 DAT_00100004; /* 00100004 */
+extern undefined DAT_0010055e; /* 0010055e */
+extern undefined DAT_001009b0; /* 001009b0 */
+extern undefined DAT_001009c6; /* 001009c6 */
+extern undefined DAT_001009ca; /* 001009ca */
+extern undefined DAT_001009ce; /* 001009ce */
+extern undefined DAT_001009da; /* 001009da */
+extern undefined DAT_001009de; /* 001009de */
+extern undefined DAT_001009e2; /* 001009e2 */
+extern undefined1 DAT_001009e6; /* 001009e6 */
+extern undefined DAT_001009f0; /* 001009f0 */
+extern undefined DAT_001009f6; /* 001009f6 */
+extern undefined DAT_001009fa; /* 001009fa */
+extern undefined DAT_00100a02; /* 00100a02 */
+extern undefined DAT_00100bb4; /* 00100bb4 */
+extern undefined DAT_00100bb8; /* 00100bb8 */
+extern undefined1 DAT_00100bc8; /* 00100bc8 */
+extern undefined1 DAT_00100bc9; /* 00100bc9 */
+extern undefined DAT_00100bca; /* 00100bca */
+extern undefined DAT_00100bce; /* 00100bce */
+extern undefined DAT_00100bd0; /* 00100bd0 */
+extern undefined DAT_00100bd2; /* 00100bd2 */
+extern undefined DAT_00100bd5; /* 00100bd5 */
+extern char DAT_00100bf4; /* 00100bf4 */
+extern undefined DAT_00100bf5; /* 00100bf5 */
+extern undefined DAT_00100c21; /* 00100c21 */
+extern undefined DAT_00100c24; /* 00100c24 */
+extern undefined DAT_00100c26; /* 00100c26 */
+extern undefined DAT_00100c28; /* 00100c28 */
+extern undefined DAT_00100c2a; /* 00100c2a */
+extern undefined DAT_00100c2e; /* 00100c2e */
+extern byte DAT_00100c30; /* 00100c30 */
+extern undefined DAT_00100c32; /* 00100c32 */
+extern undefined DAT_00100c34; /* 00100c34 */
+extern undefined DAT_00100c36; /* 00100c36 */
+extern undefined DAT_00100c38; /* 00100c38 */
+extern undefined DAT_00100c3a; /* 00100c3a */
+extern byte DAT_00100c3c; /* 00100c3c */
+extern byte DAT_00100c3d; /* 00100c3d */
+extern undefined DAT_00100c3e; /* 00100c3e */
+extern undefined DAT_00100c40; /* 00100c40 */
+extern undefined DAT_00100c44; /* 00100c44 */
+extern undefined DAT_00100c46; /* 00100c46 */
+extern short DAT_00100c48; /* 00100c48 */
+extern char DAT_00100c58; /* 00100c58 */
+extern uint DAT_00100c5a; /* 00100c5a */
+extern uint DAT_00100c5e; /* 00100c5e */
+extern uint DAT_00100c62; /* 00100c62 */
+extern byte DAT_00100c66; /* 00100c66 */
+extern undefined1 DAT_00100c67; /* 00100c67 */
+extern bool DAT_001011c4; /* 001011c4 */
+extern char DAT_001011c5; /* 001011c5 */
+extern undefined DAT_001011c6; /* 001011c6 */
+extern short DAT_00101396; /* 00101396 */
+extern short DAT_00101398; /* 00101398 */
+extern char DAT_0010139c; /* 0010139c */
+extern undefined DAT_00101406; /* 00101406 */
+extern undefined DAT_00101420; /* 00101420 */
+extern undefined DAT_00101424; /* 00101424 */
+extern char DAT_00101428; /* 00101428 */
+extern char DAT_00101429; /* 00101429 */
+extern byte DAT_0010142a; /* 0010142a */
+extern undefined DAT_0010142c; /* 0010142c */
+extern char DAT_0010155a; /* 0010155a */
+extern undefined DAT_0010155c; /* 0010155c */
+extern undefined DAT_001017f6; /* 001017f6 */
+extern undefined DAT_0010199a; /* 0010199a */
+extern undefined DAT_0010199e; /* 0010199e */
+extern undefined DAT_001019a2; /* 001019a2 */
+extern undefined DAT_00101b46; /* 00101b46 */
+extern undefined DAT_00101b4a; /* 00101b4a */
+extern char DAT_00101b54; /* 00101b54 */
+extern char DAT_00101b55; /* 00101b55 */
+extern short DAT_00101b56; /* 00101b56 */
+extern char DAT_00101b58; /* 00101b58 */
+extern undefined DAT_00101b5a; /* 00101b5a */
+extern byte DAT_00101b6a; /* 00101b6a */
+extern byte DAT_00101b6b; /* 00101b6b */
+extern char DAT_00101b6c; /* 00101b6c */
+extern char DAT_00101b71; /* 00101b71 */
+extern char DAT_00101b9e; /* 00101b9e */
+extern undefined DAT_00101b9f; /* 00101b9f */
+extern undefined DAT_00101ba0; /* 00101ba0 */
+extern undefined DAT_00101ba1; /* 00101ba1 */
+extern char DAT_00101bce; /* 00101bce */
+extern char DAT_00101bd0; /* 00101bd0 */
+extern byte DAT_00101cf2; /* 00101cf2 */
+extern char DAT_00101cf4; /* 00101cf4 */
+extern char DAT_00101cf5; /* 00101cf5 */
+extern byte DAT_00101cf6; /* 00101cf6 */
+extern byte DAT_00101cf9; /* 00101cf9 */
+extern char DAT_00101cfa; /* 00101cfa */
+extern undefined DAT_00101d00; /* 00101d00 */
+extern undefined DAT_00101d04; /* 00101d04 */
+extern undefined DAT_00101d08; /* 00101d08 */
+extern undefined DAT_00101d14; /* 00101d14 */
+extern undefined DAT_00101d20; /* 00101d20 */
+extern undefined DAT_00101d24; /* 00101d24 */
+extern undefined DAT_00101d28; /* 00101d28 */
+extern char DAT_00101d34; /* 00101d34 */
+extern undefined DAT_00101d8e; /* 00101d8e */
+extern undefined DAT_00101d90; /* 00101d90 */
+extern char DAT_00101dd6; /* 00101dd6 */
+extern char DAT_00101dd7; /* 00101dd7 */
+extern undefined DAT_00101dd8; /* 00101dd8 */
+extern char DAT_00101ddc; /* 00101ddc */
+extern char DAT_00101ddf; /* 00101ddf */
+extern undefined DAT_00101df8; /* 00101df8 */
+extern undefined DAT_00101dfc; /* 00101dfc */
+extern undefined DAT_00101e00; /* 00101e00 */
+extern undefined DAT_00101e04; /* 00101e04 */
+extern undefined DAT_00101e28; /* 00101e28 */
+extern undefined DAT_00101e2c; /* 00101e2c */
+extern undefined DAT_00101e70; /* 00101e70 */
+extern char DAT_00101e72; /* 00101e72 */
+extern char DAT_00101e74; /* 00101e74 */
+extern char DAT_00101e75; /* 00101e75 */
+extern char DAT_00101e76; /* 00101e76 */
+extern char DAT_00101e77; /* 00101e77 */
+extern undefined DAT_00101e78; /* 00101e78 */
+extern undefined DAT_00101e7c; /* 00101e7c */
+extern undefined DAT_00101e80; /* 00101e80 */
+extern char DAT_00101e88; /* 00101e88 */
+extern char DAT_00101f52; /* 00101f52 */
+extern char DAT_00101f53; /* 00101f53 */
+extern char DAT_00101f54; /* 00101f54 */
+extern char DAT_00101f55; /* 00101f55 */
+extern char DAT_00101f5a; /* 00101f5a */
+extern char DAT_00101f5b; /* 00101f5b */
+extern char DAT_00101f5c; /* 00101f5c */
+extern undefined1 DAT_00101f5d; /* 00101f5d */
+extern char DAT_00101f5e; /* 00101f5e */
+extern char DAT_00101f5f; /* 00101f5f */
+extern char DAT_00101f60; /* 00101f60 */
+extern undefined DAT_00101f64; /* 00101f64 */
+extern undefined DAT_00101f66; /* 00101f66 */
+extern byte DAT_00101fd8; /* 00101fd8 */
+extern undefined1 DAT_00101fd9; /* 00101fd9 */
+extern undefined DAT_00101fda; /* 00101fda */
+extern undefined DAT_00101fde; /* 00101fde */
+extern undefined DAT_00101fea; /* 00101fea */
+extern undefined DAT_00101fee; /* 00101fee */
+extern undefined DAT_00101ff2; /* 00101ff2 */
+extern undefined DAT_00101ffa; /* 00101ffa */
+extern undefined DAT_00101ffe; /* 00101ffe */
+extern undefined DAT_00102002; /* 00102002 */
+extern undefined DAT_00102006; /* 00102006 */
+extern undefined DAT_0010200a; /* 0010200a */
+extern undefined DAT_0010200e; /* 0010200e */
+extern uint32_t DAT_00102018; /* 00102018 */
+extern char DAT_00102040; /* 00102040 */
+extern undefined DAT_00102042; /* 00102042 */
+extern byte DAT_00102046; /* 00102046 */
+extern byte DAT_00102047; /* 00102047 */
+extern undefined1 DAT_00102048; /* 00102048 */
+extern undefined DAT_0010204a; /* 0010204a */
+extern undefined DAT_0010204e; /* 0010204e */
+extern undefined DAT_00102052; /* 00102052 */
+extern float DAT_00102056; /* 00102056 */
+extern undefined DAT_0010205a; /* 0010205a */
+extern float DAT_0010205e; /* 0010205e */
+extern float DAT_00102062; /* 00102062 */
+extern int DAT_00102066; /* 00102066 */
+extern byte DAT_0010206a; /* 0010206a */
+extern byte DAT_0010206b; /* 0010206b */
+extern char DAT_0010206c; /* 0010206c */
+extern undefined DAT_0010206e; /* 0010206e */
+extern undefined DAT_00102072; /* 00102072 */
+extern undefined DAT_00102076; /* 00102076 */
+extern undefined1 DAT_0010207a; /* 0010207a */
+extern char DAT_0010207b; /* 0010207b */
+extern undefined DAT_00102144; /* 00102144 */
+extern undefined DAT_00102148; /* 00102148 */
+extern undefined DAT_0010214c; /* 0010214c */
+extern undefined DAT_00102150; /* 00102150 */
+extern undefined DAT_00102158; /* 00102158 */
+extern undefined DAT_0010215c; /* 0010215c */
+extern char DAT_00102160; /* 00102160 */
+extern undefined1 DAT_0010253e; /* 0010253e */
+extern undefined1 DAT_0010253f; /* 0010253f */
+extern char DAT_00102540; /* 00102540 */
+extern char DAT_00102541; /* 00102541 */
+extern char DAT_00102542; /* 00102542 */
+extern undefined1 DAT_00102543; /* 00102543 */
+extern undefined DAT_00102546; /* 00102546 */
+extern float DAT_0010254a; /* 0010254a */
+extern char DAT_0010254e; /* 0010254e */
+extern char DAT_0010254f; /* 0010254f */
+extern char DAT_00102550; /* 00102550 */
+extern undefined1 DAT_00102551; /* 00102551 */
+extern char DAT_00102552; /* 00102552 */
+extern undefined DAT_00102554; /* 00102554 */
+extern float DAT_00102558; /* 00102558 */
+extern float DAT_0010255c; /* 0010255c */
+extern float DAT_00102560; /* 00102560 */
+extern float DAT_00102564; /* 00102564 */
+extern undefined DAT_00102568; /* 00102568 */
+extern byte DAT_0010256c; /* 0010256c */
+extern undefined DAT_0010256e; /* 0010256e */
+extern undefined DAT_00102572; /* 00102572 */
+extern undefined DAT_00102576; /* 00102576 */
+extern undefined DAT_0010257a; /* 0010257a */
+extern undefined DAT_0010257e; /* 0010257e */
+extern undefined DAT_00102582; /* 00102582 */
+extern char DAT_00102587; /* 00102587 */
+extern char DAT_00102588; /* 00102588 */
+extern char DAT_00102589; /* 00102589 */
+extern char DAT_0010258a; /* 0010258a */
+extern byte DAT_0010258b; /* 0010258b */
+extern byte DAT_0010258c; /* 0010258c */
+extern char DAT_0010258d; /* 0010258d */
+extern char DAT_0010258e; /* 0010258e */
+extern undefined DAT_00102590; /* 00102590 */
+extern undefined DAT_00102594; /* 00102594 */
+extern undefined DAT_00102598; /* 00102598 */
+extern int DAT_0010259c; /* 0010259c */
+extern int DAT_001025a0; /* 001025a0 */
+extern int DAT_001025a4; /* 001025a4 */
+extern int DAT_001025a8; /* 001025a8 */
+extern undefined DAT_001025ac; /* 001025ac */
+extern int DAT_00102650; /* 00102650 */
+extern undefined DAT_00102658; /* 00102658 */
+extern short DAT_00102668; /* 00102668 */
+extern undefined DAT_0010268e; /* 0010268e */
+extern undefined1 DAT_001026b2; /* 001026b2 */
+extern undefined1 DAT_001026b6; /* 001026b6 */
+extern undefined DAT_00102720; /* 00102720 */
+extern undefined1 DAT_00102724; /* 00102724 */
+extern undefined DAT_00102726; /* 00102726 */
+extern byte DAT_00102a46; /* 00102a46 */
+extern undefined DAT_00102b46; /* 00102b46 */
+extern undefined DAT_00102b4a; /* 00102b4a */
+extern byte DAT_00102b4c; /* 00102b4c */
+extern byte DAT_00102b4d; /* 00102b4d */
+extern undefined DAT_00102b4e; /* 00102b4e */
+extern undefined DAT_00102c4e; /* 00102c4e */
+extern undefined DAT_00102c52; /* 00102c52 */
+extern undefined DAT_00102c56; /* 00102c56 */
+extern undefined1 DAT_00102c60; /* 00102c60 */
+extern char DAT_00102c63; /* 00102c63 */
+extern undefined DAT_00102d64; /* 00102d64 */
+extern undefined DAT_00102d68; /* 00102d68 */
+extern undefined DAT_00102d6c; /* 00102d6c */
+extern undefined DAT_00102d70; /* 00102d70 */
+extern undefined1 DAT_00102d74; /* 00102d74 */
+extern undefined DAT_00102ebc; /* 00102ebc */
+extern char DAT_00102ecc; /* 00102ecc */
+extern char DAT_00102ecd; /* 00102ecd */
+extern char DAT_00102ece; /* 00102ece */
+extern char DAT_00102ecf; /* 00102ecf */
+extern undefined1 DAT_00102ed0; /* 00102ed0 */
+extern byte DAT_00102ed1; /* 00102ed1 */
+extern undefined1 DAT_00102ed2; /* 00102ed2 */
+extern byte DAT_00102ed3; /* 00102ed3 */
+extern byte DAT_00102ed4; /* 00102ed4 */
+extern byte DAT_00102ed5; /* 00102ed5 */
+extern byte DAT_00102ed6; /* 00102ed6 */
+extern byte DAT_00102ed7; /* 00102ed7 */
+extern byte DAT_00102ed8; /* 00102ed8 */
+extern byte DAT_00102ed9; /* 00102ed9 */
+extern undefined1 DAT_00102eda; /* 00102eda */
+extern byte DAT_00102edb; /* 00102edb */
+extern undefined1 DAT_00102edc; /* 00102edc */
+extern char DAT_00102edd; /* 00102edd */
+extern char DAT_00102ede; /* 00102ede */
+extern undefined DAT_00102fe0; /* 00102fe0 */
+extern undefined DAT_00102fe4; /* 00102fe4 */
+extern char DAT_00102fe6; /* 00102fe6 */
+extern undefined1 DAT_00102fe7; /* 00102fe7 */
+extern char DAT_00102fe8; /* 00102fe8 */
+extern byte DAT_00102fe9; /* 00102fe9 */
+extern byte DAT_00102fea; /* 00102fea */
+extern byte DAT_00102feb; /* 00102feb */
+extern undefined DAT_001030ec; /* 001030ec */
+extern undefined DAT_001030f0; /* 001030f0 */
+extern undefined DAT_001030f4; /* 001030f4 */
+extern char DAT_001030f6; /* 001030f6 */
+extern char DAT_001030f7; /* 001030f7 */
+extern byte DAT_001030f8; /* 001030f8 */
+extern char DAT_001030f9; /* 001030f9 */
+extern char DAT_001030fa; /* 001030fa */
+extern undefined1 DAT_001030fb; /* 001030fb */
+extern char DAT_001030fc; /* 001030fc */
+extern byte DAT_001030fd; /* 001030fd */
+extern undefined1 DAT_001030fe; /* 001030fe */
+extern char DAT_001030ff; /* 001030ff */
+extern char DAT_00103100; /* 00103100 */
+extern undefined DAT_0010310e; /* 0010310e */
+extern undefined DAT_00103112; /* 00103112 */
+extern undefined DAT_00103116; /* 00103116 */
+extern undefined DAT_00103126; /* 00103126 */
+extern undefined DAT_0010312a; /* 0010312a */
+extern undefined DAT_0010312e; /* 0010312e */
+extern char DAT_0010313a; /* 0010313a */
+extern undefined DAT_0010313c; /* 0010313c */
+extern byte DAT_00103140; /* 00103140 */
+extern undefined DAT_00103142; /* 00103142 */
+extern undefined DAT_00103146; /* 00103146 */
+extern undefined DAT_00103158; /* 00103158 */
+extern undefined DAT_0010315c; /* 0010315c */
+extern undefined DAT_00103160; /* 00103160 */
+extern undefined DAT_00103174; /* 00103174 */
+extern undefined DAT_00103178; /* 00103178 */
+extern undefined DAT_0010317c; /* 0010317c */
+extern byte DAT_00103188; /* 00103188 */
+extern byte DAT_00103189; /* 00103189 */
+extern undefined DAT_0010328a; /* 0010328a */
+extern undefined DAT_0010328e; /* 0010328e */
+extern undefined1 DAT_00103292; /* 00103292 */
+extern undefined1 DAT_00103293; /* 00103293 */
+extern byte DAT_00103294; /* 00103294 */
+extern char DAT_00103295; /* 00103295 */
+extern char DAT_00103296; /* 00103296 */
+extern char DAT_00103297; /* 00103297 */
+extern char DAT_00103298; /* 00103298 */
+extern undefined1 DAT_00103299; /* 00103299 */
+extern char DAT_0010329a; /* 0010329a */
+extern char DAT_0010329b; /* 0010329b */
+extern char DAT_0010329c; /* 0010329c */
+extern undefined DAT_0010329e; /* 0010329e */
+extern undefined DAT_001032a0; /* 001032a0 */
+extern char DAT_001032a4; /* 001032a4 */
+extern undefined1 DAT_001032a6; /* 001032a6 */
+extern byte DAT_001032a7; /* 001032a7 */
+extern byte DAT_001032a8; /* 001032a8 */
+extern char DAT_001032ea; /* 001032ea */
+extern undefined DAT_001032ec; /* 001032ec */
+extern undefined DAT_001032f0; /* 001032f0 */
+extern char DAT_001032f2; /* 001032f2 */
+extern char DAT_001032f3; /* 001032f3 */
+extern char DAT_001032fc; /* 001032fc */
+extern undefined DAT_0010370a; /* 0010370a */
+extern undefined DAT_0010370e; /* 0010370e */
+extern undefined DAT_00103712; /* 00103712 */
+extern undefined DAT_00103716; /* 00103716 */
+extern undefined DAT_0010371a; /* 0010371a */
+extern undefined DAT_001037cc; /* 001037cc */
+extern undefined DAT_001037d0; /* 001037d0 */
+extern char DAT_001037d4; /* 001037d4 */
+extern undefined1 DAT_001037d6; /* 001037d6 */
+extern undefined2 DAT_001037d8; /* 001037d8 */
+extern char DAT_001037dc; /* 001037dc */
+extern uint8_t DAT_001037de; /* 001037de */
+extern char DAT_001037df; /* 001037df */
+extern undefined DAT_001037e8; /* 001037e8 */
+extern undefined DAT_0010382c; /* 0010382c */
+extern char DAT_0010aad2; /* 0010aad2 */
+extern undefined1 DAT_0010aad3; /* 0010aad3 */
+extern char DAT_0010aaf2; /* 0010aaf2 */
+extern undefined1 DAT_0010aaf3; /* 0010aaf3 */
+extern undefined1 DAT_0010ab1f; /* 0010ab1f */
+extern short DAT_0010ab2c; /* 0010ab2c */
+extern char DAT_0010ab32; /* 0010ab32 */
+extern char DAT_0010ab33; /* 0010ab33 */
+extern undefined1 DAT_0010ab34; /* 0010ab34 */
+extern undefined1 DAT_0010ab35; /* 0010ab35 */
+extern char DAT_0010ab36; /* 0010ab36 */
+extern char DAT_0010ab37; /* 0010ab37 */
+extern undefined1 DAT_0010ab38; /* 0010ab38 */
+extern undefined DAT_0010ab3a; /* 0010ab3a */
+extern undefined DAT_0010ab4c; /* 0010ab4c */
+extern undefined1 DAT_0010ab5e; /* 0010ab5e */
+extern undefined DAT_0010ab60; /* 0010ab60 */
+extern undefined4 DAT_0010ab84; /* 0010ab84 */
+extern undefined1 DAT_0010acf8; /* 0010acf8 */
+extern undefined1 DAT_0010ad04; /* 0010ad04 */
+extern int DAT_0010ad06; /* 0010ad06 */
+extern char DAT_0010ad3c; /* 0010ad3c */
+extern char DAT_0010ad3d; /* 0010ad3d */
+extern char DAT_0010ad3e; /* 0010ad3e */
+extern char DAT_0010ad3f; /* 0010ad3f */
+extern byte DAT_0010ad44; /* 0010ad44 */
+extern byte DAT_0010ad47; /* 0010ad47 */
+extern byte DAT_0010ad48; /* 0010ad48 */
+extern byte DAT_0010ad49; /* 0010ad49 */
+extern byte DAT_0010ad4d; /* 0010ad4d */
+extern char DAT_0010ad4e; /* 0010ad4e */
+extern undefined DAT_0010ad4f; /* 0010ad4f */
+extern undefined1 DAT_0010ae56; /* 0010ae56 */
+extern byte DAT_0010ae59; /* 0010ae59 */
+extern byte DAT_0010ae5a; /* 0010ae5a */
+extern byte DAT_0010ae5b; /* 0010ae5b */
+extern undefined DAT_0010ae5c; /* 0010ae5c */
+extern byte * DAT_0010af5c; /* 0010af5c */
+extern byte * DAT_0010af60; /* 0010af60 */
+extern short DAT_0010af64; /* 0010af64 */
+extern char DAT_0010af66; /* 0010af66 */
+extern char DAT_0010af67; /* 0010af67 */
+extern byte DAT_0010af68; /* 0010af68 */
+extern char DAT_0010af69; /* 0010af69 */
+extern char DAT_0010af6a; /* 0010af6a */
+extern char DAT_0010af6c; /* 0010af6c */
+extern byte DAT_0010af6d; /* 0010af6d */
+extern undefined1 DAT_0010af6e; /* 0010af6e */
+extern char DAT_0010af6f; /* 0010af6f */
+extern undefined1 DAT_0010af70; /* 0010af70 */
+extern uint DAT_0010af82; /* 0010af82 */
+extern int DAT_0010af9a; /* 0010af9a */
+extern char DAT_0010afaa; /* 0010afaa */
+extern undefined DAT_0010afac; /* 0010afac */
+extern byte * DAT_0010afb2; /* 0010afb2 */
+extern char * DAT_0010afb6; /* 0010afb6 */
+extern int DAT_0010afe0; /* 0010afe0 */
+extern char DAT_0010afe4; /* 0010afe4 */
+extern char DAT_0010afe6; /* 0010afe6 */
+extern uint DAT_0010aff0; /* 0010aff0 */
+extern int DAT_0010affc; /* 0010affc */
+extern undefined DAT_0010b038; /* 0010b038 */
+extern byte DAT_0010b03a; /* 0010b03a */
+extern byte DAT_0010b03b; /* 0010b03b */
+extern undefined DAT_0010b03c; /* 0010b03c */
+extern short DAT_0010b0bc; /* 0010b0bc */
+extern undefined DAT_0010b0be; /* 0010b0be */
+extern undefined DAT_0010b0c2; /* 0010b0c2 */
+extern undefined2 DAT_0010ffd0; /* 0010ffd0 */
+extern undefined4 DAT_0010ffe6; /* 0010ffe6 */
+extern undefined4 DAT_0010ffea; /* 0010ffea */
+extern undefined4 DAT_0010ffee; /* 0010ffee */
+extern undefined4 DAT_0010fff2; /* 0010fff2 */
+extern undefined4 DAT_0010fff6; /* 0010fff6 */
+extern undefined4 DAT_0010fffa; /* 0010fffa */
+extern volatile undefined DAT_00300000; /* 00300000 */
+extern volatile undefined DAT_00304000; /* 00304000 */
+extern volatile undefined DAT_00306000; /* 00306000 */
+extern short DAT_00400000; /* 00400000 */
+extern undefined1 DAT_00400002; /* 00400002 */
+extern undefined1 DAT_00400003; /* 00400003 */
+extern undefined1 DAT_00400004; /* 00400004 */
+extern undefined1 DAT_00400005; /* 00400005 */
+extern undefined1 DAT_00400006; /* 00400006 */
+extern undefined1 DAT_00400007; /* 00400007 */
+extern undefined1 DAT_00400008; /* 00400008 */
+extern short DAT_00400010; /* 00400010 */
+extern undefined DAT_00400012; /* 00400012 */
+extern undefined DAT_00400024; /* 00400024 */
+extern char DAT_00400036; /* 00400036 */
+extern undefined DAT_00400060; /* 00400060 */
+extern undefined DAT_00400062; /* 00400062 */
+extern undefined DAT_00400066; /* 00400066 */
+extern undefined DAT_0040006a; /* 0040006a */
+extern undefined DAT_00400080; /* 00400080 */
+extern undefined DAT_00400082; /* 00400082 */
+extern undefined DAT_00400086; /* 00400086 */
+extern undefined DAT_004000c4; /* 004000c4 */
+extern undefined DAT_00400144; /* 00400144 */
+extern undefined DAT_00700000; /* 00700000 */
+extern volatile undefined DAT_00fffd00; /* 00fffd00 */
+extern volatile undefined DAT_00fffd20; /* 00fffd20 */
+extern volatile undefined DAT_00fffd22; /* 00fffd22 */
+extern undefined LAB_00012f86; /* 00012f86 */
+extern undefined LAB_00012f92; /* 00012f92 */
+extern undefined LAB_00012f9e; /* 00012f9e */
+extern undefined LAB_00013666; /* 00013666 */
+extern undefined LAB_0001366c; /* 0001366c */
+extern undefined LAB_000136a2; /* 000136a2 */
+extern undefined LAB_000136bc; /* 000136bc */
+extern undefined LAB_000277ec; /* 000277ec */
+extern undefined LAB_00030b30; /* 00030b30 */
+extern undefined LAB_00033454; /* 00033454 */
+extern undefined LAB_00033472; /* 00033472 */
+extern undefined LAB_000335be; /* 000335be */
+extern undefined LAB_00033862; /* 00033862 */
+extern undefined LAB_000338ce; /* 000338ce */
+extern undefined LAB_00033904; /* 00033904 */
+extern undefined LAB_0004007e; /* 0004007e */
+extern undefined LAB_00040096; /* 00040096 */
+extern void *PTR_DAT_00021e2e; /* 00021e2e */
+extern void *PTR_DAT_00021e32; /* 00021e32 */
+extern undefined * PTR_DAT_0004cf80; /* 0004cf80 */
+extern void *PTR_DAT_0004fece; /* 0004fece */
+extern void *PTR_DAT_0004fee4; /* 0004fee4 */
+extern void *PTR_DAT_00050cc2; /* 00050cc2 */
+extern void *PTR_DAT_00050e5e; /* 00050e5e */
+extern void *PTR_DAT_00050e66; /* 00050e66 */
+extern void *PTR_diag_cal_0001c8ac; /* 0001c8ac */
+extern void *PTR_lamp_test_command_000186b0; /* 000186b0 */
+extern undefined * PTR_long_array_get_byte_0004fed4; /* 0004fed4 */
+extern void *PTR_s_Self_Test_0004d076; /* 0004d076 */
+extern undefined * PTR_selftest_all_00018458; /* 00018458 */
+extern undefined UNK_00002a30; /* 00002a30 */
+extern undefined UNK_00003039; /* 00003039 */
+extern undefined UNK_00003c1a; /* 00003c1a */
+extern undefined UNK_00004d10; /* 00004d10 */
+extern undefined UNK_00004d11; /* 00004d11 */
+extern undefined UNK_00012350; /* 00012350 */
+extern undefined UNK_0001d570; /* 0001d570 */
+extern undefined UNK_00028720; /* 00028720 */
+extern undefined UNK_00028722; /* 00028722 */
+extern undefined UNK_00032700; /* 00032700 */
+extern undefined UNK_00033cc6; /* 00033cc6 */
+extern undefined UNK_00041300; /* 00041300 */
+extern undefined UNK_0004b800; /* 0004b800 */
+extern undefined UNK_0004cfc5; /* 0004cfc5 */
+extern undefined UNK_0004feee; /* 0004feee */
+extern undefined UNK_0004fef2; /* 0004fef2 */
+extern undefined UNK_0005fa2d; /* 0005fa2d */
+extern undefined UNK_0005fa4a; /* 0005fa4a */
+extern undefined UNK_0006184c; /* 0006184c */
+extern undefined UNK_00061854; /* 00061854 */
+extern undefined UNK_00061864; /* 00061864 */
+extern undefined UNK_00061c0f; /* 00061c0f */
+extern undefined UNK_0007a120; /* 0007a120 */
+extern undefined UNK_00100793; /* 00100793 */
+extern undefined UNK_001007bc; /* 001007bc */
+extern undefined UNK_00100b84; /* 00100b84 */
+extern undefined UNK_001011e0; /* 001011e0 */
+extern short UNK_0010139a; /* 0010139a */
+extern uint32_t UNK_00101b4e; /* 00101b4e */
+extern float UNK_00101b9a; /* 00101b9a */
+extern float UNK_00101bca; /* 00101bca */
+extern float UNK_00101bfa; /* 00101bfa */
+extern char UNK_00101bfe; /* 00101bfe */
+extern char UNK_00101c00; /* 00101c00 */
+extern float UNK_00101c2a; /* 00101c2a */
+extern char UNK_00101c2e; /* 00101c2e */
+extern float UNK_00101c5a; /* 00101c5a */
+extern char UNK_00101c5e; /* 00101c5e */
+extern char UNK_00101c60; /* 00101c60 */
+extern float UNK_00101c8a; /* 00101c8a */
+extern char UNK_00101c8e; /* 00101c8e */
+extern float UNK_00101cba; /* 00101cba */
+extern char UNK_00101cbe; /* 00101cbe */
+extern char UNK_00101cc0; /* 00101cc0 */
+extern undefined UNK_001030d2; /* 001030d2 */
+extern undefined UNK_00103ecd; /* 00103ecd */
+extern undefined UNK_001040ec; /* 001040ec */
+extern undefined UNK_0010549a; /* 0010549a */
+extern undefined UNK_001057dc; /* 001057dc */
+extern undefined UNK_00105f12; /* 00105f12 */
+extern undefined UNK_00105fd4; /* 00105fd4 */
+extern undefined UNK_0010656a; /* 0010656a */
+extern undefined UNK_001076d8; /* 001076d8 */
+extern undefined UNK_001076e1; /* 001076e1 */
+extern undefined UNK_001082c8; /* 001082c8 */
+extern undefined UNK_001084da; /* 001084da */
+extern undefined UNK_00108578; /* 00108578 */
+extern undefined UNK_00109057; /* 00109057 */
+extern undefined UNK_0010921e; /* 0010921e */
+extern undefined UNK_00109a08; /* 00109a08 */
+extern undefined UNK_00109a0c; /* 00109a0c */
+extern undefined UNK_00109ae0; /* 00109ae0 */
+extern undefined UNK_00109b16; /* 00109b16 */
+extern undefined UNK_00109b1a; /* 00109b1a */
+extern undefined UNK_00109bee; /* 00109bee */
+extern undefined UNK_0010a9e6; /* 0010a9e6 */
+extern undefined UNK_0010a9fb; /* 0010a9fb */
+extern undefined UNK_0010aa10; /* 0010aa10 */
+extern undefined UNK_0010aa12; /* 0010aa12 */
+extern undefined UNK_0010aa14; /* 0010aa14 */
+extern undefined UNK_0010aa16; /* 0010aa16 */
+extern undefined UNK_0010aa27; /* 0010aa27 */
+extern undefined UNK_0010aa38; /* 0010aa38 */
+extern undefined UNK_0010aa3b; /* 0010aa3b */
+extern undefined UNK_0010aa6c; /* 0010aa6c */
+extern byte UNK_0010afb0; /* 0010afb0 */
+extern volatile undefined UNK_00fffd40; /* 00fffd40 */
+extern ushort USHORT_0001f6c8; /* 0001f6c8 */
+extern ushort USHORT_0002f32a; /* 0002f32a */
+extern ushort USHORT_0002f76e; /* 0002f76e */
+extern ushort USHORT_0002f77c; /* 0002f77c */
+extern ushort USHORT_0002f78a; /* 0002f78a */
+extern ushort USHORT_0002f794; /* 0002f794 */
+extern ushort USHORT_0002f79e; /* 0002f79e */
+extern ushort USHORT_0002f7a0; /* 0002f7a0 */
+extern ushort USHORT_0002f7a2; /* 0002f7a2 */
+extern ushort USHORT_0002f7a4; /* 0002f7a4 */
+extern ushort USHORT_0002f7a8; /* 0002f7a8 */
+extern ushort USHORT_0002f7b0; /* 0002f7b0 */
+extern word WORD_0001062e; /* 0001062e */
+extern word WORD_00013d10; /* 00013d10 */
+extern word WORD_0001b6ac; /* 0001b6ac */
+extern word WORD_0001b9cc; /* 0001b9cc */
+extern word WORD_0001bb60; /* 0001bb60 */
+extern word WORD_0001bc60; /* 0001bc60 */
+extern word WORD_0001bd1c; /* 0001bd1c */
+extern word WORD_0001c0a2; /* 0001c0a2 */
+extern word WORD_0001d650; /* 0001d650 */
+extern word WORD_0001f510; /* 0001f510 */
+extern word WORD_0001f564; /* 0001f564 */
+extern word WORD_0001f6ec; /* 0001f6ec */
+extern word WORD_00020092; /* 00020092 */
+extern word WORD_00023dd8; /* 00023dd8 */
+extern word WORD_00024136; /* 00024136 */
+extern word WORD_000267e0; /* 000267e0 */
+extern word WORD_00026838; /* 00026838 */
+extern word WORD_00026c74; /* 00026c74 */
+extern word WORD_00028264; /* 00028264 */
+extern word WORD_00028326; /* 00028326 */
+extern word WORD_000297ea; /* 000297ea */
+extern word WORD_00029818; /* 00029818 */
+extern word WORD_00029a98; /* 00029a98 */
+extern word WORD_0002b532; /* 0002b532 */
+extern word WORD_0002bf1e; /* 0002bf1e */
+extern word WORD_0002d1f6; /* 0002d1f6 */
+extern word WORD_0002e070; /* 0002e070 */
+extern word WORD_0002e3e0; /* 0002e3e0 */
+extern word WORD_0002e42c; /* 0002e42c */
+extern word WORD_0002e460; /* 0002e460 */
+extern word WORD_0002e4ba; /* 0002e4ba */
+extern word WORD_0002e92a; /* 0002e92a */
+extern word WORD_0002ec6a; /* 0002ec6a */
+extern word WORD_0002ee86; /* 0002ee86 */
+extern word WORD_0002eed2; /* 0002eed2 */
+extern word WORD_0002f38a; /* 0002f38a */
+extern word WORD_0002f6b4; /* 0002f6b4 */
+extern word WORD_0002fa68; /* 0002fa68 */
+extern word WORD_0003001c; /* 0003001c */
+extern word WORD_0003030e; /* 0003030e */
+extern word WORD_000303c6; /* 000303c6 */
+extern word WORD_000303f0; /* 000303f0 */
+extern word WORD_000304b0; /* 000304b0 */
+extern word WORD_0003054e; /* 0003054e */
+extern word WORD_000305fe; /* 000305fe */
+extern word WORD_000413ba; /* 000413ba */
+extern word WORD_00042a3c; /* 00042a3c */
+extern word WORD_00042d3c; /* 00042d3c */
+extern word WORD_00043090; /* 00043090 */
+extern word WORD_00043238; /* 00043238 */
+extern word WORD_00043262; /* 00043262 */
+extern word WORD_00043562; /* 00043562 */
+extern word WORD_000439fe; /* 000439fe */
+extern word WORD_00043aec; /* 00043aec */
+extern word WORD_00044006; /* 00044006 */
+extern word WORD_000444fc; /* 000444fc */
+extern word WORD_00045206; /* 00045206 */
+extern word WORD_00045b94; /* 00045b94 */
+extern word WORD_00045bec; /* 00045bec */
+extern word WORD_00045f18; /* 00045f18 */
+extern word WORD_000461c4; /* 000461c4 */
+extern word WORD_0004655a; /* 0004655a */
+extern word WORD_000465da; /* 000465da */
+extern word WORD_00046dc0; /* 00046dc0 */
+extern word WORD_00046eca; /* 00046eca */
+extern word WORD_00047266; /* 00047266 */
+extern word WORD_00047786; /* 00047786 */
+extern word WORD_0004856a; /* 0004856a */
+extern word WORD_000485e8; /* 000485e8 */
+extern word WORD_00048642; /* 00048642 */
+extern word WORD_0004867a; /* 0004867a */
+extern word WORD_000486c8; /* 000486c8 */
+extern word WORD_00048a88; /* 00048a88 */
+extern word WORD_00048d00; /* 00048d00 */
+extern word WORD_00048d4e; /* 00048d4e */
+extern word WORD_00048e42; /* 00048e42 */
+extern word WORD_0004963e; /* 0004963e */
+extern word WORD_00049ac2; /* 00049ac2 */
+extern word WORD_0004a010; /* 0004a010 */
+extern word WORD_0004a2d0; /* 0004a2d0 */
+extern word WORD_0004a56c; /* 0004a56c */
+extern word WORD_0004a980; /* 0004a980 */
+extern word WORD_0004a9de; /* 0004a9de */
+extern word WORD_0004ace4; /* 0004ace4 */
+extern word WORD_0004b08c; /* 0004b08c */
+extern word WORD_0004b4ba; /* 0004b4ba */
+extern word WORD_0004b58c; /* 0004b58c */
+extern word WORD_0004b5f4; /* 0004b5f4 */
+extern word WORD_0004b89e; /* 0004b89e */
+extern word WORD_0004ba1c; /* 0004ba1c */
+extern word WORD_0004c060; /* 0004c060 */
+extern word WORD_0004c0c8; /* 0004c0c8 */
+extern word WORD_0004c7d4; /* 0004c7d4 */
+extern word WORD_0004caca; /* 0004caca */
+extern word WORD_0004cd06; /* 0004cd06 */
+extern word WORD_0004ceb8; /* 0004ceb8 */
+extern word WORD_0004cf2a; /* 0004cf2a */
+extern word WORD_0004f0f2; /* 0004f0f2 */
+extern word WORD_0004fc90; /* 0004fc90 */
+extern word WORD_0005ed48; /* 0005ed48 */
+extern undefined atexit_functions; /* 001038b4 */
+extern char float_exception_message; /* 00100bd4 */
+extern undefined klok_mutex; /* 001037b4 */
+extern undefined log_mutex; /* 00101d36 */
+extern undefined nv_records; /* 004000c0 */
+extern undefined nv_settings_defaults; /* 00030966 */
+extern int * psos_config; /* 0010264c */
+extern uint8_t reference_valid_override_request; /* 00100c68 */
+extern word switchD_000205c0; /* 000205c4 */
+extern undefined task_table; /* 001026b8 */
+
+__asm__(".set CFORC, 0x00fff924");
+__asm__(".set CSBAR0, 0x00fffa4c");
+__asm__(".set CSBAR1, 0x00fffa50");
+__asm__(".set CSBAR10, 0x00fffa74");
+__asm__(".set CSBAR2, 0x00fffa54");
+__asm__(".set CSBAR3, 0x00fffa58");
+__asm__(".set CSBAR4, 0x00fffa5c");
+__asm__(".set CSBAR5, 0x00fffa60");
+__asm__(".set CSBAR6, 0x00fffa64");
+__asm__(".set CSBAR7, 0x00fffa68");
+__asm__(".set CSBAR8, 0x00fffa6c");
+__asm__(".set CSBAR9, 0x00fffa70");
+__asm__(".set CSBARBT, 0x00fffa48");
+__asm__(".set CSOR0, 0x00fffa4e");
+__asm__(".set CSOR1, 0x00fffa52");
+__asm__(".set CSOR10, 0x00fffa76");
+__asm__(".set CSOR2, 0x00fffa56");
+__asm__(".set CSOR3, 0x00fffa5a");
+__asm__(".set CSOR4, 0x00fffa5e");
+__asm__(".set CSOR5, 0x00fffa62");
+__asm__(".set CSOR6, 0x00fffa66");
+__asm__(".set CSOR7, 0x00fffa6a");
+__asm__(".set CSOR8, 0x00fffa6e");
+__asm__(".set CSOR9, 0x00fffa72");
+__asm__(".set CSORBT, 0x00fffa4a");
+__asm__(".set CSPAR0, 0x00fffa44");
+__asm__(".set CSPAR1, 0x00fffa46");
+__asm__(".set DAT_00001388, 0x00001388");
+__asm__(".set DAT_00002580, 0x00002580");
+__asm__(".set DAT_000028f5, 0x000028f5");
+__asm__(".set DAT_00003c19, 0x00003c19");
+__asm__(".set DAT_00004b00, 0x00004b00");
+__asm__(".set DAT_0000ea60, 0x0000ea60");
+__asm__(".set DAT_00010cb0, 0x00010cb0");
+__asm__(".set DAT_00010cca, 0x00010cca");
+__asm__(".set DAT_0001186c, 0x0001186c");
+__asm__(".set DAT_00011882, 0x00011882");
+__asm__(".set DAT_00011884, 0x00011884");
+__asm__(".set DAT_0001189c, 0x0001189c");
+__asm__(".set DAT_0001234c, 0x0001234c");
+__asm__(".set DAT_00012614, 0x00012614");
+__asm__(".set DAT_00012618, 0x00012618");
+__asm__(".set DAT_00012704, 0x00012704");
+__asm__(".set DAT_000129fc, 0x000129fc");
+__asm__(".set DAT_00012a74, 0x00012a74");
+__asm__(".set DAT_00012ab0, 0x00012ab0");
+__asm__(".set DAT_00017fe0, 0x00017fe0");
+__asm__(".set DAT_0001ed2c, 0x0001ed2c");
+__asm__(".set DAT_00020336, 0x00020336");
+__asm__(".set DAT_00021e3b, 0x00021e3b");
+__asm__(".set DAT_00021e48, 0x00021e48");
+__asm__(".set DAT_00025c82, 0x00025c82");
+__asm__(".set DAT_000279ca, 0x000279ca");
+__asm__(".set DAT_00027b2e, 0x00027b2e");
+__asm__(".set DAT_00028910, 0x00028910");
+__asm__(".set DAT_00029636, 0x00029636");
+__asm__(".set DAT_0002963a, 0x0002963a");
+__asm__(".set DAT_0002963e, 0x0002963e");
+__asm__(".set DAT_0002acb6, 0x0002acb6");
+__asm__(".set DAT_0002be7d, 0x0002be7d");
+__asm__(".set DAT_0002bf30, 0x0002bf30");
+__asm__(".set DAT_0002d918, 0x0002d918");
+__asm__(".set DAT_0002d91a, 0x0002d91a");
+__asm__(".set DAT_00030816, 0x00030816");
+__asm__(".set DAT_000308b6, 0x000308b6");
+__asm__(".set DAT_0003094c, 0x0003094c");
+__asm__(".set DAT_00030a2c, 0x00030a2c");
+__asm__(".set DAT_00030a34, 0x00030a34");
+__asm__(".set DAT_00030cec, 0x00030cec");
+__asm__(".set DAT_000314b2, 0x000314b2");
+__asm__(".set DAT_00032704, 0x00032704");
+__asm__(".set DAT_00032e26, 0x00032e26");
+__asm__(".set DAT_00032ff5, 0x00032ff5");
+__asm__(".set DAT_000333a0, 0x000333a0");
+__asm__(".set DAT_000333be, 0x000333be");
+__asm__(".set DAT_00033490, 0x00033490");
+__asm__(".set DAT_000334b0, 0x000334b0");
+__asm__(".set DAT_000337e4, 0x000337e4");
+__asm__(".set DAT_0003382c, 0x0003382c");
+__asm__(".set DAT_00033898, 0x00033898");
+__asm__(".set DAT_0003393a, 0x0003393a");
+__asm__(".set DAT_00033d20, 0x00033d20");
+__asm__(".set DAT_00033d3e, 0x00033d3e");
+__asm__(".set DAT_0004132a, 0x0004132a");
+__asm__(".set DAT_00041330, 0x00041330");
+__asm__(".set DAT_00041336, 0x00041336");
+__asm__(".set DAT_0004133c, 0x0004133c");
+__asm__(".set DAT_00041342, 0x00041342");
+__asm__(".set DAT_00041348, 0x00041348");
+__asm__(".set DAT_0004134e, 0x0004134e");
+__asm__(".set DAT_00041354, 0x00041354");
+__asm__(".set DAT_0004135a, 0x0004135a");
+__asm__(".set DAT_00041360, 0x00041360");
+__asm__(".set DAT_00041366, 0x00041366");
+__asm__(".set DAT_0004136c, 0x0004136c");
+__asm__(".set DAT_00041372, 0x00041372");
+__asm__(".set DAT_00041378, 0x00041378");
+__asm__(".set DAT_0004cfce, 0x0004cfce");
+__asm__(".set DAT_0004d10b, 0x0004d10b");
+__asm__(".set DAT_0004e016, 0x0004e016");
+__asm__(".set DAT_0004fed2, 0x0004fed2");
+__asm__(".set DAT_0004fee8, 0x0004fee8");
+__asm__(".set DAT_0004feea, 0x0004feea");
+__asm__(".set DAT_0004feec, 0x0004feec");
+__asm__(".set DAT_00050cca, 0x00050cca");
+__asm__(".set DAT_00050d32, 0x00050d32");
+__asm__(".set DAT_00050da6, 0x00050da6");
+__asm__(".set DAT_00050dba, 0x00050dba");
+__asm__(".set DAT_00050dce, 0x00050dce");
+__asm__(".set DAT_00050dde, 0x00050dde");
+__asm__(".set DAT_00050df2, 0x00050df2");
+__asm__(".set DAT_00050e72, 0x00050e72");
+__asm__(".set DAT_00050e96, 0x00050e96");
+__asm__(".set DAT_00050eb6, 0x00050eb6");
+__asm__(".set DAT_00050ede, 0x00050ede");
+__asm__(".set DAT_00050f12, 0x00050f12");
+__asm__(".set DAT_00050f26, 0x00050f26");
+__asm__(".set DAT_00050f3a, 0x00050f3a");
+__asm__(".set DAT_00050f5a, 0x00050f5a");
+__asm__(".set DAT_00050f72, 0x00050f72");
+__asm__(".set DAT_00050f8a, 0x00050f8a");
+__asm__(".set DAT_00050fa2, 0x00050fa2");
+__asm__(".set DAT_00050fce, 0x00050fce");
+__asm__(".set DAT_00050fd2, 0x00050fd2");
+__asm__(".set DAT_00050fd8, 0x00050fd8");
+__asm__(".set DAT_00050fe2, 0x00050fe2");
+__asm__(".set DAT_00050fe4, 0x00050fe4");
+__asm__(".set DAT_00050fe6, 0x00050fe6");
+__asm__(".set DAT_00051002, 0x00051002");
+__asm__(".set DAT_00051004, 0x00051004");
+__asm__(".set DAT_0005122a, 0x0005122a");
+__asm__(".set DAT_000512cd, 0x000512cd");
+__asm__(".set DAT_000512d2, 0x000512d2");
+__asm__(".set DAT_000512e6, 0x000512e6");
+__asm__(".set DAT_00051382, 0x00051382");
+__asm__(".set DAT_00051385, 0x00051385");
+__asm__(".set DAT_0005171a, 0x0005171a");
+__asm__(".set DAT_00053034, 0x00053034");
+__asm__(".set DAT_0005ed99, 0x0005ed99");
+__asm__(".set DAT_0005f860, 0x0005f860");
+__asm__(".set DAT_0005f864, 0x0005f864");
+__asm__(".set DAT_0005f938, 0x0005f938");
+__asm__(".set DAT_0005f96e, 0x0005f96e");
+__asm__(".set DAT_0005f972, 0x0005f972");
+__asm__(".set DAT_0005fa46, 0x0005fa46");
+__asm__(".set DAT_00060868, 0x00060868");
+__asm__(".set DAT_0006086a, 0x0006086a");
+__asm__(".set DAT_0006086c, 0x0006086c");
+__asm__(".set DAT_00060890, 0x00060890");
+__asm__(".set DAT_00060d48, 0x00060d48");
+__asm__(".set DAT_00060d50, 0x00060d50");
+__asm__(".set DAT_00060d58, 0x00060d58");
+__asm__(".set DAT_00060d60, 0x00060d60");
+__asm__(".set DAT_00060d68, 0x00060d68");
+__asm__(".set DAT_00060d70, 0x00060d70");
+__asm__(".set DAT_00060d78, 0x00060d78");
+__asm__(".set DAT_00060d80, 0x00060d80");
+__asm__(".set DAT_00060d88, 0x00060d88");
+__asm__(".set DAT_000617e4, 0x000617e4");
+__asm__(".set DAT_000617ec, 0x000617ec");
+__asm__(".set DAT_000617f4, 0x000617f4");
+__asm__(".set DAT_000617fc, 0x000617fc");
+__asm__(".set DAT_00061804, 0x00061804");
+__asm__(".set DAT_0006180c, 0x0006180c");
+__asm__(".set DAT_00061814, 0x00061814");
+__asm__(".set DAT_0006181c, 0x0006181c");
+__asm__(".set DAT_00061824, 0x00061824");
+__asm__(".set DAT_0006182c, 0x0006182c");
+__asm__(".set DAT_00061834, 0x00061834");
+__asm__(".set DAT_0006183c, 0x0006183c");
+__asm__(".set DAT_000618d4, 0x000618d4");
+__asm__(".set DAT_00061b94, 0x00061b94");
+__asm__(".set DAT_00061b9c, 0x00061b9c");
+__asm__(".set DAT_00061ba4, 0x00061ba4");
+__asm__(".set DAT_00061bac, 0x00061bac");
+__asm__(".set DAT_00100000, 0x00100000");
+__asm__(".set DAT_00100002, 0x00100002");
+__asm__(".set DAT_00100004, 0x00100004");
+__asm__(".set DAT_0010055e, 0x0010055e");
+__asm__(".set DAT_001009b0, 0x001009b0");
+__asm__(".set DAT_001009c6, 0x001009c6");
+__asm__(".set DAT_001009ca, 0x001009ca");
+__asm__(".set DAT_001009ce, 0x001009ce");
+__asm__(".set DAT_001009da, 0x001009da");
+__asm__(".set DAT_001009de, 0x001009de");
+__asm__(".set DAT_001009e2, 0x001009e2");
+__asm__(".set DAT_001009e6, 0x001009e6");
+__asm__(".set DAT_001009f0, 0x001009f0");
+__asm__(".set DAT_001009f6, 0x001009f6");
+__asm__(".set DAT_001009fa, 0x001009fa");
+__asm__(".set DAT_00100a02, 0x00100a02");
+__asm__(".set DAT_00100bb4, 0x00100bb4");
+__asm__(".set DAT_00100bb8, 0x00100bb8");
+__asm__(".set DAT_00100bc8, 0x00100bc8");
+__asm__(".set DAT_00100bc9, 0x00100bc9");
+__asm__(".set DAT_00100bca, 0x00100bca");
+__asm__(".set DAT_00100bce, 0x00100bce");
+__asm__(".set DAT_00100bd0, 0x00100bd0");
+__asm__(".set DAT_00100bd2, 0x00100bd2");
+__asm__(".set DAT_00100bd5, 0x00100bd5");
+__asm__(".set DAT_00100bf4, 0x00100bf4");
+__asm__(".set DAT_00100bf5, 0x00100bf5");
+__asm__(".set DAT_00100c21, 0x00100c21");
+__asm__(".set DAT_00100c24, 0x00100c24");
+__asm__(".set DAT_00100c26, 0x00100c26");
+__asm__(".set DAT_00100c28, 0x00100c28");
+__asm__(".set DAT_00100c2a, 0x00100c2a");
+__asm__(".set DAT_00100c2e, 0x00100c2e");
+__asm__(".set DAT_00100c30, 0x00100c30");
+__asm__(".set DAT_00100c32, 0x00100c32");
+__asm__(".set DAT_00100c34, 0x00100c34");
+__asm__(".set DAT_00100c36, 0x00100c36");
+__asm__(".set DAT_00100c38, 0x00100c38");
+__asm__(".set DAT_00100c3a, 0x00100c3a");
+__asm__(".set DAT_00100c3c, 0x00100c3c");
+__asm__(".set DAT_00100c3d, 0x00100c3d");
+__asm__(".set DAT_00100c3e, 0x00100c3e");
+__asm__(".set DAT_00100c40, 0x00100c40");
+__asm__(".set DAT_00100c44, 0x00100c44");
+__asm__(".set DAT_00100c46, 0x00100c46");
+__asm__(".set DAT_00100c48, 0x00100c48");
+__asm__(".set DAT_00100c58, 0x00100c58");
+__asm__(".set DAT_00100c5a, 0x00100c5a");
+__asm__(".set DAT_00100c5e, 0x00100c5e");
+__asm__(".set DAT_00100c62, 0x00100c62");
+__asm__(".set DAT_00100c66, 0x00100c66");
+__asm__(".set DAT_00100c67, 0x00100c67");
+__asm__(".set DAT_001011c4, 0x001011c4");
+__asm__(".set DAT_001011c5, 0x001011c5");
+__asm__(".set DAT_001011c6, 0x001011c6");
+__asm__(".set DAT_00101396, 0x00101396");
+__asm__(".set DAT_00101398, 0x00101398");
+__asm__(".set DAT_0010139c, 0x0010139c");
+__asm__(".set DAT_00101406, 0x00101406");
+__asm__(".set DAT_00101420, 0x00101420");
+__asm__(".set DAT_00101424, 0x00101424");
+__asm__(".set DAT_00101428, 0x00101428");
+__asm__(".set DAT_00101429, 0x00101429");
+__asm__(".set DAT_0010142a, 0x0010142a");
+__asm__(".set DAT_0010142c, 0x0010142c");
+__asm__(".set DAT_0010155a, 0x0010155a");
+__asm__(".set DAT_0010155c, 0x0010155c");
+__asm__(".set DAT_001017f6, 0x001017f6");
+__asm__(".set DAT_0010199a, 0x0010199a");
+__asm__(".set DAT_0010199e, 0x0010199e");
+__asm__(".set DAT_001019a2, 0x001019a2");
+__asm__(".set DAT_00101b46, 0x00101b46");
+__asm__(".set DAT_00101b4a, 0x00101b4a");
+__asm__(".set DAT_00101b54, 0x00101b54");
+__asm__(".set DAT_00101b55, 0x00101b55");
+__asm__(".set DAT_00101b56, 0x00101b56");
+__asm__(".set DAT_00101b58, 0x00101b58");
+__asm__(".set DAT_00101b5a, 0x00101b5a");
+__asm__(".set DAT_00101b6a, 0x00101b6a");
+__asm__(".set DAT_00101b6b, 0x00101b6b");
+__asm__(".set DAT_00101b6c, 0x00101b6c");
+__asm__(".set DAT_00101b71, 0x00101b71");
+__asm__(".set DAT_00101b9e, 0x00101b9e");
+__asm__(".set DAT_00101b9f, 0x00101b9f");
+__asm__(".set DAT_00101ba0, 0x00101ba0");
+__asm__(".set DAT_00101ba1, 0x00101ba1");
+__asm__(".set DAT_00101bce, 0x00101bce");
+__asm__(".set DAT_00101bd0, 0x00101bd0");
+__asm__(".set DAT_00101cf2, 0x00101cf2");
+__asm__(".set DAT_00101cf4, 0x00101cf4");
+__asm__(".set DAT_00101cf5, 0x00101cf5");
+__asm__(".set DAT_00101cf6, 0x00101cf6");
+__asm__(".set DAT_00101cf9, 0x00101cf9");
+__asm__(".set DAT_00101cfa, 0x00101cfa");
+__asm__(".set DAT_00101d00, 0x00101d00");
+__asm__(".set DAT_00101d04, 0x00101d04");
+__asm__(".set DAT_00101d08, 0x00101d08");
+__asm__(".set DAT_00101d14, 0x00101d14");
+__asm__(".set DAT_00101d20, 0x00101d20");
+__asm__(".set DAT_00101d24, 0x00101d24");
+__asm__(".set DAT_00101d28, 0x00101d28");
+__asm__(".set DAT_00101d34, 0x00101d34");
+__asm__(".set DAT_00101d8e, 0x00101d8e");
+__asm__(".set DAT_00101d90, 0x00101d90");
+__asm__(".set DAT_00101dd6, 0x00101dd6");
+__asm__(".set DAT_00101dd7, 0x00101dd7");
+__asm__(".set DAT_00101dd8, 0x00101dd8");
+__asm__(".set DAT_00101ddc, 0x00101ddc");
+__asm__(".set DAT_00101ddf, 0x00101ddf");
+__asm__(".set DAT_00101df8, 0x00101df8");
+__asm__(".set DAT_00101dfc, 0x00101dfc");
+__asm__(".set DAT_00101e00, 0x00101e00");
+__asm__(".set DAT_00101e04, 0x00101e04");
+__asm__(".set DAT_00101e28, 0x00101e28");
+__asm__(".set DAT_00101e2c, 0x00101e2c");
+__asm__(".set DAT_00101e70, 0x00101e70");
+__asm__(".set DAT_00101e72, 0x00101e72");
+__asm__(".set DAT_00101e74, 0x00101e74");
+__asm__(".set DAT_00101e75, 0x00101e75");
+__asm__(".set DAT_00101e76, 0x00101e76");
+__asm__(".set DAT_00101e77, 0x00101e77");
+__asm__(".set DAT_00101e78, 0x00101e78");
+__asm__(".set DAT_00101e7c, 0x00101e7c");
+__asm__(".set DAT_00101e80, 0x00101e80");
+__asm__(".set DAT_00101e88, 0x00101e88");
+__asm__(".set DAT_00101f52, 0x00101f52");
+__asm__(".set DAT_00101f53, 0x00101f53");
+__asm__(".set DAT_00101f54, 0x00101f54");
+__asm__(".set DAT_00101f55, 0x00101f55");
+__asm__(".set DAT_00101f5a, 0x00101f5a");
+__asm__(".set DAT_00101f5b, 0x00101f5b");
+__asm__(".set DAT_00101f5c, 0x00101f5c");
+__asm__(".set DAT_00101f5d, 0x00101f5d");
+__asm__(".set DAT_00101f5e, 0x00101f5e");
+__asm__(".set DAT_00101f5f, 0x00101f5f");
+__asm__(".set DAT_00101f60, 0x00101f60");
+__asm__(".set DAT_00101f64, 0x00101f64");
+__asm__(".set DAT_00101f66, 0x00101f66");
+__asm__(".set DAT_00101fd8, 0x00101fd8");
+__asm__(".set DAT_00101fd9, 0x00101fd9");
+__asm__(".set DAT_00101fda, 0x00101fda");
+__asm__(".set DAT_00101fde, 0x00101fde");
+__asm__(".set DAT_00101fea, 0x00101fea");
+__asm__(".set DAT_00101fee, 0x00101fee");
+__asm__(".set DAT_00101ff2, 0x00101ff2");
+__asm__(".set DAT_00101ffa, 0x00101ffa");
+__asm__(".set DAT_00101ffe, 0x00101ffe");
+__asm__(".set DAT_00102002, 0x00102002");
+__asm__(".set DAT_00102006, 0x00102006");
+__asm__(".set DAT_0010200a, 0x0010200a");
+__asm__(".set DAT_0010200e, 0x0010200e");
+__asm__(".set DAT_00102018, 0x00102018");
+__asm__(".set DAT_00102040, 0x00102040");
+__asm__(".set DAT_00102042, 0x00102042");
+__asm__(".set DAT_00102046, 0x00102046");
+__asm__(".set DAT_00102047, 0x00102047");
+__asm__(".set DAT_00102048, 0x00102048");
+__asm__(".set DAT_0010204a, 0x0010204a");
+__asm__(".set DAT_0010204e, 0x0010204e");
+__asm__(".set DAT_00102052, 0x00102052");
+__asm__(".set DAT_00102056, 0x00102056");
+__asm__(".set DAT_0010205a, 0x0010205a");
+__asm__(".set DAT_0010205e, 0x0010205e");
+__asm__(".set DAT_00102062, 0x00102062");
+__asm__(".set DAT_00102066, 0x00102066");
+__asm__(".set DAT_0010206a, 0x0010206a");
+__asm__(".set DAT_0010206b, 0x0010206b");
+__asm__(".set DAT_0010206c, 0x0010206c");
+__asm__(".set DAT_0010206e, 0x0010206e");
+__asm__(".set DAT_00102072, 0x00102072");
+__asm__(".set DAT_00102076, 0x00102076");
+__asm__(".set DAT_0010207a, 0x0010207a");
+__asm__(".set DAT_0010207b, 0x0010207b");
+__asm__(".set DAT_00102144, 0x00102144");
+__asm__(".set DAT_00102148, 0x00102148");
+__asm__(".set DAT_0010214c, 0x0010214c");
+__asm__(".set DAT_00102150, 0x00102150");
+__asm__(".set DAT_00102158, 0x00102158");
+__asm__(".set DAT_0010215c, 0x0010215c");
+__asm__(".set DAT_00102160, 0x00102160");
+__asm__(".set DAT_0010253e, 0x0010253e");
+__asm__(".set DAT_0010253f, 0x0010253f");
+__asm__(".set DAT_00102540, 0x00102540");
+__asm__(".set DAT_00102541, 0x00102541");
+__asm__(".set DAT_00102542, 0x00102542");
+__asm__(".set DAT_00102543, 0x00102543");
+__asm__(".set DAT_00102546, 0x00102546");
+__asm__(".set DAT_0010254a, 0x0010254a");
+__asm__(".set DAT_0010254e, 0x0010254e");
+__asm__(".set DAT_0010254f, 0x0010254f");
+__asm__(".set DAT_00102550, 0x00102550");
+__asm__(".set DAT_00102551, 0x00102551");
+__asm__(".set DAT_00102552, 0x00102552");
+__asm__(".set DAT_00102554, 0x00102554");
+__asm__(".set DAT_00102558, 0x00102558");
+__asm__(".set DAT_0010255c, 0x0010255c");
+__asm__(".set DAT_00102560, 0x00102560");
+__asm__(".set DAT_00102564, 0x00102564");
+__asm__(".set DAT_00102568, 0x00102568");
+__asm__(".set DAT_0010256c, 0x0010256c");
+__asm__(".set DAT_0010256e, 0x0010256e");
+__asm__(".set DAT_00102572, 0x00102572");
+__asm__(".set DAT_00102576, 0x00102576");
+__asm__(".set DAT_0010257a, 0x0010257a");
+__asm__(".set DAT_0010257e, 0x0010257e");
+__asm__(".set DAT_00102582, 0x00102582");
+__asm__(".set DAT_00102587, 0x00102587");
+__asm__(".set DAT_00102588, 0x00102588");
+__asm__(".set DAT_00102589, 0x00102589");
+__asm__(".set DAT_0010258a, 0x0010258a");
+__asm__(".set DAT_0010258b, 0x0010258b");
+__asm__(".set DAT_0010258c, 0x0010258c");
+__asm__(".set DAT_0010258d, 0x0010258d");
+__asm__(".set DAT_0010258e, 0x0010258e");
+__asm__(".set DAT_00102590, 0x00102590");
+__asm__(".set DAT_00102594, 0x00102594");
+__asm__(".set DAT_00102598, 0x00102598");
+__asm__(".set DAT_0010259c, 0x0010259c");
+__asm__(".set DAT_001025a0, 0x001025a0");
+__asm__(".set DAT_001025a4, 0x001025a4");
+__asm__(".set DAT_001025a8, 0x001025a8");
+__asm__(".set DAT_001025ac, 0x001025ac");
+__asm__(".set DAT_00102650, 0x00102650");
+__asm__(".set DAT_00102658, 0x00102658");
+__asm__(".set DAT_00102668, 0x00102668");
+__asm__(".set DAT_0010268e, 0x0010268e");
+__asm__(".set DAT_001026b2, 0x001026b2");
+__asm__(".set DAT_001026b6, 0x001026b6");
+__asm__(".set DAT_00102720, 0x00102720");
+__asm__(".set DAT_00102724, 0x00102724");
+__asm__(".set DAT_00102726, 0x00102726");
+__asm__(".set DAT_00102a46, 0x00102a46");
+__asm__(".set DAT_00102b46, 0x00102b46");
+__asm__(".set DAT_00102b4a, 0x00102b4a");
+__asm__(".set DAT_00102b4c, 0x00102b4c");
+__asm__(".set DAT_00102b4d, 0x00102b4d");
+__asm__(".set DAT_00102b4e, 0x00102b4e");
+__asm__(".set DAT_00102c4e, 0x00102c4e");
+__asm__(".set DAT_00102c52, 0x00102c52");
+__asm__(".set DAT_00102c56, 0x00102c56");
+__asm__(".set DAT_00102c60, 0x00102c60");
+__asm__(".set DAT_00102c63, 0x00102c63");
+__asm__(".set DAT_00102d64, 0x00102d64");
+__asm__(".set DAT_00102d68, 0x00102d68");
+__asm__(".set DAT_00102d6c, 0x00102d6c");
+__asm__(".set DAT_00102d70, 0x00102d70");
+__asm__(".set DAT_00102d74, 0x00102d74");
+__asm__(".set DAT_00102ebc, 0x00102ebc");
+__asm__(".set DAT_00102ecc, 0x00102ecc");
+__asm__(".set DAT_00102ecd, 0x00102ecd");
+__asm__(".set DAT_00102ece, 0x00102ece");
+__asm__(".set DAT_00102ecf, 0x00102ecf");
+__asm__(".set DAT_00102ed0, 0x00102ed0");
+__asm__(".set DAT_00102ed1, 0x00102ed1");
+__asm__(".set DAT_00102ed2, 0x00102ed2");
+__asm__(".set DAT_00102ed3, 0x00102ed3");
+__asm__(".set DAT_00102ed4, 0x00102ed4");
+__asm__(".set DAT_00102ed5, 0x00102ed5");
+__asm__(".set DAT_00102ed6, 0x00102ed6");
+__asm__(".set DAT_00102ed7, 0x00102ed7");
+__asm__(".set DAT_00102ed8, 0x00102ed8");
+__asm__(".set DAT_00102ed9, 0x00102ed9");
+__asm__(".set DAT_00102eda, 0x00102eda");
+__asm__(".set DAT_00102edb, 0x00102edb");
+__asm__(".set DAT_00102edc, 0x00102edc");
+__asm__(".set DAT_00102edd, 0x00102edd");
+__asm__(".set DAT_00102ede, 0x00102ede");
+__asm__(".set DAT_00102fe0, 0x00102fe0");
+__asm__(".set DAT_00102fe4, 0x00102fe4");
+__asm__(".set DAT_00102fe6, 0x00102fe6");
+__asm__(".set DAT_00102fe7, 0x00102fe7");
+__asm__(".set DAT_00102fe8, 0x00102fe8");
+__asm__(".set DAT_00102fe9, 0x00102fe9");
+__asm__(".set DAT_00102fea, 0x00102fea");
+__asm__(".set DAT_00102feb, 0x00102feb");
+__asm__(".set DAT_001030ec, 0x001030ec");
+__asm__(".set DAT_001030f0, 0x001030f0");
+__asm__(".set DAT_001030f4, 0x001030f4");
+__asm__(".set DAT_001030f6, 0x001030f6");
+__asm__(".set DAT_001030f7, 0x001030f7");
+__asm__(".set DAT_001030f8, 0x001030f8");
+__asm__(".set DAT_001030f9, 0x001030f9");
+__asm__(".set DAT_001030fa, 0x001030fa");
+__asm__(".set DAT_001030fb, 0x001030fb");
+__asm__(".set DAT_001030fc, 0x001030fc");
+__asm__(".set DAT_001030fd, 0x001030fd");
+__asm__(".set DAT_001030fe, 0x001030fe");
+__asm__(".set DAT_001030ff, 0x001030ff");
+__asm__(".set DAT_00103100, 0x00103100");
+__asm__(".set DAT_0010310e, 0x0010310e");
+__asm__(".set DAT_00103112, 0x00103112");
+__asm__(".set DAT_00103116, 0x00103116");
+__asm__(".set DAT_00103126, 0x00103126");
+__asm__(".set DAT_0010312a, 0x0010312a");
+__asm__(".set DAT_0010312e, 0x0010312e");
+__asm__(".set DAT_0010313a, 0x0010313a");
+__asm__(".set DAT_0010313c, 0x0010313c");
+__asm__(".set DAT_00103140, 0x00103140");
+__asm__(".set DAT_00103142, 0x00103142");
+__asm__(".set DAT_00103146, 0x00103146");
+__asm__(".set DAT_00103158, 0x00103158");
+__asm__(".set DAT_0010315c, 0x0010315c");
+__asm__(".set DAT_00103160, 0x00103160");
+__asm__(".set DAT_00103174, 0x00103174");
+__asm__(".set DAT_00103178, 0x00103178");
+__asm__(".set DAT_0010317c, 0x0010317c");
+__asm__(".set DAT_00103188, 0x00103188");
+__asm__(".set DAT_00103189, 0x00103189");
+__asm__(".set DAT_0010328a, 0x0010328a");
+__asm__(".set DAT_0010328e, 0x0010328e");
+__asm__(".set DAT_00103292, 0x00103292");
+__asm__(".set DAT_00103293, 0x00103293");
+__asm__(".set DAT_00103294, 0x00103294");
+__asm__(".set DAT_00103295, 0x00103295");
+__asm__(".set DAT_00103296, 0x00103296");
+__asm__(".set DAT_00103297, 0x00103297");
+__asm__(".set DAT_00103298, 0x00103298");
+__asm__(".set DAT_00103299, 0x00103299");
+__asm__(".set DAT_0010329a, 0x0010329a");
+__asm__(".set DAT_0010329b, 0x0010329b");
+__asm__(".set DAT_0010329c, 0x0010329c");
+__asm__(".set DAT_0010329e, 0x0010329e");
+__asm__(".set DAT_001032a0, 0x001032a0");
+__asm__(".set DAT_001032a4, 0x001032a4");
+__asm__(".set DAT_001032a6, 0x001032a6");
+__asm__(".set DAT_001032a7, 0x001032a7");
+__asm__(".set DAT_001032a8, 0x001032a8");
+__asm__(".set DAT_001032ea, 0x001032ea");
+__asm__(".set DAT_001032ec, 0x001032ec");
+__asm__(".set DAT_001032f0, 0x001032f0");
+__asm__(".set DAT_001032f2, 0x001032f2");
+__asm__(".set DAT_001032f3, 0x001032f3");
+__asm__(".set DAT_001032fc, 0x001032fc");
+__asm__(".set DAT_0010370a, 0x0010370a");
+__asm__(".set DAT_0010370e, 0x0010370e");
+__asm__(".set DAT_00103712, 0x00103712");
+__asm__(".set DAT_00103716, 0x00103716");
+__asm__(".set DAT_0010371a, 0x0010371a");
+__asm__(".set DAT_001037cc, 0x001037cc");
+__asm__(".set DAT_001037d0, 0x001037d0");
+__asm__(".set DAT_001037d4, 0x001037d4");
+__asm__(".set DAT_001037d6, 0x001037d6");
+__asm__(".set DAT_001037d8, 0x001037d8");
+__asm__(".set DAT_001037dc, 0x001037dc");
+__asm__(".set DAT_001037de, 0x001037de");
+__asm__(".set DAT_001037df, 0x001037df");
+__asm__(".set DAT_001037e8, 0x001037e8");
+__asm__(".set DAT_0010382c, 0x0010382c");
+__asm__(".set DAT_0010aad2, 0x0010aad2");
+__asm__(".set DAT_0010aad3, 0x0010aad3");
+__asm__(".set DAT_0010aaf2, 0x0010aaf2");
+__asm__(".set DAT_0010aaf3, 0x0010aaf3");
+__asm__(".set DAT_0010ab1f, 0x0010ab1f");
+__asm__(".set DAT_0010ab2c, 0x0010ab2c");
+__asm__(".set DAT_0010ab32, 0x0010ab32");
+__asm__(".set DAT_0010ab33, 0x0010ab33");
+__asm__(".set DAT_0010ab34, 0x0010ab34");
+__asm__(".set DAT_0010ab35, 0x0010ab35");
+__asm__(".set DAT_0010ab36, 0x0010ab36");
+__asm__(".set DAT_0010ab37, 0x0010ab37");
+__asm__(".set DAT_0010ab38, 0x0010ab38");
+__asm__(".set DAT_0010ab3a, 0x0010ab3a");
+__asm__(".set DAT_0010ab4c, 0x0010ab4c");
+__asm__(".set DAT_0010ab5e, 0x0010ab5e");
+__asm__(".set DAT_0010ab60, 0x0010ab60");
+__asm__(".set DAT_0010ab84, 0x0010ab84");
+__asm__(".set DAT_0010acf8, 0x0010acf8");
+__asm__(".set DAT_0010ad04, 0x0010ad04");
+__asm__(".set DAT_0010ad06, 0x0010ad06");
+__asm__(".set DAT_0010ad3c, 0x0010ad3c");
+__asm__(".set DAT_0010ad3d, 0x0010ad3d");
+__asm__(".set DAT_0010ad3e, 0x0010ad3e");
+__asm__(".set DAT_0010ad3f, 0x0010ad3f");
+__asm__(".set DAT_0010ad44, 0x0010ad44");
+__asm__(".set DAT_0010ad47, 0x0010ad47");
+__asm__(".set DAT_0010ad48, 0x0010ad48");
+__asm__(".set DAT_0010ad49, 0x0010ad49");
+__asm__(".set DAT_0010ad4d, 0x0010ad4d");
+__asm__(".set DAT_0010ad4e, 0x0010ad4e");
+__asm__(".set DAT_0010ad4f, 0x0010ad4f");
+__asm__(".set DAT_0010ae56, 0x0010ae56");
+__asm__(".set DAT_0010ae59, 0x0010ae59");
+__asm__(".set DAT_0010ae5a, 0x0010ae5a");
+__asm__(".set DAT_0010ae5b, 0x0010ae5b");
+__asm__(".set DAT_0010ae5c, 0x0010ae5c");
+__asm__(".set DAT_0010af5c, 0x0010af5c");
+__asm__(".set DAT_0010af60, 0x0010af60");
+__asm__(".set DAT_0010af64, 0x0010af64");
+__asm__(".set DAT_0010af66, 0x0010af66");
+__asm__(".set DAT_0010af67, 0x0010af67");
+__asm__(".set DAT_0010af68, 0x0010af68");
+__asm__(".set DAT_0010af69, 0x0010af69");
+__asm__(".set DAT_0010af6a, 0x0010af6a");
+__asm__(".set DAT_0010af6c, 0x0010af6c");
+__asm__(".set DAT_0010af6d, 0x0010af6d");
+__asm__(".set DAT_0010af6e, 0x0010af6e");
+__asm__(".set DAT_0010af6f, 0x0010af6f");
+__asm__(".set DAT_0010af70, 0x0010af70");
+__asm__(".set DAT_0010af82, 0x0010af82");
+__asm__(".set DAT_0010af9a, 0x0010af9a");
+__asm__(".set DAT_0010afaa, 0x0010afaa");
+__asm__(".set DAT_0010afac, 0x0010afac");
+__asm__(".set DAT_0010afb2, 0x0010afb2");
+__asm__(".set DAT_0010afb6, 0x0010afb6");
+__asm__(".set DAT_0010afe0, 0x0010afe0");
+__asm__(".set DAT_0010afe4, 0x0010afe4");
+__asm__(".set DAT_0010afe6, 0x0010afe6");
+__asm__(".set DAT_0010aff0, 0x0010aff0");
+__asm__(".set DAT_0010affc, 0x0010affc");
+__asm__(".set DAT_0010b038, 0x0010b038");
+__asm__(".set DAT_0010b03a, 0x0010b03a");
+__asm__(".set DAT_0010b03b, 0x0010b03b");
+__asm__(".set DAT_0010b03c, 0x0010b03c");
+__asm__(".set DAT_0010b0bc, 0x0010b0bc");
+__asm__(".set DAT_0010b0be, 0x0010b0be");
+__asm__(".set DAT_0010b0c2, 0x0010b0c2");
+__asm__(".set DAT_0010ffd0, 0x0010ffd0");
+__asm__(".set DAT_0010ffe6, 0x0010ffe6");
+__asm__(".set DAT_0010ffea, 0x0010ffea");
+__asm__(".set DAT_0010ffee, 0x0010ffee");
+__asm__(".set DAT_0010fff2, 0x0010fff2");
+__asm__(".set DAT_0010fff6, 0x0010fff6");
+__asm__(".set DAT_0010fffa, 0x0010fffa");
+__asm__(".set DAT_00300000, 0x00300000");
+__asm__(".set DAT_00304000, 0x00304000");
+__asm__(".set DAT_00306000, 0x00306000");
+__asm__(".set DAT_00400000, 0x00400000");
+__asm__(".set DAT_00400002, 0x00400002");
+__asm__(".set DAT_00400003, 0x00400003");
+__asm__(".set DAT_00400004, 0x00400004");
+__asm__(".set DAT_00400005, 0x00400005");
+__asm__(".set DAT_00400006, 0x00400006");
+__asm__(".set DAT_00400007, 0x00400007");
+__asm__(".set DAT_00400008, 0x00400008");
+__asm__(".set DAT_00400010, 0x00400010");
+__asm__(".set DAT_00400012, 0x00400012");
+__asm__(".set DAT_00400024, 0x00400024");
+__asm__(".set DAT_00400036, 0x00400036");
+__asm__(".set DAT_00400060, 0x00400060");
+__asm__(".set DAT_00400062, 0x00400062");
+__asm__(".set DAT_00400066, 0x00400066");
+__asm__(".set DAT_0040006a, 0x0040006a");
+__asm__(".set DAT_00400080, 0x00400080");
+__asm__(".set DAT_00400082, 0x00400082");
+__asm__(".set DAT_00400086, 0x00400086");
+__asm__(".set DAT_004000c4, 0x004000c4");
+__asm__(".set DAT_00400144, 0x00400144");
+__asm__(".set DAT_00700000, 0x00700000");
+__asm__(".set DAT_00fffd00, 0x00fffd00");
+__asm__(".set DAT_00fffd20, 0x00fffd20");
+__asm__(".set DAT_00fffd22, 0x00fffd22");
+__asm__(".set DDRE, 0x00fffa15");
+__asm__(".set DDRF, 0x00fffa1d");
+__asm__(".set DDRGP, 0x00fff906");
+__asm__(".set DDRQS, 0x00fffc17");
+__asm__(".set DUART_CLR_CTLR, 0x0020000f");
+__asm__(".set DUART_CRA, 0x00200005");
+__asm__(".set DUART_CRB, 0x00200015");
+__asm__(".set DUART_CUR_CTUR, 0x0020000d");
+__asm__(".set DUART_IPCR_ACR, 0x00200009");
+__asm__(".set DUART_IP_OPCR, 0x0020001b");
+__asm__(".set DUART_ISR_IMR, 0x0020000b");
+__asm__(".set DUART_IVR, 0x00200019");
+__asm__(".set DUART_MR1A_MR2A, 0x00200001");
+__asm__(".set DUART_MR1B_MR2B, 0x00200011");
+__asm__(".set DUART_RBA_TBA, 0x00200007");
+__asm__(".set DUART_RBB_TBB, 0x00200017");
+__asm__(".set DUART_SRA_CSRA, 0x00200003");
+__asm__(".set DUART_SRB_CSRB, 0x00200013");
+__asm__(".set DUART_START_SOPBC, 0x0020001d");
+__asm__(".set DUART_STOP_ROPBC, 0x0020001f");
+__asm__(".set GPTMCR, 0x00fff900");
+__asm__(".set GPT_ICR, 0x00fff904");
+__asm__(".set LAB_00012f86, 0x00012f86");
+__asm__(".set LAB_00012f92, 0x00012f92");
+__asm__(".set LAB_00012f9e, 0x00012f9e");
+__asm__(".set LAB_00013666, 0x00013666");
+__asm__(".set LAB_0001366c, 0x0001366c");
+__asm__(".set LAB_000136a2, 0x000136a2");
+__asm__(".set LAB_000136bc, 0x000136bc");
+__asm__(".set LAB_000277ec, 0x000277ec");
+__asm__(".set LAB_00030b30, 0x00030b30");
+__asm__(".set LAB_00033454, 0x00033454");
+__asm__(".set LAB_00033472, 0x00033472");
+__asm__(".set LAB_000335be, 0x000335be");
+__asm__(".set LAB_00033862, 0x00033862");
+__asm__(".set LAB_000338ce, 0x000338ce");
+__asm__(".set LAB_00033904, 0x00033904");
+__asm__(".set LAB_0004007e, 0x0004007e");
+__asm__(".set LAB_00040096, 0x00040096");
+__asm__(".set OC1D, 0x00fff909");
+__asm__(".set OC1M, 0x00fff908");
+__asm__(".set PACNT, 0x00fff90d");
+__asm__(".set PACTL, 0x00fff90c");
+__asm__(".set PEPAR, 0x00fffa17");
+__asm__(".set PFPAR, 0x00fffa1f");
+__asm__(".set PICR, 0x00fffa22");
+__asm__(".set PITR, 0x00fffa24");
+__asm__(".set PORTC, 0x00fffa41");
+__asm__(".set PORTE0, 0x00fffa11");
+__asm__(".set PORTE1, 0x00fffa13");
+__asm__(".set PORTF0, 0x00fffa19");
+__asm__(".set PORTF1, 0x00fffa1b");
+__asm__(".set PORTGP, 0x00fff907");
+__asm__(".set PORTQS, 0x00fffc15");
+__asm__(".set PQSPAR, 0x00fffc16");
+__asm__(".set PRESCL, 0x00fff92c");
+__asm__(".set PTR_DAT_00021e2e, 0x00021e2e");
+__asm__(".set PTR_DAT_00021e32, 0x00021e32");
+__asm__(".set PTR_DAT_0004cf80, 0x0004cf80");
+__asm__(".set PTR_DAT_0004fece, 0x0004fece");
+__asm__(".set PTR_DAT_0004fee4, 0x0004fee4");
+__asm__(".set PTR_DAT_00050cc2, 0x00050cc2");
+__asm__(".set PTR_DAT_00050e5e, 0x00050e5e");
+__asm__(".set PTR_DAT_00050e66, 0x00050e66");
+__asm__(".set PTR_diag_cal_0001c8ac, 0x0001c8ac");
+__asm__(".set PTR_lamp_test_command_000186b0, 0x000186b0");
+__asm__(".set PTR_long_array_get_byte_0004fed4, 0x0004fed4");
+__asm__(".set PTR_s_Self_Test_0004d076, 0x0004d076");
+__asm__(".set PTR_selftest_all_00018458, 0x00018458");
+__asm__(".set PWMA, 0x00fff926");
+__asm__(".set PWMB, 0x00fff927");
+__asm__(".set PWMBUFA, 0x00fff92a");
+__asm__(".set PWMBUFB, 0x00fff92b");
+__asm__(".set PWMC, 0x00fff925");
+__asm__(".set PWMCNT, 0x00fff928");
+__asm__(".set QILR, 0x00fffc04");
+__asm__(".set QIVR, 0x00fffc05");
+__asm__(".set QSMCR, 0x00fffc00");
+__asm__(".set QTEST, 0x00fffc02");
+__asm__(".set RSR, 0x00fffa07");
+__asm__(".set SCCR0, 0x00fffc08");
+__asm__(".set SCCR1, 0x00fffc0a");
+__asm__(".set SCDR, 0x00fffc0e");
+__asm__(".set SCSR, 0x00fffc0c");
+__asm__(".set SIMCR, 0x00fffa00");
+__asm__(".set SIMTR, 0x00fffa02");
+__asm__(".set SIMTRE, 0x00fffa08");
+__asm__(".set SPCR0, 0x00fffc18");
+__asm__(".set SPCR1, 0x00fffc1a");
+__asm__(".set SPCR2, 0x00fffc1c");
+__asm__(".set SPCR3, 0x00fffc1e");
+__asm__(".set SPSR, 0x00fffc1f");
+__asm__(".set SWSR, 0x00fffa27");
+__asm__(".set SYNCR, 0x00fffa04");
+__asm__(".set SYPCR, 0x00fffa21");
+__asm__(".set TCNT, 0x00fff90a");
+__asm__(".set TCTL1, 0x00fff91e");
+__asm__(".set TCTL2, 0x00fff91f");
+__asm__(".set TFLG1, 0x00fff922");
+__asm__(".set TFLG2, 0x00fff923");
+__asm__(".set TI4_O5, 0x00fff91c");
+__asm__(".set TIC1, 0x00fff90e");
+__asm__(".set TIC2, 0x00fff910");
+__asm__(".set TIC3, 0x00fff912");
+__asm__(".set TMSK1, 0x00fff920");
+__asm__(".set TMSK2, 0x00fff921");
+__asm__(".set TOC1, 0x00fff914");
+__asm__(".set TOC2, 0x00fff916");
+__asm__(".set TOC3, 0x00fff918");
+__asm__(".set TOC4, 0x00fff91a");
+__asm__(".set UNK_00002a30, 0x00002a30");
+__asm__(".set UNK_00003039, 0x00003039");
+__asm__(".set UNK_00003c1a, 0x00003c1a");
+__asm__(".set UNK_00004d10, 0x00004d10");
+__asm__(".set UNK_00004d11, 0x00004d11");
+__asm__(".set UNK_00012350, 0x00012350");
+__asm__(".set UNK_0001d570, 0x0001d570");
+__asm__(".set UNK_00028720, 0x00028720");
+__asm__(".set UNK_00028722, 0x00028722");
+__asm__(".set UNK_00032700, 0x00032700");
+__asm__(".set UNK_00033cc6, 0x00033cc6");
+__asm__(".set UNK_00041300, 0x00041300");
+__asm__(".set UNK_0004b800, 0x0004b800");
+__asm__(".set UNK_0004cfc5, 0x0004cfc5");
+__asm__(".set UNK_0004feee, 0x0004feee");
+__asm__(".set UNK_0004fef2, 0x0004fef2");
+__asm__(".set UNK_0005fa2d, 0x0005fa2d");
+__asm__(".set UNK_0005fa4a, 0x0005fa4a");
+__asm__(".set UNK_0006184c, 0x0006184c");
+__asm__(".set UNK_00061854, 0x00061854");
+__asm__(".set UNK_00061864, 0x00061864");
+__asm__(".set UNK_00061c0f, 0x00061c0f");
+__asm__(".set UNK_0007a120, 0x0007a120");
+__asm__(".set UNK_00100793, 0x00100793");
+__asm__(".set UNK_001007bc, 0x001007bc");
+__asm__(".set UNK_00100b84, 0x00100b84");
+__asm__(".set UNK_001011e0, 0x001011e0");
+__asm__(".set UNK_0010139a, 0x0010139a");
+__asm__(".set UNK_00101b4e, 0x00101b4e");
+__asm__(".set UNK_00101b9a, 0x00101b9a");
+__asm__(".set UNK_00101bca, 0x00101bca");
+__asm__(".set UNK_00101bfa, 0x00101bfa");
+__asm__(".set UNK_00101bfe, 0x00101bfe");
+__asm__(".set UNK_00101c00, 0x00101c00");
+__asm__(".set UNK_00101c2a, 0x00101c2a");
+__asm__(".set UNK_00101c2e, 0x00101c2e");
+__asm__(".set UNK_00101c5a, 0x00101c5a");
+__asm__(".set UNK_00101c5e, 0x00101c5e");
+__asm__(".set UNK_00101c60, 0x00101c60");
+__asm__(".set UNK_00101c8a, 0x00101c8a");
+__asm__(".set UNK_00101c8e, 0x00101c8e");
+__asm__(".set UNK_00101cba, 0x00101cba");
+__asm__(".set UNK_00101cbe, 0x00101cbe");
+__asm__(".set UNK_00101cc0, 0x00101cc0");
+__asm__(".set UNK_001030d2, 0x001030d2");
+__asm__(".set UNK_00103ecd, 0x00103ecd");
+__asm__(".set UNK_001040ec, 0x001040ec");
+__asm__(".set UNK_0010549a, 0x0010549a");
+__asm__(".set UNK_001057dc, 0x001057dc");
+__asm__(".set UNK_00105f12, 0x00105f12");
+__asm__(".set UNK_00105fd4, 0x00105fd4");
+__asm__(".set UNK_0010656a, 0x0010656a");
+__asm__(".set UNK_001076d8, 0x001076d8");
+__asm__(".set UNK_001076e1, 0x001076e1");
+__asm__(".set UNK_001082c8, 0x001082c8");
+__asm__(".set UNK_001084da, 0x001084da");
+__asm__(".set UNK_00108578, 0x00108578");
+__asm__(".set UNK_00109057, 0x00109057");
+__asm__(".set UNK_0010921e, 0x0010921e");
+__asm__(".set UNK_00109a08, 0x00109a08");
+__asm__(".set UNK_00109a0c, 0x00109a0c");
+__asm__(".set UNK_00109ae0, 0x00109ae0");
+__asm__(".set UNK_00109b16, 0x00109b16");
+__asm__(".set UNK_00109b1a, 0x00109b1a");
+__asm__(".set UNK_00109bee, 0x00109bee");
+__asm__(".set UNK_0010a9e6, 0x0010a9e6");
+__asm__(".set UNK_0010a9fb, 0x0010a9fb");
+__asm__(".set UNK_0010aa10, 0x0010aa10");
+__asm__(".set UNK_0010aa12, 0x0010aa12");
+__asm__(".set UNK_0010aa14, 0x0010aa14");
+__asm__(".set UNK_0010aa16, 0x0010aa16");
+__asm__(".set UNK_0010aa27, 0x0010aa27");
+__asm__(".set UNK_0010aa38, 0x0010aa38");
+__asm__(".set UNK_0010aa3b, 0x0010aa3b");
+__asm__(".set UNK_0010aa6c, 0x0010aa6c");
+__asm__(".set UNK_0010afb0, 0x0010afb0");
+__asm__(".set UNK_00fffd40, 0x00fffd40");
+__asm__(".set USHORT_0001f6c8, 0x0001f6c8");
+__asm__(".set USHORT_0002f32a, 0x0002f32a");
+__asm__(".set USHORT_0002f76e, 0x0002f76e");
+__asm__(".set USHORT_0002f77c, 0x0002f77c");
+__asm__(".set USHORT_0002f78a, 0x0002f78a");
+__asm__(".set USHORT_0002f794, 0x0002f794");
+__asm__(".set USHORT_0002f79e, 0x0002f79e");
+__asm__(".set USHORT_0002f7a0, 0x0002f7a0");
+__asm__(".set USHORT_0002f7a2, 0x0002f7a2");
+__asm__(".set USHORT_0002f7a4, 0x0002f7a4");
+__asm__(".set USHORT_0002f7a8, 0x0002f7a8");
+__asm__(".set USHORT_0002f7b0, 0x0002f7b0");
+__asm__(".set WORD_0001062e, 0x0001062e");
+__asm__(".set WORD_00013d10, 0x00013d10");
+__asm__(".set WORD_0001b6ac, 0x0001b6ac");
+__asm__(".set WORD_0001b9cc, 0x0001b9cc");
+__asm__(".set WORD_0001bb60, 0x0001bb60");
+__asm__(".set WORD_0001bc60, 0x0001bc60");
+__asm__(".set WORD_0001bd1c, 0x0001bd1c");
+__asm__(".set WORD_0001c0a2, 0x0001c0a2");
+__asm__(".set WORD_0001d650, 0x0001d650");
+__asm__(".set WORD_0001f510, 0x0001f510");
+__asm__(".set WORD_0001f564, 0x0001f564");
+__asm__(".set WORD_0001f6ec, 0x0001f6ec");
+__asm__(".set WORD_00020092, 0x00020092");
+__asm__(".set WORD_00023dd8, 0x00023dd8");
+__asm__(".set WORD_00024136, 0x00024136");
+__asm__(".set WORD_000267e0, 0x000267e0");
+__asm__(".set WORD_00026838, 0x00026838");
+__asm__(".set WORD_00026c74, 0x00026c74");
+__asm__(".set WORD_00028264, 0x00028264");
+__asm__(".set WORD_00028326, 0x00028326");
+__asm__(".set WORD_000297ea, 0x000297ea");
+__asm__(".set WORD_00029818, 0x00029818");
+__asm__(".set WORD_00029a98, 0x00029a98");
+__asm__(".set WORD_0002b532, 0x0002b532");
+__asm__(".set WORD_0002bf1e, 0x0002bf1e");
+__asm__(".set WORD_0002d1f6, 0x0002d1f6");
+__asm__(".set WORD_0002e070, 0x0002e070");
+__asm__(".set WORD_0002e3e0, 0x0002e3e0");
+__asm__(".set WORD_0002e42c, 0x0002e42c");
+__asm__(".set WORD_0002e460, 0x0002e460");
+__asm__(".set WORD_0002e4ba, 0x0002e4ba");
+__asm__(".set WORD_0002e92a, 0x0002e92a");
+__asm__(".set WORD_0002ec6a, 0x0002ec6a");
+__asm__(".set WORD_0002ee86, 0x0002ee86");
+__asm__(".set WORD_0002eed2, 0x0002eed2");
+__asm__(".set WORD_0002f38a, 0x0002f38a");
+__asm__(".set WORD_0002f6b4, 0x0002f6b4");
+__asm__(".set WORD_0002fa68, 0x0002fa68");
+__asm__(".set WORD_0003001c, 0x0003001c");
+__asm__(".set WORD_0003030e, 0x0003030e");
+__asm__(".set WORD_000303c6, 0x000303c6");
+__asm__(".set WORD_000303f0, 0x000303f0");
+__asm__(".set WORD_000304b0, 0x000304b0");
+__asm__(".set WORD_0003054e, 0x0003054e");
+__asm__(".set WORD_000305fe, 0x000305fe");
+__asm__(".set WORD_000413ba, 0x000413ba");
+__asm__(".set WORD_00042a3c, 0x00042a3c");
+__asm__(".set WORD_00042d3c, 0x00042d3c");
+__asm__(".set WORD_00043090, 0x00043090");
+__asm__(".set WORD_00043238, 0x00043238");
+__asm__(".set WORD_00043262, 0x00043262");
+__asm__(".set WORD_00043562, 0x00043562");
+__asm__(".set WORD_000439fe, 0x000439fe");
+__asm__(".set WORD_00043aec, 0x00043aec");
+__asm__(".set WORD_00044006, 0x00044006");
+__asm__(".set WORD_000444fc, 0x000444fc");
+__asm__(".set WORD_00045206, 0x00045206");
+__asm__(".set WORD_00045b94, 0x00045b94");
+__asm__(".set WORD_00045bec, 0x00045bec");
+__asm__(".set WORD_00045f18, 0x00045f18");
+__asm__(".set WORD_000461c4, 0x000461c4");
+__asm__(".set WORD_0004655a, 0x0004655a");
+__asm__(".set WORD_000465da, 0x000465da");
+__asm__(".set WORD_00046dc0, 0x00046dc0");
+__asm__(".set WORD_00046eca, 0x00046eca");
+__asm__(".set WORD_00047266, 0x00047266");
+__asm__(".set WORD_00047786, 0x00047786");
+__asm__(".set WORD_0004856a, 0x0004856a");
+__asm__(".set WORD_000485e8, 0x000485e8");
+__asm__(".set WORD_00048642, 0x00048642");
+__asm__(".set WORD_0004867a, 0x0004867a");
+__asm__(".set WORD_000486c8, 0x000486c8");
+__asm__(".set WORD_00048a88, 0x00048a88");
+__asm__(".set WORD_00048d00, 0x00048d00");
+__asm__(".set WORD_00048d4e, 0x00048d4e");
+__asm__(".set WORD_00048e42, 0x00048e42");
+__asm__(".set WORD_0004963e, 0x0004963e");
+__asm__(".set WORD_00049ac2, 0x00049ac2");
+__asm__(".set WORD_0004a010, 0x0004a010");
+__asm__(".set WORD_0004a2d0, 0x0004a2d0");
+__asm__(".set WORD_0004a56c, 0x0004a56c");
+__asm__(".set WORD_0004a980, 0x0004a980");
+__asm__(".set WORD_0004a9de, 0x0004a9de");
+__asm__(".set WORD_0004ace4, 0x0004ace4");
+__asm__(".set WORD_0004b08c, 0x0004b08c");
+__asm__(".set WORD_0004b4ba, 0x0004b4ba");
+__asm__(".set WORD_0004b58c, 0x0004b58c");
+__asm__(".set WORD_0004b5f4, 0x0004b5f4");
+__asm__(".set WORD_0004b89e, 0x0004b89e");
+__asm__(".set WORD_0004ba1c, 0x0004ba1c");
+__asm__(".set WORD_0004c060, 0x0004c060");
+__asm__(".set WORD_0004c0c8, 0x0004c0c8");
+__asm__(".set WORD_0004c7d4, 0x0004c7d4");
+__asm__(".set WORD_0004caca, 0x0004caca");
+__asm__(".set WORD_0004cd06, 0x0004cd06");
+__asm__(".set WORD_0004ceb8, 0x0004ceb8");
+__asm__(".set WORD_0004cf2a, 0x0004cf2a");
+__asm__(".set WORD_0004f0f2, 0x0004f0f2");
+__asm__(".set WORD_0004fc90, 0x0004fc90");
+__asm__(".set WORD_0005ed48, 0x0005ed48");
+__asm__(".set atexit_count, 0x00103934");
+__asm__(".set atexit_functions, 0x001038b4");
+__asm__(".set boot_vectors, 0x00000000");
+__asm__(".set clock_date, 0x001009c2");
+__asm__(".set clock_invalid, 0x001009e7");
+__asm__(".set clock_time, 0x001009be");
+__asm__(".set console_halt_hook_cell, 0x001009fe");
+__asm__(".set counter_configuration, 0x00101fae");
+__asm__(".set crash_message, 0x0010094e");
+__asm__(".set debug_enabled, 0x001037dd");
+__asm__(".set deferred_end, 0x001036fe");
+__asm__(".set deferred_start, 0x00103700");
+__asm__(".set deferred_text, 0x001032fd");
+__asm__(".set dmes_curv, 0x00103824");
+__asm__(".set dmes_gpsm, 0x00103808");
+__asm__(".set dmes_hmon, 0x0010380c");
+__asm__(".set dmes_klok, 0x00103810");
+__asm__(".set dmes_pllp, 0x00103814");
+__asm__(".set dmes_root, 0x00103818");
+__asm__(".set dmes_scpi, 0x0010381c");
+__asm__(".set dmes_spoo, 0x00103820");
+__asm__(".set drtR_exchange, 0x00103102");
+__asm__(".set drtR_status, 0x0010310a");
+__asm__(".set drtW_exchange, 0x00103106");
+__asm__(".set drtW_status, 0x00103122");
+__asm__(".set eepx_exchange, 0x00101d18");
+__asm__(".set eepx_status, 0x00101d1c");
+__asm__(".set errno, 0x0010393a");
+__asm__(".set es_ascii, 0x00103830");
+__asm__(".set es_enabled, 0x00103831");
+__asm__(".set es_length, 0x0010386e");
+__asm__(".set es_message, 0x00103832");
+__asm__(".set fconf_regs, 0x00101fa9");
+__asm__(".set fine_y0, 0x00102154");
+__asm__(".set float_control, 0x001038b2");
+__asm__(".set float_exception_message, 0x00100bd4");
+__asm__(".set float_status, 0x001038b0");
+__asm__(".set fpga_bit_table, 0x00041310");
+__asm__(".set gps, 0x00100c6a");
+__asm__(".set gps_ack_awaited, 0x00102586");
+__asm__(".set gps_ack_code, 0x00102584");
+__asm__(".set gps_ack_ready, 0x00102585");
+__asm__(".set gps_counts, 0x001017bc");
+__asm__(".set gps_date, 0x001009d6");
+__asm__(".set gps_last_command, 0x001017f2");
+__asm__(".set gps_last_program_message, 0x00101216");
+__asm__(".set gps_pps_counting, 0x00101cfb");
+__asm__(".set gps_pps_dead, 0x00101b6e");
+__asm__(".set gps_pps_gate, 0x00101cfd");
+__asm__(".set gps_pps_last_count, 0x00101cfc");
+__asm__(".set gps_print_cursor, 0x00101390");
+__asm__(".set gps_receive_state, 0x00101394");
+__asm__(".set gps_response_buffer, 0x00101266");
+__asm__(".set gps_response_cursor, 0x0010138c");
+__asm__(".set gps_time, 0x001009d2");
+__asm__(".set gps_utc_offset, 0x001009e8");
+__asm__(".set gps_utc_offset_valid, 0x001009ea");
+__asm__(".set gpsx_exchange, 0x001037fc");
+__asm__(".set hdac_shadow, 0x0010314a");
+__asm__(".set idn_model, 0x00101f68");
+__asm__(".set idn_serial, 0x00101f7a");
+__asm__(".set idn_suffix, 0x00101f8c");
+__asm__(".set internal_pps_count, 0x00101b70");
+__asm__(".set internal_pps_dead, 0x00101b6f");
+__asm__(".set internal_pps_last_count, 0x00101cfe");
+__asm__(".set internal_pps_started, 0x00101cf8");
+__asm__(".set interpolator_calibration_state, 0x00101fce");
+__asm__(".set interval_mean, 0x00102538");
+__asm__(".set interval_mean_flag, 0x0010253c");
+__asm__(".set interval_reading, 0x00101f9c");
+__asm__(".set klok_entries, 0x00103722");
+__asm__(".set klok_free, 0x00103726");
+__asm__(".set klok_mutex, 0x001037b4");
+__asm__(".set klok_pool, 0x0010372a");
+__asm__(".set last_exception, 0x0010099e");
+__asm__(".set log_entry_count, 0x00101f8e");
+__asm__(".set log_mutex, 0x00101d36");
+__asm__(".set log_page_buffer, 0x00101d94");
+__asm__(".set log_page_number, 0x00101dd4");
+__asm__(".set max_loop_time, 0x00101e84");
+__asm__(".set nv_numeric_params, 0x00032d5e");
+__asm__(".set nv_param_field_1e, 0x00033d7a");
+__asm__(".set nv_param_field_b8, 0x00034374");
+__asm__(".set nv_param_field_bc, 0x00034242");
+__asm__(".set nv_param_leap_date, 0x000340da");
+__asm__(".set nv_param_leap_minute_length, 0x00034118");
+__asm__(".set nv_param_leap_pending, 0x00033db6");
+__asm__(".set nv_records, 0x004000c0");
+__asm__(".set nv_setting_params, 0x00032db2");
+__asm__(".set nv_settings, 0x00101e8a");
+__asm__(".set nv_settings_defaults, 0x00030966");
+__asm__(".set nv_slot, 0x00101f62");
+__asm__(".set pll, 0x00102162");
+__asm__(".set pll_scpi_index, 0x00102016");
+__asm__(".set pll_scpi_param, 0x00102012");
+__asm__(".set pll_scpi_setting, 0x0010201c");
+__asm__(".set pll_scpi_source, 0x00102017");
+__asm__(".set pll_scpi_validated, 0x00102030");
+__asm__(".set pll_scpi_values, 0x00102020");
+__asm__(".set plla_exchange, 0x00103800");
+__asm__(".set pllc_exchange, 0x00103804");
+__asm__(".set pps_exchange, 0x00100bc4");
+__asm__(".set primary_vectors, 0x00010000");
+__asm__(".set psos_config, 0x0010264c");
+__asm__(".set psos_supervisor_stack_size, 0x00102674");
+__asm__(".set qsort_compare, 0x00103940");
+__asm__(".set qsort_size, 0x00103944");
+__asm__(".set rand_seed, 0x00103936");
+__asm__(".set reference_valid_override_request, 0x00100c68");
+__asm__(".set sciR_exchange, 0x00103150");
+__asm__(".set sciR_status, 0x00103154");
+__asm__(".set sciW_exchange, 0x0010316c");
+__asm__(".set sciW_status, 0x00103170");
+__asm__(".set scpi_language, 0x00102c62");
+__asm__(".set scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe, 0x000342ba");
+__asm__(".set scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold, 0x000342f8");
+__asm__(".set scpi_param_DIAGnostic_GPSystem_UTC, 0x00033d98");
+__asm__(".set scpi_param_DIAGnostic_ROSCillator_TCOefficient, 0x00033e9c");
+__asm__(".set scpi_param_DIAGnostic_SER1_RESTricted, 0x0003429c");
+__asm__(".set scpi_param_DIAGnostic_SYSTem_DOUTput, 0x00033ca8");
+__asm__(".set scpi_param_DIAGnostic_SYSTem_PSTartup, 0x00033c8a");
+__asm__(".set scpi_param_DIAGnostic_TOFFset, 0x00033fd2");
+__asm__(".set scpi_param_DOUGlas_DURation, 0x00033eda");
+__asm__(".set scpi_param_DOUGlas_DURation_INFinity, 0x0003427e");
+__asm__(".set scpi_param_DOUGlas_STATe, 0x00033d5c");
+__asm__(".set scpi_param_DOUGlas_STATe_POWerup, 0x00033df2");
+__asm__(".set scpi_param_FORMat_DATA, 0x00034224");
+__asm__(".set scpi_param_KENneth_PREDicted_DURation, 0x0003409c");
+__asm__(".set scpi_param_OUTPut_STATe, 0x00033968");
+__asm__(".set scpi_param_ROBin_MEMory_SAVE, 0x00034260");
+__asm__(".set scpi_param_SAMPle_FARR, 0x000336da");
+__asm__(".set scpi_param_SAMPle_FLOat, 0x0003367a");
+__asm__(".set scpi_param_SAMPle_IARR, 0x0003354e");
+__asm__(".set scpi_param_SAMPle_INTeger, 0x000334de");
+__asm__(".set scpi_param_SOURce_GPSystem_ADELay, 0x00033f94");
+__asm__(".set scpi_param_SOURce_GPSystem_EMANgle, 0x00033f56");
+__asm__(".set scpi_param_SOURce_GPSystem_POSition, 0x00034178");
+__asm__(".set scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore, 0x00034010");
+__asm__(".set scpi_param_SOURce_PTIMe_TCODe_FORMat, 0x00034206");
+__asm__(".set scpi_param_SOURce_PTIMe_TZONe, 0x0003405e");
+__asm__(".set scpi_param_SOURce_PULSe_CONTinuous_PERiod, 0x000339b4");
+__asm__(".set scpi_param_SOURce_PULSe_CONTinuous_STATe, 0x00033986");
+__asm__(".set scpi_param_SOURce_PULSe_STARt_DATE, 0x00033a74");
+__asm__(".set scpi_param_SOURce_PULSe_STARt_TIME, 0x00033a14");
+__asm__(".set scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold, 0x00034336");
+__asm__(".set scpi_param_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold, 0x00033f18");
+__asm__(".set scpi_param_SOURce_ROSCillator_HOLDover_LIMit_STATe, 0x00033dd4");
+__asm__(".set scpi_param_SOURce_ROSCillator_HOLDover_LIMit_THReshold, 0x00033e5e");
+__asm__(".set scpi_param_SOURce_ROSCillator_LIMit_THReshold, 0x00033e20");
+__asm__(".set scpi_param_STATus_ENABle, 0x00033bae");
+__asm__(".set scpi_param_STATus_NTRansition, 0x00033c5c");
+__asm__(".set scpi_param_STATus_PTRansition, 0x00033c30");
+__asm__(".set scpi_param_STATus_QUEStionable_USER, 0x00033b1a");
+__asm__(".set scpi_value_DIAGnostic_ROSCillator_TCOefficient, 0x00101d0c");
+__asm__(".set scpi_value_DIAGnostic_TOFFset, 0x00101d10");
+__asm__(".set scpi_value_SAMPle_FARR, 0x00101e1c");
+__asm__(".set scpi_value_SAMPle_FLOat, 0x00101e18");
+__asm__(".set scpi_value_SAMPle_IARR, 0x00101de8");
+__asm__(".set scpi_value_SAMPle_INTeger, 0x00101de4");
+__asm__(".set selftest_abort, 0x00100c42");
+__asm__(".set selftest_running, 0x00100c43");
+__asm__(".set spoo_exchange, 0x001032f8");
+__asm__(".set status_conditions, 0x0002f838");
+__asm__(".set status_object, 0x00102eb8");
+__asm__(".set status_ready, 0x00102eb7");
+__asm__(".set status_register_setup_table, 0x0002f7ac");
+__asm__(".set status_request_service, 0x00102eb6");
+__asm__(".set status_summary, 0x00102544");
+__asm__(".set switchD_000205c0, 0x000205c4");
+__asm__(".set task_count, 0x0010271c");
+__asm__(".set task_curv, 0x001037f8");
+__asm__(".set task_gpsm, 0x001037e0");
+__asm__(".set task_hmon, 0x001037e4");
+__asm__(".set task_klok, 0x0010371e");
+__asm__(".set task_pllp, 0x001037ec");
+__asm__(".set task_root, 0x001037f0");
+__asm__(".set task_scpi, 0x001037f4");
+__asm__(".set task_spoo, 0x001032f4");
+__asm__(".set task_table, 0x001026b8");
+__asm__(".set tcode_format, 0x001038ac");
+__asm__(".set tcode_length, 0x001038ab");
+__asm__(".set tcode_message, 0x0010386f");
+__asm__(".set tcode_pending, 0x001038ad");
+__asm__(".set uptime, 0x001009ba");
+__asm__(".set watchdog_clock, 0x001009b2");
+__asm__(".set watchdog_gps, 0x001009b3");
+__asm__(".set watchdog_monitor, 0x001009b5");
+__asm__(".set watchdog_pll, 0x001009b4");
+__asm__(".set watchdog_spool, 0x001009b6");
+
+extern undefined1 DAT_00018de2;
+__asm__(".set DAT_00018de2, 0x00018de2");
+extern undefined1 DAT_00019086;
+__asm__(".set DAT_00019086, 0x00019086");
+extern undefined1 DAT_00019a2c;
+__asm__(".set DAT_00019a2c, 0x00019a2c");
+extern undefined1 DAT_00025144;
+__asm__(".set DAT_00025144, 0x00025144");
+extern undefined1 DAT_000256ae;
+__asm__(".set DAT_000256ae, 0x000256ae");
+extern undefined1 DAT_0002572e;
+__asm__(".set DAT_0002572e, 0x0002572e");
+extern undefined1 DAT_00025732;
+__asm__(".set DAT_00025732, 0x00025732");
+extern undefined1 DAT_00025b36;
+__asm__(".set DAT_00025b36, 0x00025b36");
+extern undefined1 DAT_00025b3a;
+__asm__(".set DAT_00025b3a, 0x00025b3a");
+extern undefined1 DAT_00034000;
+__asm__(".set DAT_00034000, 0x00034000");
+extern undefined1 DAT_00062000;
+__asm__(".set DAT_00062000, 0x00062000");
+extern undefined1 DAT_00070200;
+__asm__(".set DAT_00070200, 0x00070200");
+extern undefined1 DAT_00071000;
+__asm__(".set DAT_00071000, 0x00071000");
+extern undefined1 DAT_001009ec;
+__asm__(".set DAT_001009ec, 0x001009ec");
+extern undefined1 DAT_00100b10;
+__asm__(".set DAT_00100b10, 0x00100b10");
+extern undefined1 DAT_00100b14;
+__asm__(".set DAT_00100b14, 0x00100b14");
+extern undefined1 DAT_00102664;
+__asm__(".set DAT_00102664, 0x00102664");
+extern undefined1 DAT_00102666;
+__asm__(".set DAT_00102666, 0x00102666");
+extern undefined1 DAT_00102686;
+__asm__(".set DAT_00102686, 0x00102686");
+extern undefined1 DAT_00102692;
+__asm__(".set DAT_00102692, 0x00102692");
+extern undefined1 DAT_001037da;
+__asm__(".set DAT_001037da, 0x001037da");
+extern undefined1 DAT_0010ab2e;
+__asm__(".set DAT_0010ab2e, 0x0010ab2e");
+extern undefined1 DAT_0010fffe;
+__asm__(".set DAT_0010fffe, 0x0010fffe");
+extern undefined1 DAT_installer__00101528;
+__asm__(".set DAT_installer__00101528, 0x00101528");
+extern undefined1 DAT_installer__0010549a;
+__asm__(".set DAT_installer__0010549a, 0x0010549a");
+extern undefined1 DAT_installer__001057dc;
+__asm__(".set DAT_installer__001057dc, 0x001057dc");
+extern undefined1 DAT_installer__0010656a;
+__asm__(".set DAT_installer__0010656a, 0x0010656a");
+extern undefined1 DAT_installer__001076e1;
+__asm__(".set DAT_installer__001076e1, 0x001076e1");
+extern undefined1 DAT_installer__00109057;
+__asm__(".set DAT_installer__00109057, 0x00109057");
+extern undefined1 DAT_installer__00109a08;
+__asm__(".set DAT_installer__00109a08, 0x00109a08");
+extern undefined1 DAT_installer__00109a0c;
+__asm__(".set DAT_installer__00109a0c, 0x00109a0c");
+extern undefined1 DAT_installer__00109ae0;
+__asm__(".set DAT_installer__00109ae0, 0x00109ae0");
+extern undefined1 DAT_installer__00109b16;
+__asm__(".set DAT_installer__00109b16, 0x00109b16");
+extern undefined1 DAT_installer__00109b1a;
+__asm__(".set DAT_installer__00109b1a, 0x00109b1a");
+extern undefined1 DAT_installer__00109bee;
+__asm__(".set DAT_installer__00109bee, 0x00109bee");
+extern undefined1 DAT_installer__0010aa10;
+__asm__(".set DAT_installer__0010aa10, 0x0010aa10");
+extern undefined1 DAT_installer__0010aa12;
+__asm__(".set DAT_installer__0010aa12, 0x0010aa12");
+extern undefined1 DAT_installer__0010aa14;
+__asm__(".set DAT_installer__0010aa14, 0x0010aa14");
+extern undefined1 DAT_installer__0010aa38;
+__asm__(".set DAT_installer__0010aa38, 0x0010aa38");
+extern undefined1 DAT_installer__0010aa3b;
+__asm__(".set DAT_installer__0010aa3b, 0x0010aa3b");
+extern undefined1 LAB_00000a22;
+__asm__(".set LAB_00000a22, 0x00000a22");
+extern undefined1 LAB_00011672;
+__asm__(".set LAB_00011672, 0x00011672");
+extern undefined1 LAB_000121de;
+__asm__(".set LAB_000121de, 0x000121de");
+extern undefined1 LAB_000135ba;
+__asm__(".set LAB_000135ba, 0x000135ba");
+extern undefined1 LAB_00013974;
+__asm__(".set LAB_00013974, 0x00013974");
+extern undefined1 LAB_000148e6;
+__asm__(".set LAB_000148e6, 0x000148e6");
+extern undefined1 LAB_00014cdc;
+__asm__(".set LAB_00014cdc, 0x00014cdc");
+extern undefined1 LAB_00014d58;
+__asm__(".set LAB_00014d58, 0x00014d58");
+extern undefined1 LAB_00014fce;
+__asm__(".set LAB_00014fce, 0x00014fce");
+extern undefined1 LAB_000150ae;
+__asm__(".set LAB_000150ae, 0x000150ae");
+extern undefined1 LAB_00015206;
+__asm__(".set LAB_00015206, 0x00015206");
+extern undefined1 LAB_00015288;
+__asm__(".set LAB_00015288, 0x00015288");
+extern undefined1 LAB_000154a0;
+__asm__(".set LAB_000154a0, 0x000154a0");
+extern undefined1 LAB_00015576;
+__asm__(".set LAB_00015576, 0x00015576");
+extern undefined1 LAB_00015606;
+__asm__(".set LAB_00015606, 0x00015606");
+extern undefined1 LAB_000157c4;
+__asm__(".set LAB_000157c4, 0x000157c4");
+extern undefined1 LAB_0001639a;
+__asm__(".set LAB_0001639a, 0x0001639a");
+extern undefined1 LAB_000164c2;
+__asm__(".set LAB_000164c2, 0x000164c2");
+extern undefined1 LAB_000169e4;
+__asm__(".set LAB_000169e4, 0x000169e4");
+extern undefined1 LAB_00016d16;
+__asm__(".set LAB_00016d16, 0x00016d16");
+extern undefined1 LAB_00016d52;
+__asm__(".set LAB_00016d52, 0x00016d52");
+extern undefined1 LAB_00016dfc;
+__asm__(".set LAB_00016dfc, 0x00016dfc");
+extern undefined1 LAB_00018910;
+__asm__(".set LAB_00018910, 0x00018910");
+extern undefined1 LAB_00018ec8;
+__asm__(".set LAB_00018ec8, 0x00018ec8");
+extern undefined1 LAB_00018f92;
+__asm__(".set LAB_00018f92, 0x00018f92");
+extern undefined1 LAB_00019830;
+__asm__(".set LAB_00019830, 0x00019830");
+extern undefined1 LAB_0001bdbe;
+__asm__(".set LAB_0001bdbe, 0x0001bdbe");
+extern undefined1 LAB_0001d8c2;
+__asm__(".set LAB_0001d8c2, 0x0001d8c2");
+extern undefined1 LAB_0001d8ca;
+__asm__(".set LAB_0001d8ca, 0x0001d8ca");
+extern undefined1 LAB_0001d8d0;
+__asm__(".set LAB_0001d8d0, 0x0001d8d0");
+extern undefined1 LAB_0001f528;
+__asm__(".set LAB_0001f528, 0x0001f528");
+extern undefined1 LAB_0001f70c;
+__asm__(".set LAB_0001f70c, 0x0001f70c");
+extern undefined1 LAB_0001f944;
+__asm__(".set LAB_0001f944, 0x0001f944");
+extern undefined1 LAB_0001f94c;
+__asm__(".set LAB_0001f94c, 0x0001f94c");
+extern undefined1 LAB_0001f952;
+__asm__(".set LAB_0001f952, 0x0001f952");
+extern undefined1 LAB_000200ce;
+__asm__(".set LAB_000200ce, 0x000200ce");
+extern undefined1 LAB_000240e6;
+__asm__(".set LAB_000240e6, 0x000240e6");
+extern undefined1 LAB_000240f0;
+__asm__(".set LAB_000240f0, 0x000240f0");
+extern undefined1 LAB_0002423a;
+__asm__(".set LAB_0002423a, 0x0002423a");
+extern undefined1 LAB_0002425e;
+__asm__(".set LAB_0002425e, 0x0002425e");
+extern undefined1 LAB_00024d6c;
+__asm__(".set LAB_00024d6c, 0x00024d6c");
+extern undefined1 LAB_00024e22;
+__asm__(".set LAB_00024e22, 0x00024e22");
+extern undefined1 LAB_000251ce;
+__asm__(".set LAB_000251ce, 0x000251ce");
+extern undefined1 LAB_000251d2;
+__asm__(".set LAB_000251d2, 0x000251d2");
+extern undefined1 LAB_000251d6;
+__asm__(".set LAB_000251d6, 0x000251d6");
+extern undefined1 LAB_000251da;
+__asm__(".set LAB_000251da, 0x000251da");
+extern undefined1 LAB_00025410;
+__asm__(".set LAB_00025410, 0x00025410");
+extern undefined1 LAB_00025618;
+__asm__(".set LAB_00025618, 0x00025618");
+extern undefined1 LAB_0002568a;
+__asm__(".set LAB_0002568a, 0x0002568a");
+extern undefined1 LAB_000256ee;
+__asm__(".set LAB_000256ee, 0x000256ee");
+extern undefined1 LAB_00026132;
+__asm__(".set LAB_00026132, 0x00026132");
+extern undefined1 LAB_00026138;
+__asm__(".set LAB_00026138, 0x00026138");
+extern undefined1 LAB_000261cc;
+__asm__(".set LAB_000261cc, 0x000261cc");
+extern undefined1 LAB_000261dc;
+__asm__(".set LAB_000261dc, 0x000261dc");
+extern undefined1 LAB_00026316;
+__asm__(".set LAB_00026316, 0x00026316");
+extern undefined1 LAB_00026324;
+__asm__(".set LAB_00026324, 0x00026324");
+extern undefined1 LAB_000264a4;
+__asm__(".set LAB_000264a4, 0x000264a4");
+extern undefined1 LAB_000264a6;
+__asm__(".set LAB_000264a6, 0x000264a6");
+extern undefined1 LAB_000264c6;
+__asm__(".set LAB_000264c6, 0x000264c6");
+extern undefined1 LAB_0002651c;
+__asm__(".set LAB_0002651c, 0x0002651c");
+extern undefined1 LAB_00026b32;
+__asm__(".set LAB_00026b32, 0x00026b32");
+extern undefined1 LAB_00026b6e;
+__asm__(".set LAB_00026b6e, 0x00026b6e");
+extern undefined1 LAB_00026bae;
+__asm__(".set LAB_00026bae, 0x00026bae");
+extern undefined1 LAB_00026be2;
+__asm__(".set LAB_00026be2, 0x00026be2");
+extern undefined1 LAB_00026bf0;
+__asm__(".set LAB_00026bf0, 0x00026bf0");
+extern undefined1 LAB_00026c84;
+__asm__(".set LAB_00026c84, 0x00026c84");
+extern undefined1 LAB_00026d2a;
+__asm__(".set LAB_00026d2a, 0x00026d2a");
+extern undefined1 LAB_00026e12;
+__asm__(".set LAB_00026e12, 0x00026e12");
+extern undefined1 LAB_00026e5a;
+__asm__(".set LAB_00026e5a, 0x00026e5a");
+extern undefined1 LAB_00026fb6;
+__asm__(".set LAB_00026fb6, 0x00026fb6");
+extern undefined1 LAB_0002704a;
+__asm__(".set LAB_0002704a, 0x0002704a");
+extern undefined1 LAB_00027148;
+__asm__(".set LAB_00027148, 0x00027148");
+extern undefined1 LAB_000272a6;
+__asm__(".set LAB_000272a6, 0x000272a6");
+extern undefined1 LAB_00027380;
+__asm__(".set LAB_00027380, 0x00027380");
+extern undefined1 LAB_0002747e;
+__asm__(".set LAB_0002747e, 0x0002747e");
+extern undefined1 LAB_000274a4;
+__asm__(".set LAB_000274a4, 0x000274a4");
+extern undefined1 LAB_00027502;
+__asm__(".set LAB_00027502, 0x00027502");
+extern undefined1 LAB_0002752c;
+__asm__(".set LAB_0002752c, 0x0002752c");
+extern undefined1 LAB_00027568;
+__asm__(".set LAB_00027568, 0x00027568");
+extern undefined1 LAB_000276d0;
+__asm__(".set LAB_000276d0, 0x000276d0");
+extern undefined1 LAB_00027728;
+__asm__(".set LAB_00027728, 0x00027728");
+extern undefined1 LAB_00027a86;
+__asm__(".set LAB_00027a86, 0x00027a86");
+extern undefined1 LAB_00027ba2;
+__asm__(".set LAB_00027ba2, 0x00027ba2");
+extern undefined1 LAB_00027c12;
+__asm__(".set LAB_00027c12, 0x00027c12");
+extern undefined1 LAB_00027c16;
+__asm__(".set LAB_00027c16, 0x00027c16");
+extern undefined1 LAB_00027c88;
+__asm__(".set LAB_00027c88, 0x00027c88");
+extern undefined1 LAB_00027e0c;
+__asm__(".set LAB_00027e0c, 0x00027e0c");
+extern undefined1 LAB_0002810c;
+__asm__(".set LAB_0002810c, 0x0002810c");
+extern undefined1 LAB_00028680;
+__asm__(".set LAB_00028680, 0x00028680");
+extern undefined1 LAB_0002937c;
+__asm__(".set LAB_0002937c, 0x0002937c");
+extern undefined1 LAB_00029436;
+__asm__(".set LAB_00029436, 0x00029436");
+extern undefined1 LAB_000294de;
+__asm__(".set LAB_000294de, 0x000294de");
+extern undefined1 LAB_0002961c;
+__asm__(".set LAB_0002961c, 0x0002961c");
+extern undefined1 LAB_00029622;
+__asm__(".set LAB_00029622, 0x00029622");
+extern undefined1 LAB_00029896;
+__asm__(".set LAB_00029896, 0x00029896");
+extern undefined1 LAB_0002cefe;
+__asm__(".set LAB_0002cefe, 0x0002cefe");
+extern undefined1 LAB_0002e7e4;
+__asm__(".set LAB_0002e7e4, 0x0002e7e4");
+extern undefined1 LAB_0002e9be;
+__asm__(".set LAB_0002e9be, 0x0002e9be");
+extern undefined1 LAB_0002e9ce;
+__asm__(".set LAB_0002e9ce, 0x0002e9ce");
+extern undefined1 LAB_0002e9e2;
+__asm__(".set LAB_0002e9e2, 0x0002e9e2");
+extern undefined1 LAB_0002ea48;
+__asm__(".set LAB_0002ea48, 0x0002ea48");
+extern undefined1 LAB_0002eade;
+__asm__(".set LAB_0002eade, 0x0002eade");
+extern undefined1 LAB_0002ee5e;
+__asm__(".set LAB_0002ee5e, 0x0002ee5e");
+extern undefined1 LAB_00030272;
+__asm__(".set LAB_00030272, 0x00030272");
+extern undefined1 LAB_00030274;
+__asm__(".set LAB_00030274, 0x00030274");
+extern undefined1 LAB_0003034c;
+__asm__(".set LAB_0003034c, 0x0003034c");
+extern undefined1 LAB_0003035a;
+__asm__(".set LAB_0003035a, 0x0003035a");
+extern undefined1 LAB_000303f8;
+__asm__(".set LAB_000303f8, 0x000303f8");
+extern undefined1 LAB_00030582;
+__asm__(".set LAB_00030582, 0x00030582");
+extern undefined1 LAB_00030590;
+__asm__(".set LAB_00030590, 0x00030590");
+extern undefined1 LAB_00030608;
+__asm__(".set LAB_00030608, 0x00030608");
+extern undefined1 LAB_00031708;
+__asm__(".set LAB_00031708, 0x00031708");
+extern undefined1 LAB_00032210;
+__asm__(".set LAB_00032210, 0x00032210");
+extern undefined1 LAB_0003250c;
+__asm__(".set LAB_0003250c, 0x0003250c");
+extern undefined1 LAB_00032648;
+__asm__(".set LAB_00032648, 0x00032648");
+extern undefined1 LAB_00033166;
+__asm__(".set LAB_00033166, 0x00033166");
+extern undefined1 LAB_00040104;
+__asm__(".set LAB_00040104, 0x00040104");
+extern undefined1 LAB_0004011c;
+__asm__(".set LAB_0004011c, 0x0004011c");
+extern undefined1 LAB_00040122;
+__asm__(".set LAB_00040122, 0x00040122");
+extern undefined1 LAB_00040b90;
+__asm__(".set LAB_00040b90, 0x00040b90");
+extern undefined1 LAB_00040e2e;
+__asm__(".set LAB_00040e2e, 0x00040e2e");
+extern undefined1 LAB_0004298e;
+__asm__(".set LAB_0004298e, 0x0004298e");
+extern undefined1 LAB_00042ed2;
+__asm__(".set LAB_00042ed2, 0x00042ed2");
+extern undefined1 LAB_00042f24;
+__asm__(".set LAB_00042f24, 0x00042f24");
+extern undefined1 LAB_00042fca;
+__asm__(".set LAB_00042fca, 0x00042fca");
+extern undefined1 LAB_0004300c;
+__asm__(".set LAB_0004300c, 0x0004300c");
+extern undefined1 LAB_00043a88;
+__asm__(".set LAB_00043a88, 0x00043a88");
+extern undefined1 LAB_00043eb8;
+__asm__(".set LAB_00043eb8, 0x00043eb8");
+extern undefined1 LAB_00043ee6;
+__asm__(".set LAB_00043ee6, 0x00043ee6");
+extern undefined1 LAB_0004411a;
+__asm__(".set LAB_0004411a, 0x0004411a");
+extern undefined1 LAB_0004536e;
+__asm__(".set LAB_0004536e, 0x0004536e");
+extern undefined1 LAB_00045812;
+__asm__(".set LAB_00045812, 0x00045812");
+extern undefined1 LAB_00046d06;
+__asm__(".set LAB_00046d06, 0x00046d06");
+extern undefined1 LAB_00046d8a;
+__asm__(".set LAB_00046d8a, 0x00046d8a");
+extern undefined1 LAB_00046e64;
+__asm__(".set LAB_00046e64, 0x00046e64");
+extern undefined1 LAB_00046efe;
+__asm__(".set LAB_00046efe, 0x00046efe");
+extern undefined1 LAB_0004706a;
+__asm__(".set LAB_0004706a, 0x0004706a");
+extern undefined1 LAB_00047758;
+__asm__(".set LAB_00047758, 0x00047758");
+extern undefined1 LAB_000477b2;
+__asm__(".set LAB_000477b2, 0x000477b2");
+extern undefined1 LAB_0004782e;
+__asm__(".set LAB_0004782e, 0x0004782e");
+extern undefined1 LAB_00047940;
+__asm__(".set LAB_00047940, 0x00047940");
+extern undefined1 LAB_00049570;
+__asm__(".set LAB_00049570, 0x00049570");
+extern undefined1 LAB_000497a6;
+__asm__(".set LAB_000497a6, 0x000497a6");
+extern undefined1 LAB_0004aa66;
+__asm__(".set LAB_0004aa66, 0x0004aa66");
+extern undefined1 LAB_0004ab0e;
+__asm__(".set LAB_0004ab0e, 0x0004ab0e");
+extern undefined1 LAB_0004ab10;
+__asm__(".set LAB_0004ab10, 0x0004ab10");
+extern undefined1 LAB_0004b3a2;
+__asm__(".set LAB_0004b3a2, 0x0004b3a2");
+extern undefined1 LAB_0004b4d2;
+__asm__(".set LAB_0004b4d2, 0x0004b4d2");
+extern undefined1 LAB_0004b754;
+__asm__(".set LAB_0004b754, 0x0004b754");
+extern undefined1 LAB_0004b8c0;
+__asm__(".set LAB_0004b8c0, 0x0004b8c0");
+extern undefined1 LAB_0004b98c;
+__asm__(".set LAB_0004b98c, 0x0004b98c");
+extern undefined1 LAB_0004bbee;
+__asm__(".set LAB_0004bbee, 0x0004bbee");
+extern undefined1 LAB_0004bcac;
+__asm__(".set LAB_0004bcac, 0x0004bcac");
+extern undefined1 LAB_0004bd18;
+__asm__(".set LAB_0004bd18, 0x0004bd18");
+extern undefined1 LAB_0004c17a;
+__asm__(".set LAB_0004c17a, 0x0004c17a");
+extern undefined1 LAB_0004c1e6;
+__asm__(".set LAB_0004c1e6, 0x0004c1e6");
+extern undefined1 LAB_0004f0c4;
+__asm__(".set LAB_0004f0c4, 0x0004f0c4");
+extern undefined1 LAB_0004f102;
+__asm__(".set LAB_0004f102, 0x0004f102");
+extern undefined1 LAB_0005d06c;
+__asm__(".set LAB_0005d06c, 0x0005d06c");
+extern undefined1 LAB_0005d1ee;
+__asm__(".set LAB_0005d1ee, 0x0005d1ee");
+extern undefined1 LAB_0005d1fe;
+__asm__(".set LAB_0005d1fe, 0x0005d1fe");
+extern undefined1 LAB_0005d2c6;
+__asm__(".set LAB_0005d2c6, 0x0005d2c6");
+extern undefined1 LAB_0005d484;
+__asm__(".set LAB_0005d484, 0x0005d484");
+extern undefined1 LAB_0005d5ae;
+__asm__(".set LAB_0005d5ae, 0x0005d5ae");
+extern undefined1 LAB_0005d5ee;
+__asm__(".set LAB_0005d5ee, 0x0005d5ee");
+extern undefined1 LAB_0005d63e;
+__asm__(".set LAB_0005d63e, 0x0005d63e");
+extern undefined1 LAB_0005d7ae;
+__asm__(".set LAB_0005d7ae, 0x0005d7ae");
+extern undefined1 LAB_0005d982;
+__asm__(".set LAB_0005d982, 0x0005d982");
+extern undefined1 LAB_0005d9b8;
+__asm__(".set LAB_0005d9b8, 0x0005d9b8");
+extern undefined1 LAB_0005d9cc;
+__asm__(".set LAB_0005d9cc, 0x0005d9cc");
+extern undefined1 LAB_0005db84;
+__asm__(".set LAB_0005db84, 0x0005db84");
+extern undefined1 LAB_0005dd4e;
+__asm__(".set LAB_0005dd4e, 0x0005dd4e");
+extern undefined1 LAB_0005df9e;
+__asm__(".set LAB_0005df9e, 0x0005df9e");
+extern undefined1 LAB_0005e2f0;
+__asm__(".set LAB_0005e2f0, 0x0005e2f0");
+extern undefined1 LAB_0005e41a;
+__asm__(".set LAB_0005e41a, 0x0005e41a");
+extern undefined1 LAB_0005e466;
+__asm__(".set LAB_0005e466, 0x0005e466");
+extern undefined1 LAB_0005e51e;
+__asm__(".set LAB_0005e51e, 0x0005e51e");
+extern undefined1 LAB_0005e592;
+__asm__(".set LAB_0005e592, 0x0005e592");
+extern undefined1 LAB_0005e5c4;
+__asm__(".set LAB_0005e5c4, 0x0005e5c4");
+extern undefined1 LAB_0005e676;
+__asm__(".set LAB_0005e676, 0x0005e676");
+extern undefined1 LAB_0005e772;
+__asm__(".set LAB_0005e772, 0x0005e772");
+extern undefined1 LAB_0005e77c;
+__asm__(".set LAB_0005e77c, 0x0005e77c");
+extern undefined1 LAB_0005eafe;
+__asm__(".set LAB_0005eafe, 0x0005eafe");
+extern undefined1 LAB_0005ec8c;
+__asm__(".set LAB_0005ec8c, 0x0005ec8c");
+extern undefined1 LAB_0005ef40;
+__asm__(".set LAB_0005ef40, 0x0005ef40");
+extern undefined1 LAB_0005efd6;
+__asm__(".set LAB_0005efd6, 0x0005efd6");
+extern undefined1 LAB_0005effa;
+__asm__(".set LAB_0005effa, 0x0005effa");
+extern undefined1 LAB_0005f070;
+__asm__(".set LAB_0005f070, 0x0005f070");
+extern undefined1 LAB_0005f65a;
+__asm__(".set LAB_0005f65a, 0x0005f65a");
+extern undefined1 LAB_0005f74e;
+__asm__(".set LAB_0005f74e, 0x0005f74e");
+extern undefined1 LAB_0005f7a6;
+__asm__(".set LAB_0005f7a6, 0x0005f7a6");
+extern undefined1 LAB_0005f7ae;
+__asm__(".set LAB_0005f7ae, 0x0005f7ae");
+extern undefined1 LAB_0005fb1c;
+__asm__(".set LAB_0005fb1c, 0x0005fb1c");
+extern undefined1 LAB_0005fb72;
+__asm__(".set LAB_0005fb72, 0x0005fb72");
+extern undefined1 LAB_0005fdc4;
+__asm__(".set LAB_0005fdc4, 0x0005fdc4");
+extern undefined1 LAB_0005febe;
+__asm__(".set LAB_0005febe, 0x0005febe");
+extern undefined1 LAB_000600fa;
+__asm__(".set LAB_000600fa, 0x000600fa");
+extern undefined1 LAB_000602cc;
+__asm__(".set LAB_000602cc, 0x000602cc");
+extern undefined1 LAB_000609ca;
+__asm__(".set LAB_000609ca, 0x000609ca");
+extern undefined1 LAB_000610fa;
+__asm__(".set LAB_000610fa, 0x000610fa");
+extern undefined1 LAB_000611e2;
+__asm__(".set LAB_000611e2, 0x000611e2");
+extern undefined1 LAB_00061224;
+__asm__(".set LAB_00061224, 0x00061224");
+extern undefined1 LAB_0006122a;
+__asm__(".set LAB_0006122a, 0x0006122a");
+extern undefined1 LAB_000615e2;
+__asm__(".set LAB_000615e2, 0x000615e2");
+extern undefined1 LAB_00061608;
+__asm__(".set LAB_00061608, 0x00061608");
+extern undefined1 LAB_00061780;
+__asm__(".set LAB_00061780, 0x00061780");
+extern undefined1 LAB_000617c6;
+__asm__(".set LAB_000617c6, 0x000617c6");
+extern undefined1 LAB_installer__001016e2;
+__asm__(".set LAB_installer__001016e2, 0x001016e2");
+extern undefined1 LAB_installer__0010175e;
+__asm__(".set LAB_installer__0010175e, 0x0010175e");
+extern undefined1 LAB_installer__001019d4;
+__asm__(".set LAB_installer__001019d4, 0x001019d4");
+extern undefined1 LAB_installer__00101ab4;
+__asm__(".set LAB_installer__00101ab4, 0x00101ab4");
+extern undefined1 LAB_installer__00101c0c;
+__asm__(".set LAB_installer__00101c0c, 0x00101c0c");
+extern undefined1 LAB_installer__00101c8e;
+__asm__(".set LAB_installer__00101c8e, 0x00101c8e");
+extern undefined1 LAB_installer__00101ea6;
+__asm__(".set LAB_installer__00101ea6, 0x00101ea6");
+extern undefined1 LAB_installer__00101f7c;
+__asm__(".set LAB_installer__00101f7c, 0x00101f7c");
+extern undefined1 LAB_installer__0010200c;
+__asm__(".set LAB_installer__0010200c, 0x0010200c");
+extern undefined1 LAB_installer__001021ca;
+__asm__(".set LAB_installer__001021ca, 0x001021ca");
+extern undefined1 LAB_installer__00103344;
+__asm__(".set LAB_installer__00103344, 0x00103344");
+extern undefined1 LAB_installer__0010334c;
+__asm__(".set LAB_installer__0010334c, 0x0010334c");
+extern undefined1 LAB_installer__00103352;
+__asm__(".set LAB_installer__00103352, 0x00103352");
+extern undefined1 LAB_installer__0010537e;
+__asm__(".set LAB_installer__0010537e, 0x0010537e");
+extern undefined1 LAB_installer__001053d6;
+__asm__(".set LAB_installer__001053d6, 0x001053d6");
+extern undefined1 LAB_installer__0010632e;
+__asm__(".set LAB_installer__0010632e, 0x0010632e");
+extern undefined1 LAB_installer__00108578;
+__asm__(".set LAB_installer__00108578, 0x00108578");
+extern undefined1 LAB_installer__00108cf2;
+__asm__(".set LAB_installer__00108cf2, 0x00108cf2");
+extern undefined1 LAB_installer__00108e6a;
+__asm__(".set LAB_installer__00108e6a, 0x00108e6a");
+extern undefined1 LAB_installer__00108ff8;
+__asm__(".set LAB_installer__00108ff8, 0x00108ff8");
+extern undefined1 LAB_installer__00109802;
+__asm__(".set LAB_installer__00109802, 0x00109802");
+extern undefined1 LAB_installer__001098f6;
+__asm__(".set LAB_installer__001098f6, 0x001098f6");
+extern undefined1 LAB_installer__0010994e;
+__asm__(".set LAB_installer__0010994e, 0x0010994e");
+extern undefined1 LAB_installer__00109956;
+__asm__(".set LAB_installer__00109956, 0x00109956");
+extern undefined1 LAB_installer__00109cc4;
+__asm__(".set LAB_installer__00109cc4, 0x00109cc4");
+extern undefined1 LAB_installer__00109d1a;
+__asm__(".set LAB_installer__00109d1a, 0x00109d1a");
+extern undefined1 LAB_installer__00109f6c;
+__asm__(".set LAB_installer__00109f6c, 0x00109f6c");
+extern undefined1 LAB_installer__0010a066;
+__asm__(".set LAB_installer__0010a066, 0x0010a066");
+extern undefined1 LAB_installer__0010a2a2;
+__asm__(".set LAB_installer__0010a2a2, 0x0010a2a2");
+extern undefined1 LAB_installer__0010a474;
+__asm__(".set LAB_installer__0010a474, 0x0010a474");
+extern undefined1 LAB_installer__0010aa6c;
+__asm__(".set LAB_installer__0010aa6c, 0x0010aa6c");
+extern void * PTR_DAT_installer__001084da;
+__asm__(".set PTR_DAT_installer__001084da, 0x001084da");
+extern void * PTR_PTR_00025b7e;
+__asm__(".set PTR_PTR_00025b7e, 0x00025b7e");
+extern void * PTR_PTR_installer__001014c8;
+__asm__(".set PTR_PTR_installer__001014c8, 0x001014c8");
+extern volatile undefined4 Ram00fff920;
+__asm__(".set Ram00fff920, 0x00fff920");
+extern volatile undefined4 Ram00fff922;
+__asm__(".set Ram00fff922, 0x00fff922");
+extern volatile undefined4 Ram00fffc04;
+__asm__(".set Ram00fffc04, 0x00fffc04");
+extern volatile undefined4 Ram00fffd20;
+__asm__(".set Ram00fffd20, 0x00fffd20");
+extern volatile undefined4 Ram00fffd22;
+__asm__(".set Ram00fffd22, 0x00fffd22");
+extern volatile undefined4 Ram00fffd24;
+__asm__(".set Ram00fffd24, 0x00fffd24");
+extern undefined1 UNK_0001942d;
+__asm__(".set UNK_0001942d, 0x0001942d");
+extern undefined1 UNK_000194de;
+__asm__(".set UNK_000194de, 0x000194de");
+extern undefined1 UNK_00019556;
+__asm__(".set UNK_00019556, 0x00019556");
+extern undefined1 UNK_0001956a;
+__asm__(".set UNK_0001956a, 0x0001956a");
+extern undefined1 UNK_0001ad0e;
+__asm__(".set UNK_0001ad0e, 0x0001ad0e");
+extern undefined1 UNK_00072000;
+__asm__(".set UNK_00072000, 0x00072000");
+extern undefined1 UNK_00074000;
+__asm__(".set UNK_00074000, 0x00074000");
+extern volatile undefined1 UNK_00fffd41;
+__asm__(".set UNK_00fffd41, 0x00fffd41");
+extern volatile undefined1 UNK_00fffd42;
+__asm__(".set UNK_00fffd42, 0x00fffd42");
+extern word WORD_00044000;
+__asm__(".set WORD_00044000, 0x00044000");
+extern word WORD_installer__001030d2;
+__asm__(".set WORD_installer__001030d2, 0x001030d2");
+extern word WORD_installer__00105f12;
+__asm__(".set WORD_installer__00105f12, 0x00105f12");
+extern word WORD_installer__00105fd4;
+__asm__(".set WORD_installer__00105fd4, 0x00105fd4");
+extern word WORD_installer__0010921e;
+__asm__(".set WORD_installer__0010921e, 0x0010921e");
+extern short _DAT_00100002;
+__asm__(".set _DAT_00100002, 0x00100002");
+extern short _DAT_001009b0;
+__asm__(".set _DAT_001009b0, 0x001009b0");
+extern undefined4 _DAT_001009c6;
+__asm__(".set _DAT_001009c6, 0x001009c6");
+extern undefined4 _DAT_001009ca;
+__asm__(".set _DAT_001009ca, 0x001009ca");
+extern undefined4 _DAT_001009ce;
+__asm__(".set _DAT_001009ce, 0x001009ce");
+extern undefined4 _DAT_001009da;
+__asm__(".set _DAT_001009da, 0x001009da");
+extern undefined4 _DAT_001009de;
+__asm__(".set _DAT_001009de, 0x001009de");
+extern undefined4 _DAT_001009e2;
+__asm__(".set _DAT_001009e2, 0x001009e2");
+extern undefined4 _DAT_001009f6;
+__asm__(".set _DAT_001009f6, 0x001009f6");
+extern undefined4 _DAT_001009fa;
+__asm__(".set _DAT_001009fa, 0x001009fa");
+extern undefined4 _DAT_00100a02;
+__asm__(".set _DAT_00100a02, 0x00100a02");
+extern undefined4 _DAT_00100b14;
+__asm__(".set _DAT_00100b14, 0x00100b14");
+extern undefined4 _DAT_00100b18;
+__asm__(".set _DAT_00100b18, 0x00100b18");
+extern undefined4 _DAT_00100b1a;
+__asm__(".set _DAT_00100b1a, 0x00100b1a");
+extern undefined4 _DAT_00100ba8;
+__asm__(".set _DAT_00100ba8, 0x00100ba8");
+extern uint32_t _DAT_00100bb4;
+__asm__(".set _DAT_00100bb4, 0x00100bb4");
+extern uint32_t _DAT_00100bb8;
+__asm__(".set _DAT_00100bb8, 0x00100bb8");
+extern undefined4 _DAT_00100bca;
+__asm__(".set _DAT_00100bca, 0x00100bca");
+extern undefined4 _DAT_00100bce;
+__asm__(".set _DAT_00100bce, 0x00100bce");
+extern short _DAT_00100bd0;
+__asm__(".set _DAT_00100bd0, 0x00100bd0");
+extern short _DAT_00100bd2;
+__asm__(".set _DAT_00100bd2, 0x00100bd2");
+extern short _DAT_00100c24;
+__asm__(".set _DAT_00100c24, 0x00100c24");
+extern ushort _DAT_00100c26;
+__asm__(".set _DAT_00100c26, 0x00100c26");
+extern ushort _DAT_00100c28;
+__asm__(".set _DAT_00100c28, 0x00100c28");
+extern uint _DAT_00100c2a;
+__asm__(".set _DAT_00100c2a, 0x00100c2a");
+extern short _DAT_00100c2e;
+__asm__(".set _DAT_00100c2e, 0x00100c2e");
+extern ushort _DAT_00100c32;
+__asm__(".set _DAT_00100c32, 0x00100c32");
+extern short _DAT_00100c34;
+__asm__(".set _DAT_00100c34, 0x00100c34");
+extern short _DAT_00100c36;
+__asm__(".set _DAT_00100c36, 0x00100c36");
+extern short _DAT_00100c38;
+__asm__(".set _DAT_00100c38, 0x00100c38");
+extern short _DAT_00100c3a;
+__asm__(".set _DAT_00100c3a, 0x00100c3a");
+extern ushort _DAT_00100c3e;
+__asm__(".set _DAT_00100c3e, 0x00100c3e");
+extern ushort _DAT_00100c40;
+__asm__(".set _DAT_00100c40, 0x00100c40");
+extern short _DAT_00100c44;
+__asm__(".set _DAT_00100c44, 0x00100c44");
+extern short _DAT_00100c46;
+__asm__(".set _DAT_00100c46, 0x00100c46");
+extern undefined4 * _DAT_00101420;
+__asm__(".set _DAT_00101420, 0x00101420");
+extern undefined4 * _DAT_00101424;
+__asm__(".set _DAT_00101424, 0x00101424");
+extern undefined * _DAT_0010155c;
+__asm__(".set _DAT_0010155c, 0x0010155c");
+extern undefined * _DAT_0010199a;
+__asm__(".set _DAT_0010199a, 0x0010199a");
+extern undefined * _DAT_0010199e;
+__asm__(".set _DAT_0010199e, 0x0010199e");
+extern undefined * _DAT_00101b46;
+__asm__(".set _DAT_00101b46, 0x00101b46");
+extern undefined * _DAT_00101b4a;
+__asm__(".set _DAT_00101b4a, 0x00101b4a");
+extern uint _DAT_00101d00;
+__asm__(".set _DAT_00101d00, 0x00101d00");
+extern ulong _DAT_00101d04;
+__asm__(".set _DAT_00101d04, 0x00101d04");
+extern int _DAT_00101d08;
+__asm__(".set _DAT_00101d08, 0x00101d08");
+extern undefined4 _DAT_00101d14;
+__asm__(".set _DAT_00101d14, 0x00101d14");
+extern uint32_t _DAT_00101d20;
+__asm__(".set _DAT_00101d20, 0x00101d20");
+extern ulong _DAT_00101d24;
+__asm__(".set _DAT_00101d24, 0x00101d24");
+extern int _DAT_00101d28;
+__asm__(".set _DAT_00101d28, 0x00101d28");
+extern short _DAT_00101d8e;
+__asm__(".set _DAT_00101d8e, 0x00101d8e");
+extern uint32_t * _DAT_00101d90;
+__asm__(".set _DAT_00101d90, 0x00101d90");
+extern short _DAT_00101dd8;
+__asm__(".set _DAT_00101dd8, 0x00101dd8");
+extern undefined4 _DAT_00101df8;
+__asm__(".set _DAT_00101df8, 0x00101df8");
+extern undefined4 _DAT_00101dfc;
+__asm__(".set _DAT_00101dfc, 0x00101dfc");
+extern undefined4 _DAT_00101e00;
+__asm__(".set _DAT_00101e00, 0x00101e00");
+extern undefined4 _DAT_00101e04;
+__asm__(".set _DAT_00101e04, 0x00101e04");
+extern undefined4 _DAT_00101e28;
+__asm__(".set _DAT_00101e28, 0x00101e28");
+extern undefined4 _DAT_00101e2c;
+__asm__(".set _DAT_00101e2c, 0x00101e2c");
+extern int32_t _DAT_00101e78;
+__asm__(".set _DAT_00101e78, 0x00101e78");
+extern int32_t _DAT_00101e7c;
+__asm__(".set _DAT_00101e7c, 0x00101e7c");
+extern int32_t _DAT_00101e80;
+__asm__(".set _DAT_00101e80, 0x00101e80");
+extern short _DAT_00101f64;
+__asm__(".set _DAT_00101f64, 0x00101f64");
+extern short _DAT_00101f66;
+__asm__(".set _DAT_00101f66, 0x00101f66");
+extern uint _DAT_00101fda;
+__asm__(".set _DAT_00101fda, 0x00101fda");
+extern uint _DAT_00101fde;
+__asm__(".set _DAT_00101fde, 0x00101fde");
+extern float _DAT_00101fea;
+__asm__(".set _DAT_00101fea, 0x00101fea");
+extern float _DAT_00101fee;
+__asm__(".set _DAT_00101fee, 0x00101fee");
+extern float _DAT_00101ff2;
+__asm__(".set _DAT_00101ff2, 0x00101ff2");
+extern float _DAT_00101ffa;
+__asm__(".set _DAT_00101ffa, 0x00101ffa");
+extern float _DAT_00101ffe;
+__asm__(".set _DAT_00101ffe, 0x00101ffe");
+extern uint32_t _DAT_00102002;
+__asm__(".set _DAT_00102002, 0x00102002");
+extern uint32_t _DAT_00102006;
+__asm__(".set _DAT_00102006, 0x00102006");
+extern uint32_t _DAT_0010200a;
+__asm__(".set _DAT_0010200a, 0x0010200a");
+extern undefined4 _DAT_0010200e;
+__asm__(".set _DAT_0010200e, 0x0010200e");
+extern float _DAT_00102042;
+__asm__(".set _DAT_00102042, 0x00102042");
+extern undefined4 _DAT_0010204a;
+__asm__(".set _DAT_0010204a, 0x0010204a");
+extern float _DAT_0010204e;
+__asm__(".set _DAT_0010204e, 0x0010204e");
+extern float _DAT_00102052;
+__asm__(".set _DAT_00102052, 0x00102052");
+extern int _DAT_0010205a;
+__asm__(".set _DAT_0010205a, 0x0010205a");
+extern float _DAT_0010206e;
+__asm__(".set _DAT_0010206e, 0x0010206e");
+extern float _DAT_00102072;
+__asm__(".set _DAT_00102072, 0x00102072");
+extern float _DAT_00102076;
+__asm__(".set _DAT_00102076, 0x00102076");
+extern float _DAT_00102144;
+__asm__(".set _DAT_00102144, 0x00102144");
+extern float _DAT_00102148;
+__asm__(".set _DAT_00102148, 0x00102148");
+extern float _DAT_0010214c;
+__asm__(".set _DAT_0010214c, 0x0010214c");
+extern float _DAT_00102150;
+__asm__(".set _DAT_00102150, 0x00102150");
+extern float _DAT_00102158;
+__asm__(".set _DAT_00102158, 0x00102158");
+extern float _DAT_0010215c;
+__asm__(".set _DAT_0010215c, 0x0010215c");
+extern undefined4 _DAT_00102546;
+__asm__(".set _DAT_00102546, 0x00102546");
+extern float _DAT_00102554;
+__asm__(".set _DAT_00102554, 0x00102554");
+extern float _DAT_00102568;
+__asm__(".set _DAT_00102568, 0x00102568");
+extern int _DAT_0010256e;
+__asm__(".set _DAT_0010256e, 0x0010256e");
+extern undefined4 _DAT_00102572;
+__asm__(".set _DAT_00102572, 0x00102572");
+extern undefined4 _DAT_00102576;
+__asm__(".set _DAT_00102576, 0x00102576");
+extern undefined4 _DAT_0010257a;
+__asm__(".set _DAT_0010257a, 0x0010257a");
+extern undefined4 _DAT_0010257e;
+__asm__(".set _DAT_0010257e, 0x0010257e");
+extern ushort _DAT_00102582;
+__asm__(".set _DAT_00102582, 0x00102582");
+extern int _DAT_00102590;
+__asm__(".set _DAT_00102590, 0x00102590");
+extern uint _DAT_00102594;
+__asm__(".set _DAT_00102594, 0x00102594");
+extern int _DAT_00102598;
+__asm__(".set _DAT_00102598, 0x00102598");
+extern undefined4 _DAT_00102658;
+__asm__(".set _DAT_00102658, 0x00102658");
+extern undefined4 _DAT_0010266e;
+__asm__(".set _DAT_0010266e, 0x0010266e");
+extern undefined4 _DAT_00102682;
+__asm__(".set _DAT_00102682, 0x00102682");
+extern undefined4 * _DAT_0010268e;
+__asm__(".set _DAT_0010268e, 0x0010268e");
+extern uint _DAT_00102720;
+__asm__(".set _DAT_00102720, 0x00102720");
+extern undefined4 _DAT_00102726;
+__asm__(".set _DAT_00102726, 0x00102726");
+extern int _DAT_00102b46;
+__asm__(".set _DAT_00102b46, 0x00102b46");
+extern short _DAT_00102b4a;
+__asm__(".set _DAT_00102b4a, 0x00102b4a");
+extern undefined * _DAT_00102c4e;
+__asm__(".set _DAT_00102c4e, 0x00102c4e");
+extern undefined * _DAT_00102c52;
+__asm__(".set _DAT_00102c52, 0x00102c52");
+extern undefined4 _DAT_00102d64;
+__asm__(".set _DAT_00102d64, 0x00102d64");
+extern undefined4 _DAT_00102d68;
+__asm__(".set _DAT_00102d68, 0x00102d68");
+extern undefined4 _DAT_00102d6c;
+__asm__(".set _DAT_00102d6c, 0x00102d6c");
+extern undefined4 _DAT_00102d70;
+__asm__(".set _DAT_00102d70, 0x00102d70");
+extern undefined * _DAT_00102fe0;
+__asm__(".set _DAT_00102fe0, 0x00102fe0");
+extern short _DAT_00102fe4;
+__asm__(".set _DAT_00102fe4, 0x00102fe4");
+extern char * _DAT_001030ec;
+__asm__(".set _DAT_001030ec, 0x001030ec");
+extern undefined * _DAT_001030f0;
+__asm__(".set _DAT_001030f0, 0x001030f0");
+extern short _DAT_001030f4;
+__asm__(".set _DAT_001030f4, 0x001030f4");
+extern uint32_t _DAT_0010310e;
+__asm__(".set _DAT_0010310e, 0x0010310e");
+extern ulong _DAT_00103112;
+__asm__(".set _DAT_00103112, 0x00103112");
+extern undefined4 _DAT_00103116;
+__asm__(".set _DAT_00103116, 0x00103116");
+extern uint32_t _DAT_00103126;
+__asm__(".set _DAT_00103126, 0x00103126");
+extern ulong _DAT_0010312a;
+__asm__(".set _DAT_0010312a, 0x0010312a");
+extern undefined4 _DAT_0010312e;
+__asm__(".set _DAT_0010312e, 0x0010312e");
+extern undefined * _DAT_0010313c;
+__asm__(".set _DAT_0010313c, 0x0010313c");
+extern char * _DAT_00103142;
+__asm__(".set _DAT_00103142, 0x00103142");
+extern char * _DAT_00103146;
+__asm__(".set _DAT_00103146, 0x00103146");
+extern uint32_t _DAT_00103158;
+__asm__(".set _DAT_00103158, 0x00103158");
+extern undefined4 _DAT_0010315c;
+__asm__(".set _DAT_0010315c, 0x0010315c");
+extern undefined4 _DAT_00103160;
+__asm__(".set _DAT_00103160, 0x00103160");
+extern uint32_t _DAT_00103174;
+__asm__(".set _DAT_00103174, 0x00103174");
+extern undefined4 _DAT_00103178;
+__asm__(".set _DAT_00103178, 0x00103178");
+extern undefined4 _DAT_0010317c;
+__asm__(".set _DAT_0010317c, 0x0010317c");
+extern undefined * _DAT_0010328a;
+__asm__(".set _DAT_0010328a, 0x0010328a");
+extern undefined * _DAT_0010328e;
+__asm__(".set _DAT_0010328e, 0x0010328e");
+extern undefined4 _DAT_0010329e;
+__asm__(".set _DAT_0010329e, 0x0010329e");
+extern undefined * _DAT_001032a0;
+__asm__(".set _DAT_001032a0, 0x001032a0");
+extern undefined2 * _DAT_001032ec;
+__asm__(".set _DAT_001032ec, 0x001032ec");
+extern ushort _DAT_001032f0;
+__asm__(".set _DAT_001032f0, 0x001032f0");
+extern undefined * _DAT_0010370a;
+__asm__(".set _DAT_0010370a, 0x0010370a");
+extern undefined4 _DAT_0010370e;
+__asm__(".set _DAT_0010370e, 0x0010370e");
+extern undefined4 _DAT_00103712;
+__asm__(".set _DAT_00103712, 0x00103712");
+extern undefined4 _DAT_00103716;
+__asm__(".set _DAT_00103716, 0x00103716");
+extern uint _DAT_0010371a;
+__asm__(".set _DAT_0010371a, 0x0010371a");
+extern undefined4 _DAT_001037cc;
+__asm__(".set _DAT_001037cc, 0x001037cc");
+extern int _DAT_001037d0;
+__asm__(".set _DAT_001037d0, 0x001037d0");
+extern ulong _DAT_001037e8;
+__asm__(".set _DAT_001037e8, 0x001037e8");
+extern undefined4 _DAT_0010382c;
+__asm__(".set _DAT_0010382c, 0x0010382c");
+extern undefined4 _DAT_0010ab20;
+__asm__(".set _DAT_0010ab20, 0x0010ab20");
+extern undefined4 _DAT_0010ab22;
+__asm__(".set _DAT_0010ab22, 0x0010ab22");
+extern undefined4 _DAT_0010ab24;
+__asm__(".set _DAT_0010ab24, 0x0010ab24");
+extern undefined4 _DAT_0010ab26;
+__asm__(".set _DAT_0010ab26, 0x0010ab26");
+extern undefined4 _DAT_0010ab28;
+__asm__(".set _DAT_0010ab28, 0x0010ab28");
+extern undefined * _DAT_0010afac;
+__asm__(".set _DAT_0010afac, 0x0010afac");
+extern ushort _DAT_0010b038;
+__asm__(".set _DAT_0010b038, 0x0010b038");
+extern undefined4 _DAT_0010b03a;
+__asm__(".set _DAT_0010b03a, 0x0010b03a");
+extern undefined4 _DAT_0010b0be;
+__asm__(".set _DAT_0010b0be, 0x0010b0be");
+extern undefined4 _DAT_0010b0c2;
+__asm__(".set _DAT_0010b0c2, 0x0010b0c2");
+extern short _DAT_00400060;
+__asm__(".set _DAT_00400060, 0x00400060");
+extern undefined4 _DAT_00400062;
+__asm__(".set _DAT_00400062, 0x00400062");
+extern undefined4 _DAT_00400066;
+__asm__(".set _DAT_00400066, 0x00400066");
+extern uint _DAT_0040006a;
+__asm__(".set _DAT_0040006a, 0x0040006a");
+extern short _DAT_00400080;
+__asm__(".set _DAT_00400080, 0x00400080");
+extern float _DAT_00400082;
+__asm__(".set _DAT_00400082, 0x00400082");
+extern float _DAT_00400086;
+__asm__(".set _DAT_00400086, 0x00400086");
+extern uint _DAT_004000c4;
+__asm__(".set _DAT_004000c4, 0x004000c4");
+extern uint _DAT_00400144;
+__asm__(".set _DAT_00400144, 0x00400144");
+extern undefined4 _DAT_00700000;
+__asm__(".set _DAT_00700000, 0x00700000");
+extern undefined4 _interval_mean_flag;
+__asm__(".set _interval_mean_flag, 0x0010253c");
+extern undefined4 _task_table;
+__asm__(".set _task_table, 0x001026b8");
+extern byte bRam0010afb0;
+__asm__(".set bRam0010afb0, 0x0010afb0");
+extern char cRam00101bfe;
+__asm__(".set cRam00101bfe, 0x00101bfe");
+extern char cRam00101c00;
+__asm__(".set cRam00101c00, 0x00101c00");
+extern char cRam00101c2e;
+__asm__(".set cRam00101c2e, 0x00101c2e");
+extern char cRam00101c5e;
+__asm__(".set cRam00101c5e, 0x00101c5e");
+extern char cRam00101c60;
+__asm__(".set cRam00101c60, 0x00101c60");
+extern char cRam00101c8e;
+__asm__(".set cRam00101c8e, 0x00101c8e");
+extern char cRam00101cbe;
+__asm__(".set cRam00101cbe, 0x00101cbe");
+extern char cRam00101cc0;
+__asm__(".set cRam00101cc0, 0x00101cc0");
+extern float fRam00101b9a;
+__asm__(".set fRam00101b9a, 0x00101b9a");
+extern float fRam00101bca;
+__asm__(".set fRam00101bca, 0x00101bca");
+extern float fRam00101bfa;
+__asm__(".set fRam00101bfa, 0x00101bfa");
+extern float fRam00101c2a;
+__asm__(".set fRam00101c2a, 0x00101c2a");
+extern float fRam00101c5a;
+__asm__(".set fRam00101c5a, 0x00101c5a");
+extern float fRam00101c8a;
+__asm__(".set fRam00101c8a, 0x00101c8a");
+extern float fRam00101cba;
+__asm__(".set fRam00101cba, 0x00101cba");
+extern code func_0x0004c9d4;
+__asm__(".set func_0x0004c9d4, 0x0004c9d4");
+extern code func_0x0004f596;
+__asm__(".set func_0x0004f596, 0x0004f596");
+extern code func_0x0010135c;
+__asm__(".set func_0x0010135c, 0x0010135c");
+extern code func_0x0010313c;
+__asm__(".set func_0x0010313c, 0x0010313c");
+extern char * pcRam00100b48;
+__asm__(".set pcRam00100b48, 0x00100b48");
+extern char * pcRam00100b54;
+__asm__(".set pcRam00100b54, 0x00100b54");
+extern char * pcRam00100b94;
+__asm__(".set pcRam00100b94, 0x00100b94");
+extern long * plRam00100b60;
+__asm__(".set plRam00100b60, 0x00100b60");
+extern long * plRam00100ba0;
+__asm__(".set plRam00100ba0, 0x00100ba0");
+extern uint * puRam00100b5c;
+__asm__(".set puRam00100b5c, 0x00100b5c");
+extern uint * puRam00100b64;
+__asm__(".set puRam00100b64, 0x00100b64");
+extern uint * puRam00100b9c;
+__asm__(".set puRam00100b9c, 0x00100b9c");
+extern uint * puRam00100ba4;
+__asm__(".set puRam00100ba4, 0x00100ba4");
+extern void * pvRam00100b58;
+__asm__(".set pvRam00100b58, 0x00100b58");
+extern void * pvRam00100b98;
+__asm__(".set pvRam00100b98, 0x00100b98");
+extern undefined4 ram0x001009ee;
+__asm__(".set ram0x001009ee, 0x001009ee");
+extern char * ram0x001009f2;
+__asm__(".set ram0x001009f2, 0x001009f2");
+extern undefined4 ram0x00400001;
+__asm__(".set ram0x00400001, 0x00400001");
+extern short sRam0010139a;
+__asm__(".set sRam0010139a, 0x0010139a");
+extern char s_00000000000000000000_installer__0010a9fb[];
+__asm__(".set s_00000000000000000000_installer__0010a9fb, 0x0010a9fb");
+extern char s_0123456789ABCDEF_installer__0010aa16[];
+__asm__(".set s_0123456789ABCDEF_installer__0010aa16, 0x0010aa16");
+extern char s_0123456789abcdef_installer__0010aa27[];
+__asm__(".set s_0123456789abcdef_installer__0010aa27, 0x0010aa27");
+extern char s_58000A_installer__001082c8[];
+__asm__(".set s_58000A_installer__001082c8, 0x001082c8");
+extern char s_DUARTB_isr_signaling_SIG_SOQ_installer__00103ecd[];
+__asm__(".set s_DUARTB_isr_signaling_SIG_SOQ_installer__00103ecd, 0x00103ecd");
+extern char s_Oooh__That_tickles__I_don_t_know_installer__00100b84[];
+__asm__(".set s_Oooh__That_tickles__I_don_t_know_installer__00100b84, 0x00100b84");
+extern char s_Prog_end__returned_installer__0010142a[];
+__asm__(".set s_Prog_end__returned_installer__0010142a, 0x0010142a");
+extern char s_RESET_to_recover__installer__001007bc[];
+__asm__(".set s_RESET_to_recover__installer__001007bc, 0x001007bc");
+extern char s___PC_____8x__SR_____04x_installer__00100793[];
+__asm__(".set s___PC_____8x__SR_____04x_installer__00100793, 0x00100793");
+extern char s____08X_installer__001040ec[];
+__asm__(".set s____08X_installer__001040ec, 0x001040ec");
+extern char s_______ftoi___ftod___dtof___dtoi__installer__00101137[];
+__asm__(".set s_______ftoi___ftod___dtof___dtoi__installer__00101137, 0x00101137");
+extern char s__installer__0010a9e6[];
+__asm__(".set s__installer__0010a9e6, 0x0010a9e6");
+extern char s_acos___acosf___asin___asinf___at_installer__001011e0[];
+__asm__(".set s_acos___acosf___asin___asinf___at_installer__001011e0, 0x001011e0");
+extern char s_fp_all_precision_lost__installer__001010b5[];
+__asm__(".set s_fp_all_precision_lost__installer__001010b5, 0x001010b5");
+extern char s_fp_divide_by_zero__installer__001010e0[];
+__asm__(".set s_fp_divide_by_zero__installer__001010e0, 0x001010e0");
+extern char s_fp_inexact_result__installer__001010cc[];
+__asm__(".set s_fp_inexact_result__installer__001010cc, 0x001010cc");
+extern char s_fp_operand_error__installer__00101111[];
+__asm__(".set s_fp_operand_error__installer__00101111, 0x00101111");
+extern char s_fp_overflow__installer__00101103[];
+__asm__(".set s_fp_overflow__installer__00101103, 0x00101103");
+extern char s_fp_signaling_NaN__installer__00101124[];
+__asm__(".set s_fp_signaling_NaN__installer__00101124, 0x00101124");
+extern char s_fp_underflow__installer__001010f4[];
+__asm__(".set s_fp_underflow__installer__001010f4, 0x001010f4");
+extern char s_fp_unknown_exception__installer__0010109e[];
+__asm__(".set s_fp_unknown_exception__installer__0010109e, 0x0010109e");
+extern uint uRam00100b28;
+__asm__(".set uRam00100b28, 0x00100b28");
+extern uint uRam00100b2c;
+__asm__(".set uRam00100b2c, 0x00100b2c");
+extern uint uRam00100b30;
+__asm__(".set uRam00100b30, 0x00100b30");
+extern uint uRam00100b34;
+__asm__(".set uRam00100b34, 0x00100b34");
+extern uint uRam00100b38;
+__asm__(".set uRam00100b38, 0x00100b38");
+extern uint uRam00100b3c;
+__asm__(".set uRam00100b3c, 0x00100b3c");
+extern uint uRam00100b40;
+__asm__(".set uRam00100b40, 0x00100b40");
+extern uint uRam00100b44;
+__asm__(".set uRam00100b44, 0x00100b44");
+extern uint uRam00100b4c;
+__asm__(".set uRam00100b4c, 0x00100b4c");
+extern uint uRam00100b50;
+__asm__(".set uRam00100b50, 0x00100b50");
+extern uint uRam00100b68;
+__asm__(".set uRam00100b68, 0x00100b68");
+extern uint uRam00100b70;
+__asm__(".set uRam00100b70, 0x00100b70");
+extern uint uRam00100b74;
+__asm__(".set uRam00100b74, 0x00100b74");
+extern uint uRam00100b78;
+__asm__(".set uRam00100b78, 0x00100b78");
+extern uint uRam00100b7c;
+__asm__(".set uRam00100b7c, 0x00100b7c");
+extern uint uRam00100b80;
+__asm__(".set uRam00100b80, 0x00100b80");
+extern uint uRam00100b84;
+__asm__(".set uRam00100b84, 0x00100b84");
+extern uint uRam00100b88;
+__asm__(".set uRam00100b88, 0x00100b88");
+extern uint uRam00100b8c;
+__asm__(".set uRam00100b8c, 0x00100b8c");
+extern uint uRam00100b90;
+__asm__(".set uRam00100b90, 0x00100b90");
+extern uint32_t uRam00101b4e;
+__asm__(".set uRam00101b4e, 0x00101b4e");
+/* the caller's frame and the registers, which have no address */
+extern undefined4 register0x0000003c;
+extern undefined4 stack0x00000000;
+extern undefined4 stack0x00000008;
+extern undefined4 stack0x0000000c;
+extern undefined4 stack0x00000010;
+extern undefined4 stack0x00000014;
+extern undefined4 stack0xffffffd2;
+extern undefined4 stack0xffffffd4;
+extern undefined4 stack0xffffffd6;
+extern undefined4 stack0xfffffffc;
+extern undefined4 unique0x1000008f;
+
+void boot_duartb_loopback_check(void);
+void boot_duart_early_init(void);
+int boot_reset();
+int boot_trap_11();
+undefined4 boot_unpack_installer(void);
+undefined1 * boot_memcpy(undefined1 *param_1,undefined1 *param_2,int param_3);
+int mutex_init();
+int mutex_acquire();
+int mutex_release();
+int mutex_clear();
+int mutex_create(char *name,void *mutex);
+int mutex_lock(void *mutex);
+int mutex_unlock(void *mutex);
+undefined4 mutex_owner(int param_1);
+undefined4 idle_count(void);
+klok_entry * clk_do(undefined4 *param_1);
+undefined4 leap_event_schedule_gps(undefined4 param_1,int param_2);
+undefined4 leap_event_schedule_utc(undefined4 param_1,int param_2);
+void leap_event_schedule(undefined4 param_1,undefined4 param_2);
+int klok_cancel(klok_entry *param_1);
+void klok_print_entries(void);
+klok_entry * klok_find(short param_1);
+int klok_entry_state(klok_entry *param_1);
+uint klok_task_create(ulong param_1);
+void clock_set(undefined4 param_1,undefined4 param_2);
+void klok_task(void);
+void klok_run_due(void);
+undefined4 list_unlink(int *param_1,int *param_2);
+void klok_insert_sorted(int *param_1,int *param_2);
+void list_push(undefined4 *param_1,undefined4 *param_2);
+undefined4 is_leap_year(ushort param_1);
+int16_t day_of_year(uint32_t date);
+int time_packed_to_seconds(uint param_1);
+undefined4 days_to_date(undefined *param_1);
+int date_to_days(uint param_1);
+int date_to_mjd(uint param_1);
+undefined1 days_in_month(ushort param_1,byte param_2);
+undefined4 date_normalize(uint param_1);
+undefined3 oncore_date_unpack(undefined4 param_1);
+undefined4 oncore_date_pack(undefined4 param_1);
+int hms_to_seconds(uint param_1);
+int time_to_seconds(uint param_1);
+uint seconds_to_hms(uint param_1);
+int gps_seconds(uint32_t date,uint32_t time);
+int leap_gps_time(void);
+void time_next_second(uint32_t *param_1,undefined4 *param_2);
+void datetime_add(undefined4 *param_1,undefined4 *param_2);
+void datetime_subtract(undefined4 *param_1,undefined4 *param_2);
+int datetime_compare(undefined4 *param_1,undefined4 *param_2);
+void utc_to_gps(undefined4 *param_1,undefined4 *param_2);
+void gps_to_utc(undefined4 *param_1,undefined4 *param_2);
+undefined4 leap_opportunity_date(void);
+undefined1 leap_second_near(void);
+void utc_to_local(undefined4 *param_1,undefined4 *param_2);
+void local_to_utc(undefined4 *param_1,undefined4 *param_2);
+void exception_hook_reset(void);
+int exception_hook_get(void);
+int primary_default_exception();
+void print_exception(ushort param_1,uint32_t param_2,ushort param_3,uint32_t param_4);
+char * exception_name(uint16_t vector);
+int primary_user_66();
+void periodic_interrupt_enable(char param_1);
+void qsm_init(void);
+void gpt_init(void);
+void shutdown(void);
+int int_abs(int param_1);
+int int_clamp(int param_1,int param_2,int param_3);
+undefined4 crc16_ccitt(byte *param_1,short param_2);
+ushort isqrt16(uint param_1);
+int round_shift_right(int param_1,uint param_2);
+int double_round_to_long(double param_1);
+int round_divide(int param_1,int param_2);
+undefined4 double_decimal_exponent_rounded(uint param_1,uint param_2);
+undefined4 double_decimal_exponent(uint param_1,uint param_2);
+undefined8 power_of_ten_double(short param_1);
+undefined4 tfom_table_index(uint param_1);
+undefined4 power_of_ten_float(short param_1);
+int random_dither(void);
+void start_nothing(void);
+void system_init(void);
+void primary_start(void);
+undefined8 pps_interrupt(void);
+int primary_user_81();
+undefined4 pps_init(void);
+undefined4 pps_interrupt_stop(void);
+undefined4 pps_wait_time(undefined4 *param_1,undefined4 *param_2,int param_3);
+void enter_installer(void);
+void scpi_task_start(void);
+void console_halt_hook(void);
+void console_init(void);
+undefined4 klok_take_pending(void);
+void root_task(void);
+undefined4 stack_measure(undefined4 param_1,undefined8 *param_2);
+int stack_fill();
+int region_find_segment();
+int stack_unused_count();
+void stack_usage_report(undefined4 param_1);
+void enter_supervisor_mode(void);
+undefined2 set_interrupt_mask(uint16_t sr);
+byte task_set_priority(ulong param_1,byte param_2);
+float float_absolute_on_stack(float f);
+ulonglong double_abs(ulonglong param_1);
+uint rotate_left(uint param_1,byte param_2);
+int primary_trap_7();
+void enter_supervisor(void);
+void busy_wait(uint param_1);
+void sleep_seconds(float param_1);
+int clock_record_checksum();
+int clock_record_sum();
+void clock_tick(void);
+int clock_record_advance();
+int clock_record_advance_utc();
+uint32_t get_clock_date(void);
+uint32_t get_clock_time(void);
+uint32_t get_gps_date(void);
+uint32_t get_gps_time(void);
+uint32_t get_uptime(void);
+int get_date_time(uint32_t *date,uint32_t *time);
+bool get_gps_datetime(uint32_t *param_1,uint32_t *param_2);
+void clock_record_refresh(void);
+void set_timedate_unflagged(int param_1);
+void set_timedate(int param_1);
+int clock_record_store();
+int clock_record_derive();
+int clock_set_leap_year();
+void clock_init(short param_1);
+uint8_t time_valid(void);
+void set_gps_utc_offset(undefined2 param_1);
+uint8_t get_gps_utc_offset(int16_t *seconds);
+char tcode_checksum(char *param_1);
+char tcode_request(byte param_1);
+short tfom_code(undefined4 param_1);
+void es_build(uint32_t param_1,uint param_2);
+uint timecode_update(void);
+void timecode_init(void);
+void timecode_schedule(uint param_1);
+int primary_user_86();
+void es_schedule(uint param_1);
+int primary_user_87();
+void float_exception_report(uint32_t code);
+int primary_spurious_interrupt();
+int primary_reset();
+int primary_trap_11();
+int primary_trap_12();
+void program_exit(undefined4 param_1);
+void program_end_report(uint param_1);
+int kernel_dispatch_service();
+int kernel_dispatch_io();
+int kernel_switch_task();
+int kernel_process_ticks();
+int kernel_service_0();
+int kernel_create();
+int kernel_start();
+int kernel_ident();
+int kernel_delete();
+int kernel_suspend();
+int kernel_resume();
+int kernel_priority();
+int kernel_allocate_segment();
+int kernel_allocate_for_task();
+int kernel_free_segment();
+int kernel_free_for_task();
+int kernel_allocate();
+int kernel_region_allocate();
+int kernel_service_10();
+int kernel_service_16();
+int kernel_service_none();
+int kernel_create_x();
+int kernel_service_21();
+int kernel_delete_x();
+int kernel_service_18();
+int kernel_jam_x();
+int kernel_send_x();
+int kernel_send_for_task();
+int kernel_copy_message();
+int kernel_request_x();
+int kernel_signal_v();
+int kernel_signal_task();
+int kernel_get_v();
+int kernel_wait_v();
+int kernel_mode();
+int kernel_service_33();
+int kernel_pause();
+int kernel_service_29();
+int kernel_service_30();
+int kernel_service_31();
+int kernel_service_35();
+int kernel_service_36();
+int kernel_service_37();
+int kernel_service_38();
+int kernel_advance_date();
+int kernel_set_leap_year();
+int kernel_check_task();
+int kernel_check_exchange();
+int kernel_check_segment();
+int kernel_timer_cancel();
+int kernel_timer_unlink();
+int kernel_timer_insert();
+int kernel_make_ready();
+int kernel_ready_insert();
+int kernel_queue_remove();
+int kernel_init();
+int kernel_region_init();
+int kernel_return_from_interrupt();
+void os_report_cpu(code *param_1);
+char * task_name(void *task);
+undefined * object_name(int param_1);
+void os_report_exchange(undefined4 *param_1,code *param_2);
+char * task_status_name(int param_1);
+void os_report_region_line(undefined4 param_1,undefined4 *param_2,code *param_3);
+undefined4 * region_segment_containing(int param_1,int param_2);
+void os_report_process(void *param_1,char *param_2,int param_3,undefined4 param_4,code *param_5);
+int timer_ticks_until(int param_1);
+int task_table_build(void);
+void os_report_process_summary(code *param_1);
+void os_report_exchanges(code *param_1);
+void os_report_exchange_summary(code *param_1);
+int ready_queue_position(undefined4 *param_1);
+int os_report_processes(code *param_1);
+void os_report_regions(code *param_1);
+undefined4 exchange_id_valid(uint param_1);
+undefined4 task_id_valid(uint param_1);
+void os_process_report(undefined1 param_1);
+void os_memory_report(undefined1 param_1);
+void task_stack_info(int param_1,undefined4 *param_2,undefined4 *param_3,int *param_4,int *param_5,
+                    undefined4 *param_6,int *param_7);
+void task_stack_report(undefined1 param_1);
+void psos_debug_output(char param_1);
+void task_count_tick(void);
+int psos_call();
+int psos_io_call();
+int psos_pack_name();
+ulong psos_create(char *name,ulong a,ulong priority,ulong stack_a,ulong stack_b,void *e,ulong *task);
+ulong psos_start(ulong task,void *entry);
+ulong psos_ident(char *name,ulong *id,uchar *b);
+ulong psos_my_pid(void);
+ulong psos_delete(ulong task);
+ulong psos_suspend(ulong task);
+ulong psos_resume(ulong task);
+ulong psos_priority(ulong task,ulong priority,uchar *old);
+ulong psos_pause(ulong a);
+ulong psos_mode(ulong a,ulong b,uchar *old);
+void psos_service_33(void);
+ulong psos_service_8(ulong a,ulong b,ulong c,ulong d,ulong *out);
+ulong psos_service_9(ulong a);
+ulong psos_service_10(ulong a,ulong b);
+ulong psos_service_16(ulong a,ulong b);
+ulong psos_service_35(ulong a,ulong b,ulong c,ulong *out);
+ulong psos_service_36(ulong a,ulong b);
+ulong psos_service_37(ulong a,ulong b,ulong *out);
+ulong psos_service_38(ulong a,ulong b);
+ulong psos_create_x(char *name,ulong a,ulong b,ulong *exchange);
+ulong psos_service_21(char *name,ulong *out1,ulong *out2,ulong *out3);
+ulong psos_delete_x(ulong exchange);
+ulong psos_send_x(ulong exchange,void *message);
+ulong psos_jam_x(ulong exchange,void *message);
+ulong psos_service_18(ulong a,ulong b,ulong c,uchar *out1,uchar *out2);
+ulong psos_request_x(ulong exchange,void *buffer,ulong a,ulong b);
+ulong psos_signal_v(ulong variable,ulong value);
+ulong psos_wait_v(ulong a,ulong b,ulong c,ulong *out);
+ulong psos_get_v(ulong a,ulong b,ulong *out);
+ulong psos_service_29(void);
+ulong psos_service_30(ulong *out1,ulong *out2,ushort *out3);
+ulong psos_service_31(ulong a,ulong b,ulong c);
+ulong psos_io_init(ulong device);
+ulong psos_io_open(ulong device,ulong a);
+ulong psos_io_close(ulong device);
+ulong psos_io_read(ulong device,void *buffer,ulong *length);
+ulong psos_io_write(ulong device,void *buffer,ulong *length);
+ulong psos_io_control(ulong device,ulong a,ulong b);
+undefined4 cpu_register_test(void);
+void ram_pattern_test(void);
+uint rom_lane_checksum(byte *param_1,short param_2);
+void selftest_run_all(void);
+void selftest_run_all_counted(void);
+void selftest_summary(void);
+void selftest_all(char param_1);
+void selftest_interpolator(char param_1);
+void selftest_internal_reference(char param_1);
+void selftest_ram(char param_1);
+void selftest_cpu(char param_1);
+void selftest_eeprom(char param_1);
+void selftest_qspi(char param_1);
+void selftest_fpga(char param_1);
+void selftest_lamps(char param_1);
+void selftest_uart(char param_1);
+void selftest_gps(char param_1);
+void selftest_power(char param_1);
+void selftest_begin(void);
+void selftest_end(void);
+bool selftest_may_report(char param_1);
+void selftest_execute(char param_1);
+char debug_is_enabled(void);
+void selftest_report_fail(int param_1,char *param_2,char param_3);
+void format_binary(uint param_1,int param_2,int param_3);
+bool selftest_aborted(void);
+void selftest_delay(uint param_1);
+void selftest_init(void);
+undefined1 selftest_abort_wait(void);
+void internal_pps_test(void);
+void lamp_test(void);
+void supplies_test(void);
+void selftest_print_failure(char param_1);
+ushort shift_right_36(ushort *param_1);
+undefined1 qspi_hex_dac_test(void);
+undefined4 qspi_adc_test(void);
+undefined1 fpga_load_test(void);
+bool qspi_efc_test(void);
+void qspi_tests_run(void);
+void selftest_run(byte param_1);
+void ram_pattern_test_locked(void);
+void selftest_nv_slot(void);
+void selftest_qspi_run(void);
+short selftest_qspi_with_lamp(void);
+short selftest_interpolator_with_lamp(void);
+short selftest_internal_reference_with_lamp(void);
+undefined4 lamp_test_command(void);
+int forth_abort();
+int forth_interpret();
+int forth_parse_number();
+int forth_find();
+int forth_align();
+int forth_digit();
+int forth_is_space();
+int forth_skip_spaces();
+int forth_build_prompt();
+int forth_read_line();
+int forth_parse_word();
+int forth_refill();
+int forth_print_string();
+int forth_input_buffer();
+int forth_over();
+int forth_abs();
+int forth_max();
+int forth_min();
+int forth_fetch();
+int forth_store();
+int forth_w_fetch();
+int forth_w_store();
+int forth_c_fetch();
+int forth_c_store();
+int forth_negate();
+int forth_here();
+int forth_greater_r();
+int forth_r_greater();
+int forth_fill();
+int forth_pick();
+int forth_comma();
+int forth_w_comma();
+int forth_c_comma();
+int forth_rot();
+int forth_minus_rot();
+int forth_allot();
+int forth_swap();
+int forth_dup();
+int forth_2dup();
+int forth_2swap();
+int forth_paren();
+int forth_halt();
+int forth_false();
+int forth_true();
+int forth_or();
+int forth_and();
+int forth_not();
+int forth_xor();
+int forth_equal();
+int forth_greater();
+int forth_less();
+int forth_0_less();
+int forth_0_equal();
+int forth_0_greater();
+int forth_query_dup();
+int forth_cmove();
+int forth_cmove_greater();
+int forth_2drop();
+int forth_drop();
+int forth_depth();
+int forth_compile_code();
+int forth_resolve_branch();
+int forth_resolve_forward();
+int forth_check_pairs();
+int forth_unlink_latest();
+int forth_do();
+int forth_query_do();
+int forth_plus_loop();
+int forth_loop();
+int forth_if();
+int forth_else();
+int forth_endif();
+int forth_begin();
+int forth_while();
+int forth_repeat();
+int forth_again();
+int forth_until();
+int forth_leave();
+int forth_k();
+int forth_j();
+int forth_i();
+int forth_colon();
+int forth_semicolon();
+int forth_parse_create_header();
+int forth_create_header();
+int forth_variable();
+int forth_create();
+int forth_constant();
+int forth_compile_constant();
+int forth_literal();
+int forth_mod();
+int forth_slash_mod();
+int forth_star_slash_mod();
+int forth_star_slash();
+int forth_slash();
+int forth_star();
+int forth_multiply();
+int forth_divide_signed();
+int forth_divide_unsigned();
+int forth_divide_short();
+int forth_minus();
+int forth_plus();
+int forth_plus_store();
+int forth_1_plus();
+int forth_1_minus();
+int forth_2_plus();
+int forth_2_minus();
+int forth_2_slash();
+int forth_2_star();
+int forth_less_less();
+int forth_greater_greater();
+int forth_emit();
+int forth_space();
+int forth_spaces();
+int forth_cr();
+int forth_dot_quote();
+int forth_paren_dot_quote_close_paren();
+int forth_digit_char();
+int forth_print_number();
+int forth_u_dot();
+int forth_u_dot_x();
+int forth_dot();
+int forth_dot_s();
+int forth_sin();
+int forth_cos();
+int forth_decimal();
+int forth_hex();
+int forth_base();
+int forth_state();
+int forth_tick();
+int forth_bracket_tick_close_bracket();
+int forth_bracket();
+int forth_close_bracket();
+int forth_forget();
+int forth_startup();
+int forth_words();
+int forth_root();
+int forth_my_pid();
+int forth_query_caret_C();
+int forth_expect();
+int forth_type();
+int forth_word();
+int forth_count();
+int forth_tib();
+int forth_pad();
+int forth_does_greater();
+int forth_recurse();
+int forth_immediate();
+int forth_fence();
+int forth_unfence();
+int forth_number();
+int forth_0x();
+int forth_execute();
+int forth_watch();
+int forth_psos_call();
+int forth_spawn();
+int forth_pack_name();
+int forth_space_if_zero();
+int forth_ver();
+int forth_ident();
+int forth_delete();
+int forth_suspend();
+int forth_resume();
+int forth_priority();
+int forth_jam_x();
+int forth_create_x();
+int forth_delete_x();
+int forth_send_x();
+int forth_request_x();
+int forth_signal_v();
+int forth_wait_v();
+int forth_get_v();
+int forth_pause();
+int forth_mode();
+int forth_psos_io_call();
+int forth_dev_init();
+int forth_dev_open();
+int forth_dev_close();
+int forth_dev_read();
+int forth_dev_write();
+int forth_dev_ctrl();
+int forth_store_iodev();
+int forth_user();
+void pforth_dictionary_init(void);
+undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,short param_4);
+int pforth_link_word();
+void console_set_halt_hook(void *param_1);
+void console_set_device(undefined2 param_1);
+undefined4 console_task_create(void);
+int string_device_open();
+int string_device_init();
+int string_device_control();
+int console_read_from_string();
+undefined1 diag_adc_read(byte param_1);
+void diag_adc_temp(void);
+void diag_adc_5v(void);
+void diag_adc_p15v(void);
+void diag_adc_m15v(void);
+void diag_adc_oven(void);
+void diag_adc_doven(void);
+void diag_adc_ant_curr(void);
+void diag_pr_adc_avg(void);
+undefined1 diag_pr_hold_cause(void);
+void diag_efc_write(undefined2 param_1);
+void diag_hdac_write(byte param_1,byte param_2);
+void diag_hdac_all(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,byte param_6);
+void diag_clk_synch(undefined1 param_1,undefined4 param_2);
+void diag_sync_imm(void);
+void diag_loop_time(int param_1);
+void diag_pll_rep(void);
+void diag_efc_rep(void);
+void diag_get_time(void);
+void diag_set_time(undefined2 param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4,
+                  undefined1 param_5,undefined1 param_6);
+void diag_print_stat(void);
+void diag_print_vis(void);
+void diag_pr_avg(void);
+void diag_pr_gps_istate(void);
+void diag_print_bc(void);
+void diag_print_ext_msg(void);
+void diag_abr_stat(undefined4 param_1);
+void diag_avg(undefined4 param_1);
+void diag_master_reset(void);
+void diag_quiet_status(void);
+void diag_gps_query_all(void);
+void diag_init_gps(void);
+void diag_clr_avg(void);
+void diag_stat_rate(undefined4 param_1);
+void diag_vis_stat_rate(int param_1);
+void diag_xdop_stat_rate(undefined4 param_1);
+void diag_ext_msg_rate(undefined4 param_1);
+void diag_gps_time(undefined4 param_1,undefined4 param_2,undefined4 param_3);
+void diag_eman(undefined4 param_1);
+void diag_q_eman(void);
+void diag_gps_date(undefined4 param_1,undefined4 param_2,undefined4 param_3);
+void diag_gps_php(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4);
+void diag_q_gps_php(void);
+void diag_gps_ph(undefined4 param_1);
+void diag_force_1pps(int param_1);
+void diag_gps_cable_dly(undefined4 param_1);
+void diag_q_gps_cable_dly(void);
+void diag_gps_change(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
+                    undefined4 param_5);
+void diag_gps_query(undefined4 param_1);
+void diag_pr_gps_id(void);
+void diag_pr_1pps(void);
+void diag_pr_time_raim(void);
+void diag_pr_gps_debug(void);
+void diag_clr_gps_debug(void);
+void diag_pr_gps_cmds(void);
+void diag_disable_gps_cmds(int param_1);
+void diag_pstat(char param_1);
+void diag_efc_wr(uint param_1);
+void diag_pr_efc(void);
+void diag_lock(void);
+void diag_pll_restart(void);
+void diag_pll_debug(undefined1 param_1);
+void diag_phase_off(int param_1);
+void print_gps_init_state(void);
+void print_leap_check_state(void);
+void print_fine_state(byte param_1,char *param_2);
+void diag_pr_pll(void);
+void diag_log_send(undefined4 param_1);
+void diag_print_clk_list(void);
+void diag_dmessage(char *param_1);
+void diag_dmes_gpsm(uint32_t param_1);
+void diag_dmes_hmon(uint32_t param_1);
+void diag_dmes_klok(uint32_t param_1);
+void diag_dmes_pllp(uint32_t param_1);
+void diag_dmes_root(uint32_t param_1);
+void diag_dmes_scpi(uint32_t param_1);
+void diag_dmes_spoo(uint32_t param_1);
+void diag_dmes_curv(uint32_t param_1);
+void diag_dmes_all(uint32_t param_1);
+undefined1 diag_wr_eeprom(char *param_1,char param_2);
+void diag_clear_nv(void);
+void diag_debug_psos(int param_1);
+void diag_doven(int param_1);
+void diag_cal(uint param_1);
+void diag_crash(uint param_1);
+void diag_leapsec(undefined1 param_1,undefined4 param_2);
+void diag_es_ascii(int param_1);
+void diag_fp_u(void);
+void diag_words_define(void);
+int gp_port_select(char param_1);
+void duartb_mode_from_settings(void);
+void duartb_baud_from_settings(void);
+byte duartb_putc_polled(byte param_1);
+int drtb_puts(char *param_1);
+undefined4 drtb_getc(void);
+int drtb_gets(byte *param_1,int param_2);
+int drtb_unlock();
+int drtb_lock();
+undefined8 duart_init(void);
+uint duartb_reconfigure(void);
+void drtb_write(void);
+void drtb_read(void);
+void drtb_putc(undefined1 param_1);
+void drtb_send_async(undefined4 param_1,undefined1 param_2);
+ulong console_write(char *s);
+void printf(char *format,...);
+ulong console_read(void *param_1,ulong param_2,undefined1 *param_3);
+void scpi_port_open(void);
+int console_write_polled(char *s);
+void printf_polled(char *format,...);
+bool drtb_try_lock_write(void);
+undefined1 drtb_release_for_timecode(void);
+void duart_op0_set(char param_1);
+void duart_op1_set(char param_1);
+void duart_output_bits(byte param_1,byte param_2);
+undefined1 drta_send_message(undefined4 param_1,undefined2 param_2);
+bool duarta_rx_pending(void);
+undefined1 drta_get_byte(char *param_1);
+void duart_loopback_test_a(void);
+void duart_loopback_test_b(void);
+void duart_counter_test(void);
+void duart_test(void);
+void duart_test_rx_a(void);
+void duart_test_rx_b(void);
+void duart_test_tx_a(void);
+void duart_test_tx_b(void);
+uint duarta_isr(void);
+byte duartb_isr(void);
+void duarta_tx_interrupt(void);
+void duartb_transmit_interrupt(void);
+int primary_user_67();
+void duart_stop(void);
+void duartb_loopback_check(void);
+void duart_early_init(void);
+void fatal_error_with_code(char *param_1,undefined4 param_2,undefined4 param_3,uint param_4);
+int debug_sprintf(char *s,char *format,...);
+int debug_write(char *param_1);
+int debug_printf_polled(char *param_1);
+void debug_printf(char *format,...);
+void task_debug_message(char *message);
+void task_dmessage(char *message);
+void fatal_error(char *message);
+int adc_read(adc_channel channel);
+float read_adc_temp(void);
+float read_adc_5v(void);
+float read_adc_doven(void);
+float read_adc_oven(void);
+float read_adc_p15v(void);
+float read_adc_m15v(void);
+float read_adc_osc_curr(void);
+float read_adc_ant_curr(void);
+void hdac_write(byte param_1,byte param_2);
+void hdac_set(byte param_1,byte param_2);
+void hdac_write_all(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,byte param_6);
+void hdac_update(void);
+void efc_write(undefined2 param_1);
+void sci_baud_set(char param_1);
+ushort sci_putc_polled(char param_1);
+int sci_puts(int param_1);
+undefined4 sci_getc(void);
+int sci_gets(char *param_1,int param_2);
+int primary_user_64();
+undefined8 sci_unlock(void);
+undefined8 sci_lock(void);
+undefined8 sci_init(void);
+uint sci_reconfigure(void);
+void sci_write(void);
+void sci_read(void);
+void sci_putc(undefined1 param_1);
+void sci_send_async(undefined4 param_1,undefined1 param_2);
+ulong sci_port_write(void *param_1);
+void sci_printf(char *param_1);
+int sci_puts_polled(char *param_1);
+void sci_printf_polled(char *param_1);
+void qspi_release(void);
+undefined4
+qspi_queue_setup(byte param_1,undefined2 *param_2,ushort param_3,char param_4,undefined2 *param_5);
+void qspi_start(byte param_1,undefined2 *param_2,ushort param_3,char param_4);
+void qspi_acquire(void);
+int qspi_control();
+int qspi_open();
+undefined8 qspi_init(void);
+void qspi_isr(void);
+int primary_user_65();
+int qspi_transfer_raw();
+int qspi_device_write();
+void qspi_write(byte param_1,void *param_2,undefined4 param_3);
+void qspi_read(byte param_1,void *param_2,undefined4 param_3);
+void qspi_send(byte param_1,undefined2 *param_2,ushort param_3);
+void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3);
+uint spoo_task_create(ulong param_1);
+uint spoo_run(code *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4);
+int deferred_vprintf(char *format,void *arguments);
+void spoo_task(void);
+void deferred_flush(void);
+void debug_message(char *message,char with_task_name);
+void fpga_setup(void);
+undefined1 fpga_program(byte param_1,char param_2);
+bool fpga_verify_first(byte *param_1,byte *param_2,char param_3);
+bool fpga_verify_odd(byte *param_1,byte *param_2,char param_3);
+bool fpga_verify_even(byte *param_1,byte *param_2,char param_3);
+bool fpga_verify_chip(byte param_1,char param_2,byte param_3);
+undefined1 fpga_verify(byte param_1,char param_2);
+int monitors_reset(void);
+void monitor_average_add(int param_1,undefined4 param_2);
+void monitor_filter_add(int param_1,float param_2);
+bool monitor_out_of_range(int param_1,float param_2,float param_3,byte param_4);
+void hmon_check_supplies(void);
+float adc_average(adc_channel channel);
+bool double_oven_warmed_up(void);
+bool oven_warmed_up(void);
+void efc_write_dithered(void);
+float efc_clamp(float param_1);
+void efc_clamp_reset(void);
+void hmon_check_efc(void);
+void watchdog_report(void);
+void exception_record_clear(void);
+void log_reset_cause(void);
+void gps_pps_monitor_reset(void);
+undefined1 gps_pps_check(void);
+void internal_pps_monitor_reset(void);
+undefined1 internal_pps_check(void);
+void hmon_task(void);
+void counter_reset(void);
+void pps_monitors_reset(void);
+int scpi_round_decimal();
+int scpi_decimal_to_text_unused();
+int scpi_double_to_decimal();
+int scpi_bcd_to_double();
+int scpi_scale_by_power_of_ten();
+int scpi_double_multiply();
+int scpi_double_multiply_short();
+undefined4 scpi_number_to_double(char *param_1,double *param_2,short param_3);
+int scpi_number_to_bcd();
+undefined4
+scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,short param_5,
+                 short param_6,char param_7);
+undefined4 scpi_parse_string(undefined2 *param_1,undefined4 param_2,undefined4 *param_3);
+undefined4 scpi_parse_boolean(short *param_1,undefined4 param_2,undefined2 *param_3);
+undefined4 scpi_parse_boolean_number(int param_1,undefined4 param_2,undefined2 *param_3);
+undefined4 scpi_parse_choice(short *param_1,undefined4 param_2,short *param_3,int *param_4);
+int scpi_parse_short(int param_1,undefined4 param_2,int param_3,undefined4 param_4);
+int scpi_parse_unsigned_short(int param_1,undefined4 param_2,int param_3,undefined4 param_4);
+int scpi_parse_long(int param_1,undefined4 param_2,int param_3,undefined4 param_4);
+int scpi_parse_unsigned_long(int param_1,undefined4 param_2,int param_3,undefined4 param_4);
+int scpi_parse_float(int param_1,undefined4 param_2,float *param_3,undefined4 param_4);
+int scpi_parse_double(int param_1,undefined4 param_2,double *param_3,undefined4 param_4);
+undefined4 scpi_number_to_short(short *param_1,ushort *param_2,short param_3);
+undefined4 scpi_number_to_unsigned_short(int param_1,short *param_2,short param_3);
+undefined4 scpi_number_to_long(short *param_1,uint *param_2,short param_3);
+undefined4 scpi_number_to_unsigned_long(int param_1,int *param_2,short param_3);
+void scpi_number_to_boolean(int param_1,ushort *param_2,short param_3);
+undefined4 scpi_format_text(int param_1,undefined4 *param_2);
+undefined4 scpi_format_string(int param_1,undefined4 *param_2);
+undefined4 scpi_format_boolean(int param_1,short *param_2);
+undefined4 scpi_format_counted_text(int param_1,short *param_2);
+undefined4 scpi_format_choice(int param_1,short *param_2,int *param_3);
+undefined8 scpi_unsigned_to_digits(uint param_1,int param_2,short *param_3);
+int scpi_format_long(int param_1,int *param_2);
+void scpi_format_short(undefined4 param_1,short *param_2);
+int scpi_format_unsigned_long(int param_1,undefined4 *param_2);
+void scpi_format_unsigned_short(undefined4 param_1,ushort *param_2);
+undefined4 scpi_format_block(int param_1,undefined4 *param_2);
+int scpi_format_double_array(int param_1,int *param_2);
+int scpi_format_short_array(int param_1,int *param_2);
+int scpi_format_resolution_array(int param_1,int *param_2);
+undefined4 scpi_format_array(undefined4 param_1,char *param_2);
+undefined4 scpi_format_resolution_array_record(undefined4 param_1,char *param_2);
+int scpi_format_double(int param_1,int *param_2);
+int scpi_format_float(int param_1,float *param_2);
+int scpi_format_double_precision(int param_1,int *param_2);
+int scpi_format_double_resolution(int param_1,int *param_2,short *param_3);
+int scpi_format_float_resolution(int param_1,float *param_2);
+undefined4
+scpi_context_init(undefined4 *param_1,undefined4 param_2,undefined2 param_3,undefined4 param_4,
+                 undefined4 param_5,undefined4 param_6,undefined4 param_7,undefined4 param_8,
+                 undefined4 param_9);
+int scpi_parse_message_unit(int *param_1,undefined2 *param_2);
+undefined4 scpi_scan_token(undefined4 *param_1,ushort *param_2,undefined4 param_3);
+void scpi_skip_to_terminator(undefined4 *param_1);
+int scpi_scan_number(int param_1,short param_2,short param_3,undefined4 *param_4);
+undefined4 scpi_scan_exponent(short param_1,int param_2,undefined4 *param_3);
+uint scpi_char_upper(uint param_1);
+int scpi_parameter_match(int *param_1,short param_2,int param_3,short *param_4);
+undefined4 scpi_parameters_finish(int *param_1,int param_2,short *param_3);
+short scpi_suffix_compare_tail(int param_1,short param_2,int param_3);
+undefined4 scpi_multiplier_exponent(undefined2 param_1,short param_2);
+short scpi_match_suffix(short param_1,char *param_2,int param_3,short *param_4);
+undefined4 scpi_apply_suffix(int param_1,int param_2);
+undefined4 scpi_keyword_compare(char *param_1,short param_2,char *param_3);
+undefined4 scpi_node_find(int param_1,short *param_2);
+int scpi_node_find_with_defaults(int *param_1,undefined4 param_2);
+int scpi_node_find_numbered(int param_1,short *param_2,undefined4 param_3);
+undefined4
+scpi_header_resolve(undefined4 param_1,int *param_2,short *param_3,undefined4 *param_4,
+                   undefined4 *param_5,undefined2 param_6,short param_7,undefined4 param_8,
+                   undefined4 param_9);
+undefined4 scpi_header_step(undefined4 param_1,int *param_2,undefined4 param_3);
+void scpi_path_reset(undefined4 *param_1,undefined4 param_2);
+undefined4
+scpi_common_header_resolve
+          (undefined4 param_1,int *param_2,undefined2 *param_3,int *param_4,undefined2 param_5,
+          short param_6,undefined4 param_7,undefined4 param_8);
+int scpi_trg_defined(undefined4 param_1,ushort *param_2);
+void status_event_set(undefined4 param_1,int param_2,ushort param_3);
+void status_condition_set(int param_1,ushort *param_2,ushort param_3);
+void status_condition_clear(int param_1,ushort *param_2,ushort param_3);
+void status_propagate(undefined4 param_1,int param_2);
+undefined4
+status_create(int *param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5);
+void status_destroy(short *param_1);
+void status_register_setup
+               (int param_1,int param_2,undefined2 param_3,undefined2 param_4,int param_5,
+               short param_6,int param_7);
+int16_t status_set_bit(status_model *status,int condition,int value);
+void status_apply_condition(int param_1,int param_2,undefined4 param_3);
+void status_clear_bit(status_model *param_1,int param_2);
+undefined4 condition_is_command_error(int param_1);
+void status_condition_bit_get(int param_1,int param_2,uint *param_3);
+void status_register_set_enable(int param_1,int param_2,ushort param_3);
+void status_register_get_enable(int param_1,int param_2,ushort *param_3);
+void status_read_event(int param_1,int param_2,ushort *param_3);
+void status_read_condition(int param_1,int param_2,undefined2 *param_3);
+undefined4 status_clear_events(short *param_1);
+void error_queue_clear(int param_1,undefined4 param_2);
+void error_queue_read(int param_1,undefined4 param_2,undefined4 param_3);
+undefined4 error_queue_create(int *param_1,int param_2,undefined4 param_3);
+bool error_queue_push(short *param_1,short param_2,undefined4 param_3);
+void error_queue_pop(short *param_1,int *param_2,undefined4 *param_3);
+void error_queue_destroy(undefined4 param_1);
+void status_register_set_ptr(int param_1,int param_2,undefined2 param_3);
+void status_register_set_ntr(int param_1,int param_2,undefined2 param_3);
+void status_register_get_ptr(int param_1,int param_2,undefined2 *param_3);
+void status_register_get_ntr(int param_1,int param_2,undefined2 *param_3);
+undefined4 error_message_lookup(short param_1);
+undefined4
+scpi_interpret(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5,
+              undefined4 param_6,undefined4 param_7,undefined4 param_8,undefined4 param_9);
+undefined4 scpi_call_handler(int *param_1,int *param_2);
+int scpi_format_response(int param_1,int *param_2,int param_3);
+int arena_alloc(int param_1,int *param_2);
+int arena_remaining(int *param_1,int *param_2);
+int arena_take(int param_1,int param_2,int *param_3);
+undefined4 arena_current(undefined4 *param_1);
+void arena_set(undefined4 param_1,undefined4 *param_2);
+void arena_init(int *param_1,uint param_2,int *param_3);
+undefined4 scpi_check_range(int param_1,int param_2,int param_3,byte param_4);
+undefined4
+scpi_long_resolve_bound(undefined4 param_1,undefined4 param_2,undefined4 param_3,short *param_4);
+void scpi_numeric_set(int param_1,int param_2,short param_3,short param_4,undefined4 param_5,
+                     undefined1 param_6);
+void scpi_numeric_set_double
+               (int param_1,int param_2,short param_3,short param_4,undefined4 *param_5,
+               undefined1 param_6);
+float scpi_numeric_get(scpi_numeric_param *param,int index,int16_t which,int16_t bound);
+undefined8 scpi_numeric_get_double(int param_1,int param_2,short param_3,short param_4);
+char return_byte(char b);
+undefined4 long_identity(undefined4 param_1);
+void copy_longs_locked(int param_1,int param_2,byte param_3);
+undefined4 float_identity(undefined4 param_1);
+void robin_store(undefined1 *param_1,char param_2,byte param_3);
+int return_zero(void);
+undefined4 scpi_query_failed(char param_1,int param_2);
+undefined1 rtcm_supported(void);
+void scpi_prompt(int param_1);
+undefined4 scpi_session_init(void);
+undefined4 scpi_console_port(void);
+int scpi_console_read(undefined4 param_1,undefined1 *param_2,int param_3);
+int console_port_read(void);
+void scpi_input_ended(void);
+void scpi_console_putc(undefined4 param_1,int param_2);
+void status_byte_set_bits(undefined4 param_1,byte param_2);
+void status_byte_clear_bits(undefined4 param_1,byte param_2);
+void status_sre_set(undefined4 param_1,undefined1 param_2);
+void status_update_rqs(void);
+undefined4 scpi_message_done(void);
+undefined4 scpi_input_closed(void);
+void status_prompt_refresh(status_model *param_1,undefined4 param_2);
+void send_x_retry(uint32_t exchange,void *message,uint32_t ticks);
+void request_and_wait(uint32_t param_1,void *param_2);
+void pllc_request_a(undefined4 param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4);
+void pllc_request_b(undefined4 param_1,undefined1 param_2,undefined1 param_3);
+void pllc_request_c(undefined4 param_1,undefined1 param_2,undefined4 param_3,undefined4 *param_4,
+                   undefined1 param_5);
+void pllc_request_d(undefined4 param_1,undefined1 param_2,undefined4 param_3,undefined1 param_4);
+void pllc_request_e(undefined4 param_1,undefined1 param_2,undefined4 *param_3,undefined1 param_4);
+uint scpi_task_create(ulong param_1);
+void scpi_task(void);
+undefined4 scpi_set_common_CLS(undefined4 param_1,undefined4 param_2,int param_3);
+void scpi_query_CALA(undefined4 param_1,undefined4 param_2,int param_3);
+void scpi_query_CEQU(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_common_ESE(int param_1);
+undefined4 scpi_query_common_ESE(undefined4 param_1,short *param_2);
+undefined4 scpi_query_common_ESR(undefined4 param_1,undefined4 param_2);
+undefined4 scpi_query_common_IDN(undefined4 param_1,short *param_2);
+void scpi_query_RWHO(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_common_OPC(void);
+undefined4 scpi_query_common_OPC(undefined4 param_1,undefined4 *param_2);
+undefined4 scpi_set_common_RST(void);
+undefined4 scpi_set_common_SRE(int param_1);
+undefined4 scpi_query_common_SRE(undefined4 param_1,short *param_2);
+undefined4 scpi_query_common_STB(undefined4 param_1,undefined4 param_2);
+undefined4 scpi_query_common_TST(undefined4 param_1,undefined4 *param_2);
+undefined4 scpi_set_common_WAI(void);
+undefined4 scpi_query_STATus_OPERation_EVENt(short *param_1,undefined4 param_2);
+undefined4 scpi_query_STATus_OPERation_CONDition(short *param_1,undefined4 param_2);
+void scpi_query_RAST(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_STATus_QUEStionable_CONDition_USER(int param_1);
+undefined4 scpi_set_STATus_QUEStionable_EVENt_USER(int param_1);
+undefined4 scpi_set_STATus_OPERation_ENABle(short *param_1);
+undefined4 scpi_query_STATus_OPERation_ENABle(short *param_1,ushort *param_2);
+undefined4 scpi_set_STATus_OPERation_PTRansition(short *param_1);
+undefined4 scpi_query_STATus_OPERation_PTRansition(short *param_1,ushort *param_2);
+undefined4 scpi_set_STATus_OPERation_NTRansition(short *param_1);
+undefined4 scpi_query_STATus_OPERation_NTRansition(short *param_1,ushort *param_2);
+undefined4 scpi_query_STATus_OPERation_HARDware_EVENt(int param_1,undefined4 param_2);
+undefined4 scpi_query_STATus_OPERation_HARDware_CONDition(int param_1,undefined4 param_2);
+undefined4 scpi_set_STATus_OPERation_HARDware_ENABle(int param_1);
+undefined4 scpi_query_STATus_OPERation_HARDware_ENABle(int param_1,ushort *param_2);
+undefined4 scpi_set_STATus_OPERation_HARDware_PTRansition(int param_1);
+undefined4 scpi_query_STATus_OPERation_HARDware_PTRansition(int param_1,ushort *param_2);
+undefined4 scpi_set_STATus_OPERation_HARDware_NTRansition(int param_1);
+undefined4 scpi_query_STATus_OPERation_HARDware_NTRansition(int param_1,ushort *param_2);
+undefined4 scpi_set_STATus_PRESet(void);
+undefined4 scpi_set_STATus_PRESet_ALARm(void);
+undefined4 scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe(undefined2 *param_1);
+undefined4
+scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe(short *param_1,short *param_2,int param_3);
+undefined4 scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold(short *param_1);
+undefined4
+scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold(short *param_1,int *param_2,int param_3);
+undefined4
+scpi_query_SOURce_GPSystem_POSition_ACTual(undefined4 param_1,undefined2 *param_2,int param_3);
+undefined4 scpi_query_DIAGnostic_GPSystem_POSition_MSEConds(int param_1,int *param_2,int param_3);
+undefined4 scpi_query_DIAGnostic_GPSystem_POSition_DEGRees(int param_1,undefined2 *param_2);
+undefined4 scpi_query_DIAGnostic_GPSystem_TIME(undefined4 param_1,ushort *param_2,int param_3);
+undefined4 scpi_set_DIAGnostic_GPSystem_UTC(int param_1);
+undefined4 scpi_query_DIAGnostic_GPSystem_UTC(undefined4 param_1,short *param_2);
+undefined4 scpi_query_DIAGnostic_IDENtification_DEFault(undefined4 param_1,undefined4 *param_2);
+undefined4
+scpi_query_DIAGnostic_IDENtification_GPSystem(undefined4 param_1,undefined4 *param_2,int param_3);
+undefined4 scpi_set_DIAGnostic_IDENtification_HARDware(int param_1);
+undefined4 scpi_set_DIAGnostic_IDENtification_MODel(int param_1);
+undefined4 scpi_set_DIAGnostic_IDENtification_SERial(int param_1);
+undefined4 scpi_query_DIAGnostic_LIFetime_COUNt(undefined4 param_1,undefined4 *param_2);
+undefined4 scpi_set_DIAGnostic_LOG_CLEar(int param_1);
+undefined4 scpi_set_DIAGnostic_SLOG_CLEar(void);
+undefined4 scpi_query_DIAGnostic_LOG_COUNt(short *param_1,short *param_2,int param_3);
+void log_status(char *param_1,char param_2);
+void log_print(char param_1,undefined *param_2,undefined *param_3);
+undefined4 scpi_query_DIAGnostic_LOG_READ(short *param_1,int *param_2,int param_3);
+undefined4 scpi_query_DIAGnostic_LOG_READ_ALL(undefined2 *param_1,undefined2 *param_2,int param_3);
+undefined4 scpi_set_DIAGnostic_LOG_WRITe(int param_1);
+undefined4 scpi_set_DIAGnostic_ME(void);
+undefined4 scpi_query_DIAGnostic_ME(undefined4 param_1,short *param_2);
+undefined4 scpi_query_DIAGnostic_OS_MEMory(undefined4 param_1,undefined2 *param_2);
+undefined4 scpi_query_DIAGnostic_OS_PROCess(undefined4 param_1,undefined2 *param_2);
+undefined4 scpi_query_DIAGnostic_OS_STACk(undefined4 param_1,undefined2 *param_2);
+undefined4 scpi_query_DIAGnostic_PTIMe_TINTerval(undefined4 param_1,float *param_2,int param_3);
+undefined4 scpi_query_DIAGnostic_QUERy_RESPonse(undefined4 param_1,int *param_2,int param_3);
+undefined4 scpi_set_SYSTem_COMMunicate_SER1_PROMpt(short *param_1);
+undefined4 scpi_query_SYSTem_COMMunicate_SER1_PROMpt(short *param_1,ushort *param_2);
+undefined4 scpi_set_DIAGnostic_SER1_RESTricted(int param_1);
+undefined4 scpi_query_DIAGnostic_SER1_RESTricted(undefined4 param_1,short *param_2);
+undefined4 scpi_set_DIAGnostic_SER1_EGResponse(void);
+void scpi_query_DIAGnostic_SER1_EGResponse(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_query_DIAGnostic_ROSCillator_CURRent(undefined4 param_1,float *param_2);
+undefined4 scpi_query_DIAGnostic_ROSCillator_EFControl_RELative(undefined4 param_1,float *param_2);
+undefined4 scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute(undefined4 param_1,int *param_2);
+undefined4 scpi_set_DIAGnostic_ROSCillator_TCOefficient(short *param_1);
+undefined4 scpi_query_DIAGnostic_ROSCillator_TCOefficient(int16_t *param_1,float *param_2);
+undefined4 scpi_set_DIAGnostic_STATus_ERRor(int param_1);
+undefined4 scpi_set_DIAGnostic_STATus_HAPPening(int param_1);
+undefined4 scpi_set_DIAGnostic_SYSTem_DOUTput(int param_1);
+undefined4 scpi_query_DIAGnostic_SYSTem_DOUTput(undefined4 param_1,short *param_2);
+undefined4 scpi_set_DIAGnostic_SYSTem_PSTartup(int param_1);
+undefined4 scpi_query_DIAGnostic_SYSTem_PSTartup(undefined4 param_1,short *param_2);
+undefined4 scpi_query_DIAGnostic_TEMPerature(undefined4 param_1,float *param_2);
+undefined4 scpi_query_DIAGnostic_TEST(int param_1,undefined4 *param_2);
+undefined4 scpi_query_DIAGnostic_TEST_RESult(undefined4 param_1,undefined4 *param_2);
+undefined4 scpi_set_DIAGnostic_TOFFset(short *param_1);
+undefined4 scpi_query_DIAGnostic_TOFFset(int16_t *param_1,float *param_2);
+undefined4 status_report(short param_1);
+int status_report_from(short param_1,byte param_2);
+undefined4 scpi_set_OUTPut_PIN1_DELay(void);
+void scpi_query_OUTPut_PIN1_DELay(undefined4 param_1,undefined4 param_2,int param_3);
+void scpi_query_R1PO(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_OUTPut_PIN1_DELay_ALIGnment(void);
+void scpi_query_OUTPut_PIN1_DELay_ALIGnment(undefined4 param_1,undefined4 param_2,int param_3);
+void scpi_query_REAL(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_OUTPut_PIN1_FREQuency(void);
+void scpi_query_OUTPut_PIN1_FREQuency(undefined4 param_1,undefined4 param_2,int param_3);
+void scpi_query_RFOU(undefined4 param_1,undefined4 param_2,int param_3);
+void scpi_query_RSSU(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_SOURce_GPSystem_ADELay(short *param_1,undefined4 param_2,int param_3);
+undefined4 scpi_query_SOURce_GPSystem_ADELay(int16_t *param_1,float *param_2);
+void scpi_query_RACD(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_SOURce_GPSystem_EMANgle(short *param_1);
+undefined4 scpi_query_SOURce_GPSystem_EMANgle(int16_t *param_1,undefined2 *param_2);
+undefined4 scpi_set_SOURce_GPSystem_INITial_DATE(int param_1);
+undefined4 scpi_set_SOURce_GPSystem_INITial_TIME(int param_1);
+undefined4 scpi_set_SOURce_GPSystem_INITial_POSition(int param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_SOURce_GPSystem_POSition(int param_1);
+undefined4 scpi_query_SOURce_GPSystem_POSition(undefined4 param_1,undefined2 *param_2,int param_3);
+undefined4 scpi_query_SOURce_GPSystem_POSition_HOLD_LAST(undefined4 param_1,undefined2 *param_2);
+void scpi_query_RLOC(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_query_SOURce_GPSystem_POSition_HOLD_STATe(undefined4 param_1,short *param_2);
+void scpi_query_RPHS(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_DOUGlas_DURation(short *param_1);
+undefined4 scpi_query_DOUGlas_DURation(int16_t *param_1,float *param_2);
+undefined4 scpi_query_DOUGlas_PROGress(undefined4 param_1,int *param_2,int param_3);
+void scpi_query_RSPR(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_DOUGlas_STATe(void);
+void scpi_query_IPSU(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_query_DOUGlas_STATe(undefined4 param_1,undefined4 *param_2);
+undefined4 scpi_set_DOUGlas_STATe_POWerup(int param_1);
+undefined4 scpi_query_DOUGlas_STATe_POWerup(undefined4 param_1,short *param_2);
+undefined4 scpi_query_SOURce_GPSystem_REFerence_VALid(undefined4 param_1,ushort *param_2);
+undefined4 satellite_number_valid(byte param_1);
+bool satellite_in_mask(char param_1,uint param_2);
+bool satellite_mask_add(char param_1,uint *param_2);
+bool satellite_mask_remove(char param_1,uint *param_2);
+void satellite_list_limits
+               (satellite_list kind,uint8_t *id_count,uint8_t *max_listed,uint8_t *id_base);
+byte satellites_in_mask(uint param_1,byte param_2,short *param_3,byte param_4,byte param_5);
+undefined4
+scpi_query_SOURce_GPSystem_SATellite_TRACking(undefined4 param_1,int *param_2,int param_3);
+undefined4
+scpi_query_SOURce_GPSystem_SATellite_TRACking_COUNt(undefined4 param_1,short *param_2,int param_3);
+void scpi_query_RTSA(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore(int param_1);
+undefined4 scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore(undefined4 param_1,uint *param_2);
+undefined4 scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_ALL(void);
+undefined4
+scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_COUNt(undefined4 param_1,ushort *param_2);
+undefined4 scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_NONE(void);
+undefined4
+scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe
+          (undefined2 *param_1,ushort *param_2,int param_3);
+undefined4 scpi_set_SOURce_GPSystem_SATellite_TRACking_INCLude(int param_1);
+undefined4 scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude(undefined4 param_1,uint *param_2);
+undefined4
+scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude_COUNt(undefined4 param_1,ushort *param_2);
+undefined4
+scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted(undefined4 param_1,uint *param_2,int param_3);
+undefined4
+scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt
+          (undefined4 param_1,ushort *param_2,int param_3);
+undefined4 scpi_set_LED_ACTive(int param_1);
+undefined4 scpi_query_LED_ACTive(undefined4 param_1,short *param_2);
+undefined4 scpi_query_LED_ALARm(undefined4 param_1,short *param_2);
+void scpi_query_LED_ALARm_MINor(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_LED_ALARm_USER(void);
+undefined4 scpi_query_LED_ALARm_USER(void);
+undefined4 scpi_set_LED_ENABled(int param_1);
+undefined4 scpi_query_LED_ENABled(undefined4 param_1,short *param_2);
+undefined4 scpi_query_LED_GPSLock(undefined4 param_1,short *param_2);
+undefined4 scpi_query_LED_HOLDover(undefined4 param_1,short *param_2);
+undefined4 scpi_query_LED_TMHValid(undefined4 param_1,short *param_2);
+undefined4 scpi_set_OUTPut_STATe(int param_1);
+undefined4 scpi_query_OUTPut_STATe(undefined4 param_1,short *param_2);
+undefined4 scpi_set_SOURce_PULSe_CONTinuous_PERiod(short *param_1);
+undefined4 scpi_query_SOURce_PULSe_CONTinuous_PERiod(int16_t *param_1,int *param_2);
+undefined4 scpi_set_SOURce_PULSe_CONTinuous_STATe(int param_1);
+undefined4 scpi_query_SOURce_PULSe_CONTinuous_STATe(undefined4 param_1,short *param_2);
+undefined4 scpi_set_SOURce_PULSe_STARt_DATE(int param_1);
+undefined4 scpi_query_SOURce_PULSe_STARt_DATE(undefined4 param_1,undefined2 *param_2);
+undefined4 scpi_set_SOURce_PULSe_STARt_TIME(int param_1);
+undefined4 scpi_query_SOURce_PULSe_STARt_TIME(undefined4 param_1,undefined2 *param_2);
+undefined4 scpi_set_SOURce_PTIMe_PPS_EDGE(void);
+undefined4 scpi_query_SOURce_PTIMe_PPS_EDGE(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_SOURce_PULSe_REFerence_EDGE(void);
+undefined4 scpi_query_SOURce_PULSe_REFerence_EDGE(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_query_SOURce_PTIMe_DATE(undefined4 param_1,undefined2 *param_2,int param_3);
+undefined4
+scpi_query_SOURce_PTIMe_LEAPsecond_ACCumulated(undefined4 param_1,int16_t *param_2,int param_3);
+undefined4 scpi_set_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate(void);
+undefined4
+scpi_query_SOURce_PTIMe_LEAPsecond_DATE(undefined4 param_1,undefined2 *param_2,int param_3);
+undefined4
+scpi_query_SOURce_PTIMe_LEAPsecond_DURation(undefined4 param_1,undefined2 *param_2,int param_3);
+undefined4 scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime(undefined4 param_1,int *param_2,int param_3);
+undefined4 scpi_query_SOURce_PTIMe_LEAPsecond_STATe(undefined4 param_1,short *param_2);
+undefined4 scpi_query_SOURce_PTIMe_TCODe(undefined4 param_1,undefined2 *param_2,int param_3);
+undefined4 scpi_query_RTCM(int param_1,undefined2 *param_2,int param_3);
+undefined4 scpi_set_SOURce_PTIMe_TCODe_FORMat(int param_1);
+undefined4 scpi_query_SOURce_PTIMe_TCODe_FORMat(undefined4 param_1,undefined2 *param_2);
+undefined4 scpi_query_SOURce_PTIMe_TIME(undefined4 param_1,ushort *param_2,int param_3);
+undefined4 time_zone_split(char param_1,char param_2,undefined1 *param_3,undefined1 *param_4);
+void scpi_query_RTAD(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_query_SOURce_PTIMe_TIME_STRing(undefined4 param_1,int *param_2,int param_3);
+undefined4 scpi_set_SOURce_PTIMe_TZONe(int param_1);
+undefined4 scpi_query_SOURce_PTIMe_TZONe(undefined4 param_1,short *param_2);
+void scpi_query_RTZO(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_SAMPle_ACTion(int param_1);
+undefined4 scpi_set_SAMPle_BOOLean(int param_1);
+undefined4 scpi_query_SAMPle_BOOLean(undefined4 param_1,short *param_2);
+undefined4 scpi_set_SAMPle_BARR(undefined2 *param_1);
+undefined4 scpi_query_SAMPle_BARR(short *param_1,short *param_2);
+undefined4 scpi_set_SAMPle_TOGGle(int param_1);
+undefined4 scpi_query_SAMPle_TOGGle(undefined4 param_1,undefined2 *param_2);
+undefined4 scpi_set_SAMPle_TARR(undefined2 *param_1);
+undefined4 scpi_query_SAMPle_TARR(short *param_1,undefined2 *param_2);
+undefined4 scpi_set_SAMPle_INTeger(short *param_1);
+undefined4 scpi_query_SAMPle_INTeger(undefined4 param_1,int32_t *param_2);
+undefined4 scpi_set_SAMPle_IARR(short *param_1);
+undefined4 scpi_query_SAMPle_IARR(short *param_1,int32_t *param_2);
+undefined4 scpi_set_SAMPle_IMULtiple(int param_1);
+undefined4 scpi_query_SAMPle_IMULtiple(undefined4 param_1,undefined4 *param_2);
+undefined4 scpi_set_SAMPle_FLOat(short *param_1);
+undefined4 scpi_query_SAMPle_FLOat(undefined4 param_1,float *param_2);
+undefined4 scpi_set_SAMPle_FARR(short *param_1);
+undefined4 scpi_query_SAMPle_FARR(short *param_1,float *param_2);
+undefined4 scpi_set_SAMPle_DOUBle(void);
+undefined4 scpi_query_SAMPle_DOUBle(undefined4 param_1,undefined4 *param_2);
+undefined4 scpi_set_SAMPle_DARR(void);
+undefined4 scpi_query_SAMPle_DARR(short *param_1,undefined4 *param_2);
+void string_upper(int param_1);
+void skip_spaces(undefined4 *param_1);
+void string_trim_right(undefined4 *param_1);
+void robin_strip_xnon(undefined4 *param_1);
+int robin_keyword_match(char *param_1,int *param_2);
+undefined4 robin_lookup(undefined4 *param_1,undefined4 *param_2,undefined4 *param_3);
+int robin_parse_arguments(int *param_1,uint param_2,undefined4 *param_3,undefined4 *param_4);
+int robin_parse(char *param_1,undefined4 param_2,undefined4 param_3);
+void robin_point_list(int param_1,undefined2 *param_2,char param_3);
+void robin_timestamp_values(char param_1,short param_2,short *param_3);
+void robin_point_count(char param_1,short *param_2);
+void robin_overflow_count(char param_1,undefined8 *param_2);
+void robin_clear(undefined1 param_1);
+undefined4 scpi_set_FORMat_DATA(int param_1);
+undefined4 scpi_query_FORMat_DATA(undefined4 param_1,undefined2 *param_2);
+undefined4 scpi_query_ROBin(int param_1,undefined1 *param_2,int param_3);
+undefined4 scpi_set_ROBin_CLEar(short *param_1);
+undefined4 scpi_query_ROBin_MEMory_OVERflow_COUNt(short *param_1,undefined4 *param_2,int param_3);
+undefined4 scpi_set_ROBin_MEMory_SAVE(int param_1);
+undefined4 scpi_query_ROBin_MEMory_SAVE(undefined4 param_1,short *param_2);
+undefined4 scpi_query_ROBin_POINts(short *param_1,undefined4 *param_2,int param_3);
+undefined4 scpi_query_ROBin_TSTamp(int param_1,undefined1 *param_2,int param_3);
+undefined4 scpi_set_SENSe_TST1_EDGE(void);
+undefined4 scpi_query_SENSe_TST1_EDGE(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 status_preset_register(char param_1,char param_2,short param_3,short param_4);
+void status_enables_init(void);
+void status_transitions_init(void);
+int status_init(void);
+void status_event_hook(undefined4 param_1,undefined1 param_2);
+void status_happening(char param_1);
+undefined2 status_hardware_condition(void);
+void happening_buffer_clear(undefined1 *param_1);
+void happening_buffers_clear(void);
+void happening_replay(int param_1,char param_2,char param_3,char param_4);
+void happening_flush(char *param_1);
+undefined4 scpi_query_SOURce_ROSCillator_HOLDover_DURation(undefined4 param_1,float *param_2);
+undefined4 scpi_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold(short *param_1);
+undefined4
+scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold(int16_t *param_1,int *param_2);
+undefined4 scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold(short *param_1);
+undefined4
+scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold(int16_t *param_1,int *param_2);
+undefined4 scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1(void);
+void scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1
+               (undefined4 param_1,undefined4 param_2,int param_3);
+void scpi_query_RAT1(undefined4 param_1,undefined4 param_2,int param_3);
+void scpi_query_RAT3(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4
+scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_EXCeeded
+          (undefined4 param_1,short *param_2);
+undefined4 scpi_set_SOURce_ROSCillator_HOLDover_HYSTeresis(void);
+void scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis
+               (undefined4 param_1,undefined4 param_2,int param_3);
+void scpi_query_RAT2(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_SOURce_ROSCillator_HOLDover_INITiate(void);
+void scpi_query_FMHO(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_SOURce_ROSCillator_HOLDover_LIMit_STATe(int param_1);
+undefined4
+scpi_query_SOURce_ROSCillator_HOLDover_LIMit_STATe(undefined4 param_1,undefined2 *param_2);
+undefined4 scpi_set_SOURce_ROSCillator_HOLDover_LIMit_THReshold(short *param_1);
+undefined4 scpi_query_SOURce_ROSCillator_HOLDover_LIMit_THReshold(int16_t *param_1,float *param_2);
+undefined4 scpi_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO(int param_1);
+undefined4 scpi_query_SOURce_ROSCillator_HOLDover_RECovery_AUTO(undefined4 param_1,short *param_2);
+undefined4 scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate(void);
+void scpi_query_RMHO(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore(void);
+undefined4 scpi_query_KENneth_PREDicted(undefined4 param_1,int param_2,int param_3);
+undefined4 scpi_set_KENneth_PREDicted_DURation(short *param_1);
+undefined4 scpi_query_KENneth_PREDicted_DURation(int16_t *param_1,int *param_2);
+undefined4 scpi_query_KENneth_PRESent(undefined4 param_1,int param_2,int param_3);
+undefined4 scpi_query_SOURce_ROSCillator_HOLDover_WAITing(undefined4 param_1,undefined2 *param_2);
+undefined4 scpi_set_SOURce_ROSCillator_LIMit_THReshold(short *param_1);
+undefined4 scpi_query_SOURce_ROSCillator_LIMit_THReshold(int16_t *param_1,float *param_2);
+undefined4 scpi_query_SOURce_ROSCillator_STATe(undefined4 param_1,undefined2 *param_2);
+void scpi_query_RSST(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_query_SOURce_PTIMe_FFOMerit(short *param_1,ushort *param_2,int param_3);
+undefined4 scpi_query_SOURce_PTIMe_TINTerval(undefined4 param_1,float *param_2,int param_3);
+undefined4 scpi_set_SOURce_PTIMe_SYNChronization_IMMediate(void);
+undefined4 scpi_query_SYSTem_COMMunicate(undefined4 param_1,undefined2 *param_2,int param_3);
+void scpi_query_SYSTem_COMMunicate_SER1_ADDRess(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_SYSTem_COMMunicate_SER1_FDUPlex(short *param_1);
+undefined4 scpi_query_SYSTem_COMMunicate_SER1_FDUPlex(short *param_1,short *param_2);
+undefined4 scpi_set_SYSTem_COMMunicate_SER1_PRESet(short *param_1);
+undefined4 scpi_set_SYSTem_COMMunicate_SER1_RECeive_BAUD(short *param_1);
+undefined4 scpi_query_SYSTem_COMMunicate_SER1_RECeive_BAUD(short *param_1,undefined4 *param_2);
+undefined4 scpi_set_SYSTem_COMMunicate_SER1_RECeive_BITS(short *param_1);
+undefined4 scpi_query_SYSTem_COMMunicate_SER1_RECeive_BITS(short *param_1,undefined4 *param_2);
+undefined4 scpi_set_SYSTem_COMMunicate_SER1_RECeive_PACE(short *param_1);
+undefined4 scpi_query_SYSTem_COMMunicate_SER1_RECeive_PACE(short *param_1,short *param_2);
+undefined4 scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(short *param_1);
+undefined4
+scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(short *param_1,undefined2 *param_2);
+undefined4 scpi_set_SYSTem_COMMunicate_SER1_RECeive_SBITs(short *param_1);
+undefined4 scpi_query_SYSTem_COMMunicate_SER1_RECeive_SBITs(short *param_1,undefined4 *param_2);
+undefined4 scpi_query_DANA(undefined4 param_1,undefined2 *param_2,int param_3);
+void scpi_query_REQU(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_set_SYSTem_LANGuage(int param_1,undefined4 param_2,int param_3);
+undefined4 scpi_query_SYSTem_LANGuage(undefined4 param_1,undefined4 *param_2,int param_3);
+undefined4 scpi_set_SYSTem_PRESet(void);
+undefined4 scpi_query_SYSTem_PRINt(undefined4 param_1,undefined2 *param_2,int param_3);
+void scpi_query_RVST(undefined4 param_1,undefined4 param_2,int param_3);
+undefined4 scpi_query_SYSTem_PRINt_LENGth(undefined4 param_1,ushort *param_2);
+undefined2 record_checksum(void *record,uint16_t length);
+undefined1 lifetime_record_read(void);
+undefined4 lifetime_record_write(void);
+void lifetime_update(int param_1);
+bool calibration_block_read(void);
+undefined4 save_calibration_block(undefined4 param_1,byte param_2);
+undefined2 parameter_record_read(void);
+bool save_parameter_record(byte param_1);
+void eeprom_lock_init(void);
+void eeprom_init(void);
+char eeprom_lock(void);
+void eeprom_unlock(void);
+bool eeprom_write_byte(char *param_1,char param_2);
+bool eeprom_write_page(char *param_1,char *param_2,ushort param_3);
+undefined4 eeprom_write(char *param_1,char *param_2,uint param_3);
+undefined2 log_page_checksum(int param_1);
+undefined4 log_page_write(byte param_1,short *param_2);
+undefined4 log_page_read(byte param_1,undefined4 *param_2);
+uint sign_extend_bits(uint param_1,byte param_2);
+char log_erase(byte param_1);
+int log_erase_locked(byte param_1);
+int log_erase_checked(int param_1,byte param_2);
+int log_entry_total(undefined1 *param_1);
+int log_init(void);
+int log_read(int param_1,char *param_2,char *param_3);
+int log_write(undefined4 param_1,undefined4 param_2,undefined4 param_3);
+undefined4 log_event(uint8_t code);
+void log_first_satellite(undefined4 param_1,undefined4 param_2);
+void log_page_clear(void *param_1);
+uint log_page_free_entry(int param_1);
+undefined1 log_flush(void);
+undefined4 log_append(uint32_t param_1,uint32_t param_2,uint32_t param_3);
+void report_clamped(char param_1,byte param_2);
+undefined4 float_table_index(float *param_1,short param_2);
+undefined4 clamp_float(float *param_1,float *param_2,float *param_3,float *param_4,byte param_5);
+undefined4
+clamp_double(double *param_1,undefined4 *param_2,double *param_3,double *param_4,byte param_5);
+void round_float_to_step(float *param_1,float *param_2);
+undefined8 load_double(undefined8 *param_1);
+int clamp_to_limits(int *param_1,undefined4 param_2,int *param_3,int *param_4,int param_5,
+                   byte param_6);
+uint mask_to_limits(uint *param_1);
+uint clamp_to_step_and_limits
+               (uint *param_1,undefined4 param_2,uint *param_3,uint *param_4,int param_5,
+               byte param_6);
+float float_max_of(float *param_1,float *param_2);
+float float_min_of(float *param_1,float *param_2);
+void clamp_float_to_step_and_limits
+               (float *param_1,undefined4 param_2,float *param_3,float *param_4,int param_5,
+               byte param_6);
+void clamp_float_to_step_double
+               (float *param_1,undefined4 param_2,float *param_3,float *param_4,int param_5,
+               byte param_6);
+void clamp_double_to_step_and_limits
+               (double *param_1,undefined4 param_2,double *param_3,double *param_4,int param_5,
+               byte param_6);
+undefined8
+clamp_double_to_limits
+          (double *param_1,undefined4 param_2,double *param_3,double *param_4,undefined4 param_5,
+          byte param_6);
+void nv_slot_erase(byte param_1);
+void clear_nv(void);
+void nv_restore(void);
+undefined2 nv_checksum(int param_1);
+undefined4 nv_record_differs(int *param_1,int *param_2);
+char nv_save(byte param_1);
+undefined1 nv_slot_valid(void);
+undefined4 nv_load_slot(void);
+undefined4 load_long(undefined4 *param_1);
+undefined8 load_double_param(undefined8 *param_1);
+void idn_model_default(void);
+undefined1 identification_record_read(void);
+undefined4 identification_record_write(void);
+undefined2 reset_record_checksum(int param_1);
+bool reset_record_valid(byte param_1);
+int log_clear(void);
+int log_count(uint8_t *full);
+void reset_record_count(void);
+undefined4 log_entry_text(int param_1,char *param_2,char *param_3);
+undefined4 reset_record_write(undefined4 param_1,undefined4 param_2,char *param_3);
+void interpolator_calibration_init(undefined1 *param_1);
+void interpolator_measure(uint8_t mode);
+char dac_search_bisect(char param_1,byte param_2,byte param_3,byte param_4,byte param_5,
+                      undefined *param_6);
+byte dac_search_step(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,
+                    undefined *param_6);
+byte hdac_nudge(int param_1,byte param_2);
+undefined4 interpolator_prepare(void);
+uint8_t interpolator_calibrate(interpolator_calibration *calibration);
+undefined1 interpolator_verify(char *param_1);
+void interpolator_sample(char *param_1);
+void counter_calibrate(interval_reading_fields *reading,counter_configuration_fields *configuration);
+uint8_t interpolator_selftest_calibrate(void);
+void interpolator_selftest(void);
+void interpolator_sample_test(void);
+void fpga_write(uint8_t reg,uint8_t value);
+undefined1 fpga_read(uint8_t reg);
+bool fpga_bit_test(byte param_1,char param_2);
+char fpga_read_seconds(void);
+void fpga_address_sweep_debug(void);
+undefined1 counter_wait_ready(byte param_1);
+void fpga_set_bit(uint8_t bit,uint8_t on);
+void fpga_set_field(byte param_1,byte param_2);
+void sync_request(uint8_t param_1,int32_t param_2);
+void counter_set_sync(byte param_1);
+void fpga_fields_to_registers(int param_1,int param_2);
+byte fpga_read_byte(char param_1);
+void counter_offset_apply(undefined4 param_1,undefined4 param_2);
+void counter_read_raw(void);
+uint interpolator_read(void);
+void counter_arm(interval_reading_fields *reading,counter_configuration_fields *configuration);
+void counter_read(interval_reading_fields *reading,counter_configuration_fields *configuration);
+int counter_load_registers(void);
+void counter_configuration_init(int param_1);
+void counter_init(void);
+void counter_selftest(void);
+undefined8 int64_add(int param_1,uint param_2,int param_3,uint param_4);
+undefined8 int64_negate(int param_1,int param_2);
+undefined8 int64_add_long(uint param_1,int param_2,uint param_3);
+undefined4 int64_divide(int param_1,int param_2,int param_3);
+undefined4 uint64_divide(uint param_1,ulonglong param_2);
+double int64_to_double(uint param_1,uint param_2);
+undefined8 double_to_int64(uint param_1,undefined4 param_2);
+void efc_history_update(void);
+void curv_signal(void);
+void aging_fit_collect(void);
+void curv_task(void);
+void aging_fit(void);
+undefined4 fit_linear_halves(int param_1);
+undefined4 fit_linear(int param_1);
+bool fit_constant(int param_1);
+int fit_logarithmic(int param_1);
+void fit_span(int param_1);
+void fit_evaluate_latest(int param_1,float *param_2);
+undefined4 fit_log_initial(int param_1);
+uint fit_log_search(int param_1,undefined4 param_2);
+void fit_log_residuals(int param_1,undefined4 param_2);
+undefined4 fit_three_point(int *param_1);
+undefined4 linear_regression(byte *param_1,int param_2);
+float float_abs(float param_1);
+void fit_quality(char *param_1);
+undefined4 kenneth_present_get(float *param_1,undefined1 *param_2);
+undefined4 kenneth_predicted_get(float *param_1,undefined1 *param_2,undefined1 *param_3);
+undefined4 get_ffom(undefined1 *param_1);
+void output_state_program(undefined1 param_1);
+void pulse_program(undefined4 param_1,undefined4 param_2,undefined1 param_3,undefined4 param_4);
+void pulse_settings_done(void);
+void output_state_done(void);
+void pll_scpi_do_action(undefined1 *param_1);
+void toggle_change(undefined1 *param_1);
+void validate_num(void);
+void validate_or_doaction(undefined1 *param_1,undefined4 param_2);
+undefined4 pll_scpi_needs_loop(void);
+undefined4 pll_scpi_send_to_loop(undefined1 param_1,undefined1 *param_2);
+ushort scpi_param_saved_in_nv(void);
+ushort scpi_param_saved_in_record(void);
+void finish_scpi_cmd(void);
+void get_setup_vars(int param_1);
+void pll_scpi_command(undefined4 param_1,char *param_2);
+void pll_scpi_receive(void);
+void pll_scpi_complete(int *param_1,char param_2);
+void gps_diag_complete(int *param_1);
+void questionable_user_done(void);
+void status_enable_restore(char param_1,byte param_2);
+void status_ptr_restore(char param_1,byte param_2);
+void status_ntr_restore(char param_1,byte param_2);
+void status_preset_done(char param_1,byte param_2);
+void holdover_ti_reset(void);
+void holdover_ti_add(float param_1);
+undefined1 holdover_correction_valid(void);
+undefined4 holdover_ti_max(void);
+undefined4 holdover_limit_exceeded(float param_1);
+pll_hold_cause enter_holdover(void);
+undefined1 holdover(char param_1);
+undefined4 clock_check_against_gps(void);
+char holdover_recovery(char param_1);
+char startup_pll(char param_1);
+undefined1 pll_normal(char param_1);
+undefined1 fine_sync_adjust(float param_1);
+undefined1 sync_perform(float param_1);
+uint8_t interval_next_reading(char param_1,undefined4 *param_2);
+void interval_rearm(char param_1);
+void interval_wait_reading(void);
+char coarse(void);
+char fine(void);
+void time_zone_changed(void);
+void antenna_delay_done(void);
+undefined4 pll_mode(void);
+undefined1 pll_powerup_suffix_index(void);
+undefined1 recovery_suffix_index(void);
+undefined1 holdover_waiting_reason(void);
+void pllp_start_nothing_a(void);
+void pllp_start_nothing_b(void);
+void nv_clear_and_reset(void);
+void gpt_input_capture_2_interrupt(void);
+void pwma_force_level(char param_1);
+undefined1 powerup(char param_1);
+undefined1 pll_check_reference(char param_1);
+void clock_set_from_reference(void);
+void leap_settings_clear(void);
+void leap_event_delete(void);
+void leap_event_create(void);
+void status_summary_update(void);
+byte leds_update(void);
+void pll_stage_status(void);
+uint8_t gps_ack_received(void);
+undefined1 gpsx_send(undefined2 param_1,undefined1 param_2,int param_3,char param_4);
+void gps_selftest_run(void);
+void gps_init_sequence(void);
+void gps_leap_sequence(void);
+void gps_leap_ack(void);
+undefined4 leap_ack_pending(void);
+void gps_command_send(void);
+undefined1 gps_diag_sequence(char param_1);
+void pll_init(void);
+void pll_restart(void);
+void efc_gain_set(float param_1);
+void pllp_task(void);
+void running_average_update(int param_1,double *param_2,uint param_3);
+void mas_to_dms(long param_1,undefined2 *param_2,undefined1 *param_3,double *param_4);
+void dms_to_mas(int *param_1,ushort param_2,byte param_3,undefined4 param_4,undefined4 param_5);
+void format_dms(int param_1,char param_2,char *param_3);
+void format_dms_precise(char *param_1,char param_2);
+void format_angle(char *param_1,int param_2,char param_3);
+void format_duration(double param_1,char *param_2);
+void gps_print_best_combinations(void);
+void gps_print_extension(void);
+void gps_print_time_raim(void);
+void gps_print_pseudorange_corrections(void);
+void enabled_string(char param_1,char *param_2);
+void gps_print_instrument_state(void);
+void gps_print_average(void);
+void gps_print_visibility(void);
+void gps_print_status(oncore_status_fields *status);
+void gps_debug_status(void);
+void gps_print_id(void);
+void satellite_sets_build(uint8_t *param_1,uint *param_2);
+undefined4 satellite_in_set(satellite_kind kind,uint8_t id,uint32_t mask);
+undefined1 satellite_track_class(int param_1);
+void satellite_elevation_azimuth(int param_1,undefined1 *param_2);
+void satellite_status(char param_1,byte param_2,int param_3,int param_4,undefined1 *param_5);
+undefined4 satellite_compare(byte *param_1,byte *param_2);
+uint8_t * satellite_status_list
+                    (char param_1,byte param_2,int param_3,byte *param_4,int param_5,byte *param_6,
+                    char *param_7);
+void format_satellite_number(char param_1,char *param_2);
+bool mark_flag(char param_1,undefined1 *param_2);
+void format_level(short param_1,char *param_2);
+void format_satellite_cell(char param_1,byte param_2,ushort param_3,char *param_4);
+void status_screen_height(int param_1,char *param_2);
+void format_si(int param_1,int param_2,char param_3,byte param_4,char *param_5,char *param_6);
+void format_duration_short(uint param_1,char *param_2);
+void status_screen_sync(int param_1,char *param_2);
+undefined4 format_time(uint param_1,char *param_2);
+undefined4 format_date(ushort param_1,byte param_2,byte param_3,char *param_4);
+void status_screen_time(int param_1,char *param_2);
+char * status_screen_position(byte param_1,int param_2,char *param_3);
+int status_screen_tfom(byte param_1,int param_2,char *param_3);
+bool bit_is_set(short param_1,short param_2);
+byte bits_1_to_3_any(short param_1);
+byte bits_4_5_any(short param_1);
+byte bits_6_7_any(short param_1);
+byte bits_8_9_any(short param_1);
+void status_screen_mode_suffix(char param_1,int param_2,char *param_3);
+void status_snapshot(pll_stage *param_1);
+void status_screen(char *param_1,char param_2,undefined *param_3,undefined *param_4);
+void status_screen_print(undefined1 param_1,undefined *param_2,undefined *param_3);
+bool uptime_elapsed(uint *param_1,int *param_2);
+uint32_t raim_monitor(void);
+void gps_receiver_status_reset(void);
+void gps_receiver_status_update(char param_1,undefined1 param_2);
+undefined1 gps_status_alternate(void);
+void command_monitor_init(void);
+void command_monitor(void);
+void gps_response_reset(void);
+undefined4 gps_response_lookup(char param_1,char param_2,undefined2 *param_3,short *param_4);
+uint8_t gps_receive(void);
+undefined4 gps_response_timed_out(short param_1,undefined4 param_2);
+bool gps_count_response(char param_1,int param_2);
+void request_ring_clear(void);
+bool request_ring_put(undefined4 *param_1);
+undefined4 request_ring_get(undefined4 *param_1);
+undefined4 request_ring_unput(undefined4 *param_1);
+bool request_ring_empty(void);
+bool request_ring_full(void);
+undefined4 request_ring_contains(char param_1,char param_2,char param_3);
+undefined4 request_ring_newest_replaceable(void);
+undefined4 request_kind_valid(char param_1);
+void gps_request_queue(char param_1,int param_2,int param_3);
+bool gps_request_post(char param_1,short param_2,int *param_3,undefined1 param_4);
+undefined1 gps_request_class(short param_1,char param_2);
+undefined ** gps_script_lookup(short param_1);
+void gps_init(void);
+void gps_link_reset(void);
+void gpsm_task(void);
+void raim_request_arguments(void);
+void gps_console_request(short param_1,undefined4 *param_2,undefined1 param_3);
+void command_log_clear(void);
+undefined4 command_log_add(int param_1,int param_2);
+undefined4 gps_print_command(int param_1,char *param_2);
+void status_snapshot_update(undefined *param_1);
+void clear_gps_debug(void);
+void gps_print_command_log(undefined4 param_1);
+void gps_print_1pps(void);
+void gps_print_process_monitor(void);
+undefined4 long_array_get(int param_1,byte param_2);
+void long_array_set(undefined4 param_1,int param_2,byte param_3);
+undefined1 * long_array_get_byte(int param_1,byte param_2,undefined1 *param_3);
+undefined1 * long_array_get_word(int param_1,byte param_2,undefined1 *param_3);
+undefined1 * long_array_get_long(int param_1,byte param_2,undefined1 *param_3);
+void long_array_get_long_prefixed(int param_1,byte param_2,undefined1 *param_3);
+void byte_copy_optional(undefined1 *param_1,undefined1 *param_2);
+undefined2 * word_copy_advance(undefined2 *param_1,undefined2 *param_2);
+undefined1 * bytes_to_long(undefined1 *param_1,undefined4 *param_2);
+void oncore_as_height_decode(undefined4 param_1);
+byte * oncore_ai_decode(byte *param_1,int param_2);
+ushort * word_copy_14_bits(ushort *param_1,ushort *param_2);
+byte * oncore_decode_fields(byte *param_1,byte *param_2,char *param_3);
+undefined4 satellite_id_valid(satellite_kind kind,uint8_t id);
+uint8_t channel_position_satellite(byte param_1);
+undefined4 satellite_used_for_position(char param_1);
+void channels_reset(void);
+void satellite_add_to_set(satellite_kind kind,uint8_t id,uint32_t *mask);
+char count_bits(uint param_1);
+undefined4 visible_satellites(undefined1 *param_1,uint32_t *param_2);
+undefined4
+satellites_in_use(undefined1 *param_1,undefined1 *param_2,undefined4 *param_3,undefined1 *param_4);
+byte * satellite_find(byte param_1,int param_2);
+undefined4 position_settable(void);
+bool gps_position_get(int32_t *param_1,int32_t *param_2,int32_t *param_3);
+bool gps_time_local_get(undefined4 *param_1,undefined4 *param_2);
+undefined4 survey_progress_percent(undefined2 *param_1);
+undefined4 survey_progress_text(char *param_1);
+undefined4 oncore_position_message(undefined4 param_1,undefined4 param_2);
+void oncore_visibility_message(undefined4 param_1,undefined4 param_2);
+void oncore_dop_message(undefined4 param_1,undefined4 param_2);
+void oncore_almanac_status_message(undefined4 param_1,undefined4 param_2);
+undefined4 oncore_corrections_message(void);
+void oncore_extension_message(undefined4 param_1,undefined4 param_2);
+void oncore_traim_message(undefined4 param_1,undefined4 param_2);
+void oncore_receiver_id_message(undefined4 param_1,undefined4 param_2);
+byte oncore_checksum(byte *param_1,byte *param_2);
+void gps_parse_options(void);
+undefined4 gps_message_supported(short param_1,undefined1 *param_2);
+int gps_request_build(short param_1,char param_2,int param_3,char *param_4);
+int gps_response_decode(short param_1,int param_2);
+undefined4 bytes_equal_n(char *param_1,short param_2,char *param_3,short param_4);
+undefined1
+gps_response_match(short param_1,undefined1 *param_2,char param_3,char param_4,short param_5,
+                  int param_6,short param_7);
+int gps_message_to_text(char *param_1,byte param_2,char *param_3);
+void psos_config_init(void);
+ulong memory_allocate(ulong param_1);
+void memory_free(ulong param_1);
+int primary_trap_1();
+undefined8 longjmp(undefined4 *param_1,undefined4 param_2);
+undefined4 setjmp(undefined4 *param_1);
+undefined4 primary_unpack_records(void);
+int float_subtract_in_place();
+int float_add_in_place();
+int float_subtract_reversed();
+int float_subtract();
+int float_add();
+int double_subtract_in_place();
+int double_subtract_pointer();
+int double_subtract_reversed_pointers();
+int double_subtract_reversed_pointer();
+int double_subtract_reversed();
+int double_add_in_place();
+int double_add_pointers();
+int double_add_pointer();
+int double_add();
+int float_compare();
+int double_compare();
+int float_divide_in_place();
+int float_divide_reversed();
+int float_divide();
+int double_divide_in_place();
+int double_divide();
+int double_divide_reversed_pointers();
+int double_divide_reversed_pointer();
+int double_divide_reversed();
+void double_divide_operand_error(void);
+uint double_divide_by_zero(void);
+int double_divide_next_word();
+int double_divide_first_word();
+int double_to_float();
+int double_to_integer();
+int double_to_unsigned();
+int float_to_double();
+int float_to_integer();
+int float_to_unsigned();
+int integer_to_double();
+int unsigned_to_double();
+int integer_to_float();
+int unsigned_to_float();
+int float_multiply_in_place();
+int float_multiply();
+int double_multiply_in_place();
+int double_multiply_pointers();
+int double_multiply_pointer();
+int double_multiply();
+void double_multiply_operand_error(void);
+int float_normalize();
+int double_normalize();
+void float_raise(uint param_1,uint param_2,uint param_3,uint param_4,uint param_5);
+int abs(int j);
+void call_atexit_functions(void);
+int atoi(char *s);
+undefined8 div(int param_1,int param_2);
+undefined8 ldiv(int param_1,int param_2);
+long labs(long j);
+int memcmp(void *s1,void *s2,uint n);
+void * memcpy(void *s1,void *s2,uint n);
+void * memset(void *s,int c,uint n);
+void qsort_swap(undefined1 *param_1,undefined1 *param_2);
+void qsort_rotate(undefined1 *param_1,undefined1 *param_2,undefined1 *param_3);
+void qsort_range(uint param_1,uint param_2);
+void qsort(void *base,uint nmemb,uint size,void *compar);
+int rand(void);
+char * strcat(char *s1,char *s2);
+char * strchr(char *s,int c);
+int strncmp(char *s1,char *s2,uint n);
+char * strncpy(char *s1,char *s2,uint n);
+int toupper(int c);
+void double_to_digits_multiply(uint *param_1);
+void double_to_digits(uint param_1,uint param_2,uint param_3,int *param_4,uint *param_5,
+                     char *param_6,int param_7);
+undefined8 next_decimal_digit(uint *param_1);
+byte * format(byte *param_1,uint *param_2,code *param_3,undefined4 param_4);
+int sprintf(char *s,char *format,...);
+int sprintf_put(undefined1 *param_1,int param_2,int param_3,int param_4);
+int vsprintf(char *s,char *format,void *arg);
+double fabs(double x);
+double frexp(double value,int *exp);
+double log(double x);
+double modf(double value,double *iptr);
+undefined4 double_is_integer(uint param_1,uint param_2,uint *param_3);
+undefined8 double_truncate_sixteenths(uint param_1,uint param_2);
+double pow(double x,double y);
+double sqrt(double x);
+undefined8 installer_mutex_acquire(void);
+undefined4 installer_mutex_release(void);
+void installer_exception_hook_reset(void);
+int installer_exception_hook_get(void);
+undefined8 installer_default_exception(void);
+void installer_print_exception
+               (undefined2 param_1,undefined4 param_2,ushort param_3,undefined4 param_4);
+char * installer_exception_name(ushort param_1);
+void installer_periodic_interrupt(void);
+void installer_periodic_interrupt_enable(void);
+void installer_qsm_init(void);
+void installer_gpt_init(void);
+void installer_start_nothing(void);
+void installer_system_init(void);
+void installer_start(void);
+void installer_enter_supervisor_mode(void);
+undefined2 installer_set_interrupt_mask(undefined2 param_1);
+undefined2 installer_trap_7(void);
+void installer_enter_supervisor(void);
+void installer_float_exception_report(uint param_1,undefined4 param_2);
+void installer_return(void);
+void installer_entry(void);
+void installer_program_exit(undefined4 param_1);
+void installer_program_end_report(uint param_1);
+int installer_kernel_dispatch_service();
+int installer_kernel_dispatch_io();
+int installer_kernel_switch_task();
+int installer_kernel_process_ticks();
+int installer_kernel_service_0();
+int installer_kernel_create();
+int installer_kernel_start();
+int installer_kernel_ident();
+int installer_kernel_delete();
+int installer_kernel_suspend();
+int installer_kernel_resume();
+int installer_kernel_priority();
+int installer_kernel_allocate_segment();
+int installer_kernel_allocate_for_task();
+int installer_kernel_free_segment();
+int installer_kernel_free_for_task();
+int installer_kernel_allocate();
+int installer_kernel_region_allocate();
+int installer_kernel_service_10();
+int installer_kernel_service_16();
+int installer_kernel_service_none();
+int installer_kernel_create_x();
+int installer_kernel_service_21();
+int installer_kernel_delete_x();
+int installer_kernel_service_18();
+int installer_kernel_jam_x();
+int installer_kernel_send_x();
+int installer_kernel_send_for_task();
+int installer_kernel_copy_message();
+int installer_kernel_request_x();
+int installer_kernel_signal_v();
+int installer_kernel_signal_task();
+int installer_kernel_get_v();
+int installer_kernel_wait_v();
+int installer_kernel_mode();
+int installer_kernel_service_33();
+int installer_kernel_pause();
+int installer_kernel_service_29();
+int installer_kernel_service_30();
+int installer_kernel_service_31();
+int installer_kernel_service_35();
+int installer_kernel_service_36();
+int installer_kernel_service_37();
+int installer_kernel_service_38();
+int installer_kernel_advance_date();
+int installer_kernel_set_leap_year();
+int installer_kernel_check_task();
+int installer_kernel_check_exchange();
+int installer_kernel_check_segment();
+int installer_kernel_timer_cancel();
+int installer_kernel_timer_unlink();
+int installer_kernel_timer_insert();
+int installer_kernel_make_ready();
+int installer_kernel_ready_insert();
+int installer_kernel_queue_remove();
+int installer_kernel_init();
+int installer_kernel_region_init();
+int installer_kernel_return_from_interrupt();
+void installer_psos_call(void);
+undefined4 installer_psos_pack_name(void);
+undefined4 installer_psos_my_pid(void);
+undefined4 installer_psos_delete(void);
+undefined4 installer_psos_pause(void);
+undefined4 installer_psos_create_x(void);
+undefined4 installer_psos_send_x(void);
+undefined4 installer_psos_signal_v(void);
+undefined4 installer_psos_wait_v(void);
+undefined4 installer_psos_get_v(undefined4 param_1,undefined4 param_2,undefined4 *param_3);
+undefined4 installer_psos_service_29(void);
+int installer_gp_port_select(char param_1);
+void installer_duartb_mode_from_settings(void);
+void installer_duartb_baud_from_settings(void);
+byte installer_duartb_putc_polled(byte param_1);
+undefined4 installer_drtb_getc(void);
+int installer_drtb_gets(byte *param_1,int param_2);
+void installer_drtb_putc(undefined1 param_1);
+int installer_console_write_polled(byte *param_1);
+void installer_printf_polled(undefined4 param_1);
+uint installer_duarta_receive(void);
+uint installer_duartb_isr(void);
+void installer_duarta_transmit_interrupt(void);
+void installer_duartb_transmit_interrupt(void);
+void installer_duart_interrupt(void);
+void installer_fatal_error(void);
+void installer_fatal_error_with_code
+               (char *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4);
+undefined4 installer_scpi_scan_exponent(short param_1,int param_2,undefined4 *param_3);
+uint installer_scpi_char_upper(uint param_1);
+short installer_scpi_suffix_compare_tail(int param_1,short param_2,int param_3);
+undefined4 installer_scpi_multiplier_exponent(undefined2 param_1,short param_2);
+void installer_status_event_set(undefined4 param_1,int param_2,ushort param_3);
+void installer_status_condition_set(int param_1,ushort *param_2,ushort param_3);
+void installer_status_condition_clear(int param_1,ushort *param_2,ushort param_3);
+void installer_status_propagate(undefined4 param_1,int param_2);
+undefined2 installer_status_set_bit(int param_1,int param_2,undefined4 param_3);
+void installer_status_apply_condition(int param_1,int param_2,undefined4 param_3);
+void installer_status_read_event(int param_1,int param_2,ushort *param_3);
+bool installer_error_queue_push(short *param_1,short param_2,undefined4 param_3);
+undefined4 installer_error_message_lookup(short param_1);
+void installer_scpi_prompt(int param_1);
+void installer_status_prompt_refresh(int param_1,undefined4 param_2);
+undefined2 installer_record_checksum(int param_1,ushort param_2);
+bool installer_parameter_record_read(void);
+void installer_idn_model_default(void);
+undefined2 installer_identification_record_read(void);
+void installer_psos_config_init(void);
+void installer_trap_1(void);
+uint installer_float_raise(uint param_1,uint param_2,uint param_3,uint param_4,uint param_5);
+void installer_call_atexit_functions(void);
+undefined1 * installer_memcpy(undefined1 *param_1,undefined1 *param_2,int param_3);
+char * installer_strncpy(char *param_1,char *param_2,int param_3);
+int installer_strtol(char *param_1,undefined4 *param_2,int param_3);
+int installer_toupper(int param_1);
+void installer_double_to_digits_multiply(uint *param_1);
+void installer_double_to_digits
+               (uint param_1,uint param_2,uint param_3,int *param_4,uint *param_5,char *param_6,
+               int param_7);
+undefined8 installer_next_decimal_digit(uint *param_1);
+byte * installer_format(byte *param_1,uint *param_2,code *param_3,undefined4 param_4);
+void installer_sprintf(undefined1 *param_1,undefined4 param_2);
+void installer_vsprintf(undefined1 *param_1,undefined4 param_2,undefined4 param_3);
 
 /* 00000400 */
 
@@ -1214,6 +6320,7 @@ void boot_duart_early_init(void)
 
 
 /* 00000550 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x000008d4) */
 /* WARNING: Removing unreachable block (ram,0x000008dc) */
@@ -1405,7 +6512,7 @@ __exception void boot_reset(void)
       if ((undefined2 *)0x10ffff < puVar12) {
         uVar5 = 0;
         uVar6 = 2;
-        puVar12 = &DAT_00100002;
+        puVar12 = (undefined2 *)&DAT_00100002;
         sVar8 = 0xe;
         do {
           uVar2 = DAT_00100000;
@@ -1459,7 +6566,384 @@ LAB_00000a22:
 }
 
 
+#endif
+__asm__(
+	"	.globl boot_reset\n"
+	"	.type boot_reset, @function\n"
+	"	.section .text.boot_reset.550,\"ax\",@progbits\n"
+	"boot_reset:\n"
+	"	move #0x2700,%sr\n"
+	"	movea.l #0x0,%a0\n"
+	"	movec %a0,%vbr\n"
+	"	movea.l (%a0),%sp\n"
+	"	move.b #0xcc,(SYPCR).l\n"
+	"	move.w #0x2bff,(CSPAR0).l\n"
+	"	move.w #0x3af,(CSPAR1).l\n"
+	"	move.w #0x5,(CSBARBT).l\n"
+	"	move.w #0x6870,(CSORBT).l\n"
+	"	move.w #0x1003,(CSBAR0).l\n"
+	"	move.w #0x6830,(CSOR0).l\n"
+	"	move.w #0x405,(CSBAR1).l\n"
+	"	move.w #0x6870,(CSOR1).l\n"
+	"	move.w #0x1003,(CSBAR2).l\n"
+	"	move.w #0x5030,(CSOR2).l\n"
+	"	move.w #0x1003,(CSBAR3).l\n"
+	"	move.w #0x3030,(CSOR3).l\n"
+	"	move.w #0x5000,(CSBAR4).l\n"
+	"	move.w #0x7830,(CSOR4).l\n"
+	"	move.w #0x3003,(CSBAR5).l\n"
+	"	move.w #0x7b30,(CSOR5).l\n"
+	"	move.w #0x5,(CSBAR6).l\n"
+	"	move.w #0x7070,(CSOR6).l\n"
+	"	move.w #0x405,(CSBAR7).l\n"
+	"	move.w #0x7070,(CSOR7).l\n"
+	"	move.w #0x2000,(CSBAR8).l\n"
+	"	move.w #0x3bf0,(CSOR8).l\n"
+	"	move.w #0x4001,(CSBAR9).l\n"
+	"	move.w #0x78f0,(CSOR9).l\n"
+	"	move.w #-0x8,(CSBAR10).l\n"
+	"	move.w #0x2bc4,(CSOR10).l\n"
+	"	move.w #0x14a,(SIMCR).l\n"
+	"	move.w #-0x3100,(SYNCR).l\n"
+	"	move.w #0x8,(PITR).l\n"
+	"	move.b #0x32,(PEPAR).l\n"
+	"	move.b #0x40,(PORTE0).l\n"
+	"	move.b #0x40,(DDRE).l\n"
+	"	move.b #0x4,(PFPAR).l\n"
+	"	move.b #0xf7,(PORTF0).l\n"
+	"	move.b #0xf7,(DDRF).l\n"
+	"	clr.w (__ghidra_10ab20).l\n"
+	"	movea.l #0x10000,%a0\n"
+	"	move.l #0xc000,%d1\n"
+	"	clr.l %d2\n"
+	"	clr.l %d3\n"
+	"	clr.l %d4\n"
+	"	subq.l #0x2,%d1\n"
+	".Lg_69a:\n"
+	"	move.b (%a0)+,%d2\n"
+	"	add.w %d2,%d3\n"
+	"	move.b (%a0)+,%d2\n"
+	"	add.w %d2,%d4\n"
+	"	move.b (%a0)+,%d2\n"
+	"	add.w %d2,%d3\n"
+	"	move.b (%a0)+,%d2\n"
+	"	add.w %d2,%d4\n"
+	"	dbf %d1,.Lg_69a\n"
+	"	clr.l %d0\n"
+	"	clr.l %d1\n"
+	"	move.b (%a0)+,%d0\n"
+	"	lsl.w #0x8,%d0\n"
+	"	move.b (%a0)+,%d1\n"
+	"	lsl.w #0x8,%d1\n"
+	"	move.b (%a0)+,%d0\n"
+	"	move.b (%a0)+,%d1\n"
+	"	cmp.w %d0,%d3\n"
+	"	beq.b .Lg_6cc\n"
+	"	ori.w #0x2,(__ghidra_10ab20).l\n"
+	"	bra.b .Lg_746\n"
+	".Lg_6cc:\n"
+	"	cmp.w %d1,%d4\n"
+	"	beq.b .Lg_6da\n"
+	"	ori.w #0x1,(__ghidra_10ab20).l\n"
+	"	bra.b .Lg_746\n"
+	".Lg_6da:\n"
+	"	movea.l #0x40000,%a0\n"
+	"	move.l #0x10000,%d1\n"
+	"	clr.l %d2\n"
+	"	clr.l %d3\n"
+	"	clr.l %d4\n"
+	"	subq.l #0x2,%d1\n"
+	".Lg_6ee:\n"
+	"	move.b (%a0)+,%d2\n"
+	"	add.w %d2,%d3\n"
+	"	move.b (%a0)+,%d2\n"
+	"	add.w %d2,%d4\n"
+	"	move.b (%a0)+,%d2\n"
+	"	add.w %d2,%d3\n"
+	"	move.b (%a0)+,%d2\n"
+	"	add.w %d2,%d4\n"
+	"	dbf %d1,.Lg_6ee\n"
+	"	clr.l %d0\n"
+	"	clr.l %d1\n"
+	"	move.b (%a0)+,%d0\n"
+	"	lsl.w #0x8,%d0\n"
+	"	move.b (%a0)+,%d1\n"
+	"	lsl.w #0x8,%d1\n"
+	"	move.b (%a0)+,%d0\n"
+	"	move.b (%a0)+,%d1\n"
+	"	cmp.w %d0,%d3\n"
+	"	beq.b .Lg_720\n"
+	"	ori.w #0x8,(__ghidra_10ab20).l\n"
+	"	bra.b .Lg_746\n"
+	".Lg_720:\n"
+	"	cmp.w %d1,%d4\n"
+	"	beq.b .Lg_72e\n"
+	"	ori.w #0x4,(__ghidra_10ab20).l\n"
+	"	bra.b .Lg_746\n"
+	".Lg_72e:\n"
+	"	movea.l #0x10000,%a0\n"
+	"	movec %a0,%vbr\n"
+	"	movea.l (__ghidra_10004).l,%a0\n"
+	"	movea.l (primary_vectors).l,%sp\n"
+	"	jmp (%a0)\n"
+	".Lg_746:\n"
+	"	move.b #0xff,(DUART_START_SOPBC).l\n"
+	"	clr.b (__ghidra_10ab2e).l\n"
+	"	move.b #0x8,(DUART_STOP_ROPBC).l\n"
+	"	ori.b #0x8,(__ghidra_10ab2e).l\n"
+	"	bra.b .Lg_76e\n"
+	".Lg_766:\n"
+	"	.byte 0xaa,0xaa,0xaa,0xaa\n"
+	".Lg_76a:\n"
+	"	.byte 0x55,0x55 | subq.w #0x2,(A5)\n"
+	"	.byte 0x55,0x55 | subq.w #0x2,(A5)\n"
+	".Lg_76e:\n"
+	"	clr.w (__ghidra_10ab22).l\n"
+	"	move.b #0x55,%d0\n"
+	"	cmpi.b #0x55,%d0\n"
+	"	bne.w .Lg_8e4\n"
+	"	move.l #-0x55555556,%d0\n"
+	"	cmpi.l #-0x55555556,%d0\n"
+	"	bne.w .Lg_8e4\n"
+	"	move.l #0x55555555,%d0\n"
+	"	move.l %d0,%d1\n"
+	"	move.l %d1,%d2\n"
+	"	move.l %d2,%d3\n"
+	"	move.l %d3,%d4\n"
+	"	move.l %d4,%d5\n"
+	"	move.l %d5,%d6\n"
+	"	move.l %d6,%d7\n"
+	"	movea.l %d7,%a0\n"
+	"	movea.l %a0,%a1\n"
+	"	movea.l %a1,%a2\n"
+	"	movea.l %a2,%a3\n"
+	"	movea.l %a3,%a4\n"
+	"	movea.l %a4,%a5\n"
+	"	movea.l %a5,%a6\n"
+	"	cmpa.l #0x55555555,%a6\n"
+	"	bne.w .Lg_8e4\n"
+	"	move.l #-0x55555556,%d0\n"
+	"	move.l %d0,%d1\n"
+	"	move.l %d1,%d2\n"
+	"	move.l %d2,%d3\n"
+	"	move.l %d3,%d4\n"
+	"	move.l %d4,%d5\n"
+	"	move.l %d5,%d6\n"
+	"	move.l %d6,%d7\n"
+	"	movea.l %d7,%a0\n"
+	"	movea.l %a0,%a1\n"
+	"	movea.l %a1,%a2\n"
+	"	movea.l %a2,%a3\n"
+	"	movea.l %a3,%a4\n"
+	"	movea.l %a4,%a5\n"
+	"	movea.l %a5,%a6\n"
+	"	cmpa.l #-0x55555556,%a6\n"
+	"	bne.w .Lg_8e4\n"
+	"	move.l #0x55555555,%d1\n"
+	"	move.l %d1,%d2\n"
+	"	or.l %d0,%d2\n"
+	"	cmpi.l #-0x1,%d2\n"
+	"	bne.w .Lg_8e4\n"
+	"	move.l %d1,%d3\n"
+	"	and.l %d0,%d3\n"
+	"	bne.w .Lg_8e4\n"
+	"	move.l %d1,%d4\n"
+	"	eor.l %d1,%d4\n"
+	"	bne.w .Lg_8e4\n"
+	"	movea.l %sp,%a6\n"
+	"	move.l %d0,-(%sp)\n"
+	"	cmpa.l %a6,%sp\n"
+	"	beq.w .Lg_8e2\n"
+	"	cmp.l (%sp)+,%d0\n"
+	"	bne.w .Lg_8e4\n"
+	"	cmpa.l %a6,%sp\n"
+	"	bne.w .Lg_8e4\n"
+	"	subq.l #0x4,%sp\n"
+	"	move.l %d1,(%sp)\n"
+	"	move.l (%sp),(%sp)\n"
+	"	cmp.l (%sp),%d1\n"
+	"	bne.w .Lg_8e2\n"
+	"	lea (-0x1a85,%sp),%a6\n"
+	"	move.l %d0,(0x1a85,%a6)\n"
+	"	cmp.l (0x1a85,%a6),%d0\n"
+	"	bne.w .Lg_8e2\n"
+	"	bra.b .Lg_844\n"
+	".Lg_840:\n"
+	"	.byte 0xaa,0xaa,0xaa,0xaa\n"
+	".Lg_844:\n"
+	"	cmp.l (.Lg_840,%pc),%d0\n"
+	"	bne.w .Lg_8e2\n"
+	"	moveq #0x1,%d3\n"
+	"	cmp.b (.Lg_840,%pc,%d3.w*0x1),%d0\n"
+	"	bne.w .Lg_8e2\n"
+	"	cmp.l (.Lg_766).w,%d0\n"
+	"	bne.w .Lg_8e2\n"
+	"	cmp.l (.Lg_766).l,%d0\n"
+	"	bne.w .Lg_8e2\n"
+	"	cmp.l (.Lg_76a).l,%d1\n"
+	"	bne.w .Lg_8e2\n"
+	"	moveq #0x28,%d6\n"
+	"	divs.w #0x3e8,%d6\n"
+	"	cmpi.l #0x280000,%d6\n"
+	"	bne.w .Lg_8e2\n"
+	"	move.l %d0,%d7\n"
+	"	muls.w %d1,%d7\n"
+	"	cmpi.l #-0x1c71e38e,%d7\n"
+	"	bne.w .Lg_8e2\n"
+	"	move.l %d1,%d2\n"
+	"	lsl.l #0x1,%d2\n"
+	"	cmp.l %d2,%d0\n"
+	"	bne.w .Lg_8e2\n"
+	"	ror.l #0x7,%d2\n"
+	"	cmp.l %d2,%d1\n"
+	"	bne.w .Lg_8e2\n"
+	"	bclr.l #0x1,%d0\n"
+	"	beq.w .Lg_8e2\n"
+	"	moveq #0x1,%d3\n"
+	"	bset.l %d3,%d0\n"
+	"	bne.w .Lg_8e2\n"
+	"	move.l %d1,(%sp)\n"
+	"	bset.b #0x3,(%sp)\n"
+	"	bne.w .Lg_8e2\n"
+	"	moveq #0x3,%d4\n"
+	"	bclr.b %d4,(%sp)\n"
+	"	beq.w .Lg_8e2\n"
+	"	move.l %d1,(%sp)\n"
+	"	lea (0x1,%sp),%a0\n"
+	"	lea (0x2,%sp),%a1\n"
+	"	abcd -(%a0),-(%a1)\n"
+	"	bcc.w .Lg_8e2\n"
+	"	cmpi.b #0x10,(%a1)\n"
+	"	bne.w .Lg_8e2\n"
+	"	addq.l #0x4,%sp\n"
+	"	clr.w %d0\n"
+	"	bra.b .Lg_8ec\n"
+	".Lg_8e2:\n"
+	"	addq.l #0x4,%sp\n"
+	".Lg_8e4:\n"
+	"	ori.w #0x1,(__ghidra_10ab22).l\n"
+	".Lg_8ec:\n"
+	"	tst.w (__ghidra_10ab22).l\n"
+	"	beq.b .Lg_904\n"
+	"	move.b #0x10,(DUART_STOP_ROPBC).l\n"
+	"	ori.b #0x10,(__ghidra_10ab2e).l\n"
+	".Lg_904:\n"
+	"	clr.w (__ghidra_10ab24).l\n"
+	"	clr.w (__ghidra_10ab26).l\n"
+	"	clr.l (__ghidra_10ab28).l\n"
+	"	movea.l #0x100000,%a0\n"
+	"	movea.l #0x110000,%a1\n"
+	".Lg_922:\n"
+	"	clr.l %d0\n"
+	"	moveq #0x17,%d1\n"
+	".Lg_926:\n"
+	"	move.w (%a0)+,-(%sp)\n"
+	"	dbf %d1,.Lg_926\n"
+	"	move.l #-0x55555556,%d1\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	moveq #0xb,%d1\n"
+	".Lg_94c:\n"
+	"	move.l (%a0)+,%d3\n"
+	"	eori.l #-0x55555556,%d3\n"
+	"	or.l %d3,%d0\n"
+	"	dbf %d1,.Lg_94c\n"
+	"	move.l #0x55555555,%d1\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	moveq #0xb,%d1\n"
+	".Lg_97a:\n"
+	"	move.l (%a0)+,%d3\n"
+	"	eori.l #0x55555555,%d3\n"
+	"	or.l %d3,%d0\n"
+	"	dbf %d1,.Lg_97a\n"
+	"	moveq #0x17,%d1\n"
+	".Lg_98a:\n"
+	"	move.w (%sp)+,-(%a0)\n"
+	"	dbf %d1,.Lg_98a\n"
+	"	move.l %d0,%d1\n"
+	"	beq.w .Lg_9b4\n"
+	"	moveq #0x10,%d2\n"
+	"	lsr.l %d2,%d1\n"
+	"	or.l %d1,%d0\n"
+	"	andi.l #0xffff,%d0\n"
+	"	or.w %d0,(__ghidra_10ab26).l\n"
+	"	ori.w #0x1,(__ghidra_10ab24).l\n"
+	"	bra.w .Lg_a22\n"
+	".Lg_9b4:\n"
+	"	lea (0x30,%a0),%a0\n"
+	"	movea.l %a0,%a2\n"
+	"	lea (0x30,%a2),%a2\n"
+	"	cmpa.l %a2,%a1\n"
+	"	bhi.w .Lg_922\n"
+	"	cmpa.l %a0,%a1\n"
+	"	bls.w .Lg_9d2\n"
+	"	lea (-0x30,%a1),%a0\n"
+	"	bra.w .Lg_922\n"
+	".Lg_9d2:\n"
+	"	movea.l #0x100000,%a0\n"
+	"	movea.l #0x100000,%a1\n"
+	"	clr.l %d2\n"
+	"	moveq #0x2,%d0\n"
+	"	adda.l #0x2,%a1\n"
+	"	move.w #0xf,%d1\n"
+	"	subq.w #0x1,%d1\n"
+	".Lg_9ee:\n"
+	"	movea.w (%a0),%a2\n"
+	"	movea.w (%a1),%a3\n"
+	"	move.w #-0x5556,(%a0)\n"
+	"	move.w #0x5555,(%a1)\n"
+	"	move.w (%a0),%d3\n"
+	"	cmpi.w #0x5555,%d3\n"
+	"	bne.w .Lg_a0e\n"
+	"	ori.w #0x2,(__ghidra_10ab24).l\n"
+	"	or.l %d0,%d2\n"
+	".Lg_a0e:\n"
+	"	move.w %a2,(%a0)\n"
+	"	move.w %a3,(%a1)\n"
+	"	adda.l %d0,%a1\n"
+	"	lsl.l #0x1,%d0\n"
+	"	dbf %d1,.Lg_9ee\n"
+	"	lsr.l #0x1,%d2\n"
+	"	or.l %d2,(__ghidra_10ab28).l\n"
+	".Lg_a22:\n"
+	"	tst.w (__ghidra_10ab24).l\n"
+	"	beq.b .Lg_a3a\n"
+	"	move.b #0x20,(DUART_STOP_ROPBC).l\n"
+	"	ori.b #0x20,(__ghidra_10ab2e).l\n"
+	".Lg_a3a:\n"
+	"	jsr (boot_duart_early_init).l\n"
+	"	tst.w (__ghidra_10ab2c).l\n"
+	"	.byte 0x67 | beq.b 0x00000a58\n"
+	"	.reloc ., R_68K_PC8, boot_trap_11-1\n"
+	"	.byte 0\n"
+	"	move.b #0x40,(DUART_STOP_ROPBC).l\n"
+	"	ori.b #0x40,(__ghidra_10ab2e).l\n"
+	"	.size boot_reset, .-boot_reset\n"
+);
+
 /* 00000a58 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* Not a C function: an exception handler, entered by the processor through the boot table's vector
    43 (trap_11), not called. */
@@ -1487,6 +6971,32 @@ __exception void boot_trap_11(void)
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl boot_trap_11\n"
+	"	.type boot_trap_11, @function\n"
+	"	.section .text.boot_trap_11.a58,\"ax\",@progbits\n"
+	"boot_trap_11:\n"
+	"	move #0x2700,%sr\n"
+	"	movea.l #0x0,%a0\n"
+	"	movec %a0,%vbr\n"
+	"	movea.l (%a0),%sp\n"
+	"	move.w #0x0,(PICR).l\n"
+	"	jsr (boot_unpack_installer:w,%pc)\n"
+	"	nop\n"
+	"	movea.l #0x0,%a0\n"
+	"	move.l #0x3fc,%d0\n"
+	"	movea.l #0x100000,%a1\n"
+	"	lsr.l #0x2,%d0\n"
+	".Lg_a8a:\n"
+	"	move.l (%a0)+,(%a1)+\n"
+	"	dbf %d0,.Lg_a8a\n"
+	"	movea.l #0x100000,%a1\n"
+	"	movec %a1,%vbr\n"
+	"	jmp (__ghidra_10135c).l\n"
+	"	.size boot_trap_11, .-boot_trap_11\n"
+);
 
 /* 00000aa0 */
 
@@ -1541,12 +7051,13 @@ undefined1 * boot_memcpy(undefined1 *param_1,undefined1 *param_2,int param_3)
 
 
 /* 00010400 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* mutex_create's inside: creates the mutex's exchange for the name in D0 and clears the mutex at A1
    Not a C function (register; read): its arguments and results in registers.  In: D0 int name, A1
    void *mutex. */
 
-__regcall void mutex_init(int name __asm("d0"),void *mutex __asm("a1"))
+__regcall void mutex_init(int name /* d0 */,void *mutex /* a1 */)
 
 {
   undefined4 extraout_A0;
@@ -1569,13 +7080,43 @@ __regcall void mutex_init(int name __asm("d0"),void *mutex __asm("a1"))
 }
 
 
+#endif
+__asm__(
+	"	.globl mutex_init\n"
+	"	.type mutex_init, @function\n"
+	"	.section .text.mutex_init.10400,\"ax\",@progbits\n"
+	"mutex_init:\n"
+	"	movem.l %a0/%d2/%d1,-(%sp)\n"
+	"	moveq #0x15,%d7\n"
+	"	jsr (psos_call).l\n"
+	"	beq.w .Lg_10436\n"
+	"	moveq #0x0,%d1\n"
+	"	moveq #0x0,%d2\n"
+	"	moveq #0x14,%d7\n"
+	"	jsr (psos_call).l\n"
+	"	bne.w .Lg_10430\n"
+	"	bsr.w mutex_clear\n"
+	"	move.l %a0,(0x4,%a1)\n"
+	"	moveq #0x17,%d7\n"
+	"	jsr (psos_call).l\n"
+	".Lg_10430:\n"
+	"	movem.l (%sp)+,%d1/%d2/%a0\n"
+	"	rts\n"
+	".Lg_10436:\n"
+	"	moveq #0x3,%d7\n"
+	"	bra.b .Lg_10430\n"
+	"	.size mutex_init, .-mutex_init\n"
+);
+
 /* 0001043a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* recursive lock, owner at +8, count at +0xc, a token through request_x when not already owned
    Not a C function (register; read): its arguments and results in registers.  In: A1 void *mutex.
    Out: D7 int error.  Error: D7 0x80 nested hold.  Preserves: D0, D1, A0, A2. */
 
-__regcall int mutex_acquire(void *mutex __asm("a1")) /* out D7 int error; error D7 0x80 nested hold; preserves D0, D1, A0, A2 */
+/* out D7 int error; error D7 0x80 nested hold; preserves D0, D1, A0, A2 */
+__regcall int mutex_acquire(void *mutex /* a1 */)
 
 {
   int iVar1;
@@ -1604,13 +7145,50 @@ __regcall int mutex_acquire(void *mutex __asm("a1")) /* out D7 int error; error 
 }
 
 
+#endif
+__asm__(
+	"	.globl mutex_acquire\n"
+	"	.type mutex_acquire, @function\n"
+	"	.section .text.mutex_acquire.1043a,\"ax\",@progbits\n"
+	"mutex_acquire:\n"
+	"	movem.l %a2/%a0/%d1/%d0,-(%sp)\n"
+	"	moveq #0x0,%d0\n"
+	"	moveq #0x3,%d7\n"
+	"	jsr (psos_call).l\n"
+	"	movea.l %a0,%a2\n"
+	"	cmpa.l (0x8,%a1),%a0\n"
+	"	beq.w .Lg_1047a\n"
+	"	move.l (0x4,%a1),%d0\n"
+	"	beq.w .Lg_10476\n"
+	"	movea.l %d0,%a0\n"
+	"	moveq #0x0,%d0\n"
+	"	moveq #0x0,%d1\n"
+	"	moveq #0x18,%d7\n"
+	"	jsr (psos_call).l\n"
+	"	bne.w .Lg_10470\n"
+	"	move.l %a2,(0x8,%a1)\n"
+	".Lg_10470:\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a2\n"
+	"	rts\n"
+	".Lg_10476:\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.b .Lg_10470\n"
+	".Lg_1047a:\n"
+	"	move.w #0x80,%d7\n"
+	"	addq.l #0x1,(0xc,%a1)\n"
+	"	bra.b .Lg_10470\n"
+	"	.size mutex_acquire, .-mutex_acquire\n"
+);
+
 /* 00010484 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* drops the count, or the owner and the token through send_x
    Not a C function (register; read): its arguments and results in registers.  In: A1 void *mutex.
    Out: D7 int error.  Error: D7 2 not held, D7 0x80 holds remain.  Preserves: D0, A0. */
 
-__regcall int mutex_release(void *mutex __asm("a1")) /* out D7 int error; error D7 2 not held, D7 0x80 holds remain; preserves D0, A0 */
+/* out D7 int error; error D7 2 not held, D7 0x80 holds remain; preserves D0, A0 */
+__regcall int mutex_release(void *mutex /* a1 */)
 
 {
   int iVar1;
@@ -1636,13 +7214,51 @@ __regcall int mutex_release(void *mutex __asm("a1")) /* out D7 int error; error 
 }
 
 
+#endif
+__asm__(
+	"	.globl mutex_release\n"
+	"	.type mutex_release, @function\n"
+	"	.section .text.mutex_release.10484,\"ax\",@progbits\n"
+	"mutex_release:\n"
+	"	movem.l %a0/%d0,-(%sp)\n"
+	"	moveq #0x0,%d7\n"
+	"	moveq #0x0,%d0\n"
+	"	moveq #0x3,%d7\n"
+	"	jsr (psos_call).l\n"
+	"	cmpa.l (0x8,%a1),%a0\n"
+	"	bne.w .Lg_104ba\n"
+	"	tst.l (0xc,%a1)\n"
+	"	bne.b .Lg_104be\n"
+	"	move.l (0x4,%a1),%d0\n"
+	"	clr.l (0x8,%a1)\n"
+	"	movea.l %d0,%a0\n"
+	"	moveq #0x17,%d7\n"
+	"	jsr (psos_call).l\n"
+	".Lg_104b4:\n"
+	"	movem.l (%sp)+,%d0/%a0\n"
+	"	rts\n"
+	".Lg_104ba:\n"
+	"	moveq #0x2,%d7\n"
+	"	bra.b .Lg_104b4\n"
+	".Lg_104be:\n"
+	"	move.w #0x80,%d7\n"
+	"	subq.l #0x1,(0xc,%a1)\n"
+	"	bra.b .Lg_104b4\n"
+	"	.byte 0xc1,0x88 | exg D0,A0\n"
+	"	.byte 0x20,0x29,0x00,0x08 | move.l (0x8,A1),D0\n"
+	"	.byte 0xc1,0x88 | exg D0,A0\n"
+	"	.byte 0x4e,0x75 | rts\n"
+	"	.size mutex_release, .-mutex_release\n"
+);
+
 /* 000104d2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* clears the six longs of the mutex at A1
    Not a C function (register; read): its arguments and results in registers.  In: A1 void *mutex.
     */
 
-__regcall undefined8 mutex_clear(void *mutex __asm("a1"))
+__regcall undefined8 mutex_clear(void *mutex /* a1 */)
 
 {
   undefined4 in_D0;
@@ -1658,6 +7274,23 @@ __regcall undefined8 mutex_clear(void *mutex __asm("a1"))
   return CONCAT44(in_D0,in_D1);
 }
 
+
+#endif
+__asm__(
+	"	.globl mutex_clear\n"
+	"	.type mutex_clear, @function\n"
+	"	.section .text.mutex_clear.104d2,\"ax\",@progbits\n"
+	"mutex_clear:\n"
+	"	movem.l %a1/%d1/%d0,-(%sp)\n"
+	"	moveq #0x5,%d0\n"
+	"	moveq #0x0,%d1\n"
+	".Lg_104da:\n"
+	"	move.l %d1,(%a1)+\n"
+	"	dbf %d0,.Lg_104da\n"
+	"	movem.l (%sp)+,%d0/%d1/%a1\n"
+	"	rts\n"
+	"	.size mutex_clear, .-mutex_clear\n"
+);
 
 /* 000104e6 */
 
@@ -2442,7 +8075,7 @@ undefined3 oncore_date_unpack(undefined4 param_1)
   local_c = (undefined2)((uint)param_1 >> 0x10);
   uStack_9 = (undefined1)param_1;
   auStack_7[0] = uStack_9;
-  auStack_7._1_2_ = local_c;
+  __ghidra_piece(unsigned short, auStack_7, 1) = local_c;
   return auStack_7;
 }
 
@@ -2591,33 +8224,33 @@ void time_next_second(uint32_t *param_1,undefined4 *param_2)
   undefined4 local_8;
   
   uVar1 = *param_2;
-  local_8._2_1_ = (byte)((uint)uVar1 >> 8);
-  cVar3 = local_8._2_1_;
+  __ghidra_piece(unsigned char, local_8, 2) = (byte)((uint)uVar1 >> 8);
+  cVar3 = __ghidra_piece(unsigned char, local_8, 2);
   if ((((nv_settings.gps_utc == 0) || (nv_settings.leap_pending == 0)) ||
       (nv_settings.leap_date != *param_1)) ||
-     ((local_8._1_1_ = (byte)((uint)uVar1 >> 0x10), local_8._1_1_ != '\x17' ||
-      (local_8._2_1_ != ';')))) {
+     ((__ghidra_piece(unsigned char, local_8, 1) = (byte)((uint)uVar1 >> 0x10), __ghidra_piece(unsigned char, local_8, 1) != '\x17' ||
+      (__ghidra_piece(unsigned char, local_8, 2) != ';')))) {
     bVar5 = 0x3c;
   }
   else {
     bVar5 = (byte)nv_settings.leap_minute_length;
   }
-  local_8._3_1_ = (char)uVar1;
+  __ghidra_piece(unsigned char, local_8, 3) = (char)uVar1;
   bVar2 = (char)local_8 + 1;
   local_8 = CONCAT31((int3)((uint)uVar1 >> 8),bVar2);
   if (bVar5 <= bVar2) {
-    local_8._0_2_ = (undefined2)((uint)uVar1 >> 0x10);
-    local_8._2_2_ = CONCAT11(cVar3 + '\x01',bVar2 - bVar5);
+    __ghidra_piece(unsigned short, local_8, 0) = (undefined2)((uint)uVar1 >> 0x10);
+    __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(cVar3 + '\x01',bVar2 - bVar5);
   }
   uVar1 = local_8;
-  if (0x3b < local_8._2_1_) {
-    local_8._2_2_ = CONCAT11(local_8._2_1_ - 0x3c,(char)local_8);
-    local_8._1_1_ = SUB41(uVar1,2);
-    local_8._0_1_ = SUB41(uVar1,3);
-    local_8._1_3_ = CONCAT12(local_8._1_1_ + '\x01',local_8._2_2_);
+  if (0x3b < __ghidra_piece(unsigned char, local_8, 2)) {
+    __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(__ghidra_piece(unsigned char, local_8, 2) - 0x3c,(char)local_8);
+    __ghidra_piece(unsigned char, local_8, 1) = SUB41(uVar1,2);
+    __ghidra_piece(unsigned char, local_8, 0) = SUB41(uVar1,3);
+    __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) + '\x01',__ghidra_piece(unsigned short, local_8, 2));
   }
-  if (0x17 < local_8._1_1_) {
-    local_8._1_3_ = CONCAT12(local_8._1_1_ - 0x18,local_8._2_2_);
+  if (0x17 < __ghidra_piece(unsigned char, local_8, 1)) {
+    __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) - 0x18,__ghidra_piece(unsigned short, local_8, 2));
     uVar4 = date_normalize(*param_1 + 1);
     *param_1 = uVar4;
   }
@@ -2647,21 +8280,21 @@ void datetime_add(undefined4 *param_1,undefined4 *param_2)
   iVar2 = date_to_days(param_2[1]);
   iVar2 = param_1[1] + iVar2;
   cStack_9 = (char)uVar3;
-  local_8._3_1_ = (byte)uVar1;
+  __ghidra_piece(unsigned char, local_8, 3) = (byte)uVar1;
   local_8 = CONCAT31((int3)((uint)uVar1 >> 8),cStack_9 + (byte)local_8);
   while (0x3b < (byte)local_8) {
-    local_8._2_2_ = CONCAT11(local_8._2_1_ + '\x01',(byte)local_8 - 0x3c);
+    __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(__ghidra_piece(unsigned char, local_8, 2) + '\x01',(byte)local_8 - 0x3c);
   }
   cStack_a = (char)((uint)uVar3 >> 8);
-  local_8._2_2_ = CONCAT11(cStack_a + local_8._2_1_,(byte)local_8);
-  while (0x3b < local_8._2_1_) {
-    local_8._2_2_ = CONCAT11(local_8._2_1_ - 0x3c,(byte)local_8);
-    local_8._1_3_ = CONCAT12(local_8._1_1_ + '\x01',local_8._2_2_);
+  __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(cStack_a + __ghidra_piece(unsigned char, local_8, 2),(byte)local_8);
+  while (0x3b < __ghidra_piece(unsigned char, local_8, 2)) {
+    __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(__ghidra_piece(unsigned char, local_8, 2) - 0x3c,(byte)local_8);
+    __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) + '\x01',__ghidra_piece(unsigned short, local_8, 2));
   }
   cStack_b = (char)((uint)uVar3 >> 0x10);
-  local_8._1_3_ = CONCAT12(cStack_b + local_8._1_1_,local_8._2_2_);
-  while (0x17 < local_8._1_1_) {
-    local_8._1_3_ = CONCAT12(local_8._1_1_ - 0x18,local_8._2_2_);
+  __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(cStack_b + __ghidra_piece(unsigned char, local_8, 1),__ghidra_piece(unsigned short, local_8, 2));
+  while (0x17 < __ghidra_piece(unsigned char, local_8, 1)) {
+    __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) - 0x18,__ghidra_piece(unsigned short, local_8, 2));
     iVar2 = iVar2 + 1;
   }
   uVar3 = days_to_date(iVar2);
@@ -2691,21 +8324,21 @@ void datetime_subtract(undefined4 *param_1,undefined4 *param_2)
   iVar2 = date_to_days(param_2[1]);
   iVar2 = iVar2 - param_1[1];
   cStack_9 = (char)uVar3;
-  local_8._3_1_ = (char)uVar1;
+  __ghidra_piece(unsigned char, local_8, 3) = (char)uVar1;
   local_8 = CONCAT31((int3)((uint)uVar1 >> 8),(char)local_8 - cStack_9);
   while ((char)local_8 < '\0') {
-    local_8._2_2_ = CONCAT11(local_8._2_1_ + -1,(char)local_8 + '<');
+    __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(__ghidra_piece(unsigned char, local_8, 2) + -1,(char)local_8 + '<');
   }
   cStack_a = (char)((uint)uVar3 >> 8);
-  local_8._2_2_ = CONCAT11(local_8._2_1_ - cStack_a,(char)local_8);
-  while (local_8._2_1_ < '\0') {
-    local_8._2_2_ = CONCAT11(local_8._2_1_ + '<',(char)local_8);
-    local_8._1_3_ = CONCAT12(local_8._1_1_ + -1,local_8._2_2_);
+  __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(__ghidra_piece(unsigned char, local_8, 2) - cStack_a,(char)local_8);
+  while (__ghidra_piece(unsigned char, local_8, 2) < '\0') {
+    __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(__ghidra_piece(unsigned char, local_8, 2) + '<',(char)local_8);
+    __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) + -1,__ghidra_piece(unsigned short, local_8, 2));
   }
   cStack_b = (char)((uint)uVar3 >> 0x10);
-  local_8._1_3_ = CONCAT12(local_8._1_1_ - cStack_b,local_8._2_2_);
-  while (local_8._1_1_ < '\0') {
-    local_8._1_3_ = CONCAT12(local_8._1_1_ + '\x18',local_8._2_2_);
+  __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) - cStack_b,__ghidra_piece(unsigned short, local_8, 2));
+  while (__ghidra_piece(unsigned char, local_8, 1) < '\0') {
+    __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) + '\x18',__ghidra_piece(unsigned short, local_8, 2));
     iVar2 = iVar2 + -1;
   }
   uVar3 = days_to_date(iVar2);
@@ -2821,7 +8454,7 @@ undefined4 leap_opportunity_date(void)
   
   uVar3 = get_gps_date();
   uVar1 = (uVar3 >> 8 & 0xff) - 1;
-  local_8._0_2_ = (undefined2)(uVar3 >> 0x10);
+  __ghidra_piece(unsigned short, local_8, 0) = (undefined2)(uVar3 >> 0x10);
   if (uVar1 < 0xc) {
                     /* WARNING: Switch is manually overridden */
     switch((short)uVar1) {
@@ -2830,14 +8463,14 @@ undefined4 leap_opportunity_date(void)
     case 3:
     case 4:
     case 5:
-      local_8 = CONCAT22(local_8._0_2_,0x600);
-      local_8 = CONCAT31(local_8._0_3_,0x1e);
+      local_8 = CONCAT22(__ghidra_piece(unsigned short, local_8, 0),0x600);
+      local_8 = CONCAT31(__ghidra_piece(__ghidra_u3, local_8, 0).v,0x1e);
       break;
     case 6:
     case 7:
     case 8:
-      local_8 = CONCAT22(local_8._0_2_,0x900);
-      local_8 = CONCAT31(local_8._0_3_,0x1e);
+      local_8 = CONCAT22(__ghidra_piece(unsigned short, local_8, 0),0x900);
+      local_8 = CONCAT31(__ghidra_piece(__ghidra_u3, local_8, 0).v,0x1e);
       break;
     case 9:
       sVar2 = 0xc;
@@ -2848,8 +8481,8 @@ undefined4 leap_opportunity_date(void)
 switchD_0001162c_caseD_1:
     sVar2 = 3;
 LAB_00011672:
-    local_8 = CONCAT22(local_8._0_2_,sVar2 << 8);
-    local_8 = CONCAT31(local_8._0_3_,0x1f);
+    local_8 = CONCAT22(__ghidra_piece(unsigned short, local_8, 0),sVar2 << 8);
+    local_8 = CONCAT31(__ghidra_piece(__ghidra_u3, local_8, 0).v,0x1f);
   }
   return local_8;
 }
@@ -2916,7 +8549,7 @@ void utc_to_local(undefined4 *param_1,undefined4 *param_2)
     cVar3 = -1;
     cVar2 = -cVar2;
   }
-  local_10 = CONCAT22(CONCAT11(local_10._0_1_,cVar1),CONCAT11(cVar2,(undefined1)local_10));
+  local_10 = CONCAT22(CONCAT11(__ghidra_piece(unsigned char, local_10, 0),cVar1),CONCAT11(cVar2,(undefined1)local_10));
   local_18 = local_10;
   if (cVar3 == '\0') {
     datetime_add(&local_18,&local_20);
@@ -2963,7 +8596,7 @@ void local_to_utc(undefined4 *param_1,undefined4 *param_2)
     cVar3 = -1;
     cVar2 = -cVar2;
   }
-  local_10 = CONCAT22(CONCAT11(local_10._0_1_,cVar1),CONCAT11(cVar2,(undefined1)local_10));
+  local_10 = CONCAT22(CONCAT11(__ghidra_piece(unsigned char, local_10, 0),cVar1),CONCAT11(cVar2,(undefined1)local_10));
   local_18 = local_10;
   if (cVar3 == '\0') {
     datetime_subtract(&local_18,&local_20);
@@ -3015,6 +8648,7 @@ int exception_hook_get(void)
 
 
 /* 00011924 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* Not a C function: an exception handler, entered by the processor through every vector of the
    primary table without a handler of its own, not called. */
@@ -3087,6 +8721,28 @@ __exception undefined8 primary_default_exception(void)
   } while( true );
 }
 
+
+#endif
+__asm__(
+	"	.globl primary_default_exception\n"
+	"	.type primary_default_exception, @function\n"
+	"	.section .text.primary_default_exception.11924,\"ax\",@progbits\n"
+	"primary_default_exception:\n"
+	"	subq.l #0x4,%sp\n"
+	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
+	"	.byte 0x61 | bsr.b 0x000118fe\n"
+	"	.reloc ., R_68K_PC8, exception_hook_get-1\n"
+	"	.byte 0\n"
+	"	move.l %d0,(0x10,%sp)\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
+	"	tst.l (%sp)\n"
+	"	beq.b .Lg_1193a\n"
+	"	rts\n"
+	".Lg_1193a:\n"
+	"	addq.l #0x4,%sp\n"
+	"	bsr.l print_exception\n"
+	"	.size primary_default_exception, .-primary_default_exception\n"
+);
 
 /* 00011942 */
 
@@ -3167,6 +8823,7 @@ char * exception_name(uint16_t vector)
 
 
 /* 00011f82 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* Not a C function: an exception handler, entered by the processor through the primary table's
    vector 66 (user_66), not called; returns through trap #5, the kernel's return from interrupt. */
@@ -3197,6 +8854,53 @@ __exception void primary_user_66(void)
   } while( true );
 }
 
+
+#endif
+__asm__(
+	"	.globl primary_user_66\n"
+	"	.type primary_user_66, @function\n"
+	"	.section .text.primary_user_66.11f82,\"ax\",@progbits\n"
+	"primary_user_66:\n"
+	"	movem.l %a6/%a5/%a1/%a0/%d1/%d0,-(%sp)\n"
+	"	move.l %a3,-(%sp)\n"
+	"	move.l %a2,-(%sp)\n"
+	"	movea.l #0x1037d6,%a2\n"
+	"	movea.l #0x1037da,%a3\n"
+	"	jsr (psos_service_29).l\n"
+	"	tst.b (%a2)\n"
+	"	bne.b .Lg_11fb6\n"
+	"	pea (0x1).w\n"
+	"	move.l (task_hmon).l,-(%sp)\n"
+	"	jsr (psos_signal_v).l\n"
+	"	addq.l #0x8,%sp\n"
+	"	move.b #0xa,(%a2)\n"
+	".Lg_11fb6:\n"
+	"	subq.b #0x1,(%a2)\n"
+	"	addq.w #0x1,(%a3)\n"
+	"	cmpi.w #0x400,(%a3)\n"
+	"	bcs.b .Lg_11fd0\n"
+	"	tst.b (internal_pps_dead).l\n"
+	"	beq.b .Lg_11fce\n"
+	"	jsr (pps_interrupt).l\n"
+	".Lg_11fce:\n"
+	"	clr.w (%a3)\n"
+	".Lg_11fd0:\n"
+	"	addq.w #0x1,(__ghidra_1037d8).l\n"
+	"	tst.b (__ghidra_10207a).l\n"
+	"	beq.b .Lg_11ffa\n"
+	"	cmpi.w #0x199,(__ghidra_1037d8).l\n"
+	"	bne.b .Lg_11ffa\n"
+	"	pea (0x200).w\n"
+	"	move.l (task_pllp).l,-(%sp)\n"
+	"	jsr (psos_signal_v).l\n"
+	"	addq.l #0x8,%sp\n"
+	".Lg_11ffa:\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	movea.l (%sp)+,%a3\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5/%a6\n"
+	"	trap #0x5\n"
+	"	.size primary_user_66, .-primary_user_66\n"
+);
 
 /* 00012004 */
 
@@ -3366,7 +9070,7 @@ ushort isqrt16(uint param_1)
   bool bVar6;
   
   if (-1 < (int)param_1) {
-    if (param_1._0_2_ != 0) {
+    if (__ghidra_piece(unsigned short, param_1, 0) != 0) {
       return 0x100;
     }
     sVar4 = 8;
@@ -3695,11 +9399,11 @@ void system_init(void)
   } while (cVar7 < '\t');
   sVar6 = record_checksum(&DAT_00100000,0x94e);
   if ((sVar6 == DAT_00100000) && (bVar4 = RSR, (bVar4 & 0xc0) == 0)) {
-    if (DAT_00100002 == 1) {
+    if (_DAT_00100002 == 1) {
       memcpy(&DAT_00101e70,(void *)0x100934,0x19);
       sVar6 = 0x155;
       pgVar8 = &gps;
-      puVar12 = (undefined4 *)&DAT_00100004;
+      puVar12 = &DAT_00100004;
       do {
         puVar11 = puVar12 + 1;
         poVar9 = &pgVar8->gmt_offset;
@@ -3733,14 +9437,14 @@ void system_init(void)
       uVar3 = *(undefined2 *)puVar11;
       ppVar10->powerup_reference_lost = (char)((ushort)uVar3 >> 8);
       ppVar10->field_005 = (char)uVar3;
-      DAT_00100002 = 1;
+      _DAT_00100002 = 1;
       DAT_001037df = '\x01';
     }
     else {
       memcpy(&DAT_00101e70,&DAT_0003094c,0x19);
       gps_init();
       pll_init();
-      DAT_00100002 = 0;
+      _DAT_00100002 = 0;
       DAT_001037df = '\0';
     }
   }
@@ -3748,7 +9452,7 @@ void system_init(void)
     memcpy(&DAT_00101e70,&DAT_0003094c,0x19);
     gps_init();
     pll_init();
-    DAT_00100002 = 1;
+    _DAT_00100002 = 1;
     DAT_001037df = '\0';
     bVar4 = PORTE0;
     PORTE0 = bVar4 & 0xbf;
@@ -3817,6 +9521,7 @@ undefined8 pps_interrupt(void)
 
 
 /* 00012e04 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* Not a C function: an exception handler, entered by the processor through the primary table's
    vector 81 (user_81), not called; returns through trap #5, the kernel's return from interrupt. */
@@ -3839,6 +9544,25 @@ __exception void primary_user_81(void)
   } while( true );
 }
 
+
+#endif
+__asm__(
+	"	.globl primary_user_81\n"
+	"	.type primary_user_81, @function\n"
+	"	.section .text.primary_user_81.12e04,\"ax\",@progbits\n"
+	"primary_user_81:\n"
+	"	andi.w #-0x101,(TFLG1).l\n"
+	"	addq.b #0x1,(internal_pps_count).l\n"
+	"	clr.w (__ghidra_1037da).l\n"
+	"	tst.b (internal_pps_dead).l\n"
+	"	bne.b .Lg_12e22\n"
+	"	.byte 0x61 | bsr.b 0x00012db6\n"
+	"	.reloc ., R_68K_PC8, pps_interrupt-1\n"
+	"	.byte 0\n"
+	".Lg_12e22:\n"
+	"	trap #0x5\n"
+	"	.size primary_user_81, .-primary_user_81\n"
+);
 
 /* 00012e24 */
 
@@ -4057,6 +9781,7 @@ undefined4 stack_measure(undefined4 param_1,undefined8 *param_2)
 
 
 /* 00013258 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* fills a new task's stacks with 0xabcd, the task record in A0
    Not a C function (register; read): its arguments and results in registers.  In: A0. */
@@ -4102,7 +9827,49 @@ __regcall undefined4 stack_fill(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl stack_fill\n"
+	"	.type stack_fill, @function\n"
+	"	.section .text.stack_fill.13258,\"ax\",@progbits\n"
+	"stack_fill:\n"
+	"	movem.l %a1/%d0,-(%sp)\n"
+	"	move.l (0x3a,%a0),%d0\n"
+	"	move.l %d0,(0x8a,%a0)\n"
+	"	move.l (0x36,%a0),%d0\n"
+	"	move.l %d0,(0x8e,%a0)\n"
+	"	bsr.w region_find_segment\n"
+	"	move.l %a1,%d0\n"
+	"	beq.w .Lg_132b2\n"
+	"	adda.l #0x12,%a1\n"
+	"	move.l %a1,(0x92,%a0)\n"
+	"	move.l (0x8e,%a0),%d0\n"
+	"	sub.l %a1,%d0\n"
+	"	asr.l #0x1,%d0\n"
+	"	subq.l #0x2,%d0\n"
+	"	bmi.w .Lg_13296\n"
+	".Lg_1328e:\n"
+	"	move.w #-0x5433,(%a1)+\n"
+	"	dbf %d0,.Lg_1328e\n"
+	".Lg_13296:\n"
+	"	move.l (0x8a,%a0),%d0\n"
+	"	movea.l (0x8e,%a0),%a1\n"
+	"	addq.l #0x4,%a1\n"
+	"	sub.l %a1,%d0\n"
+	"	asr.l #0x1,%d0\n"
+	"	subq.l #0x2,%d0\n"
+	"	bmi.w .Lg_132b2\n"
+	".Lg_132aa:\n"
+	"	move.w #-0x5433,(%a1)+\n"
+	"	dbf %d0,.Lg_132aa\n"
+	".Lg_132b2:\n"
+	"	movem.l (%sp)+,%d0/%a1\n"
+	"	rts\n"
+	"	.size stack_fill, .-stack_fill\n"
+);
+
 /* 000132b8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* finds the memory segment that holds an address, A0 the region and D0 the address
    Not a C function (register; read): its arguments and results in registers.  In: A0, D0. */
@@ -4125,7 +9892,33 @@ __regcall void region_find_segment(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl region_find_segment\n"
+	"	.type region_find_segment, @function\n"
+	"	.section .text.region_find_segment.132b8,\"ax\",@progbits\n"
+	"region_find_segment:\n"
+	"	movem.l %a2/%d1,-(%sp)\n"
+	"	movea.l (0x20,%a0),%a1\n"
+	".Lg_132c0:\n"
+	"	movea.l %a1,%a2\n"
+	"	adda.l (0xc,%a1),%a2\n"
+	"	cmp.l %a1,%d0\n"
+	"	blt.b .Lg_132ce\n"
+	"	cmp.l %a2,%d0\n"
+	"	ble.b .Lg_132d4\n"
+	".Lg_132ce:\n"
+	"	movea.l (%a1),%a1\n"
+	"	move.l %a1,%d1\n"
+	"	bne.b .Lg_132c0\n"
+	".Lg_132d4:\n"
+	"	movem.l (%sp)+,%d1/%a2\n"
+	"	rts\n"
+	"	.size region_find_segment, .-region_find_segment\n"
+);
+
 /* 000132da */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* counts the 0xabcd fill left at the bottom of a stack, A1 its bottom and D0 its top
    Not a C function (register; read): its arguments and results in registers.  In: A1, D0. */
@@ -4154,6 +9947,27 @@ __regcall undefined8 stack_unused_count(void)
   return CONCAT44(iVar2,iVar1);
 }
 
+
+#endif
+__asm__(
+	"	.globl stack_unused_count\n"
+	"	.type stack_unused_count, @function\n"
+	"	.section .text.stack_unused_count.132da,\"ax\",@progbits\n"
+	"stack_unused_count:\n"
+	"	sub.l %a1,%d0\n"
+	"	move.l %d0,%d1\n"
+	"	beq.w .Lg_132f2\n"
+	"	asr.l #0x1,%d0\n"
+	"	subq.l #0x1,%d0\n"
+	".Lg_132e6:\n"
+	"	cmpi.w #-0x5433,(%a1)+\n"
+	"	dbne %d0,.Lg_132e6\n"
+	"	addq.l #0x1,%d0\n"
+	"	asl.l #0x1,%d0\n"
+	".Lg_132f2:\n"
+	"	rts\n"
+	"	.size stack_unused_count, .-stack_unused_count\n"
+);
 
 /* 000132f4 */
 
@@ -4258,6 +10072,7 @@ uint rotate_left(uint param_1,byte param_2)
 
 
 /* 0001341a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* Not a C function: an exception handler, entered by the processor through the primary table's
    vector 39 (trap_7), not called; returns with rte. */
@@ -4270,6 +10085,18 @@ __exception undefined2 primary_trap_7(void)
   return in_stack_00000000;
 }
 
+
+#endif
+__asm__(
+	"	.globl primary_trap_7\n"
+	"	.type primary_trap_7, @function\n"
+	"	.section .text.primary_trap_7.1341a,\"ax\",@progbits\n"
+	"primary_trap_7:\n"
+	"	move.w (%sp),%d0\n"
+	"	ori.w #0x2000,(%sp)\n"
+	"	rte\n"
+	"	.size primary_trap_7, .-primary_trap_7\n"
+);
 
 /* 00013422 */
 
@@ -4347,12 +10174,13 @@ void sleep_seconds(float param_1)
 
 
 /* 000134a8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* sums the clock record from +2 to +0x32 and stores the sum and its complement
    Not a C function (register; read): its arguments and results in registers.  In: A6 char *record.
     */
 
-__regcall void clock_record_checksum(char *record __asm("a6"))
+__regcall void clock_record_checksum(char *record /* a6 */)
 
 {
   byte bVar1;
@@ -4372,13 +10200,37 @@ __regcall void clock_record_checksum(char *record __asm("a6"))
 }
 
 
+#endif
+__asm__(
+	"	.globl clock_record_checksum\n"
+	"	.type clock_record_checksum, @function\n"
+	"	.section .text.clock_record_checksum.134a8,\"ax\",@progbits\n"
+	"clock_record_checksum:\n"
+	"	lea (0x2,%a6),%a0\n"
+	"	lea (0x33,%a6),%a1\n"
+	"	moveq #0x0,%d0\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	".Lg_134b8:\n"
+	"	add.b (%a0)+,%d0\n"
+	"	cmpa.l %a1,%a0\n"
+	"	bcs.b .Lg_134b8\n"
+	"	move.b %d0,(0x1,%a6)\n"
+	"	not.b %d0\n"
+	"	move.b %d0,(%a6)\n"
+	"	move %d6,%sr\n"
+	"	rts\n"
+	"	.size clock_record_checksum, .-clock_record_checksum\n"
+);
+
 /* 000134ca */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* clock_record_checksum's loop, A6 the record
    Not a C function (register; read): its arguments and results in registers.  In: A6 char *record.
     */
 
-__regcall void clock_record_sum(char *record __asm("a6"))
+__regcall void clock_record_sum(char *record /* a6 */)
 
 {
   char *pcVar1;
@@ -4390,6 +10242,29 @@ __regcall void clock_record_sum(char *record __asm("a6"))
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl clock_record_sum\n"
+	"	.type clock_record_sum, @function\n"
+	"	.section .text.clock_record_sum.134ca,\"ax\",@progbits\n"
+	"clock_record_sum:\n"
+	"	lea (0x2,%a6),%a0\n"
+	"	lea (0x33,%a6),%a1\n"
+	"	moveq #0x0,%d0\n"
+	".Lg_134d4:\n"
+	"	add.b (%a0)+,%d0\n"
+	"	cmpa.l %a1,%a0\n"
+	"	bcs.b .Lg_134d4\n"
+	"	moveq #0x0,%d1\n"
+	"	move.b %d0,%d1\n"
+	"	not.l %d1\n"
+	"	lsl.l #0x8,%d1\n"
+	"	or.b %d0,%d1\n"
+	"	cmp.w (%a6),%d1\n"
+	"	rts\n"
+	"	.size clock_record_sum, .-clock_record_sum\n"
+);
 
 /* 000134e8 */
 
@@ -4406,6 +10281,7 @@ void clock_tick(void)
 
 
 /* 00013502 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* adds a second to the clock record at A6, carrying through the minute, hour and date and applying
@@ -4413,7 +10289,7 @@ void clock_tick(void)
    Not a C function (register; read): its arguments and results in registers.  In: A6 char *record.
     */
 
-__regcall void clock_record_advance(char *record __asm("a6"))
+__regcall void clock_record_advance(char *record /* a6 */)
 
 {
   undefined4 uVar1;
@@ -4480,14 +10356,96 @@ LAB_000135ba:
 }
 
 
+#endif
+__asm__(
+	"	.globl clock_record_advance\n"
+	"	.type clock_record_advance, @function\n"
+	"	.section .text.clock_record_advance.13502,\"ax\",@progbits\n"
+	"clock_record_advance:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	addq.l #0x1,(0x2,%a6)\n"
+	"	move.l (0x6,%a6),%d0\n"
+	"	addq.b #0x1,%d0\n"
+	"	cmp.b (0x2e,%a6),%d0\n"
+	"	blt.w .Lg_135b6\n"
+	"	tst.b (__ghidra_100bc8).l\n"
+	"	beq.b .Lg_13554\n"
+	"	clr.b (__ghidra_100bc8).l\n"
+	"	move.b #0x1,(__ghidra_102542).l\n"
+	"	move.l %d0,%d7\n"
+	"	jsr (leap_settings_clear).l\n"
+	"	move.l %d7,%d0\n"
+	"	cmpi.b #0x3b,(0x2e,%a6)\n"
+	"	bne.b .Lg_13548\n"
+	"	subq.w #0x1,(0x30,%a6)\n"
+	"	bra.b .Lg_13554\n"
+	".Lg_13548:\n"
+	"	cmpi.b #0x3d,(0x2e,%a6)\n"
+	"	bne.b .Lg_13554\n"
+	"	addq.w #0x1,(0x30,%a6)\n"
+	".Lg_13554:\n"
+	"	move.b #0x3c,(0x2e,%a6)\n"
+	"	clr.b %d0\n"
+	"	addi.w #0x100,%d0\n"
+	"	cmpi.w #0x3c00,%d0\n"
+	"	bne.b .Lg_135b6\n"
+	"	clr.w %d0\n"
+	"	swap %d0\n"
+	"	addq.b #0x1,%d0\n"
+	"	cmpi.b #0x18,%d0\n"
+	"	bne.b .Lg_135b4\n"
+	"	subi.w #0x18,%d0\n"
+	"	swap %d0\n"
+	"	move.l %d0,(0x6,%a6)\n"
+	"	move.l (0xa,%a6),%d0\n"
+	"	addq.b #0x1,%d0\n"
+	"	move.l %d0,%d7\n"
+	"	lsr.w #0x8,%d7\n"
+	"	cmp.b (0xd,%a6,%d7.w*0x1),%d0\n"
+	"	bls.b .Lg_135ae\n"
+	"	move.b #0x1,%d0\n"
+	"	addi.w #0x100,%d0\n"
+	"	cmpi.w #0xd01,%d0\n"
+	"	bne.b .Lg_135ae\n"
+	"	move.w #0x101,%d0\n"
+	"	addi.l #0x10000,%d0\n"
+	"	move.l %d0,%d7\n"
+	"	lea (0xf,%a6),%a0\n"
+	"	bsr.w clock_set_leap_year\n"
+	".Lg_135ae:\n"
+	"	move.l %d0,(0xa,%a6)\n"
+	"	bra.b .Lg_135ba\n"
+	".Lg_135b4:\n"
+	"	swap %d0\n"
+	".Lg_135b6:\n"
+	"	move.l %d0,(0x6,%a6)\n"
+	".Lg_135ba:\n"
+	"	move %d6,%sr\n"
+	"	tst.b (__ghidra_100bc9).l\n"
+	"	beq.b .Lg_135ee\n"
+	"	move.l (0x6,%a6),%d0\n"
+	"	cmp.l (__ghidra_100bca).l,%d0\n"
+	"	bne.b .Lg_135ee\n"
+	"	clr.b (__ghidra_100bc9).l\n"
+	"	move.b #0x1,(__ghidra_102542).l\n"
+	"	jsr (leap_settings_clear).l\n"
+	"	move.w (__ghidra_100bce).l,%d0\n"
+	"	add.w %d0,(0x30,%a6)\n"
+	".Lg_135ee:\n"
+	"	rts\n"
+	"	.size clock_record_advance, .-clock_record_advance\n"
+);
+
 /* 000135f0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* adds a second to the clock record's UTC pair at +0x1a and +0x1e, carrying through the date by its
    month table
    Not a C function (register; read): its arguments and results in registers.  In: A6 char *record.
     */
 
-__regcall void clock_record_advance_utc(char *record __asm("a6"))
+__regcall void clock_record_advance_utc(char *record /* a6 */)
 
 {
   undefined4 uVar1;
@@ -4531,6 +10489,81 @@ __regcall void clock_record_advance_utc(char *record __asm("a6"))
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl clock_record_advance_utc\n"
+	"	.type clock_record_advance_utc, @function\n"
+	"	.section .text.clock_record_advance_utc.135f0,\"ax\",@progbits\n"
+	"clock_record_advance_utc:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (0x1a,%a6),%d0\n"
+	"	addq.b #0x1,%d0\n"
+	"	cmp.b (0x2e,%a6),%d0\n"
+	"	blt.b .Lg_1365e\n"
+	"	clr.b %d0\n"
+	"	addi.w #0x100,%d0\n"
+	"	cmpi.w #0x3c00,%d0\n"
+	"	bne.b .Lg_1365e\n"
+	"	clr.w %d0\n"
+	"	swap %d0\n"
+	"	addq.b #0x1,%d0\n"
+	"	cmpi.b #0x18,%d0\n"
+	"	bne.b .Lg_1365c\n"
+	"	subi.w #0x18,%d0\n"
+	"	swap %d0\n"
+	"	move.l %d0,(0x1a,%a6)\n"
+	"	move.l (0x1e,%a6),%d0\n"
+	"	addq.b #0x1,%d0\n"
+	"	move.l %d0,%d7\n"
+	"	lsr.w #0x8,%d7\n"
+	"	cmp.b (0x21,%a6,%d7.w*0x1),%d0\n"
+	"	bls.b .Lg_13656\n"
+	"	move.b #0x1,%d0\n"
+	"	addi.w #0x100,%d0\n"
+	"	cmpi.w #0xd01,%d0\n"
+	"	bne.b .Lg_13656\n"
+	"	move.w #0x101,%d0\n"
+	"	addi.l #0x10000,%d0\n"
+	"	move.l %d0,%d7\n"
+	"	lea (0x23,%a6),%a0\n"
+	"	bsr.w clock_set_leap_year\n"
+	".Lg_13656:\n"
+	"	move.l %d0,(0x1e,%a6)\n"
+	"	bra.b .Lg_13662\n"
+	".Lg_1365c:\n"
+	"	swap %d0\n"
+	".Lg_1365e:\n"
+	"	move.l %d0,(0x1a,%a6)\n"
+	".Lg_13662:\n"
+	"	move %d6,%sr\n"
+	"	rts\n"
+	"	.byte 0x10,0x3c,0x00,0x3b | move.b #0x3b,D0b\n"
+	"	bra.b .Lg_13670\n"
+	"	.byte 0x10,0x3c,0x00,0x3d | move.b #0x3d,D0b\n"
+	".Lg_13670:\n"
+	"	.byte 0x48,0xe7,0x02,0x02 | movem.l {  A6 D6},-(SP)\n"
+	"	.byte 0x2c,0x7c,0x00,0x10,0x09,0xb8 | movea.l #0x1009b8,A6\n"
+	"	.byte 0x1d,0x40,0x00,0x2e | move.b D0b,(0x2e,A6)\n"
+	"	.byte 0x13,0xfc,0x00,0x01,0x00,0x10,0x0b,0xc8 | move.b #0x1,(0x00100bc8).l\n"
+	"	.byte 0x4e,0xb9,0x00,0x01,0x34,0x22 | jsr 0x00013422.l\n"
+	"	.byte 0x3f,0x00 | move.w D0w,-(SP)\n"
+	"	bsr.w clock_record_checksum\n"
+	"	.byte 0x46,0xdf | move (SP)+,SR\n"
+	"	.byte 0x4c,0xdf,0x40,0x40 | movem.l (SP)+,{  D6 A6}\n"
+	"	.byte 0x13,0xfc,0x00,0x01,0x00,0x10,0x25,0x43 | move.b #0x1,(0x00102543).l\n"
+	"	.byte 0x4e,0x75 | rts\n"
+	"	.byte 0x33,0xfc,0xff,0xff,0x00,0x10,0x0b,0xce | move.w #-0x1,(0x00100bce).l\n"
+	"	.byte 0x13,0xfc,0x00,0x01,0x00,0x10,0x0b,0xc9 | move.b #0x1,(0x00100bc9).l\n"
+	"	.byte 0x13,0xfc,0x00,0x01,0x00,0x10,0x25,0x43 | move.b #0x1,(0x00102543).l\n"
+	"	.byte 0x4e,0x75 | rts\n"
+	"	.byte 0x33,0xfc,0x00,0x01,0x00,0x10,0x0b,0xce | move.w #0x1,(0x00100bce).l\n"
+	"	.byte 0x13,0xfc,0x00,0x01,0x00,0x10,0x0b,0xc9 | move.b #0x1,(0x00100bc9).l\n"
+	"	.byte 0x13,0xfc,0x00,0x01,0x00,0x10,0x25,0x43 | move.b #0x1,(0x00102543).l\n"
+	"	.byte 0x4e,0x75 | rts\n"
+	"	.size clock_record_advance_utc, .-clock_record_advance_utc\n"
+);
 
 /* 000136d6 */
 
@@ -4687,12 +10720,13 @@ void set_timedate(int param_1)
 
 
 /* 0001380c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* checks a date and time and stores them in the clock record, marking it set if D2 says so
    Not a C function (register; read): its arguments and results in registers.  In: A6 char *record,
    D0 int date, D1 int time, D2 int mark. */
 
-__regcall void clock_record_store(char *record __asm("a6"),int date __asm("d0"),int time __asm("d1"),int mark __asm("d2"))
+__regcall void clock_record_store(char *record /* a6 */,int date /* d0 */,int time /* d1 */,int mark /* d2 */)
 
 {
   uint uVar1;
@@ -4719,14 +10753,71 @@ __regcall void clock_record_store(char *record __asm("a6"),int date __asm("d0"),
 }
 
 
+#endif
+__asm__(
+	"	.globl clock_record_store\n"
+	"	.type clock_record_store, @function\n"
+	"	.section .text.clock_record_store.1380c,\"ax\",@progbits\n"
+	"clock_record_store:\n"
+	"	andi.l #0xffffff,%d1\n"
+	"	move.l %d1,%d7\n"
+	"	cmpi.b #0x3c,%d7\n"
+	"	bcc.b .Lg_1387a\n"
+	"	lsr.w #0x8,%d7\n"
+	"	cmpi.b #0x3c,%d7\n"
+	"	bcc.b .Lg_1387a\n"
+	"	swap %d7\n"
+	"	cmpi.b #0x18,%d7\n"
+	"	bcc.b .Lg_1387a\n"
+	"	tst.b %d0\n"
+	"	beq.b .Lg_1387e\n"
+	"	move.w %d0,%d7\n"
+	"	lsr.w #0x8,%d7\n"
+	"	beq.b .Lg_1387e\n"
+	"	cmpi.b #0xd,%d7\n"
+	"	bcc.b .Lg_1387e\n"
+	"	move.l %d0,%d7\n"
+	"	lea (0x23,%a6),%a0\n"
+	"	bsr.w clock_set_leap_year\n"
+	"	move.w %d0,%d7\n"
+	"	lsr.w #0x8,%d7\n"
+	"	cmp.b (0x21,%a6,%d7.w*0x1),%d0\n"
+	"	bls.b .Lg_1385c\n"
+	"	move.l (0x1e,%a6),%d7\n"
+	"	lea (0x23,%a6),%a0\n"
+	"	bsr.w clock_set_leap_year\n"
+	"	bra.b .Lg_1387e\n"
+	".Lg_1385c:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.l %d1,(0x1a,%a6)\n"
+	"	move.l %d0,(0x1e,%a6)\n"
+	"	move %d6,%sr\n"
+	"	tst.l %d2\n"
+	"	beq.b .Lg_13876\n"
+	"	move.b #0x1,(0x2f,%a6)\n"
+	".Lg_13876:\n"
+	"	clr.b %d7\n"
+	"	bra.b .Lg_13880\n"
+	".Lg_1387a:\n"
+	"	moveq #0x2,%d7\n"
+	"	bra.b .Lg_13880\n"
+	".Lg_1387e:\n"
+	"	moveq #0x1,%d7\n"
+	".Lg_13880:\n"
+	"	rts\n"
+	"	.size clock_record_store, .-clock_record_store\n"
+);
+
 /* 00013882 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* reads the clock record's date and time until two reads agree, converts them and stores the result
    at +6 and +0xa
    Not a C function (register; read): its arguments and results in registers.  In: A6 char *record.
     */
 
-__regcall void clock_record_derive(char *record __asm("a6"))
+__regcall void clock_record_derive(char *record /* a6 */)
 
 {
   int iVar1;
@@ -4748,14 +10839,54 @@ __regcall void clock_record_derive(char *record __asm("a6"))
 }
 
 
+#endif
+__asm__(
+	"	.globl clock_record_derive\n"
+	"	.type clock_record_derive, @function\n"
+	"	.section .text.clock_record_derive.13882,\"ax\",@progbits\n"
+	"clock_record_derive:\n"
+	"	link.w %a4,#-0x8\n"
+	"	movem.l %d2,-(%sp)\n"
+	".Lg_1388a:\n"
+	"	move.l (0x1a,%a6),%d1\n"
+	"	move.l (0x1e,%a6),%d0\n"
+	"	cmp.l (0x1a,%a6),%d1\n"
+	"	bne.b .Lg_1388a\n"
+	"	move.l %d1,%d2\n"
+	"	move.l %d1,(-0x4,%a4)\n"
+	"	move.l %d0,(-0x8,%a4)\n"
+	"	pea (-0x4,%a4)\n"
+	"	pea (-0x8,%a4)\n"
+	"	jsr (utc_to_local).l\n"
+	"	lea (0x8,%sp),%sp\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	cmp.l (0x1a,%a6),%d2\n"
+	"	beq.b .Lg_138c4\n"
+	"	move %d6,%sr\n"
+	"	bra.b .Lg_1388a\n"
+	".Lg_138c4:\n"
+	"	move.l (-0x4,%a4),(0x6,%a6)\n"
+	"	move.l (-0x8,%a4),%d7\n"
+	"	move.l %d7,(0xa,%a6)\n"
+	"	lea (0xf,%a6),%a0\n"
+	"	bsr.w clock_set_leap_year\n"
+	"	move %d6,%sr\n"
+	"	movem.l (%sp)+,%d2\n"
+	"	unlk %a4\n"
+	"	rts\n"
+	"	.size clock_record_derive, .-clock_record_derive\n"
+);
+
 /* 000138e4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* sets February's days at A0, 28 or 29 by the Gregorian rule for the year in D7's high word;
    kernel_set_leap_year's copy
    Not a C function (register; read): its arguments and results in registers.  In: A0 char
    *february, D7 int year. */
 
-__regcall void clock_set_leap_year(char *february __asm("a0"),int year __asm("d7"))
+__regcall void clock_set_leap_year(char *february /* a0 */,int year /* d7 */)
 
 {
   uint uVar1;
@@ -4769,6 +10900,33 @@ __regcall void clock_set_leap_year(char *february __asm("a0"),int year __asm("d7
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl clock_set_leap_year\n"
+	"	.type clock_set_leap_year, @function\n"
+	"	.section .text.clock_set_leap_year.138e4,\"ax\",@progbits\n"
+	"clock_set_leap_year:\n"
+	"	clr.w %d7\n"
+	"	move.b #0x1c,(%a0)\n"
+	"	lsr.l #0x2,%d7\n"
+	"	tst.w %d7\n"
+	"	bne.b .Lg_13906\n"
+	"	clr.w %d7\n"
+	"	swap %d7\n"
+	"	divu.w #0x19,%d7\n"
+	"	swap %d7\n"
+	"	tst.w %d7\n"
+	"	bne.b .Lg_13904\n"
+	"	lsr.l #0x2,%d7\n"
+	"	tst.w %d7\n"
+	"	bne.b .Lg_13906\n"
+	".Lg_13904:\n"
+	"	addq.b #0x1,(%a0)\n"
+	".Lg_13906:\n"
+	"	rts\n"
+	"	.size clock_set_leap_year, .-clock_set_leap_year\n"
+);
 
 /* 00013908 */
 
@@ -5085,13 +11243,13 @@ uint timecode_update(void)
         time_next_second(&local_10,&uStack_c);
         if (tcode_format == 1) {
           sprintf(tcode_message,"rtcm? %u,T2%04d%02d%02d%02d%02d%02d%01d%01d%1c%1c%1c",0xffffffff,
-                  (uint)local_10._0_2_,(uint)local_10._2_1_,local_10 & 0xff,(uint)uStack_c._1_1_,
-                  (uint)uStack_c._2_1_,uStack_c & 0xff,(uint)bVar5,(uint)local_8,param10,param11,
+                  (uint)__ghidra_piece(unsigned short, local_10, 0),(uint)__ghidra_piece(unsigned char, local_10, 2),local_10 & 0xff,(uint)__ghidra_piece(unsigned char, uStack_c, 1),
+                  (uint)__ghidra_piece(unsigned char, uStack_c, 2),uStack_c & 0xff,(uint)bVar5,(uint)local_8,param10,param11,
                   param12);
         }
         else {
-          sprintf(tcode_message,"T2%04d%02d%02d%02d%02d%02d%01d%01d%1c%1c%1c",(uint)local_10._0_2_,
-                  (uint)local_10._2_1_,local_10 & 0xff,(uint)uStack_c._1_1_,(uint)uStack_c._2_1_,
+          sprintf(tcode_message,"T2%04d%02d%02d%02d%02d%02d%01d%01d%1c%1c%1c",(uint)__ghidra_piece(unsigned short, local_10, 0),
+                  (uint)__ghidra_piece(unsigned char, local_10, 2),local_10 & 0xff,(uint)__ghidra_piece(unsigned char, uStack_c, 1),(uint)__ghidra_piece(unsigned char, uStack_c, 2),
                   uStack_c & 0xff,(uint)bVar5,(uint)local_8,param10,param11,param12);
         }
         bVar5 = tcode_checksum(tcode_message);
@@ -5180,6 +11338,7 @@ void timecode_schedule(uint param_1)
 
 
 /* 00014020 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* Not a C function: an exception handler, entered by the processor through the primary table's
@@ -5209,6 +11368,34 @@ __exception undefined8 primary_user_86(void)
   return CONCAT44(in_D0,in_D1);
 }
 
+
+#endif
+__asm__(
+	"	.globl primary_user_86\n"
+	"	.type primary_user_86, @function\n"
+	"	.section .text.primary_user_86.14020,\"ax\",@progbits\n"
+	"primary_user_86:\n"
+	"	movem.l %a6/%a5/%a1/%a0/%d1/%d0,-(%sp)\n"
+	"	tst.w (__ghidra_100bd2).l\n"
+	"	bne.b .Lg_14056\n"
+	"	move.b (tcode_length).l,%d0\n"
+	"	beq.b .Lg_14044\n"
+	"	move.b %d0,-(%sp)\n"
+	"	pea (0x10386f).l\n"
+	"	jsr (drtb_send_async).l\n"
+	"	addq.l #0x6,%sp\n"
+	".Lg_14044:\n"
+	"	andi.w #-0x2001,(TFLG1).l\n"
+	"	andi.w #-0x2001,(TMSK1).l\n"
+	"	bra.b .Lg_14064\n"
+	".Lg_14056:\n"
+	"	subq.w #0x1,(__ghidra_100bd2).l\n"
+	"	andi.w #-0x2001,(TFLG1).l\n"
+	".Lg_14064:\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5/%a6\n"
+	"	rte\n"
+	"	.size primary_user_86, .-primary_user_86\n"
+);
 
 /* 0001406a */
 
@@ -5255,6 +11442,7 @@ void es_schedule(uint param_1)
 
 
 /* 000140e4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* Not a C function: an exception handler, entered by the processor through the primary table's
@@ -5284,6 +11472,34 @@ __exception undefined8 primary_user_87(void)
   return CONCAT44(in_D0,in_D1);
 }
 
+
+#endif
+__asm__(
+	"	.globl primary_user_87\n"
+	"	.type primary_user_87, @function\n"
+	"	.section .text.primary_user_87.140e4,\"ax\",@progbits\n"
+	"primary_user_87:\n"
+	"	movem.l %a6/%a5/%a1/%a0/%d1/%d0,-(%sp)\n"
+	"	tst.w (__ghidra_100bd0).l\n"
+	"	bne.b .Lg_1411a\n"
+	"	move.b (es_length).l,%d0\n"
+	"	beq.b .Lg_14108\n"
+	"	move.b %d0,-(%sp)\n"
+	"	pea (0x103832).l\n"
+	"	jsr (sci_send_async).l\n"
+	"	addq.l #0x6,%sp\n"
+	".Lg_14108:\n"
+	"	andi.w #-0x4001,(TFLG1).l\n"
+	"	andi.w #-0x4001,(TMSK1).l\n"
+	"	bra.b .Lg_14128\n"
+	".Lg_1411a:\n"
+	"	subq.w #0x1,(__ghidra_100bd0).l\n"
+	"	andi.w #-0x4001,(TFLG1).l\n"
+	".Lg_14128:\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5/%a6\n"
+	"	rte\n"
+	"	.size primary_user_87, .-primary_user_87\n"
+);
 
 /* 0001412e */
 
@@ -5317,8 +11533,8 @@ void float_exception_report(uint32_t code)
     if ((0x13ffff < code) ||
        (pcVar2 = 
         "  ?????   ftoi()  ftod()  dtof()  dtoi() cmp32() cmp64() add32() add64() sub32() sub64() mul32() mul64() div32() div64()  itof() dtoui() ftoui() uitod() uitof()  ????? "
-       , code._0_2_ == 0)) {
-      code._0_2_ = 0x13;
+       , __ghidra_piece(unsigned short, code, 0) == 0)) {
+      __ghidra_piece(unsigned short, code, 0) = 0x13;
       pcVar2 = 
       "  ?????   ftoi()  ftod()  dtof()  dtoi() cmp32() cmp64() add32() add64() sub32() sub64() mul32() mul64() div32() div64()  itof() dtoui() ftoui() uitod() uitof()  ????? "
       ;
@@ -5328,11 +11544,11 @@ void float_exception_report(uint32_t code)
     pcVar2 = 
     "  acos() acosf()  asin() asinf()  atan() atanf() atan2()atan2f()  ceil() ceilf()   cos()  cosf()  cosh() coshf()   exp()  expf()  fabs() fabsf() floor()floorf()  fmod() fmodf() frexp()frexpf() ldexp()ldexpf()   log()  logf() log10()log10f()  modf() modff()   pow()  powf()   sin()  sinf()  sinh() sinhf()  sqrt() sqrtf()   tan()  tanf()  tanh() tanhf()  frem() fremf()  ????? "
     ;
-    if ((0xed < code._0_2_) || (code._0_2_ == 0)) {
-      code._0_2_ = 0xed;
+    if ((0xed < __ghidra_piece(unsigned short, code, 0)) || (__ghidra_piece(unsigned short, code, 0) == 0)) {
+      __ghidra_piece(unsigned short, code, 0) = 0xed;
     }
   }
-  pcVar2 = pcVar2 + (short)((code._0_2_ & 0x3f) << 3);
+  pcVar2 = pcVar2 + (short)((__ghidra_piece(unsigned short, code, 0) & 0x3f) << 3);
   sVar1 = 7;
   do {
     pcVar4 = pcVar3;
@@ -5353,6 +11569,7 @@ void float_exception_report(uint32_t code)
 
 
 /* 000144c8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* Not a C function: an exception handler, entered by the processor through the primary table's
    vector 24 (spurious_interrupt), not called; returns with rte. */
@@ -5364,7 +11581,18 @@ __exception void primary_spurious_interrupt(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl primary_spurious_interrupt\n"
+	"	.type primary_spurious_interrupt, @function\n"
+	"	.section .text.primary_spurious_interrupt.144c8,\"ax\",@progbits\n"
+	"primary_spurious_interrupt:\n"
+	"	rte\n"
+	"	.size primary_spurious_interrupt, .-primary_spurious_interrupt\n"
+);
+
 /* 000144ca */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: This function may have set the stack pointer */
 /* WARNING: Removing unreachable block (ram,0x00014798) */
@@ -5522,7 +11750,7 @@ __exception void primary_reset(void)
       if ((undefined2 *)0x10ffff < puVar8) {
         uVar3 = 0;
         uVar4 = 2;
-        puVar8 = &DAT_00100002;
+        puVar8 = (undefined2 *)&DAT_00100002;
         sVar5 = 0xe;
         do {
           uVar2 = DAT_00100000;
@@ -5581,7 +11809,340 @@ LAB_000148e6:
 }
 
 
+#endif
+__asm__(
+	"	.globl primary_reset\n"
+	"	.type primary_reset, @function\n"
+	"	.section .text.primary_reset.144ca,\"ax\",@progbits\n"
+	"primary_reset:\n"
+	"	move.b #0xcc,(SYPCR).l\n"
+	"	move.w #0x2bff,(CSPAR0).l\n"
+	"	move.w #0x3af,(CSPAR1).l\n"
+	"	move.w #0x5,(CSBARBT).l\n"
+	"	move.w #0x6870,(CSORBT).l\n"
+	"	move.w #0x1003,(CSBAR0).l\n"
+	"	move.w #0x6830,(CSOR0).l\n"
+	"	move.w #0x405,(CSBAR1).l\n"
+	"	move.w #0x6870,(CSOR1).l\n"
+	"	move.w #0x1003,(CSBAR2).l\n"
+	"	move.w #0x5030,(CSOR2).l\n"
+	"	move.w #0x1003,(CSBAR3).l\n"
+	"	move.w #0x3030,(CSOR3).l\n"
+	"	move.w #0x5000,(CSBAR4).l\n"
+	"	move.w #0x7830,(CSOR4).l\n"
+	"	move.w #0x3003,(CSBAR5).l\n"
+	"	move.w #0x7b30,(CSOR5).l\n"
+	"	move.w #0x5,(CSBAR6).l\n"
+	"	move.w #0x7070,(CSOR6).l\n"
+	"	move.w #0x405,(CSBAR7).l\n"
+	"	move.w #0x7070,(CSOR7).l\n"
+	"	move.w #0x2000,(CSBAR8).l\n"
+	"	move.w #0x3bf0,(CSOR8).l\n"
+	"	move.w #0x4001,(CSBAR9).l\n"
+	"	move.w #0x78f0,(CSOR9).l\n"
+	"	move.w #-0x8,(CSBAR10).l\n"
+	"	move.w #0x2bc4,(CSOR10).l\n"
+	"	move.w #0x14a,(SIMCR).l\n"
+	"	move.w #-0x3100,(SYNCR).l\n"
+	"	move.w #0x8,(PITR).l\n"
+	"	move.b #0x32,(PEPAR).l\n"
+	"	move.b #0x40,(PORTE0).l\n"
+	"	move.b #0x40,(DDRE).l\n"
+	"	move.b #0x4,(PFPAR).l\n"
+	"	move.b #0xf7,(PORTF0).l\n"
+	"	move.b #0xf7,(DDRF).l\n"
+	"	move.b #0xff,(DUART_START_SOPBC).l\n"
+	"	move.b #0x0,(DUART_STOP_ROPBC).l\n"
+	"	moveq #0x0,%d0\n"
+	"	move.l %d0,%d1\n"
+	"	move.l %d0,%d2\n"
+	"	move.l %d0,%d3\n"
+	"	move.l %d0,%d4\n"
+	"	move.l %d0,%d5\n"
+	"	move.l %d0,%d6\n"
+	"	move.l %d0,%d7\n"
+	"	movea.l %d0,%a0\n"
+	"	movea.l %d0,%a2\n"
+	"	movea.l %d0,%a3\n"
+	"	movea.l %d0,%a4\n"
+	"	movea.l %d0,%a5\n"
+	"	movea.l %d0,%a6\n"
+	"	movea.l #0x1009ec,%a0\n"
+	"	movea.l #0x110000,%a1\n"
+	".Lg_14622:\n"
+	"	move.l %d0,(%a0)+\n"
+	"	cmpa.l %a0,%a1\n"
+	"	bhi.b .Lg_14622\n"
+	"	move.b #0x0,(__ghidra_100c30).l\n"
+	"	bra.b .Lg_1463a\n"
+	".Lg_14632:\n"
+	"	.byte 0xaa,0xaa,0xaa,0xaa\n"
+	".Lg_14636:\n"
+	"	.byte 0x55,0x55,0x55,0x55\n"
+	".Lg_1463a:\n"
+	"	clr.w (__ghidra_100c24).l\n"
+	"	move.b #0x55,%d0\n"
+	"	cmpi.b #0x55,%d0\n"
+	"	bne.w .Lg_147a8\n"
+	"	move.l #-0x55555556,%d0\n"
+	"	cmpi.l #-0x55555556,%d0\n"
+	"	bne.w .Lg_147a8\n"
+	"	move.l #0x55555555,%d0\n"
+	"	move.l %d0,%d1\n"
+	"	move.l %d1,%d2\n"
+	"	move.l %d2,%d3\n"
+	"	move.l %d3,%d4\n"
+	"	move.l %d4,%d5\n"
+	"	move.l %d5,%d6\n"
+	"	move.l %d6,%d7\n"
+	"	movea.l %d7,%a0\n"
+	"	movea.l %a0,%a1\n"
+	"	movea.l %a1,%a2\n"
+	"	movea.l %a2,%a3\n"
+	"	movea.l %a3,%a4\n"
+	"	movea.l %a4,%a5\n"
+	"	movea.l %a5,%a6\n"
+	"	cmpa.l #0x55555555,%a6\n"
+	"	bne.w .Lg_147a8\n"
+	"	move.l #-0x55555556,%d0\n"
+	"	move.l %d0,%d1\n"
+	"	move.l %d1,%d2\n"
+	"	move.l %d2,%d3\n"
+	"	move.l %d3,%d4\n"
+	"	move.l %d4,%d5\n"
+	"	move.l %d5,%d6\n"
+	"	move.l %d6,%d7\n"
+	"	movea.l %d7,%a0\n"
+	"	movea.l %a0,%a1\n"
+	"	movea.l %a1,%a2\n"
+	"	movea.l %a2,%a3\n"
+	"	movea.l %a3,%a4\n"
+	"	movea.l %a4,%a5\n"
+	"	movea.l %a5,%a6\n"
+	"	cmpa.l #-0x55555556,%a6\n"
+	"	bne.w .Lg_147a8\n"
+	"	move.l #0x55555555,%d1\n"
+	"	move.l %d1,%d2\n"
+	"	or.l %d0,%d2\n"
+	"	cmpi.l #-0x1,%d2\n"
+	"	bne.w .Lg_147a8\n"
+	"	move.l %d1,%d3\n"
+	"	and.l %d0,%d3\n"
+	"	bne.w .Lg_147a8\n"
+	"	move.l %d1,%d4\n"
+	"	eor.l %d1,%d4\n"
+	"	bne.w .Lg_147a8\n"
+	"	movea.l %sp,%a6\n"
+	"	move.l %d0,-(%sp)\n"
+	"	cmpa.l %a6,%sp\n"
+	"	beq.w .Lg_147a6\n"
+	"	cmp.l (%sp)+,%d0\n"
+	"	bne.w .Lg_147a8\n"
+	"	cmpa.l %a6,%sp\n"
+	"	bne.w .Lg_147a8\n"
+	"	subq.l #0x4,%sp\n"
+	"	move.l %d1,(%sp)\n"
+	"	move.l (%sp),(%sp)\n"
+	"	cmp.l (%sp),%d1\n"
+	"	bne.w .Lg_147a6\n"
+	"	lea (-0x1a85,%sp),%a6\n"
+	"	move.l %d0,(0x1a85,%a6)\n"
+	"	cmp.l (0x1a85,%a6),%d0\n"
+	"	bne.w .Lg_147a6\n"
+	"	bra.b .Lg_14710\n"
+	".Lg_1470c:\n"
+	"	.byte 0xaa,0xaa,0xaa,0xaa\n"
+	".Lg_14710:\n"
+	"	cmp.l (.Lg_1470c,%pc),%d0\n"
+	"	bne.w .Lg_147a6\n"
+	"	moveq #0x1,%d3\n"
+	"	cmp.b (.Lg_1470c,%pc,%d3.w*0x1),%d0\n"
+	"	bne.w .Lg_147a6\n"
+	"	cmp.l (.Lg_14632).l,%d0\n"
+	"	bne.w .Lg_147a6\n"
+	"	cmp.l (.Lg_14636).l,%d1\n"
+	"	bne.w .Lg_147a6\n"
+	"	moveq #0x28,%d6\n"
+	"	divs.w #0x3e8,%d6\n"
+	"	cmpi.l #0x280000,%d6\n"
+	"	bne.w .Lg_147a6\n"
+	"	move.l %d0,%d7\n"
+	"	muls.w %d1,%d7\n"
+	"	cmpi.l #-0x1c71e38e,%d7\n"
+	"	bne.w .Lg_147a6\n"
+	"	move.l %d1,%d2\n"
+	"	lsl.l #0x1,%d2\n"
+	"	cmp.l %d2,%d0\n"
+	"	bne.w .Lg_147a6\n"
+	"	ror.l #0x7,%d2\n"
+	"	cmp.l %d2,%d1\n"
+	"	bne.w .Lg_147a6\n"
+	"	bclr.l #0x1,%d0\n"
+	"	beq.w .Lg_147a6\n"
+	"	moveq #0x1,%d3\n"
+	"	bset.l %d3,%d0\n"
+	"	bne.w .Lg_147a6\n"
+	"	move.l %d1,(%sp)\n"
+	"	bset.b #0x3,(%sp)\n"
+	"	bne.w .Lg_147a6\n"
+	"	moveq #0x3,%d4\n"
+	"	bclr.b %d4,(%sp)\n"
+	"	beq.w .Lg_147a6\n"
+	"	move.l %d1,(%sp)\n"
+	"	lea (0x1,%sp),%a0\n"
+	"	lea (0x2,%sp),%a1\n"
+	"	abcd -(%a0),-(%a1)\n"
+	"	bcc.w .Lg_147a6\n"
+	"	cmpi.b #0x10,(%a1)\n"
+	"	bne.w .Lg_147a6\n"
+	"	addq.l #0x4,%sp\n"
+	"	clr.w %d0\n"
+	"	bra.b .Lg_147b0\n"
+	".Lg_147a6:\n"
+	"	addq.l #0x4,%sp\n"
+	".Lg_147a8:\n"
+	"	ori.w #0x1,(__ghidra_100c24).l\n"
+	".Lg_147b0:\n"
+	"	tst.w (__ghidra_100c24).l\n"
+	"	beq.b .Lg_147c8\n"
+	"	move.b #0x10,(DUART_STOP_ROPBC).l\n"
+	"	ori.b #0x10,(__ghidra_100c30).l\n"
+	".Lg_147c8:\n"
+	"	clr.w (__ghidra_100c26).l\n"
+	"	clr.w (__ghidra_100c28).l\n"
+	"	clr.l (__ghidra_100c2a).l\n"
+	"	movea.l #0x100000,%a0\n"
+	"	movea.l #0x110000,%a1\n"
+	".Lg_147e6:\n"
+	"	clr.l %d0\n"
+	"	moveq #0x17,%d1\n"
+	".Lg_147ea:\n"
+	"	move.w (%a0)+,-(%sp)\n"
+	"	dbf %d1,.Lg_147ea\n"
+	"	move.l #-0x55555556,%d1\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	moveq #0xb,%d1\n"
+	".Lg_14810:\n"
+	"	move.l (%a0)+,%d3\n"
+	"	eori.l #-0x55555556,%d3\n"
+	"	or.l %d3,%d0\n"
+	"	dbf %d1,.Lg_14810\n"
+	"	move.l #0x55555555,%d1\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	moveq #0xb,%d1\n"
+	".Lg_1483e:\n"
+	"	move.l (%a0)+,%d3\n"
+	"	eori.l #0x55555555,%d3\n"
+	"	or.l %d3,%d0\n"
+	"	dbf %d1,.Lg_1483e\n"
+	"	moveq #0x17,%d1\n"
+	".Lg_1484e:\n"
+	"	move.w (%sp)+,-(%a0)\n"
+	"	dbf %d1,.Lg_1484e\n"
+	"	move.l %d0,%d1\n"
+	"	beq.w .Lg_14878\n"
+	"	moveq #0x10,%d2\n"
+	"	lsr.l %d2,%d1\n"
+	"	or.l %d1,%d0\n"
+	"	andi.l #0xffff,%d0\n"
+	"	or.w %d0,(__ghidra_100c28).l\n"
+	"	ori.w #0x1,(__ghidra_100c26).l\n"
+	"	bra.w .Lg_148e6\n"
+	".Lg_14878:\n"
+	"	lea (0x30,%a0),%a0\n"
+	"	movea.l %a0,%a2\n"
+	"	lea (0x30,%a2),%a2\n"
+	"	cmpa.l %a2,%a1\n"
+	"	bhi.w .Lg_147e6\n"
+	"	cmpa.l %a0,%a1\n"
+	"	bls.w .Lg_14896\n"
+	"	lea (-0x30,%a1),%a0\n"
+	"	bra.w .Lg_147e6\n"
+	".Lg_14896:\n"
+	"	movea.l #0x100000,%a0\n"
+	"	movea.l #0x100000,%a1\n"
+	"	clr.l %d2\n"
+	"	moveq #0x2,%d0\n"
+	"	adda.l #0x2,%a1\n"
+	"	move.w #0xf,%d1\n"
+	"	subq.w #0x1,%d1\n"
+	".Lg_148b2:\n"
+	"	movea.w (%a0),%a2\n"
+	"	movea.w (%a1),%a3\n"
+	"	move.w #-0x5556,(%a0)\n"
+	"	move.w #0x5555,(%a1)\n"
+	"	move.w (%a0),%d3\n"
+	"	cmpi.w #0x5555,%d3\n"
+	"	bne.w .Lg_148d2\n"
+	"	ori.w #0x2,(__ghidra_100c26).l\n"
+	"	or.l %d0,%d2\n"
+	".Lg_148d2:\n"
+	"	move.w %a2,(%a0)\n"
+	"	move.w %a3,(%a1)\n"
+	"	adda.l %d0,%a1\n"
+	"	lsl.l #0x1,%d0\n"
+	"	dbf %d1,.Lg_148b2\n"
+	"	lsr.l #0x1,%d2\n"
+	"	or.l %d2,(__ghidra_100c2a).l\n"
+	".Lg_148e6:\n"
+	"	tst.w (__ghidra_100c26).l\n"
+	"	beq.b .Lg_148fe\n"
+	"	move.b #0x20,(DUART_STOP_ROPBC).l\n"
+	"	ori.b #0x20,(__ghidra_100c30).l\n"
+	".Lg_148fe:\n"
+	"	jsr (duart_early_init).l\n"
+	"	tst.w (__ghidra_100c2e).l\n"
+	"	beq.b .Lg_1491c\n"
+	"	move.b #0x40,(DUART_STOP_ROPBC).l\n"
+	"	ori.b #0x40,(__ghidra_100c30).l\n"
+	".Lg_1491c:\n"
+	"	jsr (primary_unpack_records).l\n"
+	"	lea (0x10fffe).l,%sp\n"
+	"	pea (0x0).l\n"
+	"	suba.l %a6,%a6\n"
+	"	link.w %a6,#0x0\n"
+	"	move.w #0x7480,(float_control).l\n"
+	"	clr.w (float_status).l\n"
+	"	clr.w (atexit_count).l\n"
+	"	clr.l (errno).l\n"
+	"	move.l #0x1,(rand_seed).l\n"
+	"	clr.l -(%sp)\n"
+	"	clr.l -(%sp)\n"
+	"	clr.l -(%sp)\n"
+	"	jsr (primary_start).l\n"
+	"	lea (0xc,%sp),%sp\n"
+	"	move.l %d0,-(%sp)\n"
+	"	jsr (program_exit:w,%pc)\n"
+	"	nop\n"
+	".Lg_14970:\n"
+	"	jmp (.Lg_14970,%pc)\n"
+	"	.size primary_reset, .-primary_reset\n"
+);
+
 /* 00014974 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* Not a C function: an exception handler, entered by the processor through the primary table's
    vector 43 (trap_11), not called. */
@@ -5595,7 +12156,21 @@ __exception void primary_trap_11(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl primary_trap_11\n"
+	"	.type primary_trap_11, @function\n"
+	"	.section .text.primary_trap_11.14974,\"ax\",@progbits\n"
+	"primary_trap_11:\n"
+	"	move #0x2700,%sr\n"
+	"	jsr (shutdown).l\n"
+	"	movea.l (__ghidra_ac).w,%a0\n"
+	"	jmp (%a0)\n"
+	"	.size primary_trap_11, .-primary_trap_11\n"
+);
+
 /* 00014984 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: This function may have set the stack pointer */
 /* WARNING: Removing unreachable block (ram,0x00014798) */
@@ -5772,7 +12347,7 @@ __exception void primary_trap_12(void)
       if ((undefined2 *)0x10ffff < puVar9) {
         uVar4 = 0;
         uVar5 = 2;
-        puVar13 = &DAT_00100002;
+        puVar13 = (undefined2 *)&DAT_00100002;
         sVar6 = 0xe;
         do {
           uVar3 = DAT_00100000;
@@ -5830,6 +12405,23 @@ LAB_000148e6:
   } while( true );
 }
 
+
+#endif
+__asm__(
+	"	.globl primary_trap_12\n"
+	"	.type primary_trap_12, @function\n"
+	"	.section .text.primary_trap_12.14984,\"ax\",@progbits\n"
+	"primary_trap_12:\n"
+	"	move #0x2700,%sr\n"
+	"	jsr (shutdown).l\n"
+	"	reset\n"
+	"	movea.l #0x10000,%a0\n"
+	"	movec %a0,%vbr\n"
+	"	movea.l (__ghidra_10004).l,%a0\n"
+	"	movea.l (primary_vectors).l,%sp\n"
+	"	jmp (%a0)\n"
+	"	.size primary_trap_12, .-primary_trap_12\n"
+);
 
 /* 000149a8 */
 
@@ -5895,371 +12487,19 @@ void program_end_report(uint param_1)
 
 
 /* 00014aae */
-
-/* Not a C function: an exception handler, entered by the processor through the primary table's
-   vector 35 (trap_3), not called. */
-
-__exception void primary_trap_3(undefined2 param_1)
-
-{
-  int iVar1;
-  undefined2 *puVar2;
-  undefined1 *puVar3;
-  code *pcVar4;
-  byte bVar5;
-  int *piVar6;
-  undefined4 in_D0;
-  uint uVar7;
-  ushort uVar8;
-  undefined4 in_D1;
-  undefined4 uVar9;
-  undefined4 unaff_D2;
-  undefined4 unaff_D3;
-  undefined4 unaff_D4;
-  undefined4 unaff_D5;
-  undefined4 unaff_D6;
-  undefined4 unaff_D7;
-  undefined4 uVar10;
-  undefined4 in_A0;
-  undefined4 extraout_A0;
-  undefined4 extraout_A0_00;
-  undefined2 *puVar12;
-  undefined4 in_A1;
-  undefined4 extraout_A1;
-  undefined4 extraout_A1_00;
-  undefined4 unaff_A2;
-  undefined4 unaff_A3;
-  undefined4 unaff_A4;
-  undefined4 unaff_A5;
-  undefined4 unaff_A6;
-  undefined2 *puVar13;
-  undefined2 *puVar14;
-  undefined2 *in_USP;
-  undefined8 uVar15;
-  ushort in_stack_00000000;
-  undefined4 in_stack_00000002;
-  short sVar11;
-  
-  piVar6 = psos_config;
-  uVar15 = CONCAT44(in_D0,in_D1);
-  *(short *)(psos_config + 9) = *(short *)(psos_config + 9) + 1;
-  if ((ushort)unaff_D7 < 0x27) {
-    if (piVar6[0xc] != 0) {
-      (**(code **)(piVar6[0xc] + 4))();
-    }
-    sVar11 = (ushort)unaff_D7 << 2;
-    uVar10 = CONCAT22((short)((uint)unaff_D7 >> 0x10),sVar11);
-    uVar15 = (*(code *)(sVar11 + 0x14b6e))();
-    in_A0 = extraout_A0;
-    in_A1 = extraout_A1;
-  }
-  else {
-    uVar10 = CONCAT31((int3)((uint)unaff_D7 >> 8),0x55);
-  }
-  iVar1 = *piVar6;
-  if ((in_stack_00000000 & 0x700) != 0) {
-    *(short *)(piVar6 + 9) = *(short *)(piVar6 + 9) + -1;
-    return;
-  }
-  while (uVar9 = (undefined4)uVar15, piVar6[0x1b] != 0) {
-    uVar15 = kernel_process_ticks();
-    in_A0 = extraout_A0_00;
-    in_A1 = extraout_A1_00;
-  }
-  bVar5 = *(byte *)((int)piVar6 + 0x8b);
-  *(byte *)((int)piVar6 + 0x8b) = bVar5 | 0x80;
-  if ((bVar5 & 0x80) == 0) {
-    uVar9 = CONCAT22((short)((ulonglong)uVar15 >> 0x10),*(undefined2 *)(iVar1 + 0x54));
-  }
-  if ((iVar1 != piVar6[1]) &&
-     (((*(byte *)(iVar1 + 0x11) & 0x80) == 0 || (*(char *)(iVar1 + 0x13) != '\0')))) {
-    *(int *)(iVar1 + 0x4e) = (int)((ulonglong)uVar15 >> 0x20);
-    *(undefined4 *)(iVar1 + 0x52) = uVar9;
-    *(undefined4 *)(iVar1 + 0x56) = unaff_D2;
-    *(undefined4 *)(iVar1 + 0x5a) = unaff_D3;
-    *(undefined4 *)(iVar1 + 0x5e) = unaff_D4;
-    *(undefined4 *)(iVar1 + 0x62) = unaff_D5;
-    *(undefined4 *)(iVar1 + 0x66) = unaff_D6;
-    *(undefined4 *)(iVar1 + 0x6a) = uVar10;
-    *(undefined4 *)(iVar1 + 0x6e) = in_A0;
-    *(undefined4 *)(iVar1 + 0x72) = in_A1;
-    *(undefined4 *)(iVar1 + 0x76) = unaff_A2;
-    *(undefined4 *)(iVar1 + 0x7a) = unaff_A3;
-    *(undefined4 *)(iVar1 + 0x7e) = unaff_A4;
-    *(undefined4 *)(iVar1 + 0x4a) = unaff_A5;
-    *(undefined4 *)(iVar1 + 0x46) = unaff_A6;
-    uVar7 = *(uint *)(iVar1 + 0x42) & 0xffff1000;
-    uVar8 = (ushort)uVar7;
-    *(uint *)(iVar1 + 0x42) = CONCAT22((short)(uVar7 >> 0x10),in_stack_00000000 | uVar8);
-    *(undefined4 *)(iVar1 + 0x3e) = in_stack_00000002;
-    puVar13 = (undefined2 *)&stack0x00000008;
-    *(undefined2 *)(iVar1 + 0x34) = param_1;
-    *(undefined2 **)(iVar1 + 0x3a) = in_USP;
-    puVar3 = (undefined1 *)piVar6[8];
-    if ((in_stack_00000000 & 0x1000) == 0 && uVar8 == 0) {
-      for (; (undefined2 *)puVar3 != puVar13; puVar13 = puVar13 + 1) {
-        in_USP = in_USP + -1;
-        *in_USP = *puVar13;
-      }
-      *(undefined2 **)(iVar1 + 0x36) = in_USP;
-    }
-    else {
-      *(undefined1 **)(iVar1 + 0x36) = &stack0x00000008;
-      puVar13 = (undefined2 *)puVar3;
-    }
-    iVar1 = piVar6[1];
-    pcVar4 = (code *)piVar6[0x2d];
-    if (pcVar4 != (code *)0x0) {
-      *(undefined4 *)((int)puVar13 + -4) = 0x1602e;
-      (*pcVar4)();
-    }
-    *piVar6 = iVar1;
-    puVar12 = *(undefined2 **)(iVar1 + 0x36);
-    puVar2 = *(undefined2 **)(iVar1 + 0x3a);
-    uVar8 = *(ushort *)(iVar1 + 0x44);
-    if ((uVar8 & 0x1000) == 0) {
-      for (; puVar2 != puVar12; puVar12 = puVar12 + 1) {
-        puVar14 = (undefined2 *)((int)puVar13 + -2);
-        puVar13 = (undefined2 *)((int)puVar13 + -2);
-        *puVar14 = *puVar12;
-      }
-    }
-    else {
-      uVar8 = uVar8 & 0xefff;
-      puVar13 = puVar12;
-    }
-    puVar13[-1] = *(undefined2 *)(iVar1 + 0x34);
-    *(undefined4 *)(puVar13 + -3) = *(undefined4 *)(iVar1 + 0x3e);
-    puVar13[-4] = uVar8;
-    *(undefined4 *)(puVar13 + -6) = *(undefined4 *)(iVar1 + 0x46);
-    *(undefined4 *)(puVar13 + -8) = *(undefined4 *)(iVar1 + 0x4a);
-    *(undefined4 *)(puVar13 + -10) = *(undefined4 *)(iVar1 + 0x66);
-    kernel_switch_task();
-    return;
-  }
-  *(short *)(piVar6 + 9) = *(short *)(piVar6 + 9) + -1;
-  if (piVar6[0xc] != 0) {
-                    /* WARNING: Could not recover jumptable at 0x00014cbc. Too many branches */
-                    /* WARNING: Treating indirect jump as call */
-    (**(code **)(piVar6[0xc] + 8))();
-    return;
-  }
-  return;
-}
-
+/* a thunk to kernel_dispatch_service, whose name the decompiler gives it */
 
 /* 00014ab2 */
-
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-/* Not a C function: an exception handler, entered by the processor through the primary table's
-   vector 36 (trap_4), not called. */
-
-__exception void primary_trap_4(char function,int device)
-
-{
-  int *piVar1;
-  ushort uVar2;
-  undefined1 unaff_0000001e;
-  
-  uVar2 = (ushort)device;
-  if (CONCAT11(unaff_0000001e,function) < 6) {
-    piVar1 = (int *)(psos_config + 0x30);
-    if (*piVar1 != 0) {
-      *(short *)(psos_config + 0x24) = *(short *)(psos_config + 0x24) + 1;
-      uVar2 = (**(code **)(*piVar1 + 4))();
-      *(short *)(psos_config + 0x24) = *(short *)(psos_config + 0x24) + -1;
-    }
-    if (uVar2 >> 8 <= _DAT_0010266e) {
-      return;
-    }
-  }
-  return;
-}
-
+/* a thunk to kernel_dispatch_io, whose name the decompiler gives it */
 
 /* 00014ab6 */
-
-/* WARNING: Removing unreachable block (ram,0x00015ea6) */
-/* Not a C function: an exception handler, entered by the processor through the primary table's
-   vector 38 (trap_6), not called. */
-
-__exception void primary_trap_6(void)
-
-{
-  undefined2 *puVar1;
-  code *pcVar2;
-  int *piVar3;
-  int iVar4;
-  int *piVar5;
-  ushort uVar6;
-  short sVar7;
-  int extraout_A0;
-  int extraout_A0_00;
-  undefined4 *extraout_A0_01;
-  undefined2 *puVar8;
-  int iVar9;
-  undefined4 *puVar10;
-  undefined4 *puVar11;
-  undefined4 *puVar12;
-  undefined2 *puVar13;
-  bool bVar14;
-  
-  piVar5 = psos_config;
-  iVar4 = (uint)(ushort)(DAT_00102664 + 1) * 0xb2 +
-          (uint)DAT_00102668 * 0x18 + (uint)DAT_00102666 * 0x22 + psos_supervisor_stack_size + 0xda;
-  if ((uint)(iVar4 + (int)psos_config) <= DAT_00102650) {
-    puVar10 = (undefined4 *)((int)psos_config + psos_supervisor_stack_size + 200);
-    psos_config[8] = (int)puVar10;
-    *(undefined2 *)(piVar5 + 0x2e) = 0xdeaf;
-    piVar5[0xc] = 0;
-    piVar5[5] = 0;
-    piVar5[6] = 0;
-    uVar6 = DAT_00102666;
-    puVar11 = puVar10;
-    if (DAT_00102666 != 0) {
-      piVar5[6] = (int)puVar10;
-      do {
-        puVar12 = puVar11;
-        *(undefined1 *)((int)puVar12 + 0x11) = 0xfe;
-        puVar12[6] = (int)puVar12 << 0x10 | (uint)puVar12 >> 0x10;
-        puVar11 = (undefined4 *)((int)puVar12 + 0x22);
-        puVar12[7] = puVar11;
-        uVar6 = uVar6 - 1;
-      } while (uVar6 != 0);
-      puVar12[7] = 0;
-    }
-    piVar5[7] = 0;
-    uVar6 = DAT_00102668;
-    if (DAT_00102668 != 0) {
-      piVar5[7] = (int)puVar11;
-      do {
-        puVar12 = puVar11;
-        puVar11 = puVar12 + 6;
-        *puVar12 = puVar11;
-        uVar6 = uVar6 - 1;
-      } while (uVar6 != 0);
-      *puVar12 = 0;
-    }
-    sVar7 = DAT_00102664;
-    piVar5[4] = (int)puVar11;
-    do {
-      puVar12 = puVar11;
-      *(undefined1 *)((int)puVar12 + 0x13) = 0xff;
-      puVar12[10] = CONCAT22((short)((uint)puVar12 >> 0x10),~(ushort)puVar12);
-      puVar12[0xc] = (undefined4 *)((int)puVar12 + 0xb2);
-      bVar14 = sVar7 != 0;
-      sVar7 = sVar7 + -1;
-      puVar11 = (undefined4 *)((int)puVar12 + 0xb2);
-    } while (bVar14);
-    puVar12[0xc] = 0;
-    piVar5[3] = 0;
-    if (DAT_00102692 != (int *)0x0) {
-      iVar9 = *DAT_00102692;
-      puVar10[-1] = 0x15dc2;
-      (**(code **)(iVar9 + 4))();
-    }
-    puVar10[-1] = 0x15dc6;
-    kernel_region_init();
-    *(undefined4 *)((int)piVar5 + 0x7a) = 0x1f001f1e;
-    *(undefined4 *)((int)piVar5 + 0x7e) = 0x1f1e1f1f;
-    *(undefined4 *)((int)piVar5 + 0x82) = 0x1e1f1e1f;
-    piVar5[0x1b] = 0;
-    *(undefined2 *)(piVar5 + 0x1c) = 0;
-    *(undefined4 *)((int)piVar5 + 0x72) = 0;
-    *(undefined4 *)((int)piVar5 + 0x76) = 0x7c20501;
-    puVar10[-1] = 0x15df4;
-    kernel_set_leap_year();
-    *(undefined1 *)((int)piVar5 + 0x8a) = 0;
-    *(undefined4 *)((int)piVar5 + 0x86) = *(undefined4 *)(extraout_A0 + 0x1e);
-    piVar5[2] = 0;
-    piVar3 = piVar5 + 0x23;
-    *piVar5 = (int)piVar3;
-    piVar5[1] = (int)piVar3;
-    *piVar3 = 0;
-    piVar5[0x24] = (int)(piVar5 + 1);
-    piVar5[0x2c] = 0x73797364;
-    piVar5[0x27] = 0;
-    *(undefined1 *)(piVar5 + 0x28) = 0;
-    piVar5[0x2a] = 0;
-    piVar5[0x2d] = *(int *)(extraout_A0 + 0x3e);
-    *(byte *)((int)piVar5 + 0x8b) = *(byte *)((int)piVar5 + 0x8b) | 0x80;
-    *(undefined2 *)(piVar5 + 9) = 1;
-    uVar6 = *(short *)(extraout_A0 + 0x22) * 0x24;
-    iVar9 = *(int *)(extraout_A0 + 0x24);
-    do {
-      puVar10[-1] = 0x15e52;
-      (*(code *)(iVar9 + (short)uVar6))();
-      bVar14 = 0x23 < uVar6;
-      uVar6 = uVar6 - 0x24;
-    } while (bVar14);
-    iVar9 = 0;
-    if (*(int **)(extraout_A0_00 + 0x42) != (int *)0x0) {
-      iVar9 = **(int **)(extraout_A0_00 + 0x42);
-    }
-    piVar5[0xc] = iVar9;
-    puVar10[-1] = 0x15e84;
-    kernel_create();
-    if ((char)iVar4 == '\0') {
-      puVar10[-1] = 0x15e90;
-      kernel_start();
-      puVar10[-1] = 0x15ea2;
-      kernel_create();
-      puVar10[-1] = 0x15eb4;
-      kernel_start();
-      *(ushort *)(extraout_A0_01 + 0x11) = *(ushort *)(extraout_A0_01 + 0x11) | 0x2000;
-      *(undefined1 *)(extraout_A0_01 + 4) = 0;
-      *extraout_A0_01 = 0;
-      iVar4 = piVar5[1];
-      pcVar2 = (code *)piVar5[0x2d];
-      if (pcVar2 != (code *)0x0) {
-        puVar10[-1] = 0x1602e;
-        (*pcVar2)();
-      }
-      *piVar5 = iVar4;
-      puVar8 = *(undefined2 **)(iVar4 + 0x36);
-      puVar1 = *(undefined2 **)(iVar4 + 0x3a);
-      uVar6 = *(ushort *)(iVar4 + 0x44);
-      if ((uVar6 & 0x1000) == 0) {
-        for (; puVar1 != puVar8; puVar8 = puVar8 + 1) {
-          puVar13 = (undefined2 *)((int)puVar10 + -2);
-          puVar10 = (undefined4 *)((int)puVar10 + -2);
-          *puVar13 = *puVar8;
-        }
-      }
-      else {
-        uVar6 = uVar6 & 0xefff;
-        puVar10 = (undefined4 *)puVar8;
-      }
-      *(undefined2 *)((int)puVar10 + -2) = *(undefined2 *)(iVar4 + 0x34);
-      *(undefined4 *)((int)puVar10 + -6) = *(undefined4 *)(iVar4 + 0x3e);
-      *(ushort *)((int)puVar10 + -8) = uVar6;
-      *(undefined4 *)((int)puVar10 + -0xc) = *(undefined4 *)(iVar4 + 0x46);
-      *(undefined4 *)((int)puVar10 + -0x10) = *(undefined4 *)(iVar4 + 0x4a);
-      *(undefined4 *)((int)puVar10 + -0x14) = *(undefined4 *)(iVar4 + 0x66);
-      kernel_switch_task();
-      return;
-    }
-  }
-  do {
-    stop();
-  } while( true );
-}
-
+/* a thunk to kernel_init, whose name the decompiler gives it */
 
 /* 00014aba */
-
-/* Not a C function: an exception handler, entered by the processor through the primary table's
-   vector 37 (trap_5), not called. */
-
-__exception void primary_trap_5(ushort param_1)
-
-{
-  kernel_return_from_interrupt(param_1);
-  return;
-}
-
+/* a thunk to kernel_return_from_interrupt, whose name the decompiler gives it */
 
 /* 00014b26 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* trap #3: the service in D7, 0 to 0x26, through the bra.w table at 0x14b6e; error 0x55 for any
    other
@@ -6267,7 +12507,8 @@ __exception void primary_trap_5(ushort param_1)
    service, D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__exception void kernel_dispatch_service(undefined2 param_1) /* out D7 char error */
+/* out D7 char error */
+__exception void kernel_dispatch_service(undefined2 param_1)
 
 {
   int iVar1;
@@ -6416,7 +12657,83 @@ __exception void kernel_dispatch_service(undefined2 param_1) /* out D7 char erro
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_dispatch_service\n"
+	"	.type kernel_dispatch_service, @function\n"
+	"	.section .text.kernel_dispatch_service.14b26,\"ax\",@progbits\n"
+	"kernel_dispatch_service:\n"
+	"	movem.l %a6/%a5/%d6,-(%sp)\n"
+	"	movea.l (__ghidra_14ac2:w,%pc),%a5\n"
+	"	movea.l (%a5),%a5\n"
+	"	movea.l (%a5),%a6\n"
+	"	addq.w #0x1,(0x24,%a6)\n"
+	"	cmpi.w #0x26,%d7\n"
+	"	bhi.b .Lg_14b68\n"
+	"	move.l (0x30,%a6),%d6\n"
+	"	beq.b .Lg_14b4a\n"
+	"	movea.l %d6,%a5\n"
+	"	moveq #0x0,%d6\n"
+	"	jsr (0x4,%a5)\n"
+	".Lg_14b4a:\n"
+	"	lsl.w #0x2,%d7\n"
+	"	jsr (.Lg_14b6e,%pc,%d7.w*0x1)\n"
+	".Lg_14b50:\n"
+	"	move.w (0xc,%sp),%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	movea.l (%a6),%a5\n"
+	"	beq.w kernel_switch_task\n"
+	"	subq.w #0x1,(0x24,%a6)\n"
+	"	movem.l (%sp)+,%d6/%a5/%a6\n"
+	"	rte\n"
+	".Lg_14b68:\n"
+	"	move.b #0x55,%d7\n"
+	"	bra.b .Lg_14b50\n"
+	".Lg_14b6e:\n"
+	"	bra.w kernel_service_0\n"
+	"	bra.w kernel_create\n"
+	"	bra.w kernel_start\n"
+	"	bra.w kernel_ident\n"
+	"	bra.w kernel_delete\n"
+	"	bra.w kernel_suspend\n"
+	"	bra.w kernel_resume\n"
+	"	bra.w kernel_priority\n"
+	"	bra.w kernel_allocate_segment\n"
+	"	bra.w kernel_free_segment\n"
+	"	bra.w kernel_service_10\n"
+	"	bra.w kernel_service_none\n"
+	"	bra.w kernel_service_none\n"
+	"	bra.w kernel_service_none\n"
+	"	bra.w kernel_service_none\n"
+	"	bra.w kernel_service_none\n"
+	"	bra.w kernel_service_16\n"
+	"	bra.w kernel_service_none\n"
+	"	bra.w kernel_service_18\n"
+	"	bra.w kernel_jam_x\n"
+	"	bra.w kernel_create_x\n"
+	"	bra.w kernel_service_21\n"
+	"	bra.w kernel_delete_x\n"
+	"	bra.w kernel_send_x\n"
+	"	bra.w kernel_request_x\n"
+	"	bra.w kernel_signal_v\n"
+	"	bra.w kernel_wait_v\n"
+	"	bra.w kernel_get_v\n"
+	"	bra.w kernel_pause\n"
+	"	bra.w kernel_service_29\n"
+	"	bra.w kernel_service_30\n"
+	"	bra.w kernel_service_31\n"
+	"	bra.w kernel_mode\n"
+	"	bra.w kernel_service_33\n"
+	"	bra.w kernel_service_none\n"
+	"	bra.w kernel_service_35\n"
+	"	bra.w kernel_service_36\n"
+	"	bra.w kernel_service_37\n"
+	"	bra.w kernel_service_38\n"
+	"	.size kernel_dispatch_service, .-kernel_dispatch_service\n"
+);
+
 /* 00014c0a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* trap #4: I/O function 0 to 5 in D7, the device in D0's high byte
@@ -6424,7 +12741,7 @@ __exception void kernel_dispatch_service(undefined2 param_1) /* out D7 char erro
    function, D0 int device.
    psos.md */
 
-__exception void kernel_dispatch_io(char function __asm("d7"),int device __asm("d0"))
+__exception void kernel_dispatch_io(char function /* d7 */,int device /* d0 */)
 
 {
   int *piVar1;
@@ -6447,7 +12764,61 @@ __exception void kernel_dispatch_io(char function __asm("d7"),int device __asm("
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_dispatch_io\n"
+	"	.type kernel_dispatch_io, @function\n"
+	"	.section .text.kernel_dispatch_io.14c0a,\"ax\",@progbits\n"
+	"kernel_dispatch_io:\n"
+	"	movem.l %a6/%a5/%d6,-(%sp)\n"
+	"	movea.l (__ghidra_14ac2:w,%pc),%a5\n"
+	"	movea.l (%a5),%a5\n"
+	"	movea.l (%a5),%a6\n"
+	"	cmpi.w #0x5,%d7\n"
+	"	bhi.b .Lg_14c70\n"
+	"	move.l (0x30,%a6),%d6\n"
+	"	beq.b .Lg_14c34\n"
+	"	addq.w #0x1,(0x24,%a6)\n"
+	"	movea.l %d6,%a6\n"
+	"	moveq #0x1,%d6\n"
+	"	jsr (0x4,%a6)\n"
+	"	movea.l (%a5),%a6\n"
+	"	subq.w #0x1,(0x24,%a6)\n"
+	".Lg_14c34:\n"
+	"	move.w %d0,%d6\n"
+	"	lsr.w #0x8,%d6\n"
+	"	cmp.w (0x22,%a5),%d6\n"
+	"	bhi.b .Lg_14c6a\n"
+	"	lsl.w #0x1,%d6\n"
+	"	add.w %d6,%d7\n"
+	"	lsl.w #0x1,%d6\n"
+	"	add.w %d6,%d7\n"
+	"	lsl.w #0x1,%d7\n"
+	"	move.w %d7,%d6\n"
+	"	lsl.w #0x1,%d7\n"
+	"	add.w %d6,%d7\n"
+	"	movea.l (0x24,%a5),%a6\n"
+	"	pea (.Lg_14c64,%pc)\n"
+	"	nop\n"
+	"	pea (0x0,%a6,%d7.w*0x1)\n"
+	"	movem.l (0x8,%sp),%d6/%a5/%a6\n"
+	"	rts\n"
+	".Lg_14c64:\n"
+	"	.byte 0xde,0xfc,0x00,0x0c | adda.w #0xc,SP\n"
+	"	.byte 0x4e,0x73 | rte\n"
+	".Lg_14c6a:\n"
+	"	move.b #0x1,%d7\n"
+	"	bra.b .Lg_14c74\n"
+	".Lg_14c70:\n"
+	"	move.b #0x33,%d7\n"
+	".Lg_14c74:\n"
+	"	movem.l (%sp)+,%d6/%a5/%a6\n"
+	"	rte\n"
+	"	.size kernel_dispatch_io, .-kernel_dispatch_io\n"
+);
+
 /* 00014c7a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* on the way out of the kernel: runs pending ticks, saves the running task's registers in its
    record and switches to the first ready
@@ -6582,7 +12953,46 @@ __naked void kernel_switch_task(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_switch_task\n"
+	"	.type kernel_switch_task, @function\n"
+	"	.section .text.kernel_switch_task.14c7a,\"ax\",@progbits\n"
+	"kernel_switch_task:\n"
+	".Lg_14c7a:\n"
+	"	ori #0x700,%sr\n"
+	"	tst.l (0x6c,%a6)\n"
+	"	beq.b .Lg_14c8c\n"
+	"	andi #-0x701,%sr\n"
+	"	.byte 0x61 | bsr.b 0x00014cc6\n"
+	"	.reloc ., R_68K_PC8, kernel_process_ticks-1\n"
+	"	.byte 0\n"
+	"	bra.b .Lg_14c7a\n"
+	".Lg_14c8c:\n"
+	"	bset.b #0x7,(0x8b,%a6)\n"
+	"	bne.b .Lg_14c98\n"
+	"	move.w (0x54,%a5),%d1\n"
+	".Lg_14c98:\n"
+	"	cmpa.l (0x4,%a6),%a5\n"
+	"	beq.b .Lg_14cb0\n"
+	"	btst.b #0x7,(0x11,%a5)\n"
+	"	beq.w kernel_return_from_interrupt+0x54\n"
+	"	tst.b (0x13,%a5)\n"
+	"	bne.w kernel_return_from_interrupt+0x54\n"
+	".Lg_14cb0:\n"
+	"	subq.w #0x1,(0x24,%a6)\n"
+	"	move.l (0x30,%a6),%d6\n"
+	"	beq.b .Lg_14cc0\n"
+	"	movea.l %d6,%a5\n"
+	"	jmp (0x8,%a5)\n"
+	".Lg_14cc0:\n"
+	"	movem.l (%sp)+,%d6/%a5/%a6\n"
+	"	rte\n"
+	"	.size kernel_switch_task, .-kernel_switch_task\n"
+);
+
 /* 00014cc6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* one clock tick: advances the date, runs the tick hook, wakes the tasks whose delays expire and
    ends the running task's time slice
@@ -6651,7 +13061,94 @@ LAB_00014d58:
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_process_ticks\n"
+	"	.type kernel_process_ticks, @function\n"
+	"	.section .text.kernel_process_ticks.14cc6,\"ax\",@progbits\n"
+	"kernel_process_ticks:\n"
+	"	bsr.w kernel_advance_date\n"
+	"	movem.l %a3/%a2,-(%sp)\n"
+	"	move.l (0x30,%a6),%d6\n"
+	"	beq.b .Lg_14cdc\n"
+	"	movea.l %d6,%a2\n"
+	"	moveq #0x2,%d6\n"
+	"	jsr (0x4,%a2)\n"
+	".Lg_14cdc:\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (0x8,%a6),%d6\n"
+	"	beq.b .Lg_14d58\n"
+	"	movea.l %d6,%a2\n"
+	"	move.l (0x4e,%a2),%d6\n"
+	"	bne.b .Lg_14d3e\n"
+	"	move.b (0x13,%a2),%d6\n"
+	"	andi.b #0x70,%d6\n"
+	"	beq.b .Lg_14d26\n"
+	"	clr.w (0x16,%a2)\n"
+	"	andi.b #0x60,%d6\n"
+	"	beq.b .Lg_14d10\n"
+	"	move.l (%a2),%d6\n"
+	"	movea.l (0x4,%a2),%a3\n"
+	"	move.l %d6,(%a3)\n"
+	"	exg %d6,%a3\n"
+	"	move.l %d6,(0x4,%a3)\n"
+	".Lg_14d10:\n"
+	"	andi #-0x701,%sr\n"
+	"	cmpa.l %a5,%a2\n"
+	"	bne.b .Lg_14d1c\n"
+	"	move.b #0x81,%d7\n"
+	".Lg_14d1c:\n"
+	"	move.b #0x81,(0x6d,%a2)\n"
+	"	ori #0x700,%sr\n"
+	".Lg_14d26:\n"
+	"	movea.l (0x8,%a2),%a3\n"
+	"	move.l %a3,(0x8,%a6)\n"
+	"	beq.b .Lg_14d34\n"
+	"	move.l %a6,(0xc,%a3)\n"
+	".Lg_14d34:\n"
+	"	andi #-0x701,%sr\n"
+	"	bsr.w kernel_make_ready\n"
+	"	bra.b .Lg_14cdc\n"
+	".Lg_14d3e:\n"
+	"	sub.l (0x6c,%a6),%d6\n"
+	"	bcc.b .Lg_14d54\n"
+	"	clr.l (0x4e,%a2)\n"
+	"	neg.l %d6\n"
+	"	move.l %d6,(0x6c,%a6)\n"
+	"	andi #-0x701,%sr\n"
+	"	bra.b .Lg_14cdc\n"
+	".Lg_14d54:\n"
+	"	move.l %d6,(0x4e,%a2)\n"
+	".Lg_14d58:\n"
+	"	clr.l (0x6c,%a6)\n"
+	"	andi #-0x701,%sr\n"
+	"	move.b (0x11,%a5),%d6\n"
+	"	andi.b #0xc0,%d6\n"
+	"	cmpi.b #0x40,%d6\n"
+	"	bne.b .Lg_14d9c\n"
+	"	subq.w #0x1,(0x1a,%a5)\n"
+	"	bcc.b .Lg_14d9c\n"
+	"	clr.w (0x1a,%a5)\n"
+	"	tst.b (0x13,%a5)\n"
+	"	bne.b .Lg_14d9c\n"
+	"	movea.l (%a5),%a2\n"
+	"	move.b (0x10,%a2),%d6\n"
+	"	cmp.b (0x10,%a5),%d6\n"
+	"	bcs.b .Lg_14d9c\n"
+	"	ori #0x700,%sr\n"
+	"	bsr.w kernel_queue_remove\n"
+	"	andi #-0x701,%sr\n"
+	"	movea.l %a5,%a2\n"
+	"	bsr.w kernel_make_ready\n"
+	".Lg_14d9c:\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	movea.l (%sp)+,%a3\n"
+	"	rts\n"
+	"	.size kernel_process_ticks, .-kernel_process_ticks\n"
+);
+
 /* 00014da2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 0
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -6659,14 +13156,28 @@ LAB_00014d58:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_service_0(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_service_0(void)
 
 {
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_service_0\n"
+	"	.type kernel_service_0, @function\n"
+	"	.section .text.kernel_service_0.14da2,\"ax\",@progbits\n"
+	"kernel_service_0:\n"
+	"	move.w #0x3300,%d7\n"
+	"	move.b (__ghidra_14b21:w,%pc),%d7\n"
+	"	rts\n"
+	"	.size kernel_service_0, .-kernel_service_0\n"
+);
+
 /* 00014dac */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 1, psos_create
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -6674,7 +13185,8 @@ __regcall void kernel_service_0(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_create(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_create(void)
 
 {
   int iVar1;
@@ -6746,7 +13258,111 @@ __regcall void kernel_create(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_create\n"
+	"	.type kernel_create, @function\n"
+	"	.section .text.kernel_create.14dac,\"ax\",@progbits\n"
+	"kernel_create:\n"
+	"	movem.l %a3/%a2/%d5/%d4/%d3,-(%sp)\n"
+	"	tst.b %d2\n"
+	"	bne.b .Lg_14dba\n"
+	"	moveq #0x4,%d7\n"
+	"	bra.w .Lg_14e9a\n"
+	".Lg_14dba:\n"
+	"	move.l (0x10,%a6),%d6\n"
+	"	bne.b .Lg_14dc6\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.w .Lg_14e9a\n"
+	".Lg_14dc6:\n"
+	"	clr.l %d5\n"
+	"	move.w %d3,%d5\n"
+	"	swap %d3\n"
+	"	clr.l %d4\n"
+	"	move.w %d3,%d4\n"
+	"	movea.l %d6,%a5\n"
+	"	clr.l (0x20,%a5)\n"
+	"	move.l %a0,%d6\n"
+	"	beq.b .Lg_14de8\n"
+	"	clr.l %d6\n"
+	"	move.w (%a0),%d6\n"
+	"	cmp.l %d6,%d5\n"
+	"	bcc.b .Lg_14de8\n"
+	"	moveq #0x3,%d7\n"
+	"	bra.w .Lg_14e9a\n"
+	".Lg_14de8:\n"
+	"	movea.l %a0,%a3\n"
+	"	movem.l %d2/%d1,-(%sp)\n"
+	"	lsl.l #0x1,%d4\n"
+	"	lsl.l #0x1,%d5\n"
+	"	move.l %d4,%d1\n"
+	"	add.l %d5,%d1\n"
+	"	move.w (__ghidra_14ac6:w,%pc),%d2\n"
+	"	moveq #0x1,%d3\n"
+	"	bsr.w kernel_allocate_for_task\n"
+	"	adda.l %d4,%a0\n"
+	"	movea.l %a0,%a2\n"
+	"	adda.l %d5,%a2\n"
+	"	move.l (%sp)+,%d1\n"
+	"	move.l (%sp)+,%d2\n"
+	"	tst.b %d7\n"
+	"	beq.b .Lg_14e16\n"
+	"	movea.l %a3,%a0\n"
+	"	moveq #0x2,%d7\n"
+	"	bra.w .Lg_14e9a\n"
+	".Lg_14e16:\n"
+	"	move.l %a3,%d6\n"
+	"	beq.b .Lg_14e28\n"
+	"	move.w (%a3),%d6\n"
+	"	beq.b .Lg_14e28\n"
+	"	lsl.w #0x1,%d6\n"
+	".Lg_14e20:\n"
+	"	move.w (0x0,%a3,%d6.w*0x1),-(%a2)\n"
+	"	subq.w #0x2,%d6\n"
+	"	bne.b .Lg_14e20\n"
+	".Lg_14e28:\n"
+	"	movea.l (%a6),%a3\n"
+	"	move.l %d0,(0x24,%a5)\n"
+	"	move.b %d1,%d6\n"
+	"	bne.b .Lg_14e36\n"
+	"	move.b (0x14,%a3),%d6\n"
+	".Lg_14e36:\n"
+	"	move.b %d6,(0x14,%a5)\n"
+	"	clr.l (0x16,%a5)\n"
+	"	move.b %d2,(0x10,%a5)\n"
+	"	clr.l (0x46,%a5)\n"
+	"	clr.b (0x12,%a5)\n"
+	"	clr.b (0x11,%a5)\n"
+	"	clr.w (0x34,%a5)\n"
+	"	move.l %a3,(0x2c,%a5)\n"
+	"	clr.l (0x1c,%a5)\n"
+	"	move.l %a2,(0x3a,%a5)\n"
+	"	clr.w (0x44,%a5)\n"
+	"	tst.l %d4\n"
+	"	beq.b .Lg_14e6e\n"
+	"	ori.w #0x1000,(0x44,%a5)\n"
+	"	movea.l %a0,%a2\n"
+	".Lg_14e6e:\n"
+	"	move.l %a2,(0x36,%a5)\n"
+	"	move.w #0xb,%d3\n"
+	"	lea (0x82,%a5),%a0\n"
+	".Lg_14e7a:\n"
+	"	clr.l (%a0)+\n"
+	"	dbf %d3,.Lg_14e7a\n"
+	"	move.b #0x80,(0x13,%a5)\n"
+	"	move.l (0x30,%a5),(0x10,%a6)\n"
+	"	move.l (0xc,%a6),(0x30,%a5)\n"
+	"	move.l %a5,(0xc,%a6)\n"
+	"	movea.l %a5,%a0\n"
+	"	clr.b %d7\n"
+	".Lg_14e9a:\n"
+	"	movem.l (%sp)+,%d3/%d4/%d5/%a2/%a3\n"
+	"	rts\n"
+	"	.size kernel_create, .-kernel_create\n"
+);
+
 /* 00014ea0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* service 2, psos_start
@@ -6755,7 +13371,8 @@ __regcall void kernel_create(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_start(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_start(void)
 
 {
   int in_A0;
@@ -6776,7 +13393,39 @@ __regcall void kernel_start(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_start\n"
+	"	.type kernel_start, @function\n"
+	"	.section .text.kernel_start.14ea0,\"ax\",@progbits\n"
+	"kernel_start:\n"
+	"	movea.l (%a6),%a5\n"
+	"	bsr.w kernel_check_task\n"
+	"	bne.b .Lg_14ed0\n"
+	"	move.b (0x13,%a0),%d7\n"
+	"	bmi.b .Lg_14eb2\n"
+	"	moveq #0x5,%d7\n"
+	"	bra.b .Lg_14ed0\n"
+	".Lg_14eb2:\n"
+	"	move.l %a1,(0x3e,%a0)\n"
+	"	exg %a0,%a2\n"
+	"	bsr.w kernel_make_ready\n"
+	"	exg %a0,%a2\n"
+	"	movea.l (__ghidra_14ac2:w,%pc),%a5\n"
+	"	movea.l (%a5),%a5\n"
+	"	move.l (0x36,%a5),%d6\n"
+	"	beq.b .Lg_14ece\n"
+	"	movea.l %d6,%a5\n"
+	"	jsr (%a5)\n"
+	".Lg_14ece:\n"
+	"	clr.b %d7\n"
+	".Lg_14ed0:\n"
+	"	rts\n"
+	"	.size kernel_start, .-kernel_start\n"
+);
+
 /* 00014ed2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 3, psos_ident
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -6784,7 +13433,8 @@ __regcall void kernel_start(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_ident(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_ident(void)
 
 {
   int in_D0;
@@ -6804,7 +13454,36 @@ __regcall void kernel_ident(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_ident\n"
+	"	.type kernel_ident, @function\n"
+	"	.section .text.kernel_ident.14ed2,\"ax\",@progbits\n"
+	"kernel_ident:\n"
+	"	tst.l %d0\n"
+	"	bne.b .Lg_14eda\n"
+	"	movea.l (%a6),%a0\n"
+	"	bra.b .Lg_14ef0\n"
+	".Lg_14eda:\n"
+	"	movea.l (0xc,%a6),%a0\n"
+	".Lg_14ede:\n"
+	"	cmp.l (0x24,%a0),%d0\n"
+	"	beq.b .Lg_14ef0\n"
+	"	move.l (0x30,%a0),%d6\n"
+	"	movea.l %d6,%a0\n"
+	"	bne.b .Lg_14ede\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.b .Lg_14ef6\n"
+	".Lg_14ef0:\n"
+	"	move.b (0x13,%a0),%d0\n"
+	"	clr.b %d7\n"
+	".Lg_14ef6:\n"
+	"	rts\n"
+	"	.size kernel_ident, .-kernel_ident\n"
+);
+
 /* 00014ef8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 4, psos_delete
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -6812,7 +13491,8 @@ __regcall void kernel_ident(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall undefined8 kernel_delete(void) /* out D7 char error */
+/* out D7 char error */
+__regcall undefined8 kernel_delete(void)
 
 {
   int iVar1;
@@ -6890,7 +13570,113 @@ LAB_00014fce:
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_delete\n"
+	"	.type kernel_delete, @function\n"
+	"	.section .text.kernel_delete.14ef8,\"ax\",@progbits\n"
+	"kernel_delete:\n"
+	"	movea.l (%a6),%a5\n"
+	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
+	"	bsr.w kernel_check_task\n"
+	"	bne.w .Lg_14ffe\n"
+	"	movea.l (__ghidra_14ac2:w,%pc),%a1\n"
+	"	movea.l (%a1),%a1\n"
+	"	move.l (0x46,%a1),%d6\n"
+	"	beq.b .Lg_14f24\n"
+	"	movea.l %d6,%a1\n"
+	"	movea.l (%a1),%a1\n"
+	"	jsr (0x8,%a1)\n"
+	"	tst.w %d7\n"
+	"	beq.b .Lg_14f24\n"
+	"	moveq #0x5,%d7\n"
+	"	bra.w .Lg_14ffe\n"
+	".Lg_14f24:\n"
+	"	cmpa.l (%a6),%a0\n"
+	"	bne.b .Lg_14f42\n"
+	"	movea.l (0x10,%sp),%a1\n"
+	"	andi #-0x1001,%sr\n"
+	"	movea.l (0x20,%a6),%sp\n"
+	"	suba.l #0x28,%sp\n"
+	"	move.l %a1,(0x10,%sp)\n"
+	"	clr.w (0x20,%sp)\n"
+	".Lg_14f42:\n"
+	"	ori #0x700,%sr\n"
+	"	move.b (0x13,%a0),%d0\n"
+	"	beq.b .Lg_14f52\n"
+	"	andi.b #0x60,%d0\n"
+	"	beq.b .Lg_14f60\n"
+	".Lg_14f52:\n"
+	"	movea.l (%a0),%a5\n"
+	"	movea.l (0x4,%a0),%a1\n"
+	"	move.l %a5,(%a1)\n"
+	"	beq.b .Lg_14f60\n"
+	"	move.l %a1,(0x4,%a5)\n"
+	".Lg_14f60:\n"
+	"	move.b #0xff,(0x13,%a0)\n"
+	"	andi #-0x701,%sr\n"
+	"	exg %a0,%a2\n"
+	"	bsr.w kernel_timer_cancel\n"
+	"	exg %a0,%a2\n"
+	"	movea.l %a0,%a5\n"
+	".Lg_14f74:\n"
+	"	move.l (0x1c,%a5),%d6\n"
+	"	beq.b .Lg_14f9c\n"
+	"	movea.l %d6,%a1\n"
+	"	movea.l (0x4,%a1),%a0\n"
+	"	bsr.w kernel_send_for_task\n"
+	"	beq.b .Lg_14f74\n"
+	"	move.l (%a1),(0x1c,%a5)\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (0x1c,%a6),(%a1)\n"
+	"	move.l %a1,(0x1c,%a6)\n"
+	"	andi #-0x701,%sr\n"
+	"	bra.b .Lg_14f74\n"
+	".Lg_14f9c:\n"
+	"	move.l (0x20,%a5),%d6\n"
+	"	beq.b .Lg_14fb6\n"
+	"	movea.l %d6,%a0\n"
+	"	adda.w #0x12,%a0\n"
+	"	bsr.w kernel_free_for_task\n"
+	"	beq.b .Lg_14f9c\n"
+	"	move.l (-0x12,%a0),(0x20,%a5)\n"
+	"	bra.b .Lg_14f9c\n"
+	".Lg_14fb6:\n"
+	"	lea (-0x24,%a6),%a1\n"
+	".Lg_14fba:\n"
+	"	move.l (0x30,%a1),%d6\n"
+	"	beq.b .Lg_14fce\n"
+	"	cmp.l %a5,%d6\n"
+	"	beq.b .Lg_14fc8\n"
+	"	movea.l %d6,%a1\n"
+	"	bra.b .Lg_14fba\n"
+	".Lg_14fc8:\n"
+	"	move.l (0x30,%a5),(0x30,%a1)\n"
+	".Lg_14fce:\n"
+	"	move.l (0x10,%a6),(0x30,%a5)\n"
+	"	move.l %a5,(0x10,%a6)\n"
+	"	movea.l (0x2c,%a5),%a0\n"
+	"	exg %a1,%a5\n"
+	"	lea (0x8c,%a6),%a5\n"
+	"	move.w #0x2000,%d1\n"
+	"	bsr.w kernel_signal_task\n"
+	"	exg %a1,%a5\n"
+	"	movea.l (__ghidra_14ac2:w,%pc),%a0\n"
+	"	movea.l (%a0),%a0\n"
+	"	move.l (0x3a,%a0),%d6\n"
+	"	beq.b .Lg_14ffc\n"
+	"	movea.l %d6,%a0\n"
+	"	jsr (%a0)\n"
+	".Lg_14ffc:\n"
+	"	clr.b %d7\n"
+	".Lg_14ffe:\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
+	"	rts\n"
+	"	.size kernel_delete, .-kernel_delete\n"
+);
+
 /* 00015004 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 5, psos_suspend
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -6898,7 +13684,8 @@ LAB_00014fce:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_suspend(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_suspend(void)
 
 {
   int in_A0;
@@ -6922,7 +13709,37 @@ __regcall void kernel_suspend(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_suspend\n"
+	"	.type kernel_suspend, @function\n"
+	"	.section .text.kernel_suspend.15004,\"ax\",@progbits\n"
+	"kernel_suspend:\n"
+	"	movea.l (%a6),%a5\n"
+	"	bsr.w kernel_check_task\n"
+	"	bne.b .Lg_15036\n"
+	"	ori #0x700,%sr\n"
+	"	move.b (0x13,%a0),%d6\n"
+	"	beq.b .Lg_15024\n"
+	"	andi.b #0x4,%d6\n"
+	"	beq.b .Lg_1502a\n"
+	"	andi #-0x701,%sr\n"
+	"	moveq #0x4,%d7\n"
+	"	bra.b .Lg_15036\n"
+	".Lg_15024:\n"
+	"	movea.l %a0,%a5\n"
+	"	bsr.w kernel_queue_remove\n"
+	".Lg_1502a:\n"
+	"	ori.b #0x4,(0x13,%a0)\n"
+	"	andi #-0x701,%sr\n"
+	"	clr.b %d7\n"
+	".Lg_15036:\n"
+	"	rts\n"
+	"	.size kernel_suspend, .-kernel_suspend\n"
+);
+
 /* 00015038 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x00015042) */
 /* service 6, psos_resume
@@ -6931,7 +13748,8 @@ __regcall void kernel_suspend(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_resume(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_resume(void)
 
 {
   byte bVar1;
@@ -6951,7 +13769,47 @@ __regcall void kernel_resume(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_resume\n"
+	"	.type kernel_resume, @function\n"
+	"	.section .text.kernel_resume.15038,\"ax\",@progbits\n"
+	"kernel_resume:\n"
+	"	movea.l (%a6),%a5\n"
+	"	move %sr,%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	beq.b .Lg_15046\n"
+	"	lea (0x8c,%a6),%a5\n"
+	".Lg_15046:\n"
+	"	bsr.w kernel_check_task\n"
+	"	bne.b .Lg_15078\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.b (0x13,%a0),%d7\n"
+	"	bclr.l #0x2,%d7\n"
+	"	bne.b .Lg_15062\n"
+	"	move %d6,%sr\n"
+	"	moveq #0x4,%d7\n"
+	"	bra.b .Lg_15078\n"
+	".Lg_15062:\n"
+	"	move.b %d7,(0x13,%a0)\n"
+	"	beq.b .Lg_1506c\n"
+	"	move %d6,%sr\n"
+	"	bra.b .Lg_15076\n"
+	".Lg_1506c:\n"
+	"	move %d6,%sr\n"
+	"	exg %a0,%a2\n"
+	"	bsr.w kernel_make_ready\n"
+	"	exg %a0,%a2\n"
+	".Lg_15076:\n"
+	"	clr.b %d7\n"
+	".Lg_15078:\n"
+	"	rts\n"
+	"	.size kernel_resume, .-kernel_resume\n"
+);
+
 /* 0001507a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 7, psos_priority
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -6959,7 +13817,8 @@ __regcall void kernel_resume(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_priority(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_priority(void)
 
 {
   short extraout_D0w;
@@ -6997,7 +13856,57 @@ LAB_000150ae:
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_priority\n"
+	"	.type kernel_priority, @function\n"
+	"	.section .text.kernel_priority.1507a,\"ax\",@progbits\n"
+	"kernel_priority:\n"
+	"	move.w %d1,-(%sp)\n"
+	"	movea.l (%a6),%a5\n"
+	"	bsr.w kernel_check_task\n"
+	"	bne.b .Lg_150d6\n"
+	"	clr.w %d7\n"
+	"	clr.w %d1\n"
+	"	move.b (0x10,%a0),%d1\n"
+	"	tst.w %d0\n"
+	"	beq.b .Lg_150d4\n"
+	"	add.w %d1,%d0\n"
+	"	bvs.b .Lg_1509c\n"
+	"	ble.b .Lg_150a6\n"
+	"	cmpi.w #0xff,%d0\n"
+	"	ble.b .Lg_150ae\n"
+	".Lg_1509c:\n"
+	"	move.b #0xff,%d0\n"
+	"	move.b #0x81,%d7\n"
+	"	bra.b .Lg_150ae\n"
+	".Lg_150a6:\n"
+	"	move.b #0x1,%d0\n"
+	"	move.b #0x82,%d7\n"
+	".Lg_150ae:\n"
+	"	ori #0x700,%sr\n"
+	"	move.b %d0,(0x10,%a0)\n"
+	"	tst.b (0x13,%a0)\n"
+	"	beq.b .Lg_150c2\n"
+	"	andi #-0x701,%sr\n"
+	"	bra.b .Lg_150d4\n"
+	".Lg_150c2:\n"
+	"	movea.l %a0,%a5\n"
+	"	bsr.w kernel_queue_remove\n"
+	"	andi #-0x701,%sr\n"
+	"	exg %a5,%a2\n"
+	"	bsr.w kernel_ready_insert\n"
+	"	exg %a5,%a2\n"
+	".Lg_150d4:\n"
+	"	move.w %d1,%d0\n"
+	".Lg_150d6:\n"
+	"	move.w (%sp)+,%d1\n"
+	"	rts\n"
+	"	.size kernel_priority, .-kernel_priority\n"
+);
+
 /* 000150da */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 8: kernel_allocate_for_task for the running task
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -7005,7 +13914,8 @@ LAB_000150ae:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_allocate_segment(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_allocate_segment(void)
 
 {
   undefined4 *puVar1;
@@ -7034,7 +13944,18 @@ __regcall void kernel_allocate_segment(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_allocate_segment\n"
+	"	.type kernel_allocate_segment, @function\n"
+	"	.section .text.kernel_allocate_segment.150da,\"ax\",@progbits\n"
+	"kernel_allocate_segment:\n"
+	"	movea.l (%a6),%a5\n"
+	"	.size kernel_allocate_segment, .-kernel_allocate_segment\n"
+);
+
 /* 000150dc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* for the task in A5, allocates from a region through kernel_allocate, or queues the task to wait,
    with a timeout, when it cannot; kernel_create calls it too
@@ -7069,7 +13990,45 @@ __naked void kernel_allocate_for_task(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_allocate_for_task\n"
+	"	.type kernel_allocate_for_task, @function\n"
+	"	.section .text.kernel_allocate_for_task.150dc,\"ax\",@progbits\n"
+	"kernel_allocate_for_task:\n"
+	"	movem.l %a2/%a1/%d4/%d3/%d2/%d1,-(%sp)\n"
+	"	bsr.w kernel_allocate\n"
+	"	beq.b .Lg_15128\n"
+	"	movea.w #-0x2153,%a0\n"
+	"	tst.b %d3\n"
+	"	beq.b .Lg_150f4\n"
+	"	move.b #0x80,%d7\n"
+	"	bra.b .Lg_1512a\n"
+	".Lg_150f4:\n"
+	"	ori #0x700,%sr\n"
+	"	bsr.w kernel_queue_remove\n"
+	"	andi #-0x701,%sr\n"
+	"	move.b #0x40,(0x13,%a5)\n"
+	"	lea (0x64,%a6),%a1\n"
+	"	move.l %a1,(%a5)\n"
+	"	movea.l (0x68,%a6),%a2\n"
+	"	move.l %a5,(0x68,%a6)\n"
+	"	move.l %a5,(%a2)\n"
+	"	move.l %a2,(0x4,%a5)\n"
+	"	tst.l %d0\n"
+	"	beq.b .Lg_15128\n"
+	"	move.b #0xff,(0x12,%a5)\n"
+	"	bsr.w kernel_timer_insert\n"
+	".Lg_15128:\n"
+	"	clr.b %d7\n"
+	".Lg_1512a:\n"
+	"	movem.l (%sp)+,%d1/%d2/%d3/%d4/%a1/%a2\n"
+	"	rts\n"
+	"	.size kernel_allocate_for_task, .-kernel_allocate_for_task\n"
+);
+
 /* 00015130 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 9: kernel_free_for_task for the running task
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -7077,7 +14036,8 @@ __naked void kernel_allocate_for_task(void)
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_free_segment(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_free_segment(void)
 
 {
   int iVar1;
@@ -7191,7 +14151,18 @@ LAB_00015206:
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_free_segment\n"
+	"	.type kernel_free_segment, @function\n"
+	"	.section .text.kernel_free_segment.15130,\"ax\",@progbits\n"
+	"kernel_free_segment:\n"
+	"	movea.l (%a6),%a5\n"
+	"	.size kernel_free_segment, .-kernel_free_segment\n"
+);
+
 /* 00015132 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* checks a segment by kernel_check_segment and frees it, then satisfies the tasks waiting for
    memory; kernel_delete calls it
@@ -7313,7 +14284,144 @@ LAB_00015206:
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_free_for_task\n"
+	"	.type kernel_free_for_task, @function\n"
+	"	.section .text.kernel_free_for_task.15132,\"ax\",@progbits\n"
+	"kernel_free_for_task:\n"
+	"	movem.l %a5/%a3/%a2/%a1/%a0/%d4/%d3/%d2/%d1,-(%sp)\n"
+	"	suba.w #0x12,%a0\n"
+	"	bsr.w kernel_check_segment\n"
+	"	bne.w .Lg_15262\n"
+	"	move.w (0x10,%a0),%d2\n"
+	"	andi.w #0x3,%d2\n"
+	"	clr.w %d6\n"
+	"	cmpi.w #0x1,%d2\n"
+	"	beq.b .Lg_15154\n"
+	"	moveq #0x4,%d6\n"
+	".Lg_15154:\n"
+	"	lea (0x20,%a5),%a1\n"
+	".Lg_15158:\n"
+	"	move.l (%a1),%d1\n"
+	"	beq.w .Lg_1525c\n"
+	"	cmp.l %a0,%d1\n"
+	"	beq.b .Lg_15166\n"
+	"	movea.l %d1,%a1\n"
+	"	bra.b .Lg_15158\n"
+	".Lg_15166:\n"
+	"	move.l (%a0),(%a1)\n"
+	"	movea.l %a0,%a1\n"
+	"	clr.w (0x10,%a0)\n"
+	"	move.l (0xc,%a0),%d1\n"
+	"	move.l (0x8,%a0),%d3\n"
+	"	beq.b .Lg_15186\n"
+	"	movea.l %d3,%a2\n"
+	"	tst.w (0x10,%a2)\n"
+	"	bne.b .Lg_15186\n"
+	"	movea.l %a2,%a1\n"
+	"	add.l %d1,(0xc,%a1)\n"
+	".Lg_15186:\n"
+	"	move.l (0xc,%a1),%d1\n"
+	"	movea.l %a1,%a2\n"
+	"	adda.l %d1,%a2\n"
+	"	cmpa.l (0x4c,%a6,%d6.w*0x1),%a2\n"
+	"	bcc.b .Lg_151de\n"
+	"	move.l %a1,(0x8,%a2)\n"
+	"	tst.w (0x10,%a2)\n"
+	"	bne.b .Lg_151de\n"
+	"	move.l (0xc,%a2),%d1\n"
+	"	add.l %d1,(0xc,%a1)\n"
+	"	cmpa.l %a0,%a1\n"
+	"	beq.b .Lg_151c2\n"
+	"	movea.l (0x4,%a2),%a0\n"
+	"	move.l (%a2),(%a0)\n"
+	"	bne.b .Lg_151b8\n"
+	"	move.l %a0,(0x5c,%a6,%d6.w*0x1)\n"
+	"	bra.b .Lg_151f4\n"
+	".Lg_151b8:\n"
+	"	movea.l (%a2),%a0\n"
+	"	move.l (0x4,%a2),(0x4,%a0)\n"
+	"	bra.b .Lg_151f4\n"
+	".Lg_151c2:\n"
+	"	movea.l (0x4,%a2),%a0\n"
+	"	move.l %a0,(0x4,%a1)\n"
+	"	move.l %a1,(%a0)\n"
+	"	move.l (%a2),(%a1)\n"
+	"	bne.b .Lg_151d6\n"
+	"	move.l %a1,(0x5c,%a6,%d6.w*0x1)\n"
+	"	bra.b .Lg_151f4\n"
+	".Lg_151d6:\n"
+	"	movea.l (%a2),%a0\n"
+	"	move.l %a1,(0x4,%a0)\n"
+	"	bra.b .Lg_151f4\n"
+	".Lg_151de:\n"
+	"	cmpa.l %a0,%a1\n"
+	"	bne.b .Lg_151f4\n"
+	"	movea.l (0x5c,%a6,%d6.w*0x1),%a2\n"
+	"	move.l %a1,(0x5c,%a6,%d6.w*0x1)\n"
+	"	clr.l (%a1)\n"
+	"	move.l %a1,(%a2)\n"
+	"	move.l %a2,(0x4,%a1)\n"
+	"	bra.b .Lg_15206\n"
+	".Lg_151f4:\n"
+	"	move.l (0xc,%a1),%d1\n"
+	"	movea.l %a1,%a2\n"
+	"	adda.l %d1,%a2\n"
+	"	cmpa.l (0x4c,%a6,%d6.w*0x1),%a2\n"
+	"	bcc.b .Lg_15206\n"
+	"	move.l %a1,(0x8,%a2)\n"
+	".Lg_15206:\n"
+	"	cmp.l (0x44,%a6,%d6.w*0x1),%d1\n"
+	"	bcs.b .Lg_15260\n"
+	"	move.l (0x3c,%a6,%d6.w*0x1),%d1\n"
+	"	addq.l #0x1,%d1\n"
+	"	move.l %d1,(0x44,%a6,%d6.w*0x1)\n"
+	"	lea (0x64,%a6),%a3\n"
+	"	movea.l (%a3),%a5\n"
+	".Lg_1521c:\n"
+	"	cmpa.l %a3,%a5\n"
+	"	beq.b .Lg_15260\n"
+	"	move.b (0x59,%a5),%d1\n"
+	"	beq.b .Lg_1522a\n"
+	"	cmp.b %d1,%d2\n"
+	"	bne.b .Lg_15238\n"
+	".Lg_1522a:\n"
+	"	move.l (0x52,%a5),%d1\n"
+	"	cmp.l (0x44,%a6,%d6.w*0x1),%d1\n"
+	"	bcc.b .Lg_15238\n"
+	"	.byte 0x61 | bsr.b 0x00015268\n"
+	"	.reloc ., R_68K_PC8, kernel_allocate-1\n"
+	"	.byte 0\n"
+	"	beq.b .Lg_1523c\n"
+	".Lg_15238:\n"
+	"	movea.l (%a5),%a5\n"
+	"	bra.b .Lg_1521c\n"
+	".Lg_1523c:\n"
+	"	move.l %a0,(0x6e,%a5)\n"
+	"	movea.l (%a5),%a2\n"
+	"	movea.l (0x4,%a5),%a1\n"
+	"	move.l %a2,(%a1)\n"
+	"	move.l %a1,(0x4,%a2)\n"
+	"	exg %a5,%a2\n"
+	"	exg %d6,%d4\n"
+	"	bsr.w kernel_timer_cancel\n"
+	"	bsr.w kernel_make_ready\n"
+	"	exg %d6,%d4\n"
+	"	bra.b .Lg_1521c\n"
+	".Lg_1525c:\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.b .Lg_15262\n"
+	".Lg_15260:\n"
+	"	clr.b %d7\n"
+	".Lg_15262:\n"
+	"	movem.l (%sp)+,%d1/%d2/%d3/%d4/%a0/%a1/%a2/%a3/%a5\n"
+	"	rts\n"
+	"	.size kernel_free_for_task, .-kernel_free_for_task\n"
+);
+
 /* 00015268 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* allocates D1 bytes from region 0 or 1 as D2 selects, falling back to the other, and links it to
    the task's list
@@ -7352,7 +14460,44 @@ LAB_00015288:
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_allocate\n"
+	"	.type kernel_allocate, @function\n"
+	"	.section .text.kernel_allocate.15268,\"ax\",@progbits\n"
+	"kernel_allocate:\n"
+	"	addi.l #0x13,%d1\n"
+	"	bclr.l #0x0,%d1\n"
+	"	cmpi.b #0x1,%d2\n"
+	"	bgt.b .Lg_15282\n"
+	"	clr.w %d6\n"
+	"	.byte 0x61 | bsr.b 0x0001529c\n"
+	"	.reloc ., R_68K_PC8, kernel_region_allocate-1\n"
+	"	.byte 0\n"
+	"	beq.b .Lg_15288\n"
+	"	tst.b %d2\n"
+	"	bne.b .Lg_15298\n"
+	".Lg_15282:\n"
+	"	moveq #0x4,%d6\n"
+	"	.byte 0x61 | bsr.b 0x0001529c\n"
+	"	.reloc ., R_68K_PC8, kernel_region_allocate-1\n"
+	"	.byte 0\n"
+	"	bne.b .Lg_15298\n"
+	".Lg_15288:\n"
+	"	move.l (0x20,%a5),(%a0)\n"
+	"	move.l %a0,(0x20,%a5)\n"
+	"	adda.w #0x12,%a0\n"
+	"	clr.b %d1\n"
+	"	bra.b .Lg_1529a\n"
+	".Lg_15298:\n"
+	"	moveq #0x1,%d1\n"
+	".Lg_1529a:\n"
+	"	rts\n"
+	"	.size kernel_allocate, .-kernel_allocate\n"
+);
+
 /* 0001529c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* first fit from region D6's free list, stamping the segment 0xe1d0
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -7415,7 +14560,78 @@ __naked void kernel_region_allocate(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_region_allocate\n"
+	"	.type kernel_region_allocate, @function\n"
+	"	.section .text.kernel_region_allocate.1529c,\"ax\",@progbits\n"
+	"kernel_region_allocate:\n"
+	"	move.l %d1,-(%sp)\n"
+	"	cmp.l (0x34,%a6,%d6.w*0x1),%d1\n"
+	"	bcc.b .Lg_152a8\n"
+	"	move.l (0x34,%a6,%d6.w*0x1),%d1\n"
+	".Lg_152a8:\n"
+	"	cmp.l (0x44,%a6,%d6.w*0x1),%d1\n"
+	"	bcs.b .Lg_152b2\n"
+	"	moveq #0x1,%d4\n"
+	"	bra.b .Lg_1531e\n"
+	".Lg_152b2:\n"
+	"	lea (0x54,%a6,%d6.w*0x1),%a0\n"
+	".Lg_152b6:\n"
+	"	move.l (%a0),%d4\n"
+	"	beq.b .Lg_1531a\n"
+	"	movea.l %d4,%a1\n"
+	"	cmp.l (0xc,%a1),%d1\n"
+	"	bls.b .Lg_152c6\n"
+	"	movea.l %a1,%a0\n"
+	"	bra.b .Lg_152b6\n"
+	".Lg_152c6:\n"
+	"	move.l (0xc,%a1),%d4\n"
+	"	sub.l %d1,%d4\n"
+	"	cmp.l (0x34,%a6,%d6.w*0x1),%d4\n"
+	"	bcs.b .Lg_152f2\n"
+	"	move.l %d4,(0xc,%a1)\n"
+	"	movea.l %a1,%a0\n"
+	"	adda.l %d4,%a0\n"
+	"	move.l %d1,(0xc,%a0)\n"
+	"	move.l %a1,(0x8,%a0)\n"
+	"	movea.l %a0,%a1\n"
+	"	adda.l %d1,%a1\n"
+	"	cmpa.l (0x4c,%a6,%d6.w*0x1),%a1\n"
+	"	bcc.b .Lg_152f0\n"
+	"	move.l %a0,(0x8,%a1)\n"
+	".Lg_152f0:\n"
+	"	bra.b .Lg_15306\n"
+	".Lg_152f2:\n"
+	"	exg %a0,%a1\n"
+	"	move.l (%a0),%d4\n"
+	"	move.l %d4,(%a1)\n"
+	"	bne.b .Lg_15300\n"
+	"	move.l %a1,(0x5c,%a6,%d6.w*0x1)\n"
+	"	bra.b .Lg_15306\n"
+	".Lg_15300:\n"
+	"	exg %d4,%a1\n"
+	"	move.l %d4,(0x4,%a1)\n"
+	".Lg_15306:\n"
+	"	moveq #0x1,%d4\n"
+	"	tst.w %d6\n"
+	"	beq.b .Lg_1530e\n"
+	"	moveq #0x2,%d4\n"
+	".Lg_1530e:\n"
+	"	ori.w #-0x1e30,%d4\n"
+	"	move.w %d4,(0x10,%a0)\n"
+	"	clr.w %d4\n"
+	"	bra.b .Lg_1531e\n"
+	".Lg_1531a:\n"
+	"	move.l %d1,(0x44,%a6,%d6.w*0x1)\n"
+	".Lg_1531e:\n"
+	"	movem.l (%sp)+,%d1\n"
+	"	rts\n"
+	"	.size kernel_region_allocate, .-kernel_region_allocate\n"
+);
+
 /* 00015324 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x00015346) */
 /* service 10
@@ -7424,7 +14640,8 @@ __naked void kernel_region_allocate(void)
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_service_10(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_service_10(void)
 
 {
   void *running;
@@ -7461,7 +14678,22 @@ __regcall void kernel_service_10(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_service_10\n"
+	"	.type kernel_service_10, @function\n"
+	"	.section .text.kernel_service_10.15324,\"ax\",@progbits\n"
+	"kernel_service_10:\n"
+	"	move.l %a2,-(%sp)\n"
+	"	suba.w %a2,%a2\n"
+	"	.byte 0x60 | bra.b 0x00015330\n"
+	"	.reloc ., R_68K_PC8, kernel_service_16+0x6-1\n"
+	"	.byte 0\n"
+	"	.size kernel_service_10, .-kernel_service_10\n"
+);
+
 /* 0001532a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 16
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -7469,7 +14701,8 @@ __regcall void kernel_service_10(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_service_16(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_service_16(void)
 
 {
   int *piVar1;
@@ -7505,7 +14738,54 @@ __regcall void kernel_service_16(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_service_16\n"
+	"	.type kernel_service_16, @function\n"
+	"	.section .text.kernel_service_16.1532a,\"ax\",@progbits\n"
+	"kernel_service_16:\n"
+	"	move.l %a2,-(%sp)\n"
+	"	movea.w #0x1,%a2\n"
+	"	move.l %a1,-(%sp)\n"
+	"	movea.l (%a6),%a5\n"
+	"	suba.w #0x12,%a0\n"
+	"	exg %a0,%a1\n"
+	"	bsr.w kernel_check_task\n"
+	"	exg %a0,%a1\n"
+	"	bne.b .Lg_15370\n"
+	"	move.w %a2,%d6\n"
+	"	beq.b .Lg_15348\n"
+	"	exg %a1,%a5\n"
+	".Lg_15348:\n"
+	"	bsr.w kernel_check_segment\n"
+	"	bne.b .Lg_15370\n"
+	"	lea (0x20,%a5),%a5\n"
+	".Lg_15352:\n"
+	"	movea.l (%a5),%a2\n"
+	"	move.l %a2,%d6\n"
+	"	beq.b .Lg_1536e\n"
+	"	cmpa.l %a2,%a0\n"
+	"	beq.b .Lg_15360\n"
+	"	movea.l %a2,%a5\n"
+	"	bra.b .Lg_15352\n"
+	".Lg_15360:\n"
+	"	move.l (%a0),(%a5)\n"
+	"	move.l (0x20,%a1),(%a0)\n"
+	"	move.l %a0,(0x20,%a1)\n"
+	"	clr.b %d7\n"
+	"	bra.b .Lg_15370\n"
+	".Lg_1536e:\n"
+	"	moveq #0x1,%d7\n"
+	".Lg_15370:\n"
+	"	adda.w #0x12,%a0\n"
+	"	movea.l (%sp)+,%a1\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	rts\n"
+	"	.size kernel_service_16, .-kernel_service_16\n"
+);
+
 /* 0001537a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* services 11 to 15, 17 and 34: clears D7 and returns
    Not a C function (psos-service; read): a pSOS kernel service, reached from trap #3 through the
@@ -7513,7 +14793,8 @@ __regcall void kernel_service_16(void) /* out D7 char error */
    char error.
    psos.md */
 
-__regcall char kernel_service_none(void) /* out D7 char error */
+/* out D7 char error */
+__regcall char kernel_service_none(void)
 
 {
   uint unaff_D7;
@@ -7522,7 +14803,19 @@ __regcall char kernel_service_none(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_service_none\n"
+	"	.type kernel_service_none, @function\n"
+	"	.section .text.kernel_service_none.1537a,\"ax\",@progbits\n"
+	"kernel_service_none:\n"
+	"	clr.b %d7\n"
+	"	rts\n"
+	"	.size kernel_service_none, .-kernel_service_none\n"
+);
+
 /* 0001537e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 20, psos_create_x
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -7530,7 +14823,8 @@ __regcall char kernel_service_none(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_create_x(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_create_x(void)
 
 {
   int iVar1;
@@ -7566,7 +14860,48 @@ __regcall void kernel_create_x(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_create_x\n"
+	"	.type kernel_create_x, @function\n"
+	"	.section .text.kernel_create_x.1537e,\"ax\",@progbits\n"
+	"kernel_create_x:\n"
+	"	moveq #0x1,%d7\n"
+	"	move.l (0x18,%a6),%d6\n"
+	"	beq.b .Lg_153de\n"
+	"	movea.l %d6,%a0\n"
+	"	move.l %d0,(0x14,%a0)\n"
+	"	move.l %a0,(%a0)\n"
+	"	move.l %a0,(0x4,%a0)\n"
+	"	clr.l (0x8,%a0)\n"
+	"	clr.l (0xc,%a0)\n"
+	"	clr.w (0x20,%a0)\n"
+	"	move.b %d1,%d6\n"
+	"	clr.b (0x10,%a0)\n"
+	"	bclr.l #0x7,%d6\n"
+	"	beq.b .Lg_153ae\n"
+	"	addq.b #0x1,(0x10,%a0)\n"
+	".Lg_153ae:\n"
+	"	clr.b (0x12,%a0)\n"
+	"	bclr.l #0x1,%d6\n"
+	"	beq.b .Lg_153c0\n"
+	"	addq.b #0x1,(0x12,%a0)\n"
+	"	move.b %d2,(0x20,%a0)\n"
+	".Lg_153c0:\n"
+	"	move.b %d6,(0x11,%a0)\n"
+	"	movea.l (%a6),%a5\n"
+	"	move.b (0x14,%a5),(0x13,%a0)\n"
+	"	move.l (0x1c,%a0),(0x18,%a6)\n"
+	"	move.l (0x14,%a6),(0x1c,%a0)\n"
+	"	move.l %a0,(0x14,%a6)\n"
+	"	clr.b %d7\n"
+	".Lg_153de:\n"
+	"	rts\n"
+	"	.size kernel_create_x, .-kernel_create_x\n"
+);
+
 /* 000153e0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x00015402) */
 /* service 21
@@ -7575,7 +14910,8 @@ __regcall void kernel_create_x(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_service_21(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_service_21(void)
 
 {
   int exchange;
@@ -7612,7 +14948,58 @@ __regcall void kernel_service_21(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_service_21\n"
+	"	.type kernel_service_21, @function\n"
+	"	.section .text.kernel_service_21.153e0,\"ax\",@progbits\n"
+	"kernel_service_21:\n"
+	"	move.l (0x14,%a6),%d6\n"
+	"	beq.b .Lg_153f4\n"
+	".Lg_153e6:\n"
+	"	movea.l %d6,%a0\n"
+	"	cmp.l (0x14,%a0),%d0\n"
+	"	beq.b .Lg_153f8\n"
+	"	move.l (0x1c,%a0),%d6\n"
+	"	bne.b .Lg_153e6\n"
+	".Lg_153f4:\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.b .Lg_15434\n"
+	".Lg_153f8:\n"
+	"	movea.l (%a6),%a5\n"
+	"	move %sr,%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	beq.b .Lg_15406\n"
+	"	lea (0x8c,%a6),%a5\n"
+	".Lg_15406:\n"
+	"	bsr.w kernel_check_exchange\n"
+	"	bne.b .Lg_15434\n"
+	".Lg_1540c:\n"
+	"	clr.l %d1\n"
+	"	movea.l (%a0),%a5\n"
+	".Lg_15410:\n"
+	"	cmpa.l %a5,%a0\n"
+	"	beq.b .Lg_1542c\n"
+	"	addq.l #0x1,%d1\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.b (0x13,%a5),%d2\n"
+	"	movea.l (%a5),%a5\n"
+	"	move %d6,%sr\n"
+	"	andi.b #0x20,%d2\n"
+	"	bne.b .Lg_15410\n"
+	"	bra.b .Lg_1540c\n"
+	".Lg_1542c:\n"
+	"	clr.l %d2\n"
+	"	move.b (0x21,%a0),%d2\n"
+	"	clr.b %d7\n"
+	".Lg_15434:\n"
+	"	rts\n"
+	"	.size kernel_service_21, .-kernel_service_21\n"
+);
+
 /* 00015436 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 22, psos_delete_x
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -7620,7 +15007,8 @@ __regcall void kernel_service_21(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_delete_x(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_delete_x(void)
 
 {
   undefined4 uVar1;
@@ -7667,7 +15055,62 @@ LAB_000154a0:
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_delete_x\n"
+	"	.type kernel_delete_x, @function\n"
+	"	.section .text.kernel_delete_x.15436,\"ax\",@progbits\n"
+	"kernel_delete_x:\n"
+	"	move.l %a2,-(%sp)\n"
+	"	movea.l (%a6),%a5\n"
+	"	bsr.w kernel_check_exchange\n"
+	"	bne.b .Lg_154aa\n"
+	"	move.b #0xfe,(0x11,%a0)\n"
+	"	clr.b %d7\n"
+	"	movea.l (%a0),%a2\n"
+	".Lg_1544a:\n"
+	"	cmpa.l %a2,%a0\n"
+	"	beq.b .Lg_15466\n"
+	"	move.b #0x1,(0x6d,%a2)\n"
+	"	movea.l (%a2),%a5\n"
+	"	bsr.w kernel_timer_cancel\n"
+	"	bsr.w kernel_make_ready\n"
+	"	move.b #0x80,%d7\n"
+	"	movea.l %a5,%a2\n"
+	"	bra.b .Lg_1544a\n"
+	".Lg_15466:\n"
+	"	move.l (0x8,%a0),%d6\n"
+	"	beq.b .Lg_15488\n"
+	"	move.b #0x81,%d7\n"
+	"	movea.l %d6,%a5\n"
+	"	ori #0x700,%sr\n"
+	"	movea.l (0x1c,%a6),%a2\n"
+	"	move.l %a5,(0x1c,%a6)\n"
+	"	movea.l (0xc,%a0),%a5\n"
+	"	move.l %a2,(%a5)\n"
+	"	andi #-0x701,%sr\n"
+	".Lg_15488:\n"
+	"	lea (-0x8,%a6),%a5\n"
+	".Lg_1548c:\n"
+	"	move.l (0x1c,%a5),%d6\n"
+	"	beq.b .Lg_154a0\n"
+	"	cmp.l %a0,%d6\n"
+	"	beq.b .Lg_1549a\n"
+	"	movea.l %d6,%a5\n"
+	"	bra.b .Lg_1548c\n"
+	".Lg_1549a:\n"
+	"	move.l (0x1c,%a0),(0x1c,%a5)\n"
+	".Lg_154a0:\n"
+	"	move.l (0x18,%a6),(0x1c,%a0)\n"
+	"	move.l %a0,(0x18,%a6)\n"
+	".Lg_154aa:\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	rts\n"
+	"	.size kernel_delete_x, .-kernel_delete_x\n"
+);
+
 /* 000154ae */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x000154b8) */
 /* service 18
@@ -7676,7 +15119,8 @@ LAB_000154a0:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall ushort kernel_service_18(void) /* out D7 char error */
+/* out D7 char error */
+__regcall ushort kernel_service_18(void)
 
 {
   int iVar1;
@@ -7777,7 +15221,113 @@ LAB_00015576:
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_service_18\n"
+	"	.type kernel_service_18, @function\n"
+	"	.section .text.kernel_service_18.154ae,\"ax\",@progbits\n"
+	"kernel_service_18:\n"
+	"	movea.l (%a6),%a5\n"
+	"	move %sr,%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	beq.b .Lg_154bc\n"
+	"	lea (0x8c,%a6),%a5\n"
+	".Lg_154bc:\n"
+	"	movem.l %a3/%a2/%d5/%d4/%d3/%d2,-(%sp)\n"
+	"	bsr.w kernel_check_exchange\n"
+	"	bne.w .Lg_1558c\n"
+	"	tst.l (0x4,%a1)\n"
+	"	bne.w .Lg_15584\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	movea.l (0x4,%a0),%a2\n"
+	"	move.l %a0,(%a0)\n"
+	"	move.l %a0,(0x4,%a0)\n"
+	"	move %d6,%sr\n"
+	"	clr.b %d1\n"
+	".Lg_154e4:\n"
+	"	cmpa.l %a2,%a0\n"
+	"	beq.b .Lg_15510\n"
+	"	tst.b (0x12,%a2)\n"
+	"	ble.b .Lg_154f2\n"
+	"	bsr.w kernel_timer_unlink\n"
+	".Lg_154f2:\n"
+	"	move.l (0x4,%a2),%d2\n"
+	"	bsr.w kernel_make_ready\n"
+	"	movea.l (0x72,%a2),%a3\n"
+	"	movem.l (0x4,%a1),%d3/%d4/%d5/%d6/%d7\n"
+	"	movem.l %d3/%d4/%d5/%d6/%d7,(0x4,%a3)\n"
+	"	movea.l %d2,%a2\n"
+	"	addq.b #0x1,%d1\n"
+	"	bra.b .Lg_154e4\n"
+	".Lg_15510:\n"
+	"	sub.b %d1,%d0\n"
+	"	bls.b .Lg_1556c\n"
+	"	move.b %d0,%d2\n"
+	"	bsr.w kernel_copy_message\n"
+	"	bne.b .Lg_15580\n"
+	"	movea.l %a3,%a5\n"
+	".Lg_1551e:\n"
+	"	movea.l %a3,%a2\n"
+	"	subq.b #0x1,%d2\n"
+	"	beq.b .Lg_1552e\n"
+	"	bsr.w kernel_copy_message\n"
+	"	bne.b .Lg_15570\n"
+	"	move.l %a3,(%a2)\n"
+	"	bra.b .Lg_1551e\n"
+	".Lg_1552e:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.b (0x21,%a0),%d7\n"
+	"	add.b %d0,%d7\n"
+	"	tst.b (0x12,%a0)\n"
+	"	beq.b .Lg_1554c\n"
+	"	move.b (0x20,%a0),%d5\n"
+	"	cmp.b %d5,%d7\n"
+	"	bls.b .Lg_1554c\n"
+	"	moveq #0x6,%d7\n"
+	"	bra.b .Lg_15576\n"
+	".Lg_1554c:\n"
+	"	move.b %d7,(0x21,%a0)\n"
+	"	movea.l (0xc,%a0),%a2\n"
+	"	move.l %a2,%d7\n"
+	"	bne.b .Lg_1555c\n"
+	"	lea (0x8,%a0),%a2\n"
+	".Lg_1555c:\n"
+	"	move.l (%a2),(%a3)\n"
+	"	bne.b .Lg_15564\n"
+	"	move.l %a3,(0xc,%a0)\n"
+	".Lg_15564:\n"
+	"	move.l %a5,(%a2)\n"
+	"	move %d6,%sr\n"
+	"	add.b %d1,%d0\n"
+	"	bra.b .Lg_1558a\n"
+	".Lg_1556c:\n"
+	"	move.w %d1,%d0\n"
+	"	bra.b .Lg_1558a\n"
+	".Lg_15570:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	".Lg_15576:\n"
+	"	move.l (0x1c,%a6),(%a3)\n"
+	"	move.l %a5,(0x1c,%a6)\n"
+	"	move %d6,%sr\n"
+	".Lg_15580:\n"
+	"	move.w %d1,%d0\n"
+	"	bra.b .Lg_1558c\n"
+	".Lg_15584:\n"
+	"	move.b #0x7,%d7\n"
+	"	bra.b .Lg_1558c\n"
+	".Lg_1558a:\n"
+	"	clr.b %d7\n"
+	".Lg_1558c:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%a2/%a3\n"
+	"	rts\n"
+	"	.size kernel_service_18, .-kernel_service_18\n"
+);
+
 /* 00015592 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x000155ac) */
 /* service 19, psos_jam_x: kernel_send_for_task's body with A4 set, which send_x clears
@@ -7786,7 +15336,8 @@ LAB_00015576:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_jam_x(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_jam_x(void)
 
 {
   void *running;
@@ -7902,7 +15453,23 @@ LAB_00015606:
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_jam_x\n"
+	"	.type kernel_jam_x, @function\n"
+	"	.section .text.kernel_jam_x.15592,\"ax\",@progbits\n"
+	"kernel_jam_x:\n"
+	"	movea.l (%a6),%a5\n"
+	"	movem.l %a4/%a3/%a2/%d5/%d4/%d3,-(%sp)\n"
+	"	movea.l %a0,%a4\n"
+	"	.byte 0x60 | bra.b 0x000155a4\n"
+	"	.reloc ., R_68K_PC8, kernel_send_for_task+0x6-1\n"
+	"	.byte 0\n"
+	"	.size kernel_jam_x, .-kernel_jam_x\n"
+);
+
 /* 0001559c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x000155ac) */
 /* WARNING: Removing unreachable block (ram,0x00015680) */
@@ -7913,7 +15480,8 @@ LAB_00015606:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_send_x(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_send_x(void)
 
 {
   void *running;
@@ -8019,7 +15587,18 @@ LAB_00015606:
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_send_x\n"
+	"	.type kernel_send_x, @function\n"
+	"	.section .text.kernel_send_x.1559c,\"ax\",@progbits\n"
+	"kernel_send_x:\n"
+	"	movea.l (%a6),%a5\n"
+	"	.size kernel_send_x, .-kernel_send_x\n"
+);
+
 /* 0001559e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x000155ac) */
 /* WARNING: Removing unreachable block (ram,0x00015680) */
@@ -8133,7 +15712,134 @@ LAB_00015606:
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_send_for_task\n"
+	"	.type kernel_send_for_task, @function\n"
+	"	.section .text.kernel_send_for_task.1559e,\"ax\",@progbits\n"
+	"kernel_send_for_task:\n"
+	"	movem.l %a4/%a3/%a2/%d5/%d4/%d3,-(%sp)\n"
+	"	suba.l %a4,%a4\n"
+	"	move %sr,%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	beq.b .Lg_155b0\n"
+	"	lea (0x8c,%a6),%a5\n"
+	".Lg_155b0:\n"
+	"	bsr.w kernel_check_exchange\n"
+	"	bne.w .Lg_156a6\n"
+	"	suba.l %a3,%a3\n"
+	"	move.l (0x4,%a1),%d3\n"
+	"	beq.b .Lg_15606\n"
+	"	cmp.l %a0,%d3\n"
+	"	beq.b .Lg_155ca\n"
+	"	moveq #0x4,%d7\n"
+	"	bra.w .Lg_156a6\n"
+	".Lg_155ca:\n"
+	"	lea (0x1c,%a5),%a2\n"
+	"	movem.l (0x8,%a1),%d3/%d4/%d5/%d6\n"
+	".Lg_155d4:\n"
+	"	move.l (%a2),%d7\n"
+	"	beq.b .Lg_155f6\n"
+	"	movea.l %d7,%a3\n"
+	"	lea (0x4,%a3),%a3\n"
+	"	cmpa.l (%a3)+,%a0\n"
+	"	bne.b .Lg_155f2\n"
+	"	cmp.l (%a3)+,%d3\n"
+	"	bne.b .Lg_155f2\n"
+	"	cmp.l (%a3)+,%d4\n"
+	"	bne.b .Lg_155f2\n"
+	"	cmp.l (%a3)+,%d5\n"
+	"	bne.b .Lg_155f2\n"
+	"	cmp.l (%a3)+,%d6\n"
+	"	beq.b .Lg_15600\n"
+	".Lg_155f2:\n"
+	"	movea.l %d7,%a2\n"
+	"	bra.b .Lg_155d4\n"
+	".Lg_155f6:\n"
+	"	bsr.w kernel_copy_message\n"
+	"	beq.b .Lg_15606\n"
+	"	bra.w .Lg_156a6\n"
+	".Lg_15600:\n"
+	"	lea (-0x18,%a3),%a3\n"
+	"	move.l (%a3),(%a2)\n"
+	".Lg_15606:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	movea.l (%a0),%a2\n"
+	"	cmpa.l %a2,%a0\n"
+	"	beq.b .Lg_15648\n"
+	"	movea.l (%a2),%a4\n"
+	"	move.l %a4,(%a0)\n"
+	"	move.l %a0,(0x4,%a4)\n"
+	"	move %d6,%sr\n"
+	"	tst.b (0x12,%a2)\n"
+	"	ble.b .Lg_15626\n"
+	"	bsr.w kernel_timer_unlink\n"
+	".Lg_15626:\n"
+	"	bsr.w kernel_make_ready\n"
+	"	movea.l (0x72,%a2),%a4\n"
+	"	movem.l (0x4,%a1),%d3/%d4/%d5/%d6/%d7\n"
+	"	movem.l %d3/%d4/%d5/%d6/%d7,(0x4,%a4)\n"
+	"	tst.l %d3\n"
+	"	beq.b .Lg_156a4\n"
+	"	move.l (0x1c,%a2),(%a3)\n"
+	"	move.l %a3,(0x1c,%a2)\n"
+	"	bra.b .Lg_156a4\n"
+	".Lg_15648:\n"
+	"	move %d6,%sr\n"
+	"	addq.b #0x1,(0x21,%a0)\n"
+	"	move.l %a3,%d3\n"
+	"	bne.b .Lg_15666\n"
+	"	tst.b (0x12,%a0)\n"
+	"	beq.b .Lg_15662\n"
+	"	move.b (0x20,%a0),%d3\n"
+	"	cmp.b (0x21,%a0),%d3\n"
+	"	bcs.b .Lg_15694\n"
+	".Lg_15662:\n"
+	"	.byte 0x61 | bsr.b 0x000156ac\n"
+	"	.reloc ., R_68K_PC8, kernel_copy_message-1\n"
+	"	.byte 0\n"
+	"	bne.b .Lg_15696\n"
+	".Lg_15666:\n"
+	"	move.l %a4,%d7\n"
+	"	bne.b .Lg_15680\n"
+	"	clr.l (%a3)\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	movea.l (0xc,%a0),%a2\n"
+	"	move.l %a2,%d3\n"
+	"	bne.b .Lg_1569c\n"
+	"	move.l %a3,(0x8,%a0)\n"
+	"	bra.b .Lg_1569e\n"
+	".Lg_15680:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	movea.l (0x8,%a0),%a2\n"
+	"	move.l %a3,(0x8,%a0)\n"
+	"	move.l %a2,(%a3)\n"
+	"	bne.b .Lg_156a2\n"
+	"	bra.b .Lg_1569e\n"
+	".Lg_15694:\n"
+	"	moveq #0x6,%d7\n"
+	".Lg_15696:\n"
+	"	subq.b #0x1,(0x21,%a0)\n"
+	"	bra.b .Lg_156a6\n"
+	".Lg_1569c:\n"
+	"	move.l %a3,(%a2)\n"
+	".Lg_1569e:\n"
+	"	move.l %a3,(0xc,%a0)\n"
+	".Lg_156a2:\n"
+	"	move %d6,%sr\n"
+	".Lg_156a4:\n"
+	"	clr.b %d7\n"
+	".Lg_156a6:\n"
+	"	movem.l (%sp)+,%d3/%d4/%d5/%a2/%a3/%a4\n"
+	"	rts\n"
+	"	.size kernel_send_for_task, .-kernel_send_for_task\n"
+);
+
 /* 000156ac */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* takes a buffer from the free list and copies the message's 20 bytes into it
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -8167,7 +15873,33 @@ __naked void kernel_copy_message(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_copy_message\n"
+	"	.type kernel_copy_message, @function\n"
+	"	.section .text.kernel_copy_message.156ac,\"ax\",@progbits\n"
+	"kernel_copy_message:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (0x1c,%a6),%d3\n"
+	"	bne.b .Lg_156be\n"
+	"	move %d6,%sr\n"
+	"	moveq #0x5,%d7\n"
+	"	bra.b .Lg_156d4\n"
+	".Lg_156be:\n"
+	"	movea.l %d3,%a3\n"
+	"	move.l (%a3),(0x1c,%a6)\n"
+	"	move %d6,%sr\n"
+	"	movem.l (0x4,%a1),%d3/%d4/%d5/%d6/%d7\n"
+	"	movem.l %d3/%d4/%d5/%d6/%d7,(0x4,%a3)\n"
+	"	clr.b %d7\n"
+	".Lg_156d4:\n"
+	"	rts\n"
+	"	.size kernel_copy_message, .-kernel_copy_message\n"
+);
+
 /* 000156d6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x000156e4) */
 /* service 24, psos_request_x
@@ -8176,7 +15908,8 @@ __naked void kernel_copy_message(void)
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_request_x(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_request_x(void)
 
 {
   int *running;
@@ -8279,7 +16012,119 @@ LAB_000157c4:
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_request_x\n"
+	"	.type kernel_request_x, @function\n"
+	"	.section .text.kernel_request_x.156d6,\"ax\",@progbits\n"
+	"kernel_request_x:\n"
+	"	movem.l %a2/%d5/%d4/%d3,-(%sp)\n"
+	"	movea.l (%a6),%a5\n"
+	"	move %sr,%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	beq.b .Lg_156ea\n"
+	"	lea (0x8c,%a6),%a5\n"
+	"	moveq #0x1,%d1\n"
+	".Lg_156ea:\n"
+	"	bsr.w kernel_check_exchange\n"
+	"	bne.w .Lg_157dc\n"
+	".Lg_156f2:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (0x8,%a0),%d3\n"
+	"	beq.b .Lg_15740\n"
+	"	subq.b #0x1,(0x21,%a0)\n"
+	"	movea.l %d3,%a2\n"
+	"	move.l (%a2),(0x8,%a0)\n"
+	"	bne.b .Lg_1570e\n"
+	"	clr.l (0xc,%a0)\n"
+	".Lg_1570e:\n"
+	"	move %d6,%sr\n"
+	"	movem.l (0x4,%a2),%d3/%d4/%d5/%d6/%d7\n"
+	"	movem.l %d3/%d4/%d5/%d6/%d7,(0x4,%a1)\n"
+	"	tst.l %d3\n"
+	"	beq.b .Lg_1572c\n"
+	"	move.l (0x1c,%a5),(%a2)\n"
+	"	move.l %a2,(0x1c,%a5)\n"
+	"	bra.w .Lg_157da\n"
+	".Lg_1572c:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (0x1c,%a6),(%a2)\n"
+	"	move.l %a2,(0x1c,%a6)\n"
+	"	move %d6,%sr\n"
+	"	bra.w .Lg_157da\n"
+	".Lg_15740:\n"
+	"	tst.b %d1\n"
+	"	beq.b .Lg_1574e\n"
+	"	move %d6,%sr\n"
+	"	move.b #0x80,%d7\n"
+	"	bra.w .Lg_157dc\n"
+	".Lg_1574e:\n"
+	"	movea.l (0x4,%a5),%a2\n"
+	"	move.l (%a5),%d3\n"
+	"	move.l %d3,(%a2)\n"
+	"	exg %d3,%a2\n"
+	"	move.l %d3,(0x4,%a2)\n"
+	"	move.l %a1,(0x72,%a5)\n"
+	"	tst.b (0x10,%a0)\n"
+	"	beq.b .Lg_157b4\n"
+	"	move.b (0x10,%a5),%d3\n"
+	".Lg_1576a:\n"
+	"	movea.l %a0,%a2\n"
+	".Lg_1576c:\n"
+	"	move %d6,%sr\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	movea.l (%a2),%a2\n"
+	"	cmpa.l %a2,%a0\n"
+	"	beq.b .Lg_1578a\n"
+	"	move.b (0x13,%a2),%d5\n"
+	"	andi.b #0x20,%d5\n"
+	"	beq.b .Lg_1576a\n"
+	"	cmp.b (0x10,%a2),%d3\n"
+	"	bls.b .Lg_1576c\n"
+	".Lg_1578a:\n"
+	"	tst.l (0x8,%a0)\n"
+	"	bne.b .Lg_157a8\n"
+	"	move.l %a2,(%a5)\n"
+	"	move.l (0x4,%a2),%d3\n"
+	"	move.l %a5,(0x4,%a2)\n"
+	"	movea.l (0x4,%a2),%a2\n"
+	"	movea.l %d3,%a2\n"
+	"	move.l %a2,(0x4,%a5)\n"
+	"	move.l %a5,(%a2)\n"
+	"	bra.b .Lg_157c4\n"
+	".Lg_157a8:\n"
+	"	move %d6,%sr\n"
+	"	movea.l %a5,%a2\n"
+	"	bsr.w kernel_ready_insert\n"
+	"	bra.w .Lg_156f2\n"
+	".Lg_157b4:\n"
+	"	move.l %a0,(%a5)\n"
+	"	movea.l (0x4,%a0),%a2\n"
+	"	move.l %a5,(0x4,%a0)\n"
+	"	move.l %a5,(%a2)\n"
+	"	move.l %a2,(0x4,%a5)\n"
+	".Lg_157c4:\n"
+	"	move.w #-0xe0,(0x12,%a5)\n"
+	"	move %d6,%sr\n"
+	"	tst.l %d0\n"
+	"	bne.b .Lg_157d6\n"
+	"	clr.b (0x12,%a5)\n"
+	"	bra.b .Lg_157da\n"
+	".Lg_157d6:\n"
+	"	bsr.w kernel_timer_insert\n"
+	".Lg_157da:\n"
+	"	clr.b %d7\n"
+	".Lg_157dc:\n"
+	"	movem.l (%sp)+,%d3/%d4/%d5/%a2\n"
+	"	rts\n"
+	"	.size kernel_request_x, .-kernel_request_x\n"
+);
+
 /* 000157e2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x000157ec) */
 /* service 25, psos_signal_v
@@ -8288,7 +16133,8 @@ LAB_000157c4:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_signal_v(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_signal_v(void)
 
 {
   ushort uVar1;
@@ -8336,7 +16182,24 @@ __regcall void kernel_signal_v(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_signal_v\n"
+	"	.type kernel_signal_v, @function\n"
+	"	.section .text.kernel_signal_v.157e2,\"ax\",@progbits\n"
+	"kernel_signal_v:\n"
+	"	movea.l (%a6),%a5\n"
+	"	move %sr,%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	.byte 0x67 | beq.b 0x000157f0\n"
+	"	.reloc ., R_68K_PC8, kernel_signal_task-1\n"
+	"	.byte 0\n"
+	"	lea (0x8c,%a6),%a5\n"
+	"	.size kernel_signal_v, .-kernel_signal_v\n"
+);
+
 /* 000157f0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* checks the task by kernel_check_task, ORs the events in D1 into its pending word at +0x18 and, if
    they satisfy the wait at +0x16, wakes it; kernel_signal_v and kernel_delete call it
@@ -8392,7 +16255,61 @@ __naked void kernel_signal_task(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_signal_task\n"
+	"	.type kernel_signal_task, @function\n"
+	"	.section .text.kernel_signal_task.157f0,\"ax\",@progbits\n"
+	"kernel_signal_task:\n"
+	"	move.w %d1,-(%sp)\n"
+	"	bsr.w kernel_check_task\n"
+	"	bne.b .Lg_15856\n"
+	"	bclr.l #0xf,%d1\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	or.w (0x18,%a0),%d1\n"
+	"	move.w %d1,(0x18,%a0)\n"
+	"	move.w (0x16,%a0),%d7\n"
+	"	beq.b .Lg_15852\n"
+	"	eor.w %d7,%d1\n"
+	"	and.w %d1,(0x18,%a0)\n"
+	"	and.w %d7,%d1\n"
+	"	beq.b .Lg_15822\n"
+	"	bpl.b .Lg_15848\n"
+	"	cmp.w %d1,%d7\n"
+	"	beq.b .Lg_15852\n"
+	"	eor.w %d1,%d7\n"
+	".Lg_15822:\n"
+	"	or.w %d7,(0x54,%a0)\n"
+	"	clr.w (0x16,%a0)\n"
+	"	move %d6,%sr\n"
+	"	exg %a0,%a2\n"
+	"	tst.b (0x12,%a2)\n"
+	"	ble.b .Lg_15838\n"
+	"	bsr.w kernel_timer_unlink\n"
+	".Lg_15838:\n"
+	"	bsr.w kernel_make_ready\n"
+	"	exg %a0,%a2\n"
+	"	cmpa.l (%a6),%a0\n"
+	"	bne.b .Lg_15854\n"
+	"	clr.b (0x8b,%a6)\n"
+	"	bra.b .Lg_15854\n"
+	".Lg_15848:\n"
+	"	move.w %d1,(0x16,%a0)\n"
+	"	eor.w %d1,%d7\n"
+	"	or.w %d7,(0x54,%a0)\n"
+	".Lg_15852:\n"
+	"	move %d6,%sr\n"
+	".Lg_15854:\n"
+	"	clr.b %d7\n"
+	".Lg_15856:\n"
+	"	move.w (%sp)+,%d1\n"
+	"	rts\n"
+	"	.size kernel_signal_task, .-kernel_signal_task\n"
+);
+
 /* 0001585a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x000158a6) */
 /* WARNING: Removing unreachable block (ram,0x000158d0) */
@@ -8403,7 +16320,8 @@ __naked void kernel_signal_task(void)
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_get_v(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_get_v(void)
 
 {
   ushort *puVar1;
@@ -8424,7 +16342,18 @@ __regcall void kernel_get_v(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_get_v\n"
+	"	.type kernel_get_v, @function\n"
+	"	.section .text.kernel_get_v.1585a,\"ax\",@progbits\n"
+	"kernel_get_v:\n"
+	"	clr.b %d7\n"
+	"	.size kernel_get_v, .-kernel_get_v\n"
+);
+
 /* 0001585c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 26, psos_wait_v
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -8432,7 +16361,8 @@ __regcall void kernel_get_v(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_wait_v(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_wait_v(void)
 
 {
   int *piVar1;
@@ -8475,7 +16405,70 @@ __regcall void kernel_wait_v(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_wait_v\n"
+	"	.type kernel_wait_v, @function\n"
+	"	.section .text.kernel_wait_v.1585c,\"ax\",@progbits\n"
+	"kernel_wait_v:\n"
+	"	move.l %a2,-(%sp)\n"
+	"	movea.l (%a6),%a5\n"
+	"	bclr.l #0xf,%d1\n"
+	"	tst.w %d1\n"
+	"	bne.b .Lg_1586e\n"
+	"	move.w (0x18,%a5),%d1\n"
+	"	bra.b .Lg_158d4\n"
+	".Lg_1586e:\n"
+	"	tst.b %d2\n"
+	"	beq.b .Lg_15876\n"
+	"	bset.l #0xf,%d1\n"
+	".Lg_15876:\n"
+	"	ori #0x700,%sr\n"
+	"	move.w (0x18,%a5),%d6\n"
+	"	eor.w %d1,%d6\n"
+	"	and.w %d6,(0x18,%a5)\n"
+	"	and.w %d1,%d6\n"
+	"	beq.b .Lg_15890\n"
+	"	bpl.b .Lg_15896\n"
+	"	cmp.w %d1,%d6\n"
+	"	beq.b .Lg_15896\n"
+	"	eor.w %d6,%d1\n"
+	".Lg_15890:\n"
+	"	andi #-0x701,%sr\n"
+	"	bra.b .Lg_158d4\n"
+	".Lg_15896:\n"
+	"	eor.w %d6,%d1\n"
+	"	tst.b %d7\n"
+	"	bne.b .Lg_158a6\n"
+	"	andi #-0x701,%sr\n"
+	"	move.b #0x80,%d7\n"
+	"	bra.b .Lg_158d6\n"
+	".Lg_158a6:\n"
+	"	move.w %d1,(0x54,%a5)\n"
+	"	move.w %d6,(0x16,%a5)\n"
+	"	movea.l (0x4,%a5),%a2\n"
+	"	move.l (%a5),%d7\n"
+	"	move.l %d7,(%a2)\n"
+	"	exg %d7,%a2\n"
+	"	move.l %d7,(0x4,%a2)\n"
+	"	move.w #-0xf0,(0x12,%a5)\n"
+	"	andi #-0x701,%sr\n"
+	"	tst.l %d0\n"
+	"	bne.b .Lg_158d0\n"
+	"	clr.b (0x12,%a5)\n"
+	"	bra.b .Lg_158d4\n"
+	".Lg_158d0:\n"
+	"	bsr.w kernel_timer_insert\n"
+	".Lg_158d4:\n"
+	"	clr.b %d7\n"
+	".Lg_158d6:\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	rts\n"
+	"	.size kernel_wait_v, .-kernel_wait_v\n"
+);
+
 /* 000158da */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 32, psos_mode
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -8483,7 +16476,8 @@ __regcall void kernel_wait_v(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall byte kernel_mode(void) /* out D7 char error */
+/* out D7 char error */
+__regcall byte kernel_mode(void)
 
 {
   byte bVar1;
@@ -8497,7 +16491,29 @@ __regcall byte kernel_mode(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_mode\n"
+	"	.type kernel_mode, @function\n"
+	"	.section .text.kernel_mode.158da,\"ax\",@progbits\n"
+	"kernel_mode:\n"
+	"	movea.l (%a6),%a5\n"
+	"	move.b (0x11,%a5),%d6\n"
+	"	move.b %d6,%d7\n"
+	"	and.b %d1,%d0\n"
+	"	not.b %d1\n"
+	"	and.b %d1,%d6\n"
+	"	or.b %d0,%d6\n"
+	"	not.b %d1\n"
+	"	move.b %d6,(0x11,%a5)\n"
+	"	move.w %d7,%d0\n"
+	"	clr.b %d7\n"
+	"	rts\n"
+	"	.size kernel_mode, .-kernel_mode\n"
+);
+
 /* 000158f6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 33
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -8505,14 +16521,29 @@ __regcall byte kernel_mode(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall undefined2 kernel_service_33(undefined2 param_1) /* out D7 char error */
+/* out D7 char error */
+__regcall undefined2 kernel_service_33(undefined2 param_1)
 
 {
   return param_1;
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_service_33\n"
+	"	.type kernel_service_33, @function\n"
+	"	.section .text.kernel_service_33.158f6,\"ax\",@progbits\n"
+	"kernel_service_33:\n"
+	"	move.w (0x10,%sp),%d0\n"
+	"	ori.w #0x2000,(0x10,%sp)\n"
+	"	clr.w %d7\n"
+	"	rts\n"
+	"	.size kernel_service_33, .-kernel_service_33\n"
+);
+
 /* 00015904 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 28, psos_pause
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -8520,7 +16551,8 @@ __regcall undefined2 kernel_service_33(undefined2 param_1) /* out D7 char error 
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_pause(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_pause(void)
 
 {
   int iVar1;
@@ -8540,7 +16572,33 @@ __regcall void kernel_pause(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_pause\n"
+	"	.type kernel_pause, @function\n"
+	"	.section .text.kernel_pause.15904,\"ax\",@progbits\n"
+	"kernel_pause:\n"
+	"	movea.l (%a6),%a5\n"
+	"	ori #0x700,%sr\n"
+	"	bsr.w kernel_queue_remove\n"
+	"	andi #-0x701,%sr\n"
+	"	tst.l %d0\n"
+	"	bne.b .Lg_15920\n"
+	"	exg %a5,%a2\n"
+	"	bsr.w kernel_ready_insert\n"
+	"	exg %a5,%a2\n"
+	"	bra.b .Lg_1592a\n"
+	".Lg_15920:\n"
+	"	move.b #0xff,(0x12,%a5)\n"
+	"	bsr.w kernel_timer_insert\n"
+	".Lg_1592a:\n"
+	"	clr.b %d7\n"
+	"	rts\n"
+	"	.size kernel_pause, .-kernel_pause\n"
+);
+
 /* 0001592e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 29
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -8548,7 +16606,8 @@ __regcall void kernel_pause(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_service_29(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_service_29(void)
 
 {
   undefined4 uVar1;
@@ -8576,7 +16635,43 @@ __regcall void kernel_service_29(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_service_29\n"
+	"	.type kernel_service_29, @function\n"
+	"	.section .text.kernel_service_29.1592e,\"ax\",@progbits\n"
+	"kernel_service_29:\n"
+	"	addq.l #0x1,(0x6c,%a6)\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	addq.w #0x1,(0x70,%a6)\n"
+	"	move.w (0x70,%a6),%d7\n"
+	"	sub.w (0x86,%a6),%d7\n"
+	"	bcs.b .Lg_1596e\n"
+	"	move.w %d7,(0x70,%a6)\n"
+	"	move.l (0x72,%a6),%d7\n"
+	"	addq.b #0x1,%d7\n"
+	"	cmpi.b #0x3c,%d7\n"
+	"	bne.b .Lg_1596a\n"
+	"	clr.b %d7\n"
+	"	addi.w #0x100,%d7\n"
+	"	cmpi.w #0x3c00,%d7\n"
+	"	bne.b .Lg_1596a\n"
+	"	clr.w %d7\n"
+	"	swap %d7\n"
+	"	addq.b #0x1,%d7\n"
+	"	swap %d7\n"
+	".Lg_1596a:\n"
+	"	move.l %d7,(0x72,%a6)\n"
+	".Lg_1596e:\n"
+	"	move %d6,%sr\n"
+	"	clr.b %d7\n"
+	"	rts\n"
+	"	.size kernel_service_29, .-kernel_service_29\n"
+);
+
 /* 00015974 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 30
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -8584,7 +16679,8 @@ __regcall void kernel_service_29(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall undefined8 kernel_service_30(void) /* out D7 char error */
+/* out D7 char error */
+__regcall undefined8 kernel_service_30(void)
 
 {
   uint extraout_D1;
@@ -8598,7 +16694,34 @@ __regcall undefined8 kernel_service_30(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_service_30\n"
+	"	.type kernel_service_30, @function\n"
+	"	.section .text.kernel_service_30.15974,\"ax\",@progbits\n"
+	"kernel_service_30:\n"
+	".Lg_15974:\n"
+	"	move.l (0x72,%a6),%d1\n"
+	"	bsr.w kernel_advance_date\n"
+	"	move.w (0x70,%a6),%d2\n"
+	"	move.l (0x76,%a6),%d0\n"
+	"	cmp.l (0x72,%a6),%d1\n"
+	"	bne.b .Lg_15974\n"
+	"	clr.l %d7\n"
+	"	move.b %d2,%d7\n"
+	"	swap %d7\n"
+	"	lsl.l #0x8,%d7\n"
+	"	or.l %d7,%d1\n"
+	"	tst.b (0x8a,%a6)\n"
+	"	bne.b .Lg_1599c\n"
+	"	moveq #0x1,%d7\n"
+	".Lg_1599c:\n"
+	"	rts\n"
+	"	.size kernel_service_30, .-kernel_service_30\n"
+);
+
 /* 0001599e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 31
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -8606,7 +16729,8 @@ __regcall undefined8 kernel_service_30(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_service_31(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_service_31(void)
 
 {
   ushort in_D0w;
@@ -8636,7 +16760,62 @@ __regcall void kernel_service_31(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_service_31\n"
+	"	.type kernel_service_31, @function\n"
+	"	.section .text.kernel_service_31.1599e,\"ax\",@progbits\n"
+	"kernel_service_31:\n"
+	"	move.l %d1,%d7\n"
+	"	cmpi.b #0x3c,%d7\n"
+	"	bcc.b .Lg_15a08\n"
+	"	lsr.w #0x8,%d7\n"
+	"	cmpi.b #0x3c,%d7\n"
+	"	bcc.b .Lg_15a08\n"
+	"	swap %d7\n"
+	"	cmpi.b #0x18,%d7\n"
+	"	bcc.b .Lg_15a08\n"
+	"	cmp.w (0x86,%a6),%d2\n"
+	"	bcc.b .Lg_15a08\n"
+	"	tst.b %d0\n"
+	"	beq.b .Lg_15a0c\n"
+	"	move.w %d0,%d7\n"
+	"	lsr.w #0x8,%d7\n"
+	"	beq.b .Lg_15a0c\n"
+	"	cmpi.b #0xd,%d7\n"
+	"	bcc.b .Lg_15a0c\n"
+	"	move.l %d0,%d6\n"
+	"	bsr.w kernel_set_leap_year\n"
+	"	move.w %d0,%d7\n"
+	"	lsr.w #0x8,%d7\n"
+	"	cmp.b (0x79,%a6,%d7.w*0x1),%d0\n"
+	"	bls.b .Lg_159e6\n"
+	"	move.l (0x76,%a6),%d6\n"
+	"	bsr.w kernel_set_leap_year\n"
+	"	bra.b .Lg_15a0c\n"
+	".Lg_159e6:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.w %d2,(0x70,%a6)\n"
+	"	move.l %d1,(0x72,%a6)\n"
+	"	clr.b (0x72,%a6)\n"
+	"	move.l %d0,(0x76,%a6)\n"
+	"	move %d6,%sr\n"
+	"	move.b #0x1,(0x8a,%a6)\n"
+	"	clr.b %d7\n"
+	"	bra.b .Lg_15a0e\n"
+	".Lg_15a08:\n"
+	"	moveq #0x2,%d7\n"
+	"	bra.b .Lg_15a0e\n"
+	".Lg_15a0c:\n"
+	"	moveq #0x1,%d7\n"
+	".Lg_15a0e:\n"
+	"	rts\n"
+	"	.size kernel_service_31, .-kernel_service_31\n"
+);
+
 /* 00015a10 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 35
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -8644,7 +16823,8 @@ __regcall void kernel_service_31(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall undefined8 kernel_service_35(void) /* out D7 char error */
+/* out D7 char error */
+__regcall undefined8 kernel_service_35(void)
 
 {
   int in_D0;
@@ -8672,7 +16852,39 @@ __regcall undefined8 kernel_service_35(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_service_35\n"
+	"	.type kernel_service_35, @function\n"
+	"	.section .text.kernel_service_35.15a10,\"ax\",@progbits\n"
+	"kernel_service_35:\n"
+	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
+	"	clr.w (0x8,%a0)\n"
+	"	move.l %d0,(0x4,%a0)\n"
+	"	movea.l %a0,%a1\n"
+	"	adda.l #0x14,%a1\n"
+	"	move.l %a1,(%a0)\n"
+	"	move.l %d0,%d6\n"
+	"	addi.l #0x9,%d0\n"
+	"	bclr.l #0x0,%d0\n"
+	".Lg_15a32:\n"
+	"	subq.w #0x1,%d1\n"
+	"	bcs.b .Lg_15a44\n"
+	"	movea.l %a1,%a0\n"
+	"	adda.l %d0,%a1\n"
+	"	move.l %a1,(-0x8,%a0)\n"
+	"	move.l %d6,(-0x4,%a0)\n"
+	"	bra.b .Lg_15a32\n"
+	".Lg_15a44:\n"
+	"	clr.l (-0x8,%a0)\n"
+	"	clr.b %d7\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
+	"	rts\n"
+	"	.size kernel_service_35, .-kernel_service_35\n"
+);
+
 /* 00015a50 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 36
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -8680,7 +16892,8 @@ __regcall undefined8 kernel_service_35(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_service_36(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_service_36(void)
 
 {
   int in_D0;
@@ -8693,7 +16906,32 @@ __regcall void kernel_service_36(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_service_36\n"
+	"	.type kernel_service_36, @function\n"
+	"	.section .text.kernel_service_36.15a50,\"ax\",@progbits\n"
+	"kernel_service_36:\n"
+	"	moveq #0x1,%d7\n"
+	"	cmp.l (0x4,%a0),%d0\n"
+	"	bne.b .Lg_15a74\n"
+	"	ori #0x700,%sr\n"
+	"	tst.w (0x8,%a0)\n"
+	"	bne.b .Lg_15a6e\n"
+	"	clr.l (0x4,%a0)\n"
+	"	andi #-0x701,%sr\n"
+	"	clr.b %d7\n"
+	"	bra.b .Lg_15a74\n"
+	".Lg_15a6e:\n"
+	"	andi #-0x701,%sr\n"
+	"	moveq #0x2,%d7\n"
+	".Lg_15a74:\n"
+	"	rts\n"
+	"	.size kernel_service_36, .-kernel_service_36\n"
+);
+
 /* 00015a76 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 37
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -8701,7 +16939,8 @@ __regcall void kernel_service_36(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_service_37(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_service_37(void)
 
 {
   int iVar1;
@@ -8717,7 +16956,36 @@ __regcall void kernel_service_37(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_service_37\n"
+	"	.type kernel_service_37, @function\n"
+	"	.section .text.kernel_service_37.15a76,\"ax\",@progbits\n"
+	"kernel_service_37:\n"
+	"	moveq #0x1,%d7\n"
+	"	cmp.l (0x4,%a0),%d0\n"
+	"	bne.b .Lg_15aa0\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (%a0),%d7\n"
+	"	beq.b .Lg_15a9c\n"
+	"	addq.w #0x1,(0x8,%a0)\n"
+	"	movea.l %d7,%a1\n"
+	"	move.l (-0x8,%a1),(%a0)\n"
+	"	move %d6,%sr\n"
+	"	move.l %a0,(-0x8,%a1)\n"
+	"	clr.b %d7\n"
+	"	bra.b .Lg_15aa0\n"
+	".Lg_15a9c:\n"
+	"	move %d6,%sr\n"
+	"	moveq #0x2,%d7\n"
+	".Lg_15aa0:\n"
+	"	rts\n"
+	"	.size kernel_service_37, .-kernel_service_37\n"
+);
+
 /* 00015aa2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* service 38
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -8725,7 +16993,8 @@ __regcall void kernel_service_37(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void kernel_service_38(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void kernel_service_38(void)
 
 {
   int *in_A0;
@@ -8740,7 +17009,29 @@ __regcall void kernel_service_38(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_service_38\n"
+	"	.type kernel_service_38, @function\n"
+	"	.section .text.kernel_service_38.15aa2,\"ax\",@progbits\n"
+	"kernel_service_38:\n"
+	"	moveq #0x1,%d7\n"
+	"	cmpa.l (-0x8,%a1),%a0\n"
+	"	bne.b .Lg_15abe\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (%a0),(-0x8,%a1)\n"
+	"	move.l %a1,(%a0)\n"
+	"	subq.w #0x1,(0x8,%a0)\n"
+	"	move %d6,%sr\n"
+	"	clr.b %d7\n"
+	".Lg_15abe:\n"
+	"	rts\n"
+	"	.size kernel_service_38, .-kernel_service_38\n"
+);
+
 /* 00015ac0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* each 24 hours of the kernel's clock: the next day, month and year, by the days-in-month table at
    0x79 in the configuration
@@ -8779,7 +17070,46 @@ __naked void kernel_advance_date(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_advance_date\n"
+	"	.type kernel_advance_date, @function\n"
+	"	.section .text.kernel_advance_date.15ac0,\"ax\",@progbits\n"
+	"kernel_advance_date:\n"
+	"	move.l %d7,-(%sp)\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.w (0x72,%a6),%d7\n"
+	"	subi.w #0x18,%d7\n"
+	"	bcs.b .Lg_15b0a\n"
+	"	move.w %d7,(0x72,%a6)\n"
+	"	move %d6,%sr\n"
+	"	move.l (0x76,%a6),%d6\n"
+	"	addq.b #0x1,%d6\n"
+	"	move.l %d6,%d7\n"
+	"	lsr.w #0x8,%d7\n"
+	"	cmp.b (0x79,%a6,%d7.w*0x1),%d6\n"
+	"	bls.b .Lg_15b04\n"
+	"	move.b #0x1,%d6\n"
+	"	addi.w #0x100,%d6\n"
+	"	cmpi.w #0xd01,%d6\n"
+	"	bne.b .Lg_15b04\n"
+	"	move.w #0x101,%d6\n"
+	"	addi.l #0x10000,%d6\n"
+	"	bsr.w kernel_set_leap_year\n"
+	".Lg_15b04:\n"
+	"	move.l %d6,(0x76,%a6)\n"
+	"	bra.b .Lg_15b0c\n"
+	".Lg_15b0a:\n"
+	"	move %d6,%sr\n"
+	".Lg_15b0c:\n"
+	"	move.l (%sp)+,%d7\n"
+	"	rts\n"
+	"	.size kernel_advance_date, .-kernel_advance_date\n"
+);
+
 /* 00015b10 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* February's days in that table, 28 or 29 by the Gregorian rule
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -8802,14 +17132,44 @@ __naked void kernel_set_leap_year(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_set_leap_year\n"
+	"	.type kernel_set_leap_year, @function\n"
+	"	.section .text.kernel_set_leap_year.15b10,\"ax\",@progbits\n"
+	"kernel_set_leap_year:\n"
+	"	move.l %d6,%d7\n"
+	"	clr.w %d7\n"
+	"	move.b #0x1c,(0x7b,%a6)\n"
+	"	lsr.l #0x2,%d7\n"
+	"	tst.w %d7\n"
+	"	bne.b .Lg_15b38\n"
+	"	clr.w %d7\n"
+	"	swap %d7\n"
+	"	divu.w #0x19,%d7\n"
+	"	swap %d7\n"
+	"	tst.w %d7\n"
+	"	bne.b .Lg_15b34\n"
+	"	lsr.l #0x2,%d7\n"
+	"	tst.w %d7\n"
+	"	bne.b .Lg_15b38\n"
+	".Lg_15b34:\n"
+	"	addq.b #0x1,(0x7b,%a6)\n"
+	".Lg_15b38:\n"
+	"	rts\n"
+	"	.size kernel_set_leap_year, .-kernel_set_leap_year\n"
+);
+
 /* 00015b3a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the task ID in A0, or the running task for 0: error 2 bad ID, 1 deleted, 3 another group's
    Not a C function (register; read): its arguments and results in registers.  In: A0 int task, A5
    void *running.  Out: A0 void *record.  Error: D7 2 bad ID, D7 1 deleted, D7 3 another group.
    psos.md */
 
-__regcall void * kernel_check_task(int task __asm("a0"),void *running __asm("a5")) /* out A0 void *record; error D7 2 bad ID, D7 1 deleted, D7 3 another group */
+/* out A0 void *record; error D7 2 bad ID, D7 1 deleted, D7 3 another group */
+__regcall void * kernel_check_task(int task /* a0 */,void *running /* a5 */)
 
 {
   if (task != 0) {
@@ -8819,35 +17179,119 @@ __regcall void * kernel_check_task(int task __asm("a0"),void *running __asm("a5"
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_check_task\n"
+	"	.type kernel_check_task, @function\n"
+	"	.section .text.kernel_check_task.15b3a,\"ax\",@progbits\n"
+	"kernel_check_task:\n"
+	"	move.l %a0,%d6\n"
+	"	beq.b .Lg_15b68\n"
+	"	move.l (0x28,%a0),%d6\n"
+	"	not.w %d6\n"
+	"	cmp.l %a0,%d6\n"
+	"	bne.b .Lg_15b60\n"
+	"	cmpi.b #0xff,(0x13,%a0)\n"
+	"	beq.b .Lg_15b64\n"
+	"	move.b (0x14,%a5),%d6\n"
+	"	beq.b .Lg_15b6a\n"
+	"	cmp.b (0x14,%a0),%d6\n"
+	"	beq.b .Lg_15b6a\n"
+	"	moveq #0x3,%d7\n"
+	"	bra.b .Lg_15b6a\n"
+	".Lg_15b60:\n"
+	"	moveq #0x2,%d7\n"
+	"	bra.b .Lg_15b6a\n"
+	".Lg_15b64:\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.b .Lg_15b6a\n"
+	".Lg_15b68:\n"
+	"	movea.l %a5,%a0\n"
+	".Lg_15b6a:\n"
+	"	rts\n"
+	"	.size kernel_check_task, .-kernel_check_task\n"
+);
+
 /* 00015b6c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the exchange ID in A0: error 2 bad ID, 1 deleted, 3 another group's
    Not a C function (register; read): its arguments and results in registers.  In: A0 int exchange,
    A5 void *running.  Error: D7 2 bad ID, D7 1 deleted, D7 3 another group.
    psos.md */
 
-__regcall void kernel_check_exchange(int exchange __asm("a0"),void *running __asm("a5")) /* error D7 2 bad ID, D7 1 deleted, D7 3 another group */
+/* error D7 2 bad ID, D7 1 deleted, D7 3 another group */
+__regcall void kernel_check_exchange(int exchange /* a0 */,void *running /* a5 */)
 
 {
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_check_exchange\n"
+	"	.type kernel_check_exchange, @function\n"
+	"	.section .text.kernel_check_exchange.15b6c,\"ax\",@progbits\n"
+	"kernel_check_exchange:\n"
+	"	move.l (0x18,%a0),%d6\n"
+	"	swap %d6\n"
+	"	cmp.l %a0,%d6\n"
+	"	bne.b .Lg_15b92\n"
+	"	tst.b (0x11,%a0)\n"
+	"	beq.b .Lg_15b94\n"
+	"	bmi.b .Lg_15b8e\n"
+	"	move.b (0x14,%a5),%d6\n"
+	"	beq.b .Lg_15b94\n"
+	"	cmp.b (0x13,%a0),%d6\n"
+	"	beq.b .Lg_15b94\n"
+	"	moveq #0x3,%d7\n"
+	"	bra.b .Lg_15b94\n"
+	".Lg_15b8e:\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.b .Lg_15b94\n"
+	".Lg_15b92:\n"
+	"	moveq #0x2,%d7\n"
+	".Lg_15b94:\n"
+	"	rts\n"
+	"	.size kernel_check_exchange, .-kernel_check_exchange\n"
+);
+
 /* 00015b96 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* error 5 unless the segment carries kernel_region_allocate's 0xe1d0
    Not a C function (register; read): its arguments and results in registers.  In: A0 void *segment.
    Error: D7 5 bad segment.
    psos.md */
 
-__regcall void kernel_check_segment(void *segment __asm("a0")) /* error D7 5 bad segment */
+/* error D7 5 bad segment */
+__regcall void kernel_check_segment(void *segment /* a0 */)
 
 {
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_check_segment\n"
+	"	.type kernel_check_segment, @function\n"
+	"	.section .text.kernel_check_segment.15b96,\"ax\",@progbits\n"
+	"kernel_check_segment:\n"
+	"	clr.l %d7\n"
+	"	move.w (0x10,%a0),%d7\n"
+	"	andi.w #-0x4,%d7\n"
+	"	cmpi.w #-0x1e30,%d7\n"
+	"	beq.b .Lg_15ba8\n"
+	"	moveq #0x5,%d7\n"
+	".Lg_15ba8:\n"
+	"	rts\n"
+	"	.size kernel_check_segment, .-kernel_check_segment\n"
+);
+
 /* 00015baa */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* kernel_timer_unlink, if the task in A2 is in the timer list
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -8873,7 +17317,21 @@ __naked void kernel_timer_cancel(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_timer_cancel\n"
+	"	.type kernel_timer_cancel, @function\n"
+	"	.section .text.kernel_timer_cancel.15baa,\"ax\",@progbits\n"
+	"kernel_timer_cancel:\n"
+	"	tst.b (0x12,%a2)\n"
+	"	.byte 0x6f | ble.b 0x00015bdc\n"
+	"	.reloc ., R_68K_PC8, kernel_timer_unlink+0x2c-1\n"
+	"	.byte 0\n"
+	"	.size kernel_timer_cancel, .-kernel_timer_cancel\n"
+);
+
 /* 00015bb0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* removes the task in A2 from the delta timer list, giving its remaining ticks to the next
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -8898,7 +17356,33 @@ __naked undefined4 kernel_timer_unlink(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_timer_unlink\n"
+	"	.type kernel_timer_unlink, @function\n"
+	"	.section .text.kernel_timer_unlink.15bb0,\"ax\",@progbits\n"
+	"kernel_timer_unlink:\n"
+	"	movem.l %a3/%d0,-(%sp)\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (0x8,%a2),%d0\n"
+	"	movea.l (0xc,%a2),%a3\n"
+	"	move.l %d0,(0x8,%a3)\n"
+	"	beq.b .Lg_15bd6\n"
+	"	exg %d0,%a3\n"
+	"	move.l %d0,(0xc,%a3)\n"
+	"	move.l (0x4e,%a2),%d0\n"
+	"	add.l %d0,(0x4e,%a3)\n"
+	".Lg_15bd6:\n"
+	"	move %d6,%sr\n"
+	"	move.l (%sp)+,%d0\n"
+	"	movea.l (%sp)+,%a3\n"
+	"	rts\n"
+	"	.size kernel_timer_unlink, .-kernel_timer_unlink\n"
+);
+
 /* 00015bde */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* puts the running task in the delta timer list D0 ticks out
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -8949,7 +17433,56 @@ __naked void kernel_timer_insert(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_timer_insert\n"
+	"	.type kernel_timer_insert, @function\n"
+	"	.section .text.kernel_timer_insert.15bde,\"ax\",@progbits\n"
+	"kernel_timer_insert:\n"
+	"	movem.l %a4/%a2/%d2,-(%sp)\n"
+	"	subq.l #0x1,%d0\n"
+	"	move.l %d0,%d6\n"
+	".Lg_15be6:\n"
+	"	andi #-0x701,%sr\n"
+	"	lea (%a6),%a2\n"
+	"	move.l %d6,%d0\n"
+	"	ori #0x700,%sr\n"
+	".Lg_15bf2:\n"
+	"	tst.b (0x12,%a5)\n"
+	"	beq.b .Lg_15c42\n"
+	"	movea.l (0x8,%a2),%a4\n"
+	"	move.l %a4,%d2\n"
+	"	beq.b .Lg_15c26\n"
+	"	move.l (0x4e,%a4),%d2\n"
+	"	sub.l %d2,%d0\n"
+	"	bcs.b .Lg_15c1a\n"
+	"	andi #-0x701,%sr\n"
+	"	ori #0x700,%sr\n"
+	"	tst.b (0x12,%a4)\n"
+	"	beq.b .Lg_15be6\n"
+	"	movea.l %a4,%a2\n"
+	"	bra.b .Lg_15bf2\n"
+	".Lg_15c1a:\n"
+	"	add.l %d2,%d0\n"
+	"	sub.l %d0,%d2\n"
+	"	move.l %d2,(0x4e,%a4)\n"
+	"	move.l %a5,(0xc,%a4)\n"
+	".Lg_15c26:\n"
+	"	move.l %d0,(0x4e,%a5)\n"
+	"	move.l %a2,(0xc,%a5)\n"
+	"	move.l %a5,(0x8,%a2)\n"
+	"	move.l %a4,(0x8,%a5)\n"
+	"	move.b #0x1,(0x12,%a5)\n"
+	"	ori.b #0x8,(0x13,%a5)\n"
+	".Lg_15c42:\n"
+	"	andi #-0x701,%sr\n"
+	"	movem.l (%sp)+,%d2/%a2/%a4\n"
+	"	rts\n"
+	"	.size kernel_timer_insert, .-kernel_timer_insert\n"
+);
+
 /* 00015c4c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* clears the task's wait state and, unless suspended, kernel_ready_insert
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -8982,7 +17515,21 @@ __naked void kernel_make_ready(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_make_ready\n"
+	"	.type kernel_make_ready, @function\n"
+	"	.section .text.kernel_make_ready.15c4c,\"ax\",@progbits\n"
+	"kernel_make_ready:\n"
+	"	andi.w #0x4,(0x12,%a2)\n"
+	"	.byte 0x66 | bne.b 0x00015c94\n"
+	"	.reloc ., R_68K_PC8, kernel_ready_insert+0x40-1\n"
+	"	.byte 0\n"
+	"	.size kernel_make_ready, .-kernel_make_ready\n"
+);
+
 /* 00015c54 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* inserts the task in A2 in the ready queue by priority and resets its time slice
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -9010,7 +17557,41 @@ __naked void kernel_ready_insert(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_ready_insert\n"
+	"	.type kernel_ready_insert, @function\n"
+	"	.section .text.kernel_ready_insert.15c54,\"ax\",@progbits\n"
+	"kernel_ready_insert:\n"
+	"	movem.l %a5/%d1,-(%sp)\n"
+	"	move.b (0x10,%a2),%d1\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	lea (0x4,%a6),%a5\n"
+	".Lg_15c66:\n"
+	"	movea.l (%a5),%a5\n"
+	"	cmp.b (0x10,%a5),%d1\n"
+	"	bhi.b .Lg_15c76\n"
+	"	move %d6,%sr\n"
+	"	ori #0x700,%sr\n"
+	"	bra.b .Lg_15c66\n"
+	".Lg_15c76:\n"
+	"	move.l (0x4,%a5),%d1\n"
+	"	move.l %a2,(0x4,%a5)\n"
+	"	move.l %d1,(0x4,%a2)\n"
+	"	move.l %a5,(%a2)\n"
+	"	movea.l %d1,%a5\n"
+	"	move.l %a2,(%a5)\n"
+	"	move %d6,%sr\n"
+	"	move.w (0x88,%a6),(0x1a,%a2)\n"
+	"	move.l (%sp)+,%d1\n"
+	"	movea.l (%sp)+,%a5\n"
+	"	rts\n"
+	"	.size kernel_ready_insert, .-kernel_ready_insert\n"
+);
+
 /* 00015c96 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* unlinks the task in A5 from its queue
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -9031,7 +17612,71 @@ __naked void kernel_queue_remove(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_queue_remove\n"
+	"	.type kernel_queue_remove, @function\n"
+	"	.section .text.kernel_queue_remove.15c96,\"ax\",@progbits\n"
+	"kernel_queue_remove:\n"
+	"	move.l %a1,-(%sp)\n"
+	"	move.l (%a5),%d6\n"
+	"	movea.l (0x4,%a5),%a1\n"
+	"	move.l %d6,(%a1)\n"
+	"	exg %d6,%a1\n"
+	"	move.l %d6,(0x4,%a1)\n"
+	"	movea.l (%sp)+,%a1\n"
+	"	rts\n"
+	"	.byte 0x41\n"
+	"	.byte 0xfa\n"
+	"	.byte 0x03\n"
+	"	.byte 0xc0\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x71\n"
+	"	.byte 0x43\n"
+	"	.byte 0xfa\n"
+	"	.byte 0xee\n"
+	"	.byte 0x1a\n"
+	"	.byte 0x91\n"
+	"	.byte 0xc9\n"
+	"	.byte 0x20\n"
+	"	.byte 0x08\n"
+	"	.byte 0xe2\n"
+	"	.byte 0x48\n"
+	"	.byte 0x53\n"
+	"	.byte 0x80\n"
+	"	.byte 0x42\n"
+	"	.byte 0x81\n"
+	"	.byte 0x42\n"
+	"	.byte 0x82\n"
+	"	.byte 0x34\n"
+	"	.byte 0x19\n"
+	"	.byte 0xd2\n"
+	"	.byte 0x82\n"
+	"	.byte 0x51\n"
+	"	.byte 0xc8\n"
+	"	.byte 0xff\n"
+	"	.byte 0xfa\n"
+	"	.byte 0x26\n"
+	"	.byte 0x3a\n"
+	"	.byte 0xed\n"
+	"	.byte 0xfe\n"
+	"	.byte 0x67\n"
+	"	.byte 0x0a\n"
+	"	.byte 0xb6\n"
+	"	.byte 0x81\n"
+	"	.byte 0x67\n"
+	"	.byte 0x06\n"
+	"	.byte 0x7e\n"
+	"	.byte 0x04\n"
+	"	.byte 0x60\n"
+	"	.byte 0x00\n"
+	"	.byte 0x01\n"
+	"	.byte 0xee\n"
+	"	.size kernel_queue_remove, .-kernel_queue_remove\n"
+);
+
 /* 00015cd8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x00015ea6) */
 /* trap #6: carves the configuration's memory into task records (0xb2 bytes), exchanges (0x22) and
@@ -9202,7 +17847,176 @@ __exception void kernel_init(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_init\n"
+	"	.type kernel_init, @function\n"
+	"	.section .text.kernel_init.15cd8,\"ax\",@progbits\n"
+	"kernel_init:\n"
+	"	movea.l (__ghidra_14ac2:w,%pc),%a0\n"
+	"	movea.l (%a0),%a0\n"
+	"	movea.l (%a0),%a6\n"
+	"	move.l #0xc8,%d7\n"
+	"	add.l (0x28,%a0),%d7\n"
+	"	move.w (0x1a,%a0),%d0\n"
+	"	mulu.w #0x22,%d0\n"
+	"	add.l %d0,%d7\n"
+	"	move.w (0x1c,%a0),%d0\n"
+	"	mulu.w #0x18,%d0\n"
+	"	add.l %d0,%d7\n"
+	"	move.w (0x18,%a0),%d0\n"
+	"	addq.w #0x1,%d0\n"
+	"	mulu.w #0xb2,%d0\n"
+	"	add.l %d0,%d7\n"
+	"	addi.l #0x12,%d7\n"
+	"	movea.l %a6,%a3\n"
+	"	adda.l %d7,%a3\n"
+	"	cmpa.l (0x4,%a0),%a3\n"
+	"	bls.b .Lg_15d20\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.w .Lg_15ec4\n"
+	".Lg_15d20:\n"
+	"	movea.l %a6,%a3\n"
+	"	adda.w #0xc8,%a3\n"
+	"	adda.l (0x28,%a0),%a3\n"
+	"	movea.l %a3,%sp\n"
+	"	move.l %a3,(0x20,%a6)\n"
+	"	move.w #-0x2151,(0xb8,%a6)\n"
+	"	clr.l (0x30,%a6)\n"
+	"	clr.l (0x14,%a6)\n"
+	"	clr.l (0x18,%a6)\n"
+	"	move.w (0x1a,%a0),%d0\n"
+	"	beq.b .Lg_15d6c\n"
+	"	move.l %a3,(0x18,%a6)\n"
+	".Lg_15d4c:\n"
+	"	movea.l %a3,%a4\n"
+	"	move.b #0xfe,(0x11,%a4)\n"
+	"	move.l %a4,%d6\n"
+	"	swap %d6\n"
+	"	move.l %d6,(0x18,%a4)\n"
+	"	lea (0x22,%a4),%a3\n"
+	"	move.l %a3,(0x1c,%a4)\n"
+	"	subq.w #0x1,%d0\n"
+	"	bne.b .Lg_15d4c\n"
+	"	clr.l (0x1c,%a4)\n"
+	".Lg_15d6c:\n"
+	"	clr.l (0x1c,%a6)\n"
+	"	move.w (0x1c,%a0),%d0\n"
+	"	beq.b .Lg_15d88\n"
+	"	move.l %a3,(0x1c,%a6)\n"
+	".Lg_15d7a:\n"
+	"	movea.l %a3,%a4\n"
+	"	lea (0x18,%a4),%a3\n"
+	"	move.l %a3,(%a4)\n"
+	"	subq.w #0x1,%d0\n"
+	"	bne.b .Lg_15d7a\n"
+	"	clr.l (%a4)\n"
+	".Lg_15d88:\n"
+	"	move.w (0x18,%a0),%d0\n"
+	"	move.l %a3,(0x10,%a6)\n"
+	".Lg_15d90:\n"
+	"	movea.l %a3,%a4\n"
+	"	move.b #0xff,(0x13,%a4)\n"
+	"	move.l %a4,%d6\n"
+	"	not.w %d6\n"
+	"	move.l %d6,(0x28,%a4)\n"
+	"	lea (0xb2,%a4),%a3\n"
+	"	move.l %a3,(0x30,%a4)\n"
+	"	subq.w #0x1,%d0\n"
+	"	bcc.b .Lg_15d90\n"
+	"	clr.l (0x30,%a4)\n"
+	"	clr.l (0xc,%a6)\n"
+	"	move.l (0x46,%a0),%d6\n"
+	"	beq.b .Lg_15dc2\n"
+	"	movea.l %d6,%a2\n"
+	"	movea.l (%a2),%a2\n"
+	"	jsr (0x4,%a2)\n"
+	".Lg_15dc2:\n"
+	"	bsr.w kernel_region_init\n"
+	"	lea (0x7a,%a6),%a2\n"
+	"	move.l #0x1f001f1e,(%a2)+\n"
+	"	move.l #0x1f1e1f1f,(%a2)+\n"
+	"	move.l #0x1e1f1e1f,(%a2)\n"
+	"	clr.l (0x6c,%a6)\n"
+	"	clr.w (0x70,%a6)\n"
+	"	clr.l (0x72,%a6)\n"
+	"	move.l (__ghidra_14b22:w,%pc),%d6\n"
+	"	move.l %d6,(0x76,%a6)\n"
+	"	bsr.w kernel_set_leap_year\n"
+	"	clr.b (0x8a,%a6)\n"
+	"	move.l (0x1e,%a0),(0x86,%a6)\n"
+	"	clr.l (0x8,%a6)\n"
+	"	lea (0x8c,%a6),%a2\n"
+	"	lea (0x4,%a6),%a3\n"
+	"	move.l %a2,(%a6)\n"
+	"	move.l %a2,(%a3)\n"
+	"	clr.l (%a2)\n"
+	"	move.l %a3,(0x4,%a2)\n"
+	"	move.l #0x73797364,(0x24,%a2)\n"
+	"	clr.l (0x10,%a2)\n"
+	"	clr.b (0x14,%a2)\n"
+	"	clr.l (0x1c,%a2)\n"
+	"	move.l (0x3e,%a0),(0xb4,%a6)\n"
+	"	bset.b #0x7,(0x8b,%a6)\n"
+	"	move.w #0x1,(0x24,%a6)\n"
+	"	move.w (0x22,%a0),%d0\n"
+	"	move.w %d0,%d2\n"
+	"	move.w %d0,%d1\n"
+	"	lsl.w #0x5,%d2\n"
+	"	lsl.w #0x2,%d1\n"
+	"	add.w %d1,%d2\n"
+	"	movea.l (0x24,%a0),%a2\n"
+	"	lsl.w #0x8,%d0\n"
+	".Lg_15e4e:\n"
+	"	jsr (0x0,%a2,%d2.w*0x1)\n"
+	"	subi.w #0x100,%d0\n"
+	"	subi.w #0x24,%d2\n"
+	"	bcc.b .Lg_15e4e\n"
+	"	move.l (0x42,%a0),%d0\n"
+	"	movea.l %d0,%a1\n"
+	"	beq.b .Lg_15e66\n"
+	"	movea.l (%a1),%a1\n"
+	".Lg_15e66:\n"
+	"	move.l %a1,(0x30,%a6)\n"
+	"	move.l #0x524f4f54,%d0\n"
+	"	clr.b %d1\n"
+	"	move.w (0x34,%a0),%d2\n"
+	"	move.l (0x30,%a0),%d3\n"
+	"	movea.l (0x2c,%a0),%a1\n"
+	"	suba.l %a0,%a0\n"
+	"	bsr.w kernel_create\n"
+	"	tst.b %d7\n"
+	"	beq.b .Lg_15e8c\n"
+	"	moveq #0x2,%d7\n"
+	"	bra.b .Lg_15ec4\n"
+	".Lg_15e8c:\n"
+	"	bsr.w kernel_start\n"
+	"	move.l #0x49444c45,%d0\n"
+	"	clr.b %d1\n"
+	"	moveq #0x1,%d2\n"
+	"	moveq #0x10,%d3\n"
+	"	suba.l %a0,%a0\n"
+	"	bsr.w kernel_create\n"
+	"	tst.b %d7\n"
+	"	beq.b .Lg_15eaa\n"
+	"	moveq #0x3,%d7\n"
+	"	bra.b .Lg_15ec4\n"
+	".Lg_15eaa:\n"
+	"	lea (__ghidra_15f84:w,%pc),%a1\n"
+	"	nop\n"
+	"	bsr.w kernel_start\n"
+	"	ori.w #0x2000,(0x44,%a0)\n"
+	"	clr.b (0x10,%a0)\n"
+	"	clr.l (%a0)\n"
+	"	bra.w kernel_return_from_interrupt+0x94\n"
+	".Lg_15ec4:\n"
+	"	lea (0xdead).l,%a0\n"
+	"	stop #0x0\n"
+	"	.size kernel_init, .-kernel_init\n"
+);
+
 /* 00015ece */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* sets up regions 0 and 1 from the configuration
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -9263,7 +18077,80 @@ __naked void kernel_region_init(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl kernel_region_init\n"
+	"	.type kernel_region_init, @function\n"
+	"	.section .text.kernel_region_init.15ece,\"ax\",@progbits\n"
+	"kernel_region_init:\n"
+	"	move.l (0x4,%a0),%d1\n"
+	"	sub.l %a3,%d1\n"
+	"	addq.l #0x1,%d1\n"
+	"	lsr.b #0x1,%d1\n"
+	"	lsl.b #0x1,%d1\n"
+	"	move.l %d1,(0xc,%a3)\n"
+	"	clr.l (%a3)\n"
+	"	lea (0x54,%a6),%a2\n"
+	"	move.l %a2,(0x4,%a3)\n"
+	"	clr.l (0x8,%a3)\n"
+	"	clr.w (0x10,%a3)\n"
+	"	move.l %a3,(0x54,%a6)\n"
+	"	move.l %a3,(0x5c,%a6)\n"
+	"	move.l %d1,(0x3c,%a6)\n"
+	"	addq.l #0x1,%d1\n"
+	"	move.l %d1,(0x44,%a6)\n"
+	"	move.l (0x4,%a0),(0x4c,%a6)\n"
+	"	move.l (0x8,%a0),%d1\n"
+	"	cmpi.l #0x12,%d1\n"
+	"	bcc.b .Lg_15f16\n"
+	"	moveq #0x12,%d1\n"
+	".Lg_15f16:\n"
+	"	move.l %d1,(0x34,%a6)\n"
+	"	movea.l (0xc,%a0),%a3\n"
+	"	move.l (0x10,%a0),%d1\n"
+	"	sub.l %a3,%d1\n"
+	"	addq.l #0x1,%d1\n"
+	"	lsr.b #0x1,%d1\n"
+	"	lsl.b #0x1,%d1\n"
+	"	cmpi.l #0x48,%d1\n"
+	"	bcc.b .Lg_15f38\n"
+	"	clr.l (0x58,%a6)\n"
+	"	bra.b .Lg_15f78\n"
+	".Lg_15f38:\n"
+	"	move.l %d1,(0xc,%a3)\n"
+	"	clr.l (%a3)\n"
+	"	lea (0x58,%a6),%a2\n"
+	"	move.l %a2,(0x4,%a3)\n"
+	"	clr.l (0x8,%a3)\n"
+	"	clr.w (0x10,%a3)\n"
+	"	move.l %a3,(0x58,%a6)\n"
+	"	move.l %a3,(0x60,%a6)\n"
+	"	move.l %d1,(0x40,%a6)\n"
+	"	addq.l #0x1,%d1\n"
+	"	move.l %d1,(0x48,%a6)\n"
+	"	move.l (0x10,%a0),(0x50,%a6)\n"
+	"	move.l (0x14,%a0),%d1\n"
+	"	cmpi.l #0x12,%d1\n"
+	"	bcc.b .Lg_15f74\n"
+	"	moveq #0x12,%d1\n"
+	".Lg_15f74:\n"
+	"	move.l %d1,(0x38,%a6)\n"
+	".Lg_15f78:\n"
+	"	lea (0x64,%a6),%a2\n"
+	"	move.l %a2,(%a2)\n"
+	"	move.l %a2,(0x68,%a6)\n"
+	"	rts\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x72\n"
+	"	.byte 0x20\n"
+	"	.byte 0x00\n"
+	"	.byte 0x60\n"
+	"	.byte 0xfa\n"
+	"	.size kernel_region_init, .-kernel_region_init\n"
+);
+
 /* 00015f8a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* trap #5: an interrupt handler's exit, switching tasks if it made a higher one ready
    Not a C function (exception; read): entered by the processor, not called.
@@ -9383,6 +18270,107 @@ __exception void kernel_return_from_interrupt(ushort param_1)
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl kernel_return_from_interrupt\n"
+	"	.type kernel_return_from_interrupt, @function\n"
+	"	.section .text.kernel_return_from_interrupt.15f8a,\"ax\",@progbits\n"
+	"kernel_return_from_interrupt:\n"
+	"	addq.l #0x8,%sp\n"
+	"	movem.l %a6/%a5/%d6,-(%sp)\n"
+	"	move.w (0xc,%sp),%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	bne.b .Lg_15fd8\n"
+	"	movea.l (__ghidra_14ac2:w,%pc),%a5\n"
+	"	movea.l (%a5),%a5\n"
+	"	movea.l (%a5),%a6\n"
+	"	tst.w (0x24,%a6)\n"
+	"	bne.b .Lg_15fd8\n"
+	"	addq.w #0x1,(0x24,%a6)\n"
+	"	andi #-0x701,%sr\n"
+	"	movea.l (%a6),%a5\n"
+	".Lg_15fb2:\n"
+	"	ori #0x700,%sr\n"
+	"	tst.l (0x6c,%a6)\n"
+	"	beq.b .Lg_15fc6\n"
+	"	andi #-0x701,%sr\n"
+	"	bsr.w kernel_process_ticks\n"
+	"	bra.b .Lg_15fb2\n"
+	".Lg_15fc6:\n"
+	"	cmpa.l (0x4,%a6),%a5\n"
+	"	beq.b .Lg_15fd4\n"
+	"	btst.b #0x7,(0x11,%a5)\n"
+	"	beq.b .Lg_15fde\n"
+	".Lg_15fd4:\n"
+	"	subq.w #0x1,(0x24,%a6)\n"
+	".Lg_15fd8:\n"
+	"	movem.l (%sp)+,%d6/%a5/%a6\n"
+	"	rte\n"
+	".Lg_15fde:\n"
+	"	move.l (%sp)+,%d6\n"
+	"	lea (0x4e,%a5),%a5\n"
+	"	movem.l %d0/%d1/%d2/%d3/%d4/%d5/%d6/%d7/%a0/%a1/%a2/%a3/%a4,(%a5)\n"
+	"	andi #-0x701,%sr\n"
+	"	move.l (%sp)+,-(%a5)\n"
+	"	move.l (%sp)+,-(%a5)\n"
+	"	move.l -(%a5),%d0\n"
+	"	andi.w #0x1000,%d0\n"
+	"	or.w (%sp)+,%d0\n"
+	"	move.l %d0,(%a5)\n"
+	"	move.l (%sp)+,-(%a5)\n"
+	"	move.w (%sp)+,(-0xa,%a5)\n"
+	"	move %usp,%a0\n"
+	"	move.l %a0,-(%a5)\n"
+	"	move.l (0x20,%a6),%d1\n"
+	"	btst.l #0xc,%d0\n"
+	"	beq.b .Lg_16014\n"
+	"	move.l %sp,-(%a5)\n"
+	"	movea.l %d1,%sp\n"
+	"	bra.b .Lg_1601e\n"
+	".Lg_16014:\n"
+	"	cmp.l %sp,%d1\n"
+	"	beq.b .Lg_1601c\n"
+	"	move.w (%sp)+,-(%a0)\n"
+	"	bra.b .Lg_16014\n"
+	".Lg_1601c:\n"
+	"	move.l %a0,-(%a5)\n"
+	".Lg_1601e:\n"
+	"	movea.l (0x4,%a6),%a5\n"
+	"	move.l (0xb4,%a6),%d6\n"
+	"	beq.b .Lg_1602e\n"
+	"	movea.l (%a6),%a4\n"
+	"	movea.l %d6,%a1\n"
+	"	jsr (%a1)\n"
+	".Lg_1602e:\n"
+	"	move.l %a5,(%a6)\n"
+	"	lea (0x36,%a5),%a4\n"
+	"	movea.l (%a4)+,%a0\n"
+	"	movea.l (%a4)+,%a1\n"
+	"	move.w (0x44,%a5),%d6\n"
+	"	btst.l #0xc,%d6\n"
+	"	beq.b .Lg_1604a\n"
+	"	movea.l %a0,%sp\n"
+	"	bclr.l #0xc,%d6\n"
+	"	bra.b .Lg_16052\n"
+	".Lg_1604a:\n"
+	"	cmpa.l %a0,%a1\n"
+	"	beq.b .Lg_16052\n"
+	"	move.w (%a0)+,-(%sp)\n"
+	"	bra.b .Lg_1604a\n"
+	".Lg_16052:\n"
+	"	move %a1,%usp\n"
+	"	move.w (-0xa,%a4),-(%sp)\n"
+	"	move.l (%a4)+,-(%sp)\n"
+	"	move.w %d6,-(%sp)\n"
+	"	addq.l #0x4,%a4\n"
+	"	move.l (%a4)+,-(%sp)\n"
+	"	move.l (%a4)+,-(%sp)\n"
+	"	movem.l (%a4),%d0/%d1/%d2/%d3/%d4/%d5/%d6/%d7/%a0/%a1/%a2/%a3/%a4\n"
+	"	move.l %d6,-(%sp)\n"
+	"	bra.w kernel_switch_task\n"
+	"	.size kernel_return_from_interrupt, .-kernel_return_from_interrupt\n"
+);
 
 /* 0001606c */
 
@@ -10318,13 +19306,15 @@ void task_count_tick(void)
 
 
 /* 00016f1e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* trap #3, the service in D7, the error back in D7
    Not a C function (register; read): its arguments and results in registers.  In: D7 char service,
    D0, D1, D2, D3, A0, A1.  Out: D7 int error.  Returns: ccr.
    psos.md */
 
-__regcall void psos_call(void) /* out D7 int error; returns ccr */
+/* out D7 int error; returns ccr */
+__regcall void psos_call(void)
 
 {
   char unaff_D7b;
@@ -10337,14 +19327,37 @@ __regcall void psos_call(void) /* out D7 int error; returns ccr */
 }
 
 
+#endif
+__asm__(
+	"	.globl psos_call\n"
+	"	.type psos_call, @function\n"
+	"	.section .text.psos_call.16f1e,\"ax\",@progbits\n"
+	"psos_call:\n"
+	"	move.b %d7,-(%sp)\n"
+	"	trap #0x3\n"
+	"	tst.b %d7\n"
+	"	beq.b .Lg_16f30\n"
+	"	move.b %d7,(0x1,%sp)\n"
+	"	moveq #0x0,%d7\n"
+	"	move.w (%sp)+,%d7\n"
+	"	rts\n"
+	".Lg_16f30:\n"
+	"	moveq #0x0,%d7\n"
+	"	addq.l #0x2,%sp\n"
+	"	rts\n"
+	"	.size psos_call, .-psos_call\n"
+);
+
 /* 00016f36 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* trap #4, the function in D7, the device in D0's high byte
    Not a C function (register; read): its arguments and results in registers.  In: D7 char function,
    D0 int device.  Out: D7 int error.  Returns: ccr.
    psos.md */
 
-__regcall int psos_io_call(char function __asm("d7"),int device __asm("d0")) /* out D7 int error; returns ccr */
+/* out D7 int error; returns ccr */
+__regcall int psos_io_call(char function /* d7 */,int device /* d0 */)
 
 {
   undefined3 unaff_0000001c;
@@ -10359,14 +19372,38 @@ __regcall int psos_io_call(char function __asm("d7"),int device __asm("d0")) /* 
 }
 
 
+#endif
+__asm__(
+	"	.globl psos_io_call\n"
+	"	.type psos_io_call, @function\n"
+	"	.section .text.psos_io_call.16f36,\"ax\",@progbits\n"
+	"psos_io_call:\n"
+	"	move.w %d0,-(%sp)\n"
+	"	move.b %d7,(0x1,%sp)\n"
+	"	trap #0x4\n"
+	"	tst.b %d7\n"
+	"	beq.b .Lg_16f4a\n"
+	"	swap %d7\n"
+	"	move.w (%sp)+,%d7\n"
+	"	swap %d7\n"
+	"	rts\n"
+	".Lg_16f4a:\n"
+	"	moveq #0x0,%d7\n"
+	"	addq.l #0x2,%sp\n"
+	"	rts\n"
+	"	.size psos_io_call, .-psos_io_call\n"
+);
+
 /* 00016f50 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* packs a 4-character name into D0
    Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
    called.  Out: D0 int name.
    psos.md */
 
-__naked int psos_pack_name(void) /* out D0 int name */
+/* out D0 int name */
+__naked int psos_pack_name(void)
 
 {
   int iVar1;
@@ -10379,6 +19416,33 @@ __naked int psos_pack_name(void) /* out D0 int name */
   return iVar1;
 }
 
+
+#endif
+__asm__(
+	"	.globl psos_pack_name\n"
+	"	.type psos_pack_name, @function\n"
+	"	.section .text.psos_pack_name.16f50,\"ax\",@progbits\n"
+	"psos_pack_name:\n"
+	"	move.l (0x8,%a6),%d0\n"
+	"	beq.b .Lg_16f66\n"
+	"	movea.l %d0,%a0\n"
+	"	move.b (%a0)+,%d0\n"
+	"	lsl.l #0x8,%d0\n"
+	"	move.b (%a0)+,%d0\n"
+	"	lsl.l #0x8,%d0\n"
+	"	move.b (%a0)+,%d0\n"
+	"	lsl.l #0x8,%d0\n"
+	"	move.b (%a0)+,%d0\n"
+	".Lg_16f66:\n"
+	"	rts\n"
+	"	.byte 0x2f,0x07 | move.l D7,-(SP)\n"
+	"	.byte 0x7e,0x00 | moveq 0x0,D7\n"
+	"	.byte 0x4e,0x43 | trap #0x3\n"
+	"	.byte 0x30,0x07 | move.w D7w,D0w\n"
+	"	.byte 0x2e,0x1f | move.l (SP)+,D7\n"
+	"	.byte 0x4e,0x75 | rts\n"
+	"	.size psos_pack_name, .-psos_pack_name\n"
+);
 
 /* 00016f74 */
 
@@ -11103,7 +20167,7 @@ void ram_pattern_test(void)
       if ((undefined2 *)0x10ffff < puVar6) {
         uVar3 = 0;
         uVar4 = 2;
-        puVar6 = &DAT_00100002;
+        puVar6 = (undefined2 *)&DAT_00100002;
         sVar5 = 0xe;
         do {
           uVar2 = DAT_00100000;
@@ -12339,6 +21403,7 @@ undefined4 lamp_test_command(void)
 
 
 /* 00018ed6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word abort
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12369,7 +21434,29 @@ __pforth void forth_abort(forth_user_end user,long *sp,char *input)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_abort\n"
+	"	.type forth_abort, @function\n"
+	"	.section .text.forth_abort.18ed6,\"ax\",@progbits\n"
+	"forth_abort:\n"
+	"	movea.l (-0x4,%a5),%sp\n"
+	"	movea.l (-0x8,%a5),%a6\n"
+	"	movea.l (-0x1e,%a5),%a3\n"
+	"	clr.w (%a3)\n"
+	"	tst.w (-0xa,%a5)\n"
+	"	beq.b .Lg_18eee\n"
+	"	bsr.w forth_unlink_latest\n"
+	".Lg_18eee:\n"
+	"	clr.w (-0xa,%a5)\n"
+	"	move.l #0xa,(-0xe,%a5)\n"
+	"	bra.w forth_interpret\n"
+	"	.byte 0x20,0x3f,0x53,0x74,0x61,0x63,0x6b,0x20,0x65,0x6d,0x70,0x74,0x79,0x0d,0x0a,0x00\n"
+	"	.size forth_abort, .-forth_abort\n"
+);
+
 /* 00018f0e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word interpret
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12450,7 +21537,64 @@ LAB_00018ec8:
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_interpret\n"
+	"	.type forth_interpret, @function\n"
+	"	.section .text.forth_interpret.18eb0,\"ax\",@progbits\n"
+	".Lg_18eb0:\n"
+	"	move.l #0x18e80,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	move.l (-0x22,%a5),%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	move.l #0x18e89,%d0\n"
+	"	.section .text.forth_interpret.18efe,\"ax\",@progbits\n"
+	"	.byte 0x20,0x3f,0x53,0x74,0x61,0x63,0x6b,0x20,0x65,0x6d,0x70,0x74,0x79,0x0d,0x0a,0x00\n"
+	"forth_interpret:\n"
+	".Lg_18f0e:\n"
+	"	cmpa.l (-0x8,%a5),%a6\n"
+	"	ble.b .Lg_18f1c\n"
+	"	move.l #0x18efe,%d0\n"
+	"	.byte 0x60 | bra.b 0x00018ec8\n"
+	"	.reloc ., R_68K_PC8, forth_parse_number-0xa0-1\n"
+	"	.byte 0\n"
+	".Lg_18f1c:\n"
+	"	bsr.w forth_parse_word\n"
+	"	bsr.w forth_find\n"
+	"	bne.b .Lg_18f5e\n"
+	"	tst.w (-0xa,%a5)\n"
+	"	bne.w .Lg_18f3a\n"
+	"	btst.l #0x0,%d1\n"
+	"	bne.w .Lg_18eb0\n"
+	".Lg_18f36:\n"
+	"	jsr (%a0)\n"
+	"	bra.b .Lg_18f0e\n"
+	".Lg_18f3a:\n"
+	"	btst.l #0x2,%d1\n"
+	"	bne.b .Lg_18f36\n"
+	"	btst.l #0x3,%d1\n"
+	"	bne.b .Lg_18f4e\n"
+	"	move.w #0x4eb9,(%a4)+\n"
+	"	move.l %a0,(%a4)+\n"
+	"	bra.b .Lg_18f0e\n"
+	".Lg_18f4e:\n"
+	"	move.w (0x8,%a2),%d1\n"
+	"	asr.w #0x1,%d1\n"
+	"	bra.b .Lg_18f58\n"
+	".Lg_18f56:\n"
+	"	move.w (%a0)+,(%a4)+\n"
+	".Lg_18f58:\n"
+	"	dbf %d1,.Lg_18f56\n"
+	"	bra.b .Lg_18f0e\n"
+	".Lg_18f5e:\n"
+	"	movea.l (-0x22,%a5),%a0\n"
+	"	bsr.w forth_parse_number\n"
+	"	bra.b .Lg_18f0e\n"
+	"	.size forth_interpret, .-forth_interpret\n"
+);
+
 /* 00018f68 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* converts pad in base through forth_digit, or prints ": not found"; interpret and number call it
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -12458,7 +21602,7 @@ LAB_00018ec8:
    A3.
    console.md */
 
-__pforth undefined4 forth_parse_number(forth_user_end user __asm("a5"),long *sp __asm("a6"))
+__pforth undefined4 forth_parse_number(forth_user_end user /* a5 */,long *sp /* a6 */)
 
 {
   void *pvVar1;
@@ -12521,7 +21665,76 @@ LAB_00018f92:
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_parse_number\n"
+	"	.type forth_parse_number, @function\n"
+	"	.section .text.forth_parse_number.18ec8,\"ax\",@progbits\n"
+	".Lg_18ec8:\n"
+	"	bsr.w forth_print_string\n"
+	"	move.l #0x18ddf,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	.section .text.forth_parse_number.18efe,\"ax\",@progbits\n"
+	"	.byte 0x20,0x3f,0x53,0x74,0x61,0x63,0x6b,0x20,0x65,0x6d,0x70,0x74,0x79,0x0d,0x0a,0x00\n"
+	"	.section .text.forth_parse_number.18f68,\"ax\",@progbits\n"
+	"forth_parse_number:\n"
+	"	clr.l %d0\n"
+	"	clr.l %d1\n"
+	"	move.l (-0xe,%a5),%d2\n"
+	"	cmpi.b #0x2d,(%a0)\n"
+	"	seq %d7\n"
+	"	bne.b .Lg_18f92\n"
+	"	addq.l #0x1,%a0\n"
+	"	move.b (%a0)+,%d0\n"
+	".Lg_18f7c:\n"
+	"	bsr.w forth_digit\n"
+	"	bne.b .Lg_18fb8\n"
+	"	move.l %d1,%d3\n"
+	"	mulu.w %d2,%d1\n"
+	"	swap %d3\n"
+	"	mulu.w %d2,%d3\n"
+	"	swap %d3\n"
+	"	clr.w %d3\n"
+	"	add.l %d3,%d1\n"
+	"	add.l %d0,%d1\n"
+	".Lg_18f92:\n"
+	"	move.b (%a0)+,%d0\n"
+	"	bne.b .Lg_18f7c\n"
+	"	tst.w %d7\n"
+	"	beq.b .Lg_18f9c\n"
+	"	neg.l %d1\n"
+	".Lg_18f9c:\n"
+	"	move.l %d1,-(%a6)\n"
+	"	tst.w (-0xa,%a5)\n"
+	"	beq.b .Lg_18fa8\n"
+	"	bsr.w forth_literal\n"
+	".Lg_18fa8:\n"
+	"	rts\n"
+	"	.byte 0x3a\n"
+	"	.byte 0x20\n"
+	"	.byte 0x6e\n"
+	"	.byte 0x6f\n"
+	"	.byte 0x74\n"
+	"	.byte 0x20\n"
+	"	.byte 0x66\n"
+	"	.byte 0x6f\n"
+	"	.byte 0x75\n"
+	"	.byte 0x6e\n"
+	"	.byte 0x64\n"
+	"	.byte 0x0d\n"
+	"	.byte 0x0a\n"
+	"	.byte 0x00\n"
+	".Lg_18fb8:\n"
+	"	move.l (-0x22,%a5),%d0\n"
+	"	jsr (forth_print_string:w,%pc)\n"
+	"	nop\n"
+	"	move.l #0x18faa,%d0\n"
+	"	jmp (.Lg_18ec8:w,%pc)\n"
+	"	.size forth_parse_number, .-forth_parse_number\n"
+);
+
 /* 00018fcc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* looks pad up from the latest word down, skipping hidden ones; interpret, tick, forget call it
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -12529,7 +21742,7 @@ LAB_00018f92:
    A3.
    console.md */
 
-__pforth void forth_find(forth_user_end user __asm("a5"))
+__pforth void forth_find(forth_user_end user /* a5 */)
 
 {
   char cVar1;
@@ -12559,7 +21772,45 @@ __pforth void forth_find(forth_user_end user __asm("a5"))
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_find\n"
+	"	.type forth_find, @function\n"
+	"	.section .text.forth_find.18fcc,\"ax\",@progbits\n"
+	"forth_find:\n"
+	"	movem.l %a1/%d2,-(%sp)\n"
+	"	move.l (-0x16,%a5),%d1\n"
+	".Lg_18fd4:\n"
+	"	movea.l %d1,%a2\n"
+	"	move.w (0xa,%a2),%d2\n"
+	"	btst.l #0x1,%d2\n"
+	"	bne.b .Lg_19008\n"
+	"	adda.l #0xc,%a2\n"
+	"	movea.l (-0x22,%a5),%a1\n"
+	".Lg_18fea:\n"
+	"	cmpm.b (%a1)+,(%a2)+\n"
+	"	bne.b .Lg_19008\n"
+	"	tst.b (-0x1,%a2)\n"
+	"	bne.b .Lg_18fea\n"
+	"	movea.l %d1,%a2\n"
+	"	movea.l (0x4,%a2),%a0\n"
+	"	clr.l %d1\n"
+	"	move.w (0xa,%a2),%d1\n"
+	"	ori #0x4,%ccr\n"
+	"	bra.w .Lg_19012\n"
+	".Lg_19008:\n"
+	"	movea.l %d1,%a2\n"
+	"	move.l (%a2),%d1\n"
+	"	bne.b .Lg_18fd4\n"
+	"	andi #0xfb,%ccr\n"
+	".Lg_19012:\n"
+	"	movem.l (%sp)+,%d2/%a1\n"
+	"	rts\n"
+	"	.size forth_find, .-forth_find\n"
+);
+
 /* 00019018 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* rounds A4, the dictionary pointer, up to even
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -12567,14 +21818,29 @@ __pforth void forth_find(forth_user_end user __asm("a5"))
    A3.  In: A4.
    console.md */
 
-__pforth void forth_align(void *dp __asm("a4"))
+__pforth void forth_align(void *dp /* a4 */)
 
 {
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_align\n"
+	"	.type forth_align, @function\n"
+	"	.section .text.forth_align.19018,\"ax\",@progbits\n"
+	"forth_align:\n"
+	"	exg %d0,%a4\n"
+	"	addq.w #0x1,%d0\n"
+	"	bclr.l #0x0,%d0\n"
+	"	exg %d0,%a4\n"
+	"	rts\n"
+	"	.size forth_align, .-forth_align\n"
+);
+
 /* 00019024 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* a character's digit value by the table at 0x18de2, Z set if below base
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -12596,7 +21862,28 @@ __pforth void forth_digit(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_digit\n"
+	"	.type forth_digit, @function\n"
+	"	.section .text.forth_digit.19024,\"ax\",@progbits\n"
+	"forth_digit:\n"
+	"	andi.w #0x7f,%d0\n"
+	"	lea (__ghidra_18de2:w,%pc),%a1\n"
+	"	move.b (0x0,%a1,%d0.w*0x1),%d0\n"
+	"	bmi.b .Lg_1903c\n"
+	"	cmp.b %d2,%d0\n"
+	"	bcc.b .Lg_1903c\n"
+	"	ori #0x4,%ccr\n"
+	"	rts\n"
+	".Lg_1903c:\n"
+	"	andi #0xfb,%ccr\n"
+	"	rts\n"
+	"	.size forth_digit, .-forth_digit\n"
+);
+
 /* 00019042 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* Z set if the character at A3 is a space by the table at 0x18de2
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -12604,7 +21891,7 @@ __pforth void forth_digit(void)
    A3.  In: A3.
    console.md */
 
-__pforth undefined4 forth_is_space(char *input __asm("a3"))
+__pforth undefined4 forth_is_space(char *input /* a3 */)
 
 {
   undefined4 in_D0;
@@ -12613,7 +21900,33 @@ __pforth undefined4 forth_is_space(char *input __asm("a3"))
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_is_space\n"
+	"	.type forth_is_space, @function\n"
+	"	.section .text.forth_is_space.19042,\"ax\",@progbits\n"
+	"forth_is_space:\n"
+	"	movem.l %a0/%d0,-(%sp)\n"
+	"	clr.w %d0\n"
+	"	move.b (%a3),%d0\n"
+	"	lea (__ghidra_18de2:w,%pc),%a0\n"
+	"	move.b (0x0,%a0,%d0.w*0x1),%d0\n"
+	"	bpl.b .Lg_1905a\n"
+	"	btst.l #0x0,%d0\n"
+	"	bne.b .Lg_19062\n"
+	".Lg_1905a:\n"
+	"	andi #0xfb,%ccr\n"
+	"	bra.w .Lg_19066\n"
+	".Lg_19062:\n"
+	"	ori #0x4,%ccr\n"
+	".Lg_19066:\n"
+	"	movem.l (%sp)+,%d0/%a0\n"
+	"	rts\n"
+	"	.size forth_is_space, .-forth_is_space\n"
+);
+
 /* 0001906c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* advances A3 past spaces with forth_is_space
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -12621,7 +21934,7 @@ __pforth undefined4 forth_is_space(char *input __asm("a3"))
    A3.  In: A3.
    console.md */
 
-__pforth void forth_skip_spaces(char *input __asm("a3"))
+__pforth void forth_skip_spaces(char *input /* a3 */)
 
 {
   undefined1 in_ZF;
@@ -12638,7 +21951,46 @@ __pforth void forth_skip_spaces(char *input __asm("a3"))
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_skip_spaces\n"
+	"	.type forth_skip_spaces, @function\n"
+	"	.section .text.forth_skip_spaces.1906c,\"ax\",@progbits\n"
+	"forth_skip_spaces:\n"
+	".Lg_1906c:\n"
+	"	.byte 0x61 | bsr.b 0x00019042\n"
+	"	.reloc ., R_68K_PC8, forth_is_space-1\n"
+	"	.byte 0\n"
+	"	bne.b .Lg_1907a\n"
+	"	tst.b (%a3)+\n"
+	"	bne.b .Lg_1906c\n"
+	"	suba.l #0x1,%a3\n"
+	".Lg_1907a:\n"
+	"	rts\n"
+	"	.byte 0x20,0x2a\n"
+	"	.byte 0x3e,0x3e,0x20,0x00\n"
+	"	.byte 0x20,0x3e,0x20,0x00\n"
+	"	.byte 0x32\n"
+	"	.byte 0x33\n"
+	"	.byte 0x34\n"
+	"	.byte 0x35\n"
+	"	.byte 0x36\n"
+	"	.byte 0x37\n"
+	"	.byte 0x38\n"
+	"	.byte 0x39\n"
+	"	.byte 0x44\n"
+	"	.byte 0x2a\n"
+	"	.byte 0x2a\n"
+	"	.byte 0x2a\n"
+	"	.byte 0x2a\n"
+	"	.byte 0x2a\n"
+	"	.byte 0x58\n"
+	"	.byte 0xff\n"
+	"	.size forth_skip_spaces, .-forth_skip_spaces\n"
+);
+
 /* 00019096 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the prompt at 0x100b14: p4th, the base's letter, then > or >> while compiling (console.md)
@@ -12647,7 +21999,7 @@ __pforth void forth_skip_spaces(char *input __asm("a3"))
    A3.
    console.md */
 
-__pforth void forth_build_prompt(forth_user_end user __asm("a5"))
+__pforth void forth_build_prompt(forth_user_end user /* a5 */)
 
 {
   int iVar1;
@@ -12668,7 +22020,37 @@ __pforth void forth_build_prompt(forth_user_end user __asm("a5"))
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_build_prompt\n"
+	"	.type forth_build_prompt, @function\n"
+	"	.section .text.forth_build_prompt.19096,\"ax\",@progbits\n"
+	"forth_build_prompt:\n"
+	"	movem.l %a0/%d1,-(%sp)\n"
+	"	move.l (-0x26,%a5),(__ghidra_100b14).l\n"
+	"	move.w (__ghidra_1907c:w,%pc),(__ghidra_100b18).l\n"
+	"	move.l (-0xe,%a5),%d1\n"
+	"	subq.l #0x2,%d1\n"
+	"	blt.b .Lg_190c6\n"
+	"	cmpi.l #0xe,%d1\n"
+	"	bgt.b .Lg_190c6\n"
+	"	lea (__ghidra_19086:w,%pc),%a0\n"
+	"	move.b (0x0,%a0,%d1.w*0x1),(__ghidra_100b19).l\n"
+	".Lg_190c6:\n"
+	"	tst.w (-0xa,%a5)\n"
+	"	beq.w .Lg_190da\n"
+	"	move.l (__ghidra_1907e:w,%pc),(__ghidra_100b1a).l\n"
+	"	bra.w .Lg_190e2\n"
+	".Lg_190da:\n"
+	"	move.l (__ghidra_19082:w,%pc),(__ghidra_100b1a).l\n"
+	".Lg_190e2:\n"
+	"	movem.l (%sp)+,%d1/%a0\n"
+	"	rts\n"
+	"	.size forth_build_prompt, .-forth_build_prompt\n"
+);
+
 /* 000190e8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* reads a line from iodev with trap #4, or through the kernel
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -12676,13 +22058,13 @@ __pforth void forth_build_prompt(forth_user_end user __asm("a5"))
    A3.
    console.md */
 
-__pforth undefined4 forth_read_line(forth_user_end user __asm("a5"),char *input __asm("a3"))
+__pforth undefined4 forth_read_line(forth_user_end user /* a5 */,char *input /* a3 */)
 
 {
   undefined4 in_D0;
   undefined4 uVar1;
   
-  if (-1 < ((forth_user *)(user + -0x28))->iodev) {
+  if (-1 < ((forth_user_area *)(user + -0x28))->iodev) {
     __m68k_trap(4);
     return in_D0;
   }
@@ -12691,7 +22073,28 @@ __pforth undefined4 forth_read_line(forth_user_end user __asm("a5"),char *input 
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_read_line\n"
+	"	.type forth_read_line, @function\n"
+	"	.section .text.forth_read_line.190e8,\"ax\",@progbits\n"
+	"forth_read_line:\n"
+	"	movem.l %d7/%d2/%d0,-(%sp)\n"
+	"	movea.l (-0x1e,%a5),%a1\n"
+	"	moveq #0x0,%d0\n"
+	"	move.w (-0x28,%a5),%d0\n"
+	"	bmi.w forth_expect+0x23c\n"
+	"	move.l #0x86,%d2\n"
+	"	moveq #0x3,%d7\n"
+	"	trap #0x4\n"
+	"	movea.l (-0x1e,%a5),%a3\n"
+	"	movem.l (%sp)+,%d0/%d2/%d7\n"
+	"	rts\n"
+	"	.size forth_read_line, .-forth_read_line\n"
+);
+
 /* 0001910e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* refills and copies the next word into pad
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -12699,7 +22102,7 @@ __pforth undefined4 forth_read_line(forth_user_end user __asm("a5"),char *input 
    A3.
    console.md */
 
-__pforth void forth_parse_word(forth_user_end user __asm("a5"),char *input __asm("a3"))
+__pforth void forth_parse_word(forth_user_end user /* a5 */,char *input /* a3 */)
 
 {
   char cVar1;
@@ -12723,7 +22126,28 @@ __pforth void forth_parse_word(forth_user_end user __asm("a5"),char *input __asm
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_parse_word\n"
+	"	.type forth_parse_word, @function\n"
+	"	.section .text.forth_parse_word.1910e,\"ax\",@progbits\n"
+	"forth_parse_word:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	bsr.w forth_input_buffer\n"
+	"	bsr.w forth_refill\n"
+	"	movea.l (-0x22,%a5),%a0\n"
+	".Lg_1911c:\n"
+	"	move.b (%a3)+,(%a0)+\n"
+	"	bsr.w forth_is_space\n"
+	"	bne.b .Lg_1911c\n"
+	"	clr.b (%a0)\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	rts\n"
+	"	.size forth_parse_word, .-forth_parse_word\n"
+);
+
 /* 0001912a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* skips spaces and, at the input's end, prints the prompt and reads a line
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -12731,13 +22155,13 @@ __pforth void forth_parse_word(forth_user_end user __asm("a5"),char *input __asm
    A3.
    console.md */
 
-__pforth void forth_refill(forth_user_end user __asm("a5"),char *input __asm("a3"))
+__pforth void forth_refill(forth_user_end user /* a5 */,char *input /* a3 */)
 
 {
   while( true ) {
     forth_skip_spaces(input);
     if (*input != '\0') break;
-    if (((forth_user *)(user + -0x28))->iodev == 0) {
+    if (((forth_user_area *)(user + -0x28))->iodev == 0) {
       forth_build_prompt(user);
       forth_print_string(&DAT_00100b14,user);
     }
@@ -12747,7 +22171,34 @@ __pforth void forth_refill(forth_user_end user __asm("a5"),char *input __asm("a3
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_refill\n"
+	"	.type forth_refill, @function\n"
+	"	.section .text.forth_refill.1912a,\"ax\",@progbits\n"
+	"forth_refill:\n"
+	".Lg_1912a:\n"
+	"	bsr.w forth_skip_spaces\n"
+	"	tst.b (%a3)\n"
+	"	bne.w .Lg_1914e\n"
+	"	tst.w (-0x28,%a5)\n"
+	"	bne.b .Lg_1914a\n"
+	"	bsr.w forth_build_prompt\n"
+	"	move.l #0x100b14,%d0\n"
+	"	jsr (forth_print_string:w,%pc)\n"
+	"	nop\n"
+	".Lg_1914a:\n"
+	"	.byte 0x61 | bsr.b 0x000190e8\n"
+	"	.reloc ., R_68K_PC8, forth_read_line-1\n"
+	"	.byte 0\n"
+	"	bra.b .Lg_1912a\n"
+	".Lg_1914e:\n"
+	"	rts\n"
+	"	.size forth_refill, .-forth_refill\n"
+);
+
 /* 00019150 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* writes the string in D0 to iodev; type's work
    Not a C function (pforth; documented): a routine of the pForth console's kernel, which runs with
@@ -12755,22 +22206,43 @@ __pforth void forth_refill(forth_user_end user __asm("a5"),char *input __asm("a3
    in A3.  In: D0 char *s.
    console.md */
 
-__pforth ulonglong forth_print_string(char *s __asm("d0"),forth_user_end user __asm("a5"))
+__pforth ulonglong forth_print_string(char *s /* d0 */,forth_user_end user /* a5 */)
 
 {
   undefined4 in_D1;
   ulonglong uVar1;
   
-  if (-1 < ((forth_user *)(user + -0x28))->iodev) {
+  if (-1 < ((forth_user_area *)(user + -0x28))->iodev) {
     __m68k_trap(4);
-    return (ulonglong)CONCAT24(((forth_user *)(user + -0x28))->iodev,in_D1);
+    return (ulonglong)CONCAT24(((forth_user_area *)(user + -0x28))->iodev,in_D1);
   }
   uVar1 = psos_call();
   return uVar1;
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_print_string\n"
+	"	.type forth_print_string, @function\n"
+	"	.section .text.forth_print_string.19150,\"ax\",@progbits\n"
+	"forth_print_string:\n"
+	"	movem.l %a1/%a0/%d1,-(%sp)\n"
+	"	movea.l %d0,%a0\n"
+	"	moveq #0x0,%d0\n"
+	"	move.w (-0x28,%a5),%d0\n"
+	"	bmi.w forth_expect+0x23c\n"
+	"	moveq #0x4,%d7\n"
+	"	trap #0x4\n"
+	"	move.l %a0,%d2\n"
+	"	addq.l #0x1,%d2\n"
+	"	movem.l (%sp)+,%d1/%a0/%a1\n"
+	"	rts\n"
+	"	.size forth_print_string, .-forth_print_string\n"
+);
+
 /* 0001916e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* tib, or one from the kernel when there is none
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -12778,7 +22250,7 @@ __pforth ulonglong forth_print_string(char *s __asm("d0"),forth_user_end user __
    A3.
    console.md */
 
-__pforth char * forth_input_buffer(forth_user_end user __asm("a5"))
+__pforth char * forth_input_buffer(forth_user_end user /* a5 */)
 
 {
   char *pcVar1;
@@ -12791,7 +22263,24 @@ __pforth char * forth_input_buffer(forth_user_end user __asm("a5"))
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_input_buffer\n"
+	"	.type forth_input_buffer, @function\n"
+	"	.section .text.forth_input_buffer.1916e,\"ax\",@progbits\n"
+	"forth_input_buffer:\n"
+	"	move.l (-0x1e,%a5),%d0\n"
+	"	bne.w .Lg_19180\n"
+	"	suba.l %a0,%a0\n"
+	"	moveq #0x4,%d7\n"
+	"	jsr (psos_call).l\n"
+	".Lg_19180:\n"
+	"	rts\n"
+	"	.size forth_input_buffer, .-forth_input_buffer\n"
+);
+
 /* 00019182 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word over
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12806,7 +22295,19 @@ __pforth void forth_over(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_over\n"
+	"	.type forth_over, @function\n"
+	"	.section .text.forth_over.19182,\"ax\",@progbits\n"
+	"forth_over:\n"
+	"	move.l (0x4,%a6),-(%a6)\n"
+	"	rts\n"
+	"	.size forth_over, .-forth_over\n"
+);
+
 /* 00019188 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word abs
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12823,7 +22324,22 @@ __pforth void forth_abs(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_abs\n"
+	"	.type forth_abs, @function\n"
+	"	.section .text.forth_abs.19188,\"ax\",@progbits\n"
+	"forth_abs:\n"
+	"	tst.w (%a6)\n"
+	"	bge.b .Lg_1918e\n"
+	"	neg.l (%a6)\n"
+	".Lg_1918e:\n"
+	"	rts\n"
+	"	.size forth_abs, .-forth_abs\n"
+);
+
 /* 00019190 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word max
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12840,7 +22356,23 @@ __pforth void forth_max(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_max\n"
+	"	.type forth_max, @function\n"
+	"	.section .text.forth_max.19190,\"ax\",@progbits\n"
+	"forth_max:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	cmp.l (%a6),%d0\n"
+	"	blt.b .Lg_19198\n"
+	"	move.l %d0,(%a6)\n"
+	".Lg_19198:\n"
+	"	rts\n"
+	"	.size forth_max, .-forth_max\n"
+);
+
 /* 0001919a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word min
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12857,7 +22389,23 @@ __pforth void forth_min(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_min\n"
+	"	.type forth_min, @function\n"
+	"	.section .text.forth_min.1919a,\"ax\",@progbits\n"
+	"forth_min:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	cmp.l (%a6),%d0\n"
+	"	bgt.b .Lg_191a2\n"
+	"	move.l %d0,(%a6)\n"
+	".Lg_191a2:\n"
+	"	rts\n"
+	"	.size forth_min, .-forth_min\n"
+);
+
 /* 000191a4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word @
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12872,7 +22420,20 @@ __pforth void forth_fetch(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_fetch\n"
+	"	.type forth_fetch, @function\n"
+	"	.section .text.forth_fetch.191a4,\"ax\",@progbits\n"
+	"forth_fetch:\n"
+	"	movea.l (%a6),%a0\n"
+	"	move.l (%a0),(%a6)\n"
+	"	rts\n"
+	"	.size forth_fetch, .-forth_fetch\n"
+);
+
 /* 000191aa */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word !
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12887,7 +22448,20 @@ __pforth void forth_store(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_store\n"
+	"	.type forth_store, @function\n"
+	"	.section .text.forth_store.191aa,\"ax\",@progbits\n"
+	"forth_store:\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	move.l (%a6)+,(%a0)\n"
+	"	rts\n"
+	"	.size forth_store, .-forth_store\n"
+);
+
 /* 000191b0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word w@
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12902,7 +22476,22 @@ __pforth void forth_w_fetch(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_w_fetch\n"
+	"	.type forth_w_fetch, @function\n"
+	"	.section .text.forth_w_fetch.191b0,\"ax\",@progbits\n"
+	"forth_w_fetch:\n"
+	"	movea.l (%a6),%a0\n"
+	"	moveq #0x0,%d0\n"
+	"	move.w (%a0),%d0\n"
+	"	move.l %d0,(%a6)\n"
+	"	rts\n"
+	"	.size forth_w_fetch, .-forth_w_fetch\n"
+);
+
 /* 000191ba */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word w!
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12917,7 +22506,21 @@ __pforth void forth_w_store(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_w_store\n"
+	"	.type forth_w_store, @function\n"
+	"	.section .text.forth_w_store.191ba,\"ax\",@progbits\n"
+	"forth_w_store:\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.w %d0,(%a0)\n"
+	"	rts\n"
+	"	.size forth_w_store, .-forth_w_store\n"
+);
+
 /* 000191c2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word c@
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12932,7 +22535,22 @@ __pforth void forth_c_fetch(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_c_fetch\n"
+	"	.type forth_c_fetch, @function\n"
+	"	.section .text.forth_c_fetch.191c2,\"ax\",@progbits\n"
+	"forth_c_fetch:\n"
+	"	movea.l (%a6),%a0\n"
+	"	moveq #0x0,%d0\n"
+	"	move.b (%a0),%d0\n"
+	"	move.l %d0,(%a6)\n"
+	"	rts\n"
+	"	.size forth_c_fetch, .-forth_c_fetch\n"
+);
+
 /* 000191cc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word c!
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12947,7 +22565,21 @@ __pforth void forth_c_store(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_c_store\n"
+	"	.type forth_c_store, @function\n"
+	"	.section .text.forth_c_store.191cc,\"ax\",@progbits\n"
+	"forth_c_store:\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.b %d0,(%a0)\n"
+	"	rts\n"
+	"	.size forth_c_store, .-forth_c_store\n"
+);
+
 /* 000191d4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word negate
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12962,7 +22594,19 @@ __pforth void forth_negate(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_negate\n"
+	"	.type forth_negate, @function\n"
+	"	.section .text.forth_negate.191d4,\"ax\",@progbits\n"
+	"forth_negate:\n"
+	"	neg.l (%a6)\n"
+	"	rts\n"
+	"	.size forth_negate, .-forth_negate\n"
+);
+
 /* 000191d8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word here
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12978,7 +22622,21 @@ __pforth void forth_here(forth_user_end user,long *sp,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_here\n"
+	"	.type forth_here, @function\n"
+	"	.section .text.forth_here.191d8,\"ax\",@progbits\n"
+	"forth_here:\n"
+	"	lea (-0x12,%a5),%a0\n"
+	"	move.l %a0,-(%a6)\n"
+	"	move.l %a4,(%a0)\n"
+	"	rts\n"
+	"	.size forth_here, .-forth_here\n"
+);
+
 /* 000191e2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word >r
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -12992,7 +22650,22 @@ __pforth void forth_greater_r(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_greater_r\n"
+	"	.type forth_greater_r, @function\n"
+	"	.section .text.forth_greater_r.191e2,\"ax\",@progbits\n"
+	"forth_greater_r:\n"
+	"	move.l (%a6)+,-(%sp)\n"
+	"	movea.l (%sp),%a0\n"
+	"	move.l (0x4,%sp),(%sp)\n"
+	"	move.l %a0,(0x4,%sp)\n"
+	"	rts\n"
+	"	.size forth_greater_r, .-forth_greater_r\n"
+);
+
 /* 000191f0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word r>
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13011,7 +22684,22 @@ __pforth void forth_r_greater(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_r_greater\n"
+	"	.type forth_r_greater, @function\n"
+	"	.section .text.forth_r_greater.191f0,\"ax\",@progbits\n"
+	"forth_r_greater:\n"
+	"	move.l (%sp)+,-(%a6)\n"
+	"	movea.l (%a6),%a0\n"
+	"	move.l (%sp),(%a6)\n"
+	"	move.l %a0,(%sp)\n"
+	"	rts\n"
+	"	.size forth_r_greater, .-forth_r_greater\n"
+);
+
 /* 000191fa */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word fill
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13041,7 +22729,27 @@ __pforth void forth_fill(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_fill\n"
+	"	.type forth_fill, @function\n"
+	"	.section .text.forth_fill.191fa,\"ax\",@progbits\n"
+	"forth_fill:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.l (%a6)+,%d1\n"
+	"	subq.l #0x1,%d1\n"
+	"	bmi.b .Lg_1920a\n"
+	"	movea.l (%a6)+,%a2\n"
+	".Lg_19204:\n"
+	"	move.b %d0,(%a2)+\n"
+	"	dbf %d1,.Lg_19204\n"
+	".Lg_1920a:\n"
+	"	rts\n"
+	"	.size forth_fill, .-forth_fill\n"
+);
+
 /* 0001920c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word pick
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13056,7 +22764,21 @@ __pforth void forth_pick(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_pick\n"
+	"	.type forth_pick, @function\n"
+	"	.section .text.forth_pick.1920c,\"ax\",@progbits\n"
+	"forth_pick:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	asl.l #0x2,%d0\n"
+	"	move.l (0x0,%a6,%d0.l*0x1),-(%a6)\n"
+	"	rts\n"
+	"	.size forth_pick, .-forth_pick\n"
+);
+
 /* 00019216 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word ,
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13071,7 +22793,19 @@ __pforth void forth_comma(long *sp,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_comma\n"
+	"	.type forth_comma, @function\n"
+	"	.section .text.forth_comma.19216,\"ax\",@progbits\n"
+	"forth_comma:\n"
+	"	move.l (%a6)+,(%a4)+\n"
+	"	rts\n"
+	"	.size forth_comma, .-forth_comma\n"
+);
+
 /* 0001921a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word w,
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13086,7 +22820,20 @@ __pforth void forth_w_comma(long *sp,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_w_comma\n"
+	"	.type forth_w_comma, @function\n"
+	"	.section .text.forth_w_comma.1921a,\"ax\",@progbits\n"
+	"forth_w_comma:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.w %d0,(%a4)+\n"
+	"	rts\n"
+	"	.size forth_w_comma, .-forth_w_comma\n"
+);
+
 /* 00019220 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word c,
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13101,7 +22848,20 @@ __pforth void forth_c_comma(long *sp,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_c_comma\n"
+	"	.type forth_c_comma, @function\n"
+	"	.section .text.forth_c_comma.19220,\"ax\",@progbits\n"
+	"forth_c_comma:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.b %d0,(%a4)+\n"
+	"	rts\n"
+	"	.size forth_c_comma, .-forth_c_comma\n"
+);
+
 /* 00019226 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word rot
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13121,7 +22881,24 @@ __pforth void forth_rot(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_rot\n"
+	"	.type forth_rot, @function\n"
+	"	.section .text.forth_rot.19226,\"ax\",@progbits\n"
+	"forth_rot:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.l (%a6)+,%d1\n"
+	"	move.l (%a6),%d2\n"
+	"	move.l %d1,(%a6)\n"
+	"	move.l %d0,-(%a6)\n"
+	"	move.l %d2,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_rot, .-forth_rot\n"
+);
+
 /* 00019234 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word -rot
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13143,7 +22920,24 @@ __pforth void forth_minus_rot(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_minus_rot\n"
+	"	.type forth_minus_rot, @function\n"
+	"	.section .text.forth_minus_rot.19234,\"ax\",@progbits\n"
+	"forth_minus_rot:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.l (%a6)+,%d1\n"
+	"	move.l (%a6),%d2\n"
+	"	move.l %d0,(%a6)\n"
+	"	move.l %d2,-(%a6)\n"
+	"	move.l %d1,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_minus_rot, .-forth_minus_rot\n"
+);
+
 /* 00019242 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word allot
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13157,7 +22951,19 @@ __pforth void forth_allot(long *sp,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_allot\n"
+	"	.type forth_allot, @function\n"
+	"	.section .text.forth_allot.19242,\"ax\",@progbits\n"
+	"forth_allot:\n"
+	"	adda.l (%a6)+,%a4\n"
+	"	rts\n"
+	"	.size forth_allot, .-forth_allot\n"
+);
+
 /* 00019246 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word swap
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13176,7 +22982,21 @@ __pforth void forth_swap(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_swap\n"
+	"	.type forth_swap, @function\n"
+	"	.section .text.forth_swap.19246,\"ax\",@progbits\n"
+	"forth_swap:\n"
+	"	move.l (%a6),%d0\n"
+	"	move.l (0x4,%a6),(%a6)\n"
+	"	move.l %d0,(0x4,%a6)\n"
+	"	rts\n"
+	"	.size forth_swap, .-forth_swap\n"
+);
+
 /* 00019252 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word dup
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13191,7 +23011,19 @@ __pforth void forth_dup(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_dup\n"
+	"	.type forth_dup, @function\n"
+	"	.section .text.forth_dup.19252,\"ax\",@progbits\n"
+	"forth_dup:\n"
+	"	move.l (%a6),-(%a6)\n"
+	"	rts\n"
+	"	.size forth_dup, .-forth_dup\n"
+);
+
 /* 00019256 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word 2dup
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13211,7 +23043,23 @@ __pforth void forth_2dup(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_2dup\n"
+	"	.type forth_2dup, @function\n"
+	"	.section .text.forth_2dup.19256,\"ax\",@progbits\n"
+	"forth_2dup:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.l (%a6),%d1\n"
+	"	move.l %d0,-(%a6)\n"
+	"	move.l %d1,-(%a6)\n"
+	"	move.l %d0,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_2dup, .-forth_2dup\n"
+);
+
 /* 00019262 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word 2swap
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13234,7 +23082,26 @@ __pforth void forth_2swap(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_2swap\n"
+	"	.type forth_2swap, @function\n"
+	"	.section .text.forth_2swap.19262,\"ax\",@progbits\n"
+	"forth_2swap:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.l (%a6)+,%d1\n"
+	"	move.l (%a6)+,%d2\n"
+	"	move.l (%a6),%d3\n"
+	"	move.l %d1,(%a6)\n"
+	"	move.l %d0,-(%a6)\n"
+	"	move.l %d3,-(%a6)\n"
+	"	move.l %d2,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_2swap, .-forth_2swap\n"
+);
+
 /* 00019274 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word (
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13259,7 +23126,27 @@ __pforth void forth_paren(char *input)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_paren\n"
+	"	.type forth_paren, @function\n"
+	"	.section .text.forth_paren.19274,\"ax\",@progbits\n"
+	"forth_paren:\n"
+	".Lg_19274:\n"
+	"	move.b (%a3)+,%d0\n"
+	"	beq.b .Lg_19280\n"
+	"	cmpi.b #0x29,%d0\n"
+	"	bne.b .Lg_19274\n"
+	"	rts\n"
+	".Lg_19280:\n"
+	"	suba.l #0x1,%a3\n"
+	"	bsr.w forth_refill\n"
+	"	bra.b .Lg_19274\n"
+	"	.size forth_paren, .-forth_paren\n"
+);
+
 /* 0001928c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word halt
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13280,7 +23167,24 @@ __pforth void forth_halt(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_halt\n"
+	"	.type forth_halt, @function\n"
+	"	.section .text.forth_halt.1928c,\"ax\",@progbits\n"
+	"forth_halt:\n"
+	"	move.l (console_halt_hook_cell).l,%d0\n"
+	"	beq.b .Lg_19298\n"
+	"	movea.l %d0,%a0\n"
+	"	jmp (%a0)\n"
+	".Lg_19298:\n"
+	"	trap #0xe\n"
+	"	rts\n"
+	"	.size forth_halt, .-forth_halt\n"
+);
+
 /* 0001929c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word false
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13295,7 +23199,19 @@ __pforth void forth_false(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_false\n"
+	"	.type forth_false, @function\n"
+	"	.section .text.forth_false.1929c,\"ax\",@progbits\n"
+	"forth_false:\n"
+	"	clr.l -(%a6)\n"
+	"	rts\n"
+	"	.size forth_false, .-forth_false\n"
+);
+
 /* 000192a0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word true
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13310,7 +23226,19 @@ __pforth void forth_true(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_true\n"
+	"	.type forth_true, @function\n"
+	"	.section .text.forth_true.192a0,\"ax\",@progbits\n"
+	"forth_true:\n"
+	"	move.l #-0x1,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_true, .-forth_true\n"
+);
+
 /* 000192a8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word or
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13325,7 +23253,20 @@ __pforth void forth_or(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_or\n"
+	"	.type forth_or, @function\n"
+	"	.section .text.forth_or.192a8,\"ax\",@progbits\n"
+	"forth_or:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	or.l %d0,(%a6)\n"
+	"	rts\n"
+	"	.size forth_or, .-forth_or\n"
+);
+
 /* 000192ae */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word and
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13340,7 +23281,20 @@ __pforth void forth_and(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_and\n"
+	"	.type forth_and, @function\n"
+	"	.section .text.forth_and.192ae,\"ax\",@progbits\n"
+	"forth_and:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	and.l %d0,(%a6)\n"
+	"	rts\n"
+	"	.size forth_and, .-forth_and\n"
+);
+
 /* 000192b4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word not
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13355,7 +23309,19 @@ __pforth void forth_not(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_not\n"
+	"	.type forth_not, @function\n"
+	"	.section .text.forth_not.192b4,\"ax\",@progbits\n"
+	"forth_not:\n"
+	"	not.l (%a6)\n"
+	"	rts\n"
+	"	.size forth_not, .-forth_not\n"
+);
+
 /* 000192b8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word xor
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13370,7 +23336,20 @@ __pforth void forth_xor(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_xor\n"
+	"	.type forth_xor, @function\n"
+	"	.section .text.forth_xor.192b8,\"ax\",@progbits\n"
+	"forth_xor:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	eor.l %d0,(%a6)\n"
+	"	rts\n"
+	"	.size forth_xor, .-forth_xor\n"
+);
+
 /* 000192be */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word =
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13392,7 +23371,25 @@ __pforth void forth_equal(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_equal\n"
+	"	.type forth_equal, @function\n"
+	"	.section .text.forth_equal.192be,\"ax\",@progbits\n"
+	"forth_equal:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	cmp.l (%a6),%d0\n"
+	"	beq.b .Lg_192c8\n"
+	"	clr.l (%a6)\n"
+	"	rts\n"
+	".Lg_192c8:\n"
+	"	move.l #-0x1,(%a6)\n"
+	"	rts\n"
+	"	.size forth_equal, .-forth_equal\n"
+);
+
 /* 000192d0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word >
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13414,7 +23411,25 @@ __pforth void forth_greater(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_greater\n"
+	"	.type forth_greater, @function\n"
+	"	.section .text.forth_greater.192d0,\"ax\",@progbits\n"
+	"forth_greater:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	cmp.l (%a6),%d0\n"
+	"	.byte 0x6d | blt.b 0x000192c8\n"
+	"	.reloc ., R_68K_PC8, forth_equal+0xa-1\n"
+	"	.byte 0\n"
+	"	.byte 0x60 | bra.b 0x000192c4\n"
+	"	.reloc ., R_68K_PC8, forth_equal+0x6-1\n"
+	"	.byte 0\n"
+	"	.size forth_greater, .-forth_greater\n"
+);
+
 /* 000192d8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word <
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13436,7 +23451,25 @@ __pforth void forth_less(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_less\n"
+	"	.type forth_less, @function\n"
+	"	.section .text.forth_less.192d8,\"ax\",@progbits\n"
+	"forth_less:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	cmp.l (%a6),%d0\n"
+	"	.byte 0x6e | bgt.b 0x000192c8\n"
+	"	.reloc ., R_68K_PC8, forth_equal+0xa-1\n"
+	"	.byte 0\n"
+	"	.byte 0x60 | bra.b 0x000192c4\n"
+	"	.reloc ., R_68K_PC8, forth_equal+0x6-1\n"
+	"	.byte 0\n"
+	"	.size forth_less, .-forth_less\n"
+);
+
 /* 000192e0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word 0<
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13455,7 +23488,24 @@ __pforth void forth_0_less(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_0_less\n"
+	"	.type forth_0_less, @function\n"
+	"	.section .text.forth_0_less.192e0,\"ax\",@progbits\n"
+	"forth_0_less:\n"
+	"	tst.l (%a6)\n"
+	"	.byte 0x6b | bmi.b 0x000192c8\n"
+	"	.reloc ., R_68K_PC8, forth_equal+0xa-1\n"
+	"	.byte 0\n"
+	"	.byte 0x60 | bra.b 0x000192c4\n"
+	"	.reloc ., R_68K_PC8, forth_equal+0x6-1\n"
+	"	.byte 0\n"
+	"	.size forth_0_less, .-forth_0_less\n"
+);
+
 /* 000192e6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word 0=
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13474,7 +23524,24 @@ __pforth void forth_0_equal(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_0_equal\n"
+	"	.type forth_0_equal, @function\n"
+	"	.section .text.forth_0_equal.192e6,\"ax\",@progbits\n"
+	"forth_0_equal:\n"
+	"	tst.l (%a6)\n"
+	"	.byte 0x67 | beq.b 0x000192c8\n"
+	"	.reloc ., R_68K_PC8, forth_equal+0xa-1\n"
+	"	.byte 0\n"
+	"	.byte 0x60 | bra.b 0x000192c4\n"
+	"	.reloc ., R_68K_PC8, forth_equal+0x6-1\n"
+	"	.byte 0\n"
+	"	.size forth_0_equal, .-forth_0_equal\n"
+);
+
 /* 000192ec */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word 0>
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13493,7 +23560,27 @@ __pforth void forth_0_greater(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_0_greater\n"
+	"	.type forth_0_greater, @function\n"
+	"	.section .text.forth_0_greater.192ec,\"ax\",@progbits\n"
+	"forth_0_greater:\n"
+	"	tst.l (%a6)\n"
+	"	.byte 0x67 | beq.b 0x000192c4\n"
+	"	.reloc ., R_68K_PC8, forth_equal+0x6-1\n"
+	"	.byte 0\n"
+	"	.byte 0x6b | bmi.b 0x000192c4\n"
+	"	.reloc ., R_68K_PC8, forth_equal+0x6-1\n"
+	"	.byte 0\n"
+	"	.byte 0x60 | bra.b 0x000192c8\n"
+	"	.reloc ., R_68K_PC8, forth_equal+0xa-1\n"
+	"	.byte 0\n"
+	"	.size forth_0_greater, .-forth_0_greater\n"
+);
+
 /* 000192f4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word ?dup
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13510,7 +23597,22 @@ __pforth void forth_query_dup(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_query_dup\n"
+	"	.type forth_query_dup, @function\n"
+	"	.section .text.forth_query_dup.192f4,\"ax\",@progbits\n"
+	"forth_query_dup:\n"
+	"	move.l (%a6),%d0\n"
+	"	beq.b .Lg_192fa\n"
+	"	move.l %d0,-(%a6)\n"
+	".Lg_192fa:\n"
+	"	rts\n"
+	"	.size forth_query_dup, .-forth_query_dup\n"
+);
+
 /* 000192fc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word cmove
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13541,7 +23643,27 @@ __pforth void forth_cmove(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_cmove\n"
+	"	.type forth_cmove, @function\n"
+	"	.section .text.forth_cmove.192fc,\"ax\",@progbits\n"
+	"forth_cmove:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	movea.l (%a6)+,%a1\n"
+	"	subq.l #0x1,%d0\n"
+	"	bmi.b .Lg_1930c\n"
+	".Lg_19306:\n"
+	"	move.b (%a1)+,(%a0)+\n"
+	"	dbf %d0,.Lg_19306\n"
+	".Lg_1930c:\n"
+	"	rts\n"
+	"	.size forth_cmove, .-forth_cmove\n"
+);
+
 /* 0001930e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word cmove>
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13575,7 +23697,30 @@ __pforth void forth_cmove_greater(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_cmove_greater\n"
+	"	.type forth_cmove_greater, @function\n"
+	"	.section .text.forth_cmove_greater.1930e,\"ax\",@progbits\n"
+	"forth_cmove_greater:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	movea.l (%a6)+,%a1\n"
+	"	adda.l %d0,%a0\n"
+	"	adda.l %d0,%a1\n"
+	"	subq.l #0x1,%d0\n"
+	"	.byte 0x6b | bmi.b 0x0001930c\n"
+	"	.reloc ., R_68K_PC8, forth_cmove+0x10-1\n"
+	"	.byte 0\n"
+	".Lg_1931c:\n"
+	"	move.b -(%a1),-(%a0)\n"
+	"	dbf %d0,.Lg_1931c\n"
+	"	rts\n"
+	"	.size forth_cmove_greater, .-forth_cmove_greater\n"
+);
+
 /* 00019324 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word 2drop
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13589,7 +23734,19 @@ __pforth void forth_2drop(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_2drop\n"
+	"	.type forth_2drop, @function\n"
+	"	.section .text.forth_2drop.19324,\"ax\",@progbits\n"
+	"forth_2drop:\n"
+	"	addq.l #0x8,%a6\n"
+	"	rts\n"
+	"	.size forth_2drop, .-forth_2drop\n"
+);
+
 /* 00019328 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word drop
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13603,7 +23760,19 @@ __pforth void forth_drop(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_drop\n"
+	"	.type forth_drop, @function\n"
+	"	.section .text.forth_drop.19328,\"ax\",@progbits\n"
+	"forth_drop:\n"
+	"	addq.l #0x4,%a6\n"
+	"	rts\n"
+	"	.size forth_drop, .-forth_drop\n"
+);
+
 /* 0001932c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word depth
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13618,7 +23787,22 @@ __pforth void forth_depth(forth_user_end user,long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_depth\n"
+	"	.type forth_depth, @function\n"
+	"	.section .text.forth_depth.1932c,\"ax\",@progbits\n"
+	"forth_depth:\n"
+	"	move.l (-0x8,%a5),%d0\n"
+	"	sub.l %a6,%d0\n"
+	"	asr.l #0x2,%d0\n"
+	"	move.l %d0,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_depth, .-forth_depth\n"
+);
+
 /* 00019338 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* copies a run of code words into the dictionary, up to a zero
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -13626,7 +23810,7 @@ __pforth void forth_depth(forth_user_end user,long *sp)
    A3.  In: A0.
    console.md */
 
-__pforth undefined2 forth_compile_code(void *dp __asm("a4"))
+__pforth undefined2 forth_compile_code(void *dp /* a4 */)
 
 {
   short sVar1;
@@ -13654,7 +23838,30 @@ __pforth undefined2 forth_compile_code(void *dp __asm("a4"))
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_compile_code\n"
+	"	.type forth_compile_code, @function\n"
+	"	.section .text.forth_compile_code.19338,\"ax\",@progbits\n"
+	"forth_compile_code:\n"
+	"	move %ccr,-(%sp)\n"
+	"	move.w %d0,-(%sp)\n"
+	".Lg_1933c:\n"
+	"	move.w (%a0)+,(%a4)+\n"
+	"	bne.b .Lg_1933c\n"
+	"	move.w (%a0)+,%d0\n"
+	"	beq.b .Lg_19348\n"
+	"	move.w %d0,(%a4)+\n"
+	"	bra.b .Lg_1933c\n"
+	".Lg_19348:\n"
+	"	subq.l #0x2,%a4\n"
+	"	move.w (%sp)+,%d0\n"
+	"	rtr\n"
+	"	.size forth_compile_code, .-forth_compile_code\n"
+);
+
 /* 0001934e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* patches a branch's offset; loop, until, again, repeat
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -13662,7 +23869,7 @@ __pforth undefined2 forth_compile_code(void *dp __asm("a4"))
    A3.
    console.md */
 
-__pforth undefined4 forth_resolve_branch(long *sp __asm("a6"),void *dp __asm("a4"))
+__pforth undefined4 forth_resolve_branch(long *sp /* a6 */,void *dp /* a4 */)
 
 {
   undefined4 in_D0;
@@ -13672,7 +23879,64 @@ __pforth undefined4 forth_resolve_branch(long *sp __asm("a6"),void *dp __asm("a4
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_resolve_branch\n"
+	"	.type forth_resolve_branch, @function\n"
+	"	.section .text.forth_resolve_branch.1934e,\"ax\",@progbits\n"
+	"forth_resolve_branch:\n"
+	"	move %ccr,-(%sp)\n"
+	"	move.l %d0,-(%sp)\n"
+	"	move.l (%a6)+,%d0\n"
+	"	sub.l %a4,%d0\n"
+	"	addq.l #0x2,%d0\n"
+	"	move.w %d0,(-0x2,%a4)\n"
+	"	move.l (%sp)+,%d0\n"
+	"	rtr\n"
+	"	.size forth_resolve_branch, .-forth_resolve_branch\n"
+);
+
+/* 00019360 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* patches a forward branch at the address on the data stack to land here: its word before it gets
+   here less it, plus 2; if, else, while
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  Preserves: all.
+   console.md */
+
+/* preserves all */
+__pforth undefined4 forth_resolve_forward(long *sp /* a6 */,void *dp /* a4 */)
+
+{
+  undefined4 in_D0;
+  
+  *(short *)(*sp + -2) = ((short)dp - (short)*sp) + 2;
+  return in_D0;
+}
+
+
+#endif
+__asm__(
+	"	.globl forth_resolve_forward\n"
+	"	.type forth_resolve_forward, @function\n"
+	"	.section .text.forth_resolve_forward.19360,\"ax\",@progbits\n"
+	"forth_resolve_forward:\n"
+	"	move %ccr,-(%sp)\n"
+	"	movem.l %a0/%d0,-(%sp)\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	move.l %a4,%d0\n"
+	"	sub.l %a0,%d0\n"
+	"	addq.l #0x2,%d0\n"
+	"	move.w %d0,(-0x2,%a0)\n"
+	"	movem.l (%sp)+,%d0/%a0\n"
+	"	rtr\n"
+	"	.size forth_resolve_forward, .-forth_resolve_forward\n"
+);
+
 /* 00019378 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* "ERROR: Mismatched " and the word, then aborts, when a control word's tag does not match
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -13680,7 +23944,7 @@ __pforth undefined4 forth_resolve_branch(long *sp __asm("a6"),void *dp __asm("a4
    A3.  In: D0.
    console.md */
 
-__pforth void forth_check_pairs(long *sp __asm("a6"))
+__pforth void forth_check_pairs(long *sp /* a6 */)
 
 {
   void *pvVar1;
@@ -13713,7 +23977,25 @@ __pforth void forth_check_pairs(long *sp __asm("a6"))
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_check_pairs\n"
+	"	.type forth_check_pairs, @function\n"
+	"	.section .text.forth_check_pairs.19378,\"ax\",@progbits\n"
+	"forth_check_pairs:\n"
+	"	cmp.l (%a6)+,%d0\n"
+	"	beq.b .Lg_1938c\n"
+	"	move.l #0x1941a,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	move.l %d1,%d0\n"
+	"	bra.w forth_parse_number-0xa0\n"
+	".Lg_1938c:\n"
+	"	rts\n"
+	"	.size forth_check_pairs, .-forth_check_pairs\n"
+);
+
 /* 0001938e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* latest = *latest: drops the word being defined
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -13721,7 +24003,7 @@ __pforth void forth_check_pairs(long *sp __asm("a6"))
    A3.
    console.md */
 
-__pforth void forth_unlink_latest(forth_user_end user __asm("a5"),void *dp __asm("a4"))
+__pforth void forth_unlink_latest(forth_user_end user /* a5 */,void *dp /* a4 */)
 
 {
   ADJ(user)->latest = *(void **)ADJ(user)->latest;
@@ -13729,7 +24011,101 @@ __pforth void forth_unlink_latest(forth_user_end user __asm("a5"),void *dp __asm
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_unlink_latest\n"
+	"	.type forth_unlink_latest, @function\n"
+	"	.section .text.forth_unlink_latest.1938e,\"ax\",@progbits\n"
+	"forth_unlink_latest:\n"
+	"	movea.l (-0x12,%a5),%a4\n"
+	"	movea.l (-0x16,%a5),%a0\n"
+	"	move.l (%a0),(-0x16,%a5)\n"
+	"	rts\n"
+	"	.byte 0x2f,0x1e | move.l (A6)+,-(SP)\n"
+	"	.byte 0x2f,0x1e | move.l (A6)+,-(SP)\n"
+	"	.byte 0x00,0x00,0x00,0x00 | ori.b #0x0,D0b\n"
+	"	.byte 0x20,0x16 | move.l (A6),D0\n"
+	"	.byte 0xb0,0xae,0x00,0x04 | cmp.l (0x4,A6),D0\n"
+	"	bne.b .Lg_193b2\n"
+	"	.byte 0x50,0x8e | addq.l #0x8,A6\n"
+	"	bra.w .Lg_19418\n"
+	".Lg_193b2:\n"
+	"	.byte 0x00,0x00,0x00,0x00 | ori.b #0x0,D0b\n"
+	"	.byte 0x20,0x2f,0x00,0x04 | move.l (0x4,SP),D0\n"
+	"	.byte 0x52,0x80 | addq.l #0x1,D0\n"
+	"	.byte 0x2f,0x40,0x00,0x04 | move.l D0,(0x4,SP)\n"
+	"	.byte 0xb0,0x97 | cmp.l (SP),D0\n"
+	"	blt.w .Lg_19418\n"
+	"	.byte 0x00,0x00,0x00,0x00 | ori.b #0x0,D0b\n"
+	"	.byte 0x50,0x8f | addq.l #0x8,SP\n"
+	"	.byte 0x00,0x00,0x00,0x00 | ori.b #0x0,D0b\n"
+	"	.byte 0x22,0x1e | move.l (A6)+,D1\n"
+	"	.byte 0x20,0x2f,0x00,0x04 | move.l (0x4,SP),D0\n"
+	"	.byte 0xd0,0x81 | add.l D1,D0\n"
+	"	.byte 0x2f,0x40,0x00,0x04 | move.l D0,(0x4,SP)\n"
+	"	.byte 0x4a,0x81 | tst.l D1\n"
+	"	bmi.w .Lg_193e8\n"
+	"	.byte 0xb0,0x97 | cmp.l (SP),D0\n"
+	"	bge.b .Lg_193f0\n"
+	"	bra.b .Lg_193ec\n"
+	".Lg_193e8:\n"
+	"	.byte 0xb0,0x97 | cmp.l (SP),D0\n"
+	"	blt.b .Lg_193f0\n"
+	".Lg_193ec:\n"
+	"	bra.w .Lg_19418\n"
+	".Lg_193f0:\n"
+	"	.byte 0x00,0x00,0x00,0x00 | ori.b #0x0,D0b\n"
+	"	.byte 0x4a,0x9e | tst.l (A6)+\n"
+	"	beq.w .Lg_19418\n"
+	"	.byte 0x00,0x00,0x00,0x00 | ori.b #0x0,D0b\n"
+	"	bra.w .Lg_19418\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x4a\n"
+	"	.byte 0x9e\n"
+	"	.byte 0x67\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x0e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x60\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x06\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	".Lg_19418:\n"
+	"	.byte 0x4a,0xfc | illegal\n"
+	"	.byte 0x45,0x52,0x52,0x4f,0x52,0x3a,0x20,0x4d,0x69,0x73,0x6d,0x61,0x74,0x63,0x68,0x65,0x64,0x20,0x00\n"
+	"	.byte 0x22\n"
+	"	.byte 0x64\n"
+	"	.byte 0x6f\n"
+	"	.byte 0x22\n"
+	"	.byte 0x20\n"
+	"	.byte 0x6f\n"
+	"	.byte 0x72\n"
+	"	.byte 0x20\n"
+	"	.byte 0x22\n"
+	"	.byte 0x3f\n"
+	"	.byte 0x64\n"
+	"	.byte 0x6f\n"
+	"	.byte 0x22\n"
+	"	.byte 0x0d\n"
+	"	.byte 0x0a\n"
+	"	.byte 0x00\n"
+	"	.byte 0xff\n"
+	"	.size forth_unlink_latest, .-forth_unlink_latest\n"
+);
+
 /* 0001943e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word do
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13747,7 +24123,23 @@ __pforth void forth_do(long *sp,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_do\n"
+	"	.type forth_do, @function\n"
+	"	.section .text.forth_do.1943e,\"ax\",@progbits\n"
+	"forth_do:\n"
+	"	movea.l #0x1939c,%a0\n"
+	"	bsr.w forth_compile_code\n"
+	"	move.l %a4,-(%a6)\n"
+	"	move.l %a4,-(%a6)\n"
+	"	move.l #0x1942d,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_do, .-forth_do\n"
+);
+
 /* 00019454 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word ?do
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13766,7 +24158,29 @@ __pforth void forth_query_do(long *sp,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_query_do\n"
+	"	.type forth_query_do, @function\n"
+	"	.section .text.forth_query_do.19454,\"ax\",@progbits\n"
+	"forth_query_do:\n"
+	"	movea.l #0x193a4,%a0\n"
+	"	bsr.w forth_compile_code\n"
+	"	move.l %a4,-(%a6)\n"
+	"	movea.l #0x1939c,%a0\n"
+	"	bsr.w forth_compile_code\n"
+	"	move.l %a4,-(%a6)\n"
+	"	.byte 0x2d\n"
+	"	.byte 0x3c\n"
+	"	.byte 0x00\n"
+	"	.byte 0x01\n"
+	"	.byte 0x94\n"
+	"	.byte 0x2d,0x4e,0x75,0x22,0x6c,0x6f,0x6f,0x70,0x22,0x20,0x6f,0x72,0x20,0x22,0x2b,0x6c,0x6f,0x6f,0x70,0x22,0x0d,0x0a,0x00\n"
+	"	.size forth_query_do, .-forth_query_do\n"
+);
+
 /* 00019488 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word +loop
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13786,14 +24200,32 @@ __pforth void forth_plus_loop(void)
   forth_resolve_branch(unaff_A6,unaff_A4);
   forth_compile_code(unaff_A4);
   if (!(bool)uVar1) {
-    func_0x00019360();
+    forth_resolve_forward(unaff_A6,unaff_A4);
     return;
   }
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_plus_loop\n"
+	"	.type forth_plus_loop, @function\n"
+	"	.section .text.forth_plus_loop.19488,\"ax\",@progbits\n"
+	"forth_plus_loop:\n"
+	"	move.l #0x19474,%d1\n"
+	"	move.l #0x1942d,%d0\n"
+	"	bsr.w forth_check_pairs\n"
+	"	movea.l #0x193d0,%a0\n"
+	"	bsr.w forth_compile_code\n"
+	"	.byte 0x60 | bra.b 0x000194be\n"
+	"	.reloc ., R_68K_PC8, forth_loop+0x1a-1\n"
+	"	.byte 0\n"
+	"	.size forth_plus_loop, .-forth_plus_loop\n"
+);
+
 /* 000194a4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word loop
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13812,14 +24244,48 @@ __pforth void forth_loop(long *sp)
   forth_resolve_branch(sp,unaff_A4);
   forth_compile_code(unaff_A4);
   if (!(bool)uVar1) {
-    func_0x00019360();
+    forth_resolve_forward(sp,unaff_A4);
     return;
   }
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_loop\n"
+	"	.type forth_loop, @function\n"
+	"	.section .text.forth_loop.194a4,\"ax\",@progbits\n"
+	"forth_loop:\n"
+	"	move.l #0x19474,%d1\n"
+	"	move.l #0x1942d,%d0\n"
+	"	bsr.w forth_check_pairs\n"
+	"	movea.l #0x193b6,%a0\n"
+	"	bsr.w forth_compile_code\n"
+	"	move.l (%a6),%d0\n"
+	"	cmp.l (0x4,%a6),%d0\n"
+	"	bsr.w forth_resolve_branch\n"
+	"	movea.l #0x193ca,%a0\n"
+	"	bsr.w forth_compile_code\n"
+	"	beq.b .Lg_194da\n"
+	"	bsr.w forth_resolve_forward\n"
+	"	rts\n"
+	".Lg_194da:\n"
+	"	addq.w #0x4,%a6\n"
+	"	rts\n"
+	"	.byte 0x22\n"
+	"	.byte 0x69\n"
+	"	.byte 0x66\n"
+	"	.byte 0x22\n"
+	"	.byte 0x0d\n"
+	"	.byte 0x0a\n"
+	"	.byte 0x00\n"
+	"	.byte 0xff\n"
+	"	.size forth_loop, .-forth_loop\n"
+);
+
 /* 000194e6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word if
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13836,7 +24302,32 @@ __pforth void forth_if(long *sp,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_if\n"
+	"	.type forth_if, @function\n"
+	"	.section .text.forth_if.194e6,\"ax\",@progbits\n"
+	"forth_if:\n"
+	"	movea.l #0x193f4,%a0\n"
+	"	bsr.w forth_compile_code\n"
+	"	move.l %a4,-(%a6)\n"
+	"	move.l #0x194de,-(%a6)\n"
+	"	rts\n"
+	"	.byte 0x22\n"
+	"	.byte 0x65\n"
+	"	.byte 0x6c\n"
+	"	.byte 0x73\n"
+	"	.byte 0x65\n"
+	"	.byte 0x22\n"
+	"	.byte 0x0d\n"
+	"	.byte 0x0a\n"
+	"	.byte 0x00\n"
+	"	.byte 0xff\n"
+	"	.size forth_if, .-forth_if\n"
+);
+
 /* 00019504 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word else
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13848,14 +24339,33 @@ __pforth void forth_else(long *sp,void *dp)
 {
   forth_check_pairs(sp);
   forth_compile_code(dp);
-  func_0x00019360();
+  forth_resolve_forward(sp,dp);
   sp[-1] = (long)dp;
   sp[-2] = (long)&UNK_000194de;
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_else\n"
+	"	.type forth_else, @function\n"
+	"	.section .text.forth_else.19504,\"ax\",@progbits\n"
+	"forth_else:\n"
+	"	move.l #0x194fa,%d1\n"
+	"	move.l #0x194de,%d0\n"
+	"	bsr.w forth_check_pairs\n"
+	"	movea.l #0x193fe,%a0\n"
+	"	bsr.w forth_compile_code\n"
+	"	bsr.w forth_resolve_forward\n"
+	"	move.l %a4,-(%a6)\n"
+	"	move.l #0x194de,-(%a6)\n"
+	"	.byte 0x4e,0x75,0x22,0x74,0x68,0x65,0x6e,0x22,0x20,0x6f,0x72,0x20,0x22,0x65,0x6e,0x64,0x69,0x66,0x22,0x0d,0x0a,0x00\n"
+	"	.size forth_else, .-forth_else\n"
+);
+
 /* 00019540 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word endif
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13865,15 +24375,41 @@ __pforth void forth_else(long *sp,void *dp)
 __pforth void forth_endif(void)
 
 {
+  void *unaff_A4;
   long *unaff_A6;
   
   forth_check_pairs(unaff_A6);
-  func_0x00019360();
+  forth_resolve_forward(unaff_A6,unaff_A4);
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_endif\n"
+	"	.type forth_endif, @function\n"
+	"	.section .text.forth_endif.19540,\"ax\",@progbits\n"
+	"forth_endif:\n"
+	"	move.l #0x1952c,%d1\n"
+	"	move.l #0x194de,%d0\n"
+	"	bsr.w forth_check_pairs\n"
+	"	bsr.w forth_resolve_forward\n"
+	"	rts\n"
+	"	.byte 0x22\n"
+	"	.byte 0x62\n"
+	"	.byte 0x65\n"
+	"	.byte 0x67\n"
+	"	.byte 0x69\n"
+	"	.byte 0x6e\n"
+	"	.byte 0x22\n"
+	"	.byte 0x0d\n"
+	"	.byte 0x0a\n"
+	"	.byte 0x00\n"
+	"	.size forth_endif, .-forth_endif\n"
+);
+
 /* 00019560 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word begin
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13889,7 +24425,30 @@ __pforth void forth_begin(long *sp,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_begin\n"
+	"	.type forth_begin, @function\n"
+	"	.section .text.forth_begin.19560,\"ax\",@progbits\n"
+	"forth_begin:\n"
+	"	move.l %a4,-(%a6)\n"
+	"	move.l #0x19556,-(%a6)\n"
+	"	rts\n"
+	"	.byte 0x22\n"
+	"	.byte 0x77\n"
+	"	.byte 0x68\n"
+	"	.byte 0x69\n"
+	"	.byte 0x6c\n"
+	"	.byte 0x65\n"
+	"	.byte 0x22\n"
+	"	.byte 0x0d\n"
+	"	.byte 0x0a\n"
+	"	.byte 0x00\n"
+	"	.size forth_begin, .-forth_begin\n"
+);
+
 /* 00019574 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word while
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13907,7 +24466,39 @@ __pforth void forth_while(long *sp,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_while\n"
+	"	.type forth_while, @function\n"
+	"	.section .text.forth_while.19574,\"ax\",@progbits\n"
+	"forth_while:\n"
+	"	move.l #0x1956a,%d1\n"
+	"	move.l #0x19556,%d0\n"
+	"	bsr.w forth_check_pairs\n"
+	"	movea.l #0x19406,%a0\n"
+	"	bsr.w forth_compile_code\n"
+	"	move.l %a4,-(%a6)\n"
+	"	move.l #0x1956a,-(%a6)\n"
+	"	rts\n"
+	"	.byte 0x22\n"
+	"	.byte 0x72\n"
+	"	.byte 0x65 | bcs.b 0x0001960c\n"
+	"	.reloc ., R_68K_PC8, forth_until+0xc-1\n"
+	"	.byte 0\n"
+	"	.byte 0x65 | bcs.b 0x000195ff\n"
+	"	.reloc ., R_68K_PC8, __ghidra_195ff-1\n"
+	"	.byte 0\n"
+	"	.byte 0x74\n"
+	"	.byte 0x22\n"
+	"	.byte 0x0d\n"
+	"	.byte 0x0a\n"
+	"	.byte 0x00\n"
+	"	.byte 0xff\n"
+	"	.size forth_while, .-forth_while\n"
+);
+
 /* 000195a4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word repeat
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13924,12 +24515,41 @@ __pforth void forth_repeat(void)
   forth_compile_code(unaff_A4);
   forth_swap(unaff_A6);
   forth_resolve_branch(unaff_A6,unaff_A4);
-  func_0x00019360();
+  forth_resolve_forward(unaff_A6,unaff_A4);
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_repeat\n"
+	"	.type forth_repeat, @function\n"
+	"	.section .text.forth_repeat.195a4,\"ax\",@progbits\n"
+	"forth_repeat:\n"
+	"	move.l #0x19598,%d1\n"
+	"	move.l #0x1956a,%d0\n"
+	"	bsr.w forth_check_pairs\n"
+	"	movea.l #0x19410,%a0\n"
+	"	bsr.w forth_compile_code\n"
+	"	bsr.w forth_swap\n"
+	"	bsr.w forth_resolve_branch\n"
+	"	bsr.w forth_resolve_forward\n"
+	"	rts\n"
+	"	.byte 0x22\n"
+	"	.byte 0x61\n"
+	"	.byte 0x67\n"
+	"	.byte 0x61\n"
+	"	.byte 0x69\n"
+	"	.byte 0x6e\n"
+	"	.byte 0x22\n"
+	"	.byte 0x0d\n"
+	"	.byte 0x0a\n"
+	"	.byte 0x00\n"
+	"	.size forth_repeat, .-forth_repeat\n"
+);
+
 /* 000195d6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word again
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13949,7 +24569,34 @@ __pforth void forth_again(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_again\n"
+	"	.type forth_again, @function\n"
+	"	.section .text.forth_again.195d6,\"ax\",@progbits\n"
+	"forth_again:\n"
+	"	move.l #0x195cc,%d1\n"
+	"	move.l #0x19556,%d0\n"
+	"	bsr.w forth_check_pairs\n"
+	"	movea.l #0x19410,%a0\n"
+	"	bsr.w forth_compile_code\n"
+	"	bsr.w forth_resolve_branch\n"
+	"	rts\n"
+	"	.byte 0x22\n"
+	"	.byte 0x75\n"
+	"	.byte 0x6e\n"
+	"	.byte 0x74\n"
+	"	.byte 0x69\n"
+	"	.byte 0x6c\n"
+	"	.byte 0x22\n"
+	"	.byte 0x0d\n"
+	"	.byte 0x0a\n"
+	"	.byte 0x00\n"
+	"	.size forth_again, .-forth_again\n"
+);
+
 /* 00019600 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word until
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13969,7 +24616,24 @@ __pforth void forth_until(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_until\n"
+	"	.type forth_until, @function\n"
+	"	.section .text.forth_until.19600,\"ax\",@progbits\n"
+	"forth_until:\n"
+	"	move.l #0x195f6,%d1\n"
+	"	move.l #0x19556,%d0\n"
+	"	bsr.w forth_check_pairs\n"
+	"	movea.l #0x19406,%a0\n"
+	"	bsr.w forth_compile_code\n"
+	"	bsr.w forth_resolve_branch\n"
+	"	rts\n"
+	"	.size forth_until, .-forth_until\n"
+);
+
 /* 00019620 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word leave
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -13983,7 +24647,19 @@ __pforth void forth_leave(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_leave\n"
+	"	.type forth_leave, @function\n"
+	"	.section .text.forth_leave.19620,\"ax\",@progbits\n"
+	"forth_leave:\n"
+	"	move.l (%sp),(0x4,%sp)\n"
+	"	rts\n"
+	"	.size forth_leave, .-forth_leave\n"
+);
+
 /* 00019626 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word k
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14000,7 +24676,19 @@ __pforth void forth_k(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_k\n"
+	"	.type forth_k, @function\n"
+	"	.section .text.forth_k.19626,\"ax\",@progbits\n"
+	"forth_k:\n"
+	"	move.l (0x14,%sp),-(%a6)\n"
+	"	rts\n"
+	"	.size forth_k, .-forth_k\n"
+);
+
 /* 0001962c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word j
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14017,7 +24705,19 @@ __pforth void forth_j(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_j\n"
+	"	.type forth_j, @function\n"
+	"	.section .text.forth_j.1962c,\"ax\",@progbits\n"
+	"forth_j:\n"
+	"	move.l (0xc,%sp),-(%a6)\n"
+	"	rts\n"
+	"	.size forth_j, .-forth_j\n"
+);
+
 /* 00019632 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word i
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14034,7 +24734,19 @@ __pforth void forth_i(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_i\n"
+	"	.type forth_i, @function\n"
+	"	.section .text.forth_i.19632,\"ax\",@progbits\n"
+	"forth_i:\n"
+	"	move.l (0x4,%sp),-(%a6)\n"
+	"	rts\n"
+	"	.size forth_i, .-forth_i\n"
+);
+
 /* 00019638 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word :
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14046,13 +24758,30 @@ __pforth void forth_colon(forth_user_end user,long *sp,void *dp)
 {
   ADJ(user)->here = dp;
   ADJ(user)->state = 1;
-  func_0x00019688();
+  forth_parse_create_header();
   sp[-1] = (long)forth_colon;
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_colon\n"
+	"	.type forth_colon, @function\n"
+	"	.section .text.forth_colon.19638,\"ax\",@progbits\n"
+	"forth_colon:\n"
+	"	move.l %a4,(-0x12,%a5)\n"
+	"	move.w #0x1,(-0xa,%a5)\n"
+	"	moveq #0x2,%d3\n"
+	"	jsr (forth_parse_create_header:w,%pc)\n"
+	"	nop\n"
+	"	move.l #0x19638,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_colon, .-forth_colon\n"
+);
+
 /* 00019652 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word ;
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14096,7 +24825,87 @@ __pforth void forth_semicolon(forth_user_end user,long *sp,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_semicolon\n"
+	"	.type forth_semicolon, @function\n"
+	"	.section .text.forth_semicolon.19652,\"ax\",@progbits\n"
+	"forth_semicolon:\n"
+	"	move.l (%a6)+,%d1\n"
+	"	cmpi.l #0x19638,%d1\n"
+	"	beq.b .Lg_1966c\n"
+	"	move.l #0x1941a,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	move.l %d1,%d0\n"
+	"	bra.w forth_parse_number-0xa0\n"
+	".Lg_1966c:\n"
+	"	clr.w (-0xa,%a5)\n"
+	"	movea.l (-0x16,%a5),%a0\n"
+	"	andi.w #-0x3,(0xa,%a0)\n"
+	"	jsr (forth_align:w,%pc)\n"
+	"	move.w #0x4e75,(%a4)+\n"
+	"	move.l %a4,(-0x12,%a5)\n"
+	"	rts\n"
+	"	.size forth_semicolon, .-forth_semicolon\n"
+);
+
+/* 00019688 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* forth_parse_word, then falls into forth_create_header, four bytes on
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  In: D3.
+   console.md */
+
+__pforth void forth_parse_create_header(void)
+
+{
+  void *pvVar1;
+  char cVar2;
+  undefined4 unaff_D3;
+  undefined4 *extraout_A1;
+  char *pcVar3;
+  char *unaff_A3;
+  undefined4 *unaff_A4;
+  char *dp;
+  forth_user_end unaff_A5;
+  char *pcVar4;
+  
+  forth_parse_word(unaff_A5,unaff_A3);
+  forth_align(unaff_A4);
+  pvVar1 = ADJ(unaff_A5)->latest;
+  ADJ(unaff_A5)->latest = unaff_A4;
+  *unaff_A4 = pvVar1;
+  unaff_A4[1] = 0;
+  unaff_A4[2] = unaff_D3;
+  pcVar3 = ADJ(unaff_A5)->pad;
+  pcVar4 = (char *)(unaff_A4 + 3);
+  do {
+    cVar2 = *pcVar3;
+    dp = pcVar4 + 1;
+    *pcVar4 = cVar2;
+    pcVar3 = pcVar3 + 1;
+    pcVar4 = dp;
+  } while (cVar2 != '\0');
+  forth_align(dp);
+  *extraout_A1 = dp;
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl forth_parse_create_header\n"
+	"	.type forth_parse_create_header, @function\n"
+	"	.section .text.forth_parse_create_header.19688,\"ax\",@progbits\n"
+	"forth_parse_create_header:\n"
+	"	bsr.w forth_parse_word\n"
+	"	.size forth_parse_create_header, .-forth_parse_create_header\n"
+);
+
 /* 0001968c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* links a new word to latest, with its name from pad
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -14104,7 +24913,7 @@ __pforth void forth_semicolon(forth_user_end user,long *sp,void *dp)
    A3.
    console.md */
 
-__pforth void forth_create_header(forth_user_end user __asm("a5"),void *dp __asm("a4"))
+__pforth void forth_create_header(forth_user_end user /* a5 */,void *dp /* a4 */)
 
 {
   void *pvVar1;
@@ -14136,7 +24945,33 @@ __pforth void forth_create_header(forth_user_end user __asm("a5"),void *dp __asm
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_create_header\n"
+	"	.type forth_create_header, @function\n"
+	"	.section .text.forth_create_header.1968c,\"ax\",@progbits\n"
+	"forth_create_header:\n"
+	"	bsr.w forth_align\n"
+	"	movem.l %a2/%a1/%d2,-(%sp)\n"
+	"	move.l (-0x16,%a5),%d2\n"
+	"	move.l %a4,(-0x16,%a5)\n"
+	"	move.l %d2,(%a4)+\n"
+	"	movea.l %a4,%a1\n"
+	"	clr.l (%a4)+\n"
+	"	move.l %d3,(%a4)+\n"
+	"	movea.l (-0x22,%a5),%a2\n"
+	".Lg_196a8:\n"
+	"	move.b (%a2)+,(%a4)+\n"
+	"	bne.b .Lg_196a8\n"
+	"	bsr.w forth_align\n"
+	"	move.l %a4,(%a1)\n"
+	"	movem.l (%sp)+,%d2/%a1/%a2\n"
+	"	rts\n"
+	"	.size forth_create_header, .-forth_create_header\n"
+);
+
 /* 000196b8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word variable
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14148,7 +24983,7 @@ __pforth void forth_variable(forth_user_end user,void *dp)
 {
   int *piVar1;
   
-  func_0x00019688();
+  forth_parse_create_header();
   piVar1 = (int *)((int)dp + 2);
   *(undefined2 *)dp = 0x2d3c;
   *piVar1 = (int)piVar1;
@@ -14160,7 +24995,28 @@ __pforth void forth_variable(forth_user_end user,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_variable\n"
+	"	.type forth_variable, @function\n"
+	"	.section .text.forth_variable.196b8,\"ax\",@progbits\n"
+	"forth_variable:\n"
+	"	move.l #0x60008,%d3\n"
+	"	.byte 0x61 | bsr.b 0x00019688\n"
+	"	.reloc ., R_68K_PC8, forth_parse_create_header-1\n"
+	"	.byte 0\n"
+	"	move.w #0x2d3c,(%a4)+\n"
+	"	move.l %a4,(%a4)\n"
+	"	addi.l #0x6,(%a4)+\n"
+	"	move.w #0x4e75,(%a4)+\n"
+	"	clr.l (%a4)+\n"
+	"	move.l %a4,(-0x12,%a5)\n"
+	"	rts\n"
+	"	.size forth_variable, .-forth_variable\n"
+);
+
 /* 000196d8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word create
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14172,7 +25028,7 @@ __pforth void forth_create(forth_user_end user,void *dp)
 {
   int *piVar1;
   
-  func_0x00019688();
+  forth_parse_create_header();
   piVar1 = (int *)((int)dp + 2);
   *(undefined2 *)dp = 0x2d3c;
   *piVar1 = (int)piVar1;
@@ -14183,7 +25039,27 @@ __pforth void forth_create(forth_user_end user,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_create\n"
+	"	.type forth_create, @function\n"
+	"	.section .text.forth_create.196d8,\"ax\",@progbits\n"
+	"forth_create:\n"
+	"	move.l #0x60008,%d3\n"
+	"	.byte 0x61 | bsr.b 0x00019688\n"
+	"	.reloc ., R_68K_PC8, forth_parse_create_header-1\n"
+	"	.byte 0\n"
+	"	move.w #0x2d3c,(%a4)+\n"
+	"	move.l %a4,(%a4)\n"
+	"	addi.l #0x6,(%a4)+\n"
+	"	move.w #0x4e75,(%a4)+\n"
+	"	move.l %a4,(-0x12,%a5)\n"
+	"	rts\n"
+	"	.size forth_create, .-forth_create\n"
+);
+
 /* 000196f6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word constant
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14197,7 +25073,7 @@ __pforth void forth_constant(void)
   int unaff_A5;
   undefined4 *unaff_A6;
   
-  func_0x00019688();
+  forth_parse_create_header();
   *unaff_A4 = 0x2d3c;
   *(undefined4 *)(unaff_A4 + 1) = *unaff_A6;
   unaff_A4[3] = 0x4e75;
@@ -14206,7 +25082,19 @@ __pforth void forth_constant(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_constant\n"
+	"	.type forth_constant, @function\n"
+	"	.section .text.forth_constant.196f6,\"ax\",@progbits\n"
+	"forth_constant:\n"
+	"	move.l #0x60008,%d3\n"
+	"	jsr (forth_parse_create_header:w,%pc)\n"
+	"	.size forth_constant, .-forth_constant\n"
+);
+
 /* 00019700 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* compiles code that pushes a value and returns, for create_x and spawn
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -14214,7 +25102,7 @@ __pforth void forth_constant(void)
    A3.
    console.md */
 
-__pforth void forth_compile_constant(forth_user_end user __asm("a5"),long *sp __asm("a6"),void *dp __asm("a4"))
+__pforth void forth_compile_constant(forth_user_end user /* a5 */,long *sp /* a6 */,void *dp /* a4 */)
 
 {
   *(undefined2 *)dp = 0x2d3c;
@@ -14225,7 +25113,22 @@ __pforth void forth_compile_constant(forth_user_end user __asm("a5"),long *sp __
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_compile_constant\n"
+	"	.type forth_compile_constant, @function\n"
+	"	.section .text.forth_compile_constant.19700,\"ax\",@progbits\n"
+	"forth_compile_constant:\n"
+	"	move.w #0x2d3c,(%a4)+\n"
+	"	move.l (%a6)+,(%a4)+\n"
+	"	move.w #0x4e75,(%a4)+\n"
+	"	move.l %a4,(-0x12,%a5)\n"
+	"	rts\n"
+	"	.size forth_compile_constant, .-forth_compile_constant\n"
+);
+
 /* 00019710 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word literal
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14250,7 +25153,32 @@ __pforth void forth_literal(long *sp,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_literal\n"
+	"	.type forth_literal, @function\n"
+	"	.section .text.forth_literal.19710,\"ax\",@progbits\n"
+	"forth_literal:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	cmpi.l #0x7f,%d0\n"
+	"	bgt.b .Lg_19732\n"
+	"	cmpi.l #-0x80,%d0\n"
+	"	blt.b .Lg_19732\n"
+	"	andi.w #0xff,%d0\n"
+	"	addi.w #0x7000,%d0\n"
+	"	move.w %d0,(%a4)+\n"
+	"	move.w #0x2d00,(%a4)+\n"
+	"	bra.b .Lg_19738\n"
+	".Lg_19732:\n"
+	"	move.w #0x2d3c,(%a4)+\n"
+	"	move.l %d0,(%a4)+\n"
+	".Lg_19738:\n"
+	"	rts\n"
+	"	.size forth_literal, .-forth_literal\n"
+);
+
 /* 0001973a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word mod
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14290,7 +25218,23 @@ __pforth void forth_mod(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_mod\n"
+	"	.type forth_mod, @function\n"
+	"	.section .text.forth_mod.1973a,\"ax\",@progbits\n"
+	"forth_mod:\n"
+	"	move.l (%a6)+,%d1\n"
+	"	beq.w forth_slash+0xe\n"
+	"	move.l (%a6),%d0\n"
+	"	bsr.w forth_divide_signed\n"
+	"	move.l %d1,(%a6)\n"
+	"	rts\n"
+	"	.size forth_mod, .-forth_mod\n"
+);
+
 /* 0001974a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word /mod
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14330,9 +25274,26 @@ __pforth void forth_slash_mod(long *sp)
 }
 
 
-/* 0001975c */
+#endif
+__asm__(
+	"	.globl forth_slash_mod\n"
+	"	.type forth_slash_mod, @function\n"
+	"	.section .text.forth_slash_mod.1974a,\"ax\",@progbits\n"
+	"forth_slash_mod:\n"
+	"	move.l (%a6)+,%d1\n"
+	"	beq.w forth_slash+0xe\n"
+	"	move.l (%a6)+,%d0\n"
+	"	bsr.w forth_divide_signed\n"
+	"	move.l %d1,-(%a6)\n"
+	"	move.l %d0,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_slash_mod, .-forth_slash_mod\n"
+);
 
-/* the pForth word */mod
+/* 0001975c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the pForth word *\/mod
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
@@ -14371,9 +25332,28 @@ __pforth void forth_star_slash_mod(long *sp)
 }
 
 
-/* 00019774 */
+#endif
+__asm__(
+	"	.globl forth_star_slash_mod\n"
+	"	.type forth_star_slash_mod, @function\n"
+	"	.section .text.forth_star_slash_mod.1975c,\"ax\",@progbits\n"
+	"forth_star_slash_mod:\n"
+	"	move.l (%a6)+,-(%sp)\n"
+	"	beq.w forth_slash+0xe\n"
+	"	bsr.w forth_star\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.l (%sp)+,%d1\n"
+	"	bsr.w forth_divide_signed\n"
+	"	move.l %d1,-(%a6)\n"
+	"	move.l %d0,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_star_slash_mod, .-forth_star_slash_mod\n"
+);
 
-/* the pForth word */
+/* 00019774 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the pForth word *\/
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
@@ -14412,7 +25392,25 @@ __pforth void forth_star_slash(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_star_slash\n"
+	"	.type forth_star_slash, @function\n"
+	"	.section .text.forth_star_slash.19774,\"ax\",@progbits\n"
+	"forth_star_slash:\n"
+	"	move.l (%a6)+,-(%sp)\n"
+	"	beq.w forth_slash+0xe\n"
+	"	bsr.w forth_star\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.l (%sp)+,%d1\n"
+	"	bsr.w forth_divide_signed\n"
+	"	move.l %d0,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_star_slash, .-forth_star_slash\n"
+);
+
 /* 0001978a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word /
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14452,7 +25450,30 @@ __pforth void forth_slash(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_slash\n"
+	"	.type forth_slash, @function\n"
+	"	.section .text.forth_slash.1978a,\"ax\",@progbits\n"
+	"forth_slash:\n"
+	"	move.l (%a6)+,%d1\n"
+	"	beq.b .Lg_19798\n"
+	"	move.l (%a6),%d0\n"
+	"	bsr.w forth_divide_signed\n"
+	"	move.l %d0,(%a6)\n"
+	"	rts\n"
+	".Lg_19798:\n"
+	"	move.l #0x197a2,%d0\n"
+	"	.byte 0x4e\n"
+	"	.byte 0xfa\n"
+	"	.byte 0xf7\n"
+	"	.byte 0x28,0x64,0x69,0x76,0x69,0x64,0x65,0x20,0x62,0x79,0x20,0x7a,0x65,0x72,0x6f,0x0d,0x0a,0x00\n"
+	"	.byte 0xff\n"
+	"	.size forth_slash, .-forth_slash\n"
+);
+
 /* 000197b4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word *
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14483,7 +25504,35 @@ __pforth void forth_star(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_star\n"
+	"	.type forth_star, @function\n"
+	"	.section .text.forth_star.197b4,\"ax\",@progbits\n"
+	"forth_star:\n"
+	"	clr.l %d5\n"
+	"	move.l (%a6)+,%d0\n"
+	"	bpl.w .Lg_197c0\n"
+	"	not.l %d5\n"
+	"	neg.l %d0\n"
+	".Lg_197c0:\n"
+	"	move.l (%a6)+,%d1\n"
+	"	bpl.w .Lg_197ca\n"
+	"	not.l %d5\n"
+	"	neg.l %d1\n"
+	".Lg_197ca:\n"
+	"	bsr.w forth_multiply\n"
+	"	tst.l %d5\n"
+	"	bpl.w .Lg_197d6\n"
+	"	neg.l %d1\n"
+	".Lg_197d6:\n"
+	"	move.l %d1,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_star, .-forth_star\n"
+);
+
 /* 000197da */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* 32 by 32-bit multiply from 16-bit halves; * calls it
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -14504,9 +25553,33 @@ __pforth undefined8 forth_multiply(void)
 }
 
 
-/* 000197fa */
+#endif
+__asm__(
+	"	.globl forth_multiply\n"
+	"	.type forth_multiply, @function\n"
+	"	.section .text.forth_multiply.197da,\"ax\",@progbits\n"
+	"forth_multiply:\n"
+	"	movem.l %d3/%d2,-(%sp)\n"
+	"	move.w %d0,%d2\n"
+	"	mulu.w %d1,%d2\n"
+	"	move.l %d1,%d3\n"
+	"	swap %d3\n"
+	"	mulu.w %d0,%d3\n"
+	"	swap %d0\n"
+	"	mulu.w %d0,%d1\n"
+	"	add.l %d3,%d1\n"
+	"	swap %d1\n"
+	"	clr.w %d1\n"
+	"	add.l %d2,%d1\n"
+	"	movem.l (%sp)+,%d2/%d3\n"
+	"	rts\n"
+	"	.size forth_multiply, .-forth_multiply\n"
+);
 
-/* signed divide over forth_divide_unsigned; /, mod, /mod, */ call it
+/* 000197fa */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* signed divide over forth_divide_unsigned; /, mod, /mod, *\/ call it
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
    data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
    A3.  In: D0, D1.
@@ -14527,7 +25600,41 @@ __pforth int forth_divide_signed(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_divide_signed\n"
+	"	.type forth_divide_signed, @function\n"
+	"	.section .text.forth_divide_signed.197fa,\"ax\",@progbits\n"
+	"forth_divide_signed:\n"
+	"	movem.l %d4/%d3/%d2,-(%sp)\n"
+	"	move.l %d0,%d2\n"
+	"	bpl.b .Lg_19804\n"
+	"	neg.l %d0\n"
+	".Lg_19804:\n"
+	"	move.l %d1,%d3\n"
+	"	bpl.b .Lg_1980a\n"
+	"	neg.l %d1\n"
+	".Lg_1980a:\n"
+	"	move.l %d1,%d4\n"
+	"	bsr.w forth_divide_unsigned\n"
+	"	eor.l %d3,%d2\n"
+	"	bpl.b .Lg_1981c\n"
+	"	addq.w #0x1,%d0\n"
+	"	neg.l %d0\n"
+	"	sub.l %d1,%d4\n"
+	"	move.l %d4,%d1\n"
+	".Lg_1981c:\n"
+	"	tst.l %d3\n"
+	"	bpl.b .Lg_19822\n"
+	"	neg.l %d1\n"
+	".Lg_19822:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4\n"
+	"	rts\n"
+	"	.size forth_divide_signed, .-forth_divide_signed\n"
+);
+
 /* 00019828 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* 32-bit shift-and-subtract divide
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -14567,7 +25674,32 @@ LAB_00019830:
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_divide_unsigned\n"
+	"	.type forth_divide_unsigned, @function\n"
+	"	.section .text.forth_divide_unsigned.19828,\"ax\",@progbits\n"
+	"forth_divide_unsigned:\n"
+	"	movem.l %d3/%d2,-(%sp)\n"
+	"	clr.l %d2\n"
+	"	moveq #0x20,%d3\n"
+	".Lg_19830:\n"
+	"	roxl.l #0x1,%d0\n"
+	"	roxl.l #0x1,%d2\n"
+	"	sub.l %d1,%d2\n"
+	"	dbcs %d3,.Lg_19830\n"
+	"	add.l %d1,%d2\n"
+	"	dbcc %d3,.Lg_19830\n"
+	"	lsr.l #0x1,%d2\n"
+	"	not.l %d0\n"
+	"	move.l %d2,%d1\n"
+	"	movem.l (%sp)+,%d2/%d3\n"
+	"	rts\n"
+	"	.size forth_divide_unsigned, .-forth_divide_unsigned\n"
+);
+
 /* 0001984c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* 32 by 16-bit divide, quotient and remainder, for printing numbers
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -14588,7 +25720,35 @@ __pforth undefined8 forth_divide_short(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_divide_short\n"
+	"	.type forth_divide_short, @function\n"
+	"	.section .text.forth_divide_short.1984c,\"ax\",@progbits\n"
+	"forth_divide_short:\n"
+	"	movem.l %d3/%d2,-(%sp)\n"
+	"	clr.l %d2\n"
+	"	clr.l %d3\n"
+	"	swap %d0\n"
+	"	move.w %d0,%d3\n"
+	"	swap %d0\n"
+	"	divu.w %d1,%d3\n"
+	"	move.l %d3,%d2\n"
+	"	move.w %d0,%d2\n"
+	"	divu.w %d1,%d2\n"
+	"	move.w %d3,%d0\n"
+	"	swap %d0\n"
+	"	move.w %d2,%d0\n"
+	"	swap %d2\n"
+	"	clr.l %d1\n"
+	"	move.w %d2,%d1\n"
+	"	movem.l (%sp)+,%d2/%d3\n"
+	"	rts\n"
+	"	.size forth_divide_short, .-forth_divide_short\n"
+);
+
 /* 00019874 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word -
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14603,7 +25763,20 @@ __pforth void forth_minus(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_minus\n"
+	"	.type forth_minus, @function\n"
+	"	.section .text.forth_minus.19874,\"ax\",@progbits\n"
+	"forth_minus:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	sub.l %d0,(%a6)\n"
+	"	rts\n"
+	"	.size forth_minus, .-forth_minus\n"
+);
+
 /* 0001987a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word +
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14618,7 +25791,20 @@ __pforth void forth_plus(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_plus\n"
+	"	.type forth_plus, @function\n"
+	"	.section .text.forth_plus.1987a,\"ax\",@progbits\n"
+	"forth_plus:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	add.l %d0,(%a6)\n"
+	"	rts\n"
+	"	.size forth_plus, .-forth_plus\n"
+);
+
 /* 00019880 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word +!
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14633,7 +25819,21 @@ __pforth void forth_plus_store(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_plus_store\n"
+	"	.type forth_plus_store, @function\n"
+	"	.section .text.forth_plus_store.19880,\"ax\",@progbits\n"
+	"forth_plus_store:\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	move.l (%a6)+,%d0\n"
+	"	add.l %d0,(%a0)\n"
+	"	rts\n"
+	"	.size forth_plus_store, .-forth_plus_store\n"
+);
+
 /* 00019888 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word 1+
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14648,7 +25848,19 @@ __pforth void forth_1_plus(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_1_plus\n"
+	"	.type forth_1_plus, @function\n"
+	"	.section .text.forth_1_plus.19888,\"ax\",@progbits\n"
+	"forth_1_plus:\n"
+	"	addq.l #0x1,(%a6)\n"
+	"	rts\n"
+	"	.size forth_1_plus, .-forth_1_plus\n"
+);
+
 /* 0001988c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word 1-
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14663,7 +25875,19 @@ __pforth void forth_1_minus(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_1_minus\n"
+	"	.type forth_1_minus, @function\n"
+	"	.section .text.forth_1_minus.1988c,\"ax\",@progbits\n"
+	"forth_1_minus:\n"
+	"	subq.l #0x1,(%a6)\n"
+	"	rts\n"
+	"	.size forth_1_minus, .-forth_1_minus\n"
+);
+
 /* 00019890 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word 2+
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14678,7 +25902,19 @@ __pforth void forth_2_plus(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_2_plus\n"
+	"	.type forth_2_plus, @function\n"
+	"	.section .text.forth_2_plus.19890,\"ax\",@progbits\n"
+	"forth_2_plus:\n"
+	"	addq.l #0x2,(%a6)\n"
+	"	rts\n"
+	"	.size forth_2_plus, .-forth_2_plus\n"
+);
+
 /* 00019894 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word 2-
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14693,7 +25929,19 @@ __pforth void forth_2_minus(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_2_minus\n"
+	"	.type forth_2_minus, @function\n"
+	"	.section .text.forth_2_minus.19894,\"ax\",@progbits\n"
+	"forth_2_minus:\n"
+	"	subq.l #0x2,(%a6)\n"
+	"	rts\n"
+	"	.size forth_2_minus, .-forth_2_minus\n"
+);
+
 /* 00019898 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word 2/
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14708,7 +25956,21 @@ __pforth void forth_2_slash(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_2_slash\n"
+	"	.type forth_2_slash, @function\n"
+	"	.section .text.forth_2_slash.19898,\"ax\",@progbits\n"
+	"forth_2_slash:\n"
+	"	move.l (%a6),%d0\n"
+	"	asr.l #0x1,%d0\n"
+	"	move.l %d0,(%a6)\n"
+	"	rts\n"
+	"	.size forth_2_slash, .-forth_2_slash\n"
+);
+
 /* 000198a0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word 2*
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14723,7 +25985,21 @@ __pforth void forth_2_star(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_2_star\n"
+	"	.type forth_2_star, @function\n"
+	"	.section .text.forth_2_star.198a0,\"ax\",@progbits\n"
+	"forth_2_star:\n"
+	"	move.l (%a6),%d0\n"
+	"	asl.l #0x1,%d0\n"
+	"	move.l %d0,(%a6)\n"
+	"	rts\n"
+	"	.size forth_2_star, .-forth_2_star\n"
+);
+
 /* 000198a8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word <<
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14738,7 +26014,22 @@ __pforth void forth_less_less(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_less_less\n"
+	"	.type forth_less_less, @function\n"
+	"	.section .text.forth_less_less.198a8,\"ax\",@progbits\n"
+	"forth_less_less:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.l (%a6),%d1\n"
+	"	asl.l %d0,%d1\n"
+	"	move.l %d1,(%a6)\n"
+	"	rts\n"
+	"	.size forth_less_less, .-forth_less_less\n"
+);
+
 /* 000198b2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word >>
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14753,7 +26044,22 @@ __pforth void forth_greater_greater(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_greater_greater\n"
+	"	.type forth_greater_greater, @function\n"
+	"	.section .text.forth_greater_greater.198b2,\"ax\",@progbits\n"
+	"forth_greater_greater:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.l (%a6),%d1\n"
+	"	asr.l %d0,%d1\n"
+	"	move.l %d1,(%a6)\n"
+	"	rts\n"
+	"	.size forth_greater_greater, .-forth_greater_greater\n"
+);
+
 /* 000198bc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word emit
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14773,7 +26079,24 @@ __pforth void forth_emit(forth_user_end user,long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_emit\n"
+	"	.type forth_emit, @function\n"
+	"	.section .text.forth_emit.198bc,\"ax\",@progbits\n"
+	"forth_emit:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	movea.l (-0x22,%a5),%a0\n"
+	"	move.b %d0,(%a0)+\n"
+	"	clr.b (%a0)\n"
+	"	move.l (-0x22,%a5),%d0\n"
+	"	jsr (forth_print_string:w,%pc)\n"
+	"	rts\n"
+	"	.size forth_emit, .-forth_emit\n"
+);
+
 /* 000198d0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word space
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14794,7 +26117,21 @@ __pforth void forth_space(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_space\n"
+	"	.type forth_space, @function\n"
+	"	.section .text.forth_space.198d0,\"ax\",@progbits\n"
+	"forth_space:\n"
+	"	moveq #0x20,%d0\n"
+	"	.byte 0x60 | bra.b 0x000198be\n"
+	"	.reloc ., R_68K_PC8, forth_emit+0x2-1\n"
+	"	.byte 0\n"
+	"	.size forth_space, .-forth_space\n"
+);
+
 /* 000198d4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word spaces
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14826,7 +26163,30 @@ __pforth void forth_spaces(forth_user_end user,long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_spaces\n"
+	"	.type forth_spaces, @function\n"
+	"	.section .text.forth_spaces.198d4,\"ax\",@progbits\n"
+	"forth_spaces:\n"
+	"	move.l (%a6)+,%d3\n"
+	"	subq.l #0x1,%d3\n"
+	"	bmi.b .Lg_198f0\n"
+	"	moveq #0x20,%d0\n"
+	"	movea.l (-0x22,%a5),%a0\n"
+	".Lg_198e0:\n"
+	"	move.b %d0,(%a0)+\n"
+	"	dbf %d3,.Lg_198e0\n"
+	"	clr.b (%a0)\n"
+	"	move.l (-0x22,%a5),%d0\n"
+	"	bsr.w forth_print_string\n"
+	".Lg_198f0:\n"
+	"	rts\n"
+	"	.size forth_spaces, .-forth_spaces\n"
+);
+
 /* 000198f2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word cr
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14843,7 +26203,20 @@ __pforth void forth_cr(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_cr\n"
+	"	.type forth_cr, @function\n"
+	"	.section .text.forth_cr.198f2,\"ax\",@progbits\n"
+	"forth_cr:\n"
+	"	move.l #0x18ddf,%d0\n"
+	"	jsr (forth_print_string:w,%pc)\n"
+	"	rts\n"
+	"	.size forth_cr, .-forth_cr\n"
+);
+
 /* 000198fe */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word ."
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14890,7 +26263,46 @@ __pforth void forth_dot_quote(forth_user_end user,void *dp,char *input)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_dot_quote\n"
+	"	.type forth_dot_quote, @function\n"
+	"	.section .text.forth_dot_quote.198fe,\"ax\",@progbits\n"
+	"forth_dot_quote:\n"
+	"	movea.l (-0x22,%a5),%a1\n"
+	"	cmpi.b #0x20,(%a3)\n"
+	"	bne.b .Lg_1990a\n"
+	"	addq.l #0x1,%a3\n"
+	".Lg_1990a:\n"
+	"	move.b (%a3)+,%d0\n"
+	"	beq.b .Lg_19918\n"
+	"	cmpi.b #0x22,%d0\n"
+	"	beq.b .Lg_1991e\n"
+	"	move.b %d0,(%a1)+\n"
+	"	bra.b .Lg_1990a\n"
+	".Lg_19918:\n"
+	"	suba.l #0x1,%a3\n"
+	".Lg_1991e:\n"
+	"	clr.b (%a1)\n"
+	"	tst.w (-0xa,%a5)\n"
+	"	beq.b .Lg_1993e\n"
+	"	movea.l (-0x22,%a5),%a2\n"
+	"	move.w #0x4eb9,(%a4)+\n"
+	"	move.l #0x19948,(%a4)+\n"
+	".Lg_19934:\n"
+	"	move.b (%a2)+,(%a4)+\n"
+	"	bne.b .Lg_19934\n"
+	"	jsr (forth_align:w,%pc)\n"
+	"	rts\n"
+	".Lg_1993e:\n"
+	"	move.l (-0x22,%a5),%d0\n"
+	"	jsr (forth_print_string:w,%pc)\n"
+	"	rts\n"
+	"	.size forth_dot_quote, .-forth_dot_quote\n"
+);
+
 /* 00019948 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word (.")
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14908,7 +26320,25 @@ __pforth void forth_paren_dot_quote_close_paren(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_paren_dot_quote_close_paren\n"
+	"	.type forth_paren_dot_quote_close_paren, @function\n"
+	"	.section .text.forth_paren_dot_quote_close_paren.19948,\"ax\",@progbits\n"
+	"forth_paren_dot_quote_close_paren:\n"
+	"	move.l (%sp)+,%d0\n"
+	"	jsr (forth_print_string:w,%pc)\n"
+	"	btst.l #0x0,%d2\n"
+	"	beq.b .Lg_19956\n"
+	"	addq.l #0x1,%d2\n"
+	".Lg_19956:\n"
+	"	move.l %d2,-(%sp)\n"
+	"	rts\n"
+	"	.size forth_paren_dot_quote_close_paren, .-forth_paren_dot_quote_close_paren\n"
+);
+
 /* 0001995a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* a digit as 0-9 or A-Z
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -14928,7 +26358,24 @@ __pforth void forth_digit_char(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_digit_char\n"
+	"	.type forth_digit_char, @function\n"
+	"	.section .text.forth_digit_char.1995a,\"ax\",@progbits\n"
+	"forth_digit_char:\n"
+	"	cmpi.b #0x9,%d1\n"
+	"	bgt.b .Lg_19966\n"
+	"	addi.b #0x30,%d1\n"
+	"	rts\n"
+	".Lg_19966:\n"
+	"	addi.b #0x37,%d1\n"
+	"	rts\n"
+	"	.size forth_digit_char, .-forth_digit_char\n"
+);
+
 /* 0001996c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* copies the digits built on the stack into pad and prints them; . and u. call it
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -14936,7 +26383,7 @@ __pforth void forth_digit_char(void)
    A3.
    console.md */
 
-__pforth void forth_print_number(forth_user_end user __asm("a5"),long *sp __asm("a6"))
+__pforth void forth_print_number(forth_user_end user /* a5 */,long *sp /* a6 */)
 
 {
   char cVar1;
@@ -14954,7 +26401,24 @@ __pforth void forth_print_number(forth_user_end user __asm("a5"),long *sp __asm(
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_print_number\n"
+	"	.type forth_print_number, @function\n"
+	"	.section .text.forth_print_number.1996c,\"ax\",@progbits\n"
+	"forth_print_number:\n"
+	"	movea.l (-0x22,%a5),%a0\n"
+	".Lg_19970:\n"
+	"	move.b (%a6)+,(%a0)+\n"
+	"	bne.b .Lg_19970\n"
+	"	move.l (-0x22,%a5),%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	rts\n"
+	"	.size forth_print_number, .-forth_print_number\n"
+);
+
 /* 0001997e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word u.
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -14986,7 +26450,33 @@ __pforth void forth_u_dot(forth_user_end user,long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_u_dot\n"
+	"	.type forth_u_dot, @function\n"
+	"	.section .text.forth_u_dot.1997e,\"ax\",@progbits\n"
+	"forth_u_dot:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	clr.b -(%a6)\n"
+	".Lg_19982:\n"
+	"	move.l (-0xe,%a5),%d1\n"
+	"	bsr.w forth_divide_short\n"
+	"	.byte 0x61 | bsr.b 0x0001995a\n"
+	"	.reloc ., R_68K_PC8, forth_digit_char-1\n"
+	"	.byte 0\n"
+	"	move.b %d1,-(%a6)\n"
+	"	tst.l %d0\n"
+	"	bne.b .Lg_19982\n"
+	"	move.b #0x20,-(%a6)\n"
+	"	.byte 0x61 | bsr.b 0x0001996c\n"
+	"	.reloc ., R_68K_PC8, forth_print_number-1\n"
+	"	.byte 0\n"
+	"	rts\n"
+	"	.size forth_u_dot, .-forth_u_dot\n"
+);
+
 /* 0001999a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word u.x
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15023,7 +26513,37 @@ __pforth void forth_u_dot_x(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_u_dot_x\n"
+	"	.type forth_u_dot_x, @function\n"
+	"	.section .text.forth_u_dot_x.1999a,\"ax\",@progbits\n"
+	"forth_u_dot_x:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	clr.b -(%a6)\n"
+	"	moveq #0x7,%d2\n"
+	".Lg_199a0:\n"
+	"	move.b %d0,%d1\n"
+	"	andi.b #0xf,%d1\n"
+	"	.byte 0x61 | bsr.b 0x0001995a\n"
+	"	.reloc ., R_68K_PC8, forth_digit_char-1\n"
+	"	.byte 0\n"
+	"	move.b %d1,-(%a6)\n"
+	"	lsr.l #0x4,%d0\n"
+	"	dbeq %d2,.Lg_199a0\n"
+	"	move.b #0x20,-(%a6)\n"
+	"	move.b #0x78,-(%a6)\n"
+	"	move.b #0x30,-(%a6)\n"
+	"	move.b #0x20,-(%a6)\n"
+	"	.byte 0x61 | bsr.b 0x0001996c\n"
+	"	.reloc ., R_68K_PC8, forth_print_number-1\n"
+	"	.byte 0\n"
+	"	rts\n"
+	"	.size forth_u_dot_x, .-forth_u_dot_x\n"
+);
+
 /* 000199c4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word .
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15059,7 +26579,40 @@ __pforth void forth_dot(forth_user_end user,long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_dot\n"
+	"	.type forth_dot, @function\n"
+	"	.section .text.forth_dot.199c4,\"ax\",@progbits\n"
+	"forth_dot:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	clr.b -(%a6)\n"
+	"	move.l %d0,%d2\n"
+	"	bpl.b .Lg_199ce\n"
+	"	neg.l %d0\n"
+	".Lg_199ce:\n"
+	"	move.l (-0xe,%a5),%d1\n"
+	"	bsr.w forth_divide_short\n"
+	"	.byte 0x61 | bsr.b 0x0001995a\n"
+	"	.reloc ., R_68K_PC8, forth_digit_char-1\n"
+	"	.byte 0\n"
+	"	move.b %d1,-(%a6)\n"
+	"	tst.l %d0\n"
+	"	bne.b .Lg_199ce\n"
+	"	tst.l %d2\n"
+	"	bpl.b .Lg_199e6\n"
+	"	move.b #0x2d,-(%a6)\n"
+	".Lg_199e6:\n"
+	"	move.b #0x20,-(%a6)\n"
+	"	.byte 0x61 | bsr.b 0x0001996c\n"
+	"	.reloc ., R_68K_PC8, forth_print_number-1\n"
+	"	.byte 0\n"
+	"	rts\n"
+	"	.size forth_dot, .-forth_dot\n"
+);
+
 /* 000199ee */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word .s
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15092,7 +26645,37 @@ __pforth void forth_dot_s(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_dot_s\n"
+	"	.type forth_dot_s, @function\n"
+	"	.section .text.forth_dot_s.199ee,\"ax\",@progbits\n"
+	"forth_dot_s:\n"
+	"	jsr (forth_depth:w,%pc)\n"
+	"	move.l (%a6)+,%d1\n"
+	"	beq.b .Lg_19a16\n"
+	"	asl.l #0x2,%d1\n"
+	"	beq.b .Lg_19a0a\n"
+	".Lg_199fa:\n"
+	"	move.l (-0x4,%a6,%d1.w*0x1),-(%a6)\n"
+	"	move.l %d1,-(%sp)\n"
+	"	jsr (forth_dot:w,%pc)\n"
+	"	move.l (%sp)+,%d1\n"
+	"	subq.l #0x4,%d1\n"
+	"	bne.b .Lg_199fa\n"
+	".Lg_19a0a:\n"
+	"	move.l #0x18ddf,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	rts\n"
+	".Lg_19a16:\n"
+	"	move.l #0x19a22,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	bra.b .Lg_19a0a\n"
+	"	.size forth_dot_s, .-forth_dot_s\n"
+);
+
 /* 00019b98 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word sin
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15127,7 +26710,50 @@ __pforth void forth_sin(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_sin\n"
+	"	.type forth_sin, @function\n"
+	"	.section .text.forth_sin.19b98,\"ax\",@progbits\n"
+	"forth_sin:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	clr.l %d1\n"
+	".Lg_19b9c:\n"
+	"	tst.l %d0\n"
+	"	bge.b .Lg_19ba8\n"
+	"	addi.l #0x168,%d0\n"
+	"	bra.b .Lg_19b9c\n"
+	".Lg_19ba8:\n"
+	"	cmpi.l #0x168,%d0\n"
+	"	bcs.b .Lg_19bb8\n"
+	"	subi.l #0x168,%d0\n"
+	"	bra.b .Lg_19ba8\n"
+	".Lg_19bb8:\n"
+	"	cmpi.l #0xb4,%d0\n"
+	"	bcs.b .Lg_19bc8\n"
+	"	moveq #-0x1,%d1\n"
+	"	subi.l #0xb4,%d0\n"
+	".Lg_19bc8:\n"
+	"	cmpi.l #0x5a,%d0\n"
+	"	bls.b .Lg_19bda\n"
+	"	move.l #0xb4,%d2\n"
+	"	sub.l %d0,%d2\n"
+	"	move.l %d2,%d0\n"
+	".Lg_19bda:\n"
+	"	asl.l #0x2,%d0\n"
+	"	movea.l #0x19a2c,%a1\n"
+	"	move.l (0x0,%a1,%d0.w*0x1),%d0\n"
+	"	tst.l %d1\n"
+	"	beq.b .Lg_19bec\n"
+	"	neg.l %d0\n"
+	".Lg_19bec:\n"
+	"	move.l %d0,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_sin, .-forth_sin\n"
+);
+
 /* 00019bf0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word cos
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15143,7 +26769,20 @@ __pforth void forth_cos(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_cos\n"
+	"	.type forth_cos, @function\n"
+	"	.section .text.forth_cos.19bf0,\"ax\",@progbits\n"
+	"forth_cos:\n"
+	"	addi.l #0x5a,(%a6)\n"
+	"	jsr (forth_sin:w,%pc)\n"
+	"	rts\n"
+	"	.size forth_cos, .-forth_cos\n"
+);
+
 /* 00019bfc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word decimal
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15158,7 +26797,19 @@ __pforth void forth_decimal(forth_user_end user)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_decimal\n"
+	"	.type forth_decimal, @function\n"
+	"	.section .text.forth_decimal.19bfc,\"ax\",@progbits\n"
+	"forth_decimal:\n"
+	"	move.l #0xa,(-0xe,%a5)\n"
+	"	rts\n"
+	"	.size forth_decimal, .-forth_decimal\n"
+);
+
 /* 00019c06 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word hex
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15173,7 +26824,19 @@ __pforth void forth_hex(forth_user_end user)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_hex\n"
+	"	.type forth_hex, @function\n"
+	"	.section .text.forth_hex.19c06,\"ax\",@progbits\n"
+	"forth_hex:\n"
+	"	move.l #0x10,(-0xe,%a5)\n"
+	"	rts\n"
+	"	.size forth_hex, .-forth_hex\n"
+);
+
 /* 00019c10 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word base
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15188,7 +26851,20 @@ __pforth void forth_base(forth_user_end user,long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_base\n"
+	"	.type forth_base, @function\n"
+	"	.section .text.forth_base.19c10,\"ax\",@progbits\n"
+	"forth_base:\n"
+	"	lea (-0xe,%a5),%a0\n"
+	"	move.l %a0,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_base, .-forth_base\n"
+);
+
 /* 00019c18 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word state
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15203,7 +26879,21 @@ __pforth void forth_state(forth_user_end user,long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_state\n"
+	"	.type forth_state, @function\n"
+	"	.section .text.forth_state.19c18,\"ax\",@progbits\n"
+	"forth_state:\n"
+	"	clr.l %d0\n"
+	"	move.w (-0xa,%a5),%d0\n"
+	"	move.l %d0,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_state, .-forth_state\n"
+);
+
 /* 00019c22 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word '
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15247,7 +26937,23 @@ __pforth void forth_tick(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_tick\n"
+	"	.type forth_tick, @function\n"
+	"	.section .text.forth_tick.19c22,\"ax\",@progbits\n"
+	"forth_tick:\n"
+	"	jsr (forth_parse_word:w,%pc)\n"
+	"	jsr (forth_find:w,%pc)\n"
+	"	bne.w forth_parse_number+0x50\n"
+	"	adda.l #0x4,%a2\n"
+	"	move.l %a2,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_tick, .-forth_tick\n"
+);
+
 /* 00019c38 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word [']
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15291,7 +26997,24 @@ __pforth void forth_bracket_tick_close_bracket(void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_bracket_tick_close_bracket\n"
+	"	.type forth_bracket_tick_close_bracket, @function\n"
+	"	.section .text.forth_bracket_tick_close_bracket.19c38,\"ax\",@progbits\n"
+	"forth_bracket_tick_close_bracket:\n"
+	"	jsr (forth_parse_word:w,%pc)\n"
+	"	jsr (forth_find:w,%pc)\n"
+	"	bne.w forth_parse_number+0x50\n"
+	"	move.w #0x2d3c,(%a4)+\n"
+	"	adda.l #0x4,%a2\n"
+	"	move.l %a2,(%a4)+\n"
+	"	rts\n"
+	"	.size forth_bracket_tick_close_bracket, .-forth_bracket_tick_close_bracket\n"
+);
+
 /* 00019c52 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word [
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15306,7 +27029,19 @@ __pforth void forth_bracket(forth_user_end user)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_bracket\n"
+	"	.type forth_bracket, @function\n"
+	"	.section .text.forth_bracket.19c52,\"ax\",@progbits\n"
+	"forth_bracket:\n"
+	"	clr.w (-0xa,%a5)\n"
+	"	rts\n"
+	"	.size forth_bracket, .-forth_bracket\n"
+);
+
 /* 00019c58 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word ]
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15321,7 +27056,20 @@ __pforth void forth_close_bracket(forth_user_end user)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_close_bracket\n"
+	"	.type forth_close_bracket, @function\n"
+	"	.section .text.forth_close_bracket.19c58,\"ax\",@progbits\n"
+	"forth_close_bracket:\n"
+	"	move.w #0x1,(-0xa,%a5)\n"
+	"	.byte 0x4e,0x75,0x20,0x69,0x73,0x20,0x66,0x65,0x6e,0x63,0x65,0x64,0x0d,0x0a,0x00\n"
+	"	.byte 0xff\n"
+	"	.size forth_close_bracket, .-forth_close_bracket\n"
+);
+
 /* 00019c6e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word forget
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15371,7 +27119,31 @@ __pforth void forth_forget(forth_user_end user,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_forget\n"
+	"	.type forth_forget, @function\n"
+	"	.section .text.forth_forget.19c6e,\"ax\",@progbits\n"
+	"forth_forget:\n"
+	"	jsr (forth_parse_word:w,%pc)\n"
+	"	jsr (forth_find:w,%pc)\n"
+	"	bne.w forth_parse_number+0x50\n"
+	"	cmpa.l (-0x1a,%a5),%a2\n"
+	"	bls.w .Lg_19c8e\n"
+	"	move.l (%a2),(-0x16,%a5)\n"
+	"	movea.l %a2,%a4\n"
+	"	move.l %a2,(-0x12,%a5)\n"
+	"	rts\n"
+	".Lg_19c8e:\n"
+	"	move.l (-0x22,%a5),%d0\n"
+	"	jsr (forth_print_string:w,%pc)\n"
+	"	move.l #0x19c60,%d0\n"
+	"	jmp (forth_parse_number-0xa0:w,%pc)\n"
+	"	.size forth_forget, .-forth_forget\n"
+);
+
 /* 00019ca0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth word startup
@@ -15389,7 +27161,22 @@ __pforth void forth_startup(forth_user_end user,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_startup\n"
+	"	.type forth_startup, @function\n"
+	"	.section .text.forth_startup.19ca0,\"ax\",@progbits\n"
+	"forth_startup:\n"
+	"	movea.l (__ghidra_1009f2).l,%a4\n"
+	"	move.l %a4,(-0x12,%a5)\n"
+	"	move.l (__ghidra_1009ee).l,(-0x1a,%a5)\n"
+	"	move.l (__ghidra_1009ee).l,(-0x16,%a5)\n"
+	"	rts\n"
+	"	.size forth_startup, .-forth_startup\n"
+);
+
 /* 00019cbc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word words
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15457,7 +27244,58 @@ __pforth void forth_words(forth_user_end user,long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_words\n"
+	"	.type forth_words, @function\n"
+	"	.section .text.forth_words.19cbc,\"ax\",@progbits\n"
+	"forth_words:\n"
+	"	movea.l (-0x16,%a5),%a0\n"
+	"	move.l (%a6)+,%d3\n"
+	"	moveq #0x0,%d4\n"
+	".Lg_19cc4:\n"
+	"	move.l %a0,%d1\n"
+	"	beq.w .Lg_19d22\n"
+	"	cmp.l %d1,%d3\n"
+	"	bgt.w .Lg_19d22\n"
+	"	move.w (0xa,%a0),%d1\n"
+	"	btst.l #0x1,%d1\n"
+	"	bne.w .Lg_19d1e\n"
+	"	movea.l (-0x22,%a5),%a1\n"
+	"	move.l %a1,%d0\n"
+	"	lea (0xc,%a0),%a2\n"
+	"	moveq #0x12,%d1\n"
+	".Lg_19ce8:\n"
+	"	move.b (%a2)+,(%a1)+\n"
+	"	dbeq %d1,.Lg_19ce8\n"
+	"	bne.w .Lg_19cfe\n"
+	"	move.b #0x20,%d2\n"
+	"	subq.w #0x1,%a1\n"
+	".Lg_19cf8:\n"
+	"	move.b %d2,(%a1)+\n"
+	"	dbf %d1,.Lg_19cf8\n"
+	".Lg_19cfe:\n"
+	"	move.b #0x0,(%a1)\n"
+	"	move.b #0x20,-(%a1)\n"
+	"	bsr.w forth_print_string\n"
+	"	addq.b #0x1,%d4\n"
+	"	cmpi.b #0x4,%d4\n"
+	"	blt.b .Lg_19d1e\n"
+	"	move.l #0x18ddf,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	moveq #0x0,%d4\n"
+	".Lg_19d1e:\n"
+	"	movea.l (%a0),%a0\n"
+	"	bra.b .Lg_19cc4\n"
+	".Lg_19d22:\n"
+	"	move.l #0x18ddf,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	rts\n"
+	"	.size forth_words, .-forth_words\n"
+);
+
 /* 00019d2e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word root
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15472,7 +27310,19 @@ __pforth void forth_root(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_root\n"
+	"	.type forth_root, @function\n"
+	"	.section .text.forth_root.19d2e,\"ax\",@progbits\n"
+	"forth_root:\n"
+	"	move.l #0x100b10,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_root, .-forth_root\n"
+);
+
 /* 00019d36 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word my_pid
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15492,7 +27342,24 @@ __pforth void forth_my_pid(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_my_pid\n"
+	"	.type forth_my_pid, @function\n"
+	"	.section .text.forth_my_pid.19d36,\"ax\",@progbits\n"
+	"forth_my_pid:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	clr.l %d0\n"
+	"	moveq #0x3,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	move.l %a0,-(%a6)\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	rts\n"
+	"	.size forth_my_pid, .-forth_my_pid\n"
+);
+
 /* 00019d46 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x000192a0) */
 /* the pForth word ?^C
@@ -15511,7 +27378,24 @@ __pforth void forth_query_caret_C(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_query_caret_C\n"
+	"	.type forth_query_caret_C, @function\n"
+	"	.section .text.forth_query_caret_C.19d46,\"ax\",@progbits\n"
+	"forth_query_caret_C:\n"
+	"	move.w #0x800,%d1\n"
+	"	move.w (boot_vectors).w,%d2\n"
+	"	move.w #0x1b,%d7\n"
+	"	trap #0x3\n"
+	"	tst.b %d7\n"
+	"	beq.w forth_true\n"
+	"	bra.w forth_false\n"
+	"	.size forth_query_caret_C, .-forth_query_caret_C\n"
+);
+
 /* 00019d5e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word expect
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15523,16 +27407,177 @@ __pforth short forth_expect(forth_user_end user,long *sp)
 {
   short sVar1;
   
-  if (-1 < ((forth_user *)(user + -0x28))->iodev) {
+  if (-1 < ((forth_user_area *)(user + -0x28))->iodev) {
     __m68k_trap(4);
-    return ((forth_user *)(user + -0x28))->iodev;
+    return ((forth_user_area *)(user + -0x28))->iodev;
   }
   sVar1 = psos_call();
   return sVar1;
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_expect\n"
+	"	.type forth_expect, @function\n"
+	"	.section .text.forth_expect.19d5e,\"ax\",@progbits\n"
+	"forth_expect:\n"
+	"	move.l %a1,-(%sp)\n"
+	"	move.l (%a6)+,%d2\n"
+	"	movea.l (%a6)+,%a1\n"
+	"	move.w (-0x28,%a5),%d0\n"
+	"	bmi.w .Lg_19f9a\n"
+	"	moveq #0x3,%d7\n"
+	"	trap #0x4\n"
+	"	movea.l (%sp)+,%a1\n"
+	"	rts\n"
+	"	.size forth_expect, .-forth_expect\n"
+	"	.section .text.forth_expect.19dce,\"ax\",@progbits\n"
+	"	.byte 0x20\n"
+	"	.byte 0x6d\n"
+	"	.byte 0xff\n"
+	"	.byte 0xea\n"
+	"	.byte 0x02\n"
+	"	.byte 0x68\n"
+	"	.byte 0xff\n"
+	"	.byte 0xf7\n"
+	"	.byte 0x00\n"
+	"	.byte 0x0a\n"
+	"	.byte 0x20\n"
+	"	.byte 0x68\n"
+	"	.byte 0x00\n"
+	"	.byte 0x04\n"
+	"	.byte 0x30\n"
+	"	.byte 0xfc\n"
+	"	.byte 0x4e\n"
+	"	.byte 0xb9\n"
+	"	.byte 0x43\n"
+	"	.byte 0xfa\n"
+	"	.byte 0x00\n"
+	"	.byte 0x06\n"
+	"	.byte 0x20\n"
+	"	.byte 0x89\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.byte 0x2d\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x54\n"
+	"	.byte 0x96\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.section .text.forth_expect.19edc,\"ax\",@progbits\n"
+	"	.byte 0x70\n"
+	"	.byte 0x53\n"
+	"	.byte 0x4f\n"
+	"	.byte 0x53\n"
+	"	.byte 0x20\n"
+	"	.byte 0x65\n"
+	"	.byte 0x72\n"
+	"	.byte 0x72\n"
+	"	.byte 0x6f\n"
+	"	.byte 0x72\n"
+	"	.byte 0x00\n"
+	"	.byte 0x20,0x66,0x72,0x6f,0x6d,0x20,0x66,0x75,0x6e,0x63,0x74,0x69,0x6f,0x6e,0x00\n"
+	"	.section .text.forth_expect.19f42,\"ax\",@progbits\n"
+	"	.byte 0x20\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x32\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x24\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x26\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x28\n"
+	"	.byte 0x4f\n"
+	"	.byte 0x98\n"
+	"	.byte 0xc1\n"
+	"	.byte 0x98\n"
+	"	.byte 0xc1\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x55\n"
+	"	.byte 0xff\n"
+	"	.byte 0xd8\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x4f\n"
+	"	.byte 0xff\n"
+	"	.byte 0xfc\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x43\n"
+	"	.byte 0xff\n"
+	"	.byte 0xda\n"
+	"	.byte 0x04\n"
+	"	.byte 0x41\n"
+	"	.byte 0xff\n"
+	"	.byte 0xec\n"
+	"	.byte 0x2c\n"
+	"	.byte 0x4f\n"
+	"	.byte 0x9c\n"
+	"	.byte 0xc1\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x4e\n"
+	"	.byte 0xff\n"
+	"	.byte 0xf8\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x7c\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x0a\n"
+	"	.byte 0xff\n"
+	"	.byte 0xf2\n"
+	"	.byte 0x42\n"
+	"	.byte 0x6d\n"
+	"	.byte 0xff\n"
+	"	.byte 0xf6\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x40\n"
+	"	.byte 0xff\n"
+	"	.byte 0xea\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x40\n"
+	"	.byte 0xff\n"
+	"	.byte 0xe6\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x4c\n"
+	"	.byte 0xff\n"
+	"	.byte 0xee\n"
+	"	.byte 0x70\n"
+	"	.byte 0xff\n"
+	"	.byte 0x3b\n"
+	"	.byte 0x40\n"
+	"	.byte 0xff\n"
+	"	.byte 0xd8\n"
+	"	.byte 0x97\n"
+	"	.byte 0xcb\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x4b\n"
+	"	.byte 0xff\n"
+	"	.byte 0xe2\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x4b\n"
+	"	.byte 0xff\n"
+	"	.byte 0xde\n"
+	"	.byte 0x48\n"
+	"	.byte 0x7a\n"
+	"	.byte 0x00\n"
+	"	.byte 0x08\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x71\n"
+	"	.byte 0x2f\n"
+	"	.byte 0x02\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	".Lg_19f9a:\n"
+	"	suba.l %a0,%a0\n"
+	"	moveq #0x4,%d7\n"
+	"	jsr (psos_call).l\n"
+	"	rts\n"
+);
+
 /* 00019d74 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word type
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15549,7 +27594,20 @@ __pforth void forth_type(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_type\n"
+	"	.type forth_type, @function\n"
+	"	.section .text.forth_type.19d74,\"ax\",@progbits\n"
+	"forth_type:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	jsr (forth_print_string:w,%pc)\n"
+	"	rts\n"
+	"	.size forth_type, .-forth_type\n"
+);
+
 /* 00019d7c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word word
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15581,7 +27639,40 @@ __pforth void forth_word(forth_user_end user,long *sp,char *input)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_word\n"
+	"	.type forth_word, @function\n"
+	"	.section .text.forth_word.19d7c,\"ax\",@progbits\n"
+	"forth_word:\n"
+	"	bsr.w forth_input_buffer\n"
+	"	move.l (%a6)+,%d0\n"
+	"	movea.l (-0x22,%a5),%a0\n"
+	"	move.l %a0,-(%a6)\n"
+	".Lg_19d88:\n"
+	"	bsr.w forth_skip_spaces\n"
+	"	tst.b (%a3)\n"
+	"	beq.w .Lg_19d9e\n"
+	".Lg_19d92:\n"
+	"	move.b (%a3)+,%d1\n"
+	"	beq.b .Lg_19da4\n"
+	"	cmp.b %d1,%d0\n"
+	"	beq.b .Lg_19daa\n"
+	"	move.b %d1,(%a0)+\n"
+	"	bra.b .Lg_19d92\n"
+	".Lg_19d9e:\n"
+	"	bsr.w forth_read_line\n"
+	"	bra.b .Lg_19d88\n"
+	".Lg_19da4:\n"
+	"	suba.l #0x1,%a3\n"
+	".Lg_19daa:\n"
+	"	clr.b (%a0)\n"
+	"	rts\n"
+	"	.size forth_word, .-forth_word\n"
+);
+
 /* 00019dae */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word count
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15604,7 +27695,26 @@ __pforth void forth_count(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_count\n"
+	"	.type forth_count, @function\n"
+	"	.section .text.forth_count.19dae,\"ax\",@progbits\n"
+	"forth_count:\n"
+	"	movea.l (%a6),%a0\n"
+	"	move.l %a0,%d0\n"
+	".Lg_19db2:\n"
+	"	tst.b (%a0)+\n"
+	"	bne.b .Lg_19db2\n"
+	"	suba.l #0x1,%a0\n"
+	"	suba.l %d0,%a0\n"
+	"	move.l %a0,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_count, .-forth_count\n"
+);
+
 /* 00019dc2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word tib
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15619,7 +27729,19 @@ __pforth void forth_tib(forth_user_end user,long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_tib\n"
+	"	.type forth_tib, @function\n"
+	"	.section .text.forth_tib.19dc2,\"ax\",@progbits\n"
+	"forth_tib:\n"
+	"	move.l (-0x1e,%a5),-(%a6)\n"
+	"	rts\n"
+	"	.size forth_tib, .-forth_tib\n"
+);
+
 /* 00019dc8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word pad
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15634,7 +27756,53 @@ __pforth void forth_pad(forth_user_end user,long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_pad\n"
+	"	.type forth_pad, @function\n"
+	"	.section .text.forth_pad.19dc8,\"ax\",@progbits\n"
+	"forth_pad:\n"
+	"	move.l (-0x22,%a5),-(%a6)\n"
+	"	rts\n"
+	"	.byte 0x20\n"
+	"	.byte 0x6d\n"
+	"	.byte 0xff\n"
+	"	.byte 0xea\n"
+	"	.byte 0x02\n"
+	"	.byte 0x68\n"
+	"	.byte 0xff\n"
+	"	.byte 0xf7\n"
+	"	.byte 0x00\n"
+	"	.byte 0x0a\n"
+	"	.byte 0x20\n"
+	"	.byte 0x68\n"
+	"	.byte 0x00\n"
+	"	.byte 0x04\n"
+	"	.byte 0x30\n"
+	"	.byte 0xfc\n"
+	"	.byte 0x4e\n"
+	"	.byte 0xb9\n"
+	"	.byte 0x43\n"
+	"	.byte 0xfa\n"
+	"	.byte 0x00\n"
+	"	.byte 0x06\n"
+	"	.byte 0x20\n"
+	"	.byte 0x89\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.byte 0x2d\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x54\n"
+	"	.byte 0x96\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.size forth_pad, .-forth_pad\n"
+);
+
 /* 00019df0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word does>
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15651,7 +27819,20 @@ __pforth void forth_does_greater(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_does_greater\n"
+	"	.type forth_does_greater, @function\n"
+	"	.section .text.forth_does_greater.19df0,\"ax\",@progbits\n"
+	"forth_does_greater:\n"
+	"	movea.l #0x19dce,%a0\n"
+	"	bsr.w forth_compile_code\n"
+	"	rts\n"
+	"	.size forth_does_greater, .-forth_does_greater\n"
+);
+
 /* 00019dfc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word recurse
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15668,7 +27849,22 @@ __pforth void forth_recurse(forth_user_end user,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_recurse\n"
+	"	.type forth_recurse, @function\n"
+	"	.section .text.forth_recurse.19dfc,\"ax\",@progbits\n"
+	"forth_recurse:\n"
+	"	bsr.w forth_align\n"
+	"	move.w #0x4eb9,(%a4)+\n"
+	"	movea.l (-0x16,%a5),%a0\n"
+	"	move.l (0x4,%a0),(%a4)+\n"
+	"	rts\n"
+	"	.size forth_recurse, .-forth_recurse\n"
+);
+
 /* 00019e0e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word immediate
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15683,7 +27879,22 @@ __pforth void forth_immediate(forth_user_end user)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_immediate\n"
+	"	.type forth_immediate, @function\n"
+	"	.section .text.forth_immediate.19e0e,\"ax\",@progbits\n"
+	"forth_immediate:\n"
+	"	movea.l (-0x16,%a5),%a0\n"
+	"	move.w (0xa,%a0),%d0\n"
+	"	bset.l #0x2,%d0\n"
+	"	move.w %d0,(0xa,%a0)\n"
+	"	rts\n"
+	"	.size forth_immediate, .-forth_immediate\n"
+);
+
 /* 00019e20 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word fence
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15698,7 +27909,20 @@ __pforth void forth_fence(forth_user_end user,long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_fence\n"
+	"	.type forth_fence, @function\n"
+	"	.section .text.forth_fence.19e20,\"ax\",@progbits\n"
+	"forth_fence:\n"
+	"	lea (-0x1a,%a5),%a0\n"
+	"	move.l %a0,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_fence, .-forth_fence\n"
+);
+
 /* 00019e28 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word unfence
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15713,7 +27937,19 @@ __pforth void forth_unfence(forth_user_end user)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_unfence\n"
+	"	.type forth_unfence, @function\n"
+	"	.section .text.forth_unfence.19e28,\"ax\",@progbits\n"
+	"forth_unfence:\n"
+	"	move.l #0x1ad0e,(-0x1a,%a5)\n"
+	"	rts\n"
+	"	.size forth_unfence, .-forth_unfence\n"
+);
+
 /* 00019e32 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word number
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15740,7 +27976,29 @@ __pforth void forth_number(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_number\n"
+	"	.type forth_number, @function\n"
+	"	.section .text.forth_number.19e32,\"ax\",@progbits\n"
+	"forth_number:\n"
+	"	move.l %a1,-(%sp)\n"
+	"	movea.l (%a6)+,%a1\n"
+	".Lg_19e36:\n"
+	"	bsr.w forth_is_space\n"
+	"	bne.w .Lg_19e42\n"
+	"	tst.b (%a1)+\n"
+	"	bne.b .Lg_19e36\n"
+	".Lg_19e42:\n"
+	"	movea.l %a1,%a0\n"
+	"	bsr.w forth_parse_number\n"
+	"	movea.l (%sp)+,%a1\n"
+	"	rts\n"
+	"	.size forth_number, .-forth_number\n"
+);
+
 /* 00019e4c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word 0x
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15807,7 +28065,44 @@ __pforth undefined1 forth_0x(forth_user_end user,long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_0x\n"
+	"	.type forth_0x, @function\n"
+	"	.section .text.forth_0x.19e4c,\"ax\",@progbits\n"
+	"forth_0x:\n"
+	"	bsr.w forth_parse_word\n"
+	"	movea.l (-0x22,%a5),%a0\n"
+	"	clr.l %d1\n"
+	"	moveq #0x10,%d2\n"
+	"	cmpi.b #0x2d,(%a0)\n"
+	"	seq %d7\n"
+	"	bne.b .Lg_19e70\n"
+	"	addq.l #0x1,%a0\n"
+	"	bra.b .Lg_19e70\n"
+	".Lg_19e64:\n"
+	"	bsr.w forth_digit\n"
+	"	bne.w forth_parse_number+0x50\n"
+	"	asl.l #0x4,%d1\n"
+	"	or.b %d0,%d1\n"
+	".Lg_19e70:\n"
+	"	move.b (%a0)+,%d0\n"
+	"	bne.b .Lg_19e64\n"
+	"	tst.b %d7\n"
+	"	beq.b .Lg_19e7a\n"
+	"	neg.l %d1\n"
+	".Lg_19e7a:\n"
+	"	move.l %d1,-(%a6)\n"
+	"	tst.w (-0xa,%a5)\n"
+	"	beq.b .Lg_19e86\n"
+	"	bsr.w forth_literal\n"
+	".Lg_19e86:\n"
+	"	rts\n"
+	"	.size forth_0x, .-forth_0x\n"
+);
+
 /* 00019e88 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word execute
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15822,7 +28117,21 @@ __pforth void forth_execute(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_execute\n"
+	"	.type forth_execute, @function\n"
+	"	.section .text.forth_execute.19e88,\"ax\",@progbits\n"
+	"forth_execute:\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	movea.l (%a0),%a0\n"
+	"	jsr (%a0)\n"
+	"	rts\n"
+	"	.size forth_execute, .-forth_execute\n"
+);
+
 /* 00019e90 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word watch
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15903,7 +28212,37 @@ __pforth undefined8 forth_watch(forth_user_end user,long *sp,void *dp,char *inpu
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_watch\n"
+	"	.type forth_watch, @function\n"
+	"	.section .text.forth_watch.19e90,\"ax\",@progbits\n"
+	"forth_watch:\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	movea.l (%a0),%a0\n"
+	"	movem.l %d0/%d1/%d2/%d3/%d4/%d5/%d6/%d7/%a0/%a1/%a2/%a3/%a4/%a5/%a6/%sp,(0x100b28).l\n"
+	"	jsr (%a0)\n"
+	"	movem.l %d0/%d1/%d2/%d3/%d4/%d5/%d6/%d7/%a0/%a1/%a2/%a3/%a4/%a5/%a6/%sp,(0x100b68).l\n"
+	"	clr.l %d0\n"
+	"	clr.l %d1\n"
+	"	lea (0x100b28).l,%a0\n"
+	"	lea (0x100b68).l,%a1\n"
+	".Lg_19eb6:\n"
+	"	cmpm.l (%a0)+,(%a1)+\n"
+	"	beq.b .Lg_19ebc\n"
+	"	bset.l %d1,%d0\n"
+	".Lg_19ebc:\n"
+	"	addq.w #0x1,%d1\n"
+	"	cmpi.w #0x10,%d1\n"
+	"	blt.b .Lg_19eb6\n"
+	"	move.l %d0,-(%a6)\n"
+	"	movem.l (0x100b28).l,%d0/%d1/%d2/%d3/%d4/%d5/%d6/%d7/%a0/%a1/%a2/%a3/%a4/%a5\n"
+	"	rts\n"
+	"	.size forth_watch, .-forth_watch\n"
+);
+
 /* 00019ed0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the console words' service call, reporting an error
    psos.md
@@ -15940,7 +28279,143 @@ __pforth void forth_psos_call(forth_user_end user,long *sp,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_psos_call\n"
+	"	.type forth_psos_call, @function\n"
+	"	.section .text.forth_psos_call.19ed0,\"ax\",@progbits\n"
+	"forth_psos_call:\n"
+	"	jsr (psos_call).l\n"
+	"	tst.b %d7\n"
+	"	bgt.b .Lg_19ef6\n"
+	"	rts\n"
+	"	.byte 0x70\n"
+	"	.byte 0x53\n"
+	"	.byte 0x4f\n"
+	"	.byte 0x53\n"
+	"	.byte 0x20\n"
+	"	.byte 0x65\n"
+	"	.byte 0x72\n"
+	"	.byte 0x72\n"
+	"	.byte 0x6f\n"
+	"	.byte 0x72\n"
+	"	.byte 0x00\n"
+	"	.byte 0x20,0x66,0x72,0x6f,0x6d,0x20,0x66,0x75,0x6e,0x63,0x74,0x69,0x6f,0x6e,0x00\n"
+	".Lg_19ef6:\n"
+	"	moveq #0x0,%d6\n"
+	"	move.w %d7,%d6\n"
+	"	lsr.l #0x8,%d6\n"
+	"	andi.l #0xff,%d7\n"
+	"	move.l %d7,-(%a6)\n"
+	"	move.l #0x19edc,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	bsr.w forth_dot\n"
+	"	cmpi.b #0x26,%d6\n"
+	"	bhi.w .Lg_19f30\n"
+	"	tst.b %d6\n"
+	"	bls.w .Lg_19f30\n"
+	"	move.l %d6,-(%a6)\n"
+	"	move.l #0x19ee7,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	bsr.w forth_dot\n"
+	".Lg_19f30:\n"
+	"	move.l #0x18ddf,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	movea.l (-0x12,%a5),%a4\n"
+	"	bra.w forth_abort\n"
+	"	.byte 0x20\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x32\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x24\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x26\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x28\n"
+	"	.byte 0x4f\n"
+	"	.byte 0x98\n"
+	"	.byte 0xc1\n"
+	"	.byte 0x98\n"
+	"	.byte 0xc1\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x55\n"
+	"	.byte 0xff\n"
+	"	.byte 0xd8\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x4f\n"
+	"	.byte 0xff\n"
+	"	.byte 0xfc\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x43\n"
+	"	.byte 0xff\n"
+	"	.byte 0xda\n"
+	"	.byte 0x04\n"
+	"	.byte 0x41\n"
+	"	.byte 0xff\n"
+	"	.byte 0xec\n"
+	"	.byte 0x2c\n"
+	"	.byte 0x4f\n"
+	"	.byte 0x9c\n"
+	"	.byte 0xc1\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x4e\n"
+	"	.byte 0xff\n"
+	"	.byte 0xf8\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x7c\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x0a\n"
+	"	.byte 0xff\n"
+	"	.byte 0xf2\n"
+	"	.byte 0x42\n"
+	"	.byte 0x6d\n"
+	"	.byte 0xff\n"
+	"	.byte 0xf6\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x40\n"
+	"	.byte 0xff\n"
+	"	.byte 0xea\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x40\n"
+	"	.byte 0xff\n"
+	"	.byte 0xe6\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x4c\n"
+	"	.byte 0xff\n"
+	"	.byte 0xee\n"
+	"	.byte 0x70\n"
+	"	.byte 0xff\n"
+	"	.byte 0x3b\n"
+	"	.byte 0x40\n"
+	"	.byte 0xff\n"
+	"	.byte 0xd8\n"
+	"	.byte 0x97\n"
+	"	.byte 0xcb\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x4b\n"
+	"	.byte 0xff\n"
+	"	.byte 0xe2\n"
+	"	.byte 0x2b\n"
+	"	.byte 0x4b\n"
+	"	.byte 0xff\n"
+	"	.byte 0xde\n"
+	"	.byte 0x48\n"
+	"	.byte 0x7a\n"
+	"	.byte 0x00\n"
+	"	.byte 0x08\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x71\n"
+	"	.byte 0x2f\n"
+	"	.byte 0x02\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.size forth_psos_call, .-forth_psos_call\n"
+);
+
 /* 00019fa6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word spawn
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -15953,7 +28428,7 @@ __pforth void forth_spawn(forth_user_end user,long *sp,void *dp)
   long lVar1;
   void *pvVar2;
   char *pcVar3;
-  undefined4 uVar4;
+  int iVar4;
   undefined4 extraout_A0;
   long extraout_A0_00;
   char *unaff_A3;
@@ -15971,8 +28446,8 @@ __pforth void forth_spawn(forth_user_end user,long *sp,void *dp)
     *(undefined4 *)((int)dp + 8) = extraout_A0;
     psos_call();
     forth_parse_word(user,unaff_A3);
-    uVar4 = func_0x0001a01c();
-    *(undefined4 *)((int)dp + 0xc) = uVar4;
+    iVar4 = forth_pack_name(user);
+    *(int *)((int)dp + 0xc) = iVar4;
     forth_psos_call(user,sp + 3,dp);
     plVar5 = sp + 2;
     *plVar5 = extraout_A0_00;
@@ -16001,7 +28476,107 @@ __pforth void forth_spawn(forth_user_end user,long *sp,void *dp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_spawn\n"
+	"	.type forth_spawn, @function\n"
+	"	.section .text.forth_spawn.19fa6,\"ax\",@progbits\n"
+	"forth_spawn:\n"
+	"	jsr (forth_parse_word:w,%pc)\n"
+	"	jsr (forth_find:w,%pc)\n"
+	"	bne.w forth_parse_number+0x50\n"
+	"	move.l (%a6)+,%d3\n"
+	"	move.l (%a6)+,%d2\n"
+	"	move.l (%a6)+,%d1\n"
+	"	bsr.w forth_align\n"
+	"	move.w #0x7,(%a4)\n"
+	"	move.l %a4,(0x2,%a4)\n"
+	"	move.w %d3,(0x6,%a4)\n"
+	"	move.l %a0,(0x8,%a4)\n"
+	"	moveq #0x0,%d0\n"
+	"	movea.l %d0,%a0\n"
+	"	moveq #0x7,%d7\n"
+	"	jsr (psos_call).l\n"
+	"	add.b %d0,%d2\n"
+	"	bsr.w forth_parse_word\n"
+	"	bsr.w forth_pack_name\n"
+	"	move.l %d0,(0xc,%a4)\n"
+	"	movea.l %a4,%a0\n"
+	"	move.w #0x1,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	move.l %a0,-(%a6)\n"
+	"	move.l %a0,%d4\n"
+	"	moveq #0x10,%d3\n"
+	"	bsr.w forth_create_header\n"
+	"	bsr.w forth_compile_constant\n"
+	"	move.l (-0x16,%a5),(-0x1a,%a5)\n"
+	"	movem.l %a1/%a0,-(%sp)\n"
+	"	movea.l %d4,%a0\n"
+	"	lea (__ghidra_19f42:w,%pc),%a1\n"
+	"	move.w #0x2,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	movem.l (%sp)+,%a0/%a1\n"
+	"	rts\n"
+	"	.size forth_spawn, .-forth_spawn\n"
+);
+
+/* 0001a01c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the first four characters of the word in pad, a NUL made a space, packed into D0 for the kernel
+   Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
+   data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
+   A3.  Out: D0 int name.
+   console.md */
+
+/* out D0 int name */
+__pforth int forth_pack_name(forth_user_end user /* a5 */)
+
+{
+  int iVar1;
+  
+  forth_space_if_zero();
+  forth_space_if_zero();
+  forth_space_if_zero();
+  iVar1 = forth_space_if_zero();
+  return iVar1;
+}
+
+
+#endif
+__asm__(
+	"	.globl forth_pack_name\n"
+	"	.type forth_pack_name, @function\n"
+	"	.section .text.forth_pack_name.1a01c,\"ax\",@progbits\n"
+	"forth_pack_name:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	movea.l (-0x22,%a5),%a0\n"
+	"	move.b (%a0)+,%d0\n"
+	"	.byte 0x61 | bsr.b 0x0001a03c\n"
+	"	.reloc ., R_68K_PC8, forth_space_if_zero-1\n"
+	"	.byte 0\n"
+	"	rol.w #0x8,%d0\n"
+	"	move.b (%a0)+,%d0\n"
+	"	.byte 0x61 | bsr.b 0x0001a03c\n"
+	"	.reloc ., R_68K_PC8, forth_space_if_zero-1\n"
+	"	.byte 0\n"
+	"	rol.l #0x8,%d0\n"
+	"	move.b (%a0)+,%d0\n"
+	"	.byte 0x61 | bsr.b 0x0001a03c\n"
+	"	.reloc ., R_68K_PC8, forth_space_if_zero-1\n"
+	"	.byte 0\n"
+	"	rol.l #0x8,%d0\n"
+	"	move.b (%a0),%d0\n"
+	"	.byte 0x61 | bsr.b 0x0001a03c\n"
+	"	.reloc ., R_68K_PC8, forth_space_if_zero-1\n"
+	"	.byte 0\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	rts\n"
+	"	.size forth_pack_name, .-forth_pack_name\n"
+);
+
 /* 0001a03c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* a zero byte, Z set, becomes a space; spawn pads a task's name with it
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
@@ -16016,7 +28591,26 @@ __pforth void forth_space_if_zero(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_space_if_zero\n"
+	"	.type forth_space_if_zero, @function\n"
+	"	.section .text.forth_space_if_zero.1a03c,\"ax\",@progbits\n"
+	"forth_space_if_zero:\n"
+	"	bne.b .Lg_1a042\n"
+	"	move.b #0x20,%d0\n"
+	".Lg_1a042:\n"
+	"	rts\n"
+	"	.byte 0x70,0x53 | moveq 0x53,D0\n"
+	"	.byte 0x4f\n"
+	"	.byte 0x53\n"
+	"	.byte 0x20,0x76,0x65,0x72,0x73,0x69,0x6f,0x6e,0x20,0x49 | movea.l ([0x73696f6e,A6],0x2049),A0\n"
+	"	.byte 0x44,0x3a,0x00,0xff | neg.b (0xff,PC)\n"
+	"	.size forth_space_if_zero, .-forth_space_if_zero\n"
+);
+
 /* 0001a056 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word ver
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16041,7 +28635,30 @@ __pforth void forth_ver(forth_user_end user,long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_ver\n"
+	"	.type forth_ver, @function\n"
+	"	.section .text.forth_ver.1a056,\"ax\",@progbits\n"
+	"forth_ver:\n"
+	"	move.l #0x18dc6,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	move.l #0x1a044,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	moveq #0x0,%d7\n"
+	"	trap #0x3\n"
+	"	andi.l #0xffff,%d7\n"
+	"	move.l (-0xe,%a5),-(%a6)\n"
+	"	move.l #0x10,(-0xe,%a5)\n"
+	"	move.l %d7,-(%a6)\n"
+	"	jsr (forth_dot:w,%pc)\n"
+	"	move.l (%a6)+,(-0xe,%a5)\n"
+	"	rts\n"
+	"	.size forth_ver, .-forth_ver\n"
+);
+
 /* 0001a08c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word ident
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16057,14 +28674,34 @@ __pforth void forth_ident(long *sp)
   forth_user_end unaff_A5;
   
   forth_parse_word(unaff_A5,unaff_A3);
-  func_0x0001a01c();
+  forth_pack_name(unaff_A5);
   forth_psos_call(unaff_A5,sp,unaff_A4);
   sp[-1] = extraout_A0;
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_ident\n"
+	"	.type forth_ident, @function\n"
+	"	.section .text.forth_ident.1a08c,\"ax\",@progbits\n"
+	"forth_ident:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	bsr.w forth_parse_word\n"
+	"	.byte 0x61 | bsr.b 0x0001a01c\n"
+	"	.reloc ., R_68K_PC8, forth_pack_name-1\n"
+	"	.byte 0\n"
+	"	moveq #0x3,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	move.l %a0,-(%a6)\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	rts\n"
+	"	.size forth_ident, .-forth_ident\n"
+);
+
 /* 0001a0a0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word delete
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16082,7 +28719,23 @@ __pforth void forth_delete(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_delete\n"
+	"	.type forth_delete, @function\n"
+	"	.section .text.forth_delete.1a0a0,\"ax\",@progbits\n"
+	"forth_delete:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	moveq #0x4,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	rts\n"
+	"	.size forth_delete, .-forth_delete\n"
+);
+
 /* 0001a0ae */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word suspend
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16100,7 +28753,23 @@ __pforth void forth_suspend(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_suspend\n"
+	"	.type forth_suspend, @function\n"
+	"	.section .text.forth_suspend.1a0ae,\"ax\",@progbits\n"
+	"forth_suspend:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	moveq #0x5,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	rts\n"
+	"	.size forth_suspend, .-forth_suspend\n"
+);
+
 /* 0001a0bc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word resume
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16118,7 +28787,23 @@ __pforth void forth_resume(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_resume\n"
+	"	.type forth_resume, @function\n"
+	"	.section .text.forth_resume.1a0bc,\"ax\",@progbits\n"
+	"forth_resume:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	moveq #0x6,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	rts\n"
+	"	.size forth_resume, .-forth_resume\n"
+);
+
 /* 0001a0ca */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word priority
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16138,7 +28823,26 @@ __pforth void forth_priority(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_priority\n"
+	"	.type forth_priority, @function\n"
+	"	.section .text.forth_priority.1a0ca,\"ax\",@progbits\n"
+	"forth_priority:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	move.l (%a6)+,%d0\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	moveq #0x7,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	andi.l #0xff,%d0\n"
+	"	move.l %d0,-(%a6)\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	rts\n"
+	"	.size forth_priority, .-forth_priority\n"
+);
+
 /* 0001a0e2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word jam_x
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16156,7 +28860,24 @@ __pforth void forth_jam_x(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_jam_x\n"
+	"	.type forth_jam_x, @function\n"
+	"	.section .text.forth_jam_x.1a0e2,\"ax\",@progbits\n"
+	"forth_jam_x:\n"
+	"	movem.l %a1/%a0,-(%sp)\n"
+	"	movea.l (%a6)+,%a1\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	move.w #0x13,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	movem.l (%sp)+,%a0/%a1\n"
+	"	rts\n"
+	"	.size forth_jam_x, .-forth_jam_x\n"
+);
+
 /* 0001a0f8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word create_x
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16172,7 +28893,7 @@ __pforth void forth_create_x(long *sp)
   forth_user_end unaff_A5;
   
   forth_parse_word(unaff_A5,unaff_A3);
-  func_0x0001a01c();
+  forth_pack_name(unaff_A5);
   forth_psos_call(unaff_A5,sp + 2,unaff_A4);
   sp[1] = extraout_A0;
   forth_create_header(unaff_A5,unaff_A4);
@@ -16181,7 +28902,30 @@ __pforth void forth_create_x(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_create_x\n"
+	"	.type forth_create_x, @function\n"
+	"	.section .text.forth_create_x.1a0f8,\"ax\",@progbits\n"
+	"forth_create_x:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	bsr.w forth_parse_word\n"
+	"	bsr.w forth_pack_name\n"
+	"	move.l (%a6)+,%d2\n"
+	"	move.l (%a6)+,%d1\n"
+	"	move.w #0x14,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	move.l %a0,-(%a6)\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	moveq #0x20,%d3\n"
+	"	bsr.w forth_create_header\n"
+	"	bsr.w forth_compile_constant\n"
+	"	rts\n"
+	"	.size forth_create_x, .-forth_create_x\n"
+);
+
 /* 0001a11e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word delete_x
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16199,7 +28943,23 @@ __pforth void forth_delete_x(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_delete_x\n"
+	"	.type forth_delete_x, @function\n"
+	"	.section .text.forth_delete_x.1a11e,\"ax\",@progbits\n"
+	"forth_delete_x:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	move.w #0x16,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	rts\n"
+	"	.size forth_delete_x, .-forth_delete_x\n"
+);
+
 /* 0001a12e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word send_x
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16217,7 +28977,24 @@ __pforth void forth_send_x(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_send_x\n"
+	"	.type forth_send_x, @function\n"
+	"	.section .text.forth_send_x.1a12e,\"ax\",@progbits\n"
+	"forth_send_x:\n"
+	"	movem.l %a1/%a0,-(%sp)\n"
+	"	movea.l (%a6)+,%a1\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	move.w #0x17,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	movem.l (%sp)+,%a0/%a1\n"
+	"	rts\n"
+	"	.size forth_send_x, .-forth_send_x\n"
+);
+
 /* 0001a144 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word request_x
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16235,7 +29012,26 @@ __pforth void forth_request_x(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_request_x\n"
+	"	.type forth_request_x, @function\n"
+	"	.section .text.forth_request_x.1a144,\"ax\",@progbits\n"
+	"forth_request_x:\n"
+	"	movem.l %a1/%a0,-(%sp)\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.l (%a6)+,%d1\n"
+	"	movea.l (%a6)+,%a1\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	move.w #0x18,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	movem.l (%sp)+,%a0/%a1\n"
+	"	rts\n"
+	"	.size forth_request_x, .-forth_request_x\n"
+);
+
 /* 0001a15e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word signal_v
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16253,7 +29049,25 @@ __pforth void forth_signal_v(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_signal_v\n"
+	"	.type forth_signal_v, @function\n"
+	"	.section .text.forth_signal_v.1a15e,\"ax\",@progbits\n"
+	"forth_signal_v:\n"
+	"	movem.l %a0,-(%sp)\n"
+	"	move.l (%a6)+,%d1\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	andi.w #0xfff,%d1\n"
+	"	moveq #0x19,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	movem.l (%sp)+,%a0\n"
+	"	rts\n"
+	"	.size forth_signal_v, .-forth_signal_v\n"
+);
+
 /* 0001a176 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word wait_v
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16273,7 +29087,25 @@ __pforth void forth_wait_v(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_wait_v\n"
+	"	.type forth_wait_v, @function\n"
+	"	.section .text.forth_wait_v.1a176,\"ax\",@progbits\n"
+	"forth_wait_v:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.l (%a6)+,%d2\n"
+	"	move.l (%a6)+,%d1\n"
+	"	moveq #0x1a,%d7\n"
+	"	bsr.w forth_psos_call\n"
+	"	andi.l #0xffff,%d1\n"
+	"	move.l %d1,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_wait_v, .-forth_wait_v\n"
+);
+
 /* 0001a18c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word get_v
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16290,7 +29122,24 @@ __pforth void forth_get_v(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_get_v\n"
+	"	.type forth_get_v, @function\n"
+	"	.section .text.forth_get_v.1a18c,\"ax\",@progbits\n"
+	"forth_get_v:\n"
+	"	move.l (%a6)+,%d2\n"
+	"	move.l (%a6)+,%d1\n"
+	"	moveq #0x1b,%d7\n"
+	"	trap #0x3\n"
+	"	move.w %d1,-(%a6)\n"
+	"	clr.w -(%a6)\n"
+	"	rts\n"
+	"	.size forth_get_v, .-forth_get_v\n"
+);
+
 /* 0001a19a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word pause
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16305,7 +29154,21 @@ __pforth long forth_pause(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_pause\n"
+	"	.type forth_pause, @function\n"
+	"	.section .text.forth_pause.1a19a,\"ax\",@progbits\n"
+	"forth_pause:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	moveq #0x1c,%d7\n"
+	"	trap #0x3\n"
+	"	rts\n"
+	"	.size forth_pause, .-forth_pause\n"
+);
+
 /* 0001a1a2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word mode
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16321,7 +29184,24 @@ __pforth void forth_mode(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_mode\n"
+	"	.type forth_mode, @function\n"
+	"	.section .text.forth_mode.1a1a2,\"ax\",@progbits\n"
+	"forth_mode:\n"
+	"	move.l (%a6)+,%d1\n"
+	"	move.l (%a6)+,%d0\n"
+	"	moveq #0x20,%d7\n"
+	"	trap #0x3\n"
+	"	andi.l #0xff,%d0\n"
+	"	move.l %d0,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_mode, .-forth_mode\n"
+);
+
 /* 0001a1b4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the console words' I/O call, reporting an error
    psos.md
@@ -16373,7 +29253,40 @@ __pforth void forth_psos_io_call(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_psos_io_call\n"
+	"	.type forth_psos_io_call, @function\n"
+	"	.section .text.forth_psos_io_call.1a1b4,\"ax\",@progbits\n"
+	"forth_psos_io_call:\n"
+	"	movem.l %d7/%d0,-(%a6)\n"
+	"	trap #0x4\n"
+	"	tst.b %d7\n"
+	"	bne.w .Lg_1a1e2\n"
+	"	addq.l #0x8,%a6\n"
+	"	rts\n"
+	"	.byte 0x49,0x2f,0x4f,0x20,0x65,0x72,0x72,0x6f,0x72,0x00\n"
+	"	.byte 0x20,0x44,0x65,0x76,0x69,0x63,0x65,0x3a,0x00\n"
+	"	.byte 0x20,0x46,0x75,0x6e,0x63,0x74,0x69,0x6f,0x6e,0x3a,0x00\n"
+	".Lg_1a1e2:\n"
+	"	andi.l #0x7f,%d7\n"
+	"	move.l %d7,-(%a6)\n"
+	"	move.l #0x1a1c4,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	bsr.w forth_u_dot_x\n"
+	"	move.l #0x1a1ce,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	bsr.w forth_u_dot_x\n"
+	"	move.l #0x1a1d7,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	bsr.w forth_u_dot_x\n"
+	"	move.l #0x18ddf,%d0\n"
+	"	bra.w forth_parse_number-0xa0\n"
+	"	.size forth_psos_io_call, .-forth_psos_io_call\n"
+);
+
 /* 0001a21e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word dev_init
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16388,7 +29301,23 @@ __pforth void forth_dev_init(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_dev_init\n"
+	"	.type forth_dev_init, @function\n"
+	"	.section .text.forth_dev_init.1a21e,\"ax\",@progbits\n"
+	"forth_dev_init:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	moveq #0x0,%d7\n"
+	"	.byte 0x61 | bsr.b 0x0001a1b4\n"
+	"	.reloc ., R_68K_PC8, forth_psos_io_call-1\n"
+	"	.byte 0\n"
+	"	rts\n"
+	"	.size forth_dev_init, .-forth_dev_init\n"
+);
+
 /* 0001a226 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word dev_open
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16403,7 +29332,23 @@ __pforth void forth_dev_open(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_dev_open\n"
+	"	.type forth_dev_open, @function\n"
+	"	.section .text.forth_dev_open.1a226,\"ax\",@progbits\n"
+	"forth_dev_open:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	moveq #0x1,%d7\n"
+	"	.byte 0x61 | bsr.b 0x0001a1b4\n"
+	"	.reloc ., R_68K_PC8, forth_psos_io_call-1\n"
+	"	.byte 0\n"
+	"	rts\n"
+	"	.size forth_dev_open, .-forth_dev_open\n"
+);
+
 /* 0001a22e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word dev_close
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16418,7 +29363,23 @@ __pforth void forth_dev_close(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_dev_close\n"
+	"	.type forth_dev_close, @function\n"
+	"	.section .text.forth_dev_close.1a22e,\"ax\",@progbits\n"
+	"forth_dev_close:\n"
+	"	move.l (%a6)+,%d0\n"
+	"	moveq #0x2,%d7\n"
+	"	.byte 0x61 | bsr.b 0x0001a1b4\n"
+	"	.reloc ., R_68K_PC8, forth_psos_io_call-1\n"
+	"	.byte 0\n"
+	"	rts\n"
+	"	.size forth_dev_close, .-forth_dev_close\n"
+);
+
 /* 0001a236 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word dev_read
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16437,7 +29398,26 @@ __pforth void forth_dev_read(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_dev_read\n"
+	"	.type forth_dev_read, @function\n"
+	"	.section .text.forth_dev_read.1a236,\"ax\",@progbits\n"
+	"forth_dev_read:\n"
+	"	movem.l %a1,-(%sp)\n"
+	"	move.l (%a6)+,%d2\n"
+	"	movea.l (%a6)+,%a1\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.w #0x3,%d7\n"
+	"	bsr.w forth_psos_io_call\n"
+	"	move.l %d2,-(%a6)\n"
+	"	movem.l (%sp)+,%a1\n"
+	"	rts\n"
+	"	.size forth_dev_read, .-forth_dev_read\n"
+);
+
 /* 0001a250 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word dev_write
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16456,7 +29436,26 @@ __pforth void forth_dev_write(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_dev_write\n"
+	"	.type forth_dev_write, @function\n"
+	"	.section .text.forth_dev_write.1a250,\"ax\",@progbits\n"
+	"forth_dev_write:\n"
+	"	movem.l %a1/%a0,-(%sp)\n"
+	"	move.l (%a6)+,%d2\n"
+	"	movea.l (%a6)+,%a0\n"
+	"	move.l (%a6)+,%d0\n"
+	"	move.w #0x4,%d7\n"
+	"	bsr.w forth_psos_io_call\n"
+	"	move.l %d2,-(%a6)\n"
+	"	movem.l (%sp)+,%a0/%a1\n"
+	"	rts\n"
+	"	.size forth_dev_write, .-forth_dev_write\n"
+);
+
 /* 0001a26a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word dev_ctrl
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16471,7 +29470,23 @@ __pforth void forth_dev_ctrl(long *sp)
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_dev_ctrl\n"
+	"	.type forth_dev_ctrl, @function\n"
+	"	.section .text.forth_dev_ctrl.1a26a,\"ax\",@progbits\n"
+	"forth_dev_ctrl:\n"
+	"	move.l (%a6)+,%d2\n"
+	"	move.l (%a6)+,%d0\n"
+	"	moveq #0x1,%d3\n"
+	"	moveq #0x5,%d7\n"
+	"	bsr.w forth_psos_io_call\n"
+	"	rts\n"
+	"	.size forth_dev_ctrl, .-forth_dev_ctrl\n"
+);
+
 /* 0001a278 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word !iodev
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16486,13 +29501,35 @@ __pforth void forth_store_iodev(forth_user_end user,long *sp)
   __m68k_trap(4);
   __m68k_trap(4);
   lVar1 = *sp;
-  *sp = (uint)(ushort)((forth_user *)(user + -0x28))->iodev;
-  ((forth_user *)(user + -0x28))->iodev = (short)lVar1;
+  *sp = (uint)(ushort)((forth_user_area *)(user + -0x28))->iodev;
+  ((forth_user_area *)(user + -0x28))->iodev = (short)lVar1;
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl forth_store_iodev\n"
+	"	.type forth_store_iodev, @function\n"
+	"	.section .text.forth_store_iodev.1a278,\"ax\",@progbits\n"
+	"forth_store_iodev:\n"
+	"	move.w (-0x28,%a5),%d0\n"
+	"	moveq #0x2,%d7\n"
+	"	trap #0x4\n"
+	"	move.l (%a6),%d0\n"
+	"	moveq #0x1,%d7\n"
+	"	trap #0x4\n"
+	"	move.l (%a6)+,%d0\n"
+	"	moveq #0x0,%d1\n"
+	"	move.w (-0x28,%a5),%d1\n"
+	"	move.l %d1,-(%a6)\n"
+	"	move.w %d0,(-0x28,%a5)\n"
+	"	rts\n"
+	"	.size forth_store_iodev, .-forth_store_iodev\n"
+);
+
 /* 0001ad20 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the pForth word user
    Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
@@ -16506,6 +29543,17 @@ __pforth void forth_user(long *sp)
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl forth_user\n"
+	"	.type forth_user, @function\n"
+	"	.section .text.forth_user.1ad20,\"ax\",@progbits\n"
+	"forth_user:\n"
+	"	move.l #0x1ad0e,-(%a6)\n"
+	"	rts\n"
+	"	.size forth_user, .-forth_user\n"
+);
 
 /* 0001ad28 */
 
@@ -16595,13 +29643,14 @@ undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,short
 
 
 /* 0001ae36 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* links the word at A4 to the latest in the dictionary
    Not a C function (register; read): its arguments and results in registers.  In: A4 void *word.
    console.md */
 
-__regcall void pforth_link_word(void *word __asm("a4"))
+__regcall void pforth_link_word(void *word /* a4 */)
 
 {
   *(void **)word = ram0x001009ee;
@@ -16609,6 +29658,19 @@ __regcall void pforth_link_word(void *word __asm("a4"))
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl pforth_link_word\n"
+	"	.type pforth_link_word, @function\n"
+	"	.section .text.pforth_link_word.1ae36,\"ax\",@progbits\n"
+	"pforth_link_word:\n"
+	"	move.l %a4,%d0\n"
+	"	move.l (__ghidra_1009ee).l,(%a4)+\n"
+	"	move.l %d0,(__ghidra_1009ee).l\n"
+	"	rts\n"
+	"	.size pforth_link_word, .-pforth_link_word\n"
+);
 
 /* 0001ae46 */
 
@@ -16651,26 +29713,41 @@ undefined4 console_task_create(void)
 
 
 /* 0001af80 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the console string device's open and close: do nothing
    Not a C function (register; read): its arguments and results in registers.  Out: D7 int error.
    console.md */
 
-__regcall int string_device_open(void) /* out D7 int error */
+/* out D7 int error */
+__regcall int string_device_open(void)
 
 {
   return 0;
 }
 
 
+#endif
+__asm__(
+	"	.globl string_device_open\n"
+	"	.type string_device_open, @function\n"
+	"	.section .text.string_device_open.1af80,\"ax\",@progbits\n"
+	"string_device_open:\n"
+	"	moveq #0x0,%d7\n"
+	"	rts\n"
+	"	.size string_device_open, .-string_device_open\n"
+);
+
 /* 0001af84 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the console string device's init: clears the string at 0x100ba8
    Not a C function (register; read): its arguments and results in registers.  Out: D7 int error.
    console.md */
 
-__regcall int string_device_init(void) /* out D7 int error */
+/* out D7 int error */
+__regcall int string_device_init(void)
 
 {
   _DAT_00100ba8 = 0;
@@ -16678,7 +29755,20 @@ __regcall int string_device_init(void) /* out D7 int error */
 }
 
 
+#endif
+__asm__(
+	"	.globl string_device_init\n"
+	"	.type string_device_init, @function\n"
+	"	.section .text.string_device_init.1af84,\"ax\",@progbits\n"
+	"string_device_init:\n"
+	"	moveq #0x0,%d7\n"
+	"	move.l %d7,(__ghidra_100ba8).l\n"
+	"	rts\n"
+	"	.size string_device_init, .-string_device_init\n"
+);
+
 /* 0001af8e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the console string device's control: sets the string console_read_from_string reads
@@ -16686,7 +29776,8 @@ __regcall int string_device_init(void) /* out D7 int error */
    Out: D7 int error.
    console.md */
 
-__regcall int string_device_control(char *string __asm("d2")) /* out D7 int error */
+/* out D7 int error */
+__regcall int string_device_control(char *string /* d2 */)
 
 {
   _DAT_00100ba8 = string;
@@ -16694,7 +29785,20 @@ __regcall int string_device_control(char *string __asm("d2")) /* out D7 int erro
 }
 
 
+#endif
+__asm__(
+	"	.globl string_device_control\n"
+	"	.type string_device_control, @function\n"
+	"	.section .text.string_device_control.1af8e,\"ax\",@progbits\n"
+	"string_device_control:\n"
+	"	move.l %d2,(__ghidra_100ba8).l\n"
+	"	moveq #0x0,%d7\n"
+	"	rts\n"
+	"	.size string_device_control, .-string_device_control\n"
+);
+
 /* 0001af98 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* reads a line into the buffer at A1, D2 long, from the string at 0x100ba8 while one is set, else
@@ -16736,6 +29840,37 @@ __regcall void console_read_from_string(void)
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl console_read_from_string\n"
+	"	.type console_read_from_string, @function\n"
+	"	.section .text.console_read_from_string.1af98,\"ax\",@progbits\n"
+	"console_read_from_string:\n"
+	"	movem.l %a0/%d1,-(%sp)\n"
+	"	move.l (__ghidra_100ba8).l,%d1\n"
+	"	beq.w .Lg_1afca\n"
+	"	movea.l %d1,%a0\n"
+	"	tst.b (%a0)\n"
+	"	beq.w .Lg_1afca\n"
+	"	subq.l #0x1,%d2\n"
+	"	bmi.w .Lg_1afc0\n"
+	".Lg_1afb4:\n"
+	"	move.b (%a0)+,(%a1)+\n"
+	"	dbeq %d2,.Lg_1afb4\n"
+	"	move.l %a0,(__ghidra_100ba8).l\n"
+	".Lg_1afc0:\n"
+	"	move.l %a1,%d2\n"
+	"	moveq #0x0,%d7\n"
+	"	movem.l (%sp)+,%d1/%a0\n"
+	"	rts\n"
+	".Lg_1afca:\n"
+	"	suba.l %a0,%a0\n"
+	"	moveq #0x5,%d7\n"
+	"	jsr (psos_call).l\n"
+	"	bra.b .Lg_1afc0\n"
+	"	.size console_read_from_string, .-console_read_from_string\n"
+);
 
 /* 0001afd6 */
 
@@ -17120,7 +30255,7 @@ void diag_get_time(void)
   uVar1 = get_date_time((uint32_t *)&local_c,&uStack_8);
   bVar2 = time_valid();
   printf("%02d/%02d/%04d\t%02d:%02d:%02d, %1d, valid: %1d\r\n",(uint)local_a,(uint)local_9,
-         (uint)local_c,(uint)uStack_8._1_1_,(uint)uStack_8._2_1_,(uint)(byte)uStack_8,uVar1 & 0xff,
+         (uint)local_c,(uint)__ghidra_piece(unsigned char, uStack_8, 1),(uint)__ghidra_piece(unsigned char, uStack_8, 2),(uint)(byte)uStack_8,uVar1 & 0xff,
          (uint)bVar2);
   return;
 }
@@ -17137,7 +30272,7 @@ void diag_set_time(undefined2 param_1,undefined1 param_2,undefined1 param_3,unde
   byte bVar1;
   undefined4 local_8;
   
-  local_8 = CONCAT31(CONCAT21(CONCAT11(local_8._0_1_,param_4),param_5),param_6);
+  local_8 = CONCAT31(CONCAT21(CONCAT11(__ghidra_piece(unsigned char, local_8, 0),param_4),param_5),param_6);
   bVar1 = set_timedate(CONCAT31(CONCAT21(param_1,param_2),param_3),local_8);
   if (bVar1 != 0) {
     printf("set_timedate error: %2X\r\n",(uint)bVar1);
@@ -18984,11 +32119,12 @@ LAB_0001d8ca:
 
 
 /* 0001d906 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* releases channel B's read or write mutex, D0 choosing
    Not a C function (register; read): its arguments and results in registers.  In: D0 char write. */
 
-__regcall void drtb_unlock(char write __asm("d0"))
+__regcall void drtb_unlock(char write /* d0 */)
 
 {
   uint32_t *mutex;
@@ -19002,12 +32138,31 @@ __regcall void drtb_unlock(char write __asm("d0"))
 }
 
 
+#endif
+__asm__(
+	"	.globl drtb_unlock\n"
+	"	.type drtb_unlock, @function\n"
+	"	.section .text.drtb_unlock.1d906,\"ax\",@progbits\n"
+	"drtb_unlock:\n"
+	"	move.l %a1,-(%sp)\n"
+	"	lea (0x10310a).l,%a1\n"
+	"	tst.b %d0\n"
+	"	beq.b .Lg_1d918\n"
+	"	lea (0x103122).l,%a1\n"
+	".Lg_1d918:\n"
+	"	jsr (mutex_release).l\n"
+	"	movea.l (%sp)+,%a1\n"
+	"	rts\n"
+	"	.size drtb_unlock, .-drtb_unlock\n"
+);
+
 /* 0001d922 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* takes channel B's read or write mutex, D0 choosing
    Not a C function (register; read): its arguments and results in registers.  In: D0 char write. */
 
-__regcall void drtb_lock(char write __asm("d0"))
+__regcall void drtb_lock(char write /* d0 */)
 
 {
   uint32_t *mutex;
@@ -19020,6 +32175,24 @@ __regcall void drtb_lock(char write __asm("d0"))
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl drtb_lock\n"
+	"	.type drtb_lock, @function\n"
+	"	.section .text.drtb_lock.1d922,\"ax\",@progbits\n"
+	"drtb_lock:\n"
+	"	move.l %a1,-(%sp)\n"
+	"	lea (0x10310a).l,%a1\n"
+	"	tst.b %d0\n"
+	"	beq.b .Lg_1d934\n"
+	"	lea (0x103122).l,%a1\n"
+	".Lg_1d934:\n"
+	"	jsr (mutex_acquire).l\n"
+	"	movea.l (%sp)+,%a1\n"
+	"	rts\n"
+	"	.size drtb_lock, .-drtb_lock\n"
+);
 
 /* 0001d93e */
 
@@ -20023,6 +33196,7 @@ void duartb_transmit_interrupt(void)
 
 
 /* 0001eaf4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* Not a C function: an exception handler, entered by the processor through the primary table's
    vector 67 (user_67), not called; returns through trap #5, the kernel's return from interrupt. */
@@ -20078,6 +33252,75 @@ __exception void primary_user_67(void)
   } while( true );
 }
 
+
+#endif
+__asm__(
+	"	.globl primary_user_67\n"
+	"	.type primary_user_67, @function\n"
+	"	.section .text.primary_user_67.1eaf4,\"ax\",@progbits\n"
+	"primary_user_67:\n"
+	"	movem.l %a6/%a5/%a1/%a0/%d1/%d0,-(%sp)\n"
+	"	move.l %a2,-(%sp)\n"
+	"	movea.l #0x102ed0,%a2\n"
+	"	tst.b (__ghidra_102fe7).l\n"
+	"	beq.b .Lg_1eb32\n"
+	"	move.b (DUART_ISR_IMR).l,%d0\n"
+	"	and.b (0x4,%a2),%d0\n"
+	"	andi.b #0x2,%d0\n"
+	"	beq.b .Lg_1eb1c\n"
+	"	jsr (duart_test_rx_a:w,%pc)\n"
+	".Lg_1eb1c:\n"
+	"	move.b (DUART_ISR_IMR).l,%d0\n"
+	"	and.b (0x4,%a2),%d0\n"
+	"	andi.b #0x1,%d0\n"
+	"	beq.b .Lg_1eb5a\n"
+	"	jsr (duart_test_tx_a:w,%pc)\n"
+	"	bra.b .Lg_1eb5a\n"
+	".Lg_1eb32:\n"
+	"	move.b (DUART_ISR_IMR).l,%d0\n"
+	"	and.b (0x4,%a2),%d0\n"
+	"	andi.b #0x2,%d0\n"
+	"	beq.b .Lg_1eb46\n"
+	"	jsr (duarta_isr:w,%pc)\n"
+	".Lg_1eb46:\n"
+	"	move.b (DUART_ISR_IMR).l,%d0\n"
+	"	and.b (0x4,%a2),%d0\n"
+	"	andi.b #0x1,%d0\n"
+	"	beq.b .Lg_1eb5a\n"
+	"	jsr (duarta_tx_interrupt:w,%pc)\n"
+	".Lg_1eb5a:\n"
+	"	tst.b (__ghidra_1030fb).l\n"
+	"	beq.b .Lg_1eb8c\n"
+	"	move.b (DUART_ISR_IMR).l,%d0\n"
+	"	and.b (0x4,%a2),%d0\n"
+	"	andi.b #0x20,%d0\n"
+	"	beq.b .Lg_1eb76\n"
+	"	jsr (duart_test_rx_b:w,%pc)\n"
+	".Lg_1eb76:\n"
+	"	move.b (DUART_ISR_IMR).l,%d0\n"
+	"	and.b (0x4,%a2),%d0\n"
+	"	andi.b #0x10,%d0\n"
+	"	beq.b .Lg_1ebb4\n"
+	"	jsr (duart_test_tx_b:w,%pc)\n"
+	"	bra.b .Lg_1ebb4\n"
+	".Lg_1eb8c:\n"
+	"	move.b (DUART_ISR_IMR).l,%d0\n"
+	"	and.b (0x4,%a2),%d0\n"
+	"	andi.b #0x20,%d0\n"
+	"	beq.b .Lg_1eba0\n"
+	"	jsr (duartb_isr:w,%pc)\n"
+	".Lg_1eba0:\n"
+	"	move.b (DUART_ISR_IMR).l,%d0\n"
+	"	and.b (0x4,%a2),%d0\n"
+	"	andi.b #0x10,%d0\n"
+	"	beq.b .Lg_1ebb4\n"
+	"	jsr (duartb_transmit_interrupt:w,%pc)\n"
+	".Lg_1ebb4:\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5/%a6\n"
+	"	trap #0x5\n"
+	"	.size primary_user_67, .-primary_user_67\n"
+);
 
 /* 0001ebbc */
 
@@ -20931,6 +34174,7 @@ LAB_0001f94c:
 
 
 /* 0001f988 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* Not a C function: an exception handler, entered by the processor through the primary table's
@@ -21036,6 +34280,226 @@ __exception void primary_user_64(void)
   } while( true );
 }
 
+
+#endif
+__asm__(
+	"	.globl primary_user_64\n"
+	"	.type primary_user_64, @function\n"
+	"	.section .text.primary_user_64.1f988,\"ax\",@progbits\n"
+	"primary_user_64:\n"
+	"	link.w %a6,#-0x2\n"
+	"	movem.l %a5/%a1/%a0/%d1/%d0,-(%sp)\n"
+	"	movem.l %a4/%a3/%a2/%d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
+	"	movea.l #0x103154,%a2\n"
+	"	movea.l #0x103294,%a3\n"
+	"	movea.l #0x103297,%a4\n"
+	"	move.l #0x1f176,%d4\n"
+	"	move.l #0x172e8,%d5\n"
+	"	move.l #0x103188,%d6\n"
+	"	move.l #0x10328a,%d7\n"
+	"	move.w (SCSR).l,%d2\n"
+	"	move.w (SCDR).l,%d3\n"
+	"	move.w %d2,%d0\n"
+	"	andi.w #0xb,%d0\n"
+	"	or.b %d0,(__ghidra_103295).l\n"
+	"	move.w %d2,%d0\n"
+	"	andi.w #0x40,%d0\n"
+	"	beq.w .Lg_1fb06\n"
+	"	tst.b (__ghidra_103299).l\n"
+	"	beq.b .Lg_1f9f4\n"
+	"	move.w %d3,%d0\n"
+	"	moveq #0x7f,%d1\n"
+	"	and.b %d1,%d0\n"
+	"	move.b %d0,(-0x2,%a6)\n"
+	"	bra.b .Lg_1f9f8\n"
+	".Lg_1f9f4:\n"
+	"	move.b %d3,(-0x2,%a6)\n"
+	".Lg_1f9f8:\n"
+	"	cmpi.b #0x3,(-0x2,%a6)\n"
+	"	bne.b .Lg_1fa4e\n"
+	"	move.l (0x8,%a2),%d0\n"
+	"	cmp.l (__ghidra_1037e8).l,%d0\n"
+	"	bne.b .Lg_1fa4e\n"
+	"	tst.l (0x8,%a2)\n"
+	"	beq.b .Lg_1fa30\n"
+	"	pea (0x800).w\n"
+	"	move.l (0x8,%a2),-(%sp)\n"
+	"	movea.l %d5,%a0\n"
+	"	jsr (%a0)\n"
+	"	addq.l #0x8,%sp\n"
+	"	tst.b %d0\n"
+	"	beq.b .Lg_1fa30\n"
+	"	pea (0x2039b).l\n"
+	"	movea.l %d4,%a0\n"
+	"	jsr (%a0)\n"
+	"	addq.l #0x4,%sp\n"
+	".Lg_1fa30:\n"
+	"	tst.b (%a4)\n"
+	"	beq.b .Lg_1fa38\n"
+	"	andi.b #0x7f,(%a3)\n"
+	".Lg_1fa38:\n"
+	"	tst.b (__ghidra_10329a).l\n"
+	"	bne.w .Lg_1fb06\n"
+	"	ori.w #0x80,(SCCR1).l\n"
+	"	bra.w .Lg_1fb06\n"
+	".Lg_1fa4e:\n"
+	"	cmpi.b #0x11,(-0x2,%a6)\n"
+	"	bne.b .Lg_1fa76\n"
+	"	tst.b (%a4)\n"
+	"	beq.w .Lg_1fb06\n"
+	"	andi.b #0x7f,(%a3)\n"
+	"	tst.b (__ghidra_10329a).l\n"
+	"	bne.w .Lg_1fb06\n"
+	"	ori.w #0x80,(SCCR1).l\n"
+	"	bra.w .Lg_1fb06\n"
+	".Lg_1fa76:\n"
+	"	cmpi.b #0x13,(-0x2,%a6)\n"
+	"	bne.b .Lg_1fa9a\n"
+	"	tst.b (%a4)\n"
+	"	beq.w .Lg_1fb06\n"
+	"	ori.b #0x80,(%a3)\n"
+	"	tst.b (__ghidra_10329c).l\n"
+	"	bne.b .Lg_1fb06\n"
+	"	andi.w #-0x81,(SCCR1).l\n"
+	"	bra.b .Lg_1fb06\n"
+	".Lg_1fa9a:\n"
+	"	tst.l (0x8,%a2)\n"
+	"	beq.b .Lg_1fb06\n"
+	"	movea.l %d6,%a0\n"
+	"	move.b (%a0),%d1\n"
+	"	addq.b #0x1,(%a0)\n"
+	"	moveq #0x0,%d0\n"
+	"	move.b %d1,%d0\n"
+	"	.byte 0x11,0xae,0xff,0xfe,0x09,0xb0,0x00,0x10,0x31,0x8a | move.b (-0x2,A6),(0x10318a,-,D0*0x1)\n"
+	"	move.b (%a0),%d0\n"
+	"	cmp.b (__ghidra_103189).l,%d0\n"
+	"	bne.b .Lg_1fac6\n"
+	"	ori.b #0x8,(__ghidra_103295).l\n"
+	".Lg_1fac6:\n"
+	"	move.b (__ghidra_103189).l,%d0\n"
+	"	movea.l %d6,%a0\n"
+	"	sub.b (%a0),%d0\n"
+	"	cmpi.b #0x40,%d0\n"
+	"	bcc.b .Lg_1fae8\n"
+	"	ori.b #0x20,(%a3)\n"
+	"	tst.b (%a4)\n"
+	"	beq.b .Lg_1fae8\n"
+	"	move.b #0x13,-(%sp)\n"
+	"	jsr (sci_putc_polled:w,%pc)\n"
+	"	addq.l #0x2,%sp\n"
+	".Lg_1fae8:\n"
+	"	pea (0x40).w\n"
+	"	move.l (0x8,%a2),-(%sp)\n"
+	"	movea.l %d5,%a0\n"
+	"	jsr (%a0)\n"
+	"	addq.l #0x8,%sp\n"
+	"	tst.b %d0\n"
+	"	beq.b .Lg_1fb06\n"
+	"	pea (0x203b5).l\n"
+	"	movea.l %d4,%a0\n"
+	"	jsr (%a0)\n"
+	"	addq.l #0x4,%sp\n"
+	".Lg_1fb06:\n"
+	"	moveq #0x0,%d0\n"
+	"	move.w %d2,%d0\n"
+	"	andi.w #0x100,%d0\n"
+	"	moveq #0x0,%d1\n"
+	"	move.w (SCCR1).l,%d1\n"
+	"	add.l %d1,%d1\n"
+	"	and.l %d1,%d0\n"
+	"	beq.w .Lg_1fbf6\n"
+	"	move.b #0x1,(__ghidra_10329b).l\n"
+	"	tst.b (__ghidra_103292).l\n"
+	"	beq.b .Lg_1fb6e\n"
+	"	tst.b (__ghidra_103298).l\n"
+	"	beq.b .Lg_1fb50\n"
+	"	movea.l #0x10328e,%a1\n"
+	"	movea.l (%a1),%a0\n"
+	"	addq.l #0x1,(%a1)\n"
+	"	lea (0x80).w,%a1\n"
+	"	move.l %a1,%d0\n"
+	"	or.b (%a0),%d0\n"
+	"	move.w %d0,(SCDR).l\n"
+	"	bra.b .Lg_1fb64\n"
+	".Lg_1fb50:\n"
+	"	movea.l #0x10328e,%a1\n"
+	"	movea.l (%a1),%a0\n"
+	"	addq.l #0x1,(%a1)\n"
+	"	moveq #0x0,%d0\n"
+	"	move.b (%a0),%d0\n"
+	"	move.w %d0,(SCDR).l\n"
+	".Lg_1fb64:\n"
+	"	subq.b #0x1,(__ghidra_103292).l\n"
+	"	bra.w .Lg_1fbee\n"
+	".Lg_1fb6e:\n"
+	"	movea.l %d7,%a0\n"
+	"	movea.l (%a0),%a0\n"
+	"	tst.b (%a0)\n"
+	"	beq.b .Lg_1fbbe\n"
+	"	moveq #0x0,%d0\n"
+	"	move.b (%a3),%d0\n"
+	"	ext.w %d0\n"
+	"	andi.w #0x80,%d0\n"
+	"	tst.l %d0\n"
+	"	beq.b .Lg_1fb8e\n"
+	"	andi.w #-0x81,(SCCR1).l\n"
+	"	bra.b .Lg_1fbee\n"
+	".Lg_1fb8e:\n"
+	"	tst.b (__ghidra_103298).l\n"
+	"	beq.b .Lg_1fbac\n"
+	"	movea.l %d7,%a1\n"
+	"	movea.l (%a1),%a0\n"
+	"	addq.l #0x1,(%a1)\n"
+	"	move.b (%a0),%d0\n"
+	"	extb.l %d0\n"
+	"	ori.w #0x80,%d0\n"
+	"	move.w %d0,(SCDR).l\n"
+	"	bra.b .Lg_1fbee\n"
+	".Lg_1fbac:\n"
+	"	movea.l %d7,%a1\n"
+	"	movea.l (%a1),%a0\n"
+	"	addq.l #0x1,(%a1)\n"
+	"	move.b (%a0),%d0\n"
+	"	ext.w %d0\n"
+	"	move.w %d0,(SCDR).l\n"
+	"	bra.b .Lg_1fbee\n"
+	".Lg_1fbbe:\n"
+	"	andi.w #-0x81,(SCCR1).l\n"
+	"	tst.l (__ghidra_103178).l\n"
+	"	beq.b .Lg_1fbee\n"
+	"	pea (0x200).w\n"
+	"	move.l (__ghidra_103178).l,-(%sp)\n"
+	"	movea.l %d5,%a0\n"
+	"	jsr (%a0)\n"
+	"	addq.l #0x8,%sp\n"
+	"	tst.b %d0\n"
+	"	beq.b .Lg_1fbee\n"
+	"	pea (0x203d3).l\n"
+	"	movea.l %d4,%a0\n"
+	"	jsr (%a0)\n"
+	"	addq.l #0x4,%sp\n"
+	".Lg_1fbee:\n"
+	"	clr.b (__ghidra_10329b).l\n"
+	"	bra.b .Lg_1fc14\n"
+	".Lg_1fbf6:\n"
+	"	moveq #0x0,%d0\n"
+	"	move.w %d2,%d0\n"
+	"	andi.w #0x80,%d0\n"
+	"	moveq #0x0,%d1\n"
+	"	move.w (SCCR1).l,%d1\n"
+	"	add.l %d1,%d1\n"
+	"	and.l %d1,%d0\n"
+	"	tst.l %d0\n"
+	"	beq.b .Lg_1fc14\n"
+	"	move.w %d2,%d0\n"
+	"	andi.w #0x100,%d0\n"
+	".Lg_1fc14:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%d6/%d7/%a2/%a3/%a4\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5\n"
+	"	unlk %a6\n"
+	"	trap #0x5\n"
+	"	.size primary_user_64, .-primary_user_64\n"
+);
 
 /* 0001fc20 */
 
@@ -21730,30 +35194,56 @@ void qspi_acquire(void)
 
 
 /* 000208fa */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the QSPI device's control: does nothing
    Not a C function (register; read): its arguments and results in registers.  Out: D7 int error.
    psos.md */
 
-__regcall int qspi_control(void) /* out D7 int error */
+/* out D7 int error */
+__regcall int qspi_control(void)
 
 {
   return 0;
 }
 
 
+#endif
+__asm__(
+	"	.globl qspi_control\n"
+	"	.type qspi_control, @function\n"
+	"	.section .text.qspi_control.208fa,\"ax\",@progbits\n"
+	"qspi_control:\n"
+	"	moveq #0x0,%d7\n"
+	"	rts\n"
+	"	.size qspi_control, .-qspi_control\n"
+);
+
 /* 000208fe */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the QSPI device's open and close: do nothing
    Not a C function (register; read): its arguments and results in registers.  Out: D7 int error.
    psos.md */
 
-__regcall int qspi_open(void) /* out D7 int error */
+/* out D7 int error */
+__regcall int qspi_open(void)
 
 {
   return 0;
 }
 
+
+#endif
+__asm__(
+	"	.globl qspi_open\n"
+	"	.type qspi_open, @function\n"
+	"	.section .text.qspi_open.208fe,\"ax\",@progbits\n"
+	"qspi_open:\n"
+	"	moveq #0x0,%d7\n"
+	"	rts\n"
+	"	.size qspi_open, .-qspi_open\n"
+);
 
 /* 00020902 */
 
@@ -21824,6 +35314,7 @@ void qspi_isr(void)
 
 
 /* 00020a10 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* Not a C function: an exception handler, entered by the processor through the primary table's
    vector 65 (user_65), not called; returns through trap #5, the kernel's return from interrupt. */
@@ -21852,14 +35343,51 @@ __exception void primary_user_65(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl primary_user_65\n"
+	"	.type primary_user_65, @function\n"
+	"	.section .text.primary_user_65.20a10,\"ax\",@progbits\n"
+	"primary_user_65:\n"
+	"	link.w %a6,#-0x2\n"
+	"	movem.l %a5/%a1/%a0/%d1/%d0,-(%sp)\n"
+	"	move.l %a2,-(%sp)\n"
+	"	movea.l #0xfffc1f,%a2\n"
+	"	move.b (%a2),%d0\n"
+	"	andi.b #0x40,%d0\n"
+	"	beq.b .Lg_20a36\n"
+	"	pea (0x20c70).l\n"
+	"	jsr (fatal_error).l\n"
+	"	addq.l #0x4,%sp\n"
+	".Lg_20a36:\n"
+	"	move.b (%a2),%d0\n"
+	"	andi.b #0x20,%d0\n"
+	"	beq.b .Lg_20a4c\n"
+	"	pea (0x20c86).l\n"
+	"	jsr (fatal_error).l\n"
+	"	addq.l #0x4,%sp\n"
+	".Lg_20a4c:\n"
+	"	move.b (%a2),%d0\n"
+	"	andi.b #0x80,%d0\n"
+	"	beq.b .Lg_20a58\n"
+	"	jsr (qspi_isr:w,%pc)\n"
+	".Lg_20a58:\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5\n"
+	"	unlk %a6\n"
+	"	trap #0x5\n"
+	"	.size primary_user_65, .-primary_user_65\n"
+);
+
 /* 00020a62 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* takes the QSPI and runs a transfer, D0 the device, A1 the buffers and D2 the count
    Not a C function (register; read): its arguments and results in registers.  In: D0 char device,
    A1 void *buffers, D2 short count. */
 
-__regcall void qspi_transfer_raw(char device __asm("d0"),void *buffers __asm("a1"),short count __asm("d2"))
+__regcall void qspi_transfer_raw(char device /* d0 */,void *buffers /* a1 */,short count /* d2 */)
 
 {
   qspi_acquire();
@@ -21876,14 +35404,46 @@ __regcall void qspi_transfer_raw(char device __asm("d0"),void *buffers __asm("a1
 }
 
 
+#endif
+__asm__(
+	"	.globl qspi_transfer_raw\n"
+	"	.type qspi_transfer_raw, @function\n"
+	"	.section .text.qspi_transfer_raw.20a62,\"ax\",@progbits\n"
+	"qspi_transfer_raw:\n"
+	"	movem.l %a1/%d0,-(%sp)\n"
+	"	jsr (qspi_acquire:w,%pc)\n"
+	"	movem.l (%sp)+,%d0/%a1\n"
+	"	move.l (0x4,%a1),(__ghidra_1032ec).l\n"
+	"	cmpi.b #0xc,%d0\n"
+	"	bne.b .Lg_20a86\n"
+	"	move.w #0x1,(__ghidra_1032f0).l\n"
+	"	bra.b .Lg_20a8c\n"
+	".Lg_20a86:\n"
+	"	move.w %d2,(__ghidra_1032f0).l\n"
+	".Lg_20a8c:\n"
+	"	move.b #0x1,(__ghidra_1032f2).l\n"
+	"	move.b #0x1,-(%sp)\n"
+	"	move.w %d2,-(%sp)\n"
+	"	move.l (%a1),-(%sp)\n"
+	"	move.b %d0,-(%sp)\n"
+	"	jsr (qspi_start:w,%pc)\n"
+	"	lea (0xa,%sp),%sp\n"
+	".Lg_20aa6:\n"
+	"	tst.b (__ghidra_1032f2).l\n"
+	"	bne.b .Lg_20aa6\n"
+	"	rts\n"
+	"	.size qspi_transfer_raw, .-qspi_transfer_raw\n"
+);
+
 /* 00020ab0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the QSPI device's write: queues for the QSPI, then runs the transfer
    Not a C function (register; read): its arguments and results in registers.  In: D0 char device,
    A0 void *buffers, D2 short count.
    psos.md */
 
-__regcall void qspi_write(char device __asm("d0"),void *buffers __asm("a0"),short count __asm("d2"))
+__regcall void qspi_device_write(char device /* d0 */,void *buffers /* a0 */,short count /* d2 */)
 
 {
   char cVar1;
@@ -21895,6 +35455,24 @@ __regcall void qspi_write(char device __asm("d0"),void *buffers __asm("a0"),shor
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl qspi_device_write\n"
+	"	.type qspi_device_write, @function\n"
+	"	.section .text.qspi_device_write.20ab0,\"ax\",@progbits\n"
+	"qspi_device_write:\n"
+	"	clr.b -(%sp)\n"
+	"	move.w %d2,-(%sp)\n"
+	"	move.l %a0,-(%sp)\n"
+	"	move.b %d0,-(%sp)\n"
+	"	jsr (qspi_acquire:w,%pc)\n"
+	"	clr.b (__ghidra_1032f2).l\n"
+	"	jsr (qspi_start:w,%pc)\n"
+	"	lea (0xa,%sp),%sp\n"
+	"	rts\n"
+	"	.size qspi_device_write, .-qspi_device_write\n"
+);
 
 /* 00020acc */
 
@@ -23610,6 +37188,7 @@ void pps_monitors_reset(void)
 
 
 /* 00024d42 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* rounds the decimal record at A2 to D0.w digits: adds 5 at that digit and carries left, a carry
    off the front writing 1 and raising the exponent, and fills the digits after with 0
@@ -23617,7 +37196,7 @@ void pps_monitors_reset(void)
    D0 short digits.
    docs/scpi/README.md, read */
 
-__regcall void scpi_round_decimal(char *record __asm("a2"),short digits __asm("d0"))
+__regcall void scpi_round_decimal(char *record /* a2 */,short digits /* d0 */)
 
 {
   short sVar1;
@@ -23656,7 +37235,46 @@ LAB_00024d6c:
 }
 
 
+#endif
+__asm__(
+	"	.globl scpi_round_decimal\n"
+	"	.type scpi_round_decimal, @function\n"
+	"	.section .text.scpi_round_decimal.24d42,\"ax\",@progbits\n"
+	"scpi_round_decimal:\n"
+	"	addq.l #0x2,%a2\n"
+	"	lea (0x0,%a2,%d0.w*0x1),%a1\n"
+	"	addq.b #0x5,(%a1)\n"
+	".Lg_24d4a:\n"
+	"	cmpi.b #0x39,(%a1)\n"
+	"	ble.b .Lg_24d6c\n"
+	"	subi.b #0xa,(%a1)\n"
+	"	cmpa.l %a1,%a2\n"
+	"	beq.b .Lg_24d5e\n"
+	"	subq.l #0x1,%a1\n"
+	"	addq.b #0x1,(%a1)\n"
+	"	bra.b .Lg_24d4a\n"
+	".Lg_24d5e:\n"
+	"	move.b #0x31,(%a2)\n"
+	"	addq.w #0x1,(0x10,%a2)\n"
+	"	tst.w %d0\n"
+	"	bne.b .Lg_24d6c\n"
+	"	addq.w #0x1,%d0\n"
+	".Lg_24d6c:\n"
+	"	lea (0x0,%a2,%d0.w*0x1),%a1\n"
+	"	neg.w %d0\n"
+	"	addi.w #0xf,%d0\n"
+	"	blt.w .Lg_24d86\n"
+	".Lg_24d7a:\n"
+	"	move.b #0x30,(%a1)+\n"
+	"	dbf %d0,.Lg_24d7a\n"
+	"	lea (0x10,%a2),%a2\n"
+	".Lg_24d86:\n"
+	"	rts\n"
+	"	.size scpi_round_decimal, .-scpi_round_decimal\n"
+);
+
 /* 00024d88 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* writes the decimal record at A0 as NR3 text at A1, D0.w digits: the sign, the first digit, a
    point, the rest, E and the exponent by the digit pairs at 0x25c82; nothing calls it
@@ -23664,7 +37282,7 @@ LAB_00024d6c:
    A1 char *text, D0 short digits.
    docs/scpi/README.md, read */
 
-__regcall void scpi_decimal_to_text_unused(char *record __asm("a0"),char *text __asm("a1"),short digits __asm("d0"))
+__regcall void scpi_decimal_to_text_unused(char *record /* a0 */,char *text /* a1 */,short digits /* d0 */)
 
 {
   char *pcVar1;
@@ -23718,7 +37336,65 @@ __regcall void scpi_decimal_to_text_unused(char *record __asm("a0"),char *text _
 }
 
 
+#endif
+__asm__(
+	"	.globl scpi_decimal_to_text_unused\n"
+	"	.type scpi_decimal_to_text_unused, @function\n"
+	"	.section .text.scpi_decimal_to_text_unused.24d88,\"ax\",@progbits\n"
+	"scpi_decimal_to_text_unused:\n"
+	"	lea (0x12,%a0),%a2\n"
+	"	tst.w (%a0)+\n"
+	"	beq.w .Lg_24d9a\n"
+	"	move.b #0x2d,(%a1)+\n"
+	"	bra.w .Lg_24d9e\n"
+	".Lg_24d9a:\n"
+	"	move.b #0x20,(%a1)+\n"
+	".Lg_24d9e:\n"
+	"	move.b (%a0)+,(%a1)+\n"
+	"	move.b #0x2e,(%a1)+\n"
+	"	subq.w #0x2,%d0\n"
+	".Lg_24da6:\n"
+	"	move.b (%a0)+,(%a1)+\n"
+	"	dbf %d0,.Lg_24da6\n"
+	"	move.b #0x45,(%a1)+\n"
+	"	move.w (%a2),%d1\n"
+	"	subq.w #0x1,%d1\n"
+	"	bge.w .Lg_24dc2\n"
+	"	move.b #0x2d,(%a1)+\n"
+	"	neg.w %d1\n"
+	"	bra.w .Lg_24dc6\n"
+	".Lg_24dc2:\n"
+	"	move.b #0x2b,(%a1)+\n"
+	".Lg_24dc6:\n"
+	"	cmpi.w #0x63,%d1\n"
+	"	ble.w .Lg_24dfa\n"
+	"	cmpi.w #0x134,%d1\n"
+	"	ble.w .Lg_24dda\n"
+	"	move.w #0x135,%d1\n"
+	".Lg_24dda:\n"
+	"	subq.w #0x3,%a1\n"
+	"	move.b #0x45,(%a1)+\n"
+	"	move.b (0x1,%a1),(%a1)+\n"
+	"	move.w %d1,%d0\n"
+	"	ext.l %d1\n"
+	"	divs.w #0x64,%d1\n"
+	"	move.b %d1,(%a1)\n"
+	"	ori.b #0x30,(%a1)+\n"
+	"	muls.w #0x64,%d1\n"
+	"	sub.w %d1,%d0\n"
+	"	move.w %d0,%d1\n"
+	".Lg_24dfa:\n"
+	"	lea (0x25c82).l,%a2\n"
+	"	add.w %d1,%d1\n"
+	"	move.b (0x0,%a2,%d1.w*0x1),(%a1)+\n"
+	"	move.b (0x1,%a2,%d1.w*0x1),(%a1)+\n"
+	"	clr.b (%a1)\n"
+	"	rts\n"
+	"	.size scpi_decimal_to_text_unused, .-scpi_decimal_to_text_unused\n"
+);
+
 /* 00024e18 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the double in D0:D1 as a sign word, ASCII digits, D7 and two more, and the exponent of 0.d1d2...,
    into the record at A0; Z is set on failure, for a subnormal, infinite or NaN double, and its
@@ -23727,7 +37403,8 @@ __regcall void scpi_decimal_to_text_unused(char *record __asm("a0"),char *text _
    value, D7 short digits, A0 char *record.  Returns: ccr.
    docs/scpi/README.md, run */
 
-__regcall uint scpi_double_to_decimal(double value __asm("d0"),short digits __asm("d7"),char *record __asm("a0")) /* returns ccr */
+/* returns ccr */
+__regcall uint scpi_double_to_decimal(double value /* d0 */,short digits /* d7 */,char *record /* a0 */)
 
 {
   undefined1 uVar1;
@@ -23883,14 +37560,226 @@ LAB_00024e22:
 }
 
 
+#endif
+__asm__(
+	"	.globl scpi_double_to_decimal\n"
+	"	.type scpi_double_to_decimal, @function\n"
+	"	.section .text.scpi_double_to_decimal.24e0e,\"ax\",@progbits\n"
+	".Lg_24e0e:\n"
+	"	move.w #-0x8,%d0\n"
+	"	ori #0xff,%ccr\n"
+	"	rts\n"
+	"scpi_double_to_decimal:\n"
+	"	tst.l %d0\n"
+	"	bne.b .Lg_24e38\n"
+	"	tst.l %d1\n"
+	"	bne.b .Lg_24e0e\n"
+	"	clr.w (%a0)+\n"
+	".Lg_24e22:\n"
+	"	move.l #0x30303030,%d0\n"
+	"	move.l %d0,(%a0)+\n"
+	"	move.l %d0,(%a0)+\n"
+	"	move.l %d0,(%a0)+\n"
+	"	move.l %d0,(%a0)+\n"
+	"	clr.w (%a0)\n"
+	"	andi #0x0,%ccr\n"
+	"	rts\n"
+	".Lg_24e38:\n"
+	"	bmi.b .Lg_24e3e\n"
+	"	clr.w (%a0)+\n"
+	"	bra.b .Lg_24e4a\n"
+	".Lg_24e3e:\n"
+	"	move.w #0x1,(%a0)+\n"
+	"	bclr.l #0x1f,%d0\n"
+	"	tst.l %d0\n"
+	"	beq.b .Lg_24e22\n"
+	".Lg_24e4a:\n"
+	"	move.l %d0,%d4\n"
+	"	swap %d4\n"
+	"	andi.w #0x7ff0,%d4\n"
+	"	lsr.w #0x4,%d4\n"
+	"	beq.b .Lg_24e0e\n"
+	"	subi.w #0x3ff,%d4\n"
+	"	cmpi.w #0x3ff,%d4\n"
+	"	bgt.b .Lg_24e0e\n"
+	"	move.w #0x4d10,%d5\n"
+	"	tst.w %d4\n"
+	"	bge.b .Lg_24e6a\n"
+	"	addq.w #0x1,%d5\n"
+	".Lg_24e6a:\n"
+	"	muls.w %d5,%d4\n"
+	"	swap %d4\n"
+	"	addq.w #0x1,%d4\n"
+	"	move.w %d4,%d5\n"
+	"	addi.w #0x40,%d5\n"
+	"	bmi.b .Lg_24e7e\n"
+	"	cmpi.w #0x80,%d5\n"
+	"	ble.b .Lg_24eb8\n"
+	".Lg_24e7e:\n"
+	"	move.w %d4,%d5\n"
+	"	asr.w #0x6,%d5\n"
+	"	bpl.b .Lg_24e86\n"
+	"	addq.w #0x1,%d5\n"
+	".Lg_24e86:\n"
+	"	neg.w %d5\n"
+	"	addq.w #0x4,%d5\n"
+	"	asl.w #0x3,%d5\n"
+	"	lea (0x25b36).l,%a1\n"
+	"	move.l (0x0,%a1,%d5.w*0x1),%d2\n"
+	"	move.l (0x4,%a1,%d5.w*0x1),%d3\n"
+	"	movea.w %d4,%a1\n"
+	"	move.w %d7,-(%sp)\n"
+	"	bsr.w scpi_double_multiply\n"
+	"	move.w (%sp)+,%d7\n"
+	"	move.w %a1,%d4\n"
+	"	move.w %d4,%d5\n"
+	"	asr.w #0x6,%d5\n"
+	"	bpl.b .Lg_24eae\n"
+	"	addq.w #0x1,%d5\n"
+	".Lg_24eae:\n"
+	"	asl.w #0x6,%d5\n"
+	"	neg.w %d5\n"
+	"	add.w %d4,%d5\n"
+	"	addi.w #0x40,%d5\n"
+	".Lg_24eb8:\n"
+	"	asl.w #0x3,%d5\n"
+	"	lea (0x2572e).l,%a1\n"
+	"	move.l (0x0,%a1,%d5.w*0x1),%d2\n"
+	"	cmp.l %d2,%d0\n"
+	"	blt.b .Lg_24ed6\n"
+	"	bgt.b .Lg_24ed2\n"
+	"	move.l (0x4,%a1,%d5.w*0x1),%d3\n"
+	"	cmp.l %d3,%d1\n"
+	"	bcs.b .Lg_24ed6\n"
+	".Lg_24ed2:\n"
+	"	addq.w #0x8,%d5\n"
+	"	bra.b .Lg_24ed8\n"
+	".Lg_24ed6:\n"
+	"	subq.w #0x1,%d4\n"
+	".Lg_24ed8:\n"
+	"	subi.w #0x200,%d5\n"
+	"	neg.w %d5\n"
+	"	addi.w #0x200,%d5\n"
+	"	move.l (0x0,%a1,%d5.w*0x1),%d2\n"
+	"	move.l (0x4,%a1,%d5.w*0x1),%d3\n"
+	"	movea.w %d4,%a1\n"
+	"	move.w %d7,-(%sp)\n"
+	"	bsr.w scpi_double_multiply\n"
+	"	move.w (%sp)+,%d7\n"
+	"	addq.w #0x1,%a1\n"
+	"	cmpi.l #0x3fb99999,%d0\n"
+	"	bgt.b .Lg_24f20\n"
+	"	cmpi.l #-0x66666666,%d1\n"
+	"	bcc.b .Lg_24f20\n"
+	".Lg_24f06:\n"
+	"	move.l #0x31303030,(%a0)+\n"
+	"	move.l #0x30303030,%d0\n"
+	"	move.l %d0,(%a0)+\n"
+	"	move.l %d0,(%a0)+\n"
+	"	move.l %d0,(%a0)+\n"
+	"	move.w %a1,(%a0)\n"
+	"	andi #0x0,%ccr\n"
+	"	rts\n"
+	".Lg_24f20:\n"
+	"	cmpi.l #0x3ff00000,%d0\n"
+	"	bne.b .Lg_24f2c\n"
+	"	addq.w #0x1,%a1\n"
+	"	bra.b .Lg_24f06\n"
+	".Lg_24f2c:\n"
+	"	move.l %d0,%d6\n"
+	"	swap %d6\n"
+	"	lsr.w #0x4,%d6\n"
+	"	subi.w #0x3fb,%d6\n"
+	"	swap %d0\n"
+	"	andi.w #0xf,%d0\n"
+	"	ori.w #0x10,%d0\n"
+	"	swap %d0\n"
+	"	tst.b %d6\n"
+	"	beq.b .Lg_24f4e\n"
+	".Lg_24f46:\n"
+	"	add.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	"	subq.b #0x1,%d6\n"
+	"	bne.b .Lg_24f46\n"
+	".Lg_24f4e:\n"
+	"	move.w %a1,(0x10,%a0)\n"
+	"	lea (0x25c82).l,%a1\n"
+	"	bgt.b .Lg_24f5e\n"
+	".Lg_24f5a:\n"
+	"	moveq #0xf,%d7\n"
+	"	bra.b .Lg_24f70\n"
+	".Lg_24f5e:\n"
+	"	cmpi.w #0x10,%d7\n"
+	"	bge.b .Lg_24f5a\n"
+	"	ror.b #0x1,%d7\n"
+	"	bcs.b .Lg_24f6e\n"
+	"	rol.b #0x1,%d7\n"
+	"	addq.w #0x1,%d7\n"
+	"	bra.b .Lg_24f70\n"
+	".Lg_24f6e:\n"
+	"	rol.b #0x1,%d7\n"
+	".Lg_24f70:\n"
+	"	move.l %d0,%d2\n"
+	"	move.l %d1,%d3\n"
+	"	add.l %d3,%d3\n"
+	"	addx.l %d2,%d2\n"
+	"	add.l %d3,%d3\n"
+	"	addx.l %d2,%d2\n"
+	"	add.l %d3,%d1\n"
+	"	addx.l %d2,%d0\n"
+	"	add.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	"	move.l %d0,%d2\n"
+	"	move.l %d1,%d3\n"
+	"	add.l %d3,%d3\n"
+	"	addx.l %d2,%d2\n"
+	"	add.l %d3,%d3\n"
+	"	addx.l %d2,%d2\n"
+	"	add.l %d3,%d1\n"
+	"	addx.l %d2,%d0\n"
+	"	add.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	"	swap %d0\n"
+	"	move.w %d0,%d3\n"
+	"	lsr.w #0x8,%d3\n"
+	"	andi.w #0xff,%d0\n"
+	"	swap %d0\n"
+	"	add.w %d3,%d3\n"
+	"	move.w (0x0,%a1,%d3.w*0x1),(%a0)+\n"
+	"	subq.w #0x2,%d7\n"
+	"	bpl.b .Lg_24f70\n"
+	"	andi #0x0,%ccr\n"
+	"	rts\n"
+	"	.size scpi_double_to_decimal, .-scpi_double_to_decimal\n"
+	"	.section .text.scpi_double_to_decimal.25016,\"ax\",@progbits\n"
+	"	.byte 0x00,0x04\n"
+	"	.byte 0x00,0x03\n"
+	"	.byte 0x00,0x02\n"
+	"	.byte 0x00,0x02\n"
+	"	.byte 0x00,0x01\n"
+	"	.byte 0x00,0x01\n"
+	"	.byte 0x00,0x01\n"
+	"	.byte 0x00,0x01\n"
+	"	.byte 0x00,0x00\n"
+	"	.byte 0x00,0x00\n"
+	"	.byte 0x00,0x00\n"
+	"	.byte 0x00,0x00\n"
+	"	.byte 0x00,0x00\n"
+	"	.byte 0x00,0x00\n"
+	"	.byte 0x00,0x00\n"
+	"	.byte 0x00,0x00\n"
+);
+
 /* 0002507a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the 16 BCD digits as a 64-bit integer, normalized, then scaled by scpi_scale_by_power_of_ten
    Not a C function (register; run): its arguments and results in registers.  In: A0 char *bcd.
    Out: D0:D1 double.  Returns: ccr.  Error: D0.w -9 out of range.
    docs/scpi/README.md, run, as scpi_number_to_double */
 
-__regcall double scpi_bcd_to_double(char *bcd __asm("a0")) /* out D0:D1 double; returns ccr; error D0.w -9 out of range */
+/* out D0:D1 double; returns ccr; error D0.w -9 out of range */
+__regcall double scpi_bcd_to_double(char *bcd /* a0 */)
 
 {
   short sVar1;
@@ -24106,7 +37995,297 @@ LAB_000251da:
 }
 
 
+#endif
+__asm__(
+	"	.globl scpi_bcd_to_double\n"
+	"	.type scpi_bcd_to_double, @function\n"
+	"	.section .text.scpi_bcd_to_double.24fb4,\"ax\",@progbits\n"
+	".Lg_24fb4:\n"
+	"	mulu.w #0x2710,%d0\n"
+	"	move.b (%a0)+,%d7\n"
+	"	move.b (0x0,%a1,%d7.w*0x1),%d7\n"
+	"	mulu.w #0x64,%d7\n"
+	"	add.l %d7,%d0\n"
+	"	moveq #0x0,%d7\n"
+	"	move.b (%a0)+,%d7\n"
+	"	move.b (0x0,%a1,%d7.w*0x1),%d7\n"
+	"	add.l %d7,%d0\n"
+	"	addq.l #0x4,%a0\n"
+	"	moveq #0x0,%d1\n"
+	"	move.w %d0,%d1\n"
+	"	lsr.l #0x6,%d0\n"
+	"	ror.l #0x6,%d1\n"
+	"	clr.w %d1\n"
+	"	move.l %d0,%d6\n"
+	"	swap %d6\n"
+	"	andi.w #0x1e,%d6\n"
+	"	move.w (.Lg_25016,%pc,%d6.w*0x1),%d6\n"
+	"	move.w #0x418,%d7\n"
+	"	sub.w %d6,%d7\n"
+	"	neg.w %d6\n"
+	"	addq.w #0x4,%d6\n"
+	"	asl.w #0x2,%d6\n"
+	"	jmp (.Lg_24ff6,%pc,%d6.w*0x1)\n"
+	".Lg_24ff6:\n"
+	"	add.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	"	add.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	"	add.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	"	add.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	"	asl.w #0x4,%d7\n"
+	"	swap %d7\n"
+	"	add.l %d7,%d0\n"
+	"	lea (0x256ee).l,%a1\n"
+	"	bra.w scpi_scale_by_power_of_ten\n"
+	".Lg_25016:\n"
+	"	.byte 0x00,0x04\n"
+	"	.byte 0x00,0x03\n"
+	"	.byte 0x00,0x02\n"
+	"	.byte 0x00,0x02\n"
+	"	.byte 0x00,0x01\n"
+	"	.byte 0x00,0x01\n"
+	"	.byte 0x00,0x01\n"
+	"	.byte 0x00,0x01\n"
+	"	.byte 0x00,0x00\n"
+	"	.byte 0x00,0x00\n"
+	"	.byte 0x00,0x00\n"
+	"	.byte 0x00,0x00\n"
+	"	.byte 0x00,0x00\n"
+	"	.byte 0x00,0x00\n"
+	"	.byte 0x00,0x00\n"
+	"	.byte 0x00,0x00\n"
+	".Lg_25036:\n"
+	"	clr.w %d0\n"
+	"	move.b (%a0)+,%d0\n"
+	"	move.b (0x0,%a1,%d0.w*0x1),%d0\n"
+	"	mulu.w #0x64,%d0\n"
+	"	move.b (%a0)+,%d7\n"
+	"	move.b (0x0,%a1,%d7.w*0x1),%d7\n"
+	"	add.w %d7,%d0\n"
+	"	tst.w (%a0)\n"
+	"	bne.w .Lg_24fb4\n"
+	"	addq.l #0x6,%a0\n"
+	"	moveq #0x0,%d1\n"
+	"	asl.l #0x7,%d0\n"
+	"	move.l %d0,%d6\n"
+	"	swap %d6\n"
+	"	andi.w #0x1e,%d6\n"
+	"	move.w (.Lg_25016,%pc,%d6.w*0x1),%d6\n"
+	"	asl.l %d6,%d0\n"
+	"	move.w #0x40b,%d7\n"
+	"	sub.w %d6,%d7\n"
+	"	asl.w #0x4,%d7\n"
+	"	swap %d7\n"
+	"	add.l %d7,%d0\n"
+	"	lea (0x2570e).l,%a1\n"
+	"	bra.w scpi_scale_by_power_of_ten\n"
+	"scpi_bcd_to_double:\n"
+	"	addq.l #0x2,%a0\n"
+	"	tst.b (%a0)\n"
+	"	bne.b .Lg_2508a\n"
+	"	moveq #0x0,%d0\n"
+	"	move.l %d0,%d1\n"
+	"	andi #0x0,%ccr\n"
+	"	rts\n"
+	".Lg_2508a:\n"
+	"	lea (0x25b7e).l,%a1\n"
+	"	moveq #0x0,%d3\n"
+	"	moveq #0x0,%d7\n"
+	"	moveq #0x0,%d2\n"
+	"	tst.l (0x4,%a0)\n"
+	"	beq.b .Lg_25036\n"
+	"	move.b (%a0)+,%d2\n"
+	"	move.b (0x0,%a1,%d2.w*0x1),%d2\n"
+	"	mulu.w #-0xbdc,%d2\n"
+	"	asl.l #0x4,%d2\n"
+	"	move.b (%a0)+,%d7\n"
+	"	move.b (0x0,%a1,%d7.w*0x1),%d7\n"
+	"	mulu.w #0x2710,%d7\n"
+	"	add.l %d7,%d2\n"
+	"	moveq #0x0,%d7\n"
+	"	move.b (%a0)+,%d7\n"
+	"	move.b (0x0,%a1,%d7.w*0x1),%d7\n"
+	"	mulu.w #0x64,%d7\n"
+	"	add.l %d7,%d2\n"
+	"	moveq #0x0,%d7\n"
+	"	move.b (%a0)+,%d7\n"
+	"	move.b (0x0,%a1,%d7.w*0x1),%d7\n"
+	"	add.l %d7,%d2\n"
+	"	move.b (%a0)+,%d3\n"
+	"	move.b (0x0,%a1,%d3.w*0x1),%d3\n"
+	"	mulu.w #-0xbdc,%d3\n"
+	"	asl.l #0x4,%d3\n"
+	"	move.b (%a0)+,%d7\n"
+	"	move.b (0x0,%a1,%d7.w*0x1),%d7\n"
+	"	mulu.w #0x2710,%d7\n"
+	"	add.l %d7,%d3\n"
+	"	moveq #0x0,%d7\n"
+	"	move.b (%a0)+,%d7\n"
+	"	move.b (0x0,%a1,%d7.w*0x1),%d7\n"
+	"	mulu.w #0x64,%d7\n"
+	"	add.l %d7,%d3\n"
+	"	moveq #0x0,%d7\n"
+	"	move.b (%a0)+,%d7\n"
+	"	move.b (0x0,%a1,%d7.w*0x1),%d7\n"
+	"	add.l %d7,%d3\n"
+	"	moveq #0x0,%d4\n"
+	"	move.w %d2,%d1\n"
+	"	mulu.w #0x5f5e,%d1\n"
+	"	move.l %d2,%d0\n"
+	"	swap %d0\n"
+	"	mulu.w #0x5f5e,%d0\n"
+	"	swap %d1\n"
+	"	move.w %d1,%d4\n"
+	"	clr.w %d1\n"
+	"	add.l %d4,%d0\n"
+	"	move.w %d0,%d4\n"
+	"	lsr.l #0x4,%d0\n"
+	"	lsr.l #0x4,%d1\n"
+	"	ror.l #0x4,%d4\n"
+	"	clr.w %d4\n"
+	"	or.l %d4,%d1\n"
+	"	move.l %d2,%d4\n"
+	"	clr.w %d4\n"
+	"	swap %d4\n"
+	"	lsr.w #0x8,%d4\n"
+	"	lsl.l #0x8,%d2\n"
+	"	add.l %d2,%d1\n"
+	"	addx.l %d4,%d0\n"
+	"	add.l %d3,%d1\n"
+	"	bcc.b .Lg_25134\n"
+	"	addq.l #0x1,%d0\n"
+	".Lg_25134:\n"
+	"	move.l %d0,%d6\n"
+	"	swap %d6\n"
+	"	andi.w #0x3e,%d6\n"
+	"	move.w (.Lg_25144,%pc,%d6.w*0x1),%d7\n"
+	"	jmp (.Lg_25184,%pc,%d6.w*0x1)\n"
+	".Lg_25144:\n"
+	"	.byte 0x42\n"
+	"	.byte 0xe0\n"
+	"	.byte 0x42\n"
+	"	.byte 0xf0\n"
+	"	.byte 0x43\n"
+	"	.byte 0x00\n"
+	"	.byte 0x43\n"
+	"	.byte 0x00\n"
+	"	.byte 0x43\n"
+	"	.byte 0x10\n"
+	"	.byte 0x43\n"
+	"	.byte 0x10\n"
+	"	.byte 0x43\n"
+	"	.byte 0x10\n"
+	"	.byte 0x43\n"
+	"	.byte 0x10\n"
+	"	.byte 0x43\n"
+	"	.byte 0x20\n"
+	"	.byte 0x43\n"
+	"	.byte 0x20\n"
+	"	.byte 0x43\n"
+	"	.byte 0x20\n"
+	"	.byte 0x43\n"
+	"	.byte 0x20\n"
+	"	.byte 0x43\n"
+	"	.byte 0x20\n"
+	"	.byte 0x43\n"
+	"	.byte 0x20\n"
+	"	.byte 0x43\n"
+	"	.byte 0x20\n"
+	"	.byte 0x43\n"
+	"	.byte 0x20\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	".Lg_25184:\n"
+	"	bra.b .Lg_251ca\n"
+	"	bra.b .Lg_251ce\n"
+	"	bra.b .Lg_251d2\n"
+	"	bra.b .Lg_251d2\n"
+	"	bra.b .Lg_251d6\n"
+	"	bra.b .Lg_251d6\n"
+	"	bra.b .Lg_251d6\n"
+	"	bra.b .Lg_251d6\n"
+	"	bra.b .Lg_251da\n"
+	"	bra.b .Lg_251da\n"
+	"	bra.b .Lg_251da\n"
+	"	bra.b .Lg_251da\n"
+	"	bra.b .Lg_251da\n"
+	"	bra.b .Lg_251da\n"
+	"	bra.b .Lg_251da\n"
+	"	bra.b .Lg_251da\n"
+	"	bra.b .Lg_251c4\n"
+	"	bra.b .Lg_251c4\n"
+	"	bra.b .Lg_251c4\n"
+	"	bra.b .Lg_251c4\n"
+	"	bra.b .Lg_251c4\n"
+	"	bra.b .Lg_251c4\n"
+	"	bra.b .Lg_251c4\n"
+	"	bra.b .Lg_251c4\n"
+	"	bra.b .Lg_251c4\n"
+	"	bra.b .Lg_251c4\n"
+	"	bra.b .Lg_251c4\n"
+	"	bra.b .Lg_251c4\n"
+	"	bra.b .Lg_251c4\n"
+	"	bra.b .Lg_251c4\n"
+	"	bra.b .Lg_251c4\n"
+	"	nop\n"
+	".Lg_251c4:\n"
+	"	lsr.l #0x1,%d0\n"
+	"	roxr.l #0x1,%d1\n"
+	"	bra.b .Lg_251da\n"
+	".Lg_251ca:\n"
+	"	add.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	".Lg_251ce:\n"
+	"	add.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	".Lg_251d2:\n"
+	"	add.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	".Lg_251d6:\n"
+	"	add.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	".Lg_251da:\n"
+	"	swap %d7\n"
+	"	add.l %d7,%d0\n"
+	"	lea (0x256ae).l,%a1\n"
+	"	.size scpi_bcd_to_double, .-scpi_bcd_to_double\n"
+);
+
 /* 000251e4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the double in D0:D1 times 10 to the word at A0 less 16, by the tables at 0x256ae and 0x25b36; the
    sign from the word 10 bytes before; -9 beyond 309
@@ -24115,7 +38294,8 @@ LAB_000251da:
    beyond 309.
    docs/scpi/README.md, run */
 
-__regcall double scpi_scale_by_power_of_ten(double value __asm("d0"),short *exponent __asm("a0"),double *powers __asm("a1")) /* out D0:D1 double; returns ccr; error D0.w -9 beyond 309 */
+/* out D0:D1 double; returns ccr; error D0.w -9 beyond 309 */
+__regcall double scpi_scale_by_power_of_ten(double value /* d0 */,short *exponent /* a0 */,double *powers /* a1 */)
 
 {
   int iVar1;
@@ -24169,7 +38349,65 @@ __regcall double scpi_scale_by_power_of_ten(double value __asm("d0"),short *expo
 }
 
 
+#endif
+__asm__(
+	"	.globl scpi_scale_by_power_of_ten\n"
+	"	.type scpi_scale_by_power_of_ten, @function\n"
+	"	.section .text.scpi_scale_by_power_of_ten.251e4,\"ax\",@progbits\n"
+	"scpi_scale_by_power_of_ten:\n"
+	"	tst.w (-0xa,%a0)\n"
+	"	beq.b .Lg_251ee\n"
+	"	bset.l #0x1f,%d0\n"
+	".Lg_251ee:\n"
+	"	move.w (%a0),%d3\n"
+	"	cmpi.w #-0x135,%d3\n"
+	"	blt.b .Lg_25254\n"
+	"	cmpi.w #0x135,%d3\n"
+	"	bgt.b .Lg_25254\n"
+	"	move.w %d3,%d6\n"
+	"	addi.w #0x40,%d6\n"
+	"	bmi.b .Lg_25222\n"
+	"	cmpi.w #0x80,%d6\n"
+	"	bgt.b .Lg_25222\n"
+	".Lg_2520a:\n"
+	"	asl.w #0x3,%d6\n"
+	"	move.l (0x0,%a1,%d6.w*0x1),%d2\n"
+	"	move.l (0x4,%a1,%d6.w*0x1),%d3\n"
+	"	bsr.w scpi_double_multiply\n"
+	"	beq.w .Lg_25254\n"
+	"	andi #0x0,%ccr\n"
+	"	rts\n"
+	".Lg_25222:\n"
+	"	move.w %d3,-(%sp)\n"
+	"	asr.w #0x6,%d3\n"
+	"	bpl.b .Lg_2522a\n"
+	"	addq.w #0x1,%d3\n"
+	".Lg_2522a:\n"
+	"	addq.w #0x4,%d3\n"
+	"	asl.w #0x3,%d3\n"
+	"	lea (0x25b36).l,%a0\n"
+	"	move.l (0x0,%a0,%d3.w*0x1),%d2\n"
+	"	move.l (0x4,%a0,%d3.w*0x1),%d3\n"
+	"	bsr.w scpi_double_multiply\n"
+	"	move.w (%sp)+,%d6\n"
+	"	move.w %d6,%d3\n"
+	"	asr.w #0x6,%d3\n"
+	"	bpl.b .Lg_2524a\n"
+	"	addq.w #0x1,%d3\n"
+	".Lg_2524a:\n"
+	"	asl.w #0x6,%d3\n"
+	"	sub.w %d3,%d6\n"
+	"	addi.w #0x40,%d6\n"
+	"	bra.b .Lg_2520a\n"
+	".Lg_25254:\n"
+	"	move.w #-0x9,%d0\n"
+	"	ori #0xff,%ccr\n"
+	"	rts\n"
+	"	.size scpi_scale_by_power_of_ten, .-scpi_scale_by_power_of_ten\n"
+);
+
 /* 000252bc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* D0:D1 times D2:D3, the engine's own IEEE multiply
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a,
@@ -24177,7 +38415,8 @@ __regcall double scpi_scale_by_power_of_ten(double value __asm("d0"),short *expo
    Preserves: A0.
    docs/scpi/README.md, run */
 
-__regcall double scpi_double_multiply(double a __asm("d0"),double b __asm("d2")) /* out D0:D1 double; returns ccr; error D2 -2 underflow, D2 -1 overflow; preserves A0 */
+/* out D0:D1 double; returns ccr; error D2 -2 underflow, D2 -1 overflow; preserves A0 */
+__regcall double scpi_double_multiply(double a /* d0 */,double b /* d2 */)
 
 {
   int iVar1;
@@ -24325,7 +38564,259 @@ LAB_00025410:
 }
 
 
+#endif
+__asm__(
+	"	.globl scpi_double_multiply\n"
+	"	.type scpi_double_multiply, @function\n"
+	"	.section .text.scpi_double_multiply.2525e,\"ax\",@progbits\n"
+	".Lg_2525e:\n"
+	"	moveq #-0x2,%d2\n"
+	"	ori #0xff,%ccr\n"
+	"	rts\n"
+	".Lg_25266:\n"
+	"	moveq #-0x1,%d2\n"
+	"	ori #0xff,%ccr\n"
+	"	rts\n"
+	".Lg_2526e:\n"
+	"	moveq #0x0,%d0\n"
+	"	move.l %d0,%d1\n"
+	"	andi #0x0,%ccr\n"
+	"	rts\n"
+	".Lg_25278:\n"
+	"	tst.l %d3\n"
+	"	bne.b .Lg_2529c\n"
+	"	move.l %d0,%d6\n"
+	"	or.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	andi.w #0x1f,%d6\n"
+	"	beq.w .Lg_2543e\n"
+	"	move.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	andi.w #0x1f,%d6\n"
+	"	bne.b .Lg_2529c\n"
+	"	exg %d0,%d2\n"
+	"	exg %d1,%d3\n"
+	"	bra.w scpi_double_multiply_short\n"
+	".Lg_2529c:\n"
+	"	move.l %d0,%d6\n"
+	"	swap %d6\n"
+	"	andi.w #0x1f,%d6\n"
+	"	bne.b .Lg_252ee\n"
+	"	bra.w scpi_double_multiply_short\n"
+	".Lg_252aa:\n"
+	"	move.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	andi.w #0x1f,%d6\n"
+	"	bne.b .Lg_252f2\n"
+	"	exg %d0,%d2\n"
+	"	exg %d1,%d3\n"
+	"	bra.w scpi_double_multiply_short\n"
+	"scpi_double_multiply:\n"
+	"	move.l #-0x7fff8010,%d5\n"
+	"	move.l %d0,%d7\n"
+	"	beq.b .Lg_2526e\n"
+	"	swap %d0\n"
+	"	move.w %d0,%d7\n"
+	"	move.l %d2,%d6\n"
+	"	beq.b .Lg_2526e\n"
+	"	move.l %a0,-(%sp)\n"
+	"	swap %d2\n"
+	"	move.w %d2,%d6\n"
+	"	and.l %d5,%d6\n"
+	"	and.l %d5,%d7\n"
+	"	add.l %d6,%d7\n"
+	"	moveq #0xf,%d6\n"
+	"	and.w %d6,%d0\n"
+	"	and.w %d6,%d2\n"
+	"	moveq #0x10,%d6\n"
+	"	or.w %d6,%d2\n"
+	"	or.w %d6,%d0\n"
+	"	movea.l %d7,%a0\n"
+	"	moveq #0x0,%d7\n"
+	"	tst.l %d1\n"
+	"	beq.b .Lg_25278\n"
+	".Lg_252ee:\n"
+	"	move.l %d3,%d5\n"
+	"	beq.b .Lg_252aa\n"
+	".Lg_252f2:\n"
+	"	mulu.w %d1,%d5\n"
+	"	or.w %d5,%d7\n"
+	"	clr.w %d5\n"
+	"	swap %d5\n"
+	"	move.l %d3,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d1,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	clr.w %d4\n"
+	"	move.l %d1,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d3,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	addx.w %d4,%d4\n"
+	"	or.w %d5,%d7\n"
+	"	move.w %d4,%d5\n"
+	"	swap %d5\n"
+	"	move.l %d3,%d6\n"
+	"	swap %d6\n"
+	"	swap %d1\n"
+	"	mulu.w %d1,%d6\n"
+	"	swap %d1\n"
+	"	add.l %d6,%d5\n"
+	"	move.l %d0,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d3,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	clr.w %d4\n"
+	"	addx.w %d4,%d4\n"
+	"	move.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d1,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	or.w %d5,%d7\n"
+	"	move.w %d4,%d5\n"
+	"	negx.w %d5\n"
+	"	neg.w %d5\n"
+	"	swap %d5\n"
+	"	move.w %d0,%d6\n"
+	"	mulu.w %d3,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	swap %d3\n"
+	"	move.l %d0,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d3,%d6\n"
+	"	swap %d3\n"
+	"	add.l %d6,%d5\n"
+	"	clr.w %d4\n"
+	"	addx.w %d4,%d4\n"
+	"	move.w %d2,%d6\n"
+	"	mulu.w %d1,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	negx.w %d4\n"
+	"	neg.w %d4\n"
+	"	move.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	swap %d1\n"
+	"	mulu.w %d1,%d6\n"
+	"	swap %d1\n"
+	"	add.l %d6,%d5\n"
+	"	negx.w %d4\n"
+	"	neg.w %d4\n"
+	"	swap %d4\n"
+	"	swap %d5\n"
+	"	move.w %d5,%d4\n"
+	"	clr.w %d5\n"
+	"	move.l %d3,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d0,%d6\n"
+	"	add.l %d6,%d4\n"
+	"	move.l %d1,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d2,%d6\n"
+	"	add.l %d6,%d4\n"
+	"	move.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	swap %d0\n"
+	"	mulu.w %d0,%d6\n"
+	"	swap %d0\n"
+	"	add.l %d6,%d4\n"
+	"	addx.w %d5,%d5\n"
+	"	move.w %d5,%d6\n"
+	"	move.w %d4,%d5\n"
+	"	move.w %d6,%d4\n"
+	"	swap %d5\n"
+	"	swap %d4\n"
+	"	move.l %d0,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d2,%d6\n"
+	"	add.l %d6,%d4\n"
+	"	move.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d0,%d6\n"
+	"	add.l %d6,%d4\n"
+	"	move.w %d0,%d6\n"
+	"	mulu.w %d2,%d6\n"
+	"	swap %d6\n"
+	"	add.l %d6,%d4\n"
+	"	btst.l #0x19,%d4\n"
+	"	bne.b .Lg_253d6\n"
+	"	suba.w #0x10,%a0\n"
+	"	move.l %d4,%d0\n"
+	"	lsr.l #0x4,%d0\n"
+	"	andi.l #0xf,%d4\n"
+	"	ror.l #0x4,%d4\n"
+	"	move.l %d5,%d1\n"
+	"	lsr.l #0x4,%d1\n"
+	"	or.l %d4,%d1\n"
+	"	add.l %d5,%d5\n"
+	"	bra.b .Lg_253e8\n"
+	".Lg_253d6:\n"
+	"	move.l %d4,%d0\n"
+	"	lsr.l #0x5,%d0\n"
+	"	andi.l #0x1f,%d4\n"
+	"	ror.l #0x5,%d4\n"
+	"	move.l %d5,%d1\n"
+	"	lsr.l #0x5,%d1\n"
+	"	or.l %d4,%d1\n"
+	".Lg_253e8:\n"
+	"	btst.l #0x4,%d5\n"
+	"	beq.b .Lg_25410\n"
+	"	andi.b #0xf,%d5\n"
+	"	or.b %d5,%d7\n"
+	"	tst.w %d7\n"
+	"	bne.b .Lg_253fe\n"
+	"	btst.l #0x0,%d1\n"
+	"	beq.b .Lg_25410\n"
+	".Lg_253fe:\n"
+	"	addq.l #0x1,%d1\n"
+	"	bcc.b .Lg_25404\n"
+	"	addq.l #0x1,%d0\n"
+	".Lg_25404:\n"
+	"	btst.l #0x15,%d0\n"
+	"	beq.b .Lg_25410\n"
+	"	lsr.l #0x1,%d0\n"
+	"	adda.w #0x10,%a0\n"
+	".Lg_25410:\n"
+	"	move.l %a0,%d6\n"
+	"	swap %d6\n"
+	"	move.l %a0,%d7\n"
+	"	bpl.b .Lg_2541e\n"
+	"	swap %d7\n"
+	"	clr.w %d7\n"
+	"	swap %d7\n"
+	".Lg_2541e:\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	subi.l #0x3ff0,%d7\n"
+	"	bmi.w .Lg_2525e\n"
+	"	cmpi.w #0x7fd0,%d7\n"
+	"	bhi.w .Lg_25266\n"
+	"	or.w %d6,%d7\n"
+	"	swap %d7\n"
+	"	add.l %d7,%d0\n"
+	"	andi #0x0,%ccr\n"
+	"	rts\n"
+	".Lg_2543e:\n"
+	"	swap %d0\n"
+	"	swap %d2\n"
+	"	lsr.l #0x5,%d0\n"
+	"	lsr.l #0x5,%d2\n"
+	"	mulu.w %d2,%d0\n"
+	"	swap %d0\n"
+	"	move.l %d0,%d1\n"
+	"	clr.w %d1\n"
+	"	lsl.l #0x5,%d1\n"
+	"	rol.l #0x5,%d0\n"
+	"	andi.l #0x1fffff,%d0\n"
+	"	btst.l #0x14,%d0\n"
+	"	bne.b .Lg_25410\n"
+	"	add.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	"	suba.w #0x10,%a0\n"
+	"	bra.b .Lg_25410\n"
+	"	.size scpi_double_multiply, .-scpi_double_multiply\n"
+);
+
 /* 00025468 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* scpi_double_multiply's path for an operand whose mantissa fits in 16 bits
    Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
@@ -24389,6 +38880,53 @@ __naked undefined8 scpi_double_multiply_short(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl scpi_double_multiply_short\n"
+	"	.type scpi_double_multiply_short, @function\n"
+	"	.section .text.scpi_double_multiply_short.25468,\"ax\",@progbits\n"
+	"scpi_double_multiply_short:\n"
+	"	swap %d0\n"
+	"	lsr.l #0x5,%d0\n"
+	"	move.w %d3,%d5\n"
+	"	mulu.w %d0,%d5\n"
+	"	or.w %d5,%d7\n"
+	"	clr.w %d5\n"
+	"	swap %d5\n"
+	"	move.l %d3,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d0,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	move.w %d5,%d4\n"
+	"	clr.w %d5\n"
+	"	swap %d5\n"
+	"	move.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d0,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	swap %d4\n"
+	"	move.w %d5,%d4\n"
+	"	swap %d4\n"
+	"	clr.w %d5\n"
+	"	swap %d5\n"
+	"	move.w %d2,%d6\n"
+	"	mulu.w %d0,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	move.l %d5,%d0\n"
+	"	move.l %d4,%d1\n"
+	"	btst.l #0x14,%d0\n"
+	"	bne.b .Lg_254b0\n"
+	"	add.w %d7,%d7\n"
+	"	addx.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	"	suba.w #0x10,%a0\n"
+	".Lg_254b0:\n"
+	"	add.w %d7,%d7\n"
+	"	bcc.w scpi_double_multiply+0x154\n"
+	"	bra.w scpi_double_multiply+0x138\n"
+	"	.size scpi_double_multiply_short, .-scpi_double_multiply_short\n"
+);
+
 /* 000254ba */
 
 /* as a double
@@ -24415,6 +38953,7 @@ undefined4 scpi_number_to_double(char *param_1,double *param_2,short param_3)
 
 
 /* 000254fe */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* a parsed number at A0 packed into the BCD record at A1, its exponent plus D0 plus 16 at +0xa; -1
    beyond 309
@@ -24422,7 +38961,8 @@ undefined4 scpi_number_to_double(char *param_1,double *param_2,short param_3)
    D0 short scale, A1 char *bcd.  Out: D0 int status.  Error: D0 -1 exponent beyond 309.
    docs/scpi/README.md, read */
 
-__regcall int scpi_number_to_bcd(char *number __asm("a0"),short scale __asm("d0"),char *bcd __asm("a1")) /* out D0 int status; error D0 -1 exponent beyond 309 */
+/* out D0 int status; error D0 -1 exponent beyond 309 */
+__regcall int scpi_number_to_bcd(char *number /* a0 */,short scale /* d0 */,char *bcd /* a1 */)
 
 {
   int iVar1;
@@ -24446,6 +38986,38 @@ __regcall int scpi_number_to_bcd(char *number __asm("a0"),short scale __asm("d0"
   return -1;
 }
 
+
+#endif
+__asm__(
+	"	.globl scpi_number_to_bcd\n"
+	"	.type scpi_number_to_bcd, @function\n"
+	"	.section .text.scpi_number_to_bcd.254fe,\"ax\",@progbits\n"
+	"scpi_number_to_bcd:\n"
+	"	ext.l %d0\n"
+	"	move.w (0x12,%a0),%d1\n"
+	"	ext.l %d1\n"
+	"	add.l %d1,%d0\n"
+	"	addi.l #0x10,%d0\n"
+	"	cmpi.l #0x135,%d0\n"
+	"	bgt.b .Lg_25536\n"
+	"	cmpi.l #-0x135,%d0\n"
+	"	blt.b .Lg_25536\n"
+	"	move.w %d0,(0xa,%a1)\n"
+	"	move.w (%a0)+,(%a1)+\n"
+	"	moveq #0x7,%d1\n"
+	".Lg_25526:\n"
+	"	move.b (%a0)+,%d0\n"
+	"	lsl.b #0x4,%d0\n"
+	"	or.b (%a0)+,%d0\n"
+	"	move.b %d0,(%a1)+\n"
+	"	dbf %d1,.Lg_25526\n"
+	"	clr.l %d0\n"
+	"	rts\n"
+	".Lg_25536:\n"
+	"	moveq #-0x1,%d0\n"
+	"	rts\n"
+	"	.size scpi_number_to_bcd, .-scpi_number_to_bcd\n"
+);
 
 /* 0002553a */
 
@@ -30282,8 +44854,8 @@ undefined4 scpi_query_DIAGnostic_PTIMe_TINTerval(undefined4 param_1,float *param
     uVar3 = scpi_query_failed('\f',param_3);
   }
   else {
-    fVar2 = double_to_float((double)CONCAT44(interval_reading.value._0_4_,
-                                             interval_reading.value._4_4_));
+    fVar2 = double_to_float((double)CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
+                                             __ghidra_piece(unsigned int, interval_reading.value, 4)));
     *param_2 = fVar2;
     *(uint16_t *)(param_2 + 1) = interval_reading.tag;
     set_interrupt_mask(sr);
@@ -32955,8 +47527,8 @@ undefined4 scpi_query_SOURce_PTIMe_TIME(undefined4 param_1,ushort *param_2,int p
   
   iVar1 = get_date_time((uint32_t *)0x0,&uStack_8);
   if ((char)iVar1 == '\0') {
-    *param_2 = (ushort)uStack_8._1_1_;
-    param_2[2] = (ushort)uStack_8._2_1_;
+    *param_2 = (ushort)__ghidra_piece(unsigned char, uStack_8, 1);
+    param_2[2] = (ushort)__ghidra_piece(unsigned char, uStack_8, 2);
     param_2[4] = (ushort)(byte)uStack_8;
     uVar2 = 0;
   }
@@ -39169,8 +53741,8 @@ void counter_configuration_init(int param_1)
   *(undefined1 *)(param_1 + 0xf) = 2;
   *(undefined1 *)(param_1 + 0xc) = 1;
   *(undefined1 *)(param_1 + 0xd) = 2;
-  interval_reading.value._0_4_ = 0x47d2a37d;
-  interval_reading.value._4_4_ = 0xced46143;
+  __ghidra_piece(unsigned int, interval_reading.value, 0) = 0x47d2a37d;
+  __ghidra_piece(unsigned int, interval_reading.value, 4) = 0xced46143;
   interval_reading.valid = 0;
   return;
 }
@@ -41646,8 +56218,8 @@ override_jmp_00043ae6_case_0:
     uVar11 = SUB82(dVar7,0);
     iVar3 = float_to_integer(pll.efc);
     debug_sprintf(acStack_74,"%d/%d/%d %02d:%02d:%02d efc= %d ti= %.1f hold= 0 curr= %.2f\r\n",
-                  (uint)bStack_a,(uint)bStack_9,(uint)uStack_c,(uint)uStack_8._1_1_,
-                  (uint)uStack_8._2_1_,(uint)(byte)uStack_8,iVar3,
+                  (uint)bStack_a,(uint)bStack_9,(uint)uStack_c,(uint)__ghidra_piece(unsigned char, uStack_8, 1),
+                  (uint)__ghidra_piece(unsigned char, uStack_8, 2),(uint)(byte)uStack_8,iVar3,
                   (double)CONCAT62(CONCAT42(CONCAT22(uVar8,uVar9),uVar10),uVar11),
                   (double)CONCAT71(CONCAT61(CONCAT51(CONCAT41(CONCAT31(CONCAT21(uVar12,uVar5),uVar13
                                                                       ),uVar14),uVar15),uVar16),
@@ -41725,16 +56297,16 @@ undefined4 clock_check_against_gps(void)
   int local_8;
   
   cVar3 = get_gps_datetime(&local_c,&local_8);
-  if (((cVar3 == '\0') && (iVar1 = oncore_date_pack(gps.status._0_4_), iVar1 == local_c)) &&
-     (local_8 == gps.status._4_4_)) {
+  if (((cVar3 == '\0') && (iVar1 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0)), iVar1 == local_c)) &&
+     (local_8 == __ghidra_piece(unsigned int, gps.status, 4))) {
     DAT_00102552 = false;
     uVar2 = 1;
   }
   else {
     bVar4 = DAT_00102552 != '\0';
     if (bVar4) {
-      uVar2 = oncore_date_pack(gps.status._0_4_);
-      clock_set(gps.status._4_4_,uVar2);
+      uVar2 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
+      clock_set(__ghidra_piece(unsigned int, gps.status, 4),uVar2);
       status_happening('L');
     }
     DAT_00102552 = !bVar4;
@@ -41966,7 +56538,7 @@ char startup_pll(char param_1)
         fVar1 = float_multiply(local_88,1e+09);
         dVar6 = float_to_double(fVar1);
         debug_sprintf(acStack_70,"%d/%d/%d %02d:%02d:%02d TI result: %.1fns\r\n",(uint)local_a,
-                      (uint)local_9,(uint)local_c,(uint)uStack_8._1_1_,(uint)uStack_8._2_1_,
+                      (uint)local_9,(uint)local_c,(uint)__ghidra_piece(unsigned char, uStack_8, 1),(uint)__ghidra_piece(unsigned char, uStack_8, 2),
                       (uint)(byte)uStack_8,dVar6);
         task_dmessage(acStack_70);
       }
@@ -42122,8 +56694,8 @@ char startup_pll(char param_1)
         dVar6 = float_to_double(fVar1);
         iVar2 = float_to_integer(pll.efc);
         debug_sprintf(acStack_70,"%d/%d/%d %02d:%02d:%02d efc= %d ti= %.1f loop= %d curr= %.2f\r\n",
-                      (uint)local_a,(uint)local_9,(uint)local_c,(uint)uStack_8._1_1_,
-                      (uint)uStack_8._2_1_,(uint)(byte)uStack_8,iVar2,dVar6,CONCAT22(uVar7,uVar8),
+                      (uint)local_a,(uint)local_9,(uint)local_c,(uint)__ghidra_piece(unsigned char, uStack_8, 1),
+                      (uint)__ghidra_piece(unsigned char, uStack_8, 2),(uint)(byte)uStack_8,iVar2,dVar6,CONCAT22(uVar7,uVar8),
                       (double)CONCAT71(CONCAT61(CONCAT42(CONCAT31(CONCAT21(uVar9,uVar10),uVar11),
                                                          uVar12),uVar13),uVar14));
         task_dmessage(acStack_70);
@@ -42230,7 +56802,7 @@ undefined1 pll_normal(char param_1)
         fVar2 = float_multiply(local_82,1e+09);
         dVar6 = float_to_double(fVar2);
         debug_sprintf(acStack_79,"%d/%d/%d %02d:%02d:%02d TI result: %.1fns\r\n",(uint)local_a,
-                      (uint)local_9,(uint)local_c,(uint)uStack_8._1_1_,(uint)uStack_8._2_1_,
+                      (uint)local_9,(uint)local_c,(uint)__ghidra_piece(unsigned char, uStack_8, 1),(uint)__ghidra_piece(unsigned char, uStack_8, 2),
                       (uint)(byte)uStack_8,dVar6);
         task_dmessage(acStack_79);
       }
@@ -42310,8 +56882,8 @@ undefined1 pll_normal(char param_1)
         dVar6 = float_to_double(fVar1);
         iVar3 = float_to_integer(pll.efc);
         debug_sprintf(acStack_79,"%d/%d/%d %02d:%02d:%02d efc= %d ti= %.1f loop= %d curr= %.2f\r\n",
-                      (uint)local_a,(uint)local_9,(uint)local_c,(uint)uStack_8._1_1_,
-                      (uint)uStack_8._2_1_,(uint)(byte)uStack_8,iVar3,dVar6,CONCAT22(uVar7,uVar8),
+                      (uint)local_a,(uint)local_9,(uint)local_c,(uint)__ghidra_piece(unsigned char, uStack_8, 1),
+                      (uint)__ghidra_piece(unsigned char, uStack_8, 2),(uint)(byte)uStack_8,iVar3,dVar6,CONCAT22(uVar7,uVar8),
                       (double)CONCAT71(CONCAT61(CONCAT42(CONCAT31(CONCAT21(uVar9,uVar10),uVar11),
                                                          uVar12),uVar13),uVar14));
         task_dmessage(acStack_79);
@@ -42443,8 +57015,8 @@ uint8_t interval_next_reading(char param_1,undefined4 *param_2)
   efc_history_update();
   uVar1 = interval_reading.valid;
   if (param_2 != (undefined4 *)0x0) {
-    fVar2 = double_to_float((double)CONCAT44(interval_reading.value._0_4_,
-                                             interval_reading.value._4_4_));
+    fVar2 = double_to_float((double)CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
+                                             __ghidra_piece(unsigned int, interval_reading.value, 4)));
     *param_2 = fVar2;
   }
   interval_reading.armed = 1;
@@ -42583,8 +57155,8 @@ LAB_0004536e:
         interval_rearm('\0');
       }
       else {
-        fVar1 = double_to_float((double)CONCAT44(interval_reading.value._0_4_,
-                                                 interval_reading.value._4_4_));
+        fVar1 = double_to_float((double)CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
+                                                 __ghidra_piece(unsigned int, interval_reading.value, 4)));
         float_subtract_in_place(&pll.fine_d,fVar1);
         iVar2 = float_compare(1e-07,pll.fine_d);
         if (0 < iVar2) {
@@ -42676,8 +57248,8 @@ char fine(void)
       }
       else {
         pll.fine_retries = 0;
-        fVar2 = double_to_float((double)CONCAT44(interval_reading.value._0_4_,
-                                                 interval_reading.value._4_4_));
+        fVar2 = double_to_float((double)CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
+                                                 __ghidra_piece(unsigned int, interval_reading.value, 4)));
         cVar4 = sync_perform(SUB41(fVar2,0));
         if (cVar4 == '\0') {
           pll.fine_state = 4;
@@ -42822,8 +57394,8 @@ char fine(void)
         interval_rearm('\0');
         break;
       }
-      fVar2 = double_to_float((double)CONCAT44(interval_reading.value._0_4_,
-                                               interval_reading.value._4_4_));
+      fVar2 = double_to_float((double)CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
+                                               __ghidra_piece(unsigned int, interval_reading.value, 4)));
       float_subtract_in_place(&pll.fine_d,fVar2);
       float_multiply_in_place(&pll.fine_d,0.02);
       if (pll.stage == PLL_STAGE_POWERUP) {
@@ -42831,8 +57403,8 @@ LAB_00045812:
         fVar2 = float_absolute_on_stack(fine_y0);
         iVar1 = float_compare(fVar2,2e-09);
         if (iVar1 < 0) {
-          fVar2 = double_to_float((double)CONCAT44(interval_reading.value._0_4_,
-                                                   interval_reading.value._4_4_));
+          fVar2 = double_to_float((double)CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
+                                                   __ghidra_piece(unsigned int, interval_reading.value, 4)));
           pll.fine_index = fine_sync_adjust(SUB41(fVar2,0));
           if (pll.fine_index == 0) {
             cVar4 = '\x01';
@@ -42867,8 +57439,8 @@ LAB_00045812:
                             CONCAT31(CONCAT21(uVar8,uVar11),uVar12));
               task_dmessage(acStack_54);
             }
-            fVar2 = double_to_float((double)CONCAT44(interval_reading.value._0_4_,
-                                                     interval_reading.value._4_4_));
+            fVar2 = double_to_float((double)CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
+                                                     __ghidra_piece(unsigned int, interval_reading.value, 4)));
             cVar4 = sync_perform(SUB41(fVar2,0));
             if (cVar4 == '\0') {
               pll.fine_state = 3;
@@ -42914,8 +57486,8 @@ LAB_00045812:
         }
       }
       else {
-        fVar2 = double_to_float((double)CONCAT44(interval_reading.value._0_4_,
-                                                 interval_reading.value._4_4_));
+        fVar2 = double_to_float((double)CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
+                                                 __ghidra_piece(unsigned int, interval_reading.value, 4)));
         pll.fine_index = fine_sync_adjust(SUB41(fVar2,0));
         if (pll.fine_index == 0) {
           cVar4 = '\x01';
@@ -43154,6 +57726,7 @@ void pllp_start_nothing_b(void)
 
 /* 00045c92 */
 
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* clears the NV settings, invalidates the battery-backed RAM's checksum and resets with trap #12 */
 
 void nv_clear_and_reset(void)
@@ -43161,7 +57734,7 @@ void nv_clear_and_reset(void)
 {
   clear_nv();
   enter_supervisor_mode();
-  DAT_00100002 = 0;
+  _DAT_00100002 = 0;
   DAT_00100000 = record_checksum(&DAT_00100000,0x94e);
   __m68k_trap(0xc);
   return;
@@ -43287,7 +57860,7 @@ undefined1 powerup(char param_1)
         pll.tfom = 2e-06;
         if ((DAT_00102550 != '\0') && (internal_pps_dead == 0)) {
           uVar4 = oncore_date_pack((char)gps.status.year);
-          clock_set(gps.status._6_2_,uVar4);
+          clock_set(__ghidra_piece(unsigned short, gps.status, 6),uVar4);
           status_happening('&');
           cVar3 = leap_second_near();
           if (cVar3 == '\0') {
@@ -44035,14 +58608,14 @@ switchD_0004688c_caseD_0:
     if (DAT_00102589 != '\0') goto LAB_00046d06;
     if (gps.average_count != 0) {
       _DAT_00101e78 =
-           double_to_integer((double)CONCAT44(gps.average_latitude._0_4_,gps.average_latitude._4_4_)
+           double_to_integer((double)CONCAT44(__ghidra_piece(unsigned int, gps.average_latitude, 0),__ghidra_piece(unsigned int, gps.average_latitude, 4))
                             );
       _DAT_00101e7c =
-           double_to_integer((double)CONCAT44(gps.average_longitude._0_4_,
-                                              gps.average_longitude._4_4_));
+           double_to_integer((double)CONCAT44(__ghidra_piece(unsigned int, gps.average_longitude, 0),
+                                              __ghidra_piece(unsigned int, gps.average_longitude, 4)));
       _DAT_00101e80 =
-           double_to_integer((double)CONCAT44(gps.average_height_msl._0_4_,
-                                              gps.average_height_msl._4_4_));
+           double_to_integer((double)CONCAT44(__ghidra_piece(unsigned int, gps.average_height_msl, 0),
+                                              __ghidra_piece(unsigned int, gps.average_height_msl, 4)));
       if (DAT_00101e77 == '\0') {
         DAT_00101e77 = '\x01';
       }
@@ -44720,7 +59293,7 @@ void pllp_task(void)
   efc_gain_set(0xff);
   if (pll.stage == PLL_STAGE_INVALID) {
     pll.stage = PLL_STAGE_POWERUP;
-    if (DAT_00100002 == 1) {
+    if (_DAT_00100002 == 1) {
       status_happening('\x19');
       log_event(1);
     }
@@ -44976,7 +59549,7 @@ LAB_00047940:
     pll_scpi_receive();
     memcpy((void *)0x100934,&DAT_00101e70,0x19);
     sVar4 = 0x155;
-    puVar6 = (undefined4 *)&DAT_00100004;
+    puVar6 = &DAT_00100004;
     pgVar7 = &gps;
     do {
       poVar8 = &pgVar7->gmt_offset;
@@ -44999,7 +59572,7 @@ LAB_00047940:
       ppVar9 = (pll_state *)puVar10;
     } while (sVar4 != -1);
     *(undefined2 *)puVar5 = *(undefined2 *)puVar10;
-    DAT_00100002 = 1;
+    _DAT_00100002 = 1;
     DAT_00100000 = record_checksum(&DAT_00100000,0x94e);
     leds_update();
   } while( true );
@@ -45550,8 +60123,8 @@ void gps_print_pseudorange_corrections(void)
   } while (bVar3 < 6);
   console_write("\r\nDerived Statistics ___________________________\r\n");
   printf("AVG  %.2f m    STD DEV  %.2f m\r\n",
-         (double)CONCAT44(gps.correction_average._0_4_,gps.correction_average._4_4_),
-         (double)CONCAT44(gps.correction_deviation._0_4_,gps.correction_deviation._4_4_));
+         (double)CONCAT44(__ghidra_piece(unsigned int, gps.correction_average, 0),__ghidra_piece(unsigned int, gps.correction_average, 4)),
+         (double)CONCAT44(__ghidra_piece(unsigned int, gps.correction_deviation, 0),__ghidra_piece(unsigned int, gps.correction_deviation, 4)));
   return;
 }
 
@@ -45859,10 +60432,10 @@ void gps_print_average(void)
   console_write("\r\n");
   format_dms_precise(acStack_54,'\x01');
   printf("AVG LAT  %+3.6f = %s\r\n",
-         (double)CONCAT44(gps.average_latitude._0_4_,gps.average_latitude._4_4_),acStack_54);
+         (double)CONCAT44(__ghidra_piece(unsigned int, gps.average_latitude, 0),__ghidra_piece(unsigned int, gps.average_latitude, 4)),acStack_54);
   format_dms_precise(acStack_54,'\0');
   printf("AVG LON  %+3.6f = %s\r\n",
-         (double)CONCAT44(gps.average_longitude._0_4_,gps.average_longitude._4_4_),acStack_54);
+         (double)CONCAT44(__ghidra_piece(unsigned int, gps.average_longitude, 0),__ghidra_piece(unsigned int, gps.average_longitude, 4)),acStack_54);
   param1 = double_divide_reversed_pointer(100.0,&gps.average_height_msl);
   printf("AVG HGT  %+3.6f\r\n",param1);
   if (gps.position_hold == 0) {
@@ -46829,8 +61402,8 @@ undefined4 format_time(uint param_1,char *param_2)
   undefined4 uVar2;
   char *pcVar3;
   
-  if (((param_1._1_1_ < 0x18) && (param_1._2_1_ < 0x3c)) && ((byte)param_1 < 0x3d)) {
-    sprintf(param_2,"%02d:%02d:%02d",(uint)param_1._1_1_,(uint)param_1._2_1_,param_1 & 0xff);
+  if (((__ghidra_piece(unsigned char, param_1, 1) < 0x18) && (__ghidra_piece(unsigned char, param_1, 2) < 0x3c)) && ((byte)param_1 < 0x3d)) {
+    sprintf(param_2,"%02d:%02d:%02d",(uint)__ghidra_piece(unsigned char, param_1, 1),(uint)__ghidra_piece(unsigned char, param_1, 2),param_1 & 0xff);
     uVar2 = 1;
   }
   else {
@@ -47436,9 +62009,9 @@ void status_snapshot(pll_stage *param_1)
   param_1[2] = pVar8;
   pVar8 = recovery_suffix_index();
   param_1[3] = pVar8;
-  *(undefined4 *)(param_1 + 10) = interval_reading.value._0_4_;
-  *(undefined4 *)(param_1 + 0xe) = interval_reading.value._4_4_;
-  *(undefined4 *)(param_1 + 0x12) = interval_reading._8_4_;
+  *(undefined4 *)(param_1 + 10) = __ghidra_piece(unsigned int, interval_reading.value, 0);
+  *(undefined4 *)(param_1 + 0xe) = __ghidra_piece(unsigned int, interval_reading.value, 4);
+  *(undefined4 *)(param_1 + 0x12) = __ghidra_piece(unsigned int, interval_reading, 8);
   *(float *)(param_1 + 0x16) = interval_mean;
   *(undefined2 *)(param_1 + 0x1a) = _interval_mean_flag;
   *(float *)(param_1 + 4) = pll.tfom;
@@ -47523,14 +62096,14 @@ void status_snapshot(pll_stage *param_1)
     }
     else {
       *(char **)(param_1 + 0x114) = "AVG ";
-      uVar6 = double_to_integer((double)CONCAT44(gps.average_latitude._0_4_,
-                                                 gps.average_latitude._4_4_));
+      uVar6 = double_to_integer((double)CONCAT44(__ghidra_piece(unsigned int, gps.average_latitude, 0),
+                                                 __ghidra_piece(unsigned int, gps.average_latitude, 4)));
       *(undefined4 *)(param_1 + 0x118) = uVar6;
-      uVar6 = double_to_integer((double)CONCAT44(gps.average_longitude._0_4_,
-                                                 gps.average_longitude._4_4_));
+      uVar6 = double_to_integer((double)CONCAT44(__ghidra_piece(unsigned int, gps.average_longitude, 0),
+                                                 __ghidra_piece(unsigned int, gps.average_longitude, 4)));
       *(undefined4 *)(param_1 + 0x11c) = uVar6;
-      uVar6 = double_to_integer((double)CONCAT44(gps.average_height_msl._0_4_,
-                                                 gps.average_height_msl._4_4_));
+      uVar6 = double_to_integer((double)CONCAT44(__ghidra_piece(unsigned int, gps.average_height_msl, 0),
+                                                 __ghidra_piece(unsigned int, gps.average_height_msl, 4)));
       *(undefined4 *)(param_1 + 0x120) = uVar6;
     }
   }
@@ -48329,7 +62902,7 @@ LAB_0004b4d2:
               DAT_00101b54 = '\0';
               gps.status_monitor_time = get_uptime();
               gps.status_monitor_timed_out = 0;
-              if ((uint8_t  [4])gps.status._4_4_ == gps.status_last_time) {
+              if ((uint8_t  [4])__ghidra_piece(unsigned int, gps.status, 4) == gps.status_last_time) {
                 gps.status_repeat_count = gps.status_repeat_count + 1;
               }
               else {
@@ -49215,7 +63788,7 @@ void gpsm_task(void)
           uStack_98 = (undefined2)uStack_b4;
           uStack_96 = uStack_b0;
           uStack_92 = uStack_ac;
-          cStack_32 = gps_request_class(uStack_bc._2_2_,cStack_9e);
+          cStack_32 = gps_request_class(__ghidra_piece(unsigned short, uStack_bc, 2),cStack_9e);
           iVar4 = (int)cStack_32 - 2;
           if ((uint)(int)cStack_32 < 2 || iVar4 == 0) {
             bVar7 = (byte)uStack_a2;
@@ -49223,7 +63796,7 @@ void gpsm_task(void)
             switch((&WORD_0004c0c8)[(short)iVar4]) {
             case 6:
               if (DAT_001011c4 == '\0') {
-                DAT_00101b56 = uStack_a2._2_2_;
+                DAT_00101b56 = __ghidra_piece(unsigned short, uStack_a2, 2);
                 DAT_00101b58 = cStack_9e;
                 bVar7 = 0;
                 do {
@@ -49246,7 +63819,7 @@ void gpsm_task(void)
                        *(undefined4 *)(CONCAT22(uStack_9c,uStack_9a) + (uint)bVar8 * 4);
                   bVar8 = bVar8 + 1;
                 } while (bVar8 < 4);
-                ppuStack_90 = (undefined **)gps_script_lookup(uStack_a2._2_2_);
+                ppuStack_90 = (undefined **)gps_script_lookup(__ghidra_piece(unsigned short, uStack_a2, 2));
                 bStack_10 = 0;
                 bStack_2a = 0;
                 DAT_0010139c = '\x01';
@@ -49255,10 +63828,10 @@ void gpsm_task(void)
               }
               break;
             case 0x98:
-              gps_console_request(uStack_a2._2_2_,
+              gps_console_request(__ghidra_piece(unsigned short, uStack_a2, 2),
                                   (undefined4 *)
                                   CONCAT31(CONCAT21(uStack_9c,(char)((ushort)uStack_9a >> 8)),
-                                           (char)uStack_9a),uStack_a2._0_1_);
+                                           (char)uStack_9a),__ghidra_piece(unsigned char, uStack_a2, 0));
             }
             bVar8 = (byte)&uStack_aa;
             gps_count_response('\0',(int)&uStack_aa);
@@ -49342,7 +63915,7 @@ LAB_0004c17a:
             }
           }
           else {
-            gps_console_request(sVar2,(undefined4 *)(psVar1 + 2),uStack_a2._0_1_);
+            gps_console_request(sVar2,(undefined4 *)(psVar1 + 2),__ghidra_piece(unsigned char, uStack_a2, 0));
 LAB_0004c1e6:
             ppuStack_90 = ppuStack_90 + 1;
           }
@@ -49562,18 +64135,18 @@ undefined4 command_log_add(int param_1,int param_2)
   uVar1 = *(undefined1 *)(param_1 + 0x20);
   iVar2 = get_date_time(&local_c,&local_8);
   if ((char)iVar2 == '\0') {
-    local_18._2_2_ = CONCAT11(1,(byte)local_18);
+    __ghidra_piece(unsigned short, local_18, 2) = CONCAT11(1,(byte)local_18);
   }
   else {
-    local_18._2_2_ = (ushort)(byte)local_18;
-    local_c = oncore_date_pack(gps.status._0_4_);
-    local_8._0_1_ = gps.status.pad_04;
-    local_8._1_1_ = gps.status.hour;
-    local_8._2_1_ = gps.status.minute;
-    local_8._3_1_ = gps.status.second;
+    __ghidra_piece(unsigned short, local_18, 2) = (ushort)(byte)local_18;
+    local_c = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
+    __ghidra_piece(unsigned char, local_8, 0) = gps.status.pad_04;
+    __ghidra_piece(unsigned char, local_8, 1) = gps.status.hour;
+    __ghidra_piece(unsigned char, local_8, 2) = gps.status.minute;
+    __ghidra_piece(unsigned char, local_8, 3) = gps.status.second;
     utc_to_local(&local_c,&local_8);
   }
-  local_18 = (uint)CONCAT12(uVar1,local_18._2_2_);
+  local_18 = (uint)CONCAT12(uVar1,__ghidra_piece(unsigned short, local_18, 2));
   puVar3 = _DAT_0010199e + 5;
   if ((undefined4 *)0x101999 < puVar3) {
     puVar3 = (undefined4 *)&DAT_001017f6;
@@ -49655,13 +64228,13 @@ undefined4 gps_print_command(int param_1,char *param_2)
     else {
       param2 = "?";
     }
-    if (uStack_26._2_1_ == '\0') {
+    if (__ghidra_piece(unsigned char, uStack_26, 2) == '\0') {
       param9 = "e";
     }
     else {
       param9 = " ";
     }
-    if (uStack_26._1_1_ == '\0') {
+    if (__ghidra_piece(unsigned char, uStack_26, 1) == '\0') {
       param6 = "c";
     }
     else {
@@ -49669,7 +64242,7 @@ undefined4 gps_print_command(int param_1,char *param_2)
     }
     local_2e = (short)((uint)uVar4 >> 0x10);
     sprintf(param_2,"%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s",param2,(int)local_2e,
-            (&PTR_DAT_0004fece)[local_2a._0_2_ * 0xe],(char *)((int)&local_2a + 2),param6,acStack_1a
+            (&PTR_DAT_0004fece)[__ghidra_piece(unsigned short, local_2a, 0) * 0xe],(char *)((int)&local_2a + 2),param6,acStack_1a
             ,acStack_e,param9);
     uVar4 = 1;
   }
@@ -50573,8 +65146,8 @@ bool gps_time_local_get(undefined4 *param_1,undefined4 *param_2)
   
   bVar1 = gps.status_received != 0;
   if (bVar1) {
-    local_c = gps.status._4_4_;
-    local_8 = oncore_date_pack(gps.status._0_4_);
+    local_c = __ghidra_piece(unsigned int, gps.status, 4);
+    local_8 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
     utc_to_local(&local_8,&local_c);
     *param_1 = local_c;
     *param_2 = local_8;
@@ -50817,8 +65390,8 @@ undefined4 oncore_corrections_message(void)
     gps.correction_deviation = double_multiply(dVar6,0.01);
     dVar6 = gps.correction_average;
   }
-  gps.correction_average._0_4_ = (undefined4)((ulonglong)dVar6 >> 0x20);
-  gps.correction_average._4_4_ = SUB84(dVar6,0);
+  __ghidra_piece(unsigned int, gps.correction_average, 0) = (undefined4)((ulonglong)dVar6 >> 0x20);
+  __ghidra_piece(unsigned int, gps.correction_average, 4) = SUB84(dVar6,0);
   return uVar1;
 }
 
@@ -51064,7 +65637,7 @@ int gps_response_decode(short param_1,int param_2)
   }
   psos_mode(0,0x80,(uchar *)0x0);
   if (param_1 == 0x1e) {
-    status_snapshot_update(gps.status._4_4_);
+    status_snapshot_update(__ghidra_piece(unsigned int, gps.status, 4));
   }
   return iVar3;
 }
@@ -51367,6 +65940,7 @@ void memory_free(ulong param_1)
 
 
 /* 000510e8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* Not a C function: an exception handler, entered by the processor through the primary table's
    vector 33 (trap_1), not called; returns with rte. */
@@ -51384,6 +65958,23 @@ __exception void primary_trap_1(void)
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl primary_trap_1\n"
+	"	.type primary_trap_1, @function\n"
+	"	.section .text.primary_trap_1.510e8,\"ax\",@progbits\n"
+	"primary_trap_1:\n"
+	"	tst.l %d0\n"
+	"	bne.l .Lg_510fa\n"
+	"	move.w (%sp),(0x40,%a0)\n"
+	"	bra.l .Lg_510fe\n"
+	".Lg_510fa:\n"
+	"	move.w (0x40,%a0),(%sp)\n"
+	".Lg_510fe:\n"
+	"	rte\n"
+	"	.size primary_trap_1, .-primary_trap_1\n"
+);
 
 /* 00051100 */
 
@@ -51466,13 +66057,14 @@ undefined4 primary_unpack_records(void)
 
 
 /* 0005d080 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* *A0 -= D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 float *x, D1
    float y.
    softfloat.md, libc.md */
 
-__regcall void float_subtract_in_place(float *x __asm("a0"),float y __asm("d1"))
+__regcall void float_subtract_in_place(float *x /* a0 */,float y /* d1 */)
 
 {
   float fVar1;
@@ -51484,14 +66076,28 @@ __regcall void float_subtract_in_place(float *x __asm("a0"),float y __asm("d1"))
 }
 
 
+#endif
+__asm__(
+	"	.globl float_subtract_in_place\n"
+	"	.type float_subtract_in_place, @function\n"
+	"	.section .text.float_subtract_in_place.5d080,\"ax\",@progbits\n"
+	"float_subtract_in_place:\n"
+	"	move.l (%a0),%d0\n"
+	"	bsr.w float_subtract\n"
+	"	move.l %d0,(%a0)\n"
+	"	rts\n"
+	"	.size float_subtract_in_place, .-float_subtract_in_place\n"
+);
+
 /* 0005d08a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* *A0 += D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 float *x, D1
    float y.
    softfloat.md, libc.md */
 
-__regcall void float_add_in_place(float *x __asm("a0"),float y __asm("d1"))
+__regcall void float_add_in_place(float *x /* a0 */,float y /* d1 */)
 
 {
   float fVar1;
@@ -51503,7 +66109,21 @@ __regcall void float_add_in_place(float *x __asm("a0"),float y __asm("d1"))
 }
 
 
+#endif
+__asm__(
+	"	.globl float_add_in_place\n"
+	"	.type float_add_in_place, @function\n"
+	"	.section .text.float_add_in_place.5d08a,\"ax\",@progbits\n"
+	"float_add_in_place:\n"
+	"	move.l (%a0),%d0\n"
+	"	bsr.w float_add\n"
+	"	move.l %d0,(%a0)\n"
+	"	rts\n"
+	"	.size float_add_in_place, .-float_add_in_place\n"
+);
+
 /* 0005d094 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x0005d20e) */
 /* WARNING: Removing unreachable block (ram,0x0005d042) */
@@ -51513,7 +66133,8 @@ __regcall void float_add_in_place(float *x __asm("a0"),float y __asm("d1"))
    D1 float b.  Out: D0 float.
    softfloat.md */
 
-__regcall float float_subtract_reversed(float a __asm("d0"),float b __asm("d1")) /* out D0 float */
+/* out D0 float */
+__regcall float float_subtract_reversed(float a /* d0 */,float b /* d1 */)
 
 {
   bool bVar1;
@@ -51634,7 +66255,7 @@ LAB_0005d06c:
   }
   else {
     float_status = float_status | 0x200;
-    if ((float_control._0_1_ & 2) != 0) goto LAB_0005d1fe;
+    if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) goto LAB_0005d1fe;
   }
   fVar7 = (float)(uVar5 + (int)fVar7);
   if ((int)fVar7 < 0) {
@@ -51644,7 +66265,7 @@ LAB_0005d06c:
     }
     return (float)((uint)fVar8 | 0x80000000);
   }
-  if ((uVar4 == 0) || (float_status = float_status | 0x200, (float_control._0_1_ & 2) == 0)) {
+  if ((uVar4 == 0) || (float_status = float_status | 0x200, (__ghidra_piece(unsigned char, float_control, 0) & 2) == 0)) {
     if (!bVar1) {
       fVar7 = (float)((int)fVar7 + -0x800000);
     }
@@ -51660,7 +66281,18 @@ LAB_0005d1fe:
 }
 
 
+#endif
+__asm__(
+	"	.globl float_subtract_reversed\n"
+	"	.type float_subtract_reversed, @function\n"
+	"	.section .text.float_subtract_reversed.5d094,\"ax\",@progbits\n"
+	"float_subtract_reversed:\n"
+	"	exg %d0,%d1\n"
+	"	.size float_subtract_reversed, .-float_subtract_reversed\n"
+);
+
 /* 0005d096 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x0005d20e) */
 /* WARNING: Removing unreachable block (ram,0x0005d042) */
@@ -51670,7 +66302,8 @@ LAB_0005d1fe:
    D1 float b.  Out: D0 float.
    softfloat.md */
 
-__regcall float float_subtract(float a __asm("d0"),float b __asm("d1")) /* out D0 float */
+/* out D0 float */
+__regcall float float_subtract(float a /* d0 */,float b /* d1 */)
 
 {
   bool bVar1;
@@ -51791,7 +66424,7 @@ LAB_0005d06c:
   }
   else {
     float_status = float_status | 0x200;
-    if ((float_control._0_1_ & 2) != 0) goto LAB_0005d1fe;
+    if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) goto LAB_0005d1fe;
   }
   fVar7 = (float)(uVar5 + (int)fVar7);
   if ((int)fVar7 < 0) {
@@ -51801,7 +66434,7 @@ LAB_0005d06c:
     }
     return (float)((uint)fVar8 | 0x80000000);
   }
-  if ((uVar4 == 0) || (float_status = float_status | 0x200, (float_control._0_1_ & 2) == 0)) {
+  if ((uVar4 == 0) || (float_status = float_status | 0x200, (__ghidra_piece(unsigned char, float_control, 0) & 2) == 0)) {
     if (!bVar1) {
       fVar7 = (float)((int)fVar7 + -0x800000);
     }
@@ -51817,7 +66450,70 @@ LAB_0005d1fe:
 }
 
 
+#endif
+__asm__(
+	"	.globl float_subtract\n"
+	"	.type float_subtract, @function\n"
+	"	.section .text.float_subtract.5d01c,\"ax\",@progbits\n"
+	".Lg_5d01c:\n"
+	"	tst.l %d3\n"
+	"	beq.w float_add+0x134\n"
+	"	movea.l #0x1,%a1\n"
+	"	move.l %d4,%d6\n"
+	"	bra.w float_add+0x5a\n"
+	".Lg_5d02e:\n"
+	"	and.l %d6,%d2\n"
+	"	addq.l #0x1,%d6\n"
+	"	or.l %d6,%d2\n"
+	"	or.l %d4,%d1\n"
+	"	bra.w float_add+0x5a\n"
+	"	tst.l %d0\n"
+	"	bne.b .Lg_5d01c\n"
+	"	bpl.w float_add+0x13e\n"
+	"	tst.l %d1\n"
+	"	bmi.w float_add+0x13e\n"
+	"	move.l %d1,%d0\n"
+	"	bra.w float_add+0x13e\n"
+	"	tst.l %d3\n"
+	"	bne.b .Lg_5d02e\n"
+	"	bra.w float_add+0x13e\n"
+	"	bgt.b .Lg_5d06c\n"
+	"	cmp.l %d5,%d3\n"
+	"	bgt.b .Lg_5d06a\n"
+	"	blt.w float_add+0x13e\n"
+	"	eor.l %d0,%d1\n"
+	"	bmi.w float_add+0x176\n"
+	"	bra.w float_add+0x13e\n"
+	".Lg_5d06a:\n"
+	"	move.l %d1,%d0\n"
+	".Lg_5d06c:\n"
+	"	move.l %d0,-(%sp)\n"
+	"	pea (0x74000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x8,%sp\n"
+	"	bra.w float_add+0x13e\n"
+	"	.section .text.float_subtract.5d096,\"ax\",@progbits\n"
+	"float_subtract:\n"
+	"	movem.l %a3/%d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
+	"	move.l %d0,%d2\n"
+	"	move.l %d1,%d3\n"
+	"	bclr.l #0x1f,%d2\n"
+	"	bclr.l #0x1f,%d3\n"
+	"	cmpi.l #0x7f800000,%d3\n"
+	"	.byte 0x6e | bgt.b 0x0005d0ca\n"
+	"	.reloc ., R_68K_PC8, float_add+0x10-1\n"
+	"	.byte 0\n"
+	"	bchg.l #0x1f,%d1\n"
+	"	.byte 0x60 | bra.b 0x0005d0ca\n"
+	"	.reloc ., R_68K_PC8, float_add+0x10-1\n"
+	"	.byte 0\n"
+	"	moveq #0x0,%d0\n"
+	"	bra.w float_add+0x13e\n"
+	"	.size float_subtract, .-float_subtract\n"
+);
+
 /* 0005d0ba */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x0005d20e) */
 /* WARNING: Removing unreachable block (ram,0x0005d042) */
@@ -51827,7 +66523,8 @@ LAB_0005d1fe:
    D1 float b.  Out: D0 float.
    softfloat.md */
 
-__regcall float float_add(float a __asm("d0"),float b __asm("d1")) /* out D0 float */
+/* out D0 float */
+__regcall float float_add(float a /* d0 */,float b /* d1 */)
 
 {
   bool bVar1;
@@ -51944,7 +66641,7 @@ LAB_0005d06c:
   }
   else {
     float_status = float_status | 0x200;
-    if ((float_control._0_1_ & 2) != 0) goto LAB_0005d1fe;
+    if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) goto LAB_0005d1fe;
   }
   fVar6 = (float)(uVar4 + (int)fVar6);
   if ((int)fVar6 < 0) {
@@ -51954,7 +66651,7 @@ LAB_0005d06c:
     }
     return (float)((uint)fVar7 | 0x80000000);
   }
-  if ((uVar3 == 0) || (float_status = float_status | 0x200, (float_control._0_1_ & 2) == 0)) {
+  if ((uVar3 == 0) || (float_status = float_status | 0x200, (__ghidra_piece(unsigned char, float_control, 0) & 2) == 0)) {
     if (!bVar1) {
       fVar6 = (float)((int)fVar6 + -0x800000);
     }
@@ -51970,14 +66667,190 @@ LAB_0005d1fe:
 }
 
 
+#endif
+__asm__(
+	"	.globl float_add\n"
+	"	.type float_add, @function\n"
+	"	.section .text.float_add.5d0ba,\"ax\",@progbits\n"
+	"float_add:\n"
+	"	movem.l %a3/%d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
+	"	move.l %d0,%d2\n"
+	"	move.l %d1,%d3\n"
+	"	bclr.l #0x1f,%d2\n"
+	"	bclr.l #0x1f,%d3\n"
+	"	move.l #0x7f800000,%d5\n"
+	"	move.l #0x7fffff,%d6\n"
+	"	suba.l %a1,%a1\n"
+	"	move.l %d0,%d7\n"
+	"	eor.l %d1,%d7\n"
+	"	cmp.l %d5,%d2\n"
+	"	bge.w float_subtract-0x40\n"
+	"	cmp.l %d5,%d3\n"
+	"	.byte 0x6e | bgt.b 0x0005d06a\n"
+	"	.reloc ., R_68K_PC8, float_subtract-0x2c-1\n"
+	"	.byte 0\n"
+	"	cmp.l %d3,%d2\n"
+	"	bge.b .Lg_5d0ee\n"
+	"	exg %d0,%d1\n"
+	"	exg %d2,%d3\n"
+	".Lg_5d0ee:\n"
+	"	move.l %d1,%d4\n"
+	"	bchg.l #0x1f,%d4\n"
+	"	cmp.l %d4,%d0\n"
+	"	.byte 0x67 | beq.b 0x0005d0b4\n"
+	"	.reloc ., R_68K_PC8, float_subtract+0x1e-1\n"
+	"	.byte 0\n"
+	"	movea.l %d0,%a3\n"
+	"	move.l %d6,%d4\n"
+	"	addq.l #0x1,%d4\n"
+	"	cmp.l %d4,%d2\n"
+	"	blt.w float_subtract-0x5c\n"
+	"	cmp.l %d4,%d3\n"
+	"	blt.w float_subtract-0x48\n"
+	"	and.l %d6,%d2\n"
+	"	and.l %d6,%d3\n"
+	"	move.l %d4,%d6\n"
+	"	or.l %d6,%d2\n"
+	"	or.l %d6,%d3\n"
+	"	move.l %d0,%d4\n"
+	"	and.l %d5,%d4\n"
+	"	and.l %d1,%d5\n"
+	"	moveq #0x0,%d1\n"
+	"	sub.l %d4,%d5\n"
+	"	neg.l %d5\n"
+	"	swap %d5\n"
+	"	lsr.w #0x7,%d5\n"
+	"	cmpi.w #0x19,%d5\n"
+	"	ble.b .Lg_5d142\n"
+	"	ori.w #0x200,(float_status).l\n"
+	"	btst.b #0x1,(float_control).l\n"
+	"	bne.w .Lg_5d1fe\n"
+	"	bra.w .Lg_5d1ca\n"
+	".Lg_5d142:\n"
+	"	moveq #-0x1,%d1\n"
+	"	lsl.l %d5,%d1\n"
+	"	not.l %d1\n"
+	"	and.l %d3,%d1\n"
+	"	ror.l %d5,%d1\n"
+	"	lsr.l %d5,%d3\n"
+	"	tst.l %d7\n"
+	"	bmi.b .Lg_5d164\n"
+	"	add.l %d3,%d2\n"
+	"	cmpi.l #0x1000000,%d2\n"
+	"	blt.b .Lg_5d1a8\n"
+	"	lsr.l #0x1,%d2\n"
+	"	roxr.l #0x1,%d1\n"
+	"	add.l %d6,%d4\n"
+	"	bra.b .Lg_5d1a8\n"
+	".Lg_5d164:\n"
+	"	neg.l %d1\n"
+	"	subx.l %d3,%d2\n"
+	"	cmp.l %d6,%d2\n"
+	"	bge.b .Lg_5d1a8\n"
+	"	moveq #0x17,%d5\n"
+	"	move.l %d2,%d3\n"
+	"	swap %d3\n"
+	"	tst.b %d3\n"
+	"	bne.b .Lg_5d182\n"
+	"	moveq #0xf,%d5\n"
+	"	move.w %d2,%d3\n"
+	"	clr.b %d3\n"
+	"	tst.w %d3\n"
+	"	bne.b .Lg_5d182\n"
+	"	moveq #0x7,%d5\n"
+	".Lg_5d182:\n"
+	"	btst.l %d5,%d2\n"
+	"	dbne %d5,.Lg_5d182\n"
+	"	moveq #0x17,%d3\n"
+	"	sub.w %d5,%d3\n"
+	"	move.w %d3,%d5\n"
+	"	lsl.w #0x7,%d3\n"
+	"	swap %d3\n"
+	"	sub.l %d3,%d4\n"
+	"	ble.b .Lg_5d1ee\n"
+	"	lsl.l %d5,%d2\n"
+	"	rol.l %d5,%d1\n"
+	"	moveq #-0x1,%d7\n"
+	"	lsl.l %d5,%d7\n"
+	"	move.l %d7,%d3\n"
+	"	not.l %d7\n"
+	"	and.l %d1,%d7\n"
+	"	and.l %d3,%d1\n"
+	"	or.l %d7,%d2\n"
+	".Lg_5d1a8:\n"
+	"	tst.w %d4\n"
+	"	blt.b .Lg_5d20e\n"
+	"	cmpi.l #-0x80000000,%d1\n"
+	"	bcs.b .Lg_5d1ca\n"
+	"	bhi.b .Lg_5d1bc\n"
+	"	btst.l #0x0,%d2\n"
+	"	beq.b .Lg_5d1ca\n"
+	".Lg_5d1bc:\n"
+	"	addq.l #0x1,%d2\n"
+	"	cmpi.l #0x1000000,%d2\n"
+	"	blt.b .Lg_5d1ca\n"
+	"	move.l %d6,%d2\n"
+	"	add.l %d6,%d4\n"
+	".Lg_5d1ca:\n"
+	"	add.l %d4,%d2\n"
+	"	bmi.w .Lg_5d240\n"
+	"	tst.l %d1\n"
+	"	beq.b .Lg_5d1e6\n"
+	"	ori.w #0x200,(float_status).l\n"
+	"	btst.b #0x1,(float_control).l\n"
+	"	bne.b .Lg_5d1fe\n"
+	".Lg_5d1e6:\n"
+	"	move.l %a1,%d3\n"
+	"	dbf %d3,.Lg_5d1ee\n"
+	"	sub.l %d6,%d2\n"
+	".Lg_5d1ee:\n"
+	"	move.l %d2,%d0\n"
+	"	move.l %a3,%d7\n"
+	"	bpl.b .Lg_5d1f8\n"
+	"	bset.l #0x1f,%d0\n"
+	".Lg_5d1f8:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%d6/%d7/%a3\n"
+	"	rts\n"
+	".Lg_5d1fe:\n"
+	"	pea (0x70200).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5d1f8\n"
+	".Lg_5d20e:\n"
+	"	move.l %d1,-(%sp)\n"
+	"	neg.w %d4\n"
+	"	move.l %d2,-(%sp)\n"
+	"	move.l %d4,-(%sp)\n"
+	"	pea (0x70800).l\n"
+	"	jsr (float_raise).l\n"
+	"	lea (0x10,%sp),%sp\n"
+	".Lg_5d226:\n"
+	"	move.l %a3,%d7\n"
+	"	bpl.b .Lg_5d22e\n"
+	"	bset.l #0x1f,%d0\n"
+	".Lg_5d22e:\n"
+	"	bra.b .Lg_5d1f8\n"
+	"	pea (0x72000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5d1f8\n"
+	".Lg_5d240:\n"
+	"	pea (0x71000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5d226\n"
+	"	.size float_add, .-float_add\n"
+);
+
 /* 0005d2e2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* *A0 -= D0:D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *x,
    D0:D1 double y.
    libc.md */
 
-__regcall void double_subtract_in_place(double *x __asm("a0"),double y __asm("d0"))
+__regcall void double_subtract_in_place(double *x /* a0 */,double y /* d0 */)
 
 {
   double dVar1;
@@ -51988,14 +66861,35 @@ __regcall void double_subtract_in_place(double *x __asm("a0"),double y __asm("d0
 }
 
 
+#endif
+__asm__(
+	"	.globl double_subtract_in_place\n"
+	"	.type double_subtract_in_place, @function\n"
+	"	.section .text.double_subtract_in_place.5d2e2,\"ax\",@progbits\n"
+	"double_subtract_in_place:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	movem.l (%a0),%a0/%a1\n"
+	"	bsr.w double_subtract_reversed\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	movem.l %d0/%d1,(%a0)\n"
+	"	rts\n"
+	"	.byte 0x20\n"
+	"	.byte 0x18\n"
+	"	.byte 0x22\n"
+	"	.byte 0x18\n"
+	"	.size double_subtract_in_place, .-double_subtract_in_place\n"
+);
+
 /* 0005d2f8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* D0:D1 - *A1
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
    double *b.  Out: D0:D1 double.
    libc.md */
 
-__regcall double double_subtract_pointer(double a __asm("d0"),double *b __asm("a1")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double double_subtract_pointer(double a /* d0 */,double *b /* a1 */)
 
 {
   double dVar1;
@@ -52005,14 +66899,32 @@ __regcall double double_subtract_pointer(double a __asm("d0"),double *b __asm("a
 }
 
 
+#endif
+__asm__(
+	"	.globl double_subtract_pointer\n"
+	"	.type double_subtract_pointer, @function\n"
+	"	.section .text.double_subtract_pointer.5d2f8,\"ax\",@progbits\n"
+	"double_subtract_pointer:\n"
+	"	movea.l (%a1)+,%a0\n"
+	"	movea.l (%a1)+,%a1\n"
+	"	exg %d0,%a0\n"
+	"	exg %d1,%a1\n"
+	"	jmp (double_subtract_reversed:w,%pc)\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x71\n"
+	"	.size double_subtract_pointer, .-double_subtract_pointer\n"
+);
+
 /* 0005d306 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* *A1 - *A0
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *a, A1
    double *b.  Out: D0:D1 double.
    libc.md */
 
-__regcall double double_subtract_reversed_pointers(double *a __asm("a0"),double *b __asm("a1")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double double_subtract_reversed_pointers(double *a /* a0 */,double *b /* a1 */)
 
 {
   uint uVar1;
@@ -52134,7 +67046,7 @@ LAB_0005d2c6:
     else {
       if (uVar14 != 0x20) {
         if (0x37 < (short)uVar14) {
-          if ((float_control._0_1_ & 2) == 0) {
+          if ((__ghidra_piece(unsigned char, float_control, 0) & 2) == 0) {
             float_status = float_status | 0x200;
             return (double)CONCAT44(uVar10 & 0xffff0000 | uVar2 & 0xffefffff,uVar4);
           }
@@ -52173,7 +67085,7 @@ LAB_0005d2c6:
     }
     if (uVar6 != 0) {
       uVar14 = float_status | 0x200;
-      if ((float_control._0_1_ & 2) != 0) goto LAB_0005d484;
+      if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) goto LAB_0005d484;
       float_status = uVar14;
       if ((CARRY4(uVar6,uVar6)) &&
          (((((uVar6 & 0x7fffffff) != 0 || ((uVar12 & 1) != 0)) &&
@@ -52207,7 +67119,7 @@ LAB_0005d5ae:
     if (0 < (short)uVar14) {
       if (uVar3 != 0) {
         uVar8 = float_status | 0x200;
-        if ((float_control._0_1_ & 2) != 0) {
+        if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
 LAB_0005d484:
           float_status = float_status | 0x200;
           dVar18 = (double)float_raise(0x80200);
@@ -52309,14 +67221,27 @@ LAB_0005d63e:
 }
 
 
+#endif
+__asm__(
+	"	.globl double_subtract_reversed_pointers\n"
+	"	.type double_subtract_reversed_pointers, @function\n"
+	"	.section .text.double_subtract_reversed_pointers.5d306,\"ax\",@progbits\n"
+	"double_subtract_reversed_pointers:\n"
+	"	move.l (%a0)+,%d0\n"
+	"	move.l (%a0)+,%d1\n"
+	"	.size double_subtract_reversed_pointers, .-double_subtract_reversed_pointers\n"
+);
+
 /* 0005d30a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* *A1 - D0:D1
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
    double *b.  Out: D0:D1 double.
    libc.md */
 
-__regcall double double_subtract_reversed_pointer(double a __asm("d0"),double *b __asm("a1")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double double_subtract_reversed_pointer(double a /* d0 */,double *b /* a1 */)
 
 {
   uint uVar1;
@@ -52438,7 +67363,7 @@ LAB_0005d2c6:
     else {
       if (uVar14 != 0x20) {
         if (0x37 < (short)uVar14) {
-          if ((float_control._0_1_ & 2) == 0) {
+          if ((__ghidra_piece(unsigned char, float_control, 0) & 2) == 0) {
             float_status = float_status | 0x200;
             return (double)CONCAT44(uVar10 & 0xffff0000 | uVar2 & 0xffefffff,uVar4);
           }
@@ -52477,7 +67402,7 @@ LAB_0005d2c6:
     }
     if (uVar7 != 0) {
       uVar14 = float_status | 0x200;
-      if ((float_control._0_1_ & 2) != 0) goto LAB_0005d484;
+      if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) goto LAB_0005d484;
       float_status = uVar14;
       if ((CARRY4(uVar7,uVar7)) &&
          (((((uVar7 & 0x7fffffff) != 0 || ((uVar5 & 1) != 0)) &&
@@ -52511,7 +67436,7 @@ LAB_0005d5ae:
     if (0 < (short)uVar14) {
       if (uVar3 != 0) {
         uVar8 = float_status | 0x200;
-        if ((float_control._0_1_ & 2) != 0) {
+        if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
 LAB_0005d484:
           float_status = float_status | 0x200;
           dVar18 = (double)float_raise(0x80200);
@@ -52613,14 +67538,27 @@ LAB_0005d63e:
 }
 
 
+#endif
+__asm__(
+	"	.globl double_subtract_reversed_pointer\n"
+	"	.type double_subtract_reversed_pointer, @function\n"
+	"	.section .text.double_subtract_reversed_pointer.5d30a,\"ax\",@progbits\n"
+	"double_subtract_reversed_pointer:\n"
+	"	movea.l (%a1)+,%a0\n"
+	"	movea.l (%a1)+,%a1\n"
+	"	.size double_subtract_reversed_pointer, .-double_subtract_reversed_pointer\n"
+);
+
 /* 0005d30e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* A0:A1 - D0:D1
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a,
    A0:A1 double b.  Out: D0:D1 double.
    libc.md */
 
-__regcall double double_subtract_reversed(double a __asm("d0"),double b __asm("a0")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double double_subtract_reversed(double a /* d0 */,double b /* a0 */)
 
 {
   double dVar1;
@@ -52719,7 +67657,7 @@ __regcall double double_subtract_reversed(double a __asm("d0"),double b __asm("a
         else {
           if (uVar15 != 0x20) {
             if (0x37 < (short)uVar15) {
-              if ((float_control._0_1_ & 2) == 0) {
+              if ((__ghidra_piece(unsigned char, float_control, 0) & 2) == 0) {
                 float_status = float_status | 0x200;
                 return (double)CONCAT44(uVar6 & 0xffff0000 | uVar4 & 0xffefffff,uVar7);
               }
@@ -52758,7 +67696,7 @@ __regcall double double_subtract_reversed(double a __asm("d0"),double b __asm("a
         }
         if (uVar3 != 0) {
           uVar15 = float_status | 0x200;
-          if ((float_control._0_1_ & 2) != 0) goto LAB_0005d484;
+          if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) goto LAB_0005d484;
           float_status = uVar15;
           if (((CARRY4(uVar3,uVar3)) &&
               ((((uVar3 & 0x7fffffff) != 0 || ((uVar12 & 1) != 0)) &&
@@ -52792,7 +67730,7 @@ LAB_0005d5ae:
         if (0 < (short)uVar15) {
           if (uVar5 != 0) {
             uVar9 = float_status | 0x200;
-            if ((float_control._0_1_ & 2) != 0) {
+            if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
 LAB_0005d484:
               float_status = float_status | 0x200;
               dVar1 = (double)float_raise();
@@ -52919,14 +67857,124 @@ LAB_0005d2c6:
 }
 
 
+#endif
+__asm__(
+	"	.globl double_subtract_reversed\n"
+	"	.type double_subtract_reversed, @function\n"
+	"	.section .text.double_subtract_reversed.5d250,\"ax\",@progbits\n"
+	".Lg_5d250:\n"
+	"	tst.l %d2\n"
+	"	bne.b .Lg_5d258\n"
+	"	tst.l %d3\n"
+	"	beq.b .Lg_5d2b6\n"
+	".Lg_5d258:\n"
+	"	movea.w #0x1,%a0\n"
+	"	bra.w double_add+0x6e\n"
+	".Lg_5d260:\n"
+	"	andi.l #0xfffff,%d0\n"
+	"	or.l %d5,%d0\n"
+	"	or.l %d5,%d7\n"
+	"	bra.w double_add+0x6e\n"
+	".Lg_5d26e:\n"
+	"	moveq #0x0,%d0\n"
+	"	moveq #0x0,%d1\n"
+	"	bra.w double_add+0x2b6\n"
+	"	tst.l %d2\n"
+	"	bne.b .Lg_5d260\n"
+	"	tst.l %d3\n"
+	"	bne.b .Lg_5d260\n"
+	"	bra.w .Lg_5d2b6\n"
+	"	tst.l %d0\n"
+	"	bne.b .Lg_5d250\n"
+	"	tst.l %d1\n"
+	"	bne.b .Lg_5d250\n"
+	"	tst.l %d6\n"
+	"	beq.b .Lg_5d26e\n"
+	"	tst.l %d7\n"
+	"	beq.b .Lg_5d26e\n"
+	".Lg_5d292:\n"
+	"	move.l %d7,%d0\n"
+	"	move.l %d3,%d1\n"
+	"	bra.w double_add+0x2b6\n"
+	"	bgt.b .Lg_5d2c2\n"
+	"	tst.l %d1\n"
+	"	bne.b .Lg_5d2c2\n"
+	"	cmp.l %d4,%d2\n"
+	"	bgt.b .Lg_5d2bc\n"
+	"	beq.b .Lg_5d2ac\n"
+	"	move.l %d6,%d0\n"
+	"	bra.w double_add+0x2b6\n"
+	".Lg_5d2ac:\n"
+	"	tst.l %d3\n"
+	"	bne.b .Lg_5d2bc\n"
+	"	eor.l %d6,%d7\n"
+	"	bmi.w double_add+0x2f8\n"
+	".Lg_5d2b6:\n"
+	"	move.l %d6,%d0\n"
+	"	bra.w double_add+0x2b6\n"
+	".Lg_5d2bc:\n"
+	"	move.l %d3,-(%sp)\n"
+	"	move.l %d7,-(%sp)\n"
+	"	bra.b .Lg_5d2c6\n"
+	".Lg_5d2c2:\n"
+	"	move.l %d1,-(%sp)\n"
+	"	move.l %d6,-(%sp)\n"
+	".Lg_5d2c6:\n"
+	"	pea (0x84000).l\n"
+	"	jsr (float_raise).l\n"
+	"	lea (0xc,%sp),%sp\n"
+	"	bra.w double_add+0x2b6\n"
+	"	bgt.b .Lg_5d2bc\n"
+	"	tst.l %d3\n"
+	"	bne.b .Lg_5d2bc\n"
+	"	bra.b .Lg_5d292\n"
+	"	.section .text.double_subtract_reversed.5d2f4,\"ax\",@progbits\n"
+	"	.byte 0x20\n"
+	"	.byte 0x18\n"
+	"	.byte 0x22\n"
+	"	.byte 0x18\n"
+	"	.section .text.double_subtract_reversed.5d304,\"ax\",@progbits\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x71\n"
+	"	.section .text.double_subtract_reversed.5d30e,\"ax\",@progbits\n"
+	"double_subtract_reversed:\n"
+	"	movem.l %d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
+	"	move.l %d0,%d2\n"
+	"	move.l %d1,%d3\n"
+	"	move.l %a0,%d0\n"
+	"	move.l %a1,%d1\n"
+	"	move.l %d0,%d6\n"
+	"	move.l %d2,%d7\n"
+	"	moveq #0x1f,%d5\n"
+	"	bclr.l %d5,%d0\n"
+	"	bclr.l %d5,%d2\n"
+	"	move.l #0x7ff00000,%d4\n"
+	"	cmp.l %d4,%d2\n"
+	"	blt.b .Lg_5d334\n"
+	"	.byte 0x6e | bgt.b 0x0005d368\n"
+	"	.reloc ., R_68K_PC8, double_add+0x16-1\n"
+	"	.byte 0\n"
+	"	tst.l %d3\n"
+	"	.byte 0x66 | bne.b 0x0005d368\n"
+	"	.reloc ., R_68K_PC8, double_add+0x16-1\n"
+	"	.byte 0\n"
+	".Lg_5d334:\n"
+	"	bchg.l %d5,%d7\n"
+	"	.byte 0x60 | bra.b 0x0005d368\n"
+	"	.reloc ., R_68K_PC8, double_add+0x16-1\n"
+	"	.byte 0\n"
+	"	.size double_subtract_reversed, .-double_subtract_reversed\n"
+);
+
 /* 0005d338 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* *A0 += D0:D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *x,
    D0:D1 double y.
    libc.md */
 
-__regcall void double_add_in_place(double *x __asm("a0"),double y __asm("d0"))
+__regcall void double_add_in_place(double *x /* a0 */,double y /* d0 */)
 
 {
   double dVar1;
@@ -52937,14 +67985,31 @@ __regcall void double_add_in_place(double *x __asm("a0"),double y __asm("d0"))
 }
 
 
+#endif
+__asm__(
+	"	.globl double_add_in_place\n"
+	"	.type double_add_in_place, @function\n"
+	"	.section .text.double_add_in_place.5d338,\"ax\",@progbits\n"
+	"double_add_in_place:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	movem.l (%a0),%a0/%a1\n"
+	"	bsr.w double_add\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	movem.l %d0/%d1,(%a0)\n"
+	"	rts\n"
+	"	.size double_add_in_place, .-double_add_in_place\n"
+);
+
 /* 0005d34a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* *A0 + *A1
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *a, A1
    double *b.  Out: D0:D1 double.
    libc.md */
 
-__regcall double double_add_pointers(double *a __asm("a0"),double *b __asm("a1")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double double_add_pointers(double *a /* a0 */,double *b /* a1 */)
 
 {
   uint uVar1;
@@ -53063,7 +68128,7 @@ LAB_0005d2c6:
     else {
       if (uVar14 != 0x20) {
         if (0x37 < (short)uVar14) {
-          if ((float_control._0_1_ & 2) == 0) {
+          if ((__ghidra_piece(unsigned char, float_control, 0) & 2) == 0) {
             float_status = float_status | 0x200;
             return (double)CONCAT44(uVar11 & 0xffff0000 | uVar2 & 0xffefffff,uVar4);
           }
@@ -53102,7 +68167,7 @@ LAB_0005d2c6:
     }
     if (uVar7 != 0) {
       uVar14 = float_status | 0x200;
-      if ((float_control._0_1_ & 2) != 0) goto LAB_0005d484;
+      if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) goto LAB_0005d484;
       float_status = uVar14;
       if ((CARRY4(uVar7,uVar7)) &&
          (((((uVar7 & 0x7fffffff) != 0 || ((uVar5 & 1) != 0)) &&
@@ -53136,7 +68201,7 @@ LAB_0005d5ae:
     if (0 < (short)uVar14) {
       if (uVar3 != 0) {
         uVar9 = float_status | 0x200;
-        if ((float_control._0_1_ & 2) != 0) {
+        if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
 LAB_0005d484:
           float_status = float_status | 0x200;
           dVar18 = (double)float_raise(0x80200);
@@ -53238,14 +68303,27 @@ LAB_0005d63e:
 }
 
 
+#endif
+__asm__(
+	"	.globl double_add_pointers\n"
+	"	.type double_add_pointers, @function\n"
+	"	.section .text.double_add_pointers.5d34a,\"ax\",@progbits\n"
+	"double_add_pointers:\n"
+	"	move.l (%a0)+,%d0\n"
+	"	move.l (%a0)+,%d1\n"
+	"	.size double_add_pointers, .-double_add_pointers\n"
+);
+
 /* 0005d34e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* D0:D1 + *A1
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
    double *b.  Out: D0:D1 double.
    libc.md */
 
-__regcall double double_add_pointer(double a __asm("d0"),double *b __asm("a1")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double double_add_pointer(double a /* d0 */,double *b /* a1 */)
 
 {
   double dVar1;
@@ -53363,7 +68441,7 @@ LAB_0005d2c6:
     else {
       if (uVar14 != 0x20) {
         if (0x37 < (short)uVar14) {
-          if ((float_control._0_1_ & 2) == 0) {
+          if ((__ghidra_piece(unsigned char, float_control, 0) & 2) == 0) {
             float_status = float_status | 0x200;
             return (double)CONCAT44(uVar7 & 0xffff0000 | uVar3 & 0xffefffff,uVar8);
           }
@@ -53402,7 +68480,7 @@ LAB_0005d2c6:
     }
     if (uVar2 != 0) {
       uVar14 = float_status | 0x200;
-      if ((float_control._0_1_ & 2) != 0) goto LAB_0005d484;
+      if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) goto LAB_0005d484;
       float_status = uVar14;
       if ((CARRY4(uVar2,uVar2)) &&
          (((((uVar2 & 0x7fffffff) != 0 || ((uVar4 & 1) != 0)) &&
@@ -53436,7 +68514,7 @@ LAB_0005d5ae:
     if (0 < (short)uVar14) {
       if (uVar5 != 0) {
         uVar9 = float_status | 0x200;
-        if ((float_control._0_1_ & 2) != 0) {
+        if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
 LAB_0005d484:
           float_status = float_status | 0x200;
           dVar19 = (double)float_raise();
@@ -53539,14 +68617,27 @@ LAB_0005d63e:
 }
 
 
+#endif
+__asm__(
+	"	.globl double_add_pointer\n"
+	"	.type double_add_pointer, @function\n"
+	"	.section .text.double_add_pointer.5d34e,\"ax\",@progbits\n"
+	"double_add_pointer:\n"
+	"	movea.l (%a1)+,%a0\n"
+	"	movea.l (%a1)+,%a1\n"
+	"	.size double_add_pointer, .-double_add_pointer\n"
+);
+
 /* 0005d352 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* D0:D1 + A0:A1
    Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
    double a, A0:A1 double b.  Out: D0:D1 double.
    softfloat.md */
 
-__regcall double double_add(double a __asm("d0"),double b __asm("a0")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double double_add(double a /* d0 */,double b /* a0 */)
 
 {
   ulonglong uVar1;
@@ -53662,7 +68753,7 @@ LAB_0005d2c6:
     else {
       if (uVar12 != 0x20) {
         if (0x37 < (short)uVar12) {
-          if ((float_control._0_1_ & 2) == 0) {
+          if ((__ghidra_piece(unsigned char, float_control, 0) & 2) == 0) {
             float_status = float_status | 0x200;
             return (double)CONCAT44(uVar6 & 0xffff0000 | uVar3 & 0xffefffff,uVar13);
           }
@@ -53701,7 +68792,7 @@ LAB_0005d2c6:
     }
     if (uVar2 != 0) {
       uVar12 = float_status | 0x200;
-      if ((float_control._0_1_ & 2) != 0) goto LAB_0005d484;
+      if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) goto LAB_0005d484;
       float_status = uVar12;
       if ((CARRY4(uVar2,uVar2)) &&
          (((((uVar2 & 0x7fffffff) != 0 || ((uVar4 & 1) != 0)) &&
@@ -53735,7 +68826,7 @@ LAB_0005d5ae:
     if (0 < (short)uVar12) {
       if (uVar5 != 0) {
         uVar7 = float_status | 0x200;
-        if ((float_control._0_1_ & 2) != 0) {
+        if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
 LAB_0005d484:
           float_status = float_status | 0x200;
           dVar18 = (double)float_raise();
@@ -53838,14 +68929,352 @@ LAB_0005d63e:
 }
 
 
+#endif
+__asm__(
+	"	.globl double_add\n"
+	"	.type double_add, @function\n"
+	"	.section .text.double_add.5d352,\"ax\",@progbits\n"
+	"double_add:\n"
+	"	movem.l %d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
+	"	move.l %d0,%d2\n"
+	"	move.l %d1,%d3\n"
+	"	move.l %a0,%d0\n"
+	"	move.l %a1,%d1\n"
+	"	move.l %d0,%d6\n"
+	"	move.l %d2,%d7\n"
+	"	moveq #0x1f,%d5\n"
+	"	bclr.l %d5,%d0\n"
+	"	bclr.l %d5,%d2\n"
+	"	suba.l %a0,%a0\n"
+	"	move.l %d6,%d5\n"
+	"	eor.l %d7,%d5\n"
+	"	move.l #0x7ff00000,%d4\n"
+	"	cmp.l %d4,%d0\n"
+	"	bge.w double_subtract_reversed-0x74\n"
+	"	cmp.l %d4,%d2\n"
+	"	bge.w double_subtract_reversed-0x34\n"
+	"	cmp.l %d2,%d0\n"
+	"	bgt.b .Lg_5d390\n"
+	"	bne.b .Lg_5d38a\n"
+	"	cmp.l %d3,%d1\n"
+	"	bhi.b .Lg_5d390\n"
+	".Lg_5d38a:\n"
+	"	exg %d0,%d2\n"
+	"	exg %d1,%d3\n"
+	"	exg %d6,%d7\n"
+	".Lg_5d390:\n"
+	"	swap %d6\n"
+	"	move.w %d6,%d5\n"
+	"	swap %d6\n"
+	"	movea.l %d5,%a1\n"
+	"	move.l #0x100000,%d5\n"
+	"	cmp.l %d5,%d0\n"
+	"	blt.w double_subtract_reversed-0x8c\n"
+	"	cmp.l %d5,%d2\n"
+	"	blt.w double_subtract_reversed-0x98\n"
+	"	swap %d0\n"
+	"	swap %d2\n"
+	"	swap %d4\n"
+	"	swap %d5\n"
+	"	moveq #0xf,%d4\n"
+	"	and.w %d4,%d0\n"
+	"	or.w %d5,%d0\n"
+	"	swap %d0\n"
+	"	and.w %d4,%d2\n"
+	"	or.w %d5,%d2\n"
+	"	swap %d2\n"
+	"	move.w #0x7ff0,%d4\n"
+	"	swap %d6\n"
+	"	swap %d7\n"
+	"	move.w %d4,%d5\n"
+	"	and.w %d6,%d4\n"
+	"	and.w %d7,%d5\n"
+	"	sub.w %d5,%d4\n"
+	"	bne.b .Lg_5d3d6\n"
+	"	moveq #0x0,%d4\n"
+	"	bra.b .Lg_5d3f8\n"
+	".Lg_5d3d6:\n"
+	"	asr.w #0x4,%d4\n"
+	"	moveq #-0x1,%d7\n"
+	"	cmpi.w #0x20,%d4\n"
+	"	bge.w .Lg_5d4b6\n"
+	"	lsr.l %d4,%d7\n"
+	"	ror.l %d4,%d2\n"
+	"	ror.l %d4,%d3\n"
+	"	move.l %d3,%d4\n"
+	"	move.l %d2,%d5\n"
+	"	and.l %d7,%d2\n"
+	"	and.l %d7,%d3\n"
+	"	not.l %d7\n"
+	"	and.l %d7,%d5\n"
+	"	or.l %d5,%d3\n"
+	"	and.l %d7,%d4\n"
+	".Lg_5d3f8:\n"
+	"	move.w %d6,%d5\n"
+	"	move.l %a1,%d6\n"
+	"	swap %d6\n"
+	"	tst.w %d6\n"
+	"	bmi.w .Lg_5d4f6\n"
+	"	andi.w #0x7ff0,%d5\n"
+	"	move.l #0x200000,%d7\n"
+	"	add.l %d3,%d1\n"
+	"	addx.l %d2,%d0\n"
+	"	cmp.l %d7,%d0\n"
+	"	blt.b .Lg_5d428\n"
+	"	addi.w #0x10,%d5\n"
+	"	lsr.l #0x1,%d0\n"
+	"	roxr.l #0x1,%d1\n"
+	"	roxr.l #0x1,%d4\n"
+	"	bcc.w .Lg_5d428\n"
+	"	ori.w #0x1,%d4\n"
+	".Lg_5d428:\n"
+	"	tst.l %d4\n"
+	"	beq.b .Lg_5d45a\n"
+	"	ori.w #0x200,(float_status).l\n"
+	"	btst.b #0x1,(float_control).l\n"
+	"	bne.b .Lg_5d484\n"
+	"	add.l %d4,%d4\n"
+	"	bcc.b .Lg_5d45a\n"
+	"	bne.b .Lg_5d44a\n"
+	"	btst.l #0x0,%d1\n"
+	"	beq.b .Lg_5d45a\n"
+	".Lg_5d44a:\n"
+	"	addq.l #0x1,%d1\n"
+	"	bcc.b .Lg_5d45a\n"
+	"	addq.l #0x1,%d0\n"
+	"	cmp.l %d7,%d0\n"
+	"	blt.b .Lg_5d45a\n"
+	"	lsr.l #0x1,%d0\n"
+	"	addi.w #0x10,%d5\n"
+	".Lg_5d45a:\n"
+	"	cmpi.w #0x7fe0,%d5\n"
+	"	bhi.w .Lg_5d612\n"
+	"	move.l %a1,%d6\n"
+	"	tst.w %d6\n"
+	"	bpl.b .Lg_5d46c\n"
+	"	addi.w #-0x8000,%d5\n"
+	".Lg_5d46c:\n"
+	"	swap %d5\n"
+	"	clr.w %d5\n"
+	"	move.w %a0,%d4\n"
+	"	bne.b .Lg_5d478\n"
+	"	bclr.l #0x14,%d0\n"
+	".Lg_5d478:\n"
+	"	or.l %d5,%d0\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%d6/%d7\n"
+	"	movea.l %d0,%a0\n"
+	"	movea.l %d1,%a1\n"
+	"	rts\n"
+	".Lg_5d484:\n"
+	"	pea (0x80200).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.w .Lg_5d608\n"
+	".Lg_5d496:\n"
+	"	bclr.l #0x14,%d0\n"
+	"	swap %d6\n"
+	"	clr.w %d6\n"
+	"	or.l %d6,%d0\n"
+	"	ori.w #0x200,(float_status).l\n"
+	"	btst.b #0x1,(float_control).l\n"
+	"	bne.b .Lg_5d484\n"
+	"	bra.w .Lg_5d608\n"
+	".Lg_5d4b6:\n"
+	"	beq.w .Lg_5d4e2\n"
+	"	cmpi.w #0x37,%d4\n"
+	"	bgt.b .Lg_5d496\n"
+	"	subi.w #0x20,%d4\n"
+	"	lsr.l %d4,%d7\n"
+	"	ror.l %d4,%d2\n"
+	"	ror.l %d4,%d3\n"
+	"	move.l %d3,%d4\n"
+	"	move.l %d2,%d5\n"
+	"	and.l %d7,%d2\n"
+	"	and.l %d7,%d3\n"
+	"	not.l %d7\n"
+	"	and.l %d7,%d5\n"
+	"	or.l %d5,%d3\n"
+	"	and.l %d7,%d4\n"
+	"	beq.w .Lg_5d4e2\n"
+	"	ori.w #0x1,%d3\n"
+	".Lg_5d4e2:\n"
+	"	move.l %d3,%d4\n"
+	"	move.l %d2,%d3\n"
+	"	moveq #0x0,%d2\n"
+	"	bra.w .Lg_5d3f8\n"
+	".Lg_5d4ec:\n"
+	"	sub.l %d3,%d1\n"
+	"	subx.l %d2,%d0\n"
+	"	moveq #0x1,%d5\n"
+	"	bra.w .Lg_5d5ae\n"
+	".Lg_5d4f6:\n"
+	"	lsr.w #0x4,%d5\n"
+	"	andi.w #0x7ff,%d5\n"
+	"	beq.b .Lg_5d4ec\n"
+	"	neg.l %d4\n"
+	"	subx.l %d3,%d1\n"
+	"	subx.l %d2,%d0\n"
+	"	bpl.b .Lg_5d50e\n"
+	"	addi.w #-0x8000,%d6\n"
+	"	neg.l %d1\n"
+	"	negx.l %d0\n"
+	".Lg_5d50e:\n"
+	"	move.l #0x100000,%d7\n"
+	"	cmp.l %d7,%d0\n"
+	"	bge.w .Lg_5d5ae\n"
+	"	add.l %d4,%d4\n"
+	"	addx.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	"	subq.w #0x1,%d5\n"
+	"	cmp.l %d7,%d0\n"
+	"	bge.w .Lg_5d5ae\n"
+	"	tst.l %d0\n"
+	"	beq.b .Lg_5d564\n"
+	"	move.l %d0,%d2\n"
+	"	moveq #0x13,%d3\n"
+	"	swap %d2\n"
+	"	tst.b %d2\n"
+	"	bne.b .Lg_5d542\n"
+	"	moveq #0xf,%d3\n"
+	"	move.w %d0,%d2\n"
+	"	clr.b %d2\n"
+	"	tst.w %d2\n"
+	"	bne.b .Lg_5d542\n"
+	"	moveq #0x7,%d3\n"
+	".Lg_5d542:\n"
+	"	btst.l %d3,%d0\n"
+	"	dbne %d3,.Lg_5d542\n"
+	"	moveq #0x14,%d2\n"
+	"	sub.w %d3,%d2\n"
+	"	lsl.l %d2,%d0\n"
+	"	rol.l %d2,%d1\n"
+	"	move.l %d1,%d6\n"
+	"	moveq #-0x1,%d3\n"
+	"	lsl.l %d2,%d3\n"
+	"	and.l %d3,%d1\n"
+	"	not.l %d3\n"
+	"	and.l %d3,%d6\n"
+	"	or.l %d6,%d0\n"
+	"	sub.w %d2,%d5\n"
+	"	bra.w .Lg_5d5ee\n"
+	".Lg_5d564:\n"
+	"	move.l %d1,%d2\n"
+	"	beq.w .Lg_5d608\n"
+	"	moveq #0x1f,%d3\n"
+	"	swap %d2\n"
+	"	tst.w %d2\n"
+	"	bne.b .Lg_5d576\n"
+	"	swap %d2\n"
+	"	moveq #0xf,%d3\n"
+	".Lg_5d576:\n"
+	"	clr.b %d2\n"
+	"	tst.w %d2\n"
+	"	bne.b .Lg_5d57e\n"
+	"	subq.w #0x8,%d3\n"
+	".Lg_5d57e:\n"
+	"	btst.l %d3,%d1\n"
+	"	dbne %d3,.Lg_5d57e\n"
+	"	moveq #0x34,%d2\n"
+	"	sub.w %d3,%d2\n"
+	"	sub.w %d2,%d5\n"
+	"	moveq #0x14,%d2\n"
+	"	sub.w %d3,%d2\n"
+	"	bmi.b .Lg_5d598\n"
+	"	lsl.l %d2,%d1\n"
+	"	move.l %d1,%d0\n"
+	"	moveq #0x0,%d1\n"
+	"	bra.b .Lg_5d5ee\n"
+	".Lg_5d598:\n"
+	"	neg.w %d2\n"
+	"	move.l %d1,%d6\n"
+	"	lsr.l %d2,%d1\n"
+	"	moveq #-0x1,%d3\n"
+	"	lsl.w %d2,%d3\n"
+	"	not.l %d3\n"
+	"	and.l %d3,%d6\n"
+	"	ror.l %d2,%d6\n"
+	"	move.l %d1,%d0\n"
+	"	move.l %d6,%d1\n"
+	"	bra.b .Lg_5d5ee\n"
+	".Lg_5d5ae:\n"
+	"	tst.w %d5\n"
+	"	ble.w .Lg_5d622\n"
+	"	tst.l %d4\n"
+	"	beq.b .Lg_5d5ee\n"
+	"	ori.w #0x200,(float_status).l\n"
+	"	btst.b #0x1,(float_control).l\n"
+	"	bne.w .Lg_5d484\n"
+	"	add.l %d4,%d4\n"
+	"	bcc.b .Lg_5d5ee\n"
+	"	bne.b .Lg_5d5de\n"
+	"	btst.l #0x0,%d1\n"
+	"	beq.b .Lg_5d5ee\n"
+	"	btst.l #0x0,%d1\n"
+	"	beq.b .Lg_5d5ee\n"
+	".Lg_5d5de:\n"
+	"	addq.l #0x1,%d1\n"
+	"	bcc.b .Lg_5d5ee\n"
+	"	addq.l #0x1,%d0\n"
+	"	btst.l #0x15,%d0\n"
+	"	beq.b .Lg_5d5ee\n"
+	"	asr.l #0x1,%d0\n"
+	"	addq.w #0x1,%d5\n"
+	".Lg_5d5ee:\n"
+	"	tst.w %d5\n"
+	"	ble.w .Lg_5d622\n"
+	"	lsl.w #0x5,%d5\n"
+	"	move.w %a1,%d6\n"
+	"	add.w %d6,%d6\n"
+	"	roxr.w #0x1,%d5\n"
+	"	swap %d5\n"
+	"	clr.w %d5\n"
+	"	add.l %d5,%d0\n"
+	"	subi.l #0x100000,%d0\n"
+	".Lg_5d608:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%d6/%d7\n"
+	"	movea.l %d0,%a0\n"
+	"	movea.l %d1,%a1\n"
+	"	rts\n"
+	".Lg_5d612:\n"
+	"	pea (0x81000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5d63e\n"
+	".Lg_5d622:\n"
+	"	move.l %d4,-(%sp)\n"
+	"	movem.l %d1/%d0,-(%sp)\n"
+	"	neg.w %d5\n"
+	"	addq.w #0x1,%d5\n"
+	"	move.l %d5,-(%sp)\n"
+	"	pea (0xc0800).l\n"
+	"	jsr (float_raise).l\n"
+	"	lea (0x14,%sp),%sp\n"
+	".Lg_5d63e:\n"
+	"	move.w %a1,%d7\n"
+	"	tst.w %d7\n"
+	"	bpl.b .Lg_5d648\n"
+	"	bset.l #0x1f,%d0\n"
+	".Lg_5d648:\n"
+	"	bra.b .Lg_5d608\n"
+	"	pea (0x82000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5d608\n"
+	"	.byte 0xc1\n"
+	"	.byte 0x41\n"
+	"	.size double_add, .-double_add\n"
+);
+
 /* 0005d65c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* compare D0 with D1; 1, 0 or -1
    Not a C function (register; documented): its arguments and results in registers.  In: D0 float a,
    D1 float b.  Out: D0 int.
    softfloat.md */
 
-__regcall int float_compare(float a __asm("d0"),float b __asm("d1")) /* out D0 int */
+/* out D0 int */
+__regcall int float_compare(float a /* d0 */,float b /* d1 */)
 
 {
   if (a == -0.0) {
@@ -53879,14 +69308,74 @@ __regcall int float_compare(float a __asm("d0"),float b __asm("d1")) /* out D0 i
 }
 
 
+#endif
+__asm__(
+	"	.globl float_compare\n"
+	"	.type float_compare, @function\n"
+	"	.section .text.float_compare.5d65c,\"ax\",@progbits\n"
+	"float_compare:\n"
+	"	cmpi.l #-0x80000000,%d0\n"
+	"	bne.b .Lg_5d666\n"
+	"	moveq #0x0,%d0\n"
+	".Lg_5d666:\n"
+	"	cmpi.l #-0x80000000,%d1\n"
+	"	bne.b .Lg_5d670\n"
+	"	moveq #0x0,%d1\n"
+	".Lg_5d670:\n"
+	"	movea.l #0x7f800000,%a1\n"
+	"	cmp.l %a1,%d0\n"
+	"	bgt.b .Lg_5d6b0\n"
+	"	cmp.l %a1,%d1\n"
+	"	bgt.b .Lg_5d6b0\n"
+	"	adda.l #-0x80000000,%a1\n"
+	"	cmp.l %a1,%d0\n"
+	"	bhi.b .Lg_5d6b0\n"
+	"	cmp.l %a1,%d1\n"
+	"	bhi.b .Lg_5d6b0\n"
+	"	tst.l %d0\n"
+	"	bpl.b .Lg_5d69e\n"
+	"	tst.l %d1\n"
+	"	bpl.b .Lg_5d69e\n"
+	"	cmp.l %d0,%d1\n"
+	"	bgt.b .Lg_5d6a8\n"
+	"	blt.b .Lg_5d6ac\n"
+	"	moveq #0x0,%d0\n"
+	"	rts\n"
+	".Lg_5d69e:\n"
+	"	cmp.l %d1,%d0\n"
+	"	bgt.b .Lg_5d6a8\n"
+	"	blt.b .Lg_5d6ac\n"
+	"	moveq #0x0,%d0\n"
+	"	rts\n"
+	".Lg_5d6a8:\n"
+	"	moveq #0x1,%d0\n"
+	"	rts\n"
+	".Lg_5d6ac:\n"
+	"	moveq #-0x1,%d0\n"
+	"	rts\n"
+	".Lg_5d6b0:\n"
+	"	pea (0x52000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	moveq #0x0,%d0\n"
+	"	rts\n"
+	"	.byte 0xc1\n"
+	"	.byte 0x88\n"
+	"	.byte 0xc3\n"
+	"	.byte 0x89\n"
+	"	.size float_compare, .-float_compare\n"
+);
+
 /* 0005d6c6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* negative when A0:A1 < D0:D1
    Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
    double a, A0:A1 double b.  Out: D0 int.
    softfloat.md */
 
-__regcall int double_compare(double a __asm("d0"),double b __asm("a0")) /* out D0 int */
+/* out D0 int */
+__regcall int double_compare(double a /* d0 */,double b /* a0 */)
 
 {
   uint uVar1;
@@ -53940,14 +69429,100 @@ __regcall int double_compare(double a __asm("d0"),double b __asm("a0")) /* out D
 }
 
 
+#endif
+__asm__(
+	"	.globl double_compare\n"
+	"	.type double_compare, @function\n"
+	"	.section .text.double_compare.5d6c6,\"ax\",@progbits\n"
+	"double_compare:\n"
+	"	movem.l %d3/%d2,-(%sp)\n"
+	"	move.l %a0,%d2\n"
+	"	move.l %a1,%d3\n"
+	"	cmpi.l #-0x80000000,%d2\n"
+	"	bne.b .Lg_5d6dc\n"
+	"	tst.l %d3\n"
+	"	bne.b .Lg_5d6dc\n"
+	"	moveq #0x0,%d2\n"
+	".Lg_5d6dc:\n"
+	"	cmpi.l #-0x80000000,%d0\n"
+	"	bne.b .Lg_5d6ea\n"
+	"	tst.l %d1\n"
+	"	bne.b .Lg_5d6ea\n"
+	"	moveq #0x0,%d0\n"
+	".Lg_5d6ea:\n"
+	"	movea.l #0x7ff00000,%a0\n"
+	"	cmp.l %a0,%d2\n"
+	"	blt.b .Lg_5d6fa\n"
+	"	bne.b .Lg_5d752\n"
+	"	tst.l %d3\n"
+	"	bne.b .Lg_5d752\n"
+	".Lg_5d6fa:\n"
+	"	cmp.l %a0,%d0\n"
+	"	blt.b .Lg_5d704\n"
+	"	bne.b .Lg_5d752\n"
+	"	tst.l %d1\n"
+	"	bne.b .Lg_5d752\n"
+	".Lg_5d704:\n"
+	"	adda.l #-0x80000000,%a0\n"
+	"	cmp.l %a0,%d2\n"
+	"	bcs.b .Lg_5d714\n"
+	"	bne.b .Lg_5d752\n"
+	"	tst.l %d3\n"
+	"	bne.b .Lg_5d752\n"
+	".Lg_5d714:\n"
+	"	cmp.l %a0,%d0\n"
+	"	bcs.b .Lg_5d71e\n"
+	"	bne.b .Lg_5d752\n"
+	"	tst.l %d1\n"
+	"	bne.b .Lg_5d752\n"
+	".Lg_5d71e:\n"
+	"	tst.l %d2\n"
+	"	bpl.b .Lg_5d736\n"
+	"	tst.l %d0\n"
+	"	bpl.b .Lg_5d736\n"
+	"	cmp.l %d2,%d0\n"
+	"	bgt.b .Lg_5d746\n"
+	"	blt.b .Lg_5d74e\n"
+	"	cmp.l %d3,%d1\n"
+	"	bhi.b .Lg_5d746\n"
+	"	bcs.b .Lg_5d74e\n"
+	"	moveq #0x0,%d0\n"
+	"	bra.b .Lg_5d748\n"
+	".Lg_5d736:\n"
+	"	cmp.l %d0,%d2\n"
+	"	bgt.b .Lg_5d746\n"
+	"	blt.b .Lg_5d74e\n"
+	"	cmp.l %d1,%d3\n"
+	"	bhi.b .Lg_5d746\n"
+	"	bcs.b .Lg_5d74e\n"
+	"	moveq #0x0,%d0\n"
+	"	bra.b .Lg_5d748\n"
+	".Lg_5d746:\n"
+	"	moveq #0x1,%d0\n"
+	".Lg_5d748:\n"
+	"	movem.l (%sp)+,%d2/%d3\n"
+	"	rts\n"
+	".Lg_5d74e:\n"
+	"	moveq #-0x1,%d0\n"
+	"	bra.b .Lg_5d748\n"
+	".Lg_5d752:\n"
+	"	pea (0x62000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	moveq #0x0,%d0\n"
+	"	bra.b .Lg_5d748\n"
+	"	.size double_compare, .-double_compare\n"
+);
+
 /* 0005d7da */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* *A0 /= D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 float *x, D1
    float y.
    softfloat.md, libc.md */
 
-__regcall void float_divide_in_place(float *x __asm("a0"),float y __asm("d1"))
+__regcall void float_divide_in_place(float *x /* a0 */,float y /* d1 */)
 
 {
   float fVar1;
@@ -53959,7 +69534,21 @@ __regcall void float_divide_in_place(float *x __asm("a0"),float y __asm("d1"))
 }
 
 
+#endif
+__asm__(
+	"	.globl float_divide_in_place\n"
+	"	.type float_divide_in_place, @function\n"
+	"	.section .text.float_divide_in_place.5d7da,\"ax\",@progbits\n"
+	"float_divide_in_place:\n"
+	"	move.l (%a0),%d0\n"
+	"	bsr.w float_divide\n"
+	"	move.l %d0,(%a0)\n"
+	"	rts\n"
+	"	.size float_divide_in_place, .-float_divide_in_place\n"
+);
+
 /* 0005d7e4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x0005d888) */
 /* D1 / D0
@@ -53967,7 +69556,8 @@ __regcall void float_divide_in_place(float *x __asm("a0"),float y __asm("d1"))
    D1 float b.  Out: D0 float.
    softfloat.md */
 
-__regcall float float_divide_reversed(float a __asm("d0"),float b __asm("d1")) /* out D0 float */
+/* out D0 float */
+__regcall float float_divide_reversed(float a /* d0 */,float b /* d1 */)
 
 {
   ushort uVar1;
@@ -54123,7 +69713,18 @@ LAB_0005d7ae:
 }
 
 
+#endif
+__asm__(
+	"	.globl float_divide_reversed\n"
+	"	.type float_divide_reversed, @function\n"
+	"	.section .text.float_divide_reversed.5d7e4,\"ax\",@progbits\n"
+	"float_divide_reversed:\n"
+	"	exg %d0,%d1\n"
+	"	.size float_divide_reversed, .-float_divide_reversed\n"
+);
+
 /* 0005d7e6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x0005d888) */
 /* D0 / D1
@@ -54131,7 +69732,8 @@ LAB_0005d7ae:
    D1 float b.  Out: D0 float.
    softfloat.md */
 
-__regcall float float_divide(float a __asm("d0"),float b __asm("d1")) /* out D0 float */
+/* out D0 float */
+__regcall float float_divide(float a /* d0 */,float b /* d1 */)
 
 {
   ushort uVar1;
@@ -54287,14 +69889,272 @@ LAB_0005d7ae:
 }
 
 
+#endif
+__asm__(
+	"	.globl float_divide\n"
+	"	.type float_divide, @function\n"
+	"	.section .text.float_divide.5d764,\"ax\",@progbits\n"
+	".Lg_5d764:\n"
+	"	move.l %d0,-(%sp)\n"
+	"	clr.w -(%sp)\n"
+	"	jsr (float_normalize).l\n"
+	"	move.w (%sp)+,%d3\n"
+	"	move.l (%sp)+,%d0\n"
+	"	lsl.w #0x4,%d3\n"
+	"	bra.w .Lg_5d82a\n"
+	".Lg_5d778:\n"
+	"	move.l %d1,-(%sp)\n"
+	"	clr.w -(%sp)\n"
+	"	jsr (float_normalize).l\n"
+	"	move.w (%sp)+,%d4\n"
+	"	move.l (%sp)+,%d1\n"
+	"	lsl.w #0x4,%d4\n"
+	"	bra.w .Lg_5d834\n"
+	".Lg_5d78c:\n"
+	"	tst.l %d1\n"
+	"	beq.w .Lg_5d982\n"
+	"	cmp.l %d5,%d1\n"
+	"	bgt.b .Lg_5d7a8\n"
+	"	bra.w .Lg_5d930\n"
+	".Lg_5d79a:\n"
+	"	bgt.b .Lg_5d7ac\n"
+	"	cmp.l %d5,%d1\n"
+	"	bgt.b .Lg_5d7a8\n"
+	"	beq.w .Lg_5d982\n"
+	"	bra.w .Lg_5d930\n"
+	".Lg_5d7a8:\n"
+	"	move.l %d4,-(%sp)\n"
+	"	bra.b .Lg_5d7ae\n"
+	".Lg_5d7ac:\n"
+	"	move.l %d3,-(%sp)\n"
+	".Lg_5d7ae:\n"
+	"	pea (0xd4000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x8,%sp\n"
+	"	bra.w .Lg_5d938\n"
+	".Lg_5d7c0:\n"
+	"	bgt.b .Lg_5d7a8\n"
+	"	moveq #0x0,%d0\n"
+	"	bra.w .Lg_5d930\n"
+	".Lg_5d7c8:\n"
+	"	pea (0xd0400).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.w .Lg_5d930\n"
+	"	.section .text.float_divide.5d7e6,\"ax\",@progbits\n"
+	"float_divide:\n"
+	"	movem.l %d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
+	"	move.l #0x7f800000,%d5\n"
+	"	move.l %d0,%d2\n"
+	"	eor.l %d1,%d2\n"
+	"	move.l %d0,%d3\n"
+	"	move.l %d1,%d4\n"
+	"	bclr.l #0x1f,%d0\n"
+	"	bclr.l #0x1f,%d1\n"
+	"	tst.l %d0\n"
+	"	.byte 0x67 | beq.b 0x0005d78c\n"
+	"	.reloc ., R_68K_PC8, .Lg_5d78c-1\n"
+	"	.byte 0\n"
+	"	cmp.l %d5,%d0\n"
+	"	.byte 0x6c | bge.b 0x0005d79a\n"
+	"	.reloc ., R_68K_PC8, .Lg_5d79a-1\n"
+	"	.byte 0\n"
+	"	tst.l %d1\n"
+	"	.byte 0x67 | beq.b 0x0005d7c8\n"
+	"	.reloc ., R_68K_PC8, .Lg_5d7c8-1\n"
+	"	.byte 0\n"
+	"	cmp.l %d5,%d1\n"
+	"	.byte 0x6c | bge.b 0x0005d7c0\n"
+	"	.reloc ., R_68K_PC8, .Lg_5d7c0-1\n"
+	"	.byte 0\n"
+	"	move.l %d0,%d3\n"
+	"	move.l %d1,%d4\n"
+	"	swap %d3\n"
+	"	swap %d4\n"
+	"	lsr.w #0x3,%d3\n"
+	"	lsr.w #0x3,%d4\n"
+	"	andi.w #-0x10,%d3\n"
+	"	andi.w #-0x10,%d4\n"
+	"	tst.w %d3\n"
+	"	beq.w .Lg_5d764\n"
+	".Lg_5d82a:\n"
+	"	addi.w #0x3800,%d3\n"
+	"	tst.w %d4\n"
+	"	beq.w .Lg_5d778\n"
+	".Lg_5d834:\n"
+	"	addi.w #0x3800,%d4\n"
+	"	sub.w %d4,%d3\n"
+	"	addi.w #0x3ff0,%d3\n"
+	"	swap %d3\n"
+	"	move.l #0x7fffff,%d6\n"
+	"	and.l %d6,%d0\n"
+	"	and.l %d6,%d1\n"
+	"	addq.l #0x1,%d6\n"
+	"	or.l %d6,%d0\n"
+	"	or.l %d6,%d1\n"
+	"	add.l %d0,%d0\n"
+	"	move.l %d0,%d4\n"
+	"	lsl.l #0x8,%d1\n"
+	"	move.w %d1,%d3\n"
+	"	clr.w %d1\n"
+	"	swap %d1\n"
+	"	divu.w %d1,%d4\n"
+	"	move.w %d1,%d6\n"
+	"	mulu.w %d4,%d6\n"
+	"	move.w %d3,%d7\n"
+	"	mulu.w %d4,%d7\n"
+	"	move.w %d7,%d2\n"
+	"	clr.w %d7\n"
+	"	swap %d7\n"
+	"	add.l %d7,%d6\n"
+	"	neg.w %d2\n"
+	"	subx.l %d6,%d0\n"
+	"	bpl.b .Lg_5d87c\n"
+	".Lg_5d874:\n"
+	"	subq.w #0x1,%d4\n"
+	"	add.w %d3,%d2\n"
+	"	addx.l %d1,%d0\n"
+	"	bmi.b .Lg_5d874\n"
+	".Lg_5d87c:\n"
+	"	swap %d0\n"
+	"	move.w %d2,%d0\n"
+	"	move.l %d0,%d5\n"
+	"	beq.b .Lg_5d8b2\n"
+	"	divu.w %d1,%d5\n"
+	"	bvc.b .Lg_5d894\n"
+	"	moveq #-0x1,%d5\n"
+	"	move.l %d1,%d6\n"
+	"	swap %d6\n"
+	"	move.w %d3,%d6\n"
+	"	sub.l %d6,%d0\n"
+	"	bra.b .Lg_5d8ac\n"
+	".Lg_5d894:\n"
+	"	move.w %d1,%d6\n"
+	"	mulu.w %d5,%d6\n"
+	"	move.w %d3,%d7\n"
+	"	mulu.w %d5,%d7\n"
+	"	move.w %d7,%d2\n"
+	"	clr.w %d7\n"
+	"	swap %d7\n"
+	"	add.l %d7,%d6\n"
+	"	neg.w %d2\n"
+	"	subx.l %d6,%d0\n"
+	"	bpl.b .Lg_5d8b2\n"
+	".Lg_5d8aa:\n"
+	"	subq.w #0x1,%d5\n"
+	".Lg_5d8ac:\n"
+	"	add.w %d3,%d2\n"
+	"	addx.l %d1,%d0\n"
+	"	bmi.b .Lg_5d8aa\n"
+	".Lg_5d8b2:\n"
+	"	swap %d4\n"
+	"	move.w %d5,%d4\n"
+	"	clr.w %d3\n"
+	"	move.l #0x800000,%d6\n"
+	"	moveq #0x19,%d7\n"
+	"	btst.l %d7,%d4\n"
+	"	beq.b .Lg_5d8ce\n"
+	"	lsr.l #0x1,%d4\n"
+	"	bcc.b .Lg_5d8d4\n"
+	"	ori.b #0x1,%d2\n"
+	"	bra.b .Lg_5d8d4\n"
+	".Lg_5d8ce:\n"
+	"	subi.l #0x100000,%d3\n"
+	".Lg_5d8d4:\n"
+	"	lsr.w #0x1,%d2\n"
+	"	bcc.b .Lg_5d8dc\n"
+	"	ori.b #0x1,%d2\n"
+	".Lg_5d8dc:\n"
+	"	lsr.l #0x1,%d4\n"
+	"	bcc.b .Lg_5d8e4\n"
+	"	ori.w #-0x8000,%d2\n"
+	".Lg_5d8e4:\n"
+	"	swap %d3\n"
+	"	cmpi.w #0x3810,%d3\n"
+	"	blt.w .Lg_5d95e\n"
+	"	cmpi.w #-0x8000,%d2\n"
+	"	bcs.b .Lg_5d908\n"
+	"	bhi.b .Lg_5d8fc\n"
+	"	btst.l #0x0,%d4\n"
+	"	beq.b .Lg_5d908\n"
+	".Lg_5d8fc:\n"
+	"	addq.l #0x1,%d4\n"
+	"	btst.l %d7,%d4\n"
+	"	beq.b .Lg_5d908\n"
+	"	move.l %d6,%d4\n"
+	"	addi.w #0x10,%d3\n"
+	".Lg_5d908:\n"
+	"	cmpi.w #0x47e0,%d3\n"
+	"	bgt.b .Lg_5d94e\n"
+	"	subi.w #0x3800,%d3\n"
+	"	lsl.w #0x3,%d3\n"
+	"	tst.w %d2\n"
+	"	beq.b .Lg_5d928\n"
+	"	ori.w #0x200,(float_status).l\n"
+	"	btst.b #0x1,(float_control).l\n"
+	".Lg_5d928:\n"
+	"	swap %d3\n"
+	"	add.l %d4,%d3\n"
+	"	sub.l %d6,%d3\n"
+	"	move.l %d3,%d0\n"
+	".Lg_5d930:\n"
+	"	tst.l %d2\n"
+	"	bpl.b .Lg_5d938\n"
+	"	bset.l #0x1f,%d0\n"
+	".Lg_5d938:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%d6/%d7\n"
+	"	rts\n"
+	"	.byte 0x48\n"
+	"	.byte 0x79\n"
+	"	.byte 0x00\n"
+	"	.byte 0x0d\n"
+	"	.byte 0x02\n"
+	"	.byte 0x00\n"
+	"	.byte 0x4e\n"
+	"	.byte 0xb9\n"
+	"	.byte 0x00\n"
+	"	.byte 0x05\n"
+	"	.byte 0xe9\n"
+	"	.byte 0x3c\n"
+	"	.byte 0x58\n"
+	"	.byte 0x8f\n"
+	"	.byte 0x60\n"
+	"	.byte 0xea\n"
+	".Lg_5d94e:\n"
+	"	pea (0xd1000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5d930\n"
+	".Lg_5d95e:\n"
+	"	subi.w #0x3800,%d3\n"
+	"	neg.w %d3\n"
+	"	lsr.w #0x4,%d3\n"
+	"	addq.w #0x1,%d3\n"
+	"	move.w %d2,-(%sp)\n"
+	"	clr.w -(%sp)\n"
+	"	move.l %d4,-(%sp)\n"
+	"	move.l %d3,-(%sp)\n"
+	"	pea (0xd0800).l\n"
+	"	jsr (float_raise).l\n"
+	"	lea (0x10,%sp),%sp\n"
+	"	bra.b .Lg_5d930\n"
+	".Lg_5d982:\n"
+	"	pea (0xd2000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5d938\n"
+	"	.size float_divide, .-float_divide\n"
+);
+
 /* 0005da3e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* *A0 /= D0:D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *x,
    D0:D1 double y.
    libc.md */
 
-__regcall void double_divide_in_place(double *x __asm("a0"),double y __asm("d0"))
+__regcall void double_divide_in_place(double *x /* a0 */,double y /* d0 */)
 
 {
   double dVar1;
@@ -54305,14 +70165,39 @@ __regcall void double_divide_in_place(double *x __asm("a0"),double y __asm("d0")
 }
 
 
+#endif
+__asm__(
+	"	.globl double_divide_in_place\n"
+	"	.type double_divide_in_place, @function\n"
+	"	.section .text.double_divide_in_place.5da3e,\"ax\",@progbits\n"
+	"double_divide_in_place:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	movem.l (%a0),%a0/%a1\n"
+	"	bsr.w double_divide_reversed\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	movem.l %d0/%d1,(%a0)\n"
+	"	rts\n"
+	"	.byte 0x20\n"
+	"	.byte 0x18\n"
+	"	.byte 0x22\n"
+	"	.byte 0x18\n"
+	"	.byte 0x20\n"
+	"	.byte 0x59\n"
+	"	.byte 0x22\n"
+	"	.byte 0x59\n"
+	"	.size double_divide_in_place, .-double_divide_in_place\n"
+);
+
 /* 0005da58 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* D0:D1 / A0:A1
    Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
    double a, A0:A1 double b.  Out: D0:D1 double.
    softfloat.md */
 
-__regcall double double_divide(double a __asm("d0"),double b __asm("a0")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double double_divide(double a /* d0 */,double b /* a0 */)
 
 {
   double dVar1;
@@ -54322,14 +70207,30 @@ __regcall double double_divide(double a __asm("d0"),double b __asm("a0")) /* out
 }
 
 
+#endif
+__asm__(
+	"	.globl double_divide\n"
+	"	.type double_divide, @function\n"
+	"	.section .text.double_divide.5da58,\"ax\",@progbits\n"
+	"double_divide:\n"
+	"	exg %d0,%a0\n"
+	"	exg %d1,%a1\n"
+	"	jmp (double_divide_reversed:w,%pc)\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x71\n"
+	"	.size double_divide, .-double_divide\n"
+);
+
 /* 0005da62 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* *A1 / *A0
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *a, A1
    double *b.  Out: D0:D1 double.
    libc.md */
 
-__regcall double double_divide_reversed_pointers(double *a __asm("a0"),double *b __asm("a1")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double double_divide_reversed_pointers(double *a /* a0 */,double *b /* a1 */)
 
 {
   uint uVar1;
@@ -54438,7 +70339,7 @@ LAB_0005d9b8:
   else {
     if ((uVar8 & 3) != 0) {
       float_status = float_status | 0x200;
-      if ((float_control._0_1_ & 2) != 0) {
+      if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
         dVar12 = (double)float_raise(0xe0200);
         return dVar12;
       }
@@ -54473,14 +70374,27 @@ LAB_0005db84:
 }
 
 
+#endif
+__asm__(
+	"	.globl double_divide_reversed_pointers\n"
+	"	.type double_divide_reversed_pointers, @function\n"
+	"	.section .text.double_divide_reversed_pointers.5da62,\"ax\",@progbits\n"
+	"double_divide_reversed_pointers:\n"
+	"	move.l (%a0)+,%d0\n"
+	"	move.l (%a0)+,%d1\n"
+	"	.size double_divide_reversed_pointers, .-double_divide_reversed_pointers\n"
+);
+
 /* 0005da66 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* *A1 / D0:D1
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
    double *b.  Out: D0:D1 double.
    libc.md */
 
-__regcall double double_divide_reversed_pointer(double a __asm("d0"),double *b __asm("a1")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double double_divide_reversed_pointer(double a /* d0 */,double *b /* a1 */)
 
 {
   short sVar1;
@@ -54582,7 +70496,7 @@ LAB_0005d9b8:
   else {
     if ((uVar8 & 3) != 0) {
       float_status = float_status | 0x200;
-      if ((float_control._0_1_ & 2) != 0) {
+      if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
         dVar12 = (double)float_raise();
         return dVar12;
       }
@@ -54617,14 +70531,27 @@ LAB_0005db84:
 }
 
 
+#endif
+__asm__(
+	"	.globl double_divide_reversed_pointer\n"
+	"	.type double_divide_reversed_pointer, @function\n"
+	"	.section .text.double_divide_reversed_pointer.5da66,\"ax\",@progbits\n"
+	"double_divide_reversed_pointer:\n"
+	"	movea.l (%a1)+,%a0\n"
+	"	movea.l (%a1)+,%a1\n"
+	"	.size double_divide_reversed_pointer, .-double_divide_reversed_pointer\n"
+);
+
 /* 0005da6a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* A0:A1 / D0:D1
    Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
    double a, A0:A1 double b.  Out: D0:D1 double.
    softfloat.md */
 
-__regcall double double_divide_reversed(double a __asm("d0"),double b __asm("a0")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double double_divide_reversed(double a /* d0 */,double b /* a0 */)
 
 {
   short sVar1;
@@ -54726,7 +70653,7 @@ LAB_0005d9b8:
   else {
     if ((uVar9 & 3) != 0) {
       float_status = float_status | 0x200;
-      if ((float_control._0_1_ & 2) != 0) {
+      if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
         dVar12 = (double)float_raise();
         return dVar12;
       }
@@ -54761,6 +70688,244 @@ LAB_0005db84:
 }
 
 
+#endif
+__asm__(
+	"	.globl double_divide_reversed\n"
+	"	.type double_divide_reversed, @function\n"
+	"	.section .text.double_divide_reversed.5d992,\"ax\",@progbits\n"
+	".Lg_5d992:\n"
+	"	tst.l %d1\n"
+	"	bne.w .Lg_5da98\n"
+	"	cmpi.l #0x7ff00000,%d2\n"
+	"	blt.b .Lg_5d9a8\n"
+	"	bgt.b .Lg_5d9b4\n"
+	"	tst.l %d3\n"
+	"	bne.b .Lg_5d9b4\n"
+	"	bra.b .Lg_5d9cc\n"
+	".Lg_5d9a8:\n"
+	"	tst.l %d2\n"
+	"	bne.b .Lg_5d9cc\n"
+	"	tst.l %d3\n"
+	"	bne.b .Lg_5d9cc\n"
+	"	bra.w double_divide_operand_error\n"
+	".Lg_5d9b4:\n"
+	"	move.l %d3,-(%sp)\n"
+	"	move.l %d4,-(%sp)\n"
+	".Lg_5d9b8:\n"
+	"	pea (0xe4000).l\n"
+	"	jsr (float_raise).l\n"
+	"	lea (0xc,%sp),%sp\n"
+	"	bra.w .Lg_5db8c\n"
+	".Lg_5d9cc:\n"
+	"	tst.l %d7\n"
+	"	bpl.b .Lg_5d9d4\n"
+	"	bset.l #0x1f,%d0\n"
+	".Lg_5d9d4:\n"
+	"	bra.w .Lg_5db8c\n"
+	".Lg_5d9d8:\n"
+	"	move.l %d1,-(%sp)\n"
+	"	move.l %d5,-(%sp)\n"
+	"	bra.b .Lg_5d9b8\n"
+	".Lg_5d9de:\n"
+	"	bgt.b .Lg_5d9d8\n"
+	"	tst.l %d1\n"
+	"	bne.b .Lg_5d9d8\n"
+	"	cmpi.l #0x7ff00000,%d2\n"
+	"	bgt.b .Lg_5d9b4\n"
+	"	blt.b .Lg_5d9cc\n"
+	"	tst.l %d3\n"
+	"	bne.b .Lg_5d9b4\n"
+	"	bra.w double_divide_operand_error\n"
+	".Lg_5d9f6:\n"
+	"	tst.l %d3\n"
+	"	bne.w .Lg_5daa8\n"
+	"	bra.w double_divide_by_zero\n"
+	".Lg_5da00:\n"
+	"	bgt.b .Lg_5d9b4\n"
+	"	tst.l %d3\n"
+	"	bgt.b .Lg_5d9b4\n"
+	"	moveq #0x0,%d0\n"
+	"	moveq #0x0,%d1\n"
+	"	bra.w .Lg_5db84\n"
+	".Lg_5da0e:\n"
+	"	movem.l %d1/%d0,-(%sp)\n"
+	"	move.w %d7,-(%sp)\n"
+	"	jsr (double_normalize).l\n"
+	"	move.w (%sp)+,%d7\n"
+	"	movem.l (%sp)+,%d0/%d1\n"
+	"	addq.w #0x1,%d7\n"
+	"	bra.w .Lg_5dab8\n"
+	".Lg_5da26:\n"
+	"	movem.l %d3/%d2,-(%sp)\n"
+	"	move.w %d6,-(%sp)\n"
+	"	jsr (double_normalize).l\n"
+	"	move.w (%sp)+,%d6\n"
+	"	movem.l (%sp)+,%d2/%d3\n"
+	"	addq.w #0x1,%d6\n"
+	"	bra.w .Lg_5dac6\n"
+	"	.section .text.double_divide_reversed.5da50,\"ax\",@progbits\n"
+	"	.byte 0x20\n"
+	"	.byte 0x18\n"
+	"	.byte 0x22\n"
+	"	.byte 0x18\n"
+	"	.byte 0x20\n"
+	"	.byte 0x59\n"
+	"	.byte 0x22\n"
+	"	.byte 0x59\n"
+	"	.section .text.double_divide_reversed.5da60,\"ax\",@progbits\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x71\n"
+	"	.section .text.double_divide_reversed.5da6a,\"ax\",@progbits\n"
+	"double_divide_reversed:\n"
+	"	movem.l %d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
+	"	move.l %d0,%d2\n"
+	"	move.l %d1,%d3\n"
+	"	move.l %a0,%d0\n"
+	"	move.l %a1,%d1\n"
+	"	move.l %d0,%d7\n"
+	"	eor.l %d2,%d7\n"
+	"	movea.l %d7,%a0\n"
+	"	move.l %d0,%d5\n"
+	"	move.l %d2,%d4\n"
+	"	bclr.l #0x1f,%d0\n"
+	"	bclr.l #0x1f,%d2\n"
+	"	tst.l %d0\n"
+	"	beq.w .Lg_5d992\n"
+	"	cmpi.l #0x7ff00000,%d0\n"
+	"	bge.w .Lg_5d9de\n"
+	".Lg_5da98:\n"
+	"	tst.l %d2\n"
+	"	beq.w .Lg_5d9f6\n"
+	"	cmpi.l #0x7ff00000,%d2\n"
+	"	bge.w .Lg_5da00\n"
+	".Lg_5daa8:\n"
+	"	swap %d0\n"
+	"	swap %d2\n"
+	"	move.w %d0,%d4\n"
+	"	move.w %d0,%d7\n"
+	"	lsr.w #0x4,%d7\n"
+	"	tst.w %d7\n"
+	"	beq.w .Lg_5da0e\n"
+	".Lg_5dab8:\n"
+	"	addi.w #0x3c00,%d7\n"
+	"	move.w %d2,%d6\n"
+	"	lsr.w #0x4,%d6\n"
+	"	tst.w %d6\n"
+	"	beq.w .Lg_5da26\n"
+	".Lg_5dac6:\n"
+	"	addi.w #0x3c00,%d6\n"
+	"	sub.w %d6,%d7\n"
+	"	addi.w #0x3fff,%d7\n"
+	"	movea.l %d7,%a1\n"
+	"	moveq #0x10,%d7\n"
+	"	moveq #0xf,%d6\n"
+	"	and.w %d6,%d2\n"
+	"	or.w %d7,%d2\n"
+	"	swap %d2\n"
+	"	and.w %d6,%d0\n"
+	"	or.w %d7,%d0\n"
+	"	swap %d0\n"
+	"	add.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	"	moveq #0xb,%d7\n"
+	"	lsl.l %d7,%d2\n"
+	"	rol.l %d7,%d3\n"
+	"	move.l %d3,%d6\n"
+	"	andi.w #-0x800,%d3\n"
+	"	andi.w #0x7ff,%d6\n"
+	"	or.w %d6,%d2\n"
+	"	bsr.w double_divide_first_word\n"
+	"	bsr.w double_divide_next_word\n"
+	"	bsr.w double_divide_next_word\n"
+	"	bsr.w double_divide_next_word\n"
+	"	move.l %d4,%d2\n"
+	"	move.l %d5,%d3\n"
+	"	move.w %a1,%d5\n"
+	"	btst.l #0x16,%d2\n"
+	"	bne.b .Lg_5db1a\n"
+	"	add.l %d3,%d3\n"
+	"	addx.l %d2,%d2\n"
+	"	subq.w #0x1,%d5\n"
+	".Lg_5db1a:\n"
+	"	or.l %d0,%d1\n"
+	"	beq.w .Lg_5db24\n"
+	"	ori.b #0x1,%d3\n"
+	".Lg_5db24:\n"
+	"	moveq #0x3,%d6\n"
+	"	and.l %d3,%d6\n"
+	"	subi.w #0x3c00,%d5\n"
+	"	ble.w .Lg_5dba6\n"
+	"	tst.l %d6\n"
+	"	beq.b .Lg_5db66\n"
+	"	ori.w #0x200,(float_status).l\n"
+	"	btst.b #0x1,(float_control).l\n"
+	"	bne.b .Lg_5db96\n"
+	"	btst.l #0x1,%d6\n"
+	"	beq.b .Lg_5db66\n"
+	"	lsr.b #0x1,%d6\n"
+	"	bcs.b .Lg_5db56\n"
+	"	btst.l #0x2,%d3\n"
+	"	beq.b .Lg_5db66\n"
+	".Lg_5db56:\n"
+	"	addq.l #0x4,%d3\n"
+	"	bcc.b .Lg_5db5c\n"
+	"	addq.l #0x1,%d2\n"
+	".Lg_5db5c:\n"
+	"	btst.l #0x17,%d2\n"
+	"	beq.b .Lg_5db66\n"
+	"	lsr.l #0x1,%d2\n"
+	"	addq.w #0x1,%d5\n"
+	".Lg_5db66:\n"
+	"	lsr.l #0x1,%d2\n"
+	"	roxr.l #0x1,%d3\n"
+	"	lsr.l #0x1,%d2\n"
+	"	roxr.l #0x1,%d3\n"
+	"	lsl.w #0x4,%d5\n"
+	"	cmpi.w #0x7fd0,%d5\n"
+	"	bhi.b .Lg_5dbce\n"
+	"	subi.w #0x10,%d5\n"
+	"	swap %d5\n"
+	"	clr.w %d5\n"
+	"	add.l %d5,%d2\n"
+	"	move.l %d2,%d0\n"
+	"	move.l %d3,%d1\n"
+	".Lg_5db84:\n"
+	"	move.l %a0,%d7\n"
+	"	bpl.b .Lg_5db8c\n"
+	"	bset.l #0x1f,%d0\n"
+	".Lg_5db8c:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%d6/%d7\n"
+	"	movea.l %d0,%a0\n"
+	"	movea.l %d1,%a1\n"
+	"	rts\n"
+	".Lg_5db96:\n"
+	"	pea (0xe0200).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5db8c\n"
+	".Lg_5dba6:\n"
+	"	lsr.l #0x1,%d2\n"
+	"	roxr.l #0x1,%d3\n"
+	"	lsr.l #0x1,%d2\n"
+	"	roxr.l #0x1,%d3\n"
+	"	neg.w %d5\n"
+	"	addq.w #0x1,%d5\n"
+	"	ror.l #0x2,%d6\n"
+	"	move.l %d6,-(%sp)\n"
+	"	movem.l %d3/%d2,-(%sp)\n"
+	"	move.l %d5,-(%sp)\n"
+	"	pea (0xe0800).l\n"
+	"	jsr (float_raise).l\n"
+	"	lea (0x14,%sp),%sp\n"
+	"	bra.b .Lg_5db84\n"
+	".Lg_5dbce:\n"
+	"	pea (0xe1000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5db84\n"
+	"	.size double_divide_reversed, .-double_divide_reversed\n"
+);
+
 /* 0005dbde */
 
 /* exception code 0xe2000
@@ -54794,6 +70959,7 @@ uint double_divide_by_zero(void)
 
 
 /* 0005dbfe */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x0005dc10) */
 /* each further quotient word, three in all
@@ -54869,7 +71035,22 @@ __regcall void double_divide_next_word(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl double_divide_next_word\n"
+	"	.type double_divide_next_word, @function\n"
+	"	.section .text.double_divide_next_word.5dbfe,\"ax\",@progbits\n"
+	"double_divide_next_word:\n"
+	"	swap %d4\n"
+	"	swap %d5\n"
+	"	move.w %d5,%d4\n"
+	"	tst.l %d0\n"
+	"	beq.w double_divide_first_word+0x1e\n"
+	"	.size double_divide_next_word, .-double_divide_next_word\n"
+);
+
 /* 0005dc0a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x0005dc10) */
 /* the double divides' first 16-bit quotient word
@@ -54943,14 +71124,89 @@ __regcall void double_divide_first_word(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl double_divide_first_word\n"
+	"	.type double_divide_first_word, @function\n"
+	"	.section .text.double_divide_first_word.5dc0a,\"ax\",@progbits\n"
+	"double_divide_first_word:\n"
+	"	swap %d2\n"
+	"	divu.w %d2,%d0\n"
+	"	bvc.b .Lg_5dc26\n"
+	"	swap %d2\n"
+	"	move.w #-0x1,%d5\n"
+	"	sub.l %d3,%d1\n"
+	"	subx.l %d2,%d0\n"
+	"	swap %d0\n"
+	"	swap %d1\n"
+	"	move.w %d1,%d0\n"
+	"	clr.w %d1\n"
+	"	bra.w .Lg_5dc92\n"
+	".Lg_5dc26:\n"
+	"	swap %d2\n"
+	"	move.w %d0,%d5\n"
+	"	swap %d1\n"
+	"	move.w %d1,%d0\n"
+	"	clr.w %d1\n"
+	"	tst.w %d5\n"
+	"	beq.w .Lg_5dc98\n"
+	"	moveq #0x0,%d7\n"
+	"	move.w %d2,%d6\n"
+	"	beq.w .Lg_5dc48\n"
+	"	mulu.w %d5,%d6\n"
+	"	sub.l %d6,%d0\n"
+	"	bcc.w .Lg_5dc48\n"
+	"	subq.w #0x1,%d7\n"
+	".Lg_5dc48:\n"
+	"	move.w %d3,%d6\n"
+	"	beq.w .Lg_5dc5e\n"
+	"	mulu.w %d5,%d6\n"
+	"	sub.l %d6,%d1\n"
+	"	bcc.w .Lg_5dc5e\n"
+	"	subq.l #0x1,%d0\n"
+	"	bcc.w .Lg_5dc5e\n"
+	"	subq.w #0x1,%d7\n"
+	".Lg_5dc5e:\n"
+	"	swap %d3\n"
+	"	move.w %d3,%d6\n"
+	"	beq.w .Lg_5dc82\n"
+	"	mulu.w %d5,%d6\n"
+	"	swap %d1\n"
+	"	sub.w %d6,%d1\n"
+	"	swap %d1\n"
+	"	swap %d6\n"
+	"	subx.w %d6,%d0\n"
+	"	bcc.w .Lg_5dc82\n"
+	"	subi.l #0x10000,%d0\n"
+	"	bcc.w .Lg_5dc82\n"
+	"	subq.w #0x1,%d7\n"
+	".Lg_5dc82:\n"
+	"	swap %d3\n"
+	"	tst.w %d7\n"
+	"	bpl.w .Lg_5dc98\n"
+	".Lg_5dc8a:\n"
+	"	subq.l #0x1,%d5\n"
+	"	bcc.w .Lg_5dc92\n"
+	"	subq.l #0x1,%d4\n"
+	".Lg_5dc92:\n"
+	"	add.l %d3,%d1\n"
+	"	addx.l %d2,%d0\n"
+	"	bcc.b .Lg_5dc8a\n"
+	".Lg_5dc98:\n"
+	"	rts\n"
+	"	.size double_divide_first_word, .-double_divide_first_word\n"
+);
+
 /* 0005dcd2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* double to float
    Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
    double d.  Out: D0 float.
    softfloat.md */
 
-__regcall float double_to_float(double d __asm("d0")) /* out D0 float */
+/* out D0 float */
+__regcall float double_to_float(double d /* d0 */)
 
 {
   ushort uVar1;
@@ -54985,7 +71241,7 @@ __regcall float double_to_float(double d __asm("d0")) /* out D0 float */
       else {
         if (uVar3 != 0) {
           float_status = float_status | 0x200;
-          if ((float_control._0_1_ & 2) != 0) {
+          if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
             fVar6 = (float)float_raise(0x30200);
             goto LAB_0005dd4e;
           }
@@ -55021,14 +71277,123 @@ LAB_0005dd4e:
 }
 
 
+#endif
+__asm__(
+	"	.globl double_to_float\n"
+	"	.type double_to_float, @function\n"
+	"	.section .text.double_to_float.5dc9a,\"ax\",@progbits\n"
+	".Lg_5dc9a:\n"
+	"	moveq #0x0,%d0\n"
+	"	bra.w .Lg_5dd4e\n"
+	".Lg_5dca0:\n"
+	"	bgt.b .Lg_5dca6\n"
+	"	tst.l %d1\n"
+	"	beq.b .Lg_5dcc8\n"
+	".Lg_5dca6:\n"
+	"	lsl.l #0x3,%d0\n"
+	"	bclr.l #0x1f,%d0\n"
+	"	rol.l #0x3,%d1\n"
+	"	andi.b #0x7,%d1\n"
+	"	or.b %d1,%d0\n"
+	"	move.l %d0,-(%sp)\n"
+	"	pea (0x34000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x8,%sp\n"
+	"	bra.w .Lg_5dd4e\n"
+	".Lg_5dcc8:\n"
+	"	move.l #0x7f800000,%d0\n"
+	"	bra.w .Lg_5dd4e\n"
+	"double_to_float:\n"
+	"	movea.l %d3,%a0\n"
+	"	movem.l %d7/%d6/%d5/%d4,-(%sp)\n"
+	"	move.l %d0,%d7\n"
+	"	bclr.l #0x1f,%d0\n"
+	"	tst.l %d0\n"
+	"	beq.b .Lg_5dc9a\n"
+	"	cmpi.l #0x7ff00000,%d0\n"
+	"	bge.b .Lg_5dca0\n"
+	"	moveq #0x0,%d3\n"
+	"	swap %d0\n"
+	"	move.w %d0,%d3\n"
+	"	moveq #0xf,%d5\n"
+	"	and.w %d5,%d0\n"
+	"	not.w %d5\n"
+	"	and.w %d5,%d3\n"
+	"	swap %d0\n"
+	"	lsl.l #0x3,%d0\n"
+	"	rol.l #0x3,%d1\n"
+	"	move.l %d1,%d4\n"
+	"	moveq #0x7,%d5\n"
+	"	and.b %d5,%d1\n"
+	"	or.b %d1,%d0\n"
+	"	not.l %d5\n"
+	"	and.l %d5,%d4\n"
+	"	subi.w #0x3800,%d3\n"
+	"	ble.b .Lg_5dd6e\n"
+	"	tst.l %d4\n"
+	"	beq.b .Lg_5dd42\n"
+	"	ori.w #0x200,(float_status).l\n"
+	"	btst.b #0x1,(float_control).l\n"
+	"	bne.b .Lg_5dd8c\n"
+	"	add.l %d4,%d4\n"
+	"	bcc.b .Lg_5dd42\n"
+	"	bne.b .Lg_5dd32\n"
+	"	btst.l #0x0,%d0\n"
+	"	beq.b .Lg_5dd42\n"
+	".Lg_5dd32:\n"
+	"	addq.l #0x1,%d0\n"
+	"	cmpi.l #0x800000,%d0\n"
+	"	blt.b .Lg_5dd42\n"
+	"	moveq #0x0,%d0\n"
+	"	addi.w #0x10,%d3\n"
+	".Lg_5dd42:\n"
+	"	cmpi.w #0xff0,%d3\n"
+	"	bge.b .Lg_5dd5e\n"
+	"	lsl.w #0x3,%d3\n"
+	"	swap %d3\n"
+	"	add.l %d3,%d0\n"
+	".Lg_5dd4e:\n"
+	"	tst.l %d7\n"
+	"	bpl.b .Lg_5dd56\n"
+	"	bset.l #0x1f,%d0\n"
+	".Lg_5dd56:\n"
+	"	movem.l (%sp)+,%d4/%d5/%d6/%d7\n"
+	"	move.l %a0,%d3\n"
+	"	rts\n"
+	".Lg_5dd5e:\n"
+	"	pea (0x31000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5dd4e\n"
+	".Lg_5dd6e:\n"
+	"	move.l %d4,-(%sp)\n"
+	"	move.l %d0,-(%sp)\n"
+	"	neg.w %d3\n"
+	"	lsr.w #0x4,%d3\n"
+	"	addq.w #0x1,%d3\n"
+	"	move.l %d3,-(%sp)\n"
+	"	pea (0x30800).l\n"
+	"	jsr (float_raise).l\n"
+	"	lea (0x10,%sp),%sp\n"
+	"	bra.b .Lg_5dd4e\n"
+	".Lg_5dd8c:\n"
+	"	pea (0x30200).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5dd4e\n"
+	"	.size double_to_float, .-double_to_float\n"
+);
+
 /* 0005ddde */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* double to signed integer
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double d.
    Out: D0 int.
    libc.md */
 
-__regcall int double_to_integer(double d __asm("d0")) /* out D0 int */
+/* out D0 int */
+__regcall int double_to_integer(double d /* d0 */)
 
 {
   short sVar1;
@@ -55074,14 +71439,96 @@ __regcall int double_to_integer(double d __asm("d0")) /* out D0 int */
 }
 
 
+#endif
+__asm__(
+	"	.globl double_to_integer\n"
+	"	.type double_to_integer, @function\n"
+	"	.section .text.double_to_integer.5dd9c,\"ax\",@progbits\n"
+	".Lg_5dd9c:\n"
+	"	pea (0x42000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	tst.l %d7\n"
+	"	bpl.w .Lg_5de36\n"
+	"	move.l #-0x80000000,%d0\n"
+	"	bra.w .Lg_5de36\n"
+	".Lg_5ddba:\n"
+	"	bgt.b .Lg_5ddc0\n"
+	"	tst.l %d1\n"
+	"	beq.b .Lg_5dd9c\n"
+	".Lg_5ddc0:\n"
+	"	move.l %d1,-(%sp)\n"
+	"	move.l %d7,-(%sp)\n"
+	"	pea (0x44000).l\n"
+	"	jsr (float_raise).l\n"
+	"	lea (0xc,%sp),%sp\n"
+	"	bra.w .Lg_5de36\n"
+	".Lg_5ddd8:\n"
+	"	moveq #0x0,%d0\n"
+	"	bra.w .Lg_5de36\n"
+	"double_to_integer:\n"
+	"	movea.l %d4,%a0\n"
+	"	movem.l %d7/%d6/%d5,-(%sp)\n"
+	"	move.l %d0,%d7\n"
+	"	bclr.l #0x1f,%d0\n"
+	"	tst.l %d0\n"
+	"	beq.w .Lg_5de36\n"
+	"	cmpi.l #0x7ff00000,%d0\n"
+	"	bge.b .Lg_5ddba\n"
+	"	move.w %d0,%d1\n"
+	"	swap %d1\n"
+	"	clr.w %d0\n"
+	"	swap %d0\n"
+	"	move.w %d0,%d6\n"
+	"	andi.w #0x7ff0,%d6\n"
+	"	lsr.w #0x4,%d6\n"
+	"	subi.w #0x3ff,%d6\n"
+	"	moveq #0x1f,%d4\n"
+	"	moveq #0x5,%d5\n"
+	"	cmp.w %d4,%d6\n"
+	"	bgt.b .Lg_5dd9c\n"
+	"	beq.b .Lg_5de3e\n"
+	"	tst.w %d6\n"
+	"	blt.b .Lg_5ddd8\n"
+	"	andi.w #0xf,%d0\n"
+	"	lsr.l %d5,%d1\n"
+	"	ror.l %d5,%d0\n"
+	"	or.l %d0,%d1\n"
+	"	neg.w %d6\n"
+	"	add.w %d4,%d6\n"
+	"	bset.l #0x1f,%d1\n"
+	"	lsr.l %d6,%d1\n"
+	"	tst.l %d7\n"
+	"	bpl.b .Lg_5de34\n"
+	"	neg.l %d1\n"
+	".Lg_5de34:\n"
+	"	move.l %d1,%d0\n"
+	".Lg_5de36:\n"
+	"	movem.l (%sp)+,%d5/%d6/%d7\n"
+	"	move.l %a0,%d4\n"
+	"	rts\n"
+	".Lg_5de3e:\n"
+	"	tst.l %d7\n"
+	"	bpl.w .Lg_5dd9c\n"
+	"	andi.w #0xf,%d0\n"
+	"	bne.w .Lg_5dd9c\n"
+	"	lsr.l %d5,%d1\n"
+	"	bne.w .Lg_5dd9c\n"
+	"	move.l #-0x80000000,%d0\n"
+	"	bra.b .Lg_5de36\n"
+	"	.size double_to_integer, .-double_to_integer\n"
+);
+
 /* 0005de9e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* double to unsigned integer
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double d.
    Out: D0 unsigned int.
    libc.md */
 
-__regcall uint double_to_unsigned(double d __asm("d0")) /* out D0 unsigned int */
+/* out D0 unsigned int */
+__regcall uint double_to_unsigned(double d /* d0 */)
 
 {
   short sVar1;
@@ -55117,14 +71564,82 @@ __regcall uint double_to_unsigned(double d __asm("d0")) /* out D0 unsigned int *
 }
 
 
+#endif
+__asm__(
+	"	.globl double_to_unsigned\n"
+	"	.type double_to_unsigned, @function\n"
+	"	.section .text.double_to_unsigned.5de5a,\"ax\",@progbits\n"
+	".Lg_5de5a:\n"
+	"	bgt.b .Lg_5de60\n"
+	"	tst.l %d1\n"
+	"	beq.b .Lg_5de78\n"
+	".Lg_5de60:\n"
+	"	move.l %d1,-(%sp)\n"
+	"	move.l %d0,-(%sp)\n"
+	"	pea (0x104000).l\n"
+	"	jsr (float_raise).l\n"
+	"	lea (0xc,%sp),%sp\n"
+	"	bra.w .Lg_5dee4\n"
+	".Lg_5de78:\n"
+	"	pea (0x102000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	moveq #-0x1,%d0\n"
+	"	bra.w .Lg_5dee4\n"
+	".Lg_5de8c:\n"
+	"	movem.l %a1/%a0,-(%sp)\n"
+	"	jsr (double_to_integer).l\n"
+	"	movem.l (%sp)+,%a0/%a1\n"
+	"	bra.w .Lg_5dee4\n"
+	"double_to_unsigned:\n"
+	"	movea.l %d4,%a1\n"
+	"	movem.l %d7/%d6/%d5,-(%sp)\n"
+	"	tst.l %d0\n"
+	"	ble.b .Lg_5de8c\n"
+	"	cmpi.l #0x7ff00000,%d0\n"
+	"	bge.b .Lg_5de5a\n"
+	"	move.w %d0,%d1\n"
+	"	swap %d1\n"
+	"	clr.w %d0\n"
+	"	swap %d0\n"
+	"	move.w %d0,%d6\n"
+	"	andi.w #0x7ff0,%d6\n"
+	"	lsr.w #0x4,%d6\n"
+	"	subi.w #0x3ff,%d6\n"
+	"	blt.b .Lg_5deec\n"
+	"	moveq #0x1f,%d4\n"
+	"	cmp.w %d4,%d6\n"
+	"	bgt.b .Lg_5de78\n"
+	"	andi.w #0xf,%d0\n"
+	"	moveq #0x5,%d5\n"
+	"	lsr.l %d5,%d1\n"
+	"	ror.l %d5,%d0\n"
+	"	or.l %d0,%d1\n"
+	"	neg.w %d6\n"
+	"	add.w %d4,%d6\n"
+	"	bset.l #0x1f,%d1\n"
+	"	lsr.l %d6,%d1\n"
+	"	move.l %d1,%d0\n"
+	".Lg_5dee4:\n"
+	"	movem.l (%sp)+,%d5/%d6/%d7\n"
+	"	move.l %a1,%d4\n"
+	"	rts\n"
+	".Lg_5deec:\n"
+	"	moveq #0x0,%d0\n"
+	"	bra.b .Lg_5dee4\n"
+	"	.size double_to_unsigned, .-double_to_unsigned\n"
+);
+
 /* 0005df24 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* float to double, in D0:D1
    Not a C function (register; documented): its arguments and results in registers.  In: D0 float f.
    Out: D0:D1 double.
    softfloat.md */
 
-__regcall double float_to_double(float f __asm("d0")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double float_to_double(float f /* d0 */)
 
 {
   float fVar1;
@@ -55165,14 +71680,82 @@ __regcall double float_to_double(float f __asm("d0")) /* out D0:D1 double */
 }
 
 
+#endif
+__asm__(
+	"	.globl float_to_double\n"
+	"	.type float_to_double, @function\n"
+	"	.section .text.float_to_double.5def0,\"ax\",@progbits\n"
+	".Lg_5def0:\n"
+	"	beq.b .Lg_5df1a\n"
+	"	move.l %d1,%d0\n"
+	"	asr.l #0x3,%d0\n"
+	"	ori.l #0x7ff00000,%d0\n"
+	"	ror.l #0x3,%d1\n"
+	"	andi.l #-0x20000000,%d1\n"
+	"	movem.l %d1/%d0,-(%sp)\n"
+	"	pea (0x24000).l\n"
+	"	jsr (float_raise).l\n"
+	"	lea (0x10,%sp),%sp\n"
+	"	rts\n"
+	".Lg_5df1a:\n"
+	"	move.l #0x7ff00000,%d0\n"
+	"	moveq #0x0,%d1\n"
+	"	bra.b .Lg_5df4c\n"
+	"float_to_double:\n"
+	"	move.l %d0,-(%sp)\n"
+	"	move.l %d0,%d1\n"
+	"	bclr.l #0x1f,%d0\n"
+	"	cmpi.l #0x7f800000,%d0\n"
+	"	bge.b .Lg_5def0\n"
+	"	cmpi.l #0x800000,%d0\n"
+	"	blt.b .Lg_5df56\n"
+	"	lsr.l #0x3,%d0\n"
+	"	addi.l #0x38000000,%d0\n"
+	".Lg_5df44:\n"
+	"	ror.l #0x3,%d1\n"
+	"	andi.l #-0x20000000,%d1\n"
+	".Lg_5df4c:\n"
+	"	tst.l (%sp)+\n"
+	"	bpl.b .Lg_5df54\n"
+	"	bset.l #0x1f,%d0\n"
+	".Lg_5df54:\n"
+	"	rts\n"
+	".Lg_5df56:\n"
+	"	tst.l %d0\n"
+	"	beq.b .Lg_5df80\n"
+	"	move.l %d0,-(%sp)\n"
+	"	clr.w -(%sp)\n"
+	"	jsr (float_normalize).l\n"
+	"	move.w (%sp)+,%d1\n"
+	"	move.l (%sp)+,%d0\n"
+	"	bclr.l #0x17,%d0\n"
+	"	movea.l %d0,%a0\n"
+	"	lsr.l #0x3,%d0\n"
+	"	lsl.w #0x4,%d1\n"
+	"	addi.w #0x3800,%d1\n"
+	"	swap %d1\n"
+	"	clr.w %d1\n"
+	"	or.l %d1,%d0\n"
+	"	move.l %a0,%d1\n"
+	"	bra.b .Lg_5df44\n"
+	".Lg_5df80:\n"
+	"	move.l %d1,%d0\n"
+	"	moveq #0x0,%d1\n"
+	"	addq.w #0x4,%sp\n"
+	"	rts\n"
+	"	.size float_to_double, .-float_to_double\n"
+);
+
 /* 0005dfbc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* float to signed integer
    Not a C function (register; run): its arguments and results in registers.  In: D0 float f.  Out:
    D0 int.
    softfloat.md, libc.md */
 
-__regcall int float_to_integer(float f __asm("d0")) /* out D0 int */
+/* out D0 int */
+__regcall int float_to_integer(float f /* d0 */)
 
 {
   ushort uVar1;
@@ -55219,14 +71802,81 @@ LAB_0005df9e:
 }
 
 
+#endif
+__asm__(
+	"	.globl float_to_integer\n"
+	"	.type float_to_integer, @function\n"
+	"	.section .text.float_to_integer.5df88,\"ax\",@progbits\n"
+	".Lg_5df88:\n"
+	"	beq.b .Lg_5df9e\n"
+	"	move.l %d2,-(%sp)\n"
+	"	pea (0x14000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x8,%sp\n"
+	"	bra.w .Lg_5e014\n"
+	".Lg_5df9e:\n"
+	"	pea (0x12000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	tst.l %d2\n"
+	"	bpl.w .Lg_5e014\n"
+	"	move.l #-0x80000000,%d0\n"
+	"	bra.w .Lg_5e014\n"
+	"float_to_integer:\n"
+	"	movea.l %d2,%a1\n"
+	"	move.l %d0,%d2\n"
+	"	bclr.l #0x1f,%d0\n"
+	"	tst.l %d0\n"
+	"	beq.w .Lg_5e014\n"
+	"	cmpi.l #0x7f800000,%d0\n"
+	"	bge.b .Lg_5df88\n"
+	"	move.l %d0,%d1\n"
+	"	andi.l #0x7fffff,%d0\n"
+	"	bset.l #0x17,%d0\n"
+	"	swap %d1\n"
+	"	lsr.w #0x7,%d1\n"
+	"	subi.w #0x96,%d1\n"
+	"	beq.b .Lg_5e00e\n"
+	"	cmpi.w #-0x18,%d1\n"
+	"	ble.b .Lg_5e018\n"
+	"	cmpi.w #0x8,%d1\n"
+	"	bgt.b .Lg_5df9e\n"
+	"	blt.b .Lg_5e002\n"
+	"	tst.l %d2\n"
+	"	bpl.b .Lg_5df9e\n"
+	"	cmpi.l #0x800000,%d0\n"
+	"	bne.b .Lg_5df9e\n"
+	".Lg_5e002:\n"
+	"	tst.w %d1\n"
+	"	bgt.b .Lg_5e00c\n"
+	"	neg.w %d1\n"
+	"	lsr.l %d1,%d0\n"
+	"	bra.b .Lg_5e00e\n"
+	".Lg_5e00c:\n"
+	"	lsl.l %d1,%d0\n"
+	".Lg_5e00e:\n"
+	"	tst.l %d2\n"
+	"	bpl.b .Lg_5e014\n"
+	"	neg.l %d0\n"
+	".Lg_5e014:\n"
+	"	move.l %a1,%d2\n"
+	"	rts\n"
+	".Lg_5e018:\n"
+	"	moveq #0x0,%d0\n"
+	"	bra.b .Lg_5e014\n"
+	"	.size float_to_integer, .-float_to_integer\n"
+);
+
 /* 0005e04e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* float to unsigned integer
    Not a C function (register; run): its arguments and results in registers.  In: D0 float f.  Out:
    D0 unsigned int.
    softfloat.md, libc.md */
 
-__regcall uint float_to_unsigned(float f __asm("d0")) /* out D0 unsigned int */
+/* out D0 unsigned int */
+__regcall uint float_to_unsigned(float f /* d0 */)
 
 {
   uint uVar1;
@@ -55249,14 +71899,60 @@ __regcall uint float_to_unsigned(float f __asm("d0")) /* out D0 unsigned int */
 }
 
 
+#endif
+__asm__(
+	"	.globl float_to_unsigned\n"
+	"	.type float_to_unsigned, @function\n"
+	"	.section .text.float_to_unsigned.5e01c,\"ax\",@progbits\n"
+	".Lg_5e01c:\n"
+	"	cmpi.l #0x7f800000,%d0\n"
+	"	ble.b .Lg_5e038\n"
+	"	move.l %d0,-(%sp)\n"
+	"	pea (0x114000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x8,%sp\n"
+	"	bra.w .Lg_5e078\n"
+	".Lg_5e038:\n"
+	"	pea (0x112000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bset.l #0x1f,%d0\n"
+	"	bra.w .Lg_5e078\n"
+	"float_to_unsigned:\n"
+	"	tst.l %d0\n"
+	"	ble.b .Lg_5e07a\n"
+	"	cmpi.l #0x4f7fffff,%d0\n"
+	"	bgt.b .Lg_5e01c\n"
+	"	move.l %d0,%d1\n"
+	"	andi.l #0x7fffff,%d0\n"
+	"	bset.l #0x17,%d0\n"
+	"	lsl.l #0x8,%d0\n"
+	"	swap %d1\n"
+	"	lsr.w #0x7,%d1\n"
+	"	subi.w #0x7f,%d1\n"
+	"	subi.w #0x1f,%d1\n"
+	"	neg.l %d1\n"
+	"	lsr.l %d1,%d0\n"
+	".Lg_5e078:\n"
+	"	rts\n"
+	".Lg_5e07a:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	jsr (float_to_integer).l\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	bra.b .Lg_5e078\n"
+	"	.size float_to_unsigned, .-float_to_unsigned\n"
+);
+
 /* 0005e08e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* signed integer to double
    Not a C function (register; run): its arguments and results in registers.  In: D0 int i.  Out:
    D0:D1 double.
    libc.md */
 
-__regcall double integer_to_double(int i __asm("d0")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double integer_to_double(int i /* d0 */)
 
 {
   ushort uVar1;
@@ -55310,14 +72006,87 @@ __regcall double integer_to_double(int i __asm("d0")) /* out D0:D1 double */
 }
 
 
+#endif
+__asm__(
+	"	.globl integer_to_double\n"
+	"	.type integer_to_double, @function\n"
+	"	.section .text.integer_to_double.5e086,\"ax\",@progbits\n"
+	".Lg_5e086:\n"
+	"	moveq #0x0,%d0\n"
+	"	move.l %d0,%d1\n"
+	"	bra.w .Lg_5e0f6\n"
+	"integer_to_double:\n"
+	"	movea.l %d2,%a0\n"
+	"	movea.l %d3,%a1\n"
+	"	movem.l %d5/%d4,-(%sp)\n"
+	"	tst.l %d0\n"
+	"	beq.b .Lg_5e086\n"
+	"	moveq #0x0,%d1\n"
+	"	move.l %d0,%d4\n"
+	"	bpl.b .Lg_5e0a2\n"
+	"	neg.l %d0\n"
+	".Lg_5e0a2:\n"
+	"	moveq #0x1f,%d3\n"
+	"	move.l %d0,%d2\n"
+	"	swap %d2\n"
+	"	tst.w %d2\n"
+	"	beq.b .Lg_5e0b6\n"
+	"	clr.b %d2\n"
+	"	tst.w %d2\n"
+	"	bne.b .Lg_5e0c2\n"
+	"	moveq #0x17,%d3\n"
+	"	bra.b .Lg_5e0c2\n"
+	".Lg_5e0b6:\n"
+	"	moveq #0xf,%d3\n"
+	"	move.w %d0,%d2\n"
+	"	clr.b %d2\n"
+	"	tst.w %d2\n"
+	"	bne.b .Lg_5e0c2\n"
+	"	moveq #0x7,%d3\n"
+	".Lg_5e0c2:\n"
+	"	btst.l %d3,%d0\n"
+	"	dbne %d3,.Lg_5e0c2\n"
+	"	moveq #0x14,%d2\n"
+	"	sub.w %d3,%d2\n"
+	"	bpl.b .Lg_5e0e0\n"
+	"	neg.w %d2\n"
+	"	moveq #-0x1,%d5\n"
+	"	lsl.w %d2,%d5\n"
+	"	not.l %d5\n"
+	"	move.l %d0,%d1\n"
+	"	and.l %d5,%d1\n"
+	"	ror.l %d2,%d1\n"
+	"	lsr.l %d2,%d0\n"
+	"	bra.b .Lg_5e0e4\n"
+	".Lg_5e0e0:\n"
+	"	beq.b .Lg_5e0e4\n"
+	"	lsl.l %d2,%d0\n"
+	".Lg_5e0e4:\n"
+	"	addi.w #0x3fe,%d3\n"
+	"	lsl.w #0x4,%d3\n"
+	"	swap %d3\n"
+	"	add.l %d3,%d0\n"
+	"	tst.l %d4\n"
+	"	bpl.b .Lg_5e0f6\n"
+	"	bset.l #0x1f,%d0\n"
+	".Lg_5e0f6:\n"
+	"	move.l %a0,%d2\n"
+	"	move.l %a1,%d3\n"
+	"	movem.l (%sp)+,%d4/%d5\n"
+	"	rts\n"
+	"	.size integer_to_double, .-integer_to_double\n"
+);
+
 /* 0005e108 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* unsigned integer to double
    Not a C function (register; run): its arguments and results in registers.  In: D0 unsigned int u.
    Out: D0:D1 double.
    softfloat.md, libc.md */
 
-__regcall double unsigned_to_double(uint u __asm("d0")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double unsigned_to_double(uint u /* d0 */)
 
 {
   ushort uVar1;
@@ -55364,14 +72133,80 @@ __regcall double unsigned_to_double(uint u __asm("d0")) /* out D0:D1 double */
 }
 
 
+#endif
+__asm__(
+	"	.globl unsigned_to_double\n"
+	"	.type unsigned_to_double, @function\n"
+	"	.section .text.unsigned_to_double.5e100,\"ax\",@progbits\n"
+	".Lg_5e100:\n"
+	"	moveq #0x0,%d0\n"
+	"	move.l %d0,%d1\n"
+	"	bra.w .Lg_5e160\n"
+	"unsigned_to_double:\n"
+	"	movea.l %d2,%a0\n"
+	"	movea.l %d3,%a1\n"
+	"	move.l %d4,-(%sp)\n"
+	"	tst.l %d0\n"
+	"	beq.b .Lg_5e100\n"
+	"	moveq #0x0,%d1\n"
+	"	moveq #0x1f,%d3\n"
+	"	move.l %d0,%d2\n"
+	"	swap %d2\n"
+	"	tst.w %d2\n"
+	"	beq.b .Lg_5e128\n"
+	"	clr.b %d2\n"
+	"	tst.w %d2\n"
+	"	bne.b .Lg_5e134\n"
+	"	moveq #0x17,%d3\n"
+	"	bra.b .Lg_5e134\n"
+	".Lg_5e128:\n"
+	"	moveq #0xf,%d3\n"
+	"	move.w %d0,%d2\n"
+	"	clr.b %d2\n"
+	"	tst.w %d2\n"
+	"	bne.b .Lg_5e134\n"
+	"	moveq #0x7,%d3\n"
+	".Lg_5e134:\n"
+	"	btst.l %d3,%d0\n"
+	"	dbne %d3,.Lg_5e134\n"
+	"	moveq #0x14,%d2\n"
+	"	sub.w %d3,%d2\n"
+	"	bpl.b .Lg_5e152\n"
+	"	neg.w %d2\n"
+	"	moveq #-0x1,%d4\n"
+	"	lsl.w %d2,%d4\n"
+	"	not.l %d4\n"
+	"	move.l %d0,%d1\n"
+	"	and.l %d4,%d1\n"
+	"	ror.l %d2,%d1\n"
+	"	lsr.l %d2,%d0\n"
+	"	bra.b .Lg_5e156\n"
+	".Lg_5e152:\n"
+	"	beq.b .Lg_5e156\n"
+	"	lsl.l %d2,%d0\n"
+	".Lg_5e156:\n"
+	"	addi.w #0x3fe,%d3\n"
+	"	lsl.w #0x4,%d3\n"
+	"	swap %d3\n"
+	"	add.l %d3,%d0\n"
+	".Lg_5e160:\n"
+	"	move.l %a0,%d2\n"
+	"	move.l %a1,%d3\n"
+	"	move.l (%sp)+,%d4\n"
+	"	rts\n"
+	"	.size unsigned_to_double, .-unsigned_to_double\n"
+);
+
 /* 0005e168 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* signed integer to float
    Not a C function (register; run): its arguments and results in registers.  In: D0 int i.  Out: D0
    float.
    softfloat.md, libc.md */
 
-__regcall float integer_to_float(int i __asm("d0")) /* out D0 float */
+/* out D0 float */
+__regcall float integer_to_float(int i /* d0 */)
 
 {
   byte bVar1;
@@ -55411,7 +72246,7 @@ __regcall float integer_to_float(int i __asm("d0")) /* out D0 float */
       uVar6 = uVar6 << 0x10 - (uVar4 & 0x3f) | uVar6 >> (uVar4 & 0x3f);
       if (uVar6 != 0) {
         float_status = float_status | 0x200;
-        if ((float_control._0_1_ & 2) != 0) {
+        if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
           fVar2 = (float)float_raise(0xf0200);
           return fVar2;
         }
@@ -55436,14 +72271,99 @@ __regcall float integer_to_float(int i __asm("d0")) /* out D0 float */
 }
 
 
+#endif
+__asm__(
+	"	.globl integer_to_float\n"
+	"	.type integer_to_float, @function\n"
+	"	.section .text.integer_to_float.5e168,\"ax\",@progbits\n"
+	"integer_to_float:\n"
+	"	movea.l %d2,%a1\n"
+	"	movem.l %d4/%d3,-(%sp)\n"
+	"	tst.l %d0\n"
+	"	beq.w .Lg_5e1f6\n"
+	"	move.l %d0,%d1\n"
+	"	bpl.b .Lg_5e17a\n"
+	"	neg.l %d1\n"
+	".Lg_5e17a:\n"
+	"	moveq #0x1f,%d3\n"
+	"	move.l %d1,%d2\n"
+	"	swap %d2\n"
+	"	tst.w %d2\n"
+	"	beq.b .Lg_5e18e\n"
+	"	clr.b %d2\n"
+	"	tst.w %d2\n"
+	"	bne.b .Lg_5e19a\n"
+	"	moveq #0x17,%d3\n"
+	"	bra.b .Lg_5e19a\n"
+	".Lg_5e18e:\n"
+	"	moveq #0xf,%d3\n"
+	"	move.w %d1,%d2\n"
+	"	clr.b %d2\n"
+	"	tst.w %d2\n"
+	"	bne.b .Lg_5e19a\n"
+	"	moveq #0x7,%d3\n"
+	".Lg_5e19a:\n"
+	"	btst.l %d3,%d1\n"
+	"	dbne %d3,.Lg_5e19a\n"
+	"	moveq #0x17,%d2\n"
+	"	sub.w %d3,%d2\n"
+	"	bpl.b .Lg_5e1e2\n"
+	"	neg.w %d2\n"
+	"	moveq #-0x1,%d4\n"
+	"	lsl.w %d2,%d4\n"
+	"	not.w %d4\n"
+	"	and.w %d1,%d4\n"
+	"	lsr.l %d2,%d1\n"
+	"	ror.w %d2,%d4\n"
+	"	beq.b .Lg_5e1e6\n"
+	"	ori.w #0x200,(float_status).l\n"
+	"	btst.b #0x1,(float_control).l\n"
+	"	bne.b .Lg_5e1fe\n"
+	"	add.w %d4,%d4\n"
+	"	bcc.b .Lg_5e1e6\n"
+	"	bne.b .Lg_5e1d4\n"
+	"	btst.l #0x0,%d1\n"
+	"	beq.b .Lg_5e1e6\n"
+	".Lg_5e1d4:\n"
+	"	addq.l #0x1,%d1\n"
+	"	btst.l #0x18,%d1\n"
+	"	beq.b .Lg_5e1e6\n"
+	"	lsr.l #0x1,%d1\n"
+	"	addq.w #0x1,%d3\n"
+	"	bra.b .Lg_5e1e6\n"
+	".Lg_5e1e2:\n"
+	"	beq.b .Lg_5e1e6\n"
+	"	lsl.l %d2,%d1\n"
+	".Lg_5e1e6:\n"
+	"	addi.w #0x7e,%d3\n"
+	"	add.l %d0,%d0\n"
+	"	roxr.b #0x1,%d3\n"
+	"	roxl.w #0x8,%d3\n"
+	"	swap %d3\n"
+	"	add.l %d1,%d3\n"
+	"	move.l %d3,%d0\n"
+	".Lg_5e1f6:\n"
+	"	movem.l (%sp)+,%d3/%d4\n"
+	"	move.l %a1,%d2\n"
+	"	rts\n"
+	".Lg_5e1fe:\n"
+	"	pea (0xf0200).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5e1f6\n"
+	"	.size integer_to_float, .-integer_to_float\n"
+);
+
 /* 0005e20e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* unsigned integer to float
    Not a C function (register; run): its arguments and results in registers.  In: D0 unsigned int u.
    Out: D0 float.
    softfloat.md, libc.md */
 
-__regcall float unsigned_to_float(uint u __asm("d0")) /* out D0 float */
+/* out D0 float */
+__regcall float unsigned_to_float(uint u /* d0 */)
 
 {
   byte bVar1;
@@ -55479,7 +72399,7 @@ __regcall float unsigned_to_float(uint u __asm("d0")) /* out D0 float */
       uVar6 = uVar6 << 0x10 - (uVar3 & 0x3f) | uVar6 >> (uVar3 & 0x3f);
       if (uVar6 != 0) {
         float_status = float_status | 0x200;
-        if ((float_control._0_1_ & 2) != 0) {
+        if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
           fVar2 = (float)float_raise(0x130200);
           return fVar2;
         }
@@ -55507,14 +72427,97 @@ __regcall float unsigned_to_float(uint u __asm("d0")) /* out D0 float */
 }
 
 
+#endif
+__asm__(
+	"	.globl unsigned_to_float\n"
+	"	.type unsigned_to_float, @function\n"
+	"	.section .text.unsigned_to_float.5e20e,\"ax\",@progbits\n"
+	"unsigned_to_float:\n"
+	"	movea.l %d2,%a0\n"
+	"	movea.l %d3,%a1\n"
+	"	move.l %d4,-(%sp)\n"
+	"	move.l %d0,%d1\n"
+	"	beq.w .Lg_5e29a\n"
+	"	moveq #0x1f,%d3\n"
+	"	move.l %d1,%d2\n"
+	"	swap %d2\n"
+	"	tst.w %d2\n"
+	"	beq.b .Lg_5e22e\n"
+	"	clr.b %d2\n"
+	"	tst.w %d2\n"
+	"	bne.b .Lg_5e23a\n"
+	"	moveq #0x17,%d3\n"
+	"	bra.b .Lg_5e23a\n"
+	".Lg_5e22e:\n"
+	"	moveq #0xf,%d3\n"
+	"	move.w %d1,%d2\n"
+	"	clr.b %d2\n"
+	"	tst.w %d2\n"
+	"	bne.b .Lg_5e23a\n"
+	"	moveq #0x7,%d3\n"
+	".Lg_5e23a:\n"
+	"	btst.l %d3,%d1\n"
+	"	dbne %d3,.Lg_5e23a\n"
+	"	moveq #0x17,%d2\n"
+	"	sub.w %d3,%d2\n"
+	"	bpl.b .Lg_5e282\n"
+	"	neg.w %d2\n"
+	"	moveq #-0x1,%d4\n"
+	"	lsl.w %d2,%d4\n"
+	"	not.w %d4\n"
+	"	and.w %d1,%d4\n"
+	"	lsr.l %d2,%d1\n"
+	"	ror.w %d2,%d4\n"
+	"	beq.b .Lg_5e286\n"
+	"	ori.w #0x200,(float_status).l\n"
+	"	btst.b #0x1,(float_control).l\n"
+	"	bne.b .Lg_5e2a2\n"
+	"	add.w %d4,%d4\n"
+	"	bcc.b .Lg_5e286\n"
+	"	bne.b .Lg_5e274\n"
+	"	btst.l #0x0,%d1\n"
+	"	beq.b .Lg_5e286\n"
+	".Lg_5e274:\n"
+	"	addq.l #0x1,%d1\n"
+	"	btst.l #0x18,%d1\n"
+	"	beq.b .Lg_5e286\n"
+	"	lsr.l #0x1,%d1\n"
+	"	addq.w #0x1,%d3\n"
+	"	bra.b .Lg_5e286\n"
+	".Lg_5e282:\n"
+	"	beq.b .Lg_5e286\n"
+	"	lsl.l %d2,%d1\n"
+	".Lg_5e286:\n"
+	"	addi.w #0x7e,%d3\n"
+	"	add.l %d0,%d0\n"
+	"	roxr.b #0x1,%d3\n"
+	"	roxl.w #0x8,%d3\n"
+	"	swap %d3\n"
+	"	add.l %d1,%d3\n"
+	"	move.l %d3,%d0\n"
+	"	bclr.l #0x1f,%d0\n"
+	".Lg_5e29a:\n"
+	"	move.l (%sp)+,%d4\n"
+	"	move.l %a1,%d3\n"
+	"	move.l %a0,%d2\n"
+	"	rts\n"
+	".Lg_5e2a2:\n"
+	"	pea (0x130200).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5e29a\n"
+	"	.size unsigned_to_float, .-unsigned_to_float\n"
+);
+
 /* 0005e316 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* *A0 *= D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 float *x, D1
    float y.
    libc.md */
 
-__regcall void float_multiply_in_place(float *x __asm("a0"),float y __asm("d1"))
+__regcall void float_multiply_in_place(float *x /* a0 */,float y /* d1 */)
 
 {
   float fVar1;
@@ -55526,14 +72529,29 @@ __regcall void float_multiply_in_place(float *x __asm("a0"),float y __asm("d1"))
 }
 
 
+#endif
+__asm__(
+	"	.globl float_multiply_in_place\n"
+	"	.type float_multiply_in_place, @function\n"
+	"	.section .text.float_multiply_in_place.5e316,\"ax\",@progbits\n"
+	"float_multiply_in_place:\n"
+	"	move.l (%a0),%d0\n"
+	"	bsr.w float_multiply\n"
+	"	move.l %d0,(%a0)\n"
+	"	rts\n"
+	"	.size float_multiply_in_place, .-float_multiply_in_place\n"
+);
+
 /* 0005e320 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* D0 x D1
    Not a C function (register; documented): its arguments and results in registers.  In: D0 float a,
    D1 float b.  Out: D0 float.
    softfloat.md */
 
-__regcall float float_multiply(float a __asm("d0"),float b __asm("d1")) /* out D0 float */
+/* out D0 float */
+__regcall float float_multiply(float a /* d0 */,float b /* d1 */)
 
 {
   uint uVar1;
@@ -55624,7 +72642,7 @@ LAB_0005e2f0:
           }
           if (sVar14 < 0x47e1) {
             if ((uVar7 != 0) &&
-               (float_status = float_status | 0x200, (float_control._0_1_ & 2) != 0)) {
+               (float_status = float_status | 0x200, (__ghidra_piece(unsigned char, float_control, 0) & 2) != 0)) {
               fVar6 = (float)float_raise(0xb0200);
               return fVar6;
             }
@@ -55649,14 +72667,207 @@ LAB_0005e41a:
 }
 
 
+#endif
+__asm__(
+	"	.globl float_multiply\n"
+	"	.type float_multiply, @function\n"
+	"	.section .text.float_multiply.5e2b2,\"ax\",@progbits\n"
+	".Lg_5e2b2:\n"
+	"	move.l %d0,-(%sp)\n"
+	"	clr.w -(%sp)\n"
+	"	jsr (float_normalize).l\n"
+	"	move.w (%sp)+,%d2\n"
+	"	move.l (%sp)+,%d0\n"
+	"	lsl.w #0x4,%d2\n"
+	"	bra.w .Lg_5e366\n"
+	".Lg_5e2c6:\n"
+	"	move.l %d1,-(%sp)\n"
+	"	clr.w -(%sp)\n"
+	"	jsr (float_normalize).l\n"
+	"	move.w (%sp)+,%d6\n"
+	"	move.l (%sp)+,%d1\n"
+	"	lsl.w #0x4,%d6\n"
+	"	bra.w .Lg_5e370\n"
+	".Lg_5e2da:\n"
+	"	bgt.b .Lg_5e2ee\n"
+	"	tst.l %d1\n"
+	"	beq.w .Lg_5e466\n"
+	"	cmp.l %d3,%d1\n"
+	"	bgt.b .Lg_5e2ea\n"
+	"	bra.w .Lg_5e41a\n"
+	".Lg_5e2ea:\n"
+	"	move.l %d6,-(%sp)\n"
+	"	bra.b .Lg_5e2f0\n"
+	".Lg_5e2ee:\n"
+	"	move.l %d2,-(%sp)\n"
+	".Lg_5e2f0:\n"
+	"	pea (0xb4000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x8,%sp\n"
+	"	bra.w .Lg_5e422\n"
+	".Lg_5e302:\n"
+	"	cmp.l %d3,%d1\n"
+	"	bgt.b .Lg_5e2ea\n"
+	"	beq.w .Lg_5e466\n"
+	"	bra.w .Lg_5e41a\n"
+	".Lg_5e30e:\n"
+	"	bgt.b .Lg_5e2ea\n"
+	".Lg_5e310:\n"
+	"	move.l %d1,%d0\n"
+	"	bra.w .Lg_5e41a\n"
+	"	.section .text.float_multiply.5e320,\"ax\",@progbits\n"
+	"float_multiply:\n"
+	"	movem.l %d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
+	"	move.l #0x7f800000,%d3\n"
+	"	move.l #0x7fffff,%d5\n"
+	"	move.l %d0,%d7\n"
+	"	eor.l %d1,%d7\n"
+	"	move.l %d0,%d2\n"
+	"	move.l %d1,%d6\n"
+	"	bclr.l %d5,%d0\n"
+	"	bclr.l %d5,%d1\n"
+	"	tst.l %d0\n"
+	"	.byte 0x67 | beq.b 0x0005e302\n"
+	"	.reloc ., R_68K_PC8, .Lg_5e302-1\n"
+	"	.byte 0\n"
+	"	cmp.l %d3,%d0\n"
+	"	.byte 0x6c | bge.b 0x0005e2da\n"
+	"	.reloc ., R_68K_PC8, .Lg_5e2da-1\n"
+	"	.byte 0\n"
+	"	tst.l %d1\n"
+	"	.byte 0x67 | beq.b 0x0005e310\n"
+	"	.reloc ., R_68K_PC8, .Lg_5e310-1\n"
+	"	.byte 0\n"
+	"	cmp.l %d3,%d1\n"
+	"	.byte 0x6c | bge.b 0x0005e30e\n"
+	"	.reloc ., R_68K_PC8, .Lg_5e30e-1\n"
+	"	.byte 0\n"
+	"	move.l %d1,%d6\n"
+	"	move.l %d0,%d2\n"
+	"	swap %d2\n"
+	"	swap %d6\n"
+	"	lsr.w #0x3,%d2\n"
+	"	lsr.w #0x3,%d6\n"
+	"	andi.w #-0x10,%d2\n"
+	"	andi.w #-0x10,%d6\n"
+	"	tst.w %d2\n"
+	"	beq.w .Lg_5e2b2\n"
+	".Lg_5e366:\n"
+	"	addi.w #0x3800,%d2\n"
+	"	tst.w %d6\n"
+	"	beq.w .Lg_5e2c6\n"
+	".Lg_5e370:\n"
+	"	addi.w #0x3800,%d6\n"
+	"	add.w %d2,%d6\n"
+	"	subi.w #0x3ff0,%d6\n"
+	"	and.l %d5,%d0\n"
+	"	and.l %d5,%d1\n"
+	"	move.l #0x800000,%d5\n"
+	"	or.l %d5,%d0\n"
+	"	or.l %d5,%d1\n"
+	"	move.w %d0,%d2\n"
+	"	mulu.w %d1,%d2\n"
+	"	swap %d1\n"
+	"	move.w %d1,%d3\n"
+	"	mulu.w %d0,%d3\n"
+	"	swap %d0\n"
+	"	move.w %d0,%d4\n"
+	"	mulu.w %d1,%d0\n"
+	"	swap %d1\n"
+	"	mulu.w %d4,%d1\n"
+	"	add.l %d3,%d1\n"
+	"	move.l %d1,%d3\n"
+	"	swap %d1\n"
+	"	clr.w %d1\n"
+	"	clr.w %d3\n"
+	"	swap %d3\n"
+	"	add.l %d1,%d2\n"
+	"	addx.l %d3,%d0\n"
+	"	tst.w %d0\n"
+	"	bmi.b .Lg_5e3b6\n"
+	"	add.l %d2,%d2\n"
+	"	addx.l %d0,%d0\n"
+	"	bra.b .Lg_5e3ba\n"
+	".Lg_5e3b6:\n"
+	"	addi.w #0x10,%d6\n"
+	".Lg_5e3ba:\n"
+	"	lsl.l #0x8,%d0\n"
+	"	rol.l #0x8,%d2\n"
+	"	move.b %d2,%d0\n"
+	"	clr.b %d2\n"
+	"	cmpi.w #0x3810,%d6\n"
+	"	blt.w .Lg_5e438\n"
+	"	cmpi.l #-0x80000000,%d2\n"
+	"	bcs.b .Lg_5e3ea\n"
+	"	bhi.b .Lg_5e3da\n"
+	"	btst.l #0x0,%d0\n"
+	"	beq.b .Lg_5e3ea\n"
+	".Lg_5e3da:\n"
+	"	addq.l #0x1,%d0\n"
+	"	cmpi.l #0x1000000,%d0\n"
+	"	blt.b .Lg_5e3ea\n"
+	"	move.l %d5,%d0\n"
+	"	addi.w #0x10,%d6\n"
+	".Lg_5e3ea:\n"
+	"	cmpi.w #0x47e0,%d6\n"
+	"	bgt.w .Lg_5e456\n"
+	"	subi.w #0x3800,%d6\n"
+	"	lsl.w #0x3,%d6\n"
+	"	swap %d6\n"
+	"	clr.w %d6\n"
+	"	tst.l %d2\n"
+	"	beq.b .Lg_5e412\n"
+	"	ori.w #0x200,(float_status).l\n"
+	"	btst.b #0x1,(float_control).l\n"
+	"	bne.b .Lg_5e428\n"
+	".Lg_5e412:\n"
+	"	add.l %d6,%d0\n"
+	"	subi.l #0x800000,%d0\n"
+	".Lg_5e41a:\n"
+	"	tst.l %d7\n"
+	"	bpl.b .Lg_5e422\n"
+	"	bset.l #0x1f,%d0\n"
+	".Lg_5e422:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%d6/%d7\n"
+	"	rts\n"
+	".Lg_5e428:\n"
+	"	pea (0xb0200).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5e422\n"
+	".Lg_5e438:\n"
+	"	neg.w %d6\n"
+	"	lsr.w #0x4,%d6\n"
+	"	addq.w #0x1,%d6\n"
+	"	move.l %d2,-(%sp)\n"
+	"	move.l %d0,-(%sp)\n"
+	"	move.l %d6,-(%sp)\n"
+	"	pea (0xb0800).l\n"
+	"	jsr (float_raise).l\n"
+	"	lea (0x10,%sp),%sp\n"
+	"	bra.b .Lg_5e41a\n"
+	".Lg_5e456:\n"
+	"	pea (0xb1000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5e41a\n"
+	".Lg_5e466:\n"
+	"	pea (0xb2000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_5e422\n"
+	"	.size float_multiply, .-float_multiply\n"
+);
+
 /* 0005e5e6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* *A0 *= D0:D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *x,
    D0:D1 double y.
    libc.md */
 
-__regcall void double_multiply_in_place(double *x __asm("a0"),double y __asm("d0"))
+__regcall void double_multiply_in_place(double *x /* a0 */,double y /* d0 */)
 
 {
   double dVar1;
@@ -55667,14 +72878,31 @@ __regcall void double_multiply_in_place(double *x __asm("a0"),double y __asm("d0
 }
 
 
+#endif
+__asm__(
+	"	.globl double_multiply_in_place\n"
+	"	.type double_multiply_in_place, @function\n"
+	"	.section .text.double_multiply_in_place.5e5e6,\"ax\",@progbits\n"
+	"double_multiply_in_place:\n"
+	"	move.l %a0,-(%sp)\n"
+	"	movem.l (%a0),%a0/%a1\n"
+	"	bsr.w double_multiply\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	movem.l %d0/%d1,(%a0)\n"
+	"	rts\n"
+	"	.size double_multiply_in_place, .-double_multiply_in_place\n"
+);
+
 /* 0005e5f8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* *A0 x *A1
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *a, A1
    double *b.  Out: D0:D1 double.
    libc.md */
 
-__regcall double double_multiply_pointers(double *a __asm("a0"),double *b __asm("a1")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double double_multiply_pointers(double *a /* a0 */,double *b /* a1 */)
 
 {
   int iVar1;
@@ -55896,7 +73124,7 @@ LAB_0005e77c:
     bVar14 = (byte)uVar19;
     if (bVar14 != 0) {
       float_status = float_status | 0x200;
-      if ((float_control._0_1_ & 2) != 0) {
+      if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
         dVar24 = (double)float_raise(0xc0200);
         return dVar24;
       }
@@ -55929,14 +73157,27 @@ LAB_0005e77c:
 }
 
 
+#endif
+__asm__(
+	"	.globl double_multiply_pointers\n"
+	"	.type double_multiply_pointers, @function\n"
+	"	.section .text.double_multiply_pointers.5e5f8,\"ax\",@progbits\n"
+	"double_multiply_pointers:\n"
+	"	move.l (%a0)+,%d0\n"
+	"	move.l (%a0)+,%d1\n"
+	"	.size double_multiply_pointers, .-double_multiply_pointers\n"
+);
+
 /* 0005e5fc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* D0:D1 x *A1
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
    double *b.  Out: D0:D1 double.
    libc.md */
 
-__regcall double double_multiply_pointer(double a __asm("d0"),double *b __asm("a1")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double double_multiply_pointer(double a /* d0 */,double *b /* a1 */)
 
 {
   int iVar1;
@@ -56152,7 +73393,7 @@ LAB_0005e77c:
     bVar15 = (byte)uVar18;
     if (bVar15 != 0) {
       float_status = float_status | 0x200;
-      if ((float_control._0_1_ & 2) != 0) {
+      if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
         dVar23 = (double)float_raise();
         return dVar23;
       }
@@ -56185,14 +73426,27 @@ LAB_0005e77c:
 }
 
 
+#endif
+__asm__(
+	"	.globl double_multiply_pointer\n"
+	"	.type double_multiply_pointer, @function\n"
+	"	.section .text.double_multiply_pointer.5e5fc,\"ax\",@progbits\n"
+	"double_multiply_pointer:\n"
+	"	movea.l (%a1)+,%a0\n"
+	"	movea.l (%a1)+,%a1\n"
+	"	.size double_multiply_pointer, .-double_multiply_pointer\n"
+);
+
 /* 0005e600 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* D0:D1 x A0:A1
    Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
    double a, A0:A1 double b.  Out: D0:D1 double.
    softfloat.md */
 
-__regcall double double_multiply(double a __asm("d0"),double b __asm("a0")) /* out D0:D1 double */
+/* out D0:D1 double */
+__regcall double double_multiply(double a /* d0 */,double b /* a0 */)
 
 {
   int iVar1;
@@ -56407,7 +73661,7 @@ LAB_0005e77c:
     bVar13 = (byte)uVar17;
     if (bVar13 != 0) {
       float_status = float_status | 0x200;
-      if ((float_control._0_1_ & 2) != 0) {
+      if ((__ghidra_piece(unsigned char, float_control, 0) & 2) != 0) {
         dVar23 = (double)float_raise();
         return dVar23;
       }
@@ -56440,6 +73694,417 @@ LAB_0005e77c:
 }
 
 
+#endif
+__asm__(
+	"	.globl double_multiply\n"
+	"	.type double_multiply, @function\n"
+	"	.section .text.double_multiply.5e476,\"ax\",@progbits\n"
+	".Lg_5e476:\n"
+	"	swap %d0\n"
+	"	lsr.l #0x5,%d0\n"
+	"	move.w %d3,%d5\n"
+	"	mulu.w %d0,%d5\n"
+	"	or.w %d5,%d7\n"
+	"	clr.w %d5\n"
+	"	swap %d5\n"
+	"	move.l %d3,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d0,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	move.w %d5,%d4\n"
+	"	clr.w %d5\n"
+	"	swap %d5\n"
+	"	move.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d0,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	swap %d4\n"
+	"	move.w %d5,%d4\n"
+	"	swap %d4\n"
+	"	clr.w %d5\n"
+	"	swap %d5\n"
+	"	move.w %d2,%d6\n"
+	"	mulu.w %d0,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	move.l %d5,%d0\n"
+	"	move.l %d4,%d1\n"
+	"	moveq #0x0,%d5\n"
+	"	btst.l #0x14,%d0\n"
+	"	bne.b .Lg_5e4c0\n"
+	"	add.w %d7,%d7\n"
+	"	addx.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	"	suba.w #0x1,%a1\n"
+	".Lg_5e4c0:\n"
+	"	move.w %d7,%d5\n"
+	"	lsr.w #0x8,%d5\n"
+	"	bra.w .Lg_5e77c\n"
+	".Lg_5e4c8:\n"
+	"	moveq #0x0,%d7\n"
+	"	move.l %d7,%d5\n"
+	"	swap %d0\n"
+	"	swap %d2\n"
+	"	lsr.l #0x5,%d0\n"
+	"	lsr.l #0x5,%d2\n"
+	"	mulu.w %d2,%d0\n"
+	"	swap %d0\n"
+	"	move.l %d0,%d1\n"
+	"	clr.w %d1\n"
+	"	lsl.l #0x5,%d1\n"
+	"	rol.l #0x5,%d0\n"
+	"	andi.l #0x1fffff,%d0\n"
+	"	btst.l #0x14,%d0\n"
+	"	bne.w .Lg_5e772\n"
+	"	add.l %d1,%d1\n"
+	"	addx.l %d0,%d0\n"
+	"	suba.w #0x1,%a1\n"
+	"	bra.w .Lg_5e772\n"
+	".Lg_5e4fa:\n"
+	"	tst.l %d3\n"
+	"	bne.b .Lg_5e51e\n"
+	"	move.l %d0,%d6\n"
+	"	or.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	andi.w #0x1f,%d6\n"
+	"	beq.b .Lg_5e4c8\n"
+	"	move.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	andi.w #0x1f,%d6\n"
+	"	bne.w .Lg_5e51e\n"
+	"	exg %d0,%d2\n"
+	"	exg %d1,%d3\n"
+	"	bra.w .Lg_5e476\n"
+	".Lg_5e51e:\n"
+	"	move.l %d0,%d6\n"
+	"	swap %d6\n"
+	"	andi.w #0x1f,%d6\n"
+	"	bne.w .Lg_5e676\n"
+	"	bra.w .Lg_5e476\n"
+	".Lg_5e52e:\n"
+	"	move.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	andi.w #0x1f,%d6\n"
+	"	bne.w .Lg_5e67c\n"
+	"	exg %d0,%d2\n"
+	"	exg %d1,%d3\n"
+	"	bra.w .Lg_5e476\n"
+	".Lg_5e542:\n"
+	"	movem.l %d1/%d0,-(%sp)\n"
+	"	move.w %d7,-(%sp)\n"
+	"	jsr (double_normalize).l\n"
+	"	move.w (%sp)+,%d7\n"
+	"	movem.l (%sp)+,%d0/%d1\n"
+	"	addq.w #0x1,%d7\n"
+	"	bra.w .Lg_5e648\n"
+	".Lg_5e55a:\n"
+	"	movem.l %d3/%d2,-(%sp)\n"
+	"	move.w %d6,-(%sp)\n"
+	"	jsr (double_normalize).l\n"
+	"	move.w (%sp)+,%d6\n"
+	"	movem.l (%sp)+,%d2/%d3\n"
+	"	addq.w #0x1,%d7\n"
+	"	bra.w .Lg_5e656\n"
+	".Lg_5e572:\n"
+	"	tst.l %d1\n"
+	"	bne.w .Lg_5e62c\n"
+	"	cmpi.l #0x7ff00000,%d2\n"
+	"	bgt.w .Lg_5e5d8\n"
+	"	blt.b .Lg_5e592\n"
+	"	tst.l %d3\n"
+	"	bne.w .Lg_5e5d8\n"
+	"	bra.w double_multiply_operand_error\n"
+	".Lg_5e58e:\n"
+	"	move.l %d2,%d0\n"
+	"	move.l %d3,%d1\n"
+	".Lg_5e592:\n"
+	"	tst.l %d7\n"
+	"	bpl.b .Lg_5e59a\n"
+	"	bset.l #0x1f,%d0\n"
+	".Lg_5e59a:\n"
+	"	bra.w .Lg_5e7d6\n"
+	".Lg_5e59e:\n"
+	"	bgt.b .Lg_5e5c0\n"
+	"	tst.l %d1\n"
+	"	bne.b .Lg_5e5c0\n"
+	"	cmpi.l #0x7ff00000,%d2\n"
+	"	bgt.b .Lg_5e5d8\n"
+	"	bne.b .Lg_5e5b4\n"
+	"	tst.l %d3\n"
+	"	bne.b .Lg_5e5d8\n"
+	"	bra.b .Lg_5e592\n"
+	".Lg_5e5b4:\n"
+	"	tst.l %d2\n"
+	"	bne.b .Lg_5e592\n"
+	"	tst.l %d3\n"
+	"	bne.b .Lg_5e592\n"
+	"	bra.w double_multiply_operand_error\n"
+	".Lg_5e5c0:\n"
+	"	move.l %d1,-(%sp)\n"
+	"	move.l %d4,-(%sp)\n"
+	".Lg_5e5c4:\n"
+	"	pea (0xc4000).l\n"
+	"	jsr (float_raise).l\n"
+	"	lea (0xc,%sp),%sp\n"
+	"	bra.w .Lg_5e7d6\n"
+	".Lg_5e5d8:\n"
+	"	move.l %d3,-(%sp)\n"
+	"	move.l %d5,-(%sp)\n"
+	"	bra.b .Lg_5e5c4\n"
+	".Lg_5e5de:\n"
+	"	tst.l %d3\n"
+	"	bne.w .Lg_5e63a\n"
+	"	bra.b .Lg_5e58e\n"
+	"	.section .text.double_multiply.5e600,\"ax\",@progbits\n"
+	"double_multiply:\n"
+	"	movem.l %d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
+	"	move.l %d0,%d2\n"
+	"	move.l %d1,%d3\n"
+	"	move.l %a0,%d0\n"
+	"	move.l %a1,%d1\n"
+	"	move.l %d0,%d7\n"
+	"	eor.l %d2,%d7\n"
+	"	move.l %d0,%d4\n"
+	"	move.l %d2,%d5\n"
+	"	bclr.l #0x1f,%d0\n"
+	"	bclr.l #0x1f,%d2\n"
+	"	tst.l %d0\n"
+	"	beq.w .Lg_5e572\n"
+	"	cmpi.l #0x7ff00000,%d0\n"
+	"	bge.w .Lg_5e59e\n"
+	".Lg_5e62c:\n"
+	"	tst.l %d2\n"
+	"	.byte 0x67 | beq.b 0x0005e5de\n"
+	"	.reloc ., R_68K_PC8, .Lg_5e5de-1\n"
+	"	.byte 0\n"
+	"	cmpi.l #0x7ff00000,%d2\n"
+	"	bge.w .Lg_5e58e\n"
+	".Lg_5e63a:\n"
+	"	swap %d0\n"
+	"	swap %d2\n"
+	"	move.w %d0,%d7\n"
+	"	lsr.w #0x4,%d7\n"
+	"	tst.w %d7\n"
+	"	beq.w .Lg_5e542\n"
+	".Lg_5e648:\n"
+	"	addi.w #0x3c00,%d7\n"
+	"	move.w %d2,%d6\n"
+	"	lsr.w #0x4,%d6\n"
+	"	tst.w %d6\n"
+	"	beq.w .Lg_5e55a\n"
+	".Lg_5e656:\n"
+	"	addi.w #0x3c00,%d6\n"
+	"	add.w %d6,%d7\n"
+	"	subi.w #0x3fff,%d7\n"
+	"	movea.l %d7,%a1\n"
+	"	moveq #0xf,%d6\n"
+	"	and.w %d6,%d0\n"
+	"	and.w %d6,%d2\n"
+	"	moveq #0x10,%d6\n"
+	"	or.w %d6,%d2\n"
+	"	or.w %d6,%d0\n"
+	"	moveq #0x0,%d7\n"
+	"	tst.l %d1\n"
+	"	beq.w .Lg_5e4fa\n"
+	".Lg_5e676:\n"
+	"	move.l %d3,%d5\n"
+	"	beq.w .Lg_5e52e\n"
+	".Lg_5e67c:\n"
+	"	mulu.w %d1,%d5\n"
+	"	or.w %d5,%d7\n"
+	"	clr.w %d5\n"
+	"	swap %d5\n"
+	"	move.l %d3,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d1,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	clr.w %d4\n"
+	"	move.l %d1,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d3,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	addx.w %d4,%d4\n"
+	"	or.w %d5,%d7\n"
+	"	move.w %d4,%d5\n"
+	"	swap %d5\n"
+	"	move.l %d3,%d6\n"
+	"	swap %d6\n"
+	"	swap %d1\n"
+	"	mulu.w %d1,%d6\n"
+	"	swap %d1\n"
+	"	add.l %d6,%d5\n"
+	"	move.l %d0,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d3,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	clr.w %d4\n"
+	"	addx.w %d4,%d4\n"
+	"	move.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d1,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	or.w %d5,%d7\n"
+	"	move.w %d4,%d5\n"
+	"	negx.w %d5\n"
+	"	neg.w %d5\n"
+	"	swap %d5\n"
+	"	move.w %d0,%d6\n"
+	"	mulu.w %d3,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	swap %d3\n"
+	"	move.l %d0,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d3,%d6\n"
+	"	swap %d3\n"
+	"	add.l %d6,%d5\n"
+	"	clr.w %d4\n"
+	"	addx.w %d4,%d4\n"
+	"	move.w %d2,%d6\n"
+	"	mulu.w %d1,%d6\n"
+	"	add.l %d6,%d5\n"
+	"	negx.w %d4\n"
+	"	neg.w %d4\n"
+	"	move.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	swap %d1\n"
+	"	mulu.w %d1,%d6\n"
+	"	swap %d1\n"
+	"	add.l %d6,%d5\n"
+	"	negx.w %d4\n"
+	"	neg.w %d4\n"
+	"	swap %d4\n"
+	"	swap %d5\n"
+	"	move.w %d5,%d4\n"
+	"	clr.w %d5\n"
+	"	move.l %d3,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d0,%d6\n"
+	"	add.l %d6,%d4\n"
+	"	move.l %d1,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d2,%d6\n"
+	"	add.l %d6,%d4\n"
+	"	move.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	swap %d0\n"
+	"	mulu.w %d0,%d6\n"
+	"	swap %d0\n"
+	"	add.l %d6,%d4\n"
+	"	addx.w %d5,%d5\n"
+	"	move.w %d5,%d6\n"
+	"	move.w %d4,%d5\n"
+	"	move.w %d6,%d4\n"
+	"	swap %d5\n"
+	"	swap %d4\n"
+	"	move.l %d0,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d2,%d6\n"
+	"	add.l %d6,%d4\n"
+	"	move.l %d2,%d6\n"
+	"	swap %d6\n"
+	"	mulu.w %d0,%d6\n"
+	"	add.l %d6,%d4\n"
+	"	move.w %d0,%d6\n"
+	"	mulu.w %d2,%d6\n"
+	"	swap %d6\n"
+	"	add.l %d6,%d4\n"
+	"	btst.l #0x19,%d4\n"
+	"	bne.b .Lg_5e760\n"
+	"	suba.w #0x1,%a1\n"
+	"	move.l %d4,%d0\n"
+	"	lsr.l #0x4,%d0\n"
+	"	andi.l #0xf,%d4\n"
+	"	ror.l #0x4,%d4\n"
+	"	move.l %d5,%d1\n"
+	"	lsr.l #0x4,%d1\n"
+	"	or.l %d4,%d1\n"
+	"	add.l %d5,%d5\n"
+	"	bra.b .Lg_5e772\n"
+	".Lg_5e760:\n"
+	"	move.l %d4,%d0\n"
+	"	lsr.l #0x5,%d0\n"
+	"	andi.l #0x1f,%d4\n"
+	"	ror.l #0x5,%d4\n"
+	"	move.l %d5,%d1\n"
+	"	lsr.l #0x5,%d1\n"
+	"	or.l %d4,%d1\n"
+	".Lg_5e772:\n"
+	"	lsl.w #0x3,%d5\n"
+	"	tst.w %d7\n"
+	"	beq.b .Lg_5e77c\n"
+	"	ori.b #0x1,%d5\n"
+	".Lg_5e77c:\n"
+	"	move.l %a1,%d3\n"
+	"	subi.w #0x3c00,%d3\n"
+	"	blt.w .Lg_5e7e0\n"
+	"	tst.b %d5\n"
+	"	beq.b .Lg_5e7bc\n"
+	"	ori.w #0x200,(float_status).l\n"
+	"	btst.b #0x1,(float_control).l\n"
+	"	bne.w .Lg_5e82c\n"
+	"	add.b %d5,%d5\n"
+	"	bcc.b .Lg_5e7bc\n"
+	"	bne.b .Lg_5e7aa\n"
+	"	btst.l #0x0,%d1\n"
+	"	beq.b .Lg_5e7bc\n"
+	".Lg_5e7aa:\n"
+	"	addq.l #0x1,%d1\n"
+	"	bcc.b .Lg_5e7b0\n"
+	"	addq.l #0x1,%d0\n"
+	".Lg_5e7b0:\n"
+	"	btst.l #0x15,%d0\n"
+	"	beq.b .Lg_5e7bc\n"
+	"	lsr.l #0x1,%d0\n"
+	"	addi.w #0x1,%d3\n"
+	".Lg_5e7bc:\n"
+	"	move.l %a1,%d6\n"
+	"	lsl.w #0x4,%d3\n"
+	"	cmpi.w #0x7fd0,%d3\n"
+	"	bhi.w .Lg_5e802\n"
+	"	swap %d3\n"
+	"	clr.w %d3\n"
+	"	add.l %d3,%d0\n"
+	"	tst.l %d6\n"
+	"	bpl.b .Lg_5e7d6\n"
+	"	bset.l #0x1f,%d0\n"
+	".Lg_5e7d6:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%d6/%d7\n"
+	"	movea.l %d0,%a0\n"
+	"	movea.l %d1,%a1\n"
+	"	rts\n"
+	".Lg_5e7e0:\n"
+	"	lsl.w #0x8,%d5\n"
+	"	swap %d5\n"
+	"	clr.w %d5\n"
+	"	move.l %d5,-(%sp)\n"
+	"	movem.l %d1/%d0,-(%sp)\n"
+	"	neg.w %d3\n"
+	"	move.l %d3,-(%sp)\n"
+	"	pea (0xc0800).l\n"
+	"	jsr (float_raise).l\n"
+	"	lea (0x14,%sp),%sp\n"
+	"	bra.b .Lg_5e810\n"
+	".Lg_5e802:\n"
+	"	pea (0xc1000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	".Lg_5e810:\n"
+	"	move.l %a1,%d6\n"
+	"	tst.l %d6\n"
+	"	bpl.b .Lg_5e81a\n"
+	"	bset.l #0x1f,%d0\n"
+	".Lg_5e81a:\n"
+	"	bra.b .Lg_5e7d6\n"
+	"	.size double_multiply, .-double_multiply\n"
+	"	.section .text.double_multiply.5e82c,\"ax\",@progbits\n"
+	".Lg_5e82c:\n"
+	"	pea (0xc0200).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	.byte 0x60 | bra.b 0x0005e7d6\n"
+	"	.reloc ., R_68K_PC8, .Lg_5e7d6-1\n"
+	"	.byte 0\n"
+);
+
 /* 0005e81c */
 
 /* exception code 0xc2000
@@ -56454,6 +74119,7 @@ void double_multiply_operand_error(void)
 
 
 /* 0005e83c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* shifts an unpacked mantissa on the caller's stack until bit 23 is set, adjusting its exponent
    Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
@@ -56483,7 +74149,47 @@ __naked undefined8 float_normalize(uint param_1)
 }
 
 
+#endif
+__asm__(
+	"	.globl float_normalize\n"
+	"	.type float_normalize, @function\n"
+	"	.section .text.float_normalize.5e83c,\"ax\",@progbits\n"
+	"float_normalize:\n"
+	"	link.w %a6,#0x0\n"
+	"	movem.l %d3/%d2/%d1/%d0,-(%sp)\n"
+	"	moveq #0x0,%d2\n"
+	"	move.l (0xa,%a6),%d0\n"
+	"	beq.b .Lg_5e872\n"
+	"	moveq #0x17,%d3\n"
+	"	move.l %d0,%d1\n"
+	"	swap %d1\n"
+	"	tst.b %d1\n"
+	"	bne.b .Lg_5e862\n"
+	"	moveq #0xf,%d3\n"
+	"	move.w %d0,%d1\n"
+	"	clr.b %d1\n"
+	"	tst.w %d1\n"
+	"	bne.b .Lg_5e862\n"
+	"	moveq #0x7,%d3\n"
+	".Lg_5e862:\n"
+	"	btst.l %d3,%d0\n"
+	"	dbne %d3,.Lg_5e862\n"
+	"	moveq #0x17,%d1\n"
+	"	sub.w %d3,%d1\n"
+	"	lsl.l %d1,%d0\n"
+	"	moveq #0x1,%d2\n"
+	"	sub.w %d1,%d2\n"
+	".Lg_5e872:\n"
+	"	move.l %d0,(0xa,%a6)\n"
+	"	move.w %d2,(0x8,%a6)\n"
+	"	movem.l (%sp)+,%d0/%d1/%d2/%d3\n"
+	"	unlk %a6\n"
+	"	rts\n"
+	"	.size float_normalize, .-float_normalize\n"
+);
+
 /* 0005e882 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the same over 64 bits
    Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
@@ -56532,6 +74238,99 @@ __naked undefined8 double_normalize(undefined2 param_1,uint param_2)
 }
 
 
+#endif
+__asm__(
+	"	.globl double_normalize\n"
+	"	.type double_normalize, @function\n"
+	"	.section .text.double_normalize.5e882,\"ax\",@progbits\n"
+	"double_normalize:\n"
+	"	link.w %a6,#0x0\n"
+	"	movem.l %d5/%d4/%d3/%d2/%d1/%d0,-(%sp)\n"
+	"	move.w (0x8,%a6),%d5\n"
+	"	movem.l (0xa,%a6),%d0/%d1\n"
+	"	tst.l %d0\n"
+	"	beq.b .Lg_5e8e2\n"
+	"	swap %d0\n"
+	"	move.l %d0,%d2\n"
+	"	moveq #0x13,%d3\n"
+	"	swap %d2\n"
+	"	tst.b %d2\n"
+	"	bne.b .Lg_5e8b0\n"
+	"	moveq #0xf,%d3\n"
+	"	move.w %d0,%d2\n"
+	"	clr.b %d2\n"
+	"	tst.w %d2\n"
+	"	bne.b .Lg_5e8b0\n"
+	"	moveq #0x7,%d3\n"
+	".Lg_5e8b0:\n"
+	"	btst.l %d3,%d0\n"
+	"	dbne %d3,.Lg_5e8b0\n"
+	"	moveq #0x14,%d2\n"
+	"	sub.w %d3,%d2\n"
+	"	lsl.l %d2,%d0\n"
+	"	rol.l %d2,%d1\n"
+	"	move.l %d1,%d4\n"
+	"	moveq #-0x1,%d3\n"
+	"	lsl.l %d2,%d3\n"
+	"	and.l %d3,%d1\n"
+	"	not.l %d3\n"
+	"	and.l %d3,%d4\n"
+	"	or.l %d4,%d0\n"
+	"	sub.w %d2,%d5\n"
+	"	swap %d0\n"
+	"	movem.l %d0/%d1,(0xa,%a6)\n"
+	"	move.w %d5,(0x8,%a6)\n"
+	"	movem.l (%sp)+,%d0/%d1/%d2/%d3/%d4/%d5\n"
+	"	unlk %a6\n"
+	"	rts\n"
+	".Lg_5e8e2:\n"
+	"	move.l %d1,%d2\n"
+	"	beq.b .Lg_5e928\n"
+	"	moveq #0x1f,%d3\n"
+	"	swap %d2\n"
+	"	tst.w %d2\n"
+	"	bne.b .Lg_5e8f2\n"
+	"	swap %d2\n"
+	"	moveq #0xf,%d3\n"
+	".Lg_5e8f2:\n"
+	"	clr.b %d2\n"
+	"	tst.w %d2\n"
+	"	bne.b .Lg_5e8fa\n"
+	"	subq.w #0x8,%d3\n"
+	".Lg_5e8fa:\n"
+	"	btst.l %d3,%d1\n"
+	"	dbne %d3,.Lg_5e8fa\n"
+	"	moveq #0x34,%d2\n"
+	"	sub.w %d3,%d2\n"
+	"	sub.w %d2,%d5\n"
+	"	moveq #0x14,%d2\n"
+	"	sub.w %d3,%d2\n"
+	"	bmi.b .Lg_5e914\n"
+	"	lsl.l %d2,%d1\n"
+	"	move.l %d1,%d0\n"
+	"	moveq #0x0,%d1\n"
+	"	bra.b .Lg_5e928\n"
+	".Lg_5e914:\n"
+	"	neg.w %d2\n"
+	"	move.l %d1,%d4\n"
+	"	lsr.l %d2,%d1\n"
+	"	moveq #-0x1,%d3\n"
+	"	lsl.w %d2,%d3\n"
+	"	not.l %d3\n"
+	"	and.l %d3,%d4\n"
+	"	ror.l %d2,%d4\n"
+	"	move.l %d1,%d0\n"
+	"	move.l %d4,%d1\n"
+	".Lg_5e928:\n"
+	"	swap %d0\n"
+	"	move.w %d5,(0x8,%a6)\n"
+	"	movem.l %d0/%d1,(0xa,%a6)\n"
+	"	movem.l (%sp)+,%d0/%d1/%d2/%d3/%d4/%d5\n"
+	"	unlk %a6\n"
+	"	rts\n"
+	"	.size double_normalize, .-double_normalize\n"
+);
+
 /* 0005e93c */
 
 /* WARNING: Type propagation algorithm not settling */
@@ -56559,14 +74358,14 @@ void float_raise(uint param_1,uint param_2,uint param_3,uint param_4,uint param_
             if ((((param_1 & 0x200) != 0) || ((param_1 & 0x80) == 0)) ||
                (float_status = float_status | 0x280, ((byte)float_control & 0x80) != 0))
             goto LAB_0005ec8c;
-            bVar1 = float_control._0_1_ & 2;
+            bVar1 = __ghidra_piece(unsigned char, float_control, 0) & 2;
           }
           else {
             float_status = float_status | 0x400;
             if ((uVar6 & 0x80) != 0) {
               errno = 0x22;
             }
-            bVar1 = float_control._0_1_ & 4;
+            bVar1 = __ghidra_piece(unsigned char, float_control, 0) & 4;
           }
           goto joined_r0x0005ebd0;
         }
@@ -56625,24 +74424,24 @@ LAB_0005eafe:
           }
         }
         float_status = float_status | 0xa00;
-        bVar1 = float_control._0_1_ & 8;
+        bVar1 = __ghidra_piece(unsigned char, float_control, 0) & 8;
       }
       else {
         float_status = float_status | 0x1200;
         if ((uVar6 & 0x80) != 0) {
           errno = 0x22;
         }
-        bVar1 = float_control._0_1_ & 0x10;
+        bVar1 = __ghidra_piece(unsigned char, float_control, 0) & 0x10;
       }
       if (bVar1 != 0) goto LAB_0005ec8c;
-      bVar1 = float_control._0_1_ & 2;
+      bVar1 = __ghidra_piece(unsigned char, float_control, 0) & 2;
     }
     else {
       float_status = float_status | 0x2000;
       if ((uVar6 & 0x80) != 0) {
         errno = 0x21;
       }
-      bVar1 = float_control._0_1_ & 0x20;
+      bVar1 = __ghidra_piece(unsigned char, float_control, 0) & 0x20;
     }
   }
   else {
@@ -56656,7 +74455,7 @@ LAB_0005eafe:
       return;
     }
     float_status = float_status | 0x2000;
-    bVar1 = float_control._0_1_ & 0x20;
+    bVar1 = __ghidra_piece(unsigned char, float_control, 0) & 0x20;
   }
 joined_r0x0005ebd0:
   if (bVar1 == 0) {
@@ -56683,17 +74482,7 @@ int abs(int j)
 
 
 /* 0005ecda */
-
-void call_atexit_functions(void)
-
-{
-  while (0 < (short)atexit_count) {
-    atexit_count = atexit_count - 1;
-    (**(code **)(&atexit_functions + (short)atexit_count * 4))();
-  }
-  return;
-}
-
+/* a thunk to call_atexit_functions, whose name the decompiler gives it */
 
 /* 0005ecf0 */
 
@@ -57194,8 +74983,8 @@ void double_to_digits_multiply(uint *param_1)
   local_14 = (uint)CONCAT12(uVar5 <= uVar6 && uVar6 - uVar5 != 0,local_10);
   local_c = (undefined2)(uVar8 >> 0x10);
   uVar5 = CONCAT22((short)uVar5,local_c);
-  local_8._0_2_ = (undefined2)(uVar4 >> 0x10);
-  uVar6 = CONCAT22((short)uVar8,local_8._0_2_);
+  __ghidra_piece(unsigned short, local_8, 0) = (undefined2)(uVar4 >> 0x10);
+  uVar6 = CONCAT22((short)uVar8,__ghidra_piece(unsigned short, local_8, 0));
   local_8 = uVar4 * 0x10000;
   iVar9 = local_20 * uVar11;
   uVar4 = local_20 * uVar3;
@@ -58358,8 +76147,8 @@ double fabs(double x)
 {
   double dVar1;
   
-  if ((0x7fefffff < (x._0_4_ & 0x7fffffff)) &&
-     ((0x7ff00000 < (x._0_4_ & 0x7fffffff) || (x._4_4_ != 0)))) {
+  if ((0x7fefffff < (__ghidra_piece(unsigned int, x, 0) & 0x7fffffff)) &&
+     ((0x7ff00000 < (__ghidra_piece(unsigned int, x, 0) & 0x7fffffff) || (__ghidra_piece(unsigned int, x, 4) != 0)))) {
     dVar1 = (double)float_raise(0xd04000,x);
     return dVar1;
   }
@@ -58382,12 +76171,12 @@ double frexp(double value,int *exp)
   double dVar5;
   short sVar6;
   
-  uVar2 = (value._0_4_ & 0x7fffffff) >> 0x10;
-  uVar1 = value._0_4_ << 0x10 | uVar2;
-  uVar3 = (ushort)((value._0_4_ & 0x7fffffff) >> 0x10);
-  iVar4 = value._4_4_;
+  uVar2 = (__ghidra_piece(unsigned int, value, 0) & 0x7fffffff) >> 0x10;
+  uVar1 = __ghidra_piece(unsigned int, value, 0) << 0x10 | uVar2;
+  uVar3 = (ushort)((__ghidra_piece(unsigned int, value, 0) & 0x7fffffff) >> 0x10);
+  iVar4 = __ghidra_piece(unsigned int, value, 4);
   if (uVar3 < 0x10) {
-    if ((uVar1 == 0) && (value._4_4_ == 0)) {
+    if ((uVar1 == 0) && (__ghidra_piece(unsigned int, value, 4) == 0)) {
       *exp = 0;
       uVar2 = 0;
       goto LAB_000609ca;
@@ -58400,7 +76189,7 @@ double frexp(double value,int *exp)
   else {
     if (0x7fef < uVar3) {
       *exp = 0;
-      if (((uVar2 << 0x10 | value._0_4_ & 0xffff) < 0x7ff00001) && (value._4_4_ == 0)) {
+      if (((uVar2 << 0x10 | __ghidra_piece(unsigned int, value, 0) & 0xffff) < 0x7ff00001) && (__ghidra_piece(unsigned int, value, 4) == 0)) {
         dVar5 = (double)float_raise(0xd62000);
         return dVar5;
       }
@@ -58449,17 +76238,17 @@ double log(double x)
   undefined8 local_c;
   
   local_14 = x;
-  if (((x._0_4_ & 0x7ff00000) == 0x7ff00000) &&
-     (x._4_4_ != 0 || ((ulonglong)x & 0xfffff00000000) != 0)) {
+  if (((__ghidra_piece(unsigned int, x, 0) & 0x7ff00000) == 0x7ff00000) &&
+     (__ghidra_piece(unsigned int, x, 4) != 0 || ((ulonglong)x & 0xfffff00000000) != 0)) {
     dVar8 = (double)float_raise(0xda4000,x);
   }
   else {
-    bVar1 = x._4_4_ == 0;
+    bVar1 = __ghidra_piece(unsigned int, x, 4) == 0;
     bVar2 = ((ulonglong)x & 0x7fffffff00000000) == 0;
     if ((bVar1 && bVar2) || (((ulonglong)x & 0x8000000000000000) != 0)) {
       local_14 = (double)float_raise();
-      local_14._0_4_ = SUB84(local_14,4);
-      local_14._4_4_ = SUB84(local_14,0);
+      __ghidra_piece(unsigned int, local_14, 0) = SUB84(local_14,4);
+      __ghidra_piece(unsigned int, local_14, 4) = SUB84(local_14,0);
       if (bVar1 && bVar2) {
         local_14 = -INFINITY;
         errno = 0x22;
@@ -58467,29 +76256,29 @@ double log(double x)
       pdVar7 = (double *)&local_14;
     }
     else {
-      if (((x._0_4_ & 0x7fffffff) != 0x7ff00000) || (x._4_4_ != 0)) {
-        iVar5 = (x._0_4_ >> 0x14) - 0x3fe;
+      if (((__ghidra_piece(unsigned int, x, 0) & 0x7fffffff) != 0x7ff00000) || (__ghidra_piece(unsigned int, x, 4) != 0)) {
+        iVar5 = (__ghidra_piece(unsigned int, x, 0) >> 0x14) - 0x3fe;
         if ((((ulonglong)x & 0x7ff0000000000000) == 0) &&
-           (x._4_4_ != 0 || ((ulonglong)x & 0xfffff00000000) != 0)) {
+           (__ghidra_piece(unsigned int, x, 4) != 0 || ((ulonglong)x & 0xfffff00000000) != 0)) {
           if (((ulonglong)x & 0xfffff00000000) == 0) {
             uVar6 = 1;
-            for (uVar3 = x._4_4_; 0 < (int)uVar3; uVar3 = uVar3 * 2) {
+            for (uVar3 = __ghidra_piece(unsigned int, x, 4); 0 < (int)uVar3; uVar3 = uVar3 * 2) {
               uVar6 = uVar6 + 1;
             }
-            uVar3 = x._4_4_ << (uVar6 & 0x3f);
-            local_14._0_4_ = uVar3 >> 0xc | x._0_4_;
-            local_14._4_4_ = uVar3 << 0x14;
+            uVar3 = __ghidra_piece(unsigned int, x, 4) << (uVar6 & 0x3f);
+            __ghidra_piece(unsigned int, local_14, 0) = uVar3 >> 0xc | __ghidra_piece(unsigned int, x, 0);
+            __ghidra_piece(unsigned int, local_14, 4) = uVar3 << 0x14;
             uVar6 = uVar6 + 0x14;
           }
           else {
             uVar6 = 1;
-            for (iVar5 = x._0_4_ << 0xc; 0 < iVar5; iVar5 = iVar5 * 2) {
+            for (iVar5 = __ghidra_piece(unsigned int, x, 0) << 0xc; 0 < iVar5; iVar5 = iVar5 * 2) {
               uVar6 = uVar6 + 1;
             }
-            local_14._0_4_ = x._4_4_ >> (0x20 - uVar6 & 0x3f) | x._0_4_ << (uVar6 & 0x3f);
-            local_14._4_4_ = x._4_4_ << (uVar6 & 0x3f);
+            __ghidra_piece(unsigned int, local_14, 0) = __ghidra_piece(unsigned int, x, 4) >> (0x20 - uVar6 & 0x3f) | __ghidra_piece(unsigned int, x, 0) << (uVar6 & 0x3f);
+            __ghidra_piece(unsigned int, local_14, 4) = __ghidra_piece(unsigned int, x, 4) << (uVar6 & 0x3f);
           }
-          iVar5 = ((x._0_4_ >> 0x14) - 0x3fd) - uVar6;
+          iVar5 = ((__ghidra_piece(unsigned int, x, 0) >> 0x14) - 0x3fd) - uVar6;
         }
         local_14 = (double)((ulonglong)local_14 & 0xfffffffffffff);
         local_14 = (double)((ulonglong)local_14 | 0x3fe0000000000000);
@@ -58502,7 +76291,7 @@ double log(double x)
           local_14 = double_divide_reversed_pointer(dVar8,(double *)&local_c);
         }
         else {
-          local_c = (double)CONCAT44((int)((ulonglong)local_14 >> 0x20) + -0x100000,local_14._4_4_);
+          local_c = (double)CONCAT44((int)((ulonglong)local_14 >> 0x20) + -0x100000,__ghidra_piece(unsigned int, local_14, 4));
           double_add_pointer(-0.5,(double *)&local_14);
           dVar8 = double_add(-0.5,(double)CONCAT44(extraout_A0,extraout_A1));
           dVar9 = double_add_pointer(0.5,(double *)&local_c);
@@ -58551,7 +76340,7 @@ double modf(double value,double *iptr)
   double *extraout_A0_00;
   double dVar4;
   
-  if ((ushort)((value._0_4_ & 0x7fffffff) >> 0x10) < 0x7ff0) {
+  if ((ushort)((__ghidra_piece(unsigned int, value, 0) & 0x7fffffff) >> 0x10) < 0x7ff0) {
     uVar3 = ((ushort)((ulonglong)value >> 0x30) & 0x7ff0) >> 4;
     sVar1 = uVar3 - 0x3fe;
     if (sVar1 == 0 || uVar3 < 0x3fe) {
@@ -58570,13 +76359,13 @@ double modf(double value,double *iptr)
       if (sVar1 < 0x35) {
         uVar3 = -sVar1 + 0x35;
         if ((short)uVar3 < 0x20) {
-          dVar4 = (double)CONCAT44(value._0_4_,-1 << (uVar3 & 0x3f) & value._4_4_);
+          dVar4 = (double)CONCAT44(__ghidra_piece(unsigned int, value, 0),-1 << (uVar3 & 0x3f) & __ghidra_piece(unsigned int, value, 4));
         }
         else {
-          dVar4 = (double)((ulonglong)value._0_4_ << 0x20);
+          dVar4 = (double)((ulonglong)__ghidra_piece(unsigned int, value, 0) << 0x20);
           uVar3 = -sVar1 + 0x15;
           if (uVar3 != 0) {
-            dVar4 = (double)((ulonglong)(-1 << (uVar3 & 0x3f) & value._0_4_) << 0x20);
+            dVar4 = (double)((ulonglong)(-1 << (uVar3 & 0x3f) & __ghidra_piece(unsigned int, value, 0)) << 0x20);
           }
         }
       }
@@ -58587,9 +76376,9 @@ double modf(double value,double *iptr)
       }
     }
   }
-  else if (((value._0_4_ & 0x7fffffff) < 0x7ff00001) && (value._4_4_ == 0)) {
+  else if (((__ghidra_piece(unsigned int, value, 0) & 0x7fffffff) < 0x7ff00001) && (__ghidra_piece(unsigned int, value, 4) == 0)) {
     dVar4 = (double)float_raise(0xde2000);
-    *extraout_A0 = value._0_4_;
+    *extraout_A0 = __ghidra_piece(unsigned int, value, 0);
     extraout_A0[1] = 0;
   }
   else {
@@ -58723,13 +76512,13 @@ double pow(double x,double y)
   local_48 = y;
   iVar10 = 2;
   local_50 = INFINITY;
-  if (((x._0_4_ & 0x7ff00000) != 0x7ff00000) ||
-     (bVar2 = true, x._4_4_ == 0 && ((ulonglong)x & 0xfffff00000000) == 0)) {
+  if (((__ghidra_piece(unsigned int, x, 0) & 0x7ff00000) != 0x7ff00000) ||
+     (bVar2 = true, __ghidra_piece(unsigned int, x, 4) == 0 && ((ulonglong)x & 0xfffff00000000) == 0)) {
     bVar2 = false;
   }
   if ((bVar2) ||
-     (((y._0_4_ & 0x7ff00000) == 0x7ff00000 &&
-      (y._4_4_ != 0 || ((ulonglong)y & 0xfffff00000000) != 0)))) {
+     (((__ghidra_piece(unsigned int, y, 0) & 0x7ff00000) == 0x7ff00000 &&
+      (__ghidra_piece(unsigned int, y, 4) != 0 || ((ulonglong)y & 0xfffff00000000) != 0)))) {
     if (bVar2) {
       puVar11 = &local_60;
     }
@@ -58742,14 +76531,14 @@ double pow(double x,double y)
     local_48 = local_48;
   }
   else {
-    bVar2 = x._4_4_ != 0;
+    bVar2 = __ghidra_piece(unsigned int, x, 4) != 0;
     bVar3 = ((ulonglong)x & 0x7fffffff00000000) != 0;
     bVar4 = ((ulonglong)y & 0x7fffffff00000000) != 0;
-    if ((y._4_4_ != 0 || bVar4) && (bVar2 || bVar3)) {
-      if (((x._0_4_ & 0x7fffffff) != 0x7ff00000) || (bVar2 = false, x._4_4_ != 0)) {
+    if ((__ghidra_piece(unsigned int, y, 4) != 0 || bVar4) && (bVar2 || bVar3)) {
+      if (((__ghidra_piece(unsigned int, x, 0) & 0x7fffffff) != 0x7ff00000) || (bVar2 = false, __ghidra_piece(unsigned int, x, 4) != 0)) {
         bVar2 = true;
       }
-      if (((y._0_4_ & 0x7fffffff) != 0x7ff00000) || (bVar3 = false, y._4_4_ != 0)) {
+      if (((__ghidra_piece(unsigned int, y, 0) & 0x7fffffff) != 0x7ff00000) || (bVar3 = false, __ghidra_piece(unsigned int, y, 4) != 0)) {
         bVar3 = true;
       }
       if (bVar3 && bVar2) {
@@ -58771,7 +76560,7 @@ double pow(double x,double y)
             goto LAB_00061224;
           }
           iVar10 = 3;
-          local_50._0_4_ = 0x3ff00000;
+          __ghidra_piece(unsigned int, local_50, 0) = 0x3ff00000;
           goto LAB_0006122a;
         }
         uVar5 = (ulonglong)y & 0x8000000000000000;
@@ -58815,14 +76604,14 @@ LAB_000610fa:
       }
       else {
 LAB_00061224:
-        local_50._0_4_ = 0;
+        __ghidra_piece(unsigned int, local_50, 0) = 0;
 LAB_0006122a:
-        local_50 = (double)((ulonglong)local_50._0_4_ << 0x20);
+        local_50 = (double)((ulonglong)__ghidra_piece(unsigned int, local_50, 0) << 0x20);
         local_48 = local_48;
       }
     }
     else if ((bVar2 || bVar3) ||
-            ((y._4_4_ != 0 || bVar4 && (((ulonglong)y & 0x8000000000000000) == 0)))) {
+            ((__ghidra_piece(unsigned int, y, 4) != 0 || bVar4 && (((ulonglong)y & 0x8000000000000000) == 0)))) {
       if (bVar2 || bVar3) {
         uVar16 = 0x3ff00000;
       }
@@ -58835,7 +76624,7 @@ LAB_0006122a:
       iVar10 = 3;
       pdVar12 = (double *)&DAT_00060d88;
 LAB_000611e2:
-      local_50 = (double)CONCAT44(*(undefined4 *)pdVar12,local_50._4_4_);
+      local_50 = (double)CONCAT44(*(undefined4 *)pdVar12,__ghidra_piece(unsigned int, local_50, 4));
       local_50 = *pdVar12;
     }
   }
@@ -58881,9 +76670,9 @@ LAB_000611e2:
   uVar15 = SUB84(dVar13,0);
   dVar13 = double_add_pointers(&dStack_58,(double *)(&UNK_0006184c + iVar10 * 8));
   dVar13 = double_divide_reversed(dVar13,(double)CONCAT44(uVar14,uVar15));
-  local_50._0_4_ = (uint)((ulonglong)dVar13 >> 0x20);
-  local_50._4_4_ = SUB84(dVar13,0);
-  local_50 = (double)CONCAT44(local_50._0_4_ + 0x100000,local_50._4_4_);
+  __ghidra_piece(unsigned int, local_50, 0) = (uint)((ulonglong)dVar13 >> 0x20);
+  __ghidra_piece(unsigned int, local_50, 4) = SUB84(dVar13,0);
+  local_50 = (double)CONCAT44(__ghidra_piece(unsigned int, local_50, 0) + 0x100000,__ghidra_piece(unsigned int, local_50, 4));
   dStack_40 = double_multiply_pointers((double *)&local_50,(double *)&local_50);
   dVar13 = double_multiply_pointers(&dStack_40,(double *)&DAT_000617fc);
   dVar13 = double_add_pointer(dVar13,(double *)&DAT_000617f4);
@@ -58901,9 +76690,9 @@ LAB_000611e2:
   dVar13 = integer_to_double(local_64 * 0x10 - iVar10);
   uVar8 = float_control;
   uVar7 = float_status;
-  local_60._0_4_ = (int)((ulonglong)dVar13 >> 0x20);
-  local_60._4_4_ = SUB84(dVar13,0);
-  local_60 = (double)CONCAT44(local_60._0_4_ + -0x400000,local_60._4_4_);
+  __ghidra_piece(unsigned int, local_60, 0) = (int)((ulonglong)dVar13 >> 0x20);
+  __ghidra_piece(unsigned int, local_60, 4) = SUB84(dVar13,0);
+  local_60 = (double)CONCAT44(__ghidra_piece(unsigned int, local_60, 0) + -0x400000,__ghidra_piece(unsigned int, local_60, 4));
   float_status = 0;
   float_control = float_control & 0xc5ff;
   dStack_28 = (double)double_truncate_sixteenths(y);
@@ -58913,26 +76702,26 @@ LAB_000611e2:
   uVar15 = SUB84(dVar13,0);
   dVar13 = double_multiply_pointers(&dStack_20,(double *)&local_60);
   dVar13 = double_add(dVar13,(double)CONCAT44(uVar14,uVar15));
-  local_18._4_4_ = SUB84(dVar13,0);
-  local_18._0_4_ = (undefined4)((ulonglong)dVar13 >> 0x20);
-  uVar14 = local_18._0_4_;
-  uVar15 = local_18._4_4_;
+  __ghidra_piece(unsigned int, local_18, 4) = SUB84(dVar13,0);
+  __ghidra_piece(unsigned int, local_18, 0) = (undefined4)((ulonglong)dVar13 >> 0x20);
+  uVar14 = __ghidra_piece(unsigned int, local_18, 0);
+  uVar15 = __ghidra_piece(unsigned int, local_18, 4);
   local_18 = dVar13;
   dStack_10 = (double)double_truncate_sixteenths(uVar14,uVar15);
   dVar13 = double_subtract_reversed_pointers(&dStack_10,(double *)&local_18);
   local_48 = dVar13;
   dVar13 = double_multiply_pointers(&dStack_28,(double *)&local_60);
   dVar13 = double_add_pointer(dVar13,&dStack_10);
-  local_18._4_4_ = SUB84(dVar13,0);
-  local_18._0_4_ = (undefined4)((ulonglong)dVar13 >> 0x20);
-  uVar14 = local_18._0_4_;
-  uVar15 = local_18._4_4_;
+  __ghidra_piece(unsigned int, local_18, 4) = SUB84(dVar13,0);
+  __ghidra_piece(unsigned int, local_18, 0) = (undefined4)((ulonglong)dVar13 >> 0x20);
+  uVar14 = __ghidra_piece(unsigned int, local_18, 0);
+  uVar15 = __ghidra_piece(unsigned int, local_18, 4);
   local_18 = dVar13;
   dVar13 = (double)double_truncate_sixteenths(uVar14,uVar15);
   dStack_10 = dVar13;
   dVar13 = double_subtract_reversed_pointers(&dStack_10,(double *)&local_18);
   double_add_in_place((double *)&local_48,dVar13);
-  local_18 = (double)double_truncate_sixteenths(local_48._0_4_,local_48._4_4_);
+  local_18 = (double)double_truncate_sixteenths(__ghidra_piece(unsigned int, local_48, 0),__ghidra_piece(unsigned int, local_48, 4));
   double_subtract_in_place((double *)&local_48,local_18);
   dVar13 = double_add_pointers(&dStack_10,(double *)&local_18);
   dVar13 = (double)double_truncate_sixteenths((int)((ulonglong)dVar13 >> 0x20),SUB84(dVar13,0));
@@ -58960,8 +76749,8 @@ LAB_000611e2:
     local_50 = double_multiply_pointer(dVar13,(double *)&local_48);
     dVar13 = double_multiply_pointers((double *)&local_50,(double *)(&UNK_0006184c + iVar10 * 8));
     dVar13 = double_add_pointer(dVar13,(double *)(&UNK_0006184c + iVar10 * 8));
-    local_50._0_4_ = (uint)((ulonglong)dVar13 >> 0x20);
-    iVar10 = iVar9 + (local_50._0_4_ >> 0x14);
+    __ghidra_piece(unsigned int, local_50, 0) = (uint)((ulonglong)dVar13 >> 0x20);
+    iVar10 = iVar9 + (__ghidra_piece(unsigned int, local_50, 0) >> 0x14);
     uVar16 = (uint)float_status;
     float_control = uVar8;
     local_50 = dVar13;
@@ -58971,7 +76760,7 @@ LAB_000611e2:
       if ((uVar1 != 0) && (float_status = uVar7 | 0x200, (uVar8 & 0x200) != 0)) {
         local_50 = (double)float_raise(0xe00200);
       }
-      local_50 = (double)CONCAT44(iVar9 * 0x100000 + local_50._0_4_,local_50._4_4_);
+      local_50 = (double)CONCAT44(iVar9 * 0x100000 + __ghidra_piece(unsigned int, local_50, 0),__ghidra_piece(unsigned int, local_50, 4));
       goto LAB_000617c6;
     }
     if (((float_status & 0x800) == 0) && (0 < iVar10)) {
@@ -58981,11 +76770,11 @@ LAB_000611e2:
       uVar16 = uVar16 | 0xe00000;
       goto LAB_00061780;
     }
-    local_50._4_4_ = SUB84(dVar13,0);
+    __ghidra_piece(unsigned int, local_50, 4) = SUB84(dVar13,0);
     iVar10 = 1 - iVar10;
     float_status = uVar7;
-    uVar16 = local_50._0_4_;
-    uVar14 = local_50._4_4_;
+    uVar16 = __ghidra_piece(unsigned int, local_50, 0);
+    uVar14 = __ghidra_piece(unsigned int, local_50, 4);
   }
   else {
     local_48 = y;
@@ -59037,15 +76826,15 @@ double sqrt(double x)
   uint local_c;
   undefined4 local_8;
   
-  local_1c._0_4_ = x._0_4_;
-  local_1c._4_4_ = x._4_4_;
+  __ghidra_piece(unsigned int, local_1c, 0) = __ghidra_piece(unsigned int, x, 0);
+  __ghidra_piece(unsigned int, local_1c, 4) = __ghidra_piece(unsigned int, x, 4);
   local_1c = x;
-  if (((x._0_4_ & 0x7ff00000) == 0x7ff00000) &&
-     (x._4_4_ != 0 || ((ulonglong)x & 0xfffff00000000) != 0)) {
+  if (((__ghidra_piece(unsigned int, x, 0) & 0x7ff00000) == 0x7ff00000) &&
+     (__ghidra_piece(unsigned int, x, 4) != 0 || ((ulonglong)x & 0xfffff00000000) != 0)) {
     dVar6 = (double)float_raise(0xe64000,x);
   }
   else {
-    if ((x._4_4_ == 0 && ((ulonglong)x & 0x7fffffff00000000) == 0) || (x == INFINITY)) {
+    if ((__ghidra_piece(unsigned int, x, 4) == 0 && ((ulonglong)x & 0x7fffffff00000000) == 0) || (x == INFINITY)) {
       pdVar5 = (double *)&local_1c;
     }
     else {
@@ -59053,38 +76842,38 @@ double sqrt(double x)
         dVar6 = (double)float_raise();
         return dVar6;
       }
-      local_1c._0_4_ = x._0_4_ & 0x7fffffff;
-      uVar1 = local_1c._0_4_ >> 0x14;
+      __ghidra_piece(unsigned int, local_1c, 0) = __ghidra_piece(unsigned int, x, 0) & 0x7fffffff;
+      uVar1 = __ghidra_piece(unsigned int, local_1c, 0) >> 0x14;
       iVar2 = uVar1 - 0x3fe;
       if ((((ulonglong)x & 0x7ff0000000000000) == 0) &&
-         (x._4_4_ != 0 || ((ulonglong)x & 0xfffff00000000) != 0)) {
+         (__ghidra_piece(unsigned int, x, 4) != 0 || ((ulonglong)x & 0xfffff00000000) != 0)) {
         if (((ulonglong)x & 0xfffff00000000) == 0) {
           uVar4 = 1;
-          for (uVar3 = x._4_4_; 0 < (int)uVar3; uVar3 = uVar3 * 2) {
+          for (uVar3 = __ghidra_piece(unsigned int, x, 4); 0 < (int)uVar3; uVar3 = uVar3 * 2) {
             uVar4 = uVar4 + 1;
           }
-          local_1c._4_4_ = x._4_4_ << (uVar4 & 0x3f);
-          local_1c._0_4_ = local_1c._4_4_ >> 0xc | local_1c._0_4_;
-          local_1c._4_4_ = local_1c._4_4_ << 0x14;
+          __ghidra_piece(unsigned int, local_1c, 4) = __ghidra_piece(unsigned int, x, 4) << (uVar4 & 0x3f);
+          __ghidra_piece(unsigned int, local_1c, 0) = __ghidra_piece(unsigned int, local_1c, 4) >> 0xc | __ghidra_piece(unsigned int, local_1c, 0);
+          __ghidra_piece(unsigned int, local_1c, 4) = __ghidra_piece(unsigned int, local_1c, 4) << 0x14;
           uVar4 = uVar4 + 0x14;
         }
         else {
           uVar4 = 1;
-          for (iVar2 = x._0_4_ << 0xc; 0 < iVar2; iVar2 = iVar2 * 2) {
+          for (iVar2 = __ghidra_piece(unsigned int, x, 0) << 0xc; 0 < iVar2; iVar2 = iVar2 * 2) {
             uVar4 = uVar4 + 1;
           }
-          local_1c._0_4_ = x._4_4_ >> (0x20 - uVar4 & 0x3f) | local_1c._0_4_ << (uVar4 & 0x3f);
-          local_1c._4_4_ = x._4_4_ << (uVar4 & 0x3f);
+          __ghidra_piece(unsigned int, local_1c, 0) = __ghidra_piece(unsigned int, x, 4) >> (0x20 - uVar4 & 0x3f) | __ghidra_piece(unsigned int, local_1c, 0) << (uVar4 & 0x3f);
+          __ghidra_piece(unsigned int, local_1c, 4) = __ghidra_piece(unsigned int, x, 4) << (uVar4 & 0x3f);
         }
         iVar2 = (uVar1 - 0x3fd) - uVar4;
       }
-      local_1c._0_4_ = local_1c._0_4_ & 0xfffff | 0x3fe00000;
+      __ghidra_piece(unsigned int, local_1c, 0) = __ghidra_piece(unsigned int, local_1c, 0) & 0xfffff | 0x3fe00000;
       dVar6 = double_multiply_pointers((double *)&local_1c,(double *)&DAT_00061b9c);
       local_14 = double_add_pointer(dVar6,(double *)&DAT_00061b94);
       dVar6 = double_divide_reversed_pointers((double *)&local_14,(double *)&local_1c);
       double_add_in_place((double *)&local_14,dVar6);
-      local_8 = local_14._4_4_;
-      local_c = local_14._0_4_ + -0x200000;
+      local_8 = __ghidra_piece(unsigned int, local_14, 4);
+      local_c = __ghidra_piece(unsigned int, local_14, 0) + -0x200000;
       dVar6 = double_divide_reversed_pointers((double *)&local_14,(double *)&local_1c);
       local_14 = double_add_pointer(dVar6,(double *)&local_c);
       dVar6 = double_divide_reversed_pointers((double *)&local_14,(double *)&local_1c);
@@ -59092,9 +76881,9 @@ double sqrt(double x)
       uVar1 = iVar2 - 2;
       if ((uVar1 & 1) != 0) {
         uVar1 = iVar2 - 1;
-        local_c = local_14._0_4_;
+        local_c = __ghidra_piece(unsigned int, local_14, 0);
         local_8 = 0;
-        double_subtract_in_place((double *)&local_14,(double)((ulonglong)local_14._0_4_ << 0x20));
+        double_subtract_in_place((double *)&local_14,(double)((ulonglong)__ghidra_piece(unsigned int, local_14, 0) << 0x20));
         dVar6 = double_multiply_pointers((double *)&DAT_00061bac,(double *)&local_14);
         dVar7 = double_multiply_pointers((double *)&DAT_00061ba4,(double *)&local_14);
         dVar6 = double_add(dVar7,dVar6);
@@ -59103,7 +76892,7 @@ double sqrt(double x)
         dVar7 = double_multiply_pointers((double *)&DAT_00061ba4,(double *)&local_c);
         local_14 = double_add(dVar7,dVar6);
       }
-      local_14 = (double)CONCAT44(uVar1 * 0x80000 + local_14._0_4_,local_14._4_4_);
+      local_14 = (double)CONCAT44(uVar1 * 0x80000 + __ghidra_piece(unsigned int, local_14, 0),__ghidra_piece(unsigned int, local_14, 4));
       pdVar5 = (double *)&local_14;
     }
     dVar6 = *pdVar5;
@@ -59271,7 +77060,7 @@ void installer_print_exception
   installer_printf_polled(0x78a,uVar1,uVar2);
   installer_printf_polled(s___PC_____8x__SR_____04x_installer__00100793,param_2,param_1);
   if ((param_3 & 0xf000) != 0) {
-    installer_printf_polled(0x7ab,param_4._2_2_);
+    installer_printf_polled(0x7ab,__ghidra_piece(unsigned short, param_4, 2));
   }
   installer_printf_polled(0x7bc);
   if (DAT_0010afe6 != '\0') {
@@ -59519,18 +77308,18 @@ void installer_float_exception_report(uint param_1,undefined4 param_2)
   }
   if ((param_1 & 0x800000) == 0) {
     if ((0x13ffff < param_1) ||
-       (pcVar2 = s_______ftoi___ftod___dtof___dtoi__installer__00101137, param_1._0_2_ == 0)) {
-      param_1._0_2_ = 0x13;
+       (pcVar2 = s_______ftoi___ftod___dtof___dtoi__installer__00101137, __ghidra_piece(unsigned short, param_1, 0) == 0)) {
+      __ghidra_piece(unsigned short, param_1, 0) = 0x13;
       pcVar2 = s_______ftoi___ftod___dtof___dtoi__installer__00101137;
     }
   }
   else {
     pcVar2 = s_acos___acosf___asin___asinf___at_installer__001011e0;
-    if ((0xed < param_1._0_2_) || (param_1._0_2_ == 0)) {
-      param_1._0_2_ = 0xed;
+    if ((0xed < __ghidra_piece(unsigned short, param_1, 0)) || (__ghidra_piece(unsigned short, param_1, 0) == 0)) {
+      __ghidra_piece(unsigned short, param_1, 0) = 0xed;
     }
   }
-  pcVar2 = pcVar2 + (short)((param_1._0_2_ & 0x3f) << 3);
+  pcVar2 = pcVar2 + (short)((__ghidra_piece(unsigned short, param_1, 0) & 0x3f) << 3);
   sVar1 = 7;
   do {
     pcVar4 = pcVar3;
@@ -59653,482 +77442,27 @@ void installer_program_end_report(uint param_1)
 
 
 /* installer::001014b4 */
-
-void installer_kernel_dispatch_service(undefined2 param_1)
-
-{
-  int *piVar1;
-  int iVar2;
-  undefined2 *puVar3;
-  undefined1 *puVar4;
-  code *pcVar5;
-  byte bVar6;
-  undefined4 in_D0;
-  uint uVar7;
-  ushort uVar8;
-  undefined4 in_D1;
-  undefined4 uVar9;
-  undefined4 unaff_D2;
-  undefined4 unaff_D3;
-  undefined4 unaff_D4;
-  undefined4 unaff_D5;
-  undefined4 unaff_D6;
-  undefined4 unaff_D7;
-  undefined4 uVar10;
-  undefined4 in_A0;
-  undefined4 extraout_A0;
-  undefined4 extraout_A0_00;
-  undefined2 *puVar12;
-  undefined4 in_A1;
-  undefined4 extraout_A1;
-  undefined4 extraout_A1_00;
-  undefined4 unaff_A2;
-  undefined4 unaff_A3;
-  undefined4 unaff_A4;
-  undefined4 unaff_A5;
-  undefined4 unaff_A6;
-  undefined2 *puVar13;
-  undefined2 *puVar14;
-  undefined2 *in_USP;
-  undefined8 uVar15;
-  ushort in_stack_00000000;
-  undefined4 in_stack_00000002;
-  short sVar11;
-  
-  uVar15 = CONCAT44(in_D0,in_D1);
-  piVar1 = (int *)**(int **)PTR_PTR_installer__001014c8;
-  *(short *)(piVar1 + 9) = *(short *)(piVar1 + 9) + 1;
-  if ((ushort)unaff_D7 < 0x27) {
-    if (piVar1[0xc] != 0) {
-      (**(code **)(piVar1[0xc] + 4))();
-    }
-    sVar11 = (ushort)unaff_D7 << 2;
-    uVar10 = CONCAT22((short)((uint)unaff_D7 >> 0x10),sVar11);
-    uVar15 = (*(code *)(sVar11 + 0x101574))();
-    in_A0 = extraout_A0;
-    in_A1 = extraout_A1;
-  }
-  else {
-    uVar10 = CONCAT31((int3)((uint)unaff_D7 >> 8),0x55);
-  }
-  iVar2 = *piVar1;
-  if ((in_stack_00000000 & 0x700) != 0) {
-    *(short *)(piVar1 + 9) = *(short *)(piVar1 + 9) + -1;
-    return;
-  }
-  while (uVar9 = (undefined4)uVar15, piVar1[0x1b] != 0) {
-    uVar15 = installer_kernel_process_ticks();
-    in_A0 = extraout_A0_00;
-    in_A1 = extraout_A1_00;
-  }
-  bVar6 = *(byte *)((int)piVar1 + 0x8b);
-  *(byte *)((int)piVar1 + 0x8b) = bVar6 | 0x80;
-  if ((bVar6 & 0x80) == 0) {
-    uVar9 = CONCAT22((short)((ulonglong)uVar15 >> 0x10),*(undefined2 *)(iVar2 + 0x54));
-  }
-  if ((iVar2 != piVar1[1]) &&
-     (((*(byte *)(iVar2 + 0x11) & 0x80) == 0 || (*(char *)(iVar2 + 0x13) != '\0')))) {
-    *(int *)(iVar2 + 0x4e) = (int)((ulonglong)uVar15 >> 0x20);
-    *(undefined4 *)(iVar2 + 0x52) = uVar9;
-    *(undefined4 *)(iVar2 + 0x56) = unaff_D2;
-    *(undefined4 *)(iVar2 + 0x5a) = unaff_D3;
-    *(undefined4 *)(iVar2 + 0x5e) = unaff_D4;
-    *(undefined4 *)(iVar2 + 0x62) = unaff_D5;
-    *(undefined4 *)(iVar2 + 0x66) = unaff_D6;
-    *(undefined4 *)(iVar2 + 0x6a) = uVar10;
-    *(undefined4 *)(iVar2 + 0x6e) = in_A0;
-    *(undefined4 *)(iVar2 + 0x72) = in_A1;
-    *(undefined4 *)(iVar2 + 0x76) = unaff_A2;
-    *(undefined4 *)(iVar2 + 0x7a) = unaff_A3;
-    *(undefined4 *)(iVar2 + 0x7e) = unaff_A4;
-    *(undefined4 *)(iVar2 + 0x4a) = unaff_A5;
-    *(undefined4 *)(iVar2 + 0x46) = unaff_A6;
-    uVar7 = *(uint *)(iVar2 + 0x42) & 0xffff1000;
-    uVar8 = (ushort)uVar7;
-    *(uint *)(iVar2 + 0x42) = CONCAT22((short)(uVar7 >> 0x10),in_stack_00000000 | uVar8);
-    *(undefined4 *)(iVar2 + 0x3e) = in_stack_00000002;
-    puVar13 = (undefined2 *)&stack0x00000008;
-    *(undefined2 *)(iVar2 + 0x34) = param_1;
-    *(undefined2 **)(iVar2 + 0x3a) = in_USP;
-    puVar4 = (undefined1 *)piVar1[8];
-    if ((in_stack_00000000 & 0x1000) == 0 && uVar8 == 0) {
-      for (; (undefined2 *)puVar4 != puVar13; puVar13 = puVar13 + 1) {
-        in_USP = in_USP + -1;
-        *in_USP = *puVar13;
-      }
-      *(undefined2 **)(iVar2 + 0x36) = in_USP;
-    }
-    else {
-      *(undefined1 **)(iVar2 + 0x36) = &stack0x00000008;
-      puVar13 = (undefined2 *)puVar4;
-    }
-    iVar2 = piVar1[1];
-    pcVar5 = (code *)piVar1[0x2d];
-    if (pcVar5 != (code *)0x0) {
-      *(undefined4 *)((int)puVar13 + -4) = 0x102a34;
-      (*pcVar5)();
-    }
-    *piVar1 = iVar2;
-    puVar12 = *(undefined2 **)(iVar2 + 0x36);
-    puVar3 = *(undefined2 **)(iVar2 + 0x3a);
-    uVar8 = *(ushort *)(iVar2 + 0x44);
-    if ((uVar8 & 0x1000) == 0) {
-      for (; puVar3 != puVar12; puVar12 = puVar12 + 1) {
-        puVar14 = (undefined2 *)((int)puVar13 + -2);
-        puVar13 = (undefined2 *)((int)puVar13 + -2);
-        *puVar14 = *puVar12;
-      }
-    }
-    else {
-      uVar8 = uVar8 & 0xefff;
-      puVar13 = puVar12;
-    }
-    puVar13[-1] = *(undefined2 *)(iVar2 + 0x34);
-    *(undefined4 *)(puVar13 + -3) = *(undefined4 *)(iVar2 + 0x3e);
-    puVar13[-4] = uVar8;
-    *(undefined4 *)(puVar13 + -6) = *(undefined4 *)(iVar2 + 0x46);
-    *(undefined4 *)(puVar13 + -8) = *(undefined4 *)(iVar2 + 0x4a);
-    *(undefined4 *)(puVar13 + -10) = *(undefined4 *)(iVar2 + 0x66);
-    installer_kernel_switch_task();
-    return;
-  }
-  *(short *)(piVar1 + 9) = *(short *)(piVar1 + 9) + -1;
-  if (piVar1[0xc] != 0) {
-                    /* WARNING: Could not recover jumptable at 0x001016c2. Too many branches */
-                    /* WARNING: Treating indirect jump as call */
-    (**(code **)(piVar1[0xc] + 8))();
-    return;
-  }
-  return;
-}
-
+/* a thunk to installer_kernel_dispatch_service, whose name the decompiler gives it */
 
 /* installer::001014b8 */
-
-/* WARNING: Unknown calling convention */
-
-void installer_kernel_dispatch_io(char function,int device)
-
-{
-  int *piVar1;
-  int iVar2;
-  short *psVar3;
-  ushort uVar4;
-  undefined1 unaff_0000001e;
-  
-  uVar4 = (ushort)device;
-  piVar1 = *(int **)PTR_PTR_installer__001014c8;
-  if (CONCAT11(unaff_0000001e,function) < 6) {
-    iVar2 = *(int *)(*piVar1 + 0x30);
-    if (iVar2 != 0) {
-      psVar3 = (short *)(*piVar1 + 0x24);
-      *psVar3 = *psVar3 + 1;
-      uVar4 = (**(code **)(iVar2 + 4))();
-      *(short *)(*piVar1 + 0x24) = *(short *)(*piVar1 + 0x24) + -1;
-    }
-    if (uVar4 >> 8 <= *(ushort *)((int)piVar1 + 0x22)) {
-      return;
-    }
-  }
-  return;
-}
-
+/* a thunk to installer_kernel_dispatch_io, whose name the decompiler gives it */
 
 /* installer::001014bc */
-
-/* WARNING: Removing unreachable block (ram,0x001028ac) */
-
-void installer_kernel_init(void)
-
-{
-  undefined4 *puVar1;
-  int *piVar2;
-  undefined2 *puVar3;
-  code *pcVar4;
-  int *piVar5;
-  int iVar6;
-  short sVar7;
-  ushort uVar8;
-  int extraout_A0;
-  int extraout_A0_00;
-  undefined4 *extraout_A0_01;
-  undefined2 *puVar9;
-  int iVar10;
-  undefined4 *puVar11;
-  undefined4 *puVar12;
-  undefined4 *puVar13;
-  undefined2 *puVar14;
-  bool bVar15;
-  
-  puVar1 = *(undefined4 **)PTR_PTR_installer__001014c8;
-  piVar2 = (int *)*puVar1;
-  iVar6 = (uint)(ushort)(*(short *)(puVar1 + 6) + 1) * 0xb2 +
-          (uint)*(ushort *)(puVar1 + 7) * 0x18 +
-          (uint)*(ushort *)((int)puVar1 + 0x1a) * 0x22 + puVar1[10] + 0xda;
-  if ((uint)(iVar6 + (int)piVar2) <= (uint)puVar1[1]) {
-    puVar11 = (undefined4 *)((int)piVar2 + puVar1[10] + 200);
-    piVar2[8] = (int)puVar11;
-    *(undefined2 *)(piVar2 + 0x2e) = 0xdeaf;
-    piVar2[0xc] = 0;
-    piVar2[5] = 0;
-    piVar2[6] = 0;
-    sVar7 = *(short *)((int)puVar1 + 0x1a);
-    puVar12 = puVar11;
-    if (sVar7 != 0) {
-      piVar2[6] = (int)puVar11;
-      do {
-        puVar13 = puVar12;
-        *(undefined1 *)((int)puVar13 + 0x11) = 0xfe;
-        puVar13[6] = (int)puVar13 << 0x10 | (uint)puVar13 >> 0x10;
-        puVar12 = (undefined4 *)((int)puVar13 + 0x22);
-        puVar13[7] = puVar12;
-        sVar7 = sVar7 + -1;
-      } while (sVar7 != 0);
-      puVar13[7] = 0;
-    }
-    piVar2[7] = 0;
-    sVar7 = *(short *)(puVar1 + 7);
-    if (sVar7 != 0) {
-      piVar2[7] = (int)puVar12;
-      do {
-        puVar13 = puVar12;
-        puVar12 = puVar13 + 6;
-        *puVar13 = puVar12;
-        sVar7 = sVar7 + -1;
-      } while (sVar7 != 0);
-      *puVar13 = 0;
-    }
-    sVar7 = *(short *)(puVar1 + 6);
-    piVar2[4] = (int)puVar12;
-    do {
-      puVar13 = puVar12;
-      *(undefined1 *)((int)puVar13 + 0x13) = 0xff;
-      puVar13[10] = CONCAT22((short)((uint)puVar13 >> 0x10),~(ushort)puVar13);
-      puVar13[0xc] = (undefined4 *)((int)puVar13 + 0xb2);
-      bVar15 = sVar7 != 0;
-      sVar7 = sVar7 + -1;
-      puVar12 = (undefined4 *)((int)puVar13 + 0xb2);
-    } while (bVar15);
-    puVar13[0xc] = 0;
-    piVar2[3] = 0;
-    if (*(int **)((int)puVar1 + 0x46) != (int *)0x0) {
-      iVar10 = **(int **)((int)puVar1 + 0x46);
-      puVar11[-1] = 0x1027c8;
-      (**(code **)(iVar10 + 4))();
-    }
-    puVar11[-1] = 0x1027cc;
-    installer_kernel_region_init();
-    *(undefined4 *)((int)piVar2 + 0x7a) = 0x1f001f1e;
-    *(undefined4 *)((int)piVar2 + 0x7e) = 0x1f1e1f1f;
-    *(undefined4 *)((int)piVar2 + 0x82) = 0x1e1f1e1f;
-    piVar2[0x1b] = 0;
-    *(undefined2 *)(piVar2 + 0x1c) = 0;
-    *(undefined4 *)((int)piVar2 + 0x72) = 0;
-    *(undefined4 *)((int)piVar2 + 0x76) = DAT_installer__00101528;
-    puVar11[-1] = 0x1027fa;
-    installer_kernel_set_leap_year();
-    *(undefined1 *)((int)piVar2 + 0x8a) = 0;
-    *(undefined4 *)((int)piVar2 + 0x86) = *(undefined4 *)(extraout_A0 + 0x1e);
-    piVar2[2] = 0;
-    piVar5 = piVar2 + 0x23;
-    *piVar2 = (int)piVar5;
-    piVar2[1] = (int)piVar5;
-    *piVar5 = 0;
-    piVar2[0x24] = (int)(piVar2 + 1);
-    piVar2[0x2c] = 0x73797364;
-    piVar2[0x27] = 0;
-    *(undefined1 *)(piVar2 + 0x28) = 0;
-    piVar2[0x2a] = 0;
-    piVar2[0x2d] = *(int *)(extraout_A0 + 0x3e);
-    *(byte *)((int)piVar2 + 0x8b) = *(byte *)((int)piVar2 + 0x8b) | 0x80;
-    *(undefined2 *)(piVar2 + 9) = 1;
-    uVar8 = *(short *)(extraout_A0 + 0x22) * 0x24;
-    iVar10 = *(int *)(extraout_A0 + 0x24);
-    do {
-      puVar11[-1] = 0x102858;
-      (*(code *)(iVar10 + (short)uVar8))();
-      bVar15 = 0x23 < uVar8;
-      uVar8 = uVar8 - 0x24;
-    } while (bVar15);
-    iVar10 = 0;
-    if (*(int **)(extraout_A0_00 + 0x42) != (int *)0x0) {
-      iVar10 = **(int **)(extraout_A0_00 + 0x42);
-    }
-    piVar2[0xc] = iVar10;
-    puVar11[-1] = 0x10288a;
-    installer_kernel_create();
-    if ((char)iVar6 == '\0') {
-      puVar11[-1] = 0x102896;
-      installer_kernel_start();
-      puVar11[-1] = 0x1028a8;
-      installer_kernel_create();
-      puVar11[-1] = 0x1028ba;
-      installer_kernel_start();
-      *(ushort *)(extraout_A0_01 + 0x11) = *(ushort *)(extraout_A0_01 + 0x11) | 0x2000;
-      *(undefined1 *)(extraout_A0_01 + 4) = 0;
-      *extraout_A0_01 = 0;
-      iVar6 = piVar2[1];
-      pcVar4 = (code *)piVar2[0x2d];
-      if (pcVar4 != (code *)0x0) {
-        puVar11[-1] = 0x102a34;
-        (*pcVar4)();
-      }
-      *piVar2 = iVar6;
-      puVar9 = *(undefined2 **)(iVar6 + 0x36);
-      puVar3 = *(undefined2 **)(iVar6 + 0x3a);
-      uVar8 = *(ushort *)(iVar6 + 0x44);
-      if ((uVar8 & 0x1000) == 0) {
-        for (; puVar3 != puVar9; puVar9 = puVar9 + 1) {
-          puVar14 = (undefined2 *)((int)puVar11 + -2);
-          puVar11 = (undefined4 *)((int)puVar11 + -2);
-          *puVar14 = *puVar9;
-        }
-      }
-      else {
-        uVar8 = uVar8 & 0xefff;
-        puVar11 = (undefined4 *)puVar9;
-      }
-      *(undefined2 *)((int)puVar11 + -2) = *(undefined2 *)(iVar6 + 0x34);
-      *(undefined4 *)((int)puVar11 + -6) = *(undefined4 *)(iVar6 + 0x3e);
-      *(ushort *)((int)puVar11 + -8) = uVar8;
-      *(undefined4 *)((int)puVar11 + -0xc) = *(undefined4 *)(iVar6 + 0x46);
-      *(undefined4 *)((int)puVar11 + -0x10) = *(undefined4 *)(iVar6 + 0x4a);
-      *(undefined4 *)((int)puVar11 + -0x14) = *(undefined4 *)(iVar6 + 0x66);
-      installer_kernel_switch_task();
-      return;
-    }
-  }
-  do {
-    stop();
-  } while( true );
-}
-
+/* a thunk to installer_kernel_init, whose name the decompiler gives it */
 
 /* installer::001014c0 */
-
-void installer_kernel_return_from_interrupt(ushort param_1)
-
-{
-  int *piVar1;
-  int iVar2;
-  undefined2 *puVar3;
-  undefined1 *puVar4;
-  code *pcVar5;
-  undefined4 in_D0;
-  uint uVar6;
-  ushort uVar7;
-  undefined4 in_D1;
-  undefined4 unaff_D2;
-  undefined4 unaff_D3;
-  undefined4 unaff_D4;
-  undefined4 unaff_D5;
-  undefined4 unaff_D6;
-  undefined4 unaff_D7;
-  undefined4 in_A0;
-  undefined4 extraout_A0;
-  undefined2 *puVar8;
-  undefined4 in_A1;
-  undefined4 extraout_A1;
-  undefined4 unaff_A2;
-  undefined4 unaff_A3;
-  undefined4 unaff_A4;
-  undefined4 unaff_A5;
-  undefined4 unaff_A6;
-  undefined2 *puVar9;
-  undefined2 *puVar10;
-  undefined2 *in_USP;
-  undefined8 uVar11;
-  undefined4 in_stack_0000000a;
-  undefined2 in_stack_0000000e;
-  
-  uVar11 = CONCAT44(in_D0,in_D1);
-  if (((param_1 & 0x700) == 0) &&
-     (piVar1 = (int *)**(int **)PTR_PTR_installer__001014c8, *(short *)(piVar1 + 9) == 0)) {
-    *(short *)(piVar1 + 9) = *(short *)(piVar1 + 9) + 1;
-    iVar2 = *piVar1;
-    while (piVar1[0x1b] != 0) {
-      uVar11 = installer_kernel_process_ticks();
-      in_A0 = extraout_A0;
-      in_A1 = extraout_A1;
-    }
-    if ((iVar2 != piVar1[1]) && ((*(byte *)(iVar2 + 0x11) & 0x80) == 0)) {
-      *(undefined8 *)(iVar2 + 0x4e) = uVar11;
-      *(undefined4 *)(iVar2 + 0x56) = unaff_D2;
-      *(undefined4 *)(iVar2 + 0x5a) = unaff_D3;
-      *(undefined4 *)(iVar2 + 0x5e) = unaff_D4;
-      *(undefined4 *)(iVar2 + 0x62) = unaff_D5;
-      *(undefined4 *)(iVar2 + 0x66) = unaff_D6;
-      *(undefined4 *)(iVar2 + 0x6a) = unaff_D7;
-      *(undefined4 *)(iVar2 + 0x6e) = in_A0;
-      *(undefined4 *)(iVar2 + 0x72) = in_A1;
-      *(undefined4 *)(iVar2 + 0x76) = unaff_A2;
-      *(undefined4 *)(iVar2 + 0x7a) = unaff_A3;
-      *(undefined4 *)(iVar2 + 0x7e) = unaff_A4;
-      *(undefined4 *)(iVar2 + 0x4a) = unaff_A5;
-      *(undefined4 *)(iVar2 + 0x46) = unaff_A6;
-      uVar6 = *(uint *)(iVar2 + 0x42) & 0xffff1000;
-      uVar7 = (ushort)uVar6;
-      *(uint *)(iVar2 + 0x42) = CONCAT22((short)(uVar6 >> 0x10),param_1 | uVar7);
-      *(undefined4 *)(iVar2 + 0x3e) = in_stack_0000000a;
-      puVar9 = (undefined2 *)&stack0x00000010;
-      *(undefined2 *)(iVar2 + 0x34) = in_stack_0000000e;
-      *(undefined2 **)(iVar2 + 0x3a) = in_USP;
-      puVar4 = (undefined1 *)piVar1[8];
-      if ((param_1 & 0x1000) == 0 && uVar7 == 0) {
-        for (; (undefined2 *)puVar4 != puVar9; puVar9 = puVar9 + 1) {
-          in_USP = in_USP + -1;
-          *in_USP = *puVar9;
-        }
-        *(undefined2 **)(iVar2 + 0x36) = in_USP;
-      }
-      else {
-        *(undefined1 **)(iVar2 + 0x36) = &stack0x00000010;
-        puVar9 = (undefined2 *)puVar4;
-      }
-      iVar2 = piVar1[1];
-      pcVar5 = (code *)piVar1[0x2d];
-      if (pcVar5 != (code *)0x0) {
-        *(undefined4 *)((int)puVar9 + -4) = 0x102a34;
-        (*pcVar5)();
-      }
-      *piVar1 = iVar2;
-      puVar8 = *(undefined2 **)(iVar2 + 0x36);
-      puVar3 = *(undefined2 **)(iVar2 + 0x3a);
-      uVar7 = *(ushort *)(iVar2 + 0x44);
-      if ((uVar7 & 0x1000) == 0) {
-        for (; puVar3 != puVar8; puVar8 = puVar8 + 1) {
-          puVar10 = (undefined2 *)((int)puVar9 + -2);
-          puVar9 = (undefined2 *)((int)puVar9 + -2);
-          *puVar10 = *puVar8;
-        }
-      }
-      else {
-        uVar7 = uVar7 & 0xefff;
-        puVar9 = puVar8;
-      }
-      puVar9[-1] = *(undefined2 *)(iVar2 + 0x34);
-      *(undefined4 *)(puVar9 + -3) = *(undefined4 *)(iVar2 + 0x3e);
-      puVar9[-4] = uVar7;
-      *(undefined4 *)(puVar9 + -6) = *(undefined4 *)(iVar2 + 0x46);
-      *(undefined4 *)(puVar9 + -8) = *(undefined4 *)(iVar2 + 0x4a);
-      *(undefined4 *)(puVar9 + -10) = *(undefined4 *)(iVar2 + 0x66);
-      installer_kernel_switch_task();
-      return;
-    }
-    *(short *)(piVar1 + 9) = *(short *)(piVar1 + 9) + -1;
-  }
-  return;
-}
-
+/* a thunk to installer_kernel_return_from_interrupt, whose name the decompiler gives it */
 
 /* installer::0010152c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_dispatch_service, at 0x14b26 plus 0xeca06, byte for byte
    Not a C function (exception; documented): entered by the processor, not called.  In: D7 char
    service, D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__exception void installer_kernel_dispatch_service(undefined2 param_1) /* out D7 char error */
+/* out D7 char error */
+__exception void installer_kernel_dispatch_service(undefined2 param_1)
 
 {
   int *piVar1;
@@ -60277,14 +77611,90 @@ __exception void installer_kernel_dispatch_service(undefined2 param_1) /* out D7
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_dispatch_service\n"
+	"	.type installer_kernel_dispatch_service, @function\n"
+	"	.section .text.installer_kernel_dispatch_service.10152c,\"ax\",@progbits\n"
+	"installer_kernel_dispatch_service:\n"
+	"	movem.l %a6/%a5/%d6,-(%sp)\n"
+	"	movea.l (__ghidra_1014c8:w,%pc),%a5\n"
+	"	movea.l (%a5),%a5\n"
+	"	movea.l (%a5),%a6\n"
+	"	addq.w #0x1,(0x24,%a6)\n"
+	"	cmpi.w #0x26,%d7\n"
+	"	bhi.b .Lg_10156e\n"
+	"	move.l (0x30,%a6),%d6\n"
+	"	beq.b .Lg_101550\n"
+	"	movea.l %d6,%a5\n"
+	"	moveq #0x0,%d6\n"
+	"	jsr (0x4,%a5)\n"
+	".Lg_101550:\n"
+	"	lsl.w #0x2,%d7\n"
+	"	jsr (.Lg_101574,%pc,%d7.w*0x1)\n"
+	".Lg_101556:\n"
+	"	move.w (0xc,%sp),%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	movea.l (%a6),%a5\n"
+	"	beq.w installer_kernel_switch_task\n"
+	"	subq.w #0x1,(0x24,%a6)\n"
+	"	movem.l (%sp)+,%d6/%a5/%a6\n"
+	"	rte\n"
+	".Lg_10156e:\n"
+	"	move.b #0x55,%d7\n"
+	"	bra.b .Lg_101556\n"
+	".Lg_101574:\n"
+	"	bra.w installer_kernel_service_0\n"
+	"	bra.w installer_kernel_create\n"
+	"	bra.w installer_kernel_start\n"
+	"	bra.w installer_kernel_ident\n"
+	"	bra.w installer_kernel_delete\n"
+	"	bra.w installer_kernel_suspend\n"
+	"	bra.w installer_kernel_resume\n"
+	"	bra.w installer_kernel_priority\n"
+	"	bra.w installer_kernel_allocate_segment\n"
+	"	bra.w installer_kernel_free_segment\n"
+	"	bra.w installer_kernel_service_10\n"
+	"	bra.w installer_kernel_service_none\n"
+	"	bra.w installer_kernel_service_none\n"
+	"	bra.w installer_kernel_service_none\n"
+	"	bra.w installer_kernel_service_none\n"
+	"	bra.w installer_kernel_service_none\n"
+	"	bra.w installer_kernel_service_16\n"
+	"	bra.w installer_kernel_service_none\n"
+	"	bra.w installer_kernel_service_18\n"
+	"	bra.w installer_kernel_jam_x\n"
+	"	bra.w installer_kernel_create_x\n"
+	"	bra.w installer_kernel_service_21\n"
+	"	bra.w installer_kernel_delete_x\n"
+	"	bra.w installer_kernel_send_x\n"
+	"	bra.w installer_kernel_request_x\n"
+	"	bra.w installer_kernel_signal_v\n"
+	"	bra.w installer_kernel_wait_v\n"
+	"	bra.w installer_kernel_get_v\n"
+	"	bra.w installer_kernel_pause\n"
+	"	bra.w installer_kernel_service_29\n"
+	"	bra.w installer_kernel_service_30\n"
+	"	bra.w installer_kernel_service_31\n"
+	"	bra.w installer_kernel_mode\n"
+	"	bra.w installer_kernel_service_33\n"
+	"	bra.w installer_kernel_service_none\n"
+	"	bra.w installer_kernel_service_35\n"
+	"	bra.w installer_kernel_service_36\n"
+	"	bra.w installer_kernel_service_37\n"
+	"	bra.w installer_kernel_service_38\n"
+	"	.size installer_kernel_dispatch_service, .-installer_kernel_dispatch_service\n"
+);
+
 /* installer::00101610 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_dispatch_io, at 0x14c0a plus 0xeca06, byte for byte
    Not a C function (exception; documented): entered by the processor, not called.  In: D7 char
    function, D0 int device.
    psos.md */
 
-__exception void installer_kernel_dispatch_io(char function __asm("d7"),int device __asm("d0"))
+__exception void installer_kernel_dispatch_io(char function /* d7 */,int device /* d0 */)
 
 {
   int *piVar1;
@@ -60311,7 +77721,61 @@ __exception void installer_kernel_dispatch_io(char function __asm("d7"),int devi
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_dispatch_io\n"
+	"	.type installer_kernel_dispatch_io, @function\n"
+	"	.section .text.installer_kernel_dispatch_io.101610,\"ax\",@progbits\n"
+	"installer_kernel_dispatch_io:\n"
+	"	movem.l %a6/%a5/%d6,-(%sp)\n"
+	"	movea.l (__ghidra_1014c8:w,%pc),%a5\n"
+	"	movea.l (%a5),%a5\n"
+	"	movea.l (%a5),%a6\n"
+	"	cmpi.w #0x5,%d7\n"
+	"	bhi.b .Lg_101676\n"
+	"	move.l (0x30,%a6),%d6\n"
+	"	beq.b .Lg_10163a\n"
+	"	addq.w #0x1,(0x24,%a6)\n"
+	"	movea.l %d6,%a6\n"
+	"	moveq #0x1,%d6\n"
+	"	jsr (0x4,%a6)\n"
+	"	movea.l (%a5),%a6\n"
+	"	subq.w #0x1,(0x24,%a6)\n"
+	".Lg_10163a:\n"
+	"	move.w %d0,%d6\n"
+	"	lsr.w #0x8,%d6\n"
+	"	cmp.w (0x22,%a5),%d6\n"
+	"	bhi.b .Lg_101670\n"
+	"	lsl.w #0x1,%d6\n"
+	"	add.w %d6,%d7\n"
+	"	lsl.w #0x1,%d6\n"
+	"	add.w %d6,%d7\n"
+	"	lsl.w #0x1,%d7\n"
+	"	move.w %d7,%d6\n"
+	"	lsl.w #0x1,%d7\n"
+	"	add.w %d6,%d7\n"
+	"	movea.l (0x24,%a5),%a6\n"
+	"	pea (.Lg_10166a,%pc)\n"
+	"	nop\n"
+	"	pea (0x0,%a6,%d7.w*0x1)\n"
+	"	movem.l (0x8,%sp),%d6/%a5/%a6\n"
+	"	rts\n"
+	".Lg_10166a:\n"
+	"	.byte 0xde,0xfc,0x00,0x0c | adda.w #0xc,SP\n"
+	"	.byte 0x4e,0x73 | rte\n"
+	".Lg_101670:\n"
+	"	move.b #0x1,%d7\n"
+	"	bra.b .Lg_10167a\n"
+	".Lg_101676:\n"
+	"	move.b #0x33,%d7\n"
+	".Lg_10167a:\n"
+	"	movem.l (%sp)+,%d6/%a5/%a6\n"
+	"	rte\n"
+	"	.size installer_kernel_dispatch_io, .-installer_kernel_dispatch_io\n"
+);
+
 /* installer::00101680 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_switch_task, at 0x14c7a plus 0xeca06, byte for byte
    Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
@@ -60445,7 +77909,46 @@ __naked void installer_kernel_switch_task(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_switch_task\n"
+	"	.type installer_kernel_switch_task, @function\n"
+	"	.section .text.installer_kernel_switch_task.101680,\"ax\",@progbits\n"
+	"installer_kernel_switch_task:\n"
+	".Lg_101680:\n"
+	"	ori #0x700,%sr\n"
+	"	tst.l (0x6c,%a6)\n"
+	"	beq.b .Lg_101692\n"
+	"	andi #-0x701,%sr\n"
+	"	.byte 0x61 | bsr.b 0x001016cc\n"
+	"	.reloc ., R_68K_PC8, installer_kernel_process_ticks-1\n"
+	"	.byte 0\n"
+	"	bra.b .Lg_101680\n"
+	".Lg_101692:\n"
+	"	bset.b #0x7,(0x8b,%a6)\n"
+	"	bne.b .Lg_10169e\n"
+	"	move.w (0x54,%a5),%d1\n"
+	".Lg_10169e:\n"
+	"	cmpa.l (0x4,%a6),%a5\n"
+	"	beq.b .Lg_1016b6\n"
+	"	btst.b #0x7,(0x11,%a5)\n"
+	"	beq.w installer_kernel_return_from_interrupt+0x54\n"
+	"	tst.b (0x13,%a5)\n"
+	"	bne.w installer_kernel_return_from_interrupt+0x54\n"
+	".Lg_1016b6:\n"
+	"	subq.w #0x1,(0x24,%a6)\n"
+	"	move.l (0x30,%a6),%d6\n"
+	"	beq.b .Lg_1016c6\n"
+	"	movea.l %d6,%a5\n"
+	"	jmp (0x8,%a5)\n"
+	".Lg_1016c6:\n"
+	"	movem.l (%sp)+,%d6/%a5/%a6\n"
+	"	rte\n"
+	"	.size installer_kernel_switch_task, .-installer_kernel_switch_task\n"
+);
+
 /* installer::001016cc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_process_ticks, at 0x14cc6 plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -60513,7 +78016,94 @@ LAB_installer__0010175e:
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_process_ticks\n"
+	"	.type installer_kernel_process_ticks, @function\n"
+	"	.section .text.installer_kernel_process_ticks.1016cc,\"ax\",@progbits\n"
+	"installer_kernel_process_ticks:\n"
+	"	bsr.w installer_kernel_advance_date\n"
+	"	movem.l %a3/%a2,-(%sp)\n"
+	"	move.l (0x30,%a6),%d6\n"
+	"	beq.b .Lg_1016e2\n"
+	"	movea.l %d6,%a2\n"
+	"	moveq #0x2,%d6\n"
+	"	jsr (0x4,%a2)\n"
+	".Lg_1016e2:\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (0x8,%a6),%d6\n"
+	"	beq.b .Lg_10175e\n"
+	"	movea.l %d6,%a2\n"
+	"	move.l (0x4e,%a2),%d6\n"
+	"	bne.b .Lg_101744\n"
+	"	move.b (0x13,%a2),%d6\n"
+	"	andi.b #0x70,%d6\n"
+	"	beq.b .Lg_10172c\n"
+	"	clr.w (0x16,%a2)\n"
+	"	andi.b #0x60,%d6\n"
+	"	beq.b .Lg_101716\n"
+	"	move.l (%a2),%d6\n"
+	"	movea.l (0x4,%a2),%a3\n"
+	"	move.l %d6,(%a3)\n"
+	"	exg %d6,%a3\n"
+	"	move.l %d6,(0x4,%a3)\n"
+	".Lg_101716:\n"
+	"	andi #-0x701,%sr\n"
+	"	cmpa.l %a5,%a2\n"
+	"	bne.b .Lg_101722\n"
+	"	move.b #0x81,%d7\n"
+	".Lg_101722:\n"
+	"	move.b #0x81,(0x6d,%a2)\n"
+	"	ori #0x700,%sr\n"
+	".Lg_10172c:\n"
+	"	movea.l (0x8,%a2),%a3\n"
+	"	move.l %a3,(0x8,%a6)\n"
+	"	beq.b .Lg_10173a\n"
+	"	move.l %a6,(0xc,%a3)\n"
+	".Lg_10173a:\n"
+	"	andi #-0x701,%sr\n"
+	"	bsr.w installer_kernel_make_ready\n"
+	"	bra.b .Lg_1016e2\n"
+	".Lg_101744:\n"
+	"	sub.l (0x6c,%a6),%d6\n"
+	"	bcc.b .Lg_10175a\n"
+	"	clr.l (0x4e,%a2)\n"
+	"	neg.l %d6\n"
+	"	move.l %d6,(0x6c,%a6)\n"
+	"	andi #-0x701,%sr\n"
+	"	bra.b .Lg_1016e2\n"
+	".Lg_10175a:\n"
+	"	move.l %d6,(0x4e,%a2)\n"
+	".Lg_10175e:\n"
+	"	clr.l (0x6c,%a6)\n"
+	"	andi #-0x701,%sr\n"
+	"	move.b (0x11,%a5),%d6\n"
+	"	andi.b #0xc0,%d6\n"
+	"	cmpi.b #0x40,%d6\n"
+	"	bne.b .Lg_1017a2\n"
+	"	subq.w #0x1,(0x1a,%a5)\n"
+	"	bcc.b .Lg_1017a2\n"
+	"	clr.w (0x1a,%a5)\n"
+	"	tst.b (0x13,%a5)\n"
+	"	bne.b .Lg_1017a2\n"
+	"	movea.l (%a5),%a2\n"
+	"	move.b (0x10,%a2),%d6\n"
+	"	cmp.b (0x10,%a5),%d6\n"
+	"	bcs.b .Lg_1017a2\n"
+	"	ori #0x700,%sr\n"
+	"	bsr.w installer_kernel_queue_remove\n"
+	"	andi #-0x701,%sr\n"
+	"	movea.l %a5,%a2\n"
+	"	bsr.w installer_kernel_make_ready\n"
+	".Lg_1017a2:\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	movea.l (%sp)+,%a3\n"
+	"	rts\n"
+	"	.size installer_kernel_process_ticks, .-installer_kernel_process_ticks\n"
+);
+
 /* installer::001017a8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_service_0, at 0x14da2 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -60521,14 +78111,28 @@ LAB_installer__0010175e:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_service_0(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_service_0(void)
 
 {
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_service_0\n"
+	"	.type installer_kernel_service_0, @function\n"
+	"	.section .text.installer_kernel_service_0.1017a8,\"ax\",@progbits\n"
+	"installer_kernel_service_0:\n"
+	"	move.w #0x3300,%d7\n"
+	"	move.b (__ghidra_101527:w,%pc),%d7\n"
+	"	rts\n"
+	"	.size installer_kernel_service_0, .-installer_kernel_service_0\n"
+);
+
 /* installer::001017b2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_create, at 0x14dac plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -60536,7 +78140,8 @@ __regcall void installer_kernel_service_0(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_create(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_create(void)
 
 {
   int iVar1;
@@ -60608,7 +78213,111 @@ __regcall void installer_kernel_create(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_create\n"
+	"	.type installer_kernel_create, @function\n"
+	"	.section .text.installer_kernel_create.1017b2,\"ax\",@progbits\n"
+	"installer_kernel_create:\n"
+	"	movem.l %a3/%a2/%d5/%d4/%d3,-(%sp)\n"
+	"	tst.b %d2\n"
+	"	bne.b .Lg_1017c0\n"
+	"	moveq #0x4,%d7\n"
+	"	bra.w .Lg_1018a0\n"
+	".Lg_1017c0:\n"
+	"	move.l (0x10,%a6),%d6\n"
+	"	bne.b .Lg_1017cc\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.w .Lg_1018a0\n"
+	".Lg_1017cc:\n"
+	"	clr.l %d5\n"
+	"	move.w %d3,%d5\n"
+	"	swap %d3\n"
+	"	clr.l %d4\n"
+	"	move.w %d3,%d4\n"
+	"	movea.l %d6,%a5\n"
+	"	clr.l (0x20,%a5)\n"
+	"	move.l %a0,%d6\n"
+	"	beq.b .Lg_1017ee\n"
+	"	clr.l %d6\n"
+	"	move.w (%a0),%d6\n"
+	"	cmp.l %d6,%d5\n"
+	"	bcc.b .Lg_1017ee\n"
+	"	moveq #0x3,%d7\n"
+	"	bra.w .Lg_1018a0\n"
+	".Lg_1017ee:\n"
+	"	movea.l %a0,%a3\n"
+	"	movem.l %d2/%d1,-(%sp)\n"
+	"	lsl.l #0x1,%d4\n"
+	"	lsl.l #0x1,%d5\n"
+	"	move.l %d4,%d1\n"
+	"	add.l %d5,%d1\n"
+	"	move.w (__ghidra_1014cc:w,%pc),%d2\n"
+	"	moveq #0x1,%d3\n"
+	"	bsr.w installer_kernel_allocate_for_task\n"
+	"	adda.l %d4,%a0\n"
+	"	movea.l %a0,%a2\n"
+	"	adda.l %d5,%a2\n"
+	"	move.l (%sp)+,%d1\n"
+	"	move.l (%sp)+,%d2\n"
+	"	tst.b %d7\n"
+	"	beq.b .Lg_10181c\n"
+	"	movea.l %a3,%a0\n"
+	"	moveq #0x2,%d7\n"
+	"	bra.w .Lg_1018a0\n"
+	".Lg_10181c:\n"
+	"	move.l %a3,%d6\n"
+	"	beq.b .Lg_10182e\n"
+	"	move.w (%a3),%d6\n"
+	"	beq.b .Lg_10182e\n"
+	"	lsl.w #0x1,%d6\n"
+	".Lg_101826:\n"
+	"	move.w (0x0,%a3,%d6.w*0x1),-(%a2)\n"
+	"	subq.w #0x2,%d6\n"
+	"	bne.b .Lg_101826\n"
+	".Lg_10182e:\n"
+	"	movea.l (%a6),%a3\n"
+	"	move.l %d0,(0x24,%a5)\n"
+	"	move.b %d1,%d6\n"
+	"	bne.b .Lg_10183c\n"
+	"	move.b (0x14,%a3),%d6\n"
+	".Lg_10183c:\n"
+	"	move.b %d6,(0x14,%a5)\n"
+	"	clr.l (0x16,%a5)\n"
+	"	move.b %d2,(0x10,%a5)\n"
+	"	clr.l (0x46,%a5)\n"
+	"	clr.b (0x12,%a5)\n"
+	"	clr.b (0x11,%a5)\n"
+	"	clr.w (0x34,%a5)\n"
+	"	move.l %a3,(0x2c,%a5)\n"
+	"	clr.l (0x1c,%a5)\n"
+	"	move.l %a2,(0x3a,%a5)\n"
+	"	clr.w (0x44,%a5)\n"
+	"	tst.l %d4\n"
+	"	beq.b .Lg_101874\n"
+	"	ori.w #0x1000,(0x44,%a5)\n"
+	"	movea.l %a0,%a2\n"
+	".Lg_101874:\n"
+	"	move.l %a2,(0x36,%a5)\n"
+	"	move.w #0xb,%d3\n"
+	"	lea (0x82,%a5),%a0\n"
+	".Lg_101880:\n"
+	"	clr.l (%a0)+\n"
+	"	dbf %d3,.Lg_101880\n"
+	"	move.b #0x80,(0x13,%a5)\n"
+	"	move.l (0x30,%a5),(0x10,%a6)\n"
+	"	move.l (0xc,%a6),(0x30,%a5)\n"
+	"	move.l %a5,(0xc,%a6)\n"
+	"	movea.l %a5,%a0\n"
+	"	clr.b %d7\n"
+	".Lg_1018a0:\n"
+	"	movem.l (%sp)+,%d3/%d4/%d5/%a2/%a3\n"
+	"	rts\n"
+	"	.size installer_kernel_create, .-installer_kernel_create\n"
+);
+
 /* installer::001018a6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_start, at 0x14ea0 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -60616,7 +78325,8 @@ __regcall void installer_kernel_create(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_start(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_start(void)
 
 {
   int in_A0;
@@ -60637,7 +78347,39 @@ __regcall void installer_kernel_start(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_start\n"
+	"	.type installer_kernel_start, @function\n"
+	"	.section .text.installer_kernel_start.1018a6,\"ax\",@progbits\n"
+	"installer_kernel_start:\n"
+	"	movea.l (%a6),%a5\n"
+	"	bsr.w installer_kernel_check_task\n"
+	"	bne.b .Lg_1018d6\n"
+	"	move.b (0x13,%a0),%d7\n"
+	"	bmi.b .Lg_1018b8\n"
+	"	moveq #0x5,%d7\n"
+	"	bra.b .Lg_1018d6\n"
+	".Lg_1018b8:\n"
+	"	move.l %a1,(0x3e,%a0)\n"
+	"	exg %a0,%a2\n"
+	"	bsr.w installer_kernel_make_ready\n"
+	"	exg %a0,%a2\n"
+	"	movea.l (__ghidra_1014c8:w,%pc),%a5\n"
+	"	movea.l (%a5),%a5\n"
+	"	move.l (0x36,%a5),%d6\n"
+	"	beq.b .Lg_1018d4\n"
+	"	movea.l %d6,%a5\n"
+	"	jsr (%a5)\n"
+	".Lg_1018d4:\n"
+	"	clr.b %d7\n"
+	".Lg_1018d6:\n"
+	"	rts\n"
+	"	.size installer_kernel_start, .-installer_kernel_start\n"
+);
+
 /* installer::001018d8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_ident, at 0x14ed2 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -60645,7 +78387,8 @@ __regcall void installer_kernel_start(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_ident(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_ident(void)
 
 {
   int in_D0;
@@ -60665,7 +78408,36 @@ __regcall void installer_kernel_ident(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_ident\n"
+	"	.type installer_kernel_ident, @function\n"
+	"	.section .text.installer_kernel_ident.1018d8,\"ax\",@progbits\n"
+	"installer_kernel_ident:\n"
+	"	tst.l %d0\n"
+	"	bne.b .Lg_1018e0\n"
+	"	movea.l (%a6),%a0\n"
+	"	bra.b .Lg_1018f6\n"
+	".Lg_1018e0:\n"
+	"	movea.l (0xc,%a6),%a0\n"
+	".Lg_1018e4:\n"
+	"	cmp.l (0x24,%a0),%d0\n"
+	"	beq.b .Lg_1018f6\n"
+	"	move.l (0x30,%a0),%d6\n"
+	"	movea.l %d6,%a0\n"
+	"	bne.b .Lg_1018e4\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.b .Lg_1018fc\n"
+	".Lg_1018f6:\n"
+	"	move.b (0x13,%a0),%d0\n"
+	"	clr.b %d7\n"
+	".Lg_1018fc:\n"
+	"	rts\n"
+	"	.size installer_kernel_ident, .-installer_kernel_ident\n"
+);
+
 /* installer::001018fe */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_delete, at 0x14ef8 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -60673,7 +78445,8 @@ __regcall void installer_kernel_ident(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall undefined8 installer_kernel_delete(void) /* out D7 char error */
+/* out D7 char error */
+__regcall undefined8 installer_kernel_delete(void)
 
 {
   int iVar1;
@@ -60754,7 +78527,113 @@ LAB_installer__001019d4:
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_delete\n"
+	"	.type installer_kernel_delete, @function\n"
+	"	.section .text.installer_kernel_delete.1018fe,\"ax\",@progbits\n"
+	"installer_kernel_delete:\n"
+	"	movea.l (%a6),%a5\n"
+	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
+	"	bsr.w installer_kernel_check_task\n"
+	"	bne.w .Lg_101a04\n"
+	"	movea.l (__ghidra_1014c8:w,%pc),%a1\n"
+	"	movea.l (%a1),%a1\n"
+	"	move.l (0x46,%a1),%d6\n"
+	"	beq.b .Lg_10192a\n"
+	"	movea.l %d6,%a1\n"
+	"	movea.l (%a1),%a1\n"
+	"	jsr (0x8,%a1)\n"
+	"	tst.w %d7\n"
+	"	beq.b .Lg_10192a\n"
+	"	moveq #0x5,%d7\n"
+	"	bra.w .Lg_101a04\n"
+	".Lg_10192a:\n"
+	"	cmpa.l (%a6),%a0\n"
+	"	bne.b .Lg_101948\n"
+	"	movea.l (0x10,%sp),%a1\n"
+	"	andi #-0x1001,%sr\n"
+	"	movea.l (0x20,%a6),%sp\n"
+	"	suba.l #0x28,%sp\n"
+	"	move.l %a1,(0x10,%sp)\n"
+	"	clr.w (0x20,%sp)\n"
+	".Lg_101948:\n"
+	"	ori #0x700,%sr\n"
+	"	move.b (0x13,%a0),%d0\n"
+	"	beq.b .Lg_101958\n"
+	"	andi.b #0x60,%d0\n"
+	"	beq.b .Lg_101966\n"
+	".Lg_101958:\n"
+	"	movea.l (%a0),%a5\n"
+	"	movea.l (0x4,%a0),%a1\n"
+	"	move.l %a5,(%a1)\n"
+	"	beq.b .Lg_101966\n"
+	"	move.l %a1,(0x4,%a5)\n"
+	".Lg_101966:\n"
+	"	move.b #0xff,(0x13,%a0)\n"
+	"	andi #-0x701,%sr\n"
+	"	exg %a0,%a2\n"
+	"	bsr.w installer_kernel_timer_cancel\n"
+	"	exg %a0,%a2\n"
+	"	movea.l %a0,%a5\n"
+	".Lg_10197a:\n"
+	"	move.l (0x1c,%a5),%d6\n"
+	"	beq.b .Lg_1019a2\n"
+	"	movea.l %d6,%a1\n"
+	"	movea.l (0x4,%a1),%a0\n"
+	"	bsr.w installer_kernel_send_for_task\n"
+	"	beq.b .Lg_10197a\n"
+	"	move.l (%a1),(0x1c,%a5)\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (0x1c,%a6),(%a1)\n"
+	"	move.l %a1,(0x1c,%a6)\n"
+	"	andi #-0x701,%sr\n"
+	"	bra.b .Lg_10197a\n"
+	".Lg_1019a2:\n"
+	"	move.l (0x20,%a5),%d6\n"
+	"	beq.b .Lg_1019bc\n"
+	"	movea.l %d6,%a0\n"
+	"	adda.w #0x12,%a0\n"
+	"	bsr.w installer_kernel_free_for_task\n"
+	"	beq.b .Lg_1019a2\n"
+	"	move.l (-0x12,%a0),(0x20,%a5)\n"
+	"	bra.b .Lg_1019a2\n"
+	".Lg_1019bc:\n"
+	"	lea (-0x24,%a6),%a1\n"
+	".Lg_1019c0:\n"
+	"	move.l (0x30,%a1),%d6\n"
+	"	beq.b .Lg_1019d4\n"
+	"	cmp.l %a5,%d6\n"
+	"	beq.b .Lg_1019ce\n"
+	"	movea.l %d6,%a1\n"
+	"	bra.b .Lg_1019c0\n"
+	".Lg_1019ce:\n"
+	"	move.l (0x30,%a5),(0x30,%a1)\n"
+	".Lg_1019d4:\n"
+	"	move.l (0x10,%a6),(0x30,%a5)\n"
+	"	move.l %a5,(0x10,%a6)\n"
+	"	movea.l (0x2c,%a5),%a0\n"
+	"	exg %a1,%a5\n"
+	"	lea (0x8c,%a6),%a5\n"
+	"	move.w #0x2000,%d1\n"
+	"	bsr.w installer_kernel_signal_task\n"
+	"	exg %a1,%a5\n"
+	"	movea.l (__ghidra_1014c8:w,%pc),%a0\n"
+	"	movea.l (%a0),%a0\n"
+	"	move.l (0x3a,%a0),%d6\n"
+	"	beq.b .Lg_101a02\n"
+	"	movea.l %d6,%a0\n"
+	"	jsr (%a0)\n"
+	".Lg_101a02:\n"
+	"	clr.b %d7\n"
+	".Lg_101a04:\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
+	"	rts\n"
+	"	.size installer_kernel_delete, .-installer_kernel_delete\n"
+);
+
 /* installer::00101a0a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_suspend, at 0x15004 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -60762,7 +78641,8 @@ LAB_installer__001019d4:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_suspend(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_suspend(void)
 
 {
   int in_A0;
@@ -60786,7 +78666,37 @@ __regcall void installer_kernel_suspend(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_suspend\n"
+	"	.type installer_kernel_suspend, @function\n"
+	"	.section .text.installer_kernel_suspend.101a0a,\"ax\",@progbits\n"
+	"installer_kernel_suspend:\n"
+	"	movea.l (%a6),%a5\n"
+	"	bsr.w installer_kernel_check_task\n"
+	"	bne.b .Lg_101a3c\n"
+	"	ori #0x700,%sr\n"
+	"	move.b (0x13,%a0),%d6\n"
+	"	beq.b .Lg_101a2a\n"
+	"	andi.b #0x4,%d6\n"
+	"	beq.b .Lg_101a30\n"
+	"	andi #-0x701,%sr\n"
+	"	moveq #0x4,%d7\n"
+	"	bra.b .Lg_101a3c\n"
+	".Lg_101a2a:\n"
+	"	movea.l %a0,%a5\n"
+	"	bsr.w installer_kernel_queue_remove\n"
+	".Lg_101a30:\n"
+	"	ori.b #0x4,(0x13,%a0)\n"
+	"	andi #-0x701,%sr\n"
+	"	clr.b %d7\n"
+	".Lg_101a3c:\n"
+	"	rts\n"
+	"	.size installer_kernel_suspend, .-installer_kernel_suspend\n"
+);
+
 /* installer::00101a3e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x00101a48) */
 /* the installer's copy of kernel_resume, at 0x15038 plus 0xeca06, byte for byte
@@ -60795,7 +78705,8 @@ __regcall void installer_kernel_suspend(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_resume(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_resume(void)
 
 {
   byte bVar1;
@@ -60815,7 +78726,47 @@ __regcall void installer_kernel_resume(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_resume\n"
+	"	.type installer_kernel_resume, @function\n"
+	"	.section .text.installer_kernel_resume.101a3e,\"ax\",@progbits\n"
+	"installer_kernel_resume:\n"
+	"	movea.l (%a6),%a5\n"
+	"	move %sr,%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	beq.b .Lg_101a4c\n"
+	"	lea (0x8c,%a6),%a5\n"
+	".Lg_101a4c:\n"
+	"	bsr.w installer_kernel_check_task\n"
+	"	bne.b .Lg_101a7e\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.b (0x13,%a0),%d7\n"
+	"	bclr.l #0x2,%d7\n"
+	"	bne.b .Lg_101a68\n"
+	"	move %d6,%sr\n"
+	"	moveq #0x4,%d7\n"
+	"	bra.b .Lg_101a7e\n"
+	".Lg_101a68:\n"
+	"	move.b %d7,(0x13,%a0)\n"
+	"	beq.b .Lg_101a72\n"
+	"	move %d6,%sr\n"
+	"	bra.b .Lg_101a7c\n"
+	".Lg_101a72:\n"
+	"	move %d6,%sr\n"
+	"	exg %a0,%a2\n"
+	"	bsr.w installer_kernel_make_ready\n"
+	"	exg %a0,%a2\n"
+	".Lg_101a7c:\n"
+	"	clr.b %d7\n"
+	".Lg_101a7e:\n"
+	"	rts\n"
+	"	.size installer_kernel_resume, .-installer_kernel_resume\n"
+);
+
 /* installer::00101a80 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_priority, at 0x1507a plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -60823,7 +78774,8 @@ __regcall void installer_kernel_resume(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_priority(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_priority(void)
 
 {
   short extraout_D0w;
@@ -60861,7 +78813,57 @@ LAB_installer__00101ab4:
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_priority\n"
+	"	.type installer_kernel_priority, @function\n"
+	"	.section .text.installer_kernel_priority.101a80,\"ax\",@progbits\n"
+	"installer_kernel_priority:\n"
+	"	move.w %d1,-(%sp)\n"
+	"	movea.l (%a6),%a5\n"
+	"	bsr.w installer_kernel_check_task\n"
+	"	bne.b .Lg_101adc\n"
+	"	clr.w %d7\n"
+	"	clr.w %d1\n"
+	"	move.b (0x10,%a0),%d1\n"
+	"	tst.w %d0\n"
+	"	beq.b .Lg_101ada\n"
+	"	add.w %d1,%d0\n"
+	"	bvs.b .Lg_101aa2\n"
+	"	ble.b .Lg_101aac\n"
+	"	cmpi.w #0xff,%d0\n"
+	"	ble.b .Lg_101ab4\n"
+	".Lg_101aa2:\n"
+	"	move.b #0xff,%d0\n"
+	"	move.b #0x81,%d7\n"
+	"	bra.b .Lg_101ab4\n"
+	".Lg_101aac:\n"
+	"	move.b #0x1,%d0\n"
+	"	move.b #0x82,%d7\n"
+	".Lg_101ab4:\n"
+	"	ori #0x700,%sr\n"
+	"	move.b %d0,(0x10,%a0)\n"
+	"	tst.b (0x13,%a0)\n"
+	"	beq.b .Lg_101ac8\n"
+	"	andi #-0x701,%sr\n"
+	"	bra.b .Lg_101ada\n"
+	".Lg_101ac8:\n"
+	"	movea.l %a0,%a5\n"
+	"	bsr.w installer_kernel_queue_remove\n"
+	"	andi #-0x701,%sr\n"
+	"	exg %a5,%a2\n"
+	"	bsr.w installer_kernel_ready_insert\n"
+	"	exg %a5,%a2\n"
+	".Lg_101ada:\n"
+	"	move.w %d1,%d0\n"
+	".Lg_101adc:\n"
+	"	move.w (%sp)+,%d1\n"
+	"	rts\n"
+	"	.size installer_kernel_priority, .-installer_kernel_priority\n"
+);
+
 /* installer::00101ae0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_allocate_segment, at 0x150da plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -60869,7 +78871,8 @@ LAB_installer__00101ab4:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_allocate_segment(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_allocate_segment(void)
 
 {
   undefined4 *puVar1;
@@ -60898,7 +78901,18 @@ __regcall void installer_kernel_allocate_segment(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_allocate_segment\n"
+	"	.type installer_kernel_allocate_segment, @function\n"
+	"	.section .text.installer_kernel_allocate_segment.101ae0,\"ax\",@progbits\n"
+	"installer_kernel_allocate_segment:\n"
+	"	movea.l (%a6),%a5\n"
+	"	.size installer_kernel_allocate_segment, .-installer_kernel_allocate_segment\n"
+);
+
 /* installer::00101ae2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_allocate_for_task, at 0x150dc plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -60932,7 +78946,45 @@ __naked void installer_kernel_allocate_for_task(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_allocate_for_task\n"
+	"	.type installer_kernel_allocate_for_task, @function\n"
+	"	.section .text.installer_kernel_allocate_for_task.101ae2,\"ax\",@progbits\n"
+	"installer_kernel_allocate_for_task:\n"
+	"	movem.l %a2/%a1/%d4/%d3/%d2/%d1,-(%sp)\n"
+	"	bsr.w installer_kernel_allocate\n"
+	"	beq.b .Lg_101b2e\n"
+	"	movea.w #-0x2153,%a0\n"
+	"	tst.b %d3\n"
+	"	beq.b .Lg_101afa\n"
+	"	move.b #0x80,%d7\n"
+	"	bra.b .Lg_101b30\n"
+	".Lg_101afa:\n"
+	"	ori #0x700,%sr\n"
+	"	bsr.w installer_kernel_queue_remove\n"
+	"	andi #-0x701,%sr\n"
+	"	move.b #0x40,(0x13,%a5)\n"
+	"	lea (0x64,%a6),%a1\n"
+	"	move.l %a1,(%a5)\n"
+	"	movea.l (0x68,%a6),%a2\n"
+	"	move.l %a5,(0x68,%a6)\n"
+	"	move.l %a5,(%a2)\n"
+	"	move.l %a2,(0x4,%a5)\n"
+	"	tst.l %d0\n"
+	"	beq.b .Lg_101b2e\n"
+	"	move.b #0xff,(0x12,%a5)\n"
+	"	bsr.w installer_kernel_timer_insert\n"
+	".Lg_101b2e:\n"
+	"	clr.b %d7\n"
+	".Lg_101b30:\n"
+	"	movem.l (%sp)+,%d1/%d2/%d3/%d4/%a1/%a2\n"
+	"	rts\n"
+	"	.size installer_kernel_allocate_for_task, .-installer_kernel_allocate_for_task\n"
+);
+
 /* installer::00101b36 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_free_segment, at 0x15130 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -60940,7 +78992,8 @@ __naked void installer_kernel_allocate_for_task(void)
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_free_segment(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_free_segment(void)
 
 {
   int iVar1;
@@ -61054,7 +79107,18 @@ LAB_installer__00101c0c:
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_free_segment\n"
+	"	.type installer_kernel_free_segment, @function\n"
+	"	.section .text.installer_kernel_free_segment.101b36,\"ax\",@progbits\n"
+	"installer_kernel_free_segment:\n"
+	"	movea.l (%a6),%a5\n"
+	"	.size installer_kernel_free_segment, .-installer_kernel_free_segment\n"
+);
+
 /* installer::00101b38 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_free_for_task, at 0x15132 plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -61175,7 +79239,144 @@ LAB_installer__00101c0c:
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_free_for_task\n"
+	"	.type installer_kernel_free_for_task, @function\n"
+	"	.section .text.installer_kernel_free_for_task.101b38,\"ax\",@progbits\n"
+	"installer_kernel_free_for_task:\n"
+	"	movem.l %a5/%a3/%a2/%a1/%a0/%d4/%d3/%d2/%d1,-(%sp)\n"
+	"	suba.w #0x12,%a0\n"
+	"	bsr.w installer_kernel_check_segment\n"
+	"	bne.w .Lg_101c68\n"
+	"	move.w (0x10,%a0),%d2\n"
+	"	andi.w #0x3,%d2\n"
+	"	clr.w %d6\n"
+	"	cmpi.w #0x1,%d2\n"
+	"	beq.b .Lg_101b5a\n"
+	"	moveq #0x4,%d6\n"
+	".Lg_101b5a:\n"
+	"	lea (0x20,%a5),%a1\n"
+	".Lg_101b5e:\n"
+	"	move.l (%a1),%d1\n"
+	"	beq.w .Lg_101c62\n"
+	"	cmp.l %a0,%d1\n"
+	"	beq.b .Lg_101b6c\n"
+	"	movea.l %d1,%a1\n"
+	"	bra.b .Lg_101b5e\n"
+	".Lg_101b6c:\n"
+	"	move.l (%a0),(%a1)\n"
+	"	movea.l %a0,%a1\n"
+	"	clr.w (0x10,%a0)\n"
+	"	move.l (0xc,%a0),%d1\n"
+	"	move.l (0x8,%a0),%d3\n"
+	"	beq.b .Lg_101b8c\n"
+	"	movea.l %d3,%a2\n"
+	"	tst.w (0x10,%a2)\n"
+	"	bne.b .Lg_101b8c\n"
+	"	movea.l %a2,%a1\n"
+	"	add.l %d1,(0xc,%a1)\n"
+	".Lg_101b8c:\n"
+	"	move.l (0xc,%a1),%d1\n"
+	"	movea.l %a1,%a2\n"
+	"	adda.l %d1,%a2\n"
+	"	cmpa.l (0x4c,%a6,%d6.w*0x1),%a2\n"
+	"	bcc.b .Lg_101be4\n"
+	"	move.l %a1,(0x8,%a2)\n"
+	"	tst.w (0x10,%a2)\n"
+	"	bne.b .Lg_101be4\n"
+	"	move.l (0xc,%a2),%d1\n"
+	"	add.l %d1,(0xc,%a1)\n"
+	"	cmpa.l %a0,%a1\n"
+	"	beq.b .Lg_101bc8\n"
+	"	movea.l (0x4,%a2),%a0\n"
+	"	move.l (%a2),(%a0)\n"
+	"	bne.b .Lg_101bbe\n"
+	"	move.l %a0,(0x5c,%a6,%d6.w*0x1)\n"
+	"	bra.b .Lg_101bfa\n"
+	".Lg_101bbe:\n"
+	"	movea.l (%a2),%a0\n"
+	"	move.l (0x4,%a2),(0x4,%a0)\n"
+	"	bra.b .Lg_101bfa\n"
+	".Lg_101bc8:\n"
+	"	movea.l (0x4,%a2),%a0\n"
+	"	move.l %a0,(0x4,%a1)\n"
+	"	move.l %a1,(%a0)\n"
+	"	move.l (%a2),(%a1)\n"
+	"	bne.b .Lg_101bdc\n"
+	"	move.l %a1,(0x5c,%a6,%d6.w*0x1)\n"
+	"	bra.b .Lg_101bfa\n"
+	".Lg_101bdc:\n"
+	"	movea.l (%a2),%a0\n"
+	"	move.l %a1,(0x4,%a0)\n"
+	"	bra.b .Lg_101bfa\n"
+	".Lg_101be4:\n"
+	"	cmpa.l %a0,%a1\n"
+	"	bne.b .Lg_101bfa\n"
+	"	movea.l (0x5c,%a6,%d6.w*0x1),%a2\n"
+	"	move.l %a1,(0x5c,%a6,%d6.w*0x1)\n"
+	"	clr.l (%a1)\n"
+	"	move.l %a1,(%a2)\n"
+	"	move.l %a2,(0x4,%a1)\n"
+	"	bra.b .Lg_101c0c\n"
+	".Lg_101bfa:\n"
+	"	move.l (0xc,%a1),%d1\n"
+	"	movea.l %a1,%a2\n"
+	"	adda.l %d1,%a2\n"
+	"	cmpa.l (0x4c,%a6,%d6.w*0x1),%a2\n"
+	"	bcc.b .Lg_101c0c\n"
+	"	move.l %a1,(0x8,%a2)\n"
+	".Lg_101c0c:\n"
+	"	cmp.l (0x44,%a6,%d6.w*0x1),%d1\n"
+	"	bcs.b .Lg_101c66\n"
+	"	move.l (0x3c,%a6,%d6.w*0x1),%d1\n"
+	"	addq.l #0x1,%d1\n"
+	"	move.l %d1,(0x44,%a6,%d6.w*0x1)\n"
+	"	lea (0x64,%a6),%a3\n"
+	"	movea.l (%a3),%a5\n"
+	".Lg_101c22:\n"
+	"	cmpa.l %a3,%a5\n"
+	"	beq.b .Lg_101c66\n"
+	"	move.b (0x59,%a5),%d1\n"
+	"	beq.b .Lg_101c30\n"
+	"	cmp.b %d1,%d2\n"
+	"	bne.b .Lg_101c3e\n"
+	".Lg_101c30:\n"
+	"	move.l (0x52,%a5),%d1\n"
+	"	cmp.l (0x44,%a6,%d6.w*0x1),%d1\n"
+	"	bcc.b .Lg_101c3e\n"
+	"	.byte 0x61 | bsr.b 0x00101c6e\n"
+	"	.reloc ., R_68K_PC8, installer_kernel_allocate-1\n"
+	"	.byte 0\n"
+	"	beq.b .Lg_101c42\n"
+	".Lg_101c3e:\n"
+	"	movea.l (%a5),%a5\n"
+	"	bra.b .Lg_101c22\n"
+	".Lg_101c42:\n"
+	"	move.l %a0,(0x6e,%a5)\n"
+	"	movea.l (%a5),%a2\n"
+	"	movea.l (0x4,%a5),%a1\n"
+	"	move.l %a2,(%a1)\n"
+	"	move.l %a1,(0x4,%a2)\n"
+	"	exg %a5,%a2\n"
+	"	exg %d6,%d4\n"
+	"	bsr.w installer_kernel_timer_cancel\n"
+	"	bsr.w installer_kernel_make_ready\n"
+	"	exg %d6,%d4\n"
+	"	bra.b .Lg_101c22\n"
+	".Lg_101c62:\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.b .Lg_101c68\n"
+	".Lg_101c66:\n"
+	"	clr.b %d7\n"
+	".Lg_101c68:\n"
+	"	movem.l (%sp)+,%d1/%d2/%d3/%d4/%a0/%a1/%a2/%a3/%a5\n"
+	"	rts\n"
+	"	.size installer_kernel_free_for_task, .-installer_kernel_free_for_task\n"
+);
+
 /* installer::00101c6e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_allocate, at 0x15268 plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -61213,7 +79414,44 @@ LAB_installer__00101c8e:
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_allocate\n"
+	"	.type installer_kernel_allocate, @function\n"
+	"	.section .text.installer_kernel_allocate.101c6e,\"ax\",@progbits\n"
+	"installer_kernel_allocate:\n"
+	"	addi.l #0x13,%d1\n"
+	"	bclr.l #0x0,%d1\n"
+	"	cmpi.b #0x1,%d2\n"
+	"	bgt.b .Lg_101c88\n"
+	"	clr.w %d6\n"
+	"	.byte 0x61 | bsr.b 0x00101ca2\n"
+	"	.reloc ., R_68K_PC8, installer_kernel_region_allocate-1\n"
+	"	.byte 0\n"
+	"	beq.b .Lg_101c8e\n"
+	"	tst.b %d2\n"
+	"	bne.b .Lg_101c9e\n"
+	".Lg_101c88:\n"
+	"	moveq #0x4,%d6\n"
+	"	.byte 0x61 | bsr.b 0x00101ca2\n"
+	"	.reloc ., R_68K_PC8, installer_kernel_region_allocate-1\n"
+	"	.byte 0\n"
+	"	bne.b .Lg_101c9e\n"
+	".Lg_101c8e:\n"
+	"	move.l (0x20,%a5),(%a0)\n"
+	"	move.l %a0,(0x20,%a5)\n"
+	"	adda.w #0x12,%a0\n"
+	"	clr.b %d1\n"
+	"	bra.b .Lg_101ca0\n"
+	".Lg_101c9e:\n"
+	"	moveq #0x1,%d1\n"
+	".Lg_101ca0:\n"
+	"	rts\n"
+	"	.size installer_kernel_allocate, .-installer_kernel_allocate\n"
+);
+
 /* installer::00101ca2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_region_allocate, at 0x1529c plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -61276,7 +79514,78 @@ __naked void installer_kernel_region_allocate(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_region_allocate\n"
+	"	.type installer_kernel_region_allocate, @function\n"
+	"	.section .text.installer_kernel_region_allocate.101ca2,\"ax\",@progbits\n"
+	"installer_kernel_region_allocate:\n"
+	"	move.l %d1,-(%sp)\n"
+	"	cmp.l (0x34,%a6,%d6.w*0x1),%d1\n"
+	"	bcc.b .Lg_101cae\n"
+	"	move.l (0x34,%a6,%d6.w*0x1),%d1\n"
+	".Lg_101cae:\n"
+	"	cmp.l (0x44,%a6,%d6.w*0x1),%d1\n"
+	"	bcs.b .Lg_101cb8\n"
+	"	moveq #0x1,%d4\n"
+	"	bra.b .Lg_101d24\n"
+	".Lg_101cb8:\n"
+	"	lea (0x54,%a6,%d6.w*0x1),%a0\n"
+	".Lg_101cbc:\n"
+	"	move.l (%a0),%d4\n"
+	"	beq.b .Lg_101d20\n"
+	"	movea.l %d4,%a1\n"
+	"	cmp.l (0xc,%a1),%d1\n"
+	"	bls.b .Lg_101ccc\n"
+	"	movea.l %a1,%a0\n"
+	"	bra.b .Lg_101cbc\n"
+	".Lg_101ccc:\n"
+	"	move.l (0xc,%a1),%d4\n"
+	"	sub.l %d1,%d4\n"
+	"	cmp.l (0x34,%a6,%d6.w*0x1),%d4\n"
+	"	bcs.b .Lg_101cf8\n"
+	"	move.l %d4,(0xc,%a1)\n"
+	"	movea.l %a1,%a0\n"
+	"	adda.l %d4,%a0\n"
+	"	move.l %d1,(0xc,%a0)\n"
+	"	move.l %a1,(0x8,%a0)\n"
+	"	movea.l %a0,%a1\n"
+	"	adda.l %d1,%a1\n"
+	"	cmpa.l (0x4c,%a6,%d6.w*0x1),%a1\n"
+	"	bcc.b .Lg_101cf6\n"
+	"	move.l %a0,(0x8,%a1)\n"
+	".Lg_101cf6:\n"
+	"	bra.b .Lg_101d0c\n"
+	".Lg_101cf8:\n"
+	"	exg %a0,%a1\n"
+	"	move.l (%a0),%d4\n"
+	"	move.l %d4,(%a1)\n"
+	"	bne.b .Lg_101d06\n"
+	"	move.l %a1,(0x5c,%a6,%d6.w*0x1)\n"
+	"	bra.b .Lg_101d0c\n"
+	".Lg_101d06:\n"
+	"	exg %d4,%a1\n"
+	"	move.l %d4,(0x4,%a1)\n"
+	".Lg_101d0c:\n"
+	"	moveq #0x1,%d4\n"
+	"	tst.w %d6\n"
+	"	beq.b .Lg_101d14\n"
+	"	moveq #0x2,%d4\n"
+	".Lg_101d14:\n"
+	"	ori.w #-0x1e30,%d4\n"
+	"	move.w %d4,(0x10,%a0)\n"
+	"	clr.w %d4\n"
+	"	bra.b .Lg_101d24\n"
+	".Lg_101d20:\n"
+	"	move.l %d1,(0x44,%a6,%d6.w*0x1)\n"
+	".Lg_101d24:\n"
+	"	movem.l (%sp)+,%d1\n"
+	"	rts\n"
+	"	.size installer_kernel_region_allocate, .-installer_kernel_region_allocate\n"
+);
+
 /* installer::00101d2a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x00101d4c) */
 /* the installer's copy of kernel_service_10, at 0x15324 plus 0xeca06, byte for byte
@@ -61285,7 +79594,8 @@ __naked void installer_kernel_region_allocate(void)
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_service_10(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_service_10(void)
 
 {
   void *running;
@@ -61322,7 +79632,22 @@ __regcall void installer_kernel_service_10(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_service_10\n"
+	"	.type installer_kernel_service_10, @function\n"
+	"	.section .text.installer_kernel_service_10.101d2a,\"ax\",@progbits\n"
+	"installer_kernel_service_10:\n"
+	"	move.l %a2,-(%sp)\n"
+	"	suba.w %a2,%a2\n"
+	"	.byte 0x60 | bra.b 0x00101d36\n"
+	"	.reloc ., R_68K_PC8, installer_kernel_service_16+0x6-1\n"
+	"	.byte 0\n"
+	"	.size installer_kernel_service_10, .-installer_kernel_service_10\n"
+);
+
 /* installer::00101d30 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_service_16, at 0x1532a plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -61330,7 +79655,8 @@ __regcall void installer_kernel_service_10(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_service_16(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_service_16(void)
 
 {
   int *piVar1;
@@ -61366,7 +79692,54 @@ __regcall void installer_kernel_service_16(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_service_16\n"
+	"	.type installer_kernel_service_16, @function\n"
+	"	.section .text.installer_kernel_service_16.101d30,\"ax\",@progbits\n"
+	"installer_kernel_service_16:\n"
+	"	move.l %a2,-(%sp)\n"
+	"	movea.w #0x1,%a2\n"
+	"	move.l %a1,-(%sp)\n"
+	"	movea.l (%a6),%a5\n"
+	"	suba.w #0x12,%a0\n"
+	"	exg %a0,%a1\n"
+	"	bsr.w installer_kernel_check_task\n"
+	"	exg %a0,%a1\n"
+	"	bne.b .Lg_101d76\n"
+	"	move.w %a2,%d6\n"
+	"	beq.b .Lg_101d4e\n"
+	"	exg %a1,%a5\n"
+	".Lg_101d4e:\n"
+	"	bsr.w installer_kernel_check_segment\n"
+	"	bne.b .Lg_101d76\n"
+	"	lea (0x20,%a5),%a5\n"
+	".Lg_101d58:\n"
+	"	movea.l (%a5),%a2\n"
+	"	move.l %a2,%d6\n"
+	"	beq.b .Lg_101d74\n"
+	"	cmpa.l %a2,%a0\n"
+	"	beq.b .Lg_101d66\n"
+	"	movea.l %a2,%a5\n"
+	"	bra.b .Lg_101d58\n"
+	".Lg_101d66:\n"
+	"	move.l (%a0),(%a5)\n"
+	"	move.l (0x20,%a1),(%a0)\n"
+	"	move.l %a0,(0x20,%a1)\n"
+	"	clr.b %d7\n"
+	"	bra.b .Lg_101d76\n"
+	".Lg_101d74:\n"
+	"	moveq #0x1,%d7\n"
+	".Lg_101d76:\n"
+	"	adda.w #0x12,%a0\n"
+	"	movea.l (%sp)+,%a1\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	rts\n"
+	"	.size installer_kernel_service_16, .-installer_kernel_service_16\n"
+);
+
 /* installer::00101d80 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_service_none, at 0x1537a plus 0xeca06, byte for byte
    Not a C function (psos-service; read): a pSOS kernel service, reached from trap #3 through the
@@ -61374,7 +79747,8 @@ __regcall void installer_kernel_service_16(void) /* out D7 char error */
    char error.
    psos.md */
 
-__regcall char installer_kernel_service_none(void) /* out D7 char error */
+/* out D7 char error */
+__regcall char installer_kernel_service_none(void)
 
 {
   uint unaff_D7;
@@ -61383,7 +79757,19 @@ __regcall char installer_kernel_service_none(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_service_none\n"
+	"	.type installer_kernel_service_none, @function\n"
+	"	.section .text.installer_kernel_service_none.101d80,\"ax\",@progbits\n"
+	"installer_kernel_service_none:\n"
+	"	clr.b %d7\n"
+	"	rts\n"
+	"	.size installer_kernel_service_none, .-installer_kernel_service_none\n"
+);
+
 /* installer::00101d84 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_create_x, at 0x1537e plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -61391,7 +79777,8 @@ __regcall char installer_kernel_service_none(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_create_x(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_create_x(void)
 
 {
   int iVar1;
@@ -61427,7 +79814,48 @@ __regcall void installer_kernel_create_x(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_create_x\n"
+	"	.type installer_kernel_create_x, @function\n"
+	"	.section .text.installer_kernel_create_x.101d84,\"ax\",@progbits\n"
+	"installer_kernel_create_x:\n"
+	"	moveq #0x1,%d7\n"
+	"	move.l (0x18,%a6),%d6\n"
+	"	beq.b .Lg_101de4\n"
+	"	movea.l %d6,%a0\n"
+	"	move.l %d0,(0x14,%a0)\n"
+	"	move.l %a0,(%a0)\n"
+	"	move.l %a0,(0x4,%a0)\n"
+	"	clr.l (0x8,%a0)\n"
+	"	clr.l (0xc,%a0)\n"
+	"	clr.w (0x20,%a0)\n"
+	"	move.b %d1,%d6\n"
+	"	clr.b (0x10,%a0)\n"
+	"	bclr.l #0x7,%d6\n"
+	"	beq.b .Lg_101db4\n"
+	"	addq.b #0x1,(0x10,%a0)\n"
+	".Lg_101db4:\n"
+	"	clr.b (0x12,%a0)\n"
+	"	bclr.l #0x1,%d6\n"
+	"	beq.b .Lg_101dc6\n"
+	"	addq.b #0x1,(0x12,%a0)\n"
+	"	move.b %d2,(0x20,%a0)\n"
+	".Lg_101dc6:\n"
+	"	move.b %d6,(0x11,%a0)\n"
+	"	movea.l (%a6),%a5\n"
+	"	move.b (0x14,%a5),(0x13,%a0)\n"
+	"	move.l (0x1c,%a0),(0x18,%a6)\n"
+	"	move.l (0x14,%a6),(0x1c,%a0)\n"
+	"	move.l %a0,(0x14,%a6)\n"
+	"	clr.b %d7\n"
+	".Lg_101de4:\n"
+	"	rts\n"
+	"	.size installer_kernel_create_x, .-installer_kernel_create_x\n"
+);
+
 /* installer::00101de6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x00101e08) */
 /* the installer's copy of kernel_service_21, at 0x153e0 plus 0xeca06, byte for byte
@@ -61436,7 +79864,8 @@ __regcall void installer_kernel_create_x(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_service_21(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_service_21(void)
 
 {
   int exchange;
@@ -61473,7 +79902,58 @@ __regcall void installer_kernel_service_21(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_service_21\n"
+	"	.type installer_kernel_service_21, @function\n"
+	"	.section .text.installer_kernel_service_21.101de6,\"ax\",@progbits\n"
+	"installer_kernel_service_21:\n"
+	"	move.l (0x14,%a6),%d6\n"
+	"	beq.b .Lg_101dfa\n"
+	".Lg_101dec:\n"
+	"	movea.l %d6,%a0\n"
+	"	cmp.l (0x14,%a0),%d0\n"
+	"	beq.b .Lg_101dfe\n"
+	"	move.l (0x1c,%a0),%d6\n"
+	"	bne.b .Lg_101dec\n"
+	".Lg_101dfa:\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.b .Lg_101e3a\n"
+	".Lg_101dfe:\n"
+	"	movea.l (%a6),%a5\n"
+	"	move %sr,%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	beq.b .Lg_101e0c\n"
+	"	lea (0x8c,%a6),%a5\n"
+	".Lg_101e0c:\n"
+	"	bsr.w installer_kernel_check_exchange\n"
+	"	bne.b .Lg_101e3a\n"
+	".Lg_101e12:\n"
+	"	clr.l %d1\n"
+	"	movea.l (%a0),%a5\n"
+	".Lg_101e16:\n"
+	"	cmpa.l %a5,%a0\n"
+	"	beq.b .Lg_101e32\n"
+	"	addq.l #0x1,%d1\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.b (0x13,%a5),%d2\n"
+	"	movea.l (%a5),%a5\n"
+	"	move %d6,%sr\n"
+	"	andi.b #0x20,%d2\n"
+	"	bne.b .Lg_101e16\n"
+	"	bra.b .Lg_101e12\n"
+	".Lg_101e32:\n"
+	"	clr.l %d2\n"
+	"	move.b (0x21,%a0),%d2\n"
+	"	clr.b %d7\n"
+	".Lg_101e3a:\n"
+	"	rts\n"
+	"	.size installer_kernel_service_21, .-installer_kernel_service_21\n"
+);
+
 /* installer::00101e3c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_delete_x, at 0x15436 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -61481,7 +79961,8 @@ __regcall void installer_kernel_service_21(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_delete_x(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_delete_x(void)
 
 {
   undefined4 uVar1;
@@ -61528,7 +80009,62 @@ LAB_installer__00101ea6:
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_delete_x\n"
+	"	.type installer_kernel_delete_x, @function\n"
+	"	.section .text.installer_kernel_delete_x.101e3c,\"ax\",@progbits\n"
+	"installer_kernel_delete_x:\n"
+	"	move.l %a2,-(%sp)\n"
+	"	movea.l (%a6),%a5\n"
+	"	bsr.w installer_kernel_check_exchange\n"
+	"	bne.b .Lg_101eb0\n"
+	"	move.b #0xfe,(0x11,%a0)\n"
+	"	clr.b %d7\n"
+	"	movea.l (%a0),%a2\n"
+	".Lg_101e50:\n"
+	"	cmpa.l %a2,%a0\n"
+	"	beq.b .Lg_101e6c\n"
+	"	move.b #0x1,(0x6d,%a2)\n"
+	"	movea.l (%a2),%a5\n"
+	"	bsr.w installer_kernel_timer_cancel\n"
+	"	bsr.w installer_kernel_make_ready\n"
+	"	move.b #0x80,%d7\n"
+	"	movea.l %a5,%a2\n"
+	"	bra.b .Lg_101e50\n"
+	".Lg_101e6c:\n"
+	"	move.l (0x8,%a0),%d6\n"
+	"	beq.b .Lg_101e8e\n"
+	"	move.b #0x81,%d7\n"
+	"	movea.l %d6,%a5\n"
+	"	ori #0x700,%sr\n"
+	"	movea.l (0x1c,%a6),%a2\n"
+	"	move.l %a5,(0x1c,%a6)\n"
+	"	movea.l (0xc,%a0),%a5\n"
+	"	move.l %a2,(%a5)\n"
+	"	andi #-0x701,%sr\n"
+	".Lg_101e8e:\n"
+	"	lea (-0x8,%a6),%a5\n"
+	".Lg_101e92:\n"
+	"	move.l (0x1c,%a5),%d6\n"
+	"	beq.b .Lg_101ea6\n"
+	"	cmp.l %a0,%d6\n"
+	"	beq.b .Lg_101ea0\n"
+	"	movea.l %d6,%a5\n"
+	"	bra.b .Lg_101e92\n"
+	".Lg_101ea0:\n"
+	"	move.l (0x1c,%a0),(0x1c,%a5)\n"
+	".Lg_101ea6:\n"
+	"	move.l (0x18,%a6),(0x1c,%a0)\n"
+	"	move.l %a0,(0x18,%a6)\n"
+	".Lg_101eb0:\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	rts\n"
+	"	.size installer_kernel_delete_x, .-installer_kernel_delete_x\n"
+);
+
 /* installer::00101eb4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x00101ebe) */
 /* the installer's copy of kernel_service_18, at 0x154ae plus 0xeca06, byte for byte
@@ -61537,7 +80073,8 @@ LAB_installer__00101ea6:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall ushort installer_kernel_service_18(void) /* out D7 char error */
+/* out D7 char error */
+__regcall ushort installer_kernel_service_18(void)
 
 {
   int iVar1;
@@ -61638,7 +80175,113 @@ LAB_installer__00101f7c:
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_service_18\n"
+	"	.type installer_kernel_service_18, @function\n"
+	"	.section .text.installer_kernel_service_18.101eb4,\"ax\",@progbits\n"
+	"installer_kernel_service_18:\n"
+	"	movea.l (%a6),%a5\n"
+	"	move %sr,%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	beq.b .Lg_101ec2\n"
+	"	lea (0x8c,%a6),%a5\n"
+	".Lg_101ec2:\n"
+	"	movem.l %a3/%a2/%d5/%d4/%d3/%d2,-(%sp)\n"
+	"	bsr.w installer_kernel_check_exchange\n"
+	"	bne.w .Lg_101f92\n"
+	"	tst.l (0x4,%a1)\n"
+	"	bne.w .Lg_101f8a\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	movea.l (0x4,%a0),%a2\n"
+	"	move.l %a0,(%a0)\n"
+	"	move.l %a0,(0x4,%a0)\n"
+	"	move %d6,%sr\n"
+	"	clr.b %d1\n"
+	".Lg_101eea:\n"
+	"	cmpa.l %a2,%a0\n"
+	"	beq.b .Lg_101f16\n"
+	"	tst.b (0x12,%a2)\n"
+	"	ble.b .Lg_101ef8\n"
+	"	bsr.w installer_kernel_timer_unlink\n"
+	".Lg_101ef8:\n"
+	"	move.l (0x4,%a2),%d2\n"
+	"	bsr.w installer_kernel_make_ready\n"
+	"	movea.l (0x72,%a2),%a3\n"
+	"	movem.l (0x4,%a1),%d3/%d4/%d5/%d6/%d7\n"
+	"	movem.l %d3/%d4/%d5/%d6/%d7,(0x4,%a3)\n"
+	"	movea.l %d2,%a2\n"
+	"	addq.b #0x1,%d1\n"
+	"	bra.b .Lg_101eea\n"
+	".Lg_101f16:\n"
+	"	sub.b %d1,%d0\n"
+	"	bls.b .Lg_101f72\n"
+	"	move.b %d0,%d2\n"
+	"	bsr.w installer_kernel_copy_message\n"
+	"	bne.b .Lg_101f86\n"
+	"	movea.l %a3,%a5\n"
+	".Lg_101f24:\n"
+	"	movea.l %a3,%a2\n"
+	"	subq.b #0x1,%d2\n"
+	"	beq.b .Lg_101f34\n"
+	"	bsr.w installer_kernel_copy_message\n"
+	"	bne.b .Lg_101f76\n"
+	"	move.l %a3,(%a2)\n"
+	"	bra.b .Lg_101f24\n"
+	".Lg_101f34:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.b (0x21,%a0),%d7\n"
+	"	add.b %d0,%d7\n"
+	"	tst.b (0x12,%a0)\n"
+	"	beq.b .Lg_101f52\n"
+	"	move.b (0x20,%a0),%d5\n"
+	"	cmp.b %d5,%d7\n"
+	"	bls.b .Lg_101f52\n"
+	"	moveq #0x6,%d7\n"
+	"	bra.b .Lg_101f7c\n"
+	".Lg_101f52:\n"
+	"	move.b %d7,(0x21,%a0)\n"
+	"	movea.l (0xc,%a0),%a2\n"
+	"	move.l %a2,%d7\n"
+	"	bne.b .Lg_101f62\n"
+	"	lea (0x8,%a0),%a2\n"
+	".Lg_101f62:\n"
+	"	move.l (%a2),(%a3)\n"
+	"	bne.b .Lg_101f6a\n"
+	"	move.l %a3,(0xc,%a0)\n"
+	".Lg_101f6a:\n"
+	"	move.l %a5,(%a2)\n"
+	"	move %d6,%sr\n"
+	"	add.b %d1,%d0\n"
+	"	bra.b .Lg_101f90\n"
+	".Lg_101f72:\n"
+	"	move.w %d1,%d0\n"
+	"	bra.b .Lg_101f90\n"
+	".Lg_101f76:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	".Lg_101f7c:\n"
+	"	move.l (0x1c,%a6),(%a3)\n"
+	"	move.l %a5,(0x1c,%a6)\n"
+	"	move %d6,%sr\n"
+	".Lg_101f86:\n"
+	"	move.w %d1,%d0\n"
+	"	bra.b .Lg_101f92\n"
+	".Lg_101f8a:\n"
+	"	move.b #0x7,%d7\n"
+	"	bra.b .Lg_101f92\n"
+	".Lg_101f90:\n"
+	"	clr.b %d7\n"
+	".Lg_101f92:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%a2/%a3\n"
+	"	rts\n"
+	"	.size installer_kernel_service_18, .-installer_kernel_service_18\n"
+);
+
 /* installer::00101f98 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x00101fb2) */
 /* the installer's copy of kernel_jam_x, at 0x15592 plus 0xeca06, byte for byte
@@ -61647,7 +80290,8 @@ LAB_installer__00101f7c:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_jam_x(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_jam_x(void)
 
 {
   void *running;
@@ -61763,7 +80407,23 @@ LAB_installer__0010200c:
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_jam_x\n"
+	"	.type installer_kernel_jam_x, @function\n"
+	"	.section .text.installer_kernel_jam_x.101f98,\"ax\",@progbits\n"
+	"installer_kernel_jam_x:\n"
+	"	movea.l (%a6),%a5\n"
+	"	movem.l %a4/%a3/%a2/%d5/%d4/%d3,-(%sp)\n"
+	"	movea.l %a0,%a4\n"
+	"	.byte 0x60 | bra.b 0x00101faa\n"
+	"	.reloc ., R_68K_PC8, installer_kernel_send_for_task+0x6-1\n"
+	"	.byte 0\n"
+	"	.size installer_kernel_jam_x, .-installer_kernel_jam_x\n"
+);
+
 /* installer::00101fa2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x00101fb2) */
 /* WARNING: Removing unreachable block (ram,0x00102086) */
@@ -61774,7 +80434,8 @@ LAB_installer__0010200c:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_send_x(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_send_x(void)
 
 {
   void *running;
@@ -61880,7 +80541,18 @@ LAB_installer__0010200c:
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_send_x\n"
+	"	.type installer_kernel_send_x, @function\n"
+	"	.section .text.installer_kernel_send_x.101fa2,\"ax\",@progbits\n"
+	"installer_kernel_send_x:\n"
+	"	movea.l (%a6),%a5\n"
+	"	.size installer_kernel_send_x, .-installer_kernel_send_x\n"
+);
+
 /* installer::00101fa4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x00101fb2) */
 /* WARNING: Removing unreachable block (ram,0x00102086) */
@@ -61993,7 +80665,134 @@ LAB_installer__0010200c:
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_send_for_task\n"
+	"	.type installer_kernel_send_for_task, @function\n"
+	"	.section .text.installer_kernel_send_for_task.101fa4,\"ax\",@progbits\n"
+	"installer_kernel_send_for_task:\n"
+	"	movem.l %a4/%a3/%a2/%d5/%d4/%d3,-(%sp)\n"
+	"	suba.l %a4,%a4\n"
+	"	move %sr,%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	beq.b .Lg_101fb6\n"
+	"	lea (0x8c,%a6),%a5\n"
+	".Lg_101fb6:\n"
+	"	bsr.w installer_kernel_check_exchange\n"
+	"	bne.w .Lg_1020ac\n"
+	"	suba.l %a3,%a3\n"
+	"	move.l (0x4,%a1),%d3\n"
+	"	beq.b .Lg_10200c\n"
+	"	cmp.l %a0,%d3\n"
+	"	beq.b .Lg_101fd0\n"
+	"	moveq #0x4,%d7\n"
+	"	bra.w .Lg_1020ac\n"
+	".Lg_101fd0:\n"
+	"	lea (0x1c,%a5),%a2\n"
+	"	movem.l (0x8,%a1),%d3/%d4/%d5/%d6\n"
+	".Lg_101fda:\n"
+	"	move.l (%a2),%d7\n"
+	"	beq.b .Lg_101ffc\n"
+	"	movea.l %d7,%a3\n"
+	"	lea (0x4,%a3),%a3\n"
+	"	cmpa.l (%a3)+,%a0\n"
+	"	bne.b .Lg_101ff8\n"
+	"	cmp.l (%a3)+,%d3\n"
+	"	bne.b .Lg_101ff8\n"
+	"	cmp.l (%a3)+,%d4\n"
+	"	bne.b .Lg_101ff8\n"
+	"	cmp.l (%a3)+,%d5\n"
+	"	bne.b .Lg_101ff8\n"
+	"	cmp.l (%a3)+,%d6\n"
+	"	beq.b .Lg_102006\n"
+	".Lg_101ff8:\n"
+	"	movea.l %d7,%a2\n"
+	"	bra.b .Lg_101fda\n"
+	".Lg_101ffc:\n"
+	"	bsr.w installer_kernel_copy_message\n"
+	"	beq.b .Lg_10200c\n"
+	"	bra.w .Lg_1020ac\n"
+	".Lg_102006:\n"
+	"	lea (-0x18,%a3),%a3\n"
+	"	move.l (%a3),(%a2)\n"
+	".Lg_10200c:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	movea.l (%a0),%a2\n"
+	"	cmpa.l %a2,%a0\n"
+	"	beq.b .Lg_10204e\n"
+	"	movea.l (%a2),%a4\n"
+	"	move.l %a4,(%a0)\n"
+	"	move.l %a0,(0x4,%a4)\n"
+	"	move %d6,%sr\n"
+	"	tst.b (0x12,%a2)\n"
+	"	ble.b .Lg_10202c\n"
+	"	bsr.w installer_kernel_timer_unlink\n"
+	".Lg_10202c:\n"
+	"	bsr.w installer_kernel_make_ready\n"
+	"	movea.l (0x72,%a2),%a4\n"
+	"	movem.l (0x4,%a1),%d3/%d4/%d5/%d6/%d7\n"
+	"	movem.l %d3/%d4/%d5/%d6/%d7,(0x4,%a4)\n"
+	"	tst.l %d3\n"
+	"	beq.b .Lg_1020aa\n"
+	"	move.l (0x1c,%a2),(%a3)\n"
+	"	move.l %a3,(0x1c,%a2)\n"
+	"	bra.b .Lg_1020aa\n"
+	".Lg_10204e:\n"
+	"	move %d6,%sr\n"
+	"	addq.b #0x1,(0x21,%a0)\n"
+	"	move.l %a3,%d3\n"
+	"	bne.b .Lg_10206c\n"
+	"	tst.b (0x12,%a0)\n"
+	"	beq.b .Lg_102068\n"
+	"	move.b (0x20,%a0),%d3\n"
+	"	cmp.b (0x21,%a0),%d3\n"
+	"	bcs.b .Lg_10209a\n"
+	".Lg_102068:\n"
+	"	.byte 0x61 | bsr.b 0x001020b2\n"
+	"	.reloc ., R_68K_PC8, installer_kernel_copy_message-1\n"
+	"	.byte 0\n"
+	"	bne.b .Lg_10209c\n"
+	".Lg_10206c:\n"
+	"	move.l %a4,%d7\n"
+	"	bne.b .Lg_102086\n"
+	"	clr.l (%a3)\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	movea.l (0xc,%a0),%a2\n"
+	"	move.l %a2,%d3\n"
+	"	bne.b .Lg_1020a2\n"
+	"	move.l %a3,(0x8,%a0)\n"
+	"	bra.b .Lg_1020a4\n"
+	".Lg_102086:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	movea.l (0x8,%a0),%a2\n"
+	"	move.l %a3,(0x8,%a0)\n"
+	"	move.l %a2,(%a3)\n"
+	"	bne.b .Lg_1020a8\n"
+	"	bra.b .Lg_1020a4\n"
+	".Lg_10209a:\n"
+	"	moveq #0x6,%d7\n"
+	".Lg_10209c:\n"
+	"	subq.b #0x1,(0x21,%a0)\n"
+	"	bra.b .Lg_1020ac\n"
+	".Lg_1020a2:\n"
+	"	move.l %a3,(%a2)\n"
+	".Lg_1020a4:\n"
+	"	move.l %a3,(0xc,%a0)\n"
+	".Lg_1020a8:\n"
+	"	move %d6,%sr\n"
+	".Lg_1020aa:\n"
+	"	clr.b %d7\n"
+	".Lg_1020ac:\n"
+	"	movem.l (%sp)+,%d3/%d4/%d5/%a2/%a3/%a4\n"
+	"	rts\n"
+	"	.size installer_kernel_send_for_task, .-installer_kernel_send_for_task\n"
+);
+
 /* installer::001020b2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_copy_message, at 0x156ac plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -62027,7 +80826,33 @@ __naked void installer_kernel_copy_message(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_copy_message\n"
+	"	.type installer_kernel_copy_message, @function\n"
+	"	.section .text.installer_kernel_copy_message.1020b2,\"ax\",@progbits\n"
+	"installer_kernel_copy_message:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (0x1c,%a6),%d3\n"
+	"	bne.b .Lg_1020c4\n"
+	"	move %d6,%sr\n"
+	"	moveq #0x5,%d7\n"
+	"	bra.b .Lg_1020da\n"
+	".Lg_1020c4:\n"
+	"	movea.l %d3,%a3\n"
+	"	move.l (%a3),(0x1c,%a6)\n"
+	"	move %d6,%sr\n"
+	"	movem.l (0x4,%a1),%d3/%d4/%d5/%d6/%d7\n"
+	"	movem.l %d3/%d4/%d5/%d6/%d7,(0x4,%a3)\n"
+	"	clr.b %d7\n"
+	".Lg_1020da:\n"
+	"	rts\n"
+	"	.size installer_kernel_copy_message, .-installer_kernel_copy_message\n"
+);
+
 /* installer::001020dc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x001020ea) */
 /* the installer's copy of kernel_request_x, at 0x156d6 plus 0xeca06, byte for byte
@@ -62036,7 +80861,8 @@ __naked void installer_kernel_copy_message(void)
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_request_x(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_request_x(void)
 
 {
   int *running;
@@ -62139,7 +80965,119 @@ LAB_installer__001021ca:
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_request_x\n"
+	"	.type installer_kernel_request_x, @function\n"
+	"	.section .text.installer_kernel_request_x.1020dc,\"ax\",@progbits\n"
+	"installer_kernel_request_x:\n"
+	"	movem.l %a2/%d5/%d4/%d3,-(%sp)\n"
+	"	movea.l (%a6),%a5\n"
+	"	move %sr,%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	beq.b .Lg_1020f0\n"
+	"	lea (0x8c,%a6),%a5\n"
+	"	moveq #0x1,%d1\n"
+	".Lg_1020f0:\n"
+	"	bsr.w installer_kernel_check_exchange\n"
+	"	bne.w .Lg_1021e2\n"
+	".Lg_1020f8:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (0x8,%a0),%d3\n"
+	"	beq.b .Lg_102146\n"
+	"	subq.b #0x1,(0x21,%a0)\n"
+	"	movea.l %d3,%a2\n"
+	"	move.l (%a2),(0x8,%a0)\n"
+	"	bne.b .Lg_102114\n"
+	"	clr.l (0xc,%a0)\n"
+	".Lg_102114:\n"
+	"	move %d6,%sr\n"
+	"	movem.l (0x4,%a2),%d3/%d4/%d5/%d6/%d7\n"
+	"	movem.l %d3/%d4/%d5/%d6/%d7,(0x4,%a1)\n"
+	"	tst.l %d3\n"
+	"	beq.b .Lg_102132\n"
+	"	move.l (0x1c,%a5),(%a2)\n"
+	"	move.l %a2,(0x1c,%a5)\n"
+	"	bra.w .Lg_1021e0\n"
+	".Lg_102132:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (0x1c,%a6),(%a2)\n"
+	"	move.l %a2,(0x1c,%a6)\n"
+	"	move %d6,%sr\n"
+	"	bra.w .Lg_1021e0\n"
+	".Lg_102146:\n"
+	"	tst.b %d1\n"
+	"	beq.b .Lg_102154\n"
+	"	move %d6,%sr\n"
+	"	move.b #0x80,%d7\n"
+	"	bra.w .Lg_1021e2\n"
+	".Lg_102154:\n"
+	"	movea.l (0x4,%a5),%a2\n"
+	"	move.l (%a5),%d3\n"
+	"	move.l %d3,(%a2)\n"
+	"	exg %d3,%a2\n"
+	"	move.l %d3,(0x4,%a2)\n"
+	"	move.l %a1,(0x72,%a5)\n"
+	"	tst.b (0x10,%a0)\n"
+	"	beq.b .Lg_1021ba\n"
+	"	move.b (0x10,%a5),%d3\n"
+	".Lg_102170:\n"
+	"	movea.l %a0,%a2\n"
+	".Lg_102172:\n"
+	"	move %d6,%sr\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	movea.l (%a2),%a2\n"
+	"	cmpa.l %a2,%a0\n"
+	"	beq.b .Lg_102190\n"
+	"	move.b (0x13,%a2),%d5\n"
+	"	andi.b #0x20,%d5\n"
+	"	beq.b .Lg_102170\n"
+	"	cmp.b (0x10,%a2),%d3\n"
+	"	bls.b .Lg_102172\n"
+	".Lg_102190:\n"
+	"	tst.l (0x8,%a0)\n"
+	"	bne.b .Lg_1021ae\n"
+	"	move.l %a2,(%a5)\n"
+	"	move.l (0x4,%a2),%d3\n"
+	"	move.l %a5,(0x4,%a2)\n"
+	"	movea.l (0x4,%a2),%a2\n"
+	"	movea.l %d3,%a2\n"
+	"	move.l %a2,(0x4,%a5)\n"
+	"	move.l %a5,(%a2)\n"
+	"	bra.b .Lg_1021ca\n"
+	".Lg_1021ae:\n"
+	"	move %d6,%sr\n"
+	"	movea.l %a5,%a2\n"
+	"	bsr.w installer_kernel_ready_insert\n"
+	"	bra.w .Lg_1020f8\n"
+	".Lg_1021ba:\n"
+	"	move.l %a0,(%a5)\n"
+	"	movea.l (0x4,%a0),%a2\n"
+	"	move.l %a5,(0x4,%a0)\n"
+	"	move.l %a5,(%a2)\n"
+	"	move.l %a2,(0x4,%a5)\n"
+	".Lg_1021ca:\n"
+	"	move.w #-0xe0,(0x12,%a5)\n"
+	"	move %d6,%sr\n"
+	"	tst.l %d0\n"
+	"	bne.b .Lg_1021dc\n"
+	"	clr.b (0x12,%a5)\n"
+	"	bra.b .Lg_1021e0\n"
+	".Lg_1021dc:\n"
+	"	bsr.w installer_kernel_timer_insert\n"
+	".Lg_1021e0:\n"
+	"	clr.b %d7\n"
+	".Lg_1021e2:\n"
+	"	movem.l (%sp)+,%d3/%d4/%d5/%a2\n"
+	"	rts\n"
+	"	.size installer_kernel_request_x, .-installer_kernel_request_x\n"
+);
+
 /* installer::001021e8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x001021f2) */
 /* the installer's copy of kernel_signal_v, at 0x157e2 plus 0xeca06, byte for byte
@@ -62148,7 +81086,8 @@ LAB_installer__001021ca:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_signal_v(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_signal_v(void)
 
 {
   ushort uVar1;
@@ -62196,7 +81135,24 @@ __regcall void installer_kernel_signal_v(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_signal_v\n"
+	"	.type installer_kernel_signal_v, @function\n"
+	"	.section .text.installer_kernel_signal_v.1021e8,\"ax\",@progbits\n"
+	"installer_kernel_signal_v:\n"
+	"	movea.l (%a6),%a5\n"
+	"	move %sr,%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	.byte 0x67 | beq.b 0x001021f6\n"
+	"	.reloc ., R_68K_PC8, installer_kernel_signal_task-1\n"
+	"	.byte 0\n"
+	"	lea (0x8c,%a6),%a5\n"
+	"	.size installer_kernel_signal_v, .-installer_kernel_signal_v\n"
+);
+
 /* installer::001021f6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_signal_task, at 0x157f0 plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -62251,7 +81207,61 @@ __naked void installer_kernel_signal_task(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_signal_task\n"
+	"	.type installer_kernel_signal_task, @function\n"
+	"	.section .text.installer_kernel_signal_task.1021f6,\"ax\",@progbits\n"
+	"installer_kernel_signal_task:\n"
+	"	move.w %d1,-(%sp)\n"
+	"	bsr.w installer_kernel_check_task\n"
+	"	bne.b .Lg_10225c\n"
+	"	bclr.l #0xf,%d1\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	or.w (0x18,%a0),%d1\n"
+	"	move.w %d1,(0x18,%a0)\n"
+	"	move.w (0x16,%a0),%d7\n"
+	"	beq.b .Lg_102258\n"
+	"	eor.w %d7,%d1\n"
+	"	and.w %d1,(0x18,%a0)\n"
+	"	and.w %d7,%d1\n"
+	"	beq.b .Lg_102228\n"
+	"	bpl.b .Lg_10224e\n"
+	"	cmp.w %d1,%d7\n"
+	"	beq.b .Lg_102258\n"
+	"	eor.w %d1,%d7\n"
+	".Lg_102228:\n"
+	"	or.w %d7,(0x54,%a0)\n"
+	"	clr.w (0x16,%a0)\n"
+	"	move %d6,%sr\n"
+	"	exg %a0,%a2\n"
+	"	tst.b (0x12,%a2)\n"
+	"	ble.b .Lg_10223e\n"
+	"	bsr.w installer_kernel_timer_unlink\n"
+	".Lg_10223e:\n"
+	"	bsr.w installer_kernel_make_ready\n"
+	"	exg %a0,%a2\n"
+	"	cmpa.l (%a6),%a0\n"
+	"	bne.b .Lg_10225a\n"
+	"	clr.b (0x8b,%a6)\n"
+	"	bra.b .Lg_10225a\n"
+	".Lg_10224e:\n"
+	"	move.w %d1,(0x16,%a0)\n"
+	"	eor.w %d1,%d7\n"
+	"	or.w %d7,(0x54,%a0)\n"
+	".Lg_102258:\n"
+	"	move %d6,%sr\n"
+	".Lg_10225a:\n"
+	"	clr.b %d7\n"
+	".Lg_10225c:\n"
+	"	move.w (%sp)+,%d1\n"
+	"	rts\n"
+	"	.size installer_kernel_signal_task, .-installer_kernel_signal_task\n"
+);
+
 /* installer::00102260 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x001022ac) */
 /* WARNING: Removing unreachable block (ram,0x001022d6) */
@@ -62262,7 +81272,8 @@ __naked void installer_kernel_signal_task(void)
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_get_v(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_get_v(void)
 
 {
   ushort *puVar1;
@@ -62283,7 +81294,18 @@ __regcall void installer_kernel_get_v(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_get_v\n"
+	"	.type installer_kernel_get_v, @function\n"
+	"	.section .text.installer_kernel_get_v.102260,\"ax\",@progbits\n"
+	"installer_kernel_get_v:\n"
+	"	clr.b %d7\n"
+	"	.size installer_kernel_get_v, .-installer_kernel_get_v\n"
+);
+
 /* installer::00102262 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_wait_v, at 0x1585c plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -62291,7 +81313,8 @@ __regcall void installer_kernel_get_v(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_wait_v(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_wait_v(void)
 
 {
   int *piVar1;
@@ -62334,7 +81357,70 @@ __regcall void installer_kernel_wait_v(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_wait_v\n"
+	"	.type installer_kernel_wait_v, @function\n"
+	"	.section .text.installer_kernel_wait_v.102262,\"ax\",@progbits\n"
+	"installer_kernel_wait_v:\n"
+	"	move.l %a2,-(%sp)\n"
+	"	movea.l (%a6),%a5\n"
+	"	bclr.l #0xf,%d1\n"
+	"	tst.w %d1\n"
+	"	bne.b .Lg_102274\n"
+	"	move.w (0x18,%a5),%d1\n"
+	"	bra.b .Lg_1022da\n"
+	".Lg_102274:\n"
+	"	tst.b %d2\n"
+	"	beq.b .Lg_10227c\n"
+	"	bset.l #0xf,%d1\n"
+	".Lg_10227c:\n"
+	"	ori #0x700,%sr\n"
+	"	move.w (0x18,%a5),%d6\n"
+	"	eor.w %d1,%d6\n"
+	"	and.w %d6,(0x18,%a5)\n"
+	"	and.w %d1,%d6\n"
+	"	beq.b .Lg_102296\n"
+	"	bpl.b .Lg_10229c\n"
+	"	cmp.w %d1,%d6\n"
+	"	beq.b .Lg_10229c\n"
+	"	eor.w %d6,%d1\n"
+	".Lg_102296:\n"
+	"	andi #-0x701,%sr\n"
+	"	bra.b .Lg_1022da\n"
+	".Lg_10229c:\n"
+	"	eor.w %d6,%d1\n"
+	"	tst.b %d7\n"
+	"	bne.b .Lg_1022ac\n"
+	"	andi #-0x701,%sr\n"
+	"	move.b #0x80,%d7\n"
+	"	bra.b .Lg_1022dc\n"
+	".Lg_1022ac:\n"
+	"	move.w %d1,(0x54,%a5)\n"
+	"	move.w %d6,(0x16,%a5)\n"
+	"	movea.l (0x4,%a5),%a2\n"
+	"	move.l (%a5),%d7\n"
+	"	move.l %d7,(%a2)\n"
+	"	exg %d7,%a2\n"
+	"	move.l %d7,(0x4,%a2)\n"
+	"	move.w #-0xf0,(0x12,%a5)\n"
+	"	andi #-0x701,%sr\n"
+	"	tst.l %d0\n"
+	"	bne.b .Lg_1022d6\n"
+	"	clr.b (0x12,%a5)\n"
+	"	bra.b .Lg_1022da\n"
+	".Lg_1022d6:\n"
+	"	bsr.w installer_kernel_timer_insert\n"
+	".Lg_1022da:\n"
+	"	clr.b %d7\n"
+	".Lg_1022dc:\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	rts\n"
+	"	.size installer_kernel_wait_v, .-installer_kernel_wait_v\n"
+);
+
 /* installer::001022e0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_mode, at 0x158da plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -62342,7 +81428,8 @@ __regcall void installer_kernel_wait_v(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall byte installer_kernel_mode(void) /* out D7 char error */
+/* out D7 char error */
+__regcall byte installer_kernel_mode(void)
 
 {
   byte bVar1;
@@ -62356,7 +81443,29 @@ __regcall byte installer_kernel_mode(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_mode\n"
+	"	.type installer_kernel_mode, @function\n"
+	"	.section .text.installer_kernel_mode.1022e0,\"ax\",@progbits\n"
+	"installer_kernel_mode:\n"
+	"	movea.l (%a6),%a5\n"
+	"	move.b (0x11,%a5),%d6\n"
+	"	move.b %d6,%d7\n"
+	"	and.b %d1,%d0\n"
+	"	not.b %d1\n"
+	"	and.b %d1,%d6\n"
+	"	or.b %d0,%d6\n"
+	"	not.b %d1\n"
+	"	move.b %d6,(0x11,%a5)\n"
+	"	move.w %d7,%d0\n"
+	"	clr.b %d7\n"
+	"	rts\n"
+	"	.size installer_kernel_mode, .-installer_kernel_mode\n"
+);
+
 /* installer::001022fc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_service_33, at 0x158f6 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -62364,14 +81473,29 @@ __regcall byte installer_kernel_mode(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall undefined2 installer_kernel_service_33(undefined2 param_1) /* out D7 char error */
+/* out D7 char error */
+__regcall undefined2 installer_kernel_service_33(undefined2 param_1)
 
 {
   return param_1;
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_service_33\n"
+	"	.type installer_kernel_service_33, @function\n"
+	"	.section .text.installer_kernel_service_33.1022fc,\"ax\",@progbits\n"
+	"installer_kernel_service_33:\n"
+	"	move.w (0x10,%sp),%d0\n"
+	"	ori.w #0x2000,(0x10,%sp)\n"
+	"	clr.w %d7\n"
+	"	rts\n"
+	"	.size installer_kernel_service_33, .-installer_kernel_service_33\n"
+);
+
 /* installer::0010230a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_pause, at 0x15904 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -62379,7 +81503,8 @@ __regcall undefined2 installer_kernel_service_33(undefined2 param_1) /* out D7 c
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_pause(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_pause(void)
 
 {
   int iVar1;
@@ -62399,7 +81524,33 @@ __regcall void installer_kernel_pause(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_pause\n"
+	"	.type installer_kernel_pause, @function\n"
+	"	.section .text.installer_kernel_pause.10230a,\"ax\",@progbits\n"
+	"installer_kernel_pause:\n"
+	"	movea.l (%a6),%a5\n"
+	"	ori #0x700,%sr\n"
+	"	bsr.w installer_kernel_queue_remove\n"
+	"	andi #-0x701,%sr\n"
+	"	tst.l %d0\n"
+	"	bne.b .Lg_102326\n"
+	"	exg %a5,%a2\n"
+	"	bsr.w installer_kernel_ready_insert\n"
+	"	exg %a5,%a2\n"
+	"	bra.b .Lg_102330\n"
+	".Lg_102326:\n"
+	"	move.b #0xff,(0x12,%a5)\n"
+	"	bsr.w installer_kernel_timer_insert\n"
+	".Lg_102330:\n"
+	"	clr.b %d7\n"
+	"	rts\n"
+	"	.size installer_kernel_pause, .-installer_kernel_pause\n"
+);
+
 /* installer::00102334 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_service_29, at 0x1592e plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -62407,7 +81558,8 @@ __regcall void installer_kernel_pause(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_service_29(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_service_29(void)
 
 {
   undefined4 uVar1;
@@ -62435,7 +81587,43 @@ __regcall void installer_kernel_service_29(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_service_29\n"
+	"	.type installer_kernel_service_29, @function\n"
+	"	.section .text.installer_kernel_service_29.102334,\"ax\",@progbits\n"
+	"installer_kernel_service_29:\n"
+	"	addq.l #0x1,(0x6c,%a6)\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	addq.w #0x1,(0x70,%a6)\n"
+	"	move.w (0x70,%a6),%d7\n"
+	"	sub.w (0x86,%a6),%d7\n"
+	"	bcs.b .Lg_102374\n"
+	"	move.w %d7,(0x70,%a6)\n"
+	"	move.l (0x72,%a6),%d7\n"
+	"	addq.b #0x1,%d7\n"
+	"	cmpi.b #0x3c,%d7\n"
+	"	bne.b .Lg_102370\n"
+	"	clr.b %d7\n"
+	"	addi.w #0x100,%d7\n"
+	"	cmpi.w #0x3c00,%d7\n"
+	"	bne.b .Lg_102370\n"
+	"	clr.w %d7\n"
+	"	swap %d7\n"
+	"	addq.b #0x1,%d7\n"
+	"	swap %d7\n"
+	".Lg_102370:\n"
+	"	move.l %d7,(0x72,%a6)\n"
+	".Lg_102374:\n"
+	"	move %d6,%sr\n"
+	"	clr.b %d7\n"
+	"	rts\n"
+	"	.size installer_kernel_service_29, .-installer_kernel_service_29\n"
+);
+
 /* installer::0010237a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_service_30, at 0x15974 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -62443,7 +81631,8 @@ __regcall void installer_kernel_service_29(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall undefined8 installer_kernel_service_30(void) /* out D7 char error */
+/* out D7 char error */
+__regcall undefined8 installer_kernel_service_30(void)
 
 {
   uint extraout_D1;
@@ -62457,7 +81646,34 @@ __regcall undefined8 installer_kernel_service_30(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_service_30\n"
+	"	.type installer_kernel_service_30, @function\n"
+	"	.section .text.installer_kernel_service_30.10237a,\"ax\",@progbits\n"
+	"installer_kernel_service_30:\n"
+	".Lg_10237a:\n"
+	"	move.l (0x72,%a6),%d1\n"
+	"	bsr.w installer_kernel_advance_date\n"
+	"	move.w (0x70,%a6),%d2\n"
+	"	move.l (0x76,%a6),%d0\n"
+	"	cmp.l (0x72,%a6),%d1\n"
+	"	bne.b .Lg_10237a\n"
+	"	clr.l %d7\n"
+	"	move.b %d2,%d7\n"
+	"	swap %d7\n"
+	"	lsl.l #0x8,%d7\n"
+	"	or.l %d7,%d1\n"
+	"	tst.b (0x8a,%a6)\n"
+	"	bne.b .Lg_1023a2\n"
+	"	moveq #0x1,%d7\n"
+	".Lg_1023a2:\n"
+	"	rts\n"
+	"	.size installer_kernel_service_30, .-installer_kernel_service_30\n"
+);
+
 /* installer::001023a4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_service_31, at 0x1599e plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -62465,7 +81681,8 @@ __regcall undefined8 installer_kernel_service_30(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_service_31(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_service_31(void)
 
 {
   ushort in_D0w;
@@ -62495,7 +81712,62 @@ __regcall void installer_kernel_service_31(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_service_31\n"
+	"	.type installer_kernel_service_31, @function\n"
+	"	.section .text.installer_kernel_service_31.1023a4,\"ax\",@progbits\n"
+	"installer_kernel_service_31:\n"
+	"	move.l %d1,%d7\n"
+	"	cmpi.b #0x3c,%d7\n"
+	"	bcc.b .Lg_10240e\n"
+	"	lsr.w #0x8,%d7\n"
+	"	cmpi.b #0x3c,%d7\n"
+	"	bcc.b .Lg_10240e\n"
+	"	swap %d7\n"
+	"	cmpi.b #0x18,%d7\n"
+	"	bcc.b .Lg_10240e\n"
+	"	cmp.w (0x86,%a6),%d2\n"
+	"	bcc.b .Lg_10240e\n"
+	"	tst.b %d0\n"
+	"	beq.b .Lg_102412\n"
+	"	move.w %d0,%d7\n"
+	"	lsr.w #0x8,%d7\n"
+	"	beq.b .Lg_102412\n"
+	"	cmpi.b #0xd,%d7\n"
+	"	bcc.b .Lg_102412\n"
+	"	move.l %d0,%d6\n"
+	"	bsr.w installer_kernel_set_leap_year\n"
+	"	move.w %d0,%d7\n"
+	"	lsr.w #0x8,%d7\n"
+	"	cmp.b (0x79,%a6,%d7.w*0x1),%d0\n"
+	"	bls.b .Lg_1023ec\n"
+	"	move.l (0x76,%a6),%d6\n"
+	"	bsr.w installer_kernel_set_leap_year\n"
+	"	bra.b .Lg_102412\n"
+	".Lg_1023ec:\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.w %d2,(0x70,%a6)\n"
+	"	move.l %d1,(0x72,%a6)\n"
+	"	clr.b (0x72,%a6)\n"
+	"	move.l %d0,(0x76,%a6)\n"
+	"	move %d6,%sr\n"
+	"	move.b #0x1,(0x8a,%a6)\n"
+	"	clr.b %d7\n"
+	"	bra.b .Lg_102414\n"
+	".Lg_10240e:\n"
+	"	moveq #0x2,%d7\n"
+	"	bra.b .Lg_102414\n"
+	".Lg_102412:\n"
+	"	moveq #0x1,%d7\n"
+	".Lg_102414:\n"
+	"	rts\n"
+	"	.size installer_kernel_service_31, .-installer_kernel_service_31\n"
+);
+
 /* installer::00102416 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_service_35, at 0x15a10 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -62503,7 +81775,8 @@ __regcall void installer_kernel_service_31(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall undefined8 installer_kernel_service_35(void) /* out D7 char error */
+/* out D7 char error */
+__regcall undefined8 installer_kernel_service_35(void)
 
 {
   int in_D0;
@@ -62531,7 +81804,39 @@ __regcall undefined8 installer_kernel_service_35(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_service_35\n"
+	"	.type installer_kernel_service_35, @function\n"
+	"	.section .text.installer_kernel_service_35.102416,\"ax\",@progbits\n"
+	"installer_kernel_service_35:\n"
+	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
+	"	clr.w (0x8,%a0)\n"
+	"	move.l %d0,(0x4,%a0)\n"
+	"	movea.l %a0,%a1\n"
+	"	adda.l #0x14,%a1\n"
+	"	move.l %a1,(%a0)\n"
+	"	move.l %d0,%d6\n"
+	"	addi.l #0x9,%d0\n"
+	"	bclr.l #0x0,%d0\n"
+	".Lg_102438:\n"
+	"	subq.w #0x1,%d1\n"
+	"	bcs.b .Lg_10244a\n"
+	"	movea.l %a1,%a0\n"
+	"	adda.l %d0,%a1\n"
+	"	move.l %a1,(-0x8,%a0)\n"
+	"	move.l %d6,(-0x4,%a0)\n"
+	"	bra.b .Lg_102438\n"
+	".Lg_10244a:\n"
+	"	clr.l (-0x8,%a0)\n"
+	"	clr.b %d7\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
+	"	rts\n"
+	"	.size installer_kernel_service_35, .-installer_kernel_service_35\n"
+);
+
 /* installer::00102456 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_service_36, at 0x15a50 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -62539,7 +81844,8 @@ __regcall undefined8 installer_kernel_service_35(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_service_36(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_service_36(void)
 
 {
   int in_D0;
@@ -62552,7 +81858,32 @@ __regcall void installer_kernel_service_36(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_service_36\n"
+	"	.type installer_kernel_service_36, @function\n"
+	"	.section .text.installer_kernel_service_36.102456,\"ax\",@progbits\n"
+	"installer_kernel_service_36:\n"
+	"	moveq #0x1,%d7\n"
+	"	cmp.l (0x4,%a0),%d0\n"
+	"	bne.b .Lg_10247a\n"
+	"	ori #0x700,%sr\n"
+	"	tst.w (0x8,%a0)\n"
+	"	bne.b .Lg_102474\n"
+	"	clr.l (0x4,%a0)\n"
+	"	andi #-0x701,%sr\n"
+	"	clr.b %d7\n"
+	"	bra.b .Lg_10247a\n"
+	".Lg_102474:\n"
+	"	andi #-0x701,%sr\n"
+	"	moveq #0x2,%d7\n"
+	".Lg_10247a:\n"
+	"	rts\n"
+	"	.size installer_kernel_service_36, .-installer_kernel_service_36\n"
+);
+
 /* installer::0010247c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_service_37, at 0x15a76 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -62560,7 +81891,8 @@ __regcall void installer_kernel_service_36(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_service_37(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_service_37(void)
 
 {
   int iVar1;
@@ -62576,7 +81908,36 @@ __regcall void installer_kernel_service_37(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_service_37\n"
+	"	.type installer_kernel_service_37, @function\n"
+	"	.section .text.installer_kernel_service_37.10247c,\"ax\",@progbits\n"
+	"installer_kernel_service_37:\n"
+	"	moveq #0x1,%d7\n"
+	"	cmp.l (0x4,%a0),%d0\n"
+	"	bne.b .Lg_1024a6\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (%a0),%d7\n"
+	"	beq.b .Lg_1024a2\n"
+	"	addq.w #0x1,(0x8,%a0)\n"
+	"	movea.l %d7,%a1\n"
+	"	move.l (-0x8,%a1),(%a0)\n"
+	"	move %d6,%sr\n"
+	"	move.l %a0,(-0x8,%a1)\n"
+	"	clr.b %d7\n"
+	"	bra.b .Lg_1024a6\n"
+	".Lg_1024a2:\n"
+	"	move %d6,%sr\n"
+	"	moveq #0x2,%d7\n"
+	".Lg_1024a6:\n"
+	"	rts\n"
+	"	.size installer_kernel_service_37, .-installer_kernel_service_37\n"
+);
+
 /* installer::001024a8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_service_38, at 0x15aa2 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
@@ -62584,7 +81945,8 @@ __regcall void installer_kernel_service_37(void) /* out D7 char error */
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
-__regcall void installer_kernel_service_38(void) /* out D7 char error */
+/* out D7 char error */
+__regcall void installer_kernel_service_38(void)
 
 {
   int *in_A0;
@@ -62599,7 +81961,29 @@ __regcall void installer_kernel_service_38(void) /* out D7 char error */
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_service_38\n"
+	"	.type installer_kernel_service_38, @function\n"
+	"	.section .text.installer_kernel_service_38.1024a8,\"ax\",@progbits\n"
+	"installer_kernel_service_38:\n"
+	"	moveq #0x1,%d7\n"
+	"	cmpa.l (-0x8,%a1),%a0\n"
+	"	bne.b .Lg_1024c4\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (%a0),(-0x8,%a1)\n"
+	"	move.l %a1,(%a0)\n"
+	"	subq.w #0x1,(0x8,%a0)\n"
+	"	move %d6,%sr\n"
+	"	clr.b %d7\n"
+	".Lg_1024c4:\n"
+	"	rts\n"
+	"	.size installer_kernel_service_38, .-installer_kernel_service_38\n"
+);
+
 /* installer::001024c6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_advance_date, at 0x15ac0 plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -62637,7 +82021,46 @@ __naked void installer_kernel_advance_date(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_advance_date\n"
+	"	.type installer_kernel_advance_date, @function\n"
+	"	.section .text.installer_kernel_advance_date.1024c6,\"ax\",@progbits\n"
+	"installer_kernel_advance_date:\n"
+	"	move.l %d7,-(%sp)\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.w (0x72,%a6),%d7\n"
+	"	subi.w #0x18,%d7\n"
+	"	bcs.b .Lg_102510\n"
+	"	move.w %d7,(0x72,%a6)\n"
+	"	move %d6,%sr\n"
+	"	move.l (0x76,%a6),%d6\n"
+	"	addq.b #0x1,%d6\n"
+	"	move.l %d6,%d7\n"
+	"	lsr.w #0x8,%d7\n"
+	"	cmp.b (0x79,%a6,%d7.w*0x1),%d6\n"
+	"	bls.b .Lg_10250a\n"
+	"	move.b #0x1,%d6\n"
+	"	addi.w #0x100,%d6\n"
+	"	cmpi.w #0xd01,%d6\n"
+	"	bne.b .Lg_10250a\n"
+	"	move.w #0x101,%d6\n"
+	"	addi.l #0x10000,%d6\n"
+	"	bsr.w installer_kernel_set_leap_year\n"
+	".Lg_10250a:\n"
+	"	move.l %d6,(0x76,%a6)\n"
+	"	bra.b .Lg_102512\n"
+	".Lg_102510:\n"
+	"	move %d6,%sr\n"
+	".Lg_102512:\n"
+	"	move.l (%sp)+,%d7\n"
+	"	rts\n"
+	"	.size installer_kernel_advance_date, .-installer_kernel_advance_date\n"
+);
+
 /* installer::00102516 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_set_leap_year, at 0x15b10 plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -62660,14 +82083,44 @@ __naked void installer_kernel_set_leap_year(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_set_leap_year\n"
+	"	.type installer_kernel_set_leap_year, @function\n"
+	"	.section .text.installer_kernel_set_leap_year.102516,\"ax\",@progbits\n"
+	"installer_kernel_set_leap_year:\n"
+	"	move.l %d6,%d7\n"
+	"	clr.w %d7\n"
+	"	move.b #0x1c,(0x7b,%a6)\n"
+	"	lsr.l #0x2,%d7\n"
+	"	tst.w %d7\n"
+	"	bne.b .Lg_10253e\n"
+	"	clr.w %d7\n"
+	"	swap %d7\n"
+	"	divu.w #0x19,%d7\n"
+	"	swap %d7\n"
+	"	tst.w %d7\n"
+	"	bne.b .Lg_10253a\n"
+	"	lsr.l #0x2,%d7\n"
+	"	tst.w %d7\n"
+	"	bne.b .Lg_10253e\n"
+	".Lg_10253a:\n"
+	"	addq.b #0x1,(0x7b,%a6)\n"
+	".Lg_10253e:\n"
+	"	rts\n"
+	"	.size installer_kernel_set_leap_year, .-installer_kernel_set_leap_year\n"
+);
+
 /* installer::00102540 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_check_task, at 0x15b3a plus 0xeca06, byte for byte
    Not a C function (register; read): its arguments and results in registers.  In: A0 int task, A5
    void *running.  Out: A0 void *record.  Error: D7 2 bad ID, D7 1 deleted, D7 3 another group.
    psos.md */
 
-__regcall void * installer_kernel_check_task(int task __asm("a0"),void *running __asm("a5")) /* out A0 void *record; error D7 2 bad ID, D7 1 deleted, D7 3 another group */
+/* out A0 void *record; error D7 2 bad ID, D7 1 deleted, D7 3 another group */
+__regcall void * installer_kernel_check_task(int task /* a0 */,void *running /* a5 */)
 
 {
   if (task != 0) {
@@ -62677,35 +82130,119 @@ __regcall void * installer_kernel_check_task(int task __asm("a0"),void *running 
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_check_task\n"
+	"	.type installer_kernel_check_task, @function\n"
+	"	.section .text.installer_kernel_check_task.102540,\"ax\",@progbits\n"
+	"installer_kernel_check_task:\n"
+	"	move.l %a0,%d6\n"
+	"	beq.b .Lg_10256e\n"
+	"	move.l (0x28,%a0),%d6\n"
+	"	not.w %d6\n"
+	"	cmp.l %a0,%d6\n"
+	"	bne.b .Lg_102566\n"
+	"	cmpi.b #0xff,(0x13,%a0)\n"
+	"	beq.b .Lg_10256a\n"
+	"	move.b (0x14,%a5),%d6\n"
+	"	beq.b .Lg_102570\n"
+	"	cmp.b (0x14,%a0),%d6\n"
+	"	beq.b .Lg_102570\n"
+	"	moveq #0x3,%d7\n"
+	"	bra.b .Lg_102570\n"
+	".Lg_102566:\n"
+	"	moveq #0x2,%d7\n"
+	"	bra.b .Lg_102570\n"
+	".Lg_10256a:\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.b .Lg_102570\n"
+	".Lg_10256e:\n"
+	"	movea.l %a5,%a0\n"
+	".Lg_102570:\n"
+	"	rts\n"
+	"	.size installer_kernel_check_task, .-installer_kernel_check_task\n"
+);
+
 /* installer::00102572 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_check_exchange, at 0x15b6c plus 0xeca06, byte for byte
    Not a C function (register; read): its arguments and results in registers.  In: A0 int exchange,
    A5 void *running.  Error: D7 2 bad ID, D7 1 deleted, D7 3 another group.
    psos.md */
 
-__regcall void installer_kernel_check_exchange(int exchange __asm("a0"),void *running __asm("a5")) /* error D7 2 bad ID, D7 1 deleted, D7 3 another group */
+/* error D7 2 bad ID, D7 1 deleted, D7 3 another group */
+__regcall void installer_kernel_check_exchange(int exchange /* a0 */,void *running /* a5 */)
 
 {
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_check_exchange\n"
+	"	.type installer_kernel_check_exchange, @function\n"
+	"	.section .text.installer_kernel_check_exchange.102572,\"ax\",@progbits\n"
+	"installer_kernel_check_exchange:\n"
+	"	move.l (0x18,%a0),%d6\n"
+	"	swap %d6\n"
+	"	cmp.l %a0,%d6\n"
+	"	bne.b .Lg_102598\n"
+	"	tst.b (0x11,%a0)\n"
+	"	beq.b .Lg_10259a\n"
+	"	bmi.b .Lg_102594\n"
+	"	move.b (0x14,%a5),%d6\n"
+	"	beq.b .Lg_10259a\n"
+	"	cmp.b (0x13,%a0),%d6\n"
+	"	beq.b .Lg_10259a\n"
+	"	moveq #0x3,%d7\n"
+	"	bra.b .Lg_10259a\n"
+	".Lg_102594:\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.b .Lg_10259a\n"
+	".Lg_102598:\n"
+	"	moveq #0x2,%d7\n"
+	".Lg_10259a:\n"
+	"	rts\n"
+	"	.size installer_kernel_check_exchange, .-installer_kernel_check_exchange\n"
+);
+
 /* installer::0010259c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_check_segment, at 0x15b96 plus 0xeca06, byte for byte
    Not a C function (register; read): its arguments and results in registers.  In: A0 void *segment.
    Error: D7 5 bad segment.
    psos.md */
 
-__regcall void installer_kernel_check_segment(void *segment __asm("a0")) /* error D7 5 bad segment */
+/* error D7 5 bad segment */
+__regcall void installer_kernel_check_segment(void *segment /* a0 */)
 
 {
   return;
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_check_segment\n"
+	"	.type installer_kernel_check_segment, @function\n"
+	"	.section .text.installer_kernel_check_segment.10259c,\"ax\",@progbits\n"
+	"installer_kernel_check_segment:\n"
+	"	clr.l %d7\n"
+	"	move.w (0x10,%a0),%d7\n"
+	"	andi.w #-0x4,%d7\n"
+	"	cmpi.w #-0x1e30,%d7\n"
+	"	beq.b .Lg_1025ae\n"
+	"	moveq #0x5,%d7\n"
+	".Lg_1025ae:\n"
+	"	rts\n"
+	"	.size installer_kernel_check_segment, .-installer_kernel_check_segment\n"
+);
+
 /* installer::001025b0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_timer_cancel, at 0x15baa plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -62731,7 +82268,21 @@ __naked void installer_kernel_timer_cancel(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_timer_cancel\n"
+	"	.type installer_kernel_timer_cancel, @function\n"
+	"	.section .text.installer_kernel_timer_cancel.1025b0,\"ax\",@progbits\n"
+	"installer_kernel_timer_cancel:\n"
+	"	tst.b (0x12,%a2)\n"
+	"	.byte 0x6f | ble.b 0x001025e2\n"
+	"	.reloc ., R_68K_PC8, installer_kernel_timer_unlink+0x2c-1\n"
+	"	.byte 0\n"
+	"	.size installer_kernel_timer_cancel, .-installer_kernel_timer_cancel\n"
+);
+
 /* installer::001025b6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_timer_unlink, at 0x15bb0 plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -62756,7 +82307,33 @@ __naked undefined4 installer_kernel_timer_unlink(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_timer_unlink\n"
+	"	.type installer_kernel_timer_unlink, @function\n"
+	"	.section .text.installer_kernel_timer_unlink.1025b6,\"ax\",@progbits\n"
+	"installer_kernel_timer_unlink:\n"
+	"	movem.l %a3/%d0,-(%sp)\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	move.l (0x8,%a2),%d0\n"
+	"	movea.l (0xc,%a2),%a3\n"
+	"	move.l %d0,(0x8,%a3)\n"
+	"	beq.b .Lg_1025dc\n"
+	"	exg %d0,%a3\n"
+	"	move.l %d0,(0xc,%a3)\n"
+	"	move.l (0x4e,%a2),%d0\n"
+	"	add.l %d0,(0x4e,%a3)\n"
+	".Lg_1025dc:\n"
+	"	move %d6,%sr\n"
+	"	move.l (%sp)+,%d0\n"
+	"	movea.l (%sp)+,%a3\n"
+	"	rts\n"
+	"	.size installer_kernel_timer_unlink, .-installer_kernel_timer_unlink\n"
+);
+
 /* installer::001025e4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_timer_insert, at 0x15bde plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -62807,7 +82384,56 @@ __naked void installer_kernel_timer_insert(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_timer_insert\n"
+	"	.type installer_kernel_timer_insert, @function\n"
+	"	.section .text.installer_kernel_timer_insert.1025e4,\"ax\",@progbits\n"
+	"installer_kernel_timer_insert:\n"
+	"	movem.l %a4/%a2/%d2,-(%sp)\n"
+	"	subq.l #0x1,%d0\n"
+	"	move.l %d0,%d6\n"
+	".Lg_1025ec:\n"
+	"	andi #-0x701,%sr\n"
+	"	lea (%a6),%a2\n"
+	"	move.l %d6,%d0\n"
+	"	ori #0x700,%sr\n"
+	".Lg_1025f8:\n"
+	"	tst.b (0x12,%a5)\n"
+	"	beq.b .Lg_102648\n"
+	"	movea.l (0x8,%a2),%a4\n"
+	"	move.l %a4,%d2\n"
+	"	beq.b .Lg_10262c\n"
+	"	move.l (0x4e,%a4),%d2\n"
+	"	sub.l %d2,%d0\n"
+	"	bcs.b .Lg_102620\n"
+	"	andi #-0x701,%sr\n"
+	"	ori #0x700,%sr\n"
+	"	tst.b (0x12,%a4)\n"
+	"	beq.b .Lg_1025ec\n"
+	"	movea.l %a4,%a2\n"
+	"	bra.b .Lg_1025f8\n"
+	".Lg_102620:\n"
+	"	add.l %d2,%d0\n"
+	"	sub.l %d0,%d2\n"
+	"	move.l %d2,(0x4e,%a4)\n"
+	"	move.l %a5,(0xc,%a4)\n"
+	".Lg_10262c:\n"
+	"	move.l %d0,(0x4e,%a5)\n"
+	"	move.l %a2,(0xc,%a5)\n"
+	"	move.l %a5,(0x8,%a2)\n"
+	"	move.l %a4,(0x8,%a5)\n"
+	"	move.b #0x1,(0x12,%a5)\n"
+	"	ori.b #0x8,(0x13,%a5)\n"
+	".Lg_102648:\n"
+	"	andi #-0x701,%sr\n"
+	"	movem.l (%sp)+,%d2/%a2/%a4\n"
+	"	rts\n"
+	"	.size installer_kernel_timer_insert, .-installer_kernel_timer_insert\n"
+);
+
 /* installer::00102652 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_make_ready, at 0x15c4c plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -62840,7 +82466,21 @@ __naked void installer_kernel_make_ready(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_make_ready\n"
+	"	.type installer_kernel_make_ready, @function\n"
+	"	.section .text.installer_kernel_make_ready.102652,\"ax\",@progbits\n"
+	"installer_kernel_make_ready:\n"
+	"	andi.w #0x4,(0x12,%a2)\n"
+	"	.byte 0x66 | bne.b 0x0010269a\n"
+	"	.reloc ., R_68K_PC8, installer_kernel_ready_insert+0x40-1\n"
+	"	.byte 0\n"
+	"	.size installer_kernel_make_ready, .-installer_kernel_make_ready\n"
+);
+
 /* installer::0010265a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_ready_insert, at 0x15c54 plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -62868,7 +82508,41 @@ __naked void installer_kernel_ready_insert(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_ready_insert\n"
+	"	.type installer_kernel_ready_insert, @function\n"
+	"	.section .text.installer_kernel_ready_insert.10265a,\"ax\",@progbits\n"
+	"installer_kernel_ready_insert:\n"
+	"	movem.l %a5/%d1,-(%sp)\n"
+	"	move.b (0x10,%a2),%d1\n"
+	"	move %sr,%d6\n"
+	"	ori #0x700,%sr\n"
+	"	lea (0x4,%a6),%a5\n"
+	".Lg_10266c:\n"
+	"	movea.l (%a5),%a5\n"
+	"	cmp.b (0x10,%a5),%d1\n"
+	"	bhi.b .Lg_10267c\n"
+	"	move %d6,%sr\n"
+	"	ori #0x700,%sr\n"
+	"	bra.b .Lg_10266c\n"
+	".Lg_10267c:\n"
+	"	move.l (0x4,%a5),%d1\n"
+	"	move.l %a2,(0x4,%a5)\n"
+	"	move.l %d1,(0x4,%a2)\n"
+	"	move.l %a5,(%a2)\n"
+	"	movea.l %d1,%a5\n"
+	"	move.l %a2,(%a5)\n"
+	"	move %d6,%sr\n"
+	"	move.w (0x88,%a6),(0x1a,%a2)\n"
+	"	move.l (%sp)+,%d1\n"
+	"	movea.l (%sp)+,%a5\n"
+	"	rts\n"
+	"	.size installer_kernel_ready_insert, .-installer_kernel_ready_insert\n"
+);
+
 /* installer::0010269c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_queue_remove, at 0x15c96 plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -62889,7 +82563,71 @@ __naked void installer_kernel_queue_remove(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_queue_remove\n"
+	"	.type installer_kernel_queue_remove, @function\n"
+	"	.section .text.installer_kernel_queue_remove.10269c,\"ax\",@progbits\n"
+	"installer_kernel_queue_remove:\n"
+	"	move.l %a1,-(%sp)\n"
+	"	move.l (%a5),%d6\n"
+	"	movea.l (0x4,%a5),%a1\n"
+	"	move.l %d6,(%a1)\n"
+	"	exg %d6,%a1\n"
+	"	move.l %d6,(0x4,%a1)\n"
+	"	movea.l (%sp)+,%a1\n"
+	"	rts\n"
+	"	.byte 0x41\n"
+	"	.byte 0xfa\n"
+	"	.byte 0x03\n"
+	"	.byte 0xc0\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x71\n"
+	"	.byte 0x43\n"
+	"	.byte 0xfa\n"
+	"	.byte 0xee\n"
+	"	.byte 0x1a\n"
+	"	.byte 0x91\n"
+	"	.byte 0xc9\n"
+	"	.byte 0x20\n"
+	"	.byte 0x08\n"
+	"	.byte 0xe2\n"
+	"	.byte 0x48\n"
+	"	.byte 0x53\n"
+	"	.byte 0x80\n"
+	"	.byte 0x42\n"
+	"	.byte 0x81\n"
+	"	.byte 0x42\n"
+	"	.byte 0x82\n"
+	"	.byte 0x34\n"
+	"	.byte 0x19\n"
+	"	.byte 0xd2\n"
+	"	.byte 0x82\n"
+	"	.byte 0x51\n"
+	"	.byte 0xc8\n"
+	"	.byte 0xff\n"
+	"	.byte 0xfa\n"
+	"	.byte 0x26\n"
+	"	.byte 0x3a\n"
+	"	.byte 0xed\n"
+	"	.byte 0xfe\n"
+	"	.byte 0x67\n"
+	"	.byte 0x0a\n"
+	"	.byte 0xb6\n"
+	"	.byte 0x81\n"
+	"	.byte 0x67\n"
+	"	.byte 0x06\n"
+	"	.byte 0x7e\n"
+	"	.byte 0x04\n"
+	"	.byte 0x60\n"
+	"	.byte 0x00\n"
+	"	.byte 0x01\n"
+	"	.byte 0xee\n"
+	"	.size installer_kernel_queue_remove, .-installer_kernel_queue_remove\n"
+);
+
 /* installer::001026de */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x001028ac) */
 /* the installer's copy of kernel_init, at 0x15cd8 plus 0xeca06, byte for byte
@@ -63062,7 +82800,176 @@ __exception void installer_kernel_init(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_init\n"
+	"	.type installer_kernel_init, @function\n"
+	"	.section .text.installer_kernel_init.1026de,\"ax\",@progbits\n"
+	"installer_kernel_init:\n"
+	"	movea.l (__ghidra_1014c8:w,%pc),%a0\n"
+	"	movea.l (%a0),%a0\n"
+	"	movea.l (%a0),%a6\n"
+	"	move.l #0xc8,%d7\n"
+	"	add.l (0x28,%a0),%d7\n"
+	"	move.w (0x1a,%a0),%d0\n"
+	"	mulu.w #0x22,%d0\n"
+	"	add.l %d0,%d7\n"
+	"	move.w (0x1c,%a0),%d0\n"
+	"	mulu.w #0x18,%d0\n"
+	"	add.l %d0,%d7\n"
+	"	move.w (0x18,%a0),%d0\n"
+	"	addq.w #0x1,%d0\n"
+	"	mulu.w #0xb2,%d0\n"
+	"	add.l %d0,%d7\n"
+	"	addi.l #0x12,%d7\n"
+	"	movea.l %a6,%a3\n"
+	"	adda.l %d7,%a3\n"
+	"	cmpa.l (0x4,%a0),%a3\n"
+	"	bls.b .Lg_102726\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.w .Lg_1028ca\n"
+	".Lg_102726:\n"
+	"	movea.l %a6,%a3\n"
+	"	adda.w #0xc8,%a3\n"
+	"	adda.l (0x28,%a0),%a3\n"
+	"	movea.l %a3,%sp\n"
+	"	move.l %a3,(0x20,%a6)\n"
+	"	move.w #-0x2151,(0xb8,%a6)\n"
+	"	clr.l (0x30,%a6)\n"
+	"	clr.l (0x14,%a6)\n"
+	"	clr.l (0x18,%a6)\n"
+	"	move.w (0x1a,%a0),%d0\n"
+	"	beq.b .Lg_102772\n"
+	"	move.l %a3,(0x18,%a6)\n"
+	".Lg_102752:\n"
+	"	movea.l %a3,%a4\n"
+	"	move.b #0xfe,(0x11,%a4)\n"
+	"	move.l %a4,%d6\n"
+	"	swap %d6\n"
+	"	move.l %d6,(0x18,%a4)\n"
+	"	lea (0x22,%a4),%a3\n"
+	"	move.l %a3,(0x1c,%a4)\n"
+	"	subq.w #0x1,%d0\n"
+	"	bne.b .Lg_102752\n"
+	"	clr.l (0x1c,%a4)\n"
+	".Lg_102772:\n"
+	"	clr.l (0x1c,%a6)\n"
+	"	move.w (0x1c,%a0),%d0\n"
+	"	beq.b .Lg_10278e\n"
+	"	move.l %a3,(0x1c,%a6)\n"
+	".Lg_102780:\n"
+	"	movea.l %a3,%a4\n"
+	"	lea (0x18,%a4),%a3\n"
+	"	move.l %a3,(%a4)\n"
+	"	subq.w #0x1,%d0\n"
+	"	bne.b .Lg_102780\n"
+	"	clr.l (%a4)\n"
+	".Lg_10278e:\n"
+	"	move.w (0x18,%a0),%d0\n"
+	"	move.l %a3,(0x10,%a6)\n"
+	".Lg_102796:\n"
+	"	movea.l %a3,%a4\n"
+	"	move.b #0xff,(0x13,%a4)\n"
+	"	move.l %a4,%d6\n"
+	"	not.w %d6\n"
+	"	move.l %d6,(0x28,%a4)\n"
+	"	lea (0xb2,%a4),%a3\n"
+	"	move.l %a3,(0x30,%a4)\n"
+	"	subq.w #0x1,%d0\n"
+	"	bcc.b .Lg_102796\n"
+	"	clr.l (0x30,%a4)\n"
+	"	clr.l (0xc,%a6)\n"
+	"	move.l (0x46,%a0),%d6\n"
+	"	beq.b .Lg_1027c8\n"
+	"	movea.l %d6,%a2\n"
+	"	movea.l (%a2),%a2\n"
+	"	jsr (0x4,%a2)\n"
+	".Lg_1027c8:\n"
+	"	bsr.w installer_kernel_region_init\n"
+	"	lea (0x7a,%a6),%a2\n"
+	"	move.l #0x1f001f1e,(%a2)+\n"
+	"	move.l #0x1f1e1f1f,(%a2)+\n"
+	"	move.l #0x1e1f1e1f,(%a2)\n"
+	"	clr.l (0x6c,%a6)\n"
+	"	clr.w (0x70,%a6)\n"
+	"	clr.l (0x72,%a6)\n"
+	"	move.l (__ghidra_101528:w,%pc),%d6\n"
+	"	move.l %d6,(0x76,%a6)\n"
+	"	bsr.w installer_kernel_set_leap_year\n"
+	"	clr.b (0x8a,%a6)\n"
+	"	move.l (0x1e,%a0),(0x86,%a6)\n"
+	"	clr.l (0x8,%a6)\n"
+	"	lea (0x8c,%a6),%a2\n"
+	"	lea (0x4,%a6),%a3\n"
+	"	move.l %a2,(%a6)\n"
+	"	move.l %a2,(%a3)\n"
+	"	clr.l (%a2)\n"
+	"	move.l %a3,(0x4,%a2)\n"
+	"	move.l #0x73797364,(0x24,%a2)\n"
+	"	clr.l (0x10,%a2)\n"
+	"	clr.b (0x14,%a2)\n"
+	"	clr.l (0x1c,%a2)\n"
+	"	move.l (0x3e,%a0),(0xb4,%a6)\n"
+	"	bset.b #0x7,(0x8b,%a6)\n"
+	"	move.w #0x1,(0x24,%a6)\n"
+	"	move.w (0x22,%a0),%d0\n"
+	"	move.w %d0,%d2\n"
+	"	move.w %d0,%d1\n"
+	"	lsl.w #0x5,%d2\n"
+	"	lsl.w #0x2,%d1\n"
+	"	add.w %d1,%d2\n"
+	"	movea.l (0x24,%a0),%a2\n"
+	"	lsl.w #0x8,%d0\n"
+	".Lg_102854:\n"
+	"	jsr (0x0,%a2,%d2.w*0x1)\n"
+	"	subi.w #0x100,%d0\n"
+	"	subi.w #0x24,%d2\n"
+	"	bcc.b .Lg_102854\n"
+	"	move.l (0x42,%a0),%d0\n"
+	"	movea.l %d0,%a1\n"
+	"	beq.b .Lg_10286c\n"
+	"	movea.l (%a1),%a1\n"
+	".Lg_10286c:\n"
+	"	move.l %a1,(0x30,%a6)\n"
+	"	move.l #0x524f4f54,%d0\n"
+	"	clr.b %d1\n"
+	"	move.w (0x34,%a0),%d2\n"
+	"	move.l (0x30,%a0),%d3\n"
+	"	movea.l (0x2c,%a0),%a1\n"
+	"	suba.l %a0,%a0\n"
+	"	bsr.w installer_kernel_create\n"
+	"	tst.b %d7\n"
+	"	beq.b .Lg_102892\n"
+	"	moveq #0x2,%d7\n"
+	"	bra.b .Lg_1028ca\n"
+	".Lg_102892:\n"
+	"	bsr.w installer_kernel_start\n"
+	"	move.l #0x49444c45,%d0\n"
+	"	clr.b %d1\n"
+	"	moveq #0x1,%d2\n"
+	"	moveq #0x10,%d3\n"
+	"	suba.l %a0,%a0\n"
+	"	bsr.w installer_kernel_create\n"
+	"	tst.b %d7\n"
+	"	beq.b .Lg_1028b0\n"
+	"	moveq #0x3,%d7\n"
+	"	bra.b .Lg_1028ca\n"
+	".Lg_1028b0:\n"
+	"	lea (__ghidra_10298a:w,%pc),%a1\n"
+	"	nop\n"
+	"	bsr.w installer_kernel_start\n"
+	"	ori.w #0x2000,(0x44,%a0)\n"
+	"	clr.b (0x10,%a0)\n"
+	"	clr.l (%a0)\n"
+	"	bra.w installer_kernel_return_from_interrupt+0x94\n"
+	".Lg_1028ca:\n"
+	"	lea (0xdead).l,%a0\n"
+	"	stop #0x0\n"
+	"	.size installer_kernel_init, .-installer_kernel_init\n"
+);
+
 /* installer::001028d4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_region_init, at 0x15ece plus 0xeca06, byte for byte
    Not a C function (undetermined; derived): how it is called is not yet set out.
@@ -63123,7 +83030,80 @@ __naked void installer_kernel_region_init(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_kernel_region_init\n"
+	"	.type installer_kernel_region_init, @function\n"
+	"	.section .text.installer_kernel_region_init.1028d4,\"ax\",@progbits\n"
+	"installer_kernel_region_init:\n"
+	"	move.l (0x4,%a0),%d1\n"
+	"	sub.l %a3,%d1\n"
+	"	addq.l #0x1,%d1\n"
+	"	lsr.b #0x1,%d1\n"
+	"	lsl.b #0x1,%d1\n"
+	"	move.l %d1,(0xc,%a3)\n"
+	"	clr.l (%a3)\n"
+	"	lea (0x54,%a6),%a2\n"
+	"	move.l %a2,(0x4,%a3)\n"
+	"	clr.l (0x8,%a3)\n"
+	"	clr.w (0x10,%a3)\n"
+	"	move.l %a3,(0x54,%a6)\n"
+	"	move.l %a3,(0x5c,%a6)\n"
+	"	move.l %d1,(0x3c,%a6)\n"
+	"	addq.l #0x1,%d1\n"
+	"	move.l %d1,(0x44,%a6)\n"
+	"	move.l (0x4,%a0),(0x4c,%a6)\n"
+	"	move.l (0x8,%a0),%d1\n"
+	"	cmpi.l #0x12,%d1\n"
+	"	bcc.b .Lg_10291c\n"
+	"	moveq #0x12,%d1\n"
+	".Lg_10291c:\n"
+	"	move.l %d1,(0x34,%a6)\n"
+	"	movea.l (0xc,%a0),%a3\n"
+	"	move.l (0x10,%a0),%d1\n"
+	"	sub.l %a3,%d1\n"
+	"	addq.l #0x1,%d1\n"
+	"	lsr.b #0x1,%d1\n"
+	"	lsl.b #0x1,%d1\n"
+	"	cmpi.l #0x48,%d1\n"
+	"	bcc.b .Lg_10293e\n"
+	"	clr.l (0x58,%a6)\n"
+	"	bra.b .Lg_10297e\n"
+	".Lg_10293e:\n"
+	"	move.l %d1,(0xc,%a3)\n"
+	"	clr.l (%a3)\n"
+	"	lea (0x58,%a6),%a2\n"
+	"	move.l %a2,(0x4,%a3)\n"
+	"	clr.l (0x8,%a3)\n"
+	"	clr.w (0x10,%a3)\n"
+	"	move.l %a3,(0x58,%a6)\n"
+	"	move.l %a3,(0x60,%a6)\n"
+	"	move.l %d1,(0x40,%a6)\n"
+	"	addq.l #0x1,%d1\n"
+	"	move.l %d1,(0x48,%a6)\n"
+	"	move.l (0x10,%a0),(0x50,%a6)\n"
+	"	move.l (0x14,%a0),%d1\n"
+	"	cmpi.l #0x12,%d1\n"
+	"	bcc.b .Lg_10297a\n"
+	"	moveq #0x12,%d1\n"
+	".Lg_10297a:\n"
+	"	move.l %d1,(0x38,%a6)\n"
+	".Lg_10297e:\n"
+	"	lea (0x64,%a6),%a2\n"
+	"	move.l %a2,(%a2)\n"
+	"	move.l %a2,(0x68,%a6)\n"
+	"	rts\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x72\n"
+	"	.byte 0x20\n"
+	"	.byte 0x00\n"
+	"	.byte 0x60\n"
+	"	.byte 0xfa\n"
+	"	.size installer_kernel_region_init, .-installer_kernel_region_init\n"
+);
+
 /* installer::00102990 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's copy of kernel_return_from_interrupt, at 0x15f8a plus 0xeca06, byte for byte
    Not a C function (exception; read): entered by the processor, not called.
@@ -63243,6 +83223,107 @@ __exception void installer_kernel_return_from_interrupt(ushort param_1)
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl installer_kernel_return_from_interrupt\n"
+	"	.type installer_kernel_return_from_interrupt, @function\n"
+	"	.section .text.installer_kernel_return_from_interrupt.102990,\"ax\",@progbits\n"
+	"installer_kernel_return_from_interrupt:\n"
+	"	addq.l #0x8,%sp\n"
+	"	movem.l %a6/%a5/%d6,-(%sp)\n"
+	"	move.w (0xc,%sp),%d6\n"
+	"	andi.w #0x700,%d6\n"
+	"	bne.b .Lg_1029de\n"
+	"	movea.l (__ghidra_1014c8:w,%pc),%a5\n"
+	"	movea.l (%a5),%a5\n"
+	"	movea.l (%a5),%a6\n"
+	"	tst.w (0x24,%a6)\n"
+	"	bne.b .Lg_1029de\n"
+	"	addq.w #0x1,(0x24,%a6)\n"
+	"	andi #-0x701,%sr\n"
+	"	movea.l (%a6),%a5\n"
+	".Lg_1029b8:\n"
+	"	ori #0x700,%sr\n"
+	"	tst.l (0x6c,%a6)\n"
+	"	beq.b .Lg_1029cc\n"
+	"	andi #-0x701,%sr\n"
+	"	bsr.w installer_kernel_process_ticks\n"
+	"	bra.b .Lg_1029b8\n"
+	".Lg_1029cc:\n"
+	"	cmpa.l (0x4,%a6),%a5\n"
+	"	beq.b .Lg_1029da\n"
+	"	btst.b #0x7,(0x11,%a5)\n"
+	"	beq.b .Lg_1029e4\n"
+	".Lg_1029da:\n"
+	"	subq.w #0x1,(0x24,%a6)\n"
+	".Lg_1029de:\n"
+	"	movem.l (%sp)+,%d6/%a5/%a6\n"
+	"	rte\n"
+	".Lg_1029e4:\n"
+	"	move.l (%sp)+,%d6\n"
+	"	lea (0x4e,%a5),%a5\n"
+	"	movem.l %d0/%d1/%d2/%d3/%d4/%d5/%d6/%d7/%a0/%a1/%a2/%a3/%a4,(%a5)\n"
+	"	andi #-0x701,%sr\n"
+	"	move.l (%sp)+,-(%a5)\n"
+	"	move.l (%sp)+,-(%a5)\n"
+	"	move.l -(%a5),%d0\n"
+	"	andi.w #0x1000,%d0\n"
+	"	or.w (%sp)+,%d0\n"
+	"	move.l %d0,(%a5)\n"
+	"	move.l (%sp)+,-(%a5)\n"
+	"	move.w (%sp)+,(-0xa,%a5)\n"
+	"	move %usp,%a0\n"
+	"	move.l %a0,-(%a5)\n"
+	"	move.l (0x20,%a6),%d1\n"
+	"	btst.l #0xc,%d0\n"
+	"	beq.b .Lg_102a1a\n"
+	"	move.l %sp,-(%a5)\n"
+	"	movea.l %d1,%sp\n"
+	"	bra.b .Lg_102a24\n"
+	".Lg_102a1a:\n"
+	"	cmp.l %sp,%d1\n"
+	"	beq.b .Lg_102a22\n"
+	"	move.w (%sp)+,-(%a0)\n"
+	"	bra.b .Lg_102a1a\n"
+	".Lg_102a22:\n"
+	"	move.l %a0,-(%a5)\n"
+	".Lg_102a24:\n"
+	"	movea.l (0x4,%a6),%a5\n"
+	"	move.l (0xb4,%a6),%d6\n"
+	"	beq.b .Lg_102a34\n"
+	"	movea.l (%a6),%a4\n"
+	"	movea.l %d6,%a1\n"
+	"	jsr (%a1)\n"
+	".Lg_102a34:\n"
+	"	move.l %a5,(%a6)\n"
+	"	lea (0x36,%a5),%a4\n"
+	"	movea.l (%a4)+,%a0\n"
+	"	movea.l (%a4)+,%a1\n"
+	"	move.w (0x44,%a5),%d6\n"
+	"	btst.l #0xc,%d6\n"
+	"	beq.b .Lg_102a50\n"
+	"	movea.l %a0,%sp\n"
+	"	bclr.l #0xc,%d6\n"
+	"	bra.b .Lg_102a58\n"
+	".Lg_102a50:\n"
+	"	cmpa.l %a0,%a1\n"
+	"	beq.b .Lg_102a58\n"
+	"	move.w (%a0)+,-(%sp)\n"
+	"	bra.b .Lg_102a50\n"
+	".Lg_102a58:\n"
+	"	move %a1,%usp\n"
+	"	move.w (-0xa,%a4),-(%sp)\n"
+	"	move.l (%a4)+,-(%sp)\n"
+	"	move.w %d6,-(%sp)\n"
+	"	addq.l #0x4,%a4\n"
+	"	move.l (%a4)+,-(%sp)\n"
+	"	move.l (%a4)+,-(%sp)\n"
+	"	movem.l (%a4),%d0/%d1/%d2/%d3/%d4/%d5/%d6/%d7/%a0/%a1/%a2/%a3/%a4\n"
+	"	move.l %d6,-(%sp)\n"
+	"	bra.w installer_kernel_switch_task\n"
+	"	.size installer_kernel_return_from_interrupt, .-installer_kernel_return_from_interrupt\n"
+);
 
 /* installer::00102a72 */
 
@@ -64667,7 +84748,7 @@ LAB_installer__00108cf2:
         }
       }
       else {
-        uVar8 = CONCAT22(param_4._2_2_,param_5._0_2_);
+        uVar8 = CONCAT22(__ghidra_piece(unsigned short, param_4, 2),__ghidra_piece(unsigned short, param_5, 0));
         if ((uVar4 & 0x80) == 0) {
           uVar8 = *(uint *)(unaff_A6 + 4);
         }
@@ -64731,17 +84812,7 @@ LAB_installer__00108ff8:
 
 
 /* installer::00109036 */
-
-void installer_call_atexit_functions(void)
-
-{
-  while (0 < DAT_0010b0bc) {
-    DAT_0010b0bc = DAT_0010b0bc + -1;
-    (**(code **)(&DAT_0010b03c + DAT_0010b0bc * 4))();
-  }
-  return;
-}
-
+/* a thunk to installer_call_atexit_functions, whose name the decompiler gives it */
 
 /* installer::0010904c */
 
@@ -65002,8 +85073,8 @@ void installer_double_to_digits_multiply(uint *param_1)
   local_14 = (uint)CONCAT12(uVar5 <= uVar6 && uVar6 - uVar5 != 0,local_10);
   local_c = (undefined2)(uVar8 >> 0x10);
   uVar5 = CONCAT22((short)uVar5,local_c);
-  local_8._0_2_ = (undefined2)(uVar4 >> 0x10);
-  uVar6 = CONCAT22((short)uVar8,local_8._0_2_);
+  __ghidra_piece(unsigned short, local_8, 0) = (undefined2)(uVar4 >> 0x10);
+  uVar6 = CONCAT22((short)uVar8,__ghidra_piece(unsigned short, local_8, 0));
   local_8 = uVar4 * 0x10000;
   iVar9 = local_20 * uVar11;
   uVar4 = local_20 * uVar3;

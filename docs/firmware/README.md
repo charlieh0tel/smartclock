@@ -342,7 +342,9 @@ each exception handler's, naming the vectors that enter it and how it
 returns, unless the comment says already that the routine is not C.
 
 SCPI handlers are named `scpi_query_PATH` and `scpi_set_PATH`, console
-words `forth_WORD` and `diag_WORD`.  A name replaces one Ghidra made
+words `forth_WORD` and `diag_WORD`, and each has a note saying so -- the
+query handler for its path, the setter, the pForth word or diagnostic
+word -- unless the names file gives it one.  A name replaces one Ghidra made
 up, and one from the names file also one these tables gave, but none
 replaces a name given by hand.  A table vouches that its entries are code, so the
 script disassembles each, and splits a function whose body ran into

@@ -445,19 +445,24 @@ public class SmartClockSetup extends GhidraScript {
 						? "common_" + fields[0].substring(1)
 						: fields[0].substring(1)).replace(':', '_');
 				if (!fields[1].equals(NO_HANDLER)) {
-					nameFunction(toAddr(Long.decode(fields[1])), "scpi_query_" + path, false,
-						counts);
+					Address handler = toAddr(Long.decode(fields[1]));
+					nameFunction(handler, "scpi_query_" + path, false, counts);
+					describe(handler, "the query handler for " + fields[0] + "?");
 				}
 				if (!fields[2].equals(NO_HANDLER)) {
-					nameFunction(toAddr(Long.decode(fields[2])), "scpi_set_" + path, false,
-						counts);
+					Address handler = toAddr(Long.decode(fields[2]));
+					nameFunction(handler, "scpi_set_" + path, false, counts);
+					describe(handler, "the setter for " + fields[0]);
 				}
 			}
 			default -> {
 				String[] fields = line.split(" ");
-				String prefix = fields[0].equals("kernel") ? "forth_" : "diag_";
-				nameFunction(toAddr(Long.decode(fields[2])), prefix + spell(fields[1]), false,
+				boolean kernel = fields[0].equals("kernel");
+				Address word = toAddr(Long.decode(fields[2]));
+				nameFunction(word, (kernel ? "forth_" : "diag_") + spell(fields[1]), false,
 					counts);
+				describe(word, "the pForth " + (kernel ? "" : "diagnostic ") + "word "
+					+ fields[1]);
 			}
 		}
 	}
@@ -980,6 +985,17 @@ public class SmartClockSetup extends GhidraScript {
 				function.setComment(existing + "\n"
 					+ vectorComment(prefix, targets, vector, defaultHandler));
 			}
+		}
+	}
+
+	/**
+	 * Gives the function at address the comment note, if it has none: a
+	 * name from the names file, applied first, keeps its own.
+	 */
+	private void describe(Address address, String note) {
+		Function function = getFunctionAt(address);
+		if (function != null && function.getComment() == null) {
+			function.setComment(note);
 		}
 	}
 

@@ -60,7 +60,7 @@
 0x102c62	label	scpi_language	restart.md	language byte, 0 PFORTH, 1 INSTALL	uint8_t
 #
 # the interval, docs/firmware/interval.md, "In every image"
-0x448fc	function	pll_normal	the firmware's own name, "pll_normal - Error with measurement"; interval.md's averaging routine, which counts readings to ten and stores the mean
+0x448fc	function	pll_normal	the firmware's own name, "pll_normal - Error with measurement"; interval.md's averaging routine, which counts readings to ten and stores the mean	the loop's normal stage: averages interval readings, counting them to ten and storing the mean
 0x102538	label	interval_mean	interval.md	mean of ten one-second readings	float
 0x10253c	label	interval_mean_flag	interval.md	the mean's flag	uint8_t
 0x101f9c	label	interval_reading	interval.md	latest one-second reading	interval_reading_fields
@@ -215,7 +215,7 @@
 0x20b8a	function	qspi_transfer	context	waits for SPCR1 and SPSR, runs a QSPI transfer, copies the receive RAM at 0xfffd00 out
 0x1f2c0	function	adc_read	context	sends 0xc000 | channel << 11 to device 1 minor 1 and returns the reply shifted down 2; diag_adc_read and diag_cal call it	int adc_read(adc_channel channel)
 0x1df12	function	console_write_polled	context	in supervisor mode, writes the string a character at a time through 0x1d680; debug_write uses it	int console_write_polled(char *s)
-0x101fa9	label	fconf_regs	the firmware's own name, "old_addr, fconf_regs[1] = %x" printing 0x101faa; context: fpga_set_bit's copy of the FPGA registers		uint8_t[4]
+0x101fa9	label	fconf_regs	the firmware's own name, "old_addr, fconf_regs[1] = %x" printing 0x101faa; context: fpga_set_bit's copy of the FPGA registers	fpga_set_bit's copy of the FPGA's configuration registers	uint8_t[4]
 0x41310	label	fpga_bit_table	context	fpga_set_bit's register and mask for each bit	fpga_bit[6]
 #
 # structures and the functions they show, docs/firmware/structures.md
@@ -550,73 +550,73 @@
 0x100bc4	label	pps_exchange	structures.md	pps_init creates the "1pps" exchange with create_x, service 20, and keeps its id here	uint32_t
 #
 # batch 5, by the strings they print
-0x42bc4	function	toggle_change	the firmware's own name, "pll_scpi: toggle_change() -- new value > max value"
-0x42d02	function	validate_or_doaction	the firmware's own name, "pll_scpi: validate_or_doaction() -- unknown structure type"
-0x431f4	function	get_setup_vars	the firmware's own name, "pll_scpi: get_setup_vars() -- unknown structure type"
-0x43a90	function	holdover	loop.md's stage; "holdover - Error with measurement"
-0x43f9a	function	holdover_recovery	loop.md's stage; "holdover recovery - Error with measurement"
-0x4429e	function	startup_pll	loop.md's stage; "startup_pll - Error with measurement"
-0x451c2	function	coarse	loop.md's power-up step; "coarse - Error with measurement 1"
-0x4538c	function	fine	loop.md's power-up step and its sub-states; "fine - Error with measurement 1", "fine-sync", "fine-slew"
-0x10540	function	clk_do	the firmware's own name, "Clk_do: out of event buffers"
-0x1d6ba	function	drtb_puts	the firmware's own name, "wait_v SIG_SOQ error in _drtb_puts"
-0x1d74a	function	drtb_getc	"wait_v SIG_SIQ error in getc", DUART channel B
-0x1e18a	function	drta_send_message	the firmware's own name, "wait_v SIG_SOQA error in drta_send_message"
-0x1e238	function	drta_get_byte	the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine with it
-0x1f76c	function	sci_puts	the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts"
-0x1f7d0	function	sci_getc	"wait_v SIG_SIQ_SCI error in getc"
-0x17a96	function	selftest_cpu	the self-test table 0x18458's entry 2; "CPU:"
-0x179ac	function	selftest_ram	entry 3; "System RAM: D15-D0:", "adr line A18-A1:"
-0x17b16	function	selftest_eeprom	entry 4; "EEPROM:"
-0x17cbe	function	selftest_uart	entry 5; "UART: register read/write", "channel A data"
-0x17b96	function	selftest_qspi	entry 6; "QSPI: ADC", "Hex DAC", "FPGA", "EFC"
-0x17c3e	function	selftest_fpga	entry 7; "FPGA: counters not preset"
-0x178e0	function	selftest_interpolator	entry 8; "Interpolator: A, MRC mode"
-0x17946	function	selftest_internal_reference	entry 9; "Internal reference:"
-0x17d94	function	selftest_gps	entry 10; "GPS: Channel 1 Correlation" .. "GPS: Engine timeout", @@Ca's bits
-0x17f2c	function	selftest_power	entry 11; "POWER: 5V", "15V", "-15V"
-0x18600	function	selftest_print_failure	"FAIL:", "%s, error code: %02X"
-0x1606c	function	os_report_cpu	"Free CPU cycles: count 0x%08X, approx %2d%%"; os_process_report calls it
-0x16118	function	os_report_exchange	an exchange's line, "fifo", "prio"
-0x161f6	function	task_status_name	"susp", "paus", "vblk", "xblk", "mblk", "spwn"
-0x162d4	function	os_report_process	a process's line, ">> RESOURCES:", ">> EVENTS: W(0x%04x) S(0x%04x)"
-0x1660a	function	os_report_process_summary	"%d Process(s) (%d avail); Total time: %-d ticks."
-0x1665e	function	os_report_exchanges	"xid   XNAME  TYPE  ACC  maxQ  Qlen BLOCKED"
-0x166b0	function	os_report_exchange_summary	"%d Exchange(s) (%d avail).", "%d Msg buffer(s)"
-0x1675a	function	os_report_processes	"pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CP"
-0x16828	function	os_report_regions	"Region strt       end  min     max    pend   USED"
-0x16bb6	function	task_stack_info	"no system stack found"; task_stack_report's per-task stacks
-0x132f4	function	stack_usage_report	"User: %5u of %5u b   Supv: %5u of %5u b"
-0x1e766	function	duarta_isr	"DUARTA isr signaling SIG_SIQ"
-0x1e7f6	function	duartb_isr	"DUARTB isr signaling SIGINTR", "SIG_SIQ"
-0x22d70	function	fpga_setup	"setup fpga"
-0x22da4	function	fpga_program	"FPGA programmed", "ERROR: FPGA programming failed", "FPGA INIT did not go high"; outputs.md's loader
-0x23d80	function	hmon_check_supplies	"5V is out of tolerance, value: %.2f", "Secondary oven voltage", "15V", "-15V"
-0x2437a	function	watchdog_report	"watchdog: clock: %4d gps: %4d pll: %4d mon: %4d spool %4d"
-0x1b7ee	function	print_gps_init_state	"Gen GPS state:", "start", "init ack", .. "survey", "done"
-0x1b99c	function	print_leap_check_state	"Leap chk state:", "leap start", "leap pending send", "leap wait"
-0x1ba32	function	print_fine_state	": fine start" .. ": fine fine slew", ": fine unknown"
-0x11942	function	print_exception	"%s: %s", ": PC = %#8x, SR = %#04x", ", address = %#8x", "RESET to recover."
-0x4c940	function	gps_print_command_log	"GPS Receiver Command Log", "Task  ID  Command     Date and Time Issued"
-0x4c754	function	gps_print_command	a command log line, "SCPI1", "GPSc", "GPSs"
-0x46838	function	gps_init_sequence	the states print_gps_init_state names, each with its "... ack failure: %02X"
-0x46d98	function	gps_leap_sequence	the states print_leap_check_state names; "leap pending ack failure: %02X"
-0x46394	function	leap_event_delete	"Error in deleting old leapsecond event"
-0x463c2	function	leap_event_create	"Error in creating leapsecond event"
-0x44f5e	function	sync_perform	"Peforming sync"
-0x45bb8	function	pll_powerup_step	screen-format-strings.md's ladder: the power-up sub-state's suffix index
-0x4a8ea	function	status_screen	"Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status"
-0x49db0	function	status_screen_sync	"Synchronized to UTC", "Synchronized to GPS Time", "Assessing stability"
-0x4a518	function	status_screen_mode_suffix	screen-format-strings.md's mode suffixes, ": OCXO warm-up" .. ": leap second determination", "[TI %9.9s]"
-0x4a29c	function	status_screen_tfom	"TFOM     %d%13sFFOM    %2s", "1PPS TI %s", "HOLD THR %s", "Holdover Uncertainty"
-0x49fcc	function	status_screen_position	"ANT DLY  %s", "Position", "Survey:", "% complete", "Suspended:"
-0x47f14	function	format_dms	"%c%4d:%02d:%06.3f", degrees, minutes and seconds
-0x47fb6	function	format_dms_precise	"%c%4d:%02d:%06.7f"
-0x48964	function	enabled_string	"Enabled", "Disabled"
-0x29b0e	function	scpi_prompt	"scpi > ", "E%+04d> "
-0x31ba2	function	log_first_satellite	log_write("First satellite tracked at %04d%02d%02d.%02d:%02d:%02d")
-0x3305e	function	log_clear	"Log cleared"
-0x2b4c2	function	log_status	"Log status: Error", "Empty", "One entry", "%-3d entries", "Full"
+0x42bc4	function	toggle_change	the firmware's own name, "pll_scpi: toggle_change() -- new value > max value"	applies a change to a PLL setting that toggles, refusing a value above its maximum
+0x42d02	function	validate_or_doaction	the firmware's own name, "pll_scpi: validate_or_doaction() -- unknown structure type"	checks a PLL SCPI request's value against its setting's descriptor, or carries it out
+0x431f4	function	get_setup_vars	the firmware's own name, "pll_scpi: get_setup_vars() -- unknown structure type"	finds the variables behind a PLL SCPI setting, by its descriptor's type
+0x43a90	function	holdover	loop.md's stage; "holdover - Error with measurement"	the loop's holdover stage, steering the oscillator without GPS
+0x43f9a	function	holdover_recovery	loop.md's stage; "holdover recovery - Error with measurement"	the loop's stage that recovers from holdover once GPS returns
+0x4429e	function	startup_pll	loop.md's stage; "startup_pll - Error with measurement"	the loop's start-up stage
+0x451c2	function	coarse	loop.md's power-up step; "coarse - Error with measurement 1"	the power-up step that sets the oscillator's frequency coarsely
+0x4538c	function	fine	loop.md's power-up step and its sub-states; "fine - Error with measurement 1", "fine-sync", "fine-slew"	the power-up step that adjusts the frequency finely, through its sync and slew sub-states
+0x10540	function	clk_do	the firmware's own name, "Clk_do: out of event buffers"	queues an event for the clock task
+0x1d6ba	function	drtb_puts	the firmware's own name, "wait_v SIG_SOQ error in _drtb_puts"	writes a string to DUART channel B, waiting for room
+0x1d74a	function	drtb_getc	"wait_v SIG_SIQ error in getc", DUART channel B	reads a character from DUART channel B, waiting for one
+0x1e18a	function	drta_send_message	the firmware's own name, "wait_v SIG_SOQA error in drta_send_message"	sends a message to the GPS engine on DUART channel A
+0x1e238	function	drta_get_byte	the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine with it	reads a byte from the GPS engine on DUART channel A, waiting for one
+0x1f76c	function	sci_puts	the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts"	writes a string to the SCI port, waiting for room
+0x1f7d0	function	sci_getc	"wait_v SIG_SIQ_SCI error in getc"	reads a character from the SCI port, waiting for one
+0x17a96	function	selftest_cpu	the self-test table 0x18458's entry 2; "CPU:"	the self-test of the CPU
+0x179ac	function	selftest_ram	entry 3; "System RAM: D15-D0:", "adr line A18-A1:"	the self-test of system RAM, its data and address lines
+0x17b16	function	selftest_eeprom	entry 4; "EEPROM:"	the self-test of the EEPROM
+0x17cbe	function	selftest_uart	entry 5; "UART: register read/write", "channel A data"	the self-test of the DUART: its registers, counter and both channels
+0x17b96	function	selftest_qspi	entry 6; "QSPI: ADC", "Hex DAC", "FPGA", "EFC"	the self-test of the QSPI's devices: the ADC, the DACs, the FPGA and the EFC
+0x17c3e	function	selftest_fpga	entry 7; "FPGA: counters not preset"	the self-test of the FPGA's counters
+0x178e0	function	selftest_interpolator	entry 8; "Interpolator: A, MRC mode"	the self-test of the time interpolator
+0x17946	function	selftest_internal_reference	entry 9; "Internal reference:"	the self-test of the internal reference
+0x17d94	function	selftest_gps	entry 10; "GPS: Channel 1 Correlation" .. "GPS: Engine timeout", @@Ca's bits	the self-test of the GPS engine, reading its own self-test's result bits
+0x17f2c	function	selftest_power	entry 11; "POWER: 5V", "15V", "-15V"	the self-test of the 5 V, 15 V and -15 V supplies
+0x18600	function	selftest_print_failure	"FAIL:", "%s, error code: %02X"	prints a failed self-test's name and error code
+0x1606c	function	os_report_cpu	"Free CPU cycles: count 0x%08X, approx %2d%%"; os_process_report calls it	prints the free CPU cycles counted and the share they make
+0x16118	function	os_report_exchange	an exchange's line, "fifo", "prio"	prints one exchange's line of the kernel report
+0x161f6	function	task_status_name	"susp", "paus", "vblk", "xblk", "mblk", "spwn"	the four-letter name of a task's state
+0x162d4	function	os_report_process	a process's line, ">> RESOURCES:", ">> EVENTS: W(0x%04x) S(0x%04x)"	prints one process's line of the kernel report, with its resources and events
+0x1660a	function	os_report_process_summary	"%d Process(s) (%d avail); Total time: %-d ticks."	prints how many processes there are and the time they have used
+0x1665e	function	os_report_exchanges	"xid   XNAME  TYPE  ACC  maxQ  Qlen BLOCKED"	prints the kernel's exchanges, one line each
+0x166b0	function	os_report_exchange_summary	"%d Exchange(s) (%d avail).", "%d Msg buffer(s)"	prints how many exchanges and message buffers there are and are free
+0x1675a	function	os_report_processes	"pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CP"	prints the kernel's processes, one line each
+0x16828	function	os_report_regions	"Region strt       end  min     max    pend   USED"	prints the kernel's memory regions and their use
+0x16bb6	function	task_stack_info	"no system stack found"; task_stack_report's per-task stacks	measures a task's stacks for the stack report
+0x132f4	function	stack_usage_report	"User: %5u of %5u b   Supv: %5u of %5u b"	prints a task's user and supervisor stack use
+0x1e766	function	duarta_isr	"DUARTA isr signaling SIG_SIQ"	the interrupt handler for DUART channel A, the GPS engine's
+0x1e7f6	function	duartb_isr	"DUARTB isr signaling SIGINTR", "SIG_SIQ"	the interrupt handler for DUART channel B
+0x22d70	function	fpga_setup	"setup fpga"	sets the FPGA up
+0x22da4	function	fpga_program	"FPGA programmed", "ERROR: FPGA programming failed", "FPGA INIT did not go high"; outputs.md's loader	loads the FPGA's configuration
+0x23d80	function	hmon_check_supplies	"5V is out of tolerance, value: %.2f", "Secondary oven voltage", "15V", "-15V"	checks the supplies and the secondary oven voltage against their tolerances, reporting each that leaves or returns
+0x2437a	function	watchdog_report	"watchdog: clock: %4d gps: %4d pll: %4d mon: %4d spool %4d"	prints the tasks' watchdog counts
+0x1b7ee	function	print_gps_init_state	"Gen GPS state:", "start", "init ack", .. "survey", "done"	prints the GPS initialization sequence's state
+0x1b99c	function	print_leap_check_state	"Leap chk state:", "leap start", "leap pending send", "leap wait"	prints the leap second check's state
+0x1ba32	function	print_fine_state	": fine start" .. ": fine fine slew", ": fine unknown"	the suffix naming the fine adjustment's sub-state
+0x11942	function	print_exception	"%s: %s", ": PC = %#8x, SR = %#04x", ", address = %#8x", "RESET to recover."	prints an exception's name, PC, SR and address
+0x4c940	function	gps_print_command_log	"GPS Receiver Command Log", "Task  ID  Command     Date and Time Issued"	prints the GPS receiver command log
+0x4c754	function	gps_print_command	a command log line, "SCPI1", "GPSc", "GPSs"	prints one entry of the GPS receiver command log
+0x46838	function	gps_init_sequence	the states print_gps_init_state names, each with its "... ack failure: %02X"	steps the GPS engine's initialization: each setting sent, then its acknowledgment checked
+0x46d98	function	gps_leap_sequence	the states print_leap_check_state names; "leap pending ack failure: %02X"	steps the leap second check with the GPS engine
+0x46394	function	leap_event_delete	"Error in deleting old leapsecond event"	deletes the pending leap second event
+0x463c2	function	leap_event_create	"Error in creating leapsecond event"	creates the leap second event
+0x44f5e	function	sync_perform	"Peforming sync"	synchronizes the outputs to GPS time
+0x45bb8	function	pll_powerup_step	screen-format-strings.md's ladder: the power-up sub-state's suffix index	the power-up sub-state, as the status screen's suffix index
+0x4a8ea	function	status_screen	"Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status"	prints the receiver status screen
+0x49db0	function	status_screen_sync	"Synchronized to UTC", "Synchronized to GPS Time", "Assessing stability"	the status screen's synchronization line
+0x4a518	function	status_screen_mode_suffix	screen-format-strings.md's mode suffixes, ": OCXO warm-up" .. ": leap second determination", "[TI %9.9s]"	the status screen's suffix for the power-up sub-state
+0x4a29c	function	status_screen_tfom	"TFOM     %d%13sFFOM    %2s", "1PPS TI %s", "HOLD THR %s", "Holdover Uncertainty"	the status screen's TFOM, FFOM, 1PPS TI and holdover lines
+0x49fcc	function	status_screen_position	"ANT DLY  %s", "Position", "Survey:", "% complete", "Suspended:"	the status screen's position and survey lines
+0x47f14	function	format_dms	"%c%4d:%02d:%06.3f", degrees, minutes and seconds	formats an angle as degrees, minutes and seconds to milliseconds
+0x47fb6	function	format_dms_precise	"%c%4d:%02d:%06.7f"	formats an angle as degrees, minutes and seconds to 0.1 microseconds
+0x48964	function	enabled_string	"Enabled", "Disabled"	"Enabled" or "Disabled" for a flag
+0x29b0e	function	scpi_prompt	"scpi > ", "E%+04d> "	makes the SCPI prompt, with the latest error when there is one
+0x31ba2	function	log_first_satellite	log_write("First satellite tracked at %04d%02d%02d.%02d:%02d:%02d")	logs the time the first satellite was tracked
+0x3305e	function	log_clear	"Log cleared"	clears the event log
+0x2b4c2	function	log_status	"Log status: Error", "Empty", "One entry", "%-3d entries", "Full"	prints the event log's state
 0x1d7e4	function	drtb_gets	context	reads a line of up to the given length from DUART channel B; "DRTB receiver error"
 0x1f868	function	sci_gets	context	reads a line of up to the given length from the SCI; "SCI receiver error ocurred"
 0x1ea10	function	duartb_transmit_interrupt	context	with channel B's queue empty, disables its transmit interrupt and signals the writer; "DUARTB isr signaling SIG_SOQ"
@@ -633,7 +633,7 @@
 0x24440	function	log_reset_cause	context	logs the last reset's cause with the time: "Exception: %s, vector %04X, PC = %08X" or "Watchdog timeout: clk %1d ..."
 0x46e70	function	gps_leap_ack	context	the leap second's acknowledgement step; "Error in leapsecond ack"; sets the GPS-UTC offset
 0x471fc	function	gps_diag_sequence	context	the GPS diagnostic reset and test; "Error in DIAG GPS RST ack", "TST ack"
-0x417c6	function	aging_fit	loop.md's aging fit, in curv: "failed line fit", "pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f", "HQ= %.1e mode= %d"
+0x417c6	function	aging_fit	loop.md's aging fit, in curv: "failed line fit", "pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f", "HQ= %.1e mode= %d"	fits the oscillator's aging curve, for the curv task
 0x40556	function	interpolator_sample	context	sets HDAC channels 2 and 3 and takes both interpolator readings; "First-time interp test."
 0x49a6e	function	format_satellite_cell	context	a satellite's status screen cell: "%2d %3d", "Ignore", "Not OK", "Acq"
 0x49e5a	function	format_time	context	a packed time as "%02d:%02d:%02d", or "--:--:--"

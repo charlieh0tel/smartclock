@@ -3812,7 +3812,8 @@ undefined4 FUN_00010538(void)
 
 /* 00010540 */
 
-/* the firmware's own name, "Clk_do: out of event buffers" */
+/* queues an event for the clock task
+   the firmware's own name, "Clk_do: out of event buffers" */
 
 klok_entry * clk_do(undefined4 *param_1)
 
@@ -5111,7 +5112,8 @@ undefined8 primary_default_exception(void)
 /* 00011942 */
 
 /* WARNING: Unknown calling convention */
-/* "%s: %s", ": PC = %#8x, SR = %#04x", ", address = %#8x", "RESET to recover." */
+/* prints an exception's name, PC, SR and address
+   "%s: %s", ": PC = %#8x, SR = %#04x", ", address = %#8x", "RESET to recover." */
 
 void print_exception(ushort param_1,uint32_t param_2,ushort param_3,uint32_t param_4)
 
@@ -6115,7 +6117,8 @@ undefined8 FUN_000132da(void)
 
 /* 000132f4 */
 
-/* "User: %5u of %5u b   Supv: %5u of %5u b" */
+/* prints a task's user and supervisor stack use
+   "User: %5u of %5u b   Supv: %5u of %5u b" */
 
 void stack_usage_report(undefined4 param_1)
 
@@ -11314,7 +11317,8 @@ void kernel_return_from_interrupt(ushort param_1)
 
 /* 0001606c */
 
-/* "Free CPU cycles: count 0x%08X, approx %2d%%"; os_process_report calls it */
+/* prints the free CPU cycles counted and the share they make
+   "Free CPU cycles: count 0x%08X, approx %2d%%"; os_process_report calls it */
 
 void os_report_cpu(code *param_1)
 
@@ -11370,7 +11374,8 @@ undefined * FUN_000160de(int param_1)
 
 /* 00016118 */
 
-/* an exchange's line, "fifo", "prio" */
+/* prints one exchange's line of the kernel report
+   an exchange's line, "fifo", "prio" */
 
 void os_report_exchange(undefined4 *param_1,code *param_2)
 
@@ -11427,7 +11432,8 @@ void os_report_exchange(undefined4 *param_1,code *param_2)
 
 /* 000161f6 */
 
-/* "susp", "paus", "vblk", "xblk", "mblk", "spwn" */
+/* the four-letter name of a task's state
+   "susp", "paus", "vblk", "xblk", "mblk", "spwn" */
 
 char * task_status_name(int param_1)
 
@@ -11504,7 +11510,8 @@ undefined4 * FUN_000162b2(int param_1,int param_2)
 /* 000162d4 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-/* a process's line, ">> RESOURCES:", ">> EVENTS: W(0x%04x) S(0x%04x)" */
+/* prints one process's line of the kernel report, with its resources and events
+   a process's line, ">> RESOURCES:", ">> EVENTS: W(0x%04x) S(0x%04x)" */
 
 void os_report_process(void *param_1,char *param_2,int param_3,undefined4 param_4,code *param_5)
 
@@ -11682,7 +11689,8 @@ int FUN_00016540(void)
 /* 0001660a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-/* "%d Process(s) (%d avail); Total time: %-d ticks." */
+/* prints how many processes there are and the time they have used
+   "%d Process(s) (%d avail); Total time: %-d ticks." */
 
 void os_report_process_summary(code *param_1)
 
@@ -11714,7 +11722,8 @@ void os_report_process_summary(code *param_1)
 
 /* 0001665e */
 
-/* "xid   XNAME  TYPE  ACC  maxQ  Qlen BLOCKED" */
+/* prints the kernel's exchanges, one line each
+   "xid   XNAME  TYPE  ACC  maxQ  Qlen BLOCKED" */
 
 void os_report_exchanges(code *param_1)
 
@@ -11744,7 +11753,8 @@ void os_report_exchanges(code *param_1)
 
 /* 000166b0 */
 
-/* "%d Exchange(s) (%d avail).", "%d Msg buffer(s)" */
+/* prints how many exchanges and message buffers there are and are free
+   "%d Exchange(s) (%d avail).", "%d Msg buffer(s)" */
 
 void os_report_exchange_summary(code *param_1)
 
@@ -11798,7 +11808,8 @@ int FUN_00016730(undefined4 *param_1)
 /* 0001675a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-/* "pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CP" */
+/* prints the kernel's processes, one line each
+   "pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CP" */
 
 int os_report_processes(code *param_1)
 
@@ -11845,7 +11856,8 @@ int os_report_processes(code *param_1)
 /* 00016828 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-/* "Region strt       end  min     max    pend   USED" */
+/* prints the kernel's memory regions and their use
+   "Region strt       end  min     max    pend   USED" */
 
 void os_report_regions(code *param_1)
 
@@ -12048,7 +12060,8 @@ void os_memory_report(undefined1 param_1)
 
 /* 00016bb6 */
 
-/* "no system stack found"; task_stack_report's per-task stacks */
+/* measures a task's stacks for the stack report
+   "no system stack found"; task_stack_report's per-task stacks */
 
 void task_stack_info(int param_1,undefined4 *param_2,undefined4 *param_3,int *param_4,int *param_5,
                     undefined4 *param_6,int *param_7)
@@ -13120,7 +13133,8 @@ void FUN_000177fa(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* entry 8; "Interpolator: A, MRC mode" */
+/* the self-test of the time interpolator
+   entry 8; "Interpolator: A, MRC mode" */
 
 void selftest_interpolator(char param_1)
 
@@ -13149,7 +13163,8 @@ void selftest_interpolator(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* entry 9; "Internal reference:" */
+/* the self-test of the internal reference
+   entry 9; "Internal reference:" */
 
 void selftest_internal_reference(char param_1)
 
@@ -13178,7 +13193,8 @@ void selftest_internal_reference(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* entry 3; "System RAM: D15-D0:", "adr line A18-A1:" */
+/* the self-test of system RAM, its data and address lines
+   entry 3; "System RAM: D15-D0:", "adr line A18-A1:" */
 
 void selftest_ram(char param_1)
 
@@ -13215,7 +13231,8 @@ void selftest_ram(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* the self-test table 0x18458's entry 2; "CPU:" */
+/* the self-test of the CPU
+   the self-test table 0x18458's entry 2; "CPU:" */
 
 void selftest_cpu(char param_1)
 
@@ -13246,7 +13263,8 @@ void selftest_cpu(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* entry 4; "EEPROM:" */
+/* the self-test of the EEPROM
+   entry 4; "EEPROM:" */
 
 void selftest_eeprom(char param_1)
 
@@ -13276,7 +13294,8 @@ void selftest_eeprom(char param_1)
 /* 00017b96 */
 
 /* WARNING: Unknown calling convention */
-/* entry 6; "QSPI: ADC", "Hex DAC", "FPGA", "EFC" */
+/* the self-test of the QSPI's devices: the ADC, the DACs, the FPGA and the EFC
+   entry 6; "QSPI: ADC", "Hex DAC", "FPGA", "EFC" */
 
 void selftest_qspi(char param_1)
 
@@ -13308,7 +13327,8 @@ void selftest_qspi(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* entry 7; "FPGA: counters not preset" */
+/* the self-test of the FPGA's counters
+   entry 7; "FPGA: counters not preset" */
 
 void selftest_fpga(char param_1)
 
@@ -13356,7 +13376,8 @@ void FUN_00017ca4(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* entry 5; "UART: register read/write", "channel A data" */
+/* the self-test of the DUART: its registers, counter and both channels
+   entry 5; "UART: register read/write", "channel A data" */
 
 void selftest_uart(char param_1)
 
@@ -13390,7 +13411,8 @@ void selftest_uart(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* entry 10; "GPS: Channel 1 Correlation" .. "GPS: Engine timeout", @@Ca's bits */
+/* the self-test of the GPS engine, reading its own self-test's result bits
+   entry 10; "GPS: Channel 1 Correlation" .. "GPS: Engine timeout", @@Ca's bits */
 
 void selftest_gps(char param_1)
 
@@ -13430,7 +13452,8 @@ void selftest_gps(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* entry 11; "POWER: 5V", "15V", "-15V" */
+/* the self-test of the 5 V, 15 V and -15 V supplies
+   entry 11; "POWER: 5V", "15V", "-15V" */
 
 void selftest_power(char param_1)
 
@@ -13723,7 +13746,8 @@ void FUN_00018546(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* "FAIL:", "%s, error code: %02X" */
+/* prints a failed self-test's name and error code
+   "FAIL:", "%s, error code: %02X" */
 
 void selftest_print_failure(char param_1)
 
@@ -14139,7 +14163,8 @@ undefined4 FUN_00018d40(void)
 /* 00018ed6 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word abort
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14170,7 +14195,8 @@ void forth_abort(forth_user_end user,long *sp,char *input)
 /* 00018f0e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word interpret
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14603,7 +14629,8 @@ char * forth_input_buffer(forth_user_end user)
 /* 00019182 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word over
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14618,7 +14645,8 @@ void forth_over(long *sp)
 /* 00019188 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word abs
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14635,7 +14663,8 @@ void forth_abs(long *sp)
 /* 00019190 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word max
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14652,7 +14681,8 @@ void forth_max(long *sp)
 /* 0001919a */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word min
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14669,7 +14699,8 @@ void forth_min(long *sp)
 /* 000191a4 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word @
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14684,7 +14715,8 @@ void forth_fetch(long *sp)
 /* 000191aa */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word !
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14699,7 +14731,8 @@ void forth_store(long *sp)
 /* 000191b0 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word w@
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14714,7 +14747,8 @@ void forth_w_fetch(long *sp)
 /* 000191ba */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word w!
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14729,7 +14763,8 @@ void forth_w_store(long *sp)
 /* 000191c2 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word c@
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14744,7 +14779,8 @@ void forth_c_fetch(long *sp)
 /* 000191cc */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word c!
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14759,7 +14795,8 @@ void forth_c_store(long *sp)
 /* 000191d4 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word negate
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14774,7 +14811,8 @@ void forth_negate(long *sp)
 /* 000191d8 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word here
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14790,7 +14828,8 @@ void forth_here(forth_user_end user,long *sp,void *dp)
 /* 000191e2 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word >r
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14804,7 +14843,8 @@ void forth_greater_r(long *sp)
 /* 000191f0 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word r>
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14823,7 +14863,8 @@ void forth_r_greater(long *sp)
 /* 000191fa */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word fill
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14853,7 +14894,8 @@ void forth_fill(long *sp)
 /* 0001920c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word pick
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14868,7 +14910,8 @@ void forth_pick(long *sp)
 /* 00019216 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word ,
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14883,7 +14926,8 @@ void forth_comma(long *sp,void *dp)
 /* 0001921a */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word w,
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14898,7 +14942,8 @@ void forth_w_comma(long *sp,void *dp)
 /* 00019220 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word c,
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14913,7 +14958,8 @@ void forth_c_comma(long *sp,void *dp)
 /* 00019226 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word rot
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14933,7 +14979,8 @@ void forth_rot(long *sp)
 /* 00019234 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word -rot
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14955,7 +15002,8 @@ void forth_minus_rot(long *sp)
 /* 00019242 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word allot
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14969,7 +15017,8 @@ void forth_allot(long *sp,void *dp)
 /* 00019246 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word swap
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14988,7 +15037,8 @@ void forth_swap(long *sp)
 /* 00019252 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word dup
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15003,7 +15053,8 @@ void forth_dup(long *sp)
 /* 00019256 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word 2dup
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15023,7 +15074,8 @@ void forth_2dup(long *sp)
 /* 00019262 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word 2swap
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15046,7 +15098,8 @@ void forth_2swap(long *sp)
 /* 00019274 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word (
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15070,7 +15123,8 @@ void forth_paren(char *input)
 
 /* 0001928c */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word halt
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15091,7 +15145,8 @@ void forth_halt(void)
 /* 0001929c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word false
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15106,7 +15161,8 @@ void forth_false(long *sp)
 /* 000192a0 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word true
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15121,7 +15177,8 @@ void forth_true(long *sp)
 /* 000192a8 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word or
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15136,7 +15193,8 @@ void forth_or(long *sp)
 /* 000192ae */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word and
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15151,7 +15209,8 @@ void forth_and(long *sp)
 /* 000192b4 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word not
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15166,7 +15225,8 @@ void forth_not(long *sp)
 /* 000192b8 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word xor
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15181,7 +15241,8 @@ void forth_xor(long *sp)
 /* 000192be */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word =
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15203,7 +15264,8 @@ void forth_equal(long *sp)
 /* 000192d0 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word >
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15225,7 +15287,8 @@ void forth_greater(long *sp)
 /* 000192d8 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word <
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15247,7 +15310,8 @@ void forth_less(long *sp)
 /* 000192e0 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word 0<
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15266,7 +15330,8 @@ void forth_0_less(long *sp)
 /* 000192e6 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word 0=
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15285,7 +15350,8 @@ void forth_0_equal(long *sp)
 /* 000192ec */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word 0>
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15304,7 +15370,8 @@ void forth_0_greater(long *sp)
 /* 000192f4 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word ?dup
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15321,7 +15388,8 @@ void forth_query_dup(long *sp)
 /* 000192fc */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word cmove
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15352,7 +15420,8 @@ void forth_cmove(long *sp)
 /* 0001930e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word cmove>
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15386,7 +15455,8 @@ void forth_cmove_greater(long *sp)
 /* 00019324 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word 2drop
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15400,7 +15470,8 @@ void forth_2drop(long *sp)
 /* 00019328 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word drop
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15414,7 +15485,8 @@ void forth_drop(long *sp)
 /* 0001932c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word depth
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15544,7 +15616,8 @@ void forth_unlink_latest(forth_user_end user,void *dp)
 /* 0001943e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word do
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15562,7 +15635,8 @@ void forth_do(long *sp,void *dp)
 /* 00019454 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word ?do
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15580,7 +15654,8 @@ void forth_query_do(long *sp,void *dp)
 
 /* 00019488 */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word +loop
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15607,7 +15682,8 @@ void forth_plus_loop(void)
 /* 000194a4 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word loop
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15633,7 +15709,8 @@ void forth_loop(long *sp)
 /* 000194e6 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word if
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15650,7 +15727,8 @@ void forth_if(long *sp,void *dp)
 /* 00019504 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word else
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15668,7 +15746,8 @@ void forth_else(long *sp,void *dp)
 
 /* 00019540 */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word endif
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15686,7 +15765,8 @@ void forth_endif(void)
 /* 00019560 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word begin
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15702,7 +15782,8 @@ void forth_begin(long *sp,void *dp)
 /* 00019574 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word while
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15719,7 +15800,8 @@ void forth_while(long *sp,void *dp)
 
 /* 000195a4 */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word repeat
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15740,7 +15822,8 @@ void forth_repeat(void)
 
 /* 000195d6 */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word again
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15759,7 +15842,8 @@ void forth_again(void)
 
 /* 00019600 */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word until
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15778,7 +15862,8 @@ void forth_until(void)
 
 /* 00019620 */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word leave
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15792,7 +15877,8 @@ void forth_leave(void)
 /* 00019626 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word k
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15809,7 +15895,8 @@ void forth_k(long *sp)
 /* 0001962c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word j
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15826,7 +15913,8 @@ void forth_j(long *sp)
 /* 00019632 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word i
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15843,7 +15931,8 @@ void forth_i(long *sp)
 /* 00019638 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word :
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15861,7 +15950,8 @@ void forth_colon(forth_user_end user,long *sp,void *dp)
 /* 00019652 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word ;
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15946,7 +16036,8 @@ void forth_create_header(forth_user_end user,void *dp)
 /* 000196b8 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word variable
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15970,7 +16061,8 @@ void forth_variable(forth_user_end user,void *dp)
 /* 000196d8 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word create
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15992,7 +16084,8 @@ void forth_create(forth_user_end user,void *dp)
 
 /* 000196f6 */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word constant
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16035,7 +16128,8 @@ void forth_compile_constant(forth_user_end user,long *sp,void *dp)
 /* 00019710 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word literal
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16060,7 +16154,8 @@ void forth_literal(long *sp,void *dp)
 /* 0001973a */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word mod
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16100,7 +16195,8 @@ void forth_mod(long *sp)
 /* 0001974a */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word /mod
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16140,7 +16236,8 @@ void forth_slash_mod(long *sp)
 /* 0001975c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word */mod
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16181,7 +16278,8 @@ void forth_star_slash_mod(long *sp)
 /* 00019774 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word */
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16222,7 +16320,8 @@ void forth_star_slash(long *sp)
 /* 0001978a */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word /
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16262,7 +16361,8 @@ void forth_slash(long *sp)
 /* 000197b4 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word *
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16398,7 +16498,8 @@ undefined8 forth_divide_short(void)
 /* 00019874 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word -
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16413,7 +16514,8 @@ void forth_minus(long *sp)
 /* 0001987a */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word +
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16428,7 +16530,8 @@ void forth_plus(long *sp)
 /* 00019880 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word +!
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16443,7 +16546,8 @@ void forth_plus_store(long *sp)
 /* 00019888 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word 1+
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16458,7 +16562,8 @@ void forth_1_plus(long *sp)
 /* 0001988c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word 1-
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16473,7 +16578,8 @@ void forth_1_minus(long *sp)
 /* 00019890 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word 2+
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16488,7 +16594,8 @@ void forth_2_plus(long *sp)
 /* 00019894 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word 2-
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16503,7 +16610,8 @@ void forth_2_minus(long *sp)
 /* 00019898 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word 2/
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16518,7 +16626,8 @@ void forth_2_slash(long *sp)
 /* 000198a0 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word 2*
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16533,7 +16642,8 @@ void forth_2_star(long *sp)
 /* 000198a8 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word <<
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16548,7 +16658,8 @@ void forth_less_less(long *sp)
 /* 000198b2 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word >>
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16563,7 +16674,8 @@ void forth_greater_greater(long *sp)
 /* 000198bc */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word emit
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16582,7 +16694,8 @@ void forth_emit(forth_user_end user,long *sp)
 
 /* 000198d0 */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word space
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16603,7 +16716,8 @@ void forth_space(void)
 /* 000198d4 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word spaces
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16634,7 +16748,8 @@ void forth_spaces(forth_user_end user,long *sp)
 
 /* 000198f2 */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word cr
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16651,7 +16766,8 @@ void forth_cr(void)
 /* 000198fe */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word ."
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16697,7 +16813,8 @@ void forth_dot_quote(forth_user_end user,void *dp,char *input)
 
 /* 00019948 */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word (.")
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16762,7 +16879,8 @@ void forth_print_number(forth_user_end user,long *sp)
 /* 0001997e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word u.
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16794,7 +16912,8 @@ void forth_u_dot(forth_user_end user,long *sp)
 /* 0001999a */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word u.x
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16831,7 +16950,8 @@ void forth_u_dot_x(long *sp)
 /* 000199c4 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word .
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16867,7 +16987,8 @@ void forth_dot(forth_user_end user,long *sp)
 /* 000199ee */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word .s
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16900,7 +17021,8 @@ void forth_dot_s(long *sp)
 /* 00019b98 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word sin
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16935,7 +17057,8 @@ void forth_sin(long *sp)
 /* 00019bf0 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word cos
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16951,7 +17074,8 @@ void forth_cos(long *sp)
 /* 00019bfc */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word decimal
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16966,7 +17090,8 @@ void forth_decimal(forth_user_end user)
 /* 00019c06 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word hex
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16981,7 +17106,8 @@ void forth_hex(forth_user_end user)
 /* 00019c10 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word base
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16996,7 +17122,8 @@ void forth_base(forth_user_end user,long *sp)
 /* 00019c18 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word state
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17011,7 +17138,8 @@ void forth_state(forth_user_end user,long *sp)
 /* 00019c22 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word '
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17055,7 +17183,8 @@ void forth_tick(long *sp)
 /* 00019c38 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word [']
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17099,7 +17228,8 @@ void forth_bracket_tick_close_bracket(void *dp)
 /* 00019c52 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word [
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17114,7 +17244,8 @@ void forth_bracket(forth_user_end user)
 /* 00019c58 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word ]
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17129,7 +17260,8 @@ void forth_close_bracket(forth_user_end user)
 /* 00019c6e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word forget
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17180,7 +17312,8 @@ void forth_forget(forth_user_end user,void *dp)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word startup
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17197,7 +17330,8 @@ void forth_startup(forth_user_end user,void *dp)
 /* 00019cbc */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word words
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17265,7 +17399,8 @@ void forth_words(forth_user_end user,long *sp)
 /* 00019d2e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word root
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17280,7 +17415,8 @@ void forth_root(long *sp)
 /* 00019d36 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word my_pid
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17300,7 +17436,8 @@ void forth_my_pid(long *sp)
 /* 00019d46 */
 
 /* WARNING: Removing unreachable block (ram,0x000192a0) */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word ?^C
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17318,7 +17455,8 @@ void forth_query_caret_C(void)
 /* 00019d5e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word expect
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17339,7 +17477,8 @@ short forth_expect(forth_user_end user,long *sp)
 /* 00019d74 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word type
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17356,7 +17495,8 @@ void forth_type(long *sp)
 /* 00019d7c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word word
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17388,7 +17528,8 @@ void forth_word(forth_user_end user,long *sp,char *input)
 /* 00019dae */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word count
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17411,7 +17552,8 @@ void forth_count(long *sp)
 /* 00019dc2 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word tib
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17426,7 +17568,8 @@ void forth_tib(forth_user_end user,long *sp)
 /* 00019dc8 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word pad
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17440,7 +17583,8 @@ void forth_pad(forth_user_end user,long *sp)
 
 /* 00019df0 */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word does>
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17457,7 +17601,8 @@ void forth_does_greater(void)
 /* 00019dfc */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word recurse
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17474,7 +17619,8 @@ void forth_recurse(forth_user_end user,void *dp)
 /* 00019e0e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word immediate
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17489,7 +17635,8 @@ void forth_immediate(forth_user_end user)
 /* 00019e20 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word fence
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17504,7 +17651,8 @@ void forth_fence(forth_user_end user,long *sp)
 /* 00019e28 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word unfence
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17519,7 +17667,8 @@ void forth_unfence(forth_user_end user)
 /* 00019e32 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word number
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17546,7 +17695,8 @@ void forth_number(long *sp)
 /* 00019e4c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word 0x
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17613,7 +17763,8 @@ undefined1 forth_0x(forth_user_end user,long *sp)
 /* 00019e88 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word execute
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17628,7 +17779,8 @@ void forth_execute(long *sp)
 /* 00019e90 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word watch
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17747,7 +17899,8 @@ void forth_psos_call(forth_user_end user,long *sp,void *dp)
 /* 00019fa6 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word spawn
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17823,7 +17976,8 @@ void forth_space_if_zero(void)
 /* 0001a056 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word ver
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17848,7 +18002,8 @@ void forth_ver(forth_user_end user,long *sp)
 /* 0001a08c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word ident
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17871,7 +18026,8 @@ void forth_ident(long *sp)
 /* 0001a0a0 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word delete
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17889,7 +18045,8 @@ void forth_delete(long *sp)
 /* 0001a0ae */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word suspend
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17907,7 +18064,8 @@ void forth_suspend(long *sp)
 /* 0001a0bc */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word resume
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17925,7 +18083,8 @@ void forth_resume(long *sp)
 /* 0001a0ca */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word priority
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17945,7 +18104,8 @@ void forth_priority(long *sp)
 /* 0001a0e2 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word jam_x
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17963,7 +18123,8 @@ void forth_jam_x(long *sp)
 /* 0001a0f8 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word create_x
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17988,7 +18149,8 @@ void forth_create_x(long *sp)
 /* 0001a11e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word delete_x
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18006,7 +18168,8 @@ void forth_delete_x(long *sp)
 /* 0001a12e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word send_x
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18024,7 +18187,8 @@ void forth_send_x(long *sp)
 /* 0001a144 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word request_x
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18042,7 +18206,8 @@ void forth_request_x(long *sp)
 /* 0001a15e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word signal_v
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18060,7 +18225,8 @@ void forth_signal_v(long *sp)
 /* 0001a176 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word wait_v
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18080,7 +18246,8 @@ void forth_wait_v(long *sp)
 /* 0001a18c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word get_v
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18097,7 +18264,8 @@ void forth_get_v(long *sp)
 /* 0001a19a */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word pause
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18112,7 +18280,8 @@ long forth_pause(long *sp)
 /* 0001a1a2 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word mode
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18181,7 +18350,8 @@ void forth_psos_io_call(long *sp)
 /* 0001a21e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word dev_init
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18196,7 +18366,8 @@ void forth_dev_init(long *sp)
 /* 0001a226 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word dev_open
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18211,7 +18382,8 @@ void forth_dev_open(long *sp)
 /* 0001a22e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word dev_close
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18226,7 +18398,8 @@ void forth_dev_close(long *sp)
 /* 0001a236 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word dev_read
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18245,7 +18418,8 @@ void forth_dev_read(long *sp)
 /* 0001a250 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word dev_write
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18264,7 +18438,8 @@ void forth_dev_write(long *sp)
 /* 0001a26a */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word dev_ctrl
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18279,7 +18454,8 @@ void forth_dev_ctrl(long *sp)
 /* 0001a278 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word !iodev
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18300,7 +18476,8 @@ void forth_store_iodev(forth_user_end user,long *sp)
 /* 0001ad20 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the pForth word user
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18487,6 +18664,8 @@ void FUN_0001af98(void)
 
 /* 0001afd6 */
 
+/* the pForth diagnostic word adc_read */
+
 undefined1 diag_adc_read(byte param_1)
 
 {
@@ -18506,6 +18685,8 @@ undefined1 diag_adc_read(byte param_1)
 
 /* 0001b008 */
 
+/* the pForth diagnostic word adc_temp */
+
 void diag_adc_temp(void)
 
 {
@@ -18520,6 +18701,8 @@ void diag_adc_temp(void)
 
 
 /* 0001b02a */
+
+/* the pForth diagnostic word adc_5v */
 
 void diag_adc_5v(void)
 
@@ -18536,6 +18719,8 @@ void diag_adc_5v(void)
 
 /* 0001b04c */
 
+/* the pForth diagnostic word adc_p15v */
+
 void diag_adc_p15v(void)
 
 {
@@ -18550,6 +18735,8 @@ void diag_adc_p15v(void)
 
 
 /* 0001b06e */
+
+/* the pForth diagnostic word adc_m15v */
 
 void diag_adc_m15v(void)
 
@@ -18566,6 +18753,8 @@ void diag_adc_m15v(void)
 
 /* 0001b090 */
 
+/* the pForth diagnostic word adc_oven */
+
 void diag_adc_oven(void)
 
 {
@@ -18580,6 +18769,8 @@ void diag_adc_oven(void)
 
 
 /* 0001b0b2 */
+
+/* the pForth diagnostic word adc_doven */
 
 void diag_adc_doven(void)
 
@@ -18596,6 +18787,8 @@ void diag_adc_doven(void)
 
 /* 0001b0d4 */
 
+/* the pForth diagnostic word adc_ant_curr */
+
 void diag_adc_ant_curr(void)
 
 {
@@ -18610,6 +18803,8 @@ void diag_adc_ant_curr(void)
 
 
 /* 0001b0f6 */
+
+/* the pForth diagnostic word pr_adc_avg */
 
 void diag_pr_adc_avg(void)
 
@@ -18643,6 +18838,8 @@ void diag_pr_adc_avg(void)
 
 
 /* 0001b1d0 */
+
+/* the pForth diagnostic word pr_hold_cause */
 
 undefined1 diag_pr_hold_cause(void)
 
@@ -18684,6 +18881,8 @@ undefined1 diag_pr_hold_cause(void)
 
 /* 0001b282 */
 
+/* the pForth diagnostic word efc_write */
+
 void diag_efc_write(undefined2 param_1)
 
 {
@@ -18693,6 +18892,8 @@ void diag_efc_write(undefined2 param_1)
 
 
 /* 0001b292 */
+
+/* the pForth diagnostic word hdac_write */
 
 void diag_hdac_write(byte param_1,byte param_2)
 
@@ -18704,6 +18905,8 @@ void diag_hdac_write(byte param_1,byte param_2)
 
 /* 0001b2a8 */
 
+/* the pForth diagnostic word hdac_all */
+
 void diag_hdac_all(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,byte param_6)
 
 {
@@ -18713,6 +18916,8 @@ void diag_hdac_all(byte param_1,byte param_2,byte param_3,byte param_4,byte para
 
 
 /* 0001b2d8 */
+
+/* the pForth diagnostic word clk_synch */
 
 void diag_clk_synch(undefined1 param_1,undefined4 param_2)
 
@@ -18724,6 +18929,8 @@ void diag_clk_synch(undefined1 param_1,undefined4 param_2)
 
 /* 0001b2ec */
 
+/* the pForth diagnostic word sync_imm */
+
 void diag_sync_imm(void)
 
 {
@@ -18734,6 +18941,8 @@ void diag_sync_imm(void)
 
 /* 0001b2fe */
 
+/* the pForth diagnostic word loop_time */
+
 void diag_loop_time(int param_1)
 
 {
@@ -18743,6 +18952,8 @@ void diag_loop_time(int param_1)
 
 
 /* 0001b310 */
+
+/* the pForth diagnostic word pll_rep */
 
 void diag_pll_rep(void)
 
@@ -18771,6 +18982,8 @@ void diag_pll_rep(void)
 
 /* 0001b3de */
 
+/* the pForth diagnostic word efc_rep */
+
 void diag_efc_rep(void)
 
 {
@@ -18793,6 +19006,8 @@ void diag_efc_rep(void)
 
 /* 0001b430 */
 
+/* the pForth diagnostic word get_time */
+
 void diag_get_time(void)
 
 {
@@ -18814,6 +19029,8 @@ void diag_get_time(void)
 
 /* 0001b4a0 */
 
+/* the pForth diagnostic word set_time */
+
 void diag_set_time(undefined2 param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4,
                   undefined1 param_5,undefined1 param_6)
 
@@ -18832,6 +19049,8 @@ void diag_set_time(undefined2 param_1,undefined1 param_2,undefined1 param_3,unde
 
 /* 0001b504 */
 
+/* the pForth diagnostic word print_stat */
+
 void diag_print_stat(void)
 
 {
@@ -18841,6 +19060,8 @@ void diag_print_stat(void)
 
 
 /* 0001b50e */
+
+/* the pForth diagnostic word print_vis */
 
 void diag_print_vis(void)
 
@@ -18852,6 +19073,8 @@ void diag_print_vis(void)
 
 /* 0001b518 */
 
+/* the pForth diagnostic word pr_avg */
+
 void diag_pr_avg(void)
 
 {
@@ -18861,6 +19084,8 @@ void diag_pr_avg(void)
 
 
 /* 0001b522 */
+
+/* the pForth diagnostic word pr_gps_istate */
 
 void diag_pr_gps_istate(void)
 
@@ -18872,6 +19097,8 @@ void diag_pr_gps_istate(void)
 
 /* 0001b52c */
 
+/* the pForth diagnostic word print_bc */
+
 void diag_print_bc(void)
 
 {
@@ -18881,6 +19108,8 @@ void diag_print_bc(void)
 
 
 /* 0001b536 */
+
+/* the pForth diagnostic word print_ext_msg */
 
 void diag_print_ext_msg(void)
 
@@ -18893,6 +19122,7 @@ void diag_print_ext_msg(void)
 /* 0001b540 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word abr_stat */
 
 void diag_abr_stat(undefined4 param_1)
 
@@ -18906,6 +19136,7 @@ void diag_abr_stat(undefined4 param_1)
 /* 0001b552 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word avg */
 
 void diag_avg(undefined4 param_1)
 
@@ -18918,6 +19149,8 @@ void diag_avg(undefined4 param_1)
 
 /* 0001b564 */
 
+/* the pForth diagnostic word master_reset */
+
 void diag_master_reset(void)
 
 {
@@ -18927,6 +19160,8 @@ void diag_master_reset(void)
 
 
 /* 0001b56e */
+
+/* the pForth diagnostic word quiet_status */
 
 void diag_quiet_status(void)
 
@@ -18938,6 +19173,8 @@ void diag_quiet_status(void)
 
 /* 0001b578 */
 
+/* the pForth diagnostic word gps_query_all */
+
 void diag_gps_query_all(void)
 
 {
@@ -18948,6 +19185,8 @@ void diag_gps_query_all(void)
 
 /* 0001b582 */
 
+/* the pForth diagnostic word init_gps */
+
 void diag_init_gps(void)
 
 {
@@ -18957,6 +19196,8 @@ void diag_init_gps(void)
 
 
 /* 0001b58c */
+
+/* the pForth diagnostic word clr_avg */
 
 void diag_clr_avg(void)
 
@@ -18969,6 +19210,7 @@ void diag_clr_avg(void)
 /* 0001b596 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word stat_rate */
 
 void diag_stat_rate(undefined4 param_1)
 
@@ -18982,6 +19224,7 @@ void diag_stat_rate(undefined4 param_1)
 /* 0001b5a8 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word vis_stat_rate */
 
 void diag_vis_stat_rate(int param_1)
 
@@ -19000,6 +19243,7 @@ void diag_vis_stat_rate(int param_1)
 /* 0001b5ca */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word xdop_stat_rate */
 
 void diag_xdop_stat_rate(undefined4 param_1)
 
@@ -19013,6 +19257,7 @@ void diag_xdop_stat_rate(undefined4 param_1)
 /* 0001b5dc */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word ext_msg_rate */
 
 void diag_ext_msg_rate(undefined4 param_1)
 
@@ -19026,6 +19271,7 @@ void diag_ext_msg_rate(undefined4 param_1)
 /* 0001b5ee */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word gps_time */
 
 void diag_gps_time(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
@@ -19041,6 +19287,7 @@ void diag_gps_time(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 /* 0001b60e */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word eman */
 
 void diag_eman(undefined4 param_1)
 
@@ -19053,6 +19300,8 @@ void diag_eman(undefined4 param_1)
 
 /* 0001b620 */
 
+/* the pForth diagnostic word q_eman */
+
 void diag_q_eman(void)
 
 {
@@ -19064,6 +19313,7 @@ void diag_q_eman(void)
 /* 0001b62a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word gps_date */
 
 void diag_gps_date(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
@@ -19079,6 +19329,7 @@ void diag_gps_date(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 /* 0001b64a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word gps_php */
 
 void diag_gps_php(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4)
 
@@ -19094,6 +19345,8 @@ void diag_gps_php(undefined4 param_1,undefined4 param_2,undefined4 param_3,undef
 
 /* 0001b670 */
 
+/* the pForth diagnostic word q_gps_php */
+
 void diag_q_gps_php(void)
 
 {
@@ -19105,6 +19358,7 @@ void diag_q_gps_php(void)
 /* 0001b67a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word gps_ph */
 
 void diag_gps_ph(undefined4 param_1)
 
@@ -19116,6 +19370,8 @@ void diag_gps_ph(undefined4 param_1)
 
 
 /* 0001b68c */
+
+/* the pForth diagnostic word force_1pps */
 
 void diag_force_1pps(int param_1)
 
@@ -19143,6 +19399,7 @@ override_jmp_0001b6a4_case_1:
 /* 0001b6be */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word gps_cable_dly */
 
 void diag_gps_cable_dly(undefined4 param_1)
 
@@ -19155,6 +19412,8 @@ void diag_gps_cable_dly(undefined4 param_1)
 
 /* 0001b6d0 */
 
+/* the pForth diagnostic word q_gps_cable_dly */
+
 void diag_q_gps_cable_dly(void)
 
 {
@@ -19166,6 +19425,7 @@ void diag_q_gps_cable_dly(void)
 /* 0001b6da */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word gps_change */
 
 void diag_gps_change(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
                     undefined4 param_5)
@@ -19184,6 +19444,7 @@ void diag_gps_change(undefined4 param_1,undefined4 param_2,undefined4 param_3,un
 /* 0001b706 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word gps_query */
 
 void diag_gps_query(undefined4 param_1)
 
@@ -19196,6 +19457,8 @@ void diag_gps_query(undefined4 param_1)
 
 /* 0001b718 */
 
+/* the pForth diagnostic word pr_gps_id */
+
 void diag_pr_gps_id(void)
 
 {
@@ -19205,6 +19468,8 @@ void diag_pr_gps_id(void)
 
 
 /* 0001b722 */
+
+/* the pForth diagnostic word pr_1pps */
 
 void diag_pr_1pps(void)
 
@@ -19216,6 +19481,8 @@ void diag_pr_1pps(void)
 
 /* 0001b72c */
 
+/* the pForth diagnostic word pr_time_raim */
+
 void diag_pr_time_raim(void)
 
 {
@@ -19225,6 +19492,8 @@ void diag_pr_time_raim(void)
 
 
 /* 0001b736 */
+
+/* the pForth diagnostic word pr_gps_debug */
 
 void diag_pr_gps_debug(void)
 
@@ -19236,6 +19505,8 @@ void diag_pr_gps_debug(void)
 
 /* 0001b73e */
 
+/* the pForth diagnostic word clr_gps_debug */
+
 void diag_clr_gps_debug(void)
 
 {
@@ -19245,6 +19516,8 @@ void diag_clr_gps_debug(void)
 
 
 /* 0001b746 */
+
+/* the pForth diagnostic word pr_gps_cmds */
 
 void diag_pr_gps_cmds(void)
 
@@ -19256,6 +19529,8 @@ void diag_pr_gps_cmds(void)
 
 /* 0001b74e */
 
+/* the pForth diagnostic word disable_gps_cmds */
+
 void diag_disable_gps_cmds(int param_1)
 
 {
@@ -19265,6 +19540,8 @@ void diag_disable_gps_cmds(int param_1)
 
 
 /* 0001b766 */
+
+/* the pForth diagnostic word pstat */
 
 void diag_pstat(char param_1)
 
@@ -19279,6 +19556,8 @@ void diag_pstat(char param_1)
 
 /* 0001b77c */
 
+/* the pForth diagnostic word efc_wr */
+
 void diag_efc_wr(uint param_1)
 
 {
@@ -19291,6 +19570,8 @@ void diag_efc_wr(uint param_1)
 
 
 /* 0001b79a */
+
+/* the pForth diagnostic word pr_efc */
 
 void diag_pr_efc(void)
 
@@ -19306,6 +19587,7 @@ void diag_pr_efc(void)
 /* 0001b7bc */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word lock */
 
 void diag_lock(void)
 
@@ -19317,6 +19599,8 @@ void diag_lock(void)
 
 /* 0001b7c6 */
 
+/* the pForth diagnostic word pll_restart */
+
 void diag_pll_restart(void)
 
 {
@@ -19326,6 +19610,8 @@ void diag_pll_restart(void)
 
 
 /* 0001b7d0 */
+
+/* the pForth diagnostic word pll_debug */
 
 void diag_pll_debug(undefined1 param_1)
 
@@ -19337,6 +19623,8 @@ void diag_pll_debug(undefined1 param_1)
 
 /* 0001b7dc */
 
+/* the pForth diagnostic word phase_off */
+
 void diag_phase_off(int param_1)
 
 {
@@ -19347,7 +19635,8 @@ void diag_phase_off(int param_1)
 
 /* 0001b7ee */
 
-/* "Gen GPS state:", "start", "init ack", .. "survey", "done" */
+/* prints the GPS initialization sequence's state
+   "Gen GPS state:", "start", "init ack", .. "survey", "done" */
 
 void print_gps_init_state(void)
 
@@ -19559,7 +19848,8 @@ void print_gps_init_state(void)
 
 /* 0001b99c */
 
-/* "Leap chk state:", "leap start", "leap pending send", "leap wait" */
+/* prints the leap second check's state
+   "Leap chk state:", "leap start", "leap pending send", "leap wait" */
 
 void print_leap_check_state(void)
 
@@ -19634,7 +19924,8 @@ void print_leap_check_state(void)
 /* 0001ba32 */
 
 /* WARNING: Unknown calling convention */
-/* ": fine start" .. ": fine fine slew", ": fine unknown" */
+/* the suffix naming the fine adjustment's sub-state
+   ": fine start" .. ": fine fine slew", ": fine unknown" */
 
 void print_fine_state(byte param_1,char *param_2)
 
@@ -19684,6 +19975,8 @@ void print_fine_state(byte param_1,char *param_2)
 
 
 /* 0001bac8 */
+
+/* the pForth diagnostic word pr_pll */
 
 void diag_pr_pll(void)
 
@@ -19904,6 +20197,8 @@ LAB_0001bdbe:
 
 /* 0001bde2 */
 
+/* the pForth diagnostic word log_send */
+
 void diag_log_send(undefined4 param_1)
 
 {
@@ -19914,6 +20209,8 @@ void diag_log_send(undefined4 param_1)
 
 /* 0001bdf6 */
 
+/* the pForth diagnostic word print_clk_list */
+
 void diag_print_clk_list(void)
 
 {
@@ -19923,6 +20220,8 @@ void diag_print_clk_list(void)
 
 
 /* 0001bdfe */
+
+/* the pForth diagnostic word dmessage */
 
 void diag_dmessage(char *param_1)
 
@@ -19935,6 +20234,8 @@ void diag_dmessage(char *param_1)
 
 /* 0001be18 */
 
+/* the pForth diagnostic word dmes_gpsm */
+
 void diag_dmes_gpsm(uint32_t param_1)
 
 {
@@ -19944,6 +20245,8 @@ void diag_dmes_gpsm(uint32_t param_1)
 
 
 /* 0001be22 */
+
+/* the pForth diagnostic word dmes_hmon */
 
 void diag_dmes_hmon(uint32_t param_1)
 
@@ -19955,6 +20258,8 @@ void diag_dmes_hmon(uint32_t param_1)
 
 /* 0001be2c */
 
+/* the pForth diagnostic word dmes_klok */
+
 void diag_dmes_klok(uint32_t param_1)
 
 {
@@ -19964,6 +20269,8 @@ void diag_dmes_klok(uint32_t param_1)
 
 
 /* 0001be36 */
+
+/* the pForth diagnostic word dmes_pllp */
 
 void diag_dmes_pllp(uint32_t param_1)
 
@@ -19975,6 +20282,8 @@ void diag_dmes_pllp(uint32_t param_1)
 
 /* 0001be40 */
 
+/* the pForth diagnostic word dmes_root */
+
 void diag_dmes_root(uint32_t param_1)
 
 {
@@ -19984,6 +20293,8 @@ void diag_dmes_root(uint32_t param_1)
 
 
 /* 0001be4a */
+
+/* the pForth diagnostic word dmes_scpi */
 
 void diag_dmes_scpi(uint32_t param_1)
 
@@ -19995,6 +20306,8 @@ void diag_dmes_scpi(uint32_t param_1)
 
 /* 0001be54 */
 
+/* the pForth diagnostic word dmes_spoo */
+
 void diag_dmes_spoo(uint32_t param_1)
 
 {
@@ -20005,6 +20318,8 @@ void diag_dmes_spoo(uint32_t param_1)
 
 /* 0001be5e */
 
+/* the pForth diagnostic word dmes_curv */
+
 void diag_dmes_curv(uint32_t param_1)
 
 {
@@ -20014,6 +20329,8 @@ void diag_dmes_curv(uint32_t param_1)
 
 
 /* 0001be68 */
+
+/* the pForth diagnostic word dmes_all */
 
 void diag_dmes_all(uint32_t param_1)
 
@@ -20031,6 +20348,8 @@ void diag_dmes_all(uint32_t param_1)
 
 /* 0001be84 */
 
+/* the pForth diagnostic word wr_eeprom */
+
 undefined1 diag_wr_eeprom(char *param_1,char param_2)
 
 {
@@ -20043,6 +20362,8 @@ undefined1 diag_wr_eeprom(char *param_1,char param_2)
 
 /* 0001be9e */
 
+/* the pForth diagnostic word clear_nv */
+
 void diag_clear_nv(void)
 
 {
@@ -20053,6 +20374,8 @@ void diag_clear_nv(void)
 
 /* 0001bea6 */
 
+/* the pForth diagnostic word debug_psos */
+
 void diag_debug_psos(int param_1)
 
 {
@@ -20062,6 +20385,8 @@ void diag_debug_psos(int param_1)
 
 
 /* 0001bebe */
+
+/* the pForth diagnostic word doven */
 
 void diag_doven(int param_1)
 
@@ -20081,6 +20406,8 @@ void diag_doven(int param_1)
 
 
 /* 0001bed8 */
+
+/* the pForth diagnostic word cal */
 
 void diag_cal(uint param_1)
 
@@ -20184,6 +20511,7 @@ void diag_cal(uint param_1)
 /* 0001c07c */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word crash */
 
 void diag_crash(uint param_1)
 
@@ -20218,6 +20546,7 @@ void diag_crash(uint param_1)
 /* 0001c108 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the pForth diagnostic word leapsec */
 
 void diag_leapsec(undefined1 param_1,undefined4 param_2)
 
@@ -20231,6 +20560,8 @@ void diag_leapsec(undefined1 param_1,undefined4 param_2)
 
 /* 0001c124 */
 
+/* the pForth diagnostic word es_ascii */
+
 void diag_es_ascii(int param_1)
 
 {
@@ -20240,6 +20571,8 @@ void diag_es_ascii(int param_1)
 
 
 /* 0001c13c */
+
+/* the pForth diagnostic word fp_u */
 
 void diag_fp_u(void)
 
@@ -20388,7 +20721,8 @@ byte FUN_0001d680(byte param_1)
 /* 0001d6ba */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-/* the firmware's own name, "wait_v SIG_SOQ error in _drtb_puts" */
+/* writes a string to DUART channel B, waiting for room
+   the firmware's own name, "wait_v SIG_SOQ error in _drtb_puts" */
 
 int drtb_puts(char *param_1)
 
@@ -20420,7 +20754,8 @@ int drtb_puts(char *param_1)
 
 /* 0001d74a */
 
-/* "wait_v SIG_SIQ error in getc", DUART channel B */
+/* reads a character from DUART channel B, waiting for one
+   "wait_v SIG_SIQ error in getc", DUART channel B */
 
 undefined4 drtb_getc(void)
 
@@ -20989,7 +21324,8 @@ void FUN_0001e126(byte param_1,byte param_2)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* the firmware's own name, "wait_v SIG_SOQA error in drta_send_message" */
+/* sends a message to the GPS engine on DUART channel A
+   the firmware's own name, "wait_v SIG_SOQA error in drta_send_message" */
 
 undefined1 drta_send_message(undefined4 param_1,undefined2 param_2)
 
@@ -21033,7 +21369,8 @@ bool FUN_0001e222(void)
 
 /* 0001e238 */
 
-/* the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine
+/* reads a byte from the GPS engine on DUART channel A, waiting for one
+   the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine
    with it */
 
 undefined1 drta_get_byte(char *param_1)
@@ -21338,7 +21675,8 @@ void FUN_0001e736(void)
 
 /* 0001e766 */
 
-/* "DUARTA isr signaling SIG_SIQ" */
+/* the interrupt handler for DUART channel A, the GPS engine's
+   "DUARTA isr signaling SIG_SIQ" */
 
 uint duarta_isr(void)
 
@@ -21377,7 +21715,8 @@ uint duarta_isr(void)
 /* 0001e7f6 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-/* "DUARTB isr signaling SIGINTR", "SIG_SIQ" */
+/* the interrupt handler for DUART channel B
+   "DUARTB isr signaling SIGINTR", "SIG_SIQ" */
 
 byte duartb_isr(void)
 
@@ -22276,7 +22615,8 @@ ushort FUN_0001f71a(char param_1)
 /* 0001f76c */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-/* the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts" */
+/* writes a string to the SCI port, waiting for room
+   the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts" */
 
 int sci_puts(int param_1)
 
@@ -22302,7 +22642,8 @@ int sci_puts(int param_1)
 
 /* 0001f7d0 */
 
-/* "wait_v SIG_SIQ_SCI error in getc" */
+/* reads a character from the SCI port, waiting for one
+   "wait_v SIG_SIQ_SCI error in getc" */
 
 undefined4 sci_getc(void)
 
@@ -23611,7 +23952,8 @@ void debug_message(char *message,char with_task_name)
 
 /* 00022d70 */
 
-/* "setup fpga" */
+/* sets the FPGA up
+   "setup fpga" */
 
 void fpga_setup(void)
 
@@ -23631,7 +23973,8 @@ void fpga_setup(void)
 /* 00022da4 */
 
 /* WARNING: Unknown calling convention */
-/* "FPGA programmed", "ERROR: FPGA programming failed", "FPGA INIT did not go high"; outputs.md's
+/* loads the FPGA's configuration
+   "FPGA programmed", "ERROR: FPGA programming failed", "FPGA INIT did not go high"; outputs.md's
    loader */
 
 undefined1 fpga_program(byte param_1,char param_2)
@@ -24290,7 +24633,9 @@ bool FUN_00023d28(int param_1,float param_2,float param_3,byte param_4)
 
 /* 00023d80 */
 
-/* "5V is out of tolerance, value: %.2f", "Secondary oven voltage", "15V", "-15V" */
+/* checks the supplies and the secondary oven voltage against their tolerances, reporting each that
+   leaves or returns
+   "5V is out of tolerance, value: %.2f", "Secondary oven voltage", "15V", "-15V" */
 
 void hmon_check_supplies(void)
 
@@ -24625,7 +24970,8 @@ void hmon_check_efc(void)
 /* 0002437a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-/* "watchdog: clock: %4d gps: %4d pll: %4d mon: %4d spool %4d" */
+/* prints the tasks' watchdog counts
+   "watchdog: clock: %4d gps: %4d pll: %4d mon: %4d spool %4d" */
 
 void watchdog_report(void)
 
@@ -29331,7 +29677,8 @@ undefined1 FUN_00029b08(void)
 
 /* 00029b0e */
 
-/* "scpi > ", "E%+04d> " */
+/* makes the SCPI prompt, with the latest error when there is one
+   "scpi > ", "E%+04d> " */
 
 void scpi_prompt(int param_1)
 
@@ -29832,6 +30179,8 @@ void scpi_task(void)
 
 /* 0002a18c */
 
+/* the setter for *CLS */
+
 undefined4 scpi_set_common_CLS(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -29847,6 +30196,8 @@ undefined4 scpi_set_common_CLS(undefined4 param_1,undefined4 param_2,int param_3
 
 /* 0002a1be */
 
+/* the query handler for :CALA? */
+
 void scpi_query_CALA(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -29857,6 +30208,8 @@ void scpi_query_CALA(undefined4 param_1,undefined4 param_2,int param_3)
 
 /* 0002a1d0 */
 
+/* the query handler for :CEQU? */
+
 void scpi_query_CEQU(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -29866,6 +30219,8 @@ void scpi_query_CEQU(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002a1e2 */
+
+/* the setter for *ESE */
 
 undefined4 scpi_set_common_ESE(int param_1)
 
@@ -29887,6 +30242,8 @@ undefined4 scpi_set_common_ESE(int param_1)
 
 /* 0002a268 */
 
+/* the query handler for *ESE? */
+
 undefined4 scpi_query_common_ESE(undefined4 param_1,short *param_2)
 
 {
@@ -29903,6 +30260,8 @@ undefined4 scpi_query_common_ESE(undefined4 param_1,short *param_2)
 
 /* 0002a2ae */
 
+/* the query handler for *ESR? */
+
 undefined4 scpi_query_common_ESR(undefined4 param_1,undefined4 param_2)
 
 {
@@ -29912,6 +30271,8 @@ undefined4 scpi_query_common_ESR(undefined4 param_1,undefined4 param_2)
 
 
 /* 0002a2ca */
+
+/* the query handler for *IDN? */
 
 undefined4 scpi_query_common_IDN(undefined4 param_1,short *param_2)
 
@@ -29939,6 +30300,8 @@ undefined4 scpi_query_common_IDN(undefined4 param_1,short *param_2)
 
 /* 0002a344 */
 
+/* the query handler for :RWHO? */
+
 void scpi_query_RWHO(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -29949,6 +30312,8 @@ void scpi_query_RWHO(undefined4 param_1,undefined4 param_2,int param_3)
 
 /* 0002a356 */
 
+/* the setter for *OPC */
+
 undefined4 scpi_set_common_OPC(void)
 
 {
@@ -29957,6 +30322,8 @@ undefined4 scpi_set_common_OPC(void)
 
 
 /* 0002a35a */
+
+/* the query handler for *OPC? */
 
 undefined4 scpi_query_common_OPC(undefined4 param_1,undefined4 *param_2)
 
@@ -29968,6 +30335,8 @@ undefined4 scpi_query_common_OPC(undefined4 param_1,undefined4 *param_2)
 
 /* 0002a368 */
 
+/* the setter for *RST */
+
 undefined4 scpi_set_common_RST(void)
 
 {
@@ -29976,6 +30345,8 @@ undefined4 scpi_set_common_RST(void)
 
 
 /* 0002a36c */
+
+/* the setter for *SRE */
 
 undefined4 scpi_set_common_SRE(int param_1)
 
@@ -29997,6 +30368,8 @@ undefined4 scpi_set_common_SRE(int param_1)
 
 /* 0002a3ee */
 
+/* the query handler for *SRE? */
+
 undefined4 scpi_query_common_SRE(undefined4 param_1,short *param_2)
 
 {
@@ -30013,6 +30386,8 @@ undefined4 scpi_query_common_SRE(undefined4 param_1,short *param_2)
 
 /* 0002a432 */
 
+/* the query handler for *STB? */
+
 undefined4 scpi_query_common_STB(undefined4 param_1,undefined4 param_2)
 
 {
@@ -30022,6 +30397,8 @@ undefined4 scpi_query_common_STB(undefined4 param_1,undefined4 param_2)
 
 
 /* 0002a44c */
+
+/* the query handler for *TST? */
 
 undefined4 scpi_query_common_TST(undefined4 param_1,undefined4 *param_2)
 
@@ -30037,6 +30414,8 @@ undefined4 scpi_query_common_TST(undefined4 param_1,undefined4 *param_2)
 
 /* 0002a47c */
 
+/* the setter for *WAI */
+
 undefined4 scpi_set_common_WAI(void)
 
 {
@@ -30045,6 +30424,8 @@ undefined4 scpi_set_common_WAI(void)
 
 
 /* 0002a480 */
+
+/* the query handler for :STATus:OPERation:EVENt? */
 
 undefined4 scpi_query_STATus_OPERation_EVENt(short *param_1,undefined4 param_2)
 
@@ -30056,6 +30437,8 @@ undefined4 scpi_query_STATus_OPERation_EVENt(short *param_1,undefined4 param_2)
 
 /* 0002a4a0 */
 
+/* the query handler for :STATus:OPERation:CONDition? */
+
 undefined4 scpi_query_STATus_OPERation_CONDition(short *param_1,undefined4 param_2)
 
 {
@@ -30066,6 +30449,8 @@ undefined4 scpi_query_STATus_OPERation_CONDition(short *param_1,undefined4 param
 
 /* 0002a4c0 */
 
+/* the query handler for :RAST? */
+
 void scpi_query_RAST(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -30075,6 +30460,8 @@ void scpi_query_RAST(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002a4d2 */
+
+/* the setter for :STATus:QUEStionable:CONDition:USER */
 
 undefined4 scpi_set_STATus_QUEStionable_CONDition_USER(int param_1)
 
@@ -30089,6 +30476,8 @@ undefined4 scpi_set_STATus_QUEStionable_CONDition_USER(int param_1)
 
 
 /* 0002a502 */
+
+/* the setter for :STATus:QUEStionable:EVENt:USER */
 
 undefined4 scpi_set_STATus_QUEStionable_EVENt_USER(int param_1)
 
@@ -30115,6 +30504,8 @@ undefined4 scpi_set_STATus_QUEStionable_EVENt_USER(int param_1)
 
 
 /* 0002a580 */
+
+/* the setter for :STATus:OPERation:ENABle */
 
 undefined4 scpi_set_STATus_OPERation_ENABle(short *param_1)
 
@@ -30144,6 +30535,8 @@ undefined4 scpi_set_STATus_OPERation_ENABle(short *param_1)
 
 /* 0002a63a */
 
+/* the query handler for :STATus:OPERation:ENABle? */
+
 undefined4 scpi_query_STATus_OPERation_ENABle(short *param_1,ushort *param_2)
 
 {
@@ -30159,6 +30552,8 @@ undefined4 scpi_query_STATus_OPERation_ENABle(short *param_1,ushort *param_2)
 
 
 /* 0002a68e */
+
+/* the setter for :STATus:OPERation:PTRansition */
 
 undefined4 scpi_set_STATus_OPERation_PTRansition(short *param_1)
 
@@ -30188,6 +30583,8 @@ undefined4 scpi_set_STATus_OPERation_PTRansition(short *param_1)
 
 /* 0002a74c */
 
+/* the query handler for :STATus:OPERation:PTRansition? */
+
 undefined4 scpi_query_STATus_OPERation_PTRansition(short *param_1,ushort *param_2)
 
 {
@@ -30203,6 +30600,8 @@ undefined4 scpi_query_STATus_OPERation_PTRansition(short *param_1,ushort *param_
 
 
 /* 0002a7a0 */
+
+/* the setter for :STATus:OPERation:NTRansition */
 
 undefined4 scpi_set_STATus_OPERation_NTRansition(short *param_1)
 
@@ -30233,6 +30632,8 @@ undefined4 scpi_set_STATus_OPERation_NTRansition(short *param_1)
 
 /* 0002a85e */
 
+/* the query handler for :STATus:OPERation:NTRansition? */
+
 undefined4 scpi_query_STATus_OPERation_NTRansition(short *param_1,ushort *param_2)
 
 {
@@ -30249,6 +30650,8 @@ undefined4 scpi_query_STATus_OPERation_NTRansition(short *param_1,ushort *param_
 
 /* 0002a8b2 */
 
+/* the query handler for :STATus:OPERation:HARDware:EVENt? */
+
 undefined4 scpi_query_STATus_OPERation_HARDware_EVENt(int param_1,undefined4 param_2)
 
 {
@@ -30259,6 +30662,8 @@ undefined4 scpi_query_STATus_OPERation_HARDware_EVENt(int param_1,undefined4 par
 
 /* 0002a8d4 */
 
+/* the query handler for :STATus:OPERation:HARDware:CONDition? */
+
 undefined4 scpi_query_STATus_OPERation_HARDware_CONDition(int param_1,undefined4 param_2)
 
 {
@@ -30268,6 +30673,8 @@ undefined4 scpi_query_STATus_OPERation_HARDware_CONDition(int param_1,undefined4
 
 
 /* 0002a8f6 */
+
+/* the setter for :STATus:OPERation:HARDware:ENABle */
 
 undefined4 scpi_set_STATus_OPERation_HARDware_ENABle(int param_1)
 
@@ -30298,6 +30705,8 @@ undefined4 scpi_set_STATus_OPERation_HARDware_ENABle(int param_1)
 
 /* 0002a9b8 */
 
+/* the query handler for :STATus:OPERation:HARDware:ENABle? */
+
 undefined4 scpi_query_STATus_OPERation_HARDware_ENABle(int param_1,ushort *param_2)
 
 {
@@ -30313,6 +30722,8 @@ undefined4 scpi_query_STATus_OPERation_HARDware_ENABle(int param_1,ushort *param
 
 
 /* 0002aa10 */
+
+/* the setter for :STATus:OPERation:HARDware:PTRansition */
 
 undefined4 scpi_set_STATus_OPERation_HARDware_PTRansition(int param_1)
 
@@ -30343,6 +30754,8 @@ undefined4 scpi_set_STATus_OPERation_HARDware_PTRansition(int param_1)
 
 /* 0002aad6 */
 
+/* the query handler for :STATus:OPERation:HARDware:PTRansition? */
+
 undefined4 scpi_query_STATus_OPERation_HARDware_PTRansition(int param_1,ushort *param_2)
 
 {
@@ -30358,6 +30771,8 @@ undefined4 scpi_query_STATus_OPERation_HARDware_PTRansition(int param_1,ushort *
 
 
 /* 0002ab2e */
+
+/* the setter for :STATus:OPERation:HARDware:NTRansition */
 
 undefined4 scpi_set_STATus_OPERation_HARDware_NTRansition(int param_1)
 
@@ -30388,6 +30803,8 @@ undefined4 scpi_set_STATus_OPERation_HARDware_NTRansition(int param_1)
 
 /* 0002abf4 */
 
+/* the query handler for :STATus:OPERation:HARDware:NTRansition? */
+
 undefined4 scpi_query_STATus_OPERation_HARDware_NTRansition(int param_1,ushort *param_2)
 
 {
@@ -30404,6 +30821,8 @@ undefined4 scpi_query_STATus_OPERation_HARDware_NTRansition(int param_1,ushort *
 
 /* 0002ac4c */
 
+/* the setter for :STATus:PRESet */
+
 undefined4 scpi_set_STATus_PRESet(void)
 
 {
@@ -30417,6 +30836,8 @@ undefined4 scpi_set_STATus_PRESet(void)
 
 /* 0002ac72 */
 
+/* the setter for :STATus:PRESet:ALARm */
+
 undefined4 scpi_set_STATus_PRESet_ALARm(void)
 
 {
@@ -30429,6 +30850,8 @@ undefined4 scpi_set_STATus_PRESet_ALARm(void)
 
 
 /* 0002acb8 */
+
+/* the setter for :DIAGnostic:GPSystem:POSition:HOLD:RAIM:STATe */
 
 undefined4 scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe(undefined2 *param_1)
 
@@ -30460,6 +30883,8 @@ undefined4 scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe(undefined2 *par
 
 /* 0002ad30 */
 
+/* the query handler for :DIAGnostic:GPSystem:POSition:HOLD:RAIM:STATe? */
+
 undefined4
 scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe(short *param_1,short *param_2,int param_3)
 
@@ -30485,6 +30910,8 @@ scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe(short *param_1,short *pa
 
 
 /* 0002ad8c */
+
+/* the setter for :DIAGnostic:GPSystem:POSition:HOLD:RAIM:THReshold */
 
 undefined4 scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold(short *param_1)
 
@@ -30513,6 +30940,8 @@ undefined4 scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold(short *para
 
 
 /* 0002ae10 */
+
+/* the query handler for :DIAGnostic:GPSystem:POSition:HOLD:RAIM:THReshold? */
 
 undefined4
 scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold(short *param_1,int *param_2,int param_3)
@@ -30547,6 +30976,8 @@ scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold(short *param_1,int *
 
 
 /* 0002ae86 */
+
+/* the query handler for :SOURce:GPSystem:POSition:ACTual? */
 
 undefined4
 scpi_query_SOURce_GPSystem_POSition_ACTual(undefined4 param_1,undefined2 *param_2,int param_3)
@@ -30605,6 +31036,8 @@ scpi_query_SOURce_GPSystem_POSition_ACTual(undefined4 param_1,undefined2 *param_
 
 /* 0002afa2 */
 
+/* the query handler for :DIAGnostic:GPSystem:POSition:MSEConds? */
+
 undefined4 scpi_query_DIAGnostic_GPSystem_POSition_MSEConds(int param_1,int *param_2,int param_3)
 
 {
@@ -30628,6 +31061,8 @@ undefined4 scpi_query_DIAGnostic_GPSystem_POSition_MSEConds(int param_1,int *par
 
 
 /* 0002b02c */
+
+/* the query handler for :DIAGnostic:GPSystem:POSition:DEGRees? */
 
 undefined4 scpi_query_DIAGnostic_GPSystem_POSition_DEGRees(int param_1,undefined2 *param_2)
 
@@ -30670,6 +31105,8 @@ undefined4 scpi_query_DIAGnostic_GPSystem_POSition_DEGRees(int param_1,undefined
 
 /* 0002b0ae */
 
+/* the query handler for :DIAGnostic:GPSystem:TIME? */
+
 undefined4 scpi_query_DIAGnostic_GPSystem_TIME(undefined4 param_1,ushort *param_2,int param_3)
 
 {
@@ -30705,6 +31142,8 @@ undefined4 scpi_query_DIAGnostic_GPSystem_TIME(undefined4 param_1,ushort *param_
 
 /* 0002b13a */
 
+/* the setter for :DIAGnostic:GPSystem:UTC */
+
 undefined4 scpi_set_DIAGnostic_GPSystem_UTC(int param_1)
 
 {
@@ -30719,6 +31158,8 @@ undefined4 scpi_set_DIAGnostic_GPSystem_UTC(int param_1)
 
 /* 0002b16a */
 
+/* the query handler for :DIAGnostic:GPSystem:UTC? */
+
 undefined4 scpi_query_DIAGnostic_GPSystem_UTC(undefined4 param_1,short *param_2)
 
 {
@@ -30728,6 +31169,8 @@ undefined4 scpi_query_DIAGnostic_GPSystem_UTC(undefined4 param_1,short *param_2)
 
 
 /* 0002b17c */
+
+/* the query handler for :DIAGnostic:IDENtification:DEFault? */
 
 undefined4 scpi_query_DIAGnostic_IDENtification_DEFault(undefined4 param_1,undefined4 *param_2)
 
@@ -30739,6 +31182,8 @@ undefined4 scpi_query_DIAGnostic_IDENtification_DEFault(undefined4 param_1,undef
 
 
 /* 0002b196 */
+
+/* the query handler for :DIAGnostic:IDENtification:GPSystem? */
 
 undefined4
 scpi_query_DIAGnostic_IDENtification_GPSystem(undefined4 param_1,undefined4 *param_2,int param_3)
@@ -30767,6 +31212,8 @@ scpi_query_DIAGnostic_IDENtification_GPSystem(undefined4 param_1,undefined4 *par
 
 
 /* 0002b20e */
+
+/* the setter for :DIAGnostic:IDENtification:HARDware */
 
 undefined4 scpi_set_DIAGnostic_IDENtification_HARDware(int param_1)
 
@@ -30803,6 +31250,8 @@ undefined4 scpi_set_DIAGnostic_IDENtification_HARDware(int param_1)
 
 
 /* 0002b27e */
+
+/* the setter for :DIAGnostic:IDENtification:MODel */
 
 undefined4 scpi_set_DIAGnostic_IDENtification_MODel(int param_1)
 
@@ -30843,6 +31292,8 @@ undefined4 scpi_set_DIAGnostic_IDENtification_MODel(int param_1)
 
 
 /* 0002b31a */
+
+/* the setter for :DIAGnostic:IDENtification:SERial */
 
 undefined4 scpi_set_DIAGnostic_IDENtification_SERial(int param_1)
 
@@ -30885,6 +31336,7 @@ undefined4 scpi_set_DIAGnostic_IDENtification_SERial(int param_1)
 /* 0002b3b6 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the query handler for :DIAGnostic:LIFetime:COUNt? */
 
 undefined4 scpi_query_DIAGnostic_LIFetime_COUNt(undefined4 param_1,undefined4 *param_2)
 
@@ -30895,6 +31347,8 @@ undefined4 scpi_query_DIAGnostic_LIFetime_COUNt(undefined4 param_1,undefined4 *p
 
 
 /* 0002b3c4 */
+
+/* the setter for :DIAGnostic:LOG:CLEar */
 
 undefined4 scpi_set_DIAGnostic_LOG_CLEar(int param_1)
 
@@ -30928,6 +31382,8 @@ undefined4 scpi_set_DIAGnostic_LOG_CLEar(int param_1)
 
 /* 0002b44e */
 
+/* the setter for :DIAGnostic:SLOG:CLEar */
+
 undefined4 scpi_set_DIAGnostic_SLOG_CLEar(void)
 
 {
@@ -30944,6 +31400,8 @@ undefined4 scpi_set_DIAGnostic_SLOG_CLEar(void)
 
 
 /* 0002b47c */
+
+/* the query handler for :DIAGnostic:LOG:COUNt? */
 
 undefined4 scpi_query_DIAGnostic_LOG_COUNt(short *param_1,short *param_2,int param_3)
 
@@ -30973,7 +31431,8 @@ undefined4 scpi_query_DIAGnostic_LOG_COUNt(short *param_1,short *param_2,int par
 /* 0002b4c2 */
 
 /* WARNING: Unknown calling convention */
-/* "Log status: Error", "Empty", "One entry", "%-3d entries", "Full" */
+/* prints the event log's state
+   "Log status: Error", "Empty", "One entry", "%-3d entries", "Full" */
 
 void log_status(char *param_1,char param_2)
 
@@ -31060,6 +31519,8 @@ void FUN_0002b578(char param_1,undefined *param_2,undefined *param_3)
 
 /* 0002b632 */
 
+/* the query handler for :DIAGnostic:LOG:READ? */
+
 undefined4 scpi_query_DIAGnostic_LOG_READ(short *param_1,int *param_2,int param_3)
 
 {
@@ -31110,6 +31571,8 @@ undefined4 scpi_query_DIAGnostic_LOG_READ(short *param_1,int *param_2,int param_
 
 /* 0002b762 */
 
+/* the query handler for :DIAGnostic:LOG:READ:ALL? */
+
 undefined4 scpi_query_DIAGnostic_LOG_READ_ALL(undefined2 *param_1,undefined2 *param_2,int param_3)
 
 {
@@ -31125,6 +31588,8 @@ undefined4 scpi_query_DIAGnostic_LOG_READ_ALL(undefined2 *param_1,undefined2 *pa
 
 
 /* 0002b798 */
+
+/* the setter for :DIAGnostic:LOG:WRITe */
 
 undefined4 scpi_set_DIAGnostic_LOG_WRITe(int param_1)
 
@@ -31155,6 +31620,8 @@ undefined4 scpi_set_DIAGnostic_LOG_WRITe(int param_1)
 
 /* 0002b816 */
 
+/* the setter for :DIAGnostic:ME */
+
 undefined4 scpi_set_DIAGnostic_ME(void)
 
 {
@@ -31163,6 +31630,8 @@ undefined4 scpi_set_DIAGnostic_ME(void)
 
 
 /* 0002b81a */
+
+/* the query handler for :DIAGnostic:ME? */
 
 undefined4 scpi_query_DIAGnostic_ME(undefined4 param_1,short *param_2)
 
@@ -31176,6 +31645,8 @@ undefined4 scpi_query_DIAGnostic_ME(undefined4 param_1,short *param_2)
 
 
 /* 0002b830 */
+
+/* the query handler for :DIAGnostic:OS:MEMory? */
 
 undefined4 scpi_query_DIAGnostic_OS_MEMory(undefined4 param_1,undefined2 *param_2)
 
@@ -31191,6 +31662,8 @@ undefined4 scpi_query_DIAGnostic_OS_MEMory(undefined4 param_1,undefined2 *param_
 
 /* 0002b852 */
 
+/* the query handler for :DIAGnostic:OS:PROCess? */
+
 undefined4 scpi_query_DIAGnostic_OS_PROCess(undefined4 param_1,undefined2 *param_2)
 
 {
@@ -31205,6 +31678,8 @@ undefined4 scpi_query_DIAGnostic_OS_PROCess(undefined4 param_1,undefined2 *param
 
 /* 0002b874 */
 
+/* the query handler for :DIAGnostic:OS:STACk? */
+
 undefined4 scpi_query_DIAGnostic_OS_STACk(undefined4 param_1,undefined2 *param_2)
 
 {
@@ -31218,6 +31693,8 @@ undefined4 scpi_query_DIAGnostic_OS_STACk(undefined4 param_1,undefined2 *param_2
 
 
 /* 0002b896 */
+
+/* the query handler for :DIAGnostic:PTIMe:TINTerval? */
 
 undefined4 scpi_query_DIAGnostic_PTIMe_TINTerval(undefined4 param_1,float *param_2,int param_3)
 
@@ -31248,6 +31725,8 @@ undefined4 scpi_query_DIAGnostic_PTIMe_TINTerval(undefined4 param_1,float *param
 
 /* 0002b91a */
 
+/* the query handler for :DIAGnostic:QUERy:RESPonse? */
+
 undefined4 scpi_query_DIAGnostic_QUERy_RESPonse(undefined4 param_1,int *param_2,int param_3)
 
 {
@@ -31274,6 +31753,8 @@ undefined4 scpi_query_DIAGnostic_QUERy_RESPonse(undefined4 param_1,int *param_2,
 
 /* 0002b96c */
 
+/* the setter for :SYSTem:COMMunicate:SER1:PROMpt */
+
 undefined4 scpi_set_SYSTem_COMMunicate_SER1_PROMpt(short *param_1)
 
 {
@@ -31286,6 +31767,8 @@ undefined4 scpi_set_SYSTem_COMMunicate_SER1_PROMpt(short *param_1)
 
 /* 0002b982 */
 
+/* the query handler for :SYSTem:COMMunicate:SER1:PROMpt? */
+
 undefined4 scpi_query_SYSTem_COMMunicate_SER1_PROMpt(short *param_1,ushort *param_2)
 
 {
@@ -31297,6 +31780,8 @@ undefined4 scpi_query_SYSTem_COMMunicate_SER1_PROMpt(short *param_1,ushort *para
 
 
 /* 0002b99c */
+
+/* the setter for :DIAGnostic:SER1:RESTricted */
 
 undefined4 scpi_set_DIAGnostic_SER1_RESTricted(int param_1)
 
@@ -31312,6 +31797,8 @@ undefined4 scpi_set_DIAGnostic_SER1_RESTricted(int param_1)
 
 /* 0002b9cc */
 
+/* the query handler for :DIAGnostic:SER1:RESTricted? */
+
 undefined4 scpi_query_DIAGnostic_SER1_RESTricted(undefined4 param_1,short *param_2)
 
 {
@@ -31325,6 +31812,8 @@ undefined4 scpi_query_DIAGnostic_SER1_RESTricted(undefined4 param_1,short *param
 
 /* 0002b9e6 */
 
+/* the setter for :DIAGnostic:SER1:EGResponse */
+
 undefined4 scpi_set_DIAGnostic_SER1_EGResponse(void)
 
 {
@@ -31333,6 +31822,8 @@ undefined4 scpi_set_DIAGnostic_SER1_EGResponse(void)
 
 
 /* 0002b9ea */
+
+/* the query handler for :DIAGnostic:SER1:EGResponse? */
 
 void scpi_query_DIAGnostic_SER1_EGResponse(undefined4 param_1,undefined4 param_2,int param_3)
 
@@ -31343,6 +31834,8 @@ void scpi_query_DIAGnostic_SER1_EGResponse(undefined4 param_1,undefined4 param_2
 
 
 /* 0002b9fc */
+
+/* the query handler for :DIAGnostic:ROSCillator:CURRent? */
 
 undefined4 scpi_query_DIAGnostic_ROSCillator_CURRent(undefined4 param_1,float *param_2)
 
@@ -31356,6 +31849,8 @@ undefined4 scpi_query_DIAGnostic_ROSCillator_CURRent(undefined4 param_1,float *p
 
 
 /* 0002ba0c */
+
+/* the query handler for :DIAGnostic:ROSCillator:EFControl:RELative? */
 
 undefined4 scpi_query_DIAGnostic_ROSCillator_EFControl_RELative(undefined4 param_1,float *param_2)
 
@@ -31376,6 +31871,8 @@ undefined4 scpi_query_DIAGnostic_ROSCillator_EFControl_RELative(undefined4 param
 
 /* 0002ba5a */
 
+/* the query handler for :DIAGnostic:ROSCillator:EFControl:ABSolute? */
+
 undefined4 scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute(undefined4 param_1,int *param_2)
 
 {
@@ -31391,6 +31888,8 @@ undefined4 scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute(undefined4 param
 
 /* 0002ba78 */
 
+/* the setter for :DIAGnostic:ROSCillator:TCOefficient */
+
 undefined4 scpi_set_DIAGnostic_ROSCillator_TCOefficient(short *param_1)
 
 {
@@ -31404,6 +31903,8 @@ undefined4 scpi_set_DIAGnostic_ROSCillator_TCOefficient(short *param_1)
 
 /* 0002bab2 */
 
+/* the query handler for :DIAGnostic:ROSCillator:TCOefficient? */
+
 undefined4 scpi_query_DIAGnostic_ROSCillator_TCOefficient(int16_t *param_1,float *param_2)
 
 {
@@ -31416,6 +31917,8 @@ undefined4 scpi_query_DIAGnostic_ROSCillator_TCOefficient(int16_t *param_1,float
 
 
 /* 0002bad8 */
+
+/* the setter for :DIAGnostic:STATus:ERRor */
 
 undefined4 scpi_set_DIAGnostic_STATus_ERRor(int param_1)
 
@@ -31437,6 +31940,8 @@ undefined4 scpi_set_DIAGnostic_STATus_ERRor(int param_1)
 
 /* 0002bb2e */
 
+/* the setter for :DIAGnostic:STATus:HAPPening */
+
 undefined4 scpi_set_DIAGnostic_STATus_HAPPening(int param_1)
 
 {
@@ -31455,6 +31960,8 @@ undefined4 scpi_set_DIAGnostic_STATus_HAPPening(int param_1)
 
 /* 0002bb76 */
 
+/* the setter for :DIAGnostic:SYSTem:DOUTput */
+
 undefined4 scpi_set_DIAGnostic_SYSTem_DOUTput(int param_1)
 
 {
@@ -31472,6 +31979,8 @@ undefined4 scpi_set_DIAGnostic_SYSTem_DOUTput(int param_1)
 
 /* 0002bbca */
 
+/* the query handler for :DIAGnostic:SYSTem:DOUTput? */
+
 undefined4 scpi_query_DIAGnostic_SYSTem_DOUTput(undefined4 param_1,short *param_2)
 
 {
@@ -31481,6 +31990,8 @@ undefined4 scpi_query_DIAGnostic_SYSTem_DOUTput(undefined4 param_1,short *param_
 
 
 /* 0002bbdc */
+
+/* the setter for :DIAGnostic:SYSTem:PSTartup */
 
 undefined4 scpi_set_DIAGnostic_SYSTem_PSTartup(int param_1)
 
@@ -31496,6 +32007,8 @@ undefined4 scpi_set_DIAGnostic_SYSTem_PSTartup(int param_1)
 
 /* 0002bc0c */
 
+/* the query handler for :DIAGnostic:SYSTem:PSTartup? */
+
 undefined4 scpi_query_DIAGnostic_SYSTem_PSTartup(undefined4 param_1,short *param_2)
 
 {
@@ -31505,6 +32018,8 @@ undefined4 scpi_query_DIAGnostic_SYSTem_PSTartup(undefined4 param_1,short *param
 
 
 /* 0002bc1e */
+
+/* the query handler for :DIAGnostic:TEMPerature? */
 
 undefined4 scpi_query_DIAGnostic_TEMPerature(undefined4 param_1,float *param_2)
 
@@ -31518,6 +32033,8 @@ undefined4 scpi_query_DIAGnostic_TEMPerature(undefined4 param_1,float *param_2)
 
 
 /* 0002bc2e */
+
+/* the query handler for :DIAGnostic:TEST? */
 
 undefined4 scpi_query_DIAGnostic_TEST(int param_1,undefined4 *param_2)
 
@@ -31582,6 +32099,8 @@ undefined4 scpi_query_DIAGnostic_TEST(int param_1,undefined4 *param_2)
 
 /* 0002bce4 */
 
+/* the query handler for :DIAGnostic:TEST:RESult? */
+
 undefined4 scpi_query_DIAGnostic_TEST_RESult(undefined4 param_1,undefined4 *param_2)
 
 {
@@ -31638,6 +32157,8 @@ undefined4 scpi_query_DIAGnostic_TEST_RESult(undefined4 param_1,undefined4 *para
 
 /* 0002bd96 */
 
+/* the setter for :DIAGnostic:TOFFset */
+
 undefined4 scpi_set_DIAGnostic_TOFFset(short *param_1)
 
 {
@@ -31652,6 +32173,8 @@ undefined4 scpi_set_DIAGnostic_TOFFset(short *param_1)
 
 
 /* 0002bdee */
+
+/* the query handler for :DIAGnostic:TOFFset? */
 
 undefined4 scpi_query_DIAGnostic_TOFFset(int16_t *param_1,float *param_2)
 
@@ -31725,6 +32248,8 @@ int status_report_from(short param_1,byte param_2)
 
 /* 0002c148 */
 
+/* the setter for :OUTPut:PIN1:DELay */
+
 undefined4 scpi_set_OUTPut_PIN1_DELay(void)
 
 {
@@ -31733,6 +32258,8 @@ undefined4 scpi_set_OUTPut_PIN1_DELay(void)
 
 
 /* 0002c14c */
+
+/* the query handler for :OUTPut:PIN1:DELay? */
 
 void scpi_query_OUTPut_PIN1_DELay(undefined4 param_1,undefined4 param_2,int param_3)
 
@@ -31744,6 +32271,8 @@ void scpi_query_OUTPut_PIN1_DELay(undefined4 param_1,undefined4 param_2,int para
 
 /* 0002c15e */
 
+/* the query handler for :R1PO? */
+
 void scpi_query_R1PO(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -31753,6 +32282,8 @@ void scpi_query_R1PO(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002c170 */
+
+/* the setter for :OUTPut:PIN1:DELay:ALIGnment */
 
 undefined4 scpi_set_OUTPut_PIN1_DELay_ALIGnment(void)
 
@@ -31767,6 +32298,8 @@ undefined4 scpi_set_OUTPut_PIN1_DELay_ALIGnment(void)
 
 /* 0002c190 */
 
+/* the query handler for :OUTPut:PIN1:DELay:ALIGnment? */
+
 void scpi_query_OUTPut_PIN1_DELay_ALIGnment(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -31776,6 +32309,8 @@ void scpi_query_OUTPut_PIN1_DELay_ALIGnment(undefined4 param_1,undefined4 param_
 
 
 /* 0002c1a2 */
+
+/* the query handler for :REAL? */
 
 void scpi_query_REAL(undefined4 param_1,undefined4 param_2,int param_3)
 
@@ -31787,6 +32322,8 @@ void scpi_query_REAL(undefined4 param_1,undefined4 param_2,int param_3)
 
 /* 0002c1b4 */
 
+/* the setter for :OUTPut:PIN1:FREQuency */
+
 undefined4 scpi_set_OUTPut_PIN1_FREQuency(void)
 
 {
@@ -31795,6 +32332,8 @@ undefined4 scpi_set_OUTPut_PIN1_FREQuency(void)
 
 
 /* 0002c1b8 */
+
+/* the query handler for :OUTPut:PIN1:FREQuency? */
 
 void scpi_query_OUTPut_PIN1_FREQuency(undefined4 param_1,undefined4 param_2,int param_3)
 
@@ -31806,6 +32345,8 @@ void scpi_query_OUTPut_PIN1_FREQuency(undefined4 param_1,undefined4 param_2,int 
 
 /* 0002c1ca */
 
+/* the query handler for :RFOU? */
+
 void scpi_query_RFOU(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -31815,6 +32356,8 @@ void scpi_query_RFOU(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002c1dc */
+
+/* the query handler for :RSSU? */
 
 void scpi_query_RSSU(undefined4 param_1,undefined4 param_2,int param_3)
 
@@ -31827,6 +32370,7 @@ void scpi_query_RSSU(undefined4 param_1,undefined4 param_2,int param_3)
 /* 0002c1ee */
 
 /* WARNING: Type propagation algorithm not settling */
+/* the setter for :SOURce:GPSystem:ADELay */
 
 undefined4 scpi_set_SOURce_GPSystem_ADELay(short *param_1,undefined4 param_2,int param_3)
 
@@ -31868,6 +32412,8 @@ undefined4 scpi_set_SOURce_GPSystem_ADELay(short *param_1,undefined4 param_2,int
 
 /* 0002c2e4 */
 
+/* the query handler for :SOURce:GPSystem:ADELay? */
+
 undefined4 scpi_query_SOURce_GPSystem_ADELay(int16_t *param_1,float *param_2)
 
 {
@@ -31882,6 +32428,8 @@ undefined4 scpi_query_SOURce_GPSystem_ADELay(int16_t *param_1,float *param_2)
 
 /* 0002c316 */
 
+/* the query handler for :RACD? */
+
 void scpi_query_RACD(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -31891,6 +32439,8 @@ void scpi_query_RACD(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002c328 */
+
+/* the setter for :SOURce:GPSystem:EMANgle */
 
 undefined4 scpi_set_SOURce_GPSystem_EMANgle(short *param_1)
 
@@ -31904,6 +32454,8 @@ undefined4 scpi_set_SOURce_GPSystem_EMANgle(short *param_1)
 
 
 /* 0002c364 */
+
+/* the query handler for :SOURce:GPSystem:EMANgle? */
 
 undefined4 scpi_query_SOURce_GPSystem_EMANgle(int16_t *param_1,undefined2 *param_2)
 
@@ -31919,6 +32471,8 @@ undefined4 scpi_query_SOURce_GPSystem_EMANgle(int16_t *param_1,undefined2 *param
 
 
 /* 0002c390 */
+
+/* the setter for :SOURce:GPSystem:INITial:DATE */
 
 undefined4 scpi_set_SOURce_GPSystem_INITial_DATE(int param_1)
 
@@ -31945,6 +32499,8 @@ undefined4 scpi_set_SOURce_GPSystem_INITial_DATE(int param_1)
 
 /* 0002c412 */
 
+/* the setter for :SOURce:GPSystem:INITial:TIME */
+
 undefined4 scpi_set_SOURce_GPSystem_INITial_TIME(int param_1)
 
 {
@@ -31969,6 +32525,8 @@ undefined4 scpi_set_SOURce_GPSystem_INITial_TIME(int param_1)
 
 
 /* 0002c494 */
+
+/* the setter for :SOURce:GPSystem:INITial:POSition */
 
 undefined4 scpi_set_SOURce_GPSystem_INITial_POSition(int param_1,undefined4 param_2,int param_3)
 
@@ -32110,6 +32668,7 @@ undefined4 scpi_set_SOURce_GPSystem_INITial_POSition(int param_1,undefined4 para
 /* 0002c810 */
 
 /* WARNING: Type propagation algorithm not settling */
+/* the setter for :SOURce:GPSystem:POSition */
 
 undefined4 scpi_set_SOURce_GPSystem_POSition(int param_1)
 
@@ -32251,6 +32810,8 @@ undefined4 scpi_set_SOURce_GPSystem_POSition(int param_1)
 
 /* 0002cc54 */
 
+/* the query handler for :SOURce:GPSystem:POSition? */
+
 undefined4 scpi_query_SOURce_GPSystem_POSition(undefined4 param_1,undefined2 *param_2,int param_3)
 
 {
@@ -32328,6 +32889,8 @@ undefined4 scpi_query_SOURce_GPSystem_POSition(undefined4 param_1,undefined2 *pa
 
 /* 0002cd94 */
 
+/* the query handler for :SOURce:GPSystem:POSition:HOLD:LAST? */
+
 undefined4 scpi_query_SOURce_GPSystem_POSition_HOLD_LAST(undefined4 param_1,undefined2 *param_2)
 
 {
@@ -32385,6 +32948,8 @@ undefined4 scpi_query_SOURce_GPSystem_POSition_HOLD_LAST(undefined4 param_1,unde
 
 /* 0002ce92 */
 
+/* the query handler for :RLOC? */
+
 void scpi_query_RLOC(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -32394,6 +32959,8 @@ void scpi_query_RLOC(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002cea4 */
+
+/* the query handler for :SOURce:GPSystem:POSition:HOLD:STATe? */
 
 undefined4 scpi_query_SOURce_GPSystem_POSition_HOLD_STATe(undefined4 param_1,short *param_2)
 
@@ -32408,6 +32975,8 @@ undefined4 scpi_query_SOURce_GPSystem_POSition_HOLD_STATe(undefined4 param_1,sho
 
 /* 0002cebe */
 
+/* the query handler for :RPHS? */
+
 void scpi_query_RPHS(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -32417,6 +32986,8 @@ void scpi_query_RPHS(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002ced0 */
+
+/* the setter for :DOUGlas:DURation */
 
 undefined4 scpi_set_DOUGlas_DURation(short *param_1)
 
@@ -32444,6 +33015,8 @@ LAB_0002cefe:
 
 /* 0002cf66 */
 
+/* the query handler for :DOUGlas:DURation? */
+
 undefined4 scpi_query_DOUGlas_DURation(int16_t *param_1,float *param_2)
 
 {
@@ -32461,6 +33034,8 @@ undefined4 scpi_query_DOUGlas_DURation(int16_t *param_1,float *param_2)
 
 
 /* 0002cfa6 */
+
+/* the query handler for :DOUGlas:PROGress? */
 
 undefined4 scpi_query_DOUGlas_PROGress(undefined4 param_1,int *param_2,int param_3)
 
@@ -32487,6 +33062,8 @@ undefined4 scpi_query_DOUGlas_PROGress(undefined4 param_1,int *param_2,int param
 
 /* 0002d01e */
 
+/* the query handler for :RSPR? */
+
 void scpi_query_RSPR(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -32496,6 +33073,8 @@ void scpi_query_RSPR(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002d030 */
+
+/* the setter for :DOUGlas:STATe */
 
 undefined4 scpi_set_DOUGlas_STATe(void)
 
@@ -32518,6 +33097,8 @@ undefined4 scpi_set_DOUGlas_STATe(void)
 
 /* 0002d096 */
 
+/* the query handler for :IPSU? */
+
 void scpi_query_IPSU(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -32527,6 +33108,8 @@ void scpi_query_IPSU(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002d0a8 */
+
+/* the query handler for :DOUGlas:STATe? */
 
 undefined4 scpi_query_DOUGlas_STATe(undefined4 param_1,undefined4 *param_2)
 
@@ -32546,6 +33129,8 @@ undefined4 scpi_query_DOUGlas_STATe(undefined4 param_1,undefined4 *param_2)
 
 /* 0002d0d8 */
 
+/* the setter for :DOUGlas:STATe:POWerup */
+
 undefined4 scpi_set_DOUGlas_STATe_POWerup(int param_1)
 
 {
@@ -32560,6 +33145,8 @@ undefined4 scpi_set_DOUGlas_STATe_POWerup(int param_1)
 
 /* 0002d108 */
 
+/* the query handler for :DOUGlas:STATe:POWerup? */
+
 undefined4 scpi_query_DOUGlas_STATe_POWerup(undefined4 param_1,short *param_2)
 
 {
@@ -32572,6 +33159,8 @@ undefined4 scpi_query_DOUGlas_STATe_POWerup(undefined4 param_1,short *param_2)
 
 
 /* 0002d122 */
+
+/* the query handler for :SOURce:GPSystem:REFerence:VALid? */
 
 undefined4 scpi_query_SOURce_GPSystem_REFerence_VALid(undefined4 param_1,ushort *param_2)
 
@@ -32721,6 +33310,8 @@ byte satellites_in_mask(uint param_1,byte param_2,short *param_3,byte param_4,by
 
 /* 0002d272 */
 
+/* the query handler for :SOURce:GPSystem:SATellite:TRACking? */
+
 undefined4
 scpi_query_SOURce_GPSystem_SATellite_TRACking(undefined4 param_1,int *param_2,int param_3)
 
@@ -32771,6 +33362,8 @@ scpi_query_SOURce_GPSystem_SATellite_TRACking(undefined4 param_1,int *param_2,in
 
 /* 0002d384 */
 
+/* the query handler for :SOURce:GPSystem:SATellite:TRACking:COUNt? */
+
 undefined4
 scpi_query_SOURce_GPSystem_SATellite_TRACking_COUNt(undefined4 param_1,short *param_2,int param_3)
 
@@ -32798,6 +33391,8 @@ scpi_query_SOURce_GPSystem_SATellite_TRACking_COUNt(undefined4 param_1,short *pa
 
 /* 0002d3ee */
 
+/* the query handler for :RTSA? */
+
 void scpi_query_RTSA(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -32807,6 +33402,8 @@ void scpi_query_RTSA(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002d400 */
+
+/* the setter for :SOURce:GPSystem:SATellite:TRACking:IGNore */
 
 undefined4 scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore(int param_1)
 
@@ -32843,6 +33440,8 @@ undefined4 scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore(int param_1)
 
 /* 0002d4c4 */
 
+/* the query handler for :SOURce:GPSystem:SATellite:TRACking:IGNore? */
+
 undefined4 scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore(undefined4 param_1,uint *param_2)
 
 {
@@ -32868,6 +33467,8 @@ undefined4 scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore(undefined4 param
 
 /* 0002d54e */
 
+/* the setter for :SOURce:GPSystem:SATellite:TRACking:IGNore:ALL */
+
 undefined4 scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_ALL(void)
 
 {
@@ -32881,6 +33482,8 @@ undefined4 scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_ALL(void)
 
 
 /* 0002d57a */
+
+/* the query handler for :SOURce:GPSystem:SATellite:TRACking:IGNore:COUNt? */
 
 undefined4
 scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_COUNt(undefined4 param_1,ushort *param_2)
@@ -32901,6 +33504,8 @@ scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_COUNt(undefined4 param_1,us
 
 /* 0002d5c0 */
 
+/* the setter for :SOURce:GPSystem:SATellite:TRACking:IGNore:NONE */
+
 undefined4 scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_NONE(void)
 
 {
@@ -32914,6 +33519,8 @@ undefined4 scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_NONE(void)
 
 
 /* 0002d5ea */
+
+/* the query handler for :SOURce:GPSystem:SATellite:TRACking:IGNore:STATe? */
 
 undefined4
 scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe
@@ -32944,6 +33551,8 @@ scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe
 
 
 /* 0002d65a */
+
+/* the setter for :SOURce:GPSystem:SATellite:TRACking:INCLude */
 
 undefined4 scpi_set_SOURce_GPSystem_SATellite_TRACking_INCLude(int param_1)
 
@@ -32980,6 +33589,8 @@ undefined4 scpi_set_SOURce_GPSystem_SATellite_TRACking_INCLude(int param_1)
 
 /* 0002d71e */
 
+/* the query handler for :SOURce:GPSystem:SATellite:TRACking:INCLude? */
+
 undefined4 scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude(undefined4 param_1,uint *param_2)
 
 {
@@ -33005,6 +33616,8 @@ undefined4 scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude(undefined4 para
 
 /* 0002d7ac */
 
+/* the query handler for :SOURce:GPSystem:SATellite:TRACking:INCLude:COUNt? */
+
 undefined4
 scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude_COUNt(undefined4 param_1,ushort *param_2)
 
@@ -33023,6 +33636,8 @@ scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude_COUNt(undefined4 param_1,u
 
 
 /* 0002d7f6 */
+
+/* the query handler for :SOURce:GPSystem:SATellite:VISible:PREDicted? */
 
 undefined4
 scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted(undefined4 param_1,uint *param_2,int param_3)
@@ -33067,6 +33682,8 @@ scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted(undefined4 param_1,uint *
 
 /* 0002d8bc */
 
+/* the query handler for :SOURce:GPSystem:SATellite:VISible:PREDicted:COUNt? */
+
 undefined4
 scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt
           (undefined4 param_1,ushort *param_2,int param_3)
@@ -33094,6 +33711,8 @@ scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt
 
 /* 0002d920 */
 
+/* the setter for :LED:ACTive */
+
 undefined4 scpi_set_LED_ACTive(int param_1)
 
 {
@@ -33106,6 +33725,8 @@ undefined4 scpi_set_LED_ACTive(int param_1)
 
 
 /* 0002d950 */
+
+/* the query handler for :LED:ACTive? */
 
 undefined4 scpi_query_LED_ACTive(undefined4 param_1,short *param_2)
 
@@ -33120,6 +33741,8 @@ undefined4 scpi_query_LED_ACTive(undefined4 param_1,short *param_2)
 
 /* 0002d96a */
 
+/* the query handler for :LED:ALARm? */
+
 undefined4 scpi_query_LED_ALARm(undefined4 param_1,short *param_2)
 
 {
@@ -33133,6 +33756,8 @@ undefined4 scpi_query_LED_ALARm(undefined4 param_1,short *param_2)
 
 /* 0002d984 */
 
+/* the query handler for :LED:ALARm:MINor? */
+
 void scpi_query_LED_ALARm_MINor(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -33143,6 +33768,8 @@ void scpi_query_LED_ALARm_MINor(undefined4 param_1,undefined4 param_2,int param_
 
 /* 0002d996 */
 
+/* the setter for :LED:ALARm:USER */
+
 undefined4 scpi_set_LED_ALARm_USER(void)
 
 {
@@ -33152,6 +33779,8 @@ undefined4 scpi_set_LED_ALARm_USER(void)
 
 /* 0002d99a */
 
+/* the query handler for :LED:ALARm:USER? */
+
 undefined4 scpi_query_LED_ALARm_USER(void)
 
 {
@@ -33160,6 +33789,8 @@ undefined4 scpi_query_LED_ALARm_USER(void)
 
 
 /* 0002d99e */
+
+/* the setter for :LED:ENABled */
 
 undefined4 scpi_set_LED_ENABled(int param_1)
 
@@ -33174,6 +33805,8 @@ undefined4 scpi_set_LED_ENABled(int param_1)
 
 /* 0002d9ce */
 
+/* the query handler for :LED:ENABled? */
+
 undefined4 scpi_query_LED_ENABled(undefined4 param_1,short *param_2)
 
 {
@@ -33186,6 +33819,8 @@ undefined4 scpi_query_LED_ENABled(undefined4 param_1,short *param_2)
 
 
 /* 0002d9e8 */
+
+/* the query handler for :LED:GPSLock? */
 
 undefined4 scpi_query_LED_GPSLock(undefined4 param_1,short *param_2)
 
@@ -33200,6 +33835,8 @@ undefined4 scpi_query_LED_GPSLock(undefined4 param_1,short *param_2)
 
 /* 0002da02 */
 
+/* the query handler for :LED:HOLDover? */
+
 undefined4 scpi_query_LED_HOLDover(undefined4 param_1,short *param_2)
 
 {
@@ -33212,6 +33849,8 @@ undefined4 scpi_query_LED_HOLDover(undefined4 param_1,short *param_2)
 
 
 /* 0002da1c */
+
+/* the query handler for :LED:TMHValid? */
 
 undefined4 scpi_query_LED_TMHValid(undefined4 param_1,short *param_2)
 
@@ -33226,6 +33865,8 @@ undefined4 scpi_query_LED_TMHValid(undefined4 param_1,short *param_2)
 
 /* 0002da36 */
 
+/* the setter for :OUTPut:STATe */
+
 undefined4 scpi_set_OUTPut_STATe(int param_1)
 
 {
@@ -33239,6 +33880,8 @@ undefined4 scpi_set_OUTPut_STATe(int param_1)
 
 /* 0002da66 */
 
+/* the query handler for :OUTPut:STATe? */
+
 undefined4 scpi_query_OUTPut_STATe(undefined4 param_1,short *param_2)
 
 {
@@ -33248,6 +33891,8 @@ undefined4 scpi_query_OUTPut_STATe(undefined4 param_1,short *param_2)
 
 
 /* 0002da78 */
+
+/* the setter for :SOURce:PULSe:CONTinuous:PERiod */
 
 undefined4 scpi_set_SOURce_PULSe_CONTinuous_PERiod(short *param_1)
 
@@ -33261,6 +33906,8 @@ undefined4 scpi_set_SOURce_PULSe_CONTinuous_PERiod(short *param_1)
 
 
 /* 0002dab2 */
+
+/* the query handler for :SOURce:PULSe:CONTinuous:PERiod? */
 
 undefined4 scpi_query_SOURce_PULSe_CONTinuous_PERiod(int16_t *param_1,int *param_2)
 
@@ -33277,6 +33924,8 @@ undefined4 scpi_query_SOURce_PULSe_CONTinuous_PERiod(int16_t *param_1,int *param
 
 /* 0002dade */
 
+/* the setter for :SOURce:PULSe:CONTinuous:STATe */
+
 undefined4 scpi_set_SOURce_PULSe_CONTinuous_STATe(int param_1)
 
 {
@@ -33291,6 +33940,8 @@ undefined4 scpi_set_SOURce_PULSe_CONTinuous_STATe(int param_1)
 
 /* 0002db0e */
 
+/* the query handler for :SOURce:PULSe:CONTinuous:STATe? */
+
 undefined4 scpi_query_SOURce_PULSe_CONTinuous_STATe(undefined4 param_1,short *param_2)
 
 {
@@ -33300,6 +33951,8 @@ undefined4 scpi_query_SOURce_PULSe_CONTinuous_STATe(undefined4 param_1,short *pa
 
 
 /* 0002db20 */
+
+/* the setter for :SOURce:PULSe:STARt:DATE */
 
 undefined4 scpi_set_SOURce_PULSe_STARt_DATE(int param_1)
 
@@ -33321,6 +33974,8 @@ undefined4 scpi_set_SOURce_PULSe_STARt_DATE(int param_1)
 
 /* 0002dba2 */
 
+/* the query handler for :SOURce:PULSe:STARt:DATE? */
+
 undefined4 scpi_query_SOURce_PULSe_STARt_DATE(undefined4 param_1,undefined2 *param_2)
 
 {
@@ -33332,6 +33987,8 @@ undefined4 scpi_query_SOURce_PULSe_STARt_DATE(undefined4 param_1,undefined2 *par
 
 
 /* 0002dbc4 */
+
+/* the setter for :SOURce:PULSe:STARt:TIME */
 
 undefined4 scpi_set_SOURce_PULSe_STARt_TIME(int param_1)
 
@@ -33353,6 +34010,8 @@ undefined4 scpi_set_SOURce_PULSe_STARt_TIME(int param_1)
 
 /* 0002dc46 */
 
+/* the query handler for :SOURce:PULSe:STARt:TIME? */
+
 undefined4 scpi_query_SOURce_PULSe_STARt_TIME(undefined4 param_1,undefined2 *param_2)
 
 {
@@ -33364,6 +34023,8 @@ undefined4 scpi_query_SOURce_PULSe_STARt_TIME(undefined4 param_1,undefined2 *par
 
 
 /* 0002dc68 */
+
+/* the setter for :SOURce:PTIMe:PPS:EDGE */
 
 undefined4 scpi_set_SOURce_PTIMe_PPS_EDGE(void)
 
@@ -33378,6 +34039,8 @@ undefined4 scpi_set_SOURce_PTIMe_PPS_EDGE(void)
 
 /* 0002dc88 */
 
+/* the query handler for :SOURce:PTIMe:PPS:EDGE? */
+
 undefined4 scpi_query_SOURce_PTIMe_PPS_EDGE(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -33387,6 +34050,8 @@ undefined4 scpi_query_SOURce_PTIMe_PPS_EDGE(undefined4 param_1,undefined4 param_
 
 
 /* 0002dc9c */
+
+/* the setter for :SOURce:PULSe:REFerence:EDGE */
 
 undefined4 scpi_set_SOURce_PULSe_REFerence_EDGE(void)
 
@@ -33401,6 +34066,8 @@ undefined4 scpi_set_SOURce_PULSe_REFerence_EDGE(void)
 
 /* 0002dcbc */
 
+/* the query handler for :SOURce:PULSe:REFerence:EDGE? */
+
 undefined4 scpi_query_SOURce_PULSe_REFerence_EDGE(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -33410,6 +34077,8 @@ undefined4 scpi_query_SOURce_PULSe_REFerence_EDGE(undefined4 param_1,undefined4 
 
 
 /* 0002dcd0 */
+
+/* the query handler for :SOURce:PTIMe:DATE? */
 
 undefined4 scpi_query_SOURce_PTIMe_DATE(undefined4 param_1,undefined2 *param_2,int param_3)
 
@@ -33436,6 +34105,8 @@ undefined4 scpi_query_SOURce_PTIMe_DATE(undefined4 param_1,undefined2 *param_2,i
 
 /* 0002dd1e */
 
+/* the query handler for :SOURce:PTIMe:LEAPsecond:ACCumulated? */
+
 undefined4
 scpi_query_SOURce_PTIMe_LEAPsecond_ACCumulated(undefined4 param_1,int16_t *param_2,int param_3)
 
@@ -33461,6 +34132,8 @@ scpi_query_SOURce_PTIMe_LEAPsecond_ACCumulated(undefined4 param_1,int16_t *param
 
 /* 0002dd6e */
 
+/* the setter for :SOURce:PTIMe:LEAPsecond:ACCumulated:CALCulate */
+
 undefined4 scpi_set_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate(void)
 
 {
@@ -33473,6 +34146,8 @@ undefined4 scpi_set_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate(void)
 
 
 /* 0002dd94 */
+
+/* the query handler for :SOURce:PTIMe:LEAPsecond:DATE? */
 
 undefined4
 scpi_query_SOURce_PTIMe_LEAPsecond_DATE(undefined4 param_1,undefined2 *param_2,int param_3)
@@ -33508,6 +34183,8 @@ scpi_query_SOURce_PTIMe_LEAPsecond_DATE(undefined4 param_1,undefined2 *param_2,i
 
 /* 0002ddfc */
 
+/* the query handler for :SOURce:PTIMe:LEAPsecond:DURation? */
+
 undefined4
 scpi_query_SOURce_PTIMe_LEAPsecond_DURation(undefined4 param_1,undefined2 *param_2,int param_3)
 
@@ -33534,6 +34211,8 @@ scpi_query_SOURce_PTIMe_LEAPsecond_DURation(undefined4 param_1,undefined2 *param
 
 /* 0002de48 */
 
+/* the query handler for :SOURce:PTIMe:LEAPsecond:GPSTime? */
+
 undefined4 scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime(undefined4 param_1,int *param_2,int param_3)
 
 {
@@ -33558,6 +34237,8 @@ undefined4 scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime(undefined4 param_1,int *pa
 
 /* 0002deb8 */
 
+/* the query handler for :SOURce:PTIMe:LEAPsecond:STATe? */
+
 undefined4 scpi_query_SOURce_PTIMe_LEAPsecond_STATe(undefined4 param_1,short *param_2)
 
 {
@@ -33570,6 +34251,8 @@ undefined4 scpi_query_SOURce_PTIMe_LEAPsecond_STATe(undefined4 param_1,short *pa
 
 
 /* 0002ded2 */
+
+/* the query handler for :SOURce:PTIMe:TCODe? */
 
 undefined4 scpi_query_SOURce_PTIMe_TCODe(undefined4 param_1,undefined2 *param_2,int param_3)
 
@@ -33595,6 +34278,8 @@ undefined4 scpi_query_SOURce_PTIMe_TCODe(undefined4 param_1,undefined2 *param_2,
 
 
 /* 0002df46 */
+
+/* the query handler for :RTCM? */
 
 undefined4 scpi_query_RTCM(int param_1,undefined2 *param_2,int param_3)
 
@@ -33628,6 +34313,8 @@ undefined4 scpi_query_RTCM(int param_1,undefined2 *param_2,int param_3)
 
 /* 0002dff6 */
 
+/* the setter for :SOURce:PTIMe:TCODe:FORMat */
+
 undefined4 scpi_set_SOURce_PTIMe_TCODe_FORMat(int param_1)
 
 {
@@ -33653,6 +34340,8 @@ undefined4 scpi_set_SOURce_PTIMe_TCODe_FORMat(int param_1)
 
 /* 0002e054 */
 
+/* the query handler for :SOURce:PTIMe:TCODe:FORMat? */
+
 undefined4 scpi_query_SOURce_PTIMe_TCODe_FORMat(undefined4 param_1,undefined2 *param_2)
 
 {
@@ -33674,6 +34363,8 @@ undefined4 scpi_query_SOURce_PTIMe_TCODe_FORMat(undefined4 param_1,undefined2 *p
 
 
 /* 0002e086 */
+
+/* the query handler for :SOURce:PTIMe:TIME? */
 
 undefined4 scpi_query_SOURce_PTIMe_TIME(undefined4 param_1,ushort *param_2,int param_3)
 
@@ -33730,6 +34421,8 @@ undefined4 FUN_0002e0d8(char param_1,char param_2,undefined1 *param_3,undefined1
 
 /* 0002e152 */
 
+/* the query handler for :RTAD? */
+
 void scpi_query_RTAD(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -33739,6 +34432,8 @@ void scpi_query_RTAD(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002e164 */
+
+/* the query handler for :SOURce:PTIMe:TIME:STRing? */
 
 undefined4 scpi_query_SOURce_PTIMe_TIME_STRing(undefined4 param_1,int *param_2,int param_3)
 
@@ -33770,6 +34465,8 @@ undefined4 scpi_query_SOURce_PTIMe_TIME_STRing(undefined4 param_1,int *param_2,i
 
 /* 0002e1f2 */
 
+/* the setter for :SOURce:PTIMe:TZONe */
+
 undefined4 scpi_set_SOURce_PTIMe_TZONe(int param_1)
 
 {
@@ -33793,6 +34490,8 @@ undefined4 scpi_set_SOURce_PTIMe_TZONe(int param_1)
 
 
 /* 0002e28c */
+
+/* the query handler for :SOURce:PTIMe:TZONe? */
 
 undefined4 scpi_query_SOURce_PTIMe_TZONe(undefined4 param_1,short *param_2)
 
@@ -33819,6 +34518,8 @@ undefined4 scpi_query_SOURce_PTIMe_TZONe(undefined4 param_1,short *param_2)
 
 /* 0002e2ec */
 
+/* the query handler for :RTZO? */
+
 void scpi_query_RTZO(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -33828,6 +34529,8 @@ void scpi_query_RTZO(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002e306 */
+
+/* the setter for :SAMPle:ACTion */
 
 undefined4 scpi_set_SAMPle_ACTion(int param_1)
 
@@ -33842,6 +34545,8 @@ undefined4 scpi_set_SAMPle_ACTion(int param_1)
 
 /* 0002e334 */
 
+/* the setter for :SAMPle:BOOLean */
+
 undefined4 scpi_set_SAMPle_BOOLean(int param_1)
 
 {
@@ -33855,6 +34560,8 @@ undefined4 scpi_set_SAMPle_BOOLean(int param_1)
 
 /* 0002e364 */
 
+/* the query handler for :SAMPle:BOOLean? */
+
 undefined4 scpi_query_SAMPle_BOOLean(undefined4 param_1,short *param_2)
 
 {
@@ -33864,6 +34571,8 @@ undefined4 scpi_query_SAMPle_BOOLean(undefined4 param_1,short *param_2)
 
 
 /* 0002e376 */
+
+/* the setter for :SAMPle:BARR */
 
 undefined4 scpi_set_SAMPle_BARR(undefined2 *param_1)
 
@@ -33878,6 +34587,8 @@ undefined4 scpi_set_SAMPle_BARR(undefined2 *param_1)
 
 /* 0002e3a8 */
 
+/* the query handler for :SAMPle:BARR? */
+
 undefined4 scpi_query_SAMPle_BARR(short *param_1,short *param_2)
 
 {
@@ -33887,6 +34598,8 @@ undefined4 scpi_query_SAMPle_BARR(short *param_1,short *param_2)
 
 
 /* 0002e3c2 */
+
+/* the setter for :SAMPle:TOGGle */
 
 undefined4 scpi_set_SAMPle_TOGGle(int param_1)
 
@@ -33913,6 +34626,8 @@ undefined4 scpi_set_SAMPle_TOGGle(int param_1)
 
 /* 0002e412 */
 
+/* the query handler for :SAMPle:TOGGle? */
+
 undefined4 scpi_query_SAMPle_TOGGle(undefined4 param_1,undefined2 *param_2)
 
 {
@@ -33934,6 +34649,8 @@ undefined4 scpi_query_SAMPle_TOGGle(undefined4 param_1,undefined2 *param_2)
 
 
 /* 0002e442 */
+
+/* the setter for :SAMPle:TARR */
 
 undefined4 scpi_set_SAMPle_TARR(undefined2 *param_1)
 
@@ -33960,6 +34677,8 @@ undefined4 scpi_set_SAMPle_TARR(undefined2 *param_1)
 
 /* 0002e498 */
 
+/* the query handler for :SAMPle:TARR? */
+
 undefined4 scpi_query_SAMPle_TARR(short *param_1,undefined2 *param_2)
 
 {
@@ -33982,6 +34701,8 @@ undefined4 scpi_query_SAMPle_TARR(short *param_1,undefined2 *param_2)
 
 /* 0002e4d0 */
 
+/* the setter for :SAMPle:INTeger */
+
 undefined4 scpi_set_SAMPle_INTeger(short *param_1)
 
 {
@@ -33995,6 +34716,8 @@ undefined4 scpi_set_SAMPle_INTeger(short *param_1)
 
 /* 0002e50a */
 
+/* the query handler for :SAMPle:INTeger? */
+
 undefined4 scpi_query_SAMPle_INTeger(undefined4 param_1,int32_t *param_2)
 
 {
@@ -34004,6 +34727,8 @@ undefined4 scpi_query_SAMPle_INTeger(undefined4 param_1,int32_t *param_2)
 
 
 /* 0002e518 */
+
+/* the setter for :SAMPle:IARR */
 
 undefined4 scpi_set_SAMPle_IARR(short *param_1)
 
@@ -34019,6 +34744,8 @@ undefined4 scpi_set_SAMPle_IARR(short *param_1)
 
 /* 0002e556 */
 
+/* the query handler for :SAMPle:IARR? */
+
 undefined4 scpi_query_SAMPle_IARR(short *param_1,int32_t *param_2)
 
 {
@@ -34030,6 +34757,7 @@ undefined4 scpi_query_SAMPle_IARR(short *param_1,int32_t *param_2)
 /* 0002e56c */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the setter for :SAMPle:IMULtiple */
 
 undefined4 scpi_set_SAMPle_IMULtiple(int param_1)
 
@@ -34049,6 +34777,7 @@ undefined4 scpi_set_SAMPle_IMULtiple(int param_1)
 /* 0002e5ba */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the query handler for :SAMPle:IMULtiple? */
 
 undefined4 scpi_query_SAMPle_IMULtiple(undefined4 param_1,undefined4 *param_2)
 
@@ -34063,6 +34792,8 @@ undefined4 scpi_query_SAMPle_IMULtiple(undefined4 param_1,undefined4 *param_2)
 
 /* 0002e5dc */
 
+/* the setter for :SAMPle:FLOat */
+
 undefined4 scpi_set_SAMPle_FLOat(short *param_1)
 
 {
@@ -34076,6 +34807,8 @@ undefined4 scpi_set_SAMPle_FLOat(short *param_1)
 
 /* 0002e616 */
 
+/* the query handler for :SAMPle:FLOat? */
+
 undefined4 scpi_query_SAMPle_FLOat(undefined4 param_1,float *param_2)
 
 {
@@ -34085,6 +34818,8 @@ undefined4 scpi_query_SAMPle_FLOat(undefined4 param_1,float *param_2)
 
 
 /* 0002e624 */
+
+/* the setter for :SAMPle:FARR */
 
 undefined4 scpi_set_SAMPle_FARR(short *param_1)
 
@@ -34099,6 +34834,8 @@ undefined4 scpi_set_SAMPle_FARR(short *param_1)
 
 /* 0002e662 */
 
+/* the query handler for :SAMPle:FARR? */
+
 undefined4 scpi_query_SAMPle_FARR(short *param_1,float *param_2)
 
 {
@@ -34112,6 +34849,8 @@ undefined4 scpi_query_SAMPle_FARR(short *param_1,float *param_2)
 
 /* 0002e68c */
 
+/* the setter for :SAMPle:DOUBle */
+
 undefined4 scpi_set_SAMPle_DOUBle(void)
 
 {
@@ -34122,6 +34861,7 @@ undefined4 scpi_set_SAMPle_DOUBle(void)
 /* 0002e690 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the query handler for :SAMPle:DOUBle? */
 
 undefined4 scpi_query_SAMPle_DOUBle(undefined4 param_1,undefined4 *param_2)
 
@@ -34134,6 +34874,8 @@ undefined4 scpi_query_SAMPle_DOUBle(undefined4 param_1,undefined4 *param_2)
 
 /* 0002e6a2 */
 
+/* the setter for :SAMPle:DARR */
+
 undefined4 scpi_set_SAMPle_DARR(void)
 
 {
@@ -34142,6 +34884,8 @@ undefined4 scpi_set_SAMPle_DARR(void)
 
 
 /* 0002e6a6 */
+
+/* the query handler for :SAMPle:DARR? */
 
 undefined4 scpi_query_SAMPle_DARR(short *param_1,undefined4 *param_2)
 
@@ -34808,6 +35552,8 @@ void FUN_0002ee66(undefined1 param_1)
 
 /* 0002ee68 */
 
+/* the setter for :FORMat:DATA */
+
 undefined4 scpi_set_FORMat_DATA(int param_1)
 
 {
@@ -34833,6 +35579,8 @@ undefined4 scpi_set_FORMat_DATA(int param_1)
 
 /* 0002eeb8 */
 
+/* the query handler for :FORMat:DATA? */
+
 undefined4 scpi_query_FORMat_DATA(undefined4 param_1,undefined2 *param_2)
 
 {
@@ -34854,6 +35602,8 @@ undefined4 scpi_query_FORMat_DATA(undefined4 param_1,undefined2 *param_2)
 
 
 /* 0002eee8 */
+
+/* the query handler for :ROBin? */
 
 undefined4 scpi_query_ROBin(int param_1,undefined1 *param_2,int param_3)
 
@@ -34882,6 +35632,8 @@ undefined4 scpi_query_ROBin(int param_1,undefined1 *param_2,int param_3)
 
 /* 0002ef92 */
 
+/* the setter for :ROBin:CLEar */
+
 undefined4 scpi_set_ROBin_CLEar(short *param_1)
 
 {
@@ -34906,6 +35658,8 @@ undefined4 scpi_set_ROBin_CLEar(short *param_1)
 
 
 /* 0002eff8 */
+
+/* the query handler for :ROBin:MEMory:OVERflow:COUNt? */
 
 undefined4 scpi_query_ROBin_MEMory_OVERflow_COUNt(short *param_1,undefined4 *param_2,int param_3)
 
@@ -34941,6 +35695,8 @@ undefined4 scpi_query_ROBin_MEMory_OVERflow_COUNt(short *param_1,undefined4 *par
 
 /* 0002f0ac */
 
+/* the setter for :ROBin:MEMory:SAVE */
+
 undefined4 scpi_set_ROBin_MEMory_SAVE(int param_1)
 
 {
@@ -34954,6 +35710,8 @@ undefined4 scpi_set_ROBin_MEMory_SAVE(int param_1)
 
 /* 0002f0dc */
 
+/* the query handler for :ROBin:MEMory:SAVE? */
+
 undefined4 scpi_query_ROBin_MEMory_SAVE(undefined4 param_1,short *param_2)
 
 {
@@ -34966,6 +35724,8 @@ undefined4 scpi_query_ROBin_MEMory_SAVE(undefined4 param_1,short *param_2)
 
 
 /* 0002f0f6 */
+
+/* the query handler for :ROBin:POINts? */
 
 undefined4 scpi_query_ROBin_POINts(short *param_1,undefined4 *param_2,int param_3)
 
@@ -35000,6 +35760,8 @@ undefined4 scpi_query_ROBin_POINts(short *param_1,undefined4 *param_2,int param_
 
 
 /* 0002f19e */
+
+/* the query handler for :ROBin:TSTamp? */
 
 undefined4 scpi_query_ROBin_TSTamp(int param_1,undefined1 *param_2,int param_3)
 
@@ -35052,6 +35814,8 @@ undefined4 scpi_query_ROBin_TSTamp(int param_1,undefined1 *param_2,int param_3)
 
 /* 0002f2ae */
 
+/* the setter for :SENSe:TST1:EDGE */
+
 undefined4 scpi_set_SENSe_TST1_EDGE(void)
 
 {
@@ -35064,6 +35828,8 @@ undefined4 scpi_set_SENSe_TST1_EDGE(void)
 
 
 /* 0002f2ce */
+
+/* the query handler for :SENSe:TST1:EDGE? */
 
 undefined4 scpi_query_SENSe_TST1_EDGE(undefined4 param_1,undefined4 param_2,int param_3)
 
@@ -35330,6 +36096,8 @@ void FUN_0002f6dc(char *param_1)
 
 /* 0002fa12 */
 
+/* the query handler for :SOURce:ROSCillator:HOLDover:DURation? */
+
 undefined4 scpi_query_SOURce_ROSCillator_HOLDover_DURation(undefined4 param_1,float *param_2)
 
 {
@@ -35359,6 +36127,8 @@ undefined4 scpi_query_SOURce_ROSCillator_HOLDover_DURation(undefined4 param_1,fl
 
 /* 0002fa82 */
 
+/* the setter for :SOURce:ROSCillator:HOLDover:DURation:MEASurement:THReshold */
+
 undefined4 scpi_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold(short *param_1)
 
 {
@@ -35371,6 +36141,8 @@ undefined4 scpi_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold(s
 
 
 /* 0002fabc */
+
+/* the query handler for :SOURce:ROSCillator:HOLDover:DURation:MEASurement:THReshold? */
 
 undefined4
 scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold(int16_t *param_1,int *param_2)
@@ -35389,6 +36161,8 @@ scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold(int16_t *p
 
 /* 0002fae8 */
 
+/* the setter for :SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold */
+
 undefined4 scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold(short *param_1)
 
 {
@@ -35401,6 +36175,8 @@ undefined4 scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold(short 
 
 
 /* 0002fb22 */
+
+/* the query handler for :SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold? */
 
 undefined4
 scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold(int16_t *param_1,int *param_2)
@@ -35419,6 +36195,8 @@ scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold(int16_t *param_
 
 /* 0002fb4e */
 
+/* the setter for :SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold:ALAR1 */
+
 undefined4 scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1(void)
 
 {
@@ -35427,6 +36205,8 @@ undefined4 scpi_set_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1(
 
 
 /* 0002fb52 */
+
+/* the query handler for :SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold:ALAR1? */
 
 void scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1
                (undefined4 param_1,undefined4 param_2,int param_3)
@@ -35439,6 +36219,8 @@ void scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_ALAR1
 
 /* 0002fb64 */
 
+/* the query handler for :RAT1? */
+
 void scpi_query_RAT1(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -35449,6 +36231,8 @@ void scpi_query_RAT1(undefined4 param_1,undefined4 param_2,int param_3)
 
 /* 0002fb76 */
 
+/* the query handler for :RAT3? */
+
 void scpi_query_RAT3(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -35458,6 +36242,8 @@ void scpi_query_RAT3(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002fb88 */
+
+/* the query handler for :SOURce:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded? */
 
 undefined4
 scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_EXCeeded
@@ -35471,6 +36257,8 @@ scpi_query_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold_EXCeeded
 
 /* 0002fb9a */
 
+/* the setter for :SOURce:ROSCillator:HOLDover:HYSTeresis */
+
 undefined4 scpi_set_SOURce_ROSCillator_HOLDover_HYSTeresis(void)
 
 {
@@ -35479,6 +36267,8 @@ undefined4 scpi_set_SOURce_ROSCillator_HOLDover_HYSTeresis(void)
 
 
 /* 0002fb9e */
+
+/* the query handler for :SOURce:ROSCillator:HOLDover:HYSTeresis? */
 
 void scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis
                (undefined4 param_1,undefined4 param_2,int param_3)
@@ -35491,6 +36281,8 @@ void scpi_query_SOURce_ROSCillator_HOLDover_HYSTeresis
 
 /* 0002fbb0 */
 
+/* the query handler for :RAT2? */
+
 void scpi_query_RAT2(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -35500,6 +36292,8 @@ void scpi_query_RAT2(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002fbc2 */
+
+/* the setter for :SOURce:ROSCillator:HOLDover:INITiate */
 
 undefined4 scpi_set_SOURce_ROSCillator_HOLDover_INITiate(void)
 
@@ -35521,6 +36315,8 @@ undefined4 scpi_set_SOURce_ROSCillator_HOLDover_INITiate(void)
 
 /* 0002fc14 */
 
+/* the query handler for :FMHO? */
+
 void scpi_query_FMHO(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -35530,6 +36326,8 @@ void scpi_query_FMHO(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002fc26 */
+
+/* the setter for :SOURce:ROSCillator:HOLDover:LIMit:STATe */
 
 undefined4 scpi_set_SOURce_ROSCillator_HOLDover_LIMit_STATe(int param_1)
 
@@ -35553,6 +36351,8 @@ undefined4 scpi_set_SOURce_ROSCillator_HOLDover_LIMit_STATe(int param_1)
 
 /* 0002fc78 */
 
+/* the query handler for :SOURce:ROSCillator:HOLDover:LIMit:STATe? */
+
 undefined4
 scpi_query_SOURce_ROSCillator_HOLDover_LIMit_STATe(undefined4 param_1,undefined2 *param_2)
 
@@ -35572,6 +36372,8 @@ scpi_query_SOURce_ROSCillator_HOLDover_LIMit_STATe(undefined4 param_1,undefined2
 
 /* 0002fca2 */
 
+/* the setter for :SOURce:ROSCillator:HOLDover:LIMit:THReshold */
+
 undefined4 scpi_set_SOURce_ROSCillator_HOLDover_LIMit_THReshold(short *param_1)
 
 {
@@ -35584,6 +36386,8 @@ undefined4 scpi_set_SOURce_ROSCillator_HOLDover_LIMit_THReshold(short *param_1)
 
 
 /* 0002fcdc */
+
+/* the query handler for :SOURce:ROSCillator:HOLDover:LIMit:THReshold? */
 
 undefined4 scpi_query_SOURce_ROSCillator_HOLDover_LIMit_THReshold(int16_t *param_1,float *param_2)
 
@@ -35599,6 +36403,8 @@ undefined4 scpi_query_SOURce_ROSCillator_HOLDover_LIMit_THReshold(int16_t *param
 
 /* 0002fd02 */
 
+/* the setter for :SOURce:ROSCillator:HOLDover:RECovery:AUTO */
+
 undefined4 scpi_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO(int param_1)
 
 {
@@ -35611,6 +36417,8 @@ undefined4 scpi_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO(int param_1)
 
 
 /* 0002fd32 */
+
+/* the query handler for :SOURce:ROSCillator:HOLDover:RECovery:AUTO? */
 
 undefined4 scpi_query_SOURce_ROSCillator_HOLDover_RECovery_AUTO(undefined4 param_1,short *param_2)
 
@@ -35625,6 +36433,8 @@ undefined4 scpi_query_SOURce_ROSCillator_HOLDover_RECovery_AUTO(undefined4 param
 
 /* 0002fd4c */
 
+/* the setter for :SOURce:ROSCillator:HOLDover:RECovery:INITiate */
+
 undefined4 scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate(void)
 
 {
@@ -35638,6 +36448,8 @@ undefined4 scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate(void)
 
 /* 0002fd72 */
 
+/* the query handler for :RMHO? */
+
 void scpi_query_RMHO(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -35647,6 +36459,8 @@ void scpi_query_RMHO(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0002fd84 */
+
+/* the setter for :SOURce:ROSCillator:HOLDover:RECovery:LIMit:IGNore */
 
 undefined4 scpi_set_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore(void)
 
@@ -35660,6 +36474,8 @@ undefined4 scpi_set_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore(void)
 
 
 /* 0002fdaa */
+
+/* the query handler for :KENneth:PREDicted? */
 
 undefined4 scpi_query_KENneth_PREDicted(undefined4 param_1,int param_2,int param_3)
 
@@ -35687,6 +36503,8 @@ undefined4 scpi_query_KENneth_PREDicted(undefined4 param_1,int param_2,int param
 
 /* 0002fe16 */
 
+/* the setter for :KENneth:PREDicted:DURation */
+
 undefined4 scpi_set_KENneth_PREDicted_DURation(short *param_1)
 
 {
@@ -35699,6 +36517,8 @@ undefined4 scpi_set_KENneth_PREDicted_DURation(short *param_1)
 
 
 /* 0002fe50 */
+
+/* the query handler for :KENneth:PREDicted:DURation? */
 
 undefined4 scpi_query_KENneth_PREDicted_DURation(int16_t *param_1,int *param_2)
 
@@ -35714,6 +36534,8 @@ undefined4 scpi_query_KENneth_PREDicted_DURation(int16_t *param_1,int *param_2)
 
 
 /* 0002fe7c */
+
+/* the query handler for :KENneth:PRESent? */
 
 undefined4 scpi_query_KENneth_PRESent(undefined4 param_1,int param_2,int param_3)
 
@@ -35738,6 +36560,8 @@ undefined4 scpi_query_KENneth_PRESent(undefined4 param_1,int param_2,int param_3
 
 
 /* 0002feda */
+
+/* the query handler for :SOURce:ROSCillator:HOLDover:WAITing? */
 
 undefined4 scpi_query_SOURce_ROSCillator_HOLDover_WAITing(undefined4 param_1,undefined2 *param_2)
 
@@ -35778,6 +36602,8 @@ undefined4 scpi_query_SOURce_ROSCillator_HOLDover_WAITing(undefined4 param_1,und
 
 /* 0002ff78 */
 
+/* the setter for :SOURce:ROSCillator:LIMit:THReshold */
+
 undefined4 scpi_set_SOURce_ROSCillator_LIMit_THReshold(short *param_1)
 
 {
@@ -35791,6 +36617,8 @@ undefined4 scpi_set_SOURce_ROSCillator_LIMit_THReshold(short *param_1)
 
 /* 0002ffb2 */
 
+/* the query handler for :SOURce:ROSCillator:LIMit:THReshold? */
+
 undefined4 scpi_query_SOURce_ROSCillator_LIMit_THReshold(int16_t *param_1,float *param_2)
 
 {
@@ -35803,6 +36631,8 @@ undefined4 scpi_query_SOURce_ROSCillator_LIMit_THReshold(int16_t *param_1,float 
 
 
 /* 0002ffd8 */
+
+/* the query handler for :SOURce:ROSCillator:STATe? */
 
 undefined4 scpi_query_SOURce_ROSCillator_STATe(undefined4 param_1,undefined2 *param_2)
 
@@ -35843,6 +36673,8 @@ undefined4 scpi_query_SOURce_ROSCillator_STATe(undefined4 param_1,undefined2 *pa
 
 /* 00030048 */
 
+/* the query handler for :RSST? */
+
 void scpi_query_RSST(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -35852,6 +36684,8 @@ void scpi_query_RSST(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 0003005a */
+
+/* the query handler for :SOURce:PTIMe:FFOMerit? */
 
 undefined4 scpi_query_SOURce_PTIMe_FFOMerit(short *param_1,ushort *param_2,int param_3)
 
@@ -35879,6 +36713,8 @@ undefined4 scpi_query_SOURce_PTIMe_FFOMerit(short *param_1,ushort *param_2,int p
 
 /* 000300b2 */
 
+/* the query handler for :SOURce:PTIMe:TINTerval? */
+
 undefined4 scpi_query_SOURce_PTIMe_TINTerval(undefined4 param_1,float *param_2,int param_3)
 
 {
@@ -35902,6 +36738,8 @@ undefined4 scpi_query_SOURce_PTIMe_TINTerval(undefined4 param_1,float *param_2,i
 
 /* 00030108 */
 
+/* the setter for :SOURce:PTIMe:SYNChronization:IMMediate */
+
 undefined4 scpi_set_SOURce_PTIMe_SYNChronization_IMMediate(void)
 
 {
@@ -35914,6 +36752,8 @@ undefined4 scpi_set_SOURce_PTIMe_SYNChronization_IMMediate(void)
 
 
 /* 0003012e */
+
+/* the query handler for :SYSTem:COMMunicate? */
 
 undefined4 scpi_query_SYSTem_COMMunicate(undefined4 param_1,undefined2 *param_2,int param_3)
 
@@ -35930,6 +36770,8 @@ undefined4 scpi_query_SYSTem_COMMunicate(undefined4 param_1,undefined2 *param_2,
 
 /* 00030148 */
 
+/* the query handler for :SYSTem:COMMunicate:SER1:ADDRess? */
+
 void scpi_query_SYSTem_COMMunicate_SER1_ADDRess(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -35939,6 +36781,8 @@ void scpi_query_SYSTem_COMMunicate_SER1_ADDRess(undefined4 param_1,undefined4 pa
 
 
 /* 0003015a */
+
+/* the setter for :SYSTem:COMMunicate:SER1:FDUPlex */
 
 undefined4 scpi_set_SYSTem_COMMunicate_SER1_FDUPlex(short *param_1)
 
@@ -35964,6 +36808,8 @@ undefined4 scpi_set_SYSTem_COMMunicate_SER1_FDUPlex(short *param_1)
 
 /* 000301bc */
 
+/* the query handler for :SYSTem:COMMunicate:SER1:FDUPlex? */
+
 undefined4 scpi_query_SYSTem_COMMunicate_SER1_FDUPlex(short *param_1,short *param_2)
 
 {
@@ -35979,6 +36825,8 @@ undefined4 scpi_query_SYSTem_COMMunicate_SER1_FDUPlex(short *param_1,short *para
 
 
 /* 000301de */
+
+/* the setter for :SYSTem:COMMunicate:SER1:PRESet */
 
 undefined4 scpi_set_SYSTem_COMMunicate_SER1_PRESet(short *param_1)
 
@@ -36003,6 +36851,8 @@ undefined4 scpi_set_SYSTem_COMMunicate_SER1_PRESet(short *param_1)
 
 
 /* 0003022e */
+
+/* the setter for :SYSTem:COMMunicate:SER1:RECeive:BAUD */
 
 undefined4 scpi_set_SYSTem_COMMunicate_SER1_RECeive_BAUD(short *param_1)
 
@@ -36049,6 +36899,8 @@ LAB_00030274:
 
 /* 000302c4 */
 
+/* the query handler for :SYSTem:COMMunicate:SER1:RECeive:BAUD? */
+
 undefined4 scpi_query_SYSTem_COMMunicate_SER1_RECeive_BAUD(short *param_1,undefined4 *param_2)
 
 {
@@ -36093,6 +36945,8 @@ switchD_00030304_caseD_3:
 
 /* 00030332 */
 
+/* the setter for :SYSTem:COMMunicate:SER1:RECeive:BITS */
+
 undefined4 scpi_set_SYSTem_COMMunicate_SER1_RECeive_BITS(short *param_1)
 
 {
@@ -36119,6 +36973,8 @@ LAB_0003035a:
 
 
 /* 00030388 */
+
+/* the query handler for :SYSTem:COMMunicate:SER1:RECeive:BITS? */
 
 undefined4 scpi_query_SYSTem_COMMunicate_SER1_RECeive_BITS(short *param_1,undefined4 *param_2)
 
@@ -36168,6 +37024,8 @@ LAB_000303f8:
 
 /* 000303fe */
 
+/* the setter for :SYSTem:COMMunicate:SER1:RECeive:PACE */
+
 undefined4 scpi_set_SYSTem_COMMunicate_SER1_RECeive_PACE(short *param_1)
 
 {
@@ -36192,6 +37050,8 @@ undefined4 scpi_set_SYSTem_COMMunicate_SER1_RECeive_PACE(short *param_1)
 
 /* 00030460 */
 
+/* the query handler for :SYSTem:COMMunicate:SER1:RECeive:PACE? */
+
 undefined4 scpi_query_SYSTem_COMMunicate_SER1_RECeive_PACE(short *param_1,short *param_2)
 
 {
@@ -36207,6 +37067,8 @@ undefined4 scpi_query_SYSTem_COMMunicate_SER1_RECeive_PACE(short *param_1,short 
 
 
 /* 00030482 */
+
+/* the setter for :SYSTem:COMMunicate:SER1:RECeive:PARity:TYPE */
 
 undefined4 scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(short *param_1)
 
@@ -36255,6 +37117,8 @@ undefined4 scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(short *param_1)
 
 /* 0003051a */
 
+/* the query handler for :SYSTem:COMMunicate:SER1:RECeive:PARity:TYPE? */
+
 undefined4
 scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(short *param_1,undefined2 *param_2)
 
@@ -36289,6 +37153,8 @@ scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(short *param_1,undefined2
 
 /* 00030568 */
 
+/* the setter for :SYSTem:COMMunicate:SER1:RECeive:SBITs */
+
 undefined4 scpi_set_SYSTem_COMMunicate_SER1_RECeive_SBITs(short *param_1)
 
 {
@@ -36315,6 +37181,8 @@ LAB_00030590:
 
 
 /* 000305be */
+
+/* the query handler for :SYSTem:COMMunicate:SER1:RECeive:SBITs? */
 
 undefined4 scpi_query_SYSTem_COMMunicate_SER1_RECeive_SBITs(short *param_1,undefined4 *param_2)
 
@@ -36353,6 +37221,8 @@ LAB_00030608:
 
 /* 0003060e */
 
+/* the query handler for :DANA? */
+
 undefined4 scpi_query_DANA(undefined4 param_1,undefined2 *param_2,int param_3)
 
 {
@@ -36375,6 +37245,8 @@ undefined4 scpi_query_DANA(undefined4 param_1,undefined2 *param_2,int param_3)
 
 /* 0003066e */
 
+/* the query handler for :REQU? */
+
 void scpi_query_REQU(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -36384,6 +37256,8 @@ void scpi_query_REQU(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 00030680 */
+
+/* the setter for :SYSTem:LANGuage */
 
 undefined4 scpi_set_SYSTem_LANGuage(int param_1,undefined4 param_2,int param_3)
 
@@ -36445,6 +37319,8 @@ undefined4 scpi_set_SYSTem_LANGuage(int param_1,undefined4 param_2,int param_3)
 
 /* 00030752 */
 
+/* the query handler for :SYSTem:LANGuage? */
+
 undefined4 scpi_query_SYSTem_LANGuage(undefined4 param_1,undefined4 *param_2,int param_3)
 
 {
@@ -36460,6 +37336,8 @@ undefined4 scpi_query_SYSTem_LANGuage(undefined4 param_1,undefined4 *param_2,int
 
 /* 00030770 */
 
+/* the setter for :SYSTem:PRESet */
+
 undefined4 scpi_set_SYSTem_PRESet(void)
 
 {
@@ -36472,6 +37350,8 @@ undefined4 scpi_set_SYSTem_PRESet(void)
 
 
 /* 00030796 */
+
+/* the query handler for :SYSTem:PRINt? */
 
 undefined4 scpi_query_SYSTem_PRINt(undefined4 param_1,undefined2 *param_2,int param_3)
 
@@ -36491,6 +37371,8 @@ undefined4 scpi_query_SYSTem_PRINt(undefined4 param_1,undefined2 *param_2,int pa
 
 /* 000307ee */
 
+/* the query handler for :RVST? */
+
 void scpi_query_RVST(undefined4 param_1,undefined4 param_2,int param_3)
 
 {
@@ -36500,6 +37382,8 @@ void scpi_query_RVST(undefined4 param_1,undefined4 param_2,int param_3)
 
 
 /* 00030800 */
+
+/* the query handler for :SYSTem:PRINt:LENGth? */
 
 undefined4 scpi_query_SYSTem_PRINt_LENGth(undefined4 param_1,ushort *param_2)
 
@@ -37480,7 +38364,8 @@ undefined4 log_event(uint8_t code)
 
 /* 00031ba2 */
 
-/* log_write("First satellite tracked at %04d%02d%02d.%02d:%02d:%02d") */
+/* logs the time the first satellite was tracked
+   log_write("First satellite tracked at %04d%02d%02d.%02d:%02d:%02d") */
 
 void log_first_satellite(undefined4 param_1,undefined4 param_2)
 
@@ -38458,7 +39343,8 @@ bool FUN_00033028(byte param_1)
 
 /* 0003305e */
 
-/* "Log cleared" */
+/* clears the event log
+   "Log cleared" */
 
 int log_clear(void)
 
@@ -39874,7 +40760,8 @@ void curv_task(void)
 /* 000417c6 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-/* loop.md's aging fit, in curv: "failed line fit", "pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f",
+/* fits the oscillator's aging curve, for the curv task
+   loop.md's aging fit, in curv: "failed line fit", "pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f",
    "HQ= %.1e mode= %d" */
 
 void aging_fit(void)
@@ -40833,7 +41720,8 @@ void FUN_00042b8a(undefined1 *param_1)
 
 /* 00042bc4 */
 
-/* the firmware's own name, "pll_scpi: toggle_change() -- new value > max value" */
+/* applies a change to a PLL setting that toggles, refusing a value above its maximum
+   the firmware's own name, "pll_scpi: toggle_change() -- new value > max value" */
 
 void toggle_change(undefined1 *param_1)
 
@@ -40897,7 +41785,8 @@ void validate_num(void)
 
 /* 00042d02 */
 
-/* the firmware's own name, "pll_scpi: validate_or_doaction() -- unknown structure type" */
+/* checks a PLL SCPI request's value against its setting's descriptor, or carries it out
+   the firmware's own name, "pll_scpi: validate_or_doaction() -- unknown structure type" */
 
 void validate_or_doaction(undefined1 *param_1,undefined4 param_2)
 
@@ -41204,7 +42093,8 @@ void finish_scpi_cmd(void)
 
 /* 000431f4 */
 
-/* the firmware's own name, "pll_scpi: get_setup_vars() -- unknown structure type" */
+/* finds the variables behind a PLL SCPI setting, by its descriptor's type
+   the firmware's own name, "pll_scpi: get_setup_vars() -- unknown structure type" */
 
 void get_setup_vars(int param_1)
 
@@ -41674,7 +42564,8 @@ LAB_00043a88:
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* loop.md's stage; "holdover - Error with measurement" */
+/* the loop's holdover stage, steering the oscillator without GPS
+   loop.md's stage; "holdover - Error with measurement" */
 
 undefined1 holdover(char param_1)
 
@@ -41945,7 +42836,8 @@ undefined4 FUN_00043f18(void)
 /* 00043f9a */
 
 /* WARNING: Unknown calling convention */
-/* loop.md's stage; "holdover recovery - Error with measurement" */
+/* the loop's stage that recovers from holdover once GPS returns
+   loop.md's stage; "holdover recovery - Error with measurement" */
 
 char holdover_recovery(char param_1)
 
@@ -42093,7 +42985,8 @@ LAB_0004411a:
 /* 0004429e */
 
 /* WARNING: Unknown calling convention */
-/* loop.md's stage; "startup_pll - Error with measurement" */
+/* the loop's start-up stage
+   loop.md's stage; "startup_pll - Error with measurement" */
 
 char startup_pll(char param_1)
 
@@ -42349,7 +43242,8 @@ char startup_pll(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* the firmware's own name, "pll_normal - Error with measurement"; interval.md's averaging routine,
+/* the loop's normal stage: averages interval readings, counting them to ten and storing the mean
+   the firmware's own name, "pll_normal - Error with measurement"; interval.md's averaging routine,
    which counts readings to ten and stores the mean */
 
 undefined1 pll_normal(char param_1)
@@ -42581,7 +43475,8 @@ undefined1 FUN_00044e8e(float param_1)
 
 /* 00044f5e */
 
-/* "Peforming sync" */
+/* synchronizes the outputs to GPS time
+   "Peforming sync" */
 
 undefined1 sync_perform(float param_1)
 
@@ -42712,7 +43607,8 @@ void interval_wait_reading(void)
 
 /* 000451c2 */
 
-/* loop.md's power-up step; "coarse - Error with measurement 1" */
+/* the power-up step that sets the oscillator's frequency coarsely
+   loop.md's power-up step; "coarse - Error with measurement 1" */
 
 char coarse(void)
 
@@ -42820,7 +43716,8 @@ override_jmp_000451fa_case_0:
 
 /* WARNING: Removing unreachable block (ram,0x0004577c) */
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-/* loop.md's power-up step and its sub-states; "fine - Error with measurement 1", "fine-sync",
+/* the power-up step that adjusts the frequency finely, through its sync and slew sub-states
+   loop.md's power-up step and its sub-states; "fine - Error with measurement 1", "fine-sync",
    "fine-slew" */
 
 char fine(void)
@@ -43219,7 +44116,8 @@ override_jmp_00045b86_case_1:
 
 /* 00045bb8 */
 
-/* screen-format-strings.md's ladder: the power-up sub-state's suffix index */
+/* the power-up sub-state, as the status screen's suffix index
+   screen-format-strings.md's ladder: the power-up sub-state's suffix index */
 
 undefined1 pll_powerup_step(void)
 
@@ -43644,7 +44542,8 @@ void FUN_0004637a(void)
 
 /* 00046394 */
 
-/* "Error in deleting old leapsecond event" */
+/* deletes the pending leap second event
+   "Error in deleting old leapsecond event" */
 
 void leap_event_delete(void)
 
@@ -43664,7 +44563,8 @@ void leap_event_delete(void)
 
 /* 000463c2 */
 
-/* "Error in creating leapsecond event" */
+/* creates the leap second event
+   "Error in creating leapsecond event" */
 
 void leap_event_create(void)
 
@@ -43973,7 +44873,8 @@ void FUN_000466ca(void)
 /* 00046838 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-/* the states print_gps_init_state names, each with its "... ack failure: %02X" */
+/* steps the GPS engine's initialization: each setting sent, then its acknowledgment checked
+   the states print_gps_init_state names, each with its "... ack failure: %02X" */
 
 void gps_init_sequence(void)
 
@@ -44241,7 +45142,8 @@ LAB_00046d8a:
 
 /* 00046d98 */
 
-/* the states print_leap_check_state names; "leap pending ack failure: %02X" */
+/* steps the leap second check with the GPS engine
+   the states print_leap_check_state names; "leap pending ack failure: %02X" */
 
 void gps_leap_sequence(void)
 
@@ -45193,7 +46095,8 @@ void FUN_00047eb0(int *param_1,ushort param_2,byte param_3,undefined4 param_4,un
 
 /* 00047f14 */
 
-/* "%c%4d:%02d:%06.3f", degrees, minutes and seconds */
+/* formats an angle as degrees, minutes and seconds to milliseconds
+   "%c%4d:%02d:%06.3f", degrees, minutes and seconds */
 
 void format_dms(int param_1,char param_2,char *param_3)
 
@@ -45244,7 +46147,8 @@ void format_dms(int param_1,char param_2,char *param_3)
 
 /* 00047fb6 */
 
-/* "%c%4d:%02d:%06.7f" */
+/* formats an angle as degrees, minutes and seconds to 0.1 microseconds
+   "%c%4d:%02d:%06.7f" */
 
 void format_dms_precise(char *param_1,char param_2)
 
@@ -45673,7 +46577,8 @@ void gps_print_pseudorange_corrections(void)
 /* 00048964 */
 
 /* WARNING: Unknown calling convention */
-/* "Enabled", "Disabled" */
+/* "Enabled" or "Disabled" for a flag
+   "Enabled", "Disabled" */
 
 void enabled_string(char param_1,char *param_2)
 
@@ -46852,7 +47757,8 @@ void FUN_00049d14(uint param_1,char *param_2)
 
 /* 00049db0 */
 
-/* "Synchronized to UTC", "Synchronized to GPS Time", "Assessing stability" */
+/* the status screen's synchronization line
+   "Synchronized to UTC", "Synchronized to GPS Time", "Assessing stability" */
 
 void status_screen_sync(int param_1,char *param_2)
 
@@ -47017,7 +47923,8 @@ void status_screen_time(int param_1,char *param_2)
 /* 00049fcc */
 
 /* WARNING: Unknown calling convention */
-/* "ANT DLY  %s", "Position", "Survey:", "% complete", "Suspended:" */
+/* the status screen's position and survey lines
+   "ANT DLY  %s", "Position", "Survey:", "% complete", "Suspended:" */
 
 char * status_screen_position(byte param_1,int param_2,char *param_3)
 
@@ -47208,7 +48115,8 @@ char * status_screen_position(byte param_1,int param_2,char *param_3)
 /* 0004a29c */
 
 /* WARNING: Unknown calling convention */
-/* "TFOM     %d%13sFFOM    %2s", "1PPS TI %s", "HOLD THR %s", "Holdover Uncertainty" */
+/* the status screen's TFOM, FFOM, 1PPS TI and holdover lines
+   "TFOM     %d%13sFFOM    %2s", "1PPS TI %s", "HOLD THR %s", "Holdover Uncertainty" */
 
 int status_screen_tfom(byte param_1,int param_2,char *param_3)
 
@@ -47403,7 +48311,8 @@ byte FUN_0004a4ec(short param_1)
 /* 0004a518 */
 
 /* WARNING: Unknown calling convention */
-/* screen-format-strings.md's mode suffixes, ": OCXO warm-up" .. ": leap second determination", "[TI
+/* the status screen's suffix for the power-up sub-state
+   screen-format-strings.md's mode suffixes, ": OCXO warm-up" .. ": leap second determination", "[TI
    %9.9s]" */
 
 void status_screen_mode_suffix(char param_1,int param_2,char *param_3)
@@ -47630,7 +48539,8 @@ void FUN_0004a636(pll_stage *param_1)
 /* 0004a8ea */
 
 /* WARNING: Unknown calling convention */
-/* "Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status" */
+/* prints the receiver status screen
+   "Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status" */
 
 void status_screen(char *param_1,char param_2,undefined *param_3,undefined *param_4)
 
@@ -49624,7 +50534,8 @@ undefined4 FUN_0004c66e(int param_1,int param_2)
 
 /* 0004c754 */
 
-/* a command log line, "SCPI1", "GPSc", "GPSs" */
+/* prints one entry of the GPS receiver command log
+   a command log line, "SCPI1", "GPSc", "GPSs" */
 
 undefined4 gps_print_command(int param_1,char *param_2)
 
@@ -49763,7 +50674,8 @@ void clear_gps_debug(void)
 
 /* 0004c940 */
 
-/* "GPS Receiver Command Log", "Task  ID  Command     Date and Time Issued" */
+/* prints the GPS receiver command log
+   "GPS Receiver Command Log", "Task  ID  Command     Date and Time Issued" */
 
 void gps_print_command_log(undefined4 param_1)
 

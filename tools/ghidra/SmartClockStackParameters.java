@@ -8,12 +8,20 @@
 // with the types it inferred.  A function left with no parameters in
 // custom storage, by an earlier run, is inferred again.
 //
+// With the argument "all", a function the decompiler accepts is
+// repaired the same way when its parameters are misplaced: when the C
+// picks bytes out of one (param_N._0_1_), a char or short read where
+// Ghidra put a 4-byte argument.  Only a signature Ghidra made up is
+// replaced; one from the names file or given by hand is kept.  With
+// "dry-run" as well, the functions are counted, not changed.
+//
 //@category SmartClock
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.decompiler.DecompileOptions;
@@ -37,13 +45,21 @@ public class SmartClockStackParameters extends GhidraScript {
 	 */
 	private static final int FIRST_ARGUMENT_OFFSET = 4;
 	private static final String FAILURE = "Cannot properly adjust input varnodes";
+	private static final String ALL = "all";
+	private static final String DRY_RUN = "dry-run";
+	/** A parameter the C picks bytes out of, as param_2._0_1_. */
+	private static final Pattern PARTIAL_PARAMETER = Pattern.compile("\\bparam_\\d+\\._\\d+_\\d+_");
 
 	@Override
 	protected void run() throws Exception {
 		DecompInterface decompiler = new DecompInterface();
 		decompiler.setOptions(new DecompileOptions());
 		decompiler.openProgram(currentProgram);
+		List<String> args = List.of(getScriptArgs());
+		boolean all = args.contains(ALL);
+		boolean dryRun = args.contains(DRY_RUN);
 		int repaired = 0;
+		int misplaced = 0;
 		List<Function> remaining = new ArrayList<>();
 		try {
 			for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
@@ -53,9 +69,20 @@ public class SmartClockStackParameters extends GhidraScript {
 				boolean emptied = function.hasCustomVariableStorage()
 						&& function.getParameterCount() == 0;
 				DecompileResults results = decompile(decompiler, function);
-				if (!emptied && (results.decompileCompleted()
-						|| !results.getErrorMessage().contains(FAILURE))) {
+				boolean failed = !results.decompileCompleted()
+						&& results.getErrorMessage().contains(FAILURE);
+				boolean partial = all && results.decompileCompleted()
+						&& function.getSignatureSource() == SourceType.DEFAULT
+						&& !function.hasCustomVariableStorage()
+						&& PARTIAL_PARAMETER.matcher(results.getDecompiledFunction().getC()).find();
+				if (!emptied && !failed && !partial) {
 					continue;
+				}
+				if (partial) {
+					misplaced++;
+					if (dryRun) {
+						continue;
+					}
 				}
 				setParameters(function, List.of());
 				results = decompile(decompiler, function);
@@ -78,6 +105,10 @@ public class SmartClockStackParameters extends GhidraScript {
 		}
 		finally {
 			decompiler.dispose();
+		}
+		if (all) {
+			println((dryRun ? "misplaced parameters found: " : "misplaced parameters repaired: ")
+				+ misplaced);
 		}
 		println("repaired " + repaired + ", still failing " + remaining.size());
 		for (Function function : remaining) {

@@ -188,6 +188,67 @@ late.  The table starts at the `jmp`'s base, and offsets are taken
 from there.  Case bodies reached only through such a table stay
 undisassembled until disassembly is forced at the resolved targets.
 
+## The calling convention
+
+Read from the Z3805A 3543B image's 5125 calls, not from a document: no
+compiler banner is in the image, and the compiler is not known.
+
+**Observed.**
+
+- Arguments are pushed right to left and the caller pops them, often
+  two calls' worth at once (`lea (n,SP),SP`).  No `rtd` appears.
+- A long, pointer or float argument takes 4 bytes and a double 8;
+  a `char` is pushed with `move.b` (926 times) and a `short` with
+  `move.w` (337), each in a 2-byte slot, and the argument after it
+  starts 2 bytes on.  The 68000 keeps SP even, so `move.b -(SP)`
+  drops it by 2 and stores the byte at the new, even address: the
+  value is in the slot's first byte, the high byte of the word, and
+  the callee reads it there (`tst.b (0xc,A6)`).
+- Calls to the variadic functions (`printf`, `sprintf`,
+  `debug_printf`, ...) push no byte or word at all: 342 longs and 384
+  addresses.  A float passed to one is first converted to double.
+- Results come back in D0, a double in D0:D1, and a `char` result is
+  used straight from D0's low byte.  A float or double result is in
+  D0 or D0:D1 too: there is no FPU.
+- Functions save D2--D7 and A2--A4 when they use them, and keep A6 as
+  the frame pointer (`link A6`); D0, D1, A0 and A1 are scratch.
+
+**Against the documented conventions.**  The System V m68k ABI, which
+GCC and LLVM follow and Ghidra's 68000 convention models, promotes
+every `char` and `short` argument to a 32-bit `int` in a 4-byte slot
+([M68k LLVM ABI notes](https://m680x0.github.io/doc/abi.html), [LLVM
+M68kCallingConv.td](https://cgit.freebsd.org/src/tree/contrib/llvm-project/llvm/lib/Target/M68k/M68kCallingConv.td),
+[GNUPro m68k calling
+conventions](https://users.informatik.haw-hamburg.de/~krabat/FH-Labor/gnupro/7_GNUPro_Embedded_Development/embCalling_conventions_for_m68k.html)).
+GCC's `-mshort` aligns stack arguments to 2 bytes but makes `int` 16
+bits ([GCC M680x0
+options](https://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/M680x0-Options.html)).
+The classic Mac 68K convention also uses 2-byte slots, but puts a
+single byte in the slot's low half, the pad byte most significant
+([Apple, Classic 68K Stack Structure and Calling
+Conventions](https://dev.os9.ca/techpubs/mac/runtimehtml/RTArch-132.html)).
+None matches.
+
+**What it must be.**  The rest is inference from the above.  `int` is
+32 bits: the variadic calls promote a `char` to a long, which is the
+default argument promotion to `int`, and a float to double.  A call
+with a prototype in scope does not promote: ANSI C converts a
+prototyped argument as if by assignment to the parameter's type and
+does not require widening it, and this compiler passes the parameter's
+own size, rounded up to the 68000's 2-byte stack granule.  So the
+convention is "ANSI with narrow prototyped arguments": the function's
+declared types decide each slot -- 2 bytes for `char` and `short`, the
+value at the slot's start; 4 for `int`, `long`, pointers and `float`;
+8 for `double` -- and an unprototyped or variadic call falls back to
+the default promotions.  A `char` result is not extended, so the
+caller extends it if it needs to.  How a structure is passed or
+returned is not established.
+
+Ghidra cannot model this convention: its 68000 language justifies a
+small value to the end of its slot, a property of the language, not of
+a convention a program can add.  Hence `SmartClockStackParameters.java
+all`, below, which pins each argument's bytes in custom storage.
+
 ## Decompiling with Ghidra
 
 Five GhidraScripts in `tools/ghidra/` take an image imported raw at
@@ -204,7 +265,7 @@ again.  In order:
    `smartclock-cli dump-scpi --handlers IMAGE` and
    `pforth=docs/firmware/pforth/IMAGE.txt`.
 4. `SmartClockForth.java`.
-5. `SmartClockStackParameters.java`.
+5. `SmartClockStackParameters.java all`.
 6. `SmartClockExportC.java FILE`.
 
 **Setup** makes the ROM read-only, so values loaded from it fold to
@@ -287,7 +348,15 @@ with `user` a pointer to the end of a `forth_user` structure, so
 or short argument in a 2-byte slot, while Ghidra's 68000 compiler spec
 assumes 4-byte slots and infers overlapping inputs.  Each such function
 gets the stack inputs the decompiler reports once it has no
-parameters, in custom storage at their real offsets.
+parameters, in custom storage at their real offsets.  With `all` it
+does the same for a function that decompiles but whose C picks bytes
+out of a parameter (`param_2._0_1_`): a `char` or `short` where Ghidra
+put a 4-byte argument, and every argument after it misplaced.  Only a
+signature Ghidra made up is replaced.  Custom storage pins each value's
+bytes, which a calling convention cannot: Ghidra's 68000 convention
+puts a small value at the end of its slot, where this compiler puts it
+at the start, and that is a property of the whole language, not of a
+convention a program can add.
 
 **ExportC** writes every function's C, in address order.
 

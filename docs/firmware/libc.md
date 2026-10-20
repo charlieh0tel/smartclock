@@ -43,13 +43,15 @@ remainder.
 | `0x60896` | `sprintf` | run; the engine with `0x608c4`, which copies into the buffer, then a NUL |
 | `0x608fe` | `vsprintf` | read: `sprintf` with the arguments as a pointer |
 | `0x1de96` | `printf` | read: `vsprintf` into a 160-byte buffer on the stack, then `0x1de76` writes it out |
+| `0x6092a` | `fabs` | run; the double on the stack, its sign cleared, back in D0:D1 |
 | `0x6098a` | `frexp` | run |
 | `0x60d94` | `modf` | run |
 | `0x60a10` | `log` | run; `softfloat.md`'s natural log; sets `0x10393a` to 34, ERANGE, for log of zero, so that cell is `errno` |
 | `0x60f5e` | `pow` | run; `softfloat.md`'s pow |
 | `0x6191c` | `sqrt` | run; `softfloat.md`'s square root |
 | `0x5ecf0` | runs the `atexit` functions | read: calls the functions in the table at `0x1038b4`, last first, counting down `0x103934` |
-| `0x5e93c` | raises a floating-point exception | read: every float routine calls it on an invalid operand, an overflow or a division by zero; it sets the cause in the status word at `0x1038b0` and traps if the control word at `0x1038b2` enables it (`softfloat.md`) |
+| `0x5e93c` | raises a floating-point exception | read: every float routine calls it with a code, below, on an invalid operand, an overflow or a division by zero; it sets the cause in the status word at `0x1038b0` and traps if the control word at `0x1038b2` enables it (`softfloat.md`) |
+| `0x1412e` | reports a floating-point exception | read: builds the message from the code, below, in the length-prefixed buffer at `0x100bd4`, hands it to `0x1eefc` and stops |
 
 The conversions in `softfloat.md` that it gives in pairs, two routines
 to a line, differ by sign, which the emulator confirms: of each pair,
@@ -65,3 +67,39 @@ one negates a negative operand first and the other does not.
 | `0x5e108` | `unsigned` to double |
 | `0x5ddde` | double to `int` |
 | `0x5de9e` | double to `unsigned` |
+
+`0x5d30e`, run, is the double subtract: A0:A1 − D0:D1, negating D0:D1
+and adding, so it raises `add64`'s code, below.
+
+## Exception codes
+
+Each float routine passes `0x5e93c` a code naming itself and the
+cause, which the reporter at `0x1412e` turns into a message such as
+`fp operand error: div64()`.  The high word names the routine: with
+bit 7 clear it indexes, by its low 6 bits, the arithmetic table
+
+    ?????  ftoi  ftod  dtof  dtoi  cmp32  cmp64  add32  add64  sub32  sub64
+    mul32  mul64  div32  div64  itof  dtoui  ftoui  uitod  uitof  ?????
+
+from 0, and with bit 7 set the math library's
+
+    acos  acosf  asin  asinf  atan  atanf  atan2  atan2f  ceil  ceilf  cos
+    cosf  cosh  coshf  exp  expf  fabs  fabsf  floor  floorf  fmod  fmodf
+    frexp  frexpf  ldexp  ldexpf  log  logf  log10  log10f  modf  modff
+    pow  powf  sin  sinf  sinh  sinhf  sqrt  sqrtf  tan  tanf  tanh
+    tanhf  frem  fremf  ?????
+
+The low word's bits give the cause, tested in this order: `0x4000`
+signaling NaN, `0x2000` operand error, `0x1000` overflow, `0x800`
+underflow, `0x400` divide by zero, `0x200` inexact result, `0x80` all
+precision lost.  A routine code of zero or past the end is taken as
+the last real entry, `uitof` or `fremf`, not the `?????` at the end of
+either table: a bad code gets a wrong name rather than `?????`.
+
+Every routine named above passes the code of its own name, which
+confirms the names independently of running them.  Of the math
+library, only `fabs`, `frexp`, `log`, `modf`, `pow` and `sqrt` pass a
+code, so only they are linked.  The codes also name three error tails
+that analysis made functions of: `0x5dbde`, a double divide's operand
+error (0 / 0); `0x5dbee`, a double divide by zero; and `0x5e81c`, a
+double multiply's operand error (0 x infinity).

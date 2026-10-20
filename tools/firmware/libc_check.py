@@ -19,6 +19,8 @@ import sys
 from unicorn import UC_ARCH_M68K, UC_MODE_BIG_ENDIAN, Uc
 from unicorn.m68k_const import (
     UC_CPU_M68K_M68020,
+    UC_M68K_REG_A0,
+    UC_M68K_REG_A1,
     UC_M68K_REG_A7,
     UC_M68K_REG_D0,
     UC_M68K_REG_D1,
@@ -61,6 +63,7 @@ ADDRESSES = {
     "strncpy": 0x5F190,
     "toupper": 0x5F1BE,
     "sprintf": 0x60896,
+    "fabs": 0x6092A,
     "frexp": 0x6098A,
     "modf": 0x60D94,
     "log": 0x60A10,
@@ -74,6 +77,7 @@ ADDRESSES = {
     "unsigned_to_double": 0x5E108,
     "double_to_integer": 0x5DDDE,
     "double_to_unsigned": 0x5DE9E,
+    "double_subtract_reversed": 0x5D30E,
 }
 
 RAND_SEED = 0x103936
@@ -105,9 +109,11 @@ class Machine:
         data = self.read(at, BUFFER_SPACING)
         return data[: data.index(0)]
 
-    def call(self, name: str, *longs: int, d0: int = 0, d1: int = 0) -> tuple[int, int]:
+    def call(
+        self, name: str, *longs: int, d0: int = 0, d1: int = 0, a0: int = 0, a1: int = 0
+    ) -> tuple[int, int]:
         """Calls name with longs on the stack, first argument lowest, and
-        d0 and d1 in their registers; returns D0 and D1."""
+        d0, d1, a0 and a1 in their registers; returns D0 and D1."""
         sp = STACK_TOP
         for value in reversed(longs):
             sp -= 4
@@ -117,6 +123,8 @@ class Machine:
         self.uc.reg_write(UC_M68K_REG_A7, sp)
         self.uc.reg_write(UC_M68K_REG_D0, d0 & 0xFFFFFFFF)
         self.uc.reg_write(UC_M68K_REG_D1, d1 & 0xFFFFFFFF)
+        self.uc.reg_write(UC_M68K_REG_A0, a0 & 0xFFFFFFFF)
+        self.uc.reg_write(UC_M68K_REG_A1, a1 & 0xFFFFFFFF)
         self.uc.emu_start(ADDRESSES[name], RETURN, count=STEP_LIMIT)
         return self.uc.reg_read(UC_M68K_REG_D0), self.uc.reg_read(UC_M68K_REG_D1)
 
@@ -210,6 +218,10 @@ def checks(m: Machine):
     m.call("sprintf", destination, m.buffer(b"%d|%5s|%x|%c\0"), 42, m.buffer(b"ab\0"), 255, ord("Q"))
     yield "sprintf", "%d %5s %x %c", m.string(destination) == b"42|   ab|ff|Q"
 
+    for value in (2.5, -2.5, 0.0):
+        got = from_double_words(*m.call("fabs", *double_words(value)))
+        yield "fabs", f"{value}", got == abs(value)
+
     for value in (8.0, 0.75, -3.0):
         exponent = m.buffer()
         high, low = m.call("frexp", *double_words(value), exponent)
@@ -255,6 +267,14 @@ def checks(m: Machine):
     high, low = double_words(3e9)
     got = m.call("double_to_unsigned", d0=high, d1=low)[0]
     yield "double_to_unsigned", "3e9", got == 3_000_000_000
+
+    for a, d in ((3.0, 1.0), (1.0, 3.0), (-2.5, 0.5)):
+        a_high, a_low = double_words(a)
+        d_high, d_low = double_words(d)
+        got = from_double_words(
+            *m.call("double_subtract_reversed", d0=d_high, d1=d_low, a0=a_high, a1=a_low)
+        )
+        yield "double_subtract_reversed", f"{a}-{d}", got == a - d
 
 
 def main() -> int:

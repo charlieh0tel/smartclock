@@ -88,9 +88,16 @@
 0x608c4	function	sprintf_put	libc.md: copies the engine's output into sprintf's buffer
 0x608fe	function	vsprintf	libc.md	int vsprintf(char *s, char *format, void *arg)
 0x1de96	function	printf	libc.md	void printf(char *format, ...)
+0x6092a	function	fabs	libc.md	double fabs(double x)
 0x6098a	function	frexp	libc.md	double frexp(double value, int *exp)
 0x60d94	function	modf	libc.md	double modf(double value, double *iptr)
 0x10393a	label	errno	libc.md: log sets it to 34, ERANGE
 0x5ecf0	function	call_atexit_functions	libc.md
 0x1038b4	label	atexit_functions	libc.md
 0x103934	label	atexit_count	libc.md
+0x5d30e	function	double_subtract_reversed	libc.md: A0:A1 - D0:D1
+0x1412e	function	float_exception_report	libc.md	void float_exception_report(unsigned int code)
+0x100bd4	label	float_exception_message	libc.md: length-prefixed
+0x5dbde	function	double_divide_operand_error	libc.md: exception code 0xe2000
+0x5dbee	function	double_divide_by_zero	libc.md: exception code 0xe0400
+0x5e81c	function	double_multiply_operand_error	libc.md: exception code 0xc2000

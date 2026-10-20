@@ -79,17 +79,16 @@ reports an error.  A service no word calls keeps its number.
 | 37 | `0x1718a` | | two longs; a long through the last |
 | 38 | `0x171b2` | | two longs |
 
-Of the I/O functions, the console's `!iodev` closes a device with
-function 2 and opens one with function 1, and `expect` reads with
-function 3.  Function 4 takes the same arguments as 3, a device, a
-buffer and a length in and out, so is the write; 0 and 5 keep their
-numbers.
+The console's `dev_init`, `dev_open`, `dev_close`, `dev_read`,
+`dev_write` and `dev_ctrl` make I/O functions 0 to 5 in turn, through
+`0x1a1b4`; `!iodev` closes a device and opens another, and `expect`
+reads.
 
 | Function | Stub | Arguments |
 | -------- | ---- | --------- |
-| 0 | `0x173ca` | the device |
+| 0, init | `0x173ca` | the device |
 | 1, open | `0x173e2` | the device, a long |
 | 2, close | `0x173fe` | the device |
 | 3, read | `0x17416` | the device, the buffer, the length, in and out |
 | 4, write | `0x17448` | the device, the buffer, the length, in and out |
-| 5 | `0x1747a` | the device, two longs |
+| 5, control | `0x1747a` | the device, two longs |

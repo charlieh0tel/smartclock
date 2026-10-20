@@ -190,7 +190,7 @@ undisassembled until disassembly is forced at the resolved targets.
 
 ## Decompiling with Ghidra
 
-Four GhidraScripts in `tools/ghidra/` take an image imported raw at
+Five GhidraScripts in `tools/ghidra/` take an image imported raw at
 address zero as `68000:BE:32:CPU32` to C, under `analyzeHeadless
 -postScript` or ghidra-mcp's `run_ghidra_script`.  Each is safe to run
 again.  In order:
@@ -203,8 +203,9 @@ again.  In order:
    `names=tools/ghidra/names/IMAGE.tsv`, `scpi=FILE` from
    `smartclock-cli dump-scpi --handlers IMAGE` and
    `pforth=docs/firmware/pforth/IMAGE.txt`.
-4. `SmartClockStackParameters.java`.
-5. `SmartClockExportC.java FILE`.
+4. `SmartClockForth.java`.
+5. `SmartClockStackParameters.java`.
+6. `SmartClockExportC.java FILE`.
 
 **Setup** makes the ROM read-only, so values loaded from it fold to
 constants; maps RAM, the DUART, EEPROM, the CS4 and CS5 ranges and the
@@ -273,6 +274,13 @@ which the overlay does not serve; the jump is marked a call, so it
 reads `func_0x0010135c` rather than flowing into RAM with no code.  The
 installer's functions are not labeled at their plain addresses: the
 primary keeps its own data there.
+
+**Forth** gives the pForth console's kernel its register convention
+(`console.md`, "The kernel's registers"): each function in the span of
+the `forth_` words that uses A6, A5, A4 or A3, and has no frame,
+takes those registers as parameters -- `sp`, `user`, `dp`, `input` --
+with `user` a pointer to the end of a `forth_user` structure, so
+`*(A5 - 0xe)` reads as `ADJ(user)->base`.
 
 **StackParameters** repairs functions the decompiler rejects with
 "Cannot properly adjust input varnodes".  This compiler pushes a char

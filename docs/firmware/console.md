@@ -33,6 +33,36 @@ a name followed by the address of its code.  Among them:
     gps_query   gps_query_all         pr_time_raim            pr_satview
     pr_hold_cause         wr_eeprom   clear_nv    master_reset  crash
 
+## The kernel's registers
+
+The words run with four registers given over to the interpreter, read
+from the Z3805A 3543B image (addresses below are its):
+
+- A6 is the data stack, growing down: `(A6)+` pops, `-(A6)` pushes.
+- A5 points just past the task's user area, which the words read at
+  negative offsets.
+- A4 is the dictionary pointer: `,` stores through it, and `;`
+  compiles an `rts` with `move.w #0x4e75,(A4)+`.
+- A3 is the input, the next character of the text interpreted.
+
+The words that show each user variable name it:
+
+| Offset from A5 | Variable | Shown by |
+| -------------- | -------- | -------- |
+| `-0x28` | `iodev`, a word | `expect` reads it, `!iodev` sets it |
+| `-0x22` | `pad` | `pad` pushes it |
+| `-0x1e` | `tib` | `tib` pushes it |
+| `-0x1a` | `fence` | `fence` pushes its address, `unfence` resets it |
+| `-0x16` | the latest word defined | `forget`, `immediate`, `recurse`, `words`, `;` |
+| `-0x12` | `here` | `here` stores A4 there and pushes its address |
+| `-0xe` | `base` | `decimal` stores 10, `hex` 16, `base` pushes its address |
+| `-0xa` | `state`, a word | `[` clears it, `]` sets it, `state` pushes it |
+| `-0x8` | the data stack's base | `depth` is it less A6, over 4; `abort` reloads A6 from it |
+| `-0x4` | the return stack's base | `abort` reloads SP from it |
+
+`-0x26` to `-0x23` are not read by any word.  `0x19150` writes the
+string in D0 to `iodev` with I/O function 4, which is `type`'s work.
+
 ## Getting to it
 
 `:SYSTem:LANGuage` is the way in.  097-59551-02 4-15 documents two

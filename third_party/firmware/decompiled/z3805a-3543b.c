@@ -4783,7 +4783,7 @@ void FUN_00012faa(void)
   FUN_0001ad8a("mem_rep",&LAB_00012f92,0,0);
   FUN_0001ad8a("s_rep",&LAB_00012f9e,0,0);
   FUN_0001c18e();
-  psos_io_5(0x200,0x18dbc,0);
+  psos_io_control(0x200,0x18dbc,0);
   FUN_0001ae50(0x200);
   _DAT_001037e8 = FUN_0001ae5c(0x200,0x200,0x180,0x32);
   return;
@@ -9970,7 +9970,7 @@ ulong psos_service_31(ulong a,ulong b,ulong c)
 
 /* 000173ca */
 
-ulong psos_io_0(ulong device)
+ulong psos_io_init(ulong device)
 
 {
   psos_io_call();
@@ -10026,7 +10026,7 @@ ulong psos_io_write(ulong device,void *buffer,ulong *length)
 
 /* 0001747a */
 
-ulong psos_io_5(ulong device,ulong a,ulong b)
+ulong psos_io_control(ulong device,ulong a,ulong b)
 
 {
   psos_io_call();
@@ -11256,84 +11256,98 @@ undefined4 FUN_00018d40(void)
 
 /* 00018ed6 */
 
-void forth_abort(void)
+/* WARNING: Unknown calling convention */
+
+void forth_abort(forth_user_end user,long *sp,char *input)
 
 {
-  int iVar1;
-  int unaff_A5;
+  void *pvVar1;
+  long *sp_00;
+  char *pcVar2;
+  void *unaff_A4;
   
-  iVar1 = *(int *)(unaff_A5 + -4);
-  **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-  if (*(short *)(unaff_A5 + -10) != 0) {
-    *(undefined4 *)(iVar1 + -4) = 0x18eee;
-    FUN_0001938e();
+  pvVar1 = ADJ(user)->return_stack_base;
+  sp_00 = ADJ(user)->stack_base;
+  pcVar2 = ADJ(user)->tib;
+  pcVar2[0] = '\0';
+  pcVar2[1] = '\0';
+  if (ADJ(user)->state != 0) {
+    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    FUN_0001938e(user,unaff_A4);
   }
-  *(undefined2 *)(unaff_A5 + -10) = 0;
-  *(undefined4 *)(unaff_A5 + -0xe) = 10;
-  forth_interpret();
+  ADJ(user)->state = 0;
+  ADJ(user)->base = 10;
+  forth_interpret(user,sp_00,unaff_A4);
   return;
 }
 
 
 /* 00018f0e */
 
-void forth_interpret(void)
+/* WARNING: Unknown calling convention */
+
+void forth_interpret(forth_user_end user,long *sp,void *dp)
 
 {
-  int iVar1;
+  void *pvVar1;
+  long *sp_00;
+  char *pcVar2;
   uint extraout_D1;
-  short sVar2;
+  short sVar3;
   code *extraout_A0;
-  code *pcVar3;
+  code *pcVar4;
   int unaff_A2;
-  undefined2 *unaff_A4;
-  undefined4 *puVar4;
-  int unaff_A5;
-  int unaff_A6;
-  undefined1 uVar5;
+  char *unaff_A3;
+  undefined4 *puVar5;
+  undefined1 uVar6;
   
 code_r0x00018f0e:
   do {
-    uVar5 = unaff_A6 == *(int *)(unaff_A5 + -8);
-    if (*(int *)(unaff_A5 + -8) < unaff_A6) {
+    uVar6 = sp == ADJ(user)->stack_base;
+    if ((int)ADJ(user)->stack_base < (int)sp) {
+      pcVar2 = " ?Stack empty\r\n";
 LAB_00018ec8:
-      FUN_00019150();
-      FUN_00019150();
-      iVar1 = *(int *)(unaff_A5 + -4);
-      **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-      if (*(short *)(unaff_A5 + -10) != 0) {
-        *(undefined4 *)(iVar1 + -4) = 0x18eee;
-        FUN_0001938e();
+      forth_print_string(pcVar2,user);
+      forth_print_string("\r\n",user);
+      pvVar1 = ADJ(user)->return_stack_base;
+      sp_00 = ADJ(user)->stack_base;
+      pcVar2 = ADJ(user)->tib;
+      pcVar2[0] = '\0';
+      pcVar2[1] = '\0';
+      if (ADJ(user)->state != 0) {
+        *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+        FUN_0001938e(user,dp);
       }
-      *(undefined2 *)(unaff_A5 + -10) = 0;
-      *(undefined4 *)(unaff_A5 + -0xe) = 10;
-      forth_interpret();
+      ADJ(user)->state = 0;
+      ADJ(user)->base = 10;
+      forth_interpret(user,sp_00,dp);
       return;
     }
-    FUN_0001910e();
-    FUN_00018fcc();
-    if ((bool)uVar5) {
-      if (*(short *)(unaff_A5 + -10) == 0) {
+    FUN_0001910e(user,unaff_A3);
+    FUN_00018fcc(user);
+    if ((bool)uVar6) {
+      if (ADJ(user)->state == 0) {
         if ((extraout_D1 & 1) != 0) {
-          FUN_00019150();
-          FUN_00019150();
+          forth_print_string("ERROR: \"",user);
+          forth_print_string(ADJ(user)->pad,user);
+          pcVar2 = "\" is only valid inside a definition.\r\n";
           goto LAB_00018ec8;
         }
       }
       else if ((extraout_D1 & 4) == 0) {
         if ((extraout_D1 & 8) == 0) {
-          puVar4 = (undefined4 *)(unaff_A4 + 1);
-          *unaff_A4 = 0x4eb9;
-          unaff_A4 = unaff_A4 + 3;
-          *puVar4 = extraout_A0;
+          puVar5 = (undefined4 *)((int)dp + 2);
+          *(undefined2 *)dp = 0x4eb9;
+          dp = (void *)((int)dp + 6);
+          *puVar5 = extraout_A0;
         }
         else {
-          sVar2 = *(short *)(unaff_A2 + 8) >> 1;
-          pcVar3 = extraout_A0;
-          while (sVar2 = sVar2 + -1, sVar2 != -1) {
-            *unaff_A4 = *(undefined2 *)pcVar3;
-            pcVar3 = pcVar3 + 2;
-            unaff_A4 = unaff_A4 + 1;
+          sVar3 = *(short *)(unaff_A2 + 8) >> 1;
+          pcVar4 = extraout_A0;
+          while (sVar3 = sVar3 + -1, sVar3 != -1) {
+            *(undefined2 *)dp = *(undefined2 *)pcVar4;
+            pcVar4 = pcVar4 + 2;
+            dp = (undefined2 *)((int)dp + 2);
           }
         }
         goto code_r0x00018f0e;
@@ -11341,86 +11355,94 @@ LAB_00018ec8:
       (*extraout_A0)();
       goto code_r0x00018f0e;
     }
-    FUN_00018f68();
+    FUN_00018f68(user,sp);
   } while( true );
 }
 
 
 /* 00018f68 */
 
-undefined4 FUN_00018f68(void)
+/* WARNING: Unknown calling convention */
+
+undefined4 FUN_00018f68(forth_user_end user,long *sp)
 
 {
-  uint uVar1;
-  char cVar2;
-  int iVar3;
-  undefined4 uVar4;
+  void *pvVar1;
+  long *sp_00;
+  char *pcVar2;
+  uint uVar3;
+  char cVar4;
   int iVar5;
+  undefined4 uVar6;
+  int iVar7;
   undefined2 unaff_D7w;
   char *in_A0;
   char *extraout_A0;
-  int unaff_A5;
-  int unaff_A6;
-  bool bVar6;
-  undefined8 uVar7;
+  void *unaff_A4;
+  bool bVar8;
+  undefined8 uVar9;
   
-  iVar3 = 0;
   iVar5 = 0;
-  uVar1 = *(uint *)(unaff_A5 + -0xe);
-  cVar2 = *in_A0;
-  if (cVar2 != '-') goto LAB_00018f92;
-  bVar6 = in_A0[1] == '\0';
+  iVar7 = 0;
+  uVar3 = ADJ(user)->base;
+  cVar4 = *in_A0;
+  if (cVar4 != '-') goto LAB_00018f92;
+  bVar8 = in_A0[1] == '\0';
   do {
-    uVar7 = FUN_00019024();
-    iVar3 = (int)((ulonglong)uVar7 >> 0x20);
-    if (!bVar6) {
-      FUN_00019150();
-      FUN_00019150();
-      FUN_00019150();
-      iVar5 = *(int *)(unaff_A5 + -4);
-      **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-      if (*(short *)(unaff_A5 + -10) != 0) {
-        *(undefined4 *)(iVar5 + -4) = 0x18eee;
-        FUN_0001938e();
+    uVar9 = FUN_00019024();
+    iVar5 = (int)((ulonglong)uVar9 >> 0x20);
+    if (!bVar8) {
+      forth_print_string(ADJ(user)->pad,user);
+      forth_print_string(": not found\r\n",user);
+      forth_print_string("\r\n",user);
+      pvVar1 = ADJ(user)->return_stack_base;
+      sp_00 = ADJ(user)->stack_base;
+      pcVar2 = ADJ(user)->tib;
+      pcVar2[0] = '\0';
+      pcVar2[1] = '\0';
+      if (ADJ(user)->state != 0) {
+        *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+        FUN_0001938e(user,unaff_A4);
       }
-      *(undefined2 *)(unaff_A5 + -10) = 0;
-      *(undefined4 *)(unaff_A5 + -0xe) = 10;
-      uVar4 = forth_interpret();
-      return uVar4;
+      ADJ(user)->state = 0;
+      ADJ(user)->base = 10;
+      uVar6 = forth_interpret(user,sp_00,unaff_A4);
+      return uVar6;
     }
-    iVar5 = iVar3 + ((uint)uVar7 >> 0x10) * (uVar1 & 0xffff) * 0x10000 +
-                    ((uint)uVar7 & 0xffff) * (uVar1 & 0xffff);
+    iVar7 = iVar5 + ((uint)uVar9 >> 0x10) * (uVar3 & 0xffff) * 0x10000 +
+                    ((uint)uVar9 & 0xffff) * (uVar3 & 0xffff);
     in_A0 = extraout_A0;
 LAB_00018f92:
-    uVar4 = CONCAT31((int3)((uint)iVar3 >> 8),*in_A0);
-    bVar6 = *in_A0 == '\0';
-  } while (!bVar6);
-  if (CONCAT11((char)((ushort)unaff_D7w >> 8),-(cVar2 == '-')) != 0) {
-    iVar5 = -iVar5;
+    uVar6 = CONCAT31((int3)((uint)iVar5 >> 8),*in_A0);
+    bVar8 = *in_A0 == '\0';
+  } while (!bVar8);
+  if (CONCAT11((char)((ushort)unaff_D7w >> 8),-(cVar4 == '-')) != 0) {
+    iVar7 = -iVar7;
   }
-  *(int *)(unaff_A6 + -4) = iVar5;
-  if (*(short *)(unaff_A5 + -10) != 0) {
-    uVar4 = forth_literal();
+  sp[-1] = iVar7;
+  if (ADJ(user)->state != 0) {
+    uVar6 = forth_literal(sp + -1,unaff_A4);
   }
-  return uVar4;
+  return uVar6;
 }
 
 
 /* 00018fcc */
 
-void FUN_00018fcc(void)
+/* WARNING: Unknown calling convention */
+
+void FUN_00018fcc(forth_user_end user)
 
 {
   char cVar1;
   int *piVar2;
   char *pcVar3;
   int *piVar4;
-  int unaff_A5;
   
-  piVar2 = *(int **)(unaff_A5 + -0x16);
+  piVar2 = ADJ(user)->latest;
   do {
     if ((*(ushort *)((int)piVar2 + 10) & 2) == 0) {
-      pcVar3 = *(char **)(unaff_A5 + -0x22);
+      pcVar3 = ADJ(user)->pad;
       piVar4 = piVar2 + 3;
       while( true ) {
         cVar1 = *pcVar3;
@@ -11441,7 +11463,9 @@ void FUN_00018fcc(void)
 
 /* 00019018 */
 
-void FUN_00019018(void)
+/* WARNING: Unknown calling convention */
+
+void FUN_00019018(void *dp)
 
 {
   return;
@@ -11466,7 +11490,9 @@ void FUN_00019024(void)
 
 /* 00019042 */
 
-undefined4 FUN_00019042(void)
+/* WARNING: Unknown calling convention */
+
+undefined4 FUN_00019042(char *input)
 
 {
   undefined4 in_D0;
@@ -11477,19 +11503,20 @@ undefined4 FUN_00019042(void)
 
 /* 0001906c */
 
-void FUN_0001906c(void)
+/* WARNING: Unknown calling convention */
+
+void FUN_0001906c(char *input)
 
 {
-  char *unaff_A3;
   undefined1 in_ZF;
   
   do {
-    FUN_00019042();
+    FUN_00019042(input);
     if (!(bool)in_ZF) {
       return;
     }
-    in_ZF = *unaff_A3 == '\0';
-    unaff_A3 = unaff_A3 + 1;
+    in_ZF = *input == '\0';
+    input = input + 1;
   } while (!(bool)in_ZF);
   return;
 }
@@ -11498,20 +11525,20 @@ void FUN_0001906c(void)
 /* 00019096 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* WARNING: Unknown calling convention */
 
-void FUN_00019096(void)
+void FUN_00019096(forth_user_end user)
 
 {
   int iVar1;
-  int unaff_A5;
   
-  _DAT_00100b14 = *(undefined4 *)(unaff_A5 + -0x26);
+  _DAT_00100b14 = ADJ(user)->field1_0x2;
   _DAT_00100b18 = 0x202a;
-  iVar1 = *(int *)(unaff_A5 + -0xe) + -2;
-  if ((1 < *(int *)(unaff_A5 + -0xe)) && (iVar1 < 0xf)) {
+  iVar1 = ADJ(user)->base + -2;
+  if ((1 < ADJ(user)->base) && (iVar1 < 0xf)) {
     _DAT_00100b18 = CONCAT11(0x20,(&DAT_00019086)[(short)iVar1]);
   }
-  if (*(short *)(unaff_A5 + -10) == 0) {
+  if (ADJ(user)->state == 0) {
     _DAT_00100b1a = 0x203e2000;
   }
   else {
@@ -11523,14 +11550,15 @@ void FUN_00019096(void)
 
 /* 000190e8 */
 
-undefined4 FUN_000190e8(void)
+/* WARNING: Unknown calling convention */
+
+undefined4 FUN_000190e8(forth_user_end user,char *input)
 
 {
   undefined4 in_D0;
   undefined4 uVar1;
-  int unaff_A5;
   
-  if (-1 < *(short *)(unaff_A5 + -0x28)) {
+  if (-1 < ((forth_user *)(user + -0x28))->iodev) {
     __m68k_trap(4);
     return in_D0;
   }
@@ -11541,26 +11569,26 @@ undefined4 FUN_000190e8(void)
 
 /* 0001910e */
 
-void FUN_0001910e(void)
+/* WARNING: Unknown calling convention */
+
+void FUN_0001910e(forth_user_end user,char *input)
 
 {
   char cVar1;
   char *pcVar2;
   char *extraout_A0;
-  char *unaff_A3;
-  int unaff_A5;
   bool bVar3;
   
-  FUN_0001916e();
-  FUN_0001912a();
-  pcVar2 = *(char **)(unaff_A5 + -0x22);
+  FUN_0001916e(user);
+  FUN_0001912a(user,input);
+  pcVar2 = ADJ(user)->pad;
   do {
-    cVar1 = *unaff_A3;
+    cVar1 = *input;
     *pcVar2 = cVar1;
     bVar3 = cVar1 == '\0';
-    FUN_00019042();
+    FUN_00019042(input + 1);
     pcVar2 = extraout_A0;
-    unaff_A3 = unaff_A3 + 1;
+    input = input + 1;
   } while (!bVar3);
   *extraout_A0 = '\0';
   return;
@@ -11569,20 +11597,19 @@ void FUN_0001910e(void)
 
 /* 0001912a */
 
-void FUN_0001912a(void)
+/* WARNING: Unknown calling convention */
+
+void FUN_0001912a(forth_user_end user,char *input)
 
 {
-  char *unaff_A3;
-  int unaff_A5;
-  
   while( true ) {
-    FUN_0001906c();
-    if (*unaff_A3 != '\0') break;
-    if (*(short *)(unaff_A5 + -0x28) == 0) {
-      FUN_00019096();
-      FUN_00019150();
+    FUN_0001906c(input);
+    if (*input != '\0') break;
+    if (((forth_user *)(user + -0x28))->iodev == 0) {
+      FUN_00019096(user);
+      forth_print_string(&DAT_00100b14,user);
     }
-    FUN_000190e8();
+    FUN_000190e8(user,input);
   }
   return;
 }
@@ -11590,16 +11617,17 @@ void FUN_0001912a(void)
 
 /* 00019150 */
 
-ulonglong FUN_00019150(void)
+/* WARNING: Unknown calling convention */
+
+ulonglong forth_print_string(char *s,forth_user_end user)
 
 {
   undefined4 in_D1;
-  int unaff_A5;
   ulonglong uVar1;
   
-  if (-1 < *(short *)(unaff_A5 + -0x28)) {
+  if (-1 < ((forth_user *)(user + -0x28))->iodev) {
     __m68k_trap(4);
-    return (ulonglong)CONCAT24(*(short *)(unaff_A5 + -0x28),in_D1);
+    return (ulonglong)CONCAT24(((forth_user *)(user + -0x28))->iodev,in_D1);
   }
   uVar1 = psos_call();
   return uVar1;
@@ -11608,41 +11636,42 @@ ulonglong FUN_00019150(void)
 
 /* 0001916e */
 
-int FUN_0001916e(void)
+/* WARNING: Unknown calling convention */
+
+char * FUN_0001916e(forth_user_end user)
 
 {
-  int iVar1;
-  int unaff_A5;
+  char *pcVar1;
   
-  iVar1 = *(int *)(unaff_A5 + -0x1e);
-  if (iVar1 == 0) {
-    iVar1 = psos_call();
+  pcVar1 = ADJ(user)->tib;
+  if (pcVar1 == (char *)0x0) {
+    pcVar1 = (char *)psos_call();
   }
-  return iVar1;
+  return pcVar1;
 }
 
 
 /* 00019182 */
 
-void forth_over(void)
+/* WARNING: Unknown calling convention */
+
+void forth_over(long *sp)
 
 {
-  int unaff_A6;
-  
-  *(undefined4 *)(unaff_A6 + -4) = *(undefined4 *)(unaff_A6 + 4);
+  sp[-1] = sp[1];
   return;
 }
 
 
 /* 00019188 */
 
-void forth_abs(void)
+/* WARNING: Unknown calling convention */
+
+void forth_abs(long *sp)
 
 {
-  int *unaff_A6;
-  
-  if (*(short *)unaff_A6 < 0) {
-    *unaff_A6 = -*unaff_A6;
+  if (*(short *)sp < 0) {
+    *sp = -*sp;
   }
   return;
 }
@@ -11650,13 +11679,13 @@ void forth_abs(void)
 
 /* 00019190 */
 
-void forth_max(void)
+/* WARNING: Unknown calling convention */
+
+void forth_max(long *sp)
 
 {
-  int *unaff_A6;
-  
-  if (unaff_A6[1] <= *unaff_A6) {
-    unaff_A6[1] = *unaff_A6;
+  if (sp[1] <= *sp) {
+    sp[1] = *sp;
   }
   return;
 }
@@ -11664,13 +11693,13 @@ void forth_max(void)
 
 /* 0001919a */
 
-void forth_min(void)
+/* WARNING: Unknown calling convention */
+
+void forth_min(long *sp)
 
 {
-  int *unaff_A6;
-  
-  if (*unaff_A6 <= unaff_A6[1]) {
-    unaff_A6[1] = *unaff_A6;
+  if (*sp <= sp[1]) {
+    sp[1] = *sp;
   }
   return;
 }
@@ -11678,106 +11707,106 @@ void forth_min(void)
 
 /* 000191a4 */
 
-void forth_fetch(void)
+/* WARNING: Unknown calling convention */
+
+void forth_fetch(long *sp)
 
 {
-  undefined4 *unaff_A6;
-  
-  *unaff_A6 = *(undefined4 *)*unaff_A6;
+  *sp = *(long *)*sp;
   return;
 }
 
 
 /* 000191aa */
 
-void forth_store(void)
+/* WARNING: Unknown calling convention */
+
+void forth_store(long *sp)
 
 {
-  undefined4 *unaff_A6;
-  
-  *(undefined4 *)*unaff_A6 = unaff_A6[1];
+  *(long *)*sp = sp[1];
   return;
 }
 
 
 /* 000191b0 */
 
-void forth_w_fetch(void)
+/* WARNING: Unknown calling convention */
+
+void forth_w_fetch(long *sp)
 
 {
-  uint *unaff_A6;
-  
-  *unaff_A6 = (uint)*(ushort *)*unaff_A6;
+  *sp = (uint)*(ushort *)*sp;
   return;
 }
 
 
 /* 000191ba */
 
-void forth_w_store(void)
+/* WARNING: Unknown calling convention */
+
+void forth_w_store(long *sp)
 
 {
-  undefined4 *unaff_A6;
-  
-  *(short *)*unaff_A6 = (short)unaff_A6[1];
+  *(short *)*sp = (short)sp[1];
   return;
 }
 
 
 /* 000191c2 */
 
-void forth_c_fetch(void)
+/* WARNING: Unknown calling convention */
+
+void forth_c_fetch(long *sp)
 
 {
-  uint *unaff_A6;
-  
-  *unaff_A6 = (uint)*(byte *)*unaff_A6;
+  *sp = (uint)*(byte *)*sp;
   return;
 }
 
 
 /* 000191cc */
 
-void forth_c_store(void)
+/* WARNING: Unknown calling convention */
+
+void forth_c_store(long *sp)
 
 {
-  undefined4 *unaff_A6;
-  
-  *(char *)*unaff_A6 = (char)unaff_A6[1];
+  *(char *)*sp = (char)sp[1];
   return;
 }
 
 
 /* 000191d4 */
 
-void forth_negate(void)
+/* WARNING: Unknown calling convention */
+
+void forth_negate(long *sp)
 
 {
-  int *unaff_A6;
-  
-  *unaff_A6 = -*unaff_A6;
+  *sp = -*sp;
   return;
 }
 
 
 /* 000191d8 */
 
-void forth_here(void)
+/* WARNING: Unknown calling convention */
+
+void forth_here(forth_user_end user,long *sp,void *dp)
 
 {
-  undefined4 unaff_A4;
-  int unaff_A5;
-  int unaff_A6;
-  
-  *(undefined4 **)(unaff_A6 + -4) = (undefined4 *)(unaff_A5 + -0x12);
-  *(undefined4 *)(unaff_A5 + -0x12) = unaff_A4;
+  sp[-1] = (long)&ADJ(user)->here;
+  ADJ(user)->here = dp;
   return;
 }
 
 
 /* 000191e2 */
 
-void forth_greater_r(void)
+/* WARNING: Unknown calling convention */
+
+void forth_greater_r(long *sp)
 
 {
   return;
@@ -11786,35 +11815,38 @@ void forth_greater_r(void)
 
 /* 000191f0 */
 
-void forth_r_greater(undefined4 param_1)
+/* WARNING: Unknown calling convention */
+
+void forth_r_greater(long *sp)
 
 {
-  int unaff_A6;
-  undefined4 in_stack_00000000;
+  long in_stack_00000000;
+  long in_stack_00000004;
   
-  *(undefined4 *)(unaff_A6 + -4) = in_stack_00000000;
-  *(undefined4 *)(unaff_A6 + -4) = param_1;
+  sp[-1] = in_stack_00000000;
+  sp[-1] = in_stack_00000004;
   return;
 }
 
 
 /* 000191fa */
 
-void forth_fill(void)
+/* WARNING: Unknown calling convention */
+
+void forth_fill(long *sp)
 
 {
-  undefined4 uVar1;
+  long lVar1;
   uint uVar2;
   undefined1 *puVar4;
-  undefined4 *unaff_A6;
   ushort uVar3;
   
-  uVar1 = *unaff_A6;
-  uVar2 = unaff_A6[1] - 1;
+  lVar1 = *sp;
+  uVar2 = sp[1] - 1;
   if (-1 < (int)uVar2) {
-    puVar4 = (undefined1 *)unaff_A6[2];
+    puVar4 = (undefined1 *)sp[2];
     do {
-      *puVar4 = (char)uVar1;
+      *puVar4 = (char)lVar1;
       uVar3 = (short)uVar2 - 1;
       uVar2 = (uint)uVar3;
       puVar4 = puVar4 + 1;
@@ -11826,92 +11858,93 @@ void forth_fill(void)
 
 /* 0001920c */
 
-void forth_pick(void)
+/* WARNING: Unknown calling convention */
+
+void forth_pick(long *sp)
 
 {
-  int *unaff_A6;
-  
-  *unaff_A6 = unaff_A6[*unaff_A6 + 1];
+  *sp = sp[*sp + 1];
   return;
 }
 
 
 /* 00019216 */
 
-void forth_comma(void)
+/* WARNING: Unknown calling convention */
+
+void forth_comma(long *sp,void *dp)
 
 {
-  undefined4 *unaff_A4;
-  undefined4 *unaff_A6;
-  
-  *unaff_A4 = *unaff_A6;
+  *(long *)dp = *sp;
   return;
 }
 
 
 /* 0001921a */
 
-void forth_w_comma(void)
+/* WARNING: Unknown calling convention */
+
+void forth_w_comma(long *sp,void *dp)
 
 {
-  undefined2 *unaff_A4;
-  undefined4 *unaff_A6;
-  
-  *unaff_A4 = (short)*unaff_A6;
+  *(short *)dp = (short)*sp;
   return;
 }
 
 
 /* 00019220 */
 
-void forth_c_comma(void)
+/* WARNING: Unknown calling convention */
+
+void forth_c_comma(long *sp,void *dp)
 
 {
-  undefined1 *unaff_A4;
-  undefined4 *unaff_A6;
-  
-  *unaff_A4 = (char)*unaff_A6;
+  *(char *)dp = (char)*sp;
   return;
 }
 
 
 /* 00019226 */
 
-void forth_rot(void)
+/* WARNING: Unknown calling convention */
+
+void forth_rot(long *sp)
 
 {
-  undefined4 uVar1;
-  undefined4 *unaff_A6;
+  long lVar1;
   
-  uVar1 = unaff_A6[2];
-  unaff_A6[2] = unaff_A6[1];
-  unaff_A6[1] = *unaff_A6;
-  *unaff_A6 = uVar1;
+  lVar1 = sp[2];
+  sp[2] = sp[1];
+  sp[1] = *sp;
+  *sp = lVar1;
   return;
 }
 
 
 /* 00019234 */
 
-void forth_minus_rot(void)
+/* WARNING: Unknown calling convention */
+
+void forth_minus_rot(long *sp)
 
 {
-  undefined4 uVar1;
-  undefined4 uVar2;
-  undefined4 *unaff_A6;
+  long lVar1;
+  long lVar2;
   
-  uVar2 = unaff_A6[1];
-  uVar1 = unaff_A6[2];
-  unaff_A6[2] = *unaff_A6;
-  unaff_A6[1] = uVar1;
-  *unaff_A6 = uVar2;
+  lVar2 = sp[1];
+  lVar1 = sp[2];
+  sp[2] = *sp;
+  sp[1] = lVar1;
+  *sp = lVar2;
   return;
 }
 
 
 /* 00019242 */
 
-void forth_allot(void)
+/* WARNING: Unknown calling convention */
+
+void forth_allot(long *sp,void *dp)
 
 {
   return;
@@ -11920,81 +11953,86 @@ void forth_allot(void)
 
 /* 00019246 */
 
-void forth_swap(void)
+/* WARNING: Unknown calling convention */
+
+void forth_swap(long *sp)
 
 {
-  undefined4 uVar1;
-  undefined4 *unaff_A6;
+  long lVar1;
   
-  uVar1 = *unaff_A6;
-  *unaff_A6 = unaff_A6[1];
-  unaff_A6[1] = uVar1;
+  lVar1 = *sp;
+  *sp = sp[1];
+  sp[1] = lVar1;
   return;
 }
 
 
 /* 00019252 */
 
-void forth_dup(void)
+/* WARNING: Unknown calling convention */
+
+void forth_dup(long *sp)
 
 {
-  undefined4 *unaff_A6;
-  
-  unaff_A6[-1] = *unaff_A6;
+  sp[-1] = *sp;
   return;
 }
 
 
 /* 00019256 */
 
-void forth_2dup(void)
+/* WARNING: Unknown calling convention */
+
+void forth_2dup(long *sp)
 
 {
-  undefined4 uVar1;
-  undefined4 *unaff_A6;
+  long lVar1;
   
-  uVar1 = *unaff_A6;
-  *unaff_A6 = uVar1;
-  unaff_A6[-1] = unaff_A6[1];
-  unaff_A6[-2] = uVar1;
+  lVar1 = *sp;
+  *sp = lVar1;
+  sp[-1] = sp[1];
+  sp[-2] = lVar1;
   return;
 }
 
 
 /* 00019262 */
 
-void forth_2swap(void)
+/* WARNING: Unknown calling convention */
+
+void forth_2swap(long *sp)
 
 {
-  undefined4 uVar1;
-  undefined4 uVar2;
-  undefined4 *unaff_A6;
+  long lVar1;
+  long lVar2;
   
-  uVar2 = unaff_A6[2];
-  uVar1 = unaff_A6[3];
-  unaff_A6[3] = unaff_A6[1];
-  unaff_A6[2] = *unaff_A6;
-  unaff_A6[1] = uVar1;
-  *unaff_A6 = uVar2;
+  lVar2 = sp[2];
+  lVar1 = sp[3];
+  sp[3] = sp[1];
+  sp[2] = *sp;
+  sp[1] = lVar1;
+  *sp = lVar2;
   return;
 }
 
 
 /* 00019274 */
 
-void forth_paren(void)
+/* WARNING: Unknown calling convention */
+
+void forth_paren(char *input)
 
 {
   char cVar1;
-  char *unaff_A3;
+  forth_user_end unaff_A5;
   
   do {
     while( true ) {
-      cVar1 = *unaff_A3;
+      cVar1 = *input;
       if (cVar1 != '\0') break;
-      FUN_0001912a();
+      FUN_0001912a(unaff_A5,input);
     }
-    unaff_A3 = unaff_A3 + 1;
+    input = input + 1;
   } while (cVar1 != ')');
   return;
 }
@@ -12020,86 +12058,87 @@ void forth_halt(void)
 
 /* 0001929c */
 
-void forth_false(void)
+/* WARNING: Unknown calling convention */
+
+void forth_false(long *sp)
 
 {
-  int unaff_A6;
-  
-  *(undefined4 *)(unaff_A6 + -4) = 0;
+  sp[-1] = 0;
   return;
 }
 
 
 /* 000192a0 */
 
-void forth_true(void)
+/* WARNING: Unknown calling convention */
+
+void forth_true(long *sp)
 
 {
-  int unaff_A6;
-  
-  *(undefined4 *)(unaff_A6 + -4) = 0xffffffff;
+  sp[-1] = -1;
   return;
 }
 
 
 /* 000192a8 */
 
-void forth_or(void)
+/* WARNING: Unknown calling convention */
+
+void forth_or(long *sp)
 
 {
-  uint *unaff_A6;
-  
-  unaff_A6[1] = *unaff_A6 | unaff_A6[1];
+  sp[1] = *sp | sp[1];
   return;
 }
 
 
 /* 000192ae */
 
-void forth_and(void)
+/* WARNING: Unknown calling convention */
+
+void forth_and(long *sp)
 
 {
-  uint *unaff_A6;
-  
-  unaff_A6[1] = *unaff_A6 & unaff_A6[1];
+  sp[1] = *sp & sp[1];
   return;
 }
 
 
 /* 000192b4 */
 
-void forth_not(void)
+/* WARNING: Unknown calling convention */
+
+void forth_not(long *sp)
 
 {
-  uint *unaff_A6;
-  
-  *unaff_A6 = ~*unaff_A6;
+  *sp = ~*sp;
   return;
 }
 
 
 /* 000192b8 */
 
-void forth_xor(void)
+/* WARNING: Unknown calling convention */
+
+void forth_xor(long *sp)
 
 {
-  uint *unaff_A6;
-  
-  unaff_A6[1] = *unaff_A6 ^ unaff_A6[1];
+  sp[1] = *sp ^ sp[1];
   return;
 }
 
 
 /* 000192be */
 
-void forth_equal(void)
+/* WARNING: Unknown calling convention */
+
+void forth_equal(long *sp)
 
 {
-  int *unaff_A6;
   int *piVar1;
   
-  piVar1 = unaff_A6 + 1;
-  if (*unaff_A6 != *piVar1) {
+  piVar1 = sp + 1;
+  if (*sp != *piVar1) {
     *piVar1 = 0;
     return;
   }
@@ -12110,14 +12149,15 @@ void forth_equal(void)
 
 /* 000192d0 */
 
-void forth_greater(void)
+/* WARNING: Unknown calling convention */
+
+void forth_greater(long *sp)
 
 {
-  int *unaff_A6;
   int *piVar1;
   
-  piVar1 = unaff_A6 + 1;
-  if (*piVar1 <= *unaff_A6) {
+  piVar1 = sp + 1;
+  if (*piVar1 <= *sp) {
     *piVar1 = 0;
     return;
   }
@@ -12128,14 +12168,15 @@ void forth_greater(void)
 
 /* 000192d8 */
 
-void forth_less(void)
+/* WARNING: Unknown calling convention */
+
+void forth_less(long *sp)
 
 {
-  int *unaff_A6;
   int *piVar1;
   
-  piVar1 = unaff_A6 + 1;
-  if (*unaff_A6 <= *piVar1) {
+  piVar1 = sp + 1;
+  if (*sp <= *piVar1) {
     *piVar1 = 0;
     return;
   }
@@ -12146,61 +12187,61 @@ void forth_less(void)
 
 /* 000192e0 */
 
-void forth_0_less(void)
+/* WARNING: Unknown calling convention */
+
+void forth_0_less(long *sp)
 
 {
-  int *unaff_A6;
-  
-  if (-1 < *unaff_A6) {
-    *unaff_A6 = 0;
+  if (-1 < *sp) {
+    *sp = 0;
     return;
   }
-  *unaff_A6 = -1;
+  *sp = -1;
   return;
 }
 
 
 /* 000192e6 */
 
-void forth_0_equal(void)
+/* WARNING: Unknown calling convention */
+
+void forth_0_equal(long *sp)
 
 {
-  int *unaff_A6;
-  
-  if (*unaff_A6 != 0) {
-    *unaff_A6 = 0;
+  if (*sp != 0) {
+    *sp = 0;
     return;
   }
-  *unaff_A6 = -1;
+  *sp = -1;
   return;
 }
 
 
 /* 000192ec */
 
-void forth_0_greater(void)
+/* WARNING: Unknown calling convention */
+
+void forth_0_greater(long *sp)
 
 {
-  int *unaff_A6;
-  
-  if ((*unaff_A6 != 0) && (-1 < *unaff_A6)) {
-    *unaff_A6 = -1;
+  if ((*sp != 0) && (-1 < *sp)) {
+    *sp = -1;
     return;
   }
-  *unaff_A6 = 0;
+  *sp = 0;
   return;
 }
 
 
 /* 000192f4 */
 
-void forth_query_dup(void)
+/* WARNING: Unknown calling convention */
+
+void forth_query_dup(long *sp)
 
 {
-  int *unaff_A6;
-  
-  if (*unaff_A6 != 0) {
-    unaff_A6[-1] = *unaff_A6;
+  if (*sp != 0) {
+    sp[-1] = *sp;
   }
   return;
 }
@@ -12208,18 +12249,19 @@ void forth_query_dup(void)
 
 /* 000192fc */
 
-void forth_cmove(void)
+/* WARNING: Unknown calling convention */
+
+void forth_cmove(long *sp)
 
 {
   uint uVar1;
   undefined1 *puVar3;
   undefined1 *puVar4;
-  int *unaff_A6;
   ushort uVar2;
   
-  uVar1 = *unaff_A6 - 1;
-  puVar3 = (undefined1 *)unaff_A6[1];
-  puVar4 = (undefined1 *)unaff_A6[2];
+  uVar1 = *sp - 1;
+  puVar3 = (undefined1 *)sp[1];
+  puVar4 = (undefined1 *)sp[2];
   if (-1 < (int)uVar1) {
     do {
       *puVar3 = *puVar4;
@@ -12235,19 +12277,20 @@ void forth_cmove(void)
 
 /* 0001930e */
 
-void forth_cmove_greater(void)
+/* WARNING: Unknown calling convention */
+
+void forth_cmove_greater(long *sp)
 
 {
   int iVar1;
   uint uVar2;
   undefined1 *puVar4;
   undefined1 *puVar5;
-  int *unaff_A6;
   ushort uVar3;
   
-  iVar1 = *unaff_A6;
-  puVar4 = (undefined1 *)(iVar1 + unaff_A6[1]);
-  puVar5 = (undefined1 *)(iVar1 + unaff_A6[2]);
+  iVar1 = *sp;
+  puVar4 = (undefined1 *)(iVar1 + sp[1]);
+  puVar5 = (undefined1 *)(iVar1 + sp[2]);
   uVar2 = iVar1 - 1;
   if (-1 < (int)uVar2) {
     do {
@@ -12265,7 +12308,9 @@ void forth_cmove_greater(void)
 
 /* 00019324 */
 
-void forth_2drop(void)
+/* WARNING: Unknown calling convention */
+
+void forth_2drop(long *sp)
 
 {
   return;
@@ -12274,7 +12319,9 @@ void forth_2drop(void)
 
 /* 00019328 */
 
-void forth_drop(void)
+/* WARNING: Unknown calling convention */
+
+void forth_drop(long *sp)
 
 {
   return;
@@ -12283,43 +12330,43 @@ void forth_drop(void)
 
 /* 0001932c */
 
-void forth_depth(void)
+/* WARNING: Unknown calling convention */
+
+void forth_depth(forth_user_end user,long *sp)
 
 {
-  int unaff_A5;
-  int unaff_A6;
-  
-  *(int *)(unaff_A6 + -4) = *(int *)(unaff_A5 + -8) - unaff_A6 >> 2;
+  sp[-1] = (int)ADJ(user)->stack_base - (int)sp >> 2;
   return;
 }
 
 
 /* 00019338 */
 
-undefined2 FUN_00019338(void)
+/* WARNING: Unknown calling convention */
+
+undefined2 FUN_00019338(void *dp)
 
 {
   short sVar1;
   undefined2 in_D0w;
   short *in_A0;
   short *psVar2;
-  short *unaff_A4;
   short *psVar3;
   
   while( true ) {
     do {
-      psVar3 = unaff_A4;
+      psVar3 = dp;
       psVar2 = in_A0;
       sVar1 = *psVar2;
       *psVar3 = sVar1;
       in_A0 = psVar2 + 1;
-      unaff_A4 = psVar3 + 1;
+      dp = psVar3 + 1;
     } while (sVar1 != 0);
     sVar1 = psVar2[1];
     if (sVar1 == 0) break;
     psVar3[1] = sVar1;
     in_A0 = psVar2 + 2;
-    unaff_A4 = psVar3 + 2;
+    dp = psVar3 + 2;
   }
   return in_D0w;
 }
@@ -12327,41 +12374,49 @@ undefined2 FUN_00019338(void)
 
 /* 0001934e */
 
-undefined4 FUN_0001934e(void)
+/* WARNING: Unknown calling convention */
+
+undefined4 FUN_0001934e(long *sp,void *dp)
 
 {
   undefined4 in_D0;
-  int unaff_A4;
-  undefined4 *unaff_A6;
   
-  *(short *)(unaff_A4 + -2) = ((short)*unaff_A6 - (short)unaff_A4) + 2;
+  *(short *)((int)dp + -2) = ((short)*sp - (short)dp) + 2;
   return in_D0;
 }
 
 
 /* 00019378 */
 
-void FUN_00019378(void)
+/* WARNING: Unknown calling convention */
+
+void FUN_00019378(long *sp)
 
 {
-  int iVar1;
+  void *pvVar1;
+  long *sp_00;
+  char *pcVar2;
   int in_D0;
-  int unaff_A5;
-  int *unaff_A6;
+  char *s;
+  void *unaff_A4;
+  forth_user_end unaff_A5;
   
-  if (in_D0 != *unaff_A6) {
-    FUN_00019150();
-    FUN_00019150();
-    FUN_00019150();
-    iVar1 = *(int *)(unaff_A5 + -4);
-    **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-    if (*(short *)(unaff_A5 + -10) != 0) {
-      *(undefined4 *)(iVar1 + -4) = 0x18eee;
-      FUN_0001938e();
+  if (in_D0 != *sp) {
+    forth_print_string("ERROR: Mismatched ",unaff_A5);
+    forth_print_string(s,unaff_A5);
+    forth_print_string("\r\n",unaff_A5);
+    pvVar1 = ADJ(unaff_A5)->return_stack_base;
+    sp_00 = ADJ(unaff_A5)->stack_base;
+    pcVar2 = ADJ(unaff_A5)->tib;
+    pcVar2[0] = '\0';
+    pcVar2[1] = '\0';
+    if (ADJ(unaff_A5)->state != 0) {
+      *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+      FUN_0001938e(unaff_A5,unaff_A4);
     }
-    *(undefined2 *)(unaff_A5 + -10) = 0;
-    *(undefined4 *)(unaff_A5 + -0xe) = 10;
-    forth_interpret();
+    ADJ(unaff_A5)->state = 0;
+    ADJ(unaff_A5)->base = 10;
+    forth_interpret(unaff_A5,sp_00,unaff_A4);
     return;
   }
   return;
@@ -12370,45 +12425,43 @@ void FUN_00019378(void)
 
 /* 0001938e */
 
-void FUN_0001938e(void)
+/* WARNING: Unknown calling convention */
+
+void FUN_0001938e(forth_user_end user,void *dp)
 
 {
-  int unaff_A5;
-  
-  *(undefined4 *)(unaff_A5 + -0x16) = **(undefined4 **)(unaff_A5 + -0x16);
+  ADJ(user)->latest = *(void **)ADJ(user)->latest;
   return;
 }
 
 
 /* 0001943e */
 
-void forth_do(void)
+/* WARNING: Unknown calling convention */
+
+void forth_do(long *sp,void *dp)
 
 {
-  undefined4 unaff_A4;
-  int unaff_A6;
-  
-  FUN_00019338();
-  *(undefined4 *)(unaff_A6 + -4) = unaff_A4;
-  *(undefined4 *)(unaff_A6 + -8) = unaff_A4;
-  *(undefined **)(unaff_A6 + -0xc) = &UNK_0001942d;
+  FUN_00019338(dp);
+  sp[-1] = (long)dp;
+  sp[-2] = (long)dp;
+  sp[-3] = (long)&UNK_0001942d;
   return;
 }
 
 
 /* 00019454 */
 
-void forth_query_do(void)
+/* WARNING: Unknown calling convention */
+
+void forth_query_do(long *sp,void *dp)
 
 {
-  undefined4 unaff_A4;
-  int unaff_A6;
-  
-  FUN_00019338();
-  *(undefined4 *)(unaff_A6 + -4) = unaff_A4;
-  FUN_00019338();
-  *(undefined4 *)(unaff_A6 + -8) = unaff_A4;
-  *(undefined **)(unaff_A6 + -0xc) = &UNK_0001942d;
+  FUN_00019338(dp);
+  sp[-1] = (long)dp;
+  FUN_00019338(dp);
+  sp[-2] = (long)dp;
+  sp[-3] = (long)&UNK_0001942d;
   return;
 }
 
@@ -12418,14 +12471,15 @@ void forth_query_do(void)
 void forth_plus_loop(void)
 
 {
-  int *unaff_A6;
+  void *unaff_A4;
+  long *unaff_A6;
   undefined1 uVar1;
   
-  FUN_00019378();
-  FUN_00019338();
+  FUN_00019378(unaff_A6);
+  FUN_00019338(unaff_A4);
   uVar1 = *unaff_A6 == unaff_A6[1];
-  FUN_0001934e();
-  FUN_00019338();
+  FUN_0001934e(unaff_A6,unaff_A4);
+  FUN_00019338(unaff_A4);
   if (!(bool)uVar1) {
     func_0x00019360();
     return;
@@ -12436,17 +12490,19 @@ void forth_plus_loop(void)
 
 /* 000194a4 */
 
-void forth_loop(void)
+/* WARNING: Unknown calling convention */
+
+void forth_loop(long *sp)
 
 {
-  int *unaff_A6;
+  void *unaff_A4;
   undefined1 uVar1;
   
-  FUN_00019378();
-  FUN_00019338();
-  uVar1 = *unaff_A6 == unaff_A6[1];
-  FUN_0001934e();
-  FUN_00019338();
+  FUN_00019378(sp);
+  FUN_00019338(unaff_A4);
+  uVar1 = *sp == sp[1];
+  FUN_0001934e(sp,unaff_A4);
+  FUN_00019338(unaff_A4);
   if (!(bool)uVar1) {
     func_0x00019360();
     return;
@@ -12457,32 +12513,30 @@ void forth_loop(void)
 
 /* 000194e6 */
 
-void forth_if(void)
+/* WARNING: Unknown calling convention */
+
+void forth_if(long *sp,void *dp)
 
 {
-  undefined4 unaff_A4;
-  int unaff_A6;
-  
-  FUN_00019338();
-  *(undefined4 *)(unaff_A6 + -4) = unaff_A4;
-  *(undefined **)(unaff_A6 + -8) = &UNK_000194de;
+  FUN_00019338(dp);
+  sp[-1] = (long)dp;
+  sp[-2] = (long)&UNK_000194de;
   return;
 }
 
 
 /* 00019504 */
 
-void forth_else(void)
+/* WARNING: Unknown calling convention */
+
+void forth_else(long *sp,void *dp)
 
 {
-  undefined4 unaff_A4;
-  int unaff_A6;
-  
-  FUN_00019378();
-  FUN_00019338();
+  FUN_00019378(sp);
+  FUN_00019338(dp);
   func_0x00019360();
-  *(undefined4 *)(unaff_A6 + -4) = unaff_A4;
-  *(undefined **)(unaff_A6 + -8) = &UNK_000194de;
+  sp[-1] = (long)dp;
+  sp[-2] = (long)&UNK_000194de;
   return;
 }
 
@@ -12492,7 +12546,9 @@ void forth_else(void)
 void forth_endif(void)
 
 {
-  FUN_00019378();
+  long *unaff_A6;
+  
+  FUN_00019378(unaff_A6);
   func_0x00019360();
   return;
 }
@@ -12500,30 +12556,28 @@ void forth_endif(void)
 
 /* 00019560 */
 
-void forth_begin(void)
+/* WARNING: Unknown calling convention */
+
+void forth_begin(long *sp,void *dp)
 
 {
-  undefined4 unaff_A4;
-  int unaff_A6;
-  
-  *(undefined4 *)(unaff_A6 + -4) = unaff_A4;
-  *(undefined **)(unaff_A6 + -8) = &UNK_00019556;
+  sp[-1] = (long)dp;
+  sp[-2] = (long)&UNK_00019556;
   return;
 }
 
 
 /* 00019574 */
 
-void forth_while(void)
+/* WARNING: Unknown calling convention */
+
+void forth_while(long *sp,void *dp)
 
 {
-  undefined4 unaff_A4;
-  int unaff_A6;
-  
-  FUN_00019378();
-  FUN_00019338();
-  *(undefined4 *)(unaff_A6 + -4) = unaff_A4;
-  *(undefined **)(unaff_A6 + -8) = &UNK_0001956a;
+  FUN_00019378(sp);
+  FUN_00019338(dp);
+  sp[-1] = (long)dp;
+  sp[-2] = (long)&UNK_0001956a;
   return;
 }
 
@@ -12533,10 +12587,13 @@ void forth_while(void)
 void forth_repeat(void)
 
 {
-  FUN_00019378();
-  FUN_00019338();
-  forth_swap();
-  FUN_0001934e();
+  void *unaff_A4;
+  long *unaff_A6;
+  
+  FUN_00019378(unaff_A6);
+  FUN_00019338(unaff_A4);
+  forth_swap(unaff_A6);
+  FUN_0001934e(unaff_A6,unaff_A4);
   func_0x00019360();
   return;
 }
@@ -12547,9 +12604,12 @@ void forth_repeat(void)
 void forth_again(void)
 
 {
-  FUN_00019378();
-  FUN_00019338();
-  FUN_0001934e();
+  void *unaff_A4;
+  long *unaff_A6;
+  
+  FUN_00019378(unaff_A6);
+  FUN_00019338(unaff_A4);
+  FUN_0001934e(unaff_A6,unaff_A4);
   return;
 }
 
@@ -12559,9 +12619,12 @@ void forth_again(void)
 void forth_until(void)
 
 {
-  FUN_00019378();
-  FUN_00019338();
-  FUN_0001934e();
+  void *unaff_A4;
+  long *unaff_A6;
+  
+  FUN_00019378(unaff_A6);
+  FUN_00019338(unaff_A4);
+  FUN_0001934e(unaff_A6,unaff_A4);
   return;
 }
 
@@ -12577,167 +12640,175 @@ void forth_leave(void)
 
 /* 00019626 */
 
-void forth_k(void)
+/* WARNING: Unknown calling convention */
+
+void forth_k(long *sp)
 
 {
-  int unaff_A6;
-  undefined4 in_stack_00000014;
+  long in_stack_00000014;
   
-  *(undefined4 *)(unaff_A6 + -4) = in_stack_00000014;
+  sp[-1] = in_stack_00000014;
   return;
 }
 
 
 /* 0001962c */
 
-void forth_j(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+/* WARNING: Unknown calling convention */
+
+void forth_j(long *sp)
 
 {
-  int unaff_A6;
+  long in_stack_0000000c;
   
-  *(undefined4 *)(unaff_A6 + -4) = param_3;
+  sp[-1] = in_stack_0000000c;
   return;
 }
 
 
 /* 00019632 */
 
-void forth_i(undefined4 param_1)
+/* WARNING: Unknown calling convention */
+
+void forth_i(long *sp)
 
 {
-  int unaff_A6;
+  long in_stack_00000004;
   
-  *(undefined4 *)(unaff_A6 + -4) = param_1;
+  sp[-1] = in_stack_00000004;
   return;
 }
 
 
 /* 00019638 */
 
-void forth_colon(void)
+/* WARNING: Unknown calling convention */
+
+void forth_colon(forth_user_end user,long *sp,void *dp)
 
 {
-  undefined4 unaff_A4;
-  int unaff_A5;
-  int unaff_A6;
-  
-  *(undefined4 *)(unaff_A5 + -0x12) = unaff_A4;
-  *(undefined2 *)(unaff_A5 + -10) = 1;
+  ADJ(user)->here = dp;
+  ADJ(user)->state = 1;
   func_0x00019688();
-  *(code **)(unaff_A6 + -4) = forth_colon;
+  sp[-1] = (long)forth_colon;
   return;
 }
 
 
 /* 00019652 */
 
-void forth_semicolon(void)
+/* WARNING: Unknown calling convention */
+
+void forth_semicolon(forth_user_end user,long *sp,void *dp)
 
 {
-  int iVar1;
-  ushort *puVar2;
-  undefined2 *unaff_A4;
-  int unaff_A5;
-  int *unaff_A6;
+  void *pvVar1;
+  long *sp_00;
+  char *pcVar2;
+  ushort *puVar3;
+  char *s;
   
-  if ((code *)*unaff_A6 != forth_colon) {
-    FUN_00019150();
-    FUN_00019150();
-    FUN_00019150();
-    iVar1 = *(int *)(unaff_A5 + -4);
-    **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-    if (*(short *)(unaff_A5 + -10) != 0) {
-      *(undefined4 *)(iVar1 + -4) = 0x18eee;
-      FUN_0001938e();
+  if ((code *)*sp != forth_colon) {
+    forth_print_string("ERROR: Mismatched ",user);
+    forth_print_string(s,user);
+    forth_print_string("\r\n",user);
+    pvVar1 = ADJ(user)->return_stack_base;
+    sp_00 = ADJ(user)->stack_base;
+    pcVar2 = ADJ(user)->tib;
+    pcVar2[0] = '\0';
+    pcVar2[1] = '\0';
+    if (ADJ(user)->state != 0) {
+      *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+      FUN_0001938e(user,dp);
     }
-    *(undefined2 *)(unaff_A5 + -10) = 0;
-    *(undefined4 *)(unaff_A5 + -0xe) = 10;
-    forth_interpret();
+    ADJ(user)->state = 0;
+    ADJ(user)->base = 10;
+    forth_interpret(user,sp_00,dp);
     return;
   }
-  *(undefined2 *)(unaff_A5 + -10) = 0;
-  puVar2 = (ushort *)(*(int *)(unaff_A5 + -0x16) + 10);
-  *puVar2 = *puVar2 & 0xfffd;
-  FUN_00019018();
-  *unaff_A4 = 0x4e75;
-  *(undefined2 **)(unaff_A5 + -0x12) = unaff_A4 + 1;
+  ADJ(user)->state = 0;
+  puVar3 = (ushort *)((int)ADJ(user)->latest + 10);
+  *puVar3 = *puVar3 & 0xfffd;
+  FUN_00019018(dp);
+  *(undefined2 *)dp = 0x4e75;
+  ADJ(user)->here = (void *)((int)dp + 2);
   return;
 }
 
 
 /* 0001968c */
 
-void FUN_0001968c(void)
+/* WARNING: Unknown calling convention */
+
+void FUN_0001968c(forth_user_end user,void *dp)
 
 {
-  undefined4 uVar1;
+  void *pvVar1;
   char cVar2;
   undefined4 unaff_D3;
   undefined4 *extraout_A1;
   char *pcVar3;
-  undefined4 *unaff_A4;
+  char *dp_00;
   char *pcVar4;
-  int unaff_A5;
-  char *pcVar5;
   
-  FUN_00019018();
-  uVar1 = *(undefined4 *)(unaff_A5 + -0x16);
-  *(undefined4 **)(unaff_A5 + -0x16) = unaff_A4;
-  *unaff_A4 = uVar1;
-  unaff_A4[1] = 0;
-  unaff_A4[2] = unaff_D3;
-  pcVar3 = *(char **)(unaff_A5 + -0x22);
-  pcVar5 = (char *)(unaff_A4 + 3);
+  FUN_00019018(dp);
+  pvVar1 = ADJ(user)->latest;
+  ADJ(user)->latest = dp;
+  *(void **)dp = pvVar1;
+  *(undefined4 *)((int)dp + 4) = 0;
+  *(undefined4 *)((int)dp + 8) = unaff_D3;
+  pcVar3 = ADJ(user)->pad;
+  pcVar4 = (char *)((int)dp + 0xc);
   do {
     cVar2 = *pcVar3;
-    pcVar4 = pcVar5 + 1;
-    *pcVar5 = cVar2;
+    dp_00 = pcVar4 + 1;
+    *pcVar4 = cVar2;
     pcVar3 = pcVar3 + 1;
-    pcVar5 = pcVar4;
+    pcVar4 = dp_00;
   } while (cVar2 != '\0');
-  FUN_00019018();
-  *extraout_A1 = pcVar4;
+  FUN_00019018(dp_00);
+  *extraout_A1 = dp_00;
   return;
 }
 
 
 /* 000196b8 */
 
-void forth_variable(void)
+/* WARNING: Unknown calling convention */
+
+void forth_variable(forth_user_end user,void *dp)
 
 {
-  undefined2 *unaff_A4;
   int *piVar1;
-  int unaff_A5;
   
   func_0x00019688();
-  piVar1 = (int *)(unaff_A4 + 1);
-  *unaff_A4 = 0x2d3c;
+  piVar1 = (int *)((int)dp + 2);
+  *(undefined2 *)dp = 0x2d3c;
   *piVar1 = (int)piVar1;
   *piVar1 = *piVar1 + 6;
-  unaff_A4[3] = 0x4e75;
-  *(undefined4 *)(unaff_A4 + 4) = 0;
-  *(undefined2 **)(unaff_A5 + -0x12) = unaff_A4 + 6;
+  *(undefined2 *)((int)dp + 6) = 0x4e75;
+  *(undefined4 *)((int)dp + 8) = 0;
+  ADJ(user)->here = (void *)((int)dp + 0xc);
   return;
 }
 
 
 /* 000196d8 */
 
-void forth_create(void)
+/* WARNING: Unknown calling convention */
+
+void forth_create(forth_user_end user,void *dp)
 
 {
-  undefined2 *unaff_A4;
   int *piVar1;
-  int unaff_A5;
   
   func_0x00019688();
-  piVar1 = (int *)(unaff_A4 + 1);
-  *unaff_A4 = 0x2d3c;
+  piVar1 = (int *)((int)dp + 2);
+  *(undefined2 *)dp = 0x2d3c;
   *piVar1 = (int)piVar1;
   *piVar1 = *piVar1 + 6;
-  unaff_A4[3] = 0x4e75;
-  *(undefined2 **)(unaff_A5 + -0x12) = unaff_A4 + 4;
+  *(undefined2 *)((int)dp + 6) = 0x4e75;
+  ADJ(user)->here = (void *)((int)dp + 8);
   return;
 }
 
@@ -12762,38 +12833,36 @@ void forth_constant(void)
 
 /* 00019700 */
 
-void FUN_00019700(void)
+/* WARNING: Unknown calling convention */
+
+void FUN_00019700(forth_user_end user,long *sp,void *dp)
 
 {
-  undefined2 *unaff_A4;
-  int unaff_A5;
-  undefined4 *unaff_A6;
-  
-  *unaff_A4 = 0x2d3c;
-  *(undefined4 *)(unaff_A4 + 1) = *unaff_A6;
-  unaff_A4[3] = 0x4e75;
-  *(undefined2 **)(unaff_A5 + -0x12) = unaff_A4 + 4;
+  *(undefined2 *)dp = 0x2d3c;
+  *(long *)((int)dp + 2) = *sp;
+  *(undefined2 *)((int)dp + 6) = 0x4e75;
+  ADJ(user)->here = (void *)((int)dp + 8);
   return;
 }
 
 
 /* 00019710 */
 
-void forth_literal(void)
+/* WARNING: Unknown calling convention */
+
+void forth_literal(long *sp,void *dp)
 
 {
   int iVar1;
-  short *unaff_A4;
-  int *unaff_A6;
   
-  iVar1 = *unaff_A6;
+  iVar1 = *sp;
   if ((iVar1 < 0x80) && (-0x81 < iVar1)) {
-    *unaff_A4 = ((ushort)iVar1 & 0xff) + 0x7000;
-    unaff_A4[1] = 0x2d00;
+    *(ushort *)dp = ((ushort)iVar1 & 0xff) + 0x7000;
+    *(undefined2 *)((int)dp + 2) = 0x2d00;
   }
   else {
-    *unaff_A4 = 0x2d3c;
-    *(int *)(unaff_A4 + 1) = iVar1;
+    *(undefined2 *)dp = 0x2d3c;
+    *(int *)((int)dp + 2) = iVar1;
   }
   return;
 }
@@ -12801,169 +12870,207 @@ void forth_literal(void)
 
 /* 0001973a */
 
-void forth_mod(void)
+/* WARNING: Unknown calling convention */
+
+void forth_mod(long *sp)
 
 {
-  int iVar1;
-  int extraout_D1;
-  int unaff_A5;
-  int *unaff_A6;
+  void *pvVar1;
+  long *sp_00;
+  char *pcVar2;
+  long extraout_D1;
+  void *unaff_A4;
+  forth_user_end unaff_A5;
   
-  if (*unaff_A6 != 0) {
+  if (*sp != 0) {
     FUN_000197fa();
-    unaff_A6[1] = extraout_D1;
+    sp[1] = extraout_D1;
     return;
   }
-  FUN_00019150();
-  FUN_00019150();
-  iVar1 = *(int *)(unaff_A5 + -4);
-  **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-  if (*(short *)(unaff_A5 + -10) != 0) {
-    *(undefined4 *)(iVar1 + -4) = 0x18eee;
-    FUN_0001938e();
+  forth_print_string("divide by zero\r\n",unaff_A5);
+  forth_print_string("\r\n",unaff_A5);
+  pvVar1 = ADJ(unaff_A5)->return_stack_base;
+  sp_00 = ADJ(unaff_A5)->stack_base;
+  pcVar2 = ADJ(unaff_A5)->tib;
+  pcVar2[0] = '\0';
+  pcVar2[1] = '\0';
+  if (ADJ(unaff_A5)->state != 0) {
+    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    FUN_0001938e(unaff_A5,unaff_A4);
   }
-  *(undefined2 *)(unaff_A5 + -10) = 0;
-  *(undefined4 *)(unaff_A5 + -0xe) = 10;
-  forth_interpret();
+  ADJ(unaff_A5)->state = 0;
+  ADJ(unaff_A5)->base = 10;
+  forth_interpret(unaff_A5,sp_00,unaff_A4);
   return;
 }
 
 
 /* 0001974a */
 
-void forth_slash_mod(void)
+/* WARNING: Unknown calling convention */
+
+void forth_slash_mod(long *sp)
 
 {
-  int iVar1;
-  int unaff_A5;
-  int *unaff_A6;
-  undefined8 uVar2;
+  void *pvVar1;
+  long *sp_00;
+  char *pcVar2;
+  void *unaff_A4;
+  forth_user_end unaff_A5;
+  undefined8 uVar3;
   
-  if (*unaff_A6 != 0) {
-    uVar2 = FUN_000197fa();
-    *(undefined8 *)unaff_A6 = uVar2;
+  if (*sp != 0) {
+    uVar3 = FUN_000197fa();
+    *(undefined8 *)sp = uVar3;
     return;
   }
-  FUN_00019150();
-  FUN_00019150();
-  iVar1 = *(int *)(unaff_A5 + -4);
-  **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-  if (*(short *)(unaff_A5 + -10) != 0) {
-    *(undefined4 *)(iVar1 + -4) = 0x18eee;
-    FUN_0001938e();
+  forth_print_string("divide by zero\r\n",unaff_A5);
+  forth_print_string("\r\n",unaff_A5);
+  pvVar1 = ADJ(unaff_A5)->return_stack_base;
+  sp_00 = ADJ(unaff_A5)->stack_base;
+  pcVar2 = ADJ(unaff_A5)->tib;
+  pcVar2[0] = '\0';
+  pcVar2[1] = '\0';
+  if (ADJ(unaff_A5)->state != 0) {
+    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    FUN_0001938e(unaff_A5,unaff_A4);
   }
-  *(undefined2 *)(unaff_A5 + -10) = 0;
-  *(undefined4 *)(unaff_A5 + -0xe) = 10;
-  forth_interpret();
+  ADJ(unaff_A5)->state = 0;
+  ADJ(unaff_A5)->base = 10;
+  forth_interpret(unaff_A5,sp_00,unaff_A4);
   return;
 }
 
 
 /* 0001975c */
 
-void forth_star_slash_mod(void)
+/* WARNING: Unknown calling convention */
+
+void forth_star_slash_mod(long *sp)
 
 {
-  int iVar1;
-  int unaff_A5;
-  int *unaff_A6;
-  undefined8 uVar2;
+  void *pvVar1;
+  long *sp_00;
+  char *pcVar2;
+  void *unaff_A4;
+  forth_user_end unaff_A5;
+  undefined8 uVar3;
   
-  if (*unaff_A6 != 0) {
-    forth_star();
-    uVar2 = FUN_000197fa();
-    *(undefined8 *)unaff_A6 = uVar2;
+  if (*sp != 0) {
+    forth_star(sp + 1);
+    uVar3 = FUN_000197fa();
+    *(undefined8 *)sp = uVar3;
     return;
   }
-  FUN_00019150(0);
-  FUN_00019150();
-  iVar1 = *(int *)(unaff_A5 + -4);
-  **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-  if (*(short *)(unaff_A5 + -10) != 0) {
-    *(undefined4 *)(iVar1 + -4) = 0x18eee;
-    FUN_0001938e();
+  forth_print_string("divide by zero\r\n",unaff_A5);
+  forth_print_string("\r\n",unaff_A5);
+  pvVar1 = ADJ(unaff_A5)->return_stack_base;
+  sp_00 = ADJ(unaff_A5)->stack_base;
+  pcVar2 = ADJ(unaff_A5)->tib;
+  pcVar2[0] = '\0';
+  pcVar2[1] = '\0';
+  if (ADJ(unaff_A5)->state != 0) {
+    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    FUN_0001938e(unaff_A5,unaff_A4);
   }
-  *(undefined2 *)(unaff_A5 + -10) = 0;
-  *(undefined4 *)(unaff_A5 + -0xe) = 10;
-  forth_interpret();
+  ADJ(unaff_A5)->state = 0;
+  ADJ(unaff_A5)->base = 10;
+  forth_interpret(unaff_A5,sp_00,unaff_A4);
   return;
 }
 
 
 /* 00019774 */
 
-void forth_star_slash(void)
+/* WARNING: Unknown calling convention */
+
+void forth_star_slash(long *sp)
 
 {
-  int iVar1;
-  int unaff_A5;
-  int *unaff_A6;
+  void *pvVar1;
+  long *sp_00;
+  char *pcVar2;
+  long lVar3;
+  void *unaff_A4;
+  forth_user_end unaff_A5;
   
-  if (*unaff_A6 != 0) {
-    forth_star();
-    iVar1 = FUN_000197fa();
-    unaff_A6[1] = iVar1;
+  if (*sp != 0) {
+    forth_star(sp + 1);
+    lVar3 = FUN_000197fa();
+    sp[1] = lVar3;
     return;
   }
-  FUN_00019150(0);
-  FUN_00019150();
-  iVar1 = *(int *)(unaff_A5 + -4);
-  **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-  if (*(short *)(unaff_A5 + -10) != 0) {
-    *(undefined4 *)(iVar1 + -4) = 0x18eee;
-    FUN_0001938e();
+  forth_print_string("divide by zero\r\n",unaff_A5);
+  forth_print_string("\r\n",unaff_A5);
+  pvVar1 = ADJ(unaff_A5)->return_stack_base;
+  sp_00 = ADJ(unaff_A5)->stack_base;
+  pcVar2 = ADJ(unaff_A5)->tib;
+  pcVar2[0] = '\0';
+  pcVar2[1] = '\0';
+  if (ADJ(unaff_A5)->state != 0) {
+    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    FUN_0001938e(unaff_A5,unaff_A4);
   }
-  *(undefined2 *)(unaff_A5 + -10) = 0;
-  *(undefined4 *)(unaff_A5 + -0xe) = 10;
-  forth_interpret();
+  ADJ(unaff_A5)->state = 0;
+  ADJ(unaff_A5)->base = 10;
+  forth_interpret(unaff_A5,sp_00,unaff_A4);
   return;
 }
 
 
 /* 0001978a */
 
-void forth_slash(void)
+/* WARNING: Unknown calling convention */
+
+void forth_slash(long *sp)
 
 {
-  int iVar1;
-  int unaff_A5;
-  int *unaff_A6;
+  void *pvVar1;
+  long *sp_00;
+  char *pcVar2;
+  long lVar3;
+  void *unaff_A4;
+  forth_user_end unaff_A5;
   
-  if (*unaff_A6 != 0) {
-    iVar1 = FUN_000197fa();
-    unaff_A6[1] = iVar1;
+  if (*sp != 0) {
+    lVar3 = FUN_000197fa();
+    sp[1] = lVar3;
     return;
   }
-  FUN_00019150();
-  FUN_00019150();
-  iVar1 = *(int *)(unaff_A5 + -4);
-  **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-  if (*(short *)(unaff_A5 + -10) != 0) {
-    *(undefined4 *)(iVar1 + -4) = 0x18eee;
-    FUN_0001938e();
+  forth_print_string("divide by zero\r\n",unaff_A5);
+  forth_print_string("\r\n",unaff_A5);
+  pvVar1 = ADJ(unaff_A5)->return_stack_base;
+  sp_00 = ADJ(unaff_A5)->stack_base;
+  pcVar2 = ADJ(unaff_A5)->tib;
+  pcVar2[0] = '\0';
+  pcVar2[1] = '\0';
+  if (ADJ(unaff_A5)->state != 0) {
+    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    FUN_0001938e(unaff_A5,unaff_A4);
   }
-  *(undefined2 *)(unaff_A5 + -10) = 0;
-  *(undefined4 *)(unaff_A5 + -0xe) = 10;
-  forth_interpret();
+  ADJ(unaff_A5)->state = 0;
+  ADJ(unaff_A5)->base = 10;
+  forth_interpret(unaff_A5,sp_00,unaff_A4);
   return;
 }
 
 
 /* 000197b4 */
 
-void forth_star(void)
+/* WARNING: Unknown calling convention */
+
+void forth_star(long *sp)
 
 {
   int extraout_D1;
   int iVar1;
   uint uVar2;
-  int *unaff_A6;
   
   uVar2 = 0;
-  if (*unaff_A6 < 0) {
+  if (*sp < 0) {
     uVar2 = 0xffffffff;
   }
-  if (unaff_A6[1] < 0) {
+  if (sp[1] < 0) {
     uVar2 = ~uVar2;
   }
   FUN_000197da();
@@ -12971,7 +13078,7 @@ void forth_star(void)
   if ((int)uVar2 < 0) {
     iVar1 = -extraout_D1;
   }
-  unaff_A6[1] = iVar1;
+  sp[1] = iVar1;
   return;
 }
 
@@ -13059,149 +13166,149 @@ undefined8 FUN_0001984c(void)
 
 /* 00019874 */
 
-void forth_minus(void)
+/* WARNING: Unknown calling convention */
+
+void forth_minus(long *sp)
 
 {
-  int *unaff_A6;
-  
-  unaff_A6[1] = unaff_A6[1] - *unaff_A6;
+  sp[1] = sp[1] - *sp;
   return;
 }
 
 
 /* 0001987a */
 
-void forth_plus(void)
+/* WARNING: Unknown calling convention */
+
+void forth_plus(long *sp)
 
 {
-  int *unaff_A6;
-  
-  unaff_A6[1] = *unaff_A6 + unaff_A6[1];
+  sp[1] = *sp + sp[1];
   return;
 }
 
 
 /* 00019880 */
 
-void forth_plus_store(void)
+/* WARNING: Unknown calling convention */
+
+void forth_plus_store(long *sp)
 
 {
-  undefined4 *unaff_A6;
-  
-  *(int *)*unaff_A6 = unaff_A6[1] + *(int *)*unaff_A6;
+  *(int *)*sp = sp[1] + *(int *)*sp;
   return;
 }
 
 
 /* 00019888 */
 
-void forth_1_plus(void)
+/* WARNING: Unknown calling convention */
+
+void forth_1_plus(long *sp)
 
 {
-  int *unaff_A6;
-  
-  *unaff_A6 = *unaff_A6 + 1;
+  *sp = *sp + 1;
   return;
 }
 
 
 /* 0001988c */
 
-void forth_1_minus(void)
+/* WARNING: Unknown calling convention */
+
+void forth_1_minus(long *sp)
 
 {
-  int *unaff_A6;
-  
-  *unaff_A6 = *unaff_A6 + -1;
+  *sp = *sp + -1;
   return;
 }
 
 
 /* 00019890 */
 
-void forth_2_plus(void)
+/* WARNING: Unknown calling convention */
+
+void forth_2_plus(long *sp)
 
 {
-  int *unaff_A6;
-  
-  *unaff_A6 = *unaff_A6 + 2;
+  *sp = *sp + 2;
   return;
 }
 
 
 /* 00019894 */
 
-void forth_2_minus(void)
+/* WARNING: Unknown calling convention */
+
+void forth_2_minus(long *sp)
 
 {
-  int *unaff_A6;
-  
-  *unaff_A6 = *unaff_A6 + -2;
+  *sp = *sp + -2;
   return;
 }
 
 
 /* 00019898 */
 
-void forth_2_slash(void)
+/* WARNING: Unknown calling convention */
+
+void forth_2_slash(long *sp)
 
 {
-  int *unaff_A6;
-  
-  *unaff_A6 = *unaff_A6 >> 1;
+  *sp = *sp >> 1;
   return;
 }
 
 
 /* 000198a0 */
 
-void forth_2_star(void)
+/* WARNING: Unknown calling convention */
+
+void forth_2_star(long *sp)
 
 {
-  int *unaff_A6;
-  
-  *unaff_A6 = *unaff_A6 << 1;
+  *sp = *sp << 1;
   return;
 }
 
 
 /* 000198a8 */
 
-void forth_less_less(void)
+/* WARNING: Unknown calling convention */
+
+void forth_less_less(long *sp)
 
 {
-  uint *unaff_A6;
-  
-  unaff_A6[1] = unaff_A6[1] << (*unaff_A6 & 0x3f);
+  sp[1] = sp[1] << (*sp & 0x3fU);
   return;
 }
 
 
 /* 000198b2 */
 
-void forth_greater_greater(void)
+/* WARNING: Unknown calling convention */
+
+void forth_greater_greater(long *sp)
 
 {
-  uint *unaff_A6;
-  
-  unaff_A6[1] = (int)unaff_A6[1] >> (*unaff_A6 & 0x3f);
+  sp[1] = sp[1] >> (*sp & 0x3fU);
   return;
 }
 
 
 /* 000198bc */
 
-void forth_emit(void)
+/* WARNING: Unknown calling convention */
+
+void forth_emit(forth_user_end user,long *sp)
 
 {
-  undefined1 *puVar1;
-  int unaff_A5;
-  undefined4 *unaff_A6;
+  char *pcVar1;
   
-  puVar1 = *(undefined1 **)(unaff_A5 + -0x22);
-  *puVar1 = (char)*unaff_A6;
-  puVar1[1] = 0;
-  FUN_00019150();
+  pcVar1 = ADJ(user)->pad;
+  *pcVar1 = (char)*sp;
+  pcVar1[1] = '\0';
+  forth_print_string(ADJ(user)->pad,user);
   return;
 }
 
@@ -13211,41 +13318,41 @@ void forth_emit(void)
 void forth_space(void)
 
 {
-  undefined1 *puVar1;
-  int unaff_A5;
+  char *pcVar1;
+  forth_user_end unaff_A5;
   
-  puVar1 = *(undefined1 **)(unaff_A5 + -0x22);
-  *puVar1 = 0x20;
-  puVar1[1] = 0;
-  FUN_00019150();
+  pcVar1 = ADJ(unaff_A5)->pad;
+  *pcVar1 = ' ';
+  pcVar1[1] = '\0';
+  forth_print_string(ADJ(unaff_A5)->pad,unaff_A5);
   return;
 }
 
 
 /* 000198d4 */
 
-void forth_spaces(void)
+/* WARNING: Unknown calling convention */
+
+void forth_spaces(forth_user_end user,long *sp)
 
 {
   uint uVar1;
-  undefined1 *puVar3;
-  int unaff_A5;
-  int *unaff_A6;
+  char *pcVar3;
   ushort uVar2;
-  undefined1 *puVar4;
+  char *pcVar4;
   
-  uVar1 = *unaff_A6 - 1;
+  uVar1 = *sp - 1;
   if (-1 < (int)uVar1) {
-    puVar4 = *(undefined1 **)(unaff_A5 + -0x22);
+    pcVar4 = ADJ(user)->pad;
     do {
-      puVar3 = puVar4 + 1;
-      *puVar4 = 0x20;
+      pcVar3 = pcVar4 + 1;
+      *pcVar4 = ' ';
       uVar2 = (short)uVar1 - 1;
       uVar1 = (uint)uVar2;
-      puVar4 = puVar3;
+      pcVar4 = pcVar3;
     } while (uVar2 != 0xffff);
-    *puVar3 = 0;
-    FUN_00019150();
+    *pcVar3 = '\0';
+    forth_print_string(ADJ(user)->pad,user);
   }
   return;
 }
@@ -13256,50 +13363,53 @@ void forth_spaces(void)
 void forth_cr(void)
 
 {
-  FUN_00019150();
+  forth_user_end unaff_A5;
+  
+  forth_print_string("\r\n",unaff_A5);
   return;
 }
 
 
 /* 000198fe */
 
-void forth_dot_quote(void)
+/* WARNING: Unknown calling convention */
+
+void forth_dot_quote(forth_user_end user,void *dp,char *input)
 
 {
   char cVar1;
   char *pcVar2;
-  char *unaff_A3;
-  undefined2 *unaff_A4;
+  char *dp_00;
   char *pcVar3;
-  int unaff_A5;
   
-  pcVar2 = *(char **)(unaff_A5 + -0x22);
-  if (*unaff_A3 == ' ') {
-    unaff_A3 = unaff_A3 + 1;
+  pcVar2 = ADJ(user)->pad;
+  if (*input == ' ') {
+    input = input + 1;
   }
   while( true ) {
-    cVar1 = *unaff_A3;
+    cVar1 = *input;
     if ((cVar1 == '\0') || (cVar1 == '\"')) break;
     *pcVar2 = cVar1;
     pcVar2 = pcVar2 + 1;
-    unaff_A3 = unaff_A3 + 1;
+    input = input + 1;
   }
   *pcVar2 = '\0';
-  if (*(short *)(unaff_A5 + -10) == 0) {
-    FUN_00019150();
+  if (ADJ(user)->state == 0) {
+    forth_print_string(ADJ(user)->pad,user);
     return;
   }
-  pcVar2 = *(char **)(unaff_A5 + -0x22);
-  *unaff_A4 = 0x4eb9;
-  *(code **)(unaff_A4 + 1) = forth_paren_dot_quote_close_paren;
-  pcVar3 = (char *)(unaff_A4 + 3);
+  pcVar2 = ADJ(user)->pad;
+  *(undefined2 *)dp = 0x4eb9;
+  *(code **)((int)dp + 2) = forth_paren_dot_quote_close_paren;
+  pcVar3 = (char *)((int)dp + 6);
   do {
     cVar1 = *pcVar2;
+    dp_00 = pcVar3 + 1;
     *pcVar3 = cVar1;
     pcVar2 = pcVar2 + 1;
-    pcVar3 = pcVar3 + 1;
+    pcVar3 = dp_00;
   } while (cVar1 != '\0');
-  FUN_00019018();
+  FUN_00019018(dp_00);
   return;
 }
 
@@ -13309,7 +13419,10 @@ void forth_dot_quote(void)
 void forth_paren_dot_quote_close_paren(void)
 
 {
-  FUN_00019150();
+  forth_user_end unaff_A5;
+  char *in_stack_00000000;
+  
+  forth_print_string(in_stack_00000000,unaff_A5);
   return;
 }
 
@@ -13330,39 +13443,41 @@ void FUN_0001995a(void)
 
 /* 0001996c */
 
-void FUN_0001996c(void)
+/* WARNING: Unknown calling convention */
+
+void FUN_0001996c(forth_user_end user,long *sp)
 
 {
   char cVar1;
   char *pcVar2;
-  int unaff_A5;
-  char *unaff_A6;
   
-  pcVar2 = *(char **)(unaff_A5 + -0x22);
+  pcVar2 = ADJ(user)->pad;
   do {
-    cVar1 = *unaff_A6;
+    cVar1 = *(char *)sp;
     *pcVar2 = cVar1;
     pcVar2 = pcVar2 + 1;
-    unaff_A6 = unaff_A6 + 1;
+    sp = (long *)((int)sp + 1);
   } while (cVar1 != '\0');
-  FUN_00019150();
+  forth_print_string(ADJ(user)->pad,user);
   return;
 }
 
 
 /* 0001997e */
 
-void forth_u_dot(void)
+/* WARNING: Unknown calling convention */
+
+void forth_u_dot(forth_user_end user,long *sp)
 
 {
   int iVar1;
   undefined1 extraout_D1b;
-  int unaff_A6;
   undefined1 *puVar2;
   undefined1 *puVar3;
+  long *sp_00;
   
-  *(undefined1 *)(unaff_A6 + 3) = 0;
-  puVar3 = (undefined1 *)(unaff_A6 + 3);
+  *(undefined1 *)((int)sp + 3) = 0;
+  puVar3 = (undefined1 *)((int)sp + 3);
   do {
     puVar2 = puVar3;
     FUN_0001984c();
@@ -13370,27 +13485,30 @@ void forth_u_dot(void)
     puVar3 = puVar2 + -1;
     *puVar3 = extraout_D1b;
   } while (iVar1 != 0);
-  puVar2[-2] = 0x20;
-  FUN_0001996c();
+  sp_00 = (long *)(puVar2 + -2);
+  *(undefined1 *)sp_00 = 0x20;
+  FUN_0001996c(user,sp_00);
   return;
 }
 
 
 /* 0001999a */
 
-void forth_u_dot_x(void)
+/* WARNING: Unknown calling convention */
+
+void forth_u_dot_x(long *sp)
 
 {
   undefined1 *puVar1;
   uint uVar2;
   undefined1 extraout_D1b;
   short sVar3;
-  int unaff_A6;
+  forth_user_end unaff_A5;
   undefined1 *puVar4;
   
-  *(undefined1 *)(unaff_A6 + 3) = 0;
+  *(undefined1 *)((int)sp + 3) = 0;
   sVar3 = 7;
-  puVar1 = (undefined1 *)(unaff_A6 + 3);
+  puVar1 = (undefined1 *)((int)sp + 3);
   do {
     puVar4 = puVar1;
     uVar2 = FUN_0001995a();
@@ -13403,26 +13521,27 @@ void forth_u_dot_x(void)
   puVar4[-3] = 0x78;
   puVar4[-4] = 0x30;
   puVar4[-5] = 0x20;
-  FUN_0001996c();
+  FUN_0001996c(unaff_A5,(long *)(puVar4 + -5));
   return;
 }
 
 
 /* 000199c4 */
 
-void forth_dot(void)
+/* WARNING: Unknown calling convention */
+
+void forth_dot(forth_user_end user,long *sp)
 
 {
   int iVar1;
   int iVar2;
   undefined1 extraout_D1b;
-  int *unaff_A6;
   undefined1 *puVar3;
   undefined1 *puVar4;
   
-  iVar1 = *unaff_A6;
-  *(undefined1 *)((int)unaff_A6 + 3) = 0;
-  puVar4 = (undefined1 *)((int)unaff_A6 + 3);
+  iVar1 = *sp;
+  *(undefined1 *)((int)sp + 3) = 0;
+  puVar4 = (undefined1 *)((int)sp + 3);
   do {
     puVar3 = puVar4;
     FUN_0001984c();
@@ -13435,257 +13554,283 @@ void forth_dot(void)
     *puVar4 = 0x2d;
   }
   puVar4[-1] = 0x20;
-  FUN_0001996c();
+  FUN_0001996c(user,(long *)(puVar4 + -1));
   return;
 }
 
 
 /* 000199ee */
 
-void forth_dot_s(void)
+/* WARNING: Unknown calling convention */
+
+void forth_dot_s(long *sp)
 
 {
-  int *piVar1;
+  long *plVar1;
   int iVar2;
-  int *unaff_A6;
-  int *piVar3;
+  forth_user_end unaff_A5;
+  long *sp_00;
   
-  forth_depth();
-  piVar3 = unaff_A6 + 1;
-  if (*unaff_A6 == 0) {
-    FUN_00019150();
+  forth_depth(unaff_A5,sp);
+  sp_00 = sp + 1;
+  if (*sp == 0) {
+    forth_print_string("( empty )",unaff_A5);
   }
   else {
-    for (iVar2 = *unaff_A6 << 2; iVar2 != 0; iVar2 = iVar2 + -4) {
-      piVar1 = (int *)((int)piVar3 + (short)iVar2 + -4);
-      piVar3 = piVar3 + -1;
-      *piVar3 = *piVar1;
-      forth_dot();
+    for (iVar2 = *sp << 2; iVar2 != 0; iVar2 = iVar2 + -4) {
+      plVar1 = (long *)((int)sp_00 + (short)iVar2 + -4);
+      sp_00 = sp_00 + -1;
+      *sp_00 = *plVar1;
+      forth_dot(unaff_A5,sp_00);
     }
   }
-  FUN_00019150();
+  forth_print_string("\r\n",unaff_A5);
   return;
 }
 
 
 /* 00019b98 */
 
-void forth_sin(void)
+/* WARNING: Unknown calling convention */
+
+void forth_sin(long *sp)
 
 {
   uint uVar1;
   int iVar2;
-  uint *unaff_A6;
+  int iVar3;
   
-  iVar2 = 0;
-  for (uVar1 = *unaff_A6; (int)uVar1 < 0; uVar1 = uVar1 + 0x168) {
+  iVar3 = 0;
+  for (uVar1 = *sp; (int)uVar1 < 0; uVar1 = uVar1 + 0x168) {
   }
   for (; 0x167 < uVar1; uVar1 = uVar1 - 0x168) {
   }
   if (0xb3 < uVar1) {
-    iVar2 = -1;
+    iVar3 = -1;
     uVar1 = uVar1 - 0xb4;
   }
   if (0x5a < uVar1) {
     uVar1 = 0xb4 - uVar1;
   }
-  uVar1 = *(uint *)(&DAT_00019a2c + (short)(uVar1 << 2));
-  if (iVar2 != 0) {
-    uVar1 = -uVar1;
+  iVar2 = *(int *)(&DAT_00019a2c + (short)(uVar1 << 2));
+  if (iVar3 != 0) {
+    iVar2 = -iVar2;
   }
-  *unaff_A6 = uVar1;
+  *sp = iVar2;
   return;
 }
 
 
 /* 00019bf0 */
 
-void forth_cos(void)
+/* WARNING: Unknown calling convention */
+
+void forth_cos(long *sp)
 
 {
-  int *unaff_A6;
-  
-  *unaff_A6 = *unaff_A6 + 0x5a;
-  forth_sin();
+  *sp = *sp + 0x5a;
+  forth_sin(sp);
   return;
 }
 
 
 /* 00019bfc */
 
-void forth_decimal(void)
+/* WARNING: Unknown calling convention */
+
+void forth_decimal(forth_user_end user)
 
 {
-  int unaff_A5;
-  
-  *(undefined4 *)(unaff_A5 + -0xe) = 10;
+  ADJ(user)->base = 10;
   return;
 }
 
 
 /* 00019c06 */
 
-void forth_hex(void)
+/* WARNING: Unknown calling convention */
+
+void forth_hex(forth_user_end user)
 
 {
-  int unaff_A5;
-  
-  *(undefined4 *)(unaff_A5 + -0xe) = 0x10;
+  ADJ(user)->base = 0x10;
   return;
 }
 
 
 /* 00019c10 */
 
-void forth_base(void)
+/* WARNING: Unknown calling convention */
+
+void forth_base(forth_user_end user,long *sp)
 
 {
-  int unaff_A5;
-  int unaff_A6;
-  
-  *(int *)(unaff_A6 + -4) = unaff_A5 + -0xe;
+  sp[-1] = (long)&ADJ(user)->base;
   return;
 }
 
 
 /* 00019c18 */
 
-void forth_state(void)
+/* WARNING: Unknown calling convention */
+
+void forth_state(forth_user_end user,long *sp)
 
 {
-  int unaff_A5;
-  int unaff_A6;
-  
-  *(uint *)(unaff_A6 + -4) = (uint)*(ushort *)(unaff_A5 + -10);
+  sp[-1] = (uint)(ushort)ADJ(user)->state;
   return;
 }
 
 
 /* 00019c22 */
 
-void forth_tick(void)
+/* WARNING: Unknown calling convention */
+
+void forth_tick(long *sp)
 
 {
-  int iVar1;
+  void *pvVar1;
+  long *sp_00;
+  char *pcVar2;
   int unaff_A2;
-  int unaff_A5;
-  int unaff_A6;
+  char *unaff_A3;
+  void *unaff_A4;
+  forth_user_end unaff_A5;
   undefined1 in_ZF;
   
-  FUN_0001910e();
-  FUN_00018fcc();
+  FUN_0001910e(unaff_A5,unaff_A3);
+  FUN_00018fcc(unaff_A5);
   if ((bool)in_ZF) {
-    *(int *)(unaff_A6 + -4) = unaff_A2 + 4;
+    sp[-1] = unaff_A2 + 4;
     return;
   }
-  FUN_00019150();
-  FUN_00019150();
-  FUN_00019150();
-  iVar1 = *(int *)(unaff_A5 + -4);
-  **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-  if (*(short *)(unaff_A5 + -10) != 0) {
-    *(undefined4 *)(iVar1 + -4) = 0x18eee;
-    FUN_0001938e();
+  forth_print_string(ADJ(unaff_A5)->pad,unaff_A5);
+  forth_print_string(": not found\r\n",unaff_A5);
+  forth_print_string("\r\n",unaff_A5);
+  pvVar1 = ADJ(unaff_A5)->return_stack_base;
+  sp_00 = ADJ(unaff_A5)->stack_base;
+  pcVar2 = ADJ(unaff_A5)->tib;
+  pcVar2[0] = '\0';
+  pcVar2[1] = '\0';
+  if (ADJ(unaff_A5)->state != 0) {
+    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    FUN_0001938e(unaff_A5,unaff_A4);
   }
-  *(undefined2 *)(unaff_A5 + -10) = 0;
-  *(undefined4 *)(unaff_A5 + -0xe) = 10;
-  forth_interpret();
+  ADJ(unaff_A5)->state = 0;
+  ADJ(unaff_A5)->base = 10;
+  forth_interpret(unaff_A5,sp_00,unaff_A4);
   return;
 }
 
 
 /* 00019c38 */
 
-void forth_bracket_tick_close_bracket(void)
+/* WARNING: Unknown calling convention */
+
+void forth_bracket_tick_close_bracket(void *dp)
 
 {
-  int iVar1;
+  void *pvVar1;
+  long *sp;
+  char *pcVar2;
   int unaff_A2;
-  undefined2 *unaff_A4;
-  int unaff_A5;
+  char *unaff_A3;
+  forth_user_end unaff_A5;
   undefined1 in_ZF;
   
-  FUN_0001910e();
-  FUN_00018fcc();
+  FUN_0001910e(unaff_A5,unaff_A3);
+  FUN_00018fcc(unaff_A5);
   if ((bool)in_ZF) {
-    *unaff_A4 = 0x2d3c;
-    *(int *)(unaff_A4 + 1) = unaff_A2 + 4;
+    *(undefined2 *)dp = 0x2d3c;
+    *(int *)((int)dp + 2) = unaff_A2 + 4;
     return;
   }
-  FUN_00019150();
-  FUN_00019150();
-  FUN_00019150();
-  iVar1 = *(int *)(unaff_A5 + -4);
-  **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-  if (*(short *)(unaff_A5 + -10) != 0) {
-    *(undefined4 *)(iVar1 + -4) = 0x18eee;
-    FUN_0001938e();
+  forth_print_string(ADJ(unaff_A5)->pad,unaff_A5);
+  forth_print_string(": not found\r\n",unaff_A5);
+  forth_print_string("\r\n",unaff_A5);
+  pvVar1 = ADJ(unaff_A5)->return_stack_base;
+  sp = ADJ(unaff_A5)->stack_base;
+  pcVar2 = ADJ(unaff_A5)->tib;
+  pcVar2[0] = '\0';
+  pcVar2[1] = '\0';
+  if (ADJ(unaff_A5)->state != 0) {
+    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    FUN_0001938e(unaff_A5,dp);
   }
-  *(undefined2 *)(unaff_A5 + -10) = 0;
-  *(undefined4 *)(unaff_A5 + -0xe) = 10;
-  forth_interpret();
+  ADJ(unaff_A5)->state = 0;
+  ADJ(unaff_A5)->base = 10;
+  forth_interpret(unaff_A5,sp,dp);
   return;
 }
 
 
 /* 00019c52 */
 
-void forth_bracket(void)
+/* WARNING: Unknown calling convention */
+
+void forth_bracket(forth_user_end user)
 
 {
-  int unaff_A5;
-  
-  *(undefined2 *)(unaff_A5 + -10) = 0;
+  ADJ(user)->state = 0;
   return;
 }
 
 
 /* 00019c58 */
 
-void forth_close_bracket(void)
+/* WARNING: Unknown calling convention */
+
+void forth_close_bracket(forth_user_end user)
 
 {
-  int unaff_A5;
-  
-  *(undefined2 *)(unaff_A5 + -10) = 1;
+  ADJ(user)->state = 1;
   return;
 }
 
 
 /* 00019c6e */
 
-void forth_forget(void)
+/* WARNING: Unknown calling convention */
+
+void forth_forget(forth_user_end user,void *dp)
 
 {
-  int iVar1;
+  void *pvVar1;
+  long *sp;
+  char *pcVar2;
   undefined4 *unaff_A2;
-  int unaff_A5;
+  char *unaff_A3;
   undefined1 in_ZF;
   
-  FUN_0001910e();
-  FUN_00018fcc();
+  FUN_0001910e(user,unaff_A3);
+  FUN_00018fcc(user);
   if ((bool)in_ZF) {
-    if (*(undefined4 **)(unaff_A5 + -0x1a) < unaff_A2) {
-      *(undefined4 *)(unaff_A5 + -0x16) = *unaff_A2;
-      *(undefined4 **)(unaff_A5 + -0x12) = unaff_A2;
+    if (ADJ(user)->fence < unaff_A2) {
+      ADJ(user)->latest = (void *)*unaff_A2;
+      ADJ(user)->here = unaff_A2;
       return;
     }
-    FUN_00019150();
+    forth_print_string(ADJ(user)->pad,user);
+    pcVar2 = " is fenced\r\n";
   }
   else {
-    FUN_00019150();
+    forth_print_string(ADJ(user)->pad,user);
+    pcVar2 = ": not found\r\n";
   }
-  FUN_00019150();
-  FUN_00019150();
-  iVar1 = *(int *)(unaff_A5 + -4);
-  **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-  if (*(short *)(unaff_A5 + -10) != 0) {
-    *(undefined4 *)(iVar1 + -4) = 0x18eee;
-    FUN_0001938e();
+  forth_print_string(pcVar2,user);
+  forth_print_string("\r\n",user);
+  pvVar1 = ADJ(user)->return_stack_base;
+  sp = ADJ(user)->stack_base;
+  pcVar2 = ADJ(user)->tib;
+  pcVar2[0] = '\0';
+  pcVar2[1] = '\0';
+  if (ADJ(user)->state != 0) {
+    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    FUN_0001938e(user,dp);
   }
-  *(undefined2 *)(unaff_A5 + -10) = 0;
-  *(undefined4 *)(unaff_A5 + -0xe) = 10;
-  forth_interpret();
+  ADJ(user)->state = 0;
+  ADJ(user)->base = 10;
+  forth_interpret(user,sp,dp);
   return;
 }
 
@@ -13693,25 +13838,27 @@ void forth_forget(void)
 /* 00019ca0 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* WARNING: Unknown calling convention */
 
-void forth_startup(void)
+void forth_startup(forth_user_end user,void *dp)
 
 {
-  int unaff_A5;
-  
-  *(undefined4 *)(unaff_A5 + -0x12) = ram0x001009f2;
-  *(undefined4 *)(unaff_A5 + -0x1a) = ram0x001009ee;
-  *(undefined4 *)(unaff_A5 + -0x16) = ram0x001009ee;
+  ADJ(user)->here = ram0x001009f2;
+  ADJ(user)->fence = ram0x001009ee;
+  ADJ(user)->latest = ram0x001009ee;
   return;
 }
 
 
 /* 00019cbc */
 
-void forth_words(void)
+/* WARNING: Unknown calling convention */
+
+void forth_words(forth_user_end user,long *sp)
 
 {
   int iVar1;
+  char *s;
   char cVar2;
   short sVar3;
   char cVar4;
@@ -13721,20 +13868,19 @@ void forth_words(void)
   char *pcVar6;
   char *pcVar7;
   char *pcVar8;
-  int unaff_A5;
-  int *unaff_A6;
   
-  puVar5 = *(undefined4 **)(unaff_A5 + -0x16);
-  iVar1 = *unaff_A6;
+  puVar5 = ADJ(user)->latest;
+  iVar1 = *sp;
   cVar4 = '\0';
   do {
     if ((puVar5 == (undefined4 *)0x0) || ((int)puVar5 < iVar1)) {
-      FUN_00019150();
+      forth_print_string("\r\n",user);
       return;
     }
     if ((*(ushort *)((int)puVar5 + 10) & 2) == 0) {
+      s = ADJ(user)->pad;
       sVar3 = 0x12;
-      pcVar6 = *(char **)(unaff_A5 + -0x22);
+      pcVar6 = s;
       pcVar8 = (char *)(puVar5 + 3);
       do {
         pcVar7 = pcVar6;
@@ -13755,11 +13901,11 @@ void forth_words(void)
       }
       *pcVar6 = '\0';
       pcVar6[-1] = ' ';
-      FUN_00019150();
+      forth_print_string(s,user);
       cVar4 = cVar4 + '\x01';
       puVar5 = extraout_A0;
       if ('\x03' < cVar4) {
-        FUN_00019150();
+        forth_print_string("\r\n",user);
         cVar4 = '\0';
         puVar5 = extraout_A0_00;
       }
@@ -13771,26 +13917,29 @@ void forth_words(void)
 
 /* 00019d2e */
 
-void forth_root(void)
+/* WARNING: Unknown calling convention */
+
+void forth_root(long *sp)
 
 {
-  int unaff_A6;
-  
-  *(undefined **)(unaff_A6 + -4) = &DAT_00100b10;
+  sp[-1] = (long)&DAT_00100b10;
   return;
 }
 
 
 /* 00019d36 */
 
-void forth_my_pid(void)
+/* WARNING: Unknown calling convention */
+
+void forth_my_pid(long *sp)
 
 {
-  undefined4 extraout_A0;
-  int unaff_A6;
+  long extraout_A0;
+  void *unaff_A4;
+  forth_user_end unaff_A5;
   
-  forth_psos_call();
-  *(undefined4 *)(unaff_A6 + -4) = extraout_A0;
+  forth_psos_call(unaff_A5,sp,unaff_A4);
+  sp[-1] = extraout_A0;
   return;
 }
 
@@ -13812,15 +13961,16 @@ void forth_query_caret_C(void)
 
 /* 00019d5e */
 
-short forth_expect(void)
+/* WARNING: Unknown calling convention */
+
+short forth_expect(forth_user_end user,long *sp)
 
 {
   short sVar1;
-  int unaff_A5;
   
-  if (-1 < *(short *)(unaff_A5 + -0x28)) {
+  if (-1 < ((forth_user *)(user + -0x28))->iodev) {
     __m68k_trap(4);
-    return *(short *)(unaff_A5 + -0x28);
+    return ((forth_user *)(user + -0x28))->iodev;
   }
   sVar1 = psos_call();
   return sVar1;
@@ -13829,38 +13979,41 @@ short forth_expect(void)
 
 /* 00019d74 */
 
-void forth_type(void)
+/* WARNING: Unknown calling convention */
+
+void forth_type(long *sp)
 
 {
-  FUN_00019150();
+  forth_user_end unaff_A5;
+  
+  forth_print_string((char *)*sp,unaff_A5);
   return;
 }
 
 
 /* 00019d7c */
 
-void forth_word(void)
+/* WARNING: Unknown calling convention */
+
+void forth_word(forth_user_end user,long *sp,char *input)
 
 {
   char cVar1;
   char cVar2;
   char *extraout_A0;
   char *pcVar3;
-  char *unaff_A3;
-  int unaff_A5;
-  undefined4 *unaff_A6;
   
-  FUN_0001916e();
-  *unaff_A6 = *(undefined4 *)(unaff_A5 + -0x22);
-  while (cVar2 = FUN_0001906c(), pcVar3 = extraout_A0, *unaff_A3 == '\0') {
-    FUN_000190e8();
+  FUN_0001916e(user);
+  *sp = (long)ADJ(user)->pad;
+  while (cVar2 = FUN_0001906c(input), pcVar3 = extraout_A0, *input == '\0') {
+    FUN_000190e8(user,input);
   }
   while( true ) {
-    cVar1 = *unaff_A3;
+    cVar1 = *input;
     if ((cVar1 == '\0') || (cVar2 == cVar1)) break;
     *pcVar3 = cVar1;
     pcVar3 = pcVar3 + 1;
-    unaff_A3 = unaff_A3 + 1;
+    input = input + 1;
   }
   *pcVar3 = '\0';
   return;
@@ -13869,45 +14022,44 @@ void forth_word(void)
 
 /* 00019dae */
 
-void forth_count(void)
+/* WARNING: Unknown calling convention */
+
+void forth_count(long *sp)
 
 {
   char *pcVar1;
   char *pcVar2;
-  int *unaff_A6;
   
-  pcVar1 = (char *)*unaff_A6;
+  pcVar1 = (char *)*sp;
   do {
     pcVar2 = pcVar1;
     pcVar1 = pcVar2 + 1;
   } while (*pcVar2 != '\0');
-  unaff_A6[-1] = (int)pcVar2 - *unaff_A6;
+  sp[-1] = (int)pcVar2 - (int)*sp;
   return;
 }
 
 
 /* 00019dc2 */
 
-void forth_tib(void)
+/* WARNING: Unknown calling convention */
+
+void forth_tib(forth_user_end user,long *sp)
 
 {
-  int unaff_A5;
-  int unaff_A6;
-  
-  *(undefined4 *)(unaff_A6 + -4) = *(undefined4 *)(unaff_A5 + -0x1e);
+  sp[-1] = (long)ADJ(user)->tib;
   return;
 }
 
 
 /* 00019dc8 */
 
-void forth_pad(void)
+/* WARNING: Unknown calling convention */
+
+void forth_pad(forth_user_end user,long *sp)
 
 {
-  int unaff_A5;
-  int unaff_A6;
-  
-  *(undefined4 *)(unaff_A6 + -4) = *(undefined4 *)(unaff_A5 + -0x22);
+  sp[-1] = (long)ADJ(user)->pad;
   return;
 }
 
@@ -13917,155 +14069,168 @@ void forth_pad(void)
 void forth_does_greater(void)
 
 {
-  FUN_00019338();
+  void *unaff_A4;
+  
+  FUN_00019338(unaff_A4);
   return;
 }
 
 
 /* 00019dfc */
 
-void forth_recurse(void)
+/* WARNING: Unknown calling convention */
+
+void forth_recurse(forth_user_end user,void *dp)
 
 {
-  undefined2 *unaff_A4;
-  int unaff_A5;
-  
-  FUN_00019018();
-  *unaff_A4 = 0x4eb9;
-  *(undefined4 *)(unaff_A4 + 1) = *(undefined4 *)(*(int *)(unaff_A5 + -0x16) + 4);
+  FUN_00019018(dp);
+  *(undefined2 *)dp = 0x4eb9;
+  *(undefined4 *)((int)dp + 2) = *(undefined4 *)((int)ADJ(user)->latest + 4);
   return;
 }
 
 
 /* 00019e0e */
 
-void forth_immediate(void)
+/* WARNING: Unknown calling convention */
+
+void forth_immediate(forth_user_end user)
 
 {
-  int unaff_A5;
-  
-  *(ushort *)(*(int *)(unaff_A5 + -0x16) + 10) = *(ushort *)(*(int *)(unaff_A5 + -0x16) + 10) | 4;
+  *(ushort *)((int)ADJ(user)->latest + 10) = *(ushort *)((int)ADJ(user)->latest + 10) | 4;
   return;
 }
 
 
 /* 00019e20 */
 
-void forth_fence(void)
+/* WARNING: Unknown calling convention */
+
+void forth_fence(forth_user_end user,long *sp)
 
 {
-  int unaff_A5;
-  int unaff_A6;
-  
-  *(int *)(unaff_A6 + -4) = unaff_A5 + -0x1a;
+  sp[-1] = (long)&ADJ(user)->fence;
   return;
 }
 
 
 /* 00019e28 */
 
-void forth_unfence(void)
+/* WARNING: Unknown calling convention */
+
+void forth_unfence(forth_user_end user)
 
 {
-  int unaff_A5;
-  
-  *(undefined **)(unaff_A5 + -0x1a) = &UNK_0001ad0e;
+  ADJ(user)->fence = &UNK_0001ad0e;
   return;
 }
 
 
 /* 00019e32 */
 
-void forth_number(void)
+/* WARNING: Unknown calling convention */
+
+void forth_number(long *sp)
 
 {
   int in_A1;
   char *extraout_A1;
+  char *unaff_A3;
+  forth_user_end unaff_A5;
   bool bVar1;
   
   bVar1 = in_A1 == 0;
   do {
-    FUN_00019042();
+    FUN_00019042(unaff_A3);
     if (!bVar1) break;
     bVar1 = *extraout_A1 == '\0';
   } while (!bVar1);
-  FUN_00018f68();
+  FUN_00018f68(unaff_A5,sp + 1);
   return;
 }
 
 
 /* 00019e4c */
 
-undefined1 forth_0x(void)
+/* WARNING: Unknown calling convention */
+
+undefined1 forth_0x(forth_user_end user,long *sp)
 
 {
-  char cVar1;
-  undefined1 uVar2;
-  int iVar3;
-  char *pcVar4;
+  void *pvVar1;
+  long *sp_00;
+  char cVar2;
+  undefined1 uVar3;
+  int iVar4;
+  char *pcVar5;
   char *extraout_A0;
-  int unaff_A5;
-  int unaff_A6;
-  bool bVar5;
-  undefined8 uVar6;
+  char *unaff_A3;
+  void *unaff_A4;
+  bool bVar6;
+  undefined8 uVar7;
   
-  FUN_0001910e();
-  pcVar4 = *(char **)(unaff_A5 + -0x22);
-  iVar3 = 0;
-  cVar1 = *pcVar4;
-  if (cVar1 == '-') {
-    pcVar4 = pcVar4 + 1;
+  FUN_0001910e(user,unaff_A3);
+  pcVar5 = ADJ(user)->pad;
+  iVar4 = 0;
+  cVar2 = *pcVar5;
+  if (cVar2 == '-') {
+    pcVar5 = pcVar5 + 1;
   }
   while( true ) {
-    bVar5 = *pcVar4 == '\0';
-    if (bVar5) {
-      if (cVar1 == '-') {
-        iVar3 = -iVar3;
+    bVar6 = *pcVar5 == '\0';
+    if (bVar6) {
+      if (cVar2 == '-') {
+        iVar4 = -iVar4;
       }
-      *(int *)(unaff_A6 + -4) = iVar3;
-      uVar2 = 0;
-      if (*(short *)(unaff_A5 + -10) != 0) {
-        uVar2 = forth_literal();
+      sp[-1] = iVar4;
+      uVar3 = 0;
+      if (ADJ(user)->state != 0) {
+        uVar3 = forth_literal(sp + -1,unaff_A4);
       }
-      return uVar2;
+      return uVar3;
     }
-    uVar6 = FUN_00019024();
-    if (!bVar5) break;
-    iVar3 = (int)uVar6 << 4;
-    iVar3 = CONCAT31((int3)((uint)iVar3 >> 8),(byte)((ulonglong)uVar6 >> 0x20) | (byte)iVar3);
-    pcVar4 = extraout_A0;
+    uVar7 = FUN_00019024();
+    if (!bVar6) break;
+    iVar4 = (int)uVar7 << 4;
+    iVar4 = CONCAT31((int3)((uint)iVar4 >> 8),(byte)((ulonglong)uVar7 >> 0x20) | (byte)iVar4);
+    pcVar5 = extraout_A0;
   }
-  FUN_00019150();
-  FUN_00019150();
-  FUN_00019150();
-  iVar3 = *(int *)(unaff_A5 + -4);
-  **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-  if (*(short *)(unaff_A5 + -10) != 0) {
-    *(undefined4 *)(iVar3 + -4) = 0x18eee;
-    FUN_0001938e();
+  forth_print_string(ADJ(user)->pad,user);
+  forth_print_string(": not found\r\n",user);
+  forth_print_string("\r\n",user);
+  pvVar1 = ADJ(user)->return_stack_base;
+  sp_00 = ADJ(user)->stack_base;
+  pcVar5 = ADJ(user)->tib;
+  pcVar5[0] = '\0';
+  pcVar5[1] = '\0';
+  if (ADJ(user)->state != 0) {
+    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    FUN_0001938e(user,unaff_A4);
   }
-  *(undefined2 *)(unaff_A5 + -10) = 0;
-  *(undefined4 *)(unaff_A5 + -0xe) = 10;
-  uVar2 = forth_interpret();
-  return uVar2;
+  ADJ(user)->state = 0;
+  ADJ(user)->base = 10;
+  uVar3 = forth_interpret(user,sp_00,unaff_A4);
+  return uVar3;
 }
 
 
 /* 00019e88 */
 
-void forth_execute(void)
+/* WARNING: Unknown calling convention */
+
+void forth_execute(long *sp)
 
 {
-  undefined4 *unaff_A6;
-  
-  (**(code **)*unaff_A6)();
+  (**(code **)*sp)();
   return;
 }
 
 
 /* 00019e90 */
 
-undefined8 forth_watch(void)
+/* WARNING: Unknown calling convention */
+
+undefined8 forth_watch(forth_user_end user,long *sp,void *dp,char *input)
 
 {
   ushort uVar1;
@@ -14087,12 +14252,8 @@ undefined8 forth_watch(void)
   undefined4 extraout_A1;
   int *piVar7;
   undefined4 unaff_A2;
-  undefined4 unaff_A3;
-  undefined4 unaff_A4;
-  undefined4 unaff_A5;
-  uint *unaff_A6;
   
-  pcRam00100b48 = *(code **)*unaff_A6;
+  pcRam00100b48 = *(code **)*sp;
   uRam00100b28 = in_D0;
   uRam00100b2c = in_D1;
   uRam00100b30 = unaff_D2;
@@ -14103,10 +14264,10 @@ undefined8 forth_watch(void)
   uRam00100b44 = unaff_D7;
   uRam00100b4c = in_A1;
   uRam00100b50 = unaff_A2;
-  uRam00100b54 = unaff_A3;
-  uRam00100b58 = unaff_A4;
-  uRam00100b5c = unaff_A5;
-  puRam00100b60 = unaff_A6 + 1;
+  pcRam00100b54 = input;
+  pvRam00100b58 = dp;
+  puRam00100b5c = user;
+  plRam00100b60 = sp + 1;
   puRam00100b64 = (undefined1 *)register0x0000003c;
   uRam00100b68 = (*pcRam00100b48)();
   uVar4 = 0;
@@ -14133,93 +14294,103 @@ undefined8 forth_watch(void)
   uRam00100b88 = extraout_A0;
   uRam00100b8c = extraout_A1;
   uRam00100b90 = unaff_A2;
-  uRam00100b94 = unaff_A3;
-  uRam00100b98 = unaff_A4;
-  uRam00100b9c = unaff_A5;
-  puRam00100ba0 = unaff_A6 + 1;
+  pcRam00100b94 = input;
+  pvRam00100b98 = dp;
+  puRam00100b9c = user;
+  plRam00100ba0 = sp + 1;
   puRam00100ba4 = (undefined1 *)register0x0000003c;
-  *unaff_A6 = uVar4;
+  *sp = uVar4;
   return CONCAT44(uRam00100b28,uRam00100b2c);
 }
 
 
 /* 00019ed0 */
 
-void forth_psos_call(void)
+/* WARNING: Unknown calling convention */
+
+void forth_psos_call(forth_user_end user,long *sp,void *dp)
 
 {
   byte bVar1;
   uint unaff_D7;
-  int unaff_A6;
+  char *unaff_A3;
+  uint *sp_00;
   
   psos_call();
   if ((char)unaff_D7 < '\x01') {
     return;
   }
-  *(uint *)(unaff_A6 + -4) = unaff_D7 & 0xff;
-  FUN_00019150();
-  forth_dot();
+  sp_00 = (uint *)(sp + -1);
+  *sp_00 = unaff_D7 & 0xff;
+  forth_print_string("pSOS error",user);
+  forth_dot(user,(long *)sp_00);
   bVar1 = (byte)((unaff_D7 & 0xffff) >> 8);
   if ((bVar1 < 0x27) && (bVar1 != 0)) {
-    *(uint *)(unaff_A6 + -8) = (unaff_D7 & 0xffff) >> 8;
-    FUN_00019150();
-    forth_dot();
+    sp_00 = (uint *)(sp + -2);
+    *sp_00 = (unaff_D7 & 0xffff) >> 8;
+    forth_print_string(" from function",user);
+    forth_dot(user,(long *)sp_00);
   }
-  FUN_00019150();
-  forth_abort();
+  forth_print_string("\r\n",user);
+  forth_abort(user,(long *)sp_00,unaff_A3);
   return;
 }
 
 
 /* 00019fa6 */
 
-void forth_spawn(void)
+/* WARNING: Unknown calling convention */
+
+void forth_spawn(forth_user_end user,long *sp,void *dp)
 
 {
-  int iVar1;
-  undefined4 uVar2;
+  long lVar1;
+  void *pvVar2;
+  char *pcVar3;
+  undefined4 uVar4;
   undefined4 extraout_A0;
-  undefined4 extraout_A0_00;
-  undefined4 extraout_A0_01;
-  undefined4 extraout_A1;
-  undefined2 *unaff_A4;
-  int unaff_A5;
-  undefined4 *unaff_A6;
+  long extraout_A0_00;
+  char *unaff_A3;
+  long *plVar5;
   undefined1 in_ZF;
   
-  FUN_0001910e();
-  FUN_00018fcc();
+  FUN_0001910e(user,unaff_A3);
+  FUN_00018fcc(user);
   if ((bool)in_ZF) {
-    uVar2 = *unaff_A6;
-    FUN_00019018();
-    *unaff_A4 = 7;
-    *(undefined2 **)(unaff_A4 + 1) = unaff_A4;
-    unaff_A4[3] = (short)uVar2;
-    *(undefined4 *)(unaff_A4 + 4) = extraout_A0;
+    lVar1 = *sp;
+    FUN_00019018(dp);
+    *(undefined2 *)dp = 7;
+    *(void **)((int)dp + 2) = dp;
+    *(short *)((int)dp + 6) = (short)lVar1;
+    *(undefined4 *)((int)dp + 8) = extraout_A0;
     psos_call();
-    FUN_0001910e();
-    uVar2 = func_0x0001a01c();
-    *(undefined4 *)(unaff_A4 + 6) = uVar2;
-    forth_psos_call();
-    unaff_A6[2] = extraout_A0_00;
-    FUN_0001968c();
-    FUN_00019700();
-    *(undefined4 *)(unaff_A5 + -0x1a) = *(undefined4 *)(unaff_A5 + -0x16);
-    forth_psos_call(extraout_A0_01,extraout_A1);
+    FUN_0001910e(user,unaff_A3);
+    uVar4 = func_0x0001a01c();
+    *(undefined4 *)((int)dp + 0xc) = uVar4;
+    forth_psos_call(user,sp + 3,dp);
+    plVar5 = sp + 2;
+    *plVar5 = extraout_A0_00;
+    FUN_0001968c(user,dp);
+    FUN_00019700(user,plVar5,dp);
+    ADJ(user)->fence = ADJ(user)->latest;
+    forth_psos_call(user,plVar5,dp);
     return;
   }
-  FUN_00019150();
-  FUN_00019150();
-  FUN_00019150();
-  iVar1 = *(int *)(unaff_A5 + -4);
-  **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-  if (*(short *)(unaff_A5 + -10) != 0) {
-    *(undefined4 *)(iVar1 + -4) = 0x18eee;
-    FUN_0001938e();
+  forth_print_string(ADJ(user)->pad,user);
+  forth_print_string(": not found\r\n",user);
+  forth_print_string("\r\n",user);
+  pvVar2 = ADJ(user)->return_stack_base;
+  plVar5 = ADJ(user)->stack_base;
+  pcVar3 = ADJ(user)->tib;
+  pcVar3[0] = '\0';
+  pcVar3[1] = '\0';
+  if (ADJ(user)->state != 0) {
+    *(undefined4 *)((int)pvVar2 + -4) = 0x18eee;
+    FUN_0001938e(user,dp);
   }
-  *(undefined2 *)(unaff_A5 + -10) = 0;
-  *(undefined4 *)(unaff_A5 + -0xe) = 10;
-  forth_interpret();
+  ADJ(user)->state = 0;
+  ADJ(user)->base = 10;
+  forth_interpret(user,plVar5,dp);
   return;
 }
 
@@ -14235,340 +14406,415 @@ void FUN_0001a03c(void)
 
 /* 0001a056 */
 
-void forth_ver(void)
+/* WARNING: Unknown calling convention */
+
+void forth_ver(forth_user_end user,long *sp)
 
 {
-  int unaff_A5;
-  int unaff_A6;
+  long *sp_00;
   
-  FUN_00019150();
-  FUN_00019150();
+  forth_print_string("\r\npForth $Revision: 1.2 $\r\n",user);
+  forth_print_string("pSOS version ID:",user);
   __m68k_trap(3);
-  *(undefined4 *)(unaff_A6 + -4) = *(undefined4 *)(unaff_A5 + -0xe);
-  *(undefined4 *)(unaff_A5 + -0xe) = 0x10;
-  *(undefined4 *)(unaff_A6 + -8) = 0;
-  forth_dot();
-  *(undefined4 *)(unaff_A5 + -0xe) = *(undefined4 *)(unaff_A6 + -8);
+  sp[-1] = ADJ(user)->base;
+  ADJ(user)->base = 0x10;
+  sp_00 = sp + -2;
+  *sp_00 = 0;
+  forth_dot(user,sp_00);
+  ADJ(user)->base = *sp_00;
   return;
 }
 
 
 /* 0001a08c */
 
-void forth_ident(void)
+/* WARNING: Unknown calling convention */
+
+void forth_ident(long *sp)
 
 {
-  undefined4 extraout_A0;
-  int unaff_A6;
+  long extraout_A0;
+  char *unaff_A3;
+  void *unaff_A4;
+  forth_user_end unaff_A5;
   
-  FUN_0001910e();
+  FUN_0001910e(unaff_A5,unaff_A3);
   func_0x0001a01c();
-  forth_psos_call();
-  *(undefined4 *)(unaff_A6 + -4) = extraout_A0;
+  forth_psos_call(unaff_A5,sp,unaff_A4);
+  sp[-1] = extraout_A0;
   return;
 }
 
 
 /* 0001a0a0 */
 
-void forth_delete(void)
+/* WARNING: Unknown calling convention */
+
+void forth_delete(long *sp)
 
 {
-  forth_psos_call();
+  void *unaff_A4;
+  forth_user_end unaff_A5;
+  
+  forth_psos_call(unaff_A5,sp + 1,unaff_A4);
   return;
 }
 
 
 /* 0001a0ae */
 
-void forth_suspend(void)
+/* WARNING: Unknown calling convention */
+
+void forth_suspend(long *sp)
 
 {
-  forth_psos_call();
+  void *unaff_A4;
+  forth_user_end unaff_A5;
+  
+  forth_psos_call(unaff_A5,sp + 1,unaff_A4);
   return;
 }
 
 
 /* 0001a0bc */
 
-void forth_resume(void)
+/* WARNING: Unknown calling convention */
+
+void forth_resume(long *sp)
 
 {
-  forth_psos_call();
+  void *unaff_A4;
+  forth_user_end unaff_A5;
+  
+  forth_psos_call(unaff_A5,sp + 1,unaff_A4);
   return;
 }
 
 
 /* 0001a0ca */
 
-void forth_priority(void)
+/* WARNING: Unknown calling convention */
+
+void forth_priority(long *sp)
 
 {
   uint uVar1;
-  int unaff_A6;
+  void *unaff_A4;
+  forth_user_end unaff_A5;
   
-  uVar1 = forth_psos_call();
-  *(uint *)(unaff_A6 + 4) = uVar1 & 0xff;
+  uVar1 = forth_psos_call(unaff_A5,sp + 2,unaff_A4);
+  sp[1] = uVar1 & 0xff;
   return;
 }
 
 
 /* 0001a0e2 */
 
-void forth_jam_x(void)
+/* WARNING: Unknown calling convention */
+
+void forth_jam_x(long *sp)
 
 {
-  forth_psos_call();
+  void *unaff_A4;
+  forth_user_end unaff_A5;
+  
+  forth_psos_call(unaff_A5,sp + 2,unaff_A4);
   return;
 }
 
 
 /* 0001a0f8 */
 
-void forth_create_x(void)
+/* WARNING: Unknown calling convention */
+
+void forth_create_x(long *sp)
 
 {
-  undefined4 extraout_A0;
-  int unaff_A6;
+  long extraout_A0;
+  char *unaff_A3;
+  void *unaff_A4;
+  forth_user_end unaff_A5;
   
-  FUN_0001910e();
+  FUN_0001910e(unaff_A5,unaff_A3);
   func_0x0001a01c();
-  forth_psos_call();
-  *(undefined4 *)(unaff_A6 + 4) = extraout_A0;
-  FUN_0001968c();
-  FUN_00019700();
+  forth_psos_call(unaff_A5,sp + 2,unaff_A4);
+  sp[1] = extraout_A0;
+  FUN_0001968c(unaff_A5,unaff_A4);
+  FUN_00019700(unaff_A5,sp + 1,unaff_A4);
   return;
 }
 
 
 /* 0001a11e */
 
-void forth_delete_x(void)
+/* WARNING: Unknown calling convention */
+
+void forth_delete_x(long *sp)
 
 {
-  forth_psos_call();
+  void *unaff_A4;
+  forth_user_end unaff_A5;
+  
+  forth_psos_call(unaff_A5,sp + 1,unaff_A4);
   return;
 }
 
 
 /* 0001a12e */
 
-void forth_send_x(void)
+/* WARNING: Unknown calling convention */
+
+void forth_send_x(long *sp)
 
 {
-  forth_psos_call();
+  void *unaff_A4;
+  forth_user_end unaff_A5;
+  
+  forth_psos_call(unaff_A5,sp + 2,unaff_A4);
   return;
 }
 
 
 /* 0001a144 */
 
-void forth_request_x(void)
+/* WARNING: Unknown calling convention */
+
+void forth_request_x(long *sp)
 
 {
-  forth_psos_call();
+  void *unaff_A4;
+  forth_user_end unaff_A5;
+  
+  forth_psos_call(unaff_A5,sp + 4,unaff_A4);
   return;
 }
 
 
 /* 0001a15e */
 
-void forth_signal_v(void)
+/* WARNING: Unknown calling convention */
+
+void forth_signal_v(long *sp)
 
 {
-  forth_psos_call();
+  void *unaff_A4;
+  forth_user_end unaff_A5;
+  
+  forth_psos_call(unaff_A5,sp + 2,unaff_A4);
   return;
 }
 
 
 /* 0001a176 */
 
-void forth_wait_v(void)
+/* WARNING: Unknown calling convention */
+
+void forth_wait_v(long *sp)
 
 {
   uint extraout_D1;
-  int unaff_A6;
+  void *unaff_A4;
+  forth_user_end unaff_A5;
   
-  forth_psos_call();
-  *(uint *)(unaff_A6 + 8) = extraout_D1 & 0xffff;
+  forth_psos_call(unaff_A5,sp + 3,unaff_A4);
+  sp[2] = extraout_D1 & 0xffff;
   return;
 }
 
 
 /* 0001a18c */
 
-void forth_get_v(void)
+/* WARNING: Unknown calling convention */
+
+void forth_get_v(long *sp)
 
 {
-  int unaff_A6;
-  
   __m68k_trap(3);
-  *(short *)(unaff_A6 + 6) = (short)*(undefined4 *)(unaff_A6 + 4);
-  *(undefined2 *)(unaff_A6 + 4) = 0;
+  *(short *)((int)sp + 6) = (short)sp[1];
+  *(undefined2 *)(sp + 1) = 0;
   return;
 }
 
 
 /* 0001a19a */
 
-undefined4 forth_pause(void)
+/* WARNING: Unknown calling convention */
+
+long forth_pause(long *sp)
 
 {
-  undefined4 *unaff_A6;
-  
   __m68k_trap(3);
-  return *unaff_A6;
+  return *sp;
 }
 
 
 /* 0001a1a2 */
 
-void forth_mode(void)
+/* WARNING: Unknown calling convention */
+
+void forth_mode(long *sp)
 
 {
-  int unaff_A6;
-  
   __m68k_trap(3);
-  *(uint *)(unaff_A6 + 4) = *(uint *)(unaff_A6 + 4) & 0xff;
+  sp[1] = sp[1] & 0xff;
   return;
 }
 
 
 /* 0001a1b4 */
 
-void FUN_0001a1b4(void)
+/* WARNING: Unknown calling convention */
+
+void forth_psos_io_call(long *sp)
 
 {
-  int iVar1;
-  undefined4 in_D0;
+  void *pvVar1;
+  long *sp_00;
+  char *pcVar2;
+  long in_D0;
   uint unaff_D7;
-  int unaff_A5;
-  int unaff_A6;
+  void *unaff_A4;
+  forth_user_end unaff_A5;
+  uint *sp_01;
   
-  *(uint *)(unaff_A6 + -4) = unaff_D7;
-  *(undefined4 *)(unaff_A6 + -8) = in_D0;
+  sp[-1] = unaff_D7;
+  sp[-2] = in_D0;
   __m68k_trap(4);
   if ((char)unaff_D7 == '\0') {
     return;
   }
-  *(uint *)(unaff_A6 + -0xc) = unaff_D7 & 0x7f;
-  FUN_00019150();
-  forth_u_dot_x();
-  FUN_00019150();
-  forth_u_dot_x();
-  FUN_00019150();
-  forth_u_dot_x();
-  FUN_00019150();
-  FUN_00019150();
-  iVar1 = *(int *)(unaff_A5 + -4);
-  **(undefined2 **)(unaff_A5 + -0x1e) = 0;
-  if (*(short *)(unaff_A5 + -10) != 0) {
-    *(undefined4 *)(iVar1 + -4) = 0x18eee;
-    FUN_0001938e();
+  sp_01 = (uint *)(sp + -3);
+  *sp_01 = unaff_D7 & 0x7f;
+  forth_print_string("I/O error",unaff_A5);
+  forth_u_dot_x((long *)sp_01);
+  forth_print_string(" Device:",unaff_A5);
+  forth_u_dot_x((long *)sp_01);
+  forth_print_string(" Function:",unaff_A5);
+  forth_u_dot_x((long *)sp_01);
+  forth_print_string("\r\n",unaff_A5);
+  forth_print_string("\r\n",unaff_A5);
+  pvVar1 = ADJ(unaff_A5)->return_stack_base;
+  sp_00 = ADJ(unaff_A5)->stack_base;
+  pcVar2 = ADJ(unaff_A5)->tib;
+  pcVar2[0] = '\0';
+  pcVar2[1] = '\0';
+  if (ADJ(unaff_A5)->state != 0) {
+    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    FUN_0001938e(unaff_A5,unaff_A4);
   }
-  *(undefined2 *)(unaff_A5 + -10) = 0;
-  *(undefined4 *)(unaff_A5 + -0xe) = 10;
-  forth_interpret();
+  ADJ(unaff_A5)->state = 0;
+  ADJ(unaff_A5)->base = 10;
+  forth_interpret(unaff_A5,sp_00,unaff_A4);
   return;
 }
 
 
 /* 0001a21e */
 
-void forth_dev_init(void)
+/* WARNING: Unknown calling convention */
+
+void forth_dev_init(long *sp)
 
 {
-  FUN_0001a1b4();
+  forth_psos_io_call(sp + 1);
   return;
 }
 
 
 /* 0001a226 */
 
-void forth_dev_open(void)
+/* WARNING: Unknown calling convention */
+
+void forth_dev_open(long *sp)
 
 {
-  FUN_0001a1b4();
+  forth_psos_io_call(sp + 1);
   return;
 }
 
 
 /* 0001a22e */
 
-void forth_dev_close(void)
+/* WARNING: Unknown calling convention */
+
+void forth_dev_close(long *sp)
 
 {
-  FUN_0001a1b4();
+  forth_psos_io_call(sp + 1);
   return;
 }
 
 
 /* 0001a236 */
 
-void forth_dev_read(void)
+/* WARNING: Unknown calling convention */
+
+void forth_dev_read(long *sp)
 
 {
-  undefined4 uVar1;
-  undefined4 *unaff_A6;
+  long lVar1;
   
-  uVar1 = *unaff_A6;
-  FUN_0001a1b4();
-  unaff_A6[2] = uVar1;
+  lVar1 = *sp;
+  forth_psos_io_call(sp + 3);
+  sp[2] = lVar1;
   return;
 }
 
 
 /* 0001a250 */
 
-void forth_dev_write(void)
+/* WARNING: Unknown calling convention */
+
+void forth_dev_write(long *sp)
 
 {
-  undefined4 uVar1;
-  undefined4 *unaff_A6;
+  long lVar1;
   
-  uVar1 = *unaff_A6;
-  FUN_0001a1b4();
-  unaff_A6[2] = uVar1;
+  lVar1 = *sp;
+  forth_psos_io_call(sp + 3);
+  sp[2] = lVar1;
   return;
 }
 
 
 /* 0001a26a */
 
-void forth_dev_ctrl(void)
+/* WARNING: Unknown calling convention */
+
+void forth_dev_ctrl(long *sp)
 
 {
-  FUN_0001a1b4();
+  forth_psos_io_call(sp + 2);
   return;
 }
 
 
 /* 0001a278 */
 
-void forth_store_iodev(void)
+/* WARNING: Unknown calling convention */
+
+void forth_store_iodev(forth_user_end user,long *sp)
 
 {
-  uint uVar1;
-  int unaff_A5;
-  uint *unaff_A6;
+  long lVar1;
   
   __m68k_trap(4);
   __m68k_trap(4);
-  uVar1 = *unaff_A6;
-  *unaff_A6 = (uint)*(ushort *)(unaff_A5 + -0x28);
-  *(short *)(unaff_A5 + -0x28) = (short)uVar1;
+  lVar1 = *sp;
+  *sp = (uint)(ushort)((forth_user *)(user + -0x28))->iodev;
+  ((forth_user *)(user + -0x28))->iodev = (short)lVar1;
   return;
 }
 
 
 /* 0001ad20 */
 
-void forth_user(void)
+/* WARNING: Unknown calling convention */
+
+void forth_user(long *sp)
 
 {
-  int unaff_A6;
-  
-  *(undefined **)(unaff_A6 + -4) = &UNK_0001ad0e;
+  sp[-1] = (long)&UNK_0001ad0e;
   return;
 }
 
@@ -14597,61 +14843,62 @@ undefined4 FUN_0001ad8a(char *param_1,undefined4 param_2,int param_3,short param
 
 {
   char cVar1;
-  char *pcVar2;
-  int iVar3;
-  short sVar5;
-  undefined4 uVar4;
+  int iVar2;
+  short sVar4;
+  undefined4 uVar3;
+  char *dp;
   char *pcVar6;
-  char *pcVar7;
+  char *pcVar5;
   
   if (ram0x001009f2 == (char *)0x0) {
-    uVar4 = 0xffffffff;
+    uVar3 = 0xffffffff;
   }
   else {
-    pcVar2 = ram0x001009f2;
+    pcVar6 = ram0x001009f2;
     if (((uint)ram0x001009f2 & 1) != 0) {
-      pcVar2 = ram0x001009f2 + 1;
+      pcVar6 = ram0x001009f2 + 1;
     }
     FUN_0001ae36();
-    pcVar2[0] = '\0';
-    pcVar2[1] = '\0';
-    pcVar2[2] = '\0';
-    pcVar2[3] = '\0';
-    pcVar2[4] = '\0';
-    pcVar2[5] = '\0';
-    pcVar2[6] = '\0';
-    pcVar2[7] = '\0';
-    pcVar6 = pcVar2 + 8;
+    pcVar6[0] = '\0';
+    pcVar6[1] = '\0';
+    pcVar6[2] = '\0';
+    pcVar6[3] = '\0';
+    pcVar6[4] = '\0';
+    pcVar6[5] = '\0';
+    pcVar6[6] = '\0';
+    pcVar6[7] = '\0';
+    dp = pcVar6 + 8;
     do {
-      pcVar7 = pcVar6;
+      pcVar5 = dp;
       cVar1 = *param_1;
-      pcVar6 = pcVar7 + 1;
-      *pcVar7 = cVar1;
+      dp = pcVar5 + 1;
+      *pcVar5 = cVar1;
       param_1 = param_1 + 1;
     } while (cVar1 != '\0');
-    if (((uint)pcVar6 & 1) != 0) {
-      pcVar6 = pcVar7 + 2;
+    if (((uint)dp & 1) != 0) {
+      dp = pcVar5 + 2;
     }
-    *(char **)pcVar2 = pcVar6;
-    iVar3 = param_3;
-    while ((short)iVar3 != 0) {
-      iVar3 = FUN_00019338();
+    *(char **)pcVar6 = dp;
+    iVar2 = param_3;
+    while ((short)iVar2 != 0) {
+      iVar2 = FUN_00019338(dp);
     }
-    pcVar6[0] = 'N';
-    pcVar6[1] = -0x47;
-    *(undefined4 *)(pcVar6 + 2) = param_2;
+    dp[0] = 'N';
+    dp[1] = -0x47;
+    pcVar6 = dp + 6;
+    *(undefined4 *)(dp + 2) = param_2;
     if (param_3 != 0) {
-      sVar5 = FUN_00019338();
-      *(short *)(pcVar6 + 4) = sVar5 << 2;
+      sVar4 = FUN_00019338(pcVar6);
+      *(short *)(dp + 4) = sVar4 << 2;
     }
-    if ((0 < param_4) && (sVar5 = FUN_00019338(), 1 < sVar5)) {
-      FUN_00019338();
+    if ((0 < param_4) && (sVar4 = FUN_00019338(pcVar6), 1 < sVar4)) {
+      FUN_00019338(pcVar6);
     }
-    FUN_00019338();
-    uVar4 = 0;
-    unique0x1000008f = pcVar6 + 6;
+    FUN_00019338(pcVar6);
+    uVar3 = 0;
+    unique0x1000008f = pcVar6;
   }
-  return uVar4;
+  return uVar3;
 }
 
 

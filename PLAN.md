@@ -629,23 +629,43 @@ view cannot drift apart.  The library, bottom up:
   without bound.
 - **Bench work:** the open items in `docs/hardware-investigations.md`,
   each with its TODO.
-- **Decompiled C that gcc compiles.**  The goal: the whole of
-  `third_party/firmware/decompiled/z3805a-3543b.c` compiles with
-  `m68k-linux-gnu-gcc -std=gnu17 -mcpu=cpu32 -fno-toplevel-reorder
-  -Wno-error=int-conversion -Wno-error=incompatible-pointer-types`,
-  and its assembly is the image's own bytes.  Done: every routine that
-  is not C is assembly, translated from Ghidra's operands, all 395 of
-  them the image's bytes with every relocation resolved at the image's
-  addresses (`make check-decompiled`); gcc's m68k port has no register
-  parameters, so C could not have said them.  Left: the C's calls whose
-  argument counts or results disagree with their callees' signatures,
-  some 225 errors, to be fixed in the names file's prototypes rather
-  than by loosening the compiler.  Known limits, by design: C calls the
-  assembly through `int NAME();`, which compiles but does not pass
-  register arguments, so the file is a compilable reference, not a
-  working rebuild; that would need bridges for each register
-  convention.  `bcdAdjust` is a stub, and the decompiler's views of
-  the caller's frame (`stack0x...`) are externs with no address.
+- **A rebuild that runs, in readable C.**  Decided 2026-10-20: the
+  goal is C a person can read and change that gcc builds into firmware
+  that runs, not a byte-identical rebuild, which would need the
+  original compiler, unknown (`docs/firmware/README.md`, "The calling
+  convention").  The way there is one function at a time from the
+  original image, which runs: recompile one function with gcc, link it
+  in with the rest still the image's, and before trusting it run it and
+  the original side by side in the emulator the libc and app checks use
+  (`tools/firmware/`), comparing results and memory.  A failure then
+  points at one function, and every step leaves a working image.
+
+  Steps, in order:
+
+  1. The C compiles (`m68k-linux-gnu-gcc -std=gnu17 -mcpu=cpu32
+     -fno-toplevel-reorder`, int/pointer conversions warnings only).
+     Done for the routines that are not C: they are assembly, the
+     image's own bytes (`make check-decompiled`).  Left: some 225
+     calls whose argument counts or results disagree with their
+     callees' signatures, to fix in the names file's prototypes.
+  2. Bridges between gcc's C and the rest: gcc widens `char` and
+     `short` arguments to 4-byte slots where the original passes 2, and
+     the assembly takes its arguments in registers, so each call across
+     needs a generated wrapper, from the conventions the sidecar
+     records.  The kernel internals' `undetermined` conventions must be
+     settled first.
+  3. A link that keeps the ROM's data -- strings, the SCPI tree,
+     descriptors, tables -- at its own addresses, which the code names
+     absolutely, and places the rebuilt functions around it.
+  4. The emulator harness: a function's original and rebuilt code on
+     the same inputs and memory.
+  5. Replace, check, repeat, making the C readable as each function is
+     taken: names for locals, types, the decompiler's idioms undone.
+
+  Costs: the wrappers, the harness and the link; then the long tail of
+  decompiled functions that are wrong in ways only running them shows.
+  A whole image is proven only on a unit or a model of the board.
+
 - **Editing notes from the web view**, through the daemon socket.
   Needs POST bodies in `smartclock-http`, `/api/notes` returning each
   note's `id`, and edit requests keyed by it.

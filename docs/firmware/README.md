@@ -293,6 +293,13 @@ labels analysis put at its late reading's targets; one that had become
 a function's name gives the function back its default name rather than
 deleting it, since deleting a function's name deletes the function.
 
+It recovers the pSOS kernel's service dispatch, in the primary and in
+the installer: a `jsr (d8,PC,D7.w)` into a table of `bra.w`, one a
+service, bounded by the `cmpi.w` before it (`psos.md`).  Analysis
+follows none of them, so without this the kernel's 39 handlers are
+never disassembled.  It disassembles the table, records the `jsr` as
+calling each handler and makes a function of each.
+
 It ends flow at the two instructions that do not come back, by pointing
 each one's fall-through at itself, which the C shows as a loop with a
 comment: `stop`, which ends failure paths, and `trap #5`, which ends
@@ -405,10 +412,10 @@ pointer to one as `foo->bar`.  The declarations compile, taking `long`
 as 32 bits, as on the 68000; a global still accessed as
 `DAT_00100c6e._2_1_` is a record that has no type yet.
 
-In the Z3805A 3543B image this gives 1754 functions, 1448 of them before
-the names, and every one decompiles.  137 switches are recovered;
+In the Z3805A 3543B image this gives 1823 functions, and every one
+decompiles.  137 switches are recovered;
 `0x24ff2` and `0x25140`, a `jmp (d8,PC,D6.w)` with no table load, are
-not.  About half the functions are named.  The output is
+not.  1056 of the functions are named.  The output is
 `third_party/firmware/decompiled/z3805a-3543b.c`.
 
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,

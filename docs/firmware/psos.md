@@ -32,6 +32,40 @@ that takes a name passes it through `0x16f50`, which packs four
 characters into D0.  The I/O stubs, from `0x173ca`, call `0x16f36`.
 The installer has its own copy of the binding, from `0x102a72`.
 
+## Inside the kernel
+
+The handlers are named `kernel_` and the service, or `kernel_service_`
+and its number where no console word names it; services 11 to 15, 17
+and 34 share one that only clears D7, so they do nothing and succeed.
+`movea.l (A6),A5` opens most handlers, loading the running task's
+record; some handlers' bodies after it are entered again by
+`kernel_delete` and `kernel_create`, with A5 the task being deleted
+or created: `kernel_allocate_for_task` (`0x150dc`),
+`kernel_free_for_task` (`0x15132`) and `kernel_send_for_task`
+(`0x1559e`); `kernel_delete` also calls `kernel_signal_task`
+(`0x157f0`), `signal_v`'s body, which ORs the events into a task's
+pending word and wakes it if they satisfy its wait.  `jam_x` is
+`send_x`'s body with A4 set.
+
+A6 holds the kernel's configuration and state throughout.  The ready
+queue is ordered by priority (`kernel_ready_insert`), delays wait in a
+delta list in which each task holds its ticks past the one before
+(`kernel_timer_insert`, `kernel_timer_unlink`), and each tick
+(`kernel_process_ticks`) also ends the running task's time slice and,
+every 24 hours, advances a date kept with a days-in-month table in which
+`kernel_set_leap_year` makes February 28 or 29 days by the Gregorian
+rule.  Memory comes
+from two regions by first fit (`kernel_region_allocate`), each segment
+stamped `0xe1d0`, which `kernel_check_segment` checks before a free.
+Task and exchange IDs carry their record's address, complemented or
+swapped, which `kernel_check_task` and `kernel_check_exchange` compare;
+error 2 is a bad ID, 1 a deleted one and 3 one of another group.
+`kernel_init`, trap #6, carves the configured memory into task records
+of `0xb2` bytes, exchanges of `0x22` and message buffers of `0x18`;
+`kernel_return_from_interrupt`, trap #5, and `kernel_switch_task`, on
+the way out of a service, save the running task's registers in its
+record and switch to the first ready one.
+
 ## Services
 
 The SCPI task's creator, `0x29fce` (`console.md`, "Leaving

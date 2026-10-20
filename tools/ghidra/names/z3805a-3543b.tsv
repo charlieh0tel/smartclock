@@ -679,3 +679,63 @@
 0x1995a	function	forth_digit_char	console.md: a digit as 0-9 or A-Z
 0x1996c	function	forth_print_number	console.md: copies the digits built on the stack into pad and prints them; . and u. call it
 0x1a03c	function	forth_space_if_zero	console.md: a zero byte, Z set, becomes a space; spawn pads a task's name with it
+#
+# the pSOS kernel, psos.md; services by the table at 0x14b6e
+0x14b26	function	kernel_dispatch_service	psos.md: trap #3: the service in D7, 0 to 0x26, through the bra.w table at 0x14b6e; error 0x55 for any other
+0x14c0a	function	kernel_dispatch_io	psos.md: trap #4: I/O function 0 to 5 in D7, the device in D0's high byte
+0x14c7a	function	kernel_switch_task	psos.md: on the way out of the kernel: runs pending ticks, saves the running task's registers in its record and switches to the first ready
+0x14cc6	function	kernel_process_ticks	psos.md: one clock tick: advances the date, runs the tick hook, wakes the tasks whose delays expire and ends the running task's time slice
+0x14da2	function	kernel_service_0	psos.md: service 0
+0x14dac	function	kernel_create	psos.md: service 1, psos_create
+0x14ea0	function	kernel_start	psos.md: service 2, psos_start
+0x14ed2	function	kernel_ident	psos.md: service 3, psos_ident
+0x14ef8	function	kernel_delete	psos.md: service 4, psos_delete
+0x15004	function	kernel_suspend	psos.md: service 5, psos_suspend
+0x15038	function	kernel_resume	psos.md: service 6, psos_resume
+0x1507a	function	kernel_priority	psos.md: service 7, psos_priority
+0x150da	function	kernel_allocate_segment	psos.md: service 8: kernel_allocate_for_task for the running task
+0x150dc	function	kernel_allocate_for_task	psos.md: for the task in A5, allocates from a region through kernel_allocate, or queues the task to wait, with a timeout, when it cannot; kernel_create calls it too
+0x15130	function	kernel_free_segment	psos.md: service 9: kernel_free_for_task for the running task
+0x15132	function	kernel_free_for_task	psos.md: checks a segment by kernel_check_segment and frees it, then satisfies the tasks waiting for memory; kernel_delete calls it
+0x15268	function	kernel_allocate	psos.md: allocates D1 bytes from region 0 or 1 as D2 selects, falling back to the other, and links it to the task's list
+0x1529c	function	kernel_region_allocate	psos.md: first fit from region D6's free list, stamping the segment 0xe1d0
+0x15324	function	kernel_service_10	psos.md: service 10
+0x1532a	function	kernel_service_16	psos.md: service 16
+0x1537a	function	kernel_service_none	psos.md: services 11 to 15, 17 and 34: clears D7 and returns
+0x1537e	function	kernel_create_x	psos.md: service 20, psos_create_x
+0x153e0	function	kernel_service_21	psos.md: service 21
+0x15436	function	kernel_delete_x	psos.md: service 22, psos_delete_x
+0x154ae	function	kernel_service_18	psos.md: service 18
+0x15592	function	kernel_jam_x	psos.md: service 19, psos_jam_x: kernel_send_for_task's body with A4 set, which send_x clears
+0x1559c	function	kernel_send_x	psos.md: service 23, psos_send_x: kernel_send_for_task for the running task
+0x1559e	function	kernel_send_for_task	psos.md: gives a message to the first task waiting at the exchange, or queues it in a buffer by kernel_copy_message; kernel_delete calls it
+0x156ac	function	kernel_copy_message	psos.md: takes a buffer from the free list and copies the message's 20 bytes into it
+0x156d6	function	kernel_request_x	psos.md: service 24, psos_request_x
+0x157e2	function	kernel_signal_v	psos.md: service 25, psos_signal_v
+0x157f0	function	kernel_signal_task	psos.md: checks the task by kernel_check_task, ORs the events in D1 into its pending word at +0x18 and, if they satisfy the wait at +0x16, wakes it; kernel_signal_v and kernel_delete call it
+0x1585a	function	kernel_get_v	psos.md: service 27, psos_get_v: clears D7, then kernel_wait_v
+0x1585c	function	kernel_wait_v	psos.md: service 26, psos_wait_v
+0x158da	function	kernel_mode	psos.md: service 32, psos_mode
+0x158f6	function	kernel_service_33	psos.md: service 33
+0x15904	function	kernel_pause	psos.md: service 28, psos_pause
+0x1592e	function	kernel_service_29	psos.md: service 29
+0x15974	function	kernel_service_30	psos.md: service 30
+0x1599e	function	kernel_service_31	psos.md: service 31
+0x15a10	function	kernel_service_35	psos.md: service 35
+0x15a50	function	kernel_service_36	psos.md: service 36
+0x15a76	function	kernel_service_37	psos.md: service 37
+0x15aa2	function	kernel_service_38	psos.md: service 38
+0x15ac0	function	kernel_advance_date	psos.md: each 24 hours of the kernel's clock: the next day, month and year, by the days-in-month table at 0x79 in the configuration
+0x15b10	function	kernel_set_leap_year	psos.md: February's days in that table, 28 or 29 by the Gregorian rule
+0x15b3a	function	kernel_check_task	psos.md: the task ID in A0, or the running task for 0: error 2 bad ID, 1 deleted, 3 another group's
+0x15b6c	function	kernel_check_exchange	psos.md: the exchange ID in A0: error 2 bad ID, 1 deleted, 3 another group's
+0x15b96	function	kernel_check_segment	psos.md: error 5 unless the segment carries kernel_region_allocate's 0xe1d0
+0x15baa	function	kernel_timer_cancel	psos.md: kernel_timer_unlink, if the task in A2 is in the timer list
+0x15bb0	function	kernel_timer_unlink	psos.md: removes the task in A2 from the delta timer list, giving its remaining ticks to the next
+0x15bde	function	kernel_timer_insert	psos.md: puts the running task in the delta timer list D0 ticks out
+0x15c4c	function	kernel_make_ready	psos.md: clears the task's wait state and, unless suspended, kernel_ready_insert
+0x15c54	function	kernel_ready_insert	psos.md: inserts the task in A2 in the ready queue by priority and resets its time slice
+0x15c96	function	kernel_queue_remove	psos.md: unlinks the task in A5 from its queue
+0x15cd8	function	kernel_init	psos.md: trap #6: carves the configuration's memory into task records (0xb2 bytes), exchanges (0x22) and message buffers (0x18), and starts the kernel
+0x15ece	function	kernel_region_init	psos.md: sets up regions 0 and 1 from the configuration
+0x15f8a	function	kernel_return_from_interrupt	psos.md: trap #5: an interrupt handler's exit, switching tasks if it made a higher one ready

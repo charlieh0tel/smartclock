@@ -42,6 +42,18 @@
 // points 2k bytes into the table, and there are k + 1 cases.  After
 // cmpi #n it runs 0..n.
 //
+// The kernel's service dispatch, in the primary image and in the boot
+// image's copy:
+//
+//     cmpi.w  #n,D7
+//     bhi     error
+//     ...
+//     lsl.w   #2,D7
+//     jsr     (d8,PC,D7.w)
+//
+// The table holds n + 1 bra.w, one a service, each to its handler.
+// Analysis follows none of them.
+//
 //@category SmartClock
 
 import java.nio.file.Files;
@@ -121,6 +133,12 @@ public class SmartClockSetup extends GhidraScript {
 
 	/** Opcode of jmp (d8,PC,Xn); the extension word follows. */
 	private static final int JMP_PC_INDEX = 0x4efb;
+	/** Opcode of jsr (d8,PC,Xn), and of the bra.w each entry of its table holds. */
+	private static final int JSR_PC_INDEX = 0x4ebb;
+	private static final int BRA_W = 0x6000;
+	private static final int BRA_W_LENGTH = 4;
+	/** How far before the service dispatch's jsr to look for its bound check. */
+	private static final int SERVICE_BOUND_SEARCH_BYTES = 32;
 	/**
 	 * move.w (d8,PC,Xn),Dn is 0011 RRR0 0011 1011 and movea.w to An is
 	 * 0011 RRR0 0111 1011; mask out RRR and the data/address bit.
@@ -310,6 +328,7 @@ public class SmartClockSetup extends GhidraScript {
 		labelVectors(PRIMARY_VECTORS, "primary");
 		typeStrings();
 		analyzeChanges(currentProgram);
+		recoverServiceTables();
 		repairFlow();
 		removeDataFunctions();
 		applyNames();
@@ -1136,6 +1155,51 @@ public class SmartClockSetup extends GhidraScript {
 		}
 	}
 
+	/**
+	 * Recovers the kernel's service dispatch: disassembles each bra.w in
+	 * its table, records the jsr as calling each handler, and makes a
+	 * function of each.
+	 */
+	private void recoverServiceTables() throws Exception {
+		int recovered = 0;
+		ReferenceManager references = currentProgram.getReferenceManager();
+		for (Instruction instruction : currentProgram.getListing().getInstructions(true)) {
+			Address jsr = instruction.getAddress();
+			if ((getShort(jsr) & 0xffff) != JSR_PC_INDEX) {
+				continue;
+			}
+			Address table = jsr.add(2 + (byte) getByte(jsr.add(3)));
+			int services = findCompareBound(jsr, SERVICE_BOUND_SEARCH_BYTES);
+			List<Address> handlers = new ArrayList<>();
+			for (int i = 0; i < services; i++) {
+				Address entry = table.add((long) i * BRA_W_LENGTH);
+				if ((getShort(entry) & 0xffff) != BRA_W) {
+					handlers.clear();
+					break;
+				}
+				handlers.add(entry.add(2 + getShort(entry.add(2))));
+			}
+			if (handlers.isEmpty()) {
+				println("unrecognized service table at " + jsr);
+				continue;
+			}
+			clearListing(table, table.add((long) services * BRA_W_LENGTH - 1));
+			for (int i = 0; i < services; i++) {
+				disassemble(table.add((long) i * BRA_W_LENGTH));
+			}
+			for (Address handler : new HashSet<>(handlers)) {
+				references.addMemoryReference(jsr, handler, RefType.COMPUTED_CALL,
+					SourceType.USER_DEFINED, 0);
+				disassemble(handler);
+				if (getFunctionAt(handler) == null) {
+					createFunction(handler, null);
+				}
+			}
+			recovered++;
+		}
+		println("service tables recovered: " + recovered);
+	}
+
 	/** Decodes the switch at jmp, or returns null if its shape is not the known idiom. */
 	private Switch decodeSwitch(Address jmp) throws Exception {
 		Address table = jmp.add(2 + (byte) getByte(jmp.add(3)));
@@ -1157,7 +1221,7 @@ public class SmartClockSetup extends GhidraScript {
 			cases = (int) (-bias / 2) + 1;
 		}
 		else {
-			cases = findCompareBound(move);
+			cases = findCompareBound(move, BOUND_SEARCH_BYTES);
 		}
 		boolean bounded = cases > 0;
 		if (!bounded) {
@@ -1206,11 +1270,11 @@ public class SmartClockSetup extends GhidraScript {
 
 	/**
 	 * Returns the case count from a cmpi #n,Dn or cmpa #n,An followed by a
-	 * bhi in the bytes before the table load, or 0 if none is found.
+	 * bhi in the reach bytes before the table load, or 0 if none is found.
 	 */
-	private int findCompareBound(Address move) throws Exception {
-		for (int back = 2; back <= BOUND_SEARCH_BYTES; back += 2) {
-			Address at = move.subtract(back);
+	private int findCompareBound(Address load, int reach) throws Exception {
+		for (int back = 2; back <= reach; back += 2) {
+			Address at = load.subtract(back);
 			int opcode = getShort(at) & 0xffff;
 			boolean isLong = (opcode & CMPI_REGISTER_MASK) == CMPI_L
 					|| (opcode & CMPA_REGISTER_MASK) == CMPA_L;

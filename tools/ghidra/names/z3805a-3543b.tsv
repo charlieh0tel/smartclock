@@ -1002,3 +1002,53 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4eeac	function	long_array_set	context	stores a long into an array by index
 0x4eec2	function	long_array_get_byte	context	a long's low byte from an array by index, stored and the pointer advanced
 0x4fb54	function	bytes_equal_n	context	1 if two byte strings have the same nonzero length and bytes
+#
+# the root, curv, hmon, klok and scpi tasks' routines
+0x12faa	function	console_init	console.md	allocates the pForth dictionary, defines ps, mem_rep, s_rep and the diagnostic words, opens the console's device and starts its task
+0x1ad28	function	pforth_dictionary_init	console.md	allocates the dictionary's segment through trap #3 and clears its pointers
+0x1ad8a	function	pforth_define_word	console.md	adds a word to the dictionary: links it, copies its name and compiles its code
+0x1c18e	function	diag_words_define	console.md	defines every diagnostic word in the table at 0x1c8ac
+0x1ae46	function	console_set_halt_hook	context	stores the routine the console calls on halt
+0x1ae50	function	console_set_device	context	stores the console's device, 0x200 for device 2
+0x1ae5c	function	console_task_create	context	creates the console's task, p4th, through trap #3
+0x1ae36	function	pforth_link_word	console.md	links the word at A4 to the latest in the dictionary		convention=register; confidence=read; in=A4 void *word; family=pforth
+0x12f30	function	scpi_task_start	restart.md	starts scpi_task_create at priority 0x19
+0x12004	function	periodic_interrupt_enable	context	sets the SIM's PICR: the periodic interrupt at level 5, or off
+0x10400	function	mutex_init	context	mutex_create's inside: creates the mutex's exchange for the name in D0 and clears the mutex at A1		convention=register; confidence=read; in=D0 int name, A1 void *mutex; family=mutex
+0x104d2	function	mutex_clear	context	clears the six longs of the mutex at A1		convention=register; confidence=read; in=A1 void *mutex; family=mutex
+0x3141a	function	log_page_read	context	reads the event log's 64-byte EEPROM page at 0x400d40 plus 0x40 times its number; 0xff if its checksum fails
+0x31536	function	log_erase	context	clears the event log's pages and resets its state, reporting event !
+0x315e8	function	log_erase_locked	context	log_erase under log_mutex
+0x33238	function	reset_record_write	context	writes the next 0x5c-byte reset-cause record at EEPROM 0x4001c0, its time and text, with its checksum
+0x33028	function	reset_record_valid	context	1 if a reset-cause record's checksum holds
+0x32ffa	function	reset_record_checksum	context	a reset-cause record's checksum: the sum of its 0x58 bytes and its complement
+0x2842c	function	status_register_set_enable	context	sets one status register's enable mask, as :ENABle and *ESE do
+0x2f3d0	function	status_enables_init	context	sets the seven status registers' enable masks from the table at 0x2f7a8
+0x42390	function	linear_regression	loop.md's aging fit	the means, Sxx and Sxy of the weighted entries of two arrays
+0x42626	function	float_abs	context	a float's magnitude
+0x41c20	function	fit_constant	loop.md's aging fit	fits the EFC history as a constant, its weighted mean
+0x41ba0	function	fit_linear	loop.md's aging fit	fits the EFC history as a line in time, by linear_regression
+0x41a42	function	fit_linear_halves	loop.md's aging fit	a slope from the two halves of the last 64 averages, and its residuals
+0x41c8e	function	fit_logarithmic	loop.md's aging fit	fits the EFC history with a term in log time, searching its coefficient in steps a tenth as large each pass
+0x41e32	function	fit_log_initial	loop.md's aging fit	the log term's first coefficient and step
+0x41f2a	function	fit_log_search	loop.md's aging fit	steps the log term's coefficient while the fit improves
+0x42092	function	fit_log_residuals	loop.md's aging fit	the history less the log term, regressed on time
+0x41d30	function	fit_span	loop.md's aging fit	the first and last sample times among the weighted entries
+0x41dcc	function	fit_evaluate_latest	loop.md's aging fit	the fit at the latest sample, and its residual
+0x42128	function	fit_three_point	loop.md's aging fit	solves a curve through three points
+0x42644	function	fit_quality	loop.md's aging fit	half the summed squares of successive residuals' differences, scaled to the span
+0x2421c	function	efc_write_dithered	context	writes the EFC rounded, plus random_dither, clamped to 0 to 0xffff0
+0x12af2	function	random_dither	context	a small signed random value: rand, shaped by the table at 0x12ab0
+0x1223c	function	double_round_to_long	context	a double rounded half away from zero to a long, saturating
+0x23c5a	function	monitor_average_add	context	adds a reading to a monitor's 10-sample moving average
+0x23cc4	function	monitor_filter_add	context	adds a reading to a monitor's filter, 0.9 of the old and 0.1 of the new
+0x23d28	function	monitor_out_of_range	context	counts a monitor's readings outside its range, true once past a limit
+0x23c2a	function	monitors_reset	context	clears the health monitor's seven monitors at 0x101b9e
+0x1e126	function	duart_output_bits	context	sets and clears the DUART's output port bits, interrupts held off
+0x242de	function	efc_clamp_reset	context	clears efc_clamp's flags
+0x10b62	function	klok_run_due	context	runs the clock list's due entries and reschedules the periodic ones, under klok_mutex
+0x12e9e	function	pps_wait_time	context	waits up to 1200 ticks on pps_exchange for the next 1PPS and returns its time and date
+0x1303c	function	klok_take_pending	context	takes and clears the pending cell at 0x10382c
+0x1dee6	function	scpi_port_open	context	opens the SCPI port, device 0
+0x29b42	function	scpi_session_init	context	clears the SCPI input, opens the port and prompts
+0x29d98	function	status_update_rqs	context	sets or clears RQS, 0x40, in the status byte from the service request enable

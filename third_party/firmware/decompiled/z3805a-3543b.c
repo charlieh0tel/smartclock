@@ -3696,10 +3696,15 @@ LAB_0000983c:
 
 /* 00010400 */
 
-void FUN_00010400(void)
+/* mutex_create's inside: creates the mutex's exchange for the name in D0 and clears the mutex at A1
+   Not a C function (register; read): its arguments and results in registers.  In: D0 int name, A1
+   void *mutex. */
+
+__regcall void mutex_init(int name __asm("d0"),void *mutex __asm("a1"))
 
 {
   undefined4 extraout_A0;
+  void *mutex_00;
   int extraout_A1;
   bool bVar1;
   
@@ -3709,7 +3714,7 @@ void FUN_00010400(void)
     bVar1 = false;
     psos_call();
     if (bVar1) {
-      FUN_000104d2();
+      mutex_clear(mutex_00);
       *(undefined4 *)(extraout_A1 + 4) = extraout_A0;
       psos_call();
     }
@@ -3787,19 +3792,22 @@ __regcall int mutex_release(void *mutex __asm("a1")) /* out D7 int error; error 
 
 /* 000104d2 */
 
-undefined8 FUN_000104d2(void)
+/* clears the six longs of the mutex at A1
+   Not a C function (register; read): its arguments and results in registers.  In: A1 void *mutex.
+    */
+
+__regcall undefined8 mutex_clear(void *mutex __asm("a1"))
 
 {
   undefined4 in_D0;
   short sVar1;
   undefined4 in_D1;
-  undefined4 *in_A1;
   
   sVar1 = 5;
   do {
-    *in_A1 = 0;
+    *(undefined4 *)mutex = 0;
     sVar1 = sVar1 + -1;
-    in_A1 = in_A1 + 1;
+    mutex = (undefined4 *)((int)mutex + 4);
   } while (sVar1 != -1);
   return CONCAT44(in_D0,in_D1);
 }
@@ -3814,10 +3822,11 @@ undefined8 FUN_000104d2(void)
 int mutex_create(char *name,void *mutex)
 
 {
+  int name_00;
   int unaff_D7;
   
-  psos_pack_name();
-  FUN_00010400();
+  name_00 = psos_pack_name();
+  mutex_init(name_00,mutex);
   return unaff_D7;
 }
 
@@ -4258,10 +4267,10 @@ void klok_task(void)
 {
   psos_service_33();
   do {
-    FUN_00012e9e(0x1037ac,0x1037b0,1);
-    _DAT_001037cc = FUN_0001303c();
+    pps_wait_time(0x1037ac,0x1037b0,1);
+    _DAT_001037cc = klok_take_pending();
     if (klok_entries != (klok_entry *)0x0) {
-      FUN_00010b62();
+      klok_run_due();
     }
     watchdog_clock = watchdog_clock + 1;
   } while( true );
@@ -4270,7 +4279,9 @@ void klok_task(void)
 
 /* 00010b62 */
 
-void FUN_00010b62(void)
+/* runs the clock list's due entries and reschedules the periodic ones, under klok_mutex */
+
+void klok_run_due(void)
 
 {
   int iVar1;
@@ -5306,8 +5317,9 @@ __exception void primary_user_66(void)
 /* 00012004 */
 
 /* WARNING: Unknown calling convention */
+/* sets the SIM's PICR: the periodic interrupt at level 5, or off */
 
-void FUN_00012004(char param_1)
+void periodic_interrupt_enable(char param_1)
 
 {
   if (param_1 == '\0') {
@@ -5370,7 +5382,7 @@ void shutdown(void)
   ushort uVar1;
   byte bVar2;
   
-  FUN_00012004('\0');
+  periodic_interrupt_enable('\0');
   uVar1 = Ram00fff920;
   Ram00fff920 = uVar1 & 0xf;
   SPCR1 = 0;
@@ -5526,7 +5538,9 @@ int FUN_00012206(int param_1,uint param_2)
 
 /* 0001223c */
 
-int FUN_0001223c(double param_1)
+/* a double rounded half away from zero to a long, saturating */
+
+int double_round_to_long(double param_1)
 
 {
   int iVar1;
@@ -5697,7 +5711,9 @@ undefined4 FUN_000129d0(short param_1)
 
 /* 00012af2 */
 
-int FUN_00012af2(void)
+/* a small signed random value: rand, shaped by the table at 0x12ab0 */
+
+int random_dither(void)
 
 {
   int iVar1;
@@ -5945,8 +5961,9 @@ undefined4 FUN_00012e6c(void)
 /* 00012e9e */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* waits up to 1200 ticks on pps_exchange for the next 1PPS and returns its time and date */
 
-undefined4 FUN_00012e9e(undefined4 *param_1,undefined4 *param_2,int param_3)
+undefined4 pps_wait_time(undefined4 *param_1,undefined4 *param_2,int param_3)
 
 {
   undefined4 uVar1;
@@ -5984,8 +6001,10 @@ void enter_installer(void)
 /* 00012f30 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* starts scpi_task_create at priority 0x19
+   restart.md */
 
-void FUN_00012f30(void)
+void scpi_task_start(void)
 
 {
   FUN_00020d66(scpi_task_create,0x19,0,0);
@@ -6014,19 +6033,22 @@ void console_halt_hook(void)
 /* 00012faa */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* allocates the pForth dictionary, defines ps, mem_rep, s_rep and the diagnostic words, opens the
+   console's device and starts its task
+   console.md */
 
-void FUN_00012faa(void)
+void console_init(void)
 
 {
-  FUN_0001ad28(0x1000);
-  FUN_0001ae46(console_halt_hook);
-  FUN_0001ad8a("ps",&LAB_00012f86,0,0);
-  FUN_0001ad8a("mem_rep",&LAB_00012f92,0,0);
-  FUN_0001ad8a("s_rep",&LAB_00012f9e,0,0);
-  FUN_0001c18e();
+  pforth_dictionary_init(0x1000);
+  console_set_halt_hook(console_halt_hook);
+  pforth_define_word("ps",&LAB_00012f86,0,0);
+  pforth_define_word("mem_rep",&LAB_00012f92,0,0);
+  pforth_define_word("s_rep",&LAB_00012f9e,0,0);
+  diag_words_define();
   psos_io_control(0x200,0x18dbc,0);
-  FUN_0001ae50(0x200);
-  _DAT_001037e8 = FUN_0001ae5c(0x200,0x200,0x180,0x32);
+  console_set_device(0x200);
+  _DAT_001037e8 = console_task_create(0x200,0x200,0x180,0x32);
   return;
 }
 
@@ -6034,8 +6056,9 @@ void FUN_00012faa(void)
 /* 0001303c */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* takes and clears the pending cell at 0x10382c */
 
-undefined4 FUN_0001303c(void)
+undefined4 klok_take_pending(void)
 
 {
   undefined4 uVar1;
@@ -6060,13 +6083,13 @@ void root_task(void)
   _DAT_0010382c = 0;
   task_root = psos_my_pid();
   enter_supervisor();
-  FUN_00012004('\x01');
+  periodic_interrupt_enable('\x01');
   DAT_001037dc = 1;
   eeprom_init();
   status_init();
   log_init();
   if (_DAT_00100c34 != 0) {
-    FUN_000315e8(4);
+    log_erase_locked(4);
     log_clear();
   }
   psos_create_x("gpsx",0,0,&gpsx_exchange);
@@ -6083,10 +6106,10 @@ void root_task(void)
   psos_start(task_pllp,pllp_task);
   psos_start(task_curv,curv_task);
   if (nv_settings.pforth_at_startup == 0) {
-    FUN_00012f30();
+    scpi_task_start();
   }
   else {
-    FUN_00012faa();
+    console_init();
   }
   do {
                     /* WARNING: Do nothing block with infinite loop */
@@ -14211,7 +14234,7 @@ short FUN_00018c9c(void)
   DAT_00100c48 = 0;
   FUN_000189f2();
   if (DAT_00100c48 != 0) {
-    FUN_0001e126(0x80,0);
+    duart_output_bits(0x80,0);
   }
   return DAT_00100c48;
 }
@@ -14227,7 +14250,7 @@ short FUN_00018cec(void)
   _DAT_00100c3a = 0;
   FUN_000406c8();
   if (_DAT_00100c3a != 0) {
-    FUN_0001e126(0x80,0);
+    duart_output_bits(0x80,0);
   }
   return _DAT_00100c3a;
 }
@@ -14243,7 +14266,7 @@ short FUN_00018d16(void)
   _DAT_00100c46 = 0;
   FUN_000184a4();
   if (_DAT_00100c46 != 0) {
-    FUN_0001e126(0x80,0);
+    duart_output_bits(0x80,0);
   }
   return _DAT_00100c46;
 }
@@ -18432,8 +18455,10 @@ __pforth void forth_user(long *sp)
 
 /* WARNING: Removing unreachable block (ram,0x0001ad42) */
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* allocates the dictionary's segment through trap #3 and clears its pointers
+   console.md */
 
-void FUN_0001ad28(void)
+void pforth_dictionary_init(void)
 
 {
   __m68k_trap(3);
@@ -18447,8 +18472,10 @@ void FUN_0001ad28(void)
 /* 0001ad8a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* adds a word to the dictionary: links it, copies its name and compiles its code
+   console.md */
 
-undefined4 FUN_0001ad8a(char *param_1,undefined4 param_2,int param_3,short param_4)
+undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,short param_4)
 
 {
   char cVar1;
@@ -18467,7 +18494,7 @@ undefined4 FUN_0001ad8a(char *param_1,undefined4 param_2,int param_3,short param
     if (((uint)ram0x001009f2 & 1) != 0) {
       pcVar6 = ram0x001009f2 + 1;
     }
-    FUN_0001ae36();
+    pforth_link_word(pcVar6);
     pcVar6[0] = '\0';
     pcVar6[1] = '\0';
     pcVar6[2] = '\0';
@@ -18514,21 +18541,24 @@ undefined4 FUN_0001ad8a(char *param_1,undefined4 param_2,int param_3,short param
 /* 0001ae36 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* links the word at A4 to the latest in the dictionary
+   Not a C function (register; read): its arguments and results in registers.  In: A4 void *word.
+   console.md */
 
-void FUN_0001ae36(void)
+__regcall void pforth_link_word(void *word __asm("a4"))
 
 {
-  undefined4 *unaff_A4;
-  
-  *unaff_A4 = ram0x001009ee;
-  ram0x001009ee = unaff_A4;
+  *(void **)word = ram0x001009ee;
+  ram0x001009ee = word;
   return;
 }
 
 
 /* 0001ae46 */
 
-void FUN_0001ae46(void *param_1)
+/* stores the routine the console calls on halt */
+
+void console_set_halt_hook(void *param_1)
 
 {
   console_halt_hook_cell = param_1;
@@ -18539,8 +18569,9 @@ void FUN_0001ae46(void *param_1)
 /* 0001ae50 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* stores the console's device, 0x200 for device 2 */
 
-void FUN_0001ae50(undefined2 param_1)
+void console_set_device(undefined2 param_1)
 
 {
   _DAT_00100a02 = param_1;
@@ -18553,8 +18584,9 @@ void FUN_0001ae50(undefined2 param_1)
 /* WARNING: Removing unreachable block (ram,0x0001aea4) */
 /* WARNING: Removing unreachable block (ram,0x0001aebe) */
 /* WARNING: Removing unreachable block (ram,0x0001aecc) */
+/* creates the console's task, p4th, through trap #3 */
 
-undefined4 FUN_0001ae5c(void)
+undefined4 console_task_create(void)
 
 {
   __m68k_trap(3);
@@ -20556,15 +20588,18 @@ void diag_fp_u(void)
 
 /* 0001c18e */
 
-void FUN_0001c18e(void)
+/* defines every diagnostic word in the table at 0x1c8ac
+   console.md */
+
+void diag_words_define(void)
 
 {
   undefined **ppuVar1;
   
   for (ppuVar1 = &PTR_diag_cal_0001c8ac; *ppuVar1 != (undefined *)0x0;
       ppuVar1 = (undefined **)((int)ppuVar1 + 0x26)) {
-    FUN_0001ad8a(ppuVar1 + 1,*ppuVar1,*(undefined4 *)((int)ppuVar1 + 0x1e),
-                 *(undefined4 *)((int)ppuVar1 + 0x22));
+    pforth_define_word(ppuVar1 + 1,*ppuVar1,*(undefined4 *)((int)ppuVar1 + 0x1e),
+                       *(undefined4 *)((int)ppuVar1 + 0x22));
   }
   return;
 }
@@ -21161,7 +21196,9 @@ ulong FUN_0001debc(void *param_1,ulong param_2,undefined1 *param_3)
 
 /* 0001dee6 */
 
-void FUN_0001dee6(void)
+/* opens the SCPI port, device 0 */
+
+void scpi_port_open(void)
 
 {
   psos_io_open(0,0);
@@ -21282,8 +21319,9 @@ void FUN_0001e02c(char param_1)
 /* 0001e126 */
 
 /* WARNING: Unknown calling convention */
+/* sets and clears the DUART's output port bits, interrupts held off */
 
-void FUN_0001e126(byte param_1,byte param_2)
+void duart_output_bits(byte param_1,byte param_2)
 
 {
   uint16_t sr;
@@ -24504,7 +24542,9 @@ undefined1 FUN_00023980(byte param_1,char param_2)
 
 /* 00023c2a */
 
-int FUN_00023c2a(void)
+/* clears the health monitor's seven monitors at 0x101b9e */
+
+int monitors_reset(void)
 
 {
   int iVar1;
@@ -24529,7 +24569,9 @@ int FUN_00023c2a(void)
 
 /* 00023c5a */
 
-void FUN_00023c5a(int param_1,undefined4 param_2)
+/* adds a reading to a monitor's 10-sample moving average */
+
+void monitor_average_add(int param_1,undefined4 param_2)
 
 {
   uint uVar1;
@@ -24557,7 +24599,9 @@ void FUN_00023c5a(int param_1,undefined4 param_2)
 
 /* 00023cc4 */
 
-void FUN_00023cc4(int param_1,float param_2)
+/* adds a reading to a monitor's filter, 0.9 of the old and 0.1 of the new */
+
+void monitor_filter_add(int param_1,float param_2)
 
 {
   float fVar1;
@@ -24585,8 +24629,9 @@ void FUN_00023cc4(int param_1,float param_2)
 /* 00023d28 */
 
 /* WARNING: Unknown calling convention */
+/* counts a monitor's readings outside its range, true once past a limit */
 
-bool FUN_00023d28(int param_1,float param_2,float param_3,byte param_4)
+bool monitor_out_of_range(int param_1,float param_2,float param_3,byte param_4)
 
 {
   bool bVar1;
@@ -24638,8 +24683,8 @@ void hmon_check_supplies(void)
     goto LAB_000240e6;
   case 0x1c:
     fVar2 = read_adc_5v();
-    FUN_00023c5a(0x32,SUB41(fVar2,0));
-    cVar3 = FUN_00023d28(0x101c32,4.5,5.5,5);
+    monitor_average_add(0x32,SUB41(fVar2,0));
+    cVar3 = monitor_out_of_range(0x101c32,4.5,5.5,5);
     if (cVar3 == '\0') {
       if (cRam00101c60 != '\0') {
         task_debug_message("5V is now within tolerance\r\n");
@@ -24660,8 +24705,9 @@ void hmon_check_supplies(void)
     break;
   case 0xce:
     fVar2 = read_adc_doven();
-    FUN_00023c5a(0xa2,SUB41(fVar2,0));
-    if ((DAT_00101b71 == '\0') || (cVar3 = FUN_00023d28(0x101ba2,-1e+37,6.8,5), cVar3 == '\0')) {
+    monitor_average_add(0xa2,SUB41(fVar2,0));
+    if ((DAT_00101b71 == '\0') ||
+       (cVar3 = monitor_out_of_range(0x101ba2,-1e+37,6.8,5), cVar3 == '\0')) {
       if (DAT_00101bd0 != '\0') {
         task_debug_message("Secondary oven voltage is now within tolerance\r\n");
         status_happening('?');
@@ -24686,8 +24732,8 @@ void hmon_check_supplies(void)
     goto LAB_000240e6;
   case 0x19c:
     fVar2 = read_adc_p15v();
-    FUN_00023c5a(0xd2,SUB41(fVar2,0));
-    cVar3 = FUN_00023d28(0x101bd2,14.0,16.0,5);
+    monitor_average_add(0xd2,SUB41(fVar2,0));
+    cVar3 = monitor_out_of_range(0x101bd2,14.0,16.0,5);
     if (cVar3 == '\0') {
       if (cRam00101c00 != '\0') {
         task_debug_message("15V is now within tolerance\r\n");
@@ -24708,8 +24754,8 @@ void hmon_check_supplies(void)
     break;
   case 0x24e:
     fVar2 = read_adc_m15v();
-    FUN_00023c5a(0x92,SUB41(fVar2,0));
-    cVar3 = FUN_00023d28(0x101c92,-16.0,-14.0,5);
+    monitor_average_add(0x92,SUB41(fVar2,0));
+    cVar3 = monitor_out_of_range(0x101c92,-16.0,-14.0,5);
     if (cVar3 == '\0') {
       if (cRam00101cc0 != '\0') {
         task_debug_message("-15V is now within tolerance\r\n");
@@ -24730,14 +24776,14 @@ void hmon_check_supplies(void)
     break;
   case 0x2fa:
     fVar2 = read_adc_osc_curr();
-    FUN_00023cc4(2,SUB41(fVar2,0));
+    monitor_filter_add(2,SUB41(fVar2,0));
     break;
   case 0x310:
     uVar5 = 0xc2;
     fVar2 = read_adc_ant_curr();
     uVar4 = SUB41(fVar2,0);
 LAB_000240e6:
-    FUN_00023c5a(uVar5,uVar4);
+    monitor_average_add(uVar5,uVar4);
   }
 LAB_000240f0:
   DAT_00101cf2 = DAT_00101cf2 + 1;
@@ -24846,7 +24892,9 @@ bool oven_warmed_up(void)
 
 /* 0002421c */
 
-void FUN_0002421c(void)
+/* writes the EFC rounded, plus random_dither, clamped to 0 to 0xffff0 */
+
+void efc_write_dithered(void)
 
 {
   int iVar1;
@@ -24854,14 +24902,14 @@ void FUN_0002421c(void)
   double dVar3;
   
   dVar3 = float_to_double(pll.efc);
-  iVar1 = FUN_0001223c(dVar3);
+  iVar1 = double_round_to_long(dVar3);
   if (iVar1 < 0) {
 LAB_0002423a:
     iVar2 = 0;
   }
   else {
     if (iVar1 < 0xffff1) {
-      iVar2 = FUN_00012af2();
+      iVar2 = random_dither();
       iVar2 = iVar2 + iVar1;
       if (iVar2 < 0) goto LAB_0002423a;
       if (iVar2 < 0xffff1) goto LAB_0002425e;
@@ -24909,7 +24957,9 @@ float efc_clamp(float param_1)
 
 /* 000242de */
 
-void FUN_000242de(void)
+/* clears efc_clamp's flags */
+
+void efc_clamp_reset(void)
 
 {
   DAT_00101cf4 = 0;
@@ -25024,18 +25074,18 @@ void log_reset_cause(void)
               last_exception.name,(uint)last_exception.vector,last_exception.pc,
               (uint)last_exception.sr,last_exception.address);
     }
-    FUN_00033238(local_c,local_8,local_5c);
+    reset_record_write(local_c,local_8,local_5c);
   }
   if (crash_message[0] != '\0') {
     strncpy(local_5c,crash_message,0x50);
     local_d = 0;
-    FUN_00033238(local_c,local_8,local_5c);
+    reset_record_write(local_c,local_8,local_5c);
   }
   if (((_DAT_001009b0 == 0) && (crash_message[0] == '\0')) && (last_exception.pending == 0)) {
     sprintf(local_5c,"Watchdog timeout: clk %1d gps %4d mon %4d pll %1d spl %1d",
             (uint)watchdog_clock,(uint)watchdog_gps,(uint)watchdog_monitor,(uint)watchdog_pll,
             (uint)watchdog_spool);
-    FUN_00033238(local_c,local_8,local_5c);
+    reset_record_write(local_c,local_8,local_5c);
   }
   last_exception.pending = 0;
   crash_message[0] = '\0';
@@ -25230,12 +25280,12 @@ void hmon_task(void)
   uVar5 = 0;
   bVar3 = false;
   _DAT_001009b0 = 8;
-  FUN_00023c2a();
-  FUN_000242de();
+  monitors_reset();
+  efc_clamp_reset();
   psos_get_v(1,0,(ulong *)0x0);
   do {
     uVar4 = psos_wait_v(1,0,0,(ulong *)0x0);
-    FUN_0002421c();
+    efc_write_dithered();
     if ((uVar4 & 0xff) == 0) {
       watchdog_monitor = watchdog_monitor + 1;
     }
@@ -25252,7 +25302,7 @@ void hmon_task(void)
         bVar8 = 4;
         bVar7 = 0;
       }
-      FUN_0001e126(bVar7,bVar8);
+      duart_output_bits(bVar7,bVar8);
     }
     if (gps.field_52a[0x12] != 0) {
       DAT_00101cfa = '\x01';
@@ -28927,7 +28977,9 @@ void FUN_000283d2(int param_1,int param_2,uint *param_3)
 
 /* 0002842c */
 
-void FUN_0002842c(int param_1,int param_2,ushort param_3)
+/* sets one status register's enable mask, as :ENABle and *ESE do */
+
+void status_register_set_enable(int param_1,int param_2,ushort param_3)
 
 {
   int iVar1;
@@ -29843,8 +29895,9 @@ void scpi_prompt(int param_1)
 /* 00029b42 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* clears the SCPI input, opens the port and prompts */
 
-undefined4 FUN_00029b42(void)
+undefined4 scpi_session_init(void)
 
 {
   DAT_00102a46 = 0;
@@ -29852,9 +29905,9 @@ undefined4 FUN_00029b42(void)
   _DAT_00102c52 = &DAT_00102b4e;
   _DAT_00102c4e = &DAT_00102b4e;
   DAT_00102b4e = 0;
-  FUN_0001dee6();
+  scpi_port_open();
   scpi_prompt(0);
-  FUN_00029d98();
+  status_update_rqs();
   return 0x29e18;
 }
 
@@ -30006,7 +30059,7 @@ void FUN_00029d50(undefined4 param_1,byte param_2)
 
 {
   DAT_00102b4c = param_2 | DAT_00102b4c;
-  FUN_00029d98();
+  status_update_rqs();
   return;
 }
 
@@ -30017,7 +30070,7 @@ void FUN_00029d62(undefined4 param_1,byte param_2)
 
 {
   DAT_00102b4c = ~param_2 & DAT_00102b4c;
-  FUN_00029d98();
+  status_update_rqs();
   return;
 }
 
@@ -30028,14 +30081,16 @@ void FUN_00029d76(undefined4 param_1,undefined1 param_2)
 
 {
   DAT_00102b4d = param_2;
-  FUN_00029d98();
+  status_update_rqs();
   return;
 }
 
 
 /* 00029d98 */
 
-void FUN_00029d98(void)
+/* sets or clears RQS, 0x40, in the status byte from the service request enable */
+
+void status_update_rqs(void)
 
 {
   status_request_service =
@@ -30288,7 +30343,7 @@ void scpi_task(void)
   uVar1 = psos_service_8(2000,0,1,0,&local_8);
   if ((uVar1 & 0xff) == 0) {
     DAT_00102c63 = 1;
-    iVar2 = FUN_00029b42();
+    iVar2 = scpi_session_init();
     if (iVar2 == 0) {
       console_write("scpi: error opening stream\n");
     }
@@ -30298,7 +30353,7 @@ void scpi_task(void)
       (**(code **)(*(int *)(iVar2 + 4) + 4))(iVar2);
       if (scpi_language == 0) {
         psos_priority(0,0x33,(uchar *)0x0);
-        FUN_00020d66(FUN_00012faa,0,0,0);
+        FUN_00020d66(console_init,0,0,0);
       }
       else if (scpi_language == 1) {
         enter_installer();
@@ -30370,7 +30425,7 @@ undefined4 scpi_set_common_ESE(int param_1)
     iVar1 = return_zero();
     pllc_request_c(&scpi_param_STATus_ENABle,1,(int)*(short *)(param_1 + 2),(undefined4 *)0x0,
                    (char)iVar1);
-    FUN_0002842c(status_object,1,(short)nv_settings.status_enable[1]);
+    status_register_set_enable(status_object,1,(short)nv_settings.status_enable[1]);
   }
   return 0;
 }
@@ -30496,7 +30551,7 @@ undefined4 scpi_set_common_SRE(int param_1)
     iVar1 = return_zero();
     pllc_request_c(&scpi_param_STATus_ENABle,0,(int)*(short *)(param_1 + 2),(undefined4 *)0x0,
                    (char)iVar1);
-    FUN_0002842c(status_object,0,(short)nv_settings.status_enable[0]);
+    status_register_set_enable(status_object,0,(short)nv_settings.status_enable[0]);
   }
   return 0;
 }
@@ -30663,7 +30718,8 @@ undefined4 scpi_set_STATus_OPERation_ENABle(short *param_1)
     iVar1 = return_zero();
     pllc_request_c(&scpi_param_STATus_ENABle,(char)*param_1,(int)unaff_D2w,(undefined4 *)0x0,
                    (char)iVar1);
-    FUN_0002842c(status_object,(int)*param_1,(short)nv_settings.status_enable[*param_1]);
+    status_register_set_enable
+              (status_object,(int)*param_1,(short)nv_settings.status_enable[*param_1]);
   }
   return 0;
 }
@@ -30832,8 +30888,9 @@ undefined4 scpi_set_STATus_OPERation_HARDware_ENABle(int param_1)
     iVar1 = return_zero();
     pllc_request_c(&scpi_param_STATus_ENABle,(char)*(undefined2 *)(param_1 + 2),(int)unaff_D2w,
                    (undefined4 *)0x0,(char)iVar1);
-    FUN_0002842c(status_object,(int)*(short *)(param_1 + 2),
-                 (short)nv_settings.status_enable[*(short *)(param_1 + 2)]);
+    status_register_set_enable
+              (status_object,(int)*(short *)(param_1 + 2),
+               (short)nv_settings.status_enable[*(short *)(param_1 + 2)]);
   }
   return 0;
 }
@@ -31495,7 +31552,7 @@ undefined4 scpi_set_DIAGnostic_LOG_CLEar(int param_1)
   
   if (*(short *)(param_1 + 2) == -1) {
     iVar1 = return_zero();
-    sVar2 = FUN_000315e8((byte)iVar1);
+    sVar2 = log_erase_locked((byte)iVar1);
   }
   else {
     iVar1 = return_zero();
@@ -35995,7 +36052,7 @@ undefined4 FUN_0002f34e(char param_1,char param_2,short param_3,short param_4)
                     /* WARNING: Switch is manually overridden */
       switch((&WORD_0002f38a)[(short)iVar1]) {
       case 6:
-        FUN_0002842c(status_object,(int)param_3,(int)param_4);
+        status_register_set_enable(status_object,(int)param_3,(int)param_4);
         break;
       case 0x18:
         FUN_0002889a(status_object,param_3 + 2,(int)param_4);
@@ -36015,14 +36072,17 @@ undefined4 FUN_0002f34e(char param_1,char param_2,short param_3,short param_4)
 
 /* 0002f3d0 */
 
-void FUN_0002f3d0(void)
+/* sets the seven status registers' enable masks from the table at 0x2f7a8 */
+
+void status_enables_init(void)
 
 {
   byte bVar1;
   
   bVar1 = 0;
   do {
-    FUN_0002842c(status_object,(uint)bVar1,**(undefined4 **)(&USHORT_0002f7a8 + (uint)bVar1 * 0xb));
+    status_register_set_enable
+              (status_object,(uint)bVar1,**(undefined4 **)(&USHORT_0002f7a8 + (uint)bVar1 * 0xb));
     bVar1 = bVar1 + 1;
   } while (bVar1 < 7);
   return;
@@ -36074,7 +36134,7 @@ int status_init(void)
                  *(undefined1 *)(&USHORT_0002f79e + uVar3 * 0xb),(&USHORT_0002f7a0)[uVar3 * 0xb],0);
       bVar4 = bVar4 + 1;
     } while (bVar4 < 7);
-    FUN_0002f3d0();
+    status_enables_init();
     questionable_user_done();
     status_ready = '\x01';
     iVar1 = 0;
@@ -38108,8 +38168,10 @@ undefined4 FUN_000313a4(byte param_1,short *param_2)
 /* 0003141a */
 
 /* WARNING: Unknown calling convention */
+/* reads the event log's 64-byte EEPROM page at 0x400d40 plus 0x40 times its number; 0xff if its
+   checksum fails */
 
-undefined4 FUN_0003141a(byte param_1,undefined4 *param_2)
+undefined4 log_page_read(byte param_1,undefined4 *param_2)
 
 {
   short sVar1;
@@ -38169,8 +38231,9 @@ uint FUN_0003145a(uint param_1,byte param_2)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* clears the event log's pages and resets its state, reporting event ! */
 
-char FUN_00031536(byte param_1)
+char log_erase(byte param_1)
 
 {
   char cVar1;
@@ -38206,15 +38269,16 @@ char FUN_00031536(byte param_1)
 /* 000315e8 */
 
 /* WARNING: Unknown calling convention */
+/* log_erase under log_mutex */
 
-int FUN_000315e8(byte param_1)
+int log_erase_locked(byte param_1)
 
 {
   int iVar1;
   
   iVar1 = mutex_lock(&log_mutex);
   if (iVar1 == 0) {
-    iVar1 = FUN_00031536(param_1);
+    iVar1 = log_erase(param_1);
     mutex_unlock(&log_mutex);
   }
   return iVar1;
@@ -38234,7 +38298,7 @@ int FUN_0003161a(int param_1,byte param_2)
   iVar1 = mutex_lock(&log_mutex);
   if (iVar1 == 0) {
     if (param_1 == _DAT_00101dd8) {
-      iVar1 = FUN_00031536(param_2);
+      iVar1 = log_erase(param_2);
     }
     else {
       iVar1 = 0xff;
@@ -38278,7 +38342,7 @@ int log_init(void)
     log_page_number = -1;
     iVar1 = 0;
     iVar2 = _DAT_00101d90;
-    while (_DAT_00101d90 = iVar2, iVar2 = FUN_0003141a((byte)iVar1,(undefined4 *)0x101d4e),
+    while (_DAT_00101d90 = iVar2, iVar2 = log_page_read((byte)iVar1,(undefined4 *)0x101d4e),
           iVar2 != 0xff) {
       if (iVar2 != 0) {
         return iVar2;
@@ -38341,7 +38405,7 @@ int log_read(int param_1,char *param_2,char *param_3)
     }
     iVar4 = 0;
     if (local_14 != log_page_number) {
-      iVar4 = FUN_0003141a((byte)((ulonglong)lVar6 >> 0x20),&log_page_buffer.field_00);
+      iVar4 = log_page_read((byte)((ulonglong)lVar6 >> 0x20),&log_page_buffer.field_00);
       log_page_number = (int16_t)((ulonglong)lVar6 >> 0x20);
       if (iVar4 != 0) {
         log_page_clear(&log_page_buffer);
@@ -39478,7 +39542,9 @@ undefined4 FUN_00032f00(void)
 
 /* 00032ffa */
 
-undefined2 FUN_00032ffa(int param_1)
+/* a reset-cause record's checksum: the sum of its 0x58 bytes and its complement */
+
+undefined2 reset_record_checksum(int param_1)
 
 {
   byte bVar1;
@@ -39497,12 +39563,14 @@ undefined2 FUN_00032ffa(int param_1)
 
 /* 00033028 */
 
-bool FUN_00033028(byte param_1)
+/* 1 if a reset-cause record's checksum holds */
+
+bool reset_record_valid(byte param_1)
 
 {
   short sVar1;
   
-  sVar1 = FUN_00032ffa((uint)param_1 * 0x5c + 0x4001c0);
+  sVar1 = reset_record_checksum((uint)param_1 * 0x5c + 0x4001c0);
   return sVar1 == *(short *)((uint)param_1 * 0x5c + 0x4001c2);
 }
 
@@ -39528,7 +39596,7 @@ int log_clear(void)
   local_d = 0;
   iVar2 = 0;
   do {
-    cVar1 = FUN_00033028((byte)iVar2);
+    cVar1 = reset_record_valid((byte)iVar2);
     if (cVar1 != '\0') {
       cVar1 = eeprom_write(iVar2 * 0x5c + 0x4001c2,(short)&local_e,2);
       if (cVar1 == '\0') {
@@ -39540,7 +39608,7 @@ int log_clear(void)
   log_entry_count = 0;
   if (iVar3 == 0) {
     get_date_time(&local_c,&local_8);
-    FUN_00033238(local_c,local_8,"Log cleared");
+    reset_record_write(local_c,local_8,"Log cleared");
   }
   return iVar3;
 }
@@ -39572,7 +39640,7 @@ void FUN_00033114(void)
   log_entry_count = 0;
   bVar2 = 0;
   do {
-    cVar1 = FUN_00033028(bVar2);
+    cVar1 = reset_record_valid(bVar2);
     if (cVar1 == '\0') {
       return;
     }
@@ -39608,7 +39676,7 @@ undefined4 log_entry_text(int param_1,char *param_2,char *param_3)
   }
   uVar5 = 1;
 LAB_00033166:
-  cVar4 = FUN_00033028((byte)param_1);
+  cVar4 = reset_record_valid((byte)param_1);
   if (cVar4 == '\0') {
     uVar5 = 1;
     if (param_2 != (char *)0x0) {
@@ -39643,7 +39711,10 @@ LAB_00033166:
 
 /* 00033238 */
 
-undefined4 FUN_00033238(undefined4 param_1,undefined4 param_2,char *param_3)
+/* writes the next 0x5c-byte reset-cause record at EEPROM 0x4001c0, its time and text, with its
+   checksum */
+
+undefined4 reset_record_write(undefined4 param_1,undefined4 param_2,char *param_3)
 
 {
   uint uVar1;
@@ -39661,7 +39732,7 @@ undefined4 FUN_00033238(undefined4 param_1,undefined4 param_2,char *param_3)
     local_58 = param_1;
     local_5c = param_2;
     strncpy(acStack_54,param_3,0x50);
-    local_5e = FUN_00032ffa(&local_60);
+    local_5e = reset_record_checksum(&local_60);
     iVar3 = (uVar1 & 0xff) * 0x5c;
     local_60 = *(short *)(iVar3 + 0x4001c0) + 1;
     cVar2 = eeprom_write(iVar3 + 0x4001c0,&local_60,0x5c);
@@ -40988,7 +41059,7 @@ void aging_fit(void)
   param2 = 0;
   iVar5 = 0;
   DAT_00101fd9 = 2;
-  FUN_00041d30(&DAT_00101fd8);
+  fit_span(&DAT_00101fd8);
   iVar4 = 0;
   do {
     if (1 < pll.efc_history.weights[iVar4]) {
@@ -41001,20 +41072,20 @@ void aging_fit(void)
   } while (iVar4 < 0x40);
   if ((param2 == 0x40) && (0x80 < _DAT_00101fde)) {
     DAT_00101fd9 = 2;
-    uVar1 = FUN_00041a42(&DAT_00101fd8);
+    uVar1 = fit_linear_halves(&DAT_00101fd8);
     DAT_00101fd8 = 4;
-    FUN_00042644(&DAT_00101fd8);
+    fit_quality(&DAT_00101fd8);
   }
   else if ((_DAT_00101fda < 0x81) || (param2 < 3)) {
     if (param2 < 6) {
       if (iVar5 < 10) {
         if (iVar5 < 3) {
           DAT_00101fd9 = 1;
-          uVar1 = FUN_00041c20(&DAT_00101fd8);
+          uVar1 = fit_constant(&DAT_00101fd8);
         }
         else {
           DAT_00101fd9 = 1;
-          uVar1 = FUN_00041ba0(&DAT_00101fd8);
+          uVar1 = fit_linear(&DAT_00101fd8);
         }
         DAT_00101fd8 = iVar5 >= 3;
         _DAT_00101ffe = 0.000432;
@@ -41022,8 +41093,8 @@ void aging_fit(void)
       else {
         DAT_00101fd9 = 1;
         local_7d = 1;
-        uVar2 = FUN_00041ba0(&DAT_00101fd8);
-        uVar1 = FUN_00041c8e(&uStack_7e);
+        uVar2 = fit_linear(&DAT_00101fd8);
+        uVar1 = fit_logarithmic(&uStack_7e);
         uVar1 = uVar1 | uVar2;
         DAT_00101fd8 = 3;
         fVar3 = float_multiply(_DAT_00101ffa,0.75);
@@ -41035,14 +41106,14 @@ void aging_fit(void)
           _DAT_00101ffa = local_5c;
           DAT_00101fd8 = 2;
         }
-        FUN_00042644(&DAT_00101fd8);
+        fit_quality(&DAT_00101fd8);
       }
     }
     else {
       DAT_00101fd9 = 2;
       local_7d = 2;
-      uVar2 = FUN_00041ba0(&DAT_00101fd8);
-      uVar1 = FUN_00041c8e(&uStack_7e);
+      uVar2 = fit_linear(&DAT_00101fd8);
+      uVar1 = fit_logarithmic(&uStack_7e);
       uVar1 = uVar1 | uVar2;
       DAT_00101fd8 = 3;
       fVar3 = float_multiply(_DAT_00101ffa,0.75);
@@ -41054,14 +41125,14 @@ void aging_fit(void)
         _DAT_00101ffa = local_5c;
         DAT_00101fd8 = 2;
       }
-      FUN_00042644(&DAT_00101fd8);
+      fit_quality(&DAT_00101fd8);
     }
   }
   else {
     DAT_00101fd9 = 2;
-    uVar1 = FUN_00041ba0(&DAT_00101fd8);
+    uVar1 = fit_linear(&DAT_00101fd8);
     DAT_00101fd8 = 3;
-    FUN_00042644(&DAT_00101fd8);
+    fit_quality(&DAT_00101fd8);
   }
   if (DAT_00102541 != '\0') {
     if (uVar1 == 1) {
@@ -41092,7 +41163,10 @@ void aging_fit(void)
 
 /* 00041a42 */
 
-undefined4 FUN_00041a42(int param_1)
+/* a slope from the two halves of the last 64 averages, and its residuals
+   loop.md's aging fit */
+
+undefined4 fit_linear_halves(int param_1)
 
 {
   uint uVar1;
@@ -41107,7 +41181,7 @@ undefined4 FUN_00041a42(int param_1)
   fVar5 = 0.0;
   local_8 = 0;
   a = 0.0;
-  FUN_00041d30();
+  fit_span();
   for (uVar3 = *(uint *)(param_1 + 0xe); uVar1 = *(int *)(param_1 + 0xe) - 0x20U & 0x3f,
       fVar2 = fVar5, uVar3 != uVar1; uVar3 = uVar3 - 1 & 0x3f) {
     fVar5 = float_add(fVar5,pll.efc_history.averages[uVar3]);
@@ -41134,19 +41208,22 @@ undefined4 FUN_00041a42(int param_1)
     iVar4 = iVar4 + 1;
   } while (iVar4 < 0x40);
   float_divide(a,62.0);
-  fVar5 = (float)FUN_00042626();
+  fVar5 = (float)float_abs();
   dVar6 = float_to_double(fVar5);
   dVar6 = sqrt(dVar6);
   fVar5 = double_to_float(dVar6);
   *(float *)(param_1 + 0x22) = fVar5;
-  FUN_00041dcc(param_1,&local_8);
+  fit_evaluate_latest(param_1,&local_8);
   return 0;
 }
 
 
 /* 00041ba0 */
 
-undefined4 FUN_00041ba0(int param_1)
+/* fits the EFC history as a line in time, by linear_regression
+   loop.md's aging fit */
+
+undefined4 fit_linear(int param_1)
 
 {
   undefined4 uVar1;
@@ -41160,24 +41237,27 @@ undefined4 FUN_00041ba0(int param_1)
   undefined4 local_8;
   
   local_8 = 0;
-  FUN_00041d30(param_1);
+  fit_span(param_1);
   local_22[0] = *(undefined1 *)(param_1 + 1);
   local_20 = 0x1022f6;
   local_1c = 0x1021b6;
   local_18 = 0x1022b6;
-  uVar1 = FUN_00042390(local_22,1);
+  uVar1 = linear_regression(local_22,1);
   *(undefined4 *)(param_1 + 0x12) = local_10;
   *(undefined4 *)(param_1 + 0x16) = local_14;
   *(undefined4 *)(param_1 + 0x1a) = 0;
   *(undefined4 *)(param_1 + 0x22) = local_c;
-  FUN_00041dcc(param_1,&local_8);
+  fit_evaluate_latest(param_1,&local_8);
   return uVar1;
 }
 
 
 /* 00041c20 */
 
-bool FUN_00041c20(int param_1)
+/* fits the EFC history as a constant, its weighted mean
+   loop.md's aging fit */
+
+bool fit_constant(int param_1)
 
 {
   float a;
@@ -41212,7 +41292,11 @@ bool FUN_00041c20(int param_1)
 
 /* 00041c8e */
 
-int FUN_00041c8e(int param_1)
+/* fits the EFC history with a term in log time, searching its coefficient in steps a tenth as large
+   each pass
+   loop.md's aging fit */
+
+int fit_logarithmic(int param_1)
 
 {
   float a;
@@ -41226,11 +41310,11 @@ int FUN_00041c8e(int param_1)
   undefined4 local_8;
   
   local_8 = 0;
-  FUN_00041d30();
-  FUN_00041e32(param_1);
+  fit_span();
+  fit_log_initial(param_1);
   do {
     a = *(float *)(param_1 + 0x22);
-    iVar1 = FUN_00041f2a(param_1,1);
+    iVar1 = fit_log_search(param_1,1);
     float_divide_in_place((float *)(param_1 + 0x1e),10.0);
     f = float_subtract(a,*(float *)(param_1 + 0x22));
     a_00 = float_to_double(f);
@@ -41239,14 +41323,17 @@ int FUN_00041c8e(int param_1)
     iVar2 = double_compare(a_00,(double)CONCAT44(extraout_A0,extraout_A1));
     if (-1 < iVar2) break;
   } while (iVar1 == 0);
-  FUN_00041dcc(param_1,&local_8);
+  fit_evaluate_latest(param_1,&local_8);
   return iVar1;
 }
 
 
 /* 00041d30 */
 
-void FUN_00041d30(int param_1)
+/* the first and last sample times among the weighted entries
+   loop.md's aging fit */
+
+void fit_span(int param_1)
 
 {
   float fVar1;
@@ -41282,7 +41369,10 @@ void FUN_00041d30(int param_1)
 
 /* 00041dcc */
 
-void FUN_00041dcc(int param_1,float *param_2)
+/* the fit at the latest sample, and its residual
+   loop.md's aging fit */
+
+void fit_evaluate_latest(int param_1,float *param_2)
 
 {
   float fVar1;
@@ -41301,7 +41391,10 @@ void FUN_00041dcc(int param_1,float *param_2)
 
 /* 00041e32 */
 
-undefined4 FUN_00041e32(int param_1)
+/* the log term's first coefficient and step
+   loop.md's aging fit */
+
+undefined4 fit_log_initial(int param_1)
 
 {
   undefined4 uVar1;
@@ -41323,10 +41416,10 @@ undefined4 FUN_00041e32(int param_1)
   local_1c = 0x1022f6;
   local_18 = 0x1021b6;
   local_14 = 0x1022b6;
-  uVar1 = FUN_00042390(local_1e,1);
+  uVar1 = linear_regression(local_1e,1);
   fVar2 = unsigned_to_float(*(int *)(param_1 + 6) - *(int *)(param_1 + 2));
   fVar2 = float_multiply(fVar2,local_10);
-  f = (float)FUN_00042626();
+  f = (float)float_abs();
   dVar4 = float_to_double(f);
   b = float_to_double(local_8);
   double_multiply(10.0,b);
@@ -41347,7 +41440,10 @@ undefined4 FUN_00041e32(int param_1)
 
 /* 00041f2a */
 
-uint FUN_00041f2a(int param_1,undefined4 param_2)
+/* steps the log term's coefficient while the fit improves
+   loop.md's aging fit */
+
+uint fit_log_search(int param_1,undefined4 param_2)
 
 {
   float fVar1;
@@ -41366,11 +41462,11 @@ uint FUN_00041f2a(int param_1,undefined4 param_2)
   float *local_10;
   undefined4 local_c;
   
-  uVar3 = FUN_00042092(param_1,param_2);
+  uVar3 = fit_log_residuals(param_1,param_2);
   local_28 = *(float *)(param_1 + 0x22);
   local_1c = *(undefined4 *)(param_1 + 0x1a);
   local_18 = float_add_in_place((float *)(param_1 + 0x1a),*(float *)(param_1 + 0x1e));
-  uVar4 = FUN_00042092(param_1,param_2);
+  uVar4 = fit_log_residuals(param_1,param_2);
   uVar4 = uVar4 | uVar3;
   local_24 = *(float *)(param_1 + 0x22);
   iVar5 = float_compare(local_28,local_24);
@@ -41386,7 +41482,7 @@ uint FUN_00041f2a(int param_1,undefined4 param_2)
       local_20 = local_1c;
       local_1c = local_18;
       local_18 = float_subtract_in_place((float *)(param_1 + 0x1a),*(float *)(param_1 + 0x1e));
-      uVar4 = FUN_00042092(param_1,param_2);
+      uVar4 = fit_log_residuals(param_1,param_2);
       local_2c = local_28;
       local_28 = local_24;
       local_24 = *(float *)(param_1 + 0x22);
@@ -41397,7 +41493,7 @@ uint FUN_00041f2a(int param_1,undefined4 param_2)
       local_20 = local_1c;
       local_1c = local_18;
       local_18 = float_add_in_place((float *)(param_1 + 0x1a),*(float *)(param_1 + 0x1e));
-      uVar3 = FUN_00042092(param_1,param_2);
+      uVar3 = fit_log_residuals(param_1,param_2);
       uVar4 = uVar3 | uVar4;
       local_2c = local_28;
       local_28 = local_24;
@@ -41406,16 +41502,19 @@ uint FUN_00041f2a(int param_1,undefined4 param_2)
   }
   local_14 = &local_20;
   local_10 = &local_2c;
-  uVar3 = FUN_00042128(&local_14);
+  uVar3 = fit_three_point(&local_14);
   *(undefined4 *)(param_1 + 0x1a) = local_c;
-  uVar6 = FUN_00042092(param_1,param_2);
+  uVar6 = fit_log_residuals(param_1,param_2);
   return uVar3 | uVar4 | uVar6;
 }
 
 
 /* 00042092 */
 
-void FUN_00042092(int param_1,undefined4 param_2)
+/* the history less the log term, regressed on time
+   loop.md's aging fit */
+
+void fit_log_residuals(int param_1,undefined4 param_2)
 
 {
   float fVar1;
@@ -41442,7 +41541,7 @@ void FUN_00042092(int param_1,undefined4 param_2)
   local_1c = 0x1022f6;
   local_18 = local_11e;
   local_14 = 0x1022b6;
-  FUN_00042390(local_1e,param_2);
+  linear_regression(local_1e,param_2);
   *(undefined4 *)(param_1 + 0x22) = local_8;
   *(undefined4 *)(param_1 + 0x12) = local_c;
   *(undefined4 *)(param_1 + 0x16) = local_10;
@@ -41452,7 +41551,10 @@ void FUN_00042092(int param_1,undefined4 param_2)
 
 /* 00042128 */
 
-undefined4 FUN_00042128(int *param_1)
+/* solves a curve through three points
+   loop.md's aging fit */
+
+undefined4 fit_three_point(int *param_1)
 
 {
   float *pfVar1;
@@ -41537,7 +41639,10 @@ undefined4 FUN_00042128(int *param_1)
 
 /* 00042390 */
 
-undefined4 FUN_00042390(byte *param_1,int param_2)
+/* the means, Sxx and Sxy of the weighted entries of two arrays
+   loop.md's aging fit */
+
+undefined4 linear_regression(byte *param_1,int param_2)
 
 {
   float fVar1;
@@ -41602,7 +41707,7 @@ undefined4 FUN_00042390(byte *param_1,int param_2)
     if (param_2 == 0) {
       fVar5 = integer_to_float(uVar4 - 2);
       float_divide_reversed(fVar5,local_c);
-      fVar5 = (float)FUN_00042626();
+      fVar5 = (float)float_abs();
       dVar6 = float_to_double(fVar5);
       dVar6 = sqrt(dVar6);
       fVar5 = double_to_float(dVar6);
@@ -41624,7 +41729,7 @@ undefined4 FUN_00042390(byte *param_1,int param_2)
       local_8 = float_subtract(fVar5,fVar1);
       fVar5 = integer_to_float(uVar4 - 2);
       float_divide_reversed(fVar5,local_8);
-      fVar5 = (float)FUN_00042626();
+      fVar5 = (float)float_abs();
       dVar6 = float_to_double(fVar5);
       dVar6 = sqrt(dVar6);
       fVar5 = double_to_float(dVar6);
@@ -41653,7 +41758,9 @@ undefined4 FUN_00042390(byte *param_1,int param_2)
 
 /* 00042626 */
 
-float FUN_00042626(float param_1)
+/* a float's magnitude */
+
+float float_abs(float param_1)
 
 {
   int iVar1;
@@ -41668,7 +41775,10 @@ float FUN_00042626(float param_1)
 
 /* 00042644 */
 
-void FUN_00042644(char *param_1)
+/* half the summed squares of successive residuals' differences, scaled to the span
+   loop.md's aging fit */
+
+void fit_quality(char *param_1)
 
 {
   uint uVar1;

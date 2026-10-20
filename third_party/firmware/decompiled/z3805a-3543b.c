@@ -2383,7 +2383,10 @@ undefined4 date_normalize(uint param_1)
 
 /* 000110d6 */
 
-undefined3 FUN_000110d6(undefined4 param_1)
+/* the inverse of oncore_date_pack: year << 16 | month << 8 | day back to month << 24 | day << 16 |
+   year; called by nothing */
+
+undefined3 oncore_date_unpack(undefined4 param_1)
 
 {
   undefined2 local_c;
@@ -3439,7 +3442,10 @@ int round_divide(int param_1,int param_2)
 
 /* 000122f6 */
 
-undefined4 FUN_000122f6(uint param_1,uint param_2)
+/* the decimal exponent of a double's magnitude rounded, by bisection over 5e-30 to 5e30 at 0x1234c;
+   called by nothing */
+
+undefined4 double_decimal_exponent_rounded(uint param_1,uint param_2)
 
 {
   ushort uVar1;
@@ -3468,7 +3474,10 @@ undefined4 FUN_000122f6(uint param_1,uint param_2)
 
 /* 0001258a */
 
-undefined4 FUN_0001258a(uint param_1,uint param_2)
+/* floor(log10) of a double's magnitude, by bisection over power_of_ten_double's table, 1e-30 to
+   1e30 at 0x12614; called by nothing */
+
+undefined4 double_decimal_exponent(uint param_1,uint param_2)
 
 {
   ushort uVar1;
@@ -3623,7 +3632,7 @@ void system_init(void)
   DAT_001037dc = 0;
   status_ready = '\0';
   happening_buffers_clear();
-  FUN_00030f08();
+  eeprom_lock_init();
   parameter_record_read();
   identification_record_read();
   DAT_001037d6 = 0;
@@ -5503,7 +5512,7 @@ LAB_000148e6:
     DAT_00100c30 = DAT_00100c30 | 0x40;
   }
   *(undefined4 *)(puVar14 + -1) = 0x14922;
-  FUN_00051158();
+  primary_unpack_records();
   DAT_0010fffa = 0;
   DAT_0010fff6 = 0;
   float_control = 0x7480;
@@ -5753,7 +5762,7 @@ LAB_000148e6:
     DAT_00100c30 = DAT_00100c30 | 0x40;
   }
   *(undefined4 *)(puVar16 + -1) = 0x14922;
-  FUN_00051158();
+  primary_unpack_records();
   DAT_0010fffa = 0;
   DAT_0010fff6 = 0;
   float_control = 0x7480;
@@ -10931,8 +10940,10 @@ ulong psos_io_control(ulong device,ulong a,ulong b)
 /* WARNING: Removing unreachable block (ram,0x0001760a) */
 /* WARNING: Removing unreachable block (ram,0x00017612) */
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* selftest_cpu's register test: 0x55555555 and 0xaaaaaaaa through every data and address register;
+   1 at 0x100c24 on a failure */
 
-undefined4 FUN_0001749e(void)
+undefined4 cpu_register_test(void)
 
 {
   undefined1 local_30 [4];
@@ -11103,7 +11114,9 @@ uint rom_lane_checksum(byte *param_1,short param_2)
 
 /* 000177ac */
 
-void FUN_000177ac(void)
+/* runs each self-test in the list at 0x17fe0 */
+
+void selftest_run_all(void)
 
 {
   int *piVar1;
@@ -11117,7 +11130,9 @@ void FUN_000177ac(void)
 
 /* 000177cc */
 
-void FUN_000177cc(void)
+/* runs each self-test in the list at 0x17fe0, counting watchdog_pll before each */
+
+void selftest_run_all_counted(void)
 
 {
   int *piVar1;
@@ -11178,6 +11193,36 @@ void selftest_summary(void)
     cVar1 = '4';
   }
   status_happening(cVar1);
+  return;
+}
+
+
+/* 00017892 */
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* self-test 0, first in the table at 0x18458: runs every test, counting watchdog_pll for a nonzero
+   argument, then summarizes and reports any failures */
+
+void selftest_all(char param_1)
+
+{
+  int iVar1;
+  char cVar2;
+  
+  if (param_1 == '\0') {
+    selftest_run_all();
+  }
+  else {
+    selftest_run_all_counted();
+    selftest_summary();
+    iVar1 = selftest_aborted();
+    if ((iVar1 == 0) && (_DAT_00100c32 != 0)) {
+      cVar2 = debug_is_enabled();
+      if (cVar2 != '\0') {
+        selftest_report_fail((uint)_DAT_00100c32,"ALL:",'\0');
+      }
+    }
+  }
   return;
 }
 
@@ -11297,7 +11342,7 @@ void selftest_cpu(char param_1)
   if (param_1 == '\x01') {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
-      FUN_0001749e();
+      cpu_register_test();
     }
   }
   cVar2 = selftest_may_report(param_1);
@@ -11329,7 +11374,7 @@ void selftest_eeprom(char param_1)
   if (param_1 == '\x01') {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
-      FUN_00018c74();
+      selftest_nv_slot();
     }
   }
   cVar2 = selftest_may_report(param_1);
@@ -11583,7 +11628,7 @@ void selftest_execute(char param_1)
   
   selftest_running = 1;
   watchdog_pll = watchdog_pll + 1;
-  pcVar1 = (code *)(&PTR_LAB_00018458)[param_1];
+  pcVar1 = (code *)(&PTR_selftest_all_00018458)[param_1];
   selftest_begin();
   (*pcVar1)();
   (*pcVar1)();
@@ -12156,8 +12201,9 @@ void ram_pattern_test_locked(void)
 /* 00018c74 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the EEPROM self-test's settings check: nv_slot_valid's result at 0x100c34 */
 
-void FUN_00018c74(void)
+void selftest_nv_slot(void)
 
 {
   byte bVar1;
@@ -16553,6 +16599,50 @@ undefined4 console_task_create(void)
 {
   __m68k_trap(3);
   return 1;
+}
+
+
+/* 0001af80 */
+
+/* the console string device's open and close: do nothing
+   Not a C function (register; read): its arguments and results in registers.  Out: D7 int error.
+   console.md */
+
+__regcall int string_device_open(void) /* out D7 int error */
+
+{
+  return 0;
+}
+
+
+/* 0001af84 */
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the console string device's init: clears the string at 0x100ba8
+   Not a C function (register; read): its arguments and results in registers.  Out: D7 int error.
+   console.md */
+
+__regcall int string_device_init(void) /* out D7 int error */
+
+{
+  _DAT_00100ba8 = 0;
+  return 0;
+}
+
+
+/* 0001af8e */
+
+/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the console string device's control: sets the string console_read_from_string reads
+   Not a C function (register; read): its arguments and results in registers.  In: D2 char *string.
+   Out: D7 int error.
+   console.md */
+
+__regcall int string_device_control(char *string __asm("d2")) /* out D7 int error */
+
+{
+  _DAT_00100ba8 = string;
+  return 0;
 }
 
 
@@ -21593,10 +21683,27 @@ void qspi_acquire(void)
 
 /* 000208fa */
 
-void FUN_000208fa(void)
+/* the QSPI device's control: does nothing
+   Not a C function (register; read): its arguments and results in registers.  Out: D7 int error.
+   psos.md */
+
+__regcall int qspi_control(void) /* out D7 int error */
 
 {
-  return;
+  return 0;
+}
+
+
+/* 000208fe */
+
+/* the QSPI device's open and close: do nothing
+   Not a C function (register; read): its arguments and results in registers.  Out: D7 int error.
+   psos.md */
+
+__regcall int qspi_open(void) /* out D7 int error */
+
+{
+  return 0;
 }
 
 
@@ -21717,6 +21824,26 @@ __regcall void qspi_transfer_raw(char device __asm("d0"),void *buffers __asm("a1
   qspi_start(device,*(undefined2 **)buffers,count,'\x01');
   do {
   } while (DAT_001032f2 != '\0');
+  return;
+}
+
+
+/* 00020ab0 */
+
+/* the QSPI device's write: queues for the QSPI, then runs the transfer
+   Not a C function (register; read): its arguments and results in registers.  In: D0 char device,
+   A0 void *buffers, D2 short count.
+   psos.md */
+
+__regcall void qspi_write(char device __asm("d0"),void *buffers __asm("a0"),short count __asm("d2"))
+
+{
+  char cVar1;
+  
+  cVar1 = '\0';
+  qspi_acquire();
+  DAT_001032f2 = 0;
+  qspi_start(device,buffers,count,cVar1);
   return;
 }
 
@@ -25552,9 +25679,9 @@ LAB_00026b6e:
         iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
       }
       if (0x12 < iVar2) {
-        iVar4 = FUN_00027d80(auStack_2c,*(int **)((int)param_1 + 10),&local_2e,&local_32,
-                             *(undefined4 **)((int)param_1 + 6),0,(ushort)(iVar2 == 0x14),
-                             *(undefined4 *)((int)param_1 + 0xe),unaff_D5);
+        iVar4 = scpi_header_resolve(auStack_2c,*(int **)((int)param_1 + 10),&local_2e,&local_32,
+                                    *(undefined4 **)((int)param_1 + 6),0,(ushort)(iVar2 == 0x14),
+                                    *(undefined4 *)((int)param_1 + 0xe),unaff_D5);
 LAB_00026bae:
         if (iVar4 != 0) goto LAB_00026e5a;
         iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
@@ -25569,8 +25696,9 @@ LAB_00026bae:
                   goto LAB_00026d2a;
                 }
                 local_6 = (short)*(char *)(iVar2 + 0x26ecb);
-                iVar4 = FUN_000278f4(&local_32,(int)local_6,*(undefined4 *)((int)param_1 + 10),
-                                     &local_2e);
+                iVar4 = scpi_parameter_match
+                                  (&local_32,(int)local_6,*(undefined4 *)((int)param_1 + 10),
+                                   &local_2e);
                 if (iVar4 != 0) goto LAB_00026e5a;
                 unaff_D7 = (short *)local_32[1];
                 pcVar1 = *(code **)(unaff_D7 + local_6 * 2 + 6);
@@ -25635,9 +25763,10 @@ LAB_00026b32:
     if (iVar2 == 10) {
       iVar2 = scpi_scan_token(*param_1,auStack_2c,*(undefined4 *)((int)param_1 + 0xe));
       if ((iVar2 != 0x13) && (iVar2 != 0x14)) goto LAB_00026b32;
-      iVar4 = FUN_00027f10(auStack_2c,*(int **)((int)param_1 + 10),&local_2e,(int *)&local_32,0,
-                           (ushort)(iVar2 == 0x14),*(undefined4 *)((int)param_1 + 0xe),
-                           *(undefined4 *)((int)param_1 + 0x16));
+      iVar4 = scpi_common_header_resolve
+                        (auStack_2c,*(int **)((int)param_1 + 10),&local_2e,(int *)&local_32,0,
+                         (ushort)(iVar2 == 0x14),*(undefined4 *)((int)param_1 + 0xe),
+                         *(undefined4 *)((int)param_1 + 0x16));
       goto LAB_00026bae;
     }
     if (iVar2 == 3) {
@@ -25660,7 +25789,8 @@ LAB_00026bf0:
       return -100;
     }
     if ((local_32 == (undefined4 *)0x0) ||
-       (iVar4 = FUN_0002797a(&local_32,*(undefined4 *)((int)param_1 + 10),&local_2e), iVar4 == 0)) {
+       (iVar4 = scpi_parameters_finish(&local_32,*(undefined4 *)((int)param_1 + 10),&local_2e),
+       iVar4 == 0)) {
       return 0;
     }
   }
@@ -26219,7 +26349,10 @@ uint scpi_char_upper(uint param_1)
 
 /* 000278f4 */
 
-int FUN_000278f4(int *param_1,short param_2,int param_3,short *param_4)
+/* finds the next parameter descriptor that takes a parameter of the kind, marking optional ones it
+   passes 0xffff */
+
+int scpi_parameter_match(int *param_1,short param_2,int param_3,short *param_4)
 
 {
   int iVar1;
@@ -26246,7 +26379,9 @@ int FUN_000278f4(int *param_1,short param_2,int param_3,short *param_4)
 
 /* 0002797a */
 
-undefined4 FUN_0002797a(int *param_1,int param_2,short *param_3)
+/* marks the descriptors left 0xffff, omitted, unless one is required */
+
+undefined4 scpi_parameters_finish(int *param_1,int param_2,short *param_3)
 
 {
   while( true ) {
@@ -26580,9 +26715,13 @@ int scpi_node_find_numbered(int param_1,short *param_2,undefined4 param_3)
 
 /* 00027d80 */
 
+/* resolves a command header to its node and handler, through defaults and numeric suffixes, and
+   takes room for its parameters */
+
 undefined4
-FUN_00027d80(undefined4 param_1,int *param_2,short *param_3,undefined4 *param_4,undefined4 *param_5,
-            undefined2 param_6,short param_7,undefined4 param_8,undefined4 param_9)
+scpi_header_resolve(undefined4 param_1,int *param_2,short *param_3,undefined4 *param_4,
+                   undefined4 *param_5,undefined2 param_6,short param_7,undefined4 param_8,
+                   undefined4 param_9)
 
 {
   int iVar1;
@@ -26693,9 +26832,12 @@ void scpi_path_reset(undefined4 *param_1,undefined4 param_2)
 
 /* 00027f10 */
 
+/* resolves a common command's header to its node and handler and takes room for its parameters */
+
 undefined4
-FUN_00027f10(undefined4 param_1,int *param_2,undefined2 *param_3,int *param_4,undefined2 param_5,
-            short param_6,undefined4 param_7,undefined4 param_8)
+scpi_common_header_resolve
+          (undefined4 param_1,int *param_2,undefined2 *param_3,int *param_4,undefined2 param_5,
+          short param_6,undefined4 param_7,undefined4 param_8)
 
 {
   int *piVar1;
@@ -27393,9 +27535,12 @@ undefined4 error_message_lookup(short param_1)
 
 /* 000292d6 */
 
+/* the parser's loop: parses each message unit, calls its handler, writes its response and reports
+   errors, until the input ends */
+
 undefined4
-FUN_000292d6(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5,
-            undefined4 param_6,undefined4 param_7,undefined4 param_8,undefined4 param_9)
+scpi_interpret(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5,
+              undefined4 param_6,undefined4 param_7,undefined4 param_8,undefined4 param_9)
 
 {
   bool bVar1;
@@ -27478,7 +27623,7 @@ LAB_00029436:
           if (iVar3 != 0) {
             if (iVar3 != -0x5a) {
               status_clear_bit(param_7,iVar3);
-              FUN_00029e34(&local_7c,iVar3);
+              scpi_message_done(&local_7c,iVar3);
               goto LAB_0002961c;
             }
             local_52 = '\x02';
@@ -27489,7 +27634,7 @@ LAB_00029436:
 LAB_000294de:
       if ((iVar2 == 0) || (iVar2 == -100)) {
         if (local_3e != 0) {
-          local_42 = FUN_00029e34(&local_7c,0);
+          local_42 = scpi_message_done(&local_7c,0);
           iVar2 = (**(code **)(*(int *)(param_2 + 4) + 0x28))(param_2,&DAT_0002963a);
           if (iVar2 == 0) {
             if (local_52 != '\0') {
@@ -27537,7 +27682,7 @@ LAB_000294de:
   } while( true );
   if (iVar2 == -0x66) {
     (**(code **)(*(int *)(param_1 + 4) + 0x28))(param_1,&DAT_0002963e);
-    FUN_00029e38(&local_7c);
+    scpi_input_closed(&local_7c);
   }
   else if (iVar2 == -0x67) {
     unaff_D3 = -0x3c;
@@ -27548,7 +27693,7 @@ LAB_000294de:
     iVar3 = condition_is_command_error(iVar2);
     if (iVar3 != 0) {
       bVar1 = true;
-      FUN_00029e34(&local_7c,iVar2);
+      scpi_message_done(&local_7c,iVar2);
       local_3e = 1;
     }
     if ((iVar2 != -0xc) && (iVar2 != -0xd)) goto LAB_00029622;
@@ -27727,7 +27872,11 @@ undefined4 scpi_check_range(int param_1,int param_2,int param_3,byte param_4)
 
 /* 000297c4 */
 
-undefined4 FUN_000297c4(undefined4 param_1,undefined4 param_2,undefined4 param_3,short *param_4)
+/* a long parameter's value: its own, the first or second argument for keyword 0 or 1, else the
+   third; called by nothing */
+
+undefined4
+scpi_long_resolve_bound(undefined4 param_1,undefined4 param_2,undefined4 param_3,short *param_4)
 
 {
   int iVar1;
@@ -27805,8 +27954,11 @@ LAB_00029896:
 
 /* 000298b2 */
 
-void FUN_000298b2(int param_1,int param_2,short param_3,short param_4,undefined4 *param_5,
-                 undefined1 param_6)
+/* scpi_numeric_set for a parameter of doubles; called by nothing */
+
+void scpi_numeric_set_double
+               (int param_1,int param_2,short param_3,short param_4,undefined4 *param_5,
+               undefined1 param_6)
 
 {
   if (param_3 == 2) {
@@ -27860,8 +28012,9 @@ float scpi_numeric_get(scpi_numeric_param *param,int index,int16_t which,int16_t
 /* 00029990 */
 
 /* WARNING: Unknown calling convention */
+/* scpi_numeric_get for a parameter of doubles; called by nothing */
 
-undefined8 FUN_00029990(int param_1,int param_2,short param_3,short param_4)
+undefined8 scpi_numeric_get_double(int param_1,int param_2,short param_3,short param_4)
 
 {
   int iVar1;
@@ -27900,7 +28053,9 @@ char return_byte(char b)
 
 /* 00029a1e */
 
-undefined4 FUN_00029a1e(undefined4 param_1)
+/* returns its argument; called by nothing */
+
+undefined4 long_identity(undefined4 param_1)
 
 {
   return param_1;
@@ -27929,7 +28084,9 @@ void copy_longs_locked(int param_1,int param_2,byte param_3)
 
 /* 00029a62 */
 
-undefined4 FUN_00029a62(undefined4 param_1)
+/* returns its argument; the EFC queries pass pll.efc through it */
+
+undefined4 float_identity(undefined4 param_1)
 
 {
   return param_1;
@@ -28268,7 +28425,9 @@ void status_update_rqs(void)
 
 /* 00029e34 */
 
-undefined4 FUN_00029e34(void)
+/* scpi_interpret's hook at each message's end and error: returns 0, no further error */
+
+undefined4 scpi_message_done(void)
 
 {
   return 0;
@@ -28277,7 +28436,9 @@ undefined4 FUN_00029e34(void)
 
 /* 00029e38 */
 
-undefined4 FUN_00029e38(void)
+/* scpi_interpret's hook when the input closes: returns 0 */
+
+undefined4 scpi_input_closed(void)
 
 {
   return 0;
@@ -28511,7 +28672,7 @@ void scpi_task(void)
       console_write("scpi: error opening stream\n");
     }
     else {
-      FUN_000292d6(iVar2,iVar2,local_8,2000,&DAT_00053034,0x526f6,status_object,0);
+      scpi_interpret(iVar2,iVar2,local_8,2000,&DAT_00053034,0x526f6,status_object,0);
       psos_service_9(local_8);
       (**(code **)(*(int *)(iVar2 + 4) + 4))(iVar2);
       if (scpi_language == 0) {
@@ -30219,7 +30380,7 @@ undefined4 scpi_query_DIAGnostic_ROSCillator_EFControl_RELative(undefined4 param
   float fVar1;
   double dVar2;
   
-  fVar1 = (float)FUN_00029a62(pll.efc);
+  fVar1 = (float)float_identity(pll.efc);
   fVar1 = float_add(fVar1,-524288.0);
   fVar1 = float_divide(fVar1,524288.0);
   dVar2 = float_to_double(fVar1);
@@ -30240,7 +30401,7 @@ undefined4 scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute(undefined4 param
   float f;
   int iVar1;
   
-  f = (float)FUN_00029a62(pll.efc);
+  f = (float)float_identity(pll.efc);
   iVar1 = float_to_integer(f);
   *param_2 = iVar1;
   return 0;
@@ -30560,7 +30721,7 @@ undefined4 status_report(short param_1)
   int value;
   
   if (status_ready == '\0') {
-    FUN_0002f53a(&DAT_00102ebc,(char)param_1);
+    status_event_hook(&DAT_00102ebc,(char)param_1);
   }
   else {
     if (param_1 < 1) {
@@ -30755,7 +30916,7 @@ undefined4 scpi_set_SOURce_GPSystem_ADELay(short *param_1,undefined4 param_2,int
   }
   else {
     local_10[1] = 1e-09;
-    local_8 = FUN_00032e2e;
+    local_8 = load_long;
     fVar2 = integer_to_float(0);
     local_14 = float_multiply(fVar2,1e-09);
     fVar2 = integer_to_float(999999);
@@ -30926,7 +31087,7 @@ undefined4 scpi_set_SOURce_GPSystem_INITial_POSition(int param_1,undefined4 para
     local_24 = 1;
     local_20 = &DAT_00032e26;
     local_34 = 0x3a83126f;
-    local_30 = FUN_00032e2e;
+    local_30 = load_long;
     local_1c = 0;
     local_18[0] = 0x5a;
     uVar8 = (undefined2)*(undefined4 *)(param_3 + 0x12);
@@ -30999,7 +31160,7 @@ undefined4 scpi_set_SOURce_GPSystem_INITial_POSition(int param_1,undefined4 para
     dVar7 = float_to_double(fVar6);
     dms_to_mas(&local_3e,(ushort)iVar1,bVar5,(int)((ulonglong)dVar7 >> 0x20),SUB84(dVar7,0));
     local_2c = 0x3c23d70a;
-    local_28 = FUN_00032e2e;
+    local_28 = load_long;
     fVar6 = integer_to_float(-648000000);
     local_c = float_multiply(fVar6,0.01);
     fVar6 = integer_to_float(648000000);
@@ -31095,7 +31256,7 @@ undefined4 scpi_set_SOURce_GPSystem_POSition(int param_1)
     local_24 = 1;
     local_20 = &DAT_00032e26;
     local_34 = 0x3a83126f;
-    local_30 = FUN_00032e2e;
+    local_30 = load_long;
     local_1c = 0;
     local_18[0] = 0x5a;
     iVar3 = clamp_to_limits((short)(param_1 + 6),0,(char)&local_1c,(char)local_18,(short)&local_24,
@@ -31150,7 +31311,7 @@ undefined4 scpi_set_SOURce_GPSystem_POSition(int param_1)
     dVar6 = float_to_double(fVar5);
     dms_to_mas(&local_3c,(ushort)iVar3,bVar4,(int)((ulonglong)dVar6 >> 0x20),SUB84(dVar6,0));
     local_2c = 0x3c23d70a;
-    local_28 = FUN_00032e2e;
+    local_28 = load_long;
     fVar5 = integer_to_float(-100000);
     local_c = float_multiply(fVar5,0.01);
     fVar5 = integer_to_float(1800000);
@@ -34346,7 +34507,9 @@ int status_init(void)
 
 /* 0002f53a */
 
-void FUN_0002f53a(undefined4 param_1,undefined1 param_2)
+/* does nothing; status_report and status_happening pass it each event */
+
+void status_event_hook(undefined4 param_1,undefined1 param_2)
 
 {
   return;
@@ -34365,7 +34528,7 @@ void status_happening(char param_1)
   undefined2 uVar1;
   
   if (status_ready == '\0') {
-    FUN_0002f53a(0x102ec4,param_1);
+    status_event_hook(0x102ec4,param_1);
   }
   else if (param_1 != '\x16') {
     status_clear_bit((short)status_object,param_1);
@@ -36091,7 +36254,9 @@ bool save_parameter_record(byte param_1)
 
 /* 00030f08 */
 
-void FUN_00030f08(void)
+/* clears the EEPROM's busy flag at 0x101d34 */
+
+void eeprom_lock_init(void)
 
 {
   DAT_00101d34 = 0;
@@ -37702,7 +37867,9 @@ undefined4 nv_load_slot(void)
 
 /* 00032e2e */
 
-undefined4 FUN_00032e2e(undefined4 *param_1)
+/* the long at a pointer; the position setters pass it as a descriptor's getter */
+
+undefined4 load_long(undefined4 *param_1)
 
 {
   return *param_1;
@@ -37711,7 +37878,9 @@ undefined4 FUN_00032e2e(undefined4 *param_1)
 
 /* 00032e36 */
 
-undefined8 FUN_00032e36(undefined8 *param_1)
+/* the double at a pointer; descriptors at 0x33720 to 0x3379e point at it */
+
+undefined8 load_double_param(undefined8 *param_1)
 
 {
   return *param_1;
@@ -40259,7 +40428,9 @@ undefined4 get_ffom(undefined1 *param_1)
 
 /* 00042b18 */
 
-void FUN_00042b18(undefined1 param_1)
+/* a bare rts: what output_state_done hands it, :OUTPut:STATe, goes no further here */
+
+void output_state_program(undefined1 param_1)
 
 {
   return;
@@ -40300,9 +40471,23 @@ void pulse_settings_done(void)
 }
 
 
+/* 00042b7c */
+
+/* scpi_param_OUTPut_STATe's done hook: hands the output state to output_state_program */
+
+void output_state_done(void)
+
+{
+  output_state_program(nv_settings.output_state);
+  return;
+}
+
+
 /* 00042b8a */
 
-void FUN_00042b8a(undefined1 *param_1)
+/* carries out a request's action, flagging the self-test's descriptor at 0x41348 */
+
+void pll_scpi_do_action(undefined1 *param_1)
 
 {
   if (pll_scpi_param == &DAT_00041348) {
@@ -40403,7 +40588,7 @@ void validate_or_doaction(undefined1 *param_1,undefined4 param_2)
       switch((&WORD_00042d3c)[(short)iVar1]) {
       case 8:
         *param_1 = 0;
-        FUN_00042b8a(param_2);
+        pll_scpi_do_action(param_2);
         return;
       case 0x14:
         toggle_change(param_1);
@@ -40423,7 +40608,10 @@ void validate_or_doaction(undefined1 *param_1,undefined4 param_2)
 
 /* 00042d78 */
 
-undefined4 FUN_00042d78(void)
+/* 1 if a request's setting goes to the loop, its descriptor's flag bit 0; a survey start instead
+   marks 0x102040 */
+
+undefined4 pll_scpi_needs_loop(void)
 
 {
   ushort uVar1;
@@ -40449,8 +40637,10 @@ undefined4 FUN_00042d78(void)
 /* 00042dc4 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* puts a request's validated values in the loop's message at 0x102002 by the setting's action code,
+   and sends it */
 
-undefined4 FUN_00042dc4(undefined1 param_1,undefined1 *param_2)
+undefined4 pll_scpi_send_to_loop(undefined1 param_1,undefined1 *param_2)
 
 {
   char cVar2;
@@ -40764,10 +40954,10 @@ void pll_scpi_command(undefined4 param_1,char *param_2)
   validate_or_doaction((short)&local_6,(char)param_2);
   if (local_6 != '\0') {
     DAT_00102040 = 0;
-    cVar1 = FUN_00042d78();
+    cVar1 = pll_scpi_needs_loop();
     if (cVar1 != '\0') {
       if ((pll_scpi_source == 0) || (pll_scpi_source == 5)) {
-        cVar1 = FUN_00042dc4(2,&local_5);
+        cVar1 = pll_scpi_send_to_loop(2,&local_5);
         *param_2 = cVar1;
       }
       if (*param_2 != '\0') {
@@ -41289,7 +41479,7 @@ override_jmp_00043ae6_case_0:
   if (((uint)nv_settings.holdover_status_threshold < pll.holdover_duration) &&
      (DAT_00101e88 == '\0')) {
     DAT_00101e88 = '\x01';
-    FUN_00045ce4('\x01');
+    pwma_force_level('\x01');
     status_happening('.');
   }
   cVar4 = interval_next_reading('\0',&fStack_10);
@@ -41603,7 +41793,7 @@ LAB_0004411a:
   if (((uint)nv_settings.holdover_status_threshold < pll.holdover_duration) &&
      (DAT_00101e88 == '\0')) {
     DAT_00101e88 = '\x01';
-    FUN_00045ce4('\x01');
+    pwma_force_level('\x01');
     status_happening('.');
   }
   if (DAT_00102550 == '\0') {
@@ -42896,7 +43086,9 @@ undefined1 holdover_waiting_reason(void)
 
 /* 00045c8e */
 
-void FUN_00045c8e(void)
+/* does nothing; pllp_task calls it after counter_init */
+
+void pllp_start_nothing_a(void)
 
 {
   return;
@@ -42905,7 +43097,9 @@ void FUN_00045c8e(void)
 
 /* 00045c90 */
 
-void FUN_00045c90(void)
+/* does nothing; pllp_task calls it after pllp_start_nothing_a */
+
+void pllp_start_nothing_b(void)
 
 {
   return;
@@ -42930,7 +43124,9 @@ void nv_clear_and_reset(void)
 
 /* 00045cc0 */
 
-void FUN_00045cc0(void)
+/* clears the GPT's IC2 flag, TFLG1 bit 1, and returns through trap #5; no vector names it */
+
+void gpt_input_capture_2_interrupt(void)
 
 {
   ushort uVar1;
@@ -42947,8 +43143,11 @@ void FUN_00045cc0(void)
 /* 00045ce4 */
 
 /* WARNING: Unknown calling convention */
+/* forces the PWMA pin low for a nonzero argument, high for zero: PWMC's F1A (MC68331UM D.2.14);
+   holdover and the stages call it
+   loop.md */
 
-void FUN_00045ce4(char param_1)
+void pwma_force_level(char param_1)
 
 {
   byte bVar1;
@@ -43417,7 +43616,7 @@ void pll_stage_status(void)
         status_happening('\x1a');
       }
       DAT_00101e88 = 0;
-      FUN_00045ce4('\0');
+      pwma_force_level('\0');
       status_happening('/');
       pll.field_027[3] = 1;
     }
@@ -44364,7 +44563,7 @@ void pll_init(void)
   DAT_00102550 = 0;
   DAT_00102551 = 0;
   DAT_00101e88 = 0;
-  FUN_00045ce4('\0');
+  pwma_force_level('\0');
   pll.frequency_tolerance = 1e-07;
   return;
 }
@@ -44403,8 +44602,10 @@ void pll_restart(void)
 /* 000474c2 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* sets the EFC's fractional frequency a count, 6.25e-13 from pllp_task, and the values derived from
+   it: its reciprocal, 1 ns/s and 5e-9 a day in counts */
 
-void FUN_000474c2(float param_1)
+void efc_gain_set(float param_1)
 
 {
   float a;
@@ -44472,7 +44673,7 @@ void pllp_task(void)
   _DAT_00102594 = pll.reference_uptime;
   interval_mean_flag = 0;
   DAT_00102552 = 0;
-  FUN_000474c2(0xff);
+  efc_gain_set(0xff);
   if (pll.stage == PLL_STAGE_INVALID) {
     pll.stage = PLL_STAGE_POWERUP;
     if (DAT_00100002 == 1) {
@@ -44496,8 +44697,8 @@ void pllp_task(void)
   }
   DAT_0010254a = 0;
   counter_init();
-  FUN_00045c8e();
-  FUN_00045c90();
+  pllp_start_nothing_a();
+  pllp_start_nothing_b();
   _DAT_00102598 = 0;
   DAT_0010259c = 0;
   DAT_001025a4 = 0;
@@ -47234,7 +47435,7 @@ void status_snapshot(pll_stage *param_1)
   gps_receiver_status_update('\0',0);
   uVar10 = 4;
   uVar11 = 0x70;
-  uVar9 = FUN_0004b420();
+  uVar9 = gps_status_alternate();
   gps_receiver_status_update('\x01',uVar9);
   param_1[0x112] = nv_settings.douglas_duration_infinite;
   uVar7 = status_hardware_condition(uVar11);
@@ -47943,7 +48144,10 @@ LAB_0004b3a2:
 
 /* 0004b420 */
 
-undefined1 FUN_0004b420(void)
+/* 0: the receiver status gpsm_task and status_snapshot hand gps_receiver_status_update with 1,
+   which it ignores */
+
+undefined1 gps_status_alternate(void)
 
 {
   return 0;
@@ -48555,7 +48759,9 @@ LAB_0004bbee:
 
 /* 0004bc1c */
 
-undefined4 FUN_0004bc1c(void)
+/* 1 if the newest queued request is of kind 3 or 4 and not yet sent, so a new one replaces it */
+
+undefined4 request_ring_newest_replaceable(void)
 
 {
   char cVar1;
@@ -48636,7 +48842,7 @@ LAB_0004bcac:
   if (cVar1 == '\0') {
     cVar1 = request_ring_empty();
     if (cVar1 == '\0') {
-      cVar1 = FUN_0004bc1c();
+      cVar1 = request_ring_newest_replaceable();
       if (cVar1 == '\0') {
         cVar1 = request_ring_full();
         if (cVar1 != '\0') goto LAB_0004bd18;
@@ -49152,7 +49358,7 @@ LAB_0004c1e6:
       }
     }
     gps_receiver_status_update('\0',0);
-    local_e = FUN_0004b420(bVar8);
+    local_e = gps_status_alternate(bVar8);
     gps_receiver_status_update('\x01',local_e);
     command_monitor();
     if ((DAT_001011c5 != '\0') &&
@@ -49887,7 +50093,10 @@ undefined1 * bytes_to_long(undefined1 *param_1,undefined4 *param_2)
 
 /* 0004efb4 */
 
-void FUN_0004efb4(undefined4 param_1)
+/* @@As's height and its type, the position hold position's last fields
+   docs/firmware/oncore */
+
+void oncore_as_height_decode(undefined4 param_1)
 
 {
   undefined4 uVar1;
@@ -49900,7 +50109,10 @@ void FUN_0004efb4(undefined4 param_1)
 
 /* 0004efd6 */
 
-byte * FUN_0004efd6(byte *param_1,int param_2)
+/* @@Ai's byte, stored at its channel, 1 to 6
+   docs/firmware/oncore */
+
+byte * oncore_ai_decode(byte *param_1,int param_2)
 
 {
   byte bVar1;
@@ -50476,7 +50688,10 @@ void oncore_visibility_message(undefined4 param_1,undefined4 param_2)
 
 /* 0004f6a4 */
 
-void FUN_0004f6a4(undefined4 param_1,undefined4 param_2)
+/* decodes @@Bc, the xDOP table
+   docs/firmware/oncore */
+
+void oncore_dop_message(undefined4 param_1,undefined4 param_2)
 
 {
   oncore_decode_fields(param_1,param_2,&DAT_00050fe2);
@@ -50486,7 +50701,10 @@ void FUN_0004f6a4(undefined4 param_1,undefined4 param_2)
 
 /* 0004f6be */
 
-void FUN_0004f6be(undefined4 param_1,undefined4 param_2)
+/* decodes @@Bd, the almanac status
+   docs/firmware/oncore */
+
+void oncore_almanac_status_message(undefined4 param_1,undefined4 param_2)
 
 {
   oncore_decode_fields(param_1,param_2,&DAT_00051002);
@@ -50562,7 +50780,10 @@ undefined4 oncore_corrections_message(void)
 
 /* 0004f842 */
 
-void FUN_0004f842(undefined4 param_1,undefined4 param_2)
+/* decodes @@Bk, the position/status/data extension
+   docs/firmware/oncore */
+
+void oncore_extension_message(undefined4 param_1,undefined4 param_2)
 
 {
   oncore_decode_fields(param_1,param_2,&DAT_00050fe4);
@@ -50572,7 +50793,10 @@ void FUN_0004f842(undefined4 param_1,undefined4 param_2)
 
 /* 0004f85c */
 
-void FUN_0004f85c(undefined4 param_1,undefined4 param_2)
+/* decodes @@Bn, the Time RAIM setup and status, and marks it received at 0x101b55
+   docs/firmware/oncore */
+
+void oncore_traim_message(undefined4 param_1,undefined4 param_2)
 
 {
   oncore_decode_fields(param_1,param_2,&DAT_00050fe6);
@@ -51116,9 +51340,28 @@ __exception void primary_trap_1(void)
 }
 
 
+/* 00051100 */
+
+/* restores the registers setjmp saved, its status register through trap #1, and returns to its
+   caller with the value given */
+
+undefined8 longjmp(undefined4 *param_1,undefined4 param_2)
+
+{
+  undefined4 uVar1;
+  
+  __m68k_trap(1);
+  uVar1 = *param_1;
+  *(undefined4 *)param_1[0xf] = param_1[0xe];
+  return CONCAT44(param_2,uVar1);
+}
+
+
 /* 0005112a */
 
-undefined4 FUN_0005112a(undefined4 *param_1)
+/* saves the registers, return address and stack, and through trap #1 the status register */
+
+undefined4 setjmp(undefined4 *param_1)
 
 {
   undefined4 in_D1;
@@ -51167,8 +51410,10 @@ undefined4 FUN_0005112a(undefined4 *param_1)
 /* WARNING: Removing unreachable block (ram,0x000511a6) */
 /* WARNING: Removing unreachable block (ram,0x000511b2) */
 /* WARNING: Removing unreachable block (ram,0x0005121c) */
+/* the primary's copy of the boot code's record unpacker, pointed at 0, where there is no S: always
+   1 */
 
-undefined4 FUN_00051158(void)
+undefined4 primary_unpack_records(void)
 
 {
   return 1;

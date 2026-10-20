@@ -1446,3 +1446,58 @@ installer::0x109c7e	function	installer_next_decimal_digit	libc.md	the installer'
 installer::0x109cb4	function	installer_format	libc.md	the installer's format
 installer::0x10aa3e	function	installer_sprintf	libc.md	the installer's sprintf
 installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
+#
+# the last application routines
+0x110d6	function	oncore_date_unpack	context	the inverse of oncore_date_pack: year << 16 | month << 8 | day back to month << 24 | day << 16 | year; called by nothing
+0x122f6	function	double_decimal_exponent_rounded	context	the decimal exponent of a double's magnitude rounded, by bisection over 5e-30 to 5e30 at 0x1234c; called by nothing
+0x1258a	function	double_decimal_exponent	context	floor(log10) of a double's magnitude, by bisection over power_of_ten_double's table, 1e-30 to 1e30 at 0x12614; called by nothing
+0x1749e	function	cpu_register_test	context	selftest_cpu's register test: 0x55555555 and 0xaaaaaaaa through every data and address register; 1 at 0x100c24 on a failure
+0x177ac	function	selftest_run_all	context	runs each self-test in the list at 0x17fe0
+0x177cc	function	selftest_run_all_counted	context	runs each self-test in the list at 0x17fe0, counting watchdog_pll before each
+0x17892	function	selftest_all	context	self-test 0, first in the table at 0x18458: runs every test, counting watchdog_pll for a nonzero argument, then summarizes and reports any failures
+0x18c74	function	selftest_nv_slot	context	the EEPROM self-test's settings check: nv_slot_valid's result at 0x100c34
+0x1af80	function	string_device_open	console.md	the console string device's open and close: do nothing		convention=register; confidence=read; out=D7 int error; family=device
+0x1af84	function	string_device_init	console.md	the console string device's init: clears the string at 0x100ba8		convention=register; confidence=read; out=D7 int error; family=device
+0x1af8e	function	string_device_control	console.md	the console string device's control: sets the string console_read_from_string reads		convention=register; confidence=read; in=D2 char *string; out=D7 int error; family=device
+0x208fa	function	qspi_control	psos.md	the QSPI device's control: does nothing		convention=register; confidence=read; out=D7 int error; family=device
+0x208fe	function	qspi_open	psos.md	the QSPI device's open and close: do nothing		convention=register; confidence=read; out=D7 int error; family=device
+0x20ab0	function	qspi_write	psos.md	the QSPI device's write: queues for the QSPI, then runs the transfer		convention=register; confidence=read; in=D0 char device, A0 void *buffers, D2 short count; family=device
+0x278f4	function	scpi_parameter_match	context	finds the next parameter descriptor that takes a parameter of the kind, marking optional ones it passes 0xffff
+0x2797a	function	scpi_parameters_finish	context	marks the descriptors left 0xffff, omitted, unless one is required
+0x27d80	function	scpi_header_resolve	context	resolves a command header to its node and handler, through defaults and numeric suffixes, and takes room for its parameters
+0x27f10	function	scpi_common_header_resolve	context	resolves a common command's header to its node and handler and takes room for its parameters
+0x292d6	function	scpi_interpret	context	the parser's loop: parses each message unit, calls its handler, writes its response and reports errors, until the input ends
+0x297c4	function	scpi_long_resolve_bound	context	a long parameter's value: its own, the first or second argument for keyword 0 or 1, else the third; called by nothing
+0x298b2	function	scpi_numeric_set_double	context	scpi_numeric_set for a parameter of doubles; called by nothing
+0x29990	function	scpi_numeric_get_double	context	scpi_numeric_get for a parameter of doubles; called by nothing
+0x29a1e	function	long_identity	context	returns its argument; called by nothing
+0x29a62	function	float_identity	context	returns its argument; the EFC queries pass pll.efc through it
+0x29e34	function	scpi_message_done	context	scpi_interpret's hook at each message's end and error: returns 0, no further error
+0x29e38	function	scpi_input_closed	context	scpi_interpret's hook when the input closes: returns 0
+0x2f53a	function	status_event_hook	context	does nothing; status_report and status_happening pass it each event
+0x30f08	function	eeprom_lock_init	context	clears the EEPROM's busy flag at 0x101d34
+0x32e2e	function	load_long	context	the long at a pointer; the position setters pass it as a descriptor's getter
+0x32e36	function	load_double_param	context	the double at a pointer; descriptors at 0x33720 to 0x3379e point at it
+0x42b18	function	output_state_program	context	a bare rts: what output_state_done hands it, :OUTPut:STATe, goes no further here
+0x42b7c	function	output_state_done	context	scpi_param_OUTPut_STATe's done hook: hands the output state to output_state_program
+0x42b8a	function	pll_scpi_do_action	context	carries out a request's action, flagging the self-test's descriptor at 0x41348
+0x42d78	function	pll_scpi_needs_loop	context	1 if a request's setting goes to the loop, its descriptor's flag bit 0; a survey start instead marks 0x102040
+0x42dc4	function	pll_scpi_send_to_loop	context	puts a request's validated values in the loop's message at 0x102002 by the setting's action code, and sends it
+0x45c8e	function	pllp_start_nothing_a	context	does nothing; pllp_task calls it after counter_init
+0x45c90	function	pllp_start_nothing_b	context	does nothing; pllp_task calls it after pllp_start_nothing_a
+0x45cc0	function	gpt_input_capture_2_interrupt	context	clears the GPT's IC2 flag, TFLG1 bit 1, and returns through trap #5; no vector names it
+0x45ce4	function	pwma_force_level	loop.md	forces the PWMA pin low for a nonzero argument, high for zero: PWMC's F1A (MC68331UM D.2.14); holdover and the stages call it
+0x474c2	function	efc_gain_set	context	sets the EFC's fractional frequency a count, 6.25e-13 from pllp_task, and the values derived from it: its reciprocal, 1 ns/s and 5e-9 a day in counts
+0x4b420	function	gps_status_alternate	context	0: the receiver status gpsm_task and status_snapshot hand gps_receiver_status_update with 1, which it ignores
+0x4bc1c	function	request_ring_newest_replaceable	context	1 if the newest queued request is of kind 3 or 4 and not yet sent, so a new one replaces it
+0x4efb4	function	oncore_as_height_decode	docs/firmware/oncore	@@As's height and its type, the position hold position's last fields
+0x4efd6	function	oncore_ai_decode	docs/firmware/oncore	@@Ai's byte, stored at its channel, 1 to 6
+0x4f6a4	function	oncore_dop_message	docs/firmware/oncore	decodes @@Bc, the xDOP table
+0x4f6be	function	oncore_almanac_status_message	docs/firmware/oncore	decodes @@Bd, the almanac status
+0x4f842	function	oncore_extension_message	docs/firmware/oncore	decodes @@Bk, the position/status/data extension
+0x4f85c	function	oncore_traim_message	docs/firmware/oncore	decodes @@Bn, the Time RAIM setup and status, and marks it received at 0x101b55
+0x5112a	function	setjmp	context	saves the registers, return address and stack, and through trap #1 the status register
+0x51158	function	primary_unpack_records	context	the primary's copy of the boot code's record unpacker, pointed at 0, where there is no S: always 1
+#
+# setjmp's partner
+0x51100	function	longjmp	context	restores the registers setjmp saved, its status register through trap #1, and returns to its caller with the value given

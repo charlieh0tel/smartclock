@@ -19,6 +19,10 @@ says nothing about a unit's hardware.
   and calls `0x47fa8`, a bare `rts`.  The same empty routine is in
   3633 (`0x47e82`), the 58503B (`0x4d126`), the Z3815A (`0x4be5e`), the
   Z3816A (`0x4646a`) and the Z3801A (`0x42b46`).
+- `:OUTPut:STATe` likewise, in the Z3805A 3543B: the setting is saved
+  in `nv_settings.output_state`, and its descriptor's done hook
+  (`0x42b7c`) hands it to `0x42b18`, a bare `rts` beside the pulse's
+  (`0x42b1a`).  Nothing else reads the setting but its query.
 - `:PULSe:REFerence:EDGE`, `:PTIMe:PPS:EDGE` and `:SENSe:TSTn:EDGE`
   store nothing: their queries share the stub `0x28d70`, and their
   setters call `0x2bcfa(3, value)`, which for some values posts

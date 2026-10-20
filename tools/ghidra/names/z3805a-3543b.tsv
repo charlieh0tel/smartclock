@@ -1261,3 +1261,97 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2d148	function	satellite_number_valid	context	1 for a satellite number from 1 to 32
 0x2d160	function	satellite_in_mask	context	1 if a satellite's bit is set in a mask
 0x2d17a	function	satellite_mask_add	context	sets a valid satellite's bit in a mask
+#
+# SCPI helpers, ROBin and the early status events
+0x2d1a2	function	satellite_mask_remove	context	clears a valid satellite's bit in a mask
+0x2e0d8	function	time_zone_split	context	a time zone's minutes as signed hours and minutes
+0x2e6c0	function	string_upper	context	a string in upper case, in place
+0x2e714	function	string_trim_right	context	strips a string's trailing spaces
+0x2e730	function	robin_strip_xnon	context	skips an XNON:, :XNON:, XNONE: or :XNONE: prefix, for the ROBin queries
+0x2e7ee	function	robin_keyword_match	context	matches a ROBin argument's keyword at the start of the text
+0x2e882	function	robin_lookup	context	finds a ROBin argument's keyword in the tables at 0x2f32a, and its kind
+0x2e8ee	function	robin_parse_arguments	context	parses the numbers after a ROBin keyword, by its kind
+0x2eba8	function	robin_parse	context	the ROBin queries' argument parser: upper case, trimmed, prefix stripped, keyword and numbers
+0x2ec40	function	robin_point_list	context	fills a ROBin point list with fixed indexes
+0x2ecf8	function	robin_timestamp_values	context	fills a ROBin timestamp from fixed values, from 1994 on: test data
+0x2ed7a	function	robin_point_count	context	a ROBin kind's fixed point count, 4 to 7
+0x2edde	function	robin_overflow_count	context	a ROBin kind's fixed overflow count, 4.0 on
+0x2ee66	function	robin_clear	context	does nothing: :ROBin:CLEar's work
+0x2f34e	function	status_preset_register	context	sets a status register's enable or transition filter, as :STATus:PRESet does
+0x2f40c	function	status_transitions_init	context	sets registers 2 to 6's transition filters to their defaults from the setup table
+0x2f64a	function	happening_buffer_clear	context	clears a buffer of status events kept before the status model is ready
+0x2f668	function	happening_buffers_clear	context	clears both buffers of early status events
+0x2f680	function	happening_replay	context	replays buffered status events through status_report or status_happening
+0x2f6dc	function	happening_flush	context	replays one of the two buffers of early status events
+0x30a3e	function	lifetime_record_read	context	reads the lifetime record from EEPROM 0x400060, or sets its defaults: 1994-01-01 and the EFC at mid-scale
+#
+# the EEPROM records, the clamps and the counter's self-tests
+0x30c1e	function	calibration_block_read	interval.md's calibration block	reads the time offset and TC from the calibration block at EEPROM 0x400080, or zeros if its checksum fails
+0x30d2e	function	parameter_record_read	structures.md	reads the serial settings from the parameter record at EEPROM 0x400000, or sets their defaults if its checksum fails
+0x3145a	function	sign_extend_bits	context	sign-extends a value of so many bits to a long
+0x3161a	function	log_erase_checked	context	erases the event log under log_mutex if its count is the one given, else 0xff
+0x31662	function	log_entry_total	context	the event log's entry count, and whether it is full
+0x3202a	function	float_table_index	context	the index of a float's magnitude in the table at 0x32700, by bisection; called by nothing
+0x32104	function	clamp_double	context	clamps a double to its minimum and maximum, reporting each clamp; 1 if it clamped
+0x322aa	function	load_double	context	the double at a pointer
+0x323b2	function	float_max_of	context	the larger of two floats at pointers
+0x323d6	function	float_min_of	context	the smaller of two floats at pointers
+0x3244a	function	clamp_float_to_step_double	context	validate for :GPS:ADELay and the positions: clamps a float and rounds it to its step in double
+0x32596	function	clamp_double_to_step_and_limits	context	clamps a double to its minimum and maximum and rounds it to its step
+0x326d2	function	clamp_double_to_limits	context	clamps a double to its minimum and maximum
+0x32b5e	function	nv_slot_valid	context	0 if the current NV slot holds S, a good checksum and the firmware revision 3543B
+0x32e40	function	idn_model_default	context	sets the *IDN? model to Z3805A
+0x32e5c	function	identification_record_read	context	reads the model, serial and suffix from the identification record at EEPROM 0x400010, or their defaults
+0x32f00	function	identification_record_write	context	writes the model, serial and suffix to the identification record when they have changed
+0x33114	function	reset_record_count	context	counts the valid reset-cause records into log_entry_count
+0x40670	function	interpolator_selftest_calibrate	context	calibrates the interpolator, up to 20 tries, and verifies it
+0x406c8	function	interpolator_selftest	context	the interpolator's self-test: its failure flag from the calibration
+0x406e2	function	interpolator_sample_test	context	samples the interpolator with its calibrated DACs and keeps both ends' readings; called by nothing
+0x407d4	function	fpga_bit_test	context	1 if bits are set in an FPGA register; called by nothing
+0x4085e	function	fpga_address_sweep_debug	context	steps an FPGA register's address bits through 32 values, printing each; called by nothing
+0x40bda	function	counter_offset_apply	context	takes 0x555555 off the counter's 64-bit count
+0x40f98	function	counter_selftest	context	the FPGA self-test: presets the counters and fails unless the count reads zero
+0x41132	function	int64_add_long	context	adds a signed long to a 64-bit number; called by nothing
+0x4115c	function	int64_divide	context	a 64-bit number divided by a long; called by nothing
+0x4117e	function	uint64_divide	context	an unsigned 64-bit number divided by an unsigned long; called by nothing
+0x41244	function	double_to_int64	context	a double as a signed 64-bit number, through 2^32 at 0x41300; called by nothing
+0x43482	function	status_enable_restore	context	restores a status register's enable mask from the NV settings, reporting 0xe if it fails
+0x434c2	function	status_ptr_restore	context	restores a status register's positive transition filter from the NV settings
+#
+# the status presets, the Oncore decoders and the survey
+0x43504	function	status_ntr_restore	context	restores a status register's negative transition filter from the NV settings
+0x43546	function	status_preset_done	context	done for :STATus:PRESet: the enables and transition filters back to their defaults, saved
+0x43888	function	holdover_correction_valid	context	1 if holdover's TI statistics give an EFC within 0 to 1048560 from at least 10 readings; called by nothing
+0x45a24	function	time_zone_changed	context	marks the time zone changed, for :PTIMe:TZONe
+0x45c92	function	nv_clear_and_reset	context	clears the NV settings, invalidates the battery-backed RAM's checksum and resets with trap #12
+0x466ca	function	gps_selftest_run	context	asks the GPS engine for its self-test, up to 20 tries, failing the self-test's GPS bit 0x4000 if it never answers
+0x47078	function	leap_ack_pending	context	1 while a leap second acknowledgment is pending, pll +0x2c or +0x2d
+0x47de2	function	running_average_update	context	folds a value into a running average of so many
+0x47eb0	function	dms_to_mas	context	degrees, minutes and seconds as milliarcseconds
+0x49794	function	satellite_compare	context	qsort's comparison of two satellites, by elevation and then by number
+0x4a448	function	bits_1_to_3_any	context	1 if any of bits 1 to 3 is set
+0x4a494	function	bits_4_5_any	context	1 if bit 4 or 5 is set
+0x4a4c0	function	bits_6_7_any	context	1 if bit 6 or 7 is set
+0x4a4ec	function	bits_8_9_any	context	1 if bit 8 or 9 is set
+0x4afd6	function	status_screen_print	context	prints the status screen, for :SYSTem:PRINt?
+0x4eee0	function	long_array_get_word	context	a long's low word from an array by index, stored high byte first and the pointer advanced
+0x4ef02	function	long_array_get_long	context	a long from an array by index, stored high byte first and the pointer advanced
+0x4ef3a	function	long_array_get_long_prefixed	context	a zero byte, then long_array_get_long
+0x4ef54	function	byte_copy_optional	context	copies a byte if there is somewhere to put it
+0x4ef70	function	word_copy_advance	context	copies a word and advances the source
+0x4ef8e	function	bytes_to_long	context	four bytes, high first, as a long
+0x4f002	function	word_copy_14_bits	context	copies a word's low 14 bits and advances the source
+0x4f28e	function	satellites_in_use	context	the sets and counts of GPS and pseudolite satellites the channels use for position
+0x4f39a	function	position_settable	context	1 unless the receiver holds its position or is surveying
+0x4f3b2	function	gps_position_get	context	the receiver's latitude, longitude and MSL height, if it has reported them
+0x4f3de	function	gps_time_local_get	context	the receiver's date and time, in local time, if it has reported them
+0x4f42e	function	survey_progress_percent	context	the survey's progress, positions averaged against the duration, in percent
+0x4f4ca	function	survey_progress_text	context	the survey's progress as text, for :DOUGlas:PROGress?
+0x4f59a	function	oncore_position_message	gps.md	decodes the position and status message, and while surveying averages its position
+0x4f682	function	oncore_visibility_message	gps.md	decodes the visible satellites, @@Bb, and marks them received
+0x4f6d8	function	oncore_corrections_message	gps.md	decodes the range corrections and averages those of the satellites in use, and their deviation
+0x4f87e	function	oncore_receiver_id_message	gps.md	decodes the receiver ID, @@Cj, and marks it received
+0x4fb86	function	gps_response_match	context	checks a response against the request it answers
+0x51038	function	psos_config_init	psos.md	copies the kernel's configuration and the task table into RAM
+0x510aa	function	memory_allocate	psos.md	allocates from region 1 through service 8
+0x510d2	function	memory_free	psos.md	frees a segment through service 9

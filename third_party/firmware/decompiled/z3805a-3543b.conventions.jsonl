@@ -896,24 +896,24 @@
 {"address":"0002851a","name":"status_clear_events","note":"reads every register's event word, clearing them, for *CLS","convention":"unknown"}
 {"address":"0002854a","name":"error_queue_clear","note":"empties the error queue, for *CLS","convention":"unknown"}
 {"address":"0002856c","name":"error_queue_read","note":"takes the oldest error from the queue","convention":"unknown"}
-{"address":"00028588","name":"FUN_00028588","convention":"unknown"}
+{"address":"00028588","name":"error_queue_create","note":"allocates the error queue ring with room for so many entries","convention":"unknown"}
 {"address":"000285d4","name":"error_queue_push","note":"adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full","convention":"unknown"}
-{"address":"0002869e","name":"FUN_0002869e","convention":"unknown"}
-{"address":"00028712","name":"FUN_00028712","convention":"unknown"}
-{"address":"0002889a","name":"FUN_0002889a","convention":"unknown"}
-{"address":"000288ae","name":"FUN_000288ae","convention":"unknown"}
-{"address":"000288c2","name":"FUN_000288c2","convention":"unknown"}
-{"address":"000288d8","name":"FUN_000288d8","convention":"unknown"}
+{"address":"0002869e","name":"error_queue_pop","note":"takes the oldest error and its message, prompting again once the queue is empty; 0 when empty","convention":"unknown"}
+{"address":"00028712","name":"error_queue_destroy","note":"frees the error queue","convention":"unknown"}
+{"address":"0002889a","name":"status_register_set_ptr","note":"sets a register's positive transition filter, for :PTRansition","convention":"unknown"}
+{"address":"000288ae","name":"status_register_set_ntr","note":"sets a register's negative transition filter, for :NTRansition","convention":"unknown"}
+{"address":"000288c2","name":"status_register_get_ptr","note":"a register's positive transition filter, for :PTRansition?","convention":"unknown"}
+{"address":"000288d8","name":"status_register_get_ntr","note":"a register's negative transition filter, for :NTRansition?","convention":"unknown"}
 {"address":"000288ee","name":"error_message_lookup","note":"an error code's message, from the table at 0x28910","convention":"unknown"}
 {"address":"000292d6","name":"FUN_000292d6","convention":"unknown"}
-{"address":"00029642","name":"FUN_00029642","convention":"unknown"}
-{"address":"00029690","name":"FUN_00029690","convention":"unknown"}
-{"address":"00029700","name":"FUN_00029700","convention":"unknown"}
-{"address":"0002972c","name":"FUN_0002972c","convention":"unknown"}
-{"address":"00029742","name":"FUN_00029742","convention":"unknown"}
-{"address":"0002975e","name":"FUN_0002975e","convention":"unknown"}
-{"address":"00029766","name":"FUN_00029766","convention":"unknown"}
-{"address":"00029770","name":"FUN_00029770","convention":"unknown"}
+{"address":"00029642","name":"scpi_call_handler","note":"calls a node's handler, giving it room in the arena for its parameters","convention":"unknown"}
+{"address":"00029690","name":"scpi_format_response","note":"writes a response's items through their formatters","convention":"unknown"}
+{"address":"00029700","name":"arena_alloc","note":"takes so many bytes, rounded up to even, from an arena; 0 if it is full","convention":"unknown"}
+{"address":"0002972c","name":"arena_remaining","note":"the bytes left in an arena, and its next free byte","convention":"unknown"}
+{"address":"00029742","name":"arena_take","note":"takes so many bytes, rounded up to even, from a buffer","convention":"unknown"}
+{"address":"0002975e","name":"arena_current","note":"an arena's next free byte","convention":"unknown"}
+{"address":"00029766","name":"arena_set","note":"sets an arena's next free byte","convention":"unknown"}
+{"address":"00029770","name":"arena_init","note":"makes an arena of a buffer of so many bytes","convention":"unknown"}
 {"address":"0002979c","name":"scpi_check_range","note":"reports 9 when value is outside min..max; *ESE, *SRE and the STATus ENABle and transition setters","convention":"unknown"}
 {"address":"000297c4","name":"FUN_000297c4","convention":"unknown"}
 {"address":"0002982c","name":"scpi_numeric_set","note":"sends a parameter's new value, or its minimum or maximum, to pllc","convention":"unknown"}
@@ -922,22 +922,22 @@
 {"address":"00029990","name":"FUN_00029990","convention":"unknown"}
 {"address":"00029a18","name":"return_byte","note":"returns its argument; the LED and DOUGlas queries call it","convention":"unknown"}
 {"address":"00029a1e","name":"FUN_00029a1e","convention":"unknown"}
-{"address":"00029a24","name":"FUN_00029a24","convention":"unknown"}
+{"address":"00029a24","name":"copy_longs_locked","note":"copies so many longs with interrupts held off","convention":"unknown"}
 {"address":"00029a62","name":"FUN_00029a62","convention":"unknown"}
-{"address":"00029a68","name":"FUN_00029a68","convention":"unknown"}
+{"address":"00029a68","name":"robin_store","note":"stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36","convention":"unknown"}
 {"address":"00029ada","name":"return_zero","note":"returns 0; most SCPI query handlers call it","convention":"unknown"}
 {"address":"00029ade","name":"scpi_query_failed","note":"72 SCPI queries call it with -0x20; reports it through status_report_from and zeroes the reply's length at +4","convention":"unknown"}
-{"address":"00029b08","name":"FUN_00029b08","convention":"unknown"}
+{"address":"00029b08","name":"rtcm_supported","note":"0: RTCM corrections are not supported","convention":"unknown"}
 {"address":"00029b0e","name":"scpi_prompt","note":"makes the SCPI prompt, with the latest error when there is one","convention":"unknown"}
 {"address":"00029b42","name":"scpi_session_init","note":"clears the SCPI input, opens the port and prompts","convention":"unknown"}
 {"address":"00029b82","name":"scpi_console_port","note":"returns 0x29e18, the console port's object: two routines, then the \"E%+04d> \" and \"scpi > \" prompts; queries compare a request's source with it","convention":"unknown"}
-{"address":"00029b96","name":"FUN_00029b96","convention":"unknown"}
+{"address":"00029b96","name":"scpi_console_read","note":"reads up to so many characters from the console, marking the input ended at its end","convention":"unknown"}
 {"address":"00029bce","name":"console_port_read","note":"the first of the console port's routines; the SCPI input loop reads characters with it","convention":"unknown"}
-{"address":"00029cc6","name":"FUN_00029cc6","convention":"unknown"}
-{"address":"00029cd0","name":"FUN_00029cd0","convention":"unknown"}
-{"address":"00029d50","name":"FUN_00029d50","convention":"unknown"}
-{"address":"00029d62","name":"FUN_00029d62","convention":"unknown"}
-{"address":"00029d76","name":"FUN_00029d76","convention":"unknown"}
+{"address":"00029cc6","name":"scpi_input_ended","note":"marks the SCPI input ended","convention":"unknown"}
+{"address":"00029cd0","name":"scpi_console_putc","note":"writes a character to the console, keeping it in the echo buffer, or CR LF for an end","convention":"unknown"}
+{"address":"00029d50","name":"status_byte_set_bits","note":"the status output object's method: sets bits in the status byte and updates RQS","convention":"unknown"}
+{"address":"00029d62","name":"status_byte_clear_bits","note":"the status output object's method: clears bits in the status byte and updates RQS","convention":"unknown"}
+{"address":"00029d76","name":"status_sre_set","note":"the status output object's method: sets the service request enable and updates RQS","convention":"unknown"}
 {"address":"00029d98","name":"status_update_rqs","note":"sets or clears RQS, 0x40, in the status byte from the service request enable","convention":"unknown"}
 {"address":"00029e34","name":"FUN_00029e34","convention":"unknown"}
 {"address":"00029e38","name":"FUN_00029e38","convention":"unknown"}
@@ -1008,7 +1008,7 @@
 {"address":"0002b44e","name":"scpi_set_DIAGnostic_SLOG_CLEar","convention":"unknown"}
 {"address":"0002b47c","name":"scpi_query_DIAGnostic_LOG_COUNt","convention":"unknown"}
 {"address":"0002b4c2","name":"log_status","note":"prints the event log's state","convention":"unknown"}
-{"address":"0002b578","name":"FUN_0002b578","convention":"unknown"}
+{"address":"0002b578","name":"log_print","note":"prints the event log, its status and each entry, through the callbacks given","convention":"unknown"}
 {"address":"0002b632","name":"scpi_query_DIAGnostic_LOG_READ","convention":"unknown"}
 {"address":"0002b762","name":"scpi_query_DIAGnostic_LOG_READ_ALL","convention":"unknown"}
 {"address":"0002b798","name":"scpi_set_DIAGnostic_LOG_WRITe","convention":"unknown"}
@@ -1077,10 +1077,10 @@
 {"address":"0002d0d8","name":"scpi_set_DOUGlas_STATe_POWerup","convention":"unknown"}
 {"address":"0002d108","name":"scpi_query_DOUGlas_STATe_POWerup","convention":"unknown"}
 {"address":"0002d122","name":"scpi_query_SOURce_GPSystem_REFerence_VALid","convention":"unknown"}
-{"address":"0002d148","name":"FUN_0002d148","convention":"unknown"}
-{"address":"0002d160","name":"FUN_0002d160","convention":"unknown"}
-{"address":"0002d17a","name":"FUN_0002d17a","convention":"unknown"}
-{"address":"0002d1a2","name":"FUN_0002d1a2","convention":"unknown"}
+{"address":"0002d148","name":"satellite_number_valid","note":"1 for a satellite number from 1 to 32","convention":"unknown"}
+{"address":"0002d160","name":"satellite_in_mask","note":"1 if a satellite's bit is set in a mask","convention":"unknown"}
+{"address":"0002d17a","name":"satellite_mask_add","note":"sets a valid satellite's bit in a mask","convention":"unknown"}
+{"address":"0002d1a2","name":"satellite_mask_remove","note":"clears a valid satellite's bit in a mask","convention":"unknown"}
 {"address":"0002d1cc","name":"satellite_list_limits","note":"the ID count, the most listed and the ID base for satellites_in_mask: kind 0 :SAT:TRAC? (32, 6), 1 its pseudolites (5, 6, from 0x20), 2 :SAT:VIS:PRED? (32, 12), 3 the ignore and include lists (32, 32)","convention":"unknown"}
 {"address":"0002d226","name":"satellites_in_mask","note":"lists the PRNs whose bits are set; the SAT:TRAC:IGN? and INCL? queries","convention":"unknown"}
 {"address":"0002d272","name":"scpi_query_SOURce_GPSystem_SATellite_TRACking","convention":"unknown"}
@@ -1134,7 +1134,7 @@
 {"address":"0002dff6","name":"scpi_set_SOURce_PTIMe_TCODe_FORMat","convention":"unknown"}
 {"address":"0002e054","name":"scpi_query_SOURce_PTIMe_TCODe_FORMat","convention":"unknown"}
 {"address":"0002e086","name":"scpi_query_SOURce_PTIMe_TIME","convention":"unknown"}
-{"address":"0002e0d8","name":"FUN_0002e0d8","convention":"unknown"}
+{"address":"0002e0d8","name":"time_zone_split","note":"a time zone's minutes as signed hours and minutes","convention":"unknown"}
 {"address":"0002e152","name":"scpi_query_RTAD","convention":"unknown"}
 {"address":"0002e164","name":"scpi_query_SOURce_PTIMe_TIME_STRing","convention":"unknown"}
 {"address":"0002e1f2","name":"scpi_set_SOURce_PTIMe_TZONe","convention":"unknown"}
@@ -1163,19 +1163,19 @@
 {"address":"0002e690","name":"scpi_query_SAMPle_DOUBle","convention":"unknown"}
 {"address":"0002e6a2","name":"scpi_set_SAMPle_DARR","convention":"unknown"}
 {"address":"0002e6a6","name":"scpi_query_SAMPle_DARR","convention":"unknown"}
-{"address":"0002e6c0","name":"FUN_0002e6c0","convention":"unknown"}
+{"address":"0002e6c0","name":"string_upper","note":"a string in upper case, in place","convention":"unknown"}
 {"address":"0002e6fc","name":"skip_spaces","note":"advances a char ** past spaces","convention":"unknown"}
-{"address":"0002e714","name":"FUN_0002e714","convention":"unknown"}
-{"address":"0002e730","name":"FUN_0002e730","convention":"unknown"}
-{"address":"0002e7ee","name":"FUN_0002e7ee","convention":"unknown"}
-{"address":"0002e882","name":"FUN_0002e882","convention":"unknown"}
-{"address":"0002e8ee","name":"FUN_0002e8ee","convention":"unknown"}
-{"address":"0002eba8","name":"FUN_0002eba8","convention":"unknown"}
-{"address":"0002ec40","name":"FUN_0002ec40","convention":"unknown"}
-{"address":"0002ecf8","name":"FUN_0002ecf8","convention":"unknown"}
-{"address":"0002ed7a","name":"FUN_0002ed7a","convention":"unknown"}
-{"address":"0002edde","name":"FUN_0002edde","convention":"unknown"}
-{"address":"0002ee66","name":"FUN_0002ee66","convention":"unknown"}
+{"address":"0002e714","name":"string_trim_right","note":"strips a string's trailing spaces","convention":"unknown"}
+{"address":"0002e730","name":"robin_strip_xnon","note":"skips an XNON:, :XNON:, XNONE: or :XNONE: prefix, for the ROBin queries","convention":"unknown"}
+{"address":"0002e7ee","name":"robin_keyword_match","note":"matches a ROBin argument's keyword at the start of the text","convention":"unknown"}
+{"address":"0002e882","name":"robin_lookup","note":"finds a ROBin argument's keyword in the tables at 0x2f32a, and its kind","convention":"unknown"}
+{"address":"0002e8ee","name":"robin_parse_arguments","note":"parses the numbers after a ROBin keyword, by its kind","convention":"unknown"}
+{"address":"0002eba8","name":"robin_parse","note":"the ROBin queries' argument parser: upper case, trimmed, prefix stripped, keyword and numbers","convention":"unknown"}
+{"address":"0002ec40","name":"robin_point_list","note":"fills a ROBin point list with fixed indexes","convention":"unknown"}
+{"address":"0002ecf8","name":"robin_timestamp_values","note":"fills a ROBin timestamp from fixed values, from 1994 on: test data","convention":"unknown"}
+{"address":"0002ed7a","name":"robin_point_count","note":"a ROBin kind's fixed point count, 4 to 7","convention":"unknown"}
+{"address":"0002edde","name":"robin_overflow_count","note":"a ROBin kind's fixed overflow count, 4.0 on","convention":"unknown"}
+{"address":"0002ee66","name":"robin_clear","note":"does nothing: :ROBin:CLEar's work","convention":"unknown"}
 {"address":"0002ee68","name":"scpi_set_FORMat_DATA","convention":"unknown"}
 {"address":"0002eeb8","name":"scpi_query_FORMat_DATA","convention":"unknown"}
 {"address":"0002eee8","name":"scpi_query_ROBin","convention":"unknown"}
@@ -1187,17 +1187,17 @@
 {"address":"0002f19e","name":"scpi_query_ROBin_TSTamp","convention":"unknown"}
 {"address":"0002f2ae","name":"scpi_set_SENSe_TST1_EDGE","convention":"unknown"}
 {"address":"0002f2ce","name":"scpi_query_SENSe_TST1_EDGE","convention":"unknown"}
-{"address":"0002f34e","name":"FUN_0002f34e","convention":"unknown"}
+{"address":"0002f34e","name":"status_preset_register","note":"sets a status register's enable or transition filter, as :STATus:PRESet does","convention":"unknown"}
 {"address":"0002f3d0","name":"status_enables_init","note":"sets the seven status registers' enable masks from the table at 0x2f7a8","convention":"unknown"}
-{"address":"0002f40c","name":"FUN_0002f40c","convention":"unknown"}
+{"address":"0002f40c","name":"status_transitions_init","note":"sets registers 2 to 6's transition filters to their defaults from the setup table","convention":"unknown"}
 {"address":"0002f480","name":"status_init","note":"builds status_object with status_create, sets each register up, sets status_ready","convention":"unknown"}
 {"address":"0002f53a","name":"FUN_0002f53a","convention":"unknown"}
 {"address":"0002f53c","name":"status_happening","note":":DIAG:STAT:HAPP passes it a condition, 0 to 0x38","convention":"unknown"}
 {"address":"0002f626","name":"status_hardware_condition","note":"the :STATus:OPERation:HARDware condition, register 6, which status_summary folds","convention":"unknown"}
-{"address":"0002f64a","name":"FUN_0002f64a","convention":"unknown"}
-{"address":"0002f668","name":"FUN_0002f668","convention":"unknown"}
-{"address":"0002f680","name":"FUN_0002f680","convention":"unknown"}
-{"address":"0002f6dc","name":"FUN_0002f6dc","convention":"unknown"}
+{"address":"0002f64a","name":"happening_buffer_clear","note":"clears a buffer of status events kept before the status model is ready","convention":"unknown"}
+{"address":"0002f668","name":"happening_buffers_clear","note":"clears both buffers of early status events","convention":"unknown"}
+{"address":"0002f680","name":"happening_replay","note":"replays buffered status events through status_report or status_happening","convention":"unknown"}
+{"address":"0002f6dc","name":"happening_flush","note":"replays one of the two buffers of early status events","convention":"unknown"}
 {"address":"0002fa12","name":"scpi_query_SOURce_ROSCillator_HOLDover_DURation","convention":"unknown"}
 {"address":"0002fa82","name":"scpi_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold","convention":"unknown"}
 {"address":"0002fabc","name":"scpi_query_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold","convention":"unknown"}
@@ -1258,12 +1258,12 @@
 {"address":"000307ee","name":"scpi_query_RVST","convention":"unknown"}
 {"address":"00030800","name":"scpi_query_SYSTem_PRINt_LENGth","convention":"unknown"}
 {"address":"0003082e","name":"record_checksum","note":"the sum and its complement of an EEPROM record's bytes after the first two","convention":"unknown"}
-{"address":"00030a3e","name":"FUN_00030a3e","convention":"unknown"}
+{"address":"00030a3e","name":"lifetime_record_read","note":"reads the lifetime record from EEPROM 0x400060, or sets its defaults: 1994-01-01 and the EFC at mid-scale","convention":"unknown"}
 {"address":"00030ab4","name":"lifetime_record_write","note":"writes the 32-byte checksummed lifetime record at EEPROM 0x400060, the date, its count and the EFC, when it has changed","convention":"unknown"}
 {"address":"00030b66","name":"lifetime_update","note":"on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules its clock event","convention":"unknown"}
-{"address":"00030c1e","name":"FUN_00030c1e","convention":"unknown"}
+{"address":"00030c1e","name":"calibration_block_read","note":"reads the time offset and TC from the calibration block at EEPROM 0x400080, or zeros if its checksum fails","convention":"unknown"}
 {"address":"00030c60","name":"save_calibration_block","note":"rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs from it, reporting status 0x10 if the EEPROM write fails","convention":"unknown"}
-{"address":"00030d2e","name":"FUN_00030d2e","convention":"unknown"}
+{"address":"00030d2e","name":"parameter_record_read","note":"reads the serial settings from the parameter record at EEPROM 0x400000, or sets their defaults if its checksum fails","convention":"unknown"}
 {"address":"00030dea","name":"save_parameter_record","note":"writes the 16-byte checksummed parameter record at EEPROM 0x400000, reporting status 0x10 if it fails","convention":"unknown"}
 {"address":"00030f08","name":"FUN_00030f08","convention":"unknown"}
 {"address":"00030f10","name":"eeprom_init","note":"creates eepx, \"Unable to create eepx\"","convention":"unknown"}
@@ -1275,11 +1275,11 @@
 {"address":"0003137a","name":"log_page_checksum","note":"an event log page's checksum: the sum of its 0x3c bytes and its complement","convention":"unknown"}
 {"address":"000313a4","name":"log_page_write","note":"writes an event log page to EEPROM at 0x400d40 if it has changed, its count incremented and checksummed","convention":"unknown"}
 {"address":"0003141a","name":"log_page_read","note":"reads the event log's 64-byte EEPROM page at 0x400d40 plus 0x40 times its number; 0xff if its checksum fails","convention":"unknown"}
-{"address":"0003145a","name":"FUN_0003145a","convention":"unknown"}
+{"address":"0003145a","name":"sign_extend_bits","note":"sign-extends a value of so many bits to a long","convention":"unknown"}
 {"address":"00031536","name":"log_erase","note":"clears the event log's pages and resets its state, reporting event !","convention":"unknown"}
 {"address":"000315e8","name":"log_erase_locked","note":"log_erase under log_mutex","convention":"unknown"}
-{"address":"0003161a","name":"FUN_0003161a","convention":"unknown"}
-{"address":"00031662","name":"FUN_00031662","convention":"unknown"}
+{"address":"0003161a","name":"log_erase_checked","note":"erases the event log under log_mutex if its count is the one given, else 0xff","convention":"unknown"}
+{"address":"00031662","name":"log_entry_total","note":"the event log's entry count, and whether it is full","convention":"unknown"}
 {"address":"0003167c","name":"log_init","note":"creates log_mutex, \"logr\", and finds the event log's page to write next among 0x4b","convention":"unknown"}
 {"address":"00031762","name":"log_read","note":"formats a log entry, \"Log %03d:%04d%02d%02d.%02d:%02d:%02d\"","convention":"unknown"}
 {"address":"0003195a","name":"log_write","note":"appends to the diagnostic log under its lock; :DIAG:LOG:WRIT and log_send call it","convention":"unknown"}
@@ -1290,38 +1290,38 @@
 {"address":"00031bf6","name":"log_flush","note":"writes the current event log page","convention":"unknown"}
 {"address":"00031c42","name":"log_append","note":"adds an entry with its date and time to the event log, writing the page; reports event space past 180 entries","convention":"unknown"}
 {"address":"00031ff8","name":"report_clamped","note":"\"Value too small, set to min limit\" or \"too large, set to max limit\", and status_report_from(9)","convention":"unknown"}
-{"address":"0003202a","name":"FUN_0003202a","convention":"unknown"}
+{"address":"0003202a","name":"float_table_index","note":"the index of a float's magnitude in the table at 0x32700, by bisection; called by nothing","convention":"unknown"}
 {"address":"0003209c","name":"clamp_float","note":"clamps a float to its minimum and maximum, reporting each clamp; 1 if it clamped","convention":"unknown"}
-{"address":"00032104","name":"FUN_00032104","convention":"unknown"}
+{"address":"00032104","name":"clamp_double","note":"clamps a double to its minimum and maximum, reporting each clamp; 1 if it clamped","convention":"unknown"}
 {"address":"0003217e","name":"round_float_to_step","note":"rounds a float to the nearest multiple of its step, half away from zero, the step a thousand times coarser beyond 1e9 steps","convention":"unknown"}
-{"address":"000322aa","name":"FUN_000322aa","convention":"unknown"}
+{"address":"000322aa","name":"load_double","note":"the double at a pointer","convention":"unknown"}
 {"address":"000322b4","name":"clamp_to_limits","note":"clamps *value to *min and *max, reporting through report_clamped","convention":"unknown"}
 {"address":"0003232c","name":"mask_to_limits","note":"a register's new value ANDed with its maximum, the mask of the bits it has","convention":"unknown"}
 {"address":"0003233a","name":"clamp_to_step_and_limits","note":"rounds a value down to the step its descriptor gives, then clamps it to its minimum and maximum, reporting each clamp","convention":"unknown"}
-{"address":"000323b2","name":"FUN_000323b2","convention":"unknown"}
-{"address":"000323d6","name":"FUN_000323d6","convention":"unknown"}
+{"address":"000323b2","name":"float_max_of","note":"the larger of two floats at pointers","convention":"unknown"}
+{"address":"000323d6","name":"float_min_of","note":"the smaller of two floats at pointers","convention":"unknown"}
 {"address":"000323fa","name":"clamp_float_to_step_and_limits","note":"clamps a float to its minimum and maximum and rounds it to its step","convention":"unknown"}
-{"address":"0003244a","name":"FUN_0003244a","convention":"unknown"}
-{"address":"00032596","name":"FUN_00032596","convention":"unknown"}
-{"address":"000326d2","name":"FUN_000326d2","convention":"unknown"}
+{"address":"0003244a","name":"clamp_float_to_step_double","note":"validate for :GPS:ADELay and the positions: clamps a float and rounds it to its step in double","convention":"unknown"}
+{"address":"00032596","name":"clamp_double_to_step_and_limits","note":"clamps a double to its minimum and maximum and rounds it to its step","convention":"unknown"}
+{"address":"000326d2","name":"clamp_double_to_limits","note":"clamps a double to its minimum and maximum","convention":"unknown"}
 {"address":"000327f4","name":"nv_slot_erase","note":"clear_nv erases slots 0 and 1 with it","convention":"unknown"}
 {"address":"0003281a","name":"clear_nv","note":"the clear_nv word's","convention":"unknown"}
 {"address":"0003282c","name":"nv_restore","note":"loads slot 0, else slot 1, else copies nv_settings_defaults over nv_settings, erases the older slot and saves","convention":"unknown"}
 {"address":"000328e0","name":"nv_checksum","note":"the sum of a record's bytes 8 to 0x7f","convention":"unknown"}
 {"address":"0003290e","name":"nv_record_differs","note":"compares two records, nonzero when they differ","convention":"unknown"}
 {"address":"0003293a","name":"nv_save","note":"packs the settings into a 0x80-byte NV register record and writes it to slot nv_slot when it differs; \"Warning: Entire nv register is being used\"","convention":"unknown"}
-{"address":"00032b5e","name":"FUN_00032b5e","convention":"unknown"}
+{"address":"00032b5e","name":"nv_slot_valid","note":"0 if the current NV slot holds S, a good checksum and the firmware revision 3543B","convention":"unknown"}
 {"address":"00032bc2","name":"nv_load_slot","note":"loads the settings from slot nv_slot when its record is good","convention":"unknown"}
 {"address":"00032e2e","name":"FUN_00032e2e","convention":"unknown"}
 {"address":"00032e36","name":"FUN_00032e36","convention":"unknown"}
-{"address":"00032e40","name":"FUN_00032e40","convention":"unknown"}
-{"address":"00032e5c","name":"FUN_00032e5c","convention":"unknown"}
-{"address":"00032f00","name":"FUN_00032f00","convention":"unknown"}
+{"address":"00032e40","name":"idn_model_default","note":"sets the *IDN? model to Z3805A","convention":"unknown"}
+{"address":"00032e5c","name":"identification_record_read","note":"reads the model, serial and suffix from the identification record at EEPROM 0x400010, or their defaults","convention":"unknown"}
+{"address":"00032f00","name":"identification_record_write","note":"writes the model, serial and suffix to the identification record when they have changed","convention":"unknown"}
 {"address":"00032ffa","name":"reset_record_checksum","note":"a reset-cause record's checksum: the sum of its 0x58 bytes and its complement","convention":"unknown"}
 {"address":"00033028","name":"reset_record_valid","note":"1 if a reset-cause record's checksum holds","convention":"unknown"}
 {"address":"0003305e","name":"log_clear","note":"clears the event log","convention":"unknown"}
 {"address":"000330ee","name":"log_count","note":"\"Log status: %-3d entries\"; sets *full when more than 31","convention":"unknown"}
-{"address":"00033114","name":"FUN_00033114","convention":"unknown"}
+{"address":"00033114","name":"reset_record_count","note":"counts the valid reset-cause records into log_entry_count","convention":"unknown"}
 {"address":"0003313c","name":"log_entry_text","note":"one of 32 log entries as \"Log %03d:%04d%02d%02d.%02d:%02d:%02d\", or \"Unused\"","convention":"unknown"}
 {"address":"00033238","name":"reset_record_write","note":"writes the next 0x5c-byte reset-cause record at EEPROM 0x4001c0, its time and text, with its checksum","convention":"unknown"}
 {"address":"00040000","name":"interpolator_calibration_init","note":"clears the interpolator calibration, both DACs at 0x1f","convention":"unknown"}
@@ -1334,14 +1334,14 @@
 {"address":"0004047c","name":"interpolator_verify","note":"sets both DACs, measures both ends of the interpolator against [1, 25] and [201, 225], and retries with the saved DACs if they fail","convention":"unknown"}
 {"address":"00040556","name":"interpolator_sample","note":"sets HDAC channels 2 and 3 and takes both interpolator readings; \"First-time interp test.\"","convention":"unknown"}
 {"address":"000405bc","name":"counter_calibrate","note":"runs interpolator_calibrate when the configuration asks, then stores reading_low and the spread at its +0x18 and +0x1c","convention":"unknown"}
-{"address":"00040670","name":"FUN_00040670","convention":"unknown"}
-{"address":"000406c8","name":"FUN_000406c8","convention":"unknown"}
-{"address":"000406e2","name":"FUN_000406e2","convention":"unknown"}
+{"address":"00040670","name":"interpolator_selftest_calibrate","note":"calibrates the interpolator, up to 20 tries, and verifies it","convention":"unknown"}
+{"address":"000406c8","name":"interpolator_selftest","note":"the interpolator's self-test: its failure flag from the calibration","convention":"unknown"}
+{"address":"000406e2","name":"interpolator_sample_test","note":"samples the interpolator with its calibrated DACs and keeps both ends' readings; called by nothing","convention":"unknown"}
 {"address":"00040756","name":"fpga_write","note":"writes a byte to FPGA register reg at 0x304000 (interval.md: the FPGA port)","convention":"unknown"}
 {"address":"0004076a","name":"fpga_read","note":"sets the register in fconf_regs[1]'s address bits, reads 0x304000, restores them; \"old_addr, fconf_regs[1] = %x\"","convention":"unknown"}
-{"address":"000407d4","name":"FUN_000407d4","convention":"unknown"}
+{"address":"000407d4","name":"fpga_bit_test","note":"1 if bits are set in an FPGA register; called by nothing","convention":"unknown"}
 {"address":"000407fa","name":"fpga_read_seconds","note":"FPGA register 0's high nibble, read until two reads agree: a count of seconds modulo 16","convention":"unknown"}
-{"address":"0004085e","name":"FUN_0004085e","convention":"unknown"}
+{"address":"0004085e","name":"fpga_address_sweep_debug","note":"steps an FPGA register's address bits through 32 values, printing each; called by nothing","convention":"unknown"}
 {"address":"0004091a","name":"counter_wait_ready","note":"polls FPGA register 0 for a bit, up to 512 times 10 ticks, giving up and disarming the reading if a 1PPS dies","convention":"unknown"}
 {"address":"000409a4","name":"fpga_set_bit","note":"sets or clears a bit in fconf_regs, register and mask from fpga_bit_table, then fpga_write","convention":"unknown"}
 {"address":"00040a0e","name":"fpga_set_field","note":"sets one fpga_bit_table field in its register's image and writes the register","convention":"unknown"}
@@ -1349,7 +1349,7 @@
 {"address":"00040a84","name":"counter_set_sync","note":"sets fconf_regs[3]'s low two bits to counter_arm's sync_kind","convention":"unknown"}
 {"address":"00040afe","name":"fpga_fields_to_registers","note":"builds the four FPGA register images from field values, by fpga_bit_table","convention":"unknown"}
 {"address":"00040ba6","name":"fpga_read_byte","note":"a byte from two FPGA registers' low nibbles","convention":"unknown"}
-{"address":"00040bda","name":"FUN_00040bda","convention":"unknown"}
+{"address":"00040bda","name":"counter_offset_apply","note":"takes 0x555555 off the counter's 64-bit count","convention":"unknown"}
 {"address":"00040c06","name":"counter_read_raw","note":"the counter's count from FPGA registers 0x16 to 0x12, offset by 0x555555","convention":"unknown"}
 {"address":"00040c56","name":"interpolator_read","note":"the complement of FPGA register 0x10","convention":"unknown"}
 {"address":"00040c6a","name":"counter_arm","note":"reloads fconf_regs[0..3] from the configuration and re-arms the FPGA","convention":"unknown"}
@@ -1357,14 +1357,14 @@
 {"address":"00040ea2","name":"counter_load_registers","note":"writes counter_configuration's four FPGA registers to the FPGA","convention":"unknown"}
 {"address":"00040ed8","name":"counter_configuration_init","note":"the counter configuration's defaults, and the interval reading marked invalid","convention":"unknown"}
 {"address":"00040f76","name":"counter_init","note":"sets the counter configuration and interpolator calibration to their defaults and arms the reading","convention":"unknown"}
-{"address":"00040f98","name":"FUN_00040f98","convention":"unknown"}
+{"address":"00040f98","name":"counter_selftest","note":"the FPGA self-test: presets the counters and fails unless the count reads zero","convention":"unknown"}
 {"address":"000410fa","name":"int64_add","note":"adds two 64-bit numbers","convention":"unknown"}
 {"address":"0004111e","name":"int64_negate","note":"negates a 64-bit number","convention":"unknown"}
-{"address":"00041132","name":"FUN_00041132","convention":"unknown"}
-{"address":"0004115c","name":"FUN_0004115c","convention":"unknown"}
-{"address":"0004117e","name":"FUN_0004117e","convention":"unknown"}
+{"address":"00041132","name":"int64_add_long","note":"adds a signed long to a 64-bit number; called by nothing","convention":"unknown"}
+{"address":"0004115c","name":"int64_divide","note":"a 64-bit number divided by a long; called by nothing","convention":"unknown"}
+{"address":"0004117e","name":"uint64_divide","note":"an unsigned 64-bit number divided by an unsigned long; called by nothing","convention":"unknown"}
 {"address":"0004119c","name":"int64_to_double","note":"a signed 64-bit number as a double, through 2^32 at 0x41300","convention":"unknown"}
-{"address":"00041244","name":"FUN_00041244","convention":"unknown"}
+{"address":"00041244","name":"double_to_int64","note":"a double as a signed 64-bit number, through 2^32 at 0x41300; called by nothing","convention":"unknown"}
 {"address":"0004137e","name":"efc_history_update","note":"sums the EFC and stores each 2700 samples an entry of efc_history","convention":"unknown"}
 {"address":"0004172a","name":"curv_signal","note":"signals the curv task, event 0x100","convention":"unknown"}
 {"address":"0004173e","name":"aging_fit_collect","note":"if the curv task has signaled 0x100, copies its fit's results into pll; efc_history_update calls it first","convention":"unknown"}
@@ -1404,13 +1404,13 @@
 {"address":"000433b6","name":"pll_scpi_complete","note":"once the reply flag is set: clears it, reports failure, finishes the SCPI command and signals its task; otherwise counts","convention":"unknown"}
 {"address":"000433fc","name":"gps_diag_complete","note":"once the reply flag is set: clears it and signals the waiting task; otherwise counts","convention":"unknown"}
 {"address":"00043466","name":"questionable_user_done","note":"reports status event M when the user bit is set and N when it is cleared","convention":"unknown"}
-{"address":"00043482","name":"FUN_00043482","convention":"unknown"}
-{"address":"000434c2","name":"FUN_000434c2","convention":"unknown"}
-{"address":"00043504","name":"FUN_00043504","convention":"unknown"}
-{"address":"00043546","name":"FUN_00043546","convention":"unknown"}
+{"address":"00043482","name":"status_enable_restore","note":"restores a status register's enable mask from the NV settings, reporting 0xe if it fails","convention":"unknown"}
+{"address":"000434c2","name":"status_ptr_restore","note":"restores a status register's positive transition filter from the NV settings","convention":"unknown"}
+{"address":"00043504","name":"status_ntr_restore","note":"restores a status register's negative transition filter from the NV settings","convention":"unknown"}
+{"address":"00043546","name":"status_preset_done","note":"done for :STATus:PRESet: the enables and transition filters back to their defaults, saved","convention":"unknown"}
 {"address":"00043804","name":"holdover_ti_reset","note":"clears holdover's TI statistics","convention":"unknown"}
 {"address":"0004381e","name":"holdover_ti_add","note":"adds a TI reading to holdover's statistics: a sum, a sum weighted by count, the count and the largest magnitude","convention":"unknown"}
-{"address":"00043888","name":"FUN_00043888","convention":"unknown"}
+{"address":"00043888","name":"holdover_correction_valid","note":"1 if holdover's TI statistics give an EFC within 0 to 1048560 from at least 10 readings; called by nothing","convention":"unknown"}
 {"address":"00043916","name":"holdover_ti_max","note":"the largest TI magnitude holdover has seen, for holdover_limit_exceeded","convention":"unknown"}
 {"address":"0004391e","name":"holdover_limit_exceeded","note":"1 unless the holdover is younger than holdover_measurement_threshold and the TI is within its age times a rate plus holdover_limit_threshold","convention":"unknown"}
 {"address":"0004397a","name":"enter_holdover","note":"sets the stage to holdover and the manual flag from fault bit 0, and logs the cause: a code for each fault bit at pll +0x11, the GPS receiver's status for bit 1","convention":"unknown"}
@@ -1426,7 +1426,7 @@
 {"address":"0004513c","name":"interval_wait_reading","note":"the wait half of interval_next_reading: the FPGA's reading, or a wait while a 1PPS is dead; updates the EFC history","convention":"unknown"}
 {"address":"000451c2","name":"coarse","note":"the power-up step that sets the oscillator's frequency coarsely","convention":"unknown"}
 {"address":"0004538c","name":"fine","note":"the power-up step that adjusts the frequency finely, through its sync and slew sub-states","convention":"unknown"}
-{"address":"00045a24","name":"FUN_00045a24","convention":"unknown"}
+{"address":"00045a24","name":"time_zone_changed","note":"marks the time zone changed, for :PTIMe:TZONe","convention":"unknown"}
 {"address":"00045b02","name":"antenna_delay_done","note":"clears bit 5 of pll's byte at +0x11 once the antenna delay changes","convention":"unknown"}
 {"address":"00045b70","name":"pll_mode","note":"the status screen's mode accessor, from pll.stage and pll.manual; the HOLDover queries and HOLD:INIT test it","convention":"unknown"}
 {"address":"00045bb8","name":"pll_powerup_suffix_index","note":"the power-up sub-state, as the status screen's suffix index","convention":"unknown"}
@@ -1434,7 +1434,7 @@
 {"address":"00045c48","name":"holdover_waiting_reason","note":"for :HOLDover:WAITing?: which fault bit holds the loop in holdover, 0x10, 2 or 8","convention":"unknown"}
 {"address":"00045c8e","name":"FUN_00045c8e","convention":"unknown"}
 {"address":"00045c90","name":"FUN_00045c90","convention":"unknown"}
-{"address":"00045c92","name":"FUN_00045c92","convention":"unknown"}
+{"address":"00045c92","name":"nv_clear_and_reset","note":"clears the NV settings, invalidates the battery-backed RAM's checksum and resets with trap #12","convention":"unknown"}
 {"address":"00045cc0","name":"FUN_00045cc0","convention":"unknown"}
 {"address":"00045ce4","name":"FUN_00045ce4","convention":"unknown"}
 {"address":"00045e8e","name":"powerup","note":"the power-up stage: steps its sub-state, pll +3, through start, the oven warm-ups and waiting for GPS, then coarse and fine, setting tfom to 1e-3 and then 2e-6","convention":"unknown"}
@@ -1448,20 +1448,20 @@
 {"address":"00046524","name":"pll_stage_status","note":"by pll.stage, sets two pll flags and the status happenings they imply (0x1a, 0x1b, 0x28, 0x2a, 0x2c), with log_event(6); pllp_task calls it at start and on stage changes","convention":"unknown"}
 {"address":"00046620","name":"gps_ack_received","note":"returns gps_ack_ready, clearing gps_ack_awaited once it is set; the ack checker 0x46838 polls it","convention":"unknown"}
 {"address":"00046636","name":"gpsx_send","note":"copies four longs and sends them to gpsx_exchange","convention":"unknown"}
-{"address":"000466ca","name":"FUN_000466ca","convention":"unknown"}
+{"address":"000466ca","name":"gps_selftest_run","note":"asks the GPS engine for its self-test, up to 20 tries, failing the self-test's GPS bit 0x4000 if it never answers","convention":"unknown"}
 {"address":"00046838","name":"gps_init_sequence","note":"steps the GPS engine's initialization: each setting sent, then its acknowledgment checked","convention":"unknown"}
 {"address":"00046d98","name":"gps_leap_sequence","note":"steps the leap second check with the GPS engine","convention":"unknown"}
 {"address":"00046e70","name":"gps_leap_ack","note":"the leap second's acknowledgement step; \"Error in leapsecond ack\"; sets the GPS-UTC offset","convention":"unknown"}
-{"address":"00047078","name":"FUN_00047078","convention":"unknown"}
+{"address":"00047078","name":"leap_ack_pending","note":"1 while a leap second acknowledgment is pending, pll +0x2c or +0x2d","convention":"unknown"}
 {"address":"000470aa","name":"gps_command_send","note":"maps the pending GPS command code at 0x10256c to an Oncore command and sends it","convention":"unknown"}
 {"address":"000471fc","name":"gps_diag_sequence","note":"the GPS diagnostic reset and test; \"Error in DIAG GPS RST ack\", \"TST ack\"","convention":"unknown"}
 {"address":"000473d2","name":"pll_init","note":"clears pll, sets its stage invalid, its EFC from the saved value, tfom 1.0 and its defaults","convention":"unknown"}
 {"address":"00047466","name":"pll_restart","note":"re-initializes pll, keeping two bytes, reports event /, and starts the power-up stage","convention":"unknown"}
 {"address":"000474c2","name":"FUN_000474c2","convention":"unknown"}
 {"address":"00047528","name":"pllp_task","note":"root_task starts pllp here","convention":"unknown"}
-{"address":"00047de2","name":"FUN_00047de2","convention":"unknown"}
+{"address":"00047de2","name":"running_average_update","note":"folds a value into a running average of so many","convention":"unknown"}
 {"address":"00047e32","name":"mas_to_dms","note":"mas into degrees (/ 3600000), minutes (/ 60000) and seconds (the rest / 1000.0); the position queries","convention":"unknown"}
-{"address":"00047eb0","name":"FUN_00047eb0","convention":"unknown"}
+{"address":"00047eb0","name":"dms_to_mas","note":"degrees, minutes and seconds as milliarcseconds","convention":"unknown"}
 {"address":"00047f14","name":"format_dms","note":"formats an angle as degrees, minutes and seconds to milliseconds","convention":"unknown"}
 {"address":"00047fb6","name":"format_dms_precise","note":"formats an angle as degrees, minutes and seconds to 0.1 microseconds","convention":"unknown"}
 {"address":"000480c2","name":"format_angle","note":"an angle in mas as N, S, E or W by its sign and whether it is a latitude, then degrees and minutes","convention":"unknown"}
@@ -1482,7 +1482,7 @@
 {"address":"00049612","name":"satellite_track_class","note":"a track record's class, 1 to 3","convention":"unknown"}
 {"address":"00049654","name":"satellite_elevation_azimuth","note":"a satellite's elevation and azimuth, valid below 91 and 360","convention":"unknown"}
 {"address":"00049688","name":"satellite_status","note":"for status_snapshot: a satellite's status code for the screen","convention":"unknown"}
-{"address":"00049794","name":"FUN_00049794","convention":"unknown"}
+{"address":"00049794","name":"satellite_compare","note":"qsort's comparison of two satellites, by elevation and then by number","convention":"unknown"}
 {"address":"000497c8","name":"satellite_status_list","note":"for status_snapshot: the screen's list of satellites, built and sorted","convention":"unknown"}
 {"address":"000499f2","name":"format_satellite_number","note":"a satellite number as %2d, or blanks for none","convention":"unknown"}
 {"address":"00049a26","name":"mark_flag","note":"writes * for a set flag","convention":"unknown"}
@@ -1498,14 +1498,14 @@
 {"address":"00049fcc","name":"status_screen_position","note":"the status screen's position and survey lines","convention":"unknown"}
 {"address":"0004a29c","name":"status_screen_tfom","note":"the status screen's TFOM, FFOM, 1PPS TI and holdover lines","convention":"unknown"}
 {"address":"0004a42c","name":"bit_is_set","note":"value & 1 << bit","convention":"unknown"}
-{"address":"0004a448","name":"FUN_0004a448","convention":"unknown"}
-{"address":"0004a494","name":"FUN_0004a494","convention":"unknown"}
-{"address":"0004a4c0","name":"FUN_0004a4c0","convention":"unknown"}
-{"address":"0004a4ec","name":"FUN_0004a4ec","convention":"unknown"}
+{"address":"0004a448","name":"bits_1_to_3_any","note":"1 if any of bits 1 to 3 is set","convention":"unknown"}
+{"address":"0004a494","name":"bits_4_5_any","note":"1 if bit 4 or 5 is set","convention":"unknown"}
+{"address":"0004a4c0","name":"bits_6_7_any","note":"1 if bit 6 or 7 is set","convention":"unknown"}
+{"address":"0004a4ec","name":"bits_8_9_any","note":"1 if bit 8 or 9 is set","convention":"unknown"}
 {"address":"0004a518","name":"status_screen_mode_suffix","note":"the status screen's suffix for the power-up sub-state","convention":"unknown"}
 {"address":"0004a636","name":"status_snapshot","note":"gathers the loop's stage, mode and suffix indexes, the TI, TFOM, FFOM, holdover, time zone, date and satellites into a record, under a raised interrupt mask","convention":"unknown"}
 {"address":"0004a8ea","name":"status_screen","note":"prints the receiver status screen","convention":"unknown"}
-{"address":"0004afd6","name":"FUN_0004afd6","convention":"unknown"}
+{"address":"0004afd6","name":"status_screen_print","note":"prints the status screen, for :SYSTem:PRINt?","convention":"unknown"}
 {"address":"0004aff2","name":"uptime_elapsed","note":"get_uptime() less *start into *elapsed, restarting *start if the clock went back","convention":"unknown"}
 {"address":"0004b01e","name":"raim_monitor","note":"the RAIM alarm's state machine, counting raim_detected","convention":"unknown"}
 {"address":"0004b112","name":"gps_receiver_status_reset","note":"sets the receiver's status codes back to 2 and every channel back to code search","convention":"unknown"}
@@ -1547,15 +1547,15 @@
 {"address":"0004ee8c","name":"long_array_get","note":"a long from an array by index","convention":"unknown"}
 {"address":"0004eeac","name":"long_array_set","note":"stores a long into an array by index","convention":"unknown"}
 {"address":"0004eec2","name":"long_array_get_byte","note":"a long's low byte from an array by index, stored and the pointer advanced","convention":"unknown"}
-{"address":"0004eee0","name":"FUN_0004eee0","convention":"unknown"}
-{"address":"0004ef02","name":"FUN_0004ef02","convention":"unknown"}
-{"address":"0004ef3a","name":"FUN_0004ef3a","convention":"unknown"}
-{"address":"0004ef54","name":"FUN_0004ef54","convention":"unknown"}
-{"address":"0004ef70","name":"FUN_0004ef70","convention":"unknown"}
-{"address":"0004ef8e","name":"FUN_0004ef8e","convention":"unknown"}
+{"address":"0004eee0","name":"long_array_get_word","note":"a long's low word from an array by index, stored high byte first and the pointer advanced","convention":"unknown"}
+{"address":"0004ef02","name":"long_array_get_long","note":"a long from an array by index, stored high byte first and the pointer advanced","convention":"unknown"}
+{"address":"0004ef3a","name":"long_array_get_long_prefixed","note":"a zero byte, then long_array_get_long","convention":"unknown"}
+{"address":"0004ef54","name":"byte_copy_optional","note":"copies a byte if there is somewhere to put it","convention":"unknown"}
+{"address":"0004ef70","name":"word_copy_advance","note":"copies a word and advances the source","convention":"unknown"}
+{"address":"0004ef8e","name":"bytes_to_long","note":"four bytes, high first, as a long","convention":"unknown"}
 {"address":"0004efb4","name":"FUN_0004efb4","convention":"unknown"}
 {"address":"0004efd6","name":"FUN_0004efd6","convention":"unknown"}
-{"address":"0004f002","name":"FUN_0004f002","convention":"unknown"}
+{"address":"0004f002","name":"word_copy_14_bits","note":"copies a word's low 14 bits and advances the source","convention":"unknown"}
 {"address":"0004f02a","name":"oncore_decode_fields","note":"the field-table byte code the GPS task's decoders run","convention":"unknown"}
 {"address":"0004f0d6","name":"satellite_id_valid","note":"kind 0 accepts 1 to 32, kind 1 33 to 37, the VP reference's pseudolites, kind 2 either","convention":"unknown"}
 {"address":"0004f118","name":"channel_position_satellite","note":"a channel's satellite if it is valid and used for position, else 0","convention":"unknown"}
@@ -1564,32 +1564,32 @@
 {"address":"0004f1a6","name":"satellite_add_to_set","note":"sets bit prn - 1 of a mask, or prn - 0x21 for the second kind","convention":"unknown"}
 {"address":"0004f1da","name":"count_bits","note":"counts a word's set bits","convention":"unknown"}
 {"address":"0004f1f8","name":"visible_satellites","note":"the set and count of visible GPS satellites, from gps.visibility","convention":"unknown"}
-{"address":"0004f28e","name":"FUN_0004f28e","convention":"unknown"}
+{"address":"0004f28e","name":"satellites_in_use","note":"the sets and counts of GPS and pseudolite satellites the channels use for position","convention":"unknown"}
 {"address":"0004f32c","name":"satellite_find","note":"finds a satellite by ID in a table of 10-byte entries, by bisection","convention":"unknown"}
-{"address":"0004f39a","name":"FUN_0004f39a","convention":"unknown"}
-{"address":"0004f3b2","name":"FUN_0004f3b2","convention":"unknown"}
-{"address":"0004f3de","name":"FUN_0004f3de","convention":"unknown"}
-{"address":"0004f42e","name":"FUN_0004f42e","convention":"unknown"}
-{"address":"0004f4ca","name":"FUN_0004f4ca","convention":"unknown"}
-{"address":"0004f59a","name":"FUN_0004f59a","convention":"unknown"}
-{"address":"0004f682","name":"FUN_0004f682","convention":"unknown"}
+{"address":"0004f39a","name":"position_settable","note":"1 unless the receiver holds its position or is surveying","convention":"unknown"}
+{"address":"0004f3b2","name":"gps_position_get","note":"the receiver's latitude, longitude and MSL height, if it has reported them","convention":"unknown"}
+{"address":"0004f3de","name":"gps_time_local_get","note":"the receiver's date and time, in local time, if it has reported them","convention":"unknown"}
+{"address":"0004f42e","name":"survey_progress_percent","note":"the survey's progress, positions averaged against the duration, in percent","convention":"unknown"}
+{"address":"0004f4ca","name":"survey_progress_text","note":"the survey's progress as text, for :DOUGlas:PROGress?","convention":"unknown"}
+{"address":"0004f59a","name":"oncore_position_message","note":"decodes the position and status message, and while surveying averages its position","convention":"unknown"}
+{"address":"0004f682","name":"oncore_visibility_message","note":"decodes the visible satellites, @@Bb, and marks them received","convention":"unknown"}
 {"address":"0004f6a4","name":"FUN_0004f6a4","convention":"unknown"}
 {"address":"0004f6be","name":"FUN_0004f6be","convention":"unknown"}
-{"address":"0004f6d8","name":"FUN_0004f6d8","convention":"unknown"}
+{"address":"0004f6d8","name":"oncore_corrections_message","note":"decodes the range corrections and averages those of the satellites in use, and their deviation","convention":"unknown"}
 {"address":"0004f842","name":"FUN_0004f842","convention":"unknown"}
 {"address":"0004f85c","name":"FUN_0004f85c","convention":"unknown"}
-{"address":"0004f87e","name":"FUN_0004f87e","convention":"unknown"}
+{"address":"0004f87e","name":"oncore_receiver_id_message","note":"decodes the receiver ID, @@Cj, and marks it received","convention":"unknown"}
 {"address":"0004f8a0","name":"oncore_checksum","note":"the XOR of a message's bytes","convention":"unknown"}
 {"address":"0004f8b6","name":"gps_parse_options","note":"sets gps.raim_option when the receiver ID's \"OPTIONS LIST \" has an I","convention":"unknown"}
 {"address":"0004f8fc","name":"gps_message_supported","note":"@@Bn, message 0x28, needs the receiver ID and its Time RAIM option, gps.raim_option; any other is supported","convention":"unknown"}
 {"address":"0004f932","name":"gps_request_build","note":"builds a request's text: @@, its ID, then each argument through the message's encoders","convention":"unknown"}
 {"address":"0004faa2","name":"gps_response_decode","note":"runs a response's decoders from the table at 0x4feee, with preemption off, and hands @@Ea's time to status_snapshot_update","convention":"unknown"}
 {"address":"0004fb54","name":"bytes_equal_n","note":"1 if two byte strings have the same nonzero length and bytes","convention":"unknown"}
-{"address":"0004fb86","name":"FUN_0004fb86","convention":"unknown"}
+{"address":"0004fb86","name":"gps_response_match","note":"checks a response against the request it answers","convention":"unknown"}
 {"address":"0004fdca","name":"gps_message_to_text","note":"a message as text for the log: @@, its ID, the rest in hex, <cr><lf>","convention":"unknown"}
-{"address":"00051038","name":"FUN_00051038","convention":"unknown"}
-{"address":"000510aa","name":"FUN_000510aa","convention":"unknown"}
-{"address":"000510d2","name":"FUN_000510d2","convention":"unknown"}
+{"address":"00051038","name":"psos_config_init","note":"copies the kernel's configuration and the task table into RAM","convention":"unknown"}
+{"address":"000510aa","name":"memory_allocate","note":"allocates from region 1 through service 8","convention":"unknown"}
+{"address":"000510d2","name":"memory_free","note":"frees a segment through service 9","convention":"unknown"}
 {"address":"000510e8","name":"primary_trap_1","convention":"exception","confidence":"derived","family":"exception"}
 {"address":"0005112a","name":"FUN_0005112a","convention":"unknown"}
 {"address":"00051158","name":"FUN_00051158","convention":"unknown"}

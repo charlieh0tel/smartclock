@@ -450,7 +450,8 @@ struct gps_state {
     uint8_t ionospheric_correction;
     uint8_t fix_algorithm;
     struct oncore_hold_position_fields hold_position;
-    uint8_t field_0b2[2];
+    uint8_t hold_height_type;
+    uint8_t field_0b3;
     uint8_t position_hold;
     uint8_t field_0b5[6];
     uint8_t altitude_hold;
@@ -463,9 +464,12 @@ struct gps_state {
     uint8_t application_type;
     uint8_t position_fix_threshold;
     uint8_t differential_output_threshold;
-    uint8_t field_0cc[2];
+    uint8_t status_received;
+    uint8_t status_rate;
     struct oncore_status_fields status;
-    uint8_t field_10d[3];
+    uint8_t field_10d;
+    uint8_t reference_qualified;
+    uint8_t status_reported;
     uint8_t visibility_received;
     uint8_t field_111;
     struct oncore_visibility_fields visibility;
@@ -477,7 +481,8 @@ struct gps_state {
     struct oncore_corrections_fields corrections;
     double correction_average;
     double correction_deviation;
-    uint8_t field_2f8[3];
+    uint8_t field_2f8[2];
+    uint8_t raim_received;
     struct oncore_raim_fields raim;
     enum oncore_leap_pending leap_second_pending;
     uint8_t field_33b;
@@ -495,7 +500,32 @@ struct gps_state {
     double average_longitude;
     double average_height_gps;
     double average_height_msl;
-    uint8_t field_52a[46];
+    uint8_t reference_valid;
+    uint8_t pps_dead;
+    uint8_t status_code;
+    uint8_t reference_valid_override;
+    uint32_t validation_start;
+    uint8_t field_532[2];
+    uint8_t status_code_reset;
+    uint8_t field_535[5];
+    uint8_t surveying;
+    uint8_t raim_assessment;
+    uint8_t pps_check_disabled;
+    uint8_t receiver_health_failed;
+    uint8_t command_monitor_enabled;
+    uint8_t command_monitor_state;
+    void *command_monitor_query;
+    uint32_t command_monitor_time;
+    uint8_t command_monitor_error;
+    uint8_t command_monitor_failed;
+    uint8_t status_monitor_enabled;
+    uint8_t status_monitor_state;
+    uint32_t status_monitor_time;
+    uint8_t status_last_time[4];
+    uint8_t status_repeat_count;
+    uint8_t status_monitor_timed_out;
+    uint8_t status_monitor_failed;
+    uint8_t field_557;
     uint8_t raim_option;
     uint8_t field_559;
 };
@@ -642,7 +672,7 @@ typedef enum pll_hold_cause {
     HOLD_CAUSE_HARDWARE_FAILURE=16,
     HOLD_CAUSE_TEMPORARY_MODE=32,
     HOLD_CAUSE_1PPS_SELECTION=64,
-    HOLD_CAUSE_UNKNOWN_80=128
+    HOLD_CAUSE_GPS_COMMAND_MONITOR=128
 } pll_hold_cause;
 
 typedef enum pll_stage {
@@ -663,9 +693,10 @@ typedef struct pll_state pll_state, *Ppll_state;
 struct pll_state {
     enum pll_stage stage;
     enum pll_stage previous_stage;
-    uint8_t field_002;
+    uint8_t powerup_countdown;
     uint8_t powerup_state;
-    uint8_t field_004[2];
+    uint8_t powerup_reference_lost;
+    uint8_t field_005;
     uint8_t reference_check_state;
     uint8_t field_007[5];
     uint8_t startup_state;
@@ -675,7 +706,8 @@ struct pll_state {
     uint8_t holdover_state;
     enum pll_hold_cause hold_causes;
     uint8_t manual;
-    uint8_t field_013[2];
+    uint8_t ti_limit_override;
+    uint8_t recovery_countdown;
     uint8_t recovery_state;
     uint8_t coarse_state;
     uint8_t fine_state;
@@ -683,22 +715,32 @@ struct pll_state {
     uint8_t fine_index;
     uint16_t fine_retries;
     float fine_d;
-    uint8_t field_020[4];
+    uint8_t aging_state;
+    uint8_t field_021[3];
     uint8_t gps_diag_state;
     uint8_t gps_diag_substate;
     uint8_t gps_init_state;
-    uint8_t field_027[4];
+    uint8_t field_027;
+    uint16_t leap_check_timer;
+    uint8_t leap_check_requested;
     uint8_t leap_check_state;
-    uint8_t field_02c[6];
+    uint8_t leap_ack_state;
+    uint8_t leap_ack_requested;
+    uint8_t leap_ack_done;
+    uint8_t field_02f;
+    uint8_t leap_ack_again;
+    uint8_t field_031;
     float efc;
     float tfom;
     float predicted_uncertainty;
     uint8_t field_03e[8];
     float frequency_tolerance;
     struct efc_ring efc_history;
-    uint8_t field_3b0[8];
+    float ti_filtered;
+    float efc_base;
     float loop_time_constant;
-    uint8_t field_3bc[8];
+    uint32_t holdover_start_time;
+    uint32_t holdover_start_date;
     uint8_t led_gps_lock;
     uint8_t led_holdover;
     uint8_t led_tmh_valid;
@@ -706,7 +748,9 @@ struct pll_state {
     uint32_t holdover_duration;
     uint32_t reference_uptime;
     uint8_t reference_seconds;
-    uint8_t field_3d1[3];
+    uint8_t fpga_load_pending;
+    uint8_t fpga_loaded;
+    uint8_t loop_running;
     uint8_t sync_requested;
     uint8_t field_3d5;
 };
@@ -3620,14 +3664,14 @@ void system_init(void)
   undefined4 uVar1;
   undefined2 uVar3;
   byte bVar4;
-  short sVar5;
-  char cVar6;
-  gps_state *pgVar7;
-  pll_state *ppVar9;
+  pll_state *ppVar5;
+  short sVar6;
+  char cVar7;
+  gps_state *pgVar8;
+  pll_state *ppVar10;
   undefined4 *puVar11;
   undefined4 *puVar12;
-  oncore_gmt_offset_fields *poVar8;
-  uint8_t *puVar10;
+  oncore_gmt_offset_fields *poVar9;
   
   DAT_001037dc = 0;
   status_ready = '\0';
@@ -3642,49 +3686,51 @@ void system_init(void)
   DAT_001037de = nv_settings.debug_output;
   lifetime_record_read();
   clock_init(_DAT_00100c34);
-  cVar6 = '\0';
+  cVar7 = '\0';
   do {
-    (&dmes_gpsm)[cVar6] = 1;
-    cVar6 = cVar6 + '\x01';
-  } while (cVar6 < '\t');
-  sVar5 = record_checksum(&DAT_00100000,0x94e);
-  if ((sVar5 == DAT_00100000) && (bVar4 = RSR, (bVar4 & 0xc0) == 0)) {
+    (&dmes_gpsm)[cVar7] = 1;
+    cVar7 = cVar7 + '\x01';
+  } while (cVar7 < '\t');
+  sVar6 = record_checksum(&DAT_00100000,0x94e);
+  if ((sVar6 == DAT_00100000) && (bVar4 = RSR, (bVar4 & 0xc0) == 0)) {
     if (DAT_00100002 == 1) {
       memcpy(&DAT_00101e70,(void *)0x100934,0x19);
-      sVar5 = 0x155;
-      pgVar7 = &gps;
+      sVar6 = 0x155;
+      pgVar8 = &gps;
       puVar12 = (undefined4 *)&DAT_00100004;
       do {
         puVar11 = puVar12 + 1;
-        poVar8 = &pgVar7->gmt_offset;
+        poVar9 = &pgVar8->gmt_offset;
         uVar2 = (undefined3)*puVar12;
-        pgVar7->field_000 = (char)((uint)*puVar12 >> 0x18);
-        (pgVar7->time).hour = (char)((uint3)uVar2 >> 0x10);
-        (pgVar7->time).minute = (char)((uint3)uVar2 >> 8);
-        (pgVar7->time).second = (char)uVar2;
-        sVar5 = sVar5 + -1;
-        pgVar7 = (gps_state *)poVar8;
+        pgVar8->field_000 = (char)((uint)*puVar12 >> 0x18);
+        (pgVar8->time).hour = (char)((uint3)uVar2 >> 0x10);
+        (pgVar8->time).minute = (char)((uint3)uVar2 >> 8);
+        (pgVar8->time).second = (char)uVar2;
+        sVar6 = sVar6 + -1;
+        pgVar8 = (gps_state *)poVar9;
         puVar12 = puVar11;
-      } while (sVar5 != -1);
+      } while (sVar6 != -1);
       uVar3 = *(undefined2 *)puVar11;
-      poVar8->sign = (char)((ushort)uVar3 >> 8);
-      poVar8->hours = (char)uVar3;
-      sVar5 = 0xf4;
-      ppVar9 = &pll;
+      poVar9->sign = (char)((ushort)uVar3 >> 8);
+      poVar9->hours = (char)uVar3;
+      sVar6 = 0xf4;
+      ppVar5 = &pll;
       puVar12 = (undefined4 *)&DAT_0010055e;
       do {
+        ppVar10 = ppVar5;
         puVar11 = puVar12 + 1;
         uVar1 = *puVar12;
-        puVar10 = ppVar9->field_004;
-        ppVar9->stage = (char)((uint)uVar1 >> 0x18);
-        ppVar9->previous_stage = (char)((uint)uVar1 >> 0x10);
-        ppVar9->field_002 = (char)((uint)uVar1 >> 8);
-        ppVar9->powerup_state = (char)uVar1;
-        sVar5 = sVar5 + -1;
-        ppVar9 = (pll_state *)puVar10;
+        ppVar10->stage = (char)((uint)uVar1 >> 0x18);
+        ppVar10->previous_stage = (char)((uint)uVar1 >> 0x10);
+        ppVar10->powerup_countdown = (char)((uint)uVar1 >> 8);
+        ppVar10->powerup_state = (char)uVar1;
+        sVar6 = sVar6 + -1;
+        ppVar5 = (pll_state *)&ppVar10->powerup_reference_lost;
         puVar12 = puVar11;
-      } while (sVar5 != -1);
-      *(undefined2 *)puVar10 = *(undefined2 *)puVar11;
+      } while (sVar6 != -1);
+      uVar3 = *(undefined2 *)puVar11;
+      ppVar10->powerup_reference_lost = (char)((ushort)uVar3 >> 8);
+      ppVar10->field_005 = (char)uVar3;
       DAT_00100002 = 1;
       DAT_001037df = '\x01';
     }
@@ -16875,50 +16921,50 @@ undefined1 diag_pr_hold_cause(void)
   char *format;
   
   if (pll.hold_causes ==
-      ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+      ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
         HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
        HOLD_CAUSE_MANUAL)) {
     format = "No holdover cause\r\n";
   }
   else {
     if ((pll.hold_causes & HOLD_CAUSE_HARDWARE_FAILURE) !=
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       printf("Holdover due to hardware failure\r\n");
     }
     if ((pll.hold_causes & HOLD_CAUSE_MANUAL) !=
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       printf("Holdover due to manual\r\n");
     }
     if ((pll.hold_causes & HOLD_CAUSE_GPS) !=
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       printf("Holdover due to GPS\r\n");
     }
     if ((pll.hold_causes & HOLD_CAUSE_TI_ERROR) !=
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       printf("Holdover due to TI error\r\n");
     }
     if ((pll.hold_causes & HOLD_CAUSE_TI_LIMIT_EXCEEDED) !=
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       printf("Holdover due to TI limit exceeded\r\n");
     }
     if ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) !=
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       printf("Holdover due to temporary mode\r\n");
     }
     if ((pll.hold_causes & HOLD_CAUSE_1PPS_SELECTION) ==
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       return 0;
@@ -17431,17 +17477,17 @@ void diag_force_1pps(int param_1)
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0001b6ac)[(short)(param_1 + -1)]) {
     case 6:
-      DAT_00100c68 = 0xff;
+      reference_valid_override_request = 0xff;
       break;
     case 0xc:
       goto override_jmp_0001b6a4_case_1;
     case 0x10:
-      DAT_00100c68 = 1;
+      reference_valid_override_request = 1;
     }
   }
   else {
 override_jmp_0001b6a4_case_1:
-    DAT_00100c68 = 0;
+    reference_valid_override_request = 0;
   }
   return;
 }
@@ -22140,8 +22186,8 @@ void fpga_setup(void)
   task_dmessage("setup fpga\r\n");
   cVar1 = fpga_program(0,'\x01');
   if (cVar1 != '\0') {
-    pll.field_3d1[0] = 0;
-    pll.field_3d1[1] = 1;
+    pll.fpga_load_pending = 0;
+    pll.fpga_loaded = 1;
   }
   return;
 }
@@ -23289,9 +23335,9 @@ undefined1 gps_pps_check(void)
   
   uVar5 = 1;
   bVar3 = false;
-  if (gps.field_52a[0x12] == 0) {
+  if (gps.pps_check_disabled == 0) {
     if ((DAT_00101cfa == '\0') || (0xe < DAT_00101cf9)) {
-      if ((selftest_running == 0) && ((pll.field_3d1[1] != 0 && (DAT_00101b6c == '\0')))) {
+      if ((selftest_running == 0) && ((pll.fpga_loaded != 0 && (DAT_00101b6c == '\0')))) {
         if (gps_pps_counting != 0) {
           bVar2 = PACNT;
           cVar1 = bVar2 - gps_pps_last_count;
@@ -23385,7 +23431,7 @@ undefined1 internal_pps_check(void)
 {
   char cVar1;
   
-  if (((selftest_running == 0) && (pll.field_3d1[1] != 0)) && (DAT_00101b6c == '\0')) {
+  if (((selftest_running == 0) && (pll.fpga_loaded != 0)) && (DAT_00101b6c == '\0')) {
     if (internal_pps_started != 0) {
       cVar1 = internal_pps_count - internal_pps_last_count;
       internal_pps_last_count = internal_pps_count;
@@ -23473,7 +23519,7 @@ void hmon_task(void)
       }
       duart_output_bits(bVar7,bVar8);
     }
-    if (gps.field_52a[0x12] != 0) {
+    if (gps.pps_check_disabled != 0) {
       DAT_00101cfa = '\x01';
       DAT_00101cf9 = 0;
       gps_pps_dead = 1;
@@ -23484,7 +23530,7 @@ void hmon_task(void)
       local_c = 0;
     }
     if (unaff_D4b != '\0') {
-      if ((gps_pps_dead == 0) || (gps.field_10d[1] == 0)) {
+      if ((gps_pps_dead == 0) || (gps.reference_qualified == 0)) {
         uVar6 = 0;
         if (bVar2) {
           status_happening('E');
@@ -31695,7 +31741,7 @@ undefined4 scpi_query_SOURce_GPSystem_REFerence_VALid(undefined4 param_1,ushort 
 {
   bool bVar1;
   
-  if ((gps.field_10d[1] == 0) || (bVar1 = false, gps.field_52a[1] != 0)) {
+  if ((gps.reference_qualified == 0) || (bVar1 = false, gps.pps_dead != 0)) {
     bVar1 = true;
   }
   *param_2 = (ushort)!bVar1;
@@ -39304,20 +39350,20 @@ void efc_history_update(void)
   char acStack_68 [100];
   
   aging_fit_collect();
-  iVar4 = (int)(char)pll.field_020[0] - 3;
-  if (2 < (uint)(int)(char)pll.field_020[0] && iVar4 != 0) {
+  iVar4 = (int)(char)pll.aging_state - 3;
+  if (2 < (uint)(int)(char)pll.aging_state && iVar4 != 0) {
     return;
   }
                     /* WARNING: Switch is manually overridden */
   switch((&WORD_000413ba)[(short)iVar4]) {
   case 8:
-    pll.field_020[0] = 1;
+    pll.aging_state = 1;
     pll.predicted_uncertainty = 0.000432;
     pll.efc_history.field_35a = pll.efc;
     break;
   case 0x1e:
     if (pll.efc_history.field_002 == 1) {
-      pll.field_020[0] = 3;
+      pll.aging_state = 3;
     }
     break;
   case 0x30:
@@ -41303,7 +41349,7 @@ pll_hold_cause enter_holdover(void)
     pll.holdover_duration = 0;
   }
   if (((pll.hold_causes & HOLD_CAUSE_MANUAL) ==
-       ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+       ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS
         |HOLD_CAUSE_MANUAL)) && (DAT_00101e76 != '\0')) {
     pll.manual = 0;
@@ -41317,53 +41363,53 @@ pll_hold_cause enter_holdover(void)
     return pll.hold_causes & HOLD_CAUSE_MANUAL;
   }
   if ((pll.hold_causes & HOLD_CAUSE_MANUAL) !=
-      ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+      ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
         HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
        HOLD_CAUSE_MANUAL)) {
     code = 7;
     goto LAB_00043a88;
   }
   if ((pll.hold_causes & HOLD_CAUSE_GPS) ==
-      ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+      ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
         HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
        HOLD_CAUSE_MANUAL)) {
     if ((pll.hold_causes & HOLD_CAUSE_TI_ERROR) !=
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       code = 0x10;
       goto LAB_00043a88;
     }
     if ((pll.hold_causes & HOLD_CAUSE_TI_LIMIT_EXCEEDED) !=
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       code = 0x11;
       goto LAB_00043a88;
     }
     if ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) !=
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       code = 0x12;
       goto LAB_00043a88;
     }
     if ((pll.hold_causes & HOLD_CAUSE_HARDWARE_FAILURE) !=
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       code = 0xf;
       goto LAB_00043a88;
     }
     if ((pll.hold_causes & HOLD_CAUSE_1PPS_SELECTION) !=
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       code = 0x13;
       goto LAB_00043a88;
     }
-    if ((pll.hold_causes & HOLD_CAUSE_UNKNOWN_80) ==
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+    if ((pll.hold_causes & HOLD_CAUSE_GPS_COMMAND_MONITOR) ==
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       code = 0x14;
@@ -41373,8 +41419,8 @@ override_jmp_000439f2_case_0:
     code = 0xe;
     goto LAB_00043a88;
   }
-  iVar1 = (int)(char)gps.field_10d[2] - 4;
-  if ((uint)(int)(char)gps.field_10d[2] < 4 || iVar1 == 0) {
+  iVar1 = (int)(char)gps.status_reported - 4;
+  if ((uint)(int)(char)gps.status_reported < 4 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_000439fe)[(short)iVar1]) {
     case 10:
@@ -41453,7 +41499,7 @@ override_jmp_00043ae6_case_0:
       pll.efc_history.field_35a = float_subtract_reversed(fVar1,pll.efc);
     }
     _DAT_0010204a = 0x3109705f;
-    if (pll.field_020[0] == 3) {
+    if (pll.aging_state == 3) {
       if ((pll.efc_history.stop_ptr + 1 & 0x3f) == pll.efc_history.start_ptr) {
         _DAT_0010204a = 0x28d07fff;
       }
@@ -41462,7 +41508,7 @@ override_jmp_00043ae6_case_0:
       }
     }
     interval_next_reading('\0',(undefined4 *)0x0);
-    get_date_time((uint32_t *)(pll.field_3bc + 4),(uint32_t *)pll.field_3bc);
+    get_date_time(&pll.holdover_start_date,&pll.holdover_start_time);
     pll.holdover_state = 1;
     DAT_00102048 = 0;
     DAT_00102047 = 0;
@@ -41617,11 +41663,11 @@ override_jmp_00043ae6_case_0:
   if (DAT_00102046 != 10) goto LAB_00043ee6;
   pll.hold_causes =
        pll.hold_causes &
-       (HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+       (HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
         HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_MANUAL);
   interval_mean_flag = 1;
   interval_mean = _DAT_00102042;
-  if ((pll.field_013[0] == 0) && (nv_settings.holdover_limit_state == 0)) {
+  if ((pll.ti_limit_override == 0) && (nv_settings.holdover_limit_state == 0)) {
     uVar5 = holdover_ti_max();
     cVar4 = holdover_limit_exceeded(uVar5);
     if (cVar4 != '\0') goto LAB_00043eb8;
@@ -41631,13 +41677,13 @@ override_jmp_00043ae6_case_0:
 LAB_00043eb8:
     pll.hold_causes =
          pll.hold_causes &
-         (HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+         (HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL);
   }
-  if (((pll.hold_causes & HOLD_CAUSE_UNKNOWN_80) !=
-       ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+  if (((pll.hold_causes & HOLD_CAUSE_GPS_COMMAND_MONITOR) !=
+       ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS
-        |HOLD_CAUSE_MANUAL)) && (gps.field_52a[0x1f] == 0)) {
+        |HOLD_CAUSE_MANUAL)) && (gps.command_monitor_failed == 0)) {
     pll.hold_causes =
          pll.hold_causes &
          (HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|HOLD_CAUSE_HARDWARE_FAILURE|
@@ -41646,11 +41692,11 @@ LAB_00043eb8:
 LAB_00043ee6:
   if ((pll.manual == 0) &&
      (pll.hold_causes ==
-      ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+      ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
         HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
        HOLD_CAUSE_MANUAL))) {
     uVar6 = 1;
-    pll.field_013[0] = 0;
+    pll.ti_limit_override = 0;
   }
   _DAT_00102042 = 0.0;
   DAT_00102048 = 0;
@@ -41745,34 +41791,35 @@ override_jmp_00043ff8_case_0:
   case 0x4e:
     cVar3 = fine();
     if (cVar3 == '\x01') {
-      if (pll.field_02c[4] == 0) {
+      if (pll.leap_ack_again == 0) {
         pll.recovery_state = 5;
       }
       else {
         pll.recovery_state = 4;
-        pll.field_02c[1] = 1;
+        pll.leap_ack_requested = 1;
       }
       cVar3 = '\0';
     }
     goto LAB_0004411a;
   case 0x7e:
     unaff_D3b = interval_next_reading('\x01',&local_8);
-    pll.field_013[1] = pll.field_013[1] - 1;
-    if ((pll.field_013[1] != 0) || (cVar4 = leap_ack_pending(), cVar4 != '\0')) goto LAB_0004411a;
+    pll.recovery_countdown = pll.recovery_countdown - 1;
+    if ((pll.recovery_countdown != 0) || (cVar4 = leap_ack_pending(), cVar4 != '\0'))
+    goto LAB_0004411a;
     cVar4 = clock_check_against_gps();
     if ((cVar4 == '\0') && (DAT_00102552 != '\0')) {
-      pll.field_013[1] = 2;
+      pll.recovery_countdown = 2;
       goto LAB_0004411a;
     }
     break;
   case 0xb2:
     unaff_D3b = interval_next_reading('\x01',&local_8);
-    if ((pll.field_02c[1] == 0) && (pll.field_02c[2] != 0)) {
+    if ((pll.leap_ack_requested == 0) && (pll.leap_ack_done != 0)) {
       pll.recovery_state = 5;
     }
-    else if (gps.field_52a[0x1f] != 0) {
-      pll.hold_causes = pll.hold_causes | HOLD_CAUSE_UNKNOWN_80;
-      pll.field_02c[4] = 1;
+    else if (gps.command_monitor_failed != 0) {
+      pll.hold_causes = pll.hold_causes | HOLD_CAUSE_GPS_COMMAND_MONITOR;
+      pll.leap_ack_again = 1;
     }
     goto LAB_0004411a;
   case 0xea:
@@ -41787,7 +41834,7 @@ override_jmp_00043ff8_case_0:
     if (DAT_00102552 != '\0') goto LAB_0004411a;
   }
   pll.recovery_state = 4;
-  pll.field_02c[1] = 1;
+  pll.leap_ack_requested = 1;
 LAB_0004411a:
   pll.holdover_duration = pll.holdover_duration + 1;
   if (((uint)nv_settings.holdover_status_threshold < pll.holdover_duration) &&
@@ -41803,7 +41850,7 @@ LAB_0004411a:
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_HARDWARE_FAILURE;
   }
   if (pll.hold_causes !=
-      ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+      ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
         HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
        HOLD_CAUSE_MANUAL)) {
     cVar3 = '\x02';
@@ -41814,7 +41861,7 @@ LAB_0004411a:
       uVar5 = get_gps_utc_offset((int16_t *)0x0);
       if (uVar5 == 0) {
         pll.recovery_state = 4;
-        pll.field_02c[1] = 1;
+        pll.leap_ack_requested = 1;
         cVar3 = '\0';
       }
       else if (unaff_D3b == '\0') {
@@ -41837,7 +41884,7 @@ LAB_0004411a:
     }
     else {
       pll.recovery_state = 3;
-      pll.field_013[1] = 0x19;
+      pll.recovery_countdown = 0x19;
       cVar3 = '\0';
     }
   }
@@ -41885,13 +41932,10 @@ char startup_pll(char param_1)
   local_74 = adc_average(ADC_CURRENT);
   if ((param_1 == '\0') || ('\x03' < (char)pll.startup_state)) {
     pll.frequency_adjusted = 0;
-    pll.field_3b0[0] = 0;
-    pll.field_3b0[1] = 0;
-    pll.field_3b0[2] = 0;
-    pll.field_3b0[3] = 0;
+    pll.ti_filtered = 0.0;
     DAT_0010205e = 0.0;
     fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,local_74);
-    pll.field_3b0._4_4_ = float_subtract_reversed(fVar1,pll.efc);
+    pll.efc_base = float_subtract_reversed(fVar1,pll.efc);
     DAT_00102062 = 0.0;
     DAT_0010206b = 0;
     DAT_0010206a = 0;
@@ -41927,7 +41971,7 @@ char startup_pll(char param_1)
       if ((((DAT_00102550 != '\0') && (cVar4 = leap_ack_pending(), cVar4 == '\0')) &&
           ((DAT_00102552 != '\0' || (uVar3 = get_gps_time(), (uVar3 & 0xff) == 0xe)))) &&
          ((cVar4 = clock_check_against_gps(), cVar4 == '\0' && (DAT_00102552 == '\0')))) {
-        pll.field_02c[1] = 1;
+        pll.leap_ack_requested = 1;
       }
     }
     DAT_0010206a = DAT_0010206a + 1;
@@ -41965,7 +42009,7 @@ char startup_pll(char param_1)
               DAT_00102066 = DAT_00102066 + 1;
             }
           }
-          else if (pll.field_020[0] == 3) {
+          else if (pll.aging_state == 3) {
             pll.startup_state = 3;
           }
           else {
@@ -41995,7 +42039,7 @@ char startup_pll(char param_1)
               uVar7 = (undefined2)((uint)fVar1 >> 0x10);
               uVar10 = (undefined1)((uint)fVar1 >> 8);
               uVar11 = SUB41(fVar1,0);
-              fVar1 = float_multiply(DAT_0010255c,(float)pll.field_3b0._0_4_);
+              fVar1 = float_multiply(DAT_0010255c,pll.ti_filtered);
               fVar1 = float_multiply(fVar1,(float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11));
               float_add_in_place(&DAT_0010205e,fVar1);
               cVar5 = '\x01';
@@ -42013,7 +42057,7 @@ char startup_pll(char param_1)
             uVar7 = (undefined2)((uint)fVar1 >> 0x10);
             uVar10 = (undefined1)((uint)fVar1 >> 8);
             uVar11 = SUB41(fVar1,0);
-            fVar1 = float_multiply(DAT_0010255c,(float)pll.field_3b0._0_4_);
+            fVar1 = float_multiply(DAT_0010255c,pll.ti_filtered);
             fVar1 = float_multiply(fVar1,(float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11));
             float_add_in_place(&DAT_0010205e,fVar1);
           }
@@ -42026,12 +42070,12 @@ char startup_pll(char param_1)
       local_78 = float_divide(29.75,pll.loop_time_constant);
       local_84 = float_subtract(DAT_00102062,DAT_0010254a);
       fVar1 = float_subtract(1.0,local_78);
-      fVar1 = float_multiply(fVar1,(float)pll.field_3b0._0_4_);
+      fVar1 = float_multiply(fVar1,pll.ti_filtered);
       uVar7 = (undefined2)((uint)fVar1 >> 0x10);
       uVar10 = (undefined1)((uint)fVar1 >> 8);
       uVar11 = SUB41(fVar1,0);
       fVar1 = float_multiply(local_78,local_84);
-      pll.field_3b0._0_4_ = float_add((float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11),fVar1);
+      pll.ti_filtered = float_add((float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11),fVar1);
       uVar3 = get_uptime();
       fVar1 = unsigned_to_float(uVar3);
       uVar7 = (undefined2)((uint)fVar1 >> 0x10);
@@ -42047,12 +42091,12 @@ char startup_pll(char param_1)
       }
       fVar1 = float_divide(fVar1,local_7c);
       fVar1 = float_divide(fVar1,2700.0);
-      fVar1 = float_add(fVar1,(float)pll.field_3b0._0_4_);
+      fVar1 = float_add(fVar1,pll.ti_filtered);
       fVar1 = float_multiply(fVar1,local_7c);
       fVar1 = float_multiply(fVar1,10.0);
       float_add_in_place(&DAT_0010205e,fVar1);
-      fVar1 = float_multiply(local_80,(float)pll.field_3b0._0_4_);
-      fVar1 = float_add(fVar1,(float)pll.field_3b0._4_4_);
+      fVar1 = float_multiply(local_80,pll.ti_filtered);
+      fVar1 = float_add(fVar1,pll.efc_base);
       fVar1 = float_add(fVar1,DAT_0010205e);
       uVar7 = (undefined2)((uint)fVar1 >> 0x10);
       uVar10 = (undefined1)((uint)fVar1 >> 8);
@@ -42095,7 +42139,7 @@ char startup_pll(char param_1)
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_HARDWARE_FAILURE;
   }
   if (pll.hold_causes !=
-      ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+      ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
         HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
        HOLD_CAUSE_MANUAL)) {
     cVar5 = '\x02';
@@ -42161,7 +42205,7 @@ undefined1 pll_normal(char param_1)
     _DAT_00102076 = float_divide(29.75,max_loop_time);
     DAT_0010205e = 0.0;
     fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
-    pll.field_3b0._4_4_ = float_subtract_reversed(fVar1,pll.efc);
+    pll.efc_base = float_subtract_reversed(fVar1,pll.efc);
     pll.frequency_tolerance = 1e-08;
   }
   else {
@@ -42191,7 +42235,7 @@ undefined1 pll_normal(char param_1)
       if ((((DAT_00102550 != '\0') && (cVar5 = leap_ack_pending(), cVar5 == '\0')) &&
           ((DAT_00102552 != '\0' || (uVar4 = get_gps_time(), (uVar4 & 0xff) == 0xe)))) &&
          ((cVar5 = clock_check_against_gps(), cVar5 == '\0' && (DAT_00102552 == '\0')))) {
-        pll.field_02c[1] = 1;
+        pll.leap_ack_requested = 1;
       }
     }
     DAT_0010206a = DAT_0010206a + 1;
@@ -42214,12 +42258,12 @@ undefined1 pll_normal(char param_1)
       }
       local_7e = float_subtract(DAT_00102062,DAT_0010254a);
       fVar2 = float_subtract(1.0,_DAT_00102076);
-      fVar2 = float_multiply(fVar2,(float)pll.field_3b0._0_4_);
+      fVar2 = float_multiply(fVar2,pll.ti_filtered);
       uVar7 = (undefined2)((uint)fVar2 >> 0x10);
       uVar10 = (undefined1)((uint)fVar2 >> 8);
       uVar11 = SUB41(fVar2,0);
       fVar2 = float_multiply(_DAT_00102076,local_7e);
-      pll.field_3b0._0_4_ = float_add((float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11),fVar2);
+      pll.ti_filtered = float_add((float)CONCAT31(CONCAT21(uVar7,uVar10),uVar11),fVar2);
       uVar4 = get_uptime();
       fVar2 = unsigned_to_float(uVar4);
       uVar7 = (undefined2)((uint)fVar2 >> 0x10);
@@ -42235,12 +42279,12 @@ undefined1 pll_normal(char param_1)
       }
       fVar2 = float_divide(fVar2,_DAT_00102072);
       fVar2 = float_divide(fVar2,2700.0);
-      fVar2 = float_add(fVar2,(float)pll.field_3b0._0_4_);
+      fVar2 = float_add(fVar2,pll.ti_filtered);
       fVar2 = float_multiply(fVar2,_DAT_00102072);
       fVar2 = float_multiply(fVar2,10.0);
       float_add_in_place(&DAT_0010205e,fVar2);
-      fVar2 = float_multiply(_DAT_0010206e,(float)pll.field_3b0._0_4_);
-      fVar2 = float_add(fVar2,(float)pll.field_3b0._4_4_);
+      fVar2 = float_multiply(_DAT_0010206e,pll.ti_filtered);
+      fVar2 = float_add(fVar2,pll.efc_base);
       fVar2 = float_add(fVar2,DAT_0010205e);
       uVar7 = (undefined2)((uint)fVar2 >> 0x10);
       uVar10 = (undefined1)((uint)fVar2 >> 8);
@@ -42283,7 +42327,7 @@ undefined1 pll_normal(char param_1)
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_HARDWARE_FAILURE;
   }
   if (pll.hold_causes !=
-      ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+      ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
         HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
        HOLD_CAUSE_MANUAL)) {
     local_7a = 2;
@@ -42930,7 +42974,7 @@ void antenna_delay_done(void)
 {
   pll.hold_causes =
        pll.hold_causes &
-       (HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_HARDWARE_FAILURE|
+       (HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_HARDWARE_FAILURE|
         HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL);
   return;
 }
@@ -43058,23 +43102,23 @@ undefined1 holdover_waiting_reason(void)
 {
   if (pll.stage == PLL_STAGE_HOLDOVER) {
     if (((pll.hold_causes & HOLD_CAUSE_HARDWARE_FAILURE) !=
-         ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+         ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
            HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
            HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) ||
        ((pll.hold_causes & HOLD_CAUSE_TI_ERROR) !=
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL))) {
       return 0x10;
     }
     if ((pll.hold_causes & HOLD_CAUSE_GPS) !=
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       return 2;
     }
     if ((pll.hold_causes & HOLD_CAUSE_TI_LIMIT_EXCEEDED) !=
-        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       return 8;
@@ -43186,7 +43230,7 @@ undefined1 powerup(char param_1)
   uVar5 = 0;
   if ((param_1 == '\0') || ('\a' < (char)pll.powerup_state)) {
     memset(&pll.efc_history,0,0x366);
-    pll.field_020[0] = 0;
+    pll.aging_state = 0;
     pll.efc_history.field_002 = 0;
     DAT_00102160 = '\0';
     pll.powerup_state = 0;
@@ -43214,10 +43258,10 @@ undefined1 powerup(char param_1)
       break;
     case 0x74:
       interval_next_reading('\x01',(undefined4 *)0x0);
-      pll.field_004[0] = 0;
+      pll.powerup_reference_lost = 0;
       if ((((DAT_00102550 != '\0') && (internal_pps_dead == 0)) &&
           ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) ==
-           ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+           ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
              HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
              HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL))) && ('\r' < (char)pll.gps_init_state)) {
         pll.powerup_state = 4;
@@ -43246,10 +43290,10 @@ undefined1 powerup(char param_1)
           cVar3 = leap_second_near();
           if (cVar3 == '\0') {
             pll.powerup_state = 7;
-            pll.field_02c[1] = 1;
+            pll.leap_ack_requested = 1;
           }
           else {
-            pll.field_002 = 0x19;
+            pll.powerup_countdown = 0x19;
             pll.powerup_state = 6;
           }
         }
@@ -43260,24 +43304,24 @@ undefined1 powerup(char param_1)
       break;
     case 0x166:
       interval_next_reading('\x01',(undefined4 *)0x0);
-      pll.field_002 = pll.field_002 - 1;
-      if (pll.field_002 == 0) {
+      pll.powerup_countdown = pll.powerup_countdown - 1;
+      if (pll.powerup_countdown == 0) {
         cVar3 = leap_ack_pending();
         if (cVar3 == '\0') {
           cVar3 = clock_check_against_gps();
           if ((cVar3 == '\0') && (DAT_00102552 != '\0')) {
-            pll.field_002 = 2;
+            pll.powerup_countdown = 2;
           }
           else {
             pll.powerup_state = 7;
-            pll.field_02c[1] = 1;
+            pll.leap_ack_requested = 1;
           }
         }
       }
       break;
     case 0x1a6:
       interval_next_reading('\x01',(undefined4 *)0x0);
-      if ((pll.field_02c[1] == 0) && (pll.field_02c[2] != 0)) {
+      if ((pll.leap_ack_requested == 0) && (pll.leap_ack_done != 0)) {
         uVar5 = 1;
       }
     }
@@ -43304,12 +43348,12 @@ override_jmp_00045f06_case_0:
   if (('\x03' < (char)pll.powerup_state) &&
      (((DAT_00102550 == '\0' || (internal_pps_dead != 0)) ||
       ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) !=
-       ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+       ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS
         |HOLD_CAUSE_MANUAL))))) {
-    pll.field_004[0] = 1;
+    pll.powerup_reference_lost = 1;
   }
-  if ((pll.field_004[0] != 0) && ((pll.powerup_state != 7 || (pll.field_02c[2] != 0)))) {
+  if ((pll.powerup_reference_lost != 0) && ((pll.powerup_state != 7 || (pll.leap_ack_done != 0)))) {
     pll.powerup_state = 3;
     uVar5 = 0;
   }
@@ -43357,7 +43401,7 @@ undefined1 pll_check_reference(char param_1)
           pll.hold_causes = pll.hold_causes | HOLD_CAUSE_HARDWARE_FAILURE;
         }
         if (pll.hold_causes ==
-            ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+            ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
               HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
               HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
           uVar4 = 1;
@@ -43387,7 +43431,7 @@ undefined1 pll_check_reference(char param_1)
           pll.hold_causes = pll.hold_causes | HOLD_CAUSE_HARDWARE_FAILURE;
         }
         if (pll.hold_causes ==
-            ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+            ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
               HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
               HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
           return 1;
@@ -43618,7 +43662,7 @@ void pll_stage_status(void)
       DAT_00101e88 = 0;
       pwma_force_level('\0');
       status_happening('/');
-      pll.field_027[3] = 1;
+      pll.leap_check_requested = 1;
     }
   }
   iVar1 = (char)pll.stage + -9;
@@ -44099,8 +44143,7 @@ void gps_leap_sequence(void)
       if (cVar2 != '\0') {
         if (gps_ack_code == 0) {
           leap_event_create();
-          pll.field_027[1] = 0;
-          pll.field_027[2] = 0;
+          pll.leap_check_timer = 0;
           pll.leap_check_state = 3;
         }
         else {
@@ -44114,14 +44157,13 @@ void gps_leap_sequence(void)
       break;
     case 0x8c:
       if (DAT_0010258e != '\0') {
-        pll.field_027[1] = 0;
-        pll.field_027[2] = 0;
+        pll.leap_check_timer = 0;
         pll.leap_check_state = 1;
         DAT_0010258e = 0;
         return;
       }
-      pll.field_027._1_2_ = pll.field_027._1_2_ + 1;
-      if (pll.field_027._1_2_ != 0) {
+      pll.leap_check_timer = pll.leap_check_timer + 1;
+      if (pll.leap_check_timer != 0) {
         return;
       }
       goto LAB_00046e64;
@@ -44129,7 +44171,7 @@ void gps_leap_sequence(void)
   }
   else {
 override_jmp_00046db6_case_0:
-    if (pll.field_027[3] == 0) {
+    if (pll.leap_check_requested == 0) {
       return;
     }
 LAB_00046e64:
@@ -44160,15 +44202,15 @@ void gps_leap_ack(void)
   int iStack_18;
   uint auStack_14 [4];
   
-  iVar1 = (int)(char)pll.field_02c[0] - 7;
-  if (6 < (uint)(int)(char)pll.field_02c[0] && iVar1 != 0) {
+  iVar1 = (int)(char)pll.leap_ack_state - 7;
+  if (6 < (uint)(int)(char)pll.leap_ack_state && iVar1 != 0) {
 override_jmp_00046eb8_case_0:
-    if (pll.field_02c[1] == 0) {
+    if (pll.leap_ack_requested == 0) {
       return;
     }
-    pll.field_02c[0] = 1;
-    pll.field_02c[1] = 0;
-    pll.field_02c[2] = 0;
+    pll.leap_ack_state = 1;
+    pll.leap_ack_requested = 0;
+    pll.leap_ack_done = 0;
     return;
   }
                     /* WARNING: Switch is manually overridden */
@@ -44178,7 +44220,7 @@ override_jmp_00046eb8_case_0:
   case 0x28:
     if (((gps.utc_time != ONCORE_TIME_UTC) || (nv_settings.gps_utc == 0)) &&
        ((gps.utc_time != ONCORE_TIME_GPS || (nv_settings.gps_utc != 0)))) {
-      pll.field_02c[0] = 2;
+      pll.leap_ack_state = 2;
       return;
     }
     goto LAB_00046efe;
@@ -44186,7 +44228,7 @@ override_jmp_00046eb8_case_0:
     auStack_14[0] = (uint)(char)nv_settings.gps_utc;
     cVar5 = gpsx_send(0x16,0,(int)auStack_14,'\x02');
     if (cVar5 != '\0') {
-      pll.field_02c[0] = 3;
+      pll.leap_ack_state = 3;
     }
     break;
   case 0x80:
@@ -44195,17 +44237,17 @@ override_jmp_00046eb8_case_0:
       return;
     }
     if (gps_ack_code != 0) {
-      pll.field_02c[0] = 2;
+      pll.leap_ack_state = 2;
       goto LAB_0004706a;
     }
 LAB_00046efe:
-    pll.field_02c[0] = 4;
+    pll.leap_ack_state = 4;
     break;
   case 0x98:
     auStack_14[0] = (uint)(gps.utc_time == ONCORE_TIME_GPS);
     cVar5 = gpsx_send(0x4e,0,(int)auStack_14,'\x02');
     if (cVar5 != '\0') {
-      pll.field_02c[0] = 5;
+      pll.leap_ack_state = 5;
     }
     break;
   case 0xcc:
@@ -44230,16 +44272,16 @@ LAB_00046efe:
         sVar4 = -sVar4;
       }
       set_gps_utc_offset(sVar4);
-      pll.field_02c[0] = 6;
+      pll.leap_ack_state = 6;
       return;
     }
-    pll.field_02c[0] = 1;
+    pll.leap_ack_state = 1;
     goto LAB_0004706a;
   case 0x15c:
     auStack_14[0] = (uint)(gps.utc_time == ONCORE_TIME_GPS);
     cVar5 = gpsx_send(0x16,0,(int)auStack_14,'\x02');
     if (cVar5 != '\0') {
-      pll.field_02c[0] = 7;
+      pll.leap_ack_state = 7;
     }
     break;
   case 0x18c:
@@ -44248,12 +44290,12 @@ LAB_00046efe:
       return;
     }
     if (gps_ack_code == 0) {
-      pll.field_02c[0] = 0;
-      pll.field_02c[2] = 1;
-      pll.field_02c[4] = 0;
+      pll.leap_ack_state = 0;
+      pll.leap_ack_done = 1;
+      pll.leap_ack_again = 0;
       return;
     }
-    pll.field_02c[0] = 6;
+    pll.leap_ack_state = 6;
 LAB_0004706a:
     task_dmessage("Error in leapsecond ack\r\n");
   }
@@ -44270,7 +44312,7 @@ undefined4 leap_ack_pending(void)
 {
   undefined4 uVar1;
   
-  if ((pll.field_02c[0] == 0) && (pll.field_02c[1] == 0)) {
+  if ((pll.leap_ack_state == 0) && (pll.leap_ack_requested == 0)) {
     uVar1 = 0;
   }
   else {
@@ -44546,17 +44588,17 @@ void pll_init(void)
   memset(&pll,0,0x3d6);
   pll.stage = PLL_STAGE_INVALID;
   pll.gps_init_state = 0;
-  pll.field_020[0] = 0;
+  pll.aging_state = 0;
   pll.efc = (float)efc_clamp(_DAT_00101d00);
   pll.loop_time_constant = 150.0;
   DAT_00101e76 = 1;
   pll.hold_causes =
-       ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+       ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS
         |HOLD_CAUSE_MANUAL);
   pll.manual = 0;
-  pll.field_013[0] = 0;
-  pll.field_3d1[0] = 1;
+  pll.ti_limit_override = 0;
+  pll.fpga_load_pending = 1;
   DAT_0010258e = 0;
   pll.tfom = 1.0;
   pll.sync_requested = 0;
@@ -44579,13 +44621,13 @@ void pll_restart(void)
   uint8_t uVar1;
   uint8_t uVar2;
   
-  uVar2 = pll.field_3d1[1];
-  uVar1 = pll.field_3d1[0];
+  uVar2 = pll.fpga_loaded;
+  uVar1 = pll.fpga_load_pending;
   pll_init();
   status_happening('/');
-  pll.field_3d1[0] = uVar1;
-  pll.field_3d1[1] = uVar2;
-  pll.field_3d1[2] = 1;
+  pll.fpga_load_pending = uVar1;
+  pll.fpga_loaded = uVar2;
+  pll.loop_running = 1;
   if (gps_ack_awaited != 0) {
     if (gps_ack_ready == 0) {
       DAT_00102587 = 1;
@@ -44711,7 +44753,7 @@ void pllp_task(void)
   }
   pll_stage_status();
   es_enabled = 1;
-  pll.field_3d1[2] = 1;
+  pll.loop_running = 1;
   do {
     if (DAT_00102540 != '\0') {
       pll_restart();
@@ -44738,7 +44780,7 @@ void pllp_task(void)
       pll.sync_requested = 0;
       DAT_00102552 = 0;
     }
-    if ((gps.field_10d[1] == 0) || (gps_pps_dead != 0)) {
+    if ((gps.reference_qualified == 0) || (gps_pps_dead != 0)) {
       if (DAT_00102550 != '\0') {
         DAT_00102550 = '\0';
         cVar11 = '\x1f';
@@ -44835,7 +44877,7 @@ LAB_0004782e:
     case 0x172:
       if (bVar2 == false) {
         pll_stage_status();
-        pll.field_3d1[2] = 0;
+        pll.loop_running = 0;
         task_dmessage("Went into Diag\r\n");
       }
       cVar11 = gps_diag_sequence(bVar2);
@@ -44947,7 +44989,7 @@ LAB_00047940:
     puVar6 = (undefined4 *)&DAT_0010055e;
     ppVar9 = &pll;
     do {
-      puVar10 = ppVar9->field_004;
+      puVar10 = &ppVar9->powerup_reference_lost;
       puVar5 = puVar6 + 1;
       *puVar6 = *(undefined4 *)ppVar9;
       sVar4 = sVar4 + -1;
@@ -45326,8 +45368,8 @@ void gps_print_time_raim(void)
       pcVar4 = "Off";
     }
     printf("MODE       %-3s",pcVar4);
-    iVar2 = (int)(char)gps.field_52a[0x11] - 3;
-    if ((uint)(int)(char)gps.field_52a[0x11] < 3 || iVar2 == 0) {
+    iVar2 = (int)(char)gps.raim_assessment - 3;
+    if ((uint)(int)(char)gps.raim_assessment < 3 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
       switch((&WORD_0004856a)[(short)iVar2]) {
       case 8:
@@ -45664,7 +45706,7 @@ void gps_print_instrument_state(void)
   format_angle(local_20,gps.position.longitude,'\0');
   printf("LON        %s  = %+10d ms   %s  = %+10d ms\r\n",local_a0,gps.hold_position.longitude,
          local_20,gps.position.longitude);
-  if (gps.field_0b2[0] == 0) {
+  if (gps.hold_height_type == 0) {
     sprintf(local_a0,"%+8d cm",gps.hold_position.height);
     local_20[0] = '\0';
   }
@@ -47442,12 +47484,12 @@ void status_snapshot(pll_stage *param_1)
   *(undefined2 *)(param_1 + 300) = uVar7;
   set_interrupt_mask(sr);
   param_1[0xf6] = gps.fix_mode;
-  param_1[0xf0] = gps.field_52a[0];
-  param_1[0xf1] = gps.field_52a[1];
-  param_1[0xf2] = gps.field_52a[2];
-  param_1[0xf3] = gps.field_52a[8];
-  param_1[0xf4] = gps.field_52a[9];
-  param_1[0xf5] = gps.field_52a[10];
+  param_1[0xf0] = gps.reference_valid;
+  param_1[0xf1] = gps.pps_dead;
+  param_1[0xf2] = gps.status_code;
+  param_1[0xf3] = gps.field_532[0];
+  param_1[0xf4] = gps.field_532[1];
+  param_1[0xf5] = gps.status_code_reset;
   param_1[0x10a] = gps.leap_second_pending;
   param_1[0xf7] = gps.status.receiver_status;
   param_1[0x109] = gps.utc_time;
@@ -47463,7 +47505,7 @@ void status_snapshot(pll_stage *param_1)
   satellite_status_list
             ('\x01',6,(int)(param_1 + 0x32),&gps.status.channels[0].satellite,0x100d7a,
              param_1 + 0xbc,(char *)(param_1 + 0xee));
-  param_1[0xec] = gps.field_0cc[0];
+  param_1[0xec] = gps.status_received;
   if (param_1[0x111] == PLL_STAGE_INVALID) {
     if ((*(undefined4 *)(param_1 + 0x124) == PLL_STAGE_INVALID) ||
        (param_1[0x112] == PLL_STAGE_POWERUP)) {
@@ -47931,15 +47973,15 @@ uint32_t raim_monitor(void)
   char cVar3;
   uint uStack_8;
   
-  if ((((gps.raim.raim_on != 1) || (gps.field_2f8[2] == 0)) ||
+  if ((((gps.raim.raim_on != 1) || (gps.raim_received == 0)) ||
       (gps.raim.raim_status == ONCORE_RAIM_NEITHER)) ||
      (uVar1 = 1, gps.raim.solution_status == ONCORE_RAIM_UNKNOWN)) {
     uVar1 = 0;
   }
   if (((char)uVar1 == '\0') ||
-     (uVar1 = (int)(char)gps.field_52a[0x11] - 3,
-     2 < (uint)(int)(char)gps.field_52a[0x11] && uVar1 != 0)) {
-    gps.field_52a[0x11] = 0;
+     (uVar1 = (int)(char)gps.raim_assessment - 3,
+     2 < (uint)(int)(char)gps.raim_assessment && uVar1 != 0)) {
+    gps.raim_assessment = 0;
   }
   else {
     sVar2 = (short)uVar1;
@@ -47948,7 +47990,7 @@ uint32_t raim_monitor(void)
     switch((&WORD_0004b08c)[sVar2]) {
     case 8:
       if (gps.raim.solution_status != ONCORE_RAIM_OK) {
-        gps.field_52a[0x11] = 2;
+        gps.raim_assessment = 2;
         uRam00101b4e = get_uptime();
         gps_counts.raim_detected = gps_counts.raim_detected + 1;
         return uRam00101b4e;
@@ -47958,7 +48000,7 @@ uint32_t raim_monitor(void)
       if (gps.raim.solution_status != ONCORE_RAIM_ALARM) {
         return uVar1;
       }
-      gps.field_52a[0x11] = 2;
+      gps.raim_assessment = 2;
       uRam00101b4e = get_uptime();
       gps_counts.raim_detected = gps_counts.raim_detected + 1;
       return uRam00101b4e;
@@ -47972,7 +48014,7 @@ uint32_t raim_monitor(void)
         if (uStack_8 < 4) {
           return uStack_8 - 4;
         }
-        gps.field_52a[0x11] = 3;
+        gps.raim_assessment = 3;
         gps_counts.raim_alarms = gps_counts.raim_alarms + 1;
         return uStack_8 - 4;
       }
@@ -47982,7 +48024,7 @@ uint32_t raim_monitor(void)
         return uVar1;
       }
     }
-    gps.field_52a[0x11] = 1;
+    gps.raim_assessment = 1;
   }
   return uVar1;
 }
@@ -47997,13 +48039,13 @@ void gps_receiver_status_reset(void)
 {
   uint16_t sr;
   
-  gps.field_52a[2] = 2;
-  gps.field_52a[10] = 2;
+  gps.status_code = 2;
+  gps.status_code_reset = 2;
   sr = set_interrupt_mask(0x100);
-  gps.field_10d[1] = 0;
-  gps.field_10d[2] = gps.field_52a[10];
+  gps.reference_qualified = 0;
+  gps.status_reported = gps.status_code_reset;
   if (pll.field_3d5 == 0) {
-    gps.field_10d[2] = gps.field_52a[2];
+    gps.status_reported = gps.status_code;
   }
   set_interrupt_mask(sr);
   channels_reset();
@@ -48034,7 +48076,7 @@ void gps_receiver_status_update(char param_1,undefined1 param_2)
   if (param_1 != '\0') {
     return;
   }
-  if ((gps.field_0cc[0] == 0) || (bVar2 = false, gps.field_52a[0x2c] != 0)) {
+  if ((gps.status_received == 0) || (bVar2 = false, gps.status_monitor_failed != 0)) {
     bVar2 = true;
   }
   bVar7 = false;
@@ -48044,36 +48086,36 @@ void gps_receiver_status_update(char param_1,undefined1 param_2)
       bVar7 = cVar4 != '\0';
     }
   }
-  if ((gps.position_hold == 1) || (bVar1 = false, gps.field_52a[0x10] == 1)) {
+  if ((gps.position_hold == 1) || (bVar1 = false, gps.surveying == 1)) {
     bVar1 = true;
   }
   raim_monitor();
   if ((gps_pps_dead == 0) ||
-     (gps.field_52a[1] = 1, pll.field_3d5 == 0 && gps.fix_mode != ONCORE_POSITION_FIX)) {
-    gps.field_52a[1] = 0;
+     (gps.pps_dead = 1, pll.field_3d5 == 0 && gps.fix_mode != ONCORE_POSITION_FIX)) {
+    gps.pps_dead = 0;
   }
   uVar5 = 0;
-  if ((((bVar2) || (!bVar7)) || (!bVar1)) || (gps.field_52a[0x11] == 3)) {
-    if (gps.field_52a[0x2c] != 0) {
-      gps.field_52a[2] = 0;
+  if ((((bVar2) || (!bVar7)) || (!bVar1)) || (gps.raim_assessment == 3)) {
+    if (gps.status_monitor_failed != 0) {
+      gps.status_code = 0;
       goto LAB_0004b3a2;
     }
-    if ((bVar7) && (gps.field_0cc[0] != 0)) {
+    if ((bVar7) && (gps.status_received != 0)) {
       if (bVar1) {
-        gps.field_52a[2] = 4;
+        gps.status_code = 4;
       }
       else {
-        gps.field_52a[2] = 3;
+        gps.status_code = 3;
       }
       goto LAB_0004b3a2;
     }
   }
-  else if (gps.field_52a[2] < 10) {
+  else if (gps.status_code < 10) {
                     /* WARNING: Switch is manually overridden */
-    switch(gps.field_52a[2]) {
+    switch(gps.status_code) {
     default:
-      gps.field_52a._4_4_ = get_uptime();
-      gps.field_52a[2] = 5;
+      gps.validation_start = get_uptime();
+      gps.status_code = 5;
       break;
     case 5:
     case 6:
@@ -48081,7 +48123,7 @@ void gps_receiver_status_update(char param_1,undefined1 param_2)
     case 8:
       cVar4 = uptime_elapsed(0x1198,0xf6);
       if (cVar4 == '\0') {
-        gps.field_52a[2] = 5;
+        gps.status_code = 5;
       }
       else if (local_a < 0x1e) {
         dVar8 = unsigned_to_double(0x1e);
@@ -48096,20 +48138,20 @@ void gps_receiver_status_update(char param_1,undefined1 param_2)
             dVar8 = double_multiply(dVar8,0.27);
             uVar3 = double_to_unsigned(dVar8);
             if (uVar3 <= local_a) {
-              gps.field_52a[2] = 6;
+              gps.status_code = 6;
             }
           }
           else {
-            gps.field_52a[2] = 7;
+            gps.status_code = 7;
           }
         }
         else {
-          gps.field_52a[2] = 8;
+          gps.status_code = 8;
         }
       }
       else {
         uVar5 = 1;
-        gps.field_52a[2] = 9;
+        gps.status_code = 9;
       }
       break;
     case 9:
@@ -48117,26 +48159,26 @@ void gps_receiver_status_update(char param_1,undefined1 param_2)
     }
     goto LAB_0004b3a2;
   }
-  gps.field_52a[2] = 2;
+  gps.status_code = 2;
 LAB_0004b3a2:
-  gps.field_52a[3] = DAT_00100c68;
-  if (DAT_00100c68 == 1) {
+  gps.reference_valid_override = reference_valid_override_request;
+  if (reference_valid_override_request == 1) {
     uVar5 = 1;
   }
-  else if (DAT_00100c68 == 0xff) {
+  else if (reference_valid_override_request == 0xff) {
     uVar5 = 0;
   }
   sr = set_interrupt_mask(0x100);
-  if (((gps.field_52a[2] != 5) && (gps.field_52a[2] != 6)) &&
-     ((gps.field_52a[2] != 7 && (gps.field_52a[2] != 8)))) {
-    gps.field_10d[2] = gps.field_52a[2];
+  if (((gps.status_code != 5) && (gps.status_code != 6)) &&
+     ((gps.status_code != 7 && (gps.status_code != 8)))) {
+    gps.status_reported = gps.status_code;
   }
-  gps.field_52a[0] = uVar5;
-  if (gps.field_52a[1] != 0) {
-    gps.field_52a[0] = 0;
-    gps.field_52a[2] = 1;
+  gps.reference_valid = uVar5;
+  if (gps.pps_dead != 0) {
+    gps.reference_valid = 0;
+    gps.status_code = 1;
   }
-  gps.field_10d[1] = uVar5;
+  gps.reference_qualified = uVar5;
   set_interrupt_mask(sr);
   return;
 }
@@ -48161,17 +48203,17 @@ undefined1 gps_status_alternate(void)
 void command_monitor_init(void)
 
 {
-  gps.field_52a[0x15] = 0;
-  gps.field_52a[0x21] = 0;
-  gps.field_52a[0x13] = 0;
-  gps.field_52a[0x1f] = 0;
-  gps.field_52a[0x2c] = 0;
+  gps.command_monitor_state = 0;
+  gps.status_monitor_state = 0;
+  gps.receiver_health_failed = 0;
+  gps.command_monitor_failed = 0;
+  gps.status_monitor_failed = 0;
   DAT_0010142a = 0;
   status_happening('G');
-  gps.field_52a[0x14] = 1;
-  gps.field_52a[0x1e] = 0;
-  gps.field_52a._22_4_ = &PTR_DAT_00050e5e;
-  gps.field_52a[0x20] = 0;
+  gps.command_monitor_enabled = 1;
+  gps.command_monitor_error = 0;
+  gps.command_monitor_query = &PTR_DAT_00050e5e;
+  gps.status_monitor_enabled = 0;
   return;
 }
 
@@ -48190,45 +48232,45 @@ void command_monitor(void)
   char cVar4;
   uint uStack_8;
   
-  iVar1 = (int)(char)gps.field_52a[0x15] - 3;
-  if ((uint)(int)(char)gps.field_52a[0x15] < 3 || iVar1 == 0) {
+  iVar1 = (int)(char)gps.command_monitor_state - 3;
+  if ((uint)(int)(char)gps.command_monitor_state < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0004b4ba)[(short)iVar1]) {
     case 8:
-      if (gps.field_52a[0x14] == 1) {
-        gps.field_52a[0x15] = 1;
+      if (gps.command_monitor_enabled == 1) {
+        gps.command_monitor_state = 1;
       }
       break;
     case 0x1a:
-      if (gps.field_52a[0x14] == 0) {
+      if (gps.command_monitor_enabled == 0) {
 LAB_0004b4d2:
-        gps.field_52a[0x15] = 0;
+        gps.command_monitor_state = 0;
       }
-      else if (gps.field_52a[0x1e] != 0) {
-        gps.field_52a[0x1f] = 1;
+      else if (gps.command_monitor_error != 0) {
+        gps.command_monitor_failed = 1;
         gps_counts.command_monitor_failures = gps_counts.command_monitor_failures + 1;
-        gps.field_52a._26_4_ = get_uptime();
-        gps.field_52a[0x15] = 2;
+        gps.command_monitor_time = get_uptime();
+        gps.command_monitor_state = 2;
       }
       break;
     case 0x4c:
-      if (gps.field_52a[0x1e] == 0) {
-        gps.field_52a[0x1f] = 0;
-        gps.field_52a[0x15] = 1;
+      if (gps.command_monitor_error == 0) {
+        gps.command_monitor_failed = 0;
+        gps.command_monitor_state = 1;
       }
       else {
-        if (gps.field_52a[0x14] == 0) goto LAB_0004b4d2;
+        if (gps.command_monitor_enabled == 0) goto LAB_0004b4d2;
         cVar4 = uptime_elapsed(0x11ae,0xf8);
         if ((cVar4 != '\0') && (0x14 < uStack_8)) {
-          gps_request_post('\x03',4,(int *)gps.field_52a._22_4_,0);
-          gps.field_52a[0x15] = 3;
+          gps_request_post('\x03',4,gps.command_monitor_query,0);
+          gps.command_monitor_state = 3;
         }
       }
       break;
     case 0xa4:
       if (DAT_00101428 == '\t') {
-        if (gps.field_52a[0x1e] == 0) {
-          gps.field_52a[0x1f] = 0;
+        if (gps.command_monitor_error == 0) {
+          gps.command_monitor_failed = 0;
         }
       }
       else {
@@ -48237,63 +48279,63 @@ LAB_0004b4d2:
                     /* WARNING: Switch is manually overridden */
           switch((&WORD_0004b58c)[(short)iVar1]) {
           case 0x12:
-            gps.field_52a._22_4_ = gps.field_52a._22_4_ + 4;
-            if (*(int *)gps.field_52a._22_4_ == 0) {
-              gps.field_52a._22_4_ = &PTR_DAT_00050e5e;
+            gps.command_monitor_query = (void *)((int)gps.command_monitor_query + 4);
+            if (*(int *)gps.command_monitor_query == 0) {
+              gps.command_monitor_query = &PTR_DAT_00050e5e;
             }
           }
         }
-        gps.field_52a._26_4_ = get_uptime();
-        gps.field_52a[0x15] = 2;
+        gps.command_monitor_time = get_uptime();
+        gps.command_monitor_state = 2;
       }
     }
   }
-  if (((gps.field_52a[0x20] != 1) || (gps.fix_mode != ONCORE_POSITION_FIX)) ||
-     (bVar2 = true, gps.field_0cc[1] == 0)) {
+  if (((gps.status_monitor_enabled != 1) || (gps.fix_mode != ONCORE_POSITION_FIX)) ||
+     (bVar2 = true, gps.status_rate == 0)) {
     bVar2 = false;
   }
-  iVar1 = (int)(char)gps.field_52a[0x21] - 2;
-  if ((uint)(int)(char)gps.field_52a[0x21] < 2 || iVar1 == 0) {
+  iVar1 = (int)(char)gps.status_monitor_state - 2;
+  if ((uint)(int)(char)gps.status_monitor_state < 2 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0004b5f4)[(short)iVar1]) {
     case 6:
       if (!bVar2) goto LAB_0004b754;
-      gps.field_52a[0x26] = 0;
-      gps.field_52a[0x27] = 0xff;
-      gps.field_52a[0x28] = 0xff;
-      gps.field_52a[0x29] = 0xff;
-      gps.field_52a[0x2a] = 0;
+      gps.status_last_time[0] = 0;
+      gps.status_last_time[1] = 0xff;
+      gps.status_last_time[2] = 0xff;
+      gps.status_last_time[3] = 0xff;
+      gps.status_repeat_count = 0;
       DAT_00101b54 = '\0';
-      gps.field_52a._34_4_ = get_uptime();
+      gps.status_monitor_time = get_uptime();
       puVar3 = &DAT_00101b55;
       break;
     case 0x2a:
       if (bVar2) {
         cVar4 = uptime_elapsed(0x11b6,0xf8);
-        if (((cVar4 == '\0') || (uStack_8 <= (uint)gps.field_0cc[1] * 0xf)) &&
-           ((DAT_0010142a < 7 && (gps.field_52a[0x2a] < 0x2d)))) {
+        if (((cVar4 == '\0') || (uStack_8 <= (uint)gps.status_rate * 0xf)) &&
+           ((DAT_0010142a < 7 && (gps.status_repeat_count < 0x2d)))) {
           if ((DAT_00101b54 == '\0') && (DAT_00101b55 == '\0')) {
             if (cVar4 == '\0') {
               DAT_00101b54 = '\0';
-              gps.field_52a._34_4_ = get_uptime();
+              gps.status_monitor_time = get_uptime();
             }
           }
           else {
             if (DAT_00101b54 != '\0') {
-              gps.field_52a[0x2c] = 0;
-              gps.field_0cc[0] = 1;
+              gps.status_monitor_failed = 0;
+              gps.status_received = 1;
               DAT_00101b54 = '\0';
-              gps.field_52a._34_4_ = get_uptime();
-              gps.field_52a[0x2b] = 0;
-              if (gps.status._4_4_ == gps.field_52a._38_4_) {
-                gps.field_52a[0x2a] = gps.field_52a[0x2a] + 1;
+              gps.status_monitor_time = get_uptime();
+              gps.status_monitor_timed_out = 0;
+              if ((uint8_t  [4])gps.status._4_4_ == gps.status_last_time) {
+                gps.status_repeat_count = gps.status_repeat_count + 1;
               }
               else {
-                gps.field_52a[0x2a] = 0;
-                gps.field_52a[0x26] = gps.status.pad_04;
-                gps.field_52a[0x27] = gps.status.hour;
-                gps.field_52a[0x28] = gps.status.minute;
-                gps.field_52a[0x29] = gps.status.second;
+                gps.status_repeat_count = 0;
+                gps.status_last_time[0] = gps.status.pad_04;
+                gps.status_last_time[1] = gps.status.hour;
+                gps.status_last_time[2] = gps.status.minute;
+                gps.status_last_time[3] = gps.status.second;
                 if (gps.raim.rate == 0) {
                   DAT_0010142a = 0;
                 }
@@ -48303,50 +48345,51 @@ LAB_0004b4d2:
               }
             }
             if (DAT_00101b55 != '\0') {
-              gps.field_2f8[2] = 1;
+              gps.raim_received = 1;
               DAT_00101b55 = '\0';
               DAT_0010142a = 0;
             }
           }
         }
         else {
-          if (gps.field_52a[0x2b] != 0) {
-            gps.field_52a[0x2c] = 1;
+          if (gps.status_monitor_timed_out != 0) {
+            gps.status_monitor_failed = 1;
             gps_counts.status_monitor_failures = gps_counts.status_monitor_failures + 1;
-            gps.field_52a[0x2b] = 0;
-            gps.field_0cc[0] = 0;
+            gps.status_monitor_timed_out = 0;
+            gps.status_received = 0;
             gps.visibility_received = 0;
-            gps.field_2f8[2] = 0;
+            gps.raim_received = 0;
           }
           gps_request_post('\x04',0x4b,(int *)0x0,1);
-          gps.field_52a[0x21] = 2;
+          gps.status_monitor_state = 2;
         }
       }
       else {
-        gps.field_52a[0x21] = 0;
+        gps.status_monitor_state = 0;
       }
       goto LAB_0004b754;
     case 0x12e:
       if (DAT_00101429 == '\t') goto LAB_0004b754;
-      gps.field_52a[0x2b] = 1;
-      gps.field_52a[0x26] = 0;
-      gps.field_52a[0x27] = 0xff;
-      gps.field_52a[0x28] = 0xff;
-      gps.field_52a[0x29] = 0xff;
-      gps.field_52a[0x2a] = 0;
+      gps.status_monitor_timed_out = 1;
+      gps.status_last_time[0] = 0;
+      gps.status_last_time[1] = 0xff;
+      gps.status_last_time[2] = 0xff;
+      gps.status_last_time[3] = 0xff;
+      gps.status_repeat_count = 0;
       DAT_00101b54 = '\0';
-      gps.field_52a._34_4_ = get_uptime();
+      gps.status_monitor_time = get_uptime();
       DAT_00101b55 = '\0';
       puVar3 = &DAT_0010142a;
     }
     *puVar3 = 0;
-    gps.field_52a[0x21] = 1;
+    gps.status_monitor_state = 1;
   }
 LAB_0004b754:
-  if ((gps.field_52a[0x1f] != 0) || (gps.field_52a[0x13] = 0, gps.field_52a[0x2c] != 0)) {
-    gps.field_52a[0x13] = 1;
+  if ((gps.command_monitor_failed != 0) ||
+     (gps.receiver_health_failed = 0, gps.status_monitor_failed != 0)) {
+    gps.receiver_health_failed = 1;
   }
-  if (gps.field_52a[0x13] == 0) {
+  if (gps.receiver_health_failed == 0) {
     cVar4 = 'G';
   }
   else {
@@ -49028,10 +49071,10 @@ void gps_init(void)
   gps.field_504[0] = 0;
   DAT_001011c4 = 0;
   gps_receiver_status_reset();
-  gps.field_52a[3] = 0;
+  gps.reference_valid_override = 0;
   DAT_001011c5 = 0;
-  gps.field_52a[0x12] = 0;
-  DAT_00100c68 = 0;
+  gps.pps_check_disabled = 0;
+  reference_valid_override_request = 0;
   command_monitor_init();
   return;
 }
@@ -49312,7 +49355,7 @@ LAB_0004c1e6:
             gps_counts.t_retries = gps_counts.t_retries + 1;
           }
           else {
-            gps.field_52a[0x1e] = 1;
+            gps.command_monitor_error = 1;
             bVar8 = (byte)&uStack_aa;
             gps_count_response('\b',(int)&uStack_aa);
             DAT_0010139c = '\0';
@@ -49325,7 +49368,7 @@ LAB_0004c1e6:
             cStack_2c = gps_response_match(sStack_8c,auStack_88,bStack_89,cStack_8a,DAT_00101396,
                                            0x101266,DAT_00101398);
             if (cStack_2c == '\x02') {
-              gps.field_52a[0x1e] = 0;
+              gps.command_monitor_error = 0;
               ppuStack_90 = ppuStack_90 + 1;
               bStack_10 = 0;
               bStack_2a = 0;
@@ -49335,7 +49378,7 @@ LAB_0004c1e6:
               cVar6 = bytes_equal_n((char *)gps_response_buffer,DAT_00101398,acStack_29,
                                     (ushort)bStack_2a);
               if (cVar6 == '\x01') {
-                gps.field_52a[0x1e] = 1;
+                gps.command_monitor_error = 1;
                 gps_count_response('\x01',(int)&uStack_aa);
                 DAT_0010139c = '\0';
               }
@@ -49451,14 +49494,14 @@ void gps_console_request(short param_1,undefined4 *param_2,undefined1 param_3)
       gps.average_count = 0;
       break;
     case 0xc:
-      gps.field_52a[0x10] = 1;
+      gps.surveying = 1;
       break;
     case 0xd:
-      gps.field_52a[0x10] = 0;
+      gps.surveying = 0;
       break;
     case 0xe:
-      gps.field_52a[0x12] = (uint8_t)*param_2;
-      if (gps.field_52a[0x12] == 1) {
+      gps.pps_check_disabled = (uint8_t)*param_2;
+      if (gps.pps_check_disabled == 1) {
         gps_receiver_status_reset();
       }
       break;
@@ -49469,7 +49512,7 @@ void gps_console_request(short param_1,undefined4 *param_2,undefined1 param_3)
       gps_parse_options();
       break;
     case 0x13:
-      gps.field_52a[0x20] = (uint8_t)*param_2;
+      gps.status_monitor_enabled = (uint8_t)*param_2;
       break;
     case 0x14:
       gps_link_reset();
@@ -49893,15 +49936,15 @@ void gps_print_process_monitor(void)
   if (DAT_001011c4 != '\0') {
     console_write("\r\n** GPS receiver commands are blocked **\r\n");
   }
-  if (gps.field_52a[0x13] == 0) {
+  if (gps.receiver_health_failed == 0) {
     pcVar5 = "__ OK";
   }
   else {
     pcVar5 = " Fail";
   }
   printf("\r\nGPS Receiver Health _____________________________________%s\r\n",pcVar5);
-  iVar2 = (int)(char)gps.field_52a[0x15] - 3;
-  if ((uint)(int)(char)gps.field_52a[0x15] < 3 || iVar2 == 0) {
+  iVar2 = (int)(char)gps.command_monitor_state - 3;
+  if ((uint)(int)(char)gps.command_monitor_state < 3 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0004ceb8)[(short)iVar2]) {
     case 8:
@@ -49920,7 +49963,7 @@ void gps_print_process_monitor(void)
   else {
     pcVar5 = "? state";
   }
-  if (gps.field_52a[0x1f] == 0) {
+  if (gps.command_monitor_failed == 0) {
     pcVar4 = "OK";
   }
   else {
@@ -49928,8 +49971,8 @@ void gps_print_process_monitor(void)
   }
   printf("Command Monitor    %-9s   %-7s          %5d failures\r\n",pcVar5,pcVar4,
          (uint)gps_counts.command_monitor_failures);
-  iVar2 = (int)(char)gps.field_52a[0x21] - 2;
-  if ((uint)(int)(char)gps.field_52a[0x21] < 2 || iVar2 == 0) {
+  iVar2 = (int)(char)gps.status_monitor_state - 2;
+  if ((uint)(int)(char)gps.status_monitor_state < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0004cf2a)[(short)iVar2]) {
     case 6:
@@ -49945,7 +49988,7 @@ void gps_print_process_monitor(void)
   else {
     pcVar5 = "? state";
   }
-  if (gps.field_52a[0x2c] == 0) {
+  if (gps.status_monitor_failed == 0) {
     pcVar4 = "OK";
   }
   else {
@@ -50254,7 +50297,7 @@ uint8_t channel_position_satellite(byte param_1)
   char cVar2;
   
   poVar1 = gps.status.channels + (param_1 - 1);
-  if ((gps.field_0cc[0] != 0) &&
+  if ((gps.status_received != 0) &&
      (((cVar2 = satellite_id_valid(SATELLITE_GPS,poVar1->satellite), cVar2 != '\0' ||
        (cVar2 = satellite_id_valid(SATELLITE_PSEUDOLITE,poVar1->satellite), cVar2 != '\0')) &&
       (gps.status.channels[param_1 - 1].mode == ONCORE_AVAILABLE_FOR_POSITION)))) {
@@ -50404,7 +50447,7 @@ satellites_in_use(undefined1 *param_1,undefined1 *param_2,undefined4 *param_3,un
   undefined4 local_a;
   undefined1 local_6 [2];
   
-  if (gps.field_0cc[0] == 0) {
+  if (gps.status_received == 0) {
     uVar1 = 0;
   }
   else {
@@ -50486,7 +50529,7 @@ undefined4 position_settable(void)
 {
   undefined4 uVar1;
   
-  if ((gps.position_hold == 0) && (gps.field_52a[0x10] == 0)) {
+  if ((gps.position_hold == 0) && (gps.surveying == 0)) {
     uVar1 = 1;
   }
   else {
@@ -50505,7 +50548,7 @@ bool gps_position_get(int32_t *param_1,int32_t *param_2,int32_t *param_3)
 {
   bool bVar1;
   
-  bVar1 = gps.field_0cc[0] != 0;
+  bVar1 = gps.status_received != 0;
   if (bVar1) {
     *param_1 = gps.status.latitude;
     *param_2 = gps.status.longitude;
@@ -50526,7 +50569,7 @@ bool gps_time_local_get(undefined4 *param_1,undefined4 *param_2)
   undefined4 local_c;
   undefined4 local_8;
   
-  bVar1 = gps.field_0cc[0] != 0;
+  bVar1 = gps.status_received != 0;
   if (bVar1) {
     local_c = gps.status._4_4_;
     local_8 = oncore_date_pack(gps.status._0_4_);
@@ -50657,7 +50700,7 @@ undefined4 oncore_position_message(undefined4 param_1,undefined4 param_2)
       running_average_update(gps.status.height_gps,0x101184,gps.average_count);
       running_average_update(gps.status.height_msl,0x10118c,gps.average_count);
       gps.average_count = gps.average_count + 1;
-      gps.field_52a[0x10] = 1;
+      gps.surveying = 1;
     }
     if ((DAT_00101b6a != 0) && (DAT_00101b6b = DAT_00101b6b + 1, DAT_00101b6a <= DAT_00101b6b)) {
       DAT_00101b6b = 0;
@@ -50925,7 +50968,7 @@ int gps_request_build(short param_1,char param_2,int param_3,char *param_4)
         }
         if (param_1 == 0x1e) {
           long_array_get_byte(param_3,0,local_8);
-          gps.field_0cc[1] = local_8[0];
+          gps.status_rate = local_8[0];
         }
         else if (param_1 == 0x28) {
           *pcVar6 = '\0';

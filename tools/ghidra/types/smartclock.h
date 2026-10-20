@@ -51,7 +51,7 @@ typedef enum __attribute__((packed)) pll_hold_cause {
 	HOLD_CAUSE_HARDWARE_FAILURE = 0x10,
 	HOLD_CAUSE_TEMPORARY_MODE = 0x20,
 	HOLD_CAUSE_1PPS_SELECTION = 0x40,
-	HOLD_CAUSE_UNKNOWN_80 = 0x80 /* tested by enter_holdover, printed by nothing */
+	HOLD_CAUSE_GPS_COMMAND_MONITOR = 0x80 /* set in holdover recovery while the GPS command monitor has failed; logged as plain "Holdover started" */
 } pll_hold_cause;
 
 /* An ADC channel, by the console words that read and average them.  The
@@ -500,7 +500,8 @@ typedef struct gps_state {
 	uint8_t ionospheric_correction;            /* @@Aq */
 	uint8_t fix_algorithm;                     /* @@Ar */
 	oncore_hold_position_fields hold_position; /* @@As */
-	uint8_t field_0b2[2];
+	uint8_t hold_height_type;                  /* @@As: 0 GPS ellipsoid, 1 MSL */
+	uint8_t field_0b3;
 	uint8_t position_hold;                     /* @@At */
 	uint8_t field_0b5[0xbb - 0xb5];
 	uint8_t altitude_hold;                     /* @@Av */
@@ -513,9 +514,12 @@ typedef struct gps_state {
 	uint8_t application_type;                  /* @@AB */
 	uint8_t position_fix_threshold;            /* @@AD, s */
 	uint8_t differential_output_threshold;     /* @@AD, s */
-	uint8_t field_0cc[2];
+	uint8_t status_received;  /* @@Ba has come; the status monitor sets it */
+	uint8_t status_rate;      /* s between @@Ba, as last requested */
 	oncore_status_fields status;               /* @@Ba */
-	uint8_t field_10d[3];
+	uint8_t field_10d;
+	uint8_t reference_qualified; /* reference_valid before the PPS check */
+	uint8_t status_reported;     /* status_code, held while it is 5 to 8 */
 	uint8_t visibility_received;               /* set by @@Bb's decoder */
 	uint8_t field_111;
 	oncore_visibility_fields visibility;       /* @@Bb */
@@ -527,7 +531,8 @@ typedef struct gps_state {
 	oncore_corrections_fields corrections;     /* @@Ce */
 	double correction_average;                 /* m, printed AVG */
 	double correction_deviation;               /* m, printed STD DEV */
-	uint8_t field_2f8[0x2fb - 0x2f8];
+	uint8_t field_2f8[2];
+	uint8_t raim_received; /* @@Bn has come; the status monitor sets it */
 	oncore_raim_fields raim;                   /* @@Bn */
 	oncore_leap_pending leap_second_pending;   /* @@Bj */
 	uint8_t field_33b;
@@ -545,7 +550,32 @@ typedef struct gps_state {
 	double average_longitude;
 	double average_height_gps;
 	double average_height_msl;
-	uint8_t field_52a[0x558 - 0x52a];
+	uint8_t reference_valid;            /* :GPS:REF:VALid; 0 while the PPS is dead */
+	uint8_t pps_dead;                   /* gps_pps_dead, while it counts */
+	uint8_t status_code;                /* 1 PPS dead, 2 after a reset, 3 tracking, 4 holding or surveying, 5 to 8 validating, 9 valid */
+	uint8_t reference_valid_override;   /* the byte at 0x100c68: 1 forces valid, 0xff invalid */
+	uint32_t validation_start;          /* uptime as status_code reached 5 */
+	uint8_t field_532[2];               /* status_snapshot reads them; nothing writes them */
+	uint8_t status_code_reset;          /* 2, set by gps_receiver_status_reset */
+	uint8_t field_535[5];
+	uint8_t surveying;                  /* averaging @@Ba's position */
+	uint8_t raim_assessment;            /* 0 inactive, 1 OK, 2 alarm detected, 3 alarm */
+	uint8_t pps_check_disabled;         /* gps_pps_check skips while set */
+	uint8_t receiver_health_failed;     /* "GPS Receiver Health" */
+	uint8_t command_monitor_enabled;
+	uint8_t command_monitor_state;      /* 0 disabled, 1 standby, 2 query, 3 query-ack */
+	void *command_monitor_query;        /* the next query of the list at 0x50e5e */
+	uint32_t command_monitor_time;      /* uptime of its last state change */
+	uint8_t command_monitor_error;      /* set by gpsm_task when a command goes unanswered */
+	uint8_t command_monitor_failed;
+	uint8_t status_monitor_enabled;
+	uint8_t status_monitor_state;       /* 0 disabled, 1 standby, 2 recovery */
+	uint32_t status_monitor_time;       /* uptime of the last fresh @@Ba */
+	uint8_t status_last_time[4];        /* the last @@Ba's time bytes */
+	uint8_t status_repeat_count;        /* @@Ba with the same time in a row */
+	uint8_t status_monitor_timed_out;
+	uint8_t status_monitor_failed;
+	uint8_t field_557;
 	uint8_t raim_option; /* its options list has an I */
 	uint8_t field_559;
 } gps_state;
@@ -556,9 +586,10 @@ typedef struct gps_state {
 typedef struct pll_state {
 	pll_stage stage;
 	pll_stage previous_stage;     /* +0x01: pllp_task's copy of stage */
-	uint8_t field_002;
+	uint8_t powerup_countdown;    /* +0x02: readings left before powerup checks the clock against GPS, 25 then 2 */
 	uint8_t powerup_state;        /* +0x03: powerup's sub-state, screen-format-strings.md's ladder */
-	uint8_t field_004[2];
+	uint8_t powerup_reference_lost; /* +0x04: GPS or its PPS went, or temporary mode; powerup goes back to state 3 */
+	uint8_t field_005;
 	uint8_t reference_check_state; /* +0x06: pll_check_reference's */
 	uint8_t field_007[5];
 	uint8_t startup_state;        /* +0x0c: startup_pll's */
@@ -568,7 +599,8 @@ typedef struct pll_state {
 	uint8_t holdover_state;       /* +0x10: holdover's */
 	pll_hold_cause hold_causes;   /* +0x11: a set of pll_hold_cause bits */
 	uint8_t manual;               /* +0x12 */
-	uint8_t field_013[2];
+	uint8_t ti_limit_override;    /* +0x13: holdover checks the TI limit while 0; only ever cleared */
+	uint8_t recovery_countdown;   /* +0x14: holdover_recovery's, as powerup_countdown */
 	uint8_t recovery_state;       /* +0x15 */
 	uint8_t coarse_state;         /* +0x16: coarse's */
 	uint8_t fine_state;           /* +0x17 */
@@ -576,22 +608,32 @@ typedef struct pll_state {
 	uint8_t fine_index;           /* fine acquisition's "i= %d" */
 	uint16_t fine_retries;        /* +0x1a: fine's failed attempts, given up past 9 */
 	float fine_d;                 /* fine acquisition's "d = %f" */
-	uint8_t field_020[4];
+	uint8_t aging_state;          /* +0x20: efc_history_update's; 3 once the aging fit holds */
+	uint8_t field_021[3];
 	uint8_t gps_diag_state;       /* +0x24: gps_diag_sequence's */
 	uint8_t gps_diag_substate;    /* +0x25 */
 	uint8_t gps_init_state;       /* +0x26: gps_init_sequence's, print_gps_init_state's */
-	uint8_t field_027[4];
+	uint8_t field_027;
+	uint16_t leap_check_timer;    /* +0x28: gps_leap_sequence checks again when it wraps */
+	uint8_t leap_check_requested; /* +0x2a: pll_stage_status sets it */
 	uint8_t leap_check_state;     /* +0x2b: gps_leap_sequence's, print_leap_check_state's */
-	uint8_t field_02c[6];
+	uint8_t leap_ack_state;       /* +0x2c: gps_leap_ack's, measuring the GPS-UTC offset by switching @@Aw */
+	uint8_t leap_ack_requested;   /* +0x2d */
+	uint8_t leap_ack_done;        /* +0x2e: the offset is set */
+	uint8_t field_02f;
+	uint8_t leap_ack_again;       /* +0x30: holdover_recovery measures again after fine */
+	uint8_t field_031;
 	float efc;                    /* pr_efc's efc */
 	float tfom;                   /* pll_rep's tfom, s */
 	float predicted_uncertainty;  /* +0x3a: the curv fit's, :KENneth:PREDicted? */
 	uint8_t field_03e[8];
 	float frequency_tolerance;    /* +0x46: 1e-8 at first; fine's bound, holdover's limit per second */
 	efc_ring efc_history;
-	uint8_t field_3b0[8];
+	float ti_filtered;            /* +0x3b0: the TI, filtered with weight 29.75 / tau */
+	float efc_base;               /* +0x3b4: the EFC less the temperature term, TC times the current */
 	float loop_time_constant;     /* +0x3b8: 150 s at first, at most max_loop_time */
-	uint8_t field_3bc[8];
+	uint32_t holdover_start_time; /* +0x3bc: get_date_time's as holdover starts */
+	uint32_t holdover_start_date; /* +0x3c0 */
 	uint8_t led_gps_lock;         /* +0x3c4: :LED:GPSLock? */
 	uint8_t led_holdover;         /* +0x3c5: :LED:HOLDover? */
 	uint8_t led_tmh_valid;        /* +0x3c6: :LED:TMHValid? */
@@ -599,9 +641,11 @@ typedef struct pll_state {
 	uint32_t holdover_duration;   /* +0x3c8: :ROSCillator:HOLDover:DURation? */
 	uint32_t reference_uptime;    /* +0x3cc: the uptime clock_set_from_reference counts from */
 	uint8_t reference_seconds;    /* +0x3d0: the FPGA's seconds count with it */
-	uint8_t field_3d1[3];
+	uint8_t fpga_load_pending;    /* +0x3d1: 1 from ROM 0x21e2c until fpga_setup loads it */
+	uint8_t fpga_loaded;          /* +0x3d2: the PPS checks wait for it */
+	uint8_t loop_running;         /* +0x3d3: 0 in diagnostic mode; nothing reads it */
 	uint8_t sync_requested;       /* +0x3d4: sync_perform syncs whatever the TI, then clears it */
-	uint8_t field_3d5;
+	uint8_t field_3d5;            /* read by the GPS status code, never written but by the block copy */
 } pll_state;
 
 /* The GPS link's counters, which the "GPS Process Monitor" page

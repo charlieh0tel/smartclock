@@ -204,18 +204,22 @@ some messages so their words and longs fall on even addresses.
 | `+0x08e` | `almanac_update` | `@@An` | |
 | `+0x0a4`, `+0x0a5` | `ionospheric_correction`, `fix_algorithm` | `@@Aq`, `@@Ar` | `FIX ALG` |
 | `+0x0a6` | `hold_position`: latitude, longitude, height | `@@As` | `POS HOLD` |
+| `+0x0b2` | `hold_height_type`: 0 GPS ellipsoid, 1 MSL | `@@As` | |
 | `+0x0b4` | `position_hold` | `@@At` | |
 | `+0x0bb`, `+0x0bc` | `altitude_hold`, `utc_time` | `@@Av`, `@@Aw` | |
 | `+0x0be` | `epoch_offset`, ms | `@@Ax` | |
 | `+0x0c0`, `+0x0c4` | `pps_offset`, `pps_cable_delay` | `@@Ay`, `@@Az` | `1PPS OFFS`, `CABLE DLY` |
 | `+0x0c9` | `application_type` | `@@AB` | `APPL` |
 | `+0x0ca`, `+0x0cb` | `position_fix_threshold`, `differential_output_threshold` | `@@AD` | `POS FIX THR`, `DIF OUT THR` |
+| `+0x0cc`, `+0x0cd` | `status_received`, which the status monitor sets on a fresh `@@Ba`; `status_rate`, the seconds between them last requested | | |
 | `+0x0ce` | `status`, 63 bytes (table `0x50fd2`): date, time, fraction, position, velocity, heading, DOP, counts, six channels' satellite, mode, signal and status, and the receiver status | `@@Ba` | `print_stat`'s page |
+| `+0x10e`, `+0x10f` | `reference_qualified`, `status_reported`: the receiver status below before the PPS check, and its code held while it is 5 to 8 | | |
 | `+0x110` | `visibility_received`, which `@@Bb`'s decoder sets | | |
 | `+0x112` | `visibility`: a count, then 12 satellites of 10 bytes (table `0x50fd8`): satellite, Doppler, elevation, azimuth, health | `@@Bb` | `Visible Sats` |
 | `+0x18d` | `xdop_table`, copied as it comes (`0x50fe2`): type, count, mode, 9 combinations of an xDOP and six satellites | `@@Bc` | `xDOP TYPE` |
 | `+0x1da` | `almanac`: the RAM's and the EEPROM's valid flag, week, time, count and satellites | `@@Bd` | |
 | `+0x2a8` | `corrections`, 64 bytes (table `0x50ff6`): the time, then six channels' satellite, range and rate corrections and issue of data | `@@Ce` | `GPS TIME`, the pseudorange page |
+| `+0x2fa` | `raim_received`, which the status monitor sets on a fresh `@@Bn` | | |
 | `+0x2fb` | `raim`, 63 bytes (table `0x50fe6`): rate, on, alarm limit, 1PPS mode and rate, the time to the next pulse, pulse status and sync, solution and RAIM status, sigma, sawtooth, six channels' time estimates | `@@Bn` | `SAWT ERR`, the Time RAIM page |
 | `+0x33a`, `+0x33c` | `leap_second_pending`, `self_test` (14 bits kept) | `@@Bj`, `@@Ca` | |
 | `+0x344` | `extension`, 62 bytes: five DOPs, magnetic variation, velocity north, east and up, correction age, ECEF x, y and z, six URAs, the ten elements of the least-squares A-1 matrix, clock bias, oscillator offset | `@@Bk` | the DOP, `VEL`, `ECEF`, `URA` and clock lines |
@@ -223,14 +227,36 @@ some messages so their words and longs fall on even addresses.
 | `+0x3ee`, `+0x3ef` | `receiver_id_received`, which `@@Cj`'s decoder sets; `receiver_id`, ten lines, each line's CR made a NUL and its LF dropped (table `0x51004`) | `@@Cj` | |
 | `+0x506` | `average_count` | | |
 | `+0x50a`--`+0x522` | `average_latitude`, `_longitude`, `_height_gps`, `_height_msl`, doubles | | `AVG LAT`, `LON`, `HGT` |
+| `+0x52a`--`+0x534` | the receiver status: `reference_valid`, `pps_dead`, `status_code`, `reference_valid_override`, `validation_start`, `status_code_reset` | | |
+| `+0x53a`--`+0x53c` | `surveying`, `raim_assessment` (0 inactive, 1 OK, 2 alarm detected, 3 alarm), `pps_check_disabled` | | `Assessment:` |
+| `+0x53d`--`+0x556` | the monitors: `receiver_health_failed`; the command monitor's `enabled`, `state`, `query`, `time`, `error`, `failed`; the status monitor's `enabled`, `state`, `time`, `status_last_time`, `status_repeat_count`, `timed_out`, `failed` | | `GPS Receiver Health`, `Command Monitor`, `Status Monitor` |
 
 `@@Ba`'s decoder `0x4f59a`, in fix mode, adds its latitude, longitude
 and heights to the averages, counting `average_count`, while position
 hold is off, bit 5 of the receiver status is set, and either the byte
 at `0x101e98` is 1 or the count is below `:DOUGlas:DURation`.  The print shows latitude and longitude as "ms"; the
 reference's unit is the milliarcsecond.  `@@As`'s height goes through
-a decoder of its own (`0x4efb4`), not to a fixed cell, but is printed
-from `hold_position.height`.  `gps_print_extension` prints the matrix
+a decoder of its own (`0x4efb4`) rather than the table's cell, which
+stores it at `hold_position.height` and its type at
+`hold_height_type`.
+
+`gps_receiver_status_update` keeps the receiver status the holdover
+code reports: `status_code` is 1 while the PPS is dead, 2 after a
+reset, 3 while tracking, 4 while holding or surveying, and once the
+receiver qualifies, 5 to 8 through a 30 s validation, at 27, 53 and
+77 % of it, then 9, when `reference_valid` is set
+(`:GPS:REFerence:VALid?`).  The byte at `0x100c68` overrides it, 1
+valid and 0xff invalid; `gps_init` clears it and no code sets it.
+The command monitor queries the receiver from the list at `0x50e5e`
+while it is idle and fails when a command goes unanswered; the
+status monitor watches that `@@Ba` keeps coming, at most 15 times its
+rate apart, and that its time advances, and fails after a second
+miss.  `gps_print_process_monitor` prints both.
+
+`pllp_task` copies the whole of `gps`, `0x155` longs, to
+battery-backed RAM at `0x100004`, and `system_init` copies it back
+after a reset that was neither external nor a power-up, as
+`loop.md` describes for 3704's blocks.  `gps_print_extension` prints the matrix
 as the triangle the reference numbers it in.
 
 Whether the original was one structure or one source file's statics,
@@ -267,23 +293,34 @@ Its other named fields, by the routines that use them:
 | Offset | Field | Use |
 | ------ | ----- | --- |
 | `+0x01` | `previous_stage` | `pllp_task`'s copy of `stage` |
+| `+0x02` | `powerup_countdown` | readings `powerup` waits before checking the clock against GPS: 25, then 2 more each time the check is not yet decided |
 | `+0x03` | `powerup_state` | `powerup`'s sub-state, the ladder of `../screen-format-strings.md` |
+| `+0x04` | `powerup_reference_lost` | set past state 3 when GPS or its PPS goes or temporary mode starts; `powerup` returns to state 3 |
 | `+0x06` | `reference_check_state` | `pll_check_reference`'s sub-state |
 | `+0x0c`, `+0x0e`, `+0x10` | `startup_state`, `normal_state`, `holdover_state` | `startup_pll`'s, `pll_normal`'s and `holdover`'s sub-states |
-| `+0x11` | `hold_causes` | why the loop holds over, a set of `pll_hold_cause` bits as the console's `pr_hold_cause` prints them: manual 1, GPS 2, TI error 4, TI limit exceeded 8, hardware failure 0x10, temporary mode 0x20, 1PPS selection 0x40; 0x80, which `enter_holdover` tests and nothing prints, is not known |
+| `+0x11` | `hold_causes` | why the loop holds over, a set of `pll_hold_cause` bits as the console's `pr_hold_cause` prints them: manual 1, GPS 2, TI error 4, TI limit exceeded 8, hardware failure 0x10, temporary mode 0x20, 1PPS selection 0x40; 0x80, which `pr_hold_cause` does not print, is set by `holdover_recovery` while `gps.command_monitor_failed` is set and cleared by `holdover` once it is not, and `enter_holdover` logs it as code 0x14, a plain "Holdover started" |
+| `+0x13` | `ti_limit_override` | `holdover` checks the TI limit while it is 0; only `pll_init` and `holdover` write it, both 0 |
+| `+0x14` | `recovery_countdown` | `holdover_recovery`'s, as `powerup_countdown` |
 | `+0x16` | `coarse_state` | `coarse`'s sub-state |
 | `+0x18` | `frequency_adjusted` | set when `fine` applies a frequency correction; `holdover_limit_exceeded` counts the limit exceeded while it is |
 | `+0x1a` | `fine_retries` | `fine`'s failed attempts, a word; it gives up past 9 |
+| `+0x20` | `aging_state` | `efc_history_update`'s: 1 once it has stored the EFC and the first uncertainty, 3 once the ring holds the aging fit's entry; holdover uses the fit only at 3 |
 | `+0x24`, `+0x25` | `gps_diag_state`, `gps_diag_substate` | `gps_diag_sequence`'s |
 | `+0x26` | `gps_init_state` | `gps_init_sequence`'s, which `powerup` waits past 13 for |
+| `+0x28`, `+0x2a` | `leap_check_timer`, `leap_check_requested` | `gps_leap_sequence` asks again when the word wraps; `pll_stage_status` sets the request |
 | `+0x2b` | `leap_check_state` | `gps_leap_sequence`'s |
+| `+0x2c` to `+0x30` | `leap_ack_state`, `leap_ack_requested`, `leap_ack_done`, `leap_ack_again` | `gps_leap_ack`'s, which measures the GPS-UTC offset: it switches `@@Aw` to the other time scale, takes the difference of the two times and sets the offset, then switches back; `powerup` and `holdover_recovery` wait for it |
 | `+0x3a` | `predicted_uncertainty` | a float from the curv task's aging fit; `:KENneth:PREDicted?` returns it |
 | `+0x46` | `frequency_tolerance` | a float, 1e-8 at first: the offset `fine` accepts, and the rate the holdover limit grows by |
+| `+0x3b0`, `+0x3b4` | `ti_filtered`, `efc_base` | floats in `startup_pll` and `pll_normal`: the TI filtered with weight 29.75 / tau, and the EFC less the temperature term, which the proportional term and the integral are added to |
 | `+0x3b8` | `loop_time_constant` | a float, 150 s at first and at most `max_loop_time` |
 | `+0x3c4` to `+0x3c6` | `led_gps_lock`, `led_holdover`, `led_tmh_valid` | the lamps, as `:LED:GPSLock?`, `:HOLDover?` and `:TMHValid?` read them and `leds_update` writes them |
+| `+0x3bc`, `+0x3c0` | `holdover_start_time`, `holdover_start_date` | `get_date_time`'s as `holdover` starts |
 | `+0x3c8` | `holdover_duration` | `:ROSCillator:HOLDover:DURation?` |
 | `+0x3cc`, `+0x3d0` | `reference_uptime`, `reference_seconds` | the uptime and the FPGA's seconds count `clock_set_from_reference` sets the clock from |
+| `+0x3d1` to `+0x3d3` | `fpga_load_pending`, `fpga_loaded`, `loop_running` | `pll_init` sets the first from ROM `0x21e2c`, 1; `fpga_setup` clears it and sets the second, which the PPS checks wait for, and `pll_restart` keeps both; the third is 0 in diagnostic mode and read by nothing |
 | `+0x3d4` | `sync_requested` | `sync_perform` syncs whatever the TI while it is set, then clears it |
+| `+0x3d5` | `field_3d5` | read by the GPS receiver status and `status_snapshot`; nothing writes it but the block copy |
 
 | Offset | Field | Shown by |
 | ------ | ----- | -------- |

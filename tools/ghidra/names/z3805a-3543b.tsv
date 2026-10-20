@@ -1501,3 +1501,4 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 #
 # setjmp's partner
 0x51100	function	longjmp	context	restores the registers setjmp saved, its status register through trap #1, and returns to its caller with the value given
+0x100c68	label	reference_valid_override_request	context	1 forces the GPS reference valid, 0xff invalid; gps_init clears it and no code sets it, so only a memory write, as from the pForth console, does

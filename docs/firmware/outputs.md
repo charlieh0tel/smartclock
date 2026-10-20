@@ -131,9 +131,12 @@ The Z3805A also has a rear-panel TTL alarm output (its owner,
 2026-10-20).  097-58503-12 (2-11) says the 58503B's, a TTL open
 collector, "goes on and off with the Alarm indicator"; if the
 Z3805A's does too, it hangs off latch bit 2 in hardware, since no
-code writes an alarm pin apart from the latch.  The firmware's only
-other candidate is PWMA, which follows the holdover threshold alone.
-Which it is needs the board or a unit.
+code drives a pin from `status_summary` but the latch.  The other
+pins the firmware drives: PWMA, which follows the holdover threshold
+alone; the DUART's OP2, which `hmon_task` toggles every `0x70`
+passes, a heartbeat; and OP7, set on a self-test failure by three
+`_with_lamp` routines nothing calls (`duart_output_bits`).  Which one
+the connector is needs the board or a unit.
 `:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded?` returns
 the flag.
 

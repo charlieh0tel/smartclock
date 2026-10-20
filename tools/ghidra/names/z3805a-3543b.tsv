@@ -63,8 +63,7 @@
 0x448fc	function	interval_average	interval.md: counts readings to ten and stores the mean
 0x102538	label	interval_mean	interval.md: mean of ten one-second readings
 0x10253c	label	interval_mean_flag	interval.md: the mean's flag
-0x101f9c	label	interval_reading	interval.md: latest one-second reading	double
-0x101fa4	label	interval_reading_flag	interval.md: the reading's flag
+0x101f9c	label	interval_reading	interval.md: latest one-second reading	interval_reading_fields
 #
 # the console, docs/firmware/console.md
 0x12f50	function	console_halt_hook	console.md: hook halt runs
@@ -258,29 +257,19 @@
 0x336da	label	scpi_param_SAMPle_FARR	structures.md: the descriptor scpi_numeric_get and _set are given for SAMPle_FARR	scpi_numeric_param
 0x101e1c	label	scpi_value_SAMPle_FARR	structures.md: the descriptor's value	float
 0x339b4	label	scpi_param_SOURce_PULSe_CONTinuous_PERiod	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_PULSe_CONTinuous_PERiod	scpi_numeric_param
-0x101f26	label	scpi_value_SOURce_PULSe_CONTinuous_PERiod	structures.md: the descriptor's value	int32_t
 0x33e20	label	scpi_param_SOURce_ROSCillator_LIMit_THReshold	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_ROSCillator_LIMit_THReshold	scpi_numeric_param
-0x101e9e	label	scpi_value_SOURce_ROSCillator_LIMit_THReshold	structures.md: the descriptor's value	float
 0x33e5e	label	scpi_param_SOURce_ROSCillator_HOLDover_LIMit_THReshold	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_ROSCillator_HOLDover_LIMit_THReshold	scpi_numeric_param
-0x101ea2	label	scpi_value_SOURce_ROSCillator_HOLDover_LIMit_THReshold	structures.md: the descriptor's value	float
 0x33e9c	label	scpi_param_DIAGnostic_ROSCillator_TCOefficient	structures.md: the descriptor scpi_numeric_get and _set are given for DIAGnostic_ROSCillator_TCOefficient	scpi_numeric_param
 0x101d0c	label	scpi_value_DIAGnostic_ROSCillator_TCOefficient	structures.md: the descriptor's value	float
 0x33eda	label	scpi_param_DOUGlas_DURation	structures.md: the descriptor scpi_numeric_get and _set are given for DOUGlas_DURation	scpi_numeric_param
-0x101e94	label	scpi_value_DOUGlas_DURation	structures.md: the descriptor's value	int32_t
 0x33f18	label	scpi_param_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold	scpi_numeric_param
-0x101e9a	label	scpi_value_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold	structures.md: the descriptor's value	int32_t
 0x33f56	label	scpi_param_SOURce_GPSystem_EMANgle	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_GPSystem_EMANgle	scpi_numeric_param
-0x101e8c	label	scpi_value_SOURce_GPSystem_EMANgle	structures.md: the descriptor's value	int32_t
 0x33f94	label	scpi_param_SOURce_GPSystem_ADELay	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_GPSystem_ADELay	scpi_numeric_param
-0x101e90	label	scpi_value_SOURce_GPSystem_ADELay	structures.md: the descriptor's value	int32_t
 0x33fd2	label	scpi_param_DIAGnostic_TOFFset	structures.md: the descriptor scpi_numeric_get and _set are given for DIAGnostic_TOFFset	scpi_numeric_param
 0x101d10	label	scpi_value_DIAGnostic_TOFFset	structures.md: the descriptor's value	float
 0x3409c	label	scpi_param_KENneth_PREDicted_DURation	structures.md: the descriptor scpi_numeric_get and _set are given for KENneth_PREDicted_DURation	scpi_numeric_param
-0x101ec2	label	scpi_value_KENneth_PREDicted_DURation	structures.md: the descriptor's value	int32_t
 0x342f8	label	scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold	structures.md: the descriptor scpi_numeric_get and _set are given for DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold	scpi_numeric_param
-0x101ed2	label	scpi_value_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold	structures.md: the descriptor's value	int32_t
 0x34336	label	scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	structures.md: the descriptor scpi_numeric_get and _set are given for SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	scpi_numeric_param
-0x101eda	label	scpi_value_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold	structures.md: the descriptor's value	int32_t
 #
 # globals the console's print words label, docs/firmware/structures.md
 0x100c6a	label	gps	structures.md: memset(&gps, 0, 0x55a); the cells the Oncore messages' decoders fill, and the GPS task's state	gps_state
@@ -337,8 +326,6 @@
 0x103170	label	sciW_status	structures.md: "Unable to initialize sciW: %X"
 0x101d94	label	log_page_buffer	structures.md: log_read loads a page here and formats its entries	log_page
 0x101dd4	label	log_page_number	structures.md: the page log_page_buffer holds	int16_t
-0x101ece	label	leap_pending	structures.md: the time code's l is 0 unless it is set	uint8_t
-0x101eca	label	leap_minute_length	structures.md: the time code's l is - when it is 59, + otherwise
 0x102eb6	label	status_request_service	structures.md: the time code's r, the Status Byte's request-for-service summary	uint8_t
 0x101f68	label	idn_model	structures.md: *IDN?'s first %s	char[18]
 0x101f7a	label	idn_serial	structures.md: *IDN?'s second %s	char[18]
@@ -417,7 +404,7 @@
 0x12e24	function	pps_init	structures.md: "Pps_init error %#04x" prints its result
 0x137d8	function	set_timedate	structures.md: the set_time word's, "set_timedate error: %2X"
 0x111cc	function	gps_seconds	structures.md: the T1 time code's #H%08X, seconds since 1980 from a date and time	int gps_seconds(uint32_t date, uint32_t time)
-0x11284	function	leap_gps_time	structures.md: :PTIM:LEAP:GPST?'s "#H%08X", from leap_pending and leap_minute_length
+0x11284	function	leap_gps_time	structures.md: :PTIM:LEAP:GPST?'s "#H%08X", from nv_settings.leap_pending and leap_minute_length
 0x136d6	function	get_clock_date	structures.md: returns clock_date; the T2 time code's date	uint32_t get_clock_date(void)
 0x136de	function	get_clock_time	structures.md: returns clock_time; the T2 time code's time	uint32_t get_clock_time(void)
 0x136e6	function	get_gps_date	structures.md: returns gps_date; with get_gps_time, the T1 time code's GPS time	uint32_t get_gps_date(void)
@@ -475,9 +462,9 @@
 0x4aff2	function	uptime_elapsed	context: get_uptime() less *start into *elapsed, restarting *start if the clock went back
 0x4513c	function	interval_wait_reading	context: the wait half of interval_next_reading: the FPGA's reading, or a wait while a 1PPS is dead; updates the EFC history
 0x450c4	function	interval_rearm	context: the other half of interval_next_reading: counter_calibrate, or sync_request(3, 1) for mode 2, then counter_arm
-0x405bc	function	counter_calibrate	context: runs interpolator_calibrate when the configuration asks, then stores reading_low and the spread at its +0x18 and +0x1c	void counter_calibrate(double *reading, void *configuration)
-0x40c6a	function	counter_arm	context: reloads fconf_regs[0..3] from the configuration and re-arms the FPGA	void counter_arm(double *reading, void *configuration)
-0x40d34	function	counter_read	context: interval.md's one reading: the coarse count plus (interpolator_read - +0x18) / +0x1c, times 1e-7, less the configuration's double at +4, into *reading	void counter_read(double *reading, void *configuration)
+0x405bc	function	counter_calibrate	context: runs interpolator_calibrate when the configuration asks, then stores reading_low and the spread at its +0x18 and +0x1c	void counter_calibrate(interval_reading_fields *reading, counter_configuration_fields *configuration)
+0x40c6a	function	counter_arm	context: reloads fconf_regs[0..3] from the configuration and re-arms the FPGA	void counter_arm(interval_reading_fields *reading, counter_configuration_fields *configuration)
+0x40d34	function	counter_read	context: interval.md's one reading: the coarse count plus (interpolator_read - +0x18) / +0x1c, times 1e-7, less the configuration's double at +4, into *reading	void counter_read(interval_reading_fields *reading, counter_configuration_fields *configuration)
 0x29b82	function	scpi_console_port	context: returns 0x29e18, the console port's object: two routines, then the "E%+04d> " and "scpi > " prompts; queries compare a request's source with it
 0x29bce	function	console_port_read	context: the first of the console port's routines; the SCPI input loop reads characters with it
 0x11396	function	datetime_add	context: adds the first packed time and date to the second, carrying seconds, minutes, hours and days; klok adds an entry's period to its time
@@ -496,7 +483,7 @@
 0x4f8fc	function	gps_message_supported	context: @@Bn, message 0x28, needs the receiver ID and its Time RAIM option, gps.raim_option; any other is supported
 0x4f8b6	function	gps_parse_options	context: sets gps.raim_option when the receiver ID's "OPTIONS LIST " has an I
 0x49b88	function	format_si	context: formats a double with an SI prefix from "pnum kMG" by its exponent / 3; "ANT DLY %s"
-0x101fae	label	counter_configuration	context: the configuration counter_calibrate, counter_arm and counter_read are given: fconf_regs' four values at +0, the calibration double at +4, the interpolator's offset and scale at +0x18 and +0x1c
+0x101fae	label	counter_configuration	context: the configuration counter_calibrate, counter_arm and counter_read are given: fconf_regs' four values at +0, the calibration double at +4, the interpolator's offset and scale at +0x18 and +0x1c	counter_configuration_fields
 0x2d1cc	function	satellite_list_limits	context: the ID count, the most listed and the ID base for satellites_in_mask: kind 0 :SAT:TRAC? (32, 6), 1 its pseudolites (5, 6, from 0x20), 2 :SAT:VIS:PRED? (32, 12), 3 the ignore and include lists (32, 32)	void satellite_list_limits(satellite_list kind, uint8_t *id_count, uint8_t *max_listed, uint8_t *id_base)
 0x3293a	function	nv_save	structures.md: packs the settings into a 0x80-byte NV register record and writes it to slot nv_slot when it differs; "Warning: Entire nv register is being used"
 0x3282c	function	nv_restore	structures.md: loads slot 0, else slot 1, else copies nv_settings_defaults over nv_settings, erases the older slot and saves
@@ -505,6 +492,38 @@
 0x3290e	function	nv_record_differs	structures.md: compares two records, nonzero when they differ
 0x327f4	function	nv_slot_erase	structures.md: clear_nv erases slots 0 and 1 with it
 0x101f62	label	nv_slot	structures.md: the slot nv_load_slot and nv_save use, 0 or 1	uint8_t
-0x101e8a	label	nv_settings	structures.md: the saved settings, 0xc5 bytes, the scpi_value_ cells among them
+0x101e8a	label	nv_settings	structures.md: the saved settings, 0xc5 bytes; each field the value of a descriptor in nv_save's tables	nv_settings_fields
 0x30966	label	nv_settings_defaults	structures.md: nv_restore copies them over nv_settings when no slot loads
 0x4000c0	label	nv_records	structures.md: the EEPROM's two NV register records, 0x80 bytes each: "S", a sequence number at +4, "3543B", the packed settings, a checksum
+
+0x3405e	label	scpi_param_SOURce_PTIMe_TZONe	structures.md: nv_save's first table; its setter's descriptor	scpi_numeric_param
+0x34178	label	scpi_param_SOURce_GPSystem_POSition	structures.md: nv_save's first table; its setter's descriptor	scpi_numeric_param
+0x34010	label	scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore	structures.md: nv_save's first table; the IGNore and INCLude setters'	scpi_numeric_param
+0x33bae	label	scpi_param_STATus_ENABle	structures.md: nv_save's first table; *ESE, *SRE and the STATus ENABle setters'	scpi_numeric_param
+0x33c30	label	scpi_param_STATus_PTRansition	structures.md: nv_save's first table; the STATus PTRansition setters'	scpi_numeric_param
+0x33c5c	label	scpi_param_STATus_NTRansition	structures.md: nv_save's first table; the STATus NTRansition setters'	scpi_numeric_param
+0x33a14	label	scpi_param_SOURce_PULSe_STARt_TIME	structures.md: nv_save's first table; its setter's descriptor	scpi_numeric_param
+0x33a74	label	scpi_param_SOURce_PULSe_STARt_DATE	structures.md: nv_save's first table; its setter's descriptor	scpi_numeric_param
+0x34118	label	nv_param_leap_minute_length	structures.md: nv_save's first table; no setter refers to it	scpi_numeric_param
+0x340da	label	nv_param_leap_date	structures.md: nv_save's first table; no setter refers to it	scpi_numeric_param
+0x34374	label	nv_param_field_b8	structures.md: nv_save's first table; no setter refers to it	scpi_numeric_param
+0x33c8a	label	scpi_param_DIAGnostic_SYSTem_PSTartup	structures.md: nv_save's second table	scpi_setting_param
+0x33ca8	label	scpi_param_DIAGnostic_SYSTem_DOUTput	structures.md: nv_save's second table	scpi_setting_param
+0x33d5c	label	scpi_param_DOUGlas_STATe	structures.md: nv_save's second table; also given by the GPS:POSition setter	scpi_setting_param
+0x33d7a	label	nv_param_field_1e	structures.md: nv_save's second table; no setter refers to it	scpi_setting_param
+0x33d98	label	scpi_param_DIAGnostic_GPSystem_UTC	structures.md: nv_save's second table	scpi_setting_param
+0x33db6	label	nv_param_leap_pending	structures.md: nv_save's second table; no setter refers to it	scpi_setting_param
+0x34206	label	scpi_param_SOURce_PTIMe_TCODe_FORMat	structures.md: nv_save's second table	scpi_setting_param
+0x33dd4	label	scpi_param_SOURce_ROSCillator_HOLDover_LIMit_STATe	structures.md: nv_save's second table	scpi_setting_param
+0x33df2	label	scpi_param_DOUGlas_STATe_POWerup	structures.md: nv_save's second table	scpi_setting_param
+0x33b1a	label	scpi_param_STATus_QUEStionable_USER	structures.md: nv_save's second table; the CONDition and EVENt USER setters'	scpi_setting_param
+0x3427e	label	scpi_param_DOUGlas_DURation_INFinity	structures.md: nv_save's second table; :DOUG:DUR sets it for INFinity	scpi_setting_param
+0x34242	label	nv_param_field_bc	structures.md: nv_save's second table; no setter refers to it	scpi_setting_param
+0x34260	label	scpi_param_ROBin_MEMory_SAVE	structures.md: nv_save's second table	scpi_setting_param
+0x33968	label	scpi_param_OUTPut_STATe	structures.md: nv_save's second table	scpi_setting_param
+0x33986	label	scpi_param_SOURce_PULSe_CONTinuous_STATe	structures.md: nv_save's second table	scpi_setting_param
+0x34224	label	scpi_param_FORMat_DATA	structures.md: nv_save's second table	scpi_setting_param
+0x3429c	label	scpi_param_DIAGnostic_SER1_RESTricted	structures.md: nv_save's second table	scpi_setting_param
+0x342ba	label	scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe	structures.md: nv_save's second table	scpi_setting_param
+0x32d5e	label	nv_numeric_params	structures.md: nv_save's first table, 21 numeric descriptors	scpi_numeric_param *[21]
+0x32db2	label	nv_setting_params	structures.md: nv_save's second table, 18 setting descriptors	scpi_setting_param *[18]

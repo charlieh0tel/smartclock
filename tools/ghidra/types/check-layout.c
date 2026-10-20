@@ -188,3 +188,45 @@ CHECK_SIZE(pll_stage, 1);
 CHECK_SIZE(adc_channel, 1);
 CHECK_SIZE(oncore_channel_mode, 1);
 CHECK_SIZE(oncore_raim_status, 1);
+
+/* nv_settings at 0x101e8a, each field where its descriptor's value
+ * points, and the two descriptors' sizes. */
+CHECK_SIZE(nv_settings_fields, 0xc5);
+CHECK_SIZE(scpi_setting_param, 0x33ca8 - 0x33c8a);
+CHECK_FIELD(scpi_setting_param, value, 0xc);
+CHECK_FIELD(nv_settings_fields, elevation_mask, 0x101e8c - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, douglas_duration_infinite, 0x101e98 - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, holdover_status_threshold, 0x101e9a - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, holdover_limit_state, 0x101ea6 - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, position, 0x101eaa - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, ignored_satellites, 0x101eb6 - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, time_zone, 0x101eba - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, leap_date, 0x101ec6 - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, leap_pending, 0x101ece - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, raim_state, 0x101ecf - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, raim_threshold, 0x101ed2 - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, status_enable, 0x101ede - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, status_positive_transition, 0x101efa - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, status_negative_transition, 0x101f0e - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, questionable_user, 0x101f22 - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, pulse_period, 0x101f26 - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, pulse_start_date, 0x101f36 - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, field_bc, 0x101f46 - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, pforth_at_startup, 0x101f4d - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, debug_output, 0x101f4e - 0x101e8a);
+
+/* The time-interval counter's two records: the reading at 0x101f9c, its
+ * flag at 0x101fa4 and armed flag at 0x101fa8; the configuration at
+ * 0x101fae, ending where interpolator_calibration_state begins. */
+CHECK_SIZE(interval_reading_fields, 0x101fa9 - 0x101f9c);
+CHECK_FIELD(interval_reading_fields, valid, 0x101fa4 - 0x101f9c);
+CHECK_FIELD(interval_reading_fields, errors, 9);
+CHECK_FIELD(interval_reading_fields, tag, 10);
+CHECK_FIELD(interval_reading_fields, armed, 0x101fa8 - 0x101f9c);
+CHECK_SIZE(counter_configuration_fields, 0x101fce - 0x101fae);
+CHECK_FIELD(counter_configuration_fields, calibration, 4);
+CHECK_FIELD(counter_configuration_fields, registers_mode, 0xc);
+CHECK_FIELD(counter_configuration_fields, calibrate_state, 0xf);
+CHECK_FIELD(counter_configuration_fields, field_14, 0x14);
+CHECK_FIELD(counter_configuration_fields, interpolator_offset, 0x18);
+CHECK_FIELD(counter_configuration_fields, interpolator_scale, 0x1c);

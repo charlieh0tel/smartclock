@@ -13,8 +13,10 @@ structure's size or a named field's offset is not the one given here,
 an offset read from the image written as the difference of its
 addresses.  The header packs its structures.  Every one but the GPS
 task's records has the same layout unpacked, under the 68000's 2-byte
-alignment: they are what a 68000 compiler lays out, not byte layouts
-that happen to fit.  The GPS task's are not ("The GPS task's state",
+alignment, but for the pad byte a compiler would add after
+`nv_settings_fields` and `interval_reading_fields`, which have an odd
+size: they are what a 68000 compiler lays out, not byte layouts that
+happen to fit.  The GPS task's are not ("The GPS task's state",
 below).
 
 ## The tasks and exchanges
@@ -306,8 +308,8 @@ Z3801A manual gives it (097-z3801-01, "Detailed Description of the Two
 Time Code Formats"): `T1#H%08X` or `T2%04d%02d%02d%02d%02d%02d`, then
 t, f, l, r and v, then the checksum, cc.  So t is `tfom_code`
 (`0x13a48`) of `pll.tfom`; f `get_ffom` (`0x42a18`), which `pll_rep`
-prints as `ffom`; l is `0` unless `leap_pending` (`0x101ece`), and then
-`-` when `leap_minute_length` (`0x101eca`) is 59 and `+` otherwise; r
+prints as `ffom`; l is `0` unless `nv_settings.leap_pending` (`0x101ece`), and then
+`-` when `nv_settings.leap_minute_length` (`0x101eca`) is 59 and `+` otherwise; r
 is `status_request_service` (`0x102eb6`), the Status Byte's
 request-for-service bit, next to `status_ready`; v is `0` when
 `time_valid` (`0x1399a`) is true; cc is `tcode_checksum` (`0x139e4`).
@@ -370,7 +372,7 @@ them: "old_addr, fconf_regs[1] = %x" is `fpga_read` (`0x4076a`), which
 puts a register number in `fconf_regs[1]`'s address bits to read it.
 `fpga_bit_table` (`0x41310`) gives each bit `fpga_set_bit` takes its
 register and mask.  The time-interval counter's routines are each
-given `interval_reading` (a double) and `counter_configuration`
+given `interval_reading` (`0x101f9c`) and `counter_configuration`
 (`0x101fae`): `counter_arm` (`0x40c6a`) reloads `fconf_regs` from the
 configuration's first four bytes and re-arms the FPGA;
 `counter_calibrate` (`0x405bc`) runs `interpolator_calibrate` and keeps
@@ -447,7 +449,7 @@ of FPGA register `0x10`.
 ## The NV register
 
 The settings the SCPI setters keep, `nv_settings` (`0x101e8a`, `0xc5`
-bytes, the `scpi_value_` cells among them), are saved to the EEPROM as
+bytes, `nv_settings_fields`), are saved to the EEPROM as
 the "NV register": two records of `0x80` bytes, `nv_records` at
 `0x4000c0`, used in turn.  `nv_save` (`0x3293a`) builds a record --
 `"S"`, a sequence number one past the stored record's at `+4`,
@@ -461,3 +463,45 @@ says it changed.  `nv_restore` (`0x3282c`) loads slot 0, else slot 1
 `nv_settings_defaults` (`0x30966`) over the settings, takes the slot
 with the older sequence number, erases it (`nv_slot_erase`, `0x327f4`)
 and saves.  `clear_nv` erases both slots.
+
+Each value a descriptor in `nv_save`'s two tables points at is a field
+of `nv_settings`; the descriptors are the SCPI setters' own, so each
+field is named for the command whose setter is given its descriptor.
+The first table (`nv_numeric_params`, `0x32d5e`) holds 21
+`scpi_numeric_param`s, eleven of them those of "Numeric SCPI
+parameters" above, a long a value; a descriptor's `+1` is its values
+less one and `+2` (`nv_widths`) each value's bits in the record,
+negative for a signed one.  The second (`nv_setting_params`,
+`0x32db2`) holds 18 `scpi_setting_param`s, `0x1e` bytes, for the
+switches and choices, a byte a value at `+0xc`, mostly one bit wide.
+Among them are the five status registers' transition masks and seven
+enables (`*ESE`, `*SRE`, `:STATus ... ENABle`), the time zone, the
+ignored satellites, the pulse's start time and date, and
+`douglas_duration_infinite`, which `:DOUG:DUR` sets for INFinity and
+the survey's averaging tests.  Four descriptors no setter refers to
+(`nv_param_leap_minute_length`, `_leap_date`, `_leap_pending` and two
+`field_`s) keep the leap second's state and two values not traced.
+
+## The time-interval counter's records
+
+`interval_reading` (`0x101f9c`, `interval_reading_fields`, 13 bytes)
+is what `counter_read` leaves: the reading in seconds, its `valid`
+flag (`+8`), its `errors` (`+9`), the `tag` `0xfff6` at `+0xa` that the
+`:DIAG` query returns with it (`interval.md`), and `armed` (`+0xc`),
+without which the routines report the measurement aborted.  On an
+error the reading is SCPI's NaN, 9.91e37 (`0x47d2a37dced46143`), and
+`counter_read` prints each error bit, which `counter_error` names:
+1 "Gate failure", 4 "Result uncomputable", 8 "Measurement aborted",
+`0x10` "Interpolator calibration failure".
+
+`counter_configuration` (`0x101fae`, `counter_configuration_fields`,
+`0x20` bytes, `interpolator_calibration_state` right after it) holds
+the four values `counter_arm` loads into `fconf_regs` (`+0`), the
+calibration double `counter_read` subtracts (`+4`), and the
+interpolator's offset and scale (`+0x18`, `+0x1c`), which
+`counter_calibrate` stores from `reading_low` and the spread.  Between
+them are pairs of a mode and a state: `counter_arm` loads the registers
+when `registers_mode` is 1 and `registers_state` 2, and sets the state
+to 1; `counter_calibrate` calibrates when `calibrate_mode` is 3, or 1
+with `calibrate_state` 2; a third pair at `+0x10` counts `+0x14` down.
+

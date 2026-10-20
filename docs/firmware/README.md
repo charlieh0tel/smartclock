@@ -320,7 +320,20 @@ the float and C libraries (`softfloat.md`, `libc.md`), the kernel's
 service calls (`psos.md`), the interval's
 routine and cells (`interval.md`), the SCPI task and the installer's
 entry (`restart.md`), the console's hook (`console.md`).  An address in
-the installer's overlay is written `installer::0x...`.  An address a
+the installer's overlay is written `installer::0x...`.  A row may end
+with a comment, which the decompiler prints above the function's C.
+
+Every routine that is not a C function says so in that comment, and how
+it is called, since its C cannot: what it reads in which registers and
+what it returns where.  The names file gives the comment for the
+floating-point library's register routines, the SCPI number engine, the
+kernel's services and its internal routines (for most of these only
+that they are not C, so far), the binding's `psos_call`, `psos_io_call` and
+`psos_pack_name`, and `mutex_acquire` and `mutex_release`.
+`SmartClockForth.java` gives one to each routine of the pForth kernel
+that uses its registers, and `SmartClockSetup.java` one to each
+exception handler, naming the vectors that enter it and how it
+returns.  A comment from the names file is not replaced by either.  An address a
 note gives only for another image is not carried over.  SCPI handlers
 are named `scpi_query_PATH` and `scpi_set_PATH`, console words
 `forth_WORD` and `diag_WORD`.  A name replaces one Ghidra made up, and

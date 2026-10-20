@@ -12,9 +12,11 @@
 //       C declarations of the firmware's structures, parsed into the
 //       program before the names, so that names can use them.
 //   names=tools/ghidra/names/IMAGE.tsv
-//       address, "function" or "label", name, source and optionally a
-//       function's C prototype or a label's data type, tab-separated; an
-//       address in the installer's overlay is written installer::0x...:
+//       address, "function" or "label", name, source, optionally a
+//       function's C prototype or a label's data type, and optionally a
+//       function's comment, which the decompiler prints above its C,
+//       tab-separated; an address in the installer's overlay is written
+//       installer::0x...:
 //       names the firmware notes establish.  These replace names the
 //       other two gave, but not names given by hand.
 //   scpi=FILE
@@ -150,6 +152,7 @@ public class SmartClockSetup extends GhidraScript {
 	private static final String STOP = "stop";
 	/** trap #5, the kernel's return from interrupt. */
 	private static final int TRAP_RETURN_FROM_INTERRUPT = 0x4e45;
+	private static final int RTE = 0x4e73;
 	/** Naming arguments, each KIND=FILE; see the header. */
 	private static final String NAMES = "names";
 	private static final String SCPI = "scpi";
@@ -170,6 +173,8 @@ public class SmartClockSetup extends GhidraScript {
 	private static final Pattern ANNOTATION = Pattern.compile("\\s*@\\s*[A-Za-z0-9:]+");
 	/** The names file's optional fifth field: a function's C prototype, or a label's data type. */
 	private static final int PROTOTYPE_FIELD = 4;
+	/** Its optional sixth: a function's comment, such as how a routine that is not C is called. */
+	private static final int COMMENT_FIELD = 5;
 	/** How far from a named entry to repair flow when it does not disassemble. */
 	private static final int ENTRY_WINDOW = 0x400;
 
@@ -409,6 +414,10 @@ public class SmartClockSetup extends GhidraScript {
 					nameFunction(address, fields[2], true, counts);
 					if (fields.length > PROTOTYPE_FIELD && !fields[PROTOTYPE_FIELD].isBlank()) {
 						applyPrototype(address, fields[PROTOTYPE_FIELD]);
+					}
+					Function function = getFunctionAt(address);
+					if (fields.length > COMMENT_FIELD && function != null) {
+						function.setComment(fields[COMMENT_FIELD]);
 					}
 				}
 				else {
@@ -922,6 +931,50 @@ public class SmartClockSetup extends GhidraScript {
 				function.setName(name, SourceType.USER_DEFINED);
 			}
 		}
+		for (int vector = 1; vector < VECTOR_COUNT; vector++) {
+			Function function = getFunctionAt(toAddr(targets[vector]));
+			if (function != null && function.getComment() == null) {
+				function.setComment(vectorComment(prefix, targets, vector, defaultHandler));
+			}
+		}
+	}
+
+	/**
+	 * Says that the handler for vector is entered by the processor, through
+	 * which vectors of the table, and how it returns.
+	 */
+	private String vectorComment(String prefix, long[] targets, int vector, long defaultHandler)
+			throws Exception {
+		String entered;
+		if (targets[vector] == defaultHandler) {
+			entered = "every vector of the " + prefix + " table without a handler of its own";
+		}
+		else {
+			List<String> vectors = new ArrayList<>();
+			for (int other = 1; other < VECTOR_COUNT; other++) {
+				if (targets[other] == targets[vector]) {
+					vectors.add(other + " (" + vectorName(other) + ")");
+				}
+			}
+			entered = "the " + prefix + " table's vector" + (vectors.size() > 1 ? "s " : " ")
+				+ String.join(", ", vectors);
+		}
+		String returns = "";
+		Function function = getFunctionAt(toAddr(targets[vector]));
+		for (Instruction instruction : currentProgram.getListing()
+				.getInstructions(function.getBody(), true)) {
+			int opcode = getShort(instruction.getAddress()) & 0xffff;
+			if (opcode == RTE) {
+				returns = "; returns with rte";
+				break;
+			}
+			if (opcode == TRAP_RETURN_FROM_INTERRUPT) {
+				returns = "; returns through trap #5, the kernel's return from interrupt";
+				break;
+			}
+		}
+		return "Not a C function: an exception handler, entered by the processor through "
+			+ entered + ", not called" + returns + ".";
 	}
 
 	/**

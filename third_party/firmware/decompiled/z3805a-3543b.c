@@ -1113,6 +1113,8 @@ void FUN_000004cc(void)
 /* WARNING: Removing unreachable block (ram,0x000008d4) */
 /* WARNING: Removing unreachable block (ram,0x000008dc) */
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* Not a C function: an exception handler, entered by the processor through the boot table's vectors
+   1 (reset), 44 (trap_12), not called. */
 
 void boot_reset(void)
 
@@ -1353,6 +1355,9 @@ LAB_00000a22:
 
 
 /* 00000a58 */
+
+/* Not a C function: an exception handler, entered by the processor through the boot table's vector
+   43 (trap_11), not called. */
 
 void boot_trap_11(void)
 
@@ -3662,6 +3667,10 @@ void FUN_00010400(void)
 
 /* 0001043a */
 
+/* Not a C function: the mutex in A1.  Takes it for the running task, waiting if another holds it,
+   or counts one more hold if the task holds it already.  Returns the error in D7, 0x80 for a nested
+   hold.  Preserves D0, D1, A0 and A2. */
+
 undefined8 mutex_acquire(void)
 
 {
@@ -3688,6 +3697,10 @@ undefined8 mutex_acquire(void)
 
 
 /* 00010484 */
+
+/* Not a C function: the mutex in A1.  Releases one hold, freeing the mutex at the last.  Returns
+   the error in D7, 2 if the running task does not hold it, 0x80 if holds remain.  Preserves D0 and
+   A0. */
 
 undefined4 mutex_release(void)
 
@@ -4988,6 +5001,9 @@ int FUN_000118fe(void)
 
 /* 00011924 */
 
+/* Not a C function: an exception handler, entered by the processor through every vector of the
+   primary table without a handler of its own, not called. */
+
 undefined8 primary_default_exception(void)
 
 {
@@ -5132,6 +5148,9 @@ char * exception_name(uint16_t vector)
 
 
 /* 00011f82 */
+
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 66 (user_66), not called; returns through trap #5, the kernel's return from interrupt. */
 
 void primary_user_66(void)
 
@@ -5736,6 +5755,9 @@ undefined8 FUN_00012db6(void)
 
 /* 00012e04 */
 
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 81 (user_81), not called; returns through trap #5, the kernel's return from interrupt. */
+
 void primary_user_81(void)
 
 {
@@ -6101,6 +6123,9 @@ byte FUN_0001339e(ulong param_1,byte param_2)
 
 /* 000133e2 */
 
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
+
 float float_absolute_on_stack(float f)
 
 {
@@ -6127,6 +6152,9 @@ uint FUN_00013406(uint param_1,byte param_2)
 
 
 /* 0001341a */
+
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 39 (trap_7), not called; returns with rte. */
 
 undefined2 primary_trap_7(void)
 
@@ -6956,6 +6984,8 @@ void FUN_00013fa6(uint param_1)
 /* 00014020 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 86 (user_86), not called; returns with rte. */
 
 undefined8 primary_user_86(void)
 
@@ -7028,6 +7058,8 @@ void FUN_0001406a(uint param_1)
 /* 000140e4 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 87 (user_87), not called; returns with rte. */
 
 undefined8 primary_user_87(void)
 
@@ -7121,6 +7153,9 @@ void float_exception_report(uint32_t code)
 
 /* 000144c8 */
 
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 24 (spurious_interrupt), not called; returns with rte. */
+
 void primary_spurious_interrupt(void)
 
 {
@@ -7134,6 +7169,8 @@ void primary_spurious_interrupt(void)
 /* WARNING: Removing unreachable block (ram,0x00014798) */
 /* WARNING: Removing unreachable block (ram,0x000147a0) */
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 1 (reset), not called. */
 
 void primary_reset(void)
 
@@ -7345,6 +7382,9 @@ LAB_000148e6:
 
 /* 00014974 */
 
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 43 (trap_11), not called. */
+
 void primary_trap_11(void)
 
 {
@@ -7360,6 +7400,8 @@ void primary_trap_11(void)
 /* WARNING: Removing unreachable block (ram,0x00014798) */
 /* WARNING: Removing unreachable block (ram,0x000147a0) */
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 44 (trap_12), not called. */
 
 void primary_trap_12(void)
 
@@ -7649,6 +7691,9 @@ void FUN_000149bc(uint param_1)
 
 /* 00014aae */
 
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 35 (trap_3), not called. */
+
 void primary_trap_3(undefined2 param_1)
 
 {
@@ -7801,6 +7846,8 @@ void primary_trap_3(undefined2 param_1)
 /* 00014ab2 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 36 (trap_4), not called. */
 
 void primary_trap_4(void)
 
@@ -7828,6 +7875,8 @@ void primary_trap_4(void)
 
 /* WARNING: Removing unreachable block (ram,0x00015ea6) */
 /* WARNING: Unknown calling convention */
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 38 (trap_6), not called. */
 
 void primary_trap_6(void)
 
@@ -7994,6 +8043,9 @@ void primary_trap_6(void)
 
 /* 00014aba */
 
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 37 (trap_5), not called. */
+
 void primary_trap_5(ushort param_1)
 
 {
@@ -8003,6 +8055,10 @@ void primary_trap_5(ushort param_1)
 
 
 /* 00014b26 */
+
+/* Not a C function: the trap #3 handler: the service in D7, its arguments in D0 to D3, A0 and A1.
+   Calls the service's handler through the table at 0x14b6e and returns with rte, the error in D7.b
+   and the results in D0 to D2, A0 and A1 (psos.md). */
 
 void kernel_dispatch_service(undefined2 param_1)
 
@@ -8156,6 +8212,8 @@ void kernel_dispatch_service(undefined2 param_1)
 /* 00014c0a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* Not a C function: the trap #4 handler: the I/O function, 0 to 5, in D7 and the device in the high
+   byte of D0.  Returns with rte (psos.md). */
 
 void kernel_dispatch_io(void)
 
@@ -8180,6 +8238,9 @@ void kernel_dispatch_io(void)
 
 
 /* 00014c7a */
+
+/* Not a C function: branched to from the service dispatch on its way out, never called: saves the
+   running task's registers in its record and resumes the first ready task with rte. */
 
 void kernel_switch_task(void)
 
@@ -8310,6 +8371,9 @@ void kernel_switch_task(void)
 
 /* 00014cc6 */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void kernel_process_ticks(void)
 
 {
@@ -8374,6 +8438,11 @@ LAB_00014d58:
 
 /* 00014da2 */
 
+/* Not a C function: the kernel's handler for service 0, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
+
 void kernel_service_0(void)
 
 {
@@ -8382,6 +8451,11 @@ void kernel_service_0(void)
 
 
 /* 00014dac */
+
+/* Not a C function: the kernel's handler for service 1, psos_create's, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
 
 void kernel_create(void)
 
@@ -8458,6 +8532,10 @@ void kernel_create(void)
 /* 00014ea0 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* Not a C function: the kernel's handler for service 2, psos_start's, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
 
 void kernel_start(void)
 
@@ -8480,6 +8558,11 @@ void kernel_start(void)
 
 /* 00014ed2 */
 
+/* Not a C function: the kernel's handler for service 3, psos_ident's, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
+
 void kernel_ident(void)
 
 {
@@ -8501,6 +8584,11 @@ void kernel_ident(void)
 
 
 /* 00014ef8 */
+
+/* Not a C function: the kernel's handler for service 4, psos_delete's, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
 
 undefined8 kernel_delete(void)
 
@@ -8582,6 +8670,11 @@ LAB_00014fce:
 
 /* 00015004 */
 
+/* Not a C function: the kernel's handler for service 5, psos_suspend's, reached from trap #3
+   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
+   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
+   to D2, A0 and A1 (psos.md). */
+
 void kernel_suspend(void)
 
 {
@@ -8611,6 +8704,10 @@ void kernel_suspend(void)
 /* 00015038 */
 
 /* WARNING: Removing unreachable block (ram,0x00015042) */
+/* Not a C function: the kernel's handler for service 6, psos_resume's, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
 
 void kernel_resume(void)
 
@@ -8631,6 +8728,11 @@ void kernel_resume(void)
 
 
 /* 0001507a */
+
+/* Not a C function: the kernel's handler for service 7, psos_priority's, reached from trap #3
+   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
+   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
+   to D2, A0 and A1 (psos.md). */
 
 ushort kernel_priority(void)
 
@@ -8674,6 +8776,11 @@ LAB_000150ae:
 
 /* 000150da */
 
+/* Not a C function: the kernel's handler for service 8, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
+
 void kernel_allocate_segment(void)
 
 {
@@ -8705,6 +8812,9 @@ void kernel_allocate_segment(void)
 
 /* 000150dc */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void kernel_allocate_for_task(void)
 
 {
@@ -8734,6 +8844,11 @@ void kernel_allocate_for_task(void)
 
 
 /* 00015130 */
+
+/* Not a C function: the kernel's handler for service 9, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
 
 void kernel_free_segment(void)
 
@@ -8849,6 +8964,9 @@ LAB_00015206:
 
 
 /* 00015132 */
+
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
 
 void kernel_free_for_task(void)
 
@@ -8966,6 +9084,9 @@ LAB_00015206:
 
 /* 00015268 */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void kernel_allocate(void)
 
 {
@@ -8999,6 +9120,9 @@ LAB_00015288:
 
 
 /* 0001529c */
+
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
 
 void kernel_region_allocate(void)
 
@@ -9060,6 +9184,10 @@ void kernel_region_allocate(void)
 /* 00015324 */
 
 /* WARNING: Removing unreachable block (ram,0x00015346) */
+/* Not a C function: the kernel's handler for service 10, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
 
 void kernel_service_10(void)
 
@@ -9099,6 +9227,11 @@ void kernel_service_10(void)
 
 /* 0001532a */
 
+/* Not a C function: the kernel's handler for service 16, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
+
 void kernel_service_16(void)
 
 {
@@ -9135,6 +9268,9 @@ void kernel_service_16(void)
 
 /* 0001537a */
 
+/* Not a C function: the handler for services 11 to 15, 17 and 34, reached from trap #3 through
+   kernel_dispatch_service: clears D7.b, so the call succeeds and does nothing. */
+
 void kernel_service_none(void)
 
 {
@@ -9143,6 +9279,11 @@ void kernel_service_none(void)
 
 
 /* 0001537e */
+
+/* Not a C function: the kernel's handler for service 20, psos_create_x's, reached from trap #3
+   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
+   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
+   to D2, A0 and A1 (psos.md). */
 
 void kernel_create_x(void)
 
@@ -9183,6 +9324,10 @@ void kernel_create_x(void)
 /* 000153e0 */
 
 /* WARNING: Removing unreachable block (ram,0x00015402) */
+/* Not a C function: the kernel's handler for service 21, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
 
 void kernel_service_21(void)
 
@@ -9222,6 +9367,11 @@ void kernel_service_21(void)
 
 
 /* 00015436 */
+
+/* Not a C function: the kernel's handler for service 22, psos_delete_x's, reached from trap #3
+   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
+   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
+   to D2, A0 and A1 (psos.md). */
 
 void kernel_delete_x(void)
 
@@ -9272,6 +9422,10 @@ LAB_000154a0:
 /* 000154ae */
 
 /* WARNING: Removing unreachable block (ram,0x000154b8) */
+/* Not a C function: the kernel's handler for service 18, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
 
 ushort kernel_service_18(void)
 
@@ -9376,6 +9530,10 @@ LAB_00015576:
 /* 00015592 */
 
 /* WARNING: Removing unreachable block (ram,0x000155ac) */
+/* Not a C function: the kernel's handler for service 19, psos_jam_x's, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
 
 void kernel_jam_x(void)
 
@@ -9497,6 +9655,10 @@ LAB_00015606:
 /* WARNING: Removing unreachable block (ram,0x000155ac) */
 /* WARNING: Removing unreachable block (ram,0x00015680) */
 /* WARNING: Removing unreachable block (ram,0x00015692) */
+/* Not a C function: the kernel's handler for service 23, psos_send_x's, reached from trap #3
+   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
+   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
+   to D2, A0 and A1 (psos.md). */
 
 void kernel_send_x(void)
 
@@ -9607,6 +9769,8 @@ LAB_00015606:
 /* WARNING: Removing unreachable block (ram,0x000155ac) */
 /* WARNING: Removing unreachable block (ram,0x00015680) */
 /* WARNING: Removing unreachable block (ram,0x00015692) */
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
 
 void kernel_send_for_task(void)
 
@@ -9713,6 +9877,9 @@ LAB_00015606:
 
 /* 000156ac */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void kernel_copy_message(void)
 
 {
@@ -9744,6 +9911,10 @@ void kernel_copy_message(void)
 /* 000156d6 */
 
 /* WARNING: Removing unreachable block (ram,0x000156e4) */
+/* Not a C function: the kernel's handler for service 24, psos_request_x's, reached from trap #3
+   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
+   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
+   to D2, A0 and A1 (psos.md). */
 
 void kernel_request_x(void)
 
@@ -9849,6 +10020,10 @@ LAB_000157c4:
 /* 000157e2 */
 
 /* WARNING: Removing unreachable block (ram,0x000157ec) */
+/* Not a C function: the kernel's handler for service 25, psos_signal_v's, reached from trap #3
+   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
+   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
+   to D2, A0 and A1 (psos.md). */
 
 void kernel_signal_v(void)
 
@@ -9898,6 +10073,9 @@ void kernel_signal_v(void)
 
 
 /* 000157f0 */
+
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
 
 void kernel_signal_task(void)
 
@@ -9951,6 +10129,10 @@ void kernel_signal_task(void)
 /* WARNING: Removing unreachable block (ram,0x000158a6) */
 /* WARNING: Removing unreachable block (ram,0x000158d0) */
 /* WARNING: Removing unreachable block (ram,0x000158ca) */
+/* Not a C function: the kernel's handler for service 27, psos_get_v's, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
 
 void kernel_get_v(void)
 
@@ -9974,6 +10156,11 @@ void kernel_get_v(void)
 
 
 /* 0001585c */
+
+/* Not a C function: the kernel's handler for service 26, psos_wait_v's, reached from trap #3
+   through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
+   them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
+   to D2, A0 and A1 (psos.md). */
 
 void kernel_wait_v(void)
 
@@ -10020,6 +10207,11 @@ void kernel_wait_v(void)
 
 /* 000158da */
 
+/* Not a C function: the kernel's handler for service 32, psos_mode's, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
+
 byte kernel_mode(void)
 
 {
@@ -10036,6 +10228,11 @@ byte kernel_mode(void)
 
 /* 000158f6 */
 
+/* Not a C function: the kernel's handler for service 33, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
+
 undefined2 kernel_service_33(undefined2 param_1)
 
 {
@@ -10044,6 +10241,11 @@ undefined2 kernel_service_33(undefined2 param_1)
 
 
 /* 00015904 */
+
+/* Not a C function: the kernel's handler for service 28, psos_pause's, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
 
 void kernel_pause(void)
 
@@ -10066,6 +10268,11 @@ void kernel_pause(void)
 
 
 /* 0001592e */
+
+/* Not a C function: the kernel's handler for service 29, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
 
 void kernel_service_29(void)
 
@@ -10097,6 +10304,11 @@ void kernel_service_29(void)
 
 /* 00015974 */
 
+/* Not a C function: the kernel's handler for service 30, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
+
 undefined8 kernel_service_30(void)
 
 {
@@ -10112,6 +10324,11 @@ undefined8 kernel_service_30(void)
 
 
 /* 0001599e */
+
+/* Not a C function: the kernel's handler for service 31, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
 
 void kernel_service_31(void)
 
@@ -10145,6 +10362,11 @@ void kernel_service_31(void)
 
 /* 00015a10 */
 
+/* Not a C function: the kernel's handler for service 35, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
+
 undefined8 kernel_service_35(void)
 
 {
@@ -10175,6 +10397,11 @@ undefined8 kernel_service_35(void)
 
 /* 00015a50 */
 
+/* Not a C function: the kernel's handler for service 36, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
+
 void kernel_service_36(void)
 
 {
@@ -10189,6 +10416,11 @@ void kernel_service_36(void)
 
 
 /* 00015a76 */
+
+/* Not a C function: the kernel's handler for service 37, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
 
 void kernel_service_37(void)
 
@@ -10208,6 +10440,11 @@ void kernel_service_37(void)
 
 /* 00015aa2 */
 
+/* Not a C function: the kernel's handler for service 38, reached from trap #3 through
+   kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
+   the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
+   A0 and A1 (psos.md). */
+
 void kernel_service_38(void)
 
 {
@@ -10224,6 +10461,9 @@ void kernel_service_38(void)
 
 
 /* 00015ac0 */
+
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
 
 void kernel_advance_date(void)
 
@@ -10259,6 +10499,9 @@ void kernel_advance_date(void)
 
 /* 00015b10 */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void kernel_set_leap_year(void)
 
 {
@@ -10278,6 +10521,10 @@ void kernel_set_leap_year(void)
 
 /* 00015b3a */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr: the task ID in A0,
+   zero for the running task, which A5 holds.  Returns the task's record in A0, or the error in D7:
+   2 a bad ID, 1 a deleted task, 3 another group's (psos.md). */
+
 void kernel_check_task(void)
 
 {
@@ -10286,6 +10533,10 @@ void kernel_check_task(void)
 
 
 /* 00015b6c */
+
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr: the exchange ID in A0,
+   the running task in A5.  Returns the error in D7: 2 a bad ID, 1 a deleted exchange, 3 another
+   group's (psos.md). */
 
 void kernel_check_exchange(void)
 
@@ -10296,6 +10547,9 @@ void kernel_check_exchange(void)
 
 /* 00015b96 */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr: the segment in A0.
+   Returns D7 zero, or 5 if the segment lacks kernel_region_allocate's 0xe1d0 (psos.md). */
+
 void kernel_check_segment(void)
 
 {
@@ -10304,6 +10558,9 @@ void kernel_check_segment(void)
 
 
 /* 00015baa */
+
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
 
 void kernel_timer_cancel(void)
 
@@ -10327,6 +10584,9 @@ void kernel_timer_cancel(void)
 
 /* 00015bb0 */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 undefined4 kernel_timer_unlink(void)
 
 {
@@ -10347,6 +10607,9 @@ undefined4 kernel_timer_unlink(void)
 
 
 /* 00015bde */
+
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
 
 void kernel_timer_insert(void)
 
@@ -10395,6 +10658,9 @@ void kernel_timer_insert(void)
 
 /* 00015c4c */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void kernel_make_ready(void)
 
 {
@@ -10424,6 +10690,9 @@ void kernel_make_ready(void)
 
 /* 00015c54 */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void kernel_ready_insert(void)
 
 {
@@ -10448,6 +10717,9 @@ void kernel_ready_insert(void)
 
 /* 00015c96 */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void kernel_queue_remove(void)
 
 {
@@ -10467,6 +10739,8 @@ void kernel_queue_remove(void)
 
 /* WARNING: Removing unreachable block (ram,0x00015ea6) */
 /* WARNING: Unknown calling convention */
+/* Not a C function: the trap #6 handler, which starts the kernel: builds its records from the
+   configuration in A6 and never returns. */
 
 void kernel_init(void)
 
@@ -10633,6 +10907,9 @@ void kernel_init(void)
 
 /* 00015ece */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void kernel_region_init(void)
 
 {
@@ -10689,6 +10966,9 @@ void kernel_region_init(void)
 
 
 /* 00015f8a */
+
+/* Not a C function: the trap #5 handler, which every interrupt handler ends with in place of rte:
+   switches tasks if the interrupt made a higher-priority one ready, and returns with rte. */
 
 void kernel_return_from_interrupt(ushort param_1)
 
@@ -11684,6 +11964,10 @@ void FUN_00016ee6(void)
 
 /* 00016f1e */
 
+/* Not a C function: the binding's trap #3: the service in D7.b and its arguments in D0 to D3, A0
+   and A1, as the stub loaded them.  Returns D7 zero, or the service and its error in D7.w with the
+   condition codes set; results stay in D0 to D2, A0 and A1. */
+
 void psos_call(void)
 
 {
@@ -11699,6 +11983,9 @@ void psos_call(void)
 
 /* 00016f36 */
 
+/* Not a C function: the binding's trap #4: the I/O function in D7.b and the device in the high byte
+   of D0.w.  Returns D7 zero, or the error in D7.w with the device and function above it. */
+
 void psos_io_call(void)
 
 {
@@ -11713,6 +12000,9 @@ void psos_io_call(void)
 
 
 /* 00016f50 */
+
+/* Not a C function: reads the name its calling stub was given, at 8(A6) in the stub's frame, and
+   returns its four characters packed in D0, zero for none.  Uses A0. */
 
 undefined4 psos_pack_name(void)
 
@@ -13468,6 +13758,9 @@ undefined4 FUN_00018d40(void)
 /* 00018ed6 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_abort(forth_user_end user,long *sp,char *input)
 
@@ -13496,6 +13789,9 @@ void forth_abort(forth_user_end user,long *sp,char *input)
 /* 00018f0e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_interpret(forth_user_end user,long *sp,void *dp)
 
@@ -13574,6 +13870,9 @@ LAB_00018ec8:
 /* 00018f68 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 undefined4 forth_parse_number(forth_user_end user,long *sp)
 
@@ -13641,6 +13940,9 @@ LAB_00018f92:
 /* 00018fcc */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_find(forth_user_end user)
 
@@ -13675,6 +13977,9 @@ void forth_find(forth_user_end user)
 /* 00019018 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_align(void *dp)
 
@@ -13684,6 +13989,10 @@ void forth_align(void *dp)
 
 
 /* 00019024 */
+
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_digit(void)
 
@@ -13702,6 +14011,9 @@ void forth_digit(void)
 /* 00019042 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 undefined4 forth_is_space(char *input)
 
@@ -13715,6 +14027,9 @@ undefined4 forth_is_space(char *input)
 /* 0001906c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_skip_spaces(char *input)
 
@@ -13737,6 +14052,9 @@ void forth_skip_spaces(char *input)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_build_prompt(forth_user_end user)
 
@@ -13762,6 +14080,9 @@ void forth_build_prompt(forth_user_end user)
 /* 000190e8 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 undefined4 forth_read_line(forth_user_end user,char *input)
 
@@ -13781,6 +14102,9 @@ undefined4 forth_read_line(forth_user_end user,char *input)
 /* 0001910e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_parse_word(forth_user_end user,char *input)
 
@@ -13809,6 +14133,9 @@ void forth_parse_word(forth_user_end user,char *input)
 /* 0001912a */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_refill(forth_user_end user,char *input)
 
@@ -13829,6 +14156,9 @@ void forth_refill(forth_user_end user,char *input)
 /* 00019150 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 ulonglong forth_print_string(char *s,forth_user_end user)
 
@@ -13848,6 +14178,9 @@ ulonglong forth_print_string(char *s,forth_user_end user)
 /* 0001916e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 char * forth_input_buffer(forth_user_end user)
 
@@ -13865,6 +14198,9 @@ char * forth_input_buffer(forth_user_end user)
 /* 00019182 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_over(long *sp)
 
@@ -13877,6 +14213,9 @@ void forth_over(long *sp)
 /* 00019188 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_abs(long *sp)
 
@@ -13891,6 +14230,9 @@ void forth_abs(long *sp)
 /* 00019190 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_max(long *sp)
 
@@ -13905,6 +14247,9 @@ void forth_max(long *sp)
 /* 0001919a */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_min(long *sp)
 
@@ -13919,6 +14264,9 @@ void forth_min(long *sp)
 /* 000191a4 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_fetch(long *sp)
 
@@ -13931,6 +14279,9 @@ void forth_fetch(long *sp)
 /* 000191aa */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_store(long *sp)
 
@@ -13943,6 +14294,9 @@ void forth_store(long *sp)
 /* 000191b0 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_w_fetch(long *sp)
 
@@ -13955,6 +14309,9 @@ void forth_w_fetch(long *sp)
 /* 000191ba */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_w_store(long *sp)
 
@@ -13967,6 +14324,9 @@ void forth_w_store(long *sp)
 /* 000191c2 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_c_fetch(long *sp)
 
@@ -13979,6 +14339,9 @@ void forth_c_fetch(long *sp)
 /* 000191cc */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_c_store(long *sp)
 
@@ -13991,6 +14354,9 @@ void forth_c_store(long *sp)
 /* 000191d4 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_negate(long *sp)
 
@@ -14003,6 +14369,9 @@ void forth_negate(long *sp)
 /* 000191d8 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_here(forth_user_end user,long *sp,void *dp)
 
@@ -14016,6 +14385,9 @@ void forth_here(forth_user_end user,long *sp,void *dp)
 /* 000191e2 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_greater_r(long *sp)
 
@@ -14027,6 +14399,9 @@ void forth_greater_r(long *sp)
 /* 000191f0 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_r_greater(long *sp)
 
@@ -14043,6 +14418,9 @@ void forth_r_greater(long *sp)
 /* 000191fa */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_fill(long *sp)
 
@@ -14070,6 +14448,9 @@ void forth_fill(long *sp)
 /* 0001920c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_pick(long *sp)
 
@@ -14082,6 +14463,9 @@ void forth_pick(long *sp)
 /* 00019216 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_comma(long *sp,void *dp)
 
@@ -14094,6 +14478,9 @@ void forth_comma(long *sp,void *dp)
 /* 0001921a */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_w_comma(long *sp,void *dp)
 
@@ -14106,6 +14493,9 @@ void forth_w_comma(long *sp,void *dp)
 /* 00019220 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_c_comma(long *sp,void *dp)
 
@@ -14118,6 +14508,9 @@ void forth_c_comma(long *sp,void *dp)
 /* 00019226 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_rot(long *sp)
 
@@ -14135,6 +14528,9 @@ void forth_rot(long *sp)
 /* 00019234 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_minus_rot(long *sp)
 
@@ -14154,6 +14550,9 @@ void forth_minus_rot(long *sp)
 /* 00019242 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_allot(long *sp,void *dp)
 
@@ -14165,6 +14564,9 @@ void forth_allot(long *sp,void *dp)
 /* 00019246 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_swap(long *sp)
 
@@ -14181,6 +14583,9 @@ void forth_swap(long *sp)
 /* 00019252 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_dup(long *sp)
 
@@ -14193,6 +14598,9 @@ void forth_dup(long *sp)
 /* 00019256 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_2dup(long *sp)
 
@@ -14210,6 +14618,9 @@ void forth_2dup(long *sp)
 /* 00019262 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_2swap(long *sp)
 
@@ -14230,6 +14641,9 @@ void forth_2swap(long *sp)
 /* 00019274 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_paren(char *input)
 
@@ -14251,6 +14665,10 @@ void forth_paren(char *input)
 
 /* 0001928c */
 
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+
 void forth_halt(void)
 
 {
@@ -14268,6 +14686,9 @@ void forth_halt(void)
 /* 0001929c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_false(long *sp)
 
@@ -14280,6 +14701,9 @@ void forth_false(long *sp)
 /* 000192a0 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_true(long *sp)
 
@@ -14292,6 +14716,9 @@ void forth_true(long *sp)
 /* 000192a8 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_or(long *sp)
 
@@ -14304,6 +14731,9 @@ void forth_or(long *sp)
 /* 000192ae */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_and(long *sp)
 
@@ -14316,6 +14746,9 @@ void forth_and(long *sp)
 /* 000192b4 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_not(long *sp)
 
@@ -14328,6 +14761,9 @@ void forth_not(long *sp)
 /* 000192b8 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_xor(long *sp)
 
@@ -14340,6 +14776,9 @@ void forth_xor(long *sp)
 /* 000192be */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_equal(long *sp)
 
@@ -14359,6 +14798,9 @@ void forth_equal(long *sp)
 /* 000192d0 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_greater(long *sp)
 
@@ -14378,6 +14820,9 @@ void forth_greater(long *sp)
 /* 000192d8 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_less(long *sp)
 
@@ -14397,6 +14842,9 @@ void forth_less(long *sp)
 /* 000192e0 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_0_less(long *sp)
 
@@ -14413,6 +14861,9 @@ void forth_0_less(long *sp)
 /* 000192e6 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_0_equal(long *sp)
 
@@ -14429,6 +14880,9 @@ void forth_0_equal(long *sp)
 /* 000192ec */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_0_greater(long *sp)
 
@@ -14445,6 +14899,9 @@ void forth_0_greater(long *sp)
 /* 000192f4 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_query_dup(long *sp)
 
@@ -14459,6 +14916,9 @@ void forth_query_dup(long *sp)
 /* 000192fc */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_cmove(long *sp)
 
@@ -14487,6 +14947,9 @@ void forth_cmove(long *sp)
 /* 0001930e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_cmove_greater(long *sp)
 
@@ -14518,6 +14981,9 @@ void forth_cmove_greater(long *sp)
 /* 00019324 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_2drop(long *sp)
 
@@ -14529,6 +14995,9 @@ void forth_2drop(long *sp)
 /* 00019328 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_drop(long *sp)
 
@@ -14540,6 +15009,9 @@ void forth_drop(long *sp)
 /* 0001932c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_depth(forth_user_end user,long *sp)
 
@@ -14552,6 +15024,9 @@ void forth_depth(forth_user_end user,long *sp)
 /* 00019338 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 undefined2 forth_compile_code(void *dp)
 
@@ -14584,6 +15059,9 @@ undefined2 forth_compile_code(void *dp)
 /* 0001934e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 undefined4 forth_resolve_branch(long *sp,void *dp)
 
@@ -14598,6 +15076,9 @@ undefined4 forth_resolve_branch(long *sp,void *dp)
 /* 00019378 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_check_pairs(long *sp)
 
@@ -14635,6 +15116,9 @@ void forth_check_pairs(long *sp)
 /* 0001938e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_unlink_latest(forth_user_end user,void *dp)
 
@@ -14647,6 +15131,9 @@ void forth_unlink_latest(forth_user_end user,void *dp)
 /* 0001943e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_do(long *sp,void *dp)
 
@@ -14662,6 +15149,9 @@ void forth_do(long *sp,void *dp)
 /* 00019454 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_query_do(long *sp,void *dp)
 
@@ -14676,6 +15166,10 @@ void forth_query_do(long *sp,void *dp)
 
 
 /* 00019488 */
+
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_plus_loop(void)
 
@@ -14700,6 +15194,9 @@ void forth_plus_loop(void)
 /* 000194a4 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_loop(long *sp)
 
@@ -14723,6 +15220,9 @@ void forth_loop(long *sp)
 /* 000194e6 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_if(long *sp,void *dp)
 
@@ -14737,6 +15237,9 @@ void forth_if(long *sp,void *dp)
 /* 00019504 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_else(long *sp,void *dp)
 
@@ -14752,6 +15255,10 @@ void forth_else(long *sp,void *dp)
 
 /* 00019540 */
 
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+
 void forth_endif(void)
 
 {
@@ -14766,6 +15273,9 @@ void forth_endif(void)
 /* 00019560 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_begin(long *sp,void *dp)
 
@@ -14779,6 +15289,9 @@ void forth_begin(long *sp,void *dp)
 /* 00019574 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_while(long *sp,void *dp)
 
@@ -14792,6 +15305,10 @@ void forth_while(long *sp,void *dp)
 
 
 /* 000195a4 */
+
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_repeat(void)
 
@@ -14810,6 +15327,10 @@ void forth_repeat(void)
 
 /* 000195d6 */
 
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+
 void forth_again(void)
 
 {
@@ -14824,6 +15345,10 @@ void forth_again(void)
 
 
 /* 00019600 */
+
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_until(void)
 
@@ -14840,6 +15365,10 @@ void forth_until(void)
 
 /* 00019620 */
 
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+
 void forth_leave(void)
 
 {
@@ -14850,6 +15379,9 @@ void forth_leave(void)
 /* 00019626 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_k(long *sp)
 
@@ -14864,6 +15396,9 @@ void forth_k(long *sp)
 /* 0001962c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_j(long *sp)
 
@@ -14878,6 +15413,9 @@ void forth_j(long *sp)
 /* 00019632 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_i(long *sp)
 
@@ -14892,6 +15430,9 @@ void forth_i(long *sp)
 /* 00019638 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_colon(forth_user_end user,long *sp,void *dp)
 
@@ -14907,6 +15448,9 @@ void forth_colon(forth_user_end user,long *sp,void *dp)
 /* 00019652 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_semicolon(forth_user_end user,long *sp,void *dp)
 
@@ -14948,6 +15492,9 @@ void forth_semicolon(forth_user_end user,long *sp,void *dp)
 /* 0001968c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_create_header(forth_user_end user,void *dp)
 
@@ -14984,6 +15531,9 @@ void forth_create_header(forth_user_end user,void *dp)
 /* 000196b8 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_variable(forth_user_end user,void *dp)
 
@@ -15005,6 +15555,9 @@ void forth_variable(forth_user_end user,void *dp)
 /* 000196d8 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_create(forth_user_end user,void *dp)
 
@@ -15023,6 +15576,10 @@ void forth_create(forth_user_end user,void *dp)
 
 
 /* 000196f6 */
+
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_constant(void)
 
@@ -15043,6 +15600,9 @@ void forth_constant(void)
 /* 00019700 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_compile_constant(forth_user_end user,long *sp,void *dp)
 
@@ -15058,6 +15618,9 @@ void forth_compile_constant(forth_user_end user,long *sp,void *dp)
 /* 00019710 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_literal(long *sp,void *dp)
 
@@ -15080,6 +15643,9 @@ void forth_literal(long *sp,void *dp)
 /* 0001973a */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_mod(long *sp)
 
@@ -15117,6 +15683,9 @@ void forth_mod(long *sp)
 /* 0001974a */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_slash_mod(long *sp)
 
@@ -15154,6 +15723,9 @@ void forth_slash_mod(long *sp)
 /* 0001975c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_star_slash_mod(long *sp)
 
@@ -15192,6 +15764,9 @@ void forth_star_slash_mod(long *sp)
 /* 00019774 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_star_slash(long *sp)
 
@@ -15230,6 +15805,9 @@ void forth_star_slash(long *sp)
 /* 0001978a */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_slash(long *sp)
 
@@ -15267,6 +15845,9 @@ void forth_slash(long *sp)
 /* 000197b4 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_star(long *sp)
 
@@ -15294,6 +15875,10 @@ void forth_star(long *sp)
 
 /* 000197da */
 
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+
 undefined8 forth_multiply(void)
 
 {
@@ -15308,6 +15893,10 @@ undefined8 forth_multiply(void)
 
 
 /* 000197fa */
+
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 int forth_divide_signed(void)
 
@@ -15325,6 +15914,10 @@ int forth_divide_signed(void)
 
 
 /* 00019828 */
+
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 undefined8 forth_divide_unsigned(void)
 
@@ -15360,6 +15953,10 @@ LAB_00019830:
 
 /* 0001984c */
 
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+
 undefined8 forth_divide_short(void)
 
 {
@@ -15376,6 +15973,9 @@ undefined8 forth_divide_short(void)
 /* 00019874 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_minus(long *sp)
 
@@ -15388,6 +15988,9 @@ void forth_minus(long *sp)
 /* 0001987a */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_plus(long *sp)
 
@@ -15400,6 +16003,9 @@ void forth_plus(long *sp)
 /* 00019880 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_plus_store(long *sp)
 
@@ -15412,6 +16018,9 @@ void forth_plus_store(long *sp)
 /* 00019888 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_1_plus(long *sp)
 
@@ -15424,6 +16033,9 @@ void forth_1_plus(long *sp)
 /* 0001988c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_1_minus(long *sp)
 
@@ -15436,6 +16048,9 @@ void forth_1_minus(long *sp)
 /* 00019890 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_2_plus(long *sp)
 
@@ -15448,6 +16063,9 @@ void forth_2_plus(long *sp)
 /* 00019894 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_2_minus(long *sp)
 
@@ -15460,6 +16078,9 @@ void forth_2_minus(long *sp)
 /* 00019898 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_2_slash(long *sp)
 
@@ -15472,6 +16093,9 @@ void forth_2_slash(long *sp)
 /* 000198a0 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_2_star(long *sp)
 
@@ -15484,6 +16108,9 @@ void forth_2_star(long *sp)
 /* 000198a8 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_less_less(long *sp)
 
@@ -15496,6 +16123,9 @@ void forth_less_less(long *sp)
 /* 000198b2 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_greater_greater(long *sp)
 
@@ -15508,6 +16138,9 @@ void forth_greater_greater(long *sp)
 /* 000198bc */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_emit(forth_user_end user,long *sp)
 
@@ -15523,6 +16156,10 @@ void forth_emit(forth_user_end user,long *sp)
 
 
 /* 000198d0 */
+
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_space(void)
 
@@ -15541,6 +16178,9 @@ void forth_space(void)
 /* 000198d4 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_spaces(forth_user_end user,long *sp)
 
@@ -15569,6 +16209,10 @@ void forth_spaces(forth_user_end user,long *sp)
 
 /* 000198f2 */
 
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+
 void forth_cr(void)
 
 {
@@ -15582,6 +16226,9 @@ void forth_cr(void)
 /* 000198fe */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_dot_quote(forth_user_end user,void *dp,char *input)
 
@@ -15625,6 +16272,10 @@ void forth_dot_quote(forth_user_end user,void *dp,char *input)
 
 /* 00019948 */
 
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+
 void forth_paren_dot_quote_close_paren(void)
 
 {
@@ -15637,6 +16288,10 @@ void forth_paren_dot_quote_close_paren(void)
 
 
 /* 0001995a */
+
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_digit_char(void)
 
@@ -15653,6 +16308,9 @@ void forth_digit_char(void)
 /* 0001996c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_print_number(forth_user_end user,long *sp)
 
@@ -15675,6 +16333,9 @@ void forth_print_number(forth_user_end user,long *sp)
 /* 0001997e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_u_dot(forth_user_end user,long *sp)
 
@@ -15704,6 +16365,9 @@ void forth_u_dot(forth_user_end user,long *sp)
 /* 0001999a */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_u_dot_x(long *sp)
 
@@ -15738,6 +16402,9 @@ void forth_u_dot_x(long *sp)
 /* 000199c4 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_dot(forth_user_end user,long *sp)
 
@@ -15771,6 +16438,9 @@ void forth_dot(forth_user_end user,long *sp)
 /* 000199ee */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_dot_s(long *sp)
 
@@ -15801,6 +16471,9 @@ void forth_dot_s(long *sp)
 /* 00019b98 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_sin(long *sp)
 
@@ -15833,6 +16506,9 @@ void forth_sin(long *sp)
 /* 00019bf0 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_cos(long *sp)
 
@@ -15846,6 +16522,9 @@ void forth_cos(long *sp)
 /* 00019bfc */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_decimal(forth_user_end user)
 
@@ -15858,6 +16537,9 @@ void forth_decimal(forth_user_end user)
 /* 00019c06 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_hex(forth_user_end user)
 
@@ -15870,6 +16552,9 @@ void forth_hex(forth_user_end user)
 /* 00019c10 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_base(forth_user_end user,long *sp)
 
@@ -15882,6 +16567,9 @@ void forth_base(forth_user_end user,long *sp)
 /* 00019c18 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_state(forth_user_end user,long *sp)
 
@@ -15894,6 +16582,9 @@ void forth_state(forth_user_end user,long *sp)
 /* 00019c22 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_tick(long *sp)
 
@@ -15935,6 +16626,9 @@ void forth_tick(long *sp)
 /* 00019c38 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_bracket_tick_close_bracket(void *dp)
 
@@ -15976,6 +16670,9 @@ void forth_bracket_tick_close_bracket(void *dp)
 /* 00019c52 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_bracket(forth_user_end user)
 
@@ -15988,6 +16685,9 @@ void forth_bracket(forth_user_end user)
 /* 00019c58 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_close_bracket(forth_user_end user)
 
@@ -16000,6 +16700,9 @@ void forth_close_bracket(forth_user_end user)
 /* 00019c6e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_forget(forth_user_end user,void *dp)
 
@@ -16048,6 +16751,9 @@ void forth_forget(forth_user_end user,void *dp)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_startup(forth_user_end user,void *dp)
 
@@ -16062,6 +16768,9 @@ void forth_startup(forth_user_end user,void *dp)
 /* 00019cbc */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_words(forth_user_end user,long *sp)
 
@@ -16127,6 +16836,9 @@ void forth_words(forth_user_end user,long *sp)
 /* 00019d2e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_root(long *sp)
 
@@ -16139,6 +16851,9 @@ void forth_root(long *sp)
 /* 00019d36 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_my_pid(long *sp)
 
@@ -16156,6 +16871,9 @@ void forth_my_pid(long *sp)
 /* 00019d46 */
 
 /* WARNING: Removing unreachable block (ram,0x000192a0) */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_query_caret_C(void)
 
@@ -16171,6 +16889,9 @@ void forth_query_caret_C(void)
 /* 00019d5e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 short forth_expect(forth_user_end user,long *sp)
 
@@ -16189,6 +16910,9 @@ short forth_expect(forth_user_end user,long *sp)
 /* 00019d74 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_type(long *sp)
 
@@ -16203,6 +16927,9 @@ void forth_type(long *sp)
 /* 00019d7c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_word(forth_user_end user,long *sp,char *input)
 
@@ -16232,6 +16959,9 @@ void forth_word(forth_user_end user,long *sp,char *input)
 /* 00019dae */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_count(long *sp)
 
@@ -16252,6 +16982,9 @@ void forth_count(long *sp)
 /* 00019dc2 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_tib(forth_user_end user,long *sp)
 
@@ -16264,6 +16997,9 @@ void forth_tib(forth_user_end user,long *sp)
 /* 00019dc8 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_pad(forth_user_end user,long *sp)
 
@@ -16274,6 +17010,10 @@ void forth_pad(forth_user_end user,long *sp)
 
 
 /* 00019df0 */
+
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_does_greater(void)
 
@@ -16288,6 +17028,9 @@ void forth_does_greater(void)
 /* 00019dfc */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_recurse(forth_user_end user,void *dp)
 
@@ -16302,6 +17045,9 @@ void forth_recurse(forth_user_end user,void *dp)
 /* 00019e0e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_immediate(forth_user_end user)
 
@@ -16314,6 +17060,9 @@ void forth_immediate(forth_user_end user)
 /* 00019e20 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_fence(forth_user_end user,long *sp)
 
@@ -16326,6 +17075,9 @@ void forth_fence(forth_user_end user,long *sp)
 /* 00019e28 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_unfence(forth_user_end user)
 
@@ -16338,6 +17090,9 @@ void forth_unfence(forth_user_end user)
 /* 00019e32 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_number(long *sp)
 
@@ -16362,6 +17117,9 @@ void forth_number(long *sp)
 /* 00019e4c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 undefined1 forth_0x(forth_user_end user,long *sp)
 
@@ -16426,6 +17184,9 @@ undefined1 forth_0x(forth_user_end user,long *sp)
 /* 00019e88 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_execute(long *sp)
 
@@ -16438,6 +17199,9 @@ void forth_execute(long *sp)
 /* 00019e90 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 undefined8 forth_watch(forth_user_end user,long *sp,void *dp,char *input)
 
@@ -16516,6 +17280,9 @@ undefined8 forth_watch(forth_user_end user,long *sp,void *dp,char *input)
 /* 00019ed0 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_psos_call(forth_user_end user,long *sp,void *dp)
 
@@ -16549,6 +17316,9 @@ void forth_psos_call(forth_user_end user,long *sp,void *dp)
 /* 00019fa6 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_spawn(forth_user_end user,long *sp,void *dp)
 
@@ -16606,6 +17376,10 @@ void forth_spawn(forth_user_end user,long *sp,void *dp)
 
 /* 0001a03c */
 
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
+
 void forth_space_if_zero(void)
 
 {
@@ -16616,6 +17390,9 @@ void forth_space_if_zero(void)
 /* 0001a056 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_ver(forth_user_end user,long *sp)
 
@@ -16638,6 +17415,9 @@ void forth_ver(forth_user_end user,long *sp)
 /* 0001a08c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_ident(long *sp)
 
@@ -16658,6 +17438,9 @@ void forth_ident(long *sp)
 /* 0001a0a0 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_delete(long *sp)
 
@@ -16673,6 +17456,9 @@ void forth_delete(long *sp)
 /* 0001a0ae */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_suspend(long *sp)
 
@@ -16688,6 +17474,9 @@ void forth_suspend(long *sp)
 /* 0001a0bc */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_resume(long *sp)
 
@@ -16703,6 +17492,9 @@ void forth_resume(long *sp)
 /* 0001a0ca */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_priority(long *sp)
 
@@ -16720,6 +17512,9 @@ void forth_priority(long *sp)
 /* 0001a0e2 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_jam_x(long *sp)
 
@@ -16735,6 +17530,9 @@ void forth_jam_x(long *sp)
 /* 0001a0f8 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_create_x(long *sp)
 
@@ -16757,6 +17555,9 @@ void forth_create_x(long *sp)
 /* 0001a11e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_delete_x(long *sp)
 
@@ -16772,6 +17573,9 @@ void forth_delete_x(long *sp)
 /* 0001a12e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_send_x(long *sp)
 
@@ -16787,6 +17591,9 @@ void forth_send_x(long *sp)
 /* 0001a144 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_request_x(long *sp)
 
@@ -16802,6 +17609,9 @@ void forth_request_x(long *sp)
 /* 0001a15e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_signal_v(long *sp)
 
@@ -16817,6 +17627,9 @@ void forth_signal_v(long *sp)
 /* 0001a176 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_wait_v(long *sp)
 
@@ -16834,6 +17647,9 @@ void forth_wait_v(long *sp)
 /* 0001a18c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_get_v(long *sp)
 
@@ -16848,6 +17664,9 @@ void forth_get_v(long *sp)
 /* 0001a19a */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 long forth_pause(long *sp)
 
@@ -16860,6 +17679,9 @@ long forth_pause(long *sp)
 /* 0001a1a2 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_mode(long *sp)
 
@@ -16873,6 +17695,9 @@ void forth_mode(long *sp)
 /* 0001a1b4 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_psos_io_call(long *sp)
 
@@ -16921,6 +17746,9 @@ void forth_psos_io_call(long *sp)
 /* 0001a21e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_dev_init(long *sp)
 
@@ -16933,6 +17761,9 @@ void forth_dev_init(long *sp)
 /* 0001a226 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_dev_open(long *sp)
 
@@ -16945,6 +17776,9 @@ void forth_dev_open(long *sp)
 /* 0001a22e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_dev_close(long *sp)
 
@@ -16957,6 +17791,9 @@ void forth_dev_close(long *sp)
 /* 0001a236 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_dev_read(long *sp)
 
@@ -16973,6 +17810,9 @@ void forth_dev_read(long *sp)
 /* 0001a250 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_dev_write(long *sp)
 
@@ -16989,6 +17829,9 @@ void forth_dev_write(long *sp)
 /* 0001a26a */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_dev_ctrl(long *sp)
 
@@ -17001,6 +17844,9 @@ void forth_dev_ctrl(long *sp)
 /* 0001a278 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_store_iodev(forth_user_end user,long *sp)
 
@@ -17019,6 +17865,9 @@ void forth_store_iodev(forth_user_end user,long *sp)
 /* 0001ad20 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+   the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
+   anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
 void forth_user(long *sp)
 
@@ -20214,6 +21063,9 @@ void duartb_transmit_interrupt(void)
 
 /* 0001eaf4 */
 
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 67 (user_67), not called; returns through trap #5, the kernel's return from interrupt. */
+
 void primary_user_67(void)
 
 {
@@ -21061,6 +21913,8 @@ LAB_0001f94c:
 /* 0001f988 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 64 (user_64), not called; returns through trap #5, the kernel's return from interrupt. */
 
 void primary_user_64(void)
 
@@ -21899,6 +22753,9 @@ void qspi_isr(void)
 
 
 /* 00020a10 */
+
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 65 (user_65), not called; returns through trap #5, the kernel's return from interrupt. */
 
 void primary_user_65(void)
 
@@ -23625,6 +24482,11 @@ LAB_00024d6c:
 
 /* 00024e18 */
 
+/* Not a C function: the double in D0:D1, how many digits in D7, the record to fill in A0 (a sign
+   word, the digits as ASCII, the exponent of 0.d1d2... as a word).  Returns with the condition
+   codes cleared, or all set and -8 in D0.w for a subnormal, infinite or NaN double.  D0 to D7 and
+   A0 and A1 are not preserved. */
+
 uint scpi_double_to_decimal(void)
 
 {
@@ -23757,6 +24619,10 @@ LAB_00024e22:
 
 
 /* 0002507a */
+
+/* Not a C function: the BCD record in A0.  Returns the double in D0:D1 with the condition codes
+   cleared, or all set and -9 in D0.w out of range.  Falls into scpi_scale_by_power_of_ten.  D2 to
+   D7 and A0 and A1 are not preserved. */
 
 undefined8 scpi_bcd_to_double(void)
 
@@ -23937,6 +24803,11 @@ LAB_000251da:
 
 /* 000251e4 */
 
+/* Not a C function: the double in D0:D1, A0 at the exponent word (the sign word 10 bytes before
+   it), the table of powers of ten in A1.  Returns D0:D1 times 10 to the exponent less 16, with the
+   condition codes cleared, or all set and -9 in D0.w beyond 309.  D2 to D7 and A0 and A1 are not
+   preserved. */
+
 undefined * scpi_scale_by_power_of_ten(void)
 
 {
@@ -23971,6 +24842,10 @@ undefined * scpi_scale_by_power_of_ten(void)
 
 
 /* 000252bc */
+
+/* Not a C function: multiplies D0:D1 by D2:D3, both doubles, into D0:D1.  Returns with the
+   condition codes cleared, or all set and -2 in D2 for underflow or -1 for overflow.  A0 is
+   preserved; D2 to D7 are not. */
 
 undefined8 scpi_double_multiply(void)
 
@@ -24118,6 +24993,9 @@ LAB_00025410:
 
 /* 00025468 */
 
+/* Not a C function: a piece of scpi_double_multiply, which branches here when an operand's mantissa
+   fits in 16 bits and returns through it; never called. */
+
 undefined8 scpi_double_multiply_short(void)
 
 {
@@ -24197,6 +25075,9 @@ undefined4 scpi_number_to_double(undefined4 param_1,undefined8 *param_2,short pa
 
 
 /* 000254fe */
+
+/* Not a C function: the parsed number in A0, a further power of ten in D0.w, the BCD record to fill
+   in A1.  Returns 0 in D0, or -1 for an exponent beyond 309.  D1, A0 and A1 are not preserved. */
 
 undefined4 scpi_number_to_bcd(void)
 
@@ -49372,6 +50253,9 @@ void FUN_000510d2(ulong param_1)
 
 /* 000510e8 */
 
+/* Not a C function: an exception handler, entered by the processor through the primary table's
+   vector 33 (trap_1), not called; returns with rte. */
+
 void primary_trap_1(void)
 
 {
@@ -49448,6 +50332,8 @@ undefined4 FUN_00051158(void)
 /* 0005d080 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 void float_subtract_in_place(float *x,float y)
 
@@ -49464,6 +50350,8 @@ void float_subtract_in_place(float *x,float y)
 /* 0005d08a */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 void float_add_in_place(float *x,float y)
 
@@ -49483,6 +50371,8 @@ void float_add_in_place(float *x,float y)
 /* WARNING: Removing unreachable block (ram,0x0005d042) */
 /* WARNING: Removing unreachable block (ram,0x0005d048) */
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 float float_subtract_reversed(float a,float b)
 
@@ -49637,6 +50527,8 @@ LAB_0005d1fe:
 /* WARNING: Removing unreachable block (ram,0x0005d042) */
 /* WARNING: Removing unreachable block (ram,0x0005d048) */
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 float float_subtract(float a,float b)
 
@@ -49791,6 +50683,8 @@ LAB_0005d1fe:
 /* WARNING: Removing unreachable block (ram,0x0005d042) */
 /* WARNING: Removing unreachable block (ram,0x0005d048) */
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 float float_add(float a,float b)
 
@@ -49938,6 +50832,8 @@ LAB_0005d1fe:
 /* 0005d2e2 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 void double_subtract_in_place(double *x,double y)
 
@@ -49953,6 +50849,8 @@ void double_subtract_in_place(double *x,double y)
 /* 0005d2f8 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double double_subtract_pointer(double a,double *b)
 
@@ -49967,6 +50865,8 @@ double double_subtract_pointer(double a,double *b)
 /* 0005d306 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double double_subtract_reversed_pointers(double *a,double *b)
 
@@ -50268,6 +51168,8 @@ LAB_0005d63e:
 /* 0005d30a */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double double_subtract_reversed_pointer(double a,double *b)
 
@@ -50569,6 +51471,8 @@ LAB_0005d63e:
 /* 0005d30e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double double_subtract_reversed(double a,double b)
 
@@ -50872,6 +51776,8 @@ LAB_0005d2c6:
 /* 0005d338 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 void double_add_in_place(double *x,double y)
 
@@ -50887,6 +51793,8 @@ void double_add_in_place(double *x,double y)
 /* 0005d34a */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double double_add_pointers(double *a,double *b)
 
@@ -51185,6 +52093,8 @@ LAB_0005d63e:
 /* 0005d34e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double double_add_pointer(double a,double *b)
 
@@ -51483,6 +52393,8 @@ LAB_0005d63e:
 /* 0005d352 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double double_add(double a,double b)
 
@@ -51779,6 +52691,8 @@ LAB_0005d63e:
 /* 0005d65c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 int float_compare(float a,float b)
 
@@ -51817,6 +52731,8 @@ int float_compare(float a,float b)
 /* 0005d6c6 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 int double_compare(double a,double b)
 
@@ -51875,6 +52791,8 @@ int double_compare(double a,double b)
 /* 0005d7da */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 void float_divide_in_place(float *x,float y)
 
@@ -51892,6 +52810,8 @@ void float_divide_in_place(float *x,float y)
 
 /* WARNING: Removing unreachable block (ram,0x0005d888) */
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 float float_divide_reversed(float a,float b)
 
@@ -52053,6 +52973,8 @@ LAB_0005d7ae:
 
 /* WARNING: Removing unreachable block (ram,0x0005d888) */
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 float float_divide(float a,float b)
 
@@ -52213,6 +53135,8 @@ LAB_0005d7ae:
 /* 0005da3e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 void double_divide_in_place(double *x,double y)
 
@@ -52228,6 +53152,8 @@ void double_divide_in_place(double *x,double y)
 /* 0005da58 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double double_divide(double a,double b)
 
@@ -52242,6 +53168,8 @@ double double_divide(double a,double b)
 /* 0005da62 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double double_divide_reversed_pointers(double *a,double *b)
 
@@ -52390,6 +53318,8 @@ LAB_0005db84:
 /* 0005da66 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double double_divide_reversed_pointer(double a,double *b)
 
@@ -52531,6 +53461,8 @@ LAB_0005db84:
 /* 0005da6a */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double double_divide_reversed(double a,double b)
 
@@ -52698,6 +53630,8 @@ uint double_divide_by_zero(void)
 /* 0005dbfe */
 
 /* WARNING: Removing unreachable block (ram,0x0005dc10) */
+/* Not a C function: a helper of the double divides, which pass the dividend and divisor in D0 to
+   D3: each further 16 bits of the quotient. */
 
 void double_divide_next_word(void)
 
@@ -52770,6 +53704,8 @@ void double_divide_next_word(void)
 /* 0005dc0a */
 
 /* WARNING: Removing unreachable block (ram,0x0005dc10) */
+/* Not a C function: a helper of the double divides, which pass the dividend and divisor in D0 to
+   D3: the first 16 bits of the quotient. */
 
 void double_divide_first_word(void)
 
@@ -52840,6 +53776,8 @@ void double_divide_first_word(void)
 /* 0005dcd2 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 float double_to_float(double d)
 
@@ -52915,6 +53853,8 @@ LAB_0005dd4e:
 /* 0005ddde */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 int double_to_integer(double d)
 
@@ -52965,6 +53905,8 @@ int double_to_integer(double d)
 /* 0005de9e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 uint double_to_unsigned(double d)
 
@@ -53005,6 +53947,8 @@ uint double_to_unsigned(double d)
 /* 0005df24 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double float_to_double(float f)
 
@@ -53050,6 +53994,8 @@ double float_to_double(float f)
 /* 0005dfbc */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 int float_to_integer(float f)
 
@@ -53101,6 +54047,8 @@ LAB_0005df9e:
 /* 0005e04e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 uint float_to_unsigned(float f)
 
@@ -53128,6 +54076,8 @@ uint float_to_unsigned(float f)
 /* 0005e08e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double integer_to_double(int i)
 
@@ -53186,6 +54136,8 @@ double integer_to_double(int i)
 /* 0005e108 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double unsigned_to_double(uint u)
 
@@ -53237,6 +54189,8 @@ double unsigned_to_double(uint u)
 /* 0005e168 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 float integer_to_float(int i)
 
@@ -53306,6 +54260,8 @@ float integer_to_float(int i)
 /* 0005e20e */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 float unsigned_to_float(uint u)
 
@@ -53374,6 +54330,8 @@ float unsigned_to_float(uint u)
 /* 0005e316 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 void float_multiply_in_place(float *x,float y)
 
@@ -53390,6 +54348,8 @@ void float_multiply_in_place(float *x,float y)
 /* 0005e320 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 float float_multiply(float a,float b)
 
@@ -53510,6 +54470,8 @@ LAB_0005e41a:
 /* 0005e5e6 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 void double_multiply_in_place(double *x,double y)
 
@@ -53525,6 +54487,8 @@ void double_multiply_in_place(double *x,double y)
 /* 0005e5f8 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double double_multiply_pointers(double *a,double *b)
 
@@ -53784,6 +54748,8 @@ LAB_0005e77c:
 /* 0005e5fc */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double double_multiply_pointer(double a,double *b)
 
@@ -54037,6 +55003,8 @@ LAB_0005e77c:
 /* 0005e600 */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives. */
 
 double double_multiply(double a,double b)
 
@@ -54299,6 +55267,8 @@ void double_multiply_operand_error(void)
 /* 0005e83c */
 
 /* WARNING: Unknown calling convention */
+/* Not a C function: a helper of the floating-point library: normalizes the unpacked mantissa and
+   exponent in its own argument slots on the stack, which its caller reads back. */
 
 undefined8 float_normalize(uint param_1)
 
@@ -54324,6 +55294,9 @@ undefined8 float_normalize(uint param_1)
 
 
 /* 0005e882 */
+
+/* Not a C function: the 64-bit float_normalize: normalizes the unpacked mantissa and exponent in
+   its own argument slots on the stack, which its caller reads back. */
 
 undefined8 double_normalize(undefined2 param_1,uint param_2)
 
@@ -57828,6 +58801,10 @@ void installer_kernel_return_from_interrupt(ushort param_1)
 
 /* installer::0010152c */
 
+/* Not a C function: the trap #3 handler: the service in D7, its arguments in D0 to D3, A0 and A1.
+   Calls the service's handler through the table at installer::0x101574 and returns with rte, the
+   error in D7.b and the results in D0 to D2, A0 and A1 (psos.md). */
+
 void installer_kernel_dispatch_service(undefined2 param_1)
 
 {
@@ -57979,6 +58956,9 @@ void installer_kernel_dispatch_service(undefined2 param_1)
 
 /* installer::00101610 */
 
+/* Not a C function: the trap #4 handler: the I/O function, 0 to 5, in D7 and the device in the high
+   byte of D0.  Returns with rte (psos.md). */
+
 void installer_kernel_dispatch_io(void)
 
 {
@@ -58006,6 +58986,9 @@ void installer_kernel_dispatch_io(void)
 
 
 /* installer::00101680 */
+
+/* Not a C function: branched to from the service dispatch on its way out, never called: saves the
+   running task's registers in its record and resumes the first ready task with rte. */
 
 void installer_kernel_switch_task(void)
 
@@ -58136,6 +59119,9 @@ void installer_kernel_switch_task(void)
 
 /* installer::001016cc */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void installer_kernel_process_ticks(void)
 
 {
@@ -58200,6 +59186,11 @@ LAB_installer__0010175e:
 
 /* installer::001017a8 */
 
+/* Not a C function: the kernel's handler for service 0, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
+
 void installer_kernel_service_0(void)
 
 {
@@ -58208,6 +59199,11 @@ void installer_kernel_service_0(void)
 
 
 /* installer::001017b2 */
+
+/* Not a C function: the kernel's handler for service 1, psos_create's, reached from the installer's
+   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
+   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
+   its results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_create(void)
 
@@ -58283,6 +59279,11 @@ void installer_kernel_create(void)
 
 /* installer::001018a6 */
 
+/* Not a C function: the kernel's handler for service 2, psos_start's, reached from the installer's
+   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
+   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
+   its results in D0 to D2, A0 and A1 (psos.md). */
+
 void installer_kernel_start(void)
 
 {
@@ -58303,6 +59304,11 @@ void installer_kernel_start(void)
 
 
 /* installer::001018d8 */
+
+/* Not a C function: the kernel's handler for service 3, psos_ident's, reached from the installer's
+   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
+   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
+   its results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_ident(void)
 
@@ -58325,6 +59331,11 @@ void installer_kernel_ident(void)
 
 
 /* installer::001018fe */
+
+/* Not a C function: the kernel's handler for service 4, psos_delete's, reached from the installer's
+   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
+   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
+   its results in D0 to D2, A0 and A1 (psos.md). */
 
 undefined8 installer_kernel_delete(void)
 
@@ -58409,6 +59420,11 @@ LAB_installer__001019d4:
 
 /* installer::00101a0a */
 
+/* Not a C function: the kernel's handler for service 5, psos_suspend's, reached from the
+   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
+   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
+   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
+
 void installer_kernel_suspend(void)
 
 {
@@ -58438,6 +59454,10 @@ void installer_kernel_suspend(void)
 /* installer::00101a3e */
 
 /* WARNING: Removing unreachable block (ram,0x00101a48) */
+/* Not a C function: the kernel's handler for service 6, psos_resume's, reached from the installer's
+   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
+   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
+   its results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_resume(void)
 
@@ -58458,6 +59478,11 @@ void installer_kernel_resume(void)
 
 
 /* installer::00101a80 */
+
+/* Not a C function: the kernel's handler for service 7, psos_priority's, reached from the
+   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
+   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
+   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
 
 ushort installer_kernel_priority(void)
 
@@ -58501,6 +59526,11 @@ LAB_installer__00101ab4:
 
 /* installer::00101ae0 */
 
+/* Not a C function: the kernel's handler for service 8, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
+
 void installer_kernel_allocate_segment(void)
 
 {
@@ -58532,6 +59562,9 @@ void installer_kernel_allocate_segment(void)
 
 /* installer::00101ae2 */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void installer_kernel_allocate_for_task(void)
 
 {
@@ -58561,6 +59594,11 @@ void installer_kernel_allocate_for_task(void)
 
 
 /* installer::00101b36 */
+
+/* Not a C function: the kernel's handler for service 9, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_free_segment(void)
 
@@ -58676,6 +59714,9 @@ LAB_installer__00101c0c:
 
 
 /* installer::00101b38 */
+
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
 
 void installer_kernel_free_for_task(void)
 
@@ -58793,6 +59834,9 @@ LAB_installer__00101c0c:
 
 /* installer::00101c6e */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void installer_kernel_allocate(void)
 
 {
@@ -58826,6 +59870,9 @@ LAB_installer__00101c8e:
 
 
 /* installer::00101ca2 */
+
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
 
 void installer_kernel_region_allocate(void)
 
@@ -58887,6 +59934,10 @@ void installer_kernel_region_allocate(void)
 /* installer::00101d2a */
 
 /* WARNING: Removing unreachable block (ram,0x00101d4c) */
+/* Not a C function: the kernel's handler for service 10, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_service_10(void)
 
@@ -58926,6 +59977,11 @@ void installer_kernel_service_10(void)
 
 /* installer::00101d30 */
 
+/* Not a C function: the kernel's handler for service 16, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
+
 void installer_kernel_service_16(void)
 
 {
@@ -58962,6 +60018,10 @@ void installer_kernel_service_16(void)
 
 /* installer::00101d80 */
 
+/* Not a C function: the handler for services 11 to 15, 17 and 34, reached from the installer's trap
+   #3 through installer_kernel_dispatch_service: clears D7.b, so the call succeeds and does nothing.
+    */
+
 void installer_kernel_service_none(void)
 
 {
@@ -58970,6 +60030,11 @@ void installer_kernel_service_none(void)
 
 
 /* installer::00101d84 */
+
+/* Not a C function: the kernel's handler for service 20, psos_create_x's, reached from the
+   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
+   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
+   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_create_x(void)
 
@@ -59010,6 +60075,10 @@ void installer_kernel_create_x(void)
 /* installer::00101de6 */
 
 /* WARNING: Removing unreachable block (ram,0x00101e08) */
+/* Not a C function: the kernel's handler for service 21, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_service_21(void)
 
@@ -59049,6 +60118,11 @@ void installer_kernel_service_21(void)
 
 
 /* installer::00101e3c */
+
+/* Not a C function: the kernel's handler for service 22, psos_delete_x's, reached from the
+   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
+   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
+   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_delete_x(void)
 
@@ -59099,6 +60173,10 @@ LAB_installer__00101ea6:
 /* installer::00101eb4 */
 
 /* WARNING: Removing unreachable block (ram,0x00101ebe) */
+/* Not a C function: the kernel's handler for service 18, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
 
 ushort installer_kernel_service_18(void)
 
@@ -59203,6 +60281,10 @@ LAB_installer__00101f7c:
 /* installer::00101f98 */
 
 /* WARNING: Removing unreachable block (ram,0x00101fb2) */
+/* Not a C function: the kernel's handler for service 19, psos_jam_x's, reached from the installer's
+   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
+   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
+   its results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_jam_x(void)
 
@@ -59324,6 +60406,10 @@ LAB_installer__0010200c:
 /* WARNING: Removing unreachable block (ram,0x00101fb2) */
 /* WARNING: Removing unreachable block (ram,0x00102086) */
 /* WARNING: Removing unreachable block (ram,0x00102098) */
+/* Not a C function: the kernel's handler for service 23, psos_send_x's, reached from the
+   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
+   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
+   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_send_x(void)
 
@@ -59434,6 +60520,8 @@ LAB_installer__0010200c:
 /* WARNING: Removing unreachable block (ram,0x00101fb2) */
 /* WARNING: Removing unreachable block (ram,0x00102086) */
 /* WARNING: Removing unreachable block (ram,0x00102098) */
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
 
 void installer_kernel_send_for_task(void)
 
@@ -59540,6 +60628,9 @@ LAB_installer__0010200c:
 
 /* installer::001020b2 */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void installer_kernel_copy_message(void)
 
 {
@@ -59571,6 +60662,10 @@ void installer_kernel_copy_message(void)
 /* installer::001020dc */
 
 /* WARNING: Removing unreachable block (ram,0x001020ea) */
+/* Not a C function: the kernel's handler for service 24, psos_request_x's, reached from the
+   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
+   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
+   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_request_x(void)
 
@@ -59676,6 +60771,10 @@ LAB_installer__001021ca:
 /* installer::001021e8 */
 
 /* WARNING: Removing unreachable block (ram,0x001021f2) */
+/* Not a C function: the kernel's handler for service 25, psos_signal_v's, reached from the
+   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
+   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
+   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_signal_v(void)
 
@@ -59725,6 +60824,9 @@ void installer_kernel_signal_v(void)
 
 
 /* installer::001021f6 */
+
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
 
 void installer_kernel_signal_task(void)
 
@@ -59778,6 +60880,10 @@ void installer_kernel_signal_task(void)
 /* WARNING: Removing unreachable block (ram,0x001022ac) */
 /* WARNING: Removing unreachable block (ram,0x001022d6) */
 /* WARNING: Removing unreachable block (ram,0x001022d0) */
+/* Not a C function: the kernel's handler for service 27, psos_get_v's, reached from the installer's
+   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
+   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
+   its results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_get_v(void)
 
@@ -59801,6 +60907,11 @@ void installer_kernel_get_v(void)
 
 
 /* installer::00102262 */
+
+/* Not a C function: the kernel's handler for service 26, psos_wait_v's, reached from the
+   installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
+   D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
+   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_wait_v(void)
 
@@ -59847,6 +60958,11 @@ void installer_kernel_wait_v(void)
 
 /* installer::001022e0 */
 
+/* Not a C function: the kernel's handler for service 32, psos_mode's, reached from the installer's
+   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
+   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
+   its results in D0 to D2, A0 and A1 (psos.md). */
+
 byte installer_kernel_mode(void)
 
 {
@@ -59863,6 +60979,11 @@ byte installer_kernel_mode(void)
 
 /* installer::001022fc */
 
+/* Not a C function: the kernel's handler for service 33, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
+
 undefined2 installer_kernel_service_33(undefined2 param_1)
 
 {
@@ -59871,6 +60992,11 @@ undefined2 installer_kernel_service_33(undefined2 param_1)
 
 
 /* installer::0010230a */
+
+/* Not a C function: the kernel's handler for service 28, psos_pause's, reached from the installer's
+   trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
+   as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
+   its results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_pause(void)
 
@@ -59893,6 +61019,11 @@ void installer_kernel_pause(void)
 
 
 /* installer::00102334 */
+
+/* Not a C function: the kernel's handler for service 29, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_service_29(void)
 
@@ -59924,6 +61055,11 @@ void installer_kernel_service_29(void)
 
 /* installer::0010237a */
 
+/* Not a C function: the kernel's handler for service 30, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
+
 undefined8 installer_kernel_service_30(void)
 
 {
@@ -59939,6 +61075,11 @@ undefined8 installer_kernel_service_30(void)
 
 
 /* installer::001023a4 */
+
+/* Not a C function: the kernel's handler for service 31, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_service_31(void)
 
@@ -59972,6 +61113,11 @@ void installer_kernel_service_31(void)
 
 /* installer::00102416 */
 
+/* Not a C function: the kernel's handler for service 35, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
+
 undefined8 installer_kernel_service_35(void)
 
 {
@@ -60002,6 +61148,11 @@ undefined8 installer_kernel_service_35(void)
 
 /* installer::00102456 */
 
+/* Not a C function: the kernel's handler for service 36, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
+
 void installer_kernel_service_36(void)
 
 {
@@ -60016,6 +61167,11 @@ void installer_kernel_service_36(void)
 
 
 /* installer::0010247c */
+
+/* Not a C function: the kernel's handler for service 37, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
 
 void installer_kernel_service_37(void)
 
@@ -60035,6 +61191,11 @@ void installer_kernel_service_37(void)
 
 /* installer::001024a8 */
 
+/* Not a C function: the kernel's handler for service 38, reached from the installer's trap #3
+   through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
+   stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
+   results in D0 to D2, A0 and A1 (psos.md). */
+
 void installer_kernel_service_38(void)
 
 {
@@ -60051,6 +61212,9 @@ void installer_kernel_service_38(void)
 
 
 /* installer::001024c6 */
+
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
 
 void installer_kernel_advance_date(void)
 
@@ -60086,6 +61250,9 @@ void installer_kernel_advance_date(void)
 
 /* installer::00102516 */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void installer_kernel_set_leap_year(void)
 
 {
@@ -60105,6 +61272,10 @@ void installer_kernel_set_leap_year(void)
 
 /* installer::00102540 */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr: the task ID in A0,
+   zero for the running task, which A5 holds.  Returns the task's record in A0, or the error in D7:
+   2 a bad ID, 1 a deleted task, 3 another group's (psos.md). */
+
 void installer_kernel_check_task(void)
 
 {
@@ -60113,6 +61284,10 @@ void installer_kernel_check_task(void)
 
 
 /* installer::00102572 */
+
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr: the exchange ID in A0,
+   the running task in A5.  Returns the error in D7: 2 a bad ID, 1 a deleted exchange, 3 another
+   group's (psos.md). */
 
 void installer_kernel_check_exchange(void)
 
@@ -60123,6 +61298,10 @@ void installer_kernel_check_exchange(void)
 
 /* installer::0010259c */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr: the segment in A0.
+   Returns D7 zero, or 5 if the segment lacks installer_kernel_region_allocate's 0xe1d0 (psos.md).
+    */
+
 void installer_kernel_check_segment(void)
 
 {
@@ -60131,6 +61310,9 @@ void installer_kernel_check_segment(void)
 
 
 /* installer::001025b0 */
+
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
 
 void installer_kernel_timer_cancel(void)
 
@@ -60154,6 +61336,9 @@ void installer_kernel_timer_cancel(void)
 
 /* installer::001025b6 */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 undefined4 installer_kernel_timer_unlink(void)
 
 {
@@ -60174,6 +61359,9 @@ undefined4 installer_kernel_timer_unlink(void)
 
 
 /* installer::001025e4 */
+
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
 
 void installer_kernel_timer_insert(void)
 
@@ -60222,6 +61410,9 @@ void installer_kernel_timer_insert(void)
 
 /* installer::00102652 */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void installer_kernel_make_ready(void)
 
 {
@@ -60251,6 +61442,9 @@ void installer_kernel_make_ready(void)
 
 /* installer::0010265a */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void installer_kernel_ready_insert(void)
 
 {
@@ -60275,6 +61469,9 @@ void installer_kernel_ready_insert(void)
 
 /* installer::0010269c */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void installer_kernel_queue_remove(void)
 
 {
@@ -60293,6 +61490,8 @@ void installer_kernel_queue_remove(void)
 /* installer::001026de */
 
 /* WARNING: Removing unreachable block (ram,0x001028ac) */
+/* Not a C function: the trap #6 handler, which starts the kernel: builds its records from the
+   configuration in A6 and never returns. */
 
 void installer_kernel_init(void)
 
@@ -60462,6 +61661,9 @@ void installer_kernel_init(void)
 
 /* installer::001028d4 */
 
+/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md). */
+
 void installer_kernel_region_init(void)
 
 {
@@ -60518,6 +61720,9 @@ void installer_kernel_region_init(void)
 
 
 /* installer::00102990 */
+
+/* Not a C function: the trap #5 handler, which every interrupt handler ends with in place of rte:
+   switches tasks if the interrupt made a higher-priority one ready, and returns with rte. */
 
 void installer_kernel_return_from_interrupt(ushort param_1)
 

@@ -158,6 +158,8 @@ output for an image, produced by the scripts in `tools/ghidra/`
 (`docs/firmware/README.md`, "Decompiling with Ghidra").  Derived from
 the image, so no more ours than the image is; machine output, named
 where the project's notes and tables establish a name, not reviewed.
+The one edit to the decompiler's text: each function that is not C has
+its signature line marked so (`docs/firmware/README.md`).
 
   z3805a-3543b.c     Z3805A 3543B, every function in address order.
   z3805a-3543b.conventions.jsonl

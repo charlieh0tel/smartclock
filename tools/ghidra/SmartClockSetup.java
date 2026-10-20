@@ -219,6 +219,10 @@ public class SmartClockSetup extends GhidraScript {
 	/** Where the conventions and notes are kept for SmartClockExportC.java. */
 	private static final String CONVENTION_MAP = "SmartClock.convention";
 	private static final String NOTE_MAP = "SmartClock.note";
+	/** What C cannot say of a function that is not C, for its signature line. */
+	private static final String SIGNATURE_MAP = "SmartClock.signature";
+	/** The keys that SIGNATURE_MAP gives, in its order. */
+	private static final List<String> SIGNATURE_KEYS = List.of("out", "returns", "error", "preserves");
 	/** The tag every function that is not C carries. */
 	private static final String NOT_C_TAG = "not-c";
 	/** What the exception handlers' recorded convention says. */
@@ -483,6 +487,7 @@ public class SmartClockSetup extends GhidraScript {
 						function.setComment(functionComment(fields, convention));
 						record(function, convention.isEmpty() ? null : conventionJson(convention),
 							field(fields, NOTE_FIELD));
+						recordSignature(function, convention);
 					}
 				}
 				else {
@@ -1323,6 +1328,30 @@ public class SmartClockSetup extends GhidraScript {
 		}
 		else {
 			notes.add(entry, note);
+		}
+	}
+
+	/**
+	 * Keeps, for a function that is not C, what its signature line cannot
+	 * say -- its results, condition codes, errors and preserved registers --
+	 * as "out D0:D1 double; returns ccr; ...", for SmartClockExportC.java.
+	 */
+	private void recordSignature(Function function, Map<String, String> convention)
+			throws Exception {
+		List<String> parts = new ArrayList<>();
+		if (notC(convention)) {
+			for (String key : SIGNATURE_KEYS) {
+				if (convention.containsKey(key)) {
+					parts.add(key + " " + convention.get(key));
+				}
+			}
+		}
+		StringPropertyMap signatures = propertyMap(SIGNATURE_MAP);
+		if (parts.isEmpty()) {
+			signatures.remove(function.getEntryPoint());
+		}
+		else {
+			signatures.add(function.getEntryPoint(), String.join("; ", parts));
 		}
 	}
 

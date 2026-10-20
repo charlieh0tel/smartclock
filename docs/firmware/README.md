@@ -353,7 +353,22 @@ writes them all beside the C, in
 `third_party/firmware/decompiled/z3805a-3543b.conventions.jsonl`: one
 JSON object a line for every function, its address, name, note and
 convention, with its lists split into register, type and name, or
-`"convention":"unknown"`.  `jq 'select(.convention != "unknown" and
+`"convention":"unknown"`.
+
+The exporter also rewrites the signature line of each function that is
+not C, so that the C says so as far as C can.  A macro for its kind
+leads it -- `__pforth`, `__regcall` (register routines and kernel
+services), `__exception`, or `__naked` for `other` and `undetermined` --
+each gcc's `__attribute__((naked))`, `__exception` with `interrupt` too,
+defined at the head of the file.  Each parameter in a register carries
+gcc's m68k `__asm("d0")`, where the convention is `run`, `read` or
+`documented`.  A comment after the line gives what C cannot say: its
+results, condition codes, errors and preserved registers.  Ghidra's
+"Unknown calling convention" warning is dropped from these; it remains
+on C functions whose narrow stack arguments were given storage of their
+own, where it means only that.
+
+    __regcall double scpi_double_multiply(double a __asm("d0"),double b __asm("d2")) /* out D0:D1 double; returns ccr; error D2 -2 underflow, D2 -1 overflow; preserves A0 */  `jq 'select(.convention != "unknown" and
 .confidence != "run")'` lists what is left to confirm.
 
 SCPI handlers are named `scpi_query_PATH` and `scpi_set_PATH`, console

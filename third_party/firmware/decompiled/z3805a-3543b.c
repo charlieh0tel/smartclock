@@ -848,7 +848,7 @@ struct status_model {
 extern void *boot_vectors; /* 00000000 */
 extern void *primary_vectors; /* 00010000 */
 extern ushort status_register_setup_table; /* 0002f7ac */
-extern status_condition status_conditions[57]; /* 0002f838 */
+extern status_condition status_conditions[79]; /* 0002f838 */
 extern scpi_numeric_param * nv_numeric_params[21]; /* 00032d5e */
 extern scpi_setting_param * nv_setting_params[18]; /* 00032db2 */
 extern scpi_numeric_param scpi_param_SAMPle_INTeger; /* 000334de */

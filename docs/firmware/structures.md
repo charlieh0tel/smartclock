@@ -117,8 +117,9 @@ A condition, an entry of `status_conditions` (`0x2f838`), is 6 bytes:
 a kind, a register and a bit.  `status_set_bit` (`0x2820a`) looks the
 condition up (a negative one in a table at `0x28720`), and by its kind
 sets, clears or transfers the register's bit, or puts the condition in
-the queue.  `:DIAG:STAT:HAPP` takes a condition from 0 to `0x38`, so
-the table has 57.
+the queue.  The table has 79, 0 to `0x4e`: `:DIAG:STAT:HAPP n`, n from 0
+to `0x38`, raises condition n + `0x16`, and conditions `0x34` to `0x4b`
+are register 6's (`outputs.md`, "The Z3805A's lamps").
 
 ## Numeric SCPI parameters
 

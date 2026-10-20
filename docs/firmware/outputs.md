@@ -61,6 +61,82 @@ from `0x3429e`), not one it makes.
 Not traced: what drives the alarm output, and the time-code worker's
 output path (`0x13d28`).
 
+## The Z3805A's lamps
+
+097-z3801-01 (1-2, 2-9) gives the Z3801A six front-panel lamps: Power,
+Enabled, Active, Alarm, GPS Lock and Holdover.  In the Z3805A 3543B
+five are bits of the latch at `0x300000` (chip select 1), which
+`leds_update` (`0x464de`) writes whole at the end of each `pllp_task`
+pass, about once a second; Power is not the firmware's.
+
+| Bit | Lamp | Lit while | Query |
+| --- | ---- | --------- | ----- |
+| 0 | Enabled | the byte at `0x101e75` is set | `:LED:ENABled?` |
+| 1 | Active | the byte at `0x101e74` is set | `:LED:ACTive?` |
+| 2 | Alarm | `status_summary` is not 0 | `:LED:ALARm?`, `:LED:ALARm:MAJor?` |
+| 4 | GPS Lock | `pll.led_gps_lock` | `:LED:GPSLock?` |
+| 5 | Holdover | `pll.led_holdover` | `:LED:HOLDover?` |
+
+Bits 3, 6 and 7 drive nothing the firmware names.  The self-test's
+`lamp_test` (`0x184ee`) writes `0xff`, then 0, then each bit in turn,
+`0x133` ticks apiece, and then `leds_update`: the flashing at power-up
+the manual describes (1-8).
+
+- *Enabled and Active* are the user's: `:LED:ENABled` and
+  `:LED:ACTive` store them through their setting descriptors, and no
+  other code writes them.  They live in the block at `0x101e70` that
+  `pllp_task` copies to battery-backed RAM (`loop.md`'s table of
+  3704's, +4 and +5).
+- *GPS Lock* follows the loop's stage (`pll_stage_status`, `0x46524`,
+  through the table at `0x4654a`): lit on entering startup PLL (5) or
+  normal PLL (6), with log event 6 and status condition `0x1a`;
+  cleared, with condition `0x1b`, on entering power-up, power-up
+  recovery, holdover, holdover recovery, diagnostic or fatal error.
+  Idle leaves it as it is.
+- *Holdover* likewise (table `0x465ca`): lit on entering holdover (3)
+  or holdover recovery (4), with condition `0x2a` (`0x28` if holdover
+  is manual) or `0x2c`; cleared in every other stage but idle.
+- *Alarm* is lit while any of `status_summary`'s six bits is, which
+  `status_summary_update` (`0x46470`) recomputes each pass from the
+  `:STATus:OPERation:HARDware` condition, so it goes out when the
+  condition does:
+
+  | Summary bit | From |
+  | ----------- | ---- |
+  | 1 | hardware bit 0, self-test failure |
+  | 2 | hardware bits 1 to 3: the +15 V, −15 V and +5 V supplies |
+  | 4 | hardware bit 7, the EFC at full scale |
+  | 8 | hardware bits 8 and 9, GPS 1 PPS failure and GPS failure |
+  | `0x10` | hardware bit 12, internal reference failure |
+  | `0x20` | the holdover duration past `:ROSCillator:HOLDover:DURation:STATus:THReshold` |
+
+  The oven supplies (bits 4 and 5), the EFC near full scale (bit 6)
+  and the time-interval and EEPROM events (bits 10 and 11) do not
+  light it.  The `es` message carries the summary byte
+  (`es_build`).  `:LED:ALARm:USER`, which 097-z3801-01 (4-5) says
+  chooses the alarm's conditions, does nothing here: its setter
+  and query (`0x2d996`, `0x2d99a`) are `moveq #$e0,d0; rts`, the same stub as
+  `:OUTPut:PINn:DELay`'s above, and `:LED:ALARm:MINor?` fails.
+- `:LED:TMHValid?` answers `pll.led_tmh_valid`, which no code writes:
+  always 0.
+
+The last summary bit's flag (`0x101e88`) is set by `holdover` and
+`holdover_recovery` once `pll.holdover_duration` passes the threshold,
+with condition `0x2e` (`:STATus:OPERation:HOLDover` bit 3, "Exceeding
+User-Threshold"), and cleared on regaining lock.  With it,
+`pwma_force_level` forces the PWMA pin low, and releases it on lock,
+as `loop.md` records for 3704; what the pin drives was not traced.
+`:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded?` returns
+the flag.
+
+The hardware register's bits are set and cleared by conditions `0x34`
+to `0x4b` of `status_conditions`, a pair for each bit (bits 10 and 11
+by one event each), in the order 097-59551-02 (5-38) gives the
+58503A's.  The health monitor's messages confirm three: `6`/`7` with
+"15V is out of tolerance" and "now within tolerance" on bit 1, `8`/`9`
+with "-15V" on bit 2, and `>` with "Secondary oven voltage is out of
+tolerance" on bit 5, which the 58503A's list leaves out.
+
 ## The FPGA bitstreams
 
 Every image carries two 3860-byte blocks, each starting `ff 20 07 86`,

@@ -237,7 +237,7 @@
 # structures and the functions they show, docs/firmware/structures.md
 0x102eb8	label	status_object	structures.md	status_init passes its address to status_create	status_model *
 0x102eb7	label	status_ready	structures.md	status_init sets it; status_report does nothing without it	char
-0x2f838	label	status_conditions	structures.md	status_create's condition table, status_set_bit's entries	status_condition[57]
+0x2f838	label	status_conditions	structures.md	status_create's condition table, status_set_bit's entries	status_condition[79]
 0x2f7ac	label	status_register_setup_table	structures.md	status_init's 22-byte entries, one a register, for status_register_setup
 0x2f480	function	status_init	structures.md	builds status_object with status_create, sets each register up, sets status_ready
 0x280ea	function	status_create	structures.md	allocates the status model and its registers, builds the queue

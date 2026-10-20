@@ -285,7 +285,7 @@ not.  About half the functions are named.  The output is
 `third_party/firmware/decompiled/z3805a-3543b.c`.
 
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,
-a Ghidra archive: restore it (File, Restore Project, or ghidra-mcp's
+a Ghidra archive in Git LFS (install `git-lfs` to fetch it): restore it (File, Restore Project, or ghidra-mcp's
 `restore_project`) to work on it, and archive it over that file after
 work worth keeping.  The scripts rebuild everything in it from the
 image but names given by hand.  An exception in a script does not roll

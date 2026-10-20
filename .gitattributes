@@ -5,3 +5,6 @@
 # Kept exactly as posted, carriage returns and all, so it matches the
 # SHA-256 in third_party/NOTICE.
 third_party/firmware/58503b-L85376-console.log -text
+
+# The Ghidra project archive is binary and replaced whole on each update.
+third_party/firmware/ghidra/*.gar filter=lfs diff=lfs merge=lfs -text

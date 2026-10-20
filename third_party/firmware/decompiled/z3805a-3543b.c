@@ -641,7 +641,8 @@ typedef enum pll_hold_cause {
     HOLD_CAUSE_TI_LIMIT_EXCEEDED=8,
     HOLD_CAUSE_HARDWARE_FAILURE=16,
     HOLD_CAUSE_TEMPORARY_MODE=32,
-    HOLD_CAUSE_1PPS_SELECTION=64
+    HOLD_CAUSE_1PPS_SELECTION=64,
+    HOLD_CAUSE_UNKNOWN_80=128
 } pll_hold_cause;
 
 typedef enum pll_stage {
@@ -18785,29 +18786,53 @@ undefined1 diag_pr_hold_cause(void)
   undefined1 extraout_D0b;
   char *format;
   
-  if (pll.hold_causes == 0) {
+  if (pll.hold_causes ==
+      ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
+       HOLD_CAUSE_MANUAL)) {
     format = "No holdover cause\r\n";
   }
   else {
-    if ((pll.hold_causes & HOLD_CAUSE_HARDWARE_FAILURE) != 0) {
+    if ((pll.hold_causes & HOLD_CAUSE_HARDWARE_FAILURE) !=
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       printf("Holdover due to hardware failure\r\n");
     }
-    if ((pll.hold_causes & HOLD_CAUSE_MANUAL) != 0) {
+    if ((pll.hold_causes & HOLD_CAUSE_MANUAL) !=
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       printf("Holdover due to manual\r\n");
     }
-    if ((pll.hold_causes & HOLD_CAUSE_GPS) != 0) {
+    if ((pll.hold_causes & HOLD_CAUSE_GPS) !=
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       printf("Holdover due to GPS\r\n");
     }
-    if ((pll.hold_causes & HOLD_CAUSE_TI_ERROR) != 0) {
+    if ((pll.hold_causes & HOLD_CAUSE_TI_ERROR) !=
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       printf("Holdover due to TI error\r\n");
     }
-    if ((pll.hold_causes & HOLD_CAUSE_TI_LIMIT_EXCEEDED) != 0) {
+    if ((pll.hold_causes & HOLD_CAUSE_TI_LIMIT_EXCEEDED) !=
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       printf("Holdover due to TI limit exceeded\r\n");
     }
-    if ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) != 0) {
+    if ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) !=
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       printf("Holdover due to temporary mode\r\n");
     }
-    if ((pll.hold_causes & HOLD_CAUSE_1PPS_SELECTION) == 0) {
+    if ((pll.hold_causes & HOLD_CAUSE_1PPS_SELECTION) ==
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       return 0;
     }
     format = "Holdover due to 1PPS selection\r\n";
@@ -42687,7 +42712,10 @@ pll_hold_cause enter_holdover(void)
   if (pll.stage != PLL_STAGE_HOLDOVER_RECOVERY) {
     pll.holdover_duration = 0;
   }
-  if (((pll.hold_causes & HOLD_CAUSE_MANUAL) == 0) && (DAT_00101e76 != '\0')) {
+  if (((pll.hold_causes & HOLD_CAUSE_MANUAL) ==
+       ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+         HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS
+        |HOLD_CAUSE_MANUAL)) && (DAT_00101e76 != '\0')) {
     pll.manual = 0;
   }
   else {
@@ -42698,35 +42726,56 @@ pll_hold_cause enter_holdover(void)
     pll.stage = PLL_STAGE_HOLDOVER;
     return pll.hold_causes & HOLD_CAUSE_MANUAL;
   }
-  if ((pll.hold_causes & HOLD_CAUSE_MANUAL) != 0) {
+  if ((pll.hold_causes & HOLD_CAUSE_MANUAL) !=
+      ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
+       HOLD_CAUSE_MANUAL)) {
     code = 7;
     goto LAB_00043a88;
   }
-  if ((pll.hold_causes & HOLD_CAUSE_GPS) == 0) {
-    if ((pll.hold_causes & HOLD_CAUSE_TI_ERROR) != 0) {
+  if ((pll.hold_causes & HOLD_CAUSE_GPS) ==
+      ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
+       HOLD_CAUSE_MANUAL)) {
+    if ((pll.hold_causes & HOLD_CAUSE_TI_ERROR) !=
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       code = 0x10;
       goto LAB_00043a88;
     }
-    if ((pll.hold_causes & HOLD_CAUSE_TI_LIMIT_EXCEEDED) != 0) {
+    if ((pll.hold_causes & HOLD_CAUSE_TI_LIMIT_EXCEEDED) !=
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       code = 0x11;
       goto LAB_00043a88;
     }
-    if ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) != 0) {
+    if ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) !=
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       code = 0x12;
       goto LAB_00043a88;
     }
-    if ((pll.hold_causes & HOLD_CAUSE_HARDWARE_FAILURE) != 0) {
+    if ((pll.hold_causes & HOLD_CAUSE_HARDWARE_FAILURE) !=
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       code = 0xf;
       goto LAB_00043a88;
     }
-    if ((pll.hold_causes & HOLD_CAUSE_1PPS_SELECTION) != 0) {
+    if ((pll.hold_causes & HOLD_CAUSE_1PPS_SELECTION) !=
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       code = 0x13;
       goto LAB_00043a88;
     }
-    if ((pll.hold_causes &
-        ~(HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|HOLD_CAUSE_HARDWARE_FAILURE|
-          HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) == 0)
-    {
+    if ((pll.hold_causes & HOLD_CAUSE_UNKNOWN_80) ==
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       code = 0x14;
       goto LAB_00043a88;
     }
@@ -42977,7 +43026,9 @@ override_jmp_00043ae6_case_0:
   }
   if (DAT_00102046 != 10) goto LAB_00043ee6;
   pll.hold_causes =
-       pll.hold_causes & ~(HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS);
+       pll.hold_causes &
+       (HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_MANUAL);
   interval_mean_flag = 1;
   interval_mean = _DAT_00102042;
   if ((pll.field_013[0] == 0) && (nv_settings.holdover_limit_state == 0)) {
@@ -42988,19 +43039,26 @@ override_jmp_00043ae6_case_0:
   }
   else {
 LAB_00043eb8:
-    pll.hold_causes = pll.hold_causes & ~HOLD_CAUSE_TI_LIMIT_EXCEEDED;
+    pll.hold_causes =
+         pll.hold_causes &
+         (HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL);
   }
-  if (((pll.hold_causes &
-       ~(HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|HOLD_CAUSE_HARDWARE_FAILURE|
-         HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) != 0)
-     && (gps.field_52a[0x1f] == 0)) {
+  if (((pll.hold_causes & HOLD_CAUSE_UNKNOWN_80) !=
+       ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+         HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS
+        |HOLD_CAUSE_MANUAL)) && (gps.field_52a[0x1f] == 0)) {
     pll.hold_causes =
          pll.hold_causes &
          (HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|HOLD_CAUSE_HARDWARE_FAILURE|
           HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL);
   }
 LAB_00043ee6:
-  if ((pll.manual == 0) && (pll.hold_causes == 0)) {
+  if ((pll.manual == 0) &&
+     (pll.hold_causes ==
+      ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
+       HOLD_CAUSE_MANUAL))) {
     uVar6 = 1;
     pll.field_013[0] = 0;
   }
@@ -43123,10 +43181,7 @@ override_jmp_00043ff8_case_0:
       pll.recovery_state = 5;
     }
     else if (gps.field_52a[0x1f] != 0) {
-      pll.hold_causes =
-           pll.hold_causes |
-           ~(HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|HOLD_CAUSE_HARDWARE_FAILURE|
-             HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL);
+      pll.hold_causes = pll.hold_causes | HOLD_CAUSE_UNKNOWN_80;
       pll.field_02c[4] = 1;
     }
     goto LAB_0004411a;
@@ -43157,7 +43212,10 @@ LAB_0004411a:
   if (internal_pps_dead != 0) {
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_HARDWARE_FAILURE;
   }
-  if (pll.hold_causes != 0) {
+  if (pll.hold_causes !=
+      ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
+       HOLD_CAUSE_MANUAL)) {
     cVar3 = '\x02';
   }
   if (cVar3 == '\x01') {
@@ -43446,7 +43504,10 @@ char startup_pll(char param_1)
   if (internal_pps_dead != 0) {
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_HARDWARE_FAILURE;
   }
-  if (pll.hold_causes != 0) {
+  if (pll.hold_causes !=
+      ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
+       HOLD_CAUSE_MANUAL)) {
     cVar5 = '\x02';
   }
   return cVar5;
@@ -43631,7 +43692,10 @@ undefined1 pll_normal(char param_1)
   if (internal_pps_dead != 0) {
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_HARDWARE_FAILURE;
   }
-  if (pll.hold_causes != 0) {
+  if (pll.hold_causes !=
+      ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
+       HOLD_CAUSE_MANUAL)) {
     local_7a = 2;
   }
   return local_7a;
@@ -44272,7 +44336,10 @@ void FUN_00045a24(void)
 void antenna_delay_done(void)
 
 {
-  pll.hold_causes = pll.hold_causes & ~HOLD_CAUSE_TEMPORARY_MODE;
+  pll.hold_causes =
+       pll.hold_causes &
+       (HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_HARDWARE_FAILURE|
+        HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL);
   return;
 }
 
@@ -44398,14 +44465,26 @@ undefined1 holdover_waiting_reason(void)
 
 {
   if (pll.stage == PLL_STAGE_HOLDOVER) {
-    if (((pll.hold_causes & HOLD_CAUSE_HARDWARE_FAILURE) != 0) ||
-       ((pll.hold_causes & HOLD_CAUSE_TI_ERROR) != 0)) {
+    if (((pll.hold_causes & HOLD_CAUSE_HARDWARE_FAILURE) !=
+         ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+           HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) ||
+       ((pll.hold_causes & HOLD_CAUSE_TI_ERROR) !=
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL))) {
       return 0x10;
     }
-    if ((pll.hold_causes & HOLD_CAUSE_GPS) != 0) {
+    if ((pll.hold_causes & HOLD_CAUSE_GPS) !=
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       return 2;
     }
-    if ((pll.hold_causes & HOLD_CAUSE_TI_LIMIT_EXCEEDED) != 0) {
+    if ((pll.hold_causes & HOLD_CAUSE_TI_LIMIT_EXCEEDED) !=
+        ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+          HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
       return 8;
     }
   }
@@ -44534,8 +44613,10 @@ undefined1 powerup(char param_1)
       interval_next_reading('\x01',(undefined4 *)0x0);
       pll.field_004[0] = 0;
       if ((((DAT_00102550 != '\0') && (internal_pps_dead == 0)) &&
-          ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) == 0)) && ('\r' < (char)pll.gps_init_state)
-         ) {
+          ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) ==
+           ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+             HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+             HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL))) && ('\r' < (char)pll.gps_init_state)) {
         pll.powerup_state = 4;
         pll.coarse_state = 0;
       }
@@ -44619,7 +44700,10 @@ override_jmp_00045f06_case_0:
   }
   if (('\x03' < (char)pll.powerup_state) &&
      (((DAT_00102550 == '\0' || (internal_pps_dead != 0)) ||
-      ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) != 0)))) {
+      ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) !=
+       ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+         HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS
+        |HOLD_CAUSE_MANUAL))))) {
     pll.field_004[0] = 1;
   }
   if ((pll.field_004[0] != 0) && ((pll.powerup_state != 7 || (pll.field_02c[2] != 0)))) {
@@ -44669,7 +44753,10 @@ undefined1 pll_check_reference(char param_1)
         if (internal_pps_dead != 0) {
           pll.hold_causes = pll.hold_causes | HOLD_CAUSE_HARDWARE_FAILURE;
         }
-        if (pll.hold_causes == 0) {
+        if (pll.hold_causes ==
+            ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+              HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+              HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
           uVar4 = 1;
         }
         else {
@@ -44696,7 +44783,10 @@ undefined1 pll_check_reference(char param_1)
         if (internal_pps_dead != 0) {
           pll.hold_causes = pll.hold_causes | HOLD_CAUSE_HARDWARE_FAILURE;
         }
-        if (pll.hold_causes == 0) {
+        if (pll.hold_causes ==
+            ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+              HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+              HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) {
           return 1;
         }
       }
@@ -45853,7 +45943,10 @@ void pll_init(void)
   pll.efc = (float)efc_clamp(_DAT_00101d00);
   pll.loop_time_constant = 150.0;
   DAT_00101e76 = 1;
-  pll.hold_causes = 0;
+  pll.hold_causes =
+       ~(HOLD_CAUSE_UNKNOWN_80|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+         HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS
+        |HOLD_CAUSE_MANUAL);
   pll.manual = 0;
   pll.field_013[0] = 0;
   pll.field_3d1[0] = 1;

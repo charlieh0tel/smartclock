@@ -50,7 +50,8 @@ typedef enum __attribute__((packed)) pll_hold_cause {
 	HOLD_CAUSE_TI_LIMIT_EXCEEDED = 0x08,
 	HOLD_CAUSE_HARDWARE_FAILURE = 0x10,
 	HOLD_CAUSE_TEMPORARY_MODE = 0x20,
-	HOLD_CAUSE_1PPS_SELECTION = 0x40
+	HOLD_CAUSE_1PPS_SELECTION = 0x40,
+	HOLD_CAUSE_UNKNOWN_80 = 0x80 /* tested by enter_holdover, printed by nothing */
 } pll_hold_cause;
 
 /* An ADC channel, by the console words that read and average them.  The

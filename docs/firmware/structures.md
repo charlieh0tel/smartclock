@@ -252,7 +252,7 @@ Its other named fields, by the routines that use them:
 | `+0x03` | `powerup_state` | `powerup`'s sub-state, the ladder of `../screen-format-strings.md` |
 | `+0x06` | `reference_check_state` | `pll_check_reference`'s sub-state |
 | `+0x0c`, `+0x0e`, `+0x10` | `startup_state`, `normal_state`, `holdover_state` | `startup_pll`'s, `pll_normal`'s and `holdover`'s sub-states |
-| `+0x11` | `hold_causes` | why the loop holds over, a set of `pll_hold_cause` bits as the console's `pr_hold_cause` prints them: manual 1, GPS 2, TI error 4, TI limit exceeded 8, hardware failure 0x10, temporary mode 0x20, 1PPS selection 0x40 |
+| `+0x11` | `hold_causes` | why the loop holds over, a set of `pll_hold_cause` bits as the console's `pr_hold_cause` prints them: manual 1, GPS 2, TI error 4, TI limit exceeded 8, hardware failure 0x10, temporary mode 0x20, 1PPS selection 0x40; 0x80, which `enter_holdover` tests and nothing prints, is not known |
 | `+0x16` | `coarse_state` | `coarse`'s sub-state |
 | `+0x18` | `frequency_adjusted` | set when `fine` applies a frequency correction; `holdover_limit_exceeded` counts the limit exceeded while it is |
 | `+0x1a` | `fine_retries` | `fine`'s failed attempts, a word; it gives up past 9 |

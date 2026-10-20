@@ -620,7 +620,7 @@
 0x46394	function	leap_event_delete	"Error in deleting old leapsecond event"	deletes the pending leap second event
 0x463c2	function	leap_event_create	"Error in creating leapsecond event"	creates the leap second event
 0x44f5e	function	sync_perform	"Peforming sync"	synchronizes the outputs to GPS time
-0x45bb8	function	pll_powerup_step	screen-format-strings.md's ladder: the power-up sub-state's suffix index	the power-up sub-state, as the status screen's suffix index
+0x45bb8	function	pll_powerup_suffix_index	screen-format-strings.md's ladder: the power-up sub-state's suffix index	the power-up sub-state, as the status screen's suffix index
 0x4a8ea	function	status_screen	"Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status"	prints the receiver status screen
 0x49db0	function	status_screen_sync	"Synchronized to UTC", "Synchronized to GPS Time", "Assessing stability"	the status screen's synchronization line
 0x4a518	function	status_screen_mode_suffix	screen-format-strings.md's mode suffixes, ": OCXO warm-up" .. ": leap second determination", "[TI %9.9s]"	the status screen's suffix for the power-up sub-state
@@ -877,3 +877,26 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x43466	function	questionable_user_done	scpi_param_STATus_QUEStionable_USER: done	reports status event M when the user bit is set and N when it is cleared
 0x45b02	function	antenna_delay_done	scpi_param_SOURce_GPSystem_ADELay: done	clears bit 5 of pll's byte at +0x11 once the antenna delay changes
 0x30c60	function	save_calibration_block	scpi_param_DIAGnostic_ROSCillator_TCOefficient: done; interval.md's calibration block	rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs from it, reporting status 0x10 if the EEPROM write fails
+#
+# the PLL task's routines, loop.md
+0x45e8e	function	powerup	loop.md's power-up stage	the power-up stage: steps its sub-state, pll +3, through start, the oven warm-ups and waiting for GPS, then coarse and fine, setting tfom to 1e-3 and then 2e-6
+0x4397a	function	enter_holdover	loop.md's holdover stage	sets the stage to holdover and the manual flag from fault bit 0, and logs the cause: a code for each fault bit at pll +0x11, the GPS receiver's status for bit 1
+0x473d2	function	pll_init	structures.md's pll	clears pll, sets its stage invalid, its EFC from the saved value, tfom 1.0 and its defaults
+0x47466	function	pll_restart	context	re-initializes pll, keeping two bytes, reports event /, and starts the power-up stage
+0x43f18	function	clock_check_against_gps	context	compares the clock's date and time with gps.status, and on a second mismatch running sets the clock from GPS and reports event L
+0x4637a	function	leap_settings_clear	context	clears the pending leap second: leap_pending 0, a 60-second minute, leap_date 1994-01-01
+0x46470	function	status_summary_update	context	builds status_summary's bits from the status registers
+0x4172a	function	curv_signal	context	signals the curv task, event 0x100
+0x4391e	function	holdover_limit_exceeded	context	1 unless the holdover is younger than holdover_measurement_threshold and the TI is within its age times a rate plus holdover_limit_threshold
+0x43804	function	holdover_ti_reset	context	clears holdover's TI statistics
+0x4381e	function	holdover_ti_add	context	adds a TI reading to holdover's statistics: a sum, a sum weighted by count, the count and the largest magnitude
+0x43916	function	holdover_ti_max	context	the largest TI magnitude holdover has seen, for holdover_limit_exceeded
+0x46188	function	pll_check_reference	context	waits for an interval reading, sets fault bits at pll +0x11 (2 no GPS, 4 no reading, 0x10 internal 1PPS dead) and sets the clock from the reference; 1 if all is well, 2 if faulted
+0x44e8e	function	fine_sync_adjust	context	for a TI beyond 1e-7 requests a sync of one to three steps of 100 ns, and returns the steps, 4 for beyond 3e-7; fine stores it as pll.fine_index
+0x46290	function	clock_set_from_reference	context	takes the seconds from an FPGA count and the uptime, clamped to 0 to 59, adds them to the clock's time and sets it
+0x4173e	function	aging_fit_collect	context	if the curv task has signaled 0x100, copies its fit's results into pll; efc_history_update calls it first
+0x464de	function	leds_update	context	writes the status flags to the latch at 0x300000, which the self-test walks a bit through: the front-panel lamps
+0x470aa	function	gps_command_send	context	maps the pending GPS command code at 0x10256c to an Oncore command and sends it
+0x433b6	function	pll_scpi_complete	context	once the reply flag is set: clears it, reports failure, finishes the SCPI command and signals its task; otherwise counts
+0x433fc	function	gps_diag_complete	context	once the reply flag is set: clears it and signals the waiting task; otherwise counts
+0x30b66	function	lifetime_update	context	on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules its clock event

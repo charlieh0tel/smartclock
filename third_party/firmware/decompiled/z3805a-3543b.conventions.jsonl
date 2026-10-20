@@ -1260,7 +1260,7 @@
 {"address":"0003082e","name":"record_checksum","note":"the sum and its complement of an EEPROM record's bytes after the first two","convention":"unknown"}
 {"address":"00030a3e","name":"FUN_00030a3e","convention":"unknown"}
 {"address":"00030ab4","name":"FUN_00030ab4","convention":"unknown"}
-{"address":"00030b66","name":"FUN_00030b66","convention":"unknown"}
+{"address":"00030b66","name":"lifetime_update","note":"on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules its clock event","convention":"unknown"}
 {"address":"00030c1e","name":"FUN_00030c1e","convention":"unknown"}
 {"address":"00030c60","name":"save_calibration_block","note":"rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs from it, reporting status 0x10 if the EEPROM write fails","convention":"unknown"}
 {"address":"00030d2e","name":"FUN_00030d2e","convention":"unknown"}
@@ -1366,8 +1366,8 @@
 {"address":"0004119c","name":"FUN_0004119c","convention":"unknown"}
 {"address":"00041244","name":"FUN_00041244","convention":"unknown"}
 {"address":"0004137e","name":"efc_history_update","note":"sums the EFC and stores each 2700 samples an entry of efc_history","convention":"unknown"}
-{"address":"0004172a","name":"FUN_0004172a","convention":"unknown"}
-{"address":"0004173e","name":"FUN_0004173e","convention":"unknown"}
+{"address":"0004172a","name":"curv_signal","note":"signals the curv task, event 0x100","convention":"unknown"}
+{"address":"0004173e","name":"aging_fit_collect","note":"if the curv task has signaled 0x100, copies its fit's results into pll; efc_history_update calls it first","convention":"unknown"}
 {"address":"00041784","name":"curv_task","note":"root_task starts curv here","convention":"unknown"}
 {"address":"000417c6","name":"aging_fit","note":"fits the oscillator's aging curve, for the curv task","convention":"unknown"}
 {"address":"00041a42","name":"FUN_00041a42","convention":"unknown"}
@@ -1401,25 +1401,25 @@
 {"address":"000431f4","name":"get_setup_vars","note":"finds the variables behind a PLL SCPI setting, by its descriptor's type","convention":"unknown"}
 {"address":"000432bc","name":"pll_scpi_command","note":"the pllc task's handling of one request: checks it, validate_num, reports, finish_scpi_cmd","convention":"unknown"}
 {"address":"00043340","name":"pll_scpi_receive","note":"takes a request from pllc_exchange and handles it","convention":"unknown"}
-{"address":"000433b6","name":"FUN_000433b6","convention":"unknown"}
-{"address":"000433fc","name":"FUN_000433fc","convention":"unknown"}
+{"address":"000433b6","name":"pll_scpi_complete","note":"once the reply flag is set: clears it, reports failure, finishes the SCPI command and signals its task; otherwise counts","convention":"unknown"}
+{"address":"000433fc","name":"gps_diag_complete","note":"once the reply flag is set: clears it and signals the waiting task; otherwise counts","convention":"unknown"}
 {"address":"00043466","name":"questionable_user_done","note":"reports status event M when the user bit is set and N when it is cleared","convention":"unknown"}
 {"address":"00043482","name":"FUN_00043482","convention":"unknown"}
 {"address":"000434c2","name":"FUN_000434c2","convention":"unknown"}
 {"address":"00043504","name":"FUN_00043504","convention":"unknown"}
 {"address":"00043546","name":"FUN_00043546","convention":"unknown"}
-{"address":"00043804","name":"FUN_00043804","convention":"unknown"}
-{"address":"0004381e","name":"FUN_0004381e","convention":"unknown"}
+{"address":"00043804","name":"holdover_ti_reset","note":"clears holdover's TI statistics","convention":"unknown"}
+{"address":"0004381e","name":"holdover_ti_add","note":"adds a TI reading to holdover's statistics: a sum, a sum weighted by count, the count and the largest magnitude","convention":"unknown"}
 {"address":"00043888","name":"FUN_00043888","convention":"unknown"}
-{"address":"00043916","name":"FUN_00043916","convention":"unknown"}
-{"address":"0004391e","name":"FUN_0004391e","convention":"unknown"}
-{"address":"0004397a","name":"FUN_0004397a","convention":"unknown"}
+{"address":"00043916","name":"holdover_ti_max","note":"the largest TI magnitude holdover has seen, for holdover_limit_exceeded","convention":"unknown"}
+{"address":"0004391e","name":"holdover_limit_exceeded","note":"1 unless the holdover is younger than holdover_measurement_threshold and the TI is within its age times a rate plus holdover_limit_threshold","convention":"unknown"}
+{"address":"0004397a","name":"enter_holdover","note":"sets the stage to holdover and the manual flag from fault bit 0, and logs the cause: a code for each fault bit at pll +0x11, the GPS receiver's status for bit 1","convention":"unknown"}
 {"address":"00043a90","name":"holdover","note":"the loop's holdover stage, steering the oscillator without GPS","convention":"unknown"}
-{"address":"00043f18","name":"FUN_00043f18","convention":"unknown"}
+{"address":"00043f18","name":"clock_check_against_gps","note":"compares the clock's date and time with gps.status, and on a second mismatch running sets the clock from GPS and reports event L","convention":"unknown"}
 {"address":"00043f9a","name":"holdover_recovery","note":"the loop's stage that recovers from holdover once GPS returns","convention":"unknown"}
 {"address":"0004429e","name":"startup_pll","note":"the loop's start-up stage","convention":"unknown"}
 {"address":"000448fc","name":"pll_normal","note":"the loop's normal stage: averages interval readings, counting them to ten and storing the mean","convention":"unknown"}
-{"address":"00044e8e","name":"FUN_00044e8e","convention":"unknown"}
+{"address":"00044e8e","name":"fine_sync_adjust","note":"for a TI beyond 1e-7 requests a sync of one to three steps of 100 ns, and returns the steps, 4 for beyond 3e-7; fine stores it as pll.fine_index","convention":"unknown"}
 {"address":"00044f5e","name":"sync_perform","note":"synchronizes the outputs to GPS time","convention":"unknown"}
 {"address":"00044fbc","name":"interval_next_reading","note":"the next one-second interval reading, into *reading as a float, and its flag; waits instead while a 1PPS is dead; updates the EFC history","convention":"unknown"}
 {"address":"000450c4","name":"interval_rearm","note":"the other half of interval_next_reading: counter_calibrate, or sync_request(3, 1) for mode 2, then counter_arm","convention":"unknown"}
@@ -1429,7 +1429,7 @@
 {"address":"00045a24","name":"FUN_00045a24","convention":"unknown"}
 {"address":"00045b02","name":"antenna_delay_done","note":"clears bit 5 of pll's byte at +0x11 once the antenna delay changes","convention":"unknown"}
 {"address":"00045b70","name":"pll_mode","note":"the status screen's mode accessor, from pll.stage and pll.manual; the HOLDover queries and HOLD:INIT test it","convention":"unknown"}
-{"address":"00045bb8","name":"pll_powerup_step","note":"the power-up sub-state, as the status screen's suffix index","convention":"unknown"}
+{"address":"00045bb8","name":"pll_powerup_suffix_index","note":"the power-up sub-state, as the status screen's suffix index","convention":"unknown"}
 {"address":"00045c18","name":"FUN_00045c18","convention":"unknown"}
 {"address":"00045c48","name":"FUN_00045c48","convention":"unknown"}
 {"address":"00045c8e","name":"FUN_00045c8e","convention":"unknown"}
@@ -1437,14 +1437,14 @@
 {"address":"00045c92","name":"FUN_00045c92","convention":"unknown"}
 {"address":"00045cc0","name":"FUN_00045cc0","convention":"unknown"}
 {"address":"00045ce4","name":"FUN_00045ce4","convention":"unknown"}
-{"address":"00045e8e","name":"FUN_00045e8e","convention":"unknown"}
-{"address":"00046188","name":"FUN_00046188","convention":"unknown"}
-{"address":"00046290","name":"FUN_00046290","convention":"unknown"}
-{"address":"0004637a","name":"FUN_0004637a","convention":"unknown"}
+{"address":"00045e8e","name":"powerup","note":"the power-up stage: steps its sub-state, pll +3, through start, the oven warm-ups and waiting for GPS, then coarse and fine, setting tfom to 1e-3 and then 2e-6","convention":"unknown"}
+{"address":"00046188","name":"pll_check_reference","note":"waits for an interval reading, sets fault bits at pll +0x11 (2 no GPS, 4 no reading, 0x10 internal 1PPS dead) and sets the clock from the reference; 1 if all is well, 2 if faulted","convention":"unknown"}
+{"address":"00046290","name":"clock_set_from_reference","note":"takes the seconds from an FPGA count and the uptime, clamped to 0 to 59, adds them to the clock's time and sets it","convention":"unknown"}
+{"address":"0004637a","name":"leap_settings_clear","note":"clears the pending leap second: leap_pending 0, a 60-second minute, leap_date 1994-01-01","convention":"unknown"}
 {"address":"00046394","name":"leap_event_delete","note":"deletes the pending leap second event","convention":"unknown"}
 {"address":"000463c2","name":"leap_event_create","note":"creates the leap second event","convention":"unknown"}
-{"address":"00046470","name":"FUN_00046470","convention":"unknown"}
-{"address":"000464de","name":"FUN_000464de","convention":"unknown"}
+{"address":"00046470","name":"status_summary_update","note":"builds status_summary's bits from the status registers","convention":"unknown"}
+{"address":"000464de","name":"leds_update","note":"writes the status flags to the latch at 0x300000, which the self-test walks a bit through: the front-panel lamps","convention":"unknown"}
 {"address":"00046524","name":"pll_stage_status","note":"by pll.stage, sets two pll flags and the status happenings they imply (0x1a, 0x1b, 0x28, 0x2a, 0x2c), with log_event(6); pllp_task calls it at start and on stage changes","convention":"unknown"}
 {"address":"00046620","name":"gps_ack_received","note":"returns gps_ack_ready, clearing gps_ack_awaited once it is set; the ack checker 0x46838 polls it","convention":"unknown"}
 {"address":"00046636","name":"gpsx_send","note":"copies four longs and sends them to gpsx_exchange","convention":"unknown"}
@@ -1453,10 +1453,10 @@
 {"address":"00046d98","name":"gps_leap_sequence","note":"steps the leap second check with the GPS engine","convention":"unknown"}
 {"address":"00046e70","name":"gps_leap_ack","note":"the leap second's acknowledgement step; \"Error in leapsecond ack\"; sets the GPS-UTC offset","convention":"unknown"}
 {"address":"00047078","name":"FUN_00047078","convention":"unknown"}
-{"address":"000470aa","name":"FUN_000470aa","convention":"unknown"}
+{"address":"000470aa","name":"gps_command_send","note":"maps the pending GPS command code at 0x10256c to an Oncore command and sends it","convention":"unknown"}
 {"address":"000471fc","name":"gps_diag_sequence","note":"the GPS diagnostic reset and test; \"Error in DIAG GPS RST ack\", \"TST ack\"","convention":"unknown"}
-{"address":"000473d2","name":"FUN_000473d2","convention":"unknown"}
-{"address":"00047466","name":"FUN_00047466","convention":"unknown"}
+{"address":"000473d2","name":"pll_init","note":"clears pll, sets its stage invalid, its EFC from the saved value, tfom 1.0 and its defaults","convention":"unknown"}
+{"address":"00047466","name":"pll_restart","note":"re-initializes pll, keeping two bytes, reports event /, and starts the power-up stage","convention":"unknown"}
 {"address":"000474c2","name":"FUN_000474c2","convention":"unknown"}
 {"address":"00047528","name":"pllp_task","note":"root_task starts pllp here","convention":"unknown"}
 {"address":"00047de2","name":"FUN_00047de2","convention":"unknown"}

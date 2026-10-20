@@ -4189,7 +4189,7 @@ void FUN_00010b00(undefined4 param_1,undefined4 param_2)
 
 {
   set_timedate(param_2,param_1);
-  FUN_00030b66(param_2);
+  lifetime_update(param_2);
   return;
 }
 
@@ -5742,7 +5742,7 @@ void FUN_00012bb4(void)
     else {
       memcpy(&DAT_00101e70,&DAT_0003094c,0x19);
       FUN_0004bef6();
-      FUN_000473d2();
+      pll_init();
       DAT_00100002 = 0;
       DAT_001037df = '\0';
     }
@@ -5750,7 +5750,7 @@ void FUN_00012bb4(void)
   else {
     memcpy(&DAT_00101e70,&DAT_0003094c,0x19);
     FUN_0004bef6();
-    FUN_000473d2();
+    pll_init();
     DAT_00100002 = 1;
     DAT_001037df = '\0';
     bVar4 = PORTE0;
@@ -6388,7 +6388,7 @@ void FUN_00013502(void)
     if (DAT_00100bc8 != '\0') {
       DAT_00100bc8 = '\0';
       DAT_00102542 = 1;
-      FUN_0004637a();
+      leap_settings_clear();
       if (*(char *)(unaff_A6 + 0x2e) == ';') {
         *(short *)(unaff_A6 + 0x30) = *(short *)(unaff_A6 + 0x30) + -1;
       }
@@ -6424,7 +6424,7 @@ LAB_000135ba:
   if ((DAT_00100bc9 != '\0') && (*(int *)(unaff_A6 + 6) == _DAT_00100bca)) {
     DAT_00100bc9 = '\0';
     DAT_00102542 = 1;
-    FUN_0004637a();
+    leap_settings_clear();
     *(short *)(unaff_A6 + 0x30) = _DAT_00100bce + *(short *)(unaff_A6 + 0x30);
   }
   return;
@@ -13709,7 +13709,7 @@ void FUN_000184ee(void)
     watchdog_pll = watchdog_pll + 1;
     uVar1 = uVar1 << 1;
   } while (uVar1 < 0x100);
-  FUN_000464de();
+  leds_update();
   return;
 }
 
@@ -37503,8 +37503,10 @@ undefined4 FUN_00030ab4(void)
 /* 00030b66 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules
+   its clock event */
 
-void FUN_00030b66(int param_1)
+void lifetime_update(int param_1)
 
 {
   int iVar1;
@@ -40618,7 +40620,7 @@ void efc_history_update(void)
   double dVar9;
   char acStack_68 [100];
   
-  FUN_0004173e();
+  aging_fit_collect();
   iVar4 = (int)(char)pll.field_020[0] - 3;
   if (2 < (uint)(int)(char)pll.field_020[0] && iVar4 != 0) {
     return;
@@ -40728,7 +40730,7 @@ void efc_history_update(void)
       if (pll.efc_history.stop_ptr == pll.efc_history.start_ptr) {
         pll.efc_history.start_ptr = pll.efc_history.start_ptr + 1 & 0x3f;
       }
-      FUN_0004172a();
+      curv_signal();
     }
     pll.efc_history.sample_count = 0;
     pll.efc_history.summed_count = 0;
@@ -40740,7 +40742,9 @@ void efc_history_update(void)
 
 /* 0004172a */
 
-void FUN_0004172a(void)
+/* signals the curv task, event 0x100 */
+
+void curv_signal(void)
 
 {
   psos_signal_v(task_curv,0x100);
@@ -40751,8 +40755,10 @@ void FUN_0004172a(void)
 /* 0004173e */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* if the curv task has signaled 0x100, copies its fit's results into pll; efc_history_update calls
+   it first */
 
-void FUN_0004173e(void)
+void aging_fit_collect(void)
 
 {
   ulong uVar1;
@@ -42263,8 +42269,10 @@ void pll_scpi_receive(void)
 /* 000433b6 */
 
 /* WARNING: Unknown calling convention */
+/* once the reply flag is set: clears it, reports failure, finishes the SCPI command and signals its
+   task; otherwise counts */
 
-void FUN_000433b6(int *param_1,char param_2)
+void pll_scpi_complete(int *param_1,char param_2)
 
 {
   if (DAT_0010254e == '\0') {
@@ -42284,7 +42292,9 @@ void FUN_000433b6(int *param_1,char param_2)
 
 /* 000433fc */
 
-void FUN_000433fc(int *param_1)
+/* once the reply flag is set: clears it and signals the waiting task; otherwise counts */
+
+void gps_diag_complete(int *param_1)
 
 {
   if (DAT_0010254e == '\0') {
@@ -42417,8 +42427,9 @@ void FUN_00043546(char param_1,byte param_2)
 /* 00043804 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* clears holdover's TI statistics */
 
-void FUN_00043804(void)
+void holdover_ti_reset(void)
 
 {
   _DAT_0010204e = 0;
@@ -42432,8 +42443,10 @@ void FUN_00043804(void)
 /* 0004381e */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* adds a TI reading to holdover's statistics: a sum, a sum weighted by count, the count and the
+   largest magnitude */
 
-void FUN_0004381e(float param_1)
+void holdover_ti_add(float param_1)
 
 {
   float fVar1;
@@ -42481,7 +42494,9 @@ undefined1 FUN_00043888(void)
 
 /* 00043916 */
 
-undefined4 FUN_00043916(void)
+/* the largest TI magnitude holdover has seen, for holdover_limit_exceeded */
+
+undefined4 holdover_ti_max(void)
 
 {
   return DAT_00102056;
@@ -42490,7 +42505,10 @@ undefined4 FUN_00043916(void)
 
 /* 0004391e */
 
-undefined4 FUN_0004391e(float param_1)
+/* 1 unless the holdover is younger than holdover_measurement_threshold and the TI is within its age
+   times a rate plus holdover_limit_threshold */
+
+undefined4 holdover_limit_exceeded(float param_1)
 
 {
   float fVar1;
@@ -42513,7 +42531,11 @@ undefined4 FUN_0004391e(float param_1)
 
 /* 0004397a */
 
-byte FUN_0004397a(void)
+/* sets the stage to holdover and the manual flag from fault bit 0, and logs the cause: a code for
+   each fault bit at pll +0x11, the GPS receiver's status for bit 1
+   loop.md's holdover stage */
+
+byte enter_holdover(void)
 
 {
   int iVar1;
@@ -42644,7 +42666,7 @@ undefined1 holdover(char param_1)
   iVar3 = (char)pll.field_001[0xf] + -1;
   if ((char)pll.field_001[0xf] != 0 && iVar3 != 0) {
 override_jmp_00043ae6_case_0:
-    FUN_00043804();
+    holdover_ti_reset();
     if (ABS(pll.efc_history.field_35a) == 0.0) {
       fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
       pll.efc_history.field_35a = float_subtract_reversed(fVar1,pll.efc);
@@ -42686,7 +42708,7 @@ override_jmp_00043ae6_case_0:
     }
   }
   else if (DAT_00102550 != '\0') {
-    FUN_0004381e(SUB41(fStack_10,0));
+    holdover_ti_add(SUB41(fStack_10,0));
     fVar2 = float_divide(fStack_10,10.0);
     float_add_in_place((float *)&DAT_00102042,fVar2);
     DAT_00102046 = DAT_00102046 + 1;
@@ -42816,8 +42838,8 @@ override_jmp_00043ae6_case_0:
   interval_mean_flag = 1;
   interval_mean = _DAT_00102042;
   if ((pll.field_013[0] == 0) && (nv_settings.holdover_limit_state == 0)) {
-    uVar5 = FUN_00043916();
-    cVar4 = FUN_0004391e(uVar5);
+    uVar5 = holdover_ti_max();
+    cVar4 = holdover_limit_exceeded(uVar5);
     if (cVar4 != '\0') goto LAB_00043eb8;
     pll.field_001[0x10] = pll.field_001[0x10] | 8;
   }
@@ -42837,14 +42859,17 @@ LAB_00043ee6:
   DAT_00102048 = 0;
   DAT_00102047 = 0;
   DAT_00102046 = 0;
-  FUN_00043804();
+  holdover_ti_reset();
   return uVar6;
 }
 
 
 /* 00043f18 */
 
-undefined4 FUN_00043f18(void)
+/* compares the clock's date and time with gps.status, and on a second mismatch running sets the
+   clock from GPS and reports event L */
+
+undefined4 clock_check_against_gps(void)
 
 {
   char cVar3;
@@ -42937,7 +42962,7 @@ override_jmp_00043ff8_case_0:
     unaff_D3b = interval_next_reading('\x01',&local_8);
     pll.field_013[1] = pll.field_013[1] - 1;
     if ((pll.field_013[1] != 0) || (cVar4 = FUN_00047078(), cVar4 != '\0')) goto LAB_0004411a;
-    cVar4 = FUN_00043f18();
+    cVar4 = clock_check_against_gps();
     if ((cVar4 == '\0') && (DAT_00102552 != '\0')) {
       pll.field_013[1] = 2;
       goto LAB_0004411a;
@@ -42957,7 +42982,7 @@ override_jmp_00043ff8_case_0:
     unaff_D3b = interval_next_reading('\0',&local_8);
     cVar4 = FUN_00047078();
     if (cVar4 != '\0') goto LAB_0004411a;
-    cVar4 = FUN_00043f18();
+    cVar4 = clock_check_against_gps();
     if (cVar4 != '\0') {
       cVar3 = '\x01';
       goto LAB_0004411a;
@@ -43104,7 +43129,7 @@ char startup_pll(char param_1)
       }
       if ((((DAT_00102550 != '\0') && (cVar4 = FUN_00047078(), cVar4 == '\0')) &&
           ((DAT_00102552 != '\0' || (uVar3 = get_gps_time(), (uVar3 & 0xff) == 0xe)))) &&
-         ((cVar4 = FUN_00043f18(), cVar4 == '\0' && (DAT_00102552 == '\0')))) {
+         ((cVar4 = clock_check_against_gps(), cVar4 == '\0' && (DAT_00102552 == '\0')))) {
         pll.field_020[0xd] = 1;
       }
     }
@@ -43368,7 +43393,7 @@ undefined1 pll_normal(char param_1)
       }
       if ((((DAT_00102550 != '\0') && (cVar5 = FUN_00047078(), cVar5 == '\0')) &&
           ((DAT_00102552 != '\0' || (uVar4 = get_gps_time(), (uVar4 & 0xff) == 0xe)))) &&
-         ((cVar5 = FUN_00043f18(), cVar5 == '\0' && (DAT_00102552 == '\0')))) {
+         ((cVar5 = clock_check_against_gps(), cVar5 == '\0' && (DAT_00102552 == '\0')))) {
         pll.field_020[0xd] = 1;
       }
     }
@@ -43469,7 +43494,10 @@ undefined1 pll_normal(char param_1)
 
 /* 00044e8e */
 
-undefined1 FUN_00044e8e(float param_1)
+/* for a TI beyond 1e-7 requests a sync of one to three steps of 100 ns, and returns the steps, 4
+   for beyond 3e-7; fine stores it as pll.fine_index */
+
+undefined1 fine_sync_adjust(float param_1)
 
 {
   int iVar1;
@@ -43962,7 +43990,7 @@ LAB_00045812:
         if (iVar1 < 0) {
           fVar2 = double_to_float((double)CONCAT44(interval_reading.value._0_4_,
                                                    interval_reading.value._4_4_));
-          pll.fine_index = FUN_00044e8e(SUB41(fVar2,0));
+          pll.fine_index = fine_sync_adjust(SUB41(fVar2,0));
           if (pll.fine_index == 0) {
             cVar4 = '\x01';
           }
@@ -44047,7 +44075,7 @@ LAB_00045812:
       else {
         fVar2 = double_to_float((double)CONCAT44(interval_reading.value._0_4_,
                                                  interval_reading.value._4_4_));
-        pll.fine_index = FUN_00044e8e(SUB41(fVar2,0));
+        pll.fine_index = fine_sync_adjust(SUB41(fVar2,0));
         if (pll.fine_index == 0) {
           cVar4 = '\x01';
         }
@@ -44163,7 +44191,7 @@ override_jmp_00045b86_case_1:
 /* the power-up sub-state, as the status screen's suffix index
    screen-format-strings.md's ladder: the power-up sub-state's suffix index */
 
-undefined1 pll_powerup_step(void)
+undefined1 pll_powerup_suffix_index(void)
 
 {
   int iVar1;
@@ -44311,8 +44339,11 @@ void FUN_00045ce4(char param_1)
 /* 00045e8e */
 
 /* WARNING: Unknown calling convention */
+/* the power-up stage: steps its sub-state, pll +3, through start, the oven warm-ups and waiting for
+   GPS, then coarse and fine, setting tfom to 1e-3 and then 2e-6
+   loop.md's power-up stage */
 
-undefined1 FUN_00045e8e(char param_1)
+undefined1 powerup(char param_1)
 
 {
   int iVar1;
@@ -44402,7 +44433,7 @@ undefined1 FUN_00045e8e(char param_1)
       if (pll.field_001[1] == 0) {
         cVar3 = FUN_00047078();
         if (cVar3 == '\0') {
-          cVar3 = FUN_00043f18();
+          cVar3 = clock_check_against_gps();
           if ((cVar3 == '\0') && (DAT_00102552 != '\0')) {
             pll.field_001[1] = 2;
           }
@@ -44455,8 +44486,10 @@ override_jmp_00045f06_case_0:
 /* 00046188 */
 
 /* WARNING: Unknown calling convention */
+/* waits for an interval reading, sets fault bits at pll +0x11 (2 no GPS, 4 no reading, 0x10
+   internal 1PPS dead) and sets the clock from the reference; 1 if all is well, 2 if faulted */
 
-undefined1 FUN_00046188(char param_1)
+undefined1 pll_check_reference(char param_1)
 
 {
   int iVar1;
@@ -44482,7 +44515,7 @@ undefined1 FUN_00046188(char param_1)
         uVar4 = 0;
       }
       else {
-        FUN_00046290();
+        clock_set_from_reference();
         if (DAT_00102550 == '\0') {
           pll.field_001[0x10] = pll.field_001[0x10] | 2;
         }
@@ -44509,7 +44542,7 @@ undefined1 FUN_00046188(char param_1)
         }
       }
       else {
-        FUN_00046290();
+        clock_set_from_reference();
         if (DAT_00102550 == '\0') {
           pll.field_001[0x10] = pll.field_001[0x10] | 2;
         }
@@ -44538,8 +44571,10 @@ override_jmp_000461bc_case_0:
 /* 00046290 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* takes the seconds from an FPGA count and the uptime, clamped to 0 to 59, adds them to the clock's
+   time and sets it */
 
-void FUN_00046290(void)
+void clock_set_from_reference(void)
 
 {
   byte bVar2;
@@ -44574,7 +44609,9 @@ void FUN_00046290(void)
 
 /* 0004637a */
 
-void FUN_0004637a(void)
+/* clears the pending leap second: leap_pending 0, a 60-second minute, leap_date 1994-01-01 */
+
+void leap_settings_clear(void)
 
 {
   nv_settings.leap_pending = 0;
@@ -44618,7 +44655,7 @@ void leap_event_create(void)
   
   if (gps.leap_second_pending == ONCORE_NO_LEAP_SECOND) {
     if (nv_settings.leap_pending != 0) {
-      FUN_0004637a();
+      leap_settings_clear();
       nv_save(4);
       leap_event_delete();
     }
@@ -44653,7 +44690,9 @@ void leap_event_create(void)
 
 /* 00046470 */
 
-void FUN_00046470(void)
+/* builds status_summary's bits from the status registers */
+
+void status_summary_update(void)
 
 {
   ushort uVar1;
@@ -44682,7 +44721,10 @@ void FUN_00046470(void)
 
 /* 000464de */
 
-byte FUN_000464de(void)
+/* writes the status flags to the latch at 0x300000, which the self-test walks a bit through: the
+   front-panel lamps */
+
+byte leds_update(void)
 
 {
   byte bVar1;
@@ -45397,8 +45439,9 @@ undefined4 FUN_00047078(void)
 /* 000470aa */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* maps the pending GPS command code at 0x10256c to an Oncore command and sends it */
 
-void FUN_000470aa(void)
+void gps_command_send(void)
 
 {
   bool bVar1;
@@ -45623,7 +45666,7 @@ undefined1 gps_diag_sequence(char param_1)
     case 0x14c:
       selftest_run(_DAT_00102590);
       DAT_0010258d = 0;
-      FUN_000433fc(0xa4);
+      gps_diag_complete(0xa4);
       uVar3 = 1;
     }
   }
@@ -45650,8 +45693,10 @@ override_jmp_00047258_case_0:
 /* 000473d2 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* clears pll, sets its stage invalid, its EFC from the saved value, tfom 1.0 and its defaults
+   structures.md's pll */
 
-void FUN_000473d2(void)
+void pll_init(void)
 
 {
   memset(&pll,0,0x3d6);
@@ -45685,7 +45730,9 @@ void FUN_000473d2(void)
 
 /* 00047466 */
 
-void FUN_00047466(void)
+/* re-initializes pll, keeping two bytes, reports event /, and starts the power-up stage */
+
+void pll_restart(void)
 
 {
   uint8_t uVar1;
@@ -45693,7 +45740,7 @@ void FUN_00047466(void)
   
   uVar2 = pll.field_3b0[0x22];
   uVar1 = pll.field_3b0[0x21];
-  FUN_000473d2();
+  pll_init();
   status_happening('/');
   pll.field_3b0[0x21] = uVar1;
   pll.field_3b0[0x22] = uVar2;
@@ -45824,7 +45871,7 @@ void pllp_task(void)
   pll.field_3b0[0x23] = 1;
   do {
     if (DAT_00102540 != '\0') {
-      FUN_00047466();
+      pll_restart();
       local_22 = PLL_STAGE_INVALID;
       DAT_00102540 = '\0';
     }
@@ -45874,13 +45921,13 @@ LAB_00047758:
         pll_stage_status();
         task_dmessage("PLL powerup\r\n");
       }
-      cVar11 = FUN_00045e8e(bVar2);
+      cVar11 = powerup(bVar2);
       if (cVar11 == '\x01') {
 LAB_000477b2:
         pll.stage = PLL_STAGE_STARTUP_PLL;
       }
       else if (cVar11 == '\x02') {
-        FUN_00047466();
+        pll_restart();
       }
       break;
     case 0x54:
@@ -45889,13 +45936,13 @@ LAB_000477b2:
         task_dmessage("Went into powerup recovery\r\n");
         DAT_0010258e = 1;
       }
-      cVar11 = FUN_00046188(bVar2);
+      cVar11 = pll_check_reference(bVar2);
       if (cVar11 == '\x01') {
 LAB_0004782e:
         pll.stage = PLL_STAGE_HOLDOVER_RECOVERY;
       }
       else if (cVar11 == '\x02') {
-        FUN_0004397a();
+        enter_holdover();
       }
       break;
     case 0x92:
@@ -45915,7 +45962,7 @@ LAB_0004782e:
       cVar11 = holdover_recovery(bVar2);
       if (cVar11 == '\x01') goto LAB_000477b2;
       if (cVar11 == '\x02') {
-        FUN_0004397a();
+        enter_holdover();
       }
       break;
     case 0x100:
@@ -45929,7 +45976,7 @@ LAB_0004782e:
         pll.stage = PLL_STAGE_NORMAL_PLL;
       }
       else if (cVar11 == '\x02') {
-        FUN_0004397a();
+        enter_holdover();
       }
       break;
     case 0x146:
@@ -45939,7 +45986,7 @@ LAB_0004782e:
       }
       cVar11 = pll_normal(bVar2);
       if (cVar11 == '\x02') {
-        FUN_0004397a();
+        enter_holdover();
       }
       break;
     case 0x172:
@@ -45950,7 +45997,7 @@ LAB_0004782e:
       }
       cVar11 = gps_diag_sequence(bVar2);
       if (cVar11 == '\x01') {
-        FUN_00047466();
+        pll_restart();
       }
       break;
     case 0x19e:
@@ -45970,7 +46017,7 @@ LAB_00047940:
     pll.field_3b0[0x20] = FUN_000407fa();
     pll.field_3b0._28_4_ = get_uptime();
     watchdog_pll = watchdog_pll + 1;
-    FUN_00046470();
+    status_summary_update();
     if (DAT_00102542 != '\0') {
       nv_save(4);
       DAT_00102542 = '\0';
@@ -46000,7 +46047,7 @@ LAB_00047940:
         }
       }
       else if (local_18 == '\x02') {
-        FUN_000433b6(&DAT_001025a4,local_17 == 0);
+        pll_scpi_complete(&DAT_001025a4,local_17 == 0);
       }
       else {
         DAT_001025a0 = DAT_001025a0 + 1;
@@ -46037,7 +46084,7 @@ LAB_00047940:
     }
     gps_leap_sequence();
     if ((DAT_0010256c != '\0') && (gps_ack_awaited == 0)) {
-      FUN_000470aa();
+      gps_command_send();
     }
     pll_scpi_receive();
     memcpy((void *)0x100934,&DAT_00101e70,0x19);
@@ -46067,7 +46114,7 @@ LAB_00047940:
     *(undefined2 *)puVar6 = *(undefined2 *)(puVar3 + 3);
     DAT_00100002 = 1;
     DAT_00100000 = record_checksum(&DAT_00100000,0x94e);
-    FUN_000464de();
+    leds_update();
   } while( true );
 }
 
@@ -48470,7 +48517,7 @@ void FUN_0004a636(pll_stage *param_1)
   *param_1 = pll.stage;
   pVar8 = pll_mode();
   param_1[1] = pVar8;
-  pVar8 = pll_powerup_step();
+  pVar8 = pll_powerup_suffix_index();
   param_1[2] = pVar8;
   pVar8 = FUN_00045c18();
   param_1[3] = pVar8;

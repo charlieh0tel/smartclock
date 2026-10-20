@@ -165,3 +165,46 @@
 0x1747a	function	psos_io_control	psos.md: I/O function 5, dev_ctrl	unsigned long psos_io_control(unsigned long device, unsigned long a, unsigned long b)
 0x1a1b4	function	forth_psos_io_call	psos.md: the console words' I/O call, reporting an error
 0x19150	function	forth_print_string	console.md: writes the string in D0 to iodev; type's work	void forth_print_string(char *s @ D0)
+#
+# named from context: what each does with named things, reviewed
+0x1de76	function	console_write	context: writes the string to I/O device 0, returns the length; printf ends here	unsigned long console_write(char *s)
+0x1efc6	function	debug_printf	context: vsprintf then console_write, while debug_enabled	void debug_printf(char *format, ...)
+0x1ef46	function	debug_sprintf	context: vsprintf into the buffer while debug_enabled, else empties it	int debug_sprintf(char *s, char *format, ...)
+0x1eff6	function	task_debug_message	context: prints "task: message" with the calling task's name, while debug_enabled	void task_debug_message(char *message)
+0x160a0	function	task_name	context: the 4-character name at offset 0x24 of a task's record	char * task_name(void *task)
+0x1f176	function	fatal_error	context: keeps the message and task name at crash_message, prints them and "RESET to recover.", then hangs	void fatal_error(char *message)
+0x29ada	function	return_zero	context: returns 0; most SCPI query handlers call it	int return_zero(void)
+0x3195a	function	log_write	context: appends to the diagnostic log under its lock; :DIAG:LOG:WRIT and log_send call it
+0x1037dd	label	debug_enabled	context: gates every debug_ and task_debug_ output
+0x10094e	label	crash_message	context: fatal_error's message and task name, 80 characters
+0x1f056	function	task_dmessage	context: the calling task's message, printed only while its dmes_ flag is set	void task_dmessage(char *message)
+0x1037e0	label	task_gpsm	context: task id paired with dmes_gpsm in task_dmessage
+0x1037e4	label	task_hmon	context: task id paired with dmes_hmon in task_dmessage
+0x10371e	label	task_klok	context: task id paired with dmes_klok; its creator stores the klok task's id here
+0x1037ec	label	task_pllp	context: task id paired with dmes_pllp in task_dmessage
+0x1037f0	label	task_root	context: task id paired with dmes_root in task_dmessage
+0x1037f4	label	task_scpi	context: task id paired with dmes_scpi; scpi_task_create stores the scpi task's id here
+0x1032f4	label	task_spoo	context: task id paired with dmes_spoo in task_dmessage
+0x1037f8	label	task_curv	context: task id paired with dmes_curv in task_dmessage
+0x103808	label	dmes_gpsm	context: set by the console's dmes_gpsm
+0x10380c	label	dmes_hmon	context: set by the console's dmes_hmon
+0x103810	label	dmes_klok	context: set by the console's dmes_klok
+0x103814	label	dmes_pllp	context: set by the console's dmes_pllp
+0x103818	label	dmes_root	context: set by the console's dmes_root
+0x10381c	label	dmes_scpi	context: set by the console's dmes_scpi
+0x103820	label	dmes_spoo	context: set by the console's dmes_spoo
+0x103824	label	dmes_curv	context: set by the console's dmes_curv
+0x136fe	function	get_date_time	context: :PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns valid unless clock_invalid	int get_date_time(unsigned long *date, unsigned long *time)
+0x1009c2	label	clock_date	context: get_date_time's date
+0x1009be	label	clock_time	context: get_date_time's time
+0x1009e7	label	clock_invalid	context: get_date_time reports no date or time while set
+0x2410e	function	adc_average	context: diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a default when there is no reading	float adc_average(unsigned long channel) @ D0
+0x1043a	function	mutex_acquire	context: recursive lock, owner at +8, count at +0xc, a token through request_x when not already owned
+0x10484	function	mutex_release	context: drops the count, or the owner and the token through send_x
+0x10502	function	mutex_lock	context: mutex_acquire on its argument
+0x10518	function	mutex_unlock	context: mutex_release on its argument
+0x101d36	label	log_mutex	context: log_write locks it
+0x29e56	function	send_x_retry	context: send_x, pausing and retrying until it succeeds	void send_x_retry(unsigned long exchange, void *message, unsigned long ticks)
+0x29e7e	function	request_and_wait	context: raises a variable, send_x_retry, waits on the variable
+0x22d4a	function	debug_message	context: task_debug_message when with_task_name is set, else debug_write; callers push the flag with move.b	void debug_message(char *message, char with_task_name)
+0x1ef74	function	debug_write	context: writes through 0x1df12 while debug_enabled

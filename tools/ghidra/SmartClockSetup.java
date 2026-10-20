@@ -130,6 +130,8 @@ public class SmartClockSetup extends GhidraScript {
 	 */
 	private static final int FIRST_ARGUMENT_OFFSET = 4;
 	private static final int STACK_SLOT_MINIMUM = 2;
+	/** A long or pointer argument's slot, the default convention's for every argument. */
+	private static final int STACK_SLOT = 4;
 	/** A register annotation in a prototype: "@ D0" or "@ D0:D1". */
 	private static final Pattern ANNOTATION = Pattern.compile("\\s*@\\s*[A-Za-z0-9:]+");
 	/** The names file's optional fifth field: a C prototype. */
@@ -451,8 +453,11 @@ public class SmartClockSetup extends GhidraScript {
 	 * "float f(float a @ D0, double b @ A0:A1) @ D0", a pair high
 	 * register first -- puts each annotated value in those registers, in
 	 * custom storage, and each argument without one on the stack, in
-	 * order from the return address up; one without any takes the default
-	 * convention.  Ghidra's default returns a float or double in FP0, but
+	 * order from the return address up.  This compiler pushes a char or
+	 * short in a 2-byte slot, its value at the slot's start, where Ghidra's
+	 * default convention would look at the end of a 4-byte slot; so a
+	 * prototype with an argument narrower than 4 bytes is laid out this way
+	 * too.  Any other takes the default convention.  Ghidra's default returns a float or double in FP0, but
 	 * these images have no FPU and return them in D0 or D0:D1, so a
 	 * function returning one needs its return annotated.
 	 */
@@ -464,7 +469,11 @@ public class SmartClockSetup extends GhidraScript {
 			throw new IllegalArgumentException("cannot parse prototype at " + address + ": "
 				+ prototype);
 		}
-		if (!prototype.contains("@")) {
+		boolean narrow = false;
+		for (ParameterDefinition argument : signature.getArguments()) {
+			narrow |= argument.getDataType().getLength() < STACK_SLOT;
+		}
+		if (!prototype.contains("@") && !narrow) {
 			new ApplyFunctionSignatureCmd(address, signature, SourceType.IMPORTED)
 					.applyTo(currentProgram, monitor);
 			return;

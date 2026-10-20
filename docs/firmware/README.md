@@ -409,7 +409,9 @@ PLL_STAGE_HOLDOVER`, `adc_average(ADC_5V)`.
 **Installer** unpacks the records the boot code copies to RAM, after
 its vector table, into an overlay named `installer`, writable so that
 cells the installer changes do not fold, and makes a function at its
-entry and at each vector's handler.  Boot code jumps into plain RAM,
+entry and at each vector's handler, and clears the code analysis found
+in the packed records themselves, which never run where they lie, so
+that the overlay is the installer's only copy.  Boot code jumps into plain RAM,
 which the overlay does not serve; the jump is marked a call, so it
 reads `func_0x0010135c` rather than flowing into RAM with no code.  The
 installer's functions are not labeled at their plain addresses: the
@@ -464,11 +466,11 @@ pointer to one as `foo->bar`.  The declarations compile, taking `long`
 as 32 bits, as on the 68000; a global still accessed as
 `DAT_00100c6e._2_1_` is a record that has no type yet.
 
-In the Z3805A 3543B image this gives 1824 functions, and every one
-decompiles.  137 switches are recovered; `0x24ff2` and `0x25140`, a
+In the Z3805A 3543B image this gives 1741 functions, and every one
+decompiles.  136 switches are recovered; `0x24ff2` and `0x25140`, a
 `jmp (d8,PC,D6.w)` with no table load, are not, and need not be: each
 enters an unrolled run of shifts part way, all of it code already
-(`docs/scpi/README.md`).  1617 of the functions are named.  The output
+(`docs/scpi/README.md`).  1701 of the functions are named.  The output
 is `third_party/firmware/decompiled/z3805a-3543b.c`.
 
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,

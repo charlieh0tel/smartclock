@@ -1355,3 +1355,94 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x51038	function	psos_config_init	psos.md	copies the kernel's configuration and the task table into RAM
 0x510aa	function	memory_allocate	psos.md	allocates from region 1 through service 8
 0x510d2	function	memory_free	psos.md	frees a segment through service 9
+#
+# the boot code
+0x400	function	boot_duartb_loopback_check	context	the boot code's duartb_loopback_check: sends "DUART" through channel B in local loopback; 0x10 at 0x10ab2c if a character comes back wrong, 0x20 if none comes
+0x4cc	function	boot_duart_early_init	context	the boot code's duart_early_init: writes and reads back the DUART's IVR, then sets channel B up and runs the loopback test; 1 at 0x10ab2c if the IVR fails
+0xaa0	function	boot_unpack_installer	restart.md	copies the installer's records from 0xbbc into RAM; 0, or 1 without the S, 2 at a bad record
+0xb9e	function	boot_memcpy	context	copies so many bytes, returning the destination
+#
+# the installer's copies of primary routines; names as psos.md gives the kernel's
+0x12bb2	function	start_nothing	context	does nothing; primary_start calls it between gpt_init and system_init
+installer::0x10043a	function	installer_mutex_acquire	context	the installer's mutex_acquire
+installer::0x100484	function	installer_mutex_release	context	the installer's mutex_release
+installer::0x100538	function	installer_exception_hook_reset	context	the installer's exception_hook_reset
+installer::0x10058e	function	installer_exception_hook_get	context	the installer's exception_hook_get
+installer::0x1005b4	function	installer_default_exception	context	the installer's primary_default_exception
+installer::0x1005d2	function	installer_print_exception	context	the installer's print_exception
+installer::0x100658	function	installer_exception_name	context	the installer's exception_name
+installer::0x100bb2	function	installer_periodic_interrupt	context	the periodic interrupt, as primary_user_66 without its counters: announces the tick with service 29, services the watchdog and returns through trap #5
+installer::0x100bd2	function	installer_periodic_interrupt_enable	context	the installer's periodic_interrupt_enable
+installer::0x100bf4	function	installer_qsm_init	context	the installer's qsm_init
+installer::0x100c1e	function	installer_gpt_init	context	the installer's gpt_init
+installer::0x100c7a	function	installer_start_nothing	context	the installer's start_nothing
+installer::0x100c7c	function	installer_system_init	context	reads the parameter and identification records from EEPROM
+installer::0x100c96	function	installer_start	context	the installer's primary_start
+installer::0x100e80	function	installer_enter_supervisor_mode	context	the installer's enter_supervisor_mode
+installer::0x100e90	function	installer_set_interrupt_mask	context	the installer's set_interrupt_mask
+installer::0x100f32	function	installer_trap_7	context	the installer's primary_trap_7
+installer::0x100f3a	function	installer_enter_supervisor	context	the installer's enter_supervisor
+installer::0x100fc0	function	installer_float_exception_report	context	the installer's float_exception_report
+installer::0x10135a	function	installer_return	context	a lone rts before installer_entry; nothing calls it
+installer::0x1013ae	function	installer_program_exit	context	the installer's program_exit
+installer::0x1013c2	function	installer_program_end_report	context	the installer's program_end_report
+installer::0x102a72	function	installer_psos_call	psos.md	the installer's psos_call
+installer::0x102aa4	function	installer_psos_pack_name	psos.md	the installer's psos_pack_name
+installer::0x102b4c	function	installer_psos_my_pid	psos.md	the installer's psos_my_pid
+installer::0x102b5c	function	installer_psos_delete	psos.md	the installer's psos_delete, service 4
+installer::0x102bca	function	installer_psos_pause	psos.md	the installer's psos_pause, service 28
+installer::0x102d22	function	installer_psos_create_x	psos.md	the installer's psos_create_x, service 20
+installer::0x102da6	function	installer_psos_send_x	psos.md	the installer's psos_send_x, service 23
+installer::0x102e3c	function	installer_psos_signal_v	psos.md	the installer's psos_signal_v, service 25
+installer::0x102e58	function	installer_psos_wait_v	psos.md	the installer's psos_wait_v, service 26
+installer::0x102e86	function	installer_psos_get_v	psos.md	the installer's psos_get_v, service 27
+installer::0x102eb0	function	installer_psos_service_29	psos.md	the installer's psos_service_29
+installer::0x102ff4	function	installer_gp_port_select	context	the installer's gp_port_select
+installer::0x103016	function	installer_duartb_mode_from_settings	context	the installer's duartb_mode_from_settings
+installer::0x1030b4	function	installer_duartb_baud_from_settings	context	the installer's duartb_baud_from_settings
+installer::0x103102	function	installer_duartb_putc_polled	context	the installer's duartb_putc_polled
+installer::0x1031cc	function	installer_drtb_getc	context	the installer's drtb_getc
+installer::0x103266	function	installer_drtb_gets	context	the installer's drtb_gets
+installer::0x103868	function	installer_drtb_putc	context	the installer's drtb_putc
+installer::0x103984	function	installer_console_write_polled	context	the installer's console_write_polled
+installer::0x1039ba	function	installer_printf_polled	context	the installer's printf_polled
+installer::0x103a44	function	installer_duarta_receive	context	empties DUART channel A's receiver into its ring
+installer::0x103aa8	function	installer_duartb_isr	context	the installer's duartb_isr
+installer::0x103c7c	function	installer_duarta_transmit_interrupt	context	disables channel A's transmit interrupt
+installer::0x103c90	function	installer_duartb_transmit_interrupt	context	the installer's duartb_transmit_interrupt
+installer::0x103d74	function	installer_duart_interrupt	context	the DUART's interrupt: dispatches each pending, enabled source
+installer::0x103eea	function	installer_fatal_error	context	holds off interrupts and hangs
+installer::0x1040a2	function	installer_fatal_error_with_code	context	the installer's fatal_error_with_code
+installer::0x10531c	function	installer_scpi_scan_exponent	context	the installer's scpi_scan_exponent
+installer::0x105480	function	installer_scpi_char_upper	context	the installer's scpi_char_upper
+installer::0x105684	function	installer_scpi_suffix_compare_tail	context	the installer's scpi_suffix_compare_tail
+installer::0x1056ba	function	installer_scpi_multiplier_exponent	context	the installer's scpi_multiplier_exponent
+installer::0x105c78	function	installer_status_event_set	context	the installer's status_event_set
+installer::0x105c96	function	installer_status_condition_set	context	the installer's status_condition_set
+installer::0x105cf2	function	installer_status_condition_clear	context	the installer's status_condition_clear
+installer::0x105d52	function	installer_status_propagate	context	the installer's status_propagate
+installer::0x105eb8	function	installer_status_set_bit	context	the installer's status_set_bit
+installer::0x105f7c	function	installer_status_apply_condition	context	the installer's status_apply_condition
+installer::0x106164	function	installer_status_read_event	context	the installer's status_read_event
+installer::0x106282	function	installer_error_queue_push	context	the installer's error_queue_push
+installer::0x106548	function	installer_error_message_lookup	context	the installer's error_message_lookup
+installer::0x1073f6	function	installer_scpi_prompt	context	the installer's scpi_prompt
+installer::0x1076f4	function	installer_status_prompt_refresh	context	the installer's status_prompt_refresh
+installer::0x108166	function	installer_record_checksum	context	the installer's record_checksum
+installer::0x1081ac	function	installer_parameter_record_read	context	the installer's parameter_record_read
+installer::0x10822e	function	installer_idn_model_default	context	sets the *IDN? model to 58000A
+installer::0x10824a	function	installer_identification_record_read	context	the installer's identification_record_read
+installer::0x1083b6	function	installer_psos_config_init	psos.md	the installer's psos_config_init
+installer::0x108466	function	installer_trap_1	context	the installer's primary_trap_1
+installer::0x108ca8	function	installer_float_raise	softfloat.md	the installer's float_raise
+installer::0x10904c	function	installer_call_atexit_functions	libc.md	the installer's call_atexit_functions
+installer::0x109160	function	installer_memcpy	libc.md	the installer's memcpy
+installer::0x10917e	function	installer_strncpy	libc.md	the installer's strncpy
+installer::0x1091ac	function	installer_strtol	context	strtol: a long from a string in a base up to 36, and where it ended
+installer::0x109366	function	installer_toupper	libc.md	the installer's toupper
+installer::0x10937e	function	installer_double_to_digits_multiply	libc.md	the installer's double_to_digits_multiply
+installer::0x109562	function	installer_double_to_digits	libc.md	the installer's double_to_digits
+installer::0x109c7e	function	installer_next_decimal_digit	libc.md	the installer's next_decimal_digit
+installer::0x109cb4	function	installer_format	libc.md	the installer's format
+installer::0x10aa3e	function	installer_sprintf	libc.md	the installer's sprintf
+installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf

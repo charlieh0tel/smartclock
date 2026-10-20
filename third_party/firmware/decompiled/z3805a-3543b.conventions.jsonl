@@ -1,92 +1,9 @@
-{"address":"00000400","name":"FUN_00000400","convention":"unknown"}
-{"address":"000004cc","name":"FUN_000004cc","convention":"unknown"}
+{"address":"00000400","name":"boot_duartb_loopback_check","note":"the boot code's duartb_loopback_check: sends \"DUART\" through channel B in local loopback; 0x10 at 0x10ab2c if a character comes back wrong, 0x20 if none comes","convention":"unknown"}
+{"address":"000004cc","name":"boot_duart_early_init","note":"the boot code's duart_early_init: writes and reads back the DUART's IVR, then sets channel B up and runs the loopback test; 1 at 0x10ab2c if the IVR fails","convention":"unknown"}
 {"address":"00000550","name":"boot_reset","convention":"exception","confidence":"derived","family":"exception"}
 {"address":"00000a58","name":"boot_trap_11","convention":"exception","confidence":"derived","family":"exception"}
-{"address":"00000aa0","name":"FUN_00000aa0","convention":"unknown"}
-{"address":"00000b9e","name":"FUN_00000b9e","convention":"unknown"}
-{"address":"00001f8a","name":"FUN_00001f8a","convention":"unknown"}
-{"address":"000022ba","name":"FUN_000022ba","convention":"unknown"}
-{"address":"00002446","name":"FUN_00002446","convention":"unknown"}
-{"address":"0000247a","name":"FUN_0000247a","convention":"unknown"}
-{"address":"00002502","name":"FUN_00002502","convention":"unknown"}
-{"address":"00002614","name":"FUN_00002614","convention":"unknown"}
-{"address":"000028b4","name":"FUN_000028b4","convention":"unknown"}
-{"address":"00002bee","name":"FUN_00002bee","convention":"unknown"}
-{"address":"00002d18","name":"FUN_00002d18","convention":"unknown"}
-{"address":"00002d4a","name":"FUN_00002d4a","convention":"unknown"}
-{"address":"00002d74","name":"FUN_00002d74","convention":"unknown"}
-{"address":"00002d88","name":"FUN_00002d88","convention":"unknown"}
-{"address":"00002d8e","name":"FUN_00002d8e","convention":"unknown"}
-{"address":"00002dbc","name":"FUN_00002dbc","convention":"unknown"}
-{"address":"00002e2a","name":"FUN_00002e2a","convention":"unknown"}
-{"address":"00002e32","name":"FUN_00002e32","convention":"unknown"}
-{"address":"00002e74","name":"FUN_00002e74","convention":"unknown"}
-{"address":"0000324a","name":"FUN_0000324a","convention":"unknown"}
-{"address":"00003262","name":"FUN_00003262","convention":"unknown"}
-{"address":"0000327c","name":"FUN_0000327c","convention":"unknown"}
-{"address":"000032a0","name":"FUN_000032a0","convention":"unknown"}
-{"address":"000032da","name":"FUN_000032da","convention":"unknown"}
-{"address":"000032f6","name":"FUN_000032f6","convention":"unknown"}
-{"address":"00003334","name":"FUN_00003334","convention":"unknown"}
-{"address":"0000334c","name":"FUN_0000334c","convention":"unknown"}
-{"address":"00003364","name":"FUN_00003364","convention":"unknown"}
-{"address":"0000337c","name":"FUN_0000337c","convention":"unknown"}
-{"address":"000033a2","name":"FUN_000033a2","convention":"unknown"}
-{"address":"000033ba","name":"FUN_000033ba","convention":"unknown"}
-{"address":"00003420","name":"FUN_00003420","convention":"unknown"}
-{"address":"00003438","name":"FUN_00003438","convention":"unknown"}
-{"address":"00003454","name":"FUN_00003454","convention":"unknown"}
-{"address":"00003470","name":"FUN_00003470","convention":"unknown"}
-{"address":"0000349a","name":"FUN_0000349a","convention":"unknown"}
-{"address":"000034b6","name":"FUN_000034b6","convention":"unknown"}
-{"address":"000034de","name":"FUN_000034de","convention":"unknown"}
-{"address":"000034fa","name":"FUN_000034fa","convention":"unknown"}
-{"address":"0000352a","name":"FUN_0000352a","convention":"unknown"}
-{"address":"00003566","name":"FUN_00003566","convention":"unknown"}
-{"address":"0000357e","name":"FUN_0000357e","convention":"unknown"}
-{"address":"0000359a","name":"FUN_0000359a","convention":"unknown"}
-{"address":"000035b6","name":"FUN_000035b6","convention":"unknown"}
-{"address":"000035f0","name":"FUN_000035f0","convention":"unknown"}
-{"address":"00003614","name":"FUN_00003614","convention":"unknown"}
-{"address":"00003630","name":"FUN_00003630","convention":"unknown"}
-{"address":"0000365e","name":"FUN_0000365e","convention":"unknown"}
-{"address":"00003688","name":"FUN_00003688","convention":"unknown"}
-{"address":"0000369c","name":"FUN_0000369c","convention":"unknown"}
-{"address":"000036d2","name":"FUN_000036d2","convention":"unknown"}
-{"address":"000036f6","name":"FUN_000036f6","convention":"unknown"}
-{"address":"0000370e","name":"FUN_0000370e","convention":"unknown"}
-{"address":"0000372a","name":"FUN_0000372a","convention":"unknown"}
-{"address":"00003742","name":"FUN_00003742","convention":"unknown"}
-{"address":"00003774","name":"FUN_00003774","convention":"unknown"}
-{"address":"000037a6","name":"FUN_000037a6","convention":"unknown"}
-{"address":"00007c8c","name":"FUN_00007c8c","convention":"unknown"}
-{"address":"00007cc4","name":"FUN_00007cc4","convention":"unknown"}
-{"address":"00007dbc","name":"FUN_00007dbc","convention":"unknown"}
-{"address":"00007e1c","name":"FUN_00007e1c","convention":"unknown"}
-{"address":"00007e2e","name":"FUN_00007e2e","convention":"unknown"}
-{"address":"00007e42","name":"FUN_00007e42","convention":"unknown"}
-{"address":"00007e64","name":"FUN_00007e64","convention":"unknown"}
-{"address":"00007f02","name":"FUN_00007f02","convention":"unknown"}
-{"address":"00007f1c","name":"FUN_00007f1c","convention":"unknown"}
-{"address":"00007f44","name":"FUN_00007f44","convention":"unknown"}
-{"address":"00007f88","name":"FUN_00007f88","convention":"unknown"}
-{"address":"00007fbc","name":"FUN_00007fbc","convention":"unknown"}
-{"address":"00007fea","name":"FUN_00007fea","convention":"unknown"}
-{"address":"00008026","name":"FUN_00008026","convention":"unknown"}
-{"address":"0000805a","name":"FUN_0000805a","convention":"unknown"}
-{"address":"00008094","name":"FUN_00008094","convention":"unknown"}
-{"address":"00008110","name":"FUN_00008110","convention":"unknown"}
-{"address":"00008294","name":"FUN_00008294","convention":"unknown"}
-{"address":"000083d2","name":"FUN_000083d2","convention":"unknown"}
-{"address":"00008426","name":"FUN_00008426","convention":"unknown"}
-{"address":"000084c6","name":"FUN_000084c6","convention":"unknown"}
-{"address":"0000867c","name":"FUN_0000867c","convention":"unknown"}
-{"address":"000087a0","name":"FUN_000087a0","convention":"unknown"}
-{"address":"00008836","name":"FUN_00008836","convention":"unknown"}
-{"address":"00008c5a","name":"FUN_00008c5a","convention":"unknown"}
-{"address":"00008cda","name":"FUN_00008cda","convention":"unknown"}
-{"address":"00009350","name":"FUN_00009350","convention":"unknown"}
-{"address":"000094ec","name":"FUN_000094ec","convention":"unknown"}
+{"address":"00000aa0","name":"boot_unpack_installer","note":"copies the installer's records from 0xbbc into RAM; 0, or 1 without the S, 2 at a bad record","convention":"unknown"}
+{"address":"00000b9e","name":"boot_memcpy","note":"copies so many bytes, returning the destination","convention":"unknown"}
 {"address":"00010400","name":"mutex_init","note":"mutex_create's inside: creates the mutex's exchange for the name in D0 and clears the mutex at A1","convention":"register","confidence":"read","in":[{"register":"D0","type":"int","name":"name"},{"register":"A1","type":"void *","name":"mutex"}],"family":"mutex"}
 {"address":"0001043a","name":"mutex_acquire","note":"recursive lock, owner at +8, count at +0xc, a token through request_x when not already owned","convention":"register","confidence":"read","in":[{"register":"A1","type":"void *","name":"mutex"}],"out":[{"register":"D7","type":"int","name":"error"}],"error":[{"register":"D7","value":"0x80","meaning":"nested hold"}],"preserves":["D0","D1","A0","A2"],"family":"mutex"}
 {"address":"00010484","name":"mutex_release","note":"drops the count, or the owner and the token through send_x","convention":"register","confidence":"read","in":[{"register":"A1","type":"void *","name":"mutex"}],"out":[{"register":"D7","type":"int","name":"error"}],"error":[{"register":"D7","value":"2","meaning":"not held"},{"register":"D7","value":"0x80","meaning":"holds remain"}],"preserves":["D0","A0"],"family":"mutex"}
@@ -159,7 +76,7 @@
 {"address":"00012984","name":"tfom_table_index","note":"tfom_code's bisection of the table at 0x129fc","convention":"unknown"}
 {"address":"000129d0","name":"power_of_ten_float","note":"10 to a power clamped to plus or minus 30, from the table of floats at 0x12a74; called by nothing","convention":"unknown"}
 {"address":"00012af2","name":"random_dither","note":"a small signed random value: rand, shaped by the table at 0x12ab0","convention":"unknown"}
-{"address":"00012bb2","name":"FUN_00012bb2","convention":"unknown"}
+{"address":"00012bb2","name":"start_nothing","note":"does nothing; primary_start calls it between gpt_init and system_init","convention":"unknown"}
 {"address":"00012bb4","name":"system_init","note":"the start-up's setup: status, NV settings restored, debug flags, the battery-backed RAM's checksum and the reset's cause","convention":"unknown"}
 {"address":"00012d6e","name":"primary_start","note":"the reset's path: services the watchdog, sets the QSM and GPT up, runs system_init and starts the kernel with trap #6","convention":"unknown"}
 {"address":"00012db6","name":"pps_interrupt","note":"the 1PPS interrupt's work: ticks the clock, updates the time code and posts the time to pps_exchange","convention":"unknown"}
@@ -1676,29 +1593,29 @@
 {"address":"00060efa","name":"double_truncate_sixteenths","note":"a double truncated to a multiple of 1/16; pow's","convention":"unknown"}
 {"address":"00060f5e","name":"pow","note":"pow","convention":"c","confidence":"run","out":[{"register":"D0:D1","type":"double"}]}
 {"address":"0006191c","name":"sqrt","note":"square root","convention":"c","confidence":"run","out":[{"register":"D0:D1","type":"double"}]}
-{"address":"installer::0010043a","name":"FUN_installer__0010043a","convention":"unknown"}
-{"address":"installer::00100484","name":"FUN_installer__00100484","convention":"unknown"}
-{"address":"installer::00100538","name":"FUN_installer__00100538","convention":"unknown"}
-{"address":"installer::0010058e","name":"FUN_installer__0010058e","convention":"unknown"}
-{"address":"installer::001005b4","name":"FUN_installer__001005b4","convention":"unknown"}
-{"address":"installer::001005d2","name":"FUN_installer__001005d2","convention":"unknown"}
-{"address":"installer::00100658","name":"FUN_installer__00100658","convention":"unknown"}
-{"address":"installer::00100bb2","name":"FUN_installer__00100bb2","convention":"unknown"}
-{"address":"installer::00100bd2","name":"FUN_installer__00100bd2","convention":"unknown"}
-{"address":"installer::00100bf4","name":"FUN_installer__00100bf4","convention":"unknown"}
-{"address":"installer::00100c1e","name":"FUN_installer__00100c1e","convention":"unknown"}
-{"address":"installer::00100c7a","name":"FUN_installer__00100c7a","convention":"unknown"}
-{"address":"installer::00100c7c","name":"FUN_installer__00100c7c","convention":"unknown"}
-{"address":"installer::00100c96","name":"FUN_installer__00100c96","convention":"unknown"}
-{"address":"installer::00100e80","name":"FUN_installer__00100e80","convention":"unknown"}
-{"address":"installer::00100e90","name":"FUN_installer__00100e90","convention":"unknown"}
-{"address":"installer::00100f32","name":"FUN_installer__00100f32","convention":"unknown"}
-{"address":"installer::00100f3a","name":"FUN_installer__00100f3a","convention":"unknown"}
-{"address":"installer::00100fc0","name":"FUN_installer__00100fc0","convention":"unknown"}
-{"address":"installer::0010135a","name":"FUN_installer__0010135a","convention":"unknown"}
+{"address":"installer::0010043a","name":"installer_mutex_acquire","note":"the installer's mutex_acquire","convention":"unknown"}
+{"address":"installer::00100484","name":"installer_mutex_release","note":"the installer's mutex_release","convention":"unknown"}
+{"address":"installer::00100538","name":"installer_exception_hook_reset","note":"the installer's exception_hook_reset","convention":"unknown"}
+{"address":"installer::0010058e","name":"installer_exception_hook_get","note":"the installer's exception_hook_get","convention":"unknown"}
+{"address":"installer::001005b4","name":"installer_default_exception","note":"the installer's primary_default_exception","convention":"unknown"}
+{"address":"installer::001005d2","name":"installer_print_exception","note":"the installer's print_exception","convention":"unknown"}
+{"address":"installer::00100658","name":"installer_exception_name","note":"the installer's exception_name","convention":"unknown"}
+{"address":"installer::00100bb2","name":"installer_periodic_interrupt","note":"the periodic interrupt, as primary_user_66 without its counters: announces the tick with service 29, services the watchdog and returns through trap #5","convention":"unknown"}
+{"address":"installer::00100bd2","name":"installer_periodic_interrupt_enable","note":"the installer's periodic_interrupt_enable","convention":"unknown"}
+{"address":"installer::00100bf4","name":"installer_qsm_init","note":"the installer's qsm_init","convention":"unknown"}
+{"address":"installer::00100c1e","name":"installer_gpt_init","note":"the installer's gpt_init","convention":"unknown"}
+{"address":"installer::00100c7a","name":"installer_start_nothing","note":"the installer's start_nothing","convention":"unknown"}
+{"address":"installer::00100c7c","name":"installer_system_init","note":"reads the parameter and identification records from EEPROM","convention":"unknown"}
+{"address":"installer::00100c96","name":"installer_start","note":"the installer's primary_start","convention":"unknown"}
+{"address":"installer::00100e80","name":"installer_enter_supervisor_mode","note":"the installer's enter_supervisor_mode","convention":"unknown"}
+{"address":"installer::00100e90","name":"installer_set_interrupt_mask","note":"the installer's set_interrupt_mask","convention":"unknown"}
+{"address":"installer::00100f32","name":"installer_trap_7","note":"the installer's primary_trap_7","convention":"unknown"}
+{"address":"installer::00100f3a","name":"installer_enter_supervisor","note":"the installer's enter_supervisor","convention":"unknown"}
+{"address":"installer::00100fc0","name":"installer_float_exception_report","note":"the installer's float_exception_report","convention":"unknown"}
+{"address":"installer::0010135a","name":"installer_return","note":"a lone rts before installer_entry; nothing calls it","convention":"unknown"}
 {"address":"installer::0010135c","name":"installer_entry","convention":"unknown"}
-{"address":"installer::001013ae","name":"FUN_installer__001013ae","convention":"unknown"}
-{"address":"installer::001013c2","name":"FUN_installer__001013c2","convention":"unknown"}
+{"address":"installer::001013ae","name":"installer_program_exit","note":"the installer's program_exit","convention":"unknown"}
+{"address":"installer::001013c2","name":"installer_program_end_report","note":"the installer's program_end_report","convention":"unknown"}
 {"address":"installer::001014b4","name":"installer_kernel_dispatch_service","convention":"unknown"}
 {"address":"installer::001014b8","name":"installer_kernel_dispatch_io","convention":"unknown"}
 {"address":"installer::001014bc","name":"installer_kernel_init","convention":"unknown"}
@@ -1761,64 +1678,64 @@
 {"address":"installer::001026de","name":"installer_kernel_init","note":"the installer's copy of kernel_init, at 0x15cd8 plus 0xeca06, byte for byte","convention":"exception","confidence":"read","family":"psos"}
 {"address":"installer::001028d4","name":"installer_kernel_region_init","note":"the installer's copy of kernel_region_init, at 0x15ece plus 0xeca06, byte for byte","convention":"undetermined","confidence":"derived","family":"psos"}
 {"address":"installer::00102990","name":"installer_kernel_return_from_interrupt","note":"the installer's copy of kernel_return_from_interrupt, at 0x15f8a plus 0xeca06, byte for byte","convention":"exception","confidence":"read","family":"psos"}
-{"address":"installer::00102a72","name":"FUN_installer__00102a72","convention":"unknown"}
-{"address":"installer::00102aa4","name":"FUN_installer__00102aa4","convention":"unknown"}
-{"address":"installer::00102b4c","name":"FUN_installer__00102b4c","convention":"unknown"}
-{"address":"installer::00102b5c","name":"FUN_installer__00102b5c","convention":"unknown"}
-{"address":"installer::00102bca","name":"FUN_installer__00102bca","convention":"unknown"}
-{"address":"installer::00102d22","name":"FUN_installer__00102d22","convention":"unknown"}
-{"address":"installer::00102da6","name":"FUN_installer__00102da6","convention":"unknown"}
-{"address":"installer::00102e3c","name":"FUN_installer__00102e3c","convention":"unknown"}
-{"address":"installer::00102e58","name":"FUN_installer__00102e58","convention":"unknown"}
-{"address":"installer::00102e86","name":"FUN_installer__00102e86","convention":"unknown"}
-{"address":"installer::00102eb0","name":"FUN_installer__00102eb0","convention":"unknown"}
-{"address":"installer::00102ff4","name":"FUN_installer__00102ff4","convention":"unknown"}
-{"address":"installer::00103016","name":"FUN_installer__00103016","convention":"unknown"}
-{"address":"installer::001030b4","name":"FUN_installer__001030b4","convention":"unknown"}
-{"address":"installer::00103102","name":"FUN_installer__00103102","convention":"unknown"}
-{"address":"installer::001031cc","name":"FUN_installer__001031cc","convention":"unknown"}
-{"address":"installer::00103266","name":"FUN_installer__00103266","convention":"unknown"}
-{"address":"installer::00103868","name":"FUN_installer__00103868","convention":"unknown"}
-{"address":"installer::00103984","name":"FUN_installer__00103984","convention":"unknown"}
-{"address":"installer::001039ba","name":"FUN_installer__001039ba","convention":"unknown"}
-{"address":"installer::00103a44","name":"FUN_installer__00103a44","convention":"unknown"}
-{"address":"installer::00103aa8","name":"FUN_installer__00103aa8","convention":"unknown"}
-{"address":"installer::00103c7c","name":"FUN_installer__00103c7c","convention":"unknown"}
-{"address":"installer::00103c90","name":"FUN_installer__00103c90","convention":"unknown"}
-{"address":"installer::00103d74","name":"FUN_installer__00103d74","convention":"unknown"}
-{"address":"installer::00103eea","name":"FUN_installer__00103eea","convention":"unknown"}
-{"address":"installer::001040a2","name":"FUN_installer__001040a2","convention":"unknown"}
-{"address":"installer::0010531c","name":"FUN_installer__0010531c","convention":"unknown"}
-{"address":"installer::00105480","name":"FUN_installer__00105480","convention":"unknown"}
-{"address":"installer::00105684","name":"FUN_installer__00105684","convention":"unknown"}
-{"address":"installer::001056ba","name":"FUN_installer__001056ba","convention":"unknown"}
-{"address":"installer::00105c78","name":"FUN_installer__00105c78","convention":"unknown"}
-{"address":"installer::00105c96","name":"FUN_installer__00105c96","convention":"unknown"}
-{"address":"installer::00105cf2","name":"FUN_installer__00105cf2","convention":"unknown"}
-{"address":"installer::00105d52","name":"FUN_installer__00105d52","convention":"unknown"}
-{"address":"installer::00105eb8","name":"FUN_installer__00105eb8","convention":"unknown"}
-{"address":"installer::00105f7c","name":"FUN_installer__00105f7c","convention":"unknown"}
-{"address":"installer::00106164","name":"FUN_installer__00106164","convention":"unknown"}
-{"address":"installer::00106282","name":"FUN_installer__00106282","convention":"unknown"}
-{"address":"installer::00106548","name":"FUN_installer__00106548","convention":"unknown"}
-{"address":"installer::001073f6","name":"FUN_installer__001073f6","convention":"unknown"}
-{"address":"installer::001076f4","name":"FUN_installer__001076f4","convention":"unknown"}
-{"address":"installer::00108166","name":"FUN_installer__00108166","convention":"unknown"}
-{"address":"installer::001081ac","name":"FUN_installer__001081ac","convention":"unknown"}
-{"address":"installer::0010822e","name":"FUN_installer__0010822e","convention":"unknown"}
-{"address":"installer::0010824a","name":"FUN_installer__0010824a","convention":"unknown"}
-{"address":"installer::001083b6","name":"FUN_installer__001083b6","convention":"unknown"}
-{"address":"installer::00108466","name":"FUN_installer__00108466","convention":"unknown"}
-{"address":"installer::00108ca8","name":"FUN_installer__00108ca8","convention":"unknown"}
-{"address":"installer::00109036","name":"thunk_FUN_installer__0010904c","convention":"unknown"}
-{"address":"installer::0010904c","name":"FUN_installer__0010904c","convention":"unknown"}
-{"address":"installer::00109160","name":"FUN_installer__00109160","convention":"unknown"}
-{"address":"installer::0010917e","name":"FUN_installer__0010917e","convention":"unknown"}
-{"address":"installer::001091ac","name":"FUN_installer__001091ac","convention":"unknown"}
-{"address":"installer::00109366","name":"FUN_installer__00109366","convention":"unknown"}
-{"address":"installer::0010937e","name":"FUN_installer__0010937e","convention":"unknown"}
-{"address":"installer::00109562","name":"FUN_installer__00109562","convention":"unknown"}
-{"address":"installer::00109c7e","name":"FUN_installer__00109c7e","convention":"unknown"}
-{"address":"installer::00109cb4","name":"FUN_installer__00109cb4","convention":"unknown"}
-{"address":"installer::0010aa3e","name":"FUN_installer__0010aa3e","convention":"unknown"}
-{"address":"installer::0010aaa6","name":"FUN_installer__0010aaa6","convention":"unknown"}
+{"address":"installer::00102a72","name":"installer_psos_call","note":"the installer's psos_call","convention":"unknown"}
+{"address":"installer::00102aa4","name":"installer_psos_pack_name","note":"the installer's psos_pack_name","convention":"unknown"}
+{"address":"installer::00102b4c","name":"installer_psos_my_pid","note":"the installer's psos_my_pid","convention":"unknown"}
+{"address":"installer::00102b5c","name":"installer_psos_delete","note":"the installer's psos_delete, service 4","convention":"unknown"}
+{"address":"installer::00102bca","name":"installer_psos_pause","note":"the installer's psos_pause, service 28","convention":"unknown"}
+{"address":"installer::00102d22","name":"installer_psos_create_x","note":"the installer's psos_create_x, service 20","convention":"unknown"}
+{"address":"installer::00102da6","name":"installer_psos_send_x","note":"the installer's psos_send_x, service 23","convention":"unknown"}
+{"address":"installer::00102e3c","name":"installer_psos_signal_v","note":"the installer's psos_signal_v, service 25","convention":"unknown"}
+{"address":"installer::00102e58","name":"installer_psos_wait_v","note":"the installer's psos_wait_v, service 26","convention":"unknown"}
+{"address":"installer::00102e86","name":"installer_psos_get_v","note":"the installer's psos_get_v, service 27","convention":"unknown"}
+{"address":"installer::00102eb0","name":"installer_psos_service_29","note":"the installer's psos_service_29","convention":"unknown"}
+{"address":"installer::00102ff4","name":"installer_gp_port_select","note":"the installer's gp_port_select","convention":"unknown"}
+{"address":"installer::00103016","name":"installer_duartb_mode_from_settings","note":"the installer's duartb_mode_from_settings","convention":"unknown"}
+{"address":"installer::001030b4","name":"installer_duartb_baud_from_settings","note":"the installer's duartb_baud_from_settings","convention":"unknown"}
+{"address":"installer::00103102","name":"installer_duartb_putc_polled","note":"the installer's duartb_putc_polled","convention":"unknown"}
+{"address":"installer::001031cc","name":"installer_drtb_getc","note":"the installer's drtb_getc","convention":"unknown"}
+{"address":"installer::00103266","name":"installer_drtb_gets","note":"the installer's drtb_gets","convention":"unknown"}
+{"address":"installer::00103868","name":"installer_drtb_putc","note":"the installer's drtb_putc","convention":"unknown"}
+{"address":"installer::00103984","name":"installer_console_write_polled","note":"the installer's console_write_polled","convention":"unknown"}
+{"address":"installer::001039ba","name":"installer_printf_polled","note":"the installer's printf_polled","convention":"unknown"}
+{"address":"installer::00103a44","name":"installer_duarta_receive","note":"empties DUART channel A's receiver into its ring","convention":"unknown"}
+{"address":"installer::00103aa8","name":"installer_duartb_isr","note":"the installer's duartb_isr","convention":"unknown"}
+{"address":"installer::00103c7c","name":"installer_duarta_transmit_interrupt","note":"disables channel A's transmit interrupt","convention":"unknown"}
+{"address":"installer::00103c90","name":"installer_duartb_transmit_interrupt","note":"the installer's duartb_transmit_interrupt","convention":"unknown"}
+{"address":"installer::00103d74","name":"installer_duart_interrupt","note":"the DUART's interrupt: dispatches each pending, enabled source","convention":"unknown"}
+{"address":"installer::00103eea","name":"installer_fatal_error","note":"holds off interrupts and hangs","convention":"unknown"}
+{"address":"installer::001040a2","name":"installer_fatal_error_with_code","note":"the installer's fatal_error_with_code","convention":"unknown"}
+{"address":"installer::0010531c","name":"installer_scpi_scan_exponent","note":"the installer's scpi_scan_exponent","convention":"unknown"}
+{"address":"installer::00105480","name":"installer_scpi_char_upper","note":"the installer's scpi_char_upper","convention":"unknown"}
+{"address":"installer::00105684","name":"installer_scpi_suffix_compare_tail","note":"the installer's scpi_suffix_compare_tail","convention":"unknown"}
+{"address":"installer::001056ba","name":"installer_scpi_multiplier_exponent","note":"the installer's scpi_multiplier_exponent","convention":"unknown"}
+{"address":"installer::00105c78","name":"installer_status_event_set","note":"the installer's status_event_set","convention":"unknown"}
+{"address":"installer::00105c96","name":"installer_status_condition_set","note":"the installer's status_condition_set","convention":"unknown"}
+{"address":"installer::00105cf2","name":"installer_status_condition_clear","note":"the installer's status_condition_clear","convention":"unknown"}
+{"address":"installer::00105d52","name":"installer_status_propagate","note":"the installer's status_propagate","convention":"unknown"}
+{"address":"installer::00105eb8","name":"installer_status_set_bit","note":"the installer's status_set_bit","convention":"unknown"}
+{"address":"installer::00105f7c","name":"installer_status_apply_condition","note":"the installer's status_apply_condition","convention":"unknown"}
+{"address":"installer::00106164","name":"installer_status_read_event","note":"the installer's status_read_event","convention":"unknown"}
+{"address":"installer::00106282","name":"installer_error_queue_push","note":"the installer's error_queue_push","convention":"unknown"}
+{"address":"installer::00106548","name":"installer_error_message_lookup","note":"the installer's error_message_lookup","convention":"unknown"}
+{"address":"installer::001073f6","name":"installer_scpi_prompt","note":"the installer's scpi_prompt","convention":"unknown"}
+{"address":"installer::001076f4","name":"installer_status_prompt_refresh","note":"the installer's status_prompt_refresh","convention":"unknown"}
+{"address":"installer::00108166","name":"installer_record_checksum","note":"the installer's record_checksum","convention":"unknown"}
+{"address":"installer::001081ac","name":"installer_parameter_record_read","note":"the installer's parameter_record_read","convention":"unknown"}
+{"address":"installer::0010822e","name":"installer_idn_model_default","note":"sets the *IDN? model to 58000A","convention":"unknown"}
+{"address":"installer::0010824a","name":"installer_identification_record_read","note":"the installer's identification_record_read","convention":"unknown"}
+{"address":"installer::001083b6","name":"installer_psos_config_init","note":"the installer's psos_config_init","convention":"unknown"}
+{"address":"installer::00108466","name":"installer_trap_1","note":"the installer's primary_trap_1","convention":"unknown"}
+{"address":"installer::00108ca8","name":"installer_float_raise","note":"the installer's float_raise","convention":"unknown"}
+{"address":"installer::00109036","name":"installer_call_atexit_functions","convention":"unknown"}
+{"address":"installer::0010904c","name":"installer_call_atexit_functions","note":"the installer's call_atexit_functions","convention":"unknown"}
+{"address":"installer::00109160","name":"installer_memcpy","note":"the installer's memcpy","convention":"unknown"}
+{"address":"installer::0010917e","name":"installer_strncpy","note":"the installer's strncpy","convention":"unknown"}
+{"address":"installer::001091ac","name":"installer_strtol","note":"strtol: a long from a string in a base up to 36, and where it ended","convention":"unknown"}
+{"address":"installer::00109366","name":"installer_toupper","note":"the installer's toupper","convention":"unknown"}
+{"address":"installer::0010937e","name":"installer_double_to_digits_multiply","note":"the installer's double_to_digits_multiply","convention":"unknown"}
+{"address":"installer::00109562","name":"installer_double_to_digits","note":"the installer's double_to_digits","convention":"unknown"}
+{"address":"installer::00109c7e","name":"installer_next_decimal_digit","note":"the installer's next_decimal_digit","convention":"unknown"}
+{"address":"installer::00109cb4","name":"installer_format","note":"the installer's format","convention":"unknown"}
+{"address":"installer::0010aa3e","name":"installer_sprintf","note":"the installer's sprintf","convention":"unknown"}
+{"address":"installer::0010aaa6","name":"installer_vsprintf","note":"the installer's vsprintf","convention":"unknown"}

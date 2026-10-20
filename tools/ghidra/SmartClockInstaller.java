@@ -15,6 +15,10 @@
 //
 // Boot code jumps into plain RAM, which an overlay does not serve; the
 // jump is marked a call, so the decompiler shows func_0xADDRESS there.
+//
+// The packed records are never run where they lie, but analysis finds
+// code in them, a copy of each installer routine at its ROM address; the
+// script clears it, leaving the overlay the installer's only copy.
 // The installer's functions are not labeled at their plain addresses: the
 // primary keeps its own data at those addresses, and a label there would
 // name the primary's data after installer code.
@@ -56,6 +60,7 @@ public class SmartClockInstaller extends GhidraScript {
 			println("overlay " + OVERLAY + " exists; calls refreshed only");
 			removeMirroredLabels(existing);
 			callIntoInstaller(existing);
+			clearPackedCode(records);
 			return;
 		}
 		byte[] image = unpack(records);
@@ -81,6 +86,7 @@ public class SmartClockInstaller extends GhidraScript {
 		}
 		analyzeChanges(currentProgram);
 		callIntoInstaller(block);
+		clearPackedCode(records);
 	}
 
 	/**
@@ -110,14 +116,27 @@ public class SmartClockInstaller extends GhidraScript {
 		println("jumps into the installer made calls: " + count);
 	}
 
-	/** Returns the installer's RAM image from RAM up: the vector copy, then the records. */
-	private byte[] unpack(Address records) throws Exception {
+	/** Returns the address of the records' 'E'. */
+	private Address recordsEnd(Address records) throws Exception {
 		if (getByte(records) != START) {
 			throw new IllegalArgumentException("no 'S' at " + records);
 		}
-		byte[] image = new byte[0];
 		Address at = records.add(1);
 		while (getByte(at) == COPY) {
+			at = at.add(1 + RECORD_HEADER_BYTES + getInt(at.add(1)));
+		}
+		if (getByte(at) != END) {
+			throw new IllegalArgumentException("record at " + at + " is neither 'C' nor 'E'");
+		}
+		return at;
+	}
+
+	/** Returns the installer's RAM image from RAM up: the vector copy, then the records. */
+	private byte[] unpack(Address records) throws Exception {
+		Address end = recordsEnd(records);
+		byte[] image = new byte[0];
+		for (Address at = records.add(1); at.compareTo(end) < 0;
+				at = at.add(1 + RECORD_HEADER_BYTES + getInt(at.add(1)))) {
 			int count = getInt(at.add(1));
 			long destination = getInt(at.add(5)) & 0xffffffffL;
 			int offset = (int) (destination - RAM);
@@ -126,14 +145,23 @@ public class SmartClockInstaller extends GhidraScript {
 			}
 			System.arraycopy(getBytes(at.add(1 + RECORD_HEADER_BYTES), count), 0, image, offset,
 				count);
-			at = at.add(1 + RECORD_HEADER_BYTES + count);
-		}
-		if (getByte(at) != END) {
-			throw new IllegalArgumentException("record at " + at + " is neither 'C' nor 'E'");
 		}
 		System.arraycopy(getBytes(toAddr(0), VECTOR_TABLE_BYTES), 0, image, 0,
 			VECTOR_TABLE_BYTES);
 		return image;
+	}
+
+	/** Removes the functions and code analysis found in the packed records. */
+	private void clearPackedCode(Address records) throws Exception {
+		Address end = recordsEnd(records);
+		int count = 0;
+		for (Function function : currentProgram.getFunctionManager()
+				.getFunctions(new AddressSet(records, end), true)) {
+			removeFunction(function);
+			count++;
+		}
+		clearListing(records, end);
+		println("functions in the packed records removed: " + count);
 	}
 
 	private void makeFunction(Address address, String name) throws Exception {

@@ -151,7 +151,7 @@ generation:
 | ------ | --- | ------ |
 | 58503A 3633, 3704; Z3801A 3543; Z3805A 3543B | OP2 (mask 4) | `0x239c6`, `0x23c22`, `0x2372e`, `0x2486a` |
 | 58503B 1.01.04 | OP3 (mask 8) | `0x3353e` |
-| Z3815A 4010, Z3816A 4001 | OP6 (mask `0x40`) | `0x36cfa`, `0x33e5c` |
+| Z3815A 4010, Z3816A 4001 | OP6 (mask `0x40`) | `0x36cfc`, `0x33e5e` |
 
 A stopped or steady heartbeat means `hmon` has stopped running.
 `:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded?` returns

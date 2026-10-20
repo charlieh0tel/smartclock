@@ -89,6 +89,7 @@ import ghidra.app.util.cparser.C.CParser;
 import ghidra.app.util.cparser.C.CParserUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.data.AbstractFloatDataType;
 import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.ArchiveType;
 import ghidra.program.model.data.ByteDataType;
@@ -630,9 +631,10 @@ public class SmartClockSetup extends GhidraScript {
 	 * short in a 2-byte slot, its value at the slot's start, where Ghidra's
 	 * default convention would look at the end of a 4-byte slot; so a
 	 * prototype with an argument narrower than 4 bytes is laid out this way
-	 * too.  Any other takes the default convention.  Ghidra's default returns a float or double in FP0, but
-	 * these images have no FPU and return them in D0 or D0:D1, so a
-	 * function returning one needs its return annotated.
+	 * too, and so is one returning a float or double: Ghidra's default
+	 * convention returns those in FP0, but these images have no FPU and
+	 * return them in D0 or D0:D1.  Any other takes the default
+	 * convention.
 	 */
 	private void applyPrototype(Address address, String prototype) throws Exception {
 		FunctionDefinitionDataType signature = CParserUtils.parseSignature(
@@ -646,7 +648,8 @@ public class SmartClockSetup extends GhidraScript {
 		for (ParameterDefinition argument : signature.getArguments()) {
 			narrow |= argument.getDataType().getLength() < STACK_SLOT;
 		}
-		if (!prototype.contains("@") && !narrow) {
+		boolean floating = signature.getReturnType() instanceof AbstractFloatDataType;
+		if (!prototype.contains("@") && !narrow && !floating) {
 			new ApplyFunctionSignatureCmd(address, signature, SourceType.IMPORTED)
 					.applyTo(currentProgram, monitor);
 			return;
@@ -717,7 +720,6 @@ public class SmartClockSetup extends GhidraScript {
 		return new VariableStorage(currentProgram, registers.toArray(new Register[0]));
 	}
 
-	/** Types the data at address as declaration, a type the program knows, as "status_model *". */
 	/**
 	 * Makes the header's uint8_t and int8_t Ghidra's byte and sbyte.  The
 	 * header defines them as unsigned and signed char, as C does, but the
@@ -771,6 +773,7 @@ public class SmartClockSetup extends GhidraScript {
 				: max < (1L << bits);
 	}
 
+	/** Types the data at address as declaration, a type the program knows, as "status_model *". */
 	private void applyDataType(Address address, String declaration) throws Exception {
 		DataType type = parseType(declaration);
 		clearListing(address, address.add(type.getLength() - 1));

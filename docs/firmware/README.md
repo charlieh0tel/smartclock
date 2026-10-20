@@ -506,6 +506,20 @@ variable arguments; a view into a routine's own frame, or of a
 register, has no C to stand for, and is an extern at `0xfffff000`, which
 the harness leaves unmapped, so that a use faults there.
 
+The decompiler moves bits where C converts values.  These images have
+no FPU, so it never sees a conversion between a floating type and an
+integer -- the float library makes those by calls -- and every cast it
+writes between them, `(double)CONCAT44(...)`, `(ulonglong)x & mask`,
+means the same bits as the other type.  The exporter writes each as
+`__ghidra_as(type, v)`, an integer's bits as a float or double, or
+`(type)__ghidra_bits(v)`, a floating value's bits as an integer.  It
+then asks gcc (`-Wfloat-conversion -Wconversion`, as JSON) for the
+implicit conversions that remain, a double assigned to an `undefined8`
+or an integer passed as a float, and wraps each the same way, leaving a
+literal to convert; it reports any it could not, and without gcc leaves
+them.  A float or double result is in D0 or D0:D1 whatever its
+prototype's source, never FP0.
+
 `tools/firmware/rebuild_link.py` links it into a rebuilt image: each
 piece of assembly at its own address, where it must be, and is, the
 image's bytes, and gcc's code -- the C, the bridges, its constants -- at

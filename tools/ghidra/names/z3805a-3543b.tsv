@@ -1286,6 +1286,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2f680	function	happening_replay	context	replays buffered status events through status_report or status_happening
 0x2f6dc	function	happening_flush	context	replays one of the two buffers of early status events
 0x30a3e	function	lifetime_record_read	context	reads the lifetime record from EEPROM 0x400060, or sets its defaults: 1994-01-01 and the EFC at mid-scale
+0x101d00	label	lifetime_efc	context	the lifetime record's EFC, which lifetime_record_read loads from EEPROM 0x40006a or sets to mid-scale, 524288	float
 #
 # the EEPROM records, the clamps and the counter's self-tests
 0x30c1e	function	calibration_block_read	interval.md's calibration block	reads the time offset and TC from the calibration block at EEPROM 0x400080, or zeros if its checksum fails
@@ -1473,7 +1474,7 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x298b2	function	scpi_numeric_set_double	context	scpi_numeric_set for a parameter of doubles; called by nothing
 0x29990	function	scpi_numeric_get_double	context	scpi_numeric_get for a parameter of doubles; called by nothing
 0x29a1e	function	long_identity	context	returns its argument; called by nothing
-0x29a62	function	float_identity	context	returns its argument; the EFC queries pass pll.efc through it
+0x29a62	function	float_identity	context	returns its argument; the EFC queries pass pll.efc through it	float float_identity(float x)
 0x29e34	function	scpi_message_done	context	scpi_interpret's hook at each message's end and error: returns 0, no further error	undefined4 scpi_message_done(void)
 0x29e38	function	scpi_input_closed	context	scpi_interpret's hook when the input closes: returns 0	undefined4 scpi_input_closed(void)
 0x2f53a	function	status_event_hook	context	does nothing; status_report and status_happening pass it each event
@@ -1520,3 +1521,15 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x608fe	local	output	structures.md	vsprintf's record for sprintf_put	sprintf_output @ -0x14
 installer::0x10aa3e	local	output	structures.md	installer_sprintf's record for sprintf_put	sprintf_output @ -0x14
 installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for sprintf_put	sprintf_output @ -0x14
+#
+# doubles the decompiler split into two 4-byte locals, which gcc need not
+# keep adjacent; each is passed by address to the float library
+0x1bed8	local	accumulator_1	read	a double the code adds to or reads whole by its address	double @ -0x24
+0x1bed8	local	accumulator_2	read	a double the code adds to or reads whole by its address	double @ -0x1c
+0x1bed8	local	accumulator_3	read	a double the code adds to or reads whole by its address	double @ -0x14
+0x1bed8	local	accumulator_4	read	a double the code adds to or reads whole by its address	double @ -0xc
+0x4f6d8	local	accumulator_1	read	a double the code adds to or reads whole by its address	double @ -0x14
+0x4f6d8	local	accumulator_2	read	a double the code adds to or reads whole by its address	double @ -0xc
+0x60f5e	local	y_high	read	a double the code adds to or reads whole by its address	double @ -0x28
+0x60f5e	local	high_part	read	a double the code adds to or reads whole by its address	double @ -0x10
+0x6191c	local	quarter	read	a double the code adds to or reads whole by its address	double @ -0xc

@@ -20,8 +20,10 @@
 //@category SmartClock
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +34,11 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import ghidra.app.decompiler.ClangNode;
 import ghidra.app.decompiler.ClangTokenGroup;
@@ -45,11 +52,13 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.data.AbstractFloatDataType;
 import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.AbstractStringDataType;
 import ghidra.program.model.data.Array;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeComponent;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.DataTypeWriter;
 import ghidra.program.model.data.Enum;
@@ -157,6 +166,8 @@ public class SmartClockExportC extends GhidraScript {
 		#define NAN __builtin_nanf("")
 		#define __ghidra_bits(v) ({ __typeof__((v) + 0) __v = (v); unsigned long long __b = 0; \
 			__builtin_memcpy((char *)&__b + sizeof __b - sizeof __v, &__v, sizeof __v); __b; })
+		#define __ghidra_as(type, v) ({ unsigned long long __a = __ghidra_bits(v); type __r; \
+			__builtin_memcpy(&__r, (char *)&__a + sizeof __a - sizeof __r, sizeof __r); __r; })
 		#define __ghidra_mask(n) ((n) >= 8 ? ~0ULL : (1ULL << (8 * (n))) - 1)
 		#define __ghidra_concat(y, a, b) \
 			((__ghidra_bits(a) << (8 * (y))) | (__ghidra_bits(b) & __ghidra_mask(y)))
@@ -237,7 +248,7 @@ public class SmartClockExportC extends GhidraScript {
 						}
 					}
 					else {
-						functions.append(c);
+						functions.append(reinterpretingCasts(c));
 						collectGlobals(results.getHighFunction(), referenced);
 						String stack = stackArguments(results.getHighFunction());
 						if (stack != null) {
@@ -272,6 +283,7 @@ public class SmartClockExportC extends GhidraScript {
 		File sidecar = new File(base(output) + SIDECAR_SUFFIX);
 		int recorded = writeConventions(sidecar);
 		println("decompiled " + written + ", failed " + failed + " -> " + output);
+		println(reinterpretConversions(output));
 		println("bridged for C: " + bridged);
 		println("conventions recorded for " + recorded + " -> " + sidecar);
 	}
@@ -1205,6 +1217,356 @@ public class SmartClockExportC extends GhidraScript {
 		}
 		label.appendTail(out);
 		return out.toString();
+	}
+
+	/** A cast to a type named in one or two words. */
+	private static final Pattern CAST = Pattern.compile("\\(((?:unsigned |signed )?[A-Za-z_]\\w*)\\)");
+	/** The decompiler's floating types; its unkfloatN are integers here. */
+	private static final Set<String> FLOATING = Set.of("float", "double");
+	/** The integer types it casts to. */
+	private static final Set<String> INTEGERS = Set.of("char", "uchar", "byte", "sbyte", "short",
+		"ushort", "int", "uint", "long", "ulong", "longlong", "ulonglong", "bool", "undefined",
+		"undefined1", "undefined2", "undefined4", "undefined8", "int8_t", "uint8_t", "int16_t",
+		"uint16_t", "int32_t", "uint32_t", "int64_t", "uint64_t", "unsigned int", "unsigned char",
+		"unsigned short", "unsigned long", "signed char");
+	/** A floating declaration in a function, its name the group. */
+	private static final Pattern FLOATING_VARIABLE =
+		Pattern.compile("\\b(?:float|double) (\\w+)(?=[;,)\\[])");
+	private static final Pattern FLOATING_POINTER =
+		Pattern.compile("\\b(?:float|double) \\*(\\w+)(?=[;,)])|\\b(?:float|double) (\\w+)\\[");
+	/** The last member of a member access. */
+	private static final Pattern LAST_MEMBER = Pattern.compile("(?:\\.|->)(\\w+)$");
+	private static final Pattern IDENTIFIER_START = Pattern.compile("^[A-Za-z_]\\w*");
+
+	/** The program's functions that return a floating value, its floating fields and globals. */
+	private Set<String> floatingFunctions;
+	private Set<String> floatingFields;
+	private Set<String> floatingGlobals;
+
+	private static boolean isFloating(DataType type) {
+		DataType base = type instanceof TypeDef typedef ? typedef.getBaseDataType() : type;
+		return base instanceof AbstractFloatDataType;
+	}
+
+	private void collectFloating() {
+		floatingFunctions = new HashSet<>();
+		floatingFields = new HashSet<>();
+		floatingGlobals = new HashSet<>();
+		for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
+			if (isFloating(function.getReturnType())) {
+				floatingFunctions.add(function.getName());
+			}
+		}
+		Iterator<DataType> types = currentProgram.getDataTypeManager().getAllDataTypes();
+		while (types.hasNext()) {
+			if (types.next() instanceof Composite composite) {
+				for (DataTypeComponent component : composite.getDefinedComponents()) {
+					if (component.getFieldName() != null && isFloating(component.getDataType())) {
+						floatingFields.add(component.getFieldName());
+					}
+				}
+			}
+		}
+		for (Data data : currentProgram.getListing().getDefinedData(true)) {
+			if (data.getLabel() != null && isFloating(data.getDataType())) {
+				floatingGlobals.add(data.getLabel());
+			}
+		}
+	}
+
+	/**
+	 * c with each cast between a floating type and an integer one made a
+	 * reinterpretation of its bits, as the decompiler means it: these
+	 * images have no FPU, so it never sees a conversion, which the float
+	 * library makes by calls, and a C cast would convert the value.  A
+	 * cast to float or double is __ghidra_as(type, v), the integer's bits
+	 * as that type; an integer cast of a floating operand -- a floating
+	 * variable, a call to a function returning one, a floating pointer
+	 * read, a floating field -- is (type)__ghidra_bits(v).  Casts are
+	 * rewritten last first, so an operand's own are done before it.
+	 */
+	private String reinterpretingCasts(String c) {
+		if (floatingFunctions == null) {
+			collectFloating();
+		}
+		Set<String> variables = new HashSet<>(floatingGlobals);
+		Matcher declared = FLOATING_VARIABLE.matcher(c);
+		while (declared.find()) {
+			variables.add(declared.group(1));
+		}
+		Set<String> pointers = new HashSet<>();
+		Matcher pointer = FLOATING_POINTER.matcher(c);
+		while (pointer.find()) {
+			pointers.add(pointer.group(1) != null ? pointer.group(1) : pointer.group(2));
+		}
+		List<int[]> casts = new ArrayList<>();
+		Matcher cast = CAST.matcher(c);
+		while (cast.find()) {
+			String type = cast.group(1);
+			char before = cast.start() == 0 ? ' ' : c.charAt(cast.start() - 1);
+			if ((FLOATING.contains(type) || INTEGERS.contains(type))
+				&& !Character.isJavaIdentifierPart(before) && before != ')' && before != ']') {
+				casts.add(new int[] { cast.start(), cast.end() });
+			}
+		}
+		StringBuilder out = new StringBuilder(c);
+		for (int k = casts.size() - 1; k >= 0; k--) {
+			int start = casts.get(k)[0];
+			int typeEnd = casts.get(k)[1];
+			String type = out.substring(start + 1, typeEnd - 1);
+			int end = operandEnd(out, typeEnd);
+			if (end < 0) {
+				continue;
+			}
+			String operand = out.substring(typeEnd, end);
+			boolean floating = floatingOperand(operand, variables, pointers);
+			if (FLOATING.contains(type) && !floating) {
+				out.replace(start, end, "__ghidra_as(" + type + ", " + operand + ")");
+			}
+			else if (INTEGERS.contains(type) && floating) {
+				out.replace(start, end, "(" + type + ")__ghidra_bits(" + operand + ")");
+			}
+		}
+		return out.toString();
+	}
+
+	/**
+	 * Where the operand of a cast that ends at start ends: a unary
+	 * expression, its prefix operators and casts, then a primary and its
+	 * calls, subscripts and members; -1 if it is none of those.
+	 */
+	private static int operandEnd(CharSequence c, int start) {
+		int i = start;
+		while (i < c.length() && "-~!*&".indexOf(c.charAt(i)) >= 0
+			&& !(c.charAt(i) == '-' && i + 1 < c.length() && c.charAt(i + 1) == '>')) {
+			i++;
+		}
+		if (i >= c.length()) {
+			return -1;
+		}
+		char first = c.charAt(i);
+		if (first == '(') {
+			int close = matching(c, i);
+			if (close < 0) {
+				return -1;
+			}
+			String inner = c.subSequence(i + 1, close).toString().strip();
+			if (inner.matches("(?:unsigned |signed )?[A-Za-z_]\\w*(?: \\*+)?")
+				&& !inner.matches("[A-Za-z_]\\w*") || FLOATING.contains(inner) || INTEGERS.contains(inner)) {
+				return operandEnd(c, close + 1);
+			}
+			i = close + 1;
+		}
+		else if (Character.isJavaIdentifierStart(first) || Character.isDigit(first)) {
+			while (i < c.length() && (Character.isJavaIdentifierPart(c.charAt(i))
+				|| c.charAt(i) == '.' && Character.isDigit(first))) {
+				i++;
+			}
+		}
+		else if (first == '"' || first == '\'') {
+			int close = i + 1;
+			while (close < c.length() && c.charAt(close) != first) {
+				close += c.charAt(close) == '\\' ? 2 : 1;
+			}
+			i = close + 1;
+		}
+		else {
+			return -1;
+		}
+		while (i < c.length()) {
+			// the decompiler may break a line before a call's arguments
+			int spaced = i;
+			while (spaced < c.length() && Character.isWhitespace(c.charAt(spaced))) {
+				spaced++;
+			}
+			if (spaced < c.length() && (c.charAt(spaced) == '(' || c.charAt(spaced) == '[')) {
+				i = spaced;
+			}
+			char next = c.charAt(i);
+			if (next == '(' || next == '[') {
+				int close = matching(c, i);
+				if (close < 0) {
+					return -1;
+				}
+				i = close + 1;
+			}
+			else if (next == '.' || next == '-' && i + 1 < c.length() && c.charAt(i + 1) == '>') {
+				int member = i + (next == '.' ? 1 : 2);
+				int memberEnd = member;
+				while (memberEnd < c.length() && Character.isJavaIdentifierPart(c.charAt(memberEnd))) {
+					memberEnd++;
+				}
+				if (memberEnd == member) {
+					break;
+				}
+				i = memberEnd;
+			}
+			else {
+				break;
+			}
+		}
+		return i;
+	}
+
+	/** The bracket that closes the one at open, past strings; -1 if none. */
+	private static int matching(CharSequence c, int open) {
+		int depth = 0;
+		for (int i = open; i < c.length(); i++) {
+			char ch = c.charAt(i);
+			if (ch == '"' || ch == '\'') {
+				i++;
+				while (i < c.length() && c.charAt(i) != ch) {
+					i += c.charAt(i) == '\\' ? 2 : 1;
+				}
+			}
+			else if (ch == '(' || ch == '[') {
+				depth++;
+			}
+			else if (ch == ')' || ch == ']') {
+				if (--depth == 0) {
+					return i;
+				}
+			}
+		}
+		return -1;
+	}
+
+	/** Whether a cast's operand is a floating value. */
+	private boolean floatingOperand(String operand, Set<String> variables, Set<String> pointers) {
+		String s = operand.strip();
+		if (s.startsWith("__ghidra_as(float") || s.startsWith("__ghidra_as(double")) {
+			return true;
+		}
+		int stars = 0;
+		while (!s.isEmpty() && "-~!*".indexOf(s.charAt(0)) >= 0) {
+			stars += s.charAt(0) == '*' ? 1 : 0;
+			s = s.substring(1);
+		}
+		Matcher head = IDENTIFIER_START.matcher(s);
+		if (!head.find()) {
+			return false;
+		}
+		String name = head.group();
+		String rest = s.substring(name.length());
+		if (rest.isEmpty()) {
+			return stars == 0 ? variables.contains(name) : stars == 1 && pointers.contains(name);
+		}
+		if (rest.startsWith("(") && matching(rest, 0) == rest.length() - 1) {
+			return stars == 0 && floatingFunctions.contains(name);
+		}
+		if (rest.startsWith("[") && matching(rest, 0) == rest.length() - 1) {
+			return stars == 0 && pointers.contains(name);
+		}
+		Matcher member = LAST_MEMBER.matcher(rest);
+		return stars == 0 && member.find() && floatingFields.contains(member.group(1));
+	}
+
+	/** The compiler that finds the conversions reinterpretConversions makes bitwise. */
+	private static final String COMPILER = "m68k-linux-gnu-gcc";
+	private static final List<String> CONVERSION_FLAGS = List.of("-std=gnu17", "-mcpu=cpu32",
+		"-fsyntax-only", "-Wfloat-conversion", "-Wconversion", "-Wno-sign-conversion",
+		"-Wno-error=int-conversion", "-Wno-error=incompatible-pointer-types",
+		"-fdiagnostics-format=json");
+	/** A conversion's types in gcc's message, the C name first in each. */
+	private static final Pattern CONVERSION =
+		Pattern.compile("^conversion from \u2018([^\u2019]+)\u2019(?: \\{aka \u2018[^\u2019]+\u2019\\})?"
+			+ " to \u2018([^\u2019]+)\u2019");
+	private static final Pattern NUMBER = Pattern.compile("^-?[0-9][0-9a-fA-FxX.eE+-]*[fFlLuU]*$");
+
+	/**
+	 * Makes each implicit conversion between a floating type and an
+	 * integer one in the written C a reinterpretation, as the cast pass
+	 * does each cast: the decompiler copies bits where C, assigning a
+	 * double to its undefined8 or passing one as an integer, converts the
+	 * value.  gcc finds them, -Wfloat-conversion and -Wconversion, and
+	 * gives each expression's range; a floating value bound for an integer
+	 * becomes __ghidra_bits(v), an integer bound for a floating type
+	 * __ghidra_as(type, v), and a literal is left to convert.  Returns
+	 * what it did, or why it could not.
+	 */
+	private String reinterpretConversions(File output) throws Exception {
+		JsonArray found = conversions(output);
+		if (found == null) {
+			return "conversions left as C makes them: no " + COMPILER;
+		}
+		StringBuilder c = new StringBuilder(Files.readString(output.toPath()));
+		List<Integer> lineStarts = new ArrayList<>(List.of(0));
+		for (int i = 0; i < c.length(); i++) {
+			if (c.charAt(i) == '\n') {
+				lineStarts.add(i + 1);
+			}
+		}
+		// each wrap: its start, its end and its opening text, by start
+		TreeMap<Integer, Object[]> wraps = new TreeMap<>();
+		for (JsonElement element : found) {
+			JsonObject diagnostic = element.getAsJsonObject();
+			Matcher conversion = CONVERSION.matcher(diagnostic.get("message").getAsString());
+			conversion.find();
+			JsonObject caret = diagnostic.getAsJsonArray("locations").get(0).getAsJsonObject()
+				.getAsJsonObject("caret");
+			int at = lineStarts.get(caret.get("line").getAsInt() - 1)
+				+ caret.get("byte-column").getAsInt() - 1;
+			// gcc's caret may be inside the expression, at a member's dot
+			int first = at;
+			while (first > 0 && (Character.isJavaIdentifierPart(c.charAt(first - 1))
+				|| c.charAt(first - 1) == '.' || c.charAt(first - 1) == '>' && first > 1
+					&& c.charAt(first - 2) == '-')) {
+				first -= c.charAt(first - 1) == '>' ? 2 : 1;
+			}
+			int last = operandEnd(c, first);
+			if (last <= at || NUMBER.matcher(c.substring(first, last).strip()).matches()) {
+				continue;
+			}
+			String to = conversion.group(2);
+			wraps.put(first, new Object[] { last,
+				FLOATING.contains(to) ? "__ghidra_as(" + to + ", " : "__ghidra_bits(" });
+		}
+		// each opening and close is a point, put in last first so that
+		// every position still holds; where a close and an opening meet,
+		// the opening goes in first, to come after
+		TreeMap<Integer, StringBuilder> points = new TreeMap<>();
+		for (Map.Entry<Integer, Object[]> wrap : wraps.entrySet()) {
+			points.computeIfAbsent(wrap.getKey(), k -> new StringBuilder())
+				.append((String) wrap.getValue()[1]);
+			points.computeIfAbsent((int) wrap.getValue()[0], k -> new StringBuilder()).insert(0, ")");
+		}
+		for (Map.Entry<Integer, StringBuilder> point : points.descendingMap().entrySet()) {
+			c.insert(point.getKey(), point.getValue());
+		}
+		Files.writeString(output.toPath(), c);
+		JsonArray left = conversions(output);
+		return "conversions made bitwise: " + wraps.size() + ", left: "
+			+ (left == null ? "?" : left.size());
+	}
+
+	/**
+	 * The diagnostics gcc gives for the C's conversions between a floating
+	 * type and an integer one; null if there is no gcc.
+	 */
+	private static JsonArray conversions(File output) throws Exception {
+		List<String> command = new ArrayList<>(List.of(COMPILER));
+		command.addAll(CONVERSION_FLAGS);
+		command.add(output.getPath());
+		Process process;
+		try {
+			process = new ProcessBuilder(command).redirectOutput(ProcessBuilder.Redirect.DISCARD)
+				.start();
+		}
+		catch (IOException e) {
+			return null;
+		}
+		String diagnostics = new String(process.getErrorStream().readAllBytes());
+		process.waitFor();
+		JsonArray found = new JsonArray();
+		for (JsonElement element : JsonParser.parseString(diagnostics).getAsJsonArray()) {
+			JsonObject diagnostic = element.getAsJsonObject();
+			Matcher conversion = CONVERSION.matcher(diagnostic.get("message").getAsString());
+			if (conversion.find() && !diagnostic.getAsJsonArray("locations").isEmpty()
+				&& FLOATING.contains(conversion.group(1)) != FLOATING.contains(conversion.group(2))) {
+				found.add(diagnostic);
+			}
+		}
+		return found;
 	}
 
 	/** Where a C comment ends. */

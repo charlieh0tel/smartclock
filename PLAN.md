@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1212 run, 603 agree, 545 reach the kernel
-     or a peripheral and are skipped, and 64 differ, in the function or
+     original reads them: of 1212 run, 608 agree, 545 reach the kernel
+     or a peripheral and are skipped, and 59 differ, in the function or
      in gcc's callees.
      Unicorn has no CPU32 and the 68020 stands in: the image uses none
      of the CPU32's own instructions (`tbl`, `lpstop`, `bgnd`; a scan of
@@ -704,7 +704,13 @@ view cannot drift apart.  The library, bottom up:
      the harness never gave (92 differing to 78); and the record
      `sprintf` and `vsprintf` give `doprnt`, which the decompiler split
      into two locals gcc laid apart, is typed by a `local` row in the
-     names file (78 to 64).
+     names file (78 to 64), as are seven doubles split the same way,
+     which the harness found in `sqrt`.  And the C now moves bits where
+     the decompiler does: a cast between a floating type and an
+     integer, which without an FPU is never a conversion, and the
+     implicit conversions gcc finds, are reinterpretations
+     (`__ghidra_as`, `__ghidra_bits`), so `sqrt`, `frexp`, `modf` and
+     the EFC queries agree (64 to 59).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

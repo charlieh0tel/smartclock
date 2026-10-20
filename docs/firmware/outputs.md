@@ -153,7 +153,7 @@ generation:
 | 58503B 1.01.04 | OP3 (mask 8) | `0x3353e` |
 | Z3815A 4010, Z3816A 4001 | OP6 (mask `0x40`) | `0x36cfc`, `0x33e5e` |
 
-A stopped or steady heartbeat means `hmon` has stopped running.
+A stopped or steady heartbeat points at `hmon` having stopped, or at the LED's own circuit.
 
 ### The rest of the bank
 

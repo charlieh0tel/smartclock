@@ -3667,7 +3667,8 @@ void FUN_00010400(void)
 
 /* 0001043a */
 
-/* Not a C function: the mutex in A1.  Takes it for the running task, waiting if another holds it,
+/* recursive lock, owner at +8, count at +0xc, a token through request_x when not already owned
+   Not a C function: the mutex in A1.  Takes it for the running task, waiting if another holds it,
    or counts one more hold if the task holds it already.  Returns the error in D7, 0x80 for a nested
    hold.  Preserves D0, D1, A0 and A2. */
 
@@ -3698,7 +3699,8 @@ undefined8 mutex_acquire(void)
 
 /* 00010484 */
 
-/* Not a C function: the mutex in A1.  Releases one hold, freeing the mutex at the last.  Returns
+/* drops the count, or the owner and the token through send_x
+   Not a C function: the mutex in A1.  Releases one hold, freeing the mutex at the last.  Returns
    the error in D7, 2 if the running task does not hold it, 0x80 if holds remain.  Preserves D0 and
    A0. */
 
@@ -3745,6 +3747,10 @@ undefined8 FUN_000104d2(void)
 
 /* 000104e6 */
 
+/* packs the name and creates the mutex as an exchange of that name; "klok" for klok_mutex, "logr"
+   for log_mutex
+   structures.md */
+
 int mutex_create(char *name,void *mutex)
 
 {
@@ -3758,6 +3764,8 @@ int mutex_create(char *name,void *mutex)
 
 /* 00010502 */
 
+/* mutex_acquire on its argument */
+
 int mutex_lock(void *mutex)
 
 {
@@ -3769,6 +3777,8 @@ int mutex_lock(void *mutex)
 
 
 /* 00010518 */
+
+/* mutex_release on its argument */
 
 int mutex_unlock(void *mutex)
 
@@ -3801,6 +3811,8 @@ undefined4 FUN_00010538(void)
 
 
 /* 00010540 */
+
+/* the firmware's own name, "Clk_do: out of event buffers" */
 
 klok_entry * clk_do(undefined4 *param_1)
 
@@ -3999,6 +4011,9 @@ int FUN_00010786(klok_entry *param_1)
 
 /* 000107ee */
 
+/* "at:", "period:", "function address:", "event class:" for each klok entry
+   structures.md */
+
 void klok_print_entries(void)
 
 {
@@ -4097,6 +4112,8 @@ int FUN_00010946(klok_entry *param_1)
 /* 000109ae */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* psos_create("klok") into task_klok, then psos_start(task_klok, klok_task); "Pps_init error",
+   "Clk_go error" */
 
 uint klok_task_create(ulong param_1)
 
@@ -4161,6 +4178,7 @@ void FUN_00010b00(undefined4 param_1,undefined4 param_2)
 /* 00010b1e */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* klok_task_create starts the klok task here */
 
 void klok_task(void)
 
@@ -4273,6 +4291,9 @@ undefined4 FUN_00010db6(ushort param_1)
 
 /* 00010de4 */
 
+/* the es message's %03d, from a packed date
+   structures.md */
+
 int16_t day_of_year(uint32_t date)
 
 {
@@ -4304,6 +4325,7 @@ int FUN_00010e3a(uint param_1)
 /* 00010e72 */
 
 /* WARNING: Removing unreachable block (ram,0x00010eaa) */
+/* a day count as a packed date, for datetime_add */
 
 undefined4 days_to_date(undefined *param_1)
 
@@ -4339,6 +4361,8 @@ undefined4 days_to_date(undefined *param_1)
 
 
 /* 00010f46 */
+
+/* a packed date as a day count, for datetime_add */
 
 int date_to_days(uint param_1)
 
@@ -4471,6 +4495,8 @@ undefined3 FUN_000110d6(undefined4 param_1)
 
 /* 000110fa */
 
+/* @@Ba's month, day and year into year << 16 | month << 8 | day */
+
 undefined4 oncore_date_pack(undefined4 param_1)
 
 {
@@ -4516,6 +4542,9 @@ uint FUN_00011186(uint param_1)
 
 /* 000111cc */
 
+/* the T1 time code's #H%08X, seconds since 1980 from a date and time
+   structures.md */
+
 int gps_seconds(uint32_t date,uint32_t time)
 
 {
@@ -4548,6 +4577,9 @@ int gps_seconds(uint32_t date,uint32_t time)
 
 
 /* 00011284 */
+
+/* :PTIM:LEAP:GPST?'s "#H%08X", from nv_settings.leap_pending and leap_minute_length
+   structures.md */
 
 int leap_gps_time(void)
 
@@ -4633,6 +4665,9 @@ void FUN_00011300(uint32_t *param_1,undefined4 *param_2)
 
 
 /* 00011396 */
+
+/* adds the first packed time and date to the second, carrying seconds, minutes, hours and days;
+   klok adds an entry's period to its time */
 
 void datetime_add(undefined4 *param_1,undefined4 *param_2)
 
@@ -5076,6 +5111,7 @@ undefined8 primary_default_exception(void)
 /* 00011942 */
 
 /* WARNING: Unknown calling convention */
+/* "%s: %s", ": PC = %#8x, SR = %#04x", ", address = %#8x", "RESET to recover." */
 
 void print_exception(ushort param_1,uint32_t param_2,ushort param_3,uint32_t param_4)
 
@@ -5131,6 +5167,8 @@ void print_exception(ushort param_1,uint32_t param_2,ushort param_3,uint32_t par
 /* 00011a2a */
 
 /* WARNING: Unknown calling convention */
+/* the "%s: %s" of an exception; "Oooh! That tickles. I don't know that vector."
+   structures.md */
 
 char * exception_name(uint16_t vector)
 
@@ -5236,6 +5274,9 @@ void FUN_00012050(void)
 
 
 /* 000120aa */
+
+/* Shutdown
+   restart.md */
 
 void shutdown(void)
 
@@ -5780,6 +5821,8 @@ void primary_user_81(void)
 /* 00012e24 */
 
 /* WARNING: Removing unreachable block (ram,0x00012e44) */
+/* "Pps_init error %#04x" prints its result
+   structures.md */
 
 undefined4 pps_init(void)
 
@@ -5841,6 +5884,9 @@ undefined4 FUN_00012e9e(undefined4 *param_1,undefined4 *param_2,int param_3)
 
 /* 00012f2c */
 
+/* calls trap #11, the installer entry
+   restart.md */
+
 void enter_installer(void)
 
 {
@@ -5865,6 +5911,8 @@ void FUN_00012f30(void)
 /* 00012f50 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* hook halt runs
+   console.md */
 
 void console_halt_hook(void)
 
@@ -5915,6 +5963,9 @@ undefined4 FUN_0001303c(void)
 /* 0001304a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* stores its own task id in task_root, sets up the status system, creates the exchanges and tasks
+   and starts them
+   structures.md */
 
 void root_task(void)
 
@@ -6064,6 +6115,8 @@ undefined8 FUN_000132da(void)
 
 /* 000132f4 */
 
+/* "User: %5u of %5u b   Supv: %5u of %5u b" */
+
 void stack_usage_report(undefined4 param_1)
 
 {
@@ -6096,6 +6149,9 @@ void FUN_00013368(void)
 
 /* 00013378 */
 
+/* sets SR's interrupt mask from the argument, returns the old SR
+   psos.md */
+
 undefined2 set_interrupt_mask(uint16_t sr)
 
 {
@@ -6123,8 +6179,10 @@ byte FUN_0001339e(ulong param_1,byte param_2)
 
 /* 000133e2 */
 
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* absolute value of the float on the stack
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 float float_absolute_on_stack(float f)
 
@@ -6166,6 +6224,9 @@ undefined2 primary_trap_7(void)
 
 
 /* 00013422 */
+
+/* trap #7; returns the caller's status register in D0
+   psos.md */
 
 void enter_supervisor(void)
 
@@ -6398,6 +6459,8 @@ void FUN_000135f0(void)
 /* 000136d6 */
 
 /* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* returns clock_date; the T2 time code's date
+   structures.md */
 
 uint32_t get_clock_date(void)
 
@@ -6409,6 +6472,8 @@ uint32_t get_clock_date(void)
 /* 000136de */
 
 /* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* returns clock_time; the T2 time code's time
+   structures.md */
 
 uint32_t get_clock_time(void)
 
@@ -6420,6 +6485,8 @@ uint32_t get_clock_time(void)
 /* 000136e6 */
 
 /* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* returns gps_date; with get_gps_time, the T1 time code's GPS time
+   structures.md */
 
 uint32_t get_gps_date(void)
 
@@ -6431,6 +6498,8 @@ uint32_t get_gps_date(void)
 /* 000136ee */
 
 /* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* returns gps_time
+   structures.md */
 
 uint32_t get_gps_time(void)
 
@@ -6442,6 +6511,7 @@ uint32_t get_gps_time(void)
 /* 000136f6 */
 
 /* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* returns uptime; efc_history_update divides it by 2700 for an entry's time */
 
 uint32_t get_uptime(void)
 
@@ -6451,6 +6521,9 @@ uint32_t get_uptime(void)
 
 
 /* 000136fe */
+
+/* :PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns valid unless clock_invalid
+    */
 
 int get_date_time(uint32_t *date,uint32_t *time)
 
@@ -6512,6 +6585,9 @@ void FUN_000137a4(void)
 
 
 /* 000137d8 */
+
+/* the set_time word's, "set_timedate error: %2X"
+   structures.md */
 
 void set_timedate(void)
 
@@ -6642,6 +6718,9 @@ LAB_00013974:
 
 /* 0001399a */
 
+/* the time code's v is 0 when it returns nonzero
+   structures.md */
+
 uint8_t time_valid(void)
 
 {
@@ -6650,6 +6729,9 @@ uint8_t time_valid(void)
 
 
 /* 000139a2 */
+
+/* sets gps_utc_offset, from D1, and gps_utc_offset_valid; 0x46e70 computes it from the engine's GPS
+   and UTC times */
 
 void set_gps_utc_offset(undefined2 param_1)
 
@@ -6666,6 +6748,9 @@ void set_gps_utc_offset(undefined2 param_1)
 
 /* 000139ce */
 
+/* returns gps_utc_offset_valid and stores gps_utc_offset; the es message's leap value and
+   leap_gps_time */
+
 uint8_t get_gps_utc_offset(int16_t *seconds)
 
 {
@@ -6677,6 +6762,9 @@ uint8_t get_gps_utc_offset(int16_t *seconds)
 
 
 /* 000139e4 */
+
+/* the time code's cc, printed %02X and appended
+   structures.md */
 
 char tcode_checksum(char *param_1)
 
@@ -6695,6 +6783,8 @@ char tcode_checksum(char *param_1)
 
 /* WARNING: Switch with 1 destination removed at 0x00013a16 */
 /* WARNING: Unknown calling convention */
+/* sets tcode_format and tcode_pending
+   structures.md */
 
 char tcode_request(byte param_1)
 
@@ -6720,6 +6810,9 @@ char tcode_request(byte param_1)
 
 /* 00013a48 */
 
+/* the time code's t, from pll.tfom
+   structures.md */
+
 short tfom_code(undefined4 param_1)
 
 {
@@ -6738,6 +6831,9 @@ short tfom_code(undefined4 param_1)
 
 
 /* 00013a6a */
+
+/* builds es_message
+   structures.md */
 
 void es_build(uint32_t param_1,uint param_2)
 
@@ -6808,6 +6904,9 @@ void es_build(uint32_t param_1,uint param_2)
 
 
 /* 00013c50 */
+
+/* builds tcode_message, T1 or T2, and the es message
+   structures.md */
 
 uint timecode_update(void)
 
@@ -7087,6 +7186,8 @@ undefined8 primary_user_87(void)
 
 
 /* 0001412e */
+
+/* libc.md */
 
 void float_exception_report(uint32_t code)
 
@@ -8056,9 +8157,12 @@ void primary_trap_5(ushort param_1)
 
 /* 00014b26 */
 
-/* Not a C function: the trap #3 handler: the service in D7, its arguments in D0 to D3, A0 and A1.
+/* trap #3: the service in D7, 0 to 0x26, through the bra.w table at 0x14b6e; error 0x55 for any
+   other
+   Not a C function: the trap #3 handler: the service in D7, its arguments in D0 to D3, A0 and A1.
    Calls the service's handler through the table at 0x14b6e and returns with rte, the error in D7.b
-   and the results in D0 to D2, A0 and A1 (psos.md). */
+   and the results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_dispatch_service(undefined2 param_1)
 
@@ -8212,8 +8316,10 @@ void kernel_dispatch_service(undefined2 param_1)
 /* 00014c0a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-/* Not a C function: the trap #4 handler: the I/O function, 0 to 5, in D7 and the device in the high
-   byte of D0.  Returns with rte (psos.md). */
+/* trap #4: I/O function 0 to 5 in D7, the device in D0's high byte
+   Not a C function: the trap #4 handler: the I/O function, 0 to 5, in D7 and the device in the high
+   byte of D0.  Returns with rte (psos.md).
+   psos.md */
 
 void kernel_dispatch_io(void)
 
@@ -8239,8 +8345,11 @@ void kernel_dispatch_io(void)
 
 /* 00014c7a */
 
-/* Not a C function: branched to from the service dispatch on its way out, never called: saves the
-   running task's registers in its record and resumes the first ready task with rte. */
+/* on the way out of the kernel: runs pending ticks, saves the running task's registers in its
+   record and switches to the first ready
+   Not a C function: branched to from the service dispatch on its way out, never called: saves the
+   running task's registers in its record and resumes the first ready task with rte.
+   psos.md */
 
 void kernel_switch_task(void)
 
@@ -8371,8 +8480,11 @@ void kernel_switch_task(void)
 
 /* 00014cc6 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* one clock tick: advances the date, runs the tick hook, wakes the tasks whose delays expire and
+   ends the running task's time slice
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_process_ticks(void)
 
@@ -8438,10 +8550,12 @@ LAB_00014d58:
 
 /* 00014da2 */
 
-/* Not a C function: the kernel's handler for service 0, reached from trap #3 through
+/* service 0
+   Not a C function: the kernel's handler for service 0, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_service_0(void)
 
@@ -8452,10 +8566,12 @@ void kernel_service_0(void)
 
 /* 00014dac */
 
-/* Not a C function: the kernel's handler for service 1, psos_create's, reached from trap #3 through
+/* service 1, psos_create
+   Not a C function: the kernel's handler for service 1, psos_create's, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_create(void)
 
@@ -8532,10 +8648,12 @@ void kernel_create(void)
 /* 00014ea0 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
-/* Not a C function: the kernel's handler for service 2, psos_start's, reached from trap #3 through
+/* service 2, psos_start
+   Not a C function: the kernel's handler for service 2, psos_start's, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_start(void)
 
@@ -8558,10 +8676,12 @@ void kernel_start(void)
 
 /* 00014ed2 */
 
-/* Not a C function: the kernel's handler for service 3, psos_ident's, reached from trap #3 through
+/* service 3, psos_ident
+   Not a C function: the kernel's handler for service 3, psos_ident's, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_ident(void)
 
@@ -8585,10 +8705,12 @@ void kernel_ident(void)
 
 /* 00014ef8 */
 
-/* Not a C function: the kernel's handler for service 4, psos_delete's, reached from trap #3 through
+/* service 4, psos_delete
+   Not a C function: the kernel's handler for service 4, psos_delete's, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 undefined8 kernel_delete(void)
 
@@ -8670,10 +8792,12 @@ LAB_00014fce:
 
 /* 00015004 */
 
-/* Not a C function: the kernel's handler for service 5, psos_suspend's, reached from trap #3
+/* service 5, psos_suspend
+   Not a C function: the kernel's handler for service 5, psos_suspend's, reached from trap #3
    through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
    them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md). */
+   to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_suspend(void)
 
@@ -8704,10 +8828,12 @@ void kernel_suspend(void)
 /* 00015038 */
 
 /* WARNING: Removing unreachable block (ram,0x00015042) */
-/* Not a C function: the kernel's handler for service 6, psos_resume's, reached from trap #3 through
+/* service 6, psos_resume
+   Not a C function: the kernel's handler for service 6, psos_resume's, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_resume(void)
 
@@ -8729,10 +8855,12 @@ void kernel_resume(void)
 
 /* 0001507a */
 
-/* Not a C function: the kernel's handler for service 7, psos_priority's, reached from trap #3
+/* service 7, psos_priority
+   Not a C function: the kernel's handler for service 7, psos_priority's, reached from trap #3
    through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
    them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md). */
+   to D2, A0 and A1 (psos.md).
+   psos.md */
 
 ushort kernel_priority(void)
 
@@ -8776,10 +8904,12 @@ LAB_000150ae:
 
 /* 000150da */
 
-/* Not a C function: the kernel's handler for service 8, reached from trap #3 through
+/* service 8: kernel_allocate_for_task for the running task
+   Not a C function: the kernel's handler for service 8, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_allocate_segment(void)
 
@@ -8812,8 +8942,11 @@ void kernel_allocate_segment(void)
 
 /* 000150dc */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* for the task in A5, allocates from a region through kernel_allocate, or queues the task to wait,
+   with a timeout, when it cannot; kernel_create calls it too
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_allocate_for_task(void)
 
@@ -8845,10 +8978,12 @@ void kernel_allocate_for_task(void)
 
 /* 00015130 */
 
-/* Not a C function: the kernel's handler for service 9, reached from trap #3 through
+/* service 9: kernel_free_for_task for the running task
+   Not a C function: the kernel's handler for service 9, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_free_segment(void)
 
@@ -8965,8 +9100,11 @@ LAB_00015206:
 
 /* 00015132 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* checks a segment by kernel_check_segment and frees it, then satisfies the tasks waiting for
+   memory; kernel_delete calls it
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_free_for_task(void)
 
@@ -9084,8 +9222,11 @@ LAB_00015206:
 
 /* 00015268 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* allocates D1 bytes from region 0 or 1 as D2 selects, falling back to the other, and links it to
+   the task's list
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_allocate(void)
 
@@ -9121,8 +9262,10 @@ LAB_00015288:
 
 /* 0001529c */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* first fit from region D6's free list, stamping the segment 0xe1d0
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_region_allocate(void)
 
@@ -9184,10 +9327,12 @@ void kernel_region_allocate(void)
 /* 00015324 */
 
 /* WARNING: Removing unreachable block (ram,0x00015346) */
-/* Not a C function: the kernel's handler for service 10, reached from trap #3 through
+/* service 10
+   Not a C function: the kernel's handler for service 10, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_service_10(void)
 
@@ -9227,10 +9372,12 @@ void kernel_service_10(void)
 
 /* 0001532a */
 
-/* Not a C function: the kernel's handler for service 16, reached from trap #3 through
+/* service 16
+   Not a C function: the kernel's handler for service 16, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_service_16(void)
 
@@ -9268,8 +9415,10 @@ void kernel_service_16(void)
 
 /* 0001537a */
 
-/* Not a C function: the handler for services 11 to 15, 17 and 34, reached from trap #3 through
-   kernel_dispatch_service: clears D7.b, so the call succeeds and does nothing. */
+/* services 11 to 15, 17 and 34: clears D7 and returns
+   Not a C function: the handler for services 11 to 15, 17 and 34, reached from trap #3 through
+   kernel_dispatch_service: clears D7.b, so the call succeeds and does nothing.
+   psos.md */
 
 void kernel_service_none(void)
 
@@ -9280,10 +9429,12 @@ void kernel_service_none(void)
 
 /* 0001537e */
 
-/* Not a C function: the kernel's handler for service 20, psos_create_x's, reached from trap #3
+/* service 20, psos_create_x
+   Not a C function: the kernel's handler for service 20, psos_create_x's, reached from trap #3
    through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
    them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md). */
+   to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_create_x(void)
 
@@ -9324,10 +9475,12 @@ void kernel_create_x(void)
 /* 000153e0 */
 
 /* WARNING: Removing unreachable block (ram,0x00015402) */
-/* Not a C function: the kernel's handler for service 21, reached from trap #3 through
+/* service 21
+   Not a C function: the kernel's handler for service 21, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_service_21(void)
 
@@ -9368,10 +9521,12 @@ void kernel_service_21(void)
 
 /* 00015436 */
 
-/* Not a C function: the kernel's handler for service 22, psos_delete_x's, reached from trap #3
+/* service 22, psos_delete_x
+   Not a C function: the kernel's handler for service 22, psos_delete_x's, reached from trap #3
    through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
    them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md). */
+   to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_delete_x(void)
 
@@ -9422,10 +9577,12 @@ LAB_000154a0:
 /* 000154ae */
 
 /* WARNING: Removing unreachable block (ram,0x000154b8) */
-/* Not a C function: the kernel's handler for service 18, reached from trap #3 through
+/* service 18
+   Not a C function: the kernel's handler for service 18, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 ushort kernel_service_18(void)
 
@@ -9530,10 +9687,12 @@ LAB_00015576:
 /* 00015592 */
 
 /* WARNING: Removing unreachable block (ram,0x000155ac) */
-/* Not a C function: the kernel's handler for service 19, psos_jam_x's, reached from trap #3 through
+/* service 19, psos_jam_x: kernel_send_for_task's body with A4 set, which send_x clears
+   Not a C function: the kernel's handler for service 19, psos_jam_x's, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_jam_x(void)
 
@@ -9655,10 +9814,12 @@ LAB_00015606:
 /* WARNING: Removing unreachable block (ram,0x000155ac) */
 /* WARNING: Removing unreachable block (ram,0x00015680) */
 /* WARNING: Removing unreachable block (ram,0x00015692) */
-/* Not a C function: the kernel's handler for service 23, psos_send_x's, reached from trap #3
+/* service 23, psos_send_x: kernel_send_for_task for the running task
+   Not a C function: the kernel's handler for service 23, psos_send_x's, reached from trap #3
    through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
    them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md). */
+   to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_send_x(void)
 
@@ -9769,8 +9930,11 @@ LAB_00015606:
 /* WARNING: Removing unreachable block (ram,0x000155ac) */
 /* WARNING: Removing unreachable block (ram,0x00015680) */
 /* WARNING: Removing unreachable block (ram,0x00015692) */
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* gives a message to the first task waiting at the exchange, or queues it in a buffer by
+   kernel_copy_message; kernel_delete calls it
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_send_for_task(void)
 
@@ -9877,8 +10041,10 @@ LAB_00015606:
 
 /* 000156ac */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* takes a buffer from the free list and copies the message's 20 bytes into it
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_copy_message(void)
 
@@ -9911,10 +10077,12 @@ void kernel_copy_message(void)
 /* 000156d6 */
 
 /* WARNING: Removing unreachable block (ram,0x000156e4) */
-/* Not a C function: the kernel's handler for service 24, psos_request_x's, reached from trap #3
+/* service 24, psos_request_x
+   Not a C function: the kernel's handler for service 24, psos_request_x's, reached from trap #3
    through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
    them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md). */
+   to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_request_x(void)
 
@@ -10020,10 +10188,12 @@ LAB_000157c4:
 /* 000157e2 */
 
 /* WARNING: Removing unreachable block (ram,0x000157ec) */
-/* Not a C function: the kernel's handler for service 25, psos_signal_v's, reached from trap #3
+/* service 25, psos_signal_v
+   Not a C function: the kernel's handler for service 25, psos_signal_v's, reached from trap #3
    through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
    them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md). */
+   to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_signal_v(void)
 
@@ -10074,8 +10244,11 @@ void kernel_signal_v(void)
 
 /* 000157f0 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* checks the task by kernel_check_task, ORs the events in D1 into its pending word at +0x18 and, if
+   they satisfy the wait at +0x16, wakes it; kernel_signal_v and kernel_delete call it
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_signal_task(void)
 
@@ -10129,10 +10302,12 @@ void kernel_signal_task(void)
 /* WARNING: Removing unreachable block (ram,0x000158a6) */
 /* WARNING: Removing unreachable block (ram,0x000158d0) */
 /* WARNING: Removing unreachable block (ram,0x000158ca) */
-/* Not a C function: the kernel's handler for service 27, psos_get_v's, reached from trap #3 through
+/* service 27, psos_get_v: clears D7, then kernel_wait_v
+   Not a C function: the kernel's handler for service 27, psos_get_v's, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_get_v(void)
 
@@ -10157,10 +10332,12 @@ void kernel_get_v(void)
 
 /* 0001585c */
 
-/* Not a C function: the kernel's handler for service 26, psos_wait_v's, reached from trap #3
+/* service 26, psos_wait_v
+   Not a C function: the kernel's handler for service 26, psos_wait_v's, reached from trap #3
    through kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads
    them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0
-   to D2, A0 and A1 (psos.md). */
+   to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_wait_v(void)
 
@@ -10207,10 +10384,12 @@ void kernel_wait_v(void)
 
 /* 000158da */
 
-/* Not a C function: the kernel's handler for service 32, psos_mode's, reached from trap #3 through
+/* service 32, psos_mode
+   Not a C function: the kernel's handler for service 32, psos_mode's, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 byte kernel_mode(void)
 
@@ -10228,10 +10407,12 @@ byte kernel_mode(void)
 
 /* 000158f6 */
 
-/* Not a C function: the kernel's handler for service 33, reached from trap #3 through
+/* service 33
+   Not a C function: the kernel's handler for service 33, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 undefined2 kernel_service_33(undefined2 param_1)
 
@@ -10242,10 +10423,12 @@ undefined2 kernel_service_33(undefined2 param_1)
 
 /* 00015904 */
 
-/* Not a C function: the kernel's handler for service 28, psos_pause's, reached from trap #3 through
+/* service 28, psos_pause
+   Not a C function: the kernel's handler for service 28, psos_pause's, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_pause(void)
 
@@ -10269,10 +10452,12 @@ void kernel_pause(void)
 
 /* 0001592e */
 
-/* Not a C function: the kernel's handler for service 29, reached from trap #3 through
+/* service 29
+   Not a C function: the kernel's handler for service 29, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_service_29(void)
 
@@ -10304,10 +10489,12 @@ void kernel_service_29(void)
 
 /* 00015974 */
 
-/* Not a C function: the kernel's handler for service 30, reached from trap #3 through
+/* service 30
+   Not a C function: the kernel's handler for service 30, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 undefined8 kernel_service_30(void)
 
@@ -10325,10 +10512,12 @@ undefined8 kernel_service_30(void)
 
 /* 0001599e */
 
-/* Not a C function: the kernel's handler for service 31, reached from trap #3 through
+/* service 31
+   Not a C function: the kernel's handler for service 31, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_service_31(void)
 
@@ -10362,10 +10551,12 @@ void kernel_service_31(void)
 
 /* 00015a10 */
 
-/* Not a C function: the kernel's handler for service 35, reached from trap #3 through
+/* service 35
+   Not a C function: the kernel's handler for service 35, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 undefined8 kernel_service_35(void)
 
@@ -10397,10 +10588,12 @@ undefined8 kernel_service_35(void)
 
 /* 00015a50 */
 
-/* Not a C function: the kernel's handler for service 36, reached from trap #3 through
+/* service 36
+   Not a C function: the kernel's handler for service 36, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_service_36(void)
 
@@ -10417,10 +10610,12 @@ void kernel_service_36(void)
 
 /* 00015a76 */
 
-/* Not a C function: the kernel's handler for service 37, reached from trap #3 through
+/* service 37
+   Not a C function: the kernel's handler for service 37, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_service_37(void)
 
@@ -10440,10 +10635,12 @@ void kernel_service_37(void)
 
 /* 00015aa2 */
 
-/* Not a C function: the kernel's handler for service 38, reached from trap #3 through
+/* service 38
+   Not a C function: the kernel's handler for service 38, reached from trap #3 through
    kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its stub loads them,
    the kernel's state in A6.  Returns the error in D7.b, zero for none, and its results in D0 to D2,
-   A0 and A1 (psos.md). */
+   A0 and A1 (psos.md).
+   psos.md */
 
 void kernel_service_38(void)
 
@@ -10462,8 +10659,11 @@ void kernel_service_38(void)
 
 /* 00015ac0 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* each 24 hours of the kernel's clock: the next day, month and year, by the days-in-month table at
+   0x79 in the configuration
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_advance_date(void)
 
@@ -10499,8 +10699,10 @@ void kernel_advance_date(void)
 
 /* 00015b10 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* February's days in that table, 28 or 29 by the Gregorian rule
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_set_leap_year(void)
 
@@ -10521,9 +10723,11 @@ void kernel_set_leap_year(void)
 
 /* 00015b3a */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr: the task ID in A0,
+/* the task ID in A0, or the running task for 0: error 2 bad ID, 1 deleted, 3 another group's
+   Not a C function: an internal routine of the pSOS kernel, called with bsr: the task ID in A0,
    zero for the running task, which A5 holds.  Returns the task's record in A0, or the error in D7:
-   2 a bad ID, 1 a deleted task, 3 another group's (psos.md). */
+   2 a bad ID, 1 a deleted task, 3 another group's (psos.md).
+   psos.md */
 
 void kernel_check_task(void)
 
@@ -10534,9 +10738,11 @@ void kernel_check_task(void)
 
 /* 00015b6c */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr: the exchange ID in A0,
+/* the exchange ID in A0: error 2 bad ID, 1 deleted, 3 another group's
+   Not a C function: an internal routine of the pSOS kernel, called with bsr: the exchange ID in A0,
    the running task in A5.  Returns the error in D7: 2 a bad ID, 1 a deleted exchange, 3 another
-   group's (psos.md). */
+   group's (psos.md).
+   psos.md */
 
 void kernel_check_exchange(void)
 
@@ -10547,8 +10753,10 @@ void kernel_check_exchange(void)
 
 /* 00015b96 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr: the segment in A0.
-   Returns D7 zero, or 5 if the segment lacks kernel_region_allocate's 0xe1d0 (psos.md). */
+/* error 5 unless the segment carries kernel_region_allocate's 0xe1d0
+   Not a C function: an internal routine of the pSOS kernel, called with bsr: the segment in A0.
+   Returns D7 zero, or 5 if the segment lacks kernel_region_allocate's 0xe1d0 (psos.md).
+   psos.md */
 
 void kernel_check_segment(void)
 
@@ -10559,8 +10767,10 @@ void kernel_check_segment(void)
 
 /* 00015baa */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* kernel_timer_unlink, if the task in A2 is in the timer list
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_timer_cancel(void)
 
@@ -10584,8 +10794,10 @@ void kernel_timer_cancel(void)
 
 /* 00015bb0 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* removes the task in A2 from the delta timer list, giving its remaining ticks to the next
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 undefined4 kernel_timer_unlink(void)
 
@@ -10608,8 +10820,10 @@ undefined4 kernel_timer_unlink(void)
 
 /* 00015bde */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* puts the running task in the delta timer list D0 ticks out
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_timer_insert(void)
 
@@ -10658,8 +10872,10 @@ void kernel_timer_insert(void)
 
 /* 00015c4c */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* clears the task's wait state and, unless suspended, kernel_ready_insert
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_make_ready(void)
 
@@ -10690,8 +10906,10 @@ void kernel_make_ready(void)
 
 /* 00015c54 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* inserts the task in A2 in the ready queue by priority and resets its time slice
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_ready_insert(void)
 
@@ -10717,8 +10935,10 @@ void kernel_ready_insert(void)
 
 /* 00015c96 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* unlinks the task in A5 from its queue
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_queue_remove(void)
 
@@ -10739,8 +10959,11 @@ void kernel_queue_remove(void)
 
 /* WARNING: Removing unreachable block (ram,0x00015ea6) */
 /* WARNING: Unknown calling convention */
-/* Not a C function: the trap #6 handler, which starts the kernel: builds its records from the
-   configuration in A6 and never returns. */
+/* trap #6: carves the configuration's memory into task records (0xb2 bytes), exchanges (0x22) and
+   message buffers (0x18), and starts the kernel
+   Not a C function: the trap #6 handler, which starts the kernel: builds its records from the
+   configuration in A6 and never returns.
+   psos.md */
 
 void kernel_init(void)
 
@@ -10907,8 +11130,10 @@ void kernel_init(void)
 
 /* 00015ece */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* sets up regions 0 and 1 from the configuration
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void kernel_region_init(void)
 
@@ -10967,8 +11192,10 @@ void kernel_region_init(void)
 
 /* 00015f8a */
 
-/* Not a C function: the trap #5 handler, which every interrupt handler ends with in place of rte:
-   switches tasks if the interrupt made a higher-priority one ready, and returns with rte. */
+/* trap #5: an interrupt handler's exit, switching tasks if it made a higher one ready
+   Not a C function: the trap #5 handler, which every interrupt handler ends with in place of rte:
+   switches tasks if the interrupt made a higher-priority one ready, and returns with rte.
+   psos.md */
 
 void kernel_return_from_interrupt(ushort param_1)
 
@@ -11087,6 +11314,8 @@ void kernel_return_from_interrupt(ushort param_1)
 
 /* 0001606c */
 
+/* "Free CPU cycles: count 0x%08X, approx %2d%%"; os_process_report calls it */
+
 void os_report_cpu(code *param_1)
 
 {
@@ -11100,6 +11329,8 @@ void os_report_cpu(code *param_1)
 
 
 /* 000160a0 */
+
+/* the 4-character name at offset 0x24 of a task's record */
 
 char * task_name(void *task)
 
@@ -11138,6 +11369,8 @@ undefined * FUN_000160de(int param_1)
 
 
 /* 00016118 */
+
+/* an exchange's line, "fifo", "prio" */
 
 void os_report_exchange(undefined4 *param_1,code *param_2)
 
@@ -11193,6 +11426,8 @@ void os_report_exchange(undefined4 *param_1,code *param_2)
 
 
 /* 000161f6 */
+
+/* "susp", "paus", "vblk", "xblk", "mblk", "spwn" */
 
 char * task_status_name(int param_1)
 
@@ -11269,6 +11504,7 @@ undefined4 * FUN_000162b2(int param_1,int param_2)
 /* 000162d4 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* a process's line, ">> RESOURCES:", ">> EVENTS: W(0x%04x) S(0x%04x)" */
 
 void os_report_process(void *param_1,char *param_2,int param_3,undefined4 param_4,code *param_5)
 
@@ -11446,6 +11682,7 @@ int FUN_00016540(void)
 /* 0001660a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* "%d Process(s) (%d avail); Total time: %-d ticks." */
 
 void os_report_process_summary(code *param_1)
 
@@ -11477,6 +11714,8 @@ void os_report_process_summary(code *param_1)
 
 /* 0001665e */
 
+/* "xid   XNAME  TYPE  ACC  maxQ  Qlen BLOCKED" */
+
 void os_report_exchanges(code *param_1)
 
 {
@@ -11504,6 +11743,8 @@ void os_report_exchanges(code *param_1)
 
 
 /* 000166b0 */
+
+/* "%d Exchange(s) (%d avail).", "%d Msg buffer(s)" */
 
 void os_report_exchange_summary(code *param_1)
 
@@ -11557,6 +11798,7 @@ int FUN_00016730(undefined4 *param_1)
 /* 0001675a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* "pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CP" */
 
 int os_report_processes(code *param_1)
 
@@ -11603,6 +11845,7 @@ int os_report_processes(code *param_1)
 /* 00016828 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* "Region strt       end  min     max    pend   USED" */
 
 void os_report_regions(code *param_1)
 
@@ -11731,6 +11974,9 @@ undefined4 FUN_00016a20(uint param_1)
 
 /* 00016a4c */
 
+/* :DIAG:OS:PROC?'s report of the tasks
+   structures.md */
+
 void os_process_report(undefined1 param_1)
 
 {
@@ -11753,6 +11999,9 @@ void os_process_report(undefined1 param_1)
 
 
 /* 00016ace */
+
+/* :DIAG:OS:MEM?'s report, "Process Memseg size(bytes) next last neighbor key"
+   structures.md */
 
 void os_memory_report(undefined1 param_1)
 
@@ -11799,6 +12048,8 @@ void os_memory_report(undefined1 param_1)
 
 /* 00016bb6 */
 
+/* "no system stack found"; task_stack_report's per-task stacks */
+
 void task_stack_info(int param_1,undefined4 *param_2,undefined4 *param_3,int *param_4,int *param_5,
                     undefined4 *param_6,int *param_7)
 
@@ -11831,6 +12082,9 @@ void task_stack_info(int param_1,undefined4 *param_2,undefined4 *param_3,int *pa
 
 
 /* 00016c44 */
+
+/* "pid name USP size SSP size", each task's stacks and their use
+   structures.md */
 
 void task_stack_report(undefined1 param_1)
 
@@ -11927,6 +12181,8 @@ LAB_00016dfc:
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* the debug_psos word's and :DIAG:SYST:DOUT's switch
+   structures.md */
 
 void psos_debug_output(char param_1)
 
@@ -11964,9 +12220,11 @@ void FUN_00016ee6(void)
 
 /* 00016f1e */
 
-/* Not a C function: the binding's trap #3: the service in D7.b and its arguments in D0 to D3, A0
+/* trap #3, the service in D7, the error back in D7
+   Not a C function: the binding's trap #3: the service in D7.b and its arguments in D0 to D3, A0
    and A1, as the stub loaded them.  Returns D7 zero, or the service and its error in D7.w with the
-   condition codes set; results stay in D0 to D2, A0 and A1. */
+   condition codes set; results stay in D0 to D2, A0 and A1.
+   psos.md */
 
 void psos_call(void)
 
@@ -11983,8 +12241,10 @@ void psos_call(void)
 
 /* 00016f36 */
 
-/* Not a C function: the binding's trap #4: the I/O function in D7.b and the device in the high byte
-   of D0.w.  Returns D7 zero, or the error in D7.w with the device and function above it. */
+/* trap #4, the function in D7, the device in D0's high byte
+   Not a C function: the binding's trap #4: the I/O function in D7.b and the device in the high byte
+   of D0.w.  Returns D7 zero, or the error in D7.w with the device and function above it.
+   psos.md */
 
 void psos_io_call(void)
 
@@ -12001,8 +12261,10 @@ void psos_io_call(void)
 
 /* 00016f50 */
 
-/* Not a C function: reads the name its calling stub was given, at 8(A6) in the stub's frame, and
-   returns its four characters packed in D0, zero for none.  Uses A0. */
+/* packs a 4-character name into D0
+   Not a C function: reads the name its calling stub was given, at 8(A6) in the stub's frame, and
+   returns its four characters packed in D0, zero for none.  Uses A0.
+   psos.md */
 
 undefined4 psos_pack_name(void)
 
@@ -12022,6 +12284,8 @@ undefined4 psos_pack_name(void)
 
 /* WARNING: Removing unreachable block (ram,0x00016f9c) */
 /* WARNING: Removing unreachable block (ram,0x00016fa2) */
+/* service 1, spawn's create
+   psos.md */
 
 ulong psos_create(char *name,ulong a,ulong priority,ulong stack_a,ulong stack_b,void *e,ulong *task)
 
@@ -12034,6 +12298,9 @@ ulong psos_create(char *name,ulong a,ulong priority,ulong stack_a,ulong stack_b,
 
 /* 00016fae */
 
+/* service 2, spawn's start
+   psos.md */
+
 ulong psos_start(ulong task,void *entry)
 
 {
@@ -12043,6 +12310,9 @@ ulong psos_start(ulong task,void *entry)
 
 
 /* 00016fca */
+
+/* service 3, ident
+   psos.md */
 
 ulong psos_ident(char *name,ulong *id,uchar *b)
 
@@ -12069,6 +12339,8 @@ ulong psos_ident(char *name,ulong *id,uchar *b)
 /* 00016ff8 */
 
 /* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* service 3 with no name, my_pid
+   psos.md */
 
 ulong psos_my_pid(void)
 
@@ -12082,6 +12354,9 @@ ulong psos_my_pid(void)
 
 /* 00017008 */
 
+/* service 4, delete
+   psos.md */
+
 ulong psos_delete(ulong task)
 
 {
@@ -12091,6 +12366,9 @@ ulong psos_delete(ulong task)
 
 
 /* 00017020 */
+
+/* service 5, suspend
+   psos.md */
 
 ulong psos_suspend(ulong task)
 
@@ -12102,6 +12380,9 @@ ulong psos_suspend(ulong task)
 
 /* 00017038 */
 
+/* service 6, resume
+   psos.md */
+
 ulong psos_resume(ulong task)
 
 {
@@ -12111,6 +12392,9 @@ ulong psos_resume(ulong task)
 
 
 /* 00017050 */
+
+/* service 7, priority
+   psos.md */
 
 ulong psos_priority(ulong task,ulong priority,uchar *old)
 
@@ -12127,6 +12411,9 @@ ulong psos_priority(ulong task,ulong priority,uchar *old)
 
 /* 00017076 */
 
+/* service 28, pause
+   psos.md */
+
 ulong psos_pause(ulong a)
 
 {
@@ -12136,6 +12423,9 @@ ulong psos_pause(ulong a)
 
 
 /* 0001708e */
+
+/* service 32, mode
+   psos.md */
 
 ulong psos_mode(ulong a,ulong b,uchar *old)
 
@@ -12151,6 +12441,8 @@ ulong psos_mode(ulong a,ulong b,uchar *old)
 
 
 /* 000170b4 */
+
+/* psos.md */
 
 void psos_service_33(void)
 
@@ -12169,6 +12461,7 @@ void psos_service_33(void)
 
 /* WARNING: Removing unreachable block (ram,0x000170e2) */
 /* WARNING: Removing unreachable block (ram,0x000170e8) */
+/* psos.md */
 
 ulong psos_service_8(ulong a,ulong b,ulong c,ulong d,ulong *out)
 
@@ -12180,6 +12473,8 @@ ulong psos_service_8(ulong a,ulong b,ulong c,ulong d,ulong *out)
 
 /* 000170f4 */
 
+/* psos.md */
+
 ulong psos_service_9(ulong a)
 
 {
@@ -12189,6 +12484,8 @@ ulong psos_service_9(ulong a)
 
 
 /* 0001710c */
+
+/* psos.md */
 
 ulong psos_service_10(ulong a,ulong b)
 
@@ -12200,6 +12497,8 @@ ulong psos_service_10(ulong a,ulong b)
 
 /* 00017128 */
 
+/* psos.md */
+
 ulong psos_service_16(ulong a,ulong b)
 
 {
@@ -12209,6 +12508,8 @@ ulong psos_service_16(ulong a,ulong b)
 
 
 /* 00017144 */
+
+/* psos.md */
 
 ulong psos_service_35(ulong a,ulong b,ulong c,ulong *out)
 
@@ -12225,6 +12526,8 @@ ulong psos_service_35(ulong a,ulong b,ulong c,ulong *out)
 
 /* 0001716e */
 
+/* psos.md */
+
 ulong psos_service_36(ulong a,ulong b)
 
 {
@@ -12237,6 +12540,7 @@ ulong psos_service_36(ulong a,ulong b)
 
 /* WARNING: Removing unreachable block (ram,0x000171a2) */
 /* WARNING: Removing unreachable block (ram,0x000171a8) */
+/* psos.md */
 
 ulong psos_service_37(ulong a,ulong b,ulong *out)
 
@@ -12247,6 +12551,8 @@ ulong psos_service_37(ulong a,ulong b,ulong *out)
 
 
 /* 000171b2 */
+
+/* psos.md */
 
 ulong psos_service_38(ulong a,ulong b)
 
@@ -12260,6 +12566,8 @@ ulong psos_service_38(ulong a,ulong b)
 
 /* WARNING: Removing unreachable block (ram,0x000171ec) */
 /* WARNING: Removing unreachable block (ram,0x000171f2) */
+/* service 20, create_x
+   psos.md */
 
 ulong psos_create_x(char *name,ulong a,ulong b,ulong *exchange)
 
@@ -12271,6 +12579,8 @@ ulong psos_create_x(char *name,ulong a,ulong b,ulong *exchange)
 
 
 /* 000171fe */
+
+/* psos.md */
 
 ulong psos_service_21(char *name,ulong *out1,ulong *out2,ulong *out3)
 
@@ -12300,6 +12610,9 @@ ulong psos_service_21(char *name,ulong *out1,ulong *out2,ulong *out3)
 
 /* 0001723a */
 
+/* service 22, delete_x
+   psos.md */
+
 ulong psos_delete_x(ulong exchange)
 
 {
@@ -12309,6 +12622,9 @@ ulong psos_delete_x(ulong exchange)
 
 
 /* 00017252 */
+
+/* service 23, send_x
+   psos.md */
 
 ulong psos_send_x(ulong exchange,void *message)
 
@@ -12320,6 +12636,9 @@ ulong psos_send_x(ulong exchange,void *message)
 
 /* 0001726e */
 
+/* service 19, jam_x
+   psos.md */
+
 ulong psos_jam_x(ulong exchange,void *message)
 
 {
@@ -12329,6 +12648,8 @@ ulong psos_jam_x(ulong exchange,void *message)
 
 
 /* 0001728a */
+
+/* psos.md */
 
 ulong psos_service_18(ulong a,ulong b,ulong c,uchar *out1,uchar *out2)
 
@@ -12353,6 +12674,9 @@ ulong psos_service_18(ulong a,ulong b,ulong c,uchar *out1,uchar *out2)
 
 /* 000172c4 */
 
+/* service 24, request_x
+   psos.md */
+
 ulong psos_request_x(ulong exchange,void *buffer,ulong a,ulong b)
 
 {
@@ -12363,6 +12687,9 @@ ulong psos_request_x(ulong exchange,void *buffer,ulong a,ulong b)
 
 /* 000172e8 */
 
+/* service 25, signal_v
+   psos.md */
+
 ulong psos_signal_v(ulong variable,ulong value)
 
 {
@@ -12372,6 +12699,9 @@ ulong psos_signal_v(ulong variable,ulong value)
 
 
 /* 00017304 */
+
+/* service 26, wait_v
+   psos.md */
 
 ulong psos_wait_v(ulong a,ulong b,ulong c,ulong *out)
 
@@ -12387,6 +12717,9 @@ ulong psos_wait_v(ulong a,ulong b,ulong c,ulong *out)
 
 
 /* 00017332 */
+
+/* service 27, get_v
+   psos.md */
 
 ulong psos_get_v(ulong a,ulong b,ulong *out)
 
@@ -12404,6 +12737,7 @@ ulong psos_get_v(ulong a,ulong b,ulong *out)
 /* 0001735c */
 
 /* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* psos.md */
 
 ulong psos_service_29(void)
 
@@ -12414,6 +12748,8 @@ ulong psos_service_29(void)
 
 
 /* 00017370 */
+
+/* psos.md */
 
 ulong psos_service_30(ulong *out1,ulong *out2,ushort *out3)
 
@@ -12437,6 +12773,8 @@ ulong psos_service_30(ulong *out1,ulong *out2,ushort *out3)
 
 /* 000173a6 */
 
+/* psos.md */
+
 ulong psos_service_31(ulong a,ulong b,ulong c)
 
 {
@@ -12446,6 +12784,9 @@ ulong psos_service_31(ulong a,ulong b,ulong c)
 
 
 /* 000173ca */
+
+/* I/O function 0, dev_init
+   psos.md */
 
 ulong psos_io_init(ulong device)
 
@@ -12457,6 +12798,9 @@ ulong psos_io_init(ulong device)
 
 /* 000173e2 */
 
+/* I/O function 1, dev_open, !iodev
+   psos.md */
+
 ulong psos_io_open(ulong device,ulong a)
 
 {
@@ -12466,6 +12810,9 @@ ulong psos_io_open(ulong device,ulong a)
 
 
 /* 000173fe */
+
+/* I/O function 2, dev_close, !iodev
+   psos.md */
 
 ulong psos_io_close(ulong device)
 
@@ -12479,6 +12826,8 @@ ulong psos_io_close(ulong device)
 
 /* WARNING: Removing unreachable block (ram,0x00017436) */
 /* WARNING: Removing unreachable block (ram,0x0001743c) */
+/* I/O function 3, dev_read, expect
+   psos.md */
 
 ulong psos_io_read(ulong device,void *buffer,ulong *length)
 
@@ -12492,6 +12841,8 @@ ulong psos_io_read(ulong device,void *buffer,ulong *length)
 
 /* WARNING: Removing unreachable block (ram,0x00017468) */
 /* WARNING: Removing unreachable block (ram,0x0001746e) */
+/* I/O function 4, dev_write
+   psos.md */
 
 ulong psos_io_write(ulong device,void *buffer,ulong *length)
 
@@ -12502,6 +12853,9 @@ ulong psos_io_write(ulong device,void *buffer,ulong *length)
 
 
 /* 0001747a */
+
+/* I/O function 5, dev_ctrl
+   psos.md */
 
 ulong psos_io_control(ulong device,ulong a,ulong b)
 
@@ -12766,6 +13120,7 @@ void FUN_000177fa(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* entry 8; "Interpolator: A, MRC mode" */
 
 void selftest_interpolator(char param_1)
 
@@ -12794,6 +13149,7 @@ void selftest_interpolator(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* entry 9; "Internal reference:" */
 
 void selftest_internal_reference(char param_1)
 
@@ -12822,6 +13178,7 @@ void selftest_internal_reference(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* entry 3; "System RAM: D15-D0:", "adr line A18-A1:" */
 
 void selftest_ram(char param_1)
 
@@ -12858,6 +13215,7 @@ void selftest_ram(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* the self-test table 0x18458's entry 2; "CPU:" */
 
 void selftest_cpu(char param_1)
 
@@ -12888,6 +13246,7 @@ void selftest_cpu(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* entry 4; "EEPROM:" */
 
 void selftest_eeprom(char param_1)
 
@@ -12917,6 +13276,7 @@ void selftest_eeprom(char param_1)
 /* 00017b96 */
 
 /* WARNING: Unknown calling convention */
+/* entry 6; "QSPI: ADC", "Hex DAC", "FPGA", "EFC" */
 
 void selftest_qspi(char param_1)
 
@@ -12948,6 +13308,7 @@ void selftest_qspi(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* entry 7; "FPGA: counters not preset" */
 
 void selftest_fpga(char param_1)
 
@@ -12995,6 +13356,7 @@ void FUN_00017ca4(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* entry 5; "UART: register read/write", "channel A data" */
 
 void selftest_uart(char param_1)
 
@@ -13028,6 +13390,7 @@ void selftest_uart(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* entry 10; "GPS: Channel 1 Correlation" .. "GPS: Engine timeout", @@Ca's bits */
 
 void selftest_gps(char param_1)
 
@@ -13067,6 +13430,7 @@ void selftest_gps(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* entry 11; "POWER: 5V", "15V", "-15V" */
 
 void selftest_power(char param_1)
 
@@ -13095,6 +13459,8 @@ void selftest_power(char param_1)
 
 /* 000182c4 */
 
+/* clears selftest_abort before a test */
+
 void selftest_begin(void)
 
 {
@@ -13104,6 +13470,8 @@ void selftest_begin(void)
 
 
 /* 000182cc */
+
+/* clears selftest_abort after a test */
 
 void selftest_end(void)
 
@@ -13116,6 +13484,7 @@ void selftest_end(void)
 /* 000182d4 */
 
 /* WARNING: Unknown calling convention */
+/* true for mode 0 or when the test was not aborted */
 
 bool selftest_may_report(char param_1)
 
@@ -13127,6 +13496,8 @@ bool selftest_may_report(char param_1)
 /* 000182ec */
 
 /* WARNING: Unknown calling convention */
+/* runs entry n of the test table 0x18458 twice between selftest_begin and selftest_end, with
+   selftest_running set */
 
 void selftest_execute(char param_1)
 
@@ -13149,6 +13520,7 @@ void selftest_execute(char param_1)
 /* 00018334 */
 
 /* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* returns debug_enabled */
 
 char debug_is_enabled(void)
 
@@ -13160,6 +13532,7 @@ char debug_is_enabled(void)
 /* 0001833c */
 
 /* WARNING: Unknown calling convention */
+/* prints "%s FAIL" when its test failed and selftest_aborted is false */
 
 void selftest_report_fail(int param_1,char *param_2,char param_3)
 
@@ -13203,6 +13576,8 @@ void FUN_00018396(uint param_1,int param_2,int param_3)
 
 /* 000183ce */
 
+/* selftest_abort is set */
+
 bool selftest_aborted(void)
 
 {
@@ -13234,6 +13609,8 @@ void FUN_000183de(uint param_1)
 
 /* 00018404 */
 
+/* clears selftest_running and selftest_abort */
+
 void selftest_init(void)
 
 {
@@ -13245,6 +13622,8 @@ void selftest_init(void)
 
 
 /* 0001841a */
+
+/* if a test is running, sets selftest_abort and waits until it stops; returns whether one was */
 
 undefined1 selftest_abort_wait(void)
 
@@ -13344,6 +13723,7 @@ void FUN_00018546(void)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* "FAIL:", "%s, error code: %02X" */
 
 void selftest_print_failure(char param_1)
 
@@ -13572,6 +13952,7 @@ void FUN_000189f2(void)
 /* 00018a74 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* runs self-test n, 0 to 13, through selftest_execute and copies its result cells */
 
 void selftest_run(byte param_1)
 
@@ -13870,7 +14251,9 @@ LAB_00018ec8:
 /* 00018f68 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* converts pad in base through forth_digit, or prints ": not found"; interpret and number call it
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -13940,7 +14323,9 @@ LAB_00018f92:
 /* 00018fcc */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* looks pad up from the latest word down, skipping hidden ones; interpret, tick, forget call it
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -13977,7 +14362,9 @@ void forth_find(forth_user_end user)
 /* 00019018 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* rounds A4, the dictionary pointer, up to even
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -13990,7 +14377,9 @@ void forth_align(void *dp)
 
 /* 00019024 */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* a character's digit value by the table at 0x18de2, Z set if below base
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14011,7 +14400,9 @@ void forth_digit(void)
 /* 00019042 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* Z set if the character at A3 is a space by the table at 0x18de2
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14027,7 +14418,9 @@ undefined4 forth_is_space(char *input)
 /* 0001906c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* advances A3 past spaces with forth_is_space
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14052,7 +14445,9 @@ void forth_skip_spaces(char *input)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the prompt at 0x100b14: p4th, the base's letter, then > or >> while compiling (console.md)
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14080,7 +14475,9 @@ void forth_build_prompt(forth_user_end user)
 /* 000190e8 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* reads a line from iodev with trap #4, or through the kernel
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14102,7 +14499,9 @@ undefined4 forth_read_line(forth_user_end user,char *input)
 /* 0001910e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* refills and copies the next word into pad
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14133,7 +14532,9 @@ void forth_parse_word(forth_user_end user,char *input)
 /* 0001912a */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* skips spaces and, at the input's end, prints the prompt and reads a line
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14156,7 +14557,9 @@ void forth_refill(forth_user_end user,char *input)
 /* 00019150 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* writes the string in D0 to iodev; type's work
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -14178,7 +14581,9 @@ ulonglong forth_print_string(char *s,forth_user_end user)
 /* 0001916e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* tib, or one from the kernel when there is none
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15024,7 +15429,9 @@ void forth_depth(forth_user_end user,long *sp)
 /* 00019338 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* copies a run of code words into the dictionary, up to a zero
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15059,7 +15466,9 @@ undefined2 forth_compile_code(void *dp)
 /* 0001934e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* patches a branch's offset; loop, until, again, repeat
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15076,7 +15485,9 @@ undefined4 forth_resolve_branch(long *sp,void *dp)
 /* 00019378 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* "ERROR: Mismatched " and the word, then aborts, when a control word's tag does not match
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15116,7 +15527,9 @@ void forth_check_pairs(long *sp)
 /* 0001938e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* latest = *latest: drops the word being defined
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15492,7 +15905,9 @@ void forth_semicolon(forth_user_end user,long *sp,void *dp)
 /* 0001968c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* links a new word to latest, with its name from pad
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15600,7 +16015,9 @@ void forth_constant(void)
 /* 00019700 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* compiles code that pushes a value and returns, for create_x and spawn
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15875,7 +16292,9 @@ void forth_star(long *sp)
 
 /* 000197da */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* 32 by 32-bit multiply from 16-bit halves; * calls it
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15894,7 +16313,9 @@ undefined8 forth_multiply(void)
 
 /* 000197fa */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* signed divide over forth_divide_unsigned; /, mod, /mod, */ call it
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15915,7 +16336,9 @@ int forth_divide_signed(void)
 
 /* 00019828 */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* 32-bit shift-and-subtract divide
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -15953,7 +16376,9 @@ LAB_00019830:
 
 /* 0001984c */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* 32 by 16-bit divide, quotient and remainder, for printing numbers
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16289,7 +16714,9 @@ void forth_paren_dot_quote_close_paren(void)
 
 /* 0001995a */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* a digit as 0-9 or A-Z
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -16308,7 +16735,9 @@ void forth_digit_char(void)
 /* 0001996c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* copies the digits built on the stack into pad and prints them; . and u. call it
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17280,7 +17709,9 @@ undefined8 forth_watch(forth_user_end user,long *sp,void *dp,char *input)
 /* 00019ed0 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the console words' service call, reporting an error
+   psos.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17376,7 +17807,9 @@ void forth_spawn(forth_user_end user,long *sp,void *dp)
 
 /* 0001a03c */
 
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* a zero byte, Z set, becomes a space; spawn pads a task's name with it
+   console.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -17695,7 +18128,9 @@ void forth_mode(long *sp)
 /* 0001a1b4 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
+/* the console words' I/O call, reporting an error
+   psos.md
+   Not a C function: a routine of the pForth console's kernel, which runs with the data stack in A6,
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
@@ -18912,6 +19347,8 @@ void diag_phase_off(int param_1)
 
 /* 0001b7ee */
 
+/* "Gen GPS state:", "start", "init ack", .. "survey", "done" */
+
 void print_gps_init_state(void)
 
 {
@@ -19122,6 +19559,8 @@ void print_gps_init_state(void)
 
 /* 0001b99c */
 
+/* "Leap chk state:", "leap start", "leap pending send", "leap wait" */
+
 void print_leap_check_state(void)
 
 {
@@ -19195,6 +19634,7 @@ void print_leap_check_state(void)
 /* 0001ba32 */
 
 /* WARNING: Unknown calling convention */
+/* ": fine start" .. ": fine fine slew", ": fine unknown" */
 
 void print_fine_state(byte param_1,char *param_2)
 
@@ -19948,6 +20388,7 @@ byte FUN_0001d680(byte param_1)
 /* 0001d6ba */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the firmware's own name, "wait_v SIG_SOQ error in _drtb_puts" */
 
 int drtb_puts(char *param_1)
 
@@ -19978,6 +20419,8 @@ int drtb_puts(char *param_1)
 
 
 /* 0001d74a */
+
+/* "wait_v SIG_SIQ error in getc", DUART channel B */
 
 undefined4 drtb_getc(void)
 
@@ -20011,6 +20454,7 @@ undefined4 drtb_getc(void)
 /* 0001d7e4 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* reads a line of up to the given length from DUART channel B; "DRTB receiver error" */
 
 int drtb_gets(byte *param_1,int param_2)
 
@@ -20119,6 +20563,8 @@ void FUN_0001d922(void)
 /* 0001d93e */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* creates drtR and drtW, "Unable to create drtR"
+   structures.md */
 
 undefined8 duart_init(void)
 
@@ -20361,6 +20807,8 @@ void FUN_0001de32(undefined4 param_1,undefined1 param_2)
 
 /* 0001de76 */
 
+/* writes the string to I/O device 0, returns the length; printf ends here */
+
 ulong console_write(char *s)
 
 {
@@ -20372,6 +20820,8 @@ ulong console_write(char *s)
 
 
 /* 0001de96 */
+
+/* libc.md */
 
 void printf(char *format,...)
 
@@ -20409,6 +20859,9 @@ void FUN_0001dee6(void)
 
 /* 0001df12 */
 
+/* in supervisor mode, writes the string a character at a time through 0x1d680; debug_write uses it
+    */
+
 int console_write_polled(char *s)
 
 {
@@ -20425,6 +20878,9 @@ int console_write_polled(char *s)
 
 
 /* 0001df48 */
+
+/* vsprintf into a buffer, then console_write_polled
+   structures.md */
 
 void printf_polled(char *format,...)
 
@@ -20533,6 +20989,7 @@ void FUN_0001e126(byte param_1,byte param_2)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* the firmware's own name, "wait_v SIG_SOQA error in drta_send_message" */
 
 undefined1 drta_send_message(undefined4 param_1,undefined2 param_2)
 
@@ -20576,6 +21033,9 @@ bool FUN_0001e222(void)
 
 /* 0001e238 */
 
+/* the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine
+   with it */
+
 undefined1 drta_get_byte(char *param_1)
 
 {
@@ -20605,6 +21065,8 @@ undefined1 drta_get_byte(char *param_1)
 /* 0001e2c0 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* puts channel A in local loopback and sends "DUART test string"; sets the UART self-test's bit 8
+   at 0x100c2e if it fails */
 
 void duart_loopback_test_a(void)
 
@@ -20666,6 +21128,7 @@ void duart_loopback_test_a(void)
 /* 0001e41a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the same for channel B */
 
 void duart_loopback_test_b(void)
 
@@ -20875,6 +21338,8 @@ void FUN_0001e736(void)
 
 /* 0001e766 */
 
+/* "DUARTA isr signaling SIG_SIQ" */
+
 uint duarta_isr(void)
 
 {
@@ -20912,6 +21377,7 @@ uint duarta_isr(void)
 /* 0001e7f6 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* "DUARTB isr signaling SIGINTR", "SIG_SIQ" */
 
 byte duartb_isr(void)
 
@@ -21016,6 +21482,8 @@ void FUN_0001e9ca(void)
 /* 0001ea10 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* with channel B's queue empty, disables its transmit interrupt and signals the writer; "DUARTB isr
+   signaling SIG_SOQ" */
 
 void duartb_transmit_interrupt(void)
 
@@ -21227,6 +21695,8 @@ void FUN_0001eefc(char *param_1,undefined4 param_2,undefined4 param_3,uint param
 
 /* 0001ef46 */
 
+/* vsprintf into the buffer while debug_enabled, else empties it */
+
 int debug_sprintf(char *s,char *format,...)
 
 {
@@ -21244,6 +21714,8 @@ int debug_sprintf(char *s,char *format,...)
 
 
 /* 0001ef74 */
+
+/* writes through 0x1df12 while debug_enabled */
 
 int debug_write(char *param_1)
 
@@ -21277,6 +21749,8 @@ int FUN_0001ef90(char *param_1)
 
 /* 0001efc6 */
 
+/* vsprintf then console_write, while debug_enabled */
+
 void debug_printf(char *format,...)
 
 {
@@ -21291,6 +21765,8 @@ void debug_printf(char *format,...)
 
 
 /* 0001eff6 */
+
+/* prints "task: message" with the calling task's name, while debug_enabled */
 
 void task_debug_message(char *message)
 
@@ -21313,6 +21789,8 @@ void task_debug_message(char *message)
 
 
 /* 0001f056 */
+
+/* the calling task's message, printed only while its dmes_ flag is set */
 
 void task_dmessage(char *message)
 
@@ -21349,6 +21827,9 @@ void task_dmessage(char *message)
 
 
 /* 0001f176 */
+
+/* keeps the message and task name at crash_message, prints them and "RESET to recover.", then hangs
+    */
 
 void fatal_error(char *message)
 
@@ -21398,6 +21879,8 @@ void fatal_error(char *message)
 /* 0001f2c0 */
 
 /* WARNING: Unknown calling convention */
+/* sends 0xc000 | channel << 11 to device 1 minor 1 and returns the reply shifted down 2;
+   diag_adc_read and diag_cal call it */
 
 int adc_read(adc_channel channel)
 
@@ -21418,6 +21901,8 @@ int adc_read(adc_channel channel)
 /* 0001f308 */
 
 /* WARNING: Unknown calling convention */
+/* adc_temp's and :DIAG:TEMP?'s reading, "Temperature: %f": channel 0 times 0.273
+   structures.md */
 
 float read_adc_temp(void)
 
@@ -21435,6 +21920,8 @@ float read_adc_temp(void)
 /* 0001f32e */
 
 /* WARNING: Unknown calling convention */
+/* adc_5v's reading, "5V reading: %f": channel 4 times 0.0242
+   structures.md */
 
 float read_adc_5v(void)
 
@@ -21452,6 +21939,8 @@ float read_adc_5v(void)
 /* 0001f356 */
 
 /* WARNING: Unknown calling convention */
+/* adc_doven's reading, "Double oven: %f": channel 1 against channel 4
+   structures.md */
 
 float read_adc_doven(void)
 
@@ -21482,6 +21971,8 @@ float read_adc_doven(void)
 /* 0001f3ae */
 
 /* WARNING: Unknown calling convention */
+/* adc_oven's reading, "Oven: %f": channel 5 against channel 4
+   structures.md */
 
 float read_adc_oven(void)
 
@@ -21512,6 +22003,8 @@ float read_adc_oven(void)
 /* 0001f406 */
 
 /* WARNING: Unknown calling convention */
+/* adc_p15v's reading, "+15V reading: %f": channel 2 times 0.0763
+   structures.md */
 
 float read_adc_p15v(void)
 
@@ -21529,6 +22022,8 @@ float read_adc_p15v(void)
 /* 0001f42e */
 
 /* WARNING: Unknown calling convention */
+/* adc_m15v's reading, "-15V reading: %f": channel 6 against channel 4
+   structures.md */
 
 float read_adc_m15v(void)
 
@@ -21559,6 +22054,8 @@ float read_adc_m15v(void)
 /* 0001f486 */
 
 /* WARNING: Unknown calling convention */
+/* :DIAG:ROSC:CURR?'s reading, the same as read_adc_ant_curr
+   structures.md */
 
 float read_adc_osc_curr(void)
 
@@ -21577,6 +22074,8 @@ float read_adc_osc_curr(void)
 /* 0001f4ba */
 
 /* WARNING: Unknown calling convention */
+/* adc_ant_curr's reading, "Antenna current: %f": channel 3 times 250/255
+   structures.md */
 
 float read_adc_ant_curr(void)
 
@@ -21593,6 +22092,9 @@ float read_adc_ant_curr(void)
 
 
 /* 0001f4ee */
+
+/* the hdac_write word's, a value into one of six HDAC channels through hdac_set
+   structures.md */
 
 void hdac_write(byte param_1,byte param_2)
 
@@ -21634,6 +22136,8 @@ LAB_0001f528:
 /* 0001f53a */
 
 /* WARNING: Unknown calling convention */
+/* a 6-bit value into one half of an hdac word, written with device1_write; hdac_write leads here
+   structures.md */
 
 void hdac_set(byte param_1,byte param_2)
 
@@ -21666,6 +22170,8 @@ void hdac_set(byte param_1,byte param_2)
 /* 0001f5bc */
 
 /* WARNING: Unknown calling convention */
+/* the hdac_all word's: six 6-bit values packed two to a word into hdac_shadow, written to device 2
+   structures.md */
 
 void hdac_write_all(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,byte param_6)
 
@@ -21690,6 +22196,9 @@ void FUN_0001f62e(void)
 
 
 /* 0001f646 */
+
+/* the efc_write word's: the value to device 7, then a strobe at 0x306000
+   structures.md */
 
 void efc_write(undefined2 param_1)
 
@@ -21767,6 +22276,7 @@ ushort FUN_0001f71a(char param_1)
 /* 0001f76c */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts" */
 
 int sci_puts(int param_1)
 
@@ -21791,6 +22301,8 @@ int sci_puts(int param_1)
 
 
 /* 0001f7d0 */
+
+/* "wait_v SIG_SIQ_SCI error in getc" */
 
 undefined4 sci_getc(void)
 
@@ -21824,6 +22336,7 @@ undefined4 sci_getc(void)
 /* 0001f868 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* reads a line of up to the given length from the SCI; "SCI receiver error ocurred" */
 
 int sci_gets(char *param_1,int param_2)
 
@@ -22019,6 +22532,9 @@ void primary_user_64(void)
 
 /* 0001fc20 */
 
+/* "Unable to release SCI token"
+   structures.md */
+
 undefined8 sci_unlock(void)
 
 {
@@ -22067,6 +22583,9 @@ undefined8 sci_unlock(void)
 
 /* 0001fd0e */
 
+/* "Unable to acquire SCI token"
+   structures.md */
+
 undefined8 sci_lock(void)
 
 {
@@ -22106,6 +22625,8 @@ undefined8 sci_lock(void)
 /* 0001fdb6 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* creates sciR and sciW, "Unable to create sciR"
+   structures.md */
 
 undefined8 sci_init(void)
 
@@ -22417,6 +22938,8 @@ void FUN_000202f6(char *param_1)
 
 /* 0002050c */
 
+/* signals the next task in the QSPI owner queue; "SPI isr signaling SPI owner" */
+
 void qspi_release(void)
 
 {
@@ -22657,6 +23180,8 @@ void FUN_0002081e(byte param_1,undefined2 *param_2,ushort param_3,char param_4)
 
 /* 00020874 */
 
+/* waits in the QSPI owner queue while it is busy; "wait_v SIG_QSPI" */
+
 void qspi_acquire(void)
 
 {
@@ -22716,6 +23241,7 @@ undefined8 FUN_00020902(void)
 /* 00020972 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the transfer's end: copies the QSPI receive RAM out and hands the QSPI on */
 
 void qspi_isr(void)
 
@@ -22808,6 +23334,9 @@ void FUN_00020a62(void)
 
 /* 00020acc */
 
+/* psos_io_write to device 0x100 | n; hdac_write_all writes device 2, efc_write device 7
+   structures.md */
+
 void qspi_write(byte param_1,void *param_2,undefined4 param_3)
 
 {
@@ -22817,6 +23346,9 @@ void qspi_write(byte param_1,void *param_2,undefined4 param_3)
 
 
 /* 00020aec */
+
+/* psos_io_read to device 0x100 | n
+   structures.md */
 
 void qspi_read(byte param_1,void *param_2,undefined4 param_3)
 
@@ -22829,6 +23361,7 @@ void qspi_read(byte param_1,void *param_2,undefined4 param_3)
 /* 00020b0c */
 
 /* WARNING: Unknown calling convention */
+/* qspi_transfer without the copy back from receive RAM */
 
 void qspi_send(byte param_1,undefined2 *param_2,ushort param_3)
 
@@ -22864,6 +23397,7 @@ void qspi_send(byte param_1,undefined2 *param_2,ushort param_3)
 /* 00020b8a */
 
 /* WARNING: Unknown calling convention */
+/* waits for SPCR1 and SPSR, runs a QSPI transfer, copies the receive RAM at 0xfffd00 out */
 
 void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3)
 
@@ -22912,6 +23446,8 @@ void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3)
 
 
 /* 00020c96 */
+
+/* psos_create("spoo") into task_spoo, then psos_start(task_spoo, spoo_task) */
 
 uint spoo_task_create(ulong param_1)
 
@@ -22981,6 +23517,9 @@ uint FUN_00020d66(code *param_1,undefined4 param_2,undefined4 param_3,undefined4
 
 /* 00020dd2 */
 
+/* vsprintf into deferred_text at deferred_end
+   structures.md */
+
 int deferred_vprintf(char *format,void *arguments)
 
 {
@@ -23006,6 +23545,7 @@ int deferred_vprintf(char *format,void *arguments)
 /* 00020e4e */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* spoo_task_create starts the spoo task here; it takes requests from spoo_exchange */
 
 void spoo_task(void)
 
@@ -23030,6 +23570,9 @@ void spoo_task(void)
 
 /* 00020ebe */
 
+/* prints deferred_text from deferred_start to deferred_end
+   structures.md */
+
 void deferred_flush(void)
 
 {
@@ -23050,6 +23593,8 @@ void deferred_flush(void)
 /* 00022d4a */
 
 /* WARNING: Unknown calling convention */
+/* task_debug_message when with_task_name is set, else debug_write; callers push the flag with
+   move.b */
 
 void debug_message(char *message,char with_task_name)
 
@@ -23065,6 +23610,8 @@ void debug_message(char *message,char with_task_name)
 
 
 /* 00022d70 */
+
+/* "setup fpga" */
 
 void fpga_setup(void)
 
@@ -23084,6 +23631,8 @@ void fpga_setup(void)
 /* 00022da4 */
 
 /* WARNING: Unknown calling convention */
+/* "FPGA programmed", "ERROR: FPGA programming failed", "FPGA INIT did not go high"; outputs.md's
+   loader */
 
 undefined1 fpga_program(byte param_1,char param_2)
 
@@ -23229,6 +23778,8 @@ undefined1 fpga_program(byte param_1,char param_2)
 /* 00022fc6 */
 
 /* WARNING: Unknown calling convention */
+/* reads the FPGA's configuration back over QSPI device 0xc and checks it against the image under a
+   mask; "first: inv read" */
 
 bool fpga_verify_first(byte *param_1,byte *param_2,char param_3)
 
@@ -23346,6 +23897,7 @@ bool fpga_verify_first(byte *param_1,byte *param_2,char param_3)
 /* 00023304 */
 
 /* WARNING: Unknown calling convention */
+/* the same for the odd frames; "odd: inv read" */
 
 bool fpga_verify_odd(byte *param_1,byte *param_2,char param_3)
 
@@ -23426,6 +23978,7 @@ bool fpga_verify_odd(byte *param_1,byte *param_2,char param_3)
 /* 0002353a */
 
 /* WARNING: Unknown calling convention */
+/* the same for the even frames; "even: inv read" */
 
 bool fpga_verify_even(byte *param_1,byte *param_2,char param_3)
 
@@ -23536,6 +24089,7 @@ bool fpga_verify_even(byte *param_1,byte *param_2,char param_3)
 /* 0002384a */
 
 /* WARNING: Unknown calling convention */
+/* verifies one chip through the port F lines; "chip %1d failed compare" */
 
 bool fpga_verify_chip(byte param_1,char param_2,byte param_3)
 
@@ -23736,6 +24290,8 @@ bool FUN_00023d28(int param_1,float param_2,float param_3,byte param_4)
 
 /* 00023d80 */
 
+/* "5V is out of tolerance, value: %.2f", "Secondary oven voltage", "15V", "-15V" */
+
 void hmon_check_supplies(void)
 
 {
@@ -23871,6 +24427,8 @@ LAB_000240f0:
 /* 0002410e */
 
 /* WARNING: Unknown calling convention */
+/* diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a
+   default when there is no reading */
 
 float adc_average(adc_channel channel)
 
@@ -24035,6 +24593,9 @@ void FUN_000242de(void)
 
 /* 000242f0 */
 
+/* "EFC near end of range" when pll.efc stays outside 52428 to 996132, 5% to 95% of 2^20, five
+   checks */
+
 void hmon_check_efc(void)
 
 {
@@ -24064,6 +24625,7 @@ void hmon_check_efc(void)
 /* 0002437a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* "watchdog: clock: %4d gps: %4d pll: %4d mon: %4d spool %4d" */
 
 void watchdog_report(void)
 
@@ -24109,6 +24671,8 @@ void FUN_0002442c(void)
 /* 00024440 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* logs the last reset's cause with the time: "Exception: %s, vector %04X, PC = %08X" or "Watchdog
+   timeout: clk %1d ..." */
 
 void log_reset_cause(void)
 
@@ -24164,6 +24728,9 @@ void FUN_0002458c(void)
 
 
 /* 000245a6 */
+
+/* "GPS 1pps signal is dead", "short gate, count %d", "long gate, count %d"
+   structures.md */
 
 undefined1 gps_pps_check(void)
 
@@ -24262,6 +24829,9 @@ void FUN_0002470c(void)
 
 /* 0002471a */
 
+/* "Internal 1pps signal is dead", "count %d"
+   structures.md */
+
 undefined1 internal_pps_check(void)
 
 {
@@ -24299,6 +24869,8 @@ undefined1 internal_pps_check(void)
 /* 000247d4 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* root_task starts hmon here
+   structures.md */
 
 void hmon_task(void)
 
@@ -24482,10 +25054,13 @@ LAB_00024d6c:
 
 /* 00024e18 */
 
-/* Not a C function: the double in D0:D1, how many digits in D7, the record to fill in A0 (a sign
+/* the double in D0:D1 as a sign word, ASCII digits, D7 and two more, and the exponent of 0.d1d2...,
+   into the record at A0
+   Not a C function: the double in D0:D1, how many digits in D7, the record to fill in A0 (a sign
    word, the digits as ASCII, the exponent of 0.d1d2... as a word).  Returns with the condition
    codes cleared, or all set and -8 in D0.w for a subnormal, infinite or NaN double.  D0 to D7 and
-   A0 and A1 are not preserved. */
+   A0 and A1 are not preserved.
+   docs/scpi/README.md, run */
 
 uint scpi_double_to_decimal(void)
 
@@ -24620,9 +25195,11 @@ LAB_00024e22:
 
 /* 0002507a */
 
-/* Not a C function: the BCD record in A0.  Returns the double in D0:D1 with the condition codes
+/* the 16 BCD digits as a 64-bit integer, normalized, then scaled by scpi_scale_by_power_of_ten
+   Not a C function: the BCD record in A0.  Returns the double in D0:D1 with the condition codes
    cleared, or all set and -9 in D0.w out of range.  Falls into scpi_scale_by_power_of_ten.  D2 to
-   D7 and A0 and A1 are not preserved. */
+   D7 and A0 and A1 are not preserved.
+   docs/scpi/README.md, run, as scpi_number_to_double */
 
 undefined8 scpi_bcd_to_double(void)
 
@@ -24803,10 +25380,13 @@ LAB_000251da:
 
 /* 000251e4 */
 
-/* Not a C function: the double in D0:D1, A0 at the exponent word (the sign word 10 bytes before
+/* the double in D0:D1 times 10 to the word at A0 less 16, by the tables at 0x256ae and 0x25b36; the
+   sign from the word 10 bytes before; -9 beyond 309
+   Not a C function: the double in D0:D1, A0 at the exponent word (the sign word 10 bytes before
    it), the table of powers of ten in A1.  Returns D0:D1 times 10 to the exponent less 16, with the
    condition codes cleared, or all set and -9 in D0.w beyond 309.  D2 to D7 and A0 and A1 are not
-   preserved. */
+   preserved.
+   docs/scpi/README.md, run */
 
 undefined * scpi_scale_by_power_of_ten(void)
 
@@ -24843,9 +25423,11 @@ undefined * scpi_scale_by_power_of_ten(void)
 
 /* 000252bc */
 
-/* Not a C function: multiplies D0:D1 by D2:D3, both doubles, into D0:D1.  Returns with the
+/* D0:D1 times D2:D3, the engine's own IEEE multiply
+   Not a C function: multiplies D0:D1 by D2:D3, both doubles, into D0:D1.  Returns with the
    condition codes cleared, or all set and -2 in D2 for underflow or -1 for overflow.  A0 is
-   preserved; D2 to D7 are not. */
+   preserved; D2 to D7 are not.
+   docs/scpi/README.md, run */
 
 undefined8 scpi_double_multiply(void)
 
@@ -24993,8 +25575,10 @@ LAB_00025410:
 
 /* 00025468 */
 
-/* Not a C function: a piece of scpi_double_multiply, which branches here when an operand's mantissa
-   fits in 16 bits and returns through it; never called. */
+/* scpi_double_multiply's path for an operand whose mantissa fits in 16 bits
+   Not a C function: a piece of scpi_double_multiply, which branches here when an operand's mantissa
+   fits in 16 bits and returns through it; never called.
+   docs/scpi/README.md, read */
 
 undefined8 scpi_double_multiply_short(void)
 
@@ -25055,6 +25639,9 @@ undefined8 scpi_double_multiply_short(void)
 
 /* 000254ba */
 
+/* as a double
+   docs/scpi/README.md, run */
+
 undefined4 scpi_number_to_double(undefined4 param_1,undefined8 *param_2,short param_3)
 
 {
@@ -25076,8 +25663,11 @@ undefined4 scpi_number_to_double(undefined4 param_1,undefined8 *param_2,short pa
 
 /* 000254fe */
 
-/* Not a C function: the parsed number in A0, a further power of ten in D0.w, the BCD record to fill
-   in A1.  Returns 0 in D0, or -1 for an exponent beyond 309.  D1, A0 and A1 are not preserved. */
+/* a parsed number at A0 packed into the BCD record at A1, its exponent plus D0 plus 16 at +0xa; -1
+   beyond 309
+   Not a C function: the parsed number in A0, a further power of ten in D0.w, the BCD record to fill
+   in A1.  Returns 0 in D0, or -1 for an exponent beyond 309.  D1, A0 and A1 are not preserved.
+   docs/scpi/README.md, read */
 
 undefined4 scpi_number_to_bcd(void)
 
@@ -25110,6 +25700,9 @@ undefined4 scpi_number_to_bcd(void)
 /* 0002553a */
 
 /* WARNING: Unknown calling convention */
+/* a double as NR3 text, so many significant digits and no digit below the resolution given; -308
+   keeps them all
+   docs/scpi/README.md, run */
 
 undefined4
 scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,short param_5,
@@ -25240,6 +25833,9 @@ LAB_00025618:
 
 /* 00025d70 */
 
+/* the string's pointer and length
+   docs/scpi/README.md, read */
+
 undefined4 scpi_parse_string(undefined2 *param_1,undefined4 param_2,undefined4 *param_3)
 
 {
@@ -25250,6 +25846,9 @@ undefined4 scpi_parse_string(undefined2 *param_1,undefined4 param_2,undefined4 *
 
 
 /* 00025d8c */
+
+/* ON as 1, OFF as 0
+   docs/scpi/README.md, read */
 
 undefined4 scpi_parse_boolean(short *param_1,undefined4 param_2,undefined2 *param_3)
 
@@ -25290,6 +25889,9 @@ undefined4 scpi_parse_boolean(short *param_1,undefined4 param_2,undefined2 *para
 
 /* 00025de0 */
 
+/* a number as a boolean by scpi_number_to_boolean; -9 with a suffix
+   docs/scpi/README.md, read */
+
 undefined4 scpi_parse_boolean_number(int param_1,undefined4 param_2,undefined2 *param_3)
 
 {
@@ -25309,6 +25911,10 @@ undefined4 scpi_parse_boolean_number(int param_1,undefined4 param_2,undefined2 *
 
 
 /* 00025e42 */
+
+/* the index of the keyword in the node's list, or the value mapped to it; -28 with no list, -27 for
+   no match
+   docs/scpi/README.md, read */
 
 undefined4 scpi_parse_choice(short *param_1,undefined4 param_2,short *param_3,int *param_4)
 
@@ -25344,6 +25950,9 @@ undefined4 scpi_parse_choice(short *param_1,undefined4 param_2,short *param_3,in
 
 /* 00025ea6 */
 
+/* the suffix by scpi_apply_suffix, then scpi_number_to_short
+   docs/scpi/README.md, read */
+
 int scpi_parse_short(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
 
 {
@@ -25359,6 +25968,9 @@ int scpi_parse_short(int param_1,undefined4 param_2,int param_3,undefined4 param
 
 
 /* 00025ee6 */
+
+/* the suffix, then scpi_number_to_unsigned_short
+   docs/scpi/README.md, read */
 
 int scpi_parse_unsigned_short(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
 
@@ -25376,6 +25988,9 @@ int scpi_parse_unsigned_short(int param_1,undefined4 param_2,int param_3,undefin
 
 /* 00025f26 */
 
+/* the suffix, then scpi_number_to_long
+   docs/scpi/README.md, read */
+
 int scpi_parse_long(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
 
 {
@@ -25392,6 +26007,9 @@ int scpi_parse_long(int param_1,undefined4 param_2,int param_3,undefined4 param_
 
 /* 00025f66 */
 
+/* the suffix, then scpi_number_to_unsigned_long
+   docs/scpi/README.md, read */
+
 int scpi_parse_unsigned_long(int param_1,undefined4 param_2,int param_3,undefined4 param_4)
 
 {
@@ -25407,6 +26025,9 @@ int scpi_parse_unsigned_long(int param_1,undefined4 param_2,int param_3,undefine
 
 
 /* 00025fa6 */
+
+/* the suffix, then a float within 9.9e37, else -11
+   docs/scpi/README.md, read */
 
 int scpi_parse_float(int param_1,undefined4 param_2,float *param_3,undefined4 param_4)
 
@@ -25438,6 +26059,9 @@ int scpi_parse_float(int param_1,undefined4 param_2,float *param_3,undefined4 pa
 
 /* 0002602e */
 
+/* the suffix, then a double within 9.9e37, else -11
+   docs/scpi/README.md, read */
+
 int scpi_parse_double(int param_1,undefined4 param_2,double *param_3,undefined4 param_4)
 
 {
@@ -25462,6 +26086,9 @@ int scpi_parse_double(int param_1,undefined4 param_2,double *param_3,undefined4 
 
 
 /* 0002609a */
+
+/* a parsed number as a signed 16-bit value, -11 out of range
+   docs/scpi/README.md, run */
 
 undefined4 scpi_number_to_short(short *param_1,ushort *param_2,short param_3)
 
@@ -25511,6 +26138,9 @@ LAB_00026132:
 
 /* 00026140 */
 
+/* its magnitude as an unsigned 16-bit value
+   docs/scpi/README.md, run */
+
 undefined4 scpi_number_to_unsigned_short(int param_1,short *param_2,short param_3)
 
 {
@@ -25556,6 +26186,9 @@ LAB_000261cc:
 
 
 /* 000261e4 */
+
+/* as a signed 32-bit value
+   docs/scpi/README.md, run */
 
 undefined4 scpi_number_to_long(short *param_1,uint *param_2,short param_3)
 
@@ -25606,6 +26239,9 @@ undefined4 scpi_number_to_long(short *param_1,uint *param_2,short param_3)
 
 /* 0002628a */
 
+/* its magnitude as an unsigned 32-bit value
+   docs/scpi/README.md, run */
+
 undefined4 scpi_number_to_unsigned_long(int param_1,int *param_2,short param_3)
 
 {
@@ -25652,6 +26288,9 @@ LAB_00026316:
 
 /* 0002632c */
 
+/* nonzero after rounding
+   docs/scpi/README.md, read */
+
 void scpi_number_to_boolean(int param_1,ushort *param_2,short param_3)
 
 {
@@ -25675,6 +26314,9 @@ void scpi_number_to_boolean(int param_1,ushort *param_2,short param_3)
 
 /* 0002636e */
 
+/* a string as it is
+   docs/scpi/README.md, read */
+
 undefined4 scpi_format_text(int param_1,undefined4 *param_2)
 
 {
@@ -25696,6 +26338,9 @@ undefined4 scpi_format_text(int param_1,undefined4 *param_2)
 
 /* 0002639e */
 
+/* a string in double quotes, each quote doubled
+   docs/scpi/README.md, read */
+
 undefined4 scpi_format_string(int param_1,undefined4 *param_2)
 
 {
@@ -25716,6 +26361,9 @@ undefined4 scpi_format_string(int param_1,undefined4 *param_2)
 
 /* 0002640c */
 
+/* 0 or 1
+   docs/scpi/README.md, read */
+
 undefined4 scpi_format_boolean(int param_1,short *param_2)
 
 {
@@ -25734,6 +26382,9 @@ undefined4 scpi_format_boolean(int param_1,short *param_2)
 
 /* 00026438 */
 
+/* text of a given length; returns -90 always, for a reason not known
+   docs/scpi/README.md, read */
+
 undefined4 scpi_format_counted_text(int param_1,short *param_2)
 
 {
@@ -25743,6 +26394,9 @@ undefined4 scpi_format_counted_text(int param_1,short *param_2)
 
 
 /* 00026460 */
+
+/* the keyword for the value, from the node's list
+   docs/scpi/README.md, read */
 
 undefined4 scpi_format_choice(int param_1,short *param_2,int *param_3)
 
@@ -25800,6 +26454,9 @@ LAB_000264a4:
 
 /* 000264e0 */
 
+/* decimal digits right-aligned in a 17-byte buffer, -40 if they do not fit
+   docs/scpi/README.md, read */
+
 undefined8 scpi_unsigned_to_digits(uint param_1,int param_2,short *param_3)
 
 {
@@ -25826,6 +26483,9 @@ LAB_0002651c:
 
 
 /* 00026522 */
+
+/* + or -, then the digits
+   docs/scpi/README.md, read */
 
 int scpi_format_long(int param_1,int *param_2)
 
@@ -25859,6 +26519,9 @@ int scpi_format_long(int param_1,int *param_2)
 
 /* 000265a2 */
 
+/* through scpi_format_long
+   docs/scpi/README.md, read */
+
 void scpi_format_short(undefined4 param_1,short *param_2)
 
 {
@@ -25871,6 +26534,9 @@ void scpi_format_short(undefined4 param_1,short *param_2)
 
 
 /* 000265c2 */
+
+/* + and the digits
+   docs/scpi/README.md, read */
 
 int scpi_format_unsigned_long(int param_1,undefined4 *param_2)
 
@@ -25892,6 +26558,9 @@ int scpi_format_unsigned_long(int param_1,undefined4 *param_2)
 
 /* 0002661c */
 
+/* through scpi_format_unsigned_long
+   docs/scpi/README.md, read */
+
 void scpi_format_unsigned_short(undefined4 param_1,ushort *param_2)
 
 {
@@ -25904,6 +26573,9 @@ void scpi_format_unsigned_short(undefined4 param_1,ushort *param_2)
 
 
 /* 0002663e */
+
+/* a definite-length block, #, the count of length digits, the length, then the data
+   docs/scpi/README.md, read */
 
 undefined4 scpi_format_block(int param_1,undefined4 *param_2)
 
@@ -25935,6 +26607,9 @@ undefined4 scpi_format_block(int param_1,undefined4 *param_2)
 
 /* 000266d0 */
 
+/* comma-separated, by scpi_format_double
+   docs/scpi/README.md, read */
+
 int scpi_format_double_array(int param_1,int *param_2)
 
 {
@@ -25964,6 +26639,9 @@ int scpi_format_double_array(int param_1,int *param_2)
 
 /* 0002671c */
 
+/* comma-separated, by scpi_format_short
+   docs/scpi/README.md, read */
+
 int scpi_format_short_array(int param_1,int *param_2)
 
 {
@@ -25992,6 +26670,9 @@ int scpi_format_short_array(int param_1,int *param_2)
 
 
 /* 00026768 */
+
+/* comma-separated, by scpi_format_double_resolution, a resolution for each
+   docs/scpi/README.md, read */
 
 int scpi_format_resolution_array(int param_1,int *param_2)
 
@@ -26025,6 +26706,9 @@ int scpi_format_resolution_array(int param_1,int *param_2)
 
 /* 000267c0 */
 
+/* by its kind, a block, a double array or a short array
+   docs/scpi/README.md, read */
+
 undefined4 scpi_format_array(undefined4 param_1,char *param_2)
 
 {
@@ -26054,6 +26738,9 @@ undefined4 scpi_format_array(undefined4 param_1,char *param_2)
 
 /* 00026816 */
 
+/* by its kind, a block or a resolution array, then the record's release callback
+   docs/scpi/README.md, read */
+
 undefined4 scpi_format_resolution_array_record(undefined4 param_1,char *param_2)
 
 {
@@ -26081,6 +26768,9 @@ undefined4 scpi_format_resolution_array_record(undefined4 param_1,char *param_2)
 
 /* 00026870 */
 
+/* 15 significant digits by scpi_real_to_text
+   docs/scpi/README.md, read */
+
 int scpi_format_double(int param_1,int *param_2)
 
 {
@@ -26097,6 +26787,9 @@ int scpi_format_double(int param_1,int *param_2)
 
 
 /* 000268c4 */
+
+/* 6 significant digits by scpi_real_to_text
+   docs/scpi/README.md, read */
 
 int scpi_format_float(int param_1,float *param_2)
 
@@ -26120,6 +26813,9 @@ int scpi_format_float(int param_1,float *param_2)
 
 
 /* 0002692c */
+
+/* a double whose record gives either its digits or its resolution
+   docs/scpi/README.md, read */
 
 int scpi_format_double_precision(int param_1,int *param_2)
 
@@ -26158,6 +26854,9 @@ int scpi_format_double_precision(int param_1,int *param_2)
 
 /* 000269a6 */
 
+/* 15 digits to the resolution given
+   docs/scpi/README.md, read */
+
 int scpi_format_double_resolution(int param_1,int *param_2,short *param_3)
 
 {
@@ -26183,6 +26882,9 @@ int scpi_format_double_resolution(int param_1,int *param_2,short *param_3)
 
 
 /* 00026a06 */
+
+/* 6 digits to the resolution the value carries
+   docs/scpi/README.md, read */
 
 int scpi_format_float_resolution(int param_1,float *param_2)
 
@@ -26408,6 +27110,9 @@ LAB_00026e5a:
 
 
 /* 00026ee0 */
+
+/* the SCPI lexer: reads characters through the input's own routine and classifies them by the table
+   at 0x277ec */
 
 undefined4 scpi_scan_token(undefined4 *param_1,ushort *param_2,undefined4 param_3)
 
@@ -27011,6 +27716,10 @@ undefined4 FUN_00027a0c(undefined2 param_1,short param_2)
 
 /* 00027a2a */
 
+/* scans the 6-byte unit table, text and exponent, allowing a two-character multiplier before the
+   unit
+   docs/scpi/README.md, read */
+
 short scpi_match_suffix(short param_1,char *param_2,int param_3,short *param_4)
 
 {
@@ -27054,6 +27763,10 @@ LAB_00027a86:
 
 
 /* 00027ae4 */
+
+/* matches the token's units suffix against the node's table, setting its scale and unit; -9 if none
+   is allowed, -31 if unknown
+   docs/scpi/README.md, read */
 
 undefined4 scpi_apply_suffix(int param_1,int param_2)
 
@@ -27518,6 +28231,9 @@ void FUN_000280a4(undefined4 param_1,int param_2)
 
 /* 000280ea */
 
+/* allocates the status model and its registers, builds the queue
+   structures.md */
+
 undefined4
 status_create(int *param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5)
 
@@ -27565,6 +28281,9 @@ void FUN_00028160(short *param_1)
 
 /* 0002819c */
 
+/* one register's fields and its parent
+   structures.md */
+
 void status_register_setup
                (int param_1,int param_2,undefined2 param_3,undefined2 param_4,int param_5,
                short param_6,int param_7)
@@ -27592,6 +28311,9 @@ void status_register_setup
 
 
 /* 0002820a */
+
+/* sets a condition's register bit through status_conditions
+   structures.md */
 
 int16_t status_set_bit(status_model *status,int condition,int value)
 
@@ -27672,6 +28394,9 @@ void FUN_000282ce(int param_1,int param_2,undefined4 param_3)
 
 
 /* 00028388 */
+
+/* status_set_bit with 0
+   structures.md */
 
 void status_clear_bit(status_model *param_1,int param_2)
 
@@ -27760,6 +28485,9 @@ void FUN_00028474(int param_1,int param_2,ushort *param_3)
 
 /* 000284b6 */
 
+/* the STATus EVENt, *ESR? and *STB? queries' read of a register's event value
+   structures.md */
+
 void status_read_event(int param_1,int param_2,ushort *param_3)
 
 {
@@ -27781,6 +28509,9 @@ void status_read_event(int param_1,int param_2,ushort *param_3)
 
 
 /* 00028506 */
+
+/* the STATus CONDition queries' read of a register's condition
+   structures.md */
 
 void status_read_condition(int param_1,int param_2,undefined2 *param_3)
 
@@ -28297,6 +29028,9 @@ void FUN_00029770(int *param_1,uint param_2,int *param_3)
 
 /* 0002979c */
 
+/* reports 9 when value is outside min..max; *ESE, *SRE and the STATus ENABle and transition setters
+    */
+
 undefined4 scpi_check_range(int param_1,int param_2,int param_3,byte param_4)
 
 {
@@ -28347,6 +29081,9 @@ undefined4 FUN_000297c4(undefined4 param_1,undefined4 param_2,undefined4 param_3
 
 
 /* 0002982c */
+
+/* sends a parameter's new value, or its minimum or maximum, to pllc
+   structures.md */
 
 void scpi_numeric_set(int param_1,int param_2,short param_3,short param_4,undefined4 param_5,
                      undefined1 param_6)
@@ -28410,6 +29147,8 @@ void FUN_000298b2(int param_1,int param_2,short param_3,short param_4,undefined4
 /* 000298fc */
 
 /* WARNING: Unknown calling convention */
+/* a parameter's value, or its minimum or maximum, from its descriptor
+   structures.md */
 
 float scpi_numeric_get(scpi_numeric_param *param,int index,int16_t which,int16_t bound)
 
@@ -28472,6 +29211,7 @@ undefined8 FUN_00029990(int param_1,int param_2,short param_3,short param_4)
 /* 00029a18 */
 
 /* WARNING: Unknown calling convention */
+/* returns its argument; the LED and DOUGlas queries call it */
 
 char return_byte(char b)
 
@@ -28553,6 +29293,7 @@ void FUN_00029a68(undefined1 *param_1,char param_2,byte param_3)
 /* 00029ada */
 
 /* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* returns 0; most SCPI query handlers call it */
 
 int return_zero(void)
 
@@ -28564,6 +29305,8 @@ int return_zero(void)
 /* 00029ade */
 
 /* WARNING: Unknown calling convention */
+/* 72 SCPI queries call it with -0x20; reports it through status_report_from and zeroes the reply's
+   length at +4 */
 
 undefined4 scpi_query_failed(char param_1,int param_2)
 
@@ -28587,6 +29330,8 @@ undefined1 FUN_00029b08(void)
 
 
 /* 00029b0e */
+
+/* "scpi > ", "E%+04d> " */
 
 void scpi_prompt(int param_1)
 
@@ -28633,6 +29378,9 @@ undefined4 FUN_00029b42(void)
 
 /* 00029b82 */
 
+/* returns 0x29e18, the console port's object: two routines, then the "E%+04d> " and "scpi > "
+   prompts; queries compare a request's source with it */
+
 undefined4 scpi_console_port(void)
 
 {
@@ -28667,6 +29415,7 @@ int FUN_00029b96(undefined4 param_1,undefined1 *param_2,int param_3)
 /* 00029bce */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the first of the console port's routines; the SCPI input loop reads characters with it */
 
 int console_port_read(void)
 
@@ -28851,6 +29600,8 @@ void FUN_00029e3c(status_model *param_1,undefined4 param_2)
 
 /* 00029e56 */
 
+/* send_x, pausing and retrying until it succeeds */
+
 void send_x_retry(uint32_t exchange,void *message,uint32_t ticks)
 
 {
@@ -28867,6 +29618,8 @@ void send_x_retry(uint32_t exchange,void *message,uint32_t ticks)
 
 /* 00029e7e */
 
+/* raises a variable, send_x_retry, waits on the variable */
+
 void request_and_wait(uint32_t param_1,void *param_2)
 
 {
@@ -28881,6 +29634,9 @@ void request_and_wait(uint32_t param_1,void *param_2)
 
 
 /* 00029ec2 */
+
+/* request_and_wait to pllc_exchange; the five differ in the message fields they fill
+   structures.md */
 
 void pllc_request_a(undefined4 param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4)
 
@@ -28904,6 +29660,9 @@ void pllc_request_a(undefined4 param_1,undefined1 param_2,undefined1 param_3,und
 
 /* 00029ef6 */
 
+/* request_and_wait to pllc_exchange
+   structures.md */
+
 void pllc_request_b(undefined4 param_1,undefined1 param_2,undefined1 param_3)
 
 {
@@ -28923,6 +29682,9 @@ void pllc_request_b(undefined4 param_1,undefined1 param_2,undefined1 param_3)
 
 
 /* 00029f24 */
+
+/* request_and_wait to pllc_exchange, with a value through a pointer
+   structures.md */
 
 void pllc_request_c(undefined4 param_1,undefined1 param_2,undefined4 param_3,undefined4 *param_4,
                    undefined1 param_5)
@@ -28949,6 +29711,9 @@ void pllc_request_c(undefined4 param_1,undefined1 param_2,undefined4 param_3,und
 
 /* 00029f60 */
 
+/* request_and_wait to pllc_exchange
+   structures.md */
+
 void pllc_request_d(undefined4 param_1,undefined1 param_2,undefined4 param_3,undefined1 param_4)
 
 {
@@ -28970,6 +29735,9 @@ void pllc_request_d(undefined4 param_1,undefined1 param_2,undefined4 param_3,und
 
 
 /* 00029f94 */
+
+/* request_and_wait to pllc_exchange
+   structures.md */
 
 void pllc_request_e(undefined4 param_1,undefined1 param_2,undefined4 *param_3,undefined1 param_4)
 
@@ -28995,6 +29763,9 @@ void pllc_request_e(undefined4 param_1,undefined1 param_2,undefined4 *param_3,un
 
 /* 00029fce */
 
+/* creator of the SCPI task
+   console.md */
+
 uint scpi_task_create(ulong param_1)
 
 {
@@ -29019,6 +29790,9 @@ uint scpi_task_create(ulong param_1)
 
 
 /* 0002a04a */
+
+/* SCPI task
+   restart.md */
 
 void scpi_task(void)
 
@@ -30199,6 +30973,7 @@ undefined4 scpi_query_DIAGnostic_LOG_COUNt(short *param_1,short *param_2,int par
 /* 0002b4c2 */
 
 /* WARNING: Unknown calling convention */
+/* "Log status: Error", "Empty", "One entry", "%-3d entries", "Full" */
 
 void log_status(char *param_1,char param_2)
 
@@ -30892,6 +31667,8 @@ undefined4 scpi_query_DIAGnostic_TOFFset(int16_t *param_1,float *param_2)
 /* 0002be9c */
 
 /* WARNING: Unknown calling convention */
+/* puts a code into the status system once status_ready
+   structures.md */
 
 undefined4 status_report(short param_1)
 
@@ -30920,6 +31697,8 @@ undefined4 status_report(short param_1)
 /* 0002bf00 */
 
 /* WARNING: Unknown calling convention */
+/* status_report(code) for a command from source 0 or 2, not 1, 3 or 4; every caller passes
+   return_zero() */
 
 int status_report_from(short param_1,byte param_2)
 
@@ -31874,6 +32653,9 @@ bool FUN_0002d1a2(char param_1,uint *param_2)
 /* 0002d1cc */
 
 /* WARNING: Unknown calling convention */
+/* the ID count, the most listed and the ID base for satellites_in_mask: kind 0 :SAT:TRAC? (32, 6),
+   1 its pseudolites (5, 6, from 0x20), 2 :SAT:VIS:PRED? (32, 12), 3 the ignore and include lists
+   (32, 32) */
 
 void satellite_list_limits
                (satellite_list kind,uint8_t *id_count,uint8_t *max_listed,uint8_t *id_base)
@@ -31911,6 +32693,7 @@ void satellite_list_limits
 /* 0002d226 */
 
 /* WARNING: Unknown calling convention */
+/* lists the PRNs whose bits are set; the SAT:TRAC:IGN? and INCL? queries */
 
 byte satellites_in_mask(uint param_1,byte param_2,short *param_3,byte param_4,byte param_5)
 
@@ -33390,6 +34173,8 @@ void FUN_0002e6c0(int param_1)
 
 /* 0002e6fc */
 
+/* advances a char ** past spaces */
+
 void skip_spaces(undefined4 *param_1)
 
 {
@@ -34358,6 +35143,9 @@ void FUN_0002f40c(void)
 
 /* 0002f480 */
 
+/* builds status_object with status_create, sets each register up, sets status_ready
+   structures.md */
+
 int status_init(void)
 
 {
@@ -34401,6 +35189,8 @@ void FUN_0002f53a(undefined4 param_1,undefined1 param_2)
 /* 0002f53c */
 
 /* WARNING: Unknown calling convention */
+/* :DIAG:STAT:HAPP passes it a condition, 0 to 0x38
+   structures.md */
 
 void status_happening(char param_1)
 
@@ -35725,6 +36515,8 @@ undefined4 scpi_query_SYSTem_PRINt_LENGth(undefined4 param_1,ushort *param_2)
 /* 0003082e */
 
 /* WARNING: Unknown calling convention */
+/* the sum and its complement of an EEPROM record's bytes after the first two
+   structures.md */
 
 undefined2 record_checksum(void *record,uint16_t length)
 
@@ -35996,6 +36788,8 @@ void FUN_00030f08(void)
 /* 00030f10 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* creates eepx, "Unable to create eepx"
+   structures.md */
 
 void eeprom_init(void)
 
@@ -36024,6 +36818,8 @@ void eeprom_init(void)
 /* 00030fae */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* "Unable to acquire eepx token"
+   structures.md */
 
 char eeprom_lock(void)
 
@@ -36067,6 +36863,8 @@ char eeprom_lock(void)
 /* 0003105e */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* "Unable to release eepx token"
+   structures.md */
 
 void eeprom_unlock(void)
 
@@ -36108,6 +36906,8 @@ void eeprom_unlock(void)
 /* 00031128 */
 
 /* WARNING: Unknown calling convention */
+/* the wr_eeprom word's: writes a byte, polls until it reads back, retries five times
+   structures.md */
 
 bool eeprom_write_byte(char *param_1,char param_2)
 
@@ -36146,6 +36946,7 @@ bool eeprom_write_byte(char *param_1,char param_2)
 /* 0003119e */
 
 /* WARNING: Unknown calling convention */
+/* writes within one 64-byte EEPROM page under eeprom_lock, five tries */
 
 bool eeprom_write_page(char *param_1,char *param_2,ushort param_3)
 
@@ -36198,6 +36999,9 @@ bool eeprom_write_page(char *param_1,char *param_2,ushort param_3)
 
 
 /* 0003124a */
+
+/* writes data split at 64-byte page boundaries with eeprom_write_page; happening 'I' on a failure
+    */
 
 undefined4 eeprom_write(char *param_1,char *param_2,uint param_3)
 
@@ -36424,6 +37228,8 @@ int FUN_00031662(undefined1 *param_1)
 /* 0003167c */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* creates log_mutex, "logr", and finds the event log's page to write next among 0x4b
+   structures.md */
 
 int log_init(void)
 
@@ -36466,6 +37272,8 @@ LAB_00031708:
 /* 00031762 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* formats a log entry, "Log %03d:%04d%02d%02d.%02d:%02d:%02d"
+   structures.md */
 
 int log_read(int param_1,char *param_2,char *param_3)
 
@@ -36551,6 +37359,8 @@ int log_read(int param_1,char *param_2,char *param_3)
 
 /* 0003195a */
 
+/* appends to the diagnostic log under its lock; :DIAG:LOG:WRIT and log_send call it */
+
 int log_write(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
@@ -36568,6 +37378,8 @@ int log_write(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 /* 000319a2 */
 
 /* WARNING: Unknown calling convention */
+/* log_write of one of 27 fixed messages by code, "Log cleared", "Power on", "Survey mode
+   started"... */
 
 undefined4 log_event(uint8_t code)
 
@@ -36668,6 +37480,8 @@ undefined4 log_event(uint8_t code)
 
 /* 00031ba2 */
 
+/* log_write("First satellite tracked at %04d%02d%02d.%02d:%02d:%02d") */
+
 void log_first_satellite(undefined4 param_1,undefined4 param_2)
 
 {
@@ -36678,6 +37492,9 @@ void log_first_satellite(undefined4 param_1,undefined4 param_2)
 
 /* 00031bba */
 
+/* memset of a log page, 0x40 bytes
+   structures.md */
+
 void log_page_clear(void *param_1)
 
 {
@@ -36687,6 +37504,9 @@ void log_page_clear(void *param_1)
 
 
 /* 00031bd0 */
+
+/* the first entry of a page with no format
+   structures.md */
 
 uint log_page_free_entry(int param_1)
 
@@ -36763,6 +37583,8 @@ undefined4 FUN_00031c42(uint32_t param_1,uint32_t param_2,uint32_t param_3)
 /* 00031ff8 */
 
 /* WARNING: Unknown calling convention */
+/* "Value too small, set to min limit" or "too large, set to max limit", and status_report_from(9)
+    */
 
 void report_clamped(char param_1,byte param_2)
 
@@ -36946,6 +37768,8 @@ undefined8 FUN_000322aa(undefined8 *param_1)
 
 
 /* 000322b4 */
+
+/* clamps *value to *min and *max, reporting through report_clamped */
 
 int clamp_to_limits(int *param_1,undefined4 param_2,int *param_3,int *param_4,int param_5,
                    byte param_6)
@@ -37166,6 +37990,9 @@ FUN_000326d2(double *param_1,undefined4 param_2,double *param_3,double *param_4,
 
 /* 000327f4 */
 
+/* clear_nv erases slots 0 and 1 with it
+   structures.md */
+
 void nv_slot_erase(byte param_1)
 
 {
@@ -37177,6 +38004,9 @@ void nv_slot_erase(byte param_1)
 
 
 /* 0003281a */
+
+/* the clear_nv word's
+   structures.md */
 
 void clear_nv(void)
 
@@ -37190,6 +38020,9 @@ void clear_nv(void)
 /* 0003282c */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* loads slot 0, else slot 1, else copies nv_settings_defaults over nv_settings, erases the older
+   slot and saves
+   structures.md */
 
 void nv_restore(void)
 
@@ -37229,6 +38062,9 @@ void nv_restore(void)
 
 /* 000328e0 */
 
+/* the sum of a record's bytes 8 to 0x7f
+   structures.md */
+
 undefined2 nv_checksum(int param_1)
 
 {
@@ -37249,6 +38085,9 @@ undefined2 nv_checksum(int param_1)
 
 
 /* 0003290e */
+
+/* compares two records, nonzero when they differ
+   structures.md */
 
 undefined4 nv_record_differs(int *param_1,int *param_2)
 
@@ -37277,6 +38116,9 @@ undefined4 nv_record_differs(int *param_1,int *param_2)
 /* 0003293a */
 
 /* WARNING: Unknown calling convention */
+/* packs the settings into a 0x80-byte NV register record and writes it to slot nv_slot when it
+   differs; "Warning: Entire nv register is being used"
+   structures.md */
 
 char nv_save(byte param_1)
 
@@ -37407,6 +38249,8 @@ undefined1 FUN_00032b5e(void)
 /* 00032bc2 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* loads the settings from slot nv_slot when its record is good
+   structures.md */
 
 undefined4 nv_load_slot(void)
 
@@ -37614,6 +38458,8 @@ bool FUN_00033028(byte param_1)
 
 /* 0003305e */
 
+/* "Log cleared" */
+
 int log_clear(void)
 
 {
@@ -37650,6 +38496,9 @@ int log_clear(void)
 
 /* 000330ee */
 
+/* "Log status: %-3d entries"; sets *full when more than 31
+   structures.md */
+
 int log_count(uint8_t *full)
 
 {
@@ -37683,6 +38532,8 @@ void FUN_00033114(void)
 
 
 /* 0003313c */
+
+/* one of 32 log entries as "Log %03d:%04d%02d%02d.%02d:%02d:%02d", or "Unused" */
 
 undefined4 log_entry_text(int param_1,char *param_2,char *param_3)
 
@@ -37790,6 +38641,8 @@ void FUN_00040000(undefined1 *param_1)
 
 
 /* 00040030 */
+
+/* pulses the FPGA bits for a measurement and returns interpolator_read */
 
 void interpolator_measure(uint8_t mode)
 
@@ -37933,6 +38786,9 @@ undefined4 FUN_000401c4(void)
 
 
 /* 00040248 */
+
+/* sets HDAC channels 2 and 3 until interpolator_measure gives 1 to 25 and 201 to 225, 200 apart;
+   ovens.md's Z3816A 0x43b56 */
 
 uint8_t interpolator_calibrate(interpolator_calibration *calibration)
 
@@ -38079,6 +38935,8 @@ undefined1 FUN_0004047c(char *param_1)
 
 /* 00040556 */
 
+/* sets HDAC channels 2 and 3 and takes both interpolator readings; "First-time interp test." */
+
 void interpolator_sample(char *param_1)
 
 {
@@ -38101,6 +38959,9 @@ void interpolator_sample(char *param_1)
 
 
 /* 000405bc */
+
+/* runs interpolator_calibrate when the configuration asks, then stores reading_low and the spread
+   at its +0x18 and +0x1c */
 
 void counter_calibrate(interval_reading_fields *reading,counter_configuration_fields *configuration)
 
@@ -38211,6 +39072,7 @@ void FUN_000406e2(void)
 /* 00040756 */
 
 /* WARNING: Unknown calling convention */
+/* writes a byte to FPGA register reg at 0x304000 (interval.md: the FPGA port) */
 
 void fpga_write(uint8_t reg,uint8_t value)
 
@@ -38223,6 +39085,9 @@ void fpga_write(uint8_t reg,uint8_t value)
 /* 0004076a */
 
 /* WARNING: Unknown calling convention */
+/* sets the register in fconf_regs[1]'s address bits, reads 0x304000, restores them; "old_addr,
+   fconf_regs[1] = %x"
+   structures.md */
 
 undefined1 fpga_read(uint8_t reg)
 
@@ -38343,6 +39208,7 @@ undefined1 FUN_0004091a(byte param_1)
 /* 000409a4 */
 
 /* WARNING: Unknown calling convention */
+/* sets or clears a bit in fconf_regs, register and mask from fpga_bit_table, then fpga_write */
 
 void fpga_set_bit(uint8_t bit,uint8_t on)
 
@@ -38381,6 +39247,8 @@ void FUN_00040a0e(byte param_1,byte param_2)
 /* 00040a64 */
 
 /* WARNING: Unknown calling convention */
+/* the clk_synch and sync_imm words': stores a mode and a time and sets two states to 2
+   structures.md */
 
 void sync_request(uint8_t param_1,int32_t param_2)
 
@@ -38396,6 +39264,8 @@ void sync_request(uint8_t param_1,int32_t param_2)
 /* 00040a84 */
 
 /* WARNING: Unknown calling convention */
+/* sets fconf_regs[3]'s low two bits to counter_arm's sync_kind
+   structures.md */
 
 void counter_set_sync(byte param_1)
 
@@ -38502,6 +39372,8 @@ void FUN_00040c06(void)
 
 /* 00040c56 */
 
+/* the complement of FPGA register 0x10 */
+
 uint interpolator_read(void)
 
 {
@@ -38513,6 +39385,8 @@ uint interpolator_read(void)
 
 
 /* 00040c6a */
+
+/* reloads fconf_regs[0..3] from the configuration and re-arms the FPGA */
 
 void counter_arm(interval_reading_fields *reading,counter_configuration_fields *configuration)
 
@@ -38550,6 +39424,9 @@ void counter_arm(interval_reading_fields *reading,counter_configuration_fields *
 
 
 /* 00040d34 */
+
+/* interval.md's one reading: the coarse count plus (interpolator_read - +0x18) / +0x1c, times 1e-7,
+   less the configuration's double at +4, into *reading */
 
 void counter_read(interval_reading_fields *reading,counter_configuration_fields *configuration)
 
@@ -38804,6 +39681,9 @@ undefined8 FUN_00041244(uint param_1,undefined4 param_2)
 
 /* 0004137e */
 
+/* sums the EFC and stores each 2700 samples an entry of efc_history
+   structures.md */
+
 void efc_history_update(void)
 
 {
@@ -38976,6 +39856,9 @@ void FUN_0004173e(void)
 
 /* 00041784 */
 
+/* root_task starts curv here
+   structures.md */
+
 void curv_task(void)
 
 {
@@ -38991,6 +39874,8 @@ void curv_task(void)
 /* 000417c6 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* loop.md's aging fit, in curv: "failed line fit", "pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f",
+   "HQ= %.1e mode= %d" */
 
 void aging_fit(void)
 
@@ -39865,6 +40750,9 @@ undefined4 FUN_000429c6(uint8_t *param_1,undefined1 *param_2,undefined1 *param_3
 
 /* 00042a18 */
 
+/* the time code's f; pll_rep's "ffom = %1d"
+   structures.md */
+
 undefined4 get_ffom(undefined1 *param_1)
 
 {
@@ -39945,6 +40833,8 @@ void FUN_00042b8a(undefined1 *param_1)
 
 /* 00042bc4 */
 
+/* the firmware's own name, "pll_scpi: toggle_change() -- new value > max value" */
+
 void toggle_change(undefined1 *param_1)
 
 {
@@ -39962,6 +40852,10 @@ void toggle_change(undefined1 *param_1)
 
 
 /* 00042c10 */
+
+/* the firmware's own name, "pll_scpi: validate_num() -- too many in multiple": each new value
+   through its descriptor's validate, into pll_scpi_validated
+   structures.md */
 
 void validate_num(void)
 
@@ -40002,6 +40896,8 @@ void validate_num(void)
 
 
 /* 00042d02 */
+
+/* the firmware's own name, "pll_scpi: validate_or_doaction() -- unknown structure type" */
 
 void validate_or_doaction(undefined1 *param_1,undefined4 param_2)
 
@@ -40194,6 +41090,9 @@ LAB_0004300c:
 
 /* 0004301a */
 
+/* the descriptor's flags & 2; finish_scpi_cmd then calls nv_save
+   structures.md */
+
 ushort scpi_param_saved_in_nv(void)
 
 {
@@ -40211,6 +41110,10 @@ ushort scpi_param_saved_in_nv(void)
 
 /* 00043042 */
 
+/* the descriptor's flags & 4; finish_scpi_cmd then calls 0x30dea, which writes the record at
+   0x400000
+   structures.md */
+
 ushort scpi_param_saved_in_record(void)
 
 {
@@ -40227,6 +41130,10 @@ ushort scpi_param_saved_in_record(void)
 
 
 /* 0004306a */
+
+/* the firmware's own name, "pll_scpi: finish_scpi_cmd() -- unknown structure type": stores the
+   values by the descriptor's type, calls its hooks, and saves
+   structures.md */
 
 void finish_scpi_cmd(void)
 
@@ -40297,6 +41204,8 @@ void finish_scpi_cmd(void)
 
 /* 000431f4 */
 
+/* the firmware's own name, "pll_scpi: get_setup_vars() -- unknown structure type" */
+
 void get_setup_vars(int param_1)
 
 {
@@ -40353,6 +41262,9 @@ override_jmp_0004322e_case_3:
 
 /* 000432bc */
 
+/* the pllc task's handling of one request: checks it, validate_num, reports, finish_scpi_cmd
+   structures.md */
+
 void pll_scpi_command(undefined4 param_1,char *param_2)
 
 {
@@ -40384,6 +41296,9 @@ void pll_scpi_command(undefined4 param_1,char *param_2)
 
 
 /* 00043340 */
+
+/* takes a request from pllc_exchange and handles it
+   structures.md */
 
 void pll_scpi_receive(void)
 
@@ -40759,6 +41674,7 @@ LAB_00043a88:
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* loop.md's stage; "holdover - Error with measurement" */
 
 undefined1 holdover(char param_1)
 
@@ -41029,6 +41945,7 @@ undefined4 FUN_00043f18(void)
 /* 00043f9a */
 
 /* WARNING: Unknown calling convention */
+/* loop.md's stage; "holdover recovery - Error with measurement" */
 
 char holdover_recovery(char param_1)
 
@@ -41176,6 +42093,7 @@ LAB_0004411a:
 /* 0004429e */
 
 /* WARNING: Unknown calling convention */
+/* loop.md's stage; "startup_pll - Error with measurement" */
 
 char startup_pll(char param_1)
 
@@ -41431,6 +42349,8 @@ char startup_pll(char param_1)
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* the firmware's own name, "pll_normal - Error with measurement"; interval.md's averaging routine,
+   which counts readings to ten and stores the mean */
 
 undefined1 pll_normal(char param_1)
 
@@ -41661,6 +42581,8 @@ undefined1 FUN_00044e8e(float param_1)
 
 /* 00044f5e */
 
+/* "Peforming sync" */
+
 undefined1 sync_perform(float param_1)
 
 {
@@ -41686,6 +42608,8 @@ undefined1 sync_perform(float param_1)
 /* 00044fbc */
 
 /* WARNING: Unknown calling convention */
+/* the next one-second interval reading, into *reading as a float, and its flag; waits instead while
+   a 1PPS is dead; updates the EFC history */
 
 uint8_t interval_next_reading(char param_1,undefined4 *param_2)
 
@@ -41735,6 +42659,8 @@ uint8_t interval_next_reading(char param_1,undefined4 *param_2)
 /* 000450c4 */
 
 /* WARNING: Unknown calling convention */
+/* the other half of interval_next_reading: counter_calibrate, or sync_request(3, 1) for mode 2,
+   then counter_arm */
 
 void interval_rearm(char param_1)
 
@@ -41760,6 +42686,9 @@ void interval_rearm(char param_1)
 
 /* 0004513c */
 
+/* the wait half of interval_next_reading: the FPGA's reading, or a wait while a 1PPS is dead;
+   updates the EFC history */
+
 void interval_wait_reading(void)
 
 {
@@ -41782,6 +42711,8 @@ void interval_wait_reading(void)
 
 
 /* 000451c2 */
+
+/* loop.md's power-up step; "coarse - Error with measurement 1" */
 
 char coarse(void)
 
@@ -41889,6 +42820,8 @@ override_jmp_000451fa_case_0:
 
 /* WARNING: Removing unreachable block (ram,0x0004577c) */
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* loop.md's power-up step and its sub-states; "fine - Error with measurement 1", "fine-sync",
+   "fine-slew" */
 
 char fine(void)
 
@@ -42238,6 +43171,10 @@ void FUN_00045b02(void)
 
 /* 00045b70 */
 
+/* the status screen's mode accessor, from pll.stage and pll.manual; the HOLDover queries and
+   HOLD:INIT test it
+   screen-format-strings.md, "Mode suffixes" */
+
 undefined4 pll_mode(void)
 
 {
@@ -42281,6 +43218,8 @@ override_jmp_00045b86_case_1:
 
 
 /* 00045bb8 */
+
+/* screen-format-strings.md's ladder: the power-up sub-state's suffix index */
 
 undefined1 pll_powerup_step(void)
 
@@ -42705,6 +43644,8 @@ void FUN_0004637a(void)
 
 /* 00046394 */
 
+/* "Error in deleting old leapsecond event" */
+
 void leap_event_delete(void)
 
 {
@@ -42722,6 +43663,8 @@ void leap_event_delete(void)
 
 
 /* 000463c2 */
+
+/* "Error in creating leapsecond event" */
 
 void leap_event_create(void)
 
@@ -42820,6 +43763,9 @@ byte FUN_000464de(void)
 
 /* 00046524 */
 
+/* by pll.stage, sets two pll flags and the status happenings they imply (0x1a, 0x1b, 0x28, 0x2a,
+   0x2c), with log_event(6); pllp_task calls it at start and on stage changes */
+
 void pll_stage_status(void)
 
 {
@@ -42889,6 +43835,9 @@ override_jmp_000465c6_case_7:
 
 /* 00046620 */
 
+/* returns gps_ack_ready, clearing gps_ack_awaited once it is set; the ack checker 0x46838 polls it
+    */
+
 uint8_t gps_ack_received(void)
 
 {
@@ -42902,6 +43851,8 @@ uint8_t gps_ack_received(void)
 /* 00046636 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* copies four longs and sends them to gpsx_exchange
+   structures.md */
 
 undefined1 gpsx_send(undefined2 param_1,undefined1 param_2,int param_3,char param_4)
 
@@ -43022,6 +43973,7 @@ void FUN_000466ca(void)
 /* 00046838 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* the states print_gps_init_state names, each with its "... ack failure: %02X" */
 
 void gps_init_sequence(void)
 
@@ -43289,6 +44241,8 @@ LAB_00046d8a:
 
 /* 00046d98 */
 
+/* the states print_leap_check_state names; "leap pending ack failure: %02X" */
+
 void gps_leap_sequence(void)
 
 {
@@ -43356,6 +44310,8 @@ LAB_00046e64:
 
 
 /* 00046e70 */
+
+/* the leap second's acknowledgement step; "Error in leapsecond ack"; sets the GPS-UTC offset */
 
 void gps_leap_ack(void)
 
@@ -43632,6 +44588,7 @@ switchD_000470d4_caseD_0:
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
+/* the GPS diagnostic reset and test; "Error in DIAG GPS RST ack", "TST ack" */
 
 undefined1 gps_diag_sequence(char param_1)
 
@@ -43831,6 +44788,8 @@ void FUN_000474c2(float param_1)
 /* 00047528 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* root_task starts pllp here
+   structures.md */
 
 void pllp_task(void)
 
@@ -44188,6 +45147,9 @@ void FUN_00047de2(int param_1,double *param_2,uint param_3)
 
 /* 00047e32 */
 
+/* mas into degrees (/ 3600000), minutes (/ 60000) and seconds (the rest / 1000.0); the position
+   queries */
+
 void mas_to_dms(long param_1,undefined2 *param_2,undefined1 *param_3,double *param_4)
 
 {
@@ -44230,6 +45192,8 @@ void FUN_00047eb0(int *param_1,ushort param_2,byte param_3,undefined4 param_4,un
 
 
 /* 00047f14 */
+
+/* "%c%4d:%02d:%06.3f", degrees, minutes and seconds */
 
 void format_dms(int param_1,char param_2,char *param_3)
 
@@ -44280,6 +45244,8 @@ void format_dms(int param_1,char param_2,char *param_3)
 
 /* 00047fb6 */
 
+/* "%c%4d:%02d:%06.7f" */
+
 void format_dms_precise(char *param_1,char param_2)
 
 {
@@ -44324,6 +45290,8 @@ void format_dms_precise(char *param_1,char param_2)
 /* 000480c2 */
 
 /* WARNING: Unknown calling convention */
+/* an angle in mas as N, S, E or W by its sign and whether it is a latitude, then degrees and
+   minutes */
 
 void format_angle(char *param_1,int param_2,char param_3)
 
@@ -44361,6 +45329,8 @@ void format_angle(char *param_1,int param_2,char param_3)
 
 /* 0004816c */
 
+/* seconds as "%02d:%02d:%04.1f [%s]" */
+
 void format_duration(double param_1,char *param_2)
 
 {
@@ -44388,6 +45358,9 @@ void format_duration(double param_1,char *param_2)
 
 
 /* 00048224 */
+
+/* print_bc's request, 0x35; xDOP VALID COMBOS
+   structures.md */
 
 void gps_print_best_combinations(void)
 
@@ -44420,6 +45393,9 @@ void gps_print_best_combinations(void)
 
 
 /* 00048300 */
+
+/* print_ext_msg's request, 0x34; @@Bk's data
+   structures.md */
 
 void gps_print_extension(void)
 
@@ -44475,6 +45451,9 @@ void gps_print_extension(void)
 
 
 /* 000484de */
+
+/* pr_time_raim's request, 0x39; Time RAIM Status
+   structures.md */
 
 void gps_print_time_raim(void)
 
@@ -44641,6 +45620,9 @@ void gps_print_time_raim(void)
 
 /* 000487f6 */
 
+/* Pseudorange Correction Status
+   structures.md */
+
 void gps_print_pseudorange_corrections(void)
 
 {
@@ -44691,6 +45673,7 @@ void gps_print_pseudorange_corrections(void)
 /* 00048964 */
 
 /* WARNING: Unknown calling convention */
+/* "Enabled", "Disabled" */
 
 void enabled_string(char param_1,char *param_2)
 
@@ -44724,6 +45707,9 @@ void enabled_string(char param_1,char *param_2)
 
 
 /* 000489a0 */
+
+/* pr_gps_istate's request, 0x38; Instrument State Settings
+   structures.md */
 
 void gps_print_instrument_state(void)
 
@@ -44969,6 +45955,9 @@ void gps_print_instrument_state(void)
 
 /* 00048ea0 */
 
+/* pr_avg's request, 0x3a; AVG LAT, LON, HGT
+   structures.md */
+
 void gps_print_average(void)
 
 {
@@ -45011,6 +46000,9 @@ void gps_print_average(void)
 
 /* 00048fac */
 
+/* print_vis's request, 0x33; Visible Sats
+   structures.md */
+
 void gps_print_visibility(void)
 
 {
@@ -45033,6 +46025,9 @@ void gps_print_visibility(void)
 
 
 /* 00049054 */
+
+/* print_stat's request, 0x32
+   structures.md */
 
 void gps_print_status(oncore_status_fields *status)
 
@@ -45095,6 +46090,8 @@ void gps_print_status(oncore_status_fields *status)
 
 
 /* 00049210 */
+
+/* gps.status as the "gs: %02d:%02d:%02d.%09d,..." debug line */
 
 void gps_debug_status(void)
 
@@ -45162,6 +46159,9 @@ void gps_debug_status(void)
 
 
 /* 000493c0 */
+
+/* pr_gps_id's request, 0x36
+   structures.md */
 
 void gps_print_id(void)
 
@@ -45263,6 +46263,7 @@ LAB_00049570:
 /* 000495e2 */
 
 /* WARNING: Unknown calling convention */
+/* bit prn - 1 of a mask, or prn - 0x21 for the second kind */
 
 undefined4 satellite_in_set(satellite_kind kind,uint8_t id,uint32_t mask)
 
@@ -45616,6 +46617,7 @@ void FUN_00049a3c(short param_1,char *param_2)
 /* 00049a6e */
 
 /* WARNING: Unknown calling convention */
+/* a satellite's status screen cell: "%2d %3d", "Ignore", "Not OK", "Acq" */
 
 void format_satellite_cell(char param_1,byte param_2,ushort param_3,char *param_4)
 
@@ -45701,6 +46703,7 @@ void FUN_00049b06(int param_1,char *param_2)
 /* 00049b88 */
 
 /* WARNING: Unknown calling convention */
+/* formats a double with an SI prefix from "pnum kMG" by its exponent / 3; "ANT DLY %s" */
 
 void format_si(int param_1,int param_2,char param_3,byte param_4,char *param_5,char *param_6)
 
@@ -45849,6 +46852,8 @@ void FUN_00049d14(uint param_1,char *param_2)
 
 /* 00049db0 */
 
+/* "Synchronized to UTC", "Synchronized to GPS Time", "Assessing stability" */
+
 void status_screen_sync(int param_1,char *param_2)
 
 {
@@ -45909,6 +46914,8 @@ void status_screen_sync(int param_1,char *param_2)
 
 /* 00049e5a */
 
+/* a packed time as "%02d:%02d:%02d", or "--:--:--" */
+
 undefined4 format_time(uint param_1,char *param_2)
 
 {
@@ -45937,6 +46944,7 @@ undefined4 format_time(uint param_1,char *param_2)
 /* 00049eb4 */
 
 /* WARNING: Unknown calling convention */
+/* a date as "%02d %s %04d", or "-- --- ----" */
 
 undefined4 format_date(ushort param_1,byte param_2,byte param_3,char *param_4)
 
@@ -45966,6 +46974,8 @@ undefined4 format_date(ushort param_1,byte param_2,byte param_3,char *param_4)
 
 
 /* 00049f30 */
+
+/* the screen's time with its reference, "GPS", "UTC", "LOCL GPS" or "LOCAL" */
 
 void status_screen_time(int param_1,char *param_2)
 
@@ -46007,6 +47017,7 @@ void status_screen_time(int param_1,char *param_2)
 /* 00049fcc */
 
 /* WARNING: Unknown calling convention */
+/* "ANT DLY  %s", "Position", "Survey:", "% complete", "Suspended:" */
 
 char * status_screen_position(byte param_1,int param_2,char *param_3)
 
@@ -46197,6 +47208,7 @@ char * status_screen_position(byte param_1,int param_2,char *param_3)
 /* 0004a29c */
 
 /* WARNING: Unknown calling convention */
+/* "TFOM     %d%13sFFOM    %2s", "1PPS TI %s", "HOLD THR %s", "Holdover Uncertainty" */
 
 int status_screen_tfom(byte param_1,int param_2,char *param_3)
 
@@ -46313,6 +47325,7 @@ int status_screen_tfom(byte param_1,int param_2,char *param_3)
 /* 0004a42c */
 
 /* WARNING: Unknown calling convention */
+/* value & 1 << bit */
 
 bool bit_is_set(short param_1,short param_2)
 
@@ -46390,6 +47403,8 @@ byte FUN_0004a4ec(short param_1)
 /* 0004a518 */
 
 /* WARNING: Unknown calling convention */
+/* screen-format-strings.md's mode suffixes, ": OCXO warm-up" .. ": leap second determination", "[TI
+   %9.9s]" */
 
 void status_screen_mode_suffix(char param_1,int param_2,char *param_3)
 
@@ -46615,6 +47630,7 @@ void FUN_0004a636(pll_stage *param_1)
 /* 0004a8ea */
 
 /* WARNING: Unknown calling convention */
+/* "Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status" */
 
 void status_screen(char *param_1,char param_2,undefined *param_3,undefined *param_4)
 
@@ -47005,6 +48021,8 @@ void FUN_0004afd6(undefined1 param_1,undefined *param_2,undefined *param_3)
 
 
 /* 0004aff2 */
+
+/* get_uptime() less *start into *elapsed, restarting *start if the clock went back */
 
 bool uptime_elapsed(uint *param_1,int *param_2)
 
@@ -47451,6 +48469,8 @@ LAB_0004b754:
 
 /* 0004b79a */
 
+/* points gps_response_cursor at gps_response_buffer and clears gps_receive_state */
+
 void gps_response_reset(void)
 
 {
@@ -47486,6 +48506,9 @@ undefined4 FUN_0004b7ac(char param_1,char param_2,undefined2 *param_3,short *par
 
 
 /* 0004b846 */
+
+/* reads bytes from the engine and frames its messages from their @ into gps_response_buffer,
+   counting frame errors */
 
 uint8_t gps_receive(void)
 
@@ -47596,6 +48619,8 @@ undefined4 FUN_0004b9a6(short param_1,undefined4 param_2)
 /* 0004b9e6 */
 
 /* WARNING: Unknown calling convention */
+/* counts a GPS response by its kind in gps_counts: successes, rejects, aborts, unknown_sender,
+   unknown_command, busy and the rest */
 
 bool gps_count_response(char param_1,int param_2)
 
@@ -48109,6 +49134,8 @@ void FUN_0004bf3a(void)
 /* 0004bf4a */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* root_task starts gpsm here
+   structures.md */
 
 void gpsm_task(void)
 
@@ -48458,6 +49485,9 @@ void FUN_0004c4e8(void)
 
 /* 0004c572 */
 
+/* the GPS task's switch on the console's requests 0x31 to 0x45
+   structures.md */
+
 void gps_console_request(short param_1,undefined4 *param_2,undefined1 param_3)
 
 {
@@ -48594,6 +49624,8 @@ undefined4 FUN_0004c66e(int param_1,int param_2)
 
 /* 0004c754 */
 
+/* a command log line, "SCPI1", "GPSc", "GPSs" */
+
 undefined4 gps_print_command(int param_1,char *param_2)
 
 {
@@ -48715,6 +49747,9 @@ void FUN_0004c870(undefined *param_1)
 
 /* 0004c918 */
 
+/* the clr_gps_debug word's: clears gps_counts, gps_last_command and gps_last_program_message
+   structures.md */
+
 void clear_gps_debug(void)
 
 {
@@ -48727,6 +49762,8 @@ void clear_gps_debug(void)
 
 
 /* 0004c940 */
+
+/* "GPS Receiver Command Log", "Task  ID  Command     Date and Time Issued" */
 
 void gps_print_command_log(undefined4 param_1)
 
@@ -48756,6 +49793,8 @@ void gps_print_command_log(undefined4 param_1)
 /* 0004c9e2 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* pr_1pps's request, 0x37
+   structures.md */
 
 void gps_print_1pps(void)
 
@@ -48781,6 +49820,9 @@ void gps_print_1pps(void)
 
 
 /* 0004ca6c */
+
+/* "GPS Process Monitor", gps_counts
+   structures.md */
 
 void gps_print_process_monitor(void)
 
@@ -49144,6 +50186,9 @@ ushort * FUN_0004f002(ushort *param_1,ushort *param_2)
 
 /* 0004f02a */
 
+/* the field-table byte code the GPS task's decoders run
+   structures.md */
+
 byte * oncore_decode_fields(byte *param_1,byte *param_2,char *param_3)
 
 {
@@ -49209,6 +50254,7 @@ LAB_0004f0c4:
 /* 0004f0d6 */
 
 /* WARNING: Unknown calling convention */
+/* kind 0 accepts 1 to 32, kind 1 33 to 37, the VP reference's pseudolites, kind 2 either */
 
 undefined4 satellite_id_valid(satellite_kind kind,uint8_t id)
 
@@ -49304,6 +50350,7 @@ void FUN_0004f18c(void)
 /* 0004f1a6 */
 
 /* WARNING: Unknown calling convention */
+/* sets bit prn - 1 of a mask, or prn - 0x21 for the second kind */
 
 void satellite_add_to_set(satellite_kind kind,uint8_t id,uint32_t *mask)
 
@@ -49319,6 +50366,8 @@ void satellite_add_to_set(satellite_kind kind,uint8_t id,uint32_t *mask)
 
 
 /* 0004f1da */
+
+/* counts a word's set bits */
 
 char count_bits(uint param_1)
 
@@ -49788,6 +50837,8 @@ byte FUN_0004f8a0(byte *param_1,byte *param_2)
 
 /* 0004f8b6 */
 
+/* sets gps.raim_option when the receiver ID's "OPTIONS LIST " has an I */
+
 void gps_parse_options(void)
 
 {
@@ -49808,6 +50859,8 @@ void gps_parse_options(void)
 /* 0004f8fc */
 
 /* WARNING: Unknown calling convention */
+/* @@Bn, message 0x28, needs the receiver ID and its Time RAIM option, gps.raim_option; any other is
+   supported */
 
 undefined4 gps_message_supported(short param_1,undefined1 *param_2)
 
@@ -50332,8 +51385,10 @@ undefined4 FUN_00051158(void)
 /* 0005d080 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* *A0 -= D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md, libc.md */
 
 void float_subtract_in_place(float *x,float y)
 
@@ -50350,8 +51405,10 @@ void float_subtract_in_place(float *x,float y)
 /* 0005d08a */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* *A0 += D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md, libc.md */
 
 void float_add_in_place(float *x,float y)
 
@@ -50371,8 +51428,10 @@ void float_add_in_place(float *x,float y)
 /* WARNING: Removing unreachable block (ram,0x0005d042) */
 /* WARNING: Removing unreachable block (ram,0x0005d048) */
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* D1 - D0
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 float float_subtract_reversed(float a,float b)
 
@@ -50527,8 +51586,10 @@ LAB_0005d1fe:
 /* WARNING: Removing unreachable block (ram,0x0005d042) */
 /* WARNING: Removing unreachable block (ram,0x0005d048) */
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* D0 - D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 float float_subtract(float a,float b)
 
@@ -50683,8 +51744,10 @@ LAB_0005d1fe:
 /* WARNING: Removing unreachable block (ram,0x0005d042) */
 /* WARNING: Removing unreachable block (ram,0x0005d048) */
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* D0 + D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 float float_add(float a,float b)
 
@@ -50832,8 +51895,10 @@ LAB_0005d1fe:
 /* 0005d2e2 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* *A0 -= D0:D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 void double_subtract_in_place(double *x,double y)
 
@@ -50849,8 +51914,10 @@ void double_subtract_in_place(double *x,double y)
 /* 0005d2f8 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* D0:D1 - *A1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 double double_subtract_pointer(double a,double *b)
 
@@ -50865,8 +51932,10 @@ double double_subtract_pointer(double a,double *b)
 /* 0005d306 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* *A1 - *A0
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 double double_subtract_reversed_pointers(double *a,double *b)
 
@@ -51168,8 +52237,10 @@ LAB_0005d63e:
 /* 0005d30a */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* *A1 - D0:D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 double double_subtract_reversed_pointer(double a,double *b)
 
@@ -51471,8 +52542,10 @@ LAB_0005d63e:
 /* 0005d30e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* A0:A1 - D0:D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 double double_subtract_reversed(double a,double b)
 
@@ -51776,8 +52849,10 @@ LAB_0005d2c6:
 /* 0005d338 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* *A0 += D0:D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 void double_add_in_place(double *x,double y)
 
@@ -51793,8 +52868,10 @@ void double_add_in_place(double *x,double y)
 /* 0005d34a */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* *A0 + *A1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 double double_add_pointers(double *a,double *b)
 
@@ -52093,8 +53170,10 @@ LAB_0005d63e:
 /* 0005d34e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* D0:D1 + *A1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 double double_add_pointer(double a,double *b)
 
@@ -52393,8 +53472,10 @@ LAB_0005d63e:
 /* 0005d352 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* D0:D1 + A0:A1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 double double_add(double a,double b)
 
@@ -52691,8 +53772,10 @@ LAB_0005d63e:
 /* 0005d65c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* compare D0 with D1; 1, 0 or -1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 int float_compare(float a,float b)
 
@@ -52731,8 +53814,10 @@ int float_compare(float a,float b)
 /* 0005d6c6 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* negative when A0:A1 < D0:D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 int double_compare(double a,double b)
 
@@ -52791,8 +53876,10 @@ int double_compare(double a,double b)
 /* 0005d7da */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* *A0 /= D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md, libc.md */
 
 void float_divide_in_place(float *x,float y)
 
@@ -52810,8 +53897,10 @@ void float_divide_in_place(float *x,float y)
 
 /* WARNING: Removing unreachable block (ram,0x0005d888) */
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* D1 / D0
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 float float_divide_reversed(float a,float b)
 
@@ -52973,8 +54062,10 @@ LAB_0005d7ae:
 
 /* WARNING: Removing unreachable block (ram,0x0005d888) */
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* D0 / D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 float float_divide(float a,float b)
 
@@ -53135,8 +54226,10 @@ LAB_0005d7ae:
 /* 0005da3e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* *A0 /= D0:D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 void double_divide_in_place(double *x,double y)
 
@@ -53152,8 +54245,10 @@ void double_divide_in_place(double *x,double y)
 /* 0005da58 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* D0:D1 / A0:A1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 double double_divide(double a,double b)
 
@@ -53168,8 +54263,10 @@ double double_divide(double a,double b)
 /* 0005da62 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* *A1 / *A0
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 double double_divide_reversed_pointers(double *a,double *b)
 
@@ -53318,8 +54415,10 @@ LAB_0005db84:
 /* 0005da66 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* *A1 / D0:D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 double double_divide_reversed_pointer(double a,double *b)
 
@@ -53461,8 +54560,10 @@ LAB_0005db84:
 /* 0005da6a */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* A0:A1 / D0:D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 double double_divide_reversed(double a,double b)
 
@@ -53603,6 +54704,9 @@ LAB_0005db84:
 
 /* 0005dbde */
 
+/* exception code 0xe2000
+   libc.md */
+
 void double_divide_operand_error(void)
 
 {
@@ -53612,6 +54716,9 @@ void double_divide_operand_error(void)
 
 
 /* 0005dbee */
+
+/* exception code 0xe0400
+   libc.md */
 
 uint double_divide_by_zero(void)
 
@@ -53630,8 +54737,10 @@ uint double_divide_by_zero(void)
 /* 0005dbfe */
 
 /* WARNING: Removing unreachable block (ram,0x0005dc10) */
-/* Not a C function: a helper of the double divides, which pass the dividend and divisor in D0 to
-   D3: each further 16 bits of the quotient. */
+/* each further quotient word, three in all
+   Not a C function: a helper of the double divides, which pass the dividend and divisor in D0 to
+   D3: each further 16 bits of the quotient.
+   softfloat.md, read */
 
 void double_divide_next_word(void)
 
@@ -53704,8 +54813,10 @@ void double_divide_next_word(void)
 /* 0005dc0a */
 
 /* WARNING: Removing unreachable block (ram,0x0005dc10) */
-/* Not a C function: a helper of the double divides, which pass the dividend and divisor in D0 to
-   D3: the first 16 bits of the quotient. */
+/* the double divides' first 16-bit quotient word
+   Not a C function: a helper of the double divides, which pass the dividend and divisor in D0 to
+   D3: the first 16 bits of the quotient.
+   softfloat.md, read */
 
 void double_divide_first_word(void)
 
@@ -53776,8 +54887,10 @@ void double_divide_first_word(void)
 /* 0005dcd2 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* double to float
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 float double_to_float(double d)
 
@@ -53853,8 +54966,10 @@ LAB_0005dd4e:
 /* 0005ddde */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* double to signed integer
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 int double_to_integer(double d)
 
@@ -53905,8 +55020,10 @@ int double_to_integer(double d)
 /* 0005de9e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* double to unsigned integer
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 uint double_to_unsigned(double d)
 
@@ -53947,8 +55064,10 @@ uint double_to_unsigned(double d)
 /* 0005df24 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* float to double, in D0:D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 double float_to_double(float f)
 
@@ -53994,8 +55113,10 @@ double float_to_double(float f)
 /* 0005dfbc */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* float to signed integer
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md, libc.md */
 
 int float_to_integer(float f)
 
@@ -54047,8 +55168,10 @@ LAB_0005df9e:
 /* 0005e04e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* float to unsigned integer
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md, libc.md */
 
 uint float_to_unsigned(float f)
 
@@ -54076,8 +55199,10 @@ uint float_to_unsigned(float f)
 /* 0005e08e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* signed integer to double
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 double integer_to_double(int i)
 
@@ -54136,8 +55261,10 @@ double integer_to_double(int i)
 /* 0005e108 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* unsigned integer to double
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md, libc.md */
 
 double unsigned_to_double(uint u)
 
@@ -54189,8 +55316,10 @@ double unsigned_to_double(uint u)
 /* 0005e168 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* signed integer to float
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md, libc.md */
 
 float integer_to_float(int i)
 
@@ -54260,8 +55389,10 @@ float integer_to_float(int i)
 /* 0005e20e */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* unsigned integer to float
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md, libc.md */
 
 float unsigned_to_float(uint u)
 
@@ -54330,8 +55461,10 @@ float unsigned_to_float(uint u)
 /* 0005e316 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* *A0 *= D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 void float_multiply_in_place(float *x,float y)
 
@@ -54348,8 +55481,10 @@ void float_multiply_in_place(float *x,float y)
 /* 0005e320 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* D0 x D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 float float_multiply(float a,float b)
 
@@ -54470,8 +55605,10 @@ LAB_0005e41a:
 /* 0005e5e6 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* *A0 *= D0:D1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 void double_multiply_in_place(double *x,double y)
 
@@ -54487,8 +55624,10 @@ void double_multiply_in_place(double *x,double y)
 /* 0005e5f8 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* *A0 x *A1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 double double_multiply_pointers(double *a,double *b)
 
@@ -54748,8 +55887,10 @@ LAB_0005e77c:
 /* 0005e5fc */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* D0:D1 x *A1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   libc.md */
 
 double double_multiply_pointer(double a,double *b)
 
@@ -55003,8 +56144,10 @@ LAB_0005e77c:
 /* 0005e600 */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a routine of the compiler's floating-point library, which compiled code calls
-   with its operands in registers, as the prototype gives. */
+/* D0:D1 x A0:A1
+   Not a C function: a routine of the compiler's floating-point library, which compiled code calls
+   with its operands in registers, as the prototype gives.
+   softfloat.md */
 
 double double_multiply(double a,double b)
 
@@ -55256,6 +56399,9 @@ LAB_0005e77c:
 
 /* 0005e81c */
 
+/* exception code 0xc2000
+   libc.md */
+
 void double_multiply_operand_error(void)
 
 {
@@ -55267,8 +56413,10 @@ void double_multiply_operand_error(void)
 /* 0005e83c */
 
 /* WARNING: Unknown calling convention */
-/* Not a C function: a helper of the floating-point library: normalizes the unpacked mantissa and
-   exponent in its own argument slots on the stack, which its caller reads back. */
+/* shifts an unpacked mantissa on the caller's stack until bit 23 is set, adjusting its exponent
+   Not a C function: a helper of the floating-point library: normalizes the unpacked mantissa and
+   exponent in its own argument slots on the stack, which its caller reads back.
+   softfloat.md, read */
 
 undefined8 float_normalize(uint param_1)
 
@@ -55295,8 +56443,10 @@ undefined8 float_normalize(uint param_1)
 
 /* 0005e882 */
 
-/* Not a C function: the 64-bit float_normalize: normalizes the unpacked mantissa and exponent in
-   its own argument slots on the stack, which its caller reads back. */
+/* the same over 64 bits
+   Not a C function: the 64-bit float_normalize: normalizes the unpacked mantissa and exponent in
+   its own argument slots on the stack, which its caller reads back.
+   softfloat.md, read */
 
 undefined8 double_normalize(undefined2 param_1,uint param_2)
 
@@ -55343,6 +56493,8 @@ undefined8 double_normalize(undefined2 param_1,uint param_2)
 /* 0005e93c */
 
 /* WARNING: Type propagation algorithm not settling */
+/* raises a floating-point exception
+   libc.md */
 
 void float_raise(uint param_1,uint param_2,uint param_3,uint param_4,uint param_5)
 
@@ -55476,6 +56628,8 @@ LAB_0005ec8c:
 
 /* 0005ec9e */
 
+/* libc.md */
+
 int abs(int j)
 
 {
@@ -55501,6 +56655,8 @@ void call_atexit_functions(void)
 
 /* 0005ecf0 */
 
+/* libc.md */
+
 void call_atexit_functions(void)
 
 {
@@ -55513,6 +56669,8 @@ void call_atexit_functions(void)
 
 
 /* 0005ecfa */
+
+/* libc.md */
 
 int atoi(char *s)
 
@@ -55556,6 +56714,9 @@ int atoi(char *s)
 
 /* 0005eea2 */
 
+/* quotient in D0, remainder in D1
+   libc.md */
+
 undefined8 div(int param_1,int param_2)
 
 {
@@ -55565,6 +56726,9 @@ undefined8 div(int param_1,int param_2)
 
 /* 0005eed2 */
 
+/* quotient in D0, remainder in D1
+   libc.md */
+
 undefined8 ldiv(int param_1,int param_2)
 
 {
@@ -55573,6 +56737,8 @@ undefined8 ldiv(int param_1,int param_2)
 
 
 /* 0005ef02 */
+
+/* libc.md */
 
 long labs(long j)
 
@@ -55585,6 +56751,8 @@ long labs(long j)
 
 
 /* 0005ef12 */
+
+/* libc.md */
 
 int memcmp(void *s1,void *s2,uint n)
 
@@ -55610,6 +56778,8 @@ LAB_0005ef40:
 
 /* 0005ef48 */
 
+/* libc.md */
+
 void * memcpy(void *s1,void *s2,uint n)
 
 {
@@ -55628,6 +56798,8 @@ void * memcpy(void *s1,void *s2,uint n)
 
 /* 0005ef66 */
 
+/* libc.md */
+
 void * memset(void *s,int c,uint n)
 
 {
@@ -55644,6 +56816,8 @@ void * memset(void *s,int c,uint n)
 
 
 /* 0005ef86 */
+
+/* libc.md */
 
 void qsort_swap(undefined1 *param_1,undefined1 *param_2)
 
@@ -55665,6 +56839,8 @@ void qsort_swap(undefined1 *param_1,undefined1 *param_2)
 
 
 /* 0005efa0 */
+
+/* libc.md */
 
 void qsort_rotate(undefined1 *param_1,undefined1 *param_2,undefined1 *param_3)
 
@@ -55688,6 +56864,9 @@ void qsort_rotate(undefined1 *param_1,undefined1 *param_2,undefined1 *param_3)
 
 
 /* 0005efc4 */
+
+/* sorts a range by qsort's comparator and size
+   libc.md */
 
 void qsort_range(uint param_1,uint param_2)
 
@@ -55764,6 +56943,8 @@ LAB_0005f070:
 
 /* 0005f0cc */
 
+/* libc.md */
+
 void qsort(void *base,uint nmemb,uint size,void *compar)
 
 {
@@ -55777,6 +56958,7 @@ void qsort(void *base,uint nmemb,uint size,void *compar)
 /* 0005f102 */
 
 /* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* libc.md */
 
 int rand(void)
 
@@ -55790,6 +56972,8 @@ int rand(void)
 
 
 /* 0005f128 */
+
+/* libc.md */
 
 char * strcat(char *s1,char *s2)
 
@@ -55815,6 +56999,8 @@ char * strcat(char *s1,char *s2)
 
 /* 0005f140 */
 
+/* libc.md */
+
 char * strchr(char *s,int c)
 
 {
@@ -55832,6 +57018,8 @@ char * strchr(char *s,int c)
 
 
 /* 0005f15a */
+
+/* libc.md */
 
 int strncmp(char *s1,char *s2,uint n)
 
@@ -55856,6 +57044,8 @@ int strncmp(char *s1,char *s2,uint n)
 
 
 /* 0005f190 */
+
+/* libc.md */
 
 char * strncpy(char *s1,char *s2,uint n)
 
@@ -55889,6 +57079,8 @@ char * strncpy(char *s1,char *s2,uint n)
 
 /* 0005f1be */
 
+/* libc.md */
+
 int toupper(int c)
 
 {
@@ -55900,6 +57092,9 @@ int toupper(int c)
 
 
 /* 0005f1d6 */
+
+/* double_to_digits's product of two 64-bit numbers, one a power of ten from 0x5f864
+   libc.md, read */
 
 void double_to_digits_multiply(uint *param_1)
 
@@ -56002,6 +57197,10 @@ void double_to_digits_multiply(uint *param_1)
 
 
 /* 0005f3ba */
+
+/* a double's decimal digits, sign and exponent, significant or after the point; the formatting
+   engine's
+   libc.md, run */
 
 void double_to_digits(uint param_1,uint param_2,uint param_3,int *param_4,uint *param_5,
                      char *param_6,int param_7)
@@ -56303,6 +57502,9 @@ LAB_0005f7ae:
 
 /* 0005fad6 */
 
+/* '0' plus *n % 10, dividing *n by ten; the formatting engine's
+   libc.md, run */
+
 undefined8 next_decimal_digit(uint *param_1)
 
 {
@@ -56317,6 +57519,9 @@ undefined8 next_decimal_digit(uint *param_1)
 
 
 /* 0005fb0c */
+
+/* the formatting engine under sprintf
+   libc.md */
 
 byte * format(byte *param_1,uint *param_2,code *param_3,undefined4 param_4)
 
@@ -57040,6 +58245,8 @@ switchD_0005fb90_caseD_6c:
 
 /* 00060896 */
 
+/* libc.md */
+
 int sprintf(char *s,char *format,...)
 
 {
@@ -57055,6 +58262,9 @@ int sprintf(char *s,char *format,...)
 
 
 /* 000608c4 */
+
+/* copies the engine's output into sprintf's buffer
+   libc.md */
 
 int sprintf_put(undefined1 *param_1,int param_2,int param_3,int param_4)
 
@@ -57081,6 +58291,8 @@ int sprintf_put(undefined1 *param_1,int param_2,int param_3,int param_4)
 
 /* 000608fe */
 
+/* libc.md */
+
 int vsprintf(char *s,char *format,void *arg)
 
 {
@@ -57097,6 +58309,8 @@ int vsprintf(char *s,char *format,void *arg)
 
 /* 0006092a */
 
+/* libc.md */
+
 double fabs(double x)
 
 {
@@ -57112,6 +58326,8 @@ double fabs(double x)
 
 
 /* 0006098a */
+
+/* libc.md */
 
 double frexp(double value,int *exp)
 
@@ -57164,6 +58380,9 @@ LAB_000609ca:
 
 
 /* 00060a10 */
+
+/* natural log
+   softfloat.md, libc.md */
 
 double log(double x)
 
@@ -57278,6 +58497,8 @@ double log(double x)
 
 /* 00060d94 */
 
+/* libc.md */
+
 double modf(double value,double *iptr)
 
 {
@@ -57339,6 +58560,9 @@ double modf(double value,double *iptr)
 
 /* 00060e68 */
 
+/* whether a double is an integer, and through the pointer whether it is odd; pow's
+   libc.md, run */
+
 undefined4 double_is_integer(uint param_1,uint param_2,uint *param_3)
 
 {
@@ -57380,6 +58604,9 @@ undefined4 double_is_integer(uint param_1,uint param_2,uint *param_3)
 
 /* 00060efa */
 
+/* a double truncated to a multiple of 1/16; pow's
+   libc.md, run */
+
 undefined8 double_truncate_sixteenths(uint param_1,uint param_2)
 
 {
@@ -57411,6 +58638,9 @@ undefined8 double_truncate_sixteenths(uint param_1,uint param_2)
 
 
 /* 00060f5e */
+
+/* pow
+   softfloat.md, libc.md */
 
 double pow(double x,double y)
 
@@ -57746,6 +58976,9 @@ LAB_000617c6:
 
 
 /* 0006191c */
+
+/* square root
+   softfloat.md, libc.md */
 
 double sqrt(double x)
 
@@ -58801,9 +60034,11 @@ void installer_kernel_return_from_interrupt(ushort param_1)
 
 /* installer::0010152c */
 
-/* Not a C function: the trap #3 handler: the service in D7, its arguments in D0 to D3, A0 and A1.
+/* the installer's copy of kernel_dispatch_service, at 0x14b26 plus 0xeca06, byte for byte
+   Not a C function: the trap #3 handler: the service in D7, its arguments in D0 to D3, A0 and A1.
    Calls the service's handler through the table at installer::0x101574 and returns with rte, the
-   error in D7.b and the results in D0 to D2, A0 and A1 (psos.md). */
+   error in D7.b and the results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_dispatch_service(undefined2 param_1)
 
@@ -58956,8 +60191,10 @@ void installer_kernel_dispatch_service(undefined2 param_1)
 
 /* installer::00101610 */
 
-/* Not a C function: the trap #4 handler: the I/O function, 0 to 5, in D7 and the device in the high
-   byte of D0.  Returns with rte (psos.md). */
+/* the installer's copy of kernel_dispatch_io, at 0x14c0a plus 0xeca06, byte for byte
+   Not a C function: the trap #4 handler: the I/O function, 0 to 5, in D7 and the device in the high
+   byte of D0.  Returns with rte (psos.md).
+   psos.md */
 
 void installer_kernel_dispatch_io(void)
 
@@ -58987,8 +60224,10 @@ void installer_kernel_dispatch_io(void)
 
 /* installer::00101680 */
 
-/* Not a C function: branched to from the service dispatch on its way out, never called: saves the
-   running task's registers in its record and resumes the first ready task with rte. */
+/* the installer's copy of kernel_switch_task, at 0x14c7a plus 0xeca06, byte for byte
+   Not a C function: branched to from the service dispatch on its way out, never called: saves the
+   running task's registers in its record and resumes the first ready task with rte.
+   psos.md */
 
 void installer_kernel_switch_task(void)
 
@@ -59119,8 +60358,10 @@ void installer_kernel_switch_task(void)
 
 /* installer::001016cc */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_process_ticks, at 0x14cc6 plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_process_ticks(void)
 
@@ -59186,10 +60427,12 @@ LAB_installer__0010175e:
 
 /* installer::001017a8 */
 
-/* Not a C function: the kernel's handler for service 0, reached from the installer's trap #3
+/* the installer's copy of kernel_service_0, at 0x14da2 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 0, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_service_0(void)
 
@@ -59200,10 +60443,12 @@ void installer_kernel_service_0(void)
 
 /* installer::001017b2 */
 
-/* Not a C function: the kernel's handler for service 1, psos_create's, reached from the installer's
+/* the installer's copy of kernel_create, at 0x14dac plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 1, psos_create's, reached from the installer's
    trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
    as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md). */
+   its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_create(void)
 
@@ -59279,10 +60524,12 @@ void installer_kernel_create(void)
 
 /* installer::001018a6 */
 
-/* Not a C function: the kernel's handler for service 2, psos_start's, reached from the installer's
+/* the installer's copy of kernel_start, at 0x14ea0 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 2, psos_start's, reached from the installer's
    trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
    as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md). */
+   its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_start(void)
 
@@ -59305,10 +60552,12 @@ void installer_kernel_start(void)
 
 /* installer::001018d8 */
 
-/* Not a C function: the kernel's handler for service 3, psos_ident's, reached from the installer's
+/* the installer's copy of kernel_ident, at 0x14ed2 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 3, psos_ident's, reached from the installer's
    trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
    as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md). */
+   its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_ident(void)
 
@@ -59332,10 +60581,12 @@ void installer_kernel_ident(void)
 
 /* installer::001018fe */
 
-/* Not a C function: the kernel's handler for service 4, psos_delete's, reached from the installer's
+/* the installer's copy of kernel_delete, at 0x14ef8 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 4, psos_delete's, reached from the installer's
    trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
    as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md). */
+   its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 undefined8 installer_kernel_delete(void)
 
@@ -59420,10 +60671,12 @@ LAB_installer__001019d4:
 
 /* installer::00101a0a */
 
-/* Not a C function: the kernel's handler for service 5, psos_suspend's, reached from the
+/* the installer's copy of kernel_suspend, at 0x15004 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 5, psos_suspend's, reached from the
    installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
    D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
+   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_suspend(void)
 
@@ -59454,10 +60707,12 @@ void installer_kernel_suspend(void)
 /* installer::00101a3e */
 
 /* WARNING: Removing unreachable block (ram,0x00101a48) */
-/* Not a C function: the kernel's handler for service 6, psos_resume's, reached from the installer's
+/* the installer's copy of kernel_resume, at 0x15038 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 6, psos_resume's, reached from the installer's
    trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
    as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md). */
+   its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_resume(void)
 
@@ -59479,10 +60734,12 @@ void installer_kernel_resume(void)
 
 /* installer::00101a80 */
 
-/* Not a C function: the kernel's handler for service 7, psos_priority's, reached from the
+/* the installer's copy of kernel_priority, at 0x1507a plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 7, psos_priority's, reached from the
    installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
    D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
+   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 ushort installer_kernel_priority(void)
 
@@ -59526,10 +60783,12 @@ LAB_installer__00101ab4:
 
 /* installer::00101ae0 */
 
-/* Not a C function: the kernel's handler for service 8, reached from the installer's trap #3
+/* the installer's copy of kernel_allocate_segment, at 0x150da plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 8, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_allocate_segment(void)
 
@@ -59562,8 +60821,10 @@ void installer_kernel_allocate_segment(void)
 
 /* installer::00101ae2 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_allocate_for_task, at 0x150dc plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_allocate_for_task(void)
 
@@ -59595,10 +60856,12 @@ void installer_kernel_allocate_for_task(void)
 
 /* installer::00101b36 */
 
-/* Not a C function: the kernel's handler for service 9, reached from the installer's trap #3
+/* the installer's copy of kernel_free_segment, at 0x15130 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 9, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_free_segment(void)
 
@@ -59715,8 +60978,10 @@ LAB_installer__00101c0c:
 
 /* installer::00101b38 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_free_for_task, at 0x15132 plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_free_for_task(void)
 
@@ -59834,8 +61099,10 @@ LAB_installer__00101c0c:
 
 /* installer::00101c6e */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_allocate, at 0x15268 plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_allocate(void)
 
@@ -59871,8 +61138,10 @@ LAB_installer__00101c8e:
 
 /* installer::00101ca2 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_region_allocate, at 0x1529c plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_region_allocate(void)
 
@@ -59934,10 +61203,12 @@ void installer_kernel_region_allocate(void)
 /* installer::00101d2a */
 
 /* WARNING: Removing unreachable block (ram,0x00101d4c) */
-/* Not a C function: the kernel's handler for service 10, reached from the installer's trap #3
+/* the installer's copy of kernel_service_10, at 0x15324 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 10, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_service_10(void)
 
@@ -59977,10 +61248,12 @@ void installer_kernel_service_10(void)
 
 /* installer::00101d30 */
 
-/* Not a C function: the kernel's handler for service 16, reached from the installer's trap #3
+/* the installer's copy of kernel_service_16, at 0x1532a plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 16, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_service_16(void)
 
@@ -60018,9 +61291,10 @@ void installer_kernel_service_16(void)
 
 /* installer::00101d80 */
 
-/* Not a C function: the handler for services 11 to 15, 17 and 34, reached from the installer's trap
+/* the installer's copy of kernel_service_none, at 0x1537a plus 0xeca06, byte for byte
+   Not a C function: the handler for services 11 to 15, 17 and 34, reached from the installer's trap
    #3 through installer_kernel_dispatch_service: clears D7.b, so the call succeeds and does nothing.
-    */
+   psos.md */
 
 void installer_kernel_service_none(void)
 
@@ -60031,10 +61305,12 @@ void installer_kernel_service_none(void)
 
 /* installer::00101d84 */
 
-/* Not a C function: the kernel's handler for service 20, psos_create_x's, reached from the
+/* the installer's copy of kernel_create_x, at 0x1537e plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 20, psos_create_x's, reached from the
    installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
    D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
+   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_create_x(void)
 
@@ -60075,10 +61351,12 @@ void installer_kernel_create_x(void)
 /* installer::00101de6 */
 
 /* WARNING: Removing unreachable block (ram,0x00101e08) */
-/* Not a C function: the kernel's handler for service 21, reached from the installer's trap #3
+/* the installer's copy of kernel_service_21, at 0x153e0 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 21, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_service_21(void)
 
@@ -60119,10 +61397,12 @@ void installer_kernel_service_21(void)
 
 /* installer::00101e3c */
 
-/* Not a C function: the kernel's handler for service 22, psos_delete_x's, reached from the
+/* the installer's copy of kernel_delete_x, at 0x15436 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 22, psos_delete_x's, reached from the
    installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
    D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
+   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_delete_x(void)
 
@@ -60173,10 +61453,12 @@ LAB_installer__00101ea6:
 /* installer::00101eb4 */
 
 /* WARNING: Removing unreachable block (ram,0x00101ebe) */
-/* Not a C function: the kernel's handler for service 18, reached from the installer's trap #3
+/* the installer's copy of kernel_service_18, at 0x154ae plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 18, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 ushort installer_kernel_service_18(void)
 
@@ -60281,10 +61563,12 @@ LAB_installer__00101f7c:
 /* installer::00101f98 */
 
 /* WARNING: Removing unreachable block (ram,0x00101fb2) */
-/* Not a C function: the kernel's handler for service 19, psos_jam_x's, reached from the installer's
+/* the installer's copy of kernel_jam_x, at 0x15592 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 19, psos_jam_x's, reached from the installer's
    trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
    as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md). */
+   its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_jam_x(void)
 
@@ -60406,10 +61690,12 @@ LAB_installer__0010200c:
 /* WARNING: Removing unreachable block (ram,0x00101fb2) */
 /* WARNING: Removing unreachable block (ram,0x00102086) */
 /* WARNING: Removing unreachable block (ram,0x00102098) */
-/* Not a C function: the kernel's handler for service 23, psos_send_x's, reached from the
+/* the installer's copy of kernel_send_x, at 0x1559c plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 23, psos_send_x's, reached from the
    installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
    D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
+   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_send_x(void)
 
@@ -60520,8 +61806,10 @@ LAB_installer__0010200c:
 /* WARNING: Removing unreachable block (ram,0x00101fb2) */
 /* WARNING: Removing unreachable block (ram,0x00102086) */
 /* WARNING: Removing unreachable block (ram,0x00102098) */
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_send_for_task, at 0x1559e plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_send_for_task(void)
 
@@ -60628,8 +61916,10 @@ LAB_installer__0010200c:
 
 /* installer::001020b2 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_copy_message, at 0x156ac plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_copy_message(void)
 
@@ -60662,10 +61952,12 @@ void installer_kernel_copy_message(void)
 /* installer::001020dc */
 
 /* WARNING: Removing unreachable block (ram,0x001020ea) */
-/* Not a C function: the kernel's handler for service 24, psos_request_x's, reached from the
+/* the installer's copy of kernel_request_x, at 0x156d6 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 24, psos_request_x's, reached from the
    installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
    D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
+   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_request_x(void)
 
@@ -60771,10 +62063,12 @@ LAB_installer__001021ca:
 /* installer::001021e8 */
 
 /* WARNING: Removing unreachable block (ram,0x001021f2) */
-/* Not a C function: the kernel's handler for service 25, psos_signal_v's, reached from the
+/* the installer's copy of kernel_signal_v, at 0x157e2 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 25, psos_signal_v's, reached from the
    installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
    D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
+   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_signal_v(void)
 
@@ -60825,8 +62119,10 @@ void installer_kernel_signal_v(void)
 
 /* installer::001021f6 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_signal_task, at 0x157f0 plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_signal_task(void)
 
@@ -60880,10 +62176,12 @@ void installer_kernel_signal_task(void)
 /* WARNING: Removing unreachable block (ram,0x001022ac) */
 /* WARNING: Removing unreachable block (ram,0x001022d6) */
 /* WARNING: Removing unreachable block (ram,0x001022d0) */
-/* Not a C function: the kernel's handler for service 27, psos_get_v's, reached from the installer's
+/* the installer's copy of kernel_get_v, at 0x1585a plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 27, psos_get_v's, reached from the installer's
    trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
    as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md). */
+   its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_get_v(void)
 
@@ -60908,10 +62206,12 @@ void installer_kernel_get_v(void)
 
 /* installer::00102262 */
 
-/* Not a C function: the kernel's handler for service 26, psos_wait_v's, reached from the
+/* the installer's copy of kernel_wait_v, at 0x1585c plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 26, psos_wait_v's, reached from the
    installer's trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to
    D3, A0 and A1 as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero
-   for none, and its results in D0 to D2, A0 and A1 (psos.md). */
+   for none, and its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_wait_v(void)
 
@@ -60958,10 +62258,12 @@ void installer_kernel_wait_v(void)
 
 /* installer::001022e0 */
 
-/* Not a C function: the kernel's handler for service 32, psos_mode's, reached from the installer's
+/* the installer's copy of kernel_mode, at 0x158da plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 32, psos_mode's, reached from the installer's
    trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
    as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md). */
+   its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 byte installer_kernel_mode(void)
 
@@ -60979,10 +62281,12 @@ byte installer_kernel_mode(void)
 
 /* installer::001022fc */
 
-/* Not a C function: the kernel's handler for service 33, reached from the installer's trap #3
+/* the installer's copy of kernel_service_33, at 0x158f6 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 33, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 undefined2 installer_kernel_service_33(undefined2 param_1)
 
@@ -60993,10 +62297,12 @@ undefined2 installer_kernel_service_33(undefined2 param_1)
 
 /* installer::0010230a */
 
-/* Not a C function: the kernel's handler for service 28, psos_pause's, reached from the installer's
+/* the installer's copy of kernel_pause, at 0x15904 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 28, psos_pause's, reached from the installer's
    trap #3 through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1
    as its stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and
-   its results in D0 to D2, A0 and A1 (psos.md). */
+   its results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_pause(void)
 
@@ -61020,10 +62326,12 @@ void installer_kernel_pause(void)
 
 /* installer::00102334 */
 
-/* Not a C function: the kernel's handler for service 29, reached from the installer's trap #3
+/* the installer's copy of kernel_service_29, at 0x1592e plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 29, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_service_29(void)
 
@@ -61055,10 +62363,12 @@ void installer_kernel_service_29(void)
 
 /* installer::0010237a */
 
-/* Not a C function: the kernel's handler for service 30, reached from the installer's trap #3
+/* the installer's copy of kernel_service_30, at 0x15974 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 30, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 undefined8 installer_kernel_service_30(void)
 
@@ -61076,10 +62386,12 @@ undefined8 installer_kernel_service_30(void)
 
 /* installer::001023a4 */
 
-/* Not a C function: the kernel's handler for service 31, reached from the installer's trap #3
+/* the installer's copy of kernel_service_31, at 0x1599e plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 31, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_service_31(void)
 
@@ -61113,10 +62425,12 @@ void installer_kernel_service_31(void)
 
 /* installer::00102416 */
 
-/* Not a C function: the kernel's handler for service 35, reached from the installer's trap #3
+/* the installer's copy of kernel_service_35, at 0x15a10 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 35, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 undefined8 installer_kernel_service_35(void)
 
@@ -61148,10 +62462,12 @@ undefined8 installer_kernel_service_35(void)
 
 /* installer::00102456 */
 
-/* Not a C function: the kernel's handler for service 36, reached from the installer's trap #3
+/* the installer's copy of kernel_service_36, at 0x15a50 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 36, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_service_36(void)
 
@@ -61168,10 +62484,12 @@ void installer_kernel_service_36(void)
 
 /* installer::0010247c */
 
-/* Not a C function: the kernel's handler for service 37, reached from the installer's trap #3
+/* the installer's copy of kernel_service_37, at 0x15a76 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 37, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_service_37(void)
 
@@ -61191,10 +62509,12 @@ void installer_kernel_service_37(void)
 
 /* installer::001024a8 */
 
-/* Not a C function: the kernel's handler for service 38, reached from the installer's trap #3
+/* the installer's copy of kernel_service_38, at 0x15aa2 plus 0xeca06, byte for byte
+   Not a C function: the kernel's handler for service 38, reached from the installer's trap #3
    through installer_kernel_dispatch_service: the caller's arguments in D0 to D3, A0 and A1 as its
    stub loads them, the kernel's state in A6.  Returns the error in D7.b, zero for none, and its
-   results in D0 to D2, A0 and A1 (psos.md). */
+   results in D0 to D2, A0 and A1 (psos.md).
+   psos.md */
 
 void installer_kernel_service_38(void)
 
@@ -61213,8 +62533,10 @@ void installer_kernel_service_38(void)
 
 /* installer::001024c6 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_advance_date, at 0x15ac0 plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_advance_date(void)
 
@@ -61250,8 +62572,10 @@ void installer_kernel_advance_date(void)
 
 /* installer::00102516 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_set_leap_year, at 0x15b10 plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_set_leap_year(void)
 
@@ -61272,9 +62596,11 @@ void installer_kernel_set_leap_year(void)
 
 /* installer::00102540 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr: the task ID in A0,
+/* the installer's copy of kernel_check_task, at 0x15b3a plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr: the task ID in A0,
    zero for the running task, which A5 holds.  Returns the task's record in A0, or the error in D7:
-   2 a bad ID, 1 a deleted task, 3 another group's (psos.md). */
+   2 a bad ID, 1 a deleted task, 3 another group's (psos.md).
+   psos.md */
 
 void installer_kernel_check_task(void)
 
@@ -61285,9 +62611,11 @@ void installer_kernel_check_task(void)
 
 /* installer::00102572 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr: the exchange ID in A0,
+/* the installer's copy of kernel_check_exchange, at 0x15b6c plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr: the exchange ID in A0,
    the running task in A5.  Returns the error in D7: 2 a bad ID, 1 a deleted exchange, 3 another
-   group's (psos.md). */
+   group's (psos.md).
+   psos.md */
 
 void installer_kernel_check_exchange(void)
 
@@ -61298,9 +62626,10 @@ void installer_kernel_check_exchange(void)
 
 /* installer::0010259c */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr: the segment in A0.
+/* the installer's copy of kernel_check_segment, at 0x15b96 plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr: the segment in A0.
    Returns D7 zero, or 5 if the segment lacks installer_kernel_region_allocate's 0xe1d0 (psos.md).
-    */
+   psos.md */
 
 void installer_kernel_check_segment(void)
 
@@ -61311,8 +62640,10 @@ void installer_kernel_check_segment(void)
 
 /* installer::001025b0 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_timer_cancel, at 0x15baa plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_timer_cancel(void)
 
@@ -61336,8 +62667,10 @@ void installer_kernel_timer_cancel(void)
 
 /* installer::001025b6 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_timer_unlink, at 0x15bb0 plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 undefined4 installer_kernel_timer_unlink(void)
 
@@ -61360,8 +62693,10 @@ undefined4 installer_kernel_timer_unlink(void)
 
 /* installer::001025e4 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_timer_insert, at 0x15bde plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_timer_insert(void)
 
@@ -61410,8 +62745,10 @@ void installer_kernel_timer_insert(void)
 
 /* installer::00102652 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_make_ready, at 0x15c4c plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_make_ready(void)
 
@@ -61442,8 +62779,10 @@ void installer_kernel_make_ready(void)
 
 /* installer::0010265a */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_ready_insert, at 0x15c54 plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_ready_insert(void)
 
@@ -61469,8 +62808,10 @@ void installer_kernel_ready_insert(void)
 
 /* installer::0010269c */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_queue_remove, at 0x15c96 plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_queue_remove(void)
 
@@ -61490,8 +62831,10 @@ void installer_kernel_queue_remove(void)
 /* installer::001026de */
 
 /* WARNING: Removing unreachable block (ram,0x001028ac) */
-/* Not a C function: the trap #6 handler, which starts the kernel: builds its records from the
-   configuration in A6 and never returns. */
+/* the installer's copy of kernel_init, at 0x15cd8 plus 0xeca06, byte for byte
+   Not a C function: the trap #6 handler, which starts the kernel: builds its records from the
+   configuration in A6 and never returns.
+   psos.md */
 
 void installer_kernel_init(void)
 
@@ -61661,8 +63004,10 @@ void installer_kernel_init(void)
 
 /* installer::001028d4 */
 
-/* Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
-   registers; which ones is not yet set out here (psos.md). */
+/* the installer's copy of kernel_region_init, at 0x15ece plus 0xeca06, byte for byte
+   Not a C function: an internal routine of the pSOS kernel, called with bsr, its arguments in
+   registers; which ones is not yet set out here (psos.md).
+   psos.md */
 
 void installer_kernel_region_init(void)
 
@@ -61721,8 +63066,10 @@ void installer_kernel_region_init(void)
 
 /* installer::00102990 */
 
-/* Not a C function: the trap #5 handler, which every interrupt handler ends with in place of rte:
-   switches tasks if the interrupt made a higher-priority one ready, and returns with rte. */
+/* the installer's copy of kernel_return_from_interrupt, at 0x15f8a plus 0xeca06, byte for byte
+   Not a C function: the trap #5 handler, which every interrupt handler ends with in place of rte:
+   switches tasks if the interrupt made a higher-priority one ready, and returns with rte.
+   psos.md */
 
 void installer_kernel_return_from_interrupt(ushort param_1)
 

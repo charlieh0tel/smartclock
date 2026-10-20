@@ -16,8 +16,8 @@
 // its end.  One with register parameters already, from the names file,
 // keeps them and gains the rest; one with stack parameters is a C
 // function and is left alone.  Each one not C, whichever registers it
-// uses, is also given a comment saying so, unless the names file gave it
-// one.
+// uses, also has a line added to its comment saying so, unless the
+// comment already does.
 //
 // Argument: dry-run, to report the functions without changing them.
 //
@@ -68,7 +68,9 @@ public class SmartClockForth extends GhidraScript {
 	private static final String DRY_RUN = "dry-run";
 	private static final String KERNEL_PREFIX = "forth_";
 	private static final int LINK_A6 = 0x4e56;
-	private static final String NOT_C = "Not a C function: a routine of the pForth console's "
+	/** How a comment says its function is not C. */
+	private static final String NOT_C_MARK = "Not a C function";
+	private static final String NOT_C = NOT_C_MARK + ": a routine of the pForth console's "
 		+ "kernel, which runs with the data stack in A6, the end of the user area in A5, the "
 		+ "dictionary pointer in A4 and the input in A3, and passes anything else in other "
 		+ "registers (docs/firmware/console.md, \"The kernel's registers\").";
@@ -108,8 +110,12 @@ public class SmartClockForth extends GhidraScript {
 					|| usesFrame(function)) {
 				continue;
 			}
-			if (!dryRun && function.getComment() == null) {
+			String comment = function.getComment();
+			if (!dryRun && comment == null) {
 				function.setComment(NOT_C);
+			}
+			else if (!dryRun && !comment.contains(NOT_C_MARK)) {
+				function.setComment(comment + "\n" + NOT_C);
 			}
 			Map<String, KernelRegister> used = usedRegisters(function, registers);
 			for (Parameter existing : function.getParameters()) {

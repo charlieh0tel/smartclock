@@ -12,11 +12,13 @@
 //       C declarations of the firmware's structures, parsed into the
 //       program before the names, so that names can use them.
 //   names=tools/ghidra/names/IMAGE.tsv
-//       address, "function" or "label", name, source, optionally a
-//       function's C prototype or a label's data type, and optionally a
-//       function's comment, which the decompiler prints above its C,
-//       tab-separated; an address in the installer's overlay is written
-//       installer::0x...:
+//       address, "function" or "label", name, source, and optionally
+//       a note saying what it is or does, a function's C prototype or a
+//       label's data type, and a function's comment, such as how a routine
+//       that is not C is called, tab-separated; an address in the
+//       installer's overlay is written installer::0x....  A function's
+//       note, comment and source make the comment the decompiler prints
+//       above its C:
 //       names the firmware notes establish.  These replace names the
 //       other two gave, but not names given by hand.
 //   scpi=FILE
@@ -171,10 +173,18 @@ public class SmartClockSetup extends GhidraScript {
 	private static final int STACK_SLOT = 4;
 	/** A register annotation in a prototype: "@ D0" or "@ D0:D1". */
 	private static final Pattern ANNOTATION = Pattern.compile("\\s*@\\s*[A-Za-z0-9:]+");
-	/** The names file's optional fifth field: a function's C prototype, or a label's data type. */
-	private static final int PROTOTYPE_FIELD = 4;
-	/** Its optional sixth: a function's comment, such as how a routine that is not C is called. */
-	private static final int COMMENT_FIELD = 5;
+	/** The names file's fourth field: where the name comes from. */
+	private static final int SOURCE_FIELD = 3;
+	/** Its optional fifth: what the function or label is or does. */
+	private static final int NOTE_FIELD = 4;
+	/** Its optional sixth: a function's C prototype, or a label's data type. */
+	private static final int PROTOTYPE_FIELD = 5;
+	/** Its optional seventh: a function's comment, such as how a routine that is not C is called. */
+	private static final int COMMENT_FIELD = 6;
+	/** A source that is no citation: the name was read from the function's callers. */
+	private static final String CONTEXT = "context";
+	/** How a comment says its function is not C, which the comments added later look for. */
+	private static final String NOT_C = "Not a C function";
 	/** How far from a named entry to repair flow when it does not disassemble. */
 	private static final int ENTRY_WINDOW = 0x400;
 
@@ -339,6 +349,8 @@ public class SmartClockSetup extends GhidraScript {
 		removeDataFunctions();
 		applyNames();
 		repairFlow();
+		commentVectors(BOOT_VECTORS, "boot");
+		commentVectors(PRIMARY_VECTORS, "primary");
 	}
 
 	/**
@@ -416,8 +428,8 @@ public class SmartClockSetup extends GhidraScript {
 						applyPrototype(address, fields[PROTOTYPE_FIELD]);
 					}
 					Function function = getFunctionAt(address);
-					if (fields.length > COMMENT_FIELD && function != null) {
-						function.setComment(fields[COMMENT_FIELD]);
+					if (function != null) {
+						function.setComment(functionComment(fields));
 					}
 				}
 				else {
@@ -902,17 +914,13 @@ public class SmartClockSetup extends GhidraScript {
 	private void labelVectors(long base, String prefix) throws Exception {
 		Address table = toAddr(base);
 		createLabel(table, prefix + "_vectors", true, SourceType.USER_DEFINED);
-		Map<Long, Integer> uses = new TreeMap<>();
-		long[] targets = new long[VECTOR_COUNT];
 		for (int vector = 0; vector < VECTOR_COUNT; vector++) {
 			Address slot = table.add(vector * 4L);
 			clearListing(slot, slot.add(3));
 			createData(slot, PointerDataType.dataType);
-			targets[vector] = getInt(slot) & 0xffffffffL;
-			uses.merge(targets[vector], 1, Integer::sum);
 		}
-		long defaultHandler = uses.entrySet().stream()
-				.max(Map.Entry.comparingByValue()).orElseThrow().getKey();
+		long[] targets = vectorTargets(base);
+		long defaultHandler = defaultHandler(targets);
 		MemoryBlock rom = currentProgram.getMemory().getBlock(toAddr(0));
 		for (int vector = 1; vector < VECTOR_COUNT; vector++) {
 			Address target = toAddr(targets[vector]);
@@ -931,12 +939,66 @@ public class SmartClockSetup extends GhidraScript {
 				function.setName(name, SourceType.USER_DEFINED);
 			}
 		}
+	}
+
+	/** Each vector's handler address, from the table at base. */
+	private long[] vectorTargets(long base) throws Exception {
+		long[] targets = new long[VECTOR_COUNT];
+		for (int vector = 0; vector < VECTOR_COUNT; vector++) {
+			targets[vector] = getInt(toAddr(base + vector * 4L)) & 0xffffffffL;
+		}
+		return targets;
+	}
+
+	/** The handler most vectors share. */
+	private static long defaultHandler(long[] targets) {
+		Map<Long, Integer> uses = new TreeMap<>();
+		for (long target : targets) {
+			uses.merge(target, 1, Integer::sum);
+		}
+		return uses.entrySet().stream().max(Map.Entry.comparingByValue()).orElseThrow().getKey();
+	}
+
+	/**
+	 * Adds to each exception handler's comment that it is not C, which
+	 * vectors enter it and how it returns, after the names have given it
+	 * theirs, unless that comment already says it is not C.
+	 */
+	private void commentVectors(long base, String prefix) throws Exception {
+		long[] targets = vectorTargets(base);
+		long defaultHandler = defaultHandler(targets);
 		for (int vector = 1; vector < VECTOR_COUNT; vector++) {
 			Function function = getFunctionAt(toAddr(targets[vector]));
-			if (function != null && function.getComment() == null) {
+			if (function == null) {
+				continue;
+			}
+			String existing = function.getComment();
+			if (existing == null) {
 				function.setComment(vectorComment(prefix, targets, vector, defaultHandler));
 			}
+			else if (!existing.contains(NOT_C)) {
+				function.setComment(existing + "\n"
+					+ vectorComment(prefix, targets, vector, defaultHandler));
+			}
 		}
+	}
+
+	/**
+	 * A names-file function's comment: its note, its comment and its
+	 * source, each on its own line; the source is left out when it is only
+	 * the function's callers.
+	 */
+	private static String functionComment(String[] fields) {
+		List<String> lines = new ArrayList<>();
+		for (int field : new int[] { NOTE_FIELD, COMMENT_FIELD }) {
+			if (fields.length > field && !fields[field].isBlank()) {
+				lines.add(fields[field]);
+			}
+		}
+		if (!fields[SOURCE_FIELD].equals(CONTEXT)) {
+			lines.add(fields[SOURCE_FIELD]);
+		}
+		return String.join("\n", lines);
 	}
 
 	/**

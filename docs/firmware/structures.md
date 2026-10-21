@@ -58,12 +58,12 @@ under the name `klok`.  A mutex is an exchange of its name, which
 back.
 
 The SCPI setters' requests go to `pllc`: five routines,
-`0x29ec2`--`0x29f94`, fill a message on their stack and pass its address
-to `request_and_wait` with the exchange, which `0x43340` receives
-(`request_x`).  The message holds a pointer to a record in ROM (such as
-`0x33bae`), two bytes and up to two longs; the five differ in which they
-fill, which is not yet worked out.  `0x46636` sends four longs to
-`gpsx`.
+`pllc_request_a` to `pllc_request_e` (`0x29ec2`--`0x29f94`), fill a
+`pllc_request` on their stack and pass its address to
+`request_and_wait` with the exchange, which `pll_scpi_receive`
+(`0x43340`) receives (`request_x`); "The pllc task's SCPI requests",
+below, gives the message.  `gpsx_send` (`0x46636`) sends a
+`gps_request_entry` with four longs to `gpsx` ("The GPS request ring").
 
 ## The status system
 
@@ -746,6 +746,29 @@ values are kept in `pll_scpi_param`, `pll_scpi_index`,
 done `pll_scpi_receive`, `pll_scpi_complete` (`0x433b6`) and
 `gps_diag_complete` (`0x433fc`) signal that task event 0x20, which
 `request_and_wait` (`0x29e7e`) waits for.
+
+The request is a `pllc_request`, 24 bytes, the size of the kernel's
+message buffers (`psos.md`, "Inside the kernel"): each of
+`pllc_request_a` to `pllc_request_e` links a 24-byte frame and sends its
+address, and `pll_scpi_receive` receives into one of its own.  The
+kernel copies `+0x04` to `+0x17` (`kernel_copy_message`, `0x156ac`);
+the senders leave `+0x00` unset and clear `+0x04`, which
+`kernel_send_for_task` (`0x155ba`) refuses with error 4 if it is
+neither 0 nor the exchange's id.  `get_setup_vars` reads the rest:
+
+| Offset | Field | Filled by | Taken into |
+| ------ | ----- | --------- | ---------- |
+| `+0x08` | `param`, the descriptor | all five | `pll_scpi_param` |
+| `+0x0c` | `index` | all five | `pll_scpi_index` |
+| `+0x0d` | `source` | all five | `pll_scpi_source` |
+| `+0x0f` | `setting` | `pllc_request_a` | `pll_scpi_setting`, for a setting |
+| `+0x10` | `values[0]` | `_c`, `_d`; `_e` from its pointer | `pll_scpi_values` |
+| `+0x14` | `values[1]` | `_c` through its pointer; `_e` from its pointer | `pll_scpi_values` |
+
+Which values it takes depends on a numeric descriptor's `is_integer`
+(`+0x26`, the jump table at `0x4325c`): 0 takes `values[1]`, 1
+`values[0]`, 3 both, and 2 `index` + 1 longs from the address in
+`values[0]`.  Nothing writes `+0x0e`.
 `validate_num` (`0x42c10`) runs each value through the descriptor's
 `validate` into `pll_scpi_validated` (`0x102030`).  `finish_scpi_cmd`
 (`0x4306a`) switches on the descriptor's `type`: a numeric one's values
@@ -1039,13 +1062,35 @@ and not yet sent in a ring, `gps_requests` (`0x10139e`,
 `gps_request_ring`): five 26-byte entries to `0x10141f`, then the
 oldest's address at `0x101420` and the next free one's at `0x101424`.
 It is empty when the two are equal, so it holds four.
-`gps_request_queue` (`0x4bc74`) queues a request unless one with its
-id (`+8`) is waiting, and replaces the newest waiting one, rather than
-queue behind it, if that one's id is 3 or 4 and it is not yet sent
-(`+0x12`); a request whose code (`+0xa`) is `0x45` empties the ring
+`gps_request_queue` (`0x4bc74`) queues a request unless one from its
+sender (`+8`) is waiting, and replaces the newest waiting one, rather than
+queue behind it, if that one's sender is 3 or 4 and its `+0x12` is
+clear; a request whose code (`+0xa`) is `0x45` empties the ring
 first.  The ring's routines (`request_ring_clear` to
 `request_ring_newest_replaceable`, `0x4baaa` to `0x4bc1c`) read
 nothing else of an entry.
+
+An entry is the message itself, a `gps_request_entry`.
+`pll_scpi_send_to_loop` (`0x42dc4`), `gpsx_send` (`0x46636`) and
+`gps_request_post` (`0x4bd2c`) each link a 26-byte frame, build the
+message in it and send its address to `gpsx_exchange`; `gpsm_task`
+receives into 26 bytes at `-218` from its frame pointer, and
+`pllp_task` and `gps_selftest_run` take the replies from `plla` into 26
+bytes at `-28` and `-42`.  The kernel copies `+0x04` to `+0x17`, as
+for a `pllc_request` ("The pllc task's SCPI requests"); the senders
+clear `+0x00` and `+0x04`.
+
+| Offset | Field | Filled by | Read by |
+| ------ | ----- | --------- | ------- |
+| `+0x08` | `sender` | 1 `gpsx_send`, 2 `pll_scpi_send_to_loop` (its caller's argument), 3 or 4 `gps_request_post` | `request_kind_valid` (1 to 4), `gps_count_response`, `pllp_task` |
+| `+0x09` | `result` | 1; `gps_count_response` its kind before sending it back to `plla` | `pllp_task`, as `gps_ack_code` for sender 1 and `pll_scpi_complete`'s success for 2 |
+| `+0x0a` | `code` | the request | `gps_request_class`, `gpsm_task` |
+| `+0x0c` | `argument_mode` | `gpsx_send`'s argument, 0 from the others but a `gps_request_post` of code 4 | `gps_request_class`, `gps_request_step` |
+| `+0x0e` | `arguments` | `gpsx_arguments`, `pll_scpi_gps_arguments`, or `gps_request_post`'s | four longs `gpsm_task` copies to `gps_request_step` |
+| `+0x12` | `sent` | `gps_request_post`'s last argument: 0 for the command monitor's request, 1 for the status monitor's `0x4b` | `request_ring_newest_replaceable` |
+
+Nothing in the GPS task writes `+0x12`, so whether `sent` names what it
+means is open.
 
 ## The GPS command log
 

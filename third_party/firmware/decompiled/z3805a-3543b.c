@@ -585,11 +585,14 @@ typedef enum __attribute__((packed)) gps_process_state {
 typedef struct gps_request_entry gps_request_entry, *Pgps_request_entry;
 
 struct gps_request_entry {
-    uint8_t field_00[8];
-    uint8_t id;
-    uint8_t field_09;
+    uint32_t field_00;
+    uint32_t field_04;
+    uint8_t sender;
+    uint8_t result;
     int16_t code;
-    uint8_t field_0c[6];
+    uint8_t argument_mode;
+    uint8_t field_0d;
+    int32_t *arguments;
     uint8_t sent;
     uint8_t field_13[7];
 };
@@ -1346,6 +1349,19 @@ struct pll_state {
     uint8_t field_3d5;
 };
 
+typedef struct pllc_request pllc_request, *Ppllc_request;
+
+struct pllc_request {
+    uint32_t field_00;
+    uint32_t field_04;
+    void *param;
+    uint8_t index;
+    uint8_t source;
+    uint8_t field_0e;
+    uint8_t setting;
+    uint32_t values[2];
+};
+
 typedef struct pps_exchange_message pps_exchange_message, *Ppps_exchange_message;
 
 struct pps_exchange_message {
@@ -1875,6 +1891,7 @@ _Static_assert(sizeof(packed_datetime) == 8, "packed_datetime");
 _Static_assert(sizeof(pll_hold_cause) == 1, "pll_hold_cause");
 _Static_assert(sizeof(pll_stage) == 1, "pll_stage");
 _Static_assert(sizeof(pll_state) == 982, "pll_state");
+_Static_assert(sizeof(pllc_request) == 24, "pllc_request");
 _Static_assert(sizeof(pps_exchange_message) == 24, "pps_exchange_message");
 _Static_assert(sizeof(preserved_region_fields) == 2382, "preserved_region_fields");
 _Static_assert(sizeof(psos_configuration) == 98, "psos_configuration");
@@ -5248,12 +5265,12 @@ undefined4 scpi_input_closed(void);
 void status_prompt_refresh(status_model *param_1,int param_2);
 void send_x_retry(uint32_t exchange,void *message,uint32_t ticks);
 void request_and_wait(uint32_t param_1,void *param_2);
-void pllc_request_a(undefined4 param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4);
-void pllc_request_b(undefined4 param_1,undefined1 param_2,undefined1 param_3);
-void pllc_request_c(undefined4 param_1,undefined1 param_2,undefined4 param_3,undefined4 *param_4,
-                   undefined1 param_5);
-void pllc_request_d(undefined4 param_1,undefined1 param_2,undefined4 param_3,undefined1 param_4);
-void pllc_request_e(undefined4 param_1,undefined1 param_2,undefined4 *param_3,undefined1 param_4);
+void pllc_request_a(void *param_1,uint8_t param_2,uint8_t param_3,uint8_t param_4);
+void pllc_request_b(void *param_1,uint8_t param_2,uint8_t param_3);
+void pllc_request_c(void *param_1,uint8_t param_2,uint32_t param_3,undefined4 *param_4,
+                   uint8_t param_5);
+void pllc_request_d(void *param_1,uint8_t param_2,uint32_t param_3,uint8_t param_4);
+void pllc_request_e(void *param_1,uint8_t param_2,undefined4 *param_3,uint8_t param_4);
 uint scpi_task_create(ulong param_1);
 void scpi_task(void);
 int scpi_set_common_CLS(void *parameters,void *response,void *call);
@@ -5747,7 +5764,7 @@ void toggle_change(undefined1 *param_1);
 void validate_num(void);
 void validate_or_doaction(undefined1 *param_1);
 undefined4 pll_scpi_needs_loop(void);
-undefined4 pll_scpi_send_to_loop(undefined1 param_1,undefined1 *param_2);
+undefined4 pll_scpi_send_to_loop(uint8_t param_1,undefined1 *param_2);
 ushort scpi_param_saved_in_nv(void);
 ushort scpi_param_saved_in_record(void);
 void finish_scpi_cmd(void);
@@ -5812,7 +5829,7 @@ void status_summary_update(void);
 byte leds_update(void);
 void pll_stage_status(void);
 uint8_t gps_ack_received(void);
-undefined1 gpsx_send(undefined2 param_1,undefined1 param_2,int param_3,char param_4);
+undefined1 gpsx_send(int16_t param_1,uint8_t param_2,int param_3,char param_4);
 void gps_selftest_run(void);
 void gps_init_sequence(void);
 void gps_leap_sequence(void);
@@ -5897,7 +5914,7 @@ undefined4 request_ring_contains(char param_1,char param_2,char param_3);
 undefined4 request_ring_newest_replaceable(void);
 undefined4 request_kind_valid(char param_1);
 void gps_request_queue(char param_1,int param_2,int param_3);
-bool gps_request_post(char param_1,short param_2,int *param_3,undefined1 param_4);
+bool gps_request_post(char param_1,short param_2,int *param_3,uint8_t param_4);
 undefined1 gps_request_class(short param_1,char param_2);
 undefined ** gps_script_lookup(short param_1);
 void gps_init(void);
@@ -45154,128 +45171,106 @@ void request_and_wait(uint32_t param_1,void *param_2)
 
 /* 00029ec2 */
 
-/* request_and_wait to pllc_exchange; the five differ in the message fields they fill
+/* request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and a
+   setting's new value
    structures.md */
 
-void pllc_request_a(undefined4 param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4)
+void pllc_request_a(void *param_1,uint8_t param_2,uint8_t param_3,uint8_t param_4)
 
 {
-  undefined1 auStack_1c [4];
-  undefined4 local_18;
-  undefined4 local_14;
-  undefined1 local_10;
-  undefined1 local_f;
-  undefined1 local_d;
+  pllc_request request;
   
-  local_18 = 0;
-  local_14 = param_1;
-  local_10 = param_2;
-  local_d = param_3;
-  local_f = param_4;
-  request_and_wait(pllc_exchange,auStack_1c);
+  request.field_04 = 0;
+  request.param = param_1;
+  request.index = param_2;
+  request.setting = param_3;
+  request.source = param_4;
+  request_and_wait(pllc_exchange,&request);
   return;
 }
 
 
 /* 00029ef6 */
 
-/* request_and_wait to pllc_exchange
+/* request_and_wait to pllc_exchange with a pllc_request: the descriptor, index and source
    structures.md */
 
-void pllc_request_b(undefined4 param_1,undefined1 param_2,undefined1 param_3)
+void pllc_request_b(void *param_1,uint8_t param_2,uint8_t param_3)
 
 {
-  undefined1 auStack_1c [4];
-  undefined4 local_18;
-  undefined4 local_14;
-  undefined1 local_10;
-  undefined1 local_f;
+  pllc_request request;
   
-  local_18 = 0;
-  local_14 = param_1;
-  local_10 = param_2;
-  local_f = param_3;
-  request_and_wait(pllc_exchange,auStack_1c);
+  request.field_04 = 0;
+  request.param = param_1;
+  request.index = param_2;
+  request.source = param_3;
+  request_and_wait(pllc_exchange,&request);
   return;
 }
 
 
 /* 00029f24 */
 
-/* request_and_wait to pllc_exchange, with a value through a pointer
+/* request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source, values[0]
+   and values[1] through a pointer
    structures.md */
 
-void pllc_request_c(undefined4 param_1,undefined1 param_2,undefined4 param_3,undefined4 *param_4,
-                   undefined1 param_5)
+void pllc_request_c(void *param_1,uint8_t param_2,uint32_t param_3,undefined4 *param_4,
+                   uint8_t param_5)
 
 {
-  undefined1 auStack_1c [4];
-  undefined4 local_18;
-  undefined4 local_14;
-  undefined1 local_10;
-  undefined1 local_f;
-  undefined4 local_c;
-  undefined4 local_8;
+  pllc_request request;
   
-  local_18 = 0;
-  local_14 = param_1;
-  local_10 = param_2;
-  local_f = param_5;
-  local_c = param_3;
-  local_8 = *param_4;
-  request_and_wait(pllc_exchange,auStack_1c);
+  request.field_04 = 0;
+  request.param = param_1;
+  request.index = param_2;
+  request.source = param_5;
+  request.values[0] = param_3;
+  request.values[1] = *param_4;
+  request_and_wait(pllc_exchange,&request);
   return;
 }
 
 
 /* 00029f60 */
 
-/* request_and_wait to pllc_exchange
+/* request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and
+   values[0]
    structures.md */
 
-void pllc_request_d(undefined4 param_1,undefined1 param_2,undefined4 param_3,undefined1 param_4)
+void pllc_request_d(void *param_1,uint8_t param_2,uint32_t param_3,uint8_t param_4)
 
 {
-  undefined1 auStack_1c [4];
-  undefined4 local_18;
-  undefined4 local_14;
-  undefined1 local_10;
-  undefined1 local_f;
-  undefined4 local_c;
+  pllc_request request;
   
-  local_18 = 0;
-  local_14 = param_1;
-  local_10 = param_2;
-  local_f = param_4;
-  local_c = param_3;
-  request_and_wait(pllc_exchange,auStack_1c);
+  request.field_04 = 0;
+  request.param = param_1;
+  request.index = param_2;
+  request.source = param_4;
+  request.values[0] = param_3;
+  request_and_wait(pllc_exchange,&request);
   return;
 }
 
 
 /* 00029f94 */
 
-/* request_and_wait to pllc_exchange
+/* request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and both
+   values through a pointer
    structures.md */
 
-void pllc_request_e(undefined4 param_1,undefined1 param_2,undefined4 *param_3,undefined1 param_4)
+void pllc_request_e(void *param_1,uint8_t param_2,undefined4 *param_3,uint8_t param_4)
 
 {
-  undefined1 auStack_1c [4];
-  undefined4 local_18;
-  undefined4 local_14;
-  undefined1 local_10;
-  undefined1 local_f;
-  undefined4 uStack_c;
-  undefined4 uStack_8;
+  pllc_request request;
   
-  local_18 = 0;
-  local_14 = param_1;
-  local_10 = param_2;
-  local_f = param_4;
-  uStack_c = *param_3;
-  uStack_8 = param_3[1];
-  request_and_wait(pllc_exchange,auStack_1c);
+  request.field_04 = 0;
+  request.param = param_1;
+  request.index = param_2;
+  request.source = param_4;
+  request.values[0] = *param_3;
+  request.values[1] = param_3[1];
+  request_and_wait(pllc_exchange,&request);
   return;
 }
 
@@ -57526,18 +57521,12 @@ undefined4 pll_scpi_needs_loop(void)
 /* puts a request's validated values in the loop's message at 0x102002 by the setting's action code,
    and sends it */
 
-undefined4 pll_scpi_send_to_loop(undefined1 param_1,undefined1 *param_2)
+undefined4 pll_scpi_send_to_loop(uint8_t param_1,undefined1 *param_2)
 
 {
   char cVar2;
   ulong uVar1;
-  undefined4 local_1e;
-  undefined4 local_1a;
-  undefined1 local_16;
-  undefined1 local_15;
-  short local_14;
-  undefined1 local_12;
-  uint32_t *local_10;
+  gps_request_entry request;
   
   if (*(char *)pll_scpi_param == '\x01') {
     cVar2 = *(char *)((int)pll_scpi_param + 0x16);
@@ -57545,47 +57534,47 @@ undefined4 pll_scpi_send_to_loop(undefined1 param_1,undefined1 *param_2)
   else {
     cVar2 = *(char *)((int)pll_scpi_param + 0x20);
   }
-  local_14 = (short)cVar2;
+  request.code = (int16_t)cVar2;
   *param_2 = 0;
-  if (local_14 < 0x18) {
-    if (local_14 < 5) {
-      if (local_14 < 3) {
-        if (local_14 == 0) {
+  if (request.code < 0x18) {
+    if (request.code < 5) {
+      if (request.code < 3) {
+        if (request.code == 0) {
           pll_scpi_gps_arguments[0] = pll_scpi_validated[0];
           pll_scpi_gps_arguments[1] = pll_scpi_validated[1];
           pll_scpi_gps_arguments[2] = pll_scpi_validated[2];
         }
         else {
-          if (local_14 != 2) goto LAB_0004300c;
+          if (request.code != 2) goto LAB_0004300c;
           pll_scpi_gps_arguments[0] = pll_scpi_validated[1];
           pll_scpi_gps_arguments[1] = pll_scpi_validated[2];
           pll_scpi_gps_arguments[2] = pll_scpi_validated[0];
         }
         goto LAB_00042fca;
       }
-      if ((local_14 != 3) && (local_14 != 4)) goto LAB_0004300c;
+      if ((request.code != 3) && (request.code != 4)) goto LAB_0004300c;
     }
-    else if (local_14 < 0xc) {
-      if (local_14 == 5) {
+    else if (request.code < 0xc) {
+      if (request.code == 5) {
         pll_scpi_gps_arguments[0] = pll_scpi_validated[0];
         pll_scpi_gps_arguments[1] = 1;
         goto LAB_00042fca;
       }
-      if (local_14 != 6) goto LAB_0004300c;
+      if (request.code != 6) goto LAB_0004300c;
     }
-    else if (local_14 != 0xc) {
-      if (local_14 == 0x12) goto LAB_00042f24;
-      if (local_14 != 0x13) goto LAB_0004300c;
+    else if (request.code != 0xc) {
+      if (request.code == 0x12) goto LAB_00042f24;
+      if (request.code != 0x13) goto LAB_0004300c;
       goto LAB_00042ed2;
     }
     pll_scpi_gps_arguments[0] = pll_scpi_validated[0];
   }
-  else if (local_14 < 0x4f) {
-    if (local_14 < 0x28) {
-      if ((local_14 != 0x18) && (local_14 != 0x19)) goto LAB_0004300c;
+  else if (request.code < 0x4f) {
+    if (request.code < 0x28) {
+      if ((request.code != 0x18) && (request.code != 0x19)) goto LAB_0004300c;
       pll_scpi_gps_arguments[0] = pll_scpi_validated[0];
     }
-    else if (local_14 == 0x28) {
+    else if (request.code == 0x28) {
       if (((pll_scpi_index != 0) || (nv_settings.douglas_state == 0)) &&
          ((pll_scpi_index != 1 || (nv_settings.douglas_state != 0)))) {
         *param_2 = 0;
@@ -57602,10 +57591,10 @@ undefined4 pll_scpi_send_to_loop(undefined1 param_1,undefined1 *param_2)
         pll_scpi_gps_arguments[2] = pll_scpi_validated[0];
       }
     }
-    else if (local_14 != 0x31) goto LAB_0004300c;
+    else if (request.code != 0x31) goto LAB_0004300c;
   }
-  else if (local_14 < 0x53) {
-    if (local_14 == 0x4f) {
+  else if (request.code < 0x53) {
+    if (request.code == 0x4f) {
 LAB_00042f24:
       pll_scpi_gps_arguments[0] = pll_scpi_validated[0];
       pll_scpi_gps_arguments[1] = pll_scpi_validated[1];
@@ -57613,7 +57602,7 @@ LAB_00042f24:
       pll_scpi_gps_arguments[3] = 1;
     }
     else {
-      if (local_14 != 0x51) goto LAB_0004300c;
+      if (request.code != 0x51) goto LAB_0004300c;
 LAB_00042ed2:
       pll_scpi_gps_arguments[0] = (uint32_t)(char)pll_scpi_setting;
       if ((nv_settings.douglas_state == 0) || (pll_scpi_setting != 0)) {
@@ -57626,21 +57615,21 @@ LAB_00042ed2:
       }
     }
   }
-  else if (local_14 != 0x53) {
-    if (local_14 != 0x55) {
-      if (local_14 != 0x56) goto LAB_0004300c;
+  else if (request.code != 0x53) {
+    if (request.code != 0x55) {
+      if (request.code != 0x56) goto LAB_0004300c;
       goto LAB_00042f24;
     }
     goto LAB_00042ed2;
   }
 LAB_00042fca:
-  local_1e = 0;
-  local_1a = 0;
-  local_12 = 0;
-  local_15 = 1;
-  local_16 = param_1;
-  local_10 = pll_scpi_gps_arguments;
-  uVar1 = psos_send_x(gpsx_exchange,&local_1e);
+  request.field_00 = 0;
+  request.field_04 = 0;
+  request.argument_mode = 0;
+  request.result = 1;
+  request.sender = param_1;
+  request.arguments = (int32_t *)pll_scpi_gps_arguments;
+  uVar1 = psos_send_x(gpsx_exchange,&request);
   if ((char)uVar1 == '\0') {
     *param_2 = 0;
     return 1;
@@ -57869,15 +57858,15 @@ void pll_scpi_receive(void)
 {
   uint8_t uVar1;
   ulong uVar2;
-  undefined1 auStack_1c [24];
+  pllc_request request;
   
   if (pll_scpi_reply_pending == 0) {
     if (pll_scpi_signal_delay == 0) {
-      uVar2 = psos_request_x(pllc_exchange,auStack_1c,1,0);
+      uVar2 = psos_request_x(pllc_exchange,&request,1,0);
       if ((uVar2 & 0xff) != 0) {
         return;
       }
-      pll_scpi_command((int)auStack_1c,(char *)&pll_scpi_reply_pending);
+      pll_scpi_command((int)&request,(char *)&pll_scpi_reply_pending);
       uVar1 = 0;
       if (pll_scpi_reply_pending != 0) {
         return;
@@ -60793,19 +60782,13 @@ uint8_t gps_ack_received(void)
 /* copies four longs and sends them to gpsx_exchange
    structures.md */
 
-undefined1 gpsx_send(undefined2 param_1,undefined1 param_2,int param_3,char param_4)
+undefined1 gpsx_send(int16_t param_1,uint8_t param_2,int param_3,char param_4)
 
 {
   ulong uVar1;
   int iVar2;
   undefined1 uVar3;
-  undefined4 local_1e;
-  undefined4 local_1a;
-  undefined1 local_16;
-  undefined1 local_15;
-  undefined2 local_14;
-  undefined1 local_12;
-  uint32_t *local_10;
+  gps_request_entry request;
   
   uVar3 = 0;
   if (gps_ack_awaited == 0) {
@@ -60814,14 +60797,14 @@ undefined1 gpsx_send(undefined2 param_1,undefined1 param_2,int param_3,char para
       gpsx_arguments[iVar2] = *(uint32_t *)(param_3 + iVar2 * 4);
       iVar2 = iVar2 + 1;
     } while (iVar2 < 4);
-    local_1e = 0;
-    local_1a = 0;
-    local_14 = param_1;
-    local_12 = param_2;
-    local_15 = 1;
-    local_16 = 1;
-    local_10 = gpsx_arguments;
-    uVar1 = psos_send_x(gpsx_exchange,&local_1e);
+    request.field_00 = 0;
+    request.field_04 = 0;
+    request.code = param_1;
+    request.argument_mode = param_2;
+    request.result = 1;
+    request.sender = 1;
+    request.arguments = (int32_t *)gpsx_arguments;
+    uVar1 = psos_send_x(gpsx_exchange,&request);
     if ((char)uVar1 == '\0') {
       gps_ack_awaited = param_4;
       gps_ack_ready = 0;
@@ -60846,8 +60829,7 @@ void gps_selftest_run(void)
   char cVar2;
   ulong uVar1;
   char cVar3;
-  undefined1 auStack_2e [9];
-  char local_25;
+  gps_request_entry reply;
   undefined1 auStack_14 [16];
   
   for (cVar3 = '\x14';
@@ -60861,15 +60843,15 @@ void gps_selftest_run(void)
   }
   if (gps_ack_awaited != 0) {
     for (cVar3 = -0x7e;
-        (uVar1 = psos_request_x(plla_exchange,auStack_2e,1,0), (char)uVar1 != '\0' &&
-        (cVar3 != '\0')); cVar3 = cVar3 + -1) {
+        (uVar1 = psos_request_x(plla_exchange,&reply,1,0), (char)uVar1 != '\0' && (cVar3 != '\0'));
+        cVar3 = cVar3 + -1) {
       psos_pause(0x400);
       watchdog_pll = watchdog_pll + 1;
     }
-    if ((cVar3 == '\0') || ((local_25 != '\0' && (local_25 != '\b')))) {
+    if ((cVar3 == '\0') || ((reply.result != 0 && (reply.result != 8)))) {
       selftest.gps = 0x4000;
     }
-    else if (local_25 == '\0') {
+    else if (reply.result == 0) {
       selftest.gps = gps.self_test;
     }
     else {
@@ -60889,15 +60871,15 @@ void gps_selftest_run(void)
     }
     if (gps_ack_awaited != 0) {
       for (cVar3 = '\x1e';
-          (uVar1 = psos_request_x(plla_exchange,auStack_2e,1,0), (char)uVar1 != '\0' &&
-          (cVar3 != '\0')); cVar3 = cVar3 + -1) {
+          (uVar1 = psos_request_x(plla_exchange,&reply,1,0), (char)uVar1 != '\0' && (cVar3 != '\0'))
+          ; cVar3 = cVar3 + -1) {
         psos_pause(0x400);
         watchdog_pll = watchdog_pll + 1;
       }
-      if ((cVar3 == '\0') || ((local_25 != '\0' && (local_25 != '\b')))) {
+      if ((cVar3 == '\0') || ((reply.result != 0 && (reply.result != 8)))) {
         selftest.gps = 0x4000;
       }
-      else if (local_25 == '\0') {
+      else if (reply.result == 0) {
         selftest.gps = gps.self_test;
       }
       else {
@@ -61763,14 +61745,12 @@ void pllp_task(void)
   pll_state *ppVar16;
   char cVar17;
   pll_stage local_22;
-  undefined1 auStack_20 [8];
-  char local_18;
-  uint8_t local_17;
-  char local_6;
+  gps_request_entry reply;
+  bool local_6;
   oncore_gmt_offset_fields *poVar12;
   oncore_gmt_offset_fields *poVar15;
   
-  local_6 = '\0';
+  local_6 = false;
   watchdog_pll = watchdog_pll + 1;
   interval_tick_wait = 0;
   DAT_0010253e = 0;
@@ -61799,13 +61779,13 @@ void pllp_task(void)
   efc_gain_set(6.25e-13);
   if (pll.stage == PLL_STAGE_INVALID) {
     pll.stage = PLL_STAGE_POWERUP;
-    if (preserved_region.restore == 1) {
-      status_happening('\x19');
-      log_event(1);
+    local_6 = preserved_region.restore != 1;
+    if (local_6) {
+      log_event(0x1a);
     }
     else {
-      log_event(0x1a);
-      local_6 = '\x01';
+      status_happening('\x19');
+      log_event(1);
     }
     if (nv_settings.douglas_state_powerup != 0) {
       nv_settings.douglas_state = 0;
@@ -61989,16 +61969,16 @@ LAB_00047940:
       clock_change_applied = 0;
       clock_change_armed = 0;
     }
-    uVar9 = psos_request_x(plla_exchange,auStack_20,1,0);
+    uVar9 = psos_request_x(plla_exchange,&reply,1,0);
     if ((char)uVar9 == '\0') {
-      if (local_17 != 0) {
+      if (reply.result != 0) {
         plla_failed_count = plla_failed_count + 1;
       }
-      if (local_18 == '\x01') {
+      if (reply.sender == 1) {
         if (gps_ack_awaited == 0) {
           plla_unexpected_count = plla_unexpected_count + 1;
         }
-        gps_ack_code = local_17;
+        gps_ack_code = reply.result;
         gps_ack_ready = 1;
         gps_ack_wait_count = 0;
         if (gps_ack_abandoned == 0) {
@@ -62012,8 +61992,8 @@ LAB_00047940:
           gps_ack_abandoned = 0;
         }
       }
-      else if (local_18 == '\x02') {
-        pll_scpi_complete((int *)&plla_unexpected_count,local_17 == 0);
+      else if (reply.sender == 2) {
+        pll_scpi_complete((int *)&plla_unexpected_count,reply.result == 0);
       }
       else {
         plla_unknown_count = plla_unknown_count + 1;
@@ -65774,15 +65754,16 @@ bool request_ring_put(gps_request_entry *entry)
   }
   bVar4 = pgVar3 != (gps_request_ring *)gps_requests.read;
   if (bVar4) {
-    *(undefined4 *)(gps_requests.write)->field_00 = *(undefined4 *)entry->field_00;
-    *(undefined4 *)((gps_requests.write)->field_00 + 4) = *(undefined4 *)(entry->field_00 + 4);
-    uVar1 = entry->field_09;
+    (gps_requests.write)->field_00 = entry->field_00;
+    (gps_requests.write)->field_04 = entry->field_04;
+    uVar1 = entry->result;
     iVar2 = entry->code;
-    (gps_requests.write)->id = entry->id;
-    (gps_requests.write)->field_09 = uVar1;
+    (gps_requests.write)->sender = entry->sender;
+    (gps_requests.write)->result = uVar1;
     (gps_requests.write)->code = iVar2;
-    *(undefined4 *)(gps_requests.write)->field_0c = *(undefined4 *)entry->field_0c;
-    *(undefined4 *)((gps_requests.write)->field_0c + 4) = *(undefined4 *)(entry->field_0c + 4);
+    *(undefined4 *)&(gps_requests.write)->argument_mode = *(undefined4 *)&entry->argument_mode;
+    *(undefined4 *)((int)&(gps_requests.write)->arguments + 2) =
+         *(undefined4 *)((int)&entry->arguments + 2);
     *(undefined4 *)((gps_requests.write)->field_13 + 1) = *(undefined4 *)(entry->field_13 + 1);
     *(undefined2 *)((gps_requests.write)->field_13 + 5) = *(undefined2 *)(entry->field_13 + 5);
     gps_requests.write = pgVar3->entries;
@@ -65799,36 +65780,36 @@ bool request_ring_put(gps_request_entry *entry)
 int request_ring_get(gps_request_entry *entry)
 
 {
-  uint8_t *puVar1;
-  uint8_t uVar2;
-  int16_t iVar3;
-  gps_request_entry *pgVar4;
-  int iVar5;
+  uint8_t uVar1;
+  int16_t iVar2;
+  gps_request_entry *pgVar3;
+  int iVar4;
+  uint32_t *puVar5;
   
-  pgVar4 = gps_requests.read;
+  pgVar3 = gps_requests.read;
   if (gps_requests.read == gps_requests.write) {
-    iVar5 = 0;
+    iVar4 = 0;
   }
   else {
-    puVar1 = (gps_requests.read)->field_00;
-    *(undefined4 *)entry->field_00 = *(undefined4 *)(gps_requests.read)->field_00;
-    *(undefined4 *)(entry->field_00 + 4) = *(undefined4 *)(puVar1 + 4);
-    uVar2 = pgVar4->field_09;
-    iVar3 = pgVar4->code;
-    entry->id = pgVar4->id;
-    entry->field_09 = uVar2;
-    entry->code = iVar3;
-    *(undefined4 *)entry->field_0c = *(undefined4 *)pgVar4->field_0c;
-    *(undefined4 *)(entry->field_0c + 4) = *(undefined4 *)(pgVar4->field_0c + 4);
-    *(undefined4 *)(entry->field_13 + 1) = *(undefined4 *)(pgVar4->field_13 + 1);
-    *(undefined2 *)(entry->field_13 + 5) = *(undefined2 *)(pgVar4->field_13 + 5);
+    puVar5 = &(gps_requests.read)->field_04;
+    entry->field_00 = (gps_requests.read)->field_00;
+    entry->field_04 = *puVar5;
+    uVar1 = pgVar3->result;
+    iVar2 = pgVar3->code;
+    entry->sender = pgVar3->sender;
+    entry->result = uVar1;
+    entry->code = iVar2;
+    *(undefined4 *)&entry->argument_mode = *(undefined4 *)&pgVar3->argument_mode;
+    *(undefined4 *)((int)&entry->arguments + 2) = *(undefined4 *)((int)&pgVar3->arguments + 2);
+    *(undefined4 *)(entry->field_13 + 1) = *(undefined4 *)(pgVar3->field_13 + 1);
+    *(undefined2 *)(entry->field_13 + 5) = *(undefined2 *)(pgVar3->field_13 + 5);
     gps_requests.read = gps_requests.read + 1;
     if ((gps_request_entry *)(gps_requests.entries[4].field_13 + 6) < gps_requests.read) {
       gps_requests.read = gps_requests.entries;
     }
-    iVar5 = 1;
+    iVar4 = 1;
   }
-  return iVar5;
+  return iVar4;
 }
 
 
@@ -65839,38 +65820,38 @@ int request_ring_get(gps_request_entry *entry)
 int request_ring_unput(gps_request_entry *entry)
 
 {
-  uint8_t *puVar1;
-  uint8_t uVar2;
-  int16_t iVar3;
-  gps_request_entry *pgVar4;
-  int iVar5;
+  uint8_t uVar1;
+  int16_t iVar2;
+  gps_request_entry *pgVar3;
+  int iVar4;
+  uint32_t *puVar5;
   
   if (gps_requests.read == gps_requests.write) {
-    iVar5 = 0;
+    iVar4 = 0;
   }
   else {
-    if (gps_requests.write < (gps_request_entry *)(gps_requests.entries[0].field_00 + 1)) {
+    if (gps_requests.write < (gps_request_entry *)((int)&gps_requests.entries[0].field_00 + 1)) {
       gps_requests.write = gps_requests.entries + 4;
     }
     else {
       gps_requests.write = gps_requests.write + -1;
     }
-    pgVar4 = gps_requests.write;
-    puVar1 = (gps_requests.write)->field_00;
-    *(undefined4 *)entry->field_00 = *(undefined4 *)(gps_requests.write)->field_00;
-    *(undefined4 *)(entry->field_00 + 4) = *(undefined4 *)(puVar1 + 4);
-    uVar2 = pgVar4->field_09;
-    iVar3 = pgVar4->code;
-    entry->id = pgVar4->id;
-    entry->field_09 = uVar2;
-    entry->code = iVar3;
-    *(undefined4 *)entry->field_0c = *(undefined4 *)pgVar4->field_0c;
-    *(undefined4 *)(entry->field_0c + 4) = *(undefined4 *)(pgVar4->field_0c + 4);
-    *(undefined4 *)(entry->field_13 + 1) = *(undefined4 *)(pgVar4->field_13 + 1);
-    *(undefined2 *)(entry->field_13 + 5) = *(undefined2 *)(pgVar4->field_13 + 5);
-    iVar5 = 1;
+    pgVar3 = gps_requests.write;
+    puVar5 = &(gps_requests.write)->field_04;
+    entry->field_00 = (gps_requests.write)->field_00;
+    entry->field_04 = *puVar5;
+    uVar1 = pgVar3->result;
+    iVar2 = pgVar3->code;
+    entry->sender = pgVar3->sender;
+    entry->result = uVar1;
+    entry->code = iVar2;
+    *(undefined4 *)&entry->argument_mode = *(undefined4 *)&pgVar3->argument_mode;
+    *(undefined4 *)((int)&entry->arguments + 2) = *(undefined4 *)((int)&pgVar3->arguments + 2);
+    *(undefined4 *)(entry->field_13 + 1) = *(undefined4 *)(pgVar3->field_13 + 1);
+    *(undefined2 *)(entry->field_13 + 5) = *(undefined2 *)(pgVar3->field_13 + 5);
+    iVar4 = 1;
   }
-  return iVar5;
+  return iVar4;
 }
 
 
@@ -65916,7 +65897,7 @@ undefined4 request_ring_contains(char param_1,char param_2,char param_3)
   pgVar2 = (gps_request_ring *)gps_requests.read;
   if ((param_1 == '\0') || (param_2 != param_3)) {
     while (pgVar2 != (gps_request_ring *)gps_requests.write) {
-      if (param_2 == pgVar2->entries[0].id) goto LAB_0004bbee;
+      if (param_2 == pgVar2->entries[0].sender) goto LAB_0004bbee;
       pgVar2 = (gps_request_ring *)(pgVar2->entries + 1);
       if ((gps_request_ring *)(gps_requests.entries[4].field_13 + 6) < pgVar2) {
         pgVar2 = &gps_requests;
@@ -65944,7 +65925,7 @@ undefined4 request_ring_newest_replaceable(void)
   
   iVar1 = request_ring_unput(&gStack_1e);
   if (((char)iVar1 != '\0') &&
-     (((request_ring_put(&gStack_1e), gStack_1e.id == 3 || (gStack_1e.id == 4)) &&
+     (((request_ring_put(&gStack_1e), gStack_1e.sender == 3 || (gStack_1e.sender == 4)) &&
       (gStack_1e.sent == 0)))) {
     return 1;
   }
@@ -66041,41 +66022,34 @@ LAB_0004bd18:
 /* builds a request, its kind, index and arguments, and sends it to the GPS task's exchange
    gps.md, "Requests" */
 
-bool gps_request_post(char param_1,short param_2,int *param_3,undefined1 param_4)
+bool gps_request_post(char param_1,short param_2,int *param_3,uint8_t param_4)
 
 {
   ulong uVar1;
-  undefined4 local_1e;
-  undefined4 local_1a;
-  char local_16;
-  undefined1 local_15;
-  short local_14;
-  undefined1 local_12;
-  int local_10;
-  undefined1 local_c;
+  gps_request_entry request;
   
-  local_1e = 0;
-  local_1a = 0;
-  local_16 = param_1;
+  request.field_00 = 0;
+  request.field_04 = 0;
+  request.sender = param_1;
   if (param_2 == 4) {
-    local_14 = *(short *)*param_3;
-    local_12 = *(undefined1 *)(*param_3 + 2);
-    local_10 = *param_3 + 4;
+    request.code = *(int16_t *)*param_3;
+    request.argument_mode = *(uint8_t *)(*param_3 + 2);
+    request.arguments = (int32_t *)(*param_3 + 4);
   }
   else {
-    local_14 = param_2;
-    local_12 = 0;
-    local_10 = 0;
+    request.code = param_2;
+    request.argument_mode = 0;
+    request.arguments = (int32_t *)0x0;
   }
-  local_c = param_4;
-  local_15 = 1;
+  request.sent = param_4;
+  request.result = 1;
   if (param_1 == '\x03') {
     command_monitor_result = 9;
   }
   else {
     status_monitor_result = 9;
   }
-  uVar1 = psos_send_x(gpsx_exchange,&local_1e);
+  uVar1 = psos_send_x(gpsx_exchange,&request);
   return (char)uVar1 == '\0';
 }
 
@@ -66243,13 +66217,10 @@ void gpsm_task(void)
   int iVar5;
   char *pcVar9;
   char *pcVar10;
-  undefined1 auStack_de [8];
-  char local_d6;
-  short local_d4;
-  char local_d2;
+  gps_request_entry received;
   gps_request_entry gStack_c4;
-  uint8_t auStack_aa [4];
-  uint8_t auStack_a6 [4];
+  uint32_t uStack_aa;
+  uint32_t uStack_a6;
   uint8_t uStack_a2;
   uint8_t uStack_a1;
   short sStack_a0;
@@ -66287,20 +66258,20 @@ void gpsm_task(void)
   status_snapshot_last_time = 0;
   do {
     watchdog_gps = watchdog_gps + 1;
-    uVar3 = psos_request_x(gpsx_exchange,auStack_de,0,10);
+    uVar3 = psos_request_x(gpsx_exchange,&received,0,10);
     if ((char)uVar3 == '\0') {
       gps_counts.received = gps_counts.received + 1;
-      cVar7 = request_kind_valid(local_d6);
+      cVar7 = request_kind_valid(received.sender);
       if (cVar7 == '\0') {
-        gps_count_response('\x03',(int)auStack_de);
+        gps_count_response('\x03',(int)&received);
       }
       else {
-        cVar7 = gps_request_class(local_d4,local_d2);
+        cVar7 = gps_request_class(received.code,received.argument_mode);
         if (cVar7 == '\x03') {
-          gps_count_response('\x04',(int)auStack_de);
+          gps_count_response('\x04',(int)&received);
         }
         else {
-          gps_request_queue(gps_task_state,(int)auStack_de,(int)auStack_aa);
+          gps_request_queue(gps_task_state,(int)&received,(int)&uStack_aa);
         }
       }
     }
@@ -66328,21 +66299,15 @@ void gpsm_task(void)
           gps_counts.responses_read = gps_counts.responses_read + 1;
         }
         if (local_34 != '\0') {
-          auStack_aa[0] = gStack_c4.field_00[0];
-          auStack_aa[1] = gStack_c4.field_00[1];
-          auStack_aa[2] = gStack_c4.field_00[2];
-          auStack_aa[3] = gStack_c4.field_00[3];
-          auStack_a6[0] = gStack_c4.field_00[4];
-          auStack_a6[1] = gStack_c4.field_00[5];
-          auStack_a6[2] = gStack_c4.field_00[6];
-          auStack_a6[3] = gStack_c4.field_00[7];
-          uStack_a2 = gStack_c4.id;
-          uStack_a1 = gStack_c4.field_09;
+          uStack_aa = gStack_c4.field_00;
+          uStack_a6 = gStack_c4.field_04;
+          uStack_a2 = gStack_c4.sender;
+          uStack_a1 = gStack_c4.result;
           sStack_a0 = gStack_c4.code;
-          uStack_9e = gStack_c4.field_0c[0];
-          uStack_9d = gStack_c4.field_0c[1];
-          uStack_9c = __ghidra_piece(unsigned short, gStack_c4.field_0c, 2);
-          uStack_9a = __ghidra_piece(unsigned short, gStack_c4.field_0c, 4);
+          uStack_9e = gStack_c4.argument_mode;
+          uStack_9d = gStack_c4.field_0d;
+          uStack_9c = __ghidra_piece(unsigned short, gStack_c4.arguments, 0);
+          uStack_9a = __ghidra_piece(unsigned short, gStack_c4.arguments, 2);
           uStack_98 = __ghidra_piece(unsigned short, gStack_c4, 18);
           auStack_96[0] = gStack_c4.field_13[1];
           auStack_96[1] = gStack_c4.field_13[2];
@@ -66393,10 +66358,10 @@ void gpsm_task(void)
                                   CONCAT31(CONCAT21(uStack_9c,(char)((ushort)uStack_9a >> 8)),
                                            (char)uStack_9a),uStack_a2);
             }
-            gps_count_response('\0',(int)auStack_aa);
+            gps_count_response('\0',(int)&uStack_aa);
           }
 LAB_0004c17a:
-          gps_last_command = auStack_aa;
+          gps_last_command = &uStack_aa;
         }
         break;
       case 300:
@@ -66406,7 +66371,7 @@ LAB_0004c17a:
           gps_counts.responses_read = gps_counts.responses_read + 1;
         }
         if (*ppuStack_90 == (undefined *)0x0) {
-          gps_count_response('\0',(int)auStack_aa);
+          gps_count_response('\0',(int)&uStack_aa);
           gps_task_state = GPS_PROCESS_TASK_IDLE;
         }
         else {
@@ -66426,7 +66391,7 @@ LAB_0004c17a:
             if (sVar6 < 1) {
               if (sVar6 < 0) goto LAB_0004c1e6;
               if (uStack_9e == 0) {
-                gps_count_response('\x06',(int)auStack_aa);
+                gps_count_response('\x06',(int)&uStack_aa);
                 pcVar9 = " // command not supported //\n";
                 pcVar10 = gps_last_program_message;
                 do {
@@ -66437,7 +66402,7 @@ LAB_0004c17a:
                 } while (cVar7 != '\0');
               }
               else {
-                gps_count_response('\a',(int)auStack_aa);
+                gps_count_response('\a',(int)&uStack_aa);
                 pcVar9 = " // query form not supported //\n";
                 pcVar10 = gps_last_program_message;
                 do {
@@ -66462,7 +66427,7 @@ LAB_0004c17a:
               bStack_10 = bStack_10 + 1;
               gps_counts.commands_sent = gps_counts.commands_sent + 1;
               gps_message_to_text((char *)gps_command_message,bVar8,gps_last_program_message);
-              command_log_add(auStack_aa,gps_last_program_message);
+              command_log_add(&uStack_aa,gps_last_program_message);
               if (oncore_messages[sVar2].match_kind == 0) goto LAB_0004c1e6;
               gps_task_state = GPS_PROCESS_WAIT_FOR_RESPONSE;
             }
@@ -66483,7 +66448,7 @@ LAB_0004c1e6:
           }
           else {
             gps.command_monitor_error = 1;
-            gps_count_response('\b',(int)auStack_aa);
+            gps_count_response('\b',(int)&uStack_aa);
             gps_task_state = GPS_PROCESS_TASK_IDLE;
           }
         }
@@ -66505,7 +66470,7 @@ LAB_0004c1e6:
                                     (ushort)bStack_2a);
               if (cVar7 == '\x01') {
                 gps.command_monitor_error = 1;
-                gps_count_response('\x01',(int)auStack_aa);
+                gps_count_response('\x01',(int)&uStack_aa);
                 gps_task_state = GPS_PROCESS_TASK_IDLE;
               }
               else {

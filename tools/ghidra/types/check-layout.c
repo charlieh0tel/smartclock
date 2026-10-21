@@ -188,8 +188,11 @@ CHECK_FIELD(selftest_results, details, 0x100c5e - 0x100c24);
 CHECK_FIELD(selftest_results, test, 0x100c66 - 0x100c24);
 
 CHECK_SIZE(gps_request_entry, 26);
-CHECK_FIELD(gps_request_entry, id, 0x08);
+CHECK_FIELD(gps_request_entry, sender, 0x08);
+CHECK_FIELD(gps_request_entry, result, 0x09);
 CHECK_FIELD(gps_request_entry, code, 0x0a);
+CHECK_FIELD(gps_request_entry, argument_mode, 0x0c);
+CHECK_FIELD(gps_request_entry, arguments, 0x0e);
 CHECK_FIELD(gps_request_entry, sent, 0x12);
 CHECK_SIZE(gps_request_ring, 0x101428 - 0x10139e);
 CHECK_FIELD(gps_request_ring, read, 0x101420 - 0x10139e);
@@ -471,6 +474,14 @@ CHECK_FIELD(scpi_setting_param, value, 0xc);
  * 0x4132a to efc_history_update at 0x4137e */
 CHECK_SIZE(scpi_action_param, (0x4137e - 0x4132a) / 14);
 CHECK_FIELD(scpi_action_param, action, 0x02);
+/* pllc_request_a's frame, link -24, and pll_scpi_receive's; the kernel's
+ * message buffers are 0x18 bytes */
+CHECK_SIZE(pllc_request, 0x18);
+CHECK_FIELD(pllc_request, param, 0x08);
+CHECK_FIELD(pllc_request, index, 0x0c);
+CHECK_FIELD(pllc_request, source, 0x0d);
+CHECK_FIELD(pllc_request, setting, 0x0f);
+CHECK_FIELD(pllc_request, values, 0x10);
 /* the Oncore message table: 49 entries from 0x4fece to the ID strings
  * at 0x50986; gps_response_timed_out reads +0x1a, gps_response_lookup
  * +0x1c, gps_response_match +0x1e, gps_response_decode +0x20 and +0x24 */

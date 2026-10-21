@@ -260,18 +260,26 @@
 0x2982c	function	scpi_numeric_set	structures.md	sends a parameter's new value, or its minimum or maximum, to pllc
 0x1304a	function	root_task	structures.md	stores its own task id in task_root, sets up the status system, creates the exchanges and tasks and starts them
 0x4bf4a	function	gpsm_task	structures.md	root_task starts gpsm here
+0x4bf4a	local	received	structures.md	the request it takes from gpsx_exchange	gps_request_entry @ -0xde
 0x247d4	function	hmon_task	structures.md	root_task starts hmon here
 0x47528	function	pllp_task	structures.md	root_task starts pllp here
+0x47528	local	reply	structures.md	the request gps_count_response sends back to plla_exchange	gps_request_entry @ -0x20
 0x41784	function	curv_task	structures.md	root_task starts curv here
 0x1037fc	label	gpsx_exchange	structures.md	root_task's create_x("gpsx")	uint32_t
 0x103800	label	plla_exchange	structures.md	root_task's create_x("plla")	uint32_t
 0x103804	label	pllc_exchange	structures.md	root_task's create_x("pllc"); the SCPI setters' requests go here	uint32_t
-0x29ec2	function	pllc_request_a	structures.md	request_and_wait to pllc_exchange; the five differ in the message fields they fill
-0x29ef6	function	pllc_request_b	structures.md	request_and_wait to pllc_exchange
-0x29f24	function	pllc_request_c	structures.md	request_and_wait to pllc_exchange, with a value through a pointer
-0x29f60	function	pllc_request_d	structures.md	request_and_wait to pllc_exchange
-0x29f94	function	pllc_request_e	structures.md	request_and_wait to pllc_exchange
+0x29ec2	function	pllc_request_a	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and a setting's new value
+0x29ec2	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
+0x29ef6	function	pllc_request_b	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index and source
+0x29ef6	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
+0x29f24	function	pllc_request_c	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source, values[0] and values[1] through a pointer
+0x29f24	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
+0x29f60	function	pllc_request_d	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and values[0]
+0x29f60	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
+0x29f94	function	pllc_request_e	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and both values through a pointer
+0x29f94	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
 0x46636	function	gpsx_send	structures.md	copies four longs and sends them to gpsx_exchange
+0x46636	local	request	structures.md	the request it sends gpsx_exchange	gps_request_entry @ -0x1e
 0x3082e	function	record_checksum	structures.md	the sum and its complement of an EEPROM record's bytes after the first two	uint16_t record_checksum(void *record, uint16_t length)
 0x1f53a	function	hdac_set	structures.md	a 6-bit value into one half of an hdac word, written with device1_write; hdac_write leads here
 0x334de	label	scpi_param_SAMPle_INTeger	structures.md	the descriptor scpi_numeric_get and _set are given for SAMPle_INTeger	scpi_numeric_param
@@ -663,6 +671,7 @@
 0x4306a	function	finish_scpi_cmd	structures.md	the firmware's own name, "pll_scpi: finish_scpi_cmd() -- unknown structure type": stores the values by the descriptor's type, calls its hooks, and saves
 0x432bc	function	pll_scpi_command	structures.md	the pllc task's handling of one request: checks it, validate_num, reports, finish_scpi_cmd
 0x43340	function	pll_scpi_receive	structures.md	takes a request from pllc_exchange and handles it
+0x43340	local	request	structures.md	the message it takes from pllc_exchange	pllc_request @ -0x1c
 0x4301a	function	scpi_param_saved_in_nv	structures.md	the descriptor's flags & 2; finish_scpi_cmd then calls nv_save
 0x43042	function	scpi_param_saved_in_record	structures.md	the descriptor's flags & 4; finish_scpi_cmd then calls 0x30dea, which writes the record at 0x400000
 0x40a84	function	counter_set_sync	structures.md	sets fconf_regs[3]'s low two bits to counter_arm's sync_kind
@@ -1119,6 +1128,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4bbb0	function	request_ring_full	context	1 if the request ring is full
 0x4bbd6	function	request_ring_contains	context	1 if a request with the ID is waiting in the ring
 0x4bd2c	function	gps_request_post	gps.md, "Requests"	builds a request, its kind, index and arguments, and sends it to the GPS task's exchange
+0x4bd2c	local	request	structures.md	the request it sends gpsx_exchange	gps_request_entry @ -0x1e
 0x4bc58	function	request_kind_valid	context	1 for request kinds 1 to 4
 0x4be04	function	gps_script_lookup	context	a script index from 0x47 on to its script, the first also resetting gps
 0x4bdba	function	gps_request_class	context	a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3 otherwise
@@ -1528,6 +1538,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x45a24	function	time_zone_changed	context	marks the time zone changed, for :PTIMe:TZONe
 0x45c92	function	nv_clear_and_reset	context	clears the NV settings, invalidates the battery-backed RAM's checksum and resets with trap #12
 0x466ca	function	gps_selftest_run	context	asks the GPS engine for its self-test, up to 20 tries, failing the self-test's GPS bit 0x4000 if it never answers
+0x466ca	local	reply	structures.md	the request gps_count_response sends back to plla_exchange	gps_request_entry @ -0x2e
 0x47078	function	leap_ack_pending	context	1 while a leap second acknowledgment is pending, pll +0x2c or +0x2d
 0x47de2	function	running_average_update	context	folds a value into a running average of so many
 0x47eb0	function	dms_to_mas	context	degrees, minutes and seconds as milliarcseconds	void dms_to_mas(long *mas, ushort degrees, byte minutes, double seconds)
@@ -1770,6 +1781,7 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x42b8a	function	pll_scpi_do_action	context	carries out a request's action, flagging the self-test's descriptor at 0x41348
 0x42d78	function	pll_scpi_needs_loop	context	1 if a request's setting goes to the loop, its descriptor's flag bit 0; a survey start instead marks 0x102040
 0x42dc4	function	pll_scpi_send_to_loop	context	puts a request's validated values in the loop's message at 0x102002 by the setting's action code, and sends it
+0x42dc4	local	request	structures.md	the request it sends gpsx_exchange	gps_request_entry @ -0x1e
 0x45c8e	function	pllp_start_nothing_a	context	does nothing; pllp_task calls it after counter_init
 0x45c90	function	pllp_start_nothing_b	context	does nothing; pllp_task calls it after pllp_start_nothing_a
 0x45cc0	function	gpt_input_capture_2_interrupt	context	clears the GPT's IC2 flag, TFLG1 bit 1, and returns through trap #5; no vector names it

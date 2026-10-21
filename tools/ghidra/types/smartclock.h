@@ -515,16 +515,22 @@ typedef struct selftest_results {
 	uint8_t in_run;                  /* +0x43: set during selftest_run; nothing reads it */
 } selftest_results;
 
-/* A GPS request waiting in gpsm_task's ring: a copy of the 26-byte
- * message it took from gpsx_exchange.  Only the fields the ring's
- * routines read are named. */
+/* A GPS request: the message pll_scpi_send_to_loop, gpsx_send and
+ * gps_request_post build in 26 bytes of their frames and send
+ * gpsx_exchange, which gpsm_task receives into 26 bytes, keeps in its
+ * ring, and gps_count_response sends back to plla_exchange with the
+ * result, for pllp_task and gps_selftest_run.  The kernel copies +0x04
+ * to +0x17 (kernel_copy_message). */
 typedef struct gps_request_entry {
-	uint8_t field_00[8];
-	uint8_t id;          /* +0x08: one with the same id waiting is not queued again; 3 and 4 may be replaced */
-	uint8_t field_09;
-	int16_t code;        /* +0x0a: 0x45 empties the ring before it is queued */
-	uint8_t field_0c[6];
-	uint8_t sent;        /* +0x12: nonzero once sent; a sent request is not replaced */
+	uint32_t field_00;   /* +0x00: the senders clear it; the kernel does not copy it */
+	uint32_t field_04;   /* +0x04: the senders clear it; kernel_send_for_task refuses a nonzero one other than the exchange's id, error 4 */
+	uint8_t sender;      /* +0x08: 1 gpsx_send, 2 pll_scpi_send_to_loop, 3 and 4 gps_request_post's command and status monitors; request_kind_valid takes 1 to 4.  One with the same sender waiting is not queued again; 3 and 4 may be replaced */
+	uint8_t result;      /* +0x09: 1 as sent; gps_count_response's kind as it comes back, which pllp_task takes as gps_ack_code or pll_scpi_complete's success */
+	int16_t code;        /* +0x0a: the request, gps_request_class's index; 0x45 empties the ring before it is queued */
+	uint8_t argument_mode; /* +0x0c: gps_request_class's second argument, copied to gps_request_step's */
+	uint8_t field_0d;
+	int32_t *arguments;  /* +0x0e: four longs, which gpsm_task copies into gps_request_step's */
+	uint8_t sent;        /* +0x12: gps_request_post's last argument, 1 for the status monitor's 0x4b; a newest waiting request with it set is not replaced */
 	uint8_t field_13[7];
 } gps_request_entry;
 
@@ -1232,6 +1238,22 @@ typedef struct scpi_action_param {
 	uint8_t last_index;   /* +0x01: indexes less one */
 	void *action;         /* +0x02: called with the index and the source */
 } scpi_action_param;
+
+/* A SCPI request to the pllc task: the 24-byte message pllc_request_a
+ * to pllc_request_e build in their frames and send pllc_exchange, which
+ * pll_scpi_receive receives into 24 bytes and get_setup_vars copies
+ * into pll_scpi_param to pll_scpi_values.  The kernel copies +0x04 to
+ * +0x17 (kernel_copy_message). */
+typedef struct pllc_request {
+	uint32_t field_00;   /* +0x00: not set; the kernel does not copy it */
+	uint32_t field_04;   /* +0x04: cleared; as gps_request_entry's */
+	void *param;         /* +0x08: the descriptor, a scpi_numeric_param, scpi_setting_param or scpi_action_param; pll_scpi_param */
+	uint8_t index;       /* +0x0c: pll_scpi_index */
+	uint8_t source;      /* +0x0d: pll_scpi_source; for 0 the SCPI task is signaled when it is done */
+	uint8_t field_0e;    /* +0x0e: not set */
+	uint8_t setting;     /* +0x0f: a setting's new value, pll_scpi_setting; pllc_request_a's alone */
+	uint32_t values[2];  /* +0x10: by the numeric descriptor's is_integer: 0 the value in values[1], 1 in values[0], 3 both, 2 values[0] the address of index + 1 longs */
+} pllc_request;
 
 /* A decoder of an Oncore message and the record in gps it fills. */
 typedef struct oncore_decoder {

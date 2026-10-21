@@ -83,6 +83,7 @@ request scripts in `oncore/`.
 - [The C library](libc.md)
 - [The real-time kernel](psos.md)
 - [Structures](structures.md)
+- [Modules](modules.md)
 
 ## Summary
 

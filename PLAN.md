@@ -1270,6 +1270,13 @@ view cannot drift apart.  The library, bottom up:
      all, every one agreeing.  `interpolator_verify` stays the
      decompiler's, returning on its failure paths a register its caller
      left.
+     Then the plan for regrouping all 1300 C functions, hand-written
+     or not, by subject in four layers, platform, devices, services and
+     applications, each calling only its own or a lower one:
+     `tools/ghidra/names/modules.tsv` gives each its module and
+     `docs/firmware/modules.md` the layers, the modules, the eleven
+     calls that go the wrong way and the 61 hand-written functions
+     whose file is not their module's.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

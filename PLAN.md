@@ -687,7 +687,7 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1251 run, 1239 agree, 1 reaches what the
+     original reads them: of 1252 run, 1240 agree, 1 reaches what the
      harness does not model and is skipped, and 11 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
@@ -1136,7 +1136,10 @@ view cannot drift apart.  The library, bottom up:
      the code, each change checked here in the harness: the clock's,
      NV records' and drivers' (`calendar_date`; byte and word results;
      a date or time local where the code works on its bytes; 1098 to
-     1053).
+     1053), and the GPS side's (the snapshot's `satellite_sets`, the
+     command log's time, the GPS time query's; 1053 to 1043, and
+     `satellites_in_use`, whose prototype it now has, runs and agrees:
+     1240).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

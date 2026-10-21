@@ -410,7 +410,7 @@
 0x102544	label	status_summary	structures.md	six bits from status register 6's groups, the last field of the es message	uint8_t
 0x102554	label	efc_gains	structures.md	the EFC's gain and what efc_gain_set derives from it	efc_gain_values
 0x10256c	label	gps_command	structures.md	the GPS command the console's GPS words leave for pllp_task	gps_command_mailbox
-0x102584	label	gps_ack_code	structures.md	"mask angle ack failure: %02X" and eight more	uint8_t
+0x102584	label	gps_ack_code	structures.md	"mask angle ack failure: %02X" and eight more; read signed, extb.l before each print (0x468fe, 0x46972)	int8_t
 0x10264c	label	psos_config	structures.md	the kernel's configuration table, memcpy'd from ROM 0x5122a, 0x62 bytes; the kernel reaches it through the pointer at 0x51226	psos_configuration
 0x1025bc	label	io_table	structures.md	the kernel's I/O table, memcpy'd from ROM 0x5171a, 0x90 bytes; psos_config.io_table points at it	io_device_jumps[4]
 0x1026ae	label	task_name_text	structures.md	task_name copies a task's four-character name here and returns it; its NUL is object_name_text's first byte	char[4]
@@ -784,6 +784,7 @@
 0x11942	function	print_exception	"%s: %s", ": PC = %#8x, SR = %#04x", ", address = %#8x", "RESET to recover."	prints an exception's name, PC, SR and address
 0x4c940	function	gps_print_command_log	"GPS Receiver Command Log", "Task  ID  Command     Date and Time Issued"	prints the GPS receiver command log	void gps_print_command_log(gps_command_log *log)
 0x4c754	function	gps_print_command	a command log line, "SCPI1", "GPSc", "GPSs"	prints one entry of the GPS receiver command log	int gps_print_command(gps_command_log *log, char *line)
+0x4c754	local	entry	read	the oldest entry, copied by five longs (0x4c776 to 0x4c782) before read advances; its date and time go to format_date and format_time (0x4c79e, 0x4c7aa)	gps_command_log_entry @ -0x2e
 0x46838	function	gps_init_sequence	the states print_gps_init_state names, each with its "... ack failure: %02X"	steps the GPS engine's initialization: each setting sent, then its acknowledgment checked
 0x46838	local	arguments	structures.md	the four longs it gives gpsx_send, which copies all four to gpsx_arguments	uint32_t[4] @ -0x64
 0x46d98	function	gps_leap_sequence	the states print_leap_check_state names; "leap pending ack failure: %02X"	steps the leap second check with the GPS engine
@@ -843,7 +844,7 @@
 0x101cf4	label	efc_range	structures.md	efc_clamp's and hmon_check_efc's flags: clamped, near the end of range, and the checks outside it	efc_range_state
 0x24440	function	log_reset_cause	context	logs the last reset's cause with the time: "Exception: %s, vector %04X, PC = %08X" or "Watchdog timeout: clk %1d ..."
 0x46e70	function	gps_leap_ack	context	the leap second's acknowledgement step; "Error in leapsecond ack"; sets the GPS-UTC offset
-0x471fc	function	gps_diag_sequence	context	the GPS diagnostic reset and test; "Error in DIAG GPS RST ack", "TST ack"
+0x471fc	function	gps_diag_sequence	context	the GPS diagnostic reset and test; "Error in DIAG GPS RST ack", "TST ack"; 1 once the self-test has run and pllp_task is to restart the loop	bool gps_diag_sequence(bool same_stage)
 0x417c6	function	aging_fit	loop.md's aging fit, in curv: "failed line fit", "pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f", "HQ= %.1e mode= %d"	fits the oscillator's aging curve, for the curv task
 0x40556	function	interpolator_sample	context	sets HDAC channels 2 and 3 and takes both interpolator readings; "First-time interp test."	void interpolator_sample(interpolator_calibration *calibration)
 0x49a6e	function	format_satellite_cell	context	a satellite's status screen cell: "%2d %3d", "Ignore", "Not OK", "Acq"
@@ -1229,7 +1230,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4f1f8	function	visible_satellites	context	the set and count of visible GPS satellites, from gps.visibility	undefined4 visible_satellites(undefined1 *param_1,uint32_t *param_2)
 0x4f32c	function	satellite_find	context	finds a satellite by ID in a table of 10-byte entries, by bisection	oncore_visible_satellite *satellite_find(uint8_t id, void *table)
 0x49654	function	satellite_elevation_azimuth	context	a satellite's elevation and azimuth, valid below 91 and 360	void satellite_elevation_azimuth(oncore_visible_satellite *satellite, uint8_t *entry)
-0x49474	function	satellite_sets_build	context	for status_snapshot: the sets of GPS and pseudolite satellites, by band of signal level	void satellite_sets_build(uint8_t *param_1,uint *param_2)
+0x49474	function	satellite_sets_build	context	for status_snapshot: the sets of GPS and pseudolite satellites visible, used and tracked, and the tracked by @@Ba channel mode	void satellite_sets_build(oncore_channel_status *channels, satellite_sets *sets)
 0x49688	function	satellite_status	context	for status_snapshot: a satellite's status code for the screen	void satellite_status(char param_1,byte param_2,int param_3,int param_4,undefined1 *param_5)
 0x49612	function	satellite_track_class	context	a track record's class, 1 to 3	uint8_t satellite_track_class(oncore_visible_satellite *satellite)
 0x497c8	function	satellite_status_list	context	for status_snapshot: the screen's list of satellites, built and sorted
@@ -1639,10 +1640,11 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4ef70	function	word_copy_advance	context	copies a word and advances the source
 0x4ef8e	function	bytes_to_long	context	four bytes, high first, as a long
 0x4f002	function	word_copy_14_bits	context	copies a word's low 14 bits and advances the source
-0x4f28e	function	satellites_in_use	context	the sets and counts of GPS and pseudolite satellites the channels use for position	undefined4 satellites_in_use(undefined1 *param_1,undefined1 *param_2,undefined4 *param_3,undefined1 *param_4)
+0x4f28e	function	satellites_in_use	context	the sets and counts of GPS and pseudolite satellites the channels use for position	int satellites_in_use(uint8_t *count, uint8_t *pseudolite_count, uint32_t *set, uint8_t *pseudolite_set)
 0x4f39a	function	position_settable	context	1 unless the receiver holds its position or is surveying
 0x4f3b2	function	gps_position_get	context	the receiver's latitude, longitude and MSL height, if it has reported them
-0x4f3de	function	gps_time_local_get	context	the receiver's date and time, in local time, if it has reported them
+0x4f3de	function	gps_time_local_get	context	the receiver's date and time, in local time, if it has reported them; the time through the first pointer, the date through the second	bool gps_time_local_get(time_of_day *time, uint32_t *date)
+0x2b0ae	local	time	read	:DIAGnostic:GPSystem:TIME?'s time from gps_time_local_get (0x2b0ca); hour, minute and second read as bytes (0x2b0e8, 0x2b0f0, 0x2b0fa)	time_of_day @ -0xc
 0x4f42e	function	survey_progress_percent	context	the survey's progress, positions averaged against the duration, in percent
 0x4f4ca	function	survey_progress_text	context	the survey's progress as text, for :DOUGlas:PROGress?
 0x4f59a	function	oncore_position_message	gps.md	decodes the position and status message, and while surveying averages its position
@@ -1831,6 +1833,7 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 #
 # the last application routines
 0x110d6	function	oncore_date_unpack	context	the inverse of oncore_date_pack: year << 16 | month << 8 | day back to month << 24 | day << 16 | year; called by nothing	uint32_t oncore_date_unpack(uint32_t packed)
+0x110d6	local	fields	read	the month, day and year it builds from the packed date's bytes and returns as a long (0x110e0 to 0x110f2)	oncore_date_fields @ -0x8
 0x122f6	function	double_decimal_exponent_rounded	context	the decimal exponent of a double's magnitude rounded, by bisection over 5e-30 to 5e30 at 0x1234c; called by nothing
 0x1258a	function	double_decimal_exponent	context	floor(log10) of a double's magnitude, by bisection over power_of_ten_double's table, 1e-30 to 1e30 at 0x12614; called by nothing
 0x1749e	function	cpu_register_test	context, read	selftest_cpu's register test: 0x55555555 and 0xaaaaaaaa through every data and address register; 1 at 0x100c24 on a failure; called as C, D0.w 0 on a pass, but its body is the registers themselves, which C cannot say		convention=other; confidence=read; family=selftest

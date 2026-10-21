@@ -1439,7 +1439,7 @@
 {"address":"00047078","name":"leap_ack_pending","note":"1 while a leap second acknowledgment is pending, pll +0x2c or +0x2d","convention":"unknown"}
 {"address":"00047090","name":"leap_ack_request","note":"in holdover to normal PLL, stages 3 to 6, sets pll.leap_ack_requested","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000470aa","name":"gps_command_send","note":"maps the pending GPS command code at 0x10256c to an Oncore command and sends it","convention":"unknown"}
-{"address":"000471fc","name":"gps_diag_sequence","note":"the GPS diagnostic reset and test; \"Error in DIAG GPS RST ack\", \"TST ack\"","convention":"unknown","stack":[{"offset":4,"size":1}]}
+{"address":"000471fc","name":"gps_diag_sequence","note":"the GPS diagnostic reset and test; \"Error in DIAG GPS RST ack\", \"TST ack\"; 1 once the self-test has run and pllp_task is to restart the loop","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"000473d2","name":"pll_init","note":"clears pll, sets its stage invalid, its EFC from the saved value, tfom 1.0 and its defaults","convention":"unknown"}
 {"address":"00047466","name":"pll_restart","note":"re-initializes pll, keeping two bytes, reports event /, and starts the power-up stage","convention":"unknown"}
 {"address":"000474c2","name":"efc_gain_set","note":"sets the EFC's fractional frequency a count, 6.25e-13 from pllp_task, and the values derived from it: its reciprocal, 1 ns/s and 5e-9 a day in counts","convention":"unknown","stack":[{"offset":4,"size":4}]}
@@ -1462,7 +1462,7 @@
 {"address":"00049054","name":"gps_print_status","note":"print_stat's request, 0x32","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00049210","name":"gps_debug_status","note":"gps.status as the \"gs: %02d:%02d:%02d.%09d,...\" debug line","convention":"unknown"}
 {"address":"000493c0","name":"gps_print_id","note":"pr_gps_id's request, 0x36","convention":"unknown"}
-{"address":"00049474","name":"satellite_sets_build","note":"for status_snapshot: the sets of GPS and pseudolite satellites, by band of signal level","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"00049474","name":"satellite_sets_build","note":"for status_snapshot: the sets of GPS and pseudolite satellites visible, used and tracked, and the tracked by @@Ba channel mode","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000495e2","name":"satellite_in_set","note":"bit prn - 1 of a mask, or prn - 0x21 for the second kind","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":1},{"offset":8,"size":4}]}
 {"address":"00049612","name":"satellite_track_class","note":"a track record's class, 1 to 3","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00049654","name":"satellite_elevation_azimuth","note":"a satellite's elevation and azimuth, valid below 91 and 360","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
@@ -1555,7 +1555,7 @@
 {"address":"0004f32c","name":"satellite_find","note":"finds a satellite by ID in a table of 10-byte entries, by bisection","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4}]}
 {"address":"0004f39a","name":"position_settable","note":"1 unless the receiver holds its position or is surveying","convention":"unknown"}
 {"address":"0004f3b2","name":"gps_position_get","note":"the receiver's latitude, longitude and MSL height, if it has reported them","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"0004f3de","name":"gps_time_local_get","note":"the receiver's date and time, in local time, if it has reported them","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"0004f3de","name":"gps_time_local_get","note":"the receiver's date and time, in local time, if it has reported them; the time through the first pointer, the date through the second","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0004f42e","name":"survey_progress_percent","note":"the survey's progress, positions averaged against the duration, in percent","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0004f4ca","name":"survey_progress_text","note":"the survey's progress as text, for :DOUGlas:PROGress?","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0004f596","name":"status_screen_length","note":"returns 23, :SYSTem:PRINt:LENGth?'s answer","convention":"unknown"}

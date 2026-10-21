@@ -311,6 +311,26 @@ struct fpga_bit {
     uint8_t field_3;
 };
 
+typedef struct gps_request_entry gps_request_entry, *Pgps_request_entry;
+
+struct gps_request_entry {
+    uint8_t field_00[8];
+    uint8_t id;
+    uint8_t field_09;
+    int16_t code;
+    uint8_t field_0c[6];
+    uint8_t sent;
+    uint8_t field_13[7];
+};
+
+typedef struct gps_request_ring gps_request_ring, *Pgps_request_ring;
+
+struct gps_request_ring {
+    struct gps_request_entry entries[5];
+    struct gps_request_entry *read;
+    struct gps_request_entry *write;
+};
+
 typedef struct gps_state gps_state, *Pgps_state;
 
 typedef struct oncore_time_fields oncore_time_fields, *Poncore_time_fields;
@@ -1052,6 +1072,8 @@ _Static_assert(sizeof(efc_ring) == 870, "efc_ring");
 _Static_assert(sizeof(exception_record) == 18, "exception_record");
 _Static_assert(sizeof(forth_user_area) == 40, "forth_user_area");
 _Static_assert(sizeof(fpga_bit) == 4, "fpga_bit");
+_Static_assert(sizeof(gps_request_entry) == 26, "gps_request_entry");
+_Static_assert(sizeof(gps_request_ring) == 138, "gps_request_ring");
 _Static_assert(sizeof(gps_state) == 1370, "gps_state");
 _Static_assert(sizeof(gps_statistics) == 54, "gps_statistics");
 _Static_assert(sizeof(interpolator_calibration) == 9, "interpolator_calibration");
@@ -1184,6 +1206,7 @@ extern uint8_t gps_response_buffer[20]; /* 00101266 */
 extern uint8_t * gps_response_cursor; /* 0010138c */
 extern uint8_t * gps_print_cursor; /* 00101390 */
 extern uint8_t gps_receive_state; /* 00101394 */
+extern gps_request_ring gps_requests; /* 0010139e */
 extern gps_statistics gps_counts; /* 001017bc */
 extern void * gps_last_command; /* 001017f2 */
 extern uint8_t gps_pps_dead; /* 00101b6e */
@@ -1601,9 +1624,6 @@ extern undefined DAT_001011c6; /* 001011c6 */
 extern short DAT_00101396; /* 00101396 */
 extern short DAT_00101398; /* 00101398 */
 extern char DAT_0010139c; /* 0010139c */
-extern undefined DAT_00101406; /* 00101406 */
-extern undefined DAT_00101420; /* 00101420 */
-extern undefined DAT_00101424; /* 00101424 */
 extern char DAT_00101428; /* 00101428 */
 extern char DAT_00101429; /* 00101429 */
 extern byte DAT_0010142a; /* 0010142a */
@@ -1619,7 +1639,7 @@ extern undefined DAT_00101b4a; /* 00101b4a */
 extern char DAT_00101b54; /* 00101b54 */
 extern char DAT_00101b55; /* 00101b55 */
 extern short DAT_00101b56; /* 00101b56 */
-extern char DAT_00101b58; /* 00101b58 */
+extern uint8_t DAT_00101b58; /* 00101b58 */
 extern undefined DAT_00101b5a; /* 00101b5a */
 extern byte DAT_00101b6a; /* 00101b6a */
 extern byte DAT_00101b6b; /* 00101b6b */
@@ -2459,9 +2479,6 @@ __asm__(".set DAT_001011c6, 0x001011c6");
 __asm__(".set DAT_00101396, 0x00101396");
 __asm__(".set DAT_00101398, 0x00101398");
 __asm__(".set DAT_0010139c, 0x0010139c");
-__asm__(".set DAT_00101406, 0x00101406");
-__asm__(".set DAT_00101420, 0x00101420");
-__asm__(".set DAT_00101424, 0x00101424");
 __asm__(".set DAT_00101428, 0x00101428");
 __asm__(".set DAT_00101429, 0x00101429");
 __asm__(".set DAT_0010142a, 0x0010142a");
@@ -3210,6 +3227,7 @@ __asm__(".set gps_pps_gate, 0x00101cfd");
 __asm__(".set gps_pps_last_count, 0x00101cfc");
 __asm__(".set gps_print_cursor, 0x00101390");
 __asm__(".set gps_receive_state, 0x00101394");
+__asm__(".set gps_requests, 0x0010139e");
 __asm__(".set gps_response_buffer, 0x00101266");
 __asm__(".set gps_response_cursor, 0x0010138c");
 __asm__(".set gps_time, 0x001009d2");
@@ -4025,10 +4043,6 @@ extern short _DAT_00100c44;
 __asm__(".set _DAT_00100c44, 0x00100c44");
 extern short _DAT_00100c46;
 __asm__(".set _DAT_00100c46, 0x00100c46");
-extern undefined4 *_DAT_00101420;
-__asm__(".set _DAT_00101420, 0x00101420");
-extern undefined4 *_DAT_00101424;
-__asm__(".set _DAT_00101424, 0x00101424");
 extern undefined *_DAT_0010155c;
 __asm__(".set _DAT_0010155c, 0x0010155c");
 extern undefined *_DAT_0010199a;
@@ -5996,9 +6010,9 @@ uint8_t gps_receive(void);
 undefined4 gps_response_timed_out(short param_1,uint *param_2);
 bool gps_count_response(char param_1,int param_2);
 void request_ring_clear(void);
-bool request_ring_put(undefined4 *param_1);
-undefined4 request_ring_get(undefined4 *param_1);
-undefined4 request_ring_unput(undefined4 *param_1);
+bool request_ring_put(gps_request_entry *entry);
+int request_ring_get(gps_request_entry *entry);
+int request_ring_unput(gps_request_entry *entry);
 bool request_ring_empty(void);
 bool request_ring_full(void);
 undefined4 request_ring_contains(char param_1,char param_2,char param_3);
@@ -64605,156 +64619,167 @@ bool gps_count_response(char param_1,int param_2)
 
 /* 0004baaa */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* empties the ring of pending GPS requests, 26-byte entries at 0x10139e to 0x10141f
    gps.md, "Requests" */
 
 void request_ring_clear(void)
 
 {
-  _DAT_00101424 = 0x10139e;
-  _DAT_00101420 = 0x10139e;
+  gps_requests.write = gps_requests.entries;
+  gps_requests.read = gps_requests.entries;
   return;
 }
 
 
 /* 0004baba */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* adds a request to the ring; 0 if it is full
    gps.md, "Requests" */
 
-bool request_ring_put(undefined4 *param_1)
+bool request_ring_put(gps_request_entry *entry)
 
 {
-  undefined4 *puVar1;
-  bool bVar2;
+  uint8_t uVar1;
+  int16_t iVar2;
+  gps_request_ring *pgVar3;
+  bool bVar4;
   
-  puVar1 = (undefined4 *)((int)_DAT_00101424 + 0x1a);
-  if ((undefined4 *)0x10141f < puVar1) {
-    puVar1 = (undefined4 *)0x10139e;
+  pgVar3 = (gps_request_ring *)(gps_requests.write + 1);
+  if ((gps_request_ring *)(gps_requests.entries[4].field_13 + 6) < pgVar3) {
+    pgVar3 = &gps_requests;
   }
-  bVar2 = puVar1 != _DAT_00101420;
-  if (bVar2) {
-    *_DAT_00101424 = *param_1;
-    _DAT_00101424[1] = param_1[1];
-    _DAT_00101424[2] = param_1[2];
-    _DAT_00101424[3] = param_1[3];
-    _DAT_00101424[4] = param_1[4];
-    _DAT_00101424[5] = param_1[5];
-    *(undefined2 *)(_DAT_00101424 + 6) = *(undefined2 *)(param_1 + 6);
-    _DAT_00101424 = puVar1;
+  bVar4 = pgVar3 != (gps_request_ring *)gps_requests.read;
+  if (bVar4) {
+    *(undefined4 *)(gps_requests.write)->field_00 = *(undefined4 *)entry->field_00;
+    *(undefined4 *)((gps_requests.write)->field_00 + 4) = *(undefined4 *)(entry->field_00 + 4);
+    uVar1 = entry->field_09;
+    iVar2 = entry->code;
+    (gps_requests.write)->id = entry->id;
+    (gps_requests.write)->field_09 = uVar1;
+    (gps_requests.write)->code = iVar2;
+    *(undefined4 *)(gps_requests.write)->field_0c = *(undefined4 *)entry->field_0c;
+    *(undefined4 *)((gps_requests.write)->field_0c + 4) = *(undefined4 *)(entry->field_0c + 4);
+    *(undefined4 *)((gps_requests.write)->field_13 + 1) = *(undefined4 *)(entry->field_13 + 1);
+    *(undefined2 *)((gps_requests.write)->field_13 + 5) = *(undefined2 *)(entry->field_13 + 5);
+    gps_requests.write = pgVar3->entries;
   }
-  return bVar2;
+  return bVar4;
 }
 
 
 /* 0004bb02 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* takes the oldest request from the ring; 0 if it is empty
    gps.md, "Requests" */
 
-undefined4 request_ring_get(undefined4 *param_1)
+int request_ring_get(gps_request_entry *entry)
 
 {
-  undefined4 *puVar1;
-  undefined4 uVar2;
-  undefined4 *puVar3;
+  uint8_t *puVar1;
+  uint8_t uVar2;
+  int16_t iVar3;
+  gps_request_entry *pgVar4;
+  int iVar5;
   
-  puVar1 = _DAT_00101420;
-  if (_DAT_00101420 == _DAT_00101424) {
-    uVar2 = 0;
+  pgVar4 = gps_requests.read;
+  if (gps_requests.read == gps_requests.write) {
+    iVar5 = 0;
   }
   else {
-    puVar3 = _DAT_00101420 + 1;
-    *param_1 = *_DAT_00101420;
-    param_1[1] = *puVar3;
-    param_1[2] = puVar1[2];
-    param_1[3] = puVar1[3];
-    param_1[4] = puVar1[4];
-    param_1[5] = puVar1[5];
-    *(undefined2 *)(param_1 + 6) = *(undefined2 *)(puVar1 + 6);
-    _DAT_00101420 = (undefined4 *)((int)_DAT_00101420 + 0x1a);
-    if ((undefined4 *)0x10141f < _DAT_00101420) {
-      _DAT_00101420 = (undefined4 *)0x10139e;
+    puVar1 = (gps_requests.read)->field_00;
+    *(undefined4 *)entry->field_00 = *(undefined4 *)(gps_requests.read)->field_00;
+    *(undefined4 *)(entry->field_00 + 4) = *(undefined4 *)(puVar1 + 4);
+    uVar2 = pgVar4->field_09;
+    iVar3 = pgVar4->code;
+    entry->id = pgVar4->id;
+    entry->field_09 = uVar2;
+    entry->code = iVar3;
+    *(undefined4 *)entry->field_0c = *(undefined4 *)pgVar4->field_0c;
+    *(undefined4 *)(entry->field_0c + 4) = *(undefined4 *)(pgVar4->field_0c + 4);
+    *(undefined4 *)(entry->field_13 + 1) = *(undefined4 *)(pgVar4->field_13 + 1);
+    *(undefined2 *)(entry->field_13 + 5) = *(undefined2 *)(pgVar4->field_13 + 5);
+    gps_requests.read = gps_requests.read + 1;
+    if ((gps_request_entry *)(gps_requests.entries[4].field_13 + 6) < gps_requests.read) {
+      gps_requests.read = gps_requests.entries;
     }
-    uVar2 = 1;
+    iVar5 = 1;
   }
-  return uVar2;
+  return iVar5;
 }
 
 
 /* 0004bb4e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* takes back the newest request from the ring */
 
-undefined4 request_ring_unput(undefined4 *param_1)
+int request_ring_unput(gps_request_entry *entry)
 
 {
-  undefined4 *puVar1;
-  undefined4 uVar2;
-  undefined4 *puVar3;
+  uint8_t *puVar1;
+  uint8_t uVar2;
+  int16_t iVar3;
+  gps_request_entry *pgVar4;
+  int iVar5;
   
-  if (_DAT_00101420 == _DAT_00101424) {
-    uVar2 = 0;
+  if (gps_requests.read == gps_requests.write) {
+    iVar5 = 0;
   }
   else {
-    if (_DAT_00101424 < (undefined4 *)0x10139f) {
-      _DAT_00101424 = (undefined4 *)&DAT_00101406;
+    if (gps_requests.write < (gps_request_entry *)(gps_requests.entries[0].field_00 + 1)) {
+      gps_requests.write = gps_requests.entries + 4;
     }
     else {
-      _DAT_00101424 = (undefined4 *)((int)_DAT_00101424 + -0x1a);
+      gps_requests.write = gps_requests.write + -1;
     }
-    puVar1 = _DAT_00101424;
-    puVar3 = _DAT_00101424 + 1;
-    *param_1 = *_DAT_00101424;
-    param_1[1] = *puVar3;
-    param_1[2] = puVar1[2];
-    param_1[3] = puVar1[3];
-    param_1[4] = puVar1[4];
-    param_1[5] = puVar1[5];
-    *(undefined2 *)(param_1 + 6) = *(undefined2 *)(puVar1 + 6);
-    uVar2 = 1;
+    pgVar4 = gps_requests.write;
+    puVar1 = (gps_requests.write)->field_00;
+    *(undefined4 *)entry->field_00 = *(undefined4 *)(gps_requests.write)->field_00;
+    *(undefined4 *)(entry->field_00 + 4) = *(undefined4 *)(puVar1 + 4);
+    uVar2 = pgVar4->field_09;
+    iVar3 = pgVar4->code;
+    entry->id = pgVar4->id;
+    entry->field_09 = uVar2;
+    entry->code = iVar3;
+    *(undefined4 *)entry->field_0c = *(undefined4 *)pgVar4->field_0c;
+    *(undefined4 *)(entry->field_0c + 4) = *(undefined4 *)(pgVar4->field_0c + 4);
+    *(undefined4 *)(entry->field_13 + 1) = *(undefined4 *)(pgVar4->field_13 + 1);
+    *(undefined2 *)(entry->field_13 + 5) = *(undefined2 *)(pgVar4->field_13 + 5);
+    iVar5 = 1;
   }
-  return uVar2;
+  return iVar5;
 }
 
 
 /* 0004bb9a */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* 1 if the request ring is empty */
 
 bool request_ring_empty(void)
 
 {
-  return _DAT_00101420 == _DAT_00101424;
+  return gps_requests.read == gps_requests.write;
 }
 
 
 /* 0004bbb0 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* 1 if the request ring is full */
 
 bool request_ring_full(void)
 
 {
-  uint uVar1;
+  gps_request_ring *pgVar1;
   
-  uVar1 = _DAT_00101424 + 0x1a;
-  if (0x10141f < uVar1) {
-    uVar1 = 0x10139e;
+  pgVar1 = (gps_request_ring *)(gps_requests.write + 1);
+  if ((gps_request_ring *)(gps_requests.entries[4].field_13 + 6) < pgVar1) {
+    pgVar1 = &gps_requests;
   }
-  return uVar1 == _DAT_00101420;
+  return pgVar1 == (gps_request_ring *)gps_requests.read;
 }
 
 
 /* 0004bbd6 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* 1 if a request with the ID is waiting in the ring */
 
@@ -64762,15 +64787,15 @@ undefined4 request_ring_contains(char param_1,char param_2,char param_3)
 
 {
   undefined4 uVar1;
-  uint uVar2;
+  gps_request_ring *pgVar2;
   
-  uVar2 = _DAT_00101420;
+  pgVar2 = (gps_request_ring *)gps_requests.read;
   if ((param_1 == '\0') || (param_2 != param_3)) {
-    while (uVar2 != _DAT_00101424) {
-      if (param_2 == *(char *)(uVar2 + 8)) goto LAB_0004bbee;
-      uVar2 = uVar2 + 0x1a;
-      if (0x10141f < uVar2) {
-        uVar2 = 0x10139e;
+    while (pgVar2 != (gps_request_ring *)gps_requests.write) {
+      if (param_2 == pgVar2->entries[0].id) goto LAB_0004bbee;
+      pgVar2 = (gps_request_ring *)(pgVar2->entries + 1);
+      if ((gps_request_ring *)(gps_requests.entries[4].field_13 + 6) < pgVar2) {
+        pgVar2 = &gps_requests;
       }
     }
     uVar1 = 0;
@@ -64790,15 +64815,13 @@ LAB_0004bbee:
 undefined4 request_ring_newest_replaceable(void)
 
 {
-  undefined4 uVar1;
-  undefined4 auStack_1e [2];
-  char local_16;
-  char local_c;
+  int iVar1;
+  gps_request_entry gStack_1e;
   
-  uVar1 = request_ring_unput(auStack_1e);
-  if (((char)uVar1 != '\0') &&
-     (((request_ring_put(auStack_1e), local_16 == '\x03' || (local_16 == '\x04')) &&
-      (local_c == '\0')))) {
+  iVar1 = request_ring_unput(&gStack_1e);
+  if (((char)iVar1 != '\0') &&
+     (((request_ring_put(&gStack_1e), gStack_1e.id == 3 || (gStack_1e.id == 4)) &&
+      (gStack_1e.sent == 0)))) {
     return 1;
   }
   return 0;
@@ -64836,11 +64859,11 @@ undefined4 request_kind_valid(char param_1)
 void gps_request_queue(char param_1,int param_2,int param_3)
 
 {
-  undefined4 uVar1;
+  int iVar1;
   char cVar2;
   int *piVar3;
   int *piVar4;
-  undefined4 auStack_1e [6];
+  gps_request_entry gStack_1e;
   
   piVar4 = (int *)&stack0xffffffd6;
   if (*(short *)(param_2 + 10) == 0x45) {
@@ -64853,15 +64876,15 @@ void gps_request_queue(char param_1,int param_2,int param_3)
       piVar4 = piVar3 + 1;
 LAB_0004bcac:
       piVar3 = (int *)((int)piVar4 + -4);
-      *(undefined4 **)((int)piVar4 + -4) = auStack_1e;
+      *(gps_request_entry **)((int)piVar4 + -4) = &gStack_1e;
       *(undefined4 *)((int)piVar4 + -8) = 0x4bcb4;
-      uVar1 = request_ring_get(*(undefined4 **)((int)piVar4 + -4));
-      if ((char)uVar1 == '\0') break;
-      *(undefined4 **)((int)piVar4 + -4) = auStack_1e;
+      iVar1 = request_ring_get(*(gps_request_entry **)((int)piVar4 + -4));
+      if ((char)iVar1 == '\0') break;
+      *(gps_request_entry **)((int)piVar4 + -4) = &gStack_1e;
     }
     *(int *)((int)piVar4 + -4) = param_2;
     *(undefined4 *)((int)piVar4 + -8) = 0x4bcbe;
-    request_ring_put(*(undefined4 **)((int)piVar4 + -4));
+    request_ring_put(*(gps_request_entry **)((int)piVar4 + -4));
     DAT_0010139c = 0;
     return;
   }
@@ -64875,11 +64898,11 @@ LAB_0004bcac:
         if (cVar2 != '\0') goto LAB_0004bd18;
       }
       else {
-        request_ring_unput(auStack_1e);
-        gps_count_response('\x05',(int)auStack_1e);
+        request_ring_unput(&gStack_1e);
+        gps_count_response('\x05',(int)&gStack_1e);
       }
     }
-    request_ring_put((undefined4 *)param_2);
+    request_ring_put((gps_request_entry *)param_2);
   }
   else {
 LAB_0004bd18:
@@ -65100,23 +65123,19 @@ void gpsm_task(void)
   char local_d6;
   short local_d4;
   char local_d2;
-  undefined4 uStack_c4;
-  undefined4 uStack_c0;
-  undefined4 uStack_bc;
-  undefined4 uStack_b8;
-  undefined4 uStack_b4;
-  undefined4 uStack_b0;
-  undefined2 uStack_ac;
-  undefined4 uStack_aa;
-  undefined4 uStack_a6;
-  undefined4 uStack_a2;
-  char cStack_9e;
-  undefined1 uStack_9d;
+  gps_request_entry gStack_c4;
+  uint8_t auStack_aa [4];
+  uint8_t auStack_a6 [4];
+  uint8_t uStack_a2;
+  uint8_t uStack_a1;
+  short sStack_a0;
+  uint8_t uStack_9e;
+  uint8_t uStack_9d;
   undefined2 uStack_9c;
   undefined2 uStack_9a;
   undefined2 uStack_98;
-  undefined4 uStack_96;
-  undefined2 uStack_92;
+  uint8_t auStack_96 [4];
+  uint8_t auStack_92 [2];
   undefined **ppuStack_90;
   short sStack_8c;
   char cStack_8a;
@@ -65157,7 +65176,7 @@ void gpsm_task(void)
           gps_count_response('\x04',(int)auStack_de);
         }
         else {
-          gps_request_queue(DAT_0010139c,(int)auStack_de,(int)&uStack_aa);
+          gps_request_queue(DAT_0010139c,(int)auStack_de,(int)auStack_aa);
         }
       }
     }
@@ -65165,7 +65184,7 @@ void gpsm_task(void)
       gps_counts.received_errors = gps_counts.received_errors + 1;
     }
     if ((DAT_0010139c == '\0') && (cVar6 = request_ring_empty(), cVar6 == '\0')) {
-      request_ring_get(&uStack_c4);
+      request_ring_get(&gStack_c4);
       local_34 = '\x01';
     }
     else {
@@ -65184,25 +65203,37 @@ void gpsm_task(void)
           gps_counts.responses_read = gps_counts.responses_read + 1;
         }
         if (local_34 != '\0') {
-          uStack_aa = uStack_c4;
-          uStack_a6 = uStack_c0;
-          uStack_a2 = uStack_bc;
-          cStack_9e = (char)((uint)uStack_b8 >> 0x18);
-          uStack_9d = (undefined1)((uint)uStack_b8 >> 0x10);
-          uStack_9c = (undefined2)uStack_b8;
-          uStack_9a = (undefined2)((uint)uStack_b4 >> 0x10);
-          uStack_98 = (undefined2)uStack_b4;
-          uStack_96 = uStack_b0;
-          uStack_92 = uStack_ac;
-          cStack_32 = gps_request_class(__ghidra_piece(unsigned short, uStack_bc, 2),cStack_9e);
+          auStack_aa[0] = gStack_c4.field_00[0];
+          auStack_aa[1] = gStack_c4.field_00[1];
+          auStack_aa[2] = gStack_c4.field_00[2];
+          auStack_aa[3] = gStack_c4.field_00[3];
+          auStack_a6[0] = gStack_c4.field_00[4];
+          auStack_a6[1] = gStack_c4.field_00[5];
+          auStack_a6[2] = gStack_c4.field_00[6];
+          auStack_a6[3] = gStack_c4.field_00[7];
+          uStack_a2 = gStack_c4.id;
+          uStack_a1 = gStack_c4.field_09;
+          sStack_a0 = gStack_c4.code;
+          uStack_9e = gStack_c4.field_0c[0];
+          uStack_9d = gStack_c4.field_0c[1];
+          uStack_9c = __ghidra_piece(unsigned short, gStack_c4.field_0c, 2);
+          uStack_9a = __ghidra_piece(unsigned short, gStack_c4.field_0c, 4);
+          uStack_98 = __ghidra_piece(unsigned short, gStack_c4, 18);
+          auStack_96[0] = gStack_c4.field_13[1];
+          auStack_96[1] = gStack_c4.field_13[2];
+          auStack_96[2] = gStack_c4.field_13[3];
+          auStack_96[3] = gStack_c4.field_13[4];
+          auStack_92[0] = gStack_c4.field_13[5];
+          auStack_92[1] = gStack_c4.field_13[6];
+          cStack_32 = gps_request_class(gStack_c4.code,uStack_9e);
           iVar4 = (int)cStack_32 - 2;
           if ((uint)(int)cStack_32 < 2 || iVar4 == 0) {
                     /* WARNING: Switch is manually overridden */
             switch((&WORD_0004c0c8)[(short)iVar4]) {
             case 6:
               if (DAT_001011c4 == '\0') {
-                DAT_00101b56 = __ghidra_piece(unsigned short, uStack_a2, 2);
-                DAT_00101b58 = cStack_9e;
+                DAT_00101b56 = sStack_a0;
+                DAT_00101b58 = uStack_9e;
                 bVar7 = 0;
                 do {
                   *(undefined4 *)(&DAT_00101b5a + (uint)bVar7 * 4) =
@@ -65224,7 +65255,7 @@ void gpsm_task(void)
                        *(undefined4 *)(CONCAT22(uStack_9c,uStack_9a) + (uint)bVar7 * 4);
                   bVar7 = bVar7 + 1;
                 } while (bVar7 < 4);
-                ppuStack_90 = (undefined **)gps_script_lookup(__ghidra_piece(unsigned short, uStack_a2, 2));
+                ppuStack_90 = (undefined **)gps_script_lookup(sStack_a0);
                 bStack_10 = 0;
                 bStack_2a = 0;
                 DAT_0010139c = '\x01';
@@ -65232,15 +65263,15 @@ void gpsm_task(void)
               }
               break;
             case 0x98:
-              gps_console_request(__ghidra_piece(unsigned short, uStack_a2, 2),
+              gps_console_request(sStack_a0,
                                   (undefined4 *)
                                   CONCAT31(CONCAT21(uStack_9c,(char)((ushort)uStack_9a >> 8)),
-                                           (char)uStack_9a),__ghidra_piece(unsigned char, uStack_a2, 0));
+                                           (char)uStack_9a),uStack_a2);
             }
-            gps_count_response('\0',(int)&uStack_aa);
+            gps_count_response('\0',(int)auStack_aa);
           }
 LAB_0004c17a:
-          gps_last_command = &uStack_aa;
+          gps_last_command = auStack_aa;
         }
         break;
       case 300:
@@ -65250,7 +65281,7 @@ LAB_0004c17a:
           gps_counts.responses_read = gps_counts.responses_read + 1;
         }
         if (*ppuStack_90 == (undefined *)0x0) {
-          gps_count_response('\0',(int)&uStack_aa);
+          gps_count_response('\0',(int)auStack_aa);
           DAT_0010139c = '\0';
         }
         else {
@@ -65269,8 +65300,8 @@ LAB_0004c17a:
             sVar5 = gps_request_build(sVar2,cStack_31,(int)psStack_30,&DAT_001011c6);
             if (sVar5 < 1) {
               if (sVar5 < 0) goto LAB_0004c1e6;
-              if (cStack_9e == '\0') {
-                gps_count_response('\x06',(int)&uStack_aa);
+              if (uStack_9e == 0) {
+                gps_count_response('\x06',(int)auStack_aa);
                 pcVar8 = " // command not supported //\n";
                 pcVar9 = gps_last_program_message;
                 do {
@@ -65281,7 +65312,7 @@ LAB_0004c17a:
                 } while (cVar6 != '\0');
               }
               else {
-                gps_count_response('\a',(int)&uStack_aa);
+                gps_count_response('\a',(int)auStack_aa);
                 pcVar8 = " // query form not supported //\n";
                 pcVar9 = gps_last_program_message;
                 do {
@@ -65306,13 +65337,13 @@ LAB_0004c17a:
               bStack_10 = bStack_10 + 1;
               gps_counts.commands_sent = gps_counts.commands_sent + 1;
               gps_message_to_text(&DAT_001011c6,bVar7,gps_last_program_message);
-              command_log_add((int)&uStack_aa,0x101216);
+              command_log_add((int)auStack_aa,0x101216);
               if ((&DAT_0004feec)[sVar2 * 0x38] == '\0') goto LAB_0004c1e6;
               DAT_0010139c = '\x02';
             }
           }
           else {
-            gps_console_request(sVar2,(undefined4 *)(psVar1 + 2),__ghidra_piece(unsigned char, uStack_a2, 0));
+            gps_console_request(sVar2,(undefined4 *)(psVar1 + 2),uStack_a2);
 LAB_0004c1e6:
             ppuStack_90 = ppuStack_90 + 1;
           }
@@ -65327,7 +65358,7 @@ LAB_0004c1e6:
           }
           else {
             gps.command_monitor_error = 1;
-            gps_count_response('\b',(int)&uStack_aa);
+            gps_count_response('\b',(int)auStack_aa);
             DAT_0010139c = '\0';
           }
         }
@@ -65349,7 +65380,7 @@ LAB_0004c1e6:
                                     (ushort)bStack_2a);
               if (cVar6 == '\x01') {
                 gps.command_monitor_error = 1;
-                gps_count_response('\x01',(int)&uStack_aa);
+                gps_count_response('\x01',(int)auStack_aa);
                 DAT_0010139c = '\0';
               }
               else {

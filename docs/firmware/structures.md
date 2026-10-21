@@ -674,6 +674,21 @@ restored, but only their descriptors refer to them.  In
 `fconf_regs[3]` (`counter_set_sync`, `0x40a84`) while counting the
 count down.
 
+## The GPS request ring
+
+`gpsm_task` keeps the GPS requests it has taken from `gpsx_exchange`
+and not yet sent in a ring, `gps_requests` (`0x10139e`,
+`gps_request_ring`): five 26-byte entries to `0x10141f`, then the
+oldest's address at `0x101420` and the next free one's at `0x101424`.
+It is empty when the two are equal, so it holds four.
+`gps_request_queue` (`0x4bc74`) queues a request unless one with its
+id (`+8`) is waiting, and replaces the newest waiting one, rather than
+queue behind it, if that one's id is 3 or 4 and it is not yet sent
+(`+0x12`); a request whose code (`+0xa`) is `0x45` empties the ring
+first.  The ring's routines (`request_ring_clear` to
+`request_ring_newest_replaceable`, `0x4baaa` to `0x4bc1c`) read
+nothing else of an entry.
+
 ## A date and time
 
 `datetime_add` (`0x11396`) and `datetime_subtract` (`0x11428`) take

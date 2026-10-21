@@ -951,10 +951,11 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4119c	function	int64_to_double	context	a signed 64-bit number as a double, through 2^32 at 0x41300	double int64_to_double(uint param_1,uint param_2)
 #
 # the GPS task's routines, gps.md
+0x10139e	label	gps_requests	structures.md	gpsm_task's ring of waiting GPS requests	gps_request_ring
 0x4baaa	function	request_ring_clear	gps.md, "Requests"	empties the ring of pending GPS requests, 26-byte entries at 0x10139e to 0x10141f
-0x4baba	function	request_ring_put	gps.md, "Requests"	adds a request to the ring; 0 if it is full	bool request_ring_put(undefined4 *param_1)
-0x4bb02	function	request_ring_get	gps.md, "Requests"	takes the oldest request from the ring; 0 if it is empty	undefined4 request_ring_get(undefined4 *param_1)
-0x4bb4e	function	request_ring_unput	context	takes back the newest request from the ring	undefined4 request_ring_unput(undefined4 *param_1)
+0x4baba	function	request_ring_put	gps.md, "Requests"	adds a request to the ring; 0 if it is full	bool request_ring_put(gps_request_entry *entry)
+0x4bb02	function	request_ring_get	gps.md, "Requests"	takes the oldest request from the ring; 0 if it is empty	int request_ring_get(gps_request_entry *entry)
+0x4bb4e	function	request_ring_unput	context	takes back the newest request from the ring	int request_ring_unput(gps_request_entry *entry)
 0x4bb9a	function	request_ring_empty	context	1 if the request ring is empty
 0x4bbb0	function	request_ring_full	context	1 if the request ring is full
 0x4bbd6	function	request_ring_contains	context	1 if a request with the ID is waiting in the ring

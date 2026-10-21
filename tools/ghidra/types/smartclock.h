@@ -199,6 +199,28 @@ typedef int printf_function(char *format, ...);
 /* qsort's comparator. */
 typedef int qsort_compare_function(void *a, void *b);
 
+/* A GPS request waiting in gpsm_task's ring: a copy of the 26-byte
+ * message it took from gpsx_exchange.  Only the fields the ring's
+ * routines read are named. */
+typedef struct gps_request_entry {
+	uint8_t field_00[8];
+	uint8_t id;          /* +0x08: one with the same id waiting is not queued again; 3 and 4 may be replaced */
+	uint8_t field_09;
+	int16_t code;        /* +0x0a: 0x45 empties the ring before it is queued */
+	uint8_t field_0c[6];
+	uint8_t sent;        /* +0x12: nonzero once sent; a sent request is not replaced */
+	uint8_t field_13[7];
+} gps_request_entry;
+
+/* gpsm_task's ring of waiting GPS requests: five entries, the oldest at
+ * read, the next free at write; empty when the two are equal, so it
+ * holds four. */
+typedef struct gps_request_ring {
+	gps_request_entry entries[5];
+	gps_request_entry *read;     /* +0x82 */
+	gps_request_entry *write;    /* +0x86 */
+} gps_request_ring;
+
 /* A date and time as datetime_add and datetime_subtract take them: the
  * time's hours, minutes and seconds in its low three bytes, and the date
  * packed as date_to_days reads it, or, in their first argument, a count

@@ -25,6 +25,14 @@ CHECK_FIELD(scpi_numeric_param, steps, 0x28);
 CHECK_FIELD(scpi_numeric_param, gps_request, 0x20);
 CHECK_FIELD(scpi_numeric_param, group_cell, 0x22);
 
+CHECK_SIZE(gps_request_entry, 26);
+CHECK_FIELD(gps_request_entry, id, 0x08);
+CHECK_FIELD(gps_request_entry, code, 0x0a);
+CHECK_FIELD(gps_request_entry, sent, 0x12);
+CHECK_SIZE(gps_request_ring, 0x101428 - 0x10139e);
+CHECK_FIELD(gps_request_ring, read, 0x101420 - 0x10139e);
+CHECK_FIELD(gps_request_ring, write, 0x101424 - 0x10139e);
+
 CHECK_SIZE(packed_datetime, 8);
 CHECK_FIELD(packed_datetime, date, 4);
 

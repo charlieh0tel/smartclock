@@ -1,7 +1,8 @@
 // Writes the program as C for m68k-linux-gnu-gcc -std=gnu17 -mcpu=cpu32,
 // to the file named by the script's first argument: the
-// program's structures, packed and each size asserted; the decompiler's
-// vocabulary; an extern and a .set to its address for every global the
+// program's structures, packed and each size asserted, and the #defines
+// of each header a further argument defines=HEADER names; the
+// decompiler's vocabulary; an extern and a .set to its address for every global the
 // C names; a prototype for every function; then every function in
 // address order.  Beside it, with .conventions.jsonl for .c, one JSON
 // object a line for every function: its address and name, its note, the
@@ -211,6 +212,7 @@ public class SmartClockExportC extends GhidraScript {
 			writer.print(PRELUDE);
 			writer.print(sizedOperations());
 			writeTypes(writer);
+			writeDefines(writer);
 			Map<String, String> declared = writeGlobals(writer);
 			StringBuilder functions = new StringBuilder();
 			Map<String, HighSymbol> referenced = new TreeMap<>();
@@ -613,6 +615,32 @@ public class SmartClockExportC extends GhidraScript {
 	}
 
 	/** The program's structures, unions, enums and typedefs. */
+	/** The argument naming a header whose #defines the C takes. */
+	private static final String DEFINES = "defines=";
+	/** A #define, with any lines it continues onto. */
+	private static final Pattern DEFINE_LINE =
+		Pattern.compile("(?m)^#define\\b(?:[^\\n]*\\\\\\n)*[^\\n]*$");
+
+	/**
+	 * Copies the #defines of each header a defines= argument names, which
+	 * Ghidra's C parser cannot take: the bits of the registers the types
+	 * lay out.
+	 */
+	private void writeDefines(PrintWriter writer) throws Exception {
+		for (String arg : getScriptArgs()) {
+			if (!arg.startsWith(DEFINES)) {
+				continue;
+			}
+			String path = arg.substring(DEFINES.length());
+			writer.println();
+			writer.println("/* the #defines of " + new File(path).getName() + " */");
+			Matcher define = DEFINE_LINE.matcher(Files.readString(new File(path).toPath()));
+			while (define.find()) {
+				writer.println(define.group());
+			}
+		}
+	}
+
 	private void writeTypes(PrintWriter writer) throws Exception {
 		DataTypeManager types = currentProgram.getDataTypeManager();
 		List<DataType> defined = new ArrayList<>();

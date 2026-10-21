@@ -8,15 +8,17 @@
 //   dry-run
 //       report the functions in data that would be removed, and do not
 //       remove them; everything else is applied.
-//   types=tools/ghidra/types/smartclock.h
-//       C declarations of the firmware's structures, parsed into the
-//       program before the names, so that names can use them.
+//   types=tools/ghidra/types/smartclock.h, then types=.../mc68331.h
+//       C declarations of the firmware's structures and the CPU's
+//       modules, parsed into the program in the order given, before
+//       the names, so that names can use them; their #defines are
+//       skipped, as Ghidra's C parser takes none.
 //   names=tools/ghidra/names/IMAGE.tsv
 //       address, "function", "label" or "local", name, source, and
 //       optionally a note saying what it is or does, a function's C
 //       prototype, a label's data type or a local's "TYPE @ OFFSET",
-//       and a function's calling convention, tab-separated; an address in the installer's overlay is written
-//       installer::0x....  The names file's header sets out the
+//       and a function's calling convention, tab-separated; an address
+//       in the installer's overlay is written installer::0x....  The names file's header sets out the
 //       convention's keys.  A register prototype is built from its in
 //       and out, at confidence run, read or documented only.  A
 //       function's note, its convention and its source make the comment
@@ -171,6 +173,8 @@ public class SmartClockSetup extends GhidraScript {
 	private static final String SCPI = "scpi";
 	private static final String PFORTH = "pforth";
 	private static final String TYPES = "types";
+	/** A #define, with any lines it continues onto. */
+	private static final Pattern DEFINE = Pattern.compile("(?m)^#define\\b(?:[^\\n]*\\\\\\n)*[^\\n]*$");
 	private static final String COMMENT = "#";
 	private static final String NO_HANDLER = "-";
 	private static final String FUNCTION = "function";
@@ -314,55 +318,8 @@ public class SmartClockSetup extends GhidraScript {
 	};
 
 	private static final PeripheralRegister[] REGISTERS = {
-		// GPT, MC68331UM Table D-2
-		new PeripheralRegister(0xfff900, "GPTMCR", 2), new PeripheralRegister(0xfff904, "GPT_ICR", 2),
-		new PeripheralRegister(0xfff906, "DDRGP", 1), new PeripheralRegister(0xfff907, "PORTGP", 1),
-		new PeripheralRegister(0xfff908, "OC1M", 1), new PeripheralRegister(0xfff909, "OC1D", 1),
-		new PeripheralRegister(0xfff90a, "TCNT", 2), new PeripheralRegister(0xfff90c, "PACTL", 1),
-		new PeripheralRegister(0xfff90d, "PACNT", 1), new PeripheralRegister(0xfff90e, "TIC1", 2),
-		new PeripheralRegister(0xfff910, "TIC2", 2), new PeripheralRegister(0xfff912, "TIC3", 2),
-		new PeripheralRegister(0xfff914, "TOC1", 2), new PeripheralRegister(0xfff916, "TOC2", 2),
-		new PeripheralRegister(0xfff918, "TOC3", 2), new PeripheralRegister(0xfff91a, "TOC4", 2),
-		new PeripheralRegister(0xfff91c, "TI4_O5", 2), new PeripheralRegister(0xfff91e, "TCTL1", 1),
-		new PeripheralRegister(0xfff91f, "TCTL2", 1), new PeripheralRegister(0xfff920, "TMSK1", 1),
-		new PeripheralRegister(0xfff921, "TMSK2", 1), new PeripheralRegister(0xfff922, "TFLG1", 1),
-		new PeripheralRegister(0xfff923, "TFLG2", 1), new PeripheralRegister(0xfff924, "CFORC", 1),
-		new PeripheralRegister(0xfff925, "PWMC", 1), new PeripheralRegister(0xfff926, "PWMA", 1),
-		new PeripheralRegister(0xfff927, "PWMB", 1), new PeripheralRegister(0xfff928, "PWMCNT", 2),
-		new PeripheralRegister(0xfff92a, "PWMBUFA", 1), new PeripheralRegister(0xfff92b, "PWMBUFB", 1),
-		new PeripheralRegister(0xfff92c, "PRESCL", 2),
-		// SIM, MC68331UM Table D-3
-		new PeripheralRegister(0xfffa00, "SIMCR", 2), new PeripheralRegister(0xfffa02, "SIMTR", 2),
-		new PeripheralRegister(0xfffa04, "SYNCR", 2), new PeripheralRegister(0xfffa07, "RSR", 1),
-		new PeripheralRegister(0xfffa08, "SIMTRE", 2), new PeripheralRegister(0xfffa11, "PORTE0", 1),
-		new PeripheralRegister(0xfffa13, "PORTE1", 1), new PeripheralRegister(0xfffa15, "DDRE", 1),
-		new PeripheralRegister(0xfffa17, "PEPAR", 1), new PeripheralRegister(0xfffa19, "PORTF0", 1),
-		new PeripheralRegister(0xfffa1b, "PORTF1", 1), new PeripheralRegister(0xfffa1d, "DDRF", 1),
-		new PeripheralRegister(0xfffa1f, "PFPAR", 1), new PeripheralRegister(0xfffa21, "SYPCR", 1),
-		new PeripheralRegister(0xfffa22, "PICR", 2), new PeripheralRegister(0xfffa24, "PITR", 2),
-		new PeripheralRegister(0xfffa27, "SWSR", 1), new PeripheralRegister(0xfffa41, "PORTC", 1),
-		new PeripheralRegister(0xfffa44, "CSPAR0", 2), new PeripheralRegister(0xfffa46, "CSPAR1", 2),
-		new PeripheralRegister(0xfffa48, "CSBARBT", 2), new PeripheralRegister(0xfffa4a, "CSORBT", 2),
-		new PeripheralRegister(0xfffa4c, "CSBAR0", 2), new PeripheralRegister(0xfffa4e, "CSOR0", 2),
-		new PeripheralRegister(0xfffa50, "CSBAR1", 2), new PeripheralRegister(0xfffa52, "CSOR1", 2),
-		new PeripheralRegister(0xfffa54, "CSBAR2", 2), new PeripheralRegister(0xfffa56, "CSOR2", 2),
-		new PeripheralRegister(0xfffa58, "CSBAR3", 2), new PeripheralRegister(0xfffa5a, "CSOR3", 2),
-		new PeripheralRegister(0xfffa5c, "CSBAR4", 2), new PeripheralRegister(0xfffa5e, "CSOR4", 2),
-		new PeripheralRegister(0xfffa60, "CSBAR5", 2), new PeripheralRegister(0xfffa62, "CSOR5", 2),
-		new PeripheralRegister(0xfffa64, "CSBAR6", 2), new PeripheralRegister(0xfffa66, "CSOR6", 2),
-		new PeripheralRegister(0xfffa68, "CSBAR7", 2), new PeripheralRegister(0xfffa6a, "CSOR7", 2),
-		new PeripheralRegister(0xfffa6c, "CSBAR8", 2), new PeripheralRegister(0xfffa6e, "CSOR8", 2),
-		new PeripheralRegister(0xfffa70, "CSBAR9", 2), new PeripheralRegister(0xfffa72, "CSOR9", 2),
-		new PeripheralRegister(0xfffa74, "CSBAR10", 2), new PeripheralRegister(0xfffa76, "CSOR10", 2),
-		// QSM, MC68331UM Table D-13
-		new PeripheralRegister(0xfffc00, "QSMCR", 2), new PeripheralRegister(0xfffc02, "QTEST", 2),
-		new PeripheralRegister(0xfffc04, "QILR", 1), new PeripheralRegister(0xfffc05, "QIVR", 1),
-		new PeripheralRegister(0xfffc08, "SCCR0", 2), new PeripheralRegister(0xfffc0a, "SCCR1", 2),
-		new PeripheralRegister(0xfffc0c, "SCSR", 2), new PeripheralRegister(0xfffc0e, "SCDR", 2),
-		new PeripheralRegister(0xfffc15, "PORTQS", 1), new PeripheralRegister(0xfffc16, "PQSPAR", 1),
-		new PeripheralRegister(0xfffc17, "DDRQS", 1), new PeripheralRegister(0xfffc18, "SPCR0", 2),
-		new PeripheralRegister(0xfffc1a, "SPCR1", 2), new PeripheralRegister(0xfffc1c, "SPCR2", 2),
-		new PeripheralRegister(0xfffc1e, "SPCR3", 1), new PeripheralRegister(0xfffc1f, "SPSR", 1),
+		// The GPT, the SIM and the QSM are structures in types/mc68331.h,
+		// which the names file gives their bases.
 		// 68681 DUART on an 8-bit port at odd addresses: register n at 2n+1.
 		// Read and write names differ; both are given where they do.
 		new PeripheralRegister(0x200001, "DUART_MR1A_MR2A", 1), new PeripheralRegister(0x200003, "DUART_SRA_CSRA", 1),
@@ -436,12 +393,16 @@ public class SmartClockSetup extends GhidraScript {
 	/**
 	 * Applies the naming arguments, in the order names, scpi, pforth.  A
 	 * name replaces only one Ghidra made up; otherwise it is added as a
-	 * further label, so nothing named earlier or by hand is overwritten.
+	 * further label, so nothing named earlier or by hand is overwritten,
+	 * though a names-file label becomes the primary one at its address.
 	 */
 	private void applyNames() throws Exception {
 		for (String arg : getScriptArgs()) {
 			if (arg.startsWith(TYPES + "=")) {
-				String header = Files.readString(Path.of(arg.substring(TYPES.length() + 1)));
+				// Ghidra's C parser takes no preprocessor lines but #pragma; a
+				// header's #defines are for gcc and the exported C
+				String header = DEFINE.matcher(
+					Files.readString(Path.of(arg.substring(TYPES.length() + 1)))).replaceAll("");
 				new CParser(currentProgram.getDataTypeManager(), true, null).parse(header);
 				bindByteTypes();
 				sizeEnums();
@@ -841,13 +802,22 @@ public class SmartClockSetup extends GhidraScript {
 		return type;
 	}
 
-	/** Adds name as a label at address, unless it is there already. */
+	/**
+	 * Makes name the primary label at address, adding it unless it is
+	 * there already.  Other labels there stay, but the decompiler names an
+	 * address by its primary label, and a structure the names file types
+	 * should read by the name it gives.
+	 */
 	private void label(Address address, String name, int[] counts) throws Exception {
-		if (getSymbols(name, null).stream().anyMatch(s -> s.getAddress().equals(address))) {
-			return;
+		Symbol existing = getSymbols(name, null).stream()
+			.filter(s -> s.getAddress().equals(address)).findFirst().orElse(null);
+		if (existing == null) {
+			createLabel(address, name, true, SourceType.IMPORTED);
+			counts[NameCount.LABELED.ordinal()]++;
 		}
-		createLabel(address, name, false, SourceType.IMPORTED);
-		counts[NameCount.LABELED.ordinal()]++;
+		else if (!existing.isPrimary()) {
+			existing.setPrimary();
+		}
 	}
 
 	/**

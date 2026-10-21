@@ -299,8 +299,10 @@
 0x102fea	label	duartb_ring	structures.md	DUART channel B's receive ring, the host port's	serial_ring
 0x1030ec	label	duartb	structures.md	DUART channel B's driver state, the host port	duartb_driver
 0x101d18	label	eepx_exchange	structures.md	create_x("eepx")	uint32_t
-0x103150	label	sciR_exchange	structures.md	create_x("sciR")	uint32_t
-0x10316c	label	sciW_exchange	structures.md	create_x("sciW")	uint32_t
+0x103150	label	sci_exchanges	structures.md	the SCI port's exchanges, sciR and sciW, and their token messages	sci_exchange_state
+0x103188	label	sci_ring	structures.md	the SCI port's receive ring	serial_ring
+0x10328a	label	sci	structures.md	the SCI port's driver state	sci_driver
+0x1032a6	label	qspi	structures.md	the QSPI's lock, its queue of waiting tasks, and its transfer	qspi_state
 0x1032f8	label	spoo_exchange	structures.md	create_x("spoo")	uint32_t
 0x101e84	label	max_loop_time	structures.md	pll_rep's max loop time	float
 0x1d93e	function	duart_init	structures.md	creates drtR and drtW, "Unable to create drtR"
@@ -342,8 +344,6 @@
 0x101b6f	label	internal_pps_dead	structures.md	set with "Internal 1pps signal is dead", cleared with "is ok"	uint8_t
 0x101cf8	label	internal_pps_started	structures.md	set on internal_pps_check's first pass	uint8_t
 0x101d1c	label	eepx_status	structures.md	"Unable to initialize eepx: %X", "Unable to acquire eepx token: %X"	uint32_t
-0x103154	label	sciR_status	structures.md	"Unable to initialize sciR: %X", "Unable to acquire SCI token: %X"	uint32_t
-0x103170	label	sciW_status	structures.md	"Unable to initialize sciW: %X"	uint32_t
 0x101d94	label	log_page_buffer	structures.md	log_read loads a page here and formats its entries	log_page
 0x101dd4	label	log_page_number	structures.md	the page log_page_buffer holds	int16_t
 0x102eb6	label	status_request_service	structures.md	the time code's r, the Status Byte's request-for-service summary	uint8_t
@@ -1556,3 +1556,8 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x11700	local	value	read	the date and time it is changed in	packed_datetime @ -0x20
 0x117b6	local	change	read	what to add or take away	packed_datetime @ -0x18
 0x117b6	local	value	read	the date and time it is changed in	packed_datetime @ -0x20
+#
+# the MC68331's modules, types/mc68331.h; MC68331UM Tables D-2, D-3, D-13
+0xfff900	label	gpt	MC68331UM	the general-purpose timer	gpt_registers
+0xfffa00	label	sim	MC68331UM	the system integration module	sim_registers
+0xfffc00	label	qsm	MC68331UM	the queued serial module: the SCI and the QSPI	qsm_registers

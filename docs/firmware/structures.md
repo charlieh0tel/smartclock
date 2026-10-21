@@ -504,7 +504,7 @@ is `interval_wait_reading` (`0x4513c`), then `interval_rearm`
 "mask angle ack failure: %02X" and eight like it print `gps_ack_code`
 (`0x102584`); "Unable to initialize eepx: %X" and the like print
 `eepx_status`, `duartb.read_token.status`, `duartb.write_token.status`,
-`sciR_status` and `sciW_status`.  `fine_y0` (`0x102154`), `pll.fine_index` and
+`sci_exchanges.read_token.status` and `sci_exchanges.write_token.status`.  `fine_y0` (`0x102154`), `pll.fine_index` and
 `pll.fine_d` are fine acquisition's "y0", "i" and "d" (`loop.md`).
 
 ## What the words name
@@ -735,6 +735,34 @@ received (`+0xc`, bits `0x20` and `0x80`).  The two exchange tokens,
 `exchange_token`, are the messages `duart_init` sends `drtR` and `drtW`
 once, so that a task takes the exchange before it uses the port; their
 status is what "Unable to initialize drtR: %X" prints.
+
+## The SCI port's driver
+
+The QSM's SCI port is driven as DUART channel B is.  Its exchanges,
+`sciR` and `sciW`, and their tokens are `sci_exchanges` (`0x103150`,
+`sci_exchange_state`); its receive ring is `sci_ring` (`0x103188`,
+`serial_ring`); and `sci` (`0x10328a`, `sci_driver`) has the same send,
+flow-control, error and echo state as `duartb`, but for the serial
+settings it applies itself.  SCCR1 gives the SCI even or odd parity,
+PE and PT (MC68331UM D.4.5); `sci_init` uses them for those settings,
+with `seven_bits` set so that the parity bit received is stripped, and
+makes mark parity itself, `mark_bit` sending each character with its
+top bit set.  The receive interrupt collects SCSR's OR, FE and PF --
+overrun, framing error or break, parity error (D.4.6), not NF -- in
+`receive_errors`.  `sci_puts` sets TIE, the transmit interrupt, sends
+to the string's NUL, not by count, and waits for event `0x200`.
+
+## The QSPI's lock
+
+Several tasks talk to the QSPI's devices -- the ADC, the DACs, the
+FPGA's counters -- and take turns through a lock, `qspi` (`0x1032a6`,
+`qspi_state`): `qspi_acquire` takes it if it is free, else puts its task
+in a ring of sixteen and waits for event `0x400`; `qspi_release`, or the
+QSPI's interrupt when a transfer ends, gives it to the next task waiting
+or frees it.  The interrupt also copies the transfer's result from the
+QSPI's receive RAM (`qsm.rr`, `0xfffd00` to `0xfffd1f`, MC68331UM
+Table D-13) to the buffer at `+0x46`, `+0x4a` words,
+and clears `+0x4d`, for which `qspi_start` waits.
 
 ## The EFC's gain
 

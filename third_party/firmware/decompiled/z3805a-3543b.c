@@ -861,6 +861,38 @@ struct gps_statistics {
     uint16_t status_monitor_failures;
 };
 
+typedef struct gpt_registers gpt_registers, *Pgpt_registers;
+
+struct gpt_registers {
+    uint16_t gptmcr;
+    uint16_t gptmtr;
+    uint16_t icr;
+    uint8_t ddrgp;
+    uint8_t portgp;
+    uint8_t oc1m;
+    uint8_t oc1d;
+    uint16_t tcnt;
+    uint8_t pactl;
+    uint8_t pacnt;
+    uint16_t tic[3];
+    uint16_t toc[4];
+    uint16_t ti4_o5;
+    uint8_t tctl1;
+    uint8_t tctl2;
+    uint8_t tmsk1;
+    uint8_t tmsk2;
+    uint8_t tflg1;
+    uint8_t tflg2;
+    uint8_t cforc;
+    uint8_t pwmc;
+    uint8_t pwma;
+    uint8_t pwmb;
+    uint16_t pwmcnt;
+    uint8_t pwmbufa;
+    uint8_t pwmbufb;
+    uint16_t prescl;
+};
+
 typedef struct holdover_steering_state holdover_steering_state, *Pholdover_steering_state;
 
 struct holdover_steering_state {
@@ -1094,7 +1126,51 @@ struct pll_state {
 
 typedef int (printf_function)(char *, ...);
 
+typedef struct qsm_registers qsm_registers, *Pqsm_registers;
+
+struct qsm_registers {
+    uint16_t qsmcr;
+    uint16_t qtest;
+    uint8_t qilr;
+    uint8_t qivr;
+    uint16_t reserved_06;
+    uint16_t sccr0;
+    uint16_t sccr1;
+    uint16_t scsr;
+    uint16_t scdr;
+    uint8_t reserved_10[4];
+    uint8_t reserved_14;
+    uint8_t portqs;
+    uint8_t pqspar;
+    uint8_t ddrqs;
+    uint16_t spcr0;
+    uint16_t spcr1;
+    uint16_t spcr2;
+    uint8_t spcr3;
+    uint8_t spsr;
+    uint8_t reserved_20[224];
+    uint16_t rr[16];
+    uint16_t tr[16];
+    uint8_t cr[16];
+};
+
 typedef int (qsort_compare_function)(void *, void *);
+
+typedef struct qspi_state qspi_state, *Pqspi_state;
+
+struct qspi_state {
+    uint8_t field_00;
+    uint8_t write;
+    uint8_t read;
+    uint8_t field_03;
+    uint32_t waiting[16];
+    uint8_t busy;
+    uint8_t field_45;
+    uint16_t *receive_buffer;
+    uint16_t receive_count;
+    uint8_t copy_pending;
+    uint8_t running;
+};
 
 typedef enum __attribute__((packed)) satellite_kind {
     SATELLITE_GPS=0,
@@ -1108,6 +1184,40 @@ typedef enum __attribute__((packed)) satellite_list {
     SATELLITE_LIST_VISIBLE=2,
     SATELLITE_LIST_ALL=3
 } satellite_list;
+
+typedef struct sci_driver sci_driver, *Psci_driver;
+
+struct sci_driver {
+    char *transmit_next;
+    char *async_next;
+    uint8_t async_count;
+    uint8_t async_pending;
+    uint8_t flow;
+    uint8_t receive_errors;
+    uint8_t read_errors;
+    uint8_t xon_xoff;
+    uint8_t mark_bit;
+    uint8_t seven_bits;
+    uint8_t reconfiguring;
+    uint8_t field_11;
+    uint8_t async_allowed;
+    uint8_t field_13;
+    uint16_t baud_constant;
+    putc_function *echo;
+    uint8_t last_terminator;
+    uint8_t field_1b;
+};
+
+typedef struct sci_exchange_state sci_exchange_state, *Psci_exchange_state;
+
+struct sci_exchange_state {
+    uint32_t read_exchange;
+    struct exchange_token read_token;
+    uint8_t field_14[8];
+    uint32_t write_exchange;
+    struct exchange_token write_token;
+    uint8_t field_34[8];
+};
 
 typedef struct scpi_numeric_param scpi_numeric_param, *Pscpi_numeric_param;
 
@@ -1194,6 +1304,62 @@ struct serial_ring {
     uint8_t data[256];
 };
 
+typedef struct sim_chip_select sim_chip_select, *Psim_chip_select;
+
+struct sim_chip_select {
+    uint16_t csbar;
+    uint16_t csor;
+};
+
+typedef struct sim_registers sim_registers, *Psim_registers;
+
+struct sim_registers {
+    uint16_t simcr;
+    uint16_t simtr;
+    uint16_t syncr;
+    uint8_t reserved_06;
+    uint8_t rsr;
+    uint16_t simtre;
+    uint8_t reserved_0a[6];
+    uint8_t reserved_10;
+    uint8_t porte0;
+    uint8_t reserved_12;
+    uint8_t porte1;
+    uint8_t reserved_14;
+    uint8_t ddre;
+    uint8_t reserved_16;
+    uint8_t pepar;
+    uint8_t reserved_18;
+    uint8_t portf0;
+    uint8_t reserved_1a;
+    uint8_t portf1;
+    uint8_t reserved_1c;
+    uint8_t ddrf;
+    uint8_t reserved_1e;
+    uint8_t pfpar;
+    uint8_t reserved_20;
+    uint8_t sypcr;
+    uint16_t picr;
+    uint16_t pitr;
+    uint8_t reserved_26;
+    uint8_t swsr;
+    uint8_t reserved_28[8];
+    uint16_t tstmsra;
+    uint16_t tstmsrb;
+    uint16_t tstsc;
+    uint16_t tstrc;
+    uint16_t creg;
+    uint16_t dreg;
+    uint8_t reserved_3c[4];
+    uint8_t reserved_40;
+    uint8_t portc;
+    uint8_t reserved_42[2];
+    uint16_t cspar0;
+    uint16_t cspar1;
+    struct sim_chip_select csboot;
+    struct sim_chip_select cs[11];
+};
+
 typedef struct sprintf_output sprintf_output, *Psprintf_output;
 
 struct sprintf_output {
@@ -1253,6 +1419,7 @@ _Static_assert(sizeof(gps_request_entry) == 26, "gps_request_entry");
 _Static_assert(sizeof(gps_request_ring) == 138, "gps_request_ring");
 _Static_assert(sizeof(gps_state) == 1370, "gps_state");
 _Static_assert(sizeof(gps_statistics) == 54, "gps_statistics");
+_Static_assert(sizeof(gpt_registers) == 46, "gpt_registers");
 _Static_assert(sizeof(holdover_steering_state) == 28, "holdover_steering_state");
 _Static_assert(sizeof(interpolator_calibration) == 9, "interpolator_calibration");
 _Static_assert(sizeof(interval_reading_fields) == 13, "interval_reading_fields");
@@ -1295,17 +1462,125 @@ _Static_assert(sizeof(packed_datetime) == 8, "packed_datetime");
 _Static_assert(sizeof(pll_hold_cause) == 1, "pll_hold_cause");
 _Static_assert(sizeof(pll_stage) == 1, "pll_stage");
 _Static_assert(sizeof(pll_state) == 982, "pll_state");
+_Static_assert(sizeof(qsm_registers) == 336, "qsm_registers");
+_Static_assert(sizeof(qspi_state) == 78, "qspi_state");
 _Static_assert(sizeof(satellite_kind) == 1, "satellite_kind");
 _Static_assert(sizeof(satellite_list) == 1, "satellite_list");
+_Static_assert(sizeof(sci_driver) == 28, "sci_driver");
+_Static_assert(sizeof(sci_exchange_state) == 56, "sci_exchange_state");
 _Static_assert(sizeof(scpi_numeric_param) == 44, "scpi_numeric_param");
 _Static_assert(sizeof(scpi_param_type) == 1, "scpi_param_type");
 _Static_assert(sizeof(scpi_setting_param) == 28, "scpi_setting_param");
 _Static_assert(sizeof(selftest_results) == 68, "selftest_results");
 _Static_assert(sizeof(serial_ring) == 258, "serial_ring");
+_Static_assert(sizeof(sim_chip_select) == 4, "sim_chip_select");
+_Static_assert(sizeof(sim_registers) == 120, "sim_registers");
 _Static_assert(sizeof(sprintf_output) == 8, "sprintf_output");
 _Static_assert(sizeof(status_condition) == 6, "status_condition");
 _Static_assert(sizeof(status_model) == 46, "status_model");
 _Static_assert(sizeof(status_register) == 16, "status_register");
+
+/* the #defines of mc68331.h */
+#define QSMCR_STOP     0x8000
+#define QSMCR_FRZ1     0x4000
+#define QSMCR_FRZ0     0x2000
+#define QSMCR_SUPV     0x0080
+#define QSMCR_IARB_MASK 0x000f
+#define SCCR1_LOOPS    0x4000
+#define SCCR1_WOMS     0x2000
+#define SCCR1_ILT      0x1000
+#define SCCR1_PT       0x0800  /* odd parity, else even */
+#define SCCR1_PE       0x0400  /* parity enabled */
+#define SCCR1_M        0x0200  /* an 11-bit frame, else 10 */
+#define SCCR1_WAKE     0x0100
+#define SCCR1_TIE      0x0080  /* the transmit-data-register-empty interrupt */
+#define SCCR1_TCIE     0x0040
+#define SCCR1_RIE      0x0020  /* the receive and overrun interrupt */
+#define SCCR1_ILIE     0x0010
+#define SCCR1_TE       0x0008
+#define SCCR1_RE       0x0004
+#define SCCR1_RWU      0x0002
+#define SCCR1_SBK      0x0001
+#define SCSR_TDRE      0x0100
+#define SCSR_TC        0x0080
+#define SCSR_RDRF      0x0040
+#define SCSR_RAF       0x0020
+#define SCSR_IDLE      0x0010
+#define SCSR_OR        0x0008  /* overrun */
+#define SCSR_NF        0x0004  /* noise */
+#define SCSR_FE        0x0002  /* framing error or break */
+#define SCSR_PF        0x0001  /* parity error */
+#define SPCR0_MSTR     0x8000
+#define SPCR0_WOMQ     0x4000
+#define SPCR0_BITS_MASK 0x3c00
+#define SPCR0_BITS_SHIFT 10
+#define SPCR0_CPOL     0x0200
+#define SPCR0_CPHA     0x0100
+#define SPCR0_SPBR_MASK 0x00ff
+#define SPCR1_SPE      0x8000  /* the QSPI runs its queue */
+#define SPCR1_DSCKL_MASK 0x7f00
+#define SPCR1_DSCKL_SHIFT 8
+#define SPCR1_DTL_MASK 0x00ff
+#define SPCR2_SPIFIE   0x8000  /* the end-of-queue interrupt */
+#define SPCR2_WREN     0x4000
+#define SPCR2_WRTO     0x2000
+#define SPCR2_ENDQP_MASK 0x0f00
+#define SPCR2_ENDQP_SHIFT 8
+#define SPCR2_NEWQP_MASK 0x000f
+#define SPCR3_LOOPQ    0x04
+#define SPCR3_HMIE     0x02
+#define SPCR3_HALT     0x01
+#define SPSR_SPIF      0x80  /* the queue is done */
+#define SPSR_MODF      0x40
+#define SPSR_HALTA     0x20
+#define SPSR_CPTQP_MASK 0x0f
+#define QSPI_CR_CONT   0x80
+#define QSPI_CR_BITSE  0x40
+#define QSPI_CR_DT     0x20
+#define QSPI_CR_DSCK   0x10
+#define QSPI_CR_PCS_MASK 0x0f
+#define SIMCR_EXOFF    0x8000
+#define SIMCR_FRZSW    0x4000
+#define SIMCR_FRZBM    0x2000
+#define SIMCR_SLVEN    0x0800
+#define SIMCR_SHEN_MASK 0x0300
+#define SIMCR_SUPV     0x0080
+#define SIMCR_MM       0x0040  /* the modules at 0xfff000, else 0x7ff000 */
+#define SIMCR_IARB_MASK 0x000f
+#define SYPCR_SWE      0x80  /* the software watchdog enabled */
+#define SYPCR_SWP      0x40
+#define SYPCR_SWT_MASK 0x30
+#define SYPCR_HME      0x08
+#define SYPCR_BME      0x04
+#define SYPCR_BMT_MASK 0x03
+#define PICR_PIRQL_MASK 0x0700
+#define PICR_PIRQL_SHIFT 8
+#define PICR_PIV_MASK  0x00ff
+#define PITR_PTP       0x0100
+#define PITR_PITM_MASK 0x00ff
+#define TMSK1_I4O5I    0x80
+#define TMSK1_OCI_MASK 0x78
+#define TMSK1_ICI_MASK 0x07
+#define TMSK2_TOI      0x80
+#define TMSK2_PAOVI    0x20
+#define TMSK2_PAII     0x10
+#define TMSK2_CPROUT   0x08
+#define TMSK2_CPR_MASK 0x07
+#define TFLG1_I4O5F    0x80
+#define TFLG1_OCF_MASK 0x78
+#define TFLG1_ICF_MASK 0x07
+#define TFLG2_TOF      0x80
+#define TFLG2_PAOVF    0x20
+#define TFLG2_PAIF     0x10
+#define CFORC_FOC_MASK 0xf8
+#define CFORC_FPWMA    0x02  /* PWMA forced to F1A's level */
+#define CFORC_FPWMB    0x01
+#define PWMC_PPROUT    0x80
+#define PWMC_PPR_MASK  0x70
+#define PWMC_SFA       0x08
+#define PWMC_SFB       0x04
+#define PWMC_F1A       0x02
+#define PWMC_F1B       0x01
 
 extern void *boot_vectors; /* 00000000 */
 extern void *primary_vectors; /* 00010000 */
@@ -1452,10 +1727,10 @@ extern duarta_driver duarta; /* 00102fe0 */
 extern serial_ring duartb_ring; /* 00102fea */
 extern duartb_driver duartb; /* 001030ec */
 extern uint16_t hdac_shadow[3]; /* 0010314a */
-extern uint32_t sciR_exchange; /* 00103150 */
-extern uint32_t sciR_status; /* 00103154 */
-extern uint32_t sciW_exchange; /* 0010316c */
-extern uint32_t sciW_status; /* 00103170 */
+extern sci_exchange_state sci_exchanges; /* 00103150 */
+extern serial_ring sci_ring; /* 00103188 */
+extern sci_driver sci; /* 0010328a */
+extern qspi_state qspi; /* 001032a6 */
 extern uint32_t task_spoo; /* 001032f4 */
 extern uint32_t spoo_exchange; /* 001032f8 */
 extern char deferred_text[1025]; /* 001032fd */
@@ -1514,97 +1789,9 @@ extern volatile byte DUART_IVR; /* 00200019 */
 extern volatile byte DUART_IP_OPCR; /* 0020001b */
 extern volatile byte DUART_START_SOPBC; /* 0020001d */
 extern volatile byte DUART_STOP_ROPBC; /* 0020001f */
-extern volatile word GPTMCR; /* 00fff900 */
-extern volatile word GPT_ICR; /* 00fff904 */
-extern volatile byte DDRGP; /* 00fff906 */
-extern volatile byte PORTGP; /* 00fff907 */
-extern volatile byte OC1M; /* 00fff908 */
-extern volatile byte OC1D; /* 00fff909 */
-extern volatile word TCNT; /* 00fff90a */
-extern volatile byte PACTL; /* 00fff90c */
-extern volatile byte PACNT; /* 00fff90d */
-extern volatile word TIC1; /* 00fff90e */
-extern volatile word TIC2; /* 00fff910 */
-extern volatile word TIC3; /* 00fff912 */
-extern volatile word TOC1; /* 00fff914 */
-extern volatile word TOC2; /* 00fff916 */
-extern volatile word TOC3; /* 00fff918 */
-extern volatile word TOC4; /* 00fff91a */
-extern volatile word TI4_O5; /* 00fff91c */
-extern volatile byte TCTL1; /* 00fff91e */
-extern volatile byte TCTL2; /* 00fff91f */
-extern volatile byte TMSK1; /* 00fff920 */
-extern volatile byte TMSK2; /* 00fff921 */
-extern volatile byte TFLG1; /* 00fff922 */
-extern volatile byte TFLG2; /* 00fff923 */
-extern volatile byte CFORC; /* 00fff924 */
-extern volatile byte PWMC; /* 00fff925 */
-extern volatile byte PWMA; /* 00fff926 */
-extern volatile byte PWMB; /* 00fff927 */
-extern volatile word PWMCNT; /* 00fff928 */
-extern volatile byte PWMBUFA; /* 00fff92a */
-extern volatile byte PWMBUFB; /* 00fff92b */
-extern volatile word PRESCL; /* 00fff92c */
-extern volatile word SIMCR; /* 00fffa00 */
-extern volatile word SIMTR; /* 00fffa02 */
-extern volatile word SYNCR; /* 00fffa04 */
-extern volatile byte RSR; /* 00fffa07 */
-extern volatile word SIMTRE; /* 00fffa08 */
-extern volatile byte PORTE0; /* 00fffa11 */
-extern volatile byte PORTE1; /* 00fffa13 */
-extern volatile byte DDRE; /* 00fffa15 */
-extern volatile byte PEPAR; /* 00fffa17 */
-extern volatile byte PORTF0; /* 00fffa19 */
-extern volatile byte PORTF1; /* 00fffa1b */
-extern volatile byte DDRF; /* 00fffa1d */
-extern volatile byte PFPAR; /* 00fffa1f */
-extern volatile byte SYPCR; /* 00fffa21 */
-extern volatile word PICR; /* 00fffa22 */
-extern volatile word PITR; /* 00fffa24 */
-extern volatile byte SWSR; /* 00fffa27 */
-extern volatile byte PORTC; /* 00fffa41 */
-extern volatile word CSPAR0; /* 00fffa44 */
-extern volatile word CSPAR1; /* 00fffa46 */
-extern volatile word CSBARBT; /* 00fffa48 */
-extern volatile word CSORBT; /* 00fffa4a */
-extern volatile word CSBAR0; /* 00fffa4c */
-extern volatile word CSOR0; /* 00fffa4e */
-extern volatile word CSBAR1; /* 00fffa50 */
-extern volatile word CSOR1; /* 00fffa52 */
-extern volatile word CSBAR2; /* 00fffa54 */
-extern volatile word CSOR2; /* 00fffa56 */
-extern volatile word CSBAR3; /* 00fffa58 */
-extern volatile word CSOR3; /* 00fffa5a */
-extern volatile word CSBAR4; /* 00fffa5c */
-extern volatile word CSOR4; /* 00fffa5e */
-extern volatile word CSBAR5; /* 00fffa60 */
-extern volatile word CSOR5; /* 00fffa62 */
-extern volatile word CSBAR6; /* 00fffa64 */
-extern volatile word CSOR6; /* 00fffa66 */
-extern volatile word CSBAR7; /* 00fffa68 */
-extern volatile word CSOR7; /* 00fffa6a */
-extern volatile word CSBAR8; /* 00fffa6c */
-extern volatile word CSOR8; /* 00fffa6e */
-extern volatile word CSBAR9; /* 00fffa70 */
-extern volatile word CSOR9; /* 00fffa72 */
-extern volatile word CSBAR10; /* 00fffa74 */
-extern volatile word CSOR10; /* 00fffa76 */
-extern volatile word QSMCR; /* 00fffc00 */
-extern volatile word QTEST; /* 00fffc02 */
-extern volatile byte QILR; /* 00fffc04 */
-extern volatile byte QIVR; /* 00fffc05 */
-extern volatile word SCCR0; /* 00fffc08 */
-extern volatile word SCCR1; /* 00fffc0a */
-extern volatile word SCSR; /* 00fffc0c */
-extern volatile word SCDR; /* 00fffc0e */
-extern volatile byte PORTQS; /* 00fffc15 */
-extern volatile byte PQSPAR; /* 00fffc16 */
-extern volatile byte DDRQS; /* 00fffc17 */
-extern volatile word SPCR0; /* 00fffc18 */
-extern volatile word SPCR1; /* 00fffc1a */
-extern volatile word SPCR2; /* 00fffc1c */
-extern volatile byte SPCR3; /* 00fffc1e */
-extern volatile byte SPSR; /* 00fffc1f */
+extern volatile gpt_registers gpt; /* 00fff900 */
+extern volatile sim_registers sim; /* 00fffa00 */
+extern volatile qsm_registers qsm; /* 00fffc00 */
 
 #define ADJ(p) _Generic((p), forth_user_end: (forth_user_area *)((char *)(p) - 40))
 
@@ -1627,7 +1814,6 @@ extern undefined4 DAT_00012a74; /* 00012a74 */
 extern undefined4 DAT_00012ab0; /* 00012ab0 */
 extern undefined DAT_00017fe0; /* 00017fe0 */
 extern undefined DAT_0001ed2c; /* 0001ed2c */
-extern undefined DAT_00020336; /* 00020336 */
 extern undefined DAT_00021e3b; /* 00021e3b */
 extern undefined DAT_00021e48; /* 00021e48 */
 extern undefined2 DAT_00025c82; /* 00025c82 */
@@ -1943,38 +2129,6 @@ extern undefined1 DAT_00102d74; /* 00102d74 */
 extern undefined DAT_00102ebc; /* 00102ebc */
 extern undefined DAT_00103142; /* 00103142 */
 extern undefined DAT_00103146; /* 00103146 */
-extern undefined DAT_00103158; /* 00103158 */
-extern undefined DAT_0010315c; /* 0010315c */
-extern undefined DAT_00103160; /* 00103160 */
-extern undefined DAT_00103174; /* 00103174 */
-extern undefined DAT_00103178; /* 00103178 */
-extern undefined DAT_0010317c; /* 0010317c */
-extern byte DAT_00103188; /* 00103188 */
-extern byte DAT_00103189; /* 00103189 */
-extern undefined DAT_0010328a; /* 0010328a */
-extern undefined DAT_0010328e; /* 0010328e */
-extern undefined1 DAT_00103292; /* 00103292 */
-extern undefined1 DAT_00103293; /* 00103293 */
-extern byte DAT_00103294; /* 00103294 */
-extern char DAT_00103295; /* 00103295 */
-extern char DAT_00103296; /* 00103296 */
-extern char DAT_00103297; /* 00103297 */
-extern char DAT_00103298; /* 00103298 */
-extern undefined1 DAT_00103299; /* 00103299 */
-extern char DAT_0010329a; /* 0010329a */
-extern char DAT_0010329b; /* 0010329b */
-extern char DAT_0010329c; /* 0010329c */
-extern undefined DAT_0010329e; /* 0010329e */
-extern undefined DAT_001032a0; /* 001032a0 */
-extern char DAT_001032a4; /* 001032a4 */
-extern undefined1 DAT_001032a6; /* 001032a6 */
-extern byte DAT_001032a7; /* 001032a7 */
-extern byte DAT_001032a8; /* 001032a8 */
-extern char DAT_001032ea; /* 001032ea */
-extern undefined DAT_001032ec; /* 001032ec */
-extern undefined DAT_001032f0; /* 001032f0 */
-extern char DAT_001032f2; /* 001032f2 */
-extern char DAT_001032f3; /* 001032f3 */
 extern char DAT_001032fc; /* 001032fc */
 extern undefined DAT_0010370a; /* 0010370a */
 extern undefined DAT_0010370e; /* 0010370e */
@@ -2092,9 +2246,6 @@ extern undefined DAT_00400086; /* 00400086 */
 extern undefined DAT_004000c4; /* 004000c4 */
 extern undefined DAT_00400144; /* 00400144 */
 extern undefined DAT_00700000; /* 00700000 */
-extern volatile undefined DAT_00fffd00; /* 00fffd00 */
-extern volatile undefined DAT_00fffd20; /* 00fffd20 */
-extern volatile undefined DAT_00fffd22; /* 00fffd22 */
 extern undefined LAB_00012f86; /* 00012f86 */
 extern undefined LAB_00012f92; /* 00012f92 */
 extern undefined LAB_00012f9e; /* 00012f9e */
@@ -2206,7 +2357,6 @@ extern undefined UNK_0010aa38; /* 0010aa38 */
 extern undefined UNK_0010aa3b; /* 0010aa3b */
 extern undefined UNK_0010aa6c; /* 0010aa6c */
 extern byte UNK_0010afb0; /* 0010afb0 */
-extern volatile undefined UNK_00fffd40; /* 00fffd40 */
 extern ushort USHORT_0001f6c8; /* 0001f6c8 */
 extern ushort USHORT_0002f32a; /* 0002f32a */
 extern ushort USHORT_0002f76e; /* 0002f76e */
@@ -2330,33 +2480,6 @@ extern uint8_t reference_valid_override_request; /* 00100c68 */
 extern word switchD_000205c0; /* 000205c4 */
 extern undefined task_table; /* 001026b8 */
 
-__asm__(".set CFORC, 0x00fff924");
-__asm__(".set CSBAR0, 0x00fffa4c");
-__asm__(".set CSBAR1, 0x00fffa50");
-__asm__(".set CSBAR10, 0x00fffa74");
-__asm__(".set CSBAR2, 0x00fffa54");
-__asm__(".set CSBAR3, 0x00fffa58");
-__asm__(".set CSBAR4, 0x00fffa5c");
-__asm__(".set CSBAR5, 0x00fffa60");
-__asm__(".set CSBAR6, 0x00fffa64");
-__asm__(".set CSBAR7, 0x00fffa68");
-__asm__(".set CSBAR8, 0x00fffa6c");
-__asm__(".set CSBAR9, 0x00fffa70");
-__asm__(".set CSBARBT, 0x00fffa48");
-__asm__(".set CSOR0, 0x00fffa4e");
-__asm__(".set CSOR1, 0x00fffa52");
-__asm__(".set CSOR10, 0x00fffa76");
-__asm__(".set CSOR2, 0x00fffa56");
-__asm__(".set CSOR3, 0x00fffa5a");
-__asm__(".set CSOR4, 0x00fffa5e");
-__asm__(".set CSOR5, 0x00fffa62");
-__asm__(".set CSOR6, 0x00fffa66");
-__asm__(".set CSOR7, 0x00fffa6a");
-__asm__(".set CSOR8, 0x00fffa6e");
-__asm__(".set CSOR9, 0x00fffa72");
-__asm__(".set CSORBT, 0x00fffa4a");
-__asm__(".set CSPAR0, 0x00fffa44");
-__asm__(".set CSPAR1, 0x00fffa46");
 __asm__(".set DAT_00001388, 0x00001388");
 __asm__(".set DAT_00002580, 0x00002580");
 __asm__(".set DAT_00003c19, 0x00003c19");
@@ -2376,7 +2499,6 @@ __asm__(".set DAT_00012a74, 0x00012a74");
 __asm__(".set DAT_00012ab0, 0x00012ab0");
 __asm__(".set DAT_00017fe0, 0x00017fe0");
 __asm__(".set DAT_0001ed2c, 0x0001ed2c");
-__asm__(".set DAT_00020336, 0x00020336");
 __asm__(".set DAT_00021e3b, 0x00021e3b");
 __asm__(".set DAT_00021e48, 0x00021e48");
 __asm__(".set DAT_00025c82, 0x00025c82");
@@ -2692,38 +2814,6 @@ __asm__(".set DAT_00102d74, 0x00102d74");
 __asm__(".set DAT_00102ebc, 0x00102ebc");
 __asm__(".set DAT_00103142, 0x00103142");
 __asm__(".set DAT_00103146, 0x00103146");
-__asm__(".set DAT_00103158, 0x00103158");
-__asm__(".set DAT_0010315c, 0x0010315c");
-__asm__(".set DAT_00103160, 0x00103160");
-__asm__(".set DAT_00103174, 0x00103174");
-__asm__(".set DAT_00103178, 0x00103178");
-__asm__(".set DAT_0010317c, 0x0010317c");
-__asm__(".set DAT_00103188, 0x00103188");
-__asm__(".set DAT_00103189, 0x00103189");
-__asm__(".set DAT_0010328a, 0x0010328a");
-__asm__(".set DAT_0010328e, 0x0010328e");
-__asm__(".set DAT_00103292, 0x00103292");
-__asm__(".set DAT_00103293, 0x00103293");
-__asm__(".set DAT_00103294, 0x00103294");
-__asm__(".set DAT_00103295, 0x00103295");
-__asm__(".set DAT_00103296, 0x00103296");
-__asm__(".set DAT_00103297, 0x00103297");
-__asm__(".set DAT_00103298, 0x00103298");
-__asm__(".set DAT_00103299, 0x00103299");
-__asm__(".set DAT_0010329a, 0x0010329a");
-__asm__(".set DAT_0010329b, 0x0010329b");
-__asm__(".set DAT_0010329c, 0x0010329c");
-__asm__(".set DAT_0010329e, 0x0010329e");
-__asm__(".set DAT_001032a0, 0x001032a0");
-__asm__(".set DAT_001032a4, 0x001032a4");
-__asm__(".set DAT_001032a6, 0x001032a6");
-__asm__(".set DAT_001032a7, 0x001032a7");
-__asm__(".set DAT_001032a8, 0x001032a8");
-__asm__(".set DAT_001032ea, 0x001032ea");
-__asm__(".set DAT_001032ec, 0x001032ec");
-__asm__(".set DAT_001032f0, 0x001032f0");
-__asm__(".set DAT_001032f2, 0x001032f2");
-__asm__(".set DAT_001032f3, 0x001032f3");
 __asm__(".set DAT_001032fc, 0x001032fc");
 __asm__(".set DAT_0010370a, 0x0010370a");
 __asm__(".set DAT_0010370e, 0x0010370e");
@@ -2841,13 +2931,6 @@ __asm__(".set DAT_00400086, 0x00400086");
 __asm__(".set DAT_004000c4, 0x004000c4");
 __asm__(".set DAT_00400144, 0x00400144");
 __asm__(".set DAT_00700000, 0x00700000");
-__asm__(".set DAT_00fffd00, 0x00fffd00");
-__asm__(".set DAT_00fffd20, 0x00fffd20");
-__asm__(".set DAT_00fffd22, 0x00fffd22");
-__asm__(".set DDRE, 0x00fffa15");
-__asm__(".set DDRF, 0x00fffa1d");
-__asm__(".set DDRGP, 0x00fff906");
-__asm__(".set DDRQS, 0x00fffc17");
 __asm__(".set DUART_CLR_CTLR, 0x0020000f");
 __asm__(".set DUART_CRA, 0x00200005");
 __asm__(".set DUART_CRB, 0x00200015");
@@ -2864,8 +2947,6 @@ __asm__(".set DUART_SRA_CSRA, 0x00200003");
 __asm__(".set DUART_SRB_CSRB, 0x00200013");
 __asm__(".set DUART_START_SOPBC, 0x0020001d");
 __asm__(".set DUART_STOP_ROPBC, 0x0020001f");
-__asm__(".set GPTMCR, 0x00fff900");
-__asm__(".set GPT_ICR, 0x00fff904");
 __asm__(".set LAB_00012f86, 0x00012f86");
 __asm__(".set LAB_00012f92, 0x00012f92");
 __asm__(".set LAB_00012f9e, 0x00012f9e");
@@ -2881,23 +2962,6 @@ __asm__(".set LAB_000338ce, 0x000338ce");
 __asm__(".set LAB_00033904, 0x00033904");
 __asm__(".set LAB_0004007e, 0x0004007e");
 __asm__(".set LAB_00040096, 0x00040096");
-__asm__(".set OC1D, 0x00fff909");
-__asm__(".set OC1M, 0x00fff908");
-__asm__(".set PACNT, 0x00fff90d");
-__asm__(".set PACTL, 0x00fff90c");
-__asm__(".set PEPAR, 0x00fffa17");
-__asm__(".set PFPAR, 0x00fffa1f");
-__asm__(".set PICR, 0x00fffa22");
-__asm__(".set PITR, 0x00fffa24");
-__asm__(".set PORTC, 0x00fffa41");
-__asm__(".set PORTE0, 0x00fffa11");
-__asm__(".set PORTE1, 0x00fffa13");
-__asm__(".set PORTF0, 0x00fffa19");
-__asm__(".set PORTF1, 0x00fffa1b");
-__asm__(".set PORTGP, 0x00fff907");
-__asm__(".set PORTQS, 0x00fffc15");
-__asm__(".set PQSPAR, 0x00fffc16");
-__asm__(".set PRESCL, 0x00fff92c");
 __asm__(".set PTR_DAT_00021e2e, 0x00021e2e");
 __asm__(".set PTR_DAT_00021e32, 0x00021e32");
 __asm__(".set PTR_DAT_0004cf80, 0x0004cf80");
@@ -2911,47 +2975,6 @@ __asm__(".set PTR_lamp_test_command_000186b0, 0x000186b0");
 __asm__(".set PTR_long_array_get_byte_0004fed4, 0x0004fed4");
 __asm__(".set PTR_s_Self_Test_0004d076, 0x0004d076");
 __asm__(".set PTR_selftest_all_00018458, 0x00018458");
-__asm__(".set PWMA, 0x00fff926");
-__asm__(".set PWMB, 0x00fff927");
-__asm__(".set PWMBUFA, 0x00fff92a");
-__asm__(".set PWMBUFB, 0x00fff92b");
-__asm__(".set PWMC, 0x00fff925");
-__asm__(".set PWMCNT, 0x00fff928");
-__asm__(".set QILR, 0x00fffc04");
-__asm__(".set QIVR, 0x00fffc05");
-__asm__(".set QSMCR, 0x00fffc00");
-__asm__(".set QTEST, 0x00fffc02");
-__asm__(".set RSR, 0x00fffa07");
-__asm__(".set SCCR0, 0x00fffc08");
-__asm__(".set SCCR1, 0x00fffc0a");
-__asm__(".set SCDR, 0x00fffc0e");
-__asm__(".set SCSR, 0x00fffc0c");
-__asm__(".set SIMCR, 0x00fffa00");
-__asm__(".set SIMTR, 0x00fffa02");
-__asm__(".set SIMTRE, 0x00fffa08");
-__asm__(".set SPCR0, 0x00fffc18");
-__asm__(".set SPCR1, 0x00fffc1a");
-__asm__(".set SPCR2, 0x00fffc1c");
-__asm__(".set SPCR3, 0x00fffc1e");
-__asm__(".set SPSR, 0x00fffc1f");
-__asm__(".set SWSR, 0x00fffa27");
-__asm__(".set SYNCR, 0x00fffa04");
-__asm__(".set SYPCR, 0x00fffa21");
-__asm__(".set TCNT, 0x00fff90a");
-__asm__(".set TCTL1, 0x00fff91e");
-__asm__(".set TCTL2, 0x00fff91f");
-__asm__(".set TFLG1, 0x00fff922");
-__asm__(".set TFLG2, 0x00fff923");
-__asm__(".set TI4_O5, 0x00fff91c");
-__asm__(".set TIC1, 0x00fff90e");
-__asm__(".set TIC2, 0x00fff910");
-__asm__(".set TIC3, 0x00fff912");
-__asm__(".set TMSK1, 0x00fff920");
-__asm__(".set TMSK2, 0x00fff921");
-__asm__(".set TOC1, 0x00fff914");
-__asm__(".set TOC2, 0x00fff916");
-__asm__(".set TOC3, 0x00fff918");
-__asm__(".set TOC4, 0x00fff91a");
 __asm__(".set UNK_00002a30, 0x00002a30");
 __asm__(".set UNK_00003039, 0x00003039");
 __asm__(".set UNK_00003c1a, 0x00003c1a");
@@ -3035,7 +3058,6 @@ __asm__(".set UNK_0010aa38, 0x0010aa38");
 __asm__(".set UNK_0010aa3b, 0x0010aa3b");
 __asm__(".set UNK_0010aa6c, 0x0010aa6c");
 __asm__(".set UNK_0010afb0, 0x0010afb0");
-__asm__(".set UNK_00fffd40, 0x00fffd40");
 __asm__(".set USHORT_0001f6c8, 0x0001f6c8");
 __asm__(".set USHORT_0002f32a, 0x0002f32a");
 __asm__(".set USHORT_0002f76e, 0x0002f76e");
@@ -3213,6 +3235,7 @@ __asm__(".set gps_time, 0x001009d2");
 __asm__(".set gps_utc_offset, 0x001009e8");
 __asm__(".set gps_utc_offset_valid, 0x001009ea");
 __asm__(".set gpsx_exchange, 0x001037fc");
+__asm__(".set gpt, 0x00fff900");
 __asm__(".set hdac_shadow, 0x0010314a");
 __asm__(".set holdover_steering, 0x00102042");
 __asm__(".set idn_model, 0x00101f68");
@@ -3264,15 +3287,16 @@ __asm__(".set pps_exchange, 0x00100bc4");
 __asm__(".set primary_vectors, 0x00010000");
 __asm__(".set psos_config, 0x0010264c");
 __asm__(".set psos_supervisor_stack_size, 0x00102674");
+__asm__(".set qsm, 0x00fffc00");
 __asm__(".set qsort_compare, 0x00103940");
 __asm__(".set qsort_size, 0x00103944");
+__asm__(".set qspi, 0x001032a6");
 __asm__(".set rand_seed, 0x00103936");
 __asm__(".set reference_valid_override_request, 0x00100c68");
 __asm__(".set reset_to_recover_text, 0x00011b8c");
-__asm__(".set sciR_exchange, 0x00103150");
-__asm__(".set sciR_status, 0x00103154");
-__asm__(".set sciW_exchange, 0x0010316c");
-__asm__(".set sciW_status, 0x00103170");
+__asm__(".set sci, 0x0010328a");
+__asm__(".set sci_exchanges, 0x00103150");
+__asm__(".set sci_ring, 0x00103188");
 __asm__(".set scpi_language, 0x00102c62");
 __asm__(".set scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe, 0x000342ba");
 __asm__(".set scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold, 0x000342f8");
@@ -3320,6 +3344,7 @@ __asm__(".set scpi_value_SAMPle_FLOat, 0x00101e18");
 __asm__(".set scpi_value_SAMPle_IARR, 0x00101de8");
 __asm__(".set scpi_value_SAMPle_INTeger, 0x00101de4");
 __asm__(".set selftest, 0x00100c24");
+__asm__(".set sim, 0x00fffa00");
 __asm__(".set spoo_exchange, 0x001032f8");
 __asm__(".set status_conditions, 0x0002f838");
 __asm__(".set status_object, 0x00102eb8");
@@ -3920,18 +3945,6 @@ extern undefined4 * PTR_PTR_00025b7e;
 __asm__(".set PTR_PTR_00025b7e, 0x00025b7e");
 extern undefined4 * PTR_PTR_installer__001014c8;
 __asm__(".set PTR_PTR_installer__001014c8, 0x001014c8");
-extern volatile undefined4 Ram00fff920;
-__asm__(".set Ram00fff920, 0x00fff920");
-extern volatile undefined4 Ram00fff922;
-__asm__(".set Ram00fff922, 0x00fff922");
-extern volatile undefined4 Ram00fffc04;
-__asm__(".set Ram00fffc04, 0x00fffc04");
-extern volatile undefined4 Ram00fffd20;
-__asm__(".set Ram00fffd20, 0x00fffd20");
-extern volatile undefined4 Ram00fffd22;
-__asm__(".set Ram00fffd22, 0x00fffd22");
-extern volatile undefined4 Ram00fffd24;
-__asm__(".set Ram00fffd24, 0x00fffd24");
 extern undefined1 UNK_0001942d;
 __asm__(".set UNK_0001942d, 0x0001942d");
 extern undefined1 UNK_000194de;
@@ -3942,10 +3955,6 @@ extern undefined1 UNK_0001956a;
 __asm__(".set UNK_0001956a, 0x0001956a");
 extern undefined1 UNK_0001ad0e;
 __asm__(".set UNK_0001ad0e, 0x0001ad0e");
-extern volatile undefined1 UNK_00fffd41;
-__asm__(".set UNK_00fffd41, 0x00fffd41");
-extern volatile undefined1 UNK_00fffd42;
-__asm__(".set UNK_00fffd42, 0x00fffd42");
 extern word WORD_installer__001030d2;
 __asm__(".set WORD_installer__001030d2, 0x001030d2");
 extern word WORD_installer__00105f12;
@@ -4120,30 +4129,6 @@ extern char *_DAT_00103142;
 __asm__(".set _DAT_00103142, 0x00103142");
 extern char *_DAT_00103146;
 __asm__(".set _DAT_00103146, 0x00103146");
-extern uint32_t _DAT_00103158;
-__asm__(".set _DAT_00103158, 0x00103158");
-extern undefined4 _DAT_0010315c;
-__asm__(".set _DAT_0010315c, 0x0010315c");
-extern undefined4 _DAT_00103160;
-__asm__(".set _DAT_00103160, 0x00103160");
-extern uint32_t _DAT_00103174;
-__asm__(".set _DAT_00103174, 0x00103174");
-extern undefined4 _DAT_00103178;
-__asm__(".set _DAT_00103178, 0x00103178");
-extern undefined4 _DAT_0010317c;
-__asm__(".set _DAT_0010317c, 0x0010317c");
-extern undefined *_DAT_0010328a;
-__asm__(".set _DAT_0010328a, 0x0010328a");
-extern undefined *_DAT_0010328e;
-__asm__(".set _DAT_0010328e, 0x0010328e");
-extern undefined4 _DAT_0010329e;
-__asm__(".set _DAT_0010329e, 0x0010329e");
-extern code *_DAT_001032a0;
-__asm__(".set _DAT_001032a0, 0x001032a0");
-extern undefined2 *_DAT_001032ec;
-__asm__(".set _DAT_001032ec, 0x001032ec");
-extern ushort _DAT_001032f0;
-__asm__(".set _DAT_001032f0, 0x001032f0");
 extern code *_DAT_0010370a;
 __asm__(".set _DAT_0010370a, 0x0010370a");
 extern undefined4 _DAT_0010370e;
@@ -5084,7 +5069,7 @@ uint sci_reconfigure(void);
 void sci_write(void);
 void sci_read(void);
 void sci_putc(undefined1 param_1);
-void sci_send_async(undefined4 param_1,undefined1 param_2);
+void sci_send_async(char *param_1,uint8_t param_2);
 ulong sci_port_write(void *param_1);
 void sci_printf(char *param_1);
 int sci_puts_polled(char *param_1);
@@ -6327,42 +6312,42 @@ __exception void boot_reset(void)
   uint *puVar14;
   undefined1 *puVar19;
   
-  SYPCR = 0xcc;
-  CSPAR0 = 0x2bff;
-  CSPAR1 = 0x3af;
-  CSBARBT = 5;
-  CSORBT = 0x6870;
-  CSBAR0 = 0x1003;
-  CSOR0 = 0x6830;
-  CSBAR1 = 0x405;
-  CSOR1 = 0x6870;
-  CSBAR2 = 0x1003;
-  CSOR2 = 0x5030;
-  CSBAR3 = 0x1003;
-  CSOR3 = 0x3030;
-  CSBAR4 = 0x5000;
-  CSOR4 = 0x7830;
-  CSBAR5 = 0x3003;
-  CSOR5 = 0x7b30;
-  CSBAR6 = 5;
-  CSOR6 = 0x7070;
-  CSBAR7 = 0x405;
-  CSOR7 = 0x7070;
-  CSBAR8 = 0x2000;
-  CSOR8 = 0x3bf0;
-  CSBAR9 = 0x4001;
-  CSOR9 = 0x78f0;
-  CSBAR10 = 0xfff8;
-  CSOR10 = 0x2bc4;
-  SIMCR = 0x14a;
-  SYNCR = 0xcf00;
-  PITR = 8;
-  PEPAR = 0x32;
-  PORTE0 = 0x40;
-  DDRE = 0x40;
-  PFPAR = 4;
-  PORTF0 = 0xf7;
-  DDRF = 0xf7;
+  sim.sypcr = 0xcc;
+  sim.cspar0 = 0x2bff;
+  sim.cspar1 = 0x3af;
+  sim.csboot.csbar = 5;
+  sim.csboot.csor = 0x6870;
+  sim.cs[0].csbar = 0x1003;
+  sim.cs[0].csor = 0x6830;
+  sim.cs[1].csbar = 0x405;
+  sim.cs[1].csor = 0x6870;
+  sim.cs[2].csbar = 0x1003;
+  sim.cs[2].csor = 0x5030;
+  sim.cs[3].csbar = 0x1003;
+  sim.cs[3].csor = 0x3030;
+  sim.cs[4].csbar = 0x5000;
+  sim.cs[4].csor = 0x7830;
+  sim.cs[5].csbar = 0x3003;
+  sim.cs[5].csor = 0x7b30;
+  sim.cs[6].csbar = 5;
+  sim.cs[6].csor = 0x7070;
+  sim.cs[7].csbar = 0x405;
+  sim.cs[7].csor = 0x7070;
+  sim.cs[8].csbar = 0x2000;
+  sim.cs[8].csor = 0x3bf0;
+  sim.cs[9].csbar = 0x4001;
+  sim.cs[9].csor = 0x78f0;
+  sim.cs[10].csbar = 0xfff8;
+  sim.cs[10].csor = 0x2bc4;
+  sim.simcr = 0x14a;
+  sim.syncr = 0xcf00;
+  sim.pitr = 8;
+  sim.pepar = 0x32;
+  sim.porte0 = 0x40;
+  sim.ddre = 0x40;
+  sim.pfpar = 4;
+  sim.portf0 = 0xf7;
+  sim.ddrf = 0xf7;
   _DAT_0010ab20 = 0;
   sVar8 = 0;
   sVar9 = 0;
@@ -6524,7 +6509,7 @@ LAB_00000a22:
     DUART_STOP_ROPBC = 0x40;
     DAT_0010ab2e = DAT_0010ab2e | 0x40;
   }
-  PICR = 0;
+  sim.picr = 0;
   DAT_0010fffa = 0xa74;
   boot_unpack_installer();
   sVar8 = 0xff;
@@ -6551,42 +6536,42 @@ __asm__(
 	"	movea.l #0x0,%a0\n"
 	"	movec %a0,%vbr\n"
 	"	movea.l (%a0),%sp\n"
-	"	move.b #0xcc,(SYPCR).l\n"
-	"	move.w #0x2bff,(CSPAR0).l\n"
-	"	move.w #0x3af,(CSPAR1).l\n"
-	"	move.w #0x5,(CSBARBT).l\n"
-	"	move.w #0x6870,(CSORBT).l\n"
-	"	move.w #0x1003,(CSBAR0).l\n"
-	"	move.w #0x6830,(CSOR0).l\n"
-	"	move.w #0x405,(CSBAR1).l\n"
-	"	move.w #0x6870,(CSOR1).l\n"
-	"	move.w #0x1003,(CSBAR2).l\n"
-	"	move.w #0x5030,(CSOR2).l\n"
-	"	move.w #0x1003,(CSBAR3).l\n"
-	"	move.w #0x3030,(CSOR3).l\n"
-	"	move.w #0x5000,(CSBAR4).l\n"
-	"	move.w #0x7830,(CSOR4).l\n"
-	"	move.w #0x3003,(CSBAR5).l\n"
-	"	move.w #0x7b30,(CSOR5).l\n"
-	"	move.w #0x5,(CSBAR6).l\n"
-	"	move.w #0x7070,(CSOR6).l\n"
-	"	move.w #0x405,(CSBAR7).l\n"
-	"	move.w #0x7070,(CSOR7).l\n"
-	"	move.w #0x2000,(CSBAR8).l\n"
-	"	move.w #0x3bf0,(CSOR8).l\n"
-	"	move.w #0x4001,(CSBAR9).l\n"
-	"	move.w #0x78f0,(CSOR9).l\n"
-	"	move.w #-0x8,(CSBAR10).l\n"
-	"	move.w #0x2bc4,(CSOR10).l\n"
-	"	move.w #0x14a,(SIMCR).l\n"
-	"	move.w #-0x3100,(SYNCR).l\n"
-	"	move.w #0x8,(PITR).l\n"
-	"	move.b #0x32,(PEPAR).l\n"
-	"	move.b #0x40,(PORTE0).l\n"
-	"	move.b #0x40,(DDRE).l\n"
-	"	move.b #0x4,(PFPAR).l\n"
-	"	move.b #0xf7,(PORTF0).l\n"
-	"	move.b #0xf7,(DDRF).l\n"
+	"	move.b #0xcc,(__ghidra_fffa21).l\n"
+	"	move.w #0x2bff,(__ghidra_fffa44).l\n"
+	"	move.w #0x3af,(__ghidra_fffa46).l\n"
+	"	move.w #0x5,(__ghidra_fffa48).l\n"
+	"	move.w #0x6870,(__ghidra_fffa4a).l\n"
+	"	move.w #0x1003,(__ghidra_fffa4c).l\n"
+	"	move.w #0x6830,(__ghidra_fffa4e).l\n"
+	"	move.w #0x405,(__ghidra_fffa50).l\n"
+	"	move.w #0x6870,(__ghidra_fffa52).l\n"
+	"	move.w #0x1003,(__ghidra_fffa54).l\n"
+	"	move.w #0x5030,(__ghidra_fffa56).l\n"
+	"	move.w #0x1003,(__ghidra_fffa58).l\n"
+	"	move.w #0x3030,(__ghidra_fffa5a).l\n"
+	"	move.w #0x5000,(__ghidra_fffa5c).l\n"
+	"	move.w #0x7830,(__ghidra_fffa5e).l\n"
+	"	move.w #0x3003,(__ghidra_fffa60).l\n"
+	"	move.w #0x7b30,(__ghidra_fffa62).l\n"
+	"	move.w #0x5,(__ghidra_fffa64).l\n"
+	"	move.w #0x7070,(__ghidra_fffa66).l\n"
+	"	move.w #0x405,(__ghidra_fffa68).l\n"
+	"	move.w #0x7070,(__ghidra_fffa6a).l\n"
+	"	move.w #0x2000,(__ghidra_fffa6c).l\n"
+	"	move.w #0x3bf0,(__ghidra_fffa6e).l\n"
+	"	move.w #0x4001,(__ghidra_fffa70).l\n"
+	"	move.w #0x78f0,(__ghidra_fffa72).l\n"
+	"	move.w #-0x8,(__ghidra_fffa74).l\n"
+	"	move.w #0x2bc4,(__ghidra_fffa76).l\n"
+	"	move.w #0x14a,(sim).l\n"
+	"	move.w #-0x3100,(__ghidra_fffa04).l\n"
+	"	move.w #0x8,(__ghidra_fffa24).l\n"
+	"	move.b #0x32,(__ghidra_fffa17).l\n"
+	"	move.b #0x40,(__ghidra_fffa11).l\n"
+	"	move.b #0x40,(__ghidra_fffa15).l\n"
+	"	move.b #0x4,(__ghidra_fffa1f).l\n"
+	"	move.b #0xf7,(__ghidra_fffa19).l\n"
+	"	move.b #0xf7,(__ghidra_fffa1d).l\n"
 	"	clr.w (__ghidra_10ab20).l\n"
 	"	movea.l #0x10000,%a0\n"
 	"	move.l #0xc000,%d1\n"
@@ -6931,7 +6916,7 @@ __exception void boot_trap_11(void)
   undefined4 *puVar2;
   undefined4 *puVar3;
   
-  PICR = 0;
+  sim.picr = 0;
   DAT_0010fffa = 0xa74;
   boot_unpack_installer();
   sVar1 = 0xff;
@@ -6958,7 +6943,7 @@ __asm__(
 	"	movea.l #0x0,%a0\n"
 	"	movec %a0,%vbr\n"
 	"	movea.l (%a0),%sp\n"
-	"	move.w #0x0,(PICR).l\n"
+	"	move.w #0x0,(__ghidra_fffa22).l\n"
 	"	jsr (boot_unpack_installer:w,%pc)\n"
 	"	nop\n"
 	"	movea.l #0x0,%a0\n"
@@ -8953,10 +8938,10 @@ void periodic_interrupt_enable(char param_1)
 
 {
   if (param_1 == '\0') {
-    PICR = 0x42;
+    sim.picr = 0x42;
   }
   else {
-    PICR = 0x542;
+    sim.picr = 0x542;
   }
   return;
 }
@@ -8969,11 +8954,11 @@ void periodic_interrupt_enable(char param_1)
 void qsm_init(void)
 
 {
-  QSMCR = 8;
-  Ram00fffc04 = 0x2340;
-  PORTQS = 0xff;
-  DDRQS = 0xfe;
-  PQSPAR = 0x7b;
+  qsm.qsmcr = 8;
+  __ghidra_piece(unsigned short, qsm, 4) = 0x2340;
+  qsm.portqs = 0xff;
+  qsm.ddrqs = 0xfe;
+  qsm.pqspar = 0x7b;
   return;
 }
 
@@ -8985,22 +8970,22 @@ void qsm_init(void)
 void gpt_init(void)
 
 {
-  byte bVar1;
+  uint8_t uVar1;
   undefined2 uVar2;
   
-  GPTMCR = 0xc;
-  GPT_ICR = 0x650;
-  bVar1 = CFORC;
-  CFORC = bVar1 | 2;
-  DDRGP = 0xbc;
-  PORTGP = 0x80;
-  OC1M = 0;
-  TCTL1 = 0;
-  PACTL = 4;
-  TCTL2 = 5;
-  Ram00fff920 = 3;
-  uVar2 = Ram00fff922;
-  Ram00fff922 = 0;
+  gpt.gptmcr = 0xc;
+  gpt.icr = 0x650;
+  uVar1 = gpt.cforc;
+  gpt.cforc = uVar1 | 2;
+  gpt.ddrgp = 0xbc;
+  gpt.portgp = 0x80;
+  gpt.oc1m = 0;
+  gpt.tctl1 = 0;
+  gpt.pactl = 4;
+  gpt.tctl2 = 5;
+  __ghidra_piece(unsigned short, gpt, 32) = 3;
+  uVar2 = __ghidra_piece(unsigned short, gpt, 34);
+  __ghidra_piece(unsigned short, gpt, 34) = 0;
   return;
 }
 
@@ -9014,17 +8999,17 @@ void shutdown(void)
 
 {
   ushort uVar1;
-  byte bVar2;
+  uint8_t uVar2;
   
   periodic_interrupt_enable('\0');
-  uVar1 = Ram00fff920;
-  Ram00fff920 = uVar1 & 0xf;
-  SPCR1 = 0;
-  SPCR2 = 0;
-  SPCR3 = 0;
-  bVar2 = SPSR;
-  SPSR = 0;
-  SCCR1 = 0;
+  uVar1 = __ghidra_piece(unsigned short, gpt, 32);
+  __ghidra_piece(unsigned short, gpt, 32) = uVar1 & 0xf;
+  qsm.spcr1 = 0;
+  qsm.spcr2 = 0;
+  qsm.spcr3 = 0;
+  uVar2 = qsm.spsr;
+  qsm.spsr = 0;
+  qsm.sccr1 = 0;
   duart_stop();
   return;
 }
@@ -9414,7 +9399,7 @@ void system_init(void)
   undefined3 uVar2;
   undefined4 uVar1;
   undefined2 uVar3;
-  byte bVar4;
+  uint8_t uVar4;
   pll_state *ppVar5;
   uint16_t uVar6;
   short sVar7;
@@ -9444,7 +9429,7 @@ void system_init(void)
     cVar8 = cVar8 + '\x01';
   } while (cVar8 < '\t');
   uVar6 = record_checksum(&DAT_00100000,0x94e);
-  if ((uVar6 == DAT_00100000) && (bVar4 = RSR, (bVar4 & 0xc0) == 0)) {
+  if ((uVar6 == DAT_00100000) && (uVar4 = sim.rsr, (uVar4 & 0xc0) == 0)) {
     if (_DAT_00100002 == 1) {
       memcpy(&DAT_00101e70,(void *)0x100934,0x19);
       sVar7 = 0x155;
@@ -9500,10 +9485,10 @@ void system_init(void)
     pll_init();
     _DAT_00100002 = 1;
     DAT_001037df = '\0';
-    bVar4 = PORTE0;
-    PORTE0 = bVar4 & 0xbf;
-    bVar4 = PORTE0;
-    PORTE0 = bVar4 | 0x40;
+    uVar4 = sim.porte0;
+    sim.porte0 = uVar4 & 0xbf;
+    uVar4 = sim.porte0;
+    sim.porte0 = uVar4 | 0x40;
   }
   if (DAT_001037df == '\0') {
     exception_record_clear();
@@ -9528,15 +9513,15 @@ void primary_start(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 
 {
   exception_hook_reset();
-  SWSR = 0x55;
-  SWSR = 0xaa;
+  sim.swsr = 0x55;
+  sim.swsr = 0xaa;
   qsm_init();
   gpt_init();
   start_nothing();
   system_init();
   psos_config_init();
-  SWSR = 0x55;
-  SWSR = 0xaa;
+  sim.swsr = 0x55;
+  sim.swsr = 0xaa;
   primary_trap_6();
   return;
 }
@@ -9581,8 +9566,8 @@ __exception void primary_user_81(void)
 {
   ushort uVar1;
   
-  uVar1 = Ram00fff922;
-  Ram00fff922 = uVar1 & 0xfeff;
+  uVar1 = __ghidra_piece(unsigned short, gpt, 34);
+  __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xfeff;
   internal_pps_count = internal_pps_count + 1;
   DAT_001037da = 0;
   if (internal_pps_dead == 0) {
@@ -9601,7 +9586,7 @@ __asm__(
 	"	.type primary_user_81, @function\n"
 	"	.pushsection .text.primary_user_81.12e04,\"ax\",@progbits\n"
 	"primary_user_81:\n"
-	"	andi.w #-0x101,(TFLG1).l\n"
+	"	andi.w #-0x101,(__ghidra_fff922).l\n"
 	"	addq.b #0x1,(internal_pps_count).l\n"
 	"	clr.w (__ghidra_1037da).l\n"
 	"	tst.b (internal_pps_dead).l\n"
@@ -9635,10 +9620,10 @@ int pps_init(void)
   if (iVar2 == 0) {
     pps_exchange = extraout_A0;
     mutex_clear((void *)0x100bac);
-    uVar1 = Ram00fff922;
-    Ram00fff922 = uVar1 & 0xfeff;
-    uVar1 = Ram00fff920;
-    Ram00fff920 = uVar1 | 0x100;
+    uVar1 = __ghidra_piece(unsigned short, gpt, 34);
+    __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xfeff;
+    uVar1 = __ghidra_piece(unsigned short, gpt, 32);
+    __ghidra_piece(unsigned short, gpt, 32) = uVar1 | 0x100;
   }
   return iVar2;
 }
@@ -9663,10 +9648,10 @@ int pps_interrupt_stop(void)
   }
   else {
     iVar2 = psos_call('\x16',pps_exchange,in_D1,unaff_D2,unaff_D3,(void *)pps_exchange,in_A1);
-    uVar1 = Ram00fff922;
-    Ram00fff922 = uVar1 & 0xfeff;
-    uVar1 = Ram00fff920;
-    Ram00fff920 = uVar1 & 0xfeff;
+    uVar1 = __ghidra_piece(unsigned short, gpt, 34);
+    __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xfeff;
+    uVar1 = __ghidra_piece(unsigned short, gpt, 32);
+    __ghidra_piece(unsigned short, gpt, 32) = uVar1 & 0xfeff;
   }
   return iVar2;
 }
@@ -11527,21 +11512,21 @@ void timecode_schedule(uint param_1)
 
 {
   uint uVar1;
-  word wVar2;
-  word wVar3;
+  uint16_t uVar2;
+  uint16_t uVar3;
   ushort uVar4;
   uint uVar5;
   
   _DAT_00100bd2 = (short)(param_1 >> 0x10);
-  wVar2 = TIC1;
-  uVar1 = (uint)wVar2 + (param_1 & 0xffff);
-  TOC3 = (word)uVar1;
-  uVar4 = Ram00fff922;
-  Ram00fff922 = uVar4 & 0xdfff;
-  wVar2 = TCNT;
-  uVar5 = (uint)wVar2;
-  wVar3 = TIC1;
-  if (wVar2 < wVar3) {
+  uVar2 = gpt.tic[0];
+  uVar1 = (uint)uVar2 + (param_1 & 0xffff);
+  gpt.toc[2] = (uint16_t)uVar1;
+  uVar4 = __ghidra_piece(unsigned short, gpt, 34);
+  __ghidra_piece(unsigned short, gpt, 34) = uVar4 & 0xdfff;
+  uVar2 = gpt.tcnt;
+  uVar5 = (uint)uVar2;
+  uVar3 = gpt.tic[0];
+  if (uVar2 < uVar3) {
     uVar5 = uVar5 + 0x10000;
   }
   if (uVar1 <= uVar5) {
@@ -11553,11 +11538,11 @@ void timecode_schedule(uint param_1)
       return;
     }
     _DAT_00100bd2 = _DAT_00100bd2 + -1;
-    uVar4 = Ram00fff922;
-    Ram00fff922 = uVar4 & 0xdfff;
+    uVar4 = __ghidra_piece(unsigned short, gpt, 34);
+    __ghidra_piece(unsigned short, gpt, 34) = uVar4 & 0xdfff;
   }
-  uVar4 = Ram00fff920;
-  Ram00fff920 = uVar4 | 0x2000;
+  uVar4 = __ghidra_piece(unsigned short, gpt, 32);
+  __ghidra_piece(unsigned short, gpt, 32) = uVar4 | 0x2000;
   return;
 }
 
@@ -11580,15 +11565,15 @@ __exception undefined8 primary_user_86(void)
     if (tcode_length != 0) {
       drtb_send_async(tcode_message,tcode_length);
     }
-    uVar1 = Ram00fff922;
-    Ram00fff922 = uVar1 & 0xdfff;
-    uVar1 = Ram00fff920;
-    Ram00fff920 = uVar1 & 0xdfff;
+    uVar1 = __ghidra_piece(unsigned short, gpt, 34);
+    __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xdfff;
+    uVar1 = __ghidra_piece(unsigned short, gpt, 32);
+    __ghidra_piece(unsigned short, gpt, 32) = uVar1 & 0xdfff;
   }
   else {
     _DAT_00100bd2 = _DAT_00100bd2 + -1;
-    uVar1 = Ram00fff922;
-    Ram00fff922 = uVar1 & 0xdfff;
+    uVar1 = __ghidra_piece(unsigned short, gpt, 34);
+    __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xdfff;
   }
   return CONCAT44(in_D0,in_D1);
 }
@@ -11610,12 +11595,12 @@ __asm__(
 	"	jsr (drtb_send_async).l\n"
 	"	addq.l #0x6,%sp\n"
 	".Lg_14044:\n"
-	"	andi.w #-0x2001,(TFLG1).l\n"
-	"	andi.w #-0x2001,(TMSK1).l\n"
+	"	andi.w #-0x2001,(__ghidra_fff922).l\n"
+	"	andi.w #-0x2001,(__ghidra_fff920).l\n"
 	"	bra.b .Lg_14064\n"
 	".Lg_14056:\n"
 	"	subq.w #0x1,(__ghidra_100bd2).l\n"
-	"	andi.w #-0x2001,(TFLG1).l\n"
+	"	andi.w #-0x2001,(__ghidra_fff922).l\n"
 	".Lg_14064:\n"
 	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5/%a6\n"
 	"	rte\n"
@@ -11632,21 +11617,21 @@ void es_schedule(uint param_1)
 
 {
   uint uVar1;
-  word wVar2;
-  word wVar3;
+  uint16_t uVar2;
+  uint16_t uVar3;
   ushort uVar4;
   uint uVar5;
   
   _DAT_00100bd0 = (short)(param_1 >> 0x10);
-  wVar2 = TIC1;
-  uVar1 = (uint)wVar2 + (param_1 & 0xffff);
-  TOC4 = (word)uVar1;
-  uVar4 = Ram00fff922;
-  Ram00fff922 = uVar4 & 0xbfff;
-  wVar2 = TCNT;
-  uVar5 = (uint)wVar2;
-  wVar3 = TIC1;
-  if (wVar2 < wVar3) {
+  uVar2 = gpt.tic[0];
+  uVar1 = (uint)uVar2 + (param_1 & 0xffff);
+  gpt.toc[3] = (uint16_t)uVar1;
+  uVar4 = __ghidra_piece(unsigned short, gpt, 34);
+  __ghidra_piece(unsigned short, gpt, 34) = uVar4 & 0xbfff;
+  uVar2 = gpt.tcnt;
+  uVar5 = (uint)uVar2;
+  uVar3 = gpt.tic[0];
+  if (uVar2 < uVar3) {
     uVar5 = uVar5 + 0x10000;
   }
   if (uVar1 <= uVar5) {
@@ -11658,11 +11643,11 @@ void es_schedule(uint param_1)
       return;
     }
     _DAT_00100bd0 = _DAT_00100bd0 + -1;
-    uVar4 = Ram00fff922;
-    Ram00fff922 = uVar4 & 0xbfff;
+    uVar4 = __ghidra_piece(unsigned short, gpt, 34);
+    __ghidra_piece(unsigned short, gpt, 34) = uVar4 & 0xbfff;
   }
-  uVar4 = Ram00fff920;
-  Ram00fff920 = uVar4 | 0x4000;
+  uVar4 = __ghidra_piece(unsigned short, gpt, 32);
+  __ghidra_piece(unsigned short, gpt, 32) = uVar4 | 0x4000;
   return;
 }
 
@@ -11685,15 +11670,15 @@ __exception undefined8 primary_user_87(void)
     if (es_length != 0) {
       sci_send_async(es_message,es_length);
     }
-    uVar1 = Ram00fff922;
-    Ram00fff922 = uVar1 & 0xbfff;
-    uVar1 = Ram00fff920;
-    Ram00fff920 = uVar1 & 0xbfff;
+    uVar1 = __ghidra_piece(unsigned short, gpt, 34);
+    __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xbfff;
+    uVar1 = __ghidra_piece(unsigned short, gpt, 32);
+    __ghidra_piece(unsigned short, gpt, 32) = uVar1 & 0xbfff;
   }
   else {
     _DAT_00100bd0 = _DAT_00100bd0 + -1;
-    uVar1 = Ram00fff922;
-    Ram00fff922 = uVar1 & 0xbfff;
+    uVar1 = __ghidra_piece(unsigned short, gpt, 34);
+    __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xbfff;
   }
   return CONCAT44(in_D0,in_D1);
 }
@@ -11715,12 +11700,12 @@ __asm__(
 	"	jsr (sci_send_async).l\n"
 	"	addq.l #0x6,%sp\n"
 	".Lg_14108:\n"
-	"	andi.w #-0x4001,(TFLG1).l\n"
-	"	andi.w #-0x4001,(TMSK1).l\n"
+	"	andi.w #-0x4001,(__ghidra_fff922).l\n"
+	"	andi.w #-0x4001,(__ghidra_fff920).l\n"
 	"	bra.b .Lg_14128\n"
 	".Lg_1411a:\n"
 	"	subq.w #0x1,(__ghidra_100bd0).l\n"
-	"	andi.w #-0x4001,(TFLG1).l\n"
+	"	andi.w #-0x4001,(__ghidra_fff922).l\n"
 	".Lg_14128:\n"
 	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5/%a6\n"
 	"	rte\n"
@@ -11851,42 +11836,42 @@ __exception void primary_reset(void)
   uint *puVar10;
   undefined1 *puVar13;
   
-  SYPCR = 0xcc;
-  CSPAR0 = 0x2bff;
-  CSPAR1 = 0x3af;
-  CSBARBT = 5;
-  CSORBT = 0x6870;
-  CSBAR0 = 0x1003;
-  CSOR0 = 0x6830;
-  CSBAR1 = 0x405;
-  CSOR1 = 0x6870;
-  CSBAR2 = 0x1003;
-  CSOR2 = 0x5030;
-  CSBAR3 = 0x1003;
-  CSOR3 = 0x3030;
-  CSBAR4 = 0x5000;
-  CSOR4 = 0x7830;
-  CSBAR5 = 0x3003;
-  CSOR5 = 0x7b30;
-  CSBAR6 = 5;
-  CSOR6 = 0x7070;
-  CSBAR7 = 0x405;
-  CSOR7 = 0x7070;
-  CSBAR8 = 0x2000;
-  CSOR8 = 0x3bf0;
-  CSBAR9 = 0x4001;
-  CSOR9 = 0x78f0;
-  CSBAR10 = 0xfff8;
-  CSOR10 = 0x2bc4;
-  SIMCR = 0x14a;
-  SYNCR = 0xcf00;
-  PITR = 8;
-  PEPAR = 0x32;
-  PORTE0 = 0x40;
-  DDRE = 0x40;
-  PFPAR = 4;
-  PORTF0 = 0xf7;
-  DDRF = 0xf7;
+  sim.sypcr = 0xcc;
+  sim.cspar0 = 0x2bff;
+  sim.cspar1 = 0x3af;
+  sim.csboot.csbar = 5;
+  sim.csboot.csor = 0x6870;
+  sim.cs[0].csbar = 0x1003;
+  sim.cs[0].csor = 0x6830;
+  sim.cs[1].csbar = 0x405;
+  sim.cs[1].csor = 0x6870;
+  sim.cs[2].csbar = 0x1003;
+  sim.cs[2].csor = 0x5030;
+  sim.cs[3].csbar = 0x1003;
+  sim.cs[3].csor = 0x3030;
+  sim.cs[4].csbar = 0x5000;
+  sim.cs[4].csor = 0x7830;
+  sim.cs[5].csbar = 0x3003;
+  sim.cs[5].csor = 0x7b30;
+  sim.cs[6].csbar = 5;
+  sim.cs[6].csor = 0x7070;
+  sim.cs[7].csbar = 0x405;
+  sim.cs[7].csor = 0x7070;
+  sim.cs[8].csbar = 0x2000;
+  sim.cs[8].csor = 0x3bf0;
+  sim.cs[9].csbar = 0x4001;
+  sim.cs[9].csor = 0x78f0;
+  sim.cs[10].csbar = 0xfff8;
+  sim.cs[10].csor = 0x2bc4;
+  sim.simcr = 0x14a;
+  sim.syncr = 0xcf00;
+  sim.pitr = 8;
+  sim.pepar = 0x32;
+  sim.porte0 = 0x40;
+  sim.ddre = 0x40;
+  sim.pfpar = 4;
+  sim.portf0 = 0xf7;
+  sim.ddrf = 0xf7;
   DUART_START_SOPBC = 0xff;
   DUART_STOP_ROPBC = 0;
   puVar6 = &DAT_001009ec;
@@ -12046,42 +12031,42 @@ __asm__(
 	"	.type primary_reset, @function\n"
 	"	.pushsection .text.primary_reset.144ca,\"ax\",@progbits\n"
 	"primary_reset:\n"
-	"	move.b #0xcc,(SYPCR).l\n"
-	"	move.w #0x2bff,(CSPAR0).l\n"
-	"	move.w #0x3af,(CSPAR1).l\n"
-	"	move.w #0x5,(CSBARBT).l\n"
-	"	move.w #0x6870,(CSORBT).l\n"
-	"	move.w #0x1003,(CSBAR0).l\n"
-	"	move.w #0x6830,(CSOR0).l\n"
-	"	move.w #0x405,(CSBAR1).l\n"
-	"	move.w #0x6870,(CSOR1).l\n"
-	"	move.w #0x1003,(CSBAR2).l\n"
-	"	move.w #0x5030,(CSOR2).l\n"
-	"	move.w #0x1003,(CSBAR3).l\n"
-	"	move.w #0x3030,(CSOR3).l\n"
-	"	move.w #0x5000,(CSBAR4).l\n"
-	"	move.w #0x7830,(CSOR4).l\n"
-	"	move.w #0x3003,(CSBAR5).l\n"
-	"	move.w #0x7b30,(CSOR5).l\n"
-	"	move.w #0x5,(CSBAR6).l\n"
-	"	move.w #0x7070,(CSOR6).l\n"
-	"	move.w #0x405,(CSBAR7).l\n"
-	"	move.w #0x7070,(CSOR7).l\n"
-	"	move.w #0x2000,(CSBAR8).l\n"
-	"	move.w #0x3bf0,(CSOR8).l\n"
-	"	move.w #0x4001,(CSBAR9).l\n"
-	"	move.w #0x78f0,(CSOR9).l\n"
-	"	move.w #-0x8,(CSBAR10).l\n"
-	"	move.w #0x2bc4,(CSOR10).l\n"
-	"	move.w #0x14a,(SIMCR).l\n"
-	"	move.w #-0x3100,(SYNCR).l\n"
-	"	move.w #0x8,(PITR).l\n"
-	"	move.b #0x32,(PEPAR).l\n"
-	"	move.b #0x40,(PORTE0).l\n"
-	"	move.b #0x40,(DDRE).l\n"
-	"	move.b #0x4,(PFPAR).l\n"
-	"	move.b #0xf7,(PORTF0).l\n"
-	"	move.b #0xf7,(DDRF).l\n"
+	"	move.b #0xcc,(__ghidra_fffa21).l\n"
+	"	move.w #0x2bff,(__ghidra_fffa44).l\n"
+	"	move.w #0x3af,(__ghidra_fffa46).l\n"
+	"	move.w #0x5,(__ghidra_fffa48).l\n"
+	"	move.w #0x6870,(__ghidra_fffa4a).l\n"
+	"	move.w #0x1003,(__ghidra_fffa4c).l\n"
+	"	move.w #0x6830,(__ghidra_fffa4e).l\n"
+	"	move.w #0x405,(__ghidra_fffa50).l\n"
+	"	move.w #0x6870,(__ghidra_fffa52).l\n"
+	"	move.w #0x1003,(__ghidra_fffa54).l\n"
+	"	move.w #0x5030,(__ghidra_fffa56).l\n"
+	"	move.w #0x1003,(__ghidra_fffa58).l\n"
+	"	move.w #0x3030,(__ghidra_fffa5a).l\n"
+	"	move.w #0x5000,(__ghidra_fffa5c).l\n"
+	"	move.w #0x7830,(__ghidra_fffa5e).l\n"
+	"	move.w #0x3003,(__ghidra_fffa60).l\n"
+	"	move.w #0x7b30,(__ghidra_fffa62).l\n"
+	"	move.w #0x5,(__ghidra_fffa64).l\n"
+	"	move.w #0x7070,(__ghidra_fffa66).l\n"
+	"	move.w #0x405,(__ghidra_fffa68).l\n"
+	"	move.w #0x7070,(__ghidra_fffa6a).l\n"
+	"	move.w #0x2000,(__ghidra_fffa6c).l\n"
+	"	move.w #0x3bf0,(__ghidra_fffa6e).l\n"
+	"	move.w #0x4001,(__ghidra_fffa70).l\n"
+	"	move.w #0x78f0,(__ghidra_fffa72).l\n"
+	"	move.w #-0x8,(__ghidra_fffa74).l\n"
+	"	move.w #0x2bc4,(__ghidra_fffa76).l\n"
+	"	move.w #0x14a,(sim).l\n"
+	"	move.w #-0x3100,(__ghidra_fffa04).l\n"
+	"	move.w #0x8,(__ghidra_fffa24).l\n"
+	"	move.b #0x32,(__ghidra_fffa17).l\n"
+	"	move.b #0x40,(__ghidra_fffa11).l\n"
+	"	move.b #0x40,(__ghidra_fffa15).l\n"
+	"	move.b #0x4,(__ghidra_fffa1f).l\n"
+	"	move.b #0xf7,(__ghidra_fffa19).l\n"
+	"	move.b #0xf7,(__ghidra_fffa1d).l\n"
 	"	move.b #0xff,(DUART_START_SOPBC).l\n"
 	"	move.b #0x0,(DUART_STOP_ROPBC).l\n"
 	"	moveq #0x0,%d0\n"
@@ -12434,42 +12419,42 @@ __exception void primary_trap_12(void)
   shutdown();
   puVar13 = (undefined2 *)primary_vectors;
   reset();
-  SYPCR = 0xcc;
-  CSPAR0 = 0x2bff;
-  CSPAR1 = 0x3af;
-  CSBARBT = 5;
-  CSORBT = 0x6870;
-  CSBAR0 = 0x1003;
-  CSOR0 = 0x6830;
-  CSBAR1 = 0x405;
-  CSOR1 = 0x6870;
-  CSBAR2 = 0x1003;
-  CSOR2 = 0x5030;
-  CSBAR3 = 0x1003;
-  CSOR3 = 0x3030;
-  CSBAR4 = 0x5000;
-  CSOR4 = 0x7830;
-  CSBAR5 = 0x3003;
-  CSOR5 = 0x7b30;
-  CSBAR6 = 5;
-  CSOR6 = 0x7070;
-  CSBAR7 = 0x405;
-  CSOR7 = 0x7070;
-  CSBAR8 = 0x2000;
-  CSOR8 = 0x3bf0;
-  CSBAR9 = 0x4001;
-  CSOR9 = 0x78f0;
-  CSBAR10 = 0xfff8;
-  CSOR10 = 0x2bc4;
-  SIMCR = 0x14a;
-  SYNCR = 0xcf00;
-  PITR = 8;
-  PEPAR = 0x32;
-  PORTE0 = 0x40;
-  DDRE = 0x40;
-  PFPAR = 4;
-  PORTF0 = 0xf7;
-  DDRF = 0xf7;
+  sim.sypcr = 0xcc;
+  sim.cspar0 = 0x2bff;
+  sim.cspar1 = 0x3af;
+  sim.csboot.csbar = 5;
+  sim.csboot.csor = 0x6870;
+  sim.cs[0].csbar = 0x1003;
+  sim.cs[0].csor = 0x6830;
+  sim.cs[1].csbar = 0x405;
+  sim.cs[1].csor = 0x6870;
+  sim.cs[2].csbar = 0x1003;
+  sim.cs[2].csor = 0x5030;
+  sim.cs[3].csbar = 0x1003;
+  sim.cs[3].csor = 0x3030;
+  sim.cs[4].csbar = 0x5000;
+  sim.cs[4].csor = 0x7830;
+  sim.cs[5].csbar = 0x3003;
+  sim.cs[5].csor = 0x7b30;
+  sim.cs[6].csbar = 5;
+  sim.cs[6].csor = 0x7070;
+  sim.cs[7].csbar = 0x405;
+  sim.cs[7].csor = 0x7070;
+  sim.cs[8].csbar = 0x2000;
+  sim.cs[8].csor = 0x3bf0;
+  sim.cs[9].csbar = 0x4001;
+  sim.cs[9].csor = 0x78f0;
+  sim.cs[10].csbar = 0xfff8;
+  sim.cs[10].csor = 0x2bc4;
+  sim.simcr = 0x14a;
+  sim.syncr = 0xcf00;
+  sim.pitr = 8;
+  sim.pepar = 0x32;
+  sim.porte0 = 0x40;
+  sim.ddre = 0x40;
+  sim.pfpar = 4;
+  sim.portf0 = 0xf7;
+  sim.ddrf = 0xf7;
   DUART_START_SOPBC = 0xff;
   DUART_STOP_ROPBC = 0;
   puVar7 = &DAT_001009ec;
@@ -32528,15 +32513,15 @@ void diag_debug_psos(int param_1)
 void diag_doven(int param_1)
 
 {
-  byte bVar1;
+  uint8_t uVar1;
   
   if (param_1 == 0) {
-    bVar1 = PORTGP;
-    PORTGP = bVar1 & 0xdf;
+    uVar1 = gpt.portgp;
+    gpt.portgp = uVar1 & 0xdf;
   }
   else {
-    bVar1 = PORTGP;
-    PORTGP = bVar1 | 0x20;
+    uVar1 = gpt.portgp;
+    gpt.portgp = uVar1 | 0x20;
   }
   return;
 }
@@ -32751,15 +32736,15 @@ void diag_words_define(void)
 int gp_port_select(char param_1)
 
 {
-  byte bVar1;
+  uint8_t uVar1;
   
   if ('\x06' < param_1) {
     param_1 = '\0';
   }
-  bVar1 = PORTGP;
-  PORTGP = bVar1 & 0xe3;
-  bVar1 = PORTGP;
-  PORTGP = (byte)((int)param_1 << 2) | bVar1;
+  uVar1 = gpt.portgp;
+  gpt.portgp = uVar1 & 0xe3;
+  uVar1 = gpt.portgp;
+  gpt.portgp = (byte)((int)param_1 << 2) | uVar1;
   return (int)param_1 << 2;
 }
 
@@ -34881,7 +34866,6 @@ void efc_write(undefined2 param_1)
 
 /* 0001f6ca */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* the SCI's baud rate from a code */
 
@@ -34889,33 +34873,33 @@ void sci_baud_set(char param_1)
 
 {
   int iVar1;
-  word wVar2;
+  uint16_t uVar2;
   
   iVar1 = (int)param_1 - 3;
   if ((uint)(int)param_1 < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0001f6ec)[(short)iVar1]) {
     case 8:
-      wVar2 = 0x1b5;
-      _DAT_0010329e = 0x2222;
+      uVar2 = 0x1b5;
+      sci.baud_constant = 0x2222;
       break;
     case 0x12:
-      wVar2 = 0xda;
-      _DAT_0010329e = 0x1111;
+      uVar2 = 0xda;
+      sci.baud_constant = 0x1111;
       break;
     case 0x1c:
       goto LAB_0001f70c;
     case 0x1e:
-      wVar2 = 0x1b;
-      _DAT_0010329e = 0x222;
+      uVar2 = 0x1b;
+      sci.baud_constant = 0x222;
     }
   }
   else {
 LAB_0001f70c:
-    wVar2 = 0x37;
-    _DAT_0010329e = 0x444;
+    uVar2 = 0x37;
+    sci.baud_constant = 0x444;
   }
-  SCCR0 = wVar2;
+  qsm.sccr0 = uVar2;
   return;
 }
 
@@ -34928,26 +34912,25 @@ LAB_0001f70c:
 ushort sci_putc_polled(char param_1)
 
 {
-  word wVar1;
+  uint16_t uVar1;
   ushort uVar2;
   
   do {
-    wVar1 = SCSR;
-  } while ((wVar1 & 0x100) == 0);
-  if (DAT_00103298 == '\0') {
+    uVar1 = qsm.scsr;
+  } while ((uVar1 & 0x100) == 0);
+  if (sci.mark_bit == 0) {
     uVar2 = (ushort)param_1;
   }
   else {
     uVar2 = (short)param_1 | 0x80;
   }
-  SCDR = uVar2;
+  qsm.scdr = uVar2;
   return uVar2;
 }
 
 
 /* 0001f76c */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* writes a string to the SCI port, waiting for room
    the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts" */
 
@@ -34955,21 +34938,21 @@ int sci_puts(int param_1)
 
 {
   int iVar1;
-  word wVar2;
+  uint16_t uVar2;
   ulong uVar3;
   
   psos_get_v(0x200,0,(ulong *)0x0);
-  _DAT_0010328a = (undefined *)param_1;
-  if (DAT_0010329a == '\0') {
-    wVar2 = SCCR1;
-    SCCR1 = wVar2 | 0x80;
+  sci.transmit_next = (char *)param_1;
+  if (sci.reconfiguring == 0) {
+    uVar2 = qsm.sccr1;
+    qsm.sccr1 = uVar2 | 0x80;
   }
   uVar3 = psos_wait_v(0x200,0,0,(ulong *)0x0);
   if ((char)uVar3 != '\0') {
     fatal_error("wait_v SIG_SOQ_SCI error in _sci_puts");
   }
-  iVar1 = (int)_DAT_0010328a - param_1;
-  _DAT_0010328a = &DAT_00020336;
+  iVar1 = (int)sci.transmit_next - param_1;
+  sci.transmit_next = "";
   return iVar1;
 }
 
@@ -34982,25 +34965,25 @@ int sci_puts(int param_1)
 undefined4 sci_getc(void)
 
 {
-  undefined1 uVar1;
-  char cVar2;
+  uint8_t uVar1;
+  uint8_t uVar2;
   undefined3 uVar3;
   undefined3 extraout_var;
   ulong uVar4;
   
   psos_get_v(0x40,0,(ulong *)0x0);
-  if (DAT_00103188 == DAT_00103189) {
+  if (sci_ring.write == sci_ring.read) {
     uVar4 = psos_wait_v(0x40,0,0,(ulong *)0x0);
     if ((char)uVar4 != '\0') {
       fatal_error("wait_v SIG_SIQ_SCI error in getc");
     }
   }
-  cVar2 = DAT_00103189 + 1;
+  uVar2 = sci_ring.read + 1;
   uVar3 = 0;
-  uVar1 = *(undefined1 *)(DAT_00103189 + 0x10318a);
-  DAT_00103189 = cVar2;
-  if ((((DAT_00103294 & 0x20) != 0) && (uVar3 = 0, 0x10 < (byte)(cVar2 - DAT_00103188))) &&
-     (DAT_00103294 = DAT_00103294 & 0xdf, DAT_00103297 != '\0')) {
+  uVar1 = sci_ring.data[sci_ring.read];
+  sci_ring.read = uVar2;
+  if ((((sci.flow & 0x20) != 0) && (uVar3 = 0, 0x10 < (byte)(uVar2 - sci_ring.write))) &&
+     (sci.flow = sci.flow & 0xdf, sci.xon_xoff != 0)) {
     sci_putc_polled('\x11');
     uVar3 = extraout_var;
   }
@@ -35010,50 +34993,49 @@ undefined4 sci_getc(void)
 
 /* 0001f868 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* reads a line of up to the given length from the SCI; "SCI receiver error ocurred" */
 
 int sci_gets(char *param_1,int param_2)
 
 {
-  char cVar1;
+  uint8_t uVar1;
   int iVar2;
   int iVar3;
-  char *pcVar4;
-  char *pcVar5;
+  uint8_t *puVar4;
+  uint8_t *puVar5;
   undefined1 uVar6;
   
   iVar2 = param_2 + -1;
   iVar3 = iVar2;
-  pcVar5 = param_1;
+  puVar5 = (uint8_t *)param_1;
 LAB_0001f952:
   while( true ) {
     if (iVar2 == 0) {
-      *pcVar5 = '\0';
-      if (DAT_00103295 == '\0') {
-        DAT_00103296 = '\0';
+      *puVar5 = 0;
+      if (sci.receive_errors == 0) {
+        sci.read_errors = 0;
       }
       else {
         task_debug_message("SCI receiver error ocurred\r\n");
-        DAT_00103296 = DAT_00103295;
-        DAT_00103295 = '\0';
+        sci.read_errors = sci.receive_errors;
+        sci.receive_errors = 0;
       }
       return iVar3;
     }
     uVar6 = 0x94;
-    cVar1 = sci_getc();
-    if ('\x1f' < cVar1) break;
-    if (0x10 < (int)cVar1 - 8U) {
+    uVar1 = sci_getc();
+    if ('\x1f' < (char)uVar1) break;
+    if (0x10 < (int)(char)uVar1 - 8U) {
 switchD_0001f8b2_caseD_b:
-      (*_DAT_001032a0)();
-      pcVar4 = pcVar5;
+      (*(code *)sci.echo)();
+      puVar4 = puVar5;
       goto LAB_0001f94c;
     }
                     /* WARNING: Switch is manually overridden */
-    switch((short)((int)cVar1 - 8U)) {
+    switch((short)((int)(char)uVar1 - 8U)) {
     case 0:
       if (iVar3 != iVar2) {
-        pcVar4 = pcVar5 + -1;
+        puVar4 = puVar5 + -1;
         iVar2 = iVar2 + 1;
         goto LAB_0001f94c;
       }
@@ -35062,16 +35044,16 @@ switchD_0001f8b2_caseD_b:
       goto LAB_0001f944;
     case 2:
     case 5:
-      if (((DAT_001032a4 == '\r') && (cVar1 == '\n')) || ((DAT_001032a4 == '\n' && (cVar1 == '\r')))
-         ) {
-        DAT_001032a4 = '\0';
+      if (((sci.last_terminator == 0xd) && (uVar1 == 10)) ||
+         ((sci.last_terminator == 10 && (uVar1 == 0xd)))) {
+        sci.last_terminator = 0;
       }
       else {
-        (*_DAT_001032a0)();
-        (*_DAT_001032a0)(uVar6);
+        (*(code *)sci.echo)();
+        (*(code *)sci.echo)(uVar6);
         iVar3 = iVar3 - iVar2;
         iVar2 = 0;
-        DAT_001032a4 = cVar1;
+        sci.last_terminator = uVar1;
       }
       break;
     default:
@@ -35081,19 +35063,19 @@ switchD_0001f8b2_caseD_b:
     }
   }
 LAB_0001f944:
-  pcVar4 = pcVar5 + 1;
-  DAT_001032a4 = cVar1;
-  *pcVar5 = cVar1;
+  puVar4 = puVar5 + 1;
+  sci.last_terminator = uVar1;
+  *puVar5 = uVar1;
   iVar2 = iVar2 + -1;
   goto LAB_0001f94c;
 switchD_0001f8b2_caseD_18:
   if (iVar3 != iVar2) {
-    (*_DAT_001032a0)();
+    (*(code *)sci.echo)();
     iVar2 = iVar3;
-    pcVar4 = param_1;
+    puVar4 = (uint8_t *)param_1;
 LAB_0001f94c:
-    (*_DAT_001032a0)();
-    pcVar5 = pcVar4;
+    (*(code *)sci.echo)();
+    puVar5 = puVar4;
   }
   goto LAB_0001f952;
 }
@@ -35109,95 +35091,95 @@ LAB_0001f94c:
 __exception void primary_user_64(void)
 
 {
-  word wVar1;
-  word wVar2;
+  uint16_t uVar1;
+  uint16_t uVar2;
   ulong uVar3;
   uint uVar4;
   byte local_6;
   
-  wVar2 = SCSR;
-  wVar1 = SCDR;
-  DAT_00103295 = (byte)wVar2 & 0xb | DAT_00103295;
-  if ((wVar2 & 0x40) != 0) {
-    local_6 = (byte)wVar1;
-    if (DAT_00103299 != '\0') {
+  uVar2 = qsm.scsr;
+  uVar1 = qsm.scdr;
+  sci.receive_errors = (byte)uVar2 & 0xb | sci.receive_errors;
+  if ((uVar2 & 0x40) != 0) {
+    local_6 = (byte)uVar1;
+    if (sci.seven_bits != 0) {
       local_6 = local_6 & 0x7f;
     }
-    if ((local_6 == 3) && (_DAT_0010315c == _DAT_001037e8)) {
-      if ((_DAT_0010315c != 0) && (uVar3 = psos_signal_v(_DAT_0010315c,0x800), (char)uVar3 != '\0'))
-      {
+    if ((local_6 == 3) && (sci_exchanges.read_token.task == _DAT_001037e8)) {
+      if ((sci_exchanges.read_token.task != 0) &&
+         (uVar3 = psos_signal_v(sci_exchanges.read_token.task,0x800), (char)uVar3 != '\0')) {
         fatal_error("SCI isr signaling SIGINTR");
       }
-      if (DAT_00103297 != '\0') {
-        DAT_00103294 = DAT_00103294 & 0x7f;
+      if (sci.xon_xoff != 0) {
+        sci.flow = sci.flow & 0x7f;
       }
-      if (DAT_0010329a == '\0') {
-        wVar1 = SCCR1;
-        SCCR1 = wVar1 | 0x80;
+      if (sci.reconfiguring == 0) {
+        uVar1 = qsm.sccr1;
+        qsm.sccr1 = uVar1 | 0x80;
       }
     }
     else if (local_6 == 0x11) {
-      if ((DAT_00103297 != '\0') && (DAT_00103294 = DAT_00103294 & 0x7f, DAT_0010329a == '\0')) {
-        wVar1 = SCCR1;
-        SCCR1 = wVar1 | 0x80;
+      if ((sci.xon_xoff != 0) && (sci.flow = sci.flow & 0x7f, sci.reconfiguring == 0)) {
+        uVar1 = qsm.sccr1;
+        qsm.sccr1 = uVar1 | 0x80;
       }
     }
     else if (local_6 == 0x13) {
-      if ((DAT_00103297 != '\0') && (DAT_00103294 = DAT_00103294 | 0x80, DAT_0010329c == '\0')) {
-        wVar1 = SCCR1;
-        SCCR1 = wVar1 & 0xff7f;
+      if ((sci.xon_xoff != 0) && (sci.flow = sci.flow | 0x80, sci.async_allowed == 0)) {
+        uVar1 = qsm.sccr1;
+        qsm.sccr1 = uVar1 & 0xff7f;
       }
     }
-    else if (_DAT_0010315c != 0) {
-      uVar4 = (uint)DAT_00103188;
-      DAT_00103188 = DAT_00103188 + 1;
-      *(byte *)(uVar4 + 0x10318a) = local_6;
-      if (DAT_00103188 == DAT_00103189) {
-        DAT_00103295 = DAT_00103295 | 8;
+    else if (sci_exchanges.read_token.task != 0) {
+      uVar4 = (uint)sci_ring.write;
+      sci_ring.write = sci_ring.write + 1;
+      sci_ring.data[uVar4] = local_6;
+      if (sci_ring.write == sci_ring.read) {
+        sci.receive_errors = sci.receive_errors | 8;
       }
-      if (((byte)(DAT_00103189 - DAT_00103188) < 0x40) &&
-         (DAT_00103294 = DAT_00103294 | 0x20, DAT_00103297 != '\0')) {
+      if (((byte)(sci_ring.read - sci_ring.write) < 0x40) &&
+         (sci.flow = sci.flow | 0x20, sci.xon_xoff != 0)) {
         sci_putc_polled('\x13');
       }
-      uVar3 = psos_signal_v(_DAT_0010315c,0x40);
+      uVar3 = psos_signal_v(sci_exchanges.read_token.task,0x40);
       if ((char)uVar3 != '\0') {
         fatal_error("SCI isr signaling SIG_SIQ_SCI");
       }
     }
   }
-  wVar1 = SCCR1;
-  if ((wVar1 * 2 & wVar2 & 0x100) == 0) {
-    wVar2 = SCCR1;
+  uVar1 = qsm.sccr1;
+  if ((uVar1 * 2 & uVar2 & 0x100) == 0) {
+    uVar2 = qsm.sccr1;
   }
   else {
-    DAT_0010329b = 1;
-    if (DAT_00103292 == '\0') {
-      if (*_DAT_0010328a == '\0') {
-        wVar2 = SCCR1;
-        SCCR1 = wVar2 & 0xff7f;
-        if ((_DAT_00103178 != 0) &&
-           (uVar3 = psos_signal_v(_DAT_00103178,0x200), (char)uVar3 != '\0')) {
+    sci.field_11 = 1;
+    if (sci.async_count == 0) {
+      if (*sci.transmit_next == '\0') {
+        uVar2 = qsm.sccr1;
+        qsm.sccr1 = uVar2 & 0xff7f;
+        if ((sci_exchanges.write_token.task != 0) &&
+           (uVar3 = psos_signal_v(sci_exchanges.write_token.task,0x200), (char)uVar3 != '\0')) {
           fatal_error("SCI isr signaling SIG_SOQ_SCI");
         }
       }
-      else if (((short)(char)DAT_00103294 & 0x80U) == 0) {
-        if (DAT_00103298 == '\0') {
-          SCDR = (short)*_DAT_0010328a;
+      else if (((short)(char)sci.flow & 0x80U) == 0) {
+        if (sci.mark_bit == 0) {
+          qsm.scdr = (short)*sci.transmit_next;
         }
         else {
-          SCDR = (short)*_DAT_0010328a | 0x80;
+          qsm.scdr = (short)*sci.transmit_next | 0x80;
         }
       }
       else {
-        wVar2 = SCCR1;
-        SCCR1 = wVar2 & 0xff7f;
+        uVar2 = qsm.sccr1;
+        qsm.sccr1 = uVar2 & 0xff7f;
       }
     }
-    else if (DAT_00103298 == '\0') {
-      SCDR = (ushort)*_DAT_0010328e;
+    else if (sci.mark_bit == 0) {
+      qsm.scdr = (ushort)(byte)*sci.async_next;
     }
     else {
-      SCDR = (ushort)(*_DAT_0010328e | 0x80);
+      qsm.scdr = (ushort)(byte)(*sci.async_next | 0x80);
     }
   }
   do {
@@ -35223,8 +35205,8 @@ __asm__(
 	"	move.l #0x172e8,%d5\n"
 	"	move.l #0x103188,%d6\n"
 	"	move.l #0x10328a,%d7\n"
-	"	move.w (SCSR).l,%d2\n"
-	"	move.w (SCDR).l,%d3\n"
+	"	move.w (__ghidra_fffc0c).l,%d2\n"
+	"	move.w (__ghidra_fffc0e).l,%d3\n"
 	"	move.w %d2,%d0\n"
 	"	andi.w #0xb,%d0\n"
 	"	or.b %d0,(__ghidra_103295).l\n"
@@ -35266,7 +35248,7 @@ __asm__(
 	".Lg_1fa38:\n"
 	"	tst.b (__ghidra_10329a).l\n"
 	"	bne.w .Lg_1fb06\n"
-	"	ori.w #0x80,(SCCR1).l\n"
+	"	ori.w #0x80,(__ghidra_fffc0a).l\n"
 	"	bra.w .Lg_1fb06\n"
 	".Lg_1fa4e:\n"
 	"	cmpi.b #0x11,(-0x2,%a6)\n"
@@ -35276,7 +35258,7 @@ __asm__(
 	"	andi.b #0x7f,(%a3)\n"
 	"	tst.b (__ghidra_10329a).l\n"
 	"	bne.w .Lg_1fb06\n"
-	"	ori.w #0x80,(SCCR1).l\n"
+	"	ori.w #0x80,(__ghidra_fffc0a).l\n"
 	"	bra.w .Lg_1fb06\n"
 	".Lg_1fa76:\n"
 	"	cmpi.b #0x13,(-0x2,%a6)\n"
@@ -35286,7 +35268,7 @@ __asm__(
 	"	ori.b #0x80,(%a3)\n"
 	"	tst.b (__ghidra_10329c).l\n"
 	"	bne.b .Lg_1fb06\n"
-	"	andi.w #-0x81,(SCCR1).l\n"
+	"	andi.w #-0x81,(__ghidra_fffc0a).l\n"
 	"	bra.b .Lg_1fb06\n"
 	".Lg_1fa9a:\n"
 	"	tst.l (0x8,%a2)\n"
@@ -35330,7 +35312,7 @@ __asm__(
 	"	move.w %d2,%d0\n"
 	"	andi.w #0x100,%d0\n"
 	"	moveq #0x0,%d1\n"
-	"	move.w (SCCR1).l,%d1\n"
+	"	move.w (__ghidra_fffc0a).l,%d1\n"
 	"	add.l %d1,%d1\n"
 	"	and.l %d1,%d0\n"
 	"	beq.w .Lg_1fbf6\n"
@@ -35345,7 +35327,7 @@ __asm__(
 	"	lea (0x80).w,%a1\n"
 	"	move.l %a1,%d0\n"
 	"	or.b (%a0),%d0\n"
-	"	move.w %d0,(SCDR).l\n"
+	"	move.w %d0,(__ghidra_fffc0e).l\n"
 	"	bra.b .Lg_1fb64\n"
 	".Lg_1fb50:\n"
 	"	movea.l #0x10328e,%a1\n"
@@ -35353,7 +35335,7 @@ __asm__(
 	"	addq.l #0x1,(%a1)\n"
 	"	moveq #0x0,%d0\n"
 	"	move.b (%a0),%d0\n"
-	"	move.w %d0,(SCDR).l\n"
+	"	move.w %d0,(__ghidra_fffc0e).l\n"
 	".Lg_1fb64:\n"
 	"	subq.b #0x1,(__ghidra_103292).l\n"
 	"	bra.w .Lg_1fbee\n"
@@ -35368,7 +35350,7 @@ __asm__(
 	"	andi.w #0x80,%d0\n"
 	"	tst.l %d0\n"
 	"	beq.b .Lg_1fb8e\n"
-	"	andi.w #-0x81,(SCCR1).l\n"
+	"	andi.w #-0x81,(__ghidra_fffc0a).l\n"
 	"	bra.b .Lg_1fbee\n"
 	".Lg_1fb8e:\n"
 	"	tst.b (__ghidra_103298).l\n"
@@ -35379,7 +35361,7 @@ __asm__(
 	"	move.b (%a0),%d0\n"
 	"	extb.l %d0\n"
 	"	ori.w #0x80,%d0\n"
-	"	move.w %d0,(SCDR).l\n"
+	"	move.w %d0,(__ghidra_fffc0e).l\n"
 	"	bra.b .Lg_1fbee\n"
 	".Lg_1fbac:\n"
 	"	movea.l %d7,%a1\n"
@@ -35387,10 +35369,10 @@ __asm__(
 	"	addq.l #0x1,(%a1)\n"
 	"	move.b (%a0),%d0\n"
 	"	ext.w %d0\n"
-	"	move.w %d0,(SCDR).l\n"
+	"	move.w %d0,(__ghidra_fffc0e).l\n"
 	"	bra.b .Lg_1fbee\n"
 	".Lg_1fbbe:\n"
-	"	andi.w #-0x81,(SCCR1).l\n"
+	"	andi.w #-0x81,(__ghidra_fffc0a).l\n"
 	"	tst.l (__ghidra_103178).l\n"
 	"	beq.b .Lg_1fbee\n"
 	"	pea (0x200).w\n"
@@ -35412,7 +35394,7 @@ __asm__(
 	"	move.w %d2,%d0\n"
 	"	andi.w #0x80,%d0\n"
 	"	moveq #0x0,%d1\n"
-	"	move.w (SCCR1).l,%d1\n"
+	"	move.w (__ghidra_fffc0a).l,%d1\n"
 	"	add.l %d1,%d1\n"
 	"	and.l %d1,%d0\n"
 	"	tst.l %d0\n"
@@ -35440,22 +35422,22 @@ undefined8 sci_unlock(void)
   ulong uVar1;
   undefined4 in_D1;
   uint32_t exchange;
-  uint32_t *message;
+  exchange_token *message;
   char acStack_64 [80];
   
   if ((char)in_D0 == '\x01') {
-    message = &sciW_status;
-    exchange = sciW_exchange;
+    message = &sci_exchanges.write_token;
+    exchange = sci_exchanges.write_exchange;
   }
   else {
-    message = &sciR_status;
-    exchange = sciR_exchange;
+    message = &sci_exchanges.read_token;
+    exchange = sci_exchanges.read_exchange;
   }
   uVar1 = psos_my_pid();
-  if (uVar1 == message[2]) {
-    if (message[3] == 0) {
-      message[2] = 0;
-      if (exchange != message[1]) {
+  if (uVar1 == message->task) {
+    if (message->field_0c == 0) {
+      message->task = 0;
+      if (exchange != message->exchange) {
         fatal_error("SCI semaphore has been corrupted.");
       }
       uVar1 = psos_send_x(exchange,message);
@@ -35464,11 +35446,11 @@ undefined8 sci_unlock(void)
         fatal_error(acStack_64);
       }
     }
-    else if ((int)message[3] < 0) {
+    else if ((int)message->field_0c < 0) {
       fatal_error("SCI semaphore count is < 0.");
     }
     else {
-      message[3] = message[3] - 1;
+      message->field_0c = message->field_0c - 1;
     }
   }
   else {
@@ -35492,20 +35474,20 @@ undefined8 sci_lock(void)
   ulong uVar2;
   undefined4 in_D1;
   uint32_t exchange;
-  uint32_t *buffer;
+  exchange_token *buffer;
   char acStack_64 [80];
   
   if ((char)in_D0 == '\x01') {
-    buffer = &sciW_status;
-    exchange = sciW_exchange;
+    buffer = &sci_exchanges.write_token;
+    exchange = sci_exchanges.write_exchange;
   }
   else {
-    buffer = &sciR_status;
-    exchange = sciR_exchange;
+    buffer = &sci_exchanges.read_token;
+    exchange = sci_exchanges.read_exchange;
   }
   uVar1 = psos_my_pid();
-  if (uVar1 == buffer[2]) {
-    buffer[3] = buffer[3] + 1;
+  if (uVar1 == buffer->task) {
+    buffer->field_0c = buffer->field_0c + 1;
   }
   else {
     uVar2 = psos_request_x(exchange,buffer,0,0);
@@ -35513,8 +35495,8 @@ undefined8 sci_lock(void)
       sprintf(acStack_64,"Unable to acquire SCI token: %X",uVar2 & 0xff);
       fatal_error(acStack_64);
     }
-    buffer[2] = uVar1;
-    buffer[3] = 0;
+    buffer->task = uVar1;
+    buffer->field_0c = 0;
   }
   return CONCAT44(in_D0,in_D1);
 }
@@ -35522,14 +35504,13 @@ undefined8 sci_lock(void)
 
 /* 0001fdb6 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* creates sciR and sciW, "Unable to create sciR"
    structures.md */
 
 undefined8 sci_init(void)
 
 {
-  word wVar1;
+  uint16_t uVar1;
   undefined4 in_D0;
   ulong uVar2;
   undefined4 in_D1;
@@ -35538,76 +35519,76 @@ undefined8 sci_init(void)
   
   sci_baud_set(DAT_00101f52);
   if (DAT_00101f53 == '\0') {
-    DAT_00103299 = 0;
-    DAT_00103298 = 0;
+    sci.seven_bits = 0;
+    sci.mark_bit = 0;
   }
   else if (DAT_00101f53 == '\x03') {
-    DAT_00103299 = 1;
-    DAT_00103298 = 1;
+    sci.seven_bits = 1;
+    sci.mark_bit = 1;
   }
   else {
-    DAT_00103299 = 1;
-    DAT_00103298 = 0;
+    sci.seven_bits = 1;
+    sci.mark_bit = 0;
     if (DAT_00101f53 == '\x01') {
-      SCCR1 = 0x400;
+      qsm.sccr1 = 0x400;
     }
     else if (DAT_00101f53 == '\x02') {
-      SCCR1 = 0xc00;
+      qsm.sccr1 = 0xc00;
     }
   }
-  wVar1 = SCCR1;
-  SCCR1 = wVar1 | 0x2c;
+  uVar1 = qsm.sccr1;
+  qsm.sccr1 = uVar1 | 0x2c;
   iVar3 = 0;
   do {
     iVar3 = iVar3 + 1;
   } while (iVar3 < 100000);
-  wVar1 = SCSR;
-  wVar1 = SCDR;
-  uVar2 = psos_create_x("sciR",0,0,&sciR_exchange);
+  uVar1 = qsm.scsr;
+  uVar1 = qsm.scdr;
+  uVar2 = psos_create_x("sciR",0,0,&sci_exchanges.read_exchange);
   if ((uVar2 & 0xff) != 0) {
     sprintf(acStack_64,"Unable to create sciR: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
-  sciR_status = 0;
-  _DAT_00103158 = sciR_exchange;
-  _DAT_0010315c = 0;
-  _DAT_00103160 = 0;
-  uVar2 = psos_send_x(sciR_exchange,&sciR_status);
+  sci_exchanges.read_token.status = 0;
+  sci_exchanges.read_token.exchange = sci_exchanges.read_exchange;
+  sci_exchanges.read_token.task = 0;
+  sci_exchanges.read_token.field_0c = 0;
+  uVar2 = psos_send_x(sci_exchanges.read_exchange,&sci_exchanges.read_token);
   if ((uVar2 & 0xff) != 0) {
     sprintf(acStack_64,"Unable to initialize sciR: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
-  uVar2 = psos_create_x("sciW",0,0,&sciW_exchange);
+  uVar2 = psos_create_x("sciW",0,0,&sci_exchanges.write_exchange);
   if ((uVar2 & 0xff) != 0) {
     sprintf(acStack_64,"Unable to create sciW: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
-  sciW_status = 0;
-  _DAT_00103174 = sciW_exchange;
-  _DAT_00103178 = 0;
-  _DAT_0010317c = 0;
-  uVar2 = psos_send_x(sciW_exchange,&sciW_status);
+  sci_exchanges.write_token.status = 0;
+  sci_exchanges.write_token.exchange = sci_exchanges.write_exchange;
+  sci_exchanges.write_token.task = 0;
+  sci_exchanges.write_token.field_0c = 0;
+  uVar2 = psos_send_x(sci_exchanges.write_exchange,&sci_exchanges.write_token);
   if ((uVar2 & 0xff) != 0) {
     sprintf(acStack_64,"Unable to initialize sciW: %X",uVar2 & 0xff);
     fatal_error(acStack_64);
   }
-  _DAT_0010328e = &DAT_00020336;
-  DAT_00103292 = 0;
-  DAT_00103293 = 0;
-  _DAT_0010328a = &DAT_00020336;
-  DAT_00103188 = 0;
-  DAT_00103189 = 0;
-  DAT_00103294 = 0;
-  DAT_00103295 = 0;
-  DAT_00103297 = DAT_00101f54 != '\0';
-  DAT_0010329a = 0;
-  DAT_0010329b = 0;
-  DAT_0010329c = 1;
+  sci.async_next = "";
+  sci.async_count = 0;
+  sci.async_pending = 0;
+  sci.transmit_next = "";
+  sci_ring.write = 0;
+  sci_ring.read = 0;
+  sci.flow = 0;
+  sci.receive_errors = 0;
+  sci.xon_xoff = DAT_00101f54 != '\0';
+  sci.reconfiguring = 0;
+  sci.field_11 = 0;
+  sci.async_allowed = 1;
   if (DAT_00101f55 == '\0') {
-    _DAT_001032a0 = (code *)&USHORT_0001f6c8;
+    sci.echo = (undefined1 *)&USHORT_0001f6c8;
   }
   else {
-    _DAT_001032a0 = sci_putc;
+    sci.echo = sci_putc;
   }
   return CONCAT44(in_D0,in_D1);
 }
@@ -35615,13 +35596,12 @@ undefined8 sci_init(void)
 
 /* 0001fffa */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* resets the SCI and applies the serial settings' baud rate and mode */
 
 uint sci_reconfigure(void)
 
 {
-  word wVar1;
+  uint16_t uVar1;
   uint uVar2;
   bool bVar3;
   uint3 uVar4;
@@ -35629,18 +35609,18 @@ uint sci_reconfigure(void)
   int iVar6;
   undefined *puVar7;
   
-  DAT_0010329a = 1;
-  wVar1 = SCCR1;
-  SCCR1 = wVar1 & 0xff5b;
+  sci.reconfiguring = 1;
+  uVar1 = qsm.sccr1;
+  qsm.sccr1 = uVar1 & 0xff5b;
   iVar6 = 100;
-  while ((0 < iVar6 && (wVar1 = SCSR, (wVar1 & 0x100) == 0))) {
+  while ((0 < iVar6 && (uVar1 = qsm.scsr, (uVar1 & 0x100) == 0))) {
     psos_pause(1);
     iVar6 = iVar6 + -1;
   }
-  wVar1 = SCCR1;
-  SCCR1 = wVar1 & 0xfff7;
+  uVar1 = qsm.sccr1;
+  qsm.sccr1 = uVar1 & 0xfff7;
   puVar7 = &DAT_00001388;
-  while ((0 < (int)puVar7 && (wVar1 = SCSR, (wVar1 & 0x80) == 0))) {
+  while ((0 < (int)puVar7 && (uVar1 = qsm.scsr, (uVar1 & 0x80) == 0))) {
     puVar7 = puVar7 + -1;
   }
   sci_baud_set(DAT_00101f52);
@@ -35651,22 +35631,22 @@ uint sci_reconfigure(void)
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00020092)[sVar5]) {
     case 8:
-      wVar1 = SCCR1;
-      SCCR1 = wVar1 | 0x400;
-      wVar1 = SCCR1;
-      SCCR1 = wVar1 & 0xf7ff;
-      DAT_00103299 = 1;
+      uVar1 = qsm.sccr1;
+      qsm.sccr1 = uVar1 | 0x400;
+      uVar1 = qsm.sccr1;
+      qsm.sccr1 = uVar1 & 0xf7ff;
+      sci.seven_bits = 1;
       break;
     case 0x18:
-      wVar1 = SCCR1;
-      SCCR1 = wVar1 | 0xc00;
-      DAT_00103299 = 1;
+      uVar1 = qsm.sccr1;
+      qsm.sccr1 = uVar1 | 0xc00;
+      sci.seven_bits = 1;
       break;
     case 0x24:
-      wVar1 = SCCR1;
-      SCCR1 = wVar1 & 0xfbff;
-      DAT_00103299 = 1;
-      DAT_00103298 = 1;
+      uVar1 = qsm.sccr1;
+      qsm.sccr1 = uVar1 & 0xfbff;
+      sci.seven_bits = 1;
+      sci.mark_bit = 1;
       goto LAB_000200ce;
     case 0x36:
       goto switchD_00020088_caseD_0;
@@ -35674,43 +35654,43 @@ uint sci_reconfigure(void)
   }
   else {
 switchD_00020088_caseD_0:
-    wVar1 = SCCR1;
-    SCCR1 = wVar1 & 0xfbff;
-    DAT_00103299 = 0;
+    uVar1 = qsm.sccr1;
+    qsm.sccr1 = uVar1 & 0xfbff;
+    sci.seven_bits = 0;
   }
-  DAT_00103298 = 0;
+  sci.mark_bit = 0;
 LAB_000200ce:
-  wVar1 = SCCR1;
-  SCCR1 = wVar1 | 8;
+  uVar1 = qsm.sccr1;
+  qsm.sccr1 = uVar1 | 8;
   uVar4 = (uint3)((uint)iVar6 >> 8);
   if (DAT_00101f54 == '\0') {
-    if ((DAT_00103297 != '\0') && (iVar6 = (uint)uVar4 << 8, (DAT_00103294 & 0x20) != 0)) {
+    if ((sci.xon_xoff != 0) && (iVar6 = (uint)uVar4 << 8, (sci.flow & 0x20) != 0)) {
       iVar6 = sci_putc_polled('\x11');
     }
-    DAT_00103297 = 0;
+    sci.xon_xoff = 0;
     bVar3 = false;
-    DAT_00103294 = DAT_00103294 & 0x7f;
+    sci.flow = sci.flow & 0x7f;
   }
   else {
-    if ((DAT_00103297 == '\0') && (iVar6 = (uint)uVar4 << 8, (DAT_00103294 & 0x20) != 0)) {
+    if ((sci.xon_xoff == 0) && (iVar6 = (uint)uVar4 << 8, (sci.flow & 0x20) != 0)) {
       iVar6 = sci_putc_polled('\x13');
     }
-    DAT_00103297 = 1;
+    sci.xon_xoff = 1;
     bVar3 = true;
   }
-  uVar2 = CONCAT31((int3)((uint)iVar6 >> 8),DAT_00103294);
-  if (((DAT_00103294 & 0x20) != 0) && (!bVar3)) {
-    DAT_00103294 = DAT_00103294 & 0xdf;
+  uVar2 = CONCAT31((int3)((uint)iVar6 >> 8),sci.flow);
+  if (((sci.flow & 0x20) != 0) && (!bVar3)) {
+    sci.flow = sci.flow & 0xdf;
   }
   if (DAT_00101f55 == '\0') {
-    _DAT_001032a0 = (code *)&USHORT_0001f6c8;
+    sci.echo = (undefined1 *)&USHORT_0001f6c8;
   }
   else {
-    _DAT_001032a0 = sci_putc;
+    sci.echo = sci_putc;
   }
-  wVar1 = SCCR1;
-  SCCR1 = wVar1 | 0xac;
-  DAT_0010329a = 0;
+  uVar1 = qsm.sccr1;
+  qsm.sccr1 = uVar1 | 0xac;
+  sci.reconfiguring = 0;
   return uVar2 & 0xffffff20;
 }
 
@@ -35724,7 +35704,7 @@ void sci_write(void)
 {
   int in_A0;
   
-  if (DAT_0010329c == '\0') {
+  if (sci.async_allowed == 0) {
     sci_lock();
     sci_puts(in_A0);
     sci_unlock();
@@ -35772,21 +35752,20 @@ void sci_putc(undefined1 param_1)
 
 /* 000201e0 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* queues a block for the SCI to send by interrupt */
 
-void sci_send_async(undefined4 param_1,undefined1 param_2)
+void sci_send_async(char *param_1,uint8_t param_2)
 
 {
-  word wVar1;
+  uint16_t uVar1;
   
-  if (((DAT_0010329c != '\0') && (DAT_0010329a == '\0')) && (DAT_0010329b == '\0')) {
-    _DAT_0010328e = param_1;
-    DAT_00103292 = param_2;
-    DAT_00103293 = 1;
-    wVar1 = SCCR1;
-    SCCR1 = wVar1 | 0x80;
+  if (((sci.async_allowed != 0) && (sci.reconfiguring == 0)) && (sci.field_11 == 0)) {
+    sci.async_next = param_1;
+    sci.async_count = param_2;
+    sci.async_pending = 1;
+    uVar1 = qsm.sccr1;
+    qsm.sccr1 = uVar1 | 0x80;
   }
   return;
 }
@@ -35864,15 +35843,15 @@ void qspi_release(void)
 {
   ulong uVar1;
   
-  if (DAT_001032a7 == DAT_001032a8) {
-    DAT_001032ea = 0;
+  if (qspi.write == qspi.read) {
+    qspi.busy = 0;
   }
   else {
-    uVar1 = psos_signal_v(*(ulong *)((uint)DAT_001032a8 * 4 + 0x1032aa),0x400);
+    uVar1 = psos_signal_v(qspi.waiting[qspi.read],0x400);
     if ((char)uVar1 != '\0') {
       fatal_error("SPI isr signaling SPI owner");
     }
-    DAT_001032a8 = DAT_001032a8 + 1 & 0xf;
+    qspi.read = qspi.read + 1 & 0xf;
   }
   return;
 }
@@ -35891,8 +35870,8 @@ qspi_queue_setup(byte param_1,undefined2 *param_2,ushort param_3,char param_4,un
   uint uVar1;
   uint uVar2;
   undefined1 uVar3;
-  undefined2 *puVar4;
-  undefined *puVar5;
+  uint16_t *puVar4;
+  uint8_t *puVar5;
   ushort uStack_6;
   
   uVar3 = 0;
@@ -35903,71 +35882,71 @@ qspi_queue_setup(byte param_1,undefined2 *param_2,ushort param_3,char param_4,un
   switch((ushort)param_1) {
   case 0:
     if (param_4 == '\0') {
-      Ram00fffd20 = *param_2;
-      Ram00fffd22 = param_2[1];
-      Ram00fffd24 = param_2[2];
+      qsm.tr[0] = *param_2;
+      qsm.tr[1] = param_2[1];
+      qsm.tr[2] = param_2[2];
     }
     else {
-      Ram00fffd20 = 0;
-      Ram00fffd22 = 0;
-      Ram00fffd24 = 0;
+      qsm.tr[0] = 0;
+      qsm.tr[1] = 0;
+      qsm.tr[2] = 0;
     }
-    UNK_00fffd40 = 0xc0;
-    UNK_00fffd41 = 0xc0;
-    UNK_00fffd42 = 0x40;
-    SPCR0 = 0xb311;
-    SPCR2 = 0x8200;
+    qsm.cr[0] = 0xc0;
+    qsm.cr[1] = 0xc0;
+    qsm.cr[2] = 0x40;
+    qsm.spcr0 = 0xb311;
+    qsm.spcr2 = 0x8200;
     *param_5 = 0x8101;
     break;
   case 1:
-    Ram00fffd20 = *param_2;
-    UNK_00fffd40 = 0x41;
-    SPCR0 = 0x8318;
-    SPCR2 = 0x8000;
+    qsm.tr[0] = *param_2;
+    qsm.cr[0] = 0x41;
+    qsm.spcr0 = 0x8318;
+    qsm.spcr2 = 0x8000;
     *param_5 = 0x8101;
     break;
   case 2:
-    Ram00fffd20 = *param_2;
-    Ram00fffd22 = param_2[1];
-    Ram00fffd24 = param_2[2];
-    UNK_00fffd40 = 0xc2;
-    UNK_00fffd41 = 0xc2;
-    UNK_00fffd42 = 0x42;
+    qsm.tr[0] = *param_2;
+    qsm.tr[1] = param_2[1];
+    qsm.tr[2] = param_2[2];
+    qsm.cr[0] = 0xc2;
+    qsm.cr[1] = 0xc2;
+    qsm.cr[2] = 0x42;
     if (param_4 == '\0') {
-      SPCR0 = 0xb246;
-      DAT_001032f3 = 1;
+      qsm.spcr0 = 0xb246;
+      qspi.running = 1;
     }
     else {
-      SPCR0 = 0xb346;
+      qsm.spcr0 = 0xb346;
     }
-    SPCR2 = 0x8200;
+    qsm.spcr2 = 0x8200;
     *param_5 = 0x8101;
     break;
   case 4:
-    Ram00fffd20 = *param_2;
-    UNK_00fffd40 = 0x44;
+    qsm.tr[0] = *param_2;
+    qsm.cr[0] = 0x44;
     if (param_4 == '\0') {
-      SPCR0 = 0x8308;
+      qsm.spcr0 = 0x8308;
     }
     else {
-      SPCR0 = 0x8208;
+      qsm.spcr0 = 0x8208;
     }
-    SPCR2 = 0x8100;
+    qsm.spcr2 = 0x8100;
     *param_5 = 0x8101;
     break;
   case 5:
-    Ram00fffd20 = *param_2;
-    Ram00fffd22 = param_2[1];
-    UNK_00fffd40 = 0xc5;
-    UNK_00fffd41 = 0x45;
+    qsm.tr[0] = *param_2;
+    qsm.tr[1] = param_2[1];
+    qsm.cr[0] = 0xc5;
+    qsm.cr[1] = 0x45;
     if (param_4 == '\0') {
-      SPCR0 = 0x8202;
-      DAT_001032f3 = 1;
+      qsm.spcr0 = 0x8202;
+      qspi.running = 1;
     }
     else {
-      SPCR0 = 0x8205;
+      qsm.spcr0 = 0x8205;
     }
-    SPCR2 = 0x8100;
+    qsm.spcr2 = 0x8100;
     *param_5 = 0x8101;
     break;
   case 6:
@@ -35975,8 +35954,8 @@ qspi_queue_setup(byte param_1,undefined2 *param_2,ushort param_3,char param_4,un
       if (0x10 < param_3) {
         param_3 = 0x10;
       }
-      puVar4 = (undefined2 *)&DAT_00fffd20;
-      puVar5 = &UNK_00fffd40;
+      puVar4 = qsm.tr;
+      puVar5 = qsm.cr;
       for (uStack_6 = 0; uStack_6 < param_3; uStack_6 = uStack_6 + 1) {
         *puVar4 = *param_2;
         *puVar5 = 0xc6;
@@ -35986,13 +35965,13 @@ qspi_queue_setup(byte param_1,undefined2 *param_2,ushort param_3,char param_4,un
       }
       puVar5[-1] = 0x46;
       if (param_4 == '\0') {
-        SPCR0 = 0x8202;
+        qsm.spcr0 = 0x8202;
       }
       else {
-        SPCR0 = 0x8209;
+        qsm.spcr0 = 0x8209;
       }
       uVar1 = (param_3 - 1) * 0x100 | 0x8000;
-      SPCR2 = (word)uVar1;
+      qsm.spcr2 = (uint16_t)uVar1;
       *param_5 = 0x8101;
       break;
     }
@@ -36001,54 +35980,54 @@ override_jmp_000205c0_case_3:
     uVar3 = 1;
     break;
   case 7:
-    Ram00fffd20 = *param_2;
-    UNK_00fffd40 = 0x47;
+    qsm.tr[0] = *param_2;
+    qsm.cr[0] = 0x47;
     if (param_4 == '\0') {
-      SPCR0 = 0x8308;
-      DAT_001032f3 = 1;
+      qsm.spcr0 = 0x8308;
+      qspi.running = 1;
     }
     else {
-      SPCR0 = 0x8208;
+      qsm.spcr0 = 0x8208;
     }
-    SPCR2 = 0x8000;
+    qsm.spcr2 = 0x8000;
     *param_5 = 0x8101;
     break;
   case 9:
-    Ram00fffd20 = *param_2;
-    Ram00fffd22 = param_2[1];
-    UNK_00fffd40 = 0xc6;
-    UNK_00fffd41 = 0x46;
+    qsm.tr[0] = *param_2;
+    qsm.tr[1] = param_2[1];
+    qsm.cr[0] = 0xc6;
+    qsm.cr[1] = 0x46;
     if (param_4 == '\0') {
-      SPCR0 = 0x8202;
+      qsm.spcr0 = 0x8202;
     }
     else {
-      SPCR0 = 0x8209;
+      qsm.spcr0 = 0x8209;
     }
-    SPCR2 = 0x8100;
+    qsm.spcr2 = 0x8100;
     *param_5 = 0x8101;
     break;
   case 10:
-    Ram00fffd20 = *param_2;
-    UNK_00fffd40 = 0x46;
+    qsm.tr[0] = *param_2;
+    qsm.cr[0] = 0x46;
     if (param_4 == '\0') {
-      SPCR0 = 0x8202;
+      qsm.spcr0 = 0x8202;
     }
     else {
-      SPCR0 = 0x8209;
+      qsm.spcr0 = 0x8209;
     }
-    SPCR2 = 0x8000;
+    qsm.spcr2 = 0x8000;
     *param_5 = 0x8101;
     break;
   case 0xb:
-    Ram00fffd20 = *param_2;
-    UNK_00fffd40 = 0x46;
+    qsm.tr[0] = *param_2;
+    qsm.cr[0] = 0x46;
     if (param_4 == '\0') {
-      SPCR0 = 0xa202;
+      qsm.spcr0 = 0xa202;
     }
     else {
-      SPCR0 = 0xa209;
+      qsm.spcr0 = 0xa209;
     }
-    SPCR2 = 0x8000;
+    qsm.spcr2 = 0x8000;
     *param_5 = 0x8101;
     break;
   case 0xc:
@@ -36060,12 +36039,12 @@ override_jmp_000205c0_case_3:
     else {
       param_3 = 0;
     }
-    Ram00fffd20 = *param_2;
-    UNK_00fffd40 = 0x46;
+    qsm.tr[0] = *param_2;
+    qsm.cr[0] = 0x46;
     uVar2 = (uint)(param_3 & 0xf) << 10;
     uVar1 = uVar2 | 0x8209;
-    SPCR0 = (ushort)uVar2 | 0x8209;
-    SPCR2 = 0x8000;
+    qsm.spcr0 = (ushort)uVar2 | 0x8209;
+    qsm.spcr2 = 0x8000;
     *param_5 = 0x8101;
   }
   return CONCAT31((int3)(uVar1 >> 8),uVar3);
@@ -36081,21 +36060,21 @@ void qspi_start(byte param_1,undefined2 *param_2,ushort param_3,char param_4)
 
 {
   char cVar1;
-  word local_8 [2];
+  uint16_t local_8 [2];
   
-  DAT_001032f3 = '\0';
+  qspi.running = 0;
   cVar1 = qspi_queue_setup(param_1,param_2,param_3,param_4,local_8);
   if (cVar1 == '\0') {
-    SPCR1 = local_8[0];
+    qsm.spcr1 = local_8[0];
   }
   else {
     qspi_release();
     if (param_4 != '\0') {
-      DAT_001032f2 = 0;
+      qspi.copy_pending = 0;
     }
   }
   do {
-  } while (DAT_001032f3 != '\0');
+  } while (qspi.running != 0);
   return;
 }
 
@@ -36109,13 +36088,13 @@ void qspi_acquire(void)
 {
   ulong uVar1;
   
-  if (DAT_001032ea == '\0') {
-    DAT_001032ea = '\x01';
+  if (qspi.busy == 0) {
+    qspi.busy = 1;
   }
   else {
     uVar1 = psos_my_pid();
-    *(ulong *)((uint)DAT_001032a7 * 4 + 0x1032aa) = uVar1;
-    DAT_001032a7 = DAT_001032a7 + 1 & 0xf;
+    qspi.waiting[qspi.write] = uVar1;
+    qspi.write = qspi.write + 1 & 0xf;
     uVar1 = psos_wait_v(0x400,0,0,(ulong *)0x0);
     if ((char)uVar1 != '\0') {
       fatal_error("wait_v SIG_QSPI");
@@ -36216,61 +36195,60 @@ undefined8 qspi_init(void)
 {
   undefined4 in_D0;
   undefined4 in_D1;
-  undefined2 *puVar1;
+  uint16_t *puVar1;
   
-  puVar1 = (undefined2 *)&DAT_00fffd20;
+  puVar1 = qsm.tr;
   do {
     *puVar1 = 0;
     puVar1 = puVar1 + 1;
-  } while (puVar1 < (undefined2 *)0xfffd50);
-  SPCR0 = 0x8309;
-  SPCR2 = 0x8000;
-  SPCR3 = 2;
-  SPCR1 = 0x101;
-  SPSR = 0;
-  DAT_001032a7 = 0;
-  DAT_001032a8 = 0;
-  DAT_001032ea = 0;
+  } while (puVar1 < (uint16_t *)0xfffd50);
+  qsm.spcr0 = 0x8309;
+  qsm.spcr2 = 0x8000;
+  qsm.spcr3 = 2;
+  qsm.spcr1 = 0x101;
+  qsm.spsr = 0;
+  qspi.write = 0;
+  qspi.read = 0;
+  qspi.busy = 0;
   return CONCAT44(in_D0,in_D1);
 }
 
 
 /* 00020972 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the transfer's end: copies the QSPI receive RAM out and hands the QSPI on */
 
 void qspi_isr(void)
 
 {
-  undefined2 *puVar1;
-  byte bVar2;
+  uint16_t *puVar1;
+  uint8_t uVar2;
   ulong uVar3;
-  undefined2 *puVar4;
-  undefined2 *puVar5;
+  uint16_t *puVar4;
+  uint16_t *puVar5;
   
-  DAT_001032f3 = 0;
-  if (DAT_001032f2 != '\0') {
-    puVar1 = _DAT_001032ec + _DAT_001032f0;
-    puVar4 = (undefined2 *)&DAT_00fffd00;
-    for (puVar5 = _DAT_001032ec; puVar5 < puVar1; puVar5 = puVar5 + 1) {
+  qspi.running = 0;
+  if (qspi.copy_pending != 0) {
+    puVar1 = qspi.receive_buffer + qspi.receive_count;
+    puVar4 = qsm.rr;
+    for (puVar5 = qspi.receive_buffer; puVar5 < puVar1; puVar5 = puVar5 + 1) {
       *puVar5 = *puVar4;
       puVar4 = puVar4 + 1;
     }
-    DAT_001032f2 = '\0';
+    qspi.copy_pending = 0;
   }
-  if (DAT_001032a7 == DAT_001032a8) {
-    DAT_001032ea = 0;
+  if (qspi.write == qspi.read) {
+    qspi.busy = 0;
   }
   else {
-    uVar3 = psos_signal_v(*(ulong *)((uint)DAT_001032a8 * 4 + 0x1032aa),0x400);
+    uVar3 = psos_signal_v(qspi.waiting[qspi.read],0x400);
     if ((char)uVar3 != '\0') {
       fatal_error("SPI isr signaling SPI owner");
     }
-    DAT_001032a8 = DAT_001032a8 + 1 & 0xf;
+    qspi.read = qspi.read + 1 & 0xf;
   }
-  bVar2 = SPSR;
-  SPSR = 0;
+  uVar2 = qsm.spsr;
+  qsm.spsr = 0;
   return;
 }
 
@@ -36284,18 +36262,18 @@ void qspi_isr(void)
 __exception void primary_user_65(void)
 
 {
-  byte bVar1;
+  uint8_t uVar1;
   
-  bVar1 = SPSR;
-  if ((bVar1 & 0x40) != 0) {
+  uVar1 = qsm.spsr;
+  if ((uVar1 & 0x40) != 0) {
     fatal_error("\r\nSPI: mode failure\r\n");
   }
-  bVar1 = SPSR;
-  if ((bVar1 & 0x20) != 0) {
+  uVar1 = qsm.spsr;
+  if ((uVar1 & 0x20) != 0) {
     fatal_error("\r\nSPI: halted\r\n");
   }
-  bVar1 = SPSR;
-  if ((bVar1 & 0x80) != 0) {
+  uVar1 = qsm.spsr;
+  if ((uVar1 & 0x80) != 0) {
     qspi_isr();
   }
   do {
@@ -36345,7 +36323,6 @@ __asm__(
 /* 00020a62 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* takes the QSPI and runs a transfer, D0 the device, A1 the buffers and D2 the count
    Not a C function (register; read): its arguments and results in registers.  In: D0 char device,
    A1 void *buffers, D2 short count. */
@@ -36354,15 +36331,15 @@ __regcall void qspi_transfer_raw(char device /* d0 */,void *buffers /* a1 */,sho
 
 {
   qspi_acquire();
-  _DAT_001032ec = *(undefined4 *)((int)buffers + 4);
-  _DAT_001032f0 = count;
+  qspi.receive_buffer = *(uint16_t **)((int)buffers + 4);
+  qspi.receive_count = count;
   if (device == 0xc) {
-    _DAT_001032f0 = 1;
+    qspi.receive_count = 1;
   }
-  DAT_001032f2 = '\x01';
+  qspi.copy_pending = 1;
   qspi_start(device,*(undefined2 **)buffers,count,'\x01');
   do {
-  } while (DAT_001032f2 != '\0');
+  } while (qspi.copy_pending != 0);
   return;
 }
 
@@ -36430,7 +36407,7 @@ __regcall void qspi_device_write(char device /* d0 */,void *buffers /* a0 */,sho
   
   cVar1 = '\0';
   qspi_acquire();
-  DAT_001032f2 = 0;
+  qspi.copy_pending = 0;
   qspi_start(device,buffers,count,cVar1);
   return;
 }
@@ -36505,29 +36482,29 @@ void qspi_read(byte param_1,void *param_2,undefined4 param_3)
 void qspi_send(byte param_1,undefined2 *param_2,ushort param_3)
 
 {
-  word wVar1;
-  byte bVar2;
+  uint16_t uVar1;
+  uint8_t uVar2;
   char cVar3;
-  word local_8;
+  uint16_t local_8;
   uint16_t local_6;
   
   local_6 = enter_supervisor();
-  DAT_001032a6 = 1;
+  qspi.field_00 = 1;
   do {
-    wVar1 = SPCR1;
-  } while ((wVar1 & 0x8000) != 0);
-  bVar2 = SPSR;
-  if ((bVar2 & 0x80) != 0) {
+    uVar1 = qsm.spcr1;
+  } while ((uVar1 & 0x8000) != 0);
+  uVar2 = qsm.spsr;
+  if ((uVar2 & 0x80) != 0) {
     qspi_isr();
   }
   cVar3 = qspi_queue_setup(param_1,param_2,param_3,'\0',&local_8);
   if (cVar3 == '\0') {
-    SPCR1 = local_8;
+    qsm.spcr1 = local_8;
     do {
-      bVar2 = SPSR;
-    } while ((bVar2 & 0x80) == 0);
-    bVar2 = SPSR;
-    SPSR = 0;
+      uVar2 = qsm.spsr;
+    } while ((uVar2 & 0x80) == 0);
+    uVar2 = qsm.spsr;
+    qsm.spsr = 0;
   }
   return;
 }
@@ -36541,32 +36518,32 @@ void qspi_send(byte param_1,undefined2 *param_2,ushort param_3)
 void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3)
 
 {
-  word wVar1;
-  byte bVar2;
+  uint16_t uVar1;
+  uint8_t uVar2;
   char cVar3;
-  undefined2 *puVar4;
-  undefined2 *puVar5;
-  undefined2 *puVar6;
-  word local_8;
+  uint16_t *puVar4;
+  uint16_t *puVar5;
+  uint16_t *puVar6;
+  uint16_t local_8;
   uint16_t local_6;
   
-  puVar4 = (undefined2 *)&DAT_00fffd00;
-  puVar5 = (undefined2 *)param_2[1];
+  puVar4 = qsm.rr;
+  puVar5 = (uint16_t *)param_2[1];
   local_6 = enter_supervisor();
-  DAT_001032a6 = 1;
+  qspi.field_00 = 1;
   do {
-    wVar1 = SPCR1;
-  } while ((wVar1 & 0x8000) != 0);
-  bVar2 = SPSR;
-  if ((bVar2 & 0x80) != 0) {
+    uVar1 = qsm.spcr1;
+  } while ((uVar1 & 0x8000) != 0);
+  uVar2 = qsm.spsr;
+  if ((uVar2 & 0x80) != 0) {
     qspi_isr();
   }
   cVar3 = qspi_queue_setup(param_1,(undefined2 *)*param_2,param_3,'\x01',&local_8);
   if (cVar3 == '\0') {
-    SPCR1 = local_8;
+    qsm.spcr1 = local_8;
     do {
-      bVar2 = SPSR;
-    } while ((bVar2 & 0x80) == 0);
+      uVar2 = qsm.spsr;
+    } while ((uVar2 & 0x80) == 0);
     if (param_1 == 0xc) {
       puVar6 = puVar5 + 1;
     }
@@ -36577,8 +36554,8 @@ void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3)
       *puVar5 = *puVar4;
       puVar4 = puVar4 + 1;
     }
-    bVar2 = SPSR;
-    SPSR = 0;
+    uVar2 = qsm.spsr;
+    qsm.spsr = 0;
   }
   return;
 }
@@ -36782,7 +36759,7 @@ undefined1 fpga_program(byte param_1,char param_2)
 {
   undefined2 *puVar1;
   char cVar2;
-  byte bVar3;
+  uint8_t uVar3;
   bool bVar4;
   int iVar5;
   undefined1 uVar6;
@@ -36796,37 +36773,37 @@ undefined1 fpga_program(byte param_1,char param_2)
     return 0;
   }
   DAT_00101b6c = 1;
-  bVar3 = PORTE0;
-  PORTE0 = bVar3 & 0xbf;
-  bVar3 = PORTF0;
-  PORTF0 = bVar3 | 0xc0;
-  bVar3 = PORTF0;
-  PORTF0 = bVar3 & 0xf7;
-  bVar3 = DDRF;
-  DDRF = bVar3 | 8;
+  uVar3 = sim.porte0;
+  sim.porte0 = uVar3 & 0xbf;
+  uVar3 = sim.portf0;
+  sim.portf0 = uVar3 | 0xc0;
+  uVar3 = sim.portf0;
+  sim.portf0 = uVar3 & 0xf7;
+  uVar3 = sim.ddrf;
+  sim.ddrf = uVar3 | 8;
   bVar4 = false;
   iVar5 = 0;
   while ((iVar5 < 1000 && (!bVar4))) {
-    bVar3 = PACTL;
-    if ((bVar3 & 8) == 0) {
+    uVar3 = gpt.pactl;
+    if ((uVar3 & 8) == 0) {
       bVar4 = true;
     }
     iVar5 = iVar5 + 1;
   }
   if (bVar4) {
-    bVar3 = PORTE0;
-    PORTE0 = bVar3 | 0x40;
+    uVar3 = sim.porte0;
+    sim.porte0 = uVar3 | 0x40;
     bVar4 = false;
     iVar5 = 0;
     while ((iVar5 < 1000 && (!bVar4))) {
-      bVar3 = PACTL;
-      if ((bVar3 & 8) != 0) {
+      uVar3 = gpt.pactl;
+      if ((uVar3 & 8) != 0) {
         bVar4 = true;
       }
       iVar5 = iVar5 + 1;
     }
-    bVar3 = DDRF;
-    DDRF = bVar3 & 0xf7;
+    uVar3 = sim.ddrf;
+    sim.ddrf = uVar3 & 0xf7;
     if (bVar4) {
       if (param_2 == '\0') {
         busy_wait(1);
@@ -36834,8 +36811,8 @@ undefined1 fpga_program(byte param_1,char param_2)
       else {
         psos_pause(1);
       }
-      bVar3 = PORTF0;
-      if ((bVar3 & 8) != 0) {
+      uVar3 = sim.portf0;
+      if ((uVar3 & 8) != 0) {
         pcVar7 = "ERROR: FPGA done line went high early\r\n";
         pcVar8 = acStack_54;
         do {
@@ -36870,8 +36847,8 @@ undefined1 fpga_program(byte param_1,char param_2)
       else {
         psos_pause(2);
       }
-      bVar3 = PORTF0;
-      if ((bVar3 & 8) == 0) {
+      uVar3 = sim.portf0;
+      if ((uVar3 & 8) == 0) {
         pcVar7 = "ERROR: FPGA programming failed\r\n";
         pcVar8 = acStack_54;
         do {
@@ -36886,10 +36863,10 @@ undefined1 fpga_program(byte param_1,char param_2)
       else if (param_2 != '\0') {
         task_dmessage("FPGA programmed\r\n");
       }
-      bVar3 = PORTE0;
-      PORTE0 = bVar3 & 0xbf;
-      bVar3 = PORTE0;
-      PORTE0 = bVar3 | 0x40;
+      uVar3 = sim.porte0;
+      sim.porte0 = uVar3 & 0xbf;
+      uVar3 = sim.porte0;
+      sim.porte0 = uVar3 | 0x40;
       DAT_00101b6c = 0;
       return uVar6;
     }
@@ -37237,7 +37214,7 @@ bool fpga_verify_even(byte *param_1,byte *param_2,char param_3)
 bool fpga_verify_chip(byte param_1,char param_2,byte param_3)
 
 {
-  byte bVar1;
+  uint8_t uVar1;
   bool bVar2;
   char cVar3;
   int iVar4;
@@ -37255,16 +37232,16 @@ bool fpga_verify_chip(byte param_1,char param_2,byte param_3)
   else {
     bVar6 = 0x40;
   }
-  bVar1 = PORTF0;
-  PORTF0 = ~bVar6 & 0xf7 & bVar1;
+  uVar1 = sim.portf0;
+  sim.portf0 = ~bVar6 & 0xf7 & uVar1;
   iVar4 = 0;
   do {
     iVar4 = iVar4 + 1;
   } while (iVar4 < 4);
-  bVar1 = PORTF0;
-  PORTF0 = bVar6 | bVar1;
-  bVar6 = PORTF0;
-  PORTF0 = bVar6 & 0xf7;
+  uVar1 = sim.portf0;
+  sim.portf0 = bVar6 | uVar1;
+  uVar1 = sim.portf0;
+  sim.portf0 = uVar1 & 0xf7;
   cVar3 = fpga_verify_first(pbVar7,&DAT_00021e3b,param_2);
   if (cVar3 == '\0') {
     bVar2 = false;
@@ -37808,8 +37785,8 @@ void watchdog_report(void)
   }
   if (_DAT_001009b0 != 0) {
     enter_supervisor();
-    SWSR = 0x55;
-    SWSR = 0xaa;
+    sim.swsr = 0x55;
+    sim.swsr = 0xaa;
   }
   watchdog_clock = 0;
   watchdog_gps = 0;
@@ -37904,7 +37881,7 @@ undefined1 gps_pps_check(void)
 
 {
   char cVar1;
-  byte bVar2;
+  uint8_t uVar2;
   bool bVar3;
   uint8_t uVar4;
   undefined1 uVar5;
@@ -37915,8 +37892,8 @@ undefined1 gps_pps_check(void)
     if ((DAT_00101cfa == '\0') || (0xe < DAT_00101cf9)) {
       if ((selftest.running == 0) && ((pll.fpga_loaded != 0 && (DAT_00101b6c == '\0')))) {
         if (gps_pps_counting != 0) {
-          bVar2 = PACNT;
-          cVar1 = bVar2 - gps_pps_last_count;
+          uVar2 = gpt.pacnt;
+          cVar1 = uVar2 - gps_pps_last_count;
           uVar4 = gps_pps_dead;
           if (((cVar1 < '\x01') || ('\x03' < cVar1)) && (bVar3 = true, gps_pps_dead == 0)) {
             task_dmessage("GPS 1pps signal is dead\r\n");
@@ -37925,12 +37902,12 @@ undefined1 gps_pps_check(void)
           }
           gps_pps_gate = gps_pps_gate + 2;
           if (gps_pps_gate == 10) {
-            PACNT = 0;
-            gps_pps_last_count = bVar2;
-            if ((bVar2 < 8) || (0xc < bVar2)) {
+            gpt.pacnt = 0;
+            gps_pps_last_count = uVar2;
+            if ((uVar2 < 8) || (0xc < uVar2)) {
               if (uVar4 == 0) {
                 task_dmessage("GPS 1pps signal frequency is incorrect\r\n");
-                debug_printf("long gate, count %d\r\n",(uint)bVar2);
+                debug_printf("long gate, count %d\r\n",(uint)uVar2);
                 uVar4 = 1;
               }
             }
@@ -37948,21 +37925,21 @@ undefined1 gps_pps_check(void)
           }
           if (gps_pps_gate < 0xb) {
             gps_pps_dead = uVar4;
-            gps_pps_last_count = bVar2;
+            gps_pps_last_count = uVar2;
             return 1;
           }
-          PACNT = 0;
+          gpt.pacnt = 0;
           gps_pps_dead = uVar4;
           gps_pps_last_count = 0;
           gps_pps_gate = 0;
           return 1;
         }
-        PACNT = 0;
-        PACTL = 0x50;
+        gpt.pacnt = 0;
+        gpt.pactl = 0x50;
         gps_pps_counting = 1;
       }
       else {
-        PACNT = 0;
+        gpt.pacnt = 0;
       }
       gps_pps_gate = 0;
       gps_pps_last_count = 0;
@@ -37976,7 +37953,7 @@ undefined1 gps_pps_check(void)
     DAT_00101cfa = '\x01';
     DAT_00101cf9 = 0;
     gps_pps_dead = 1;
-    PACNT = 0;
+    gpt.pacnt = 0;
     gps_pps_gate = 0;
     gps_pps_last_count = 0;
   }
@@ -59029,8 +59006,8 @@ void gpt_input_capture_2_interrupt(void)
 {
   ushort uVar1;
   
-  uVar1 = Ram00fff922;
-  Ram00fff922 = uVar1 & 0xfdff;
+  uVar1 = __ghidra_piece(unsigned short, gpt, 34);
+  __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xfdff;
   do {
                     /* trap #5: kernel return from interrupt; does not come back */
     __m68k_trap(5);
@@ -59048,15 +59025,15 @@ void gpt_input_capture_2_interrupt(void)
 void pwma_force_level(char param_1)
 
 {
-  byte bVar1;
+  uint8_t uVar1;
   
   if (param_1 == '\0') {
-    bVar1 = PWMC;
-    PWMC = bVar1 | 2;
+    uVar1 = gpt.pwmc;
+    gpt.pwmc = uVar1 | 2;
   }
   else {
-    bVar1 = PWMC;
-    PWMC = bVar1 & 0xfd;
+    uVar1 = gpt.pwmc;
+    gpt.pwmc = uVar1 & 0xfd;
   }
   return;
 }
@@ -59073,19 +59050,18 @@ undefined1 powerup(char param_1)
 
 {
   int iVar1;
-  byte bVar2;
-  uint32_t uVar3;
-  char cVar5;
+  uint32_t uVar2;
+  char cVar4;
   uint16_t sr;
-  undefined4 uVar4;
-  undefined1 uVar6;
-  undefined2 uVar7;
+  undefined4 uVar3;
+  undefined1 uVar5;
+  undefined2 uVar6;
+  uint8_t uVar7;
   uint8_t uVar8;
-  uint8_t uVar9;
   char local_6;
   undefined1 uStack_5;
   
-  uVar6 = 0;
+  uVar5 = 0;
   if ((param_1 == '\0') || ('\a' < (char)pll.powerup_state)) {
     memset(&pll.efc_history,0,0x366);
     pll.aging_state = 0;
@@ -59101,11 +59077,11 @@ undefined1 powerup(char param_1)
       goto override_jmp_00045f06_case_0;
     case 0x26:
       interval_next_reading('\x01',(undefined4 *)0x0);
-      cVar5 = oven_warmed_up();
-      if (cVar5 != '\0') {
+      cVar4 = oven_warmed_up();
+      if (cVar4 != '\0') {
         pll.powerup_state = 2;
-        bVar2 = PORTGP;
-        PORTGP = bVar2 | 0x20;
+        uVar7 = gpt.portgp;
+        gpt.portgp = uVar7 | 0x20;
         DAT_00101b71 = 1;
       }
       break;
@@ -59127,26 +59103,26 @@ undefined1 powerup(char param_1)
       }
       break;
     case 0xb8:
-      cVar5 = coarse();
-      if (cVar5 == '\x01') {
+      cVar4 = coarse();
+      if (cVar4 == '\x01') {
         pll.tfom = 0.001;
         pll.powerup_state = 5;
         pll.fine_state = 0;
       }
-      else if (cVar5 == '\x02') {
-        uVar6 = 2;
+      else if (cVar4 == '\x02') {
+        uVar5 = 2;
       }
       break;
     case 0xea:
-      cVar5 = fine();
-      if (cVar5 == '\x01') {
+      cVar4 = fine();
+      if (cVar4 == '\x01') {
         pll.tfom = 2e-06;
         if ((DAT_00102550 != '\0') && (internal_pps_dead == 0)) {
-          uVar3 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
-          clock_set(__ghidra_piece(unsigned int, gps.status, 4),uVar3);
+          uVar2 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
+          clock_set(__ghidra_piece(unsigned int, gps.status, 4),uVar2);
           status_happening('&');
-          cVar5 = leap_second_near();
-          if (cVar5 == '\0') {
+          cVar4 = leap_second_near();
+          if (cVar4 == '\0') {
             pll.powerup_state = 7;
             pll.leap_ack_requested = 1;
           }
@@ -59156,18 +59132,18 @@ undefined1 powerup(char param_1)
           }
         }
       }
-      else if (cVar5 == '\x02') {
-        uVar6 = 2;
+      else if (cVar4 == '\x02') {
+        uVar5 = 2;
       }
       break;
     case 0x166:
       interval_next_reading('\x01',(undefined4 *)0x0);
       pll.powerup_countdown = pll.powerup_countdown - 1;
       if (pll.powerup_countdown == 0) {
-        cVar5 = leap_ack_pending();
-        if (cVar5 == '\0') {
-          cVar5 = clock_check_against_gps();
-          if ((cVar5 == '\0') && (DAT_00102552 != '\0')) {
+        cVar4 = leap_ack_pending();
+        if (cVar4 == '\0') {
+          cVar4 = clock_check_against_gps();
+          if ((cVar4 == '\0') && (DAT_00102552 != '\0')) {
             pll.powerup_countdown = 2;
           }
           else {
@@ -59180,7 +59156,7 @@ undefined1 powerup(char param_1)
     case 0x1a6:
       interval_next_reading('\x01',(undefined4 *)0x0);
       if ((pll.leap_ack_requested == 0) && (pll.leap_ack_done != 0)) {
-        uVar6 = 1;
+        uVar5 = 1;
       }
     }
   }
@@ -59191,19 +59167,19 @@ override_jmp_00045f06_case_0:
   }
   if (DAT_00102160 == '\0') {
     sr = set_interrupt_mask(0x100);
-    uVar4 = satellites_in_use(&local_6,&uStack_5,(undefined4 *)0x0,(undefined1 *)0x0);
-    if ((char)uVar4 == '\0') {
+    uVar3 = satellites_in_use(&local_6,&uStack_5,(undefined4 *)0x0,(undefined1 *)0x0);
+    if ((char)uVar3 == '\0') {
       local_6 = '\0';
     }
     set_interrupt_mask(sr);
     if (local_6 != '\0') {
       status_happening('\"');
       DAT_00102160 = '\x01';
-      uVar7 = __ghidra_piece(unsigned short, gps.status, 4);
-      uVar8 = gps.status.minute;
-      uVar9 = gps.status.second;
-      uVar4 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
-      log_first_satellite(uVar4,CONCAT31(CONCAT21(uVar7,uVar8),uVar9));
+      uVar6 = __ghidra_piece(unsigned short, gps.status, 4);
+      uVar7 = gps.status.minute;
+      uVar8 = gps.status.second;
+      uVar3 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
+      log_first_satellite(uVar3,CONCAT31(CONCAT21(uVar6,uVar7),uVar8));
     }
   }
   if (('\x03' < (char)pll.powerup_state) &&
@@ -59216,9 +59192,9 @@ override_jmp_00045f06_case_0:
   }
   if ((pll.powerup_reference_lost != 0) && ((pll.powerup_state != 7 || (pll.leap_ack_done != 0)))) {
     pll.powerup_state = 3;
-    uVar6 = 0;
+    uVar5 = 0;
   }
-  return uVar6;
+  return uVar5;
 }
 
 
@@ -59232,7 +59208,7 @@ undefined1 pll_check_reference(char param_1)
 
 {
   int iVar1;
-  byte bVar2;
+  uint8_t uVar2;
   char cVar3;
   undefined1 uVar4;
   
@@ -59303,8 +59279,8 @@ undefined1 pll_check_reference(char param_1)
   }
   else {
 override_jmp_000461bc_case_0:
-    bVar2 = PORTGP;
-    PORTGP = bVar2 | 0x20;
+    uVar2 = gpt.portgp;
+    gpt.portgp = uVar2 | 0x20;
     DAT_00101b71 = 1;
     interval_rearm('\0');
     pll.reference_check_state = 1;
@@ -79193,8 +79169,8 @@ void installer_periodic_interrupt(void)
 
 {
   installer_psos_service_29();
-  SWSR = 0x55;
-  SWSR = 0xaa;
+  sim.swsr = 0x55;
+  sim.swsr = 0xaa;
   do {
                     /* trap #5: kernel return from interrupt; does not come back */
     __m68k_trap(5);
@@ -79212,10 +79188,10 @@ void installer_periodic_interrupt_enable(void)
   char in_stack_00000004;
   
   if (in_stack_00000004 == '\0') {
-    PICR = 0x42;
+    sim.picr = 0x42;
   }
   else {
-    PICR = 0x542;
+    sim.picr = 0x542;
   }
   return;
 }
@@ -79228,11 +79204,11 @@ void installer_periodic_interrupt_enable(void)
 void installer_qsm_init(void)
 
 {
-  QSMCR = 8;
-  Ram00fffc04 = 0x2340;
-  PORTQS = 0xff;
-  DDRQS = 0xfe;
-  PQSPAR = 0x7b;
+  qsm.qsmcr = 8;
+  __ghidra_piece(unsigned short, qsm, 4) = 0x2340;
+  qsm.portqs = 0xff;
+  qsm.ddrqs = 0xfe;
+  qsm.pqspar = 0x7b;
   return;
 }
 
@@ -79244,22 +79220,22 @@ void installer_qsm_init(void)
 void installer_gpt_init(void)
 
 {
-  byte bVar1;
+  uint8_t uVar1;
   undefined2 uVar2;
   
-  GPTMCR = 0xc;
-  GPT_ICR = 0x650;
-  bVar1 = CFORC;
-  CFORC = bVar1 | 2;
-  DDRGP = 0xbc;
-  PORTGP = 0x80;
-  OC1M = 0;
-  TCTL1 = 0;
-  PACTL = 4;
-  TCTL2 = 5;
-  Ram00fff920 = 3;
-  uVar2 = Ram00fff922;
-  Ram00fff922 = 0;
+  gpt.gptmcr = 0xc;
+  gpt.icr = 0x650;
+  uVar1 = gpt.cforc;
+  gpt.cforc = uVar1 | 2;
+  gpt.ddrgp = 0xbc;
+  gpt.portgp = 0x80;
+  gpt.oc1m = 0;
+  gpt.tctl1 = 0;
+  gpt.pactl = 4;
+  gpt.tctl2 = 5;
+  __ghidra_piece(unsigned short, gpt, 32) = 3;
+  uVar2 = __ghidra_piece(unsigned short, gpt, 34);
+  __ghidra_piece(unsigned short, gpt, 34) = 0;
   return;
 }
 
@@ -79299,15 +79275,15 @@ void installer_start(void)
 
 {
   installer_exception_hook_reset();
-  SWSR = 0x55;
-  SWSR = 0xaa;
+  sim.swsr = 0x55;
+  sim.swsr = 0xaa;
   installer_qsm_init();
   installer_gpt_init();
   installer_start_nothing();
   installer_system_init();
   installer_psos_config_init();
-  SWSR = 0x55;
-  SWSR = 0xaa;
+  sim.swsr = 0x55;
+  sim.swsr = 0xaa;
   installer_kernel_init();
   return;
 }
@@ -85739,15 +85715,15 @@ undefined4 installer_psos_service_29(void)
 int installer_gp_port_select(char param_1)
 
 {
-  byte bVar1;
+  uint8_t uVar1;
   
   if ('\x06' < param_1) {
     param_1 = '\0';
   }
-  bVar1 = PORTGP;
-  PORTGP = bVar1 & 0xe3;
-  bVar1 = PORTGP;
-  PORTGP = (byte)((int)param_1 << 2) | bVar1;
+  uVar1 = gpt.portgp;
+  gpt.portgp = uVar1 & 0xe3;
+  uVar1 = gpt.portgp;
+  gpt.portgp = (byte)((int)param_1 << 2) | uVar1;
   return (int)param_1 << 2;
 }
 

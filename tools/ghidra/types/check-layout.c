@@ -8,6 +8,7 @@
 #include <stddef.h>
 
 #include "smartclock.h"
+#include "mc68331.h"
 
 #define CHECK_SIZE(type, size) _Static_assert(sizeof(type) == (size), #type)
 #define CHECK_FIELD(type, field, offset) \
@@ -47,6 +48,22 @@ CHECK_FIELD(duart_shadow, mr1b, 0x102ed7 - 0x102ed0);
 CHECK_FIELD(duart_shadow, output_reset, 0x102edb - 0x102ed0);
 
 CHECK_SIZE(exchange_token, 16);
+CHECK_SIZE(sci_exchange_state, 0x103188 - 0x103150);
+CHECK_FIELD(sci_exchange_state, read_token, 0x103154 - 0x103150);
+CHECK_FIELD(sci_exchange_state, write_exchange, 0x10316c - 0x103150);
+CHECK_FIELD(sci_exchange_state, write_token, 0x103170 - 0x103150);
+CHECK_SIZE(serial_ring, 0x10328a - 0x103188);
+CHECK_SIZE(sci_driver, 0x1032a6 - 0x10328a);
+CHECK_SIZE(qspi_state, 0x1032f4 - 0x1032a6);
+CHECK_FIELD(qspi_state, waiting, 0x1032aa - 0x1032a6);
+CHECK_FIELD(qspi_state, busy, 0x1032ea - 0x1032a6);
+CHECK_FIELD(qspi_state, receive_buffer, 0x1032ec - 0x1032a6);
+CHECK_FIELD(qspi_state, running, 0x1032f3 - 0x1032a6);
+CHECK_FIELD(sci_driver, flow, 0x103294 - 0x10328a);
+CHECK_FIELD(sci_driver, async_allowed, 0x10329c - 0x10328a);
+CHECK_FIELD(sci_driver, baud_constant, 0x10329e - 0x10328a);
+CHECK_FIELD(sci_driver, echo, 0x1032a0 - 0x10328a);
+CHECK_FIELD(sci_driver, last_terminator, 0x1032a4 - 0x10328a);
 CHECK_SIZE(duartb_driver, 0x103142 - 0x1030ec);
 CHECK_FIELD(duartb_driver, flow, 0x1030f8 - 0x1030ec);
 CHECK_FIELD(duartb_driver, reconfiguring, 0x1030ff - 0x1030ec);
@@ -357,3 +374,25 @@ CHECK_FIELD(counter_configuration_fields, sync_kind, 0x101fc0 - 0x101fae);
 CHECK_FIELD(counter_configuration_fields, sync_count, 0x101fc2 - 0x101fae);
 CHECK_FIELD(counter_configuration_fields, interpolator_offset, 0x18);
 CHECK_FIELD(counter_configuration_fields, interpolator_scale, 0x1c);
+
+/* the MC68331's modules: Tables D-2, D-3 and D-13 */
+CHECK_SIZE(gpt_registers, 0x2e);
+CHECK_FIELD(gpt_registers, tcnt, 0xfff90a - 0xfff900);
+CHECK_FIELD(gpt_registers, toc, 0xfff914 - 0xfff900);
+CHECK_FIELD(gpt_registers, tmsk1, 0xfff920 - 0xfff900);
+CHECK_FIELD(gpt_registers, pwmc, 0xfff925 - 0xfff900);
+CHECK_FIELD(gpt_registers, prescl, 0xfff92c - 0xfff900);
+CHECK_SIZE(sim_registers, 0xfffa78 - 0xfffa00);
+CHECK_FIELD(sim_registers, sypcr, 0xfffa21 - 0xfffa00);
+CHECK_FIELD(sim_registers, picr, 0xfffa22 - 0xfffa00);
+CHECK_FIELD(sim_registers, swsr, 0xfffa27 - 0xfffa00);
+CHECK_FIELD(sim_registers, portc, 0xfffa41 - 0xfffa00);
+CHECK_FIELD(sim_registers, csboot, 0xfffa48 - 0xfffa00);
+CHECK_FIELD(sim_registers, cs, 0xfffa4c - 0xfffa00);
+CHECK_SIZE(qsm_registers, 0xfffd50 - 0xfffc00);
+CHECK_FIELD(qsm_registers, sccr1, 0xfffc0a - 0xfffc00);
+CHECK_FIELD(qsm_registers, portqs, 0xfffc15 - 0xfffc00);
+CHECK_FIELD(qsm_registers, spsr, 0xfffc1f - 0xfffc00);
+CHECK_FIELD(qsm_registers, rr, 0xfffd00 - 0xfffc00);
+CHECK_FIELD(qsm_registers, tr, 0xfffd20 - 0xfffc00);
+CHECK_FIELD(qsm_registers, cr, 0xfffd40 - 0xfffc00);

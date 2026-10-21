@@ -264,18 +264,19 @@ part of what they change.  In order:
    with an unusable primary").
 3. `SmartClockSetup.java` again, now over the installer too, with
    `types=tools/ghidra/types/smartclock.h`,
+   `types=tools/ghidra/types/mc68331.h`,
    `names=tools/ghidra/names/IMAGE.tsv`, `scpi=FILE` from
    `smartclock-cli dump-scpi --handlers IMAGE` and
    `pforth=docs/firmware/pforth/IMAGE.txt`.
 4. `SmartClockForth.java`.
 5. `SmartClockStackParameters.java`.
 6. `SmartClockFormatStrings.java`.
-7. `SmartClockExportC.java FILE`.
+7. `SmartClockExportC.java FILE defines=tools/ghidra/types/mc68331.h`.
 
 **Setup** makes the ROM read-only, so values loaded from it fold to
 constants; maps RAM, the DUART, EEPROM, the CS4 and CS5 ranges and the
-GPT, SIM and QSM, the I/O ones volatile; labels the on-chip registers
-from MC68331UM Tables D-2, D-3 and D-13 and the DUART's; types both
+GPT, SIM and QSM, the I/O ones volatile; labels the DUART's
+registers; types both
 vector tables, the boot one at `0x0` and the primary's at `0x10000`,
 and makes a function at each handler; and types the string tables,
 removing the code analysis decoded in them (a 0x61, `a`, is a `bsr`, so
@@ -408,6 +409,16 @@ high register first, `@ D0:D1`.  An argument without `@` goes on the
 stack.  Ghidra's 68000 convention returns a float or double in the FPU
 register FP0, but these images have no FPU and return one in D0 or
 D0:D1, so every function returning one has its return annotated.
+
+`types/mc68331.h` lays out the CPU's own modules as the names file
+types them: `gpt` (`0xfff900`), `sim` (`0xfffa00`) and `qsm`
+(`0xfffc00`), each register a field at its offset in MC68331UM Tables
+D-2, D-3 and D-13, so that the C reads `qsm.sccr1 = qsm.sccr1 | 0x80`;
+and it names their bits, `SCCR1_TIE`, from the registers' pages in
+Appendix D, as `#define`s, which Setup leaves out of what Ghidra parses
+and the exporter copies into the C (`defines=`).  The DUART is still
+labeled register by register, its bits unnamed, for want of its data
+sheet here.
 
 `types/smartclock.h` declares the structures (`structures.md`), parsed
 into the program before the names so a row may use them: a label's

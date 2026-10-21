@@ -325,6 +325,59 @@ typedef struct duartb_driver {
 	uint8_t field_55;
 } duartb_driver;
 
+/* The QSM's SCI port's exchanges, sciR and sciW, and the token messages
+ * sci_init sends them, at 0x103150. */
+typedef struct sci_exchange_state {
+	uint32_t read_exchange;
+	exchange_token read_token;    /* +0x04: its task is signaled on a ctrl-C and when input comes */
+	uint8_t field_14[8];
+	uint32_t write_exchange;      /* +0x1c */
+	exchange_token write_token;   /* +0x20: its task is signaled 0x200 when sci_puts's string is out */
+	uint8_t field_34[8];
+} sci_exchange_state;
+
+/* The SCI port's driver, at 0x10328a, as DUART channel B's: its receive
+ * ring is just before it, at 0x103188. */
+typedef struct sci_driver {
+	char *transmit_next;          /* +0x00: sci_puts's next character; it sends to the NUL */
+	char *async_next;             /* +0x04: sci_send_async's */
+	uint8_t async_count;          /* +0x08 */
+	uint8_t async_pending;        /* +0x09 */
+	uint8_t flow;                 /* +0x0a: 0x80 an XOFF received, holding transmission; 0x20 one sent */
+	uint8_t receive_errors;       /* +0x0b: SCSR's OR, FE and PF, overrun, framing and parity (MC68331UM D.4.6) */
+	uint8_t read_errors;          /* +0x0c: receive_errors as the last read left them */
+	uint8_t xon_xoff;             /* +0x0d: flow control, from the serial settings */
+	uint8_t mark_bit;             /* +0x0e: each character goes out with its top bit set: mark parity, which SCCR1's PE and PT cannot give */
+	uint8_t seven_bits;           /* +0x0f: seven data bits, the top bit received stripped */
+	uint8_t reconfiguring;        /* +0x10: set while sci_reconfigure changes the port */
+	uint8_t field_11;             /* +0x11: sci_send_async needs it clear; only sci_init writes it */
+	uint8_t async_allowed;        /* +0x12: an asynchronous send may start */
+	uint8_t field_13;
+	uint16_t baud_constant;       /* +0x14: sci_baud_set's per-baud value, halving as the baud doubles; nothing reads it */
+	putc_function *echo;          /* +0x16: from the serial settings */
+	uint8_t last_terminator;      /* +0x1a: the CR or LF that ended the last line */
+	uint8_t field_1b;
+} sci_driver;
+
+/* The QSPI's lock and its transfer, at 0x1032a6: qspi_acquire takes the
+ * lock if it is free, else queues its task and waits for 0x400, which
+ * qspi_release or the interrupt signals the next waiting task.  The
+ * interrupt copies the QSPI's receive RAM, qsm.rr at 0xfffd00
+ * (MC68331UM Table D-13), to the caller's buffer. */
+typedef struct qspi_state {
+	uint8_t field_00;          /* +0x00: qspi_send and qspi_transfer set it; nothing reads it */
+	uint8_t write;             /* +0x01: the next waiting slot, wrapping at 16 */
+	uint8_t read;              /* +0x02: the next task to hand the lock to */
+	uint8_t field_03;
+	uint32_t waiting[16];      /* +0x04: the tasks queued for the lock */
+	uint8_t busy;              /* +0x44: the lock is held */
+	uint8_t field_45;
+	uint16_t *receive_buffer;  /* +0x46: where the interrupt copies the receive RAM */
+	uint16_t receive_count;    /* +0x4a: how many words */
+	uint8_t copy_pending;      /* +0x4c: the interrupt is to copy them */
+	uint8_t running;           /* +0x4d: qspi_start waits while it is set; the interrupt clears it */
+} qspi_state;
+
 /* The EFC's gain and what efc_gain_set derives from it, at 0x102554:
  * pllp_task sets the gain, the fractional frequency one EFC count
  * moves, 6.25e-13. */

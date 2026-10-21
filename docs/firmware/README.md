@@ -672,8 +672,12 @@ original compiler did: `psos_pack_name` reads its caller's first
 argument through the caller's A6.  The EEPROM, chip select 9's 8 KB at
 `0x400000`, is erased for each call and compared after it as RAM is;
 gcc's code is above every chip select so that a read of the EEPROM
-finds no code, and its data, a bridge's `__ghidra_ccr`, apart from its
-code, which the function check keeps read-only.
+finds no code, and its data, a bridge's `__ghidra_ccr` and libgcc's
+`_fpCCR`, apart from its code, which the function check keeps
+read-only.  libgcc's float routines are PIC and reach `_fpCCR` through
+the GOT, which the link gives an output section of its own, as ld's
+default script does (ld takes a GOT entry's offset from that section's
+start), and the harness loads.
 
 What lies outside memory the harness models, the same for both calls,
 at its boundary rather than routine by routine.  `trap #7` takes the

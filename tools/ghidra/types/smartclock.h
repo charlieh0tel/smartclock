@@ -436,6 +436,15 @@ typedef struct qspi_state {
 	uint8_t running;           /* +0x4d: qspi_start waits while it is set; the interrupt clears it */
 } qspi_state;
 
+/* A QSPI transfer's two buffers, on its caller's stack, which
+ * qspi_transfer takes, and qspi_read hands its device's read: the words
+ * to send and where the words received go.  adc_read and the FPGA's
+ * routines pass one. */
+typedef struct qspi_buffers {
+	uint16_t *transmit;  /* +0x00 */
+	uint16_t *receive;   /* +0x04 */
+} qspi_buffers;
+
 /* The EEPROM lock's token, at 0x101d1c: the 16-byte message eeprom_init
  * sends the eepx exchange, which eeprom_lock receives into the same
  * cells and eeprom_unlock sends back.  The lock is recursive, as
@@ -612,6 +621,80 @@ typedef struct lifetime_state {
 	int32_t count;  /* +0x08: one more for each new date lifetime_update is given; :DIAGnostic:LIFetime:COUNt? returns it */
 } lifetime_state;
 
+/* The EEPROM's records ("EEPROM records" in structures.md), each
+ * checksummed by record_checksum in its first two bytes, as their
+ * writers build them on their stacks: erased to 0xff, then filled. */
+
+/* The parameter record at 0x400000: save_parameter_record's copy of
+ * the two ports' settings. */
+typedef struct parameter_record {
+	uint16_t checksum;            /* +0x00 */
+	uint8_t duartb_baud;          /* +0x02: duartb_settings' +2 to +8, in order */
+	uint8_t duartb_parity;        /* +0x03 */
+	uint8_t duartb_xon_xoff;      /* +0x04 */
+	uint8_t duartb_field_05;      /* +0x05 */
+	uint8_t duartb_eight_bits;    /* +0x06 */
+	uint8_t duartb_two_stop_bits; /* +0x07 */
+	uint8_t duartb_echo;          /* +0x08 */
+	uint8_t sci_baud;             /* +0x09: sci_settings' +2 to +5, in order */
+	uint8_t sci_parity;           /* +0x0a */
+	uint8_t sci_xon_xoff;         /* +0x0b */
+	uint8_t sci_echo;             /* +0x0c */
+	uint8_t unused[3];            /* +0x0d: left erased */
+} parameter_record;
+
+/* The identification record at 0x400010: identification_record_write's
+ * model, serial and suffix, and "S". */
+typedef struct identification_record {
+	uint16_t checksum;  /* +0x00 */
+	char model[18];     /* +0x02: idn_model */
+	char serial[18];    /* +0x14: idn_serial */
+	char suffix;        /* +0x26: idn_suffix */
+	char tag[3];        /* +0x27: "S" */
+	uint8_t unused[6];  /* +0x2a: left erased */
+} identification_record;
+
+/* The lifetime record at 0x400060, lifetime's date, count and EFC in
+ * that order. */
+typedef struct lifetime_record {
+	uint16_t checksum;   /* +0x00 */
+	uint32_t date;       /* +0x02 */
+	int32_t count;       /* +0x06 */
+	float efc;           /* +0x0a */
+	uint8_t unused[18];  /* +0x0e: left erased */
+} lifetime_record;
+
+/* The calibration block at 0x400080: save_calibration_block's TC and
+ * time offset. */
+typedef struct calibration_block {
+	uint16_t checksum;     /* +0x00 */
+	float tc_coefficient;  /* +0x02: scpi_value_DIAGnostic_ROSCillator_TCOefficient */
+	float time_offset;     /* +0x06: scpi_value_DIAGnostic_TOFFset */
+	uint8_t unused[54];    /* +0x0a: left erased */
+} calibration_block;
+
+/* An NV register record, one of nv_records at 0x4000c0, as nv_save
+ * builds it (structures.md, "The NV register"); its checksum is
+ * nv_checksum's, over bytes 8 to 0x7f. */
+typedef struct nv_record {
+	char tag[2];          /* +0x00: "S" */
+	uint16_t checksum;    /* +0x02 */
+	int32_t sequence;     /* +0x04: one past the stored record's */
+	char revision[8];     /* +0x08: "3543B" */
+	uint32_t packed[28];  /* +0x10: the settings packed into longs, then 0xff */
+} nv_record;
+
+/* A reset-cause record, one of 32 from 0x4001c0, as reset_record_write
+ * builds it; its checksum is reset_record_checksum's, over bytes 4 to
+ * 0x5b. */
+typedef struct reset_record {
+	int16_t sequence;   /* +0x00: one past the slot's stored record's */
+	uint16_t checksum;  /* +0x02 */
+	uint32_t time;      /* +0x04: get_date_time's time */
+	uint32_t date;      /* +0x08: its date */
+	char text[80];      /* +0x0c */
+} reset_record;
+
 /* What sprintf and vsprintf hand doprnt to pass to sprintf_put, on
  * their own stacks: sprintf_put writes at cursor and advances it.
  * Nothing reads unused. */
@@ -647,6 +730,15 @@ typedef struct scpi_numeric_param {
 	uint8_t field_27;
 	void *steps;          /* +0x28: 8 bytes a value, whose routine at +4 gives validate the step */
 } scpi_numeric_param;
+
+/* A value's step, one of scpi_numeric_param's steps, or on a setter's
+ * stack for the clamp routines it calls: its routine, given the step,
+ * the value and its index, gives the step; load_long gives the long at
+ * +0. */
+typedef struct scpi_step {
+	uint32_t value;  /* +0x00: the step's bits, a float or a long */
+	void *function;  /* +0x04 */
+} scpi_step;
 
 /* One status register of the SCPI status tree.  16 bytes. */
 typedef struct status_register {

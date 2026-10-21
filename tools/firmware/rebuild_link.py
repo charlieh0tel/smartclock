@@ -41,8 +41,12 @@ from decompiled_check import RAM, TOOLS, assembly_lines, installer_image
 # so that a read of the EEPROM at 0x400000 reaches no code.
 REBUILT = 0x600000
 # Where gcc's own data is, apart from its code, which the harness keeps
-# read-only: a bridge's __ghidra_ccr.
+# read-only: a bridge's __ghidra_ccr, libgcc's _fpCCR and its GOT.
 REBUILT_DATA = 0x6F0000
+# The rebuilt image's sections the harness loads: its code, its data
+# and, after the data, the GOT.
+GOT = ".got"
+LOADED = (".rebuilt", ".rebuilt_data", GOT)
 # A piece's section, its routine's name and its address.
 PIECE = re.compile(r"^\.text\.(\w+)\.([0-9a-f]+)$")
 # An __asm__ block that holds code: a routine's pieces or a bridge.
@@ -94,6 +98,10 @@ def script(pieces: list[str], image_names: dict[str, int]) -> str:
         f"  .rebuilt 0x{REBUILT:x} : {{ *(.text) *(.text.*) *(.rodata) *(.rodata.*) }}"
     )
     lines.append(f"  .rebuilt_data 0x{REBUILT_DATA:x} : {{ *(.data) *(.data.*) *(.bss) *(.bss.*) *(COMMON) }}")
+    # libgcc's float routines are PIC: their status word, _fpCCR, is
+    # reached through the GOT, an output section of its own as in ld's
+    # default script, since ld takes a GOT entry's offset from its start
+    lines.append(f"  {GOT} : {{ *(.got.plt) *(.igot.plt) *(.got) *(.igot) }}")
     lines.append("  /DISCARD/ : { *(.comment) *(.note.*) }")
     lines.append("}")
     return "\n".join(lines) + "\n"

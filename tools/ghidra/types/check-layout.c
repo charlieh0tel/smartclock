@@ -227,6 +227,24 @@ CHECK_SIZE(lifetime_state, 0x101d0c - 0x101d00);
 CHECK_FIELD(lifetime_state, date, 0x101d04 - 0x101d00);
 CHECK_FIELD(lifetime_state, count, 0x101d08 - 0x101d00);
 
+CHECK_SIZE(qspi_buffers, 8);
+CHECK_SIZE(scpi_step, 8);
+CHECK_SIZE(parameter_record, 16);
+CHECK_FIELD(parameter_record, sci_baud, 9);
+CHECK_SIZE(identification_record, 48);
+CHECK_FIELD(identification_record, suffix, 0x26);
+CHECK_SIZE(lifetime_record, 32);
+CHECK_FIELD(lifetime_record, date, 2);
+CHECK_FIELD(lifetime_record, count, 6);
+CHECK_FIELD(lifetime_record, efc, 0xa);
+CHECK_SIZE(calibration_block, 64);
+CHECK_FIELD(calibration_block, time_offset, 6);
+CHECK_SIZE(nv_record, 0x80);
+CHECK_FIELD(nv_record, sequence, 4);
+CHECK_FIELD(nv_record, packed, 0x10);
+CHECK_SIZE(reset_record, 0x5c);
+CHECK_FIELD(reset_record, text, 0xc);
+
 CHECK_SIZE(sprintf_output, 8);
 CHECK_SIZE(scpi_decimal, 20);
 CHECK_FIELD(scpi_decimal, exponent, 0x12);

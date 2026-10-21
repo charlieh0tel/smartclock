@@ -179,7 +179,7 @@
 0x17370	function	psos_service_30	psos.md		unsigned long psos_service_30(unsigned long *out1, unsigned long *out2, unsigned short *out3)
 0x173a6	function	psos_service_31	psos.md		unsigned long psos_service_31(unsigned long a, unsigned long b, unsigned long c)
 0x1708e	function	psos_mode	psos.md	service 32, mode	unsigned long psos_mode(unsigned long a, unsigned long b, unsigned char *old)
-0x170b4	function	psos_service_33	psos.md
+0x170b4	function	psos_service_33	psos.md	service 33, by a trap in line: pops its return address into A0, keeps D7 in D1 across the trap and jumps back		convention=other; confidence=read; family=psos-binding
 0x17144	function	psos_service_35	psos.md		unsigned long psos_service_35(unsigned long a, unsigned long b, unsigned long c, unsigned long *out)
 0x1716e	function	psos_service_36	psos.md		unsigned long psos_service_36(unsigned long a, unsigned long b)
 0x1718a	function	psos_service_37	psos.md		unsigned long psos_service_37(unsigned long a, unsigned long b, unsigned long *out)
@@ -240,6 +240,7 @@
 0x409a4	function	fpga_set_bit	context	sets or clears a bit in fconf_regs, register and mask from fpga_bit_table, then fpga_write	void fpga_set_bit(uint8_t bit, uint8_t on)
 0x20b8a	function	qspi_transfer	context	waits for SPCR1 and SPSR, runs a QSPI transfer, copies the receive RAM at 0xfffd00 out
 0x1f2c0	function	adc_read	context	sends 0xc000 | channel << 11 to device 1 minor 1 and returns the reply shifted down 2; diag_adc_read and diag_cal call it	int adc_read(adc_channel channel)
+0x1f2c0	local	buffers	read	the transfer adc_read hands qspi_read: its command word and its reply	qspi_buffers @ -0x10
 0x1df12	function	console_write_polled	context	in supervisor mode, writes the string a character at a time through 0x1d680; debug_write uses it	int console_write_polled(char *s)
 0x101fa9	label	fconf_regs	the firmware's own name, "old_addr, fconf_regs[1] = %x" printing 0x101faa; context: fpga_set_bit's copy of the FPGA registers	fpga_set_bit's copy of the FPGA's configuration registers	uint8_t[4]
 0x41310	label	fpga_bit_table	context	fpga_set_bit's register and mask for each bit	fpga_bit[6]
@@ -612,6 +613,7 @@
 0x101fae	label	counter_configuration	context	the configuration counter_calibrate, counter_arm and counter_read are given: fconf_regs' four values at +0, the calibration double at +4, the interpolator's offset and scale at +0x18 and +0x1c	counter_configuration_fields
 0x2d1cc	function	satellite_list_limits	context	the ID count, the most listed and the ID base for satellites_in_mask: kind 0 :SAT:TRAC? (32, 6), 1 its pseudolites (5, 6, from 0x20), 2 :SAT:VIS:PRED? (32, 12), 3 the ignore and include lists (32, 32)	void satellite_list_limits(satellite_list kind, uint8_t *id_count, uint8_t *max_listed, uint8_t *id_base)
 0x3293a	function	nv_save	structures.md	packs the settings into a 0x80-byte NV register record and writes it to slot nv_slot when it differs; "Warning: Entire nv register is being used"
+0x3293a	local	record	read	the NV register record it builds and writes	nv_record @ -0x84
 0x3282c	function	nv_restore	structures.md	loads slot 0, else slot 1, else copies nv_settings_defaults over nv_settings, erases the older slot and saves
 0x32bc2	function	nv_load_slot	structures.md	loads the settings from slot nv_slot when its record is good
 0x328e0	function	nv_checksum	structures.md	the sum of a record's bytes 8 to 0x7f
@@ -989,6 +991,14 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x25468	function	scpi_double_multiply_short	docs/scpi/README.md, read	scpi_double_multiply's path for an operand whose mantissa fits in 16 bits		convention=other; confidence=read; family=scpi-engine
 0x2553a	function	scpi_real_to_text	docs/scpi/README.md, run	a double as NR3 text, so many significant digits and no digit below the resolution given; -308 keeps them all
 0x2553a	local	exponent_digits	read	the exponent's four digits, two from decimal_digit_pairs for its hundreds and two for the rest	char[4] @ -0x8
+0x2c1ee	local	step	read	the step clamp_float_to_step_double is given, 1e-9 and load_long	scpi_step @ -0xc
+0x2c494	local	unit_step	read	the degrees' and minutes' step, 1 and the routine at 0x32e26	scpi_step @ -0x24
+0x2c494	local	centi_step	read	the last value's step, 0.01 and load_long	scpi_step @ -0x2c
+0x2c494	local	milli_step	read	the seconds' step, 0.001 and load_long	scpi_step @ -0x34
+0x2c810	local	unit_step	read	the degrees' and minutes' step, 1 and the routine at 0x32e26	scpi_step @ -0x24
+0x2c810	local	centi_step	read	the last value's step, 0.01 and load_long	scpi_step @ -0x2c
+0x2c810	local	milli_step	read	the seconds' step, 0.001 and load_long	scpi_step @ -0x34
+0x2cd94	local	position	read	the three longs copy_longs_locked copies from 0x101eaa	int32_t[3] @ -0x1c
 0x2553a	local	decimal	read	scpi_double_to_decimal's record	scpi_decimal @ -0x1c
 0x264e0	function	scpi_unsigned_to_digits	docs/scpi/README.md, read	decimal digits right-aligned in a 17-byte buffer, -40 if they do not fit
 0x2636e	function	scpi_format_text	docs/scpi/README.md, read	a string as it is
@@ -1046,6 +1056,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x30ea0	function	duartb_settings_preset	scpi_action_SER1_PRESet: action	copies duartb_settings_defaults over duartb_settings, duartb_settings_done, then save_parameter_record given the source	void duartb_settings_preset(int32_t index, int32_t source)
 0x30ed4	function	sci_settings_preset	scpi_action_SER2_PRESet: action	copies sci_settings_defaults over sci_settings, sci_settings_done, then save_parameter_record given the source	void sci_settings_preset(int32_t index, int32_t source)
 0x47090	function	leap_ack_request	scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate: action	in holdover to normal PLL, stages 3 to 6, sets pll.leap_ack_requested	void leap_ack_request(int32_t index, int32_t source)
+0x30c60	local	block	read	the calibration block it builds and writes	calibration_block @ -0x44
 #
 # the PLL task's routines, loop.md
 0x45e8e	function	powerup	loop.md's power-up stage	the power-up stage: steps its sub-state, pll +3, through start, the oven warm-ups and waiting for GPS, then coarse and fine, setting tfom to 1e-3 and then 2e-6
@@ -1070,6 +1081,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x433fc	function	gps_diag_complete	context	once the reply flag is set: clears it and signals the waiting task; otherwise counts
 0x30b66	function	lifetime_update	context	on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules its clock event
 0x30b30	function	lifetime_event_run	lifetime_update's clock event	takes the GPS date into lifetime.date when time_valid, counts lifetime.count, takes pll.efc in normal PLL, and lifetime_record_write	void lifetime_event_run(void)
+0x30b66	local	event	read	the clock event it copies from 0x30cec and gives clk_do	klok_entry @ -0x1e
 #
 # the clock, the leap second and the counter, under the PLL task
 0x1075a	function	leap_event_schedule	context	queues the leap second's clock event, in GPS time or in UTC as nv_settings.gps_utc says	int leap_event_schedule(undefined4 param_1, undefined4 param_2)
@@ -1098,7 +1110,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2426e	function	efc_clamp	context	clamps the EFC to 0 to 1048560, reporting event B when clamped and C when back in range
 0x24976	function	counter_reset	context	sets the FPGA up again and reloads the counter's registers
 0x30ab4	function	lifetime_record_write	context	writes the 32-byte checksummed lifetime record at EEPROM 0x400060, the date, its count and the EFC, when it has changed
+0x30ab4	local	record	read	the lifetime record it builds and writes	lifetime_record @ -0x24
 0x30dea	function	save_parameter_record	structures.md	writes the 16-byte checksummed parameter record at EEPROM 0x400000, reporting status 0x10 if it fails
+0x30dea	local	record	read	the parameter record it builds and writes	parameter_record @ -0x14
 0x40f76	function	counter_init	context	sets the counter configuration and interpolator calibration to their defaults and arms the reading
 0x40ed8	function	counter_configuration_init	context	the counter configuration's defaults, and the interval reading marked invalid
 0x40000	function	interpolator_calibration_init	context	clears the interpolator calibration, both DACs at 0x1f	void interpolator_calibration_init(interpolator_calibration *calibration)
@@ -1203,6 +1217,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x31536	function	log_erase	context	clears the event log's pages and resets its state, reporting event !
 0x315e8	function	log_erase_locked	context	log_erase under log_mutex
 0x33238	function	reset_record_write	context	writes the next 0x5c-byte reset-cause record at EEPROM 0x4001c0, its time and text, with its checksum
+0x33238	local	record	read	the reset-cause record it builds and writes	reset_record @ -0x60
 0x33028	function	reset_record_valid	context	1 if a reset-cause record's checksum holds
 0x32ffa	function	reset_record_checksum	context	a reset-cause record's checksum: the sum of its 0x58 bytes and its complement
 0x2842c	function	status_register_set_enable	context	sets one status register's enable mask, as :ENABle and *ESE do
@@ -1516,10 +1531,12 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x32e40	function	idn_model_default	context	sets the *IDN? model to Z3805A
 0x32e5c	function	identification_record_read	context	reads the model, serial and suffix from the identification record at EEPROM 0x400010, or their defaults
 0x32f00	function	identification_record_write	context	writes the model, serial and suffix to the identification record when they have changed
+0x32f00	local	record	read	the identification record it builds and writes	identification_record @ -0x34
 0x33114	function	reset_record_count	context	counts the valid reset-cause records into log_entry_count
 0x40670	function	interpolator_selftest_calibrate	context	calibrates the interpolator, up to 20 tries, and verifies it
 0x406c8	function	interpolator_selftest	context	the interpolator's self-test: its failure flag from the calibration
 0x406e2	function	interpolator_sample_test	context	samples the interpolator with its calibrated DACs and keeps both ends' readings; self-test 13, selftest_interpolator_sample
+0x406e2	local	calibration	read	interpolator_calibration_init's record, which interpolator_sample takes	interpolator_calibration @ -0xe
 0x407d4	function	fpga_bit_test	context	1 if bits are set in an FPGA register; called by nothing
 0x4085e	function	fpga_address_sweep_debug	context	steps an FPGA register's address bits through 32 values, printing each; called by nothing
 0x40bda	function	counter_offset_apply	context	takes 0x555555 off the counter's 64-bit count

@@ -182,7 +182,18 @@ query returns the 8 bytes, and its setter (`0x2e68c`) only returns 0.
 and returns the sum and its complement, which a record keeps in those
 two bytes.  It is called on the EEPROM's records at `0x400000` (16
 bytes), `0x400010` (48), `0x400060` (32) and `0x400080` (64), and on
-`0x94e` bytes of RAM from `0x100000`.
+`0x94e` bytes of RAM from `0x100000`.  Each writer builds its record
+on its stack, erased to `0xff` and filled, then checksummed:
+`save_parameter_record` (`0x30dea`, `parameter_record`: channel B's
+settings `+2` to `+8` at `+2`, the SCI's `+2` to `+5` at `+9`),
+`identification_record_write` (`0x32f00`, `identification_record`:
+model at `+2`, serial at `+0x14`, suffix at `+0x26`, "S" at `+0x27`),
+`lifetime_record_write` (`lifetime_record`, "The lifetime record"
+below) and `save_calibration_block` (`0x30c60`, `calibration_block`:
+the TC at `+2`, the time offset at `+6`).  `nv_save` builds an
+`nv_record` ("The NV register") and `reset_record_write` (`0x33238`)
+a `reset_record` of `0x5c` bytes: a sequence number, the checksum,
+the time and date, and 80 bytes of text.
 
 ## The serial settings
 

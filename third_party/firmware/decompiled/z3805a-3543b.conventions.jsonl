@@ -254,7 +254,7 @@
 {"address":"00017050","name":"psos_priority","note":"service 7, priority","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00017076","name":"psos_pause","note":"service 28, pause","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001708e","name":"psos_mode","note":"service 32, mode","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"000170b4","name":"psos_service_33","convention":"unknown"}
+{"address":"000170b4","name":"psos_service_33","note":"service 33, by a trap in line: pops its return address into A0, keeps D7 in D1 across the trap and jumps back","convention":"other","confidence":"read","family":"psos-binding"}
 {"address":"000170c0","name":"psos_service_8","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4}]}
 {"address":"000170f4","name":"psos_service_9","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001710c","name":"psos_service_10","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}

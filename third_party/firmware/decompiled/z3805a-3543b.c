@@ -273,6 +273,15 @@ struct boot_selftest_results {
     uint8_t field_0f;
 };
 
+typedef struct calibration_block calibration_block, *Pcalibration_block;
+
+struct calibration_block {
+    uint16_t checksum;
+    float tc_coefficient;
+    float time_offset;
+    uint8_t unused[54];
+};
+
 typedef struct char_slot char_slot, *Pchar_slot;
 
 struct char_slot {
@@ -1098,6 +1107,17 @@ struct holdover_steering_state {
     int32_t ti_count;
 };
 
+typedef struct identification_record identification_record, *Pidentification_record;
+
+struct identification_record {
+    uint16_t checksum;
+    char model[18];
+    char serial[18];
+    char suffix;
+    char tag[3];
+    uint8_t unused[6];
+};
+
 typedef struct interpolator_calibration interpolator_calibration, *Pinterpolator_calibration;
 
 struct interpolator_calibration {
@@ -1147,6 +1167,16 @@ struct klok_entry {
     int16_t event_class;
 };
 
+typedef struct lifetime_record lifetime_record, *Plifetime_record;
+
+struct lifetime_record {
+    uint16_t checksum;
+    uint32_t date;
+    int32_t count;
+    float efc;
+    uint8_t unused[18];
+};
+
 typedef struct lifetime_state lifetime_state, *Plifetime_state;
 
 struct lifetime_state {
@@ -1186,6 +1216,16 @@ struct loop_steering_state {
     float proportional_gain;
     float integral_gain;
     float filter_weight;
+};
+
+typedef struct nv_record nv_record, *Pnv_record;
+
+struct nv_record {
+    char tag[2];
+    uint16_t checksum;
+    int32_t sequence;
+    char revision[8];
+    uint32_t packed[28];
 };
 
 typedef struct nv_settings_fields nv_settings_fields, *Pnv_settings_fields;
@@ -1265,6 +1305,24 @@ typedef struct packed_datetime packed_datetime, *Ppacked_datetime;
 struct packed_datetime {
     uint32_t time;
     uint32_t date;
+};
+
+typedef struct parameter_record parameter_record, *Pparameter_record;
+
+struct parameter_record {
+    uint16_t checksum;
+    uint8_t duartb_baud;
+    uint8_t duartb_parity;
+    uint8_t duartb_xon_xoff;
+    uint8_t duartb_field_05;
+    uint8_t duartb_eight_bits;
+    uint8_t duartb_two_stop_bits;
+    uint8_t duartb_echo;
+    uint8_t sci_baud;
+    uint8_t sci_parity;
+    uint8_t sci_xon_xoff;
+    uint8_t sci_echo;
+    uint8_t unused[3];
 };
 
 typedef enum __attribute__((packed)) pll_hold_cause {
@@ -1450,6 +1508,13 @@ struct qsm_registers {
 
 typedef int (qsort_compare_function)(void *, void *);
 
+typedef struct qspi_buffers qspi_buffers, *Pqspi_buffers;
+
+struct qspi_buffers {
+    uint16_t *transmit;
+    uint16_t *receive;
+};
+
 typedef struct qspi_state qspi_state, *Pqspi_state;
 
 struct qspi_state {
@@ -1477,6 +1542,16 @@ struct regression_record {
     float slope;
     float intercept;
     float rms;
+};
+
+typedef struct reset_record reset_record, *Preset_record;
+
+struct reset_record {
+    int16_t sequence;
+    uint16_t checksum;
+    uint32_t time;
+    uint32_t date;
+    char text[80];
 };
 
 typedef enum __attribute__((packed)) satellite_kind {
@@ -1596,6 +1671,13 @@ struct scpi_setting_param {
     uint8_t gps_request;
     uint8_t field_17;
     void *group_cell;
+};
+
+typedef struct scpi_step scpi_step, *Pscpi_step;
+
+struct scpi_step {
+    uint32_t value;
+    void *function;
 };
 
 typedef void (selftest_test)(struct char_slot);
@@ -1828,6 +1910,7 @@ _Static_assert(sizeof(adc_channel) == 1, "adc_channel");
 _Static_assert(sizeof(adc_monitor) == 48, "adc_monitor");
 _Static_assert(sizeof(aging_curve_state) == 42, "aging_curve_state");
 _Static_assert(sizeof(boot_selftest_results) == 16, "boot_selftest_results");
+_Static_assert(sizeof(calibration_block) == 64, "calibration_block");
 _Static_assert(sizeof(char_slot) == 4, "char_slot");
 _Static_assert(sizeof(clock_record) == 51, "clock_record");
 _Static_assert(sizeof(counter_configuration_fields) == 32, "counter_configuration_fields");
@@ -1859,15 +1942,18 @@ _Static_assert(sizeof(gps_state) == 1370, "gps_state");
 _Static_assert(sizeof(gps_statistics) == 54, "gps_statistics");
 _Static_assert(sizeof(gpt_registers) == 46, "gpt_registers");
 _Static_assert(sizeof(holdover_steering_state) == 28, "holdover_steering_state");
+_Static_assert(sizeof(identification_record) == 48, "identification_record");
 _Static_assert(sizeof(interpolator_calibration) == 9, "interpolator_calibration");
 _Static_assert(sizeof(interval_reading_fields) == 13, "interval_reading_fields");
 _Static_assert(sizeof(io_device_jumps) == 36, "io_device_jumps");
 _Static_assert(sizeof(io_jump) == 6, "io_jump");
 _Static_assert(sizeof(klok_entry) == 26, "klok_entry");
+_Static_assert(sizeof(lifetime_record) == 32, "lifetime_record");
 _Static_assert(sizeof(lifetime_state) == 12, "lifetime_state");
 _Static_assert(sizeof(log_entry) == 20, "log_entry");
 _Static_assert(sizeof(log_page) == 64, "log_page");
 _Static_assert(sizeof(loop_steering_state) == 28, "loop_steering_state");
+_Static_assert(sizeof(nv_record) == 128, "nv_record");
 _Static_assert(sizeof(nv_settings_fields) == 197, "nv_settings_fields");
 _Static_assert(sizeof(oncore_almanac) == 8, "oncore_almanac");
 _Static_assert(sizeof(oncore_almanac_status_fields) == 16, "oncore_almanac_status_fields");
@@ -1902,6 +1988,7 @@ _Static_assert(sizeof(oncore_xdop_combination) == 8, "oncore_xdop_combination");
 _Static_assert(sizeof(oncore_xdop_table_fields) == 75, "oncore_xdop_table_fields");
 _Static_assert(sizeof(oncore_xdop_type) == 1, "oncore_xdop_type");
 _Static_assert(sizeof(packed_datetime) == 8, "packed_datetime");
+_Static_assert(sizeof(parameter_record) == 16, "parameter_record");
 _Static_assert(sizeof(pll_hold_cause) == 1, "pll_hold_cause");
 _Static_assert(sizeof(pll_stage) == 1, "pll_stage");
 _Static_assert(sizeof(pll_state) == 982, "pll_state");
@@ -1910,8 +1997,10 @@ _Static_assert(sizeof(pps_exchange_message) == 24, "pps_exchange_message");
 _Static_assert(sizeof(preserved_region_fields) == 2382, "preserved_region_fields");
 _Static_assert(sizeof(psos_configuration) == 98, "psos_configuration");
 _Static_assert(sizeof(qsm_registers) == 336, "qsm_registers");
+_Static_assert(sizeof(qspi_buffers) == 8, "qspi_buffers");
 _Static_assert(sizeof(qspi_state) == 78, "qspi_state");
 _Static_assert(sizeof(regression_record) == 26, "regression_record");
+_Static_assert(sizeof(reset_record) == 92, "reset_record");
 _Static_assert(sizeof(satellite_kind) == 1, "satellite_kind");
 _Static_assert(sizeof(satellite_list) == 1, "satellite_list");
 _Static_assert(sizeof(sci_driver) == 28, "sci_driver");
@@ -1922,6 +2011,7 @@ _Static_assert(sizeof(scpi_decimal) == 20, "scpi_decimal");
 _Static_assert(sizeof(scpi_numeric_param) == 44, "scpi_numeric_param");
 _Static_assert(sizeof(scpi_param_type) == 1, "scpi_param_type");
 _Static_assert(sizeof(scpi_setting_param) == 28, "scpi_setting_param");
+_Static_assert(sizeof(scpi_step) == 8, "scpi_step");
 _Static_assert(sizeof(selftest_results) == 68, "selftest_results");
 _Static_assert(sizeof(serial_ring) == 258, "serial_ring");
 _Static_assert(sizeof(sim_chip_select) == 4, "sim_chip_select");
@@ -4608,7 +4698,7 @@ ulong psos_resume(ulong task);
 ulong psos_priority(ulong task,ulong priority,uchar *old);
 ulong psos_pause(ulong a);
 ulong psos_mode(ulong a,ulong b,uchar *old);
-void psos_service_33(void);
+int psos_service_33();
 ulong psos_service_8(ulong a,ulong b,ulong c,ulong d,ulong *out);
 ulong psos_service_9(ulong a);
 ulong psos_service_10(ulong a,ulong b);
@@ -5701,7 +5791,7 @@ int log_clear(void);
 int log_count(uint8_t *full);
 void reset_record_count(void);
 undefined4 log_entry_text(int param_1,char *param_2,char *param_3);
-undefined4 reset_record_write(undefined4 param_1,undefined4 param_2,char *param_3);
+undefined4 reset_record_write(uint32_t param_1,uint32_t param_2,char *param_3);
 void interpolator_calibration_init(interpolator_calibration *calibration);
 uint8_t interpolator_measure(uint8_t mode);
 uint8_t interpolator_measure_low(char_slot dac);
@@ -20486,10 +20576,15 @@ ulong psos_mode(ulong a,ulong b,uchar *old)
 
 
 /* 000170b4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* psos.md */
+/* service 33, by a trap in line: pops its return address into A0, keeps D7 in D1 across the trap
+   and jumps back
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
+   psos.md */
 
-void psos_service_33(void)
+__naked void psos_service_33(void)
 
 {
   code *UNRECOVERED_JUMPTABLE;
@@ -20501,6 +20596,22 @@ void psos_service_33(void)
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl psos_service_33\n"
+	"	.type psos_service_33, @function\n"
+	"	.pushsection .text.psos_service_33.170b4,\"ax\",@progbits\n"
+	"psos_service_33:\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	move.l %d7,%d1\n"
+	"	moveq #0x21,%d7\n"
+	"	trap #0x3\n"
+	"	move.l %d1,%d7\n"
+	"	jmp (%a0)\n"
+	"	.size psos_service_33, .-psos_service_33\n"
+	"	.popsection\n"
+);
 
 /* 000170c0 */
 
@@ -35574,15 +35685,14 @@ void fatal_error(char *message)
 int adc_read(adc_channel channel)
 
 {
-  ushort *local_10;
-  ushort *local_c;
+  qspi_buffers buffers;
   ushort local_8;
   ushort local_6;
   
   local_8 = (ushort)channel << 0xb | 0xc000;
-  local_10 = &local_8;
-  local_c = &local_6;
-  qspi_read(1,&local_10,1);
+  buffers.transmit = &local_8;
+  buffers.receive = &local_6;
+  qspi_read(1,&buffers,1);
   return (int)(uint)local_6 >> 2;
 }
 
@@ -48237,7 +48347,6 @@ int scpi_query_RSSU(void *parameters,void *response,void *call)
 
 /* 0002c1ee */
 
-/* WARNING: Type propagation algorithm not settling */
 /* the setter for :SOURce:GPSystem:ADELay */
 
 int scpi_set_SOURce_GPSystem_ADELay(void *parameters,void *response,void *call)
@@ -48249,8 +48358,8 @@ int scpi_set_SOURce_GPSystem_ADELay(void *parameters,void *response,void *call)
   undefined4 extraout_D0;
   undefined4 uVar4;
   float local_14;
-  float local_10 [2];
-  code *local_8;
+  float local_10;
+  scpi_step step;
   
   iVar1 = return_zero();
   pllc_request_b(&scpi_action_temporary_hold,0,(char)iVar1);
@@ -48263,16 +48372,15 @@ int scpi_set_SOURce_GPSystem_ADELay(void *parameters,void *response,void *call)
     }
   }
   else {
-    local_10[1] = 1e-09;
-    local_8 = load_long;
+    step.value = 0x3089705f;
+    step.function = load_long;
     fVar2 = integer_to_float(0);
     local_14 = float_multiply(fVar2,1e-09);
     fVar2 = integer_to_float(999999);
-    local_10[0] = float_multiply(fVar2,1e-09);
+    local_10 = float_multiply(fVar2,1e-09);
     uVar3 = return_zero();
     clamp_float_to_step_double
-              ((float *)((int)parameters + 2),0,&local_14,local_10,(int)(local_10 + 1),uVar3 & 0xff)
-    ;
+              ((float *)((int)parameters + 2),0,&local_14,&local_10,(int)&step,uVar3 & 0xff);
     uVar4 = extraout_D0;
   }
   iVar1 = return_zero();
@@ -48422,12 +48530,9 @@ int scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *response,vo
   int local_3e;
   undefined4 local_3a;
   char local_36;
-  undefined4 local_34;
-  code *local_30;
-  undefined4 local_2c;
-  code *local_28;
-  undefined4 local_24;
-  undefined *local_20;
+  scpi_step milli_step;
+  scpi_step centi_step;
+  scpi_step unit_step;
   int local_1c;
   int local_18;
   float local_14;
@@ -48440,14 +48545,14 @@ int scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *response,vo
   local_36 = cVar4 == '\0';
   set_interrupt_mask(sr);
   if (local_36 == '\0') {
-    local_24 = 1;
-    local_20 = &DAT_00032e26;
-    local_34 = 0x3a83126f;
-    local_30 = load_long;
+    unit_step.value = 1;
+    unit_step.function = &DAT_00032e26;
+    milli_step.value = 0x3a83126f;
+    milli_step.function = load_long;
     local_1c = 0;
     local_18 = 0x5a;
     return_zero();
-    iVar1 = clamp_to_limits((int *)((int)parameters + 6),0,&local_1c,&local_18,(int)&local_24,0);
+    iVar1 = clamp_to_limits((int *)((int)parameters + 6),0,&local_1c,&local_18,(int)&unit_step,0);
     if (iVar1 == local_18) {
       bVar6 = 0;
       fVar5 = 0.0;
@@ -48464,14 +48569,14 @@ int scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *response,vo
       local_1c = 0;
       local_18 = 0x3b;
       return_zero();
-      iVar2 = clamp_to_limits((int *)((int)parameters + 0xe),0,&local_1c,&local_18,(int)&local_24,0)
-      ;
+      iVar2 = clamp_to_limits((int *)((int)parameters + 0xe),0,&local_1c,&local_18,(int)&unit_step,0
+                             );
       local_14 = 0.0;
       local_10 = 59.999;
       uVar3 = return_zero();
       clamp_float_to_step_and_limits
-                ((float *)((int)parameters + 0x16),0,&local_14,&local_10,(int)&local_34,uVar3 & 0xff
-                );
+                ((float *)((int)parameters + 0x16),0,&local_14,&local_10,(int)&milli_step,
+                 uVar3 & 0xff);
       fVar5 = extraout_D0;
       bVar6 = (byte)iVar2;
     }
@@ -48480,7 +48585,8 @@ int scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *response,vo
     local_1c = 0;
     local_18 = 0xb4;
     return_zero();
-    iVar1 = clamp_to_limits((int *)((int)parameters + 0x22),0,&local_1c,&local_18,(int)&local_24,0);
+    iVar1 = clamp_to_limits((int *)((int)parameters + 0x22),0,&local_1c,&local_18,(int)&unit_step,0)
+    ;
     if (iVar1 == local_18) {
       bVar6 = 0;
       fVar5 = 0.0;
@@ -48497,28 +48603,28 @@ int scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *response,vo
       local_1c = 0;
       local_18 = 0x3b;
       return_zero();
-      iVar2 = clamp_to_limits((int *)((int)parameters + 0x2a),0,&local_1c,&local_18,(int)&local_24,0
-                             );
+      iVar2 = clamp_to_limits((int *)((int)parameters + 0x2a),0,&local_1c,&local_18,(int)&unit_step,
+                              0);
       local_14 = 0.0;
       local_10 = 59.999;
       uVar3 = return_zero();
       clamp_float_to_step_and_limits
-                ((float *)((int)parameters + 0x32),0,&local_14,&local_10,(int)&local_34,uVar3 & 0xff
-                );
+                ((float *)((int)parameters + 0x32),0,&local_14,&local_10,(int)&milli_step,
+                 uVar3 & 0xff);
       fVar5 = extraout_D0_00;
       bVar6 = (byte)iVar2;
     }
     dVar7 = float_to_double(fVar5);
     dms_to_mas(&local_3e,(ushort)iVar1,bVar6,dVar7);
-    local_2c = 0x3c23d70a;
-    local_28 = load_long;
+    centi_step.value = 0x3c23d70a;
+    centi_step.function = load_long;
     fVar5 = integer_to_float(-648000000);
     local_c = float_multiply(fVar5,0.01);
     fVar5 = integer_to_float(648000000);
     local_8 = float_multiply(fVar5,0.01);
     uVar3 = return_zero();
     clamp_float_to_step_double
-              ((float *)((int)parameters + 0x3a),0,&local_c,&local_8,(int)&local_2c,uVar3 & 0xff);
+              ((float *)((int)parameters + 0x3a),0,&local_c,&local_8,(int)&centi_step,uVar3 & 0xff);
     if (*(short *)((int)parameters + 2) == 1) {
       local_42 = -local_42;
     }
@@ -48560,12 +48666,9 @@ int scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *call
   double dVar7;
   int local_40;
   int local_3c [2];
-  undefined4 local_34;
-  code *local_30;
-  undefined4 local_2c;
-  code *local_28;
-  undefined4 local_24;
-  undefined *local_20;
+  scpi_step milli_step;
+  scpi_step centi_step;
+  scpi_step unit_step;
   int local_1c;
   int local_18;
   float local_14;
@@ -48610,13 +48713,13 @@ int scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *call
       status_report_from(2,bVar1);
       return 0;
     }
-    local_24 = 1;
-    local_20 = &DAT_00032e26;
-    local_34 = 0x3a83126f;
-    local_30 = load_long;
+    unit_step.value = 1;
+    unit_step.function = &DAT_00032e26;
+    milli_step.value = 0x3a83126f;
+    milli_step.function = load_long;
     local_1c = 0;
     local_18 = 0x5a;
-    iVar3 = clamp_to_limits((int *)((int)parameters + 6),0,&local_1c,&local_18,(int)&local_24,0);
+    iVar3 = clamp_to_limits((int *)((int)parameters + 6),0,&local_1c,&local_18,(int)&unit_step,0);
     if (iVar3 == local_18) {
       bVar6 = 0;
       fVar5 = 0.0;
@@ -48630,13 +48733,13 @@ int scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *call
     else {
       local_1c = 0;
       local_18 = 0x3b;
-      iVar4 = clamp_to_limits((int *)((int)parameters + 0xe),0,&local_1c,&local_18,(int)&local_24,0)
-      ;
+      iVar4 = clamp_to_limits((int *)((int)parameters + 0xe),0,&local_1c,&local_18,(int)&unit_step,0
+                             );
       local_14 = 0.0;
       local_10 = 59.999;
       clamp_float_to_step_and_limits
-                ((float *)((int)parameters + 0x16),0,&local_14,&local_10,(int)&local_34,uVar2 & 0xff
-                );
+                ((float *)((int)parameters + 0x16),0,&local_14,&local_10,(int)&milli_step,
+                 uVar2 & 0xff);
       fVar5 = extraout_D0;
       bVar6 = (byte)iVar4;
     }
@@ -48644,7 +48747,8 @@ int scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *call
     dms_to_mas(&local_40,(ushort)iVar3,bVar6,dVar7);
     local_1c = 0;
     local_18 = 0xb4;
-    iVar3 = clamp_to_limits((int *)((int)parameters + 0x22),0,&local_1c,&local_18,(int)&local_24,0);
+    iVar3 = clamp_to_limits((int *)((int)parameters + 0x22),0,&local_1c,&local_18,(int)&unit_step,0)
+    ;
     if (iVar3 == local_18) {
       bVar6 = 0;
       fVar5 = 0.0;
@@ -48658,26 +48762,26 @@ int scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *call
     else {
       local_1c = 0;
       local_18 = 0x3b;
-      iVar4 = clamp_to_limits((int *)((int)parameters + 0x2a),0,&local_1c,&local_18,(int)&local_24,0
-                             );
+      iVar4 = clamp_to_limits((int *)((int)parameters + 0x2a),0,&local_1c,&local_18,(int)&unit_step,
+                              0);
       local_14 = 0.0;
       local_10 = 59.999;
       clamp_float_to_step_and_limits
-                ((float *)((int)parameters + 0x32),0,&local_14,&local_10,(int)&local_34,uVar2 & 0xff
-                );
+                ((float *)((int)parameters + 0x32),0,&local_14,&local_10,(int)&milli_step,
+                 uVar2 & 0xff);
       fVar5 = extraout_D0_00;
       bVar6 = (byte)iVar4;
     }
     dVar7 = float_to_double(fVar5);
     dms_to_mas(local_3c,(ushort)iVar3,bVar6,dVar7);
-    local_2c = 0x3c23d70a;
-    local_28 = load_long;
+    centi_step.value = 0x3c23d70a;
+    centi_step.function = load_long;
     fVar5 = integer_to_float(-100000);
     local_c = float_multiply(fVar5,0.01);
     fVar5 = integer_to_float(1800000);
     local_8 = float_multiply(fVar5,0.01);
     clamp_float_to_step_double
-              ((float *)((int)parameters + 0x3a),0,&local_c,&local_8,(int)&local_2c,uVar2 & 0xff);
+              ((float *)((int)parameters + 0x3a),0,&local_c,&local_8,(int)&centi_step,uVar2 & 0xff);
     if (*(short *)((int)parameters + 2) == 1) {
       local_40 = -local_40;
     }
@@ -48802,22 +48906,20 @@ int scpi_query_SOURce_GPSystem_POSition_HOLD_LAST(void *parameters,void *respons
   undefined2 uVar6;
   undefined1 uVar7;
   undefined1 uVar8;
-  long local_1c;
-  long local_18;
-  int local_14;
+  int32_t position [3];
   undefined2 local_10;
   byte local_e [2];
   double dStack_c;
   
-  copy_longs_locked(0x101eaa,(int)&local_1c,3);
+  copy_longs_locked(0x101eaa,(int)position,3);
   uVar6 = (undefined2)((uint)&dStack_c >> 0x10);
   uVar7 = (undefined1)((uint)&dStack_c >> 8);
   uVar8 = SUB41(&dStack_c,0);
   pbVar5 = local_e;
   puVar4 = &local_10;
-  lVar1 = labs(local_1c);
+  lVar1 = labs(position[0]);
   mas_to_dms(lVar1,puVar4,pbVar5,(double *)CONCAT31(CONCAT21(uVar6,uVar7),uVar8));
-  if (local_1c < 0) {
+  if (position[0] < 0) {
     *(undefined2 *)response = 1;
   }
   else {
@@ -48832,9 +48934,9 @@ int scpi_query_SOURce_GPSystem_POSition_HOLD_LAST(void *parameters,void *respons
   uVar8 = SUB41(&dStack_c,0);
   pbVar5 = local_e;
   puVar4 = &local_10;
-  lVar1 = labs(local_18);
+  lVar1 = labs(position[1]);
   mas_to_dms(lVar1,puVar4,pbVar5,(double *)CONCAT31(CONCAT21(uVar6,uVar7),uVar8));
-  if (local_18 < 0) {
+  if (position[1] < 0) {
     *(undefined2 *)((int)response + 0x10) = 3;
   }
   else {
@@ -48844,7 +48946,7 @@ int scpi_query_SOURce_GPSystem_POSition_HOLD_LAST(void *parameters,void *respons
   *(ushort *)((int)response + 0x16) = (ushort)local_e[0];
   fVar2 = double_to_float(dStack_c);
   *(float *)((int)response + 0x1a) = fVar2;
-  dVar3 = integer_to_double(local_14);
+  dVar3 = integer_to_double(position[2]);
   dVar3 = double_divide_reversed(100.0,dVar3);
   fVar2 = double_to_float(dVar3);
   *(float *)((int)response + 0x20) = fVar2;
@@ -53510,22 +53612,19 @@ undefined4 lifetime_record_write(void)
 {
   int iVar1;
   undefined4 uVar2;
-  uint16_t local_24;
-  uint32_t local_22;
-  int32_t local_1e;
-  float local_1a;
+  lifetime_record record;
   
-  memset(&local_24,0xff,0x20);
-  local_1e = lifetime.count;
-  local_22 = lifetime.date;
-  local_1a = lifetime.efc;
-  local_24 = record_checksum(&local_24,0x20);
-  iVar1 = memcmp(&local_24,&DAT_00400060,0x20);
+  memset(&record,0xff,0x20);
+  record.count = lifetime.count;
+  record.date = lifetime.date;
+  record.efc = lifetime.efc;
+  record.checksum = record_checksum(&record,0x20);
+  iVar1 = memcmp(&record,&DAT_00400060,0x20);
   if (iVar1 == 0) {
     uVar2 = 1;
   }
   else {
-    uVar2 = eeprom_write(&DAT_00400060,(char *)&local_24,0x20);
+    uVar2 = eeprom_write(&DAT_00400060,(char *)&record,0x20);
   }
   return uVar2;
 }
@@ -53568,20 +53667,16 @@ void lifetime_update(int param_1)
   int iVar2;
   short sVar3;
   undefined1 *puVar4;
-  undefined1 *puVar5;
-  undefined1 auStack_1e [8];
-  uint32_t uStack_16;
-  packed_datetime local_12;
-  code *local_a;
+  klok_entry event;
   
   sVar3 = 0x19;
-  puVar4 = auStack_1e;
-  puVar5 = &DAT_00030cec;
+  pkVar1 = &event;
+  puVar4 = &DAT_00030cec;
   do {
-    *puVar4 = *puVar5;
+    *(undefined1 *)&pkVar1->next = *puVar4;
     sVar3 = sVar3 + -1;
+    pkVar1 = (klok_entry *)((int)&pkVar1->next + 1);
     puVar4 = puVar4 + 1;
-    puVar5 = puVar5 + 1;
   } while (sVar3 != -1);
   if (lifetime.date != param_1) {
     lifetime.date = param_1;
@@ -53595,11 +53690,11 @@ void lifetime_update(int param_1)
   if ((pkVar1 != (klok_entry *)0x0) && (iVar2 = klok_cancel(pkVar1), iVar2 != 0)) {
     task_dmessage("Error in deleting old lifetime event\r\n");
   }
-  get_gps_datetime(&uStack_16,(uint32_t *)(auStack_1e + 4));
-  local_12.time = 0x30000;
-  datetime_add(&local_12,(packed_datetime *)(auStack_1e + 4));
-  local_a = lifetime_event_run;
-  lifetime_event = clk_do((klok_entry *)auStack_1e);
+  get_gps_datetime(&event.date,&event.time);
+  event.period_time = 0x30000;
+  datetime_add((packed_datetime *)&event.period_time,(packed_datetime *)&event.time);
+  event.function = lifetime_event_run;
+  lifetime_event = clk_do(&event);
   return;
 }
 
@@ -53640,17 +53735,15 @@ undefined4 save_calibration_block(undefined4 param_1)
 
 {
   char cVar1;
-  uint16_t local_44;
-  float local_42;
-  float local_3e;
+  calibration_block block;
   
   if ((_DAT_00400086 != scpi_value_DIAGnostic_TOFFset) ||
      (_DAT_00400082 != scpi_value_DIAGnostic_ROSCillator_TCOefficient)) {
-    memset(&local_44,0xff,0x40);
-    local_3e = scpi_value_DIAGnostic_TOFFset;
-    local_42 = scpi_value_DIAGnostic_ROSCillator_TCOefficient;
-    local_44 = record_checksum(&local_44,0x40);
-    cVar1 = eeprom_write(&DAT_00400080,(char *)&local_44,0x40);
+    memset(&block,0xff,0x40);
+    block.time_offset = scpi_value_DIAGnostic_TOFFset;
+    block.tc_coefficient = scpi_value_DIAGnostic_ROSCillator_TCOefficient;
+    block.checksum = record_checksum(&block,0x40);
+    cVar1 = eeprom_write(&DAT_00400080,(char *)&block,0x40);
     if (cVar1 == '\0') {
       status_report_from(0x10,(byte)param_1);
       return 0;
@@ -53707,33 +53800,22 @@ bool save_parameter_record(byte param_1)
 
 {
   char cVar1;
-  uint16_t local_14;
-  uint8_t local_12;
-  uint8_t local_11;
-  uint8_t local_10;
-  uint8_t local_f;
-  uint8_t local_e;
-  uint8_t local_d;
-  uint8_t local_c;
-  uint8_t local_b;
-  uint8_t local_a;
-  uint8_t local_9;
-  uint8_t local_8;
+  parameter_record record;
   
-  memset(&local_14,0xff,0x10);
-  local_12 = duartb_settings.baud;
-  local_11 = duartb_settings.parity;
-  local_10 = duartb_settings.xon_xoff;
-  local_f = duartb_settings.field_05;
-  local_e = duartb_settings.eight_bits;
-  local_d = duartb_settings.two_stop_bits;
-  local_c = duartb_settings.echo;
-  local_b = sci_settings.baud;
-  local_a = sci_settings.parity;
-  local_9 = sci_settings.xon_xoff;
-  local_8 = sci_settings.echo;
-  local_14 = record_checksum(&local_14,0x10);
-  cVar1 = eeprom_write((char *)&DAT_00400000,(char *)&local_14,0x10);
+  memset(&record,0xff,0x10);
+  record.duartb_baud = duartb_settings.baud;
+  record.duartb_parity = duartb_settings.parity;
+  record.duartb_xon_xoff = duartb_settings.xon_xoff;
+  record.duartb_field_05 = duartb_settings.field_05;
+  record.duartb_eight_bits = duartb_settings.eight_bits;
+  record.duartb_two_stop_bits = duartb_settings.two_stop_bits;
+  record.duartb_echo = duartb_settings.echo;
+  record.sci_baud = sci_settings.baud;
+  record.sci_parity = sci_settings.parity;
+  record.sci_xon_xoff = sci_settings.xon_xoff;
+  record.sci_echo = sci_settings.echo;
+  record.checksum = record_checksum(&record,0x10);
+  cVar1 = eeprom_write((char *)&DAT_00400000,(char *)&record,0x10);
   if (cVar1 == '\0') {
     status_report_from(0x10,param_1);
   }
@@ -55179,17 +55261,14 @@ char nv_save(byte param_1)
   uint uVar7;
   char cVar8;
   uint uVar9;
-  uint *puVar10;
-  uint *puVar11;
-  undefined4 uStack_84;
-  int iStack_80;
-  char acStack_7c [8];
-  uint auStack_74 [28];
+  uint32_t *puVar10;
+  uint32_t *puVar11;
+  nv_record record;
   
-  strncpy((char *)&uStack_84,"S",2);
-  iStack_80 = *(int *)(&DAT_004000c4 + (uint)nv_slot * 0x80) + 1;
-  strncpy(acStack_7c,"3543B",8);
-  puVar11 = auStack_74;
+  strncpy(record.tag,"S",2);
+  record.sequence = *(int *)(&DAT_004000c4 + (uint)nv_slot * 0x80) + 1;
+  strncpy(record.revision,"3543B",8);
+  puVar11 = record.packed;
   bVar6 = 0;
   uVar7 = 0;
   for (uVar9 = 0; uVar9 < 0x15; uVar9 = uVar9 + 1) {
@@ -55254,13 +55333,13 @@ char nv_save(byte param_1)
   for (; puVar10 < &stack0xfffffffc; puVar10 = puVar10 + 1) {
     *puVar10 = 0xffffffff;
   }
-  __ghidra_piece(unsigned short, uStack_84, 2) = nv_checksum((int)&uStack_84);
-  cVar5 = nv_record_differs((int *)(&nv_records + (uint)nv_slot * 0x80),&uStack_84);
+  record.checksum = nv_checksum((int)&record);
+  cVar5 = nv_record_differs((int *)(&nv_records + (uint)nv_slot * 0x80),(int *)&record);
   if (cVar5 == '\0') {
     cVar5 = '\x01';
   }
   else {
-    cVar5 = eeprom_write(&nv_records + (uint)nv_slot * 0x80,(char *)&uStack_84,0x80);
+    cVar5 = eeprom_write(&nv_records + (uint)nv_slot * 0x80,record.tag,0x80);
   }
   if (cVar5 == '\0') {
     if (kernel_running != 0) {
@@ -55460,24 +55539,20 @@ undefined4 identification_record_write(void)
 {
   int iVar1;
   undefined4 uVar2;
-  uint16_t local_34;
-  char acStack_32 [18];
-  char acStack_20 [18];
-  char local_e;
-  char acStack_d [9];
+  identification_record record;
   
   iVar1 = strncmp(&DAT_00400012,idn_model,0x12);
   if ((((iVar1 == 0) && (iVar1 = strncmp(&DAT_00400024,idn_serial,0x12), iVar1 == 0)) &&
       (iVar1 = strncmp((char *)0x400037,"S",3), iVar1 == 0)) && (DAT_00400036 == idn_suffix)) {
     return 1;
   }
-  memset(&local_34,0xff,0x30);
-  strncpy(acStack_32,idn_model,0x12);
-  strncpy(acStack_20,idn_serial,0x12);
-  local_e = idn_suffix;
-  strncpy(acStack_d,"S",3);
-  local_34 = record_checksum(&local_34,0x30);
-  uVar2 = eeprom_write((char *)&DAT_00400010,(char *)&local_34,0x30);
+  memset(&record,0xff,0x30);
+  strncpy(record.model,idn_model,0x12);
+  strncpy(record.serial,idn_serial,0x12);
+  record.suffix = idn_suffix;
+  strncpy(record.tag,"S",3);
+  record.checksum = record_checksum(&record,0x30);
+  uVar2 = eeprom_write((char *)&DAT_00400010,(char *)&record,0x30);
   return uVar2;
 }
 
@@ -55658,28 +55733,24 @@ LAB_00033166:
 /* writes the next 0x5c-byte reset-cause record at EEPROM 0x4001c0, its time and text, with its
    checksum */
 
-undefined4 reset_record_write(undefined4 param_1,undefined4 param_2,char *param_3)
+undefined4 reset_record_write(uint32_t param_1,uint32_t param_2,char *param_3)
 
 {
   uint uVar1;
   char cVar2;
   int iVar3;
   uint8_t local_62 [2];
-  short local_60;
-  undefined2 local_5e;
-  undefined4 local_5c;
-  undefined4 local_58;
-  char acStack_54 [80];
+  reset_record record;
   
   uVar1 = log_count(local_62);
   if (local_62[0] == 0) {
-    local_58 = param_1;
-    local_5c = param_2;
-    strncpy(acStack_54,param_3,0x50);
-    local_5e = reset_record_checksum((int)&local_60);
+    record.date = param_1;
+    record.time = param_2;
+    strncpy(record.text,param_3,0x50);
+    record.checksum = reset_record_checksum((int)&record);
     iVar3 = (uVar1 & 0xff) * 0x5c;
-    local_60 = *(short *)(iVar3 + 0x4001c0) + 1;
-    cVar2 = eeprom_write((char *)(iVar3 + 0x4001c0),(char *)&local_60,0x5c);
+    record.sequence = *(short *)(iVar3 + 0x4001c0) + 1;
+    cVar2 = eeprom_write((char *)(iVar3 + 0x4001c0),(char *)&record,0x5c);
     if (cVar2 != '\0') {
       log_entry_count = log_entry_count + 1;
       return 0;
@@ -56169,18 +56240,18 @@ void interpolator_selftest(void)
 void interpolator_sample_test(void)
 
 {
-  interpolator_calibration local_e;
+  interpolator_calibration calibration;
   
-  interpolator_calibration_init(&local_e);
-  local_e.initialized = interpolator_calibration_state.initialized;
+  interpolator_calibration_init(&calibration);
+  calibration.initialized = interpolator_calibration_state.initialized;
   if (interpolator_calibration_state.initialized != 0) {
-    local_e.hdac_2 = interpolator_calibration_state.hdac_2;
-    local_e.hdac_3 = interpolator_calibration_state.hdac_3;
+    calibration.hdac_2 = interpolator_calibration_state.hdac_2;
+    calibration.hdac_3 = interpolator_calibration_state.hdac_3;
   }
-  interpolator_sample(&local_e);
+  interpolator_sample(&calibration);
   selftest.interpolator = 0;
-  selftest.interpolator_readings[0] = (ushort)local_e.reading_low;
-  selftest.interpolator_readings[1] = (ushort)local_e.reading_high;
+  selftest.interpolator_readings[0] = (ushort)calibration.reading_low;
+  selftest.interpolator_readings[1] = (ushort)calibration.reading_high;
   return;
 }
 

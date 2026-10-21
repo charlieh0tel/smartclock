@@ -42,7 +42,7 @@ from unicorn.m68k_const import (
 )
 
 from libc_check import BUFFER, BUFFER_SPACING, RAM, RAM_SIZE, RETURN, ROM, ROM_SIZE, STEP_LIMIT, Machine
-from rebuild_link import IMAGE_PREFIX, REBUILT, REBUILT_DATA, Section
+from rebuild_link import IMAGE_PREFIX, LOADED, REBUILT, REBUILT_DATA, Section
 
 # Every register a routine might take, by the sidecar's name.
 REGISTERS = {
@@ -320,7 +320,7 @@ def rebuilt_machine(image: bytes, linked: list[Section], linked_symbols: dict[st
     }
     m.uc.mem_map(REBUILT, REBUILT_SIZE)
     for section in linked:
-        if section.name in (".rebuilt", ".rebuilt_data"):
+        if section.name in LOADED:
             m.uc.mem_write(section.address, section.data)
     m.uc.mem_map(STACK, STACK_SIZE)
     m.uc.mem_map(EEPROM, EEPROM_SIZE)

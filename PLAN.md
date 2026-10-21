@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1251 run, 935 agree, 233 reach what the
-     harness does not model and are skipped, and 83 differ, in the
+     original reads them: of 1250 run, 966 agree, 233 reach what the
+     harness does not model and are skipped, and 51 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): `trap #7` runs the image's handler;
@@ -802,7 +802,12 @@ view cannot drift apart.  The library, bottom up:
      the slot's does; the pSOS device routines are register routines,
      and `set_timedate`, `console_task_create` and
      `pforth_dictionary_init`, which take traps in line, assembly (97 to
-     83).
+     83).  The EEPROM records, the QSPI's buffer pair, the GPS position's
+     three longs and the SCPI step entries the routines that build them
+     keep on their stacks are typed; libgcc's soft-float exception
+     handler reaches `_fpCCR` through a GOT the link now places and the
+     harness loads; and `psos_service_33`, which pops its return address,
+     traps and jumps back, is assembly (83 to 51).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

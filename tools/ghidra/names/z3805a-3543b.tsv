@@ -245,7 +245,7 @@
 0x29e7e	function	request_and_wait	context	raises a variable, send_x_retry, waits on the variable
 0x22d4a	function	debug_message	context	task_debug_message when with_task_name is set, else debug_write; callers push the flag with move.b	void debug_message(char *message, char with_task_name)
 0x1ef74	function	debug_write	context	writes through 0x1df12 while debug_enabled
-0x319a2	function	log_event	context	log_write of one of 27 fixed messages by code, "Log cleared", "Power on", "Survey mode started"...	int log_event(uint8_t code)
+0x319a2	function	log_event	context	log_write of one of 27 fixed messages by code, "Log cleared", "Power on", "Survey mode started"...	int32_t log_event(log_event_code code)
 0x18334	function	debug_is_enabled	context	returns debug_enabled	char debug_is_enabled(void)
 0x29a18	function	return_byte	context	returns its argument; the LED and DOUGlas queries call it	char return_byte(char b)
 0x40756	function	fpga_write	context	writes a byte to FPGA register reg at 0x304000 (interval.md: the FPGA port)	void fpga_write(uint8_t reg, uint8_t value)
@@ -529,7 +529,7 @@
 0x10258d	label	selftest_requested	structures.md	selftest_request, the self-test action, sets it; pllp_task then enters PLL_STAGE_DIAG and gps_diag_sequence clears it	uint8_t
 0x10258e	label	leap_recheck_requested	structures.md	set by diag_leapsec and on entering powerup recovery; gps_leap_sequence's wait state then returns to state 1	uint8_t
 0x102590	label	selftest_number	structures.md	selftest_request's index, which gps_diag_sequence passes to selftest_run	int32_t
-0x102040	label	douglas_log_event	structures.md	the log_event code finish_scpi_cmd logs for a :DOUGlas:STATe change, with status_happening 0x1d or 0x1c: 3 "Survey mode started" when it is cleared, 4 "Position hold mode started" when set from 0; pll_scpi_command clears it	uint8_t
+0x102040	label	douglas_log_event	structures.md	the log_event code finish_scpi_cmd logs for a :DOUGlas:STATe change, with status_happening 0x1d or 0x1c: 3 "Survey mode started" when it is cleared, 4 "Position hold mode started" when set from 0; pll_scpi_command clears it	log_event_code
 0x10207a	label	interval_tick_wait	structures.md	set while interval_wait_reading and interval_next_reading wait on event 0x200 with a 1PPS dead; the periodic interrupt then signals pllp 0x199 ticks after the last pps_interrupt	uint8_t
 0x10207b	label	interval_armed_without_pps	structures.md	set when interval_rearm or interval_next_reading arms a reading with a 1PPS dead; interval_wait_reading and interval_next_reading then report no happening 'H' for its being invalid	uint8_t
 0x102144	label	fine_sum_i	structures.md	fine's least-squares sum of i	float

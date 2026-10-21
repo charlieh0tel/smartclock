@@ -721,7 +721,7 @@ static char* const records_log_events[] = {
 };
 
 /* Logs one of log_event's messages by its code (0x319a2). */
-int32_t log_event(uint8_t code) {
+int32_t log_event(log_event_code code) {
   /* The result for a code it has no message for. */
   static const uint8_t LOG_EVENT_UNKNOWN = 0xfd;
 
@@ -917,8 +917,6 @@ uint32_t nv_record_differs(int32_t* first, int32_t* second) {
  * nv_slot when it differs; a memory error for the source when the write
  * fails (0x3293a). */
 char nv_save(uint8_t source) {
-  /* log_event's "EEPROM save failed". */
-  static const uint8_t LOG_EEPROM_SAVE_FAILED = 0x18;
   static const uint32_t NV_PACKED_LONGS =
       (uint32_t)(sizeof nv_records[0].packed / sizeof nv_records[0].packed[0]);
   nv_record record;

@@ -1285,6 +1285,36 @@ struct log_entry {
     int32_t argument_2;
 };
 
+typedef enum __attribute__((packed)) log_event_code {
+    LOG_CLEARED=0,
+    LOG_POWER_ON=1,
+    LOG_REBOOT=2,
+    LOG_SURVEY_STARTED=3,
+    LOG_POSITION_HOLD_STARTED=4,
+    LOG_EXT_LOCK_STARTED=5,
+    LOG_GPS_LOCK_STARTED=6,
+    LOG_HOLDOVER_MANUAL=7,
+    LOG_HOLDOVER_EXT=8,
+    LOG_HOLDOVER_INVALID_EXT_PPS=9,
+    LOG_HOLDOVER_GPS=10,
+    LOG_HOLDOVER_INVALID_GPS_PPS=11,
+    LOG_HOLDOVER_NOT_TRACKING=12,
+    LOG_HOLDOVER_RAIM_ALARM=13,
+    LOG_HOLDOVER_GPS_ALARM=14,
+    LOG_HOLDOVER_HW_ERROR=15,
+    LOG_HOLDOVER_TI_ERROR=16,
+    LOG_HOLDOVER_TI_LIMIT=17,
+    LOG_HOLDOVER_TEMPORARY=18,
+    LOG_HOLDOVER_SELECTING_PPS=19,
+    LOG_HOLDOVER_STARTED=20,
+    LOG_SPECIFICATIONS_EXCEEDED=21,
+    LOG_HARDWARE_FAILURE=22,
+    LOG_SELFTEST_FAILED=23,
+    LOG_EEPROM_SAVE_FAILED=24,
+    LOG_OUT_OF_EVENT_BUFFERS=25,
+    LOG_SYSTEM_PRESET=26
+} log_event_code;
+
 typedef struct log_page log_page, *Plog_page;
 
 struct log_page {
@@ -2285,6 +2315,7 @@ _Static_assert(sizeof(klok_entry) == 26, "klok_entry");
 _Static_assert(sizeof(lifetime_record) == 32, "lifetime_record");
 _Static_assert(sizeof(lifetime_state) == 12, "lifetime_state");
 _Static_assert(sizeof(log_entry) == 20, "log_entry");
+_Static_assert(sizeof(log_event_code) == 1, "log_event_code");
 _Static_assert(sizeof(log_page) == 64, "log_page");
 _Static_assert(sizeof(loop_steering_state) == 28, "loop_steering_state");
 _Static_assert(sizeof(mutex) == 24, "mutex");
@@ -2909,7 +2940,7 @@ extern uint32_t pll_scpi_waiting_task; /* 00102018 */
 extern uint8_t pll_scpi_setting; /* 0010201c */
 extern uint32_t pll_scpi_values[4]; /* 00102020 */
 extern uint32_t pll_scpi_validated[4]; /* 00102030 */
-extern uint8_t douglas_log_event; /* 00102040 */
+extern log_event_code douglas_log_event; /* 00102040 */
 extern holdover_steering_state holdover_steering; /* 00102042 */
 extern loop_steering_state loop_steering; /* 0010205e */
 extern uint8_t interval_tick_wait; /* 0010207a */
@@ -6023,7 +6054,7 @@ int32_t log_entry_total(uint8_t *param_1);
 int32_t log_init(void);
 int32_t log_read(int32_t number,char *text,char *heading);
 int32_t log_write(char *format,...);
-int32_t log_event(uint8_t code);
+int32_t log_event(log_event_code code);
 void log_first_satellite(uint32_t param_1,uint32_t param_2);
 void log_page_clear(void *param_1);
 log_entry * log_page_free_entry(log_page *page);
@@ -7866,7 +7897,7 @@ klok_entry * clk_do(klok_entry *event)
   if (status == 0) {
     if (klok_free == (klok_entry *)0x0) {
       task_dmessage("Clk_do: out of event buffers");
-      log_event(0x19);
+      log_event(LOG_OUT_OF_EVENT_BUFFERS);
       entry = (klok_entry *)0x0;
     }
     else {
@@ -23036,7 +23067,7 @@ void selftest_print_failure(char param_1)
   selftest.test = 0;
   selftest.running = 0;
   if (selftest.passed == 0) {
-    log_event(0x17);
+    log_event(LOG_SELFTEST_FAILED);
   }
   return;
 }
@@ -55504,93 +55535,93 @@ int32_t log_write(char *format,...)
 /* log_write of one of 27 fixed messages by code, "Log cleared", "Power on", "Survey mode
    started"... */
 
-int32_t log_event(uint8_t code)
+int32_t log_event(log_event_code code)
 
 {
   int32_t iVar1;
   
-  if (code < 0x1b) {
+  if (code < (LOG_SYSTEM_PRESET|LOG_POWER_ON)) {
                     /* WARNING: Switch is manually overridden */
     switch(code) {
-    case 0:
+    case LOG_CLEARED:
       iVar1 = log_write("Log cleared");
       break;
-    case 1:
+    case LOG_POWER_ON:
       iVar1 = log_write("Power on");
       break;
-    case 2:
+    case LOG_REBOOT:
       iVar1 = log_write("Re-boot");
       break;
-    case 3:
+    case LOG_SURVEY_STARTED:
       iVar1 = log_write("Survey mode started");
       break;
-    case 4:
+    case LOG_POSITION_HOLD_STARTED:
       iVar1 = log_write("Position hold mode started");
       break;
-    case 5:
+    case LOG_EXT_LOCK_STARTED:
       iVar1 = log_write("EXT lock started");
       break;
-    case 6:
+    case LOG_GPS_LOCK_STARTED:
       iVar1 = log_write("GPS lock started");
       break;
-    case 7:
+    case LOG_HOLDOVER_MANUAL:
       iVar1 = log_write("Holdover started, manual");
       break;
-    case 8:
+    case LOG_HOLDOVER_EXT:
       iVar1 = log_write("Holdover started, EXT");
       break;
-    case 9:
+    case LOG_HOLDOVER_INVALID_EXT_PPS:
       iVar1 = log_write("Holdover started, invalid EXT 1PPS");
       break;
-    case 10:
+    case LOG_HOLDOVER_GPS:
       iVar1 = log_write("Holdover started, GPS");
       break;
-    case 0xb:
+    case LOG_HOLDOVER_INVALID_GPS_PPS:
       iVar1 = log_write("Holdover started, invalid GPS 1PPS");
       break;
-    case 0xc:
+    case LOG_HOLDOVER_NOT_TRACKING:
       iVar1 = log_write("Holdover started, not tracking GPS");
       break;
-    case 0xd:
+    case LOG_HOLDOVER_RAIM_ALARM:
       iVar1 = log_write("Holdover started, GPS RAIM alarm");
       break;
-    case 0xe:
+    case LOG_HOLDOVER_GPS_ALARM:
       iVar1 = log_write("Holdover started, GPS alarm");
       break;
-    case 0xf:
+    case LOG_HOLDOVER_HW_ERROR:
       iVar1 = log_write("Holdover started, HW error");
       break;
-    case 0x10:
+    case LOG_HOLDOVER_TI_ERROR:
       iVar1 = log_write("Holdover started, TI error");
       break;
-    case 0x11:
+    case LOG_HOLDOVER_TI_LIMIT:
       iVar1 = log_write("Holdover started, TI limit exceeded");
       break;
-    case 0x12:
+    case LOG_HOLDOVER_TEMPORARY:
       iVar1 = log_write("Holdover started, temporary");
       break;
-    case 0x13:
+    case LOG_HOLDOVER_SELECTING_PPS:
       iVar1 = log_write("Holdover started, selecting 1PPS");
       break;
-    case 0x14:
+    case LOG_HOLDOVER_STARTED:
       iVar1 = log_write("Holdover started");
       break;
-    case 0x15:
+    case LOG_SPECIFICATIONS_EXCEEDED:
       iVar1 = log_write("Output specifications exceeded");
       break;
-    case 0x16:
+    case LOG_HARDWARE_FAILURE:
       iVar1 = log_write("Hardware failure");
       break;
-    case 0x17:
+    case LOG_SELFTEST_FAILED:
       iVar1 = log_write("Self-test failed");
       break;
-    case 0x18:
+    case LOG_EEPROM_SAVE_FAILED:
       iVar1 = log_write("EEPROM save failed");
       break;
-    case 0x19:
+    case LOG_OUT_OF_EVENT_BUFFERS:
       iVar1 = log_write("Clk_do: out of event buffers");
       break;
-    case 0x1a:
+    case LOG_SYSTEM_PRESET:
       iVar1 = log_write("System preset");
     }
   }
@@ -56388,7 +56419,7 @@ char nv_save(uint8_t param_1)
   }
   if (cVar5 == 0) {
     if (kernel_running != 0) {
-      log_event(0x18);
+      log_event(LOG_EEPROM_SAVE_FAILED);
     }
     status_report_from(0x10,param_1);
   }
@@ -59359,7 +59390,7 @@ uint32_t pll_scpi_needs_loop(void)
       return 1;
     }
     if (nv_settings.douglas_state == 0) {
-      douglas_log_event = 4;
+      douglas_log_event = LOG_POSITION_HOLD_STARTED;
     }
   }
   return 0;
@@ -59457,11 +59488,11 @@ LAB_00042ed2:
       pll_scpi_gps_arguments[0] = (uint32_t)(char)pll_scpi_setting;
       if ((nv_settings.douglas_state == 0) || (pll_scpi_setting != 0)) {
         if ((nv_settings.douglas_state == 0) && (pll_scpi_setting != 0)) {
-          douglas_log_event = 4;
+          douglas_log_event = LOG_POSITION_HOLD_STARTED;
         }
       }
       else {
-        douglas_log_event = 3;
+        douglas_log_event = LOG_SURVEY_STARTED;
       }
     }
   }
@@ -59588,15 +59619,15 @@ void finish_scpi_cmd(void)
   if (iVar2 != 0) {
     save_parameter_record(pll_scpi_source);
   }
-  if (douglas_log_event == 3) {
-    log_event(3);
+  if (douglas_log_event == LOG_SURVEY_STARTED) {
+    log_event(LOG_SURVEY_STARTED);
     condition = STATUS_POSITION_HOLD_CLEARED;
   }
   else {
-    if (douglas_log_event != 4) {
+    if (douglas_log_event != LOG_POSITION_HOLD_STARTED) {
       return;
     }
-    log_event(4);
+    log_event(LOG_POSITION_HOLD_STARTED);
     condition = STATUS_POSITION_HOLD_SET;
   }
   status_happening(condition);
@@ -59679,7 +59710,7 @@ void pll_scpi_command(pllc_request *request,uint8_t *reply_pending)
   get_setup_vars(request);
   validate_or_doaction(&local_6,(char *)reply_pending);
   if (local_6 != 0) {
-    douglas_log_event = 0;
+    douglas_log_event = LOG_CLEARED;
     cVar1 = pll_scpi_needs_loop();
     if (cVar1 != 0) {
       if ((pll_scpi_source == 0) || (pll_scpi_source == 5)) {
@@ -60051,7 +60082,7 @@ uint32_t enter_holdover(void)
 {
   int32_t iVar1;
   uint32_t status;
-  uint8_t code;
+  log_event_code code;
   
   if (pll.stage != PLL_STAGE_HOLDOVER_RECOVERY) {
     pll.holdover_duration = 0;
@@ -60068,36 +60099,36 @@ uint32_t enter_holdover(void)
     return pll.hold_causes & 0xffffff01;
   }
   if ((pll.hold_causes & HOLD_CAUSE_MANUAL) != HOLD_CAUSE_NONE) {
-    code = 7;
+    code = LOG_HOLDOVER_MANUAL;
     goto LAB_00043a88;
   }
   if ((pll.hold_causes & HOLD_CAUSE_GPS) == HOLD_CAUSE_NONE) {
     if ((pll.hold_causes & HOLD_CAUSE_TI_ERROR) != HOLD_CAUSE_NONE) {
-      code = 0x10;
+      code = LOG_HOLDOVER_TI_ERROR;
       goto LAB_00043a88;
     }
     if ((pll.hold_causes & HOLD_CAUSE_TI_LIMIT_EXCEEDED) != HOLD_CAUSE_NONE) {
-      code = 0x11;
+      code = LOG_HOLDOVER_TI_LIMIT;
       goto LAB_00043a88;
     }
     if ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) != HOLD_CAUSE_NONE) {
-      code = 0x12;
+      code = LOG_HOLDOVER_TEMPORARY;
       goto LAB_00043a88;
     }
     if ((pll.hold_causes & HOLD_CAUSE_HARDWARE_FAILURE) != HOLD_CAUSE_NONE) {
-      code = 0xf;
+      code = LOG_HOLDOVER_HW_ERROR;
       goto LAB_00043a88;
     }
     if ((pll.hold_causes & HOLD_CAUSE_1PPS_SELECTION) != HOLD_CAUSE_NONE) {
-      code = 0x13;
+      code = LOG_HOLDOVER_SELECTING_PPS;
       goto LAB_00043a88;
     }
     if ((pll.hold_causes & HOLD_CAUSE_GPS_COMMAND_MONITOR) == HOLD_CAUSE_NONE) {
-      code = 0x14;
+      code = LOG_HOLDOVER_STARTED;
       goto LAB_00043a88;
     }
 override_jmp_000439f2_case_0:
-    code = 0xe;
+    code = LOG_HOLDOVER_GPS_ALARM;
     goto LAB_00043a88;
   }
   iVar1 = (int32_t)(char)gps.status_reported - 4;
@@ -60107,10 +60138,10 @@ override_jmp_000439f2_case_0:
     case 10:
       goto override_jmp_000439f2_case_0;
     case 0x12:
-      code = 0xc;
+      code = LOG_HOLDOVER_NOT_TRACKING;
       break;
     case 0x18:
-      code = 0xd;
+      code = LOG_HOLDOVER_RAIM_ALARM;
       break;
     case 0x1e:
       goto override_jmp_000439f2_case_1;
@@ -60119,10 +60150,10 @@ override_jmp_000439f2_case_0:
   else {
 override_jmp_000439f2_case_1:
     if (gps_pps_dead == 0) {
-      code = 10;
+      code = LOG_HOLDOVER_GPS;
     }
     else {
-      code = 0xb;
+      code = LOG_HOLDOVER_INVALID_GPS_PPS;
     }
   }
 LAB_00043a88:
@@ -62387,7 +62418,7 @@ void pll_stage_status(void)
     case 0x2c:
       if (pll.led_gps_lock == 0) {
         pll.led_gps_lock = 1;
-        log_event(6);
+        log_event(LOG_GPS_LOCK_STARTED);
         status_happening(STATUS_LOCKED_SET);
       }
       holdover_duration_exceeded = 0;
@@ -62786,7 +62817,7 @@ switchD_0004688c_caseD_0:
     if (douglas_stop_requested == 0) {
       if (gps_ack_code == 0) {
         pll.gps_init_state = 0x11;
-        log_event(4);
+        log_event(LOG_POSITION_HOLD_STARTED);
         status_happening(STATUS_POSITION_HOLD_SET);
         return;
       }
@@ -63437,11 +63468,11 @@ void pllp_task(void)
     pll.stage = PLL_STAGE_POWERUP;
     local_6 = preserved_region.restore != 1;
     if (local_6) {
-      log_event(0x1a);
+      log_event(LOG_SYSTEM_PRESET);
     }
     else {
       status_happening(STATUS_POWER_ON);
-      log_event(1);
+      log_event(LOG_POWER_ON);
     }
     if (nv_settings.douglas_state_powerup != 0) {
       nv_settings.douglas_state = 0;
@@ -63452,7 +63483,7 @@ void pllp_task(void)
     if (pll.stage != PLL_STAGE_POWERUP) {
       pll.stage = PLL_STAGE_POWERUP_RECOVERY;
     }
-    log_event(2);
+    log_event(LOG_REBOOT);
   }
   ti_setpoint = 0.0;
   counter_init();

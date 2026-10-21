@@ -35,8 +35,6 @@ static packed_datetime* klok_when(uint32_t* time) {
 /* Queues a copy of an event on the clock list from the free list; NULL
  * with none free or the mutex not taken (0x10540). */
 klok_entry* clk_do(klok_entry* event) {
-  /* log_event's code for "Clk_do: out of event buffers" (0x10598). */
-  static const uint8_t LOG_OUT_OF_BUFFERS = 0x19;
   char message[KLOK_MESSAGE_SIZE];
   uint32_t status = mutex_lock(&klok_mutex);
 
@@ -49,7 +47,7 @@ klok_entry* clk_do(klok_entry* event) {
 
   if (entry == NULL) {
     task_dmessage("Clk_do: out of event buffers");
-    log_event(LOG_OUT_OF_BUFFERS);
+    log_event(LOG_OUT_OF_EVENT_BUFFERS);
   } else {
     klok_free = entry->next;
     *entry = *event;

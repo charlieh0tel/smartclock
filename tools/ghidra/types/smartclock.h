@@ -1805,6 +1805,39 @@ typedef struct klok_entry {
   int16_t event_class;     /* event class */
 } klok_entry;
 
+/* A fixed event log message, by the code log_event (0x319a2) takes
+ * and its table's order; the names are the messages'.  enter_holdover
+ * (0x4397a) picks a holdover's by its cause. */
+typedef enum __attribute__((packed)) log_event_code {
+  LOG_CLEARED = 0x00,                  /* "Log cleared" */
+  LOG_POWER_ON = 0x01,                 /* "Power on" */
+  LOG_REBOOT = 0x02,                   /* "Re-boot" */
+  LOG_SURVEY_STARTED = 0x03,           /* "Survey mode started" */
+  LOG_POSITION_HOLD_STARTED = 0x04,    /* "Position hold mode started" */
+  LOG_EXT_LOCK_STARTED = 0x05,         /* "EXT lock started" */
+  LOG_GPS_LOCK_STARTED = 0x06,         /* "GPS lock started" */
+  LOG_HOLDOVER_MANUAL = 0x07,          /* "Holdover started, manual" */
+  LOG_HOLDOVER_EXT = 0x08,             /* "..., EXT" */
+  LOG_HOLDOVER_INVALID_EXT_PPS = 0x09, /* "..., invalid EXT 1PPS" */
+  LOG_HOLDOVER_GPS = 0x0a,             /* "..., GPS" */
+  LOG_HOLDOVER_INVALID_GPS_PPS = 0x0b, /* "..., invalid GPS 1PPS" */
+  LOG_HOLDOVER_NOT_TRACKING = 0x0c,    /* "..., not tracking GPS" */
+  LOG_HOLDOVER_RAIM_ALARM = 0x0d,      /* "..., GPS RAIM alarm" */
+  LOG_HOLDOVER_GPS_ALARM = 0x0e,       /* "..., GPS alarm" */
+  LOG_HOLDOVER_HW_ERROR = 0x0f,        /* "..., HW error" */
+  LOG_HOLDOVER_TI_ERROR = 0x10,        /* "..., TI error" */
+  LOG_HOLDOVER_TI_LIMIT = 0x11,        /* "..., TI limit exceeded" */
+  LOG_HOLDOVER_TEMPORARY = 0x12,       /* "..., temporary" */
+  LOG_HOLDOVER_SELECTING_PPS = 0x13,   /* "..., selecting 1PPS" */
+  LOG_HOLDOVER_STARTED = 0x14,         /* "Holdover started" */
+  LOG_SPECIFICATIONS_EXCEEDED = 0x15,  /* "Output specifications exceeded" */
+  LOG_HARDWARE_FAILURE = 0x16,         /* "Hardware failure" */
+  LOG_SELFTEST_FAILED = 0x17,          /* "Self-test failed" */
+  LOG_EEPROM_SAVE_FAILED = 0x18,       /* "EEPROM save failed" */
+  LOG_OUT_OF_EVENT_BUFFERS = 0x19,     /* "Clk_do: out of event buffers" */
+  LOG_SYSTEM_PRESET = 0x1a,            /* "System preset" */
+} log_event_code;
+
 /* An event log entry: its time and date, packed as a klok_entry's, and
  * the format and two arguments it is printed with.  log_read formats
  * one as "Log %03d:%04d%02d%02d.%02d:%02d:%02d" and its text. */

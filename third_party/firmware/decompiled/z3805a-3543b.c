@@ -644,6 +644,8 @@ struct gps_request_ring {
     struct gps_request_entry *write;
 };
 
+typedef struct gps_running_command gps_running_command, *Pgps_running_command;
+
 typedef struct gps_script_step gps_script_step, *Pgps_script_step;
 
 struct gps_script_step {
@@ -651,6 +653,15 @@ struct gps_script_step {
     uint8_t argument_mode;
     uint8_t field_03;
     int32_t arguments[4];
+};
+
+struct gps_running_command {
+    struct gps_request_entry request;
+    struct gps_script_step **script;
+    int16_t message;
+    uint8_t query;
+    uint8_t length;
+    uint8_t sent[80];
 };
 
 typedef struct gps_state gps_state, *Pgps_state;
@@ -2113,6 +2124,7 @@ _Static_assert(sizeof(gps_command_mailbox) == 22, "gps_command_mailbox");
 _Static_assert(sizeof(gps_process_state) == 1, "gps_process_state");
 _Static_assert(sizeof(gps_request_entry) == 26, "gps_request_entry");
 _Static_assert(sizeof(gps_request_ring) == 138, "gps_request_ring");
+_Static_assert(sizeof(gps_running_command) == 114, "gps_running_command");
 _Static_assert(sizeof(gps_script_step) == 20, "gps_script_step");
 _Static_assert(sizeof(gps_state) == 1370, "gps_state");
 _Static_assert(sizeof(gps_statistics) == 54, "gps_statistics");
@@ -2664,7 +2676,7 @@ extern uint32_t status_snapshot_last_time; /* 0010155c */
 extern status_snapshot_record status_snapshot_latest; /* 00101560 */
 extern status_snapshot_record status_snapshot_flagged; /* 0010168e */
 extern gps_statistics gps_counts; /* 001017bc */
-extern void * gps_last_command; /* 001017f2 */
+extern gps_running_command * gps_last_command; /* 001017f2 */
 extern gps_command_log command_log; /* 001017f6 */
 extern gps_command_log command_log_snapshot; /* 001019a2 */
 extern uint32_t raim_suspect_time; /* 00101b4e */
@@ -2941,6 +2953,7 @@ extern identification_record eeprom_identification_record; /* 00400010 */
 extern lifetime_record eeprom_lifetime_record; /* 00400060 */
 extern calibration_block eeprom_calibration_block; /* 00400080 */
 extern nv_record nv_records[2]; /* 004000c0 */
+extern reset_record eeprom_reset_records[32]; /* 004001c0 */
 extern volatile gpt_registers gpt; /* 00fff900 */
 extern volatile sim_registers sim; /* 00fffa00 */
 extern volatile qsm_registers qsm; /* 00fffc00 */
@@ -3282,6 +3295,7 @@ __asm__(".set eeprom_calibration_block, 0x00400080");
 __asm__(".set eeprom_identification_record, 0x00400010");
 __asm__(".set eeprom_lifetime_record, 0x00400060");
 __asm__(".set eeprom_parameter_record, 0x00400000");
+__asm__(".set eeprom_reset_records, 0x004001c0");
 __asm__(".set eeprom_writing, 0x00101d34");
 __asm__(".set eepx_exchange, 0x00101d18");
 __asm__(".set eepx_token, 0x00101d1c");
@@ -5265,7 +5279,7 @@ void efc_write(undefined2 param_1);
 void sci_echo_none(char c);
 void sci_baud_set(char param_1);
 ushort sci_putc_polled(char param_1);
-int sci_puts(int param_1);
+int sci_puts(char *text);
 undefined4 sci_getc(void);
 int sci_gets(char *param_1,int param_2);
 int primary_user_64();
@@ -6151,7 +6165,7 @@ void gpsm_task(void);
 void raim_request_arguments(void);
 void gps_console_request(short param_1,undefined4 *param_2,undefined1 param_3);
 void command_log_clear(void);
-int command_log_add(void *request,char *text);
+int command_log_add(gps_running_command *command,char *text);
 int gps_print_command(gps_command_log *log,char *line);
 void status_snapshot_update(undefined *param_1);
 void clear_gps_debug(void);
@@ -36402,7 +36416,7 @@ ushort sci_putc_polled(char param_1)
 /* writes a string to the SCI port, waiting for room
    the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts" */
 
-int sci_puts(int param_1)
+int sci_puts(char *text)
 
 {
   int iVar1;
@@ -36410,7 +36424,7 @@ int sci_puts(int param_1)
   ulong uVar3;
   
   psos_get_v(SIG_SOQ_SCI,0,(ulong *)0x0);
-  sci.transmit_next = (char *)param_1;
+  sci.transmit_next = text;
   if (sci.reconfiguring == 0) {
     uVar2 = qsm.sccr1;
     qsm.sccr1 = uVar2 | SCCR1_TIE;
@@ -36419,7 +36433,7 @@ int sci_puts(int param_1)
   if ((char)uVar3 != 0) {
     fatal_error("wait_v SIG_SOQ_SCI error in _sci_puts");
   }
-  iVar1 = (int)sci.transmit_next - param_1;
+  iVar1 = (int)sci.transmit_next - (int)text;
   sci.transmit_next = "";
   return iVar1;
 }
@@ -37545,7 +37559,7 @@ LAB_000200ce:
 __regcall void sci_write(void)
 
 {
-  int in_A0;
+  char *in_A0;
   
   if (sci.async_allowed == 0) {
     sci_lock(1);
@@ -37620,7 +37634,7 @@ void sci_putc(char param_1)
   text[1] = 0;
   Var1 = (unkfloat1)sci_lock(1);
   if (SUB41(__ghidra_as(float, Var1),0) < 1) {
-    sci_puts((int)text);
+    sci_puts(text);
     sci_unlock(1);
   }
   return;
@@ -55756,8 +55770,8 @@ uint8_t reset_record_valid(uint8_t index)
 {
   uint16_t uVar1;
   
-  uVar1 = reset_record_checksum((reset_record *)((uint)index * 0x5c + 0x4001c0));
-  return uVar1 == *(uint16_t *)((uint)index * 0x5c + 0x4001c2);
+  uVar1 = reset_record_checksum(eeprom_reset_records + index);
+  return uVar1 == eeprom_reset_records[index].checksum;
 }
 
 
@@ -55784,7 +55798,7 @@ int log_clear(void)
   do {
     uVar1 = reset_record_valid((uint8_t)iVar3);
     if (uVar1 != 0) {
-      cVar2 = eeprom_write((char *)(iVar3 * 0x5c + 0x4001c2),local_e,2);
+      cVar2 = eeprom_write((char *)&eeprom_reset_records[iVar3].checksum,local_e,2);
       if (cVar2 == 0) {
         iVar4 = 1;
       }
@@ -55846,56 +55860,55 @@ void reset_record_count(void)
 undefined4 log_entry_text(int param_1,char *param_2,char *param_3)
 
 {
-  uint uVar1;
+  time_of_day tVar1;
   uint uVar2;
   char cVar3;
-  uint8_t uVar5;
-  int iVar4;
-  int iVar6;
-  undefined4 uVar7;
-  char *pcVar8;
+  uint8_t uVar4;
+  int iVar5;
+  undefined4 uVar6;
+  char *pcVar7;
   
-  uVar7 = 0;
-  iVar6 = param_1 + -1;
-  if (iVar6 < 0x20) {
-    if (-1 < iVar6) goto LAB_00033166;
-    iVar6 = 0;
+  uVar6 = 0;
+  iVar5 = param_1 + -1;
+  if (iVar5 < 0x20) {
+    if (-1 < iVar5) goto LAB_00033166;
+    iVar5 = 0;
   }
   else {
-    iVar6 = 0x1f;
+    iVar5 = 0x1f;
   }
-  uVar7 = 1;
+  uVar6 = 1;
 LAB_00033166:
-  uVar5 = reset_record_valid((uint8_t)iVar6);
-  if (uVar5 == 0) {
-    uVar7 = 1;
+  uVar4 = reset_record_valid((uint8_t)iVar5);
+  if (uVar4 == 0) {
+    uVar6 = 1;
     if (param_2 != (char *)0x0) {
-      pcVar8 = "Unused";
+      pcVar7 = "Unused";
       do {
-        cVar3 = *pcVar8;
+        cVar3 = *pcVar7;
         *param_2 = cVar3;
-        pcVar8 = pcVar8 + 1;
+        pcVar7 = pcVar7 + 1;
         param_2 = param_2 + 1;
       } while (cVar3 != 0);
     }
     if (param_3 != (char *)0x0) {
-      sprintf(param_3,"Log %03d:00000000.00:00:00",iVar6 + 1);
+      sprintf(param_3,"Log %03d:00000000.00:00:00",iVar5 + 1);
     }
   }
   else {
-    iVar4 = iVar6 * 0x5c;
     if (param_2 != (char *)0x0) {
-      strncpy(param_2,(char *)(iVar4 + 0x4001cc),0x50);
+      strncpy(param_2,eeprom_reset_records[iVar5].text,0x50);
       param_2[0x4f] = 0;
     }
-    uVar2 = *(uint *)(iVar4 + 0x4001c8);
-    uVar1 = *(uint *)(iVar4 + 0x4001c4);
+    uVar2 = eeprom_reset_records[iVar5].date;
+    tVar1 = eeprom_reset_records[iVar5].time;
     if (param_3 != (char *)0x0) {
-      sprintf(param_3,"Log %03d:%04d%02d%02d.%02d:%02d:%02d",iVar6 + 1,uVar2 >> 0x10,
-              uVar2 >> 8 & 0xff,uVar2 & 0xff,uVar1 >> 0x10 & 0xff,uVar1 >> 8 & 0xff,uVar1 & 0xff);
+      sprintf(param_3,"Log %03d:%04d%02d%02d.%02d:%02d:%02d",iVar5 + 1,uVar2 >> 0x10,
+              uVar2 >> 8 & 0xff,uVar2 & 0xff,(uint)__ghidra_aggregate_bits(tVar1) >> 0x10 & 0xff,(uint)__ghidra_aggregate_bits(tVar1) >> 8 & 0xff,
+              (uint)__ghidra_aggregate_bits(tVar1) & 0xff);
     }
   }
-  return uVar7;
+  return uVar6;
 }
 
 
@@ -55909,7 +55922,6 @@ uint32_t reset_record_write(uint32_t date,time_of_day time,char *text)
 {
   uint uVar1;
   char cVar2;
-  int iVar3;
   uint8_t local_62 [2];
   reset_record record;
   
@@ -55919,9 +55931,8 @@ uint32_t reset_record_write(uint32_t date,time_of_day time,char *text)
     record.time = time;
     strncpy(record.text,text,0x50);
     record.checksum = reset_record_checksum(&record);
-    iVar3 = (uVar1 & 0xff) * 0x5c;
-    record.sequence = *(short *)(iVar3 + 0x4001c0) + 1;
-    cVar2 = eeprom_write((char *)(iVar3 + 0x4001c0),(char *)&record,0x5c);
+    record.sequence = eeprom_reset_records[uVar1 & 0xff].sequence + 1;
+    cVar2 = eeprom_write((char *)(eeprom_reset_records + (uVar1 & 0xff)),(char *)&record,0x5c);
     if (cVar2 != 0) {
       log_entry_count = log_entry_count + 1;
       return 0;
@@ -66848,7 +66859,7 @@ void gps_link_reset(void)
 void gpsm_task(void)
 
 {
-  short *psVar1;
+  gps_script_step *pgVar1;
   short sVar2;
   ulong uVar3;
   char cVar7;
@@ -66860,17 +66871,12 @@ void gpsm_task(void)
   char *pcVar10;
   gps_request_entry received;
   gps_request_entry gStack_c4;
-  gps_request_entry gStack_aa;
-  undefined **ppuStack_90;
-  short sStack_8c;
-  char cStack_8a;
-  byte bStack_89;
-  undefined1 auStack_88 [80];
+  gps_running_command command;
   uint32_t uStack_38;
   char local_34;
   char local_33;
   char cStack_32;
-  char cStack_31;
+  uint8_t uStack_31;
   int32_t *piStack_30;
   char cStack_2c;
   byte bStack_2a;
@@ -66901,7 +66907,7 @@ void gpsm_task(void)
           gps_count_response(4,&received);
         }
         else {
-          gps_request_queue(gps_task_state,&received,&gStack_aa);
+          gps_request_queue(gps_task_state,&received,&command.request);
         }
       }
     }
@@ -66929,40 +66935,40 @@ void gpsm_task(void)
           gps_counts.responses_read = gps_counts.responses_read + 1;
         }
         if (local_34 != 0) {
-          gStack_aa.field_00 = gStack_c4.field_00;
-          gStack_aa.field_04 = gStack_c4.field_04;
-          gStack_aa.sender = gStack_c4.sender;
-          gStack_aa.result = gStack_c4.result;
-          gStack_aa.code = gStack_c4.code;
-          gStack_aa.argument_mode = gStack_c4.argument_mode;
-          gStack_aa.field_0d = gStack_c4.field_0d;
-          __ghidra_piece(unsigned short, gStack_aa.arguments, 0) = __ghidra_piece(unsigned short, gStack_c4.arguments, 0);
-          __ghidra_piece(unsigned short, gStack_aa.arguments, 2) = __ghidra_piece(unsigned short, gStack_c4.arguments, 2);
-          __ghidra_piece(unsigned short, gStack_aa, 18) = __ghidra_piece(unsigned short, gStack_c4, 18);
-          gStack_aa.field_13[1] = gStack_c4.field_13[1];
-          gStack_aa.field_13[2] = gStack_c4.field_13[2];
-          gStack_aa.field_13[3] = gStack_c4.field_13[3];
-          gStack_aa.field_13[4] = gStack_c4.field_13[4];
-          gStack_aa.field_13[5] = gStack_c4.field_13[5];
-          gStack_aa.field_13[6] = gStack_c4.field_13[6];
-          cStack_32 = gps_request_class(gStack_c4.code,gStack_aa.argument_mode);
+          command.request.field_00 = gStack_c4.field_00;
+          command.request.field_04 = gStack_c4.field_04;
+          command.request.sender = gStack_c4.sender;
+          command.request.result = gStack_c4.result;
+          command.request.code = gStack_c4.code;
+          command.request.argument_mode = gStack_c4.argument_mode;
+          command.request.field_0d = gStack_c4.field_0d;
+          __ghidra_piece(unsigned short, command.request.arguments, 0) = __ghidra_piece(unsigned short, gStack_c4.arguments, 0);
+          __ghidra_piece(unsigned short, command.request.arguments, 2) = __ghidra_piece(unsigned short, gStack_c4.arguments, 2);
+          __ghidra_piece(unsigned short, command.request, 18) = __ghidra_piece(unsigned short, gStack_c4, 18);
+          command.request.field_13[1] = gStack_c4.field_13[1];
+          command.request.field_13[2] = gStack_c4.field_13[2];
+          command.request.field_13[3] = gStack_c4.field_13[3];
+          command.request.field_13[4] = gStack_c4.field_13[4];
+          command.request.field_13[5] = gStack_c4.field_13[5];
+          command.request.field_13[6] = gStack_c4.field_13[6];
+          cStack_32 = gps_request_class(gStack_c4.code,command.request.argument_mode);
           iVar5 = (int)cStack_32 - 2;
           if ((uint)(int)cStack_32 < 2 || iVar5 == 0) {
                     /* WARNING: Switch is manually overridden */
             switch((&switchD_0004c0c0_index_zero)[(short)iVar5]) {
             case 6:
               if (gps_commands_blocked == 0) {
-                gps_request_step.code = gStack_aa.code;
-                gps_request_step.argument_mode = gStack_aa.argument_mode;
+                gps_request_step.code = command.request.code;
+                gps_request_step.argument_mode = command.request.argument_mode;
                 bVar8 = 0;
                 do {
                   gps_request_step.arguments[bVar8] =
                        *(int32_t *)
-                        (CONCAT22(__ghidra_piece(unsigned short, gStack_aa.arguments, 0),__ghidra_piece(unsigned short, gStack_aa.arguments, 2)) +
+                        (CONCAT22(__ghidra_piece(unsigned short, command.request.arguments, 0),__ghidra_piece(unsigned short, command.request.arguments, 2)) +
                         (uint)bVar8 * 4);
                   bVar8 = bVar8 + 1;
                 } while (bVar8 < 4);
-                ppuStack_90 = &PTR_gps_request_step_00050cc2;
+                command.script = (gps_script_step **)&PTR_gps_request_step_00050cc2;
                 bStack_10 = 0;
                 bStack_2a = 0;
                 gps_task_state = GPS_PROCESS_SEND_COMMAND;
@@ -66975,11 +66981,11 @@ void gpsm_task(void)
                 do {
                   gps_request_step.arguments[bVar8] =
                        *(int32_t *)
-                        (CONCAT22(__ghidra_piece(unsigned short, gStack_aa.arguments, 0),__ghidra_piece(unsigned short, gStack_aa.arguments, 2)) +
+                        (CONCAT22(__ghidra_piece(unsigned short, command.request.arguments, 0),__ghidra_piece(unsigned short, command.request.arguments, 2)) +
                         (uint)bVar8 * 4);
                   bVar8 = bVar8 + 1;
                 } while (bVar8 < 4);
-                ppuStack_90 = (undefined **)gps_script_lookup(gStack_aa.code);
+                command.script = (gps_script_step **)gps_script_lookup(command.request.code);
                 bStack_10 = 0;
                 bStack_2a = 0;
                 gps_task_state = GPS_PROCESS_SEND_COMMAND;
@@ -66987,16 +66993,18 @@ void gpsm_task(void)
               }
               break;
             case 0x98:
-              gps_console_request(gStack_aa.code,
+              gps_console_request(command.request.code,
                                   (undefined4 *)
-                                  CONCAT31(CONCAT21(__ghidra_piece(unsigned short, gStack_aa.arguments, 0),
-                                                    (char)((ushort)__ghidra_piece(unsigned short, gStack_aa.arguments, 2) >> 8)),
-                                           (char)__ghidra_piece(short, gStack_aa.arguments, 2)),gStack_aa.sender);
+                                  CONCAT31(CONCAT21(__ghidra_piece(unsigned short, command.request.arguments, 0),
+                                                    (char)((ushort)__ghidra_piece(unsigned short, command.request.arguments, 2)
+                                                          >> 8)),
+                                           (char)__ghidra_piece(short, command.request.arguments, 2)),
+                                  command.request.sender);
             }
-            gps_count_response(0,&gStack_aa);
+            gps_count_response(0,&command.request);
           }
 LAB_0004c17a:
-          gps_last_command = &gStack_aa;
+          gps_last_command = &command;
         }
         break;
       case 300:
@@ -67005,28 +67013,28 @@ LAB_0004c17a:
           gps_response_reset();
           gps_counts.responses_read = gps_counts.responses_read + 1;
         }
-        if (*ppuStack_90 == (undefined *)0x0) {
-          gps_count_response(0,&gStack_aa);
+        if (*command.script == (gps_script_step *)0x0) {
+          gps_count_response(0,&command.request);
           gps_task_state = GPS_PROCESS_TASK_IDLE;
         }
         else {
-          psVar1 = (short *)*ppuStack_90;
-          sVar2 = *psVar1;
+          pgVar1 = *command.script;
+          sVar2 = pgVar1->code;
           if ((sVar2 < 0x31) || (0x46 < sVar2)) {
-            cStack_31 = *(char *)(psVar1 + 1);
-            if (cStack_31 == 2) {
-              cStack_31 = 0;
-              lVar4 = long_array_get((long *)(psVar1 + 2),0);
+            uStack_31 = pgVar1->argument_mode;
+            if (uStack_31 == 2) {
+              uStack_31 = 0;
+              lVar4 = long_array_get(pgVar1->arguments,0);
               piStack_30 = gps_request_step.arguments + lVar4;
             }
             else {
-              piStack_30 = (int32_t *)(psVar1 + 2);
+              piStack_30 = pgVar1->arguments;
             }
-            sVar6 = gps_request_build(sVar2,cStack_31,(int)piStack_30,(char *)gps_command_message);
+            sVar6 = gps_request_build(sVar2,uStack_31,(int)piStack_30,(char *)gps_command_message);
             if (sVar6 < 1) {
               if (sVar6 < 0) goto LAB_0004c1e6;
-              if (gStack_aa.argument_mode == 0) {
-                gps_count_response(6,&gStack_aa);
+              if (command.request.argument_mode == 0) {
+                gps_count_response(6,&command.request);
                 pcVar9 = " // command not supported //\n";
                 pcVar10 = gps_last_program_message;
                 do {
@@ -67037,7 +67045,7 @@ LAB_0004c17a:
                 } while (cVar7 != 0);
               }
               else {
-                gps_count_response(7,&gStack_aa);
+                gps_count_response(7,&command.request);
                 pcVar9 = " // query form not supported //\n";
                 pcVar10 = gps_last_program_message;
                 do {
@@ -67050,11 +67058,11 @@ LAB_0004c17a:
               gps_task_state = GPS_PROCESS_TASK_IDLE;
             }
             else {
-              cStack_8a = cStack_31;
+              command.query = uStack_31;
               bVar8 = (byte)sVar6;
-              sStack_8c = sVar2;
-              bStack_89 = bVar8;
-              memcpy(auStack_88,gps_command_message,
+              command.message = sVar2;
+              command.length = bVar8;
+              memcpy(command.sent,gps_command_message,
                      CONCAT31(CONCAT21(CONCAT11(sVar6 >> 0xf,sVar6 >> 0xf),
                                        (char)((ushort)sVar6 >> 8)),bVar8));
               drta_send_message(gps_command_message,sVar6);
@@ -67062,20 +67070,20 @@ LAB_0004c17a:
               bStack_10 = bStack_10 + 1;
               gps_counts.commands_sent = gps_counts.commands_sent + 1;
               gps_message_to_text((char *)gps_command_message,bVar8,gps_last_program_message);
-              command_log_add(&gStack_aa,gps_last_program_message);
+              command_log_add(&command,gps_last_program_message);
               if (oncore_messages[sVar2].match_kind == 0) goto LAB_0004c1e6;
               gps_task_state = GPS_PROCESS_WAIT_FOR_RESPONSE;
             }
           }
           else {
-            gps_console_request(sVar2,(undefined4 *)(psVar1 + 2),gStack_aa.sender);
+            gps_console_request(sVar2,pgVar1->arguments,command.request.sender);
 LAB_0004c1e6:
-            ppuStack_90 = ppuStack_90 + 1;
+            command.script = command.script + 1;
           }
         }
         break;
       case 0x2be:
-        cStack_f = gps_response_timed_out(sStack_8c,&uStack_38);
+        cStack_f = gps_response_timed_out(command.message,&uStack_38);
         if (cStack_f == 1) {
           if (bStack_10 < 3) {
             gps_task_state = GPS_PROCESS_SEND_COMMAND;
@@ -67083,7 +67091,7 @@ LAB_0004c1e6:
           }
           else {
             gps.command_monitor_error = 1;
-            gps_count_response(8,&gStack_aa);
+            gps_count_response(8,&command.request);
             gps_task_state = GPS_PROCESS_TASK_IDLE;
           }
         }
@@ -67091,11 +67099,11 @@ LAB_0004c1e6:
           gps_response_decode(gps_response_index,(char *)gps_response_buffer);
           gps_counts.responses_read = gps_counts.responses_read + 1;
           if (cStack_f == 0) {
-            cStack_2c = gps_response_match(sStack_8c,auStack_88,bStack_89,cStack_8a,
-                                           gps_response_index,0x101266,gps_response_length);
+            cStack_2c = gps_response_match(command.message,command.sent,command.length,command.query
+                                           ,gps_response_index,0x101266,gps_response_length);
             if (cStack_2c == 2) {
               gps.command_monitor_error = 0;
-              ppuStack_90 = ppuStack_90 + 1;
+              command.script = command.script + 1;
               bStack_10 = 0;
               bStack_2a = 0;
               gps_task_state = GPS_PROCESS_SEND_COMMAND;
@@ -67105,7 +67113,7 @@ LAB_0004c1e6:
                                     (ushort)bStack_2a);
               if (cVar7 == 1) {
                 gps.command_monitor_error = 1;
-                gps_count_response(1,&gStack_aa);
+                gps_count_response(1,&command.request);
                 gps_task_state = GPS_PROCESS_TASK_IDLE;
               }
               else {
@@ -67263,11 +67271,11 @@ void command_log_clear(void)
 
 /* adds an entry to the GPS Receiver Command Log, with its date and time */
 
-int command_log_add(void *request,char *text)
+int command_log_add(gps_running_command *command,char *text)
 
 {
   int16_t iVar1;
-  undefined2 uVar2;
+  int16_t iVar2;
   uint8_t uVar3;
   char cVar4;
   char cVar5;
@@ -67277,12 +67285,12 @@ int command_log_add(void *request,char *text)
   uint32_t local_c;
   time_of_day local_8;
   
-  uVar3 = *(uint8_t *)((int)request + 8);
-  iVar1 = *(int16_t *)((int)request + 10);
-  uVar2 = *(undefined2 *)((int)request + 0x1e);
+  uVar3 = (command->request).sender;
+  iVar1 = (command->request).code;
+  iVar2 = command->message;
   cVar4 = text[4];
   cVar5 = text[5];
-  entry.query = *(undefined1 *)((int)request + 0x20);
+  entry.query = command->query;
   iVar6 = get_date_time(&local_c,&local_8);
   if ((char)iVar6 == 0) {
     entry.clock_invalid = 1;
@@ -67308,7 +67316,7 @@ int command_log_add(void *request,char *text)
   (command_log.write)->code = iVar1;
   (command_log.write)->sender = uVar3;
   (command_log.write)->field_03 = entry.field_03;
-  (command_log.write)->message = uVar2;
+  (command_log.write)->message = iVar2;
   (command_log.write)->argument_text[0] = cVar4;
   (command_log.write)->argument_text[1] = cVar5;
   *(undefined4 *)((command_log.write)->argument_text + 2) = __ghidra_piece(unsigned int, entry, 8);
@@ -67457,7 +67465,7 @@ void clear_gps_debug(void)
 
 {
   memset(&gps_counts,0,0x36);
-  gps_last_command = (void *)0x0;
+  gps_last_command = (gps_running_command *)0x0;
   gps_last_program_message[0] = 0;
   command_log_clear();
   return;
@@ -67545,9 +67553,10 @@ void gps_print_process_monitor(void)
 {
   char cVar1;
   int iVar2;
-  uint uVar3;
-  char *pcVar4;
+  int iVar3;
+  uint uVar4;
   char *pcVar5;
+  char *pcVar6;
   char local_32 [5];
   char local_2d [41];
   
@@ -67558,19 +67567,19 @@ void gps_print_process_monitor(void)
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0004cac2_index_zero)[(short)iVar2]) {
     case 6:
-      pcVar5 = "________ State: Task Idle";
+      pcVar6 = "________ State: Task Idle";
       break;
     case 0xe:
-      pcVar5 = "_____ State: Send Command";
+      pcVar6 = "_____ State: Send Command";
       break;
     case 0x16:
-      pcVar5 = " State: Wait for Response";
+      pcVar6 = " State: Wait for Response";
     }
   }
   else {
-    pcVar5 = "________________ State: ?";
+    pcVar6 = "________________ State: ?";
   }
-  printf("GPS Process Monitor _________________%s\r\n",pcVar5);
+  printf("GPS Process Monitor _________________%s\r\n",pcVar6);
   printf("\r\nProcess Messages   Net:   %+6d              Rcvr Messages\r\n",
          (((uint)gps_counts.jam_errors - (uint)gps_counts.jammed) + (uint)gps_counts.received) -
          (uint)gps_counts.sent);
@@ -67595,46 +67604,47 @@ void gps_print_process_monitor(void)
   printf("%-9s  %5d   %-6s  %5d\r\n","Abort",(uint)gps_counts.aborts,"No Qry",
          (uint)gps_counts.no_query);
   console_write("\r\nLast Valid pSOS Msg:  ");
-  if (gps_last_command == (void *)0x0) {
+  if (gps_last_command == (gps_running_command *)0x0) {
     console_write("(none received)\r\n");
   }
   else {
-    iVar2 = *(char *)((int)gps_last_command + 8) + -4;
-    if ((int)*(char *)((int)gps_last_command + 8) - 1U < 3U || iVar2 == 0) {
+    iVar3 = (int)(char)(gps_last_command->request).sender;
+    iVar2 = iVar3 + -4;
+    if (iVar3 - 1U < 3U || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
       switch((&switchD_0004ccfc_index_zero)[(short)iVar2]) {
       case 8:
-        pcVar5 = "SCPI1";
+        pcVar6 = "SCPI1";
         break;
       case 0x10:
-        pcVar5 = "PLL";
+        pcVar6 = "PLL";
         break;
       case 0x18:
-        pcVar5 = "GPSc";
+        pcVar6 = "GPSc";
         break;
       case 0x20:
-        pcVar5 = "GPSs";
+        pcVar6 = "GPSs";
       }
     }
     else {
-      pcVar5 = "?";
+      pcVar6 = "?";
     }
-    iVar2 = *(char *)((int)gps_last_command + 0xc) + -1;
-    if (*(char *)((int)gps_last_command + 0xc) == 0 || iVar2 == 0) {
+    iVar3 = (int)(char)(gps_last_command->request).argument_mode;
+    iVar2 = iVar3 + -1;
+    if (iVar3 == 0 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
       switch((short)iVar2) {
       case 0:
-        pcVar4 = "query setting";
+        pcVar5 = "query setting";
         break;
       case -1:
-        pcVar4 = "change/execute";
+        pcVar5 = "change/execute";
       }
     }
     else {
-      pcVar4 = "? action";
+      pcVar5 = "? action";
     }
-    printf("Sender: %-5s Cmd #: %-2d (%s)\r\n",pcVar5,(int)*(short *)((int)gps_last_command + 10),
-           pcVar4);
+    printf("Sender: %-5s Cmd #: %-2d (%s)\r\n",pcVar6,(int)(gps_last_command->request).code,pcVar5);
   }
   console_write("Last Rcvr Prgm Msg:   ");
   if (gps_last_program_message[0] == 0) {
@@ -67648,97 +67658,97 @@ void gps_print_process_monitor(void)
   for (gps_print_cursor = gps_response_buffer; gps_print_cursor < (uint8_t *)0x10127a;
       gps_print_cursor = gps_print_cursor + 1) {
     sprintf(local_32,"%hx",(ushort)*gps_print_cursor);
-    pcVar5 = local_32;
-    uVar3 = 0xffffffff;
-    pcVar4 = pcVar5;
+    pcVar6 = local_32;
+    uVar4 = 0xffffffff;
+    pcVar5 = pcVar6;
     do {
-      uVar3 = uVar3 + 1;
-      cVar1 = *pcVar4;
-      pcVar4 = pcVar4 + 1;
+      uVar4 = uVar4 + 1;
+      cVar1 = *pcVar5;
+      pcVar5 = pcVar5 + 1;
     } while (cVar1 != 0);
-    if (uVar3 < 2) {
+    if (uVar4 < 2) {
       local_32[2] = 0;
       local_32[1] = local_32[0];
       local_32[0] = '0';
     }
     else {
       while( true ) {
-        uVar3 = 0xffffffff;
-        pcVar4 = pcVar5;
+        uVar4 = 0xffffffff;
+        pcVar5 = pcVar6;
         do {
-          uVar3 = uVar3 + 1;
-          cVar1 = *pcVar4;
-          pcVar4 = pcVar4 + 1;
+          uVar4 = uVar4 + 1;
+          cVar1 = *pcVar5;
+          pcVar5 = pcVar5 + 1;
         } while (cVar1 != 0);
-        if ((uVar3 < 3) || ((*pcVar5 != '0' && (*pcVar5 != 'f')))) break;
-        pcVar5 = pcVar5 + 1;
+        if ((uVar4 < 3) || ((*pcVar6 != '0' && (*pcVar6 != 'f')))) break;
+        pcVar6 = pcVar6 + 1;
       }
     }
-    strcat(local_2d,pcVar5);
+    strcat(local_2d,pcVar6);
   }
   printf("%s\r\n",local_2d);
   if (gps_commands_blocked != 0) {
     console_write("\r\n** GPS receiver commands are blocked **\r\n");
   }
   if (gps.receiver_health_failed == 0) {
-    pcVar5 = "__ OK";
+    pcVar6 = "__ OK";
   }
   else {
-    pcVar5 = " Fail";
+    pcVar6 = " Fail";
   }
-  printf("\r\nGPS Receiver Health _____________________________________%s\r\n",pcVar5);
+  printf("\r\nGPS Receiver Health _____________________________________%s\r\n",pcVar6);
   iVar2 = (int)(char)gps.command_monitor_state - 3;
   if ((uint)(int)(char)gps.command_monitor_state < 3 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0004ceae_index_zero)[(short)iVar2]) {
     case 8:
-      pcVar5 = "disabled";
+      pcVar6 = "disabled";
       break;
     case 0x10:
-      pcVar5 = "standby";
+      pcVar6 = "standby";
       break;
     case 0x18:
-      pcVar5 = "query";
+      pcVar6 = "query";
       break;
     case 0x20:
-      pcVar5 = "query-ack";
+      pcVar6 = "query-ack";
     }
   }
   else {
-    pcVar5 = "? state";
+    pcVar6 = "? state";
   }
   if (gps.command_monitor_failed == 0) {
-    pcVar4 = "OK";
+    pcVar5 = "OK";
   }
   else {
-    pcVar4 = "Fail";
+    pcVar5 = "Fail";
   }
-  printf("Command Monitor    %-9s   %-7s          %5d failures\r\n",pcVar5,pcVar4,
+  printf("Command Monitor    %-9s   %-7s          %5d failures\r\n",pcVar6,pcVar5,
          (uint)gps_counts.command_monitor_failures);
   iVar2 = (int)(char)gps.status_monitor_state - 2;
   if ((uint)(int)(char)gps.status_monitor_state < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0004cf22_index_zero)[(short)iVar2]) {
     case 6:
-      pcVar5 = "disabled";
+      pcVar6 = "disabled";
       break;
     case 0xe:
-      pcVar5 = "standby";
+      pcVar6 = "standby";
       break;
     case 0x16:
-      pcVar5 = "recovery";
+      pcVar6 = "recovery";
     }
   }
   else {
-    pcVar5 = "? state";
+    pcVar6 = "? state";
   }
   if (gps.status_monitor_failed == 0) {
-    pcVar4 = "OK";
+    pcVar5 = "OK";
   }
   else {
-    pcVar4 = "Fail";
+    pcVar5 = "Fail";
   }
-  printf("Status Monitor     %-9s   %-7s          %5d failures\r\n",pcVar5,pcVar4,
+  printf("Status Monitor     %-9s   %-7s          %5d failures\r\n",pcVar6,pcVar5,
          (uint)gps_counts.status_monitor_failures);
   return;
 }

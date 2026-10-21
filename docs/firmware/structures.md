@@ -204,7 +204,10 @@ below) and `save_calibration_block` (`0x30c60`, `calibration_block`:
 the TC at `+2`, the time offset at `+6`).  `nv_save` builds an
 `nv_record` ("The NV register") and `reset_record_write` (`0x33238`)
 a `reset_record` of `0x5c` bytes: a sequence number, the checksum,
-the time and date, and 80 bytes of text.
+the time and date, and 80 bytes of text.  The reset records are a log of 32,
+`eeprom_reset_records` (`0x4001c0` to `0x400d40`): `reset_record_count`
+(`0x33114`) counts the valid ones from the first, at most `0x20`, into
+`log_entry_count`, and `reset_record_write` writes the next.
 
 ## The serial settings
 
@@ -489,9 +492,13 @@ is no `scanf`; input is parsed by the SCPI parser and two `atoi` calls.
 | `+0x2e`, `+0x30` | `frame_errors`, `checksum_errors` | `Frame`, `Cksum` |
 | `+0x32`, `+0x34` | `command_monitor_failures`, `status_monitor_failures` | `Command Monitor ... %5d failures`, `Status Monitor ...` |
 
-`gps_last_command` (`0x1017f2`) points at the last command record,
-whose `+8`, `+0xa` and `+0xc` the page prints as `Sender`, `Cmd #` and
-its kind; `gps_last_program_message` (`0x101216`) is the "Last Rcvr
+`gps_last_command` (`0x1017f2`) points at the command `gpsm_task`
+runs, `gps_running_command` on its stack: the request it took from the
+ring, whose `+8`, `+0xa` and `+0xc` the page prints as `Sender`,
+`Cmd #` and its kind, then where it is in the request's script, and the
+message it last sent -- its code, query form, length and bytes, from
+`+0x1e` -- which `gps_response_match` matches each response against
+and `command_log_add` logs; `gps_last_program_message` (`0x101216`) is the "Last Rcvr
 Prgm Msg", `(none issued)` when empty, and `gps_response_buffer`, 20
 bytes from `0x101266`, the "Response Buffer", in hex.  `gps_receive`
 (`0x4b846`) frames the engine's messages into it from their `@`,

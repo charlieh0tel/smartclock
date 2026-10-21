@@ -586,6 +586,21 @@ typedef struct gps_request_ring {
 	gps_request_entry *write;    /* +0x86 */
 } gps_request_ring;
 
+/* The GPS command gpsm_task is running, on its stack from -0xaa(A6)'s
+ * frame offset (gpsm_task's command local): the request it took from
+ * the ring, where it is in the request's script, and the message it
+ * last sent, which gps_response_match matches each response against
+ * and command_log_add logs.  gps_last_command points at it.  0x72
+ * bytes. */
+typedef struct gps_running_command {
+	gps_request_entry request; /* +0x00: copied from the ring's oldest */
+	gps_script_step **script;  /* +0x1a: the step it runs; the next after each matched response, a null one ending the script */
+	int16_t message;           /* +0x1e: the step's code, an index of oncore_messages, which gps_request_build built */
+	uint8_t query;             /* +0x20: the step's argument mode, gps_request_build's query form; the log prints q, else c */
+	uint8_t length;            /* +0x21: the built message's bytes */
+	uint8_t sent[80];          /* +0x22: the message as sent, copied from gps_command_message */
+} gps_running_command;
+
 /* A time of day as a long holds it, hour << 16 | minute << 8 | second,
  * by its bytes, which the clock routines add and carry one at a time
  * (datetime_add, time_next_second). */

@@ -274,6 +274,7 @@
 0x1304a	function	root_task	structures.md	stores its own task id in task_root, sets up the status system, creates the exchanges and tasks and starts them
 0x4bf4a	function	gpsm_task	structures.md	root_task starts gpsm here
 0x4bf4a	local	received	structures.md	the request it takes from gpsx_exchange	gps_request_entry @ -0xde
+0x4bf4a	local	command	read	the command it runs: the ring's oldest request copied in, the script step at +0x1a, the built message's code, query form and length at +0x1e to +0x21 and its bytes at +0x22, which gps_response_match and command_log_add are given; gps_last_command points at it	gps_running_command @ -0xaa
 0x247d4	function	hmon_task	structures.md	root_task starts hmon here
 0x47528	function	pllp_task	structures.md	root_task starts pllp here
 0x47528	local	reply	structures.md	the request gps_count_response sends back to plla_exchange	gps_request_entry @ -0x20
@@ -372,7 +373,7 @@
 0x1009b6	label	watchdog_spool	structures.md	the watchdog line's spool	uint8_t
 0x1009b0	label	watchdog_countdown	structures.md	watchdog_report sets it to 8 when every task has reported, else counts it down, and services SWSR only while it is above 0; log_reset_cause logs "Watchdog timeout" when it is 0; hmon_task starts it at 8	int16_t
 0x1017bc	label	gps_counts	structures.md	the GPS Process Monitor page's counters, memset as one	gps_statistics
-0x1017f2	label	gps_last_command	structures.md	"Sender: %-5s Cmd #: %-2d (%s)" reads +8, +0xa and +0xc through it	void *
+0x1017f2	label	gps_last_command	structures.md	the command gpsm_task runs, on its stack; "Sender: %-5s Cmd #: %-2d (%s)" reads its request's sender, code and argument mode	gps_running_command *
 0x101216	label	gps_last_program_message	structures.md	the GPS Process Monitor's "Last Rcvr Prgm Msg", "(none issued)" when empty	char[80]
 0x101b6e	label	gps_pps_dead	structures.md	set with "GPS 1pps signal is dead", cleared with "is ok"	uint8_t
 0x101cfb	label	gps_pps_counting	structures.md	set when gps_pps_check starts the pulse accumulator	uint8_t
@@ -736,7 +737,7 @@
 0x1d74a	function	drtb_getc	"wait_v SIG_SIQ error in getc", DUART channel B	reads a character from DUART channel B, waiting for one
 0x1e18a	function	drta_send_message	the firmware's own name, "wait_v SIG_SOQA error in drta_send_message"	sends a message to the GPS engine on DUART channel A
 0x1e238	function	drta_get_byte	the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine with it	reads a byte from the GPS engine on DUART channel A, waiting for one
-0x1f76c	function	sci_puts	the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts"	writes a string to the SCI port, waiting for room	int sci_puts(int param_1)
+0x1f76c	function	sci_puts	the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts"	writes a string to the SCI port, waiting for room	int sci_puts(char *text)
 0x1f7d0	function	sci_getc	"wait_v SIG_SIQ_SCI error in getc"	reads a character from the SCI port, waiting for one
 0x17a96	function	selftest_cpu	the self-test table 0x18458's entry 2; "CPU:"	the self-test of the CPU	void selftest_cpu(char_slot run)
 0x179ac	function	selftest_ram	entry 3; "System RAM: D15-D0:", "adr line A18-A1:"	the self-test of system RAM, its data and address lines	void selftest_ram(char_slot run)
@@ -1222,7 +1223,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4b426	function	command_monitor_init	context	clears the command monitor's state and reports status event G
 0x4c4e8	function	raim_request_arguments	context	the RAIM request's four arguments: 1, raim_state and raim_threshold for position hold or not, then 1
 0x4c65e	function	command_log_clear	context	empties the GPS Receiver Command Log ring at 0x1017f6
-0x4c66e	function	command_log_add	context	adds an entry to the GPS Receiver Command Log, with its date and time	int command_log_add(void *request, char *text)
+0x4c66e	function	command_log_add	context	adds an entry to the GPS Receiver Command Log, with its date and time	int command_log_add(gps_running_command *command, char *text)
 0x4c66e	local	entry	read	the entry it builds (0x4c680 to 0x4c700) and copies to command_log.write, 0x14 bytes (0x4c738 to 0x4c744)	gps_command_log_entry @ -0x20
 0x4c870	function	status_snapshot_update	context	takes a status snapshot into 0x101560 for each @@Ea, and at 03:14:07 or 06:28:15 exactly into 0x10168e as well, with a copy of the command log
 0x1017f6	label	command_log	structures.md	the GPS Receiver Command Log, the last 20 GPS commands sent	gps_command_log
@@ -2105,3 +2106,4 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x400010	label	eeprom_identification_record	structures.md	the EEPROM's identification record, 48 bytes	identification_record
 0x400060	label	eeprom_lifetime_record	structures.md	the EEPROM's lifetime record, 32 bytes	lifetime_record
 0x400080	label	eeprom_calibration_block	structures.md	the EEPROM's calibration block, 64 bytes	calibration_block
+0x4001c0	label	eeprom_reset_records	structures.md	the EEPROM's reset-cause log, 32 reset_records of 0x5c bytes to 0x400d40: reset_record_count checks 0x20 slots (0x33114), log_count calls it full past 0x1f, and reset_record_write writes the next at 0x4001c0 + n * 0x5c	reset_record[32]

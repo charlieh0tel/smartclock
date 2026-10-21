@@ -1336,3 +1336,112 @@ typedef struct counter_configuration_fields {
 	int32_t interpolator_scale;  /* the spread it is divided by */
 } counter_configuration_fields;
 
+/* The battery-backed RAM a warm restart restores, preserved_region at
+ * 0x100000: pllp_task copies gps, pll and the 0x19 bytes from 0x101e70
+ * into it each pass and checksums it, and system_init copies them back
+ * when the checksum is good, RSR shows neither an external nor a
+ * power-up reset, and restore is 1.  0x94e bytes, record_checksum's
+ * length. */
+typedef struct preserved_region_fields {
+	uint16_t checksum;    /* +0x000: record_checksum's sum and complement of the rest */
+	uint16_t restore;     /* +0x002: 1, system_init restores; pllp_task sets it, nv_clear_and_reset and system_init's defaults clear it */
+	gps_state gps;        /* +0x004 */
+	pll_state pll;        /* +0x55e */
+	uint8_t values[0x19]; /* +0x934: 0x101e70 to 0x101e88 */
+	uint8_t field_94d;    /* in the checksum; nothing else refers to it */
+} preserved_region_fields;
+
+/* The clock record at 0x1009b8, clock, which the clock_record_ routines
+ * reach through A6 or A4: the uptime, two dates and times, each with its
+ * month table, the minute's length and the GPS-UTC offset.
+ * clock_record_checksum sums +0x02 to +0x32.  0x33 bytes. */
+typedef struct clock_record {
+	uint16_t checksum;           /* +0x00: the sum's complement, then the sum */
+	uint32_t uptime;             /* +0x02: seconds since the clock started; addq.l #1 at 0x13508, each second; cleared only by clock_init */
+	uint32_t time;               /* +0x06: get_date_time's time; clock_record_derive's utc_to_local of gps_time */
+	uint32_t date;               /* +0x0a: get_date_time's date */
+	uint8_t month_days[12];      /* +0x0e: date's days a month, January first; clock_set_leap_year sets February's */
+	uint32_t gps_time;           /* +0x1a: get_gps_time's; hour << 16 | minute << 8 | second */
+	uint32_t gps_date;           /* +0x1e: get_gps_date's; year << 16 | month << 8 | day */
+	uint8_t gps_month_days[12];  /* +0x22: gps_date's */
+	uint8_t minute_length;       /* +0x2e: seconds in this minute, 60; 59 or 61 from the leap stubs at 0x13666 and 0x1366c */
+	uint8_t invalid;             /* +0x2f: get_date_time reports no date or time while set */
+	int16_t gps_utc_offset;      /* +0x30: GPS less UTC in seconds, days times 86400 plus the difference of two times of day, negated in UTC mode; a 59- or 61-second minute or offset_step changes it */
+	uint8_t gps_utc_offset_valid; /* +0x32: set_gps_utc_offset sets it; clock_init clears it */
+} clock_record;
+
+/* The message pps_interrupt sends pps_exchange each 1PPS, at 0x100bac,
+ * which pps_wait_time receives into the same cells.  pps_init clears
+ * 0x18 bytes from it with mutex_clear. */
+typedef struct pps_exchange_message {
+	uint32_t field_00[2]; /* only cleared */
+	uint32_t gps_time;    /* +0x08: get_gps_time's at the pulse */
+	uint32_t gps_date;    /* +0x0c: get_gps_date's */
+	uint32_t field_10[2]; /* only cleared */
+} pps_exchange_message;
+
+/* The GPS task's state, gps_task_state: the GPS Process Monitor's
+ * "State: " strings. */
+typedef enum __attribute__((packed)) gps_process_state {
+	GPS_PROCESS_TASK_IDLE = 0,              /* takes the next request from gps_requests */
+	GPS_PROCESS_SEND_COMMAND = 1,      /* runs the script's next step */
+	GPS_PROCESS_WAIT_FOR_RESPONSE = 2  /* waits for the step's response, retrying on a timeout */
+} gps_process_state;
+
+/* A status snapshot, status_snapshot's record, which status_screen
+ * prints: 0x12e bytes, three of them from 0x10142c. */
+typedef struct status_snapshot_record {
+	pll_stage stage;                 /* +0x000: pll.stage */
+	uint8_t mode;                    /* +0x001: pll_mode's */
+	uint8_t powerup_suffix;          /* +0x002: pll_powerup_suffix_index's */
+	uint8_t recovery_suffix;         /* +0x003: recovery_suffix_index's */
+	float tfom;                      /* +0x004: pll.tfom */
+	uint8_t ffom;                    /* +0x008: get_ffom's */
+	uint8_t ffom_valid;              /* +0x009: get_ffom's result */
+	double interval;                 /* +0x00a: interval_reading.value */
+	uint8_t interval_status[4];      /* +0x012: interval_reading's +8 to +0xb */
+	float interval_mean;             /* +0x016 */
+	uint16_t interval_mean_flag;     /* +0x01a: the word at interval_mean_flag */
+	uint8_t holdover_waiting_reason; /* +0x01c */
+	uint8_t holdover_limit_state;    /* +0x01d: nv_settings' */
+	float holdover_limit_threshold;  /* +0x01e: nv_settings' */
+	uint32_t holdover_duration;      /* +0x022: pll's */
+	float kenneth_present;           /* +0x026: kenneth_present_get's */
+	uint8_t kenneth_present_valid;   /* +0x02a: its result */
+	uint8_t field_02b;               /* its second output */
+	float kenneth_predicted;         /* +0x02c: kenneth_predicted_get's */
+	uint8_t kenneth_predicted_valid; /* +0x030: its result */
+	uint8_t field_031;               /* its second output */
+	uint8_t satellite_sets[0x2a];    /* +0x032: satellite_sets_build's */
+	uint8_t gps_satellites[12][8];   /* +0x05c: satellite_status_list's, for GPS */
+	uint8_t pseudolites[6][8];       /* +0x0bc: satellite_status_list's, for pseudolites */
+	uint8_t status_received;         /* +0x0ec: gps' */
+	uint8_t gps_satellite_count;     /* +0x0ed: satellite_status_list's count of gps_satellites */
+	uint8_t pseudolite_count;        /* +0x0ee: its count of pseudolites */
+	uint8_t pll_field_3d5;           /* +0x0ef: pll.field_3d5 */
+	uint8_t reference_valid;         /* +0x0f0: gps' */
+	uint8_t pps_dead;                /* +0x0f1: gps' */
+	uint8_t status_code;             /* +0x0f2: gps' */
+	uint8_t gps_field_532[2];        /* +0x0f3: gps.field_532 */
+	uint8_t status_code_reset;       /* +0x0f5: gps' */
+	uint8_t fix_mode;                /* +0x0f6: gps' */
+	uint8_t receiver_status;         /* +0x0f7: gps.status' */
+	uint32_t time;                   /* +0x0f8: gps.status' time made local; the clock's while clock_invalid */
+	uint32_t date;                   /* +0x0fc: the same's date */
+	int32_t time_zone[2];            /* +0x100: nv_settings' */
+	uint8_t clock_invalid;           /* +0x108: 1 when get_date_time reports no date or time */
+	uint8_t utc_time;                /* +0x109: gps' */
+	uint8_t leap_second_pending;     /* +0x10a: gps' */
+	uint8_t field_10b;
+	int32_t pps_cable_delay;         /* +0x10c: gps' */
+	uint8_t mask_angle;              /* +0x110: gps' */
+	uint8_t position_hold;           /* +0x111: gps' */
+	uint8_t douglas_duration_infinite; /* +0x112: nv_settings' */
+	uint8_t field_113;
+	char *position_source;           /* +0x114: "INIT ", "AVG " or "" */
+	int32_t position[3];             /* +0x118: latitude, longitude, height; as position_source says */
+	uint32_t average_count;          /* +0x124: gps' */
+	int32_t douglas_duration;        /* +0x128: nv_settings' */
+	uint16_t hardware_condition;     /* +0x12c: status_hardware_condition's */
+} status_snapshot_record;
+

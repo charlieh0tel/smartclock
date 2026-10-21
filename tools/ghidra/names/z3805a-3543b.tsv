@@ -88,6 +88,10 @@
 # the console, docs/firmware/console.md
 0x12f50	function	console_halt_hook	console.md	hook halt runs
 0x1009fe	label	console_halt_hook_cell	console.md	hook cell	void *
+0x1009ee	label	pforth_latest_word	structures.md	pforth_link_word links each new word to it and stores the word in it; pforth_dictionary_init starts it at 0x1ad0e	void *
+0x1009f2	label	pforth_dictionary_next	structures.md	where pforth_define_word builds the next word, and stores its end; the console task's A4 starts from it	void *
+0x1009f6	label	pforth_dictionary_start	structures.md	the segment pforth_dictionary_init gets with trap #3 service 8; console_task_create passes it to service 10	void *
+0x1009fa	label	pforth_dictionary_end	structures.md	pforth_dictionary_start plus the size; only written	void *
 0x29fce	function	scpi_task_create	console.md	creator of the SCPI task
 #
 # the rest of the float library, docs/firmware/libc.md
@@ -131,7 +135,8 @@
 0x1038b4	label	atexit_functions	libc.md
 0x103934	label	atexit_count	libc.md		uint16_t
 0x1412e	function	float_exception_report	libc.md		void float_exception_report(uint32_t code)
-0x100bd4	label	float_exception_message	libc.md	length-prefixed
+0x100bd4	label	float_exception_message	libc.md, structures.md	length-prefixed: its length, then the text from 0x100bd5, at most 30 characters, to program_end_message	uint8_t[32]
+0x100bf4	label	program_end_message	structures.md	program_end_report's "Prog end, returned N", length-prefixed, for fatal_error_with_code; the digits built backward from the 0xff it stores at 0x100c21	uint8_t[46]
 0x5dbde	function	double_divide_operand_error	libc.md, read	exception code 0xe2000; a tail the divide branches to (0x5d9b0, 0x5d9f2), leaving through its epilogue at 0x5db8c, which pops the D2-D7 it pushed		convention=other; confidence=read; family=softfloat
 0x5dbee	function	double_divide_by_zero	libc.md, read	exception code 0xe0400; a tail the divide branches to (0x5d9fc), leaving through its epilogue at 0x5db84		convention=other; confidence=read; family=softfloat
 0x5e81c	function	double_multiply_operand_error	libc.md, read	exception code 0xc2000; a tail the multiply branches to (0x5e58a, 0x5e5bc), leaving through its epilogue at 0x5e7d6, which pops the D2-D7 it pushed		convention=other; confidence=read; family=softfloat
@@ -213,10 +218,8 @@
 0x10381c	label	dmes_scpi	context	set by the console's dmes_scpi	uint32_t
 0x103820	label	dmes_spoo	context	set by the console's dmes_spoo	uint32_t
 0x103824	label	dmes_curv	context	set by the console's dmes_curv	uint32_t
-0x136fe	function	get_date_time	context	:PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns valid unless clock_invalid	int get_date_time(uint32_t *date, uint32_t *time)
-0x1009c2	label	clock_date	context	get_date_time's date	uint32_t
-0x1009be	label	clock_time	context	get_date_time's time	uint32_t
-0x1009e7	label	clock_invalid	context	get_date_time reports no date or time while set	uint8_t
+0x136fe	function	get_date_time	context	:PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns valid unless clock.invalid	int get_date_time(uint32_t *date, uint32_t *time)
+0x1009b8	label	clock	structures.md	the clock record the clock_record_ routines are given in A6, or reach through A4: uptime, date and time, GPS date and time, their month tables, the minute's length, the GPS-UTC offset; once the labels uptime, clock_time, clock_date, gps_time, gps_date, clock_invalid, gps_utc_offset and gps_utc_offset_valid	clock_record
 0x2410e	function	adc_average	context	diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a default when there is no reading	float adc_average(adc_channel channel)	convention=c; confidence=documented; out=D0 float
 0x1043a	function	mutex_acquire	context	recursive lock, owner at +8, count at +0xc, a token through request_x when not already owned		convention=register; confidence=read; in=A1 void *mutex; out=D7 int error; error=D7 0x80 nested hold; preserves=D0, D1, A0, A2; family=mutex
 0x10484	function	mutex_release	context	drops the count, or the owner and the token through send_x		convention=register; confidence=read; in=A1 void *mutex; out=D7 int error; error=D7 2 not held, D7 0x80 holds remain; preserves=D0, A0; family=mutex
@@ -276,6 +279,12 @@
 0x101e18	label	scpi_value_SAMPle_FLOat	structures.md	the descriptor's value	float
 0x336da	label	scpi_param_SAMPle_FARR	structures.md	the descriptor scpi_numeric_get and _set are given for SAMPle_FARR	scpi_numeric_param
 0x101e1c	label	scpi_value_SAMPle_FARR	structures.md	the descriptor's value	float
+0x101ddc	label	scpi_value_SAMPle_BOOLean	structures.md	the value of the setting descriptor at 0x33454, which :SAMPle:BOOLean's setter gives pllc_request_a; its query returns it	uint8_t
+0x101ddd	label	scpi_value_SAMPle_BARR	structures.md	the values of the setting descriptor at 0x33472, last index 1; :SAMPle:BARR? returns the one its index names	uint8_t[2]
+0x101ddf	label	scpi_value_SAMPle_TOGGle	structures.md	the value of the setting descriptor at 0x33490; :SAMPle:TOGGle? reads it	uint8_t
+0x101de0	label	scpi_value_SAMPle_TARR	structures.md	the values of the setting descriptor at 0x334b0, last index 2; :SAMPle:TARR? reads the one its index names	uint8_t[3]
+0x101df8	label	scpi_value_SAMPle_IMULtiple	structures.md	the values of the descriptor at 0x335be, last index 3, which :SAMPle:IMULtiple's setter gives pllc_request_d; its query returns the four	int32_t[4]
+0x101e28	label	scpi_value_SAMPle_DOUBle	structures.md	the value the descriptor at 0x33724 points at; :SAMPle:DOUBle? returns its 8 bytes, and the setter does nothing	double
 0x339b4	label	scpi_param_SOURce_PULSe_CONTinuous_PERiod	structures.md	the descriptor scpi_numeric_get and _set are given for SOURce_PULSe_CONTinuous_PERiod	scpi_numeric_param
 0x33e20	label	scpi_param_SOURce_ROSCillator_LIMit_THReshold	structures.md	the descriptor scpi_numeric_get and _set are given for SOURce_ROSCillator_LIMit_THReshold	scpi_numeric_param
 0x33e5e	label	scpi_param_SOURce_ROSCillator_HOLDover_LIMit_THReshold	structures.md	the descriptor scpi_numeric_get and _set are given for SOURce_ROSCillator_HOLDover_LIMit_THReshold	scpi_numeric_param
@@ -336,6 +345,7 @@
 0x1009b4	label	watchdog_pll	structures.md	the watchdog line's pll; pllp_task counts it	uint8_t
 0x1009b5	label	watchdog_monitor	structures.md	the watchdog line's mon	uint8_t
 0x1009b6	label	watchdog_spool	structures.md	the watchdog line's spool	uint8_t
+0x1009b0	label	watchdog_countdown	structures.md	watchdog_report sets it to 8 when every task has reported, else counts it down, and services SWSR only while it is above 0; log_reset_cause logs "Watchdog timeout" when it is 0; hmon_task starts it at 8	int16_t
 0x1017bc	label	gps_counts	structures.md	the GPS Process Monitor page's counters, memset as one	gps_statistics
 0x1017f2	label	gps_last_command	structures.md	"Sender: %-5s Cmd #: %-2d (%s)" reads +8, +0xa and +0xc through it	void *
 0x101216	label	gps_last_program_message	structures.md	the GPS Process Monitor's "Last Rcvr Prgm Msg", "(none issued)" when empty	char[80]
@@ -362,6 +372,11 @@
 0x101b72	label	adc_monitors	structures.md	the health monitor's eight ADC monitors, by hmon_check_supplies' step: temperature, double oven, +15V, oscillator current, 5V, oven, -15V, antenna current	adc_monitor[8]
 0x101d94	label	log_page_buffer	structures.md	log_read loads a page here and formats its entries	log_page
 0x101dd4	label	log_page_number	structures.md	the page log_page_buffer holds	int16_t
+0x101d4e	label	log_write_page	structures.md	the page log_append fills, through log_cursor, and log_flush writes; log_page_clear empties it when log_append moves to the next	log_page
+0x101d8e	label	log_write_page_number	structures.md	log_write_page's page, 0 to 0x4a: log_init finds it, log_append advances it, log_flush and log_read compare log_page_number with it	int16_t
+0x101dd6	label	log_full	structures.md	set by log_init when no page has a free entry and by log_append past page 0x4a; log_append then adds nothing and returns 0xfc; log_entry_total reports it	uint8_t
+0x101dd7	label	log_write_page_open	structures.md	log_append sets it when the entry leaves room on the page; log_read calls log_flush first while it is set and the page asked for is log_write_page_number; log_flush clears it	uint8_t
+0x101dd8	label	log_entries	structures.md	the event log's entries, log_write_page_number times 3 plus the page's; past 180 log_append and log_init report happening ' '; log_entry_total returns it, log_erase_checked compares with it	int16_t
 0x102eb6	label	status_request_service	structures.md	the time code's r, the Status Byte's request-for-service summary	uint8_t
 0x101f68	label	idn_model	structures.md	*IDN?'s first %s	char[18]
 0x101f7a	label	idn_serial	structures.md	*IDN?'s second %s	char[18]
@@ -443,12 +458,10 @@
 0x137d8	function	set_timedate	structures.md	the set_time word's, "set_timedate error: %2X"	int set_timedate(uint32_t date, uint32_t time)
 0x111cc	function	gps_seconds	structures.md	the T1 time code's #H%08X, seconds since 1980 from a date and time	int gps_seconds(uint32_t date, uint32_t time)
 0x11284	function	leap_gps_time	structures.md	:PTIM:LEAP:GPST?'s "#H%08X", from nv_settings.leap_pending and leap_minute_length	int leap_gps_time(void)
-0x136d6	function	get_clock_date	structures.md	returns clock_date; the T2 time code's date	uint32_t get_clock_date(void)
-0x136de	function	get_clock_time	structures.md	returns clock_time; the T2 time code's time	uint32_t get_clock_time(void)
+0x136d6	function	get_clock_date	structures.md	returns clock.date; the T2 time code's date	uint32_t get_clock_date(void)
+0x136de	function	get_clock_time	structures.md	returns clock.time; the T2 time code's time	uint32_t get_clock_time(void)
 0x136e6	function	get_gps_date	structures.md	returns gps_date; with get_gps_time, the T1 time code's GPS time	uint32_t get_gps_date(void)
 0x136ee	function	get_gps_time	structures.md	returns gps_time	uint32_t get_gps_time(void)
-0x1009d6	label	gps_date	structures.md	get_gps_date's; year << 16 | month << 8 | day	uint32_t
-0x1009d2	label	gps_time	structures.md	get_gps_time's; hour << 16 | minute << 8 | second	uint32_t
 0x10de4	function	day_of_year	structures.md	the es message's %03d, from a packed date	int16_t day_of_year(uint32_t date)
 0x11a2a	function	exception_name	structures.md	the "%s: %s" of an exception; "Oooh! That tickles. I don't know that vector."	char * exception_name(uint16_t vector)
 0x11b8c	label	reset_to_recover_text	read	"\r\nRESET to recover.", which print_exception ends a report with; its NUL is the first byte of exception_names, and exception_name reads that table from 12 bytes in, so it is bytes, not a string, to keep the C reading the ROM	byte[20]
@@ -459,7 +472,6 @@
 0x2bf00	function	status_report_from	context	status_report(code) for a command from source 0 or 2, not 1, 3 or 4; every caller passes return_zero()
 0x2e6fc	function	skip_spaces	context	advances a char ** past spaces
 0x136f6	function	get_uptime	context	returns uptime; efc_history_update divides it by 2700 for an entry's time	uint32_t get_uptime(void)
-0x1009ba	label	uptime	context	seconds since the clock started: addq.l #1 at 0x13508, each second; cleared only by the clock's start at 0x13908	uint32_t
 0x44fbc	function	interval_next_reading	context	the next one-second interval reading, into *reading as a float, and its flag; waits instead while a 1PPS is dead; updates the EFC history
 0x4b9e6	function	gps_count_response	context	counts a GPS response by its kind in gps_counts: successes, rejects, aborts, unknown_sender, unknown_command, busy and the rest
 0x46620	function	gps_ack_received	context	returns gps_ack_ready, clearing gps_ack_awaited once it is set; the ack checker 0x46838 polls it
@@ -530,14 +542,27 @@
 0x11396	function	datetime_add	context	adds the first packed time and date to the second, carrying seconds, minutes, hours and days; klok adds an entry's period to its time	void datetime_add(packed_datetime *change, packed_datetime *value)
 0x10f46	function	date_to_days	context	a packed date as a day count, for datetime_add
 0x10e72	function	days_to_date	context	a day count as a packed date, for datetime_add
-0x139ce	function	get_gps_utc_offset	context	returns gps_utc_offset_valid and stores gps_utc_offset; the es message's leap value and leap_gps_time	uint8_t get_gps_utc_offset(int16_t *seconds)
-0x139a2	function	set_gps_utc_offset	context	sets gps_utc_offset, from D1, and gps_utc_offset_valid; 0x46e70 computes it from the engine's GPS and UTC times
-0x1009e8	label	gps_utc_offset	context	GPS less UTC in seconds: days times 86400 plus the difference of two times of day, negated in UTC mode	int16_t
-0x1009ea	label	gps_utc_offset_valid	context	set_gps_utc_offset sets it; the clock's start clears it	uint8_t
+0x139ce	function	get_gps_utc_offset	context	returns clock.gps_utc_offset_valid and stores clock.gps_utc_offset; the es message's leap value and leap_gps_time	uint8_t get_gps_utc_offset(int16_t *seconds)
+0x139a2	function	set_gps_utc_offset	context	sets clock.gps_utc_offset, from D1, and clock.gps_utc_offset_valid; 0x46e70 computes it from the engine's GPS and UTC times
 0x4b79a	function	gps_response_reset	context	points gps_response_cursor at gps_response_buffer and clears gps_receive_state
 0x4b846	function	gps_receive	context	reads bytes from the engine and frames its messages from their @ into gps_response_buffer, counting frame errors
 0x10138c	label	gps_response_cursor	context	where gps_receive stores the next byte	uint8_t *
 0x101394	label	gps_receive_state	context	gps_receive's state; 7 when a message is complete	uint8_t
+0x101396	label	gps_response_index	structures.md	gps_response_lookup's index of the response's ID among the 49 at 0x4fece; gpsm_task gives it gps_response_decode and gps_response_match	int16_t
+0x101398	label	gps_response_length	structures.md	the response's length, from gps_response_lookup's table entry; gps_response_match and the retry compare take it	int16_t
+0x10139a	label	gps_response_remaining	structures.md	gps_receive's count of bytes to the checksum, the length less 6, counted down; at 0 the byte is the checksum	int16_t
+0x10139c	label	gps_task_state	structures.md	gpsm_task's state, which gps_print_process_monitor prints as "Task Idle", "Send Command" or "Wait for Response"; gps_link_reset clears it	gps_process_state
+0x101428	label	command_monitor_result	structures.md	gps_request_post sets it to 9 for a request from sender 3, the command monitor; gps_count_response stores the request's result code; command_monitor waits while it is 9	int8_t
+0x101429	label	status_monitor_result	structures.md	the same for the other senders: command_monitor's status monitor, sender 4	int8_t
+0x10142a	label	status_without_traim_count	structures.md	command_monitor's count of @@Ba with a new time since the last @@Bn, while gps.raim.rate is set; at 7 the status monitor requests the messages again	uint8_t
+0x10142c	label	status_screen_snapshot	structures.md	the snapshot status_screen_print, the pstat print in gpsm_task and gps_console_request take and print	status_snapshot_record
+0x101560	label	status_snapshot_latest	structures.md	status_snapshot_update's snapshot at each @@Ea not at 03:14:07 or 06:28:15; gps_print_1pps prints it	status_snapshot_record
+0x10168e	label	status_snapshot_flagged	structures.md	status_snapshot_update's snapshot at an @@Ea of 03:14:07 or 06:28:15, taken with the command log's copy; gps_print_1pps prints it	status_snapshot_record
+0x10155a	label	status_snapshots_frozen	structures.md	set when a second @@Ea in a row has the same of those two times; status_snapshot_update then takes no more, and gps_print_1pps prints the snapshots instead of "(no GPS receiver errors were logged)"; gpsm_task clears it	uint8_t
+0x10155c	label	status_snapshot_last_time	structures.md	the @@Ea time status_snapshot_update was last given; gpsm_task clears it	uint32_t
+0x1011c4	label	gps_commands_blocked	structures.md	disable_gps_cmds sets it; while set gpsm_task answers a class 0 or 1 request with code 0 and does not run it, and the GPS Process Monitor prints "GPS receiver commands are blocked"; gps_init clears it	uint8_t
+0x1011c5	label	status_screen_print_interval	structures.md	pstat's argument, made negative: gpsm_task prints status_screen_snapshot at once when it is negative and makes it positive, then every that many seconds; 0 for never; gps_init clears it	int8_t
+0x1011c6	label	gps_command_message	structures.md	gps_request_build's message, which gpsm_task sends with drta_send_message and turns into gps_last_program_message	uint8_t[80]
 0x20b0c	function	qspi_send	context	qspi_transfer without the copy back from receive RAM
 0x4f0d6	function	satellite_id_valid	context	kind 0 accepts 1 to 32, kind 1 33 to 37, the VP reference's pseudolites, kind 2 either	int satellite_id_valid(satellite_kind kind, uint8_t id)
 0x4f8fc	function	gps_message_supported	context	@@Bn, message 0x28, needs the receiver ID and its Time RAIM option, gps.raim_option; any other is supported
@@ -557,6 +582,18 @@
 0x101e8a	label	nv_settings	structures.md	the saved settings, 0xc5 bytes; each field the value of a descriptor in nv_save's tables	nv_settings_fields
 0x30966	label	nv_settings_defaults	structures.md	nv_restore copies them over nv_settings when no slot loads
 0x4000c0	label	nv_records	structures.md	the EEPROM's two NV register records, 0x80 bytes each: "S", a sequence number at +4, "3543B", the packed settings, a checksum
+#
+# the preserved region a warm restart restores, and the cells from
+# 0x101e70 to 0x101e88 it keeps a copy of; docs/firmware/structures.md,
+# "The preserved region"
+0x100000	label	preserved_region	structures.md	pllp_task's copy of gps, pll and 0x101e70 to 0x101e88, checksummed; system_init restores it on a warm start	preserved_region_fields
+0x101e72	label	led_alarm	structures.md	status_summary_update sets it while status_summary is not 0; leds_update lights bit 2 from it; :LED:ALARm? returns it	uint8_t
+0x101e74	label	led_active	structures.md	:LED:ACTive's setting descriptor's value; leds_update lights bit 1 from it	uint8_t
+0x101e75	label	led_enabled	structures.md	:LED:ENABled's setting descriptor's value; leds_update lights bit 0 from it	uint8_t
+0x101e76	label	holdover_recovery_auto	structures.md	:ROSCillator:HOLDover:RECovery:AUTO's setting descriptor's value; with it clear, enter_holdover sets pll.manual even with no manual cause; pll_init sets it	uint8_t
+0x101e77	label	survey_position_valid	structures.md	gps_init_sequence sets it in state 0xe once gps.average_count is not 0; :GPS:POSition? fails without it while nv_settings.douglas_state is 0	uint8_t
+0x101e78	label	survey_position	structures.md	gps.average_latitude, _longitude and _height_msl as integers, from gps_init_sequence's state 0xe, which saves them as nv_settings.position; :GPS:POSition? returns them while nv_settings.douglas_state is 0	int32_t[3]
+0x101e88	label	holdover_duration_exceeded	structures.md	holdover and holdover_recovery set it, with happening '.' and pwma_force_level(1), once pll.holdover_duration passes nv_settings.holdover_status_threshold; status_summary bit 0x20; pll_stage_status clears it where it lights GPS Lock, and pll_init; :ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded? returns it	uint8_t
 
 0x3405e	label	scpi_param_SOURce_PTIMe_TZONe	structures.md	nv_save's first table; its setter's descriptor	scpi_numeric_param
 0x34178	label	scpi_param_SOURce_GPSystem_POSition	structures.md	nv_save's first table; its setter's descriptor	scpi_numeric_param
@@ -615,6 +652,13 @@
 0x104e6	function	mutex_create	structures.md	packs the name and creates the mutex as an exchange of that name; "klok" for klok_mutex, "logr" for log_mutex	int mutex_create(char *name, void *mutex)
 0x3167c	function	log_init	structures.md	creates log_mutex, "logr", and finds the event log's page to write next among 0x4b
 0x100bc4	label	pps_exchange	structures.md	pps_init creates the "1pps" exchange with create_x, service 20, and keeps its id here	uint32_t
+0x100bac	label	pps_message	structures.md	pps_interrupt's message to pps_exchange, the GPS time and date at the pulse; pps_wait_time receives into it and returns them	pps_exchange_message
+0x100bc8	label	leap_minute_pending	structures.md	set by the stubs at 0x13666 and 0x1366c with a 59- or 61-second minute; clock_record_advance clears it at the minute's end, setting clock_change_applied and calling leap_settings_clear	uint8_t
+0x100bc9	label	offset_step_pending	structures.md	set by the stubs at 0x136a2 and 0x136bc with offset_step -1 or 1; clock_record_advance clears it when clock.time is offset_step_time, adding offset_step to clock.gps_utc_offset	uint8_t
+0x100bca	label	offset_step_time	structures.md	leap_event_schedule_utc's 24:00:00 on the leap date, moved by the GPS-UTC offset as it will be; clock_record_advance compares clock.time with it	uint32_t
+0x100bce	label	offset_step	structures.md	-1 or 1, from the stubs at 0x136a2 and 0x136bc; clock_record_advance adds it to clock.gps_utc_offset	int16_t
+0x100bd0	label	es_compare_wraps	structures.md	es_schedule's delay's high word: output compare 4 matches primary_user_87 lets pass, counting down, before sci_send_async sends es_message	int16_t
+0x100bd2	label	timecode_compare_wraps	structures.md	timecode_schedule's delay's high word: output compare 3 matches primary_user_86 lets pass, counting down, before drtb_send_async sends tcode_message	int16_t
 #
 # batch 5, by the strings they print
 0x42bc4	function	toggle_change	the firmware's own name, "pll_scpi: toggle_change() -- new value > max value"	applies a change to a PLL setting that toggles, refusing a value above its maximum
@@ -974,9 +1018,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x13740	function	get_gps_datetime	context	gps_date and gps_time through pointers; 1 if the clock is valid
 0x137a4	function	set_timedate_unflagged	context	set_timedate's twin: sets the clock record's date and time without marking it set	int set_timedate_unflagged(uint32_t date, uint32_t time)
 0x13428	function	busy_wait	context	spins 729 empty loops for each count
-0x1380c	function	clock_record_store	context	checks a date and time and stores them in the clock record, marking it set if D2 says so		convention=register; confidence=read; in=A6 char *record, D0 int date, D1 int time, D2 int mark; family=clock
-0x13882	function	clock_record_derive	context	reads the clock record's date and time until two reads agree, converts them and stores the result at +6 and +0xa		convention=register; confidence=read; in=A6 char *record; family=clock
-0x134a8	function	clock_record_checksum	context	sums the clock record from +2 to +0x32 and stores the sum and its complement		convention=register; confidence=read; in=A6 char *record; family=clock
+0x1380c	function	clock_record_store	context	checks a date and time and stores them in the clock record, marking it set if D2 says so		convention=register; confidence=read; in=A6 clock_record *record, D0 int date, D1 int time, D2 int mark; family=clock
+0x13882	function	clock_record_derive	context	reads the clock record's date and time until two reads agree, converts them and stores the result at +6 and +0xa		convention=register; confidence=read; in=A6 clock_record *record; family=clock
+0x134a8	function	clock_record_checksum	context	sums the clock record from +2 to +0x32 and stores the sum and its complement		convention=register; confidence=read; in=A6 clock_record *record; family=clock
 0x138e4	function	clock_set_leap_year	context	sets February's days at A0, 28 or 29 by the Gregorian rule for the year in D7's high word; kernel_set_leap_year's copy		convention=register; confidence=read; in=A0 char *february, D7 int year; family=clock
 0x177fa	function	selftest_summary	context	the self-test's failure flags as bits; reports status event 4 on a failure and 5 on none
 0x241f4	function	oven_warmed_up	context	1 once the oven ADC reads below -2.0; powerup's warm-up test
@@ -1184,12 +1228,12 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x133f2	function	double_abs	context	a double's magnitude; called by nothing
 0x13406	function	rotate_left	context	a long rotated left
 0x13448	function	sleep_seconds	context	pauses for a float number of seconds, at 1024 ticks a second, at least one tick; called by nothing
-0x134ca	function	clock_record_sum	context	clock_record_checksum's loop, A6 the record; Z set if the checksum word at +0 matches		convention=register; confidence=read; in=A6 char *record; returns=ccr; family=clock
+0x134ca	function	clock_record_sum	context	clock_record_checksum's loop, A6 the record; Z set if the checksum word at +0 matches		convention=register; confidence=read; in=A6 clock_record *record; returns=ccr; family=clock
 0x134e8	function	clock_tick	context	advances the clock a second and checksums its record
-0x13502	function	clock_record_advance	context	adds a second to the clock record at A6, carrying through the minute, hour and date and applying a pending leap second		convention=register; confidence=read; in=A6 char *record; family=clock
+0x13502	function	clock_record_advance	context	adds a second to the clock record at A6, carrying through the minute, hour and date and applying a pending leap second		convention=register; confidence=read; in=A6 clock_record *record; family=clock
 #
 # the clock, the kernel's reports and the self-tests
-0x135f0	function	clock_record_advance_utc	context	adds a second to the clock record's UTC pair at +0x1a and +0x1e, carrying through the date by its month table		convention=register; confidence=read; in=A6 char *record; family=clock
+0x135f0	function	clock_record_advance_utc	context	adds a second to the clock record's UTC pair at +0x1a and +0x1e, carrying through the date by its month table		convention=register; confidence=read; in=A6 clock_record *record; family=clock
 0x13782	function	clock_record_refresh	context	recomputes the clock record's local time from its UTC and checksums it, in supervisor mode
 0x13908	function	clock_init	context	sets the clock record up: its month tables, uptime and time zero, the date from the lifetime record, a 60-second minute
 0x13ee4	function	timecode_init	context	clears the time code's and the ES message's state

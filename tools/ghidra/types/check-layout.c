@@ -479,6 +479,59 @@ CHECK_FIELD(counter_configuration_fields, sync_count, 0x101fc2 - 0x101fae);
 CHECK_FIELD(counter_configuration_fields, interpolator_offset, 0x18);
 CHECK_FIELD(counter_configuration_fields, interpolator_scale, 0x1c);
 
+/* The preserved region at 0x100000, the 0x94e bytes record_checksum
+ * sums: gps's copy at 0x100004, pll's at 0x10055e, the block from
+ * 0x101e70 at 0x100934; crash_message after it. */
+CHECK_SIZE(preserved_region_fields, 0x10094e - 0x100000);
+CHECK_FIELD(preserved_region_fields, restore, 0x100002 - 0x100000);
+CHECK_FIELD(preserved_region_fields, gps, 0x100004 - 0x100000);
+CHECK_FIELD(preserved_region_fields, pll, 0x10055e - 0x100000);
+CHECK_FIELD(preserved_region_fields, values, 0x100934 - 0x100000);
+CHECK_SIZE(((preserved_region_fields *)0)->values, 0x101e89 - 0x101e70);
+
+/* The clock record at 0x1009b8: the routines' offsets, and the
+ * addresses get_date_time, get_gps_time and clock_init use. */
+CHECK_SIZE(clock_record, 0x1009eb - 0x1009b8);
+CHECK_FIELD(clock_record, uptime, 0x1009ba - 0x1009b8);
+CHECK_FIELD(clock_record, time, 0x1009be - 0x1009b8);
+CHECK_FIELD(clock_record, date, 0x1009c2 - 0x1009b8);
+CHECK_FIELD(clock_record, month_days, 0x1009c6 - 0x1009b8);
+CHECK_FIELD(clock_record, gps_time, 0x1009d2 - 0x1009b8);
+CHECK_FIELD(clock_record, gps_date, 0x1009d6 - 0x1009b8);
+CHECK_FIELD(clock_record, gps_month_days, 0x1009da - 0x1009b8);
+CHECK_FIELD(clock_record, minute_length, 0x1009e6 - 0x1009b8);
+CHECK_FIELD(clock_record, invalid, 0x1009e7 - 0x1009b8);
+CHECK_FIELD(clock_record, gps_utc_offset, 0x1009e8 - 0x1009b8);
+CHECK_FIELD(clock_record, gps_utc_offset_valid, 0x1009ea - 0x1009b8);
+
+/* pps_message at 0x100bac, pps_exchange after the cells pps_init clears */
+CHECK_SIZE(pps_exchange_message, 0x100bc4 - 0x100bac);
+CHECK_FIELD(pps_exchange_message, gps_time, 0x100bb4 - 0x100bac);
+CHECK_FIELD(pps_exchange_message, gps_date, 0x100bb8 - 0x100bac);
+
+CHECK_SIZE(gps_process_state, 1);
+
+/* the three status snapshots, 0x10142c, 0x101560 and 0x10168e, with the
+ * two cells at 0x10155a between the first two */
+CHECK_SIZE(status_snapshot_record, 0x10168e - 0x101560);
+CHECK_SIZE(status_snapshot_record[2], 0x1017bc - 0x101560);
+CHECK_FIELD(status_snapshot_record, interval, 0x0a);
+CHECK_FIELD(status_snapshot_record, holdover_duration, 0x22);
+CHECK_FIELD(status_snapshot_record, satellite_sets, 0x32);
+CHECK_FIELD(status_snapshot_record, gps_satellites, 0x5c);
+CHECK_FIELD(status_snapshot_record, pseudolites, 0xbc);
+CHECK_FIELD(status_snapshot_record, status_received, 0xec);
+CHECK_FIELD(status_snapshot_record, time, 0xf8);
+CHECK_FIELD(status_snapshot_record, time_zone, 0x100);
+CHECK_FIELD(status_snapshot_record, clock_invalid, 0x108);
+CHECK_FIELD(status_snapshot_record, pps_cable_delay, 0x10c);
+CHECK_FIELD(status_snapshot_record, position_source, 0x114);
+CHECK_FIELD(status_snapshot_record, average_count, 0x124);
+CHECK_FIELD(status_snapshot_record, hardware_condition, 0x12c);
+
+/* the event log's write page at 0x101d4e, its number after it */
+CHECK_SIZE(log_page, 0x101d8e - 0x101d4e);
+
 /* the MC68331's modules: Tables D-2, D-3 and D-13 */
 CHECK_SIZE(gpt_registers, 0x2e);
 CHECK_FIELD(gpt_registers, tcnt, 0xfff90a - 0xfff900);

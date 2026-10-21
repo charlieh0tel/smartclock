@@ -71,9 +71,9 @@ pass, about once a second; Power is not the firmware's.
 
 | Bit | Lamp | Lit while | Query |
 | --- | ---- | --------- | ----- |
-| 0 | Enabled | the byte at `0x101e75` is set | `:LED:ENABled?` |
-| 1 | Active | the byte at `0x101e74` is set | `:LED:ACTive?` |
-| 2 | Alarm | `status_summary` is not 0 | `:LED:ALARm?`, `:LED:ALARm:MAJor?` |
+| 0 | Enabled | `led_enabled` (`0x101e75`) is set | `:LED:ENABled?` |
+| 1 | Active | `led_active` (`0x101e74`) is set | `:LED:ACTive?` |
+| 2 | Alarm | `led_alarm` (`0x101e72`), set while `status_summary` is not 0 | `:LED:ALARm?`, `:LED:ALARm:MAJor?` |
 | 4 | GPS Lock | `pll.led_gps_lock` | `:LED:GPSLock?` |
 | 5 | Holdover | `pll.led_holdover` | `:LED:HOLDover?` |
 

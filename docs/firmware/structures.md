@@ -12,12 +12,13 @@ m68k compiler (`m68k-linux-gnu-gcc`, or `M68K_CC`) and fails if a
 structure's size or a named field's offset is not the one given here,
 an offset read from the image written as the difference of its
 addresses.  The header packs its structures.  Every one but the GPS
-task's records has the same layout unpacked, under the 68000's 2-byte
+task's records, and `preserved_region_fields`, which holds a copy of
+one, has the same layout unpacked, under the 68000's 2-byte
 alignment, but for the pad byte a compiler would add after
-`nv_settings_fields` and `interval_reading_fields`, which have an odd
-size: they are what a 68000 compiler lays out, not byte layouts that
-happen to fit.  The GPS task's are not ("The GPS task's state",
-below).
+`nv_settings_fields`, `interval_reading_fields` and `clock_record`,
+which have an odd size: they are what a 68000 compiler lays out, not
+byte layouts that happen to fit.  The GPS task's are not ("The GPS
+task's state", below).
 
 ## The tasks and exchanges
 
@@ -160,6 +161,20 @@ given one.
 | `0x3409c` | `:KENneth:PREDicted:DURation` | 3600 | 604800 | `0x101ec2` |
 | `0x342f8` | `:DIAGnostic:GPSystem:POSition:HOLD:RAIM:THReshold` | 3 | 65535 | `0x101ed2` |
 | `0x34336` | `:SOURce:ROSCillator:HOLDover:DURation:MEASurement:THReshold` | 0 | 130000 | `0x101eda` |
+
+The other `:SAMPle` commands' values are beside these, from the cells
+`system_init` (`0x12bb4`) fills with `0x94` bytes from ROM `0x308b6`,
+`0x101dda` to `0x101e6d`.  Four go through setting descriptors (value
+at `+0x0c`), which their setters give `pllc_request_a`:
+`scpi_value_SAMPle_BOOLean` (`0x101ddc`, descriptor `0x33454`),
+`scpi_value_SAMPle_BARR` (`0x101ddd`, `0x33472`, two),
+`scpi_value_SAMPle_TOGGle` (`0x101ddf`, `0x33490`) and
+`scpi_value_SAMPle_TARR` (`0x101de0`, `0x334b0`, three); each query
+reads its cell.  `scpi_value_SAMPle_IMULtiple` (`0x101df8`, four
+longs) is the value of the descriptor at `0x335be`, which the setter
+(`0x2e56c`) gives `pllc_request_d`, and `scpi_value_SAMPle_DOUBle`
+(`0x101e28`) that of the one at `0x33724`, whose type byte is 3; its
+query returns the 8 bytes, and its setter (`0x2e68c`) only returns 0.
 
 ## EEPROM records
 
@@ -505,7 +520,12 @@ good; meanwhile `hmon_task` withholds happening `'D'`.
 PC, vector and the fault address, printed when the vector word's format
 is not 0.  The watchdog's per-task counters are bytes from `0x1009b2`:
 "watchdog: clock: %4d gps: %4d pll: %4d mon: %4d spool %4d";
-`pllp_task` counts `watchdog_pll`.
+`pllp_task` counts `watchdog_pll`.  `watchdog_countdown` (`0x1009b0`,
+a word) is the countdown `restart.md` gives: `watchdog_report`
+(`0x2437a`) sets it to 8 when every counter shows its task ran, else
+prints the line and counts it down, and writes SWSR only while it is
+above 0; `log_reset_cause` (`0x24440`) logs "Watchdog timeout: clk
+..." when it is 0 and there is no exception or crash message.
 
 **The clock and the log.**  The `klok` task's entries (`klok_entry`,
 `0x1a` bytes) are what `print_clk_list` prints (`klok_print_entries`,
@@ -518,7 +538,22 @@ second`, and the event log keeps them so too: `log_read` (`0x31762`)
 loads a page of three `log_entry`s into `log_page_buffer` (`0x101d94`,
 page number at `0x101dd4`) and prints one as "Log
 %03d:%04d%02d%02d.%02d:%02d:%02d" and its format with its two
-arguments, "First satellite tracked at" among them.
+arguments, "First satellite tracked at" among them.  The page being
+filled is `log_write_page` (`0x101d4e`, a `log_page`), page
+`log_write_page_number` (`0x101d8e`, 0 to `0x4a`), which `log_init`
+(`0x3167c`) finds as the first with a free entry: `log_append`
+(`0x31c42`) stores an entry at `log_cursor` and writes the page with
+`log_flush` (`0x31bf6`), which copies it into `log_page_buffer` too
+when that holds the same page; after the third entry it moves to the
+next page and empties `log_write_page` with `log_page_clear`.
+`log_entries` (`0x101dd8`) counts them, page times 3 plus the page's;
+past 180 `log_append` and `log_init` report happening `' '`.
+`log_full` (`0x101dd6`) is set when no page is free or `log_append`
+passes page `0x4a`, and `log_append` then returns `0xfc`.
+`log_write_page_open` (`0x101dd7`) is set when an entry leaves room
+on its page; `log_read` flushes first while it is set and it reads
+that page, and `log_flush` clears it.  `log_erase` (`0x31536`) resets
+them all.
 
 **The tasks' stacks.**  `task_stack_report` (`0x16c44`) prints each task
 in `task_table` (`0x1026b8`, six bytes a task, `task_count` of them) with
@@ -592,8 +627,8 @@ The others:
 | `pps_init` (`0x12e24`), `set_timedate` (`0x137d8`) | "Pps_init error %#04x", "set_timedate error: %2X" | the firmware's own names |
 | `gps_seconds` (`0x111cc`) | the T1 time code's `#H%08X` | seconds since 1980 from a packed date and time |
 | `leap_gps_time` (`0x11284`) | `:PTIM:LEAP:GPST?` | |
-| `get_clock_date`, `get_clock_time` (`0x136d6`, `0x136de`) | the T2 time code | `clock_date`, `clock_time` |
-| `get_gps_date`, `get_gps_time` (`0x136e6`, `0x136ee`) | the T1 time code | `gps_date` (`0x1009d6`), `gps_time` (`0x1009d2`) |
+| `get_clock_date`, `get_clock_time` (`0x136d6`, `0x136de`) | the T2 time code | `clock.date`, `clock.time` |
+| `get_gps_date`, `get_gps_time` (`0x136e6`, `0x136ee`) | the T1 time code | `clock.gps_date` (`0x1009d6`), `clock.gps_time` (`0x1009d2`) |
 | `day_of_year` (`0x10de4`) | the es message's `%03d` | |
 | `exception_name` (`0x11a2a`) | an exception's "%s: %s" | "Oooh! That tickles. I don't know that vector." past 0xe8 |
 
@@ -1207,3 +1242,167 @@ source, and sets `pll_scpi_reply_pending` for the self-test's alone.
 | `days_before_month`, `_leap` (`0x1186c`, `0x11884`) | `int16_t[12]` | `day_of_year` reads `0x1186a` and `0x11882` plus twice the month, 1 to 12 |
 | `powers_of_ten_64` (`0x5fa46`) | `uint32_t[36]` | `double_to_digits` clamps the index to 0 to `0x11`; the bytes after are not powers of ten |
 | `os_report_format` (`0x51382`), `os_report_newline` (`0x512e6`) | `char[3]` | `"%s"` and `"\r\n"` with their NULs |
+## The preserved region
+
+`preserved_region` (`0x100000`, `preserved_region_fields`, `0x94e`
+bytes) is the RAM a warm restart restores (`restart.md`): a checksum
+word, the word `restore`, a copy of `gps` at `+4`, of `pll` at
+`+0x55e` and of the `0x19` bytes from `0x101e70` at `+0x934`.  Each
+`pllp_task` (`0x47528`) pass copies the three in, sets `restore` to 1
+and stores `record_checksum` (`0x3082e`) of the `0x94e` bytes.
+`system_init` (`0x12bb4`) copies them back when the checksum matches,
+RSR's EXT and POW bits (`0xc0`) are clear and `restore` is 1;
+`nv_clear_and_reset` (`0x45c92`) clears `restore` and re-sums before
+`trap #12`.  `crash_message` (`0x10094e`) follows it, outside the sum.
+
+The `0x19` bytes from `0x101e70` are a block the code copies whole,
+its length the difference of two addresses (`0x12bc4`, `0x47ab0`),
+with defaults from ROM `0x3094c`; their users address each cell
+alone, so each has its own label:
+
+| Address | Name | What the code does with it |
+| ------- | ---- | -------------------------- |
+| `0x101e72` | `led_alarm` | `status_summary_update` sets it while `status_summary` is not 0; `leds_update` (`0x464de`) lights bit 2 from it; `:LED:ALARm?` |
+| `0x101e74`, `0x101e75` | `led_active`, `led_enabled` | `:LED:ACTive`'s and `:LED:ENABled`'s values (descriptors `0x33cc6`, `0x33d20`); bits 1 and 0 |
+| `0x101e76` | `holdover_recovery_auto` | `:ROSCillator:HOLDover:RECovery:AUTO`'s (`0x33d3e`); clear, `enter_holdover` sets `pll.manual`; `pll_init` sets it |
+| `0x101e77` | `survey_position_valid` | set in `gps_init_sequence`'s state `0xe` once `gps.average_count` is not 0; `:GPS:POSition?` fails without it while `nv_settings.douglas_state` is 0 |
+| `0x101e78` | `survey_position` | `gps.average_latitude`, `_longitude` and `_height_msl` as integers, from the same state, which saves them as `nv_settings.position`; the query returns them |
+| `0x101e84` | `max_loop_time` | ("The loop's state", above) |
+| `0x101e88` | `holdover_duration_exceeded` | set by `holdover` and `holdover_recovery` once `pll.holdover_duration` passes `nv_settings.holdover_status_threshold`, with happening `'.'`; `status_summary` bit `0x20`; `:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded?` |
+
+`0x101e70`, `0x101e71` and `0x101e73` are only copied; the setting
+descriptor at `0x33d02` points at `0x101e73`, but no handler refers to
+it.
+
+## The clock record
+
+`clock` (`0x1009b8`, `clock_record`, `0x33` bytes) is the record the
+`clock_record_` routines are given in A6, or reach through A4
+(`get_date_time`, `0x136fe`): a checksum word, `uptime` at `+2`, the
+date and time `get_date_time` returns at `+6` and `+0xa`, their month
+table at `+0xe`, `gps_time` and `gps_date` at `+0x1a` and `+0x1e` with
+theirs at `+0x22`, `minute_length` at `+0x2e`, `invalid` at `+0x2f`,
+and `gps_utc_offset` and its flag at `+0x30` and `+0x32`.
+`clock_record_checksum` (`0x134a8`) sums `+2` to `+0x32`.
+`clock_init` (`0x13908`), given a nonzero argument or finding the
+checksum bad, stores both month tables as 31, 0, 31, 30, 31,
+30, 31, 31, 30, 31, 30, 31, `clock_set_leap_year` (`0x138e4`) setting
+February, and `minute_length` 60.  `clock_record_advance` (`0x13502`)
+ends the minute at `minute_length`, and `clock_record_advance_utc`
+(`0x135f0`) too; `clock_record_derive` (`0x13882`) stores `utc_to_local`
+of `gps_time` and `gps_date` at `+6` and `+0xa`.
+
+The stubs at `0x13666` and `0x1366c` make the minute 59 or 61 seconds
+and set `leap_minute_pending` (`0x100bc8`); at that minute's end
+`clock_record_advance` clears it, sets `clock_change_applied`, calls
+`leap_settings_clear` (`0x4637a`), takes 1 from `gps_utc_offset` after
+59 or adds 1 after 61, and the minute is 60 seconds again.  The stubs
+at `0x136a2` and
+`0x136bc` set `offset_step` (`0x100bce`, a word) to -1 or 1 and
+`offset_step_pending` (`0x100bc9`); when `clock.time` reaches
+`offset_step_time` (`0x100bca`), which `leap_event_schedule_utc`
+(`0x10656`) sets to 24:00:00 of the leap date moved by the offset as it
+will be, `clock_record_advance` clears the flag and adds the step to
+`gps_utc_offset`.  `clock_init` clears the four.
+
+`pps_message` (`0x100bac`, `pps_exchange_message`, `0x18` bytes) is what
+`pps_interrupt` (`0x12db6`) sends `pps_exchange` each 1PPS, the GPS
+time and date at `+8` and `+0xc`; `pps_wait_time` (`0x12e9e`) receives
+into it and returns those two, and `pps_init` (`0x12e24`) clears its
+`0x18` bytes with `mutex_clear`.  `es_compare_wraps` (`0x100bd0`) and
+`timecode_compare_wraps` (`0x100bd2`) are the high words of
+`es_schedule`'s (`0x1406a`) and `timecode_schedule`'s (`0x13fa6`)
+delays: the output compare 4 or 3 matches `primary_user_87` or `_86`
+lets pass, counting down, before it sends `es_message` or
+`tcode_message`.
+
+## The fatal messages
+
+`float_exception_message` (`0x100bd4`) and `program_end_message`
+(`0x100bf4`) are length-prefixed, a count byte and the text, for
+`fatal_error_with_code` (`0x1eefc`).  `float_exception_report`
+(`0x1412e`) writes a name of at most 22 characters and at most 8 of a
+routine name from `0x100bd5`, so the 32 bytes to `0x100bf3`.
+`program_end_report` (`0x149bc`) writes "Prog end, returned ", a sign
+and the value from `0x100bf5`, its digits built backward from the
+`0xff` it stores at `0x100c21`, the 46 bytes' last; `selftest`
+(`0x100c24`) follows.
+
+## The console's dictionary
+
+`pforth_dictionary_init` (`0x1ad28`) gets the dictionary's segment with
+`trap #3` service 8 and stores it in `pforth_dictionary_next`
+(`0x1009f2`) and `pforth_dictionary_start` (`0x1009f6`), the segment
+plus its size in `pforth_dictionary_end` (`0x1009fa`), which nothing
+reads, and 0x1ad0e in `pforth_latest_word` (`0x1009ee`); on an error
+it zeroes the first three.  `pforth_define_word` (`0x1ad8a`) builds a
+word at `pforth_dictionary_next` and stores its end there, and
+`pforth_link_word` (`0x1ae36`) stores `pforth_latest_word` in the new
+word and the word in `pforth_latest_word`.  `console_task_create`
+(`0x1ae5c`) passes `pforth_dictionary_start` to service 10, and the
+code it starts the task at (`0x1aedc`) loads A4, the dictionary pointer, from
+`pforth_dictionary_next`.
+
+## The GPS task's link
+
+`gps_task_state` (`0x10139c`, `gps_process_state`) is `gpsm_task`'s
+(`0x4bf4a`) state, which `gps_print_process_monitor` (`0x4ca6c`)
+prints as "Task Idle" (0), "Send Command" (1) or "Wait for Response"
+(2): idle, it takes a request from `gps_requests`; sending, it builds
+the script's next step into `gps_command_message` (`0x1011c6`, 80
+bytes, to `gps_last_program_message`) with `gps_request_build` and
+sends it with `drta_send_message`; waiting, it matches the response or
+retries.  `gps_link_reset` (`0x4bf3a`) clears it.  `gps_receive`
+(`0x4b846`) frames a response: `gps_response_lookup` (`0x4b7ac`) gives
+its index among the 49 IDs at `0x4fece`, `gps_response_index`
+(`0x101396`), and its length, `gps_response_length` (`0x101398`), and
+`gps_response_remaining` (`0x10139a`) counts the length less 6 down to
+the checksum byte.
+
+`gps_commands_blocked` (`0x1011c4`), set by `disable_gps_cmds`
+(`diag_disable_gps_cmds`, `0x1b74e`), makes `gpsm_task` answer a class
+0 or 1 request with code 0 instead of running it, and the GPS Process
+Monitor print "GPS receiver commands are blocked".
+`status_screen_print_interval` (`0x1011c5`) is `pstat`'s argument made
+negative (`diag_pstat`, `0x1b766`): while it is not 0 `gpsm_task`
+takes `status_screen_snapshot` and prints it, at once while it is
+negative, which it then makes positive, and then each time that many
+seconds have passed.  `gps_init` (`0x4bef6`) clears both.
+
+`gps_request_post` (`0x4bd2c`) sets `command_monitor_result`
+(`0x101428`) to 9 for a request from sender 3, the command monitor,
+and `status_monitor_result` (`0x101429`) for any other, the status
+monitor's 4; `gps_count_response` (`0x4b9e6`) stores the request's
+result code there in place of sending it to `plla`.
+`command_monitor` (`0x4b46e`) waits on each while it is 9.
+`status_without_traim_count` (`0x10142a`) is its count of `@@Ba` with a
+new time since the last `@@Bn`, while `gps.raim.rate` is set; at 7 the
+status monitor requests the messages again.
+
+## The status snapshots
+
+`status_snapshot` (`0x4a636`) fills a `status_snapshot_record`, `0x12e`
+bytes, under a raised interrupt mask, and `status_screen` (`0x4a8ea`)
+prints one.  It takes the loop's stage and suffix indexes, the TFOM,
+FFOM, the time-interval reading and mean, the holdover state and
+limits, the `:KENneth` values, the satellite sets and lists
+(`satellite_sets_build`, `satellite_status_list`), the GPS flags, the
+date and time, the time zone, the cable delay, mask angle, the
+position with its source ("INIT ", "AVG " or empty) and the survey's
+count and duration, and `status_hardware_condition`.  The date and time
+at `+0xf8` and `+0xfc` are `gps.status`'s made local while
+`get_date_time` reports a time, else the clock's, with `+0x108` set.
+There are three, end to end from `0x10142c` but for two cells:
+
+| Address | Name | Taken by |
+| ------- | ---- | -------- |
+| `0x10142c` | `status_screen_snapshot` | `gpsm_task`'s `pstat` print, `status_screen_print` (`0x4afd6`, `:SYSTem:PRINt?`) and `gps_console_request` (`0x4c572`) |
+| `0x101560` | `status_snapshot_latest` | `status_snapshot_update` (`0x4c870`), at each `@@Ea` but those below |
+| `0x10168e` | `status_snapshot_flagged` | the same, at an `@@Ea` of 03:14:07 or 06:28:15, copying the command log beside it |
+
+`status_snapshot_last_time` (`0x10155c`) is the `@@Ea` time
+`status_snapshot_update` was last given; one of those two times twice in
+a row sets `status_snapshots_frozen` (`0x10155a`), after which it takes
+no more, and `gps_print_1pps` (`0x4c9e2`) prints the last two and the
+log's copy instead of "(no GPS receiver errors were logged)".
+`gpsm_task` clears both.

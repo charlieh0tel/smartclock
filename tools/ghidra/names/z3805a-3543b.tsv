@@ -293,7 +293,7 @@
 0x100c6a	label	gps	structures.md	memset(&gps, 0, 0x55a); the cells the Oncore messages' decoders fill, and the GPS task's state	gps_state
 0x102162	label	pll	structures.md	memset(&pll, 0, 0x3d6); the loop's stage, efc, tfom and EFC history	pll_state
 0x102ecc	label	duartb_applied	structures.md	channel B's serial settings as last applied	duartb_applied_settings
-0x102ed0	label	duart_registers	structures.md	what the code last wrote to the DUART's write-only registers	duart_shadow
+0x102ed0	label	duart_shadow	structures.md	what the code last wrote to the DUART's write-only registers	duart_shadow_registers
 0x102edd	label	duarta_ring	structures.md	DUART channel A's receive ring, the GPS receiver's	serial_ring
 0x102fe0	label	duarta	structures.md	DUART channel A's driver state, the GPS receiver's link	duarta_driver
 0x102fea	label	duartb_ring	structures.md	DUART channel B's receive ring, the host port's	serial_ring
@@ -1561,3 +1561,4 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0xfff900	label	gpt	MC68331UM	the general-purpose timer	gpt_registers
 0xfffa00	label	sim	MC68331UM	the system integration module	sim_registers
 0xfffc00	label	qsm	MC68331UM	the queued serial module: the SCI and the QSPI	qsm_registers
+0x200000	label	duart	MC68681	the 68681 DUART on chip select 8: channel A the GPS receiver's, channel B the host port	duart_registers

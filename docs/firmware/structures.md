@@ -680,8 +680,8 @@ count down.
 
 The 68681's mode, clock-select, auxiliary-control, interrupt-mask,
 counter and output-configuration registers cannot be read back, so
-the code keeps what it last wrote to each in `duart_registers`
-(`0x102ed0`, `duart_shadow`, 13 bytes, in the order MR1A, MR2A, CSRA,
+the code keeps what it last wrote to each in `duart_shadow`
+(`0x102ed0`, `duart_shadow_registers`, 13 bytes, in the order MR1A, MR2A, CSRA,
 ACR, IMR, CTUR, CTLR, MR1B, MR2B, CSRB, OPCR), changes the bits it
 wants and writes the whole: `duartb_isr` and `drtb_puts` turn channel
 B's transmit interrupt on and off through the IMR's at `+4`.  `+0xb`

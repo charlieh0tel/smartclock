@@ -194,6 +194,16 @@ In `motorola/`.
                              status bits, chip-select encoding and
                              SCI baud-rate formula, cited from
                              `docs/firmware/`.
+  MC68681.pdf                "MC68681 Dual Asynchronous Receiver/
+                             Transmitter (DUART)", Motorola, Advance
+                             Information, September 1985, as scanned
+                             by bitsavers.org (components/motorola/
+                             68000/).  The DUART on chip select 8:
+                             its register map and bits.  The
+                             firmware programs the IVR, so the part
+                             is a 68681, not a 2681; its maker and
+                             exact part are not confirmed from a
+                             board.
 
 Motorola / Synergy Systems
 --------------------------

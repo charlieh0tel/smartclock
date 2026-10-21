@@ -265,18 +265,19 @@ part of what they change.  In order:
 3. `SmartClockSetup.java` again, now over the installer too, with
    `types=tools/ghidra/types/smartclock.h`,
    `types=tools/ghidra/types/mc68331.h`,
+   `types=tools/ghidra/types/mc68681.h`,
    `names=tools/ghidra/names/IMAGE.tsv`, `scpi=FILE` from
    `smartclock-cli dump-scpi --handlers IMAGE` and
    `pforth=docs/firmware/pforth/IMAGE.txt`.
 4. `SmartClockForth.java`.
 5. `SmartClockStackParameters.java`.
 6. `SmartClockFormatStrings.java`.
-7. `SmartClockExportC.java FILE defines=tools/ghidra/types/mc68331.h`.
+7. `SmartClockExportC.java FILE defines=tools/ghidra/types/mc68331.h
+   defines=tools/ghidra/types/mc68681.h`.
 
 **Setup** makes the ROM read-only, so values loaded from it fold to
 constants; maps RAM, the DUART, EEPROM, the CS4 and CS5 ranges and the
-GPT, SIM and QSM, the I/O ones volatile; labels the DUART's
-registers; types both
+GPT, SIM and QSM, the I/O ones volatile; types both
 vector tables, the boot one at `0x0` and the primary's at `0x10000`,
 and makes a function at each handler; and types the string tables,
 removing the code analysis decoded in them (a 0x61, `a`, is a `bsr`, so
@@ -419,9 +420,18 @@ what Ghidra parses and the exporter copies into the C (`defines=`).
 The exporter then names the constants written to or tested in a
 register by those bits, where every bit has a name, so that the C
 reads `qsm.sccr1 = uVar1 | SCCR1_TIE` and `uVar1 & ~SCCR1_PE`; the
-ports' bits, the board's wiring, stay numbers.  The DUART is still
-labeled register by register, its bits unnamed, for want of its data
-sheet here.
+ports' bits, the board's wiring, stay numbers.  `types/mc68681.h` does
+the same for the DUART, `duart` (`0x200000`), from Motorola's MC68681
+data sheet (Tables 4-1 and 4-5): a channel's registers are a
+`duart_channel`, `duart.a` and `duart.b`, and a register read and the
+one written at its address are one field, named read then write,
+`sr_csr`, whose constant a store names by the written register's bits
+and a test by the read one's.  A register whose codes are not single
+bits, the command register's, is named only by a code it equals, so
+that `duart.b.cr = CR_RESET_RECEIVER`, and a code is never split into
+bits that do not mean it.  The code's shadow of the DUART's write-only
+registers, `duart_shadow`, is named by the same bits:
+`duart_shadow.imr & ~IMR_TXRDYB`.
 
 `types/smartclock.h` declares the structures (`structures.md`), parsed
 into the program before the names so a row may use them: a label's

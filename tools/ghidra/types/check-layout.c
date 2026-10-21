@@ -9,6 +9,7 @@
 
 #include "smartclock.h"
 #include "mc68331.h"
+#include "mc68681.h"
 
 #define CHECK_SIZE(type, size) _Static_assert(sizeof(type) == (size), #type)
 #define CHECK_FIELD(type, field, offset) \
@@ -42,10 +43,10 @@ CHECK_FIELD(duarta_driver, overrun, 0x102fe6 - 0x102fe0);
 CHECK_FIELD(duarta_driver, least_free, 0x102fe9 - 0x102fe0);
 
 CHECK_SIZE(duartb_applied_settings, 0x102ed0 - 0x102ecc);
-CHECK_SIZE(duart_shadow, 0x102edd - 0x102ed0);
-CHECK_FIELD(duart_shadow, imr, 0x102ed4 - 0x102ed0);
-CHECK_FIELD(duart_shadow, mr1b, 0x102ed7 - 0x102ed0);
-CHECK_FIELD(duart_shadow, output_reset, 0x102edb - 0x102ed0);
+CHECK_SIZE(duart_shadow_registers, 0x102edd - 0x102ed0);
+CHECK_FIELD(duart_shadow_registers, imr, 0x102ed4 - 0x102ed0);
+CHECK_FIELD(duart_shadow_registers, mr1b, 0x102ed7 - 0x102ed0);
+CHECK_FIELD(duart_shadow_registers, output_reset, 0x102edb - 0x102ed0);
 
 CHECK_SIZE(exchange_token, 16);
 CHECK_SIZE(sci_exchange_state, 0x103188 - 0x103150);
@@ -396,3 +397,14 @@ CHECK_FIELD(qsm_registers, spsr, 0xfffc1f - 0xfffc00);
 CHECK_FIELD(qsm_registers, rr, 0xfffd00 - 0xfffc00);
 CHECK_FIELD(qsm_registers, tr, 0xfffd20 - 0xfffc00);
 CHECK_FIELD(qsm_registers, cr, 0xfffd40 - 0xfffc00);
+
+/* the 68681: Table 4-1, register n at 2n + 1 */
+CHECK_SIZE(duart_channel, 8);
+CHECK_FIELD(duart_channel, sr_csr, 0x200003 - 0x200000);
+CHECK_FIELD(duart_channel, rb_tb, 0x200007 - 0x200000);
+CHECK_SIZE(duart_registers, 0x20);
+CHECK_FIELD(duart_registers, isr_imr, 0x20000b - 0x200000);
+CHECK_FIELD(duart_registers, b, 0x200010 - 0x200000);
+CHECK_FIELD(duart_registers, ivr, 0x200019 - 0x200000);
+CHECK_FIELD(duart_registers, start_sopbc, 0x20001d - 0x200000);
+CHECK_FIELD(duart_registers, stop_ropbc, 0x20001f - 0x200000);

@@ -1,7 +1,8 @@
 // Prepares a SmartClock CPU32 firmware image (Z3801A / Z3805A family)
-// imported raw at address 0: memory map, peripheral register labels,
-// both vector tables, string tables, the compiler's PC-relative switch
-// tables, flow that analysis got wrong, and names.  Safe to run again.
+// imported raw at address 0: memory map, both vector tables, string
+// tables, the compiler's PC-relative switch tables, flow that analysis
+// got wrong, and names, the peripherals' registers among them as the
+// types headers lay them out.  Safe to run again.
 //
 // Arguments, any of:
 //
@@ -140,7 +141,6 @@ public class SmartClockSetup extends GhidraScript {
 	private record Region(String name, long base, long size, boolean io) {}
 
 	/** A named register: absolute address and width in bytes (1 or 2). */
-	private record PeripheralRegister(long address, String name, int size) {}
 
 	/** A recovered switch: the jmp, its table, and each case target in index order. */
 	private record Switch(Address jmp, Address table, List<Address> targets) {}
@@ -317,21 +317,6 @@ public class SmartClockSetup extends GhidraScript {
 		new Region("QSM", 0xfffc00, 0x150, true),
 	};
 
-	private static final PeripheralRegister[] REGISTERS = {
-		// The GPT, the SIM and the QSM are structures in types/mc68331.h,
-		// which the names file gives their bases.
-		// 68681 DUART on an 8-bit port at odd addresses: register n at 2n+1.
-		// Read and write names differ; both are given where they do.
-		new PeripheralRegister(0x200001, "DUART_MR1A_MR2A", 1), new PeripheralRegister(0x200003, "DUART_SRA_CSRA", 1),
-		new PeripheralRegister(0x200005, "DUART_CRA", 1), new PeripheralRegister(0x200007, "DUART_RBA_TBA", 1),
-		new PeripheralRegister(0x200009, "DUART_IPCR_ACR", 1), new PeripheralRegister(0x20000b, "DUART_ISR_IMR", 1),
-		new PeripheralRegister(0x20000d, "DUART_CUR_CTUR", 1), new PeripheralRegister(0x20000f, "DUART_CLR_CTLR", 1),
-		new PeripheralRegister(0x200011, "DUART_MR1B_MR2B", 1), new PeripheralRegister(0x200013, "DUART_SRB_CSRB", 1),
-		new PeripheralRegister(0x200015, "DUART_CRB", 1), new PeripheralRegister(0x200017, "DUART_RBB_TBB", 1),
-		new PeripheralRegister(0x200019, "DUART_IVR", 1), new PeripheralRegister(0x20001b, "DUART_IP_OPCR", 1),
-		new PeripheralRegister(0x20001d, "DUART_START_SOPBC", 1), new PeripheralRegister(0x20001f, "DUART_STOP_ROPBC", 1),
-	};
-
 	/** CPU32 vector names, MC68331UM Table 5-2; others are named by number. */
 	private static final Map<Integer, String> VECTOR_NAMES = new TreeMap<>(Map.ofEntries(
 		Map.entry(0, "initial_sp"), Map.entry(1, "reset"), Map.entry(2, "bus_error"),
@@ -350,7 +335,6 @@ public class SmartClockSetup extends GhidraScript {
 	@Override
 	protected void run() throws Exception {
 		mapMemory();
-		labelRegisters();
 		labelVectors(BOOT_VECTORS, "boot");
 		labelVectors(PRIMARY_VECTORS, "primary");
 		typeStrings();
@@ -1023,16 +1007,6 @@ public class SmartClockSetup extends GhidraScript {
 			block.setWrite(true);
 			block.setExecute(false);
 			block.setVolatile(region.io());
-		}
-	}
-
-	private void labelRegisters() throws Exception {
-		for (PeripheralRegister register : REGISTERS) {
-			Address address = toAddr(register.address());
-			createLabel(address, register.name(), true, SourceType.USER_DEFINED);
-			DataType type = register.size() == 2 ? WordDataType.dataType : ByteDataType.dataType;
-			clearListing(address, address.add(register.size() - 1));
-			createData(address, type);
 		}
 	}
 

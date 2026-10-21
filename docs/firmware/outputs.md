@@ -161,10 +161,11 @@ The bank is six LEDs (the owner, 2026-10-20), and the DUART's output
 port has six general-purpose bits, OP2 to OP7: `duart_init` clears
 the OPCR, so none carries a counter or a status, and
 `duart_output_bits` masks with `0xfc`.  The power-on code uses them
-as a self-test display.  An SC2681's output pins are the complement
-of its output port register (OPR), so setting a bit (`SOPBC`,
-`0x20001d`) drives the pin low and resetting it (`ROPBC`, `0x20001f`)
-drives it high.  The code reads as if an LED lights on a high pin:
+as a self-test display.  The output port register (OPR) holds "the
+complement of the logic levels output at the output port pins"
+(MC68681 data sheet, 4.2.12), so setting a bit (`SOPBC`, `0x20001d`)
+drives the pin low and resetting it (`ROPBC`, `0x20001f`) drives it
+high.  The code reads as if an LED lights on a high pin:
 
 | Bit | Lit when | Written at (Z3805A) |
 | --- | -------- | ------------------- |

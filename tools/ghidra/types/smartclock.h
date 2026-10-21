@@ -263,8 +263,9 @@ typedef struct duartb_applied_settings {
 } duartb_applied_settings;
 
 /* What the code last wrote to the 68681's write-only registers, at
- * 0x102ed0, so that it can change some bits of one and write it whole. */
-typedef struct duart_shadow {
+ * 0x102ed0, so that it can change some bits of one and write it whole;
+ * their bits are mc68681.h's. */
+typedef struct duart_shadow_registers {
 	uint8_t mr1a;
 	uint8_t mr2a;
 	uint8_t csra;
@@ -278,7 +279,7 @@ typedef struct duart_shadow {
 	uint8_t opcr;
 	uint8_t output_reset;   /* +0x0b: the output bits reset, the failed self-tests' lamps */
 	uint8_t field_0c;       /* +0x0c: duart_init zeroes it; nothing reads it */
-} duart_shadow;
+} duart_shadow_registers;
 
 /* A routine that writes a character to a port. */
 typedef void putc_function(char c);

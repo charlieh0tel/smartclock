@@ -628,20 +628,28 @@ public class SmartClockExportC extends GhidraScript {
 	/** The suffix of a structure laying out a module's registers. */
 	private static final String REGISTERS_SUFFIX = "_registers";
 	/** A register field's assignment, test or constant store: groups variable, field, and the rest. */
+	private static final String MODULE_PATH = "\\b([A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)*)\\.(\\w+)";
 	private static final Pattern REGISTER_ASSIGNMENT = Pattern.compile(
-		"\\b(\\w+)\\.(\\w+) = ([^;]*?)([|&]) (0x[0-9a-f]+|[0-9]+);");
+		MODULE_PATH + " = ([^;]*?)([|&]) (0x[0-9a-f]+|[0-9]+);");
 	private static final Pattern REGISTER_TEST = Pattern.compile(
-		"\\b(\\w+)\\.(\\w+) & (0x[0-9a-f]+|[0-9]+)\\)");
+		MODULE_PATH + " & (0x[0-9a-f]+|[0-9]+)\\)");
 	private static final Pattern REGISTER_STORE = Pattern.compile(
-		"\\b(\\w+)\\.(\\w+) = (0x[0-9a-f]+|[0-9]+);");
+		MODULE_PATH + " = (0x[0-9a-f]+|[0-9]+);");
 
 	/** Each register's single bits, by its name upper-cased, from the defines= headers. */
 	private Map<String, TreeMap<Long, String>> registerBitNames;
-	/** Each module variable's register fields and their widths in bits. */
+	/**
+	 * Each register's named values but its masks and shifts, by its name,
+	 * for a register whose codes are not all single bits -- a command
+	 * register's -- which only an exact value may name.
+	 */
+	private Map<String, Map<Long, String>> registerCodes;
+	/** Each module's register fields and their widths in bits, by its path: duart.a for a channel. */
 	private Map<String, Map<String, Integer>> moduleFields;
 
 	private void collectRegisterBits() throws Exception {
 		registerBitNames = new HashMap<>();
+		Map<String, Map<Long, String>> values = new HashMap<>();
 		for (String arg : getScriptArgs()) {
 			if (!arg.startsWith(DEFINES)) {
 				continue;
@@ -652,38 +660,66 @@ public class SmartClockExportC extends GhidraScript {
 				String name = define.group(1);
 				long value = Long.decode(define.group(2));
 				int underscore = name.indexOf('_');
-				if (underscore < 0 || name.endsWith("_MASK") || name.endsWith("_SHIFT")
-					|| Long.bitCount(value) != 1) {
+				if (underscore < 0 || name.endsWith("_MASK") || name.endsWith("_SHIFT") || value == 0) {
 					continue;
 				}
-				registerBitNames.computeIfAbsent(name.substring(0, underscore), k -> new TreeMap<>())
-					.put(value, name);
+				String register = name.substring(0, underscore);
+				values.computeIfAbsent(register, k -> new HashMap<>()).put(value, name);
+				if (Long.bitCount(value) == 1) {
+					registerBitNames.computeIfAbsent(register, k -> new TreeMap<>()).put(value, name);
+				}
+			}
+		}
+		registerCodes = new HashMap<>();
+		for (Map.Entry<String, Map<Long, String>> register : values.entrySet()) {
+			if (register.getValue().keySet().stream().anyMatch(v -> Long.bitCount(v) != 1)) {
+				registerCodes.put(register.getKey(), register.getValue());
 			}
 		}
 		moduleFields = new HashMap<>();
 		for (Data data : currentProgram.getListing().getDefinedData(true)) {
 			if (data.getLabel() != null && data.getDataType() instanceof Structure module
 				&& module.getName().endsWith(REGISTERS_SUFFIX)) {
-				Map<String, Integer> fields = new HashMap<>();
-				for (DataTypeComponent component : module.getDefinedComponents()) {
-					if (component.getFieldName() != null) {
-						fields.put(component.getFieldName(), 8 * component.getLength());
-					}
-				}
-				moduleFields.put(data.getLabel(), fields);
+				addModuleFields(data.getLabel(), module);
 			}
 		}
+	}
+
+	/** Records a module's fields under its path, and its sub-structures' under theirs. */
+	private void addModuleFields(String path, Structure module) {
+		Map<String, Integer> fields = new HashMap<>();
+		for (DataTypeComponent component : module.getDefinedComponents()) {
+			if (component.getFieldName() == null) {
+				continue;
+			}
+			fields.put(component.getFieldName(), 8 * component.getLength());
+			if (component.getDataType() instanceof Structure part) {
+				addModuleFields(path + "." + component.getFieldName(), part);
+			}
+		}
+		moduleFields.put(path, fields);
 	}
 
 	/**
 	 * A register's value as the OR of its bits' names, or, for a mask
 	 * that clears more bits than it keeps, ~ of the OR of the bits it
-	 * clears; null unless every bit has a name.
+	 * clears; for a register of codes, the one code it equals.  Null
+	 * unless every bit has a name.  A field one register read and another
+	 * written, sr_csr, is named by the one written for a store, the one
+	 * read for a test.
 	 */
-	private String bitNames(String variable, String field, long value, boolean mask) {
+	private String bitNames(String variable, String field, long value, boolean mask, boolean write) {
 		Map<String, Integer> fields = moduleFields.get(variable);
-		TreeMap<Long, String> bits = registerBitNames.get(field.toUpperCase());
-		if (fields == null || bits == null || !fields.containsKey(field)) {
+		if (fields == null || !fields.containsKey(field)) {
+			return null;
+		}
+		String[] parts = field.toUpperCase().split("_");
+		String register = parts.length == 2 ? parts[write ? 1 : 0] : field.toUpperCase();
+		if (registerCodes.containsKey(register)) {
+			return mask ? null : registerCodes.get(register).get(value);
+		}
+		TreeMap<Long, String> bits = registerBitNames.get(register);
+		if (bits == null) {
 			return null;
 		}
 		int width = fields.get(field);
@@ -723,7 +759,7 @@ public class SmartClockExportC extends GhidraScript {
 		StringBuilder out = new StringBuilder();
 		while (assignment.find()) {
 			String names = bitNames(assignment.group(1), assignment.group(2),
-				Long.decode(assignment.group(5)), assignment.group(4).equals("&"));
+				Long.decode(assignment.group(5)), assignment.group(4).equals("&"), true);
 			assignment.appendReplacement(out, Matcher.quoteReplacement(names == null
 				? assignment.group()
 				: assignment.group(1) + "." + assignment.group(2) + " = " + assignment.group(3)
@@ -734,7 +770,7 @@ public class SmartClockExportC extends GhidraScript {
 		Matcher test = REGISTER_TEST.matcher(out.toString());
 		out = new StringBuilder();
 		while (test.find()) {
-			String names = bitNames(test.group(1), test.group(2), Long.decode(test.group(3)), false);
+			String names = bitNames(test.group(1), test.group(2), Long.decode(test.group(3)), false, false);
 			test.appendReplacement(out, Matcher.quoteReplacement(names == null ? test.group()
 				: test.group(1) + "." + test.group(2) + " & "
 					+ (names.contains(" ") ? "(" + names + ")" : names) + ")"));
@@ -743,7 +779,7 @@ public class SmartClockExportC extends GhidraScript {
 		Matcher store = REGISTER_STORE.matcher(out.toString());
 		out = new StringBuilder();
 		while (store.find()) {
-			String names = bitNames(store.group(1), store.group(2), Long.decode(store.group(3)), false);
+			String names = bitNames(store.group(1), store.group(2), Long.decode(store.group(3)), false, true);
 			store.appendReplacement(out, Matcher.quoteReplacement(names == null ? store.group()
 				: store.group(1) + "." + store.group(2) + " = " + names + ";"));
 		}

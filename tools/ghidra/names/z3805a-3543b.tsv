@@ -265,7 +265,7 @@
 0x2be9c	function	status_report	structures.md	puts a code into the status system once status_ready
 0x2f53c	function	status_happening	structures.md	:DIAG:STAT:HAPP passes it a condition, 0 to 0x38
 0x298fc	function	scpi_numeric_get	structures.md	a parameter's value, or its minimum or maximum, from its descriptor	float scpi_numeric_get(scpi_numeric_param *param, int index, int16_t which, int16_t bound)	convention=c; confidence=documented; out=D0 float
-0x2982c	function	scpi_numeric_set	structures.md	sends a parameter's new value, or its minimum or maximum, to pllc: a float's value, its address as values[1], or an integer's as values[0]; every caller pushes both, the other 0	void scpi_numeric_set(void *param, int index, short kind, short bound, uint32_t float_value, int32_t integer_value, uint8_t source)
+0x2982c	function	scpi_numeric_set	structures.md	sends a parameter's new value, or its minimum or maximum, to pllc: a float's value, its address as values[1], or an integer's as values[0]; every caller pushes both, the other 0	void scpi_numeric_set(scpi_numeric_param *param, int index, short kind, short bound, uint32_t float_value, int32_t integer_value, uint8_t source)
 0x1304a	function	root_task	structures.md	stores its own task id in task_root, sets up the status system, creates the exchanges and tasks and starts them
 0x4bf4a	function	gpsm_task	structures.md	root_task starts gpsm here
 0x4bf4a	local	received	structures.md	the request it takes from gpsx_exchange	gps_request_entry @ -0xde
@@ -286,7 +286,7 @@
 0x29f60	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
 0x29f94	function	pllc_request_e	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and both values through a pointer
 0x29f94	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
-0x46636	function	gpsx_send	structures.md	copies four longs and sends them to gpsx_exchange
+0x46636	function	gpsx_send	structures.md	copies four longs and sends them to gpsx_exchange	uint8_t gpsx_send(int16_t code, uint8_t argument_mode, int32_t *arguments, uint8_t ack_awaited)
 0x46636	local	request	structures.md	the request it sends gpsx_exchange	gps_request_entry @ -0x1e
 0x3082e	function	record_checksum	structures.md	the sum and its complement of an EEPROM record's bytes after the first two	uint16_t record_checksum(void *record, uint16_t length)
 0x1f53a	function	hdac_set	structures.md	a 6-bit value into one half of an hdac word, written with device1_write; hdac_write leads here
@@ -446,7 +446,7 @@
 0x107ee	function	klok_print_entries	structures.md	"at:", "period:", "function address:", "event class:" for each klok entry
 0x31762	function	log_read	structures.md	formats a log entry, "Log %03d:%04d%02d%02d.%02d:%02d:%02d"
 0x31bba	function	log_page_clear	structures.md	memset of a log page, 0x40 bytes
-0x31bd0	function	log_page_free_entry	structures.md	the first entry of a page with no format
+0x31bd0	function	log_page_free_entry	structures.md	the first entry of a page with no format	log_entry *log_page_free_entry(log_page *page)
 0x4ca6c	function	gps_print_process_monitor	structures.md	"GPS Process Monitor", gps_counts
 0x4076a	function	fpga_read	structures.md	sets the register in fconf_regs[1]'s address bits, reads 0x304000, restores them; "old_addr, fconf_regs[1] = %x"	uint8_t fpga_read(uint8_t reg)
 0x101266	label	gps_response_buffer	structures.md	the GPS Process Monitor's "Response Buffer", printed %hx; gps_receive frames bytes from the engine into it	uint8_t[20]
@@ -467,8 +467,8 @@
 0x1f646	function	efc_write	structures.md	the efc_write word's: the value to device 7, then a strobe at 0x306000
 0x20acc	function	qspi_write	structures.md	psos_io_write to device 0x100 | n; hdac_write_all writes device 2, efc_write device 7
 0x20aec	function	qspi_read	structures.md	psos_io_read to device 0x100 | n
-0x284b6	function	status_read_event	structures.md	the STATus EVENt, *ESR? and *STB? queries' read of a register's event value
-0x28506	function	status_read_condition	structures.md	the STATus CONDition queries' read of a register's condition
+0x284b6	function	status_read_event	structures.md	the STATus EVENt, *ESR? and *STB? queries' read of a register's event value	void status_read_event(status_model *status, int index, uint16_t *event)
+0x28506	function	status_read_condition	structures.md	the STATus CONDition queries' read of a register's condition	void status_read_condition(status_model *status, int index, uint16_t *condition)
 0x16a4c	function	os_process_report	structures.md	:DIAG:OS:PROC?'s report of the tasks
 0x16ace	function	os_memory_report	structures.md	:DIAG:OS:MEM?'s report, "Process Memseg size(bytes) next last neighbor key"
 0x16e5a	function	psos_debug_output	structures.md	the debug_psos word's and :DIAG:SYST:DOUT's switch
@@ -493,12 +493,12 @@
 0x11ba0	label	exception_names	read	the name of each exception vector from 2, bus error, to 58, PMMU access violation, which exception_name indexes by the vector offset less 8	char *[57]
 #
 # batch 3, the most-called unnamed functions, by their code and callers
-0x29ade	function	scpi_query_failed	context	72 SCPI queries call it with -0x20; reports it through status_report_from and zeroes the reply's length at +4
+0x29ade	function	scpi_query_failed	context	72 SCPI queries call it with -0x20; reports it through status_report_from and zeroes the reply's length at +4	int scpi_query_failed(char code, void *response)
 0x2bf00	function	status_report_from	context	status_report(code) for a command from source 0 or 2, not 1, 3 or 4; every caller passes return_zero()
 0x2e6fc	function	skip_spaces	context	advances a char ** past spaces
 0x136f6	function	get_uptime	context	returns uptime; efc_history_update divides it by 2700 for an entry's time	uint32_t get_uptime(void)
 0x44fbc	function	interval_next_reading	context	the next one-second interval reading, into *reading as a float, and its flag; waits instead while a 1PPS is dead; updates the EFC history
-0x4b9e6	function	gps_count_response	context	counts a GPS response by its kind in gps_counts: successes, rejects, aborts, unknown_sender, unknown_command, busy and the rest
+0x4b9e6	function	gps_count_response	context	counts a GPS response by its kind in gps_counts: successes, rejects, aborts, unknown_sender, unknown_command, busy and the rest	int gps_count_response(char kind, gps_request_entry *request)
 0x46620	function	gps_ack_received	context	returns gps_ack_ready, clearing gps_ack_awaited once it is set; the ack checker 0x46838 polls it
 0x102585	label	gps_ack_ready	context	gpsx_send clears it; pllp_task sets it with gps_ack_code when the GPS task's answer comes back on plla	uint8_t
 0x102586	label	gps_ack_awaited	context	gpsx_send stores its last argument there	uint8_t
@@ -568,7 +568,7 @@
 0x4f02a	function	oncore_decode_fields	structures.md	the field-table byte code the GPS task's decoders run	byte * oncore_decode_fields(byte *param_1,byte *param_2,char *param_3)
 0x480c2	function	format_angle	context	an angle in mas as N, S, E or W by its sign and whether it is a latitude, then degrees and minutes
 0x47e32	function	mas_to_dms	context	mas into degrees (/ 3600000), minutes (/ 60000) and seconds (the rest / 1000.0); the position queries
-0x322b4	function	clamp_to_limits	context	clamps *value to *min and *max, reporting through report_clamped	int clamp_to_limits(int *param_1,undefined4 param_2,int *param_3,int *param_4,int param_5, byte param_6)
+0x322b4	function	clamp_to_limits	context	clamps *value to *min and *max, reporting through report_clamped	int clamp_to_limits(int32_t *value, int index, int32_t *minimum, int32_t *maximum, scpi_step *step, int source)
 0x31ff8	function	report_clamped	context	"Value too small, set to min limit" or "too large, set to max limit", and status_report_from(9)
 0x2979c	function	scpi_check_range	context	reports 9 when value is outside min..max; *ESE, *SRE and the STATus ENABle and transition setters
 0x3124a	function	eeprom_write	context	writes data split at 64-byte page boundaries with eeprom_write_page; happening 'I' on a failure
@@ -625,7 +625,7 @@
 0x3293a	local	record	read	the NV register record it builds and writes	nv_record @ -0x84
 0x3282c	function	nv_restore	structures.md	loads slot 0, else slot 1, else copies nv_settings_defaults over nv_settings, erases the older slot and saves
 0x32bc2	function	nv_load_slot	structures.md	loads the settings from slot nv_slot when its record is good
-0x328e0	function	nv_checksum	structures.md	the sum of a record's bytes 8 to 0x7f
+0x328e0	function	nv_checksum	structures.md	the sum of a record's bytes 8 to 0x7f	uint16_t nv_checksum(nv_record *record)
 0x3290e	function	nv_record_differs	structures.md	compares two records, nonzero when they differ
 0x327f4	function	nv_slot_erase	structures.md	clear_nv erases slots 0 and 1 with it
 0x101f62	label	nv_slot	structures.md	the slot nv_load_slot and nv_save use, 0 or 1	uint8_t
@@ -680,7 +680,7 @@
 0x32db2	label	nv_setting_params	structures.md	nv_save's second table, 18 setting descriptors	scpi_setting_param *[18]
 0x42c10	function	validate_num	structures.md	the firmware's own name, "pll_scpi: validate_num() -- too many in multiple": each new value through its descriptor's validate, into pll_scpi_validated
 0x4306a	function	finish_scpi_cmd	structures.md	the firmware's own name, "pll_scpi: finish_scpi_cmd() -- unknown structure type": stores the values by the descriptor's type, calls its hooks, and saves
-0x432bc	function	pll_scpi_command	structures.md	the pllc task's handling of one request: checks it, validate_num, reports, finish_scpi_cmd
+0x432bc	function	pll_scpi_command	structures.md	the pllc task's handling of one request: checks it, validate_num, reports, finish_scpi_cmd	void pll_scpi_command(pllc_request *request, uint8_t *reply_pending)
 0x43340	function	pll_scpi_receive	structures.md	takes a request from pllc_exchange and handles it
 0x43340	local	request	structures.md	the message it takes from pllc_exchange	pllc_request @ -0x1c
 0x4301a	function	scpi_param_saved_in_nv	structures.md	the descriptor's flags & 2; finish_scpi_cmd then calls nv_save
@@ -716,7 +716,7 @@
 # batch 5, by the strings they print
 0x42bc4	function	toggle_change	the firmware's own name, "pll_scpi: toggle_change() -- new value > max value"	applies a change to a PLL setting that toggles, refusing a value above its maximum
 0x42d02	function	validate_or_doaction	the firmware's own name, "pll_scpi: validate_or_doaction() -- unknown structure type"	checks a PLL SCPI request's value against its setting's descriptor, or carries it out
-0x431f4	function	get_setup_vars	the firmware's own name, "pll_scpi: get_setup_vars() -- unknown structure type"	finds the variables behind a PLL SCPI setting, by its descriptor's type
+0x431f4	function	get_setup_vars	the firmware's own name, "pll_scpi: get_setup_vars() -- unknown structure type"	finds the variables behind a PLL SCPI setting, by its descriptor's type	void get_setup_vars(pllc_request *request)
 0x43a90	function	holdover	loop.md's stage; "holdover - Error with measurement"	the loop's holdover stage, steering the oscillator without GPS
 0x43f9a	function	holdover_recovery	loop.md's stage; "holdover recovery - Error with measurement"	the loop's stage that recovers from holdover once GPS returns
 0x4429e	function	startup_pll	loop.md's stage; "startup_pll - Error with measurement"	the loop's start-up stage
@@ -744,15 +744,15 @@
 0x18600	function	selftest_print_failure	"FAIL:", "%s, error code: %02X"	prints a failed self-test's name and error code
 0x1606c	function	os_report_cpu	"Free CPU cycles: count 0x%08X, approx %2d%%"; os_process_report calls it	prints the free CPU cycles counted and the share they make
 0x16118	function	os_report_exchange	an exchange's line, "fifo", "prio"	prints one exchange's line of the kernel report
-0x161f6	function	task_status_name	"susp", "paus", "vblk", "xblk", "mblk", "spwn"	the four-letter name of a task's state	char * task_status_name(int param_1)
+0x161f6	function	task_status_name	"susp", "paus", "vblk", "xblk", "mblk", "spwn"	the four-letter name of a task's state	char *task_status_name(void *task)
 0x162d4	function	os_report_process	a process's line, ">> RESOURCES:", ">> EVENTS: W(0x%04x) S(0x%04x)"	prints one process's line of the kernel report, with its resources and events	void os_report_process(void *param_1, char *param_2, int param_3, undefined4 param_4, printf_function *print)
 0x1660a	function	os_report_process_summary	"%d Process(s) (%d avail); Total time: %-d ticks."	prints how many processes there are and the time they have used
 0x1665e	function	os_report_exchanges	"xid   XNAME  TYPE  ACC  maxQ  Qlen BLOCKED"	prints the kernel's exchanges, one line each
 0x166b0	function	os_report_exchange_summary	"%d Exchange(s) (%d avail).", "%d Msg buffer(s)"	prints how many exchanges and message buffers there are and are free
 0x1675a	function	os_report_processes	"pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CP"	prints the kernel's processes, one line each
 0x16828	function	os_report_regions	"Region strt       end  min     max    pend   USED"	prints the kernel's memory regions and their use
-0x16bb6	function	task_stack_info	"no system stack found"; task_stack_report's per-task stacks	measures a task's stacks for the stack report
-0x132f4	function	stack_usage_report	"User: %5u of %5u b   Supv: %5u of %5u b"	prints a task's user and supervisor stack use
+0x16bb6	function	task_stack_info	"no system stack found"; task_stack_report's per-task stacks	measures a task's stacks for the stack report	void task_stack_info(void *task, uint32_t *user_top, uint32_t *user_pointer, uint32_t *user_size, uint32_t *supervisor_top, uint32_t *supervisor_pointer, uint32_t *supervisor_size)
+0x132f4	function	stack_usage_report	"User: %5u of %5u b   Supv: %5u of %5u b"	prints a task's user and supervisor stack use	void stack_usage_report(void *task)
 0x1e766	function	duarta_isr	"DUARTA isr signaling SIG_SIQ"	the interrupt handler for DUART channel A, the GPS engine's
 0x1e7f6	function	duartb_isr	"DUARTB isr signaling SIGINTR", "SIG_SIQ"	the interrupt handler for DUART channel B
 0x22d70	function	fpga_setup	"setup fpga"	sets the FPGA up
@@ -774,8 +774,8 @@
 0x44f5e	function	sync_perform	"Peforming sync"	synchronizes the outputs to GPS time
 0x45bb8	function	pll_powerup_suffix_index	screen-format-strings.md's ladder: the power-up sub-state's suffix index	the power-up sub-state, as the status screen's suffix index
 0x4a8ea	function	status_screen	"Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status"	prints the receiver status screen
-0x49db0	function	status_screen_sync	"Synchronized to UTC", "Synchronized to GPS Time", "Assessing stability"	the status screen's synchronization line
-0x4a518	function	status_screen_mode_suffix	screen-format-strings.md's mode suffixes, ": OCXO warm-up" .. ": leap second determination", "[TI %9.9s]"	the status screen's suffix for the power-up sub-state
+0x49db0	function	status_screen_sync	"Synchronized to UTC", "Synchronized to GPS Time", "Assessing stability"	the status screen's synchronization line	void status_screen_sync(status_snapshot_record *snapshot, char *line)
+0x4a518	function	status_screen_mode_suffix	screen-format-strings.md's mode suffixes, ": OCXO warm-up" .. ": leap second determination", "[TI %9.9s]"	the status screen's suffix for the power-up sub-state	void status_screen_mode_suffix(char param_1, status_snapshot_record *snapshot, char *text)
 0x4a29c	function	status_screen_tfom	"TFOM     %d%13sFFOM    %2s", "1PPS TI %s", "HOLD THR %s", "Holdover Uncertainty"	the status screen's TFOM, FFOM, 1PPS TI and holdover lines
 0x49fcc	function	status_screen_position	"ANT DLY  %s", "Position", "Survey:", "% complete", "Suspended:"	the status screen's position and survey lines
 0x47f14	function	format_dms	"%c%4d:%02d:%06.3f", degrees, minutes and seconds	formats an angle as degrees, minutes and seconds to milliseconds
@@ -808,7 +808,7 @@
 0x49a6e	function	format_satellite_cell	context	a satellite's status screen cell: "%2d %3d", "Ignore", "Not OK", "Acq"
 0x49e5a	function	format_time	context	a packed time as "%02d:%02d:%02d", or "--:--:--"
 0x49eb4	function	format_date	context	a date as "%02d %s %04d", or "-- --- ----"
-0x49f30	function	status_screen_time	context	the screen's time with its reference, "GPS", "UTC", "LOCL GPS" or "LOCAL"
+0x49f30	function	status_screen_time	context	the screen's time with its reference, "GPS", "UTC", "LOCL GPS" or "LOCAL"	void status_screen_time(status_snapshot_record *snapshot, char *line)
 0x4816c	function	format_duration	context	seconds as "%02d:%02d:%04.1f [%s]"	void format_duration(double param_1,char *param_2)
 0x49210	function	gps_debug_status	context	gps.status as the "gs: %02d:%02d:%02d.%09d,..." debug line
 0x3313c	function	log_entry_text	context	one of 32 log entries as "Log %03d:%04d%02d%02d.%02d:%02d:%02d", or "Unused"
@@ -980,18 +980,18 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2628a	function	scpi_number_to_unsigned_long	docs/scpi/README.md, run	its magnitude as an unsigned 32-bit value	int scpi_number_to_unsigned_long(char *number, uint32_t *value, int scale)
 0x254ba	function	scpi_number_to_double	docs/scpi/README.md, run	as a double	int scpi_number_to_double(char *number, double *value, int scale)
 0x2632c	function	scpi_number_to_boolean	docs/scpi/README.md, read	nonzero after rounding	void scpi_number_to_boolean(char *number, uint16_t *value, int scale)
-0x25ea6	function	scpi_parse_short	docs/scpi/README.md, read	the suffix by scpi_apply_suffix, then scpi_number_to_short
-0x25ee6	function	scpi_parse_unsigned_short	docs/scpi/README.md, read	the suffix, then scpi_number_to_unsigned_short
-0x25f26	function	scpi_parse_long	docs/scpi/README.md, read	the suffix, then scpi_number_to_long
-0x25f66	function	scpi_parse_unsigned_long	docs/scpi/README.md, read	the suffix, then scpi_number_to_unsigned_long
-0x25fa6	function	scpi_parse_float	docs/scpi/README.md, read	the suffix, then a float within 9.9e37, else -11
-0x2602e	function	scpi_parse_double	docs/scpi/README.md, read	the suffix, then a double within 9.9e37, else -11
+0x25ea6	function	scpi_parse_short	docs/scpi/README.md, read	the suffix by scpi_apply_suffix, then scpi_number_to_short	int scpi_parse_short(char *number, void *param_2, int16_t *value, scpi_unit *units)
+0x25ee6	function	scpi_parse_unsigned_short	docs/scpi/README.md, read	the suffix, then scpi_number_to_unsigned_short	int scpi_parse_unsigned_short(char *number, void *param_2, uint16_t *value, scpi_unit *units)
+0x25f26	function	scpi_parse_long	docs/scpi/README.md, read	the suffix, then scpi_number_to_long	int scpi_parse_long(char *number, void *param_2, int32_t *value, scpi_unit *units)
+0x25f66	function	scpi_parse_unsigned_long	docs/scpi/README.md, read	the suffix, then scpi_number_to_unsigned_long	int scpi_parse_unsigned_long(char *number, void *param_2, uint32_t *value, scpi_unit *units)
+0x25fa6	function	scpi_parse_float	docs/scpi/README.md, read	the suffix, then a float within 9.9e37, else -11	int scpi_parse_float(char *number, void *param_2, float *value, scpi_unit *units)
+0x2602e	function	scpi_parse_double	docs/scpi/README.md, read	the suffix, then a double within 9.9e37, else -11	int scpi_parse_double(char *number, void *param_2, double *value, scpi_unit *units)
 0x25d8c	function	scpi_parse_boolean	docs/scpi/README.md, read	ON as 1, OFF as 0
-0x25de0	function	scpi_parse_boolean_number	docs/scpi/README.md, read	a number as a boolean by scpi_number_to_boolean; -9 with a suffix
+0x25de0	function	scpi_parse_boolean_number	docs/scpi/README.md, read	a number as a boolean by scpi_number_to_boolean; -9 with a suffix	int scpi_parse_boolean_number(char *number, void *param_2, uint16_t *value, void *param_4)
 0x25e42	function	scpi_parse_choice	docs/scpi/README.md, read	the index of the keyword in the node's list, or the value mapped to it; -28 with no list, -27 for no match
 0x25d70	function	scpi_parse_string	docs/scpi/README.md, read	the string's pointer and length
-0x27ae4	function	scpi_apply_suffix	docs/scpi/README.md, read	matches the token's units suffix against the node's table, setting its scale and unit; -9 if none is allowed, -31 if unknown
-0x27a2a	function	scpi_match_suffix	docs/scpi/README.md, read	scans the 6-byte unit table, text and exponent, allowing a two-character multiplier before the unit
+0x27ae4	function	scpi_apply_suffix	docs/scpi/README.md, read	matches the token's units suffix against the node's table, setting its scale and unit; -9 if none is allowed, -31 if unknown	int scpi_apply_suffix(char *number, scpi_unit *units)
+0x27a2a	function	scpi_match_suffix	docs/scpi/README.md, read	scans the 6-byte unit table, text and exponent, allowing a two-character multiplier before the unit	short scpi_match_suffix(int length, char *suffix, scpi_unit *units, int16_t *scale)
 0x24e18	function	scpi_double_to_decimal	docs/scpi/README.md, run	the double in D0:D1 as a sign word, ASCII digits, D7 and two more, and the exponent of 0.d1d2..., into the record at A0; Z is set on failure, for a subnormal, infinite or NaN double, and its caller reads nothing else, though D0.w holds -8		convention=register; confidence=run; in=D0:D1 double value, D7 short digits, A0 char *record; returns=ccr; family=scpi-engine
 0x24d42	function	scpi_round_decimal	docs/scpi/README.md, read	rounds the decimal record at A2 to D0.w digits: adds 5 at that digit and carries left, a carry off the front writing 1 and raising the exponent, and fills the digits after with 0		convention=register; confidence=read; in=A2 char *record, D0 short digits; family=scpi-engine
 0x24d88	function	scpi_decimal_to_text_unused	docs/scpi/README.md, read	writes the decimal record at A0 as NR3 text at A1, D0.w digits: the sign, the first digit, a point, the rest, E and the exponent by the digit pairs at 0x25c82; nothing calls it		convention=register; confidence=read; in=A0 char *record, A1 char *text, D0 short digits; family=scpi-engine
@@ -1011,22 +1011,22 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2c810	local	milli_step	read	the seconds' step, 0.001 and load_long	scpi_step @ -0x34
 0x2cd94	local	position	read	the three longs copy_longs_locked copies from 0x101eaa	int32_t[3] @ -0x1c
 0x2553a	local	decimal	read	scpi_double_to_decimal's record	scpi_decimal @ -0x1c
-0x264e0	function	scpi_unsigned_to_digits	docs/scpi/README.md, read	decimal digits right-aligned in a 17-byte buffer, -40 if they do not fit
+0x264e0	function	scpi_unsigned_to_digits	docs/scpi/README.md, read	decimal digits right-aligned in a 17-byte buffer, -40 if they do not fit	int scpi_unsigned_to_digits(uint32_t value, char *digits, short *start)
 0x2636e	function	scpi_format_text	docs/scpi/README.md, read	a string as it is
-0x2639e	function	scpi_format_string	docs/scpi/README.md, read	a string in double quotes, each quote doubled
-0x26438	function	scpi_format_counted_text	docs/scpi/README.md, read	text of a given length; returns -90 always, for a reason not known
-0x2640c	function	scpi_format_boolean	docs/scpi/README.md, read	0 or 1
+0x2639e	function	scpi_format_string	docs/scpi/README.md, read	a string in double quotes, each quote doubled	int scpi_format_string(void *output, char **value)
+0x26438	function	scpi_format_counted_text	docs/scpi/README.md, read	text of a given length; returns -90 always, for a reason not known	int scpi_format_counted_text(void *output, short *text)
+0x2640c	function	scpi_format_boolean	docs/scpi/README.md, read	0 or 1	int scpi_format_boolean(void *output, short *value)
 0x26460	function	scpi_format_choice	docs/scpi/README.md, read	the keyword for the value, from the node's list
-0x26522	function	scpi_format_long	docs/scpi/README.md, read	+ or -, then the digits
+0x26522	function	scpi_format_long	docs/scpi/README.md, read	+ or -, then the digits	int scpi_format_long(void *output, int32_t *value)
 0x265a2	function	scpi_format_short	docs/scpi/README.md, read	through scpi_format_long	int scpi_format_short(void *output, short *value)
-0x265c2	function	scpi_format_unsigned_long	docs/scpi/README.md, read	+ and the digits
-0x2661c	function	scpi_format_unsigned_short	docs/scpi/README.md, read	through scpi_format_unsigned_long
-0x26870	function	scpi_format_double	docs/scpi/README.md, read	15 significant digits by scpi_real_to_text
-0x268c4	function	scpi_format_float	docs/scpi/README.md, read	6 significant digits by scpi_real_to_text
-0x269a6	function	scpi_format_double_resolution	docs/scpi/README.md, read	15 digits to the resolution given
-0x26a06	function	scpi_format_float_resolution	docs/scpi/README.md, read	6 digits to the resolution the value carries
+0x265c2	function	scpi_format_unsigned_long	docs/scpi/README.md, read	+ and the digits	int scpi_format_unsigned_long(void *output, uint32_t *value)
+0x2661c	function	scpi_format_unsigned_short	docs/scpi/README.md, read	through scpi_format_unsigned_long	int scpi_format_unsigned_short(void *output, uint16_t *value)
+0x26870	function	scpi_format_double	docs/scpi/README.md, read	15 significant digits by scpi_real_to_text	int scpi_format_double(void *output, double *value)
+0x268c4	function	scpi_format_float	docs/scpi/README.md, read	6 significant digits by scpi_real_to_text	int scpi_format_float(void *output, float *value)
+0x269a6	function	scpi_format_double_resolution	docs/scpi/README.md, read	15 digits to the resolution given	int scpi_format_double_resolution(void *output, double *value, short *resolution)
+0x26a06	function	scpi_format_float_resolution	docs/scpi/README.md, read	6 digits to the resolution the value carries	int scpi_format_float_resolution(void *output, float *value)
 0x2692c	function	scpi_format_double_precision	docs/scpi/README.md, read	a double whose record gives either its digits or its resolution
-0x2663e	function	scpi_format_block	docs/scpi/README.md, read	a definite-length block, #, the count of length digits, the length, then the data
+0x2663e	function	scpi_format_block	docs/scpi/README.md, read	a definite-length block, #, the count of length digits, the length, then the data	int scpi_format_block(void *output, uint32_t *block)
 0x2671c	function	scpi_format_short_array	docs/scpi/README.md, read	comma-separated, by scpi_format_short
 0x266d0	function	scpi_format_double_array	docs/scpi/README.md, read	comma-separated, by scpi_format_double
 0x26768	function	scpi_format_resolution_array	docs/scpi/README.md, read	comma-separated, by scpi_format_double_resolution, a resolution for each
@@ -1125,11 +1125,11 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x30dea	function	save_parameter_record	structures.md	writes the 16-byte checksummed parameter record at EEPROM 0x400000, reporting status 0x10 if it fails
 0x30dea	local	record	read	the parameter record it builds and writes	parameter_record @ -0x14
 0x40f76	function	counter_init	context	sets the counter configuration and interpolator calibration to their defaults and arms the reading
-0x40ed8	function	counter_configuration_init	context	the counter configuration's defaults, and the interval reading marked invalid
+0x40ed8	function	counter_configuration_init	context	the counter configuration's defaults, and the interval reading marked invalid	void counter_configuration_init(counter_configuration_fields *configuration)
 0x40000	function	interpolator_calibration_init	context	clears the interpolator calibration, both DACs at 0x1f	void interpolator_calibration_init(interpolator_calibration *calibration)
 0x40ea2	function	counter_load_registers	context	writes counter_configuration's four FPGA registers to the FPGA
 0x40a0e	function	fpga_set_field	context	sets one fpga_bit_table field in its register's image and writes the register
-0x40afe	function	fpga_fields_to_registers	context	builds the four FPGA register images from field values, by fpga_bit_table
+0x40afe	function	fpga_fields_to_registers	context	builds the four FPGA register images from field values, by fpga_bit_table	void fpga_fields_to_registers(uint8_t *fields, uint8_t *registers)
 0x40ba6	function	fpga_read_byte	context	a byte from two FPGA registers' low nibbles
 0x407fa	function	fpga_read_seconds	context	FPGA register 0's high nibble, read until two reads agree: a count of seconds modulo 16
 0x4091a	function	counter_wait_ready	context	polls FPGA register 0 for a bit, up to 512 times 10 ticks, giving up and disarming the reading if a 1PPS dies
@@ -1159,9 +1159,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4bc58	function	request_kind_valid	context	1 for request kinds 1 to 4
 0x4be04	function	gps_script_lookup	context	a script index from 0x47 on to its script, the first also resetting gps
 0x4bdba	function	gps_request_class	context	a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3 otherwise
-0x4bc74	function	gps_request_queue	context	queues a new request: the step index 0x45 flushes the ring, others are queued unless one is waiting already
+0x4bc74	function	gps_request_queue	context	queues a new request: the step index 0x45 flushes the ring, others are queued unless one is waiting already	void gps_request_queue(char param_1, gps_request_entry *request, gps_request_entry *param_3)
 0x4f932	function	gps_request_build	context	builds a request's text: @@, its ID, then each argument through the message's encoders
-0x4faa2	function	gps_response_decode	context	runs a response's decoders from the table at 0x4feee, with preemption off, and hands @@Ea's time to status_snapshot_update
+0x4faa2	function	gps_response_decode	context	runs a response's decoders from the table at 0x4feee, with preemption off, and hands @@Ea's time to status_snapshot_update	char *gps_response_decode(int16_t message, char *response)
 0x4b7ac	function	gps_response_lookup	context	a response's two-character ID to its index among 49, counting unknown_response
 0x4b9a6	function	gps_response_timed_out	context	1 once more time has passed than the message's timeout
 0x4f8a0	function	oncore_checksum	context	the XOR of a message's bytes
@@ -1184,18 +1184,18 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4f162	function	satellite_used_for_position	context	1 if a channel uses the satellite for position
 0x4f18c	function	channels_reset	context	sets every channel's mode to code search
 0x4f1f8	function	visible_satellites	context	the set and count of visible GPS satellites, from gps.visibility	undefined4 visible_satellites(undefined1 *param_1,uint32_t *param_2)
-0x4f32c	function	satellite_find	context	finds a satellite by ID in a table of 10-byte entries, by bisection
-0x49654	function	satellite_elevation_azimuth	context	a satellite's elevation and azimuth, valid below 91 and 360
+0x4f32c	function	satellite_find	context	finds a satellite by ID in a table of 10-byte entries, by bisection	oncore_visible_satellite *satellite_find(uint8_t id, void *table)
+0x49654	function	satellite_elevation_azimuth	context	a satellite's elevation and azimuth, valid below 91 and 360	void satellite_elevation_azimuth(oncore_visible_satellite *satellite, uint8_t *entry)
 0x49474	function	satellite_sets_build	context	for status_snapshot: the sets of GPS and pseudolite satellites, by band of signal level	void satellite_sets_build(uint8_t *param_1,uint *param_2)
 0x49688	function	satellite_status	context	for status_snapshot: a satellite's status code for the screen	void satellite_status(char param_1,byte param_2,int param_3,int param_4,undefined1 *param_5)
-0x49612	function	satellite_track_class	context	a track record's class, 1 to 3
+0x49612	function	satellite_track_class	context	a track record's class, 1 to 3	uint8_t satellite_track_class(oncore_visible_satellite *satellite)
 0x497c8	function	satellite_status_list	context	for status_snapshot: the screen's list of satellites, built and sorted
 0x4a636	function	status_snapshot	context	gathers the loop's stage, mode and suffix indexes, the TI, TFOM, FFOM, holdover, time zone, date and satellites into a record, under a raised interrupt mask
 0x45c18	function	recovery_suffix_index	screen-format-strings.md, "Mode suffixes"	in holdover recovery's first state: 1 fine freq adj, 2 phase alignment; pll_powerup_suffix_index's companion
 0x45c48	function	holdover_waiting_reason	context	for :HOLDover:WAITing?: which fault bit holds the loop in holdover, 0x10, 2 or 8
 0x4299c	function	kenneth_present_get	undocumented.md, ":KENneth"	for :KENneth:PRESent?: in holdover or its recovery, pll.tfom, resolution 1e-7
 0x429c6	function	kenneth_predicted_get	undocumented.md, ":KENneth"	for :KENneth:PREDicted?: from startup PLL on, the float at pll +0x3a, resolution 1e-7, and whether in holdover
-0x49b06	function	status_screen_height	context	the status screen's height line, HGT and %+9.2f m (MSL)
+0x49b06	function	status_screen_height	context	the status screen's height line, HGT and %+9.2f m (MSL)	void status_screen_height(status_snapshot_record *snapshot, char *line)
 0x49d14	function	format_duration_short	context	a duration as minutes and seconds or hours and minutes, or 1000+ hr
 0x499f2	function	format_satellite_number	context	a satellite number as %2d, or blanks for none
 0x49a3c	function	format_level	context	a level as %3d, or blanks when negative
@@ -1232,8 +1232,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x33238	function	reset_record_write	context	writes the next 0x5c-byte reset-cause record at EEPROM 0x4001c0, its time and text, with its checksum
 0x33238	local	record	read	the reset-cause record it builds and writes	reset_record @ -0x60
 0x33028	function	reset_record_valid	context	1 if a reset-cause record's checksum holds
-0x32ffa	function	reset_record_checksum	context	a reset-cause record's checksum: the sum of its 0x58 bytes and its complement
-0x2842c	function	status_register_set_enable	context	sets one status register's enable mask, as :ENABle and *ESE do
+0x32ffa	function	reset_record_checksum	context	a reset-cause record's checksum: the sum of its 0x58 bytes and its complement	uint16_t reset_record_checksum(reset_record *record)
+0x2842c	function	status_register_set_enable	context	sets one status register's enable mask, as :ENABle and *ESE do	void status_register_set_enable(status_model *status, int index, int enable)
 0x2f3d0	function	status_enables_init	context	sets the seven status registers' enable masks from the table at 0x2f7a8
 0x42390	function	linear_regression	loop.md's aging fit	the means, Sxx and Sxy of the weighted entries of two arrays	int linear_regression(regression_record *record, int with_slope)
 0x42092	local	regression	read	fit_log_residuals's record for linear_regression	regression_record @ -0x1e
@@ -1259,9 +1259,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2421c	function	efc_write_dithered	context	writes the EFC rounded, plus random_dither, clamped to 0 to 0xffff0
 0x12af2	function	random_dither	context	a small signed random value: rand, shaped by dither_table
 0x1223c	function	double_round_to_long	context	a double rounded half away from zero to a long, saturating
-0x23c5a	function	monitor_average_add	context	adds a reading to a monitor's 10-sample moving average
-0x23cc4	function	monitor_filter_add	context	adds a reading to a monitor's filter, 0.9 of the old and 0.1 of the new
-0x23d28	function	monitor_out_of_range	context	counts a monitor's readings outside its range, true once past a limit
+0x23c5a	function	monitor_average_add	context	adds a reading to a monitor's 10-sample moving average	void monitor_average_add(adc_monitor *monitor, float reading)
+0x23cc4	function	monitor_filter_add	context	adds a reading to a monitor's filter, 0.9 of the old and 0.1 of the new	void monitor_filter_add(adc_monitor *monitor, float reading)
+0x23d28	function	monitor_out_of_range	context	counts a monitor's readings outside its range, true once past a limit	uint8_t monitor_out_of_range(adc_monitor *monitor, float minimum, float maximum, uint8_t limit)
 0x23c2a	function	monitors_reset	context	clears all eight adc_monitors' valid, sample_index, out_of_tolerance and out_of_range_count, and hmon_supply_step
 0x1e126	function	duart_output_bits	context	sets and clears the DUART's output port bits, interrupts held off
 0x242de	function	efc_clamp_reset	context	clears efc_clamp's flags
@@ -1286,22 +1286,22 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1d680	function	duartb_putc_polled	context	waits for DUART channel B's transmitter and writes a character
 0x1eefc	function	fatal_error_with_code	context	a length-prefixed message and ", %08X" with a code, to fatal_error	void fatal_error_with_code(char *param_1,undefined4 param_2,undefined4 param_3,uint param_4)
 0x20d66	function	spoo_run	context	calls a function directly, or posts it to the spooler task's exchange while the spooler runs
-0x27fca	function	status_event_set	structures.md's status registers	ORs bits into a register's event word and propagates
+0x27fca	function	status_event_set	structures.md's status registers	ORs bits into a register's event word and propagates	void status_event_set(status_model *status, status_register *reg, int bits)
 0x27fe8	function	status_condition_set	structures.md's status registers	sets condition bits; those rising through the positive transition mask become events
 0x28044	function	status_condition_clear	structures.md's status registers	clears condition bits; those falling through the negative transition mask become events
-0x280a4	function	status_propagate	structures.md's status registers	sets or clears a register's summary bit in its parent from its event and enable words
-0x282ce	function	status_apply_condition	structures.md's status registers	applies a condition by its kind: event set, condition set, condition clear, or the error queue
+0x280a4	function	status_propagate	structures.md's status registers	sets or clears a register's summary bit in its parent from its event and enable words	void status_propagate(status_model *status, status_register *reg)
+0x282ce	function	status_apply_condition	structures.md's status registers	applies a condition by its kind: event set, condition set, condition clear, or the error queue	void status_apply_condition(status_model *status, int condition, int param_3)
 0x285d4	function	error_queue_push	context	adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full
 0x288ee	function	error_message_lookup	context	an error code's message, from the table at 0x28910
 0x2f626	function	status_hardware_condition	structures.md's status registers	the :STATus:OPERation:HARDware condition, register 6, which status_summary folds	undefined2 status_hardware_condition(void)
 0x29e3c	function	status_prompt_refresh	context	prompts again when the status object that changed is the main one; a method of the status output object	void status_prompt_refresh(status_model *param_1,undefined4 param_2)
-0x3137a	function	log_page_checksum	context	an event log page's checksum: the sum of its 0x3c bytes and its complement
+0x3137a	function	log_page_checksum	context	an event log page's checksum: the sum of its 0x3c bytes and its complement	uint16_t log_page_checksum(log_page *page)
 0x313a4	function	log_page_write	context	writes an event log page to EEPROM at 0x400d40 if it has changed, its count incremented and checksummed
 0x31bf6	function	log_flush	context	writes the current event log page
 0x31c42	function	log_append	context	adds an entry with its date and time to the event log, writing the page; reports event space past 180 entries
 #
 # the start-up, the clock and unused helpers
-0x1052e	function	mutex_owner	context	a mutex's owner, at +8
+0x1052e	function	mutex_owner	context	a mutex's owner, at +8	uint32_t mutex_owner(void *mutex)
 0x10538	function	idle_count	context	the count of free CPU cycles os_report_cpu prints
 0x10946	function	klok_entry_state	context	0 if an entry is on the clock list, 1 if on the free list, -1 if on neither
 0x10e3a	function	time_packed_to_seconds	context	a packed time as seconds; a third copy of hms_to_seconds, called by nothing
@@ -1327,7 +1327,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x12d6e	function	primary_start	context	the reset's path: services the watchdog, sets the QSM and GPT up, runs system_init and starts the kernel with trap #6
 0x12db6	function	pps_interrupt	context	the 1PPS interrupt's work: ticks the clock, updates the time code and posts the time to pps_exchange	void pps_interrupt(void)
 0x12e6c	function	pps_interrupt_stop	context	stops the 1PPS interrupt, clearing its GPT enable and flag
-0x1321a	function	stack_measure	context	a task's supervisor and user stacks, each the used part of its size, for stack_usage_report
+0x1321a	function	stack_measure	context	a task's supervisor and user stacks, each the used part of its size, for stack_usage_report	int stack_measure(void *task, uint32_t *usage)
 0x132da	function	stack_usage	context	measures a stack from A1, its bottom, to D0, its top: the bytes above the 0xabcd fill left at its bottom back in D0, its size in D1		convention=register; confidence=read; in=A1 uint16_t *bottom, D0 char *top; out=D0 int used, D1 int size; family=stack
 0x13258	function	stack_fill	context	fills a new task's stacks with 0xabcd, the task record in A0		convention=register; confidence=read; in=A0 void *task; family=stack
 0x132b8	function	region_find_segment	context	finds the memory segment that holds an address, A0 the region and D0 the address, the segment back in A1, zero if none		convention=register; confidence=read; in=A0 void *region, D0 char *address; out=A1 void *segment; family=stack
@@ -1352,10 +1352,10 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1406a	function	es_schedule	context	sets output compare 4 to fire an ES message character a delay after the 1PPS capture
 0x149a8	function	program_exit	context	runs the atexit functions and reports "Prog end, returned" with the code; never returns
 0x149bc	function	program_end_report	context	builds "Prog end, returned N" and stops with fatal_error_with_code	void program_end_report(uint value)
-0x160de	function	object_name	context	a task's or exchange's four-character name, from its record at +0x14	undefined * object_name(int param_1)
+0x160de	function	object_name	context	a task's or exchange's four-character name, from its record at +0x14	char *object_name(void *object)
 0x16280	function	os_report_region_line	context	prints one memory region's line of the kernel report
-0x162b2	function	region_segment_containing	context	the segment of a region that holds an address
-0x164f2	function	timer_ticks_until	context	the ticks until a task's delay expires: the sum of the delta list's ticks up to it
+0x162b2	function	region_segment_containing	context	the segment of a region that holds an address	void *region_segment_containing(void *region, uint32_t address)
+0x164f2	function	timer_ticks_until	context	the ticks until a task's delay expires: the sum of the delta list's ticks up to it	int timer_ticks_until(void *task)
 0x16540	function	task_table_build	context	snapshots the kernel's tasks and their states into task_table for the reports
 0x16730	function	ready_queue_position	context	a task's place in the ready queue; -1 if it is not there
 0x169fa	function	exchange_id_valid	context	1 if an exchange ID is one, by the swapped address its record holds; called by nothing
@@ -1365,7 +1365,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x17628	function	ram_pattern_test	context, read	the RAM self-test's pattern pass, saving and restoring each block around 0xaaaaaaaa and its complement; called as C, but saves each 48-byte block of RAM on the stack and walks all of it, which C cannot say		convention=other; confidence=read; family=selftest
 0x17750	function	rom_lane_checksum	context	sums a ROM's even and odd byte lanes, one checksum for each chip; called by nothing
 0x17ca4	function	selftest_lamps	context	runs the lamp test unless the self-test has been aborted	void selftest_lamps(char_slot run)
-0x18396	function	format_binary	context	a number as a string of binary digits
+0x18396	function	format_binary	context	a number as a string of binary digits	void format_binary(uint32_t value, char *text, int digits)
 0x183de	function	selftest_delay	context	pauses so many ticks, stopping if the self-test is aborted
 0x184a4	function	internal_pps_test	context	counts the internal 1PPS over 1024 ticks; fails unless one to three came
 0x184ee	function	lamp_test	context	lights every lamp, then none, then each in turn, then restores them
@@ -1449,40 +1449,41 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x273cc	function	scpi_scan_number	context	scans a decimal number's digits, point and exponent into a parsed number
 0x2766e	function	scpi_scan_exponent	context	scans a number's exponent after its E
 0x277d2	function	scpi_char_upper	context	a letter in upper case, by the parser's character classes
-0x279d6	function	scpi_suffix_compare_tail	context	how much of a token's end matches a unit's name
+0x279d6	function	scpi_suffix_compare_tail	context	how much of a token's end matches a unit's name	short scpi_suffix_compare_tail(char *suffix, int length, char *name)
 0x27a0c	function	scpi_multiplier_exponent	context	a unit multiplier's power of ten, from the table at 0x27b2e; -128 for none
 0x27b62	function	scpi_keyword_compare	context	compares a token with a keyword's short and long forms	short scpi_keyword_compare(char *token, int length, char *keyword)
-0x27baa	function	scpi_node_find	context	finds a keyword in a child list, by bisection
+0x27baa	function	scpi_node_find	context	finds a keyword in a child list, by bisection	void *scpi_node_find(void *list, scpi_keyword *keyword)
 0x27c22	function	scpi_node_find_with_defaults	context	finds a keyword, else follows the default nodes, recording their suffixes	int scpi_node_find_with_defaults(int *path, short *keyword, void *unused)
 0x27c94	function	scpi_node_find_numbered	context	finds a keyword with its numeric suffix stripped and kept	int scpi_node_find_numbered(int *path, short *keyword, void *unused)
 0x27e9e	function	scpi_header_step	context	moves the path one keyword down a compound header	undefined4 scpi_header_step(undefined4 param_1,int *param_2,undefined4 param_3)
 0x27efe	function	scpi_path_reset	context	sets a header path back to a root list
-0x27f7e	function	scpi_trg_defined	context	looks _TRG up in a list: whether the common list defines it
+0x27f7e	function	scpi_trg_defined	context	looks _TRG up in a list: whether the common list defines it	void *scpi_trg_defined(void *list, uint16_t *no_setter)
+0x27f7e	local	keyword	read	"_TRG", copied in and looked up	scpi_keyword @ -0x18
 0x28160	function	status_destroy	context	frees the status model's queue and registers; called by nothing
 0x2839c	function	condition_is_command_error	context	1 for a negative condition of the error kind with a code from -199 to -100, a command error
-0x283d2	function	status_condition_bit_get	context	a condition's bit in its register's condition word, inverted for kind 2
-0x28474	function	status_register_get_enable	context	a status register's enable mask, as the :ENABle? and *ESE? queries read it
+0x283d2	function	status_condition_bit_get	context	a condition's bit in its register's condition word, inverted for kind 2	void status_condition_bit_get(status_model *status, int condition, uint32_t *bit)
+0x28474	function	status_register_get_enable	context	a status register's enable mask, as the :ENABle? and *ESE? queries read it	void status_register_get_enable(status_model *status, int index, uint16_t *enable)
 0x2851a	function	status_clear_events	context	reads every register's event word, clearing them, for *CLS
-0x2854a	function	error_queue_clear	context	empties the error queue, for *CLS
-0x2856c	function	error_queue_read	context	takes the oldest error from the queue
+0x2854a	function	error_queue_clear	context	empties the error queue, for *CLS	void error_queue_clear(status_model *status, int *code)
+0x2856c	function	error_queue_read	context	takes the oldest error from the queue	void error_queue_read(status_model *status, int *code, uint32_t *message)
 #
 # the error queue, the parser's arena and SCPI helpers
 0x28588	function	error_queue_create	context	allocates the error queue ring with room for so many entries
 0x2869e	function	error_queue_pop	context	takes the oldest error and its message, prompting again once the queue is empty; 0 when empty
 0x28712	function	error_queue_destroy	context	frees the error queue
-0x2889a	function	status_register_set_ptr	structures.md's status registers	sets a register's positive transition filter, for :PTRansition
-0x288ae	function	status_register_set_ntr	structures.md's status registers	sets a register's negative transition filter, for :NTRansition
-0x288c2	function	status_register_get_ptr	structures.md's status registers	a register's positive transition filter, for :PTRansition?
-0x288d8	function	status_register_get_ntr	structures.md's status registers	a register's negative transition filter, for :NTRansition?
+0x2889a	function	status_register_set_ptr	structures.md's status registers	sets a register's positive transition filter, for :PTRansition	void status_register_set_ptr(status_model *status, int index, int filter)
+0x288ae	function	status_register_set_ntr	structures.md's status registers	sets a register's negative transition filter, for :NTRansition	void status_register_set_ntr(status_model *status, int index, int filter)
+0x288c2	function	status_register_get_ptr	structures.md's status registers	a register's positive transition filter, for :PTRansition?	void status_register_get_ptr(status_model *status, int index, uint16_t *filter)
+0x288d8	function	status_register_get_ntr	structures.md's status registers	a register's negative transition filter, for :NTRansition?	void status_register_get_ntr(status_model *status, int index, uint16_t *filter)
 0x29642	function	scpi_call_handler	context	calls a node's handler, giving it room in the arena for its parameters
-0x29690	function	scpi_format_response	context	writes a response's items through their formatters
+0x29690	function	scpi_format_response	context	writes a response's items through their formatters	int scpi_format_response(void *output, void *items, void *param_3)
 0x29700	function	arena_alloc	context	takes so many bytes, rounded up to even, from an arena; 0 if it is full
 0x2972c	function	arena_remaining	context	the bytes left in an arena, and its next free byte
 0x29742	function	arena_take	context	takes so many bytes, rounded up to even, from a buffer
 0x2975e	function	arena_current	context	an arena's next free byte
 0x29766	function	arena_set	context	sets an arena's next free byte
 0x29770	function	arena_init	context	makes an arena of a buffer of so many bytes
-0x29a24	function	copy_longs_locked	context	copies so many longs with interrupts held off
+0x29a24	function	copy_longs_locked	context	copies so many longs with interrupts held off	void copy_longs_locked(uint32_t *source, uint32_t *destination, uint8_t count)
 0x29a68	function	robin_store	context	stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36
 0x29b08	function	rtcm_supported	context	0: RTCM corrections are not supported	undefined1 rtcm_supported(void)
 0x29b96	function	scpi_console_read	context	reads up to so many characters from the console, marking the input ended at its end
@@ -1501,14 +1502,14 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 # SCPI helpers, ROBin and the early status events
 0x2d1a2	function	satellite_mask_remove	context	clears a valid satellite's bit in a mask
 0x2e0d8	function	time_zone_split	context	a time zone's minutes as signed hours and minutes
-0x2e6c0	function	string_upper	context	a string in upper case, in place
+0x2e6c0	function	string_upper	context	a string in upper case, in place	void string_upper(char *text)
 0x2e714	function	string_trim_right	context	strips a string's trailing spaces
 0x2e730	function	robin_strip_xnon	context	skips an XNON:, :XNON:, XNONE: or :XNONE: prefix, for the ROBin queries
 0x2e7ee	function	robin_keyword_match	context	matches a ROBin argument's keyword at the start of the text
 0x2e882	function	robin_lookup	context	finds a ROBin argument's keyword in the tables at 0x2f32a, and its kind
 0x2e8ee	function	robin_parse_arguments	context	parses the numbers after a ROBin keyword, by its kind
 0x2eba8	function	robin_parse	context	the ROBin queries' argument parser: upper case, trimmed, prefix stripped, keyword and numbers
-0x2ec40	function	robin_point_list	context	fills a ROBin point list with fixed indexes
+0x2ec40	function	robin_point_list	context	fills a ROBin point list with fixed indexes	void robin_point_list(uint16_t *points, uint16_t *count, char kind)
 0x2ecf8	function	robin_timestamp_values	context	fills a ROBin timestamp from fixed values, from 1994 on: test data	void robin_timestamp_values(char param_1,short param_2,short *param_3)
 0x2ed7a	function	robin_point_count	context	a ROBin kind's fixed point count, 4 to 7
 0x2edde	function	robin_overflow_count	context	a ROBin kind's fixed overflow count, 4.0 on
@@ -1803,7 +1804,7 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x292d6	function	scpi_interpret	context	the parser's loop: parses each message unit, calls its handler, writes its response and reports errors, until the input ends	undefined4 scpi_interpret(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5, undefined4 param_6,undefined4 param_7,undefined4 param_8,undefined4 param_9)
 0x297c4	function	scpi_long_resolve_bound	context	a long parameter's value: its own, the first or second argument for keyword 0 or 1, else the third; called by nothing
 0x298b2	function	scpi_numeric_set_double	context	scpi_numeric_set for a parameter of doubles; called by nothing
-0x29990	function	scpi_numeric_get_double	context	scpi_numeric_get for a parameter of doubles; called by nothing
+0x29990	function	scpi_numeric_get_double	context	scpi_numeric_get for a parameter of doubles; called by nothing	double scpi_numeric_get_double(scpi_numeric_param *param, int index, short kind, short bound)
 0x29a1e	function	long_identity	context	returns its argument; called by nothing
 0x29a62	function	float_identity	context	returns its argument; the EFC queries pass pll.efc through it	float float_identity(float x)
 0x29e34	function	scpi_message_done	context	scpi_interpret's hook at each message's end and error: returns 0, no further error	undefined4 scpi_message_done(void)

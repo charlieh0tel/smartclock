@@ -721,6 +721,15 @@ typedef struct scpi_multiplier {
 	uint8_t unused;   /* +0x03: 0 */
 } scpi_multiplier;
 
+/* A unit a numeric parameter accepts: one entry of the table at +4 of
+ * the parser's parameter descriptor, which scpi_parse_message_unit
+ * passes scpi_parse_short and its kind, and scpi_match_suffix walks, 6
+ * bytes a step, to the entry whose name is 0. */
+typedef struct scpi_unit {
+	char *name;        /* +0x00: upper case and reversed, "ZHM" for MHZ; scpi_suffix_compare_tail matches it against the suffix's end */
+	int16_t exponent;  /* +0x04: the power of ten the unit scales by; -128 for one that takes a multiplier before it, scpi_multiplier_exponent's */
+} scpi_unit;
+
 /* An error code's message, one of scpi_error_messages at 0x28910, which
  * error_message_lookup walks to the entry whose code is -1. */
 typedef struct scpi_error_message {
@@ -760,9 +769,20 @@ typedef struct scpi_numeric_param {
  * stack for the clamp routines it calls: its routine, given the step,
  * the value and its index, gives the step; load_long gives the long at
  * +0. */
+/* A keyword scpi_node_find looks up: its length, then its text from +2
+ * (0x27bb2, 0x27bc6).  The text's size is scpi_trg_defined's buffer's,
+ * the 20-byte frame at 0x27f7e. */
+typedef struct scpi_keyword {
+	int16_t length; /* +0x00 */
+	char text[18];  /* +0x02 */
+} scpi_keyword;
+
+struct scpi_step;
+/* A step's routine: the step for value, the setting at index. */
+typedef int scpi_step_function(struct scpi_step *step, void *value, int index);
 typedef struct scpi_step {
-	uint32_t value;  /* +0x00: the step's bits, a float or a long */
-	void *function;  /* +0x04 */
+	uint32_t value;               /* +0x00: the step's bits, a float or a long */
+	scpi_step_function *function; /* +0x04 */
 } scpi_step;
 
 /* One status register of the SCPI status tree.  16 bytes. */

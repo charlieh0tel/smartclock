@@ -687,7 +687,7 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1251 run, 1082 agree, 141 reach what the
+     original reads them: of 1251 run, 1063 agree, 160 reach what the
      harness does not model and are skipped, and 28 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
@@ -842,7 +842,11 @@ view cannot drift apart.  The library, bottom up:
      table, the self-tests' and the DAC searches' measurement, is given
      its callee's prototype at the call, which the decompiler took as
      code with no arguments, and a structure it builds from the bytes
-     pushed is those bytes (36 to 28).
+     pushed is those bytes (36 to 28).  77 routines a parameter of
+     which the harness found dereferenced take a pointer to their record,
+     where Ghidra had an integer; 19 that agreed now follow a pointer in
+     the buffer the harness gives them and are skipped (1082 agreeing to
+     1063).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

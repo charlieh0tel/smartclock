@@ -1179,6 +1179,29 @@ and at `+0x12` the exponent of 0.d1d2...  `scpi_real_to_text`
 the decompiler took it for a single byte, and gcc's copy of the routine
 wrote the record over the buffer pointer beside it.
 
+## A numeric parameter's units
+
+`scpi_parse_message_unit` (`0x26ab6`) calls a parameter's converter
+with the parsed token, a pointer it does not use, where the value
+goes, and the table at `+4` of the parameter's descriptor (the push at
+`0x26c78`): its units, `scpi_unit`, 6 bytes each to a zero name
+(`scpi_match_suffix`, `0x27a2a`, steps by 6 at `0x27a4a`).  A unit's
+name, at `+0`, is upper case and reversed, since
+`scpi_suffix_compare_tail` (`0x279d6`) matches it against the
+suffix's end: the table at `0x53d6e` holds `ZHM` and `ZH`, MHz and Hz.
+Its word at `+4` is the power of ten the unit scales by, 6 for MHz, or
+-128 for a unit that takes a one- or two-letter multiplier before it,
+which `scpi_multiplier_exponent` looks up in `scpi_multipliers`.
+`scpi_apply_suffix` (`0x27ae4`) stores the exponent at the token's
+`+0x22` and the unit's index plus one at `+0x24`, and the converters
+copy that word after the value.
+
+`scpi_node_find` (`0x27baa`) looks a keyword up in a child list by
+bisection; the keyword is a `scpi_keyword`, its length at `+0` and its
+text from `+2` (`0x27bb2`, `0x27bc6`).  `scpi_trg_defined` builds one
+for `_TRG` in its 20-byte frame (`0x27f7e`), a `local` row, so that gcc
+keeps the length beside the text.
+
 ## The health monitor's supplies and EFC
 
 `hmon_task` (`0x247d4`) calls `hmon_check_supplies` (`0x23d80`) every

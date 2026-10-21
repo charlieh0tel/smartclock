@@ -126,6 +126,7 @@ import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.HighFunctionDBUtil;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.program.model.pcode.JumpTable;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.model.symbol.Namespace;
@@ -197,6 +198,8 @@ public class SmartClockSetup extends GhidraScript {
 	private static final int STACK_SLOT_MINIMUM = 2;
 	/** A long or pointer argument's slot, the default convention's for every argument. */
 	private static final int STACK_SLOT = 4;
+	/** A prototype's result type, its pointer stars and its name: "log_entry *f(". */
+	private static final Pattern POINTER_RESULT = Pattern.compile("^(.*?\\S)\\s*(\\*+)\\s*(\\w+\\s*\\()");
 	/** A register annotation in a prototype: "@ D0" or "@ D0:D1". */
 	private static final Pattern ANNOTATION = Pattern.compile("\\s*@\\s*[A-Za-z0-9:]+");
 	/** The names file's fourth field: where the name comes from. */
@@ -597,9 +600,8 @@ public class SmartClockSetup extends GhidraScript {
 	 * convention.
 	 */
 	private void applyPrototype(Address address, String prototype) throws Exception {
-		FunctionDefinitionDataType signature = CParserUtils.parseSignature(
-			(DataTypeManagerService) null, currentProgram, ANNOTATION.matcher(prototype).replaceAll(""),
-			false);
+		FunctionDefinitionDataType signature =
+			parseSignature(ANNOTATION.matcher(prototype).replaceAll(""));
 		if (signature == null) {
 			throw new IllegalArgumentException("cannot parse prototype at " + address + ": "
 				+ prototype);
@@ -641,8 +643,14 @@ public class SmartClockSetup extends GhidraScript {
 					currentProgram)
 				: new ReturnParameterImpl(returnType, resultStorage(returnType, address),
 					currentProgram);
-		getFunctionAt(address).updateFunction(null, result, parameters,
-			FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.IMPORTED);
+		try {
+			getFunctionAt(address).updateFunction(null, result, parameters,
+				FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.IMPORTED);
+		}
+		catch (InvalidInputException e) {
+			throw new IllegalArgumentException("cannot lay out prototype at " + address + ": "
+				+ prototype + ": " + e.getMessage(), e);
+		}
 	}
 
 	/**
@@ -781,6 +789,16 @@ public class SmartClockSetup extends GhidraScript {
 	}
 
 	/**
+	 * prototype parsed, null if it cannot be.  Ghidra's parser drops a
+	 * pointer result's stars when they are written against the name,
+	 * "log_entry *f(", and keeps them against the type, "log_entry* f(".
+	 */
+	private FunctionDefinitionDataType parseSignature(String prototype) throws Exception {
+		return CParserUtils.parseSignature((DataTypeManagerService) null, currentProgram,
+			POINTER_RESULT.matcher(prototype).replaceFirst("$1$2 $3"), false);
+	}
+
+	/**
 	 * Gives the call at address, through a pointer, the prototype of the
 	 * routine it reaches, as a decompiler override: the decompiler takes
 	 * a call through a typed pointer loaded from a table as one to code,
@@ -788,8 +806,7 @@ public class SmartClockSetup extends GhidraScript {
 	 */
 	private void applyCall(Address address, String prototype, String line) throws Exception {
 		Function function = getFunctionContaining(address);
-		FunctionDefinitionDataType signature = CParserUtils.parseSignature(
-			(DataTypeManagerService) null, currentProgram, prototype, false);
+		FunctionDefinitionDataType signature = parseSignature(prototype);
 		if (function == null || signature == null) {
 			throw new IllegalArgumentException("a call needs a function and a prototype: " + line);
 		}

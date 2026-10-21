@@ -634,7 +634,7 @@
 {"address":"0001d7e4","name":"drtb_gets","note":"reads a line of up to the given length from DUART channel B; \"DRTB receiver error\"","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0001d906","name":"drtb_unlock","note":"releases channel B's read or write mutex, D0 choosing","convention":"register","confidence":"read","in":[{"register":"D0","type":"char","name":"write"}],"family":"drtb"}
 {"address":"0001d922","name":"drtb_lock","note":"takes channel B's read or write mutex, D0 choosing","convention":"register","confidence":"read","in":[{"register":"D0","type":"char","name":"write"}],"family":"drtb"}
-{"address":"0001d93e","name":"duart_init","note":"creates drtR and drtW, \"Unable to create drtR\"","convention":"unknown"}
+{"address":"0001d93e","name":"duart_init","note":"the DUART channel B device's init, device 0's function 0: creates drtR and drtW, \"Unable to create drtR\"","convention":"register","confidence":"read","preserves":["D0","D1","A0","A1"],"family":"device"}
 {"address":"0001dc7e","name":"duartb_reconfigure","note":"resets DUART channel B and applies the serial settings' mode and baud rate","convention":"unknown"}
 {"address":"0001dd98","name":"drtb_write","note":"devices 0's and 2's write: drtb_puts under the write lock, unless the byte at 0x10313a is set","convention":"register","confidence":"read","in":[{"register":"A0","type":"char *","name":"buffer"}],"out":[{"register":"D7","type":"char","name":"error"},{"register":"D2","type":"int","name":"count"},{"register":"A0","type":"char *","name":"end"}],"family":"device"}
 {"address":"0001ddd6","name":"drtb_read","note":"the console device's read: drtb_gets","convention":"unknown"}

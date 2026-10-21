@@ -42,8 +42,12 @@ typedef enum __attribute__((packed)) pll_stage {
 /* Why the loop holds over, pll.hold_causes, a set of these bits: the
  * console's pr_hold_cause prints each as "Holdover due to ..."
  * (docs/firmware/loop.md).  enter_holdover logs a code for each, and
- * holdover_waiting_reason answers :HOLDover:WAITing? with one. */
+ * holdover_waiting_reason answers :HOLDover:WAITing? with one.  None is
+ * pr_hold_cause's "No holdover cause"; without it Ghidra prints a byte's
+ * 0 as the complement of all eight bits, which C promotes to an int
+ * that no byte equals. */
 typedef enum __attribute__((packed)) pll_hold_cause {
+	HOLD_CAUSE_NONE = 0x00,
 	HOLD_CAUSE_MANUAL = 0x01,
 	HOLD_CAUSE_GPS = 0x02,
 	HOLD_CAUSE_TI_ERROR = 0x04,

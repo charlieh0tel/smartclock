@@ -630,7 +630,11 @@ decompiler wrote it, and reported.
   the C reads a copied register from, a byte piece of it from its own
   bytes (`format_duration`'s `ldiv`), and one to a routine that
   `preserves` a register assigns an `extraout_` variable for it the
-  value before the call, where the C names that value.
+  value before the call, where the C names that value.  Where the
+  decompiler made the register's value up, having tracked none, it is
+  what the instruction that last wrote the register gave it, a stack
+  variable or an immediate, found back through fall-throughs and lone
+  branches (`modf`'s A0, the `iptr` it was loaded from).
 - A rotate of a long by a register, which the decompiler writes as two
   shifts, `x << (n & 0x3f) | x >> (0x20 - (n & 0x3f))`, is
   `__ghidra_rotl(x, n)`: the 68k's `rol` rotates by n modulo 32, where

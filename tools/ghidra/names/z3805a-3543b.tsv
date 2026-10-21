@@ -133,6 +133,10 @@
 0x5f1be	function	toupper	libc.md		int toupper(int c)
 0x5fb0c	function	doprnt	libc.md	the formatting engine under sprintf, by the classic C library's name for it
 0x5fb0c	local	conversion	read	the conversion's text: hex and decimal written back from its 11th byte, %f forward from its first	char[20] @ -0x1c6
+0x5fb0c	local	precision	read	the conversion's precision, 6 when it gives none (moveq #6 at 0x600a6, 0x60274, 0x603d8); an int, which Ghidra otherwise types char * and prints 6 as the text at address 6	int @ -0x1d2
+0x5fb0c	local	count	read	the count its loops run down: digits, padding, the exponent's value; %p's 8 digits (0x60022)	int @ -0x8
+0x5fb0c	local	fraction_limit	read	%f's most fraction digits, 60 (0x6027a); past it, and past the precision, zeros	int @ -0x2c
+0x5fb0c	local	exponent	read	%e's exponent text, written back from its last byte (0x60190 to 0x60250): e, the sign, at least two digits, the terminator	char[6] @ -0x4a
 0x60896	function	sprintf	libc.md		int sprintf(char *s, char *format, ...)
 0x608c4	function	sprintf_put	libc.md	copies the engine's output into sprintf's buffer
 0x608fe	function	vsprintf	libc.md		int vsprintf(char *s, char *format, void *arg)
@@ -337,7 +341,7 @@
 0x1032a6	label	qspi	structures.md	the QSPI's lock, its queue of waiting tasks, and its transfer	qspi_state
 0x1032f8	label	spoo_exchange	structures.md	create_x("spoo")	uint32_t
 0x101e84	label	max_loop_time	structures.md	pll_rep's max loop time	float
-0x1d93e	function	duart_init	structures.md	creates drtR and drtW, "Unable to create drtR"
+0x1d93e	function	duart_init	structures.md	the DUART channel B device's init, device 0's function 0: creates drtR and drtW, "Unable to create drtR"		convention=register; confidence=read; preserves=D0, D1, A0, A1; family=device
 0x1fdb6	function	sci_init	structures.md	the SCI device's init, device 3's function 0: creates sciR and sciW, "Unable to create sciR"		convention=register; confidence=read; preserves=D0, D1, A0, A1; family=device
 0x1f6c8	function	sci_echo_none	sci_driver: echo	a bare rts: sci_init and sci_reconfigure put it in sci.echo when the settings' echo is off	void sci_echo_none(char c)
 0x1fd0e	function	sci_lock	structures.md	the SCI device's open, and sci_putc's lock: takes the write token for D0 1, else the read one, or counts a nested hold; "Unable to acquire SCI token"		convention=register; confidence=read; in=D0 char write; out=D7 char error; error=D7 0x80 already held; preserves=D0, D1, A0, A1; family=device
@@ -1371,9 +1375,12 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x184ee	function	lamp_test	context	lights every lamp, then none, then each in turn, then restores them
 0x18546	function	supplies_test	context	checks the 5 V, +15 V and -15 V supplies within 10 percent
 0x187aa	function	qspi_hex_dac_test	context	writes three words to QSPI device 2, the hex DAC, reads them back shifted and compares
+0x187aa	local	buffers	read	the transfer it hands qspi_transfer: the three words written and the three read back	qspi_buffers @ -0xc
 0x18890	function	qspi_adc_test	context	reads QSPI device 1, the ADC, and checks its status bits
+0x18890	local	buffers	read	the transfer it hands qspi_transfer: the command word and its reply (0x18898 to 0x188b2)	qspi_buffers @ -0xc
 0x18918	function	fpga_load_test	context	loads the FPGA and checks it
 0x1895e	function	qspi_efc_test	context	writes 0x5555 and 0xaaaa to QSPI device 7, the EFC DAC, and reads each back
+0x1895e	local	buffers	read	the transfer it hands qspi_transfer: the word written and the word read back	qspi_buffers @ -0xc
 0x189f2	function	qspi_tests_run	context	runs the ADC, hex DAC, FPGA and EFC tests with interrupts held off, a failure bit for each
 0x1876c	function	shift_right_36	context	shifts three 12-bit words right one bit as a 36-bit number
 0x18c48	function	ram_pattern_test_locked	context	ram_pattern_test with interrupts held off, unless the self-test is aborted

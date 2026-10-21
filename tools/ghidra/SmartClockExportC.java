@@ -90,6 +90,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionIterator;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.listing.Variable;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.HighFunction;
@@ -103,7 +104,9 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.IllegalCharCppTransformer;
 import ghidra.program.model.symbol.NameTransformer;
+import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.StackReference;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.program.model.util.StringPropertyMap;
@@ -1489,7 +1492,10 @@ public class SmartClockExportC extends GhidraScript {
 	 * to change a register its prototype does not name, so the C reads an
 	 * extraout_ variable nothing set (modf's A0 after float_raise).  The
 	 * value before is the INDIRECT's input, followed back through copies
-	 * and casts to a variable or a constant the C names.
+	 * and casts to a variable or a constant the C names.  An INDIRECT
+	 * whose input is a constant is one the decompiler made up, the
+	 * register having no value it tracked, and the value is the one the
+	 * instructions before the call wrote (valueWritten).
 	 */
 	private void preservedRegisters(List<ClangToken> tokens, HighFunction high, TokenEdits edits) {
 		for (int i = 0; i < tokens.size(); i++) {
@@ -1503,15 +1509,71 @@ public class SmartClockExportC extends GhidraScript {
 			for (PcodeOp op : indirects(high, call)) {
 				Register register = currentProgram.getRegister(op.getOutput());
 				String name = namedHigh(op.getOutput());
-				String before = valueName(op.getInput(0));
-				if (register != null && name != null && name.startsWith(EXTRA_OUTPUT) && before != null
-					&& (preserved.contains(ALL_PRESERVED)
-						|| preserved.contains(register.getBaseRegister().getName()))) {
+				if (register == null || name == null || !name.startsWith(EXTRA_OUTPUT)
+					|| !preserved.contains(ALL_PRESERVED)
+						&& !preserved.contains(register.getBaseRegister().getName())) {
+					continue;
+				}
+				String before = op.getInput(0).isConstant()
+						? valueWritten(call, register, high.getFunction())
+						: valueName(op.getInput(0));
+				if (before != null) {
 					assignments.add(name + " = (__typeof__(" + name + "))" + before);
 				}
 			}
 			assignAfterCall(tokens, edits, i, call, assignments);
 		}
+	}
+
+	/**
+	 * What the last instruction before call to write register wrote: the
+	 * stack variable it read, as the C names it, or the immediate it
+	 * moved; null for anything else, or none.  The way back runs through
+	 * fall-throughs and, into an instruction nothing falls through to,
+	 * the one branch to it, and stops where several paths meet.
+	 */
+	private String valueWritten(PcodeOp call, Register register, Function function) {
+		Instruction at = getInstructionAt(call.getSeqnum().getTarget());
+		for (int step = 0; at != null && step < WALK_LIMIT; step++) {
+			at = predecessor(at);
+			if (at == null || !function.getBody().contains(at.getAddress())) {
+				return null;
+			}
+			for (Object result : at.getResultObjects()) {
+				if (!(result instanceof Register written)
+					|| !written.getBaseRegister().equals(register.getBaseRegister())) {
+					continue;
+				}
+				for (Reference reference : at.getReferencesFrom()) {
+					if (reference instanceof StackReference stack && reference.getReferenceType().isRead()) {
+						Variable variable = function.getStackFrame()
+								.getVariableContaining(stack.getStackOffset());
+						return variable == null ? null : variable.getName();
+					}
+				}
+				Scalar immediate = at.getScalar(0);
+				return at.getNumOperands() == 2 && immediate != null
+						? "0x" + Long.toHexString(immediate.getUnsignedValue())
+						: null;
+			}
+		}
+		return null;
+	}
+
+	/** The one instruction control reaches at from; null if there are several, or none. */
+	private Instruction predecessor(Instruction at) {
+		Instruction before = getInstructionBefore(at.getAddress());
+		boolean fallsInto = before != null && at.getAddress().equals(before.getFallThrough());
+		List<Address> branches = new ArrayList<>();
+		for (Reference reference : currentProgram.getReferenceManager().getReferencesTo(at.getAddress())) {
+			if (reference.getReferenceType().isFlow()) {
+				branches.add(reference.getFromAddress());
+			}
+		}
+		if (fallsInto && branches.isEmpty()) {
+			return before;
+		}
+		return !fallsInto && branches.size() == 1 ? getInstructionAt(branches.get(0)) : null;
 	}
 
 	/** A value as the C names it, followed back through copies and casts; null if it has no name. */
@@ -1653,6 +1715,10 @@ public class SmartClockExportC extends GhidraScript {
 
 	/** SmartClockSetup.java's record of each recovered switch, by its jmp: "TABLE FIRST ENTRIES". */
 	private static final String SWITCH_MAP = "SmartClock.switch";
+	/** The default's token, a ClangCaseToken too, with no value of its own. */
+	private static final String DEFAULT_LABEL = "default";
+	/** The most instructions valueWritten looks back through, so that a loop ends it. */
+	private static final int WALK_LIMIT = 256;
 	/** Bytes in a switch table's entry, a word offset from the table. */
 	private static final int ENTRY_BYTES = 2;
 	/**
@@ -1690,7 +1756,7 @@ public class SmartClockExportC extends GhidraScript {
 		Map<Address, List<ClangCaseToken>> switches = new LinkedHashMap<>();
 		for (ClangToken token : tokens) {
 			if (token instanceof ClangCaseToken label && label.getSwitchOp() != null
-				&& label.getVarnode() != null) {
+				&& label.getVarnode() != null && !label.getText().equals(DEFAULT_LABEL)) {
 				switches.computeIfAbsent(label.getSwitchOp().getSeqnum().getTarget(),
 					k -> new ArrayList<>()).add(label);
 			}
@@ -2513,6 +2579,12 @@ public class SmartClockExportC extends GhidraScript {
 			}
 			String macro = out.charAt(operator) == '<' ? "__ghidra_shl(" : "__ghidra_shr(";
 			out.replace(start, countEnd, macro + left + ", " + count + ")");
+			// the shifts in left, still to do, move on by the macro's name
+			for (int j = 0; j < k; j++) {
+				if (operators.get(j) >= start) {
+					operators.set(j, operators.get(j) + macro.length());
+				}
+			}
 		}
 		return out.toString();
 	}

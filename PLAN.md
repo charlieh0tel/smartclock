@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1251 run, 1063 agree, 160 reach what the
-     harness does not model and are skipped, and 28 differ, in the
+     original reads them: of 1250 run, 1085 agree, 160 reach what the
+     harness does not model and are skipped, and 5 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): traps #1 and #7 run the image's handlers;
@@ -846,7 +846,17 @@ view cannot drift apart.  The library, bottom up:
      which the harness found dereferenced take a pointer to their record,
      where Ghidra had an integer; 19 that agreed now follow a pointer in
      the buffer the harness gives them and are skipped (1082 agreeing to
-     1063).
+     1063).  `doprnt`'s precision, count and exponent text are an int, an
+     int and one array, where Ghidra had a pointer that printed 6 as the
+     text at address 6; the QSPI tests' buffers are one record; a switch
+     is relabeled though the decompiler gives its default a case token
+     (`%x`); `HOLD_CAUSE_NONE` names a byte's 0; `duart_init` preserves
+     what it returns nothing in; a register a preserving call's
+     INDIRECT made up is the value the code last wrote it, back through
+     a lone branch (`modf`'s A0, `set_gps_utc_offset`'s D1); and a shift
+     inside another's left operand is rewritten where it now is (28 to
+     5).  Left: `setjmp`, the 64-bit divides' overflow, `log_erase`'s
+     checksum over a pointer and the DIAG query's caller's registers.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

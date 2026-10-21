@@ -292,8 +292,7 @@
 # globals the console's print words label, docs/firmware/structures.md
 0x100c6a	label	gps	structures.md	memset(&gps, 0, 0x55a); the cells the Oncore messages' decoders fill, and the GPS task's state	gps_state
 0x102162	label	pll	structures.md	memset(&pll, 0, 0x3d6); the loop's stage, efc, tfom and EFC history	pll_state
-0x103102	label	drtR_exchange	structures.md	create_x("drtR")	uint32_t
-0x103106	label	drtW_exchange	structures.md	create_x("drtW")	uint32_t
+0x1030ec	label	duartb	structures.md	DUART channel B's driver state, the host port	duartb_driver
 0x101d18	label	eepx_exchange	structures.md	create_x("eepx")	uint32_t
 0x103150	label	sciR_exchange	structures.md	create_x("sciR")	uint32_t
 0x10316c	label	sciW_exchange	structures.md	create_x("sciW")	uint32_t
@@ -338,8 +337,6 @@
 0x101b6f	label	internal_pps_dead	structures.md	set with "Internal 1pps signal is dead", cleared with "is ok"	uint8_t
 0x101cf8	label	internal_pps_started	structures.md	set on internal_pps_check's first pass	uint8_t
 0x101d1c	label	eepx_status	structures.md	"Unable to initialize eepx: %X", "Unable to acquire eepx token: %X"	uint32_t
-0x10310a	label	drtR_status	structures.md	"Unable to initialize drtR: %X"	uint32_t
-0x103122	label	drtW_status	structures.md	"Unable to initialize drtW: %X"	uint32_t
 0x103154	label	sciR_status	structures.md	"Unable to initialize sciR: %X", "Unable to acquire SCI token: %X"	uint32_t
 0x103170	label	sciW_status	structures.md	"Unable to initialize sciW: %X"	uint32_t
 0x101d94	label	log_page_buffer	structures.md	log_read loads a page here and formats its entries	log_page

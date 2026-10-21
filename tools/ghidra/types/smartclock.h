@@ -199,6 +199,51 @@ typedef int printf_function(char *format, ...);
 /* qsort's comparator. */
 typedef int qsort_compare_function(void *a, void *b);
 
+/* A routine that writes a character to a port. */
+typedef void putc_function(char c);
+
+/* The 16-byte message a driver sends its exchange once, at start-up, so
+ * that a task takes the exchange as a token before using the port: its
+ * status, the exchange's id, and the task that holds it, which the
+ * driver's interrupts signal. */
+typedef struct exchange_token {
+	uint32_t status;    /* +0x00: printed if the send fails ("Unable to initialize drtR: %X") */
+	uint32_t exchange;  /* +0x04 */
+	uint32_t task;      /* +0x08: the task waiting on the port, 0 for none */
+	uint32_t field_0c;
+} exchange_token;
+
+/* DUART channel B's driver, the host port, at 0x1030ec.  Its receive
+ * buffer is beside channel A's, at 0x102fec. */
+typedef struct duartb_driver {
+	char *transmit_next;          /* +0x00: drtb_puts's next character */
+	char *async_next;             /* +0x04: drtb_send_async's */
+	int16_t transmit_count;       /* +0x08: drtb_puts's characters left */
+	uint8_t async_count;          /* +0x0a */
+	uint8_t async_pending;        /* +0x0b: when the asynchronous send ends, the SCPI task is signaled 0x20 */
+	uint8_t flow;                 /* +0x0c: 0x80 an XOFF received, holding transmission; 0x20 one sent */
+	uint8_t receive_errors;       /* +0x0d: the status register's error bits, 0x10 an overrun */
+	uint8_t read_errors;          /* +0x0e: receive_errors as the last read left them */
+	uint8_t loopback_test;        /* +0x0f: set while duart_loopback_test_b runs */
+	uint8_t xon_xoff;             /* +0x10: flow control, from the serial settings */
+	uint8_t least_free;           /* +0x11: the receive buffer's least free space seen */
+	uint8_t parity;               /* +0x12: from the serial settings */
+	uint8_t reconfiguring;        /* +0x13: set while duartb_reconfigure has the port's interrupts off */
+	uint8_t in_transmit_interrupt; /* +0x14 */
+	uint8_t field_15;
+	uint32_t read_exchange;       /* +0x16: drtR */
+	uint32_t write_exchange;      /* +0x1a: drtW */
+	exchange_token read_token;    /* +0x1e: its task is signaled 0x800 on a ctrl-C, 0x4000 when input comes */
+	uint8_t field_2e[8];
+	exchange_token write_token;   /* +0x36: its task is signaled 0x1000 when drtb_puts's string is out */
+	uint8_t field_46[8];
+	uint8_t async_allowed;        /* +0x4e: an asynchronous send may start; an XOFF does not stop it */
+	uint8_t field_4f;
+	putc_function *echo;          /* +0x50: drtb_putc, or a routine that does nothing, from the serial settings */
+	uint8_t last_terminator;      /* +0x54: the CR or LF that ended the last line, so its partner is skipped */
+	uint8_t field_55;
+} duartb_driver;
+
 /* The EFC's gain and what efc_gain_set derives from it, at 0x102554:
  * pllp_task sets the gain, the fractional frequency one EFC count
  * moves, 6.25e-13. */

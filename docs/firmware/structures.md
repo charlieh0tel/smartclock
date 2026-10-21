@@ -503,8 +503,8 @@ is `interval_wait_reading` (`0x4513c`), then `interval_rearm`
 (`0x450c4`).
 "mask angle ack failure: %02X" and eight like it print `gps_ack_code`
 (`0x102584`); "Unable to initialize eepx: %X" and the like print
-`eepx_status`, `drtR_status`, `drtW_status`, `sciR_status` and
-`sciW_status`.  `fine_y0` (`0x102154`), `pll.fine_index` and
+`eepx_status`, `duartb.read_token.status`, `duartb.write_token.status`,
+`sciR_status` and `sciW_status`.  `fine_y0` (`0x102154`), `pll.fine_index` and
 `pll.fine_d` are fine acquisition's "y0", "i" and "d" (`loop.md`).
 
 ## What the words name
@@ -675,6 +675,24 @@ restored, but only their descriptors refer to them.  In
 `sync_kind` and a `sync_count`, and `counter_arm` writes the kind into
 `fconf_regs[3]` (`counter_set_sync`, `0x40a84`) while counting the
 count down.
+
+## DUART channel B's driver
+
+`duartb` (`0x1030ec`, `duartb_driver`, 86 bytes) is the host port's
+driver state.  `drtb_puts` points `+0` at its string and counts it at
+`+8`, enables the transmit interrupt and waits for event `0x1000`,
+which `duartb_transmit_interrupt` signals the task in the write token
+when the count runs out; `drtb_send_async` sends a second string,
+`+4` and `+0xa`, without waiting, and the interrupt signals the SCPI
+task `0x20` when it ends.  `duartb_isr` takes each received byte into
+the ring at `0x102fec` (its indexes at `0x102fea` and `0x102feb`),
+signals the read token's task `0x4000`, or `0x800` for a ctrl-C, and,
+with XON/XOFF on (`+0x10`, from the serial settings), sends XOFF when
+fewer than 64 bytes are free and holds transmission on an XOFF
+received (`+0xc`, bits `0x20` and `0x80`).  The two exchange tokens,
+`exchange_token`, are the messages `duart_init` sends `drtR` and `drtW`
+once, so that a task takes the exchange before it uses the port; their
+status is what "Unable to initialize drtR: %X" prints.
 
 ## The EFC's gain
 

@@ -25,6 +25,17 @@ CHECK_FIELD(scpi_numeric_param, steps, 0x28);
 CHECK_FIELD(scpi_numeric_param, gps_request, 0x20);
 CHECK_FIELD(scpi_numeric_param, group_cell, 0x22);
 
+CHECK_SIZE(exchange_token, 16);
+CHECK_SIZE(duartb_driver, 0x103142 - 0x1030ec);
+CHECK_FIELD(duartb_driver, flow, 0x1030f8 - 0x1030ec);
+CHECK_FIELD(duartb_driver, reconfiguring, 0x1030ff - 0x1030ec);
+CHECK_FIELD(duartb_driver, read_exchange, 0x103102 - 0x1030ec);
+CHECK_FIELD(duartb_driver, read_token, 0x10310a - 0x1030ec);
+CHECK_FIELD(duartb_driver, write_token, 0x103122 - 0x1030ec);
+CHECK_FIELD(duartb_driver, async_allowed, 0x10313a - 0x1030ec);
+CHECK_FIELD(duartb_driver, echo, 0x10313c - 0x1030ec);
+CHECK_FIELD(duartb_driver, last_terminator, 0x103140 - 0x1030ec);
+
 CHECK_SIZE(efc_gain_values, 0x10256c - 0x102554);
 CHECK_FIELD(efc_gain_values, reciprocal_tau, 0x102560 - 0x102554);
 CHECK_FIELD(efc_gain_values, step_limit, 0x102564 - 0x102554);

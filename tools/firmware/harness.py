@@ -6,11 +6,13 @@ A call starts in supervisor mode with interrupts masked, as the
 firmware runs, every register a distinct sentinel but A6, which holds a
 caller's frame, and its own stack at STACK, filled and never compared;
 the EEPROM erased, and compared after it as RAM is; and the devices'
-registers zeroed.  The harness stands in for what lies outside memory,
-the same for both calls: trap #7 runs the image's own handler; the
-kernel's traps, #3 and #4, are answered by a model of each service; and
-the kernel calls and device writes a call makes, in order, are its
-effects, compared as RAM is.
+registers zeroed but the status bits the routines poll for.  The
+harness stands in for what lies outside memory, the same for both
+calls: traps #1 and #7 run the image's own handlers; the kernel's
+traps, #3 and #4, are answered by a model of each service; a trap that
+never returns, or a write to code, ends a call; and the kernel calls
+and device writes a call makes, in order, are its effects, compared as
+RAM is.
 Unicorn has no CPU32; the 68020 stands in, and the image uses none of
 the instructions either has alone (PLAN.md, "A rebuild that runs").
 """
@@ -19,7 +21,15 @@ import re
 import struct
 from dataclasses import dataclass
 
-from unicorn import UC_HOOK_INTR, UC_HOOK_MEM_INVALID, UC_HOOK_MEM_WRITE, Uc, UcError
+from unicorn import (
+    UC_HOOK_INTR,
+    UC_HOOK_MEM_INVALID,
+    UC_HOOK_MEM_READ,
+    UC_HOOK_MEM_WRITE,
+    UC_MEM_WRITE_PROT,
+    Uc,
+    UcError,
+)
 from unicorn.m68k_const import (
     UC_M68K_REG_A0,
     UC_M68K_REG_A1,
@@ -99,9 +109,24 @@ VECTORS = 0x10000
 VECTOR_SIZE = 4
 # trap #n is vector TRAP_VECTORS + n.
 TRAP_VECTORS = 32
-# The vectors whose handlers the harness runs, the image's own: trap #7,
-# which hands back the caller's status register (docs/firmware/psos.md).
-HANDLED = {TRAP_VECTORS + 7}
+# The vectors whose handlers the harness runs, the image's own: trap #1,
+# which saves or restores a status register through A0 for setjmp and
+# longjmp (primary_trap_1, 0x510e8), and trap #7, which hands back the
+# caller's status register (docs/firmware/psos.md).
+HANDLED = {TRAP_VECTORS + 1, TRAP_VECTORS + 7}
+# The vectors whose handlers never return to the routine, which ends at
+# them, the two calls then compared as if it had returned, but for its
+# result: trap #5, which ends an interrupt by switching to the first
+# ready task (docs/firmware/psos.md, "Inside the kernel"), and traps #11
+# and #12, which shut down and restart (docs/firmware/restart.md).
+ENDING = {TRAP_VECTORS + 5, TRAP_VECTORS + 11, TRAP_VECTORS + 12}
+# A write to code, the image's ROM or gcc's, which the checks protect,
+# made by code, not by data a call runs, ends the call the same way, at
+# the bus error it would raise: the boot chip select is read only
+# (CSORBT 0x6870, R/W 01), so that a write finds no DSACK, and the bus
+# monitor is on (SYPCR 0xcc, BME), as boot_reset and primary_reset set
+# them (MC68331UM, table 4-22 and D.3.12).
+BUS_ERROR = 2
 # The 68020's exception frame of format 0: the status register, the
 # return address and the format and vector offset word.
 FRAME_FORMAT = ">HIH"
@@ -121,13 +146,22 @@ class Service:
     length) registers, the length None for a message, which a call
     records by their contents, since a caller's buffer on its stack
     lies where its own frame puts it; a buffer it fills with MESSAGE;
-    and a count it returns as none done."""
+    a count it returns as none done; and a NUL-terminated string it
+    reads, as (pointer, count) registers, recorded by its contents and
+    returned as its length in the count and its end in the pointer; and
+    a segment it allocates, as (size, pointer) registers, returned from
+    ALLOCATIONS; and a task it identifies, as (name, pointer) registers,
+    returned as its record, a segment of TASK_RECORD_SIZE allocated the
+    first time a call names it."""
 
     arguments: tuple[str, ...] = ()
     results: tuple[str, ...] = ()
     reads: tuple[str, str | None] | None = None
     fills: str | None = None
     none_done: str | None = None
+    text: tuple[str, str] | None = None
+    allocates: tuple[str, str] | None = None
+    identifies: tuple[str, str] | None = None
 
 
 # The kernel's services, trap #3, by number.
@@ -135,12 +169,12 @@ KERNEL_SERVICES = {
     0: Service(),
     1: Service(("D0", "D1", "D2", "D3", "A0"), ("A0",)),
     2: Service(("A0", "A1")),
-    3: Service(("D0",), ("A0", "D0")),
+    3: Service(("D0",), ("D0",), identifies=("D0", "A0")),
     4: Service(("A0",)),
     5: Service(("A0",)),
     6: Service(("A0",)),
     7: Service(("A0", "D0"), ("D0",)),
-    8: Service(("D0", "D1", "D2", "D3"), ("A0",)),
+    8: Service(("D0", "D1", "D2", "D3"), allocates=("D1", "A0")),
     9: Service(("A0",)),
     10: Service(("A0", "A1")),
     **{number: Service() for number in (11, 12, 13, 14, 15, 17, 34)},
@@ -168,17 +202,29 @@ KERNEL_SERVICES = {
 }
 # The I/O functions, trap #4, by number: a read reads nothing, a write
 # writes all it is given.
+IO_TRAP = TRAP_VECTORS + 4
+WRITE = 4
 IO_FUNCTIONS = {
     0: Service(("D0",)),
     1: Service(("D0", "D1")),
     2: Service(("D0",)),
     3: Service(("D0", "D2"), none_done="D2"),
-    4: Service(("D0", "D2"), reads=("A0", "D2")),
+    WRITE: Service(("D0", "D2"), reads=("A0", "D2")),
     5: Service(("D0", "D2", "D3")),
 }
+# A device is D0's bits 8 to 15 (kernel_dispatch_io, 0x14c0a).  Those
+# whose write sends the string at A0 whatever D2 holds and returns its
+# length in D2 and its end in A0: DUART channel B and the console's
+# string device, through drtb_write (0x1dd98), and the SCI, through
+# sci_write (0x20152) (docs/firmware/structures.md, "The kernel's
+# configuration"); and that write.  The QSPI's, device 1, takes D2.
+DEVICE_SHIFT = 8
+DEVICE_MASK = 0xFF
+STRING_DEVICES = {0, 2, 3}
+STRING_WRITE = Service(("D0",), text=("A0", "D2"))
 # The traps the harness answers for the kernel, by vector.  Each takes
 # its service or function in D7's low byte and returns its error there.
-KERNEL_TRAPS = {TRAP_VECTORS + 3: KERNEL_SERVICES, TRAP_VECTORS + 4: IO_FUNCTIONS}
+KERNEL_TRAPS = {TRAP_VECTORS + 3: KERNEL_SERVICES, IO_TRAP: IO_FUNCTIONS}
 SERVICE_REGISTER = "D7"
 SERVICE_MASK = 0xFF
 # What a modeled service returns: no error, and in each result register
@@ -196,6 +242,20 @@ MESSAGE = struct.pack(">I", KERNEL_RESULT) * MESSAGE_LONGS
 MESSAGE_SIZE = len(MESSAGE)
 # The most a service's buffer may hold: RAM's size.
 LONGEST_BUFFER = RAM_SIZE
+# Where service 8, alloc_seg, takes its segments, D1 bytes each rounded
+# up to a word (kernel_allocate, 0x15272): RAM's top quarter, in the
+# kernel's region 1 (docs/firmware/structures.md, "The kernel's
+# configuration") and clear of the arguments' buffers, from its start
+# at each call's, so that the two calls get the same segments and RAM
+# compares them.
+ALLOCATIONS = RAM + RAM_SIZE * 3 // 4
+ALLOCATIONS_END = RAM + RAM_SIZE
+SEGMENT_ALIGNMENT = 2
+# A task's id is its record's address, which service 3, ident, returns
+# in A0 for the name in D0, the running task's for 0 (kernel_ident,
+# 0x14ed0), and a record's bytes (docs/firmware/psos.md, "Inside the
+# kernel").
+TASK_RECORD_SIZE = 0xB2
 
 
 @dataclass(frozen=True)
@@ -228,6 +288,38 @@ DEVICES = [
     (0x300000, 0x10000),  # the latch, the switch byte and the registers at 0x304000 and 0x306000
     (0x500000, 0x1000),
     (0xFFF000, 0x1000),  # the GPT, SIM and QSM, and the chip select at 0xfff800
+]
+
+
+@dataclass(frozen=True)
+class Status:
+    """A device register a routine polls, which reads as the bits its
+    data sheet says the device sets when what the routine waits for has
+    happened, whatever was written there: its address, its bytes, the
+    bits a write leaves, and the bits set."""
+
+    address: int
+    size: int
+    kept: int
+    set: int
+
+
+# The registers the routines poll, read alike in both calls; every other
+# bit reads as zero, or as written where kept says.
+STATUS_REGISTERS = [
+    # the DUART's SRA and SRB: TxRDY (MC68681, "Channel A status register
+    # (SRA) and channel B status register (SRB)"), which
+    # duartb_putc_polled waits for; a write there is to CSRA or CSRB
+    Status(0x200003, 1, 0, 0x04),
+    Status(0x200013, 1, 0, 0x04),
+    # the SCI's SCSR: TDRE (MC68331UM, D.4.6), which sci_putc_polled
+    # waits for
+    Status(0xFFFC0C, 2, 0, 0x0100),
+    # the QSPI's SPCR1, whose SPE the QSPI clears at the end of its queue
+    # (6.3.5.1), and SPSR, whose SPIF it then sets (D.4.13): qspi_send
+    # waits for both
+    Status(0xFFFC1A, 2, 0x7FFF, 0),
+    Status(0xFFFC1F, 1, 0, 0x80),
 ]
 
 
@@ -300,9 +392,22 @@ class RebuiltMachine(Machine):
         self.effects: list[KernelCall | DeviceWrite] = []
         # each C function's two copies, gcc's address and the image's
         self.copies: set[tuple[int, int]] = set()
+        # where service 8's next segment starts, and the task records
+        # service 3 has returned, by name
+        self.next_allocation = ALLOCATIONS
+        self.tasks: dict[int, int] = {}
         for start, size in DEVICES:
             self.uc.mem_map(start, size)
             self.uc.hook_add(UC_HOOK_MEM_WRITE, self.device_write, begin=start, end=start + size - 1)
+        for status in STATUS_REGISTERS:
+            self.uc.hook_add(
+                UC_HOOK_MEM_READ, self.status_read, status, begin=status.address, end=status.address + status.size - 1
+            )
+
+    def status_read(self, uc: Uc, access: int, address: int, size: int, value: int, status: Status) -> None:
+        """Sets a polled register to what it reads as, before the read."""
+        written = int.from_bytes(uc.mem_read(status.address, status.size), "big")
+        uc.mem_write(status.address, (written & status.kept | status.set).to_bytes(status.size, "big"))
 
     def device_write(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
         self.effects.append(DeviceWrite(address, size, value & ((1 << 8 * size) - 1)))
@@ -379,6 +484,8 @@ def fresh_ram(m: Machine) -> None:
 
 def reset(m: RebuiltMachine, ram: bytes) -> None:
     m.uc.mem_write(RAM, ram)
+    m.next_allocation = ALLOCATIONS
+    m.tasks = {}
     m.uc.mem_write(EEPROM, ERASED)
     m.uc.mem_write(STACK, CLEAN_STACK)
     for start, size in DEVICES:
@@ -416,12 +523,38 @@ def return_from_exception(uc: Uc) -> bool:
     return True
 
 
-def answer_kernel(uc: Uc, vector: int) -> KernelCall | str:
+def string(uc: Uc, at: int) -> bytes | None:
+    """The NUL-terminated string at an address, without its NUL; None if
+    it runs past LONGEST_BUFFER."""
+    data = b""
+    while len(data) < LONGEST_BUFFER:
+        byte = bytes(uc.mem_read(at + len(data), 1))
+        if byte == b"\0":
+            return data
+        data += byte
+    return None
+
+
+def allocate(m: RebuiltMachine, size: int) -> int | None:
+    """A segment of a size from ALLOCATIONS; None if it does not fit."""
+    segment = m.next_allocation
+    end = segment + size + SEGMENT_ALIGNMENT - 1 & -SEGMENT_ALIGNMENT
+    if end > ALLOCATIONS_END:
+        return None
+    m.next_allocation = end
+    return segment
+
+
+def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
     """Answers a kernel trap as KERNEL_TRAPS models it, returning past
     the trap; or, nothing done, why it cannot: a service it does not
-    model, or a buffer it cannot read or fill."""
+    model, a buffer it cannot read or fill, or a segment too large."""
+    uc = m.uc
     number = uc.reg_read(REGISTERS[SERVICE_REGISTER]) & SERVICE_MASK
     service = KERNEL_TRAPS[vector].get(number)
+    device = uc.reg_read(UC_M68K_REG_D0) >> DEVICE_SHIFT & DEVICE_MASK
+    if vector == IO_TRAP and number == WRITE and device in STRING_DEVICES:
+        service = STRING_WRITE
     if service is None:
         return f"service {number}"
     out_of_reach = f"service {number}, its buffer out of reach"
@@ -436,13 +569,36 @@ def answer_kernel(uc: Uc, vector: int) -> KernelCall | str:
             data = bytes(uc.mem_read(start, size))
         if service.fills:
             uc.mem_write(uc.reg_read(REGISTERS[service.fills]) + MESSAGE_OFFSET, MESSAGE)
+        if service.text:
+            data = string(uc, uc.reg_read(REGISTERS[service.text[0]]))
+            if data is None:
+                return out_of_reach
     except UcError:
         return out_of_reach
+    too_large = f"service {number}, its segment out of reach"
+    if service.allocates:
+        size, pointer = service.allocates
+        segment = allocate(m, uc.reg_read(REGISTERS[size]))
+        if segment is None:
+            return too_large
+        uc.reg_write(REGISTERS[pointer], segment)
+    if service.identifies:
+        name, pointer = service.identifies
+        task = uc.reg_read(REGISTERS[name])
+        if task not in m.tasks:
+            m.tasks[task] = allocate(m, TASK_RECORD_SIZE)
+        if m.tasks[task] is None:
+            return too_large
+        uc.reg_write(REGISTERS[pointer], m.tasks[task])
     call = KernelCall(vector, number, tuple((name, uc.reg_read(REGISTERS[name])) for name in service.arguments), data)
     for name in service.results:
         uc.reg_write(REGISTERS[name], KERNEL_RESULT)
     if service.none_done:
         uc.reg_write(REGISTERS[service.none_done], 0)
+    if service.text:
+        pointer, count = service.text
+        uc.reg_write(REGISTERS[pointer], uc.reg_read(REGISTERS[pointer]) + len(data))
+        uc.reg_write(REGISTERS[count], len(data))
     uc.reg_write(REGISTERS[SERVICE_REGISTER], NO_ERROR)
     uc.reg_write(UC_M68K_REG_PC, uc.reg_read(UC_M68K_REG_PC) + TRAP_SIZE)
     return call
@@ -450,21 +606,26 @@ def answer_kernel(uc: Uc, vector: int) -> KernelCall | str:
 
 class Run:
     """One call: its stack arguments laid above the return address, its
-    registers after, RAM and the EEPROM after, its effects, and the fault
-    or trap that stopped it, if one did."""
+    registers after, RAM and the EEPROM after, its effects, the ENDING
+    vector it ended at instead of returning, and the fault or trap that
+    stopped it, if one did."""
 
     def __init__(self, m: RebuiltMachine, start: int, stack_arguments: bytes = b""):
-        trapped, invalid = [], []
+        trapped, invalid, ended = [], [], []
         self.effects = m.effects = []
 
         def trap(uc, number, _):
             if number in HANDLED:
                 take_exception(uc, number)
                 return
+            if number in ENDING:
+                ended.append(number)
+                uc.emu_stop()
+                return
             if number == RETURN_FROM_EXCEPTION and return_from_exception(uc):
                 return
             if number in KERNEL_TRAPS:
-                call = answer_kernel(uc, number)
+                call = answer_kernel(m, number)
                 if isinstance(call, KernelCall):
                     m.effects.append(call)
                     return
@@ -474,6 +635,8 @@ class Run:
             uc.emu_stop()
 
         def fault(uc, access, address, size, value, _):
+            if access == UC_MEM_WRITE_PROT and literal_region(uc.reg_read(UC_M68K_REG_PC)) is not None:
+                ended.append(BUS_ERROR)
             invalid.append(address)
             return False
 
@@ -486,15 +649,21 @@ class Run:
             self.stopped = f"trap {trapped[0]}" if trapped else None
         except UcError as error:
             of = f" of {invalid[0]:x}" if invalid else ""
-            self.stopped = f"{error}{of} at {m.uc.reg_read(UC_M68K_REG_PC):x}"
+            self.stopped = None if ended else f"{error}{of} at {m.uc.reg_read(UC_M68K_REG_PC):x}"
         finally:
             for hook in hooks:
                 m.uc.hook_del(hook)
-        if self.stopped is None and m.uc.reg_read(UC_M68K_REG_PC) != RETURN:
+        self.ended = ended[0] if ended else None
+        if self.stopped is None and self.ended is None and m.uc.reg_read(UC_M68K_REG_PC) != RETURN:
             self.stopped = f"no return in {STEP_LIMIT} steps"
         self.registers = {name: m.uc.reg_read(register) for name, register in REGISTERS.items()}
         self.ram = m.read(RAM, RAM_SIZE)
         self.eeprom = m.read(EEPROM, EEPROM_SIZE)
+
+    def end(self) -> str:
+        if self.ended is None:
+            return "returned"
+        return f"vector {self.ended}" if self.ended < TRAP_VECTORS else f"trap #{self.ended - TRAP_VECTORS}"
 
     def value(self, register: str) -> int:
         """A result in a register or pair, high register first."""
@@ -505,8 +674,8 @@ class Run:
 
 
 def literal_region(at: int) -> int | None:
-    """The start of the region of LITERALS an address is in; None if
-    it is in none."""
+    """The start of the LITERALS region, the image's ROM or gcc's code
+    and constants, an address lies in; None if neither."""
     return next((start for start, size in LITERALS if start <= at < start + size), None)
 
 
@@ -589,10 +758,11 @@ def effects_difference(a: Run, b: Run, names: tuple[str, str]) -> str | None:
 
 
 def stopped_outcome(a: Run, b: Run, names: tuple[str, str]) -> str | None:
-    """None if both calls returned; a skip if both stopped, what the
-    harness does not model deciding; else the difference."""
+    """None if both calls returned or ended at the same vector; a skip if
+    both stopped, what the harness does not model deciding; else the
+    difference."""
     if a.stopped is None and b.stopped is None:
-        return None
+        return None if a.ended == b.ended else f"one ended: {names[0]} {a.end()}, {names[1]} {b.end()}"
     if a.stopped is not None and b.stopped is not None:
         return "skipped: " + a.stopped
     return f"one stopped: {names[0]} {a.stopped}, {names[1]} {b.stopped}"

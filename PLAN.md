@@ -683,15 +683,15 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/bridge_check.py` (Unicorn, run with uv) calls each
      wrapper as gcc would and its routine from its registers, from the
      same RAM, and requires the same result, RAM and effects and gcc's
-     callee-saved registers kept; 74 of 85 agree, none disagree.
+     callee-saved registers kept; 77 of 89 agree, none disagree.
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1251 run, 980 agree, 233 reach what the
-     harness does not model and are skipped, and 38 differ, in the
+     original reads them: of 1251 run, 1048 agree, 141 reach what the
+     harness does not model and are skipped, and 62 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
-     (`docs/firmware/README.md`): `trap #7` runs the image's handler;
+     (`docs/firmware/README.md`): traps #1 and #7 run the image's handlers;
      the kernel's traps are answered by a model of each service, from
      the registers the binding's stubs load and store; the devices are
      memory zeroed for each call; and the kernel calls and device
@@ -815,7 +815,22 @@ view cannot drift apart.  The library, bottom up:
      before it shows (the DUART loopback tests, `sci_puts`).  A rotate is
      a rotate; an argument the kernel returns a result in is read back
      after the call; a copied result reaches a byte piece of it; and
-     `si_prefixes` is bytes, not a literal (48 to 38).
+     `si_prefixes` is bytes, not a literal (48 to 38).  Then
+     the harness
+     turned 92 of the 233 skipped into comparisons (980 agreeing to
+     1048, 38 differing to 62): the string devices' write, which sends a
+     string and returns its length, where the model had taken an unset
+     local as a length (`console_write`); trap #1 through the image's
+     handler; `alloc_seg` and `ident` returning memory a caller can
+     use; traps #5, #11 and #12, and a write to code, which raises a bus
+     error on the board, ending a call; and the status bits the polled
+     DUART, SCI and QSPI routines wait for.  The new differences are the
+     C's: `psos_io_write` and `sci_port_write` store back the length
+     they passed, not the one the device returns; the QSPI self-tests
+     pass `&local_c` as the buffer pair gcc lays apart from `local_8`
+     (and `selftest_execute`, which agreed, through them); `duart_init`
+     returns D0:D1 it never sets; `setjmp` reads registers C cannot;
+     and printf's `%e` and `%#x` (`diag_pll_rep`, `diag_pr_gps_debug`).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

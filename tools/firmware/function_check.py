@@ -16,9 +16,10 @@ device writes in the same order (harness.py).
 
 With NAMEs, only those.  gcc's copy calls gcc's C and, through their
 names and the bridges, the assembly; so a difference may lie in a
-callee.  A function that reaches beyond what the harness maps, writes
-ROM, calls a kernel service the harness does not model, or traps the
-same way both times is skipped.  A function whose prototype has an
+callee.  A call that ends at a trap that never returns, or at a write
+to code, is compared up to there, but for its result.  A function that
+reaches beyond what the harness maps, calls a kernel service the
+harness does not model, or traps the same way both times is skipped.  A function whose prototype has an
 argument of no known size, a structure passed whole, a variable
 argument list, or an argument not on the stack is not run, nor is the
 installer's, whose image copy the boot code unpacks into RAM.  This is the rebuild's measure, not a gate:
@@ -109,8 +110,9 @@ def original_layout(function: Function, values: list[bytes]) -> bytes:
 
 
 def result(function: Function, types: Types, run: Run) -> int | None:
-    """The function's result as its type has it, from D0 or D0:D1."""
-    if function.result == "void":
+    """The function's result as its type has it, from D0 or D0:D1; None
+    if it has none or ended without returning."""
+    if function.result == "void" or run.ended is not None:
         return None
     size = types.size(function.result)
     if size == WIDEST:

@@ -699,24 +699,41 @@ default script does (ld takes a GOT entry's offset from that section's
 start), and the harness loads.
 
 What lies outside memory the harness models, the same for both calls,
-at its boundary rather than routine by routine.  `trap #7` takes the
-exception through the primary's vector table to the image's own
-handler, and `rte` returns from it, which Unicorn leaves to its
-interrupt hook.  The kernel's traps, `#3` and `#4`, are answered: for
-each service and I/O function (`psos.md`) the harness knows, from the
-binding's stubs, the registers it reads and returns in; a call records
-the service and those registers, a message by the 20 bytes from its `+4` the kernel copies and a
-write's buffer by its contents, since a caller's buffer on its stack
-lies where its own frame puts it, and returns no error and
-`0x6b000000`, an address nothing is mapped at, in each result register;
-`request_x` fills its buffer with that value, a read reads nothing and
-a write writes all it is given.  The devices -- the DUART at
-`0x200000`, `0x300000` to `0x30ffff`, `0x500000` and the MC68331's
+at its boundary rather than routine by routine.  `trap #7`, and
+`trap #1`, which saves or restores a status register for `setjmp` and
+`longjmp`, take the exception through the primary's vector table to
+the image's own handler, and `rte` returns from it, which Unicorn
+leaves to its interrupt hook.  The kernel's traps, `#3` and `#4`, are
+answered: for each service and I/O function (`psos.md`) the harness
+knows, from the binding's stubs, the registers it reads and returns
+in; a call records the service and those registers, a message by the
+20 bytes from its `+4` the kernel copies and a write's buffer by its
+contents, since a caller's buffer on its stack lies where its own
+frame puts it, and returns no error and `0x6b000000`, an address
+nothing is mapped at, in each result register; `request_x` fills its
+buffer with that value, a read reads nothing and a write writes all it
+is given.  But the write of DUART channel B, the console's string
+device and the SCI (devices 0, 2 and 3: `drtb_write`, `sci_write`)
+sends the string at A0 whatever D2 holds and returns its length in D2,
+as the routines do; service 8, `alloc_seg`, returns a segment of the
+size in D1 from RAM's top quarter, and service 3, `ident`, a task
+record there, one per name, each from the same place in both calls, so
+that a caller uses it and RAM compares it.  The devices -- the DUART
+at `0x200000`, `0x300000` to `0x30ffff`, `0x500000` and the MC68331's
 modules from `0xfff000` -- are memory zeroed for each call, and each
-write to them is recorded.  The kernel calls and device writes, in
+write to them is recorded; but the registers the polled routines wait
+on read as the data sheets say they do once the wait is over: the
+DUART's SRA and SRB with TxRDY, the SCI's SCSR with TDRE, the QSPI's
+SPSR with SPIF and its SPCR1 with SPE clear (MC68681; MC68331UM
+D.4.6, D.4.13, 6.3.5.1).  The kernel calls and device writes, in
 order, are a call's effects, which the two calls must make alike; a
 service the harness does not model stops a call, as an unmapped
-address does.  And the stack is filled with `0xa5` at a call's start,
+address does.  A trap whose handler never comes back -- `#5`, the
+kernel's return from interrupt, and `#11` and `#12`, which restart --
+ends a call, as does a write to code, which on the board raises a bus
+error (the boot chip select is read only, CSORBT `0x6870`, and the bus
+monitor on, SYPCR `0xcc`); two calls that end at the same vector are
+compared as if they had returned, but for their result.  And the stack is filled with `0xa5` at a call's start,
 so that a local read before it is written reads the same in both.
 
 In the Z3805A 3543B image this gives 1813 functions, and every one but

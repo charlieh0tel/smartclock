@@ -131,12 +131,13 @@ def check(m: Machine, types: Types, bridge: Bridge, wrapper: int, address: int):
             yield f"case {case}", stopped
             continue
         differences = []
-        if bridge.result != "void" and bridge.result_register:
+        returned = direct.ended is None
+        if returned and bridge.result != "void" and bridge.result_register:
             register, wanted = gcc_result(bridge, types, direct.value(bridge.result_register))
             got = bridged.value(register)
             if got != wanted:
                 differences.append(f"result {got:x} in {register}, routine's {wanted:x}")
-        kept = [r for r in REGISTERS if r in CALLEE_SAVED and bridged.registers[r] != STARTING[r]]
+        kept = [r for r in REGISTERS if returned and r in CALLEE_SAVED and bridged.registers[r] != STARTING[r]]
         if kept:
             differences.append(f"not kept: {', '.join(kept)}")
         ram_differs = ram_difference(m, direct, bridged)

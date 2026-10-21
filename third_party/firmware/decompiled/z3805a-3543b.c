@@ -36388,16 +36388,16 @@ float read_adc_doven(void)
 
 {
   float pushed_1;
-  uint32_t uVar1;
   uint32_t reading;
+  uint32_t uVar2;
   float fVar3;
   
-  uVar1 = adc_read(ADC_DOUBLE_OVEN);
-  reading = adc_read(ADC_5V);
-  fVar3 = unsigned_to_float(uVar1 & 0xff);
+  reading = adc_read(ADC_DOUBLE_OVEN);
+  uVar2 = adc_read(ADC_5V);
+  fVar3 = unsigned_to_float(reading & 0xff);
   fVar3 = float_multiply(fVar3,0.0743);
   pushed_1 = fVar3;
-  fVar3 = unsigned_to_float(reading & 0xff);
+  fVar3 = unsigned_to_float(uVar2 & 0xff);
   fVar3 = float_multiply(fVar3,-0.0472);
   fVar3 = float_add(pushed_1,fVar3);
   return fVar3;
@@ -36462,16 +36462,16 @@ float read_adc_m15v(void)
 
 {
   float pushed_1;
-  uint32_t uVar1;
   uint32_t reading;
+  uint32_t uVar2;
   float fVar3;
   
-  uVar1 = adc_read(ADC_MINUS_15V);
-  reading = adc_read(ADC_5V);
-  fVar3 = unsigned_to_float(uVar1 & 0xff);
+  reading = adc_read(ADC_MINUS_15V);
+  uVar2 = adc_read(ADC_5V);
+  fVar3 = unsigned_to_float(reading & 0xff);
   fVar3 = float_multiply(fVar3,0.0438);
   pushed_1 = fVar3;
-  fVar3 = unsigned_to_float(reading & 0xff);
+  fVar3 = unsigned_to_float(uVar2 & 0xff);
   fVar3 = float_multiply(fVar3,-0.084);
   fVar3 = float_add(pushed_1,fVar3);
   return fVar3;
@@ -49197,16 +49197,16 @@ int32_t scpi_query_RSSU(void *parameters,void *response,void *call)
 int32_t scpi_set_SOURce_GPSystem_ADELay(void *parameters,void *response,void *call)
 
 {
-  int32_t iVar1;
+  int32_t zero;
   float fVar2;
-  uint32_t zero;
+  uint32_t uVar3;
   int32_t iVar4;
   float local_14;
   float local_10;
   scpi_step step;
   
-  iVar1 = return_zero();
-  pllc_request_b(&scpi_action_temporary_hold,0,(char)iVar1);
+  zero = return_zero();
+  pllc_request_b(&scpi_action_temporary_hold,0,(char)zero);
   if (*(int16_t *)parameters == 2) {
     if (*(int16_t *)((int32_t)parameters + 2) == 1) {
       iVar4 = 0;
@@ -49222,13 +49222,13 @@ int32_t scpi_set_SOURce_GPSystem_ADELay(void *parameters,void *response,void *ca
     local_14 = float_multiply(fVar2,1e-09);
     fVar2 = integer_to_float(999999);
     local_10 = float_multiply(fVar2,1e-09);
-    zero = return_zero();
+    uVar3 = return_zero();
     iVar4 = clamp_float_to_step_double
-                      ((float *)((int32_t)parameters + 2),0,&local_14,&local_10,(int32_t)&step,zero & 0xff)
+                      ((float *)((int32_t)parameters + 2),0,&local_14,&local_10,(int32_t)&step,uVar3 & 0xff)
     ;
   }
-  iVar1 = return_zero();
-  pllc_request_c(&scpi_param_SOURce_GPSystem_ADELay,0,iVar4,(uint32_t *)0x0,(char)iVar1);
+  zero = return_zero();
+  pllc_request_c(&scpi_param_SOURce_GPSystem_ADELay,0,iVar4,(uint32_t *)0x0,(char)zero);
   return 0;
 }
 
@@ -72127,8 +72127,8 @@ __regcall double double_add_pointers(double *a /* a0 */,double *b /* a1 */)
   int16_t sVar16;
   bool bVar17;
   bool bVar18;
-  double dVar19;
-  uint64_t raised;
+  double raised;
+  uint64_t uVar20;
   
   uVar5 = *(uint32_t *)a;
   uVar8 = *(uint32_t *)((int32_t)a + 4);
@@ -72152,15 +72152,15 @@ __regcall double double_add_pointers(double *a /* a0 */,double *b /* a1 */)
       }
       if (uVar8 == 0) {
         if ((int32_t)(uVar4 ^ uVar5) < 0) {
-          dVar19 = (double)float_raise(0x82000);
-          return dVar19;
+          raised = (double)float_raise(0x82000);
+          return raised;
         }
         goto LAB_0005d2b6;
       }
     }
 LAB_0005d2c6:
-    dVar19 = (double)float_raise(0x84000,uVar3,uVar14);
-    return dVar19;
+    raised = (double)float_raise(0x84000,uVar3,uVar14);
+    return raised;
   }
   if (0x7fefffff < uVar7) {
     if ((uVar7 < 0x7ff00001) && (uVar8 == 0)) {
@@ -72284,7 +72284,7 @@ LAB_0005d2b6:
       }
       return (double)CONCAT44((uint32_t)uVar13 << 0x10 | uVar4,uVar5);
     }
-    raised = float_raise(0x81000);
+    uVar20 = float_raise(0x81000);
     sVar16 = extraout_A1w;
     goto LAB_0005d63e;
   }
@@ -72302,8 +72302,8 @@ LAB_0005d5ae:
         if ((__ghidra_piece(uint8_t, float_control, 0) & 2) != 0) {
 LAB_0005d484:
           float_status = float_status | 0x200;
-          dVar19 = (double)float_raise(0x80200);
-          return dVar19;
+          raised = (double)float_raise(0x80200);
+          return raised;
         }
         bVar18 = CARRY4(uVar4,uVar4);
         uVar4 = uVar4 * 2;
@@ -72391,14 +72391,14 @@ LAB_0005d5ee:
                               uVar5);
     }
   }
-  raised = float_raise(0xc0800,CONCAT22(uVar11,1 - uVar15),uVar3,uVar5,uVar4);
+  uVar20 = float_raise(0xc0800,CONCAT22(uVar11,1 - uVar15),uVar3,uVar5,uVar4);
   sVar16 = extraout_A1w_00;
 LAB_0005d63e:
-  uVar5 = (uint32_t)(raised >> 0x20);
+  uVar5 = (uint32_t)(uVar20 >> 0x20);
   if (sVar16 < 0) {
     uVar5 = uVar5 | 0x80000000;
   }
-  return (double)CONCAT44(uVar5,(int32_t)raised);
+  return (double)CONCAT44(uVar5,(int32_t)uVar20);
 }
 
 

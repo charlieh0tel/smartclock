@@ -1579,7 +1579,8 @@ public class SmartClockExportC extends GhidraScript {
 			return;
 		}
 		Set<String> taken = new HashSet<>(KEYWORDS);
-		Map<HighVariable, List<ClangToken>> uses = new IdentityHashMap<>();
+		// in the order the variables appear, so that the first takes a name several would
+		Map<HighVariable, List<ClangToken>> uses = new LinkedHashMap<>();
 		for (ClangToken token : tokens) {
 			if (!(token instanceof ClangCommentToken)) {
 				taken.add(token.getText());

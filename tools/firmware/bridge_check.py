@@ -7,17 +7,18 @@ which gcc's C calls in place of a routine that takes its arguments in
 registers (docs/firmware/README.md), is called in the rebuilt image as
 gcc calls it, its arguments in 4-byte stack slots, and the routine
 itself is called with the same arguments in the registers the
-.conventions.jsonl sidecar names.  The two must give the same result and
-leave RAM the same, and the wrapper must keep the registers gcc's
-callee saves.
+.conventions.jsonl sidecar names.  The two must give the same result,
+leave RAM the same and make the same kernel calls and device writes
+(harness.py), and the wrapper must keep the registers gcc's callee
+saves.
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/bridge_check.py \\
         third_party/firmware/decompiled/z3805a-3543b.c \\
         third_party/firmware/z3805a-3543b.bin
 
-A routine that reaches beyond what the harness maps, or traps, the same
-way both times is skipped: a peripheral or the kernel would decide its
-result.  Installer routines are not run.  make check-decompiled runs it
+A routine that reaches beyond what the harness maps, calls a kernel
+service the harness does not model, or traps, the same way both times
+is skipped.  Installer routines are not run.  make check-decompiled runs it
 with its flags.  Exits nonzero if any bridge disagrees with its routine.
 """
 
@@ -39,6 +40,7 @@ from harness import (
     Run,
     Types,
     arguments,
+    effects_difference,
     fresh_ram,
     gcc_slots,
     ram_difference,
@@ -140,6 +142,9 @@ def check(m: Machine, types: Types, bridge: Bridge, wrapper: int, address: int):
         ram_differs = ram_difference(m, direct, bridged)
         if ram_differs:
             differences.append(ram_differs)
+        effects_differ = effects_difference(direct, bridged, ("direct", "bridged"))
+        if effects_differ:
+            differences.append(effects_differ)
         yield f"case {case}", "; ".join(differences) or None
 
 

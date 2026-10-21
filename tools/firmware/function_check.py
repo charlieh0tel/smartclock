@@ -7,7 +7,8 @@ image's own: in the rebuilt image (rebuild_link.py), the image's copy is
 called with its arguments where the .conventions.jsonl sidecar says the
 original reads them, as Ghidra's storage has them, and gcc's copy as
 gcc's callers lay them, in 4-byte slots.  From the same RAM, the two must give
-the same result and leave RAM the same.
+the same result, leave RAM the same, and make the same kernel calls and
+device writes in the same order (harness.py).
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/function_check.py \\
         third_party/firmware/decompiled/z3805a-3543b.c \\
@@ -16,8 +17,8 @@ the same result and leave RAM the same.
 With NAMEs, only those.  gcc's copy calls gcc's C and, through their
 names and the bridges, the assembly; so a difference may lie in a
 callee.  A function that reaches beyond what the harness maps, writes
-ROM, or traps the same way both times is skipped: a peripheral or the
-kernel would decide its result.  A function whose prototype has an
+ROM, calls a kernel service the harness does not model, or traps the
+same way both times is skipped.  A function whose prototype has an
 argument of no known size, a structure passed whole, a variable
 argument list, or an argument not on the stack is not run, nor is the
 installer's, whose image copy the boot code unpacks into RAM.  This is the rebuild's measure, not a gate:
@@ -42,6 +43,7 @@ from harness import (
     Run,
     Types,
     arguments,
+    effects_difference,
     fresh_ram,
     gcc_slots,
     ram_difference,
@@ -155,6 +157,9 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
         ram_differs = ram_difference(m, original, gcc)
         if ram_differs:
             differences.append(ram_differs)
+        effects_differ = effects_difference(original, gcc, ("image", "gcc"))
+        if effects_differ:
+            differences.append(effects_differ)
         yield f"case {case}", "; ".join(differences) or None
 
 

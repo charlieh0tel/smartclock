@@ -682,14 +682,20 @@ view cannot drift apart.  The library, bottom up:
      the same inputs and memory.  Done, as `tools/firmware/harness.py`.
      `tools/firmware/bridge_check.py` (Unicorn, run with uv) calls each
      wrapper as gcc would and its routine from its registers, from the
-     same RAM, and requires the same result and RAM and gcc's
-     callee-saved registers kept; 68 of 85 agree, none disagree.
+     same RAM, and requires the same result, RAM and effects and gcc's
+     callee-saved registers kept; 74 of 85 agree, none disagree.
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1212 run, 659 agree, 541 reach the kernel
-     or a peripheral and are skipped, and 12 differ, in the function or
-     in gcc's callees.
+     original reads them: of 1212 run, 766 agree, 224 reach what the
+     harness does not model and are skipped, and 222 differ, in the
+     function or in gcc's callees.  The harness models what lies
+     outside memory at its boundary, the same for both calls
+     (`docs/firmware/README.md`): `trap #7` runs the image's handler;
+     the kernel's traps are answered by a model of each service, from
+     the registers the binding's stubs load and store; the devices are
+     memory zeroed for each call; and the kernel calls and device
+     writes a call makes, in order, are compared as RAM is.
      Unicorn has no CPU32 and the 68020 stands in: the image uses none
      of the CPU32's own instructions (`tbl`, `lpstop`, `bgnd`; a scan of
      its words finds none), and none of the 68020's the CPU32 lacks.
@@ -755,6 +761,27 @@ view cannot drift apart.  The library, bottom up:
      Oncore field tables and the installer's records, which the
      decompiler took for short strings, are typed byte arrays (20 to 18:
      `oncore_traim_message`, `boot_unpack_installer`).
+     Then
+     the harness's models of the kernel, the devices and `trap #7`
+     turned 317 of the 541 skipped into comparisons: 107 agree and 210
+     differ, nearly all through a few callees whose C is wrong where
+     the harness could not see before -- `enter_supervisor`, whose
+     `trap #7` and jump back through its popped return address the
+     decompiler reads as a call through an unset pointer (61 callers
+     jump to 0); `psos_pack_name`, which reads its caller's name
+     argument from the caller's frame (12, by `psos_ident` and the
+     task and exchange creators); the I/O stubs, whose C drops the
+     buffer, length and other registers the binding loads (43); the
+     stubs that store a result the kernel returns in A0 through a
+     pointer, which the C reads from an unset local (`psos_my_pid`,
+     `memory_allocate`, eight in all); and the messages the SCPI
+     setters and `pllc_request_*` build on their stacks, split into
+     locals gcc lays apart (61).  Five that agreed differ in a case
+     now run (`eeprom_write`, `eeprom_write_page`,
+     `gps_receiver_status_update`: `enter_supervisor`; `fpga_verify`,
+     `hdac_nudge`: the I/O stubs), and `duartb_putc_polled`, which
+     agreed by reading what an earlier call left at the DUART, polls
+     a zeroed one forever and is skipped (12 to 222).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

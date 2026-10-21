@@ -539,9 +539,9 @@ label, `c_NAME`: a generated wrapper that moves the arguments from
 gcc's stack into the routine's registers and its result into D0, D0:D1
 or A0.  `tools/firmware/bridge_check.py` runs each wrapper in Unicorn
 against its routine called directly, from the registers the sidecar
-names: of the 85, 68 give the same result and RAM and keep gcc's
-callee-saved registers, 10 reach the kernel or a peripheral and are
-skipped, and 7 (the installer's) are not run.  The
+names: of the 85, 74 give the same result, RAM and effects and keep
+gcc's callee-saved registers, 4 reach what the harness does not model
+and are skipped, and 7 (the installer's) are not run.  The
 whole file compiles to an object (`make check-decompiled`, whose flags
 add `-fno-builtin -fno-tree-loop-distribute-patterns`, since the image's
 C library has no `puts`, `strlen` or `strcmp` for gcc to call).  The
@@ -653,6 +653,27 @@ where gcc's keeps no frame pointer.  The EEPROM, chip select 9's 8 KB at
 gcc's code is above every chip select so that a read of the EEPROM
 finds no code, and its data, a bridge's `__ghidra_ccr`, apart from its
 code, which the function check keeps read-only.
+
+What lies outside memory the harness models, the same for both calls,
+at its boundary rather than routine by routine.  `trap #7` takes the
+exception through the primary's vector table to the image's own
+handler, and `rte` returns from it, which Unicorn leaves to its
+interrupt hook.  The kernel's traps, `#3` and `#4`, are answered: for
+each service and I/O function (`psos.md`) the harness knows, from the
+binding's stubs, the registers it reads and returns in; a call records
+the service and those registers, a message by its 16 bytes and a
+write's buffer by its contents, since a caller's buffer on its stack
+lies where its own frame puts it, and returns no error and
+`0x6b000000`, an address nothing is mapped at, in each result register;
+`request_x` fills its buffer with that value, a read reads nothing and
+a write writes all it is given.  The devices -- the DUART at
+`0x200000`, `0x300000` to `0x30ffff`, `0x500000` and the MC68331's
+modules from `0xfff000` -- are memory zeroed for each call, and each
+write to them is recorded.  The kernel calls and device writes, in
+order, are a call's effects, which the two calls must make alike; a
+service the harness does not model stops a call, as an unmapped
+address does.  And the stack is filled with `0xa5` at a call's start,
+so that a local read before it is written reads the same in both.
 
 In the Z3805A 3543B image this gives 1755 functions, and every one but
 the ten thunks decompiles.  136 switches are recovered; `0x24ff2` and `0x25140`, a

@@ -32,7 +32,7 @@ RAM = 0x100000
 RAM_SIZE = 0x10000
 STACK_TOP = RAM + RAM_SIZE - 0x10
 # Where a call returns to: mapped, never executed, the emulation's end.
-RETURN = 0x200000
+RETURN = 0x800000
 RETURN_SIZE = 0x1000
 # Scratch buffers for arguments and results.
 BUFFER = RAM + 0x8000

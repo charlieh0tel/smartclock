@@ -196,3 +196,101 @@ pps_wait_time	status	0 or the kernel's error
 stack_measure	status	0
 enter_supervisor_mode	sr	the status register as it was
 set_interrupt_mask	sr	the status register as it was
+# The SCPI engine, 0x25000 to 0x29fff (rewritten/z3805a-3543b/scpi.c)
+scpi_bcd_to_double	converted	Z set when the number does not fit a double
+scpi_scale_by_power_of_ten	scaled
+scpi_double_multiply	product
+scpi_double_multiply_short	product
+scpi_number_to_double	error	0, or -1 when the number does not fit a double
+scpi_number_to_bcd	error	0, or -1 for an exponent beyond 309
+scpi_real_to_text	error	0, or 1 when the text cannot be made
+scpi_parse_string	error	always 0
+scpi_parse_boolean	error	0, or a negative condition
+scpi_parse_boolean_number	error	0, or a negative condition
+scpi_parse_choice	error	0, or a negative condition
+scpi_parse_short	error	0, or a negative condition
+scpi_parse_unsigned_short	error	0, or a negative condition
+scpi_parse_long	error	0, or a negative condition
+scpi_parse_unsigned_long	error	0, or a negative condition
+scpi_parse_float	error	0, or a negative condition
+scpi_parse_double	error	0, or a negative condition
+scpi_number_to_short	error	0, or -11 out of range
+scpi_number_to_unsigned_short	error	0, or -11 out of range
+scpi_number_to_long	error	0, or -11 out of range
+scpi_number_to_unsigned_long	error	0, or -11 out of range
+scpi_format_text	error	0, or a negative condition
+scpi_format_string	error	0, or a negative condition
+scpi_format_boolean	error	0, or a negative condition
+scpi_format_counted_text	error	-90, the response's end
+scpi_format_choice	error	0, or a negative condition
+scpi_unsigned_to_digits	error	0, or -40 when the digits do not fit
+scpi_format_long	error	0, or a negative condition
+scpi_format_short	error	0, or a negative condition
+scpi_format_unsigned_long	error	0, or a negative condition
+scpi_format_unsigned_short	error	0, or a negative condition
+scpi_format_block	error	0, or a negative condition
+scpi_format_double_array	error	0, or a negative condition
+scpi_format_short_array	error	0, or a negative condition
+scpi_format_resolution_array	error	0, or a negative condition
+scpi_format_array	error	0, or a negative condition
+scpi_format_resolution_array_record	error	0, or a negative condition
+scpi_format_double	error	0, or scpi_real_to_text's
+scpi_format_float	error	0, or scpi_real_to_text's
+scpi_format_double_precision	error	0, or scpi_real_to_text's
+scpi_format_double_resolution	error	0, or scpi_real_to_text's
+scpi_format_float_resolution	error	0, or scpi_real_to_text's
+scpi_context_init	error	always 0
+scpi_parse_message_unit	error	0, a negative condition, or -100 and -101 for an empty unit and SCPI_PORT_SKIPPED_END
+scpi_scan_token	kind	the token's kind, or a negative condition
+scpi_scan_number	kind	14, a decimal number's kind, or a negative condition
+scpi_scan_exponent	error	0, or a negative condition
+scpi_char_upper	upper	a letter in upper case, else the character
+scpi_parameter_match	error	0, or a negative condition
+scpi_parameters_finish	error	0, or -37 for a required parameter left out
+scpi_suffix_compare_tail	matched	the characters of the name matched, 0 unless all
+scpi_multiplier_exponent	exponent	the multiplier's power of ten, -128 for none
+scpi_match_suffix	unit	the unit's index plus one, 0 for none
+scpi_apply_suffix	error	0, or a negative condition
+scpi_keyword_compare	order	-1, 0 or 1 as the token sorts before, is, or sorts after the keyword
+scpi_node_find	node	NULL for none
+scpi_node_find_with_defaults	node	0 for none
+scpi_node_find_numbered	node	0 for none
+scpi_header_resolve	error	0, or a negative condition
+scpi_header_step	error	0, or a negative condition
+scpi_common_header_resolve	error	0, or a negative condition
+scpi_trg_defined	node	_TRG's, NULL for none
+status_create	error	0, or -56 for no memory
+status_set_bit	result	1, or error_queue_push's for an error
+status_clear_bit	result	as status_set_bit's
+condition_is_command_error	command_error	1 for a command error's condition
+status_clear_events	error	always 0
+error_queue_create	error	0, or -56 for no memory
+error_queue_push	full	1 when the queue was full or overflows
+error_message_lookup	message	NULL for none
+scpi_interpret	error
+scpi_call_handler	error	the handler's, or -56 for no room for the response
+scpi_format_response	error	0, or a formatter's
+arena_alloc	start	the room's address, 0 when the arena does not hold it
+arena_remaining	next	the arena's next free byte; the bytes left through the first argument
+arena_take	start	the buffer given
+arena_current	next	the arena's next free byte
+scpi_check_range	in_range	1 within the bounds
+scpi_long_resolve_bound	error	always 0
+scpi_numeric_get	value
+scpi_numeric_get_double	value
+return_byte	value
+long_identity	value
+float_identity	value
+return_zero	zero
+scpi_query_failed	error	always 0
+rtcm_supported	supported	0
+scpi_session_init	port	the console port's object
+scpi_console_port	port	the console port's object, 0x29e18
+scpi_console_return_zero	zero
+scpi_console_read	count	the characters read
+console_port_read	character	or above 0xff an end
+status_sre_get	enable	the service request enable
+status_byte_get	summary	the Status Byte
+scpi_message_done	error	always 0
+scpi_input_closed	error	always 0
+scpi_task_create	error	-1 when the task exists, else the kernel's

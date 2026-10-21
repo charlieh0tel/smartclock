@@ -1231,6 +1231,13 @@ view cannot drift apart.  The library, bottom up:
      line of assembly); and the image's `duart_op0_set` and its kin pass
      6 to `set_interrupt_mask`, which keeps only bits 10 to 8, so the
      mask they set is level 0.
+     `scpi.c`, the SCPI engine, 122 more: the converters and parsers,
+     the formatters, the lexer, keyword and suffix matching, the status
+     system and error queue, and the call path, checked beyond the
+     harness's cases on real command lines and numbers; 386 written by
+     hand in all.  Its structures are its own for now and belong in
+     `smartclock.h`; seven of its routines wait on prototypes that skip
+     an argument's slot.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

@@ -623,6 +623,11 @@ decompiler wrote it, and reported.
   unsigned operand is that operand's value, `!= 0xff`: the decompiler
   prints the byte as -1, but C promotes the operand to int
   (`nv_slot_erase`, on an erased EEPROM).
+- The address of a view of the routine's own frame that ends a local
+  is the local's end, `(void *)((char *)&record + sizeof record)`: the
+  decompiler writes a loop to a stack record's end as
+  `&stack0xfffffffc`, the frame offset where it ends, which has no C
+  (`nv_save`, `nv_restore`, once their record is typed).
 - An infinity or NaN assigned to an integer variable becomes its bits,
   `local_14 = __ghidra_bits(-__builtin_inf())`: the decompiler copies
   the constant's bits, where C converts its value, undefined for an

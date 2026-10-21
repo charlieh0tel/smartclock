@@ -268,7 +268,7 @@ public class SmartClockExportC extends GhidraScript {
 				functions.append("\n/* ").append(function.getEntryPoint()).append(" */\n");
 				if (results.decompileCompleted()) {
 					Printed printed = printed(function, results);
-					String c = indexedFunctions(identifiers(nonfiniteBits(pieces(notC(function, printed.c()),
+					String c = indexedFunctions(identifiers(nonfiniteBits(pieces(frameEnds(results.getHighFunction(), notC(function, printed.c())),
 						printed.signedPieces()))));
 					if (notCMacro(function) != null) {
 						functions.append(READING).append(c).append("\n#endif\n")
@@ -1001,6 +1001,36 @@ public class SmartClockExportC extends GhidraScript {
 				writer.println("__asm__(\".set " + name + ", 0x" + Long.toHexString(UNEXPRESSED) + "\");");
 			}
 		}
+	}
+
+	/** The address of a view of the routine's own frame, as the decompiler writes one. */
+	private static final Pattern FRAME_VIEW_ADDRESS = Pattern.compile("&stack0x([0-9a-f]{8})\\b");
+
+	/**
+	 * c with the address of each view of the routine's own frame that ends
+	 * a local the local's end, (void *)((char *)&local + sizeof local): a
+	 * loop to the end of a record on the stack, which the decompiler
+	 * writes as &stack0xfffffffc, the frame offset where it ends (nv_save's
+	 * record).  A view that ends no local is left to UNEXPRESSED.
+	 */
+	private static String frameEnds(HighFunction high, String c) {
+		Matcher view = FRAME_VIEW_ADDRESS.matcher(c);
+		StringBuilder out = new StringBuilder();
+		while (view.find()) {
+			int offset = (int) Long.parseLong(view.group(1), 16);
+			String end = view.group();
+			for (Iterator<HighSymbol> symbols = high.getLocalSymbolMap().getSymbols();
+					offset < 0 && symbols.hasNext();) {
+				HighSymbol local = symbols.next();
+				VariableStorage storage = local.getStorage();
+				if (storage.isStackStorage() && storage.getStackOffset() + local.getSize() == offset) {
+					end = "(void *)((char *)&" + local.getName() + " + sizeof " + local.getName() + ")";
+				}
+			}
+			view.appendReplacement(out, Matcher.quoteReplacement(end));
+		}
+		view.appendTail(out);
+		return out.toString();
 	}
 
 	/** The prefix of the decompiler's name for a view of the stack at entry. */

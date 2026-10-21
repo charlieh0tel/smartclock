@@ -4434,12 +4434,8 @@ __asm__(".set register0x0000003c, 0xfffff000");
 #define stack0x00000014 (*(undefined4 *)((char *)__builtin_frame_address(0) + 24))
 extern undefined4 stack0xffffffd2;
 __asm__(".set stack0xffffffd2, 0xfffff000");
-extern undefined4 stack0xffffffd4;
-__asm__(".set stack0xffffffd4, 0xfffff000");
 extern undefined4 stack0xffffffd6;
 __asm__(".set stack0xffffffd6, 0xfffff000");
-extern undefined4 stack0xfffffffc;
-__asm__(".set stack0xfffffffc, 0xfffff000");
 
 void boot_duartb_loopback_check(void);
 void boot_duart_early_init(void);
@@ -21202,7 +21198,7 @@ __naked undefined4 cpu_register_test(void)
 {
   undefined1 local_30 [4];
   
-  if (local_30 != &stack0xffffffd4) {
+  if (local_30 != (void *)((char *)&local_30 + sizeof local_30)) {
     bcdAdjust(0xaa);
   }
   selftest.cpu = 1;
@@ -21386,7 +21382,7 @@ __naked void ram_pattern_test(void)
   selftest.ram_data_bits = 0;
   selftest.ram_address_lines = 0;
   ppVar6 = &preserved_region;
-  puVar13 = (undefined2 *)&stack0xffffffd4;
+  puVar13 = (undefined2 *)(void *)((char *)&uStack_2e + sizeof uStack_2e);
   while( true ) {
     uVar3 = 0;
     sVar5 = 0x17;
@@ -55327,10 +55323,10 @@ char nv_save(byte param_1)
     puVar10 = puVar11 + 1;
     *puVar11 = uVar7;
   }
-  if ((&stack0xfffffffc <= puVar10) && (kernel_running != 0)) {
+  if (((void *)((char *)&record + sizeof record) <= puVar10) && (kernel_running != 0)) {
     task_debug_message("Warning: Entire nv register is being used\r\n");
   }
-  for (; puVar10 < &stack0xfffffffc; puVar10 = puVar10 + 1) {
+  for (; puVar10 < (void *)((char *)&record + sizeof record); puVar10 = puVar10 + 1) {
     *puVar10 = 0xffffffff;
   }
   record.checksum = nv_checksum((int)&record);

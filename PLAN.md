@@ -1201,6 +1201,8 @@ view cannot drift apart.  The library, bottom up:
      The scan also found the exporter missing a pointer-typed `unaff_`
      register and A6, now read, and byte results with garbage above
      (`drtb_getc`, `sci_getc`, `coarse`, now `uint8_t`).
+     And the decompiler's types of a size alone, `undefined4` and the
+     like, are written `uint32_t` and the like, which they are.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

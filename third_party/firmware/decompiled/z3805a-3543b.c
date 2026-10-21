@@ -18,6 +18,8 @@
  * end, taken from its bits whatever its type.
  */
 typedef unsigned int undefined3;
+typedef unsigned long long uint64_t; /* standardTypes' undefined8; the type header has none */
+typedef long long int64_t;
 typedef unsigned long long undefined5;
 typedef unsigned long long undefined7;
 typedef int int3;
@@ -560,7 +562,7 @@ typedef struct forth_user_area forth_user_area, *Pforth_user_area;
 
 struct forth_user_area {
     short iodev;
-    undefined4 field1_0x2; /* not known */
+    uint32_t field1_0x2; /* not known */
     char *pad;
     char *tib;
     void *fence;
@@ -2960,74 +2962,74 @@ extern volatile qsm_registers qsm; /* 00fffc00 */
 
 #define ADJ(p) _Generic((p), forth_user_end: (forth_user_area *)((char *)(p) - 40))
 
-extern undefined1 DAT_0010253e; /* 0010253e */
-extern undefined1 DAT_0010253f; /* 0010253f */
-extern undefined1 DAT_00102c60; /* 00102c60 */
-extern undefined4 DAT_0010ffe6; /* 0010ffe6 */
-extern undefined4 DAT_0010ffea; /* 0010ffea */
-extern undefined4 DAT_0010ffee; /* 0010ffee */
-extern undefined4 DAT_0010fff2; /* 0010fff2 */
-extern undefined4 DAT_0010fff6; /* 0010fff6 */
-extern undefined4 DAT_0010fffa; /* 0010fffa */
-extern undefined DAT_00700000; /* 00700000 */
-extern undefined LAB_000277ec; /* 000277ec */
-extern undefined LAB_00033454; /* 00033454 */
-extern undefined LAB_00033472; /* 00033472 */
-extern undefined LAB_000335be; /* 000335be */
-extern undefined LAB_00033862; /* 00033862 */
-extern undefined LAB_000338ce; /* 000338ce */
-extern undefined LAB_00033904; /* 00033904 */
-extern undefined4 *PTR_DAT_00021e2e; /* 00021e2e */
-extern undefined4 *PTR_DAT_00021e32; /* 00021e32 */
-extern undefined4 *PTR_DAT_0004cf80; /* 0004cf80 */
-extern undefined4 *PTR_DAT_00050e5e; /* 00050e5e */
-extern undefined4 *PTR_diag_cal_0001c8ac; /* 0001c8ac */
-extern undefined4 *PTR_gps_request_step_00050cc2; /* 00050cc2 */
-extern undefined4 *PTR_lamp_test_command_000186b0; /* 000186b0 */
-extern undefined4 *PTR_s_Self_Test_0004d076; /* 0004d076 */
-extern undefined UNK_0001af5e; /* 0001af5e */
-extern undefined UNK_0001af64; /* 0001af64 */
-extern undefined UNK_0001af6c; /* 0001af6c */
-extern undefined UNK_0001af72; /* 0001af72 */
-extern undefined UNK_0001af78; /* 0001af78 */
-extern undefined UNK_00061c0f; /* 00061c0f */
-extern undefined UNK_0007a120; /* 0007a120 */
-extern undefined UNK_00100b84; /* 00100b84 */
-extern undefined UNK_00103dfc; /* 00103dfc */
-extern undefined UNK_00103e93; /* 00103e93 */
-extern undefined UNK_00103eb0; /* 00103eb0 */
-extern undefined UNK_00103ecd; /* 00103ecd */
-extern undefined UNK_001040ec; /* 001040ec */
-extern undefined UNK_0010549a; /* 0010549a */
-extern undefined UNK_001057dc; /* 001057dc */
-extern undefined UNK_00105f12; /* 00105f12 */
-extern undefined UNK_00105fd4; /* 00105fd4 */
-extern undefined UNK_0010656a; /* 0010656a */
-extern undefined UNK_001076d8; /* 001076d8 */
-extern undefined UNK_001076e1; /* 001076e1 */
-extern undefined UNK_001081a2; /* 001081a2 */
-extern undefined UNK_001082c8; /* 001082c8 */
-extern undefined UNK_001082d7; /* 001082d7 */
-extern undefined UNK_001084da; /* 001084da */
-extern undefined UNK_00108578; /* 00108578 */
-extern undefined UNK_00109057; /* 00109057 */
-extern undefined UNK_0010921e; /* 0010921e */
-extern undefined UNK_00109a08; /* 00109a08 */
-extern undefined UNK_00109a0c; /* 00109a0c */
-extern undefined UNK_00109ae0; /* 00109ae0 */
-extern undefined UNK_00109b16; /* 00109b16 */
-extern undefined UNK_00109b1a; /* 00109b1a */
-extern undefined UNK_00109bee; /* 00109bee */
-extern undefined UNK_0010a9e6; /* 0010a9e6 */
-extern undefined UNK_0010a9fb; /* 0010a9fb */
-extern undefined UNK_0010aa10; /* 0010aa10 */
-extern undefined UNK_0010aa12; /* 0010aa12 */
-extern undefined UNK_0010aa14; /* 0010aa14 */
-extern undefined UNK_0010aa16; /* 0010aa16 */
-extern undefined UNK_0010aa27; /* 0010aa27 */
-extern undefined UNK_0010aa38; /* 0010aa38 */
-extern undefined UNK_0010aa3b; /* 0010aa3b */
-extern undefined UNK_0010aa6c; /* 0010aa6c */
+extern uint8_t DAT_0010253e; /* 0010253e */
+extern uint8_t DAT_0010253f; /* 0010253f */
+extern uint8_t DAT_00102c60; /* 00102c60 */
+extern uint32_t DAT_0010ffe6; /* 0010ffe6 */
+extern uint32_t DAT_0010ffea; /* 0010ffea */
+extern uint32_t DAT_0010ffee; /* 0010ffee */
+extern uint32_t DAT_0010fff2; /* 0010fff2 */
+extern uint32_t DAT_0010fff6; /* 0010fff6 */
+extern uint32_t DAT_0010fffa; /* 0010fffa */
+extern uint8_t DAT_00700000; /* 00700000 */
+extern uint8_t LAB_000277ec; /* 000277ec */
+extern uint8_t LAB_00033454; /* 00033454 */
+extern uint8_t LAB_00033472; /* 00033472 */
+extern uint8_t LAB_000335be; /* 000335be */
+extern uint8_t LAB_00033862; /* 00033862 */
+extern uint8_t LAB_000338ce; /* 000338ce */
+extern uint8_t LAB_00033904; /* 00033904 */
+extern uint32_t *PTR_DAT_00021e2e; /* 00021e2e */
+extern uint32_t *PTR_DAT_00021e32; /* 00021e32 */
+extern uint32_t *PTR_DAT_0004cf80; /* 0004cf80 */
+extern uint32_t *PTR_DAT_00050e5e; /* 00050e5e */
+extern uint32_t *PTR_diag_cal_0001c8ac; /* 0001c8ac */
+extern uint32_t *PTR_gps_request_step_00050cc2; /* 00050cc2 */
+extern uint32_t *PTR_lamp_test_command_000186b0; /* 000186b0 */
+extern uint32_t *PTR_s_Self_Test_0004d076; /* 0004d076 */
+extern uint8_t UNK_0001af5e; /* 0001af5e */
+extern uint8_t UNK_0001af64; /* 0001af64 */
+extern uint8_t UNK_0001af6c; /* 0001af6c */
+extern uint8_t UNK_0001af72; /* 0001af72 */
+extern uint8_t UNK_0001af78; /* 0001af78 */
+extern uint8_t UNK_00061c0f; /* 00061c0f */
+extern uint8_t UNK_0007a120; /* 0007a120 */
+extern uint8_t UNK_00100b84; /* 00100b84 */
+extern uint8_t UNK_00103dfc; /* 00103dfc */
+extern uint8_t UNK_00103e93; /* 00103e93 */
+extern uint8_t UNK_00103eb0; /* 00103eb0 */
+extern uint8_t UNK_00103ecd; /* 00103ecd */
+extern uint8_t UNK_001040ec; /* 001040ec */
+extern uint8_t UNK_0010549a; /* 0010549a */
+extern uint8_t UNK_001057dc; /* 001057dc */
+extern uint8_t UNK_00105f12; /* 00105f12 */
+extern uint8_t UNK_00105fd4; /* 00105fd4 */
+extern uint8_t UNK_0010656a; /* 0010656a */
+extern uint8_t UNK_001076d8; /* 001076d8 */
+extern uint8_t UNK_001076e1; /* 001076e1 */
+extern uint8_t UNK_001081a2; /* 001081a2 */
+extern uint8_t UNK_001082c8; /* 001082c8 */
+extern uint8_t UNK_001082d7; /* 001082d7 */
+extern uint8_t UNK_001084da; /* 001084da */
+extern uint8_t UNK_00108578; /* 00108578 */
+extern uint8_t UNK_00109057; /* 00109057 */
+extern uint8_t UNK_0010921e; /* 0010921e */
+extern uint8_t UNK_00109a08; /* 00109a08 */
+extern uint8_t UNK_00109a0c; /* 00109a0c */
+extern uint8_t UNK_00109ae0; /* 00109ae0 */
+extern uint8_t UNK_00109b16; /* 00109b16 */
+extern uint8_t UNK_00109b1a; /* 00109b1a */
+extern uint8_t UNK_00109bee; /* 00109bee */
+extern uint8_t UNK_0010a9e6; /* 0010a9e6 */
+extern uint8_t UNK_0010a9fb; /* 0010a9fb */
+extern uint8_t UNK_0010aa10; /* 0010aa10 */
+extern uint8_t UNK_0010aa12; /* 0010aa12 */
+extern uint8_t UNK_0010aa14; /* 0010aa14 */
+extern uint8_t UNK_0010aa16; /* 0010aa16 */
+extern uint8_t UNK_0010aa27; /* 0010aa27 */
+extern uint8_t UNK_0010aa38; /* 0010aa38 */
+extern uint8_t UNK_0010aa3b; /* 0010aa3b */
+extern uint8_t UNK_0010aa6c; /* 0010aa6c */
 extern ushort USHORT_0002f32a; /* 0002f32a */
 extern ushort USHORT_0002f76e; /* 0002f76e */
 extern ushort USHORT_0002f77c; /* 0002f77c */
@@ -3039,13 +3041,13 @@ extern ushort USHORT_0002f7a2; /* 0002f7a2 */
 extern ushort USHORT_0002f7a4; /* 0002f7a4 */
 extern ushort USHORT_0002f7a8; /* 0002f7a8 */
 extern ushort USHORT_0002f7b0; /* 0002f7b0 */
-extern undefined atexit_functions; /* 001038b4 */
-extern undefined installer_atexit_functions; /* 0010b03c */
-extern undefined klok_mutex; /* 001037b4 */
-extern undefined log_mutex; /* 00101d36 */
-extern undefined nv_settings_defaults; /* 00030966 */
+extern uint8_t atexit_functions; /* 001038b4 */
+extern uint8_t installer_atexit_functions; /* 0010b03c */
+extern uint8_t klok_mutex; /* 001037b4 */
+extern uint8_t log_mutex; /* 00101d36 */
+extern uint8_t nv_settings_defaults; /* 00030966 */
 extern uint8_t reference_valid_override_request; /* 00100c68 */
-extern undefined retained_block; /* 00101e70 */
+extern uint8_t retained_block; /* 00101e70 */
 extern char s_DUART_test_string_0001ee6e[]; /* 0001ee6e */
 extern word switchD_00010626_index_zero; /* 0001062e */
 extern word switchD_00013d08_index_zero; /* 00013d10 */
@@ -3883,545 +3885,545 @@ __asm__(".set watchdog_monitor, 0x001009b5");
 __asm__(".set watchdog_pll, 0x001009b4");
 __asm__(".set watchdog_spool, 0x001009b6");
 
-extern undefined1 DAT_001009ec;
+extern uint8_t DAT_001009ec;
 __asm__(".set DAT_001009ec, 0x001009ec");
-extern undefined1 DAT_0010ffd0;
+extern uint8_t DAT_0010ffd0;
 __asm__(".set DAT_0010ffd0, 0x0010ffd0");
-extern undefined1 DAT_0010fffe;
+extern uint8_t DAT_0010fffe;
 __asm__(".set DAT_0010fffe, 0x0010fffe");
-extern undefined1 DAT_installer__00100787;
+extern uint8_t DAT_installer__00100787;
 __asm__(".set DAT_installer__00100787, 0x00100787");
-extern undefined1 DAT_installer__00101528;
+extern uint8_t DAT_installer__00101528;
 __asm__(".set DAT_installer__00101528, 0x00101528");
-extern undefined1 DAT_installer__0010549a;
+extern uint8_t DAT_installer__0010549a;
 __asm__(".set DAT_installer__0010549a, 0x0010549a");
-extern undefined1 DAT_installer__001057dc;
+extern uint8_t DAT_installer__001057dc;
 __asm__(".set DAT_installer__001057dc, 0x001057dc");
-extern undefined1 DAT_installer__0010656a;
+extern uint8_t DAT_installer__0010656a;
 __asm__(".set DAT_installer__0010656a, 0x0010656a");
-extern undefined1 DAT_installer__001076e1;
+extern uint8_t DAT_installer__001076e1;
 __asm__(".set DAT_installer__001076e1, 0x001076e1");
-extern undefined1 DAT_installer__001081a2;
+extern uint8_t DAT_installer__001081a2;
 __asm__(".set DAT_installer__001081a2, 0x001081a2");
-extern undefined1 DAT_installer__001082d7;
+extern uint8_t DAT_installer__001082d7;
 __asm__(".set DAT_installer__001082d7, 0x001082d7");
-extern undefined1 DAT_installer__00109057;
+extern uint8_t DAT_installer__00109057;
 __asm__(".set DAT_installer__00109057, 0x00109057");
-extern undefined1 DAT_installer__00109a08;
+extern uint8_t DAT_installer__00109a08;
 __asm__(".set DAT_installer__00109a08, 0x00109a08");
-extern undefined1 DAT_installer__00109a0c;
+extern uint8_t DAT_installer__00109a0c;
 __asm__(".set DAT_installer__00109a0c, 0x00109a0c");
-extern undefined1 DAT_installer__00109ae0;
+extern uint8_t DAT_installer__00109ae0;
 __asm__(".set DAT_installer__00109ae0, 0x00109ae0");
-extern undefined1 DAT_installer__00109b16;
+extern uint8_t DAT_installer__00109b16;
 __asm__(".set DAT_installer__00109b16, 0x00109b16");
-extern undefined1 DAT_installer__00109b1a;
+extern uint8_t DAT_installer__00109b1a;
 __asm__(".set DAT_installer__00109b1a, 0x00109b1a");
-extern undefined1 DAT_installer__00109bee;
+extern uint8_t DAT_installer__00109bee;
 __asm__(".set DAT_installer__00109bee, 0x00109bee");
-extern undefined1 DAT_installer__0010aa10;
+extern uint8_t DAT_installer__0010aa10;
 __asm__(".set DAT_installer__0010aa10, 0x0010aa10");
-extern undefined1 DAT_installer__0010aa12;
+extern uint8_t DAT_installer__0010aa12;
 __asm__(".set DAT_installer__0010aa12, 0x0010aa12");
-extern undefined1 DAT_installer__0010aa14;
+extern uint8_t DAT_installer__0010aa14;
 __asm__(".set DAT_installer__0010aa14, 0x0010aa14");
-extern undefined1 DAT_installer__0010aa38;
+extern uint8_t DAT_installer__0010aa38;
 __asm__(".set DAT_installer__0010aa38, 0x0010aa38");
-extern undefined1 DAT_installer__0010aa3b;
+extern uint8_t DAT_installer__0010aa3b;
 __asm__(".set DAT_installer__0010aa3b, 0x0010aa3b");
-extern undefined1 LAB_00000a22;
+extern uint8_t LAB_00000a22;
 __asm__(".set LAB_00000a22, 0x00000a22");
-extern undefined1 LAB_00011672;
+extern uint8_t LAB_00011672;
 __asm__(".set LAB_00011672, 0x00011672");
-extern undefined1 LAB_000121de;
+extern uint8_t LAB_000121de;
 __asm__(".set LAB_000121de, 0x000121de");
-extern undefined1 LAB_000135ba;
+extern uint8_t LAB_000135ba;
 __asm__(".set LAB_000135ba, 0x000135ba");
-extern undefined1 LAB_00013974;
+extern uint8_t LAB_00013974;
 __asm__(".set LAB_00013974, 0x00013974");
-extern undefined1 LAB_000148e6;
+extern uint8_t LAB_000148e6;
 __asm__(".set LAB_000148e6, 0x000148e6");
-extern undefined1 LAB_00014cdc;
+extern uint8_t LAB_00014cdc;
 __asm__(".set LAB_00014cdc, 0x00014cdc");
-extern undefined1 LAB_00014d58;
+extern uint8_t LAB_00014d58;
 __asm__(".set LAB_00014d58, 0x00014d58");
-extern undefined1 LAB_00014fce;
+extern uint8_t LAB_00014fce;
 __asm__(".set LAB_00014fce, 0x00014fce");
-extern undefined1 LAB_000150ae;
+extern uint8_t LAB_000150ae;
 __asm__(".set LAB_000150ae, 0x000150ae");
-extern undefined1 LAB_00015206;
+extern uint8_t LAB_00015206;
 __asm__(".set LAB_00015206, 0x00015206");
-extern undefined1 LAB_00015288;
+extern uint8_t LAB_00015288;
 __asm__(".set LAB_00015288, 0x00015288");
-extern undefined1 LAB_000154a0;
+extern uint8_t LAB_000154a0;
 __asm__(".set LAB_000154a0, 0x000154a0");
-extern undefined1 LAB_00015576;
+extern uint8_t LAB_00015576;
 __asm__(".set LAB_00015576, 0x00015576");
-extern undefined1 LAB_00015606;
+extern uint8_t LAB_00015606;
 __asm__(".set LAB_00015606, 0x00015606");
-extern undefined1 LAB_000157c4;
+extern uint8_t LAB_000157c4;
 __asm__(".set LAB_000157c4, 0x000157c4");
-extern undefined1 LAB_0001639a;
+extern uint8_t LAB_0001639a;
 __asm__(".set LAB_0001639a, 0x0001639a");
-extern undefined1 LAB_000164c2;
+extern uint8_t LAB_000164c2;
 __asm__(".set LAB_000164c2, 0x000164c2");
-extern undefined1 LAB_000169e4;
+extern uint8_t LAB_000169e4;
 __asm__(".set LAB_000169e4, 0x000169e4");
-extern undefined1 LAB_00016d16;
+extern uint8_t LAB_00016d16;
 __asm__(".set LAB_00016d16, 0x00016d16");
-extern undefined1 LAB_00016d52;
+extern uint8_t LAB_00016d52;
 __asm__(".set LAB_00016d52, 0x00016d52");
-extern undefined1 LAB_00016dfc;
+extern uint8_t LAB_00016dfc;
 __asm__(".set LAB_00016dfc, 0x00016dfc");
-extern undefined1 LAB_00018ec8;
+extern uint8_t LAB_00018ec8;
 __asm__(".set LAB_00018ec8, 0x00018ec8");
-extern undefined1 LAB_00018f92;
+extern uint8_t LAB_00018f92;
 __asm__(".set LAB_00018f92, 0x00018f92");
-extern undefined1 LAB_00019830;
+extern uint8_t LAB_00019830;
 __asm__(".set LAB_00019830, 0x00019830");
-extern undefined1 LAB_0001bdbe;
+extern uint8_t LAB_0001bdbe;
 __asm__(".set LAB_0001bdbe, 0x0001bdbe");
-extern undefined1 LAB_0001d8c2;
+extern uint8_t LAB_0001d8c2;
 __asm__(".set LAB_0001d8c2, 0x0001d8c2");
-extern undefined1 LAB_0001d8ca;
+extern uint8_t LAB_0001d8ca;
 __asm__(".set LAB_0001d8ca, 0x0001d8ca");
-extern undefined1 LAB_0001d8d0;
+extern uint8_t LAB_0001d8d0;
 __asm__(".set LAB_0001d8d0, 0x0001d8d0");
-extern undefined1 LAB_0001f528;
+extern uint8_t LAB_0001f528;
 __asm__(".set LAB_0001f528, 0x0001f528");
-extern undefined1 LAB_0001f70c;
+extern uint8_t LAB_0001f70c;
 __asm__(".set LAB_0001f70c, 0x0001f70c");
-extern undefined1 LAB_0001f944;
+extern uint8_t LAB_0001f944;
 __asm__(".set LAB_0001f944, 0x0001f944");
-extern undefined1 LAB_0001f94c;
+extern uint8_t LAB_0001f94c;
 __asm__(".set LAB_0001f94c, 0x0001f94c");
-extern undefined1 LAB_0001f952;
+extern uint8_t LAB_0001f952;
 __asm__(".set LAB_0001f952, 0x0001f952");
-extern undefined1 LAB_000200ce;
+extern uint8_t LAB_000200ce;
 __asm__(".set LAB_000200ce, 0x000200ce");
-extern undefined1 LAB_000240e6;
+extern uint8_t LAB_000240e6;
 __asm__(".set LAB_000240e6, 0x000240e6");
-extern undefined1 LAB_000240f0;
+extern uint8_t LAB_000240f0;
 __asm__(".set LAB_000240f0, 0x000240f0");
-extern undefined1 LAB_0002423a;
+extern uint8_t LAB_0002423a;
 __asm__(".set LAB_0002423a, 0x0002423a");
-extern undefined1 LAB_0002425e;
+extern uint8_t LAB_0002425e;
 __asm__(".set LAB_0002425e, 0x0002425e");
-extern undefined1 LAB_00024d6c;
+extern uint8_t LAB_00024d6c;
 __asm__(".set LAB_00024d6c, 0x00024d6c");
-extern undefined1 LAB_00024e22;
+extern uint8_t LAB_00024e22;
 __asm__(".set LAB_00024e22, 0x00024e22");
-extern undefined1 LAB_000251ce;
+extern uint8_t LAB_000251ce;
 __asm__(".set LAB_000251ce, 0x000251ce");
-extern undefined1 LAB_000251d2;
+extern uint8_t LAB_000251d2;
 __asm__(".set LAB_000251d2, 0x000251d2");
-extern undefined1 LAB_000251d6;
+extern uint8_t LAB_000251d6;
 __asm__(".set LAB_000251d6, 0x000251d6");
-extern undefined1 LAB_000251da;
+extern uint8_t LAB_000251da;
 __asm__(".set LAB_000251da, 0x000251da");
-extern undefined1 LAB_00025410;
+extern uint8_t LAB_00025410;
 __asm__(".set LAB_00025410, 0x00025410");
-extern undefined1 LAB_00025618;
+extern uint8_t LAB_00025618;
 __asm__(".set LAB_00025618, 0x00025618");
-extern undefined1 LAB_0002568a;
+extern uint8_t LAB_0002568a;
 __asm__(".set LAB_0002568a, 0x0002568a");
-extern undefined1 LAB_00026132;
+extern uint8_t LAB_00026132;
 __asm__(".set LAB_00026132, 0x00026132");
-extern undefined1 LAB_00026138;
+extern uint8_t LAB_00026138;
 __asm__(".set LAB_00026138, 0x00026138");
-extern undefined1 LAB_000261cc;
+extern uint8_t LAB_000261cc;
 __asm__(".set LAB_000261cc, 0x000261cc");
-extern undefined1 LAB_000261dc;
+extern uint8_t LAB_000261dc;
 __asm__(".set LAB_000261dc, 0x000261dc");
-extern undefined1 LAB_00026316;
+extern uint8_t LAB_00026316;
 __asm__(".set LAB_00026316, 0x00026316");
-extern undefined1 LAB_00026324;
+extern uint8_t LAB_00026324;
 __asm__(".set LAB_00026324, 0x00026324");
-extern undefined1 LAB_000264a4;
+extern uint8_t LAB_000264a4;
 __asm__(".set LAB_000264a4, 0x000264a4");
-extern undefined1 LAB_000264a6;
+extern uint8_t LAB_000264a6;
 __asm__(".set LAB_000264a6, 0x000264a6");
-extern undefined1 LAB_000264c6;
+extern uint8_t LAB_000264c6;
 __asm__(".set LAB_000264c6, 0x000264c6");
-extern undefined1 LAB_00026b32;
+extern uint8_t LAB_00026b32;
 __asm__(".set LAB_00026b32, 0x00026b32");
-extern undefined1 LAB_00026b6e;
+extern uint8_t LAB_00026b6e;
 __asm__(".set LAB_00026b6e, 0x00026b6e");
-extern undefined1 LAB_00026bae;
+extern uint8_t LAB_00026bae;
 __asm__(".set LAB_00026bae, 0x00026bae");
-extern undefined1 LAB_00026be2;
+extern uint8_t LAB_00026be2;
 __asm__(".set LAB_00026be2, 0x00026be2");
-extern undefined1 LAB_00026bf0;
+extern uint8_t LAB_00026bf0;
 __asm__(".set LAB_00026bf0, 0x00026bf0");
-extern undefined1 LAB_00026c84;
+extern uint8_t LAB_00026c84;
 __asm__(".set LAB_00026c84, 0x00026c84");
-extern undefined1 LAB_00026d2a;
+extern uint8_t LAB_00026d2a;
 __asm__(".set LAB_00026d2a, 0x00026d2a");
-extern undefined1 LAB_00026e12;
+extern uint8_t LAB_00026e12;
 __asm__(".set LAB_00026e12, 0x00026e12");
-extern undefined1 LAB_00026e5a;
+extern uint8_t LAB_00026e5a;
 __asm__(".set LAB_00026e5a, 0x00026e5a");
-extern undefined1 LAB_00026fb6;
+extern uint8_t LAB_00026fb6;
 __asm__(".set LAB_00026fb6, 0x00026fb6");
-extern undefined1 LAB_0002704a;
+extern uint8_t LAB_0002704a;
 __asm__(".set LAB_0002704a, 0x0002704a");
-extern undefined1 LAB_00027148;
+extern uint8_t LAB_00027148;
 __asm__(".set LAB_00027148, 0x00027148");
-extern undefined1 LAB_000272a6;
+extern uint8_t LAB_000272a6;
 __asm__(".set LAB_000272a6, 0x000272a6");
-extern undefined1 LAB_00027380;
+extern uint8_t LAB_00027380;
 __asm__(".set LAB_00027380, 0x00027380");
-extern undefined1 LAB_0002747e;
+extern uint8_t LAB_0002747e;
 __asm__(".set LAB_0002747e, 0x0002747e");
-extern undefined1 LAB_000274a4;
+extern uint8_t LAB_000274a4;
 __asm__(".set LAB_000274a4, 0x000274a4");
-extern undefined1 LAB_00027502;
+extern uint8_t LAB_00027502;
 __asm__(".set LAB_00027502, 0x00027502");
-extern undefined1 LAB_0002752c;
+extern uint8_t LAB_0002752c;
 __asm__(".set LAB_0002752c, 0x0002752c");
-extern undefined1 LAB_00027568;
+extern uint8_t LAB_00027568;
 __asm__(".set LAB_00027568, 0x00027568");
-extern undefined1 LAB_000276d0;
+extern uint8_t LAB_000276d0;
 __asm__(".set LAB_000276d0, 0x000276d0");
-extern undefined1 LAB_00027728;
+extern uint8_t LAB_00027728;
 __asm__(".set LAB_00027728, 0x00027728");
-extern undefined1 LAB_00027a86;
+extern uint8_t LAB_00027a86;
 __asm__(".set LAB_00027a86, 0x00027a86");
-extern undefined1 LAB_00027ba2;
+extern uint8_t LAB_00027ba2;
 __asm__(".set LAB_00027ba2, 0x00027ba2");
-extern undefined1 LAB_00027c12;
+extern uint8_t LAB_00027c12;
 __asm__(".set LAB_00027c12, 0x00027c12");
-extern undefined1 LAB_00027c16;
+extern uint8_t LAB_00027c16;
 __asm__(".set LAB_00027c16, 0x00027c16");
-extern undefined1 LAB_00027c88;
+extern uint8_t LAB_00027c88;
 __asm__(".set LAB_00027c88, 0x00027c88");
-extern undefined1 LAB_00027e0c;
+extern uint8_t LAB_00027e0c;
 __asm__(".set LAB_00027e0c, 0x00027e0c");
-extern undefined1 LAB_0002810c;
+extern uint8_t LAB_0002810c;
 __asm__(".set LAB_0002810c, 0x0002810c");
-extern undefined1 LAB_00028680;
+extern uint8_t LAB_00028680;
 __asm__(".set LAB_00028680, 0x00028680");
-extern undefined1 LAB_0002937c;
+extern uint8_t LAB_0002937c;
 __asm__(".set LAB_0002937c, 0x0002937c");
-extern undefined1 LAB_00029436;
+extern uint8_t LAB_00029436;
 __asm__(".set LAB_00029436, 0x00029436");
-extern undefined1 LAB_000294de;
+extern uint8_t LAB_000294de;
 __asm__(".set LAB_000294de, 0x000294de");
-extern undefined1 LAB_0002961c;
+extern uint8_t LAB_0002961c;
 __asm__(".set LAB_0002961c, 0x0002961c");
-extern undefined1 LAB_00029622;
+extern uint8_t LAB_00029622;
 __asm__(".set LAB_00029622, 0x00029622");
-extern undefined1 LAB_00029896;
+extern uint8_t LAB_00029896;
 __asm__(".set LAB_00029896, 0x00029896");
-extern undefined1 LAB_0002cefe;
+extern uint8_t LAB_0002cefe;
 __asm__(".set LAB_0002cefe, 0x0002cefe");
-extern undefined1 LAB_0002e7e4;
+extern uint8_t LAB_0002e7e4;
 __asm__(".set LAB_0002e7e4, 0x0002e7e4");
-extern undefined1 LAB_0002e9be;
+extern uint8_t LAB_0002e9be;
 __asm__(".set LAB_0002e9be, 0x0002e9be");
-extern undefined1 LAB_0002e9ce;
+extern uint8_t LAB_0002e9ce;
 __asm__(".set LAB_0002e9ce, 0x0002e9ce");
-extern undefined1 LAB_0002e9e2;
+extern uint8_t LAB_0002e9e2;
 __asm__(".set LAB_0002e9e2, 0x0002e9e2");
-extern undefined1 LAB_0002ea48;
+extern uint8_t LAB_0002ea48;
 __asm__(".set LAB_0002ea48, 0x0002ea48");
-extern undefined1 LAB_0002eade;
+extern uint8_t LAB_0002eade;
 __asm__(".set LAB_0002eade, 0x0002eade");
-extern undefined1 LAB_0002ee5e;
+extern uint8_t LAB_0002ee5e;
 __asm__(".set LAB_0002ee5e, 0x0002ee5e");
-extern undefined1 LAB_00030272;
+extern uint8_t LAB_00030272;
 __asm__(".set LAB_00030272, 0x00030272");
-extern undefined1 LAB_00030274;
+extern uint8_t LAB_00030274;
 __asm__(".set LAB_00030274, 0x00030274");
-extern undefined1 LAB_0003034c;
+extern uint8_t LAB_0003034c;
 __asm__(".set LAB_0003034c, 0x0003034c");
-extern undefined1 LAB_0003035a;
+extern uint8_t LAB_0003035a;
 __asm__(".set LAB_0003035a, 0x0003035a");
-extern undefined1 LAB_000303f8;
+extern uint8_t LAB_000303f8;
 __asm__(".set LAB_000303f8, 0x000303f8");
-extern undefined1 LAB_00030582;
+extern uint8_t LAB_00030582;
 __asm__(".set LAB_00030582, 0x00030582");
-extern undefined1 LAB_00030590;
+extern uint8_t LAB_00030590;
 __asm__(".set LAB_00030590, 0x00030590");
-extern undefined1 LAB_00030608;
+extern uint8_t LAB_00030608;
 __asm__(".set LAB_00030608, 0x00030608");
-extern undefined1 LAB_00031708;
+extern uint8_t LAB_00031708;
 __asm__(".set LAB_00031708, 0x00031708");
-extern undefined1 LAB_00032210;
+extern uint8_t LAB_00032210;
 __asm__(".set LAB_00032210, 0x00032210");
-extern undefined1 LAB_0003250c;
+extern uint8_t LAB_0003250c;
 __asm__(".set LAB_0003250c, 0x0003250c");
-extern undefined1 LAB_00032648;
+extern uint8_t LAB_00032648;
 __asm__(".set LAB_00032648, 0x00032648");
-extern undefined1 LAB_00033166;
+extern uint8_t LAB_00033166;
 __asm__(".set LAB_00033166, 0x00033166");
-extern undefined1 LAB_00040104;
+extern uint8_t LAB_00040104;
 __asm__(".set LAB_00040104, 0x00040104");
-extern undefined1 LAB_0004011c;
+extern uint8_t LAB_0004011c;
 __asm__(".set LAB_0004011c, 0x0004011c");
-extern undefined1 LAB_00040122;
+extern uint8_t LAB_00040122;
 __asm__(".set LAB_00040122, 0x00040122");
-extern undefined1 LAB_00040b90;
+extern uint8_t LAB_00040b90;
 __asm__(".set LAB_00040b90, 0x00040b90");
-extern undefined1 LAB_00040e2e;
+extern uint8_t LAB_00040e2e;
 __asm__(".set LAB_00040e2e, 0x00040e2e");
-extern undefined1 LAB_0004298e;
+extern uint8_t LAB_0004298e;
 __asm__(".set LAB_0004298e, 0x0004298e");
-extern undefined1 LAB_00042ed2;
+extern uint8_t LAB_00042ed2;
 __asm__(".set LAB_00042ed2, 0x00042ed2");
-extern undefined1 LAB_00042f24;
+extern uint8_t LAB_00042f24;
 __asm__(".set LAB_00042f24, 0x00042f24");
-extern undefined1 LAB_00042fca;
+extern uint8_t LAB_00042fca;
 __asm__(".set LAB_00042fca, 0x00042fca");
-extern undefined1 LAB_0004300c;
+extern uint8_t LAB_0004300c;
 __asm__(".set LAB_0004300c, 0x0004300c");
-extern undefined1 LAB_00043a88;
+extern uint8_t LAB_00043a88;
 __asm__(".set LAB_00043a88, 0x00043a88");
-extern undefined1 LAB_00043eb8;
+extern uint8_t LAB_00043eb8;
 __asm__(".set LAB_00043eb8, 0x00043eb8");
-extern undefined1 LAB_00043ee6;
+extern uint8_t LAB_00043ee6;
 __asm__(".set LAB_00043ee6, 0x00043ee6");
-extern undefined1 LAB_0004411a;
+extern uint8_t LAB_0004411a;
 __asm__(".set LAB_0004411a, 0x0004411a");
-extern undefined1 LAB_0004536e;
+extern uint8_t LAB_0004536e;
 __asm__(".set LAB_0004536e, 0x0004536e");
-extern undefined1 LAB_00045812;
+extern uint8_t LAB_00045812;
 __asm__(".set LAB_00045812, 0x00045812");
-extern undefined1 LAB_00046d06;
+extern uint8_t LAB_00046d06;
 __asm__(".set LAB_00046d06, 0x00046d06");
-extern undefined1 LAB_00046d8a;
+extern uint8_t LAB_00046d8a;
 __asm__(".set LAB_00046d8a, 0x00046d8a");
-extern undefined1 LAB_00046e64;
+extern uint8_t LAB_00046e64;
 __asm__(".set LAB_00046e64, 0x00046e64");
-extern undefined1 LAB_00046efe;
+extern uint8_t LAB_00046efe;
 __asm__(".set LAB_00046efe, 0x00046efe");
-extern undefined1 LAB_0004706a;
+extern uint8_t LAB_0004706a;
 __asm__(".set LAB_0004706a, 0x0004706a");
-extern undefined1 LAB_00047758;
+extern uint8_t LAB_00047758;
 __asm__(".set LAB_00047758, 0x00047758");
-extern undefined1 LAB_000477b2;
+extern uint8_t LAB_000477b2;
 __asm__(".set LAB_000477b2, 0x000477b2");
-extern undefined1 LAB_0004782e;
+extern uint8_t LAB_0004782e;
 __asm__(".set LAB_0004782e, 0x0004782e");
-extern undefined1 LAB_00047940;
+extern uint8_t LAB_00047940;
 __asm__(".set LAB_00047940, 0x00047940");
-extern undefined1 LAB_00049570;
+extern uint8_t LAB_00049570;
 __asm__(".set LAB_00049570, 0x00049570");
-extern undefined1 LAB_000497a6;
+extern uint8_t LAB_000497a6;
 __asm__(".set LAB_000497a6, 0x000497a6");
-extern undefined1 LAB_0004aa66;
+extern uint8_t LAB_0004aa66;
 __asm__(".set LAB_0004aa66, 0x0004aa66");
-extern undefined1 LAB_0004ab0e;
+extern uint8_t LAB_0004ab0e;
 __asm__(".set LAB_0004ab0e, 0x0004ab0e");
-extern undefined1 LAB_0004ab10;
+extern uint8_t LAB_0004ab10;
 __asm__(".set LAB_0004ab10, 0x0004ab10");
-extern undefined1 LAB_0004b3a2;
+extern uint8_t LAB_0004b3a2;
 __asm__(".set LAB_0004b3a2, 0x0004b3a2");
-extern undefined1 LAB_0004b4d2;
+extern uint8_t LAB_0004b4d2;
 __asm__(".set LAB_0004b4d2, 0x0004b4d2");
-extern undefined1 LAB_0004b754;
+extern uint8_t LAB_0004b754;
 __asm__(".set LAB_0004b754, 0x0004b754");
-extern undefined1 LAB_0004b8c0;
+extern uint8_t LAB_0004b8c0;
 __asm__(".set LAB_0004b8c0, 0x0004b8c0");
-extern undefined1 LAB_0004b98c;
+extern uint8_t LAB_0004b98c;
 __asm__(".set LAB_0004b98c, 0x0004b98c");
-extern undefined1 LAB_0004bbee;
+extern uint8_t LAB_0004bbee;
 __asm__(".set LAB_0004bbee, 0x0004bbee");
-extern undefined1 LAB_0004bcac;
+extern uint8_t LAB_0004bcac;
 __asm__(".set LAB_0004bcac, 0x0004bcac");
-extern undefined1 LAB_0004bd18;
+extern uint8_t LAB_0004bd18;
 __asm__(".set LAB_0004bd18, 0x0004bd18");
-extern undefined1 LAB_0004c17a;
+extern uint8_t LAB_0004c17a;
 __asm__(".set LAB_0004c17a, 0x0004c17a");
-extern undefined1 LAB_0004c1e6;
+extern uint8_t LAB_0004c1e6;
 __asm__(".set LAB_0004c1e6, 0x0004c1e6");
-extern undefined1 LAB_0004f0c4;
+extern uint8_t LAB_0004f0c4;
 __asm__(".set LAB_0004f0c4, 0x0004f0c4");
-extern undefined1 LAB_0004f102;
+extern uint8_t LAB_0004f102;
 __asm__(".set LAB_0004f102, 0x0004f102");
-extern undefined1 LAB_0005d06c;
+extern uint8_t LAB_0005d06c;
 __asm__(".set LAB_0005d06c, 0x0005d06c");
-extern undefined1 LAB_0005d1ee;
+extern uint8_t LAB_0005d1ee;
 __asm__(".set LAB_0005d1ee, 0x0005d1ee");
-extern undefined1 LAB_0005d1fe;
+extern uint8_t LAB_0005d1fe;
 __asm__(".set LAB_0005d1fe, 0x0005d1fe");
-extern undefined1 LAB_0005d292;
+extern uint8_t LAB_0005d292;
 __asm__(".set LAB_0005d292, 0x0005d292");
-extern undefined1 LAB_0005d2b6;
+extern uint8_t LAB_0005d2b6;
 __asm__(".set LAB_0005d2b6, 0x0005d2b6");
-extern undefined1 LAB_0005d2c6;
+extern uint8_t LAB_0005d2c6;
 __asm__(".set LAB_0005d2c6, 0x0005d2c6");
-extern undefined1 LAB_0005d484;
+extern uint8_t LAB_0005d484;
 __asm__(".set LAB_0005d484, 0x0005d484");
-extern undefined1 LAB_0005d5ae;
+extern uint8_t LAB_0005d5ae;
 __asm__(".set LAB_0005d5ae, 0x0005d5ae");
-extern undefined1 LAB_0005d5ee;
+extern uint8_t LAB_0005d5ee;
 __asm__(".set LAB_0005d5ee, 0x0005d5ee");
-extern undefined1 LAB_0005d63e;
+extern uint8_t LAB_0005d63e;
 __asm__(".set LAB_0005d63e, 0x0005d63e");
-extern undefined1 LAB_0005d7ae;
+extern uint8_t LAB_0005d7ae;
 __asm__(".set LAB_0005d7ae, 0x0005d7ae");
-extern undefined1 LAB_0005d982;
+extern uint8_t LAB_0005d982;
 __asm__(".set LAB_0005d982, 0x0005d982");
-extern undefined1 LAB_0005d9b8;
+extern uint8_t LAB_0005d9b8;
 __asm__(".set LAB_0005d9b8, 0x0005d9b8");
-extern undefined1 LAB_0005d9cc;
+extern uint8_t LAB_0005d9cc;
 __asm__(".set LAB_0005d9cc, 0x0005d9cc");
-extern undefined1 LAB_0005db84;
+extern uint8_t LAB_0005db84;
 __asm__(".set LAB_0005db84, 0x0005db84");
-extern undefined1 LAB_0005dd4e;
+extern uint8_t LAB_0005dd4e;
 __asm__(".set LAB_0005dd4e, 0x0005dd4e");
-extern undefined1 LAB_0005df9e;
+extern uint8_t LAB_0005df9e;
 __asm__(".set LAB_0005df9e, 0x0005df9e");
-extern undefined1 LAB_0005e2f0;
+extern uint8_t LAB_0005e2f0;
 __asm__(".set LAB_0005e2f0, 0x0005e2f0");
-extern undefined1 LAB_0005e41a;
+extern uint8_t LAB_0005e41a;
 __asm__(".set LAB_0005e41a, 0x0005e41a");
-extern undefined1 LAB_0005e466;
+extern uint8_t LAB_0005e466;
 __asm__(".set LAB_0005e466, 0x0005e466");
-extern undefined1 LAB_0005e51e;
+extern uint8_t LAB_0005e51e;
 __asm__(".set LAB_0005e51e, 0x0005e51e");
-extern undefined1 LAB_0005e592;
+extern uint8_t LAB_0005e592;
 __asm__(".set LAB_0005e592, 0x0005e592");
-extern undefined1 LAB_0005e5c4;
+extern uint8_t LAB_0005e5c4;
 __asm__(".set LAB_0005e5c4, 0x0005e5c4");
-extern undefined1 LAB_0005e676;
+extern uint8_t LAB_0005e676;
 __asm__(".set LAB_0005e676, 0x0005e676");
-extern undefined1 LAB_0005e772;
+extern uint8_t LAB_0005e772;
 __asm__(".set LAB_0005e772, 0x0005e772");
-extern undefined1 LAB_0005e77c;
+extern uint8_t LAB_0005e77c;
 __asm__(".set LAB_0005e77c, 0x0005e77c");
-extern undefined1 LAB_0005eafe;
+extern uint8_t LAB_0005eafe;
 __asm__(".set LAB_0005eafe, 0x0005eafe");
-extern undefined1 LAB_0005ec84;
+extern uint8_t LAB_0005ec84;
 __asm__(".set LAB_0005ec84, 0x0005ec84");
-extern undefined1 LAB_0005ef40;
+extern uint8_t LAB_0005ef40;
 __asm__(".set LAB_0005ef40, 0x0005ef40");
-extern undefined1 LAB_0005efd6;
+extern uint8_t LAB_0005efd6;
 __asm__(".set LAB_0005efd6, 0x0005efd6");
-extern undefined1 LAB_0005effa;
+extern uint8_t LAB_0005effa;
 __asm__(".set LAB_0005effa, 0x0005effa");
-extern undefined1 LAB_0005f070;
+extern uint8_t LAB_0005f070;
 __asm__(".set LAB_0005f070, 0x0005f070");
-extern undefined1 LAB_0005f65a;
+extern uint8_t LAB_0005f65a;
 __asm__(".set LAB_0005f65a, 0x0005f65a");
-extern undefined1 LAB_0005f74e;
+extern uint8_t LAB_0005f74e;
 __asm__(".set LAB_0005f74e, 0x0005f74e");
-extern undefined1 LAB_0005f7a6;
+extern uint8_t LAB_0005f7a6;
 __asm__(".set LAB_0005f7a6, 0x0005f7a6");
-extern undefined1 LAB_0005f7ae;
+extern uint8_t LAB_0005f7ae;
 __asm__(".set LAB_0005f7ae, 0x0005f7ae");
-extern undefined1 LAB_0005fb1c;
+extern uint8_t LAB_0005fb1c;
 __asm__(".set LAB_0005fb1c, 0x0005fb1c");
-extern undefined1 LAB_0005fb72;
+extern uint8_t LAB_0005fb72;
 __asm__(".set LAB_0005fb72, 0x0005fb72");
-extern undefined1 LAB_0005fdc4;
+extern uint8_t LAB_0005fdc4;
 __asm__(".set LAB_0005fdc4, 0x0005fdc4");
-extern undefined1 LAB_0005febe;
+extern uint8_t LAB_0005febe;
 __asm__(".set LAB_0005febe, 0x0005febe");
-extern undefined1 LAB_000600fa;
+extern uint8_t LAB_000600fa;
 __asm__(".set LAB_000600fa, 0x000600fa");
-extern undefined1 LAB_000602cc;
+extern uint8_t LAB_000602cc;
 __asm__(".set LAB_000602cc, 0x000602cc");
-extern undefined1 LAB_000609ca;
+extern uint8_t LAB_000609ca;
 __asm__(".set LAB_000609ca, 0x000609ca");
-extern undefined1 LAB_0006107e;
+extern uint8_t LAB_0006107e;
 __asm__(".set LAB_0006107e, 0x0006107e");
-extern undefined1 LAB_000610fa;
+extern uint8_t LAB_000610fa;
 __asm__(".set LAB_000610fa, 0x000610fa");
-extern undefined1 LAB_000611e2;
+extern uint8_t LAB_000611e2;
 __asm__(".set LAB_000611e2, 0x000611e2");
-extern undefined1 LAB_00061224;
+extern uint8_t LAB_00061224;
 __asm__(".set LAB_00061224, 0x00061224");
-extern undefined1 LAB_0006122a;
+extern uint8_t LAB_0006122a;
 __asm__(".set LAB_0006122a, 0x0006122a");
-extern undefined1 LAB_000615e2;
+extern uint8_t LAB_000615e2;
 __asm__(".set LAB_000615e2, 0x000615e2");
-extern undefined1 LAB_00061608;
+extern uint8_t LAB_00061608;
 __asm__(".set LAB_00061608, 0x00061608");
-extern undefined1 LAB_00061752;
+extern uint8_t LAB_00061752;
 __asm__(".set LAB_00061752, 0x00061752");
-extern undefined1 LAB_00061780;
+extern uint8_t LAB_00061780;
 __asm__(".set LAB_00061780, 0x00061780");
-extern undefined1 LAB_000617c6;
+extern uint8_t LAB_000617c6;
 __asm__(".set LAB_000617c6, 0x000617c6");
-extern undefined1 LAB_000617dc;
+extern uint8_t LAB_000617dc;
 __asm__(".set LAB_000617dc, 0x000617dc");
-extern undefined1 LAB_installer__001016e2;
+extern uint8_t LAB_installer__001016e2;
 __asm__(".set LAB_installer__001016e2, 0x001016e2");
-extern undefined1 LAB_installer__0010175e;
+extern uint8_t LAB_installer__0010175e;
 __asm__(".set LAB_installer__0010175e, 0x0010175e");
-extern undefined1 LAB_installer__001019d4;
+extern uint8_t LAB_installer__001019d4;
 __asm__(".set LAB_installer__001019d4, 0x001019d4");
-extern undefined1 LAB_installer__00101ab4;
+extern uint8_t LAB_installer__00101ab4;
 __asm__(".set LAB_installer__00101ab4, 0x00101ab4");
-extern undefined1 LAB_installer__00101c0c;
+extern uint8_t LAB_installer__00101c0c;
 __asm__(".set LAB_installer__00101c0c, 0x00101c0c");
-extern undefined1 LAB_installer__00101c8e;
+extern uint8_t LAB_installer__00101c8e;
 __asm__(".set LAB_installer__00101c8e, 0x00101c8e");
-extern undefined1 LAB_installer__00101ea6;
+extern uint8_t LAB_installer__00101ea6;
 __asm__(".set LAB_installer__00101ea6, 0x00101ea6");
-extern undefined1 LAB_installer__00101f7c;
+extern uint8_t LAB_installer__00101f7c;
 __asm__(".set LAB_installer__00101f7c, 0x00101f7c");
-extern undefined1 LAB_installer__0010200c;
+extern uint8_t LAB_installer__0010200c;
 __asm__(".set LAB_installer__0010200c, 0x0010200c");
-extern undefined1 LAB_installer__001021ca;
+extern uint8_t LAB_installer__001021ca;
 __asm__(".set LAB_installer__001021ca, 0x001021ca");
-extern undefined1 LAB_installer__00103344;
+extern uint8_t LAB_installer__00103344;
 __asm__(".set LAB_installer__00103344, 0x00103344");
-extern undefined1 LAB_installer__0010334c;
+extern uint8_t LAB_installer__0010334c;
 __asm__(".set LAB_installer__0010334c, 0x0010334c");
-extern undefined1 LAB_installer__00103352;
+extern uint8_t LAB_installer__00103352;
 __asm__(".set LAB_installer__00103352, 0x00103352");
-extern undefined1 LAB_installer__0010537e;
+extern uint8_t LAB_installer__0010537e;
 __asm__(".set LAB_installer__0010537e, 0x0010537e");
-extern undefined1 LAB_installer__001053d6;
+extern uint8_t LAB_installer__001053d6;
 __asm__(".set LAB_installer__001053d6, 0x001053d6");
-extern undefined1 LAB_installer__0010632e;
+extern uint8_t LAB_installer__0010632e;
 __asm__(".set LAB_installer__0010632e, 0x0010632e");
-extern undefined1 LAB_installer__00108578;
+extern uint8_t LAB_installer__00108578;
 __asm__(".set LAB_installer__00108578, 0x00108578");
-extern undefined1 LAB_installer__00108cf2;
+extern uint8_t LAB_installer__00108cf2;
 __asm__(".set LAB_installer__00108cf2, 0x00108cf2");
-extern undefined1 LAB_installer__00108e6a;
+extern uint8_t LAB_installer__00108e6a;
 __asm__(".set LAB_installer__00108e6a, 0x00108e6a");
-extern undefined1 LAB_installer__00108ff8;
+extern uint8_t LAB_installer__00108ff8;
 __asm__(".set LAB_installer__00108ff8, 0x00108ff8");
-extern undefined1 LAB_installer__00109802;
+extern uint8_t LAB_installer__00109802;
 __asm__(".set LAB_installer__00109802, 0x00109802");
-extern undefined1 LAB_installer__001098f6;
+extern uint8_t LAB_installer__001098f6;
 __asm__(".set LAB_installer__001098f6, 0x001098f6");
-extern undefined1 LAB_installer__0010994e;
+extern uint8_t LAB_installer__0010994e;
 __asm__(".set LAB_installer__0010994e, 0x0010994e");
-extern undefined1 LAB_installer__00109956;
+extern uint8_t LAB_installer__00109956;
 __asm__(".set LAB_installer__00109956, 0x00109956");
-extern undefined1 LAB_installer__00109cc4;
+extern uint8_t LAB_installer__00109cc4;
 __asm__(".set LAB_installer__00109cc4, 0x00109cc4");
-extern undefined1 LAB_installer__00109d1a;
+extern uint8_t LAB_installer__00109d1a;
 __asm__(".set LAB_installer__00109d1a, 0x00109d1a");
-extern undefined1 LAB_installer__00109f6c;
+extern uint8_t LAB_installer__00109f6c;
 __asm__(".set LAB_installer__00109f6c, 0x00109f6c");
-extern undefined1 LAB_installer__0010a066;
+extern uint8_t LAB_installer__0010a066;
 __asm__(".set LAB_installer__0010a066, 0x0010a066");
-extern undefined1 LAB_installer__0010a2a2;
+extern uint8_t LAB_installer__0010a2a2;
 __asm__(".set LAB_installer__0010a2a2, 0x0010a2a2");
-extern undefined1 LAB_installer__0010a474;
+extern uint8_t LAB_installer__0010a474;
 __asm__(".set LAB_installer__0010a474, 0x0010a474");
-extern undefined1 LAB_installer__0010aa6c;
+extern uint8_t LAB_installer__0010aa6c;
 __asm__(".set LAB_installer__0010aa6c, 0x0010aa6c");
-extern undefined4 * PTR_DAT_installer__001084da;
+extern uint32_t * PTR_DAT_installer__001084da;
 __asm__(".set PTR_DAT_installer__001084da, 0x001084da");
-extern undefined4 * PTR_PTR_0001ad0e;
+extern uint32_t * PTR_PTR_0001ad0e;
 __asm__(".set PTR_PTR_0001ad0e, 0x0001ad0e");
-extern undefined4 * PTR_PTR_00025b7e;
+extern uint32_t * PTR_PTR_00025b7e;
 __asm__(".set PTR_PTR_00025b7e, 0x00025b7e");
-extern undefined4 * PTR_PTR_installer__001014c8;
+extern uint32_t * PTR_PTR_installer__001014c8;
 __asm__(".set PTR_PTR_installer__001014c8, 0x001014c8");
-extern undefined1 UNK_00019406;
+extern uint8_t UNK_00019406;
 __asm__(".set UNK_00019406, 0x00019406");
-extern undefined1 UNK_00019410;
+extern uint8_t UNK_00019410;
 __asm__(".set UNK_00019410, 0x00019410");
-extern undefined1 UNK_00019dce;
+extern uint8_t UNK_00019dce;
 __asm__(".set UNK_00019dce, 0x00019dce");
 extern word WORD_installer__001030d2;
 __asm__(".set WORD_installer__001030d2, 0x001030d2");
@@ -4431,9 +4433,9 @@ extern word WORD_installer__00105fd4;
 __asm__(".set WORD_installer__00105fd4, 0x00105fd4");
 extern word WORD_installer__0010921e;
 __asm__(".set WORD_installer__0010921e, 0x0010921e");
-extern undefined4 _DAT_00700000;
+extern uint32_t _DAT_00700000;
 __asm__(".set _DAT_00700000, 0x00700000");
-extern undefined4 _interval_mean_flag;
+extern uint32_t _interval_mean_flag;
 __asm__(".set _interval_mean_flag, 0x0010253c");
 extern code func_0x0010135c;
 __asm__(".set func_0x0010135c, 0x0010135c");
@@ -4563,24 +4565,24 @@ __asm__(".set uRam00100b90, 0x00100b90");
  * harness leaves unmapped, so that a use faults there, until its
  * function is rewritten.
  */
-extern undefined4 register0x0000003c;
+extern uint32_t register0x0000003c;
 __asm__(".set register0x0000003c, 0xfffff000");
-#define stack0x00000000 (*(undefined4 *)((char *)__builtin_frame_address(0) + 4))
-#define stack0x00000008 (*(undefined4 *)((char *)__builtin_frame_address(0) + 12))
-#define stack0x0000000c (*(undefined4 *)((char *)__builtin_frame_address(0) + 16))
-#define stack0x00000010 (*(undefined4 *)((char *)__builtin_frame_address(0) + 20))
-#define stack0x00000014 (*(undefined4 *)((char *)__builtin_frame_address(0) + 24))
-extern undefined4 stack0xffffffd2;
+#define stack0x00000000 (*(uint32_t *)((char *)__builtin_frame_address(0) + 4))
+#define stack0x00000008 (*(uint32_t *)((char *)__builtin_frame_address(0) + 12))
+#define stack0x0000000c (*(uint32_t *)((char *)__builtin_frame_address(0) + 16))
+#define stack0x00000010 (*(uint32_t *)((char *)__builtin_frame_address(0) + 20))
+#define stack0x00000014 (*(uint32_t *)((char *)__builtin_frame_address(0) + 24))
+extern uint32_t stack0xffffffd2;
 __asm__(".set stack0xffffffd2, 0xfffff000");
-extern undefined4 stack0xffffffd6;
+extern uint32_t stack0xffffffd6;
 __asm__(".set stack0xffffffd6, 0xfffff000");
 
 void boot_duartb_loopback_check(void);
 void boot_duart_early_init(void);
 int boot_reset();
 int boot_trap_11();
-undefined4 boot_unpack_installer(void);
-undefined1 * boot_memcpy(undefined1 *param_1,undefined1 *param_2,int param_3);
+uint32_t boot_unpack_installer(void);
+uint8_t * boot_memcpy(uint8_t *param_1,uint8_t *param_2,int param_3);
 int mutex_init(int name, void *mutex) __asm__("c_mutex_init");
 int mutex_acquire(void *mutex) __asm__("c_mutex_acquire");
 int mutex_release(void *mutex) __asm__("c_mutex_release");
@@ -4602,17 +4604,17 @@ uint klok_task_create(ulong param_1);
 void clock_set(time_of_day time,uint32_t date);
 void klok_task(void);
 void klok_run_due(void);
-undefined4 list_unlink(int *param_1,int *param_2);
+uint32_t list_unlink(int *param_1,int *param_2);
 void klok_insert_sorted(int *param_1,int *param_2);
-void list_push(undefined4 *param_1,undefined4 *param_2);
-undefined4 is_leap_year(ushort param_1);
+void list_push(uint32_t *param_1,uint32_t *param_2);
+uint32_t is_leap_year(ushort param_1);
 int16_t day_of_year(uint32_t date);
 int time_packed_to_seconds(uint32_t time);
 uint32_t days_to_date(uint32_t days);
 int date_to_days(uint param_1);
 int date_to_mjd(uint param_1);
 uint8_t days_in_month(ushort param_1,byte param_2);
-undefined4 date_normalize(uint param_1);
+uint32_t date_normalize(uint param_1);
 uint32_t oncore_date_unpack(uint32_t packed);
 uint32_t oncore_date_pack(oncore_date_fields fields);
 int hms_to_seconds(uint32_t time);
@@ -4627,7 +4629,7 @@ int datetime_compare(uint *param_1,uint *param_2);
 void utc_to_gps(uint32_t *date,time_of_day *time);
 void gps_to_utc(uint32_t *date,time_of_day *time);
 uint32_t leap_opportunity_date(void);
-undefined1 leap_second_near(void);
+uint8_t leap_second_near(void);
 void utc_to_local(uint32_t *date,time_of_day *time);
 void local_to_utc(uint32_t *date,time_of_day *time);
 void exception_hook_reset(void);
@@ -4643,13 +4645,13 @@ void gpt_init(void);
 void shutdown(void);
 int int_abs(int param_1);
 int int_clamp(int param_1,int param_2,int param_3);
-undefined4 crc16_ccitt(byte *param_1,short param_2);
+uint32_t crc16_ccitt(byte *param_1,short param_2);
 ushort isqrt16(uint param_1);
 int round_shift_right(int param_1,uint param_2);
 int32_t double_round_to_long(double x);
 int round_divide(int param_1,int param_2);
-undefined4 double_decimal_exponent_rounded(uint param_1,uint param_2);
-undefined4 double_decimal_exponent(uint param_1,uint param_2);
+uint32_t double_decimal_exponent_rounded(uint param_1,uint param_2);
+uint32_t double_decimal_exponent(uint param_1,uint param_2);
 double power_of_ten_double(short param_1);
 int16_t tfom_table_index(uint32_t tfom);
 float power_of_ten_float(short param_1);
@@ -4657,12 +4659,12 @@ void scpi_param_hook_nothing(void);
 int random_dither(void);
 void start_nothing(void);
 void system_init(void);
-void primary_start(undefined4 param_1,undefined4 param_2,undefined4 param_3);
+void primary_start(uint32_t param_1,uint32_t param_2,uint32_t param_3);
 void pps_interrupt(void);
 int primary_user_81();
 int pps_init(void);
 int pps_interrupt_stop(void);
-int pps_wait_time(undefined4 *param_1,undefined4 *param_2,int param_3);
+int pps_wait_time(uint32_t *param_1,uint32_t *param_2,int param_3);
 void enter_installer(void);
 void scpi_task_start(void);
 void console_halt_hook(void);
@@ -4681,7 +4683,7 @@ uint16_t enter_supervisor_mode(void);
 uint16_t set_interrupt_mask(uint16_t sr);
 byte task_set_priority(ulong param_1,byte param_2);
 float float_absolute_on_stack(float f);
-ulonglong double_abs(undefined4 param_1,undefined4 param_2);
+ulonglong double_abs(uint32_t param_1,uint32_t param_2);
 uint rotate_left(uint param_1,byte param_2);
 int primary_trap_7();
 int enter_supervisor(void) __asm__("c_enter_supervisor");
@@ -4711,7 +4713,7 @@ void clock_record_derive(clock_record *record) __asm__("c_clock_record_derive");
 void clock_set_leap_year(char *february, int year) __asm__("c_clock_set_leap_year");
 void clock_init(short param_1);
 uint8_t time_valid(void);
-void set_gps_utc_offset(undefined2 param_1);
+void set_gps_utc_offset(uint16_t param_1);
 uint8_t get_gps_utc_offset(int16_t *seconds);
 char tcode_checksum(char *param_1);
 char tcode_request(byte param_1);
@@ -4797,27 +4799,27 @@ int kernel_return_from_interrupt();
 void os_report_cpu(printf_function *print);
 char * task_name(void *task);
 char * object_name(void *object);
-void os_report_exchange(undefined4 *param_1,printf_function *print);
+void os_report_exchange(uint32_t *param_1,printf_function *print);
 char * task_status_name(void *task);
-void os_report_region_line(char *name,undefined4 *param_2,printf_function *print);
+void os_report_region_line(char *name,uint32_t *param_2,printf_function *print);
 void * region_segment_containing(void *region,uint32_t address);
-void os_report_process(void *param_1,char *param_2,int param_3,undefined4 param_4,
+void os_report_process(void *param_1,char *param_2,int param_3,uint32_t param_4,
                       printf_function *print);
 int timer_ticks_until(void *task);
 int task_table_build(void);
 void os_report_process_summary(printf_function *print);
 void os_report_exchanges(printf_function *print);
 void os_report_exchange_summary(printf_function *print);
-int ready_queue_position(undefined4 *param_1);
+int ready_queue_position(uint32_t *param_1);
 int os_report_processes(printf_function *print);
 void os_report_regions(printf_function *print);
-undefined4 exchange_id_valid(uint param_1);
-undefined4 task_id_valid(uint param_1);
-void os_process_report(undefined1 param_1);
-void os_memory_report(undefined1 param_1);
+uint32_t exchange_id_valid(uint param_1);
+uint32_t task_id_valid(uint param_1);
+void os_process_report(uint8_t param_1);
+void os_memory_report(uint8_t param_1);
 void task_stack_info(void *task,uint32_t *user_top,uint32_t *user_pointer,uint32_t *user_size,
                     uint32_t *supervisor_top,uint32_t *supervisor_pointer,uint32_t *supervisor_size);
-void task_stack_report(undefined1 param_1);
+void task_stack_report(uint8_t param_1);
 void psos_debug_output(char param_1);
 void tick_account(short mode) __asm__("c_tick_account");
 void task_count_tick(void);
@@ -4892,7 +4894,7 @@ void format_binary(uint32_t value,char *text,int digits);
 bool selftest_aborted(void);
 void selftest_delay(uint param_1);
 void selftest_init(void);
-undefined1 selftest_abort_wait(void);
+uint8_t selftest_abort_wait(void);
 void internal_pps_test(void);
 void lamp_test(void);
 void supplies_test(void);
@@ -4901,12 +4903,12 @@ uint32_t selftest_ram_result(void);
 uint32_t selftest_eeprom_result(void);
 void selftest_print_failure(char param_1);
 ushort shift_right_36(ushort *param_1);
-undefined1 qspi_hex_dac_test(void);
+uint8_t qspi_hex_dac_test(void);
 uint8_t qspi_adc_test(void);
-undefined1 fpga_load_test(void);
+uint8_t fpga_load_test(void);
 bool qspi_efc_test(void);
 void qspi_tests_run(void);
-void selftest_run(undefined4 param_1);
+void selftest_run(uint32_t param_1);
 void ram_pattern_test_locked(void);
 void selftest_nv_slot(void);
 void selftest_qspi_run(void);
@@ -4914,7 +4916,7 @@ int16_t selftest_qspi_with_lamp(void);
 uint32_t selftest_fpga_with_lamp(void);
 int16_t selftest_interpolator_with_lamp(void);
 int16_t selftest_internal_reference_with_lamp(void);
-undefined4 lamp_test_command(void);
+uint32_t lamp_test_command(void);
 uint32_t selftest_uart_with_lamp(void);
 uint32_t selftest_gps_with_lamp(void);
 uint32_t selftest_power_with_lamp(void);
@@ -5104,7 +5106,7 @@ int forth_dev_ctrl();
 int forth_store_iodev();
 int forth_user();
 int pforth_dictionary_init();
-undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,undefined4 param_4);
+uint32_t pforth_define_word(char *param_1,uint32_t param_2,int param_3,uint32_t param_4);
 void *pforth_link_word(void *word) __asm__("c_pforth_link_word");
 void console_set_halt_hook(void *param_1);
 void console_set_device(int32_t device);
@@ -5123,19 +5125,19 @@ void diag_adc_oven(void);
 void diag_adc_doven(void);
 void diag_adc_ant_curr(void);
 void diag_pr_adc_avg(void);
-undefined1 diag_pr_hold_cause(void);
-void diag_efc_write(undefined4 param_1);
-void diag_hdac_write(undefined4 param_1,undefined4 param_2);
-void diag_hdac_all(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
-                  undefined4 param_5,undefined4 param_6);
-void diag_clk_synch(undefined1 param_1,undefined4 param_2);
+uint8_t diag_pr_hold_cause(void);
+void diag_efc_write(uint32_t param_1);
+void diag_hdac_write(uint32_t param_1,uint32_t param_2);
+void diag_hdac_all(uint32_t param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4,
+                  uint32_t param_5,uint32_t param_6);
+void diag_clk_synch(uint8_t param_1,uint32_t param_2);
 void diag_sync_imm(void);
 void diag_loop_time(int param_1);
 void diag_pll_rep(void);
 void diag_efc_rep(void);
 void diag_get_time(void);
-void diag_set_time(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
-                  undefined4 param_5,undefined4 param_6);
+void diag_set_time(uint32_t param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4,
+                  uint32_t param_5,uint32_t param_6);
 void diag_print_stat(void);
 void diag_print_vis(void);
 void diag_pr_avg(void);
@@ -5173,18 +5175,18 @@ void diag_pr_gps_debug(void);
 void diag_clr_gps_debug(void);
 void diag_pr_gps_cmds(void);
 void diag_disable_gps_cmds(int param_1);
-void diag_pstat(undefined4 param_1);
+void diag_pstat(uint32_t param_1);
 void diag_efc_wr(uint param_1);
 void diag_pr_efc(void);
 void diag_lock(void);
 void diag_pll_restart(void);
-void diag_pll_debug(undefined4 param_1);
+void diag_pll_debug(uint32_t param_1);
 void diag_phase_off(int param_1);
 void print_gps_init_state(void);
 void print_leap_check_state(void);
 void print_fine_state(byte param_1,char *param_2);
 void diag_pr_pll(void);
-void diag_log_send(undefined4 param_1);
+void diag_log_send(uint32_t param_1);
 void diag_print_clk_list(void);
 void diag_dmessage(char *param_1);
 void diag_dmes_gpsm(uint32_t param_1);
@@ -5196,13 +5198,13 @@ void diag_dmes_scpi(uint32_t param_1);
 void diag_dmes_spoo(uint32_t param_1);
 void diag_dmes_curv(uint32_t param_1);
 void diag_dmes_all(uint32_t param_1);
-undefined1 diag_wr_eeprom(char *param_1,undefined4 param_2);
+uint8_t diag_wr_eeprom(char *param_1,uint32_t param_2);
 void diag_clear_nv(void);
 void diag_debug_psos(int param_1);
 void diag_doven(int param_1);
 void diag_cal(uint param_1);
 void diag_crash(uint param_1);
-void diag_leapsec(undefined4 param_1,uint32_t param_2);
+void diag_leapsec(uint32_t param_1,uint32_t param_2);
 void diag_es_ascii(int param_1);
 void diag_fp_u(void);
 void diag_words_define(void);
@@ -5224,18 +5226,18 @@ void drtb_putc(char param_1);
 void drtb_send_async(char *param_1,uint8_t param_2);
 ulong console_write(char *s);
 int printf(char *format,...);
-undefined4 console_read(void *param_1,undefined4 param_2,undefined1 *param_3);
+uint32_t console_read(void *param_1,uint32_t param_2,uint8_t *param_3);
 void scpi_port_open(void);
 void scpi_port_close(void);
 void duartb_settings_done(void);
 int console_write_polled(char *s);
 void printf_polled(char *format,...);
 bool drtb_try_lock_write(void);
-undefined1 drtb_release_for_timecode(void);
+uint8_t drtb_release_for_timecode(void);
 void duart_op0_set(char param_1);
 void duart_op1_set(char param_1);
 void duart_output_bits(byte param_1,byte param_2);
-undefined1 drta_send_message(char *param_1,int16_t param_2);
+uint8_t drta_send_message(char *param_1,int16_t param_2);
 bool duarta_rx_pending(void);
 uint8_t drta_get_byte(char *param_1);
 void duart_loopback_test_a(void);
@@ -5254,7 +5256,7 @@ int primary_user_67();
 void duart_stop(void);
 void duartb_loopback_check(void);
 void duart_early_init(void);
-void fatal_error_with_code(char *param_1,undefined4 param_2,undefined4 param_3,uint param_4);
+void fatal_error_with_code(char *param_1,uint32_t param_2,uint32_t param_3,uint param_4);
 int debug_sprintf(char *s,char *format,...);
 int debug_write(char *param_1);
 int debug_printf_polled(char *param_1);
@@ -5275,7 +5277,7 @@ void hdac_write(byte param_1,byte param_2);
 void hdac_set(byte param_1,byte param_2);
 void hdac_write_all(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,byte param_6);
 void hdac_update(void);
-void efc_write(undefined2 param_1);
+void efc_write(uint16_t param_1);
 void sci_echo_none(char c);
 void sci_baud_set(char param_1);
 ushort sci_putc_polled(char param_1);
@@ -5297,9 +5299,9 @@ void sci_settings_done(void);
 int sci_puts_polled(char *param_1);
 void sci_printf_polled(char *param_1);
 void qspi_release(void);
-undefined4
-qspi_queue_setup(byte param_1,undefined2 *param_2,ushort param_3,char param_4,undefined2 *param_5);
-void qspi_start(byte param_1,undefined2 *param_2,ushort param_3,char param_4);
+uint32_t
+qspi_queue_setup(byte param_1,uint16_t *param_2,ushort param_3,char param_4,uint16_t *param_5);
+void qspi_start(byte param_1,uint16_t *param_2,ushort param_3,char param_4);
 void qspi_acquire(void);
 int qspi_control(void) __asm__("c_qspi_control");
 int qspi_open(void) __asm__("c_qspi_open");
@@ -5308,10 +5310,10 @@ void qspi_isr(void);
 int primary_user_65();
 void qspi_transfer_raw(char device, void *buffers, short count) __asm__("c_qspi_transfer_raw");
 void qspi_device_write(char device, void *buffers, short count) __asm__("c_qspi_device_write");
-void qspi_write(byte param_1,void *param_2,undefined4 param_3);
-void qspi_read(byte param_1,void *param_2,undefined4 param_3);
-void qspi_send(byte param_1,undefined2 *param_2,ushort param_3);
-void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3);
+void qspi_write(byte param_1,void *param_2,uint32_t param_3);
+void qspi_read(byte param_1,void *param_2,uint32_t param_3);
+void qspi_send(byte param_1,uint16_t *param_2,ushort param_3);
+void qspi_transfer(byte param_1,uint32_t *param_2,ushort param_3);
 uint spoo_task_create(ulong param_1);
 uint spoo_run(spoo_function *function,uint32_t a,uint32_t b,uint32_t c);
 int deferred_vprintf(char *format,void *arguments);
@@ -5319,12 +5321,12 @@ void spoo_task(void);
 void deferred_flush(void);
 void debug_message(char *message,char with_task_name);
 void fpga_setup(void);
-undefined1 fpga_program(byte param_1,char param_2);
+uint8_t fpga_program(byte param_1,char param_2);
 bool fpga_verify_first(byte *param_1,byte *param_2,char param_3);
 bool fpga_verify_odd(byte *param_1,byte *param_2,char param_3);
 bool fpga_verify_even(byte *param_1,byte *param_2,char param_3);
 bool fpga_verify_chip(byte param_1,char param_2,byte param_3);
-undefined1 fpga_verify(byte param_1,char param_2);
+uint8_t fpga_verify(byte param_1,char param_2);
 int monitors_reset(void);
 void monitor_average_add(adc_monitor *monitor,float reading);
 void monitor_filter_add(adc_monitor *monitor,float reading);
@@ -5341,9 +5343,9 @@ void watchdog_report(void);
 void exception_record_clear(void);
 void log_reset_cause(void);
 void gps_pps_monitor_reset(void);
-undefined1 gps_pps_check(void);
+uint8_t gps_pps_check(void);
 void internal_pps_monitor_reset(void);
-undefined1 internal_pps_check(void);
+uint8_t internal_pps_check(void);
 void hmon_task(void);
 void counter_reset(void);
 void pps_monitors_reset(void);
@@ -5356,13 +5358,13 @@ double scpi_double_multiply(double a, double b) __asm__("c_scpi_double_multiply"
 int scpi_double_multiply_short();
 int scpi_number_to_double(scpi_number *number,double *value,int scale);
 int scpi_number_to_bcd(scpi_number *number, short scale, char *bcd) __asm__("c_scpi_number_to_bcd");
-undefined4
-scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,short param_5,
+uint32_t
+scpi_real_to_text(int param_1,int param_2,uint8_t *param_3,short param_4,short param_5,
                  short param_6,char param_7);
-undefined4 scpi_parse_string(undefined2 *param_1,undefined4 *param_2);
-undefined4 scpi_parse_boolean(short *param_1,undefined2 *param_2);
+uint32_t scpi_parse_string(uint16_t *param_1,uint32_t *param_2);
+uint32_t scpi_parse_boolean(short *param_1,uint16_t *param_2);
 int scpi_parse_boolean_number(scpi_number *number,void *param_2,uint16_t *value,void *param_4);
-undefined4 scpi_parse_choice(short *param_1,short *param_2,int *param_3);
+uint32_t scpi_parse_choice(short *param_1,short *param_2,int *param_3);
 int scpi_parse_short(scpi_number *number,void *param_2,int16_t *value,scpi_unit *units);
 int scpi_parse_unsigned_short(scpi_number *number,void *param_2,uint16_t *value,scpi_unit *units);
 int scpi_parse_long(scpi_number *number,void *param_2,int32_t *value,scpi_unit *units);
@@ -5395,10 +5397,10 @@ int scpi_format_float(scpi_port *output,float *value);
 int scpi_format_double_precision(scpi_port *output,int *param_2);
 int scpi_format_double_resolution(scpi_port *output,double *value,short *resolution);
 int scpi_format_float_resolution(scpi_port *output,float *value);
-undefined4
-scpi_context_init(undefined4 *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
-                 undefined4 param_5,undefined4 param_6,undefined4 param_7,undefined4 param_8,
-                 undefined4 param_9);
+uint32_t
+scpi_context_init(uint32_t *param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4,
+                 uint32_t param_5,uint32_t param_6,uint32_t param_7,uint32_t param_8,
+                 uint32_t param_9);
 int scpi_parse_message_unit(void *context,short *reset_path);
 int scpi_scan_token(scpi_port *input,scpi_token *token,int *param_3);
 void scpi_skip_to_terminator(scpi_port *input);
@@ -5406,7 +5408,7 @@ int scpi_scan_number(scpi_number *number,int have_character,int character,scpi_p
 int scpi_scan_exponent(int character,scpi_number *number,scpi_port *input);
 uint scpi_char_upper(uint param_1);
 int scpi_parameter_match(int *param_1,int kind,void *param_3,short *param_4);
-undefined4 scpi_parameters_finish(int *param_1,void *param_2,short *param_3);
+uint32_t scpi_parameters_finish(int *param_1,void *param_2,short *param_3);
 short scpi_suffix_compare_tail(char *suffix,int length,char *name);
 int8_t scpi_multiplier_exponent(int name);
 short scpi_match_suffix(int length,char *suffix,scpi_unit *units,int16_t *scale);
@@ -5415,102 +5417,102 @@ short scpi_keyword_compare(char *token,int length,char *keyword);
 void * scpi_node_find(void *list,scpi_keyword *keyword);
 int scpi_node_find_with_defaults(int *path,short *keyword,void *unused);
 int scpi_node_find_numbered(int *path,short *keyword,void *unused);
-undefined4
-scpi_header_resolve(short *param_1,int *param_2,short *param_3,undefined4 *param_4,
-                   undefined4 *param_5,undefined2 param_6,short param_7,int *param_8,void *param_9);
-undefined4 scpi_header_step(short *keyword,int *path,void *unused);
-void scpi_path_reset(undefined4 *param_1,undefined4 param_2);
-undefined4
+uint32_t
+scpi_header_resolve(short *param_1,int *param_2,short *param_3,uint32_t *param_4,
+                   uint32_t *param_5,uint16_t param_6,short param_7,int *param_8,void *param_9);
+uint32_t scpi_header_step(short *keyword,int *path,void *unused);
+void scpi_path_reset(uint32_t *param_1,uint32_t param_2);
+uint32_t
 scpi_common_header_resolve
-          (scpi_keyword *param_1,int *param_2,undefined2 *param_3,int *param_4,undefined2 param_5,
+          (scpi_keyword *param_1,int *param_2,uint16_t *param_3,int *param_4,uint16_t param_5,
           short param_6,int *param_7,void *param_8);
 void * scpi_trg_defined(void *list,uint16_t *no_setter);
 void status_event_set(status_model *status,status_register *reg,uint32_t bits);
 void status_condition_set(status_model *status,status_register *reg,int bits);
 void status_condition_clear(status_model *status,status_register *reg,int bits);
 void status_propagate(status_model *status,status_register *reg);
-undefined4 status_create(int *param_1,int param_2,int param_3,undefined4 param_4,undefined4 param_5);
+uint32_t status_create(int *param_1,int param_2,int param_3,uint32_t param_4,uint32_t param_5);
 void status_destroy(status_model *status);
 void status_register_setup
-               (int param_1,int param_2,undefined4 param_3,undefined4 param_4,int param_5,
-               undefined4 param_6,int param_7);
+               (int param_1,int param_2,uint32_t param_3,uint32_t param_4,int param_5,
+               uint32_t param_6,int param_7);
 int16_t status_set_bit(status_model *status,int condition,int value);
 void status_apply_condition(status_model *status,int condition,int param_3);
 int16_t status_clear_bit(status_model *status,int condition);
-undefined4 condition_is_command_error(int param_1);
+uint32_t condition_is_command_error(int param_1);
 void status_condition_bit_get(status_model *status,int condition,uint32_t *bit);
 void status_register_set_enable(status_model *status,int index,int enable);
 void status_register_get_enable(status_model *status,int index,uint16_t *enable);
 void status_read_event(status_model *status,int index,uint16_t *event);
 void status_read_condition(status_model *status,int index,uint16_t *condition);
-undefined4 status_clear_events(short *param_1);
+uint32_t status_clear_events(short *param_1);
 void error_queue_clear(status_model *status,int *code);
 void error_queue_read(status_model *status,int *code,uint32_t *message);
-undefined4 error_queue_create(int *param_1,int param_2,undefined4 param_3);
+uint32_t error_queue_create(int *param_1,int param_2,uint32_t param_3);
 int16_t error_queue_push(short *error_queue,int code,uint32_t value);
-void error_queue_pop(short *param_1,int *param_2,undefined4 *param_3);
+void error_queue_pop(short *param_1,int *param_2,uint32_t *param_3);
 void error_queue_destroy(ulong param_1);
 void status_register_set_ptr(status_model *status,int index,uint32_t filter);
 void status_register_set_ntr(status_model *status,int index,uint32_t filter);
 void status_register_get_ptr(status_model *status,int index,uint16_t *filter);
 void status_register_get_ntr(status_model *status,int index,uint16_t *filter);
 char * error_message_lookup(int code);
-undefined4
-scpi_interpret(int param_1,int param_2,int *param_3,uint param_4,undefined4 param_5,void *param_6,
-              status_model *param_7,undefined4 param_8,undefined4 param_9);
+uint32_t
+scpi_interpret(int param_1,int param_2,int *param_3,uint param_4,uint32_t param_5,void *param_6,
+              status_model *param_7,uint32_t param_8,uint32_t param_9);
 int scpi_call_handler(void *call,void **response);
 int scpi_format_response(scpi_port *output,void *items,void *call);
 int arena_alloc(int param_1,int *param_2);
 int arena_remaining(int *param_1,int *param_2);
 int arena_take(int param_1,int param_2,int *param_3);
-undefined4 arena_current(undefined4 *param_1);
-void arena_set(undefined4 param_1,undefined4 *param_2);
+uint32_t arena_current(uint32_t *param_1);
+void arena_set(uint32_t param_1,uint32_t *param_2);
 void arena_init(int *param_1,uint param_2,int *param_3);
-undefined4 scpi_check_range(int param_1,int param_2,int param_3,byte param_4);
+uint32_t scpi_check_range(int param_1,int param_2,int param_3,byte param_4);
 int scpi_long_resolve_bound(long low,long high,long value,short *parameter);
 void scpi_numeric_set(scpi_numeric_param *param,int index,short kind,short bound,
                      uint32_t float_value,int32_t integer_value,uint8_t source);
 void scpi_numeric_set_double
-               (int param_1,int param_2,short param_3,short param_4,undefined4 *param_5,
-               undefined1 param_6);
+               (int param_1,int param_2,short param_3,short param_4,uint32_t *param_5,
+               uint8_t param_6);
 float scpi_numeric_get(scpi_numeric_param *param,int index,int16_t which,int16_t bound);
 double scpi_numeric_get_double(scpi_numeric_param *param,int index,short kind,short bound);
 char return_byte(char b);
-undefined4 long_identity(undefined4 param_1);
+uint32_t long_identity(uint32_t param_1);
 void copy_longs_locked(uint32_t *source,uint32_t *destination,uint8_t count);
 float float_identity(float x);
 void robin_store(char *response,short *points,long count,char format,uint8_t index);
 int return_zero(void);
 int scpi_query_failed(char code,void *response);
-undefined1 rtcm_supported(void);
+uint8_t rtcm_supported(void);
 void scpi_prompt(int param_1);
-undefined4 scpi_session_init(void);
-undefined4 scpi_console_port(void);
+uint32_t scpi_session_init(void);
+uint32_t scpi_console_port(void);
 void scpi_session_close(void);
 int scpi_console_return_zero(void);
-int scpi_console_read(undefined1 *param_1,int param_2);
+int scpi_console_read(uint8_t *param_1,int param_2);
 int16_t console_port_read(void);
 void scpi_input_ended(void);
-void scpi_console_putc(undefined4 param_1,int param_2);
+void scpi_console_putc(uint32_t param_1,int param_2);
 int scpi_console_write();
 void scpi_console_write_loop(void *port,char *s,int n);
-void status_byte_set_bits(undefined4 param_1);
-void status_byte_clear_bits(undefined4 param_1);
-void status_sre_set(undefined4 param_1);
+void status_byte_set_bits(uint32_t param_1);
+void status_byte_clear_bits(uint32_t param_1);
+void status_sre_set(uint32_t param_1);
 uint8_t status_sre_get(void);
 uint8_t status_byte_get(void);
 void status_update_rqs(void);
-undefined4 scpi_message_done(void);
-undefined4 scpi_input_closed(void);
+uint32_t scpi_message_done(void);
+uint32_t scpi_input_closed(void);
 void status_prompt_refresh(status_model *param_1,int param_2);
 void send_x_retry(uint32_t exchange,void *message,uint32_t ticks);
 void request_and_wait(uint32_t param_1,void *param_2);
 void pllc_request_a(void *param_1,uint8_t param_2,uint8_t param_3,uint8_t param_4);
 void pllc_request_b(void *param_1,uint8_t param_2,uint8_t param_3);
-void pllc_request_c(void *param_1,uint8_t param_2,uint32_t param_3,undefined4 *param_4,
+void pllc_request_c(void *param_1,uint8_t param_2,uint32_t param_3,uint32_t *param_4,
                    uint8_t param_5);
 void pllc_request_d(void *param_1,uint8_t param_2,uint32_t param_3,uint8_t param_4);
-void pllc_request_e(void *param_1,uint8_t param_2,undefined4 *param_3,uint8_t param_4);
+void pllc_request_e(void *param_1,uint8_t param_2,uint32_t *param_3,uint8_t param_4);
 uint scpi_task_create(ulong param_1);
 void scpi_task(void);
 int scpi_set_common_CLS(void *parameters,void *response,void *call);
@@ -5607,7 +5609,7 @@ int scpi_query_DIAGnostic_TEST(void *parameters,void *response,void *call);
 int scpi_query_DIAGnostic_TEST_RESult(void *parameters,void *response,void *call);
 int scpi_set_DIAGnostic_TOFFset(void *parameters,void *response,void *call);
 int scpi_query_DIAGnostic_TOFFset(void *parameters,void *response,void *call);
-undefined4 status_report(short param_1);
+uint32_t status_report(short param_1);
 int status_report_from(short param_1,byte param_2);
 int scpi_set_OUTPut_PIN1_DELay(void *parameters,void *response,void *call);
 int scpi_query_OUTPut_PIN1_DELay(void *parameters,void *response,void *call);
@@ -5643,7 +5645,7 @@ int scpi_query_DOUGlas_STATe(void *parameters,void *response,void *call);
 int scpi_set_DOUGlas_STATe_POWerup(void *parameters,void *response,void *call);
 int scpi_query_DOUGlas_STATe_POWerup(void *parameters,void *response,void *call);
 int scpi_query_SOURce_GPSystem_REFerence_VALid(void *parameters,void *response,void *call);
-undefined4 satellite_number_valid(byte param_1);
+uint32_t satellite_number_valid(byte param_1);
 bool satellite_in_mask(char param_1,uint param_2);
 bool satellite_mask_add(char param_1,uint *param_2);
 bool satellite_mask_remove(char param_1,uint *param_2);
@@ -5740,18 +5742,18 @@ int scpi_query_SAMPle_DOUBle(void *parameters,void *response,void *call);
 int scpi_set_SAMPle_DARR(void *parameters,void *response,void *call);
 int scpi_query_SAMPle_DARR(void *parameters,void *response,void *call);
 void string_upper(char *text);
-void skip_spaces(undefined4 *param_1);
-void string_trim_right(undefined4 *param_1);
-void robin_strip_xnon(undefined4 *param_1);
+void skip_spaces(uint32_t *param_1);
+void string_trim_right(uint32_t *param_1);
+void robin_strip_xnon(uint32_t *param_1);
 int robin_keyword_match(char *param_1,int *param_2);
-undefined4 robin_lookup(int *param_1,undefined4 *param_2,undefined4 *param_3);
-int robin_parse_arguments(int *param_1,uint param_2,undefined4 *param_3,undefined4 *param_4);
-int robin_parse(char *param_1,undefined4 *param_2,undefined4 *param_3);
+uint32_t robin_lookup(int *param_1,uint32_t *param_2,uint32_t *param_3);
+int robin_parse_arguments(int *param_1,uint param_2,uint32_t *param_3,uint32_t *param_4);
+int robin_parse(char *param_1,uint32_t *param_2,uint32_t *param_3);
 void robin_point_list(uint16_t *points,uint16_t *count,char kind);
 void robin_timestamp_values(char param_1,short param_2,short *param_3);
 void robin_point_count(char param_1,short *param_2);
 void robin_overflow_count(char kind,double *count);
-void robin_clear(undefined1 param_1);
+void robin_clear(uint8_t param_1);
 int scpi_set_FORMat_DATA(void *parameters,void *response,void *call);
 int scpi_query_FORMat_DATA(void *parameters,void *response,void *call);
 int scpi_query_ROBin(void *parameters,void *response,void *call);
@@ -5763,14 +5765,14 @@ int scpi_query_ROBin_POINts(void *parameters,void *response,void *call);
 int scpi_query_ROBin_TSTamp(void *parameters,void *response,void *call);
 int scpi_set_SENSe_TST1_EDGE(void *parameters,void *response,void *call);
 int scpi_query_SENSe_TST1_EDGE(void *parameters,void *response,void *call);
-undefined4 status_preset_register(char param_1,char param_2,short param_3,short param_4);
+uint32_t status_preset_register(char param_1,char param_2,short param_3,short param_4);
 void status_enables_init(void);
 void status_transitions_init(void);
 int status_init(void);
-void status_event_hook(undefined4 param_1,undefined1 param_2);
+void status_event_hook(uint32_t param_1,uint8_t param_2);
 void status_happening(char param_1);
 uint16_t status_hardware_condition(void);
-void happening_buffer_clear(undefined1 *param_1);
+void happening_buffer_clear(uint8_t *param_1);
 void happening_buffers_clear(void);
 void happening_replay(char *events,char mode,char first,char last);
 void happening_flush(char *param_1);
@@ -5849,11 +5851,11 @@ void duartb_parity_restrict(void);
 void duartb_eight_bits_restrict(void);
 void douglas_duration_changed(void);
 uint8_t lifetime_record_read(void);
-undefined4 lifetime_record_write(void);
+uint32_t lifetime_record_write(void);
 void lifetime_event_run(void);
 void lifetime_update(int param_1);
 bool calibration_block_read(void);
-undefined4 save_calibration_block(undefined4 param_1);
+uint32_t save_calibration_block(uint32_t param_1);
 uint8_t parameter_record_read(void);
 bool save_parameter_record(byte param_1);
 void duartb_settings_preset(int32_t index,int32_t source);
@@ -5864,70 +5866,70 @@ char eeprom_lock(void);
 void eeprom_unlock(void);
 bool eeprom_write_byte(char *param_1,char param_2);
 bool eeprom_write_page(char *param_1,char *param_2,ushort param_3);
-undefined4 eeprom_write(char *param_1,char *param_2,uint param_3);
+uint32_t eeprom_write(char *param_1,char *param_2,uint param_3);
 uint16_t log_page_checksum(log_page *page);
-undefined4 log_page_write(byte param_1,short *param_2);
-undefined4 log_page_read(byte param_1,undefined4 *param_2);
+uint32_t log_page_write(byte param_1,short *param_2);
+uint32_t log_page_read(byte param_1,uint32_t *param_2);
 uint sign_extend_bits(uint param_1,byte param_2);
 char log_erase(byte param_1);
 int log_erase_locked(byte param_1);
 int log_erase_checked(int param_1,byte param_2);
-int log_entry_total(undefined1 *param_1);
+int log_entry_total(uint8_t *param_1);
 int log_init(void);
 int log_read(int param_1,char *param_2,char *param_3);
 int log_write(char *format,...);
 int log_event(uint8_t code);
-void log_first_satellite(undefined4 param_1,undefined4 param_2);
+void log_first_satellite(uint32_t param_1,uint32_t param_2);
 void log_page_clear(void *param_1);
 log_entry * log_page_free_entry(log_page *page);
-undefined1 log_flush(void);
-undefined4 log_append(char *param_1,int32_t param_2,int32_t param_3);
+uint8_t log_flush(void);
+uint32_t log_append(char *param_1,int32_t param_2,int32_t param_3);
 void report_clamped(char param_1,byte param_2);
 float float_table_index(float *param_1,short param_2);
-undefined4 clamp_float(float *param_1,float *param_2,float *param_3,float *param_4,byte param_5);
-undefined4
-clamp_double(double *param_1,undefined4 *param_2,double *param_3,double *param_4,byte param_5);
+uint32_t clamp_float(float *param_1,float *param_2,float *param_3,float *param_4,byte param_5);
+uint32_t
+clamp_double(double *param_1,uint32_t *param_2,double *param_3,double *param_4,byte param_5);
 float round_float_to_step(float *value,float *step);
-undefined8 load_double(undefined8 *param_1);
+uint64_t load_double(uint64_t *param_1);
 int clamp_to_limits(int32_t *value,int index,int32_t *minimum,int32_t *maximum,scpi_step *step,
                    int source);
 uint mask_to_limits(uint *param_1,uint *param_2);
 uint clamp_to_step_and_limits
-               (uint *param_1,undefined4 param_2,uint *param_3,uint *param_4,int param_5,
-               undefined4 param_6);
+               (uint *param_1,uint32_t param_2,uint *param_3,uint *param_4,int param_5,
+               uint32_t param_6);
 float float_max_of(float *param_1,float *param_2);
 float float_min_of(float *param_1,float *param_2);
 float clamp_float_to_step_and_limits
-                (float *param_1,undefined4 param_2,float *param_3,float *param_4,int param_5,
+                (float *param_1,uint32_t param_2,float *param_3,float *param_4,int param_5,
                 int param_6);
 int32_t clamp_float_to_step_double
-                  (float *param_1,undefined4 param_2,float *param_3,float *param_4,int param_5,
+                  (float *param_1,uint32_t param_2,float *param_3,float *param_4,int param_5,
                   int param_6);
 void clamp_double_to_step_and_limits
-               (double *param_1,undefined4 param_2,double *param_3,double *param_4,int param_5,
-               undefined4 param_6);
-undefined8
-clamp_double_to_limits(double *param_1,double *param_2,double *param_3,undefined4 param_4);
+               (double *param_1,uint32_t param_2,double *param_3,double *param_4,int param_5,
+               uint32_t param_6);
+uint64_t
+clamp_double_to_limits(double *param_1,double *param_2,double *param_3,uint32_t param_4);
 void nv_slot_erase(byte param_1);
 void clear_nv(void);
 void nv_restore(void);
 uint16_t nv_checksum(nv_record *record);
-undefined4 nv_record_differs(int *param_1,int *param_2);
+uint32_t nv_record_differs(int *param_1,int *param_2);
 char nv_save(byte param_1);
-undefined1 nv_slot_valid(void);
-undefined4 nv_load_slot(void);
-undefined4 load_long_unit_step(undefined4 *param_1);
-undefined4 load_long(undefined4 *param_1);
-undefined8 load_double_param(undefined8 *param_1);
+uint8_t nv_slot_valid(void);
+uint32_t nv_load_slot(void);
+uint32_t load_long_unit_step(uint32_t *param_1);
+uint32_t load_long(uint32_t *param_1);
+uint64_t load_double_param(uint64_t *param_1);
 void idn_model_default(void);
-undefined1 identification_record_read(void);
-undefined4 identification_record_write(void);
+uint8_t identification_record_read(void);
+uint32_t identification_record_write(void);
 uint16_t reset_record_checksum(reset_record *record);
 uint8_t reset_record_valid(uint8_t index);
 int log_clear(void);
 int log_count(uint8_t *full);
 void reset_record_count(void);
-undefined4 log_entry_text(int param_1,char *param_2,char *param_3);
+uint32_t log_entry_text(int param_1,char *param_2,char *param_3);
 uint32_t reset_record_write(uint32_t date,time_of_day time,char *text);
 void interpolator_calibration_init(interpolator_calibration *calibration);
 uint8_t interpolator_measure(uint8_t mode);
@@ -5938,7 +5940,7 @@ uint8_t dac_search_bisect(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t lo
 uint8_t dac_search_step(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t low,uint8_t high,
                        dac_measure *measure);
 byte hdac_nudge(int param_1,byte param_2);
-undefined4 interpolator_prepare(void);
+uint32_t interpolator_prepare(void);
 uint8_t interpolator_calibrate(interpolator_calibration *calibration);
 uint8_t interpolator_verify(interpolator_calibration *calibration);
 void interpolator_sample(interpolator_calibration *calibration);
@@ -5958,7 +5960,7 @@ void sync_request(uint8_t param_1,int32_t param_2);
 void counter_set_sync(byte param_1);
 void fpga_fields_to_registers(uint8_t *fields,uint8_t *registers);
 byte fpga_read_byte(char param_1);
-undefined8 counter_offset_apply(int param_1,uint param_2);
+uint64_t counter_offset_apply(int param_1,uint param_2);
 longlong counter_read_raw(void);
 uint interpolator_read(void);
 void counter_arm(interval_reading_fields *reading,counter_configuration_fields *configuration);
@@ -5967,13 +5969,13 @@ int counter_load_registers(void);
 void counter_configuration_init(counter_configuration_fields *configuration);
 void counter_init(void);
 void counter_selftest(void);
-undefined8 int64_add(int param_1,uint param_2,int param_3,uint param_4);
-undefined8 int64_negate(int param_1,int param_2);
-undefined8 int64_add_long(uint param_1,int param_2,uint param_3);
+uint64_t int64_add(int param_1,uint param_2,int param_3,uint param_4);
+uint64_t int64_negate(int param_1,int param_2);
+uint64_t int64_add_long(uint param_1,int param_2,uint param_3);
 int int64_divide(int divisor,int high,uint low);
 uint uint64_divide(uint divisor,uint high,uint low);
 double int64_to_double(uint param_1,uint param_2);
-undefined8 double_to_int64(uint param_1,undefined4 param_2);
+uint64_t double_to_int64(uint param_1,uint32_t param_2);
 void pll_action_nothing(int32_t index,int32_t source);
 void efc_history_update(void);
 void curv_signal(void);
@@ -5993,19 +5995,19 @@ int fit_three_point(three_point_fit *fit);
 int linear_regression(regression_record *record,int with_slope);
 float float_abs(float param_1);
 void fit_quality(aging_curve_state *curve);
-undefined4 kenneth_present_get(float *param_1,undefined1 *param_2);
-undefined4 kenneth_predicted_get(float *param_1,undefined1 *param_2,undefined1 *param_3);
-undefined4 get_ffom(undefined1 *param_1);
-void output_state_program(undefined1 param_1);
+uint32_t kenneth_present_get(float *param_1,uint8_t *param_2);
+uint32_t kenneth_predicted_get(float *param_1,uint8_t *param_2,uint8_t *param_3);
+uint32_t get_ffom(uint8_t *param_1);
+void output_state_program(uint8_t param_1);
 void pulse_program(time_of_day time,calendar_date date,uint8_t state,int32_t period);
 void pulse_settings_done(void);
 void output_state_done(void);
-void pll_scpi_do_action(undefined1 *param_1);
-void toggle_change(undefined1 *param_1);
+void pll_scpi_do_action(uint8_t *param_1);
+void toggle_change(uint8_t *param_1);
 void validate_num(void);
 void validate_or_doaction(char *needs_loop,char *result);
-undefined4 pll_scpi_needs_loop(void);
-undefined4 pll_scpi_send_to_loop(uint8_t param_1,undefined1 *param_2);
+uint32_t pll_scpi_needs_loop(void);
+uint32_t pll_scpi_send_to_loop(uint8_t param_1,uint8_t *param_2);
 ushort scpi_param_saved_in_nv(void);
 ushort scpi_param_saved_in_record(void);
 void finish_scpi_cmd(void);
@@ -6016,23 +6018,23 @@ void pll_scpi_complete(int *param_1,char param_2);
 void gps_diag_complete(int *param_1);
 void sample_action_print(int32_t index,int32_t source);
 void questionable_user_done(void);
-void status_enable_restore(undefined4 param_1,undefined4 param_2);
-void status_ptr_restore(undefined4 param_1,undefined4 param_2);
-void status_ntr_restore(undefined4 param_1,undefined4 param_2);
-void status_preset_done(undefined4 param_1,undefined4 param_2);
+void status_enable_restore(uint32_t param_1,uint32_t param_2);
+void status_ptr_restore(uint32_t param_1,uint32_t param_2);
+void status_ntr_restore(uint32_t param_1,uint32_t param_2);
+void status_preset_done(uint32_t param_1,uint32_t param_2);
 void holdover_ti_reset(void);
 void holdover_ti_add(float param_1);
-undefined1 holdover_correction_valid(void);
+uint8_t holdover_correction_valid(void);
 float holdover_ti_max(void);
-undefined4 holdover_limit_exceeded(float param_1);
+uint32_t holdover_limit_exceeded(float param_1);
 uint enter_holdover(void);
-undefined1 holdover(char param_1);
-undefined4 clock_check_against_gps(void);
+uint8_t holdover(char param_1);
+uint32_t clock_check_against_gps(void);
 char holdover_recovery(char param_1);
 char startup_pll(char param_1);
-undefined1 pll_normal(char param_1);
-undefined1 fine_sync_adjust(float param_1);
-undefined1 sync_perform(float param_1);
+uint8_t pll_normal(char param_1);
+uint8_t fine_sync_adjust(float param_1);
+uint8_t sync_perform(float param_1);
 uint8_t interval_next_reading(char arm_mode,float *reading);
 void interval_rearm(char param_1);
 void interval_wait_reading(void);
@@ -6049,16 +6051,16 @@ void holdover_recovery_limit_ignore(int32_t index,int32_t source);
 void sync_immediate_request(int32_t index,int32_t source);
 void nv_param_field_b8_done(void);
 uint8_t pll_mode(void);
-undefined1 pll_powerup_suffix_index(void);
-undefined1 recovery_suffix_index(void);
-undefined1 holdover_waiting_reason(void);
+uint8_t pll_powerup_suffix_index(void);
+uint8_t recovery_suffix_index(void);
+uint8_t holdover_waiting_reason(void);
 void pllp_start_nothing_a(void);
 void pllp_start_nothing_b(void);
 void nv_clear_and_reset(void);
 void gpt_input_capture_2_interrupt(void);
 void pwma_force_level(char param_1);
-undefined1 powerup(char param_1);
-undefined1 pll_check_reference(char param_1);
+uint8_t powerup(char param_1);
+uint8_t pll_check_reference(char param_1);
 void clock_set_from_reference(void);
 void selftest_request(int32_t index,int32_t source);
 void douglas_state_done(void);
@@ -6075,7 +6077,7 @@ void gps_selftest_run(void);
 void gps_init_sequence(void);
 void gps_leap_sequence(void);
 void gps_leap_ack(void);
-undefined4 leap_ack_pending(void);
+uint32_t leap_ack_pending(void);
 void leap_ack_request(int32_t index,int32_t source);
 void gps_command_send(void);
 bool gps_diag_sequence(bool same_stage);
@@ -6084,7 +6086,7 @@ void pll_restart(void);
 void efc_gain_set(float param_1);
 void pllp_task(void);
 void running_average_update(int param_1,double *param_2,uint param_3);
-void mas_to_dms(long param_1,undefined2 *param_2,undefined1 *param_3,double *param_4);
+void mas_to_dms(long param_1,uint16_t *param_2,uint8_t *param_3,double *param_4);
 void dms_to_mas(long *mas,ushort degrees,byte minutes,double seconds);
 void format_dms(int param_1,char param_2,char *param_3);
 void format_dms_precise(char *text,double mas,char latitude);
@@ -6105,13 +6107,13 @@ void satellite_sets_build(oncore_channel_status *channels,satellite_sets *sets);
 int satellite_in_set(satellite_kind kind,uint8_t id,uint32_t mask);
 uint8_t satellite_track_class(oncore_visible_satellite *satellite);
 void satellite_elevation_azimuth(oncore_visible_satellite *satellite,uint8_t *entry);
-void satellite_status(char param_1,byte param_2,int param_3,int param_4,undefined1 *param_5);
-undefined4 satellite_compare(byte *param_1,byte *param_2);
+void satellite_status(char param_1,byte param_2,int param_3,int param_4,uint8_t *param_5);
+uint32_t satellite_compare(byte *param_1,byte *param_2);
 void satellite_status_list
                (char param_1,byte param_2,int param_3,byte *param_4,int param_5,byte *param_6,
                char *param_7);
 void format_satellite_number(char param_1,char *param_2);
-bool mark_flag(char param_1,undefined1 *param_2);
+bool mark_flag(char param_1,uint8_t *param_2);
 void format_level(short param_1,char *param_2);
 void format_satellite_cell(char param_1,byte param_2,ushort param_3,char *param_4);
 void status_screen_height(status_snapshot_record *snapshot,char *line);
@@ -6119,7 +6121,7 @@ void format_si(double value,char resolution,uint8_t digits,char *unit,char *text
 void format_duration_short(uint param_1,char *param_2);
 void status_screen_sync(status_snapshot_record *snapshot,char *line);
 int format_time(time_of_day time,char *text);
-undefined4 format_date(ushort param_1,byte param_2,byte param_3,char *param_4);
+uint32_t format_date(ushort param_1,byte param_2,byte param_3,char *param_4);
 void status_screen_time(status_snapshot_record *snapshot,char *line);
 void status_screen_position(uint8_t row,status_snapshot_record *snapshot,char *line);
 void status_screen_tfom(uint8_t row,status_snapshot_record *snapshot,char *line);
@@ -6132,19 +6134,19 @@ void status_screen_mode_suffix(char param_1,status_snapshot_record *snapshot,cha
 void status_snapshot(status_snapshot_record *snapshot);
 void status_screen(status_snapshot_record *snapshot,char clear,write_function *write,
                   printf_function *print);
-void status_screen_print(undefined1 param_1,write_function *write,printf_function *print);
+void status_screen_print(uint8_t param_1,write_function *write,printf_function *print);
 bool uptime_elapsed(uint *param_1,int *param_2);
 uint32_t raim_monitor(void);
 void gps_receiver_status_reset(void);
-void gps_receiver_status_update(char param_1,undefined1 param_2);
-undefined1 gps_status_alternate(void);
+void gps_receiver_status_update(char param_1,uint8_t param_2);
+uint8_t gps_status_alternate(void);
 void command_monitor_init(void);
 void command_monitor(void);
 void gps_response_reset(void);
-undefined4 gps_response_lookup(char param_1,char param_2,undefined2 *param_3,short *param_4);
+uint32_t gps_response_lookup(char param_1,char param_2,uint16_t *param_3,short *param_4);
 void gps_receive_expect(uint8_t c,uint8_t expected);
 uint8_t gps_receive(void);
-undefined4 gps_response_timed_out(short param_1,uint *param_2);
+uint32_t gps_response_timed_out(short param_1,uint *param_2);
 int gps_count_response(char kind,gps_request_entry *request);
 void request_ring_clear(void);
 bool request_ring_put(gps_request_entry *entry);
@@ -6152,22 +6154,22 @@ int request_ring_get(gps_request_entry *entry);
 int request_ring_unput(gps_request_entry *entry);
 bool request_ring_empty(void);
 bool request_ring_full(void);
-undefined4 request_ring_contains(char param_1,char param_2,char param_3);
-undefined4 request_ring_newest_replaceable(void);
-undefined4 request_kind_valid(char param_1);
+uint32_t request_ring_contains(char param_1,char param_2,char param_3);
+uint32_t request_ring_newest_replaceable(void);
+uint32_t request_kind_valid(char param_1);
 void gps_request_queue(char param_1,gps_request_entry *request,gps_request_entry *param_3);
 bool gps_request_post(char param_1,short param_2,int *param_3,uint8_t param_4);
-undefined1 gps_request_class(short param_1,char param_2);
+uint8_t gps_request_class(short param_1,char param_2);
 gps_script_step ** gps_script_lookup(short param_1);
 void gps_init(void);
 void gps_link_reset(void);
 void gpsm_task(void);
 void raim_request_arguments(void);
-void gps_console_request(short param_1,undefined4 *param_2,undefined1 param_3);
+void gps_console_request(short param_1,uint32_t *param_2,uint8_t param_3);
 void command_log_clear(void);
 int command_log_add(gps_running_command *command,char *text);
 int gps_print_command(gps_command_log *log,char *line);
-void status_snapshot_update(undefined *param_1);
+void status_snapshot_update(uint8_t *param_1);
 void clear_gps_debug(void);
 void gps_print_command_log(gps_command_log *log);
 void gps_print_commands(void);
@@ -6179,28 +6181,28 @@ char * long_array_get_byte(long *array,uint8_t index,char *out);
 char * long_array_get_word(long *array,uint8_t index,char *out);
 char * long_array_get_long(long *array,uint8_t index,char *out);
 void long_array_get_long_prefixed(long *array,uint8_t index,char *out);
-void byte_copy_optional(undefined1 *param_1,undefined1 *param_2);
-undefined2 * word_copy_advance(undefined2 *param_1,undefined2 *param_2);
-undefined1 * bytes_to_long(undefined1 *param_1,undefined4 *param_2);
-void oncore_as_height_decode(undefined1 *param_1);
+void byte_copy_optional(uint8_t *param_1,uint8_t *param_2);
+uint16_t * word_copy_advance(uint16_t *param_1,uint16_t *param_2);
+uint8_t * bytes_to_long(uint8_t *param_1,uint32_t *param_2);
+void oncore_as_height_decode(uint8_t *param_1);
 byte * oncore_ai_decode(byte *param_1,int param_2);
 ushort * word_copy_14_bits(ushort *param_1,ushort *param_2);
 byte * oncore_decode_fields(byte *param_1,byte *param_2,char *param_3);
 int satellite_id_valid(satellite_kind kind,uint8_t id);
 uint8_t channel_position_satellite(byte param_1);
-undefined4 satellite_used_for_position(char param_1);
+uint32_t satellite_used_for_position(char param_1);
 void channels_reset(void);
 void satellite_add_to_set(satellite_kind kind,uint8_t id,uint32_t *mask);
 char count_bits(uint param_1);
-undefined4 visible_satellites(undefined1 *param_1,uint32_t *param_2);
+uint32_t visible_satellites(uint8_t *param_1,uint32_t *param_2);
 int satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set,uint8_t *pseudolite_set
                      );
 oncore_visible_satellite * satellite_find(uint8_t id,void *table);
-undefined4 position_settable(void);
+uint32_t position_settable(void);
 bool gps_position_get(int32_t *param_1,int32_t *param_2,int32_t *param_3);
 bool gps_time_local_get(time_of_day *time,uint32_t *date);
-undefined4 survey_progress_percent(undefined2 *param_1);
-undefined4 survey_progress_text(char *param_1);
+uint32_t survey_progress_percent(uint16_t *param_1);
+uint32_t survey_progress_text(char *param_1);
 uint8_t status_screen_length(void);
 byte * oncore_position_message(byte *param_1,byte *param_2);
 void oncore_visibility_message(byte *param_1,byte *param_2);
@@ -6212,21 +6214,21 @@ void oncore_traim_message(byte *param_1,byte *param_2);
 void oncore_receiver_id_message(byte *param_1,byte *param_2);
 byte oncore_checksum(byte *param_1,byte *param_2);
 void gps_parse_options(void);
-undefined4 gps_message_supported(short param_1,undefined1 *param_2);
+uint32_t gps_message_supported(short param_1,uint8_t *param_2);
 int gps_request_build(short param_1,char param_2,int param_3,char *param_4);
 char * gps_response_decode(int16_t message,char *response);
-undefined4 bytes_equal_n(char *param_1,short param_2,char *param_3,short param_4);
-undefined1
-gps_response_match(short param_1,undefined1 *param_2,char param_3,char param_4,short param_5,
+uint32_t bytes_equal_n(char *param_1,short param_2,char *param_3,short param_4);
+uint8_t
+gps_response_match(short param_1,uint8_t *param_2,char param_3,char param_4,short param_5,
                   int param_6,short param_7);
 int gps_message_to_text(char *param_1,byte param_2,char *param_3);
 void psos_config_init(void);
 ulong memory_allocate(ulong param_1);
 void memory_free(ulong param_1);
 int primary_trap_1();
-undefined8 longjmp(undefined4 *param_1,undefined4 param_2);
-undefined4 setjmp(undefined4 *param_1);
-undefined4 primary_unpack_records(void);
+uint64_t longjmp(uint32_t *param_1,uint32_t param_2);
+uint32_t setjmp(uint32_t *param_1);
+uint32_t primary_unpack_records(void);
 float float_subtract_in_place(float *x, float y) __asm__("c_float_subtract_in_place");
 float float_add_in_place(float *x, float y) __asm__("c_float_add_in_place");
 float float_subtract_reversed(float a, float b) __asm__("c_float_subtract_reversed");
@@ -6278,15 +6280,15 @@ ulonglong float_raise(uint code,...);
 int abs(int j);
 void call_atexit_functions(void);
 int atoi(char *s);
-undefined8 div(int param_1,int param_2);
+uint64_t div(int param_1,int param_2);
 longlong ldiv(int numerator,int denominator);
 long labs(long j);
 int memcmp(void *s1,void *s2,uint n);
 void * memcpy(void *s1,void *s2,uint n);
 void * memset(void *s,int c,uint n);
-void qsort_swap(undefined1 *param_1,undefined1 *param_2);
-void qsort_rotate(undefined1 *param_1,undefined1 *param_2,undefined1 *param_3);
-void qsort_range(undefined1 *param_1,undefined1 *param_2);
+void qsort_swap(uint8_t *param_1,uint8_t *param_2);
+void qsort_rotate(uint8_t *param_1,uint8_t *param_2,uint8_t *param_3);
+void qsort_range(uint8_t *param_1,uint8_t *param_2);
 void qsort(void *base,uint nmemb,uint size,void *compar);
 int rand(void);
 char * strcat(char *s1,char *s2);
@@ -6296,16 +6298,16 @@ char * strncpy(char *s1,char *s2,uint n);
 int toupper(int c);
 void double_to_digits_multiply(uint *param_1);
 void double_to_digits(double value,int count,int *exponent,uint *negative,char *digits,int mode);
-undefined8 next_decimal_digit(uint *param_1);
-byte * doprnt(byte *param_1,uint *param_2,undefined *param_3,undefined4 param_4);
+uint64_t next_decimal_digit(uint *param_1);
+byte * doprnt(byte *param_1,uint *param_2,uint8_t *param_3,uint32_t param_4);
 int sprintf(char *s,char *format,...);
-int sprintf_put(undefined1 *param_1,int param_2,int param_3,int param_4);
+int sprintf_put(uint8_t *param_1,int param_2,int param_3,int param_4);
 int vsprintf(char *s,char *format,void *arg);
 double fabs(double x);
 double frexp(double value,int *exp);
 double log(double x);
 double modf(double value,double *iptr);
-undefined4 double_is_integer(uint param_1,uint param_2,uint *param_3);
+uint32_t double_is_integer(uint param_1,uint param_2,uint *param_3);
 double double_truncate_sixteenths(double value);
 double pow(double x,double y);
 double sqrt(double x);
@@ -6314,7 +6316,7 @@ int installer_mutex_release(void *mutex) __asm__("c_installer_mutex_release");
 void installer_exception_hook_reset(void);
 void * installer_exception_hook_get(void);
 int installer_default_exception();
-void installer_print_exception(ushort param_1,undefined4 param_2,ushort param_3,uint32_t param_4);
+void installer_print_exception(ushort param_1,uint32_t param_2,ushort param_3,uint32_t param_4);
 char * installer_exception_name(uint16_t vector);
 int installer_periodic_interrupt();
 void installer_periodic_interrupt_enable(void);
@@ -6327,7 +6329,7 @@ uint16_t installer_enter_supervisor_mode(void);
 uint16_t installer_set_interrupt_mask(uint16_t sr);
 int installer_trap_7();
 int installer_enter_supervisor(void) __asm__("c_installer_enter_supervisor");
-void installer_float_exception_report(uint param_1,undefined4 param_2);
+void installer_float_exception_report(uint param_1,uint32_t param_2);
 int installer_spurious_interrupt();
 void installer_entry(void);
 void installer_program_exit(uint param_1);
@@ -6407,7 +6409,7 @@ void installer_duartb_baud_from_settings(void);
 byte installer_duartb_putc_polled(byte param_1);
 uint8_t installer_drtb_getc(void);
 int installer_drtb_gets(uint8_t *param_1,int param_2);
-void installer_drtb_putc(undefined1 param_1);
+void installer_drtb_putc(uint8_t param_1);
 int installer_console_write_polled(char *s);
 void installer_printf_polled(char *format,...);
 void installer_duarta_receive(void);
@@ -6417,39 +6419,39 @@ void installer_duartb_transmit_interrupt(void);
 int installer_duart_interrupt();
 void installer_fatal_error(char *message);
 void installer_fatal_error_with_code
-               (char *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4);
-undefined4 installer_scpi_scan_exponent(undefined4 param_1,int param_2,undefined4 *param_3);
+               (char *param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4);
+uint32_t installer_scpi_scan_exponent(uint32_t param_1,int param_2,uint32_t *param_3);
 uint installer_scpi_char_upper(uint param_1);
 short installer_scpi_suffix_compare_tail(char *suffix,int length,char *name);
-undefined4 installer_scpi_multiplier_exponent(undefined2 param_1,short param_2);
+uint32_t installer_scpi_multiplier_exponent(uint16_t param_1,short param_2);
 void installer_status_event_set(status_model *status,status_register *reg,int bits);
-void installer_status_condition_set(int param_1,ushort *param_2,undefined4 param_3);
-void installer_status_condition_clear(int param_1,ushort *param_2,undefined4 param_3);
+void installer_status_condition_set(int param_1,ushort *param_2,uint32_t param_3);
+void installer_status_condition_clear(int param_1,ushort *param_2,uint32_t param_3);
 void installer_status_propagate(status_model *status,status_register *reg);
 int16_t installer_status_set_bit(status_model *status,int condition,int value);
 void installer_status_apply_condition(status_model *status,int condition,int param_3);
 void installer_status_read_event(status_model *status,int index,uint16_t *event);
 int16_t installer_error_queue_push(short *error_queue,int code,uint32_t value);
-undefined4 installer_error_message_lookup(undefined4 param_1);
+uint32_t installer_error_message_lookup(uint32_t param_1);
 void installer_scpi_prompt(int param_1);
 void installer_status_prompt_refresh(int param_1,int param_2);
 uint16_t installer_record_checksum(void *record,uint16_t length);
 bool installer_parameter_record_read(void);
 void installer_idn_model_default(void);
-undefined2 installer_identification_record_read(void);
+uint16_t installer_identification_record_read(void);
 void installer_psos_config_init(void);
 int installer_trap_1();
 void installer_float_raise(uint param_1);
 void installer_call_atexit_functions(void);
 void * installer_memcpy(void *s1,void *s2,uint n);
 char * installer_strncpy(char *s1,char *s2,uint n);
-int installer_strtol(char *param_1,undefined4 *param_2,int param_3);
+int installer_strtol(char *param_1,uint32_t *param_2,int param_3);
 int installer_toupper(int c);
 void installer_double_to_digits_multiply(uint *param_1);
 void installer_double_to_digits
                (double value,int count,int *exponent,uint *negative,char *digits,int mode);
-undefined8 installer_next_decimal_digit(uint *param_1);
-byte * installer_doprnt(byte *param_1,uint *param_2,undefined *param_3,undefined4 param_4);
+uint64_t installer_next_decimal_digit(uint *param_1);
+byte * installer_doprnt(byte *param_1,uint *param_2,uint8_t *param_3,uint32_t param_4);
 int installer_sprintf(char *s,char *format,...);
 int installer_vsprintf(char *s,char *format,void *arg);
 
@@ -6545,28 +6547,28 @@ void boot_duart_early_init(void)
 __exception void boot_reset(void)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   uint16_t uVar2;
   uint16_t uVar3;
   code *pcVar4;
-  undefined **ppuVar5;
+  uint8_t **ppuVar5;
   uint uVar6;
   uint uVar7;
   short sVar8;
   short sVar9;
   short sVar10;
-  undefined **ppuVar11;
+  uint8_t **ppuVar11;
   code *pcVar12;
   preserved_region_fields *ppVar13;
   preserved_region_fields *ppVar14;
   uint *puVar15;
-  undefined4 *puVar17;
+  uint32_t *puVar17;
   uint16_t *puVar18;
-  undefined2 *puVar19;
-  undefined *puVar20;
-  undefined2 *puVar22;
+  uint16_t *puVar19;
+  uint8_t *puVar20;
+  uint16_t *puVar22;
   uint *puVar16;
-  undefined1 *puVar21;
+  uint8_t *puVar21;
   
   sim.sypcr = 0xcc;
   sim.cspar0 = 0x2bff;
@@ -6658,11 +6660,11 @@ __exception void boot_reset(void)
   boot_selftest.ram_data_bits = 0;
   boot_selftest.ram_address_lines = 0;
   ppVar13 = &preserved_region;
-  puVar19 = (undefined2 *)&DAT_0010fffe;
+  puVar19 = (uint16_t *)&DAT_0010fffe;
   while( true ) {
     uVar6 = 0;
     sVar9 = 0x17;
-    puVar20 = (undefined *)puVar19;
+    puVar20 = (uint8_t *)puVar19;
     do {
       ppVar14 = ppVar13;
       puVar21 = puVar20 + -2;
@@ -6671,7 +6673,7 @@ __exception void boot_reset(void)
       ppVar13 = (preserved_region_fields *)&ppVar14->restore;
       puVar20 = puVar20 + -2;
     } while (sVar9 != -1);
-    *(undefined4 *)(ppVar14[-1].values + 0x18) = 0xaaaaaaaa;
+    *(uint32_t *)(ppVar14[-1].values + 0x18) = 0xaaaaaaaa;
     ppVar14[-0xffffffff00000001].values[0x14] = 0xaa;
     ppVar14[-0xffffffff00000001].values[0x15] = 0xaa;
     ppVar14[-0xffffffff00000001].values[0x16] = 0xaa;
@@ -6700,9 +6702,9 @@ __exception void boot_reset(void)
     ppVar14[-0xffffffff00000001].pll.loop_running = 0xaa;
     ppVar14[-0xffffffff00000001].pll.sync_requested = 0xaa;
     ppVar14[-0xffffffff00000001].pll.field_3d5 = 0xaa;
-    *(undefined4 *)((int)&ppVar14[-1].pll.reference_uptime + 2) = 0xaaaaaaaa;
-    *(undefined4 *)((int)&ppVar14[-1].pll.holdover_duration + 2) = 0xaaaaaaaa;
-    *(undefined4 *)&ppVar14[-1].pll.led_tmh_valid = 0xaaaaaaaa;
+    *(uint32_t *)((int)&ppVar14[-1].pll.reference_uptime + 2) = 0xaaaaaaaa;
+    *(uint32_t *)((int)&ppVar14[-1].pll.holdover_duration + 2) = 0xaaaaaaaa;
+    *(uint32_t *)&ppVar14[-1].pll.led_tmh_valid = 0xaaaaaaaa;
     puVar15 = (uint *)((int)&ppVar14[-1].pll.holdover_start_date + 2);
     *puVar15 = 0xaaaaaaaa;
     sVar9 = 0xb;
@@ -6733,11 +6735,11 @@ __exception void boot_reset(void)
       puVar15 = puVar16;
     } while (sVar9 != -1);
     sVar9 = 0x17;
-    puVar19 = (undefined2 *)puVar21;
+    puVar19 = (uint16_t *)puVar21;
     do {
       puVar22 = puVar19;
       puVar15 = puVar16;
-      *(undefined2 *)((int)puVar15 + -2) = *puVar22;
+      *(uint16_t *)((int)puVar15 + -2) = *puVar22;
       sVar9 = sVar9 + -1;
       puVar16 = (uint *)((int)puVar15 + -2);
       puVar19 = puVar22 + 1;
@@ -6781,7 +6783,7 @@ LAB_00000a22:
     duart.stop_ropbc = 0x20;
     boot_selftest.lamp_mask = boot_selftest.lamp_mask | 0x20;
   }
-  *(undefined4 *)(puVar22 + -1) = 0xa40;
+  *(uint32_t *)(puVar22 + -1) = 0xa40;
   boot_duart_early_init();
   if (boot_selftest.uart != 0) {
     duart.stop_ropbc = 0x40;
@@ -6791,7 +6793,7 @@ LAB_00000a22:
   DAT_0010fffa = 0xa74;
   boot_unpack_installer();
   sVar9 = 0xff;
-  puVar17 = (undefined4 *)0x0;
+  puVar17 = (uint32_t *)0x0;
   ppVar13 = &preserved_region;
   do {
     uVar1 = *puVar17;
@@ -7192,16 +7194,16 @@ __asm__(
 __exception void boot_trap_11(void)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   short sVar2;
-  undefined4 *puVar3;
+  uint32_t *puVar3;
   preserved_region_fields *ppVar4;
   
   sim.picr = 0;
   DAT_0010fffa = 0xa74;
   boot_unpack_installer();
   sVar2 = 0xff;
-  puVar3 = (undefined4 *)0x0;
+  puVar3 = (uint32_t *)0x0;
   ppVar4 = &preserved_region;
   do {
     uVar1 = *puVar3;
@@ -7250,7 +7252,7 @@ __asm__(
 /* copies the installer's records from 0xbbc into RAM; 0, or 1 without the S, 2 at a bad record
    restart.md */
 
-undefined4 boot_unpack_installer(void)
+uint32_t boot_unpack_installer(void)
 
 {
   int iVar1;
@@ -7266,7 +7268,7 @@ undefined4 boot_unpack_installer(void)
     iVar1 = CONCAT31((uint3)puVar2[3] |
                      (uint3)(((uint)puVar2[2] << 0x10) >> 8) |
                      (uint3)(((uint)puVar2[1] << 0x18) >> 8),puVar2[4]);
-    boot_memcpy((undefined1 *)
+    boot_memcpy((uint8_t *)
                 CONCAT31((uint3)puVar2[7] |
                          (uint3)(((uint)puVar2[6] << 0x10) >> 8) |
                          (uint3)(((uint)puVar2[5] << 0x18) >> 8),puVar2[8]),puVar2 + 9,iVar1);
@@ -7280,10 +7282,10 @@ undefined4 boot_unpack_installer(void)
 
 /* copies so many bytes, returning the destination */
 
-undefined1 * boot_memcpy(undefined1 *param_1,undefined1 *param_2,int param_3)
+uint8_t * boot_memcpy(uint8_t *param_1,uint8_t *param_2,int param_3)
 
 {
-  undefined1 *puVar1;
+  uint8_t *puVar1;
   
   puVar1 = param_1;
   while (param_3 != 0) {
@@ -7500,7 +7502,7 @@ __regcall int mutex_release(void *mutex /* a1 */)
   iVar1 = ({ __auto_type __c = psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
   if (extraout_A0 == *(int *)((int)a1 + 8)) {
     if (*(int *)((int)a1 + 0xc) == 0) {
-      *(undefined4 *)((int)a1 + 8) = 0;
+      *(uint32_t *)((int)a1 + 8) = 0;
       iVar1 = ({ __auto_type __c = psos_call(0x17,*(int *)((int)a1 + 4),d1,unaff_D2,unaff_D3,
                         (void *)*(int *)((int)a1 + 4),a1); a1 = (__typeof__(a1))__ghidra_result_a1; __c; });
     }
@@ -7583,9 +7585,9 @@ __regcall void mutex_clear(void *mutex /* a1 */)
   
   sVar1 = 5;
   do {
-    *(undefined4 *)mutex = 0;
+    *(uint32_t *)mutex = 0;
     sVar1 = sVar1 + -1;
-    mutex = (undefined4 *)((int)mutex + 4);
+    mutex = (uint32_t *)((int)mutex + 4);
   } while (sVar1 != -1);
   return;
 }
@@ -7754,7 +7756,7 @@ klok_entry * leap_event_schedule_gps(uint32_t param_1,int param_2)
   pkVar2 = &event;
   pkVar3 = &leap_event_gps_template;
   do {
-    *(undefined1 *)&pkVar2->next = *(undefined1 *)&pkVar3->next;
+    *(uint8_t *)&pkVar2->next = *(uint8_t *)&pkVar3->next;
     sVar1 = sVar1 + -1;
     pkVar2 = (klok_entry *)((int)&pkVar2->next + 1);
     pkVar3 = (klok_entry *)((int)&pkVar3->next + 1);
@@ -7800,7 +7802,7 @@ klok_entry * leap_event_schedule_utc(uint32_t param_1,int param_2)
   pkVar1 = &event;
   pkVar4 = &leap_event_utc_template;
   do {
-    *(undefined1 *)&pkVar1->next = *(undefined1 *)&pkVar4->next;
+    *(uint8_t *)&pkVar1->next = *(uint8_t *)&pkVar4->next;
     sVar3 = sVar3 + -1;
     pkVar1 = (klok_entry *)((int)&pkVar1->next + 1);
     pkVar4 = (klok_entry *)((int)&pkVar4->next + 1);
@@ -8074,7 +8076,7 @@ void klok_task(void)
 {
   psos_supervisor();
   do {
-    pps_wait_time((undefined4 *)0x1037ac,(undefined4 *)0x1037b0,1);
+    pps_wait_time((uint32_t *)0x1037ac,(uint32_t *)0x1037b0,1);
     idle_loops_last_second = klok_take_pending();
     if (klok_entries != (klok_entry *)0x0) {
       klok_run_due();
@@ -8121,7 +8123,7 @@ void klok_run_due(void)
 
 /* removes an item from a singly linked list; -2 if it is not there */
 
-undefined4 list_unlink(int *param_1,int *param_2)
+uint32_t list_unlink(int *param_1,int *param_2)
 
 {
   while( true ) {
@@ -8159,7 +8161,7 @@ void klok_insert_sorted(int *param_1,int *param_2)
 
 /* pushes an item onto a singly linked list */
 
-void list_push(undefined4 *param_1,undefined4 *param_2)
+void list_push(uint32_t *param_1,uint32_t *param_2)
 
 {
   *param_2 = *param_1;
@@ -8172,11 +8174,11 @@ void list_push(undefined4 *param_1,undefined4 *param_2)
 
 /* 1 for a leap year, by the Gregorian rule */
 
-undefined4 is_leap_year(ushort param_1)
+uint32_t is_leap_year(ushort param_1)
 
 {
   uint uVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   
   uVar2 = 0;
   if (((param_1 & 3) == 0) &&
@@ -8251,7 +8253,7 @@ uint32_t days_to_date(uint32_t days)
     while ((bVar5 < 0xc && ((ushort)days_before_month[bVar5] < uVar2))) {
       bVar5 = bVar5 + 1;
     }
-    cVar4 = (char)*(undefined2 *)((uint)bVar5 * 2 + 0x1186a);
+    cVar4 = (char)*(uint16_t *)((uint)bVar5 * 2 + 0x1186a);
   }
   else {
     while ((bVar5 < 0xc && ((ushort)days_before_month_leap[bVar5] < uVar2))) {
@@ -8354,7 +8356,7 @@ uint8_t days_in_month(ushort param_1,byte param_2)
 
 /* carries a date's overflowing months and days into the next */
 
-undefined4 date_normalize(uint param_1)
+uint32_t date_normalize(uint param_1)
 
 {
   ushort uVar1;
@@ -8393,9 +8395,9 @@ undefined4 date_normalize(uint param_1)
 uint32_t oncore_date_unpack(uint32_t packed)
 
 {
-  undefined2 local_c;
-  undefined1 uStack_a;
-  undefined1 uStack_9;
+  uint16_t local_c;
+  uint8_t uStack_a;
+  uint8_t uStack_9;
   oncore_date_fields fields;
   
   local_c = (uint16_t)(packed >> 0x10);
@@ -8415,8 +8417,8 @@ uint32_t oncore_date_unpack(uint32_t packed)
 uint32_t oncore_date_pack(oncore_date_fields fields)
 
 {
-  undefined1 local_8;
-  undefined1 uStack_7;
+  uint8_t local_8;
+  uint8_t uStack_7;
   
   local_8 = fields.month;
   uStack_7 = fields.day;
@@ -8457,7 +8459,7 @@ int time_to_seconds(uint32_t time)
 uint seconds_to_hms(uint param_1)
 
 {
-  undefined4 local_8;
+  uint32_t local_8;
   
   local_8 = (uint)CONCAT21(CONCAT11((char)(param_1 / 0xe10),(char)((param_1 % 0xe10) / 0x3c)),
                            (char)((param_1 % 0xe10) % 0x3c));
@@ -8475,8 +8477,8 @@ int gps_seconds(uint32_t date,uint32_t time)
 {
   int iVar1;
   char cVar2;
-  undefined2 local_c;
-  undefined1 uStack_a;
+  uint16_t local_c;
+  uint8_t uStack_a;
   
   local_c = (ushort)(date >> 0x10);
   if (local_c < 0x7bc) {
@@ -8826,10 +8828,10 @@ LAB_00011672:
 
 /* 1 at 23:59:46 or later, in UTC, on the last day of a quarter */
 
-undefined1 leap_second_near(void)
+uint8_t leap_second_near(void)
 
 {
-  undefined1 uVar1;
+  uint8_t uVar1;
   uint local_c;
   time_of_day tStack_8;
   
@@ -8995,27 +8997,27 @@ void * exception_hook_get(void)
 /* Not a C function: an exception handler, entered by the processor through every vector of the
    primary table without a handler of its own, not called. */
 
-__exception undefined8 primary_default_exception(void)
+__exception uint64_t primary_default_exception(void)
 
 {
   char cVar1;
-  undefined4 in_D0;
+  uint32_t in_D0;
   int iVar2;
   void *task;
   char *pcVar3;
-  undefined4 in_D1;
+  uint32_t in_D1;
   char *pcVar4;
-  undefined2 in_stack_00000000 = *(undefined2 *)((char *)__builtin_frame_address(0) + 4);
+  uint16_t in_stack_00000000 = *(uint16_t *)((char *)__builtin_frame_address(0) + 4);
   uint in_stack_00000002 = *(uint *)((char *)__builtin_frame_address(0) + 6);
   ushort in_stack_00000006 = *(ushort *)((char *)__builtin_frame_address(0) + 10);
-  undefined2 in_stack_00000008 = *(undefined2 *)((char *)__builtin_frame_address(0) + 12);
+  uint16_t in_stack_00000008 = *(uint16_t *)((char *)__builtin_frame_address(0) + 12);
   ushort in_stack_0000000a = *(ushort *)((char *)__builtin_frame_address(0) + 14);
   uint32_t in_stack_0000000c = *(uint32_t *)((char *)__builtin_frame_address(0) + 16);
-  undefined2 uVar5;
-  undefined2 uVar6;
+  uint16_t uVar5;
+  uint16_t uVar6;
   
-  uVar5 = (undefined2)((uint)in_D0 >> 0x10);
-  uVar6 = (undefined2)in_D0;
+  uVar5 = (uint16_t)((uint)in_D0 >> 0x10);
+  uVar6 = (uint16_t)in_D0;
   iVar2 = exception_hook_get();
   if (iVar2 != 0) {
     return CONCAT44(CONCAT22(uVar5,uVar6),in_D1);
@@ -9360,13 +9362,13 @@ int int_clamp(int param_1,int param_2,int param_3)
 
 /* the reflected CRC-16, polynomial 0x8408 from 0xffff, over bytes; called by nothing */
 
-undefined4 crc16_ccitt(byte *param_1,short param_2)
+uint32_t crc16_ccitt(byte *param_1,short param_2)
 
 {
   uint uVar1;
   byte bVar2;
   char cVar3;
-  undefined4 local_8;
+  uint32_t local_8;
   
   uVar1 = 0xffffffff;
   bVar2 = 0;
@@ -9536,7 +9538,7 @@ int round_divide(int param_1,int param_2)
 /* the decimal exponent of a double's magnitude rounded, by bisection over 5e-30 to 5e30 at 0x1234c;
    called by nothing */
 
-undefined4 double_decimal_exponent_rounded(uint param_1,uint param_2)
+uint32_t double_decimal_exponent_rounded(uint param_1,uint param_2)
 
 {
   uint uVar1;
@@ -9570,7 +9572,7 @@ undefined4 double_decimal_exponent_rounded(uint param_1,uint param_2)
 /* floor(log10) of a double's magnitude, by bisection over power_of_ten_double's table, 1e-30 to
    1e30 at 0x12614; called by nothing */
 
-undefined4 double_decimal_exponent(uint param_1,uint param_2)
+uint32_t double_decimal_exponent(uint param_1,uint param_2)
 
 {
   uint uVar1;
@@ -9833,7 +9835,7 @@ void system_init(void)
 /* the reset's path: services the watchdog, sets the QSM and GPT up, runs system_init and starts the
    kernel with trap #6 */
 
-void primary_start(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void primary_start(uint32_t param_1,uint32_t param_2,uint32_t param_3)
 
 {
   exception_hook_reset();
@@ -9982,7 +9984,7 @@ int pps_interrupt_stop(void)
 
 /* waits up to 1200 ticks on pps_exchange for the next 1PPS and returns its time and date */
 
-int pps_wait_time(undefined4 *param_1,undefined4 *param_2,int param_3)
+int pps_wait_time(uint32_t *param_1,uint32_t *param_2,int param_3)
 
 {
   int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
@@ -9994,10 +9996,10 @@ int pps_wait_time(undefined4 *param_1,undefined4 *param_2,int param_3)
      iVar1 != 0)) {
     return iVar1;
   }
-  if (param_1 != (undefined4 *)0x0) {
+  if (param_1 != (uint32_t *)0x0) {
     *param_1 = pps_message.gps_time;
   }
-  if (param_2 != (undefined4 *)0x0) {
+  if (param_2 != (uint32_t *)0x0) {
     *param_2 = pps_message.gps_date;
   }
   return 0;
@@ -10201,15 +10203,15 @@ __regcall void stack_fill(void *task /* a0 */)
   uint uVar1;
   int extraout_A0;
   void *pvVar3;
-  undefined2 *puVar4;
+  uint16_t *puVar4;
   ushort uVar2;
   
-  *(undefined4 *)((int)task + 0x8a) = *(undefined4 *)((int)task + 0x3a);
+  *(uint32_t *)((int)task + 0x8a) = *(uint32_t *)((int)task + 0x3a);
   *(char **)((int)task + 0x8e) = *(char **)((int)task + 0x36);
   pvVar3 = region_find_segment(task,*(char **)((int)task + 0x36));
   if (pvVar3 != (void *)0x0) {
-    puVar4 = (undefined2 *)((int)pvVar3 + 0x12);
-    *(undefined2 **)(extraout_A0 + 0x92) = puVar4;
+    puVar4 = (uint16_t *)((int)pvVar3 + 0x12);
+    *(uint16_t **)(extraout_A0 + 0x92) = puVar4;
     uVar1 = (*(int *)(extraout_A0 + 0x8e) - (int)puVar4 >> 1) - 2;
     if (-1 < (int)uVar1) {
       do {
@@ -10219,7 +10221,7 @@ __regcall void stack_fill(void *task /* a0 */)
         puVar4 = puVar4 + 1;
       } while (uVar2 != 0xffff);
     }
-    puVar4 = (undefined2 *)(*(int *)(extraout_A0 + 0x8e) + 4);
+    puVar4 = (uint16_t *)(*(int *)(extraout_A0 + 0x8e) + 4);
     uVar1 = (*(int *)(extraout_A0 + 0x8a) - (int)puVar4 >> 1) - 2;
     if (-1 < (int)uVar1) {
       do {
@@ -10510,7 +10512,7 @@ float float_absolute_on_stack(float f)
 
 /* a double's magnitude; called by nothing */
 
-ulonglong double_abs(undefined4 param_1,undefined4 param_2)
+ulonglong double_abs(uint32_t param_1,uint32_t param_2)
 
 {
   return CONCAT44(param_1,param_2) & 0x7fffffffffffffff;
@@ -10534,10 +10536,10 @@ uint rotate_left(uint param_1,byte param_2)
 /* Not a C function: an exception handler, entered by the processor through the primary table's
    vector 39 (trap_7), not called; returns with rte. */
 
-__exception undefined2 primary_trap_7(void)
+__exception uint16_t primary_trap_7(void)
 
 {
-  undefined2 in_stack_00000000 = *(undefined2 *)((char *)__builtin_frame_address(0) + 4);
+  uint16_t in_stack_00000000 = *(uint16_t *)((char *)__builtin_frame_address(0) + 4);
   
   return in_stack_00000000;
 }
@@ -10820,7 +10822,7 @@ __regcall void clock_record_advance(clock_record *record /* a6 */)
   byte bVar5;
   short sVar6;
   ushort uVar7;
-  undefined2 uVar8;
+  uint16_t uVar8;
   undefined3 uVar9;
   time_of_day tVar10;
   uint32_t extraout_D0;
@@ -10858,7 +10860,7 @@ __regcall void clock_record_advance(clock_record *record /* a6 */)
         uVar11 = CONCAT31(uVar9,bVar5);
         if (record->month_days[(short)((ushort)(uVar2 >> 8) & 0xff) + -1] < bVar5) {
           sVar6 = (short)CONCAT31(uVar9,1) + 0x100;
-          uVar8 = (undefined2)(uVar2 >> 0x10);
+          uVar8 = (uint16_t)(uVar2 >> 0x10);
           uVar11 = CONCAT22(uVar8,sVar6);
           if (sVar6 == 0xd01) {
             clock_set_leap_year((char *)(record->month_days + 1),CONCAT22(uVar8,0x101) + 0x10000);
@@ -10997,7 +10999,7 @@ __regcall void clock_record_advance_utc(clock_record *record /* a6 */)
   byte bVar5;
   short sVar6;
   ushort uVar7;
-  undefined2 uVar8;
+  uint16_t uVar8;
   undefined3 uVar9;
   time_of_day tVar10;
   uint32_t extraout_D0;
@@ -11020,7 +11022,7 @@ __regcall void clock_record_advance_utc(clock_record *record /* a6 */)
       uVar11 = CONCAT31(uVar9,bVar5);
       if (record->gps_month_days[(short)((ushort)(uVar2 >> 8) & 0xff) + -1] < bVar5) {
         sVar6 = (short)CONCAT31(uVar9,1) + 0x100;
-        uVar8 = (undefined2)(uVar2 >> 0x10);
+        uVar8 = (uint16_t)(uVar2 >> 0x10);
         uVar11 = CONCAT22(uVar8,sVar6);
         if (sVar6 == 0xd01) {
           clock_set_leap_year((char *)(record->gps_month_days + 1),CONCAT22(uVar8,0x101) + 0x10000);
@@ -11717,7 +11719,7 @@ uint8_t time_valid(void)
 /* sets clock.gps_utc_offset, from D1, and clock.gps_utc_offset_valid; 0x46e70 computes it from the
    engine's GPS and UTC times */
 
-void set_gps_utc_offset(undefined2 param_1)
+void set_gps_utc_offset(uint16_t param_1)
 
 {
   int16_t extraout_D1w;
@@ -12070,12 +12072,12 @@ void timecode_schedule(uint param_1)
 /* Not a C function: an exception handler, entered by the processor through the primary table's
    vector 86 (user_86), not called; returns with rte. */
 
-__exception undefined8 primary_user_86(void)
+__exception uint64_t primary_user_86(void)
 
 {
   uint16_t uVar1;
-  undefined4 in_D0;
-  undefined4 in_D1;
+  uint32_t in_D0;
+  uint32_t in_D1;
   
   if (timecode_compare_wraps == 0) {
     if (tcode_length != 0) {
@@ -12172,12 +12174,12 @@ void es_schedule(uint param_1)
 /* Not a C function: an exception handler, entered by the processor through the primary table's
    vector 87 (user_87), not called; returns with rte. */
 
-__exception undefined8 primary_user_87(void)
+__exception uint64_t primary_user_87(void)
 
 {
   uint16_t uVar1;
-  undefined4 in_D0;
-  undefined4 in_D1;
+  uint32_t in_D0;
+  uint32_t in_D1;
   
   if (es_compare_wraps == 0) {
     if (es_length != 0) {
@@ -12239,7 +12241,7 @@ void float_exception_report(uint32_t code)
   uint8_t *puVar4;
   uint8_t *puVar5;
   uint8_t *puVar6;
-  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
+  uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
   uint in_stack_00000008 = *(uint *)((char *)__builtin_frame_address(0) + 12);
   
   float_exception_message[0] = 0;
@@ -12339,18 +12341,18 @@ __exception void primary_reset(void)
   uint uVar3;
   uint uVar4;
   short sVar5;
-  undefined4 *puVar6;
+  uint32_t *puVar6;
   preserved_region_fields *ppVar8;
   preserved_region_fields *ppVar9;
   uint *puVar10;
   uint16_t *puVar12;
-  undefined2 *puVar13;
-  undefined1 *puVar14;
-  undefined2 *puVar16;
-  undefined4 local_4;
-  undefined4 *puVar7;
+  uint16_t *puVar13;
+  uint8_t *puVar14;
+  uint16_t *puVar16;
+  uint32_t local_4;
+  uint32_t *puVar7;
   uint *puVar11;
-  undefined1 *puVar15;
+  uint8_t *puVar15;
   
   sim.sypcr = 0xcc;
   sim.cspar0 = 0x2bff;
@@ -12390,14 +12392,14 @@ __exception void primary_reset(void)
   sim.ddrf = 0xf7;
   duart.start_sopbc = 0xff;
   duart.stop_ropbc = 0;
-  puVar6 = (undefined4 *)&DAT_001009ec;
+  puVar6 = (uint32_t *)&DAT_001009ec;
   do {
     puVar7 = puVar6 + 1;
     *puVar6 = 0;
     puVar6 = puVar7;
-  } while (puVar7 < (undefined4 *)0x110000);
+  } while (puVar7 < (uint32_t *)0x110000);
   local_4 = 0xaaaaaaaa;
-  if (&local_4 != (undefined4 *)&stack0x00000000) {
+  if (&local_4 != (uint32_t *)&stack0x00000000) {
     local_4 = 0x55555555;
     local_4 = 0xaaaaaaaa;
     local_4 = 0x5d555555;
@@ -12412,11 +12414,11 @@ __exception void primary_reset(void)
   selftest.ram_data_bits = 0;
   selftest.ram_address_lines = 0;
   ppVar8 = &preserved_region;
-  puVar13 = (undefined2 *)register0x0000003c;
+  puVar13 = (uint16_t *)register0x0000003c;
   while( true ) {
     uVar3 = 0;
     sVar5 = 0x17;
-    puVar14 = (undefined1 *)puVar13;
+    puVar14 = (uint8_t *)puVar13;
     do {
       ppVar9 = ppVar8;
       puVar15 = puVar14 + -2;
@@ -12425,7 +12427,7 @@ __exception void primary_reset(void)
       ppVar8 = (preserved_region_fields *)&ppVar9->restore;
       puVar14 = puVar14 + -2;
     } while (sVar5 != -1);
-    *(undefined4 *)(ppVar9[-1].values + 0x18) = 0xaaaaaaaa;
+    *(uint32_t *)(ppVar9[-1].values + 0x18) = 0xaaaaaaaa;
     ppVar9[-0xffffffff00000001].values[0x14] = 0xaa;
     ppVar9[-0xffffffff00000001].values[0x15] = 0xaa;
     ppVar9[-0xffffffff00000001].values[0x16] = 0xaa;
@@ -12454,9 +12456,9 @@ __exception void primary_reset(void)
     ppVar9[-0xffffffff00000001].pll.loop_running = 0xaa;
     ppVar9[-0xffffffff00000001].pll.sync_requested = 0xaa;
     ppVar9[-0xffffffff00000001].pll.field_3d5 = 0xaa;
-    *(undefined4 *)((int)&ppVar9[-1].pll.reference_uptime + 2) = 0xaaaaaaaa;
-    *(undefined4 *)((int)&ppVar9[-1].pll.holdover_duration + 2) = 0xaaaaaaaa;
-    *(undefined4 *)&ppVar9[-1].pll.led_tmh_valid = 0xaaaaaaaa;
+    *(uint32_t *)((int)&ppVar9[-1].pll.reference_uptime + 2) = 0xaaaaaaaa;
+    *(uint32_t *)((int)&ppVar9[-1].pll.holdover_duration + 2) = 0xaaaaaaaa;
+    *(uint32_t *)&ppVar9[-1].pll.led_tmh_valid = 0xaaaaaaaa;
     puVar10 = (uint *)((int)&ppVar9[-1].pll.holdover_start_date + 2);
     *puVar10 = 0xaaaaaaaa;
     sVar5 = 0xb;
@@ -12487,11 +12489,11 @@ __exception void primary_reset(void)
       puVar10 = puVar11;
     } while (sVar5 != -1);
     sVar5 = 0x17;
-    puVar13 = (undefined2 *)puVar15;
+    puVar13 = (uint16_t *)puVar15;
     do {
       puVar16 = puVar13;
       puVar10 = puVar11;
-      *(undefined2 *)((int)puVar10 + -2) = *puVar16;
+      *(uint16_t *)((int)puVar10 + -2) = *puVar16;
       sVar5 = sVar5 + -1;
       puVar11 = (uint *)((int)puVar10 + -2);
       puVar13 = puVar16 + 1;
@@ -12534,13 +12536,13 @@ LAB_000148e6:
     duart.stop_ropbc = 0x20;
     selftest.lamp_mask = selftest.lamp_mask | 0x20;
   }
-  *(undefined4 *)(puVar16 + -1) = 0x14904;
+  *(uint32_t *)(puVar16 + -1) = 0x14904;
   duart_early_init();
   if (selftest.uart != 0) {
     duart.stop_ropbc = 0x40;
     selftest.lamp_mask = selftest.lamp_mask | 0x40;
   }
-  *(undefined4 *)(puVar16 + -1) = 0x14922;
+  *(uint32_t *)(puVar16 + -1) = 0x14922;
   primary_unpack_records();
   DAT_0010fffa = 0;
   DAT_0010fff6 = 0;
@@ -12942,21 +12944,21 @@ __exception void primary_trap_12(void)
   uint uVar4;
   uint uVar5;
   short sVar6;
-  undefined4 *puVar7;
+  uint32_t *puVar7;
   preserved_region_fields *ppVar9;
   preserved_region_fields *ppVar10;
   uint *puVar11;
   char *pcVar13;
   uint16_t *puVar14;
-  undefined2 *puVar15;
-  undefined1 *puVar16;
-  undefined2 *puVar18;
-  undefined4 *puVar8;
+  uint16_t *puVar15;
+  uint8_t *puVar16;
+  uint16_t *puVar18;
+  uint32_t *puVar8;
   uint *puVar12;
-  undefined1 *puVar17;
+  uint8_t *puVar17;
   
   shutdown();
-  puVar15 = (undefined2 *)primary_vectors;
+  puVar15 = (uint16_t *)primary_vectors;
   reset();
   sim.sypcr = 0xcc;
   sim.cspar0 = 0x2bff;
@@ -12996,29 +12998,29 @@ __exception void primary_trap_12(void)
   sim.ddrf = 0xf7;
   duart.start_sopbc = 0xff;
   duart.stop_ropbc = 0;
-  puVar7 = (undefined4 *)&DAT_001009ec;
+  puVar7 = (uint32_t *)&DAT_001009ec;
   do {
     puVar8 = puVar7 + 1;
     *puVar7 = 0;
     puVar7 = puVar8;
-  } while (puVar8 < (undefined4 *)0x110000);
+  } while (puVar8 < (uint32_t *)0x110000);
   selftest.lamp_mask = 0;
   selftest.cpu = 0;
-  *(undefined4 *)((int)puVar15 + -4) = 0xaaaaaaaa;
-  if (((undefined2 *)((int)puVar15 + -4) != puVar15) && (*(int *)((int)puVar15 + -4) == -0x55555556)
+  *(uint32_t *)((int)puVar15 + -4) = 0xaaaaaaaa;
+  if (((uint16_t *)((int)puVar15 + -4) != puVar15) && (*(int *)((int)puVar15 + -4) == -0x55555556)
      ) {
-    *(undefined4 *)((int)puVar15 + -4) = 0x55555555;
-    *(undefined4 *)((int)puVar15 + -4) = *(undefined4 *)((int)puVar15 + -4);
+    *(uint32_t *)((int)puVar15 + -4) = 0x55555555;
+    *(uint32_t *)((int)puVar15 + -4) = *(uint32_t *)((int)puVar15 + -4);
     if ((*(int *)((int)puVar15 + -4) == 0x55555555) &&
-       (*(undefined4 *)((int)puVar15 + -4) = 0xaaaaaaaa, *(int *)((int)puVar15 + -4) == -0x55555556)
+       (*(uint32_t *)((int)puVar15 + -4) = 0xaaaaaaaa, *(int *)((int)puVar15 + -4) == -0x55555556)
        ) {
-      *(undefined4 *)((int)puVar15 + -4) = 0x55555555;
+      *(uint32_t *)((int)puVar15 + -4) = 0x55555555;
       bVar2 = *(byte *)((int)puVar15 + -4);
       *(byte *)((int)puVar15 + -4) = bVar2 | 8;
       if (((bVar2 & 8) == 0) &&
          (bVar2 = *(byte *)((int)puVar15 + -4), *(byte *)((int)puVar15 + -4) = bVar2 & 0xf7,
          (bVar2 & 8) != 0)) {
-        *(undefined4 *)((int)puVar15 + -4) = 0x55555555;
+        *(uint32_t *)((int)puVar15 + -4) = 0x55555555;
         pcVar13 = (char *)((int)puVar15 + -3);
         *pcVar13 = *pcVar13 + *(char *)((int)puVar15 + -4);
         bcdAdjust(*pcVar13);
@@ -13037,7 +13039,7 @@ __exception void primary_trap_12(void)
   while( true ) {
     uVar4 = 0;
     sVar6 = 0x17;
-    puVar16 = (undefined1 *)puVar15;
+    puVar16 = (uint8_t *)puVar15;
     do {
       ppVar10 = ppVar9;
       puVar17 = puVar16 + -2;
@@ -13046,7 +13048,7 @@ __exception void primary_trap_12(void)
       ppVar9 = (preserved_region_fields *)&ppVar10->restore;
       puVar16 = puVar16 + -2;
     } while (sVar6 != -1);
-    *(undefined4 *)(ppVar10[-1].values + 0x18) = 0xaaaaaaaa;
+    *(uint32_t *)(ppVar10[-1].values + 0x18) = 0xaaaaaaaa;
     ppVar10[-0xffffffff00000001].values[0x14] = 0xaa;
     ppVar10[-0xffffffff00000001].values[0x15] = 0xaa;
     ppVar10[-0xffffffff00000001].values[0x16] = 0xaa;
@@ -13075,9 +13077,9 @@ __exception void primary_trap_12(void)
     ppVar10[-0xffffffff00000001].pll.loop_running = 0xaa;
     ppVar10[-0xffffffff00000001].pll.sync_requested = 0xaa;
     ppVar10[-0xffffffff00000001].pll.field_3d5 = 0xaa;
-    *(undefined4 *)((int)&ppVar10[-1].pll.reference_uptime + 2) = 0xaaaaaaaa;
-    *(undefined4 *)((int)&ppVar10[-1].pll.holdover_duration + 2) = 0xaaaaaaaa;
-    *(undefined4 *)&ppVar10[-1].pll.led_tmh_valid = 0xaaaaaaaa;
+    *(uint32_t *)((int)&ppVar10[-1].pll.reference_uptime + 2) = 0xaaaaaaaa;
+    *(uint32_t *)((int)&ppVar10[-1].pll.holdover_duration + 2) = 0xaaaaaaaa;
+    *(uint32_t *)&ppVar10[-1].pll.led_tmh_valid = 0xaaaaaaaa;
     puVar11 = (uint *)((int)&ppVar10[-1].pll.holdover_start_date + 2);
     *puVar11 = 0xaaaaaaaa;
     sVar6 = 0xb;
@@ -13108,11 +13110,11 @@ __exception void primary_trap_12(void)
       puVar11 = puVar12;
     } while (sVar6 != -1);
     sVar6 = 0x17;
-    puVar15 = (undefined2 *)puVar17;
+    puVar15 = (uint16_t *)puVar17;
     do {
       puVar18 = puVar15;
       puVar11 = puVar12;
-      *(undefined2 *)((int)puVar11 + -2) = *puVar18;
+      *(uint16_t *)((int)puVar11 + -2) = *puVar18;
       sVar6 = sVar6 + -1;
       puVar12 = (uint *)((int)puVar11 + -2);
       puVar15 = puVar18 + 1;
@@ -13155,13 +13157,13 @@ LAB_000148e6:
     duart.stop_ropbc = 0x20;
     selftest.lamp_mask = selftest.lamp_mask | 0x20;
   }
-  *(undefined4 *)(puVar18 + -1) = 0x14904;
+  *(uint32_t *)(puVar18 + -1) = 0x14904;
   duart_early_init();
   if (selftest.uart != 0) {
     duart.stop_ropbc = 0x40;
     selftest.lamp_mask = selftest.lamp_mask | 0x40;
   }
-  *(undefined4 *)(puVar18 + -1) = 0x14922;
+  *(uint32_t *)(puVar18 + -1) = 0x14922;
   primary_unpack_records();
   DAT_0010fffa = 0;
   DAT_0010fff6 = 0;
@@ -13232,7 +13234,7 @@ void program_end_report(uint value,uint32_t return_address)
   uint8_t *puVar4;
   uint8_t *puVar5;
   uint8_t *puVar6;
-  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
+  uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
   
   puVar5 = program_end_message;
   program_end_message[0] = 0;
@@ -13296,45 +13298,45 @@ __asm__(".set primary_trap_5, kernel_return_from_interrupt");
    psos.md */
 
 /* out D7 char error */
-__exception void kernel_dispatch_service(undefined2 param_1)
+__exception void kernel_dispatch_service(uint16_t param_1)
 
 {
   int iVar1;
-  undefined2 *puVar2;
-  undefined1 *puVar3;
+  uint16_t *puVar2;
+  uint8_t *puVar3;
   code *pcVar4;
   byte bVar5;
   void *pvVar6;
-  undefined4 in_D0;
+  uint32_t in_D0;
   uint uVar7;
   ushort uVar8;
-  undefined4 in_D1;
-  undefined4 uVar9;
-  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 uVar10;
-  undefined4 in_A0;
-  undefined4 extraout_A0;
-  undefined4 extraout_A0_00;
-  undefined2 *puVar12;
-  undefined4 in_A1;
-  undefined4 extraout_A1;
-  undefined4 extraout_A1_00;
-  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A6 = (undefined4)*(void **)__builtin_frame_address(0);
-  undefined2 *puVar13;
-  undefined2 *puVar14;
-  undefined2 *in_USP;
-  undefined8 uVar15;
+  uint32_t in_D1;
+  uint32_t uVar9;
+  uint32_t unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t uVar10;
+  uint32_t in_A0;
+  uint32_t extraout_A0;
+  uint32_t extraout_A0_00;
+  uint16_t *puVar12;
+  uint32_t in_A1;
+  uint32_t extraout_A1;
+  uint32_t extraout_A1_00;
+  uint32_t unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A6 = (uint32_t)*(void **)__builtin_frame_address(0);
+  uint16_t *puVar13;
+  uint16_t *puVar14;
+  uint16_t *in_USP;
+  uint64_t uVar15;
   ushort in_stack_00000000 = *(ushort *)((char *)__builtin_frame_address(0) + 4);
-  undefined4 in_stack_00000002 = *(undefined4 *)((char *)__builtin_frame_address(0) + 6);
+  uint32_t in_stack_00000002 = *(uint32_t *)((char *)__builtin_frame_address(0) + 6);
   short sVar11;
   
   pvVar6 = psos_config.data_area;
@@ -13358,7 +13360,7 @@ __exception void kernel_dispatch_service(undefined2 param_1)
     *(short *)((int)pvVar6 + 0x24) = *(short *)((int)pvVar6 + 0x24) + -1;
     return;
   }
-  while (uVar9 = (undefined4)uVar15, *(int *)((int)pvVar6 + 0x6c) != 0) {
+  while (uVar9 = (uint32_t)uVar15, *(int *)((int)pvVar6 + 0x6c) != 0) {
     uVar15 = kernel_process_ticks();
     in_A0 = extraout_A0_00;
     in_A1 = extraout_A1_00;
@@ -13366,58 +13368,58 @@ __exception void kernel_dispatch_service(undefined2 param_1)
   bVar5 = *(byte *)((int)pvVar6 + 0x8b);
   *(byte *)((int)pvVar6 + 0x8b) = bVar5 | 0x80;
   if ((bVar5 & 0x80) == 0) {
-    uVar9 = CONCAT22((short)((ulonglong)uVar15 >> 0x10),*(undefined2 *)(iVar1 + 0x54));
+    uVar9 = CONCAT22((short)((ulonglong)uVar15 >> 0x10),*(uint16_t *)(iVar1 + 0x54));
   }
   if ((iVar1 != *(int *)((int)pvVar6 + 4)) &&
      (((*(byte *)(iVar1 + 0x11) & 0x80) == 0 || (*(char *)(iVar1 + 0x13) != 0)))) {
     *(int *)(iVar1 + 0x4e) = (int)((ulonglong)uVar15 >> 0x20);
-    *(undefined4 *)(iVar1 + 0x52) = uVar9;
-    *(undefined4 *)(iVar1 + 0x56) = unaff_D2;
-    *(undefined4 *)(iVar1 + 0x5a) = unaff_D3;
-    *(undefined4 *)(iVar1 + 0x5e) = unaff_D4;
-    *(undefined4 *)(iVar1 + 0x62) = unaff_D5;
-    *(undefined4 *)(iVar1 + 0x66) = unaff_D6;
-    *(undefined4 *)(iVar1 + 0x6a) = uVar10;
-    *(undefined4 *)(iVar1 + 0x6e) = in_A0;
-    *(undefined4 *)(iVar1 + 0x72) = in_A1;
-    *(undefined4 *)(iVar1 + 0x76) = unaff_A2;
-    *(undefined4 *)(iVar1 + 0x7a) = unaff_A3;
-    *(undefined4 *)(iVar1 + 0x7e) = unaff_A4;
-    *(undefined4 *)(iVar1 + 0x4a) = unaff_A5;
-    *(undefined4 *)(iVar1 + 0x46) = unaff_A6;
+    *(uint32_t *)(iVar1 + 0x52) = uVar9;
+    *(uint32_t *)(iVar1 + 0x56) = unaff_D2;
+    *(uint32_t *)(iVar1 + 0x5a) = unaff_D3;
+    *(uint32_t *)(iVar1 + 0x5e) = unaff_D4;
+    *(uint32_t *)(iVar1 + 0x62) = unaff_D5;
+    *(uint32_t *)(iVar1 + 0x66) = unaff_D6;
+    *(uint32_t *)(iVar1 + 0x6a) = uVar10;
+    *(uint32_t *)(iVar1 + 0x6e) = in_A0;
+    *(uint32_t *)(iVar1 + 0x72) = in_A1;
+    *(uint32_t *)(iVar1 + 0x76) = unaff_A2;
+    *(uint32_t *)(iVar1 + 0x7a) = unaff_A3;
+    *(uint32_t *)(iVar1 + 0x7e) = unaff_A4;
+    *(uint32_t *)(iVar1 + 0x4a) = unaff_A5;
+    *(uint32_t *)(iVar1 + 0x46) = unaff_A6;
     uVar7 = *(uint *)(iVar1 + 0x42) & 0xffff1000;
     uVar8 = (ushort)uVar7;
     *(uint *)(iVar1 + 0x42) = CONCAT22((short)(uVar7 >> 0x10),in_stack_00000000 | uVar8);
-    *(undefined4 *)(iVar1 + 0x3e) = in_stack_00000002;
-    puVar13 = (undefined2 *)&stack0x00000008;
-    *(undefined2 *)(iVar1 + 0x34) = param_1;
-    *(undefined2 **)(iVar1 + 0x3a) = in_USP;
-    puVar3 = *(undefined1 **)((int)pvVar6 + 0x20);
+    *(uint32_t *)(iVar1 + 0x3e) = in_stack_00000002;
+    puVar13 = (uint16_t *)&stack0x00000008;
+    *(uint16_t *)(iVar1 + 0x34) = param_1;
+    *(uint16_t **)(iVar1 + 0x3a) = in_USP;
+    puVar3 = *(uint8_t **)((int)pvVar6 + 0x20);
     if ((in_stack_00000000 & 0x1000) == 0 && uVar8 == 0) {
-      for (; (undefined2 *)puVar3 != puVar13; puVar13 = puVar13 + 1) {
+      for (; (uint16_t *)puVar3 != puVar13; puVar13 = puVar13 + 1) {
         in_USP = in_USP + -1;
         *in_USP = *puVar13;
       }
-      *(undefined2 **)(iVar1 + 0x36) = in_USP;
+      *(uint16_t **)(iVar1 + 0x36) = in_USP;
     }
     else {
-      *(undefined1 **)(iVar1 + 0x36) = &stack0x00000008;
-      puVar13 = (undefined2 *)puVar3;
+      *(uint8_t **)(iVar1 + 0x36) = &stack0x00000008;
+      puVar13 = (uint16_t *)puVar3;
     }
     iVar1 = *(int *)((int)pvVar6 + 4);
     pcVar4 = *(code **)((int)pvVar6 + 0xb4);
     if (pcVar4 != (code *)0x0) {
-      *(undefined4 *)((int)puVar13 + -4) = 0x1602e;
+      *(uint32_t *)((int)puVar13 + -4) = 0x1602e;
       (*pcVar4)();
     }
     *(int *)pvVar6 = iVar1;
-    puVar12 = *(undefined2 **)(iVar1 + 0x36);
-    puVar2 = *(undefined2 **)(iVar1 + 0x3a);
+    puVar12 = *(uint16_t **)(iVar1 + 0x36);
+    puVar2 = *(uint16_t **)(iVar1 + 0x3a);
     uVar8 = *(ushort *)(iVar1 + 0x44);
     if ((uVar8 & 0x1000) == 0) {
       for (; puVar2 != puVar12; puVar12 = puVar12 + 1) {
-        puVar14 = (undefined2 *)((int)puVar13 + -2);
-        puVar13 = (undefined2 *)((int)puVar13 + -2);
+        puVar14 = (uint16_t *)((int)puVar13 + -2);
+        puVar13 = (uint16_t *)((int)puVar13 + -2);
         *puVar14 = *puVar12;
       }
     }
@@ -13425,12 +13427,12 @@ __exception void kernel_dispatch_service(undefined2 param_1)
       uVar8 = uVar8 & 0xefff;
       puVar13 = puVar12;
     }
-    puVar13[-1] = *(undefined2 *)(iVar1 + 0x34);
-    *(undefined4 *)(puVar13 + -3) = *(undefined4 *)(iVar1 + 0x3e);
+    puVar13[-1] = *(uint16_t *)(iVar1 + 0x34);
+    *(uint32_t *)(puVar13 + -3) = *(uint32_t *)(iVar1 + 0x3e);
     puVar13[-4] = uVar8;
-    *(undefined4 *)(puVar13 + -6) = *(undefined4 *)(iVar1 + 0x46);
-    *(undefined4 *)(puVar13 + -8) = *(undefined4 *)(iVar1 + 0x4a);
-    *(undefined4 *)(puVar13 + -10) = *(undefined4 *)(iVar1 + 0x66);
+    *(uint32_t *)(puVar13 + -6) = *(uint32_t *)(iVar1 + 0x46);
+    *(uint32_t *)(puVar13 + -8) = *(uint32_t *)(iVar1 + 0x4a);
+    *(uint32_t *)(puVar13 + -10) = *(uint32_t *)(iVar1 + 0x66);
     kernel_switch_task();
     return;
   }
@@ -13534,7 +13536,7 @@ __exception void kernel_dispatch_io(char function /* d7 */,int device /* d0 */)
 {
   int *piVar1;
   ushort uVar2;
-  undefined1 unaff_0000001e;
+  uint8_t unaff_0000001e;
   
   uVar2 = (ushort)device;
   if (CONCAT11(unaff_0000001e,function) < 6) {
@@ -13666,44 +13668,44 @@ __asm__(
 __naked void kernel_switch_task(void)
 
 {
-  undefined2 *puVar1;
-  undefined1 *puVar2;
+  uint16_t *puVar1;
+  uint8_t *puVar2;
   int iVar3;
   code *pcVar4;
   byte bVar5;
-  undefined4 in_D0;
+  uint32_t in_D0;
   uint uVar6;
   ushort uVar7;
-  undefined4 in_D1;
-  undefined4 uVar8;
-  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 in_A0;
-  undefined4 extraout_A0;
-  undefined2 *puVar9;
-  undefined4 in_A1;
-  undefined4 extraout_A1;
-  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  uint32_t in_D1;
+  uint32_t uVar8;
+  uint32_t unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t in_A0;
+  uint32_t extraout_A0;
+  uint16_t *puVar9;
+  uint32_t in_A1;
+  uint32_t extraout_A1;
+  uint32_t unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
-  undefined2 *puVar10;
-  undefined2 *puVar11;
-  undefined2 *in_USP;
-  undefined8 uVar12;
-  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
-  undefined4 in_stack_00000004 = *(undefined4 *)((char *)__builtin_frame_address(0) + 8);
-  undefined4 in_stack_00000008 = *(undefined4 *)((char *)__builtin_frame_address(0) + 12);
+  uint16_t *puVar10;
+  uint16_t *puVar11;
+  uint16_t *in_USP;
+  uint64_t uVar12;
+  uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
+  uint32_t in_stack_00000004 = *(uint32_t *)((char *)__builtin_frame_address(0) + 8);
+  uint32_t in_stack_00000008 = *(uint32_t *)((char *)__builtin_frame_address(0) + 12);
   ushort in_stack_0000000c = *(ushort *)((char *)__builtin_frame_address(0) + 16);
-  undefined4 in_stack_0000000e = *(undefined4 *)((char *)__builtin_frame_address(0) + 18);
-  undefined2 in_stack_00000012 = *(undefined2 *)((char *)__builtin_frame_address(0) + 22);
+  uint32_t in_stack_0000000e = *(uint32_t *)((char *)__builtin_frame_address(0) + 18);
+  uint16_t in_stack_00000012 = *(uint16_t *)((char *)__builtin_frame_address(0) + 22);
   
   uVar12 = CONCAT44(in_D0,in_D1);
-  while (uVar8 = (undefined4)uVar12, unaff_A6[0x1b] != 0) {
+  while (uVar8 = (uint32_t)uVar12, unaff_A6[0x1b] != 0) {
     uVar12 = kernel_process_ticks();
     in_A0 = extraout_A0;
     in_A1 = extraout_A1;
@@ -13711,58 +13713,58 @@ __naked void kernel_switch_task(void)
   bVar5 = *(byte *)((int)unaff_A6 + 0x8b);
   *(byte *)((int)unaff_A6 + 0x8b) = bVar5 | 0x80;
   if ((bVar5 & 0x80) == 0) {
-    uVar8 = CONCAT22((short)((ulonglong)uVar12 >> 0x10),*(undefined2 *)(unaff_A5 + 0x54));
+    uVar8 = CONCAT22((short)((ulonglong)uVar12 >> 0x10),*(uint16_t *)(unaff_A5 + 0x54));
   }
   if ((unaff_A5 != unaff_A6[1]) &&
      (((*(byte *)(unaff_A5 + 0x11) & 0x80) == 0 || (*(char *)(unaff_A5 + 0x13) != 0)))) {
     *(int *)(unaff_A5 + 0x4e) = (int)((ulonglong)uVar12 >> 0x20);
-    *(undefined4 *)(unaff_A5 + 0x52) = uVar8;
-    *(undefined4 *)(unaff_A5 + 0x56) = unaff_D2;
-    *(undefined4 *)(unaff_A5 + 0x5a) = unaff_D3;
-    *(undefined4 *)(unaff_A5 + 0x5e) = unaff_D4;
-    *(undefined4 *)(unaff_A5 + 0x62) = unaff_D5;
-    *(undefined4 *)(unaff_A5 + 0x66) = in_stack_00000000;
-    *(undefined4 *)(unaff_A5 + 0x6a) = unaff_D7;
-    *(undefined4 *)(unaff_A5 + 0x6e) = in_A0;
-    *(undefined4 *)(unaff_A5 + 0x72) = in_A1;
-    *(undefined4 *)(unaff_A5 + 0x76) = unaff_A2;
-    *(undefined4 *)(unaff_A5 + 0x7a) = unaff_A3;
-    *(undefined4 *)(unaff_A5 + 0x7e) = unaff_A4;
-    *(undefined4 *)(unaff_A5 + 0x4a) = in_stack_00000004;
-    *(undefined4 *)(unaff_A5 + 0x46) = in_stack_00000008;
+    *(uint32_t *)(unaff_A5 + 0x52) = uVar8;
+    *(uint32_t *)(unaff_A5 + 0x56) = unaff_D2;
+    *(uint32_t *)(unaff_A5 + 0x5a) = unaff_D3;
+    *(uint32_t *)(unaff_A5 + 0x5e) = unaff_D4;
+    *(uint32_t *)(unaff_A5 + 0x62) = unaff_D5;
+    *(uint32_t *)(unaff_A5 + 0x66) = in_stack_00000000;
+    *(uint32_t *)(unaff_A5 + 0x6a) = unaff_D7;
+    *(uint32_t *)(unaff_A5 + 0x6e) = in_A0;
+    *(uint32_t *)(unaff_A5 + 0x72) = in_A1;
+    *(uint32_t *)(unaff_A5 + 0x76) = unaff_A2;
+    *(uint32_t *)(unaff_A5 + 0x7a) = unaff_A3;
+    *(uint32_t *)(unaff_A5 + 0x7e) = unaff_A4;
+    *(uint32_t *)(unaff_A5 + 0x4a) = in_stack_00000004;
+    *(uint32_t *)(unaff_A5 + 0x46) = in_stack_00000008;
     uVar6 = *(uint *)(unaff_A5 + 0x42) & 0xffff1000;
     uVar7 = (ushort)uVar6;
     *(uint *)(unaff_A5 + 0x42) = CONCAT22((short)(uVar6 >> 0x10),in_stack_0000000c | uVar7);
-    *(undefined4 *)(unaff_A5 + 0x3e) = in_stack_0000000e;
-    puVar10 = (undefined2 *)&stack0x00000014;
-    *(undefined2 *)(unaff_A5 + 0x34) = in_stack_00000012;
-    *(undefined2 **)(unaff_A5 + 0x3a) = in_USP;
-    puVar2 = (undefined1 *)unaff_A6[8];
+    *(uint32_t *)(unaff_A5 + 0x3e) = in_stack_0000000e;
+    puVar10 = (uint16_t *)&stack0x00000014;
+    *(uint16_t *)(unaff_A5 + 0x34) = in_stack_00000012;
+    *(uint16_t **)(unaff_A5 + 0x3a) = in_USP;
+    puVar2 = (uint8_t *)unaff_A6[8];
     if ((in_stack_0000000c & 0x1000) == 0 && uVar7 == 0) {
-      for (; (undefined2 *)puVar2 != puVar10; puVar10 = puVar10 + 1) {
+      for (; (uint16_t *)puVar2 != puVar10; puVar10 = puVar10 + 1) {
         in_USP = in_USP + -1;
         *in_USP = *puVar10;
       }
-      *(undefined2 **)(unaff_A5 + 0x36) = in_USP;
+      *(uint16_t **)(unaff_A5 + 0x36) = in_USP;
     }
     else {
-      *(undefined1 **)(unaff_A5 + 0x36) = &stack0x00000014;
-      puVar10 = (undefined2 *)puVar2;
+      *(uint8_t **)(unaff_A5 + 0x36) = &stack0x00000014;
+      puVar10 = (uint16_t *)puVar2;
     }
     iVar3 = unaff_A6[1];
     pcVar4 = (code *)unaff_A6[0x2d];
     if (pcVar4 != (code *)0x0) {
-      *(undefined4 *)((int)puVar10 + -4) = 0x1602e;
+      *(uint32_t *)((int)puVar10 + -4) = 0x1602e;
       (*pcVar4)();
     }
     *unaff_A6 = iVar3;
-    puVar9 = *(undefined2 **)(iVar3 + 0x36);
-    puVar1 = *(undefined2 **)(iVar3 + 0x3a);
+    puVar9 = *(uint16_t **)(iVar3 + 0x36);
+    puVar1 = *(uint16_t **)(iVar3 + 0x3a);
     uVar7 = *(ushort *)(iVar3 + 0x44);
     if ((uVar7 & 0x1000) == 0) {
       for (; puVar1 != puVar9; puVar9 = puVar9 + 1) {
-        puVar11 = (undefined2 *)((int)puVar10 + -2);
-        puVar10 = (undefined2 *)((int)puVar10 + -2);
+        puVar11 = (uint16_t *)((int)puVar10 + -2);
+        puVar10 = (uint16_t *)((int)puVar10 + -2);
         *puVar11 = *puVar9;
       }
     }
@@ -13770,12 +13772,12 @@ __naked void kernel_switch_task(void)
       uVar7 = uVar7 & 0xefff;
       puVar10 = puVar9;
     }
-    puVar10[-1] = *(undefined2 *)(iVar3 + 0x34);
-    *(undefined4 *)(puVar10 + -3) = *(undefined4 *)(iVar3 + 0x3e);
+    puVar10[-1] = *(uint16_t *)(iVar3 + 0x34);
+    *(uint32_t *)(puVar10 + -3) = *(uint32_t *)(iVar3 + 0x3e);
     puVar10[-4] = uVar7;
-    *(undefined4 *)(puVar10 + -6) = *(undefined4 *)(iVar3 + 0x46);
-    *(undefined4 *)(puVar10 + -8) = *(undefined4 *)(iVar3 + 0x4a);
-    *(undefined4 *)(puVar10 + -10) = *(undefined4 *)(iVar3 + 0x66);
+    *(uint32_t *)(puVar10 + -6) = *(uint32_t *)(iVar3 + 0x46);
+    *(uint32_t *)(puVar10 + -8) = *(uint32_t *)(iVar3 + 0x4a);
+    *(uint32_t *)(puVar10 + -10) = *(uint32_t *)(iVar3 + 0x66);
     kernel_switch_task();
     return;
   }
@@ -13857,11 +13859,11 @@ LAB_00014cdc:
     piVar2 = *(int **)(unaff_A6 + 8);
     if (piVar2 == (int *)0x0) {
 LAB_00014d58:
-      *(undefined4 *)(unaff_A6 + 0x6c) = 0;
+      *(uint32_t *)(unaff_A6 + 0x6c) = 0;
       if (((((*(byte *)((int)unaff_A5 + 0x11) & 0xc0) == 0x40) &&
            (sVar5 = *(short *)((int)unaff_A5 + 0x1a), *(short *)((int)unaff_A5 + 0x1a) = sVar5 + -1,
            sVar5 == 0)) &&
-          (*(undefined2 *)((int)unaff_A5 + 0x1a) = 0, *(char *)((int)unaff_A5 + 0x13) == 0)) &&
+          (*(uint16_t *)((int)unaff_A5 + 0x1a) = 0, *(char *)((int)unaff_A5 + 0x13) == 0)) &&
          (*(byte *)(unaff_A5 + 4) <= *(byte *)(*unaff_A5 + 0x10))) {
         kernel_queue_remove();
         kernel_make_ready();
@@ -13871,14 +13873,14 @@ LAB_00014d58:
     uVar3 = *(uint *)((int)piVar2 + 0x4e);
     if (uVar3 == 0) {
       if ((*(byte *)((int)piVar2 + 0x13) & 0x70) != 0) {
-        *(undefined2 *)((int)piVar2 + 0x16) = 0;
+        *(uint16_t *)((int)piVar2 + 0x16) = 0;
         if ((*(byte *)((int)piVar2 + 0x13) & 0x60) != 0) {
           iVar1 = *piVar2;
           piVar4 = (int *)piVar2[1];
           *piVar4 = iVar1;
           *(int **)(iVar1 + 4) = piVar4;
         }
-        *(undefined1 *)((int)piVar2 + 0x6d) = 0x81;
+        *(uint8_t *)((int)piVar2 + 0x6d) = 0x81;
       }
       iVar1 = piVar2[2];
       *(int *)(unaff_A6 + 8) = iVar1;
@@ -13893,7 +13895,7 @@ LAB_00014d58:
       *(int *)((int)piVar2 + 0x4e) = iVar1;
       goto LAB_00014d58;
     }
-    *(undefined4 *)((int)piVar2 + 0x4e) = 0;
+    *(uint32_t *)((int)piVar2 + 0x4e) = 0;
     *(int *)(unaff_A6 + 0x6c) = -iVar1;
   } while( true );
 }
@@ -14031,7 +14033,7 @@ __regcall void kernel_create(void)
 {
   int iVar1;
   int iVar2;
-  undefined4 uVar3;
+  uint32_t uVar3;
   char in_D1b;
   char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
   uint unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint)__entry; });
@@ -14039,55 +14041,55 @@ __regcall void kernel_create(void)
   char unaff_D7b = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (char)__entry; });
   ushort *in_A0;
   int extraout_A0;
-  undefined2 *puVar5;
-  undefined4 *puVar6;
-  undefined2 *puVar7;
+  uint16_t *puVar5;
+  uint32_t *puVar6;
+  uint16_t *puVar7;
   int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   if ((unaff_D2b != 0) && (iVar2 = unaff_A6[4], iVar2 != 0)) {
-    *(undefined4 *)(iVar2 + 0x20) = 0;
+    *(uint32_t *)(iVar2 + 0x20) = 0;
     if ((in_A0 == (ushort *)0x0) || ((uint)*in_A0 <= (unaff_D3 & 0xffff))) {
       uVar3 = kernel_allocate_for_task();
-      puVar5 = (undefined2 *)((unaff_D3 >> 0x10) * 2 + extraout_A0);
+      puVar5 = (uint16_t *)((unaff_D3 >> 0x10) * 2 + extraout_A0);
       puVar7 = puVar5 + (unaff_D3 & 0xffff);
       if (unaff_D7b == 0) {
         if ((in_A0 != (ushort *)0x0) && (*in_A0 != 0)) {
           sVar4 = *in_A0 << 1;
           do {
             puVar7 = puVar7 + -1;
-            *puVar7 = *(undefined2 *)((int)in_A0 + (int)sVar4);
+            *puVar7 = *(uint16_t *)((int)in_A0 + (int)sVar4);
             sVar4 = sVar4 + -2;
           } while (sVar4 != 0);
         }
         iVar1 = *unaff_A6;
-        *(undefined4 *)(iVar2 + 0x24) = uVar3;
+        *(uint32_t *)(iVar2 + 0x24) = uVar3;
         if (in_D1b == 0) {
           in_D1b = *(char *)(iVar1 + 0x14);
         }
         *(char *)(iVar2 + 0x14) = in_D1b;
-        *(undefined4 *)(iVar2 + 0x16) = 0;
+        *(uint32_t *)(iVar2 + 0x16) = 0;
         *(char *)(iVar2 + 0x10) = unaff_D2b;
-        *(undefined4 *)(iVar2 + 0x46) = 0;
-        *(undefined1 *)(iVar2 + 0x12) = 0;
-        *(undefined1 *)(iVar2 + 0x11) = 0;
-        *(undefined2 *)(iVar2 + 0x34) = 0;
+        *(uint32_t *)(iVar2 + 0x46) = 0;
+        *(uint8_t *)(iVar2 + 0x12) = 0;
+        *(uint8_t *)(iVar2 + 0x11) = 0;
+        *(uint16_t *)(iVar2 + 0x34) = 0;
         *(int *)(iVar2 + 0x2c) = iVar1;
-        *(undefined4 *)(iVar2 + 0x1c) = 0;
-        *(undefined2 **)(iVar2 + 0x3a) = puVar7;
-        *(undefined2 *)(iVar2 + 0x44) = 0;
+        *(uint32_t *)(iVar2 + 0x1c) = 0;
+        *(uint16_t **)(iVar2 + 0x3a) = puVar7;
+        *(uint16_t *)(iVar2 + 0x44) = 0;
         if (unaff_D3 >> 0x10 != 0) {
           *(ushort *)(iVar2 + 0x44) = *(ushort *)(iVar2 + 0x44) | 0x1000;
           puVar7 = puVar5;
         }
-        *(undefined2 **)(iVar2 + 0x36) = puVar7;
+        *(uint16_t **)(iVar2 + 0x36) = puVar7;
         sVar4 = 0xb;
-        puVar6 = (undefined4 *)(iVar2 + 0x82);
+        puVar6 = (uint32_t *)(iVar2 + 0x82);
         do {
           *puVar6 = 0;
           sVar4 = sVar4 + -1;
           puVar6 = puVar6 + 1;
         } while (sVar4 != -1);
-        *(undefined1 *)(iVar2 + 0x13) = 0x80;
+        *(uint8_t *)(iVar2 + 0x13) = 0x80;
         unaff_A6[4] = *(int *)(iVar2 + 0x30);
         *(int *)(iVar2 + 0x30) = unaff_A6[3];
         unaff_A6[3] = iVar2;
@@ -14217,13 +14219,13 @@ __regcall void kernel_start(void)
 {
   int in_A0;
   void *pvVar1;
-  undefined4 extraout_A1;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
-  undefined1 in_ZF;
+  uint32_t extraout_A1;
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
+  uint8_t in_ZF;
   
   pvVar1 = kernel_check_task(in_A0,(void *)*unaff_A6);
   if (((bool)in_ZF) && (*(char *)((int)pvVar1 + 0x13) < 0)) {
-    *(undefined4 *)((int)pvVar1 + 0x3e) = extraout_A1;
+    *(uint32_t *)((int)pvVar1 + 0x3e) = extraout_A1;
     kernel_make_ready();
     if (psos_config.start_hook != (void *)0x0) {
       (*psos_config.start_hook)();
@@ -14334,7 +14336,7 @@ __asm__(
    psos.md */
 
 /* out D7 char error */
-__regcall undefined8 kernel_delete(void)
+__regcall uint64_t kernel_delete(void)
 
 {
   int iVar1;
@@ -14346,23 +14348,23 @@ __regcall undefined8 kernel_delete(void)
   int extraout_A0_00;
   int *extraout_A1;
   int *piVar4;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
-  undefined8 *puVar5;
-  undefined1 in_ZF;
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
+  uint64_t *puVar5;
+  uint8_t in_ZF;
   bool bVar6;
-  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
-  undefined1 local_10 [16];
+  uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
+  uint8_t local_10 [16];
   
-  puVar5 = (undefined8 *)local_10;
+  puVar5 = (uint64_t *)local_10;
   piVar3 = kernel_check_task(in_A0,(void *)*unaff_A6);
   if (((bool)in_ZF) &&
      ((psos_config.task_hooks == (void **)0x0 ||
       ((**(code **)((int)*psos_config.task_hooks + 8))(), piVar3 = extraout_A0, unaff_D7w == 0)))) {
     if (piVar3 == (int *)*unaff_A6) {
       iVar1 = unaff_A6[8];
-      puVar5 = (undefined8 *)(iVar1 + -0x28);
-      *(undefined4 *)(iVar1 + -0x18) = in_stack_00000000;
-      *(undefined2 *)(iVar1 + -8) = 0;
+      puVar5 = (uint64_t *)(iVar1 + -0x28);
+      *(uint32_t *)(iVar1 + -0x18) = in_stack_00000000;
+      *(uint16_t *)(iVar1 + -8) = 0;
     }
     if ((*(byte *)((int)piVar3 + 0x13) == 0) || ((*(byte *)((int)piVar3 + 0x13) & 0x60) != 0)) {
       iVar1 = *piVar3;
@@ -14372,11 +14374,11 @@ __regcall undefined8 kernel_delete(void)
         *(int **)(iVar1 + 4) = piVar2;
       }
     }
-    *(undefined1 *)((int)piVar3 + 0x13) = 0xff;
-    *(undefined4 *)((int)puVar5 + -4) = 0x14f70;
+    *(uint8_t *)((int)piVar3 + 0x13) = 0xff;
+    *(uint32_t *)((int)puVar5 + -4) = 0x14f70;
     kernel_timer_cancel();
     while (bVar6 = piVar3[7] == 0, !bVar6) {
-      *(undefined4 *)((int)puVar5 + -4) = 0x14f84;
+      *(uint32_t *)((int)puVar5 + -4) = 0x14f84;
       kernel_send_for_task();
       if (!bVar6) {
         piVar3[7] = *extraout_A1;
@@ -14385,7 +14387,7 @@ __regcall undefined8 kernel_delete(void)
       }
     }
     while (bVar6 = piVar3[8] == 0, !bVar6) {
-      *(undefined4 *)((int)puVar5 + -4) = 0x14fac;
+      *(uint32_t *)((int)puVar5 + -4) = 0x14fac;
       kernel_free_for_task();
       if (!bVar6) {
         piVar3[8] = *(int *)(extraout_A0_00 + -0x12);
@@ -14401,10 +14403,10 @@ __regcall undefined8 kernel_delete(void)
 LAB_00014fce:
     piVar3[0xc] = unaff_A6[4];
     unaff_A6[4] = piVar3;
-    *(undefined4 *)((int)puVar5 + -4) = 0x14fea;
+    *(uint32_t *)((int)puVar5 + -4) = 0x14fea;
     kernel_signal_task();
     if (psos_config.delete_hook != (void *)0x0) {
-      *(undefined4 *)((int)puVar5 + -4) = 0x14ffc;
+      *(uint32_t *)((int)puVar5 + -4) = 0x14ffc;
       (*psos_config.delete_hook)();
     }
   }
@@ -14534,8 +14536,8 @@ __regcall void kernel_suspend(void)
   int in_A0;
   void *pvVar1;
   void *extraout_A0;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
-  undefined1 in_ZF;
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
+  uint8_t in_ZF;
   
   pvVar1 = kernel_check_task(in_A0,(void *)*unaff_A6);
   if ((bool)in_ZF) {
@@ -14599,7 +14601,7 @@ __regcall void kernel_resume(void)
   byte bVar1;
   int in_A0;
   void *pvVar2;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   bVar3 = true;
@@ -14671,7 +14673,7 @@ __regcall void kernel_priority(void)
   short in_D1w;
   int in_A0;
   void *pvVar2;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   bVar3 = in_D1w == 0;
@@ -14764,25 +14766,25 @@ __asm__(
 __regcall void kernel_allocate_segment(void)
 
 {
-  undefined4 *puVar1;
+  uint32_t *puVar1;
   int *piVar2;
   int iVar3;
   char unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (char)__entry; });
   int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
-  undefined1 in_ZF;
+  uint8_t in_ZF;
   
-  puVar1 = (undefined4 *)*unaff_A6;
+  puVar1 = (uint32_t *)*unaff_A6;
   kernel_allocate();
   if ((!(bool)in_ZF) && (unaff_D3b == 0)) {
     iVar3 = kernel_queue_remove();
-    *(undefined1 *)((int)puVar1 + 0x13) = 0x40;
+    *(uint8_t *)((int)puVar1 + 0x13) = 0x40;
     *puVar1 = unaff_A6 + 0x19;
     piVar2 = (int *)unaff_A6[0x1a];
     unaff_A6[0x1a] = (int)puVar1;
     *piVar2 = (int)puVar1;
     puVar1[1] = piVar2;
     if (iVar3 != 0) {
-      *(undefined1 *)((int)puVar1 + 0x12) = 0xff;
+      *(uint8_t *)((int)puVar1 + 0x12) = 0xff;
       kernel_timer_insert();
     }
   }
@@ -14812,24 +14814,24 @@ __asm__(
 __naked void kernel_allocate_for_task(void)
 
 {
-  undefined4 *puVar1;
+  uint32_t *puVar1;
   int iVar2;
   char unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (char)__entry; });
   int *unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int *)__entry; });
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
-  undefined1 in_ZF;
+  uint8_t in_ZF;
   
   kernel_allocate();
   if ((!(bool)in_ZF) && (unaff_D3b == 0)) {
     iVar2 = kernel_queue_remove();
-    *(undefined1 *)((int)unaff_A5 + 0x13) = 0x40;
+    *(uint8_t *)((int)unaff_A5 + 0x13) = 0x40;
     *unaff_A5 = unaff_A6 + 100;
-    puVar1 = *(undefined4 **)(unaff_A6 + 0x68);
+    puVar1 = *(uint32_t **)(unaff_A6 + 0x68);
     *(int **)(unaff_A6 + 0x68) = unaff_A5;
     *puVar1 = unaff_A5;
     unaff_A5[1] = (int)puVar1;
     if (iVar2 != 0) {
-      *(undefined1 *)((int)unaff_A5 + 0x12) = 0xff;
+      *(uint8_t *)((int)unaff_A5 + 0x12) = 0xff;
       kernel_timer_insert();
     }
   }
@@ -14891,17 +14893,17 @@ __regcall void kernel_free_segment(void)
 {
   int iVar1;
   int *piVar2;
-  undefined4 *puVar3;
+  uint32_t *puVar3;
   ushort uVar4;
   uint uVar5;
   short sVar6;
   int in_A0;
   int *extraout_A0;
-  undefined4 extraout_A0_00;
+  uint32_t extraout_A0_00;
   int *piVar7;
   int *piVar8;
   int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
-  undefined1 in_ZF;
+  uint8_t in_ZF;
   bool bVar9;
   
   iVar1 = *unaff_A6;
@@ -14923,7 +14925,7 @@ __regcall void kernel_free_segment(void)
     }
   } while (piVar8 != extraout_A0);
   *piVar7 = *extraout_A0;
-  *(undefined2 *)(extraout_A0 + 4) = 0;
+  *(uint16_t *)(extraout_A0 + 4) = 0;
   piVar8 = (int *)extraout_A0[2];
   piVar7 = extraout_A0;
   if ((piVar8 != (int *)0x0) && (piVar7 = extraout_A0, *(short *)(piVar8 + 4) == 0)) {
@@ -14936,7 +14938,7 @@ __regcall void kernel_free_segment(void)
      (piVar8[2] = (int)piVar7, *(short *)(piVar8 + 4) == 0)) {
     piVar7[3] = piVar8[3] + piVar7[3];
     if (piVar7 == extraout_A0) {
-      puVar3 = (undefined4 *)piVar8[1];
+      puVar3 = (uint32_t *)piVar8[1];
       piVar7[1] = (int)puVar3;
       *puVar3 = piVar7;
       iVar1 = *piVar8;
@@ -14961,7 +14963,7 @@ __regcall void kernel_free_segment(void)
     }
   }
   else if (piVar7 == extraout_A0) {
-    puVar3 = *(undefined4 **)((int)unaff_A6 + sVar6 + 0x5c);
+    puVar3 = *(uint32_t **)((int)unaff_A6 + sVar6 + 0x5c);
     *(int **)((int)unaff_A6 + sVar6 + 0x5c) = piVar7;
     *piVar7 = 0;
     *puVar3 = piVar7;
@@ -14982,9 +14984,9 @@ LAB_00015206:
           (uVar5 = *(uint *)((int)unaff_A6 + sVar6 + 0x44),
           bVar9 = *(uint *)((int)piVar8 + 0x52) == uVar5, *(uint *)((int)piVar8 + 0x52) < uVar5)) &&
          (kernel_allocate(), bVar9)) {
-        *(undefined4 *)((int)piVar8 + 0x6e) = extraout_A0_00;
+        *(uint32_t *)((int)piVar8 + 0x6e) = extraout_A0_00;
         piVar7 = (int *)*piVar8;
-        puVar3 = (undefined4 *)piVar8[1];
+        puVar3 = (uint32_t *)piVar8[1];
         *puVar3 = piVar7;
         piVar7[1] = (int)puVar3;
         kernel_timer_cancel();
@@ -15023,20 +15025,20 @@ __naked void kernel_free_for_task(void)
 
 {
   int iVar1;
-  undefined4 *puVar2;
+  uint32_t *puVar2;
   int *piVar3;
   ushort uVar4;
   uint uVar5;
   short sVar6;
   int in_A0;
   int *extraout_A0;
-  undefined4 extraout_A0_00;
+  uint32_t extraout_A0_00;
   int *piVar7;
   int *piVar8;
   int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
-  undefined4 *puVar9;
+  uint32_t *puVar9;
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
-  undefined1 in_ZF;
+  uint8_t in_ZF;
   bool bVar10;
   
   kernel_check_segment((void *)(in_A0 + -0x12));
@@ -15057,7 +15059,7 @@ __naked void kernel_free_for_task(void)
     }
   } while (piVar8 != extraout_A0);
   *piVar7 = *extraout_A0;
-  *(undefined2 *)(extraout_A0 + 4) = 0;
+  *(uint16_t *)(extraout_A0 + 4) = 0;
   piVar8 = (int *)extraout_A0[2];
   piVar7 = extraout_A0;
   if ((piVar8 != (int *)0x0) && (piVar7 = extraout_A0, *(short *)(piVar8 + 4) == 0)) {
@@ -15070,7 +15072,7 @@ __naked void kernel_free_for_task(void)
      (piVar8[2] = (int)piVar7, *(short *)(piVar8 + 4) == 0)) {
     piVar7[3] = piVar8[3] + piVar7[3];
     if (piVar7 == extraout_A0) {
-      puVar9 = (undefined4 *)piVar8[1];
+      puVar9 = (uint32_t *)piVar8[1];
       piVar7[1] = (int)puVar9;
       *puVar9 = piVar7;
       iVar1 = *piVar8;
@@ -15095,7 +15097,7 @@ __naked void kernel_free_for_task(void)
     }
   }
   else if (piVar7 == extraout_A0) {
-    puVar9 = *(undefined4 **)(unaff_A6 + 0x5c + (int)sVar6);
+    puVar9 = *(uint32_t **)(unaff_A6 + 0x5c + (int)sVar6);
     *(int **)(unaff_A6 + 0x5c + (int)sVar6) = piVar7;
     *piVar7 = 0;
     *puVar9 = piVar7;
@@ -15109,16 +15111,16 @@ __naked void kernel_free_for_task(void)
 LAB_00015206:
   if (*(uint *)(unaff_A6 + 0x44 + (int)sVar6) <= uVar5) {
     *(int *)(unaff_A6 + 0x44 + (int)sVar6) = *(int *)(unaff_A6 + 0x3c + (int)sVar6) + 1;
-    puVar9 = *(undefined4 **)(unaff_A6 + 100);
-    while (puVar9 != (undefined4 *)(unaff_A6 + 100)) {
+    puVar9 = *(uint32_t **)(unaff_A6 + 100);
+    while (puVar9 != (uint32_t *)(unaff_A6 + 100)) {
       if ((((*(char *)((int)puVar9 + 0x59) == 0) ||
            ((char)(uVar4 & 3) == *(char *)((int)puVar9 + 0x59))) &&
           (uVar5 = *(uint *)(unaff_A6 + 0x44 + (int)sVar6),
           bVar10 = *(uint *)((int)puVar9 + 0x52) == uVar5, *(uint *)((int)puVar9 + 0x52) < uVar5))
          && (kernel_allocate(), bVar10)) {
-        *(undefined4 *)((int)puVar9 + 0x6e) = extraout_A0_00;
-        puVar2 = (undefined4 *)*puVar9;
-        puVar9 = (undefined4 *)puVar9[1];
+        *(uint32_t *)((int)puVar9 + 0x6e) = extraout_A0_00;
+        puVar2 = (uint32_t *)*puVar9;
+        puVar9 = (uint32_t *)puVar9[1];
         *puVar9 = puVar2;
         puVar2[1] = puVar9;
         kernel_timer_cancel();
@@ -15126,7 +15128,7 @@ LAB_00015206:
         puVar9 = puVar2;
       }
       else {
-        puVar9 = (undefined4 *)*puVar9;
+        puVar9 = (uint32_t *)*puVar9;
       }
     }
   }
@@ -15283,9 +15285,9 @@ __naked void kernel_allocate(void)
 
 {
   char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
-  undefined4 *extraout_A0;
-  undefined4 *extraout_A0_00;
-  undefined4 *puVar1;
+  uint32_t *extraout_A0;
+  uint32_t *extraout_A0_00;
+  uint32_t *puVar1;
   int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   bool bVar2;
   
@@ -15305,8 +15307,8 @@ __naked void kernel_allocate(void)
     return;
   }
 LAB_00015288:
-  *puVar1 = *(undefined4 *)(unaff_A5 + 0x20);
-  *(undefined4 **)(unaff_A5 + 0x20) = puVar1;
+  *puVar1 = *(uint32_t *)(unaff_A5 + 0x20);
+  *(uint32_t **)(unaff_A5 + 0x20) = puVar1;
   return;
 }
 
@@ -15505,7 +15507,7 @@ __regcall void kernel_assign_segment(void)
   void *segment;
   int extraout_A1;
   int *piVar2;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   bVar3 = in_A1 == 0;
@@ -15568,7 +15570,7 @@ __regcall void kernel_reclaim_segment(void)
   void *segment;
   int extraout_A1;
   int *piVar3;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar4;
   
   bVar4 = in_A1 == 0;
@@ -15701,30 +15703,30 @@ __regcall void kernel_create_x(void)
 
 {
   int iVar1;
-  undefined4 in_D0;
+  uint32_t in_D0;
   byte in_D1b;
-  undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
+  uint8_t unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint8_t)__entry; });
   int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   iVar1 = unaff_A6[6];
   if (iVar1 != 0) {
-    *(undefined4 *)(iVar1 + 0x14) = in_D0;
+    *(uint32_t *)(iVar1 + 0x14) = in_D0;
     *(int *)iVar1 = iVar1;
     *(int *)(iVar1 + 4) = iVar1;
-    *(undefined4 *)(iVar1 + 8) = 0;
-    *(undefined4 *)(iVar1 + 0xc) = 0;
-    *(undefined2 *)(iVar1 + 0x20) = 0;
-    *(undefined1 *)(iVar1 + 0x10) = 0;
+    *(uint32_t *)(iVar1 + 8) = 0;
+    *(uint32_t *)(iVar1 + 0xc) = 0;
+    *(uint16_t *)(iVar1 + 0x20) = 0;
+    *(uint8_t *)(iVar1 + 0x10) = 0;
     if ((in_D1b & 0x80) != 0) {
       *(char *)(iVar1 + 0x10) = *(char *)(iVar1 + 0x10) + 1;
     }
-    *(undefined1 *)(iVar1 + 0x12) = 0;
+    *(uint8_t *)(iVar1 + 0x12) = 0;
     if ((in_D1b & 2) != 0) {
       *(char *)(iVar1 + 0x12) = *(char *)(iVar1 + 0x12) + 1;
-      *(undefined1 *)(iVar1 + 0x20) = unaff_D2b;
+      *(uint8_t *)(iVar1 + 0x20) = unaff_D2b;
     }
     *(byte *)(iVar1 + 0x11) = in_D1b & 0x7d;
-    *(undefined1 *)(iVar1 + 0x13) = *(undefined1 *)(*unaff_A6 + 0x14);
+    *(uint8_t *)(iVar1 + 0x13) = *(uint8_t *)(*unaff_A6 + 0x14);
     unaff_A6[6] = *(int *)(iVar1 + 0x1c);
     *(int *)(iVar1 + 0x1c) = unaff_A6[5];
     unaff_A6[5] = iVar1;
@@ -15791,9 +15793,9 @@ __regcall void kernel_service_21(void)
   int exchange;
   byte *pbVar1;
   int in_D0;
-  undefined4 *extraout_A0;
-  undefined4 *puVar2;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *extraout_A0;
+  uint32_t *puVar2;
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   exchange = unaff_A6[5];
@@ -15810,13 +15812,13 @@ __regcall void kernel_service_21(void)
     return;
   }
   do {
-    puVar2 = (undefined4 *)*extraout_A0;
+    puVar2 = (uint32_t *)*extraout_A0;
     do {
       if (extraout_A0 == puVar2) {
         return;
       }
       pbVar1 = (byte *)((int)puVar2 + 0x13);
-      puVar2 = (undefined4 *)*puVar2;
+      puVar2 = (uint32_t *)*puVar2;
     } while ((*pbVar1 & 0x20) != 0);
   } while( true );
 }
@@ -15886,26 +15888,26 @@ __asm__(
 __regcall void kernel_delete_x(void)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   int in_A0;
-  undefined4 *extraout_A0;
-  undefined4 *puVar2;
-  undefined4 *extraout_A0_00;
+  uint32_t *extraout_A0;
+  uint32_t *puVar2;
+  uint32_t *extraout_A0_00;
   int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
-  undefined4 *puVar3;
-  undefined4 *puVar4;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *puVar3;
+  uint32_t *puVar4;
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar5;
   
   bVar5 = unaff_A2 == 0;
   kernel_check_exchange(in_A0,(void *)*unaff_A6);
   if (bVar5) {
-    *(undefined1 *)((int)extraout_A0 + 0x11) = 0xfe;
-    puVar3 = (undefined4 *)*extraout_A0;
+    *(uint8_t *)((int)extraout_A0 + 0x11) = 0xfe;
+    puVar3 = (uint32_t *)*extraout_A0;
     puVar2 = extraout_A0;
     while (puVar2 != puVar3) {
-      *(undefined1 *)((int)puVar3 + 0x6d) = 1;
-      puVar3 = (undefined4 *)*puVar3;
+      *(uint8_t *)((int)puVar3 + 0x6d) = 1;
+      puVar3 = (uint32_t *)*puVar3;
       kernel_timer_cancel();
       kernel_make_ready();
       puVar2 = extraout_A0_00;
@@ -15913,13 +15915,13 @@ __regcall void kernel_delete_x(void)
     if (puVar2[2] != 0) {
       uVar1 = unaff_A6[7];
       unaff_A6[7] = puVar2[2];
-      *(undefined4 *)puVar2[3] = uVar1;
+      *(uint32_t *)puVar2[3] = uVar1;
     }
     puVar3 = unaff_A6 + -2;
     do {
       puVar4 = puVar3;
-      puVar3 = (undefined4 *)puVar4[7];
-      if (puVar3 == (undefined4 *)0x0) goto LAB_000154a0;
+      puVar3 = (uint32_t *)puVar4[7];
+      if (puVar3 == (uint32_t *)0x0) goto LAB_000154a0;
     } while (puVar3 != puVar2);
     puVar4[7] = puVar2[7];
 LAB_000154a0:
@@ -16002,8 +16004,8 @@ __regcall void kernel_broadcast_x(void)
 
 {
   int iVar1;
-  undefined2 extraout_D0w;
-  undefined2 uVar2;
+  uint16_t extraout_D0w;
+  uint16_t uVar2;
   char cVar3;
   byte bVar4;
   char extraout_D1b;
@@ -16021,7 +16023,7 @@ __regcall void kernel_broadcast_x(void)
   int extraout_A1_00;
   int *piVar10;
   int *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (int *)__entry; });
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar11;
   
   bVar11 = true;
@@ -16218,10 +16220,10 @@ __regcall void kernel_jam_x(void)
   int *piVar1;
   int iVar2;
   int iVar3;
-  undefined4 uVar4;
-  undefined4 uVar5;
-  undefined4 uVar6;
-  undefined4 uVar7;
+  uint32_t uVar4;
+  uint32_t uVar5;
+  uint32_t uVar6;
+  uint32_t uVar7;
   int in_A0;
   int *extraout_A0;
   int *extraout_A0_00;
@@ -16231,7 +16233,7 @@ __regcall void kernel_jam_x(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar11;
   
   running = (void *)*unaff_A6;
@@ -16277,11 +16279,11 @@ LAB_00015606:
           (kernel_copy_message(), piVar8 = extraout_A0_01, bVar11)))) {
         if (in_A0 == 0) {
           *piVar10 = 0;
-          if ((undefined4 *)piVar8[3] == (undefined4 *)0x0) {
+          if ((uint32_t *)piVar8[3] == (uint32_t *)0x0) {
             piVar8[2] = (int)piVar10;
           }
           else {
-            *(undefined4 *)piVar8[3] = piVar10;
+            *(uint32_t *)piVar8[3] = piVar10;
           }
         }
         else {
@@ -16308,15 +16310,15 @@ LAB_00015606:
       kernel_make_ready();
       iVar2 = *(int *)((int)piVar1 + 0x72);
       iVar3 = *(int *)(extraout_A1_00 + 4);
-      uVar4 = *(undefined4 *)(extraout_A1_00 + 8);
-      uVar5 = *(undefined4 *)(extraout_A1_00 + 0xc);
-      uVar6 = *(undefined4 *)(extraout_A1_00 + 0x10);
-      uVar7 = *(undefined4 *)(extraout_A1_00 + 0x14);
+      uVar4 = *(uint32_t *)(extraout_A1_00 + 8);
+      uVar5 = *(uint32_t *)(extraout_A1_00 + 0xc);
+      uVar6 = *(uint32_t *)(extraout_A1_00 + 0x10);
+      uVar7 = *(uint32_t *)(extraout_A1_00 + 0x14);
       *(int *)(iVar2 + 4) = iVar3;
-      *(undefined4 *)(iVar2 + 8) = uVar4;
-      *(undefined4 *)(iVar2 + 0xc) = uVar5;
-      *(undefined4 *)(iVar2 + 0x10) = uVar6;
-      *(undefined4 *)(iVar2 + 0x14) = uVar7;
+      *(uint32_t *)(iVar2 + 8) = uVar4;
+      *(uint32_t *)(iVar2 + 0xc) = uVar5;
+      *(uint32_t *)(iVar2 + 0x10) = uVar6;
+      *(uint32_t *)(iVar2 + 0x14) = uVar7;
       if (iVar3 != 0) {
         *piVar10 = piVar1[7];
         piVar1[7] = (int)piVar10;
@@ -16363,10 +16365,10 @@ __regcall void kernel_send_x(void)
   int *piVar1;
   int iVar2;
   int iVar3;
-  undefined4 uVar4;
-  undefined4 uVar5;
-  undefined4 uVar6;
-  undefined4 uVar7;
+  uint32_t uVar4;
+  uint32_t uVar5;
+  uint32_t uVar6;
+  uint32_t uVar7;
   int in_A0;
   int *extraout_A0;
   int *extraout_A0_00;
@@ -16376,7 +16378,7 @@ __regcall void kernel_send_x(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar11;
   
   running = (void *)*unaff_A6;
@@ -16421,11 +16423,11 @@ LAB_00015606:
            *(byte *)((int)piVar8 + 0x21) <= *(byte *)(piVar8 + 8))) &&
           (kernel_copy_message(), piVar8 = extraout_A0_01, bVar11)))) {
         *piVar10 = 0;
-        if ((undefined4 *)piVar8[3] == (undefined4 *)0x0) {
+        if ((uint32_t *)piVar8[3] == (uint32_t *)0x0) {
           piVar8[2] = (int)piVar10;
         }
         else {
-          *(undefined4 *)piVar8[3] = piVar10;
+          *(uint32_t *)piVar8[3] = piVar10;
         }
         piVar8[3] = (int)piVar10;
       }
@@ -16443,15 +16445,15 @@ LAB_00015606:
       kernel_make_ready();
       iVar2 = *(int *)((int)piVar1 + 0x72);
       iVar3 = *(int *)(extraout_A1_00 + 4);
-      uVar4 = *(undefined4 *)(extraout_A1_00 + 8);
-      uVar5 = *(undefined4 *)(extraout_A1_00 + 0xc);
-      uVar6 = *(undefined4 *)(extraout_A1_00 + 0x10);
-      uVar7 = *(undefined4 *)(extraout_A1_00 + 0x14);
+      uVar4 = *(uint32_t *)(extraout_A1_00 + 8);
+      uVar5 = *(uint32_t *)(extraout_A1_00 + 0xc);
+      uVar6 = *(uint32_t *)(extraout_A1_00 + 0x10);
+      uVar7 = *(uint32_t *)(extraout_A1_00 + 0x14);
       *(int *)(iVar2 + 4) = iVar3;
-      *(undefined4 *)(iVar2 + 8) = uVar4;
-      *(undefined4 *)(iVar2 + 0xc) = uVar5;
-      *(undefined4 *)(iVar2 + 0x10) = uVar6;
-      *(undefined4 *)(iVar2 + 0x14) = uVar7;
+      *(uint32_t *)(iVar2 + 8) = uVar4;
+      *(uint32_t *)(iVar2 + 0xc) = uVar5;
+      *(uint32_t *)(iVar2 + 0x10) = uVar6;
+      *(uint32_t *)(iVar2 + 0x14) = uVar7;
       if (iVar3 != 0) {
         *piVar10 = piVar1[7];
         piVar1[7] = (int)piVar10;
@@ -16490,10 +16492,10 @@ __naked void kernel_send_for_task(void)
   int *piVar1;
   int iVar2;
   int iVar3;
-  undefined4 uVar4;
-  undefined4 uVar5;
-  undefined4 uVar6;
-  undefined4 uVar7;
+  uint32_t uVar4;
+  uint32_t uVar5;
+  uint32_t uVar6;
+  uint32_t uVar7;
   int in_A0;
   int *extraout_A0;
   int *extraout_A0_00;
@@ -16547,11 +16549,11 @@ LAB_00015606:
            *(byte *)((int)piVar8 + 0x21) <= *(byte *)(piVar8 + 8))) &&
           (kernel_copy_message(), piVar8 = extraout_A0_01, bVar11)))) {
         *piVar10 = 0;
-        if ((undefined4 *)piVar8[3] == (undefined4 *)0x0) {
+        if ((uint32_t *)piVar8[3] == (uint32_t *)0x0) {
           piVar8[2] = (int)piVar10;
         }
         else {
-          *(undefined4 *)piVar8[3] = piVar10;
+          *(uint32_t *)piVar8[3] = piVar10;
         }
         piVar8[3] = (int)piVar10;
       }
@@ -16569,15 +16571,15 @@ LAB_00015606:
       kernel_make_ready();
       iVar2 = *(int *)((int)piVar1 + 0x72);
       iVar3 = *(int *)(extraout_A1_00 + 4);
-      uVar4 = *(undefined4 *)(extraout_A1_00 + 8);
-      uVar5 = *(undefined4 *)(extraout_A1_00 + 0xc);
-      uVar6 = *(undefined4 *)(extraout_A1_00 + 0x10);
-      uVar7 = *(undefined4 *)(extraout_A1_00 + 0x14);
+      uVar4 = *(uint32_t *)(extraout_A1_00 + 8);
+      uVar5 = *(uint32_t *)(extraout_A1_00 + 0xc);
+      uVar6 = *(uint32_t *)(extraout_A1_00 + 0x10);
+      uVar7 = *(uint32_t *)(extraout_A1_00 + 0x14);
       *(int *)(iVar2 + 4) = iVar3;
-      *(undefined4 *)(iVar2 + 8) = uVar4;
-      *(undefined4 *)(iVar2 + 0xc) = uVar5;
-      *(undefined4 *)(iVar2 + 0x10) = uVar6;
-      *(undefined4 *)(iVar2 + 0x14) = uVar7;
+      *(uint32_t *)(iVar2 + 8) = uVar4;
+      *(uint32_t *)(iVar2 + 0xc) = uVar5;
+      *(uint32_t *)(iVar2 + 0x10) = uVar6;
+      *(uint32_t *)(iVar2 + 0x14) = uVar7;
       if (iVar3 != 0) {
         *piVar10 = piVar1[7];
         piVar1[7] = (int)piVar10;
@@ -16725,22 +16727,22 @@ __asm__(
 __naked void kernel_copy_message(void)
 
 {
-  undefined4 *puVar1;
-  undefined4 uVar2;
-  undefined4 uVar3;
-  undefined4 uVar4;
-  undefined4 uVar5;
+  uint32_t *puVar1;
+  uint32_t uVar2;
+  uint32_t uVar3;
+  uint32_t uVar4;
+  uint32_t uVar5;
   int in_A1;
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
-  puVar1 = *(undefined4 **)(unaff_A6 + 0x1c);
-  if (puVar1 != (undefined4 *)0x0) {
-    *(undefined4 *)(unaff_A6 + 0x1c) = *puVar1;
-    uVar2 = *(undefined4 *)(in_A1 + 8);
-    uVar3 = *(undefined4 *)(in_A1 + 0xc);
-    uVar4 = *(undefined4 *)(in_A1 + 0x10);
-    uVar5 = *(undefined4 *)(in_A1 + 0x14);
-    puVar1[1] = *(undefined4 *)(in_A1 + 4);
+  puVar1 = *(uint32_t **)(unaff_A6 + 0x1c);
+  if (puVar1 != (uint32_t *)0x0) {
+    *(uint32_t *)(unaff_A6 + 0x1c) = *puVar1;
+    uVar2 = *(uint32_t *)(in_A1 + 8);
+    uVar3 = *(uint32_t *)(in_A1 + 0xc);
+    uVar4 = *(uint32_t *)(in_A1 + 0x10);
+    uVar5 = *(uint32_t *)(in_A1 + 0x14);
+    puVar1[1] = *(uint32_t *)(in_A1 + 4);
     puVar1[2] = uVar2;
     puVar1[3] = uVar3;
     puVar1[4] = uVar4;
@@ -16792,9 +16794,9 @@ __regcall void kernel_request_x(void)
 {
   int *running;
   int *piVar1;
-  undefined4 *puVar2;
-  undefined4 extraout_D0;
-  undefined4 extraout_D1;
+  uint32_t *puVar2;
+  uint32_t extraout_D0;
+  uint32_t extraout_D1;
   int iVar3;
   int iVar4;
   int iVar5;
@@ -16808,9 +16810,9 @@ __regcall void kernel_request_x(void)
   int iVar9;
   int extraout_A1_00;
   int *piVar10;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar11;
-  undefined8 uVar12;
+  uint64_t uVar12;
   
   running = (int *)*unaff_A6;
   bVar11 = true;
@@ -16832,14 +16834,14 @@ __regcall void kernel_request_x(void)
       *(int *)((int)running + 0x72) = iVar9;
       if (*(char *)(piVar8 + 4) == 0) {
         *running = (int)piVar8;
-        puVar2 = (undefined4 *)piVar8[1];
+        puVar2 = (uint32_t *)piVar8[1];
         piVar8[1] = (int)running;
         *puVar2 = running;
         running[1] = (int)puVar2;
 LAB_000157c4:
-        *(undefined2 *)((int)running + 0x12) = 0xff20;
+        *(uint16_t *)((int)running + 0x12) = 0xff20;
         if ((int)((ulonglong)uVar12 >> 0x20) == 0) {
-          *(undefined1 *)((int)running + 0x12) = 0;
+          *(uint8_t *)((int)running + 0x12) = 0;
           return;
         }
         kernel_timer_insert();
@@ -16854,7 +16856,7 @@ LAB_000157c4:
               (piVar10 = piVar1, *(byte *)(running + 4) <= *(byte *)(piVar1 + 4)));
       if (piVar8[2] == 0) {
         *running = (int)piVar1;
-        puVar2 = (undefined4 *)piVar1[1];
+        puVar2 = (uint32_t *)piVar1[1];
         piVar1[1] = (int)running;
         running[1] = (int)puVar2;
         *puVar2 = running;
@@ -17050,13 +17052,13 @@ __regcall void kernel_signal_v(void)
         uVar2 = uVar1 ^ uVar2;
       }
       *(ushort *)((int)pvVar3 + 0x54) = uVar2 | *(ushort *)((int)pvVar3 + 0x54);
-      *(undefined2 *)((int)pvVar3 + 0x16) = 0;
+      *(uint16_t *)((int)pvVar3 + 0x16) = 0;
       if (0 < *(char *)((int)pvVar3 + 0x12)) {
         kernel_timer_unlink();
       }
       kernel_make_ready();
       if (pvVar3 == (void *)*unaff_A6) {
-        *(undefined1 *)((int)unaff_A6 + 0x8b) = 0;
+        *(uint8_t *)((int)unaff_A6 + 0x8b) = 0;
       }
     }
   }
@@ -17124,13 +17126,13 @@ __naked void kernel_signal_task(void)
         uVar2 = uVar1 ^ uVar2;
       }
       *(ushort *)((int)pvVar3 + 0x54) = uVar2 | *(ushort *)((int)pvVar3 + 0x54);
-      *(undefined2 *)((int)pvVar3 + 0x16) = 0;
+      *(uint16_t *)((int)pvVar3 + 0x16) = 0;
       if (0 < *(char *)((int)pvVar3 + 0x12)) {
         kernel_timer_unlink();
       }
       kernel_make_ready();
       if (pvVar3 == (void *)*unaff_A6) {
-        *(undefined1 *)((int)unaff_A6 + 0x8b) = 0;
+        *(uint8_t *)((int)unaff_A6 + 0x8b) = 0;
       }
     }
   }
@@ -17277,9 +17279,9 @@ __regcall void kernel_wait_v(void)
       iVar2 = *piVar1;
       *piVar3 = iVar2;
       *(int **)(iVar2 + 4) = piVar3;
-      *(undefined2 *)((int)piVar1 + 0x12) = 0xff10;
+      *(uint16_t *)((int)piVar1 + 0x12) = 0xff10;
       if (in_D0 == 0) {
-        *(undefined1 *)((int)piVar1 + 0x12) = 0;
+        *(uint8_t *)((int)piVar1 + 0x12) = 0;
       }
       else {
         kernel_timer_insert();
@@ -17410,7 +17412,7 @@ __asm__(
    psos.md */
 
 /* out D7 char error */
-__regcall undefined2 kernel_supervisor(undefined2 param_1)
+__regcall uint16_t kernel_supervisor(uint16_t param_1)
 
 {
   return param_1;
@@ -17454,7 +17456,7 @@ __regcall void kernel_pause(void)
     kernel_ready_insert();
   }
   else {
-    *(undefined1 *)(iVar1 + 0x12) = 0xff;
+    *(uint8_t *)(iVar1 + 0x12) = 0xff;
     kernel_timer_insert();
   }
   return;
@@ -17501,7 +17503,7 @@ __asm__(
 __regcall void kernel_announce_tick(void)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   char cVar2;
   short sVar3;
   int iVar4;
@@ -17511,7 +17513,7 @@ __regcall void kernel_announce_tick(void)
   *(short *)(unaff_A6 + 0x70) = *(short *)(unaff_A6 + 0x70) + 1;
   if (*(ushort *)(unaff_A6 + 0x86) <= *(ushort *)(unaff_A6 + 0x70)) {
     *(ushort *)(unaff_A6 + 0x70) = *(ushort *)(unaff_A6 + 0x70) - *(ushort *)(unaff_A6 + 0x86);
-    uVar1 = *(undefined4 *)(unaff_A6 + 0x72);
+    uVar1 = *(uint32_t *)(unaff_A6 + 0x72);
     cVar2 = (char)uVar1 + 1;
     iVar4 = CONCAT31((int3)((uint)uVar1 >> 8),cVar2);
     if ((cVar2 == '<') &&
@@ -17573,7 +17575,7 @@ __asm__(
    psos.md */
 
 /* out D7 char error */
-__regcall undefined8 kernel_get_time(void)
+__regcall uint64_t kernel_get_time(void)
 
 {
   uint extraout_D1;
@@ -17582,8 +17584,8 @@ __regcall undefined8 kernel_get_time(void)
   do {
     kernel_advance_date();
   } while (extraout_D1 != *(uint *)(unaff_A6 + 0x72));
-  return CONCAT44(*(undefined4 *)(unaff_A6 + 0x76),
-                  (uint)(byte)*(undefined2 *)(unaff_A6 + 0x70) << 0x18 | extraout_D1);
+  return CONCAT44(*(uint32_t *)(unaff_A6 + 0x76),
+                  (uint)(byte)*(uint16_t *)(unaff_A6 + 0x70) << 0x18 | extraout_D1);
 }
 
 
@@ -17629,10 +17631,10 @@ __regcall void kernel_set_time(void)
 
 {
   ushort in_D0w;
-  undefined4 in_D1;
+  uint32_t in_D1;
   ushort unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (ushort)__entry; });
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
-  undefined8 uVar1;
+  uint64_t uVar1;
   
   if (((((byte)in_D1 < 0x3c) && ((byte)((uint)in_D1 >> 8) < 0x3c)) &&
       ((byte)((uint)in_D1 >> 0x10) < 0x18)) &&
@@ -17646,9 +17648,9 @@ __regcall void kernel_set_time(void)
     else {
       *(ushort *)(unaff_A6 + 0x70) = unaff_D2w;
       *(int *)(unaff_A6 + 0x72) = (int)uVar1;
-      *(undefined1 *)(unaff_A6 + 0x72) = 0;
+      *(uint8_t *)(unaff_A6 + 0x72) = 0;
       *(int *)(unaff_A6 + 0x76) = (int)((ulonglong)uVar1 >> 0x20);
-      *(undefined1 *)(unaff_A6 + 0x8a) = 1;
+      *(uint8_t *)(unaff_A6 + 0x8a) = 1;
     }
   }
   return;
@@ -17721,7 +17723,7 @@ __asm__(
    psos.md */
 
 /* out D7 char error */
-__regcall undefined8 kernel_create_partition(void)
+__regcall uint64_t kernel_create_partition(void)
 
 {
   int in_D0;
@@ -17732,7 +17734,7 @@ __regcall undefined8 kernel_create_partition(void)
   int *piVar4;
   short sVar2;
   
-  *(undefined2 *)(in_A0 + 2) = 0;
+  *(uint16_t *)(in_A0 + 2) = 0;
   in_A0[1] = in_D0;
   *in_A0 = (int)(in_A0 + 5);
   uVar1 = in_D1;
@@ -17799,7 +17801,7 @@ __regcall void kernel_delete_partition(void)
   int in_A0;
   
   if ((in_D0 == *(int *)(in_A0 + 4)) && (*(short *)(in_A0 + 8) == 0)) {
-    *(undefined4 *)(in_A0 + 4) = 0;
+    *(uint32_t *)(in_A0 + 4) = 0;
   }
   return;
 }
@@ -17944,23 +17946,23 @@ __asm__(
 __naked void kernel_advance_date(void)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   byte bVar2;
   short sVar3;
-  undefined2 uVar4;
+  uint16_t uVar4;
   undefined3 uVar5;
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   int iVar6;
   
   if (0x17 < *(ushort *)(unaff_A6 + 0x72)) {
     *(ushort *)(unaff_A6 + 0x72) = *(ushort *)(unaff_A6 + 0x72) - 0x18;
-    uVar1 = *(undefined4 *)(unaff_A6 + 0x76);
+    uVar1 = *(uint32_t *)(unaff_A6 + 0x76);
     bVar2 = (char)uVar1 + 1;
     uVar5 = (undefined3)((uint)uVar1 >> 8);
     iVar6 = CONCAT31(uVar5,bVar2);
     if (*(byte *)(unaff_A6 + 0x79 + (int)(short)((ushort)((uint)uVar1 >> 8) & 0xff)) < bVar2) {
       sVar3 = (short)CONCAT31(uVar5,1) + 0x100;
-      uVar4 = (undefined2)((uint)uVar1 >> 0x10);
+      uVar4 = (uint16_t)((uint)uVar1 >> 0x10);
       iVar6 = CONCAT22(uVar4,sVar3);
       if (sVar3 == 0xd01) {
         iVar6 = CONCAT22(uVar4,0x101) + 0x10000;
@@ -18026,7 +18028,7 @@ __naked void kernel_set_leap_year(void)
   uint unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
-  *(undefined1 *)(unaff_A6 + 0x7b) = 0x1c;
+  *(uint8_t *)(unaff_A6 + 0x7b) = 0x1c;
   if (((short)((unaff_D6 >> 0x10) << 0xe) == 0) &&
      ((uVar1 = (unaff_D6 >> 0x12) % 0x19, (short)uVar1 != 0 ||
       ((short)(((unaff_D6 >> 0x12) / 0x19 << 0x10 | uVar1) >> 2) == 0)))) {
@@ -18292,12 +18294,12 @@ __asm__(
    Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
-__naked undefined4 kernel_timer_unlink(void)
+__naked uint32_t kernel_timer_unlink(void)
 
 {
   int iVar1;
   int iVar2;
-  undefined4 in_D0;
+  uint32_t in_D0;
   int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   
   iVar1 = *(int *)(unaff_A2 + 8);
@@ -18383,7 +18385,7 @@ __naked void kernel_timer_insert(void)
   *(int *)(unaff_A5 + 0xc) = iVar5;
   *(int *)(iVar5 + 8) = unaff_A5;
   *(int *)(unaff_A5 + 8) = iVar1;
-  *(undefined1 *)(unaff_A5 + 0x12) = 1;
+  *(uint8_t *)(unaff_A5 + 0x12) = 1;
   *(byte *)(unaff_A5 + 0x13) = *(byte *)(unaff_A5 + 0x13) | 8;
   return;
 }
@@ -18448,7 +18450,7 @@ __asm__(
 __naked void kernel_make_ready(void)
 
 {
-  undefined4 *puVar1;
+  uint32_t *puVar1;
   ushort uVar2;
   int *unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int *)__entry; });
   int *piVar3;
@@ -18461,12 +18463,12 @@ __naked void kernel_make_ready(void)
     do {
       piVar3 = (int *)*piVar3;
     } while (*(byte *)(unaff_A2 + 4) <= *(byte *)(piVar3 + 4));
-    puVar1 = (undefined4 *)piVar3[1];
+    puVar1 = (uint32_t *)piVar3[1];
     piVar3[1] = (int)unaff_A2;
     unaff_A2[1] = (int)puVar1;
     *unaff_A2 = (int)piVar3;
     *puVar1 = unaff_A2;
-    *(undefined2 *)((int)unaff_A2 + 0x1a) = *(undefined2 *)(unaff_A6 + 0x88);
+    *(uint16_t *)((int)unaff_A2 + 0x1a) = *(uint16_t *)(unaff_A6 + 0x88);
   }
   return;
 }
@@ -18496,7 +18498,7 @@ __asm__(
 __naked void kernel_ready_insert(void)
 
 {
-  undefined4 *puVar1;
+  uint32_t *puVar1;
   int *unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int *)__entry; });
   int *piVar2;
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
@@ -18505,12 +18507,12 @@ __naked void kernel_ready_insert(void)
   do {
     piVar2 = (int *)*piVar2;
   } while (*(byte *)(unaff_A2 + 4) <= *(byte *)(piVar2 + 4));
-  puVar1 = (undefined4 *)piVar2[1];
+  puVar1 = (uint32_t *)piVar2[1];
   piVar2[1] = (int)unaff_A2;
   unaff_A2[1] = (int)puVar1;
   *unaff_A2 = (int)piVar2;
   *puVar1 = unaff_A2;
-  *(undefined2 *)((int)unaff_A2 + 0x1a) = *(undefined2 *)(unaff_A6 + 0x88);
+  *(uint16_t *)((int)unaff_A2 + 0x1a) = *(uint16_t *)(unaff_A6 + 0x88);
   return;
 }
 
@@ -18648,7 +18650,7 @@ __exception void kernel_init(void)
 
 {
   void *pvVar1;
-  undefined2 *puVar2;
+  uint16_t *puVar2;
   int iVar3;
   code *pcVar4;
   int iVar5;
@@ -18657,13 +18659,13 @@ __exception void kernel_init(void)
   ushort uVar8;
   int extraout_A0;
   int extraout_A0_00;
-  undefined4 *extraout_A0_01;
-  undefined2 *puVar9;
-  undefined4 uVar10;
-  undefined4 *puVar11;
-  undefined4 *puVar12;
-  undefined4 *puVar13;
-  undefined2 *puVar14;
+  uint32_t *extraout_A0_01;
+  uint16_t *puVar9;
+  uint32_t uVar10;
+  uint32_t *puVar11;
+  uint32_t *puVar12;
+  uint32_t *puVar13;
+  uint16_t *puVar14;
   bool bVar15;
   
   pvVar6 = psos_config.data_area;
@@ -18671,30 +18673,30 @@ __exception void kernel_init(void)
           (uint)psos_config.message_buffers * 0x18 +
           (uint)psos_config.exchange_records * 0x22 + psos_config.supervisor_stack_size + 0xda;
   if ((uint)(iVar5 + (int)psos_config.data_area) <= psos_config.data_end) {
-    puVar11 = (undefined4 *)((int)psos_config.data_area + psos_config.supervisor_stack_size + 200);
-    *(undefined4 **)((int)psos_config.data_area + 0x20) = puVar11;
-    *(undefined2 *)((int)pvVar6 + 0xb8) = 0xdeaf;
-    *(undefined4 *)((int)pvVar6 + 0x30) = 0;
-    *(undefined4 *)((int)pvVar6 + 0x14) = 0;
-    *(undefined4 *)((int)pvVar6 + 0x18) = 0;
+    puVar11 = (uint32_t *)((int)psos_config.data_area + psos_config.supervisor_stack_size + 200);
+    *(uint32_t **)((int)psos_config.data_area + 0x20) = puVar11;
+    *(uint16_t *)((int)pvVar6 + 0xb8) = 0xdeaf;
+    *(uint32_t *)((int)pvVar6 + 0x30) = 0;
+    *(uint32_t *)((int)pvVar6 + 0x14) = 0;
+    *(uint32_t *)((int)pvVar6 + 0x18) = 0;
     uVar7 = psos_config.exchange_records;
     puVar12 = puVar11;
     if (psos_config.exchange_records != 0) {
-      *(undefined4 **)((int)pvVar6 + 0x18) = puVar11;
+      *(uint32_t **)((int)pvVar6 + 0x18) = puVar11;
       do {
         puVar13 = puVar12;
-        *(undefined1 *)((int)puVar13 + 0x11) = 0xfe;
+        *(uint8_t *)((int)puVar13 + 0x11) = 0xfe;
         puVar13[6] = (int)puVar13 << 0x10 | (uint)puVar13 >> 0x10;
-        puVar12 = (undefined4 *)((int)puVar13 + 0x22);
+        puVar12 = (uint32_t *)((int)puVar13 + 0x22);
         puVar13[7] = puVar12;
         uVar7 = uVar7 - 1;
       } while (uVar7 != 0);
       puVar13[7] = 0;
     }
-    *(undefined4 *)((int)pvVar6 + 0x1c) = 0;
+    *(uint32_t *)((int)pvVar6 + 0x1c) = 0;
     uVar7 = psos_config.message_buffers;
     if (psos_config.message_buffers != 0) {
-      *(undefined4 **)((int)pvVar6 + 0x1c) = puVar12;
+      *(uint32_t **)((int)pvVar6 + 0x1c) = puVar12;
       do {
         puVar13 = puVar12;
         puVar12 = puVar13 + 6;
@@ -18704,18 +18706,18 @@ __exception void kernel_init(void)
       *puVar13 = 0;
     }
     uVar7 = psos_config.task_records;
-    *(undefined4 **)((int)pvVar6 + 0x10) = puVar12;
+    *(uint32_t **)((int)pvVar6 + 0x10) = puVar12;
     do {
       puVar13 = puVar12;
-      *(undefined1 *)((int)puVar13 + 0x13) = 0xff;
+      *(uint8_t *)((int)puVar13 + 0x13) = 0xff;
       puVar13[10] = CONCAT22((short)((uint)puVar13 >> 0x10),~(ushort)puVar13);
-      puVar13[0xc] = (undefined4 *)((int)puVar13 + 0xb2);
+      puVar13[0xc] = (uint32_t *)((int)puVar13 + 0xb2);
       bVar15 = uVar7 != 0;
       uVar7 = uVar7 - 1;
-      puVar12 = (undefined4 *)((int)puVar13 + 0xb2);
+      puVar12 = (uint32_t *)((int)puVar13 + 0xb2);
     } while (bVar15);
     puVar13[0xc] = 0;
-    *(undefined4 *)((int)pvVar6 + 0xc) = 0;
+    *(uint32_t *)((int)pvVar6 + 0xc) = 0;
     if (psos_config.task_hooks != (void **)0x0) {
       pvVar1 = *psos_config.task_hooks;
       puVar11[-1] = 0x15dc2;
@@ -18723,30 +18725,30 @@ __exception void kernel_init(void)
     }
     puVar11[-1] = 0x15dc6;
     kernel_region_init();
-    *(undefined4 *)((int)pvVar6 + 0x7a) = 0x1f001f1e;
-    *(undefined4 *)((int)pvVar6 + 0x7e) = 0x1f1e1f1f;
-    *(undefined4 *)((int)pvVar6 + 0x82) = 0x1e1f1e1f;
-    *(undefined4 *)((int)pvVar6 + 0x6c) = 0;
-    *(undefined2 *)((int)pvVar6 + 0x70) = 0;
-    *(undefined4 *)((int)pvVar6 + 0x72) = 0;
-    *(undefined4 *)((int)pvVar6 + 0x76) = 0x7c20501;
+    *(uint32_t *)((int)pvVar6 + 0x7a) = 0x1f001f1e;
+    *(uint32_t *)((int)pvVar6 + 0x7e) = 0x1f1e1f1f;
+    *(uint32_t *)((int)pvVar6 + 0x82) = 0x1e1f1e1f;
+    *(uint32_t *)((int)pvVar6 + 0x6c) = 0;
+    *(uint16_t *)((int)pvVar6 + 0x70) = 0;
+    *(uint32_t *)((int)pvVar6 + 0x72) = 0;
+    *(uint32_t *)((int)pvVar6 + 0x76) = 0x7c20501;
     puVar11[-1] = 0x15df4;
     kernel_set_leap_year();
-    *(undefined1 *)((int)pvVar6 + 0x8a) = 0;
-    *(undefined4 *)((int)pvVar6 + 0x86) = *(undefined4 *)(extraout_A0 + 0x1e);
-    *(undefined4 *)((int)pvVar6 + 8) = 0;
-    puVar12 = (undefined4 *)((int)pvVar6 + 0x8c);
-    *(undefined4 **)pvVar6 = puVar12;
-    *(undefined4 *)((int)pvVar6 + 4) = puVar12;
+    *(uint8_t *)((int)pvVar6 + 0x8a) = 0;
+    *(uint32_t *)((int)pvVar6 + 0x86) = *(uint32_t *)(extraout_A0 + 0x1e);
+    *(uint32_t *)((int)pvVar6 + 8) = 0;
+    puVar12 = (uint32_t *)((int)pvVar6 + 0x8c);
+    *(uint32_t **)pvVar6 = puVar12;
+    *(uint32_t *)((int)pvVar6 + 4) = puVar12;
     *puVar12 = 0;
-    *(undefined4 **)((int)pvVar6 + 0x90) = (undefined4 *)((int)pvVar6 + 4);
-    *(undefined4 *)((int)pvVar6 + 0xb0) = 0x73797364;
-    *(undefined4 *)((int)pvVar6 + 0x9c) = 0;
-    *(undefined1 *)((int)pvVar6 + 0xa0) = 0;
-    *(undefined4 *)((int)pvVar6 + 0xa8) = 0;
-    *(undefined4 *)((int)pvVar6 + 0xb4) = *(undefined4 *)(extraout_A0 + 0x3e);
+    *(uint32_t **)((int)pvVar6 + 0x90) = (uint32_t *)((int)pvVar6 + 4);
+    *(uint32_t *)((int)pvVar6 + 0xb0) = 0x73797364;
+    *(uint32_t *)((int)pvVar6 + 0x9c) = 0;
+    *(uint8_t *)((int)pvVar6 + 0xa0) = 0;
+    *(uint32_t *)((int)pvVar6 + 0xa8) = 0;
+    *(uint32_t *)((int)pvVar6 + 0xb4) = *(uint32_t *)(extraout_A0 + 0x3e);
     *(byte *)((int)pvVar6 + 0x8b) = *(byte *)((int)pvVar6 + 0x8b) | 0x80;
-    *(undefined2 *)((int)pvVar6 + 0x24) = 1;
+    *(uint16_t *)((int)pvVar6 + 0x24) = 1;
     uVar8 = *(short *)(extraout_A0 + 0x22) * 0x24;
     iVar3 = *(int *)(extraout_A0 + 0x24);
     do {
@@ -18756,10 +18758,10 @@ __exception void kernel_init(void)
       uVar8 = uVar8 - 0x24;
     } while (bVar15);
     uVar10 = 0;
-    if (*(undefined4 **)(extraout_A0_00 + 0x42) != (undefined4 *)0x0) {
-      uVar10 = **(undefined4 **)(extraout_A0_00 + 0x42);
+    if (*(uint32_t **)(extraout_A0_00 + 0x42) != (uint32_t *)0x0) {
+      uVar10 = **(uint32_t **)(extraout_A0_00 + 0x42);
     }
-    *(undefined4 *)((int)pvVar6 + 0x30) = uVar10;
+    *(uint32_t *)((int)pvVar6 + 0x30) = uVar10;
     puVar11[-1] = 0x15e84;
     kernel_create();
     if ((char)iVar5 == 0) {
@@ -18770,7 +18772,7 @@ __exception void kernel_init(void)
       puVar11[-1] = 0x15eb4;
       kernel_start();
       *(ushort *)(extraout_A0_01 + 0x11) = *(ushort *)(extraout_A0_01 + 0x11) | 0x2000;
-      *(undefined1 *)(extraout_A0_01 + 4) = 0;
+      *(uint8_t *)(extraout_A0_01 + 4) = 0;
       *extraout_A0_01 = 0;
       iVar5 = *(int *)((int)pvVar6 + 4);
       pcVar4 = *(code **)((int)pvVar6 + 0xb4);
@@ -18779,26 +18781,26 @@ __exception void kernel_init(void)
         (*pcVar4)();
       }
       *(int *)pvVar6 = iVar5;
-      puVar9 = *(undefined2 **)(iVar5 + 0x36);
-      puVar2 = *(undefined2 **)(iVar5 + 0x3a);
+      puVar9 = *(uint16_t **)(iVar5 + 0x36);
+      puVar2 = *(uint16_t **)(iVar5 + 0x3a);
       uVar8 = *(ushort *)(iVar5 + 0x44);
       if ((uVar8 & 0x1000) == 0) {
         for (; puVar2 != puVar9; puVar9 = puVar9 + 1) {
-          puVar14 = (undefined2 *)((int)puVar11 + -2);
-          puVar11 = (undefined4 *)((int)puVar11 + -2);
+          puVar14 = (uint16_t *)((int)puVar11 + -2);
+          puVar11 = (uint32_t *)((int)puVar11 + -2);
           *puVar14 = *puVar9;
         }
       }
       else {
         uVar8 = uVar8 & 0xefff;
-        puVar11 = (undefined4 *)puVar9;
+        puVar11 = (uint32_t *)puVar9;
       }
-      *(undefined2 *)((int)puVar11 + -2) = *(undefined2 *)(iVar5 + 0x34);
-      *(undefined4 *)((int)puVar11 + -6) = *(undefined4 *)(iVar5 + 0x3e);
+      *(uint16_t *)((int)puVar11 + -2) = *(uint16_t *)(iVar5 + 0x34);
+      *(uint32_t *)((int)puVar11 + -6) = *(uint32_t *)(iVar5 + 0x3e);
       *(ushort *)((int)puVar11 + -8) = uVar8;
-      *(undefined4 *)((int)puVar11 + -0xc) = *(undefined4 *)(iVar5 + 0x46);
-      *(undefined4 *)((int)puVar11 + -0x10) = *(undefined4 *)(iVar5 + 0x4a);
-      *(undefined4 *)((int)puVar11 + -0x14) = *(undefined4 *)(iVar5 + 0x66);
+      *(uint32_t *)((int)puVar11 + -0xc) = *(uint32_t *)(iVar5 + 0x46);
+      *(uint32_t *)((int)puVar11 + -0x10) = *(uint32_t *)(iVar5 + 0x4a);
+      *(uint32_t *)((int)puVar11 + -0x14) = *(uint32_t *)(iVar5 + 0x66);
       kernel_switch_task();
       return;
     }
@@ -18988,11 +18990,11 @@ __asm__(
 __naked void kernel_region_init(void)
 
 {
-  undefined4 *puVar1;
+  uint32_t *puVar1;
   int iVar2;
   uint uVar3;
   int in_A0;
-  undefined4 *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4 *)__entry; });
+  uint32_t *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (uint32_t *)__entry; });
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   uVar3 = (*(int *)(in_A0 + 4) - (int)unaff_A3) + 1U & 0xfffffffe;
@@ -19000,33 +19002,33 @@ __naked void kernel_region_init(void)
   *unaff_A3 = 0;
   unaff_A3[1] = unaff_A6 + 0x54;
   unaff_A3[2] = 0;
-  *(undefined2 *)(unaff_A3 + 4) = 0;
-  *(undefined4 **)(unaff_A6 + 0x54) = unaff_A3;
-  *(undefined4 **)(unaff_A6 + 0x5c) = unaff_A3;
+  *(uint16_t *)(unaff_A3 + 4) = 0;
+  *(uint32_t **)(unaff_A6 + 0x54) = unaff_A3;
+  *(uint32_t **)(unaff_A6 + 0x5c) = unaff_A3;
   *(uint *)(unaff_A6 + 0x3c) = uVar3;
   *(uint *)(unaff_A6 + 0x44) = uVar3 + 1;
-  *(undefined4 *)(unaff_A6 + 0x4c) = *(undefined4 *)(in_A0 + 4);
+  *(uint32_t *)(unaff_A6 + 0x4c) = *(uint32_t *)(in_A0 + 4);
   uVar3 = *(uint *)(in_A0 + 8);
   if (uVar3 < 0x12) {
     uVar3 = 0x12;
   }
   *(uint *)(unaff_A6 + 0x34) = uVar3;
-  puVar1 = *(undefined4 **)(in_A0 + 0xc);
+  puVar1 = *(uint32_t **)(in_A0 + 0xc);
   uVar3 = (*(int *)(in_A0 + 0x10) - (int)puVar1) + 1U & 0xfffffffe;
   if (uVar3 < 0x48) {
-    *(undefined4 *)(unaff_A6 + 0x58) = 0;
+    *(uint32_t *)(unaff_A6 + 0x58) = 0;
   }
   else {
     puVar1[3] = uVar3;
     *puVar1 = 0;
     puVar1[1] = unaff_A6 + 0x58;
     puVar1[2] = 0;
-    *(undefined2 *)(puVar1 + 4) = 0;
-    *(undefined4 **)(unaff_A6 + 0x58) = puVar1;
-    *(undefined4 **)(unaff_A6 + 0x60) = puVar1;
+    *(uint16_t *)(puVar1 + 4) = 0;
+    *(uint32_t **)(unaff_A6 + 0x58) = puVar1;
+    *(uint32_t **)(unaff_A6 + 0x60) = puVar1;
     *(uint *)(unaff_A6 + 0x40) = uVar3;
     *(uint *)(unaff_A6 + 0x48) = uVar3 + 1;
-    *(undefined4 *)(unaff_A6 + 0x50) = *(undefined4 *)(in_A0 + 0x10);
+    *(uint32_t *)(unaff_A6 + 0x50) = *(uint32_t *)(in_A0 + 0x10);
     uVar3 = *(uint *)(in_A0 + 0x14);
     if (uVar3 < 0x12) {
       uVar3 = 0x12;
@@ -19149,36 +19151,36 @@ __exception void kernel_return_from_interrupt(ushort param_1)
 
 {
   int iVar1;
-  undefined2 *puVar2;
-  undefined1 *puVar3;
+  uint16_t *puVar2;
+  uint8_t *puVar3;
   code *pcVar4;
   void *pvVar5;
-  undefined4 in_D0;
+  uint32_t in_D0;
   uint uVar6;
   ushort uVar7;
-  undefined4 in_D1;
-  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 in_A0;
-  undefined4 extraout_A0;
-  undefined2 *puVar8;
-  undefined4 in_A1;
-  undefined4 extraout_A1;
-  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A6 = (undefined4)*(void **)__builtin_frame_address(0);
-  undefined2 *puVar9;
-  undefined2 *puVar10;
-  undefined2 *in_USP;
-  undefined8 uVar11;
-  undefined4 in_stack_0000000a;
-  undefined2 in_stack_0000000e;
+  uint32_t in_D1;
+  uint32_t unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t in_A0;
+  uint32_t extraout_A0;
+  uint16_t *puVar8;
+  uint32_t in_A1;
+  uint32_t extraout_A1;
+  uint32_t unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A6 = (uint32_t)*(void **)__builtin_frame_address(0);
+  uint16_t *puVar9;
+  uint16_t *puVar10;
+  uint16_t *in_USP;
+  uint64_t uVar11;
+  uint32_t in_stack_0000000a;
+  uint16_t in_stack_0000000e;
   
   pvVar5 = psos_config.data_area;
   uVar11 = CONCAT44(in_D0,in_D1);
@@ -19192,53 +19194,53 @@ __exception void kernel_return_from_interrupt(ushort param_1)
       in_A1 = extraout_A1;
     }
     if ((iVar1 != *(int *)((int)pvVar5 + 4)) && ((*(byte *)(iVar1 + 0x11) & 0x80) == 0)) {
-      *(undefined8 *)(iVar1 + 0x4e) = uVar11;
-      *(undefined4 *)(iVar1 + 0x56) = unaff_D2;
-      *(undefined4 *)(iVar1 + 0x5a) = unaff_D3;
-      *(undefined4 *)(iVar1 + 0x5e) = unaff_D4;
-      *(undefined4 *)(iVar1 + 0x62) = unaff_D5;
-      *(undefined4 *)(iVar1 + 0x66) = unaff_D6;
-      *(undefined4 *)(iVar1 + 0x6a) = unaff_D7;
-      *(undefined4 *)(iVar1 + 0x6e) = in_A0;
-      *(undefined4 *)(iVar1 + 0x72) = in_A1;
-      *(undefined4 *)(iVar1 + 0x76) = unaff_A2;
-      *(undefined4 *)(iVar1 + 0x7a) = unaff_A3;
-      *(undefined4 *)(iVar1 + 0x7e) = unaff_A4;
-      *(undefined4 *)(iVar1 + 0x4a) = unaff_A5;
-      *(undefined4 *)(iVar1 + 0x46) = unaff_A6;
+      *(uint64_t *)(iVar1 + 0x4e) = uVar11;
+      *(uint32_t *)(iVar1 + 0x56) = unaff_D2;
+      *(uint32_t *)(iVar1 + 0x5a) = unaff_D3;
+      *(uint32_t *)(iVar1 + 0x5e) = unaff_D4;
+      *(uint32_t *)(iVar1 + 0x62) = unaff_D5;
+      *(uint32_t *)(iVar1 + 0x66) = unaff_D6;
+      *(uint32_t *)(iVar1 + 0x6a) = unaff_D7;
+      *(uint32_t *)(iVar1 + 0x6e) = in_A0;
+      *(uint32_t *)(iVar1 + 0x72) = in_A1;
+      *(uint32_t *)(iVar1 + 0x76) = unaff_A2;
+      *(uint32_t *)(iVar1 + 0x7a) = unaff_A3;
+      *(uint32_t *)(iVar1 + 0x7e) = unaff_A4;
+      *(uint32_t *)(iVar1 + 0x4a) = unaff_A5;
+      *(uint32_t *)(iVar1 + 0x46) = unaff_A6;
       uVar6 = *(uint *)(iVar1 + 0x42) & 0xffff1000;
       uVar7 = (ushort)uVar6;
       *(uint *)(iVar1 + 0x42) = CONCAT22((short)(uVar6 >> 0x10),param_1 | uVar7);
-      *(undefined4 *)(iVar1 + 0x3e) = in_stack_0000000a;
-      puVar9 = (undefined2 *)&stack0x00000010;
-      *(undefined2 *)(iVar1 + 0x34) = in_stack_0000000e;
-      *(undefined2 **)(iVar1 + 0x3a) = in_USP;
-      puVar3 = *(undefined1 **)((int)pvVar5 + 0x20);
+      *(uint32_t *)(iVar1 + 0x3e) = in_stack_0000000a;
+      puVar9 = (uint16_t *)&stack0x00000010;
+      *(uint16_t *)(iVar1 + 0x34) = in_stack_0000000e;
+      *(uint16_t **)(iVar1 + 0x3a) = in_USP;
+      puVar3 = *(uint8_t **)((int)pvVar5 + 0x20);
       if ((param_1 & 0x1000) == 0 && uVar7 == 0) {
-        for (; (undefined2 *)puVar3 != puVar9; puVar9 = puVar9 + 1) {
+        for (; (uint16_t *)puVar3 != puVar9; puVar9 = puVar9 + 1) {
           in_USP = in_USP + -1;
           *in_USP = *puVar9;
         }
-        *(undefined2 **)(iVar1 + 0x36) = in_USP;
+        *(uint16_t **)(iVar1 + 0x36) = in_USP;
       }
       else {
-        *(undefined1 **)(iVar1 + 0x36) = &stack0x00000010;
-        puVar9 = (undefined2 *)puVar3;
+        *(uint8_t **)(iVar1 + 0x36) = &stack0x00000010;
+        puVar9 = (uint16_t *)puVar3;
       }
       iVar1 = *(int *)((int)pvVar5 + 4);
       pcVar4 = *(code **)((int)pvVar5 + 0xb4);
       if (pcVar4 != (code *)0x0) {
-        *(undefined4 *)((int)puVar9 + -4) = 0x1602e;
+        *(uint32_t *)((int)puVar9 + -4) = 0x1602e;
         (*pcVar4)();
       }
       *(int *)pvVar5 = iVar1;
-      puVar8 = *(undefined2 **)(iVar1 + 0x36);
-      puVar2 = *(undefined2 **)(iVar1 + 0x3a);
+      puVar8 = *(uint16_t **)(iVar1 + 0x36);
+      puVar2 = *(uint16_t **)(iVar1 + 0x3a);
       uVar7 = *(ushort *)(iVar1 + 0x44);
       if ((uVar7 & 0x1000) == 0) {
         for (; puVar2 != puVar8; puVar8 = puVar8 + 1) {
-          puVar10 = (undefined2 *)((int)puVar9 + -2);
-          puVar9 = (undefined2 *)((int)puVar9 + -2);
+          puVar10 = (uint16_t *)((int)puVar9 + -2);
+          puVar9 = (uint16_t *)((int)puVar9 + -2);
           *puVar10 = *puVar8;
         }
       }
@@ -19246,12 +19248,12 @@ __exception void kernel_return_from_interrupt(ushort param_1)
         uVar7 = uVar7 & 0xefff;
         puVar9 = puVar8;
       }
-      puVar9[-1] = *(undefined2 *)(iVar1 + 0x34);
-      *(undefined4 *)(puVar9 + -3) = *(undefined4 *)(iVar1 + 0x3e);
+      puVar9[-1] = *(uint16_t *)(iVar1 + 0x34);
+      *(uint32_t *)(puVar9 + -3) = *(uint32_t *)(iVar1 + 0x3e);
       puVar9[-4] = uVar7;
-      *(undefined4 *)(puVar9 + -6) = *(undefined4 *)(iVar1 + 0x46);
-      *(undefined4 *)(puVar9 + -8) = *(undefined4 *)(iVar1 + 0x4a);
-      *(undefined4 *)(puVar9 + -10) = *(undefined4 *)(iVar1 + 0x66);
+      *(uint32_t *)(puVar9 + -6) = *(uint32_t *)(iVar1 + 0x46);
+      *(uint32_t *)(puVar9 + -8) = *(uint32_t *)(iVar1 + 0x4a);
+      *(uint32_t *)(puVar9 + -10) = *(uint32_t *)(iVar1 + 0x66);
       kernel_switch_task();
       return;
     }
@@ -19427,7 +19429,7 @@ char * object_name(void *object)
 /* prints one exchange's line of the kernel report
    an exchange's line, "fifo", "prio" */
 
-void os_report_exchange(undefined4 *param_1,printf_function *print)
+void os_report_exchange(uint32_t *param_1,printf_function *print)
 
 {
   char cVar1;
@@ -19536,7 +19538,7 @@ char * task_status_name(void *task)
 
 /* prints one memory region's line of the kernel report */
 
-void os_report_region_line(char *name,undefined4 *param_2,printf_function *print)
+void os_report_region_line(char *name,uint32_t *param_2,printf_function *print)
 
 {
   (*print)("%4s 0x%08x %7d   0x%08x  0x%08x  0x%08x 0x%04x\r\n",name,param_2,param_2[3],*param_2,
@@ -19552,12 +19554,12 @@ void os_report_region_line(char *name,undefined4 *param_2,printf_function *print
 void * region_segment_containing(void *region,uint32_t address)
 
 {
-  undefined4 *puVar1;
+  uint32_t *puVar1;
   
-  for (puVar1 = *(undefined4 **)((int)region + 0x20);
-      (puVar1 != (undefined4 *)0x0 &&
+  for (puVar1 = *(uint32_t **)((int)region + 0x20);
+      (puVar1 != (uint32_t *)0x0 &&
       (((int)(address - (int)puVar1) < 0 || ((uint)puVar1[3] < address - (int)puVar1))));
-      puVar1 = (undefined4 *)*puVar1) {
+      puVar1 = (uint32_t *)*puVar1) {
   }
   return puVar1;
 }
@@ -19568,7 +19570,7 @@ void * region_segment_containing(void *region,uint32_t address)
 /* prints one process's line of the kernel report, with its resources and events
    a process's line, ">> RESOURCES:", ">> EVENTS: W(0x%04x) S(0x%04x)" */
 
-void os_report_process(void *param_1,char *param_2,int param_3,undefined4 param_4,
+void os_report_process(void *param_1,char *param_2,int param_3,uint32_t param_4,
                       printf_function *print)
 
 {
@@ -19582,7 +19584,7 @@ void os_report_process(void *param_1,char *param_2,int param_3,undefined4 param_
   uint uVar6;
   char *pcVar7;
   int *piVar8;
-  undefined4 *puVar9;
+  uint32_t *puVar9;
   char local_2c [16];
   char acStack_1c [20];
   int local_8;
@@ -19600,8 +19602,8 @@ void os_report_process(void *param_1,char *param_2,int param_3,undefined4 param_
   else {
     sprintf(local_2c,"%2d",param_3);
   }
-  for (puVar9 = *(undefined4 **)((int)param_1 + 0x20); puVar9 != (undefined4 *)0x0;
-      puVar9 = (undefined4 *)*puVar9) {
+  for (puVar9 = *(uint32_t **)((int)param_1 + 0x20); puVar9 != (uint32_t *)0x0;
+      puVar9 = (uint32_t *)*puVar9) {
     unaff_D6 = puVar9[3] + unaff_D6;
   }
   iVar5 = *(int *)((int)param_1 + 0x3a);
@@ -19624,7 +19626,7 @@ void os_report_process(void *param_1,char *param_2,int param_3,undefined4 param_
   }
 LAB_0001639a:
   local_8 = *(int *)((int)param_1 + 0xae);
-  *(undefined4 *)((int)param_1 + 0xae) = 0;
+  *(uint32_t *)((int)param_1 + 0xae) = 0;
   if (task_ticks_total == 0) {
     uVar6 = 0;
   }
@@ -19791,7 +19793,7 @@ void os_report_exchanges(printf_function *print)
   short sVar1;
   char *pcVar2;
   char *pcVar3;
-  undefined4 *puVar4;
+  uint32_t *puVar4;
   char acStack_36 [50];
   
   sVar1 = 0x30;
@@ -19804,8 +19806,8 @@ void os_report_exchanges(printf_function *print)
     pcVar3 = pcVar3 + 1;
   } while (sVar1 != -1);
   (*print)("%s",acStack_36);
-  for (puVar4 = *(undefined4 **)((int)psos_config.data_area + 0x14); puVar4 != (undefined4 *)0x0;
-      puVar4 = (undefined4 *)puVar4[7]) {
+  for (puVar4 = *(uint32_t **)((int)psos_config.data_area + 0x14); puVar4 != (uint32_t *)0x0;
+      puVar4 = (uint32_t *)puVar4[7]) {
     os_report_exchange(puVar4,print);
   }
   return;
@@ -19824,7 +19826,7 @@ void os_report_exchange_summary(printf_function *print)
   int iVar2;
   int iVar3;
   int iVar4;
-  undefined4 *puVar5;
+  uint32_t *puVar5;
   
   iVar2 = 0;
   iVar1 = 0;
@@ -19837,8 +19839,8 @@ void os_report_exchange_summary(printf_function *print)
       iVar4 = *(int *)(iVar4 + 0x1c)) {
     iVar1 = iVar1 + 1;
   }
-  for (puVar5 = *(undefined4 **)((int)psos_config.data_area + 0x1c); puVar5 != (undefined4 *)0x0;
-      puVar5 = (undefined4 *)*puVar5) {
+  for (puVar5 = *(uint32_t **)((int)psos_config.data_area + 0x1c); puVar5 != (uint32_t *)0x0;
+      puVar5 = (uint32_t *)*puVar5) {
     iVar3 = iVar3 + 1;
   }
   iVar4 = (int)(short)psos_config.message_buffers;
@@ -19852,18 +19854,18 @@ void os_report_exchange_summary(printf_function *print)
 
 /* a task's place in the ready queue; -1 if it is not there */
 
-int ready_queue_position(undefined4 *param_1)
+int ready_queue_position(uint32_t *param_1)
 
 {
   int iVar1;
-  undefined4 *puVar2;
+  uint32_t *puVar2;
   
   iVar1 = 0;
-  for (puVar2 = *(undefined4 **)((int)psos_config.data_area + 4);
-      (puVar2 != (undefined4 *)0x0 && (puVar2 != param_1)); puVar2 = (undefined4 *)*puVar2) {
+  for (puVar2 = *(uint32_t **)((int)psos_config.data_area + 4);
+      (puVar2 != (uint32_t *)0x0 && (puVar2 != param_1)); puVar2 = (uint32_t *)*puVar2) {
     iVar1 = iVar1 + 1;
   }
-  if (puVar2 == (undefined4 *)0x0) {
+  if (puVar2 == (uint32_t *)0x0) {
     iVar1 = -1;
   }
   return iVar1;
@@ -19878,7 +19880,7 @@ int ready_queue_position(undefined4 *param_1)
 int os_report_processes(printf_function *print)
 
 {
-  undefined4 *task;
+  uint32_t *task;
   bool bVar1;
   int iVar2;
   uint uVar3;
@@ -19932,16 +19934,16 @@ void os_report_regions(printf_function *print)
   int *piVar1;
   int iVar2;
   int iVar3;
-  undefined4 *puVar4;
+  uint32_t *puVar4;
   int *task;
-  undefined4 uVar5;
+  uint32_t uVar5;
   char *pcVar6;
   int count [2];
   int available [2];
   int used [2];
   void *start [2];
-  undefined4 local_2a [8];
-  undefined4 local_a;
+  uint32_t local_2a [8];
+  uint32_t local_a;
   char local_6;
   
   (*print)("%s","Region strt       end  min     max    pend   USED  cnt  AVAIL cnt\r\n");
@@ -19952,8 +19954,8 @@ void os_report_regions(printf_function *print)
   count[1] = 0;
   count[0] = 0;
   for (iVar2 = 0; iVar2 < task_count; iVar2 = iVar2 + 1) {
-    for (puVar4 = *(undefined4 **)((int)task_table[iVar2].task + 0x20); puVar4 != (undefined4 *)0x0;
-        puVar4 = (undefined4 *)*puVar4) {
+    for (puVar4 = *(uint32_t **)((int)task_table[iVar2].task + 0x20); puVar4 != (uint32_t *)0x0;
+        puVar4 = (uint32_t *)*puVar4) {
       iVar3 = (*(ushort *)(puVar4 + 4) & 3) - 1;
       used[iVar3] = puVar4[3] + used[iVar3];
       count[iVar3] = count[iVar3] + 1;
@@ -19963,8 +19965,8 @@ void os_report_regions(printf_function *print)
   do {
     available[iVar2] = 0;
     iVar3 = 0;
-    for (puVar4 = *(undefined4 **)((int)psos_config.data_area + iVar2 * 4 + 0x54);
-        puVar4 != (undefined4 *)0x0; puVar4 = (undefined4 *)*puVar4) {
+    for (puVar4 = *(uint32_t **)((int)psos_config.data_area + iVar2 * 4 + 0x54);
+        puVar4 != (uint32_t *)0x0; puVar4 = (uint32_t *)*puVar4) {
       available[iVar2] = puVar4[3] + available[iVar2];
       iVar3 = iVar3 + 1;
     }
@@ -19975,10 +19977,10 @@ void os_report_regions(printf_function *print)
       local_2a[iVar2 + 6] = 0;
     }
     else {
-      local_2a[iVar2] = *(undefined4 *)((int)psos_config.data_area + iVar2 * 4 + 0x4c);
-      local_2a[iVar2 + 2] = *(undefined4 *)((int)psos_config.data_area + iVar2 * 4 + 0x34);
-      local_2a[iVar2 + 4] = *(undefined4 *)((int)psos_config.data_area + iVar2 * 4 + 0x3c);
-      local_2a[iVar2 + 6] = *(undefined4 *)((int)psos_config.data_area + iVar2 * 4 + 0x44);
+      local_2a[iVar2] = *(uint32_t *)((int)psos_config.data_area + iVar2 * 4 + 0x4c);
+      local_2a[iVar2 + 2] = *(uint32_t *)((int)psos_config.data_area + iVar2 * 4 + 0x34);
+      local_2a[iVar2 + 4] = *(uint32_t *)((int)psos_config.data_area + iVar2 * 4 + 0x3c);
+      local_2a[iVar2 + 6] = *(uint32_t *)((int)psos_config.data_area + iVar2 * 4 + 0x44);
     }
     (*print)("%1d 0x%08x 0x%08x %4d %8d %8d %4dkB %4d %4dkB %3d\r\n",iVar2 + 1,start[iVar2],
              local_2a[iVar2],local_2a[iVar2 + 2],local_2a[iVar2 + 4],local_2a[iVar2 + 6],
@@ -19996,8 +19998,8 @@ void os_report_regions(printf_function *print)
           (*print)("%s","\r\n");
           goto LAB_000169e4;
         }
-        uVar5 = *(undefined4 *)((int)task + 0x52);
-        local_6 = ((byte)*(undefined4 *)((int)task + 0x56) & 0xf) + 1;
+        uVar5 = *(uint32_t *)((int)task + 0x52);
+        local_6 = ((byte)*(uint32_t *)((int)task + 0x56) & 0xf) + 1;
         iVar2 = (int)local_6;
         local_a = uVar5;
         pcVar6 = task_name(task);
@@ -20017,10 +20019,10 @@ LAB_000169e4:
 
 /* 1 if an exchange ID is one, by the swapped address its record holds; called by nothing */
 
-undefined4 exchange_id_valid(uint param_1)
+uint32_t exchange_id_valid(uint param_1)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   
   if ((((int)param_1 < (int)psos_config.data_area) || ((int)psos_config.data_end < (int)param_1)) ||
      ((*(uint *)(param_1 + 0x18) << 0x10 | *(uint *)(param_1 + 0x18) >> 0x10) != param_1)) {
@@ -20037,10 +20039,10 @@ undefined4 exchange_id_valid(uint param_1)
 
 /* 1 if a task ID is one, by the complemented address its record holds; called by nothing */
 
-undefined4 task_id_valid(uint param_1)
+uint32_t task_id_valid(uint param_1)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   
   if (((param_1 < psos_config.data_area) || (psos_config.data_end < param_1)) ||
      ((*(uint *)(param_1 + 0x28) ^ 0xffff) != param_1)) {
@@ -20058,7 +20060,7 @@ undefined4 task_id_valid(uint param_1)
 /* :DIAG:OS:PROC?'s report of the tasks
    structures.md */
 
-void os_process_report(undefined1 param_1)
+void os_process_report(uint8_t param_1)
 
 {
   printf("%s","\r\n");
@@ -20084,14 +20086,14 @@ void os_process_report(undefined1 param_1)
 /* :DIAG:OS:MEM?'s report, "Process Memseg size(bytes) next last neighbor key"
    structures.md */
 
-void os_memory_report(undefined1 param_1)
+void os_memory_report(uint8_t param_1)
 
 {
   void *task;
   char *name;
   int iVar1;
-  undefined4 *puVar2;
-  undefined4 *puVar3;
+  uint32_t *puVar2;
+  uint32_t *puVar3;
   code *print;
   
   printf("%s","\r\n");
@@ -20101,8 +20103,8 @@ void os_memory_report(undefined1 param_1)
   printf("%s","Process  Memseg size(bytes)     next        last    neighbor   key\r\n");
   for (iVar1 = 0; iVar1 < task_count; iVar1 = iVar1 + 1) {
     task = task_table[iVar1].task;
-    for (puVar2 = *(undefined4 **)((int)task + 0x20); puVar2 != (undefined4 *)0x0;
-        puVar2 = (undefined4 *)*puVar2) {
+    for (puVar2 = *(uint32_t **)((int)task + 0x20); puVar2 != (uint32_t *)0x0;
+        puVar2 = (uint32_t *)*puVar2) {
       print = printf;
       puVar3 = puVar2;
       name = task_name(task);
@@ -20111,11 +20113,11 @@ void os_memory_report(undefined1 param_1)
   }
   iVar1 = 0;
   do {
-    puVar2 = *(undefined4 **)((int)psos_config.data_area + iVar1 * 4 + 0x54);
-    if (puVar2 != (undefined4 *)0x0) {
+    puVar2 = *(uint32_t **)((int)psos_config.data_area + iVar1 * 4 + 0x54);
+    if (puVar2 != (uint32_t *)0x0) {
       printf(">> Free memory - region: %d\r\n",iVar1);
     }
-    for (; puVar2 != (undefined4 *)0x0; puVar2 = (undefined4 *)*puVar2) {
+    for (; puVar2 != (uint32_t *)0x0; puVar2 = (uint32_t *)*puVar2) {
       os_report_region_line("****",puVar2,printf);
     }
     iVar1 = iVar1 + 1;
@@ -20168,7 +20170,7 @@ void task_stack_info(void *task,uint32_t *user_top,uint32_t *user_pointer,uint32
 /* "pid name USP size SSP size", each task's stacks and their use
    structures.md */
 
-void task_stack_report(undefined1 param_1)
+void task_stack_report(uint8_t param_1)
 
 {
   void *task;
@@ -20274,7 +20276,7 @@ void psos_debug_output(char param_1)
   sr = set_interrupt_mask(0x700);
   if (param_1 == 0) {
     psos_debug_enabled = 0;
-    *(undefined4 *)((int)psos_config.data_area + 0x30) = 0;
+    *(uint32_t *)((int)psos_config.data_area + 0x30) = 0;
   }
   else {
     psos_debug_enabled = 1;
@@ -20382,7 +20384,7 @@ void task_count_tick(void)
 __regcall int psos_call(char service /* d7 */,int d0 /* d0 */,int d1 /* d1 */,int d2 /* d2 */,int d3 /* d3 */,void *a0 /* a0 */,void *a1 /* a1 */)
 
 {
-  undefined2 local_2;
+  uint16_t local_2;
   
   __m68k_trap(3);
   if (service != 0) {
@@ -20457,7 +20459,7 @@ __regcall int psos_io_call(char function /* d7 */,int device /* d0 */,int d1 /* 
 
 {
   undefined3 unaff_0000001c;
-  undefined2 local_2;
+  uint16_t local_2;
   
   local_2 = CONCAT11((char)((uint)device >> 8),function);
   __m68k_trap(4);
@@ -21436,10 +21438,10 @@ ulong psos_io_control(ulong device,ulong a,ulong b)
    called.
    context, read */
 
-__naked undefined4 cpu_register_test(void)
+__naked uint32_t cpu_register_test(void)
 
 {
-  undefined1 local_30 [4];
+  uint8_t local_30 [4];
   
   if (local_30 != (void *)((char *)&local_30 + sizeof local_30)) {
     bcdAdjust(0xaa);
@@ -21613,23 +21615,23 @@ __naked void ram_pattern_test(void)
   preserved_region_fields *ppVar7;
   uint *puVar8;
   uint16_t *puVar10;
-  undefined1 *puVar11;
-  undefined2 *puVar13;
+  uint8_t *puVar11;
+  uint16_t *puVar13;
   uint16_t uStack_2e;
   uint *puVar9;
-  undefined1 *puVar12;
-  undefined2 *puVar14;
-  undefined2 *puVar15;
+  uint8_t *puVar12;
+  uint16_t *puVar14;
+  uint16_t *puVar15;
   
   selftest.ram = 0;
   selftest.ram_data_bits = 0;
   selftest.ram_address_lines = 0;
   ppVar6 = &preserved_region;
-  puVar13 = (undefined2 *)(void *)((char *)&uStack_2e + sizeof uStack_2e);
+  puVar13 = (uint16_t *)(void *)((char *)&uStack_2e + sizeof uStack_2e);
   while( true ) {
     uVar3 = 0;
     sVar5 = 0x17;
-    puVar11 = (undefined1 *)puVar13;
+    puVar11 = (uint8_t *)puVar13;
     do {
       ppVar7 = ppVar6;
       puVar12 = puVar11 + -2;
@@ -21638,7 +21640,7 @@ __naked void ram_pattern_test(void)
       ppVar6 = (preserved_region_fields *)&ppVar7->restore;
       puVar11 = puVar11 + -2;
     } while (sVar5 != -1);
-    *(undefined4 *)(ppVar7[-1].values + 0x18) = 0xaaaaaaaa;
+    *(uint32_t *)(ppVar7[-1].values + 0x18) = 0xaaaaaaaa;
     ppVar7[-0xffffffff00000001].values[0x14] = 0xaa;
     ppVar7[-0xffffffff00000001].values[0x15] = 0xaa;
     ppVar7[-0xffffffff00000001].values[0x16] = 0xaa;
@@ -21667,9 +21669,9 @@ __naked void ram_pattern_test(void)
     ppVar7[-0xffffffff00000001].pll.loop_running = 0xaa;
     ppVar7[-0xffffffff00000001].pll.sync_requested = 0xaa;
     ppVar7[-0xffffffff00000001].pll.field_3d5 = 0xaa;
-    *(undefined4 *)((int)&ppVar7[-1].pll.reference_uptime + 2) = 0xaaaaaaaa;
-    *(undefined4 *)((int)&ppVar7[-1].pll.holdover_duration + 2) = 0xaaaaaaaa;
-    *(undefined4 *)&ppVar7[-1].pll.led_tmh_valid = 0xaaaaaaaa;
+    *(uint32_t *)((int)&ppVar7[-1].pll.reference_uptime + 2) = 0xaaaaaaaa;
+    *(uint32_t *)((int)&ppVar7[-1].pll.holdover_duration + 2) = 0xaaaaaaaa;
+    *(uint32_t *)&ppVar7[-1].pll.led_tmh_valid = 0xaaaaaaaa;
     puVar8 = (uint *)((int)&ppVar7[-1].pll.holdover_start_date + 2);
     *puVar8 = 0xaaaaaaaa;
     sVar5 = 0xb;
@@ -21700,12 +21702,12 @@ __naked void ram_pattern_test(void)
       puVar8 = puVar9;
     } while (sVar5 != -1);
     sVar5 = 0x17;
-    puVar13 = (undefined2 *)puVar12;
+    puVar13 = (uint16_t *)puVar12;
     do {
       puVar8 = puVar9;
       puVar14 = puVar13 + 1;
       puVar15 = puVar13 + 1;
-      *(undefined2 *)((int)puVar8 + -2) = *puVar13;
+      *(uint16_t *)((int)puVar8 + -2) = *puVar13;
       sVar5 = sVar5 + -1;
       puVar9 = (uint *)((int)puVar8 + -2);
       puVar13 = puVar13 + 1;
@@ -22417,9 +22419,9 @@ void selftest_execute(char param_1)
 
 {
   code *pcVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   char_slot run;
-  undefined4 uVar3;
+  uint32_t uVar3;
   
   selftest.running = 1;
   watchdog_pll = watchdog_pll + 1;
@@ -22548,10 +22550,10 @@ void selftest_init(void)
 
 /* if a test is running, sets selftest_abort and waits until it stops; returns whether one was */
 
-undefined1 selftest_abort_wait(void)
+uint8_t selftest_abort_wait(void)
 
 {
-  undefined1 uVar1;
+  uint8_t uVar1;
   
   if (selftest.running == 0) {
     uVar1 = 0;
@@ -22692,7 +22694,7 @@ void selftest_print_failure(char param_1)
   uint param2;
   char *pcVar2;
   char *pcVar3;
-  undefined **ppuVar4;
+  uint8_t **ppuVar4;
   char acStack_12 [14];
   
   ppuVar4 = &PTR_lamp_test_command_000186b0;
@@ -22701,7 +22703,7 @@ void selftest_print_failure(char param_1)
     selftest.eeprom = 0;
   }
   selftest.running = 1;
-  for (; *ppuVar4 != (undefined *)0x0; ppuVar4 = ppuVar4 + 2) {
+  for (; *ppuVar4 != (uint8_t *)0x0; ppuVar4 = ppuVar4 + 2) {
     param2 = (*(code *)*ppuVar4)();
     if (param2 != 0) {
       selftest.passed = 0;
@@ -22759,11 +22761,11 @@ ushort shift_right_36(ushort *param_1)
 
 /* writes three words to QSPI device 2, the hex DAC, reads them back shifted and compares */
 
-undefined1 qspi_hex_dac_test(void)
+uint8_t qspi_hex_dac_test(void)
 
 {
   uint uVar1;
-  undefined1 uVar2;
+  uint8_t uVar2;
   uint16_t local_18 [6];
   qspi_buffers buffers;
   
@@ -22830,11 +22832,11 @@ uint8_t qspi_adc_test(void)
 
 /* loads the FPGA and checks it */
 
-undefined1 fpga_load_test(void)
+uint8_t fpga_load_test(void)
 
 {
   char cVar1;
-  undefined1 uVar2;
+  uint8_t uVar2;
   
   cVar1 = fpga_program(0,0);
   if (cVar1 == 0) {
@@ -22915,7 +22917,7 @@ void qspi_tests_run(void)
 
 /* runs self-test n, 0 to 13, through selftest_execute and copies its result cells */
 
-void selftest_run(undefined4 param_1)
+void selftest_run(uint32_t param_1)
 
 {
   selftest.test = (byte)param_1;
@@ -23116,7 +23118,7 @@ int16_t selftest_internal_reference_with_lamp(void)
 
 /* runs the lamp test and returns 0; the check "DISP", first in selftest_print_failure's table */
 
-undefined4 lamp_test_command(void)
+uint32_t lamp_test_command(void)
 
 {
   lamp_test();
@@ -23181,7 +23183,7 @@ uint32_t selftest_power_with_lamp(void)
    clear
    Not a C function (exception; read): entered by the processor, not called. */
 
-__exception void console_exception_hook(undefined4 param_1)
+__exception void console_exception_hook(uint32_t param_1)
 
 {
   exception_name(__ghidra_piece(unsigned short, param_1, 2));
@@ -23229,7 +23231,7 @@ __pforth void forth_abort(forth_user_end user,long *sp,char *input)
   pcVar2[0] = 0;
   pcVar2[1] = 0;
   if (ADJ(user)->state != 0) {
-    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
     forth_unlink_latest(user,unaff_A4);
   }
   ADJ(user)->state = 0;
@@ -23281,8 +23283,8 @@ __pforth void forth_interpret(forth_user_end user,long *sp,void *dp)
   code *pcVar4;
   int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
-  undefined4 *puVar5;
-  undefined1 uVar6;
+  uint32_t *puVar5;
+  uint8_t uVar6;
   
 code_r0x00018f0e:
   do {
@@ -23298,7 +23300,7 @@ LAB_00018ec8:
       pcVar2[0] = 0;
       pcVar2[1] = 0;
       if (ADJ(user)->state != 0) {
-        *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+        *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
         forth_unlink_latest(user,dp);
       }
       ADJ(user)->state = 0;
@@ -23319,8 +23321,8 @@ LAB_00018ec8:
       }
       else if ((extraout_D1 & 4) == 0) {
         if ((extraout_D1 & 8) == 0) {
-          puVar5 = (undefined4 *)((int)dp + 2);
-          *(undefined2 *)dp = 0x4eb9;
+          puVar5 = (uint32_t *)((int)dp + 2);
+          *(uint16_t *)dp = 0x4eb9;
           dp = (void *)((int)dp + 6);
           *puVar5 = extraout_A0;
         }
@@ -23328,9 +23330,9 @@ LAB_00018ec8:
           sVar3 = *(short *)(unaff_A2 + 8) >> 1;
           pcVar4 = extraout_A0;
           while (sVar3 = sVar3 + -1, sVar3 != -1) {
-            *(undefined2 *)dp = *(undefined2 *)pcVar4;
+            *(uint16_t *)dp = *(uint16_t *)pcVar4;
             pcVar4 = pcVar4 + 2;
-            dp = (undefined2 *)((int)dp + 2);
+            dp = (uint16_t *)((int)dp + 2);
           }
         }
         goto code_r0x00018f0e;
@@ -23410,7 +23412,7 @@ __asm__(
    A3.
    console.md */
 
-__pforth undefined4 forth_parse_number(forth_user_end user /* a5 */,long *sp /* a6 */)
+__pforth uint32_t forth_parse_number(forth_user_end user /* a5 */,long *sp /* a6 */)
 
 {
   void *pvVar1;
@@ -23419,14 +23421,14 @@ __pforth undefined4 forth_parse_number(forth_user_end user /* a5 */,long *sp /* 
   uint uVar3;
   char cVar4;
   int iVar5;
-  undefined4 uVar6;
+  uint32_t uVar6;
   int iVar7;
-  undefined2 unaff_D7w = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined2)__entry; });
+  uint16_t unaff_D7w = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint16_t)__entry; });
   char *in_A0;
   char *extraout_A0;
   void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   bool bVar8;
-  undefined8 uVar9;
+  uint64_t uVar9;
   
   iVar5 = 0;
   iVar7 = 0;
@@ -23447,7 +23449,7 @@ __pforth undefined4 forth_parse_number(forth_user_end user /* a5 */,long *sp /* 
       pcVar2[0] = 0;
       pcVar2[1] = 0;
       if (ADJ(user)->state != 0) {
-        *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+        *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
         forth_unlink_latest(user,unaff_A4);
       }
       ADJ(user)->state = 0;
@@ -23705,10 +23707,10 @@ __asm__(
    A3.  In: A3.
    console.md */
 
-__pforth undefined4 forth_is_space(char *input /* a3 */)
+__pforth uint32_t forth_is_space(char *input /* a3 */)
 
 {
-  undefined4 in_D0;
+  uint32_t in_D0;
   
   return in_D0;
 }
@@ -23752,7 +23754,7 @@ __asm__(
 __pforth void forth_skip_spaces(char *input /* a3 */)
 
 {
-  undefined1 in_ZF;
+  uint8_t in_ZF;
   
   do {
     forth_is_space(input);
@@ -23862,11 +23864,11 @@ __asm__(
    A3.
    console.md */
 
-__pforth undefined4 forth_read_line(forth_user_end user /* a5 */,char *input /* a3 */)
+__pforth uint32_t forth_read_line(forth_user_end user /* a5 */,char *input /* a3 */)
 
 {
-  undefined4 in_D0;
-  undefined4 extraout_D0;
+  uint32_t in_D0;
+  uint32_t extraout_D0;
   int in_D1;
   int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
@@ -24558,13 +24560,13 @@ __pforth void forth_fill(long *sp)
 {
   long lVar1;
   uint uVar2;
-  undefined1 *puVar4;
+  uint8_t *puVar4;
   ushort uVar3;
   
   lVar1 = *sp;
   uVar2 = sp[1] - 1;
   if (-1 < (int)uVar2) {
-    puVar4 = (undefined1 *)sp[2];
+    puVar4 = (uint8_t *)sp[2];
     do {
       *puVar4 = (char)lVar1;
       uVar3 = (short)uVar2 - 1;
@@ -25497,13 +25499,13 @@ __pforth void forth_cmove(long *sp)
 
 {
   uint uVar1;
-  undefined1 *puVar3;
-  undefined1 *puVar4;
+  uint8_t *puVar3;
+  uint8_t *puVar4;
   ushort uVar2;
   
   uVar1 = *sp - 1;
-  puVar3 = (undefined1 *)sp[1];
-  puVar4 = (undefined1 *)sp[2];
+  puVar3 = (uint8_t *)sp[1];
+  puVar4 = (uint8_t *)sp[2];
   if (-1 < (int)uVar1) {
     do {
       *puVar3 = *puVar4;
@@ -25550,13 +25552,13 @@ __pforth void forth_cmove_greater(long *sp)
 {
   int iVar1;
   uint uVar2;
-  undefined1 *puVar4;
-  undefined1 *puVar5;
+  uint8_t *puVar4;
+  uint8_t *puVar5;
   ushort uVar3;
   
   iVar1 = *sp;
-  puVar4 = (undefined1 *)(iVar1 + sp[1]);
-  puVar5 = (undefined1 *)(iVar1 + sp[2]);
+  puVar4 = (uint8_t *)(iVar1 + sp[1]);
+  puVar5 = (uint8_t *)(iVar1 + sp[2]);
   uVar2 = iVar1 - 1;
   if (-1 < (int)uVar2) {
     do {
@@ -25766,10 +25768,10 @@ __asm__(
    A3.
    console.md */
 
-__pforth undefined4 forth_resolve_branch(long *sp /* a6 */,void *dp /* a4 */)
+__pforth uint32_t forth_resolve_branch(long *sp /* a6 */,void *dp /* a4 */)
 
 {
-  undefined4 in_D0;
+  uint32_t in_D0;
   
   *(short *)((int)dp + -2) = ((short)*sp - (short)dp) + 2;
   return in_D0;
@@ -25805,10 +25807,10 @@ __asm__(
    console.md */
 
 /* preserves all */
-__pforth undefined4 forth_resolve_forward(long *sp /* a6 */,void *dp /* a4 */)
+__pforth uint32_t forth_resolve_forward(long *sp /* a6 */,void *dp /* a4 */)
 
 {
-  undefined4 in_D0;
+  uint32_t in_D0;
   
   *(short *)(*sp + -2) = ((short)dp - (short)*sp) + 2;
   return in_D0;
@@ -25864,7 +25866,7 @@ __pforth void forth_check_pairs(long *sp /* a6 */)
     pcVar2[0] = 0;
     pcVar2[1] = 0;
     if (ADJ(unaff_A5)->state != 0) {
-      *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+      *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
       forth_unlink_latest(unaff_A5,unaff_A4);
     }
     ADJ(unaff_A5)->state = 0;
@@ -26085,7 +26087,7 @@ __pforth void forth_plus_loop(void)
   void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   void *pvVar1;
   long *unaff_A6 = (long *)*(void **)__builtin_frame_address(0);
-  undefined1 uVar2;
+  uint8_t uVar2;
   
   forth_check_pairs(unaff_A6);
   pvVar1 = forth_compile_code((uint16_t *)0x193d0,unaff_A4);
@@ -26131,7 +26133,7 @@ __pforth void forth_loop(long *sp)
 {
   void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   void *pvVar1;
-  undefined1 uVar2;
+  uint8_t uVar2;
   
   forth_check_pairs(sp);
   pvVar1 = forth_compile_code((uint16_t *)0x193b6,unaff_A4);
@@ -26701,7 +26703,7 @@ __pforth void forth_semicolon(forth_user_end user,long *sp,void *dp)
     pcVar2[0] = 0;
     pcVar2[1] = 0;
     if (ADJ(user)->state != 0) {
-      *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+      *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
       forth_unlink_latest(user,dp);
     }
     ADJ(user)->state = 0;
@@ -26713,7 +26715,7 @@ __pforth void forth_semicolon(forth_user_end user,long *sp,void *dp)
   puVar3 = (ushort *)((int)ADJ(user)->latest + 10);
   *puVar3 = *puVar3 & 0xfffd;
   forth_align(dp);
-  *(undefined2 *)dp = 0x4e75;
+  *(uint16_t *)dp = 0x4e75;
   ADJ(user)->here = (void *)((int)dp + 2);
   return;
 }
@@ -26758,11 +26760,11 @@ __pforth void forth_parse_create_header(void)
 {
   void *pvVar1;
   char cVar2;
-  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 *extraout_A1;
+  uint32_t unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t *extraout_A1;
   char *pcVar3;
   char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
-  undefined4 *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4 *)__entry; });
+  uint32_t *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (uint32_t *)__entry; });
   char *dp;
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   char *pcVar4;
@@ -26814,8 +26816,8 @@ __pforth void forth_create_header(forth_user_end user /* a5 */,void *dp /* a4 */
 {
   void *pvVar1;
   char cVar2;
-  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 *extraout_A1;
+  uint32_t unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t *extraout_A1;
   char *pcVar3;
   char *dp_00;
   char *pcVar4;
@@ -26824,8 +26826,8 @@ __pforth void forth_create_header(forth_user_end user /* a5 */,void *dp /* a4 */
   pvVar1 = ADJ(user)->latest;
   ADJ(user)->latest = dp;
   *(void **)dp = pvVar1;
-  *(undefined4 *)((int)dp + 4) = 0;
-  *(undefined4 *)((int)dp + 8) = unaff_D3;
+  *(uint32_t *)((int)dp + 4) = 0;
+  *(uint32_t *)((int)dp + 8) = unaff_D3;
   pcVar3 = ADJ(user)->pad;
   pcVar4 = (char *)((int)dp + 0xc);
   do {
@@ -26882,11 +26884,11 @@ __pforth void forth_variable(forth_user_end user,void *dp)
   
   forth_parse_create_header();
   piVar1 = (int *)((int)dp + 2);
-  *(undefined2 *)dp = 0x2d3c;
+  *(uint16_t *)dp = 0x2d3c;
   *piVar1 = (int)piVar1;
   *piVar1 = *piVar1 + 6;
-  *(undefined2 *)((int)dp + 6) = 0x4e75;
-  *(undefined4 *)((int)dp + 8) = 0;
+  *(uint16_t *)((int)dp + 6) = 0x4e75;
+  *(uint32_t *)((int)dp + 8) = 0;
   ADJ(user)->here = (void *)((int)dp + 0xc);
   return;
 }
@@ -26928,10 +26930,10 @@ __pforth void forth_create(forth_user_end user,void *dp)
   
   forth_parse_create_header();
   piVar1 = (int *)((int)dp + 2);
-  *(undefined2 *)dp = 0x2d3c;
+  *(uint16_t *)dp = 0x2d3c;
   *piVar1 = (int)piVar1;
   *piVar1 = *piVar1 + 6;
-  *(undefined2 *)((int)dp + 6) = 0x4e75;
+  *(uint16_t *)((int)dp + 6) = 0x4e75;
   ADJ(user)->here = (void *)((int)dp + 8);
   return;
 }
@@ -26968,15 +26970,15 @@ __asm__(
 __pforth void forth_constant(void)
 
 {
-  undefined2 *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined2 *)__entry; });
+  uint16_t *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (uint16_t *)__entry; });
   int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   
   forth_parse_create_header();
   *unaff_A4 = 0x2d3c;
-  *(undefined4 *)(unaff_A4 + 1) = *unaff_A6;
+  *(uint32_t *)(unaff_A4 + 1) = *unaff_A6;
   unaff_A4[3] = 0x4e75;
-  *(undefined2 **)(unaff_A5 + -0x12) = unaff_A4 + 4;
+  *(uint16_t **)(unaff_A5 + -0x12) = unaff_A4 + 4;
   return;
 }
 
@@ -27005,9 +27007,9 @@ __asm__(
 __pforth void forth_compile_constant(forth_user_end user /* a5 */,long *sp /* a6 */,void *dp /* a4 */)
 
 {
-  *(undefined2 *)dp = 0x2d3c;
+  *(uint16_t *)dp = 0x2d3c;
   *(long *)((int)dp + 2) = *sp;
-  *(undefined2 *)((int)dp + 6) = 0x4e75;
+  *(uint16_t *)((int)dp + 6) = 0x4e75;
   ADJ(user)->here = (void *)((int)dp + 8);
   return;
 }
@@ -27044,10 +27046,10 @@ __pforth void forth_literal(long *sp,void *dp)
   iVar1 = *sp;
   if ((iVar1 < 0x80) && (-0x81 < iVar1)) {
     *(ushort *)dp = ((ushort)iVar1 & 0xff) + 0x7000;
-    *(undefined2 *)((int)dp + 2) = 0x2d00;
+    *(uint16_t *)((int)dp + 2) = 0x2d00;
   }
   else {
-    *(undefined2 *)dp = 0x2d3c;
+    *(uint16_t *)dp = 0x2d3c;
     *(int *)((int)dp + 2) = iVar1;
   }
   return;
@@ -27110,7 +27112,7 @@ __pforth void forth_mod(long *sp)
   pcVar2[0] = 0;
   pcVar2[1] = 0;
   if (ADJ(unaff_A5)->state != 0) {
-    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
     forth_unlink_latest(unaff_A5,unaff_A4);
   }
   ADJ(unaff_A5)->state = 0;
@@ -27152,11 +27154,11 @@ __pforth void forth_slash_mod(long *sp)
   char *pcVar2;
   void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
-  undefined8 uVar3;
+  uint64_t uVar3;
   
   if (*sp != 0) {
     uVar3 = forth_divide_signed();
-    *(undefined8 *)sp = uVar3;
+    *(uint64_t *)sp = uVar3;
     return;
   }
   forth_print_string("divide by zero\r\n",unaff_A5);
@@ -27167,7 +27169,7 @@ __pforth void forth_slash_mod(long *sp)
   pcVar2[0] = 0;
   pcVar2[1] = 0;
   if (ADJ(unaff_A5)->state != 0) {
-    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
     forth_unlink_latest(unaff_A5,unaff_A4);
   }
   ADJ(unaff_A5)->state = 0;
@@ -27210,12 +27212,12 @@ __pforth void forth_star_slash_mod(long *sp)
   char *pcVar2;
   void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
-  undefined8 uVar3;
+  uint64_t uVar3;
   
   if (*sp != 0) {
     forth_star(sp + 1);
     uVar3 = forth_divide_signed();
-    *(undefined8 *)sp = uVar3;
+    *(uint64_t *)sp = uVar3;
     return;
   }
   forth_print_string("divide by zero\r\n",unaff_A5);
@@ -27226,7 +27228,7 @@ __pforth void forth_star_slash_mod(long *sp)
   pcVar2[0] = 0;
   pcVar2[1] = 0;
   if (ADJ(unaff_A5)->state != 0) {
-    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
     forth_unlink_latest(unaff_A5,unaff_A4);
   }
   ADJ(unaff_A5)->state = 0;
@@ -27287,7 +27289,7 @@ __pforth void forth_star_slash(long *sp)
   pcVar2[0] = 0;
   pcVar2[1] = 0;
   if (ADJ(unaff_A5)->state != 0) {
-    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
     forth_unlink_latest(unaff_A5,unaff_A4);
   }
   ADJ(unaff_A5)->state = 0;
@@ -27346,7 +27348,7 @@ __pforth void forth_slash(long *sp)
   pcVar2[0] = 0;
   pcVar2[1] = 0;
   if (ADJ(unaff_A5)->state != 0) {
-    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
     forth_unlink_latest(unaff_A5,unaff_A4);
   }
   ADJ(unaff_A5)->state = 0;
@@ -27448,7 +27450,7 @@ __asm__(
    A3.  In: D0, D1.
    console.md */
 
-__pforth undefined8 forth_multiply(void)
+__pforth uint64_t forth_multiply(void)
 
 {
   uint in_D0;
@@ -27552,7 +27554,7 @@ __asm__(
    A3.  In: D0, D1.
    console.md */
 
-__pforth undefined8 forth_divide_unsigned(void)
+__pforth uint64_t forth_divide_unsigned(void)
 
 {
   uint uVar1;
@@ -27618,7 +27620,7 @@ __asm__(
    A3.  In: D0, D1.
    console.md */
 
-__pforth undefined8 forth_divide_short(void)
+__pforth uint64_t forth_divide_short(void)
 
 {
   uint in_D0;
@@ -28175,7 +28177,7 @@ __pforth void forth_dot_quote(forth_user_end user,void *dp,char *input)
     return;
   }
   pcVar2 = ADJ(user)->pad;
-  *(undefined2 *)dp = 0x4eb9;
+  *(uint16_t *)dp = 0x4eb9;
   *(code **)((int)dp + 2) = forth_paren_dot_quote_close_paren;
   pcVar3 = (char *)((int)dp + 6);
   do {
@@ -28360,13 +28362,13 @@ __pforth void forth_u_dot(forth_user_end user,long *sp)
 
 {
   int iVar1;
-  undefined1 extraout_D1b;
-  undefined1 *puVar2;
-  undefined1 *puVar3;
+  uint8_t extraout_D1b;
+  uint8_t *puVar2;
+  uint8_t *puVar3;
   long *sp_00;
   
-  *(undefined1 *)((int)sp + 3) = 0;
-  puVar3 = (undefined1 *)((int)sp + 3);
+  *(uint8_t *)((int)sp + 3) = 0;
+  puVar3 = (uint8_t *)((int)sp + 3);
   do {
     puVar2 = puVar3;
     forth_divide_short();
@@ -28375,7 +28377,7 @@ __pforth void forth_u_dot(forth_user_end user,long *sp)
     *puVar3 = extraout_D1b;
   } while (iVar1 != 0);
   sp_00 = (long *)(puVar2 + -2);
-  *(undefined1 *)sp_00 = 0x20;
+  *(uint8_t *)sp_00 = 0x20;
   forth_print_number(user,sp_00);
   return;
 }
@@ -28418,16 +28420,16 @@ __asm__(
 __pforth void forth_u_dot_x(long *sp)
 
 {
-  undefined1 *puVar1;
+  uint8_t *puVar1;
   uint uVar2;
-  undefined1 extraout_D1b;
+  uint8_t extraout_D1b;
   short sVar3;
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
-  undefined1 *puVar4;
+  uint8_t *puVar4;
   
-  *(undefined1 *)((int)sp + 3) = 0;
+  *(uint8_t *)((int)sp + 3) = 0;
   sVar3 = 7;
-  puVar1 = (undefined1 *)((int)sp + 3);
+  puVar1 = (uint8_t *)((int)sp + 3);
   do {
     puVar4 = puVar1;
     uVar2 = forth_digit_char();
@@ -28488,13 +28490,13 @@ __pforth void forth_dot(forth_user_end user,long *sp)
 {
   int iVar1;
   int iVar2;
-  undefined1 extraout_D1b;
-  undefined1 *puVar3;
-  undefined1 *puVar4;
+  uint8_t extraout_D1b;
+  uint8_t *puVar3;
+  uint8_t *puVar4;
   
   iVar1 = *sp;
-  *(undefined1 *)((int)sp + 3) = 0;
-  puVar4 = (undefined1 *)((int)sp + 3);
+  *(uint8_t *)((int)sp + 3) = 0;
+  puVar4 = (uint8_t *)((int)sp + 3);
   do {
     puVar3 = puVar4;
     forth_divide_short();
@@ -28851,7 +28853,7 @@ __pforth void forth_tick(long *sp)
   char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
   void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
-  undefined1 in_ZF;
+  uint8_t in_ZF;
   
   forth_parse_word(unaff_A5,unaff_A3);
   forth_find(unaff_A5);
@@ -28868,7 +28870,7 @@ __pforth void forth_tick(long *sp)
   pcVar2[0] = 0;
   pcVar2[1] = 0;
   if (ADJ(unaff_A5)->state != 0) {
-    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
     forth_unlink_latest(unaff_A5,unaff_A4);
   }
   ADJ(unaff_A5)->state = 0;
@@ -28911,12 +28913,12 @@ __pforth void forth_bracket_tick_close_bracket(void *dp)
   int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
-  undefined1 in_ZF;
+  uint8_t in_ZF;
   
   forth_parse_word(unaff_A5,unaff_A3);
   forth_find(unaff_A5);
   if ((bool)in_ZF) {
-    *(undefined2 *)dp = 0x2d3c;
+    *(uint16_t *)dp = 0x2d3c;
     *(int *)((int)dp + 2) = unaff_A2 + 4;
     return;
   }
@@ -28929,7 +28931,7 @@ __pforth void forth_bracket_tick_close_bracket(void *dp)
   pcVar2[0] = 0;
   pcVar2[1] = 0;
   if (ADJ(unaff_A5)->state != 0) {
-    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
     forth_unlink_latest(unaff_A5,dp);
   }
   ADJ(unaff_A5)->state = 0;
@@ -29027,9 +29029,9 @@ __pforth void forth_forget(forth_user_end user,void *dp)
   void *pvVar1;
   long *sp;
   char *pcVar2;
-  undefined4 *unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4 *)__entry; });
+  uint32_t *unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (uint32_t *)__entry; });
   char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
-  undefined1 in_ZF;
+  uint8_t in_ZF;
   
   forth_parse_word(user,unaff_A3);
   forth_find(user);
@@ -29054,7 +29056,7 @@ __pforth void forth_forget(forth_user_end user,void *dp)
   pcVar2[0] = 0;
   pcVar2[1] = 0;
   if (ADJ(user)->state != 0) {
-    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
     forth_unlink_latest(user,dp);
   }
   ADJ(user)->state = 0;
@@ -29137,9 +29139,9 @@ __pforth void forth_words(forth_user_end user,long *sp)
   char cVar2;
   short sVar3;
   char cVar4;
-  undefined4 *extraout_A0;
-  undefined4 *extraout_A0_00;
-  undefined4 *puVar5;
+  uint32_t *extraout_A0;
+  uint32_t *extraout_A0_00;
+  uint32_t *puVar5;
   char *pcVar6;
   char *pcVar7;
   char *pcVar8;
@@ -29148,7 +29150,7 @@ __pforth void forth_words(forth_user_end user,long *sp)
   iVar1 = *sp;
   cVar4 = 0;
   do {
-    if ((puVar5 == (undefined4 *)0x0) || ((int)puVar5 < iVar1)) {
+    if ((puVar5 == (uint32_t *)0x0) || ((int)puVar5 < iVar1)) {
       forth_print_string("\r\n",user);
       return;
     }
@@ -29185,7 +29187,7 @@ __pforth void forth_words(forth_user_end user,long *sp)
         puVar5 = extraout_A0_00;
       }
     }
-    puVar5 = (undefined4 *)*puVar5;
+    puVar5 = (uint32_t *)*puVar5;
   } while( true );
 }
 
@@ -29322,7 +29324,7 @@ __pforth void forth_query_caret_C(void)
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   __m68k_trap(3);
-  *(undefined4 *)(unaff_A6 + -4) = 0;
+  *(uint32_t *)(unaff_A6 + -4) = 0;
   return;
 }
 
@@ -29355,7 +29357,7 @@ __asm__(
 __pforth void forth_expect(forth_user_end user,long *sp)
 
 {
-  undefined4 in_D0;
+  uint32_t in_D0;
   int in_D1;
   int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   
@@ -29718,8 +29720,8 @@ __pforth void forth_recurse(forth_user_end user,void *dp)
 
 {
   forth_align(dp);
-  *(undefined2 *)dp = 0x4eb9;
-  *(undefined4 *)((int)dp + 2) = *(undefined4 *)((int)ADJ(user)->latest + 4);
+  *(uint16_t *)dp = 0x4eb9;
+  *(uint32_t *)((int)dp + 2) = *(uint32_t *)((int)ADJ(user)->latest + 4);
   return;
 }
 
@@ -29885,20 +29887,20 @@ __asm__(
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
-__pforth undefined1 forth_0x(forth_user_end user,long *sp)
+__pforth uint8_t forth_0x(forth_user_end user,long *sp)
 
 {
   void *pvVar1;
   long *sp_00;
   char cVar2;
-  undefined1 uVar3;
+  uint8_t uVar3;
   int iVar4;
   char *pcVar5;
   char *extraout_A0;
   char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
   void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   bool bVar6;
-  undefined8 uVar7;
+  uint64_t uVar7;
   
   forth_parse_word(user,unaff_A3);
   pcVar5 = ADJ(user)->pad;
@@ -29935,7 +29937,7 @@ __pforth undefined1 forth_0x(forth_user_end user,long *sp)
   pcVar5[0] = 0;
   pcVar5[1] = 0;
   if (ADJ(user)->state != 0) {
-    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
     forth_unlink_latest(user,unaff_A4);
   }
   ADJ(user)->state = 0;
@@ -30020,28 +30022,28 @@ __asm__(
    the end of the user area in A5, the dictionary pointer in A4 and the input in A3, and passes
    anything else in other registers (docs/firmware/console.md, "The kernel's registers"). */
 
-__pforth undefined8 forth_watch(forth_user_end user,long *sp,void *dp,char *input)
+__pforth uint64_t forth_watch(forth_user_end user,long *sp,void *dp,char *input)
 
 {
   ushort uVar1;
   int iVar2;
   int iVar3;
-  undefined4 in_D0;
+  uint32_t in_D0;
   uint uVar4;
-  undefined4 in_D1;
+  uint32_t in_D1;
   uint uVar5;
-  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 extraout_A0;
+  uint32_t unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t extraout_A0;
   int *piVar6;
-  undefined4 in_A1;
-  undefined4 extraout_A1;
+  uint32_t in_A1;
+  uint32_t extraout_A1;
   int *piVar7;
-  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  uint32_t unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   
   pcRam00100b48 = *(code **)*sp;
   uRam00100b28 = in_D0;
@@ -30058,7 +30060,7 @@ __pforth undefined8 forth_watch(forth_user_end user,long *sp,void *dp,char *inpu
   pvRam00100b58 = dp;
   puRam00100b5c = user;
   plRam00100b60 = sp + 1;
-  puRam00100b64 = (undefined1 *)register0x0000003c;
+  puRam00100b64 = (uint8_t *)register0x0000003c;
   uRam00100b68 = (*pcRam00100b48)();
   uVar4 = 0;
   uVar5 = 0;
@@ -30088,7 +30090,7 @@ __pforth undefined8 forth_watch(forth_user_end user,long *sp,void *dp,char *inpu
   pvRam00100b98 = dp;
   puRam00100b9c = user;
   plRam00100ba0 = sp + 1;
-  puRam00100ba4 = (undefined1 *)register0x0000003c;
+  puRam00100ba4 = (uint8_t *)register0x0000003c;
   *sp = uVar4;
   return CONCAT44(uRam00100b28,uRam00100b2c);
 }
@@ -30287,12 +30289,12 @@ __pforth void forth_spawn(forth_user_end user,long *sp,void *dp)
   char *pcVar2;
   int iVar3;
   int d1;
-  undefined4 extraout_A0;
+  uint32_t extraout_A0;
   long extraout_A0_00;
   void *a1;
   char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
   long *plVar4;
-  undefined1 in_ZF;
+  uint8_t in_ZF;
   
   forth_parse_word(user,unaff_A3);
   forth_find(user);
@@ -30300,10 +30302,10 @@ __pforth void forth_spawn(forth_user_end user,long *sp,void *dp)
     iVar3 = *sp;
     d2 = sp[1];
     forth_align(dp);
-    *(undefined2 *)dp = 7;
+    *(uint16_t *)dp = 7;
     *(void **)((int)dp + 2) = dp;
     *(short *)((int)dp + 6) = (short)iVar3;
-    *(undefined4 *)((int)dp + 8) = extraout_A0;
+    *(uint32_t *)((int)dp + 8) = extraout_A0;
     ({ __auto_type __c = psos_call(7,0,d1,d2,iVar3,(void *)0x0,a1); iVar3 = (__typeof__(iVar3))__ghidra_result_d3; __c; });
     forth_parse_word(user,unaff_A3);
     iVar3 = forth_pack_name(user);
@@ -30326,7 +30328,7 @@ __pforth void forth_spawn(forth_user_end user,long *sp,void *dp)
   pcVar2[0] = 0;
   pcVar2[1] = 0;
   if (ADJ(user)->state != 0) {
-    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
     forth_unlink_latest(user,dp);
   }
   ADJ(user)->state = 0;
@@ -31007,7 +31009,7 @@ __pforth void forth_get_v(long *sp)
 {
   __m68k_trap(3);
   *(short *)((int)sp + 6) = (short)sp[1];
-  *(undefined2 *)(sp + 1) = 0;
+  *(uint16_t *)(sp + 1) = 0;
   return;
 }
 
@@ -31136,7 +31138,7 @@ __pforth void forth_psos_io_call(long *sp)
   pcVar2[0] = 0;
   pcVar2[1] = 0;
   if (ADJ(unaff_A5)->state != 0) {
-    *(undefined4 *)((int)pvVar1 + -4) = 0x18eee;
+    *(uint32_t *)((int)pvVar1 + -4) = 0x18eee;
     forth_unlink_latest(unaff_A5,unaff_A4);
   }
   ADJ(unaff_A5)->state = 0;
@@ -31520,7 +31522,7 @@ __asm__(
 /* adds a word to the dictionary: links it, copies its name and compiles its code
    console.md */
 
-undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,undefined4 param_4)
+uint32_t pforth_define_word(char *param_1,uint32_t param_2,int param_3,uint32_t param_4)
 
 {
   char cVar1;
@@ -31529,8 +31531,8 @@ undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,undef
   int iVar2;
   int extraout_D0_00;
   short extraout_D0w;
-  undefined4 uVar3;
-  undefined4 *puVar4;
+  uint32_t uVar3;
+  uint32_t *puVar4;
   char *dp;
   char *pcVar5;
   
@@ -31565,7 +31567,7 @@ undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,undef
     dp[0] = 'N';
     dp[1] = -0x47;
     pcVar5 = dp + 6;
-    *(undefined4 *)(dp + 2) = param_2;
+    *(uint32_t *)(dp + 2) = param_2;
     if (param_3 != 0) {
       pcVar5 = ({ __auto_type __c = forth_compile_code((uint16_t *)&UNK_0001af64,pcVar5); extraout_D0_00 = (__typeof__(extraout_D0_00))param_3; __c; });
       *(short *)(pcVar5 + -2) = (short)(extraout_D0_00 << 2);
@@ -31753,10 +31755,10 @@ __naked void console_task(void)
   uint16_t local_28 [3];
   char *local_22;
   char *local_1e;
-  undefined **local_1a;
+  uint8_t **local_1a;
   void *local_16;
   void *local_12;
-  undefined4 uStackY_e;
+  uint32_t uStackY_e;
   short local_a;
   uint16_t *local_8;
   uint16_t *puVar1;
@@ -31783,7 +31785,7 @@ __naked void console_task(void)
   local_1e[0] = 0;
   local_1e[1] = 0;
   if (local_a != 0) {
-    *(undefined4 *)((int)puVar1 + -4) = 0x18eee;
+    *(uint32_t *)((int)puVar1 + -4) = 0x18eee;
     forth_unlink_latest(&stack0x00000000,dp);
   }
   local_a = 0;
@@ -32252,7 +32254,7 @@ void diag_pr_adc_avg(void)
 
 /* the pForth diagnostic word pr_hold_cause */
 
-undefined1 diag_pr_hold_cause(void)
+uint8_t diag_pr_hold_cause(void)
 
 {
   int iVar1;
@@ -32294,7 +32296,7 @@ undefined1 diag_pr_hold_cause(void)
 
 /* the pForth diagnostic word efc_write */
 
-void diag_efc_write(undefined4 param_1)
+void diag_efc_write(uint32_t param_1)
 
 {
   efc_write(__ghidra_piece(unsigned short, param_1, 2));
@@ -32306,7 +32308,7 @@ void diag_efc_write(undefined4 param_1)
 
 /* the pForth diagnostic word hdac_write */
 
-void diag_hdac_write(undefined4 param_1,undefined4 param_2)
+void diag_hdac_write(uint32_t param_1,uint32_t param_2)
 
 {
   hdac_write((byte)param_1,(byte)param_2);
@@ -32318,8 +32320,8 @@ void diag_hdac_write(undefined4 param_1,undefined4 param_2)
 
 /* the pForth diagnostic word hdac_all */
 
-void diag_hdac_all(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
-                  undefined4 param_5,undefined4 param_6)
+void diag_hdac_all(uint32_t param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4,
+                  uint32_t param_5,uint32_t param_6)
 
 {
   hdac_write_all((byte)param_1,(byte)param_2,(byte)param_3,(byte)param_4,(byte)param_5,(byte)param_6
@@ -32332,7 +32334,7 @@ void diag_hdac_all(undefined4 param_1,undefined4 param_2,undefined4 param_3,unde
 
 /* the pForth diagnostic word clk_synch */
 
-void diag_clk_synch(undefined1 param_1,undefined4 param_2)
+void diag_clk_synch(uint8_t param_1,uint32_t param_2)
 
 {
   sync_request(param_1,param_2);
@@ -32442,16 +32444,16 @@ void diag_get_time(void)
 
 /* the pForth diagnostic word set_time */
 
-void diag_set_time(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
-                  undefined4 param_5,undefined4 param_6)
+void diag_set_time(uint32_t param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4,
+                  uint32_t param_5,uint32_t param_6)
 
 {
   uint uVar1;
-  undefined4 local_8;
+  uint32_t local_8;
   
-  local_8 = CONCAT31(CONCAT21(CONCAT11(__ghidra_piece(unsigned char, local_8, 0),(undefined1)param_4),(undefined1)param_5),
-                     (undefined1)param_6);
-  uVar1 = set_timedate(CONCAT31(CONCAT21(__ghidra_piece(unsigned short, param_1, 2),(undefined1)param_2),(undefined1)param_3),
+  local_8 = CONCAT31(CONCAT21(CONCAT11(__ghidra_piece(unsigned char, local_8, 0),(uint8_t)param_4),(uint8_t)param_5),
+                     (uint8_t)param_6);
+  uVar1 = set_timedate(CONCAT31(CONCAT21(__ghidra_piece(unsigned short, param_1, 2),(uint8_t)param_2),(uint8_t)param_3),
                        local_8);
   if ((char)uVar1 != 0) {
     printf("set_timedate error: %2X\r\n",uVar1 & 0xff);
@@ -32942,7 +32944,7 @@ void diag_disable_gps_cmds(int param_1)
 
 /* the pForth diagnostic word pstat */
 
-void diag_pstat(undefined4 param_1)
+void diag_pstat(uint32_t param_1)
 
 {
   if (0 < (int8_t)param_1) {
@@ -33011,7 +33013,7 @@ void diag_pll_restart(void)
 
 /* the pForth diagnostic word pll_debug */
 
-void diag_pll_debug(undefined4 param_1)
+void diag_pll_debug(uint32_t param_1)
 
 {
   pll_debug_enabled = (uint8_t)param_1;
@@ -33596,7 +33598,7 @@ LAB_0001bdbe:
 
 /* the pForth diagnostic word log_send */
 
-void diag_log_send(undefined4 param_1)
+void diag_log_send(uint32_t param_1)
 
 {
   log_write("Log test message %d",param_1);
@@ -33747,10 +33749,10 @@ void diag_dmes_all(uint32_t param_1)
 
 /* the pForth diagnostic word wr_eeprom */
 
-undefined1 diag_wr_eeprom(char *param_1,undefined4 param_2)
+uint8_t diag_wr_eeprom(char *param_1,uint32_t param_2)
 
 {
-  undefined1 uVar1;
+  uint8_t uVar1;
   
   uVar1 = eeprom_write_byte(param_1,(char)param_2);
   return uVar1;
@@ -33918,7 +33920,7 @@ void diag_crash(uint param_1)
 
 /* the pForth diagnostic word leapsec */
 
-void diag_leapsec(undefined4 param_1,uint32_t param_2)
+void diag_leapsec(uint32_t param_1,uint32_t param_2)
 
 {
   diag_leapsec_argument_1 = (uint8_t)param_1;
@@ -33969,12 +33971,12 @@ void diag_fp_u(void)
 void diag_words_define(void)
 
 {
-  undefined **ppuVar1;
+  uint8_t **ppuVar1;
   
-  for (ppuVar1 = &PTR_diag_cal_0001c8ac; *ppuVar1 != (undefined *)0x0;
-      ppuVar1 = (undefined **)((int)ppuVar1 + 0x26)) {
+  for (ppuVar1 = &PTR_diag_cal_0001c8ac; *ppuVar1 != (uint8_t *)0x0;
+      ppuVar1 = (uint8_t **)((int)ppuVar1 + 0x26)) {
     pforth_define_word((char *)(ppuVar1 + 1),*ppuVar1,*(int *)((int)ppuVar1 + 0x1e),
-                       *(undefined4 *)((int)ppuVar1 + 0x22));
+                       *(uint32_t *)((int)ppuVar1 + 0x22));
   }
   return;
 }
@@ -34183,7 +34185,7 @@ int drtb_gets(byte *param_1,int param_2)
   int iVar3;
   uint8_t *puVar4;
   byte *pbVar5;
-  undefined1 uVar6;
+  uint8_t uVar6;
   
   iVar2 = param_2 + -1;
   iVar3 = iVar2;
@@ -34377,13 +34379,13 @@ __asm__(
    structures.md */
 
 /* preserves D0, D1, A0, A1 */
-__regcall undefined8 duart_init(void)
+__regcall uint64_t duart_init(void)
 
 {
   uint8_t uVar1;
-  undefined4 in_D0;
+  uint32_t in_D0;
   ulong uVar2;
-  undefined4 in_D1;
+  uint32_t in_D1;
   uint uVar3;
   char acStack_64 [80];
   
@@ -34906,11 +34908,11 @@ int printf(char *format,...)
 
 /* reads from the console, device 0, and its last status */
 
-undefined4 console_read(void *param_1,undefined4 param_2,undefined1 *param_3)
+uint32_t console_read(void *param_1,uint32_t param_2,uint8_t *param_3)
 
 {
   psos_io_read(0,param_1,&param_2);
-  if (param_3 != (undefined1 *)0x0) {
+  if (param_3 != (uint8_t *)0x0) {
     *param_3 = duartb.read_errors;
   }
   return param_2;
@@ -35009,7 +35011,7 @@ bool drtb_try_lock_write(void)
 
 /* closes the console device so that channel B can send the time code */
 
-undefined1 drtb_release_for_timecode(void)
+uint8_t drtb_release_for_timecode(void)
 
 {
   char cVar1;
@@ -35092,12 +35094,12 @@ void duart_output_bits(byte param_1,byte param_2)
 /* sends a message to the GPS engine on DUART channel A
    the firmware's own name, "wait_v SIG_SOQA error in drta_send_message" */
 
-undefined1 drta_send_message(char *param_1,int16_t param_2)
+uint8_t drta_send_message(char *param_1,int16_t param_2)
 
 {
   ulong uVar1;
   uint16_t sr;
-  undefined1 uVar2;
+  uint8_t uVar2;
   
   uVar2 = 0;
   uVar1 = psos_my_pid();
@@ -35859,7 +35861,7 @@ void duart_early_init(void)
 
 /* a length-prefixed message and ", %08X" with a code, to fatal_error */
 
-void fatal_error_with_code(char *param_1,undefined4 param_2,undefined4 param_3,uint param_4)
+void fatal_error_with_code(char *param_1,uint32_t param_2,uint32_t param_3,uint param_4)
 
 {
   char acStack_68 [100];
@@ -36018,8 +36020,8 @@ void fatal_error(char *message)
   ulong uVar2;
   char *pcVar3;
   uint uVar4;
-  undefined2 uVar5;
-  undefined2 uVar6;
+  uint16_t uVar5;
+  uint16_t uVar6;
   void *local_8;
   
   strncpy(crash_message,message,0x50);
@@ -36352,7 +36354,7 @@ void hdac_update(void)
 /* the efc_write word's: the value to device 7, then a strobe at 0x306000
    structures.md */
 
-void efc_write(undefined2 param_1)
+void efc_write(uint16_t param_1)
 
 {
   qspi_write(7,&param_1,1);
@@ -36506,7 +36508,7 @@ int sci_gets(char *param_1,int param_2)
   int iVar3;
   uint8_t *puVar4;
   uint8_t *puVar5;
-  undefined1 uVar6;
+  uint8_t uVar6;
   
   iVar2 = param_2 + -1;
   iVar3 = iVar2;
@@ -36928,9 +36930,9 @@ __regcall char sci_unlock(char write /* d0 */)
 {
   ulong uVar1;
   uint32_t exchange;
-  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  uint32_t unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   exchange_token *message;
-  undefined1 local_66;
+  uint8_t local_66;
   char acStack_64 [80];
   
   if (write == 1) {
@@ -37085,9 +37087,9 @@ __regcall char sci_lock(char write /* d0 */)
   ulong uVar1;
   ulong uVar2;
   uint32_t exchange;
-  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  uint32_t unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   exchange_token *buffer;
-  undefined1 local_66;
+  uint8_t local_66;
   char acStack_64 [80];
   
   if (write == 1) {
@@ -37204,13 +37206,13 @@ __asm__(
    structures.md */
 
 /* preserves D0, D1, A0, A1 */
-__regcall undefined8 sci_init(void)
+__regcall uint64_t sci_init(void)
 
 {
   uint16_t uVar1;
-  undefined4 in_D0;
+  uint32_t in_D0;
   ulong uVar2;
-  undefined4 in_D1;
+  uint32_t in_D1;
   int iVar3;
   char acStack_64 [80];
   
@@ -37787,13 +37789,13 @@ void qspi_release(void)
 /* writes a QSPI device's transfer into the QSM's queue RAM and command words, by the device's
    number */
 
-undefined4
-qspi_queue_setup(byte param_1,undefined2 *param_2,ushort param_3,char param_4,undefined2 *param_5)
+uint32_t
+qspi_queue_setup(byte param_1,uint16_t *param_2,ushort param_3,char param_4,uint16_t *param_5)
 
 {
   uint uVar1;
   uint uVar2;
-  undefined1 uVar3;
+  uint8_t uVar3;
   uint16_t *puVar4;
   uint8_t *puVar5;
   ushort uStack_6;
@@ -37979,7 +37981,7 @@ override_jmp_000205c0_case_3:
 
 /* sets a transfer up and starts it, or releases the QSPI, and waits until it is done */
 
-void qspi_start(byte param_1,undefined2 *param_2,ushort param_3,char param_4)
+void qspi_start(byte param_1,uint16_t *param_2,ushort param_3,char param_4)
 
 {
   char cVar1;
@@ -38118,11 +38120,11 @@ __asm__(
    A0, A1. */
 
 /* preserves D0, D1, A0, A1 */
-__regcall undefined8 qspi_init(void)
+__regcall uint64_t qspi_init(void)
 
 {
-  undefined4 in_D0;
-  undefined4 in_D1;
+  uint32_t in_D0;
+  uint32_t in_D1;
   uint16_t *puVar1;
   
   puVar1 = qsm.tr;
@@ -38302,7 +38304,7 @@ __regcall void qspi_transfer_raw(char device /* d0 */,void *buffers /* a1 */,sho
     qspi.receive_count = 1;
   }
   qspi.copy_pending = 1;
-  qspi_start(device,*(undefined2 **)buffers,count,1);
+  qspi_start(device,*(uint16_t **)buffers,count,1);
   do {
   } while (qspi.copy_pending != 0);
   return;
@@ -38418,7 +38420,7 @@ __asm__(
 /* psos_io_write to device 0x100 | n; hdac_write_all writes device 2, efc_write device 7
    structures.md */
 
-void qspi_write(byte param_1,void *param_2,undefined4 param_3)
+void qspi_write(byte param_1,void *param_2,uint32_t param_3)
 
 {
   psos_io_write(param_1 | 0x100,param_2,&param_3);
@@ -38431,7 +38433,7 @@ void qspi_write(byte param_1,void *param_2,undefined4 param_3)
 /* psos_io_read to device 0x100 | n
    structures.md */
 
-void qspi_read(byte param_1,void *param_2,undefined4 param_3)
+void qspi_read(byte param_1,void *param_2,uint32_t param_3)
 
 {
   psos_io_read(param_1 | 0x100,param_2,&param_3);
@@ -38443,7 +38445,7 @@ void qspi_read(byte param_1,void *param_2,undefined4 param_3)
 
 /* qspi_transfer without the copy back from receive RAM */
 
-void qspi_send(byte param_1,undefined2 *param_2,ushort param_3)
+void qspi_send(byte param_1,uint16_t *param_2,ushort param_3)
 
 {
   uint16_t uVar1;
@@ -38451,10 +38453,10 @@ void qspi_send(byte param_1,undefined2 *param_2,ushort param_3)
   int iVar3;
   char cVar4;
   uint16_t local_8;
-  undefined2 local_6;
+  uint16_t local_6;
   
   iVar3 = enter_supervisor();
-  local_6 = (undefined2)iVar3;
+  local_6 = (uint16_t)iVar3;
   qspi.field_00 = 1;
   do {
     uVar1 = qsm.spcr1;
@@ -38480,7 +38482,7 @@ void qspi_send(byte param_1,undefined2 *param_2,ushort param_3)
 
 /* waits for SPCR1 and SPSR, runs a QSPI transfer, copies the receive RAM at 0xfffd00 out */
 
-void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3)
+void qspi_transfer(byte param_1,uint32_t *param_2,ushort param_3)
 
 {
   uint16_t uVar1;
@@ -38491,12 +38493,12 @@ void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3)
   uint16_t *puVar6;
   uint16_t *puVar7;
   uint16_t local_8;
-  undefined2 local_6;
+  uint16_t local_6;
   
   puVar5 = qsm.rr;
   puVar6 = (uint16_t *)param_2[1];
   iVar3 = enter_supervisor();
-  local_6 = (undefined2)iVar3;
+  local_6 = (uint16_t)iVar3;
   qspi.field_00 = 1;
   do {
     uVar1 = qsm.spcr1;
@@ -38505,7 +38507,7 @@ void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3)
   if ((uVar2 & SPSR_SPIF) != 0) {
     qspi_isr();
   }
-  cVar4 = qspi_queue_setup(param_1,(undefined2 *)*param_2,param_3,1,&local_8);
+  cVar4 = qspi_queue_setup(param_1,(uint16_t *)*param_2,param_3,1,&local_8);
   if (cVar4 == 0) {
     qsm.spcr1 = local_8;
     do {
@@ -38573,8 +38575,8 @@ uint spoo_run(spoo_function *function,uint32_t a,uint32_t b,uint32_t c)
 {
   uint uVar1;
   ulong uVar2;
-  undefined1 auStack_1c [4];
-  undefined4 local_18;
+  uint8_t auStack_1c [4];
+  uint32_t local_18;
   spoo_function *local_14;
   uint32_t local_10;
   uint32_t local_c;
@@ -38719,18 +38721,18 @@ void fpga_setup(void)
    "FPGA programmed", "ERROR: FPGA programming failed", "FPGA INIT did not go high"; outputs.md's
    loader */
 
-undefined1 fpga_program(byte param_1,char param_2)
+uint8_t fpga_program(byte param_1,char param_2)
 
 {
-  undefined2 *puVar1;
+  uint16_t *puVar1;
   char cVar2;
   uint8_t uVar3;
   bool bVar4;
   int iVar5;
-  undefined1 uVar6;
+  uint8_t uVar6;
   char *pcVar7;
   char *pcVar8;
-  undefined2 *puVar9;
+  uint16_t *puVar9;
   char acStack_54 [80];
   
   uVar6 = 1;
@@ -38788,8 +38790,8 @@ undefined1 fpga_program(byte param_1,char param_2)
         } while (cVar2 != 0);
         debug_message(acStack_54,param_2);
       }
-      puVar9 = (undefined2 *)(&PTR_DAT_00021e2e)[(uint)param_1 * 2];
-      puVar1 = (undefined2 *)(&PTR_DAT_00021e32)[(uint)param_1 * 2];
+      puVar9 = (uint16_t *)(&PTR_DAT_00021e2e)[(uint)param_1 * 2];
+      puVar1 = (uint16_t *)(&PTR_DAT_00021e32)[(uint)param_1 * 2];
       if (param_2 == 0) {
         for (; puVar9 + 0x10 < puVar1; puVar9 = puVar9 + 0x10) {
           qspi_send(6,puVar9,0x10);
@@ -39246,10 +39248,10 @@ bool fpga_verify_chip(byte param_1,char param_2,byte param_3)
 
 /* fpga_verify_chip for chip 0 or 1 */
 
-undefined1 fpga_verify(byte param_1,char param_2)
+uint8_t fpga_verify(byte param_1,char param_2)
 
 {
-  undefined1 uVar1;
+  uint8_t uVar1;
   
   if (param_1 < 2) {
     uVar1 = fpga_verify_chip(param_1,param_2,1);
@@ -39775,7 +39777,7 @@ void log_reset_cause(void)
 
 {
   char local_5c [79];
-  undefined1 local_d;
+  uint8_t local_d;
   uint32_t local_c;
   time_of_day local_8;
   
@@ -39831,14 +39833,14 @@ void gps_pps_monitor_reset(void)
 /* "GPS 1pps signal is dead", "short gate, count %d", "long gate, count %d"
    structures.md */
 
-undefined1 gps_pps_check(void)
+uint8_t gps_pps_check(void)
 
 {
   char cVar1;
   uint8_t uVar2;
   bool bVar3;
   uint8_t uVar4;
-  undefined1 uVar5;
+  uint8_t uVar5;
   
   uVar5 = 1;
   bVar3 = false;
@@ -39933,7 +39935,7 @@ void internal_pps_monitor_reset(void)
 /* "Internal 1pps signal is dead", "count %d"
    structures.md */
 
-undefined1 internal_pps_check(void)
+uint8_t internal_pps_check(void)
 
 {
   char cVar1;
@@ -39984,11 +39986,11 @@ void hmon_task(void)
   ushort uVar6;
   byte bVar7;
   byte bVar8;
-  undefined2 local_e;
-  undefined2 local_c;
-  undefined2 local_a;
-  undefined2 local_8;
-  undefined2 local_6;
+  uint16_t local_e;
+  uint16_t local_c;
+  uint16_t local_a;
+  uint16_t local_8;
+  uint16_t local_6;
   
   bVar1 = false;
   local_e = 0;
@@ -40368,7 +40370,7 @@ __asm__(
 __regcall void scpi_double_to_decimal(double value /* d0 */,short digits /* d7 */,char *record /* a0 */)
 
 {
-  undefined1 uVar1;
+  uint8_t uVar1;
   uint uVar2;
   uint uVar3;
   uint uVar4;
@@ -40384,8 +40386,8 @@ __regcall void scpi_double_to_decimal(double value /* d0 */,short digits /* d7 *
   ushort uVar14;
   short sVar15;
   byte bVar16;
-  undefined4 *extraout_A0;
-  undefined4 *puVar17;
+  uint32_t *extraout_A0;
+  uint32_t *puVar17;
   short extraout_A1w;
   short extraout_A1w_00;
   short sVar18;
@@ -40433,9 +40435,9 @@ LAB_00024e22:
         sVar18 = (4 - sVar18) * 8;
         dVar21 = scpi_double_multiply
                            ((double)CONCAT44(uVar9,iVar12),
-                            (double)CONCAT44(*(undefined4 *)
+                            (double)CONCAT44(*(uint32_t *)
                                               ((int)scpi_powers_of_ten_64 + (int)sVar18),
-                                             *(undefined4 *)
+                                             *(uint32_t *)
                                               ((int)scpi_powers_of_ten_64 + sVar18 + 4)));
         sVar18 = extraout_A1w >> 6;
         if (sVar18 < 0) {
@@ -40453,9 +40455,9 @@ LAB_00024e22:
       }
       sVar18 = 0x200 - (sVar18 + -0x200);
       dVar21 = scpi_double_multiply
-                         (dVar21,(double)CONCAT44(*(undefined4 *)
+                         (dVar21,(double)CONCAT44(*(uint32_t *)
                                                    ((int)scpi_powers_of_ten + sVar18 + 0x80),
-                                                  *(undefined4 *)
+                                                  *(uint32_t *)
                                                    ((int)scpi_powers_of_ten + sVar18 + 0x84)));
       uVar9 = SUB84(dVar21,0);
       sVar18 = extraout_A1w_00 + 1;
@@ -40480,7 +40482,7 @@ LAB_00024e22:
           }
           else {
             bVar16 = (byte)digits;
-            uVar1 = (undefined1)((ushort)digits >> 8);
+            uVar1 = (uint8_t)((ushort)digits >> 8);
             puVar17 = extraout_A0;
             if ((digits & 1U) == 0) {
               sVar18 = CONCAT11(uVar1,(bVar16 >> 1) << 1 | bVar16 & 1) + 1;
@@ -40506,13 +40508,13 @@ LAB_00024e22:
             uVar13 = (ushort)((uint)iVar12 >> 0x10);
             uVar14 = (ushort)((uint)(iVar12 * 0x10000) >> 0x10);
             uVar11 = (CONCAT22(uVar14,uVar13) & 0xffff00ff) << 0x10 | (uint)uVar14;
-            *(undefined2 *)puVar17 =
-                 *(undefined2 *)
+            *(uint16_t *)puVar17 =
+                 *(uint16_t *)
                   (
                   "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
                   + (short)((uVar13 >> 8) * 2));
             sVar18 = sVar18 + -2;
-            puVar17 = (undefined4 *)((int)puVar17 + 2);
+            puVar17 = (uint32_t *)((int)puVar17 + 2);
           } while (-1 < sVar18);
           return;
         }
@@ -40965,8 +40967,8 @@ LAB_000251da:
       sVar8 = (sVar8 + 4) * 8;
       a = scpi_double_multiply
                     ((double)CONCAT44(uVar6,uVar5),
-                     (double)CONCAT44(*(undefined4 *)((int)scpi_powers_of_ten_64 + (int)sVar8),
-                                      *(undefined4 *)((int)scpi_powers_of_ten_64 + sVar8 + 4)));
+                     (double)CONCAT44(*(uint32_t *)((int)scpi_powers_of_ten_64 + (int)sVar8),
+                                      *(uint32_t *)((int)scpi_powers_of_ten_64 + sVar8 + 4)));
       if (sVar9 < 0) {
         sVar9 = sVar9 + 1;
       }
@@ -40976,7 +40978,7 @@ LAB_000251da:
     iVar4 = *(int *)((int)pdVar12 + (short)(uVar10 << 3) + 4);
     bVar13 = iVar4 == 0;
     dVar14 = ({ __auto_type __c = scpi_double_multiply
-                       (a,(double)CONCAT44(*(undefined4 *)((int)pdVar12 + (int)(short)(uVar10 << 3))
+                       (a,(double)CONCAT44(*(uint32_t *)((int)pdVar12 + (int)(short)(uVar10 << 3))
                                            ,iVar4)); bVar13 = __ghidra_flag(4); __c; });
     if (!bVar13) {
       return dVar14;
@@ -41245,7 +41247,7 @@ __regcall double scpi_scale_by_power_of_ten(double value /* d0 */,short *exponen
   int iVar1;
   short sVar2;
   uint uVar3;
-  undefined4 uVar4;
+  uint32_t uVar4;
   short sVar5;
   short sVar6;
   double *extraout_A1;
@@ -41272,8 +41274,8 @@ __regcall double scpi_scale_by_power_of_ten(double value /* d0 */,short *exponen
       sVar6 = (sVar6 + 4) * 8;
       a = scpi_double_multiply
                     ((double)CONCAT44(uVar3,uVar4),
-                     (double)CONCAT44(*(undefined4 *)((int)scpi_powers_of_ten_64 + (int)sVar6),
-                                      *(undefined4 *)((int)scpi_powers_of_ten_64 + sVar6 + 4)));
+                     (double)CONCAT44(*(uint32_t *)((int)scpi_powers_of_ten_64 + (int)sVar6),
+                                      *(uint32_t *)((int)scpi_powers_of_ten_64 + sVar6 + 4)));
       if (sVar5 < 0) {
         sVar5 = sVar5 + 1;
       }
@@ -41283,7 +41285,7 @@ __regcall double scpi_scale_by_power_of_ten(double value /* d0 */,short *exponen
     iVar1 = *(int *)((int)powers + (short)(sVar6 << 3) + 4);
     bVar7 = iVar1 == 0;
     dVar8 = ({ __auto_type __c = scpi_double_multiply
-                      (a,(double)CONCAT44(*(undefined4 *)((int)powers + (int)(short)(sVar6 << 3)),
+                      (a,(double)CONCAT44(*(uint32_t *)((int)powers + (int)(short)(sVar6 << 3)),
                                           iVar1)); bVar7 = __ghidra_flag(4); __c; });
     if (!bVar7) {
       return dVar8;
@@ -41805,7 +41807,7 @@ __asm__(
    called.
    docs/scpi/README.md, read */
 
-__naked undefined8 scpi_double_multiply_short(void)
+__naked uint64_t scpi_double_multiply_short(void)
 
 {
   int iVar1;
@@ -42027,8 +42029,8 @@ __asm__(
    keeps them all
    docs/scpi/README.md, run */
 
-undefined4
-scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,short param_5,
+uint32_t
+scpi_real_to_text(int param_1,int param_2,uint8_t *param_3,short param_4,short param_5,
                  short param_6,char param_7)
 
 {
@@ -42117,12 +42119,12 @@ LAB_00025618:
     param_6 = -param_6;
   }
   __ghidra_piece(unsigned short, exponent_digits, 0) =
-       *(undefined2 *)
+       *(uint16_t *)
         (
         "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
         + (short)((short)((uint)(int)param_6 / 100) << 1));
   __ghidra_piece(unsigned short, exponent_digits, 2) =
-       *(undefined2 *)
+       *(uint16_t *)
         (
         "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
         + (short)((short)((uint)(int)param_6 % 100) << 1));
@@ -42161,11 +42163,11 @@ LAB_00025618:
 /* the string's pointer and length
    docs/scpi/README.md, read */
 
-undefined4 scpi_parse_string(undefined2 *param_1,undefined4 *param_2)
+uint32_t scpi_parse_string(uint16_t *param_1,uint32_t *param_2)
 
 {
-  *param_2 = *(undefined4 *)(param_1 + 1);
-  *(undefined2 *)(param_2 + 1) = *param_1;
+  *param_2 = *(uint32_t *)(param_1 + 1);
+  *(uint16_t *)(param_2 + 1) = *param_1;
   return 0;
 }
 
@@ -42175,7 +42177,7 @@ undefined4 scpi_parse_string(undefined2 *param_1,undefined4 *param_2)
 /* ON as 1, OFF as 0
    docs/scpi/README.md, read */
 
-undefined4 scpi_parse_boolean(short *param_1,undefined2 *param_2)
+uint32_t scpi_parse_boolean(short *param_1,uint16_t *param_2)
 
 {
   char cVar1;
@@ -42183,7 +42185,7 @@ undefined4 scpi_parse_boolean(short *param_1,undefined2 *param_2)
   char *pcVar3;
   short *psVar4;
   
-  *(undefined1 *)((int)param_1 + *param_1 + 2) = 0;
+  *(uint8_t *)((int)param_1 + *param_1 + 2) = 0;
   pcVar3 = "ON";
   psVar4 = param_1 + 1;
   do {
@@ -42241,11 +42243,11 @@ int scpi_parse_boolean_number(scpi_number *number,void *param_2,uint16_t *value,
    no match
    docs/scpi/README.md, read */
 
-undefined4 scpi_parse_choice(short *param_1,short *param_2,int *param_3)
+uint32_t scpi_parse_choice(short *param_1,short *param_2,int *param_3)
 
 {
   int iVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   short sVar3;
   short sVar4;
   
@@ -42689,7 +42691,7 @@ int scpi_format_string(scpi_port *output,char **value)
 int scpi_format_boolean(scpi_port *output,short *value)
 
 {
-  undefined1 uVar1;
+  uint8_t uVar1;
   
   if (*value == 0) {
     uVar1 = 0x30;
@@ -42710,7 +42712,7 @@ int scpi_format_boolean(scpi_port *output,short *value)
 int scpi_format_counted_text(scpi_port *output,short *text)
 
 {
-  (*(code *)output->methods->write)(output,*(undefined4 *)(text + 1),(int)*text);
+  (*(code *)output->methods->write)(output,*(uint32_t *)(text + 1),(int)*text);
   return -0x5a;
 }
 
@@ -43089,7 +43091,7 @@ int scpi_format_double(scpi_port *output,double *value)
 
 {
   int iVar1;
-  undefined1 auStack_1c [24];
+  uint8_t auStack_1c [24];
   
   iVar1 = scpi_real_to_text(*(int *)value,*(int *)((int)value + 4),auStack_1c,0xf,3,-0x134,1);
   if (iVar1 == 0) {
@@ -43112,7 +43114,7 @@ int scpi_format_float(scpi_port *output,float *value)
   double dVar2;
   int local_20;
   int local_1c;
-  undefined1 auStack_18 [20];
+  uint8_t auStack_18 [20];
   
   dVar2 = float_to_double(*value);
   local_1c = SUB84(dVar2,0);
@@ -43138,11 +43140,11 @@ int scpi_format_double_precision(scpi_port *output,int *param_2)
   int iVar2;
   char *pcVar3;
   short sVar4;
-  undefined4 uVar5;
+  uint32_t uVar5;
   char acStack_1c [24];
   
   if (*(char *)(param_2 + 2) == 0) {
-    uVar5 = CONCAT22(*(undefined2 *)((int)param_2 + 10),0x100);
+    uVar5 = CONCAT22(*(uint16_t *)((int)param_2 + 10),0x100);
     sVar4 = 0xf;
   }
   else {
@@ -43235,20 +43237,20 @@ int scpi_format_float_resolution(scpi_port *output,float *value)
 
 /* fills a parser context's eight fields; called by nothing */
 
-undefined4
-scpi_context_init(undefined4 *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
-                 undefined4 param_5,undefined4 param_6,undefined4 param_7,undefined4 param_8,
-                 undefined4 param_9)
+uint32_t
+scpi_context_init(uint32_t *param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4,
+                 uint32_t param_5,uint32_t param_6,uint32_t param_7,uint32_t param_8,
+                 uint32_t param_9)
 
 {
   *param_1 = param_2;
-  *(undefined2 *)(param_1 + 1) = __ghidra_piece(unsigned short, param_3, 2);
-  *(undefined4 *)((int)param_1 + 6) = param_4;
-  *(undefined4 *)((int)param_1 + 10) = param_5;
-  *(undefined4 *)((int)param_1 + 0xe) = param_6;
-  *(undefined4 *)((int)param_1 + 0x1e) = param_7;
-  *(undefined4 *)((int)param_1 + 0x12) = param_8;
-  *(undefined4 *)((int)param_1 + 0x16) = param_9;
+  *(uint16_t *)(param_1 + 1) = __ghidra_piece(unsigned short, param_3, 2);
+  *(uint32_t *)((int)param_1 + 6) = param_4;
+  *(uint32_t *)((int)param_1 + 10) = param_5;
+  *(uint32_t *)((int)param_1 + 0xe) = param_6;
+  *(uint32_t *)((int)param_1 + 0x1e) = param_7;
+  *(uint32_t *)((int)param_1 + 0x12) = param_8;
+  *(uint32_t *)((int)param_1 + 0x16) = param_9;
   return 0;
 }
 
@@ -43267,13 +43269,13 @@ int scpi_parse_message_unit(void *context,short *reset_path)
   int iVar4;
   void *unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   short *unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (short *)__entry; });
-  undefined4 uVar5;
-  undefined4 *local_32;
+  uint32_t uVar5;
+  uint32_t *local_32;
   short local_2e;
   scpi_token token;
   short local_6;
   
-  *(undefined4 *)(*(int *)((int)context + 10) + 10) = 0;
+  *(uint32_t *)(*(int *)((int)context + 10) + 10) = 0;
   iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe));
   if ((iVar2 == 4) &&
      (iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe)),
@@ -43282,7 +43284,7 @@ int scpi_parse_message_unit(void *context,short *reset_path)
     goto LAB_00026e5a;
   }
   if (iVar2 == 0xc) {
-    scpi_path_reset(*(undefined4 **)((int)context + 6),*(undefined4 *)((int)context + 0x12));
+    scpi_path_reset(*(uint32_t **)((int)context + 6),*(uint32_t *)((int)context + 0x12));
     iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe));
     if (0x12 < iVar2) {
 LAB_00026b6e:
@@ -43293,8 +43295,8 @@ LAB_00026b6e:
       }
       if (0x12 < iVar2) {
         iVar4 = scpi_header_resolve(&token,*(int **)((int)context + 10),&local_2e,&local_32,
-                                    *(undefined4 **)((int)context + 6),0,(ushort)(iVar2 == 0x14),
-                                    *(undefined4 *)((int)context + 0xe),unaff_D5);
+                                    *(uint32_t **)((int)context + 6),0,(ushort)(iVar2 == 0x14),
+                                    *(uint32_t *)((int)context + 0xe),unaff_D5);
 LAB_00026bae:
         if (iVar4 != 0) goto LAB_00026e5a;
         iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe));
@@ -43319,36 +43321,36 @@ LAB_00026bae:
                     /* WARNING: Switch is manually overridden */
                 switch((&switchD_00026c64_index_zero)[(short)(iVar2 + -0x13)]) {
                 case 0xe:
-                  uVar5 = *(undefined4 *)(unaff_D7 + 2);
+                  uVar5 = *(uint32_t *)(unaff_D7 + 2);
                   goto LAB_00026c84;
                 case 0x16:
-                  uVar5 = *(undefined4 *)(unaff_D7 + 4);
+                  uVar5 = *(uint32_t *)(unaff_D7 + 4);
 LAB_00026c84:
-                  iVar4 = (*pcVar1)(&token,*(undefined4 *)((int)context + 10),
+                  iVar4 = (*pcVar1)(&token,*(uint32_t *)((int)context + 10),
                                     *(int *)(*(int *)((int)context + 10) + 10) + (int)local_2e,uVar5
                                    );
                   break;
                 case 0x40:
-                  iVar4 = (*pcVar1)(&token,*(undefined4 *)((int)context + 10),
+                  iVar4 = (*pcVar1)(&token,*(uint32_t *)((int)context + 10),
                                     *(int *)(*(int *)((int)context + 10) + 10) + (int)local_2e);
                   break;
                 case 0x62:
-                  iVar4 = (*pcVar1)(&token,*(undefined4 *)((int)context + 10),
+                  iVar4 = (*pcVar1)(&token,*(uint32_t *)((int)context + 10),
                                     *(int *)(*(int *)((int)context + 10) + 10) + (int)local_2e,
-                                    *(undefined2 *)((int)context + 4),*(undefined4 *)context,
-                                    *(undefined4 *)((int)context + 0xe),
-                                    *(undefined4 *)((int)context + 0x1e));
+                                    *(uint16_t *)((int)context + 4),*(uint32_t *)context,
+                                    *(uint32_t *)((int)context + 0xe),
+                                    *(uint32_t *)((int)context + 0x1e));
                   break;
                 case 0x94:
-                  iVar4 = (*pcVar1)(*(undefined4 *)((int)context + 10),
+                  iVar4 = (*pcVar1)(*(uint32_t *)((int)context + 10),
                                     *(int *)(*(int *)((int)context + 10) + 10) + (int)local_2e,
-                                    *(undefined2 *)((int)context + 4),*(undefined4 *)context,
-                                    *(undefined4 *)((int)context + 0xe));
+                                    *(uint16_t *)((int)context + 4),*(uint32_t *)context,
+                                    *(uint32_t *)((int)context + 0xe));
                 }
 LAB_00026d2a:
                 if (iVar4 != 0) goto LAB_00026e5a;
                 local_2e = *unaff_D7 + local_2e;
-                local_32 = (undefined4 *)*local_32;
+                local_32 = (uint32_t *)*local_32;
                 iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe))
                 ;
                 if (iVar2 == 4) {
@@ -43382,8 +43384,8 @@ LAB_00026b32:
       if ((iVar2 != 0x13) && (iVar2 != 0x14)) goto LAB_00026b32;
       iVar4 = scpi_common_header_resolve
                         (&token,*(int **)((int)context + 10),&local_2e,(int *)&local_32,0,
-                         (ushort)(iVar2 == 0x14),*(undefined4 *)((int)context + 0xe),
-                         *(undefined4 *)((int)context + 0x16));
+                         (ushort)(iVar2 == 0x14),*(uint32_t *)((int)context + 0xe),
+                         *(uint32_t *)((int)context + 0x16));
       goto LAB_00026bae;
     }
     if (iVar2 == 3) {
@@ -43405,7 +43407,7 @@ LAB_00026bf0:
     if (*(int *)(*(int *)((int)context + 10) + 10) == 0) {
       return -100;
     }
-    if ((local_32 == (undefined4 *)0x0) ||
+    if ((local_32 == (uint32_t *)0x0) ||
        (iVar4 = scpi_parameters_finish((int *)&local_32,*(void **)((int)context + 10),&local_2e),
        iVar4 == 0)) {
       return 0;
@@ -43429,7 +43431,7 @@ LAB_00026e5a:
       }
     }
     else if ((iVar2 == 2) || (iVar2 == 3)) {
-      (**(code **)(*(int *)(*(int *)context + 4) + 0xc))(*(undefined4 *)context);
+      (**(code **)(*(int *)(*(int *)context + 4) + 0xc))(*(uint32_t *)context);
     }
   }
   return iVar4;
@@ -43624,7 +43626,7 @@ switchD_00026f1c_caseD_1b:
         if (0xff < (short)uVar9) goto LAB_000272a6;
         if ((uVar9 == uVar7) && (uVar9 = (*pcVar1)(input), uVar9 != uVar7)) {
           (*(code *)input->methods->unread)(input);
-          *(undefined1 *)(iVar6 + sVar8) = 0;
+          *(uint8_t *)(iVar6 + sVar8) = 0;
           uVar5 = arena_take(iVar6,sVar8 + 1,param_3);
           (token->non_decimal).value = uVar5;
           (token->number).negative = sVar8;
@@ -43994,7 +43996,7 @@ int scpi_parameter_match(int *param_1,int kind,void *param_3,short *param_4)
     if (*(short *)(*(int *)(*param_1 + 4) + 2) == 0) {
       return (int)scpi_parameter_kind_errors[sVar2];
     }
-    *(undefined2 *)(*(int *)((int)param_3 + 10) + (int)*param_4) = 0xffff;
+    *(uint16_t *)(*(int *)((int)param_3 + 10) + (int)*param_4) = 0xffff;
     *param_4 = *param_4 + **(short **)(*param_1 + 4) + 2;
     iVar1 = *(int *)*param_1;
     *param_1 = iVar1;
@@ -44009,7 +44011,7 @@ int scpi_parameter_match(int *param_1,int kind,void *param_3,short *param_4)
 
 /* marks the descriptors left 0xffff, omitted, unless one is required */
 
-undefined4 scpi_parameters_finish(int *param_1,void *param_2,short *param_3)
+uint32_t scpi_parameters_finish(int *param_1,void *param_2,short *param_3)
 
 {
   while( true ) {
@@ -44017,7 +44019,7 @@ undefined4 scpi_parameters_finish(int *param_1,void *param_2,short *param_3)
       return 0;
     }
     if (*(short *)(*(int *)(*param_1 + 4) + 2) == 0) break;
-    *(undefined2 *)(*(int *)((int)param_2 + 10) + (int)*param_3) = 0xffff;
+    *(uint16_t *)(*(int *)((int)param_2 + 10) + (int)*param_3) = 0xffff;
     *param_3 = *param_3 + **(short **)(*param_1 + 4) + 2;
     *param_1 = *(int *)*param_1;
   }
@@ -44208,7 +44210,7 @@ LAB_00027c16:
     }
     sVar4 = (short)((int)sVar6 + (int)sVar5 >> 1);
     pcVar9 = keyword->text;
-    pcVar8 = (char *)**(undefined4 **)((int)list + sVar4 * 4 + 6);
+    pcVar8 = (char *)**(uint32_t **)((int)list + sVar4 * 4 + 6);
     bVar3 = true;
     for (sVar7 = 0; sVar7 < keyword->length; sVar7 = sVar7 + 1) {
       if (*pcVar8 < *pcVar9) {
@@ -44241,7 +44243,7 @@ int scpi_node_find_with_defaults(int *path,short *keyword,void *unused)
 
 {
   int iVar1;
-  undefined2 uVar2;
+  uint16_t uVar2;
   short sVar3;
   void *pvVar4;
   void *list;
@@ -44249,18 +44251,18 @@ int scpi_node_find_with_defaults(int *path,short *keyword,void *unused)
   pvVar4 = scpi_node_find((void *)*path,(scpi_keyword *)keyword);
   if (pvVar4 == (void *)0x0) {
     list = (void *)*path;
-    uVar2 = *(undefined2 *)(path + 1);
+    uVar2 = *(uint16_t *)(path + 1);
     do {
       if (*(short *)((int)list + 4) == -1) {
 LAB_00027c88:
-        *(undefined2 *)(path + 1) = uVar2;
+        *(uint16_t *)(path + 1) = uVar2;
         return 0;
       }
       iVar1 = *(int *)((int)list + *(short *)((int)list + 4) * 4 + 6);
       if (*(short *)(iVar1 + 0x22) != -1) {
         sVar3 = *(short *)(path + 1);
         *(short *)(path + 1) = *(short *)(path + 1) + 1;
-        *(undefined2 *)((int)path + sVar3 * 2 + 6) = *(undefined2 *)(iVar1 + 0x22);
+        *(uint16_t *)((int)path + sVar3 * 2 + 6) = *(uint16_t *)(iVar1 + 0x22);
       }
       list = *(void **)(iVar1 + 4);
       if (list == (void *)0x0) goto LAB_00027c88;
@@ -44304,14 +44306,14 @@ int scpi_node_find_numbered(int *path,short *keyword,void *unused)
       return 0;
     }
   }
-  *(undefined1 *)((int)keyword + sVar6 + 2) = 0x2a;
+  *(uint8_t *)((int)keyword + sVar6 + 2) = 0x2a;
   *keyword = sVar6 + 1;
   iVar2 = scpi_node_find_with_defaults(path,keyword,unused);
   if (iVar2 != 0) {
     if (sVar1 < 1) {
       sVar6 = *(short *)(path + 1);
       *(short *)(path + 1) = *(short *)(path + 1) + 1;
-      *(undefined2 *)((int)path + sVar6 * 2 + 6) = 1;
+      *(uint16_t *)((int)path + sVar6 * 2 + 6) = 1;
       return iVar2;
     }
     sVar6 = *(short *)(path + 1);
@@ -44333,7 +44335,7 @@ int scpi_node_find_numbered(int *path,short *keyword,void *unused)
   if (*(short *)(iVar5 + 0x22) != -1) {
     sVar6 = *(short *)(path + 1);
     *(short *)(path + 1) = *(short *)(path + 1) + 1;
-    *(undefined2 *)((int)path + sVar6 * 2 + 6) = *(undefined2 *)(iVar5 + 0x22);
+    *(uint16_t *)((int)path + sVar6 * 2 + 6) = *(uint16_t *)(iVar5 + 0x22);
     return iVar5;
   }
   return iVar5;
@@ -44345,25 +44347,25 @@ int scpi_node_find_numbered(int *path,short *keyword,void *unused)
 /* resolves a command header to its node and handler, through defaults and numeric suffixes, and
    takes room for its parameters */
 
-undefined4
-scpi_header_resolve(short *param_1,int *param_2,short *param_3,undefined4 *param_4,
-                   undefined4 *param_5,undefined2 param_6,short param_7,int *param_8,void *param_9)
+uint32_t
+scpi_header_resolve(short *param_1,int *param_2,short *param_3,uint32_t *param_4,
+                   uint32_t *param_5,uint16_t param_6,short param_7,int *param_8,void *param_9)
 
 {
   int iVar1;
   int iVar2;
-  undefined4 uVar3;
+  uint32_t uVar3;
   int iVar4;
   short sVar5;
-  undefined2 auStackY_10014 [32743];
+  uint16_t auStackY_10014 [32743];
   int local_1a;
   short local_16;
-  undefined2 local_14 [8];
+  uint16_t local_14 [8];
   
   local_1a = *param_5;
   local_16 = *(short *)(param_5 + 1);
   for (sVar5 = 0; sVar5 < local_16; sVar5 = sVar5 + 1) {
-    local_14[sVar5] = *(undefined2 *)((int)param_5 + sVar5 * 2 + 6);
+    local_14[sVar5] = *(uint16_t *)((int)param_5 + sVar5 * 2 + 6);
   }
   iVar2 = scpi_node_find_with_defaults(&local_1a,param_1,param_9);
   if (iVar2 != 0) goto LAB_00027e0c;
@@ -44380,7 +44382,7 @@ scpi_header_resolve(short *param_1,int *param_2,short *param_3,undefined4 *param
       iVar2 = *(int *)(iVar2 + 6 + *(short *)(iVar2 + 4) * 4);
 LAB_00027e0c:
       if (*(short *)(iVar2 + 0x22) != -1) {
-        local_14[local_16] = *(undefined2 *)(iVar2 + 0x22);
+        local_14[local_16] = *(uint16_t *)(iVar2 + 0x22);
         local_16 = local_16 + 1;
       }
     }
@@ -44393,11 +44395,11 @@ LAB_00027e0c:
     else {
       *(short *)(param_2 + 1) = param_7;
       *param_2 = iVar2;
-      *param_4 = *(undefined4 *)(iVar1 + 4);
+      *param_4 = *(uint32_t *)(iVar1 + 4);
       *param_3 = 0;
       if (local_16 != 0) {
         for (sVar5 = 0; sVar5 < local_16; sVar5 = sVar5 + 1) {
-          *(undefined2 *)(*(int *)((int)param_2 + 10) + (int)*param_3) = local_14[sVar5];
+          *(uint16_t *)(*(int *)((int)param_2 + 10) + (int)*param_3) = local_14[sVar5];
           *param_3 = *param_3 + 2;
         }
       }
@@ -44412,12 +44414,12 @@ LAB_00027e0c:
 
 /* moves the path one keyword down a compound header */
 
-undefined4 scpi_header_step(short *keyword,int *path,void *unused)
+uint32_t scpi_header_step(short *keyword,int *path,void *unused)
 
 {
   short sVar1;
   int iVar2;
-  undefined4 uVar3;
+  uint32_t uVar3;
   
   iVar2 = scpi_node_find_with_defaults(path,keyword,unused);
   if (iVar2 == 0) {
@@ -44429,7 +44431,7 @@ undefined4 scpi_header_step(short *keyword,int *path,void *unused)
   else if (*(short *)(iVar2 + 0x22) != -1) {
     sVar1 = *(short *)(path + 1);
     *(short *)(path + 1) = *(short *)(path + 1) + 1;
-    *(undefined2 *)((int)path + sVar1 * 2 + 6) = *(undefined2 *)(iVar2 + 0x22);
+    *(uint16_t *)((int)path + sVar1 * 2 + 6) = *(uint16_t *)(iVar2 + 0x22);
   }
   iVar2 = *(int *)(iVar2 + 4);
   *path = iVar2;
@@ -44447,11 +44449,11 @@ undefined4 scpi_header_step(short *keyword,int *path,void *unused)
 
 /* sets a header path back to a root list */
 
-void scpi_path_reset(undefined4 *param_1,undefined4 param_2)
+void scpi_path_reset(uint32_t *param_1,uint32_t param_2)
 
 {
   *param_1 = param_2;
-  *(undefined2 *)(param_1 + 1) = 0;
+  *(uint16_t *)(param_1 + 1) = 0;
   return;
 }
 
@@ -44460,15 +44462,15 @@ void scpi_path_reset(undefined4 *param_1,undefined4 param_2)
 
 /* resolves a common command's header to its node and handler and takes room for its parameters */
 
-undefined4
+uint32_t
 scpi_common_header_resolve
-          (scpi_keyword *param_1,int *param_2,undefined2 *param_3,int *param_4,undefined2 param_5,
+          (scpi_keyword *param_1,int *param_2,uint16_t *param_3,int *param_4,uint16_t param_5,
           short param_6,int *param_7,void *param_8)
 
 {
   int *piVar1;
   void *pvVar2;
-  undefined4 uVar3;
+  uint32_t uVar3;
   int iVar4;
   
   pvVar2 = scpi_node_find(param_8,param_1);
@@ -44622,11 +44624,11 @@ void status_propagate(status_model *status,status_register *reg)
 /* allocates the status model and its registers, builds the queue
    structures.md */
 
-undefined4 status_create(int *param_1,int param_2,int param_3,undefined4 param_4,undefined4 param_5)
+uint32_t status_create(int *param_1,int param_2,int param_3,uint32_t param_4,uint32_t param_5)
 
 {
   int iVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   short sVar3;
   
   iVar1 = memory_allocate(param_2 * 4 + 0x16);
@@ -44637,8 +44639,8 @@ LAB_0002810c:
   }
   else {
     *(short *)*param_1 = (short)param_2;
-    *(undefined4 *)(*param_1 + 0xe) = param_5;
-    *(undefined4 *)(*param_1 + 10) = param_4;
+    *(uint32_t *)(*param_1 + 0xe) = param_5;
+    *(uint32_t *)(*param_1 + 10) = param_4;
     for (sVar3 = 0; sVar3 < param_2; sVar3 = sVar3 + 1) {
       iVar1 = memory_allocate(0x10);
       *(int *)(*param_1 + 0x12 + sVar3 * 4) = iVar1;
@@ -44674,13 +44676,13 @@ void status_destroy(status_model *status)
    structures.md */
 
 void status_register_setup
-               (int param_1,int param_2,undefined4 param_3,undefined4 param_4,int param_5,
-               undefined4 param_6,int param_7)
+               (int param_1,int param_2,uint32_t param_3,uint32_t param_4,int param_5,
+               uint32_t param_6,int param_7)
 
 {
-  undefined2 *puVar1;
+  uint16_t *puVar1;
   
-  puVar1 = *(undefined2 **)(param_1 + 0x12 + param_2 * 4);
+  puVar1 = *(uint16_t **)(param_1 + 0x12 + param_2 * 4);
   *puVar1 = 0;
   puVar1[4] = 0;
   puVar1[3] = 0;
@@ -44693,7 +44695,7 @@ void status_register_setup
     *(int *)(param_1 + 2) = param_7;
   }
   else {
-    *(undefined4 *)(puVar1 + 5) = *(undefined4 *)(param_1 + 0x12 + param_5 * 4);
+    *(uint32_t *)(puVar1 + 5) = *(uint32_t *)(param_1 + 0x12 + param_5 * 4);
   }
   return;
 }
@@ -44804,10 +44806,10 @@ int16_t status_clear_bit(status_model *status,int condition)
 
 /* 1 for a negative condition of the error kind with a code from -199 to -100, a command error */
 
-undefined4 condition_is_command_error(int param_1)
+uint32_t condition_is_command_error(int param_1)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   
   if ((((param_1 < 0) && (status_negative_conditions[-param_1].kind == 3)) &&
       (status_negative_conditions[-param_1].register_index < -99)) &&
@@ -44923,7 +44925,7 @@ void status_read_condition(status_model *status,int index,uint16_t *condition)
 
 /* reads every register's event word, clearing them, for *CLS */
 
-undefined4 status_clear_events(short *param_1)
+uint32_t status_clear_events(short *param_1)
 
 {
   short sVar1;
@@ -44944,7 +44946,7 @@ undefined4 status_clear_events(short *param_1)
 void error_queue_clear(status_model *status,int *code)
 
 {
-  undefined4 uStack_8;
+  uint32_t uStack_8;
   
   error_queue_pop(status->queue,code,&uStack_8);
   return;
@@ -44967,11 +44969,11 @@ void error_queue_read(status_model *status,int *code,uint32_t *message)
 
 /* allocates the error queue ring with room for so many entries */
 
-undefined4 error_queue_create(int *param_1,int param_2,undefined4 param_3)
+uint32_t error_queue_create(int *param_1,int param_2,uint32_t param_3)
 
 {
   int iVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   short sVar3;
   
   iVar1 = memory_allocate(param_2 * 6 + 0x10);
@@ -44980,7 +44982,7 @@ undefined4 error_queue_create(int *param_1,int param_2,undefined4 param_3)
     uVar2 = 0xffffffc8;
   }
   else {
-    *(undefined4 *)(*param_1 + 4) = param_3;
+    *(uint32_t *)(*param_1 + 4) = param_3;
     sVar3 = (short)param_2;
     *(short *)*param_1 = sVar3;
     *(short *)(*param_1 + 2) = sVar3;
@@ -45050,7 +45052,7 @@ LAB_00028680:
 
 /* takes the oldest error and its message, prompting again once the queue is empty; 0 when empty */
 
-void error_queue_pop(short *param_1,int *param_2,undefined4 *param_3)
+void error_queue_pop(short *param_1,int *param_2,uint32_t *param_3)
 
 {
   if (*param_1 == param_1[1]) {
@@ -45063,7 +45065,7 @@ void error_queue_pop(short *param_1,int *param_2,undefined4 *param_3)
       param_1[1] = 0;
     }
     *param_2 = (int)param_1[param_1[1] * 3 + 5];
-    *param_3 = *(undefined4 *)(param_1 + param_1[1] * 3 + 6);
+    *param_3 = *(uint32_t *)(param_1 + param_1[1] * 3 + 6);
     if (*param_1 == param_1[1]) {
       status_prompt_refresh(*(status_model **)(param_1 + 2),0);
     }
@@ -45162,9 +45164,9 @@ char * error_message_lookup(int code)
 /* the parser's loop: parses each message unit, calls its handler, writes its response and reports
    errors, until the input ends */
 
-undefined4
-scpi_interpret(int param_1,int param_2,int *param_3,uint param_4,undefined4 param_5,void *param_6,
-              status_model *param_7,undefined4 param_8,undefined4 param_9)
+uint32_t
+scpi_interpret(int param_1,int param_2,int *param_3,uint param_4,uint32_t param_5,void *param_6,
+              status_model *param_7,uint32_t param_8,uint32_t param_9)
 
 {
   bool bVar1;
@@ -45174,30 +45176,30 @@ scpi_interpret(int param_1,int param_2,int *param_3,uint param_4,undefined4 para
   code *pcVar4;
   void **ppvVar5;
   uint32_t *puVar6;
-  undefined4 uVar7;
-  undefined4 auStack_92 [5];
+  uint32_t uVar7;
+  uint32_t auStack_92 [5];
   void *local_7c;
   uint16_t local_78;
-  undefined4 *local_76;
+  uint32_t *local_76;
   void *pvStack_6e;
   int local_6a;
   int local_66;
   status_model *local_62;
-  undefined4 local_5e;
-  undefined4 local_5a;
+  uint32_t local_5e;
+  uint32_t local_5a;
   void *local_56;
   char local_52;
-  undefined2 local_48;
-  undefined4 local_46;
+  uint16_t local_48;
+  uint32_t local_46;
   int local_42;
   short local_3e;
-  undefined4 *local_3c;
-  undefined4 local_38;
-  undefined4 local_34;
+  uint32_t *local_3c;
+  uint32_t local_38;
+  uint32_t local_34;
   void *local_30;
   uint16_t local_2c;
   void *local_2a;
-  undefined4 auStack_26 [8];
+  uint32_t auStack_26 [8];
   
   arena_init(param_3,param_4,(int *)&local_3c);
   local_34 = arena_current(local_3c);
@@ -45358,7 +45360,7 @@ int scpi_call_handler(void *call,void **response)
       return -0x38;
     }
   }
-  iVar3 = (*pcVar1)(*(undefined4 *)((int)call + 10),*response,call);
+  iVar3 = (*pcVar1)(*(uint32_t *)((int)call + 10),*response,call);
   return iVar3;
 }
 
@@ -45384,7 +45386,7 @@ int scpi_format_response(scpi_port *output,void *items,void *call)
   }
   while( true ) {
     iVar2 = (**(code **)items)(output,*(int *)((int)call + 0xe) + (int)sVar3,
-                               *(undefined4 *)((int)items + 6),call);
+                               *(uint32_t *)((int)items + 6),call);
     if (iVar2 != 0) {
       return iVar2;
     }
@@ -45447,7 +45449,7 @@ int arena_take(int param_1,int param_2,int *param_3)
 
 /* an arena's next free byte */
 
-undefined4 arena_current(undefined4 *param_1)
+uint32_t arena_current(uint32_t *param_1)
 
 {
   return *param_1;
@@ -45458,7 +45460,7 @@ undefined4 arena_current(undefined4 *param_1)
 
 /* sets an arena's next free byte */
 
-void arena_set(undefined4 param_1,undefined4 *param_2)
+void arena_set(uint32_t param_1,uint32_t *param_2)
 
 {
   *param_2 = param_1;
@@ -45485,10 +45487,10 @@ void arena_init(int *param_1,uint param_2,int *param_3)
 /* reports 9 when value is outside min..max; *ESE, *SRE and the STATus ENABle and transition setters
     */
 
-undefined4 scpi_check_range(int param_1,int param_2,int param_3,byte param_4)
+uint32_t scpi_check_range(int param_1,int param_2,int param_3,byte param_4)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   
   if ((param_2 < param_1) || (param_3 < param_2)) {
     status_report_from(9,param_4);
@@ -45588,16 +45590,16 @@ LAB_00029896:
 /* scpi_numeric_set for a parameter of doubles; called by nothing */
 
 void scpi_numeric_set_double
-               (int param_1,int param_2,short param_3,short param_4,undefined4 *param_5,
-               undefined1 param_6)
+               (int param_1,int param_2,short param_3,short param_4,uint32_t *param_5,
+               uint8_t param_6)
 
 {
   if (param_3 == 2) {
     if (param_4 == 1) {
-      param_5 = (undefined4 *)(*(int *)(param_1 + 6) + param_2 * 8);
+      param_5 = (uint32_t *)(*(int *)(param_1 + 6) + param_2 * 8);
     }
     else {
-      param_5 = (undefined4 *)(*(int *)(param_1 + 10) + param_2 * 8);
+      param_5 = (uint32_t *)(*(int *)(param_1 + 10) + param_2 * 8);
     }
   }
   pllc_request_e(param_1,(char)param_2,param_5,param_6);
@@ -45614,7 +45616,7 @@ float scpi_numeric_get(scpi_numeric_param *param,int index,int16_t which,int16_t
 
 {
   void *pvVar1;
-  undefined4 local_c;
+  uint32_t local_c;
   float local_8;
   
   if (which == 2) {
@@ -45624,7 +45626,7 @@ float scpi_numeric_get(scpi_numeric_param *param,int index,int16_t which,int16_t
     else {
       pvVar1 = param->maximum;
     }
-    local_c = *(undefined4 *)((int)pvVar1 + index * 4);
+    local_c = *(uint32_t *)((int)pvVar1 + index * 4);
     local_8 = __ghidra_as(float, (*(code *)param->validate)
                                (&local_c,index,(void *)((int)param->minimum + index * 4),
                                 (void *)((int)param->maximum + index * 4),
@@ -45685,7 +45687,7 @@ char return_byte(char b)
 
 /* returns its argument; called by nothing */
 
-undefined4 long_identity(undefined4 param_1)
+uint32_t long_identity(uint32_t param_1)
 
 {
   return param_1;
@@ -45778,7 +45780,7 @@ int scpi_query_failed(char code,void *response)
   
   iVar1 = return_zero();
   status_report_from((short)code,(byte)iVar1);
-  *(undefined2 *)((int)response + 4) = 0;
+  *(uint16_t *)((int)response + 4) = 0;
   return 0;
 }
 
@@ -45787,7 +45789,7 @@ int scpi_query_failed(char code,void *response)
 
 /* 0: RTCM corrections are not supported */
 
-undefined1 rtcm_supported(void)
+uint8_t rtcm_supported(void)
 
 {
   return 0;
@@ -45827,7 +45829,7 @@ void scpi_prompt(int param_1)
 
 /* clears the SCPI input, opens the port and prompts */
 
-undefined4 scpi_session_init(void)
+uint32_t scpi_session_init(void)
 
 {
   scpi_echo_length = 0;
@@ -45847,7 +45849,7 @@ undefined4 scpi_session_init(void)
 /* returns 0x29e18, the console port's object: console_port_read, its method table at 0x29dd4, then
    the "E%+04d> " and "scpi > " prompts; queries compare a request's source with it */
 
-undefined4 scpi_console_port(void)
+uint32_t scpi_console_port(void)
 
 {
   return 0x29e18;
@@ -45883,7 +45885,7 @@ int scpi_console_return_zero(void)
 
 /* reads up to so many characters from the console, marking the input ended at its end */
 
-int scpi_console_read(undefined1 *param_1,int param_2)
+int scpi_console_read(uint8_t *param_1,int param_2)
 
 {
   int16_t iVar1;
@@ -45980,7 +45982,7 @@ void scpi_input_ended(void)
 
 /* writes a character to the console, keeping it in the echo buffer, or CR LF for an end */
 
-void scpi_console_putc(undefined4 param_1,int param_2)
+void scpi_console_putc(uint32_t param_1,int param_2)
 
 {
   char local_6 [2];
@@ -46024,7 +46026,7 @@ void scpi_console_write_loop(void *port,char *s,int n)
 
 /* the status output object's method: sets bits in the status byte and updates RQS */
 
-void status_byte_set_bits(undefined4 param_1)
+void status_byte_set_bits(uint32_t param_1)
 
 {
   status_byte = (byte)param_1 | status_byte;
@@ -46037,7 +46039,7 @@ void status_byte_set_bits(undefined4 param_1)
 
 /* the status output object's method: clears bits in the status byte and updates RQS */
 
-void status_byte_clear_bits(undefined4 param_1)
+void status_byte_clear_bits(uint32_t param_1)
 
 {
   status_byte = ~(byte)param_1 & status_byte;
@@ -46050,7 +46052,7 @@ void status_byte_clear_bits(undefined4 param_1)
 
 /* the status output object's method: sets the service request enable and updates RQS */
 
-void status_sre_set(undefined4 param_1)
+void status_sre_set(uint32_t param_1)
 
 {
   service_request_enable = (uint8_t)param_1;
@@ -46107,7 +46109,7 @@ void status_update_rqs(void)
 
 /* scpi_interpret's hook at each message's end and error: returns 0, no further error */
 
-undefined4 scpi_message_done(void)
+uint32_t scpi_message_done(void)
 
 {
   return 0;
@@ -46118,7 +46120,7 @@ undefined4 scpi_message_done(void)
 
 /* scpi_interpret's hook when the input closes: returns 0 */
 
-undefined4 scpi_input_closed(void)
+uint32_t scpi_input_closed(void)
 
 {
   return 0;
@@ -46221,7 +46223,7 @@ void pllc_request_b(void *param_1,uint8_t param_2,uint8_t param_3)
    and values[1] through a pointer
    structures.md */
 
-void pllc_request_c(void *param_1,uint8_t param_2,uint32_t param_3,undefined4 *param_4,
+void pllc_request_c(void *param_1,uint8_t param_2,uint32_t param_3,uint32_t *param_4,
                    uint8_t param_5)
 
 {
@@ -46265,7 +46267,7 @@ void pllc_request_d(void *param_1,uint8_t param_2,uint32_t param_3,uint8_t param
    values through a pointer
    structures.md */
 
-void pllc_request_e(void *param_1,uint8_t param_2,undefined4 *param_3,uint8_t param_4)
+void pllc_request_e(void *param_1,uint8_t param_2,uint32_t *param_3,uint8_t param_4)
 
 {
   pllc_request request;
@@ -46319,7 +46321,7 @@ void scpi_task(void)
 {
   ulong uVar1;
   int iVar2;
-  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  uint32_t unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   void *local_8;
   
   psos_mode(0x40,0x40,(uchar *)0x0);
@@ -46411,7 +46413,7 @@ int scpi_set_common_ESE(void *parameters,void *response,void *call)
   if (cVar2 != 0) {
     iVar1 = return_zero();
     pllc_request_c(&scpi_param_STATus_ENABle,1,(int)*(short *)((int)parameters + 2),
-                   (undefined4 *)0x0,(char)iVar1);
+                   (uint32_t *)0x0,(char)iVar1);
     status_register_set_enable(status_object,1,nv_settings.status_enable[1]);
   }
   return 0;
@@ -46539,7 +46541,7 @@ int scpi_set_common_SRE(void *parameters,void *response,void *call)
   if (cVar2 != 0) {
     iVar1 = return_zero();
     pllc_request_c(&scpi_param_STATus_ENABle,0,(int)*(short *)((int)parameters + 2),
-                   (undefined4 *)0x0,(char)iVar1);
+                   (uint32_t *)0x0,(char)iVar1);
     status_register_set_enable(status_object,0,nv_settings.status_enable[0]);
   }
   return 0;
@@ -46651,7 +46653,7 @@ int scpi_set_STATus_QUEStionable_CONDition_USER(void *parameters,void *response,
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_a(&scpi_param_STATus_QUEStionable_USER,0,(char)*(undefined2 *)((int)parameters + 4),
+  pllc_request_a(&scpi_param_STATus_QUEStionable_USER,0,(char)*(uint16_t *)((int)parameters + 4),
                  (char)iVar1);
   return 0;
 }
@@ -46697,7 +46699,7 @@ int scpi_set_STATus_OPERation_ENABle(void *parameters,void *response,void *call)
   short unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (short)__entry; });
   
   if (*(short *)((int)parameters + 2) == 4) {
-    unaff_D2w = (short)*(undefined4 *)((int)parameters + 4);
+    unaff_D2w = (short)*(uint32_t *)((int)parameters + 4);
   }
   else if (*(short *)((int)parameters + 2) == 0) {
     unaff_D2w = *(short *)((int)parameters + 4);
@@ -46707,8 +46709,8 @@ int scpi_set_STATus_OPERation_ENABle(void *parameters,void *response,void *call)
                            (uint)(&USHORT_0002f7a2)[*(short *)parameters * 0xb],(byte)iVar1);
   if (cVar2 != 0) {
     iVar1 = return_zero();
-    pllc_request_c(&scpi_param_STATus_ENABle,(char)*(undefined2 *)parameters,(int)unaff_D2w,
-                   (undefined4 *)0x0,(char)iVar1);
+    pllc_request_c(&scpi_param_STATus_ENABle,(char)*(uint16_t *)parameters,(int)unaff_D2w,
+                   (uint32_t *)0x0,(char)iVar1);
     status_register_set_enable
               (status_object,(int)*(short *)parameters,
                nv_settings.status_enable[*(short *)parameters]);
@@ -46747,7 +46749,7 @@ int scpi_set_STATus_OPERation_PTRansition(void *parameters,void *response,void *
   short unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (short)__entry; });
   
   if (*(short *)((int)parameters + 2) == 4) {
-    unaff_D2w = (short)*(undefined4 *)((int)parameters + 4);
+    unaff_D2w = (short)*(uint32_t *)((int)parameters + 4);
   }
   else if (*(short *)((int)parameters + 2) == 0) {
     unaff_D2w = *(short *)((int)parameters + 4);
@@ -46757,8 +46759,8 @@ int scpi_set_STATus_OPERation_PTRansition(void *parameters,void *response,void *
                            (uint)(&USHORT_0002f7a2)[*(short *)parameters * 0xb],(byte)iVar1);
   if (cVar2 != 0) {
     iVar1 = return_zero();
-    pllc_request_c(&scpi_param_STATus_PTRansition,(char)*(undefined2 *)parameters + -2,
-                   (int)unaff_D2w,(undefined4 *)0x0,(char)iVar1);
+    pllc_request_c(&scpi_param_STATus_PTRansition,(char)*(uint16_t *)parameters + -2,
+                   (int)unaff_D2w,(uint32_t *)0x0,(char)iVar1);
     status_register_set_ptr
               (status_object,(int)*(short *)parameters,
                nv_settings.status_enable[*(short *)parameters + 5]);
@@ -46797,7 +46799,7 @@ int scpi_set_STATus_OPERation_NTRansition(void *parameters,void *response,void *
   short unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (short)__entry; });
   
   if (*(short *)((int)parameters + 2) == 4) {
-    unaff_D2w = (short)*(undefined4 *)((int)parameters + 4);
+    unaff_D2w = (short)*(uint32_t *)((int)parameters + 4);
   }
   else if (*(short *)((int)parameters + 2) == 0) {
     unaff_D2w = *(short *)((int)parameters + 4);
@@ -46807,8 +46809,8 @@ int scpi_set_STATus_OPERation_NTRansition(void *parameters,void *response,void *
                            (uint)(&USHORT_0002f7a2)[*(short *)parameters * 0xb],(byte)iVar1);
   if (cVar2 != 0) {
     iVar1 = return_zero();
-    pllc_request_c(&scpi_param_STATus_NTRansition,(char)*(undefined2 *)parameters + -2,
-                   (int)unaff_D2w,(undefined4 *)0x0,(char)iVar1);
+    pllc_request_c(&scpi_param_STATus_NTRansition,(char)*(uint16_t *)parameters + -2,
+                   (int)unaff_D2w,(uint32_t *)0x0,(char)iVar1);
     status_register_set_ntr
               (status_object,(int)*(short *)parameters,
                nv_settings.status_positive_transition[*(short *)parameters + 3]);
@@ -46872,7 +46874,7 @@ int scpi_set_STATus_OPERation_HARDware_ENABle(void *parameters,void *response,vo
   short unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (short)__entry; });
   
   if (*(short *)((int)parameters + 4) == 4) {
-    unaff_D2w = (short)*(undefined4 *)((int)parameters + 6);
+    unaff_D2w = (short)*(uint32_t *)((int)parameters + 6);
   }
   else if (*(short *)((int)parameters + 4) == 0) {
     unaff_D2w = *(short *)((int)parameters + 6);
@@ -46884,8 +46886,8 @@ int scpi_set_STATus_OPERation_HARDware_ENABle(void *parameters,void *response,vo
                            (byte)iVar1);
   if (cVar2 != 0) {
     iVar1 = return_zero();
-    pllc_request_c(&scpi_param_STATus_ENABle,(char)*(undefined2 *)((int)parameters + 2),
-                   (int)unaff_D2w,(undefined4 *)0x0,(char)iVar1);
+    pllc_request_c(&scpi_param_STATus_ENABle,(char)*(uint16_t *)((int)parameters + 2),
+                   (int)unaff_D2w,(uint32_t *)0x0,(char)iVar1);
     status_register_set_enable
               (status_object,(int)*(short *)((int)parameters + 2),
                nv_settings.status_enable[*(short *)((int)parameters + 2)]);
@@ -46924,7 +46926,7 @@ int scpi_set_STATus_OPERation_HARDware_PTRansition(void *parameters,void *respon
   short unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (short)__entry; });
   
   if (*(short *)((int)parameters + 4) == 4) {
-    unaff_D2w = (short)*(undefined4 *)((int)parameters + 6);
+    unaff_D2w = (short)*(uint32_t *)((int)parameters + 6);
   }
   else if (*(short *)((int)parameters + 4) == 0) {
     unaff_D2w = *(short *)((int)parameters + 6);
@@ -46936,8 +46938,8 @@ int scpi_set_STATus_OPERation_HARDware_PTRansition(void *parameters,void *respon
                            (byte)iVar1);
   if (cVar2 != 0) {
     iVar1 = return_zero();
-    pllc_request_c(&scpi_param_STATus_PTRansition,(char)*(undefined2 *)((int)parameters + 2) + -2,
-                   (int)unaff_D2w,(undefined4 *)0x0,(char)iVar1);
+    pllc_request_c(&scpi_param_STATus_PTRansition,(char)*(uint16_t *)((int)parameters + 2) + -2,
+                   (int)unaff_D2w,(uint32_t *)0x0,(char)iVar1);
     status_register_set_ptr
               (status_object,(int)*(short *)((int)parameters + 2),
                nv_settings.status_enable[*(short *)((int)parameters + 2) + 5]);
@@ -46976,7 +46978,7 @@ int scpi_set_STATus_OPERation_HARDware_NTRansition(void *parameters,void *respon
   short unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (short)__entry; });
   
   if (*(short *)((int)parameters + 4) == 4) {
-    unaff_D2w = (short)*(undefined4 *)((int)parameters + 6);
+    unaff_D2w = (short)*(uint32_t *)((int)parameters + 6);
   }
   else if (*(short *)((int)parameters + 4) == 0) {
     unaff_D2w = *(short *)((int)parameters + 6);
@@ -46988,8 +46990,8 @@ int scpi_set_STATus_OPERation_HARDware_NTRansition(void *parameters,void *respon
                            (byte)iVar1);
   if (cVar2 != 0) {
     iVar1 = return_zero();
-    pllc_request_c(&scpi_param_STATus_NTRansition,(char)*(undefined2 *)((int)parameters + 2) + -2,
-                   (int)unaff_D2w,(undefined4 *)0x0,(char)iVar1);
+    pllc_request_c(&scpi_param_STATus_NTRansition,(char)*(uint16_t *)((int)parameters + 2) + -2,
+                   (int)unaff_D2w,(uint32_t *)0x0,(char)iVar1);
     status_register_set_ntr
               (status_object,(int)*(short *)((int)parameters + 2),
                nv_settings.status_positive_transition[*(short *)((int)parameters + 2) + 3]);
@@ -47058,7 +47060,7 @@ int scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe
   byte bVar1;
   int iVar2;
   char cVar3;
-  undefined4 uVar4;
+  uint32_t uVar4;
   char local_6 [2];
   
   iVar2 = return_zero();
@@ -47070,7 +47072,7 @@ int scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe
   else {
     if (local_6[0] != 0) {
       pllc_request_a(&scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe,
-                     (char)*(undefined2 *)parameters,(char)*(undefined2 *)((int)parameters + 4),
+                     (char)*(uint16_t *)parameters,(char)*(uint16_t *)((int)parameters + 4),
                      bVar1);
       return 0;
     }
@@ -47192,7 +47194,7 @@ int scpi_query_SOURce_GPSystem_POSition_ACTual(void *parameters,void *response,v
   long local_1c;
   long local_18;
   int local_14;
-  undefined2 local_10;
+  uint16_t local_10;
   byte local_e [2];
   double dStack_c;
   
@@ -47205,23 +47207,23 @@ int scpi_query_SOURce_GPSystem_POSition_ACTual(void *parameters,void *response,v
   else {
     mas_to_dms(local_1c,&local_10,local_e,&dStack_c);
     if (local_1c < 0) {
-      *(undefined2 *)response = 1;
+      *(uint16_t *)response = 1;
     }
     else {
-      *(undefined2 *)response = 0;
+      *(uint16_t *)response = 0;
     }
-    *(undefined2 *)((int)response + 2) = local_10;
+    *(uint16_t *)((int)response + 2) = local_10;
     *(ushort *)((int)response + 6) = (ushort)local_e[0];
     fVar1 = double_to_float(dStack_c);
     *(float *)((int)response + 10) = fVar1;
     mas_to_dms(local_18,&local_10,local_e,&dStack_c);
     if (local_18 < 0) {
-      *(undefined2 *)((int)response + 0x10) = 3;
+      *(uint16_t *)((int)response + 0x10) = 3;
     }
     else {
-      *(undefined2 *)((int)response + 0x10) = 2;
+      *(uint16_t *)((int)response + 0x10) = 2;
     }
-    *(undefined2 *)((int)response + 0x12) = local_10;
+    *(uint16_t *)((int)response + 0x12) = local_10;
     *(ushort *)((int)response + 0x16) = (ushort)local_e[0];
     fVar1 = double_to_float(dStack_c);
     *(float *)((int)response + 0x1a) = fVar1;
@@ -47248,7 +47250,7 @@ int scpi_query_DIAGnostic_GPSystem_POSition_MSEConds(void *parameters,void *resp
   if (((-1 < *(short *)((int)parameters + 6)) && (-1 < *(short *)((int)parameters + 0xc))) &&
      (iVar1 = double_compare(0.0,*(double *)((int)parameters + 0x12)), -1 < iVar1)) {
     dms_to_mas(&local_8,*(ushort *)((int)parameters + 6),
-               (byte)*(undefined2 *)((int)parameters + 0xc),*(double *)((int)parameters + 0x12));
+               (byte)*(uint16_t *)((int)parameters + 0xc),*(double *)((int)parameters + 0x12));
     if ((*(short *)((int)parameters + 2) == 1) || (*(short *)((int)parameters + 2) == 3)) {
       local_8 = -local_8;
     }
@@ -47269,33 +47271,33 @@ int scpi_query_DIAGnostic_GPSystem_POSition_DEGRees(void *parameters,void *respo
 {
   long lVar1;
   float fVar2;
-  undefined2 *puVar3;
+  uint16_t *puVar3;
   byte *pbVar4;
   double *pdVar5;
-  undefined2 local_10;
+  uint16_t local_10;
   byte local_e [2];
   double dStack_c;
   
   if (*(int *)((int)parameters + 6) < 0) {
     if (*(short *)((int)parameters + 2) == 0) {
-      *(undefined2 *)response = 1;
+      *(uint16_t *)response = 1;
     }
     else {
-      *(undefined2 *)response = 3;
+      *(uint16_t *)response = 3;
     }
   }
   else if (*(short *)((int)parameters + 2) == 0) {
-    *(undefined2 *)response = 0;
+    *(uint16_t *)response = 0;
   }
   else {
-    *(undefined2 *)response = 2;
+    *(uint16_t *)response = 2;
   }
   pdVar5 = &dStack_c;
   pbVar4 = local_e;
   puVar3 = &local_10;
   lVar1 = labs(*(long *)((int)parameters + 6));
   mas_to_dms(lVar1,puVar3,pbVar4,pdVar5);
-  *(undefined2 *)((int)response + 2) = local_10;
+  *(uint16_t *)((int)response + 2) = local_10;
   *(ushort *)((int)response + 6) = (ushort)local_e[0];
   fVar2 = double_to_float(dStack_c);
   *(float *)((int)response + 10) = fVar2;
@@ -47314,7 +47316,7 @@ int scpi_query_DIAGnostic_GPSystem_TIME(void *parameters,void *response,void *ca
   bool bVar2;
   int iVar1;
   time_of_day time;
-  undefined2 local_8;
+  uint16_t local_8;
   byte local_6;
   byte local_5;
   
@@ -47325,7 +47327,7 @@ int scpi_query_DIAGnostic_GPSystem_TIME(void *parameters,void *response,void *ca
     *(ushort *)response = (ushort)time.hour;
     *(ushort *)((int)response + 4) = (ushort)time.minute;
     *(ushort *)((int)response + 8) = (ushort)time.second;
-    *(undefined2 *)((int)response + 0xc) = local_8;
+    *(uint16_t *)((int)response + 0xc) = local_8;
     *(ushort *)((int)response + 0x10) = (ushort)local_6;
     *(ushort *)((int)response + 0x14) = (ushort)local_5;
     iVar1 = 0;
@@ -47347,7 +47349,7 @@ int scpi_set_DIAGnostic_GPSystem_UTC(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_a(&scpi_param_DIAGnostic_GPSystem_UTC,0,(char)*(undefined2 *)((int)parameters + 2),
+  pllc_request_a(&scpi_param_DIAGnostic_GPSystem_UTC,0,(char)*(uint16_t *)((int)parameters + 2),
                  (char)iVar1);
   return 0;
 }
@@ -47391,16 +47393,16 @@ int scpi_query_DIAGnostic_IDENtification_GPSystem(void *parameters,void *respons
     iVar1 = scpi_query_failed(0xc,call);
   }
   else {
-    *(undefined4 *)response = 0x101059;
-    *(undefined4 *)((int)response + 4) = 0x10107b;
-    *(undefined4 *)((int)response + 8) = 0x101096;
-    *(undefined4 *)((int)response + 0xc) = 0x1010b1;
-    *(undefined4 *)((int)response + 0x10) = 0x1010cc;
-    *(undefined4 *)((int)response + 0x14) = 0x1010e7;
-    *(undefined4 *)((int)response + 0x18) = 0x101102;
-    *(undefined4 *)((int)response + 0x1c) = 0x10111d;
-    *(undefined4 *)((int)response + 0x20) = 0x101138;
-    *(undefined4 *)((int)response + 0x24) = 0x101153;
+    *(uint32_t *)response = 0x101059;
+    *(uint32_t *)((int)response + 4) = 0x10107b;
+    *(uint32_t *)((int)response + 8) = 0x101096;
+    *(uint32_t *)((int)response + 0xc) = 0x1010b1;
+    *(uint32_t *)((int)response + 0x10) = 0x1010cc;
+    *(uint32_t *)((int)response + 0x14) = 0x1010e7;
+    *(uint32_t *)((int)response + 0x18) = 0x101102;
+    *(uint32_t *)((int)response + 0x1c) = 0x10111d;
+    *(uint32_t *)((int)response + 0x20) = 0x101138;
+    *(uint32_t *)((int)response + 0x24) = 0x101153;
     iVar1 = 0;
   }
   return iVar1;
@@ -47418,7 +47420,7 @@ int scpi_set_DIAGnostic_IDENtification_HARDware(void *parameters,void *response,
   int iVar2;
   char cVar3;
   char *pcVar4;
-  undefined4 uVar5;
+  uint32_t uVar5;
   
   uVar1 = 0xffffffff;
   pcVar4 = *(char **)((int)parameters + 2);
@@ -47457,7 +47459,7 @@ int scpi_set_DIAGnostic_IDENtification_MODel(void *parameters,void *response,voi
   char cVar3;
   byte bVar4;
   char *pcVar5;
-  undefined4 uVar6;
+  uint32_t uVar6;
   
   uVar1 = 0xffffffff;
   pcVar5 = *(char **)((int)parameters + 2);
@@ -47500,7 +47502,7 @@ int scpi_set_DIAGnostic_IDENtification_SERial(void *parameters,void *response,vo
   char cVar3;
   byte bVar4;
   char *pcVar5;
-  undefined4 uVar6;
+  uint32_t uVar6;
   
   uVar1 = 0xffffffff;
   pcVar5 = *(char **)((int)parameters + 2);
@@ -47552,7 +47554,7 @@ int scpi_set_DIAGnostic_LOG_CLEar(void *parameters,void *response,void *call)
 {
   int iVar1;
   short sVar2;
-  undefined4 uVar3;
+  uint32_t uVar3;
   
   if (*(short *)((int)parameters + 2) == -1) {
     iVar1 = return_zero();
@@ -47607,7 +47609,7 @@ int scpi_query_DIAGnostic_LOG_COUNt(void *parameters,void *response,void *call)
   int iVar1;
   
   if (*(short *)parameters == 0) {
-    sVar2 = log_entry_total((undefined1 *)0x0);
+    sVar2 = log_entry_total((uint8_t *)0x0);
   }
   else {
     iVar1 = log_count((uint8_t *)0x0);
@@ -47685,7 +47687,7 @@ void log_print(char param_1,write_function *write,printf_function *print)
   char acStack_54 [80];
   
   if (param_1 == 0) {
-    sVar2 = log_entry_total((undefined1 *)0x0);
+    sVar2 = log_entry_total((uint8_t *)0x0);
   }
   else {
     iVar1 = log_count((uint8_t *)0x0);
@@ -47724,9 +47726,9 @@ int scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,void *call)
   uVar1 = return_zero();
   local_11e[0] = 0;
   local_1f[0] = 0;
-  *(undefined1 *)((uVar1 & 0xff) * 0x11a + 0x10272a) = 0;
+  *(uint8_t *)((uVar1 & 0xff) * 0x11a + 0x10272a) = 0;
   if (*(short *)parameters == 0) {
-    sVar3 = log_entry_total((undefined1 *)0x0);
+    sVar3 = log_entry_total((uint8_t *)0x0);
   }
   else {
     iVar2 = log_count((uint8_t *)0x0);
@@ -47768,10 +47770,10 @@ int scpi_query_DIAGnostic_LOG_READ_ALL(void *parameters,void *response,void *cal
 {
   int iVar1;
   
-  *(undefined2 *)response = 0;
+  *(uint16_t *)response = 0;
   iVar1 = scpi_console_port();
   if (iVar1 == *(int *)((int)call + 0x12)) {
-    log_print((char)*(undefined2 *)parameters,console_write,printf);
+    log_print((char)*(uint16_t *)parameters,console_write,printf);
   }
   return 0;
 }
@@ -47786,7 +47788,7 @@ int scpi_set_DIAGnostic_LOG_WRITe(void *parameters,void *response,void *call)
 {
   short sVar1;
   int iVar2;
-  undefined4 uVar3;
+  uint32_t uVar3;
   
   iVar2 = log_write("diag entry %d",(int)*(short *)((int)parameters + 4));
   sVar1 = (short)iVar2;
@@ -47844,7 +47846,7 @@ int scpi_query_DIAGnostic_OS_MEMory(void *parameters,void *response,void *call)
 {
   int iVar1;
   
-  *(undefined2 *)response = 0;
+  *(uint16_t *)response = 0;
   iVar1 = return_zero();
   os_memory_report((char)iVar1);
   return 0;
@@ -47860,7 +47862,7 @@ int scpi_query_DIAGnostic_OS_PROCess(void *parameters,void *response,void *call)
 {
   int iVar1;
   
-  *(undefined2 *)response = 0;
+  *(uint16_t *)response = 0;
   iVar1 = return_zero();
   os_process_report((char)iVar1);
   return 0;
@@ -47876,7 +47878,7 @@ int scpi_query_DIAGnostic_OS_STACk(void *parameters,void *response,void *call)
 {
   int iVar1;
   
-  *(undefined2 *)response = 0;
+  *(uint16_t *)response = 0;
   iVar1 = return_zero();
   task_stack_report((char)iVar1);
   return 0;
@@ -47948,7 +47950,7 @@ int scpi_set_SYSTem_COMMunicate_SER1_PROMpt(void *parameters,void *response,void
 
 {
   if (*(short *)parameters == 0) {
-    scpi_prompt_enabled = (uint8_t)*(undefined2 *)((int)parameters + 4);
+    scpi_prompt_enabled = (uint8_t)*(uint16_t *)((int)parameters + 4);
   }
   return 0;
 }
@@ -47978,7 +47980,7 @@ int scpi_set_DIAGnostic_SER1_RESTricted(void *parameters,void *response,void *ca
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_a(&scpi_param_DIAGnostic_SER1_RESTricted,0,(char)*(undefined2 *)((int)parameters + 4)
+  pllc_request_a(&scpi_param_DIAGnostic_SER1_RESTricted,0,(char)*(uint16_t *)((int)parameters + 4)
                  ,(char)iVar1);
   return 0;
 }
@@ -48125,7 +48127,7 @@ int scpi_set_DIAGnostic_STATus_ERRor(void *parameters,void *response,void *call)
   }
   else {
     iVar1 = return_zero();
-    iVar1 = (uint)CONCAT21(*(undefined2 *)((int)parameters + 2),(char)iVar1) << 8;
+    iVar1 = (uint)CONCAT21(*(uint16_t *)((int)parameters + 2),(char)iVar1) << 8;
   }
   status_report_from((short)((uint)iVar1 >> 0x10),(byte)((uint)iVar1 >> 8));
   return 0;
@@ -48146,7 +48148,7 @@ int scpi_set_DIAGnostic_STATus_HAPPening(void *parameters,void *response,void *c
     status_report_from(9,(byte)iVar1);
   }
   else {
-    status_happening((char)*(undefined2 *)((int)parameters + 2) + 0x16);
+    status_happening((char)*(uint16_t *)((int)parameters + 2) + 0x16);
   }
   return 0;
 }
@@ -48161,9 +48163,9 @@ int scpi_set_DIAGnostic_SYSTem_DOUTput(void *parameters,void *response,void *cal
 {
   int iVar1;
   
-  debug_enabled = (uint8_t)*(undefined2 *)((int)parameters + 2);
+  debug_enabled = (uint8_t)*(uint16_t *)((int)parameters + 2);
   iVar1 = return_zero();
-  pllc_request_a(&scpi_param_DIAGnostic_SYSTem_DOUTput,0,(char)*(undefined2 *)((int)parameters + 2),
+  pllc_request_a(&scpi_param_DIAGnostic_SYSTem_DOUTput,0,(char)*(uint16_t *)((int)parameters + 2),
                  (char)iVar1);
   psos_debug_enabled = debug_enabled;
   psos_debug_output(debug_enabled);
@@ -48193,7 +48195,7 @@ int scpi_set_DIAGnostic_SYSTem_PSTartup(void *parameters,void *response,void *ca
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_a(&scpi_param_DIAGnostic_SYSTem_PSTartup,0,(char)*(undefined2 *)((int)parameters + 2)
+  pllc_request_a(&scpi_param_DIAGnostic_SYSTem_PSTartup,0,(char)*(uint16_t *)((int)parameters + 2)
                  ,(char)iVar1);
   return 0;
 }
@@ -48234,7 +48236,7 @@ int scpi_query_DIAGnostic_TEST(void *parameters,void *response,void *call)
 
 {
   int iVar1;
-  undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
+  uint8_t unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint8_t)__entry; });
   
   if (*(ushort *)((int)parameters + 2) < 0xe) {
                     /* WARNING: Switch is manually overridden */
@@ -48303,46 +48305,46 @@ int scpi_query_DIAGnostic_TEST_RESult(void *parameters,void *response,void *call
                     /* WARNING: Switch is manually overridden */
     switch(selftest.test) {
     case 0:
-      *(undefined2 *)((int)response + 6) = 0;
+      *(uint16_t *)((int)response + 6) = 0;
       break;
     case 1:
-      *(undefined2 *)((int)response + 6) = 1;
+      *(uint16_t *)((int)response + 6) = 1;
       break;
     case 2:
-      *(undefined2 *)((int)response + 6) = 9;
+      *(uint16_t *)((int)response + 6) = 9;
       break;
     case 3:
-      *(undefined2 *)((int)response + 6) = 0xc;
+      *(uint16_t *)((int)response + 6) = 0xc;
       break;
     case 4:
-      *(undefined2 *)((int)response + 6) = 2;
+      *(uint16_t *)((int)response + 6) = 2;
       break;
     case 5:
-      *(undefined2 *)((int)response + 6) = 0xd;
+      *(uint16_t *)((int)response + 6) = 0xd;
       break;
     case 6:
-      *(undefined2 *)((int)response + 6) = 0xb;
+      *(uint16_t *)((int)response + 6) = 0xb;
       break;
     case 7:
-      *(undefined2 *)((int)response + 6) = 3;
+      *(uint16_t *)((int)response + 6) = 3;
       break;
     case 8:
-      *(undefined2 *)((int)response + 6) = 6;
+      *(uint16_t *)((int)response + 6) = 6;
       break;
     case 9:
-      *(undefined2 *)((int)response + 6) = 7;
+      *(uint16_t *)((int)response + 6) = 7;
       break;
     case 10:
-      *(undefined2 *)((int)response + 6) = 4;
+      *(uint16_t *)((int)response + 6) = 4;
       break;
     case 0xb:
-      *(undefined2 *)((int)response + 6) = 8;
+      *(uint16_t *)((int)response + 6) = 8;
       break;
     case 0xc:
-      *(undefined2 *)((int)response + 6) = 5;
+      *(uint16_t *)((int)response + 6) = 5;
       break;
     case 0xd:
-      *(undefined2 *)((int)response + 6) = 10;
+      *(uint16_t *)((int)response + 6) = 10;
     }
   }
   return 0;
@@ -48389,7 +48391,7 @@ int scpi_query_DIAGnostic_TOFFset(void *parameters,void *response,void *call)
 /* puts a code into the status system once status_ready
    structures.md */
 
-undefined4 status_report(short param_1)
+uint32_t status_report(short param_1)
 
 {
   char *value;
@@ -48616,7 +48618,7 @@ int scpi_set_SOURce_GPSystem_ADELay(void *parameters,void *response,void *call)
     ;
   }
   iVar1 = return_zero();
-  pllc_request_c(&scpi_param_SOURce_GPSystem_ADELay,0,iVar4,(undefined4 *)0x0,(char)iVar1);
+  pllc_request_c(&scpi_param_SOURce_GPSystem_ADELay,0,iVar4,(uint32_t *)0x0,(char)iVar1);
   return 0;
 }
 
@@ -48862,12 +48864,12 @@ int scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *response,vo
       local_3e = -local_3e;
     }
     iVar1 = return_zero();
-    pllc_request_c(&LAB_00033862,0,local_42,(undefined4 *)0x0,(char)iVar1);
+    pllc_request_c(&LAB_00033862,0,local_42,(uint32_t *)0x0,(char)iVar1);
     iVar1 = return_zero();
     pllc_request_c(&scpi_param_SOURce_GPSystem_INITial_POSition_longitude,0,local_3e,
-                   (undefined4 *)0x0,(char)iVar1);
+                   (uint32_t *)0x0,(char)iVar1);
     iVar1 = return_zero();
-    pllc_request_c(&LAB_000338ce,0,local_3a,(undefined4 *)0x0,(char)iVar1);
+    pllc_request_c(&LAB_000338ce,0,local_3a,(uint32_t *)0x0,(char)iVar1);
   }
   else {
     iVar1 = return_zero();
@@ -49041,17 +49043,17 @@ int scpi_query_SOURce_GPSystem_POSition(void *parameters,void *response,void *ca
   long lVar2;
   float fVar3;
   double dVar5;
-  undefined2 *puVar6;
-  undefined2 uVar7;
-  undefined1 uVar8;
-  undefined1 uVar9;
-  undefined2 uVar10;
-  undefined1 uVar11;
-  undefined1 uVar12;
+  uint16_t *puVar6;
+  uint16_t uVar7;
+  uint8_t uVar8;
+  uint8_t uVar9;
+  uint16_t uVar10;
+  uint8_t uVar11;
+  uint8_t uVar12;
   long local_1c;
   long local_18;
   int local_14;
-  undefined2 local_10;
+  uint16_t local_10;
   byte local_e [2];
   double dStack_c;
   
@@ -49061,56 +49063,56 @@ int scpi_query_SOURce_GPSystem_POSition(void *parameters,void *response,void *ca
       iVar1 = scpi_query_failed(0xc,call);
       return iVar1;
     }
-    uVar8 = (undefined1)((uint)&local_1c >> 0x18);
-    uVar9 = (undefined1)((uint)&local_1c >> 0x10);
+    uVar8 = (uint8_t)((uint)&local_1c >> 0x18);
+    uVar9 = (uint8_t)((uint)&local_1c >> 0x10);
     uVar10 = SUB42(&local_1c,0);
     uVar7 = 0x1e78;
   }
   else {
-    uVar8 = (undefined1)((uint)&local_1c >> 0x18);
-    uVar9 = (undefined1)((uint)&local_1c >> 0x10);
+    uVar8 = (uint8_t)((uint)&local_1c >> 0x18);
+    uVar9 = (uint8_t)((uint)&local_1c >> 0x10);
     uVar10 = SUB42(&local_1c,0);
     uVar7 = 0x1eaa;
   }
   copy_longs_locked((uint32_t *)CONCAT22(0x10,uVar7),
                     (uint32_t *)CONCAT22(CONCAT11(uVar8,uVar9),uVar10),3);
-  uVar10 = (undefined2)((uint)&dStack_c >> 0x10);
-  uVar11 = (undefined1)((uint)&dStack_c >> 8);
+  uVar10 = (uint16_t)((uint)&dStack_c >> 0x10);
+  uVar11 = (uint8_t)((uint)&dStack_c >> 8);
   uVar12 = SUB41(&dStack_c,0);
-  uVar7 = (undefined2)((uint)local_e >> 0x10);
-  uVar8 = (undefined1)((uint)local_e >> 8);
+  uVar7 = (uint16_t)((uint)local_e >> 0x10);
+  uVar8 = (uint8_t)((uint)local_e >> 8);
   uVar9 = SUB41(local_e,0);
   puVar6 = &local_10;
   lVar2 = labs(local_1c);
-  mas_to_dms(lVar2,puVar6,(undefined1 *)CONCAT31(CONCAT21(uVar7,uVar8),uVar9),
+  mas_to_dms(lVar2,puVar6,(uint8_t *)CONCAT31(CONCAT21(uVar7,uVar8),uVar9),
              (double *)CONCAT31(CONCAT21(uVar10,uVar11),uVar12));
   if (local_1c < 0) {
-    *(undefined2 *)response = 1;
+    *(uint16_t *)response = 1;
   }
   else {
-    *(undefined2 *)response = 0;
+    *(uint16_t *)response = 0;
   }
-  *(undefined2 *)((int)response + 2) = local_10;
+  *(uint16_t *)((int)response + 2) = local_10;
   *(ushort *)((int)response + 6) = (ushort)local_e[0];
   fVar3 = double_to_float(dStack_c);
   *(float *)((int)response + 10) = fVar3;
-  uVar10 = (undefined2)((uint)&dStack_c >> 0x10);
-  uVar11 = (undefined1)((uint)&dStack_c >> 8);
+  uVar10 = (uint16_t)((uint)&dStack_c >> 0x10);
+  uVar11 = (uint8_t)((uint)&dStack_c >> 8);
   uVar12 = SUB41(&dStack_c,0);
-  uVar7 = (undefined2)((uint)local_e >> 0x10);
-  uVar8 = (undefined1)((uint)local_e >> 8);
+  uVar7 = (uint16_t)((uint)local_e >> 0x10);
+  uVar8 = (uint8_t)((uint)local_e >> 8);
   uVar9 = SUB41(local_e,0);
   puVar6 = &local_10;
   lVar2 = labs(local_18);
-  mas_to_dms(lVar2,puVar6,(undefined1 *)CONCAT31(CONCAT21(uVar7,uVar8),uVar9),
+  mas_to_dms(lVar2,puVar6,(uint8_t *)CONCAT31(CONCAT21(uVar7,uVar8),uVar9),
              (double *)CONCAT31(CONCAT21(uVar10,uVar11),uVar12));
   if (local_18 < 0) {
-    *(undefined2 *)((int)response + 0x10) = 3;
+    *(uint16_t *)((int)response + 0x10) = 3;
   }
   else {
-    *(undefined2 *)((int)response + 0x10) = 2;
+    *(uint16_t *)((int)response + 0x10) = 2;
   }
-  *(undefined2 *)((int)response + 0x12) = local_10;
+  *(uint16_t *)((int)response + 0x12) = local_10;
   *(ushort *)((int)response + 0x16) = (ushort)local_e[0];
   fVar3 = double_to_float(dStack_c);
   *(float *)((int)response + 0x1a) = fVar3;
@@ -49132,48 +49134,48 @@ int scpi_query_SOURce_GPSystem_POSition_HOLD_LAST(void *parameters,void *respons
   long lVar1;
   float fVar2;
   double dVar3;
-  undefined2 *puVar4;
+  uint16_t *puVar4;
   byte *pbVar5;
-  undefined2 uVar6;
-  undefined1 uVar7;
-  undefined1 uVar8;
+  uint16_t uVar6;
+  uint8_t uVar7;
+  uint8_t uVar8;
   int32_t position [3];
-  undefined2 local_10;
+  uint16_t local_10;
   byte local_e [2];
   double dStack_c;
   
   copy_longs_locked((uint32_t *)nv_settings.position,(uint32_t *)position,3);
-  uVar6 = (undefined2)((uint)&dStack_c >> 0x10);
-  uVar7 = (undefined1)((uint)&dStack_c >> 8);
+  uVar6 = (uint16_t)((uint)&dStack_c >> 0x10);
+  uVar7 = (uint8_t)((uint)&dStack_c >> 8);
   uVar8 = SUB41(&dStack_c,0);
   pbVar5 = local_e;
   puVar4 = &local_10;
   lVar1 = labs(position[0]);
   mas_to_dms(lVar1,puVar4,pbVar5,(double *)CONCAT31(CONCAT21(uVar6,uVar7),uVar8));
   if (position[0] < 0) {
-    *(undefined2 *)response = 1;
+    *(uint16_t *)response = 1;
   }
   else {
-    *(undefined2 *)response = 0;
+    *(uint16_t *)response = 0;
   }
-  *(undefined2 *)((int)response + 2) = local_10;
+  *(uint16_t *)((int)response + 2) = local_10;
   *(ushort *)((int)response + 6) = (ushort)local_e[0];
   fVar2 = double_to_float(dStack_c);
   *(float *)((int)response + 10) = fVar2;
-  uVar6 = (undefined2)((uint)&dStack_c >> 0x10);
-  uVar7 = (undefined1)((uint)&dStack_c >> 8);
+  uVar6 = (uint16_t)((uint)&dStack_c >> 0x10);
+  uVar7 = (uint8_t)((uint)&dStack_c >> 8);
   uVar8 = SUB41(&dStack_c,0);
   pbVar5 = local_e;
   puVar4 = &local_10;
   lVar1 = labs(position[1]);
   mas_to_dms(lVar1,puVar4,pbVar5,(double *)CONCAT31(CONCAT21(uVar6,uVar7),uVar8));
   if (position[1] < 0) {
-    *(undefined2 *)((int)response + 0x10) = 3;
+    *(uint16_t *)((int)response + 0x10) = 3;
   }
   else {
-    *(undefined2 *)((int)response + 0x10) = 2;
+    *(uint16_t *)((int)response + 0x10) = 2;
   }
-  *(undefined2 *)((int)response + 0x12) = local_10;
+  *(uint16_t *)((int)response + 0x12) = local_10;
   *(ushort *)((int)response + 0x16) = (ushort)local_e[0];
   fVar2 = double_to_float(dStack_c);
   *(float *)((int)response + 0x1a) = fVar2;
@@ -49267,7 +49269,7 @@ int scpi_query_DOUGlas_DURation(void *parameters,void *response,void *call)
   float fVar1;
   
   if ((*(short *)parameters == -1) && (nv_settings.douglas_duration_infinite != 0)) {
-    *(undefined4 *)response = 0x7e94f56a;
+    *(uint32_t *)response = 0x7e94f56a;
   }
   else {
     fVar1 = scpi_numeric_get(&scpi_param_DOUGlas_DURation,0,*(int16_t *)parameters,
@@ -49332,7 +49334,7 @@ int scpi_set_DOUGlas_STATe(void *parameters,void *response,void *call)
   cVar2 = return_byte(nv_settings.douglas_state);
   if (cVar2 == 0) {
     iVar1 = return_zero();
-    pllc_request_c(&scpi_param_DOUGlas_STATe_request,0,0,(undefined4 *)0x0,(char)iVar1);
+    pllc_request_c(&scpi_param_DOUGlas_STATe_request,0,0,(uint32_t *)0x0,(char)iVar1);
   }
   else {
     iVar1 = return_zero();
@@ -49386,7 +49388,7 @@ int scpi_set_DOUGlas_STATe_POWerup(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_a(&scpi_param_DOUGlas_STATe_POWerup,0,(char)*(undefined2 *)((int)parameters + 2),
+  pllc_request_a(&scpi_param_DOUGlas_STATe_POWerup,0,(char)*(uint16_t *)((int)parameters + 2),
                  (char)iVar1);
   return 0;
 }
@@ -49428,10 +49430,10 @@ int scpi_query_SOURce_GPSystem_REFerence_VALid(void *parameters,void *response,v
 
 /* 1 for a satellite number from 1 to 32 */
 
-undefined4 satellite_number_valid(byte param_1)
+uint32_t satellite_number_valid(byte param_1)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   
   if ((param_1 == 0) || (0x20 < param_1)) {
     uVar1 = 0;
@@ -49593,8 +49595,8 @@ int scpi_query_SOURce_GPSystem_SATellite_TRACking(void *parameters,void *respons
                                ,local_5);
     *(uint *)response = (uint)bVar4 + (uint)bVar3;
     if ((uint)bVar4 + (uint)bVar3 == 0) {
-      *(undefined4 *)response = 1;
-      *(undefined2 *)((uVar1 & 0xff) * 0x40 + 0x10295e) = 0;
+      *(uint32_t *)response = 1;
+      *(uint16_t *)((uVar1 & 0xff) * 0x40 + 0x10295e) = 0;
     }
     *(uint *)((int)response + 4) = (uVar1 & 0xff) * 0x40 + 0x10295e;
     iVar2 = 0;
@@ -49658,11 +49660,11 @@ int scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore(void *parameters,void *re
   uint32_t local_8;
   
   local_8 = nv_settings.ignored_satellites;
-  cVar2 = satellite_mask_add((char)*(undefined2 *)((int)parameters + 2),&local_8);
+  cVar2 = satellite_mask_add((char)*(uint16_t *)((int)parameters + 2),&local_8);
   bVar4 = cVar2 == 0;
   bVar3 = 0;
   while ((bVar3 < 0x1f && (*(short *)((int)parameters + (uint)bVar3 * 6 + 6) == 0))) {
-    cVar2 = satellite_mask_add((char)*(undefined2 *)((int)parameters + (uint)bVar3 * 6 + 8),&local_8
+    cVar2 = satellite_mask_add((char)*(uint16_t *)((int)parameters + (uint)bVar3 * 6 + 8),&local_8
                               );
     if (cVar2 == 0) {
       bVar4 = true;
@@ -49675,7 +49677,7 @@ int scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore(void *parameters,void *re
   }
   else {
     iVar1 = return_zero();
-    pllc_request_c(&scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore,0,local_8,(undefined4 *)0x0
+    pllc_request_c(&scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore,0,local_8,(uint32_t *)0x0
                    ,(char)iVar1);
   }
   return 0;
@@ -49701,8 +49703,8 @@ int scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore(void *parameters,void *
                              (short *)((uVar1 & 0xff) * 0x40 + 0x10295e),local_7,local_6[0]);
   *(uint *)response = (uint)bVar2;
   if (bVar2 == 0) {
-    *(undefined4 *)response = 1;
-    *(undefined2 *)((uVar1 & 0xff) * 0x40 + 0x10295e) = 0;
+    *(uint32_t *)response = 1;
+    *(uint16_t *)((uVar1 & 0xff) * 0x40 + 0x10295e) = 0;
   }
   *(uint *)((int)response + 4) = (uVar1 & 0xff) * 0x40 + 0x10295e;
   return 0;
@@ -49721,7 +49723,7 @@ int scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_ALL
   
   iVar1 = return_zero();
   pllc_request_c(&scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore,0,0xffffffff,
-                 (undefined4 *)0x0,(char)iVar1);
+                 (uint32_t *)0x0,(char)iVar1);
   return 0;
 }
 
@@ -49758,7 +49760,7 @@ int scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_NONE
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_c(&scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore,0,0,(undefined4 *)0x0,
+  pllc_request_c(&scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore,0,0,(uint32_t *)0x0,
                  (char)iVar1);
   return 0;
 }
@@ -49772,17 +49774,17 @@ int scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe
               (void *parameters,void *response,void *call)
 
 {
-  undefined2 uVar1;
+  uint16_t uVar1;
   char cVar3;
   int iVar2;
   
-  uVar1 = *(undefined2 *)parameters;
-  cVar3 = satellite_number_valid((byte)*(undefined2 *)((int)parameters + 4));
+  uVar1 = *(uint16_t *)parameters;
+  cVar3 = satellite_number_valid((byte)*(uint16_t *)((int)parameters + 4));
   if (cVar3 == 0) {
     iVar2 = scpi_query_failed('\t',call);
   }
   else {
-    cVar3 = satellite_in_mask((char)*(undefined2 *)((int)parameters + 4),
+    cVar3 = satellite_in_mask((char)*(uint16_t *)((int)parameters + 4),
                               nv_settings.ignored_satellites);
     if (cVar3 == 0) {
       *(ushort *)response = (ushort)((char)uVar1 == 0);
@@ -49810,12 +49812,12 @@ int scpi_set_SOURce_GPSystem_SATellite_TRACking_INCLude(void *parameters,void *r
   uint32_t local_8;
   
   local_8 = nv_settings.ignored_satellites;
-  cVar2 = satellite_mask_remove((char)*(undefined2 *)((int)parameters + 2),&local_8);
+  cVar2 = satellite_mask_remove((char)*(uint16_t *)((int)parameters + 2),&local_8);
   bVar4 = cVar2 == 0;
   bVar3 = 0;
   while ((bVar3 < 0x1f && (*(short *)((int)parameters + (uint)bVar3 * 6 + 6) == 0))) {
     cVar2 = satellite_mask_remove
-                      ((char)*(undefined2 *)((int)parameters + (uint)bVar3 * 6 + 8),&local_8);
+                      ((char)*(uint16_t *)((int)parameters + (uint)bVar3 * 6 + 8),&local_8);
     if (cVar2 == 0) {
       bVar4 = true;
     }
@@ -49827,7 +49829,7 @@ int scpi_set_SOURce_GPSystem_SATellite_TRACking_INCLude(void *parameters,void *r
   }
   else {
     iVar1 = return_zero();
-    pllc_request_c(&scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore,0,local_8,(undefined4 *)0x0
+    pllc_request_c(&scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore,0,local_8,(uint32_t *)0x0
                    ,(char)iVar1);
   }
   return 0;
@@ -49854,8 +49856,8 @@ int scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude
                              (short *)((uVar1 & 0xff) * 0x40 + 0x10295e),local_7,local_6[0]);
   *(uint *)response = (uint)bVar2;
   if (bVar2 == 0) {
-    *(undefined4 *)response = 1;
-    *(undefined2 *)((uVar1 & 0xff) * 0x40 + 0x10295e) = 0;
+    *(uint32_t *)response = 1;
+    *(uint16_t *)((uVar1 & 0xff) * 0x40 + 0x10295e) = 0;
   }
   *(uint *)((int)response + 4) = (uVar1 & 0xff) * 0x40 + 0x10295e;
   return 0;
@@ -49893,7 +49895,7 @@ int scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted
 {
   uint uVar1;
   uint16_t sr;
-  undefined4 uVar2;
+  uint32_t uVar2;
   int iVar3;
   byte bVar4;
   uint local_c;
@@ -49916,8 +49918,8 @@ int scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted
                                local_5);
     *(uint *)response = (uint)bVar4;
     if (bVar4 == 0) {
-      *(undefined4 *)response = 1;
-      *(undefined2 *)((uVar1 & 0xff) * 0x40 + 0x10295e) = 0;
+      *(uint32_t *)response = 1;
+      *(uint16_t *)((uVar1 & 0xff) * 0x40 + 0x10295e) = 0;
     }
     *(uint *)((int)response + 4) = (uVar1 & 0xff) * 0x40 + 0x10295e;
     iVar3 = 0;
@@ -49935,7 +49937,7 @@ int scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt
 
 {
   uint16_t sr;
-  undefined4 uVar1;
+  uint32_t uVar1;
   int iVar2;
   byte local_6 [2];
   
@@ -49964,7 +49966,7 @@ int scpi_set_LED_ACTive(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_a(&scpi_param_LED_ACTive,0,(char)*(undefined2 *)((int)parameters + 2),(char)iVar1);
+  pllc_request_a(&scpi_param_LED_ACTive,0,(char)*(uint16_t *)((int)parameters + 2),(char)iVar1);
   return 0;
 }
 
@@ -50045,7 +50047,7 @@ int scpi_set_LED_ENABled(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_a(&scpi_param_LED_ENABled,0,(char)*(undefined2 *)((int)parameters + 2),(char)iVar1);
+  pllc_request_a(&scpi_param_LED_ENABled,0,(char)*(uint16_t *)((int)parameters + 2),(char)iVar1);
   return 0;
 }
 
@@ -50120,7 +50122,7 @@ int scpi_set_OUTPut_STATe(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_a(&scpi_param_OUTPut_STATe,0,(char)*(undefined2 *)((int)parameters + 2),(char)iVar1);
+  pllc_request_a(&scpi_param_OUTPut_STATe,0,(char)*(uint16_t *)((int)parameters + 2),(char)iVar1);
   return 0;
 }
 
@@ -50183,7 +50185,7 @@ int scpi_set_SOURce_PULSe_CONTinuous_STATe(void *parameters,void *response,void 
   
   iVar1 = return_zero();
   pllc_request_a(&scpi_param_SOURce_PULSe_CONTinuous_STATe,0,
-                 (char)*(undefined2 *)((int)parameters + 2),(char)iVar1);
+                 (char)*(uint16_t *)((int)parameters + 2),(char)iVar1);
   return 0;
 }
 
@@ -50334,13 +50336,13 @@ int scpi_query_SOURce_PTIMe_DATE(void *parameters,void *response,void *call)
 
 {
   int iVar1;
-  undefined2 local_8;
+  uint16_t local_8;
   byte local_6;
   byte local_5;
   
   iVar1 = get_date_time((uint32_t *)&local_8,(time_of_day *)0x0);
   if ((char)iVar1 == 0) {
-    *(undefined2 *)response = local_8;
+    *(uint16_t *)response = local_8;
     *(ushort *)((int)response + 4) = (ushort)local_6;
     *(ushort *)((int)response + 8) = (ushort)local_5;
     iVar1 = 0;
@@ -50405,9 +50407,9 @@ int scpi_query_SOURce_PTIMe_LEAPsecond_DATE(void *parameters,void *response,void
   uint8_t uVar2;
   uint16_t sr;
   int iVar3;
-  undefined2 local_8;
-  undefined1 uStack_6;
-  undefined1 uStack_5;
+  uint16_t local_8;
+  uint8_t uStack_6;
+  uint8_t uStack_5;
   
   sr = enter_supervisor_mode();
   uVar2 = nv_settings.leap_pending;
@@ -50417,8 +50419,8 @@ int scpi_query_SOURce_PTIMe_LEAPsecond_DATE(void *parameters,void *response,void
     iVar3 = scpi_query_failed(0xc,call);
   }
   else {
-    local_8 = (undefined2)(uVar1 >> 0x10);
-    *(undefined2 *)response = local_8;
+    local_8 = (uint16_t)(uVar1 >> 0x10);
+    *(uint16_t *)response = local_8;
     uStack_6 = (byte)(uVar1 >> 8);
     *(ushort *)((int)response + 4) = (ushort)uStack_6;
     uStack_5 = (byte)uVar1;
@@ -50436,20 +50438,20 @@ int scpi_query_SOURce_PTIMe_LEAPsecond_DATE(void *parameters,void *response,void
 int scpi_query_SOURce_PTIMe_LEAPsecond_DURation(void *parameters,void *response,void *call)
 
 {
-  undefined2 uVar1;
+  uint16_t uVar1;
   uint8_t uVar2;
   uint16_t sr;
   int iVar3;
   
   sr = enter_supervisor_mode();
   uVar2 = nv_settings.leap_pending;
-  uVar1 = (undefined2)nv_settings.leap_minute_length;
+  uVar1 = (uint16_t)nv_settings.leap_minute_length;
   set_interrupt_mask(sr);
   if (uVar2 == 0) {
     iVar3 = scpi_query_failed(0xc,call);
   }
   else {
-    *(undefined2 *)response = uVar1;
+    *(uint16_t *)response = uVar1;
     iVar3 = 0;
   }
   return iVar3;
@@ -50516,7 +50518,7 @@ int scpi_query_SOURce_PTIMe_TCODe(void *parameters,void *response,void *call)
       return iVar1;
     }
     psos_wait_v(0x20,0,0,&uStack_8);
-    *(undefined2 *)response = 0;
+    *(uint16_t *)response = 0;
   }
   return 0;
 }
@@ -50549,7 +50551,7 @@ int scpi_query_RTCM(void *parameters,void *response,void *call)
       return iVar1;
     }
     psos_wait_v(0x20,0,0,&uStack_8);
-    *(undefined2 *)response = 0;
+    *(uint16_t *)response = 0;
   }
   return 0;
 }
@@ -50596,10 +50598,10 @@ int scpi_query_SOURce_PTIMe_TCODe_FORMat(void *parameters,void *response,void *c
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0002e068_index_zero)[(short)iVar1]) {
     case 6:
-      *(undefined2 *)response = 0;
+      *(uint16_t *)response = 0;
       break;
     case 0xe:
-      *(undefined2 *)response = 1;
+      *(uint16_t *)response = 1;
     }
   }
   return 0;
@@ -50717,7 +50719,7 @@ int scpi_set_SOURce_PTIMe_TZONe(void *parameters,void *response,void *call)
   iVar2 = (uVar1 & 0xff) * 0xc;
   *(int *)(iVar2 + 0x102a0e) = (int)*(short *)((int)parameters + 2);
   if (*(short *)((int)parameters + 6) == -1) {
-    *(undefined4 *)(iVar2 + 0x102a12) = 0;
+    *(uint32_t *)(iVar2 + 0x102a12) = 0;
   }
   else {
     *(int *)((uVar1 & 0xff) * 0xc + 0x102a12) = (int)*(short *)((int)parameters + 8);
@@ -50780,7 +50782,7 @@ int scpi_set_SAMPle_ACTion(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_b(&scpi_action_SAMPle_ACTion,(char)*(undefined4 *)((int)parameters + 2),(char)iVar1);
+  pllc_request_b(&scpi_action_SAMPle_ACTion,(char)*(uint32_t *)((int)parameters + 2),(char)iVar1);
   return 0;
 }
 
@@ -50795,7 +50797,7 @@ int scpi_set_SAMPle_BOOLean(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_a(&LAB_00033454,0,(char)*(undefined2 *)((int)parameters + 2),(char)iVar1);
+  pllc_request_a(&LAB_00033454,0,(char)*(uint16_t *)((int)parameters + 2),(char)iVar1);
   return 0;
 }
 
@@ -50822,8 +50824,8 @@ int scpi_set_SAMPle_BARR(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_a(&LAB_00033472,(char)*(undefined2 *)parameters,
-                 (char)*(undefined2 *)((int)parameters + 4),(char)iVar1);
+  pllc_request_a(&LAB_00033472,(char)*(uint16_t *)parameters,
+                 (char)*(uint16_t *)((int)parameters + 4),(char)iVar1);
   return 0;
 }
 
@@ -50848,7 +50850,7 @@ int scpi_set_SAMPle_TOGGle(void *parameters,void *response,void *call)
 
 {
   int iVar1;
-  undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
+  uint8_t unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint8_t)__entry; });
   
   iVar1 = *(short *)((int)parameters + 2) + -1;
   if (*(short *)((int)parameters + 2) == 0 || iVar1 == 0) {
@@ -50881,10 +50883,10 @@ int scpi_query_SAMPle_TOGGle(void *parameters,void *response,void *call)
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0002e426_index_zero)[(short)iVar1]) {
     case 4:
-      *(undefined2 *)response = 0;
+      *(uint16_t *)response = 0;
       break;
     case 0xc:
-      *(undefined2 *)response = 1;
+      *(uint16_t *)response = 1;
     }
   }
   return 0;
@@ -50899,7 +50901,7 @@ int scpi_set_SAMPle_TARR(void *parameters,void *response,void *call)
 
 {
   int iVar1;
-  undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
+  uint8_t unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint8_t)__entry; });
   
   iVar1 = *(short *)((int)parameters + 4) + -1;
   if (*(short *)((int)parameters + 4) == 0 || iVar1 == 0) {
@@ -50913,7 +50915,7 @@ int scpi_set_SAMPle_TARR(void *parameters,void *response,void *call)
     }
   }
   iVar1 = return_zero();
-  pllc_request_a(&scpi_param_SAMPle_TARR,(char)*(undefined2 *)parameters,unaff_D2b,(char)iVar1);
+  pllc_request_a(&scpi_param_SAMPle_TARR,(char)*(uint16_t *)parameters,unaff_D2b,(char)iVar1);
   return 0;
 }
 
@@ -50932,10 +50934,10 @@ int scpi_query_SAMPle_TARR(void *parameters,void *response,void *call)
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0002e4b4_index_zero)[(short)iVar1]) {
     case 4:
-      *(undefined2 *)response = 0;
+      *(uint16_t *)response = 0;
       break;
     case 0xc:
-      *(undefined2 *)response = 1;
+      *(uint16_t *)response = 1;
     }
   }
   return 0;
@@ -51112,8 +51114,8 @@ int scpi_set_SAMPle_DOUBle(void *parameters,void *response,void *call)
 int scpi_query_SAMPle_DOUBle(void *parameters,void *response,void *call)
 
 {
-  *(undefined4 *)response = __ghidra_piece(unsigned int, scpi_value_SAMPle_DOUBle, 0);
-  *(undefined4 *)((int)response + 4) = __ghidra_piece(unsigned int, scpi_value_SAMPle_DOUBle, 4);
+  *(uint32_t *)response = __ghidra_piece(unsigned int, scpi_value_SAMPle_DOUBle, 0);
+  *(uint32_t *)((int)response + 4) = __ghidra_piece(unsigned int, scpi_value_SAMPle_DOUBle, 4);
   return 0;
 }
 
@@ -51139,8 +51141,8 @@ int scpi_query_SAMPle_DARR(void *parameters,void *response,void *call)
   short sVar1;
   
   sVar1 = *(short *)parameters;
-  *(undefined4 *)response = *(undefined4 *)(sVar1 * 8 + 0x101e30);
-  *(undefined4 *)((int)response + 4) = *(undefined4 *)(sVar1 * 8 + 0x101e34);
+  *(uint32_t *)response = *(uint32_t *)(sVar1 * 8 + 0x101e30);
+  *(uint32_t *)((int)response + 4) = *(uint32_t *)(sVar1 * 8 + 0x101e34);
   return 0;
 }
 
@@ -51167,7 +51169,7 @@ void string_upper(char *text)
 
 /* advances a char ** past spaces */
 
-void skip_spaces(undefined4 *param_1)
+void skip_spaces(uint32_t *param_1)
 
 {
   char *pcVar1;
@@ -51185,7 +51187,7 @@ void skip_spaces(undefined4 *param_1)
 
 /* strips a string's trailing spaces */
 
-void string_trim_right(undefined4 *param_1)
+void string_trim_right(uint32_t *param_1)
 
 {
   char *pcVar1;
@@ -51203,7 +51205,7 @@ void string_trim_right(undefined4 *param_1)
 
 /* skips an XNON:, :XNON:, XNONE: or :XNONE: prefix, for the ROBin queries */
 
-void robin_strip_xnon(undefined4 *param_1)
+void robin_strip_xnon(uint32_t *param_1)
 
 {
   char cVar1;
@@ -51342,7 +51344,7 @@ int robin_keyword_match(char *param_1,int *param_2)
 
 /* finds a ROBin argument's keyword in the tables at 0x2f32a, and its kind */
 
-undefined4 robin_lookup(int *param_1,undefined4 *param_2,undefined4 *param_3)
+uint32_t robin_lookup(int *param_1,uint32_t *param_2,uint32_t *param_3)
 
 {
   int iVar1;
@@ -51364,8 +51366,8 @@ undefined4 robin_lookup(int *param_1,undefined4 *param_2,undefined4 *param_3)
       }
       iVar1 = robin_keyword_match(pcVar2,&local_8);
       if (iVar1 == -0x15) break;
-      *param_2 = *(undefined4 *)(pcVar2 + 0x10);
-      *param_3 = *(undefined4 *)(pcVar2 + 0x14);
+      *param_2 = *(uint32_t *)(pcVar2 + 0x10);
+      *param_3 = *(uint32_t *)(pcVar2 + 0x14);
       pcVar2 = pcVar2 + 0x18;
     }
     puVar3 = puVar3 + 2;
@@ -51377,7 +51379,7 @@ undefined4 robin_lookup(int *param_1,undefined4 *param_2,undefined4 *param_3)
 
 /* parses the numbers after a ROBin keyword, by its kind */
 
-int robin_parse_arguments(int *param_1,uint param_2,undefined4 *param_3,undefined4 *param_4)
+int robin_parse_arguments(int *param_1,uint param_2,uint32_t *param_3,uint32_t *param_4)
 
 {
   char *pcVar1;
@@ -51597,12 +51599,12 @@ LAB_0002e9be:
 
 /* the ROBin queries' argument parser: upper case, trimmed, prefix stripped, keyword and numbers */
 
-int robin_parse(char *param_1,undefined4 *param_2,undefined4 *param_3)
+int robin_parse(char *param_1,uint32_t *param_2,uint32_t *param_3)
 
 {
   char cVar1;
   char *pcVar2;
-  undefined4 local_74;
+  uint32_t local_74;
   uint local_70;
   char *local_6c;
   char local_68 [100];
@@ -51765,21 +51767,21 @@ void robin_overflow_count(char kind,double *count)
   
   if (kind < 2) {
     if (kind == 0) {
-      *(undefined4 *)count = 0x40100000;
+      *(uint32_t *)count = 0x40100000;
       goto LAB_0002ee5e;
     }
     if (kind == 1) {
-      *(undefined4 *)count = 0x40140000;
+      *(uint32_t *)count = 0x40140000;
       goto LAB_0002ee5e;
     }
   }
   else {
     if (kind == 2) {
-      *(undefined4 *)count = 0x40180000;
+      *(uint32_t *)count = 0x40180000;
       goto LAB_0002ee5e;
     }
     if (kind == 3) {
-      *(undefined4 *)count = 0x401c0000;
+      *(uint32_t *)count = 0x401c0000;
       goto LAB_0002ee5e;
     }
     if (kind == '@') {
@@ -51793,9 +51795,9 @@ void robin_overflow_count(char kind,double *count)
       return;
     }
   }
-  *(undefined4 *)count = 0;
+  *(uint32_t *)count = 0;
 LAB_0002ee5e:
-  *(undefined4 *)((int)count + 4) = 0;
+  *(uint32_t *)((int)count + 4) = 0;
   return;
 }
 
@@ -51804,7 +51806,7 @@ LAB_0002ee5e:
 
 /* does nothing: :ROBin:CLEar's work */
 
-void robin_clear(undefined1 param_1)
+void robin_clear(uint8_t param_1)
 
 {
   return;
@@ -51819,7 +51821,7 @@ int scpi_set_FORMat_DATA(void *parameters,void *response,void *call)
 
 {
   int iVar1;
-  undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
+  uint8_t unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint8_t)__entry; });
   
   iVar1 = *(short *)((int)parameters + 2) + -1;
   if (*(short *)((int)parameters + 2) == 0 || iVar1 == 0) {
@@ -51852,10 +51854,10 @@ int scpi_query_FORMat_DATA(void *parameters,void *response,void *call)
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0002eecc_index_zero)[(short)iVar1]) {
     case 4:
-      *(undefined2 *)response = 0;
+      *(uint16_t *)response = 0;
       break;
     case 0xc:
-      *(undefined2 *)response = 1;
+      *(uint16_t *)response = 1;
     }
   }
   return 0;
@@ -51872,8 +51874,8 @@ int scpi_query_ROBin(void *parameters,void *response,void *call)
   int iVar1;
   uint uVar2;
   uint16_t local_e;
-  undefined4 local_c;
-  undefined4 uStack_8;
+  uint32_t local_c;
+  uint32_t uStack_8;
   
   iVar1 = robin_parse(*(char **)((int)parameters + 2),&local_c,&uStack_8);
   uVar2 = return_zero();
@@ -51899,8 +51901,8 @@ int scpi_set_ROBin_CLEar(void *parameters,void *response,void *call)
 
 {
   int iVar1;
-  undefined4 local_c;
-  undefined4 uStack_8;
+  uint32_t local_c;
+  uint32_t uStack_8;
   
   if (*(short *)parameters == -1) {
     robin_clear(0x40);
@@ -51908,7 +51910,7 @@ int scpi_set_ROBin_CLEar(void *parameters,void *response,void *call)
   else {
     iVar1 = robin_parse(*(char **)((int)parameters + 2),&local_c,&uStack_8);
     if (iVar1 == 0) {
-      robin_clear((undefined1)local_c);
+      robin_clear((uint8_t)local_c);
     }
     else {
       iVar1 = return_zero();
@@ -51928,12 +51930,12 @@ int scpi_query_ROBin_MEMory_OVERflow_COUNt(void *parameters,void *response,void 
 {
   uint uVar1;
   int iVar2;
-  undefined4 local_c;
-  undefined4 uStack_8;
+  uint32_t local_c;
+  uint32_t uStack_8;
   
   uVar1 = return_zero();
   if (*(short *)parameters == -1) {
-    *(undefined4 *)response = 3;
+    *(uint32_t *)response = 3;
     iVar2 = (uVar1 & 0xff) * 0x18;
     *(int *)((int)response + 4) = iVar2 + 0x1029de;
     robin_overflow_count('@',(double *)(iVar2 + 0x1029de));
@@ -51944,7 +51946,7 @@ int scpi_query_ROBin_MEMory_OVERflow_COUNt(void *parameters,void *response,void 
       iVar2 = scpi_query_failed(0xb,call);
       return iVar2;
     }
-    *(undefined4 *)response = 1;
+    *(uint32_t *)response = 1;
     iVar2 = (uVar1 & 0xff) * 0x18;
     *(int *)((int)response + 4) = iVar2 + 0x1029de;
     robin_overflow_count((char)local_c,(double *)(iVar2 + 0x1029de));
@@ -51963,7 +51965,7 @@ int scpi_set_ROBin_MEMory_SAVE(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_a(&scpi_param_ROBin_MEMory_SAVE,0,(char)*(undefined2 *)((int)parameters + 2),
+  pllc_request_a(&scpi_param_ROBin_MEMory_SAVE,0,(char)*(uint16_t *)((int)parameters + 2),
                  (char)iVar1);
   return 0;
 }
@@ -51993,12 +51995,12 @@ int scpi_query_ROBin_POINts(void *parameters,void *response,void *call)
 {
   uint uVar1;
   int iVar2;
-  undefined4 local_c;
-  undefined4 uStack_8;
+  uint32_t local_c;
+  uint32_t uStack_8;
   
   uVar1 = return_zero();
   if (*(short *)parameters == -1) {
-    *(undefined4 *)response = 3;
+    *(uint32_t *)response = 3;
     iVar2 = (uVar1 & 0xff) * 0x40;
     *(int *)((int)response + 4) = iVar2 + 0x10295e;
     robin_point_count('@',(short *)(iVar2 + 0x10295e));
@@ -52009,7 +52011,7 @@ int scpi_query_ROBin_POINts(void *parameters,void *response,void *call)
       iVar2 = scpi_query_failed(0xb,call);
       return iVar2;
     }
-    *(undefined4 *)response = 1;
+    *(uint32_t *)response = 1;
     iVar2 = (uVar1 & 0xff) * 0x40;
     *(int *)((int)response + 4) = iVar2 + 0x10295e;
     robin_point_count((char)local_c,(short *)(iVar2 + 0x10295e));
@@ -52028,18 +52030,18 @@ int scpi_query_ROBin_TSTamp(void *parameters,void *response,void *call)
   int iVar1;
   uint uVar2;
   char extraout_D0b;
-  undefined4 local_20;
-  undefined4 uStack_1c;
+  uint32_t local_20;
+  uint32_t uStack_1c;
   short local_18;
-  undefined2 local_16;
-  undefined2 local_14;
-  undefined2 local_12;
-  undefined2 local_10;
-  undefined2 local_e;
-  undefined2 local_c;
-  undefined2 local_a;
-  undefined2 local_8;
-  undefined2 local_6;
+  uint16_t local_16;
+  uint16_t local_14;
+  uint16_t local_12;
+  uint16_t local_10;
+  uint16_t local_e;
+  uint16_t local_c;
+  uint16_t local_a;
+  uint16_t local_8;
+  uint16_t local_6;
   
   iVar1 = robin_parse(*(char **)((int)parameters + 2),&local_20,&uStack_1c);
   uVar2 = return_zero();
@@ -52049,15 +52051,15 @@ int scpi_query_ROBin_TSTamp(void *parameters,void *response,void *call)
        extraout_D0b != 0)) {
       iVar1 = (uVar2 & 0xff) * 0xa0;
       *(short *)(iVar1 + 0x102d76) = local_18;
-      *(undefined2 *)(iVar1 + 0x102d78) = local_16;
-      *(undefined2 *)(iVar1 + 0x102d7a) = local_14;
-      *(undefined2 *)(iVar1 + 0x102d7c) = local_12;
-      *(undefined2 *)(iVar1 + 0x102d7e) = local_10;
-      *(undefined2 *)(iVar1 + 0x102d80) = local_e;
-      *(undefined2 *)(iVar1 + 0x102d82) = local_c;
-      *(undefined2 *)(iVar1 + 0x102d84) = local_a;
-      *(undefined2 *)(iVar1 + 0x102d86) = local_8;
-      *(undefined2 *)(iVar1 + 0x102d88) = local_6;
+      *(uint16_t *)(iVar1 + 0x102d78) = local_16;
+      *(uint16_t *)(iVar1 + 0x102d7a) = local_14;
+      *(uint16_t *)(iVar1 + 0x102d7c) = local_12;
+      *(uint16_t *)(iVar1 + 0x102d7e) = local_10;
+      *(uint16_t *)(iVar1 + 0x102d80) = local_e;
+      *(uint16_t *)(iVar1 + 0x102d82) = local_c;
+      *(uint16_t *)(iVar1 + 0x102d84) = local_a;
+      *(uint16_t *)(iVar1 + 0x102d86) = local_8;
+      *(uint16_t *)(iVar1 + 0x102d88) = local_6;
       robin_store(response,(short *)((uVar2 & 0xff) * 0xa0 + 0x102d76),10,nv_settings.format_data,
                   (uint8_t)uVar2);
       return 0;
@@ -52102,11 +52104,11 @@ int scpi_query_SENSe_TST1_EDGE(void *parameters,void *response,void *call)
 
 /* sets a status register's enable or transition filter, as :STATus:PRESet does */
 
-undefined4 status_preset_register(char param_1,char param_2,short param_3,short param_4)
+uint32_t status_preset_register(char param_1,char param_2,short param_3,short param_4)
 
 {
   int iVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   
   if (param_2 == 0) {
     iVar1 = (int)param_1 - 2;
@@ -52195,8 +52197,8 @@ int status_init(void)
       uVar2 = (uint)bVar3;
       status_register_setup
                 ((int)status_object,uVar2,
-                 **(undefined4 **)(&status_register_setup_table + uVar2 * 0xb),
-                 **(undefined4 **)(&USHORT_0002f7b0 + uVar2 * 0xb),
+                 **(uint32_t **)(&status_register_setup_table + uVar2 * 0xb),
+                 **(uint32_t **)(&USHORT_0002f7b0 + uVar2 * 0xb),
                  (uint)*(byte *)(&USHORT_0002f79e + uVar2 * 0xb),
                  (uint)(&USHORT_0002f7a0)[uVar2 * 0xb],0);
       bVar3 = bVar3 + 1;
@@ -52214,7 +52216,7 @@ int status_init(void)
 
 /* does nothing; status_report and status_happening pass it each event */
 
-void status_event_hook(undefined4 param_1,undefined1 param_2)
+void status_event_hook(uint32_t param_1,uint8_t param_2)
 
 {
   return;
@@ -52280,7 +52282,7 @@ uint16_t status_hardware_condition(void)
 
 /* clears a buffer of status events kept before the status model is ready */
 
-void happening_buffer_clear(undefined1 *param_1)
+void happening_buffer_clear(uint8_t *param_1)
 
 {
   byte bVar1;
@@ -52390,11 +52392,11 @@ int scpi_query_SOURce_ROSCillator_HOLDover_DURation(void *parameters,void *respo
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0002fa5c_index_zero)[(short)iVar1]) {
     case 10:
-      *(undefined2 *)((int)response + 6) = 1;
+      *(uint16_t *)((int)response + 6) = 1;
       return 0;
     }
   }
-  *(undefined2 *)((int)response + 6) = 0;
+  *(uint16_t *)((int)response + 6) = 0;
   return 0;
 }
 
@@ -52651,10 +52653,10 @@ int scpi_query_SOURce_ROSCillator_HOLDover_LIMit_STATe(void *parameters,void *re
   
   cVar1 = return_byte(nv_settings.holdover_limit_state);
   if (cVar1 == 0) {
-    *(undefined2 *)response = 1;
+    *(uint16_t *)response = 1;
   }
   else {
-    *(undefined2 *)response = 0;
+    *(uint16_t *)response = 0;
   }
   return 0;
 }
@@ -52705,7 +52707,7 @@ int scpi_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO(void *parameters,void *re
   
   iVar1 = return_zero();
   pllc_request_a(&scpi_param_SOURce_ROSCillator_HOLDover_RECovery_AUTO,0,
-                 (char)*(undefined2 *)((int)parameters + 2),(char)iVar1);
+                 (char)*(uint16_t *)((int)parameters + 2),(char)iVar1);
   return 0;
 }
 
@@ -52882,21 +52884,21 @@ int scpi_query_SOURce_ROSCillator_HOLDover_WAITing(void *parameters,void *respon
                     /* WARNING: Switch is manually overridden */
       switch((short)(bVar3 - 1)) {
       case 0:
-        *(undefined2 *)response = 0;
+        *(uint16_t *)response = 0;
         return 0;
       case 1:
-        *(undefined2 *)response = 1;
+        *(uint16_t *)response = 1;
         return 0;
       case 3: case 0xf:
-        *(undefined2 *)response = 2;
+        *(uint16_t *)response = 2;
         return 0;
       case 7:
-        *(undefined2 *)response = 3;
+        *(uint16_t *)response = 3;
         return 0;
       }
     }
   }
-  *(undefined2 *)response = 4;
+  *(uint16_t *)response = 4;
   return 0;
 }
 
@@ -52953,23 +52955,23 @@ int scpi_query_SOURce_ROSCillator_STATe(void *parameters,void *response,void *ca
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_00030010_index_zero)[(short)iVar1]) {
     case 10:
-      *(undefined2 *)response = 0;
+      *(uint16_t *)response = 0;
       break;
     case 0xe:
-      *(undefined2 *)response = 5;
+      *(uint16_t *)response = 5;
       break;
     case 0x14:
-      *(undefined2 *)response = 4;
+      *(uint16_t *)response = 4;
       break;
     case 0x1a:
-      *(undefined2 *)response = 3;
+      *(uint16_t *)response = 3;
       break;
     case 0x20:
-      *(undefined2 *)response = 1;
+      *(uint16_t *)response = 1;
     }
   }
   else {
-    *(undefined2 *)response = 2;
+    *(uint16_t *)response = 2;
   }
   return 0;
 }
@@ -53034,7 +53036,7 @@ int scpi_query_SOURce_PTIMe_TINTerval(void *parameters,void *response,void *call
   }
   else {
     *(float *)response = interval_mean;
-    *(undefined2 *)((int)response + 4) = 0xfff6;
+    *(uint16_t *)((int)response + 4) = 0xfff6;
     set_interrupt_mask(sr);
     iVar1 = 0;
   }
@@ -53068,7 +53070,7 @@ int scpi_query_SYSTem_COMMunicate(void *parameters,void *response,void *call)
   
   iVar1 = scpi_console_port();
   if (iVar1 == *(int *)((int)call + 0x12)) {
-    *(undefined2 *)response = 0;
+    *(uint16_t *)response = 0;
   }
   return 0;
 }
@@ -53096,17 +53098,17 @@ int scpi_set_SYSTem_COMMunicate_SER1_FDUPlex(void *parameters,void *response,voi
 
 {
   uint uVar1;
-  undefined2 uVar2;
-  undefined4 uVar3;
+  uint16_t uVar2;
+  uint32_t uVar3;
   
   if (*(short *)parameters == 0) {
     uVar1 = return_zero();
-    uVar3 = CONCAT13((char)*(undefined2 *)((int)parameters + 4),(int3)((uVar1 & 0xff) << 8));
+    uVar3 = CONCAT13((char)*(uint16_t *)((int)parameters + 4),(int3)((uVar1 & 0xff) << 8));
     uVar2 = 0x33dc;
   }
   else {
     uVar1 = return_zero();
-    uVar3 = CONCAT13((char)*(undefined2 *)((int)parameters + 4),(int3)((uVar1 & 0xff) << 8));
+    uVar3 = CONCAT13((char)*(uint16_t *)((int)parameters + 4),(int3)((uVar1 & 0xff) << 8));
     uVar2 = 0x3afc;
   }
   pllc_request_a(CONCAT22(3,uVar2),0,(char)((uint)uVar3 >> 0x18),(char)((uint)uVar3 >> 8));
@@ -53140,17 +53142,17 @@ int scpi_set_SYSTem_COMMunicate_SER1_PRESet(void *parameters,void *response,void
 
 {
   int iVar1;
-  undefined1 uVar2;
+  uint8_t uVar2;
   scpi_action_param *psVar3;
   
   if (*(short *)parameters == 0) {
     iVar1 = return_zero();
-    uVar2 = (undefined1)iVar1;
+    uVar2 = (uint8_t)iVar1;
     psVar3 = &scpi_action_SER1_PRESet;
   }
   else {
     iVar1 = return_zero();
-    uVar2 = (undefined1)iVar1;
+    uVar2 = (uint8_t)iVar1;
     psVar3 = &scpi_action_SER2_PRESet;
   }
   pllc_request_b(psVar3,0,uVar2);
@@ -53166,9 +53168,9 @@ int scpi_set_SYSTem_COMMunicate_SER1_RECeive_BAUD(void *parameters,void *respons
 
 {
   int iVar1;
-  undefined1 uVar2;
-  undefined2 uVar3;
-  undefined1 uVar4;
+  uint8_t uVar2;
+  uint16_t uVar3;
+  uint8_t uVar4;
   
   if (*(short *)((int)parameters + 2) == 2) {
     if (*(short *)((int)parameters + 4) != 1) {
@@ -53192,12 +53194,12 @@ LAB_00030272:
 LAB_00030274:
   if (*(short *)parameters == 0) {
     iVar1 = return_zero();
-    uVar4 = (undefined1)iVar1;
+    uVar4 = (uint8_t)iVar1;
     uVar3 = 0x3328;
   }
   else {
     iVar1 = return_zero();
-    uVar4 = (undefined1)iVar1;
+    uVar4 = (uint8_t)iVar1;
     uVar3 = 0x3aa2;
   }
   pllc_request_a(CONCAT22(3,uVar3),0,uVar2,uVar4);
@@ -53218,11 +53220,11 @@ int scpi_query_SYSTem_COMMunicate_SER1_RECeive_BAUD(void *parameters,void *respo
   if (*(short *)((int)parameters + 2) == 2) {
     if (*(short *)((int)parameters + 4) == 1) {
 switchD_00030304_caseD_0:
-      *(undefined4 *)response = 0x4b0;
+      *(uint32_t *)response = 0x4b0;
       return 0;
     }
 switchD_00030304_caseD_3:
-    *(undefined4 *)response = 0x4b00;
+    *(uint32_t *)response = 0x4b00;
   }
   else {
     uVar2 = sci_settings.baud;
@@ -53238,10 +53240,10 @@ switchD_00030304_caseD_3:
     case 8:
       goto switchD_00030304_caseD_0;
     case 0x10:
-      *(undefined4 *)response = 0x960;
+      *(uint32_t *)response = 0x960;
       break;
     case 0x18:
-      *(undefined4 *)response = 0x2580;
+      *(uint32_t *)response = 0x2580;
       break;
     case 0x20:
       goto switchD_00030304_caseD_3;
@@ -53259,7 +53261,7 @@ int scpi_set_SYSTem_COMMunicate_SER1_RECeive_BITS(void *parameters,void *respons
 
 {
   int iVar1;
-  undefined1 uVar2;
+  uint8_t uVar2;
   
   if (*(short *)parameters != 0) {
     return -0x20;
@@ -53288,7 +53290,7 @@ int scpi_query_SYSTem_COMMunicate_SER1_RECeive_BITS(void *parameters,void *respo
 
 {
   int iVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   
   if (*(short *)parameters == 0) {
     if (*(short *)((int)parameters + 2) == 2) {
@@ -53325,7 +53327,7 @@ override_jmp_000303c0_case_0:
   }
   uVar2 = 8;
 LAB_000303f8:
-  *(undefined4 *)response = uVar2;
+  *(uint32_t *)response = uVar2;
   return 0;
 }
 
@@ -53338,17 +53340,17 @@ int scpi_set_SYSTem_COMMunicate_SER1_RECeive_PACE(void *parameters,void *respons
 
 {
   uint uVar1;
-  undefined2 uVar2;
-  undefined4 uVar3;
+  uint16_t uVar2;
+  uint32_t uVar3;
   
   if (*(short *)parameters == 0) {
     uVar1 = return_zero();
-    uVar3 = CONCAT13((char)*(undefined2 *)((int)parameters + 4),(int3)((uVar1 & 0xff) << 8));
+    uVar3 = CONCAT13((char)*(uint16_t *)((int)parameters + 4),(int3)((uVar1 & 0xff) << 8));
     uVar2 = 0x3346;
   }
   else {
     uVar1 = return_zero();
-    uVar3 = CONCAT13((char)*(undefined2 *)((int)parameters + 4),(int3)((uVar1 & 0xff) << 8));
+    uVar3 = CONCAT13((char)*(uint16_t *)((int)parameters + 4),(int3)((uVar1 & 0xff) << 8));
     uVar2 = 0x3ac0;
   }
   pllc_request_a(CONCAT22(3,uVar2),0,(char)((uint)uVar3 >> 0x18),(char)((uint)uVar3 >> 8));
@@ -53382,9 +53384,9 @@ int scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(void *parameters,void *
 
 {
   int iVar1;
-  undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
-  undefined2 uVar2;
-  undefined1 uVar3;
+  uint8_t unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint8_t)__entry; });
+  uint16_t uVar2;
+  uint8_t uVar3;
   
   iVar1 = (int)*(short *)((int)parameters + 4) - 3;
   if ((uint)(int)*(short *)((int)parameters + 4) < 3 || iVar1 == 0) {
@@ -53410,12 +53412,12 @@ int scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(void *parameters,void *
   }
   if (*(short *)parameters == 0) {
     iVar1 = return_zero();
-    uVar3 = (undefined1)iVar1;
+    uVar3 = (uint8_t)iVar1;
     uVar2 = 0x3382;
   }
   else {
     iVar1 = return_zero();
-    uVar3 = (undefined1)iVar1;
+    uVar3 = (uint8_t)iVar1;
     uVar2 = 0x3ade;
   }
   pllc_request_a(CONCAT22(3,uVar2),0,unaff_D2b,uVar3);
@@ -53443,16 +53445,16 @@ int scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_00030544_index_zero)[(short)iVar1]) {
     case 8:
-      *(undefined2 *)response = 0;
+      *(uint16_t *)response = 0;
       break;
     case 0xc:
-      *(undefined2 *)response = 2;
+      *(uint16_t *)response = 2;
       break;
     case 0x12:
-      *(undefined2 *)response = 3;
+      *(uint16_t *)response = 3;
       break;
     case 0x18:
-      *(undefined2 *)response = 1;
+      *(uint16_t *)response = 1;
     }
   }
   return 0;
@@ -53467,7 +53469,7 @@ int scpi_set_SYSTem_COMMunicate_SER1_RECeive_SBITs(void *parameters,void *respon
 
 {
   int iVar1;
-  undefined1 uVar2;
+  uint8_t uVar2;
   
   if (*(short *)parameters != 0) {
     return -0x20;
@@ -53496,7 +53498,7 @@ int scpi_query_SYSTem_COMMunicate_SER1_RECeive_SBITs(void *parameters,void *resp
 
 {
   int iVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   
   if (*(short *)parameters == 0) {
     if (*(short *)((int)parameters + 2) == 2) {
@@ -53522,7 +53524,7 @@ int scpi_query_SYSTem_COMMunicate_SER1_RECeive_SBITs(void *parameters,void *resp
   }
   uVar2 = 1;
 LAB_00030608:
-  *(undefined4 *)response = uVar2;
+  *(uint32_t *)response = uVar2;
   return 0;
 }
 
@@ -53669,8 +53671,8 @@ int scpi_query_SYSTem_PRINt(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_c(&LAB_00033904,0,0,(undefined4 *)0x0,(char)iVar1);
-  *(undefined2 *)response = 0;
+  pllc_request_c(&LAB_00033904,0,0,(uint32_t *)0x0,(char)iVar1);
+  *(uint16_t *)response = 0;
   iVar1 = scpi_console_port();
   if (iVar1 == *(int *)((int)call + 0x12)) {
     status_screen_print(0,console_write,printf);
@@ -53820,11 +53822,11 @@ uint8_t lifetime_record_read(void)
 /* writes the 32-byte checksummed lifetime record at EEPROM 0x400060, the date, its count and the
    EFC, when it has changed */
 
-undefined4 lifetime_record_write(void)
+uint32_t lifetime_record_write(void)
 
 {
   int iVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   lifetime_record record;
   
   memset(&record,0xff,0x20);
@@ -53885,7 +53887,7 @@ void lifetime_update(int param_1)
   pkVar1 = &event;
   pkVar4 = &lifetime_event_template;
   do {
-    *(undefined1 *)&pkVar1->next = *(undefined1 *)&pkVar4->next;
+    *(uint8_t *)&pkVar1->next = *(uint8_t *)&pkVar4->next;
     sVar3 = sVar3 + -1;
     pkVar1 = (klok_entry *)((int)&pkVar1->next + 1);
     pkVar4 = (klok_entry *)((int)&pkVar4->next + 1);
@@ -53941,7 +53943,7 @@ bool calibration_block_read(void)
    from it, reporting status 0x10 if the EEPROM write fails
    scpi_param_DIAGnostic_ROSCillator_TCOefficient: done; interval.md's calibration block */
 
-undefined4 save_calibration_block(undefined4 param_1)
+uint32_t save_calibration_block(uint32_t param_1)
 
 {
   char cVar1;
@@ -54114,10 +54116,10 @@ char eeprom_lock(void)
   ulong uVar3;
   char cVar4;
   char acStack_56 [80];
-  undefined2 local_6;
+  uint16_t local_6;
   
   uVar1 = enter_supervisor();
-  local_6 = (undefined2)uVar1;
+  local_6 = (uint16_t)uVar1;
   if (kernel_running != 0) {
     if ((uVar1 & 0x700) == 0) {
       uVar2 = psos_my_pid();
@@ -54158,10 +54160,10 @@ void eeprom_unlock(void)
   uint uVar1;
   ulong uVar2;
   char acStack_56 [80];
-  undefined2 local_6;
+  uint16_t local_6;
   
   uVar1 = enter_supervisor();
-  local_6 = (undefined2)uVar1;
+  local_6 = (uint16_t)uVar1;
   if ((kernel_running != 0) && ((uVar1 & 0x700) == 0)) {
     uVar2 = psos_my_pid();
     if (uVar2 == eepx_token.owner) {
@@ -54289,7 +54291,7 @@ bool eeprom_write_page(char *param_1,char *param_2,ushort param_3)
 /* writes data split at 64-byte page boundaries with eeprom_write_page; happening 'I' on a failure
     */
 
-undefined4 eeprom_write(char *param_1,char *param_2,uint param_3)
+uint32_t eeprom_write(char *param_1,char *param_2,uint param_3)
 
 {
   char cVar1;
@@ -54339,7 +54341,7 @@ uint16_t log_page_checksum(log_page *page)
 /* writes an event log page to EEPROM at 0x400d40 if it has changed, its count incremented and
    checksummed */
 
-undefined4 log_page_write(byte param_1,short *param_2)
+uint32_t log_page_write(byte param_1,short *param_2)
 
 {
   int iVar1;
@@ -54365,19 +54367,19 @@ undefined4 log_page_write(byte param_1,short *param_2)
 /* reads the event log's 64-byte EEPROM page at 0x400d40 plus 0x40 times its number; 0xff if its
    checksum fails */
 
-undefined4 log_page_read(byte param_1,undefined4 *param_2)
+uint32_t log_page_read(byte param_1,uint32_t *param_2)
 
 {
   uint16_t uVar1;
   short sVar2;
-  undefined4 uVar3;
-  undefined4 *puVar4;
-  undefined4 *puVar5;
+  uint32_t uVar3;
+  uint32_t *puVar4;
+  uint32_t *puVar5;
   
   uVar3 = 0;
   sVar2 = 0xf;
   puVar4 = param_2;
-  puVar5 = (undefined4 *)((uint)param_1 * 0x40 + 0x400d40);
+  puVar5 = (uint32_t *)((uint)param_1 * 0x40 + 0x400d40);
   do {
     *puVar4 = *puVar5;
     sVar2 = sVar2 + -1;
@@ -54504,10 +54506,10 @@ int log_erase_checked(int param_1,byte param_2)
 
 /* the event log's entry count, and whether it is full */
 
-int log_entry_total(undefined1 *param_1)
+int log_entry_total(uint8_t *param_1)
 
 {
-  if (param_1 != (undefined1 *)0x0) {
+  if (param_1 != (uint8_t *)0x0) {
     *param_1 = log_full;
   }
   return (int)log_entries;
@@ -54533,7 +54535,7 @@ int log_init(void)
     log_page_number = -1;
     iVar2 = 0;
     plVar1 = log_cursor;
-    while (log_cursor = plVar1, iVar3 = log_page_read((byte)iVar2,(undefined4 *)&log_write_page),
+    while (log_cursor = plVar1, iVar3 = log_page_read((byte)iVar2,(uint32_t *)&log_write_page),
           iVar3 != 0xff) {
       if (iVar3 != 0) {
         return iVar3;
@@ -54597,7 +54599,7 @@ int log_read(int param_1,char *param_2,char *param_3)
     }
     iVar4 = 0;
     if (local_14 != log_page_number) {
-      iVar4 = log_page_read((byte)((ulonglong)lVar7 >> 0x20),(undefined4 *)&log_page_buffer);
+      iVar4 = log_page_read((byte)((ulonglong)lVar7 >> 0x20),(uint32_t *)&log_page_buffer);
       log_page_number = (int16_t)((ulonglong)lVar7 >> 0x20);
       if (iVar4 != 0) {
         log_page_clear(&log_page_buffer);
@@ -54774,7 +54776,7 @@ int log_event(uint8_t code)
 /* logs the time the first satellite was tracked
    log_write("First satellite tracked at %04d%02d%02d.%02d:%02d:%02d") */
 
-void log_first_satellite(undefined4 param_1,undefined4 param_2)
+void log_first_satellite(uint32_t param_1,uint32_t param_2)
 
 {
   log_write("First satellite tracked at %04d%02d%02d.%02d:%02d:%02d",param_1,param_2);
@@ -54821,10 +54823,10 @@ log_entry * log_page_free_entry(log_page *page)
 
 /* writes the current event log page */
 
-undefined1 log_flush(void)
+uint8_t log_flush(void)
 
 {
-  undefined1 uVar1;
+  uint8_t uVar1;
   
   log_write_page_open = 0;
   if (log_page_number == log_write_page_number) {
@@ -54840,10 +54842,10 @@ undefined1 log_flush(void)
 /* adds an entry with its date and time to the event log, writing the page; reports event space past
    180 entries */
 
-undefined4 log_append(char *param_1,int32_t param_2,int32_t param_3)
+uint32_t log_append(char *param_1,int32_t param_2,int32_t param_3)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   
   if (log_full == 0) {
     log_cursor->format = param_1;
@@ -54940,11 +54942,11 @@ float float_table_index(float *param_1,short param_2)
 
 /* clamps a float to its minimum and maximum, reporting each clamp; 1 if it clamped */
 
-undefined4 clamp_float(float *param_1,float *param_2,float *param_3,float *param_4,byte param_5)
+uint32_t clamp_float(float *param_1,float *param_2,float *param_3,float *param_4,byte param_5)
 
 {
   int iVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   
   iVar1 = float_compare(*param_3,*param_1);
   if (iVar1 < 1) {
@@ -54972,32 +54974,32 @@ undefined4 clamp_float(float *param_1,float *param_2,float *param_3,float *param
 
 /* clamps a double to its minimum and maximum, reporting each clamp; 1 if it clamped */
 
-undefined4
-clamp_double(double *param_1,undefined4 *param_2,double *param_3,double *param_4,byte param_5)
+uint32_t
+clamp_double(double *param_1,uint32_t *param_2,double *param_3,double *param_4,byte param_5)
 
 {
   int iVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   
   iVar1 = double_compare(*param_1,*param_3);
   if (iVar1 < 1) {
     iVar1 = double_compare(*param_4,*param_1);
     if (iVar1 < 1) {
-      *param_2 = *(undefined4 *)param_1;
-      param_2[1] = *(undefined4 *)((int)param_1 + 4);
+      *param_2 = *(uint32_t *)param_1;
+      param_2[1] = *(uint32_t *)((int)param_1 + 4);
       uVar2 = 0;
     }
     else {
       report_clamped(1,param_5);
-      *param_2 = *(undefined4 *)param_4;
-      param_2[1] = *(undefined4 *)((int)param_4 + 4);
+      *param_2 = *(uint32_t *)param_4;
+      param_2[1] = *(uint32_t *)((int)param_4 + 4);
       uVar2 = 1;
     }
   }
   else {
     report_clamped(0,param_5);
-    *param_2 = *(undefined4 *)param_3;
-    param_2[1] = *(undefined4 *)((int)param_3 + 4);
+    *param_2 = *(uint32_t *)param_3;
+    param_2[1] = *(uint32_t *)((int)param_3 + 4);
     uVar2 = 1;
   }
   return uVar2;
@@ -55057,7 +55059,7 @@ LAB_00032210:
 
 /* the double at a pointer */
 
-undefined8 load_double(undefined8 *param_1)
+uint64_t load_double(uint64_t *param_1)
 
 {
   return *param_1;
@@ -55112,8 +55114,8 @@ uint mask_to_limits(uint *param_1,uint *param_2)
    scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore, nv_param_leap_date: validate */
 
 uint clamp_to_step_and_limits
-               (uint *param_1,undefined4 param_2,uint *param_3,uint *param_4,int param_5,
-               undefined4 param_6)
+               (uint *param_1,uint32_t param_2,uint *param_3,uint *param_4,int param_5,
+               uint32_t param_6)
 
 {
   uint uVar1;
@@ -55177,7 +55179,7 @@ float float_min_of(float *param_1,float *param_2)
    scpi_param_SAMPle_FLOat, FARR, SOURce_ROSCillator_LIMit_THReshold: validate */
 
 float clamp_float_to_step_and_limits
-                (float *param_1,undefined4 param_2,float *param_3,float *param_4,int param_5,
+                (float *param_1,uint32_t param_2,float *param_3,float *param_4,int param_5,
                 int param_6)
 
 {
@@ -55197,7 +55199,7 @@ float clamp_float_to_step_and_limits
 /* validate for :GPS:ADELay and the positions: clamps a float and rounds it to its step in double */
 
 int32_t clamp_float_to_step_double
-                  (float *param_1,undefined4 param_2,float *param_3,float *param_4,int param_5,
+                  (float *param_1,uint32_t param_2,float *param_3,float *param_4,int param_5,
                   int param_6)
 
 {
@@ -55247,21 +55249,21 @@ LAB_0003250c:
 /* clamps a double to its minimum and maximum and rounds it to its step */
 
 void clamp_double_to_step_and_limits
-               (double *param_1,undefined4 param_2,double *param_3,double *param_4,int param_5,
-               undefined4 param_6)
+               (double *param_1,uint32_t param_2,double *param_3,double *param_4,int param_5,
+               uint32_t param_6)
 
 {
   int iVar1;
   double y;
-  undefined4 uStack_3c;
-  undefined4 uStack_38;
+  uint32_t uStack_3c;
+  uint32_t uStack_38;
   double dStack_34;
-  undefined4 uStack_2c;
-  undefined4 uStack_28;
+  uint32_t uStack_2c;
+  uint32_t uStack_28;
   double dStack_24;
   double dStack_1c;
   double dStack_14;
-  undefined8 local_c;
+  uint64_t local_c;
   
   clamp_double(param_1,&uStack_3c,param_3,param_4,(byte)param_6);
   dStack_34 = __ghidra_as(double, (**(code **)(param_5 + 8))(param_5,&uStack_3c,param_2));
@@ -55296,13 +55298,13 @@ LAB_00032648:
 
 /* clamps a double to its minimum and maximum */
 
-undefined8
-clamp_double_to_limits(double *param_1,double *param_2,double *param_3,undefined4 param_4)
+uint64_t
+clamp_double_to_limits(double *param_1,double *param_2,double *param_3,uint32_t param_4)
 
 {
-  undefined8 uStack_c;
+  uint64_t uStack_c;
   
-  clamp_double(param_1,(undefined4 *)&uStack_c,param_2,param_3,(byte)param_4);
+  clamp_double(param_1,(uint32_t *)&uStack_c,param_2,param_3,(byte)param_4);
   return uStack_c;
 }
 
@@ -55408,7 +55410,7 @@ uint16_t nv_checksum(nv_record *record)
 /* compares two records, nonzero when they differ
    structures.md */
 
-undefined4 nv_record_differs(int *param_1,int *param_2)
+uint32_t nv_record_differs(int *param_1,int *param_2)
 
 {
   int iVar1;
@@ -55545,7 +55547,7 @@ char nv_save(byte param_1)
 
 /* 0 if the current NV slot holds S, a good checksum and the firmware revision 3543B */
 
-undefined1 nv_slot_valid(void)
+uint8_t nv_slot_valid(void)
 
 {
   uint uVar1;
@@ -55568,7 +55570,7 @@ undefined1 nv_slot_valid(void)
 /* loads the settings from slot nv_slot when its record is good
    structures.md */
 
-undefined4 nv_load_slot(void)
+uint32_t nv_load_slot(void)
 
 {
   scpi_numeric_param *psVar1;
@@ -55576,7 +55578,7 @@ undefined4 nv_load_slot(void)
   int8_t iVar3;
   short sVar4;
   char cVar8;
-  undefined4 uVar5;
+  uint32_t uVar5;
   uint uVar6;
   byte bVar9;
   uint uVar7;
@@ -55655,7 +55657,7 @@ undefined4 nv_load_slot(void)
 
 /* the long at a pointer, load_long's code again; the position setters give it unit_step */
 
-undefined4 load_long_unit_step(undefined4 *param_1)
+uint32_t load_long_unit_step(uint32_t *param_1)
 
 {
   return *param_1;
@@ -55666,7 +55668,7 @@ undefined4 load_long_unit_step(undefined4 *param_1)
 
 /* the long at a pointer; the position setters pass it as a descriptor's getter */
 
-undefined4 load_long(undefined4 *param_1)
+uint32_t load_long(uint32_t *param_1)
 
 {
   return *param_1;
@@ -55677,7 +55679,7 @@ undefined4 load_long(undefined4 *param_1)
 
 /* the double at a pointer; descriptors at 0x33720 to 0x3379e point at it */
 
-undefined8 load_double_param(undefined8 *param_1)
+uint64_t load_double_param(uint64_t *param_1)
 
 {
   return *param_1;
@@ -55701,12 +55703,12 @@ void idn_model_default(void)
 /* reads the model, serial and suffix from the identification record at EEPROM 0x400010, or their
    defaults */
 
-undefined1 identification_record_read(void)
+uint8_t identification_record_read(void)
 
 {
   uint16_t uVar2;
   int iVar1;
-  undefined1 uVar3;
+  uint8_t uVar3;
   
   uVar2 = record_checksum(&eeprom_identification_record,0x30);
   if (uVar2 == eeprom_identification_record.checksum) {
@@ -55735,11 +55737,11 @@ undefined1 identification_record_read(void)
 
 /* writes the model, serial and suffix to the identification record when they have changed */
 
-undefined4 identification_record_write(void)
+uint32_t identification_record_write(void)
 
 {
   int iVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   identification_record record;
   
   iVar1 = strncmp(eeprom_identification_record.model,idn_model,0x12);
@@ -55877,7 +55879,7 @@ void reset_record_count(void)
 
 /* one of 32 log entries as "Log %03d:%04d%02d%02d.%02d:%02d:%02d", or "Unused" */
 
-undefined4 log_entry_text(int param_1,char *param_2,char *param_3)
+uint32_t log_entry_text(int param_1,char *param_2,char *param_3)
 
 {
   time_of_day tVar1;
@@ -55885,7 +55887,7 @@ undefined4 log_entry_text(int param_1,char *param_2,char *param_3)
   char cVar3;
   uint8_t uVar4;
   int iVar5;
-  undefined4 uVar6;
+  uint32_t uVar6;
   char *pcVar7;
   
   uVar6 = 0;
@@ -56047,12 +56049,12 @@ uint8_t dac_search_bisect(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t lo
   char_slot dac_00;
   uint8_t uVar2;
   int iVar1;
-  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  uint32_t unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   char cVar3;
-  undefined1 in_stack_ffffffe7;
-  undefined2 uVar4;
+  uint8_t in_stack_ffffffe7;
+  uint16_t uVar4;
   
-  uVar4 = (undefined2)((uint)unaff_D2 >> 0x10);
+  uVar4 = (uint16_t)((uint)unaff_D2 >> 0x10);
   cVar3 = '\n';
 LAB_00040122:
   while( true ) {
@@ -56097,12 +56099,12 @@ uint8_t dac_search_step(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t low,
 {
   char_slot dac_00;
   uint8_t uVar1;
-  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  uint32_t unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   char cVar2;
-  undefined1 in_stack_ffffffef;
-  undefined2 uVar3;
+  uint8_t in_stack_ffffffef;
+  uint16_t uVar3;
   
-  uVar3 = (undefined2)((uint)unaff_D2 >> 0x10);
+  uVar3 = (uint16_t)((uint)unaff_D2 >> 0x10);
   cVar2 = 0x14;
   while (cVar2 != 0) {
     cVar2 = cVar2 + -1;
@@ -56159,7 +56161,7 @@ byte hdac_nudge(int param_1,byte param_2)
 
 /* loads any pending FPGA registers and sets the fields for an interpolator measurement */
 
-undefined4 interpolator_prepare(void)
+uint32_t interpolator_prepare(void)
 
 {
   int iVar1;
@@ -56738,10 +56740,10 @@ byte fpga_read_byte(char param_1)
 
 /* takes 0x555555 off the counter's 64-bit count */
 
-undefined8 counter_offset_apply(int param_1,uint param_2)
+uint64_t counter_offset_apply(int param_1,uint param_2)
 
 {
-  undefined8 uVar1;
+  uint64_t uVar1;
   
   uVar1 = int64_negate(0,0x555555);
   uVar1 = int64_add(param_1,param_2,(int)((ulonglong)uVar1 >> 0x20),(uint)uVar1);
@@ -56872,8 +56874,8 @@ void counter_read(interval_reading_fields *reading,counter_configuration_fields 
   }
 LAB_00040e2e:
   if (reading->errors != 0) {
-    *(undefined4 *)&reading->value = 0x47d2a37d;
-    *(undefined4 *)((int)&reading->value + 4) = 0xced46143;
+    *(uint32_t *)&reading->value = 0x47d2a37d;
+    *(uint32_t *)((int)&reading->value + 4) = 0xced46143;
     reading->valid = 0;
     if ((reading->errors & COUNTER_GATE_FAILURE) != 0) {
       task_dmessage("Gate failure\r\n");
@@ -56939,8 +56941,8 @@ void counter_configuration_init(counter_configuration_fields *configuration)
   local_a[5] = 0;
   fpga_fields_to_registers(local_a,configuration->fpga_registers);
   fpga_fields_to_registers(local_a,fconf_regs);
-  *(undefined4 *)&configuration->calibration = 0x3fd9999a;
-  *(undefined4 *)((int)&configuration->calibration + 4) = 0xdbb8f8da;
+  *(uint32_t *)&configuration->calibration = 0x3fd9999a;
+  *(uint32_t *)((int)&configuration->calibration + 4) = 0xdbb8f8da;
   configuration->interpolator_scale = 200;
   configuration->calibrate_mode = 3;
   configuration->calibrate_state = 2;
@@ -56975,8 +56977,8 @@ void counter_selftest(void)
 
 {
   longlong lVar1;
-  undefined4 local_c;
-  undefined4 local_8;
+  uint32_t local_c;
+  uint32_t local_8;
   
   fpga_set_bit(1,8);
   lVar1 = counter_read_raw();
@@ -56995,7 +56997,7 @@ void counter_selftest(void)
 
 /* adds two 64-bit numbers */
 
-undefined8 int64_add(int param_1,uint param_2,int param_3,uint param_4)
+uint64_t int64_add(int param_1,uint param_2,int param_3,uint param_4)
 
 {
   return CONCAT44(param_1 + param_3 + (uint)CARRY4(param_2,param_4),param_2 + param_4);
@@ -57006,7 +57008,7 @@ undefined8 int64_add(int param_1,uint param_2,int param_3,uint param_4)
 
 /* negates a 64-bit number */
 
-undefined8 int64_negate(int param_1,int param_2)
+uint64_t int64_negate(int param_1,int param_2)
 
 {
   return CONCAT44(-(param_1 + (uint)(-param_2 != 0)),-param_2);
@@ -57017,7 +57019,7 @@ undefined8 int64_negate(int param_1,int param_2)
 
 /* adds a signed long to a 64-bit number; called by nothing */
 
-undefined8 int64_add_long(uint param_1,int param_2,uint param_3)
+uint64_t int64_add_long(uint param_1,int param_2,uint param_3)
 
 {
   int iVar1;
@@ -57060,7 +57062,7 @@ uint uint64_divide(uint divisor,uint high,uint low)
 double int64_to_double(uint param_1,uint param_2)
 
 {
-  undefined8 uVar1;
+  uint64_t uVar1;
   double dVar2;
   double dStack_c;
   
@@ -57086,14 +57088,14 @@ double int64_to_double(uint param_1,uint param_2)
 
 /* a double as a signed 64-bit number, through 2^32 at 0x41300; called by nothing */
 
-undefined8 double_to_int64(uint param_1,undefined4 param_2)
+uint64_t double_to_int64(uint param_1,uint32_t param_2)
 
 {
   int iVar1;
   uint u;
   uint uVar2;
   double dVar3;
-  undefined8 uVar4;
+  uint64_t uVar4;
   
   iVar1 = double_compare(0.0,__ghidra_as(double, CONCAT44(param_1,param_2)));
   if (iVar1 < 0) {
@@ -58038,8 +58040,8 @@ void fit_quality(aging_curve_state *curve)
   float fVar4;
   double dVar5;
   double dVar6;
-  undefined4 uVar7;
-  undefined4 uVar8;
+  uint32_t uVar7;
+  uint32_t uVar8;
   float local_14;
   float local_8;
   
@@ -58134,10 +58136,10 @@ LAB_0004298e:
 /* for :KENneth:PRESent?: in holdover or its recovery, pll.tfom, resolution 1e-7
    undocumented.md, ":KENneth" */
 
-undefined4 kenneth_present_get(float *param_1,undefined1 *param_2)
+uint32_t kenneth_present_get(float *param_1,uint8_t *param_2)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   
   if ((pll.stage == PLL_STAGE_HOLDOVER) || (pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)) {
     *param_1 = pll.tfom;
@@ -58157,10 +58159,10 @@ undefined4 kenneth_present_get(float *param_1,undefined1 *param_2)
    whether in holdover
    undocumented.md, ":KENneth" */
 
-undefined4 kenneth_predicted_get(float *param_1,undefined1 *param_2,undefined1 *param_3)
+uint32_t kenneth_predicted_get(float *param_1,uint8_t *param_2,uint8_t *param_3)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   
   if ((pll.stage == PLL_STAGE_HOLDOVER) || (pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)) {
     *param_3 = 1;
@@ -58186,7 +58188,7 @@ undefined4 kenneth_predicted_get(float *param_1,undefined1 *param_2,undefined1 *
 /* the time code's f; pll_rep's "ffom = %1d"
    structures.md */
 
-undefined4 get_ffom(undefined1 *param_1)
+uint32_t get_ffom(uint8_t *param_1)
 
 {
   int iVar1;
@@ -58216,7 +58218,7 @@ undefined4 get_ffom(undefined1 *param_1)
 
 /* a bare rts: what output_state_done hands it, :OUTPut:STATe, goes no further here */
 
-void output_state_program(undefined1 param_1)
+void output_state_program(uint8_t param_1)
 
 {
   return;
@@ -58277,7 +58279,7 @@ void output_state_done(void)
 
 /* carries out a request's action, flagging the self-test's descriptor at 0x41348 */
 
-void pll_scpi_do_action(undefined1 *param_1)
+void pll_scpi_do_action(uint8_t *param_1)
 
 {
   if (pll_scpi_param == &scpi_action_self_test) {
@@ -58296,7 +58298,7 @@ void pll_scpi_do_action(undefined1 *param_1)
 /* applies a change to a PLL setting that toggles, refusing a value above its maximum
    the firmware's own name, "pll_scpi: toggle_change() -- new value > max value" */
 
-void toggle_change(undefined1 *param_1)
+void toggle_change(uint8_t *param_1)
 
 {
   if (*(char *)((int)pll_scpi_param + 6) < (char)pll_scpi_setting) {
@@ -58401,7 +58403,7 @@ void validate_or_doaction(char *needs_loop,char *result)
 /* 1 if a request's setting goes to the loop, its descriptor's flag bit 0; a survey start instead
    marks 0x102040 */
 
-undefined4 pll_scpi_needs_loop(void)
+uint32_t pll_scpi_needs_loop(void)
 
 {
   ushort uVar1;
@@ -58429,7 +58431,7 @@ undefined4 pll_scpi_needs_loop(void)
 /* puts a request's validated values in the loop's message at 0x102002 by the setting's action code,
    and sends it */
 
-undefined4 pll_scpi_send_to_loop(uint8_t param_1,undefined1 *param_2)
+uint32_t pll_scpi_send_to_loop(uint8_t param_1,uint8_t *param_2)
 
 {
   char cVar2;
@@ -58601,7 +58603,7 @@ void finish_scpi_cmd(void)
   void *pvVar1;
   int iVar2;
   byte bVar3;
-  undefined1 unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
+  uint8_t unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint8_t)__entry; });
   char cVar4;
   
   pvVar1 = pll_scpi_param;
@@ -58890,7 +58892,7 @@ void questionable_user_done(void)
 
 /* restores a status register's enable mask from the NV settings, reporting 0xe if it fails */
 
-void status_enable_restore(undefined4 param_1,undefined4 param_2)
+void status_enable_restore(uint32_t param_1,uint32_t param_2)
 
 {
   char cVar1;
@@ -58909,7 +58911,7 @@ void status_enable_restore(undefined4 param_1,undefined4 param_2)
 
 /* restores a status register's positive transition filter from the NV settings */
 
-void status_ptr_restore(undefined4 param_1,undefined4 param_2)
+void status_ptr_restore(uint32_t param_1,uint32_t param_2)
 
 {
   char cVar1;
@@ -58928,7 +58930,7 @@ void status_ptr_restore(undefined4 param_1,undefined4 param_2)
 
 /* restores a status register's negative transition filter from the NV settings */
 
-void status_ntr_restore(undefined4 param_1,undefined4 param_2)
+void status_ntr_restore(uint32_t param_1,uint32_t param_2)
 
 {
   char cVar1;
@@ -58947,7 +58949,7 @@ void status_ntr_restore(undefined4 param_1,undefined4 param_2)
 
 /* done for :STATus:PRESet: the enables and transition filters back to their defaults, saved */
 
-void status_preset_done(undefined4 param_1,undefined4 param_2)
+void status_preset_done(uint32_t param_1,uint32_t param_2)
 
 {
   byte bVar1;
@@ -59038,7 +59040,7 @@ void holdover_ti_add(float param_1)
 /* 1 if holdover's TI statistics give an EFC within 0 to 1048560 from at least 10 readings; called
    by nothing */
 
-undefined1 holdover_correction_valid(void)
+uint8_t holdover_correction_valid(void)
 
 {
   float fVar1;
@@ -59077,7 +59079,7 @@ float holdover_ti_max(void)
 /* 1 unless the holdover is younger than holdover_measurement_threshold and the TI is within its age
    times a rate plus holdover_limit_threshold */
 
-undefined4 holdover_limit_exceeded(float param_1)
+uint32_t holdover_limit_exceeded(float param_1)
 
 {
   float fVar1;
@@ -59194,7 +59196,7 @@ LAB_00043a88:
 /* the loop's holdover stage, steering the oscillator without GPS
    loop.md's stage; "holdover - Error with measurement" */
 
-undefined1 holdover(char param_1)
+uint8_t holdover(char param_1)
 
 {
   float pushed_1;
@@ -59211,7 +59213,7 @@ undefined1 holdover(char param_1)
   int iVar3;
   uint32_t uptime;
   char cVar5;
-  undefined1 uVar6;
+  uint8_t uVar6;
   double dVar7;
   char acStack_74 [100];
   float fStack_10;
@@ -59398,12 +59400,12 @@ LAB_00043ee6:
 /* compares the clock's date and time with gps.status, and on a second mismatch running sets the
    clock from GPS and reports event L */
 
-undefined4 clock_check_against_gps(void)
+uint32_t clock_check_against_gps(void)
 
 {
   bool bVar3;
   uint32_t uVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   uint32_t local_c;
   time_of_day local_8;
   
@@ -59812,7 +59814,7 @@ char startup_pll(char param_1)
    the firmware's own name, "pll_normal - Error with measurement"; interval.md's averaging routine,
    which counts readings to ten and stores the mean */
 
-undefined1 pll_normal(char param_1)
+uint8_t pll_normal(char param_1)
 
 {
   float pushed_1;
@@ -59830,7 +59832,7 @@ undefined1 pll_normal(char param_1)
   double dVar7;
   float local_82;
   float local_7e;
-  undefined1 local_7a;
+  uint8_t local_7a;
   char acStack_79 [101];
   uint8_t *local_14;
   int local_10;
@@ -59979,13 +59981,13 @@ undefined1 pll_normal(char param_1)
 /* for a TI beyond 1e-7 requests a sync of one to three steps of 100 ns, and returns the steps, 4
    for beyond 3e-7; fine stores it as pll.fine_index */
 
-undefined1 fine_sync_adjust(float param_1)
+uint8_t fine_sync_adjust(float param_1)
 
 {
   int iVar1;
   float quotient;
   uint uVar3;
-  undefined1 uVar4;
+  uint8_t uVar4;
   
   iVar1 = float_compare(param_1,1e-07);
   if (iVar1 < 0) {
@@ -59998,7 +60000,7 @@ undefined1 fine_sync_adjust(float param_1)
       if (iVar1 < 0) {
         quotient = float_divide(param_1,-1e-07);
         uVar3 = float_to_unsigned(quotient);
-        uVar4 = (undefined1)uVar3;
+        uVar4 = (uint8_t)uVar3;
         sync_request(2,uVar3 & 0xff);
       }
       else {
@@ -60012,7 +60014,7 @@ undefined1 fine_sync_adjust(float param_1)
     if (iVar1 < 0) {
       quotient = float_divide(param_1,1e-07);
       uVar3 = float_to_unsigned(quotient);
-      uVar4 = (undefined1)uVar3;
+      uVar4 = (uint8_t)uVar3;
       sync_request(1,uVar3 & 0xff);
     }
     else {
@@ -60029,7 +60031,7 @@ undefined1 fine_sync_adjust(float param_1)
 /* synchronizes the outputs to GPS time
    "Peforming sync" */
 
-undefined1 sync_perform(float param_1)
+uint8_t sync_perform(float param_1)
 
 {
   float a;
@@ -60784,11 +60786,11 @@ override_jmp_00045b86_case_1:
 /* the power-up sub-state, as the status screen's suffix index
    screen-format-strings.md's ladder: the power-up sub-state's suffix index */
 
-undefined1 pll_powerup_suffix_index(void)
+uint8_t pll_powerup_suffix_index(void)
 
 {
   int iVar1;
-  undefined1 uVar2;
+  uint8_t uVar2;
   
   uVar2 = 0;
   if ((pll.stage == PLL_STAGE_POWERUP) &&
@@ -60826,10 +60828,10 @@ undefined1 pll_powerup_suffix_index(void)
    pll_powerup_suffix_index's companion
    screen-format-strings.md, "Mode suffixes" */
 
-undefined1 recovery_suffix_index(void)
+uint8_t recovery_suffix_index(void)
 
 {
-  undefined1 uVar1;
+  uint8_t uVar1;
   
   uVar1 = 0;
   if ((pll.stage == PLL_STAGE_HOLDOVER_RECOVERY) && (pll.recovery_state == 1)) {
@@ -60848,7 +60850,7 @@ undefined1 recovery_suffix_index(void)
 
 /* for :HOLDover:WAITing?: which fault bit holds the loop in holdover, 0x10, 2 or 8 */
 
-undefined1 holdover_waiting_reason(void)
+uint8_t holdover_waiting_reason(void)
 
 {
   if (pll.stage == PLL_STAGE_HOLDOVER) {
@@ -60952,7 +60954,7 @@ void pwma_force_level(char param_1)
    GPS, then coarse and fine, setting tfom to 1e-3 and then 2e-6
    loop.md's power-up stage */
 
-undefined1 powerup(char param_1)
+uint8_t powerup(char param_1)
 
 {
   uint8_t uVar3;
@@ -60960,8 +60962,8 @@ undefined1 powerup(char param_1)
   uint16_t sr;
   int iVar1;
   uint32_t uVar2;
-  undefined1 uVar5;
-  undefined2 uVar6;
+  uint8_t uVar5;
+  uint16_t uVar6;
   uint8_t uVar7;
   uint8_t local_6;
   uint8_t uStack_5;
@@ -61103,12 +61105,12 @@ override_jmp_00045f06_case_0:
 /* waits for an interval reading, sets fault bits at pll +0x11 (2 no GPS, 4 no reading, 0x10
    internal 1PPS dead) and sets the clock from the reference; 1 if all is well, 2 if faulted */
 
-undefined1 pll_check_reference(char param_1)
+uint8_t pll_check_reference(char param_1)
 
 {
   int iVar1;
   uint8_t uVar2;
-  undefined1 uVar3;
+  uint8_t uVar3;
   
   uVar3 = 0;
   if ((param_1 == 0) || (2 < (char)pll.reference_check_state)) {
@@ -61946,14 +61948,14 @@ LAB_00046e64:
 void gps_leap_ack(void)
 
 {
-  undefined4 pushed_1;
-  undefined4 uVar1;
+  uint32_t pushed_1;
+  uint32_t uVar1;
   int iVar2;
   uint8_t uVar3;
   char cVar4;
   short sVar5;
-  undefined1 uVar7;
-  undefined1 uVar8;
+  uint8_t uVar7;
+  uint8_t uVar8;
   uint uStack_20;
   time_of_day tStack_1c;
   int iStack_18;
@@ -62019,8 +62021,8 @@ LAB_00046efe:
       iStack_18 = date_to_days(uStack_20);
       iStack_18 = pushed_1 - iStack_18;
       iVar2 = hms_to_seconds((uint32_t)__ghidra_aggregate_bits(gps.status.time));
-      uVar7 = (undefined1)((uint)iVar2 >> 8);
-      uVar8 = (undefined1)iVar2;
+      uVar7 = (uint8_t)((uint)iVar2 >> 8);
+      uVar8 = (uint8_t)iVar2;
       iVar2 = time_to_seconds((uint32_t)__ghidra_aggregate_bits(tStack_1c));
       sVar5 = (short)iStack_18 * 0x5180 + (CONCAT11(uVar7,uVar8) - (short)iVar2);
       if (gps.utc_time == ONCORE_TIME_UTC) {
@@ -62062,10 +62064,10 @@ LAB_0004706a:
 
 /* 1 while a leap second acknowledgment is pending, pll +0x2c or +0x2d */
 
-undefined4 leap_ack_pending(void)
+uint32_t leap_ack_pending(void)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   
   if ((pll.leap_ack_state == 0) && (pll.leap_ack_requested == 0)) {
     uVar1 = 0;
@@ -62809,14 +62811,14 @@ void running_average_update(int param_1,double *param_2,uint param_3)
 /* mas into degrees (/ 3600000), minutes (/ 60000) and seconds (the rest / 1000.0); the position
    queries */
 
-void mas_to_dms(long param_1,undefined2 *param_2,undefined1 *param_3,double *param_4)
+void mas_to_dms(long param_1,uint16_t *param_2,uint8_t *param_3,double *param_4)
 
 {
   long numerator;
   longlong lVar1;
   double dVar2;
   int denominator;
-  undefined4 local_8;
+  uint32_t local_8;
   
   denominator = 3600000;
   numerator = labs(param_1);
@@ -63129,7 +63131,7 @@ void gps_print_time_raim(void)
   char *pcVar5;
   char cVar6;
   byte bVar7;
-  undefined1 uVar8;
+  uint8_t uVar8;
   char acStack_12 [10];
   uint32_t local_8;
   
@@ -63386,16 +63388,16 @@ void gps_print_instrument_state(void)
   char *pcVar8;
   double dVar9;
   char local_a0 [31];
-  undefined1 local_81;
+  uint8_t local_81;
   char local_80 [31];
-  undefined1 local_61;
+  uint8_t local_61;
   char local_60 [31];
-  undefined1 local_41;
+  uint8_t local_41;
   char local_40 [32];
   char local_20 [16];
   char *local_10;
   byte local_c;
-  undefined4 local_a;
+  uint32_t local_a;
   uchar local_6;
   
   psos_pause(1);
@@ -63705,8 +63707,8 @@ void gps_print_status(oncore_status_fields *status)
   int iVar3;
   double dVar4;
   char *format;
-  undefined4 uVar5;
-  undefined4 uVar6;
+  uint32_t uVar5;
+  uint32_t uVar6;
   char acStack_54 [80];
   
   psos_pause(1);
@@ -63731,7 +63733,7 @@ void gps_print_status(oncore_status_fields *status)
     fVar2 = unsigned_to_float((uint)status->dop);
     fVar2 = float_divide(fVar2,10.0);
     dVar4 = float_to_double(fVar2);
-    uVar5 = (undefined4)((ulonglong)__ghidra_bits(dVar4) >> 0x20);
+    uVar5 = (uint32_t)((ulonglong)__ghidra_bits(dVar4) >> 0x20);
     uVar6 = SUB84(dVar4,0);
     format = "PDOP%23.1f\r\n";
   }
@@ -63739,7 +63741,7 @@ void gps_print_status(oncore_status_fields *status)
     fVar2 = unsigned_to_float((uint)status->dop);
     fVar2 = float_divide(fVar2,10.0);
     dVar4 = float_to_double(fVar2);
-    uVar5 = (undefined4)((ulonglong)__ghidra_bits(dVar4) >> 0x20);
+    uVar5 = (uint32_t)((ulonglong)__ghidra_bits(dVar4) >> 0x20);
     uVar6 = SUB84(dVar4,0);
     format = "HDOP%23.1f\r\n";
   }
@@ -63862,7 +63864,7 @@ void satellite_sets_build(oncore_channel_status *channels,satellite_sets *sets)
   uint8_t id;
   byte bVar1;
   uint uVar2;
-  undefined4 uVar3;
+  uint32_t uVar3;
   int iVar4;
   oncore_channel_status *poVar5;
   uint32_t *mask;
@@ -64011,7 +64013,7 @@ void satellite_elevation_azimuth(oncore_visible_satellite *satellite,uint8_t *en
 
 /* for status_snapshot: a satellite's status code for the screen */
 
-void satellite_status(char param_1,byte param_2,int param_3,int param_4,undefined1 *param_5)
+void satellite_status(char param_1,byte param_2,int param_3,int param_4,uint8_t *param_5)
 
 {
   int iVar1;
@@ -64070,10 +64072,10 @@ void satellite_status(char param_1,byte param_2,int param_3,int param_4,undefine
 
 /* qsort's comparison of two satellites, by elevation and then by number */
 
-undefined4 satellite_compare(byte *param_1,byte *param_2)
+uint32_t satellite_compare(byte *param_1,byte *param_2)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   
   if (param_1[1] < param_2[1]) {
 LAB_000497a6:
@@ -64118,8 +64120,8 @@ void satellite_status_list
   uint8_t local_2a [24];
   char local_12;
   uint8_t *local_10;
-  undefined4 uStack_c;
-  undefined4 uStack_8;
+  uint32_t uStack_c;
+  uint32_t uStack_8;
   
   local_10 = param_6 + (uint)param_2 * 8;
   sVar7 = 7;
@@ -64171,8 +64173,8 @@ void satellite_status_list
   do {
     if ((local_10 <= param_6) || ((local_2e == 0 && (bVar8 == 0)))) {
       for (; param_6 < local_10; param_6 = param_6 + 8) {
-        *(undefined4 *)param_6 = uStack_c;
-        *(undefined4 *)(param_6 + 4) = uStack_8;
+        *(uint32_t *)param_6 = uStack_c;
+        *(uint32_t *)(param_6 + 4) = uStack_8;
       }
       return;
     }
@@ -64243,7 +64245,7 @@ void format_satellite_number(char param_1,char *param_2)
 
 /* writes * for a set flag */
 
-bool mark_flag(char param_1,undefined1 *param_2)
+bool mark_flag(char param_1,uint8_t *param_2)
 
 {
   if (param_1 != 0) {
@@ -64618,11 +64620,11 @@ int format_time(time_of_day time,char *text)
 
 /* a date as "%02d %s %04d", or "-- --- ----" */
 
-undefined4 format_date(ushort param_1,byte param_2,byte param_3,char *param_4)
+uint32_t format_date(ushort param_1,byte param_2,byte param_3,char *param_4)
 
 {
   char cVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   char *pcVar3;
   
   if ((((param_2 == 0) || (0xc < param_2)) || (param_3 == 0)) ||
@@ -64705,9 +64707,9 @@ void status_screen_position(uint8_t row,status_snapshot_record *snapshot,char *l
   double dVar7;
   char cVar8;
   uint8_t digits;
-  undefined2 uVar9;
-  undefined1 uVar10;
-  undefined1 uVar11;
+  uint16_t uVar9;
+  uint8_t uVar10;
+  uint8_t uVar11;
   char *pcVar12;
   char text [16];
   char acStack_e [10];
@@ -64883,7 +64885,7 @@ void status_screen_tfom(uint8_t row,status_snapshot_record *snapshot,char *line)
   byte bVar4;
   char *pcVar5;
   double dVar6;
-  undefined4 uVar7;
+  uint32_t uVar7;
   char *pcVar8;
   char acStack_26 [34];
   
@@ -65162,11 +65164,11 @@ void status_snapshot(status_snapshot_record *snapshot)
   uint8_t uVar5;
   int iVar2;
   uint32_t uVar3;
-  undefined1 uVar6;
+  uint8_t uVar6;
   uint16_t uVar4;
   time_of_day local_e;
   uint32_t local_a;
-  undefined1 auStack_6 [2];
+  uint8_t auStack_6 [2];
   
   sr = set_interrupt_mask(0x100);
   snapshot->stage = pll.stage;
@@ -65176,8 +65178,8 @@ void status_snapshot(status_snapshot_record *snapshot)
   snapshot->powerup_suffix = uVar5;
   uVar5 = recovery_suffix_index();
   snapshot->recovery_suffix = uVar5;
-  *(undefined4 *)&snapshot->interval = __ghidra_piece(unsigned int, interval_reading.value, 0);
-  *(undefined4 *)((int)&snapshot->interval + 4) = __ghidra_piece(unsigned int, interval_reading.value, 4);
+  *(uint32_t *)&snapshot->interval = __ghidra_piece(unsigned int, interval_reading.value, 0);
+  *(uint32_t *)((int)&snapshot->interval + 4) = __ghidra_piece(unsigned int, interval_reading.value, 4);
   cVar1 = interval_reading.errors;
   uVar4 = interval_reading.tag;
   snapshot->interval_valid = interval_reading.valid;
@@ -65284,7 +65286,7 @@ void status_screen(status_snapshot_record *snapshot,char clear,write_function *w
                   printf_function *print)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   int iVar2;
   uint uVar3;
   char *pcVar4;
@@ -65292,17 +65294,17 @@ void status_screen(status_snapshot_record *snapshot,char clear,write_function *w
   byte bVar6;
   uint8_t uVar7;
   char cVar8;
-  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  uint32_t unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   uint8_t (*pauVar9) [8];
-  undefined **ppuVar10;
+  uint8_t **ppuVar10;
   char *pcVar11;
   char *pcVar12;
   double dVar13;
   uint8_t digits;
   uint8_t uVar14;
-  undefined2 uVar15;
-  undefined1 uVar16;
-  undefined1 uVar17;
+  uint16_t uVar15;
+  uint8_t uVar16;
+  uint8_t uVar17;
   byte local_c0;
   uint8_t (*local_b2) [8];
   uint8_t local_ae;
@@ -65598,18 +65600,18 @@ override_jmp_0004acdc_case_0:
   while (local_ae = local_ae + 1, local_ae < 7) {
     format_satellite_number((*local_b2)[0],acStack_ad);
     format_level(*(short *)(*local_b2 + 2),acStack_a8);
-    uVar1 = *(undefined4 *)(*local_b2 + 4);
+    uVar1 = *(uint32_t *)(*local_b2 + 4);
     format_satellite_cell
               ((char)((uint)uVar1 >> 0x18),(byte)((uint)uVar1 >> 0x10),(ushort)uVar1,acStack_a4);
     format_satellite_number((*pauVar9)[0],acStack_9d);
     bVar5 = mark_flag((*pauVar9)[1],acStack_9d);
-    uVar1 = *(undefined4 *)(*pauVar9 + 4);
+    uVar1 = *(uint32_t *)(*pauVar9 + 4);
     format_satellite_cell
               ((char)((uint)uVar1 >> 0x18),(byte)((uint)uVar1 >> 0x10),(ushort)uVar1,acStack_98);
     format_satellite_number(pauVar9[6][0],acStack_91);
     bVar6 = mark_flag(pauVar9[6][1],acStack_91);
     local_c0 = bVar6 | bVar5 | local_c0;
-    uVar1 = *(undefined4 *)(pauVar9[6] + 4);
+    uVar1 = *(uint32_t *)(pauVar9[6] + 4);
     format_satellite_cell
               ((char)((uint)uVar1 >> 0x18),(byte)((uint)uVar1 >> 0x10),(ushort)uVar1,acStack_8c);
     status_screen_position(local_ae,snapshot,line);
@@ -65629,8 +65631,8 @@ override_jmp_0004acdc_case_0:
   (*print)("%s\r\n",line);
   line[0] = 0;
   local_80 = 0;
-  for (ppuVar10 = &PTR_s_Self_Test_0004d076; *ppuVar10 != (undefined *)0x0;
-      ppuVar10 = (undefined **)((int)ppuVar10 + 0xe)) {
+  for (ppuVar10 = &PTR_s_Self_Test_0004d076; *ppuVar10 != (uint8_t *)0x0;
+      ppuVar10 = (uint8_t **)((int)ppuVar10 + 0xe)) {
     uVar7 = (*(code *)ppuVar10[1])(*(uint16_t *)(ppuVar10 + 2),(uint16_t)unaff_D2);
     if (uVar7 == 0) {
       pcVar11 = "OK";
@@ -65663,7 +65665,7 @@ override_jmp_0004acdc_case_0:
 
 /* prints the status screen, for :SYSTem:PRINt? */
 
-void status_screen_print(undefined1 param_1,write_function *write,printf_function *print)
+void status_screen_print(uint8_t param_1,write_function *write,printf_function *print)
 
 {
   status_screen(&status_screen_snapshot,0,write,print);
@@ -65792,7 +65794,7 @@ void gps_receiver_status_reset(void)
 /* sets the GPS receiver's status code, which enter_holdover reports, from its fix mode, the
    satellites in use, position hold and RAIM */
 
-void gps_receiver_status_update(char param_1,undefined1 param_2)
+void gps_receiver_status_update(char param_1,uint8_t param_2)
 
 {
   bool bVar1;
@@ -65922,7 +65924,7 @@ LAB_0004b3a2:
 /* 0: the receiver status gpsm_task and status_snapshot hand gps_receiver_status_update with 1,
    which it ignores */
 
-undefined1 gps_status_alternate(void)
+uint8_t gps_status_alternate(void)
 
 {
   return 0;
@@ -66144,7 +66146,7 @@ void gps_response_reset(void)
 
 /* a response's two-character ID to its index among 49, counting unknown_response */
 
-undefined4 gps_response_lookup(char param_1,char param_2,undefined2 *param_3,short *param_4)
+uint32_t gps_response_lookup(char param_1,char param_2,uint16_t *param_3,short *param_4)
 
 {
   short sVar1;
@@ -66296,11 +66298,11 @@ LAB_0004b8c0:
 
 /* 1 once more time has passed than the message's timeout */
 
-undefined4 gps_response_timed_out(short param_1,uint *param_2)
+uint32_t gps_response_timed_out(short param_1,uint *param_2)
 
 {
   char cVar2;
-  undefined4 uVar1;
+  uint32_t uVar1;
   uint local_8;
   
   cVar2 = uptime_elapsed(param_2,(int *)&local_8);
@@ -66421,11 +66423,11 @@ bool request_ring_put(gps_request_entry *entry)
     (gps_requests.write)->sender = entry->sender;
     (gps_requests.write)->result = uVar1;
     (gps_requests.write)->code = iVar2;
-    *(undefined4 *)&(gps_requests.write)->argument_mode = *(undefined4 *)&entry->argument_mode;
-    *(undefined4 *)((int)&(gps_requests.write)->arguments + 2) =
-         *(undefined4 *)((int)&entry->arguments + 2);
-    *(undefined4 *)((gps_requests.write)->field_13 + 1) = *(undefined4 *)(entry->field_13 + 1);
-    *(undefined2 *)((gps_requests.write)->field_13 + 5) = *(undefined2 *)(entry->field_13 + 5);
+    *(uint32_t *)&(gps_requests.write)->argument_mode = *(uint32_t *)&entry->argument_mode;
+    *(uint32_t *)((int)&(gps_requests.write)->arguments + 2) =
+         *(uint32_t *)((int)&entry->arguments + 2);
+    *(uint32_t *)((gps_requests.write)->field_13 + 1) = *(uint32_t *)(entry->field_13 + 1);
+    *(uint16_t *)((gps_requests.write)->field_13 + 5) = *(uint16_t *)(entry->field_13 + 5);
     gps_requests.write = pgVar3->entries;
   }
   return bVar4;
@@ -66459,10 +66461,10 @@ int request_ring_get(gps_request_entry *entry)
     entry->sender = pgVar3->sender;
     entry->result = uVar1;
     entry->code = iVar2;
-    *(undefined4 *)&entry->argument_mode = *(undefined4 *)&pgVar3->argument_mode;
-    *(undefined4 *)((int)&entry->arguments + 2) = *(undefined4 *)((int)&pgVar3->arguments + 2);
-    *(undefined4 *)(entry->field_13 + 1) = *(undefined4 *)(pgVar3->field_13 + 1);
-    *(undefined2 *)(entry->field_13 + 5) = *(undefined2 *)(pgVar3->field_13 + 5);
+    *(uint32_t *)&entry->argument_mode = *(uint32_t *)&pgVar3->argument_mode;
+    *(uint32_t *)((int)&entry->arguments + 2) = *(uint32_t *)((int)&pgVar3->arguments + 2);
+    *(uint32_t *)(entry->field_13 + 1) = *(uint32_t *)(pgVar3->field_13 + 1);
+    *(uint16_t *)(entry->field_13 + 5) = *(uint16_t *)(pgVar3->field_13 + 5);
     gps_requests.read = gps_requests.read + 1;
     if ((gps_request_entry *)(gps_requests.entries[4].field_13 + 6) < gps_requests.read) {
       gps_requests.read = gps_requests.entries;
@@ -66505,10 +66507,10 @@ int request_ring_unput(gps_request_entry *entry)
     entry->sender = pgVar3->sender;
     entry->result = uVar1;
     entry->code = iVar2;
-    *(undefined4 *)&entry->argument_mode = *(undefined4 *)&pgVar3->argument_mode;
-    *(undefined4 *)((int)&entry->arguments + 2) = *(undefined4 *)((int)&pgVar3->arguments + 2);
-    *(undefined4 *)(entry->field_13 + 1) = *(undefined4 *)(pgVar3->field_13 + 1);
-    *(undefined2 *)(entry->field_13 + 5) = *(undefined2 *)(pgVar3->field_13 + 5);
+    *(uint32_t *)&entry->argument_mode = *(uint32_t *)&pgVar3->argument_mode;
+    *(uint32_t *)((int)&entry->arguments + 2) = *(uint32_t *)((int)&pgVar3->arguments + 2);
+    *(uint32_t *)(entry->field_13 + 1) = *(uint32_t *)(pgVar3->field_13 + 1);
+    *(uint16_t *)(entry->field_13 + 5) = *(uint16_t *)(pgVar3->field_13 + 5);
     iVar4 = 1;
   }
   return iVar4;
@@ -66547,10 +66549,10 @@ bool request_ring_full(void)
 
 /* 1 if a request with the ID is waiting in the ring */
 
-undefined4 request_ring_contains(char param_1,char param_2,char param_3)
+uint32_t request_ring_contains(char param_1,char param_2,char param_3)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   gps_request_ring *pgVar2;
   
   pgVar2 = (gps_request_ring *)gps_requests.read;
@@ -66576,7 +66578,7 @@ LAB_0004bbee:
 
 /* 1 if the newest queued request is of kind 3 or 4 and not yet sent, so a new one replaces it */
 
-undefined4 request_ring_newest_replaceable(void)
+uint32_t request_ring_newest_replaceable(void)
 
 {
   int iVar1;
@@ -66596,7 +66598,7 @@ undefined4 request_ring_newest_replaceable(void)
 
 /* 1 for request kinds 1 to 4 */
 
-undefined4 request_kind_valid(char param_1)
+uint32_t request_kind_valid(char param_1)
 
 {
   char cVar1;
@@ -66624,29 +66626,29 @@ void gps_request_queue(char param_1,gps_request_entry *request,gps_request_entry
 {
   int iVar1;
   char cVar2;
-  undefined4 *puVar3;
-  undefined4 *puVar4;
+  uint32_t *puVar3;
+  uint32_t *puVar4;
   gps_request_entry gStack_1e;
   
-  puVar4 = (undefined4 *)&stack0xffffffd6;
+  puVar4 = (uint32_t *)&stack0xffffffd6;
   if (request->code == 0x45) {
     if (param_1 == 0) goto LAB_0004bcac;
-    puVar3 = (undefined4 *)&stack0xffffffd2;
+    puVar3 = (uint32_t *)&stack0xffffffd2;
     while( true ) {
-      *(undefined1 *)((int)puVar3 + -2) = 2;
-      *(undefined4 *)((int)puVar3 + -6) = 0x4bcaa;
+      *(uint8_t *)((int)puVar3 + -2) = 2;
+      *(uint32_t *)((int)puVar3 + -6) = 0x4bcaa;
       gps_count_response(*(char *)((int)puVar3 + -2),(gps_request_entry *)*puVar3);
       puVar4 = puVar3 + 1;
 LAB_0004bcac:
-      puVar3 = (undefined4 *)((int)puVar4 + -4);
+      puVar3 = (uint32_t *)((int)puVar4 + -4);
       *(gps_request_entry **)((int)puVar4 + -4) = &gStack_1e;
-      *(undefined4 *)((int)puVar4 + -8) = 0x4bcb4;
+      *(uint32_t *)((int)puVar4 + -8) = 0x4bcb4;
       iVar1 = request_ring_get(*(gps_request_entry **)((int)puVar4 + -4));
       if ((char)iVar1 == 0) break;
       *(gps_request_entry **)((int)puVar4 + -4) = &gStack_1e;
     }
     *(gps_request_entry **)((int)puVar4 + -4) = request;
-    *(undefined4 *)((int)puVar4 + -8) = 0x4bcbe;
+    *(uint32_t *)((int)puVar4 + -8) = 0x4bcbe;
     request_ring_put(*(gps_request_entry **)((int)puVar4 + -4));
     gps_task_state = GPS_PROCESS_TASK_IDLE;
     return;
@@ -66717,10 +66719,10 @@ bool gps_request_post(char param_1,short param_2,int *param_3,uint8_t param_4)
 /* a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3
    otherwise */
 
-undefined1 gps_request_class(short param_1,char param_2)
+uint8_t gps_request_class(short param_1,char param_2)
 
 {
-  undefined1 uVar1;
+  uint8_t uVar1;
   
   if (((param_1 < 0) || (0x30 < param_1)) || ((param_2 != 0 && (param_2 != 1)))) {
     if ((param_1 < 0x31) || (0x46 < param_1)) {
@@ -66887,7 +66889,7 @@ void gpsm_task(void)
   char acStack_29 [25];
   byte bStack_10;
   char cStack_f;
-  undefined1 local_e;
+  uint8_t local_e;
   uint32_t local_c;
   uint local_8;
   
@@ -66998,7 +67000,7 @@ void gpsm_task(void)
               break;
             case 0x98:
               gps_console_request(command.request.code,
-                                  (undefined4 *)
+                                  (uint32_t *)
                                   CONCAT31(CONCAT21(__ghidra_piece(unsigned short, command.request.arguments, 0),
                                                     (char)((ushort)__ghidra_piece(unsigned short, command.request.arguments, 2)
                                                           >> 8)),
@@ -67190,7 +67192,7 @@ void raim_request_arguments(void)
 /* the GPS task's switch on the console's requests 0x31 to 0x45
    structures.md */
 
-void gps_console_request(short param_1,undefined4 *param_2,undefined1 param_3)
+void gps_console_request(short param_1,uint32_t *param_2,uint8_t param_3)
 
 {
   if ((int)param_1 - 0x31U < 0x15U) {
@@ -67323,7 +67325,7 @@ int command_log_add(gps_running_command *command,char *text)
   (command_log.write)->message = iVar2;
   (command_log.write)->argument_text[0] = cVar4;
   (command_log.write)->argument_text[1] = cVar5;
-  *(undefined4 *)((command_log.write)->argument_text + 2) = __ghidra_piece(unsigned int, entry, 8);
+  *(uint32_t *)((command_log.write)->argument_text + 2) = __ghidra_piece(unsigned int, entry, 8);
   (command_log.write)->date = local_c;
   (command_log.write)->time = local_8;
   command_log.write = pgVar7->entries;
@@ -67359,7 +67361,7 @@ int gps_print_command(gps_command_log *log,char *line)
     entry.message = pgVar1->message;
     entry.argument_text[0] = pgVar1->argument_text[0];
     entry.argument_text[1] = pgVar1->argument_text[1];
-    __ghidra_piece(unsigned int, entry, 8) = *(undefined4 *)(pgVar1->argument_text + 2);
+    __ghidra_piece(unsigned int, entry, 8) = *(uint32_t *)(pgVar1->argument_text + 2);
     entry.date = pgVar1->date;
     entry.time = pgVar1->time;
     pgVar1 = log->read;
@@ -67415,7 +67417,7 @@ int gps_print_command(gps_command_log *log,char *line)
 /* takes a status snapshot into 0x101560 for each @@Ea, and at 03:14:07 or 06:28:15 exactly into
    0x10168e as well, with a copy of the command log */
 
-void status_snapshot_update(undefined *param_1)
+void status_snapshot_update(uint8_t *param_1)
 
 {
   uint8_t uVar1;
@@ -67425,8 +67427,8 @@ void status_snapshot_update(undefined *param_1)
   gps_command_log *pgVar5;
   
   if (status_snapshots_frozen == 0) {
-    if ((param_1 == &UNK_00061c0f) || (param_1 == (undefined *)0x30e07)) {
-      if (param_1 == (undefined *)status_snapshot_last_time) {
+    if ((param_1 == &UNK_00061c0f) || (param_1 == (uint8_t *)0x30e07)) {
+      if (param_1 == (uint8_t *)status_snapshot_last_time) {
         status_snapshots_frozen = 1;
         return;
       }
@@ -67847,10 +67849,10 @@ void long_array_get_long_prefixed(long *array,uint8_t index,char *out)
 
 /* copies a byte if there is somewhere to put it */
 
-void byte_copy_optional(undefined1 *param_1,undefined1 *param_2)
+void byte_copy_optional(uint8_t *param_1,uint8_t *param_2)
 
 {
-  if (param_2 != (undefined1 *)0x0) {
+  if (param_2 != (uint8_t *)0x0) {
     *param_2 = *param_1;
   }
   return;
@@ -67861,7 +67863,7 @@ void byte_copy_optional(undefined1 *param_1,undefined1 *param_2)
 
 /* copies a word and advances the source */
 
-undefined2 * word_copy_advance(undefined2 *param_1,undefined2 *param_2)
+uint16_t * word_copy_advance(uint16_t *param_1,uint16_t *param_2)
 
 {
   *param_2 = *param_1;
@@ -67873,12 +67875,12 @@ undefined2 * word_copy_advance(undefined2 *param_1,undefined2 *param_2)
 
 /* four bytes, high first, as a long */
 
-undefined1 * bytes_to_long(undefined1 *param_1,undefined4 *param_2)
+uint8_t * bytes_to_long(uint8_t *param_1,uint32_t *param_2)
 
 {
-  undefined1 *puVar1;
+  uint8_t *puVar1;
   byte bVar2;
-  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  uint32_t unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   
   bVar2 = 0;
   do {
@@ -67897,12 +67899,12 @@ undefined1 * bytes_to_long(undefined1 *param_1,undefined4 *param_2)
 /* @@As's height and its type, the position hold position's last fields
    docs/firmware/oncore */
 
-void oncore_as_height_decode(undefined1 *param_1)
+void oncore_as_height_decode(uint8_t *param_1)
 
 {
-  undefined1 *puVar1;
+  uint8_t *puVar1;
   
-  puVar1 = (undefined1 *)bytes_to_long(param_1,&gps.hold_position.height);
+  puVar1 = (uint8_t *)bytes_to_long(param_1,&gps.hold_position.height);
   byte_copy_optional(puVar1,&gps.hold_height_type);
   return;
 }
@@ -67920,7 +67922,7 @@ byte * oncore_ai_decode(byte *param_1,int param_2)
   
   bVar1 = *param_1;
   if ((bVar1 != 0) && (bVar1 < 7)) {
-    byte_copy_optional(param_1 + 1,(undefined1 *)(param_2 + -1 + (uint)bVar1));
+    byte_copy_optional(param_1 + 1,(uint8_t *)(param_2 + -1 + (uint)bVar1));
   }
   return param_1 + 2;
 }
@@ -68068,7 +68070,7 @@ uint8_t channel_position_satellite(byte param_1)
 
 /* 1 if a channel uses the satellite for position */
 
-undefined4 satellite_used_for_position(char param_1)
+uint32_t satellite_used_for_position(char param_1)
 
 {
   char cVar1;
@@ -68146,14 +68148,14 @@ char count_bits(uint param_1)
 
 /* the set and count of visible GPS satellites, from gps.visibility */
 
-undefined4 visible_satellites(undefined1 *param_1,uint32_t *param_2)
+uint32_t visible_satellites(uint8_t *param_1,uint32_t *param_2)
 
 {
   uint8_t id;
   int iVar1;
   byte bVar3;
   char cVar4;
-  undefined4 uVar2;
+  uint32_t uVar2;
   byte bVar5;
   uint32_t local_8;
   
@@ -68197,9 +68199,9 @@ int satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set,uin
   uint8_t uVar2;
   int iVar1;
   byte bVar3;
-  undefined2 uVar4;
-  undefined1 uVar5;
-  undefined1 uVar6;
+  uint16_t uVar4;
+  uint8_t uVar5;
+  uint8_t uVar6;
   uint local_a;
   byte local_6 [2];
   
@@ -68213,13 +68215,13 @@ int satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set,uin
       id = channel_position_satellite(bVar3);
       if (id != 0) {
         if (0x20 < id) {
-          uVar4 = (undefined2)((uint)local_6 >> 0x10);
-          uVar5 = (undefined1)((uint)local_6 >> 8);
+          uVar4 = (uint16_t)((uint)local_6 >> 0x10);
+          uVar5 = (uint8_t)((uint)local_6 >> 8);
           uVar6 = SUB41(local_6,0);
         }
         else {
-          uVar4 = (undefined2)((uint)&local_a >> 0x10);
-          uVar5 = (undefined1)((uint)&local_a >> 8);
+          uVar4 = (uint16_t)((uint)&local_a >> 0x10);
+          uVar5 = (uint8_t)((uint)&local_a >> 8);
           uVar6 = SUB41(&local_a,0);
         }
         satellite_add_to_set(0x20 < id,id,(uint32_t *)CONCAT31(CONCAT21(uVar4,uVar5),uVar6));
@@ -68279,10 +68281,10 @@ oncore_visible_satellite * satellite_find(uint8_t id,void *table)
 
 /* 1 unless the receiver holds its position or is surveying */
 
-undefined4 position_settable(void)
+uint32_t position_settable(void)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   
   if ((gps.position_hold == 0) && (gps.surveying == 0)) {
     uVar1 = 1;
@@ -68341,14 +68343,14 @@ bool gps_time_local_get(time_of_day *time,uint32_t *date)
 
 /* the survey's progress, positions averaged against the duration, in percent */
 
-undefined4 survey_progress_percent(undefined2 *param_1)
+uint32_t survey_progress_percent(uint16_t *param_1)
 
 {
   uint32_t u;
   float fVar1;
   float a;
   int iVar2;
-  undefined4 uVar3;
+  uint32_t uVar3;
   
   if ((gps.position_hold == 0) && (nv_settings.douglas_duration_infinite == 0)) {
     u = nv_settings.douglas_duration;
@@ -68390,13 +68392,13 @@ undefined4 survey_progress_percent(undefined2 *param_1)
 
 /* the survey's progress as text, for :DOUGlas:PROGress? */
 
-undefined4 survey_progress_text(char *param_1)
+uint32_t survey_progress_text(char *param_1)
 
 {
   uint32_t u;
   float a;
   int iVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   float fVar3;
   double param2;
   
@@ -68670,7 +68672,7 @@ void gps_parse_options(void)
 /* @@Bn, message 0x28, needs the receiver ID and its Time RAIM option, gps.raim_option; any other is
    supported */
 
-undefined4 gps_message_supported(short param_1,undefined1 *param_2)
+uint32_t gps_message_supported(short param_1,uint8_t *param_2)
 
 {
   if (param_1 == 0x28) {
@@ -68819,11 +68821,11 @@ char * gps_response_decode(int16_t message,char *response)
   for (bVar4 = 0; (*(int *)(iVar2 + 0x4feee + (uint)bVar4 * 8) != 0 && (bVar4 < 3));
       bVar4 = bVar4 + 1) {
     pcVar5 = (char *)(**(code **)(iVar2 + 0x4feee + (uint)bVar4 * 8))
-                               (pcVar5,*(undefined4 *)(iVar2 + 0x4fef2 + (uint)bVar4 * 8));
+                               (pcVar5,*(uint32_t *)(iVar2 + 0x4fef2 + (uint)bVar4 * 8));
   }
   psos_mode(0,0x80,(uchar *)0x0);
   if (message == 0x1e) {
-    status_snapshot_update((undefined *)__ghidra_aggregate_bits(gps.status.time));
+    status_snapshot_update((uint8_t *)__ghidra_aggregate_bits(gps.status.time));
   }
   return pcVar5;
 }
@@ -68833,7 +68835,7 @@ char * gps_response_decode(int16_t message,char *response)
 
 /* 1 if two byte strings have the same nonzero length and bytes */
 
-undefined4 bytes_equal_n(char *param_1,short param_2,char *param_3,short param_4)
+uint32_t bytes_equal_n(char *param_1,short param_2,char *param_3,short param_4)
 
 {
   if ((param_2 == param_4) && (param_2 != 0)) {
@@ -68853,8 +68855,8 @@ undefined4 bytes_equal_n(char *param_1,short param_2,char *param_3,short param_4
 
 /* checks a response against the request it answers */
 
-undefined1
-gps_response_match(short param_1,undefined1 *param_2,char param_3,char param_4,short param_5,
+uint8_t
+gps_response_match(short param_1,uint8_t *param_2,char param_3,char param_4,short param_5,
                   int param_6,short param_7)
 
 {
@@ -68865,12 +68867,12 @@ gps_response_match(short param_1,undefined1 *param_2,char param_3,char param_4,s
   long lVar5;
   char cVar6;
   char cVar7;
-  undefined1 uVar8;
+  uint8_t uVar8;
   byte bVar9;
   short sVar10;
   byte bVar11;
   char *pcVar12;
-  undefined1 auStack_12 [2];
+  uint8_t auStack_12 [2];
   char cStack_10;
   int iStack_c;
   int iStack_8;
@@ -68945,7 +68947,7 @@ gps_response_match(short param_1,undefined1 *param_2,char param_3,char param_4,s
             case 0x68:
               if (param_2[bVar9 + 0xc] == *(char *)(param_6 + 0xc + (uint)bVar2)) {
                 bytes_to_long(param_2 + bVar9 + 8,&iStack_c);
-                bytes_to_long((undefined1 *)(param_6 + 8 + (uint)bVar2),&iStack_8);
+                bytes_to_long((uint8_t *)(param_6 + 8 + (uint)bVar2),&iStack_8);
                 if (((-0x186a1 < iStack_c) && (iStack_c < 0x1b7741)) &&
                    (lVar5 = labs(iStack_c - iStack_8), lVar5 < 3)) {
                   bVar11 = 8;
@@ -69015,7 +69017,7 @@ int gps_message_to_text(char *param_1,byte param_2,char *param_3)
   char *pcVar8;
   char *pcVar9;
   byte *pbVar10;
-  undefined1 auStack_44 [5];
+  uint8_t auStack_44 [5];
   char local_3f [5];
   char local_3a [54];
   
@@ -69133,10 +69135,10 @@ __exception void primary_trap_1(void)
 {
   int in_D0;
   int in_A0;
-  undefined2 in_stack_00000000 = *(undefined2 *)((char *)__builtin_frame_address(0) + 4);
+  uint16_t in_stack_00000000 = *(uint16_t *)((char *)__builtin_frame_address(0) + 4);
   
   if (in_D0 == 0) {
-    *(undefined2 *)(in_A0 + 0x40) = in_stack_00000000;
+    *(uint16_t *)(in_A0 + 0x40) = in_stack_00000000;
   }
   return;
 }
@@ -69165,14 +69167,14 @@ __asm__(
 /* restores the registers setjmp saved, its status register through trap #1, and returns to its
    caller with the value given */
 
-undefined8 longjmp(undefined4 *param_1,undefined4 param_2)
+uint64_t longjmp(uint32_t *param_1,uint32_t param_2)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   
   __m68k_trap(1);
   uVar1 = *param_1;
-  *(undefined4 *)param_1[0xf] = param_1[0xe];
+  *(uint32_t *)param_1[0xf] = param_1[0xe];
   return CONCAT44(param_2,uVar1);
 }
 
@@ -69181,24 +69183,24 @@ undefined8 longjmp(undefined4 *param_1,undefined4 param_2)
 
 /* saves the registers, return address and stack, and through trap #1 the status register */
 
-undefined4 setjmp(undefined4 *param_1)
+uint32_t setjmp(uint32_t *param_1)
 
 {
-  undefined4 in_D1;
-  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 in_A0;
-  undefined4 in_A1;
-  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A6 = (undefined4)*(void **)__builtin_frame_address(0);
-  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
+  uint32_t in_D1;
+  uint32_t unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t in_A0;
+  uint32_t in_A1;
+  uint32_t unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A6 = (uint32_t)*(void **)__builtin_frame_address(0);
+  uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
   
   param_1[0xc] = in_A0;
   __m68k_trap(1);
@@ -69233,7 +69235,7 @@ undefined4 setjmp(undefined4 *param_1)
 /* the primary's copy of the boot code's record unpacker, pointed at 0, where there is no S: always
    1 */
 
-undefined4 primary_unpack_records(void)
+uint32_t primary_unpack_records(void)
 
 {
   return 1;
@@ -70244,7 +70246,7 @@ __regcall double double_subtract_reversed_pointers(double *a /* a0 */,double *b 
   uint uVar7;
   ushort uVar9;
   uint uVar8;
-  undefined2 uVar10;
+  uint16_t uVar10;
   uint uVar11;
   ushort uVar12;
   uint uVar13;
@@ -70377,7 +70379,7 @@ LAB_0005d2b6:
       uVar8 = 0;
     }
   }
-  uVar10 = (undefined2)(uVar13 >> 0x10);
+  uVar10 = (uint16_t)(uVar13 >> 0x10);
   if (-1 < (short)((ushort)uVar1 ^ (ushort)(uVar4 >> 0x10))) {
     uVar12 = uVar12 & 0x7ff0;
     uVar13 = uVar6 + uVar5;
@@ -70581,7 +70583,7 @@ __regcall double double_subtract_reversed_pointer(double a /* d0 */,double *b /*
   uint uVar7;
   uint uVar8;
   ushort uVar9;
-  undefined2 uVar10;
+  uint16_t uVar10;
   uint uVar11;
   ushort uVar12;
   uint uVar13;
@@ -70714,7 +70716,7 @@ LAB_0005d2b6:
       uVar13 = 0;
     }
   }
-  uVar10 = (undefined2)(uVar4 >> 0x10);
+  uVar10 = (uint16_t)(uVar4 >> 0x10);
   if (-1 < (short)((ushort)uVar1 ^ (ushort)(uVar5 >> 0x10))) {
     uVar12 = uVar12 & 0x7ff0;
     uVar5 = uVar7 + uVar6;
@@ -70918,7 +70920,7 @@ __regcall double double_subtract_reversed(double a /* d0 */,double b /* a0 */)
   ushort uVar8;
   uint uVar6;
   uint uVar7;
-  undefined2 uVar9;
+  uint16_t uVar9;
   ushort uVar10;
   uint uVar11;
   ushort uVar14;
@@ -71026,7 +71028,7 @@ __regcall double double_subtract_reversed(double a /* d0 */,double b /* a0 */)
           uVar5 = 0;
         }
       }
-      uVar9 = (undefined2)(uVar7 >> 0x10);
+      uVar9 = (uint16_t)(uVar7 >> 0x10);
       if (-1 < (short)((ushort)(uVar11 >> 0x10) ^ (ushort)((ulonglong)b >> 0x30))) {
         uVar10 = uVar10 & 0x7ff0;
         uVar11 = uVar4 + uVar6;
@@ -71410,7 +71412,7 @@ __regcall double double_add_pointers(double *a /* a0 */,double *b /* a1 */)
   uint uVar8;
   ushort uVar10;
   uint uVar9;
-  undefined2 uVar11;
+  uint16_t uVar11;
   uint uVar12;
   ushort uVar13;
   ushort uVar15;
@@ -71539,7 +71541,7 @@ LAB_0005d2b6:
       uVar9 = 0;
     }
   }
-  uVar11 = (undefined2)(uVar5 >> 0x10);
+  uVar11 = (uint16_t)(uVar5 >> 0x10);
   if (-1 < (short)((ushort)uVar1 ^ (ushort)(uVar4 >> 0x10))) {
     uVar13 = uVar13 & 0x7ff0;
     uVar5 = uVar7 + uVar6;
@@ -71743,7 +71745,7 @@ __regcall double double_add_pointer(double a /* d0 */,double *b /* a1 */)
   uint uVar7;
   ushort uVar9;
   uint uVar8;
-  undefined2 uVar10;
+  uint16_t uVar10;
   ushort uVar11;
   ushort uVar14;
   uint uVar12;
@@ -71869,7 +71871,7 @@ LAB_0005d2c6:
       uVar7 = 0;
     }
   }
-  uVar10 = (undefined2)(uVar6 >> 0x10);
+  uVar10 = (uint16_t)(uVar6 >> 0x10);
   if (-1 < (short)((ushort)((ulonglong)a >> 0x30) ^ (ushort)(uVar4 >> 0x10))) {
     uVar11 = uVar11 & 0x7ff0;
     uVar4 = uVar5 + uVar8;
@@ -72071,7 +72073,7 @@ __regcall double double_add(double a /* d0 */,double b /* a0 */)
   uint uVar4;
   ushort uVar6;
   uint uVar5;
-  undefined2 uVar7;
+  uint16_t uVar7;
   ushort uVar8;
   ushort uVar11;
   uint uVar9;
@@ -72197,7 +72199,7 @@ LAB_0005d2c6:
       uVar5 = 0;
     }
   }
-  uVar7 = (undefined2)(uVar3 >> 0x10);
+  uVar7 = (uint16_t)(uVar3 >> 0x10);
   if (-1 < (short)((ushort)((ulonglong)a >> 0x30) ^ (ushort)uVar17)) {
     uVar8 = uVar8 & 0x7ff0;
     uVar3 = uVar4 + uVar12;
@@ -73063,7 +73065,7 @@ __regcall float float_divide_reversed(float a /* d0 */,float b /* d1 */)
   uint uVar7;
   ushort uVar8;
   ushort uVar9;
-  undefined2 uVar10;
+  uint16_t uVar10;
   uint uVar11;
   ushort uVar14;
   uint uVar13;
@@ -73120,7 +73122,7 @@ LAB_0005d982:
       iVar5 = uVar3 - ((uint)(sVar19 != 0) + (uVar16 >> 0x10) + uVar9 * uVar17);
       while( true ) {
         uVar15 = (ushort)uVar13;
-        uVar10 = (undefined2)(uVar13 >> 0x10);
+        uVar10 = (uint16_t)(uVar13 >> 0x10);
         if (-1 < iVar5) break;
         uVar1 = (short)uVar17 - 1;
         uVar17 = (uint)uVar1;
@@ -73259,7 +73261,7 @@ __regcall float float_divide(float a /* d0 */,float b /* d1 */)
   uint uVar7;
   ushort uVar8;
   ushort uVar9;
-  undefined2 uVar10;
+  uint16_t uVar10;
   uint uVar11;
   ushort uVar14;
   uint uVar13;
@@ -73316,7 +73318,7 @@ LAB_0005d982:
       iVar5 = uVar3 - ((uint)(sVar19 != 0) + (uVar16 >> 0x10) + uVar9 * uVar17);
       while( true ) {
         uVar15 = (ushort)uVar13;
-        uVar10 = (undefined2)(uVar13 >> 0x10);
+        uVar10 = (uint16_t)(uVar13 >> 0x10);
         if (-1 < iVar5) break;
         uVar1 = (short)uVar17 - 1;
         uVar17 = (uint)uVar1;
@@ -74601,7 +74603,7 @@ __asm__(
    called.
    libc.md, read */
 
-__naked undefined8 double_divide_by_zero(void)
+__naked uint64_t double_divide_by_zero(void)
 
 {
   uint uVar1;
@@ -78097,11 +78099,11 @@ __asm__(
    called.
    softfloat.md, read */
 
-__naked undefined8 float_normalize(uint param_1)
+__naked uint64_t float_normalize(uint param_1)
 
 {
-  undefined4 in_D0;
-  undefined4 in_D1;
+  uint32_t in_D0;
+  uint32_t in_D1;
   uint uVar1;
   ushort uVar2;
   
@@ -78168,11 +78170,11 @@ __asm__(
    called.
    softfloat.md, read */
 
-__naked undefined8 double_normalize(undefined2 param_1,uint param_2)
+__naked uint64_t double_normalize(uint16_t param_1,uint param_2)
 
 {
-  undefined4 in_D0;
-  undefined4 in_D1;
+  uint32_t in_D0;
+  uint32_t in_D1;
   uint uVar1;
   ushort uVar3;
   uint uVar2;
@@ -78317,7 +78319,7 @@ ulonglong float_raise(uint code,...)
   uint uVar3;
   uint uVar4;
   uint extraout_D0;
-  undefined4 in_D1;
+  uint32_t in_D1;
   uint uVar5;
   uint extraout_D1;
   short sVar6;
@@ -78577,7 +78579,7 @@ int atoi(char *s)
 /* quotient in D0, remainder in D1
    libc.md */
 
-undefined8 div(int param_1,int param_2)
+uint64_t div(int param_1,int param_2)
 
 {
   return CONCAT44(param_1 / param_2,param_1 - param_2 * (param_1 / param_2));
@@ -78643,13 +78645,13 @@ LAB_0005ef40:
 void * memcpy(void *s1,void *s2,uint n)
 
 {
-  undefined1 *puVar1;
+  uint8_t *puVar1;
   
   puVar1 = s1;
   while (n != 0) {
-    *puVar1 = *(undefined1 *)s2;
+    *puVar1 = *(uint8_t *)s2;
     n = n - 1;
-    s2 = (undefined1 *)((int)s2 + 1);
+    s2 = (uint8_t *)((int)s2 + 1);
     puVar1 = puVar1 + 1;
   }
   return s1;
@@ -78663,7 +78665,7 @@ void * memcpy(void *s1,void *s2,uint n)
 void * memset(void *s,int c,uint n)
 
 {
-  undefined1 *puVar1;
+  uint8_t *puVar1;
   
   puVar1 = s;
   while (n != 0) {
@@ -78679,10 +78681,10 @@ void * memset(void *s,int c,uint n)
 
 /* libc.md */
 
-void qsort_swap(undefined1 *param_1,undefined1 *param_2)
+void qsort_swap(uint8_t *param_1,uint8_t *param_2)
 
 {
-  undefined1 uVar1;
+  uint8_t uVar1;
   uint32_t uVar2;
   
   uVar2 = qsort_size;
@@ -78702,10 +78704,10 @@ void qsort_swap(undefined1 *param_1,undefined1 *param_2)
 
 /* libc.md */
 
-void qsort_rotate(undefined1 *param_1,undefined1 *param_2,undefined1 *param_3)
+void qsort_rotate(uint8_t *param_1,uint8_t *param_2,uint8_t *param_3)
 
 {
-  undefined1 uVar1;
+  uint8_t uVar1;
   uint32_t uVar2;
   
   uVar2 = qsort_size;
@@ -78728,15 +78730,15 @@ void qsort_rotate(undefined1 *param_1,undefined1 *param_2,undefined1 *param_3)
 /* sorts a range by qsort's comparator and size
    libc.md */
 
-void qsort_range(undefined1 *param_1,undefined1 *param_2)
+void qsort_range(uint8_t *param_1,uint8_t *param_2)
 
 {
   uint32_t uVar1;
   int iVar2;
-  undefined1 *puVar3;
-  undefined1 *puVar4;
-  undefined1 *puVar5;
-  undefined1 *puVar6;
+  uint8_t *puVar3;
+  uint8_t *puVar4;
+  uint8_t *puVar5;
+  uint8_t *puVar6;
   
   uVar1 = qsort_size;
 LAB_0005efd6:
@@ -78810,7 +78812,7 @@ void qsort(void *base,uint nmemb,uint size,void *compar)
 {
   qsort_compare = compar;
   qsort_size = size;
-  qsort_range(base,(undefined1 *)((int)base + size * nmemb));
+  qsort_range(base,(uint8_t *)((int)base + size * nmemb));
   return;
 }
 
@@ -78969,8 +78971,8 @@ void double_to_digits_multiply(uint *param_1)
   ushort local_24;
   ushort local_20;
   uint local_14;
-  undefined2 local_10;
-  undefined2 local_c;
+  uint16_t local_10;
+  uint16_t local_c;
   uint local_8;
   
   uVar7 = *param_1;
@@ -79004,11 +79006,11 @@ void double_to_digits_multiply(uint *param_1)
   }
   uVar6 = (uVar10 & 0xffff) * uVar11;
   uVar5 = uVar6 + iVar9;
-  local_10 = (undefined2)(uVar5 >> 0x10);
+  local_10 = (uint16_t)(uVar5 >> 0x10);
   local_14 = (uint)CONCAT12(uVar5 <= uVar6 && uVar6 - uVar5 != 0,local_10);
-  local_c = (undefined2)(uVar8 >> 0x10);
+  local_c = (uint16_t)(uVar8 >> 0x10);
   uVar5 = CONCAT22((short)uVar5,local_c);
-  __ghidra_piece(unsigned short, local_8, 0) = (undefined2)(uVar4 >> 0x10);
+  __ghidra_piece(unsigned short, local_8, 0) = (uint16_t)(uVar4 >> 0x10);
   uVar6 = CONCAT22((short)uVar8,__ghidra_piece(unsigned short, local_8, 0));
   local_8 = uVar4 * 0x10000;
   iVar9 = local_20 * uVar11;
@@ -79360,7 +79362,7 @@ LAB_0005f7ae:
 /* '0' plus *n % 10, dividing *n by ten; the formatting engine's
    libc.md, run */
 
-undefined8 next_decimal_digit(uint *param_1)
+uint64_t next_decimal_digit(uint *param_1)
 
 {
   uint uVar1;
@@ -79378,7 +79380,7 @@ undefined8 next_decimal_digit(uint *param_1)
 /* the formatting engine under sprintf, by the classic C library's name for it
    libc.md */
 
-byte * doprnt(byte *param_1,uint *param_2,undefined *param_3,undefined4 param_4)
+byte * doprnt(byte *param_1,uint *param_2,uint8_t *param_3,uint32_t param_4)
 
 {
   bool bVar1;
@@ -80114,16 +80116,16 @@ int sprintf(char *s,char *format,...)
 /* copies the engine's output into sprintf's buffer
    libc.md */
 
-int sprintf_put(undefined1 *param_1,int param_2,int param_3,int param_4)
+int sprintf_put(uint8_t *param_1,int param_2,int param_3,int param_4)
 
 {
-  undefined1 *puVar1;
+  uint8_t *puVar1;
   int iVar2;
   
   iVar2 = param_3;
   if (param_2 == 1) {
     while (0 < iVar2) {
-      puVar1 = *(undefined1 **)(param_4 + 4);
+      puVar1 = *(uint8_t **)(param_4 + 4);
       *(int *)(param_4 + 4) = *(int *)(param_4 + 4) + 1;
       *puVar1 = *param_1;
       iVar2 = iVar2 + -1;
@@ -80247,8 +80249,8 @@ double log(double x)
   double dVar8;
   double dVar9;
   double dStack_1c;
-  undefined8 local_14;
-  undefined8 local_c;
+  uint64_t local_14;
+  uint64_t local_c;
   
   local_14 = __ghidra_bits(x);
   if (((__ghidra_piece(unsigned int, x, 0) & 0x7ff00000) == 0x7ff00000) &&
@@ -80346,7 +80348,7 @@ double modf(double value,double *iptr)
 
 {
   short sVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   ushort uVar3;
   uint *extraout_A0;
   double *extraout_A0_00;
@@ -80362,8 +80364,8 @@ double modf(double value,double *iptr)
       else {
         uVar2 = 0;
       }
-      *(undefined4 *)iptr = uVar2;
-      *(undefined4 *)((int)iptr + 4) = 0;
+      *(uint32_t *)iptr = uVar2;
+      *(uint32_t *)((int)iptr + 4) = 0;
       dVar4 = value;
     }
     else {
@@ -80406,11 +80408,11 @@ double modf(double value,double *iptr)
 /* whether a double is an integer, and through the pointer whether it is odd; pow's
    libc.md, run */
 
-undefined4 double_is_integer(uint param_1,uint param_2,uint *param_3)
+uint32_t double_is_integer(uint param_1,uint param_2,uint *param_3)
 
 {
   int iVar1;
-  undefined4 uVar2;
+  uint32_t uVar2;
   uint uVar3;
   
   *param_3 = 0;
@@ -80494,40 +80496,40 @@ double pow(double x,double y)
   ulonglong uVar6;
   uint16_t uVar7;
   uint16_t uVar8;
-  undefined4 extraout_D0;
-  undefined4 uVar9;
-  undefined4 extraout_D0_00;
+  uint32_t extraout_D0;
+  uint32_t uVar9;
+  uint32_t extraout_D0_00;
   int iVar10;
-  undefined4 extraout_D0_01;
-  undefined4 extraout_D0_02;
-  undefined4 extraout_D0_03;
-  undefined4 extraout_D0_06;
-  undefined4 extraout_D0_07;
-  undefined4 extraout_D1;
-  undefined4 uVar11;
-  undefined4 extraout_D1_00;
-  undefined4 extraout_D1_01;
-  undefined4 extraout_D1_02;
-  undefined4 extraout_D1_03;
-  undefined4 extraout_D1_06;
-  undefined4 extraout_D1_07;
+  uint32_t extraout_D0_01;
+  uint32_t extraout_D0_02;
+  uint32_t extraout_D0_03;
+  uint32_t extraout_D0_06;
+  uint32_t extraout_D0_07;
+  uint32_t extraout_D1;
+  uint32_t uVar11;
+  uint32_t extraout_D1_00;
+  uint32_t extraout_D1_01;
+  uint32_t extraout_D1_02;
+  uint32_t extraout_D1_03;
+  uint32_t extraout_D1_06;
+  uint32_t extraout_D1_07;
   int iVar12;
-  undefined8 *puVar13;
+  uint64_t *puVar13;
   double *pdVar14;
   double dVar15;
   uint uVar16;
   uint local_68;
   int local_64;
-  undefined8 local_60;
+  uint64_t local_60;
   double dStack_58;
-  undefined8 local_50;
-  undefined8 local_48;
+  uint64_t local_50;
+  uint64_t local_48;
   double dStack_40;
   double dStack_38;
   double dStack_30;
   double y_high;
   double dStack_20;
-  undefined8 local_18;
+  uint64_t local_18;
   double high_part;
   double *local_8;
   
@@ -80549,7 +80551,7 @@ double pow(double x,double y)
     else {
       puVar13 = &local_48;
     }
-    ({ __auto_type __c = ({ __auto_type __c = float_raise(0xe04000,*(undefined4 *)puVar13,*(undefined4 *)((int)puVar13 + 4)); __ghidra_also(extraout_D0, __c, 4); __c; }); __ghidra_also(extraout_D1, __c, 0); __c; });
+    ({ __auto_type __c = ({ __auto_type __c = float_raise(0xe04000,*(uint32_t *)puVar13,*(uint32_t *)((int)puVar13 + 4)); __ghidra_also(extraout_D0, __c, 4); __c; }); __ghidra_also(extraout_D1, __c, 0); __c; });
     uVar9 = extraout_D0;
     uVar11 = extraout_D1;
 LAB_0006107e:
@@ -80654,7 +80656,7 @@ LAB_0006122a:
       iVar12 = 3;
       pdVar14 = &pow_error_result;
 LAB_000611e2:
-      local_50 = __ghidra_bits(__ghidra_as(double, CONCAT44(*(undefined4 *)pdVar14,__ghidra_piece(unsigned int, local_50, 4))));
+      local_50 = __ghidra_bits(__ghidra_as(double, CONCAT44(*(uint32_t *)pdVar14,__ghidra_piece(unsigned int, local_50, 4))));
       local_50 = __ghidra_bits(*pdVar14);
       dVar15 = __ghidra_as(double, local_48);
     }
@@ -80861,8 +80863,8 @@ double sqrt(double x)
   double *pdVar5;
   double dVar6;
   double dVar7;
-  undefined8 local_1c;
-  undefined8 local_14;
+  uint64_t local_1c;
+  uint64_t local_14;
   double quarter;
   
   __ghidra_piece(unsigned int, local_1c, 0) = __ghidra_piece(unsigned int, x, 0);
@@ -81054,7 +81056,7 @@ __regcall int installer_mutex_release(void *mutex /* a1 */)
   iVar1 = ({ __auto_type __c = installer_psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
   if (extraout_A0 == *(int *)((int)a1 + 8)) {
     if (*(int *)((int)a1 + 0xc) == 0) {
-      *(undefined4 *)((int)a1 + 8) = 0;
+      *(uint32_t *)((int)a1 + 8) = 0;
       iVar1 = ({ __auto_type __c = installer_psos_call(0x17,*(int *)((int)a1 + 4),d1,unaff_D2,unaff_D3,
                                   (void *)*(int *)((int)a1 + 4),a1); a1 = (__typeof__(a1))__ghidra_result_a1; __c; });
     }
@@ -81274,28 +81276,28 @@ void * installer_exception_hook_get(void)
    every vector without one of its own
    Not a C function (exception; read): entered by the processor, not called. */
 
-__exception undefined8 installer_default_exception(void)
+__exception uint64_t installer_default_exception(void)
 
 {
-  undefined4 in_D0;
+  uint32_t in_D0;
   int iVar1;
   char *pcVar2;
-  undefined4 in_D1;
-  undefined2 in_stack_00000000 = *(undefined2 *)((char *)__builtin_frame_address(0) + 4);
-  undefined4 in_stack_00000002 = *(undefined4 *)((char *)__builtin_frame_address(0) + 6);
+  uint32_t in_D1;
+  uint16_t in_stack_00000000 = *(uint16_t *)((char *)__builtin_frame_address(0) + 4);
+  uint32_t in_stack_00000002 = *(uint32_t *)((char *)__builtin_frame_address(0) + 6);
   ushort in_stack_00000006 = *(ushort *)((char *)__builtin_frame_address(0) + 10);
-  undefined2 in_stack_00000008 = *(undefined2 *)((char *)__builtin_frame_address(0) + 12);
+  uint16_t in_stack_00000008 = *(uint16_t *)((char *)__builtin_frame_address(0) + 12);
   ushort in_stack_0000000a = *(ushort *)((char *)__builtin_frame_address(0) + 14);
-  undefined2 in_stack_0000000e = *(undefined2 *)((char *)__builtin_frame_address(0) + 18);
-  undefined2 uVar3;
-  undefined2 uStack_12;
-  undefined2 uVar4;
-  undefined2 uVar5;
+  uint16_t in_stack_0000000e = *(uint16_t *)((char *)__builtin_frame_address(0) + 18);
+  uint16_t uVar3;
+  uint16_t uStack_12;
+  uint16_t uVar4;
+  uint16_t uVar5;
   
-  uVar4 = (undefined2)((uint)in_D1 >> 0x10);
-  uVar5 = (undefined2)in_D1;
-  uVar3 = (undefined2)((uint)in_D0 >> 0x10);
-  uStack_12 = (undefined2)in_D0;
+  uVar4 = (uint16_t)((uint)in_D1 >> 0x10);
+  uVar5 = (uint16_t)in_D1;
+  uVar3 = (uint16_t)((uint)in_D0 >> 0x10);
+  uStack_12 = (uint16_t)in_D0;
   iVar1 = installer_exception_hook_get();
   if (iVar1 != 0) {
     return CONCAT62(CONCAT42(CONCAT22(uVar3,uStack_12),uVar4),uVar5);
@@ -81303,7 +81305,7 @@ __exception undefined8 installer_default_exception(void)
   installer_print_exception
             (in_stack_00000000,in_stack_00000002,in_stack_00000006,
              CONCAT22(in_stack_00000008,in_stack_0000000a));
-  uVar3 = (undefined2)in_stack_00000002;
+  uVar3 = (uint16_t)in_stack_00000002;
   installer_printf_polled(&DAT_installer__00100787);
   pcVar2 = installer_exception_name(in_stack_0000000a);
   installer_printf_polled(s_Boot___s_installer__0010078a,(short)pcVar2);
@@ -81351,7 +81353,7 @@ __asm__(
 
 /* the installer's print_exception */
 
-void installer_print_exception(ushort param_1,undefined4 param_2,ushort param_3,uint32_t param_4)
+void installer_print_exception(ushort param_1,uint32_t param_2,ushort param_3,uint32_t param_4)
 
 {
   char *name;
@@ -81573,10 +81575,10 @@ uint16_t installer_set_interrupt_mask(uint16_t sr)
 /* the installer's primary_trap_7, byte for byte: the boot vector table's vector 39, trap #7
    Not a C function (exception; read): entered by the processor, not called. */
 
-__exception undefined2 installer_trap_7(void)
+__exception uint16_t installer_trap_7(void)
 
 {
-  undefined2 in_stack_00000000 = *(undefined2 *)((char *)__builtin_frame_address(0) + 4);
+  uint16_t in_stack_00000000 = *(uint16_t *)((char *)__builtin_frame_address(0) + 4);
   
   return in_stack_00000000;
 }
@@ -81775,7 +81777,7 @@ __asm__(
 
 /* the installer's float_exception_report */
 
-void installer_float_exception_report(uint param_1,undefined4 param_2)
+void installer_float_exception_report(uint param_1,uint32_t param_2)
 
 {
   ushort uVar1;
@@ -81784,7 +81786,7 @@ void installer_float_exception_report(uint param_1,undefined4 param_2)
   uint8_t *puVar4;
   uint8_t *puVar5;
   uint8_t *puVar6;
-  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
+  uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
   
   installer_float_exception_message[0] = 0;
   puVar5 = installer_float_exception_message + 1;
@@ -81870,7 +81872,7 @@ __asm__(
 void installer_entry(void)
 
 {
-  undefined4 extraout_D0;
+  uint32_t extraout_D0;
   
   DAT_0010fffa = 0;
   DAT_0010fff6 = 0;
@@ -81922,7 +81924,7 @@ void installer_program_end_report(uint value,uint32_t return_address)
   uint8_t *puVar4;
   uint8_t *puVar5;
   uint8_t *puVar6;
-  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
+  uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
   
   puVar5 = installer_program_end_message;
   installer_program_end_message[0] = 0;
@@ -81983,45 +81985,45 @@ void installer_program_end_report(uint value,uint32_t return_address)
    psos.md */
 
 /* out D7 char error */
-__exception void installer_kernel_dispatch_service(undefined2 param_1)
+__exception void installer_kernel_dispatch_service(uint16_t param_1)
 
 {
   int *piVar1;
   int iVar2;
-  undefined2 *puVar3;
-  undefined1 *puVar4;
+  uint16_t *puVar3;
+  uint8_t *puVar4;
   code *pcVar5;
   byte bVar6;
-  undefined4 in_D0;
+  uint32_t in_D0;
   uint uVar7;
   ushort uVar8;
-  undefined4 in_D1;
-  undefined4 uVar9;
-  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 uVar10;
-  undefined4 in_A0;
-  undefined4 extraout_A0;
-  undefined4 extraout_A0_00;
-  undefined2 *puVar12;
-  undefined4 in_A1;
-  undefined4 extraout_A1;
-  undefined4 extraout_A1_00;
-  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A6 = (undefined4)*(void **)__builtin_frame_address(0);
-  undefined2 *puVar13;
-  undefined2 *puVar14;
-  undefined2 *in_USP;
-  undefined8 uVar15;
+  uint32_t in_D1;
+  uint32_t uVar9;
+  uint32_t unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t uVar10;
+  uint32_t in_A0;
+  uint32_t extraout_A0;
+  uint32_t extraout_A0_00;
+  uint16_t *puVar12;
+  uint32_t in_A1;
+  uint32_t extraout_A1;
+  uint32_t extraout_A1_00;
+  uint32_t unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A6 = (uint32_t)*(void **)__builtin_frame_address(0);
+  uint16_t *puVar13;
+  uint16_t *puVar14;
+  uint16_t *in_USP;
+  uint64_t uVar15;
   ushort in_stack_00000000 = *(ushort *)((char *)__builtin_frame_address(0) + 4);
-  undefined4 in_stack_00000002 = *(undefined4 *)((char *)__builtin_frame_address(0) + 6);
+  uint32_t in_stack_00000002 = *(uint32_t *)((char *)__builtin_frame_address(0) + 6);
   short sVar11;
   
   uVar15 = CONCAT44(in_D0,in_D1);
@@ -82045,7 +82047,7 @@ __exception void installer_kernel_dispatch_service(undefined2 param_1)
     *(short *)(piVar1 + 9) = *(short *)(piVar1 + 9) + -1;
     return;
   }
-  while (uVar9 = (undefined4)uVar15, piVar1[0x1b] != 0) {
+  while (uVar9 = (uint32_t)uVar15, piVar1[0x1b] != 0) {
     uVar15 = installer_kernel_process_ticks();
     in_A0 = extraout_A0_00;
     in_A1 = extraout_A1_00;
@@ -82053,58 +82055,58 @@ __exception void installer_kernel_dispatch_service(undefined2 param_1)
   bVar6 = *(byte *)((int)piVar1 + 0x8b);
   *(byte *)((int)piVar1 + 0x8b) = bVar6 | 0x80;
   if ((bVar6 & 0x80) == 0) {
-    uVar9 = CONCAT22((short)((ulonglong)uVar15 >> 0x10),*(undefined2 *)(iVar2 + 0x54));
+    uVar9 = CONCAT22((short)((ulonglong)uVar15 >> 0x10),*(uint16_t *)(iVar2 + 0x54));
   }
   if ((iVar2 != piVar1[1]) &&
      (((*(byte *)(iVar2 + 0x11) & 0x80) == 0 || (*(char *)(iVar2 + 0x13) != 0)))) {
     *(int *)(iVar2 + 0x4e) = (int)((ulonglong)uVar15 >> 0x20);
-    *(undefined4 *)(iVar2 + 0x52) = uVar9;
-    *(undefined4 *)(iVar2 + 0x56) = unaff_D2;
-    *(undefined4 *)(iVar2 + 0x5a) = unaff_D3;
-    *(undefined4 *)(iVar2 + 0x5e) = unaff_D4;
-    *(undefined4 *)(iVar2 + 0x62) = unaff_D5;
-    *(undefined4 *)(iVar2 + 0x66) = unaff_D6;
-    *(undefined4 *)(iVar2 + 0x6a) = uVar10;
-    *(undefined4 *)(iVar2 + 0x6e) = in_A0;
-    *(undefined4 *)(iVar2 + 0x72) = in_A1;
-    *(undefined4 *)(iVar2 + 0x76) = unaff_A2;
-    *(undefined4 *)(iVar2 + 0x7a) = unaff_A3;
-    *(undefined4 *)(iVar2 + 0x7e) = unaff_A4;
-    *(undefined4 *)(iVar2 + 0x4a) = unaff_A5;
-    *(undefined4 *)(iVar2 + 0x46) = unaff_A6;
+    *(uint32_t *)(iVar2 + 0x52) = uVar9;
+    *(uint32_t *)(iVar2 + 0x56) = unaff_D2;
+    *(uint32_t *)(iVar2 + 0x5a) = unaff_D3;
+    *(uint32_t *)(iVar2 + 0x5e) = unaff_D4;
+    *(uint32_t *)(iVar2 + 0x62) = unaff_D5;
+    *(uint32_t *)(iVar2 + 0x66) = unaff_D6;
+    *(uint32_t *)(iVar2 + 0x6a) = uVar10;
+    *(uint32_t *)(iVar2 + 0x6e) = in_A0;
+    *(uint32_t *)(iVar2 + 0x72) = in_A1;
+    *(uint32_t *)(iVar2 + 0x76) = unaff_A2;
+    *(uint32_t *)(iVar2 + 0x7a) = unaff_A3;
+    *(uint32_t *)(iVar2 + 0x7e) = unaff_A4;
+    *(uint32_t *)(iVar2 + 0x4a) = unaff_A5;
+    *(uint32_t *)(iVar2 + 0x46) = unaff_A6;
     uVar7 = *(uint *)(iVar2 + 0x42) & 0xffff1000;
     uVar8 = (ushort)uVar7;
     *(uint *)(iVar2 + 0x42) = CONCAT22((short)(uVar7 >> 0x10),in_stack_00000000 | uVar8);
-    *(undefined4 *)(iVar2 + 0x3e) = in_stack_00000002;
-    puVar13 = (undefined2 *)&stack0x00000008;
-    *(undefined2 *)(iVar2 + 0x34) = param_1;
-    *(undefined2 **)(iVar2 + 0x3a) = in_USP;
-    puVar4 = (undefined1 *)piVar1[8];
+    *(uint32_t *)(iVar2 + 0x3e) = in_stack_00000002;
+    puVar13 = (uint16_t *)&stack0x00000008;
+    *(uint16_t *)(iVar2 + 0x34) = param_1;
+    *(uint16_t **)(iVar2 + 0x3a) = in_USP;
+    puVar4 = (uint8_t *)piVar1[8];
     if ((in_stack_00000000 & 0x1000) == 0 && uVar8 == 0) {
-      for (; (undefined2 *)puVar4 != puVar13; puVar13 = puVar13 + 1) {
+      for (; (uint16_t *)puVar4 != puVar13; puVar13 = puVar13 + 1) {
         in_USP = in_USP + -1;
         *in_USP = *puVar13;
       }
-      *(undefined2 **)(iVar2 + 0x36) = in_USP;
+      *(uint16_t **)(iVar2 + 0x36) = in_USP;
     }
     else {
-      *(undefined1 **)(iVar2 + 0x36) = &stack0x00000008;
-      puVar13 = (undefined2 *)puVar4;
+      *(uint8_t **)(iVar2 + 0x36) = &stack0x00000008;
+      puVar13 = (uint16_t *)puVar4;
     }
     iVar2 = piVar1[1];
     pcVar5 = (code *)piVar1[0x2d];
     if (pcVar5 != (code *)0x0) {
-      *(undefined4 *)((int)puVar13 + -4) = 0x102a34;
+      *(uint32_t *)((int)puVar13 + -4) = 0x102a34;
       (*pcVar5)();
     }
     *piVar1 = iVar2;
-    puVar12 = *(undefined2 **)(iVar2 + 0x36);
-    puVar3 = *(undefined2 **)(iVar2 + 0x3a);
+    puVar12 = *(uint16_t **)(iVar2 + 0x36);
+    puVar3 = *(uint16_t **)(iVar2 + 0x3a);
     uVar8 = *(ushort *)(iVar2 + 0x44);
     if ((uVar8 & 0x1000) == 0) {
       for (; puVar3 != puVar12; puVar12 = puVar12 + 1) {
-        puVar14 = (undefined2 *)((int)puVar13 + -2);
-        puVar13 = (undefined2 *)((int)puVar13 + -2);
+        puVar14 = (uint16_t *)((int)puVar13 + -2);
+        puVar13 = (uint16_t *)((int)puVar13 + -2);
         *puVar14 = *puVar12;
       }
     }
@@ -82112,12 +82114,12 @@ __exception void installer_kernel_dispatch_service(undefined2 param_1)
       uVar8 = uVar8 & 0xefff;
       puVar13 = puVar12;
     }
-    puVar13[-1] = *(undefined2 *)(iVar2 + 0x34);
-    *(undefined4 *)(puVar13 + -3) = *(undefined4 *)(iVar2 + 0x3e);
+    puVar13[-1] = *(uint16_t *)(iVar2 + 0x34);
+    *(uint32_t *)(puVar13 + -3) = *(uint32_t *)(iVar2 + 0x3e);
     puVar13[-4] = uVar8;
-    *(undefined4 *)(puVar13 + -6) = *(undefined4 *)(iVar2 + 0x46);
-    *(undefined4 *)(puVar13 + -8) = *(undefined4 *)(iVar2 + 0x4a);
-    *(undefined4 *)(puVar13 + -10) = *(undefined4 *)(iVar2 + 0x66);
+    *(uint32_t *)(puVar13 + -6) = *(uint32_t *)(iVar2 + 0x46);
+    *(uint32_t *)(puVar13 + -8) = *(uint32_t *)(iVar2 + 0x4a);
+    *(uint32_t *)(puVar13 + -10) = *(uint32_t *)(iVar2 + 0x66);
     installer_kernel_switch_task();
     return;
   }
@@ -82223,7 +82225,7 @@ __exception void installer_kernel_dispatch_io(char function /* d7 */,int device 
   int iVar2;
   short *psVar3;
   ushort uVar4;
-  undefined1 unaff_0000001e;
+  uint8_t unaff_0000001e;
   
   uVar4 = (ushort)device;
   piVar1 = *(int **)PTR_PTR_installer__001014c8;
@@ -82324,44 +82326,44 @@ __asm__(
 __naked void installer_kernel_switch_task(void)
 
 {
-  undefined2 *puVar1;
-  undefined1 *puVar2;
+  uint16_t *puVar1;
+  uint8_t *puVar2;
   int iVar3;
   code *pcVar4;
   byte bVar5;
-  undefined4 in_D0;
+  uint32_t in_D0;
   uint uVar6;
   ushort uVar7;
-  undefined4 in_D1;
-  undefined4 uVar8;
-  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 in_A0;
-  undefined4 extraout_A0;
-  undefined2 *puVar9;
-  undefined4 in_A1;
-  undefined4 extraout_A1;
-  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  uint32_t in_D1;
+  uint32_t uVar8;
+  uint32_t unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t in_A0;
+  uint32_t extraout_A0;
+  uint16_t *puVar9;
+  uint32_t in_A1;
+  uint32_t extraout_A1;
+  uint32_t unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
-  undefined2 *puVar10;
-  undefined2 *puVar11;
-  undefined2 *in_USP;
-  undefined8 uVar12;
-  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
-  undefined4 in_stack_00000004 = *(undefined4 *)((char *)__builtin_frame_address(0) + 8);
-  undefined4 in_stack_00000008 = *(undefined4 *)((char *)__builtin_frame_address(0) + 12);
+  uint16_t *puVar10;
+  uint16_t *puVar11;
+  uint16_t *in_USP;
+  uint64_t uVar12;
+  uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
+  uint32_t in_stack_00000004 = *(uint32_t *)((char *)__builtin_frame_address(0) + 8);
+  uint32_t in_stack_00000008 = *(uint32_t *)((char *)__builtin_frame_address(0) + 12);
   ushort in_stack_0000000c = *(ushort *)((char *)__builtin_frame_address(0) + 16);
-  undefined4 in_stack_0000000e = *(undefined4 *)((char *)__builtin_frame_address(0) + 18);
-  undefined2 in_stack_00000012 = *(undefined2 *)((char *)__builtin_frame_address(0) + 22);
+  uint32_t in_stack_0000000e = *(uint32_t *)((char *)__builtin_frame_address(0) + 18);
+  uint16_t in_stack_00000012 = *(uint16_t *)((char *)__builtin_frame_address(0) + 22);
   
   uVar12 = CONCAT44(in_D0,in_D1);
-  while (uVar8 = (undefined4)uVar12, unaff_A6[0x1b] != 0) {
+  while (uVar8 = (uint32_t)uVar12, unaff_A6[0x1b] != 0) {
     uVar12 = installer_kernel_process_ticks();
     in_A0 = extraout_A0;
     in_A1 = extraout_A1;
@@ -82369,58 +82371,58 @@ __naked void installer_kernel_switch_task(void)
   bVar5 = *(byte *)((int)unaff_A6 + 0x8b);
   *(byte *)((int)unaff_A6 + 0x8b) = bVar5 | 0x80;
   if ((bVar5 & 0x80) == 0) {
-    uVar8 = CONCAT22((short)((ulonglong)uVar12 >> 0x10),*(undefined2 *)(unaff_A5 + 0x54));
+    uVar8 = CONCAT22((short)((ulonglong)uVar12 >> 0x10),*(uint16_t *)(unaff_A5 + 0x54));
   }
   if ((unaff_A5 != unaff_A6[1]) &&
      (((*(byte *)(unaff_A5 + 0x11) & 0x80) == 0 || (*(char *)(unaff_A5 + 0x13) != 0)))) {
     *(int *)(unaff_A5 + 0x4e) = (int)((ulonglong)uVar12 >> 0x20);
-    *(undefined4 *)(unaff_A5 + 0x52) = uVar8;
-    *(undefined4 *)(unaff_A5 + 0x56) = unaff_D2;
-    *(undefined4 *)(unaff_A5 + 0x5a) = unaff_D3;
-    *(undefined4 *)(unaff_A5 + 0x5e) = unaff_D4;
-    *(undefined4 *)(unaff_A5 + 0x62) = unaff_D5;
-    *(undefined4 *)(unaff_A5 + 0x66) = in_stack_00000000;
-    *(undefined4 *)(unaff_A5 + 0x6a) = unaff_D7;
-    *(undefined4 *)(unaff_A5 + 0x6e) = in_A0;
-    *(undefined4 *)(unaff_A5 + 0x72) = in_A1;
-    *(undefined4 *)(unaff_A5 + 0x76) = unaff_A2;
-    *(undefined4 *)(unaff_A5 + 0x7a) = unaff_A3;
-    *(undefined4 *)(unaff_A5 + 0x7e) = unaff_A4;
-    *(undefined4 *)(unaff_A5 + 0x4a) = in_stack_00000004;
-    *(undefined4 *)(unaff_A5 + 0x46) = in_stack_00000008;
+    *(uint32_t *)(unaff_A5 + 0x52) = uVar8;
+    *(uint32_t *)(unaff_A5 + 0x56) = unaff_D2;
+    *(uint32_t *)(unaff_A5 + 0x5a) = unaff_D3;
+    *(uint32_t *)(unaff_A5 + 0x5e) = unaff_D4;
+    *(uint32_t *)(unaff_A5 + 0x62) = unaff_D5;
+    *(uint32_t *)(unaff_A5 + 0x66) = in_stack_00000000;
+    *(uint32_t *)(unaff_A5 + 0x6a) = unaff_D7;
+    *(uint32_t *)(unaff_A5 + 0x6e) = in_A0;
+    *(uint32_t *)(unaff_A5 + 0x72) = in_A1;
+    *(uint32_t *)(unaff_A5 + 0x76) = unaff_A2;
+    *(uint32_t *)(unaff_A5 + 0x7a) = unaff_A3;
+    *(uint32_t *)(unaff_A5 + 0x7e) = unaff_A4;
+    *(uint32_t *)(unaff_A5 + 0x4a) = in_stack_00000004;
+    *(uint32_t *)(unaff_A5 + 0x46) = in_stack_00000008;
     uVar6 = *(uint *)(unaff_A5 + 0x42) & 0xffff1000;
     uVar7 = (ushort)uVar6;
     *(uint *)(unaff_A5 + 0x42) = CONCAT22((short)(uVar6 >> 0x10),in_stack_0000000c | uVar7);
-    *(undefined4 *)(unaff_A5 + 0x3e) = in_stack_0000000e;
-    puVar10 = (undefined2 *)&stack0x00000014;
-    *(undefined2 *)(unaff_A5 + 0x34) = in_stack_00000012;
-    *(undefined2 **)(unaff_A5 + 0x3a) = in_USP;
-    puVar2 = (undefined1 *)unaff_A6[8];
+    *(uint32_t *)(unaff_A5 + 0x3e) = in_stack_0000000e;
+    puVar10 = (uint16_t *)&stack0x00000014;
+    *(uint16_t *)(unaff_A5 + 0x34) = in_stack_00000012;
+    *(uint16_t **)(unaff_A5 + 0x3a) = in_USP;
+    puVar2 = (uint8_t *)unaff_A6[8];
     if ((in_stack_0000000c & 0x1000) == 0 && uVar7 == 0) {
-      for (; (undefined2 *)puVar2 != puVar10; puVar10 = puVar10 + 1) {
+      for (; (uint16_t *)puVar2 != puVar10; puVar10 = puVar10 + 1) {
         in_USP = in_USP + -1;
         *in_USP = *puVar10;
       }
-      *(undefined2 **)(unaff_A5 + 0x36) = in_USP;
+      *(uint16_t **)(unaff_A5 + 0x36) = in_USP;
     }
     else {
-      *(undefined1 **)(unaff_A5 + 0x36) = &stack0x00000014;
-      puVar10 = (undefined2 *)puVar2;
+      *(uint8_t **)(unaff_A5 + 0x36) = &stack0x00000014;
+      puVar10 = (uint16_t *)puVar2;
     }
     iVar3 = unaff_A6[1];
     pcVar4 = (code *)unaff_A6[0x2d];
     if (pcVar4 != (code *)0x0) {
-      *(undefined4 *)((int)puVar10 + -4) = 0x102a34;
+      *(uint32_t *)((int)puVar10 + -4) = 0x102a34;
       (*pcVar4)();
     }
     *unaff_A6 = iVar3;
-    puVar9 = *(undefined2 **)(iVar3 + 0x36);
-    puVar1 = *(undefined2 **)(iVar3 + 0x3a);
+    puVar9 = *(uint16_t **)(iVar3 + 0x36);
+    puVar1 = *(uint16_t **)(iVar3 + 0x3a);
     uVar7 = *(ushort *)(iVar3 + 0x44);
     if ((uVar7 & 0x1000) == 0) {
       for (; puVar1 != puVar9; puVar9 = puVar9 + 1) {
-        puVar11 = (undefined2 *)((int)puVar10 + -2);
-        puVar10 = (undefined2 *)((int)puVar10 + -2);
+        puVar11 = (uint16_t *)((int)puVar10 + -2);
+        puVar10 = (uint16_t *)((int)puVar10 + -2);
         *puVar11 = *puVar9;
       }
     }
@@ -82428,12 +82430,12 @@ __naked void installer_kernel_switch_task(void)
       uVar7 = uVar7 & 0xefff;
       puVar10 = puVar9;
     }
-    puVar10[-1] = *(undefined2 *)(iVar3 + 0x34);
-    *(undefined4 *)(puVar10 + -3) = *(undefined4 *)(iVar3 + 0x3e);
+    puVar10[-1] = *(uint16_t *)(iVar3 + 0x34);
+    *(uint32_t *)(puVar10 + -3) = *(uint32_t *)(iVar3 + 0x3e);
     puVar10[-4] = uVar7;
-    *(undefined4 *)(puVar10 + -6) = *(undefined4 *)(iVar3 + 0x46);
-    *(undefined4 *)(puVar10 + -8) = *(undefined4 *)(iVar3 + 0x4a);
-    *(undefined4 *)(puVar10 + -10) = *(undefined4 *)(iVar3 + 0x66);
+    *(uint32_t *)(puVar10 + -6) = *(uint32_t *)(iVar3 + 0x46);
+    *(uint32_t *)(puVar10 + -8) = *(uint32_t *)(iVar3 + 0x4a);
+    *(uint32_t *)(puVar10 + -10) = *(uint32_t *)(iVar3 + 0x66);
     installer_kernel_switch_task();
     return;
   }
@@ -82514,11 +82516,11 @@ LAB_installer__001016e2:
     piVar2 = *(int **)(unaff_A6 + 8);
     if (piVar2 == (int *)0x0) {
 LAB_installer__0010175e:
-      *(undefined4 *)(unaff_A6 + 0x6c) = 0;
+      *(uint32_t *)(unaff_A6 + 0x6c) = 0;
       if (((((*(byte *)((int)unaff_A5 + 0x11) & 0xc0) == 0x40) &&
            (sVar5 = *(short *)((int)unaff_A5 + 0x1a), *(short *)((int)unaff_A5 + 0x1a) = sVar5 + -1,
            sVar5 == 0)) &&
-          (*(undefined2 *)((int)unaff_A5 + 0x1a) = 0, *(char *)((int)unaff_A5 + 0x13) == 0)) &&
+          (*(uint16_t *)((int)unaff_A5 + 0x1a) = 0, *(char *)((int)unaff_A5 + 0x13) == 0)) &&
          (*(byte *)(unaff_A5 + 4) <= *(byte *)(*unaff_A5 + 0x10))) {
         installer_kernel_queue_remove();
         installer_kernel_make_ready();
@@ -82528,14 +82530,14 @@ LAB_installer__0010175e:
     uVar3 = *(uint *)((int)piVar2 + 0x4e);
     if (uVar3 == 0) {
       if ((*(byte *)((int)piVar2 + 0x13) & 0x70) != 0) {
-        *(undefined2 *)((int)piVar2 + 0x16) = 0;
+        *(uint16_t *)((int)piVar2 + 0x16) = 0;
         if ((*(byte *)((int)piVar2 + 0x13) & 0x60) != 0) {
           iVar1 = *piVar2;
           piVar4 = (int *)piVar2[1];
           *piVar4 = iVar1;
           *(int **)(iVar1 + 4) = piVar4;
         }
-        *(undefined1 *)((int)piVar2 + 0x6d) = 0x81;
+        *(uint8_t *)((int)piVar2 + 0x6d) = 0x81;
       }
       iVar1 = piVar2[2];
       *(int *)(unaff_A6 + 8) = iVar1;
@@ -82550,7 +82552,7 @@ LAB_installer__0010175e:
       *(int *)((int)piVar2 + 0x4e) = iVar1;
       goto LAB_installer__0010175e;
     }
-    *(undefined4 *)((int)piVar2 + 0x4e) = 0;
+    *(uint32_t *)((int)piVar2 + 0x4e) = 0;
     *(int *)(unaff_A6 + 0x6c) = -iVar1;
   } while( true );
 }
@@ -82688,7 +82690,7 @@ __regcall void installer_kernel_create(void)
 {
   int iVar1;
   int iVar2;
-  undefined4 uVar3;
+  uint32_t uVar3;
   char in_D1b;
   char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
   uint unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint)__entry; });
@@ -82696,55 +82698,55 @@ __regcall void installer_kernel_create(void)
   char unaff_D7b = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (char)__entry; });
   ushort *in_A0;
   int extraout_A0;
-  undefined2 *puVar5;
-  undefined4 *puVar6;
-  undefined2 *puVar7;
+  uint16_t *puVar5;
+  uint32_t *puVar6;
+  uint16_t *puVar7;
   int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   if ((unaff_D2b != 0) && (iVar2 = unaff_A6[4], iVar2 != 0)) {
-    *(undefined4 *)(iVar2 + 0x20) = 0;
+    *(uint32_t *)(iVar2 + 0x20) = 0;
     if ((in_A0 == (ushort *)0x0) || ((uint)*in_A0 <= (unaff_D3 & 0xffff))) {
       uVar3 = installer_kernel_allocate_for_task();
-      puVar5 = (undefined2 *)((unaff_D3 >> 0x10) * 2 + extraout_A0);
+      puVar5 = (uint16_t *)((unaff_D3 >> 0x10) * 2 + extraout_A0);
       puVar7 = puVar5 + (unaff_D3 & 0xffff);
       if (unaff_D7b == 0) {
         if ((in_A0 != (ushort *)0x0) && (*in_A0 != 0)) {
           sVar4 = *in_A0 << 1;
           do {
             puVar7 = puVar7 + -1;
-            *puVar7 = *(undefined2 *)((int)in_A0 + (int)sVar4);
+            *puVar7 = *(uint16_t *)((int)in_A0 + (int)sVar4);
             sVar4 = sVar4 + -2;
           } while (sVar4 != 0);
         }
         iVar1 = *unaff_A6;
-        *(undefined4 *)(iVar2 + 0x24) = uVar3;
+        *(uint32_t *)(iVar2 + 0x24) = uVar3;
         if (in_D1b == 0) {
           in_D1b = *(char *)(iVar1 + 0x14);
         }
         *(char *)(iVar2 + 0x14) = in_D1b;
-        *(undefined4 *)(iVar2 + 0x16) = 0;
+        *(uint32_t *)(iVar2 + 0x16) = 0;
         *(char *)(iVar2 + 0x10) = unaff_D2b;
-        *(undefined4 *)(iVar2 + 0x46) = 0;
-        *(undefined1 *)(iVar2 + 0x12) = 0;
-        *(undefined1 *)(iVar2 + 0x11) = 0;
-        *(undefined2 *)(iVar2 + 0x34) = 0;
+        *(uint32_t *)(iVar2 + 0x46) = 0;
+        *(uint8_t *)(iVar2 + 0x12) = 0;
+        *(uint8_t *)(iVar2 + 0x11) = 0;
+        *(uint16_t *)(iVar2 + 0x34) = 0;
         *(int *)(iVar2 + 0x2c) = iVar1;
-        *(undefined4 *)(iVar2 + 0x1c) = 0;
-        *(undefined2 **)(iVar2 + 0x3a) = puVar7;
-        *(undefined2 *)(iVar2 + 0x44) = 0;
+        *(uint32_t *)(iVar2 + 0x1c) = 0;
+        *(uint16_t **)(iVar2 + 0x3a) = puVar7;
+        *(uint16_t *)(iVar2 + 0x44) = 0;
         if (unaff_D3 >> 0x10 != 0) {
           *(ushort *)(iVar2 + 0x44) = *(ushort *)(iVar2 + 0x44) | 0x1000;
           puVar7 = puVar5;
         }
-        *(undefined2 **)(iVar2 + 0x36) = puVar7;
+        *(uint16_t **)(iVar2 + 0x36) = puVar7;
         sVar4 = 0xb;
-        puVar6 = (undefined4 *)(iVar2 + 0x82);
+        puVar6 = (uint32_t *)(iVar2 + 0x82);
         do {
           *puVar6 = 0;
           sVar4 = sVar4 + -1;
           puVar6 = puVar6 + 1;
         } while (sVar4 != -1);
-        *(undefined1 *)(iVar2 + 0x13) = 0x80;
+        *(uint8_t *)(iVar2 + 0x13) = 0x80;
         unaff_A6[4] = *(int *)(iVar2 + 0x30);
         *(int *)(iVar2 + 0x30) = unaff_A6[3];
         unaff_A6[3] = iVar2;
@@ -82874,13 +82876,13 @@ __regcall void installer_kernel_start(void)
 {
   int in_A0;
   void *pvVar1;
-  undefined4 extraout_A1;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
-  undefined1 in_ZF;
+  uint32_t extraout_A1;
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
+  uint8_t in_ZF;
   
   pvVar1 = installer_kernel_check_task(in_A0,(void *)*unaff_A6);
   if (((bool)in_ZF) && (*(char *)((int)pvVar1 + 0x13) < 0)) {
-    *(undefined4 *)((int)pvVar1 + 0x3e) = extraout_A1;
+    *(uint32_t *)((int)pvVar1 + 0x3e) = extraout_A1;
     installer_kernel_make_ready();
     if (*(code **)(*(int *)PTR_PTR_installer__001014c8 + 0x36) != (code *)0x0) {
       (**(code **)(*(int *)PTR_PTR_installer__001014c8 + 0x36))();
@@ -82991,7 +82993,7 @@ __asm__(
    psos.md */
 
 /* out D7 char error */
-__regcall undefined8 installer_kernel_delete(void)
+__regcall uint64_t installer_kernel_delete(void)
 
 {
   int iVar1;
@@ -83004,14 +83006,14 @@ __regcall undefined8 installer_kernel_delete(void)
   int extraout_A0_00;
   int *extraout_A1;
   int *piVar5;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
-  undefined8 *puVar6;
-  undefined1 in_ZF;
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
+  uint64_t *puVar6;
+  uint8_t in_ZF;
   bool bVar7;
-  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
-  undefined1 local_10 [16];
+  uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
+  uint8_t local_10 [16];
   
-  puVar6 = (undefined8 *)local_10;
+  puVar6 = (uint64_t *)local_10;
   piVar4 = installer_kernel_check_task(in_A0,(void *)*unaff_A6);
   if (((bool)in_ZF) &&
      ((*(int **)(*(int *)PTR_PTR_installer__001014c8 + 0x46) == (int *)0x0 ||
@@ -83019,9 +83021,9 @@ __regcall undefined8 installer_kernel_delete(void)
       piVar4 = extraout_A0, unaff_D7w == 0)))) {
     if (piVar4 == (int *)*unaff_A6) {
       iVar1 = unaff_A6[8];
-      puVar6 = (undefined8 *)(iVar1 + -0x28);
-      *(undefined4 *)(iVar1 + -0x18) = in_stack_00000000;
-      *(undefined2 *)(iVar1 + -8) = 0;
+      puVar6 = (uint64_t *)(iVar1 + -0x28);
+      *(uint32_t *)(iVar1 + -0x18) = in_stack_00000000;
+      *(uint16_t *)(iVar1 + -8) = 0;
     }
     if ((*(byte *)((int)piVar4 + 0x13) == 0) || ((*(byte *)((int)piVar4 + 0x13) & 0x60) != 0)) {
       iVar1 = *piVar4;
@@ -83031,11 +83033,11 @@ __regcall undefined8 installer_kernel_delete(void)
         *(int **)(iVar1 + 4) = piVar2;
       }
     }
-    *(undefined1 *)((int)piVar4 + 0x13) = 0xff;
-    *(undefined4 *)((int)puVar6 + -4) = 0x101976;
+    *(uint8_t *)((int)piVar4 + 0x13) = 0xff;
+    *(uint32_t *)((int)puVar6 + -4) = 0x101976;
     installer_kernel_timer_cancel();
     while (bVar7 = piVar4[7] == 0, !bVar7) {
-      *(undefined4 *)((int)puVar6 + -4) = 0x10198a;
+      *(uint32_t *)((int)puVar6 + -4) = 0x10198a;
       installer_kernel_send_for_task();
       if (!bVar7) {
         piVar4[7] = *extraout_A1;
@@ -83044,7 +83046,7 @@ __regcall undefined8 installer_kernel_delete(void)
       }
     }
     while (bVar7 = piVar4[8] == 0, !bVar7) {
-      *(undefined4 *)((int)puVar6 + -4) = 0x1019b2;
+      *(uint32_t *)((int)puVar6 + -4) = 0x1019b2;
       installer_kernel_free_for_task();
       if (!bVar7) {
         piVar4[8] = *(int *)(extraout_A0_00 + -0x12);
@@ -83060,11 +83062,11 @@ __regcall undefined8 installer_kernel_delete(void)
 LAB_installer__001019d4:
     piVar4[0xc] = unaff_A6[4];
     unaff_A6[4] = piVar4;
-    *(undefined4 *)((int)puVar6 + -4) = 0x1019f0;
+    *(uint32_t *)((int)puVar6 + -4) = 0x1019f0;
     installer_kernel_signal_task();
     pcVar3 = *(code **)(*(int *)PTR_PTR_installer__001014c8 + 0x3a);
     if (pcVar3 != (code *)0x0) {
-      *(undefined4 *)((int)puVar6 + -4) = 0x101a02;
+      *(uint32_t *)((int)puVar6 + -4) = 0x101a02;
       (*pcVar3)();
     }
   }
@@ -83194,8 +83196,8 @@ __regcall void installer_kernel_suspend(void)
   int in_A0;
   void *pvVar1;
   void *extraout_A0;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
-  undefined1 in_ZF;
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
+  uint8_t in_ZF;
   
   pvVar1 = installer_kernel_check_task(in_A0,(void *)*unaff_A6);
   if ((bool)in_ZF) {
@@ -83259,7 +83261,7 @@ __regcall void installer_kernel_resume(void)
   byte bVar1;
   int in_A0;
   void *pvVar2;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   bVar3 = true;
@@ -83331,7 +83333,7 @@ __regcall void installer_kernel_priority(void)
   short in_D1w;
   int in_A0;
   void *pvVar2;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   bVar3 = in_D1w == 0;
@@ -83424,25 +83426,25 @@ __asm__(
 __regcall void installer_kernel_allocate_segment(void)
 
 {
-  undefined4 *puVar1;
+  uint32_t *puVar1;
   int *piVar2;
   int iVar3;
   char unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (char)__entry; });
   int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
-  undefined1 in_ZF;
+  uint8_t in_ZF;
   
-  puVar1 = (undefined4 *)*unaff_A6;
+  puVar1 = (uint32_t *)*unaff_A6;
   installer_kernel_allocate();
   if ((!(bool)in_ZF) && (unaff_D3b == 0)) {
     iVar3 = installer_kernel_queue_remove();
-    *(undefined1 *)((int)puVar1 + 0x13) = 0x40;
+    *(uint8_t *)((int)puVar1 + 0x13) = 0x40;
     *puVar1 = unaff_A6 + 0x19;
     piVar2 = (int *)unaff_A6[0x1a];
     unaff_A6[0x1a] = (int)puVar1;
     *piVar2 = (int)puVar1;
     puVar1[1] = piVar2;
     if (iVar3 != 0) {
-      *(undefined1 *)((int)puVar1 + 0x12) = 0xff;
+      *(uint8_t *)((int)puVar1 + 0x12) = 0xff;
       installer_kernel_timer_insert();
     }
   }
@@ -83471,24 +83473,24 @@ __asm__(
 __naked void installer_kernel_allocate_for_task(void)
 
 {
-  undefined4 *puVar1;
+  uint32_t *puVar1;
   int iVar2;
   char unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (char)__entry; });
   int *unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int *)__entry; });
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
-  undefined1 in_ZF;
+  uint8_t in_ZF;
   
   installer_kernel_allocate();
   if ((!(bool)in_ZF) && (unaff_D3b == 0)) {
     iVar2 = installer_kernel_queue_remove();
-    *(undefined1 *)((int)unaff_A5 + 0x13) = 0x40;
+    *(uint8_t *)((int)unaff_A5 + 0x13) = 0x40;
     *unaff_A5 = unaff_A6 + 100;
-    puVar1 = *(undefined4 **)(unaff_A6 + 0x68);
+    puVar1 = *(uint32_t **)(unaff_A6 + 0x68);
     *(int **)(unaff_A6 + 0x68) = unaff_A5;
     *puVar1 = unaff_A5;
     unaff_A5[1] = (int)puVar1;
     if (iVar2 != 0) {
-      *(undefined1 *)((int)unaff_A5 + 0x12) = 0xff;
+      *(uint8_t *)((int)unaff_A5 + 0x12) = 0xff;
       installer_kernel_timer_insert();
     }
   }
@@ -83549,17 +83551,17 @@ __regcall void installer_kernel_free_segment(void)
 {
   int iVar1;
   int *piVar2;
-  undefined4 *puVar3;
+  uint32_t *puVar3;
   ushort uVar4;
   uint uVar5;
   short sVar6;
   int in_A0;
   int *extraout_A0;
-  undefined4 extraout_A0_00;
+  uint32_t extraout_A0_00;
   int *piVar7;
   int *piVar8;
   int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
-  undefined1 in_ZF;
+  uint8_t in_ZF;
   bool bVar9;
   
   iVar1 = *unaff_A6;
@@ -83581,7 +83583,7 @@ __regcall void installer_kernel_free_segment(void)
     }
   } while (piVar8 != extraout_A0);
   *piVar7 = *extraout_A0;
-  *(undefined2 *)(extraout_A0 + 4) = 0;
+  *(uint16_t *)(extraout_A0 + 4) = 0;
   piVar8 = (int *)extraout_A0[2];
   piVar7 = extraout_A0;
   if ((piVar8 != (int *)0x0) && (piVar7 = extraout_A0, *(short *)(piVar8 + 4) == 0)) {
@@ -83594,7 +83596,7 @@ __regcall void installer_kernel_free_segment(void)
      (piVar8[2] = (int)piVar7, *(short *)(piVar8 + 4) == 0)) {
     piVar7[3] = piVar8[3] + piVar7[3];
     if (piVar7 == extraout_A0) {
-      puVar3 = (undefined4 *)piVar8[1];
+      puVar3 = (uint32_t *)piVar8[1];
       piVar7[1] = (int)puVar3;
       *puVar3 = piVar7;
       iVar1 = *piVar8;
@@ -83619,7 +83621,7 @@ __regcall void installer_kernel_free_segment(void)
     }
   }
   else if (piVar7 == extraout_A0) {
-    puVar3 = *(undefined4 **)((int)unaff_A6 + sVar6 + 0x5c);
+    puVar3 = *(uint32_t **)((int)unaff_A6 + sVar6 + 0x5c);
     *(int **)((int)unaff_A6 + sVar6 + 0x5c) = piVar7;
     *piVar7 = 0;
     *puVar3 = piVar7;
@@ -83640,9 +83642,9 @@ LAB_installer__00101c0c:
           (uVar5 = *(uint *)((int)unaff_A6 + sVar6 + 0x44),
           bVar9 = *(uint *)((int)piVar8 + 0x52) == uVar5, *(uint *)((int)piVar8 + 0x52) < uVar5)) &&
          (installer_kernel_allocate(), bVar9)) {
-        *(undefined4 *)((int)piVar8 + 0x6e) = extraout_A0_00;
+        *(uint32_t *)((int)piVar8 + 0x6e) = extraout_A0_00;
         piVar7 = (int *)*piVar8;
-        puVar3 = (undefined4 *)piVar8[1];
+        puVar3 = (uint32_t *)piVar8[1];
         *puVar3 = piVar7;
         piVar7[1] = (int)puVar3;
         installer_kernel_timer_cancel();
@@ -83680,20 +83682,20 @@ __naked void installer_kernel_free_for_task(void)
 
 {
   int iVar1;
-  undefined4 *puVar2;
+  uint32_t *puVar2;
   int *piVar3;
   ushort uVar4;
   uint uVar5;
   short sVar6;
   int in_A0;
   int *extraout_A0;
-  undefined4 extraout_A0_00;
+  uint32_t extraout_A0_00;
   int *piVar7;
   int *piVar8;
   int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
-  undefined4 *puVar9;
+  uint32_t *puVar9;
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
-  undefined1 in_ZF;
+  uint8_t in_ZF;
   bool bVar10;
   
   installer_kernel_check_segment((void *)(in_A0 + -0x12));
@@ -83714,7 +83716,7 @@ __naked void installer_kernel_free_for_task(void)
     }
   } while (piVar8 != extraout_A0);
   *piVar7 = *extraout_A0;
-  *(undefined2 *)(extraout_A0 + 4) = 0;
+  *(uint16_t *)(extraout_A0 + 4) = 0;
   piVar8 = (int *)extraout_A0[2];
   piVar7 = extraout_A0;
   if ((piVar8 != (int *)0x0) && (piVar7 = extraout_A0, *(short *)(piVar8 + 4) == 0)) {
@@ -83727,7 +83729,7 @@ __naked void installer_kernel_free_for_task(void)
      (piVar8[2] = (int)piVar7, *(short *)(piVar8 + 4) == 0)) {
     piVar7[3] = piVar8[3] + piVar7[3];
     if (piVar7 == extraout_A0) {
-      puVar9 = (undefined4 *)piVar8[1];
+      puVar9 = (uint32_t *)piVar8[1];
       piVar7[1] = (int)puVar9;
       *puVar9 = piVar7;
       iVar1 = *piVar8;
@@ -83752,7 +83754,7 @@ __naked void installer_kernel_free_for_task(void)
     }
   }
   else if (piVar7 == extraout_A0) {
-    puVar9 = *(undefined4 **)(unaff_A6 + 0x5c + (int)sVar6);
+    puVar9 = *(uint32_t **)(unaff_A6 + 0x5c + (int)sVar6);
     *(int **)(unaff_A6 + 0x5c + (int)sVar6) = piVar7;
     *piVar7 = 0;
     *puVar9 = piVar7;
@@ -83766,16 +83768,16 @@ __naked void installer_kernel_free_for_task(void)
 LAB_installer__00101c0c:
   if (*(uint *)(unaff_A6 + 0x44 + (int)sVar6) <= uVar5) {
     *(int *)(unaff_A6 + 0x44 + (int)sVar6) = *(int *)(unaff_A6 + 0x3c + (int)sVar6) + 1;
-    puVar9 = *(undefined4 **)(unaff_A6 + 100);
-    while (puVar9 != (undefined4 *)(unaff_A6 + 100)) {
+    puVar9 = *(uint32_t **)(unaff_A6 + 100);
+    while (puVar9 != (uint32_t *)(unaff_A6 + 100)) {
       if ((((*(char *)((int)puVar9 + 0x59) == 0) ||
            ((char)(uVar4 & 3) == *(char *)((int)puVar9 + 0x59))) &&
           (uVar5 = *(uint *)(unaff_A6 + 0x44 + (int)sVar6),
           bVar10 = *(uint *)((int)puVar9 + 0x52) == uVar5, *(uint *)((int)puVar9 + 0x52) < uVar5))
          && (installer_kernel_allocate(), bVar10)) {
-        *(undefined4 *)((int)puVar9 + 0x6e) = extraout_A0_00;
-        puVar2 = (undefined4 *)*puVar9;
-        puVar9 = (undefined4 *)puVar9[1];
+        *(uint32_t *)((int)puVar9 + 0x6e) = extraout_A0_00;
+        puVar2 = (uint32_t *)*puVar9;
+        puVar9 = (uint32_t *)puVar9[1];
         *puVar9 = puVar2;
         puVar2[1] = puVar9;
         installer_kernel_timer_cancel();
@@ -83783,7 +83785,7 @@ LAB_installer__00101c0c:
         puVar9 = puVar2;
       }
       else {
-        puVar9 = (undefined4 *)*puVar9;
+        puVar9 = (uint32_t *)*puVar9;
       }
     }
   }
@@ -83939,9 +83941,9 @@ __naked void installer_kernel_allocate(void)
 
 {
   char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
-  undefined4 *extraout_A0;
-  undefined4 *extraout_A0_00;
-  undefined4 *puVar1;
+  uint32_t *extraout_A0;
+  uint32_t *extraout_A0_00;
+  uint32_t *puVar1;
   int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   bool bVar2;
   
@@ -83961,8 +83963,8 @@ __naked void installer_kernel_allocate(void)
     return;
   }
 LAB_installer__00101c8e:
-  *puVar1 = *(undefined4 *)(unaff_A5 + 0x20);
-  *(undefined4 **)(unaff_A5 + 0x20) = puVar1;
+  *puVar1 = *(uint32_t *)(unaff_A5 + 0x20);
+  *(uint32_t **)(unaff_A5 + 0x20) = puVar1;
   return;
 }
 
@@ -84160,7 +84162,7 @@ __regcall void installer_kernel_assign_segment(void)
   void *segment;
   int extraout_A1;
   int *piVar2;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   bVar3 = in_A1 == 0;
@@ -84222,7 +84224,7 @@ __regcall void installer_kernel_reclaim_segment(void)
   void *segment;
   int extraout_A1;
   int *piVar3;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar4;
   
   bVar4 = in_A1 == 0;
@@ -84355,30 +84357,30 @@ __regcall void installer_kernel_create_x(void)
 
 {
   int iVar1;
-  undefined4 in_D0;
+  uint32_t in_D0;
   byte in_D1b;
-  undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
+  uint8_t unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint8_t)__entry; });
   int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   iVar1 = unaff_A6[6];
   if (iVar1 != 0) {
-    *(undefined4 *)(iVar1 + 0x14) = in_D0;
+    *(uint32_t *)(iVar1 + 0x14) = in_D0;
     *(int *)iVar1 = iVar1;
     *(int *)(iVar1 + 4) = iVar1;
-    *(undefined4 *)(iVar1 + 8) = 0;
-    *(undefined4 *)(iVar1 + 0xc) = 0;
-    *(undefined2 *)(iVar1 + 0x20) = 0;
-    *(undefined1 *)(iVar1 + 0x10) = 0;
+    *(uint32_t *)(iVar1 + 8) = 0;
+    *(uint32_t *)(iVar1 + 0xc) = 0;
+    *(uint16_t *)(iVar1 + 0x20) = 0;
+    *(uint8_t *)(iVar1 + 0x10) = 0;
     if ((in_D1b & 0x80) != 0) {
       *(char *)(iVar1 + 0x10) = *(char *)(iVar1 + 0x10) + 1;
     }
-    *(undefined1 *)(iVar1 + 0x12) = 0;
+    *(uint8_t *)(iVar1 + 0x12) = 0;
     if ((in_D1b & 2) != 0) {
       *(char *)(iVar1 + 0x12) = *(char *)(iVar1 + 0x12) + 1;
-      *(undefined1 *)(iVar1 + 0x20) = unaff_D2b;
+      *(uint8_t *)(iVar1 + 0x20) = unaff_D2b;
     }
     *(byte *)(iVar1 + 0x11) = in_D1b & 0x7d;
-    *(undefined1 *)(iVar1 + 0x13) = *(undefined1 *)(*unaff_A6 + 0x14);
+    *(uint8_t *)(iVar1 + 0x13) = *(uint8_t *)(*unaff_A6 + 0x14);
     unaff_A6[6] = *(int *)(iVar1 + 0x1c);
     *(int *)(iVar1 + 0x1c) = unaff_A6[5];
     unaff_A6[5] = iVar1;
@@ -84445,9 +84447,9 @@ __regcall void installer_kernel_service_21(void)
   int exchange;
   byte *pbVar1;
   int in_D0;
-  undefined4 *extraout_A0;
-  undefined4 *puVar2;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *extraout_A0;
+  uint32_t *puVar2;
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   exchange = unaff_A6[5];
@@ -84464,13 +84466,13 @@ __regcall void installer_kernel_service_21(void)
     return;
   }
   do {
-    puVar2 = (undefined4 *)*extraout_A0;
+    puVar2 = (uint32_t *)*extraout_A0;
     do {
       if (extraout_A0 == puVar2) {
         return;
       }
       pbVar1 = (byte *)((int)puVar2 + 0x13);
-      puVar2 = (undefined4 *)*puVar2;
+      puVar2 = (uint32_t *)*puVar2;
     } while ((*pbVar1 & 0x20) != 0);
   } while( true );
 }
@@ -84540,26 +84542,26 @@ __asm__(
 __regcall void installer_kernel_delete_x(void)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   int in_A0;
-  undefined4 *extraout_A0;
-  undefined4 *puVar2;
-  undefined4 *extraout_A0_00;
+  uint32_t *extraout_A0;
+  uint32_t *puVar2;
+  uint32_t *extraout_A0_00;
   int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
-  undefined4 *puVar3;
-  undefined4 *puVar4;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *puVar3;
+  uint32_t *puVar4;
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar5;
   
   bVar5 = unaff_A2 == 0;
   installer_kernel_check_exchange(in_A0,(void *)*unaff_A6);
   if (bVar5) {
-    *(undefined1 *)((int)extraout_A0 + 0x11) = 0xfe;
-    puVar3 = (undefined4 *)*extraout_A0;
+    *(uint8_t *)((int)extraout_A0 + 0x11) = 0xfe;
+    puVar3 = (uint32_t *)*extraout_A0;
     puVar2 = extraout_A0;
     while (puVar2 != puVar3) {
-      *(undefined1 *)((int)puVar3 + 0x6d) = 1;
-      puVar3 = (undefined4 *)*puVar3;
+      *(uint8_t *)((int)puVar3 + 0x6d) = 1;
+      puVar3 = (uint32_t *)*puVar3;
       installer_kernel_timer_cancel();
       installer_kernel_make_ready();
       puVar2 = extraout_A0_00;
@@ -84567,13 +84569,13 @@ __regcall void installer_kernel_delete_x(void)
     if (puVar2[2] != 0) {
       uVar1 = unaff_A6[7];
       unaff_A6[7] = puVar2[2];
-      *(undefined4 *)puVar2[3] = uVar1;
+      *(uint32_t *)puVar2[3] = uVar1;
     }
     puVar3 = unaff_A6 + -2;
     do {
       puVar4 = puVar3;
-      puVar3 = (undefined4 *)puVar4[7];
-      if (puVar3 == (undefined4 *)0x0) goto LAB_installer__00101ea6;
+      puVar3 = (uint32_t *)puVar4[7];
+      if (puVar3 == (uint32_t *)0x0) goto LAB_installer__00101ea6;
     } while (puVar3 != puVar2);
     puVar4[7] = puVar2[7];
 LAB_installer__00101ea6:
@@ -84654,8 +84656,8 @@ __regcall void installer_kernel_broadcast_x(void)
 
 {
   int iVar1;
-  undefined2 extraout_D0w;
-  undefined2 uVar2;
+  uint16_t extraout_D0w;
+  uint16_t uVar2;
   char cVar3;
   byte bVar4;
   char extraout_D1b;
@@ -84673,7 +84675,7 @@ __regcall void installer_kernel_broadcast_x(void)
   int extraout_A1_00;
   int *piVar10;
   int *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (int *)__entry; });
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar11;
   
   bVar11 = true;
@@ -84870,10 +84872,10 @@ __regcall void installer_kernel_jam_x(void)
   int *piVar1;
   int iVar2;
   int iVar3;
-  undefined4 uVar4;
-  undefined4 uVar5;
-  undefined4 uVar6;
-  undefined4 uVar7;
+  uint32_t uVar4;
+  uint32_t uVar5;
+  uint32_t uVar6;
+  uint32_t uVar7;
   int in_A0;
   int *extraout_A0;
   int *extraout_A0_00;
@@ -84883,7 +84885,7 @@ __regcall void installer_kernel_jam_x(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar11;
   
   running = (void *)*unaff_A6;
@@ -84929,11 +84931,11 @@ LAB_installer__0010200c:
           (installer_kernel_copy_message(), piVar8 = extraout_A0_01, bVar11)))) {
         if (in_A0 == 0) {
           *piVar10 = 0;
-          if ((undefined4 *)piVar8[3] == (undefined4 *)0x0) {
+          if ((uint32_t *)piVar8[3] == (uint32_t *)0x0) {
             piVar8[2] = (int)piVar10;
           }
           else {
-            *(undefined4 *)piVar8[3] = piVar10;
+            *(uint32_t *)piVar8[3] = piVar10;
           }
         }
         else {
@@ -84960,15 +84962,15 @@ LAB_installer__0010200c:
       installer_kernel_make_ready();
       iVar2 = *(int *)((int)piVar1 + 0x72);
       iVar3 = *(int *)(extraout_A1_00 + 4);
-      uVar4 = *(undefined4 *)(extraout_A1_00 + 8);
-      uVar5 = *(undefined4 *)(extraout_A1_00 + 0xc);
-      uVar6 = *(undefined4 *)(extraout_A1_00 + 0x10);
-      uVar7 = *(undefined4 *)(extraout_A1_00 + 0x14);
+      uVar4 = *(uint32_t *)(extraout_A1_00 + 8);
+      uVar5 = *(uint32_t *)(extraout_A1_00 + 0xc);
+      uVar6 = *(uint32_t *)(extraout_A1_00 + 0x10);
+      uVar7 = *(uint32_t *)(extraout_A1_00 + 0x14);
       *(int *)(iVar2 + 4) = iVar3;
-      *(undefined4 *)(iVar2 + 8) = uVar4;
-      *(undefined4 *)(iVar2 + 0xc) = uVar5;
-      *(undefined4 *)(iVar2 + 0x10) = uVar6;
-      *(undefined4 *)(iVar2 + 0x14) = uVar7;
+      *(uint32_t *)(iVar2 + 8) = uVar4;
+      *(uint32_t *)(iVar2 + 0xc) = uVar5;
+      *(uint32_t *)(iVar2 + 0x10) = uVar6;
+      *(uint32_t *)(iVar2 + 0x14) = uVar7;
       if (iVar3 != 0) {
         *piVar10 = piVar1[7];
         piVar1[7] = (int)piVar10;
@@ -85015,10 +85017,10 @@ __regcall void installer_kernel_send_x(void)
   int *piVar1;
   int iVar2;
   int iVar3;
-  undefined4 uVar4;
-  undefined4 uVar5;
-  undefined4 uVar6;
-  undefined4 uVar7;
+  uint32_t uVar4;
+  uint32_t uVar5;
+  uint32_t uVar6;
+  uint32_t uVar7;
   int in_A0;
   int *extraout_A0;
   int *extraout_A0_00;
@@ -85028,7 +85030,7 @@ __regcall void installer_kernel_send_x(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar11;
   
   running = (void *)*unaff_A6;
@@ -85073,11 +85075,11 @@ LAB_installer__0010200c:
            *(byte *)((int)piVar8 + 0x21) <= *(byte *)(piVar8 + 8))) &&
           (installer_kernel_copy_message(), piVar8 = extraout_A0_01, bVar11)))) {
         *piVar10 = 0;
-        if ((undefined4 *)piVar8[3] == (undefined4 *)0x0) {
+        if ((uint32_t *)piVar8[3] == (uint32_t *)0x0) {
           piVar8[2] = (int)piVar10;
         }
         else {
-          *(undefined4 *)piVar8[3] = piVar10;
+          *(uint32_t *)piVar8[3] = piVar10;
         }
         piVar8[3] = (int)piVar10;
       }
@@ -85095,15 +85097,15 @@ LAB_installer__0010200c:
       installer_kernel_make_ready();
       iVar2 = *(int *)((int)piVar1 + 0x72);
       iVar3 = *(int *)(extraout_A1_00 + 4);
-      uVar4 = *(undefined4 *)(extraout_A1_00 + 8);
-      uVar5 = *(undefined4 *)(extraout_A1_00 + 0xc);
-      uVar6 = *(undefined4 *)(extraout_A1_00 + 0x10);
-      uVar7 = *(undefined4 *)(extraout_A1_00 + 0x14);
+      uVar4 = *(uint32_t *)(extraout_A1_00 + 8);
+      uVar5 = *(uint32_t *)(extraout_A1_00 + 0xc);
+      uVar6 = *(uint32_t *)(extraout_A1_00 + 0x10);
+      uVar7 = *(uint32_t *)(extraout_A1_00 + 0x14);
       *(int *)(iVar2 + 4) = iVar3;
-      *(undefined4 *)(iVar2 + 8) = uVar4;
-      *(undefined4 *)(iVar2 + 0xc) = uVar5;
-      *(undefined4 *)(iVar2 + 0x10) = uVar6;
-      *(undefined4 *)(iVar2 + 0x14) = uVar7;
+      *(uint32_t *)(iVar2 + 8) = uVar4;
+      *(uint32_t *)(iVar2 + 0xc) = uVar5;
+      *(uint32_t *)(iVar2 + 0x10) = uVar6;
+      *(uint32_t *)(iVar2 + 0x14) = uVar7;
       if (iVar3 != 0) {
         *piVar10 = piVar1[7];
         piVar1[7] = (int)piVar10;
@@ -85141,10 +85143,10 @@ __naked void installer_kernel_send_for_task(void)
   int *piVar1;
   int iVar2;
   int iVar3;
-  undefined4 uVar4;
-  undefined4 uVar5;
-  undefined4 uVar6;
-  undefined4 uVar7;
+  uint32_t uVar4;
+  uint32_t uVar5;
+  uint32_t uVar6;
+  uint32_t uVar7;
   int in_A0;
   int *extraout_A0;
   int *extraout_A0_00;
@@ -85198,11 +85200,11 @@ LAB_installer__0010200c:
            *(byte *)((int)piVar8 + 0x21) <= *(byte *)(piVar8 + 8))) &&
           (installer_kernel_copy_message(), piVar8 = extraout_A0_01, bVar11)))) {
         *piVar10 = 0;
-        if ((undefined4 *)piVar8[3] == (undefined4 *)0x0) {
+        if ((uint32_t *)piVar8[3] == (uint32_t *)0x0) {
           piVar8[2] = (int)piVar10;
         }
         else {
-          *(undefined4 *)piVar8[3] = piVar10;
+          *(uint32_t *)piVar8[3] = piVar10;
         }
         piVar8[3] = (int)piVar10;
       }
@@ -85220,15 +85222,15 @@ LAB_installer__0010200c:
       installer_kernel_make_ready();
       iVar2 = *(int *)((int)piVar1 + 0x72);
       iVar3 = *(int *)(extraout_A1_00 + 4);
-      uVar4 = *(undefined4 *)(extraout_A1_00 + 8);
-      uVar5 = *(undefined4 *)(extraout_A1_00 + 0xc);
-      uVar6 = *(undefined4 *)(extraout_A1_00 + 0x10);
-      uVar7 = *(undefined4 *)(extraout_A1_00 + 0x14);
+      uVar4 = *(uint32_t *)(extraout_A1_00 + 8);
+      uVar5 = *(uint32_t *)(extraout_A1_00 + 0xc);
+      uVar6 = *(uint32_t *)(extraout_A1_00 + 0x10);
+      uVar7 = *(uint32_t *)(extraout_A1_00 + 0x14);
       *(int *)(iVar2 + 4) = iVar3;
-      *(undefined4 *)(iVar2 + 8) = uVar4;
-      *(undefined4 *)(iVar2 + 0xc) = uVar5;
-      *(undefined4 *)(iVar2 + 0x10) = uVar6;
-      *(undefined4 *)(iVar2 + 0x14) = uVar7;
+      *(uint32_t *)(iVar2 + 8) = uVar4;
+      *(uint32_t *)(iVar2 + 0xc) = uVar5;
+      *(uint32_t *)(iVar2 + 0x10) = uVar6;
+      *(uint32_t *)(iVar2 + 0x14) = uVar7;
       if (iVar3 != 0) {
         *piVar10 = piVar1[7];
         piVar1[7] = (int)piVar10;
@@ -85376,22 +85378,22 @@ __asm__(
 __naked void installer_kernel_copy_message(void)
 
 {
-  undefined4 *puVar1;
-  undefined4 uVar2;
-  undefined4 uVar3;
-  undefined4 uVar4;
-  undefined4 uVar5;
+  uint32_t *puVar1;
+  uint32_t uVar2;
+  uint32_t uVar3;
+  uint32_t uVar4;
+  uint32_t uVar5;
   int in_A1;
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
-  puVar1 = *(undefined4 **)(unaff_A6 + 0x1c);
-  if (puVar1 != (undefined4 *)0x0) {
-    *(undefined4 *)(unaff_A6 + 0x1c) = *puVar1;
-    uVar2 = *(undefined4 *)(in_A1 + 8);
-    uVar3 = *(undefined4 *)(in_A1 + 0xc);
-    uVar4 = *(undefined4 *)(in_A1 + 0x10);
-    uVar5 = *(undefined4 *)(in_A1 + 0x14);
-    puVar1[1] = *(undefined4 *)(in_A1 + 4);
+  puVar1 = *(uint32_t **)(unaff_A6 + 0x1c);
+  if (puVar1 != (uint32_t *)0x0) {
+    *(uint32_t *)(unaff_A6 + 0x1c) = *puVar1;
+    uVar2 = *(uint32_t *)(in_A1 + 8);
+    uVar3 = *(uint32_t *)(in_A1 + 0xc);
+    uVar4 = *(uint32_t *)(in_A1 + 0x10);
+    uVar5 = *(uint32_t *)(in_A1 + 0x14);
+    puVar1[1] = *(uint32_t *)(in_A1 + 4);
     puVar1[2] = uVar2;
     puVar1[3] = uVar3;
     puVar1[4] = uVar4;
@@ -85443,9 +85445,9 @@ __regcall void installer_kernel_request_x(void)
 {
   int *running;
   int *piVar1;
-  undefined4 *puVar2;
-  undefined4 extraout_D0;
-  undefined4 extraout_D1;
+  uint32_t *puVar2;
+  uint32_t extraout_D0;
+  uint32_t extraout_D1;
   int iVar3;
   int iVar4;
   int iVar5;
@@ -85459,9 +85461,9 @@ __regcall void installer_kernel_request_x(void)
   int iVar9;
   int extraout_A1_00;
   int *piVar10;
-  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
+  uint32_t *unaff_A6 = (uint32_t *)*(void **)__builtin_frame_address(0);
   bool bVar11;
-  undefined8 uVar12;
+  uint64_t uVar12;
   
   running = (int *)*unaff_A6;
   bVar11 = true;
@@ -85483,14 +85485,14 @@ __regcall void installer_kernel_request_x(void)
       *(int *)((int)running + 0x72) = iVar9;
       if (*(char *)(piVar8 + 4) == 0) {
         *running = (int)piVar8;
-        puVar2 = (undefined4 *)piVar8[1];
+        puVar2 = (uint32_t *)piVar8[1];
         piVar8[1] = (int)running;
         *puVar2 = running;
         running[1] = (int)puVar2;
 LAB_installer__001021ca:
-        *(undefined2 *)((int)running + 0x12) = 0xff20;
+        *(uint16_t *)((int)running + 0x12) = 0xff20;
         if ((int)((ulonglong)uVar12 >> 0x20) == 0) {
-          *(undefined1 *)((int)running + 0x12) = 0;
+          *(uint8_t *)((int)running + 0x12) = 0;
           return;
         }
         installer_kernel_timer_insert();
@@ -85505,7 +85507,7 @@ LAB_installer__001021ca:
               (piVar10 = piVar1, *(byte *)(running + 4) <= *(byte *)(piVar1 + 4)));
       if (piVar8[2] == 0) {
         *running = (int)piVar1;
-        puVar2 = (undefined4 *)piVar1[1];
+        puVar2 = (uint32_t *)piVar1[1];
         piVar1[1] = (int)running;
         running[1] = (int)puVar2;
         *puVar2 = running;
@@ -85701,13 +85703,13 @@ __regcall void installer_kernel_signal_v(void)
         uVar2 = uVar1 ^ uVar2;
       }
       *(ushort *)((int)pvVar3 + 0x54) = uVar2 | *(ushort *)((int)pvVar3 + 0x54);
-      *(undefined2 *)((int)pvVar3 + 0x16) = 0;
+      *(uint16_t *)((int)pvVar3 + 0x16) = 0;
       if (0 < *(char *)((int)pvVar3 + 0x12)) {
         installer_kernel_timer_unlink();
       }
       installer_kernel_make_ready();
       if (pvVar3 == (void *)*unaff_A6) {
-        *(undefined1 *)((int)unaff_A6 + 0x8b) = 0;
+        *(uint8_t *)((int)unaff_A6 + 0x8b) = 0;
       }
     }
   }
@@ -85774,13 +85776,13 @@ __naked void installer_kernel_signal_task(void)
         uVar2 = uVar1 ^ uVar2;
       }
       *(ushort *)((int)pvVar3 + 0x54) = uVar2 | *(ushort *)((int)pvVar3 + 0x54);
-      *(undefined2 *)((int)pvVar3 + 0x16) = 0;
+      *(uint16_t *)((int)pvVar3 + 0x16) = 0;
       if (0 < *(char *)((int)pvVar3 + 0x12)) {
         installer_kernel_timer_unlink();
       }
       installer_kernel_make_ready();
       if (pvVar3 == (void *)*unaff_A6) {
-        *(undefined1 *)((int)unaff_A6 + 0x8b) = 0;
+        *(uint8_t *)((int)unaff_A6 + 0x8b) = 0;
       }
     }
   }
@@ -85927,9 +85929,9 @@ __regcall void installer_kernel_wait_v(void)
       iVar2 = *piVar1;
       *piVar3 = iVar2;
       *(int **)(iVar2 + 4) = piVar3;
-      *(undefined2 *)((int)piVar1 + 0x12) = 0xff10;
+      *(uint16_t *)((int)piVar1 + 0x12) = 0xff10;
       if (in_D0 == 0) {
-        *(undefined1 *)((int)piVar1 + 0x12) = 0;
+        *(uint8_t *)((int)piVar1 + 0x12) = 0;
       }
       else {
         installer_kernel_timer_insert();
@@ -86059,7 +86061,7 @@ __asm__(
    psos.md */
 
 /* out D7 char error */
-__regcall undefined2 installer_kernel_supervisor(undefined2 param_1)
+__regcall uint16_t installer_kernel_supervisor(uint16_t param_1)
 
 {
   return param_1;
@@ -86103,7 +86105,7 @@ __regcall void installer_kernel_pause(void)
     installer_kernel_ready_insert();
   }
   else {
-    *(undefined1 *)(iVar1 + 0x12) = 0xff;
+    *(uint8_t *)(iVar1 + 0x12) = 0xff;
     installer_kernel_timer_insert();
   }
   return;
@@ -86149,7 +86151,7 @@ __asm__(
 __regcall void installer_kernel_announce_tick(void)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   char cVar2;
   short sVar3;
   int iVar4;
@@ -86159,7 +86161,7 @@ __regcall void installer_kernel_announce_tick(void)
   *(short *)(unaff_A6 + 0x70) = *(short *)(unaff_A6 + 0x70) + 1;
   if (*(ushort *)(unaff_A6 + 0x86) <= *(ushort *)(unaff_A6 + 0x70)) {
     *(ushort *)(unaff_A6 + 0x70) = *(ushort *)(unaff_A6 + 0x70) - *(ushort *)(unaff_A6 + 0x86);
-    uVar1 = *(undefined4 *)(unaff_A6 + 0x72);
+    uVar1 = *(uint32_t *)(unaff_A6 + 0x72);
     cVar2 = (char)uVar1 + 1;
     iVar4 = CONCAT31((int3)((uint)uVar1 >> 8),cVar2);
     if ((cVar2 == '<') &&
@@ -86220,7 +86222,7 @@ __asm__(
    psos.md */
 
 /* out D7 char error */
-__regcall undefined8 installer_kernel_get_time(void)
+__regcall uint64_t installer_kernel_get_time(void)
 
 {
   uint extraout_D1;
@@ -86229,8 +86231,8 @@ __regcall undefined8 installer_kernel_get_time(void)
   do {
     installer_kernel_advance_date();
   } while (extraout_D1 != *(uint *)(unaff_A6 + 0x72));
-  return CONCAT44(*(undefined4 *)(unaff_A6 + 0x76),
-                  (uint)(byte)*(undefined2 *)(unaff_A6 + 0x70) << 0x18 | extraout_D1);
+  return CONCAT44(*(uint32_t *)(unaff_A6 + 0x76),
+                  (uint)(byte)*(uint16_t *)(unaff_A6 + 0x70) << 0x18 | extraout_D1);
 }
 
 
@@ -86275,10 +86277,10 @@ __regcall void installer_kernel_set_time(void)
 
 {
   ushort in_D0w;
-  undefined4 in_D1;
+  uint32_t in_D1;
   ushort unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (ushort)__entry; });
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
-  undefined8 uVar1;
+  uint64_t uVar1;
   
   if (((((byte)in_D1 < 0x3c) && ((byte)((uint)in_D1 >> 8) < 0x3c)) &&
       ((byte)((uint)in_D1 >> 0x10) < 0x18)) &&
@@ -86292,9 +86294,9 @@ __regcall void installer_kernel_set_time(void)
     else {
       *(ushort *)(unaff_A6 + 0x70) = unaff_D2w;
       *(int *)(unaff_A6 + 0x72) = (int)uVar1;
-      *(undefined1 *)(unaff_A6 + 0x72) = 0;
+      *(uint8_t *)(unaff_A6 + 0x72) = 0;
       *(int *)(unaff_A6 + 0x76) = (int)((ulonglong)uVar1 >> 0x20);
-      *(undefined1 *)(unaff_A6 + 0x8a) = 1;
+      *(uint8_t *)(unaff_A6 + 0x8a) = 1;
     }
   }
   return;
@@ -86366,7 +86368,7 @@ __asm__(
    psos.md */
 
 /* out D7 char error */
-__regcall undefined8 installer_kernel_create_partition(void)
+__regcall uint64_t installer_kernel_create_partition(void)
 
 {
   int in_D0;
@@ -86377,7 +86379,7 @@ __regcall undefined8 installer_kernel_create_partition(void)
   int *piVar4;
   short sVar2;
   
-  *(undefined2 *)(in_A0 + 2) = 0;
+  *(uint16_t *)(in_A0 + 2) = 0;
   in_A0[1] = in_D0;
   *in_A0 = (int)(in_A0 + 5);
   uVar1 = in_D1;
@@ -86443,7 +86445,7 @@ __regcall void installer_kernel_delete_partition(void)
   int in_A0;
   
   if ((in_D0 == *(int *)(in_A0 + 4)) && (*(short *)(in_A0 + 8) == 0)) {
-    *(undefined4 *)(in_A0 + 4) = 0;
+    *(uint32_t *)(in_A0 + 4) = 0;
   }
   return;
 }
@@ -86586,23 +86588,23 @@ __asm__(
 __naked void installer_kernel_advance_date(void)
 
 {
-  undefined4 uVar1;
+  uint32_t uVar1;
   byte bVar2;
   short sVar3;
-  undefined2 uVar4;
+  uint16_t uVar4;
   undefined3 uVar5;
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   int iVar6;
   
   if (0x17 < *(ushort *)(unaff_A6 + 0x72)) {
     *(ushort *)(unaff_A6 + 0x72) = *(ushort *)(unaff_A6 + 0x72) - 0x18;
-    uVar1 = *(undefined4 *)(unaff_A6 + 0x76);
+    uVar1 = *(uint32_t *)(unaff_A6 + 0x76);
     bVar2 = (char)uVar1 + 1;
     uVar5 = (undefined3)((uint)uVar1 >> 8);
     iVar6 = CONCAT31(uVar5,bVar2);
     if (*(byte *)(unaff_A6 + 0x79 + (int)(short)((ushort)((uint)uVar1 >> 8) & 0xff)) < bVar2) {
       sVar3 = (short)CONCAT31(uVar5,1) + 0x100;
-      uVar4 = (undefined2)((uint)uVar1 >> 0x10);
+      uVar4 = (uint16_t)((uint)uVar1 >> 0x10);
       iVar6 = CONCAT22(uVar4,sVar3);
       if (sVar3 == 0xd01) {
         iVar6 = CONCAT22(uVar4,0x101) + 0x10000;
@@ -86668,7 +86670,7 @@ __naked void installer_kernel_set_leap_year(void)
   uint unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
-  *(undefined1 *)(unaff_A6 + 0x7b) = 0x1c;
+  *(uint8_t *)(unaff_A6 + 0x7b) = 0x1c;
   if (((short)((unaff_D6 >> 0x10) << 0xe) == 0) &&
      ((uVar1 = (unaff_D6 >> 0x12) % 0x19, (short)uVar1 != 0 ||
       ((short)(((unaff_D6 >> 0x12) / 0x19 << 0x10 | uVar1) >> 2) == 0)))) {
@@ -86934,12 +86936,12 @@ __asm__(
    Not a C function (undetermined; derived): how it is called is not yet set out.
    psos.md */
 
-__naked undefined4 installer_kernel_timer_unlink(void)
+__naked uint32_t installer_kernel_timer_unlink(void)
 
 {
   int iVar1;
   int iVar2;
-  undefined4 in_D0;
+  uint32_t in_D0;
   int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   
   iVar1 = *(int *)(unaff_A2 + 8);
@@ -87025,7 +87027,7 @@ __naked void installer_kernel_timer_insert(void)
   *(int *)(unaff_A5 + 0xc) = iVar5;
   *(int *)(iVar5 + 8) = unaff_A5;
   *(int *)(unaff_A5 + 8) = iVar1;
-  *(undefined1 *)(unaff_A5 + 0x12) = 1;
+  *(uint8_t *)(unaff_A5 + 0x12) = 1;
   *(byte *)(unaff_A5 + 0x13) = *(byte *)(unaff_A5 + 0x13) | 8;
   return;
 }
@@ -87090,7 +87092,7 @@ __asm__(
 __naked void installer_kernel_make_ready(void)
 
 {
-  undefined4 *puVar1;
+  uint32_t *puVar1;
   ushort uVar2;
   int *unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int *)__entry; });
   int *piVar3;
@@ -87103,12 +87105,12 @@ __naked void installer_kernel_make_ready(void)
     do {
       piVar3 = (int *)*piVar3;
     } while (*(byte *)(unaff_A2 + 4) <= *(byte *)(piVar3 + 4));
-    puVar1 = (undefined4 *)piVar3[1];
+    puVar1 = (uint32_t *)piVar3[1];
     piVar3[1] = (int)unaff_A2;
     unaff_A2[1] = (int)puVar1;
     *unaff_A2 = (int)piVar3;
     *puVar1 = unaff_A2;
-    *(undefined2 *)((int)unaff_A2 + 0x1a) = *(undefined2 *)(unaff_A6 + 0x88);
+    *(uint16_t *)((int)unaff_A2 + 0x1a) = *(uint16_t *)(unaff_A6 + 0x88);
   }
   return;
 }
@@ -87138,7 +87140,7 @@ __asm__(
 __naked void installer_kernel_ready_insert(void)
 
 {
-  undefined4 *puVar1;
+  uint32_t *puVar1;
   int *unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int *)__entry; });
   int *piVar2;
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
@@ -87147,12 +87149,12 @@ __naked void installer_kernel_ready_insert(void)
   do {
     piVar2 = (int *)*piVar2;
   } while (*(byte *)(unaff_A2 + 4) <= *(byte *)(piVar2 + 4));
-  puVar1 = (undefined4 *)piVar2[1];
+  puVar1 = (uint32_t *)piVar2[1];
   piVar2[1] = (int)unaff_A2;
   unaff_A2[1] = (int)puVar1;
   *unaff_A2 = (int)piVar2;
   *puVar1 = unaff_A2;
-  *(undefined2 *)((int)unaff_A2 + 0x1a) = *(undefined2 *)(unaff_A6 + 0x88);
+  *(uint16_t *)((int)unaff_A2 + 0x1a) = *(uint16_t *)(unaff_A6 + 0x88);
   return;
 }
 
@@ -87288,9 +87290,9 @@ __asm__(
 __exception void installer_kernel_init(void)
 
 {
-  undefined4 *puVar1;
+  uint32_t *puVar1;
   int *piVar2;
-  undefined2 *puVar3;
+  uint16_t *puVar3;
   code *pcVar4;
   int *piVar5;
   int iVar6;
@@ -87298,24 +87300,24 @@ __exception void installer_kernel_init(void)
   ushort uVar8;
   int extraout_A0;
   int extraout_A0_00;
-  undefined4 *extraout_A0_01;
-  undefined2 *puVar9;
+  uint32_t *extraout_A0_01;
+  uint16_t *puVar9;
   int iVar10;
-  undefined4 *puVar11;
-  undefined4 *puVar12;
-  undefined4 *puVar13;
-  undefined2 *puVar14;
+  uint32_t *puVar11;
+  uint32_t *puVar12;
+  uint32_t *puVar13;
+  uint16_t *puVar14;
   bool bVar15;
   
-  puVar1 = *(undefined4 **)PTR_PTR_installer__001014c8;
+  puVar1 = *(uint32_t **)PTR_PTR_installer__001014c8;
   piVar2 = (int *)*puVar1;
   iVar6 = (uint)(ushort)(*(short *)(puVar1 + 6) + 1) * 0xb2 +
           (uint)*(ushort *)(puVar1 + 7) * 0x18 +
           (uint)*(ushort *)((int)puVar1 + 0x1a) * 0x22 + puVar1[10] + 0xda;
   if ((uint)(iVar6 + (int)piVar2) <= (uint)puVar1[1]) {
-    puVar11 = (undefined4 *)((int)piVar2 + puVar1[10] + 200);
+    puVar11 = (uint32_t *)((int)piVar2 + puVar1[10] + 200);
     piVar2[8] = (int)puVar11;
-    *(undefined2 *)(piVar2 + 0x2e) = 0xdeaf;
+    *(uint16_t *)(piVar2 + 0x2e) = 0xdeaf;
     piVar2[0xc] = 0;
     piVar2[5] = 0;
     piVar2[6] = 0;
@@ -87325,9 +87327,9 @@ __exception void installer_kernel_init(void)
       piVar2[6] = (int)puVar11;
       do {
         puVar13 = puVar12;
-        *(undefined1 *)((int)puVar13 + 0x11) = 0xfe;
+        *(uint8_t *)((int)puVar13 + 0x11) = 0xfe;
         puVar13[6] = (int)puVar13 << 0x10 | (uint)puVar13 >> 0x10;
-        puVar12 = (undefined4 *)((int)puVar13 + 0x22);
+        puVar12 = (uint32_t *)((int)puVar13 + 0x22);
         puVar13[7] = puVar12;
         sVar7 = sVar7 + -1;
       } while (sVar7 != 0);
@@ -87349,12 +87351,12 @@ __exception void installer_kernel_init(void)
     piVar2[4] = (int)puVar12;
     do {
       puVar13 = puVar12;
-      *(undefined1 *)((int)puVar13 + 0x13) = 0xff;
+      *(uint8_t *)((int)puVar13 + 0x13) = 0xff;
       puVar13[10] = CONCAT22((short)((uint)puVar13 >> 0x10),~(ushort)puVar13);
-      puVar13[0xc] = (undefined4 *)((int)puVar13 + 0xb2);
+      puVar13[0xc] = (uint32_t *)((int)puVar13 + 0xb2);
       bVar15 = sVar7 != 0;
       sVar7 = sVar7 + -1;
-      puVar12 = (undefined4 *)((int)puVar13 + 0xb2);
+      puVar12 = (uint32_t *)((int)puVar13 + 0xb2);
     } while (bVar15);
     puVar13[0xc] = 0;
     piVar2[3] = 0;
@@ -87365,17 +87367,17 @@ __exception void installer_kernel_init(void)
     }
     puVar11[-1] = 0x1027cc;
     installer_kernel_region_init();
-    *(undefined4 *)((int)piVar2 + 0x7a) = 0x1f001f1e;
-    *(undefined4 *)((int)piVar2 + 0x7e) = 0x1f1e1f1f;
-    *(undefined4 *)((int)piVar2 + 0x82) = 0x1e1f1e1f;
+    *(uint32_t *)((int)piVar2 + 0x7a) = 0x1f001f1e;
+    *(uint32_t *)((int)piVar2 + 0x7e) = 0x1f1e1f1f;
+    *(uint32_t *)((int)piVar2 + 0x82) = 0x1e1f1e1f;
     piVar2[0x1b] = 0;
-    *(undefined2 *)(piVar2 + 0x1c) = 0;
-    *(undefined4 *)((int)piVar2 + 0x72) = 0;
-    *(undefined4 *)((int)piVar2 + 0x76) = DAT_installer__00101528;
+    *(uint16_t *)(piVar2 + 0x1c) = 0;
+    *(uint32_t *)((int)piVar2 + 0x72) = 0;
+    *(uint32_t *)((int)piVar2 + 0x76) = DAT_installer__00101528;
     puVar11[-1] = 0x1027fa;
     installer_kernel_set_leap_year();
-    *(undefined1 *)((int)piVar2 + 0x8a) = 0;
-    *(undefined4 *)((int)piVar2 + 0x86) = *(undefined4 *)(extraout_A0 + 0x1e);
+    *(uint8_t *)((int)piVar2 + 0x8a) = 0;
+    *(uint32_t *)((int)piVar2 + 0x86) = *(uint32_t *)(extraout_A0 + 0x1e);
     piVar2[2] = 0;
     piVar5 = piVar2 + 0x23;
     *piVar2 = (int)piVar5;
@@ -87384,11 +87386,11 @@ __exception void installer_kernel_init(void)
     piVar2[0x24] = (int)(piVar2 + 1);
     piVar2[0x2c] = 0x73797364;
     piVar2[0x27] = 0;
-    *(undefined1 *)(piVar2 + 0x28) = 0;
+    *(uint8_t *)(piVar2 + 0x28) = 0;
     piVar2[0x2a] = 0;
     piVar2[0x2d] = *(int *)(extraout_A0 + 0x3e);
     *(byte *)((int)piVar2 + 0x8b) = *(byte *)((int)piVar2 + 0x8b) | 0x80;
-    *(undefined2 *)(piVar2 + 9) = 1;
+    *(uint16_t *)(piVar2 + 9) = 1;
     uVar8 = *(short *)(extraout_A0 + 0x22) * 0x24;
     iVar10 = *(int *)(extraout_A0 + 0x24);
     do {
@@ -87412,7 +87414,7 @@ __exception void installer_kernel_init(void)
       puVar11[-1] = 0x1028ba;
       installer_kernel_start();
       *(ushort *)(extraout_A0_01 + 0x11) = *(ushort *)(extraout_A0_01 + 0x11) | 0x2000;
-      *(undefined1 *)(extraout_A0_01 + 4) = 0;
+      *(uint8_t *)(extraout_A0_01 + 4) = 0;
       *extraout_A0_01 = 0;
       iVar6 = piVar2[1];
       pcVar4 = (code *)piVar2[0x2d];
@@ -87421,26 +87423,26 @@ __exception void installer_kernel_init(void)
         (*pcVar4)();
       }
       *piVar2 = iVar6;
-      puVar9 = *(undefined2 **)(iVar6 + 0x36);
-      puVar3 = *(undefined2 **)(iVar6 + 0x3a);
+      puVar9 = *(uint16_t **)(iVar6 + 0x36);
+      puVar3 = *(uint16_t **)(iVar6 + 0x3a);
       uVar8 = *(ushort *)(iVar6 + 0x44);
       if ((uVar8 & 0x1000) == 0) {
         for (; puVar3 != puVar9; puVar9 = puVar9 + 1) {
-          puVar14 = (undefined2 *)((int)puVar11 + -2);
-          puVar11 = (undefined4 *)((int)puVar11 + -2);
+          puVar14 = (uint16_t *)((int)puVar11 + -2);
+          puVar11 = (uint32_t *)((int)puVar11 + -2);
           *puVar14 = *puVar9;
         }
       }
       else {
         uVar8 = uVar8 & 0xefff;
-        puVar11 = (undefined4 *)puVar9;
+        puVar11 = (uint32_t *)puVar9;
       }
-      *(undefined2 *)((int)puVar11 + -2) = *(undefined2 *)(iVar6 + 0x34);
-      *(undefined4 *)((int)puVar11 + -6) = *(undefined4 *)(iVar6 + 0x3e);
+      *(uint16_t *)((int)puVar11 + -2) = *(uint16_t *)(iVar6 + 0x34);
+      *(uint32_t *)((int)puVar11 + -6) = *(uint32_t *)(iVar6 + 0x3e);
       *(ushort *)((int)puVar11 + -8) = uVar8;
-      *(undefined4 *)((int)puVar11 + -0xc) = *(undefined4 *)(iVar6 + 0x46);
-      *(undefined4 *)((int)puVar11 + -0x10) = *(undefined4 *)(iVar6 + 0x4a);
-      *(undefined4 *)((int)puVar11 + -0x14) = *(undefined4 *)(iVar6 + 0x66);
+      *(uint32_t *)((int)puVar11 + -0xc) = *(uint32_t *)(iVar6 + 0x46);
+      *(uint32_t *)((int)puVar11 + -0x10) = *(uint32_t *)(iVar6 + 0x4a);
+      *(uint32_t *)((int)puVar11 + -0x14) = *(uint32_t *)(iVar6 + 0x66);
       installer_kernel_switch_task();
       return;
     }
@@ -87630,11 +87632,11 @@ __asm__(
 __naked void installer_kernel_region_init(void)
 
 {
-  undefined4 *puVar1;
+  uint32_t *puVar1;
   int iVar2;
   uint uVar3;
   int in_A0;
-  undefined4 *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4 *)__entry; });
+  uint32_t *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (uint32_t *)__entry; });
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   uVar3 = (*(int *)(in_A0 + 4) - (int)unaff_A3) + 1U & 0xfffffffe;
@@ -87642,33 +87644,33 @@ __naked void installer_kernel_region_init(void)
   *unaff_A3 = 0;
   unaff_A3[1] = unaff_A6 + 0x54;
   unaff_A3[2] = 0;
-  *(undefined2 *)(unaff_A3 + 4) = 0;
-  *(undefined4 **)(unaff_A6 + 0x54) = unaff_A3;
-  *(undefined4 **)(unaff_A6 + 0x5c) = unaff_A3;
+  *(uint16_t *)(unaff_A3 + 4) = 0;
+  *(uint32_t **)(unaff_A6 + 0x54) = unaff_A3;
+  *(uint32_t **)(unaff_A6 + 0x5c) = unaff_A3;
   *(uint *)(unaff_A6 + 0x3c) = uVar3;
   *(uint *)(unaff_A6 + 0x44) = uVar3 + 1;
-  *(undefined4 *)(unaff_A6 + 0x4c) = *(undefined4 *)(in_A0 + 4);
+  *(uint32_t *)(unaff_A6 + 0x4c) = *(uint32_t *)(in_A0 + 4);
   uVar3 = *(uint *)(in_A0 + 8);
   if (uVar3 < 0x12) {
     uVar3 = 0x12;
   }
   *(uint *)(unaff_A6 + 0x34) = uVar3;
-  puVar1 = *(undefined4 **)(in_A0 + 0xc);
+  puVar1 = *(uint32_t **)(in_A0 + 0xc);
   uVar3 = (*(int *)(in_A0 + 0x10) - (int)puVar1) + 1U & 0xfffffffe;
   if (uVar3 < 0x48) {
-    *(undefined4 *)(unaff_A6 + 0x58) = 0;
+    *(uint32_t *)(unaff_A6 + 0x58) = 0;
   }
   else {
     puVar1[3] = uVar3;
     *puVar1 = 0;
     puVar1[1] = unaff_A6 + 0x58;
     puVar1[2] = 0;
-    *(undefined2 *)(puVar1 + 4) = 0;
-    *(undefined4 **)(unaff_A6 + 0x58) = puVar1;
-    *(undefined4 **)(unaff_A6 + 0x60) = puVar1;
+    *(uint16_t *)(puVar1 + 4) = 0;
+    *(uint32_t **)(unaff_A6 + 0x58) = puVar1;
+    *(uint32_t **)(unaff_A6 + 0x60) = puVar1;
     *(uint *)(unaff_A6 + 0x40) = uVar3;
     *(uint *)(unaff_A6 + 0x48) = uVar3 + 1;
-    *(undefined4 *)(unaff_A6 + 0x50) = *(undefined4 *)(in_A0 + 0x10);
+    *(uint32_t *)(unaff_A6 + 0x50) = *(uint32_t *)(in_A0 + 0x10);
     uVar3 = *(uint *)(in_A0 + 0x14);
     if (uVar3 < 0x12) {
       uVar3 = 0x12;
@@ -87767,35 +87769,35 @@ __exception void installer_kernel_return_from_interrupt(ushort param_1)
 {
   int *piVar1;
   int iVar2;
-  undefined2 *puVar3;
-  undefined1 *puVar4;
+  uint16_t *puVar3;
+  uint8_t *puVar4;
   code *pcVar5;
-  undefined4 in_D0;
+  uint32_t in_D0;
   uint uVar6;
   ushort uVar7;
-  undefined4 in_D1;
-  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 in_A0;
-  undefined4 extraout_A0;
-  undefined2 *puVar8;
-  undefined4 in_A1;
-  undefined4 extraout_A1;
-  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A6 = (undefined4)*(void **)__builtin_frame_address(0);
-  undefined2 *puVar9;
-  undefined2 *puVar10;
-  undefined2 *in_USP;
-  undefined8 uVar11;
-  undefined4 in_stack_0000000a;
-  undefined2 in_stack_0000000e;
+  uint32_t in_D1;
+  uint32_t unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t in_A0;
+  uint32_t extraout_A0;
+  uint16_t *puVar8;
+  uint32_t in_A1;
+  uint32_t extraout_A1;
+  uint32_t unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
+  uint32_t unaff_A6 = (uint32_t)*(void **)__builtin_frame_address(0);
+  uint16_t *puVar9;
+  uint16_t *puVar10;
+  uint16_t *in_USP;
+  uint64_t uVar11;
+  uint32_t in_stack_0000000a;
+  uint16_t in_stack_0000000e;
   
   uVar11 = CONCAT44(in_D0,in_D1);
   if (((param_1 & 0x700) == 0) &&
@@ -87808,53 +87810,53 @@ __exception void installer_kernel_return_from_interrupt(ushort param_1)
       in_A1 = extraout_A1;
     }
     if ((iVar2 != piVar1[1]) && ((*(byte *)(iVar2 + 0x11) & 0x80) == 0)) {
-      *(undefined8 *)(iVar2 + 0x4e) = uVar11;
-      *(undefined4 *)(iVar2 + 0x56) = unaff_D2;
-      *(undefined4 *)(iVar2 + 0x5a) = unaff_D3;
-      *(undefined4 *)(iVar2 + 0x5e) = unaff_D4;
-      *(undefined4 *)(iVar2 + 0x62) = unaff_D5;
-      *(undefined4 *)(iVar2 + 0x66) = unaff_D6;
-      *(undefined4 *)(iVar2 + 0x6a) = unaff_D7;
-      *(undefined4 *)(iVar2 + 0x6e) = in_A0;
-      *(undefined4 *)(iVar2 + 0x72) = in_A1;
-      *(undefined4 *)(iVar2 + 0x76) = unaff_A2;
-      *(undefined4 *)(iVar2 + 0x7a) = unaff_A3;
-      *(undefined4 *)(iVar2 + 0x7e) = unaff_A4;
-      *(undefined4 *)(iVar2 + 0x4a) = unaff_A5;
-      *(undefined4 *)(iVar2 + 0x46) = unaff_A6;
+      *(uint64_t *)(iVar2 + 0x4e) = uVar11;
+      *(uint32_t *)(iVar2 + 0x56) = unaff_D2;
+      *(uint32_t *)(iVar2 + 0x5a) = unaff_D3;
+      *(uint32_t *)(iVar2 + 0x5e) = unaff_D4;
+      *(uint32_t *)(iVar2 + 0x62) = unaff_D5;
+      *(uint32_t *)(iVar2 + 0x66) = unaff_D6;
+      *(uint32_t *)(iVar2 + 0x6a) = unaff_D7;
+      *(uint32_t *)(iVar2 + 0x6e) = in_A0;
+      *(uint32_t *)(iVar2 + 0x72) = in_A1;
+      *(uint32_t *)(iVar2 + 0x76) = unaff_A2;
+      *(uint32_t *)(iVar2 + 0x7a) = unaff_A3;
+      *(uint32_t *)(iVar2 + 0x7e) = unaff_A4;
+      *(uint32_t *)(iVar2 + 0x4a) = unaff_A5;
+      *(uint32_t *)(iVar2 + 0x46) = unaff_A6;
       uVar6 = *(uint *)(iVar2 + 0x42) & 0xffff1000;
       uVar7 = (ushort)uVar6;
       *(uint *)(iVar2 + 0x42) = CONCAT22((short)(uVar6 >> 0x10),param_1 | uVar7);
-      *(undefined4 *)(iVar2 + 0x3e) = in_stack_0000000a;
-      puVar9 = (undefined2 *)&stack0x00000010;
-      *(undefined2 *)(iVar2 + 0x34) = in_stack_0000000e;
-      *(undefined2 **)(iVar2 + 0x3a) = in_USP;
-      puVar4 = (undefined1 *)piVar1[8];
+      *(uint32_t *)(iVar2 + 0x3e) = in_stack_0000000a;
+      puVar9 = (uint16_t *)&stack0x00000010;
+      *(uint16_t *)(iVar2 + 0x34) = in_stack_0000000e;
+      *(uint16_t **)(iVar2 + 0x3a) = in_USP;
+      puVar4 = (uint8_t *)piVar1[8];
       if ((param_1 & 0x1000) == 0 && uVar7 == 0) {
-        for (; (undefined2 *)puVar4 != puVar9; puVar9 = puVar9 + 1) {
+        for (; (uint16_t *)puVar4 != puVar9; puVar9 = puVar9 + 1) {
           in_USP = in_USP + -1;
           *in_USP = *puVar9;
         }
-        *(undefined2 **)(iVar2 + 0x36) = in_USP;
+        *(uint16_t **)(iVar2 + 0x36) = in_USP;
       }
       else {
-        *(undefined1 **)(iVar2 + 0x36) = &stack0x00000010;
-        puVar9 = (undefined2 *)puVar4;
+        *(uint8_t **)(iVar2 + 0x36) = &stack0x00000010;
+        puVar9 = (uint16_t *)puVar4;
       }
       iVar2 = piVar1[1];
       pcVar5 = (code *)piVar1[0x2d];
       if (pcVar5 != (code *)0x0) {
-        *(undefined4 *)((int)puVar9 + -4) = 0x102a34;
+        *(uint32_t *)((int)puVar9 + -4) = 0x102a34;
         (*pcVar5)();
       }
       *piVar1 = iVar2;
-      puVar8 = *(undefined2 **)(iVar2 + 0x36);
-      puVar3 = *(undefined2 **)(iVar2 + 0x3a);
+      puVar8 = *(uint16_t **)(iVar2 + 0x36);
+      puVar3 = *(uint16_t **)(iVar2 + 0x3a);
       uVar7 = *(ushort *)(iVar2 + 0x44);
       if ((uVar7 & 0x1000) == 0) {
         for (; puVar3 != puVar8; puVar8 = puVar8 + 1) {
-          puVar10 = (undefined2 *)((int)puVar9 + -2);
-          puVar9 = (undefined2 *)((int)puVar9 + -2);
+          puVar10 = (uint16_t *)((int)puVar9 + -2);
+          puVar9 = (uint16_t *)((int)puVar9 + -2);
           *puVar10 = *puVar8;
         }
       }
@@ -87862,12 +87864,12 @@ __exception void installer_kernel_return_from_interrupt(ushort param_1)
         uVar7 = uVar7 & 0xefff;
         puVar9 = puVar8;
       }
-      puVar9[-1] = *(undefined2 *)(iVar2 + 0x34);
-      *(undefined4 *)(puVar9 + -3) = *(undefined4 *)(iVar2 + 0x3e);
+      puVar9[-1] = *(uint16_t *)(iVar2 + 0x34);
+      *(uint32_t *)(puVar9 + -3) = *(uint32_t *)(iVar2 + 0x3e);
       puVar9[-4] = uVar7;
-      *(undefined4 *)(puVar9 + -6) = *(undefined4 *)(iVar2 + 0x46);
-      *(undefined4 *)(puVar9 + -8) = *(undefined4 *)(iVar2 + 0x4a);
-      *(undefined4 *)(puVar9 + -10) = *(undefined4 *)(iVar2 + 0x66);
+      *(uint32_t *)(puVar9 + -6) = *(uint32_t *)(iVar2 + 0x46);
+      *(uint32_t *)(puVar9 + -8) = *(uint32_t *)(iVar2 + 0x4a);
+      *(uint32_t *)(puVar9 + -10) = *(uint32_t *)(iVar2 + 0x66);
       installer_kernel_switch_task();
       return;
     }
@@ -87992,7 +87994,7 @@ __asm__(
 __regcall int installer_psos_call(char service /* d7 */,int d0 /* d0 */,int d1 /* d1 */,int d2 /* d2 */,int d3 /* d3 */,void *a0 /* a0 */,void *a1 /* a1 */)
 
 {
-  undefined2 local_2;
+  uint16_t local_2;
   
   __m68k_trap(3);
   if (service != 0) {
@@ -88624,7 +88626,7 @@ int installer_drtb_gets(uint8_t *param_1,int param_2)
   int iVar2;
   uint8_t *puVar3;
   uint8_t *puVar4;
-  undefined1 uVar5;
+  uint8_t uVar5;
   
   param_2 = param_2 + -1;
   iVar2 = param_2;
@@ -88705,12 +88707,12 @@ LAB_installer__0010334c:
 
 /* the installer's drtb_putc */
 
-void installer_drtb_putc(undefined1 param_1)
+void installer_drtb_putc(uint8_t param_1)
 
 {
   int iVar1;
-  undefined1 local_6;
-  undefined1 local_5;
+  uint8_t local_6;
+  uint8_t local_5;
   
   local_6 = param_1;
   local_5 = 0;
@@ -89030,7 +89032,7 @@ void installer_fatal_error(char *message)
 /* the installer's fatal_error_with_code */
 
 void installer_fatal_error_with_code
-               (char *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4)
+               (char *param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4)
 
 {
   char acStack_68 [100];
@@ -89046,7 +89048,7 @@ void installer_fatal_error_with_code
 
 /* the installer's scpi_scan_exponent */
 
-undefined4 installer_scpi_scan_exponent(undefined4 param_1,int param_2,undefined4 *param_3)
+uint32_t installer_scpi_scan_exponent(uint32_t param_1,int param_2,uint32_t *param_3)
 
 {
   bool bVar1;
@@ -89058,7 +89060,7 @@ undefined4 installer_scpi_scan_exponent(undefined4 param_1,int param_2,undefined
   if (sVar2 != 0x45) {
 LAB_installer__0010537e:
     (**(code **)(param_3[1] + 0xc))(param_3);
-    *(undefined2 *)(param_2 + 0x12) = 0;
+    *(uint16_t *)(param_2 + 0x12) = 0;
     return 0;
   }
   sVar2 = (*(code *)*param_3)(param_3);
@@ -89066,7 +89068,7 @@ LAB_installer__0010537e:
   if ((((cVar4 != 1) && (cVar4 != 0x10)) && (cVar4 != 0x11)) && (cVar4 != 3)) {
     sVar2 = *(short *)(param_2 + 0x14);
     *(short *)(param_2 + 0x14) = *(short *)(param_2 + 0x14) + 1;
-    *(undefined1 *)(param_2 + 0x16 + (int)sVar2) = 0x45;
+    *(uint8_t *)(param_2 + 0x16 + (int)sVar2) = 0x45;
     goto LAB_installer__0010537e;
   }
   while (cVar4 == 3) {
@@ -89153,17 +89155,17 @@ short installer_scpi_suffix_compare_tail(char *suffix,int length,char *name)
 
 /* the installer's scpi_multiplier_exponent */
 
-undefined4 installer_scpi_multiplier_exponent(undefined2 param_1,short param_2)
+uint32_t installer_scpi_multiplier_exponent(uint16_t param_1,short param_2)
 
 {
-  undefined4 in_D0;
+  uint32_t in_D0;
   short *psVar1;
   
   psVar1 = &DAT_installer__001057dc;
   do {
     in_D0 = CONCAT22((short)((uint)in_D0 >> 0x10),param_2);
     if (param_2 == *psVar1) {
-      return CONCAT31((int3)((uint)in_D0 >> 8),*(undefined1 *)(psVar1 + 1));
+      return CONCAT31((int3)((uint)in_D0 >> 8),*(uint8_t *)(psVar1 + 1));
     }
     psVar1 = psVar1 + 2;
   } while (*psVar1 != 0);
@@ -89188,14 +89190,14 @@ void installer_status_event_set(status_model *status,status_register *reg,int bi
 
 /* the installer's status_condition_set */
 
-void installer_status_condition_set(int param_1,ushort *param_2,undefined4 param_3)
+void installer_status_condition_set(int param_1,ushort *param_2,uint32_t param_3)
 
 {
   ushort uVar1;
   
   if (param_2[7] == 0) {
     (**(code **)(*(int *)(*(int *)(param_1 + 2) + 4) + 0x30))
-              (*(undefined4 *)(param_1 + 2),(int)(short)__ghidra_piece(short, param_3, 2));
+              (*(uint32_t *)(param_1 + 2),(int)(short)__ghidra_piece(short, param_3, 2));
   }
   else {
     uVar1 = __ghidra_piece(unsigned short, param_3, 2) & param_2[2] & ~*param_2;
@@ -89213,14 +89215,14 @@ void installer_status_condition_set(int param_1,ushort *param_2,undefined4 param
 
 /* the installer's status_condition_clear */
 
-void installer_status_condition_clear(int param_1,ushort *param_2,undefined4 param_3)
+void installer_status_condition_clear(int param_1,ushort *param_2,uint32_t param_3)
 
 {
   ushort uVar1;
   
   if (param_2[7] == 0) {
     (**(code **)(*(int *)(*(int *)(param_1 + 2) + 4) + 0x34))
-              (*(undefined4 *)(param_1 + 2),(int)(short)__ghidra_piece(short, param_3, 2));
+              (*(uint32_t *)(param_1 + 2),(int)(short)__ghidra_piece(short, param_3, 2));
   }
   else {
     uVar1 = __ghidra_piece(unsigned short, param_3, 2) & param_2[1] & *param_2;
@@ -89422,7 +89424,7 @@ LAB_installer__0010632e:
 
 /* the installer's error_message_lookup */
 
-undefined4 installer_error_message_lookup(undefined4 param_1)
+uint32_t installer_error_message_lookup(uint32_t param_1)
 
 {
   short *psVar1;
@@ -89435,7 +89437,7 @@ undefined4 installer_error_message_lookup(undefined4 param_1)
     if (*psVar1 == __ghidra_piece(unsigned short, param_1, 2)) break;
     psVar1 = psVar1 + 3;
   }
-  return *(undefined4 *)(psVar1 + 1);
+  return *(uint32_t *)(psVar1 + 1);
 }
 
 
@@ -89553,10 +89555,10 @@ void installer_idn_model_default(void)
 
 /* the installer's identification_record_read */
 
-undefined2 installer_identification_record_read(void)
+uint16_t installer_identification_record_read(void)
 
 {
-  undefined1 uVar2;
+  uint8_t uVar2;
   uint16_t uVar3;
   char *pcVar1;
   bool bVar4;
@@ -89604,10 +89606,10 @@ __exception void installer_trap_1(void)
 {
   int in_D0;
   int in_A0;
-  undefined2 in_stack_00000000 = *(undefined2 *)((char *)__builtin_frame_address(0) + 4);
+  uint16_t in_stack_00000000 = *(uint16_t *)((char *)__builtin_frame_address(0) + 4);
   
   if (in_D0 == 0) {
-    *(undefined2 *)(in_A0 + 0x40) = in_stack_00000000;
+    *(uint16_t *)(in_A0 + 0x40) = in_stack_00000000;
   }
   return;
 }
@@ -89654,10 +89656,10 @@ void installer_float_raise(uint param_1)
   int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   uint in_stack_00000008 = *(uint *)((char *)__builtin_frame_address(0) + 12);
   uint in_stack_0000000c = *(uint *)((char *)__builtin_frame_address(0) + 16);
-  undefined2 in_stack_00000010 = *(undefined2 *)((char *)__builtin_frame_address(0) + 20);
-  undefined2 in_stack_00000012 = *(undefined2 *)((char *)__builtin_frame_address(0) + 22);
-  undefined2 in_stack_00000014 = *(undefined2 *)((char *)__builtin_frame_address(0) + 24);
-  undefined2 in_stack_00000016 = *(undefined2 *)((char *)__builtin_frame_address(0) + 26);
+  uint16_t in_stack_00000010 = *(uint16_t *)((char *)__builtin_frame_address(0) + 20);
+  uint16_t in_stack_00000012 = *(uint16_t *)((char *)__builtin_frame_address(0) + 22);
+  uint16_t in_stack_00000014 = *(uint16_t *)((char *)__builtin_frame_address(0) + 24);
+  uint16_t in_stack_00000016 = *(uint16_t *)((char *)__builtin_frame_address(0) + 26);
   
   if ((short)param_1 == 0) {
 LAB_installer__00108cf2:
@@ -89863,13 +89865,13 @@ void installer_call_atexit_functions(void)
 void * installer_memcpy(void *s1,void *s2,uint n)
 
 {
-  undefined1 *puVar1;
+  uint8_t *puVar1;
   
   puVar1 = s1;
   while (n != 0) {
-    *puVar1 = *(undefined1 *)s2;
+    *puVar1 = *(uint8_t *)s2;
     n = n - 1;
-    s2 = (undefined1 *)((int)s2 + 1);
+    s2 = (uint8_t *)((int)s2 + 1);
     puVar1 = puVar1 + 1;
   }
   return s1;
@@ -89915,7 +89917,7 @@ char * installer_strncpy(char *s1,char *s2,uint n)
 
 /* strtol: a long from a string in a base up to 36, and where it ended */
 
-int installer_strtol(char *param_1,undefined4 *param_2,int param_3)
+int installer_strtol(char *param_1,uint32_t *param_2,int param_3)
 
 {
   bool bVar1;
@@ -89924,7 +89926,7 @@ int installer_strtol(char *param_1,undefined4 *param_2,int param_3)
   int iVar4;
   int iVar5;
   
-  if (param_2 != (undefined4 *)0x0) {
+  if (param_2 != (uint32_t *)0x0) {
     *param_2 = param_1;
   }
   if ((-1 < param_3) && (param_3 < 0x25)) {
@@ -89996,7 +89998,7 @@ int installer_strtol(char *param_1,undefined4 *param_2,int param_3)
           bVar2 = (bool)(iVar4 < iVar5 | bVar2);
           iVar4 = iVar5;
         }
-        if (param_2 != (undefined4 *)0x0) {
+        if (param_2 != (uint32_t *)0x0) {
           *param_2 = param_1;
         }
         if ((iVar4 == -0x80000000) && (!bVar1)) {
@@ -90058,8 +90060,8 @@ void installer_double_to_digits_multiply(uint *param_1)
   ushort local_24;
   ushort local_20;
   uint local_14;
-  undefined2 local_10;
-  undefined2 local_c;
+  uint16_t local_10;
+  uint16_t local_c;
   uint local_8;
   
   uVar7 = *param_1;
@@ -90093,11 +90095,11 @@ void installer_double_to_digits_multiply(uint *param_1)
   }
   uVar6 = (uVar10 & 0xffff) * uVar11;
   uVar5 = uVar6 + iVar9;
-  local_10 = (undefined2)(uVar5 >> 0x10);
+  local_10 = (uint16_t)(uVar5 >> 0x10);
   local_14 = (uint)CONCAT12(uVar5 <= uVar6 && uVar6 - uVar5 != 0,local_10);
-  local_c = (undefined2)(uVar8 >> 0x10);
+  local_c = (uint16_t)(uVar8 >> 0x10);
   uVar5 = CONCAT22((short)uVar5,local_c);
-  __ghidra_piece(unsigned short, local_8, 0) = (undefined2)(uVar4 >> 0x10);
+  __ghidra_piece(unsigned short, local_8, 0) = (uint16_t)(uVar4 >> 0x10);
   uVar6 = CONCAT22((short)uVar8,__ghidra_piece(unsigned short, local_8, 0));
   local_8 = uVar4 * 0x10000;
   iVar9 = local_20 * uVar11;
@@ -90449,7 +90451,7 @@ LAB_installer__00109956:
 /* the installer's next_decimal_digit
    libc.md */
 
-undefined8 installer_next_decimal_digit(uint *param_1)
+uint64_t installer_next_decimal_digit(uint *param_1)
 
 {
   uint uVar1;
@@ -90467,7 +90469,7 @@ undefined8 installer_next_decimal_digit(uint *param_1)
 /* the installer's doprnt
    libc.md */
 
-byte * installer_doprnt(byte *param_1,uint *param_2,undefined *param_3,undefined4 param_4)
+byte * installer_doprnt(byte *param_1,uint *param_2,uint8_t *param_3,uint32_t param_4)
 
 {
   bool bVar1;
@@ -90500,7 +90502,7 @@ byte * installer_doprnt(byte *param_1,uint *param_2,undefined *param_3,undefined
   byte local_1c6 [10];
   byte local_1bc [10];
   char acStack_1b2 [352];
-  undefined *local_52;
+  uint8_t *local_52;
   char *local_4e;
   char local_47;
   char local_46 [2];

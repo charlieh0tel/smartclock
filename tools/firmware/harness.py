@@ -707,7 +707,7 @@ BASE_SIZES = {
     "short": 2, "ushort": 2, "undefined2": 2, "uint16_t": 2, "int16_t": 2,
     "int": 4, "uint": 4, "long": 4, "ulong": 4, "undefined4": 4, "uint32_t": 4, "int32_t": 4,
     "float": 4,
-    "double": 8, "undefined8": 8, "longlong": 8, "ulonglong": 8,
+    "double": 8, "undefined8": 8, "longlong": 8, "ulonglong": 8, "uint64_t": 8, "int64_t": 8,
 }  # fmt: skip
 # Of those, the unsigned: their narrow results are zero-extended.
 UNSIGNED = {"byte", "uchar", "undefined1", "uint8_t", "bool", "ushort", "undefined2", "uint16_t"}

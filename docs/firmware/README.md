@@ -743,6 +743,9 @@ decompiler wrote it, and reported.
   decompiler's own rather than one given on purpose, and where no other
   name in the function is the same.  The table is keyed by the
   functions' names, which the images share.
+- A type of the decompiler's that says only a size, `undefined4` and
+  the like, is the standard unsigned type of that size, `uint32_t`,
+  which it is; only the odd sizes, `undefined3` and the like, stay.
 - A character constant that is no text is an integer: the decompiler
   prints every constant of a char type as a character, so a flag's 0
   and 1 read `'\0'` and `'\x01'`.  A printable character and `\n`,

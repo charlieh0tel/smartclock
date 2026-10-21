@@ -174,6 +174,8 @@ public class SmartClockExportC extends GhidraScript {
 		 * end, taken from its bits whatever its type.
 		 */
 		typedef unsigned int undefined3;
+		typedef unsigned long long uint64_t; /* standardTypes' undefined8; the type header has none */
+		typedef long long int64_t;
 		typedef unsigned long long undefined5;
 		typedef unsigned long long undefined7;
 		typedef int int3;
@@ -342,6 +344,7 @@ public class SmartClockExportC extends GhidraScript {
 		File sidecar = new File(base(output) + SIDECAR_SUFFIX);
 		int recorded = writeConventions(sidecar);
 		println("decompiled " + written + ", failed " + failed + " -> " + output);
+		println(standardTypes(output));
 		println(reinterpretConversions(output));
 		println("bridged for C: " + bridged);
 		println("conventions recorded for " + recorded + " -> " + sidecar);
@@ -3953,6 +3956,38 @@ public class SmartClockExportC extends GhidraScript {
 		}
 		Matcher member = LAST_MEMBER.matcher(rest);
 		return stars == 0 && member.find() && floatingFields.contains(member.group(1));
+	}
+
+	/** The decompiler's types of a size it knows and nothing else, and the standard type of that size. */
+	private static final Map<String, String> SIZED_TYPES = Map.of("undefined", "uint8_t", "undefined1", "uint8_t",
+		"undefined2", "uint16_t", "undefined4", "uint32_t", "undefined8", "uint64_t");
+	private static final Pattern SIZED_TYPE = Pattern.compile("\\bundefined[1248]?\\b");
+	/** A line that defines a type, which keeps the decompiler's. */
+	private static final String TYPEDEF = "typedef ";
+
+	/**
+	 * Writes each of the decompiler's types of a known size alone,
+	 * undefined4 and the like, as the standard unsigned type of that size,
+	 * which it is (the typedefs above the C, which stay): uint32_t.  The
+	 * odd sizes, undefined3 and the like, have none and stay.  Returns
+	 * what it did.
+	 */
+	private static String standardTypes(File output) throws Exception {
+		String c = Files.readString(output.toPath());
+		boolean[] code = code(c);
+		int replaced = 0;
+		StringBuilder out = new StringBuilder();
+		Matcher type = SIZED_TYPE.matcher(c);
+		while (type.find()) {
+			int lineStart = c.lastIndexOf('\n', type.start()) + 1;
+			// a string's or a comment's text, and a typedef's, stays
+			boolean typedef = c.startsWith(TYPEDEF, lineStart);
+			type.appendReplacement(out, !code[type.start()] || typedef ? type.group() : SIZED_TYPES.get(type.group()));
+			replaced += !code[type.start()] || typedef ? 0 : 1;
+		}
+		type.appendTail(out);
+		Files.writeString(output.toPath(), out);
+		return "sized types made standard: " + replaced;
 	}
 
 	/** The compiler that finds the conversions reinterpretConversions makes bitwise. */

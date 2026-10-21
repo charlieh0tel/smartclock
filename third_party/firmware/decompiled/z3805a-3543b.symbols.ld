@@ -103,6 +103,7 @@ __ghidra_fffa1f = 0xfffa1f;
 __ghidra_fffa21 = 0xfffa21;
 __ghidra_fffa22 = 0xfffa22;
 __ghidra_fffa24 = 0xfffa24;
+__ghidra_fffa27 = 0xfffa27;
 __ghidra_fffa44 = 0xfffa44;
 __ghidra_fffa46 = 0xfffa46;
 __ghidra_fffa48 = 0xfffa48;

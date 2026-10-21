@@ -1672,7 +1672,7 @@
 {"address":"installer::001005b4","name":"installer_default_exception","note":"the installer's primary_default_exception, byte for byte: the boot vector table's handler for every vector without one of its own","convention":"exception","confidence":"read","family":"exception"}
 {"address":"installer::001005d2","name":"installer_print_exception","note":"the installer's print_exception","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":4},{"offset":10,"size":2},{"offset":12,"size":4}]}
 {"address":"installer::00100658","name":"installer_exception_name","note":"the installer's exception_name","convention":"unknown","stack":[{"offset":4,"size":2}]}
-{"address":"installer::00100bb2","name":"installer_periodic_interrupt","note":"the periodic interrupt, as primary_user_66 without its counters: announces the tick with service 29, services the watchdog and returns through trap #5","convention":"unknown"}
+{"address":"installer::00100bb2","name":"installer_periodic_interrupt","note":"the periodic interrupt, as primary_user_66 without its counters: announces the tick with service 29, services the watchdog and returns through trap #5","convention":"exception","confidence":"read","family":"exception"}
 {"address":"installer::00100bd2","name":"installer_periodic_interrupt_enable","note":"the installer's periodic_interrupt_enable","convention":"unknown"}
 {"address":"installer::00100bf4","name":"installer_qsm_init","note":"the installer's qsm_init","convention":"unknown"}
 {"address":"installer::00100c1e","name":"installer_gpt_init","note":"the installer's gpt_init","convention":"unknown"}
@@ -1774,7 +1774,7 @@
 {"address":"installer::00103aa8","name":"installer_duartb_isr","note":"the installer's duartb_isr","convention":"unknown"}
 {"address":"installer::00103c7c","name":"installer_duarta_transmit_interrupt","note":"disables channel A's transmit interrupt","convention":"unknown"}
 {"address":"installer::00103c90","name":"installer_duartb_transmit_interrupt","note":"the installer's duartb_transmit_interrupt","convention":"unknown"}
-{"address":"installer::00103d74","name":"installer_duart_interrupt","note":"the DUART's interrupt: dispatches each pending, enabled source","convention":"unknown"}
+{"address":"installer::00103d74","name":"installer_duart_interrupt","note":"the DUART's interrupt: dispatches each pending, enabled source","convention":"exception","confidence":"read","family":"exception"}
 {"address":"installer::00103eea","name":"installer_fatal_error","note":"holds off interrupts and hangs","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::001040a2","name":"installer_fatal_error_with_code","note":"the installer's fatal_error_with_code","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"installer::0010531c","name":"installer_scpi_scan_exponent","note":"the installer's scpi_scan_exponent","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}

@@ -1658,7 +1658,7 @@ installer::0x1005d2	function	installer_print_exception	context	the installer's p
 installer::0x1005f8	call	installer_printf_polled	read	the exception's name, installer_exception_name's result	void installer_printf_polled(char *format, char *name)
 installer::0x100626	call	installer_printf_polled	read	the exception's address, the long at the frame's +0x10	void installer_printf_polled(char *format, uint32_t address)
 installer::0x100658	function	installer_exception_name	context	the installer's exception_name	char * installer_exception_name(uint16_t vector)
-installer::0x100bb2	function	installer_periodic_interrupt	context	the periodic interrupt, as primary_user_66 without its counters: announces the tick with service 29, services the watchdog and returns through trap #5
+installer::0x100bb2	function	installer_periodic_interrupt	context	the periodic interrupt, as primary_user_66 without its counters: announces the tick with service 29, services the watchdog and returns through trap #5		convention=exception; confidence=read; family=exception
 installer::0x100bd2	function	installer_periodic_interrupt_enable	context	the installer's periodic_interrupt_enable
 installer::0x100bf4	function	installer_qsm_init	context	the installer's qsm_init
 installer::0x100c1e	function	installer_gpt_init	context	the installer's gpt_init
@@ -1697,7 +1697,7 @@ installer::0x103a44	function	installer_duarta_receive	context	empties DUART chan
 installer::0x103aa8	function	installer_duartb_isr	context	the installer's duartb_isr
 installer::0x103c7c	function	installer_duarta_transmit_interrupt	context	disables channel A's transmit interrupt
 installer::0x103c90	function	installer_duartb_transmit_interrupt	context	the installer's duartb_transmit_interrupt
-installer::0x103d74	function	installer_duart_interrupt	context	the DUART's interrupt: dispatches each pending, enabled source
+installer::0x103d74	function	installer_duart_interrupt	context	the DUART's interrupt: dispatches each pending, enabled source		convention=exception; confidence=read; family=exception
 installer::0x103eea	function	installer_fatal_error	context	holds off interrupts and hangs	void installer_fatal_error(char *message)
 installer::0x1040a2	function	installer_fatal_error_with_code	context	the installer's fatal_error_with_code	void installer_fatal_error_with_code (char *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4)
 installer::0x10531c	function	installer_scpi_scan_exponent	context	the installer's scpi_scan_exponent

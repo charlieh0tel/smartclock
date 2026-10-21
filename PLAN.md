@@ -1094,9 +1094,10 @@ view cannot drift apart.  The library, bottom up:
      the message's array, so the C wrote the digits down from a lone
      byte, out of its object, and gcc dropped the store of its `0xff`;
      the label is gone, as the primary has none at `0x100c21`.  The
-     exception entries are written as assembly, as the primary's are,
-     and left out: the installer's 70 agree and none is skipped or
-     differs (63 agreeing, 3 skipped and 8 differing before).  The
+     exception entries, and the periodic and DUART interrupts, vector
+     targets as the primary's are, are written as assembly and left
+     out: the installer's 68 agree and none is skipped or differs (63
+     agreeing, 3 skipped and 8 differing before).  The
      primary's are unchanged.
 
   Costs: the wrappers, the harness and the link; then the long tail of

@@ -6152,7 +6152,7 @@ void * installer_exception_hook_get(void);
 int installer_default_exception();
 void installer_print_exception(ushort param_1,undefined4 param_2,ushort param_3,uint32_t param_4);
 char * installer_exception_name(uint16_t vector);
-void installer_periodic_interrupt(void);
+int installer_periodic_interrupt();
 void installer_periodic_interrupt_enable(void);
 void installer_qsm_init(void);
 void installer_gpt_init(void);
@@ -6250,7 +6250,7 @@ void installer_duarta_receive(void);
 byte installer_duartb_isr(void);
 void installer_duarta_transmit_interrupt(void);
 void installer_duartb_transmit_interrupt(void);
-void installer_duart_interrupt(void);
+int installer_duart_interrupt();
 void installer_fatal_error(char *message);
 void installer_fatal_error_with_code
                (char *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4);
@@ -81656,11 +81656,13 @@ char * installer_exception_name(uint16_t vector)
 
 
 /* installer::00100bb2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the periodic interrupt, as primary_user_66 without its counters: announces the tick with service
-   29, services the watchdog and returns through trap #5 */
+   29, services the watchdog and returns through trap #5
+   Not a C function (exception; read): entered by the processor, not called. */
 
-void installer_periodic_interrupt(void)
+__exception void installer_periodic_interrupt(void)
 
 {
   installer_psos_service_29();
@@ -81672,6 +81674,22 @@ void installer_periodic_interrupt(void)
   } while( true );
 }
 
+
+#endif
+__asm__(
+	"	.globl installer_periodic_interrupt\n"
+	"	.type installer_periodic_interrupt, @function\n"
+	"	.pushsection .text.installer_periodic_interrupt.100bb2,\"ax\",@progbits\n"
+	"installer_periodic_interrupt:\n"
+	"	movem.l %a6/%a5/%a1/%a0/%d1/%d0,-(%sp)\n"
+	"	jsr (installer_psos_service_29).l\n"
+	"	move.b #0x55,(__ghidra_fffa27).l\n"
+	"	move.b #0xaa,(__ghidra_fffa27).l\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5/%a6\n"
+	"	trap #0x5\n"
+	"	.size installer_periodic_interrupt, .-installer_periodic_interrupt\n"
+	"	.popsection\n"
+);
 
 /* installer::00100bd2 */
 
@@ -89194,10 +89212,12 @@ void installer_duartb_transmit_interrupt(void)
 
 
 /* installer::00103d74 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the DUART's interrupt: dispatches each pending, enabled source */
+/* the DUART's interrupt: dispatches each pending, enabled source
+   Not a C function (exception; read): entered by the processor, not called. */
 
-void installer_duart_interrupt(void)
+__exception void installer_duart_interrupt(void)
 
 {
   uint8_t uVar1;
@@ -89224,6 +89244,46 @@ void installer_duart_interrupt(void)
   } while( true );
 }
 
+
+#endif
+__asm__(
+	"	.globl installer_duart_interrupt\n"
+	"	.type installer_duart_interrupt, @function\n"
+	"	.pushsection .text.installer_duart_interrupt.103d74,\"ax\",@progbits\n"
+	"installer_duart_interrupt:\n"
+	"	movem.l %a6/%a5/%a1/%a0/%d1/%d0,-(%sp)\n"
+	"	move.l %a2,-(%sp)\n"
+	"	movea.l #0x10ad40,%a2\n"
+	"	move.b (__ghidra_20000b).l,%d0\n"
+	"	and.b (0x4,%a2),%d0\n"
+	"	andi.b #0x2,%d0\n"
+	"	beq.b .Lg_103d94\n"
+	"	jsr (installer_duarta_receive:w,%pc)\n"
+	".Lg_103d94:\n"
+	"	move.b (__ghidra_20000b).l,%d0\n"
+	"	and.b (0x4,%a2),%d0\n"
+	"	andi.b #0x1,%d0\n"
+	"	beq.b .Lg_103da8\n"
+	"	jsr (installer_duarta_transmit_interrupt:w,%pc)\n"
+	".Lg_103da8:\n"
+	"	move.b (__ghidra_20000b).l,%d0\n"
+	"	and.b (0x4,%a2),%d0\n"
+	"	andi.b #0x20,%d0\n"
+	"	beq.b .Lg_103dbc\n"
+	"	jsr (installer_duartb_isr:w,%pc)\n"
+	".Lg_103dbc:\n"
+	"	move.b (__ghidra_20000b).l,%d0\n"
+	"	and.b (0x4,%a2),%d0\n"
+	"	andi.b #0x10,%d0\n"
+	"	beq.b .Lg_103dd0\n"
+	"	jsr (installer_duartb_transmit_interrupt:w,%pc)\n"
+	".Lg_103dd0:\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5/%a6\n"
+	"	trap #0x5\n"
+	"	.size installer_duart_interrupt, .-installer_duart_interrupt\n"
+	"	.popsection\n"
+);
 
 /* installer::00103eea */
 

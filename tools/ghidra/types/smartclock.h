@@ -326,8 +326,9 @@ typedef void putc_function(char c);
  * carry.  A 4-byte structure's first byte is at the slot's start in
  * both; gcc pads a 2-byte one to the slot's end. */
 typedef struct char_slot {
-	uint8_t value;       /* +0x00: the char */
-	uint8_t field_01[3]; /* unread: the rest of the original's 2-byte slot and the 2 above it */
+	uint8_t value;     /* +0x00: the char */
+	uint8_t field_01;  /* unread: the rest of the original's 2-byte slot */
+	uint16_t field_02; /* unread: the slot above it, a second argument the callee ignores */
 } char_slot;
 
 /* A self-test, in the tables at 0x18458 and 0x17fe0: run is 1 to run the

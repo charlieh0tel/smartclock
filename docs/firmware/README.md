@@ -255,7 +255,8 @@ self-test tables at `0x18458` and `0x17fe0`, the measurements
 as `char_slot` (`tools/ghidra/types/smartclock.h`), a 4-byte structure
 whose first byte, its value, lies where this compiler puts a `char`'s,
 at the slot's start, for Ghidra and gcc alike; gcc pads a 2-byte one to
-the slot's end.  The routines called that way take it too.
+the slot's end.  The routines called that way take it too, and a `call`
+row gives each such call its callee's prototype.
 
 ## Decompiling with Ghidra
 
@@ -344,7 +345,10 @@ function's calling convention.  A `local` row instead types a function's
 stack variable, which the decompiler would otherwise split or leave
 untyped: its name, and `TYPE @ OFFSET` in the prototype field, Ghidra's
 offset from the stack pointer at entry (`sprintf_output`,
-`structures.md`).  Every SCPI handler takes what `scpi_call_handler`
+`structures.md`).  A `call` row gives the call through a pointer at its
+address the prototype of what it reaches, which the decompiler takes as
+a call to code with no arguments when it loads the pointer from a
+table: the self-tests' `char_slot run`.  Every SCPI handler takes what `scpi_call_handler`
 gives it, `int NAME(void *parameters, void *response, void *call)`,
 unless its row gives a prototype.
 
@@ -564,7 +568,9 @@ integer -- the float library makes those by calls -- and every cast it
 writes between them, `(double)CONCAT44(...)`, `(ulonglong)x & mask`,
 means the same bits as the other type.  The exporter writes each as
 `__ghidra_as(type, v)`, an integer's bits as a float or double, or
-`(type)__ghidra_bits(v)`, a floating value's bits as an integer.  It
+`(type)__ghidra_bits(v)`, a floating value's bits as an integer.  A
+cast to a structure, which C has none of, is `__ghidra_as` too: the
+decompiler builds a `char_slot` argument from the bytes pushed.  It
 then asks gcc (`-Wfloat-conversion -Wconversion`, as JSON) for the
 implicit conversions that remain, a double assigned to an `undefined8`
 or an integer passed as a float, and wraps each the same way, leaving a

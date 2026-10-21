@@ -287,7 +287,8 @@ typedef struct char_slot char_slot, *Pchar_slot;
 
 struct char_slot {
     uint8_t value;
-    uint8_t field_01[3];
+    uint8_t field_01;
+    uint16_t field_02;
 };
 
 typedef struct clock_record clock_record, *Pclock_record;
@@ -21655,9 +21656,14 @@ void selftest_run_all(void)
 
 {
   selftest_entry *ppuVar1;
+  char_slot in_stack_fffffff8;
   
   for (ppuVar1 = selftest_list; *ppuVar1 != (selftest_entry)0x0; ppuVar1 = ppuVar1 + 1) {
-    (*(code *)*ppuVar1)();
+    in_stack_fffffff8 =
+         __ghidra_as(char_slot, 
+         (CONCAT22(__ghidra_piece(unsigned short, in_stack_fffffff8, 0),CONCAT11(1,(char)in_stack_fffffff8.field_02)) & 0xffffff))
+    ;
+    (*(code *)*ppuVar1)(in_stack_fffffff8);
   }
   return;
 }
@@ -21671,10 +21677,14 @@ void selftest_run_all_counted(void)
 
 {
   selftest_entry *ppuVar1;
+  char_slot in_stack_fffffff8;
   
   for (ppuVar1 = selftest_list; watchdog_pll = watchdog_pll + 1, *ppuVar1 != (selftest_entry)0x0;
       ppuVar1 = ppuVar1 + 1) {
-    (*(code *)*ppuVar1)();
+    __ghidra_piece(__ghidra_u3, in_stack_fffffff8, 1).v =
+         (undefined3)CONCAT22(__ghidra_piece(unsigned short, in_stack_fffffff8, 0),CONCAT11(1,(char)in_stack_fffffff8.field_02));
+    in_stack_fffffff8.value = 1;
+    (*(code *)*ppuVar1)(in_stack_fffffff8);
   }
   return;
 }
@@ -22168,13 +22178,20 @@ void selftest_execute(char param_1)
 
 {
   code *pcVar1;
+  undefined4 uVar2;
+  char_slot run;
+  undefined4 uVar3;
   
   selftest.running = 1;
   watchdog_pll = watchdog_pll + 1;
   pcVar1 = (code *)selftest_table[param_1];
+  uVar3 = 0x18310;
   selftest_begin();
-  (*pcVar1)();
-  (*pcVar1)();
+  uVar2 = 0x18316;
+  (*pcVar1)(__ghidra_as(char_slot, (CONCAT22((short)((uint)uVar3 >> 0x10),(ushort)(byte)uVar3) & 0xffffff)));
+  __ghidra_piece(__ghidra_u3, run, 1).v = (undefined3)CONCAT22((short)((uint)uVar2 >> 0x10),(ushort)(byte)uVar2);
+  run.value = 1;
+  (*pcVar1)(run);
   selftest_end();
   watchdog_pll = watchdog_pll + 1;
   selftest.running = 0;
@@ -55754,10 +55771,15 @@ uint8_t dac_search_bisect(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t lo
                          undefined1 *measure)
 
 {
-  byte bVar2;
+  char_slot dac_00;
+  uint8_t uVar2;
   int iVar1;
+  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   char cVar3;
+  undefined1 in_stack_ffffffe7;
+  uint16_t uVar4;
   
+  uVar4 = (uint16_t)((uint)unaff_D2 >> 0x10);
   cVar3 = '\n';
 LAB_00040122:
   while( true ) {
@@ -55765,19 +55787,22 @@ LAB_00040122:
       if (cVar3 == '\0') {
         return dac;
       }
-      bVar2 = (*(code *)measure)();
-      if ((bVar2 < low) || (high < bVar2)) break;
+      dac_00.value = dac;
+      dac_00.field_01 = in_stack_ffffffe7;
+      dac_00.field_02 = uVar4;
+      uVar2 = (*(code *)measure)(dac_00);
+      if ((uVar2 < low) || (high < uVar2)) break;
       cVar3 = '\0';
     }
     if (minimum != maximum) break;
     cVar3 = '\0';
   }
-  if (low <= bVar2) goto LAB_00040104;
+  if (low <= uVar2) goto LAB_00040104;
   maximum = dac - 1;
   iVar1 = (uint)maximum + (uint)minimum;
   goto LAB_0004011c;
 LAB_00040104:
-  if (high < bVar2) {
+  if (high < uVar2) {
     minimum = dac + 1;
     iVar1 = (uint)maximum + (uint)minimum;
 LAB_0004011c:
@@ -55797,19 +55822,27 @@ uint8_t dac_search_step(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t low,
                        undefined1 *measure)
 
 {
-  byte bVar1;
+  char_slot dac_00;
+  uint8_t uVar1;
+  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   char cVar2;
+  undefined1 in_stack_ffffffef;
+  uint16_t uVar3;
   
+  uVar3 = (uint16_t)((uint)unaff_D2 >> 0x10);
   cVar2 = '\x14';
   while (cVar2 != '\0') {
     cVar2 = cVar2 + -1;
-    bVar1 = (*(code *)measure)();
-    if ((bVar1 < low) || (high < bVar1)) {
+    dac_00.value = dac;
+    dac_00.field_01 = in_stack_ffffffef;
+    dac_00.field_02 = uVar3;
+    uVar1 = (*(code *)measure)(dac_00);
+    if ((uVar1 < low) || (high < uVar1)) {
       if ((dac < maximum) && (minimum < dac)) {
-        if (bVar1 < low) {
+        if (uVar1 < low) {
           dac = dac - 1;
         }
-        else if (high < bVar1) {
+        else if (high < uVar1) {
           dac = dac + 1;
         }
       }

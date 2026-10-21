@@ -125,6 +125,7 @@ import ghidra.program.model.listing.Variable;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.pcode.HighFunctionDBUtil;
 import ghidra.program.model.pcode.JumpTable;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.model.symbol.Namespace;
@@ -186,6 +187,8 @@ public class SmartClockSetup extends GhidraScript {
 	private static final String FUNCTION = "function";
 	/** A names row giving a function's stack variable a type. */
 	private static final String LOCAL = "local";
+	/** A names row giving an indirect call the prototype of what it calls. */
+	private static final String CALL = "call";
 	/**
 	 * Stack offsets are from SP at entry, where the return address occupies
 	 * 0..3; arguments start at 4, each in a slot of at least 2 bytes.
@@ -453,6 +456,9 @@ public class SmartClockSetup extends GhidraScript {
 				}
 				else if (fields[1].equals(LOCAL)) {
 					applyLocal(address, fields[2], field(fields, PROTOTYPE_FIELD), line);
+				}
+				else if (fields[1].equals(CALL)) {
+					applyCall(address, field(fields, PROTOTYPE_FIELD), line);
 				}
 				else {
 					label(address, fields[2], counts);
@@ -772,6 +778,22 @@ public class SmartClockSetup extends GhidraScript {
 			}
 		}
 		frame.createVariable(name, offset, type, SourceType.IMPORTED);
+	}
+
+	/**
+	 * Gives the call at address, through a pointer, the prototype of the
+	 * routine it reaches, as a decompiler override: the decompiler takes
+	 * a call through a typed pointer loaded from a table as one to code,
+	 * with no arguments, and drops what the caller pushed.
+	 */
+	private void applyCall(Address address, String prototype, String line) throws Exception {
+		Function function = getFunctionContaining(address);
+		FunctionDefinitionDataType signature = CParserUtils.parseSignature(
+			(DataTypeManagerService) null, currentProgram, prototype, false);
+		if (function == null || signature == null) {
+			throw new IllegalArgumentException("a call needs a function and a prototype: " + line);
+		}
+		HighFunctionDBUtil.writeOverride(function, address, signature);
 	}
 
 	/**

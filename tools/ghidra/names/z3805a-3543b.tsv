@@ -4,7 +4,8 @@
 # is or does, a C prototype or a label's type, and a function's calling
 # convention.  A "local" row instead gives the function at its address a
 # stack variable: its name, and "TYPE @ OFFSET", Ghidra's offset from the
-# stack pointer at entry, in the prototype field.  Only the Z3805A's own column of a note's table, or a
+# stack pointer at entry, in the prototype field.  A "call" row gives the
+# call through a pointer at its address its callee's prototype.  Only the Z3805A's own column of a note's table, or a
 # statement about this image, counts; an address a note gives for
 # another image does not carry over.
 #
@@ -541,6 +542,8 @@
 0x46524	function	pll_stage_status	context	by pll.stage, sets two pll flags and the status happenings they imply (0x1a, 0x1b, 0x28, 0x2a, 0x2c), with log_event(6); pllp_task calls it at start and on stage changes
 0x18a74	function	selftest_run	context	runs self-test n, 0 to 13, through selftest_execute and copies its result cells
 0x182ec	function	selftest_execute	context	runs entry n of the test table 0x18458 twice between selftest_begin and selftest_end, with selftest.running set
+0x18314	call	selftest_test	read	the selected self-test, run 0	void selftest_test(char_slot run)
+0x1831c	call	selftest_test	read	the selected self-test again, run 1	void selftest_test(char_slot run)
 0x1833c	function	selftest_report_fail	context	prints "%s FAIL" when its test failed and selftest_aborted is false
 0x100c42	label	selftest_abort	context	selftest_abort_wait sets it while a test runs; selftest_begin, selftest_end and selftest_init clear it	uint8_t
 0x100c24	label	selftest	structures.md	the self-tests' results and what selftest_run reports	selftest_results
@@ -1133,7 +1136,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x401c4	function	interpolator_prepare	context	loads any pending FPGA registers and sets the fields for an interpolator measurement	undefined4 interpolator_prepare(void)
 0x4047c	function	interpolator_verify	context	sets both DACs, measures both ends of the interpolator against [1, 25] and [201, 225], and retries with the saved DACs if they fail	uint8_t interpolator_verify(interpolator_calibration *calibration)
 0x400b0	function	dac_search_bisect	context	halves a DAC's range, up to 10 times, until a measurement falls in a window	uint8_t dac_search_bisect(uint8_t dac, uint8_t minimum, uint8_t maximum, uint8_t low, uint8_t high, dac_measure *measure)
+0x400cc	call	dac_measure	read	the measurement, at the DAC setting D2	uint8_t dac_measure(char_slot dac)
 0x4012e	function	dac_search_step	context	moves a DAC a step at a time, up to 20, until a measurement falls in a window	uint8_t dac_search_step(uint8_t dac, uint8_t minimum, uint8_t maximum, uint8_t low, uint8_t high, dac_measure *measure)
+0x40144	call	dac_measure	read	the measurement, at the DAC setting D2	uint8_t dac_measure(char_slot dac)
 0x4018e	function	hdac_nudge	context	moves hex DAC channel 2 one step against a sign
 0x40c06	function	counter_read_raw	context	the counter's count from FPGA registers 0x16 to 0x12, offset by 0x555555	long long counter_read_raw(void)
 0x410fa	function	int64_add	context	adds two 64-bit numbers	undefined8 int64_add(int param_1,uint param_2,int param_3,uint param_4)
@@ -1777,7 +1782,9 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x1258a	function	double_decimal_exponent	context	floor(log10) of a double's magnitude, by bisection over power_of_ten_double's table, 1e-30 to 1e30 at 0x12614; called by nothing
 0x1749e	function	cpu_register_test	context, read	selftest_cpu's register test: 0x55555555 and 0xaaaaaaaa through every data and address register; 1 at 0x100c24 on a failure; called as C, D0.w 0 on a pass, but its body is the registers themselves, which C cannot say		convention=other; confidence=read; family=selftest
 0x177ac	function	selftest_run_all	context	runs each self-test in the list at 0x17fe0
+0x177be	call	selftest_test	read	each self-test in turn, run 0	void selftest_test(char_slot run)
 0x177cc	function	selftest_run_all_counted	context	runs each self-test in the list at 0x17fe0, counting watchdog_pll before each
+0x177e6	call	selftest_test	read	each self-test in turn, run 1	void selftest_test(char_slot run)
 0x17892	function	selftest_all	context	self-test 0, first in the table at 0x18458: runs every test, counting watchdog_pll for a nonzero argument, then summarizes and reports any failures	void selftest_all(char_slot run)
 0x18458	label	selftest_table	read	the self-tests by number, 0 to 13, which selftest_execute runs	selftest_entry[14]
 0x17fe0	label	selftest_list	read	the self-tests selftest_run_all and selftest_run_all_counted run, entries 1 to 11 of selftest_table, then a null	selftest_entry[12]

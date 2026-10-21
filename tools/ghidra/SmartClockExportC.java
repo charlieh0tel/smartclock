@@ -2314,6 +2314,8 @@ public class SmartClockExportC extends GhidraScript {
 	private Set<String> floatingFunctions;
 	private Set<String> floatingFields;
 	private Set<String> floatingGlobals;
+	/** The program's structures and unions, by name. */
+	private Set<String> composites;
 
 	private static boolean isFloating(DataType type) {
 		DataType base = type instanceof TypeDef typedef ? typedef.getBaseDataType() : type;
@@ -2324,6 +2326,7 @@ public class SmartClockExportC extends GhidraScript {
 		floatingFunctions = new HashSet<>();
 		floatingFields = new HashSet<>();
 		floatingGlobals = new HashSet<>();
+		composites = new HashSet<>();
 		for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
 			if (isFloating(function.getReturnType())) {
 				floatingFunctions.add(function.getName());
@@ -2332,6 +2335,7 @@ public class SmartClockExportC extends GhidraScript {
 		Iterator<DataType> types = currentProgram.getDataTypeManager().getAllDataTypes();
 		while (types.hasNext()) {
 			if (types.next() instanceof Composite composite) {
+				composites.add(composite.getName());
 				for (DataTypeComponent component : composite.getDefinedComponents()) {
 					if (component.getFieldName() != null && isFloating(component.getDataType())) {
 						floatingFields.add(component.getFieldName());
@@ -2354,7 +2358,9 @@ public class SmartClockExportC extends GhidraScript {
 	 * cast to float or double is __ghidra_as(type, v), the integer's bits
 	 * as that type; an integer cast of a floating operand -- a floating
 	 * variable, a call to a function returning one, a floating pointer
-	 * read, a floating field -- is (type)__ghidra_bits(v).  Casts are
+	 * read, a floating field -- is (type)__ghidra_bits(v).  A cast to a
+	 * structure, which C has none of, is __ghidra_as too: the decompiler
+	 * builds a structure argument from the bytes pushed.  Casts are
 	 * rewritten last first, so an operand's own are done before it.
 	 */
 	private String reinterpretingCasts(String c) {
@@ -2377,7 +2383,8 @@ public class SmartClockExportC extends GhidraScript {
 		while (cast.find()) {
 			String type = cast.group(1);
 			char before = cast.start() == 0 ? ' ' : c.charAt(cast.start() - 1);
-			if (code[cast.start()] && (FLOATING.contains(type) || INTEGERS.contains(type))
+			if (code[cast.start()]
+				&& (FLOATING.contains(type) || INTEGERS.contains(type) || composites.contains(type))
 				&& !Character.isJavaIdentifierPart(before) && before != ')' && before != ']') {
 				casts.add(new int[] { cast.start(), cast.end() });
 			}
@@ -2393,7 +2400,7 @@ public class SmartClockExportC extends GhidraScript {
 			}
 			String operand = out.substring(typeEnd, end);
 			boolean floating = floatingOperand(operand, variables, pointers);
-			if (FLOATING.contains(type) && !floating) {
+			if (FLOATING.contains(type) && !floating || composites.contains(type)) {
 				out.replace(start, end, "__ghidra_as(" + type + ", " + operand + ")");
 			}
 			else if (INTEGERS.contains(type) && floating) {
@@ -2613,6 +2620,9 @@ public class SmartClockExportC extends GhidraScript {
 	 */
 	private static int operandEnd(CharSequence c, int start) {
 		int i = start;
+		while (i < c.length() && Character.isWhitespace(c.charAt(i))) {
+			i++;
+		}
 		while (i < c.length() && "-~!*&".indexOf(c.charAt(i)) >= 0
 			&& !(c.charAt(i) == '-' && i + 1 < c.length() && c.charAt(i + 1) == '>')) {
 			i++;

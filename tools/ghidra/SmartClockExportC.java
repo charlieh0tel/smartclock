@@ -274,8 +274,8 @@ public class SmartClockExportC extends GhidraScript {
 				functions.append("\n/* ").append(function.getEntryPoint()).append(" */\n");
 				if (results.decompileCompleted()) {
 					Printed printed = printed(function, results);
-					String c = indexedFunctions(identifiers(nonfiniteBits(entryRegisters(pieces(frameEnds(results.getHighFunction(), notC(function, printed.c())),
-						printed.signedPieces())))));
+					String c = indexedFunctions(identifiers(nonfiniteBits(stackInputs(function, entryRegisters(pieces(frameEnds(results.getHighFunction(), notC(function, printed.c())),
+						printed.signedPieces()))))));
 					if (notCMacro(function) != null) {
 						functions.append(READING).append(c).append("\n#endif\n")
 							.append(assembly(function, declared, madeSymbols));
@@ -496,6 +496,8 @@ public class SmartClockExportC extends GhidraScript {
 	/** Bytes the wrapper pushes saving SAVED, and the return address under them. */
 	private static final int SAVED_BYTES = 11 * 4;
 	private static final int RETURN_ADDRESS_BYTES = 4;
+	/** A stack argument's first offset from the stack pointer at entry, above the return address. */
+	private static final int FIRST_ARGUMENT = RETURN_ADDRESS_BYTES;
 	/** gcc's stack slot for an argument narrower than it. */
 	private static final int SLOT = 4;
 
@@ -1029,6 +1031,39 @@ public class SmartClockExportC extends GhidraScript {
 			local.appendReplacement(out, Matcher.quoteReplacement(local.group(1) + " " + local.group(2)
 				+ " = ({ register long __entry __asm__(\"" + register + "\"); __asm__(\"\" : \"=r\"(__entry)); ("
 				+ local.group(1).strip() + ")__entry; });"));
+		}
+		local.appendTail(out);
+		return out.toString();
+	}
+
+	/** A local the decompiler reads from the caller's stack above the arguments: its type and offset. */
+	private static final Pattern STACK_INPUT = Pattern.compile(
+		"^(  (?!return\\b)[A-Za-z_][\\w ]*?\\**) (in_stack_([0-9a-f]{8}));$", Pattern.MULTILINE);
+
+	/**
+	 * c with each in_stack_N local, the long N bytes above the return
+	 * address that the routine reads past its arguments, given that long
+	 * from gcc's frame, where C left it unset: program_end_report prints
+	 * its caller's return address from there.  Only where every argument
+	 * is a long in its own slot, from the first, so that gcc's frame
+	 * holds the same bytes above them as the original's.
+	 */
+	private static String stackInputs(Function function, String c) {
+		int expected = FIRST_ARGUMENT;
+		for (Parameter parameter : function.getParameters()) {
+			if (!parameter.isStackVariable() || parameter.getStackOffset() != expected
+				|| parameter.getLength() != SLOT) {
+				return c;
+			}
+			expected += SLOT;
+		}
+		Matcher local = STACK_INPUT.matcher(c);
+		StringBuilder out = new StringBuilder();
+		while (local.find()) {
+			String type = local.group(1).strip();
+			local.appendReplacement(out, Matcher.quoteReplacement(local.group(1) + " " + local.group(2)
+				+ " = *(" + type + " *)((char *)__builtin_frame_address(0) + "
+				+ (Long.parseLong(local.group(3), 16) + RETURN_ADDRESS_BYTES) + ");"));
 		}
 		local.appendTail(out);
 		return out.toString();

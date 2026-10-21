@@ -4487,7 +4487,7 @@ void root_task(void);
 int stack_measure(void *task,uint32_t *usage);
 void stack_fill(void *task) __asm__("c_stack_fill");
 void *region_find_segment(void *region, char *address) __asm__("c_region_find_segment");
-int stack_usage();
+longlong stack_usage(uint16_t *bottom, char *top) __asm__("c_stack_usage");
 void stack_usage_report(void *task);
 uint16_t enter_supervisor_mode(void);
 uint16_t set_interrupt_mask(uint16_t sr);
@@ -4541,7 +4541,7 @@ int primary_reset();
 int primary_trap_11();
 int primary_trap_12();
 void program_exit(uint param_1);
-void program_end_report(uint value);
+void program_end_report(uint value,uint32_t return_address);
 int primary_trap_3();
 int primary_trap_4();
 int primary_trap_6();
@@ -8801,12 +8801,12 @@ __exception undefined8 primary_default_exception(void)
   char *pcVar3;
   undefined4 in_D1;
   char *pcVar4;
-  undefined2 in_stack_00000000;
-  uint in_stack_00000002;
-  ushort in_stack_00000006;
-  undefined2 in_stack_00000008;
-  ushort in_stack_0000000a;
-  uint32_t in_stack_0000000c;
+  undefined2 in_stack_00000000 = *(undefined2 *)((char *)__builtin_frame_address(0) + 4);
+  uint in_stack_00000002 = *(uint *)((char *)__builtin_frame_address(0) + 6);
+  ushort in_stack_00000006 = *(ushort *)((char *)__builtin_frame_address(0) + 10);
+  undefined2 in_stack_00000008 = *(undefined2 *)((char *)__builtin_frame_address(0) + 12);
+  ushort in_stack_0000000a = *(ushort *)((char *)__builtin_frame_address(0) + 14);
+  uint32_t in_stack_0000000c = *(uint32_t *)((char *)__builtin_frame_address(0) + 16);
   undefined2 uVar5;
   undefined2 uVar6;
   
@@ -9985,12 +9985,14 @@ void root_task(void)
 int stack_measure(void *task,uint32_t *usage)
 
 {
-  undefined8 uVar1;
+  int extraout_A0;
+  longlong lVar1;
   
-  uVar1 = stack_usage();
-  *(undefined8 *)(usage + 2) = uVar1;
-  uVar1 = stack_usage();
-  *(undefined8 *)usage = uVar1;
+  lVar1 = ({ __auto_type __c = stack_usage(*(uint16_t **)((int)task + 0x92),*(char **)((int)task + 0x8e)); extraout_A0 = (__typeof__(extraout_A0))task; __c; });
+  *(longlong *)(usage + 2) = lVar1;
+  lVar1 = stack_usage((uint16_t *)(*(int *)(extraout_A0 + 0x8e) + 4),*(char **)(extraout_A0 + 0x8a))
+  ;
+  *(longlong *)usage = lVar1;
   return 0;
 }
 
@@ -10168,29 +10170,28 @@ __asm__(
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* measures a stack from A1, its bottom, to D0, its top: the bytes above the 0xabcd fill left at its
-   bottom back in D0, its size in D1
+   bottom back in D0, its size in D1, a long long's high and low halves
    Not a C function (register; read): its arguments and results in registers.  In: A1 uint16_t
-   *bottom, D0 char *top.  Out: D0 int used, D1 int size. */
+   *bottom, D0 char *top.  Out: D0:D1 long long usage.  Preserves: D2, D3, D4, D5, D6, D7, A0, A2,
+   A3, A4, A5, A6. */
 
-/* out D0 int used, D1 int size */
-__regcall undefined8 stack_usage(void)
+/* out D0:D1 long long usage; preserves D2, D3, D4, D5, D6, D7, A0, A2, A3, A4, A5, A6 */
+__regcall longlong stack_usage(uint16_t *bottom /* a1 */,char *top /* d0 */)
 
 {
   int iVar1;
-  int in_D0;
   int iVar2;
-  short *in_A1;
   short sVar3;
   
-  iVar1 = in_D0 - (int)in_A1;
+  iVar1 = (int)top - (int)bottom;
   iVar2 = 0;
   if (iVar1 != 0) {
     iVar2 = (iVar1 >> 1) + -1;
     do {
-      if (*in_A1 != -0x5433) break;
+      if (*bottom != 0xabcd) break;
       sVar3 = (short)iVar2 + -1;
       iVar2 = CONCAT22((short)((uint)iVar2 >> 0x10),sVar3);
-      in_A1 = in_A1 + 1;
+      bottom = bottom + 1;
     } while (sVar3 != -1);
     iVar2 = (iVar2 + 1) * 2;
   }
@@ -10219,6 +10220,21 @@ __asm__(
 	"	.size stack_usage, .-stack_usage\n"
 	"	.popsection\n"
 );
+/* stack_usage from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_stack_usage,\"ax\",@progbits\n"
+	"	.globl c_stack_usage\n"
+	"	.type c_stack_usage, @function\n"
+	"c_stack_usage:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a1\n"
+	"	move.l (52,%sp),%d0\n"
+	"	jsr stack_usage\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_stack_usage, .-c_stack_usage\n"
+	"	.popsection\n"
+);
 
 /* 000132f4 */
 
@@ -10229,16 +10245,13 @@ void stack_usage_report(void *task)
 
 {
   int iVar1;
-  uint local_64;
-  uint local_60;
-  uint local_5c;
-  uint local_58;
+  uint32_t usage [4];
   char acStack_54 [80];
   
-  iVar1 = stack_measure(task,&local_64);
+  iVar1 = stack_measure(task,usage);
   if (iVar1 == 0) {
-    sprintf(acStack_54,"User: %5u of %5u b   Supv: %5u of %5u b\r\n",local_64,local_60,local_5c,
-            local_58);
+    sprintf(acStack_54,"User: %5u of %5u b   Supv: %5u of %5u b\r\n",usage[0],usage[1],usage[2],
+            usage[3]);
     task_debug_message(acStack_54);
   }
   return;
@@ -10334,7 +10347,7 @@ uint rotate_left(uint param_1,byte param_2)
 __exception undefined2 primary_trap_7(void)
 
 {
-  undefined2 in_stack_00000000;
+  undefined2 in_stack_00000000 = *(undefined2 *)((char *)__builtin_frame_address(0) + 4);
   
   return in_stack_00000000;
 }
@@ -12035,8 +12048,8 @@ void float_exception_report(uint32_t code)
   uint8_t *puVar4;
   uint8_t *puVar5;
   uint8_t *puVar6;
-  undefined4 in_stack_00000000;
-  uint in_stack_00000008;
+  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
+  uint in_stack_00000008 = *(uint *)((char *)__builtin_frame_address(0) + 12);
   
   float_exception_message[0] = 0;
   puVar5 = float_exception_message + 1;
@@ -13004,8 +13017,10 @@ __asm__(
 void program_exit(uint param_1)
 
 {
+  uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
+  
   call_atexit_functions();
-  program_end_report(param_1);
+  program_end_report(param_1,in_stack_00000000);
   do {
                     /* WARNING: Do nothing block with infinite loop */
   } while( true );
@@ -13014,9 +13029,10 @@ void program_exit(uint param_1)
 
 /* 000149bc */
 
-/* builds "Prog end, returned N" and stops with fatal_error_with_code */
+/* builds "Prog end, returned N" and stops with fatal_error_with_code, its code the long above
+   value, which program_exit does not push: program_exit's return address (0x149ae to 0x149b2) */
 
-void program_end_report(uint value)
+void program_end_report(uint value,uint32_t return_address)
 
 {
   uint uVar1;
@@ -13025,8 +13041,7 @@ void program_end_report(uint value)
   uint8_t *puVar4;
   uint8_t *puVar5;
   uint8_t *puVar6;
-  undefined4 in_stack_00000000;
-  uint in_stack_00000008;
+  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
   
   puVar5 = program_end_message;
   program_end_message[0] = 0;
@@ -13057,7 +13072,7 @@ void program_end_report(uint value)
     puVar4 = puVar4 + 1;
     puVar6 = puVar6 + 1;
   }
-  fatal_error_with_code((char *)program_end_message,in_stack_00000000,value,in_stack_00000008);
+  fatal_error_with_code((char *)program_end_message,in_stack_00000000,value,return_address);
   do {
                     /* WARNING: Do nothing block with infinite loop */
   } while( true );
@@ -13127,8 +13142,8 @@ __exception void kernel_dispatch_service(undefined2 param_1)
   undefined2 *puVar14;
   undefined2 *in_USP;
   undefined8 uVar15;
-  ushort in_stack_00000000;
-  undefined4 in_stack_00000002;
+  ushort in_stack_00000000 = *(ushort *)((char *)__builtin_frame_address(0) + 4);
+  undefined4 in_stack_00000002 = *(undefined4 *)((char *)__builtin_frame_address(0) + 6);
   short sVar11;
   
   pvVar6 = psos_config.data_area;
@@ -13488,12 +13503,12 @@ __naked void kernel_switch_task(void)
   undefined2 *puVar11;
   undefined2 *in_USP;
   undefined8 uVar12;
-  undefined4 in_stack_00000000;
-  undefined4 in_stack_00000004;
-  undefined4 in_stack_00000008;
-  ushort in_stack_0000000c;
-  undefined4 in_stack_0000000e;
-  undefined2 in_stack_00000012;
+  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
+  undefined4 in_stack_00000004 = *(undefined4 *)((char *)__builtin_frame_address(0) + 8);
+  undefined4 in_stack_00000008 = *(undefined4 *)((char *)__builtin_frame_address(0) + 12);
+  ushort in_stack_0000000c = *(ushort *)((char *)__builtin_frame_address(0) + 16);
+  undefined4 in_stack_0000000e = *(undefined4 *)((char *)__builtin_frame_address(0) + 18);
+  undefined2 in_stack_00000012 = *(undefined2 *)((char *)__builtin_frame_address(0) + 22);
   
   uVar12 = CONCAT44(in_D0,in_D1);
   while (uVar8 = (undefined4)uVar12, unaff_A6[0x1b] != 0) {
@@ -14143,7 +14158,7 @@ __regcall undefined8 kernel_delete(void)
   undefined8 *puVar5;
   undefined1 in_ZF;
   bool bVar6;
-  undefined4 in_stack_00000000;
+  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
   undefined1 local_10 [16];
   
   puVar5 = (undefined8 *)local_10;
@@ -21672,7 +21687,7 @@ void selftest_run_all(void)
 
 {
   selftest_entry *ppuVar1;
-  char_slot in_stack_fffffff8;
+  char_slot in_stack_fffffff8 = *(char_slot *)((char *)__builtin_frame_address(0) + 4294967292);
   
   for (ppuVar1 = selftest_list; *ppuVar1 != (selftest_entry)0x0; ppuVar1 = ppuVar1 + 1) {
     in_stack_fffffff8 =
@@ -21693,7 +21708,7 @@ void selftest_run_all_counted(void)
 
 {
   selftest_entry *ppuVar1;
-  char_slot in_stack_fffffff8;
+  char_slot in_stack_fffffff8 = *(char_slot *)((char *)__builtin_frame_address(0) + 4294967292);
   
   for (ppuVar1 = selftest_list; watchdog_pll = watchdog_pll + 1, *ppuVar1 != (selftest_entry)0x0;
       ppuVar1 = ppuVar1 + 1) {
@@ -31497,7 +31512,7 @@ __naked void console_task(void)
 {
   void *dp;
   uint16_t *sp;
-  uint in_stack_00000000;
+  uint in_stack_00000000 = *(uint *)((char *)__builtin_frame_address(0) + 4);
   uint16_t local_28 [3];
   char *local_22;
   char *local_1e;
@@ -38705,45 +38720,45 @@ bool fpga_verify_first(byte *param_1,byte *param_2,char param_3)
   byte *param2;
   bool bVar1;
   int local_64;
-  ushort *local_60;
-  ushort *local_5c;
-  ushort local_58 [2];
+  qspi_buffers buffers;
+  ushort local_58;
+  uint16_t local_56;
   char acStack_54 [80];
   
-  local_60 = local_58 + 1;
-  local_5c = local_58;
-  local_58[1] = 0xffff;
+  buffers.transmit = &local_56;
+  buffers.receive = &local_58;
+  local_56 = 0xffff;
   if (param_3 == '\0') {
-    qspi_transfer(0xc,&local_60,0xb);
+    qspi_transfer(0xc,&buffers.transmit,0xb);
   }
   else {
-    qspi_read(0xc,&local_60,0xb);
+    qspi_read(0xc,&buffers,0xb);
   }
-  bVar1 = (*param_2 & (*param_1 ^ ~(byte)local_58[0])) == 0;
+  bVar1 = (*param_2 & (*param_1 ^ ~(byte)local_58)) == 0;
   param2 = param_1 + 1;
   param3 = param_2 + 1;
   if (bVar1) {
     for (local_64 = 0; (bVar1 != false && (local_64 < 5)); local_64 = local_64 + 1) {
       if (param_3 == '\0') {
-        qspi_transfer(0xc,&local_60,0x10);
+        qspi_transfer(0xc,&buffers.transmit,0x10);
       }
       else {
-        qspi_read(0xc,&local_60,0x10);
+        qspi_read(0xc,&buffers,0x10);
       }
-      if ((*param3 & (*param2 ^ ~(byte)(local_58[0] >> 8))) != 0) {
+      if ((*param3 & (*param2 ^ ~(byte)(local_58 >> 8))) != 0) {
         bVar1 = false;
       }
       if (bVar1 == false) {
-        debug_sprintf(acStack_54,"first: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58[0]
-                      ,(ushort)*param2,(ushort)*param3);
+        debug_sprintf(acStack_54,"first: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58,
+                      (ushort)*param2,(ushort)*param3);
         debug_message(acStack_54,param_3);
       }
-      if ((param3[1] & (param2[1] ^ ~(byte)local_58[0])) != 0) {
+      if ((param3[1] & (param2[1] ^ ~(byte)local_58)) != 0) {
         bVar1 = false;
       }
       if (bVar1 == false) {
-        debug_sprintf(acStack_54,"first: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58[0]
-                      ,(ushort)param2[1],(ushort)param3[1]);
+        debug_sprintf(acStack_54,"first: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58,
+                      (ushort)param2[1],(ushort)param3[1]);
         debug_message(acStack_54,param_3);
       }
       param2 = param2 + 2;
@@ -38751,7 +38766,7 @@ bool fpga_verify_first(byte *param_1,byte *param_2,char param_3)
     }
   }
   else {
-    debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+    debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58,
                   (ushort)*param_1,(ushort)*param_2);
     debug_message(acStack_54,param_3);
     param3 = param_2 + 1;
@@ -38759,16 +38774,16 @@ bool fpga_verify_first(byte *param_1,byte *param_2,char param_3)
   }
   if (bVar1 != false) {
     if (param_3 == '\0') {
-      qspi_transfer(0xc,&local_60,8);
+      qspi_transfer(0xc,&buffers.transmit,8);
     }
     else {
-      qspi_read(0xc,&local_60,8);
+      qspi_read(0xc,&buffers,8);
     }
-    if ((*param3 & (*param2 ^ ~(byte)local_58[0])) != 0) {
+    if ((*param3 & (*param2 ^ ~(byte)local_58)) != 0) {
       bVar1 = false;
     }
     if (bVar1 == false) {
-      debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+      debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58,
                     (ushort)*param2,(ushort)*param3);
       debug_message(acStack_54,param_3);
     }
@@ -38777,27 +38792,27 @@ bool fpga_verify_first(byte *param_1,byte *param_2,char param_3)
   }
   if (bVar1 != false) {
     if (param_3 == '\0') {
-      qspi_transfer(0xc,&local_60,10);
+      qspi_transfer(0xc,&buffers.transmit,10);
     }
     else {
-      qspi_read(0xc,&local_60,10);
+      qspi_read(0xc,&buffers,10);
     }
-    local_58[0] = local_58[0] << 6;
-    if ((*param3 & (*param2 ^ ~(byte)(local_58[0] >> 8))) != 0) {
+    local_58 = local_58 << 6;
+    if ((*param3 & (*param2 ^ ~(byte)(local_58 >> 8))) != 0) {
       bVar1 = false;
     }
     if (bVar1 == false) {
-      debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+      debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58,
                     (ushort)*param2,(ushort)*param3);
       debug_message(acStack_54,param_3);
     }
     param2 = param2 + 1;
     param3 = param3 + 1;
-    if ((*param3 & (*param2 ^ ~(byte)local_58[0]) & 0xc0) != 0) {
+    if ((*param3 & (*param2 ^ ~(byte)local_58) & 0xc0) != 0) {
       bVar1 = false;
     }
     if (bVar1 == false) {
-      debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+      debug_sprintf(acStack_54,"first: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58,
                     (ushort)*param2,(ushort)*param3);
       debug_message(acStack_54,param_3);
     }
@@ -38821,35 +38836,35 @@ bool fpga_verify_odd(byte *param_1,byte *param_2,char param_3)
 {
   bool bVar1;
   int iVar2;
-  ushort *local_60;
-  ushort *local_5c;
-  ushort local_58 [2];
+  qspi_buffers buffers;
+  ushort local_58;
+  uint16_t local_56;
   char acStack_54 [80];
   
   bVar1 = true;
-  local_60 = local_58 + 1;
-  local_5c = local_58;
-  local_58[1] = 0xffff;
+  buffers.transmit = &local_56;
+  buffers.receive = &local_58;
+  local_56 = 0xffff;
   for (iVar2 = 0; (bVar1 != false && (iVar2 < 6)); iVar2 = iVar2 + 1) {
     if (param_3 == '\0') {
-      qspi_transfer(0xc,&local_60,0x10);
+      qspi_transfer(0xc,&buffers.transmit,0x10);
     }
     else {
-      qspi_read(0xc,&local_60,0x10);
+      qspi_read(0xc,&buffers,0x10);
     }
-    if ((*param_2 & (*param_1 ^ ~(byte)(local_58[0] >> 8))) != 0) {
+    if ((*param_2 & (*param_1 ^ ~(byte)(local_58 >> 8))) != 0) {
       bVar1 = false;
     }
     if (!bVar1) {
-      debug_sprintf(acStack_54,"odd: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58[0],
+      debug_sprintf(acStack_54,"odd: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58,
                     (ushort)*param_1,(ushort)*param_2);
       debug_message(acStack_54,param_3);
     }
-    if ((param_2[1] & (param_1[1] ^ ~(byte)local_58[0])) != 0) {
+    if ((param_2[1] & (param_1[1] ^ ~(byte)local_58)) != 0) {
       bVar1 = false;
     }
     if (bVar1 == false) {
-      debug_sprintf(acStack_54,"odd: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58[0],
+      debug_sprintf(acStack_54,"odd: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58,
                     (ushort)param_1[1],(ushort)param_2[1]);
       debug_message(acStack_54,param_3);
     }
@@ -38858,27 +38873,27 @@ bool fpga_verify_odd(byte *param_1,byte *param_2,char param_3)
   }
   if (bVar1 != false) {
     if (param_3 == '\0') {
-      qspi_transfer(0xc,&local_60,10);
+      qspi_transfer(0xc,&buffers.transmit,10);
     }
     else {
-      qspi_read(0xc,&local_60,10);
+      qspi_read(0xc,&buffers,10);
     }
-    local_58[0] = local_58[0] << 6;
-    if ((*param_2 & (*param_1 ^ ~(byte)(local_58[0] >> 8))) != 0) {
+    local_58 = local_58 << 6;
+    if ((*param_2 & (*param_1 ^ ~(byte)(local_58 >> 8))) != 0) {
       bVar1 = false;
     }
     if (bVar1 == false) {
-      debug_sprintf(acStack_54,"odd: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+      debug_sprintf(acStack_54,"odd: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58,
                     (ushort)*param_1,(ushort)*param_2);
       debug_message(acStack_54,param_3);
     }
     param_1 = param_1 + 1;
     param_2 = param_2 + 1;
-    if ((*param_2 & (*param_1 ^ ~(byte)local_58[0]) & 0xc0) != 0) {
+    if ((*param_2 & (*param_1 ^ ~(byte)local_58) & 0xc0) != 0) {
       bVar1 = false;
     }
     if (bVar1 == false) {
-      debug_sprintf(acStack_54,"odd: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+      debug_sprintf(acStack_54,"odd: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58,
                     (ushort)*param_1,(ushort)*param_2);
       debug_message(acStack_54,param_3);
     }
@@ -38906,27 +38921,27 @@ bool fpga_verify_even(byte *param_1,byte *param_2,char param_3)
   byte *param2;
   bool bVar3;
   bool bVar4;
-  ushort *local_60;
-  ushort *local_5c;
-  ushort local_58 [2];
+  qspi_buffers buffers;
+  ushort local_58;
+  uint16_t local_56;
   char acStack_54 [80];
   
-  local_60 = local_58 + 1;
-  local_5c = local_58;
-  local_58[1] = 0xffff;
+  buffers.transmit = &local_56;
+  buffers.receive = &local_58;
+  local_56 = 0xffff;
   if (param_3 == '\0') {
-    qspi_transfer(0xc,&local_60,0xc);
+    qspi_transfer(0xc,&buffers.transmit,0xc);
   }
   else {
-    qspi_read(0xc,&local_60,0xc);
+    qspi_read(0xc,&buffers,0xc);
   }
-  bVar3 = (*param_2 & (*param_1 ^ ~(byte)(local_58[0] >> 8)) & 0xf) == 0;
+  bVar3 = (*param_2 & (*param_1 ^ ~(byte)(local_58 >> 8)) & 0xf) == 0;
   if (!bVar3) {
-    debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+    debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58,
                   (ushort)*param_1,(ushort)*param_2);
     debug_message(acStack_54,param_3);
   }
-  bVar4 = (param_2[1] & (param_1[1] ^ ~(byte)local_58[0])) == 0;
+  bVar4 = (param_2[1] & (param_1[1] ^ ~(byte)local_58)) == 0;
   bVar1 = bVar4 && bVar3;
   param3 = param_2 + 2;
   param2 = param_1 + 2;
@@ -38937,24 +38952,24 @@ bool fpga_verify_even(byte *param_1,byte *param_2,char param_3)
       param3 = param_2 + 2;
       if ((bVar1 == false) || (4 < iVar2)) break;
       if (param_3 == '\0') {
-        qspi_transfer(0xc,&local_60,0x10);
+        qspi_transfer(0xc,&buffers.transmit,0x10);
       }
       else {
-        qspi_read(0xc,&local_60,0x10);
+        qspi_read(0xc,&buffers,0x10);
       }
-      if ((*param3 & (*param2 ^ ~(byte)(local_58[0] >> 8))) != 0) {
+      if ((*param3 & (*param2 ^ ~(byte)(local_58 >> 8))) != 0) {
         bVar1 = false;
       }
       if (bVar1 == false) {
-        debug_sprintf(acStack_54,"even: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58[0],
+        debug_sprintf(acStack_54,"even: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58,
                       (ushort)*param2,(ushort)*param3);
         debug_message(acStack_54,param_3);
       }
-      if ((param_2[3] & (param_1[3] ^ ~(byte)local_58[0])) != 0) {
+      if ((param_2[3] & (param_1[3] ^ ~(byte)local_58)) != 0) {
         bVar1 = false;
       }
       if (bVar1 == false) {
-        debug_sprintf(acStack_54,"even: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58[0],
+        debug_sprintf(acStack_54,"even: inv read: %04hX config: %02hX mask: %02hX\r\n",~local_58,
                       (ushort)param_1[3],(ushort)param_2[3]);
         debug_message(acStack_54,param_3);
       }
@@ -38964,31 +38979,31 @@ bool fpga_verify_even(byte *param_1,byte *param_2,char param_3)
     }
   }
   else {
-    debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+    debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58,
                   (ushort)param_1[1],(ushort)param_2[1]);
     debug_message(acStack_54,param_3);
   }
   if (bVar1 != false) {
     if (param_3 == '\0') {
-      qspi_transfer(0xc,&local_60,0xe);
+      qspi_transfer(0xc,&buffers.transmit,0xe);
     }
     else {
-      qspi_read(0xc,&local_60,0xe);
+      qspi_read(0xc,&buffers,0xe);
     }
-    local_58[0] = local_58[0] << 2;
-    if ((*param3 & (*param2 ^ ~(byte)(local_58[0] >> 8))) != 0) {
+    local_58 = local_58 << 2;
+    if ((*param3 & (*param2 ^ ~(byte)(local_58 >> 8))) != 0) {
       bVar1 = false;
     }
     if (bVar1 == false) {
-      debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+      debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58,
                     (ushort)*param2,(ushort)*param3);
       debug_message(acStack_54,param_3);
     }
-    if ((param3[1] & (param2[1] ^ ~(byte)local_58[0]) & 0xfc) != 0) {
+    if ((param3[1] & (param2[1] ^ ~(byte)local_58) & 0xfc) != 0) {
       bVar1 = false;
     }
     if (bVar1 == false) {
-      debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58[0],
+      debug_sprintf(acStack_54,"even: inv read: %02hX config: %02hX mask: %02hX\r\n",~local_58,
                     (ushort)param2[1],(ushort)param3[1]);
       debug_message(acStack_54,param_3);
     }
@@ -54571,8 +54586,8 @@ int log_write(char *format,...)
 
 {
   int iVar1;
-  int32_t in_stack_00000008;
-  int32_t in_stack_0000000c;
+  int32_t in_stack_00000008 = *(int32_t *)((char *)__builtin_frame_address(0) + 12);
+  int32_t in_stack_0000000c = *(int32_t *)((char *)__builtin_frame_address(0) + 16);
   
   iVar1 = mutex_lock(&log_mutex);
   if (iVar1 == 0) {
@@ -69319,7 +69334,7 @@ __exception void primary_trap_1(void)
 {
   int in_D0;
   int in_A0;
-  undefined2 in_stack_00000000;
+  undefined2 in_stack_00000000 = *(undefined2 *)((char *)__builtin_frame_address(0) + 4);
   
   if (in_D0 == 0) {
     *(undefined2 *)(in_A0 + 0x40) = in_stack_00000000;
@@ -69384,7 +69399,7 @@ undefined4 setjmp(undefined4 *param_1)
   undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A6;
-  undefined4 in_stack_00000000;
+  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
   
   param_1[0xc] = in_A0;
   __m68k_trap(1);
@@ -78509,10 +78524,10 @@ ulonglong float_raise(uint code,...)
   short sVar6;
   uint uVar7;
   bool bVar8;
-  uint in_stack_00000008;
-  uint in_stack_0000000c;
-  uint in_stack_00000010;
-  uint in_stack_00000014;
+  uint in_stack_00000008 = *(uint *)((char *)__builtin_frame_address(0) + 12);
+  uint in_stack_0000000c = *(uint *)((char *)__builtin_frame_address(0) + 16);
+  uint in_stack_00000010 = *(uint *)((char *)__builtin_frame_address(0) + 20);
+  uint in_stack_00000014 = *(uint *)((char *)__builtin_frame_address(0) + 24);
   
   uVar3 = CONCAT22((short)((uint)in_D1 >> 0x10),(short)code);
   if ((short)code != 0) {
@@ -81233,12 +81248,12 @@ undefined8 installer_default_exception(void)
   int iVar1;
   undefined2 uVar2;
   undefined4 in_D1;
-  undefined2 in_stack_00000000;
-  undefined4 in_stack_00000002;
-  ushort in_stack_00000006;
-  undefined2 in_stack_00000008;
-  ushort in_stack_0000000a;
-  undefined2 in_stack_0000000e;
+  undefined2 in_stack_00000000 = *(undefined2 *)((char *)__builtin_frame_address(0) + 4);
+  undefined4 in_stack_00000002 = *(undefined4 *)((char *)__builtin_frame_address(0) + 6);
+  ushort in_stack_00000006 = *(ushort *)((char *)__builtin_frame_address(0) + 10);
+  undefined2 in_stack_00000008 = *(undefined2 *)((char *)__builtin_frame_address(0) + 12);
+  ushort in_stack_0000000a = *(ushort *)((char *)__builtin_frame_address(0) + 14);
+  undefined2 in_stack_0000000e = *(undefined2 *)((char *)__builtin_frame_address(0) + 18);
   undefined2 uStack_12;
   undefined2 uVar3;
   undefined2 uVar4;
@@ -81347,7 +81362,7 @@ void installer_periodic_interrupt(void)
 void installer_periodic_interrupt_enable(void)
 
 {
-  char in_stack_00000004;
+  char in_stack_00000004 = *(char *)((char *)__builtin_frame_address(0) + 8);
   
   if (in_stack_00000004 == '\0') {
     sim.picr = 0x42;
@@ -81484,7 +81499,7 @@ uint16_t installer_set_interrupt_mask(undefined2 param_1)
 undefined2 installer_trap_7(void)
 
 {
-  undefined2 in_stack_00000000;
+  undefined2 in_stack_00000000 = *(undefined2 *)((char *)__builtin_frame_address(0) + 4);
   
   return in_stack_00000000;
 }
@@ -81522,7 +81537,7 @@ void installer_float_exception_report(uint param_1,undefined4 param_2)
   uint8_t *puVar4;
   uint8_t *puVar5;
   uint8_t *puVar6;
-  undefined4 in_stack_00000000;
+  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
   
   installer_float_exception_message[0] = 0;
   puVar5 = installer_float_exception_message + 1;
@@ -81644,8 +81659,8 @@ void installer_program_end_report(uint value)
   char *pcVar3;
   uint8_t *puVar4;
   char *pcVar5;
-  undefined4 in_stack_00000000;
-  undefined4 in_stack_00000008;
+  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
+  undefined4 in_stack_00000008 = *(undefined4 *)((char *)__builtin_frame_address(0) + 12);
   
   installer_program_end_message = '\0';
   pcVar5 = &DAT_0010aaf3;
@@ -81743,8 +81758,8 @@ __exception void installer_kernel_dispatch_service(undefined2 param_1)
   undefined2 *puVar14;
   undefined2 *in_USP;
   undefined8 uVar15;
-  ushort in_stack_00000000;
-  undefined4 in_stack_00000002;
+  ushort in_stack_00000000 = *(ushort *)((char *)__builtin_frame_address(0) + 4);
+  undefined4 in_stack_00000002 = *(undefined4 *)((char *)__builtin_frame_address(0) + 6);
   short sVar11;
   
   uVar15 = CONCAT44(in_D0,in_D1);
@@ -82075,12 +82090,12 @@ __naked void installer_kernel_switch_task(void)
   undefined2 *puVar11;
   undefined2 *in_USP;
   undefined8 uVar12;
-  undefined4 in_stack_00000000;
-  undefined4 in_stack_00000004;
-  undefined4 in_stack_00000008;
-  ushort in_stack_0000000c;
-  undefined4 in_stack_0000000e;
-  undefined2 in_stack_00000012;
+  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
+  undefined4 in_stack_00000004 = *(undefined4 *)((char *)__builtin_frame_address(0) + 8);
+  undefined4 in_stack_00000008 = *(undefined4 *)((char *)__builtin_frame_address(0) + 12);
+  ushort in_stack_0000000c = *(ushort *)((char *)__builtin_frame_address(0) + 16);
+  undefined4 in_stack_0000000e = *(undefined4 *)((char *)__builtin_frame_address(0) + 18);
+  undefined2 in_stack_00000012 = *(undefined2 *)((char *)__builtin_frame_address(0) + 22);
   
   uVar12 = CONCAT44(in_D0,in_D1);
   while (uVar8 = (undefined4)uVar12, unaff_A6[0x1b] != 0) {
@@ -82730,7 +82745,7 @@ __regcall undefined8 installer_kernel_delete(void)
   undefined8 *puVar6;
   undefined1 in_ZF;
   bool bVar7;
-  undefined4 in_stack_00000000;
+  undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
   undefined1 local_10 [16];
   
   puVar6 = (undefined8 *)local_10;
@@ -88634,7 +88649,7 @@ undefined2 installer_status_set_bit(int param_1,int param_2)
   int iVar3;
   short *psVar4;
   undefined2 uVar5;
-  undefined4 in_stack_0000000c;
+  undefined4 in_stack_0000000c = *(undefined4 *)((char *)__builtin_frame_address(0) + 16);
   
   uVar5 = 1;
   if (param_2 < 0) {
@@ -88977,7 +88992,7 @@ void installer_trap_1(void)
 {
   int in_D0;
   int in_A0;
-  undefined2 in_stack_00000000;
+  undefined2 in_stack_00000000 = *(undefined2 *)((char *)__builtin_frame_address(0) + 4);
   
   if (in_D0 == 0) {
     *(undefined2 *)(in_A0 + 0x40) = in_stack_00000000;
@@ -89007,12 +89022,12 @@ void installer_float_raise(uint param_1)
   uint uVar10;
   uint uVar11;
   int unaff_A6;
-  uint in_stack_00000008;
-  uint in_stack_0000000c;
-  undefined2 in_stack_00000010;
-  undefined2 in_stack_00000012;
-  undefined2 in_stack_00000014;
-  undefined2 in_stack_00000016;
+  uint in_stack_00000008 = *(uint *)((char *)__builtin_frame_address(0) + 12);
+  uint in_stack_0000000c = *(uint *)((char *)__builtin_frame_address(0) + 16);
+  undefined2 in_stack_00000010 = *(undefined2 *)((char *)__builtin_frame_address(0) + 20);
+  undefined2 in_stack_00000012 = *(undefined2 *)((char *)__builtin_frame_address(0) + 22);
+  undefined2 in_stack_00000014 = *(undefined2 *)((char *)__builtin_frame_address(0) + 24);
+  undefined2 in_stack_00000016 = *(undefined2 *)((char *)__builtin_frame_address(0) + 26);
   
   if ((short)param_1 == 0) {
 LAB_installer__00108cf2:

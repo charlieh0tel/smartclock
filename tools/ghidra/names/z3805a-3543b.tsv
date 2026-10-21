@@ -757,6 +757,7 @@
 0x16828	function	os_report_regions	"Region strt       end  min     max    pend   USED"	prints the kernel's memory regions and their use
 0x16bb6	function	task_stack_info	"no system stack found"; task_stack_report's per-task stacks	measures a task's stacks for the stack report	void task_stack_info(void *task, uint32_t *user_top, uint32_t *user_pointer, uint32_t *user_size, uint32_t *supervisor_top, uint32_t *supervisor_pointer, uint32_t *supervisor_size)
 0x132f4	function	stack_usage_report	"User: %5u of %5u b   Supv: %5u of %5u b"	prints a task's user and supervisor stack use	void stack_usage_report(void *task)
+0x132f4	local	usage	read	the four longs stack_measure fills and it prints: user used and size, supervisor used and size (0x132f8 to 0x13318)	uint32_t[4] @ -0x64
 0x1e766	function	duarta_isr	"DUARTA isr signaling SIG_SIQ"	the interrupt handler for DUART channel A, the GPS engine's
 0x1e7f6	function	duartb_isr	"DUARTB isr signaling SIGINTR", "SIG_SIQ"	the interrupt handler for DUART channel B
 0x22d70	function	fpga_setup	"setup fpga"	sets the FPGA up
@@ -799,8 +800,11 @@
 0x2050c	function	qspi_release	context	signals the next task in the QSPI owner queue; "SPI isr signaling SPI owner"
 0x20972	function	qspi_isr	context	the transfer's end: copies the QSPI receive RAM out and hands the QSPI on
 0x22fc6	function	fpga_verify_first	context	reads the FPGA's configuration back over QSPI device 0xc and checks it against the image under a mask; "first: inv read"
+0x22fc6	local	buffers	read	the transfer it hands qspi_read or qspi_transfer: the 0xffff word written and the word read back (0x22ffa to 0x2300a)	qspi_buffers @ -0x60
 0x23304	function	fpga_verify_odd	context	the same for the odd frames; "odd: inv read"
+0x23304	local	buffers	read	the transfer it hands qspi_read or qspi_transfer: the 0xffff word written and the word read back (0x23326 to 0x23336)	qspi_buffers @ -0x60
 0x2353a	function	fpga_verify_even	context	the same for the even frames; "even: inv read"
+0x2353a	local	buffers	read	the transfer it hands qspi_read or qspi_transfer: the 0xffff word written and the word read back (0x23568 to 0x23578)	qspi_buffers @ -0x60
 0x2384a	function	fpga_verify_chip	context	verifies one chip through the port F lines; "chip %1d failed compare"
 0x242f0	function	hmon_check_efc	context	"EFC near end of range" when pll.efc stays outside 52428 to 996132, 5% to 95% of 2^20, five checks
 0x101cf4	label	efc_range	structures.md	efc_clamp's and hmon_check_efc's flags: clamped, near the end of range, and the checks outside it	efc_range_state
@@ -1332,7 +1336,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x12db6	function	pps_interrupt	context	the 1PPS interrupt's work: ticks the clock, updates the time code and posts the time to pps_exchange	void pps_interrupt(void)
 0x12e6c	function	pps_interrupt_stop	context	stops the 1PPS interrupt, clearing its GPT enable and flag
 0x1321a	function	stack_measure	context	a task's supervisor and user stacks, each the used part of its size, for stack_usage_report	int stack_measure(void *task, uint32_t *usage)
-0x132da	function	stack_usage	context	measures a stack from A1, its bottom, to D0, its top: the bytes above the 0xabcd fill left at its bottom back in D0, its size in D1		convention=register; confidence=read; in=A1 uint16_t *bottom, D0 char *top; out=D0 int used, D1 int size; family=stack
+0x132da	function	stack_usage	context	measures a stack from A1, its bottom, to D0, its top: the bytes above the 0xabcd fill left at its bottom back in D0, its size in D1, a long long's high and low halves		convention=register; confidence=read; in=A1 uint16_t *bottom, D0 char *top; out=D0:D1 long long usage; preserves=D2, D3, D4, D5, D6, D7, A0, A2, A3, A4, A5, A6; family=stack
 0x13258	function	stack_fill	context	fills a new task's stacks with 0xabcd, the task record in A0		convention=register; confidence=read; in=A0 void *task; family=stack
 0x132b8	function	region_find_segment	context	finds the memory segment that holds an address, A0 the region and D0 the address, the segment back in A1, zero if none		convention=register; confidence=read; in=A0 void *region, D0 char *address; out=A1 void *segment; family=stack
 0x1339e	function	task_set_priority	context	sets a task's priority, returning the old
@@ -1355,7 +1359,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x13fa6	function	timecode_schedule	context	sets output compare 3 to fire a time code character a delay after the 1PPS capture	void timecode_schedule(uint param_1)
 0x1406a	function	es_schedule	context	sets output compare 4 to fire an ES message character a delay after the 1PPS capture
 0x149a8	function	program_exit	context	runs the atexit functions and reports "Prog end, returned" with the code; never returns
-0x149bc	function	program_end_report	context	builds "Prog end, returned N" and stops with fatal_error_with_code	void program_end_report(uint value)
+0x149bc	function	program_end_report	context	builds "Prog end, returned N" and stops with fatal_error_with_code, its code the long above value, which program_exit does not push: program_exit's return address (0x149ae to 0x149b2)	void program_end_report(uint value, uint32_t return_address)
 0x160de	function	object_name	context	a task's or exchange's four-character name, from its record at +0x14	char *object_name(void *object)
 0x16280	function	os_report_region_line	context	prints one memory region's line of the kernel report
 0x162b2	function	region_segment_containing	context	the segment of a region that holds an address	void *region_segment_containing(void *region, uint32_t address)

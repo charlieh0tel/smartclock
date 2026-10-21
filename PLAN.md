@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1251 run, 1160 agree, 77 reach what the
-     harness does not model and are skipped, and 14 differ, in the
+     original reads them: of 1251 run, 1166 agree, 77 reach what the
+     harness does not model and are skipped, and 8 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): traps #1 and #7 run the image's handlers;
@@ -876,9 +876,22 @@ view cannot drift apart.  The library, bottom up:
      (`task_stack_report`, `s_rep_word`,
      `scpi_query_DIAGnostic_OS_STACk`); and `fpga_verify_first`,
      `_odd` and `_even`, which agreed, return 0 where the image's
-     return 1 on the buffers of pointers, after the first QSPI read:
-     perhaps the buffer pair, which the C keeps as two locals, as the
-     self-tests' was.
+     return 1 on the buffers of pointers, after the first QSPI read.
+     Their causes: the FPGA checks' buffer pair, kept as two locals gcc
+     lays apart, and `stack_usage_report`'s four longs, are each one
+     local by a `local` row; `stack_usage`, which returns two values in
+     D0 and D1, gets one `long long` from D0:D1, as `ldiv`, and so a
+     bridge, where `stack_measure` called it with no arguments;
+     `program_end_report` reads the long above its argument, which
+     `program_exit` does not push, its own return address, and takes it
+     as a second argument, which the exporter reads from gcc's frame, N
+     + 4 above its frame pointer, for each `in_stack_N` where every
+     argument is a long in its slot; `stack_usage` preserves the A0
+     `stack_measure` reads after it (1159 agreeing to 1166, 14
+     differing to 8).  `task_stack_info`'s two locals, which the image
+     reads unset ("no system stack found" at `0x16c28` to `0x16c32`),
+     still differ: gcc takes them as 0, where the image faults on the
+     filled frame.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

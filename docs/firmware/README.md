@@ -656,6 +656,11 @@ decompiler wrote it, and reported.
   declaration, before the function's code sets the register: a switch
   with no case for a value passes its caller's D2 on, which C left
   unset (the SCPI setters' `setting`).  A6 and A7 are left alone.
+- A local the decompiler reads from the caller's stack above the
+  arguments, `in_stack_N`, is the long N + 4 above gcc's frame pointer,
+  where every argument is a long in its own slot, so that gcc's frame
+  holds the same bytes there (`program_end_report`'s caller's return
+  address).
 - An infinity or NaN assigned to an integer variable becomes its bits,
   `local_14 = __ghidra_bits(-__builtin_inf())`: the decompiler copies
   the constant's bits, where C converts its value, undefined for an

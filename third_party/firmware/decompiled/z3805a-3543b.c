@@ -31530,7 +31530,7 @@ undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,undef
     *puVar4 = dp;
     iVar2 = param_3;
     while ((short)iVar2 != 0) {
-      dp = forth_compile_code((uint16_t *)&UNK_0001af5e,dp);
+      dp = ({ __auto_type __c = forth_compile_code((uint16_t *)&UNK_0001af5e,dp); extraout_D0 = (__typeof__(extraout_D0))((iVar2 & 0xffff0000) | (uint16_t)(iVar2 - 1)); __c; });
       iVar2 = extraout_D0;
     }
     dp[0] = 'N';

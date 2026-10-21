@@ -2376,7 +2376,7 @@ public class SmartClockExportC extends GhidraScript {
 					continue;
 				}
 				String before = op.getInput(0).isConstant()
-						? valueWritten(call, register, high.getFunction())
+						? valueWritten(call, register, high)
 						: valueName(op.getInput(0));
 				if (before != null) {
 					assignments.add(name + " = (__typeof__(" + name + "))" + before);
@@ -2393,7 +2393,8 @@ public class SmartClockExportC extends GhidraScript {
 	 * fall-throughs and, into an instruction nothing falls through to,
 	 * the one branch to it, and stops where several paths meet.
 	 */
-	private String valueWritten(PcodeOp call, Register register, Function function) {
+	private String valueWritten(PcodeOp call, Register register, HighFunction high) {
+		Function function = high.getFunction();
 		Instruction at = getInstructionAt(call.getSeqnum().getTarget());
 		for (int step = 0; at != null && step < WALK_LIMIT; step++) {
 			at = predecessor(at);
@@ -2404,6 +2405,9 @@ public class SmartClockExportC extends GhidraScript {
 				if (!(result instanceof Register written)
 					|| !written.getBaseRegister().equals(register.getBaseRegister())) {
 					continue;
+				}
+				if (at.getMnemonicString().startsWith(DECREMENT_AND_BRANCH)) {
+					return decremented(at, register, high);
 				}
 				for (Reference reference : at.getReferencesFrom()) {
 					if (reference instanceof StackReference stack && reference.getReferenceType().isRead()) {
@@ -2416,6 +2420,30 @@ public class SmartClockExportC extends GhidraScript {
 				return at.getNumOperands() == 2 && immediate != null
 						? "0x" + Long.toHexString(immediate.getUnsignedValue())
 						: null;
+			}
+		}
+		return null;
+	}
+
+	/** The mnemonics of the 68k's decrement-and-branch, dbf and the rest. */
+	private static final String DECREMENT_AND_BRANCH = "db";
+
+	/**
+	 * What a dbf leaves in its counter: the value the decompiler reads it
+	 * from at the dbf, less one in its low word, the high word kept
+	 * (pforth_define_word's loop around forth_compile_code, 0x1add8);
+	 * null if that value has no name.
+	 */
+	private String decremented(Instruction dbf, Register register, HighFunction high) {
+		for (Iterator<PcodeOpAST> ops = high.getPcodeOps(dbf.getAddress()); ops.hasNext();) {
+			PcodeOp op = ops.next();
+			for (Varnode input : op.getInputs()) {
+				Register read = input.isRegister() ? currentProgram.getRegister(input) : null;
+				String name = namedHigh(input);
+				if (read != null && read.getBaseRegister().equals(register.getBaseRegister()) && name != null
+					&& input.getSize() == REGISTER_BYTES) {
+					return "((" + name + " & 0xffff0000) | (uint16_t)(" + name + " - 1))";
+				}
 			}
 		}
 		return null;

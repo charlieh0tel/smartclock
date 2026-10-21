@@ -687,13 +687,15 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1252 run, 1240 agree, 1 reaches what the
-     harness does not model and is skipped, and 11 differ, in the
+     original reads them: of 1252 run, 1241 agree, 1 reaches what the
+     harness does not model and is skipped, and 10 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): traps #1 and #7 run the image's handlers;
      the kernel's traps are answered by a model of each service, from
-     the registers the binding's stubs load and store; the devices are
+     the registers the binding's stubs load and store, and of those
+     only the bits the kernel reads (`create`'s D1 and D2 low bytes and
+     the block through A0); the devices are
      memory zeroed for each call; and the kernel calls and device
      writes a call makes, in order, are compared as RAM is.
      Unicorn has no CPU32 and the 68020 stands in: the image uses none
@@ -1155,6 +1157,18 @@ view cannot drift apart.  The library, bottom up:
      call's double read back from a register pair, its copy in A0:A1
      or D0:D1 the decompiler took to be elsewhere, is kept in a
      variable (859 to 788).
+     And `console_init`, which differed at `console_task_create`'s
+     `create`: the kernel reads only D1's and D2's low bytes and the
+     block A0 points at (`kernel_create`, `0x14dac`), so the high word
+     the `clr.w` leaves and the block's address on each build's stack are
+     no difference, and the model records what the kernel reads.  What
+     then differed was the dictionary, 0x32 bytes short: gcc's
+     `pforth_define_word` compiled one argument push where `hdac_write`
+     takes two, its `dbf` loop around `forth_compile_code` reading the
+     count back from a register the decompiler takes the call to change.
+     That routine keeps D0, and what the `dbf` leaves there is the count
+     less one in its low word, which the exporter now assigns after the
+     call (1240 agreeing to 1241, 11 differing to 10).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

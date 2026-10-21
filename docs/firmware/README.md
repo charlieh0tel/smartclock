@@ -678,8 +678,10 @@ decompiler wrote it, and reported.
   value before the call, where the C names that value.  Where the
   decompiler made the register's value up, having tracked none, it is
   what the instruction that last wrote the register gave it, a stack
-  variable or an immediate, found back through fall-throughs and lone
-  branches (`modf`'s A0, the `iptr` it was loaded from).
+  variable or an immediate, or a `dbf`'s counter less one in its low
+  word, found back through fall-throughs and lone branches (`modf`'s
+  A0, the `iptr` it was loaded from; `pforth_define_word`'s loop count
+  around `forth_compile_code`).
 - A rotate of a long by a register, which the decompiler writes as two
   shifts, `x << (n & 0x3f) | x >> (0x20 - (n & 0x3f))`, is
   `__ghidra_rotl(x, n)`: the 68k's `rol` rotates by n modulo 32, where

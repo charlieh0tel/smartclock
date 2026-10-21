@@ -200,9 +200,12 @@ class Service:
     reads, as (pointer, count) registers, recorded by its contents and
     returned as its length in the count and its end in the pointer; and
     a segment it allocates, as (size, pointer) registers, returned from
-    ALLOCATIONS; and a task it identifies, as (name, pointer) registers,
+    ALLOCATIONS; a task it identifies, as (name, pointer) registers,
     returned as its record, a segment of TASK_RECORD_SIZE allocated the
-    first time a call names it."""
+    first time a call names it; and a block it reads through a pointer,
+    unless null, as a word count and that many words after it, recorded
+    by its contents.  An argument read only in part names its width,
+    D1.b for the low byte, and is recorded so."""
 
     arguments: tuple[str, ...] = ()
     results: tuple[str, ...] = ()
@@ -212,12 +215,29 @@ class Service:
     text: tuple[str, str] | None = None
     allocates: tuple[str, str] | None = None
     identifies: tuple[str, str] | None = None
+    counted: str | None = None
+
+
+# A counted block's word count, and each of its words.
+COUNT = struct.Struct(">H")
+# An argument's width suffix, and the bits of the register it reads.
+WIDTHS = {".b": 0xFF, ".w": 0xFFFF}
+
+
+def service_argument(uc, name: str) -> tuple[str, int]:
+    """An argument's name and the bits of its register a service reads."""
+    register, width = name[:2], name[2:]
+    return name, uc.reg_read(REGISTERS[register]) & WIDTHS.get(width, 0xFFFFFFFF)
 
 
 # The kernel's services, trap #3, by number.
 KERNEL_SERVICES = {
     0: Service(),
-    1: Service(("D0", "D1", "D2", "D3", "A0"), ("A0",)),
+    # create: the name, the time slice and the priority from D1's and
+    # D2's low bytes, the two stack sizes in D3's words, and through A0,
+    # unless null, a word count and that many words for the new stack
+    # (kernel_create, 0x14dac: 0x14e2e, 0x14db0, 0x14dc8, 0x14ddc)
+    1: Service(("D0", "D1.b", "D2.b", "D3"), ("A0",), counted="A0"),
     2: Service(("A0", "A1")),
     3: Service(("D0",), ("D0",), identifies=("D0", "A0")),
     4: Service(("A0",)),
@@ -1362,6 +1382,11 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
             data = string(uc, uc.reg_read(REGISTERS[service.text[0]]))
             if data is None:
                 return out_of_reach
+        if service.counted:
+            block = uc.reg_read(REGISTERS[service.counted])
+            if block:
+                (count,) = COUNT.unpack(uc.mem_read(block, COUNT.size))
+                data = bytes(uc.mem_read(block, COUNT.size * (count + 1)))
     except UcError:
         return out_of_reach
     too_large = f"service {number}, its segment out of reach"
@@ -1379,7 +1404,7 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
         if m.tasks[task] is None:
             return too_large
         uc.reg_write(REGISTERS[pointer], m.tasks[task])
-    call = KernelCall(vector, number, tuple((name, uc.reg_read(REGISTERS[name])) for name in service.arguments), data)
+    call = KernelCall(vector, number, tuple(service_argument(uc, name) for name in service.arguments), data)
     for name in service.results:
         uc.reg_write(REGISTERS[name], KERNEL_RESULT)
     if service.none_done:

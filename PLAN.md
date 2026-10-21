@@ -688,8 +688,8 @@ view cannot drift apart.  The library, bottom up:
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
      original reads them: of 1252 run, 1240 agree, 1 reaches what the
-     harness does not model and is skipped, 10 differ as known, and 1
-     differs otherwise (`frexp` on a subnormal, below).  A known difference is one whose cause is
+     harness does not model and is skipped, 10 differ as known, and
+     none otherwise.  A known difference is one whose cause is
      found and is not the C's, `function_check.py`'s `KNOWN`: the
      firmware's own reads of what nothing set (`task_stack_info`'s
      locals, `os_report_processes`' D5) and what C cannot say
@@ -1210,6 +1210,14 @@ view cannot drift apart.  The library, bottom up:
      calibration records and the two logs, 47 functions written by hand,
      each agreeing (`log_page_read` and `log_page_write` wait on their
      prototypes, which should take a `log_page *`).
+     `libc.c`, the C library, 29 functions: `frexp`, the last that
+     differed, agrees, normalizing a subnormal in C where the decompiled
+     call of `double_normalize` lost the shift; and `pow` on a negative
+     base, which the decompiled C got wrong (`ABS` of a `uint64_t`) and
+     no case tried, does too, now a given case (`POWERS`).  Of 1252 run,
+     1241 agree, 1 is skipped, 10 differ as known and none otherwise.
+     Left: `doprnt`, `sprintf_put` and `vsprintf` on their prototypes,
+     `call_atexit_functions` on the type of `atexit_functions`.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

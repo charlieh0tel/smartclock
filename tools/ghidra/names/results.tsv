@@ -52,3 +52,31 @@ log_clear	failed	1 when a record's erasure failed
 log_count	count	the reset-cause log's entry count
 log_entry_text	clamped	1 when the number was clamped or the entry is unused
 reset_record_write	failed	1 when the log is full or the write failed
+# The C library, 0x5e000 to 0x61fff (libc.md); sqrt is above
+float_raise	raised	the routine's result in D0:D1, a double
+abs	magnitude
+atoi	value
+div	quotient_remainder	quotient in the high word, remainder in the low
+ldiv	quotient_remainder	quotient in the high word, remainder in the low
+labs	magnitude
+memcmp	difference	the first differing bytes', as signed
+memcpy	destination
+memset	destination
+rand	random_value
+strcat	destination
+strchr	found	null when absent
+strncmp	difference
+strncpy	destination
+toupper	upper
+next_decimal_digit	digit_quotient	the digit in the high word, the quotient in the low
+doprnt	length	the characters written
+sprintf	length	the characters written
+sprintf_put	written	the count copied, 0 for an element size other than 1
+vsprintf	length	the characters written
+fabs	magnitude
+frexp	mantissa	in [0.5, 1)
+log	logarithm
+modf	fraction
+double_is_integer	integral	whether an integer
+double_truncate_sixteenths	truncated
+pow	power

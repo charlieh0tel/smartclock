@@ -164,11 +164,16 @@ DIGITS = [(7, 1), (17, 1), (1, 1), (6, 0), (0, 0), (60, 0)]
 # (0x609ac, 0x60dae) and modf then stores through iptr, float_raise
 # keeping A0 (0x5e940, 0x60e62).
 SPECIAL_DOUBLES = [5e-324, 1e-310, float("inf"), float("nan")]
+# pow's operands the generated reals never are: a negative base to an
+# integer power, odd and even, which pow takes the sign of apart
+# (double_is_integer, 0x60e68), and a fraction.
+POWERS = [(-2.0, 3.0), (-2.0, 2.0), (-0.5, 3.0), (2.0, 0.5), (0.0, 2.0)]
 GIVEN_CASES = {
     "pforth_define_word": [{2: arguments, 3: results} for arguments, results in WORD_COUNTS],
     "bytes_equal_n": [dict(enumerate(arguments)) for arguments in SAME_LENGTH],
     "double_to_digits": [{1: count, 5: mode} for count, mode in DIGITS],
     **{name: [{0: value} for value in SPECIAL_DOUBLES] for name in ("frexp", "modf", "sqrt", "log", "fabs")},
+    "pow": [{0: base, 1: exponent} for base, exponent in POWERS],
 }
 
 

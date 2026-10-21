@@ -1993,6 +1993,59 @@ struct status_condition {
     int16_t bit;
 };
 
+typedef enum __attribute__((packed)) status_condition_code {
+    STATUS_POWER_ON=25,
+    STATUS_LOCKED_SET=26,
+    STATUS_LOCKED_CLEARED=27,
+    STATUS_POSITION_HOLD_SET=28,
+    STATUS_POSITION_HOLD_CLEARED=29,
+    STATUS_SATELLITES_SUFFICIENT_SET=30,
+    STATUS_SATELLITES_SUFFICIENT_CLEARED=31,
+    STATUS_LOG_ALMOST_FULL_SET=32,
+    STATUS_LOG_ALMOST_FULL_CLEARED=33,
+    STATUS_FIRST_SATELLITE_SET=34,
+    STATUS_FIRST_SATELLITE_CLEARED=35,
+    STATUS_OVEN_WARMED_SET=36,
+    STATUS_OVEN_WARMED_CLEARED=37,
+    STATUS_DATE_TIME_VALID_SET=38,
+    STATUS_DATE_TIME_VALID_CLEARED=39,
+    STATUS_HOLDING_SET=40,
+    STATUS_HOLDING_CLEARED=41,
+    STATUS_WAITING_SET=42,
+    STATUS_WAITING_CLEARED=43,
+    STATUS_RECOVERING_SET=44,
+    STATUS_RECOVERING_CLEARED=45,
+    STATUS_HOLDOVER_THRESHOLD_SET=46,
+    STATUS_HOLDOVER_THRESHOLD_CLEARED=47,
+    STATUS_SELFTEST_FAILURE_SET=52,
+    STATUS_SELFTEST_FAILURE_CLEARED=53,
+    STATUS_PLUS_15V_SET=54,
+    STATUS_PLUS_15V_CLEARED=55,
+    STATUS_MINUS_15V_SET=56,
+    STATUS_MINUS_15V_CLEARED=57,
+    STATUS_PLUS_5V_SET=58,
+    STATUS_PLUS_5V_CLEARED=59,
+    STATUS_PRIMARY_OVEN_SET=60,
+    STATUS_PRIMARY_OVEN_CLEARED=61,
+    STATUS_SECONDARY_OVEN_SET=62,
+    STATUS_SECONDARY_OVEN_CLEARED=63,
+    STATUS_EFC_NEAR_LIMIT_SET=64,
+    STATUS_EFC_NEAR_LIMIT_CLEARED=65,
+    STATUS_EFC_AT_LIMIT_SET=66,
+    STATUS_EFC_AT_LIMIT_CLEARED=67,
+    STATUS_GPS_PPS_FAILURE_SET=68,
+    STATUS_GPS_PPS_FAILURE_CLEARED=69,
+    STATUS_GPS_FAILURE_SET=70,
+    STATUS_GPS_FAILURE_CLEARED=71,
+    STATUS_TIME_INTERVAL_ERROR=72,
+    STATUS_EEPROM_WRITE_FAILURE=73,
+    STATUS_INTERNAL_REFERENCE_SET=74,
+    STATUS_INTERNAL_REFERENCE_CLEARED=75,
+    STATUS_TIME_SET=76,
+    STATUS_USER_REPORTED_SET=77,
+    STATUS_USER_REPORTED_CLEARED=78
+} status_condition_code;
+
 typedef struct status_model status_model, *Pstatus_model;
 
 typedef struct status_register status_register, *Pstatus_register;
@@ -2233,6 +2286,7 @@ _Static_assert(sizeof(sim_registers) == 120, "sim_registers");
 _Static_assert(sizeof(spoo_request) == 24, "spoo_request");
 _Static_assert(sizeof(sprintf_output) == 8, "sprintf_output");
 _Static_assert(sizeof(status_condition) == 6, "status_condition");
+_Static_assert(sizeof(status_condition_code) == 1, "status_condition_code");
 _Static_assert(sizeof(status_model) == 46, "status_model");
 _Static_assert(sizeof(status_register) == 16, "status_register");
 _Static_assert(sizeof(status_screen_mode_line) == 6, "status_screen_mode_line");
@@ -5781,7 +5835,7 @@ void status_enables_init(void);
 void status_transitions_init(void);
 int32_t status_init(void);
 void status_event_hook(uint32_t param_1,uint8_t param_2);
-void status_happening(char param_1);
+void status_happening(status_condition_code condition);
 uint16_t status_hardware_condition(void);
 void happening_buffer_clear(uint8_t *param_1);
 void happening_buffers_clear(void);
@@ -22113,7 +22167,7 @@ void selftest_run_all_counted(void)
 void selftest_summary(void)
 
 {
-  char cVar1;
+  status_condition_code condition;
   
   selftest.summary = 0;
   if (selftest.cpu != 0) {
@@ -22147,12 +22201,12 @@ void selftest_summary(void)
     selftest.summary = selftest.summary | 0x400;
   }
   if (selftest.summary == 0) {
-    cVar1 = '5';
+    condition = STATUS_SELFTEST_FAILURE_CLEARED;
   }
   else {
-    cVar1 = '4';
+    condition = STATUS_SELFTEST_FAILURE_SET;
   }
-  status_happening(cVar1);
+  status_happening(condition);
   return;
 }
 
@@ -39742,7 +39796,7 @@ void hmon_check_supplies(void)
     if (out_of_range == 0) {
       if (adc_monitors[4].out_of_tolerance != 0) {
         task_debug_message("5V is now within tolerance\r\n");
-        status_happening(';');
+        status_happening(STATUS_PLUS_5V_CLEARED);
         adc_monitors[4].out_of_tolerance = 0;
       }
     }
@@ -39753,7 +39807,7 @@ void hmon_check_supplies(void)
       dVar4 = float_to_double(fVar2);
       debug_sprintf(acStack_54,"5V is out of tolerance, value: %.2f\r\n",dVar4);
       task_debug_message(acStack_54);
-      status_happening(':');
+      status_happening(STATUS_PLUS_5V_SET);
       adc_monitors[4].out_of_tolerance = 1;
     }
     break;
@@ -39764,7 +39818,7 @@ void hmon_check_supplies(void)
        (out_of_range = monitor_out_of_range(adc_monitors + 1,-1e+37,6.8,5), out_of_range == 0)) {
       if (adc_monitors[1].out_of_tolerance != 0) {
         task_debug_message("Secondary oven voltage is now within tolerance\r\n");
-        status_happening('?');
+        status_happening(STATUS_SECONDARY_OVEN_CLEARED);
         adc_monitors[1].out_of_tolerance = 0;
       }
     }
@@ -39775,7 +39829,7 @@ void hmon_check_supplies(void)
       dVar4 = float_to_double(fVar2);
       debug_sprintf(acStack_54,"Secondary oven voltage is out of tolerance, value: %.2f\r\n",dVar4);
       task_debug_message(acStack_54);
-      status_happening('>');
+      status_happening(STATUS_SECONDARY_OVEN_SET);
       adc_monitors[1].out_of_tolerance = 1;
     }
     break;
@@ -39790,7 +39844,7 @@ void hmon_check_supplies(void)
     if (out_of_range == 0) {
       if (adc_monitors[2].out_of_tolerance != 0) {
         task_debug_message("15V is now within tolerance\r\n");
-        status_happening('7');
+        status_happening(STATUS_PLUS_15V_CLEARED);
         adc_monitors[2].out_of_tolerance = 0;
       }
     }
@@ -39801,7 +39855,7 @@ void hmon_check_supplies(void)
       dVar4 = float_to_double(fVar2);
       debug_sprintf(acStack_54,"15V is out of tolerance, value: %.2f\r\n",dVar4);
       task_debug_message(acStack_54);
-      status_happening('6');
+      status_happening(STATUS_PLUS_15V_SET);
       adc_monitors[2].out_of_tolerance = 1;
     }
     break;
@@ -39812,7 +39866,7 @@ void hmon_check_supplies(void)
     if (out_of_range == 0) {
       if (adc_monitors[6].out_of_tolerance != 0) {
         task_debug_message("-15V is now within tolerance\r\n");
-        status_happening('9');
+        status_happening(STATUS_MINUS_15V_CLEARED);
         adc_monitors[6].out_of_tolerance = 0;
       }
     }
@@ -39823,7 +39877,7 @@ void hmon_check_supplies(void)
       dVar4 = float_to_double(fVar2);
       debug_sprintf(acStack_54,"-15V is out of tolerance, value: %.2f\r\n",dVar4);
       task_debug_message(acStack_54);
-      status_happening('8');
+      status_happening(STATUS_MINUS_15V_SET);
       adc_monitors[6].out_of_tolerance = 1;
     }
     break;
@@ -40000,19 +40054,19 @@ float efc_clamp(float efc)
     iVar1 = float_compare(efc,1.04856e+06);
     if (iVar1 < 1) {
       if (efc_range.clamped != 0) {
-        status_happening('C');
+        status_happening(STATUS_EFC_AT_LIMIT_CLEARED);
         efc_range.clamped = 0;
       }
     }
     else {
       efc = 1.04856e+06;
-      status_happening('B');
+      status_happening(STATUS_EFC_AT_LIMIT_SET);
       efc_range.clamped = 1;
     }
   }
   else {
     efc = 0.0;
-    status_happening('B');
+    status_happening(STATUS_EFC_AT_LIMIT_SET);
     efc_range.clamped = 1;
   }
   return efc;
@@ -40055,13 +40109,13 @@ void hmon_check_efc(void)
       return;
     }
     efc_range.near_end = 0;
-    status_happening('A');
+    status_happening(STATUS_EFC_NEAR_LIMIT_CLEARED);
     return;
   }
   efc_range.near_end_checks = efc_range.near_end_checks + 1;
   if ((5 < efc_range.near_end_checks) && (efc_range.near_end_checks = 5, efc_range.near_end == 0)) {
     task_debug_message("EFC near end of range\r\n");
-    status_happening('@');
+    status_happening(STATUS_EFC_NEAR_LIMIT_SET);
     efc_range.near_end = 1;
   }
   return;
@@ -40404,7 +40458,7 @@ void hmon_task(void)
       if ((gps_pps_dead == 0) || (gps.reference_qualified == 0)) {
         uVar6 = 0;
         if (bVar2) {
-          status_happening('E');
+          status_happening(STATUS_GPS_PPS_FAILURE_CLEARED);
           bVar2 = false;
         }
       }
@@ -40412,7 +40466,7 @@ void hmon_task(void)
         uVar6 = uVar6 + 1;
       }
       else if ((gps_pps_unconfirmed == 0) && (!bVar2)) {
-        status_happening('D');
+        status_happening(STATUS_GPS_PPS_FAILURE_SET);
         bVar2 = true;
       }
     }
@@ -40425,7 +40479,7 @@ void hmon_task(void)
       if (internal_pps_dead == 0) {
         uVar5 = 0;
         if (bVar3) {
-          status_happening('K');
+          status_happening(STATUS_INTERNAL_REFERENCE_CLEARED);
           bVar3 = false;
         }
       }
@@ -40433,7 +40487,7 @@ void hmon_task(void)
         uVar5 = uVar5 + 1;
       }
       else if (!bVar3) {
-        status_happening('J');
+        status_happening(STATUS_INTERNAL_REFERENCE_SET);
         bVar3 = true;
       }
     }
@@ -52835,35 +52889,37 @@ void status_event_hook(uint32_t param_1,uint8_t param_2)
 
 /* 0002f53c */
 
-/* :DIAG:STAT:HAPP passes it a condition, 0 to 0x38
+/* raises a status condition: :DIAG:STAT:HAPP n passes condition n + 0x16, the firmware's own
+   callers the condition itself, 0x16 to 0x4e (status_condition_code)
    structures.md */
 
-void status_happening(char param_1)
+void status_happening(status_condition_code condition)
 
 {
   if (status_ready == 0) {
-    status_event_hook(&early_status_happenings,param_1);
+    status_event_hook(&early_status_happenings,condition);
   }
-  else if (param_1 != 0x16) {
-    status_clear_bit(status_object,(int32_t)(int8_t)param_1);
-    if (param_1 < '*') {
-      if (param_1 == 0x1a) {
+  else if (condition != 0x16) {
+    status_clear_bit(status_object,
+                     CONCAT31(CONCAT21((char)condition >> 7,(char)condition >> 7),condition));
+    if ((char)condition < '*') {
+      if (condition == STATUS_LOCKED_SET) {
         status_clear_bit(status_object,0x29);
         status_clear_bit(status_object,0x2b);
         status_clear_bit(status_object,0x2d);
       }
-      else if (param_1 == '(') {
+      else if (condition == STATUS_HOLDING_SET) {
         status_clear_bit(status_object,0x1b);
         status_clear_bit(status_object,0x2b);
         status_clear_bit(status_object,0x2d);
       }
     }
-    else if (param_1 == '*') {
+    else if (condition == STATUS_WAITING_SET) {
       status_clear_bit(status_object,0x1b);
       status_clear_bit(status_object,0x29);
       status_clear_bit(status_object,0x2d);
     }
-    else if (param_1 == ',') {
+    else if (condition == STATUS_RECOVERING_SET) {
       status_clear_bit(status_object,0x1b);
       status_clear_bit(status_object,0x29);
       status_clear_bit(status_object,0x2b);
@@ -54860,11 +54916,11 @@ bool eeprom_write_byte(char *param_1,char param_2)
     eeprom_writing = 0;
     eeprom_unlock();
     if (bVar2 == false) {
-      status_happening('I');
+      status_happening(STATUS_EEPROM_WRITE_FAILURE);
     }
   }
   else {
-    status_happening('I');
+    status_happening(STATUS_EEPROM_WRITE_FAILURE);
     bVar2 = false;
   }
   return bVar2;
@@ -54954,7 +55010,7 @@ uint32_t eeprom_write(char *param_1,char *param_2,uint32_t param_3)
     param_1 = param_1 + uVar2;
     param_2 = param_2 + uVar2;
   }
-  status_happening('I');
+  status_happening(STATUS_EEPROM_WRITE_FAILURE);
   return 0;
 }
 
@@ -55101,7 +55157,7 @@ char log_erase(uint8_t param_1)
   log_entries = 0;
   log_write_page_open = 0;
   log_full = 0;
-  status_happening('!');
+  status_happening(STATUS_LOG_ALMOST_FULL_CLEARED);
   if (status == 0) {
     log_append("Log cleared",0,0);
   }
@@ -55208,7 +55264,7 @@ LAB_00031708:
       log_entries = (int16_t)((int32_t)((int32_t)&log_cursor[-0xce45].argument_2 + 2) / 0x14) + log_entries;
     }
     if (0xb4 < log_entries) {
-      status_happening(' ');
+      status_happening(STATUS_LOG_ALMOST_FULL_SET);
     }
     iVar2 = mutex_unlock(&log_mutex);
   }
@@ -55532,7 +55588,7 @@ uint32_t log_append(char *param_1,int32_t param_2,int32_t param_3)
     }
     log_entries = log_entries + 1;
     if (0xb4 < log_entries) {
-      status_happening(' ');
+      status_happening(STATUS_LOG_ALMOST_FULL_SET);
     }
   }
   else {
@@ -59308,7 +59364,7 @@ void finish_scpi_cmd(void)
   int32_t iVar2;
   uint8_t bVar3;
   uint8_t unaff_D3b = ({ register int32_t __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint8_t)__entry; });
-  char cVar4;
+  status_condition_code condition;
   
   pvVar1 = pll_scpi_param;
   iVar2 = (int32_t)*(char *)pll_scpi_param - 3;
@@ -59354,16 +59410,16 @@ void finish_scpi_cmd(void)
   }
   if (douglas_log_event == 3) {
     log_event(3);
-    cVar4 = 0x1d;
+    condition = STATUS_POSITION_HOLD_CLEARED;
   }
   else {
     if (douglas_log_event != 4) {
       return;
     }
     log_event(4);
-    cVar4 = 0x1c;
+    condition = STATUS_POSITION_HOLD_SET;
   }
-  status_happening(cVar4);
+  status_happening(condition);
   return;
 }
 
@@ -59579,15 +59635,15 @@ void sample_action_print(int32_t index,int32_t source)
 void questionable_user_done(void)
 
 {
-  char cVar1;
+  status_condition_code condition;
   
   if (nv_settings.questionable_user == 0) {
-    cVar1 = 'N';
+    condition = STATUS_USER_REPORTED_CLEARED;
   }
   else {
-    cVar1 = 'M';
+    condition = STATUS_USER_REPORTED_SET;
   }
-  status_happening(cVar1);
+  status_happening(condition);
   return;
 }
 
@@ -59967,7 +60023,7 @@ override_jmp_00043ae6_case_0:
      (holdover_duration_exceeded == 0)) {
     holdover_duration_exceeded = 1;
     pwma_force_level(1);
-    status_happening('.');
+    status_happening(STATUS_HOLDOVER_THRESHOLD_SET);
   }
   uVar4 = interval_next_reading(0,&fStack_10);
   if (uVar4 == 0) {
@@ -60120,7 +60176,7 @@ uint32_t clock_check_against_gps(void)
     if (bVar3) {
       uVar1 = oncore_date_pack(gps.status.date);
       clock_set(gps.status.time,uVar1);
-      status_happening('L');
+      status_happening(STATUS_TIME_SET);
     }
     clock_gps_mismatch = !bVar3;
     uVar2 = 0;
@@ -60231,7 +60287,7 @@ LAB_0004411a:
      (holdover_duration_exceeded == 0)) {
     holdover_duration_exceeded = 1;
     pwma_force_level(1);
-    status_happening('.');
+    status_happening(STATUS_HOLDOVER_THRESHOLD_SET);
   }
   if (gps_reference_good == 0) {
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_GPS;
@@ -60773,7 +60829,7 @@ uint8_t interval_next_reading(char arm_mode,float *reading)
     counter_read(&interval_reading,&counter_configuration);
     if ((interval_reading.valid == 0) &&
        (((interval_armed_without_pps == 0 && (gps_pps_dead == 0)) && (internal_pps_dead == 0)))) {
-      status_happening('H');
+      status_happening(STATUS_TIME_INTERVAL_ERROR);
     }
   }
   else {
@@ -60846,7 +60902,7 @@ void interval_wait_reading(void)
     counter_read(&interval_reading,&counter_configuration);
     if ((interval_reading.valid == 0) &&
        (((interval_armed_without_pps == 0 && (gps_pps_dead == 0)) && (internal_pps_dead == 0)))) {
-      status_happening('H');
+      status_happening(STATUS_TIME_INTERVAL_ERROR);
     }
   }
   else {
@@ -61323,7 +61379,7 @@ void holdover_recovery_initiate(int32_t index,int32_t source)
          (HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
           HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
          HOLD_CAUSE_GPS);
-    status_happening('*');
+    status_happening(STATUS_WAITING_SET);
   }
   else {
     status_report_from(8,(uint8_t)source);
@@ -61349,7 +61405,7 @@ void holdover_initiate(int32_t index,int32_t source)
     pll.manual = 1;
     pll_scpi_signal_delay = 1;
     if (pll.stage == PLL_STAGE_HOLDOVER) {
-      status_happening('(');
+      status_happening(STATUS_HOLDING_SET);
     }
   }
   return;
@@ -61699,7 +61755,7 @@ uint8_t powerup(char param_1)
     case 0x56:
       interval_next_reading(1,(float *)0x0);
       pll.powerup_state = 3;
-      status_happening('$');
+      status_happening(STATUS_OVEN_WARMED_SET);
       break;
     case 0x74:
       interval_next_reading(1,(float *)0x0);
@@ -61729,7 +61785,7 @@ uint8_t powerup(char param_1)
         if ((gps_reference_good != 0) && (internal_pps_dead == 0)) {
           uVar2 = oncore_date_pack(gps.status.date);
           clock_set(gps.status.time,uVar2);
-          status_happening('&');
+          status_happening(STATUS_DATE_TIME_VALID_SET);
           cVar4 = leap_second_near();
           if (cVar4 == 0) {
             pll.powerup_state = 7;
@@ -61782,7 +61838,7 @@ override_jmp_00045f06_case_0:
     }
     set_interrupt_mask(sr);
     if (local_6 != 0) {
-      status_happening('\"');
+      status_happening(STATUS_FIRST_SATELLITE_SET);
       first_satellite_logged = 1;
       uVar6 = __ghidra_piece(uint16_t, gps.status.time, 0);
       uVar3 = gps.status.time.minute;
@@ -62129,7 +62185,7 @@ void pll_stage_status(void)
 
 {
   int32_t iVar1;
-  char cVar2;
+  status_condition_code condition;
   
   iVar1 = (char)pll.stage + -9;
   if ((int32_t)(char)pll.stage - 1U < 8U || iVar1 == 0) {
@@ -62138,7 +62194,7 @@ void pll_stage_status(void)
     case 0x12:
       if (pll.led_gps_lock != 0) {
         pll.led_gps_lock = 0;
-        status_happening(0x1b);
+        status_happening(STATUS_LOCKED_CLEARED);
       }
       interval_mean_flag = 0;
       break;
@@ -62146,11 +62202,11 @@ void pll_stage_status(void)
       if (pll.led_gps_lock == 0) {
         pll.led_gps_lock = 1;
         log_event(6);
-        status_happening(0x1a);
+        status_happening(STATUS_LOCKED_SET);
       }
       holdover_duration_exceeded = 0;
       pwma_force_level(0);
-      status_happening('/');
+      status_happening(STATUS_HOLDOVER_THRESHOLD_CLEARED);
       pll.leap_check_requested = 1;
     }
   }
@@ -62171,22 +62227,22 @@ void pll_stage_status(void)
       pll.led_holdover = 1;
     }
     if (pll.manual == 0) {
-      cVar2 = '*';
+      condition = STATUS_WAITING_SET;
     }
     else {
-      cVar2 = '(';
+      condition = STATUS_HOLDING_SET;
     }
     break;
   case 0x3c:
     if (pll.led_holdover == 0) {
       pll.led_holdover = 1;
     }
-    cVar2 = ',';
+    condition = STATUS_RECOVERING_SET;
     break;
   case 0x50:
     goto override_jmp_000465c6_case_7;
   }
-  status_happening(cVar2);
+  status_happening(condition);
 override_jmp_000465c6_case_7:
   return;
 }
@@ -62464,7 +62520,7 @@ switchD_0004688c_caseD_0:
     cVar2 = gps_ack_received();
     if (cVar2 != 0) {
       if (gps_ack_code == 0) {
-        status_happening(0x1c);
+        status_happening(STATUS_POSITION_HOLD_SET);
         pll.gps_init_state = 0x11;
       }
       else {
@@ -62486,7 +62542,7 @@ switchD_0004688c_caseD_0:
     cVar2 = gps_ack_received();
     if (cVar2 != 0) {
       if (gps_ack_code == 0) {
-        status_happening(0x1d);
+        status_happening(STATUS_POSITION_HOLD_CLEARED);
         pll.gps_init_state = 0xe;
       }
       else {
@@ -62545,7 +62601,7 @@ switchD_0004688c_caseD_0:
       if (gps_ack_code == 0) {
         pll.gps_init_state = 0x11;
         log_event(4);
-        status_happening(0x1c);
+        status_happening(STATUS_POSITION_HOLD_SET);
         return;
       }
       pll.gps_init_state = 0xf;
@@ -63096,7 +63152,7 @@ void pll_restart(void)
   uVar2 = pll.fpga_loaded;
   uVar1 = pll.fpga_load_pending;
   pll_init();
-  status_happening('/');
+  status_happening(STATUS_HOLDOVER_THRESHOLD_CLEARED);
   pll.fpga_load_pending = uVar1;
   pll.fpga_loaded = uVar2;
   pll.loop_running = 1;
@@ -63149,19 +63205,20 @@ void pllp_task(void)
   uint8_t uVar5;
   pll_state *ppVar6;
   pll_state *ppVar7;
-  bool bVar9;
+  char cVar9;
+  bool bVar10;
   uint32_t uVar8;
-  int16_t sVar10;
-  gps_state *pgVar11;
-  pll_state *ppVar13;
-  gps_state *pgVar14;
-  pll_state *ppVar16;
-  char cVar17;
+  int16_t sVar11;
+  gps_state *pgVar12;
+  pll_state *ppVar14;
+  gps_state *pgVar15;
+  pll_state *ppVar17;
+  status_condition_code condition;
   pll_stage local_22;
   gps_request_entry reply;
   bool local_6;
-  oncore_gmt_offset_fields *poVar12;
-  oncore_gmt_offset_fields *poVar15;
+  oncore_gmt_offset_fields *poVar13;
+  oncore_gmt_offset_fields *poVar16;
   
   local_6 = false;
   watchdog_pll = watchdog_pll + 1;
@@ -63197,7 +63254,7 @@ void pllp_task(void)
       log_event(0x1a);
     }
     else {
-      status_happening(0x19);
+      status_happening(STATUS_POWER_ON);
       log_event(1);
     }
     if (nv_settings.douglas_state_powerup != 0) {
@@ -63238,10 +63295,10 @@ void pllp_task(void)
       pll.stage = PLL_STAGE_DIAG;
     }
     if (pll.stage == local_22) {
-      bVar9 = true;
+      bVar10 = true;
     }
     else {
-      bVar9 = false;
+      bVar10 = false;
       local_22 = pll.stage;
       if (gps_ack_awaited == 5) {
         if (gps_ack_ready == 0) {
@@ -63257,15 +63314,15 @@ void pllp_task(void)
     if ((gps.reference_qualified == 0) || (gps_pps_dead != 0)) {
       if (gps_reference_good != 0) {
         gps_reference_good = 0;
-        cVar17 = 0x1f;
+        condition = STATUS_SATELLITES_SUFFICIENT_CLEARED;
         goto LAB_00047758;
       }
     }
     else if (gps_reference_good == 0) {
       gps_reference_good = 1;
-      cVar17 = 0x1e;
+      condition = STATUS_SATELLITES_SUFFICIENT_SET;
 LAB_00047758:
-      status_happening(cVar17);
+      status_happening(condition);
     }
     iVar1 = (char)pll.stage + -9;
     if (7U < (int32_t)(char)pll.stage - 1U && iVar1 != 0) {
@@ -63275,98 +63332,98 @@ LAB_00047758:
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_00047772_index_zero)[(int16_t)iVar1]) {
     case 0x12:
-      if (!bVar9) {
+      if (!bVar10) {
         pll_lock = 0;
         pll_stage_status();
         task_dmessage("PLL powerup\r\n");
       }
-      cVar17 = powerup(bVar9);
-      if (cVar17 == 1) {
+      cVar9 = powerup(bVar10);
+      if (cVar9 == 1) {
 LAB_000477b2:
         pll.stage = PLL_STAGE_STARTUP_PLL;
       }
-      else if (cVar17 == 2) {
+      else if (cVar9 == 2) {
         pll_restart();
       }
       break;
     case 0x54:
-      if (bVar9 == false) {
+      if (bVar10 == false) {
         pll_stage_status();
         task_dmessage("Went into powerup recovery\r\n");
         leap_recheck_requested = 1;
       }
-      cVar17 = pll_check_reference(bVar9);
-      if (cVar17 == 1) {
+      cVar9 = pll_check_reference(bVar10);
+      if (cVar9 == 1) {
 LAB_0004782e:
         pll.stage = PLL_STAGE_HOLDOVER_RECOVERY;
       }
-      else if (cVar17 == 2) {
+      else if (cVar9 == 2) {
         enter_holdover();
       }
       break;
     case 0x92:
-      if (bVar9 == false) {
+      if (bVar10 == false) {
         pll_stage_status();
         task_dmessage("Went into holdover\r\n");
       }
-      cVar17 = holdover(bVar9);
-      if (cVar17 == 1) goto LAB_0004782e;
+      cVar9 = holdover(bVar10);
+      if (cVar9 == 1) goto LAB_0004782e;
       break;
     case 0xc0:
-      if (bVar9 == false) {
+      if (bVar10 == false) {
         pll_lock = 1;
         pll_stage_status();
         task_dmessage("Went into holdover recovery\r\n");
       }
-      cVar17 = holdover_recovery(bVar9);
-      if (cVar17 == 1) goto LAB_000477b2;
-      if (cVar17 == 2) {
+      cVar9 = holdover_recovery(bVar10);
+      if (cVar9 == 1) goto LAB_000477b2;
+      if (cVar9 == 2) {
         enter_holdover();
       }
       break;
     case 0x100:
-      if (bVar9 == false) {
+      if (bVar10 == false) {
         pll_lock = 1;
         pll_stage_status();
         task_dmessage("Went into PLL startup\r\n");
       }
-      cVar17 = startup_pll(bVar9);
-      if (cVar17 == 1) {
+      cVar9 = startup_pll(bVar10);
+      if (cVar9 == 1) {
         pll.stage = PLL_STAGE_NORMAL_PLL;
       }
-      else if (cVar17 == 2) {
+      else if (cVar9 == 2) {
         enter_holdover();
       }
       break;
     case 0x146:
-      if (bVar9 == false) {
+      if (bVar10 == false) {
         pll_stage_status();
         task_dmessage("Went into PLL normal\r\n");
       }
-      cVar17 = pll_normal(bVar9);
-      if (cVar17 == 2) {
+      cVar9 = pll_normal(bVar10);
+      if (cVar9 == 2) {
         enter_holdover();
       }
       break;
     case 0x172:
-      if (bVar9 == false) {
+      if (bVar10 == false) {
         pll_stage_status();
         pll.loop_running = 0;
         task_dmessage("Went into Diag\r\n");
       }
-      bVar9 = gps_diag_sequence(bVar9);
-      if (bVar9) {
+      bVar10 = gps_diag_sequence(bVar10);
+      if (bVar10) {
         pll_restart();
       }
       break;
     case 0x19e:
-      if (bVar9 == false) {
+      if (bVar10 == false) {
         pll_stage_status();
         task_dmessage("Went into Idle\r\n");
       }
       goto LAB_00047940;
     case 0x1b2:
-      if (bVar9 == false) {
+      if (bVar10 == false) {
         pll_stage_status();
         task_dmessage("Went into fatal error\r\n");
       }
@@ -63447,42 +63504,42 @@ LAB_00047940:
     }
     pll_scpi_receive();
     memcpy(preserved_region.values,&retained_block,0x19);
-    sVar10 = 0x155;
-    pgVar11 = &preserved_region.gps;
-    pgVar14 = &gps;
+    sVar11 = 0x155;
+    pgVar12 = &preserved_region.gps;
+    pgVar15 = &gps;
     do {
-      poVar15 = &pgVar14->gmt_offset;
-      oVar2 = pgVar14->time;
-      poVar12 = &pgVar11->gmt_offset;
-      pgVar11->field_000 = pgVar14->field_000;
-      pgVar11->time = oVar2;
-      sVar10 = sVar10 + -1;
-      pgVar11 = (gps_state *)poVar12;
-      pgVar14 = (gps_state *)poVar15;
-    } while (sVar10 != -1);
-    uVar3 = poVar15->hours;
-    poVar12->sign = poVar15->sign;
-    poVar12->hours = uVar3;
-    sVar10 = 0xf4;
+      poVar16 = &pgVar15->gmt_offset;
+      oVar2 = pgVar15->time;
+      poVar13 = &pgVar12->gmt_offset;
+      pgVar12->field_000 = pgVar15->field_000;
+      pgVar12->time = oVar2;
+      sVar11 = sVar11 + -1;
+      pgVar12 = (gps_state *)poVar13;
+      pgVar15 = (gps_state *)poVar16;
+    } while (sVar11 != -1);
+    uVar3 = poVar16->hours;
+    poVar13->sign = poVar16->sign;
+    poVar13->hours = uVar3;
+    sVar11 = 0xf4;
     ppVar6 = &preserved_region.pll;
     ppVar7 = &pll;
     do {
-      ppVar16 = ppVar7;
-      ppVar13 = ppVar6;
-      pVar4 = ppVar16->previous_stage;
-      uVar3 = ppVar16->powerup_countdown;
-      uVar5 = ppVar16->powerup_state;
-      ppVar13->stage = ppVar16->stage;
-      ppVar13->previous_stage = pVar4;
-      ppVar13->powerup_countdown = uVar3;
-      ppVar13->powerup_state = uVar5;
-      sVar10 = sVar10 + -1;
-      ppVar6 = (pll_state *)&ppVar13->powerup_reference_lost;
-      ppVar7 = (pll_state *)&ppVar16->powerup_reference_lost;
-    } while (sVar10 != -1);
-    uVar3 = ppVar16->field_005;
-    ppVar13->powerup_reference_lost = ppVar16->powerup_reference_lost;
-    ppVar13->field_005 = uVar3;
+      ppVar17 = ppVar7;
+      ppVar14 = ppVar6;
+      pVar4 = ppVar17->previous_stage;
+      uVar3 = ppVar17->powerup_countdown;
+      uVar5 = ppVar17->powerup_state;
+      ppVar14->stage = ppVar17->stage;
+      ppVar14->previous_stage = pVar4;
+      ppVar14->powerup_countdown = uVar3;
+      ppVar14->powerup_state = uVar5;
+      sVar11 = sVar11 + -1;
+      ppVar6 = (pll_state *)&ppVar14->powerup_reference_lost;
+      ppVar7 = (pll_state *)&ppVar17->powerup_reference_lost;
+    } while (sVar11 != -1);
+    uVar3 = ppVar17->field_005;
+    ppVar14->powerup_reference_lost = ppVar17->powerup_reference_lost;
+    ppVar14->field_005 = uVar3;
     preserved_region.restore = 1;
     preserved_region.checksum = record_checksum(&preserved_region,0x94e);
     leds_update();
@@ -66649,7 +66706,7 @@ void command_monitor_init(void)
   gps.command_monitor_failed = 0;
   gps.status_monitor_failed = 0;
   status_without_traim_count = 0;
-  status_happening('G');
+  status_happening(STATUS_GPS_FAILURE_CLEARED);
   gps.command_monitor_enabled = 1;
   gps.command_monitor_error = 0;
   gps.command_monitor_query = &PTR_DAT_00050e5e;
@@ -66668,8 +66725,9 @@ void command_monitor(void)
 {
   int32_t iVar1;
   bool bVar2;
-  uint8_t *puVar3;
-  char cVar4;
+  char cVar3;
+  uint8_t *puVar4;
+  status_condition_code condition;
   uint32_t uStack_8;
   
   iVar1 = (int32_t)(char)gps.command_monitor_state - 3;
@@ -66700,8 +66758,8 @@ LAB_0004b4d2:
       }
       else {
         if (gps.command_monitor_enabled == 0) goto LAB_0004b4d2;
-        cVar4 = uptime_elapsed(&gps.command_monitor_time,(int32_t *)&uStack_8);
-        if ((cVar4 != 0) && (0x14 < uStack_8)) {
+        cVar3 = uptime_elapsed(&gps.command_monitor_time,(int32_t *)&uStack_8);
+        if ((cVar3 != 0) && (0x14 < uStack_8)) {
           gps_request_post(3,4,gps.command_monitor_query,0);
           gps.command_monitor_state = 3;
         }
@@ -66744,15 +66802,15 @@ LAB_0004b4d2:
       gps.status_repeat_count = 0;
       status_message_arrived = 0;
       gps.status_monitor_time = get_uptime();
-      puVar3 = &traim_message_arrived;
+      puVar4 = &traim_message_arrived;
       break;
     case 0x2a:
       if (bVar2) {
-        cVar4 = uptime_elapsed(&gps.status_monitor_time,(int32_t *)&uStack_8);
-        if (((cVar4 == 0) || (uStack_8 <= (uint32_t)gps.status_rate * 0xf)) &&
+        cVar3 = uptime_elapsed(&gps.status_monitor_time,(int32_t *)&uStack_8);
+        if (((cVar3 == 0) || (uStack_8 <= (uint32_t)gps.status_rate * 0xf)) &&
            ((status_without_traim_count < 7 && (gps.status_repeat_count < 0x2d)))) {
           if ((status_message_arrived == 0) && (traim_message_arrived == 0)) {
-            if (cVar4 == 0) {
+            if (cVar3 == 0) {
               status_message_arrived = 0;
               gps.status_monitor_time = get_uptime();
             }
@@ -66813,9 +66871,9 @@ LAB_0004b4d2:
       status_message_arrived = 0;
       gps.status_monitor_time = get_uptime();
       traim_message_arrived = 0;
-      puVar3 = &status_without_traim_count;
+      puVar4 = &status_without_traim_count;
     }
-    *puVar3 = 0;
+    *puVar4 = 0;
     gps.status_monitor_state = 1;
   }
 LAB_0004b754:
@@ -66824,12 +66882,12 @@ LAB_0004b754:
     gps.receiver_health_failed = 1;
   }
   if (gps.receiver_health_failed == 0) {
-    cVar4 = 'G';
+    condition = STATUS_GPS_FAILURE_CLEARED;
   }
   else {
-    cVar4 = 'F';
+    condition = STATUS_GPS_FAILURE_SET;
   }
-  status_happening(cVar4);
+  status_happening(condition);
   return;
 }
 

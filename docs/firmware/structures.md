@@ -120,7 +120,14 @@ condition up (a negative one in `status_negative_conditions`, `0x28720`), and by
 sets, clears or transfers the register's bit, or puts the condition in
 the queue.  The table has 79, 0 to `0x4e`: `:DIAG:STAT:HAPP n`, n from 0
 to `0x38`, raises condition n + `0x16`, and conditions `0x34` to `0x4b`
-are register 6's (`outputs.md`, "The Z3805A's lamps").
+are register 6's (`outputs.md`, "The Z3805A's lamps").  The firmware's own
+callers pass `status_happening` (`0x2f53c`) the condition itself, a
+`status_condition_code` (`smartclock.h`): conditions `0x19` to `0x4e`
+set or clear the registers' bits, or are events only, one name each
+for the bits of the Z3801A guide's status register tables
+(097-z3801-01, pages 4-15 to 4-17), so that `'I'` (`0x49`), which the
+EEPROM's writers raise, is `STATUS_EEPROM_WRITE_FAILURE`, and `'B'`
+(`0x42`), the EFC clamped, `STATUS_EFC_AT_LIMIT_SET`.
 
 ## Numeric SCPI parameters
 

@@ -268,7 +268,7 @@
 0x2820a	function	status_set_bit	structures.md	sets a condition's register bit through status_conditions	int16_t status_set_bit(status_model *status, int condition, int value)
 0x28388	function	status_clear_bit	structures.md	status_set_bit with 0	int16_t status_clear_bit(status_model *status, int condition)
 0x2be9c	function	status_report	structures.md	puts a code into the status system once status_ready
-0x2f53c	function	status_happening	structures.md	:DIAG:STAT:HAPP passes it a condition, 0 to 0x38
+0x2f53c	function	status_happening	structures.md	raises a status condition: :DIAG:STAT:HAPP n passes condition n + 0x16, the firmware's own callers the condition itself, 0x16 to 0x4e (status_condition_code)	void status_happening(status_condition_code condition)
 0x298fc	function	scpi_numeric_get	structures.md	a parameter's value, or its minimum or maximum, from its descriptor	float scpi_numeric_get(scpi_numeric_param *param, int index, int16_t which, int16_t bound)	convention=c; confidence=documented; out=D0 float
 0x2982c	function	scpi_numeric_set	structures.md	sends a parameter's new value, or its minimum or maximum, to pllc: a float's value, its address as values[1], or an integer's as values[0]; every caller pushes both, the other 0	void scpi_numeric_set(scpi_numeric_param *param, int index, short kind, short bound, uint32_t float_value, int32_t integer_value, uint8_t source)
 0x1304a	function	root_task	structures.md	stores its own task id in task_root, sets up the status system, creates the exchanges and tasks and starts them

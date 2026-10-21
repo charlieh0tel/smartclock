@@ -952,6 +952,67 @@ typedef struct status_condition {
 	int16_t bit;
 } status_condition;
 
+/* A condition of status_conditions (0x2f838), by its index, which
+ * status_happening raises: each sets (_SET) or clears (_CLEARED) a
+ * register's condition bit, or is an event only, as the entry's kind
+ * says (1, 2 and 0).  The names are the bits' in the Z3801A guide's
+ * status register tables (097-z3801-01, pages 4-15 to 4-17); bit 7 of
+ * the Standard Event register is IEEE 488.2's power-on.  :DIAG:STAT:HAPP
+ * n raises n + 0x16.  The conditions below 0x19, and 0x30 to 0x33, which
+ * put an entry in the error queue (kind 3 and 4), have no name here. */
+typedef enum status_condition_code {
+	STATUS_POWER_ON = 0x19,                  /* *ESR? bit 7 */
+	STATUS_LOCKED_SET = 0x1a,                /* :OPERation bit 1, locked to GPS */
+	STATUS_LOCKED_CLEARED = 0x1b,
+	STATUS_POSITION_HOLD_SET = 0x1c,         /* :OPERation bit 3, position hold, not survey */
+	STATUS_POSITION_HOLD_CLEARED = 0x1d,
+	STATUS_SATELLITES_SUFFICIENT_SET = 0x1e, /* :OPERation bit 4, enough satellites to lock */
+	STATUS_SATELLITES_SUFFICIENT_CLEARED = 0x1f,
+	STATUS_LOG_ALMOST_FULL_SET = 0x20,       /* :OPERation bit 6 */
+	STATUS_LOG_ALMOST_FULL_CLEARED = 0x21,
+	STATUS_FIRST_SATELLITE_SET = 0x22,       /* :POWERup bit 0, first satellite tracked */
+	STATUS_FIRST_SATELLITE_CLEARED = 0x23,
+	STATUS_OVEN_WARMED_SET = 0x24,           /* :POWERup bit 1, oscillator oven warmed up */
+	STATUS_OVEN_WARMED_CLEARED = 0x25,
+	STATUS_DATE_TIME_VALID_SET = 0x26,       /* :POWERup bit 2 */
+	STATUS_DATE_TIME_VALID_CLEARED = 0x27,
+	STATUS_HOLDING_SET = 0x28,               /* :HOLDover bit 0 */
+	STATUS_HOLDING_CLEARED = 0x29,
+	STATUS_WAITING_SET = 0x2a,               /* :HOLDover bit 1, waiting to recover */
+	STATUS_WAITING_CLEARED = 0x2b,
+	STATUS_RECOVERING_SET = 0x2c,            /* :HOLDover bit 2 */
+	STATUS_RECOVERING_CLEARED = 0x2d,
+	STATUS_HOLDOVER_THRESHOLD_SET = 0x2e,    /* :HOLDover bit 3, longer than :ROSC:HOLD:DUR:THReshold */
+	STATUS_HOLDOVER_THRESHOLD_CLEARED = 0x2f,
+	STATUS_SELFTEST_FAILURE_SET = 0x34,      /* :HARDware bit 0 */
+	STATUS_SELFTEST_FAILURE_CLEARED = 0x35,
+	STATUS_PLUS_15V_SET = 0x36,              /* :HARDware bit 1, +15 V supply out of range */
+	STATUS_PLUS_15V_CLEARED = 0x37,
+	STATUS_MINUS_15V_SET = 0x38,             /* :HARDware bit 2, -15 V supply out of range */
+	STATUS_MINUS_15V_CLEARED = 0x39,
+	STATUS_PLUS_5V_SET = 0x3a,               /* :HARDware bit 3, +5 V supply out of range */
+	STATUS_PLUS_5V_CLEARED = 0x3b,
+	STATUS_PRIMARY_OVEN_SET = 0x3c,          /* :HARDware bit 4, primary oven voltage out of range */
+	STATUS_PRIMARY_OVEN_CLEARED = 0x3d,
+	STATUS_SECONDARY_OVEN_SET = 0x3e,        /* :HARDware bit 5, secondary oven voltage out of range */
+	STATUS_SECONDARY_OVEN_CLEARED = 0x3f,
+	STATUS_EFC_NEAR_LIMIT_SET = 0x40,        /* :HARDware bit 6, EFC voltage within 5% of limit */
+	STATUS_EFC_NEAR_LIMIT_CLEARED = 0x41,
+	STATUS_EFC_AT_LIMIT_SET = 0x42,          /* :HARDware bit 7 */
+	STATUS_EFC_AT_LIMIT_CLEARED = 0x43,
+	STATUS_GPS_PPS_FAILURE_SET = 0x44,       /* :HARDware bit 8, GPS 1 PPS failure */
+	STATUS_GPS_PPS_FAILURE_CLEARED = 0x45,
+	STATUS_GPS_FAILURE_SET = 0x46,           /* :HARDware bit 9 */
+	STATUS_GPS_FAILURE_CLEARED = 0x47,
+	STATUS_TIME_INTERVAL_ERROR = 0x48,       /* :HARDware bit 10, an event only */
+	STATUS_EEPROM_WRITE_FAILURE = 0x49,      /* :HARDware bit 11, an event only */
+	STATUS_INTERNAL_REFERENCE_SET = 0x4a,    /* :HARDware bit 12, internal reference failure */
+	STATUS_INTERNAL_REFERENCE_CLEARED = 0x4b,
+	STATUS_TIME_SET = 0x4c,                  /* :QUEStionable bit 0, an event only */
+	STATUS_USER_REPORTED_SET = 0x4d,         /* :QUEStionable bit 1 */
+	STATUS_USER_REPORTED_CLEARED = 0x4e,
+} status_condition_code;
+
 /* The SCPI status system: status_create builds it, status_object points
  * at it. */
 typedef struct status_model {

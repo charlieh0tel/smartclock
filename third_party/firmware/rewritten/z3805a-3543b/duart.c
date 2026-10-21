@@ -38,10 +38,6 @@ static const uint8_t DUART_FLOW_XOFF_RECEIVED = 0x80; /* transmission held */
  * XON once more are free. */
 static const uint8_t DUART_XON_ABOVE_FREE = 0x10;
 
-/* The kernel's I/O device, the device in the high byte, the minor in
- * the low (kernel_dispatch_io, 0x14c36). */
-static const uint32_t DUART_DEVICE_B = 0x000;
-
 /* The 68681's channel B settings (MC68681 Table 4-5) that several
  * functions use; the rest are in the functions that use them. */
 static const uint8_t DUART_MR1_EIGHT_BITS = 3;
@@ -51,23 +47,6 @@ static const uint8_t DUART_CSR_CLOCK_BITS =
         */
 /* baud-rate set 2's clock select for 9600, which ACR_BRG_SET_2 picks */
 static const uint8_t DUART_CSR_9600 = 0xb;
-
-/* The serial settings' baud codes (duartb_settings_record.baud). */
-enum {
-  DUART_BAUD_1200,
-  DUART_BAUD_2400,
-  DUART_BAUD_9600,
-  DUART_BAUD_19200,
-};
-
-/* The serial settings' parity codes (duartb_settings_record.parity,
- * sci_settings_record.parity). */
-enum {
-  DUART_PARITY_NONE,
-  DUART_PARITY_EVEN,
-  DUART_PARITY_ODD,
-  DUART_PARITY_ONE, /* the SCI's only: mark parity */
-};
 
 /* How long a reconfiguration waits for the transmitter to empty, in
  * ticks. */
@@ -102,12 +81,12 @@ void duartb_mode_from_settings(void) {
   static const uint8_t MR2_TWO_STOP_BITS = 0x0f;
 
   duart_shadow.mr1b &= MR1_KEEP;
-  if (duartb_settings.parity == DUART_PARITY_NONE) {
+  if (duartb_settings.parity == SERIAL_PARITY_NONE) {
     duartb.parity = 0;
     duart_shadow.mr1b |= MR1_PARITY_NONE;
   } else {
     duartb.parity = 1;
-    if (duartb_settings.parity == DUART_PARITY_ODD) {
+    if (duartb_settings.parity == SERIAL_PARITY_ODD) {
       duart_shadow.mr1b |= MR1_PARITY_ODD;
     }
   }
@@ -134,13 +113,13 @@ void duartb_baud_from_settings(void) {
   uint8_t clock;
 
   switch (duartb_settings.baud) {
-    case DUART_BAUD_1200:
+    case SERIAL_BAUD_1200:
       clock = CSR_1200;
       break;
-    case DUART_BAUD_2400:
+    case SERIAL_BAUD_2400:
       clock = CSR_2400;
       break;
-    case DUART_BAUD_9600:
+    case SERIAL_BAUD_9600:
       clock = DUART_CSR_9600;
       break;
     default:
@@ -368,14 +347,14 @@ void drtb_send_async(char* block, uint8_t count) {
 uint32_t console_write(char* s) {
   uint32_t length;
 
-  psos_io_write(DUART_DEVICE_B, s, &length);
+  psos_io_write(IO_DEVICE_DUART_B, s, &length);
   return length;
 }
 
 /* Reads from the console, device 0, and its last read errors
  * (0x1debc). */
 uint32_t console_read(void* buffer, uint32_t length, uint8_t* errors) {
-  psos_io_read(DUART_DEVICE_B, buffer, &length);
+  psos_io_read(IO_DEVICE_DUART_B, buffer, &length);
   if (errors != 0) {
     *errors = duartb.read_errors;
   }
@@ -383,14 +362,14 @@ uint32_t console_read(void* buffer, uint32_t length, uint8_t* errors) {
 }
 
 /* Opens the SCPI port, device 0 (0x1dee6). */
-void scpi_port_open(void) { psos_io_open(DUART_DEVICE_B, 0); }
+void scpi_port_open(void) { psos_io_open(IO_DEVICE_DUART_B, 0); }
 
 /* Closes the SCPI port, device 0 (0x1def4). */
-void scpi_port_close(void) { psos_io_close(DUART_DEVICE_B); }
+void scpi_port_close(void) { psos_io_close(IO_DEVICE_DUART_B); }
 
 /* The done hook of channel B's setting descriptors and its PRESet:
  * reconfigures device 0 (0x1df00). */
-void duartb_settings_done(void) { psos_io_control(DUART_DEVICE_B, 0, 0); }
+void duartb_settings_done(void) { psos_io_control(IO_DEVICE_DUART_B, 0, 0); }
 
 /* Writes a string to channel B by polling, in supervisor mode; returns
  * its length (0x1df12). */

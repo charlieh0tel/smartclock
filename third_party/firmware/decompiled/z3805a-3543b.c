@@ -483,10 +483,24 @@ struct duartb_driver {
 
 typedef struct duartb_settings_record duartb_settings_record, *Pduartb_settings_record;
 
+typedef enum __attribute__((packed)) serial_baud {
+    SERIAL_BAUD_1200=0,
+    SERIAL_BAUD_2400=1,
+    SERIAL_BAUD_9600=2,
+    SERIAL_BAUD_19200=3
+} serial_baud;
+
+typedef enum __attribute__((packed)) serial_parity {
+    SERIAL_PARITY_NONE=0,
+    SERIAL_PARITY_EVEN=1,
+    SERIAL_PARITY_ODD=2,
+    SERIAL_PARITY_ONE=3
+} serial_parity;
+
 struct duartb_settings_record {
     uint8_t field_00[2];
-    uint8_t baud;
-    uint8_t parity;
+    enum serial_baud baud;
+    enum serial_parity parity;
     uint8_t xon_xoff;
     uint8_t field_05;
     uint8_t eight_bits;
@@ -1230,6 +1244,13 @@ struct interval_reading_fields {
     uint8_t armed;
 };
 
+typedef enum __attribute__((packed)) io_device {
+    IO_DEVICE_DUART_B=0,
+    IO_DEVICE_QSPI=256,
+    IO_DEVICE_CONSOLE_STRING=512,
+    IO_DEVICE_SCI=768
+} io_device;
+
 typedef struct io_device_jumps io_device_jumps, *Pio_device_jumps;
 
 typedef struct io_jump io_jump, *Pio_jump;
@@ -1256,6 +1277,11 @@ struct klok_entry {
     spoo_function *function;
     int16_t event_class;
 };
+
+typedef enum __attribute__((packed)) klok_event_class {
+    KLOK_EVENT_LEAP=1,
+    KLOK_EVENT_LIFETIME=2
+} klok_event_class;
 
 typedef struct lifetime_record lifetime_record, *Plifetime_record;
 
@@ -1361,6 +1387,12 @@ struct nv_record {
 
 typedef struct nv_settings_fields nv_settings_fields, *Pnv_settings_fields;
 
+typedef enum __attribute__((packed)) timecode_format {
+    TIMECODE_T1=0,
+    TIMECODE_T2_TEST=1,
+    TIMECODE_T2=2
+} timecode_format;
+
 struct nv_settings_fields {
     uint8_t field_00[2];
     int32_t elevation_mask;
@@ -1402,7 +1434,7 @@ struct nv_settings_fields {
     uint8_t format_data;
     uint8_t memory_save;
     uint8_t douglas_state_powerup;
-    uint8_t tcode_format;
+    enum timecode_format tcode_format;
     uint8_t gps_utc;
     uint8_t pforth_at_startup;
     uint8_t debug_output;
@@ -1769,8 +1801,8 @@ typedef struct sci_settings_record sci_settings_record, *Psci_settings_record;
 
 struct sci_settings_record {
     uint8_t field_00[2];
-    uint8_t baud;
-    uint8_t parity;
+    enum serial_baud baud;
+    enum serial_parity parity;
     uint8_t xon_xoff;
     uint8_t echo;
 };
@@ -2488,9 +2520,11 @@ _Static_assert(sizeof(interpolator_calibration) == 9, "interpolator_calibration"
 _Static_assert(sizeof(interpolator_reference) == 1, "interpolator_reference");
 _Static_assert(sizeof(interval_arm_mode) == 1, "interval_arm_mode");
 _Static_assert(sizeof(interval_reading_fields) == 13, "interval_reading_fields");
+_Static_assert(sizeof(io_device) == 2, "io_device");
 _Static_assert(sizeof(io_device_jumps) == 36, "io_device_jumps");
 _Static_assert(sizeof(io_jump) == 6, "io_jump");
 _Static_assert(sizeof(klok_entry) == 26, "klok_entry");
+_Static_assert(sizeof(klok_event_class) == 1, "klok_event_class");
 _Static_assert(sizeof(lifetime_record) == 32, "lifetime_record");
 _Static_assert(sizeof(lifetime_state) == 12, "lifetime_state");
 _Static_assert(sizeof(log_entry) == 20, "log_entry");
@@ -2592,6 +2626,8 @@ _Static_assert(sizeof(scpi_token_non_decimal) == 6, "scpi_token_non_decimal");
 _Static_assert(sizeof(scpi_token_string) == 6, "scpi_token_string");
 _Static_assert(sizeof(scpi_unit) == 6, "scpi_unit");
 _Static_assert(sizeof(selftest_results) == 68, "selftest_results");
+_Static_assert(sizeof(serial_baud) == 1, "serial_baud");
+_Static_assert(sizeof(serial_parity) == 1, "serial_parity");
 _Static_assert(sizeof(serial_ring) == 258, "serial_ring");
 _Static_assert(sizeof(sim_chip_select) == 4, "sim_chip_select");
 _Static_assert(sizeof(sim_registers) == 120, "sim_registers");
@@ -2606,6 +2642,7 @@ _Static_assert(sizeof(status_snapshot_record) == 302, "status_snapshot_record");
 _Static_assert(sizeof(task_table_entry) == 6, "task_table_entry");
 _Static_assert(sizeof(three_point_fit) == 16, "three_point_fit");
 _Static_assert(sizeof(time_of_day) == 4, "time_of_day");
+_Static_assert(sizeof(timecode_format) == 1, "timecode_format");
 
 /* the #defines of mc68331.h */
 #define QSMCR_STOP 0x8000
@@ -3279,7 +3316,7 @@ extern char es_message[60]; /* 00103832 */
 extern uint8_t es_length; /* 0010386e */
 extern char tcode_message[60]; /* 0010386f */
 extern uint8_t tcode_length; /* 001038ab */
-extern uint8_t tcode_format; /* 001038ac */
+extern timecode_format tcode_format; /* 001038ac */
 extern uint8_t tcode_pending; /* 001038ad */
 extern uint16_t float_status; /* 001038b0 */
 extern uint16_t float_control; /* 001038b2 */
@@ -5091,7 +5128,7 @@ uint8_t time_valid(void);
 void set_gps_utc_offset(uint16_t param_1);
 uint8_t get_gps_utc_offset(int16_t *seconds);
 char tcode_checksum(char *param_1);
-char tcode_request(uint8_t param_1);
+char tcode_request(timecode_format format);
 int16_t tfom_code(uint32_t tfom);
 void es_build(uint32_t param_1,uint32_t param_2);
 void timecode_update(void);
@@ -5654,7 +5691,7 @@ void hdac_write_all(uint8_t param_1,uint8_t param_2,uint8_t param_3,uint8_t para
 void hdac_update(void);
 void efc_write(uint16_t param_1);
 void sci_echo_none(char c);
-void sci_baud_set(char param_1);
+void sci_baud_set(serial_baud baud);
 uint16_t sci_putc_polled(char param_1);
 int32_t sci_puts(char *text);
 uint8_t sci_getc(void);
@@ -12305,16 +12342,16 @@ char tcode_checksum(char *param_1)
 /* sets tcode_format and tcode_pending
    structures.md */
 
-char tcode_request(uint8_t param_1)
+char tcode_request(timecode_format format)
 
 {
   char cVar1;
   bool bVar2;
   
   bVar2 = true;
-  if ((tcode_pending == 0) && (param_1 < 3)) {
+  if ((tcode_pending == 0) && (format < (TIMECODE_T2|TIMECODE_T2_TEST))) {
                     /* WARNING: Switch is manually overridden */
-    tcode_format = param_1;
+    tcode_format = format;
   }
   else {
     bVar2 = false;
@@ -12513,7 +12550,7 @@ void timecode_update(void)
         date = __ghidra_as(calendar_date, get_clock_date());
         tStack_c = __ghidra_as(time_of_day, get_clock_time());
         time_next_second((uint32_t *)&date,&tStack_c);
-        if (tcode_format == 1) {
+        if (tcode_format == TIMECODE_T2_TEST) {
           sprintf(tcode_message,"rtcm? %u,T2%04d%02d%02d%02d%02d%02d%01d%01d%1c%1c%1c",0xffffffff,
                   (uint32_t)date.year,(uint32_t)date.month,(uint32_t)__ghidra_aggregate_bits(date) & 0xff,(uint32_t)tStack_c.hour,
                   (uint32_t)tStack_c.minute,(uint32_t)__ghidra_aggregate_bits(tStack_c) & 0xff,(uint32_t)bVar6,(uint32_t)local_8,param10,
@@ -34580,13 +34617,13 @@ void duartb_mode_from_settings(void)
 
 {
   duart_shadow.mr1b = duart_shadow.mr1b & 0xe0;
-  if (duartb_settings.parity == 0) {
+  if (duartb_settings.parity == SERIAL_PARITY_NONE) {
     duartb.parity = 0;
     duart_shadow.mr1b = duart_shadow.mr1b | 0x10;
   }
   else {
     duartb.parity = 1;
-    if (duartb_settings.parity == 2) {
+    if (duartb_settings.parity == SERIAL_PARITY_ODD) {
       duart_shadow.mr1b = duart_shadow.mr1b | 4;
     }
   }
@@ -37047,14 +37084,14 @@ void sci_echo_none(char c)
 
 /* the SCI's baud rate from a code */
 
-void sci_baud_set(char param_1)
+void sci_baud_set(serial_baud baud)
 
 {
   int32_t iVar1;
   uint16_t uVar2;
   
-  iVar1 = (int32_t)param_1 - 3;
-  if ((uint32_t)(int32_t)param_1 < 3 || iVar1 == 0) {
+  iVar1 = (int32_t)(char)baud - 3;
+  if ((uint32_t)(int32_t)(char)baud < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0001f6e2_index_zero)[(int16_t)iVar1]) {
     case 8:
@@ -37894,21 +37931,21 @@ __regcall uint64_t sci_init(void)
   char acStack_64 [80];
   
   sci_baud_set(sci_settings.baud);
-  if (sci_settings.parity == 0) {
+  if (sci_settings.parity == SERIAL_PARITY_NONE) {
     sci.seven_bits = 0;
     sci.mark_bit = 0;
   }
-  else if (sci_settings.parity == 3) {
+  else if (sci_settings.parity == SERIAL_PARITY_ONE) {
     sci.seven_bits = 1;
     sci.mark_bit = 1;
   }
   else {
     sci.seven_bits = 1;
     sci.mark_bit = 0;
-    if (sci_settings.parity == 1) {
+    if (sci_settings.parity == SERIAL_PARITY_EVEN) {
       qsm.sccr1 = 0x400;
     }
-    else if (sci_settings.parity == 2) {
+    else if (sci_settings.parity == SERIAL_PARITY_ODD) {
       qsm.sccr1 = 0xc00;
     }
   }
@@ -51554,7 +51591,7 @@ int32_t scpi_query_RTCM(void *parameters,void *response,void *call)
       return error;
     }
     psos_get_v(0x20,1,&uStack_8);
-    released = tcode_request(1);
+    released = tcode_request(TIMECODE_T2_TEST);
     if (released == 0) {
       error = scpi_query_failed(0xc,call);
       return error;
@@ -54227,7 +54264,7 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_BAUD(void *parameters,void *r
 
 {
   int32_t iVar1;
-  uint8_t uVar2;
+  serial_baud sVar2;
   
   if (*(int16_t *)((int32_t)parameters + 2) == 2) {
     if (*(int16_t *)((int32_t)parameters + 4) == 1) {
@@ -54239,12 +54276,12 @@ switchD_00030304_caseD_3:
     *(uint32_t *)response = 0x4b00;
   }
   else {
-    uVar2 = sci_settings.baud;
+    sVar2 = sci_settings.baud;
     if (*(int16_t *)parameters == 0) {
-      uVar2 = duartb_settings.baud;
+      sVar2 = duartb_settings.baud;
     }
-    iVar1 = (int32_t)(char)uVar2 - 3;
-    if (2 < (uint32_t)(int32_t)(char)uVar2 && iVar1 != 0) {
+    iVar1 = (int32_t)(char)sVar2 - 3;
+    if (2 < (uint32_t)(int32_t)(char)sVar2 && iVar1 != 0) {
       return 0;
     }
                     /* WARNING: Switch is manually overridden */
@@ -54446,14 +54483,14 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE
 
 {
   int32_t iVar1;
-  uint8_t uVar2;
+  serial_parity sVar2;
   
-  uVar2 = sci_settings.parity;
+  sVar2 = sci_settings.parity;
   if (*(int16_t *)parameters == 0) {
-    uVar2 = duartb_settings.parity;
+    sVar2 = duartb_settings.parity;
   }
-  iVar1 = (int32_t)(char)uVar2 - 3;
-  if ((uint32_t)(int32_t)(char)uVar2 < 3 || iVar1 == 0) {
+  iVar1 = (int32_t)(char)sVar2 - 3;
+  if ((uint32_t)(int32_t)(char)sVar2 < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_00030544_index_zero)[(int16_t)iVar1]) {
     case 8:
@@ -54764,7 +54801,7 @@ void duartb_parity_restrict(void)
 
 {
   if (((nv_settings.serial_restricted != 0) && (duartb_settings.eight_bits == 1)) &&
-     (duartb_settings.parity != 0)) {
+     (duartb_settings.parity != SERIAL_PARITY_NONE)) {
     duartb_settings.eight_bits = 0;
   }
   return;
@@ -54780,8 +54817,8 @@ void duartb_eight_bits_restrict(void)
 
 {
   if (((nv_settings.serial_restricted != 0) && (duartb_settings.eight_bits == 1)) &&
-     (duartb_settings.parity != 0)) {
-    duartb_settings.parity = 0;
+     (duartb_settings.parity != SERIAL_PARITY_NONE)) {
+    duartb_settings.parity = SERIAL_PARITY_NONE;
   }
   return;
 }
@@ -89751,13 +89788,13 @@ void installer_duartb_mode_from_settings(void)
 
 {
   installer_duart_shadow.mr1b = installer_duart_shadow.mr1b & 0xe0;
-  if (installer_duartb_settings.parity == 0) {
+  if (installer_duartb_settings.parity == SERIAL_PARITY_NONE) {
     installer_duartb.parity = 0;
     installer_duart_shadow.mr1b = installer_duart_shadow.mr1b | 0x10;
   }
   else {
     installer_duartb.parity = 1;
-    if (installer_duartb_settings.parity == 2) {
+    if (installer_duartb_settings.parity == SERIAL_PARITY_ODD) {
       installer_duart_shadow.mr1b = installer_duart_shadow.mr1b | 4;
     }
   }

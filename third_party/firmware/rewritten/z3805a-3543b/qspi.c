@@ -6,9 +6,6 @@
  * docs/firmware/structures.md's "The QSPI's lock"; the registers are
  * mc68331.h's. */
 
-/* The QSPI's I/O device, 1 (qspi_queue_setup's cases). */
-static const uint32_t QSPI_DEVICE = 0x100;
-
 /* The QSPI lock's ring of waiting tasks wraps at 16. */
 static const uint8_t QSPI_WAITING_MASK = 0xf;
 
@@ -93,12 +90,12 @@ void qspi_isr(void) {
 
 /* Writes a QSPI device through the kernel, device 1 (0x20acc). */
 void qspi_write(qspi_device device, void* buffers, uint32_t count) {
-  psos_io_write(QSPI_DEVICE | device, buffers, &count);
+  psos_io_write(IO_DEVICE_QSPI | device, buffers, &count);
 }
 
 /* Reads a QSPI device through the kernel, device 1 (0x20aec). */
 void qspi_read(qspi_device device, void* buffers, uint32_t count) {
-  psos_io_read(QSPI_DEVICE | device, buffers, &count);
+  psos_io_read(IO_DEVICE_QSPI | device, buffers, &count);
 }
 
 /* Sends to a QSPI device by polling, in supervisor mode with interrupts

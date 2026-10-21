@@ -8,16 +8,13 @@
  * are mc68331.h's.  It uses the control characters, codes, line reader
  * and status register helpers duart.c defines. */
 
-/* The SCI's I/O device (kernel_dispatch_io, 0x14c36). */
-static const uint32_t SCI_DEVICE = 0x300;
-
 /* A no-op echo, a bare rts: sci_init and sci_reconfigure put it in
  * sci.echo when the settings' echo is off (0x1f6c8). */
 void sci_echo_none(char c) {}
 
 /* Sets the SCI's baud rate from a settings code, 9600 for a code out of
  * range (0x1f6ca). */
-void sci_baud_set(char baud) {
+void sci_baud_set(serial_baud baud) {
   /* The SCI's baud divisors for SCCR0 (MC68331UM D.4.4), and the
    * per-baud value sci_baud_set keeps beside each. */
   static const uint16_t DIVISOR_1200 = 0x1b5;
@@ -30,16 +27,16 @@ void sci_baud_set(char baud) {
   static const uint16_t CONSTANT_19200 = 0x222;
   uint16_t divisor;
 
-  switch ((uint8_t)baud) {
-    case DUART_BAUD_1200:
+  switch (baud) {
+    case SERIAL_BAUD_1200:
       divisor = DIVISOR_1200;
       sci.baud_constant = CONSTANT_1200;
       break;
-    case DUART_BAUD_2400:
+    case SERIAL_BAUD_2400:
       divisor = DIVISOR_2400;
       sci.baud_constant = CONSTANT_2400;
       break;
-    case DUART_BAUD_19200:
+    case SERIAL_BAUD_19200:
       divisor = DIVISOR_19200;
       sci.baud_constant = CONSTANT_19200;
       break;
@@ -142,13 +139,13 @@ void sci_send_async(char* block, uint8_t count) {
 uint32_t sci_port_write(void* text) {
   uint32_t length;
 
-  psos_io_write(SCI_DEVICE, text, &length);
+  psos_io_write(IO_DEVICE_SCI, text, &length);
   return length;
 }
 
 /* The done hook of the SCI's setting descriptors and its PRESet:
  * reconfigures device 3 (0x202ac). */
-void sci_settings_done(void) { psos_io_control(SCI_DEVICE, 0, 0); }
+void sci_settings_done(void) { psos_io_control(IO_DEVICE_SCI, 0, 0); }
 
 /* Writes a string to the SCI by polling, in supervisor mode; returns
  * its length (0x202c0). */

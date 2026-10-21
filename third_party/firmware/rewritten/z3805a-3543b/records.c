@@ -150,9 +150,7 @@ void lifetime_event_run(void) {
  * schedules lifetime_event_run every three hours in place of the last
  * (0x30b66). */
 void lifetime_update(int32_t date) {
-  /* The clock event's class, and its period, three hours as a packed
-   * time (hour << 16). */
-  static const int16_t LIFETIME_EVENT_CLASS = 2;
+  /* The clock event's period, three hours as a packed time (hour << 16). */
   static const uint32_t LIFETIME_EVENT_PERIOD = 3u << 16;
   klok_entry event = lifetime_event_template;
 
@@ -160,7 +158,7 @@ void lifetime_update(int32_t date) {
     lifetime.date = date;
     records_lifetime_count();
   }
-  klok_entry* previous = klok_find(LIFETIME_EVENT_CLASS);
+  klok_entry* previous = klok_find(KLOK_EVENT_LIFETIME);
   if (previous != 0 && klok_cancel(previous) != 0) {
     task_dmessage("Error in deleting old lifetime event\r\n");
   }

@@ -434,7 +434,7 @@
 0x10386e	label	es_length	structures.md	es_message's length, 0x10 binary or 0x12 ASCII	uint8_t
 0x10386f	label	tcode_message	structures.md	the :PTIMe:TCODe? message, "T1#H%08X..." or "T2%04d..." and its checksum	char[60]
 0x1038ab	label	tcode_length	structures.md	tcode_message's length	uint8_t
-0x1038ac	label	tcode_format	structures.md	tcode_request's format, which selects T1 or T2	uint8_t
+0x1038ac	label	tcode_format	structures.md	tcode_request's format, which selects T1 or T2	timecode_format
 0x1038ad	label	tcode_pending	structures.md	tcode_request sets it, timecode_update builds the message and clears it	uint8_t
 0x1df48	function	printf_polled	structures.md	vsprintf into a buffer, then console_write_polled	void printf_polled(char *format, ...)
 0x20dd2	function	deferred_vprintf	structures.md	vsprintf into deferred_text at deferred_end	int deferred_vprintf(char *format, void *arguments)
@@ -445,7 +445,7 @@
 0x13c50	function	timecode_update	structures.md	builds tcode_message, T1 or T2, and the es message
 0x13c50	local	date	read	the T2 code's date: get_clock_date's (0x13da0), advanced by time_next_second (0x13db2); its year, month and day printed (0x13e04 to 0x13e14)	calendar_date @ -0x10
 0x13a6a	function	es_build	structures.md	builds es_message	void es_build(uint32_t param_1,uint param_2)
-0x139f6	function	tcode_request	structures.md	sets tcode_format and tcode_pending
+0x139f6	function	tcode_request	structures.md	sets tcode_format and tcode_pending	char tcode_request(timecode_format format)
 0x139e4	function	tcode_checksum	structures.md	the time code's cc, printed %02X and appended
 0x1399a	function	time_valid	structures.md	the time code's v is 0 when it returns nonzero
 0x13a48	function	tfom_code	structures.md	the time code's t, from pll.tfom; given pll.tfom, a float, which it passes on whole (0x13a48)	short tfom_code(uint32_t tfom)
@@ -1476,7 +1476,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1ecae	function	duart_early_init	context	at reset: tests the DUART's interrupt vector register and sets channel B up for the console
 0x1ef90	function	debug_printf_polled	context	formats and writes to the console by polling, when debug output is on; called by nothing	int32_t debug_printf_polled(char *format, ...)
 0x1f62e	function	hdac_update	context	sends the hex DAC's three shadow words to QSPI device 2
-0x1f6ca	function	sci_baud_set	context	the SCI's baud rate from a code
+0x1f6ca	function	sci_baud_set	context	the SCI's baud rate from a code	void sci_baud_set(serial_baud baud)
 0x1f71a	function	sci_putc_polled	context	waits for the SCI's transmitter and writes a character, with the parity bit if set
 0x1fffa	function	sci_reconfigure	context	resets the SCI and applies the serial settings' baud rate and mode	void sci_reconfigure(void)
 0x20152	function	sci_write	context	the SCI device's write: sci_puts under its lock, unless the byte at 0x10329c is set		convention=register; confidence=read; in=A0 char *buffer; out=D7 char error, D2 int count, A0 char *end; family=device

@@ -278,6 +278,48 @@ typedef struct duarta_driver {
   uint8_t least_free; /* +0x09: the receive ring's least free space seen */
 } duarta_driver;
 
+/* A serial port's baud code, in its settings record (SERial1's and
+ * SERial2's :BAUD; sci_baud_set and duartb_reconfigure). */
+typedef enum __attribute__((packed)) serial_baud {
+  SERIAL_BAUD_1200 = 0,
+  SERIAL_BAUD_2400 = 1,
+  SERIAL_BAUD_9600 = 2,
+  SERIAL_BAUD_19200 = 3,
+} serial_baud;
+
+/* A serial port's parity code, in its settings record (:PARity). */
+typedef enum __attribute__((packed)) serial_parity {
+  SERIAL_PARITY_NONE = 0,
+  SERIAL_PARITY_EVEN = 1,
+  SERIAL_PARITY_ODD = 2,
+  SERIAL_PARITY_ONE = 3, /* the SCI's only: the top bit set, mark parity */
+} serial_parity;
+
+/* A kernel I/O device, by kernel_dispatch_io's (0x14c36) major number in
+ * the high byte; the QSPI's minor, a qspi_device, goes in the low. */
+typedef enum io_device {
+  IO_DEVICE_DUART_B = 0x000,
+  IO_DEVICE_QSPI = 0x100,
+  IO_DEVICE_CONSOLE_STRING = 0x200,
+  IO_DEVICE_SCI = 0x300,
+} io_device;
+
+/* The time code's format, :PTIMe:TCODe:FORMat, which tcode_request
+ * takes: T1, the GPS seconds; T2 with a test prefix; T2. */
+typedef enum __attribute__((packed)) timecode_format {
+  TIMECODE_T1 = 0,
+  TIMECODE_T2_TEST = 1,
+  TIMECODE_T2 = 2,
+} timecode_format;
+
+/* A klok_entry's event class, which klok_find looks entries up by:
+ * the leap second's (leap_event_delete, 0x46394) and the lifetime
+ * record's hourly save. */
+typedef enum __attribute__((packed)) klok_event_class {
+  KLOK_EVENT_LEAP = 1,
+  KLOK_EVENT_LIFETIME = 2,
+} klok_event_class;
+
 /* DUART channel B's serial settings, SERial1's, at 0x101f58: the
  * :SYSTem:COMMunicate:SERial1 setters store them, through setting
  * descriptors that save the EEPROM parameter record, and
@@ -288,14 +330,14 @@ typedef struct duarta_driver {
 typedef struct duartb_settings_record {
   uint8_t field_00[2]; /* +0x00: only the defaults' copy writes them, 0; nothing
                           reads them */
-  uint8_t baud;        /* +0x02: 0 1200, 1 2400, 2 9600, 3 19200 */
-  uint8_t parity;      /* +0x03: 0 none, 1 even, 2 odd */
-  uint8_t xon_xoff;    /* +0x04: :PACE XON when nonzero, else NONE */
-  uint8_t field_05;    /* +0x05: saved and restored; its setting descriptor,
-                          0x33364, no setter uses */
-  uint8_t eight_bits;  /* +0x06: else seven; with nv_settings.serial_restricted
-                          set, parity set with 8 bits clears it, and 8 bits set
-                          with parity clears parity */
+  serial_baud baud;    /* +0x02 */
+  serial_parity parity; /* +0x03: not ONE */
+  uint8_t xon_xoff;     /* +0x04: :PACE XON when nonzero, else NONE */
+  uint8_t field_05;     /* +0x05: saved and restored; its setting descriptor,
+                           0x33364, no setter uses */
+  uint8_t eight_bits;   /* +0x06: else seven; with nv_settings.serial_restricted
+                           set, parity set with 8 bits clears it, and 8 bits set
+                           with parity clears parity */
   uint8_t two_stop_bits; /* +0x07: else one */
   uint8_t echo; /* +0x08: :FDUPlex ON, each character received echoed */
 } duartb_settings_record;
@@ -309,11 +351,11 @@ typedef struct duartb_settings_record {
 typedef struct sci_settings_record {
   uint8_t field_00[2]; /* +0x00: only the defaults' copy writes them, 0; nothing
                           reads them */
-  uint8_t baud;        /* +0x02: as duartb_settings_record's */
-  uint8_t parity;   /* +0x03: 0 none, eight data bits; 1 even, 2 odd, 3 ONE, the
-                       top bit set, each with seven */
-  uint8_t xon_xoff; /* +0x04: :PACE XON when nonzero, else NONE */
-  uint8_t echo;     /* +0x05: :FDUPlex ON, each character received echoed */
+  serial_baud baud;    /* +0x02 */
+  serial_parity parity; /* +0x03: NONE with eight data bits, the others with
+                           seven */
+  uint8_t xon_xoff;     /* +0x04: :PACE XON when nonzero, else NONE */
+  uint8_t echo;         /* +0x05: :FDUPlex ON, each character received echoed */
 } sci_settings_record;
 
 /* Channel B's serial settings as last applied to the DUART, at
@@ -2209,7 +2251,7 @@ typedef struct nv_settings_fields {
   uint8_t format_data;           /* :FORMat:DATA */
   uint8_t memory_save;           /* :ROBin:MEMory:SAVE */
   uint8_t douglas_state_powerup; /* :DOUGlas:STATe:POWerup */
-  uint8_t tcode_format;          /* :PTIMe:TCODe:FORMat */
+  timecode_format tcode_format;  /* :PTIMe:TCODe:FORMat */
   uint8_t gps_utc;               /* :DIAG:GPS:UTC */
   uint8_t pforth_at_startup;     /* :DIAG:SYSTem:PSTartup */
   uint8_t debug_output;          /* :DIAG:SYSTem:DOUTput */

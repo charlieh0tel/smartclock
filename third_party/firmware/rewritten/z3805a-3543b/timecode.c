@@ -9,13 +9,6 @@
  * declares are in scope; each function here keeps its generated
  * prototype. */
 
-/* tcode_format: T1, the GPS seconds; T2 with a test prefix; T2. */
-enum {
-  TIMECODE_T1 = 0,
-  TIMECODE_T2_TEST = 1,
-  TIMECODE_T2 = 2,
-};
-
 /* The delay after the 1PPS capture, in GPT ticks, at which
  * timecode_update and es_build send their messages (0x13eca,
  * 0x13c3c). */
@@ -43,7 +36,7 @@ char tcode_checksum(char* text) {
 /* Asks for a time code of a format, 0 to 2, unless one is pending: the
  * format is kept and tcode_pending set once drtb_release_for_timecode
  * frees the port; its result, 0 for a request refused (0x139f6). */
-char tcode_request(uint8_t format) {
+char tcode_request(timecode_format format) {
   if (tcode_pending != 0 || format > TIMECODE_T2) {
     return 0;
   }

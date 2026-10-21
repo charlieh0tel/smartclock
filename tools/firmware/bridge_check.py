@@ -33,7 +33,7 @@ from dataclasses import dataclass
 from harness import (
     CASES,
     REGISTERS,
-    SENTINEL,
+    STARTING,
     UNSIGNED,
     Machine,
     Run,
@@ -134,10 +134,10 @@ def check(m: Machine, types: Types, bridge: Bridge, wrapper: int, address: int):
             got = bridged.value(register)
             if got != wanted:
                 differences.append(f"result {got:x} in {register}, routine's {wanted:x}")
-        kept = [r for i, r in enumerate(REGISTERS) if r in CALLEE_SAVED and bridged.registers[r] != SENTINEL + i]
+        kept = [r for r in REGISTERS if r in CALLEE_SAVED and bridged.registers[r] != STARTING[r]]
         if kept:
             differences.append(f"not kept: {', '.join(kept)}")
-        ram_differs = ram_difference(direct, bridged)
+        ram_differs = ram_difference(m, direct, bridged)
         if ram_differs:
             differences.append(ram_differs)
         yield f"case {case}", "; ".join(differences) or None

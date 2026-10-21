@@ -153,7 +153,7 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
         wanted, got = result(function, types, original), result(function, types, gcc)
         if wanted != got and not same_text(m, function, wanted, got):
             differences.append(f"result {got:x}, image's {wanted:x}")
-        ram_differs = ram_difference(original, gcc)
+        ram_differs = ram_difference(m, original, gcc)
         if ram_differs:
             differences.append(ram_differs)
         yield f"case {case}", "; ".join(differences) or None

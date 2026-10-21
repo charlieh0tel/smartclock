@@ -3,10 +3,10 @@ rebuilt image's code loaded beside it in Unicorn (libc_check.Machine),
 and calls into either from the same RAM and registers.
 
 A call starts in supervisor mode with interrupts masked, as the
-firmware runs, every register a distinct sentinel, and its own stack at
-STACK, which is never compared.  Unicorn has no CPU32; the 68020 stands
-in, and the image uses none of the instructions either has alone
-(PLAN.md, "A rebuild that runs").
+firmware runs, every register a distinct sentinel but A6, which holds a
+caller's frame, and its own stack at STACK, which is never compared.
+Unicorn has no CPU32; the 68020 stands in, and the image uses none of
+the instructions either has alone (PLAN.md, "A rebuild that runs").
 """
 
 import re
@@ -34,7 +34,7 @@ from unicorn.m68k_const import (
     UC_M68K_REG_SR,
 )
 
-from libc_check import BUFFER, BUFFER_SPACING, RAM, RAM_SIZE, RETURN, STEP_LIMIT, Machine
+from libc_check import BUFFER, BUFFER_SPACING, RAM, RAM_SIZE, RETURN, ROM, ROM_SIZE, STEP_LIMIT, Machine
 from rebuild_link import REBUILT, Section
 
 # Every register a routine might take, by the sidecar's name.
@@ -64,7 +64,22 @@ SENTINEL = 0x5A5A0000
 STACK = 0x500000
 STACK_SIZE = 0x10000
 STACK_TOP = STACK + STACK_SIZE - 0x10
+# A6 at a call's start: a caller's frame above the call's stack, its
+# saved frame pointer 0 and its return address RETURN.  The image's code
+# may walk its caller's frame (float_raise reads the return address
+# there); gcc's keeps no frame pointer, so its callees find the caller's
+# A6 instead, and must find a frame there too.
+FRAME = STACK_TOP
+FRAME_CONTENTS = struct.pack(">II", 0, RETURN)
+# Each register's value at a call's start.
+STARTING = {name: FRAME if name == "A6" else SENTINEL + i for i, name in enumerate(REGISTERS)}
 REBUILT_SIZE = 0x100000
+# Where a literal's text may lie: the image's ROM and gcc's code and
+# constants.
+LITERALS = [(ROM, ROM_SIZE), (REBUILT, REBUILT_SIZE)]
+# A pointer's bytes, and the alignment the 68k keeps one at in RAM.
+POINTER_SIZE = 4
+POINTER_ALIGNMENT = 2
 # Arguments the cases cycle through, by kind.
 INTEGERS = [0, 1, -1, 0x12345678, -100000, 7]
 CHARS = [-1, 0x41, 0x7F, 0, -0x80, 3]
@@ -168,8 +183,8 @@ def fresh_ram(m: Machine) -> None:
 def reset(m: Machine, ram: bytes) -> None:
     m.uc.mem_write(RAM, ram)
     m.uc.reg_write(UC_M68K_REG_SR, SUPERVISOR)
-    for i, register in enumerate(REGISTERS.values()):
-        m.uc.reg_write(register, SENTINEL + i)
+    for name, register in REGISTERS.items():
+        m.uc.reg_write(register, STARTING[name])
 
 
 class Run:
@@ -185,7 +200,7 @@ class Run:
             uc.emu_stop()
 
         sp = STACK_TOP - 4 - len(stack_arguments)
-        m.uc.mem_write(sp, struct.pack(">I", RETURN) + stack_arguments)
+        m.uc.mem_write(sp, struct.pack(">I", RETURN) + stack_arguments + FRAME_CONTENTS)
         m.uc.reg_write(UC_M68K_REG_A7, sp)
         hook = m.uc.hook_add(UC_HOOK_INTR, trap)
         try:
@@ -208,11 +223,57 @@ class Run:
         return value
 
 
-def ram_difference(a: Run, b: Run) -> str | None:
-    if a.ram == b.ram:
+def preceding(m: Machine, at: int) -> bytes | None:
+    """Up to BUFFER_SPACING bytes before an address in ROM or gcc's
+    constants; None if it is in neither."""
+    region = next((start for start, size in LITERALS if start <= at < start + size), None)
+    if region is None:
         return None
-    first = next(i for i in range(len(a.ram)) if a.ram[i] != b.ram[i])
-    return f"RAM differs from {RAM + first:x}"
+    start = max(region, at - BUFFER_SPACING)
+    return m.read(start, at - start)
+
+
+def same_literal(m: Machine, a: int, b: int) -> bool:
+    """Whether two pointers, each in ROM or gcc's constants, name the same
+    place in the same text: gcc keeps its own copy of a literal the
+    image keeps in ROM, and a pointer may be part way along one or at
+    its end.  The text runs back over the bytes, not NUL, the two have
+    alike before them, and must not be empty."""
+    before = [preceding(m, p) for p in (a, b)]
+    if None in before:
+        return False
+    back = 0
+    while back < min(map(len, before)) and before[0][-1 - back] == before[1][-1 - back] != 0:
+        back += 1
+    try:
+        text = m.string(a - back)
+        return text != b"" and text == m.string(b - back)
+    except (UcError, ValueError):
+        return False
+
+
+def ram_difference(m: Machine, a: Run, b: Run) -> str | None:
+    """None if two calls left RAM the same, but for pointers, at even
+    addresses as the 68k keeps a long, to the same literal; else where
+    it first differs."""
+    at = 0
+    while a.ram[at:] != b.ram[at:]:
+        first = next(i for i in range(at, len(a.ram)) if a.ram[i] != b.ram[i])
+        even = first - first % POINTER_ALIGNMENT
+        starts = range(max(at, even - POINTER_SIZE + POINTER_ALIGNMENT), even + 1, POINTER_ALIGNMENT)
+        literal = next(
+            (
+                start
+                for start in starts
+                if start + POINTER_SIZE <= len(a.ram)
+                and same_literal(m, *(struct.unpack_from(">I", run.ram, start)[0] for run in (a, b)))
+            ),
+            None,
+        )
+        if literal is None:
+            return f"RAM differs from {RAM + first:x}"
+        at = literal + POINTER_SIZE
+    return None
 
 
 def stopped_outcome(a: Run, b: Run, names: tuple[str, str]) -> str | None:

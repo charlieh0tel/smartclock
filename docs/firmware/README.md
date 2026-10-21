@@ -388,8 +388,8 @@ the bytes after it up to the next routine, at most 256, which are its
 tables.  C calls these routines through `int NAME();`.
 `tools/firmware/decompiled_check.py` (`make check-decompiled`)
 assembles them alone and compares every piece with the image, every
-relocated field resolved at the image's own addresses: all 395
-routines, in 413 pieces, are the image's bytes.  `jq 'select(.convention
+relocated field resolved at the image's own addresses: all 400
+routines, in 418 pieces, are the image's bytes.  `jq 'select(.convention
 != "unknown" and .confidence != "run")'` over the sidecar lists what is
 left to confirm.
 
@@ -526,8 +526,8 @@ label, `c_NAME`: a generated wrapper that moves the arguments from
 gcc's stack into the routine's registers and its result into D0, D0:D1
 or A0.  `tools/firmware/bridge_check.py` runs each wrapper in Unicorn
 against its routine called directly, from the registers the sidecar
-names: of the 85, 67 give the same result and RAM and keep gcc's
-callee-saved registers, 11 reach the kernel or a peripheral and are
+names: of the 85, 68 give the same result and RAM and keep gcc's
+callee-saved registers, 10 reach the kernel or a peripheral and are
 skipped, and 7 (the installer's) are not run.  The
 whole file compiles to an object (`make check-decompiled`, whose flags
 add `-fno-builtin -fno-tree-loop-distribute-patterns`, since the image's
@@ -567,7 +567,15 @@ callees and argument layout until a function is replaced; gcc's C calls
 gcc's.  `tools/firmware/function_check.py` (`make report-decompiled`)
 then calls each C function's image copy and gcc's copy in Unicorn, from
 the same RAM, and compares result and RAM: a measure of the decompiled
-C, not a gate (PLAN.md, "A rebuild that runs, in readable C").
+C, not a gate (PLAN.md, "A rebuild that runs, in readable C").  Both
+checks (`tools/firmware/harness.py`) take a pointer left in RAM, at an
+even address, as the same when the two point at the same place in the
+same text, not empty, in ROM or among gcc's constants: gcc keeps its
+own copy of a literal the image keeps in ROM.  And a call starts with
+A6 at a caller's frame on the harness's stack, its saved frame pointer
+0 and its return address the harness's, since the image's code may
+walk its caller's frame (`float_raise` reads the return address there)
+where gcc's keeps no frame pointer.
 
 In the Z3805A 3543B image this gives 1752 functions, and every one but
 the ten thunks decompiles.  136 switches are recovered; `0x24ff2` and `0x25140`, a

@@ -2370,7 +2370,6 @@ extern undefined DAT_0010b03c; /* 0010b03c */
 extern short DAT_0010b0bc; /* 0010b0bc */
 extern undefined DAT_0010b0be; /* 0010b0be */
 extern undefined DAT_0010b0c2; /* 0010b0c2 */
-extern undefined2 DAT_0010ffd0; /* 0010ffd0 */
 extern undefined4 DAT_0010ffe6; /* 0010ffe6 */
 extern undefined4 DAT_0010ffea; /* 0010ffea */
 extern undefined4 DAT_0010ffee; /* 0010ffee */
@@ -2925,7 +2924,6 @@ __asm__(".set DAT_0010b03c, 0x0010b03c");
 __asm__(".set DAT_0010b0bc, 0x0010b0bc");
 __asm__(".set DAT_0010b0be, 0x0010b0be");
 __asm__(".set DAT_0010b0c2, 0x0010b0c2");
-__asm__(".set DAT_0010ffd0, 0x0010ffd0");
 __asm__(".set DAT_0010ffe6, 0x0010ffe6");
 __asm__(".set DAT_0010ffea, 0x0010ffea");
 __asm__(".set DAT_0010ffee, 0x0010ffee");
@@ -3460,6 +3458,8 @@ extern undefined1 DAT_001037da;
 __asm__(".set DAT_001037da, 0x001037da");
 extern undefined1 DAT_0010ab2e;
 __asm__(".set DAT_0010ab2e, 0x0010ab2e");
+extern undefined1 DAT_0010ffd0;
+__asm__(".set DAT_0010ffd0, 0x0010ffd0");
 extern undefined1 DAT_0010fffe;
 __asm__(".set DAT_0010fffe, 0x0010fffe");
 extern undefined1 DAT_installer__00100787;
@@ -4620,8 +4620,8 @@ ulong psos_io_close(ulong device);
 ulong psos_io_read(ulong device,void *buffer,ulong *length);
 ulong psos_io_write(ulong device,void *buffer,ulong *length);
 ulong psos_io_control(ulong device,ulong a,ulong b);
-undefined4 cpu_register_test(void);
-void ram_pattern_test(void);
+int cpu_register_test();
+int ram_pattern_test();
 uint rom_lane_checksum(byte *param_1,undefined4 param_2);
 void selftest_run_all(void);
 void selftest_run_all_counted(void);
@@ -5507,7 +5507,7 @@ void status_happening(char param_1);
 undefined2 status_hardware_condition(void);
 void happening_buffer_clear(undefined1 *param_1);
 void happening_buffers_clear(void);
-void happening_replay(int param_1,char param_2,char param_3,char param_4);
+void happening_replay(char *events,char mode,char first,char last);
 void happening_flush(char *param_1);
 int scpi_query_SOURce_ROSCillator_HOLDover_DURation(void *parameters,void *response,void *call);
 int scpi_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold
@@ -5884,7 +5884,7 @@ void gps_print_1pps(void);
 void gps_print_process_monitor(void);
 undefined4 long_array_get(int param_1,byte param_2);
 void long_array_set(undefined4 param_1,int param_2,byte param_3);
-undefined1 * long_array_get_byte(int param_1,byte param_2,undefined1 *param_3);
+char * long_array_get_byte(long *array,uint8_t index,char *out);
 undefined1 * long_array_get_word(int param_1,byte param_2,undefined1 *param_3);
 undefined1 * long_array_get_long(int param_1,byte param_2,undefined1 *param_3);
 void long_array_get_long_prefixed(int param_1,byte param_2,undefined1 *param_3);
@@ -5959,8 +5959,8 @@ double double_divide(double a, double b) __asm__("c_double_divide");
 double double_divide_reversed_pointers(double *a, double *b) __asm__("c_double_divide_reversed_pointers");
 double double_divide_reversed_pointer(double a, double *b) __asm__("c_double_divide_reversed_pointer");
 double double_divide_reversed(double a, double b) __asm__("c_double_divide_reversed");
-ulonglong double_divide_operand_error(void);
-undefined8 double_divide_by_zero(void);
+int double_divide_operand_error();
+int double_divide_by_zero();
 int double_divide_next_word();
 int double_divide_first_word();
 float double_to_float(double d) __asm__("c_double_to_float");
@@ -5979,7 +5979,7 @@ void double_multiply_in_place(double *x, double y) __asm__("c_double_multiply_in
 double double_multiply_pointers(double *a, double *b) __asm__("c_double_multiply_pointers");
 double double_multiply_pointer(double a, double *b) __asm__("c_double_multiply_pointer");
 double double_multiply(double a, double b) __asm__("c_double_multiply");
-ulonglong double_multiply_operand_error(void);
+int double_multiply_operand_error();
 int float_normalize();
 int double_normalize();
 ulonglong float_raise(uint code,...);
@@ -20619,13 +20619,18 @@ ulong psos_io_control(ulong device,ulong a,ulong b)
 
 
 /* 0001749e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x0001760a) */
 /* WARNING: Removing unreachable block (ram,0x00017612) */
 /* selftest_cpu's register test: 0x55555555 and 0xaaaaaaaa through every data and address register;
-   1 at 0x100c24 on a failure */
+   1 at 0x100c24 on a failure; called as C, D0.w 0 on a pass, but its body is the registers
+   themselves, which C cannot say
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
+   context, read */
 
-undefined4 cpu_register_test(void)
+__naked undefined4 cpu_register_test(void)
 
 {
   undefined1 local_30 [4];
@@ -20638,12 +20643,159 @@ undefined4 cpu_register_test(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl cpu_register_test\n"
+	"	.type cpu_register_test, @function\n"
+	"	.pushsection .text.cpu_register_test.1749e,\"ax\",@progbits\n"
+	"cpu_register_test:\n"
+	"	movem.l %a6/%a5/%a4/%a3/%a2/%d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
+	"	bra.b .Lg_174ac\n"
+	".Lg_174a4:\n"
+	"	.byte 0xaa,0xaa,0xaa,0xaa\n"
+	".Lg_174a8:\n"
+	"	.byte 0x55,0x55,0x55,0x55\n"
+	".Lg_174ac:\n"
+	"	clr.w (selftest).l\n"
+	"	move.b #0x55,%d0\n"
+	"	cmpi.b #0x55,%d0\n"
+	"	bne.w .Lg_1761a\n"
+	"	move.l #-0x55555556,%d0\n"
+	"	cmpi.l #-0x55555556,%d0\n"
+	"	bne.w .Lg_1761a\n"
+	"	move.l #0x55555555,%d0\n"
+	"	move.l %d0,%d1\n"
+	"	move.l %d1,%d2\n"
+	"	move.l %d2,%d3\n"
+	"	move.l %d3,%d4\n"
+	"	move.l %d4,%d5\n"
+	"	move.l %d5,%d6\n"
+	"	move.l %d6,%d7\n"
+	"	movea.l %d7,%a0\n"
+	"	movea.l %a0,%a1\n"
+	"	movea.l %a1,%a2\n"
+	"	movea.l %a2,%a3\n"
+	"	movea.l %a3,%a4\n"
+	"	movea.l %a4,%a5\n"
+	"	movea.l %a5,%a6\n"
+	"	cmpa.l #0x55555555,%a6\n"
+	"	bne.w .Lg_1761a\n"
+	"	move.l #-0x55555556,%d0\n"
+	"	move.l %d0,%d1\n"
+	"	move.l %d1,%d2\n"
+	"	move.l %d2,%d3\n"
+	"	move.l %d3,%d4\n"
+	"	move.l %d4,%d5\n"
+	"	move.l %d5,%d6\n"
+	"	move.l %d6,%d7\n"
+	"	movea.l %d7,%a0\n"
+	"	movea.l %a0,%a1\n"
+	"	movea.l %a1,%a2\n"
+	"	movea.l %a2,%a3\n"
+	"	movea.l %a3,%a4\n"
+	"	movea.l %a4,%a5\n"
+	"	movea.l %a5,%a6\n"
+	"	cmpa.l #-0x55555556,%a6\n"
+	"	bne.w .Lg_1761a\n"
+	"	move.l #0x55555555,%d1\n"
+	"	move.l %d1,%d2\n"
+	"	or.l %d0,%d2\n"
+	"	cmpi.l #-0x1,%d2\n"
+	"	bne.w .Lg_1761a\n"
+	"	move.l %d1,%d3\n"
+	"	and.l %d0,%d3\n"
+	"	bne.w .Lg_1761a\n"
+	"	move.l %d1,%d4\n"
+	"	eor.l %d1,%d4\n"
+	"	bne.w .Lg_1761a\n"
+	"	movea.l %sp,%a6\n"
+	"	move.l %d0,-(%sp)\n"
+	"	cmpa.l %a6,%sp\n"
+	"	beq.w .Lg_17618\n"
+	"	cmp.l (%sp)+,%d0\n"
+	"	bne.w .Lg_1761a\n"
+	"	cmpa.l %a6,%sp\n"
+	"	bne.w .Lg_1761a\n"
+	"	subq.l #0x4,%sp\n"
+	"	move.l %d1,(%sp)\n"
+	"	move.l (%sp),(%sp)\n"
+	"	cmp.l (%sp),%d1\n"
+	"	bne.w .Lg_17618\n"
+	"	lea (-0x1a85,%sp),%a6\n"
+	"	move.l %d0,(0x1a85,%a6)\n"
+	"	cmp.l (0x1a85,%a6),%d0\n"
+	"	bne.w .Lg_17618\n"
+	"	bra.b .Lg_17582\n"
+	".Lg_1757e:\n"
+	"	.byte 0xaa,0xaa,0xaa,0xaa\n"
+	".Lg_17582:\n"
+	"	cmp.l (.Lg_1757e,%pc),%d0\n"
+	"	bne.w .Lg_17618\n"
+	"	moveq #0x1,%d3\n"
+	"	cmp.b (.Lg_1757e,%pc,%d3.w*0x1),%d0\n"
+	"	bne.w .Lg_17618\n"
+	"	cmp.l (.Lg_174a4).l,%d0\n"
+	"	bne.w .Lg_17618\n"
+	"	cmp.l (.Lg_174a8).l,%d1\n"
+	"	bne.w .Lg_17618\n"
+	"	moveq #0x28,%d6\n"
+	"	divs.w #0x3e8,%d6\n"
+	"	cmpi.l #0x280000,%d6\n"
+	"	bne.w .Lg_17618\n"
+	"	move.l %d0,%d7\n"
+	"	muls.w %d1,%d7\n"
+	"	cmpi.l #-0x1c71e38e,%d7\n"
+	"	bne.w .Lg_17618\n"
+	"	move.l %d1,%d2\n"
+	"	lsl.l #0x1,%d2\n"
+	"	cmp.l %d2,%d0\n"
+	"	bne.w .Lg_17618\n"
+	"	ror.l #0x7,%d2\n"
+	"	cmp.l %d2,%d1\n"
+	"	bne.w .Lg_17618\n"
+	"	bclr.l #0x1,%d0\n"
+	"	beq.w .Lg_17618\n"
+	"	moveq #0x1,%d3\n"
+	"	bset.l %d3,%d0\n"
+	"	bne.w .Lg_17618\n"
+	"	move.l %d1,(%sp)\n"
+	"	bset.b #0x3,(%sp)\n"
+	"	bne.w .Lg_17618\n"
+	"	moveq #0x3,%d4\n"
+	"	bclr.b %d4,(%sp)\n"
+	"	beq.w .Lg_17618\n"
+	"	move.l %d1,(%sp)\n"
+	"	lea (0x1,%sp),%a0\n"
+	"	lea (0x2,%sp),%a1\n"
+	"	abcd -(%a0),-(%a1)\n"
+	"	bcc.w .Lg_17618\n"
+	"	cmpi.b #0x10,(%a1)\n"
+	"	bne.w .Lg_17618\n"
+	"	addq.l #0x4,%sp\n"
+	"	clr.w %d0\n"
+	"	bra.b .Lg_17622\n"
+	".Lg_17618:\n"
+	"	addq.l #0x4,%sp\n"
+	".Lg_1761a:\n"
+	"	ori.w #0x1,(selftest).l\n"
+	".Lg_17622:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%d6/%d7/%a2/%a3/%a4/%a5/%a6\n"
+	"	rts\n"
+	"	.size cpu_register_test, .-cpu_register_test\n"
+	"	.popsection\n"
+);
+
 /* 00017628 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the RAM self-test's pattern pass, saving and restoring each block around 0xaaaaaaaa and its
-   complement */
+   complement; called as C, but saves each 48-byte block of RAM on the stack and walks all of it,
+   which C cannot say
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
+   context, read */
 
-void ram_pattern_test(void)
+__naked void ram_pattern_test(void)
 
 {
   undefined2 uVar1;
@@ -20765,6 +20917,118 @@ void ram_pattern_test(void)
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl ram_pattern_test\n"
+	"	.type ram_pattern_test, @function\n"
+	"	.pushsection .text.ram_pattern_test.17628,\"ax\",@progbits\n"
+	"ram_pattern_test:\n"
+	"	movem.l %a6/%a5/%a4/%a3/%a2/%d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
+	"	clr.w (__ghidra_100c26).l\n"
+	"	clr.w (__ghidra_100c28).l\n"
+	"	clr.l (__ghidra_100c2a).l\n"
+	"	movea.l #0x100000,%a0\n"
+	"	movea.l #0x110000,%a1\n"
+	".Lg_1764a:\n"
+	"	clr.l %d0\n"
+	"	moveq #0x17,%d1\n"
+	".Lg_1764e:\n"
+	"	move.w (%a0)+,-(%sp)\n"
+	"	dbf %d1,.Lg_1764e\n"
+	"	move.l #-0x55555556,%d1\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	moveq #0xb,%d1\n"
+	".Lg_17674:\n"
+	"	move.l (%a0)+,%d3\n"
+	"	eori.l #-0x55555556,%d3\n"
+	"	or.l %d3,%d0\n"
+	"	dbf %d1,.Lg_17674\n"
+	"	move.l #0x55555555,%d1\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	move.l %d1,-(%a0)\n"
+	"	moveq #0xb,%d1\n"
+	".Lg_176a2:\n"
+	"	move.l (%a0)+,%d3\n"
+	"	eori.l #0x55555555,%d3\n"
+	"	or.l %d3,%d0\n"
+	"	dbf %d1,.Lg_176a2\n"
+	"	moveq #0x17,%d1\n"
+	".Lg_176b2:\n"
+	"	move.w (%sp)+,-(%a0)\n"
+	"	dbf %d1,.Lg_176b2\n"
+	"	move.l %d0,%d1\n"
+	"	beq.w .Lg_176dc\n"
+	"	moveq #0x10,%d2\n"
+	"	lsr.l %d2,%d1\n"
+	"	or.l %d1,%d0\n"
+	"	andi.l #0xffff,%d0\n"
+	"	or.w %d0,(__ghidra_100c28).l\n"
+	"	ori.w #0x1,(__ghidra_100c26).l\n"
+	"	bra.w .Lg_1774a\n"
+	".Lg_176dc:\n"
+	"	lea (0x30,%a0),%a0\n"
+	"	movea.l %a0,%a2\n"
+	"	lea (0x30,%a2),%a2\n"
+	"	cmpa.l %a2,%a1\n"
+	"	bhi.w .Lg_1764a\n"
+	"	cmpa.l %a0,%a1\n"
+	"	bls.w .Lg_176fa\n"
+	"	lea (-0x30,%a1),%a0\n"
+	"	bra.w .Lg_1764a\n"
+	".Lg_176fa:\n"
+	"	movea.l #0x100000,%a0\n"
+	"	movea.l #0x100000,%a1\n"
+	"	clr.l %d2\n"
+	"	moveq #0x2,%d0\n"
+	"	adda.l #0x2,%a1\n"
+	"	move.w #0xf,%d1\n"
+	"	subq.w #0x1,%d1\n"
+	".Lg_17716:\n"
+	"	movea.w (%a0),%a2\n"
+	"	movea.w (%a1),%a3\n"
+	"	move.w #-0x5556,(%a0)\n"
+	"	move.w #0x5555,(%a1)\n"
+	"	move.w (%a0),%d3\n"
+	"	cmpi.w #0x5555,%d3\n"
+	"	bne.w .Lg_17736\n"
+	"	ori.w #0x2,(__ghidra_100c26).l\n"
+	"	or.l %d0,%d2\n"
+	".Lg_17736:\n"
+	"	move.w %a2,(%a0)\n"
+	"	move.w %a3,(%a1)\n"
+	"	adda.l %d0,%a1\n"
+	"	lsl.l #0x1,%d0\n"
+	"	dbf %d1,.Lg_17716\n"
+	"	lsr.l #0x1,%d2\n"
+	"	or.l %d2,(__ghidra_100c2a).l\n"
+	".Lg_1774a:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%d6/%d7/%a2/%a3/%a4/%a5/%a6\n"
+	"	rts\n"
+	"	.size ram_pattern_test, .-ram_pattern_test\n"
+	"	.popsection\n"
+);
 
 /* 00017750 */
 
@@ -50368,21 +50632,21 @@ void happening_buffers_clear(void)
 /* WARNING: Unknown calling convention */
 /* replays buffered status events through status_report or status_happening */
 
-void happening_replay(int param_1,char param_2,char param_3,char param_4)
+void happening_replay(char *events,char mode,char first,char last)
 
 {
   int iVar1;
   
-  for (; param_3 <= param_4; param_3 = param_3 + '\x01') {
-    iVar1 = param_2 + -1;
-    if (param_2 == 0 || iVar1 == 0) {
+  for (; first <= last; first = first + '\x01') {
+    iVar1 = mode + -1;
+    if (mode == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
       switch((&WORD_0002f6b4)[(short)iVar1]) {
       case 4:
-        status_report((short)*(char *)(param_1 + param_3));
+        status_report((short)events[first]);
         break;
       case 0x12:
-        status_happening(*(char *)(param_1 + param_3));
+        status_happening(events[first]);
       }
     }
   }
@@ -50414,10 +50678,10 @@ void happening_flush(char *param_1)
   }
   cVar1 = cVar1 + -1;
   if (('\x05' < *param_1) && (param_1[1] != '\0')) {
-    happening_replay((int)(param_1 + 2),unaff_D2b,param_1[1],cVar1);
+    happening_replay(param_1 + 2,unaff_D2b,param_1[1],cVar1);
     cVar1 = param_1[1] + -1;
   }
-  happening_replay((int)(param_1 + 2),unaff_D2b,'\0',cVar1);
+  happening_replay(param_1 + 2,unaff_D2b,'\0',cVar1);
   happening_buffers_clear();
   return;
 }
@@ -65745,14 +66009,14 @@ void long_array_set(undefined4 param_1,int param_2,byte param_3)
 
 /* a long's low byte from an array by index, stored and the pointer advanced */
 
-undefined1 * long_array_get_byte(int param_1,byte param_2,undefined1 *param_3)
+char * long_array_get_byte(long *array,uint8_t index,char *out)
 
 {
-  undefined1 uVar1;
+  char cVar1;
   
-  uVar1 = long_array_get(param_1,param_2);
-  *param_3 = uVar1;
-  return param_3 + 1;
+  cVar1 = long_array_get((int)array,index);
+  *out = cVar1;
+  return out + 1;
 }
 
 
@@ -66653,8 +66917,8 @@ int gps_request_build(short param_1,char param_2,int param_3,char *param_4)
   int iVar2;
   byte bVar4;
   char *pcVar5;
+  byte *out;
   byte *pbVar6;
-  byte *pbVar7;
   uint8_t local_8 [2];
   char local_6 [2];
   
@@ -66667,7 +66931,7 @@ int gps_request_build(short param_1,char param_2,int param_3,char *param_4)
   else {
     *param_4 = '\0';
     if (((&DAT_0004fed2)[iVar1 * 0x38] == '\x01') ||
-       (pbVar7 = (byte *)param_4, (&DAT_0004fed2)[iVar1 * 0x38] == '\x03')) {
+       (pbVar6 = (byte *)param_4, (&DAT_0004fed2)[iVar1 * 0x38] == '\x03')) {
       strcat(param_4,"@@");
       strcat(param_4,(&PTR_DAT_0004fece)[iVar1 * 0xe]);
       iVar2 = -1;
@@ -66677,50 +66941,50 @@ int gps_request_build(short param_1,char param_2,int param_3,char *param_4)
         cVar3 = *pcVar5;
         pcVar5 = pcVar5 + 1;
       } while (cVar3 != '\0');
-      pbVar6 = (byte *)(param_4 + iVar2);
+      out = (byte *)(param_4 + iVar2);
       if (param_2 == '\0') {
         for (bVar4 = 0;
             ((&PTR_long_array_get_byte_0004fed4)[iVar1 * 0xe + (uint)bVar4] != (undefined *)0x0 &&
             (bVar4 < 4)); bVar4 = bVar4 + 1) {
-          pbVar6 = (byte *)(*(code *)(&PTR_long_array_get_byte_0004fed4)[iVar1 * 0xe + (uint)bVar4])
-                                     ((short)param_3);
+          out = (byte *)(*(code *)(&PTR_long_array_get_byte_0004fed4)[iVar1 * 0xe + (uint)bVar4])
+                                  ((short)param_3);
         }
         if (param_1 == 0x1e) {
-          long_array_get_byte(param_3,0,local_8);
+          long_array_get_byte((long *)param_3,0,(char *)local_8);
           gps.status_rate = local_8[0];
         }
         else if (param_1 == 0x28) {
-          *pbVar6 = 0;
-          pbVar6[1] = 0;
-          pbVar6[2] = 1;
+          *out = 0;
+          out[1] = 0;
+          out[2] = 1;
           bVar4 = 1;
-          pbVar7 = pbVar6 + 3;
+          pbVar6 = out + 3;
           do {
-            pbVar6 = pbVar7 + 1;
-            *pbVar7 = 0;
+            out = pbVar6 + 1;
+            *pbVar6 = 0;
             bVar4 = bVar4 + 1;
-            pbVar7 = pbVar6;
+            pbVar6 = out;
           } while (bVar4 < 8);
         }
       }
       else {
-        pbVar7 = (&PTR_DAT_0004fee4)[iVar1 * 0xe];
-        if (pbVar7 == (byte *)0x0) {
+        pbVar6 = (&PTR_DAT_0004fee4)[iVar1 * 0xe];
+        if (pbVar6 == (byte *)0x0) {
           *param_4 = '\0';
           return 0;
         }
         if (param_1 == 8) {
-          pbVar6 = (byte *)long_array_get_byte(param_3,0,pbVar6);
+          out = (byte *)long_array_get_byte((long *)param_3,0,(char *)out);
         }
-        for (; *pbVar7 != 0; pbVar7 = pbVar7 + 1) {
-          if (*pbVar7 == 0xee) {
+        for (; *pbVar6 != 0; pbVar6 = pbVar6 + 1) {
+          if (*pbVar6 == 0xee) {
             bVar4 = 0;
           }
           else {
-            bVar4 = *pbVar7;
+            bVar4 = *pbVar6;
           }
-          *pbVar6 = bVar4;
-          pbVar6 = pbVar6 + 1;
+          *out = bVar4;
+          out = out + 1;
         }
       }
       bVar4 = 0xff;
@@ -66730,13 +66994,13 @@ int gps_request_build(short param_1,char param_2,int param_3,char *param_4)
         cVar3 = *pcVar5;
         pcVar5 = pcVar5 + 1;
       } while (cVar3 != '\0');
-      bVar4 = oncore_checksum((byte *)(param_4 + bVar4),pbVar6);
-      *pbVar6 = bVar4;
-      pbVar6[1] = 0xd;
-      pbVar7 = pbVar6 + 3;
-      pbVar6[2] = 10;
+      bVar4 = oncore_checksum((byte *)(param_4 + bVar4),out);
+      *out = bVar4;
+      out[1] = 0xd;
+      pbVar6 = out + 3;
+      out[2] = 10;
     }
-    iVar1 = (int)pbVar7 - (int)param_4;
+    iVar1 = (int)pbVar6 - (int)param_4;
   }
   return iVar1;
 }
@@ -72513,11 +72777,15 @@ __asm__(
 );
 
 /* 0005dbde */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* exception code 0xe2000
-   libc.md */
+/* exception code 0xe2000; a tail the divide branches to (0x5d9b0, 0x5d9f2), leaving through its
+   epilogue at 0x5db8c, which pops the D2-D7 it pushed
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
+   libc.md, read */
 
-ulonglong double_divide_operand_error(void)
+__naked ulonglong double_divide_operand_error(void)
 
 {
   ulonglong uVar1;
@@ -72527,12 +72795,32 @@ ulonglong double_divide_operand_error(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl double_divide_operand_error\n"
+	"	.type double_divide_operand_error, @function\n"
+	"	.pushsection .text.double_divide_operand_error.5dbde,\"ax\",@progbits\n"
+	"double_divide_operand_error:\n"
+	"	pea (0xe2000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	.byte 0x60 | bra.b 0x0005db8c\n"
+	"	.reloc ., R_68K_PC8, double_divide_reversed+0x122-1\n"
+	"	.byte 0\n"
+	"	.size double_divide_operand_error, .-double_divide_operand_error\n"
+	"	.popsection\n"
+);
+
 /* 0005dbee */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* exception code 0xe0400
-   libc.md */
+/* exception code 0xe0400; a tail the divide branches to (0x5d9fc), leaving through its epilogue at
+   0x5db84
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
+   libc.md, read */
 
-undefined8 double_divide_by_zero(void)
+__naked undefined8 double_divide_by_zero(void)
 
 {
   uint uVar1;
@@ -72547,6 +72835,22 @@ undefined8 double_divide_by_zero(void)
   return CONCAT44(uVar1,(int)uVar2);
 }
 
+
+#endif
+__asm__(
+	"	.globl double_divide_by_zero\n"
+	"	.type double_divide_by_zero, @function\n"
+	"	.pushsection .text.double_divide_by_zero.5dbee,\"ax\",@progbits\n"
+	"double_divide_by_zero:\n"
+	"	pea (0xe0400).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	.byte 0x60 | bra.b 0x0005db84\n"
+	"	.reloc ., R_68K_PC8, double_divide_reversed+0x11a-1\n"
+	"	.byte 0\n"
+	"	.size double_divide_by_zero, .-double_divide_by_zero\n"
+	"	.popsection\n"
+);
 
 /* 0005dbfe */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -75968,11 +76272,15 @@ __asm__(
 );
 
 /* 0005e81c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* exception code 0xc2000
-   libc.md */
+/* exception code 0xc2000; a tail the multiply branches to (0x5e58a, 0x5e5bc), leaving through its
+   epilogue at 0x5e7d6, which pops the D2-D7 it pushed
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
+   libc.md, read */
 
-ulonglong double_multiply_operand_error(void)
+__naked ulonglong double_multiply_operand_error(void)
 
 {
   ulonglong uVar1;
@@ -75981,6 +76289,22 @@ ulonglong double_multiply_operand_error(void)
   return uVar1;
 }
 
+
+#endif
+__asm__(
+	"	.globl double_multiply_operand_error\n"
+	"	.type double_multiply_operand_error, @function\n"
+	"	.pushsection .text.double_multiply_operand_error.5e81c,\"ax\",@progbits\n"
+	"double_multiply_operand_error:\n"
+	"	pea (0xc2000).l\n"
+	"	jsr (float_raise).l\n"
+	"	addq.l #0x4,%sp\n"
+	"	.byte 0x60 | bra.b 0x0005e7d6\n"
+	"	.reloc ., R_68K_PC8, double_multiply+0x1d6-1\n"
+	"	.byte 0\n"
+	"	.size double_multiply_operand_error, .-double_multiply_operand_error\n"
+	"	.popsection\n"
+);
 
 /* 0005e83c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */

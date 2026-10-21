@@ -673,7 +673,7 @@ view cannot drift apart.  The library, bottom up:
      descriptors, tables -- at its own addresses, which the code names
      absolutely, and places the rebuilt functions around it.  Done for
      the harness: `tools/firmware/rebuild_link.py` puts every piece of
-     assembly at its address, all 413 the image's bytes, and gcc's code
+     assembly at its address, all 418 the image's bytes, and gcc's code
      at `0x400000`; the ROM's data and its original C stay where they
      are, and the assembly calls the original C (`__image_NAME`).  A
      link for the board, gcc's C in the ROM's free space and the
@@ -683,12 +683,12 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/bridge_check.py` (Unicorn, run with uv) calls each
      wrapper as gcc would and its routine from its registers, from the
      same RAM, and requires the same result and RAM and gcc's
-     callee-saved registers kept; 67 of 85 agree, none disagree.
+     callee-saved registers kept; 68 of 85 agree, none disagree.
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1214 run, 620 agree, 545 reach the kernel
-     or a peripheral and are skipped, and 49 differ, in the function or
+     original reads them: of 1209 run, 640 agree, 541 reach the kernel
+     or a peripheral and are skipped, and 28 differ, in the function or
      in gcc's callees.
      Unicorn has no CPU32 and the 68020 stands in: the image uses none
      of the CPU32's own instructions (`tbl`, `lpstop`, `bgnd`; a scan of
@@ -726,7 +726,16 @@ view cannot drift apart.  The library, bottom up:
      read signed, the decompiler's sign extension (53 to 49).  Left as
      the harness's own: a function copying a string it is pointed at
      into a small local overruns it on the harness's garbage, and lands
-     differently in gcc's frame (`status_screen_height`).
+     differently in gcc's frame (`status_screen_height`).  Then the
+     harness itself: a pointer left in RAM to the same text, the
+     image's in ROM and gcc's in its constants, is the same, and a call
+     starts with A6 at a caller's frame, which the image's
+     `float_raise` walks where gcc's caller keeps none (41 to 35).
+     Five routines the names file marks `convention=other` -- the
+     divide's and multiply's error tails, entered by a branch and left
+     through their callers' epilogues, and the CPU and RAM self-tests --
+     are assembly and no longer run, and `long_array_get_byte` and
+     `happening_replay` take pointers (35 to 28).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

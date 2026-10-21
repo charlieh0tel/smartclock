@@ -598,6 +598,9 @@ CHECK_SIZE(status_snapshot_record[2], 0x1017bc - 0x101560);
 CHECK_FIELD(status_snapshot_record, interval, 0x0a);
 CHECK_FIELD(status_snapshot_record, holdover_duration, 0x22);
 CHECK_FIELD(status_snapshot_record, satellite_sets, 0x32);
+/* status_screen_mode_lines' five entries, the last a terminator */
+CHECK_SIZE(status_screen_mode_line[5], 0x4d050 - 0x4d032);
+CHECK_FIELD(status_screen_mode_line, text, 0x02);
 CHECK_FIELD(status_snapshot_record, gps_satellites, 0x5c);
 CHECK_FIELD(status_snapshot_record, pseudolites, 0xbc);
 CHECK_FIELD(status_snapshot_record, status_received, 0xec);

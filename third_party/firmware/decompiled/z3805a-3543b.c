@@ -1872,6 +1872,14 @@ struct status_model {
     struct status_register *registers[7];
 };
 
+typedef struct status_screen_mode_line status_screen_mode_line, *Pstatus_screen_mode_line;
+
+struct status_screen_mode_line {
+    uint8_t mode;
+    uint8_t field_01;
+    char *text;
+};
+
 typedef struct status_snapshot_record status_snapshot_record, *Pstatus_snapshot_record;
 
 struct status_snapshot_record {
@@ -2071,6 +2079,7 @@ _Static_assert(sizeof(sprintf_output) == 8, "sprintf_output");
 _Static_assert(sizeof(status_condition) == 6, "status_condition");
 _Static_assert(sizeof(status_model) == 46, "status_model");
 _Static_assert(sizeof(status_register) == 16, "status_register");
+_Static_assert(sizeof(status_screen_mode_line) == 6, "status_screen_mode_line");
 _Static_assert(sizeof(status_snapshot_record) == 302, "status_snapshot_record");
 _Static_assert(sizeof(task_table_entry) == 6, "task_table_entry");
 _Static_assert(sizeof(three_point_fit) == 16, "three_point_fit");
@@ -2372,6 +2381,7 @@ extern scpi_action_param scpi_action_STATus_PRESet; /* 00041372 */
 extern scpi_action_param scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate; /* 00041378 */
 extern uint8_t si_prefixes[8]; /* 0004cfc5 */
 extern char * month_names[13]; /* 0004cfce */
+extern status_screen_mode_line status_screen_mode_lines[5]; /* 0004d032 */
 extern char status_screen_blank[1]; /* 0004d10b */
 extern uint8_t satellite_status_blank_entry[8]; /* 0004e016 */
 extern oncore_message_entry oncore_messages[49]; /* 0004fece */
@@ -3555,6 +3565,7 @@ __asm__(".set status_register_setup_table, 0x0002f7ac");
 __asm__(".set status_report_messages, 0x0002bf30");
 __asm__(".set status_request_service, 0x00102eb6");
 __asm__(".set status_screen_blank, 0x0004d10b");
+__asm__(".set status_screen_mode_lines, 0x0004d032");
 __asm__(".set status_screen_print_interval, 0x001011c5");
 __asm__(".set status_screen_snapshot, 0x0010142c");
 __asm__(".set status_snapshot_flagged, 0x0010168e");
@@ -19728,85 +19739,82 @@ int os_report_processes(printf_function *print)
 void os_report_regions(printf_function *print)
 
 {
-  ushort uVar1;
-  int *piVar2;
+  int *piVar1;
+  int iVar2;
   int iVar3;
-  int iVar4;
-  undefined4 *puVar5;
+  undefined4 *puVar4;
   int *task;
-  undefined4 uVar6;
-  char *pcVar7;
-  int local_4a [4];
-  undefined4 local_3a;
-  undefined4 local_36;
-  void *local_32;
-  uint32_t local_2e;
+  undefined4 uVar5;
+  char *pcVar6;
+  int count [2];
+  int available [2];
+  int used [2];
+  void *start [2];
   undefined4 local_2a [8];
   undefined4 local_a;
   char local_6;
   
   (*print)("%s","Region strt       end  min     max    pend   USED  cnt  AVAIL cnt\r\n");
-  local_32 = psos_config.data_area;
-  local_2e = psos_config.region_2_start;
-  local_36 = 0;
-  local_3a = 0;
-  local_4a[1] = 0;
-  local_4a[0] = 0;
-  for (iVar3 = 0; iVar3 < task_count; iVar3 = iVar3 + 1) {
-    for (puVar5 = *(undefined4 **)((int)task_table[iVar3].task + 0x20); puVar5 != (undefined4 *)0x0;
-        puVar5 = (undefined4 *)*puVar5) {
-      uVar1 = *(ushort *)(puVar5 + 4);
-      local_4a[(uVar1 & 3) + 3] = puVar5[3] + local_4a[(uVar1 & 3) + 3];
-      local_4a[(uVar1 & 3) - 1] = local_4a[(uVar1 & 3) - 1] + 1;
+  start[0] = psos_config.data_area;
+  start[1] = (void *)psos_config.region_2_start;
+  used[1] = 0;
+  used[0] = 0;
+  count[1] = 0;
+  count[0] = 0;
+  for (iVar2 = 0; iVar2 < task_count; iVar2 = iVar2 + 1) {
+    for (puVar4 = *(undefined4 **)((int)task_table[iVar2].task + 0x20); puVar4 != (undefined4 *)0x0;
+        puVar4 = (undefined4 *)*puVar4) {
+      iVar3 = (*(ushort *)(puVar4 + 4) & 3) - 1;
+      used[iVar3] = puVar4[3] + used[iVar3];
+      count[iVar3] = count[iVar3] + 1;
     }
   }
-  iVar3 = 0;
+  iVar2 = 0;
   do {
-    local_4a[iVar3 + 2] = 0;
-    iVar4 = 0;
-    for (puVar5 = *(undefined4 **)((int)psos_config.data_area + iVar3 * 4 + 0x54);
-        puVar5 != (undefined4 *)0x0; puVar5 = (undefined4 *)*puVar5) {
-      local_4a[iVar3 + 2] = puVar5[3] + local_4a[iVar3 + 2];
-      iVar4 = iVar4 + 1;
+    available[iVar2] = 0;
+    iVar3 = 0;
+    for (puVar4 = *(undefined4 **)((int)psos_config.data_area + iVar2 * 4 + 0x54);
+        puVar4 != (undefined4 *)0x0; puVar4 = (undefined4 *)*puVar4) {
+      available[iVar2] = puVar4[3] + available[iVar2];
+      iVar3 = iVar3 + 1;
     }
-    if ((&local_32)[iVar3] == (void *)0x0) {
-      local_2a[iVar3] = 0;
-      local_2a[iVar3 + 2] = 0;
-      local_2a[iVar3 + 4] = 0;
-      local_2a[iVar3 + 6] = 0;
+    if (start[iVar2] == (void *)0x0) {
+      local_2a[iVar2] = 0;
+      local_2a[iVar2 + 2] = 0;
+      local_2a[iVar2 + 4] = 0;
+      local_2a[iVar2 + 6] = 0;
     }
     else {
-      local_2a[iVar3] = *(undefined4 *)((int)psos_config.data_area + iVar3 * 4 + 0x4c);
-      local_2a[iVar3 + 2] = *(undefined4 *)((int)psos_config.data_area + iVar3 * 4 + 0x34);
-      local_2a[iVar3 + 4] = *(undefined4 *)((int)psos_config.data_area + iVar3 * 4 + 0x3c);
-      local_2a[iVar3 + 6] = *(undefined4 *)((int)psos_config.data_area + iVar3 * 4 + 0x44);
+      local_2a[iVar2] = *(undefined4 *)((int)psos_config.data_area + iVar2 * 4 + 0x4c);
+      local_2a[iVar2 + 2] = *(undefined4 *)((int)psos_config.data_area + iVar2 * 4 + 0x34);
+      local_2a[iVar2 + 4] = *(undefined4 *)((int)psos_config.data_area + iVar2 * 4 + 0x3c);
+      local_2a[iVar2 + 6] = *(undefined4 *)((int)psos_config.data_area + iVar2 * 4 + 0x44);
     }
-    (*print)("%1d 0x%08x 0x%08x %4d %8d %8d %4dkB %4d %4dkB %3d\r\n",iVar3 + 1,(&local_32)[iVar3],
-             local_2a[iVar3],local_2a[iVar3 + 2],local_2a[iVar3 + 4],local_2a[iVar3 + 6],
-             (local_4a[iVar3 + 4] + 0x200) / 0x400,local_4a[iVar3],
-             (local_4a[iVar3 + 2] + 0x200) / 0x400,iVar4);
-    iVar3 = iVar3 + 1;
-  } while (iVar3 < 2);
-  piVar2 = (int *)((int)psos_config.data_area + 100);
+    (*print)("%1d 0x%08x 0x%08x %4d %8d %8d %4dkB %4d %4dkB %3d\r\n",iVar2 + 1,start[iVar2],
+             local_2a[iVar2],local_2a[iVar2 + 2],local_2a[iVar2 + 4],local_2a[iVar2 + 6],
+             (used[iVar2] + 0x200) / 0x400,count[iVar2],(available[iVar2] + 0x200) / 0x400,iVar3);
+    iVar2 = iVar2 + 1;
+  } while (iVar2 < 2);
+  piVar1 = (int *)((int)psos_config.data_area + 100);
   task = *(int **)((int)psos_config.data_area + 100);
-  if (task != piVar2) {
-    pcVar7 = "   >> BLOCKED: ";
+  if (task != piVar1) {
+    pcVar6 = "   >> BLOCKED: ";
     do {
-      (*print)(pcVar7);
+      (*print)(pcVar6);
       do {
-        if (task == piVar2) {
+        if (task == piVar1) {
           (*print)("%s","\r\n");
           goto LAB_000169e4;
         }
-        uVar6 = *(undefined4 *)((int)task + 0x52);
+        uVar5 = *(undefined4 *)((int)task + 0x52);
         local_6 = ((byte)*(undefined4 *)((int)task + 0x56) & 0xf) + 1;
-        iVar3 = (int)local_6;
-        local_a = uVar6;
-        pcVar7 = task_name(task);
-        (*print)("%s %d(%d)",pcVar7,uVar6,iVar3);
+        iVar2 = (int)local_6;
+        local_a = uVar5;
+        pcVar6 = task_name(task);
+        (*print)("%s %d(%d)",pcVar6,uVar5,iVar2);
         task = (int *)*task;
-      } while (task == piVar2);
-      pcVar7 = ",";
+      } while (task == piVar1);
+      pcVar6 = ",";
     } while( true );
   }
 LAB_000169e4:
@@ -47567,8 +47575,6 @@ void log_print(char param_1,write_function *write,printf_function *print)
   short sVar2;
   int iVar1;
   short sVar3;
-  char *pcVar4;
-  undefined2 uVar5;
   char acStack_a4 [80];
   char acStack_54 [80];
   
@@ -47579,10 +47585,8 @@ void log_print(char param_1,write_function *write,printf_function *print)
     iVar1 = log_count((uint8_t *)0x0);
     sVar2 = (short)iVar1;
   }
-  uVar5 = 0;
-  pcVar4 = acStack_a4;
-  log_status(pcVar4,param_1);
-  (*print)("%s\r\n",(short)acStack_a4,(short)pcVar4,uVar5);
+  log_status(acStack_a4,param_1);
+  (*print)("%s\r\n",acStack_a4);
   (*write)("\r\n");
   for (sVar3 = 1; sVar3 <= sVar2; sVar3 = sVar3 + 1) {
     if (param_1 == '\0') {
@@ -47591,7 +47595,7 @@ void log_print(char param_1,write_function *write,printf_function *print)
     else {
       log_entry_text((int)sVar3,acStack_a4,acStack_54);
     }
-    (*print)("%s:  %s\r\n",(short)acStack_54,(char)acStack_a4);
+    (*print)("%s:  %s\r\n",acStack_54,acStack_a4);
   }
   (*write)("\r\n");
   return;
@@ -64848,8 +64852,7 @@ char * status_screen_position(byte param_1,int param_2,char *param_3)
   undefined2 uVar9;
   undefined1 uVar10;
   undefined1 uVar11;
-  char cStack_1e;
-  undefined1 auStack_1d [15];
+  char text [16];
   char acStack_e [10];
   
   iVar3 = param_1 - 6;
@@ -64858,7 +64861,7 @@ char * status_screen_position(byte param_1,int param_2,char *param_3)
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0004a002_index_zero)[(short)iVar3]) {
     case 0xc:
-      pcVar4 = &cStack_1e;
+      pcVar4 = text;
       uVar9 = 4;
       uVar10 = 0xe1;
       uVar11 = 0xe4;
@@ -64868,7 +64871,7 @@ char * status_screen_position(byte param_1,int param_2,char *param_3)
       dVar7 = double_divide_reversed(1000000000.0,dVar7);
       format_si((int)((ulonglong)__ghidra_bits(dVar7) >> 0x20),SUB84(dVar7,0),cVar8,bVar5,
                 (char *)CONCAT31(CONCAT21(uVar9,uVar10),uVar11),pcVar4);
-      pcVar4 = (char *)sprintf(param_3,"ANT DLY  %s",auStack_1d);
+      pcVar4 = (char *)sprintf(param_3,"ANT DLY  %s",text + 1);
       break;
     case 0x58:
       pcVar6 = "Position ________________________";
@@ -64913,8 +64916,8 @@ char * status_screen_position(byte param_1,int param_2,char *param_3)
               iVar3 = float_compare(fVar2,99.9);
               if ((iVar3 < 1) || (*(uint *)(param_2 + 0x128) <= u)) {
                 dVar7 = float_to_double(fVar2);
-                sprintf(&cStack_1e,"%5.1f",0x45,(char)((ulonglong)__ghidra_bits(dVar7) >> 0x20),SUB84(dVar7,0));
-                pcVar4 = &cStack_1e;
+                sprintf(text,"%5.1f",dVar7);
+                pcVar4 = text;
               }
               else {
                 pcVar4 = ">99.9";
@@ -64961,7 +64964,7 @@ char * status_screen_position(byte param_1,int param_2,char *param_3)
           }
         }
         if (bVar1) {
-          pcVar4 = (char *)sprintf(param_3,"%9sSuspended: %13.13s",0x85,0xb,unaff_D4);
+          pcVar4 = (char *)sprintf(param_3,"%9sSuspended: %13.13s","",unaff_D4);
         }
         else {
           pcVar6 = "";
@@ -64984,7 +64987,7 @@ char * status_screen_position(byte param_1,int param_2,char *param_3)
       }
       break;
     case 0x202:
-      format_dms(*(int *)(param_2 + 0x118),'\0',&cStack_1e);
+      format_dms(*(int *)(param_2 + 0x118),'\0',text);
       pcVar4 = *(char **)(param_2 + 0x114);
       pcVar6 = acStack_e;
       do {
@@ -64994,10 +64997,10 @@ char * status_screen_position(byte param_1,int param_2,char *param_3)
         pcVar6 = pcVar6 + 1;
       } while (cVar8 != '\0');
       strcat(acStack_e,"LAT");
-      pcVar4 = (char *)sprintf(param_3,"%-8s %s",(short)acStack_e,(char)&cStack_1e);
+      pcVar4 = (char *)sprintf(param_3,"%-8s %s",acStack_e,text);
       break;
     case 0x246:
-      format_dms(*(int *)(param_2 + 0x11c),'\x01',&cStack_1e);
+      format_dms(*(int *)(param_2 + 0x11c),'\x01',text);
       pcVar4 = *(char **)(param_2 + 0x114);
       pcVar6 = acStack_e;
       do {
@@ -65007,7 +65010,7 @@ char * status_screen_position(byte param_1,int param_2,char *param_3)
         pcVar6 = pcVar6 + 1;
       } while (cVar8 != '\0');
       strcat(acStack_e,"LON");
-      pcVar4 = (char *)sprintf(param_3,"%-8s %s",(short)acStack_e,(char)&cStack_1e);
+      pcVar4 = (char *)sprintf(param_3,"%-8s %s",acStack_e,text);
     }
   }
   else {
@@ -65460,16 +65463,15 @@ void status_screen(char *param_1,char param_2,write_function *write,printf_funct
   char *pcVar3;
   byte bVar4;
   char cVar5;
-  undefined **ppuVar6;
-  char *pcVar7;
+  uint8_t uVar6;
+  undefined **ppuVar7;
   char *pcVar8;
-  double dVar9;
-  char cVar10;
+  char *pcVar9;
+  double dVar10;
   byte bVar11;
   undefined2 uVar12;
   undefined1 uVar13;
   undefined1 uVar14;
-  undefined1 uVar15;
   byte local_c0;
   char *local_b2;
   byte local_ae;
@@ -65480,14 +65482,14 @@ void status_screen(char *param_1,char param_2,write_function *write,printf_funct
   char acStack_98 [7];
   char acStack_91 [5];
   char acStack_8c [8];
-  char *local_84;
+  status_screen_mode_line *local_84;
   char local_80;
   char local_7f;
-  char local_7e [16];
-  undefined1 local_6e;
+  uint8_t raim_option;
+  char line [80];
   char acStack_2d [41];
   
-  local_7e[0] = '\0';
+  raim_option = 0;
   if (param_2 == '\x01') {
     (*print)("%c%c%c%c%c%c%c",0x1b,0x5b,0x32,0x4a,0x1b,0x5b,0x48);
   }
@@ -65522,16 +65524,16 @@ override_jmp_0004a96c_case_1:
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_0004a9d0_index_zero)[(short)iVar2]) {
     case 0xc:
-      cVar5 = '\0';
+      uVar6 = 0;
       break;
     case 0x10:
-      cVar5 = '\x01';
+      uVar6 = 1;
       break;
     case 0x14:
-      cVar5 = '\x02';
+      uVar6 = 2;
       break;
     case 0x18:
-      cVar5 = '\x03';
+      uVar6 = 3;
       break;
     case 0x1c:
       goto override_jmp_0004a9d0_case_0;
@@ -65539,29 +65541,30 @@ override_jmp_0004a96c_case_1:
   }
   else {
 override_jmp_0004a9d0_case_0:
-    cVar5 = '\x04';
+    uVar6 = 4;
   }
   local_ae = 1;
-  for (local_84 = "\x03"; *(int *)(local_84 + 2) != 0; local_84 = local_84 + 6) {
-    if (cVar5 != *local_84) {
+  for (local_84 = status_screen_mode_lines; local_84->text != (char *)0x0; local_84 = local_84 + 1)
+  {
+    if (uVar6 != local_84->mode) {
       pcVar8 = "   ";
       goto LAB_0004ab0e;
     }
     pcVar8 = ">> ";
-    if (cVar5 == '\x03') {
+    if (uVar6 == 3) {
       if (param_1[0xef] == '\0') {
         pcVar3 = "GPS";
       }
       else {
         pcVar3 = "Ext";
       }
-      pcVar7 = acStack_2d;
+      pcVar9 = acStack_2d;
       do {
-        cVar10 = *pcVar3;
-        *pcVar7 = cVar10;
+        cVar5 = *pcVar3;
+        *pcVar9 = cVar5;
         pcVar3 = pcVar3 + 1;
-        pcVar7 = pcVar7 + 1;
-      } while (cVar10 != '\0');
+        pcVar9 = pcVar9 + 1;
+      } while (cVar5 != '\0');
       if (local_7f == '\0') {
         pcVar3 = ": stabilizing frequency";
       }
@@ -65572,14 +65575,14 @@ override_jmp_0004a9d0_case_0:
       pcVar3 = acStack_2d;
       goto LAB_0004ab10;
     }
-    if (cVar5 == '\x02') {
+    if (uVar6 == 2) {
 LAB_0004aa66:
-      status_screen_mode_suffix(cVar5,(status_snapshot_record *)param_1,acStack_2d);
+      status_screen_mode_suffix(uVar6,(status_snapshot_record *)param_1,acStack_2d);
       pcVar3 = acStack_2d;
     }
     else {
-      if (cVar5 != '\x01') {
-        if (cVar5 != '\0') goto LAB_0004ab0e;
+      if (uVar6 != 1) {
+        if (uVar6 != 0) goto LAB_0004ab0e;
         goto LAB_0004aa66;
       }
       if (param_1[1] == '\x01') {
@@ -65615,29 +65618,29 @@ LAB_0004ab0e:
       }
     }
 LAB_0004ab10:
-    pcVar7 = local_7e;
+    pcVar9 = line;
     do {
-      pcVar7 = pcVar7 + 1;
-      cVar10 = *pcVar8;
-      *pcVar7 = cVar10;
+      cVar5 = *pcVar8;
+      *pcVar9 = cVar5;
       pcVar8 = pcVar8 + 1;
-    } while (cVar10 != '\0');
-    strcat(local_7e + 1,*(char **)(local_84 + 2));
-    strcat(local_7e + 1,pcVar3);
-    (*print)("%-46.46s",(short)local_7e + 1);
-    status_screen_tfom(local_ae,(int)param_1,local_7e + 1);
-    (*print)("%s\r\n",(short)(local_7e + 1));
+      pcVar9 = pcVar9 + 1;
+    } while (cVar5 != '\0');
+    strcat(line,local_84->text);
+    strcat(line,pcVar3);
+    (*print)("%-46.46s",line);
+    status_screen_tfom(local_ae,(int)param_1,line);
+    (*print)("%s\r\n",line);
     local_ae = local_ae + 1;
   }
   if (param_1[0x30] == '\0') {
     pcVar8 = " --";
     pcVar3 = acStack_2d;
     do {
-      cVar10 = *pcVar8;
-      *pcVar3 = cVar10;
+      cVar5 = *pcVar8;
+      *pcVar3 = cVar5;
       pcVar8 = pcVar8 + 1;
       pcVar3 = pcVar3 + 1;
-    } while (cVar10 != '\0');
+    } while (cVar5 != '\0');
   }
   else {
     pcVar8 = acStack_2d;
@@ -65645,31 +65648,31 @@ LAB_0004ab10:
     uVar13 = 0xe1;
     uVar14 = 0xe4;
     bVar11 = 4;
-    cVar10 = param_1[0x31];
-    dVar9 = float_to_double(*(float *)(param_1 + 0x2c));
-    format_si((int)((ulonglong)__ghidra_bits(dVar9) >> 0x20),SUB84(dVar9,0),cVar10,bVar11,
+    cVar5 = param_1[0x31];
+    dVar10 = float_to_double(*(float *)(param_1 + 0x2c));
+    format_si((int)((ulonglong)__ghidra_bits(dVar10) >> 0x20),SUB84(dVar10,0),cVar5,bVar11,
               (char *)CONCAT31(CONCAT21(uVar12,uVar13),uVar14),pcVar8);
     strcat(acStack_2d,"/initial 24 hrs");
   }
-  (*print)("%43s   Predict  %s\r\n",0xb,acStack_2d + 1);
-  if ((cVar5 == '\x01') || (cVar5 == '\x02')) {
-    pcVar8 = local_7e;
-    pcVar3 = "Holdover Duration:";
+  (*print)("%43s   Predict  %s\r\n","",acStack_2d + 1);
+  if ((uVar6 == 1) || (uVar6 == 2)) {
+    pcVar8 = "Holdover Duration:";
+    pcVar3 = line;
     do {
+      cVar5 = *pcVar8;
+      *pcVar3 = cVar5;
       pcVar8 = pcVar8 + 1;
-      cVar5 = *pcVar3;
-      *pcVar8 = cVar5;
       pcVar3 = pcVar3 + 1;
     } while (cVar5 != '\0');
     format_duration_short(*(uint *)(param_1 + 0x22),acStack_2d);
-    strcat(local_7e + 1,acStack_2d);
+    strcat(line,acStack_2d);
   }
   else {
-    local_7e[1] = 0x20;
-    local_7e[2] = 0;
+    line[0] = ' ';
+    line[1] = '\0';
   }
   if (param_1[0x2a] == '\0') {
-    uVar13 = 0xb;
+    pcVar9 = "";
     pcVar8 = " ";
     pcVar3 = acStack_2d;
     do {
@@ -65680,18 +65683,18 @@ LAB_0004ab10:
     } while (cVar5 != '\0');
   }
   else {
-    uVar13 = 0x35;
+    pcVar9 = "Present";
     pcVar8 = acStack_2d;
     uVar12 = 4;
-    uVar14 = 0xe1;
-    uVar15 = 0xe4;
+    uVar13 = 0xe1;
+    uVar14 = 0xe4;
     bVar11 = 4;
     cVar5 = param_1[0x2b];
-    dVar9 = float_to_double(*(float *)(param_1 + 0x26));
-    format_si((int)((ulonglong)__ghidra_bits(dVar9) >> 0x20),SUB84(dVar9,0),cVar5,bVar11,
-              (char *)CONCAT31(CONCAT21(uVar12,uVar14),uVar15),pcVar8);
+    dVar10 = float_to_double(*(float *)(param_1 + 0x26));
+    format_si((int)((ulonglong)__ghidra_bits(dVar10) >> 0x20),SUB84(dVar10,0),cVar5,bVar11,
+              (char *)CONCAT31(CONCAT21(uVar12,uVar13),uVar14),pcVar8);
   }
-  (*print)("%43s   %s  %s\r\n",(char)local_7e + '\x01',uVar13,acStack_2d + 1);
+  (*print)("%43s   %s  %s\r\n",line,pcVar9,acStack_2d + 1);
   (*write)("ACQUISITION ..........................................");
   if (param_1[0xef] == '\0') {
     if ((param_1[0xf0] == '\0') || (param_1[0xf1] != '\0')) {
@@ -65715,49 +65718,49 @@ LAB_0004ab10:
     case 6:
       goto override_jmp_0004acdc_case_0;
     case 0xe:
-      uVar13 = 4;
+      pcVar8 = " +1 leap second pending";
       break;
     case 0x16:
-      uVar13 = 0x1c;
+      pcVar8 = " -1 leap second pending";
     }
   }
   else {
 override_jmp_0004acdc_case_0:
-    uVar13 = 0xec;
+    pcVar8 = "_______________________";
   }
   (*write)("Satellite Status __________________________   ");
-  (*print)("Time _____%s\r\n",uVar13);
+  (*print)("Time _____%s\r\n",pcVar8);
   (*print)("Tracking: %d        Not Tracking: %-2d%11s",(uint)(byte)param_1[0xee],
-           (ushort)(byte)param_1[0xed],0xd10b);
-  status_screen_time((status_snapshot_record *)param_1,local_7e + 1);
-  (*print)("%s\r\n",(short)local_7e + 1);
+           (uint)(byte)param_1[0xed],"");
+  status_screen_time((status_snapshot_record *)param_1,line);
+  (*print)("%s\r\n",line);
   if (param_1[0xee] == '\0') {
-    uVar12 = 0xd10b;
+    pcVar8 = "";
   }
   else {
-    uVar12 = 0xe79d;
+    pcVar8 = "PRN  El  Az   SS";
   }
   if (param_1[0xed] == '\0') {
-    uVar13 = 0xb;
+    pcVar3 = "";
   }
   else {
-    uVar13 = 0xae;
+    pcVar3 = "PRN  El  Az";
   }
   if ((byte)param_1[0xed] < 7) {
-    uVar14 = 0xb;
+    pcVar9 = "";
   }
   else {
-    uVar14 = 0xae;
+    pcVar9 = "PRN  El  Az";
   }
-  (*print)("%-16.16s   %-11.11s  %-11.11s%3s",uVar12,uVar13,uVar14,"");
+  (*print)("%-16.16s   %-11.11s  %-11.11s%3s",pcVar8,pcVar3,pcVar9,"");
   if (param_1[0xef] == '\0') {
-    uVar12 = 0xe7db;
+    pcVar8 = "1PPS CLK";
   }
   else {
-    uVar12 = 0xe7e4;
+    pcVar8 = "GPS 1PPS";
   }
   status_screen_sync((status_snapshot_record *)param_1,acStack_2d);
-  (*print)("%s %s\r\n",uVar12,(char)acStack_2d);
+  (*print)("%s %s\r\n",pcVar8,acStack_2d);
   local_b2 = param_1 + 0xbc;
   pcVar8 = param_1 + 0x5c;
   local_ae = 0;
@@ -65779,40 +65782,40 @@ override_jmp_0004acdc_case_0:
     uVar1 = *(undefined4 *)(pcVar8 + 0x34);
     format_satellite_cell
               ((char)((uint)uVar1 >> 0x18),(byte)((uint)uVar1 >> 0x10),(ushort)uVar1,acStack_8c);
-    status_screen_position(local_ae,(int)param_1,local_7e + 1);
+    status_screen_position(local_ae,(int)param_1,line);
     (*print)("%3.3s  %6.6s  %3.3s   %3.3s  %6.6s  %3.3s  %6.6s%3s%s\r\n",acStack_ad,acStack_a4,
-             acStack_a8,acStack_9d,acStack_98,acStack_91,acStack_8c,"",local_7e + 1);
+             acStack_a8,acStack_9d,acStack_98,acStack_91,acStack_8c,"",line);
     local_b2 = local_b2 + 8;
     pcVar8 = pcVar8 + 8;
   }
   if (local_c0 == 0) {
-    uVar13 = 0xb;
+    pcVar8 = "";
   }
   else {
-    uVar13 = 0x2d;
+    pcVar8 = "*attempting to track";
   }
-  (*print)("ELEV MASK %2d deg%3s%-25.25s%2s",(ushort)(byte)param_1[0x110],0xb,uVar13,"");
-  status_screen_height((status_snapshot_record *)param_1,local_7e + 1);
-  (*print)("%s\r\n",(short)local_7e + 1);
-  local_7e[1] = 0;
+  (*print)("ELEV MASK %2d deg%3s%-25.25s%2s",(uint)(byte)param_1[0x110],"",pcVar8,"");
+  status_screen_height((status_snapshot_record *)param_1,line);
+  (*print)("%s\r\n",line);
+  line[0] = '\0';
   local_80 = '\0';
-  for (ppuVar6 = &PTR_s_Self_Test_0004d076; *ppuVar6 != (undefined *)0x0;
-      ppuVar6 = (undefined **)((int)ppuVar6 + 0xe)) {
-    cVar5 = (*(code *)ppuVar6[1])
-                      (CONCAT22(*(undefined2 *)(param_1 + 300),*(undefined2 *)(ppuVar6 + 2)));
+  for (ppuVar7 = &PTR_s_Self_Test_0004d076; *ppuVar7 != (undefined *)0x0;
+      ppuVar7 = (undefined **)((int)ppuVar7 + 0xe)) {
+    cVar5 = (*(code *)ppuVar7[1])
+                      (CONCAT22(*(undefined2 *)(param_1 + 300),*(undefined2 *)(ppuVar7 + 2)));
     if (cVar5 == '\0') {
-      uVar13 = 0x1c;
+      pcVar8 = "OK";
     }
     else {
-      uVar13 = 0x62;
+      pcVar8 = "Err";
       local_80 = '\x01';
     }
-    sprintf(acStack_2d,"%s: %-3s%s",(char)*ppuVar6,uVar13,*(undefined4 *)((int)ppuVar6 + 10));
-    strcat(local_7e + 1,acStack_2d);
+    sprintf(acStack_2d,"%s: %-3s%s",*ppuVar7,pcVar8,*(char **)((int)ppuVar7 + 10));
+    strcat(line,acStack_2d);
   }
-  cVar5 = gps_message_supported(0x28,local_7e);
-  if ((cVar5 == '\0') || (local_7e[0] == '\0')) {
-    local_6e = 0x7c;
+  cVar5 = gps_message_supported(0x28,&raim_option);
+  if ((cVar5 == '\0') || (raim_option == 0)) {
+    line[0xf] = '|';
   }
   (*write)("HEALTH MONITOR ......................................................");
   if (local_80 == '\0') {
@@ -65822,7 +65825,7 @@ override_jmp_0004acdc_case_0:
     pcVar8 = " [ ERROR ]";
   }
   (*print)("%s\r\n",pcVar8);
-  (*print)("%s",(char)local_7e + '\x01');
+  (*print)("%s",line);
   return;
 }
 

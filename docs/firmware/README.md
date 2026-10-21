@@ -351,7 +351,12 @@ offset from the stack pointer at entry (`sprintf_output`,
 `structures.md`).  A `call` row gives the call through a pointer at its
 address the prototype of what it reaches, which the decompiler takes as
 a call to code with no arguments when it loads the pointer from a
-table: the self-tests' `char_slot run`.  Every SCPI handler takes what `scpi_call_handler`
+table: the self-tests' `char_slot run`.  It also gives a variadic call
+its arguments' types, `print`'s or `sprintf`'s: the decompiler sizes
+a variadic argument by the stack location it is pushed to, so where a
+`move.b` or `move.w` push for another call writes that location, it
+passes an address's low byte or word (`log_print`, `status_screen`,
+`status_screen_position`).  Every SCPI handler takes what `scpi_call_handler`
 gives it, `int NAME(void *parameters, void *response, void *call)`,
 unless its row gives a prototype.
 

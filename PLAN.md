@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1251 run, 1176 agree, 57 reach what the
-     harness does not model and are skipped, and 18 differ, in the
+     original reads them: of 1251 run, 1183 agree, 57 reach what the
+     harness does not model and are skipped, and 11 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): traps #1 and #7 run the image's handlers;
@@ -917,6 +917,29 @@ view cannot drift apart.  The library, bottom up:
      `scpi_parameters_finish` take a pointer to a record with a pointer
      at `+0xa`, where Ghidra had an integer, and the first then agrees
      (1166 agreeing to 1176, 71 skipped to 57, 14 differing to 18).
+     Then the names file's rows for three of those causes.
+     `os_report_regions` keeps its counts, free and used bytes and
+     starts in arrays of two the decompiler took as one `int[4]` and
+     loose longs, which its C read past: `local` rows.  `log_print`,
+     the status screen and `status_screen_position` call `print`, or
+     `sprintf` through A0, with arguments at stack offsets that a
+     `move.b` or `move.w` push for another call writes, and the
+     decompiler sizes a variadic call's arguments by those pieces,
+     passing an address's low word or byte: `call` rows give each such
+     call its prototype.  `status_screen` walks its mode lines, a table
+     at `0x4d032` the decompiler took as the string `"\x03"`: a label,
+     `status_screen_mode_lines`.  Its line buffer, 80 bytes after the
+     byte `gps_message_supported` fills, and `status_screen_position`'s
+     16-byte text were split into short arrays and loose bytes gcc lays
+     apart: `local` rows.  Regenerated, 1176 agreeing to 1183, 18
+     differing to 11.  The
+     stack share `os_report_process` prints from D5 is the firmware's:
+     `region_segment_containing` (`0x162b2`) touches only D0, D1, A0
+     and A1, and `os_report_processes` holds the address of `"%s"` in
+     D5 (`0x16768`) across both of its calls, so the image prints
+     332674% for a task whose stack is in no segment; its MEMORY sum
+     starts from the caller's D6 the same way.  Like
+     `task_stack_info`'s, it is left.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

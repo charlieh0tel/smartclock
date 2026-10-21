@@ -1652,6 +1652,11 @@ position with its source ("INIT ", "AVG " or empty) and the survey's
 count and duration, and `status_hardware_condition`.  The date and time
 at `+0xf8` and `+0xfc` are `gps.status`'s made local while
 `get_date_time` reports a time, else the clock's, with `+0x108` set.
+`status_screen` marks with `>>` the line of `status_screen_mode_lines`
+(`0x4d032`) whose mode its switch at `0x4a9d0` takes from the
+snapshot's second byte: five 6-byte `status_screen_mode_line`s, a mode
+and its text, "Locked to " for 3, "Recovery" 2, "Holdover" 1 and
+"Power-up" 0, and mode 4 with no text, which ends the table.
 There are three, end to end from `0x10142c` but for two cells:
 
 | Address | Name | Taken by |

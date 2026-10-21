@@ -5,7 +5,8 @@
 # convention.  A "local" row instead gives the function at its address a
 # stack variable: its name, and "TYPE @ OFFSET", Ghidra's offset from the
 # stack pointer at entry, in the prototype field.  A "call" row gives the
-# call through a pointer at its address its callee's prototype.  Only the Z3805A's own column of a note's table, or a
+# call through a pointer, or a variadic call, at its address its
+# callee's prototype.  Only the Z3805A's own column of a note's table, or a
 # statement about this image, counts; an address a note gives for
 # another image does not carry over.
 #
@@ -755,6 +756,10 @@
 0x166b0	function	os_report_exchange_summary	"%d Exchange(s) (%d avail).", "%d Msg buffer(s)"	prints how many exchanges and message buffers there are and are free	void os_report_exchange_summary(printf_function *print)
 0x1675a	function	os_report_processes	"pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CP"	prints the kernel's processes, one line each	int os_report_processes(printf_function *print)
 0x16828	function	os_report_regions	"Region strt       end  min     max    pend   USED"	prints the kernel's memory regions and their use	void os_report_regions(printf_function *print)
+0x16828	local	count	read	each region's segments over the tasks' lists, by a segment's +0x10 & 3 less 1 (0x16892, 0x168a0), the first cnt; with available and used one array, which the decompiler otherwise reads past	int[2] @ -0x4a
+0x16828	local	available	read	each region's free bytes, the sum of its free list's +0xc (0x168c6), AVAIL	int[2] @ -0x42
+0x16828	local	used	read	each region's bytes the tasks hold, the sum of their segments' +0xc (0x16894), USED	int[2] @ -0x3a
+0x16828	local	start	read	each region's start (0x16850, 0x16856), strt; a region whose start is zero prints zeros	void *[2] @ -0x32
 0x16bb6	function	task_stack_info	"no system stack found"; task_stack_report's per-task stacks	measures a task's stacks for the stack report	void task_stack_info(void *task, uint32_t *user_top, uint32_t *user_pointer, uint32_t *user_size, uint32_t *supervisor_top, uint32_t *supervisor_pointer, uint32_t *supervisor_size)
 0x132f4	function	stack_usage_report	"User: %5u of %5u b   Supv: %5u of %5u b"	prints a task's user and supervisor stack use	void stack_usage_report(void *task)
 0x132f4	local	usage	read	the four longs stack_measure fills and it prints: user used and size, supervisor used and size (0x132f8 to 0x13318)	uint32_t[4] @ -0x64
@@ -779,10 +784,30 @@
 0x44f5e	function	sync_perform	"Peforming sync"	synchronizes the outputs to GPS time
 0x45bb8	function	pll_powerup_suffix_index	screen-format-strings.md's ladder: the power-up sub-state's suffix index	the power-up sub-state, as the status screen's suffix index
 0x4a8ea	function	status_screen	"Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status"	prints the receiver status screen	void status_screen(char *param_1, char param_2, write_function *write, printf_function *print)
+0x4a8ea	local	raim_option	read	gps_message_supported's answer for @@Bn, cleared first (0x4a904)	uint8_t @ -0x7e
+0x4a8ea	local	line	read	the line it builds and prints: a mode line, the holdover line, a right-hand column, the health monitor's tests, with a | at 15 (0x4af8e) without Time RAIM	char[80] @ -0x7d
+0x4ab42	call	print	read	a mode line	int print(char *format, char *line)
+0x4ab5c	call	print	read	status_screen_tfom's line	int print(char *format, char *line)
+0x4abd0	call	print	read	the Predict line	int print(char *format, char *blank, char *predict)
+0x4ac70	call	print	read	the holdover duration, Present and its value	int print(char *format, char *duration, char *present, char *value)
+0x4ad0e	call	print	read	the Time line's leap second	int print(char *format, char *leap)
+0x4ad28	call	print	read	the tracking counts	int print(char *format, int tracking, int not_tracking, char *blank)
+0x4ad3e	call	print	read	status_screen_time's line	int print(char *format, char *line)
+0x4ad96	call	print	read	the satellite headings	int print(char *format, char *tracking, char *not_tracking, char *not_tracking_2, char *blank)
+0x4adc8	call	print	read	the reference's label and status_screen_sync's text	int print(char *format, char *label, char *sync)
+0x4aee8	call	print	read	the elevation mask line	int print(char *format, int mask, char *blank, char *attempting, char *blank_2)
+0x4aefe	call	print	read	status_screen_height's line	int print(char *format, char *line)
+0x4af52	call	sprintf	read	a health monitor test's name, OK or Err, and its separator	int sprintf(char *s, char *format, char *name, char *result, char *separator)
+0x4afc8	call	print	read	the health monitor's tests	int print(char *format, char *line)
 0x49db0	function	status_screen_sync	"Synchronized to UTC", "Synchronized to GPS Time", "Assessing stability"	the status screen's synchronization line	void status_screen_sync(status_snapshot_record *snapshot, char *line)
 0x4a518	function	status_screen_mode_suffix	screen-format-strings.md's mode suffixes, ": OCXO warm-up" .. ": leap second determination", "[TI %9.9s]"	the status screen's suffix for the power-up sub-state	void status_screen_mode_suffix(char param_1, status_snapshot_record *snapshot, char *text)
 0x4a29c	function	status_screen_tfom	"TFOM     %d%13sFFOM    %2s", "1PPS TI %s", "HOLD THR %s", "Holdover Uncertainty"	the status screen's TFOM, FFOM, 1PPS TI and holdover lines
 0x49fcc	function	status_screen_position	"ANT DLY  %s", "Position", "Survey:", "% complete", "Suspended:"	the status screen's position and survey lines
+0x49fcc	local	text	read	the number, survey percentage or angle it formats; format_si's from its second byte (0x4a046)	char[16] @ -0x1e
+0x4a144	call	sprintf	read	the survey's percentage, through A0	int sprintf(char *s, char *format, double percent)
+0x4a1e6	call	sprintf	read	why the survey is suspended, through A0	int sprintf(char *s, char *format, char *blank, char *reason)
+0x4a244	call	sprintf	read	the latitude, through A0	int sprintf(char *s, char *format, char *label, char *angle)
+0x4a28a	call	sprintf	read	the longitude, through A0	int sprintf(char *s, char *format, char *label, char *angle)
 0x47f14	function	format_dms	"%c%4d:%02d:%06.3f", degrees, minutes and seconds	formats an angle as degrees, minutes and seconds to milliseconds
 0x47f14	local	seconds	read	mas_to_dms's seconds	double @ -0xc
 0x47fb6	function	format_dms_precise	"%c%4d:%02d:%06.7f"	formats an angle as degrees, minutes and seconds to 0.1 microseconds	void format_dms_precise(char *text, double mas, char latitude)
@@ -1506,6 +1531,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x29d88	function	status_sre_get	the console port's method table 0x29dd4, +0x40	the status output object's method: returns the service request enable	uint8_t status_sre_get(void)
 0x29d90	function	status_byte_get	method table 0x29dd4, +0x38	the status output object's method: returns the status byte	uint8_t status_byte_get(void)
 0x2b578	function	log_print	context	prints the event log, its status and each entry, through the callbacks given	void log_print(char param_1, write_function *write, printf_function *print)
+0x2b5b8	call	print	read	the log's status line	int print(char *format, char *status)
+0x2b60e	call	print	read	an entry: log_read's or log_entry_text's header, then its text	int print(char *format, char *header, char *text)
 0x2d148	function	satellite_number_valid	context	1 for a satellite number from 1 to 32
 0x2d160	function	satellite_in_mask	context	1 if a satellite's bit is set in a mask
 0x2d17a	function	satellite_mask_add	context	sets a valid satellite's bit in a mask
@@ -1979,6 +2006,7 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x3393a	label	scpi_param_DOUGlas_STATe_request	structures.md	scpi_param_SAMPle_INTeger's bytes but for gps_request 0x53; :DOUGlas:STATe's setter gives it pllc_request_c while nv_settings.douglas_state is 0	scpi_numeric_param
 0x41300	label	two_to_32	softfloat.md	4294967296.0, by which int64_to_double and double_to_int64 scale the high long	double
 0x4cfce	label	month_names	structures.md	format_date's "Jan" to "Dec" for months 1 to 12; entry 0 "---"	char *[13]
+0x4d032	label	status_screen_mode_lines	structures.md	status_screen's mode lines, "Locked to ", "Recovery", "Holdover" and "Power-up", each with the mode it marks; the decompiler otherwise takes its address as the string "\x03"	status_screen_mode_line[5]
 0x4d10b	label	status_screen_blank	structures.md	an empty string status_screen and status_snapshot print or store for a field with nothing	char[1]
 0x4e016	label	satellite_status_blank_entry	structures.md	satellite_status_list copies its 8 bytes over each unused entry of the list	uint8_t[8]
 0x50cca	label	gps_script_47	oncore/z3805a-3543b.txt	script 0x47, gps_script_lookup's first, which also calls gps_init; to its NULL	gps_script_step *[26]

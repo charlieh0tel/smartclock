@@ -1635,6 +1635,15 @@ typedef struct status_snapshot_record {
 	int32_t douglas_duration;        /* +0x128: nv_settings' */
 	uint16_t hardware_condition;     /* +0x12c: status_hardware_condition's */
 } status_snapshot_record;
+
+/* An entry of status_screen_mode_lines: a mode line of the status
+ * screen and the mode it stands for, which status_screen marks ">>"
+ * when it is the snapshot's.  A null text ends the table. */
+typedef struct status_screen_mode_line {
+	uint8_t mode;     /* +0x00: 3 Locked, 2 Recovery, 1 Holdover, 0 Power-up */
+	uint8_t field_01;
+	char *text;       /* +0x02 */
+} status_screen_mode_line;
 /* One entry of the kernel's I/O table, a "jmp.l routine" instruction:
  * kernel_dispatch_io jumps into the table at (device * 6 + function) * 6
  * (docs/firmware/psos.md, "Calls"). */

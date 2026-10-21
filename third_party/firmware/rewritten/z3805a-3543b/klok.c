@@ -56,7 +56,7 @@ klok_entry* clk_do(klok_entry* event) {
   } else {
     klok_free = entry->next;
     *entry = *event;
-    klok_insert_sorted((int32_t*)&klok_entries, (int32_t*)entry);
+    klok_insert_sorted(&klok_entries, entry);
   }
   mutex_unlock(&klok_mutex);
   return entry;
@@ -76,9 +76,9 @@ int32_t klok_cancel(klok_entry* entry) {
   if (entry < klok_pool || entry > &klok_pool[KLOK_POOL_SIZE - 1]) {
     status = NOT_IN_POOL;
   } else {
-    status = list_unlink((int32_t*)&klok_entries, (int32_t*)entry);
+    status = list_unlink(&klok_entries, entry);
     if (status == 0) {
-      list_push((uint32_t*)&klok_free, (uint32_t*)&entry->next);
+      list_push(&klok_free, entry);
     }
   }
   mutex_unlock(&klok_mutex);
@@ -232,14 +232,14 @@ void klok_run_due(void) {
   while (entry != NULL &&
          (order = datetime_compare(&entry->time, KLOK_NOW)) <= 0) {
     if (order == 0 && entry->function != NULL) {
-      spoo_run((spoo_function*)entry->function, 0, 0, 0);
+      spoo_run(entry->function, 0, 0, 0);
     }
-    list_unlink((int32_t*)&klok_entries, (int32_t*)entry);
+    list_unlink(&klok_entries, entry);
     if (entry->period_time == 0 && entry->period_date == 0) {
-      list_push((uint32_t*)&klok_free, (uint32_t*)&entry->next);
+      list_push(&klok_free, entry);
     } else {
       datetime_add(klok_when(&entry->period_time), klok_when(&entry->time));
-      klok_insert_sorted((int32_t*)&klok_entries, (int32_t*)entry);
+      klok_insert_sorted(&klok_entries, entry);
     }
     entry = klok_entries;
   }

@@ -58,8 +58,8 @@ uint16_t sci_putc_polled(char c) {
   uint16_t sr = cpu_interrupts_at(CPU_IPL_3);
   uint16_t data = c;
 
-  while ((qsm.scsr & SCSR_TDRE) == 0)
-    ;
+  while ((qsm.scsr & SCSR_TDRE) == 0) {
+  }
   if (sci.mark_bit) {
     data |= MARK_BIT;
   }

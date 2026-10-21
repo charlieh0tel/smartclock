@@ -113,8 +113,8 @@ void fatal_error(char* message) {
     }
     set_interrupt_mask(CPU_IPL_4);
   }
-  for (;;)
-    ;
+  for (;;) {
+  }
 }
 
 /* Creates the spool task at a priority, unless one is running, with its

@@ -304,8 +304,8 @@ char* strcat(char* s1, char* s2) {
   while (*end != '\0') {
     end++;
   }
-  while ((*end++ = *s2++) != '\0')
-    ;
+  while ((*end++ = *s2++) != '\0') {
+  }
   return s1;
 }
 

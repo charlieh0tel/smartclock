@@ -265,6 +265,8 @@ CHECK_SIZE(status_condition, 6);
 CHECK_SIZE(status_condition_code, 1);
 CHECK_SIZE(fpga_configuration_index, 1);
 CHECK_SIZE(fpga_chip, 1);
+CHECK_SIZE(mutex, 0x18);
+CHECK_FIELD(mutex, holds, 0x0c);
 CHECK_SIZE(fpga_configuration_entry, 8);
 CHECK_FIELD(fpga_configuration_table, entries, 0x02);
 

@@ -55,7 +55,12 @@ event log's mutex, `log_mutex`, which `log_init` (`0x3167c`) creates
 with `mutex_create` (`0x104e6`), as `klok_task_create` does `klok_mutex`
 under the name `klok`.  A mutex is an exchange of its name, which
 `mutex_lock` and `mutex_unlock` (`0x10502`, `0x10518`) take and give
-back.
+back: a `mutex` (`smartclock.h`), `0x18` bytes, which `mutex_clear`
+(`0x104d2`) clears, the exchange at `+4`, the owning task at `+8` and
+its holds past the first at `+0xc`.  `mutex_acquire` (`0x1043a`) gives
+1 for a mutex not yet created and `0x80` for a nested hold, which
+callers such as `clk_do` (`0x10540`) treat as an error; `mutex_release`
+(`0x10484`) 2 when the caller is not the owner.
 
 The SCPI setters' requests go to `pllc`: five routines,
 `pllc_request_a` to `pllc_request_e` (`0x29ec2`--`0x29f94`), fill a

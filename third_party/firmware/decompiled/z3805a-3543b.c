@@ -1217,13 +1217,15 @@ struct io_device_jumps {
 
 typedef struct klok_entry klok_entry, *Pklok_entry;
 
+typedef void (spoo_function)(uint32_t, uint32_t, uint32_t);
+
 struct klok_entry {
     struct klok_entry *next;
     uint32_t time;
     uint32_t date;
     uint32_t period_time;
     uint32_t period_date;
-    void *function;
+    spoo_function *function;
     int16_t event_class;
 };
 
@@ -1276,6 +1278,17 @@ struct loop_steering_state {
     float proportional_gain;
     float integral_gain;
     float filter_weight;
+};
+
+typedef struct mutex mutex, *Pmutex;
+
+struct mutex {
+    uint32_t field_00;
+    uint32_t exchange;
+    uint32_t owner;
+    int32_t holds;
+    uint32_t field_10;
+    uint32_t field_14;
 };
 
 typedef struct nv_record nv_record, *Pnv_record;
@@ -1989,8 +2002,6 @@ struct sim_registers {
     struct sim_chip_select cs[11];
 };
 
-typedef void (spoo_function)(uint32_t, uint32_t, uint32_t);
-
 typedef struct spoo_request spoo_request, *Pspoo_request;
 
 struct spoo_request {
@@ -2235,6 +2246,7 @@ _Static_assert(sizeof(lifetime_state) == 12, "lifetime_state");
 _Static_assert(sizeof(log_entry) == 20, "log_entry");
 _Static_assert(sizeof(log_page) == 64, "log_page");
 _Static_assert(sizeof(loop_steering_state) == 28, "loop_steering_state");
+_Static_assert(sizeof(mutex) == 24, "mutex");
 _Static_assert(sizeof(nv_record) == 128, "nv_record");
 _Static_assert(sizeof(nv_settings_fields) == 197, "nv_settings_fields");
 _Static_assert(sizeof(oncore_almanac) == 8, "oncore_almanac");
@@ -2804,6 +2816,7 @@ extern klok_entry * lifetime_event; /* 00101d14 */
 extern uint32_t eepx_exchange; /* 00101d18 */
 extern eeprom_lock_token eepx_token; /* 00101d1c */
 extern uint8_t eeprom_writing; /* 00101d34 */
+extern mutex log_mutex; /* 00101d36 */
 extern log_page log_write_page; /* 00101d4e */
 extern int16_t log_write_page_number; /* 00101d8e */
 extern log_entry * log_cursor; /* 00101d90 */
@@ -2957,6 +2970,7 @@ extern uint32_t task_klok; /* 0010371e */
 extern klok_entry * klok_entries; /* 00103722 */
 extern klok_entry * klok_free; /* 00103726 */
 extern klok_entry klok_pool[5]; /* 0010372a */
+extern mutex klok_mutex; /* 001037b4 */
 extern uint32_t idle_loops_last_second; /* 001037cc */
 extern void * exception_hook; /* 001037d0 */
 extern uint8_t exception_hook_per_task; /* 001037d4 */
@@ -3136,8 +3150,6 @@ extern uint16_t USHORT_0002f7a4; /* 0002f7a4 */
 extern uint16_t USHORT_0002f7a8; /* 0002f7a8 */
 extern uint16_t USHORT_0002f7b0; /* 0002f7b0 */
 extern uint8_t installer_atexit_functions; /* 0010b03c */
-extern uint8_t klok_mutex; /* 001037b4 */
-extern uint8_t log_mutex; /* 00101d36 */
 extern uint8_t reference_valid_override_request; /* 00100c68 */
 extern uint8_t retained_block; /* 00101e70 */
 extern char s_DUART_test_string_0001ee6e[]; /* 0001ee6e */
@@ -4674,20 +4686,20 @@ int32_t boot_reset();
 int32_t boot_trap_11();
 uint32_t boot_unpack_installer(void);
 uint8_t * boot_memcpy(uint8_t *param_1,uint8_t *param_2,int32_t param_3);
-int32_t mutex_init(int32_t name, void *mutex) __asm__("c_mutex_init");
-int32_t mutex_acquire(void *mutex) __asm__("c_mutex_acquire");
-int32_t mutex_release(void *mutex) __asm__("c_mutex_release");
-void mutex_clear(void *mutex) __asm__("c_mutex_clear");
-int32_t mutex_create(char *name,void *mutex);
-int32_t mutex_lock(void *mutex);
-int32_t mutex_unlock(void *mutex);
+int32_t mutex_init(int32_t name, mutex *lock) __asm__("c_mutex_init");
+int32_t mutex_acquire(mutex *lock) __asm__("c_mutex_acquire");
+int32_t mutex_release(mutex *lock) __asm__("c_mutex_release");
+void mutex_clear(mutex *lock) __asm__("c_mutex_clear");
+uint32_t mutex_create(char *name,mutex *lock);
+uint32_t mutex_lock(mutex *lock);
+uint32_t mutex_unlock(mutex *lock);
 uint32_t mutex_owner(void *mutex);
 uint32_t idle_count(void);
 klok_entry * clk_do(klok_entry *event);
 klok_entry * leap_event_schedule_gps(uint32_t param_1,int32_t param_2);
 klok_entry * leap_event_schedule_utc(uint32_t param_1,int32_t param_2);
 klok_entry * leap_event_schedule(uint32_t param_1,int32_t param_2);
-int32_t klok_cancel(klok_entry *param_1);
+int32_t klok_cancel(klok_entry *entry);
 void klok_print_entries(void);
 klok_entry * klok_find(int16_t param_1);
 int32_t klok_entry_state(klok_entry *param_1);
@@ -4695,9 +4707,9 @@ uint32_t klok_task_create(uint32_t param_1);
 void clock_set(time_of_day time,uint32_t date);
 void klok_task(void);
 void klok_run_due(void);
-uint32_t list_unlink(int32_t *param_1,int32_t *param_2);
-void klok_insert_sorted(int32_t *param_1,int32_t *param_2);
-void list_push(uint32_t *param_1,uint32_t *param_2);
+int32_t list_unlink(klok_entry **list,klok_entry *entry);
+void klok_insert_sorted(klok_entry **list,klok_entry *entry);
+void list_push(klok_entry **list,klok_entry *entry);
 uint32_t is_leap_year(uint16_t param_1);
 int16_t day_of_year(uint32_t date);
 int32_t time_packed_to_seconds(uint32_t time);
@@ -5404,7 +5416,7 @@ void qspi_device_write(char device, void *buffers, int16_t count) __asm__("c_qsp
 void qspi_write(uint8_t param_1,void *param_2,uint32_t param_3);
 void qspi_read(uint8_t param_1,void *param_2,uint32_t param_3);
 void qspi_send(uint8_t param_1,uint16_t *param_2,uint16_t param_3);
-void qspi_transfer(uint8_t param_1,uint32_t *param_2,uint16_t param_3);
+void qspi_transfer(uint8_t device,qspi_buffers *buffers,uint16_t count);
 uint32_t spoo_task_create(uint32_t param_1);
 uint32_t spoo_run(spoo_function *function,uint32_t a,uint32_t b,uint32_t c);
 int32_t deferred_vprintf(char *format,void *arguments);
@@ -5959,22 +5971,22 @@ bool eeprom_write_byte(char *param_1,char param_2);
 bool eeprom_write_page(char *param_1,char *param_2,uint16_t param_3);
 uint32_t eeprom_write(char *param_1,char *param_2,uint32_t param_3);
 uint16_t log_page_checksum(log_page *page);
-uint32_t log_page_write(uint8_t param_1,int16_t *param_2);
-uint32_t log_page_read(uint8_t param_1,uint32_t *param_2);
+uint32_t log_page_write(uint8_t page,log_page *source);
+uint32_t log_page_read(uint8_t page,log_page *destination);
 uint32_t sign_extend_bits(uint32_t param_1,uint8_t param_2);
-char log_erase(uint8_t param_1);
-int32_t log_erase_locked(uint8_t param_1);
-int32_t log_erase_checked(int32_t param_1,uint8_t param_2);
+char log_erase(uint8_t source);
+int32_t log_erase_locked(uint8_t source);
+int32_t log_erase_checked(int32_t count,uint8_t source);
 int32_t log_entry_total(uint8_t *param_1);
 int32_t log_init(void);
-int32_t log_read(int32_t param_1,char *param_2,char *param_3);
+int32_t log_read(int32_t number,char *text,char *heading);
 int32_t log_write(char *format,...);
 int32_t log_event(uint8_t code);
 void log_first_satellite(uint32_t param_1,uint32_t param_2);
 void log_page_clear(void *param_1);
 log_entry * log_page_free_entry(log_page *page);
 uint8_t log_flush(void);
-uint32_t log_append(char *param_1,int32_t param_2,int32_t param_3);
+uint32_t log_append(char *format,int32_t argument_1,int32_t argument_2);
 void report_clamped(char param_1,uint8_t param_2);
 float float_table_index(float *param_1,int16_t param_2);
 uint32_t clamp_float(float *param_1,float *param_2,float *param_3,float *param_4,uint8_t param_5);
@@ -7394,11 +7406,11 @@ uint8_t * boot_memcpy(uint8_t *param_1,uint8_t *param_2,int32_t param_3)
 
 /* mutex_create's inside: creates the mutex's exchange for the name in D0 and clears the mutex at A1
    Not a C function (register; read): its arguments and results in registers.  In: D0 int name, A1
-   void *mutex.  Out: D7 int error.  Error: D7 3 service 21 finds the name.  Preserves: D1, D2, A0.
+   mutex *lock.  Out: D7 int error.  Error: D7 3 service 21 finds the name.  Preserves: D1, D2, A0.
     */
 
 /* out D7 int error; error D7 3 service 21 finds the name; preserves D1, D2, A0 */
-__regcall int32_t mutex_init(int32_t name /* d0 */,void *mutex /* a1 */)
+__regcall int32_t mutex_init(int32_t name /* d0 */,mutex *lock /* a1 */)
 
 {
   int32_t d0;
@@ -7412,12 +7424,12 @@ __regcall int32_t mutex_init(int32_t name /* d0 */,void *mutex /* a1 */)
   void *a0;
   void *a0_00;
   void *a1;
-  void *mutex_00;
+  mutex *lock_00;
   void *a1_00;
   bool bVar2;
   
   bVar2 = false;
-  ({ __auto_type __c = ({ __auto_type __c = psos_call(0x15,name,in_D1,unaff_D2,unaff_D3,in_A0,mutex); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
+  ({ __auto_type __c = ({ __auto_type __c = psos_call(0x15,name,in_D1,unaff_D2,unaff_D3,in_A0,lock); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
   if (bVar2) {
     iVar1 = 3;
   }
@@ -7425,7 +7437,7 @@ __regcall int32_t mutex_init(int32_t name /* d0 */,void *mutex /* a1 */)
     bVar2 = false;
     iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x14,d0,0,0,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
     if (bVar2) {
-      mutex_clear(mutex_00);
+      mutex_clear(lock_00);
       *(void **)((int32_t)a1_00 + 4) = a0_00;
       iVar1 = psos_call(0x17,d0_00,d1,0,unaff_D3,a0_00,a1_00);
     }
@@ -7483,11 +7495,11 @@ __asm__(
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* recursive lock, owner at +8, count at +0xc, a token through request_x when not already owned
-   Not a C function (register; read): its arguments and results in registers.  In: A1 void *mutex.
+   Not a C function (register; read): its arguments and results in registers.  In: A1 mutex *lock.
    Out: D7 int error.  Error: D7 0x80 nested hold.  Preserves: D0, D1, A0, A2. */
 
 /* out D7 int error; error D7 0x80 nested hold; preserves D0, D1, A0, A2 */
-__regcall int32_t mutex_acquire(void *mutex /* a1 */)
+__regcall int32_t mutex_acquire(mutex *lock /* a1 */)
 
 {
   int32_t in_D1;
@@ -7500,7 +7512,7 @@ __regcall int32_t mutex_acquire(void *mutex /* a1 */)
   int32_t extraout_A1;
   bool bVar2;
   
-  iVar1 = ({ __auto_type __c = psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
+  iVar1 = ({ __auto_type __c = psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,lock); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
   if (extraout_A0 == *(int32_t *)((int32_t)a1 + 8)) {
     iVar1 = CONCAT22((int16_t)((uint32_t)iVar1 >> 0x10),0x80);
     *(int32_t *)((int32_t)a1 + 0xc) = *(int32_t *)((int32_t)a1 + 0xc) + 1;
@@ -7574,11 +7586,11 @@ __asm__(
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* drops the count, or the owner and the token through send_x
-   Not a C function (register; read): its arguments and results in registers.  In: A1 void *mutex.
+   Not a C function (register; read): its arguments and results in registers.  In: A1 mutex *lock.
    Out: D7 int error.  Error: D7 2 not held, D7 0x80 holds remain.  Preserves: D0, A0. */
 
 /* out D7 int error; error D7 2 not held, D7 0x80 holds remain; preserves D0, A0 */
-__regcall int32_t mutex_release(void *mutex /* a1 */)
+__regcall int32_t mutex_release(mutex *lock /* a1 */)
 
 {
   int32_t in_D1;
@@ -7590,7 +7602,7 @@ __regcall int32_t mutex_release(void *mutex /* a1 */)
   int32_t extraout_A0;
   void *a1;
   
-  iVar1 = ({ __auto_type __c = psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
+  iVar1 = ({ __auto_type __c = psos_call(3,0,in_D1,unaff_D2,unaff_D3,in_A0,lock); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
   if (extraout_A0 == *(int32_t *)((int32_t)a1 + 8)) {
     if (*(int32_t *)((int32_t)a1 + 0xc) == 0) {
       *(uint32_t *)((int32_t)a1 + 8) = 0;
@@ -7666,19 +7678,19 @@ __asm__(
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* clears the six longs of the mutex at A1
-   Not a C function (register; read): its arguments and results in registers.  In: A1 void *mutex.
+   Not a C function (register; read): its arguments and results in registers.  In: A1 mutex *lock.
     */
 
-__regcall void mutex_clear(void *mutex /* a1 */)
+__regcall void mutex_clear(mutex *lock /* a1 */)
 
 {
   int16_t sVar1;
   
   sVar1 = 5;
   do {
-    *(uint32_t *)mutex = 0;
+    lock->field_00 = 0;
     sVar1 = sVar1 + -1;
-    mutex = (uint32_t *)((int32_t)mutex + 4);
+    lock = (mutex *)&lock->exchange;
   } while (sVar1 != -1);
   return;
 }
@@ -7723,14 +7735,15 @@ __asm__(
    for log_mutex
    structures.md */
 
-int32_t mutex_create(char *name,void *mutex)
+uint32_t mutex_create(char *name,mutex *lock)
 
 {
-  int32_t iVar1;
+  int32_t name_00;
+  uint32_t uVar1;
   
-  iVar1 = psos_pack_name();
-  iVar1 = mutex_init(iVar1,mutex);
-  return iVar1;
+  name_00 = psos_pack_name();
+  uVar1 = mutex_init(name_00,lock);
+  return uVar1;
 }
 
 #endif
@@ -7740,13 +7753,13 @@ int32_t mutex_create(char *name,void *mutex)
 
 /* mutex_acquire on its argument */
 
-int32_t mutex_lock(void *mutex)
+uint32_t mutex_lock(mutex *lock)
 
 {
-  int32_t iVar1;
+  uint32_t uVar1;
   
-  iVar1 = mutex_acquire(mutex);
-  return iVar1;
+  uVar1 = mutex_acquire(lock);
+  return uVar1;
 }
 
 #endif
@@ -7756,13 +7769,13 @@ int32_t mutex_lock(void *mutex)
 
 /* mutex_release on its argument */
 
-int32_t mutex_unlock(void *mutex)
+uint32_t mutex_unlock(mutex *lock)
 
 {
-  int32_t iVar1;
+  uint32_t uVar1;
   
-  iVar1 = mutex_release(mutex);
-  return iVar1;
+  uVar1 = mutex_release(lock);
+  return uVar1;
 }
 
 #endif
@@ -7802,39 +7815,39 @@ klok_entry * clk_do(klok_entry *event)
 {
   klok_entry **ppkVar1;
   uint32_t status;
-  klok_entry *pkVar2;
-  uint32_t *puVar3;
+  klok_entry *entry;
+  uint32_t *puVar2;
   char acStack_54 [80];
   
   status = mutex_lock(&klok_mutex);
-  pkVar2 = klok_free;
+  entry = klok_free;
   if (status == 0) {
     if (klok_free == (klok_entry *)0x0) {
       task_dmessage("Clk_do: out of event buffers");
       log_event(0x19);
-      pkVar2 = (klok_entry *)0x0;
+      entry = (klok_entry *)0x0;
     }
     else {
-      puVar3 = &klok_free->time;
+      puVar2 = &klok_free->time;
       ppkVar1 = &klok_free->next;
       klok_free = klok_free->next;
       *ppkVar1 = event->next;
-      *puVar3 = event->time;
-      pkVar2->date = event->date;
-      pkVar2->period_time = event->period_time;
-      pkVar2->period_date = event->period_date;
-      pkVar2->function = event->function;
-      pkVar2->event_class = event->event_class;
-      klok_insert_sorted((int32_t *)&klok_entries,(int32_t *)pkVar2);
+      *puVar2 = event->time;
+      entry->date = event->date;
+      entry->period_time = event->period_time;
+      entry->period_date = event->period_date;
+      entry->function = event->function;
+      entry->event_class = event->event_class;
+      klok_insert_sorted(&klok_entries,entry);
     }
     mutex_unlock(&klok_mutex);
   }
   else {
     debug_sprintf(acStack_54,"Clk_do: error %#04x\r\n",status);
     task_dmessage(acStack_54);
-    pkVar2 = (klok_entry *)0x0;
+    entry = (klok_entry *)0x0;
   }
-  return pkVar2;
+  return entry;
 }
 
 #endif
@@ -7982,25 +7995,25 @@ klok_entry * leap_event_schedule(uint32_t param_1,int32_t param_2)
 /* under klok_mutex, unlinks an entry from the clock list and returns it to the free list; -3 for a
    pointer outside the pool */
 
-int32_t klok_cancel(klok_entry *param_1)
+int32_t klok_cancel(klok_entry *entry)
 
 {
-  int32_t iVar1;
+  uint32_t uVar1;
   
-  iVar1 = mutex_lock(&klok_mutex);
-  if (iVar1 == 0) {
-    if ((param_1 < klok_pool) || (klok_pool + 4 < param_1)) {
-      iVar1 = -3;
+  uVar1 = mutex_lock(&klok_mutex);
+  if (uVar1 == 0) {
+    if ((entry < klok_pool) || (klok_pool + 4 < entry)) {
+      uVar1 = 0xfffffffd;
     }
     else {
-      iVar1 = list_unlink((int32_t *)&klok_entries,(int32_t *)param_1);
-      if (iVar1 == 0) {
-        list_push(&klok_free,&param_1->next);
+      uVar1 = list_unlink(&klok_entries,entry);
+      if (uVar1 == 0) {
+        list_push(&klok_free,entry);
       }
     }
     mutex_unlock(&klok_mutex);
   }
-  return iVar1;
+  return uVar1;
 }
 
 #endif
@@ -8016,7 +8029,7 @@ void klok_print_entries(void)
 {
   uint32_t uVar1;
   uint32_t uVar2;
-  int32_t status;
+  uint32_t status;
   klok_entry *pkVar4;
   
   status = mutex_lock(&klok_mutex);
@@ -8057,7 +8070,7 @@ void klok_print_entries(void)
 klok_entry * klok_find(int16_t param_1)
 
 {
-  int32_t status;
+  uint32_t status;
   klok_entry *pkVar2;
   klok_entry *pkVar3;
   
@@ -8083,7 +8096,7 @@ klok_entry * klok_find(int16_t param_1)
 int32_t klok_entry_state(klok_entry *param_1)
 
 {
-  int32_t status;
+  uint32_t status;
   int32_t iVar2;
   klok_entry *pkVar3;
   
@@ -8214,24 +8227,24 @@ void klok_run_due(void)
 
 {
   int32_t order;
-  klok_entry *pkVar2;
+  klok_entry *entry;
   
-  pkVar2 = klok_entries;
+  entry = klok_entries;
   mutex_lock(&klok_mutex);
-  while ((pkVar2 != (klok_entry *)0x0 &&
-         (order = datetime_compare(&pkVar2->time,(uint32_t *)0x1037ac), order < 1))) {
-    if ((order == 0) && (pkVar2->function != (void *)0x0)) {
-      spoo_run(pkVar2->function,0,0,0);
+  while ((entry != (klok_entry *)0x0 &&
+         (order = datetime_compare(&entry->time,(uint32_t *)0x1037ac), order < 1))) {
+    if ((order == 0) && (entry->function != (uint8_t *)0x0)) {
+      spoo_run((spoo_function *)entry->function,0,0,0);
     }
-    list_unlink((int32_t *)&klok_entries,(int32_t *)pkVar2);
-    if ((pkVar2->period_time == 0) && (pkVar2->period_date == 0)) {
-      list_push(&klok_free,&pkVar2->next);
-      pkVar2 = klok_entries;
+    list_unlink(&klok_entries,entry);
+    if ((entry->period_time == 0) && (entry->period_date == 0)) {
+      list_push(&klok_free,entry);
+      entry = klok_entries;
     }
     else {
-      datetime_add((packed_datetime *)&pkVar2->period_time,(packed_datetime *)&pkVar2->time);
-      klok_insert_sorted((int32_t *)&klok_entries,(int32_t *)pkVar2);
-      pkVar2 = klok_entries;
+      datetime_add((packed_datetime *)&entry->period_time,(packed_datetime *)&entry->time);
+      klok_insert_sorted(&klok_entries,entry);
+      entry = klok_entries;
     }
   }
   mutex_unlock(&klok_mutex);
@@ -8244,17 +8257,17 @@ void klok_run_due(void)
 
 /* removes an item from a singly linked list; -2 if it is not there */
 
-uint32_t list_unlink(int32_t *param_1,int32_t *param_2)
+int32_t list_unlink(klok_entry **list,klok_entry *entry)
 
 {
   while( true ) {
-    if (*param_1 == 0) {
-      return 0xfffffffe;
+    if (((klok_entry *)list)->next == (klok_entry *)0x0) {
+      return -2;
     }
-    if ((int32_t *)*param_1 == param_2) break;
-    param_1 = (int32_t *)*param_1;
+    if (((klok_entry *)list)->next == entry) break;
+    list = &((klok_entry *)list)->next->next;
   }
-  *param_1 = *param_2;
+  ((klok_entry *)list)->next = entry->next;
   return 0;
 }
 
@@ -8263,17 +8276,18 @@ uint32_t list_unlink(int32_t *param_1,int32_t *param_2)
 
 /* inserts an entry into the clock list in time order */
 
-void klok_insert_sorted(int32_t *param_1,int32_t *param_2)
+void klok_insert_sorted(klok_entry **list,klok_entry *entry)
 
 {
   int32_t order;
   
-  for (; *param_1 != 0; param_1 = (int32_t *)*param_1) {
-    order = datetime_compare((uint32_t *)(*param_1 + 4),(uint32_t *)(param_2 + 1));
+  for (; ((klok_entry *)list)->next != (klok_entry *)0x0; list = &((klok_entry *)list)->next->next)
+  {
+    order = datetime_compare(&((klok_entry *)list)->next->time,&entry->time);
     if (0 < order) break;
   }
-  *param_2 = *param_1;
-  *param_1 = (int32_t)param_2;
+  entry->next = ((klok_entry *)list)->next;
+  ((klok_entry *)list)->next = entry;
   return;
 }
 
@@ -8282,11 +8296,11 @@ void klok_insert_sorted(int32_t *param_1,int32_t *param_2)
 
 /* pushes an item onto a singly linked list */
 
-void list_push(uint32_t *param_1,uint32_t *param_2)
+void list_push(klok_entry **list,klok_entry *entry)
 
 {
-  *param_2 = *param_1;
-  *param_1 = param_2;
+  entry->next = *list;
+  *list = entry;
   return;
 }
 
@@ -10139,7 +10153,7 @@ int32_t pps_init(void)
   iVar2 = ({ __auto_type __c = psos_call(0x14,0x31707073,0,0,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
   if (iVar2 == 0) {
     pps_exchange = extraout_A0;
-    mutex_clear(&pps_message);
+    mutex_clear((mutex *)&pps_message);
     uVar1 = gpt.tflg;
     gpt.tflg = uVar1 & ~TFLG_ICF1;
     uVar1 = gpt.tmsk;
@@ -23029,7 +23043,7 @@ uint8_t qspi_hex_dac_test(void)
   local_18[1] = 0x123;
   local_18[2] = 0x456;
   qspi_send(2,local_18,3);
-  qspi_transfer(2,&buffers.transmit,3);
+  qspi_transfer(2,&buffers,3);
   shift_right_36(local_18 + 3);
   uVar1 = 0;
   do {
@@ -23042,7 +23056,7 @@ uint8_t qspi_hex_dac_test(void)
   local_18[1] = 0xfed;
   local_18[2] = 0xcba;
   qspi_send(2,local_18,3);
-  qspi_transfer(2,&buffers.transmit,3);
+  qspi_transfer(2,&buffers,3);
   shift_right_36(local_18 + 3);
   uVar1 = 0;
   do {
@@ -23070,7 +23084,7 @@ uint8_t qspi_adc_test(void)
   buffers.transmit = &local_10;
   buffers.receive = &local_e;
   local_10 = 0xe000;
-  qspi_transfer(1,&buffers.transmit,1);
+  qspi_transfer(1,&buffers,1);
   if (((((local_e & 0x400) == 0) && ((int32_t)(uint32_t)(local_e & 0x10) >> 4 == (uint32_t)(local_e & 1))) &&
       ((int32_t)(uint32_t)(local_e & 8) >> 2 == (uint32_t)(local_e & 2))) &&
      ((((int32_t)(uint32_t)local_e >> 2 & 0xffU) != 0 &&
@@ -23119,11 +23133,11 @@ bool qspi_efc_test(void)
   buffers.receive = &local_e;
   local_10 = 0x5555;
   qspi_send(7,&local_10,1);
-  qspi_transfer(7,&buffers.transmit,1);
+  qspi_transfer(7,&buffers,1);
   bVar1 = local_10 == local_e;
   local_10 = 0xaaaa;
   qspi_send(7,&local_10,1);
-  qspi_transfer(7,&buffers.transmit,1);
+  qspi_transfer(7,&buffers,1);
   return local_10 == local_e && bVar1;
 }
 
@@ -34542,13 +34556,13 @@ LAB_0001d8ca:
 __regcall void drtb_unlock(char write /* d0 */)
 
 {
-  exchange_token *mutex;
+  mutex *lock;
   
-  mutex = &duartb.read_token;
+  lock = (mutex *)&duartb.read_token;
   if (write != 0) {
-    mutex = &duartb.write_token;
+    lock = (mutex *)&duartb.write_token;
   }
-  mutex_release(mutex);
+  mutex_release(lock);
   return;
 }
 
@@ -34595,13 +34609,13 @@ __asm__(
 __regcall void drtb_lock(char write /* d0 */)
 
 {
-  exchange_token *mutex;
+  mutex *lock;
   
-  mutex = &duartb.read_token;
+  lock = (mutex *)&duartb.read_token;
   if (write != 0) {
-    mutex = &duartb.write_token;
+    lock = (mutex *)&duartb.write_token;
   }
-  mutex_acquire(mutex);
+  mutex_acquire(lock);
   return;
 }
 
@@ -35119,10 +35133,10 @@ void drtb_putc(char param_1)
   
   local_6[0] = param_1;
   local_6[1] = 0;
-  iVar1 = mutex_acquire(&duartb.write_token);
+  iVar1 = mutex_acquire((mutex *)&duartb.write_token);
   if ((char)iVar1 < 1) {
     drtb_puts(local_6);
-    mutex_release(&duartb.write_token);
+    mutex_release((mutex *)&duartb.write_token);
   }
   return;
 }
@@ -35291,7 +35305,7 @@ bool drtb_try_lock_write(void)
 {
   int32_t iVar1;
   
-  iVar1 = mutex_acquire(&duartb.write_token);
+  iVar1 = mutex_acquire((mutex *)&duartb.write_token);
   return 0 < (char)iVar1;
 }
 
@@ -38878,7 +38892,7 @@ void qspi_send(uint8_t param_1,uint16_t *param_2,uint16_t param_3)
 
 /* waits for SPCR1 and SPSR, runs a QSPI transfer, copies the receive RAM at 0xfffd00 out */
 
-void qspi_transfer(uint8_t param_1,uint32_t *param_2,uint16_t param_3)
+void qspi_transfer(uint8_t device,qspi_buffers *buffers,uint16_t count)
 
 {
   uint16_t uVar1;
@@ -38892,7 +38906,7 @@ void qspi_transfer(uint8_t param_1,uint32_t *param_2,uint16_t param_3)
   uint16_t local_6;
   
   puVar5 = qsm.rr;
-  puVar6 = (uint16_t *)param_2[1];
+  puVar6 = buffers->receive;
   uVar3 = enter_supervisor();
   local_6 = (uint16_t)uVar3;
   qspi.field_00 = 1;
@@ -38903,17 +38917,17 @@ void qspi_transfer(uint8_t param_1,uint32_t *param_2,uint16_t param_3)
   if ((uVar2 & SPSR_SPIF) != 0) {
     qspi_isr();
   }
-  unknown_device = qspi_queue_setup(param_1,(uint16_t *)*param_2,param_3,1,&local_8);
+  unknown_device = qspi_queue_setup(device,buffers->transmit,count,1,&local_8);
   if (unknown_device == 0) {
     qsm.spcr1 = local_8;
     do {
       uVar2 = qsm.spsr;
     } while ((uVar2 & SPSR_SPIF) == 0);
-    if (param_1 == 0xc) {
+    if (device == 0xc) {
       puVar7 = puVar6 + 1;
     }
     else {
-      puVar7 = puVar6 + param_3;
+      puVar7 = puVar6 + count;
     }
     for (; puVar6 < puVar7; puVar6 = puVar6 + 1) {
       *puVar6 = *puVar5;
@@ -39293,7 +39307,7 @@ bool fpga_verify_first(uint8_t *param_1,uint8_t *param_2,char param_3)
   buffers.receive = &local_58;
   local_56 = 0xffff;
   if (param_3 == 0) {
-    qspi_transfer(0xc,&buffers.transmit,0xb);
+    qspi_transfer(0xc,&buffers,0xb);
   }
   else {
     qspi_read(0xc,&buffers,0xb);
@@ -39304,7 +39318,7 @@ bool fpga_verify_first(uint8_t *param_1,uint8_t *param_2,char param_3)
   if (bVar1) {
     for (local_64 = 0; (bVar1 != false && (local_64 < 5)); local_64 = local_64 + 1) {
       if (param_3 == 0) {
-        qspi_transfer(0xc,&buffers.transmit,0x10);
+        qspi_transfer(0xc,&buffers,0x10);
       }
       else {
         qspi_read(0xc,&buffers,0x10);
@@ -39338,7 +39352,7 @@ bool fpga_verify_first(uint8_t *param_1,uint8_t *param_2,char param_3)
   }
   if (bVar1 != false) {
     if (param_3 == 0) {
-      qspi_transfer(0xc,&buffers.transmit,8);
+      qspi_transfer(0xc,&buffers,8);
     }
     else {
       qspi_read(0xc,&buffers,8);
@@ -39356,7 +39370,7 @@ bool fpga_verify_first(uint8_t *param_1,uint8_t *param_2,char param_3)
   }
   if (bVar1 != false) {
     if (param_3 == 0) {
-      qspi_transfer(0xc,&buffers.transmit,10);
+      qspi_transfer(0xc,&buffers,10);
     }
     else {
       qspi_read(0xc,&buffers,10);
@@ -39410,7 +39424,7 @@ bool fpga_verify_odd(uint8_t *param_1,uint8_t *param_2,char param_3)
   local_56 = 0xffff;
   for (iVar2 = 0; (bVar1 != false && (iVar2 < 6)); iVar2 = iVar2 + 1) {
     if (param_3 == 0) {
-      qspi_transfer(0xc,&buffers.transmit,0x10);
+      qspi_transfer(0xc,&buffers,0x10);
     }
     else {
       qspi_read(0xc,&buffers,0x10);
@@ -39436,7 +39450,7 @@ bool fpga_verify_odd(uint8_t *param_1,uint8_t *param_2,char param_3)
   }
   if (bVar1 != false) {
     if (param_3 == 0) {
-      qspi_transfer(0xc,&buffers.transmit,10);
+      qspi_transfer(0xc,&buffers,10);
     }
     else {
       qspi_read(0xc,&buffers,10);
@@ -39492,7 +39506,7 @@ bool fpga_verify_even(uint8_t *param_1,uint8_t *param_2,char param_3)
   buffers.receive = &local_58;
   local_56 = 0xffff;
   if (param_3 == 0) {
-    qspi_transfer(0xc,&buffers.transmit,0xc);
+    qspi_transfer(0xc,&buffers,0xc);
   }
   else {
     qspi_read(0xc,&buffers,0xc);
@@ -39514,7 +39528,7 @@ bool fpga_verify_even(uint8_t *param_1,uint8_t *param_2,char param_3)
       param3 = param_2 + 2;
       if ((bVar1 == false) || (4 < iVar2)) break;
       if (param_3 == 0) {
-        qspi_transfer(0xc,&buffers.transmit,0x10);
+        qspi_transfer(0xc,&buffers,0x10);
       }
       else {
         qspi_read(0xc,&buffers,0x10);
@@ -39547,7 +39561,7 @@ bool fpga_verify_even(uint8_t *param_1,uint8_t *param_2,char param_3)
   }
   if (bVar1 != false) {
     if (param_3 == 0) {
-      qspi_transfer(0xc,&buffers.transmit,0xe);
+      qspi_transfer(0xc,&buffers,0xe);
     }
     else {
       qspi_read(0xc,&buffers,0xe);
@@ -48246,27 +48260,30 @@ int32_t scpi_set_DIAGnostic_LOG_CLEar(void *parameters,void *response,void *call
 
 {
   int32_t zero;
-  int16_t status;
-  uint32_t uVar3;
+  int32_t status;
+  uint32_t uVar4;
+  int16_t sVar3;
   
   if (*(int16_t *)((int32_t)parameters + 2) == -1) {
     zero = return_zero();
     status = log_erase_locked((uint8_t)zero);
+    sVar3 = (int16_t)status;
   }
   else {
     zero = return_zero();
     status = log_erase_checked((int32_t)*(int16_t *)((int32_t)parameters + 4),(uint8_t)zero);
+    sVar3 = (int16_t)status;
   }
-  if ((status != 0) && (status != 0xfe)) {
-    if (status == 0xff) {
+  if ((sVar3 != 0) && (sVar3 != 0xfe)) {
+    if (sVar3 == 0xff) {
       zero = return_zero();
-      uVar3 = CONCAT22(9,(uint16_t)(uint8_t)zero << 8);
+      uVar4 = CONCAT22(9,(uint16_t)(uint8_t)zero << 8);
     }
     else {
       zero = return_zero();
-      uVar3 = CONCAT22(0xe,(uint16_t)(uint8_t)zero << 8);
+      uVar4 = CONCAT22(0xe,(uint16_t)(uint8_t)zero << 8);
     }
-    status_report_from((int16_t)((uint32_t)uVar3 >> 0x10),(uint8_t)((uint32_t)uVar3 >> 8));
+    status_report_from((int16_t)((uint32_t)uVar4 >> 0x10),(uint8_t)((uint32_t)uVar4 >> 8));
   }
   return 0;
 }
@@ -48411,8 +48428,9 @@ int32_t scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,void *cal
 
 {
   uint32_t zero;
-  int16_t sVar3;
-  int32_t iVar2;
+  int16_t sVar4;
+  int32_t error;
+  int32_t iVar3;
   char local_11e [255];
   char local_1f [27];
   
@@ -48421,27 +48439,28 @@ int32_t scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,void *cal
   local_1f[0] = 0;
   *(uint8_t *)((zero & 0xff) * 0x11a + 0x10272a) = 0;
   if (*(int16_t *)parameters == 0) {
-    sVar3 = log_entry_total((uint8_t *)0x0);
+    sVar4 = log_entry_total((uint8_t *)0x0);
   }
   else {
-    iVar2 = log_count((uint8_t *)0x0);
-    sVar3 = (int16_t)iVar2;
+    iVar3 = log_count((uint8_t *)0x0);
+    sVar4 = (int16_t)iVar3;
   }
-  if (0 < sVar3) {
+  if (0 < sVar4) {
     if (*(int16_t *)((int32_t)parameters + 2) != -1) {
-      if ((*(int16_t *)((int32_t)parameters + 4) < 1) || (sVar3 < *(int16_t *)((int32_t)parameters + 4))) {
-        iVar2 = scpi_query_failed('\t',call);
-        return iVar2;
+      if ((*(int16_t *)((int32_t)parameters + 4) < 1) || (sVar4 < *(int16_t *)((int32_t)parameters + 4))) {
+        iVar3 = scpi_query_failed('\t',call);
+        return iVar3;
       }
-      sVar3 = *(int16_t *)((int32_t)parameters + 4);
+      sVar4 = *(int16_t *)((int32_t)parameters + 4);
     }
     if (*(int16_t *)parameters == 0) {
-      sVar3 = log_read((int32_t)sVar3,local_11e,local_1f);
+      error = log_read((int32_t)sVar4,local_11e,local_1f);
+      sVar4 = (int16_t)error;
     }
     else {
-      sVar3 = log_entry_text((int32_t)sVar3,local_11e,local_1f);
+      sVar4 = log_entry_text((int32_t)sVar4,local_11e,local_1f);
     }
-    if (sVar3 == 0) {
+    if (sVar4 == 0) {
       strcat((char *)((zero & 0xff) * 0x11a + 0x10272a),local_1f);
       strcat((char *)((zero & 0xff) * 0x11a + 0x10272a),": ");
       strcat((char *)((zero & 0xff) * 0x11a + 0x10272a),local_11e);
@@ -48449,8 +48468,8 @@ int32_t scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,void *cal
       return 0;
     }
   }
-  iVar2 = scpi_query_failed(0xe,call);
-  return iVar2;
+  iVar3 = scpi_query_failed(0xe,call);
+  return iVar3;
 }
 
 
@@ -55072,19 +55091,19 @@ uint16_t log_page_checksum(log_page *page)
 /* writes an event log page to EEPROM at 0x400d40 if it has changed, its count incremented and
    checksummed */
 
-uint32_t log_page_write(uint8_t param_1,int16_t *param_2)
+uint32_t log_page_write(uint8_t page,log_page *source)
 
 {
   int32_t difference;
-  uint16_t checksum;
+  uint16_t uVar2;
   char written;
   
-  difference = memcmp((void *)((uint32_t)param_1 * 0x40 + 0x400d44),param_2 + 2,0x3c);
+  difference = memcmp((void *)((uint32_t)page * 0x40 + 0x400d44),source->entries,0x3c);
   if (difference != 0) {
-    *param_2 = *(int16_t *)((uint32_t)param_1 * 0x40 + 0x400d40) + 1;
-    checksum = log_page_checksum((log_page *)param_2);
-    param_2[1] = checksum;
-    written = eeprom_write((char *)((uint32_t)param_1 * 0x40 + 0x400d40),(char *)param_2,0x40);
+    source->write_count = *(int16_t *)((uint32_t)page * 0x40 + 0x400d40) + 1;
+    uVar2 = log_page_checksum(source);
+    source->checksum = uVar2;
+    written = eeprom_write((char *)((uint32_t)page * 0x40 + 0x400d40),(char *)source,0x40);
     if (written == 0) {
       return 0xfffffffe;
     }
@@ -55098,30 +55117,33 @@ uint32_t log_page_write(uint8_t param_1,int16_t *param_2)
 /* reads the event log's 64-byte EEPROM page at 0x400d40 plus 0x40 times its number; 0xff if its
    checksum fails */
 
-uint32_t log_page_read(uint8_t param_1,uint32_t *param_2)
+uint32_t log_page_read(uint8_t page,log_page *destination)
 
 {
-  uint16_t checksum;
-  int16_t sVar2;
-  uint32_t uVar3;
-  uint32_t *puVar4;
-  uint32_t *puVar5;
+  uint32_t uVar1;
+  uint16_t uVar2;
+  int16_t sVar3;
+  uint32_t uVar4;
+  log_page *plVar5;
+  uint32_t *puVar6;
   
-  uVar3 = 0;
-  sVar2 = 0xf;
-  puVar4 = param_2;
-  puVar5 = (uint32_t *)((uint32_t)param_1 * 0x40 + 0x400d40);
+  uVar4 = 0;
+  sVar3 = 0xf;
+  plVar5 = destination;
+  puVar6 = (uint32_t *)((uint32_t)page * 0x40 + 0x400d40);
   do {
-    *puVar4 = *puVar5;
-    sVar2 = sVar2 + -1;
-    puVar4 = puVar4 + 1;
-    puVar5 = puVar5 + 1;
-  } while (sVar2 != -1);
-  checksum = log_page_checksum((log_page *)param_2);
-  if (checksum != *(uint16_t *)((int32_t)param_2 + 2)) {
-    uVar3 = 0xff;
+    uVar1 = *puVar6;
+    plVar5->write_count = (int16_t)((uint32_t)uVar1 >> 0x10);
+    plVar5->checksum = (int16_t)uVar1;
+    sVar3 = sVar3 + -1;
+    plVar5 = (log_page *)plVar5->entries;
+    puVar6 = puVar6 + 1;
+  } while (sVar3 != -1);
+  uVar2 = log_page_checksum(destination);
+  if (uVar2 != destination->checksum) {
+    uVar4 = 0xff;
   }
-  return uVar3;
+  return uVar4;
 }
 
 
@@ -55161,25 +55183,27 @@ uint32_t sign_extend_bits(uint32_t param_1,uint8_t param_2)
 
 /* clears the event log's pages and resets its state, reporting event ! */
 
-char log_erase(uint8_t param_1)
+char log_erase(uint8_t source)
 
 {
-  char status;
-  int32_t iVar2;
+  uint32_t status;
+  uint32_t uVar2;
+  int32_t iVar3;
   
   log_page_clear(&log_write_page);
   log_page_clear(&log_page_buffer);
-  iVar2 = 0;
+  iVar3 = 0;
   do {
-    status = log_page_write((uint8_t)iVar2,(int16_t *)&log_write_page);
-    if (status != 0) {
-      if (status == -2) {
-        status_report_from(0x10,param_1);
+    status = log_page_write((uint8_t)iVar3,&log_write_page);
+    uVar2 = status & 0xff;
+    if (uVar2 != 0) {
+      if (uVar2 == 0xfe) {
+        status_report_from(0x10,source);
       }
       break;
     }
-    iVar2 = iVar2 + 1;
-  } while (iVar2 < 0x4b);
+    iVar3 = iVar3 + 1;
+  } while (iVar3 < 0x4b);
   log_write_page_number = 0;
   log_page_number = 0;
   log_cursor = log_write_page.entries;
@@ -55187,10 +55211,10 @@ char log_erase(uint8_t param_1)
   log_write_page_open = 0;
   log_full = 0;
   status_happening(STATUS_LOG_ALMOST_FULL_CLEARED);
-  if (status == 0) {
+  if (uVar2 == 0) {
     log_append("Log cleared",0,0);
   }
-  return status;
+  return (char)status;
 }
 
 
@@ -55199,17 +55223,20 @@ char log_erase(uint8_t param_1)
 
 /* log_erase under log_mutex */
 
-int32_t log_erase_locked(uint8_t param_1)
+int32_t log_erase_locked(uint8_t source)
 
 {
-  int32_t status;
+  undefined3 extraout_var;
+  uint32_t uVar1;
+  char status;
   
-  status = mutex_lock(&log_mutex);
-  if (status == 0) {
-    status = log_erase(param_1);
+  uVar1 = mutex_lock(&log_mutex);
+  if (uVar1 == 0) {
+    status = log_erase(source);
+    uVar1 = CONCAT31(extraout_var,status);
     mutex_unlock(&log_mutex);
   }
-  return status;
+  return uVar1;
 }
 
 #endif
@@ -55219,22 +55246,25 @@ int32_t log_erase_locked(uint8_t param_1)
 
 /* erases the event log under log_mutex if its count is the one given, else 0xff */
 
-int32_t log_erase_checked(int32_t param_1,uint8_t param_2)
+int32_t log_erase_checked(int32_t count,uint8_t source)
 
 {
-  int32_t iVar1;
+  undefined3 extraout_var;
+  uint32_t uVar1;
+  char status;
   
-  iVar1 = mutex_lock(&log_mutex);
-  if (iVar1 == 0) {
-    if (param_1 == log_entries) {
-      iVar1 = log_erase(param_2);
+  uVar1 = mutex_lock(&log_mutex);
+  if (uVar1 == 0) {
+    if (count == log_entries) {
+      status = log_erase(source);
+      uVar1 = CONCAT31(extraout_var,status);
     }
     else {
-      iVar1 = 0xff;
+      uVar1 = 0xff;
     }
     mutex_unlock(&log_mutex);
   }
-  return iVar1;
+  return uVar1;
 }
 
 #endif
@@ -55265,28 +55295,28 @@ int32_t log_init(void)
 
 {
   log_entry *plVar1;
-  int32_t iVar2;
-  int32_t status;
+  uint32_t status;
+  int32_t iVar3;
   
-  iVar2 = mutex_create("logr",&log_mutex);
-  if ((iVar2 == 0) && (iVar2 = mutex_lock(&log_mutex), iVar2 == 0)) {
+  status = mutex_create("logr",&log_mutex);
+  if ((status == 0) && (status = mutex_lock(&log_mutex), status == 0)) {
     log_write_page_open = 0;
     log_entries = -1;
     log_page_number = -1;
-    iVar2 = 0;
+    iVar3 = 0;
     plVar1 = log_cursor;
-    while (log_cursor = plVar1, status = log_page_read((uint8_t)iVar2,(uint32_t *)&log_write_page),
-          status != 0xff) {
+    while (log_cursor = plVar1, status = log_page_read((uint8_t)iVar3,&log_write_page), status != 0xff
+          ) {
       if (status != 0) {
         return status;
       }
       log_cursor = log_page_free_entry(&log_write_page);
       if ((log_cursor != (log_entry *)0x0) ||
-         (iVar2 = iVar2 + 1, plVar1 = (log_entry *)0x0, 0x4a < iVar2)) goto LAB_00031708;
+         (iVar3 = iVar3 + 1, plVar1 = (log_entry *)0x0, 0x4a < iVar3)) goto LAB_00031708;
     }
     log_cursor = log_write_page.entries;
 LAB_00031708:
-    log_write_page_number = (int16_t)iVar2;
+    log_write_page_number = (int16_t)iVar3;
     log_full = log_cursor == (log_entry *)0x0;
     log_entries = log_write_page_number * 3;
     if (!(bool)log_full) {
@@ -55295,9 +55325,9 @@ LAB_00031708:
     if (0xb4 < log_entries) {
       status_happening(STATUS_LOG_ALMOST_FULL_SET);
     }
-    iVar2 = mutex_unlock(&log_mutex);
+    status = mutex_unlock(&log_mutex);
   }
-  return iVar2;
+  return status;
 }
 
 #endif
@@ -55308,22 +55338,22 @@ LAB_00031708:
 /* formats a log entry, "Log %03d:%04d%02d%02d.%02d:%02d:%02d"
    structures.md */
 
-int32_t log_read(int32_t param_1,char *param_2,char *param_3)
+int32_t log_read(int32_t number,char *text,char *heading)
 
 {
   uint32_t uVar1;
   uint32_t uVar2;
   char cVar3;
-  int32_t iVar4;
+  uint32_t uVar4;
   int32_t iVar5;
   char *pcVar6;
   int64_t lVar7;
   int32_t local_14;
   int32_t local_10;
   
-  iVar5 = param_1 + -1;
-  iVar4 = mutex_lock(&log_mutex);
-  if (iVar4 == 0) {
+  iVar5 = number + -1;
+  uVar4 = mutex_lock(&log_mutex);
+  if (uVar4 == 0) {
     lVar7 = div(iVar5,3);
     if (0x4affffffff < lVar7) {
       lVar7 = 0x4a00000002;
@@ -55339,55 +55369,55 @@ int32_t log_read(int32_t param_1,char *param_2,char *param_3)
     if ((local_14 == log_write_page_number) && (log_write_page_open != 0)) {
       log_flush();
     }
-    iVar4 = 0;
+    uVar4 = 0;
     if (local_14 != log_page_number) {
-      iVar4 = log_page_read((uint8_t)((uint64_t)lVar7 >> 0x20),(uint32_t *)&log_page_buffer);
+      uVar4 = log_page_read((uint8_t)((uint64_t)lVar7 >> 0x20),&log_page_buffer);
       log_page_number = (int16_t)((uint64_t)lVar7 >> 0x20);
-      if (iVar4 != 0) {
+      if (uVar4 != 0) {
         log_page_clear(&log_page_buffer);
       }
     }
-    if ((iVar4 == 0) && (log_page_buffer.entries[local_10].format != (char *)0x0)) {
-      if (param_2 != (char *)0x0) {
+    if ((uVar4 == 0) && (log_page_buffer.entries[local_10].format != (char *)0x0)) {
+      if (text != (char *)0x0) {
         if (log_page_buffer.entries[local_10].format ==
             "First satellite tracked at %04d%02d%02d.%02d:%02d:%02d") {
           uVar1 = log_page_buffer.entries[local_10].argument_1;
           uVar2 = log_page_buffer.entries[local_10].argument_2;
-          sprintf(param_2,"First satellite tracked at %04d%02d%02d.%02d:%02d:%02d",uVar1 >> 0x10,
+          sprintf(text,"First satellite tracked at %04d%02d%02d.%02d:%02d:%02d",uVar1 >> 0x10,
                   uVar1 >> 8 & 0xff,uVar1 & 0xff,uVar2 >> 0x10 & 0xff,uVar2 >> 8 & 0xff,uVar2 & 0xff
                  );
         }
         else {
-          sprintf(param_2,log_page_buffer.entries[local_10].format,
+          sprintf(text,log_page_buffer.entries[local_10].format,
                   (char)log_page_buffer.entries[local_10].argument_1,
                   log_page_buffer.entries[local_10].argument_2);
         }
       }
-      if (param_3 != (char *)0x0) {
+      if (heading != (char *)0x0) {
         uVar2 = log_page_buffer.entries[local_10].date;
         uVar1 = log_page_buffer.entries[local_10].time;
-        sprintf(param_3,"Log %03d:%04d%02d%02d.%02d:%02d:%02d",iVar5 + 1,uVar2 >> 0x10,
+        sprintf(heading,"Log %03d:%04d%02d%02d.%02d:%02d:%02d",iVar5 + 1,uVar2 >> 0x10,
                 uVar2 >> 8 & 0xff,uVar2 & 0xff,uVar1 >> 0x10 & 0xff,uVar1 >> 8 & 0xff,uVar1 & 0xff);
       }
     }
     else {
-      if (param_2 != (char *)0x0) {
+      if (text != (char *)0x0) {
         pcVar6 = "Unused";
         do {
           cVar3 = *pcVar6;
-          *param_2 = cVar3;
+          *text = cVar3;
           pcVar6 = pcVar6 + 1;
-          param_2 = param_2 + 1;
+          text = text + 1;
         } while (cVar3 != 0);
       }
-      if (param_3 != (char *)0x0) {
-        sprintf(param_3,"Log %03d:00000000.00:00:00",iVar5 + 1);
+      if (heading != (char *)0x0) {
+        sprintf(heading,"Log %03d:00000000.00:00:00",iVar5 + 1);
       }
     }
     mutex_unlock(&log_mutex);
-    iVar4 = 0;
+    uVar4 = 0;
   }
-  return iVar4;
+  return uVar4;
 }
 
 #endif
@@ -55399,7 +55429,7 @@ int32_t log_read(int32_t param_1,char *param_2,char *param_3)
 int32_t log_write(char *format,...)
 
 {
-  int32_t status;
+  uint32_t status;
   int32_t in_stack_00000008 = *(int32_t *)((char *)__builtin_frame_address(0) + 12);
   int32_t in_stack_0000000c = *(int32_t *)((char *)__builtin_frame_address(0) + 16);
   
@@ -55576,14 +55606,14 @@ log_entry * log_page_free_entry(log_page *page)
 uint8_t log_flush(void)
 
 {
-  uint8_t status;
+  uint32_t status;
   
   log_write_page_open = 0;
   if (log_page_number == log_write_page_number) {
     memcpy(&log_page_buffer,&log_write_page,0x40);
   }
-  status = log_page_write((uint8_t)log_write_page_number,(int16_t *)&log_write_page);
-  return status;
+  status = log_page_write((uint8_t)log_write_page_number,&log_write_page);
+  return (uint8_t)status;
 }
 
 #endif
@@ -55594,17 +55624,20 @@ uint8_t log_flush(void)
 /* adds an entry with its date and time to the event log, writing the page; reports event space past
    180 entries */
 
-uint32_t log_append(char *param_1,int32_t param_2,int32_t param_3)
+uint32_t log_append(char *format,int32_t argument_1,int32_t argument_2)
 
 {
-  uint32_t uVar1;
+  undefined3 extraout_var;
+  uint8_t status;
+  uint32_t uVar2;
   
   if (log_full == 0) {
-    log_cursor->format = param_1;
-    log_cursor->argument_1 = param_2;
-    log_cursor->argument_2 = param_3;
+    log_cursor->format = format;
+    log_cursor->argument_1 = argument_1;
+    log_cursor->argument_2 = argument_2;
     get_date_time(&log_cursor->date,(time_of_day *)log_cursor);
-    uVar1 = log_flush();
+    status = log_flush();
+    uVar2 = CONCAT31(extraout_var,status);
     if (log_cursor == log_write_page.entries + 2) {
       log_write_page_number = log_write_page_number + 1;
       log_full = 0x4a < log_write_page_number;
@@ -55621,9 +55654,9 @@ uint32_t log_append(char *param_1,int32_t param_2,int32_t param_3)
     }
   }
   else {
-    uVar1 = 0xfc;
+    uVar2 = 0xfc;
   }
-  return uVar1;
+  return uVar2;
 }
 
 #endif

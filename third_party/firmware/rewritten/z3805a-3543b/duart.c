@@ -918,8 +918,8 @@ void duartb_loopback_check(void) {
   duart.b.rb_tb = *loopback_send_next++;
   while (*loopback_expect_next != 0 && selftest.uart == 0) {
     for (int32_t spins = LOOPBACK_CHECK_SPINS;
-         spins > 0 && (duart.b.sr_csr & SR_RXRDY) == 0; spins--)
-      ;
+         spins > 0 && (duart.b.sr_csr & SR_RXRDY) == 0; spins--) {
+    }
     if ((duart.b.sr_csr & SR_RXRDY) != 0) {
       char expected = *loopback_expect_next++;
 

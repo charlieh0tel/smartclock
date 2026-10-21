@@ -1716,6 +1716,23 @@ typedef struct exception_record {
   uint32_t address; /* printed when the vector's format is not 0 */
 } exception_record;
 
+/* A mutex: an exchange holding one message, its token, which
+ * mutex_acquire (0x1043a) takes with request_x unless the calling task
+ * owns it already, and the owner and its nested holds.  mutex_clear
+ * (0x104d2) clears all 0x18 bytes; mutex_init (0x10400) creates the
+ * exchange and sends the token. */
+typedef struct mutex {
+  uint32_t field_00;
+  uint32_t exchange; /* +0x04: 0 until mutex_init; mutex_acquire fails 1 */
+  uint32_t owner;    /* +0x08: the holding task's id, 0 when free */
+  int32_t holds;     /* +0x0c: the owner's holds past its first, each 0x80 */
+  uint32_t field_10;
+  uint32_t field_14;
+} mutex;
+
+/* A routine the spool task runs for a caller, with its three arguments. */
+typedef void spoo_function(uint32_t a, uint32_t b, uint32_t c);
+
 /* A clock (klok task) entry, which print_clk_list prints: when it fires,
  * its period, the function it calls and its event class.  A date is
  * year << 16 | month << 8 | day, a time hour << 16 | minute << 8 |
@@ -1726,8 +1743,8 @@ typedef struct klok_entry {
   uint32_t date;
   uint32_t period_time; /* period */
   uint32_t period_date;
-  void* function;      /* function address */
-  int16_t event_class; /* event class */
+  spoo_function* function; /* function address: spoo_run runs it */
+  int16_t event_class;     /* event class */
 } klok_entry;
 
 /* An event log entry: its time and date, packed as a klok_entry's, and
@@ -2174,9 +2191,6 @@ typedef struct task_table_entry {
   uint8_t field_01;
   void* task; /* +0x02: the task's record */
 } task_table_entry;
-
-/* A routine the spool task runs for a caller, with its three arguments. */
-typedef void spoo_function(uint32_t a, uint32_t b, uint32_t c);
 
 /* A request on the spoo exchange, which spoo_run builds on its stack and
  * spoo_task receives at 0x103702: a function and its three arguments. */

@@ -396,8 +396,8 @@ bool eeprom_write_byte(char* address, char value) {
   for (int32_t tries = RECORDS_EEPROM_TRIES; !written && tries > 0; tries--) {
     *cell = value;
     for (int16_t polls = RECORDS_EEPROM_POLLS; *cell != value && polls > 0;
-         polls--)
-      ;
+         polls--) {
+    }
     if (*cell == value) {
       written = true;
     }
@@ -442,8 +442,8 @@ bool eeprom_write_page(char* destination, char* source, uint16_t length) {
     *to = *from;
     set_interrupt_mask(sr);
     for (int16_t polls = RECORDS_EEPROM_POLLS; *to != *from && polls > 0;
-         polls--)
-      ;
+         polls--) {
+    }
 
     written = true;
     to = destination;
@@ -510,8 +510,8 @@ static void records_log_heading(char* heading, int32_t number, uint32_t date,
 static void records_log_unused(char* text, char* heading, int32_t number) {
   if (text != 0) {
     const char* unused = "Unused";
-    while ((*text++ = *unused++) != '\0')
-      ;
+    while ((*text++ = *unused++) != '\0') {
+    }
   }
   if (heading != 0) {
     sprintf(heading, "Log %03d:00000000.00:00:00", number);
@@ -590,8 +590,7 @@ int32_t log_init(void) {
 
   int32_t page = 0;
   for (;;) {
-    /* log_page_read's prototype takes the page as longs. */
-    uint32_t status = log_page_read((uint8_t)page, (uint32_t*)&log_write_page);
+    uint32_t status = log_page_read((uint8_t)page, &log_write_page);
     if (status == LOG_PAGE_BAD) {
       log_cursor = log_write_page.entries;
       break;
@@ -644,8 +643,7 @@ int32_t log_read(int32_t number, char* text, char* heading) {
 
   uint32_t status = 0;
   if (page != log_page_number) {
-    /* log_page_read's prototype takes the page as longs. */
-    status = log_page_read((uint8_t)page, (uint32_t*)&log_page_buffer);
+    status = log_page_read((uint8_t)page, &log_page_buffer);
     log_page_number = (int16_t)page;
     if (status != 0) {
       log_page_clear(&log_page_buffer);
@@ -751,9 +749,8 @@ uint8_t log_flush(void) {
   if (log_page_number == log_write_page_number) {
     memcpy(&log_page_buffer, &log_write_page, sizeof log_page_buffer);
   }
-  /* log_page_write's prototype takes the page as words. */
   return (uint8_t)log_page_write((uint8_t)log_write_page_number,
-                                 (int16_t*)&log_write_page);
+                                 &log_write_page);
 }
 
 /* Adds an entry, its format, arguments, date and time, to the event log

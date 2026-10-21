@@ -2159,8 +2159,8 @@ void* scpi_trg_defined(void* list, uint16_t* no_setter) {
   char* from = "_TRG";
   char* to = keyword.text;
 
-  while ((*to++ = *from++) != 0)
-    ;
+  while ((*to++ = *from++) != 0) {
+  }
   keyword.length = scpi_engine_length(keyword.text);
   scpi_engine_node* node = scpi_node_find(list, &keyword);
 
@@ -2852,8 +2852,8 @@ void scpi_prompt(int32_t error) {
   char* from = "scpi > ";
   char* to = scpi_prompt_text;
 
-  while ((*to++ = *from++) != 0)
-    ;
+  while ((*to++ = *from++) != 0) {
+  }
 }
 
 /* Clears the SCPI input, opens the port and prompts; the console port

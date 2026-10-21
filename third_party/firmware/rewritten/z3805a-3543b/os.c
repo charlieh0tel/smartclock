@@ -54,8 +54,8 @@ void print_exception(uint16_t sr, uint32_t pc, uint16_t vector,
     const char* name = task_name((void*)psos_my_pid());
     char* to = last_exception.name;
 
-    while ((*to++ = *name++) != 0)
-      ;
+    while ((*to++ = *name++) != 0) {
+    }
   }
   if (debug_enabled) {
     printf_polled("\r\n");
@@ -70,22 +70,22 @@ void print_exception(uint16_t sr, uint32_t pc, uint16_t vector,
     }
   }
   set_interrupt_mask(CPU_IPL_7);
-  for (;;)
-    ;
+  for (;;) {
+  }
 }
 
 /* Packs the name and creates the mutex as an exchange of that name;
  * psos_pack_name reads the name as this function's caller's first
  * argument (0x104e6). */
-int32_t mutex_create(char* name, void* mutex) {
-  return mutex_init(psos_pack_name(), mutex);
+uint32_t mutex_create(char* name, mutex* lock) {
+  return mutex_init(psos_pack_name(), lock);
 }
 
 /* mutex_acquire on its argument (0x10502). */
-int32_t mutex_lock(void* mutex) { return mutex_acquire(mutex); }
+uint32_t mutex_lock(mutex* lock) { return mutex_acquire(lock); }
 
 /* mutex_release on its argument (0x10518). */
-int32_t mutex_unlock(void* mutex) { return mutex_release(mutex); }
+uint32_t mutex_unlock(mutex* lock) { return mutex_release(lock); }
 
 /* The count of idle loops in the last second, which os_report_cpu
  * prints (0x10538). */

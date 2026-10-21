@@ -49,8 +49,8 @@ void qspi_start(uint8_t device, uint16_t* transmit, uint16_t count, char read) {
       qspi.copy_pending = 0;
     }
   }
-  while (qspi.running)
-    ;
+  while (qspi.running) {
+  }
 }
 
 /* Takes the QSPI lock, or queues the task and waits until it is handed
@@ -109,15 +109,15 @@ void qspi_send(uint8_t device, uint16_t* transmit, uint16_t count) {
 
   cpu_interrupts_raise(CPU_IPL_7);
   qspi.field_00 = 1;
-  while ((qsm.spcr1 & SPCR1_SPE) != 0)
-    ;
+  while ((qsm.spcr1 & SPCR1_SPE) != 0) {
+  }
   if ((qsm.spsr & SPSR_SPIF) != 0) {
     qspi_isr();
   }
   if ((uint8_t)qspi_queue_setup(device, transmit, count, 0, &spcr1) == 0) {
     qsm.spcr1 = spcr1;
-    while ((qsm.spsr & SPSR_SPIF) == 0)
-      ;
+    while ((qsm.spsr & SPSR_SPIF) == 0) {
+    }
     (void)qsm.spsr;
     qsm.spsr = 0;
   }

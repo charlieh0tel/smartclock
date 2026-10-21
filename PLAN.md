@@ -1256,6 +1256,14 @@ view cannot drift apart.  The library, bottom up:
      the slot they skipped, `duarta_isr` returns a byte, three print
      routines are variadic, and the harness, which does not run a
      variadic function, runs three fewer (1241 to 1238).
+     Then the shared values named: `status_condition_code`, the
+     conditions `status_happening` raises, by the Z3801A guide's status
+     bits; `fpga_configuration_index` and `fpga_chip`, which the FPGA's
+     loader and checks take, the ROM table `fpga_configurations` and
+     `pll.fpga_configuration`; a `mutex`; the klok lists as
+     `klok_entry **`, the log pages as `log_page *` and `qspi_transfer`'s
+     `qspi_buffers *`, the hand-written callers' casts gone.  The C is in
+     Google's style with braces everywhere (`make format-c`).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

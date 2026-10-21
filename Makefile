@@ -50,7 +50,7 @@ clippy:
 # The project's own C, the Ghidra type headers and the hand-written
 # firmware, in .clang-format's style; needs clang-format, not part of ci.
 CLANG_FORMAT ?= clang-format
-C_SOURCES = $(shell git ls-files 'tools/ghidra/types/*.[ch]' 'third_party/firmware/rewritten/*.[ch]')
+C_SOURCES = $(wildcard tools/ghidra/types/*.[ch] third_party/firmware/rewritten/*/*.[ch])
 format-c:
 	$(CLANG_FORMAT) -i $(C_SOURCES)
 

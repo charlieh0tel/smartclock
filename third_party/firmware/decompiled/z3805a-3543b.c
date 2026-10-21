@@ -56787,6 +56787,7 @@ uint32_t reset_record_write(uint32_t date,time_of_day time,char *text)
 #endif
 
 /* 00040000 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* clears the interpolator calibration, both DACs at 0x1f */
 
@@ -56805,15 +56806,17 @@ void interpolator_calibration_init(interpolator_calibration *calibration)
   return;
 }
 
+#endif
 
 /* 00040030 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* pulses the FPGA bits for a measurement and returns interpolator_read */
 
 uint8_t interpolator_measure(uint8_t mode)
 
 {
-  uint8_t uVar1;
+  uint8_t reading;
   
   fpga_set_bit(3,mode);
   fpga_set_bit(1,8);
@@ -56821,12 +56824,14 @@ uint8_t interpolator_measure(uint8_t mode)
   fpga_set_bit(1,0);
   fpga_set_bit(2,0);
   counter_wait_ready(1);
-  uVar1 = interpolator_read();
-  return uVar1;
+  reading = interpolator_read();
+  return reading;
 }
 
+#endif
 
 /* 0004007e */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* hdac_set of HDAC channel 2, then interpolator_measure(0)
    interpolator_calibrate */
@@ -56834,15 +56839,17 @@ uint8_t interpolator_measure(uint8_t mode)
 uint8_t interpolator_measure_low(char_slot dac)
 
 {
-  uint8_t uVar1;
+  uint8_t reading;
   
   hdac_set(dac.value,2);
-  uVar1 = interpolator_measure(0);
-  return uVar1;
+  reading = interpolator_measure(0);
+  return reading;
 }
 
+#endif
 
 /* 00040096 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* hdac_set of HDAC channel 3, then interpolator_measure(1)
    interpolator_calibrate */
@@ -56850,13 +56857,14 @@ uint8_t interpolator_measure_low(char_slot dac)
 uint8_t interpolator_measure_high(char_slot dac)
 
 {
-  uint8_t uVar1;
+  uint8_t reading;
   
   hdac_set(dac.value,3);
-  uVar1 = interpolator_measure(1);
-  return uVar1;
+  reading = interpolator_measure(1);
+  return reading;
 }
 
+#endif
 
 /* 000400b0 */
 
@@ -56980,6 +56988,7 @@ uint8_t hdac_nudge(int32_t param_1,uint8_t param_2)
 
 
 /* 000401c4 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* loads any pending FPGA registers and sets the fields for an interpolator measurement */
 
@@ -57004,8 +57013,10 @@ uint32_t interpolator_prepare(void)
   return 1;
 }
 
+#endif
 
 /* 00040248 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* sets HDAC channels 2 and 3 until interpolator_measure gives 1 to 25 and 201 to 225, 200 apart;
    ovens.md's Z3816A 0x43b56 */
@@ -57101,6 +57112,7 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
   return unaff_D3b;
 }
 
+#endif
 
 /* 0004047c */
 
@@ -57110,7 +57122,7 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
 uint8_t interpolator_verify(interpolator_calibration *calibration)
 
 {
-  uint8_t uVar1;
+  uint8_t reading;
   uint8_t unaff_D2b = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint8_t)__entry; });
   
   if (calibration->initialized == 0) {
@@ -57120,12 +57132,12 @@ uint8_t interpolator_verify(interpolator_calibration *calibration)
   interpolator_prepare();
   hdac_set(calibration->hdac_2,2);
   hdac_set(calibration->hdac_3,3);
-  uVar1 = interpolator_measure(0);
-  calibration->reading_low = uVar1;
-  uVar1 = interpolator_measure(1);
-  calibration->reading_high = uVar1;
-  if ((((calibration->reading_low == 0) || (0x19 < calibration->reading_low)) || (uVar1 < 0xc9)) ||
-     (0xe1 < uVar1)) {
+  reading = interpolator_measure(0);
+  calibration->reading_low = reading;
+  reading = interpolator_measure(1);
+  calibration->reading_high = reading;
+  if ((((calibration->reading_low == 0) || (0x19 < calibration->reading_low)) || (reading < 0xc9)) ||
+     (0xe1 < reading)) {
     if (calibration->result_valid == 0) {
       return unaff_D2b;
     }
@@ -57133,20 +57145,20 @@ uint8_t interpolator_verify(interpolator_calibration *calibration)
     calibration->hdac_3 = calibration->result_hdac_3;
     hdac_set(calibration->hdac_2,2);
     hdac_set(calibration->hdac_3,3);
-    uVar1 = interpolator_measure(0);
-    calibration->reading_low = uVar1;
-    uVar1 = interpolator_measure(1);
-    calibration->reading_high = uVar1;
+    reading = interpolator_measure(0);
+    calibration->reading_low = reading;
+    reading = interpolator_measure(1);
+    calibration->reading_high = reading;
     if (calibration->reading_low == 0) {
       return unaff_D2b;
     }
     if (0x19 < calibration->reading_low) {
       return unaff_D2b;
     }
-    if (uVar1 < 0xc9) {
+    if (reading < 0xc9) {
       return unaff_D2b;
     }
-    if (0xe1 < uVar1) {
+    if (0xe1 < reading) {
       return unaff_D2b;
     }
   }
@@ -57156,13 +57168,14 @@ uint8_t interpolator_verify(interpolator_calibration *calibration)
 
 
 /* 00040556 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* sets HDAC channels 2 and 3 and takes both interpolator readings; "First-time interp test." */
 
 void interpolator_sample(interpolator_calibration *calibration)
 
 {
-  uint8_t uVar1;
+  uint8_t reading;
   
   interpolator_prepare();
   if (calibration->initialized == 0) {
@@ -57172,15 +57185,17 @@ void interpolator_sample(interpolator_calibration *calibration)
   }
   hdac_set(calibration->hdac_2,2);
   hdac_set(calibration->hdac_3,3);
-  uVar1 = interpolator_measure(0);
-  calibration->reading_low = uVar1;
-  uVar1 = interpolator_measure(1);
-  calibration->reading_high = uVar1;
+  reading = interpolator_measure(0);
+  calibration->reading_low = reading;
+  reading = interpolator_measure(1);
+  calibration->reading_high = reading;
   return;
 }
 
+#endif
 
 /* 000405bc */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* runs interpolator_calibrate when the configuration asks, then stores reading_low and the spread
    at its +0x18 and +0x1c */
@@ -57222,8 +57237,10 @@ void counter_calibrate(interval_reading_fields *reading,counter_configuration_fi
   return;
 }
 
+#endif
 
 /* 00040670 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* calibrates the interpolator, up to 20 tries, and verifies it; a byte in D0 (0x406be) */
 
@@ -57250,23 +57267,27 @@ uint8_t interpolator_selftest_calibrate(void)
   return uVar1;
 }
 
+#endif
 
 /* 000406c8 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* the interpolator's self-test: its failure flag from the calibration */
 
 void interpolator_selftest(void)
 
 {
-  uint8_t uVar1;
+  uint8_t calibrated;
   
-  uVar1 = interpolator_selftest_calibrate();
-  selftest.interpolator = (int16_t)(uVar1 == 0);
+  calibrated = interpolator_selftest_calibrate();
+  selftest.interpolator = (int16_t)(calibrated == 0);
   return;
 }
 
+#endif
 
 /* 000406e2 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* samples the interpolator with its calibrated DACs and keeps both ends' readings; self-test 13,
    selftest_interpolator_sample */
@@ -57289,6 +57310,7 @@ void interpolator_sample_test(void)
   return;
 }
 
+#endif
 
 /* 00040756 */
 
@@ -57394,6 +57416,7 @@ void fpga_address_sweep_debug(void)
 
 
 /* 0004091a */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* polls FPGA register 0 for a bit, up to 512 times 10 ticks, giving up and disarming the reading if
    a 1PPS dies; a byte in D0 (0x40998) */
@@ -57428,6 +57451,7 @@ uint8_t counter_wait_ready(uint8_t mask)
   } while( true );
 }
 
+#endif
 
 /* 000409a4 */
 
@@ -57484,6 +57508,7 @@ void sync_request(uint8_t param_1,int32_t param_2)
 
 
 /* 00040a84 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* sets fconf_regs[3]'s low two bits to counter_arm's sync_kind
    structures.md */
@@ -57498,6 +57523,7 @@ void counter_set_sync(uint8_t param_1)
   return;
 }
 
+#endif
 
 /* 00040afe */
 
@@ -57559,6 +57585,7 @@ uint8_t fpga_read_byte(char param_1)
 
 
 /* 00040bda */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* takes 0x555555 off the counter's 64-bit count */
 
@@ -57572,8 +57599,10 @@ uint64_t counter_offset_apply(int32_t param_1,uint32_t param_2)
   return uVar1;
 }
 
+#endif
 
 /* 00040c06 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* the counter's count from FPGA registers 0x16 to 0x12, offset by 0x555555 */
 
@@ -57584,7 +57613,7 @@ int64_t counter_read_raw(void)
   uint3 uVar2;
   uint8_t bVar3;
   uint8_t bVar4;
-  int64_t lVar5;
+  int64_t count;
   
   bVar4 = 0x16;
   uVar2 = 0;
@@ -57594,12 +57623,14 @@ int64_t counter_read_raw(void)
     bVar4 = bVar4 - 2;
     uVar2 = (uint3)bVar3 | uVar1 << 8;
   } while (0x11 < bVar4);
-  lVar5 = counter_offset_apply(0,CONCAT31(uVar1,bVar3));
-  return lVar5;
+  count = counter_offset_apply(0,CONCAT31(uVar1,bVar3));
+  return count;
 }
 
+#endif
 
 /* 00040c56 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* the complement of FPGA register 0x10 */
 
@@ -57612,8 +57643,10 @@ uint32_t interpolator_read(void)
   return ~(uint32_t)bVar1;
 }
 
+#endif
 
 /* 00040c6a */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* reloads fconf_regs[0..3] from the configuration and re-arms the FPGA */
 
@@ -57651,8 +57684,10 @@ void counter_arm(interval_reading_fields *reading,counter_configuration_fields *
   return;
 }
 
+#endif
 
 /* 00040d34 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* interval.md's one reading: the coarse count plus (interpolator_read - +0x18) / +0x1c, times 1e-7,
    less the configuration's double at +4, into *reading */
@@ -57660,9 +57695,9 @@ void counter_arm(interval_reading_fields *reading,counter_configuration_fields *
 void counter_read(interval_reading_fields *reading,counter_configuration_fields *configuration)
 
 {
-  uint8_t uVar1;
+  uint8_t ready;
   uint8_t bVar2;
-  int64_t lVar3;
+  int64_t count;
   double dVar4;
   double a;
   
@@ -57670,12 +57705,12 @@ void counter_read(interval_reading_fields *reading,counter_configuration_fields 
     reading->errors = reading->errors | COUNTER_MEASUREMENT_ABORTED;
   }
   if (reading->errors == 0) {
-    uVar1 = counter_wait_ready(2);
-    if (uVar1 != 0) {
-      uVar1 = counter_wait_ready(1);
-      if (uVar1 != 0) {
-        lVar3 = counter_read_raw();
-        dVar4 = int64_to_double((uint32_t)((uint64_t)lVar3 >> 0x20),(uint32_t)lVar3);
+    ready = counter_wait_ready(2);
+    if (ready != 0) {
+      ready = counter_wait_ready(1);
+      if (ready != 0) {
+        count = counter_read_raw();
+        dVar4 = int64_to_double((uint32_t)((uint64_t)count >> 0x20),(uint32_t)count);
         reading->value = dVar4;
         bVar2 = interpolator_read();
         dVar4 = integer_to_double((uint32_t)bVar2 - configuration->interpolator_offset);
@@ -57715,8 +57750,10 @@ LAB_00040e2e:
   return;
 }
 
+#endif
 
 /* 00040ea2 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* writes counter_configuration's four FPGA registers to the FPGA */
 
@@ -57739,8 +57776,10 @@ int32_t counter_load_registers(void)
   return iVar2;
 }
 
+#endif
 
 /* 00040ed8 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* the counter configuration's defaults, and the interval reading marked invalid */
 
@@ -57775,8 +57814,10 @@ void counter_configuration_init(counter_configuration_fields *configuration)
   return;
 }
 
+#endif
 
 /* 00040f76 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* sets the counter configuration and interpolator calibration to their defaults and arms the
    reading */
@@ -57790,22 +57831,24 @@ void counter_init(void)
   return;
 }
 
+#endif
 
 /* 00040f98 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* the FPGA self-test: presets the counters and fails unless the count reads zero */
 
 void counter_selftest(void)
 
 {
-  int64_t lVar1;
+  int64_t count;
   uint32_t local_c;
   uint32_t local_8;
   
   fpga_set_bit(1,8);
-  lVar1 = counter_read_raw();
-  local_c = (int32_t)((uint64_t)lVar1 >> 0x20);
-  if ((local_c == 0) && (local_8 = (int32_t)lVar1, local_8 == 0)) {
+  count = counter_read_raw();
+  local_c = (int32_t)((uint64_t)count >> 0x20);
+  if ((local_c == 0) && (local_8 = (int32_t)count, local_8 == 0)) {
     selftest.fpga = 0;
   }
   else {
@@ -57814,6 +57857,7 @@ void counter_selftest(void)
   return;
 }
 
+#endif
 
 /* 000410fa */
 
@@ -60030,7 +60074,7 @@ uint8_t holdover(char param_1)
   double pushed_7;
   double pushed_8;
   float fVar1;
-  uint8_t uVar4;
+  uint8_t valid;
   float fVar2;
   int32_t iVar3;
   uint32_t uptime;
@@ -60087,8 +60131,8 @@ override_jmp_00043ae6_case_0:
     pwma_force_level(1);
     status_happening(STATUS_HOLDOVER_THRESHOLD_SET);
   }
-  uVar4 = interval_next_reading(0,&fStack_10);
-  if (uVar4 == 0) {
+  valid = interval_next_reading(0,&fStack_10);
+  if (valid == 0) {
     if ((gps_pps_dead == 0) && (internal_pps_dead == 0)) {
       task_dmessage("holdover - Error with measurement\r\n");
     }
@@ -60415,7 +60459,7 @@ char startup_pll(char param_1)
   int32_t pushed_8;
   double pushed_9;
   float fVar1;
-  uint8_t uVar4;
+  uint8_t valid;
   int32_t iVar2;
   char cVar5;
   uint32_t uVar3;
@@ -60451,8 +60495,8 @@ char startup_pll(char param_1)
     pll.startup_state = 1;
   }
   else {
-    uVar4 = interval_next_reading(0,&local_88);
-    if (uVar4 == 0) {
+    valid = interval_next_reading(0,&local_88);
+    if (valid == 0) {
       if ((internal_pps_dead == 0) && (gps_pps_dead == 0)) {
         task_dmessage("startup_pll - Error with measurement\r\n");
         loop_steering.measurement_failed = 1;
@@ -60646,7 +60690,7 @@ uint8_t pll_normal(char param_1)
   double pushed_5;
   float fVar1;
   float fVar2;
-  uint8_t uVar5;
+  uint8_t valid;
   int32_t iVar3;
   char cVar6;
   uint32_t uVar4;
@@ -60687,8 +60731,8 @@ uint8_t pll_normal(char param_1)
     pll.frequency_tolerance = 1e-08;
   }
   else {
-    uVar5 = interval_next_reading(0,&local_82);
-    if (uVar5 == 0) {
+    valid = interval_next_reading(0,&local_82);
+    if (valid == 0) {
       if ((internal_pps_dead == 0) && (gps_pps_dead == 0)) {
         task_dmessage("pll_normal - Error with measurement\r\n");
         loop_steering.measurement_failed = 1;
@@ -60876,6 +60920,7 @@ uint8_t sync_perform(float param_1)
 
 
 /* 00044fbc */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* the next one-second interval reading, into *reading as a float, and its flag; waits instead while
    a 1PPS is dead; updates the EFC history; arm_mode 0 calibrates, 2 syncs (0x4506e, 0x45082);
@@ -60924,8 +60969,10 @@ uint8_t interval_next_reading(char arm_mode,float *reading)
   return uVar1;
 }
 
+#endif
 
 /* 000450c4 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* the other half of interval_next_reading: counter_calibrate, or sync_request(3, 1) for mode 2,
    then counter_arm */
@@ -60951,8 +60998,10 @@ void interval_rearm(char param_1)
   return;
 }
 
+#endif
 
 /* 0004513c */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* the wait half of interval_next_reading: the FPGA's reading, or a wait while a 1PPS is dead;
    updates the EFC history */
@@ -60977,6 +61026,7 @@ void interval_wait_reading(void)
   return;
 }
 
+#endif
 
 /* 000451c2 */
 
@@ -92144,5 +92194,7 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 #include "../rewritten/z3805a-3543b/spool.c"
 
 #include "../rewritten/z3805a-3543b/startup.c"
+
+#include "../rewritten/z3805a-3543b/ti.c"
 
 #include "../rewritten/z3805a-3543b/timecode.c"

@@ -295,3 +295,16 @@ status_byte_get	summary	the Status Byte
 scpi_message_done	error	always 0
 scpi_input_closed	error	always 0
 scpi_task_create	error	-1 when the task exists, else the kernel's
+# The time-interval counter and its interpolator (ti.c)
+counter_load_registers	zero	what the loop leaves in D0, 0
+counter_wait_ready	ready	1 when the FPGA's status bit came
+counter_offset_apply	count	the count less its preset, 0x555555
+counter_read_raw	count	the counter's 100 ns ticks less its preset
+interpolator_read	reading	the complement of FPGA register 0x10's byte
+interpolator_prepare	prepared	always 1
+interpolator_measure	reading	the interpolator's reading at a reference
+interpolator_measure_low	reading	the low reference's reading
+interpolator_measure_high	reading	the high reference's reading
+interpolator_calibrate	calibrated	1 when the references read 200 apart, or 199 or 201
+interpolator_selftest_calibrate	calibrated	1 when a calibration took, else interpolator_verify's
+interval_next_reading	valid	interval_reading.valid before the rearm

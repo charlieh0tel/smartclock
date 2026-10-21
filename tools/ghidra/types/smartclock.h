@@ -562,6 +562,15 @@ typedef struct sprintf_output {
 	char *cursor;
 } sprintf_output;
 
+/* The record scpi_double_to_decimal fills at A0, on its caller's stack:
+ * the double's sign, its significant digits in ASCII, and the exponent
+ * of 0.d1d2... */
+typedef struct scpi_decimal {
+	int16_t sign;         /* +0x00 */
+	char digits[16];      /* +0x02 */
+	int16_t exponent;     /* +0x12 */
+} scpi_decimal;
+
 typedef struct scpi_numeric_param {
 	scpi_param_type type; /* SCPI_PARAM_NUMERIC */
 	uint8_t last_index;   /* +0x01: values less one */

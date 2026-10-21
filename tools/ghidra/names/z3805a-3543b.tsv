@@ -623,7 +623,7 @@
 0x4429e	function	startup_pll	loop.md's stage; "startup_pll - Error with measurement"	the loop's start-up stage
 0x451c2	function	coarse	loop.md's power-up step; "coarse - Error with measurement 1"	the power-up step that sets the oscillator's frequency coarsely
 0x4538c	function	fine	loop.md's power-up step and its sub-states; "fine - Error with measurement 1", "fine-sync", "fine-slew"	the power-up step that adjusts the frequency finely, through its sync and slew sub-states
-0x10540	function	clk_do	the firmware's own name, "Clk_do: out of event buffers"	queues an event for the clock task
+0x10540	function	clk_do	the firmware's own name, "Clk_do: out of event buffers"	queues an event for the clock task	klok_entry * clk_do(klok_entry *event)
 0x1d6ba	function	drtb_puts	the firmware's own name, "wait_v SIG_SOQ error in _drtb_puts"	writes a string to DUART channel B, waiting for room	int drtb_puts(char *param_1)
 0x1d74a	function	drtb_getc	"wait_v SIG_SIQ error in getc", DUART channel B	reads a character from DUART channel B, waiting for one
 0x1e18a	function	drta_send_message	the firmware's own name, "wait_v SIG_SOQA error in drta_send_message"	sends a message to the GPS engine on DUART channel A
@@ -677,7 +677,8 @@
 0x4a29c	function	status_screen_tfom	"TFOM     %d%13sFFOM    %2s", "1PPS TI %s", "HOLD THR %s", "Holdover Uncertainty"	the status screen's TFOM, FFOM, 1PPS TI and holdover lines
 0x49fcc	function	status_screen_position	"ANT DLY  %s", "Position", "Survey:", "% complete", "Suspended:"	the status screen's position and survey lines
 0x47f14	function	format_dms	"%c%4d:%02d:%06.3f", degrees, minutes and seconds	formats an angle as degrees, minutes and seconds to milliseconds
-0x47fb6	function	format_dms_precise	"%c%4d:%02d:%06.7f"	formats an angle as degrees, minutes and seconds to 0.1 microseconds
+0x47f14	local	seconds	read	mas_to_dms's seconds	double @ -0xc
+0x47fb6	function	format_dms_precise	"%c%4d:%02d:%06.7f"	formats an angle as degrees, minutes and seconds to 0.1 microseconds	void format_dms_precise(char *text, double mas, char latitude)
 0x48964	function	enabled_string	"Enabled", "Disabled"	"Enabled" or "Disabled" for a flag
 0x29b0e	function	scpi_prompt	"scpi > ", "E%+04d> "	makes the SCPI prompt, with the latest error when there is one
 0x31ba2	function	log_first_satellite	log_write("First satellite tracked at %04d%02d%02d.%02d:%02d:%02d")	logs the time the first satellite was tracked	void log_first_satellite(undefined4 param_1,undefined4 param_2)
@@ -714,7 +715,7 @@
 0x60e68	function	double_is_integer	libc.md, run	whether a double is an integer, and through the pointer whether it is odd; pow's	undefined4 double_is_integer(uint param_1,uint param_2,uint *param_3)
 0x60efa	function	double_truncate_sixteenths	libc.md, run	a double truncated to a multiple of 1/16; pow's	undefined8 double_truncate_sixteenths(uint param_1,uint param_2)
 0x5fad6	function	next_decimal_digit	libc.md, run	'0' plus *n % 10, dividing *n by ten; the formatting engine's
-0x5f3ba	function	double_to_digits	libc.md, run	a double's decimal digits, sign and exponent, significant or after the point; the formatting engine's
+0x5f3ba	function	double_to_digits	libc.md, run	a double's decimal digits, sign and exponent, significant or after the point; the formatting engine's	void double_to_digits(double value, int count, int *exponent, uint *negative, char *digits, int mode)
 0x5f1d6	function	double_to_digits_multiply	libc.md, read	double_to_digits's product of two 64-bit numbers, one a power of ten from 0x5f864
 0x5e83c	function	float_normalize	softfloat.md, read	shifts an unpacked mantissa on the caller's stack until bit 23 is set, adjusting its exponent		convention=other; confidence=read; family=softfloat
 0x5e882	function	double_normalize	softfloat.md, read	the same over 64 bits		convention=other; confidence=read; family=softfloat
@@ -895,6 +896,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x252bc	function	scpi_double_multiply	docs/scpi/README.md, run	D0:D1 times D2:D3, the engine's own IEEE multiply		convention=register; confidence=run; in=D0:D1 double a, D2:D3 double b; out=D0:D1 double; returns=ccr; error=D2 -2 underflow, D2 -1 overflow; preserves=A0; family=scpi-engine
 0x25468	function	scpi_double_multiply_short	docs/scpi/README.md, read	scpi_double_multiply's path for an operand whose mantissa fits in 16 bits		convention=other; confidence=read; family=scpi-engine
 0x2553a	function	scpi_real_to_text	docs/scpi/README.md, run	a double as NR3 text, so many significant digits and no digit below the resolution given; -308 keeps them all
+0x2553a	local	decimal	read	scpi_double_to_decimal's record	scpi_decimal @ -0x1c
 0x264e0	function	scpi_unsigned_to_digits	docs/scpi/README.md, read	decimal digits right-aligned in a 17-byte buffer, -40 if they do not fit
 0x2636e	function	scpi_format_text	docs/scpi/README.md, read	a string as it is
 0x2639e	function	scpi_format_string	docs/scpi/README.md, read	a string in double quotes, each quote doubled
@@ -922,7 +924,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x3233a	function	clamp_to_step_and_limits	scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore, nv_param_leap_date: validate	rounds a value down to the step its descriptor gives, then clamps it to its minimum and maximum, reporting each clamp
 0x323fa	function	clamp_float_to_step_and_limits	scpi_param_SAMPle_FLOat, FARR, SOURce_ROSCillator_LIMit_THReshold: validate	clamps a float to its minimum and maximum and rounds it to its step	void clamp_float_to_step_and_limits (float *param_1,undefined4 param_2,float *param_3,float *param_4,int param_5, int param_6)
 0x3209c	function	clamp_float	context	clamps a float to its minimum and maximum, reporting each clamp; 1 if it clamped
-0x3217e	function	round_float_to_step	context	rounds a float to the nearest multiple of its step, half away from zero, the step a thousand times coarser beyond 1e9 steps
+0x3217e	function	round_float_to_step	context	rounds a float to the nearest multiple of its step, half away from zero, the step a thousand times coarser beyond 1e9 steps	float round_float_to_step(float *value, float *step)
 0x42b1c	function	pulse_settings_done	scpi_param_SOURce_PULSe_CONTinuous_STATe, PERiod, STARt_TIME and DATE: done	hands the pulse start time, date, state and period from nv_settings to pulse_program
 0x42b1a	function	pulse_program	context	a bare rts in this image: what pulse_settings_done hands it goes no further here, and no code reads the pulse settings by address but it and the SCPI queries; whatever programs the pulse output reads them some other way, through the descriptors or a copy
 0x43466	function	questionable_user_done	scpi_param_STATus_QUEStionable_USER: done	reports status event M when the user bit is set and N when it is cleared	void questionable_user_done(void)
@@ -955,7 +957,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 # the clock, the leap second and the counter, under the PLL task
 0x1075a	function	leap_event_schedule	context	queues the leap second's clock event, in GPS time or in UTC as nv_settings.gps_utc says	int leap_event_schedule(undefined4 param_1, undefined4 param_2)
 0x105ee	function	leap_event_schedule_gps	context	queues the clock event for a 59- or 61-second minute, in GPS time
+0x105ee	local	event	read	the entry clk_do copies	klok_entry @ -0x1e
 0x10656	function	leap_event_schedule_utc	context	queues the clock event for a 59- or 61-second minute, converted to UTC with the GPS-UTC offset as it will be
+0x10656	local	event	read	the entry clk_do copies	klok_entry @ -0x28
 0x10786	function	klok_cancel	context	under klok_mutex, unlinks an entry from the clock list and returns it to the free list; -3 for a pointer outside the pool
 0x108fe	function	klok_find	context	under klok_mutex, the first entry of the clock list of a class
 0x10b00	function	clock_set	context	sets the date and time, then lifetime_update
@@ -1062,6 +1066,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1c18e	function	diag_words_define	console.md	defines every diagnostic word in the table at 0x1c8ac
 0x1ae46	function	console_set_halt_hook	context	stores the routine the console calls on halt
 0x1ae50	function	console_set_device	context	stores the console's device, 0x200 for device 2
+0x100a02	label	console_device	read	the console's device, set by console_set_device	uint16_t
 0x1ae5c	function	console_task_create	context	creates the console's task, p4th, through trap #3	undefined4 console_task_create(void)
 0x1ae36	function	pforth_link_word	console.md	links the word at A4 to the latest in the dictionary		convention=register; confidence=read; in=A4 void *word; family=pforth
 0x12f30	function	scpi_task_start	restart.md	starts scpi_task_create at priority 0x19
@@ -1164,7 +1169,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x129d0	function	power_of_ten_float	context	10 to a power clamped to plus or minus 30, from the table of floats at 0x12a74; called by nothing
 0x12bb4	function	system_init	context	the start-up's setup: status, NV settings restored, debug flags, the battery-backed RAM's checksum and the reset's cause
 0x12d6e	function	primary_start	context	the reset's path: services the watchdog, sets the QSM and GPT up, runs system_init and starts the kernel with trap #6
-0x12db6	function	pps_interrupt	context	the 1PPS interrupt's work: ticks the clock, updates the time code and posts the time to pps_exchange
+0x12db6	function	pps_interrupt	context	the 1PPS interrupt's work: ticks the clock, updates the time code and posts the time to pps_exchange	void pps_interrupt(void)
 0x12e6c	function	pps_interrupt_stop	context	stops the 1PPS interrupt, clearing its GPT enable and flag
 0x1321a	function	stack_measure	context	a task's supervisor and user stacks, each the used part of its size, for stack_usage_report
 0x132da	function	stack_usage	context	measures a stack from A1, its bottom, to D0, its top: the bytes above the 0xabcd fill left at its bottom back in D0, its size in D1		convention=register; confidence=read; in=A1 uint16_t *bottom, D0 char *top; out=D0 int used, D1 int size; family=stack
@@ -1277,7 +1282,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x277d2	function	scpi_char_upper	context	a letter in upper case, by the parser's character classes
 0x279d6	function	scpi_suffix_compare_tail	context	how much of a token's end matches a unit's name
 0x27a0c	function	scpi_multiplier_exponent	context	a unit multiplier's power of ten, from the table at 0x27b2e; -128 for none
-0x27b62	function	scpi_keyword_compare	context	compares a token with a keyword's short and long forms
+0x27b62	function	scpi_keyword_compare	context	compares a token with a keyword's short and long forms	short scpi_keyword_compare(char *token, int length, char *keyword)
 0x27baa	function	scpi_node_find	context	finds a keyword in a child list, by bisection
 0x27c22	function	scpi_node_find_with_defaults	context	finds a keyword, else follows the default nodes, recording their suffixes	int scpi_node_find_with_defaults(int *path, short *keyword, void *unused)
 0x27c94	function	scpi_node_find_numbered	context	finds a keyword with its numeric suffix stripped and kept	int scpi_node_find_numbered(int *path, short *keyword, void *unused)
@@ -1391,7 +1396,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x466ca	function	gps_selftest_run	context	asks the GPS engine for its self-test, up to 20 tries, failing the self-test's GPS bit 0x4000 if it never answers
 0x47078	function	leap_ack_pending	context	1 while a leap second acknowledgment is pending, pll +0x2c or +0x2d
 0x47de2	function	running_average_update	context	folds a value into a running average of so many
-0x47eb0	function	dms_to_mas	context	degrees, minutes and seconds as milliarcseconds
+0x47eb0	function	dms_to_mas	context	degrees, minutes and seconds as milliarcseconds	void dms_to_mas(long *mas, ushort degrees, byte minutes, double seconds)
 0x49794	function	satellite_compare	context	qsort's comparison of two satellites, by elevation and then by number
 0x4a448	function	bits_1_to_3_any	context	1 if any of bits 1 to 3 is set
 0x4a494	function	bits_4_5_any	context	1 if bit 4 or 5 is set

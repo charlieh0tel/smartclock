@@ -1353,6 +1353,14 @@ struct sci_settings_record {
     uint8_t echo;
 };
 
+typedef struct scpi_decimal scpi_decimal, *Pscpi_decimal;
+
+struct scpi_decimal {
+    int16_t sign;
+    char digits[16];
+    int16_t exponent;
+};
+
 typedef struct scpi_numeric_param scpi_numeric_param, *Pscpi_numeric_param;
 
 typedef enum __attribute__((packed)) scpi_param_type {
@@ -1622,6 +1630,7 @@ _Static_assert(sizeof(satellite_list) == 1, "satellite_list");
 _Static_assert(sizeof(sci_driver) == 28, "sci_driver");
 _Static_assert(sizeof(sci_exchange_state) == 56, "sci_exchange_state");
 _Static_assert(sizeof(sci_settings_record) == 6, "sci_settings_record");
+_Static_assert(sizeof(scpi_decimal) == 20, "scpi_decimal");
 _Static_assert(sizeof(scpi_numeric_param) == 44, "scpi_numeric_param");
 _Static_assert(sizeof(scpi_param_type) == 1, "scpi_param_type");
 _Static_assert(sizeof(scpi_setting_param) == 28, "scpi_setting_param");
@@ -1875,6 +1884,7 @@ extern uint8_t clock_invalid; /* 001009e7 */
 extern int16_t gps_utc_offset; /* 001009e8 */
 extern uint8_t gps_utc_offset_valid; /* 001009ea */
 extern void * console_halt_hook_cell; /* 001009fe */
+extern uint16_t console_device; /* 00100a02 */
 extern uint32_t pps_exchange; /* 00100bc4 */
 extern selftest_results selftest; /* 00100c24 */
 extern gps_state gps; /* 00100c6a */
@@ -2214,7 +2224,6 @@ extern undefined1 DAT_001009e6; /* 001009e6 */
 extern undefined DAT_001009f0; /* 001009f0 */
 extern undefined DAT_001009f6; /* 001009f6 */
 extern undefined DAT_001009fa; /* 001009fa */
-extern undefined DAT_00100a02; /* 00100a02 */
 extern undefined DAT_00100bb4; /* 00100bb4 */
 extern undefined DAT_00100bb8; /* 00100bb8 */
 extern undefined1 DAT_00100bc8; /* 00100bc8 */
@@ -2770,7 +2779,6 @@ __asm__(".set DAT_001009e6, 0x001009e6");
 __asm__(".set DAT_001009f0, 0x001009f0");
 __asm__(".set DAT_001009f6, 0x001009f6");
 __asm__(".set DAT_001009fa, 0x001009fa");
-__asm__(".set DAT_00100a02, 0x00100a02");
 __asm__(".set DAT_00100bb4, 0x00100bb4");
 __asm__(".set DAT_00100bb8, 0x00100bb8");
 __asm__(".set DAT_00100bc8, 0x00100bc8");
@@ -3169,6 +3177,7 @@ __asm__(".set clock_date, 0x001009c2");
 __asm__(".set clock_gps_mismatch, 0x00102552");
 __asm__(".set clock_invalid, 0x001009e7");
 __asm__(".set clock_time, 0x001009be");
+__asm__(".set console_device, 0x00100a02");
 __asm__(".set console_halt_hook_cell, 0x001009fe");
 __asm__(".set counter_configuration, 0x00101fae");
 __asm__(".set crash_message, 0x0010094e");
@@ -4023,8 +4032,6 @@ extern undefined4 _DAT_001009f6;
 __asm__(".set _DAT_001009f6, 0x001009f6");
 extern undefined4 _DAT_001009fa;
 __asm__(".set _DAT_001009fa, 0x001009fa");
-extern undefined4 _DAT_00100a02;
-__asm__(".set _DAT_00100a02, 0x00100a02");
 extern undefined4 _DAT_00100b14;
 __asm__(".set _DAT_00100b14, 0x00100b14");
 extern undefined4 _DAT_00100b18;
@@ -4354,9 +4361,9 @@ int mutex_lock(void *mutex);
 int mutex_unlock(void *mutex);
 undefined4 mutex_owner(int param_1);
 undefined4 idle_count(void);
-klok_entry * clk_do(undefined4 *param_1);
-undefined4 leap_event_schedule_gps(undefined4 param_1,int param_2);
-undefined4 leap_event_schedule_utc(uint32_t param_1,int param_2);
+klok_entry * clk_do(klok_entry *event);
+klok_entry * leap_event_schedule_gps(uint32_t param_1,int param_2);
+klok_entry * leap_event_schedule_utc(uint32_t param_1,int param_2);
 int leap_event_schedule(uint32_t param_1,int param_2);
 int klok_cancel(klok_entry *param_1);
 void klok_print_entries(void);
@@ -4420,7 +4427,7 @@ int random_dither(void);
 void start_nothing(void);
 void system_init(void);
 void primary_start(undefined4 param_1,undefined4 param_2,undefined4 param_3);
-undefined8 pps_interrupt(void);
+void pps_interrupt(void);
 int primary_user_81();
 int pps_init(void);
 int pps_interrupt_stop(void);
@@ -5145,7 +5152,7 @@ short scpi_suffix_compare_tail(int param_1,undefined4 param_2,int param_3);
 undefined4 scpi_multiplier_exponent(undefined2 param_1,short param_2);
 short scpi_match_suffix(undefined4 param_1,char *param_2,int param_3,short *param_4);
 undefined4 scpi_apply_suffix(int param_1,int param_2);
-undefined4 scpi_keyword_compare(char *param_1,undefined4 param_2,char *param_3);
+short scpi_keyword_compare(char *token,int length,char *keyword);
 undefined4 scpi_node_find(int param_1,short *param_2);
 int scpi_node_find_with_defaults(int *path,short *keyword,void *unused);
 int scpi_node_find_numbered(int *path,short *keyword,void *unused);
@@ -5609,7 +5616,7 @@ undefined4 float_table_index(float *param_1,short param_2);
 undefined4 clamp_float(float *param_1,float *param_2,float *param_3,float *param_4,byte param_5);
 undefined4
 clamp_double(double *param_1,undefined4 *param_2,double *param_3,double *param_4,byte param_5);
-void round_float_to_step(float *param_1,float *param_2);
+float round_float_to_step(float *value,float *step);
 undefined8 load_double(undefined8 *param_1);
 int clamp_to_limits(int *param_1,undefined4 param_2,int *param_3,int *param_4,int param_5,
                    byte param_6);
@@ -5790,9 +5797,9 @@ void efc_gain_set(float param_1);
 void pllp_task(void);
 void running_average_update(int param_1,double *param_2,uint param_3);
 void mas_to_dms(long param_1,undefined2 *param_2,undefined1 *param_3,double *param_4);
-void dms_to_mas(int *param_1,ushort param_2,byte param_3,undefined4 param_4,undefined4 param_5);
+void dms_to_mas(long *mas,ushort degrees,byte minutes,double seconds);
 void format_dms(int param_1,char param_2,char *param_3);
-void format_dms_precise(char *param_1,char param_2);
+void format_dms_precise(char *text,double mas,char latitude);
 void format_angle(char *param_1,int param_2,char param_3);
 void format_duration(double param_1,char *param_2);
 void gps_print_best_combinations(void);
@@ -5996,7 +6003,7 @@ int strncmp(char *s1,char *s2,uint n);
 char * strncpy(char *s1,char *s2,uint n);
 int toupper(int c);
 void double_to_digits_multiply(uint *param_1);
-void double_to_digits(uint param_1,int *param_2,uint *param_3,char *param_4,int param_5);
+void double_to_digits(double value,int count,int *exponent,uint *negative,char *digits,int mode);
 undefined8 next_decimal_digit(uint *param_1);
 byte * doprnt(byte *param_1,uint *param_2,undefined *param_3,undefined4 param_4);
 int sprintf(char *s,char *format,...);
@@ -7363,7 +7370,7 @@ undefined4 idle_count(void)
 /* queues an event for the clock task
    the firmware's own name, "Clk_do: out of event buffers" */
 
-klok_entry * clk_do(undefined4 *param_1)
+klok_entry * clk_do(klok_entry *event)
 
 {
   klok_entry **ppkVar1;
@@ -7384,13 +7391,13 @@ klok_entry * clk_do(undefined4 *param_1)
       puVar3 = &klok_free->time;
       ppkVar1 = &klok_free->next;
       klok_free = klok_free->next;
-      *ppkVar1 = (klok_entry *)*param_1;
-      *puVar3 = param_1[1];
-      pkVar2->date = param_1[2];
-      pkVar2->period_time = param_1[3];
-      pkVar2->period_date = param_1[4];
-      pkVar2->function = (void *)param_1[5];
-      pkVar2->event_class = *(int16_t *)(param_1 + 6);
+      *ppkVar1 = event->next;
+      *puVar3 = event->time;
+      pkVar2->date = event->date;
+      pkVar2->period_time = event->period_time;
+      pkVar2->period_date = event->period_date;
+      pkVar2->function = event->function;
+      pkVar2->event_class = event->event_class;
       klok_insert_sorted((int *)&klok_entries,(int *)pkVar2);
     }
     mutex_unlock(&klok_mutex);
@@ -7408,44 +7415,42 @@ klok_entry * clk_do(undefined4 *param_1)
 
 /* queues the clock event for a 59- or 61-second minute, in GPS time */
 
-undefined4 leap_event_schedule_gps(undefined4 param_1,int param_2)
+klok_entry * leap_event_schedule_gps(uint32_t param_1,int param_2)
 
 {
   short sVar1;
-  undefined4 *puVar2;
+  klok_entry *pkVar2;
   undefined1 *puVar3;
-  undefined4 uVar4;
-  undefined4 auStack_1e [2];
-  undefined4 local_16;
-  undefined1 *puStack_a;
+  klok_entry *pkVar4;
+  klok_entry event;
   
-  uVar4 = 0;
+  pkVar4 = (klok_entry *)0x0;
   sVar1 = 0x19;
-  puVar2 = auStack_1e;
+  pkVar2 = &event;
   puVar3 = &DAT_00010cb0;
   do {
-    *(undefined1 *)puVar2 = *puVar3;
+    *(undefined1 *)&pkVar2->next = *puVar3;
     sVar1 = sVar1 + -1;
-    puVar2 = (undefined4 *)((int)puVar2 + 1);
+    pkVar2 = (klok_entry *)((int)&pkVar2->next + 1);
     puVar3 = puVar3 + 1;
   } while (sVar1 != -1);
-  local_16 = param_1;
+  event.date = param_1;
   if (param_2 - 0x3bU < 2 || param_2 + -0x3d == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0001062e)[(short)(param_2 + -0x3d)]) {
     case 6:
-      puStack_a = &LAB_00013666;
+      event.function = &LAB_00013666;
       break;
     case 0x10:
-      puStack_a = &LAB_0001366c;
+      event.function = &LAB_0001366c;
       break;
     case 0x24:
       goto override_jmp_00010626_case_1;
     }
-    uVar4 = clk_do(auStack_1e);
+    pkVar4 = clk_do(&event);
   }
 override_jmp_00010626_case_1:
-  return uVar4;
+  return pkVar4;
 }
 
 
@@ -7455,28 +7460,28 @@ override_jmp_00010626_case_1:
 /* queues the clock event for a 59- or 61-second minute, converted to UTC with the GPS-UTC offset as
    it will be */
 
-undefined4 leap_event_schedule_utc(uint32_t param_1,int param_2)
+klok_entry * leap_event_schedule_utc(uint32_t param_1,int param_2)
 
 {
   uint8_t uVar1;
   short sVar2;
-  undefined4 *puVar3;
+  undefined1 *puVar3;
   undefined1 *puVar4;
-  undefined4 uVar5;
+  klok_entry *pkVar5;
   bool bVar6;
-  undefined4 uStack_28;
+  undefined1 auStack_28 [4];
   packed_datetime value;
   packed_datetime change;
   int16_t local_6;
   
-  uVar5 = 0;
+  pkVar5 = (klok_entry *)0x0;
   sVar2 = 0x19;
-  puVar3 = &uStack_28;
+  puVar3 = auStack_28;
   puVar4 = &DAT_00010cca;
   do {
-    *(undefined1 *)puVar3 = *puVar4;
+    *puVar3 = *puVar4;
     sVar2 = sVar2 + -1;
-    puVar3 = (undefined4 *)((int)puVar3 + 1);
+    puVar3 = puVar3 + 1;
     puVar4 = puVar4 + 1;
   } while (sVar2 != -1);
   value.date = param_1;
@@ -7508,9 +7513,9 @@ undefined4 leap_event_schedule_utc(uint32_t param_1,int param_2)
   change.date = 0;
   datetime_subtract(&change,&value);
   if ((param_2 == 0x3b) || (param_2 == 0x3d)) {
-    uVar5 = clk_do(&uStack_28);
+    pkVar5 = clk_do((klok_entry *)auStack_28);
   }
-  return uVar5;
+  return pkVar5;
 }
 
 
@@ -9485,14 +9490,13 @@ void primary_start(undefined4 param_1,undefined4 param_2,undefined4 param_3)
 /* 00012db6 */
 
 /* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
 /* the 1PPS interrupt's work: ticks the clock, updates the time code and posts the time to
    pps_exchange */
 
-undefined8 pps_interrupt(void)
+void pps_interrupt(void)
 
 {
-  undefined4 in_D0;
-  undefined4 in_D1;
   int d1;
   int unaff_D2;
   int unaff_D3;
@@ -9506,7 +9510,7 @@ undefined8 pps_interrupt(void)
     psos_call('\x12',pps_exchange & 0xffffff00,d1,unaff_D2,unaff_D3,(void *)pps_exchange,
               (void *)0x100bac);
   }
-  return CONCAT44(in_D0,in_D1);
+  return;
 }
 
 
@@ -30489,13 +30493,12 @@ void console_set_halt_hook(void *param_1)
 
 /* 0001ae50 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* stores the console's device, 0x200 for device 2 */
 
 void console_set_device(undefined4 param_1)
 
 {
-  _DAT_00100a02 = __ghidra_piece(unsigned short, param_1, 2);
+  console_device = __ghidra_piece(unsigned short, param_1, 2);
   return;
 }
 
@@ -40075,15 +40078,11 @@ scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,shor
 {
   byte bVar1;
   short sVar2;
-  undefined1 *puVar3;
-  undefined1 *puVar4;
-  undefined1 *puVar5;
+  char *pcVar3;
+  char *pcVar4;
+  char *pcVar5;
   bool bVar6;
-  char cStack_1c;
-  char local_1b;
-  undefined1 local_1a;
-  undefined1 auStack_19 [15];
-  short local_a;
+  scpi_decimal decimal;
   undefined2 local_8;
   undefined2 local_6;
   
@@ -40092,54 +40091,54 @@ scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,shor
       return 1;
     }
     bVar6 = param_4 == 0;
-    scpi_double_to_decimal(__ghidra_as(double, CONCAT44(param_1,param_2)),param_4,&cStack_1c);
+    scpi_double_to_decimal(__ghidra_as(double, CONCAT44(param_1,param_2)),param_4,(char *)&decimal);
     if (bVar6) {
       return 1;
     }
-    if (param_6 <= local_a) {
-      sVar2 = local_a - param_6;
-      if (param_4 < (short)(local_a - param_6)) {
+    if (param_6 <= decimal.exponent) {
+      sVar2 = decimal.exponent - param_6;
+      if (param_4 < (short)(decimal.exponent - param_6)) {
         sVar2 = param_4;
       }
       if (sVar2 < 0x10) {
-        scpi_round_decimal(&cStack_1c,sVar2);
-        sVar2 = local_a - param_6;
-        if (sVar2 == 0 || local_a < param_6) goto LAB_0002568a;
+        scpi_round_decimal((char *)&decimal,sVar2);
+        sVar2 = decimal.exponent - param_6;
+        if (sVar2 == 0 || decimal.exponent < param_6) goto LAB_0002568a;
         if (sVar2 <= param_4) {
           param_4 = sVar2;
         }
       }
       *param_3 = 0x2b;
-      if (local_1b != '\0') {
+      if ((char)decimal.sign != '\0') {
         *param_3 = 0x2d;
       }
-      param_3[1] = local_1a;
+      param_3[1] = decimal.digits[0];
       param_3[2] = 0x2e;
       if (param_3[1] == '0') {
-        local_a = 1;
+        decimal.exponent = 1;
       }
-      param_6 = local_a + -1;
+      param_6 = decimal.exponent + -1;
+      pcVar3 = decimal.digits;
       if (param_4 < 2) {
         if (param_7 == '\0') {
-          puVar4 = param_3 + 2;
+          pcVar4 = param_3 + 2;
         }
         else {
           param_3[3] = param_3[1];
           param_3[1] = 0x30;
-          puVar4 = param_3 + 4;
-          param_6 = local_a;
+          pcVar4 = param_3 + 4;
+          param_6 = decimal.exponent;
         }
       }
       else {
         sVar2 = param_4 + -2;
-        puVar3 = param_3 + 3;
-        puVar5 = auStack_19;
+        pcVar5 = param_3 + 3;
         do {
-          puVar4 = puVar3 + 1;
-          *puVar3 = *puVar5;
+          pcVar3 = pcVar3 + 1;
+          pcVar4 = pcVar5 + 1;
+          *pcVar5 = *pcVar3;
           sVar2 = sVar2 + -1;
-          puVar3 = puVar4;
-          puVar5 = puVar5 + 1;
+          pcVar5 = pcVar4;
         } while (sVar2 != -1);
       }
       goto LAB_00025618;
@@ -40147,19 +40146,19 @@ scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,shor
   }
 LAB_0002568a:
   *param_3 = 0x2b;
-  puVar4 = param_3 + 2;
+  pcVar4 = param_3 + 2;
   param_3[1] = 0x30;
   if (param_7 != '\0') {
-    *puVar4 = 0x2e;
-    puVar4 = param_3 + 4;
+    *pcVar4 = '.';
+    pcVar4 = param_3 + 4;
     param_3[3] = 0x30;
     param_6 = param_6 + 1;
   }
 LAB_00025618:
-  *puVar4 = 0x45;
-  puVar4[1] = 0x2b;
+  *pcVar4 = 'E';
+  pcVar4[1] = '+';
   if (param_6 < 0) {
-    puVar4[1] = 0x2d;
+    pcVar4[1] = '-';
     param_6 = -param_6;
   }
   local_8 = *(undefined2 *)
@@ -40179,16 +40178,16 @@ LAB_00025618:
         } while (sVar2 != -1);
       }
       sVar2 = param_5 + -1;
-      puVar3 = (undefined1 *)((int)&local_8 + (int)(short)(ushort)bVar1);
-      puVar4 = puVar4 + 2;
+      pcVar3 = (char *)((int)&local_8 + (int)(short)(ushort)bVar1);
+      pcVar4 = pcVar4 + 2;
       do {
-        puVar5 = puVar4 + 1;
-        *puVar4 = *puVar3;
+        pcVar5 = pcVar4 + 1;
+        *pcVar4 = *pcVar3;
         sVar2 = sVar2 + -1;
-        puVar3 = puVar3 + 1;
-        puVar4 = puVar5;
+        pcVar3 = pcVar3 + 1;
+        pcVar4 = pcVar5;
       } while (sVar2 != -1);
-      *puVar5 = 0;
+      *pcVar5 = '\0';
       return 0;
     }
   }
@@ -42195,37 +42194,36 @@ undefined4 scpi_apply_suffix(int param_1,int param_2)
 
 /* compares a token with a keyword's short and long forms */
 
-undefined4 scpi_keyword_compare(char *param_1,undefined4 param_2,char *param_3)
+short scpi_keyword_compare(char *token,int length,char *keyword)
 
 {
   char cVar1;
   char cVar2;
   bool bVar3;
-  undefined4 uVar4;
-  short sVar5;
+  short sVar4;
   
   bVar3 = true;
-  for (sVar5 = 0; sVar5 < __ghidra_piece(unsigned short, param_2, 2); sVar5 = sVar5 + 1) {
-    if (*param_3 < *param_1) {
-      if (((*param_3 != '\0') || (!bVar3)) || (param_3 = param_3 + 1, *param_3 < *param_1)) {
+  for (sVar4 = 0; sVar4 < __ghidra_piece(unsigned short, length, 2); sVar4 = sVar4 + 1) {
+    if (*keyword < *token) {
+      if (((*keyword != '\0') || (!bVar3)) || (keyword = keyword + 1, *keyword < *token)) {
         return 1;
       }
       bVar3 = false;
     }
-    cVar1 = *param_1;
-    param_1 = param_1 + 1;
-    cVar2 = *param_3;
-    param_3 = param_3 + 1;
+    cVar1 = *token;
+    token = token + 1;
+    cVar2 = *keyword;
+    keyword = keyword + 1;
     if (cVar1 < cVar2) goto LAB_00027ba2;
   }
-  if (*param_3 == '\0') {
-    uVar4 = 0;
+  if (*keyword == '\0') {
+    sVar4 = 0;
   }
   else {
 LAB_00027ba2:
-    uVar4 = 0xffff;
+    sVar4 = -1;
   }
-  return uVar4;
+  return sVar4;
 }
 
 
@@ -45270,8 +45268,7 @@ int scpi_query_DIAGnostic_GPSystem_POSition_MSEConds(void *parameters,void *resp
   if (((-1 < *(short *)((int)parameters + 6)) && (-1 < *(short *)((int)parameters + 0xc))) &&
      (iVar1 = double_compare(0.0,*(double *)((int)parameters + 0x12)), -1 < iVar1)) {
     dms_to_mas(&local_8,*(ushort *)((int)parameters + 6),
-               (byte)*(undefined2 *)((int)parameters + 0xc),*(undefined4 *)((int)parameters + 0x12),
-               *(undefined4 *)((int)parameters + 0x16));
+               (byte)*(undefined2 *)((int)parameters + 0xc),*(double *)((int)parameters + 0x12));
     if ((*(short *)((int)parameters + 2) == 1) || (*(short *)((int)parameters + 2) == 3)) {
       local_8 = -local_8;
     }
@@ -46847,7 +46844,7 @@ int scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *response,vo
       bVar6 = (byte)iVar2;
     }
     dVar7 = float_to_double(fVar5);
-    dms_to_mas(&local_42,(ushort)iVar1,bVar6,(int)((ulonglong)__ghidra_bits(dVar7) >> 0x20),SUB84(dVar7,0));
+    dms_to_mas(&local_42,(ushort)iVar1,bVar6,dVar7);
     local_1c = 0;
     local_18 = 0xb4;
     return_zero();
@@ -46880,7 +46877,7 @@ int scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *response,vo
       bVar6 = (byte)iVar2;
     }
     dVar7 = float_to_double(fVar5);
-    dms_to_mas(&local_3e,(ushort)iVar1,bVar6,(int)((ulonglong)__ghidra_bits(dVar7) >> 0x20),SUB84(dVar7,0));
+    dms_to_mas(&local_3e,(ushort)iVar1,bVar6,dVar7);
     local_2c = 0x3c23d70a;
     local_28 = load_long;
     fVar5 = integer_to_float(-648000000);
@@ -47012,7 +47009,7 @@ int scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *call
       bVar6 = (byte)iVar4;
     }
     dVar7 = float_to_double(fVar5);
-    dms_to_mas(&local_40,(ushort)iVar3,bVar6,(int)((ulonglong)__ghidra_bits(dVar7) >> 0x20),SUB84(dVar7,0));
+    dms_to_mas(&local_40,(ushort)iVar3,bVar6,dVar7);
     local_1c = 0;
     local_18 = 0xb4;
     iVar3 = clamp_to_limits((int *)((int)parameters + 0x22),0,&local_1c,&local_18,(int)&local_24,0);
@@ -47040,7 +47037,7 @@ int scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *call
       bVar6 = (byte)iVar4;
     }
     dVar7 = float_to_double(fVar5);
-    dms_to_mas(local_3c,(ushort)iVar3,bVar6,(int)((ulonglong)__ghidra_bits(dVar7) >> 0x20),SUB84(dVar7,0));
+    dms_to_mas(local_3c,(ushort)iVar3,bVar6,dVar7);
     local_2c = 0x3c23d70a;
     local_28 = load_long;
     fVar5 = integer_to_float(-100000);
@@ -51868,20 +51865,20 @@ void lifetime_update(int param_1)
   klok_entry *pkVar1;
   int iVar2;
   short sVar3;
-  undefined4 *puVar4;
+  undefined1 *puVar4;
   undefined1 *puVar5;
-  undefined4 uStack_1e;
-  packed_datetime pStack_1a;
+  undefined1 auStack_1e [8];
+  uint32_t uStack_16;
   packed_datetime local_12;
   undefined1 *local_a;
   
   sVar3 = 0x19;
-  puVar4 = &uStack_1e;
+  puVar4 = auStack_1e;
   puVar5 = &DAT_00030cec;
   do {
-    *(undefined1 *)puVar4 = *puVar5;
+    *puVar4 = *puVar5;
     sVar3 = sVar3 + -1;
-    puVar4 = (undefined4 *)((int)puVar4 + 1);
+    puVar4 = puVar4 + 1;
     puVar5 = puVar5 + 1;
   } while (sVar3 != -1);
   if (lifetime.date != param_1) {
@@ -51896,11 +51893,11 @@ void lifetime_update(int param_1)
   if ((pkVar1 != (klok_entry *)0x0) && (iVar2 = klok_cancel(pkVar1), iVar2 != 0)) {
     task_dmessage("Error in deleting old lifetime event\r\n");
   }
-  get_gps_datetime(&pStack_1a.date,&pStack_1a.time);
+  get_gps_datetime(&uStack_16,(uint32_t *)(auStack_1e + 4));
   local_12.time = 0x30000;
-  datetime_add(&local_12,&pStack_1a);
+  datetime_add(&local_12,(packed_datetime *)(auStack_1e + 4));
   local_a = &LAB_00030b30;
-  lifetime_event = (klok_entry *)clk_do(&uStack_1e);
+  lifetime_event = clk_do((klok_entry *)auStack_1e);
   return;
 }
 
@@ -53008,29 +53005,29 @@ clamp_double(double *param_1,undefined4 *param_2,double *param_3,double *param_4
 /* rounds a float to the nearest multiple of its step, half away from zero, the step a thousand
    times coarser beyond 1e9 steps */
 
-void round_float_to_step(float *param_1,float *param_2)
+float round_float_to_step(float *value,float *step)
 
 {
   float fVar1;
   int iVar2;
-  float f;
-  double dVar3;
+  float fVar3;
+  double dVar4;
   double dStack_14;
   double local_c;
   
-  f = *param_2;
-  local_c = float_to_double(*param_1);
-  dVar3 = float_to_double(f);
-  dVar3 = double_divide_reversed_pointer(dVar3,&local_c);
-  fVar1 = double_to_float(dVar3);
-  dVar3 = float_to_double(fVar1);
-  iVar2 = double_compare(dVar3,1000000000.0);
+  fVar3 = *step;
+  local_c = float_to_double(*value);
+  dVar4 = float_to_double(fVar3);
+  dVar4 = double_divide_reversed_pointer(dVar4,&local_c);
+  fVar1 = double_to_float(dVar4);
+  dVar4 = float_to_double(fVar1);
+  iVar2 = double_compare(dVar4,1000000000.0);
   if (-1 < iVar2) {
-    dVar3 = float_to_double(fVar1);
-    iVar2 = double_compare(dVar3,-1000000000.0);
+    dVar4 = float_to_double(fVar1);
+    iVar2 = double_compare(dVar4,-1000000000.0);
     if (iVar2 < 1) goto LAB_00032210;
   }
-  f = float_multiply(f,1000.0);
+  fVar3 = float_multiply(fVar3,1000.0);
 LAB_00032210:
   iVar2 = double_compare(0.0,local_c);
   if (iVar2 < 0) {
@@ -53039,16 +53036,16 @@ LAB_00032210:
   else {
     fVar1 = 0.5;
   }
-  fVar1 = float_multiply(fVar1,f);
-  dVar3 = float_to_double(fVar1);
-  double_add_in_place(&local_c,dVar3);
-  dVar3 = float_to_double(f);
-  double_divide_in_place(&local_c,dVar3);
+  fVar1 = float_multiply(fVar1,fVar3);
+  dVar4 = float_to_double(fVar1);
+  double_add_in_place(&local_c,dVar4);
+  dVar4 = float_to_double(fVar3);
+  double_divide_in_place(&local_c,dVar4);
   local_c = modf(local_c,&dStack_14);
-  dVar3 = float_to_double(f);
-  double_multiply_in_place(&dStack_14,dVar3);
-  double_to_float(dStack_14);
-  return;
+  dVar4 = float_to_double(fVar3);
+  double_multiply_in_place(&dStack_14,dVar4);
+  fVar3 = double_to_float(dStack_14);
+  return fVar3;
 }
 
 
@@ -60785,19 +60782,19 @@ void mas_to_dms(long param_1,undefined2 *param_2,undefined1 *param_3,double *par
 
 /* degrees, minutes and seconds as milliarcseconds */
 
-void dms_to_mas(int *param_1,ushort param_2,byte param_3,undefined4 param_4,undefined4 param_5)
+void dms_to_mas(long *mas,ushort degrees,byte minutes,double seconds)
 
 {
   int iVar1;
   double dVar2;
   double a;
   
-  dVar2 = fabs(__ghidra_as(double, CONCAT44(param_4,param_5)));
+  dVar2 = fabs(seconds);
   dVar2 = double_multiply(1000.0,dVar2);
-  a = integer_to_double((uint)param_3 * 60000 + (uint)param_2 * 3600000);
+  a = integer_to_double((uint)minutes * 60000 + (uint)degrees * 3600000);
   dVar2 = double_add(a,dVar2);
   iVar1 = double_to_integer(dVar2);
-  *param_1 = iVar1;
+  *mas = iVar1;
   return;
 }
 
@@ -60815,8 +60812,7 @@ void format_dms(int param_1,char param_2,char *param_3)
   char *pcVar3;
   ushort local_10;
   byte local_e [2];
-  undefined4 local_c;
-  undefined4 local_8;
+  double seconds;
   
   if (param_1 < 1) {
     if (param_1 < 0) {
@@ -60837,8 +60833,9 @@ void format_dms(int param_1,char param_2,char *param_3)
   else {
     cVar1 = 'E';
   }
-  mas_to_dms(param_1,&local_10,local_e,(double *)&local_c);
-  sprintf(param_3,"%c%4d:%02d:%06.3f",(int)cVar1,(uint)local_10,(uint)local_e[0],local_c,local_8);
+  mas_to_dms(param_1,&local_10,local_e,&seconds);
+  sprintf(param_3,"%c%4d:%02d:%06.3f",(int)cVar1,(uint)local_10,(uint)local_e[0],__ghidra_piece(unsigned int, seconds, 0),
+          __ghidra_piece(unsigned int, seconds, 4));
   pcVar2 = "   0:00:00.000";
   pcVar3 = param_3;
   do {
@@ -60859,7 +60856,7 @@ void format_dms(int param_1,char param_2,char *param_3)
 /* formats an angle as degrees, minutes and seconds to 0.1 microseconds
    "%c%4d:%02d:%06.7f" */
 
-void format_dms_precise(char *param_1,char param_2)
+void format_dms_precise(char *text,double mas,char latitude)
 
 {
   int iVar1;
@@ -60867,35 +60864,33 @@ void format_dms_precise(char *param_1,char param_2)
   uint uVar2;
   uint uVar3;
   double dVar4;
-  uint in_stack_00000008;
-  undefined4 in_stack_0000000c;
   
-  iVar1 = double_compare(0.0,__ghidra_as(double, CONCAT44(in_stack_00000008,in_stack_0000000c)));
+  iVar1 = double_compare(0.0,mas);
   if (iVar1 < 0) {
-    if (param_2 == '\0') {
+    if (latitude == '\0') {
       param2 = 'W';
     }
     else {
       param2 = 'S';
     }
-    in_stack_00000008 = in_stack_00000008 ^ 0x80000000;
+    mas = -mas;
   }
-  else if (param_2 == '\0') {
+  else if (latitude == '\0') {
     param2 = 'E';
   }
   else {
     param2 = 'N';
   }
-  dVar4 = double_divide_reversed_pointer(3600000.0,(double *)&stack0x00000008);
+  dVar4 = double_divide_reversed_pointer(3600000.0,&mas);
   uVar2 = double_to_unsigned(dVar4);
   dVar4 = integer_to_double((uVar2 & 0xff) * 3600000);
-  double_subtract_in_place((double *)&stack0x00000008,dVar4);
-  dVar4 = double_divide_reversed_pointer(60000.0,(double *)&stack0x00000008);
+  double_subtract_in_place(&mas,dVar4);
+  dVar4 = double_divide_reversed_pointer(60000.0,&mas);
   uVar3 = double_to_unsigned(dVar4);
   dVar4 = integer_to_double((uVar3 & 0xff) * 60000);
-  double_subtract_in_place((double *)&stack0x00000008,dVar4);
-  dVar4 = double_divide_reversed_pointer(1000.0,(double *)&stack0x00000008);
-  sprintf(param_1,"%c%4d:%02d:%06.7f",param2,uVar2 & 0xff,uVar3 & 0xff,dVar4);
+  double_subtract_in_place(&mas,dVar4);
+  dVar4 = double_divide_reversed_pointer(1000.0,&mas);
+  sprintf(text,"%c%4d:%02d:%06.7f",param2,uVar2 & 0xff,uVar3 & 0xff,dVar4);
   return;
 }
 
@@ -61584,10 +61579,16 @@ void gps_print_average(void)
   bVar2 = 0;
   psos_pause(1);
   console_write("\r\n");
-  format_dms_precise(acStack_54,'\x01');
+  format_dms_precise(acStack_54,
+                     __ghidra_as(double, CONCAT62(CONCAT42(__ghidra_piece(unsigned int, gps.average_latitude, 0),
+                                               (short)((uint)__ghidra_piece(unsigned int, gps.average_latitude, 4) >> 0x10)),
+                                      (short)__ghidra_piece(int, gps.average_latitude, 4))),'\x01');
   printf("AVG LAT  %+3.6f = %s\r\n",
          __ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_latitude, 0),__ghidra_piece(unsigned int, gps.average_latitude, 4))),acStack_54);
-  format_dms_precise(acStack_54,'\0');
+  format_dms_precise(acStack_54,
+                     __ghidra_as(double, CONCAT62(CONCAT42(__ghidra_piece(unsigned int, gps.average_longitude, 0),
+                                               (short)((uint)__ghidra_piece(unsigned int, gps.average_longitude, 4) >> 0x10)),
+                                      (short)__ghidra_piece(int, gps.average_longitude, 4))),'\0');
   printf("AVG LON  %+3.6f = %s\r\n",
          __ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_longitude, 0),__ghidra_piece(unsigned int, gps.average_longitude, 4))),acStack_54);
   param1 = double_divide_reversed_pointer(100.0,&gps.average_height_msl);
@@ -76954,7 +76955,7 @@ void double_to_digits_multiply(uint *param_1)
    engine's
    libc.md, run */
 
-void double_to_digits(uint param_1,int *param_2,uint *param_3,char *param_4,int param_5)
+void double_to_digits(double value,int count,int *exponent,uint *negative,char *digits,int mode)
 
 {
   int iVar1;
@@ -76969,38 +76970,36 @@ void double_to_digits(uint param_1,int *param_2,uint *param_3,char *param_4,int 
   short sVar9;
   int iVar10;
   char *pcVar11;
-  uint in_stack_00000004;
-  uint in_stack_00000008;
-  uint local_26;
+  int local_26;
   uint local_1e;
   uint local_1a [4];
   short local_a;
   ushort local_8;
   short local_6;
   
-  *param_3 = (uint)((int)in_stack_00000004 < 0);
-  local_1e = in_stack_00000008;
-  uVar4 = in_stack_00000004 & 0xfffff;
-  uVar6 = in_stack_00000004 & 0x7ff00000;
-  if (uVar6 == 0) {
-    if (uVar4 == 0) {
-      if (in_stack_00000008 == 0) {
-        if ((int)param_1 < 0) {
-          param_1 = 0;
+  *negative = (uint)((longlong)__ghidra_bits(value) < 0);
+  local_1e = __ghidra_piece(unsigned int, value, 4);
+  uVar4 = __ghidra_piece(unsigned int, value, 0) & 0xfffff;
+  uVar6 = __ghidra_piece(unsigned int, value, 0) & 0x7ff00000;
+  if (((ulonglong)__ghidra_bits(value) & 0x7ff0000000000000) == 0) {
+    if (((ulonglong)__ghidra_bits(value) & 0xfffff00000000) == 0) {
+      if (__ghidra_piece(unsigned int, value, 4) == 0) {
+        if (count < 0) {
+          count = 0;
         }
-        else if (0x15c < param_1) {
-          param_1 = 0x15c;
+        else if (0x15c < (uint)count) {
+          count = 0x15c;
         }
-        while (param_1 != 0) {
-          *param_4 = '0';
-          param_1 = param_1 - 1;
-          param_4 = param_4 + 1;
+        while (count != 0) {
+          *digits = '0';
+          count = count + -1;
+          digits = digits + 1;
         }
-        *param_4 = '\0';
-        *param_2 = 0;
+        *digits = '\0';
+        *exponent = 0;
         return;
       }
-      if (in_stack_00000008 >> 0x10 == 0) {
+      if (__ghidra_piece(unsigned int, value, 4) >> 0x10 == 0) {
         uVar6 = 5;
         uVar4 = 0x8000;
       }
@@ -77008,15 +77007,15 @@ void double_to_digits(uint param_1,int *param_2,uint *param_3,char *param_4,int 
         uVar6 = 0xfffffff5;
         uVar4 = 0x80000000;
       }
-      for (; (uVar4 & in_stack_00000008) == 0; uVar4 = uVar4 >> 1) {
+      for (; (uVar4 & __ghidra_piece(unsigned int, value, 4)) == 0; uVar4 = uVar4 >> 1) {
         uVar6 = uVar6 + 1;
       }
       if ((int)uVar6 < 0) {
-        local_1e = __ghidra_shl(in_stack_00000008, (uVar6 + 0x20 & 0x3f));
-        uVar4 = __ghidra_shr(in_stack_00000008, (-uVar6 & 0x3f));
+        local_1e = __ghidra_shl(__ghidra_piece(unsigned int, value, 4), (uVar6 + 0x20 & 0x3f));
+        uVar4 = __ghidra_shr(__ghidra_piece(unsigned int, value, 4), (-uVar6 & 0x3f));
       }
       else {
-        uVar4 = __ghidra_shl(in_stack_00000008, (uVar6 & 0x3f));
+        uVar4 = __ghidra_shl(__ghidra_piece(unsigned int, value, 4), (uVar6 & 0x3f));
         local_1e = 0;
       }
       uVar6 = uVar6 + 0x20;
@@ -77026,30 +77025,30 @@ void double_to_digits(uint param_1,int *param_2,uint *param_3,char *param_4,int 
       for (uVar3 = 0x80000; (uVar3 & uVar4) == 0; uVar3 = uVar3 >> 1) {
         uVar6 = uVar6 + 1;
       }
-      uVar4 = __ghidra_shr(in_stack_00000008, (0x20 - uVar6 & 0x3f)) | __ghidra_shl(uVar4, (uVar6 & 0x3f));
-      local_1e = __ghidra_shl(in_stack_00000008, (uVar6 & 0x3f));
+      uVar4 = __ghidra_shr(__ghidra_piece(unsigned int, value, 4), (0x20 - uVar6 & 0x3f)) | __ghidra_shl(uVar4, (uVar6 & 0x3f));
+      local_1e = __ghidra_shl(__ghidra_piece(unsigned int, value, 4), (uVar6 & 0x3f));
     }
     uVar6 = (uVar6 - 1) * -0x100000;
   }
   else if (uVar6 == 0x7ff00000) {
-    if ((in_stack_00000008 == 0) && ((in_stack_00000004 & 0xfffff) == 0)) {
-      if (*param_3 == 0) {
-        *param_4 = '+';
-        param_4[1] = '+';
+    if ((__ghidra_piece(unsigned int, value, 4) == 0) && (((ulonglong)__ghidra_bits(value) & 0xfffff00000000) == 0)) {
+      if (*negative == 0) {
+        *digits = '+';
+        digits[1] = '+';
       }
       else {
-        *param_4 = '-';
-        param_4[1] = '-';
+        *digits = '-';
+        digits[1] = '-';
       }
-      pcVar11 = param_4 + 2;
+      pcVar11 = digits + 2;
       iVar1 = 2;
     }
     else {
-      pcVar11 = param_4 + 1;
-      *param_4 = '?';
+      pcVar11 = digits + 1;
+      *digits = '?';
       iVar1 = 1;
     }
-    *param_2 = iVar1;
+    *exponent = iVar1;
     *pcVar11 = '\0';
     return;
   }
@@ -77059,18 +77058,18 @@ void double_to_digits(uint param_1,int *param_2,uint *param_3,char *param_4,int 
     puVar7 = &UNK_00004d11;
   }
   local_a = (short)((uint)(iVar1 * (int)puVar7) >> 0x10);
-  if ((int)param_1 < 0) {
-    param_1 = 0;
+  if (count < 0) {
+    count = 0;
   }
-  if (param_5 == 0) {
-    param_1 = local_a + 1 + param_1;
+  if (mode == 0) {
+    count = local_a + 1 + count;
   }
-  if (0x15c < (int)param_1) {
-    param_1 = 0x15c;
+  if (0x15c < count) {
+    count = 0x15c;
   }
-  local_26 = param_1;
-  if ((int)param_1 < 0x12) {
-    if ((int)param_1 < 0) {
+  local_26 = count;
+  if (count < 0x12) {
+    if (count < 0) {
       local_26 = 0;
     }
   }
@@ -77183,10 +77182,10 @@ LAB_0005f74e:
       if (local_1a[1] < *(uint *)(&UNK_0005fa4a + local_26 * 8)) goto LAB_0005f7ae;
       if (local_1a[1] == *(uint *)(&UNK_0005fa4a + local_26 * 8)) {
         local_a = local_a + 1;
-        if (param_5 != 0) {
+        if (mode != 0) {
           if (local_26 != 0) {
-            local_1a[0] = *(uint *)(&DAT_0005fa46 + (local_26 - 1) * 8);
-            local_1a[1] = *(uint *)(&UNK_0005fa4a + (local_26 - 1) * 8);
+            local_1a[0] = *(uint *)(&DAT_0005fa46 + (local_26 + -1) * 8);
+            local_1a[1] = *(uint *)(&UNK_0005fa4a + (local_26 + -1) * 8);
           }
           goto LAB_0005f7ae;
         }
@@ -77194,18 +77193,18 @@ LAB_0005f74e:
       }
     }
     local_a = local_a + 1;
-    if (param_5 == 0) {
+    if (mode == 0) {
 LAB_0005f7a6:
       local_26 = local_26 + 1;
-      param_1 = param_1 + 1;
+      count = count + 1;
 LAB_0005f7ae:
-      if ((int)param_1 < 1) {
-        *param_2 = local_a + 1;
-        *param_4 = '\0';
+      if (count < 1) {
+        *exponent = local_a + 1;
+        *digits = '\0';
       }
       else {
         sVar9 = (short)local_26;
-        pcVar11 = param_4;
+        pcVar11 = digits;
         while (sVar9 = sVar9 + -1, local_1a[0] != 0) {
           *pcVar11 = '0';
           uVar4 = *(uint *)(&DAT_0005fa46 + sVar9 * 8);
@@ -77222,7 +77221,7 @@ LAB_0005f7ae:
         }
         while (*(int *)(&DAT_0005fa46 + sVar9 * 8) != 0) {
           sVar9 = sVar9 + -1;
-          if (param_4 < pcVar11) {
+          if (digits < pcVar11) {
             *pcVar11 = '0';
             pcVar11 = pcVar11 + 1;
           }
@@ -77237,7 +77236,7 @@ LAB_0005f7ae:
           sVar9 = sVar9 + -1;
         }
         *pcVar11 = (char)local_1a[1] + '0';
-        iVar1 = param_1 - local_26;
+        iVar1 = count - local_26;
         while( true ) {
           pcVar11 = pcVar11 + 1;
           if (iVar1 == 0) break;
@@ -77245,7 +77244,7 @@ LAB_0005f7ae:
           iVar1 = iVar1 + -1;
         }
         *pcVar11 = '\0';
-        *param_2 = local_a + 1;
+        *exponent = local_a + 1;
       }
       return;
     }
@@ -77462,7 +77461,7 @@ LAB_0005fb72:
         else {
           pcVar13 = (char *)0x11;
         }
-        double_to_digits((uint)pcVar13,&local_20,&local_1c,acStack_1b2 + 1,1);
+        double_to_digits(*(double *)param_2,(int)pcVar13,&local_20,&local_1c,acStack_1b2 + 1,1);
         goto LAB_000600fa;
       case 0x27:
       case 0x47:
@@ -77480,7 +77479,7 @@ LAB_0005fb72:
         if (0x10 < (int)local_1d2) {
           pcVar13 = (char *)0x11;
         }
-        double_to_digits((uint)pcVar13,&local_20,&local_1c,acStack_1b2 + 1,1);
+        double_to_digits(*(double *)param_2,(int)pcVar13,&local_20,&local_1c,acStack_1b2 + 1,1);
         if (local_30 == 0 && (local_34 & 0x7fffffff) == 0) {
           local_20 = 1;
         }
@@ -77762,7 +77761,7 @@ LAB_000602cc:
         if (0x3b < (int)local_1d2) {
           pcVar13 = "";
         }
-        double_to_digits((uint)pcVar13,&local_20,&local_1c,acStack_1b2 + 1,0);
+        double_to_digits(*(double *)param_2,(int)pcVar13,&local_20,&local_1c,acStack_1b2 + 1,0);
         goto LAB_000602cc;
       case 0x48:
         bVar1 = true;

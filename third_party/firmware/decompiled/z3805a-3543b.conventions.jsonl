@@ -1388,9 +1388,9 @@
 {"address":"00047528","name":"pllp_task","note":"root_task starts pllp here","convention":"unknown"}
 {"address":"00047de2","name":"running_average_update","note":"folds a value into a running average of so many","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00047e32","name":"mas_to_dms","note":"mas into degrees (/ 3600000), minutes (/ 60000) and seconds (the rest / 1000.0); the position queries","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
-{"address":"00047eb0","name":"dms_to_mas","note":"degrees, minutes and seconds as milliarcseconds","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":2},{"offset":10,"size":1},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"00047eb0","name":"dms_to_mas","note":"degrees, minutes and seconds as milliarcseconds","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":2},{"offset":10,"size":1},{"offset":12,"size":8}]}
 {"address":"00047f14","name":"format_dms","note":"formats an angle as degrees, minutes and seconds to milliseconds","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1},{"offset":10,"size":4}]}
-{"address":"00047fb6","name":"format_dms_precise","note":"formats an angle as degrees, minutes and seconds to 0.1 microseconds","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":16,"size":1}]}
+{"address":"00047fb6","name":"format_dms_precise","note":"formats an angle as degrees, minutes and seconds to 0.1 microseconds","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":8},{"offset":16,"size":1}]}
 {"address":"000480c2","name":"format_angle","note":"an angle in mas as N, S, E or W by its sign and whether it is a latitude, then degrees and minutes","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":1}]}
 {"address":"0004816c","name":"format_duration","note":"seconds as \"%02d:%02d:%04.1f [%s]\"","convention":"unknown","stack":[{"offset":4,"size":8},{"offset":12,"size":4}]}
 {"address":"00048224","name":"gps_print_best_combinations","note":"print_bc's request, 0x35; xDOP VALID COMBOS","convention":"unknown"}
@@ -1590,7 +1590,7 @@
 {"address":"0005f190","name":"strncpy","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0005f1be","name":"toupper","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0005f1d6","name":"double_to_digits_multiply","note":"double_to_digits's product of two 64-bit numbers, one a power of ten from 0x5f864","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"0005f3ba","name":"double_to_digits","note":"a double's decimal digits, sign and exponent, significant or after the point; the formatting engine's","convention":"unknown","stack":[{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4}]}
+{"address":"0005f3ba","name":"double_to_digits","note":"a double's decimal digits, sign and exponent, significant or after the point; the formatting engine's","convention":"unknown","stack":[{"offset":4,"size":8},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4}]}
 {"address":"0005fad6","name":"next_decimal_digit","note":"'0' plus *n % 10, dividing *n by ten; the formatting engine's","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0005fb0c","name":"doprnt","note":"the formatting engine under sprintf, by the classic C library's name for it","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"00060896","name":"sprintf","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}

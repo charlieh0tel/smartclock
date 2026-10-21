@@ -166,6 +166,8 @@ CHECK_FIELD(lifetime_state, date, 0x101d04 - 0x101d00);
 CHECK_FIELD(lifetime_state, count, 0x101d08 - 0x101d00);
 
 CHECK_SIZE(sprintf_output, 8);
+CHECK_SIZE(scpi_decimal, 20);
+CHECK_FIELD(scpi_decimal, exponent, 0x12);
 CHECK_FIELD(sprintf_output, cursor, 4);
 
 CHECK_SIZE(status_register, 16);

@@ -149,7 +149,7 @@
 0x16f1e	function	psos_call	psos.md	trap #3, the service in D7, the error back in D7		convention=register; confidence=read; in=D7 char service, D0 int d0, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1; out=D7 int error; returns=ccr; results=D0, D1, D2, D3, A0, A1; family=psos-binding
 0x16f36	function	psos_io_call	psos.md	trap #4, the function in D7, the device in D0's high byte		convention=register; confidence=read; in=D7 char function, D0 int device, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1; out=D7 int error; returns=ccr; results=D0, D1, D2, D3, A0, A1; family=psos-binding
 0x16f50	function	psos_pack_name	psos.md	packs a 4-character name into D0		convention=other; confidence=read; out=D0 int name; family=psos-binding
-0x13422	function	enter_supervisor	psos.md	trap #7, then a jump back through the return address it pops; returns the caller's status register in D0		convention=other; confidence=read; out=D0 int status; family=supervisor
+0x13422	function	enter_supervisor	psos.md	trap #7, then a jump back through the return address it pops; returns the caller's status register in D0		convention=other; confidence=read; out=D0 int status; preserves=D1, D2, D3, D4, D5, D6, D7, A1, A2, A3, A4, A5, A6; family=supervisor
 0x13378	function	set_interrupt_mask	psos.md	sets SR's interrupt mask from the argument, returns the old SR	uint16_t set_interrupt_mask(uint16_t sr)
 0x19ed0	function	forth_psos_call	psos.md	the console words' service call, reporting an error
 0x16f74	function	psos_create	psos.md	service 1, spawn's create	unsigned long psos_create(char *name, unsigned long a, unsigned long priority, unsigned long stack_a, unsigned long stack_b, void *e, unsigned long *task)
@@ -1542,8 +1542,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x40bda	function	counter_offset_apply	context	takes 0x555555 off the counter's 64-bit count
 0x40f98	function	counter_selftest	context	the FPGA self-test: presets the counters and fails unless the count reads zero
 0x41132	function	int64_add_long	context	adds a signed long to a 64-bit number; called by nothing
-0x4115c	function	int64_divide	context	a 64-bit number divided by a long; called by nothing
-0x4117e	function	uint64_divide	context	an unsigned 64-bit number divided by an unsigned long; called by nothing
+0x4115c	function	int64_divide	context	a 64-bit number divided by a long, the quotient, or on overflow the low word, which divs.l leaves; called by nothing	int int64_divide(int divisor, int high, unsigned int low)
+0x4117e	function	uint64_divide	context	an unsigned 64-bit number divided by an unsigned long, as int64_divide; called by nothing	unsigned int uint64_divide(unsigned int divisor, unsigned int high, unsigned int low)
 0x41244	function	double_to_int64	context	a double as a signed 64-bit number, through 2^32 at 0x41300; called by nothing
 0x43482	function	status_enable_restore	context	restores a status register's enable mask from the NV settings, reporting 0xe if it fails
 0x434c2	function	status_ptr_restore	context	restores a status register's positive transition filter from the NV settings
@@ -1878,7 +1878,7 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x30a34	label	duartb_settings_defaults	structures.md	what parameter_record_read and scpi_action_SER1_PRESet's routine copy over duartb_settings	duartb_settings_record
 0x3094c	label	retained_block_defaults	structures.md	system_init copies these 25 bytes over the block at 0x101e70 unless it restores pllp_task's battery-backed copy at 0x100934; max_loop_time's 1000 at +0x14	uint8_t[25]
 0x25c82	label	decimal_digit_pairs	structures.md	"00" to "99", two characters a value; scpi_real_to_text and scpi_double_to_decimal index it by the value times 2	char[200]
-0x4cfc5	label	si_prefixes	structures.md	format_si's prefix for each third power of ten from -12 to 9, a NUL for none	char[8]
+0x4cfc5	label	si_prefixes	structures.md	format_si's prefix for each third power of ten from -12 to 9, a NUL for none; bytes, since the decompiler prints a char array in ROM as a literal ending at its first NUL ("pnum")	uint8_t[8]
 0x314b2	label	low_bit_masks	structures.md	the mask of the low n bits, n 0 to 32; nv_save and nv_load_slot index it by a value's NV width	uint32_t[33]
 0x1186c	label	days_before_month	structures.md	the days before each month in a common year; day_of_year and days_to_date	int16_t[12]
 0x11884	label	days_before_month_leap	structures.md	the days before each month in a leap year; day_of_year and days_to_date	int16_t[12]

@@ -1399,7 +1399,7 @@ call by offset: `+0` `scpi_session_init`, `+4` `scpi_session_close`
 | `sci_settings_defaults` (`0x30a2c`), `duartb_settings_defaults` (`0x30a34`) | the records | `memcpy` 6 and 9 bytes |
 | `retained_block_defaults` (`0x3094c`) | 25 bytes | `system_init`'s `memcpy` over `0x101e70`, `0x19` bytes |
 | `decimal_digit_pairs` (`0x25c82`) | `char[200]` | `"00"` to `"99"`, indexed by a value below 100 times 2; instructions follow at `0x25d4a` |
-| `si_prefixes` (`0x4cfc5`) | `char[8]` | `format_si` takes exponents -12 to 11, `(e + 12) / 3` from 0 to 7 |
+| `si_prefixes` (`0x4cfc5`) | `uint8_t[8]`, characters | `format_si` takes exponents -12 to 11, `(e + 12) / 3` from 0 to 7; bytes, since the decompiler prints a `char` array in ROM as a literal ending at its first NUL, `"pnum"` |
 | `low_bit_masks` (`0x314b2`) | `uint32_t[33]` | 0 to `0xffffffff`; `log_erase` begins at `0x31536` |
 | `days_before_month`, `_leap` (`0x1186c`, `0x11884`) | `int16_t[12]` | `day_of_year` reads `0x1186a` and `0x11882` plus twice the month, 1 to 12 |
 | `powers_of_ten_64` (`0x5fa46`) | `uint32_t[36]` | `double_to_digits` clamps the index to 0 to `0x11`; the bytes after are not powers of ten |

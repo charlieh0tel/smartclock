@@ -107,7 +107,7 @@
 {"address":"000133f2","name":"double_abs","note":"a double's magnitude; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00013406","name":"rotate_left","note":"a long rotated left","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1}]}
 {"address":"0001341a","name":"primary_trap_7","convention":"exception","confidence":"derived","family":"exception"}
-{"address":"00013422","name":"enter_supervisor","note":"trap #7, then a jump back through the return address it pops; returns the caller's status register in D0","convention":"other","confidence":"read","out":[{"register":"D0","type":"int","name":"status"}],"family":"supervisor"}
+{"address":"00013422","name":"enter_supervisor","note":"trap #7, then a jump back through the return address it pops; returns the caller's status register in D0","convention":"other","confidence":"read","out":[{"register":"D0","type":"int","name":"status"}],"preserves":["D1","D2","D3","D4","D5","D6","D7","A1","A2","A3","A4","A5","A6"],"family":"supervisor"}
 {"address":"00013428","name":"busy_wait","note":"spins 729 empty loops for each count","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00013448","name":"sleep_seconds","note":"pauses for a float number of seconds, at 1024 ticks a second, at least one tick; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000134a8","name":"clock_record_checksum","note":"sums the clock record from +2 to +0x32 and stores the sum and its complement","convention":"register","confidence":"read","in":[{"register":"A6","type":"clock_record *","name":"record"}],"family":"clock"}
@@ -1329,8 +1329,8 @@
 {"address":"000410fa","name":"int64_add","note":"adds two 64-bit numbers","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"0004111e","name":"int64_negate","note":"negates a 64-bit number","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00041132","name":"int64_add_long","note":"adds a signed long to a 64-bit number; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"0004115c","name":"int64_divide","note":"a 64-bit number divided by a long; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"0004117e","name":"uint64_divide","note":"an unsigned 64-bit number divided by an unsigned long; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"0004115c","name":"int64_divide","note":"a 64-bit number divided by a long, the quotient, or on overflow the low word, which divs.l leaves; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"0004117e","name":"uint64_divide","note":"an unsigned 64-bit number divided by an unsigned long, as int64_divide; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0004119c","name":"int64_to_double","note":"a signed 64-bit number as a double, through 2^32 at 0x41300","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00041244","name":"double_to_int64","note":"a double as a signed 64-bit number, through 2^32 at 0x41300; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00041328","name":"pll_action_nothing","note":"a bare rts","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}

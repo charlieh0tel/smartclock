@@ -617,8 +617,18 @@ decompiler wrote it, and reported.
   (`psos_ident`'s id, `psos_my_pid`); the bridge keeps each listed
   register in `__ghidra_result_d0` and the like right after its `jsr`,
   and each `extraout_` variable the C reads is assigned from it after
-  the call, as is an argument in such a register the C reads again
-  after the call, which the decompiler takes the call to keep.
+  the call, as is an argument in such a register -- the callee's
+  parameter's register -- whose variable the C reads again after the
+  call, which the decompiler takes the call to keep (`psos_io_read`'s
+  length).  A call whose convention has `copies` assigns any variable
+  the C reads a copied register from, a byte piece of it from its own
+  bytes (`format_duration`'s `ldiv`), and one to a routine that
+  `preserves` a register assigns an `extraout_` variable for it the
+  value before the call, where the C names that value.
+- A rotate of a long by a register, which the decompiler writes as two
+  shifts, `x << (n & 0x3f) | x >> (0x20 - (n & 0x3f))`, is
+  `__ghidra_rotl(x, n)`: the 68k's `rol` rotates by n modulo 32, where
+  the shifts give 0 for a count from 32 to 63 (`rotate_left`).
 - A negative constant an equality test compares with a narrower
   unsigned operand is that operand's value, `!= 0xff`: the decompiler
   prints the byte as -1, but C promotes the operand to int
@@ -665,8 +675,12 @@ the same RAM, and compares result and RAM: a measure of the decompiled
 C, not a gate (PLAN.md, "A rebuild that runs, in readable C").  Both
 checks (`tools/firmware/harness.py`) take a pointer left in RAM, at an
 even address, as the same when the two point at the same place in the
-same text, not empty, in ROM or among gcc's constants: gcc keeps its
-own copy of a literal the image keeps in ROM; and a pointer to a C
+same text, in ROM or among gcc's constants: gcc keeps its
+own copy of a literal the image keeps in ROM.  An empty text is the
+same only when one pointer is in ROM and the other among gcc's
+constants: gcc keeps `""` as any literal's end, so nothing before it
+tells (`loopback_expect_next` and `sci.transmit_next` reset to `""`);
+and a pointer to a C
 function's image copy and one to gcc's copy are the same (a driver's
 echo routine).  And a call starts with
 A6 at a caller's frame on the harness's stack, its saved frame pointer

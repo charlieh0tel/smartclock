@@ -95,6 +95,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighGlobal;
 import ghidra.program.model.pcode.HighSymbol;
+import ghidra.program.model.pcode.HighVariable;
 import ghidra.program.model.pcode.LocalSymbolMap;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.PcodeOpAST;
@@ -195,6 +196,8 @@ public class SmartClockExportC extends GhidraScript {
 			__n >= 8 * sizeof __x ? (__typeof__(__x))0 : __x << __n; })
 		#define __ghidra_shr(x, n) ({ __typeof__((x) + 0) __x = (x); unsigned int __n = (n); \
 			__n >= 8 * sizeof __x ? (__x < 0 ? (__typeof__(__x))-1 : (__typeof__(__x))0) : __x >> __n; })
+		#define __ghidra_rotl(x, n) ({ __typeof__((x) + 0) __x = (x); unsigned int __n = (n) % (8 * sizeof __x); \
+			__n == 0 ? __x : (__typeof__(__x))(__x << __n | __x >> (8 * sizeof __x - __n)); })
 		#define __ghidra_mask(n) ((n) >= 8 ? ~0ULL : (1ULL << (8 * (n))) - 1)
 		#define __ghidra_concat(y, a, b) \
 			((__ghidra_bits(a) << (8 * (y))) | (__ghidra_bits(b) & __ghidra_mask(y)))
@@ -284,7 +287,7 @@ public class SmartClockExportC extends GhidraScript {
 						}
 					}
 					else {
-						functions.append(registerBits(registerShifts(reinterpretingCasts(c))));
+						functions.append(registerBits(rotates(registerShifts(reinterpretingCasts(c)))));
 						collectGlobals(results.getHighFunction(), referenced);
 						String stack = stackArguments(results.getHighFunction());
 						if (stack != null) {
@@ -1136,6 +1139,7 @@ public class SmartClockExportC extends GhidraScript {
 		resultCopies(tokens, results.getHighFunction(), edits);
 		conditionCodeResults(tokens, results.getHighFunction(), edits);
 		registerResults(tokens, results.getHighFunction(), edits);
+		preservedRegisters(tokens, results.getHighFunction(), edits);
 		switchLabels(tokens, edits);
 		List<Boolean> signedPieces = new ArrayList<>();
 		for (int i = 0; i < tokens.size(); i++) {
@@ -1321,17 +1325,18 @@ public class SmartClockExportC extends GhidraScript {
 				continue;
 			}
 			List<String> copies = copies(getFunctionAt(call.getInput(0).getAddress()));
-			Map<String, String> outputs = copies.isEmpty() ? Map.of() : extraOutputs(high, call);
+			Map<String, ExtraOutput> outputs = copies.isEmpty() ? Map.of() : extraOutputs(high, call);
 			int close = outputs.isEmpty() ? -1 : closingParenthesis(tokens, i);
 			if (close < 0) {
 				continue;
 			}
 			for (int k = 0; k < copies.size(); k++) {
-				String variable = outputs.get(copies.get(k));
-				if (variable != null) {
+				ExtraOutput output = outputs.get(copies.get(k));
+				if (output != null) {
 					edits.before.merge(tokens.get(i), ALSO_OPEN, String::concat);
-					edits.after.merge(tokens.get(close), "; " + ALSO + "(" + variable + ", __c, "
-						+ (copies.size() - 1 - k) * REGISTER_BYTES + "); __c; })", String::concat);
+					edits.after.merge(tokens.get(close), "; " + ALSO + "(" + output.name() + ", __c, "
+						+ ((copies.size() - 1 - k) * REGISTER_BYTES + output.low()) + "); __c; })",
+						String::concat);
 				}
 			}
 		}
@@ -1340,6 +1345,9 @@ public class SmartClockExportC extends GhidraScript {
 	/** Where a bridge keeps the condition codes its routine returns, a C global. */
 	private static final String CONDITION_CODES = "__ghidra_ccr";
 	private static final Pattern RETURNS_CCR = Pattern.compile("\"returns\":\"ccr\"");
+	private static final Pattern PRESERVES = Pattern.compile("\"preserves\":\\[([^\\]]*)\\]");
+	/** What a convention's preserves holds for every register. */
+	private static final String ALL_PRESERVED = "all";
 	private static final Pattern RESULTS = Pattern.compile("\"results\":\\[([^\\]]*)\\]");
 	/** Where a bridge keeps a register its routine also leaves a result in, by its name. */
 	private static final String RESULT_PREFIX = "__ghidra_result_";
@@ -1411,9 +1419,11 @@ public class SmartClockExportC extends GhidraScript {
 			}
 			// an argument in a result's register the decompiler takes the
 			// call to keep, read again after it (psos_io_read's length in D2)
+			Function callee = getFunctionAt(call.getInput(0).getAddress());
 			for (int k = 1; k < call.getNumInputs(); k++) {
 				Varnode argument = call.getInput(k);
-				Register register = argument.isRegister() ? currentProgram.getRegister(argument) : null;
+				Parameter parameter = callee == null ? null : callee.getParameter(k - 1);
+				Register register = parameter == null ? null : parameter.getRegister();
 				String base = register == null ? null : register.getBaseRegister().getName();
 				String name = namedHigh(argument);
 				String assignment = name + " = (__typeof__(" + name + "))" + RESULT_PREFIX
@@ -1427,16 +1437,85 @@ public class SmartClockExportC extends GhidraScript {
 		}
 	}
 
-	/** Whether a value a call is given is read by an operation after the call. */
+	/**
+	 * Whether the variable a call is given is read after the call: by an
+	 * operation at a later address, other than the call and the INDIRECTs
+	 * that carry it past calls, on any instance of the variable.
+	 */
 	private static boolean readAfter(Varnode value, PcodeOp call) {
 		Address at = call.getSeqnum().getTarget();
-		for (Iterator<PcodeOp> readers = value.getDescendants(); readers.hasNext();) {
-			PcodeOp reader = readers.next();
-			if (reader != call && reader.getSeqnum().getTarget().compareTo(at) > 0) {
-				return true;
+		HighVariable variable = value.getHigh();
+		Varnode[] instances = variable == null ? new Varnode[] { value } : variable.getInstances();
+		for (Varnode instance : instances) {
+			for (Iterator<PcodeOp> readers = instance.getDescendants(); readers.hasNext();) {
+				PcodeOp reader = readers.next();
+				if (reader != call && reader.getOpcode() != PcodeOp.INDIRECT
+					&& reader.getSeqnum().getTarget().compareTo(at) > 0) {
+					return true;
+				}
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Gives each register the C reads after a call to a routine that
+	 * preserves it the value it had before: the decompiler takes the call
+	 * to change a register its prototype does not name, so the C reads an
+	 * extraout_ variable nothing set (modf's A0 after float_raise).  The
+	 * value before is the INDIRECT's input, followed back through copies
+	 * and casts to a variable or a constant the C names.
+	 */
+	private void preservedRegisters(List<ClangToken> tokens, HighFunction high, TokenEdits edits) {
+		for (int i = 0; i < tokens.size(); i++) {
+			PcodeOp call = tokens.get(i).getPcodeOp();
+			if (!(tokens.get(i) instanceof ClangFuncNameToken) || call == null
+				|| call.getOpcode() != PcodeOp.CALL) {
+				continue;
+			}
+			Set<String> preserved = preserves(getFunctionAt(call.getInput(0).getAddress()));
+			List<String> assignments = new ArrayList<>();
+			for (PcodeOp op : indirects(high, call)) {
+				Register register = currentProgram.getRegister(op.getOutput());
+				String name = namedHigh(op.getOutput());
+				String before = valueName(op.getInput(0));
+				if (register != null && name != null && name.startsWith(EXTRA_OUTPUT) && before != null
+					&& (preserved.contains(ALL_PRESERVED)
+						|| preserved.contains(register.getBaseRegister().getName()))) {
+					assignments.add(name + " = (__typeof__(" + name + "))" + before);
+				}
+			}
+			assignAfterCall(tokens, edits, i, call, assignments);
+		}
+	}
+
+	/** A value as the C names it, followed back through copies and casts; null if it has no name. */
+	private static String valueName(Varnode value) {
+		for (Varnode at = value; at != null; ) {
+			if (at.isConstant()) {
+				return "0x" + Long.toHexString(at.getOffset());
+			}
+			String name = namedHigh(at);
+			if (name != null && !name.startsWith(EXTRA_OUTPUT)) {
+				return name;
+			}
+			PcodeOp def = at.getDef();
+			at = def != null && (def.getOpcode() == PcodeOp.COPY || def.getOpcode() == PcodeOp.CAST
+				|| def.getOpcode() == PcodeOp.INDIRECT) ? def.getInput(0) : null;
+		}
+		return null;
+	}
+
+	/** The registers a function's trusted convention says it preserves; "all" for every one. */
+	private Set<String> preserves(Function function) {
+		String convention = function == null ? null : recorded(CONVENTION_MAP, function);
+		Matcher preserves = convention == null ? null : PRESERVES.matcher(convention);
+		Matcher confidence = convention == null ? null : CONFIDENCE.matcher(convention);
+		if (preserves == null || !preserves.find() || !confidence.find()
+			|| !TRUSTED.contains(confidence.group(1))) {
+			return Set.of();
+		}
+		return Set.of(preserves.group(1).replace("\"", "").split(","));
 	}
 
 	/** The INDIRECTs at a call, which give the registers the decompiler takes it to change. */
@@ -1505,16 +1584,24 @@ public class SmartClockExportC extends GhidraScript {
 	}
 
 	/** The variable each register the call sets outside its prototype is read from, by register. */
-	private Map<String, String> extraOutputs(HighFunction high, PcodeOp call) {
-		Map<String, String> outputs = new HashMap<>();
-		for (Iterator<PcodeOpAST> ops = high.getPcodeOps(call.getSeqnum().getTarget()); ops.hasNext();) {
-			PcodeOp op = ops.next();
-			Varnode output = op.getOutput();
-			Register register = output == null ? null : currentProgram.getRegister(output);
-			String name = output == null || output.getHigh() == null ? null : output.getHigh().getName();
-			if (op.getOpcode() == PcodeOp.INDIRECT && register != null && name != null
-				&& name.startsWith(EXTRA_OUTPUT)) {
-				outputs.put(register.getName(), name);
+	/** A variable the C reads a register a call changes from, and how many bytes up from the register's low end it starts. */
+	private record ExtraOutput(String name, int low) {}
+
+	/**
+	 * The variable each register the call changes is read from, by base
+	 * register: an extraout_ variable, or one the decompiler named for an
+	 * argument the value then feeds (format_duration's remainders).
+	 */
+	private Map<String, ExtraOutput> extraOutputs(HighFunction high, PcodeOp call) {
+		Map<String, ExtraOutput> outputs = new HashMap<>();
+		for (PcodeOp op : indirects(high, call)) {
+			Register register = currentProgram.getRegister(op.getOutput());
+			String name = namedHigh(op.getOutput());
+			if (register != null && name != null) {
+				Register base = register.getBaseRegister();
+				int low = base.getOffset() + base.getMinimumByteSize()
+					- register.getOffset() - register.getMinimumByteSize();
+				outputs.put(base.getName(), new ExtraOutput(name, low));
 			}
 		}
 		return outputs;
@@ -2322,6 +2409,31 @@ public class SmartClockExportC extends GhidraScript {
 	/** A shift, its operator the group. */
 	private static final Pattern SHIFT = Pattern.compile("(<<|>>) ");
 	private static final Pattern LITERAL = Pattern.compile("^(?:0x[0-9a-fA-F]+|[0-9]+)[uUlL]*$");
+	/**
+	 * The decompiler's reading of a 68k rotate of a long by a register,
+	 * x << n | x >> (32 - n), its count n & 0x3f, after registerShifts: the
+	 * two shifts of the same x by the same count.
+	 */
+	private static final Pattern ROTATE = Pattern.compile(
+		"__ghidra_shl\\(([^()]+), \\(([^()]+ & 0x3f)\\)\\) \\| __ghidra_shr\\(\\1, 0x20 - \\(\\2\\)\\)");
+
+	/**
+	 * c with each rotate left the decompiler wrote as two shifts made
+	 * __ghidra_rotl(x, n): the 68k's rol by a register rotates by its
+	 * count modulo 64, and so by n modulo the width, where the two shifts
+	 * give 0 for a count from the width to 63 (rotate_left).
+	 */
+	private static String rotates(String c) {
+		Matcher rotate = ROTATE.matcher(c);
+		StringBuilder out = new StringBuilder();
+		while (rotate.find()) {
+			rotate.appendReplacement(out,
+				Matcher.quoteReplacement("__ghidra_rotl(" + rotate.group(1) + ", " + rotate.group(2) + ")"));
+		}
+		rotate.appendTail(out);
+		return out.toString();
+	}
+
 	/** Operators of lower precedence than a shift, which end its operands. */
 	private static final String LOWER = "=<>&^|?:,;{";
 

@@ -504,10 +504,16 @@ class Run:
         return value
 
 
+def literal_region(at: int) -> int | None:
+    """The start of the region of LITERALS an address is in; None if
+    it is in none."""
+    return next((start for start, size in LITERALS if start <= at < start + size), None)
+
+
 def preceding(m: Machine, at: int) -> bytes | None:
     """Up to BUFFER_SPACING bytes before an address in ROM or gcc's
     constants; None if it is in neither."""
-    region = next((start for start, size in LITERALS if start <= at < start + size), None)
+    region = literal_region(at)
     if region is None:
         return None
     start = max(region, at - BUFFER_SPACING)
@@ -519,7 +525,9 @@ def same_literal(m: Machine, a: int, b: int) -> bool:
     place in the same text: gcc keeps its own copy of a literal the
     image keeps in ROM, and a pointer may be part way along one or at
     its end.  The text runs back over the bytes, not NUL, the two have
-    alike before them, and must not be empty."""
+    alike before them.  An empty text is the same only as gcc's own
+    copy of it, one pointer in ROM and the other in gcc's constants:
+    gcc keeps `""` as any literal's end, so nothing before it tells."""
     before = [preceding(m, p) for p in (a, b)]
     if None in before:
         return False
@@ -528,7 +536,9 @@ def same_literal(m: Machine, a: int, b: int) -> bool:
         back += 1
     try:
         text = m.string(a - back)
-        return text != b"" and text == m.string(b - back)
+        if text != m.string(b - back):
+            return False
+        return text != b"" or literal_region(a) != literal_region(b)
     except (UcError, ValueError):
         return False
 

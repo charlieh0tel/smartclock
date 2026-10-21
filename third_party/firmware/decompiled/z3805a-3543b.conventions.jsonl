@@ -1669,7 +1669,7 @@
 {"address":"installer::00100484","name":"installer_mutex_release","note":"the installer's mutex_release","convention":"register","confidence":"read","in":[{"register":"A1","type":"void *","name":"mutex"}],"out":[{"register":"D7","type":"int","name":"error"}],"error":[{"register":"D7","value":"2","meaning":"not held"},{"register":"D7","value":"0x80","meaning":"holds remain"}],"preserves":["D0","A0"],"family":"mutex"}
 {"address":"installer::00100538","name":"installer_exception_hook_reset","note":"the installer's exception_hook_reset","convention":"unknown"}
 {"address":"installer::0010058e","name":"installer_exception_hook_get","note":"the installer's exception_hook_get","convention":"unknown"}
-{"address":"installer::001005b4","name":"installer_default_exception","note":"the installer's primary_default_exception","convention":"unknown"}
+{"address":"installer::001005b4","name":"installer_default_exception","note":"the installer's primary_default_exception, byte for byte: the boot vector table's handler for every vector without one of its own","convention":"exception","confidence":"read","family":"exception"}
 {"address":"installer::001005d2","name":"installer_print_exception","note":"the installer's print_exception","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":4},{"offset":10,"size":2},{"offset":12,"size":4}]}
 {"address":"installer::00100658","name":"installer_exception_name","note":"the installer's exception_name","convention":"unknown","stack":[{"offset":4,"size":2}]}
 {"address":"installer::00100bb2","name":"installer_periodic_interrupt","note":"the periodic interrupt, as primary_user_66 without its counters: announces the tick with service 29, services the watchdog and returns through trap #5","convention":"unknown"}
@@ -1681,10 +1681,10 @@
 {"address":"installer::00100c96","name":"installer_start","note":"the installer's primary_start","convention":"unknown"}
 {"address":"installer::00100e80","name":"installer_enter_supervisor_mode","note":"the installer's enter_supervisor_mode","convention":"unknown"}
 {"address":"installer::00100e90","name":"installer_set_interrupt_mask","note":"the installer's set_interrupt_mask","convention":"unknown","stack":[{"offset":4,"size":2}]}
-{"address":"installer::00100f32","name":"installer_trap_7","note":"the installer's primary_trap_7","convention":"unknown"}
+{"address":"installer::00100f32","name":"installer_trap_7","note":"the installer's primary_trap_7, byte for byte: the boot vector table's vector 39, trap #7","convention":"exception","confidence":"read","family":"exception"}
 {"address":"installer::00100f3a","name":"installer_enter_supervisor","note":"the installer's enter_supervisor","convention":"other","confidence":"read","out":[{"register":"D0","type":"int","name":"status"}],"preserves":["D1","D2","D3","D4","D5","D6","D7","A1","A2","A3","A4","A5","A6"],"family":"supervisor"}
 {"address":"installer::00100fc0","name":"installer_float_exception_report","note":"the installer's float_exception_report","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"installer::0010135a","name":"installer_return","note":"a lone rts before installer_entry; nothing calls it","convention":"unknown"}
+{"address":"installer::0010135a","name":"installer_spurious_interrupt","note":"the installer's primary_spurious_interrupt, a lone rte, byte for byte: the boot vector table's vector 24, the spurious interrupt","convention":"exception","confidence":"read","family":"exception"}
 {"address":"installer::0010135c","name":"installer_entry","convention":"unknown"}
 {"address":"installer::001013ae","name":"installer_program_exit","note":"the installer's program_exit","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::001013c2","name":"installer_program_end_report","note":"the installer's program_end_report","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
@@ -1770,7 +1770,7 @@
 {"address":"installer::00103868","name":"installer_drtb_putc","note":"the installer's drtb_putc","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"installer::00103984","name":"installer_console_write_polled","note":"the installer's console_write_polled","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::001039ba","name":"installer_printf_polled","note":"the installer's printf_polled","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"installer::00103a44","name":"installer_duarta_receive","note":"empties DUART channel A's receiver into its ring","convention":"unknown"}
+{"address":"installer::00103a44","name":"installer_duarta_receive","note":"empties DUART channel A's receiver into its ring; returns nothing, D0 left SRA's overrun bit, which its one caller, installer_duart_interrupt, does not read","convention":"unknown"}
 {"address":"installer::00103aa8","name":"installer_duartb_isr","note":"the installer's duartb_isr","convention":"unknown"}
 {"address":"installer::00103c7c","name":"installer_duarta_transmit_interrupt","note":"disables channel A's transmit interrupt","convention":"unknown"}
 {"address":"installer::00103c90","name":"installer_duartb_transmit_interrupt","note":"the installer's duartb_transmit_interrupt","convention":"unknown"}
@@ -1797,7 +1797,7 @@
 {"address":"installer::0010822e","name":"installer_idn_model_default","note":"sets the *IDN? model to 58000A","convention":"unknown"}
 {"address":"installer::0010824a","name":"installer_identification_record_read","note":"the installer's identification_record_read","convention":"unknown"}
 {"address":"installer::001083b6","name":"installer_psos_config_init","note":"the installer's psos_config_init","convention":"unknown"}
-{"address":"installer::00108466","name":"installer_trap_1","note":"the installer's primary_trap_1","convention":"unknown"}
+{"address":"installer::00108466","name":"installer_trap_1","note":"the installer's primary_trap_1, byte for byte: the boot vector table's vector 33, trap #1","convention":"exception","confidence":"read","family":"exception"}
 {"address":"installer::00108ca8","name":"installer_float_raise","note":"the installer's float_raise","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::00109036","name":"installer_call_atexit_functions","convention":"unknown"}
 {"address":"installer::0010904c","name":"installer_call_atexit_functions","note":"the installer's call_atexit_functions","convention":"unknown"}

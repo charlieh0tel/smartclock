@@ -2742,7 +2742,7 @@ extern int32_t errno; /* 0010393a */
 extern qsort_compare_function * qsort_compare; /* 00103940 */
 extern uint32_t qsort_size; /* 00103944 */
 extern uint8_t installer_float_exception_message[32]; /* 0010aad2 */
-extern uint8_t installer_program_end_digits_end; /* 0010ab1f */
+extern uint8_t installer_program_end_message[46]; /* 0010aaf2 */
 extern boot_selftest_results boot_selftest; /* 0010ab20 */
 extern duartb_settings_record installer_duartb_settings; /* 0010ab30 */
 extern char installer_idn_model[18]; /* 0010ab3a */
@@ -2799,7 +2799,6 @@ extern volatile qsm_registers qsm; /* 00fffc00 */
 extern undefined1 DAT_0010253e; /* 0010253e */
 extern undefined1 DAT_0010253f; /* 0010253f */
 extern undefined1 DAT_00102c60; /* 00102c60 */
-extern undefined DAT_0010aaf3; /* 0010aaf3 */
 extern undefined4 DAT_0010ffe6; /* 0010ffe6 */
 extern undefined4 DAT_0010ffea; /* 0010ffea */
 extern undefined4 DAT_0010ffee; /* 0010ffee */
@@ -2878,7 +2877,6 @@ extern ushort USHORT_0002f7a8; /* 0002f7a8 */
 extern ushort USHORT_0002f7b0; /* 0002f7b0 */
 extern undefined atexit_functions; /* 001038b4 */
 extern undefined installer_atexit_functions; /* 0010b03c */
-extern char installer_program_end_message; /* 0010aaf2 */
 extern undefined klok_mutex; /* 001037b4 */
 extern undefined log_mutex; /* 00101d36 */
 extern undefined nv_settings_defaults; /* 00030966 */
@@ -2992,7 +2990,6 @@ extern uint8_t uint8_t_0010142a; /* 0010142a */
 __asm__(".set DAT_0010253e, 0x0010253e");
 __asm__(".set DAT_0010253f, 0x0010253f");
 __asm__(".set DAT_00102c60, 0x00102c60");
-__asm__(".set DAT_0010aaf3, 0x0010aaf3");
 __asm__(".set DAT_0010ffe6, 0x0010ffe6");
 __asm__(".set DAT_0010ffea, 0x0010ffea");
 __asm__(".set DAT_0010ffee, 0x0010ffee");
@@ -3265,7 +3262,6 @@ __asm__(".set installer_idn_serial, 0x0010ab4c");
 __asm__(".set installer_idn_suffix, 0x0010ab5e");
 __asm__(".set installer_io_table, 0x0010ab60");
 __asm__(".set installer_kernel_running, 0x0010afe6");
-__asm__(".set installer_program_end_digits_end, 0x0010ab1f");
 __asm__(".set installer_program_end_message, 0x0010aaf2");
 __asm__(".set installer_psos_config, 0x0010ab84");
 __asm__(".set installer_rand_seed, 0x0010b0be");
@@ -6153,8 +6149,8 @@ int installer_mutex_acquire(void *mutex) __asm__("c_installer_mutex_acquire");
 int installer_mutex_release(void *mutex) __asm__("c_installer_mutex_release");
 void installer_exception_hook_reset(void);
 void * installer_exception_hook_get(void);
-undefined8 installer_default_exception(void);
-void installer_print_exception(ushort param_1,undefined4 param_2,ushort param_3,undefined4 param_4);
+int installer_default_exception();
+void installer_print_exception(ushort param_1,undefined4 param_2,ushort param_3,uint32_t param_4);
 char * installer_exception_name(uint16_t vector);
 void installer_periodic_interrupt(void);
 void installer_periodic_interrupt_enable(void);
@@ -6165,10 +6161,10 @@ void installer_system_init(void);
 void installer_start(void);
 uint16_t installer_enter_supervisor_mode(void);
 uint16_t installer_set_interrupt_mask(uint16_t sr);
-undefined2 installer_trap_7(void);
+int installer_trap_7();
 int installer_enter_supervisor(void) __asm__("c_installer_enter_supervisor");
 void installer_float_exception_report(uint param_1,undefined4 param_2);
-void installer_return(void);
+int installer_spurious_interrupt();
 void installer_entry(void);
 void installer_program_exit(uint param_1);
 void installer_program_end_report(uint value,uint32_t return_address);
@@ -6250,7 +6246,7 @@ int installer_drtb_gets(byte *param_1,int param_2);
 void installer_drtb_putc(undefined1 param_1);
 int installer_console_write_polled(char *s);
 void installer_printf_polled(char *format,...);
-uint installer_duarta_receive(void);
+void installer_duarta_receive(void);
 byte installer_duartb_isr(void);
 void installer_duarta_transmit_interrupt(void);
 void installer_duartb_transmit_interrupt(void);
@@ -6278,7 +6274,7 @@ bool installer_parameter_record_read(void);
 void installer_idn_model_default(void);
 undefined2 installer_identification_record_read(void);
 void installer_psos_config_init(void);
-void installer_trap_1(void);
+int installer_trap_1();
 void installer_float_raise(uint param_1);
 void installer_call_atexit_functions(void);
 void * installer_memcpy(void *s1,void *s2,uint n);
@@ -81533,10 +81529,13 @@ void * installer_exception_hook_get(void)
 
 
 /* installer::001005b4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the installer's primary_default_exception */
+/* the installer's primary_default_exception, byte for byte: the boot vector table's handler for
+   every vector without one of its own
+   Not a C function (exception; read): entered by the processor, not called. */
 
-undefined8 installer_default_exception(void)
+__exception undefined8 installer_default_exception(void)
 
 {
   undefined4 in_D0;
@@ -81586,21 +81585,44 @@ undefined8 installer_default_exception(void)
 }
 
 
+#endif
+__asm__(
+	"	.globl installer_default_exception\n"
+	"	.type installer_default_exception, @function\n"
+	"	.pushsection .text.installer_default_exception.1005b4,\"ax\",@progbits\n"
+	"installer_default_exception:\n"
+	"	subq.l #0x4,%sp\n"
+	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
+	"	.byte 0x61 | bsr.b 0x0010058e\n"
+	"	.reloc ., R_68K_PC8, installer_exception_hook_get-1\n"
+	"	.byte 0\n"
+	"	move.l %d0,(0x10,%sp)\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
+	"	tst.l (%sp)\n"
+	"	beq.b .Lg_1005ca\n"
+	"	rts\n"
+	".Lg_1005ca:\n"
+	"	addq.l #0x4,%sp\n"
+	"	bsr.l installer_print_exception\n"
+	"	.size installer_default_exception, .-installer_default_exception\n"
+	"	.popsection\n"
+);
+
 /* installer::001005d2 */
 
 /* the installer's print_exception */
 
-void installer_print_exception(ushort param_1,undefined4 param_2,ushort param_3,undefined4 param_4)
+void installer_print_exception(ushort param_1,undefined4 param_2,ushort param_3,uint32_t param_4)
 
 {
-  char *pcVar1;
+  char *name;
   
   installer_printf_polled(&DAT_installer__00100787);
-  pcVar1 = installer_exception_name(param_3);
-  installer_printf_polled(s_Boot___s_installer__0010078a,(short)pcVar1);
+  name = installer_exception_name(param_3);
+  installer_printf_polled(s_Boot___s_installer__0010078a,name);
   installer_printf_polled(s___PC_____8x__SR_____04x_installer__00100793,param_2,(uint)param_1);
   if ((param_3 & 0xf000) != 0) {
-    installer_printf_polled(s___address_____8x_installer__001007ab,__ghidra_piece(unsigned short, param_4, 2));
+    installer_printf_polled(s___address_____8x_installer__001007ab,param_4);
   }
   installer_printf_polled(s_RESET_to_recover__installer__001007bc);
   if (installer_kernel_running != 0) {
@@ -81792,10 +81814,12 @@ uint16_t installer_set_interrupt_mask(uint16_t sr)
 
 
 /* installer::00100f32 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the installer's primary_trap_7 */
+/* the installer's primary_trap_7, byte for byte: the boot vector table's vector 39, trap #7
+   Not a C function (exception; read): entered by the processor, not called. */
 
-undefined2 installer_trap_7(void)
+__exception undefined2 installer_trap_7(void)
 
 {
   undefined2 in_stack_00000000 = *(undefined2 *)((char *)__builtin_frame_address(0) + 4);
@@ -81803,6 +81827,19 @@ undefined2 installer_trap_7(void)
   return in_stack_00000000;
 }
 
+
+#endif
+__asm__(
+	"	.globl installer_trap_7\n"
+	"	.type installer_trap_7, @function\n"
+	"	.pushsection .text.installer_trap_7.100f32,\"ax\",@progbits\n"
+	"installer_trap_7:\n"
+	"	move.w (%sp),%d0\n"
+	"	ori.w #0x2000,(%sp)\n"
+	"	rte\n"
+	"	.size installer_trap_7, .-installer_trap_7\n"
+	"	.popsection\n"
+);
 
 /* installer::00100f3a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -82048,15 +82085,29 @@ void installer_float_exception_report(uint param_1,undefined4 param_2)
 
 
 /* installer::0010135a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* a lone rts before installer_entry; nothing calls it */
+/* the installer's primary_spurious_interrupt, a lone rte, byte for byte: the boot vector table's
+   vector 24, the spurious interrupt
+   Not a C function (exception; read): entered by the processor, not called. */
 
-void installer_return(void)
+__exception void installer_spurious_interrupt(void)
 
 {
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl installer_spurious_interrupt\n"
+	"	.type installer_spurious_interrupt, @function\n"
+	"	.pushsection .text.installer_spurious_interrupt.10135a,\"ax\",@progbits\n"
+	"installer_spurious_interrupt:\n"
+	"	rte\n"
+	"	.size installer_spurious_interrupt, .-installer_spurious_interrupt\n"
+	"	.popsection\n"
+);
 
 /* installer::0010135c */
 
@@ -82116,25 +82167,26 @@ void installer_program_end_report(uint value,uint32_t return_address)
   uint uVar2;
   char *pcVar3;
   uint8_t *puVar4;
-  char *pcVar5;
+  uint8_t *puVar5;
+  uint8_t *puVar6;
   undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
   
-  installer_program_end_message = '\0';
-  pcVar5 = &DAT_0010aaf3;
-  for (pcVar3 = s_Prog_end__returned_installer__0010142a; *pcVar3 != '\0'; pcVar3 = pcVar3 + 1) {
-    *pcVar5 = *pcVar3;
-    installer_program_end_message = installer_program_end_message + '\x01';
-    pcVar5 = pcVar5 + 1;
+  puVar5 = installer_program_end_message;
+  installer_program_end_message[0] = 0;
+  for (pcVar3 = s_Prog_end__returned_installer__0010142a; puVar5 = puVar5 + 1, *pcVar3 != 0;
+      pcVar3 = pcVar3 + 1) {
+    *puVar5 = *pcVar3;
+    installer_program_end_message[0] = installer_program_end_message[0] + 1;
   }
-  puVar4 = &installer_program_end_digits_end;
-  installer_program_end_digits_end = 0xff;
+  puVar4 = installer_program_end_message + 0x2d;
+  installer_program_end_message[0x2d] = 0xff;
   uVar2 = value;
-  pcVar3 = pcVar5;
+  puVar6 = puVar5;
   if ((int)value < 0) {
     uVar2 = -value;
-    pcVar3 = pcVar5 + 1;
-    *pcVar5 = '-';
-    installer_program_end_message = installer_program_end_message + '\x01';
+    puVar6 = puVar5 + 1;
+    *puVar5 = 0x2d;
+    installer_program_end_message[0] = installer_program_end_message[0] + 1;
   }
   do {
     uVar1 = uVar2 % 10;
@@ -82144,13 +82196,13 @@ void installer_program_end_report(uint value,uint32_t return_address)
   } while (uVar2 != 0);
   while( true ) {
     if (*puVar4 == 0xff) break;
-    *pcVar3 = *puVar4 + 0x30;
-    installer_program_end_message = installer_program_end_message + '\x01';
+    *puVar6 = *puVar4 + 0x30;
+    installer_program_end_message[0] = installer_program_end_message[0] + 1;
     puVar4 = puVar4 + 1;
-    pcVar3 = pcVar3 + 1;
+    puVar6 = puVar6 + 1;
   }
   installer_fatal_error_with_code
-            (&installer_program_end_message,in_stack_00000000,value,return_address);
+            ((char *)installer_program_end_message,in_stack_00000000,value,return_address);
   do {
                     /* WARNING: Do nothing block with infinite loop */
   } while( true );
@@ -88962,21 +89014,21 @@ void installer_printf_polled(char *format,...)
 
 /* installer::00103a44 */
 
-/* empties DUART channel A's receiver into its ring */
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* empties DUART channel A's receiver into its ring; returns nothing, D0 left SRA's overrun bit,
+   which its one caller, installer_duart_interrupt, does not read */
 
-uint installer_duarta_receive(void)
+void installer_duarta_receive(void)
 
 {
   uint8_t uVar1;
-  uint in_D0;
+  uint uVar2;
   
-  while( true ) {
-    uVar1 = duart.a.sr_csr;
-    if ((uVar1 & 1) == 0) break;
-    in_D0 = (uint)installer_duarta_ring.write;
+  while (uVar1 = duart.a.sr_csr, (uVar1 & 1) != 0) {
+    uVar2 = (uint)installer_duarta_ring.write;
     uVar1 = duart.a.rb_tb;
     installer_duarta_ring.write = installer_duarta_ring.write + 1;
-    installer_duarta_ring.data[in_D0] = uVar1;
+    installer_duarta_ring.data[uVar2] = uVar1;
   }
   if ((byte)(installer_duarta_ring.read - installer_duarta_ring.write) < installer_duarta.least_free
      ) {
@@ -88987,7 +89039,7 @@ uint installer_duarta_receive(void)
     installer_duarta.overrun = 1;
     duart.a.cr = CR_RESET_ERROR;
   }
-  return CONCAT31((int3)(in_D0 >> 8),uVar1) & 0xffffff10;
+  return;
 }
 
 
@@ -89758,10 +89810,12 @@ void installer_psos_config_init(void)
 
 
 /* installer::00108466 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the installer's primary_trap_1 */
+/* the installer's primary_trap_1, byte for byte: the boot vector table's vector 33, trap #1
+   Not a C function (exception; read): entered by the processor, not called. */
 
-void installer_trap_1(void)
+__exception void installer_trap_1(void)
 
 {
   int in_D0;
@@ -89774,6 +89828,24 @@ void installer_trap_1(void)
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl installer_trap_1\n"
+	"	.type installer_trap_1, @function\n"
+	"	.pushsection .text.installer_trap_1.108466,\"ax\",@progbits\n"
+	"installer_trap_1:\n"
+	"	tst.l %d0\n"
+	"	bne.l .Lg_108478\n"
+	"	move.w (%sp),(0x40,%a0)\n"
+	"	bra.l .Lg_10847c\n"
+	".Lg_108478:\n"
+	"	move.w (0x40,%a0),(%sp)\n"
+	".Lg_10847c:\n"
+	"	rte\n"
+	"	.size installer_trap_1, .-installer_trap_1\n"
+	"	.popsection\n"
+);
 
 /* installer::00108ca8 */
 

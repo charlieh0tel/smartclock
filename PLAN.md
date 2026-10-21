@@ -1070,7 +1070,34 @@ view cannot drift apart.  The library, bottom up:
      Left: the four exception entries run as functions,
      `installer_duarta_receive`, `_print_exception`, `_program_exit`
      and `_program_end_report`, and the status system's three, which
-     wait for the installer's status object.
+     wait for the installer's status object.  The status object is now
+     a profile's (`Profile.status_object`), the primary's `0x102eb8`
+     and the installer's `0x10ad06`, where `0x107a00` has
+     `status_create`'s copy (`0x105d98`) keep the model; every profile
+     gives its model, registers and error queue by type and name, and
+     only the primary its other objects.  The three agree: installer
+     66 agree, 0 skipped, 8 differ.  The rest are the names file's.
+     `installer_trap_1`, `_trap_7`, `_default_exception` and
+     `installer_spurious_interrupt` (`installer_return` was named for
+     its `rte` before the boot vector table's vector 24 was seen to
+     enter it) are the vectors' targets, byte for byte their primary
+     twins, and get their `exception` convention.
+     `installer_duarta_receive` returns nothing: its D0 is what is left
+     of its overrun test, and its one caller does not read it.
+     `installer_print_exception` calls `installer_printf_polled`
+     through A2, so Ghidra guessed the variadic arguments: a `short` for
+     the name's pointer and the address's low word, where the code
+     pushes longs (`0x1005f0`, `0x10061c`); two `call` rows give them.
+     And `installer_program_end_report`, and with it `_program_exit`:
+     the label `installer_program_end_digits_end` (`0x10ab1f`), typed
+     `uint8_t`, inside `installer_program_end_message`, had Ghidra clear
+     the message's array, so the C wrote the digits down from a lone
+     byte, out of its object, and gcc dropped the store of its `0xff`;
+     the label is gone, as the primary has none at `0x100c21`.  The
+     exception entries are written as assembly, as the primary's are,
+     and left out: the installer's 70 agree and none is skipped or
+     differs (63 agreeing, 3 skipped and 8 differing before).  The
+     primary's are unchanged.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

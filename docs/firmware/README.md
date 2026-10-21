@@ -874,8 +874,11 @@ Its kernel's tables are as `installer_psos_config_init` (`0x1083b6`)
 copies them, from `0x1084da` and `0x108578` to `0x10ab84` and
 `0x10ab60`, and its data area, from `0x10b0c8`, as
 `installer_kernel_init` (`0x1026de`) makes it, run to the same places
-as `kernel_init`, whose bytes it is; its status object as its root task
-(`0x100d40`) has `0x107a00` make it.  The root task creates no exchange
+as `kernel_init`, whose bytes it is; its status object, `0x10ad06`, as
+its root task (`0x100d40`) has `0x107a00` make it, passing its address
+to `status_create`'s copy (`0x105d98`), whose model, a register of it
+and its error queue a parameter is given by type and name as the
+primary's are.  The root task creates no exchange
 itself; its spool's id, at `0x10afbe`, which `0x103efe` creates as
 `"spoo"`, is a distinct id, from which `request_x` receives the SCPI
 task's creator, `0x107886`, at priority `0x19`, as the root task sends
@@ -888,7 +891,7 @@ compared as RAM is, pointers to the same literal or function the same;
 the unpacked image is a place literals lie, as ROM is, and is kept
 read-only: Unicorn protects whole 4 KB pages, and the image shares its
 first and last with the vectors and its data, so a write there is
-undone and ends the call as one to ROM does.  The primary's objects,
+undone and ends the call as one to ROM does.  The primary's other objects,
 the console port to the SCPI handlers' records, are not given.
 
 In the Z3805A 3543B image this gives 1813 functions, and every one but

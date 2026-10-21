@@ -732,9 +732,10 @@ class Profile:
     RECEIVED; string_devices as STRING_DEVICES; caller_name the name in
     a call's caller's frame, as CALLER_NAME; vsprintf its own, as
     VSPRINTF; buffers its arguments' buffers, as (start, bytes), in RAM
-    or apart from it; and objects whether its parameters are given the
-    primary's objects, OBJECTS to EXCHANGE_PARAMETERS and an SCPI
-    handler's."""
+    or apart from it; status_object where its status set-up keeps the
+    status model, as STATUS_OBJECT; and objects whether its parameters
+    are given the primary's other objects, OBJECTS to
+    EXCHANGE_PARAMETERS and an SCPI handler's."""
 
     overlay: str | None
     ram: bytes
@@ -751,6 +752,7 @@ class Profile:
     caller_name: int
     vsprintf: int
     buffers: tuple[int, int]
+    status_object: int
     objects: bool
 
     def exchange_ids(self) -> dict[int, int]:
@@ -782,6 +784,7 @@ PRIMARY = Profile(
     caller_name=CALLER_NAME,
     vsprintf=VSPRINTF,
     buffers=(BUFFER, ALLOCATIONS - BUFFER),
+    status_object=STATUS_OBJECT,
     objects=True,
 )
 # The installer (docs/firmware/restart.md, "Forced installer entry with
@@ -798,10 +801,11 @@ PRIMARY = Profile(
 # installer_kernel_create_x (0x101d84) are kernel_init's and
 # kernel_create_x's bytes, 0xeca06 higher, so that they run to the same
 # places.  The installer's root task (0x100d40) creates no exchange
-# itself and sets up the status system with 0x107a00 before it starts
-# its spool (0x103efe), which creates "spoo" (0x104088), passing the
-# name to ident, psos_create_x and psos_create_t, and keeps its id at
-# 0x10afbe; the root task then sends the spool the SCPI task's creator,
+# itself and sets up the status system with 0x107a00, which passes
+# INSTALLER_STATUS_OBJECT's address to status_create's copy (0x105d98),
+# before it starts its spool (0x103efe), which creates "spoo"
+# (0x104088), passing the name to ident, psos_create_x and
+# psos_create_t, and keeps its id at 0x10afbe; the root task then sends the spool the SCPI task's creator,
 # 0x107886, and priority 0x19 (0x100d20), as scpi_task_start does.  Its
 # arguments' buffers lie outside RAM, which its code fills, at
 # INSTALLER_BUFFERS, compared as RAM is.
@@ -809,6 +813,7 @@ INSTALLER = "installer"
 VECTOR_TABLE_SIZE = 0x400
 INSTALLER_PSOS_CONFIG = 0x10AB84
 INSTALLER_SPOO_EXCHANGE = 0x10AFBE
+INSTALLER_STATUS_OBJECT = 0x10AD06
 INSTALLER_BUFFERS = 0x900000
 
 
@@ -836,6 +841,7 @@ def installer_profile(image: bytes) -> Profile:
         caller_name=0x104088,
         vsprintf=0x10AAA6,
         buffers=(INSTALLER_BUFFERS, PRIMARY.buffers[1]),
+        status_object=INSTALLER_STATUS_OBJECT,
         objects=False,
     )
 
@@ -1053,10 +1059,8 @@ def arguments(
     values = []
     for i, (kind, name) in enumerate(zip(kinds, names or [None] * len(kinds))):
         at = (
-            None
-            if not objects
-            else exchange(m, case)
-            if EXCHANGE_PARAMETERS.get(function) == i
+            exchange(m, case)
+            if objects and EXCHANGE_PARAMETERS.get(function) == i
             else image_object(m, kind, name, case + POSITION_STRIDE * i)
         )
         values.append(
@@ -1097,7 +1101,7 @@ def call_record(m: RebuiltMachine, query: bool, path: str, parameters: int, resp
         (CALL_RESPONSE, ">I", response),
         (CALL_INPUT, ">I", CONSOLE_PORT),
         (CALL_OUTPUT, ">I", CONSOLE_PORT),
-        (CALL_STATUS, ">I", pointer_at(m, STATUS_OBJECT)),
+        (CALL_STATUS, ">I", pointer_at(m, m.profile.status_object)),
         (CALL_MAIN_TREE, ">I", SCPI_MAIN_TREE),
         (CALL_COMMON_LIST, ">I", SCPI_COMMON_LIST),
     ):
@@ -1163,18 +1167,20 @@ def keyword_text(m: Machine, node: int) -> str:
 
 def image_object(m: RebuiltMachine, kind: str, name: str | None, case: int) -> int | None:
     """The image's object a parameter of a name and type is given, the
-    case'th of those it may be; None if it is given none."""
-    if name in OBJECTS:
-        return OBJECTS[name]
-    if name == PATH:
-        return m.buffer(RESET_PATH)
-    if kind in VARIABLES:
-        return VARIABLES[kind]
-    if kind == SCPI_STEP:
-        return pointer_at(m, SAMPLE_INTEGER + DESCRIPTOR_STEPS)
+    case'th of those it may be; None if it is given none.  Every profile
+    gives its status model's; only one with objects the rest."""
+    if m.profile.objects:
+        if name in OBJECTS:
+            return OBJECTS[name]
+        if name == PATH:
+            return m.buffer(RESET_PATH)
+        if kind in VARIABLES:
+            return VARIABLES[kind]
+        if kind == SCPI_STEP:
+            return pointer_at(m, SAMPLE_INTEGER + DESCRIPTOR_STEPS)
     if kind not in (STATUS_MODEL, STATUS_REGISTER) and name != ERROR_QUEUE:
         return None
-    status = pointer_at(m, STATUS_OBJECT)
+    status = pointer_at(m, m.profile.status_object)
     if kind == STATUS_MODEL:
         return status
     if name == ERROR_QUEUE:

@@ -771,7 +771,8 @@
 0x1e766	function	duarta_isr	"DUARTA isr signaling SIG_SIQ"	the interrupt handler for DUART channel A, the GPS engine's	uint8_t duarta_isr(void)
 0x1e7f6	function	duartb_isr	"DUARTB isr signaling SIGINTR", "SIG_SIQ"	the interrupt handler for DUART channel B
 0x22d70	function	fpga_setup	"setup fpga"	sets the FPGA up
-0x22da4	function	fpga_program	"FPGA programmed", "ERROR: FPGA programming failed", "FPGA INIT did not go high"; outputs.md's loader	loads the FPGA's configuration
+0x21e2c	label	fpga_configurations	outputs.md	the FPGA's configurations: the highest index the loader takes, then each one's start and end; one real entry, the first bitstream	fpga_configuration_table
+0x22da4	function	fpga_program	"FPGA programmed", "ERROR: FPGA programming failed", "FPGA INIT did not go high"; outputs.md's loader	loads the FPGA's configuration	uint8_t fpga_program(fpga_configuration_index configuration, char with_task_name)
 0x23d80	function	hmon_check_supplies	"5V is out of tolerance, value: %.2f", "Secondary oven voltage", "15V", "-15V"	checks the supplies and the secondary oven voltage against their tolerances, reporting each that leaves or returns
 0x23e3e	call	log_write	read	the 5V reading, as a double (0x23e2c to 0x23e34)	int log_write(char *format, double value)
 0x23efc	call	log_write	read	the secondary oven voltage, as a double (0x23eea to 0x23ef2)	int log_write(char *format, double value)
@@ -841,7 +842,7 @@
 0x23304	local	buffers	read	the transfer it hands qspi_read or qspi_transfer: the 0xffff word written and the word read back (0x23326 to 0x23336)	qspi_buffers @ -0x60
 0x2353a	function	fpga_verify_even	context	the same for the even frames; "even: inv read"
 0x2353a	local	buffers	read	the transfer it hands qspi_read or qspi_transfer: the 0xffff word written and the word read back (0x23568 to 0x23578)	qspi_buffers @ -0x60
-0x2384a	function	fpga_verify_chip	context	verifies one chip through the port F lines; "chip %1d failed compare"
+0x2384a	function	fpga_verify_chip	context	verifies one chip through the port F lines; "chip %1d failed compare"	bool fpga_verify_chip(fpga_configuration_index configuration, char with_task_name, fpga_chip chip)
 0x242f0	function	hmon_check_efc	context	"EFC near end of range" when pll.efc stays outside 52428 to 996132, 5% to 95% of 2^20, five checks
 0x101cf4	label	efc_range	structures.md	efc_clamp's and hmon_check_efc's flags: clamped, near the end of range, and the checks outside it	efc_range_state
 0x24440	function	log_reset_cause	context	logs the last reset's cause with the time: "Exception: %s, vector %04X, PC = %08X" or "Watchdog timeout: clk %1d ..."
@@ -1492,7 +1493,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2081e	function	qspi_start	context	sets a transfer up and starts it, or releases the QSPI, and waits until it is done
 0x20902	function	qspi_init	context	the QSPI device's init, device 1's function 0: clears the QSM's queue RAM and sets SPCR0 to SPCR3 up		convention=register; confidence=read; preserves=D0, D1, A0, A1; family=device
 0x20a62	function	qspi_transfer_raw	context	takes the QSPI and runs a transfer, D0 the device, A1 the buffers and D2 the count		convention=register; confidence=read; in=D0 char device, A1 void *buffers, D2 short count; family=qspi
-0x23980	function	fpga_verify	context	fpga_verify_chip for chip 0 or 1
+0x23980	function	fpga_verify	context	fpga_verify_chip for chip 0 or 1	uint8_t fpga_verify(fpga_configuration_index configuration, char with_task_name)
 0x241cc	function	double_oven_warmed_up	context	1 once the double oven's ADC reads above 1.5; called by nothing
 0x2442c	function	exception_record_clear	context	clears the last exception and the crash message
 0x2458c	function	gps_pps_monitor_reset	context	clears the GPS 1PPS monitor's state

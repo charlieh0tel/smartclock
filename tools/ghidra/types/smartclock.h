@@ -960,7 +960,7 @@ typedef struct status_condition {
  * the Standard Event register is IEEE 488.2's power-on.  :DIAG:STAT:HAPP
  * n raises n + 0x16.  The conditions below 0x19, and 0x30 to 0x33, which
  * put an entry in the error queue (kind 3 and 4), have no name here. */
-typedef enum status_condition_code {
+typedef enum __attribute__((packed)) status_condition_code {
 	STATUS_POWER_ON = 0x19,                  /* *ESR? bit 7 */
 	STATUS_LOCKED_SET = 0x1a,                /* :OPERation bit 1, locked to GPS */
 	STATUS_LOCKED_CLEARED = 0x1b,
@@ -1408,6 +1408,38 @@ typedef struct gps_state {
 	uint8_t field_559;
 } gps_state;
 
+/* An FPGA configuration, a bitstream fpga_program loads and
+ * fpga_verify checks, by its index in fpga_configurations.  The table
+ * holds one, the first bitstream, the time-interval counter's design
+ * (outputs.md, "The FPGA bitstreams"). */
+typedef enum __attribute__((packed)) fpga_configuration_index {
+	FPGA_CONFIGURATION_COUNTER = 0,
+} fpga_configuration_index;
+
+/* The chip of a configuration fpga_verify_chip reads back: the first
+ * through port F bit 6, the second through bit 7, its bytes 0xf0d into
+ * the configuration (0x2384a). */
+typedef enum __attribute__((packed)) fpga_chip {
+	FPGA_CHIP_FIRST = 1,
+	FPGA_CHIP_SECOND = 2,
+} fpga_chip;
+
+/* A configuration's bitstream in ROM, from start to end. */
+typedef struct fpga_configuration_entry {
+	uint8_t *start;
+	uint8_t *end;
+} fpga_configuration_entry;
+
+/* The FPGA's configurations, at 0x21e2c: the highest index the loader
+ * and the checks take (cmp.b and bls at 0x22dbc, 0x23984 and 0x1891c),
+ * 1, though only entry 0 is a configuration and entry 1 would be read
+ * from the second bitstream's first bytes. */
+typedef struct fpga_configuration_table {
+	uint8_t last;                         /* +0x00 */
+	uint8_t field_01;
+	fpga_configuration_entry entries[1];  /* +0x02 */
+} fpga_configuration_table;
+
 /* The disciplining loop's state block: the stage the status screen
  * shows (docs/screen-format-strings.md, "Mode suffixes") and the PLL's
  * values.  Cleared as one, memset(&pll, 0, 0x3d6). */
@@ -1469,7 +1501,7 @@ typedef struct pll_state {
 	uint32_t holdover_duration;   /* +0x3c8: :ROSCillator:HOLDover:DURation? */
 	uint32_t reference_uptime;    /* +0x3cc: the uptime clock_set_from_reference counts from */
 	uint8_t reference_seconds;    /* +0x3d0: the FPGA's seconds count with it */
-	uint8_t fpga_load_pending;    /* +0x3d1: 1 from ROM 0x21e2c until fpga_setup loads it */
+	fpga_configuration_index fpga_configuration; /* +0x3d1: the configuration fpga_setup loaded and fpga_load_test loads again; pll_init starts it at fpga_configurations.last */
 	uint8_t fpga_loaded;          /* +0x3d2: the PPS checks wait for it */
 	uint8_t loop_running;         /* +0x3d3: 0 in diagnostic mode; nothing reads it */
 	uint8_t sync_requested;       /* +0x3d4: sync_perform syncs whatever the TI, then clears it */

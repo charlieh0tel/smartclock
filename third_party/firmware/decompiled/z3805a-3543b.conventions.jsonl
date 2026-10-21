@@ -1153,7 +1153,7 @@
 {"address":"0002f40c","name":"status_transitions_init","note":"sets registers 2 to 6's transition filters to their defaults from the setup table","convention":"unknown"}
 {"address":"0002f480","name":"status_init","note":"builds status_object with status_create, sets each register up, sets status_ready","convention":"unknown"}
 {"address":"0002f53a","name":"status_event_hook","note":"does nothing; status_report and status_happening pass it each event","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1}]}
-{"address":"0002f53c","name":"status_happening","note":":DIAG:STAT:HAPP passes it a condition, 0 to 0x38","convention":"unknown","stack":[{"offset":4,"size":1}]}
+{"address":"0002f53c","name":"status_happening","note":"raises a status condition: :DIAG:STAT:HAPP n passes condition n + 0x16, the firmware's own callers the condition itself, 0x16 to 0x4e (status_condition_code)","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"0002f626","name":"status_hardware_condition","note":"the :STATus:OPERation:HARDware condition, register 6, which status_summary folds","convention":"unknown"}
 {"address":"0002f64a","name":"happening_buffer_clear","note":"clears a buffer of status events kept before the status model is ready","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0002f668","name":"happening_buffers_clear","note":"clears both buffers of early status events","convention":"unknown"}

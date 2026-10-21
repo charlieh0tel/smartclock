@@ -262,6 +262,11 @@ CHECK_FIELD(status_register, parent, 0x0a);
 CHECK_FIELD(status_register, parent_bit, 0x0e);
 
 CHECK_SIZE(status_condition, 6);
+CHECK_SIZE(status_condition_code, 1);
+CHECK_SIZE(fpga_configuration_index, 1);
+CHECK_SIZE(fpga_chip, 1);
+CHECK_SIZE(fpga_configuration_entry, 8);
+CHECK_FIELD(fpga_configuration_table, entries, 0x02);
 
 /* status_create allocates 0x16 bytes and four a register; the first
  * four of those are registers[0]. */
@@ -430,7 +435,7 @@ CHECK_FIELD(pll_state, ti_filtered, 0x3b0);
 CHECK_FIELD(pll_state, efc_base, 0x3b4);
 CHECK_FIELD(pll_state, holdover_start_time, 0x3bc);
 CHECK_FIELD(pll_state, holdover_start_date, 0x3c0);
-CHECK_FIELD(pll_state, fpga_load_pending, 0x3d1);
+CHECK_FIELD(pll_state, fpga_configuration, 0x3d1);
 CHECK_FIELD(pll_state, loop_running, 0x3d3);
 CHECK_SIZE(gps_statistics, 0x36);
 CHECK_FIELD(gps_statistics, successes, 0x1017c8 - 0x1017bc);

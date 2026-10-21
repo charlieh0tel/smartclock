@@ -124,6 +124,7 @@ fpga_verify_odd	matches
 fpga_verify_even	matches
 fpga_verify_chip	matches
 fpga_verify	matches
+fpga_load_test	passed
 monitor_out_of_range	out_of_range	past the limit
 adc_average	average	the monitor's value, or the channel's default
 double_oven_warmed_up	warm

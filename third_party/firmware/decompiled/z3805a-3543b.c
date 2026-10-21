@@ -594,6 +594,30 @@ struct fpga_bit {
     uint8_t field_3;
 };
 
+typedef enum __attribute__((packed)) fpga_chip {
+    FPGA_CHIP_FIRST=1,
+    FPGA_CHIP_SECOND=2
+} fpga_chip;
+
+typedef struct fpga_configuration_entry fpga_configuration_entry, *Pfpga_configuration_entry;
+
+struct fpga_configuration_entry {
+    uint8_t *start;
+    uint8_t *end;
+};
+
+typedef enum __attribute__((packed)) fpga_configuration_index {
+    FPGA_CONFIGURATION_COUNTER=0
+} fpga_configuration_index;
+
+typedef struct fpga_configuration_table fpga_configuration_table, *Pfpga_configuration_table;
+
+struct fpga_configuration_table {
+    uint8_t last;
+    uint8_t field_01;
+    struct fpga_configuration_entry entries[1];
+};
+
 typedef struct gps_command_log gps_command_log, *Pgps_command_log;
 
 typedef struct gps_command_log_entry gps_command_log_entry, *Pgps_command_log_entry;
@@ -1446,7 +1470,7 @@ struct pll_state {
     uint32_t holdover_duration;
     uint32_t reference_uptime;
     uint8_t reference_seconds;
-    uint8_t fpga_load_pending;
+    enum fpga_configuration_index fpga_configuration;
     uint8_t fpga_loaded;
     uint8_t loop_running;
     uint8_t sync_requested;
@@ -2184,6 +2208,10 @@ _Static_assert(sizeof(exception_record) == 18, "exception_record");
 _Static_assert(sizeof(exchange_token) == 16, "exchange_token");
 _Static_assert(sizeof(forth_user_area) == 40, "forth_user_area");
 _Static_assert(sizeof(fpga_bit) == 4, "fpga_bit");
+_Static_assert(sizeof(fpga_chip) == 1, "fpga_chip");
+_Static_assert(sizeof(fpga_configuration_entry) == 8, "fpga_configuration_entry");
+_Static_assert(sizeof(fpga_configuration_index) == 1, "fpga_configuration_index");
+_Static_assert(sizeof(fpga_configuration_table) == 10, "fpga_configuration_table");
 _Static_assert(sizeof(gps_command_log) == 428, "gps_command_log");
 _Static_assert(sizeof(gps_command_log_entry) == 20, "gps_command_log_entry");
 _Static_assert(sizeof(gps_command_mailbox) == 22, "gps_command_mailbox");
@@ -2507,6 +2535,7 @@ extern char forth_begin_tag[10]; /* 00019556 */
 extern char forth_while_tag[10]; /* 0001956a */
 extern int32_t forth_sine_table[91]; /* 00019a2c */
 extern char loopback_idle_text[1]; /* 0001ed2c */
+extern fpga_configuration_table fpga_configurations; /* 00021e2c */
 extern uint8_t fpga_readback_mask[3847]; /* 00021e3b */
 extern uint16_t scpi_normalize_exponents[32]; /* 00025144 */
 extern double scpi_powers_of_ten[145]; /* 000256ae */
@@ -3046,8 +3075,6 @@ extern uint8_t LAB_000335be; /* 000335be */
 extern uint8_t LAB_00033862; /* 00033862 */
 extern uint8_t LAB_000338ce; /* 000338ce */
 extern uint8_t LAB_00033904; /* 00033904 */
-extern uint32_t *PTR_DAT_00021e2e; /* 00021e2e */
-extern uint32_t *PTR_DAT_00021e32; /* 00021e32 */
 extern uint32_t *PTR_DAT_0004cf80; /* 0004cf80 */
 extern uint32_t *PTR_DAT_00050e5e; /* 00050e5e */
 extern uint32_t *PTR_diag_cal_0001c8ac; /* 0001c8ac */
@@ -3235,8 +3262,6 @@ __asm__(".set LAB_000335be, 0x000335be");
 __asm__(".set LAB_00033862, 0x00033862");
 __asm__(".set LAB_000338ce, 0x000338ce");
 __asm__(".set LAB_00033904, 0x00033904");
-__asm__(".set PTR_DAT_00021e2e, 0x00021e2e");
-__asm__(".set PTR_DAT_00021e32, 0x00021e32");
 __asm__(".set PTR_DAT_0004cf80, 0x0004cf80");
 __asm__(".set PTR_DAT_00050e5e, 0x00050e5e");
 __asm__(".set PTR_diag_cal_0001c8ac, 0x0001c8ac");
@@ -3402,6 +3427,7 @@ __asm__(".set forth_sine_table, 0x00019a2c");
 __asm__(".set forth_terminal_input, 0x00100a04");
 __asm__(".set forth_while_tag, 0x0001956a");
 __asm__(".set fpga_bit_table, 0x00041310");
+__asm__(".set fpga_configurations, 0x00021e2c");
 __asm__(".set fpga_port, 0x00304000");
 __asm__(".set fpga_programming, 0x00101b6c");
 __asm__(".set fpga_readback_mask, 0x00021e3b");
@@ -5386,12 +5412,12 @@ void spoo_task(void);
 void deferred_flush(void);
 void debug_message(char *message,char with_task_name);
 void fpga_setup(void);
-uint8_t fpga_program(uint8_t param_1,char param_2);
+uint8_t fpga_program(fpga_configuration_index configuration,char with_task_name);
 bool fpga_verify_first(uint8_t *param_1,uint8_t *param_2,char param_3);
 bool fpga_verify_odd(uint8_t *param_1,uint8_t *param_2,char param_3);
 bool fpga_verify_even(uint8_t *param_1,uint8_t *param_2,char param_3);
-bool fpga_verify_chip(uint8_t param_1,char param_2,uint8_t param_3);
-uint8_t fpga_verify(uint8_t param_1,char param_2);
+bool fpga_verify_chip(fpga_configuration_index configuration,char with_task_name,fpga_chip chip);
+uint8_t fpga_verify(fpga_configuration_index configuration,char with_task_name);
 void monitors_reset(void);
 void monitor_average_add(adc_monitor *monitor,float reading);
 void monitor_filter_add(adc_monitor *monitor,float reading);
@@ -23056,25 +23082,26 @@ uint8_t qspi_adc_test(void)
 
 
 /* 00018918 */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* loads the FPGA and checks it */
 
 uint8_t fpga_load_test(void)
 
 {
-  char programmed;
-  uint8_t uVar2;
+  uint8_t uVar1;
   
-  programmed = fpga_program(0,0);
-  if (programmed == 0) {
-    uVar2 = 0;
+  uVar1 = fpga_program(0,0);
+  if (uVar1 == 0) {
+    uVar1 = 0;
   }
   else {
-    uVar2 = fpga_verify(0,0);
+    uVar1 = fpga_verify(0,0);
   }
-  return uVar2;
+  return uVar1;
 }
 
+#endif
 
 /* 0001895e */
 
@@ -39085,12 +39112,12 @@ void debug_message(char *message,char with_task_name)
 void fpga_setup(void)
 
 {
-  char programmed;
+  uint8_t programmed;
   
   task_dmessage("setup fpga\r\n");
-  programmed = fpga_program(0,1);
+  programmed = fpga_program(FPGA_CONFIGURATION_COUNTER,1);
   if (programmed != 0) {
-    pll.fpga_load_pending = 0;
+    pll.fpga_configuration = FPGA_CONFIGURATION_COUNTER;
     pll.fpga_loaded = 1;
   }
   return;
@@ -39104,10 +39131,10 @@ void fpga_setup(void)
    "FPGA programmed", "ERROR: FPGA programming failed", "FPGA INIT did not go high"; outputs.md's
    loader */
 
-uint8_t fpga_program(uint8_t param_1,char param_2)
+uint8_t fpga_program(fpga_configuration_index configuration,char with_task_name)
 
 {
-  uint16_t *puVar1;
+  uint8_t *puVar1;
   char cVar2;
   uint8_t uVar3;
   bool bVar4;
@@ -39115,11 +39142,11 @@ uint8_t fpga_program(uint8_t param_1,char param_2)
   uint8_t uVar6;
   char *pcVar7;
   char *pcVar8;
-  uint16_t *puVar9;
+  uint8_t *puVar9;
   char acStack_54 [80];
   
   uVar6 = 1;
-  if (1 < param_1) {
+  if (1 < configuration) {
     return 0;
   }
   fpga_programming = 1;
@@ -39155,7 +39182,7 @@ uint8_t fpga_program(uint8_t param_1,char param_2)
     uVar3 = sim.ddrf;
     sim.ddrf = uVar3 & 0xf7;
     if (bVar4) {
-      if (param_2 == 0) {
+      if (with_task_name == 0) {
         busy_wait(1);
       }
       else {
@@ -39171,27 +39198,27 @@ uint8_t fpga_program(uint8_t param_1,char param_2)
           pcVar7 = pcVar7 + 1;
           pcVar8 = pcVar8 + 1;
         } while (cVar2 != 0);
-        debug_message(acStack_54,param_2);
+        debug_message(acStack_54,with_task_name);
       }
-      puVar9 = (uint16_t *)(&PTR_DAT_00021e2e)[(uint32_t)param_1 * 2];
-      puVar1 = (uint16_t *)(&PTR_DAT_00021e32)[(uint32_t)param_1 * 2];
-      if (param_2 == 0) {
-        for (; puVar9 + 0x10 < puVar1; puVar9 = puVar9 + 0x10) {
-          qspi_send(6,puVar9,0x10);
+      puVar9 = fpga_configurations.entries[configuration].start;
+      puVar1 = fpga_configurations.entries[configuration].end;
+      if (with_task_name == 0) {
+        for (; puVar9 + 0x20 < puVar1; puVar9 = puVar9 + 0x20) {
+          qspi_send(6,(uint16_t *)puVar9,0x10);
         }
-        for (; puVar9 < puVar1; puVar9 = puVar9 + 2) {
-          qspi_send(9,puVar9,2);
+        for (; puVar9 < puVar1; puVar9 = puVar9 + 4) {
+          qspi_send(9,(uint16_t *)puVar9,2);
         }
       }
       else {
-        for (; puVar9 + 0x10 < puVar1; puVar9 = puVar9 + 0x10) {
+        for (; puVar9 + 0x20 < puVar1; puVar9 = puVar9 + 0x20) {
           qspi_write(6,puVar9,0x10);
         }
-        for (; puVar9 < puVar1; puVar9 = puVar9 + 2) {
+        for (; puVar9 < puVar1; puVar9 = puVar9 + 4) {
           qspi_write(9,puVar9,2);
         }
       }
-      if (param_2 == 0) {
+      if (with_task_name == 0) {
         busy_wait(2);
       }
       else {
@@ -39207,10 +39234,10 @@ uint8_t fpga_program(uint8_t param_1,char param_2)
           pcVar7 = pcVar7 + 1;
           pcVar8 = pcVar8 + 1;
         } while (cVar2 != 0);
-        debug_message(acStack_54,param_2);
+        debug_message(acStack_54,with_task_name);
         uVar6 = 0;
       }
-      else if (param_2 != 0) {
+      else if (with_task_name != 0) {
         task_dmessage("FPGA programmed\r\n");
       }
       uVar3 = sim.porte0;
@@ -39239,7 +39266,7 @@ uint8_t fpga_program(uint8_t param_1,char param_2)
       pcVar8 = pcVar8 + 1;
     } while (cVar2 != 0);
   }
-  debug_message(acStack_54,param_2);
+  debug_message(acStack_54,with_task_name);
   fpga_programming = 0;
   return 0;
 }
@@ -39557,7 +39584,7 @@ bool fpga_verify_even(uint8_t *param_1,uint8_t *param_2,char param_3)
 
 /* verifies one chip through the port F lines; "chip %1d failed compare" */
 
-bool fpga_verify_chip(uint8_t param_1,char param_2,uint8_t param_3)
+bool fpga_verify_chip(fpga_configuration_index configuration,char with_task_name,fpga_chip chip)
 
 {
   uint8_t uVar1;
@@ -39566,13 +39593,15 @@ bool fpga_verify_chip(uint8_t param_1,char param_2,uint8_t param_3)
   int32_t iVar4;
   uint32_t uVar5;
   uint8_t bVar6;
-  uint8_t *pbVar7;
-  uint8_t *puVar8;
+  uint8_t *puVar7;
+  uint8_t *pbVar8;
+  uint8_t *puVar9;
   char acStack_54 [80];
   
-  pbVar7 = (&PTR_DAT_00021e2e)[(uint32_t)param_1 * 2] + 5;
-  if (param_3 == 2) {
-    pbVar7 = (&PTR_DAT_00021e2e)[(uint32_t)param_1 * 2] + 0xf0d;
+  puVar9 = fpga_configurations.entries[configuration].start;
+  puVar7 = puVar9 + 5;
+  if (chip == FPGA_CHIP_SECOND) {
+    puVar7 = puVar9 + 0xf0d;
     bVar6 = 0x80;
   }
   else {
@@ -39588,40 +39617,40 @@ bool fpga_verify_chip(uint8_t param_1,char param_2,uint8_t param_3)
   sim.portf0 = bVar6 | uVar1;
   uVar1 = sim.portf0;
   sim.portf0 = uVar1 & 0xf7;
-  matches = fpga_verify_first(pbVar7,fpga_readback_mask,param_2);
+  matches = fpga_verify_first(puVar7,fpga_readback_mask,with_task_name);
   if (matches == 0) {
     bVar2 = false;
   }
   else {
-    pbVar7 = pbVar7 + 0xd;
-    puVar8 = fpga_readback_mask + 0xd;
+    pbVar8 = puVar7 + 0xd;
+    puVar9 = fpga_readback_mask + 0xd;
     bVar2 = true;
     for (uVar5 = 2; (bVar2 && ((int32_t)uVar5 < 0x11e)); uVar5 = uVar5 + 1) {
       if ((uVar5 & 1) == 0) {
-        matches = fpga_verify_even(pbVar7,puVar8,param_2);
+        matches = fpga_verify_even(pbVar8,puVar9,with_task_name);
         if (matches == 0) {
           bVar2 = false;
         }
-        pbVar7 = pbVar7 + 0xe;
-        puVar8 = puVar8 + 0xe;
+        pbVar8 = pbVar8 + 0xe;
+        puVar9 = puVar9 + 0xe;
       }
       else {
-        matches = fpga_verify_odd(pbVar7,puVar8,param_2);
+        matches = fpga_verify_odd(pbVar8,puVar9,with_task_name);
         if (matches == 0) {
           bVar2 = false;
         }
-        pbVar7 = pbVar7 + 0xd;
-        puVar8 = puVar8 + 0xd;
+        pbVar8 = pbVar8 + 0xd;
+        puVar9 = puVar9 + 0xd;
       }
     }
     if (bVar2 == false) {
-      debug_sprintf(acStack_54,"chip: %1d frame: %d\r\n",(uint32_t)param_3,uVar5 - 1);
-      debug_message(acStack_54,param_2);
+      debug_sprintf(acStack_54,"chip: %1d frame: %d\r\n",(uint32_t)chip,uVar5 - 1);
+      debug_message(acStack_54,with_task_name);
     }
   }
   if (bVar2 == false) {
-    debug_sprintf(acStack_54,"chip %1d failed compare\r\n",(uint32_t)param_3);
-    debug_message(acStack_54,param_2);
+    debug_sprintf(acStack_54,"chip %1d failed compare\r\n",(uint32_t)chip);
+    debug_message(acStack_54,with_task_name);
   }
   return bVar2;
 }
@@ -39632,18 +39661,18 @@ bool fpga_verify_chip(uint8_t param_1,char param_2,uint8_t param_3)
 
 /* fpga_verify_chip for chip 0 or 1 */
 
-uint8_t fpga_verify(uint8_t param_1,char param_2)
+uint8_t fpga_verify(fpga_configuration_index configuration,char with_task_name)
 
 {
-  uint8_t uVar1;
+  bool bVar1;
   
-  if (param_1 < 2) {
-    uVar1 = fpga_verify_chip(param_1,param_2,1);
+  if (configuration < 2) {
+    bVar1 = fpga_verify_chip(configuration,with_task_name,FPGA_CHIP_FIRST);
   }
   else {
-    uVar1 = 0;
+    bVar1 = false;
   }
-  return uVar1;
+  return bVar1;
 }
 
 #endif
@@ -63126,7 +63155,7 @@ void pll_init(void)
   pll.hold_causes = HOLD_CAUSE_NONE;
   pll.manual = 0;
   pll.ti_limit_override = 0;
-  pll.fpga_load_pending = 1;
+  pll.fpga_configuration = 1;
   leap_recheck_requested = 0;
   pll.tfom = 1.0;
   pll.sync_requested = 0;
@@ -63146,14 +63175,14 @@ void pll_init(void)
 void pll_restart(void)
 
 {
-  uint8_t uVar1;
+  fpga_configuration_index fVar1;
   uint8_t uVar2;
   
   uVar2 = pll.fpga_loaded;
-  uVar1 = pll.fpga_load_pending;
+  fVar1 = pll.fpga_configuration;
   pll_init();
   status_happening(STATUS_HOLDOVER_THRESHOLD_CLEARED);
-  pll.fpga_load_pending = uVar1;
+  pll.fpga_configuration = fVar1;
   pll.fpga_loaded = uVar2;
   pll.loop_running = 1;
   if (gps_ack_awaited != 0) {

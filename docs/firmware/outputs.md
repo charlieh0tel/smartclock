@@ -211,11 +211,15 @@ tolerance" on bit 5, which the 58503A's list leaves out.
 Every image carries two 3860-byte blocks, each starting `ff 20 07 86`,
 the header and length count of a Xilinx XC3000-family bitstream.  In
 the Z3805A, the loader `0x22da4` takes an index and reads that entry
-of the table at `0x21e2c`.  Each entry is a start and an end address
+of the table at `0x21e2c`, `fpga_configurations`, after a byte that
+is the highest index it takes, 1 (`0x22dbc`; the check at `0x23984`
+and `0x1891c` is the same).  Each entry is a start and an end address
 (`0x22e94` to `0x22ea0`).  The table holds one entry, `0x20f18` to
-`0x21e2c`, which is the first bitstream.  The boot code at `0x22d70`
-loads index 0 and keeps it at `0x102533`; the only other caller,
-`0x18938`, reloads that stored index.  The loader drives PROGRAM with
+`0x21e2c`, which is the first bitstream; an index of 1 would read its
+entry from the second block's first bytes.  The boot code at `0x22d70`
+loads index 0, `FPGA_CONFIGURATION_COUNTER` (`smartclock.h`), and
+keeps it at `0x102533`, `pll.fpga_configuration`; the only other
+caller, `0x18938`, reloads that stored index.  The loader drives PROGRAM with
 PORTE bit 6 and reads INIT and DONE on `0xfff90c` bit 3.  The second
 block starts right after the table, at `0x21e36`.  No table entry and
 no code address points to it.

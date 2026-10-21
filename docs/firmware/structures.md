@@ -422,7 +422,7 @@ Its other named fields, by the routines that use them:
 | `+0x3bc`, `+0x3c0` | `holdover_start_time`, `holdover_start_date` | `get_date_time`'s as `holdover` starts |
 | `+0x3c8` | `holdover_duration` | `:ROSCillator:HOLDover:DURation?` |
 | `+0x3cc`, `+0x3d0` | `reference_uptime`, `reference_seconds` | the uptime and the FPGA's seconds count `clock_set_from_reference` sets the clock from |
-| `+0x3d1` to `+0x3d3` | `fpga_load_pending`, `fpga_loaded`, `loop_running` | `pll_init` sets the first from ROM `0x21e2c`, 1; `fpga_setup` clears it and sets the second, which the PPS checks wait for, and `pll_restart` keeps both; the third is 0 in diagnostic mode and read by nothing |
+| `+0x3d1` to `+0x3d3` | `fpga_configuration`, `fpga_loaded`, `loop_running` | the first is a `fpga_configuration_index`: `pll_init` starts it at `fpga_configurations.last` (ROM `0x21e2c`, 1), `fpga_setup` sets it to the configuration it loaded, `FPGA_CONFIGURATION_COUNTER`, and `fpga_load_test` loads it again if it is below `last`, else configuration 0, so always 0; `fpga_setup` also sets the second, which the PPS checks wait for, and `pll_restart` keeps both; the third is 0 in diagnostic mode and read by nothing |
 | `+0x3d4` | `sync_requested` | `sync_perform` syncs whatever the TI while it is set, then clears it |
 | `+0x3d5` | `field_3d5` | read by the GPS receiver status and `status_snapshot`; nothing writes it but the block copy |
 

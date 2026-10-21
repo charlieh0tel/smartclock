@@ -263,7 +263,7 @@
 0x2f838	label	status_conditions	structures.md	status_create's condition table, status_set_bit's entries	status_condition[79]
 0x2f7ac	label	status_register_setup_table	structures.md	status_init's 22-byte entries, one a register, for status_register_setup
 0x2f480	function	status_init	structures.md	builds status_object with status_create, sets each register up, sets status_ready
-0x280ea	function	status_create	structures.md	allocates the status model and its registers, builds the queue
+0x280ea	function	status_create	structures.md	allocates the status model and its registers, builds the queue	uint32_t status_create(status_model **model, int register_count, int queue_capacity, status_condition *conditions, uint32_t reserved)
 0x2819c	function	status_register_setup	structures.md	one register's fields and its parent
 0x2820a	function	status_set_bit	structures.md	sets a condition's register bit through status_conditions	int16_t status_set_bit(status_model *status, int condition, int value)
 0x28388	function	status_clear_bit	structures.md	status_set_bit with 0	int16_t status_clear_bit(status_model *status, int condition)
@@ -560,7 +560,7 @@
 0x182cc	function	selftest_end	context	clears selftest_abort after a test
 0x183ce	function	selftest_aborted	context	selftest_abort is set
 0x182d4	function	selftest_may_report	context	true for mode 0 or when the test was not aborted
-0x26ee0	function	scpi_scan_token	context	the SCPI lexer: reads characters through the input's own routine and classifies them by the table at 0x277ec	int scpi_scan_token(scpi_port *input, scpi_token *token, int *param_3)
+0x26ee0	function	scpi_scan_token	context	the SCPI lexer: reads characters through the input's own routine and classifies them by the table at 0x277ec	int scpi_scan_token(scpi_port *input, scpi_token *token, scpi_engine_arena *arena)
 0x40248	function	interpolator_calibrate	context	sets HDAC channels 2 and 3 until interpolator_measure gives 1 to 25 and 201 to 225, 200 apart; ovens.md's Z3816A 0x43b56	uint8_t interpolator_calibrate(interpolator_calibration *calibration)
 0x40030	function	interpolator_measure	context	pulses the FPGA bits for a measurement and returns interpolator_read	uint8_t interpolator_measure(interpolator_reference reference)
 0x4007e	function	interpolator_measure_low	interpolator_calibrate	hdac_set of HDAC channel 2, then interpolator_measure(0)	uint8_t interpolator_measure_low(char_slot dac)
@@ -590,11 +590,11 @@
 0x405bc	function	counter_calibrate	context	runs interpolator_calibrate when the configuration asks, then stores reading_low and the spread at its +0x18 and +0x1c	void counter_calibrate(interval_reading_fields *reading, counter_configuration_fields *configuration)
 0x40c6a	function	counter_arm	context	reloads fconf_regs[0..3] from the configuration and re-arms the FPGA	void counter_arm(interval_reading_fields *reading, counter_configuration_fields *configuration)
 0x40d34	function	counter_read	context	interval.md's one reading: the coarse count plus (interpolator_read - +0x18) / +0x1c, times 1e-7, less the configuration's double at +4, into *reading	void counter_read(interval_reading_fields *reading, counter_configuration_fields *configuration)
-0x29b82	function	scpi_console_port	context	returns 0x29e18, the console port's object: console_port_read, its method table at 0x29dd4, then the "E%+04d> " and "scpi > " prompts; queries compare a request's source with it
+0x29b82	function	scpi_console_port	context	returns 0x29e18, the console port's object: console_port_read, its method table at 0x29dd4, then the "E%+04d> " and "scpi > " prompts; queries compare a request's source with it	scpi_port *scpi_console_port(void)
 0x29b8a	function	scpi_session_close	method table 0x29dd4, +4	closes the SCPI port; scpi_task calls it when scpi_interpret returns	void scpi_session_close(void)
 0x29b92	function	scpi_console_return_zero	method table 0x29dd4, +0x20 to +0x2c	returns 0; the four methods at +0x20 to +0x2c	int scpi_console_return_zero(void)
 0x29d22	function	scpi_console_write	method table 0x29dd4, +0x18 and +0x1c	writes up to n characters of a string, stopping at its NUL, through scpi_console_putc; its entry is a branch to scpi_console_write_loop, so Ghidra takes it for a thunk
-0x29d40	function	scpi_console_write_loop	read	scpi_console_write's loop, from its test of n, which its entry branches to	void scpi_console_write_loop(void *port, char *s, int n)
+0x29d40	function	scpi_console_write_loop	read	scpi_console_write's loop, from its test of n, which its entry branches to	void scpi_console_write_loop(scpi_port *port, char *s, int n)
 0x29bce	function	console_port_read	context	the first of the console port's routines; the SCPI input loop reads characters with it (a short result, 0x29cbc, which scpi_console_read extends at 0x29ba2)	int16_t console_port_read(void)
 0x11396	function	datetime_add	context	adds the first packed time and date to the second, carrying seconds, minutes, hours and days; klok adds an entry's period to its time	void datetime_add(packed_datetime *change, packed_datetime *value)
 0x11396	local	change_time	read	the first argument's time, copied (0x113a4)	time_of_day @ -0xc
@@ -1041,8 +1041,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x24e18	function	scpi_double_to_decimal	docs/scpi/README.md, run	the double in D0:D1 as a sign word, ASCII digits, D7 and two more, and the exponent of 0.d1d2..., into the record at A0; Z is set on failure, for a subnormal, infinite or NaN double, and its caller reads nothing else, though D0.w holds -8		convention=register; confidence=run; in=D0:D1 double value, D7 short digits, A0 char *record; returns=ccr; family=scpi-engine
 0x24d42	function	scpi_round_decimal	docs/scpi/README.md, read	rounds the decimal record at A2 to D0.w digits: adds 5 at that digit and carries left, a carry off the front writing 1 and raising the exponent, and fills the digits after with 0		convention=register; confidence=read; in=A2 char *record, D0 short digits; family=scpi-engine
 0x24d88	function	scpi_decimal_to_text_unused	docs/scpi/README.md, read	writes the decimal record at A0 as NR3 text at A1, D0.w digits: the sign, the first digit, a point, the rest, E and the exponent by the digit pairs at 0x25c82; nothing calls it		convention=register; confidence=read; in=A0 char *record, A1 char *text, D0 short digits; family=scpi-engine
-0x254fe	function	scpi_number_to_bcd	docs/scpi/README.md, read	a parsed number at A0 packed into the BCD record at A1, its exponent plus D0 plus 16 at +0xa; -1 beyond 309		convention=register; confidence=read; in=A0 scpi_number *number, D0 short scale, A1 char *bcd; out=D0 int status; returns=ccr; error=D0 -1 exponent beyond 309; family=scpi-engine
-0x2507a	function	scpi_bcd_to_double	docs/scpi/README.md, run, as scpi_number_to_double	the 16 BCD digits as a 64-bit integer, normalized, then scaled by scpi_scale_by_power_of_ten		convention=register; confidence=run; in=A0 char *bcd; out=D0:D1 double; returns=ccr; error=D0.w -9 out of range; family=scpi-engine
+0x254fe	function	scpi_number_to_bcd	docs/scpi/README.md, read	a parsed number at A0 packed into the BCD record at A1, its exponent plus D0 plus 16 at +0xa; -1 beyond 309		convention=register; confidence=read; in=A0 scpi_number *number, D0 short scale, A1 scpi_engine_bcd *bcd; out=D0 int status; returns=ccr; error=D0 -1 exponent beyond 309; family=scpi-engine
+0x2507a	function	scpi_bcd_to_double	docs/scpi/README.md, run, as scpi_number_to_double	the 16 BCD digits as a 64-bit integer, normalized, then scaled by scpi_scale_by_power_of_ten		convention=register; confidence=run; in=A0 scpi_engine_bcd *bcd; out=D0:D1 double; returns=ccr; error=D0.w -9 out of range; family=scpi-engine
 0x251e4	function	scpi_scale_by_power_of_ten	docs/scpi/README.md, run	the double in D0:D1 times 10 to the word at A0 less 16, by the tables at 0x256ae and 0x25b36; the sign from the word 10 bytes before; -9 beyond 309		convention=register; confidence=run; in=D0:D1 double value, A0 short *exponent, A1 double *powers; out=D0:D1 double; returns=ccr; error=D0.w -9 beyond 309; family=scpi-engine
 0x252bc	function	scpi_double_multiply	docs/scpi/README.md, run	D0:D1 times D2:D3, the engine's own IEEE multiply		convention=register; confidence=run; in=D0:D1 double a, D2:D3 double b; out=D0:D1 double; returns=ccr; error=D2 -2 underflow, D2 -1 overflow; preserves=A0; family=scpi-engine
 0x25468	function	scpi_double_multiply_short	docs/scpi/README.md, read	scpi_double_multiply's path for an operand whose mantissa fits in 16 bits		convention=other; confidence=read; family=scpi-engine
@@ -1060,9 +1060,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x264e0	function	scpi_unsigned_to_digits	docs/scpi/README.md, read	decimal digits right-aligned in a 17-byte buffer, -40 if they do not fit	int scpi_unsigned_to_digits(uint32_t value, char *digits, short *start)
 0x2636e	function	scpi_format_text	docs/scpi/README.md, read	a string as it is	int scpi_format_text(scpi_port *output, char **value)
 0x2639e	function	scpi_format_string	docs/scpi/README.md, read	a string in double quotes, each quote doubled	int scpi_format_string(scpi_port *output, char **value)
-0x26438	function	scpi_format_counted_text	docs/scpi/README.md, read	text of a given length; returns -90 always, for a reason not known	int scpi_format_counted_text(scpi_port *output, short *text)
+0x26438	function	scpi_format_counted_text	docs/scpi/README.md, read	text of a given length; returns -90 always, for a reason not known	int scpi_format_counted_text(scpi_port *output, scpi_token_string *text)
 0x2640c	function	scpi_format_boolean	docs/scpi/README.md, read	0 or 1	int scpi_format_boolean(scpi_port *output, short *value)
-0x26460	function	scpi_format_choice	docs/scpi/README.md, read	the keyword for the value, from the node's list	int scpi_format_choice(scpi_port *output, short *value, int *param_3)
+0x26460	function	scpi_format_choice	docs/scpi/README.md, read	the keyword for the value, from the node's list	int scpi_format_choice(scpi_port *output, short *value, scpi_engine_choices *choices)
 0x26522	function	scpi_format_long	docs/scpi/README.md, read	+ or -, then the digits	int scpi_format_long(scpi_port *output, int32_t *value)
 0x265a2	function	scpi_format_short	docs/scpi/README.md, read	through scpi_format_long	int scpi_format_short(scpi_port *output, short *value)
 0x265c2	function	scpi_format_unsigned_long	docs/scpi/README.md, read	+ and the digits	int scpi_format_unsigned_long(scpi_port *output, uint32_t *value)
@@ -1070,13 +1070,13 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x26870	function	scpi_format_double	docs/scpi/README.md, read	15 significant digits by scpi_real_to_text	int scpi_format_double(scpi_port *output, double *value)
 0x268c4	function	scpi_format_float	docs/scpi/README.md, read	6 significant digits by scpi_real_to_text	int scpi_format_float(scpi_port *output, float *value)
 0x269a6	function	scpi_format_double_resolution	docs/scpi/README.md, read	15 digits to the resolution given	int scpi_format_double_resolution(scpi_port *output, double *value, short *resolution)
-0x26a06	function	scpi_format_float_resolution	docs/scpi/README.md, read	6 digits to the resolution the value carries	int scpi_format_float_resolution(scpi_port *output, float *value)
-0x2692c	function	scpi_format_double_precision	docs/scpi/README.md, read	a double whose record gives either its digits or its resolution	int scpi_format_double_precision(scpi_port *output, int *param_2)
-0x2663e	function	scpi_format_block	docs/scpi/README.md, read	a definite-length block, #, the count of length digits, the length, then the data	int scpi_format_block(scpi_port *output, uint32_t *block)
-0x2671c	function	scpi_format_short_array	docs/scpi/README.md, read	comma-separated, by scpi_format_short
-0x266d0	function	scpi_format_double_array	docs/scpi/README.md, read	comma-separated, by scpi_format_double
-0x26768	function	scpi_format_resolution_array	docs/scpi/README.md, read	comma-separated, by scpi_format_double_resolution, a resolution for each
-0x267c0	function	scpi_format_array	docs/scpi/README.md, read	by its kind, a block, a double array or a short array
+0x26a06	function	scpi_format_float_resolution	docs/scpi/README.md, read	6 digits to the resolution the value carries	int scpi_format_float_resolution(scpi_port *output, scpi_engine_float_resolution *value)
+0x2692c	function	scpi_format_double_precision	docs/scpi/README.md, read	a double whose record gives either its digits or its resolution	int scpi_format_double_precision(scpi_port *output, scpi_engine_precise_double *value)
+0x2663e	function	scpi_format_block	docs/scpi/README.md, read	a definite-length block, #, the count of length digits, the length, then the data	int scpi_format_block(scpi_port *output, scpi_engine_block *block)
+0x2671c	function	scpi_format_short_array	docs/scpi/README.md, read	comma-separated, by scpi_format_short	int scpi_format_short_array(scpi_port *output, scpi_engine_array *array)
+0x266d0	function	scpi_format_double_array	docs/scpi/README.md, read	comma-separated, by scpi_format_double	int scpi_format_double_array(scpi_port *output, scpi_engine_array *array)
+0x26768	function	scpi_format_resolution_array	docs/scpi/README.md, read	comma-separated, by scpi_format_double_resolution, a resolution for each	int scpi_format_resolution_array(scpi_port *output, scpi_engine_resolution_array *array)
+0x267c0	function	scpi_format_array	docs/scpi/README.md, read	by its kind, a block, a double array or a short array	int scpi_format_array(scpi_port *output, scpi_engine_array_record *record)
 0x26816	function	scpi_format_resolution_array_record	docs/scpi/README.md, read	by its kind, a block or a resolution array, then the record's release callback	int scpi_format_resolution_array_record(scpi_port *output, char *record)
 #
 # the SCPI settings' descriptor callbacks, and the helpers they use
@@ -1320,7 +1320,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1303c	function	klok_take_pending	context	takes and clears the pending cell at 0x10382c
 0x1dee6	function	scpi_port_open	context	opens the SCPI port, device 0
 0x1def4	function	scpi_port_close	context	closes the SCPI port, device 0: psos_io_close(0)	void scpi_port_close(void)
-0x29b42	function	scpi_session_init	context	clears the SCPI input, opens the port and prompts
+0x29b42	function	scpi_session_init	context	clears the SCPI input, opens the port and prompts	scpi_port *scpi_session_init(void)
 0x29d98	function	status_update_rqs	context	sets or clears RQS, 0x40, in the status byte from the service request enable
 #
 # routines several tasks share
@@ -1343,7 +1343,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x28044	function	status_condition_clear	structures.md's status registers	clears condition bits; those falling through the negative transition mask become events; the bits a long whose low word it reads	void status_condition_clear(status_model *status, status_register *reg, int bits)
 0x280a4	function	status_propagate	structures.md's status registers	sets or clears a register's summary bit in its parent from its event and enable words	void status_propagate(status_model *status, status_register *reg)
 0x282ce	function	status_apply_condition	structures.md's status registers	applies a condition by its kind: event set, condition set, condition clear, or the error queue	void status_apply_condition(status_model *status, int condition, int param_3)
-0x285d4	function	error_queue_push	context	adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full	int16_t error_queue_push(short *error_queue, int code, uint32_t value)
+0x285d4	function	error_queue_push	context	adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full	int16_t error_queue_push(scpi_engine_error_queue *error_queue, int code, uint32_t value)
 0x288ee	function	error_message_lookup	context	an error code's message, from the table at 0x28910; the code a word (0x288f6)	char *error_message_lookup(int code)
 0x2f626	function	status_hardware_condition	structures.md's status registers	the :STATus:OPERation:HARDware condition, register 6, which status_summary folds	undefined2 status_hardware_condition(void)
 0x29e3c	function	status_prompt_refresh	context	prompts again when the status object that changed is the main one; a method of the status output object	void status_prompt_refresh(status_model *param_1,undefined4 param_2)
@@ -1500,7 +1500,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2470c	function	internal_pps_monitor_reset	context	clears the internal 1PPS monitor's state
 0x24984	function	pps_monitors_reset	context	clears both 1PPS monitors
 0x26a80	function	scpi_context_init	context	fills a parser context's eight fields; called by nothing
-0x26ab6	function	scpi_parse_message_unit	context	parses one program message unit: its header, then its parameters, token by token; sets *reset_path, which has scpi_interpret reset the path before the next	int scpi_parse_message_unit(void *context, short *reset_path)
+0x26ab6	function	scpi_parse_message_unit	context	parses one program message unit: its header, then its parameters, token by token; sets *reset_path, which has scpi_interpret reset the path before the next	int scpi_parse_message_unit(scpi_engine_context *context, short *reset_path)
 0x26ab6	local	token	read	the lexer's token, which scpi_scan_token fills (0x26ad8) and the header routines and converters read (0x26ba0, 0x26c98); 0x26 bytes, to the word at -0x2 of A6	scpi_token @ -0x2c
 0x27388	function	scpi_skip_to_terminator	context	reads characters until a message terminator	void scpi_skip_to_terminator(scpi_port *input)
 0x273cc	function	scpi_scan_number	context	scans a decimal number's digits, point and exponent into a parsed number; scpi_scan_token passes 1 and the character it has read, each a long whose low word it reads	int scpi_scan_number(scpi_number *number, int have_character, int character, scpi_port *input)
@@ -1509,43 +1509,43 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x279d6	function	scpi_suffix_compare_tail	context	how much of a token's end matches a unit's name; the length a word (0x279da, 0x279f4)	short scpi_suffix_compare_tail(char *suffix, int length, char *name)
 0x27a0c	function	scpi_multiplier_exponent	context	a unit multiplier's power of ten, from the table at 0x27b2e; -128 for none; the name a word (0x27a12), the exponent a byte (0x27a1a, 0x27a26)	int8_t scpi_multiplier_exponent(int name)
 0x27b62	function	scpi_keyword_compare	context	compares a token with a keyword's short and long forms; the length a word (0x27b94)	short scpi_keyword_compare(char *token, int length, char *keyword)
-0x27baa	function	scpi_node_find	context	finds a keyword in a child list, by bisection	void *scpi_node_find(void *list, scpi_keyword *keyword)
-0x27c22	function	scpi_node_find_with_defaults	context	finds a keyword, else follows the default nodes, recording their suffixes	int scpi_node_find_with_defaults(int *path, short *keyword, void *unused)
-0x27c94	function	scpi_node_find_numbered	context	finds a keyword with its numeric suffix stripped and kept	int scpi_node_find_numbered(int *path, short *keyword, void *unused)
-0x27e9e	function	scpi_header_step	context	moves the path one keyword down a compound header	undefined4 scpi_header_step(short *keyword, int *path, void *unused)
-0x27efe	function	scpi_path_reset	context	sets a header path back to a root list
-0x27f7e	function	scpi_trg_defined	context	looks _TRG up in a list: whether the common list defines it	void *scpi_trg_defined(void *list, uint16_t *no_setter)
+0x27baa	function	scpi_node_find	context	finds a keyword in a child list, by bisection	scpi_engine_node *scpi_node_find(scpi_engine_child_list *list, scpi_keyword *keyword)
+0x27c22	function	scpi_node_find_with_defaults	context	finds a keyword, else follows the default nodes, recording their suffixes	scpi_engine_node *scpi_node_find_with_defaults(scpi_engine_path *path, scpi_keyword *keyword, void *unused)
+0x27c94	function	scpi_node_find_numbered	context	finds a keyword with its numeric suffix stripped and kept	scpi_engine_node *scpi_node_find_numbered(scpi_engine_path *path, scpi_keyword *keyword, void *unused)
+0x27e9e	function	scpi_header_step	context	moves the path one keyword down a compound header	uint32_t scpi_header_step(scpi_keyword *keyword, scpi_engine_path *path, void *unused)
+0x27efe	function	scpi_path_reset	context	sets a header path back to a root list	void scpi_path_reset(scpi_engine_path *path, scpi_engine_child_list *list)
+0x27f7e	function	scpi_trg_defined	context	looks _TRG up in a list: whether the common list defines it	scpi_engine_node *scpi_trg_defined(scpi_engine_child_list *list, uint16_t *no_setter)
 0x27f7e	local	keyword	read	"_TRG", copied in and looked up	scpi_keyword @ -0x18
 0x28160	function	status_destroy	context	frees the status model's queue and registers; called by nothing	void status_destroy(status_model *status)
 0x2839c	function	condition_is_command_error	context	1 for a negative condition of the error kind with a code from -199 to -100, a command error
 0x283d2	function	status_condition_bit_get	context	a condition's bit in its register's condition word, inverted for kind 2	void status_condition_bit_get(status_model *status, int condition, uint32_t *bit)
 0x28474	function	status_register_get_enable	context	a status register's enable mask, as the :ENABle? and *ESE? queries read it	void status_register_get_enable(status_model *status, int index, uint16_t *enable)
-0x2851a	function	status_clear_events	context	reads every register's event word, clearing them, for *CLS
+0x2851a	function	status_clear_events	context	reads every register's event word, clearing them, for *CLS	uint32_t status_clear_events(status_model *status)
 0x2854a	function	error_queue_clear	context	empties the error queue, for *CLS	void error_queue_clear(status_model *status, int *code)
 0x2856c	function	error_queue_read	context	takes the oldest error from the queue	void error_queue_read(status_model *status, int *code, uint32_t *message)
 #
 # the error queue, the parser's arena and SCPI helpers
-0x28588	function	error_queue_create	context	allocates the error queue ring with room for so many entries
-0x2869e	function	error_queue_pop	context	takes the oldest error and its message, prompting again once the queue is empty; 0 when empty
-0x28712	function	error_queue_destroy	context	frees the error queue
+0x28588	function	error_queue_create	context	allocates the error queue ring with room for so many entries	uint32_t error_queue_create(scpi_engine_error_queue **queue, int capacity, status_model *status)
+0x2869e	function	error_queue_pop	context	takes the oldest error and its message, prompting again once the queue is empty; 0 when empty	void error_queue_pop(scpi_engine_error_queue *error_queue, int *code, uint32_t *value)
+0x28712	function	error_queue_destroy	context	frees the error queue	void error_queue_destroy(scpi_engine_error_queue *queue)
 0x2889a	function	status_register_set_ptr	structures.md's status registers	sets a register's positive transition filter, for :PTRansition; the filter a word (0x288a6)	void status_register_set_ptr(status_model *status, int index, uint32_t filter)
 0x288ae	function	status_register_set_ntr	structures.md's status registers	sets a register's negative transition filter, for :NTRansition; the filter a word (0x288ba)	void status_register_set_ntr(status_model *status, int index, uint32_t filter)
 0x288c2	function	status_register_get_ptr	structures.md's status registers	a register's positive transition filter, for :PTRansition?	void status_register_get_ptr(status_model *status, int index, uint16_t *filter)
 0x288d8	function	status_register_get_ntr	structures.md's status registers	a register's negative transition filter, for :NTRansition?	void status_register_get_ntr(status_model *status, int index, uint16_t *filter)
-0x29642	function	scpi_call_handler	context	calls a node's handler with the call record's parameters, its response and the record, first taking room in the arena for a query's response	int scpi_call_handler(void *call, void **response)
-0x29690	function	scpi_format_response	context	writes a response's items through their formatters	int scpi_format_response(scpi_port *output, void *items, void *call)
-0x29700	function	arena_alloc	context	takes so many bytes, rounded up to even, from an arena; 0 if it is full
-0x2972c	function	arena_remaining	context	the bytes left in an arena, and its next free byte
-0x29742	function	arena_take	context	takes so many bytes, rounded up to even, from a buffer
-0x2975e	function	arena_current	context	an arena's next free byte
-0x29766	function	arena_set	context	sets an arena's next free byte
-0x29770	function	arena_init	context	makes an arena of a buffer of so many bytes
+0x29642	function	scpi_call_handler	context	calls a node's handler with the call record's parameters, its response and the record, first taking room in the arena for a query's response	int scpi_call_handler(scpi_engine_call *call, void **response)
+0x29690	function	scpi_format_response	context	writes a response's items through their formatters	int scpi_format_response(scpi_port *output, scpi_engine_response_item *items, scpi_engine_call *call)
+0x29700	function	arena_alloc	context	takes so many bytes, rounded up to even, from an arena; 0 if it is full	void *arena_alloc(int size, scpi_engine_arena *arena)
+0x2972c	function	arena_remaining	context	the bytes left in an arena, and its next free byte	void *arena_remaining(int *remaining, scpi_engine_arena *arena)
+0x29742	function	arena_take	context	takes so many bytes, rounded up to even, from a buffer	void *arena_take(void *buffer, int size, scpi_engine_arena *arena)
+0x2975e	function	arena_current	context	an arena's next free byte	void *arena_current(scpi_engine_arena *arena)
+0x29766	function	arena_set	context	sets an arena's next free byte	void arena_set(void *next, scpi_engine_arena *arena)
+0x29770	function	arena_init	context	makes an arena of a buffer of so many bytes	void arena_init(void *buffer, uint32_t size, scpi_engine_arena **arena)
 0x29a24	function	copy_longs_locked	context	copies so many longs with interrupts held off	void copy_longs_locked(uint32_t *source, uint32_t *destination, uint8_t count)
-0x29a68	function	robin_store	context	stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36	void robin_store(char *response, short *points, long count, char format, uint8_t index)
+0x29a68	function	robin_store	context	stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36	void robin_store(scpi_engine_array_record *response, short *points, long count, char format, uint8_t index)
 0x29b08	function	rtcm_supported	context	0: RTCM corrections are not supported	undefined1 rtcm_supported(void)
 0x29b96	function	scpi_console_read	context	reads up to so many characters from the console, marking the input ended at its end	int32_t scpi_console_read(scpi_port *port, uint8_t *buffer, int32_t length)
 0x29cc6	function	scpi_input_ended	context	marks the SCPI input ended
-0x29cd0	function	scpi_console_putc	context	writes a character to the console, keeping it in the echo buffer, or CR LF for an end
+0x29cd0	function	scpi_console_putc	context	writes a character to the console, keeping it in the echo buffer, or CR LF for an end	void scpi_console_putc(scpi_port *port, int character)
 0x29d50	function	status_byte_set_bits	context	the status output object's method: sets bits in the status byte and updates RQS	void status_byte_set_bits(scpi_port *port, int32_t bits)
 0x29d62	function	status_byte_clear_bits	context	the status output object's method: clears bits in the status byte and updates RQS	void status_byte_clear_bits(scpi_port *port, int32_t bits)
 0x29d76	function	status_sre_set	context	the status output object's method: sets the service request enable and updates RQS	void status_sre_set(scpi_port *port, int32_t bits)
@@ -1660,8 +1660,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4f87e	function	oncore_receiver_id_message	gps.md	decodes the receiver ID, @@Cj, and marks it received
 0x4fb86	function	gps_response_match	context	checks a response against the request it answers
 0x51038	function	psos_config_init	psos.md	copies the kernel's configuration and its I/O table into RAM
-0x510aa	function	memory_allocate	psos.md	allocates from region 1 through service 8
-0x510d2	function	memory_free	psos.md	frees a segment through service 9
+0x510aa	function	memory_allocate	psos.md	allocates from region 1 through service 8	void *memory_allocate(uint32_t size)
+0x510d2	function	memory_free	psos.md	frees a segment through service 9	void memory_free(void *segment)
 #
 # the boot code
 0x400	function	boot_duartb_loopback_check	context	the boot code's duartb_loopback_check: sends "DUART" through channel B in local loopback; 0x10 at 0x10ab2c if a character comes back wrong, 0x20 if none comes
@@ -1859,8 +1859,8 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x208fa	function	qspi_control	psos.md	the QSPI device's control: does nothing		convention=register; confidence=read; out=D7 int error; family=device
 0x208fe	function	qspi_open	psos.md	the QSPI device's open and close: do nothing		convention=register; confidence=read; out=D7 int error; family=device
 0x20ab0	function	qspi_device_write	psos.md	the QSPI device's write: queues for the QSPI, then runs the transfer		convention=register; confidence=read; in=D0 char device, A0 void *buffers, D2 short count; family=device
-0x278f4	function	scpi_parameter_match	context	finds the next parameter descriptor that takes a parameter of the kind, marking optional ones it passes 0xffff; the kind a long whose low word it reads (0x27900)	int scpi_parameter_match(int *param_1, int kind, void *param_3, short *param_4)
-0x2797a	function	scpi_parameters_finish	context	marks the descriptors left 0xffff, omitted, unless one is required	undefined4 scpi_parameters_finish(int *param_1, void *param_2, short *param_3)
+0x278f4	function	scpi_parameter_match	context	finds the next parameter descriptor that takes a parameter of the kind, marking optional ones it passes 0xffff; the kind a long whose low word it reads (0x27900)	int scpi_parameter_match(scpi_engine_parameter **parameter, int kind, scpi_engine_call *call, short *offset)
+0x2797a	function	scpi_parameters_finish	context	marks the descriptors left 0xffff, omitted, unless one is required	uint32_t scpi_parameters_finish(scpi_engine_parameter **parameter, scpi_engine_call *call, short *offset)
 0x27d80	function	scpi_header_resolve	context	resolves a command header to its node and handler, through defaults and numeric suffixes, and takes room for its parameters
 0x27f10	function	scpi_common_header_resolve	context	resolves a common command's header to its node and handler and takes room for its parameters
 0x292d6	function	scpi_interpret	context	the parser's loop: parses each message unit, calls its handler, writes its response and reports errors, until the input ends	undefined4 scpi_interpret(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5, undefined4 param_6,undefined4 param_7,undefined4 param_8,undefined4 param_9)

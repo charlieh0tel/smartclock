@@ -1020,14 +1020,16 @@ typedef void scpi_port_write_function(struct scpi_port* port, char* text,
                                       int length);
 typedef void scpi_port_bits_function(struct scpi_port* port, int bits);
 typedef uint8_t scpi_port_byte_function(struct scpi_port* port);
+typedef void scpi_port_close_function(struct scpi_port* port);
 
 /* A port's method table, the console's at 0x29dd4: what the SCPI parser
  * reads commands through, the formatters write responses through, and
  * the status system keeps the status byte through.  Untyped entries are
  * those whose arguments no caller shows. */
 typedef struct scpi_port_methods {
-  void* open;  /* +0x00: scpi_session_init, which returns the port */
-  void* close; /* +0x04: scpi_session_close */
+  void* open; /* +0x00: scpi_session_init, which returns the port */
+  scpi_port_close_function*
+      close; /* +0x04: scpi_session_close, which reads no argument */
   scpi_port_read_function*
       read; /* +0x08: console_port_read, as the port's own */
   scpi_port_unread_function*
@@ -1070,6 +1072,190 @@ typedef struct scpi_step {
   uint32_t value;               /* +0x00: the step's bits, a float or a long */
   scpi_step_function* function; /* +0x04 */
 } scpi_step;
+
+/* The packed decimal record scpi_number_to_bcd fills and
+ * scpi_bcd_to_double reads (docs/scpi/README.md, "Parameters and
+ * responses"): two digits a byte, and the exponent of the 16 digits'
+ * integer plus 16 and the scale (0x254fe). */
+typedef struct scpi_engine_bcd {
+  int16_t negative;  /* +0x00 */
+  uint8_t digits[8]; /* +0x02 */
+  int16_t exponent;  /* +0x0a */
+} scpi_engine_bcd;
+
+/* An arena, at the start of the buffer it hands out: its next free
+ * byte and its last (arena_init, 0x29770). */
+typedef struct scpi_engine_arena {
+  uint8_t* next; /* +0x00 */
+  uint8_t* last; /* +0x04 */
+} scpi_engine_arena;
+
+struct scpi_engine_call;
+/* A handler, the routine a node's setter or query entry holds: the
+ * call's parameters, its response and the call (scpi_call_handler,
+ * 0x29642). */
+typedef int32_t scpi_engine_handler_function(uint8_t* parameters,
+                                             void* response,
+                                             struct scpi_engine_call* call);
+
+/* A response item's formatter: the port, the value at its place in the
+ * response, the item's argument and the call (scpi_format_response,
+ * 0x29690). */
+typedef int32_t scpi_engine_format_function(struct scpi_port* output,
+                                            void* value, uint32_t argument,
+                                            struct scpi_engine_call* call);
+
+/* A choice parameter's list, the node's for scpi_parse_choice and
+ * scpi_format_choice: its keywords to a NULL, and the value each gives,
+ * or NULL for its index (0x26460). */
+typedef struct scpi_engine_choices {
+  char** keywords; /* +0x00 */
+  int16_t* values; /* +0x04 */
+} scpi_engine_choices;
+
+/* A parameter's descriptor, what scpi_parameter_match and
+ * scpi_parse_message_unit read (0x26c3e to 0x26c80): converters runs on
+ * past the record, one for each parameter kind. */
+typedef struct scpi_engine_parameter_kinds {
+  int16_t size;     /* +0x00: the value's bytes, after its kind word */
+  int16_t optional; /* +0x02: nonzero when it may be left out */
+  scpi_unit* units; /* +0x04 */
+  scpi_engine_choices* choices; /* +0x08 */
+  void* converters[]; /* +0x0c: by the token's kind, NULL for one it does not
+                         take; each kind's routine takes its own arguments */
+} scpi_engine_parameter_kinds;
+
+/* A parameter a node takes, one of the list scpi_parameter_match walks
+ * (0x278f4). */
+typedef struct scpi_engine_parameter {
+  struct scpi_engine_parameter* next; /* +0x00 */
+  scpi_engine_parameter_kinds* kinds; /* +0x04 */
+} scpi_engine_parameter;
+
+/* A node's setter or query entry, 10 bytes (docs/scpi/README.md, "How
+ * it is read"; scpi_call_handler, 0x29658). */
+typedef struct scpi_engine_handler {
+  scpi_engine_handler_function* function; /* +0x00 */
+  scpi_engine_parameter*
+      parameters; /* +0x04: what it takes (scpi_header_resolve, 0x27d80) */
+  int16_t parameters_size; /* +0x08: the bytes they take in the call's buffer */
+} scpi_engine_handler;
+
+/* One item of a query's response: how scpi_format_response writes the
+ * value at its place in the response, 10 bytes (0x296dc). */
+typedef struct scpi_engine_response_item {
+  scpi_engine_format_function* format; /* +0x00: NULL after the last */
+  int16_t size;                        /* +0x04: the value's bytes */
+  uint32_t argument; /* +0x06: the node's list, for a choice */
+} scpi_engine_response_item;
+
+/* A node of the SCPI tree (docs/scpi/README.md, "How it is read"). */
+typedef struct scpi_engine_node {
+  char* keywords; /* +0x00: the short form, a NUL, the rest of the long form */
+  struct scpi_engine_child_list* children; /* +0x04: NULL for a leaf */
+  scpi_engine_handler handlers[2]; /* +0x08: the setter, then the query */
+  scpi_engine_response_item* response_items; /* +0x1c: the query's (0x29488) */
+  int16_t
+      response_size; /* +0x20: the bytes the query's response takes (0x29666) */
+  int16_t path_word; /* +0x22: the word it adds to the path, -1 for none
+                        (0x27c50) */
+} scpi_engine_node;
+
+/* A node's children, sorted by keyword for scpi_node_find's bisection
+ * (docs/scpi/README.md, "How it is read"); scpi_root_children is the
+ * main tree's. */
+typedef struct scpi_engine_child_list {
+  uint16_t id;           /* +0x00 */
+  int16_t count;         /* +0x02 */
+  int16_t default_child; /* +0x04: the child a header may leave out, -1 for none
+                            (0x27c80) */
+  scpi_engine_node* children[]; /* +0x06 */
+} scpi_engine_child_list;
+
+/* A header's path, scpi_interpret's 20 bytes (0x2935e): the list the
+ * next keyword is looked up in, and the words the nodes on the way and
+ * their numeric suffixes add, the handler's first parameters. */
+typedef struct scpi_engine_path {
+  scpi_engine_child_list* list; /* +0x00 */
+  int16_t count;                /* +0x04 */
+  uint16_t words[7];            /* +0x06 */
+} scpi_engine_path;
+
+struct status_model;
+/* The call record scpi_interpret builds for a handler, on its stack
+ * (docs/firmware/README.md, "Hand-written C"; 0x29322 to 0x2932e). */
+typedef struct scpi_engine_call {
+  scpi_engine_node* node; /* +0x00 */
+  uint16_t query; /* +0x04: 0 the setter, 1 the query, the handler's index */
+  scpi_engine_arena* arena; /* +0x06 */
+  uint8_t* parameters;      /* +0x0a: each parameter's kind word, then its
+                               value */
+  uint8_t* response; /* +0x0e: the query's, each item's value at its place */
+  struct scpi_port* input;     /* +0x12 */
+  struct scpi_port* output;    /* +0x16 */
+  struct status_model* status; /* +0x1a */
+} scpi_engine_call;
+
+/* The parser's context, which scpi_context_init (0x26a80) fills for
+ * scpi_interpret. */
+typedef struct scpi_engine_context {
+  struct scpi_port* input; /* +0x00 */
+  uint16_t word; /* +0x04: 0 from scpi_interpret; the block and expression
+                    converters' */
+  scpi_engine_path* path;              /* +0x06 */
+  scpi_engine_call* call;              /* +0x0a */
+  scpi_engine_arena* arena;            /* +0x0e */
+  scpi_engine_child_list* main_tree;   /* +0x12: the main tree's root list */
+  scpi_engine_child_list* common_list; /* +0x16: the common commands' list */
+  uint8_t field_1a[4];
+  uint32_t field_1e; /* +0x1e: what scpi_interpret's frame holds there, unset;
+                        the block converter's last */
+} scpi_engine_context;
+
+/* A response's array, as scpi_format_double_array and _short_array take
+ * it. */
+typedef struct scpi_engine_array {
+  int32_t count; /* +0x00 */
+  void* values;  /* +0x04: doubles or shorts */
+} scpi_engine_array;
+
+/* Doubles each with its resolution, as scpi_format_resolution_array
+ * takes them. */
+typedef struct scpi_engine_resolution_array {
+  int32_t count;        /* +0x00 */
+  double* values;       /* +0x04 */
+  int16_t* resolutions; /* +0x08 */
+} scpi_engine_resolution_array;
+
+/* A definite-length block, as scpi_format_block takes it. */
+typedef struct scpi_engine_block {
+  uint32_t length; /* +0x00 */
+  void* data;      /* +0x04: its bytes */
+} scpi_engine_block;
+
+/* An array response by its kind, as scpi_format_array takes it and
+ * robin_store makes it. */
+typedef struct scpi_engine_array_record {
+  int8_t kind; /* +0x00: the jump table at 0x267dc */
+  uint8_t unused;
+  void* array; /* +0x02: a scpi_engine_block or scpi_engine_array */
+} scpi_engine_array_record;
+
+/* A double scpi_format_double_precision writes, to so many digits or
+ * to a resolution. */
+typedef struct scpi_engine_precise_double {
+  double value; /* +0x00 */
+  char
+      to_digits; /* +0x08: nonzero for precision as digits, else a resolution */
+  uint8_t unused;
+  int16_t precision; /* +0x0a */
+} scpi_engine_precise_double;
+
+/* A float scpi_format_float_resolution writes, and its resolution. */
+typedef struct scpi_engine_float_resolution {
+  float value;        /* +0x00 */
+  int16_t resolution; /* +0x04 */
+} scpi_engine_float_resolution;
 
 /* One status register of the SCPI status tree.  16 bytes. */
 typedef struct status_register {
@@ -1160,14 +1346,32 @@ typedef enum __attribute__((packed)) status_condition_code {
   STATUS_USER_REPORTED_CLEARED = 0x4e,
 } status_condition_code;
 
+/* An entry of the error queue: an error code and what status_set_bit is
+ * given with it, status_report's message (error_queue_push, 0x285d4). */
+typedef struct scpi_engine_error_entry {
+  int16_t code;   /* +0x00 */
+  uint32_t value; /* +0x02 */
+} scpi_engine_error_entry;
+
+/* The error queue, which error_queue_create allocates and
+ * status_model.queue points at: a ring of entries, one more than it
+ * holds, so that head equal to tail is empty (0x28588). */
+typedef struct scpi_engine_error_queue {
+  int16_t head;                      /* +0x00: the newest entry */
+  int16_t tail;                      /* +0x02: the entry before the oldest */
+  struct status_model* status;       /* +0x04: the model it reports into */
+  int16_t size;                      /* +0x08: entries, the capacity plus one */
+  scpi_engine_error_entry entries[]; /* +0x0a */
+} scpi_engine_error_queue;
+
 /* The SCPI status system: status_create builds it, status_object points
  * at it. */
 typedef struct status_model {
   int16_t register_count; /* +0x00: 7 */
   scpi_port* output; /* +0x02: set for the top register; the port whose status
                         byte it keeps (status_condition_set, 0x2802a) */
-  void* queue;       /* +0x06: built with room for 30 */
-  status_condition* conditions; /* +0x0a */
+  scpi_engine_error_queue* queue; /* +0x06: built with room for 30 */
+  status_condition* conditions;   /* +0x0a */
   int32_t
       field_0e; /* +0x0e: status_create's last argument, 0; nothing reads it */
   status_register* registers[7]; /* +0x12 */

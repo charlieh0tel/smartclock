@@ -8213,6 +8213,7 @@ int16_t day_of_year(uint32_t date)
 
 
 /* 00010e3a */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* a packed time as seconds; a third copy of hms_to_seconds, called by nothing */
 
@@ -8222,6 +8223,7 @@ int time_packed_to_seconds(uint32_t time)
   return (time >> 0x10 & 0xff) * 0xe10 + (time >> 8 & 0xff) * 0x3c + (time & 0xff);
 }
 
+#endif
 
 /* 00010e72 */
 
@@ -8423,6 +8425,7 @@ uint32_t oncore_date_pack(oncore_date_fields fields)
 
 
 /* 0001111e */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* hours, minutes and seconds as seconds */
 
@@ -8432,8 +8435,10 @@ int hms_to_seconds(uint32_t time)
   return (time & 0xff) + (time >> 8 & 0xff) * 0x3c + (time >> 0x10 & 0xff) * 0xe10;
 }
 
+#endif
 
 /* 00011152 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* a packed time as seconds; the same code as hms_to_seconds, a second copy */
 
@@ -8443,6 +8448,7 @@ int time_to_seconds(uint32_t time)
   return (time & 0xff) + (time >> 8 & 0xff) * 0x3c + (time >> 0x10 & 0xff) * 0xe10;
 }
 
+#endif
 
 /* 00011186 */
 
@@ -91253,3 +91259,5 @@ int installer_vsprintf(char *s,char *format,void *arg)
   return iVar1;
 }
 
+
+#include "../../../firmware/src/clock.c"

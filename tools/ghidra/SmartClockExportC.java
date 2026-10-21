@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -298,7 +299,10 @@ public class SmartClockExportC extends GhidraScript {
 						}
 					}
 					else {
-						functions.append(signals(function.getName(), registerBits(rotates(registerShifts(reinterpretingCasts(c))))));
+						String reading = signals(function.getName(), registerBits(rotates(registerShifts(reinterpretingCasts(c)))));
+						File by = rewritten().get(function.getName());
+						functions.append(by == null ? reading : "#if 0 /* the decompiler's reading; rewritten in "
+							+ by.getName() + " */\n" + reading + "#endif\n");
 						collectGlobals(results.getHighFunction(), referenced);
 						String stack = stackArguments(results.getHighFunction());
 						if (stack != null) {
@@ -326,6 +330,11 @@ public class SmartClockExportC extends GhidraScript {
 				}
 			}
 			writer.print(functions);
+			for (File file : new TreeSet<>(rewritten().values())) {
+				writer.println();
+				writer.println("#include \"" + output.getAbsoluteFile().getParentFile().toPath()
+					.relativize(file.getAbsoluteFile().toPath()) + "\"");
+			}
 		}
 		finally {
 			decompiler.dispose();
@@ -3989,8 +3998,11 @@ public class SmartClockExportC extends GhidraScript {
 		for (JsonElement element : JsonParser.parseString(diagnostics).getAsJsonArray()) {
 			JsonObject diagnostic = element.getAsJsonObject();
 			Matcher conversion = CONVERSION.matcher(diagnostic.get("message").getAsString());
+			// the hand-written files the C includes are theirs, not the decompiler's
 			if (conversion.find() && !diagnostic.getAsJsonArray("locations").isEmpty()
-				&& FLOATING.contains(conversion.group(1)) != FLOATING.contains(conversion.group(2))) {
+				&& FLOATING.contains(conversion.group(1)) != FLOATING.contains(conversion.group(2))
+				&& diagnostic.getAsJsonArray("locations").get(0).getAsJsonObject().getAsJsonObject("caret")
+					.get("file").getAsString().equals(output.getPath())) {
 				found.add(diagnostic);
 			}
 		}
@@ -4027,6 +4039,40 @@ public class SmartClockExportC extends GhidraScript {
 	/** What comes before a routine that is not C: the decompiler's reading, which gcc skips. */
 	private static final String READING =
 		"#if 0 /* the decompiler's reading; the routine is the assembly after it */\n";
+
+	/** The argument naming the folder of hand-written C: rewritten=DIR. */
+	private static final String REWRITTEN = "rewritten=";
+	/** A function's definition in hand-written C: its name, at a line's start, its body's brace on the next. */
+	private static final Pattern DEFINITION =
+		Pattern.compile("(?m)^[A-Za-z_][\\w \\*]*?\\b(\\w+)\\([^;{}]*\\)\\s*\\{");
+	/** Each hand-written function's file, by its name, from the rewritten= folder. */
+	private Map<String, File> rewritten;
+
+	/**
+	 * The functions the rewritten= folder's .c files define, by name, and
+	 * the file of each: C written by hand in place of the decompiler's,
+	 * which the exported C keeps as a reading and includes the files after
+	 * its own (docs/firmware/README.md, "Hand-written C").
+	 */
+	private Map<String, File> rewritten() throws Exception {
+		if (rewritten == null) {
+			rewritten = new TreeMap<>();
+			for (String arg : getScriptArgs()) {
+				if (!arg.startsWith(REWRITTEN)) {
+					continue;
+				}
+				File[] files = new File(arg.substring(REWRITTEN.length())).listFiles((dir, name) -> name.endsWith(".c"));
+				Arrays.sort(files);
+				for (File file : files) {
+					Matcher definition = DEFINITION.matcher(Files.readString(file.toPath()));
+					while (definition.find()) {
+						rewritten.put(definition.group(1), file);
+					}
+				}
+			}
+		}
+		return rewritten;
+	}
 
 	/**
 	 * A function's prototype, for ahead of the bodies, since the

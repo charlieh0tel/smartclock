@@ -283,7 +283,7 @@ part of what they change.  In order:
 7. `SmartClockExportC.java FILE defines=tools/ghidra/types/mc68331.h
    defines=tools/ghidra/types/mc68681.h
    defines=tools/ghidra/types/psos-signals.h
-   results=tools/ghidra/names/results.tsv`.
+   results=tools/ghidra/names/results.tsv rewritten=firmware/src`.
 
 **Setup** makes the ROM read-only, so values loaded from it fold to
 constants; maps RAM, the DUART, EEPROM, the CS4 and CS5 ranges and the
@@ -770,6 +770,17 @@ decompiler wrote it, and reported.
   is `(int)(signed char)x`, where the p-code shows every high piece is
   x shifted right signed by its width less one; the sign's statement
   goes where nothing else reads it.
+
+## Hand-written C
+
+A function rewritten by hand lives in `firmware/src/`, a file to a
+subsystem (`clock.c`).  The exporter finds the functions those files
+define (`rewritten=`), keeps the decompiler's reading of each in the
+exported C inside `#if 0`, for reference, and includes the files after
+its own C, so that they see the types, globals and prototypes it
+declares; a function keeps its generated prototype.  The checks run
+the hand-written function as they ran the decompiled one, against the
+image's own.
 
 `tools/firmware/rebuild_link.py` links it into a rebuilt image: each
 piece of assembly at its own address, where it must be, and is, the

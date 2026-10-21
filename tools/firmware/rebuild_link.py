@@ -119,7 +119,8 @@ def link(c_path: str, cflags: list[str], work: str, elf_path: str) -> list[Secti
 
     c_only, compiled = work + "/c.c", work + "/c.o"
     open(c_only, "w").write(CODE_BLOCK.sub("", c))
-    run(TOOLS + "gcc", *cflags, "-c", "-o", compiled, c_only)
+    # the hand-written C it includes is named from the C file's own folder
+    run(TOOLS + "gcc", *cflags, "-I", os.path.dirname(os.path.abspath(c_path)), "-c", "-o", compiled, c_only)
     # what the C defines that is not a function, a bridge's __ghidra_ccr
     c_data = {
         name for kind, name in re.findall(r"^\S* ([BCDRbdr]) (\S+)$", run(TOOLS + "nm", compiled), re.M)

@@ -1179,6 +1179,11 @@ view cannot drift apart.  The library, bottom up:
      And a call's result has a name, `names/results.tsv`, which the
      variable it is assigned to takes where every value the variable
      holds is so named: `uptime = get_uptime()` at every call.
+     And a function can be written by hand, in `firmware/src/`, a file
+     to a subsystem: the exported C keeps the decompiler's reading inside
+     `#if 0` and includes the file, and the harness checks the hand's
+     version as it did the decompiler's (`clock.c`'s time conversions
+     first).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

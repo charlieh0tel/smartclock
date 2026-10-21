@@ -283,7 +283,7 @@ part of what they change.  In order:
 7. `SmartClockExportC.java FILE defines=tools/ghidra/types/mc68331.h
    defines=tools/ghidra/types/mc68681.h
    defines=tools/ghidra/types/psos-signals.h
-   results=tools/ghidra/names/results.tsv rewritten=firmware/src`.
+   results=tools/ghidra/names/results.tsv rewritten=third_party/firmware/rewritten/IMAGE`.
 
 **Setup** makes the ROM read-only, so values loaded from it fold to
 constants; maps RAM, the DUART, EEPROM, the CS4 and CS5 ranges and the
@@ -781,7 +781,8 @@ decompiler wrote it, and reported.
 
 ## Hand-written C
 
-A function rewritten by hand lives in `firmware/src/`, a file to a
+A function rewritten by hand lives in
+`third_party/firmware/rewritten/IMAGE/`, beside the decompiled C, a file to a
 subsystem (`clock.c`).  The exporter finds the functions those files
 define (`rewritten=`), keeps the decompiler's reading of each in the
 exported C inside `#if 0`, for reference, and includes the files after

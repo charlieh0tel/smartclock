@@ -91227,4 +91227,4 @@ int installer_vsprintf(char *s,char *format,void *arg)
 }
 
 
-#include "../../../firmware/src/clock.c"
+#include "../rewritten/z3805a-3543b/clock.c"

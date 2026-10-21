@@ -330,10 +330,10 @@
 0x1032f8	label	spoo_exchange	structures.md	create_x("spoo")	uint32_t
 0x101e84	label	max_loop_time	structures.md	pll_rep's max loop time	float
 0x1d93e	function	duart_init	structures.md	creates drtR and drtW, "Unable to create drtR"
-0x1fdb6	function	sci_init	structures.md	creates sciR and sciW, "Unable to create sciR"
+0x1fdb6	function	sci_init	structures.md	the SCI device's init, device 3's function 0: creates sciR and sciW, "Unable to create sciR"		convention=register; confidence=read; preserves=D0, D1, A0, A1; family=device
 0x1f6c8	function	sci_echo_none	sci_driver: echo	a bare rts: sci_init and sci_reconfigure put it in sci.echo when the settings' echo is off	void sci_echo_none(char c)
-0x1fd0e	function	sci_lock	structures.md	"Unable to acquire SCI token"
-0x1fc20	function	sci_unlock	structures.md	"Unable to release SCI token"
+0x1fd0e	function	sci_lock	structures.md	the SCI device's open, and sci_putc's lock: takes the write token for D0 1, else the read one, or counts a nested hold; "Unable to acquire SCI token"		convention=register; confidence=read; in=D0 char write; out=D7 char error; error=D7 0x80 already held; preserves=D0, D1, A0, A1; family=device
+0x1fc20	function	sci_unlock	structures.md	the SCI device's close, and sci_putc's unlock: gives the token for D0 back, or drops a nested hold; "Unable to release SCI token"		convention=register; confidence=read; in=D0 char write; out=D7 char error; error=D7 0x80 holds remain, D7 1 not the holder; preserves=D0, D1, A0, A1; family=device
 0x30f10	function	eeprom_init	structures.md	creates eepx, "Unable to create eepx"
 0x30fae	function	eeprom_lock	structures.md	"Unable to acquire eepx token"
 0x3105e	function	eeprom_unlock	structures.md	"Unable to release eepx token"
@@ -472,7 +472,7 @@
 0x330ee	function	log_count	structures.md	"Log status: %-3d entries"; sets *full when more than 31	int log_count(uint8_t *full)
 0x101f8e	label	log_entry_count	structures.md	log_count returns it	int16_t
 0x12e24	function	pps_init	structures.md	"Pps_init error %#04x" prints its result
-0x137d8	function	set_timedate	structures.md	the set_time word's, "set_timedate error: %2X"	int set_timedate(uint32_t date, uint32_t time)
+0x137d8	function	set_timedate	structures.md	the set_time word's, "set_timedate error: %2X": enter_supervisor, then clock_record_store, marking the record set, clock_record_derive and clock_record_checksum on the record in A6, and the status register restored from the stack, which C cannot say; returns clock_record_store's D7		convention=other; confidence=read; family=clock
 0x111cc	function	gps_seconds	structures.md	the T1 time code's #H%08X, seconds since 1980 from a date and time	int gps_seconds(uint32_t date, uint32_t time)
 0x11284	function	leap_gps_time	structures.md	:PTIM:LEAP:GPST?'s "#H%08X", from nv_settings.leap_pending and leap_minute_length	int leap_gps_time(void)
 0x136d6	function	get_clock_date	structures.md	returns clock.date; the T2 time code's date	uint32_t get_clock_date(void)
@@ -546,8 +546,8 @@
 0x26ee0	function	scpi_scan_token	context	the SCPI lexer: reads characters through the input's own routine and classifies them by the table at 0x277ec
 0x40248	function	interpolator_calibrate	context	sets HDAC channels 2 and 3 until interpolator_measure gives 1 to 25 and 201 to 225, 200 apart; ovens.md's Z3816A 0x43b56	uint8_t interpolator_calibrate(interpolator_calibration *calibration)
 0x40030	function	interpolator_measure	context	pulses the FPGA bits for a measurement and returns interpolator_read	uint8_t interpolator_measure(uint8_t mode)
-0x4007e	function	interpolator_measure_low	interpolator_calibrate	hdac_set of HDAC channel 2, then interpolator_measure(0)	uint8_t interpolator_measure_low(uint8_t hdac_2)
-0x40096	function	interpolator_measure_high	interpolator_calibrate	hdac_set of HDAC channel 3, then interpolator_measure(1)	uint8_t interpolator_measure_high(uint8_t hdac_3)
+0x4007e	function	interpolator_measure_low	interpolator_calibrate	hdac_set of HDAC channel 2, then interpolator_measure(0)	uint8_t interpolator_measure_low(char_slot dac)
+0x40096	function	interpolator_measure_high	interpolator_calibrate	hdac_set of HDAC channel 3, then interpolator_measure(1)	uint8_t interpolator_measure_high(char_slot dac)
 0x40c56	function	interpolator_read	context	the complement of FPGA register 0x10
 
 0x101fce	label	interpolator_calibration_state	context	the record interpolator_calibrate is given, besides a copy on one caller's stack	interpolator_calibration
@@ -718,18 +718,18 @@
 0x1e238	function	drta_get_byte	the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine with it	reads a byte from the GPS engine on DUART channel A, waiting for one
 0x1f76c	function	sci_puts	the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts"	writes a string to the SCI port, waiting for room	int sci_puts(int param_1)
 0x1f7d0	function	sci_getc	"wait_v SIG_SIQ_SCI error in getc"	reads a character from the SCI port, waiting for one
-0x17a96	function	selftest_cpu	the self-test table 0x18458's entry 2; "CPU:"	the self-test of the CPU
-0x179ac	function	selftest_ram	entry 3; "System RAM: D15-D0:", "adr line A18-A1:"	the self-test of system RAM, its data and address lines
-0x17b16	function	selftest_eeprom	entry 4; "EEPROM:"	the self-test of the EEPROM
-0x17cbe	function	selftest_uart	entry 5; "UART: register read/write", "channel A data"	the self-test of the DUART: its registers, counter and both channels
-0x17b96	function	selftest_qspi	entry 6; "QSPI: ADC", "Hex DAC", "FPGA", "EFC"	the self-test of the QSPI's devices: the ADC, the DACs, the FPGA and the EFC
-0x17c3e	function	selftest_fpga	entry 7; "FPGA: counters not preset"	the self-test of the FPGA's counters
-0x178e0	function	selftest_interpolator	entry 8; "Interpolator: A, MRC mode"	the self-test of the time interpolator
-0x17946	function	selftest_internal_reference	entry 9; "Internal reference:"	the self-test of the internal reference
-0x17d94	function	selftest_gps	entry 10; "GPS: Channel 1 Correlation" .. "GPS: Engine timeout", @@Ca's bits	the self-test of the GPS engine, reading its own self-test's result bits
-0x17f2c	function	selftest_power	entry 11; "POWER: 5V", "15V", "-15V"	the self-test of the 5 V, 15 V and -15 V supplies
-0x17fc0	function	selftest_interpolator_calibration	the self-test table 0x18458's entry 12	on selftest_execute's second pass, its argument 1, runs interpolator_selftest	void selftest_interpolator_calibration(uint8_t pass)
-0x17fd0	function	selftest_interpolator_sample	entry 13	on selftest_execute's second pass, its argument 1, runs interpolator_sample_test	void selftest_interpolator_sample(uint8_t pass)
+0x17a96	function	selftest_cpu	the self-test table 0x18458's entry 2; "CPU:"	the self-test of the CPU	void selftest_cpu(char_slot run)
+0x179ac	function	selftest_ram	entry 3; "System RAM: D15-D0:", "adr line A18-A1:"	the self-test of system RAM, its data and address lines	void selftest_ram(char_slot run)
+0x17b16	function	selftest_eeprom	entry 4; "EEPROM:"	the self-test of the EEPROM	void selftest_eeprom(char_slot run)
+0x17cbe	function	selftest_uart	entry 5; "UART: register read/write", "channel A data"	the self-test of the DUART: its registers, counter and both channels	void selftest_uart(char_slot run)
+0x17b96	function	selftest_qspi	entry 6; "QSPI: ADC", "Hex DAC", "FPGA", "EFC"	the self-test of the QSPI's devices: the ADC, the DACs, the FPGA and the EFC	void selftest_qspi(char_slot run)
+0x17c3e	function	selftest_fpga	entry 7; "FPGA: counters not preset"	the self-test of the FPGA's counters	void selftest_fpga(char_slot run)
+0x178e0	function	selftest_interpolator	entry 8; "Interpolator: A, MRC mode"	the self-test of the time interpolator	void selftest_interpolator(char_slot run)
+0x17946	function	selftest_internal_reference	entry 9; "Internal reference:"	the self-test of the internal reference	void selftest_internal_reference(char_slot run)
+0x17d94	function	selftest_gps	entry 10; "GPS: Channel 1 Correlation" .. "GPS: Engine timeout", @@Ca's bits	the self-test of the GPS engine, reading its own self-test's result bits	void selftest_gps(char_slot run)
+0x17f2c	function	selftest_power	entry 11; "POWER: 5V", "15V", "-15V"	the self-test of the 5 V, 15 V and -15 V supplies	void selftest_power(char_slot run)
+0x17fc0	function	selftest_interpolator_calibration	the self-test table 0x18458's entry 12	on selftest_execute's second pass, its argument 1, runs interpolator_selftest	void selftest_interpolator_calibration(char_slot run)
+0x17fd0	function	selftest_interpolator_sample	entry 13	on selftest_execute's second pass, its argument 1, runs interpolator_sample_test	void selftest_interpolator_sample(char_slot run)
 0x18600	function	selftest_print_failure	"FAIL:", "%s, error code: %02X"	prints a failed self-test's name and error code
 0x1606c	function	os_report_cpu	"Free CPU cycles: count 0x%08X, approx %2d%%"; os_process_report calls it	prints the free CPU cycles counted and the share they make
 0x16118	function	os_report_exchange	an exchange's line, "fifo", "prio"	prints one exchange's line of the kernel report
@@ -792,7 +792,7 @@
 0x46e70	function	gps_leap_ack	context	the leap second's acknowledgement step; "Error in leapsecond ack"; sets the GPS-UTC offset
 0x471fc	function	gps_diag_sequence	context	the GPS diagnostic reset and test; "Error in DIAG GPS RST ack", "TST ack"
 0x417c6	function	aging_fit	loop.md's aging fit, in curv: "failed line fit", "pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f", "HQ= %.1e mode= %d"	fits the oscillator's aging curve, for the curv task
-0x40556	function	interpolator_sample	context	sets HDAC channels 2 and 3 and takes both interpolator readings; "First-time interp test."
+0x40556	function	interpolator_sample	context	sets HDAC channels 2 and 3 and takes both interpolator readings; "First-time interp test."	void interpolator_sample(interpolator_calibration *calibration)
 0x49a6e	function	format_satellite_cell	context	a satellite's status screen cell: "%2d %3d", "Ignore", "Not OK", "Acq"
 0x49e5a	function	format_time	context	a packed time as "%02d:%02d:%02d", or "--:--:--"
 0x49eb4	function	format_date	context	a date as "%02d %s %04d", or "-- --- ----"
@@ -1087,7 +1087,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x11606	function	leap_opportunity_date	context	the end of the coming quarter, when a leap second may come: Mar 31, Jun 30, Sep 30 or Dec 31
 0x11680	function	leap_second_near	context	1 at 23:59:46 or later, in UTC, on the last day of a quarter
 0x13740	function	get_gps_datetime	context	gps_date and gps_time through pointers; 1 if the clock is valid
-0x137a4	function	set_timedate_unflagged	context	set_timedate's twin: sets the clock record's date and time without marking it set	int set_timedate_unflagged(uint32_t date, uint32_t time)
+0x137a4	function	set_timedate_unflagged	context	set_timedate's twin: sets the clock record's date and time without marking it set; assembly as set_timedate is		convention=other; confidence=read; family=clock
 0x13428	function	busy_wait	context	spins 729 empty loops for each count
 0x1380c	function	clock_record_store	context	checks a date and time and stores them in the clock record, marking it set if D2 says so		convention=register; confidence=read; in=A6 clock_record *record, D0 int date, D1 int time, D2 int mark; family=clock
 0x13882	function	clock_record_derive	context	reads the clock record's date and time until two reads agree, converts them and stores the result at +6 and +0xa		convention=register; confidence=read; in=A6 clock_record *record; family=clock
@@ -1101,7 +1101,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x30dea	function	save_parameter_record	structures.md	writes the 16-byte checksummed parameter record at EEPROM 0x400000, reporting status 0x10 if it fails
 0x40f76	function	counter_init	context	sets the counter configuration and interpolator calibration to their defaults and arms the reading
 0x40ed8	function	counter_configuration_init	context	the counter configuration's defaults, and the interval reading marked invalid
-0x40000	function	interpolator_calibration_init	context	clears the interpolator calibration, both DACs at 0x1f
+0x40000	function	interpolator_calibration_init	context	clears the interpolator calibration, both DACs at 0x1f	void interpolator_calibration_init(interpolator_calibration *calibration)
 0x40ea2	function	counter_load_registers	context	writes counter_configuration's four FPGA registers to the FPGA
 0x40a0e	function	fpga_set_field	context	sets one fpga_bit_table field in its register's image and writes the register
 0x40afe	function	fpga_fields_to_registers	context	builds the four FPGA register images from field values, by fpga_bit_table
@@ -1109,9 +1109,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x407fa	function	fpga_read_seconds	context	FPGA register 0's high nibble, read until two reads agree: a count of seconds modulo 16
 0x4091a	function	counter_wait_ready	context	polls FPGA register 0 for a bit, up to 512 times 10 ticks, giving up and disarming the reading if a 1PPS dies
 0x401c4	function	interpolator_prepare	context	loads any pending FPGA registers and sets the fields for an interpolator measurement	undefined4 interpolator_prepare(void)
-0x4047c	function	interpolator_verify	context	sets both DACs, measures both ends of the interpolator against [1, 25] and [201, 225], and retries with the saved DACs if they fail
-0x400b0	function	dac_search_bisect	context	halves a DAC's range, up to 10 times, until a measurement falls in a window
-0x4012e	function	dac_search_step	context	moves a DAC a step at a time, up to 20, until a measurement falls in a window
+0x4047c	function	interpolator_verify	context	sets both DACs, measures both ends of the interpolator against [1, 25] and [201, 225], and retries with the saved DACs if they fail	uint8_t interpolator_verify(interpolator_calibration *calibration)
+0x400b0	function	dac_search_bisect	context	halves a DAC's range, up to 10 times, until a measurement falls in a window	uint8_t dac_search_bisect(uint8_t dac, uint8_t minimum, uint8_t maximum, uint8_t low, uint8_t high, dac_measure *measure)
+0x4012e	function	dac_search_step	context	moves a DAC a step at a time, up to 20, until a measurement falls in a window	uint8_t dac_search_step(uint8_t dac, uint8_t minimum, uint8_t maximum, uint8_t low, uint8_t high, dac_measure *measure)
 0x4018e	function	hdac_nudge	context	moves hex DAC channel 2 one step against a sign
 0x40c06	function	counter_read_raw	context	the counter's count from FPGA registers 0x16 to 0x12, offset by 0x555555	long long counter_read_raw(void)
 0x410fa	function	int64_add	context	adds two 64-bit numbers	undefined8 int64_add(int param_1,uint param_2,int param_3,uint param_4)
@@ -1182,22 +1182,22 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 #
 # the root, curv, hmon, klok and scpi tasks' routines
 0x12faa	function	console_init	console.md	allocates the pForth dictionary, defines ps, mem_rep, s_rep and the diagnostic words, opens the console's device and starts its task
-0x12f86	function	ps_word	console_init's word ps	os_process_report(0)	void forth_ps(void)
-0x12f92	function	mem_rep_word	console_init's word mem_rep	os_memory_report(0)	void forth_mem_rep(void)
-0x12f9e	function	s_rep_word	console_init's word s_rep	task_stack_report(0)	void forth_s_rep(void)
-0x1ad28	function	pforth_dictionary_init	console.md	allocates the dictionary's segment through trap #3 and clears its pointers	void pforth_dictionary_init(int size)
+0x12f86	function	ps_word	console_init's word ps	os_process_report(0)	void ps_word(void)
+0x12f92	function	mem_rep_word	console_init's word mem_rep	os_memory_report(0)	void mem_rep_word(void)
+0x12f9e	function	s_rep_word	console_init's word s_rep	task_stack_report(0)	void s_rep_word(void)
+0x1ad28	function	pforth_dictionary_init	console.md	allocates the dictionary's segment through trap #3, service 8 in line with the size in D1 and its segment back in A0, which C cannot say, and clears its pointers		convention=other; confidence=read; family=pforth
 0x1ad8a	function	pforth_define_word	console.md	adds a word to the dictionary: links it, copies its name and compiles its code
 0x1c18e	function	diag_words_define	console.md	defines every diagnostic word in the table at 0x1c8ac
 0x1ae46	function	console_set_halt_hook	context	stores the routine the console calls on halt
 0x1ae50	function	console_set_device	context	stores the console's device, 0x200 for device 2
 0x100a02	label	console_device	read	the console's device, set by console_set_device	uint16_t
-0x1ae5c	function	console_task_create	context	creates the console's task, p4th, through trap #3	undefined4 console_task_create(void)
+0x1ae5c	function	console_task_create	context	creates the console's task, p4th, from four stack arguments, through traps in line, services 1, 10 and 2, which C cannot say; the task starts at 0x1aedc		convention=other; confidence=read; family=pforth
 0x1aedc	function	console_task	structures.md	the code console_task_create starts p4th at: sets console_exception_hook, builds the interpreter's frame at A5 with A4 from pforth_dictionary_next, prints the pForth banner and enters forth_abort's loop		convention=other; confidence=read; family=pforth
 0x18e62	function	console_exception_hook	context	the console task's exception hook: exception_name of the frame's vector into D0, then rte to 0x18ec8, which prints it and enters forth_abort; never reached while the byte at 0x1037d4 is clear		convention=exception; confidence=read; family=pforth
 0x1ae36	function	pforth_link_word	console.md	links the word at A4 to the latest in the dictionary		convention=register; confidence=read; in=A4 void *word; family=pforth
 0x12f30	function	scpi_task_start	restart.md	starts scpi_task_create at priority 0x19
 0x12004	function	periodic_interrupt_enable	context	sets the SIM's PICR: the periodic interrupt at level 5, or off
-0x10400	function	mutex_init	context	mutex_create's inside: creates the mutex's exchange for the name in D0 and clears the mutex at A1		convention=register; confidence=read; in=D0 int name, A1 void *mutex; family=mutex
+0x10400	function	mutex_init	context	mutex_create's inside: creates the mutex's exchange for the name in D0 and clears the mutex at A1		convention=register; confidence=read; in=D0 int name, A1 void *mutex; out=D7 int error; error=D7 3 service 21 finds the name; preserves=D1, D2, A0; family=mutex
 0x104d2	function	mutex_clear	context	clears the six longs of the mutex at A1		convention=register; confidence=read; in=A1 void *mutex; family=mutex
 0x3141a	function	log_page_read	context	reads the event log's 64-byte EEPROM page at 0x400d40 plus 0x40 times its number; 0xff if its checksum fails
 0x31536	function	log_erase	context	clears the event log's pages and resets its state, reporting event !
@@ -1335,7 +1335,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x16ee6	function	task_count_tick	context	counts a tick to the running task, at +0xae of its record; called by nothing
 0x17628	function	ram_pattern_test	context, read	the RAM self-test's pattern pass, saving and restoring each block around 0xaaaaaaaa and its complement; called as C, but saves each 48-byte block of RAM on the stack and walks all of it, which C cannot say		convention=other; confidence=read; family=selftest
 0x17750	function	rom_lane_checksum	context	sums a ROM's even and odd byte lanes, one checksum for each chip; called by nothing
-0x17ca4	function	selftest_lamps	context	runs the lamp test unless the self-test has been aborted
+0x17ca4	function	selftest_lamps	context	runs the lamp test unless the self-test has been aborted	void selftest_lamps(char_slot run)
 0x18396	function	format_binary	context	a number as a string of binary digits
 0x183de	function	selftest_delay	context	pauses so many ticks, stopping if the self-test is aborted
 0x184a4	function	internal_pps_test	context	counts the internal 1PPS over 1024 ticks; fails unless one to three came
@@ -1369,7 +1369,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1d906	function	drtb_unlock	context	releases channel B's read or write mutex, D0 choosing		convention=register; confidence=read; in=D0 char write; family=drtb
 0x1d922	function	drtb_lock	context	takes channel B's read or write mutex, D0 choosing		convention=register; confidence=read; in=D0 char write; family=drtb
 0x1dc7e	function	duartb_reconfigure	context	resets DUART channel B and applies the serial settings' mode and baud rate
-0x1dd98	function	drtb_write	context	the console device's write: drtb_puts under the write lock
+0x1dd98	function	drtb_write	context	devices 0's and 2's write: drtb_puts under the write lock, unless the byte at 0x10313a is set		convention=register; confidence=read; in=A0 char *buffer; out=D7 char error, D2 int count, A0 char *end; family=device
 0x1ddd6	function	drtb_read	context	the console device's read: drtb_gets
 0x1ddf6	function	drtb_putc	context	writes a character to channel B under the write lock
 0x1d570	function	duartb_echo_none	duartb_driver: echo	a bare rts: duart_init and duartb_reconfigure put it in duartb.echo when the settings' echo is off, drtb_putc when it is on	void duartb_echo_none(char c)
@@ -1394,7 +1394,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1f6ca	function	sci_baud_set	context	the SCI's baud rate from a code
 0x1f71a	function	sci_putc_polled	context	waits for the SCI's transmitter and writes a character, with the parity bit if set
 0x1fffa	function	sci_reconfigure	context	resets the SCI and applies the serial settings' baud rate and mode
-0x20152	function	sci_write	context	the SCI device's write: sci_puts under its lock
+0x20152	function	sci_write	context	the SCI device's write: sci_puts under its lock, unless the byte at 0x10329c is set		convention=register; confidence=read; in=A0 char *buffer; out=D7 char error, D2 int count, A0 char *end; family=device
 0x20190	function	sci_read	context	the SCI device's read: sci_gets
 0x201b0	function	sci_putc	context	writes a character to the SCI under its lock
 0x201e0	function	sci_send_async	context	queues a block for the SCI to send by interrupt
@@ -1406,7 +1406,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 # the QSPI driver, the 1PPS monitors and the SCPI parser
 0x20578	function	qspi_queue_setup	context	writes a QSPI device's transfer into the QSM's queue RAM and command words, by the device's number
 0x2081e	function	qspi_start	context	sets a transfer up and starts it, or releases the QSPI, and waits until it is done
-0x20902	function	qspi_init	context	clears the QSM's queue RAM and sets SPCR0 to SPCR3 up
+0x20902	function	qspi_init	context	the QSPI device's init, device 1's function 0: clears the QSM's queue RAM and sets SPCR0 to SPCR3 up		convention=register; confidence=read; preserves=D0, D1, A0, A1; family=device
 0x20a62	function	qspi_transfer_raw	context	takes the QSPI and runs a transfer, D0 the device, A1 the buffers and D2 the count		convention=register; confidence=read; in=D0 char device, A1 void *buffers, D2 short count; family=qspi
 0x23980	function	fpga_verify	context	fpga_verify_chip for chip 0 or 1
 0x241cc	function	double_oven_warmed_up	context	1 once the double oven's ADC reads above 1.5; called by nothing
@@ -1752,7 +1752,10 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x1749e	function	cpu_register_test	context, read	selftest_cpu's register test: 0x55555555 and 0xaaaaaaaa through every data and address register; 1 at 0x100c24 on a failure; called as C, D0.w 0 on a pass, but its body is the registers themselves, which C cannot say		convention=other; confidence=read; family=selftest
 0x177ac	function	selftest_run_all	context	runs each self-test in the list at 0x17fe0
 0x177cc	function	selftest_run_all_counted	context	runs each self-test in the list at 0x17fe0, counting watchdog_pll before each
-0x17892	function	selftest_all	context	self-test 0, first in the table at 0x18458: runs every test, counting watchdog_pll for a nonzero argument, then summarizes and reports any failures
+0x17892	function	selftest_all	context	self-test 0, first in the table at 0x18458: runs every test, counting watchdog_pll for a nonzero argument, then summarizes and reports any failures	void selftest_all(char_slot run)
+0x18458	label	selftest_table	read	the self-tests by number, 0 to 13, which selftest_execute runs	selftest_entry[14]
+0x17fe0	label	selftest_list	read	the self-tests selftest_run_all and selftest_run_all_counted run, entries 1 to 11 of selftest_table, then a null	selftest_entry[12]
+0x201b0	local	text	read	the character and its NUL, which sci_puts writes	char[2] @ -0x6
 0x18c74	function	selftest_nv_slot	context	the EEPROM self-test's settings check: nv_slot_valid's result at 0x100c34
 0x1af80	function	string_device_open	console.md	the console string device's open and close: do nothing		convention=register; confidence=read; out=D7 int error; family=device
 0x1af84	function	string_device_init	console.md	the console string device's init: clears the string at 0x100ba8		convention=register; confidence=read; out=D7 int error; family=device

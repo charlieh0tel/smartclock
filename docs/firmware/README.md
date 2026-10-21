@@ -248,7 +248,14 @@ returned is not established.
 Ghidra cannot model this convention: its 68000 language justifies a
 small value to the end of its slot, a property of the language, not of
 a convention a program can add.  Hence `SmartClockStackParameters.java`,
-below, which pins each argument's bytes in custom storage.
+below, which pins each argument's bytes in custom storage.  A pointer's
+prototype cannot carry custom storage, so a call through one -- the
+self-test tables at `0x18458` and `0x17fe0`, the measurements
+`dac_search_bisect` and `dac_search_step` are given -- passes its `char`
+as `char_slot` (`tools/ghidra/types/smartclock.h`), a 4-byte structure
+whose first byte, its value, lies where this compiler puts a `char`'s,
+at the slot's start, for Ghidra and gcc alike; gcc pads a 2-byte one to
+the slot's end.  The routines called that way take it too.
 
 ## Decompiling with Ghidra
 

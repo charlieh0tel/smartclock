@@ -317,6 +317,30 @@ typedef struct duart_shadow_registers {
 /* A routine that writes a character to a port. */
 typedef void putc_function(char c);
 
+/* A char argument through a function pointer.  This compiler pushes a
+ * char in a 2-byte slot, its value at the slot's start, 4 bytes above
+ * the stack pointer at entry (docs/firmware/README.md, "The calling
+ * convention"), where Ghidra's convention for a pointer's prototype, and
+ * gcc, put a char at the end of a 4-byte slot; custom storage, which
+ * places a function's own char there, a pointer's prototype cannot
+ * carry.  A 4-byte structure's first byte is at the slot's start in
+ * both; gcc pads a 2-byte one to the slot's end. */
+typedef struct char_slot {
+	uint8_t value;       /* +0x00: the char */
+	uint8_t field_01[3]; /* unread: the rest of the original's 2-byte slot and the 2 above it */
+} char_slot;
+
+/* A self-test, in the tables at 0x18458 and 0x17fe0: run is 1 to run the
+ * test, as selftest_execute's second call and selftest_run_all_counted
+ * pass it, and 0 otherwise. */
+typedef void selftest_test(char_slot run);
+/* An entry of the self-test tables. */
+typedef selftest_test *selftest_entry;
+
+/* The measurement dac_search_bisect and dac_search_step move a DAC by:
+ * it sets the DAC to its argument and returns a reading. */
+typedef uint8_t dac_measure(char_slot dac);
+
 /* The 16-byte message a driver sends its exchange once, at start-up, so
  * that a task takes the exchange as a token before using the port: its
  * status, the exchange's id, and the task that holds it, which the

@@ -17,7 +17,11 @@ byte of D7, zero for none, and results in D0, D1, D2, A0 and A1.
 
 I/O goes through `trap #4`, `0x14c0a`: a function, 0 to 5, in D7 and a
 device in the high byte of D0, which indexes a table of six routines a
-device at `0x24` in the kernel's configuration.
+device at `0x24` in the kernel's configuration.  The kernel jumps to the
+routine with the caller's registers, and the routine's error in D7 and
+its results in the others go back through the `rte`; so these are
+register routines, not C, the names file's `family=device`
+(`structures.md`, `io_table`, lists them).
 
 `trap #7`, `0x1341a`, hands back the caller's status register in D0
 and returns to it in supervisor mode.  `0x13422` wraps it, and

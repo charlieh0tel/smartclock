@@ -4,7 +4,7 @@
 {"address":"00000a58","name":"boot_trap_11","convention":"exception","confidence":"derived","family":"exception"}
 {"address":"00000aa0","name":"boot_unpack_installer","note":"copies the installer's records from 0xbbc into RAM; 0, or 1 without the S, 2 at a bad record","convention":"unknown"}
 {"address":"00000b9e","name":"boot_memcpy","note":"copies so many bytes, returning the destination","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"00010400","name":"mutex_init","note":"mutex_create's inside: creates the mutex's exchange for the name in D0 and clears the mutex at A1","convention":"register","confidence":"read","in":[{"register":"D0","type":"int","name":"name"},{"register":"A1","type":"void *","name":"mutex"}],"family":"mutex"}
+{"address":"00010400","name":"mutex_init","note":"mutex_create's inside: creates the mutex's exchange for the name in D0 and clears the mutex at A1","convention":"register","confidence":"read","in":[{"register":"D0","type":"int","name":"name"},{"register":"A1","type":"void *","name":"mutex"}],"out":[{"register":"D7","type":"int","name":"error"}],"error":[{"register":"D7","value":"3","meaning":"service 21 finds the name"}],"preserves":["D1","D2","A0"],"family":"mutex"}
 {"address":"0001043a","name":"mutex_acquire","note":"recursive lock, owner at +8, count at +0xc, a token through request_x when not already owned","convention":"register","confidence":"read","in":[{"register":"A1","type":"void *","name":"mutex"}],"out":[{"register":"D7","type":"int","name":"error"}],"error":[{"register":"D7","value":"0x80","meaning":"nested hold"}],"preserves":["D0","D1","A0","A2"],"family":"mutex"}
 {"address":"00010484","name":"mutex_release","note":"drops the count, or the owner and the token through send_x","convention":"register","confidence":"read","in":[{"register":"A1","type":"void *","name":"mutex"}],"out":[{"register":"D7","type":"int","name":"error"}],"error":[{"register":"D7","value":"2","meaning":"not held"},{"register":"D7","value":"0x80","meaning":"holds remain"}],"preserves":["D0","A0"],"family":"mutex"}
 {"address":"000104d2","name":"mutex_clear","note":"clears the six longs of the mutex at A1","convention":"register","confidence":"read","in":[{"register":"A1","type":"void *","name":"mutex"}],"family":"mutex"}
@@ -127,8 +127,8 @@
 {"address":"000136fe","name":"get_date_time","note":":PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns valid unless clock.invalid","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00013740","name":"get_gps_datetime","note":"gps_date and gps_time through pointers; 1 if the clock is valid","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00013782","name":"clock_record_refresh","note":"recomputes the clock record's local time from its UTC and checksums it, in supervisor mode","convention":"unknown"}
-{"address":"000137a4","name":"set_timedate_unflagged","note":"set_timedate's twin: sets the clock record's date and time without marking it set","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"000137d8","name":"set_timedate","note":"the set_time word's, \"set_timedate error: %2X\"","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"000137a4","name":"set_timedate_unflagged","note":"set_timedate's twin: sets the clock record's date and time without marking it set; assembly as set_timedate is","convention":"other","confidence":"read","family":"clock"}
+{"address":"000137d8","name":"set_timedate","note":"the set_time word's, \"set_timedate error: %2X\": enter_supervisor, then clock_record_store, marking the record set, clock_record_derive and clock_record_checksum on the record in A6, and the status register restored from the stack, which C cannot say; returns clock_record_store's D7","convention":"other","confidence":"read","family":"clock"}
 {"address":"0001380c","name":"clock_record_store","note":"checks a date and time and stores them in the clock record, marking it set if D2 says so","convention":"register","confidence":"read","in":[{"register":"A6","type":"clock_record *","name":"record"},{"register":"D0","type":"int","name":"date"},{"register":"D1","type":"int","name":"time"},{"register":"D2","type":"int","name":"mark"}],"family":"clock"}
 {"address":"00013882","name":"clock_record_derive","note":"reads the clock record's date and time until two reads agree, converts them and stores the result at +6 and +0xa","convention":"register","confidence":"read","in":[{"register":"A6","type":"clock_record *","name":"record"}],"family":"clock"}
 {"address":"000138e4","name":"clock_set_leap_year","note":"sets February's days at A0, 28 or 29 by the Gregorian rule for the year in D7's high word; kernel_set_leap_year's copy","convention":"register","confidence":"read","in":[{"register":"A0","type":"char *","name":"february"},{"register":"D7","type":"int","name":"year"}],"family":"clock"}
@@ -288,20 +288,20 @@
 {"address":"000177ac","name":"selftest_run_all","note":"runs each self-test in the list at 0x17fe0","convention":"unknown"}
 {"address":"000177cc","name":"selftest_run_all_counted","note":"runs each self-test in the list at 0x17fe0, counting watchdog_pll before each","convention":"unknown"}
 {"address":"000177fa","name":"selftest_summary","note":"the self-test's failure flags as bits; reports status event 4 on a failure and 5 on none","convention":"unknown"}
-{"address":"00017892","name":"selftest_all","note":"self-test 0, first in the table at 0x18458: runs every test, counting watchdog_pll for a nonzero argument, then summarizes and reports any failures","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"000178e0","name":"selftest_interpolator","note":"the self-test of the time interpolator","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"00017946","name":"selftest_internal_reference","note":"the self-test of the internal reference","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"000179ac","name":"selftest_ram","note":"the self-test of system RAM, its data and address lines","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"00017a96","name":"selftest_cpu","note":"the self-test of the CPU","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"00017b16","name":"selftest_eeprom","note":"the self-test of the EEPROM","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"00017b96","name":"selftest_qspi","note":"the self-test of the QSPI's devices: the ADC, the DACs, the FPGA and the EFC","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"00017c3e","name":"selftest_fpga","note":"the self-test of the FPGA's counters","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"00017ca4","name":"selftest_lamps","note":"runs the lamp test unless the self-test has been aborted","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"00017cbe","name":"selftest_uart","note":"the self-test of the DUART: its registers, counter and both channels","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"00017d94","name":"selftest_gps","note":"the self-test of the GPS engine, reading its own self-test's result bits","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"00017f2c","name":"selftest_power","note":"the self-test of the 5 V, 15 V and -15 V supplies","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"00017fc0","name":"selftest_interpolator_calibration","note":"on selftest_execute's second pass, its argument 1, runs interpolator_selftest","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"00017fd0","name":"selftest_interpolator_sample","note":"on selftest_execute's second pass, its argument 1, runs interpolator_sample_test","convention":"unknown","stack":[{"offset":4,"size":1}]}
+{"address":"00017892","name":"selftest_all","note":"self-test 0, first in the table at 0x18458: runs every test, counting watchdog_pll for a nonzero argument, then summarizes and reports any failures","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"000178e0","name":"selftest_interpolator","note":"the self-test of the time interpolator","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00017946","name":"selftest_internal_reference","note":"the self-test of the internal reference","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"000179ac","name":"selftest_ram","note":"the self-test of system RAM, its data and address lines","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00017a96","name":"selftest_cpu","note":"the self-test of the CPU","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00017b16","name":"selftest_eeprom","note":"the self-test of the EEPROM","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00017b96","name":"selftest_qspi","note":"the self-test of the QSPI's devices: the ADC, the DACs, the FPGA and the EFC","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00017c3e","name":"selftest_fpga","note":"the self-test of the FPGA's counters","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00017ca4","name":"selftest_lamps","note":"runs the lamp test unless the self-test has been aborted","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00017cbe","name":"selftest_uart","note":"the self-test of the DUART: its registers, counter and both channels","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00017d94","name":"selftest_gps","note":"the self-test of the GPS engine, reading its own self-test's result bits","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00017f2c","name":"selftest_power","note":"the self-test of the 5 V, 15 V and -15 V supplies","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00017fc0","name":"selftest_interpolator_calibration","note":"on selftest_execute's second pass, its argument 1, runs interpolator_selftest","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00017fd0","name":"selftest_interpolator_sample","note":"on selftest_execute's second pass, its argument 1, runs interpolator_sample_test","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000182c4","name":"selftest_begin","note":"clears selftest_abort before a test","convention":"unknown"}
 {"address":"000182cc","name":"selftest_end","note":"clears selftest_abort after a test","convention":"unknown"}
 {"address":"000182d4","name":"selftest_may_report","note":"true for mode 0 or when the test was not aborted","convention":"unknown","stack":[{"offset":4,"size":1}]}
@@ -523,12 +523,12 @@
 {"address":"0001a26a","name":"forth_dev_ctrl","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001a278","name":"forth_store_iodev","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001ad20","name":"forth_user","convention":"pforth","confidence":"assumed","family":"pforth"}
-{"address":"0001ad28","name":"pforth_dictionary_init","note":"allocates the dictionary's segment through trap #3 and clears its pointers","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"0001ad28","name":"pforth_dictionary_init","note":"allocates the dictionary's segment through trap #3, service 8 in line with the size in D1 and its segment back in A0, which C cannot say, and clears its pointers","convention":"other","confidence":"read","family":"pforth"}
 {"address":"0001ad8a","name":"pforth_define_word","note":"adds a word to the dictionary: links it, copies its name and compiles its code","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"0001ae36","name":"pforth_link_word","note":"links the word at A4 to the latest in the dictionary","convention":"register","confidence":"read","in":[{"register":"A4","type":"void *","name":"word"}],"family":"pforth"}
 {"address":"0001ae46","name":"console_set_halt_hook","note":"stores the routine the console calls on halt","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001ae50","name":"console_set_device","note":"stores the console's device, 0x200 for device 2","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"0001ae5c","name":"console_task_create","note":"creates the console's task, p4th, through trap #3","convention":"unknown"}
+{"address":"0001ae5c","name":"console_task_create","note":"creates the console's task, p4th, from four stack arguments, through traps in line, services 1, 10 and 2, which C cannot say; the task starts at 0x1aedc","convention":"other","confidence":"read","family":"pforth"}
 {"address":"0001aedc","name":"console_task","note":"the code console_task_create starts p4th at: sets console_exception_hook, builds the interpreter's frame at A5 with A4 from pforth_dictionary_next, prints the pForth banner and enters forth_abort's loop","convention":"other","confidence":"read","family":"pforth"}
 {"address":"0001af80","name":"string_device_open","note":"the console string device's open and close: do nothing","convention":"register","confidence":"read","out":[{"register":"D7","type":"int","name":"error"}],"family":"device"}
 {"address":"0001af84","name":"string_device_init","note":"the console string device's init: clears the string at 0x100ba8","convention":"register","confidence":"read","out":[{"register":"D7","type":"int","name":"error"}],"family":"device"}
@@ -635,7 +635,7 @@
 {"address":"0001d922","name":"drtb_lock","note":"takes channel B's read or write mutex, D0 choosing","convention":"register","confidence":"read","in":[{"register":"D0","type":"char","name":"write"}],"family":"drtb"}
 {"address":"0001d93e","name":"duart_init","note":"creates drtR and drtW, \"Unable to create drtR\"","convention":"unknown"}
 {"address":"0001dc7e","name":"duartb_reconfigure","note":"resets DUART channel B and applies the serial settings' mode and baud rate","convention":"unknown"}
-{"address":"0001dd98","name":"drtb_write","note":"the console device's write: drtb_puts under the write lock","convention":"unknown"}
+{"address":"0001dd98","name":"drtb_write","note":"devices 0's and 2's write: drtb_puts under the write lock, unless the byte at 0x10313a is set","convention":"register","confidence":"read","in":[{"register":"A0","type":"char *","name":"buffer"}],"out":[{"register":"D7","type":"char","name":"error"},{"register":"D2","type":"int","name":"count"},{"register":"A0","type":"char *","name":"end"}],"family":"device"}
 {"address":"0001ddd6","name":"drtb_read","note":"the console device's read: drtb_gets","convention":"unknown"}
 {"address":"0001ddf6","name":"drtb_putc","note":"writes a character to channel B under the write lock","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"0001de32","name":"drtb_send_async","note":"queues a block for channel B to send by interrupt","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1}]}
@@ -700,11 +700,11 @@
 {"address":"0001f7d0","name":"sci_getc","note":"reads a character from the SCI port, waiting for one","convention":"unknown"}
 {"address":"0001f868","name":"sci_gets","note":"reads a line of up to the given length from the SCI; \"SCI receiver error ocurred\"","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0001f988","name":"primary_user_64","convention":"exception","confidence":"derived","family":"exception"}
-{"address":"0001fc20","name":"sci_unlock","note":"\"Unable to release SCI token\"","convention":"unknown"}
-{"address":"0001fd0e","name":"sci_lock","note":"\"Unable to acquire SCI token\"","convention":"unknown"}
-{"address":"0001fdb6","name":"sci_init","note":"creates sciR and sciW, \"Unable to create sciR\"","convention":"unknown"}
+{"address":"0001fc20","name":"sci_unlock","note":"the SCI device's close, and sci_putc's unlock: gives the token for D0 back, or drops a nested hold; \"Unable to release SCI token\"","convention":"register","confidence":"read","in":[{"register":"D0","type":"char","name":"write"}],"out":[{"register":"D7","type":"char","name":"error"}],"error":[{"register":"D7","value":"0x80","meaning":"holds remain"},{"register":"D7","value":"1","meaning":"not the holder"}],"preserves":["D0","D1","A0","A1"],"family":"device"}
+{"address":"0001fd0e","name":"sci_lock","note":"the SCI device's open, and sci_putc's lock: takes the write token for D0 1, else the read one, or counts a nested hold; \"Unable to acquire SCI token\"","convention":"register","confidence":"read","in":[{"register":"D0","type":"char","name":"write"}],"out":[{"register":"D7","type":"char","name":"error"}],"error":[{"register":"D7","value":"0x80","meaning":"already held"}],"preserves":["D0","D1","A0","A1"],"family":"device"}
+{"address":"0001fdb6","name":"sci_init","note":"the SCI device's init, device 3's function 0: creates sciR and sciW, \"Unable to create sciR\"","convention":"register","confidence":"read","preserves":["D0","D1","A0","A1"],"family":"device"}
 {"address":"0001fffa","name":"sci_reconfigure","note":"resets the SCI and applies the serial settings' baud rate and mode","convention":"unknown"}
-{"address":"00020152","name":"sci_write","note":"the SCI device's write: sci_puts under its lock","convention":"unknown"}
+{"address":"00020152","name":"sci_write","note":"the SCI device's write: sci_puts under its lock, unless the byte at 0x10329c is set","convention":"register","confidence":"read","in":[{"register":"A0","type":"char *","name":"buffer"}],"out":[{"register":"D7","type":"char","name":"error"},{"register":"D2","type":"int","name":"count"},{"register":"A0","type":"char *","name":"end"}],"family":"device"}
 {"address":"00020190","name":"sci_read","note":"the SCI device's read: sci_gets","convention":"unknown"}
 {"address":"000201b0","name":"sci_putc","note":"writes a character to the SCI under its lock","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"000201e0","name":"sci_send_async","note":"queues a block for the SCI to send by interrupt","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1}]}
@@ -719,7 +719,7 @@
 {"address":"00020874","name":"qspi_acquire","note":"waits in the QSPI owner queue while it is busy; \"wait_v SIG_QSPI\"","convention":"unknown"}
 {"address":"000208fa","name":"qspi_control","note":"the QSPI device's control: does nothing","convention":"register","confidence":"read","out":[{"register":"D7","type":"int","name":"error"}],"family":"device"}
 {"address":"000208fe","name":"qspi_open","note":"the QSPI device's open and close: do nothing","convention":"register","confidence":"read","out":[{"register":"D7","type":"int","name":"error"}],"family":"device"}
-{"address":"00020902","name":"qspi_init","note":"clears the QSM's queue RAM and sets SPCR0 to SPCR3 up","convention":"unknown"}
+{"address":"00020902","name":"qspi_init","note":"the QSPI device's init, device 1's function 0: clears the QSM's queue RAM and sets SPCR0 to SPCR3 up","convention":"register","confidence":"read","preserves":["D0","D1","A0","A1"],"family":"device"}
 {"address":"00020972","name":"qspi_isr","note":"the transfer's end: copies the QSPI receive RAM out and hands the QSPI on","convention":"unknown"}
 {"address":"00020a10","name":"primary_user_65","convention":"exception","confidence":"derived","family":"exception"}
 {"address":"00020a62","name":"qspi_transfer_raw","note":"takes the QSPI and runs a transfer, D0 the device, A1 the buffers and D2 the count","convention":"register","confidence":"read","in":[{"register":"D0","type":"char","name":"device"},{"register":"A1","type":"void *","name":"buffers"},{"register":"D2","type":"short","name":"count"}],"family":"qspi"}
@@ -1292,8 +1292,8 @@
 {"address":"00033238","name":"reset_record_write","note":"writes the next 0x5c-byte reset-cause record at EEPROM 0x4001c0, its time and text, with its checksum","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00040000","name":"interpolator_calibration_init","note":"clears the interpolator calibration, both DACs at 0x1f","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00040030","name":"interpolator_measure","note":"pulses the FPGA bits for a measurement and returns interpolator_read","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"0004007e","name":"interpolator_measure_low","note":"hdac_set of HDAC channel 2, then interpolator_measure(0)","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"00040096","name":"interpolator_measure_high","note":"hdac_set of HDAC channel 3, then interpolator_measure(1)","convention":"unknown","stack":[{"offset":4,"size":1}]}
+{"address":"0004007e","name":"interpolator_measure_low","note":"hdac_set of HDAC channel 2, then interpolator_measure(0)","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00040096","name":"interpolator_measure_high","note":"hdac_set of HDAC channel 3, then interpolator_measure(1)","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000400b0","name":"dac_search_bisect","note":"halves a DAC's range, up to 10 times, until a measurement falls in a window","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":1},{"offset":8,"size":1},{"offset":10,"size":1},{"offset":12,"size":1},{"offset":14,"size":4}]}
 {"address":"0004012e","name":"dac_search_step","note":"moves a DAC a step at a time, up to 20, until a measurement falls in a window","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":1},{"offset":8,"size":1},{"offset":10,"size":1},{"offset":12,"size":1},{"offset":14,"size":4}]}
 {"address":"0004018e","name":"hdac_nudge","note":"moves hex DAC channel 2 one step against a sign","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1}]}

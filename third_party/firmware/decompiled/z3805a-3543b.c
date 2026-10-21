@@ -273,6 +273,13 @@ struct boot_selftest_results {
     uint8_t field_0f;
 };
 
+typedef struct char_slot char_slot, *Pchar_slot;
+
+struct char_slot {
+    uint8_t value;
+    uint8_t field_01[3];
+};
+
 typedef struct clock_record clock_record, *Pclock_record;
 
 struct clock_record {
@@ -314,6 +321,8 @@ typedef enum __attribute__((packed)) counter_error {
     COUNTER_MEASUREMENT_ABORTED=8,
     COUNTER_CALIBRATION_FAILURE=16
 } counter_error;
+
+typedef uint8_t (dac_measure)(struct char_slot);
 
 typedef struct duart_channel duart_channel, *Pduart_channel;
 
@@ -1589,6 +1598,10 @@ struct scpi_setting_param {
     void *group_cell;
 };
 
+typedef void (selftest_test)(struct char_slot);
+
+typedef selftest_test *selftest_entry;
+
 typedef struct selftest_results selftest_results, *Pselftest_results;
 
 struct selftest_results {
@@ -1815,6 +1828,7 @@ _Static_assert(sizeof(adc_channel) == 1, "adc_channel");
 _Static_assert(sizeof(adc_monitor) == 48, "adc_monitor");
 _Static_assert(sizeof(aging_curve_state) == 42, "aging_curve_state");
 _Static_assert(sizeof(boot_selftest_results) == 16, "boot_selftest_results");
+_Static_assert(sizeof(char_slot) == 4, "char_slot");
 _Static_assert(sizeof(clock_record) == 51, "clock_record");
 _Static_assert(sizeof(counter_configuration_fields) == 32, "counter_configuration_fields");
 _Static_assert(sizeof(counter_error) == 1, "counter_error");
@@ -2098,6 +2112,8 @@ extern int16_t days_before_month_leap[12]; /* 00011884 */
 extern byte reset_to_recover_text[20]; /* 00011b8c */
 extern char * exception_names[57]; /* 00011ba0 */
 extern char dither_table[128]; /* 00012b32 */
+extern selftest_entry selftest_list[12]; /* 00017fe0 */
+extern selftest_entry selftest_table[14]; /* 00018458 */
 extern char decimal_digit_pairs[200]; /* 00025c82 */
 extern ushort status_register_setup_table; /* 0002f7ac */
 extern status_condition status_conditions[79]; /* 0002f838 */
@@ -2514,7 +2530,6 @@ extern undefined4 DAT_00012704; /* 00012704 */
 extern undefined4 DAT_000129fc; /* 000129fc */
 extern undefined4 DAT_00012a74; /* 00012a74 */
 extern undefined4 DAT_00012ab0; /* 00012ab0 */
-extern undefined DAT_00017fe0; /* 00017fe0 */
 extern undefined DAT_0001ed2c; /* 0001ed2c */
 extern undefined DAT_00021e3b; /* 00021e3b */
 extern undefined DAT_00021e48; /* 00021e48 */
@@ -2662,7 +2677,6 @@ extern undefined4 *PTR_diag_cal_0001c8ac; /* 0001c8ac */
 extern undefined4 *PTR_gps_request_step_00050cc2; /* 00050cc2 */
 extern undefined4 *PTR_lamp_test_command_000186b0; /* 000186b0 */
 extern undefined4 *PTR_s_Self_Test_0004d076; /* 0004d076 */
-extern undefined4 *PTR_selftest_all_00018458; /* 00018458 */
 extern undefined UNK_00012350; /* 00012350 */
 extern undefined UNK_00028720; /* 00028720 */
 extern undefined UNK_00028722; /* 00028722 */
@@ -2846,7 +2860,6 @@ __asm__(".set DAT_00012704, 0x00012704");
 __asm__(".set DAT_000129fc, 0x000129fc");
 __asm__(".set DAT_00012a74, 0x00012a74");
 __asm__(".set DAT_00012ab0, 0x00012ab0");
-__asm__(".set DAT_00017fe0, 0x00017fe0");
 __asm__(".set DAT_0001ed2c, 0x0001ed2c");
 __asm__(".set DAT_00021e3b, 0x00021e3b");
 __asm__(".set DAT_00021e48, 0x00021e48");
@@ -2994,7 +3007,6 @@ __asm__(".set PTR_diag_cal_0001c8ac, 0x0001c8ac");
 __asm__(".set PTR_gps_request_step_00050cc2, 0x00050cc2");
 __asm__(".set PTR_lamp_test_command_000186b0, 0x000186b0");
 __asm__(".set PTR_s_Self_Test_0004d076, 0x0004d076");
-__asm__(".set PTR_selftest_all_00018458, 0x00018458");
 __asm__(".set UNK_00012350, 0x00012350");
 __asm__(".set UNK_00028720, 0x00028720");
 __asm__(".set UNK_00028722, 0x00028722");
@@ -3519,8 +3531,10 @@ __asm__(".set scpi_value_SAMPle_TARR, 0x00101de0");
 __asm__(".set scpi_value_SAMPle_TOGGle, 0x00101ddf");
 __asm__(".set scpi_values_SAMPle_IMULtiple, 0x00102d64");
 __asm__(".set selftest, 0x00100c24");
+__asm__(".set selftest_list, 0x00017fe0");
 __asm__(".set selftest_number, 0x00102590");
 __asm__(".set selftest_requested, 0x0010258d");
+__asm__(".set selftest_table, 0x00018458");
 __asm__(".set service_request_enable, 0x00102b4d");
 __asm__(".set si_prefixes, 0x0004cfc5");
 __asm__(".set sim, 0x00fffa00");
@@ -4343,7 +4357,7 @@ int boot_reset();
 int boot_trap_11();
 undefined4 boot_unpack_installer(void);
 undefined1 * boot_memcpy(undefined1 *param_1,undefined1 *param_2,int param_3);
-void mutex_init(int name, void *mutex) __asm__("c_mutex_init");
+int mutex_init(int name, void *mutex) __asm__("c_mutex_init");
 int mutex_acquire(void *mutex) __asm__("c_mutex_acquire");
 int mutex_release(void *mutex) __asm__("c_mutex_release");
 void mutex_clear(void *mutex) __asm__("c_mutex_clear");
@@ -4466,8 +4480,8 @@ uint32_t get_uptime(void);
 int get_date_time(uint32_t *date,uint32_t *time);
 bool get_gps_datetime(uint32_t *param_1,uint32_t *param_2);
 void clock_record_refresh(void);
-int set_timedate_unflagged(uint32_t date,uint32_t time);
-int set_timedate(uint32_t date,uint32_t time);
+int set_timedate_unflagged();
+int set_timedate();
 void clock_record_store(clock_record *record, int date, int time, int mark) __asm__("c_clock_record_store");
 void clock_record_derive(clock_record *record) __asm__("c_clock_record_derive");
 void clock_set_leap_year(char *february, int year) __asm__("c_clock_set_leap_year");
@@ -4628,20 +4642,20 @@ uint rom_lane_checksum(byte *param_1,undefined4 param_2);
 void selftest_run_all(void);
 void selftest_run_all_counted(void);
 void selftest_summary(void);
-void selftest_all(char param_1);
-void selftest_interpolator(char param_1);
-void selftest_internal_reference(char param_1);
-void selftest_ram(char param_1);
-void selftest_cpu(char param_1);
-void selftest_eeprom(char param_1);
-void selftest_qspi(char param_1);
-void selftest_fpga(char param_1);
-void selftest_lamps(char param_1);
-void selftest_uart(char param_1);
-void selftest_gps(char param_1);
-void selftest_power(char param_1);
-void selftest_interpolator_calibration(uint8_t pass);
-void selftest_interpolator_sample(uint8_t pass);
+void selftest_all(char_slot run);
+void selftest_interpolator(char_slot run);
+void selftest_internal_reference(char_slot run);
+void selftest_ram(char_slot run);
+void selftest_cpu(char_slot run);
+void selftest_eeprom(char_slot run);
+void selftest_qspi(char_slot run);
+void selftest_fpga(char_slot run);
+void selftest_lamps(char_slot run);
+void selftest_uart(char_slot run);
+void selftest_gps(char_slot run);
+void selftest_power(char_slot run);
+void selftest_interpolator_calibration(char_slot run);
+void selftest_interpolator_sample(char_slot run);
 void selftest_begin(void);
 void selftest_end(void);
 bool selftest_may_report(char param_1);
@@ -4863,12 +4877,12 @@ int forth_dev_write();
 int forth_dev_ctrl();
 int forth_store_iodev();
 int forth_user();
-void pforth_dictionary_init(int size);
+int pforth_dictionary_init();
 undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,undefined4 param_4);
 void pforth_link_word(void *word) __asm__("c_pforth_link_word");
 void console_set_halt_hook(void *param_1);
 void console_set_device(undefined4 param_1);
-undefined4 console_task_create(void);
+int console_task_create();
 int console_task();
 int string_device_open(void) __asm__("c_string_device_open");
 int string_device_init(void) __asm__("c_string_device_init");
@@ -4978,7 +4992,7 @@ void drtb_unlock(char write) __asm__("c_drtb_unlock");
 void drtb_lock(char write) __asm__("c_drtb_lock");
 undefined8 duart_init(void);
 void duartb_reconfigure(void);
-void drtb_write(void);
+int drtb_write();
 void drtb_read(void);
 void drtb_putc(char param_1);
 void drtb_send_async(char *param_1,uint8_t param_2);
@@ -5043,13 +5057,13 @@ int sci_puts(int param_1);
 undefined4 sci_getc(void);
 int sci_gets(char *param_1,int param_2);
 int primary_user_64();
-undefined8 sci_unlock(void);
-undefined8 sci_lock(void);
-undefined8 sci_init(void);
+char sci_unlock(char write) __asm__("c_sci_unlock");
+char sci_lock(char write) __asm__("c_sci_lock");
+int sci_init();
 uint sci_reconfigure(void);
-void sci_write(void);
+int sci_write();
 void sci_read(void);
-void sci_putc(undefined1 param_1);
+void sci_putc(char param_1);
 void sci_send_async(char *param_1,uint8_t param_2);
 ulong sci_port_write(void *param_1);
 void sci_printf(char *param_1);
@@ -5063,7 +5077,7 @@ void qspi_start(byte param_1,undefined2 *param_2,ushort param_3,char param_4);
 void qspi_acquire(void);
 int qspi_control(void) __asm__("c_qspi_control");
 int qspi_open(void) __asm__("c_qspi_open");
-undefined8 qspi_init(void);
+int qspi_init();
 void qspi_isr(void);
 int primary_user_65();
 void qspi_transfer_raw(char device, void *buffers, short count) __asm__("c_qspi_transfer_raw");
@@ -5688,21 +5702,21 @@ int log_count(uint8_t *full);
 void reset_record_count(void);
 undefined4 log_entry_text(int param_1,char *param_2,char *param_3);
 undefined4 reset_record_write(undefined4 param_1,undefined4 param_2,char *param_3);
-void interpolator_calibration_init(undefined1 *param_1);
+void interpolator_calibration_init(interpolator_calibration *calibration);
 uint8_t interpolator_measure(uint8_t mode);
-uint8_t interpolator_measure_low(uint8_t hdac_2);
-uint8_t interpolator_measure_high(uint8_t hdac_3);
-char dac_search_bisect(char param_1,byte param_2,byte param_3,byte param_4,byte param_5,
-                      undefined *param_6);
-byte dac_search_step(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,
-                    undefined *param_6);
+uint8_t interpolator_measure_low(char_slot dac);
+uint8_t interpolator_measure_high(char_slot dac);
+uint8_t dac_search_bisect(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t low,uint8_t high,
+                         undefined1 *measure);
+uint8_t dac_search_step(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t low,uint8_t high,
+                       undefined1 *measure);
 byte hdac_nudge(int param_1,byte param_2);
 undefined4 interpolator_prepare(void);
 uint8_t interpolator_calibrate(interpolator_calibration *calibration);
-undefined1 interpolator_verify(char *param_1);
-void interpolator_sample(char *param_1);
+uint8_t interpolator_verify(interpolator_calibration *calibration);
+void interpolator_sample(interpolator_calibration *calibration);
 void counter_calibrate(interval_reading_fields *reading,counter_configuration_fields *configuration);
-uint8_t interpolator_selftest_calibrate(void);
+undefined4 interpolator_selftest_calibrate(void);
 void interpolator_selftest(void);
 void interpolator_sample_test(void);
 void fpga_write(uint8_t reg,uint8_t value);
@@ -7059,9 +7073,11 @@ undefined1 * boot_memcpy(undefined1 *param_1,undefined1 *param_2,int param_3)
 
 /* mutex_create's inside: creates the mutex's exchange for the name in D0 and clears the mutex at A1
    Not a C function (register; read): its arguments and results in registers.  In: D0 int name, A1
-   void *mutex. */
+   void *mutex.  Out: D7 int error.  Error: D7 3 service 21 finds the name.  Preserves: D1, D2, A0.
+    */
 
-__regcall void mutex_init(int name /* d0 */,void *mutex /* a1 */)
+/* out D7 int error; error D7 3 service 21 finds the name; preserves D1, D2, A0 */
+__regcall int mutex_init(int name /* d0 */,void *mutex /* a1 */)
 
 {
   int d0;
@@ -7070,26 +7086,30 @@ __regcall void mutex_init(int name /* d0 */,void *mutex /* a1 */)
   int d1;
   int unaff_D2;
   int unaff_D3;
+  int iVar1;
   void *in_A0;
   void *a0;
   void *a0_00;
   void *a1;
   void *mutex_00;
   void *a1_00;
-  bool bVar1;
+  bool bVar2;
   
-  bVar1 = false;
-  ({ __auto_type __c = ({ __auto_type __c = psos_call('\x15',name,in_D1,unaff_D2,unaff_D3,in_A0,mutex); bVar1 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
-  if (!bVar1) {
-    bVar1 = false;
-    ({ __auto_type __c = ({ __auto_type __c = psos_call('\x14',d0,0,0,unaff_D3,a0,a1); bVar1 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
-    if (bVar1) {
+  bVar2 = false;
+  ({ __auto_type __c = ({ __auto_type __c = psos_call('\x15',name,in_D1,unaff_D2,unaff_D3,in_A0,mutex); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
+  if (bVar2) {
+    iVar1 = 3;
+  }
+  else {
+    bVar2 = false;
+    iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call('\x14',d0,0,0,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
+    if (bVar2) {
       mutex_clear(mutex_00);
       *(void **)((int)a1_00 + 4) = a0_00;
-      psos_call('\x17',d0_00,d1,0,unaff_D3,a0_00,a1_00);
+      iVar1 = psos_call('\x17',d0_00,d1,0,unaff_D3,a0_00,a1_00);
     }
   }
-  return;
+  return iVar1;
 }
 
 
@@ -7131,6 +7151,7 @@ __asm__(
 	"	move.l (48,%sp),%d0\n"
 	"	move.l (52,%sp),%a1\n"
 	"	jsr mutex_init\n"
+	"	move.l %d7,%d0\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_mutex_init, .-c_mutex_init\n"
@@ -7383,12 +7404,11 @@ __asm__(
 int mutex_create(char *name,void *mutex)
 
 {
-  int name_00;
-  int unaff_D7;
+  int iVar1;
   
-  name_00 = psos_pack_name();
-  mutex_init(name_00,mutex);
-  return unaff_D7;
+  iVar1 = psos_pack_name();
+  iVar1 = mutex_init(iVar1,mutex);
+  return iVar1;
 }
 
 
@@ -11021,10 +11041,14 @@ void clock_record_refresh(void)
 
 
 /* 000137a4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* set_timedate's twin: sets the clock record's date and time without marking it set */
+/* set_timedate's twin: sets the clock record's date and time without marking it set; assembly as
+   set_timedate is
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called. */
 
-int set_timedate_unflagged(uint32_t date,uint32_t time)
+__naked int set_timedate_unflagged(uint32_t date,uint32_t time)
 
 {
   int time_00;
@@ -11038,12 +11062,42 @@ int set_timedate_unflagged(uint32_t date,uint32_t time)
 }
 
 
-/* 000137d8 */
+#endif
+__asm__(
+	"	.globl set_timedate_unflagged\n"
+	"	.type set_timedate_unflagged, @function\n"
+	"	.pushsection .text.set_timedate_unflagged.137a4,\"ax\",@progbits\n"
+	"set_timedate_unflagged:\n"
+	"	movem.l %a6/%d7/%d6/%d2,-(%sp)\n"
+	"	movea.l #0x1009b8,%a6\n"
+	"	move.l (0x14,%sp),%d6\n"
+	"	move.l (0x18,%sp),%d1\n"
+	"	jsr (enter_supervisor).l\n"
+	"	move.w %d0,-(%sp)\n"
+	"	move.l %d6,%d0\n"
+	"	moveq #0x0,%d2\n"
+	"	bsr.w clock_record_store\n"
+	"	bsr.w clock_record_derive\n"
+	"	bsr.w clock_record_checksum\n"
+	"	move (%sp)+,%sr\n"
+	"	move.l %d7,%d0\n"
+	"	movem.l (%sp)+,%d2/%d6/%d7/%a6\n"
+	"	rts\n"
+	"	.size set_timedate_unflagged, .-set_timedate_unflagged\n"
+	"	.popsection\n"
+);
 
-/* the set_time word's, "set_timedate error: %2X"
+/* 000137d8 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the set_time word's, "set_timedate error: %2X": enter_supervisor, then clock_record_store,
+   marking the record set, clock_record_derive and clock_record_checksum on the record in A6, and
+   the status register restored from the stack, which C cannot say; returns clock_record_store's D7
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
    structures.md */
 
-int set_timedate(uint32_t date,uint32_t time)
+__naked int set_timedate(uint32_t date,uint32_t time)
 
 {
   int time_00;
@@ -11056,6 +11110,31 @@ int set_timedate(uint32_t date,uint32_t time)
   return unaff_D7;
 }
 
+
+#endif
+__asm__(
+	"	.globl set_timedate\n"
+	"	.type set_timedate, @function\n"
+	"	.pushsection .text.set_timedate.137d8,\"ax\",@progbits\n"
+	"set_timedate:\n"
+	"	movem.l %a6/%d7/%d6/%d2,-(%sp)\n"
+	"	movea.l #0x1009b8,%a6\n"
+	"	move.l (0x14,%sp),%d6\n"
+	"	move.l (0x18,%sp),%d1\n"
+	"	jsr (enter_supervisor).l\n"
+	"	move.w %d0,-(%sp)\n"
+	"	move.l %d6,%d0\n"
+	"	moveq #0x1,%d2\n"
+	"	bsr.w clock_record_store\n"
+	"	bsr.w clock_record_derive\n"
+	"	bsr.w clock_record_checksum\n"
+	"	move (%sp)+,%sr\n"
+	"	move.l %d7,%d0\n"
+	"	movem.l (%sp)+,%d2/%d6/%d7/%a6\n"
+	"	rts\n"
+	"	.size set_timedate, .-set_timedate\n"
+	"	.popsection\n"
+);
 
 /* 0001380c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -21465,10 +21544,10 @@ uint rom_lane_checksum(byte *param_1,undefined4 param_2)
 void selftest_run_all(void)
 
 {
-  int *piVar1;
+  selftest_entry *ppuVar1;
   
-  for (piVar1 = (int *)&DAT_00017fe0; *piVar1 != 0; piVar1 = piVar1 + 1) {
-    (*(code *)*piVar1)();
+  for (ppuVar1 = selftest_list; *ppuVar1 != (selftest_entry)0x0; ppuVar1 = ppuVar1 + 1) {
+    (*(code *)*ppuVar1)();
   }
   return;
 }
@@ -21481,11 +21560,11 @@ void selftest_run_all(void)
 void selftest_run_all_counted(void)
 
 {
-  int *piVar1;
+  selftest_entry *ppuVar1;
   
-  for (piVar1 = (int *)&DAT_00017fe0; watchdog_pll = watchdog_pll + 1, *piVar1 != 0;
-      piVar1 = piVar1 + 1) {
-    (*(code *)*piVar1)();
+  for (ppuVar1 = selftest_list; watchdog_pll = watchdog_pll + 1, *ppuVar1 != (selftest_entry)0x0;
+      ppuVar1 = ppuVar1 + 1) {
+    (*(code *)*ppuVar1)();
   }
   return;
 }
@@ -21547,13 +21626,13 @@ void selftest_summary(void)
 /* self-test 0, first in the table at 0x18458: runs every test, counting watchdog_pll for a nonzero
    argument, then summarizes and reports any failures */
 
-void selftest_all(char param_1)
+void selftest_all(char_slot run)
 
 {
   int iVar1;
   char cVar2;
   
-  if (param_1 == '\0') {
+  if (run.value == 0) {
     selftest_run_all();
   }
   else {
@@ -21573,24 +21652,23 @@ void selftest_all(char param_1)
 
 /* 000178e0 */
 
-/* WARNING: Unknown calling convention */
 /* the self-test of the time interpolator
    entry 8; "Interpolator: A, MRC mode" */
 
-void selftest_interpolator(char param_1)
+void selftest_interpolator(char_slot run)
 
 {
   int iVar1;
   char cVar2;
   
-  if (param_1 == '\x01') {
+  if (run.value == 1) {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       interpolator_selftest();
     }
   }
-  cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.interpolator != 0)) {
+  cVar2 = selftest_may_report(run.value);
+  if (((cVar2 != '\0') && (run.value == 1)) && (selftest.interpolator != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
       selftest_report_fail((uint)(selftest.interpolator & 1),"Interpolator: A, MRC mode",'\0');
@@ -21602,24 +21680,23 @@ void selftest_interpolator(char param_1)
 
 /* 00017946 */
 
-/* WARNING: Unknown calling convention */
 /* the self-test of the internal reference
    entry 9; "Internal reference:" */
 
-void selftest_internal_reference(char param_1)
+void selftest_internal_reference(char_slot run)
 
 {
   int iVar1;
   char cVar2;
   
-  if (param_1 == '\x01') {
+  if (run.value == 1) {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       internal_pps_test();
     }
   }
-  cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.internal_reference != 0)) {
+  cVar2 = selftest_may_report(run.value);
+  if (((cVar2 != '\0') && (run.value == 1)) && (selftest.internal_reference != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
       selftest_report_fail((uint)(selftest.internal_reference & 1),"Internal reference: ",'\0');
@@ -21631,11 +21708,10 @@ void selftest_internal_reference(char param_1)
 
 /* 000179ac */
 
-/* WARNING: Unknown calling convention */
 /* the self-test of system RAM, its data and address lines
    entry 3; "System RAM: D15-D0:", "adr line A18-A1:" */
 
-void selftest_ram(char param_1)
+void selftest_ram(char_slot run)
 
 {
   int iVar1;
@@ -21644,14 +21720,14 @@ void selftest_ram(char param_1)
   char acStack_51 [17];
   char acStack_40 [60];
   
-  if (param_1 == '\x01') {
+  if (run.value == 1) {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       ram_pattern_test_locked();
     }
   }
-  cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.ram != 0)) {
+  cVar2 = selftest_may_report(run.value);
+  if (((cVar2 != '\0') && (run.value == 1)) && (selftest.ram != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
       format_binary((uint)selftest.ram_data_bits,(int)acStack_51,0x10);
@@ -21668,25 +21744,24 @@ void selftest_ram(char param_1)
 
 /* 00017a96 */
 
-/* WARNING: Unknown calling convention */
 /* the self-test of the CPU
    the self-test table 0x18458's entry 2; "CPU:" */
 
-void selftest_cpu(char param_1)
+void selftest_cpu(char_slot run)
 
 {
   int iVar1;
   char cVar2;
   char acStack_40 [60];
   
-  if (param_1 == '\x01') {
+  if (run.value == 1) {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       cpu_register_test();
     }
   }
-  cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.cpu != 0)) {
+  cVar2 = selftest_may_report(run.value);
+  if (((cVar2 != '\0') && (run.value == 1)) && (selftest.cpu != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
       sprintf(acStack_40,"%s","CPU:");
@@ -21699,25 +21774,24 @@ void selftest_cpu(char param_1)
 
 /* 00017b16 */
 
-/* WARNING: Unknown calling convention */
 /* the self-test of the EEPROM
    entry 4; "EEPROM:" */
 
-void selftest_eeprom(char param_1)
+void selftest_eeprom(char_slot run)
 
 {
   int iVar1;
   char cVar2;
   char acStack_40 [60];
   
-  if (param_1 == '\x01') {
+  if (run.value == 1) {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       selftest_nv_slot();
     }
   }
-  cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.eeprom != 0)) {
+  cVar2 = selftest_may_report(run.value);
+  if (((cVar2 != '\0') && (run.value == 1)) && (selftest.eeprom != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
       sprintf(acStack_40,"%s","EEPROM:");
@@ -21730,24 +21804,23 @@ void selftest_eeprom(char param_1)
 
 /* 00017b96 */
 
-/* WARNING: Unknown calling convention */
 /* the self-test of the QSPI's devices: the ADC, the DACs, the FPGA and the EFC
    entry 6; "QSPI: ADC", "Hex DAC", "FPGA", "EFC" */
 
-void selftest_qspi(char param_1)
+void selftest_qspi(char_slot run)
 
 {
   int iVar1;
   char cVar2;
   
-  if (param_1 == '\x01') {
+  if (run.value == 1) {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       selftest_qspi_run();
     }
   }
-  cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.qspi != 0)) {
+  cVar2 = selftest_may_report(run.value);
+  if (((cVar2 != '\0') && (run.value == 1)) && (selftest.qspi != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
       selftest_report_fail((uint)(selftest.qspi & 2),"QSPI: ADC",'\0');
@@ -21762,24 +21835,23 @@ void selftest_qspi(char param_1)
 
 /* 00017c3e */
 
-/* WARNING: Unknown calling convention */
 /* the self-test of the FPGA's counters
    entry 7; "FPGA: counters not preset" */
 
-void selftest_fpga(char param_1)
+void selftest_fpga(char_slot run)
 
 {
   int iVar1;
   char cVar2;
   
-  if (param_1 == '\x01') {
+  if (run.value == 1) {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       counter_selftest();
     }
   }
-  cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.fpga != 0)) {
+  cVar2 = selftest_may_report(run.value);
+  if (((cVar2 != '\0') && (run.value == 1)) && (selftest.fpga != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
       selftest_report_fail((uint)(selftest.fpga & 1),"FPGA: counters not preset",'\0');
@@ -21791,15 +21863,14 @@ void selftest_fpga(char param_1)
 
 /* 00017ca4 */
 
-/* WARNING: Unknown calling convention */
 /* runs the lamp test unless the self-test has been aborted */
 
-void selftest_lamps(char param_1)
+void selftest_lamps(char_slot run)
 
 {
   int iVar1;
   
-  if (param_1 == '\x01') {
+  if (run.value == 1) {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       lamp_test();
@@ -21811,24 +21882,23 @@ void selftest_lamps(char param_1)
 
 /* 00017cbe */
 
-/* WARNING: Unknown calling convention */
 /* the self-test of the DUART: its registers, counter and both channels
    entry 5; "UART: register read/write", "channel A data" */
 
-void selftest_uart(char param_1)
+void selftest_uart(char_slot run)
 
 {
   int iVar1;
   char cVar2;
   
-  if (param_1 == '\x01') {
+  if (run.value == 1) {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       duart_test();
     }
   }
-  cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.uart != 0)) {
+  cVar2 = selftest_may_report(run.value);
+  if (((cVar2 != '\0') && (run.value == 1)) && (selftest.uart != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
       selftest_report_fail((uint)(selftest.uart & 1),"UART: register read/write",'\0');
@@ -21845,20 +21915,19 @@ void selftest_uart(char param_1)
 
 /* 00017d94 */
 
-/* WARNING: Unknown calling convention */
 /* the self-test of the GPS engine, reading its own self-test's result bits
    entry 10; "GPS: Channel 1 Correlation" .. "GPS: Engine timeout", @@Ca's bits */
 
-void selftest_gps(char param_1)
+void selftest_gps(char_slot run)
 
 {
   char cVar1;
   
-  if (param_1 == '\x01') {
+  if (run.value == 1) {
     selftest_aborted();
   }
-  cVar1 = selftest_may_report(param_1);
-  if (((cVar1 != '\0') && (param_1 == '\x01')) && (selftest.gps != 0)) {
+  cVar1 = selftest_may_report(run.value);
+  if (((cVar1 != '\0') && (run.value == 1)) && (selftest.gps != 0)) {
     cVar1 = debug_is_enabled();
     if (cVar1 != '\0') {
       selftest_report_fail((uint)(selftest.gps & 1),"GPS: Channel 1 Correlation",'\0');
@@ -21885,24 +21954,23 @@ void selftest_gps(char param_1)
 
 /* 00017f2c */
 
-/* WARNING: Unknown calling convention */
 /* the self-test of the 5 V, 15 V and -15 V supplies
    entry 11; "POWER: 5V", "15V", "-15V" */
 
-void selftest_power(char param_1)
+void selftest_power(char_slot run)
 
 {
   int iVar1;
   char cVar2;
   
-  if (param_1 == '\x01') {
+  if (run.value == 1) {
     iVar1 = selftest_aborted();
     if (iVar1 == 0) {
       supplies_test();
     }
   }
-  cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.power != 0)) {
+  cVar2 = selftest_may_report(run.value);
+  if (((cVar2 != '\0') && (run.value == 1)) && (selftest.power != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
       selftest_report_fail((uint)(selftest.power & 1),"POWER: 5V",'\0');
@@ -21916,14 +21984,13 @@ void selftest_power(char param_1)
 
 /* 00017fc0 */
 
-/* WARNING: Unknown calling convention */
 /* on selftest_execute's second pass, its argument 1, runs interpolator_selftest
    the self-test table 0x18458's entry 12 */
 
-void selftest_interpolator_calibration(uint8_t pass)
+void selftest_interpolator_calibration(char_slot run)
 
 {
-  if (pass == 1) {
+  if (run.value == 1) {
     interpolator_selftest();
   }
   return;
@@ -21932,14 +21999,13 @@ void selftest_interpolator_calibration(uint8_t pass)
 
 /* 00017fd0 */
 
-/* WARNING: Unknown calling convention */
 /* on selftest_execute's second pass, its argument 1, runs interpolator_sample_test
    entry 13 */
 
-void selftest_interpolator_sample(uint8_t pass)
+void selftest_interpolator_sample(char_slot run)
 
 {
-  if (pass == 1) {
+  if (run.value == 1) {
     interpolator_sample_test();
   }
   return;
@@ -21995,7 +22061,7 @@ void selftest_execute(char param_1)
   
   selftest.running = 1;
   watchdog_pll = watchdog_pll + 1;
-  pcVar1 = (code *)(&PTR_selftest_all_00018458)[param_1];
+  pcVar1 = (code *)selftest_table[param_1];
   selftest_begin();
   (*pcVar1)();
   (*pcVar1)();
@@ -31065,12 +31131,16 @@ __asm__(
 );
 
 /* 0001ad28 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x0001ad42) */
-/* allocates the dictionary's segment through trap #3 and clears its pointers
+/* allocates the dictionary's segment through trap #3, service 8 in line with the size in D1 and its
+   segment back in A0, which C cannot say, and clears its pointers
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
    console.md */
 
-void pforth_dictionary_init(int size)
+__naked void pforth_dictionary_init(int size)
 
 {
   __m68k_trap(3);
@@ -31080,6 +31150,42 @@ void pforth_dictionary_init(int size)
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl pforth_dictionary_init\n"
+	"	.type pforth_dictionary_init, @function\n"
+	"	.pushsection .text.pforth_dictionary_init.1ad28,\"ax\",@progbits\n"
+	"pforth_dictionary_init:\n"
+	"	link.w %a6,#0x0\n"
+	"	movem.l %d7/%d3/%d2,-(%sp)\n"
+	"	move.l (0x8,%a6),%d1\n"
+	"	moveq #0x0,%d2\n"
+	"	moveq #0x1,%d3\n"
+	"	moveq #0x8,%d7\n"
+	"	trap #0x3\n"
+	"	moveq #0x0,%d0\n"
+	"	move.b %d7,%d0\n"
+	"	bne.b .Lg_1ad76\n"
+	"	move.l %d0,(console_halt_hook_cell).l\n"
+	"	move.w %d0,(console_device).l\n"
+	"	move.l %a0,(pforth_dictionary_next).l\n"
+	"	move.l %a0,(pforth_dictionary_start).l\n"
+	"	adda.l (0x8,%a6),%a0\n"
+	"	move.l %a0,(pforth_dictionary_end).l\n"
+	"	move.l #0x1ad0e,(pforth_latest_word).l\n"
+	".Lg_1ad6e:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d7\n"
+	"	unlk %a6\n"
+	"	rts\n"
+	".Lg_1ad76:\n"
+	"	clr.l (pforth_dictionary_next).l\n"
+	"	clr.l (pforth_dictionary_start).l\n"
+	"	clr.l (pforth_dictionary_end).l\n"
+	"	bra.b .Lg_1ad6e\n"
+	"	.size pforth_dictionary_init, .-pforth_dictionary_init\n"
+	"	.popsection\n"
+);
 
 /* 0001ad8a */
 
@@ -31212,20 +31318,81 @@ void console_set_device(undefined4 param_1)
 
 
 /* 0001ae5c */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x0001aea4) */
 /* WARNING: Removing unreachable block (ram,0x0001aebe) */
 /* WARNING: Removing unreachable block (ram,0x0001aecc) */
 /* WARNING: Unknown calling convention -- yet parameter storage is locked */
-/* creates the console's task, p4th, through trap #3 */
+/* creates the console's task, p4th, from four stack arguments, through traps in line, services 1,
+   10 and 2, which C cannot say; the task starts at 0x1aedc
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called. */
 
-undefined4 console_task_create(void)
+__naked undefined4 console_task_create(void)
 
 {
   __m68k_trap(3);
   return 1;
 }
 
+
+#endif
+__asm__(
+	"	.globl console_task_create\n"
+	"	.type console_task_create, @function\n"
+	"	.pushsection .text.console_task_create.1ae5c,\"ax\",@progbits\n"
+	"console_task_create:\n"
+	"	link.w %a6,#0x0\n"
+	"	movem.l %d7/%d4/%d3/%d2,-(%sp)\n"
+	"	move.l #0x70347468,%d0\n"
+	"	clr.w %d1\n"
+	"	move.l (0x14,%a6),%d2\n"
+	"	clr.l %d3\n"
+	"	move.l (0x8,%a6),%d3\n"
+	"	add.l (0xc,%a6),%d3\n"
+	"	addi.l #0xa,%d3\n"
+	"	move.l (0x10,%a6),%d4\n"
+	"	swap %d3\n"
+	"	move.w %d4,%d3\n"
+	"	swap %d3\n"
+	"	move.l %sp,%d4\n"
+	"	move.w (0xe,%a6),-(%sp)\n"
+	"	move.w (0xa,%a6),-(%sp)\n"
+	"	move.w #0x2,-(%sp)\n"
+	"	movea.l %sp,%a0\n"
+	"	moveq #0x1,%d7\n"
+	"	trap #0x3\n"
+	"	movea.l %d4,%sp\n"
+	"	tst.b %d7\n"
+	"	bne.b .Lg_1aed6\n"
+	"	move.l %a0,(__ghidra_100b10).l\n"
+	"	move.l %a0,-(%sp)\n"
+	"	movea.l %a0,%a1\n"
+	"	movea.l (pforth_dictionary_start).l,%a0\n"
+	"	moveq #0xa,%d7\n"
+	"	trap #0x3\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	tst.b %d7\n"
+	"	bne.b .Lg_1aed6\n"
+	"	lea (console_task:w,%pc),%a1\n"
+	"	nop\n"
+	"	moveq #0x2,%d7\n"
+	"	trap #0x3\n"
+	"	tst.b %d7\n"
+	"	bne.b .Lg_1aed6\n"
+	"	move.l %a0,%d0\n"
+	".Lg_1aece:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%d7\n"
+	"	unlk %a6\n"
+	"	rts\n"
+	".Lg_1aed6:\n"
+	"	clr.l %d0\n"
+	"	move.b %d7,%d0\n"
+	"	bra.b .Lg_1aece\n"
+	"	.size console_task_create, .-console_task_create\n"
+	"	.popsection\n"
+);
 
 /* 0001aedc */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -34096,10 +34263,14 @@ void duartb_reconfigure(void)
 
 
 /* 0001dd98 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the console device's write: drtb_puts under the write lock */
+/* devices 0's and 2's write: drtb_puts under the write lock, unless the byte at 0x10313a is set
+   Not a C function (register; read): its arguments and results in registers.  In: A0 char *buffer.
+   Out: D7 char error, D2 int count, A0 char *end. */
 
-void drtb_write(void)
+/* out D7 char error, D2 int count, A0 char *end */
+__regcall void drtb_write(void)
 
 {
   char *in_A0;
@@ -34112,6 +34283,41 @@ void drtb_write(void)
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl drtb_write\n"
+	"	.type drtb_write, @function\n"
+	"	.pushsection .text.drtb_write.1dd98,\"ax\",@progbits\n"
+	"drtb_write:\n"
+	"	link.w %a6,#-0x2\n"
+	"	tst.b (__ghidra_10313a).l\n"
+	"	bne.b .Lg_1ddce\n"
+	"	move.l %a2,-(%sp)\n"
+	"	movea.l %a0,%a2\n"
+	"	moveq #0x1,%d0\n"
+	"	jsr (drtb_lock:w,%pc)\n"
+	"	move.b %d7,(-0x2,%a6)\n"
+	"	move.l %a2,-(%sp)\n"
+	"	jsr (drtb_puts:w,%pc)\n"
+	"	addq.l #0x4,%sp\n"
+	"	move.l %d0,%d2\n"
+	"	adda.l %d2,%a2\n"
+	"	moveq #0x1,%d0\n"
+	"	jsr (drtb_unlock:w,%pc)\n"
+	"	move.b (-0x2,%a6),%d7\n"
+	"	movea.l %a2,%a0\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	bra.b .Lg_1ddd2\n"
+	".Lg_1ddce:\n"
+	"	clr.l %d2\n"
+	"	clr.l %d7\n"
+	".Lg_1ddd2:\n"
+	"	unlk %a6\n"
+	"	rts\n"
+	"	.size drtb_write, .-drtb_write\n"
+	"	.popsection\n"
+);
 
 /* 0001ddd6 */
 
@@ -36253,21 +36459,27 @@ __asm__(
 );
 
 /* 0001fc20 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* "Unable to release SCI token"
+/* the SCI device's close, and sci_putc's unlock: gives the token for D0 back, or drops a nested
+   hold; "Unable to release SCI token"
+   Not a C function (register; read): its arguments and results in registers.  In: D0 char write.
+   Out: D7 char error.  Error: D7 0x80 holds remain, D7 1 not the holder.  Preserves: D0, D1, A0,
+   A1.
    structures.md */
 
-undefined8 sci_unlock(void)
+/* out D7 char error; error D7 0x80 holds remain, D7 1 not the holder; preserves D0, D1, A0, A1 */
+__regcall char sci_unlock(char write /* d0 */)
 
 {
-  undefined4 in_D0;
   ulong uVar1;
-  undefined4 in_D1;
   uint32_t exchange;
+  undefined4 unaff_D7;
   exchange_token *message;
+  undefined1 local_66;
   char acStack_64 [80];
   
-  if ((char)in_D0 == '\x01') {
+  if (write == '\x01') {
     message = &sci_exchanges.write_token;
     exchange = sci_exchanges.write_exchange;
   }
@@ -36279,6 +36491,7 @@ undefined8 sci_unlock(void)
   if (uVar1 == message->task) {
     if (message->field_0c == 0) {
       message->task = 0;
+      local_66 = 0;
       if (exchange != message->exchange) {
         fatal_error("SCI semaphore has been corrupted.");
       }
@@ -36292,34 +36505,138 @@ undefined8 sci_unlock(void)
       fatal_error("SCI semaphore count is < 0.");
     }
     else {
+      local_66 = 0x80;
       message->field_0c = message->field_0c - 1;
     }
   }
   else {
     sprintf(acStack_64,"sci_close and not owner (pid): %X",uVar1);
     task_debug_message(acStack_64);
+    local_66 = 1;
   }
-  return CONCAT44(in_D0,in_D1);
+  return (char)(unkfloat1)(float)CONCAT31((int3)((uint)unaff_D7 >> 8),local_66);
 }
 
 
-/* 0001fd0e */
+#endif
+__asm__(
+	"	.globl sci_unlock\n"
+	"	.type sci_unlock, @function\n"
+	"	.pushsection .text.sci_unlock.1fc20,\"ax\",@progbits\n"
+	"sci_unlock:\n"
+	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
+	"	link.w %a6,#-0x52\n"
+	"	movem.l %a3/%a2/%d4/%d3/%d2,-(%sp)\n"
+	"	movea.l #0x1f176,%a3\n"
+	"	move.b %d0,(-0x51,%a6)\n"
+	"	cmpi.b #0x1,(-0x51,%a6)\n"
+	"	bne.b .Lg_1fc4c\n"
+	"	move.l (__ghidra_10316c).l,%d2\n"
+	"	movea.l #0x103170,%a2\n"
+	"	bra.b .Lg_1fc58\n"
+	".Lg_1fc4c:\n"
+	"	move.l (sci_exchanges).l,%d2\n"
+	"	movea.l #0x103154,%a2\n"
+	".Lg_1fc58:\n"
+	"	jsr (psos_my_pid).l\n"
+	"	move.l %d0,%d3\n"
+	"	cmp.l (0x8,%a2),%d3\n"
+	"	bne.w .Lg_1fcd8\n"
+	"	tst.l (0xc,%a2)\n"
+	"	bne.b .Lg_1fcba\n"
+	"	clr.l (0x8,%a2)\n"
+	"	clr.b (-0x52,%a6)\n"
+	"	cmp.l (0x4,%a2),%d2\n"
+	"	beq.b .Lg_1fc86\n"
+	"	pea (0x203f1).l\n"
+	"	jsr (%a3)\n"
+	"	addq.l #0x4,%sp\n"
+	".Lg_1fc86:\n"
+	"	move.l %a2,-(%sp)\n"
+	"	move.l %d2,-(%sp)\n"
+	"	jsr (psos_send_x).l\n"
+	"	addq.l #0x8,%sp\n"
+	"	move.b %d0,%d1\n"
+	"	moveq #0x0,%d4\n"
+	"	move.b %d1,%d4\n"
+	"	tst.l %d4\n"
+	"	beq.b .Lg_1fcfe\n"
+	"	move.l %d4,-(%sp)\n"
+	"	pea (0x20413).l\n"
+	"	pea (-0x50,%a6)\n"
+	"	jsr (sprintf).l\n"
+	"	pea (-0x50,%a6)\n"
+	"	jsr (%a3)\n"
+	"	lea (0x10,%sp),%sp\n"
+	"	bra.b .Lg_1fcfe\n"
+	".Lg_1fcba:\n"
+	"	tst.l (0xc,%a2)\n"
+	"	bpl.b .Lg_1fccc\n"
+	"	pea (0x20433).l\n"
+	"	jsr (%a3)\n"
+	"	addq.l #0x4,%sp\n"
+	"	bra.b .Lg_1fcfe\n"
+	".Lg_1fccc:\n"
+	"	move.b #0x80,(-0x52,%a6)\n"
+	"	subq.l #0x1,(0xc,%a2)\n"
+	"	bra.b .Lg_1fcfe\n"
+	".Lg_1fcd8:\n"
+	"	move.l %d3,-(%sp)\n"
+	"	pea (0x2044f).l\n"
+	"	pea (-0x50,%a6)\n"
+	"	jsr (sprintf).l\n"
+	"	pea (-0x50,%a6)\n"
+	"	jsr (task_debug_message).l\n"
+	"	lea (0x10,%sp),%sp\n"
+	"	move.b #0x1,(-0x52,%a6)\n"
+	".Lg_1fcfe:\n"
+	"	move.b (-0x52,%a6),%d7\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%a2/%a3\n"
+	"	unlk %a6\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
+	"	rts\n"
+	"	.size sci_unlock, .-sci_unlock\n"
+	"	.popsection\n"
+);
+/* sci_unlock from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_sci_unlock,\"ax\",@progbits\n"
+	"	.globl c_sci_unlock\n"
+	"	.type c_sci_unlock, @function\n"
+	"c_sci_unlock:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	jsr sci_unlock\n"
+	"	move.l %d7,%d0\n"
+	"	extb.l %d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_sci_unlock, .-c_sci_unlock\n"
+	"	.popsection\n"
+);
 
-/* "Unable to acquire SCI token"
+/* 0001fd0e */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the SCI device's open, and sci_putc's lock: takes the write token for D0 1, else the read one, or
+   counts a nested hold; "Unable to acquire SCI token"
+   Not a C function (register; read): its arguments and results in registers.  In: D0 char write.
+   Out: D7 char error.  Error: D7 0x80 already held.  Preserves: D0, D1, A0, A1.
    structures.md */
 
-undefined8 sci_lock(void)
+/* out D7 char error; error D7 0x80 already held; preserves D0, D1, A0, A1 */
+__regcall char sci_lock(char write /* d0 */)
 
 {
-  undefined4 in_D0;
   ulong uVar1;
   ulong uVar2;
-  undefined4 in_D1;
   uint32_t exchange;
+  undefined4 unaff_D7;
   exchange_token *buffer;
+  undefined1 local_66;
   char acStack_64 [80];
   
-  if ((char)in_D0 == '\x01') {
+  if (write == '\x01') {
     buffer = &sci_exchanges.write_token;
     exchange = sci_exchanges.write_exchange;
   }
@@ -36329,6 +36646,7 @@ undefined8 sci_lock(void)
   }
   uVar1 = psos_my_pid();
   if (uVar1 == buffer->task) {
+    local_66 = 0x80;
     buffer->field_0c = buffer->field_0c + 1;
   }
   else {
@@ -36339,17 +36657,100 @@ undefined8 sci_lock(void)
     }
     buffer->task = uVar1;
     buffer->field_0c = 0;
+    local_66 = 0;
   }
-  return CONCAT44(in_D0,in_D1);
+  return (char)(unkfloat1)(float)CONCAT31((int3)((uint)unaff_D7 >> 8),local_66);
 }
 
 
-/* 0001fdb6 */
+#endif
+__asm__(
+	"	.globl sci_lock\n"
+	"	.type sci_lock, @function\n"
+	"	.pushsection .text.sci_lock.1fd0e,\"ax\",@progbits\n"
+	"sci_lock:\n"
+	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
+	"	link.w %a6,#-0x52\n"
+	"	movem.l %a2/%d4/%d3/%d2,-(%sp)\n"
+	"	move.b %d0,(-0x51,%a6)\n"
+	"	cmpi.b #0x1,(-0x51,%a6)\n"
+	"	bne.b .Lg_1fd34\n"
+	"	move.l (__ghidra_10316c).l,%d2\n"
+	"	movea.l #0x103170,%a2\n"
+	"	bra.b .Lg_1fd40\n"
+	".Lg_1fd34:\n"
+	"	move.l (sci_exchanges).l,%d2\n"
+	"	movea.l #0x103154,%a2\n"
+	".Lg_1fd40:\n"
+	"	jsr (psos_my_pid).l\n"
+	"	move.l %d0,%d4\n"
+	"	cmp.l (0x8,%a2),%d4\n"
+	"	beq.b .Lg_1fd98\n"
+	"	clr.l -(%sp)\n"
+	"	clr.l -(%sp)\n"
+	"	move.l %a2,-(%sp)\n"
+	"	move.l %d2,-(%sp)\n"
+	"	jsr (psos_request_x).l\n"
+	"	lea (0x10,%sp),%sp\n"
+	"	move.b %d0,%d1\n"
+	"	moveq #0x0,%d3\n"
+	"	move.b %d1,%d3\n"
+	"	tst.l %d3\n"
+	"	beq.b .Lg_1fd8a\n"
+	"	move.l %d3,-(%sp)\n"
+	"	pea (0x20471).l\n"
+	"	pea (-0x50,%a6)\n"
+	"	jsr (sprintf).l\n"
+	"	pea (-0x50,%a6)\n"
+	"	jsr (fatal_error).l\n"
+	"	lea (0x10,%sp),%sp\n"
+	".Lg_1fd8a:\n"
+	"	move.l %d4,(0x8,%a2)\n"
+	"	clr.l (0xc,%a2)\n"
+	"	clr.b (-0x52,%a6)\n"
+	"	bra.b .Lg_1fda2\n"
+	".Lg_1fd98:\n"
+	"	move.b #0x80,(-0x52,%a6)\n"
+	"	addq.l #0x1,(0xc,%a2)\n"
+	".Lg_1fda2:\n"
+	"	move.b (-0x52,%a6),%d7\n"
+	"	move.l (%sp)+,%d2\n"
+	"	move.l (%sp)+,%d3\n"
+	"	move.l (%sp)+,%d4\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	unlk %a6\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
+	"	rts\n"
+	"	.size sci_lock, .-sci_lock\n"
+	"	.popsection\n"
+);
+/* sci_lock from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_sci_lock,\"ax\",@progbits\n"
+	"	.globl c_sci_lock\n"
+	"	.type c_sci_lock, @function\n"
+	"c_sci_lock:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d0\n"
+	"	jsr sci_lock\n"
+	"	move.l %d7,%d0\n"
+	"	extb.l %d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_sci_lock, .-c_sci_lock\n"
+	"	.popsection\n"
+);
 
-/* creates sciR and sciW, "Unable to create sciR"
+/* 0001fdb6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the SCI device's init, device 3's function 0: creates sciR and sciW, "Unable to create sciR"
+   Not a C function (register; read): its arguments and results in registers.  Preserves: D0, D1,
+   A0, A1.
    structures.md */
 
-undefined8 sci_init(void)
+/* preserves D0, D1, A0, A1 */
+__regcall undefined8 sci_init(void)
 
 {
   uint16_t uVar1;
@@ -36372,14 +36773,14 @@ undefined8 sci_init(void)
     sci.seven_bits = 1;
     sci.mark_bit = 0;
     if (sci_settings.parity == 1) {
-      qsm.sccr1 = SCCR1_PE;
+      qsm.sccr1 = 0x400;
     }
     else if (sci_settings.parity == 2) {
-      qsm.sccr1 = SCCR1_PT | SCCR1_PE;
+      qsm.sccr1 = 0xc00;
     }
   }
   uVar1 = qsm.sccr1;
-  qsm.sccr1 = uVar1 | (SCCR1_RIE | SCCR1_TE | SCCR1_RE);
+  qsm.sccr1 = uVar1 | 0x2c;
   iVar3 = 0;
   do {
     iVar3 = iVar3 + 1;
@@ -36435,6 +36836,184 @@ undefined8 sci_init(void)
   return CONCAT44(in_D0,in_D1);
 }
 
+
+#endif
+__asm__(
+	"	.globl sci_init\n"
+	"	.type sci_init, @function\n"
+	"	.pushsection .text.sci_init.1fdb6,\"ax\",@progbits\n"
+	"sci_init:\n"
+	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
+	"	link.w %a6,#-0x50\n"
+	"	movem.l %a4/%a3/%a2/%d7/%d6/%d5/%d4/%d3/%d2,-(%sp)\n"
+	"	movea.l #0x103154,%a2\n"
+	"	movea.l #0x103170,%a3\n"
+	"	move.l #0x60896,%d3\n"
+	"	move.l #0x1f176,%d4\n"
+	"	move.l #0x101f53,%d5\n"
+	"	move.l #0x103150,%d6\n"
+	"	move.l #0x10316c,%d7\n"
+	"	movea.l #0xfffc0a,%a4\n"
+	"	move.b (__ghidra_101f52).l,-(%sp)\n"
+	"	jsr (sci_baud_set:w,%pc)\n"
+	"	addq.l #0x2,%sp\n"
+	"	movea.l %d5,%a0\n"
+	"	tst.b (%a0)\n"
+	"	bne.b .Lg_1fe12\n"
+	"	clr.b (__ghidra_103299).l\n"
+	"	clr.b (__ghidra_103298).l\n"
+	"	bra.b .Lg_1fe54\n"
+	".Lg_1fe12:\n"
+	"	movea.l %d5,%a0\n"
+	"	cmpi.b #0x3,(%a0)\n"
+	"	bne.b .Lg_1fe2c\n"
+	"	move.b #0x1,(__ghidra_103299).l\n"
+	"	move.b #0x1,(__ghidra_103298).l\n"
+	"	bra.b .Lg_1fe54\n"
+	".Lg_1fe2c:\n"
+	"	move.b #0x1,(__ghidra_103299).l\n"
+	"	clr.b (__ghidra_103298).l\n"
+	"	movea.l %d5,%a0\n"
+	"	cmpi.b #0x1,(%a0)\n"
+	"	bne.b .Lg_1fe48\n"
+	"	move.w #0x400,(%a4)\n"
+	"	bra.b .Lg_1fe54\n"
+	".Lg_1fe48:\n"
+	"	movea.l %d5,%a0\n"
+	"	cmpi.b #0x2,(%a0)\n"
+	"	bne.b .Lg_1fe54\n"
+	"	move.w #0xc00,(%a4)\n"
+	".Lg_1fe54:\n"
+	"	ori.w #0x2c,(%a4)\n"
+	"	moveq #0x0,%d2\n"
+	".Lg_1fe5a:\n"
+	"	addq.l #0x1,%d2\n"
+	"	cmpi.l #0x186a0,%d2\n"
+	"	blt.b .Lg_1fe5a\n"
+	"	move.w (__ghidra_fffc0c).l,%d2\n"
+	"	move.w (__ghidra_fffc0e).l,%d2\n"
+	"	move.l %d6,-(%sp)\n"
+	"	clr.l -(%sp)\n"
+	"	clr.l -(%sp)\n"
+	"	pea (0x20491).l\n"
+	"	jsr (psos_create_x).l\n"
+	"	lea (0x10,%sp),%sp\n"
+	"	move.b %d0,%d1\n"
+	"	moveq #0x0,%d2\n"
+	"	move.b %d1,%d2\n"
+	"	tst.l %d2\n"
+	"	beq.b .Lg_1feac\n"
+	"	move.l %d2,-(%sp)\n"
+	"	pea (0x20496).l\n"
+	"	pea (-0x50,%a6)\n"
+	"	movea.l %d3,%a0\n"
+	"	jsr (%a0)\n"
+	"	pea (-0x50,%a6)\n"
+	"	movea.l %d4,%a0\n"
+	"	jsr (%a0)\n"
+	"	lea (0x10,%sp),%sp\n"
+	".Lg_1feac:\n"
+	"	clr.l (%a2)\n"
+	"	movea.l %d6,%a0\n"
+	"	move.l (%a0),(0x4,%a2)\n"
+	"	clr.l (0x8,%a2)\n"
+	"	clr.l (0xc,%a2)\n"
+	"	move.l %a2,-(%sp)\n"
+	"	move.l (%a0),-(%sp)\n"
+	"	jsr (psos_send_x).l\n"
+	"	addq.l #0x8,%sp\n"
+	"	move.b %d0,%d1\n"
+	"	moveq #0x0,%d2\n"
+	"	move.b %d1,%d2\n"
+	"	tst.l %d2\n"
+	"	beq.b .Lg_1feee\n"
+	"	move.l %d2,-(%sp)\n"
+	"	pea (0x204b0).l\n"
+	"	pea (-0x50,%a6)\n"
+	"	movea.l %d3,%a0\n"
+	"	jsr (%a0)\n"
+	"	pea (-0x50,%a6)\n"
+	"	movea.l %d4,%a0\n"
+	"	jsr (%a0)\n"
+	"	lea (0x10,%sp),%sp\n"
+	".Lg_1feee:\n"
+	"	move.l %d7,-(%sp)\n"
+	"	clr.l -(%sp)\n"
+	"	clr.l -(%sp)\n"
+	"	pea (0x204ce).l\n"
+	"	jsr (psos_create_x).l\n"
+	"	lea (0x10,%sp),%sp\n"
+	"	move.b %d0,%d1\n"
+	"	moveq #0x0,%d2\n"
+	"	move.b %d1,%d2\n"
+	"	tst.l %d2\n"
+	"	beq.b .Lg_1ff2a\n"
+	"	move.l %d2,-(%sp)\n"
+	"	pea (0x204d3).l\n"
+	"	pea (-0x50,%a6)\n"
+	"	movea.l %d3,%a0\n"
+	"	jsr (%a0)\n"
+	"	pea (-0x50,%a6)\n"
+	"	movea.l %d4,%a0\n"
+	"	jsr (%a0)\n"
+	"	lea (0x10,%sp),%sp\n"
+	".Lg_1ff2a:\n"
+	"	clr.l (%a3)\n"
+	"	movea.l %d7,%a0\n"
+	"	move.l (%a0),(0x4,%a3)\n"
+	"	clr.l (0x8,%a3)\n"
+	"	clr.l (0xc,%a3)\n"
+	"	move.l %a3,-(%sp)\n"
+	"	move.l (%a0),-(%sp)\n"
+	"	jsr (psos_send_x).l\n"
+	"	addq.l #0x8,%sp\n"
+	"	move.b %d0,%d1\n"
+	"	moveq #0x0,%d2\n"
+	"	move.b %d1,%d2\n"
+	"	tst.l %d2\n"
+	"	beq.b .Lg_1ff6c\n"
+	"	move.l %d2,-(%sp)\n"
+	"	pea (0x204ed).l\n"
+	"	pea (-0x50,%a6)\n"
+	"	movea.l %d3,%a0\n"
+	"	jsr (%a0)\n"
+	"	pea (-0x50,%a6)\n"
+	"	movea.l %d4,%a0\n"
+	"	jsr (%a0)\n"
+	"	lea (0x10,%sp),%sp\n"
+	".Lg_1ff6c:\n"
+	"	move.l #0x20336,(__ghidra_10328e).l\n"
+	"	clr.b (__ghidra_103292).l\n"
+	"	clr.b (__ghidra_103293).l\n"
+	"	move.l #0x20336,(sci).l\n"
+	"	clr.b (sci_ring).l\n"
+	"	clr.b (__ghidra_103189).l\n"
+	"	clr.b (__ghidra_103294).l\n"
+	"	clr.b (__ghidra_103295).l\n"
+	"	tst.b (__ghidra_101f54).l\n"
+	"	beq.b .Lg_1ffb6\n"
+	"	move.b #0x1,(__ghidra_103297).l\n"
+	"	bra.b .Lg_1ffbc\n"
+	".Lg_1ffb6:\n"
+	"	clr.b (__ghidra_103297).l\n"
+	".Lg_1ffbc:\n"
+	"	clr.b (__ghidra_10329a).l\n"
+	"	clr.b (__ghidra_10329b).l\n"
+	"	move.b #0x1,(__ghidra_10329c).l\n"
+	"	tst.b (__ghidra_101f55).l\n"
+	"	beq.b .Lg_1ffe4\n"
+	"	move.l #0x201b0,(__ghidra_1032a0).l\n"
+	"	bra.b .Lg_1ffee\n"
+	".Lg_1ffe4:\n"
+	"	move.l #0x1f6c8,(__ghidra_1032a0).l\n"
+	".Lg_1ffee:\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%d6/%d7/%a2/%a3/%a4\n"
+	"	unlk %a6\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
+	"	rts\n"
+	"	.size sci_init, .-sci_init\n"
+	"	.popsection\n"
+);
 
 /* 0001fffa */
 
@@ -36537,22 +37116,61 @@ LAB_000200ce:
 
 
 /* 00020152 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the SCI device's write: sci_puts under its lock */
+/* the SCI device's write: sci_puts under its lock, unless the byte at 0x10329c is set
+   Not a C function (register; read): its arguments and results in registers.  In: A0 char *buffer.
+   Out: D7 char error, D2 int count, A0 char *end. */
 
-void sci_write(void)
+/* out D7 char error, D2 int count, A0 char *end */
+__regcall void sci_write(void)
 
 {
   int in_A0;
   
   if (sci.async_allowed == 0) {
-    sci_lock();
+    sci_lock('\x01');
     sci_puts(in_A0);
-    sci_unlock();
+    sci_unlock('\x01');
   }
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl sci_write\n"
+	"	.type sci_write, @function\n"
+	"	.pushsection .text.sci_write.20152,\"ax\",@progbits\n"
+	"sci_write:\n"
+	"	link.w %a6,#-0x2\n"
+	"	tst.b (__ghidra_10329c).l\n"
+	"	bne.b .Lg_20188\n"
+	"	move.l %a2,-(%sp)\n"
+	"	movea.l %a0,%a2\n"
+	"	moveq #0x1,%d0\n"
+	"	jsr (sci_lock:w,%pc)\n"
+	"	move.b %d7,(-0x2,%a6)\n"
+	"	move.l %a2,-(%sp)\n"
+	"	jsr (sci_puts:w,%pc)\n"
+	"	addq.l #0x4,%sp\n"
+	"	move.l %d0,%d2\n"
+	"	adda.l %d2,%a2\n"
+	"	moveq #0x1,%d0\n"
+	"	jsr (sci_unlock:w,%pc)\n"
+	"	move.b (-0x2,%a6),%d7\n"
+	"	movea.l %a2,%a0\n"
+	"	movea.l (%sp)+,%a2\n"
+	"	bra.b .Lg_2018c\n"
+	".Lg_20188:\n"
+	"	clr.l %d2\n"
+	"	clr.l %d7\n"
+	".Lg_2018c:\n"
+	"	unlk %a6\n"
+	"	rts\n"
+	"	.size sci_write, .-sci_write\n"
+	"	.popsection\n"
+);
 
 /* 00020190 */
 
@@ -36573,19 +37191,18 @@ void sci_read(void)
 
 /* writes a character to the SCI under its lock */
 
-void sci_putc(undefined1 param_1)
+void sci_putc(char param_1)
 
 {
-  char unaff_D7b;
-  undefined1 local_6;
-  undefined1 local_5;
+  unkfloat1 Var1;
+  char text [2];
   
-  local_6 = param_1;
-  local_5 = 0;
-  sci_lock();
-  if (unaff_D7b < '\x01') {
-    sci_puts((int)&local_6);
-    sci_unlock();
+  text[0] = param_1;
+  text[1] = '\0';
+  Var1 = (unkfloat1)sci_lock('\x01');
+  if (SUB41(__ghidra_as(float, Var1),0) < '\x01') {
+    sci_puts((int)text);
+    sci_unlock('\x01');
   }
   return;
 }
@@ -37043,10 +37660,15 @@ __asm__(
 );
 
 /* 00020902 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* clears the QSM's queue RAM and sets SPCR0 to SPCR3 up */
+/* the QSPI device's init, device 1's function 0: clears the QSM's queue RAM and sets SPCR0 to SPCR3
+   up
+   Not a C function (register; read): its arguments and results in registers.  Preserves: D0, D1,
+   A0, A1. */
 
-undefined8 qspi_init(void)
+/* preserves D0, D1, A0, A1 */
+__regcall undefined8 qspi_init(void)
 
 {
   undefined4 in_D0;
@@ -37059,8 +37681,8 @@ undefined8 qspi_init(void)
     puVar1 = puVar1 + 1;
   } while (puVar1 < (uint16_t *)0xfffd50);
   qsm.spcr0 = 0x8309;
-  qsm.spcr2 = SPCR2_SPIFIE;
-  qsm.spcr3 = SPCR3_HMIE;
+  qsm.spcr2 = 0x8000;
+  qsm.spcr3 = 2;
   qsm.spcr1 = 0x101;
   qsm.spsr = 0;
   qspi.write = 0;
@@ -37069,6 +37691,43 @@ undefined8 qspi_init(void)
   return CONCAT44(in_D0,in_D1);
 }
 
+
+#endif
+__asm__(
+	"	.globl qspi_init\n"
+	"	.type qspi_init, @function\n"
+	"	.pushsection .text.qspi_init.20902,\"ax\",@progbits\n"
+	"qspi_init:\n"
+	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
+	"	movem.l %a4/%a3/%a2/%d4/%d3/%d2,-(%sp)\n"
+	"	move.l #0xfffc18,%d4\n"
+	"	move.l #0xfffc1a,%d3\n"
+	"	move.l #0xfffc1c,%d2\n"
+	"	movea.l #0xfffc1e,%a4\n"
+	"	movea.l #0xfffc1f,%a3\n"
+	"	movea.l #0xfffd20,%a2\n"
+	".Lg_2092e:\n"
+	"	move.w (__ghidra_20c6e).l,(%a2)\n"
+	"	addq.l #0x2,%a2\n"
+	"	cmpa.l #0xfffd50,%a2\n"
+	"	bcs.b .Lg_2092e\n"
+	"	movea.l %d4,%a0\n"
+	"	move.w #-0x7cf7,(%a0)\n"
+	"	movea.l %d2,%a0\n"
+	"	move.w #-0x8000,(%a0)\n"
+	"	move.b #0x2,(%a4)\n"
+	"	movea.l %d3,%a0\n"
+	"	move.w #0x101,(%a0)\n"
+	"	clr.b (%a3)\n"
+	"	clr.b (__ghidra_1032a7).l\n"
+	"	clr.b (__ghidra_1032a8).l\n"
+	"	clr.b (__ghidra_1032ea).l\n"
+	"	movem.l (%sp)+,%d2/%d3/%d4/%a2/%a3/%a4\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
+	"	rts\n"
+	"	.size qspi_init, .-qspi_init\n"
+	"	.popsection\n"
+);
 
 /* 00020972 */
 
@@ -55034,18 +55693,18 @@ undefined4 reset_record_write(undefined4 param_1,undefined4 param_2,char *param_
 
 /* clears the interpolator calibration, both DACs at 0x1f */
 
-void interpolator_calibration_init(undefined1 *param_1)
+void interpolator_calibration_init(interpolator_calibration *calibration)
 
 {
-  *param_1 = 0;
-  param_1[1] = 0;
-  param_1[2] = 0x1f;
-  param_1[3] = 0x1f;
-  param_1[5] = param_1[2];
-  param_1[6] = param_1[3];
-  param_1[4] = 0;
-  param_1[7] = 0;
-  param_1[8] = 0;
+  calibration->initialized = 0;
+  calibration->calibrated = 0;
+  calibration->hdac_2 = 0x1f;
+  calibration->hdac_3 = 0x1f;
+  calibration->result_hdac_2 = calibration->hdac_2;
+  calibration->result_hdac_3 = calibration->hdac_3;
+  calibration->result_valid = 0;
+  calibration->reading_low = 0;
+  calibration->reading_high = 0;
   return;
 }
 
@@ -55072,16 +55731,15 @@ uint8_t interpolator_measure(uint8_t mode)
 
 /* 0004007e */
 
-/* WARNING: Unknown calling convention */
 /* hdac_set of HDAC channel 2, then interpolator_measure(0)
    interpolator_calibrate */
 
-uint8_t interpolator_measure_low(uint8_t hdac_2)
+uint8_t interpolator_measure_low(char_slot dac)
 
 {
   uint8_t uVar1;
   
-  hdac_set(hdac_2,2);
+  hdac_set(dac.value,2);
   uVar1 = interpolator_measure(0);
   return uVar1;
 }
@@ -55089,16 +55747,15 @@ uint8_t interpolator_measure_low(uint8_t hdac_2)
 
 /* 00040096 */
 
-/* WARNING: Unknown calling convention */
 /* hdac_set of HDAC channel 3, then interpolator_measure(1)
    interpolator_calibrate */
 
-uint8_t interpolator_measure_high(uint8_t hdac_3)
+uint8_t interpolator_measure_high(char_slot dac)
 
 {
   uint8_t uVar1;
   
-  hdac_set(hdac_3,3);
+  hdac_set(dac.value,3);
   uVar1 = interpolator_measure(1);
   return uVar1;
 }
@@ -55111,8 +55768,8 @@ uint8_t interpolator_measure_high(uint8_t hdac_3)
 /* WARNING: Unknown calling convention */
 /* halves a DAC's range, up to 10 times, until a measurement falls in a window */
 
-char dac_search_bisect(char param_1,byte param_2,byte param_3,byte param_4,byte param_5,
-                      undefined *param_6)
+uint8_t dac_search_bisect(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t low,uint8_t high,
+                         undefined1 *measure)
 
 {
   byte bVar2;
@@ -55124,25 +55781,25 @@ LAB_00040122:
   while( true ) {
     while( true ) {
       if (cVar3 == '\0') {
-        return param_1;
+        return dac;
       }
-      bVar2 = (*(code *)param_6)();
-      if ((bVar2 < param_4) || (param_5 < bVar2)) break;
+      bVar2 = (*(code *)measure)();
+      if ((bVar2 < low) || (high < bVar2)) break;
       cVar3 = '\0';
     }
-    if (param_2 != param_3) break;
+    if (minimum != maximum) break;
     cVar3 = '\0';
   }
-  if (param_4 <= bVar2) goto LAB_00040104;
-  param_3 = param_1 - 1;
-  iVar1 = (uint)param_3 + (uint)param_2;
+  if (low <= bVar2) goto LAB_00040104;
+  maximum = dac - 1;
+  iVar1 = (uint)maximum + (uint)minimum;
   goto LAB_0004011c;
 LAB_00040104:
-  if (param_5 < bVar2) {
-    param_2 = param_1 + 1;
-    iVar1 = (uint)param_3 + (uint)param_2;
+  if (high < bVar2) {
+    minimum = dac + 1;
+    iVar1 = (uint)maximum + (uint)minimum;
 LAB_0004011c:
-    param_1 = (char)(iVar1 >> 1);
+    dac = (uint8_t)(iVar1 >> 1);
     cVar3 = cVar3 + -1;
   }
   goto LAB_00040122;
@@ -55154,8 +55811,8 @@ LAB_0004011c:
 /* WARNING: Unknown calling convention */
 /* moves a DAC a step at a time, up to 20, until a measurement falls in a window */
 
-byte dac_search_step(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,
-                    undefined *param_6)
+uint8_t dac_search_step(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t low,uint8_t high,
+                       undefined1 *measure)
 
 {
   byte bVar1;
@@ -55164,14 +55821,14 @@ byte dac_search_step(byte param_1,byte param_2,byte param_3,byte param_4,byte pa
   cVar2 = '\x14';
   while (cVar2 != '\0') {
     cVar2 = cVar2 + -1;
-    bVar1 = (*(code *)param_6)();
-    if ((bVar1 < param_4) || (param_5 < bVar1)) {
-      if ((param_1 < param_3) && (param_2 < param_1)) {
-        if (bVar1 < param_4) {
-          param_1 = param_1 - 1;
+    bVar1 = (*(code *)measure)();
+    if ((bVar1 < low) || (high < bVar1)) {
+      if ((dac < maximum) && (minimum < dac)) {
+        if (bVar1 < low) {
+          dac = dac - 1;
         }
-        else if (param_5 < bVar1) {
-          param_1 = param_1 + 1;
+        else if (high < bVar1) {
+          dac = dac + 1;
         }
       }
       else {
@@ -55182,7 +55839,7 @@ byte dac_search_step(byte param_1,byte param_2,byte param_3,byte param_4,byte pa
       cVar2 = '\0';
     }
   }
-  return param_1;
+  return dac;
 }
 
 
@@ -55339,39 +55996,40 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
 /* sets both DACs, measures both ends of the interpolator against [1, 25] and [201, 225], and
    retries with the saved DACs if they fail */
 
-undefined1 interpolator_verify(char *param_1)
+uint8_t interpolator_verify(interpolator_calibration *calibration)
 
 {
   uint8_t uVar1;
-  undefined1 unaff_D2b;
+  uint8_t unaff_D2b;
   
-  if (*param_1 == '\0') {
+  if (calibration->initialized == 0) {
     return 0;
   }
-  param_1[1] = '\0';
+  calibration->calibrated = 0;
   interpolator_prepare();
-  hdac_set(param_1[2],2);
-  hdac_set(param_1[3],3);
+  hdac_set(calibration->hdac_2,2);
+  hdac_set(calibration->hdac_3,3);
   uVar1 = interpolator_measure(0);
-  param_1[7] = uVar1;
+  calibration->reading_low = uVar1;
   uVar1 = interpolator_measure(1);
-  param_1[8] = uVar1;
-  if ((((param_1[7] == '\0') || (0x19 < (byte)param_1[7])) || (uVar1 < 0xc9)) || (0xe1 < uVar1)) {
-    if (param_1[4] == '\0') {
+  calibration->reading_high = uVar1;
+  if ((((calibration->reading_low == 0) || (0x19 < calibration->reading_low)) || (uVar1 < 0xc9)) ||
+     (0xe1 < uVar1)) {
+    if (calibration->result_valid == 0) {
       return unaff_D2b;
     }
-    param_1[2] = param_1[5];
-    param_1[3] = param_1[6];
-    hdac_set(param_1[2],2);
-    hdac_set(param_1[3],3);
+    calibration->hdac_2 = calibration->result_hdac_2;
+    calibration->hdac_3 = calibration->result_hdac_3;
+    hdac_set(calibration->hdac_2,2);
+    hdac_set(calibration->hdac_3,3);
     uVar1 = interpolator_measure(0);
-    param_1[7] = uVar1;
+    calibration->reading_low = uVar1;
     uVar1 = interpolator_measure(1);
-    param_1[8] = uVar1;
-    if (param_1[7] == '\0') {
+    calibration->reading_high = uVar1;
+    if (calibration->reading_low == 0) {
       return unaff_D2b;
     }
-    if (0x19 < (byte)param_1[7]) {
+    if (0x19 < calibration->reading_low) {
       return unaff_D2b;
     }
     if (uVar1 < 0xc9) {
@@ -55381,7 +56039,7 @@ undefined1 interpolator_verify(char *param_1)
       return unaff_D2b;
     }
   }
-  param_1[1] = '\x01';
+  calibration->calibrated = 1;
   return 1;
 }
 
@@ -55390,23 +56048,23 @@ undefined1 interpolator_verify(char *param_1)
 
 /* sets HDAC channels 2 and 3 and takes both interpolator readings; "First-time interp test." */
 
-void interpolator_sample(char *param_1)
+void interpolator_sample(interpolator_calibration *calibration)
 
 {
   uint8_t uVar1;
   
   interpolator_prepare();
-  if (*param_1 == '\0') {
-    param_1[2] = '\x1f';
-    param_1[3] = '\x1f';
+  if (calibration->initialized == 0) {
+    calibration->hdac_2 = 0x1f;
+    calibration->hdac_3 = 0x1f;
     task_dmessage("First-time interp test. \r\n");
   }
-  hdac_set(param_1[2],2);
-  hdac_set(param_1[3],3);
+  hdac_set(calibration->hdac_2,2);
+  hdac_set(calibration->hdac_3,3);
   uVar1 = interpolator_measure(0);
-  param_1[7] = uVar1;
+  calibration->reading_low = uVar1;
   uVar1 = interpolator_measure(1);
-  param_1[8] = uVar1;
+  calibration->reading_high = uVar1;
   return;
 }
 
@@ -55434,7 +56092,7 @@ void counter_calibrate(interval_reading_fields *reading,counter_configuration_fi
       iVar2 = iVar2 + 1;
       uVar1 = interpolator_calibrate(&interpolator_calibration_state);
       if (uVar1 == 0) {
-        uVar1 = interpolator_verify((char *)&interpolator_calibration_state);
+        uVar1 = interpolator_verify(&interpolator_calibration_state);
       }
     }
     if (interpolator_calibration_state.calibrated == 1) {
@@ -55458,27 +56116,33 @@ void counter_calibrate(interval_reading_fields *reading,counter_configuration_fi
 
 /* calibrates the interpolator, up to 20 tries, and verifies it */
 
-uint8_t interpolator_selftest_calibrate(void)
+undefined4 interpolator_selftest_calibrate(void)
 
 {
-  uint8_t uVar1;
-  int iVar2;
+  undefined3 extraout_var;
+  undefined3 extraout_var_00;
+  undefined3 uVar1;
+  uint8_t uVar2;
+  int iVar3;
   interpolator_calibration iStack_e;
   
   selftest.interpolator_calibrated = 0;
-  iVar2 = 0;
+  iVar3 = 0;
   do {
-    interpolator_calibration_init(&iStack_e.initialized);
-    uVar1 = interpolator_calibrate(&iStack_e);
-    iVar2 = iVar2 + 1;
-    if (uVar1 != 0) break;
-  } while (iVar2 < 0x14);
-  selftest.interpolator_tries = (uint8_t)iVar2;
-  if (uVar1 == 0) {
+    interpolator_calibration_init(&iStack_e);
+    uVar2 = interpolator_calibrate(&iStack_e);
+    iVar3 = iVar3 + 1;
+    uVar1 = extraout_var;
+    if (uVar2 != 0) break;
+    uVar1 = 0;
+  } while (iVar3 < 0x14);
+  selftest.interpolator_tries = (uint8_t)iVar3;
+  if (uVar2 == 0) {
     selftest.interpolator_calibrated = 1;
-    uVar1 = interpolator_verify((char *)&iStack_e);
+    uVar2 = interpolator_verify(&iStack_e);
+    uVar1 = extraout_var_00;
   }
-  return uVar1;
+  return CONCAT31(uVar1,uVar2);
 }
 
 
@@ -55505,22 +56169,18 @@ void interpolator_selftest(void)
 void interpolator_sample_test(void)
 
 {
-  uint8_t local_e [2];
-  uint8_t local_c;
-  uint8_t local_b;
-  byte local_7;
-  byte local_6;
+  interpolator_calibration local_e;
   
-  interpolator_calibration_init(local_e);
-  local_e[0] = interpolator_calibration_state.initialized;
+  interpolator_calibration_init(&local_e);
+  local_e.initialized = interpolator_calibration_state.initialized;
   if (interpolator_calibration_state.initialized != 0) {
-    local_c = interpolator_calibration_state.hdac_2;
-    local_b = interpolator_calibration_state.hdac_3;
+    local_e.hdac_2 = interpolator_calibration_state.hdac_2;
+    local_e.hdac_3 = interpolator_calibration_state.hdac_3;
   }
-  interpolator_sample((char *)local_e);
+  interpolator_sample(&local_e);
   selftest.interpolator = 0;
-  selftest.interpolator_readings[0] = (ushort)local_7;
-  selftest.interpolator_readings[1] = (ushort)local_6;
+  selftest.interpolator_readings[0] = (ushort)local_e.reading_low;
+  selftest.interpolator_readings[1] = (ushort)local_e.reading_high;
   return;
 }
 
@@ -56039,7 +56699,7 @@ void counter_init(void)
 
 {
   counter_configuration_init(0x101fae);
-  interpolator_calibration_init(&interpolator_calibration_state.initialized);
+  interpolator_calibration_init(&interpolator_calibration_state);
   interval_reading.armed = 1;
   return;
 }

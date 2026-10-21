@@ -98,8 +98,8 @@ typedef struct monitors_supply {
 	char *out_message;
 	char *out_log;
 	char *in_message;
-	char out_happening;
-	char in_happening;
+	status_condition_code out_happening;
+	status_condition_code in_happening;
 } monitors_supply;
 
 /* Reports a supply leaving its tolerance, or returning to it, as
@@ -128,20 +128,23 @@ static void monitors_supply_report(const monitors_supply *supply, bool out_of_ra
 
 static const monitors_supply monitors_5v = {
 	ADC_5V, "5V is out of tolerance, value: %.2f\r\n", "5V is out of tolerance, value: %.2f",
-	"5V is now within tolerance\r\n", ':', ';',
+	"5V is now within tolerance\r\n", STATUS_PLUS_5V_SET, STATUS_PLUS_5V_CLEARED,
 };
 static const monitors_supply monitors_double_oven = {
 	ADC_DOUBLE_OVEN, "Secondary oven voltage is out of tolerance, value: %.2f\r\n",
 	"Secondary oven voltage is out of tolerance, value: %.2f",
-	"Secondary oven voltage is now within tolerance\r\n", '>', '?',
+	"Secondary oven voltage is now within tolerance\r\n", STATUS_SECONDARY_OVEN_SET,
+	STATUS_SECONDARY_OVEN_CLEARED,
 };
 static const monitors_supply monitors_plus_15v = {
 	ADC_PLUS_15V, "15V is out of tolerance, value: %.2f\r\n",
-	"15V is out of tolerance, value: %.2f", "15V is now within tolerance\r\n", '6', '7',
+	"15V is out of tolerance, value: %.2f", "15V is now within tolerance\r\n", STATUS_PLUS_15V_SET,
+	STATUS_PLUS_15V_CLEARED,
 };
 static const monitors_supply monitors_minus_15v = {
 	ADC_MINUS_15V, "-15V is out of tolerance, value: %.2f\r\n",
-	"-15V is out of tolerance, value: %.2f", "-15V is now within tolerance\r\n", '8', '9',
+	"-15V is out of tolerance, value: %.2f", "-15V is now within tolerance\r\n", STATUS_MINUS_15V_SET,
+	STATUS_MINUS_15V_CLEARED,
 };
 
 /* Takes one of the eight readings into its monitor, hmon_supply_step's,
@@ -267,7 +270,7 @@ void hmon_check_efc(void)
 		efc_range.near_end_checks = 0;
 		if (efc_range.near_end) {
 			efc_range.near_end = 0;
-			status_happening(ADC_HAPPENING_EFC_NOT_NEAR_END);
+			status_happening(STATUS_EFC_NEAR_LIMIT_CLEARED);
 		}
 		return;
 	}
@@ -275,7 +278,7 @@ void hmon_check_efc(void)
 		efc_range.near_end_checks = NEAR_END_CHECKS;
 		if (!efc_range.near_end) {
 			task_debug_message("EFC near end of range\r\n");
-			status_happening(ADC_HAPPENING_EFC_NEAR_END);
+			status_happening(STATUS_EFC_NEAR_LIMIT_SET);
 			efc_range.near_end = 1;
 		}
 	}

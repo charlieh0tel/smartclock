@@ -5,8 +5,7 @@
  * this file after its own, so the types and prototypes it declares are
  * in scope; each function here keeps its generated prototype.  The
  * EFC's clamp state is docs/firmware/structures.md's "The health
- * monitor's supplies and EFC".  monitors.c uses the EFC's happenings
- * defined here. */
+ * monitor's supplies and EFC". */
 
 /* The QSPI's devices, by the minor number of I/O device 1, the QSPI
  * (qspi_queue_setup's cases). */
@@ -212,14 +211,6 @@ void efc_write_dithered(void)
 	efc_write(efc >> EFC_DAC_SHIFT);
 }
 
-/* The status happenings efc_clamp and hmon_check_efc report. */
-enum {
-	ADC_HAPPENING_EFC_NEAR_END = '@',
-	ADC_HAPPENING_EFC_NOT_NEAR_END = 'A',
-	ADC_HAPPENING_EFC_CLAMPED = 'B',
-	ADC_HAPPENING_EFC_IN_RANGE = 'C',
-};
-
 /* Clamps an EFC to 0 to 1048560, reporting each clamp, and the first
  * value back in range (0x2426e). */
 float efc_clamp(float efc)
@@ -233,12 +224,12 @@ float efc_clamp(float efc)
 		efc = EFC_MOST;
 	} else {
 		if (efc_range.clamped) {
-			status_happening(ADC_HAPPENING_EFC_IN_RANGE);
+			status_happening(STATUS_EFC_AT_LIMIT_CLEARED);
 			efc_range.clamped = 0;
 		}
 		return efc;
 	}
-	status_happening(ADC_HAPPENING_EFC_CLAMPED);
+	status_happening(STATUS_EFC_AT_LIMIT_SET);
 	efc_range.clamped = 1;
 	return efc;
 }

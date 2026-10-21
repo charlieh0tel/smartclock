@@ -29,8 +29,6 @@ static const uint16_t RECORDS_SR_INTERRUPT_MASK = 0x0700;
 
 /* A status_report code (status_report_messages, 0x2bf30). */
 static const int16_t RECORDS_STATUS_MEMORY_ERROR = 0x10;
-/* The status happening of a failed EEPROM write. */
-static const char RECORDS_HAPPENING_EEPROM_WRITE = 'I';
 
 /* The tag the NV register's and the identification record's writers
  * store, and the firmware revision the NV register's must match. */
@@ -376,13 +374,13 @@ static void records_set_writing(bool writing)
 }
 
 /* Writes a byte to the EEPROM and polls until it reads back, five tries,
- * happening 'I' on a failure (0x31128). */
+ * raising STATUS_EEPROM_WRITE_FAILURE on a failure (0x31128). */
 bool eeprom_write_byte(char *address, char value)
 {
 	volatile char *cell = address;
 
 	if (eeprom_lock() != 0) {
-		status_happening(RECORDS_HAPPENING_EEPROM_WRITE);
+		status_happening(STATUS_EEPROM_WRITE_FAILURE);
 		return false;
 	}
 	records_set_writing(true);
@@ -397,7 +395,7 @@ bool eeprom_write_byte(char *address, char value)
 	records_set_writing(false);
 	eeprom_unlock();
 	if (!written)
-		status_happening(RECORDS_HAPPENING_EEPROM_WRITE);
+		status_happening(STATUS_EEPROM_WRITE_FAILURE);
 	return written;
 }
 
@@ -444,8 +442,8 @@ bool eeprom_write_page(char *destination, char *source, uint16_t length)
 	return written;
 }
 
-/* Writes bytes to the EEPROM a page at a time, happening 'I' on a failure
- * (0x3124a). */
+/* Writes bytes to the EEPROM a page at a time, raising
+ * STATUS_EEPROM_WRITE_FAILURE on a failure (0x3124a). */
 uint32_t eeprom_write(char *destination, char *source, uint32_t length)
 {
 	while ((int32_t)length > 0) {
@@ -453,7 +451,7 @@ uint32_t eeprom_write(char *destination, char *source, uint32_t length)
 		if (length < chunk)
 			chunk = length;
 		if (!eeprom_write_page(destination, source, (uint16_t)chunk)) {
-			status_happening(RECORDS_HAPPENING_EEPROM_WRITE);
+			status_happening(STATUS_EEPROM_WRITE_FAILURE);
 			return 0;
 		}
 		length -= chunk;
@@ -502,9 +500,9 @@ static void records_log_unused(char *text, char *heading, int32_t number)
 static const uint8_t RECORDS_LOG_PAGES = 75;
 static const int32_t RECORDS_LOG_PAGE_ENTRIES =
 	(int32_t)(sizeof log_write_page.entries / sizeof log_write_page.entries[0]);
-/* Past this many entries log_init and log_append report happening ' '. */
+/* Past this many entries log_init and log_append report the log almost
+ * full. */
 static const uint8_t RECORDS_LOG_ENTRIES_REPORTED = 180;
-static const char RECORDS_HAPPENING_LOG_ENTRIES = ' ';
 /* The one format log_read gives a date and a time, not a byte and a
  * long; log_read knows it by its address, so log_first_satellite and
  * log_read share the one copy.  The casts drop const for the exported
@@ -586,7 +584,7 @@ int32_t log_init(void)
 	if (!log_full)
 		log_entries += (int16_t)(log_cursor - log_write_page.entries);
 	if (log_entries > RECORDS_LOG_ENTRIES_REPORTED)
-		status_happening(RECORDS_HAPPENING_LOG_ENTRIES);
+		status_happening(STATUS_LOG_ALMOST_FULL_SET);
 	return mutex_unlock(&log_mutex);
 }
 
@@ -748,7 +746,7 @@ uint32_t log_append(char *format, int32_t argument_1, int32_t argument_2)
 	}
 	log_entries++;
 	if (log_entries > RECORDS_LOG_ENTRIES_REPORTED)
-		status_happening(RECORDS_HAPPENING_LOG_ENTRIES);
+		status_happening(STATUS_LOG_ALMOST_FULL_SET);
 	return status;
 }
 

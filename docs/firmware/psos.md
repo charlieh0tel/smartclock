@@ -7,6 +7,15 @@ of 95/03/24, `PSOS-6803`) and whose errors it reports ("pSOS error",
 pSOS+'s: messages go through exchanges and signals through what the
 console calls variables.  Addresses below are the Z3805A 3543B's.
 
+Which pSOS: the kernel's banner, beside its headers (`0x14ace`), is
+`PSOS-6803`, then ` V4.1 COPYRIGHT 1983, 1984, 1985, 1986 SOFTWARE
+COMPONENTS GROUP, INC. A`, so version 4.1, whose copyright ends in
+1986, built into this firmware with headers of 1995.  Service 0,
+`ver` (`kernel_service_0`, `0x14da2`), returns `0x33` in D7's high
+byte and the banner's last letter, the `A` at `0x14b21`, in its low,
+`0x3341`, which pForth's `ver` prints as the "pSOS version ID".  A
+second copy of the banner and headers is at `0x1cac`.
+
 ## Calls
 
 A program calls the kernel with `trap #3`, the service's number in D7

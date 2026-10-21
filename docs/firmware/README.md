@@ -462,7 +462,10 @@ registers' pages in Appendix D, as `#define`s, which Setup leaves out of
 what Ghidra parses and the exporter copies into the C (`defines=`).
 The exporter then names the constants written to or tested in a
 register by those bits, where every bit has a name, so that the C
-reads `qsm.sccr1 = uVar1 | SCCR1_TIE` and `uVar1 & ~SCCR1_PE`; the
+reads `qsm.sccr1 = uVar1 | SCCR1_TIE` and `uVar1 & ~SCCR1_PE`.  A pair
+of byte registers the firmware only ever moves as a word is one field,
+named for both, with bits named across the word: `gpt.tmsk` for TMSK1
+and TMSK2, so that `gpt.tmsk = uVar2 | TMSK_OCI3`, and `gpt.tflg`.  The
 ports' bits, the board's wiring, stay numbers.  A register the
 decompiler reads into a local first, as it does a volatile one, names
 the local's tests too, `uVar1 = qsm.scsr;` then `(uVar1 & SCSR_TDRE)
@@ -734,6 +737,11 @@ decompiler wrote it, and reported.
   the first piece's statement becomes `pushed_1 = fVar2;`, the others
   go, and the `CONCAT` is `pushed_1` (283 of the 1546 idioms in the
   file's C).
+- A cast of a structure to an integer, which C has none of, reads the
+  structure's bytes as the integer they make:
+  `(uint32_t)__ghidra_aggregate_bits(value.time)` of a `time_of_day`.
+  The p-code's `CAST` says its operand is a structure, which the text
+  cannot.
 
 `tools/firmware/rebuild_link.py` links it into a rebuilt image: each
 piece of assembly at its own address, where it must be, and is, the

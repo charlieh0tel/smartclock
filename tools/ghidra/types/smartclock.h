@@ -612,12 +612,22 @@ typedef struct gps_command_log {
 	gps_command_log_entry *write; /* +0x1a8 */
 } gps_command_log;
 
+/* A time of day as a long holds it, hour << 16 | minute << 8 | second,
+ * by its bytes, which the clock routines add and carry one at a time
+ * (datetime_add, time_next_second). */
+typedef struct time_of_day {
+	uint8_t reserved; /* 0 */
+	uint8_t hour;
+	uint8_t minute;
+	uint8_t second;
+} time_of_day;
+
 /* A date and time as datetime_add and datetime_subtract take them: the
  * time's hours, minutes and seconds in its low three bytes, and the date
  * packed as date_to_days reads it, or, in their first argument, a count
  * of days to add or take away. */
 typedef struct packed_datetime {
-	uint32_t time;
+	time_of_day time;
 	uint32_t date;
 } packed_datetime;
 

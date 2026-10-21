@@ -43,6 +43,7 @@ extern code *UNRECOVERED_JUMPTABLE;
 #define INFINITY __builtin_inff()
 #define NAN __builtin_nanf("")
 #define __ghidra_bits(v) ({ __typeof__((v) + 0) __v = (v); unsigned long long __b = 0; 	__builtin_memcpy((char *)&__b + sizeof __b - sizeof __v, &__v, sizeof __v); __b; })
+#define __ghidra_aggregate_bits(v) ({ __typeof__(v) __v = (v); unsigned long long __b = 0; 	__builtin_memcpy((char *)&__b + sizeof __b - sizeof __v, &__v, sizeof __v); __b; })
 #define __ghidra_as(type, v) ({ unsigned long long __a = __ghidra_bits(v); type __r; 	__builtin_memcpy(&__r, (char *)&__a + sizeof __a - sizeof __r, sizeof __r); __r; })
 #define __ghidra_shl(x, n) ({ __typeof__((x) + 0) __x = (x); unsigned int __n = (n); 	__n >= 8 * sizeof __x ? (__typeof__(__x))0 : __x << __n; })
 #define __ghidra_shr(x, n) ({ __typeof__((x) + 0) __x = (x); unsigned int __n = (n); 	__n >= 8 * sizeof __x ? (__x < 0 ? (__typeof__(__x))-1 : (__typeof__(__x))0) : __x >> __n; })
@@ -1080,10 +1081,8 @@ struct gpt_registers {
     uint16_t ti4_o5;
     uint8_t tctl1;
     uint8_t tctl2;
-    uint8_t tmsk1;
-    uint8_t tmsk2;
-    uint8_t tflg1;
-    uint8_t tflg2;
+    uint16_t tmsk;
+    uint16_t tflg;
     uint8_t cforc;
     uint8_t pwmc;
     uint8_t pwma;
@@ -1304,8 +1303,17 @@ struct oncore_message_entry {
 
 typedef struct packed_datetime packed_datetime, *Ppacked_datetime;
 
+typedef struct time_of_day time_of_day, *Ptime_of_day;
+
+struct time_of_day {
+    uint8_t reserved;
+    uint8_t hour;
+    uint8_t minute;
+    uint8_t second;
+};
+
 struct packed_datetime {
-    uint32_t time;
+    struct time_of_day time;
     uint32_t date;
 };
 
@@ -2083,6 +2091,7 @@ _Static_assert(sizeof(status_screen_mode_line) == 6, "status_screen_mode_line");
 _Static_assert(sizeof(status_snapshot_record) == 302, "status_snapshot_record");
 _Static_assert(sizeof(task_table_entry) == 6, "task_table_entry");
 _Static_assert(sizeof(three_point_fit) == 16, "three_point_fit");
+_Static_assert(sizeof(time_of_day) == 4, "time_of_day");
 
 /* the #defines of mc68331.h */
 #define QSMCR_STOP     0x8000
@@ -2162,20 +2171,30 @@ _Static_assert(sizeof(three_point_fit) == 16, "three_point_fit");
 #define PICR_PIV_MASK  0x00ff
 #define PITR_PTP       0x0100
 #define PITR_PITM_MASK 0x00ff
-#define TMSK1_I4O5I    0x80
-#define TMSK1_OCI_MASK 0x78
-#define TMSK1_ICI_MASK 0x07
-#define TMSK2_TOI      0x80
-#define TMSK2_PAOVI    0x20
-#define TMSK2_PAII     0x10
-#define TMSK2_CPROUT   0x08
-#define TMSK2_CPR_MASK 0x07
-#define TFLG1_I4O5F    0x80
-#define TFLG1_OCF_MASK 0x78
-#define TFLG1_ICF_MASK 0x07
-#define TFLG2_TOF      0x80
-#define TFLG2_PAOVF    0x20
-#define TFLG2_PAIF     0x10
+#define TMSK_I4O5I     0x8000
+#define TMSK_OCI4      0x4000
+#define TMSK_OCI3      0x2000
+#define TMSK_OCI2      0x1000
+#define TMSK_OCI1      0x0800
+#define TMSK_ICI3      0x0400
+#define TMSK_ICI2      0x0200
+#define TMSK_ICI1      0x0100
+#define TMSK_TOI       0x0080
+#define TMSK_PAOVI     0x0020
+#define TMSK_PAII      0x0010
+#define TMSK_CPROUT    0x0008
+#define TMSK_CPR_MASK  0x0007
+#define TFLG_I4O5F     0x8000
+#define TFLG_OCF4      0x4000
+#define TFLG_OCF3      0x2000
+#define TFLG_OCF2      0x1000
+#define TFLG_OCF1      0x0800
+#define TFLG_ICF3      0x0400
+#define TFLG_ICF2      0x0200
+#define TFLG_ICF1      0x0100
+#define TFLG_TOF       0x0080
+#define TFLG_PAOVF     0x0020
+#define TFLG_PAIF      0x0010
 #define CFORC_FOC_MASK 0xf8
 #define CFORC_FPWMA    0x02  /* PWMA forced to F1A's level */
 #define CFORC_FPWMB    0x01
@@ -4466,7 +4485,7 @@ int time_to_seconds(uint param_1);
 uint seconds_to_hms(uint param_1);
 int gps_seconds(uint32_t date,uint32_t time);
 int leap_gps_time(void);
-void time_next_second(uint32_t *param_1,undefined4 *param_2);
+void time_next_second(uint32_t *date,time_of_day *value);
 void datetime_add(packed_datetime *change,packed_datetime *value);
 void datetime_subtract(packed_datetime *change,packed_datetime *value);
 int datetime_compare(uint *param_1,uint *param_2);
@@ -5293,7 +5312,7 @@ undefined4 status_clear_events(short *param_1);
 void error_queue_clear(status_model *status,int *code);
 void error_queue_read(status_model *status,int *code,uint32_t *message);
 undefined4 error_queue_create(int *param_1,int param_2,undefined4 param_3);
-bool error_queue_push(short *error_queue,undefined4 param_2,undefined4 param_3);
+bool error_queue_push(short *error_queue,int code,uint32_t value);
 void error_queue_pop(short *param_1,int *param_2,undefined4 *param_3);
 void error_queue_destroy(ulong param_1);
 void status_register_set_ptr(status_model *status,int index,int filter);
@@ -6274,7 +6293,7 @@ void installer_status_propagate(status_model *status,status_register *reg);
 int16_t installer_status_set_bit(status_model *status,int condition,int value);
 void installer_status_apply_condition(status_model *status,int condition,int param_3);
 void installer_status_read_event(status_model *status,int index,uint16_t *event);
-bool installer_error_queue_push(short *error_queue,undefined4 param_2,undefined4 param_3);
+bool installer_error_queue_push(short *error_queue,int code,uint32_t value);
 undefined4 installer_error_message_lookup(undefined4 param_1);
 void installer_scpi_prompt(int param_1);
 void installer_status_prompt_refresh(int param_1,int param_2);
@@ -7667,7 +7686,7 @@ klok_entry * leap_event_schedule_utc(uint32_t param_1,int param_2)
     local_6 = -local_6;
   }
   change.date = 0;
-  change.time = seconds_to_hms((int)local_6);
+  change.time = __ghidra_as(time_of_day, seconds_to_hms((int)local_6));
   if (bVar5) {
     datetime_add(&change,(packed_datetime *)&event.time);
   }
@@ -7675,7 +7694,10 @@ klok_entry * leap_event_schedule_utc(uint32_t param_1,int param_2)
     datetime_subtract(&change,(packed_datetime *)&event.time);
   }
   offset_step_time = event.time;
-  change.time = 5;
+  change.time.reserved = 0;
+  change.time.hour = 0;
+  change.time.minute = 0;
+  change.time.second = 5;
   change.date = 0;
   datetime_subtract(&change,(packed_datetime *)&event.time);
   if (param_2 == 0x3b) {
@@ -8379,48 +8401,47 @@ int leap_gps_time(void)
 
 /* advances a time by a second, the minute 59 or 61 seconds long at a pending leap second's 23:59 */
 
-void time_next_second(uint32_t *param_1,undefined4 *param_2)
+void time_next_second(uint32_t *date,time_of_day *value)
 
 {
-  undefined4 uVar1;
-  byte bVar2;
-  char cVar3;
-  uint32_t uVar4;
-  byte bVar5;
-  undefined4 local_8;
+  time_of_day tVar1;
+  uint8_t uVar2;
+  uint32_t uVar3;
+  byte bVar4;
+  time_of_day time;
   
-  uVar1 = *param_2;
-  __ghidra_piece(unsigned char, local_8, 2) = (byte)((uint)uVar1 >> 8);
-  cVar3 = __ghidra_piece(unsigned char, local_8, 2);
+  tVar1 = *value;
+  time.minute = tVar1.minute;
+  uVar2 = time.minute;
   if ((((nv_settings.gps_utc == 0) || (nv_settings.leap_pending == 0)) ||
-      (nv_settings.leap_date != *param_1)) ||
-     ((__ghidra_piece(unsigned char, local_8, 1) = (byte)((uint)uVar1 >> 0x10), __ghidra_piece(unsigned char, local_8, 1) != 0x17 ||
-      (__ghidra_piece(unsigned char, local_8, 2) != ';')))) {
-    bVar5 = 0x3c;
+      (nv_settings.leap_date != *date)) ||
+     ((time.hour = tVar1.hour, time.hour != 0x17 || (time.minute != 0x3b)))) {
+    bVar4 = 0x3c;
   }
   else {
-    bVar5 = (byte)nv_settings.leap_minute_length;
+    bVar4 = (byte)nv_settings.leap_minute_length;
   }
-  __ghidra_piece(unsigned char, local_8, 3) = (char)uVar1;
-  bVar2 = (char)local_8 + 1;
-  local_8 = CONCAT31((int3)((uint)uVar1 >> 8),bVar2);
-  if (bVar5 <= bVar2) {
-    __ghidra_piece(unsigned short, local_8, 0) = (undefined2)((uint)uVar1 >> 0x10);
-    __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(cVar3 + 1,bVar2 - bVar5);
+  time.second = tVar1.second;
+  time.second = time.second + 1;
+  __ghidra_piece(__ghidra_u3, time, 0).v = __ghidra_piece(__ghidra_u3, tVar1, 0).v;
+  if (bVar4 <= time.second) {
+    __ghidra_piece(unsigned short, time, 0) = __ghidra_piece(unsigned short, tVar1, 0);
+    time.minute = uVar2 + 1;
+    time.second = time.second - bVar4;
   }
-  uVar1 = local_8;
-  if (0x3b < __ghidra_piece(unsigned char, local_8, 2)) {
-    __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(__ghidra_piece(unsigned char, local_8, 2) - 0x3c,(char)local_8);
-    __ghidra_piece(unsigned char, local_8, 1) = SUB41(uVar1,2);
-    __ghidra_piece(unsigned char, local_8, 0) = SUB41(uVar1,3);
-    __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) + 1,__ghidra_piece(unsigned short, local_8, 2));
+  tVar1 = time;
+  if (0x3b < time.minute) {
+    time.minute = time.minute - 0x3c;
+    time.hour = tVar1.hour;
+    time.reserved = tVar1.reserved;
+    time.hour = time.hour + 1;
   }
-  if (0x17 < __ghidra_piece(unsigned char, local_8, 1)) {
-    __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) - 0x18,__ghidra_piece(unsigned short, local_8, 2));
-    uVar4 = date_normalize(*param_1 + 1);
-    *param_1 = uVar4;
+  if (0x17 < time.hour) {
+    time.hour = time.hour - 0x18;
+    uVar3 = date_normalize(*date + 1);
+    *date = uVar3;
   }
-  *param_2 = local_8;
+  *value = time;
   return;
 }
 
@@ -8433,40 +8454,41 @@ void time_next_second(uint32_t *param_1,undefined4 *param_2)
 void datetime_add(packed_datetime *change,packed_datetime *value)
 
 {
-  uint32_t uVar1;
-  int iVar2;
-  uint32_t uVar3;
-  undefined *puVar4;
-  char cStack_b;
-  char cStack_a;
-  char cStack_9;
-  undefined4 local_8;
+  time_of_day tVar1;
+  time_of_day tVar2;
+  int iVar3;
+  uint32_t uVar4;
+  undefined *puVar5;
+  time_of_day change_time;
+  time_of_day time;
   
-  uVar3 = change->time;
-  uVar1 = value->time;
-  iVar2 = date_to_days(value->date);
-  puVar4 = (undefined *)(change->date + iVar2);
-  cStack_9 = (char)uVar3;
-  __ghidra_piece(unsigned char, local_8, 3) = (byte)uVar1;
-  local_8 = CONCAT31((int3)(uVar1 >> 8),cStack_9 + (byte)local_8);
-  while (0x3b < (byte)local_8) {
-    __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(__ghidra_piece(unsigned char, local_8, 2) + 1,(byte)local_8 - 0x3c);
+  tVar1 = change->time;
+  tVar2 = value->time;
+  iVar3 = date_to_days(value->date);
+  puVar5 = (undefined *)(change->date + iVar3);
+  change_time.second = tVar1.second;
+  time.second = tVar2.second;
+  __ghidra_piece(__ghidra_u3, time, 0).v = __ghidra_piece(__ghidra_u3, tVar2, 0).v;
+  time.second = change_time.second + time.second;
+  while (0x3b < time.second) {
+    time.minute = time.minute + 1;
+    time.second = time.second - 0x3c;
   }
-  cStack_a = (char)(uVar3 >> 8);
-  __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(cStack_a + __ghidra_piece(unsigned char, local_8, 2),(byte)local_8);
-  while (0x3b < __ghidra_piece(unsigned char, local_8, 2)) {
-    __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(__ghidra_piece(unsigned char, local_8, 2) - 0x3c,(byte)local_8);
-    __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) + 1,__ghidra_piece(unsigned short, local_8, 2));
+  change_time.minute = tVar1.minute;
+  time.minute = change_time.minute + time.minute;
+  while (0x3b < time.minute) {
+    time.minute = time.minute - 0x3c;
+    time.hour = time.hour + 1;
   }
-  cStack_b = (char)(uVar3 >> 0x10);
-  __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(cStack_b + __ghidra_piece(unsigned char, local_8, 1),__ghidra_piece(unsigned short, local_8, 2));
-  while (0x17 < __ghidra_piece(unsigned char, local_8, 1)) {
-    __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) - 0x18,__ghidra_piece(unsigned short, local_8, 2));
-    puVar4 = puVar4 + 1;
+  change_time.hour = tVar1.hour;
+  time.hour = change_time.hour + time.hour;
+  while (0x17 < time.hour) {
+    time.hour = time.hour - 0x18;
+    puVar5 = puVar5 + 1;
   }
-  uVar3 = days_to_date(puVar4);
-  value->date = uVar3;
-  value->time = local_8;
+  uVar4 = days_to_date(puVar5);
+  value->date = uVar4;
+  value->time = time;
   return;
 }
 
@@ -8478,40 +8500,41 @@ void datetime_add(packed_datetime *change,packed_datetime *value)
 void datetime_subtract(packed_datetime *change,packed_datetime *value)
 
 {
-  uint32_t uVar1;
-  int iVar2;
-  uint32_t uVar3;
-  undefined *puVar4;
-  char cStack_b;
-  char cStack_a;
-  char cStack_9;
-  undefined4 local_8;
+  time_of_day tVar1;
+  time_of_day tVar2;
+  int iVar3;
+  uint32_t uVar4;
+  undefined *puVar5;
+  time_of_day change_time;
+  time_of_day time;
   
-  uVar3 = change->time;
-  uVar1 = value->time;
-  iVar2 = date_to_days(value->date);
-  puVar4 = (undefined *)(iVar2 - change->date);
-  cStack_9 = (char)uVar3;
-  __ghidra_piece(unsigned char, local_8, 3) = (char)uVar1;
-  local_8 = CONCAT31((int3)(uVar1 >> 8),(char)local_8 - cStack_9);
-  while ((char)local_8 < 0) {
-    __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(__ghidra_piece(unsigned char, local_8, 2) + -1,(char)local_8 + '<');
+  tVar1 = change->time;
+  tVar2 = value->time;
+  iVar3 = date_to_days(value->date);
+  puVar5 = (undefined *)(iVar3 - change->date);
+  change_time.second = tVar1.second;
+  time.second = tVar2.second;
+  __ghidra_piece(__ghidra_u3, time, 0).v = __ghidra_piece(__ghidra_u3, tVar2, 0).v;
+  time.second = time.second - change_time.second;
+  while ((char)time.second < 0) {
+    time.minute = time.minute - 1;
+    time.second = time.second + 0x3c;
   }
-  cStack_a = (char)(uVar3 >> 8);
-  __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(__ghidra_piece(unsigned char, local_8, 2) - cStack_a,(char)local_8);
-  while (__ghidra_piece(signed char, local_8, 2) < 0) {
-    __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(__ghidra_piece(unsigned char, local_8, 2) + '<',(char)local_8);
-    __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) + -1,__ghidra_piece(unsigned short, local_8, 2));
+  change_time.minute = tVar1.minute;
+  time.minute = time.minute - change_time.minute;
+  while ((char)time.minute < 0) {
+    time.minute = time.minute + 0x3c;
+    time.hour = time.hour - 1;
   }
-  cStack_b = (char)(uVar3 >> 0x10);
-  __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) - cStack_b,__ghidra_piece(unsigned short, local_8, 2));
-  while (__ghidra_piece(signed char, local_8, 1) < 0) {
-    __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) + 0x18,__ghidra_piece(unsigned short, local_8, 2));
-    puVar4 = puVar4 + -1;
+  change_time.hour = tVar1.hour;
+  time.hour = time.hour - change_time.hour;
+  while ((char)time.hour < 0) {
+    time.hour = time.hour + 0x18;
+    puVar5 = puVar5 + -1;
   }
-  uVar3 = days_to_date(puVar4);
-  value->date = uVar3;
-  value->time = local_8;
+  uVar4 = days_to_date(puVar5);
+  value->date = uVar4;
+  value->time = time;
   return;
 }
 
@@ -8551,22 +8574,22 @@ void utc_to_gps(uint32_t *param_1,uint32_t *param_2)
   int16_t local_6;
   
   value.date = *param_1;
-  value.time = *param_2;
+  value.time = __ghidra_as(time_of_day, *param_2);
   change.date = 0;
   uVar1 = get_gps_utc_offset(&local_6);
   if (uVar1 == 0) {
     local_6 = 0;
   }
   if (local_6 < 1) {
-    change.time = seconds_to_hms(-(int)local_6);
+    change.time = __ghidra_as(time_of_day, seconds_to_hms(-(int)local_6));
     datetime_subtract(&change,&value);
   }
   else {
-    change.time = seconds_to_hms((int)local_6);
+    change.time = __ghidra_as(time_of_day, seconds_to_hms((int)local_6));
     datetime_add(&change,&value);
   }
   *param_1 = value.date;
-  *param_2 = value.time;
+  *param_2 = (uint32_t)__ghidra_aggregate_bits(value.time);
   return;
 }
 
@@ -8584,22 +8607,22 @@ void gps_to_utc(uint32_t *param_1,uint32_t *param_2)
   int16_t local_6;
   
   value.date = *param_1;
-  value.time = *param_2;
+  value.time = __ghidra_as(time_of_day, *param_2);
   change.date = 0;
   uVar1 = get_gps_utc_offset(&local_6);
   if (uVar1 != 0) {
     local_6 = 0;
   }
   if (local_6 < 1) {
-    change.time = seconds_to_hms(-(int)local_6);
+    change.time = __ghidra_as(time_of_day, seconds_to_hms(-(int)local_6));
     datetime_add(&change,&value);
   }
   else {
-    change.time = seconds_to_hms((int)local_6);
+    change.time = __ghidra_as(time_of_day, seconds_to_hms((int)local_6));
     datetime_subtract(&change,&value);
   }
   *param_1 = value.date;
-  *param_2 = value.time;
+  *param_2 = (uint32_t)__ghidra_aggregate_bits(value.time);
   return;
 }
 
@@ -8690,10 +8713,10 @@ void utc_to_local(uint32_t *param_1,uint32_t *param_2)
   longlong lVar4;
   packed_datetime value;
   packed_datetime change;
-  uint32_t local_10;
+  time_of_day local_10;
   
   value.date = *param_1;
-  value.time = *param_2;
+  value.time = __ghidra_as(time_of_day, *param_2);
   change.date = 0;
   lVar4 = div(nv_settings.time_zone[1] + nv_settings.time_zone[0] * 0x3c,0x3c);
   cVar3 = 0;
@@ -8707,7 +8730,7 @@ void utc_to_local(uint32_t *param_1,uint32_t *param_2)
     cVar3 = -1;
     cVar2 = -cVar2;
   }
-  local_10 = (uint)CONCAT11(cVar1,cVar2) << 8;
+  local_10 = __ghidra_as(time_of_day, ((uint)CONCAT11(cVar1,cVar2) << 8));
   change.time = local_10;
   if (cVar3 == 0) {
     datetime_add(&change,&value);
@@ -8716,7 +8739,7 @@ void utc_to_local(uint32_t *param_1,uint32_t *param_2)
     datetime_subtract(&change,&value);
   }
   *param_1 = value.date;
-  *param_2 = value.time;
+  *param_2 = (uint32_t)__ghidra_aggregate_bits(value.time);
   return;
 }
 
@@ -8734,10 +8757,10 @@ void local_to_utc(uint32_t *param_1,uint32_t *param_2)
   longlong lVar4;
   packed_datetime value;
   packed_datetime change;
-  uint32_t local_10;
+  time_of_day local_10;
   
   value.date = *param_1;
-  value.time = *param_2;
+  value.time = __ghidra_as(time_of_day, *param_2);
   change.date = 0;
   lVar4 = div(nv_settings.time_zone[1] + nv_settings.time_zone[0] * 0x3c,0x3c);
   cVar3 = 0;
@@ -8751,7 +8774,7 @@ void local_to_utc(uint32_t *param_1,uint32_t *param_2)
     cVar3 = -1;
     cVar2 = -cVar2;
   }
-  local_10 = (uint)CONCAT11(cVar1,cVar2) << 8;
+  local_10 = __ghidra_as(time_of_day, ((uint)CONCAT11(cVar1,cVar2) << 8));
   change.time = local_10;
   if (cVar3 == 0) {
     datetime_subtract(&change,&value);
@@ -8760,7 +8783,7 @@ void local_to_utc(uint32_t *param_1,uint32_t *param_2)
     datetime_add(&change,&value);
   }
   *param_1 = value.date;
-  *param_2 = value.time;
+  *param_2 = (uint32_t)__ghidra_aggregate_bits(value.time);
   return;
 }
 
@@ -9113,7 +9136,7 @@ void gpt_init(void)
 
 {
   uint8_t uVar1;
-  undefined2 uVar2;
+  uint16_t uVar2;
   
   gpt.gptmcr = 0xc;
   gpt.icr = 0x650;
@@ -9125,9 +9148,9 @@ void gpt_init(void)
   gpt.tctl1 = 0;
   gpt.pactl = 4;
   gpt.tctl2 = 5;
-  __ghidra_piece(unsigned short, gpt, 32) = 3;
-  uVar2 = __ghidra_piece(unsigned short, gpt, 34);
-  __ghidra_piece(unsigned short, gpt, 34) = 0;
+  gpt.tmsk = 3;
+  uVar2 = gpt.tflg;
+  gpt.tflg = 0;
   return;
 }
 
@@ -9140,12 +9163,12 @@ void gpt_init(void)
 void shutdown(void)
 
 {
-  ushort uVar1;
+  uint16_t uVar1;
   uint8_t uVar2;
   
   periodic_interrupt_enable(0);
-  uVar1 = __ghidra_piece(unsigned short, gpt, 32);
-  __ghidra_piece(unsigned short, gpt, 32) = uVar1 & 0xf;
+  uVar1 = gpt.tmsk;
+  gpt.tmsk = uVar1 & 0xf;
   qsm.spcr1 = 0;
   qsm.spcr2 = 0;
   qsm.spcr3 = 0;
@@ -9715,10 +9738,10 @@ void pps_interrupt(void)
 __exception void primary_user_81(void)
 
 {
-  ushort uVar1;
+  uint16_t uVar1;
   
-  uVar1 = __ghidra_piece(unsigned short, gpt, 34);
-  __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xfeff;
+  uVar1 = gpt.tflg;
+  gpt.tflg = uVar1 & 0xfeff;
   internal_pps_count = internal_pps_count + 1;
   ticks_since_internal_pps = 0;
   if (internal_pps_dead == 0) {
@@ -9759,7 +9782,7 @@ __asm__(
 int pps_init(void)
 
 {
-  ushort uVar1;
+  uint16_t uVar1;
   int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int iVar2;
   void *in_A0;
@@ -9771,10 +9794,10 @@ int pps_init(void)
   if (iVar2 == 0) {
     pps_exchange = extraout_A0;
     mutex_clear(&pps_message);
-    uVar1 = __ghidra_piece(unsigned short, gpt, 34);
-    __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xfeff;
-    uVar1 = __ghidra_piece(unsigned short, gpt, 32);
-    __ghidra_piece(unsigned short, gpt, 32) = uVar1 | 0x100;
+    uVar1 = gpt.tflg;
+    gpt.tflg = uVar1 & ~TFLG_ICF1;
+    uVar1 = gpt.tmsk;
+    gpt.tmsk = uVar1 | TMSK_ICI1;
   }
   return iVar2;
 }
@@ -9787,7 +9810,7 @@ int pps_init(void)
 int pps_interrupt_stop(void)
 
 {
-  ushort uVar1;
+  uint16_t uVar1;
   int in_D1;
   int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
@@ -9799,10 +9822,10 @@ int pps_interrupt_stop(void)
   }
   else {
     iVar2 = ({ __auto_type __c = psos_call(0x16,pps_exchange,in_D1,unaff_D2,unaff_D3,(void *)pps_exchange,in_A1); pps_exchange = (__typeof__(pps_exchange))__ghidra_result_d0; __c; });
-    uVar1 = __ghidra_piece(unsigned short, gpt, 34);
-    __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xfeff;
-    uVar1 = __ghidra_piece(unsigned short, gpt, 32);
-    __ghidra_piece(unsigned short, gpt, 32) = uVar1 & 0xfeff;
+    uVar1 = gpt.tflg;
+    gpt.tflg = uVar1 & ~TFLG_ICF1;
+    uVar1 = gpt.tmsk;
+    gpt.tmsk = uVar1 & ~TMSK_ICI1;
   }
   return iVar2;
 }
@@ -11725,7 +11748,7 @@ void timecode_update(void)
   uchar param11;
   char *pcVar7;
   undefined4 local_10;
-  undefined4 uStack_c;
+  time_of_day tStack_c;
   byte local_8;
   char acStack_7 [3];
   
@@ -11786,18 +11809,18 @@ void timecode_update(void)
         break;
       case 0x8e:
         local_10 = get_clock_date();
-        uStack_c = get_clock_time();
-        time_next_second(&local_10,&uStack_c);
+        tStack_c = __ghidra_as(time_of_day, get_clock_time());
+        time_next_second(&local_10,&tStack_c);
         if (tcode_format == 1) {
           sprintf(tcode_message,"rtcm? %u,T2%04d%02d%02d%02d%02d%02d%01d%01d%1c%1c%1c",0xffffffff,
-                  (uint)__ghidra_piece(unsigned short, local_10, 0),(uint)__ghidra_piece(unsigned char, local_10, 2),local_10 & 0xff,(uint)__ghidra_piece(unsigned char, uStack_c, 1),
-                  (uint)__ghidra_piece(unsigned char, uStack_c, 2),uStack_c & 0xff,(uint)bVar6,(uint)local_8,param10,param11,
-                  param12);
+                  (uint)__ghidra_piece(unsigned short, local_10, 0),(uint)__ghidra_piece(unsigned char, local_10, 2),local_10 & 0xff,(uint)tStack_c.hour,
+                  (uint)tStack_c.minute,(uint)__ghidra_aggregate_bits(tStack_c) & 0xff,(uint)bVar6,(uint)local_8,param10,
+                  param11,param12);
         }
         else {
           sprintf(tcode_message,"T2%04d%02d%02d%02d%02d%02d%01d%01d%1c%1c%1c",(uint)__ghidra_piece(unsigned short, local_10, 0),
-                  (uint)__ghidra_piece(unsigned char, local_10, 2),local_10 & 0xff,(uint)__ghidra_piece(unsigned char, uStack_c, 1),(uint)__ghidra_piece(unsigned char, uStack_c, 2),
-                  uStack_c & 0xff,(uint)bVar6,(uint)local_8,param10,param11,param12);
+                  (uint)__ghidra_piece(unsigned char, local_10, 2),local_10 & 0xff,(uint)tStack_c.hour,(uint)tStack_c.minute,
+                  (uint)__ghidra_aggregate_bits(tStack_c) & 0xff,(uint)bVar6,(uint)local_8,param10,param11,param12);
         }
         bVar6 = tcode_checksum(tcode_message);
         sprintf(acStack_7,"%02X",(uint)bVar6);
@@ -11849,22 +11872,21 @@ void timecode_schedule(uint param_1)
   uint uVar1;
   uint16_t uVar2;
   uint16_t uVar3;
-  ushort uVar4;
-  uint uVar5;
+  uint uVar4;
   
   timecode_compare_wraps = (int16_t)(param_1 >> 0x10);
   uVar2 = gpt.tic[0];
   uVar1 = (uint)uVar2 + (param_1 & 0xffff);
   gpt.toc[2] = (uint16_t)uVar1;
-  uVar4 = __ghidra_piece(unsigned short, gpt, 34);
-  __ghidra_piece(unsigned short, gpt, 34) = uVar4 & 0xdfff;
+  uVar2 = gpt.tflg;
+  gpt.tflg = uVar2 & ~TFLG_OCF3;
   uVar2 = gpt.tcnt;
-  uVar5 = (uint)uVar2;
+  uVar4 = (uint)uVar2;
   uVar3 = gpt.tic[0];
   if (uVar2 < uVar3) {
-    uVar5 = uVar5 + 0x10000;
+    uVar4 = uVar4 + 0x10000;
   }
-  if (uVar1 <= uVar5) {
+  if (uVar1 <= uVar4) {
     if (timecode_compare_wraps == 0) {
       if (tcode_length == 0) {
         return;
@@ -11873,11 +11895,11 @@ void timecode_schedule(uint param_1)
       return;
     }
     timecode_compare_wraps = timecode_compare_wraps + -1;
-    uVar4 = __ghidra_piece(unsigned short, gpt, 34);
-    __ghidra_piece(unsigned short, gpt, 34) = uVar4 & 0xdfff;
+    uVar2 = gpt.tflg;
+    gpt.tflg = uVar2 & ~TFLG_OCF3;
   }
-  uVar4 = __ghidra_piece(unsigned short, gpt, 32);
-  __ghidra_piece(unsigned short, gpt, 32) = uVar4 | 0x2000;
+  uVar2 = gpt.tmsk;
+  gpt.tmsk = uVar2 | TMSK_OCI3;
   return;
 }
 
@@ -11891,7 +11913,7 @@ void timecode_schedule(uint param_1)
 __exception undefined8 primary_user_86(void)
 
 {
-  ushort uVar1;
+  uint16_t uVar1;
   undefined4 in_D0;
   undefined4 in_D1;
   
@@ -11899,15 +11921,15 @@ __exception undefined8 primary_user_86(void)
     if (tcode_length != 0) {
       drtb_send_async(tcode_message,tcode_length);
     }
-    uVar1 = __ghidra_piece(unsigned short, gpt, 34);
-    __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xdfff;
-    uVar1 = __ghidra_piece(unsigned short, gpt, 32);
-    __ghidra_piece(unsigned short, gpt, 32) = uVar1 & 0xdfff;
+    uVar1 = gpt.tflg;
+    gpt.tflg = uVar1 & 0xdfff;
+    uVar1 = gpt.tmsk;
+    gpt.tmsk = uVar1 & 0xdfff;
   }
   else {
     timecode_compare_wraps = timecode_compare_wraps + -1;
-    uVar1 = __ghidra_piece(unsigned short, gpt, 34);
-    __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xdfff;
+    uVar1 = gpt.tflg;
+    gpt.tflg = uVar1 & 0xdfff;
   }
   return CONCAT44(in_D0,in_D1);
 }
@@ -11952,22 +11974,21 @@ void es_schedule(uint param_1)
   uint uVar1;
   uint16_t uVar2;
   uint16_t uVar3;
-  ushort uVar4;
-  uint uVar5;
+  uint uVar4;
   
   es_compare_wraps = (int16_t)(param_1 >> 0x10);
   uVar2 = gpt.tic[0];
   uVar1 = (uint)uVar2 + (param_1 & 0xffff);
   gpt.toc[3] = (uint16_t)uVar1;
-  uVar4 = __ghidra_piece(unsigned short, gpt, 34);
-  __ghidra_piece(unsigned short, gpt, 34) = uVar4 & 0xbfff;
+  uVar2 = gpt.tflg;
+  gpt.tflg = uVar2 & ~TFLG_OCF4;
   uVar2 = gpt.tcnt;
-  uVar5 = (uint)uVar2;
+  uVar4 = (uint)uVar2;
   uVar3 = gpt.tic[0];
   if (uVar2 < uVar3) {
-    uVar5 = uVar5 + 0x10000;
+    uVar4 = uVar4 + 0x10000;
   }
-  if (uVar1 <= uVar5) {
+  if (uVar1 <= uVar4) {
     if (es_compare_wraps == 0) {
       if (es_length == 0) {
         return;
@@ -11976,11 +11997,11 @@ void es_schedule(uint param_1)
       return;
     }
     es_compare_wraps = es_compare_wraps + -1;
-    uVar4 = __ghidra_piece(unsigned short, gpt, 34);
-    __ghidra_piece(unsigned short, gpt, 34) = uVar4 & 0xbfff;
+    uVar2 = gpt.tflg;
+    gpt.tflg = uVar2 & ~TFLG_OCF4;
   }
-  uVar4 = __ghidra_piece(unsigned short, gpt, 32);
-  __ghidra_piece(unsigned short, gpt, 32) = uVar4 | 0x4000;
+  uVar2 = gpt.tmsk;
+  gpt.tmsk = uVar2 | TMSK_OCI4;
   return;
 }
 
@@ -11994,7 +12015,7 @@ void es_schedule(uint param_1)
 __exception undefined8 primary_user_87(void)
 
 {
-  ushort uVar1;
+  uint16_t uVar1;
   undefined4 in_D0;
   undefined4 in_D1;
   
@@ -12002,15 +12023,15 @@ __exception undefined8 primary_user_87(void)
     if (es_length != 0) {
       sci_send_async(es_message,es_length);
     }
-    uVar1 = __ghidra_piece(unsigned short, gpt, 34);
-    __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xbfff;
-    uVar1 = __ghidra_piece(unsigned short, gpt, 32);
-    __ghidra_piece(unsigned short, gpt, 32) = uVar1 & 0xbfff;
+    uVar1 = gpt.tflg;
+    gpt.tflg = uVar1 & 0xbfff;
+    uVar1 = gpt.tmsk;
+    gpt.tmsk = uVar1 & 0xbfff;
   }
   else {
     es_compare_wraps = es_compare_wraps + -1;
-    uVar1 = __ghidra_piece(unsigned short, gpt, 34);
-    __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xbfff;
+    uVar1 = gpt.tflg;
+    gpt.tflg = uVar1 & 0xbfff;
   }
   return CONCAT44(in_D0,in_D1);
 }
@@ -44805,52 +44826,54 @@ undefined4 error_queue_create(int *param_1,int param_2,undefined4 param_3)
 
 /* adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full */
 
-bool error_queue_push(short *error_queue,undefined4 param_2,undefined4 param_3)
+bool error_queue_push(short *error_queue,int code,uint32_t value)
 
 {
   status_model *status;
   short sVar1;
-  bool bVar2;
+  short sVar2;
+  bool bVar3;
   int condition;
   
+  sVar2 = (short)code;
   status = *(status_model **)(error_queue + 2);
   sVar1 = error_queue[1] - *error_queue;
   if (sVar1 < 1) {
     sVar1 = error_queue[4] + sVar1;
   }
   if (sVar1 == 1) {
-    bVar2 = true;
+    bVar3 = true;
   }
   else {
-    bVar2 = sVar1 == 2;
-    if (bVar2) {
-      __ghidra_piece(unsigned short, param_2, 2) = -0x15e;
-      param_3 = 0;
+    bVar3 = sVar1 == 2;
+    if (bVar3) {
+      sVar2 = -0x15e;
+      value = 0;
     }
     *error_queue = *error_queue + 1;
     if (*error_queue == error_queue[4]) {
       *error_queue = 0;
     }
-    error_queue[*error_queue * 3 + 5] = __ghidra_piece(unsigned short, param_2, 2);
-    *(undefined4 *)(error_queue + *error_queue * 3 + 6) = param_3;
+    error_queue[*error_queue * 3 + 5] = sVar2;
+    *(uint32_t *)(error_queue + *error_queue * 3 + 6) = value;
   }
-  if (__ghidra_piece(short, param_2, 2) < -399) {
+  if (sVar2 < -399) {
     condition = -4;
   }
-  else if ((__ghidra_piece(short, param_2, 2) < -299) || (0 < __ghidra_piece(short, param_2, 2))) {
+  else if ((sVar2 < -299) || (0 < sVar2)) {
     condition = -3;
   }
-  else if (__ghidra_piece(short, param_2, 2) < -199) {
+  else if (sVar2 < -199) {
     condition = -2;
   }
   else {
-    if (-100 < __ghidra_piece(short, param_2, 2)) goto LAB_00028680;
+    if (-100 < sVar2) goto LAB_00028680;
     condition = -1;
   }
   status_apply_condition(status,condition,0);
 LAB_00028680:
-  status_prompt_refresh(status,(int)__ghidra_piece(short, param_2, 2));
-  return bVar2;
+  status_prompt_refresh(status,(int)sVar2);
+  return bVar3;
 }
 
 
@@ -60778,10 +60801,10 @@ void nv_clear_and_reset(void)
 void gpt_input_capture_2_interrupt(void)
 
 {
-  ushort uVar1;
+  uint16_t uVar1;
   
-  uVar1 = __ghidra_piece(unsigned short, gpt, 34);
-  __ghidra_piece(unsigned short, gpt, 34) = uVar1 & 0xfdff;
+  uVar1 = gpt.tflg;
+  gpt.tflg = uVar1 & ~TFLG_ICF2;
   do {
                     /* trap #5: kernel return from interrupt; does not come back */
     __m68k_trap(5);
@@ -61073,17 +61096,24 @@ void clock_set_from_reference(void)
     restart_reference_uptime = 0;
   }
   local_14.time =
-       (restart_reference_uptime - uVar1) + ((uint)bVar2 - (uint)restart_reference_seconds);
-  if ((int)local_14.time < 0) {
-    local_14.time = 0;
+       __ghidra_as(time_of_day, 
+       ((restart_reference_uptime - uVar1) + ((uint)bVar2 - (uint)restart_reference_seconds)));
+  if ((int)__ghidra_aggregate_bits(local_14.time) < 0) {
+    local_14.time.reserved = 0;
+    local_14.time.hour = 0;
+    local_14.time.minute = 0;
+    local_14.time.second = 0;
   }
-  else if (0x3b < (int)local_14.time) {
-    local_14.time = 0x3b;
+  else if (0x3b < (int)__ghidra_aggregate_bits(local_14.time)) {
+    local_14.time.reserved = 0;
+    local_14.time.hour = 0;
+    local_14.time.minute = 0;
+    local_14.time.second = 0x3b;
   }
   local_14.date = 0;
-  get_gps_datetime(&local_c.date,&local_c.time);
+  get_gps_datetime(&local_c.date,(uint32_t *)&local_c);
   datetime_add(&local_14,&local_c);
-  set_timedate_unflagged(local_c.date,local_c.time);
+  set_timedate_unflagged(local_c.date,(uint32_t)__ghidra_aggregate_bits(local_c.time));
   return;
 }
 
@@ -81396,7 +81426,7 @@ void installer_gpt_init(void)
 
 {
   uint8_t uVar1;
-  undefined2 uVar2;
+  uint16_t uVar2;
   
   gpt.gptmcr = 0xc;
   gpt.icr = 0x650;
@@ -81408,9 +81438,9 @@ void installer_gpt_init(void)
   gpt.tctl1 = 0;
   gpt.pactl = 4;
   gpt.tctl2 = 5;
-  __ghidra_piece(unsigned short, gpt, 32) = 3;
-  uVar2 = __ghidra_piece(unsigned short, gpt, 34);
-  __ghidra_piece(unsigned short, gpt, 34) = 0;
+  gpt.tmsk = 3;
+  uVar2 = gpt.tflg;
+  gpt.tflg = 0;
   return;
 }
 
@@ -89299,52 +89329,54 @@ void installer_status_read_event(status_model *status,int index,uint16_t *event)
 
 /* the installer's error_queue_push */
 
-bool installer_error_queue_push(short *error_queue,undefined4 param_2,undefined4 param_3)
+bool installer_error_queue_push(short *error_queue,int code,uint32_t value)
 
 {
   status_model *status;
   short sVar1;
-  bool bVar2;
+  short sVar2;
+  bool bVar3;
   int condition;
   
+  sVar2 = (short)code;
   status = *(status_model **)(error_queue + 2);
   sVar1 = error_queue[1] - *error_queue;
   if (sVar1 < 1) {
     sVar1 = error_queue[4] + sVar1;
   }
   if (sVar1 == 1) {
-    bVar2 = true;
+    bVar3 = true;
   }
   else {
-    bVar2 = sVar1 == 2;
-    if (bVar2) {
-      __ghidra_piece(unsigned short, param_2, 2) = -0x15e;
-      param_3 = 0;
+    bVar3 = sVar1 == 2;
+    if (bVar3) {
+      sVar2 = -0x15e;
+      value = 0;
     }
     *error_queue = *error_queue + 1;
     if (*error_queue == error_queue[4]) {
       *error_queue = 0;
     }
-    error_queue[*error_queue * 3 + 5] = __ghidra_piece(unsigned short, param_2, 2);
-    *(undefined4 *)(error_queue + *error_queue * 3 + 6) = param_3;
+    error_queue[*error_queue * 3 + 5] = sVar2;
+    *(uint32_t *)(error_queue + *error_queue * 3 + 6) = value;
   }
-  if (__ghidra_piece(short, param_2, 2) < -399) {
+  if (sVar2 < -399) {
     condition = -4;
   }
-  else if ((__ghidra_piece(short, param_2, 2) < -299) || (0 < __ghidra_piece(short, param_2, 2))) {
+  else if ((sVar2 < -299) || (0 < sVar2)) {
     condition = -3;
   }
-  else if (__ghidra_piece(short, param_2, 2) < -199) {
+  else if (sVar2 < -199) {
     condition = -2;
   }
   else {
-    if (-100 < __ghidra_piece(short, param_2, 2)) goto LAB_installer__0010632e;
+    if (-100 < sVar2) goto LAB_installer__0010632e;
     condition = -1;
   }
   installer_status_apply_condition(status,condition,0);
 LAB_installer__0010632e:
-  installer_status_prompt_refresh((int)status,(int)__ghidra_piece(short, param_2, 2));
-  return bVar2;
+  installer_status_prompt_refresh((int)status,(int)sVar2);
+  return bVar3;
 }
 
 

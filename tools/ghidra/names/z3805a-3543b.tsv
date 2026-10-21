@@ -595,6 +595,8 @@
 0x29d40	function	scpi_console_write_loop	read	scpi_console_write's loop, from its test of n, which its entry branches to	void scpi_console_write_loop(void *port, char *s, int n)
 0x29bce	function	console_port_read	context	the first of the console port's routines; the SCPI input loop reads characters with it
 0x11396	function	datetime_add	context	adds the first packed time and date to the second, carrying seconds, minutes, hours and days; klok adds an entry's period to its time	void datetime_add(packed_datetime *change, packed_datetime *value)
+0x11396	local	change_time	read	the first argument's time, copied (0x113a4)	time_of_day @ -0xc
+0x11396	local	time	read	the second argument's time, which the sum is made in and copied back (0x113a8, 0x1141e)	time_of_day @ -0x8
 0x10f46	function	date_to_days	context	a packed date as a day count, for datetime_add
 0x10e72	function	days_to_date	context	a day count as a packed date, for datetime_add
 0x139ce	function	get_gps_utc_offset	context	returns clock.gps_utc_offset_valid and stores clock.gps_utc_offset; the es message's leap value and leap_gps_time	uint8_t get_gps_utc_offset(int16_t *seconds)
@@ -1313,6 +1315,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x10db6	function	is_leap_year	context	1 for a leap year, by the Gregorian rule
 0x11152	function	time_to_seconds	context	a packed time as seconds; the same code as hms_to_seconds, a second copy
 0x11428	function	datetime_subtract	context	subtracts a time from a date and time, borrowing through the date	void datetime_subtract(packed_datetime *change, packed_datetime *value)
+0x11428	local	change_time	read	the first argument's time, copied (0x11436)	time_of_day @ -0xc
+0x11428	local	time	read	the second argument's time, which the difference is made in and copied back (0x1143a, 0x114aa)	time_of_day @ -0x8
 0x114b4	function	datetime_compare	context	compares two dates and times: by days, then by seconds
 0x11700	function	utc_to_local	context	applies nv_settings.time_zone's hours and minutes to a date and time
 0x13368	function	enter_supervisor_mode	context	C's wrapper for enter_supervisor	uint16_t enter_supervisor_mode(void)
@@ -1324,7 +1328,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x28044	function	status_condition_clear	structures.md's status registers	clears condition bits; those falling through the negative transition mask become events
 0x280a4	function	status_propagate	structures.md's status registers	sets or clears a register's summary bit in its parent from its event and enable words	void status_propagate(status_model *status, status_register *reg)
 0x282ce	function	status_apply_condition	structures.md's status registers	applies a condition by its kind: event set, condition set, condition clear, or the error queue	void status_apply_condition(status_model *status, int condition, int param_3)
-0x285d4	function	error_queue_push	context	adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full	bool error_queue_push(short *error_queue, undefined4 param_2, undefined4 param_3)
+0x285d4	function	error_queue_push	context	adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full	bool error_queue_push(short *error_queue, int code, uint32_t value)
 0x288ee	function	error_message_lookup	context	an error code's message, from the table at 0x28910
 0x2f626	function	status_hardware_condition	structures.md's status registers	the :STATus:OPERation:HARDware condition, register 6, which status_summary folds	undefined2 status_hardware_condition(void)
 0x29e3c	function	status_prompt_refresh	context	prompts again when the status object that changed is the main one; a method of the status output object	void status_prompt_refresh(status_model *param_1,undefined4 param_2)
@@ -1340,7 +1344,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x10e3a	function	time_packed_to_seconds	context	a packed time as seconds; a third copy of hms_to_seconds, called by nothing
 0x11032	function	days_in_month	context	the days in a month, 28 or 29 for February by is_leap_year
 0x11076	function	date_normalize	context	carries a date's overflowing months and days into the next
-0x11300	function	time_next_second	context	advances a time by a second, the minute 59 or 61 seconds long at a pending leap second's 23:59
+0x11300	function	time_next_second	context	advances a time by a second, the minute 59 or 61 seconds long at a pending leap second's 23:59	void time_next_second(uint32_t *date, time_of_day *value)
+0x11300	local	time	read	the time it advances, copied from its second argument (0x1130e) and back (0x1138c)	time_of_day @ -0x8
 0x114fa	function	utc_to_gps	context	applies the GPS-UTC offset the other way, UTC to GPS time; called by nothing
 0x117b6	function	local_to_utc	context	takes nv_settings.time_zone off a date and time; called by nothing
 0x118a8	function	exception_hook_reset	context	clears the exception hook and its per-task switch
@@ -1711,7 +1716,7 @@ installer::0x105d52	function	installer_status_propagate	context	the installer's 
 installer::0x105eb8	function	installer_status_set_bit	context	the installer's status_set_bit	int16_t installer_status_set_bit(status_model *status, int condition, int value)
 installer::0x105f7c	function	installer_status_apply_condition	context	the installer's status_apply_condition	void installer_status_apply_condition(status_model *status, int condition, int param_3)
 installer::0x106164	function	installer_status_read_event	context	the installer's status_read_event	void installer_status_read_event(status_model *status, int index, uint16_t *event)
-installer::0x106282	function	installer_error_queue_push	context	the installer's error_queue_push	bool installer_error_queue_push(short *error_queue, undefined4 param_2, undefined4 param_3)
+installer::0x106282	function	installer_error_queue_push	context	the installer's error_queue_push	bool installer_error_queue_push(short *error_queue, int code, uint32_t value)
 installer::0x106548	function	installer_error_message_lookup	context	the installer's error_message_lookup
 installer::0x1073f6	function	installer_scpi_prompt	context	the installer's scpi_prompt
 installer::0x1076f4	function	installer_status_prompt_refresh	context	the installer's status_prompt_refresh	void installer_status_prompt_refresh(int param_1,undefined4 param_2)

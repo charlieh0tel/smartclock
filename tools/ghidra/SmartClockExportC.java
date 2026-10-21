@@ -194,6 +194,8 @@ public class SmartClockExportC extends GhidraScript {
 		#define NAN __builtin_nanf("")
 		#define __ghidra_bits(v) ({ __typeof__((v) + 0) __v = (v); unsigned long long __b = 0; \
 			__builtin_memcpy((char *)&__b + sizeof __b - sizeof __v, &__v, sizeof __v); __b; })
+		#define __ghidra_aggregate_bits(v) ({ __typeof__(v) __v = (v); unsigned long long __b = 0; \
+			__builtin_memcpy((char *)&__b + sizeof __b - sizeof __v, &__v, sizeof __v); __b; })
 		#define __ghidra_as(type, v) ({ unsigned long long __a = __ghidra_bits(v); type __r; \
 			__builtin_memcpy(&__r, (char *)&__a + sizeof __a - sizeof __r, sizeof __r); __r; })
 		#define __ghidra_shl(x, n) ({ __typeof__((x) + 0) __x = (x); unsigned int __n = (n); \
@@ -1347,6 +1349,7 @@ public class SmartClockExportC extends GhidraScript {
 		switchLabels(tokens, edits);
 		byteConstants(tokens, edits);
 		pushedValues(lines, tokens, edits);
+		aggregateCasts(tokens, edits);
 		List<Boolean> signedPieces = new ArrayList<>();
 		for (int i = 0; i < tokens.size(); i++) {
 			ClangToken token = tokens.get(i);
@@ -1354,7 +1357,7 @@ public class SmartClockExportC extends GhidraScript {
 				signedPieces.add(readSigned(fieldOperator(tokens, i)));
 			}
 		}
-		return new Printed(text(lines, edits), signedPieces);
+		return new Printed(aggregateOperands(text(lines, edits)), signedPieces);
 	}
 
 	/** The lines' text, each token's as edits make it, as PrettyPrinter.print writes it. */
@@ -1761,6 +1764,71 @@ public class SmartClockExportC extends GhidraScript {
 	private static boolean singleStatement(ClangLine line) {
 		long ends = line.getAllTokens().stream().filter(t -> t.getText().equals(";")).count();
 		return ends == 1 && line.getAllTokens().get(line.getAllTokens().size() - 1).getText().equals(";");
+	}
+
+	/** What aggregateCasts puts after a cast of a structure, for aggregateOperands. */
+	private static final String AGGREGATE_MARK = "__ghidra_aggregate_bits@";
+	/** The macro that gives a structure's bytes as an integer, its last byte the least significant. */
+	private static final String AGGREGATE_BITS = "__ghidra_aggregate_bits";
+
+	/**
+	 * Marks each cast of a structure to an integer, which C has none of:
+	 * the decompiler reads a structure's bytes as the integer they make,
+	 * (uint32_t)value.time of a time_of_day.  The p-code's CAST says the
+	 * operand is a structure, which the text cannot.
+	 */
+	private static void aggregateCasts(List<ClangToken> tokens, TokenEdits edits) {
+		for (int i = 0; i < tokens.size(); i++) {
+			if (!(tokens.get(i) instanceof ClangTypeToken)) {
+				continue;
+			}
+			int open = nextPrinted(tokens, i, -1);
+			int close = nextPrinted(tokens, i, 1);
+			int operand = close < 0 ? -1 : nextPrinted(tokens, close, 1);
+			if (open < 0 || operand < 0 || !tokens.get(open).getText().equals("(")
+				|| !tokens.get(close).getText().equals(")")) {
+				continue;
+			}
+			// the cast's own tokens carry no operation; its operand's carry the CAST
+			PcodeOp op = tokens.get(operand).getPcodeOp();
+			if (op == null || op.getOpcode() != PcodeOp.CAST || op.getInput(0).getHigh() == null) {
+				continue;
+			}
+			DataType input = op.getInput(0).getHigh().getDataType();
+			DataType base = input instanceof TypeDef typedef ? typedef.getBaseDataType() : input;
+			if (base instanceof Composite) {
+				edits.after.merge(tokens.get(close), AGGREGATE_MARK, String::concat);
+			}
+		}
+	}
+
+	/** The index of the next token from tokens[from] in direction step that prints something, or -1. */
+	private static int nextPrinted(List<ClangToken> tokens, int from, int step) {
+		for (int i = from + step; i >= 0 && i < tokens.size(); i += step) {
+			if (!tokens.get(i).getText().isBlank()) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	/** c with each operand aggregateCasts marked read as __ghidra_aggregate_bits(operand). */
+	private static String aggregateOperands(String c) {
+		StringBuilder out = new StringBuilder(c);
+		for (int at = out.lastIndexOf(AGGREGATE_MARK); at >= 0; at = out.lastIndexOf(AGGREGATE_MARK, at - 1)) {
+			int start = at + AGGREGATE_MARK.length();
+			int end = operandEnd(out, start);
+			if (end < 0) {
+				out.replace(at, start, "");
+				continue;
+			}
+			out.replace(start, end, "(" + out.substring(start, end) + ")");
+			out.replace(at, start, AGGREGATE_BITS);
+			if (at == 0) {
+				break;
+			}
+		}
+		return out.toString();
 	}
 
 	/** The p-code's equality tests. */

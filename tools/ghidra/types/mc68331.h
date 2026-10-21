@@ -27,10 +27,8 @@ typedef struct gpt_registers {
 	uint16_t ti4_o5;      /* +0x1c */
 	uint8_t tctl1;        /* +0x1e */
 	uint8_t tctl2;        /* +0x1f */
-	uint8_t tmsk1;        /* +0x20: D.2.12 */
-	uint8_t tmsk2;        /* +0x21 */
-	uint8_t tflg1;        /* +0x22: D.2.13 */
-	uint8_t tflg2;        /* +0x23 */
+	uint16_t tmsk;        /* +0x20: TMSK1 the high byte, TMSK2 the low, D.2.12; the firmware moves them as a word */
+	uint16_t tflg;        /* +0x22: TFLG1 and TFLG2, D.2.13, as tmsk */
 	uint8_t cforc;        /* +0x24: D.2.14 */
 	uint8_t pwmc;         /* +0x25: D.2.14 */
 	uint8_t pwma;         /* +0x26 */
@@ -225,23 +223,34 @@ typedef struct qsm_registers {
 #define PITR_PTP       0x0100
 #define PITR_PITM_MASK 0x00ff
 
-/* TMSK1 and TMSK2, D.2.12: TMSK1 the high byte, TMSK2 the low */
-#define TMSK1_I4O5I    0x80
-#define TMSK1_OCI_MASK 0x78
-#define TMSK1_ICI_MASK 0x07
-#define TMSK2_TOI      0x80
-#define TMSK2_PAOVI    0x20
-#define TMSK2_PAII     0x10
-#define TMSK2_CPROUT   0x08
-#define TMSK2_CPR_MASK 0x07
+/* TMSK1/TMSK2, D.2.12, as one word: TMSK1 the high byte; OCI[4:1]
+ * bits 14 to 11, ICI[3:1] bits 10 to 8 */
+#define TMSK_I4O5I     0x8000
+#define TMSK_OCI4      0x4000
+#define TMSK_OCI3      0x2000
+#define TMSK_OCI2      0x1000
+#define TMSK_OCI1      0x0800
+#define TMSK_ICI3      0x0400
+#define TMSK_ICI2      0x0200
+#define TMSK_ICI1      0x0100
+#define TMSK_TOI       0x0080
+#define TMSK_PAOVI     0x0020
+#define TMSK_PAII      0x0010
+#define TMSK_CPROUT    0x0008
+#define TMSK_CPR_MASK  0x0007
 
-/* TFLG1 and TFLG2, D.2.13 */
-#define TFLG1_I4O5F    0x80
-#define TFLG1_OCF_MASK 0x78
-#define TFLG1_ICF_MASK 0x07
-#define TFLG2_TOF      0x80
-#define TFLG2_PAOVF    0x20
-#define TFLG2_PAIF     0x10
+/* TFLG1/TFLG2, D.2.13, as one word, the flags at their enables' bits */
+#define TFLG_I4O5F     0x8000
+#define TFLG_OCF4      0x4000
+#define TFLG_OCF3      0x2000
+#define TFLG_OCF2      0x1000
+#define TFLG_OCF1      0x0800
+#define TFLG_ICF3      0x0400
+#define TFLG_ICF2      0x0200
+#define TFLG_ICF1      0x0100
+#define TFLG_TOF       0x0080
+#define TFLG_PAOVF     0x0020
+#define TFLG_PAIF      0x0010
 
 /* CFORC and PWMC, D.2.14: CFORC the high byte, PWMC the low */
 #define CFORC_FOC_MASK 0xf8

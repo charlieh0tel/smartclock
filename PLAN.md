@@ -1118,7 +1118,13 @@ view cannot drift apart.  The library, bottom up:
      signals the drivers send their tasks, by the firmware's messages
      (`SIG_SIQ`, `SIG_SOQA`; `types/psos-signals.h`), and a device
      register's bits where the decompiler reads it into a local first
-     (`SCSR_TDRE`, `SR_RXRDY`).
+     (`SCSR_TDRE`, `SR_RXRDY`).  Then types, in the shared headers
+     where they can be, so the other images take them: a
+     `time_of_day` the clock routines carry byte by byte
+     (`datetime_add`, `time_next_second`), the GPT's TMSK and TFLG
+     pairs as the words the firmware moves, and `error_queue_push`'s
+     code an `int` whose low word it reads (1263 to 1157; the counts
+     unchanged).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

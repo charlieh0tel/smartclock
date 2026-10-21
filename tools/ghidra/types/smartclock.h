@@ -354,7 +354,7 @@ typedef struct duartb_driver {
 	uint8_t field_46[8];
 	uint8_t async_allowed;        /* +0x4e: an asynchronous send may start; an XOFF does not stop it */
 	uint8_t field_4f;
-	putc_function *echo;          /* +0x50: drtb_putc, or a routine that does nothing, from the serial settings */
+	putc_function *echo;          /* +0x50: drtb_putc, or duartb_echo_none, a bare rts, from the serial settings */
 	uint8_t last_terminator;      /* +0x54: the CR or LF that ended the last line, so its partner is skipped */
 	uint8_t field_55;
 } duartb_driver;
@@ -388,7 +388,7 @@ typedef struct sci_driver {
 	uint8_t async_allowed;        /* +0x12: an asynchronous send may start */
 	uint8_t field_13;
 	uint16_t baud_constant;       /* +0x14: sci_baud_set's per-baud value, halving as the baud doubles; nothing reads it */
-	putc_function *echo;          /* +0x16: from the serial settings */
+	putc_function *echo;          /* +0x16: from the serial settings; sci_echo_none, a bare rts, with echo off */
 	uint8_t last_terminator;      /* +0x1a: the CR or LF that ended the last line */
 	uint8_t field_1b;
 } sci_driver;
@@ -1056,7 +1056,7 @@ typedef struct pll_state {
 	uint8_t holdover_state;       /* +0x10: holdover's */
 	pll_hold_cause hold_causes;   /* +0x11: a set of pll_hold_cause bits */
 	uint8_t manual;               /* +0x12 */
-	uint8_t ti_limit_override;    /* +0x13: holdover checks the TI limit while 0; only ever cleared */
+	uint8_t ti_limit_override;    /* +0x13: holdover checks the TI limit while 0; holdover_recovery_limit_ignore sets it */
 	uint8_t recovery_countdown;   /* +0x14: holdover_recovery's, as powerup_countdown */
 	uint8_t recovery_state;       /* +0x15 */
 	uint8_t coarse_state;         /* +0x16: coarse's */

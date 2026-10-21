@@ -133,8 +133,9 @@ collector, "goes on and off with the Alarm indicator"; if the
 Z3805A's does too, it hangs off latch bit 2 in hardware, since no
 code drives a pin from `status_summary` but the latch.  The other
 pins the firmware drives: PWMA, which follows the holdover threshold
-alone; the DUART's OP2, the board's heartbeat LED (below); and OP7, set on a self-test failure by three
-`_with_lamp` routines nothing calls (`duart_output_bits`).  Which one
+alone; the DUART's OP2, the board's heartbeat LED (below); and OP7, set on a self-test failure by six
+`_with_lamp` routines that `selftest_print_failure` runs at power-up
+(`duart_output_bits`).  Which one
 the connector is needs the board or a unit.
 
 ### The heartbeat
@@ -173,8 +174,8 @@ high.  The code reads as if an LED lights on a high pin:
 | OP3 | the boot code entered the installer, the flash checksums or vector 43 having sent it there | `0x754`, right after the reset code's `SOPBC = 0xff` at `0x746` |
 | OP4 | the reset code's CPU test failed (`0x100c24`) | `0x147b8`; the boot code's at `0x8f4` |
 | OP5 | its RAM test failed (`0x100c26`) | `0x148ee`; `0xa2a` |
-| OP6 | its DUART test failed, `duart_early_init`'s IVR and loopback checks (`0x100c2e`) | `0x1490c`; `0xa48` |
-| OP7 | a QSPI, interpolator or internal-reference test failed, through the three `selftest_*_with_lamp` routines, which nothing calls here | `0x18cb6`, `0x18d06`, `0x18d30` |
+| OP6 | its DUART test failed, `duart_early_init`'s IVR and loopback checks (`0x100c2e`); at power-up, `duart_test` through `selftest_uart_with_lamp` | `0x1490c`; `0xa48`; `0x18d5e` |
+| OP7 | a QSPI, FPGA, interpolator, internal-reference, GPS or supplies test failed at power-up, through the `selftest_*_with_lamp` routines in `selftest_print_failure`'s table (`structures.md`, "The self-tests' results") | `0x18cb6`, `0x18cda`, `0x18d06`, `0x18d30`, `0x18d84`, `0x18daa` |
 
 Reset sets every bit, `SOPBC = 0xff`, and each failed test resets its
 own and records it in a mask (`0x100c30`; the boot code's

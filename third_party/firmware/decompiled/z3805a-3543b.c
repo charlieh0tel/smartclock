@@ -2137,19 +2137,19 @@ extern scpi_numeric_param scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASur
 extern scpi_numeric_param nv_param_field_b8; /* 00034374 */
 extern fpga_bit fpga_bit_table[6]; /* 00041310 */
 extern scpi_action_param scpi_action_DIAGnostic_PTIMe_TINTerval; /* 0004132a */
-extern scpi_action_param scpi_action_SOURce_ROSCillator_HOLDover_RECovery_AUTO; /* 00041330 */
+extern scpi_action_param scpi_action_SOURce_ROSCillator_HOLDover_RECovery_INITiate; /* 00041330 */
 extern scpi_action_param scpi_action_SOURce_ROSCillator_HOLDover_INITiate; /* 00041336 */
 extern scpi_action_param scpi_action_temporary_hold; /* 0004133c */
 extern scpi_action_param scpi_action_SAMPle_ACTion; /* 00041342 */
 extern scpi_action_param scpi_action_self_test; /* 00041348 */
 extern scpi_action_param scpi_action_SOURce_PTIMe_SYNChronization_IMMediate; /* 0004134e */
-extern scpi_action_param scpi_action_RMHO; /* 00041354 */
+extern scpi_action_param scpi_action_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore; /* 00041354 */
 extern scpi_action_param scpi_action_SOURce_GPSystem_POSition; /* 0004135a */
 extern scpi_action_param scpi_action_SYSTem_PRESet; /* 00041360 */
 extern scpi_action_param scpi_action_SER1_PRESet; /* 00041366 */
 extern scpi_action_param scpi_action_SER2_PRESet; /* 0004136c */
 extern scpi_action_param scpi_action_STATus_PRESet; /* 00041372 */
-extern scpi_action_param scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated; /* 00041378 */
+extern scpi_action_param scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate; /* 00041378 */
 extern char si_prefixes[8]; /* 0004cfc5 */
 extern oncore_message_entry oncore_messages[49]; /* 0004fece */
 extern uint8_t oncore_status_field_codes[6]; /* 00050fd2 */
@@ -2629,23 +2629,13 @@ extern undefined DAT_00400086; /* 00400086 */
 extern undefined DAT_004000c4; /* 004000c4 */
 extern undefined DAT_00400144; /* 00400144 */
 extern undefined DAT_00700000; /* 00700000 */
-extern undefined LAB_00012f86; /* 00012f86 */
-extern undefined LAB_00012f92; /* 00012f92 */
-extern undefined LAB_00012f9e; /* 00012f9e */
-extern undefined LAB_00013666; /* 00013666 */
-extern undefined LAB_0001366c; /* 0001366c */
-extern undefined LAB_000136a2; /* 000136a2 */
-extern undefined LAB_000136bc; /* 000136bc */
 extern undefined LAB_000277ec; /* 000277ec */
-extern undefined LAB_00030b30; /* 00030b30 */
 extern undefined LAB_00033454; /* 00033454 */
 extern undefined LAB_00033472; /* 00033472 */
 extern undefined LAB_000335be; /* 000335be */
 extern undefined LAB_00033862; /* 00033862 */
 extern undefined LAB_000338ce; /* 000338ce */
 extern undefined LAB_00033904; /* 00033904 */
-extern undefined LAB_0004007e; /* 0004007e */
-extern undefined LAB_00040096; /* 00040096 */
 extern undefined4 *PTR_DAT_00021e2e; /* 00021e2e */
 extern undefined4 *PTR_DAT_00021e32; /* 00021e32 */
 extern undefined4 *PTR_DAT_0004cf80; /* 0004cf80 */
@@ -2657,13 +2647,11 @@ extern undefined4 *PTR_lamp_test_command_000186b0; /* 000186b0 */
 extern undefined4 *PTR_s_Self_Test_0004d076; /* 0004d076 */
 extern undefined4 *PTR_selftest_all_00018458; /* 00018458 */
 extern undefined UNK_00012350; /* 00012350 */
-extern undefined UNK_0001d570; /* 0001d570 */
 extern undefined UNK_00028720; /* 00028720 */
 extern undefined UNK_00028722; /* 00028722 */
 extern undefined UNK_00032700; /* 00032700 */
 extern undefined UNK_00033cc6; /* 00033cc6 */
 extern undefined UNK_00041300; /* 00041300 */
-extern undefined UNK_0004b800; /* 0004b800 */
 extern undefined UNK_0005fa2d; /* 0005fa2d */
 extern undefined UNK_0006184c; /* 0006184c */
 extern undefined UNK_00061854; /* 00061854 */
@@ -2706,7 +2694,6 @@ extern undefined UNK_0010aa27; /* 0010aa27 */
 extern undefined UNK_0010aa38; /* 0010aa38 */
 extern undefined UNK_0010aa3b; /* 0010aa3b */
 extern undefined UNK_0010aa6c; /* 0010aa6c */
-extern ushort USHORT_0001f6c8; /* 0001f6c8 */
 extern ushort USHORT_0002f32a; /* 0002f32a */
 extern ushort USHORT_0002f76e; /* 0002f76e */
 extern ushort USHORT_0002f77c; /* 0002f77c */
@@ -2769,6 +2756,7 @@ extern word WORD_00042d3c; /* 00042d3c */
 extern word WORD_00043090; /* 00043090 */
 extern word WORD_00043238; /* 00043238 */
 extern word WORD_00043262; /* 00043262 */
+extern word WORD_00043448; /* 00043448 */
 extern word WORD_00043562; /* 00043562 */
 extern word WORD_000439fe; /* 000439fe */
 extern word WORD_00043aec; /* 00043aec */
@@ -2973,23 +2961,13 @@ __asm__(".set DAT_00400086, 0x00400086");
 __asm__(".set DAT_004000c4, 0x004000c4");
 __asm__(".set DAT_00400144, 0x00400144");
 __asm__(".set DAT_00700000, 0x00700000");
-__asm__(".set LAB_00012f86, 0x00012f86");
-__asm__(".set LAB_00012f92, 0x00012f92");
-__asm__(".set LAB_00012f9e, 0x00012f9e");
-__asm__(".set LAB_00013666, 0x00013666");
-__asm__(".set LAB_0001366c, 0x0001366c");
-__asm__(".set LAB_000136a2, 0x000136a2");
-__asm__(".set LAB_000136bc, 0x000136bc");
 __asm__(".set LAB_000277ec, 0x000277ec");
-__asm__(".set LAB_00030b30, 0x00030b30");
 __asm__(".set LAB_00033454, 0x00033454");
 __asm__(".set LAB_00033472, 0x00033472");
 __asm__(".set LAB_000335be, 0x000335be");
 __asm__(".set LAB_00033862, 0x00033862");
 __asm__(".set LAB_000338ce, 0x000338ce");
 __asm__(".set LAB_00033904, 0x00033904");
-__asm__(".set LAB_0004007e, 0x0004007e");
-__asm__(".set LAB_00040096, 0x00040096");
 __asm__(".set PTR_DAT_00021e2e, 0x00021e2e");
 __asm__(".set PTR_DAT_00021e32, 0x00021e32");
 __asm__(".set PTR_DAT_0004cf80, 0x0004cf80");
@@ -3001,13 +2979,11 @@ __asm__(".set PTR_lamp_test_command_000186b0, 0x000186b0");
 __asm__(".set PTR_s_Self_Test_0004d076, 0x0004d076");
 __asm__(".set PTR_selftest_all_00018458, 0x00018458");
 __asm__(".set UNK_00012350, 0x00012350");
-__asm__(".set UNK_0001d570, 0x0001d570");
 __asm__(".set UNK_00028720, 0x00028720");
 __asm__(".set UNK_00028722, 0x00028722");
 __asm__(".set UNK_00032700, 0x00032700");
 __asm__(".set UNK_00033cc6, 0x00033cc6");
 __asm__(".set UNK_00041300, 0x00041300");
-__asm__(".set UNK_0004b800, 0x0004b800");
 __asm__(".set UNK_0005fa2d, 0x0005fa2d");
 __asm__(".set UNK_0006184c, 0x0006184c");
 __asm__(".set UNK_00061854, 0x00061854");
@@ -3050,7 +3026,6 @@ __asm__(".set UNK_0010aa27, 0x0010aa27");
 __asm__(".set UNK_0010aa38, 0x0010aa38");
 __asm__(".set UNK_0010aa3b, 0x0010aa3b");
 __asm__(".set UNK_0010aa6c, 0x0010aa6c");
-__asm__(".set USHORT_0001f6c8, 0x0001f6c8");
 __asm__(".set USHORT_0002f32a, 0x0002f32a");
 __asm__(".set USHORT_0002f76e, 0x0002f76e");
 __asm__(".set USHORT_0002f77c, 0x0002f77c");
@@ -3113,6 +3088,7 @@ __asm__(".set WORD_00042d3c, 0x00042d3c");
 __asm__(".set WORD_00043090, 0x00043090");
 __asm__(".set WORD_00043238, 0x00043238");
 __asm__(".set WORD_00043262, 0x00043262");
+__asm__(".set WORD_00043448, 0x00043448");
 __asm__(".set WORD_00043562, 0x00043562");
 __asm__(".set WORD_000439fe, 0x000439fe");
 __asm__(".set WORD_00043aec, 0x00043aec");
@@ -3449,15 +3425,15 @@ __asm__(".set sci_ring, 0x00103188");
 __asm__(".set sci_settings, 0x00101f50");
 __asm__(".set sci_settings_defaults, 0x00030a2c");
 __asm__(".set scpi_action_DIAGnostic_PTIMe_TINTerval, 0x0004132a");
-__asm__(".set scpi_action_RMHO, 0x00041354");
 __asm__(".set scpi_action_SAMPle_ACTion, 0x00041342");
 __asm__(".set scpi_action_SER1_PRESet, 0x00041366");
 __asm__(".set scpi_action_SER2_PRESet, 0x0004136c");
 __asm__(".set scpi_action_SOURce_GPSystem_POSition, 0x0004135a");
-__asm__(".set scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated, 0x00041378");
+__asm__(".set scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate, 0x00041378");
 __asm__(".set scpi_action_SOURce_PTIMe_SYNChronization_IMMediate, 0x0004134e");
 __asm__(".set scpi_action_SOURce_ROSCillator_HOLDover_INITiate, 0x00041336");
-__asm__(".set scpi_action_SOURce_ROSCillator_HOLDover_RECovery_AUTO, 0x00041330");
+__asm__(".set scpi_action_SOURce_ROSCillator_HOLDover_RECovery_INITiate, 0x00041330");
+__asm__(".set scpi_action_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore, 0x00041354");
 __asm__(".set scpi_action_STATus_PRESet, 0x00041372");
 __asm__(".set scpi_action_SYSTem_PRESet, 0x00041360");
 __asm__(".set scpi_action_self_test, 0x00041348");
@@ -3606,6 +3582,10 @@ extern undefined1 DAT_00025b3a;
 __asm__(".set DAT_00025b3a, 0x00025b3a");
 extern undefined1 DAT_001009ec;
 __asm__(".set DAT_001009ec, 0x001009ec");
+extern undefined1 DAT_00100a04;
+__asm__(".set DAT_00100a04, 0x00100a04");
+extern undefined1 DAT_00100a8a;
+__asm__(".set DAT_00100a8a, 0x00100a8a");
 extern undefined1 DAT_00100b10;
 __asm__(".set DAT_00100b10, 0x00100b10");
 extern undefined1 DAT_00100b14;
@@ -4142,6 +4122,8 @@ extern undefined1 LAB_installer__0010aa6c;
 __asm__(".set LAB_installer__0010aa6c, 0x0010aa6c");
 extern undefined4 * PTR_DAT_installer__001084da;
 __asm__(".set PTR_DAT_installer__001084da, 0x001084da");
+extern undefined4 * PTR_PTR_0001ad0e;
+__asm__(".set PTR_PTR_0001ad0e, 0x0001ad0e");
 extern undefined4 * PTR_PTR_00025b7e;
 __asm__(".set PTR_PTR_00025b7e, 0x00025b7e");
 extern undefined4 * PTR_PTR_installer__001014c8;
@@ -4154,8 +4136,6 @@ extern undefined1 UNK_00019556;
 __asm__(".set UNK_00019556, 0x00019556");
 extern undefined1 UNK_0001956a;
 __asm__(".set UNK_0001956a, 0x0001956a");
-extern undefined1 UNK_0001ad0e;
-__asm__(".set UNK_0001ad0e, 0x0001ad0e");
 extern word WORD_installer__001030d2;
 __asm__(".set WORD_installer__001030d2, 0x001030d2");
 extern word WORD_installer__00105f12;
@@ -4194,8 +4174,6 @@ extern undefined4 _DAT_00700000;
 __asm__(".set _DAT_00700000, 0x00700000");
 extern undefined4 _interval_mean_flag;
 __asm__(".set _interval_mean_flag, 0x0010253c");
-extern code func_0x0004f596;
-__asm__(".set func_0x0004f596, 0x0004f596");
 extern code func_0x0010135c;
 __asm__(".set func_0x0010135c, 0x0010135c");
 extern code func_0x0010313c;
@@ -4398,6 +4376,7 @@ undefined1 leap_second_near(void);
 void utc_to_local(uint32_t *param_1,uint32_t *param_2);
 void local_to_utc(uint32_t *param_1,uint32_t *param_2);
 void exception_hook_reset(void);
+int exception_hook_set_task(void *hook);
 void * exception_hook_get(void);
 int primary_default_exception();
 void print_exception(ushort param_1,uint32_t param_2,ushort param_3,uint32_t param_4);
@@ -4419,6 +4398,7 @@ undefined4 double_decimal_exponent(uint param_1,uint param_2);
 undefined8 power_of_ten_double(short param_1);
 undefined4 tfom_table_index(uint param_1);
 undefined4 power_of_ten_float(short param_1);
+void scpi_param_hook_nothing(void);
 int random_dither(void);
 void start_nothing(void);
 void system_init(void);
@@ -4431,6 +4411,9 @@ int pps_wait_time(undefined4 *param_1,undefined4 *param_2,int param_3);
 void enter_installer(void);
 void scpi_task_start(void);
 void console_halt_hook(void);
+void ps_word(void);
+void mem_rep_word(void);
+void s_rep_word(void);
 void console_init(void);
 uint32_t klok_take_pending(void);
 void root_task(void);
@@ -4454,6 +4437,10 @@ void clock_record_sum(clock_record *record) __asm__("c_clock_record_sum");
 void clock_tick(void);
 void clock_record_advance(clock_record *record) __asm__("c_clock_record_advance");
 void clock_record_advance_utc(clock_record *record) __asm__("c_clock_record_advance_utc");
+void leap_minute_59_arm(void);
+void leap_minute_61_arm(void);
+void offset_step_down_arm(void);
+void offset_step_up_arm(void);
 uint32_t get_clock_date(void);
 uint32_t get_clock_time(void);
 uint32_t get_gps_date(void);
@@ -4494,6 +4481,7 @@ int primary_trap_6();
 int primary_trap_5();
 int kernel_dispatch_service();
 void kernel_dispatch_io(char function, int device) __asm__("c_kernel_dispatch_io");
+int kernel_io_return();
 int kernel_switch_task();
 int kernel_process_ticks();
 int kernel_service_0();
@@ -4549,6 +4537,7 @@ int kernel_ready_insert();
 int kernel_queue_remove();
 int kernel_init();
 int kernel_region_init();
+int kernel_idle_task();
 int kernel_return_from_interrupt();
 void os_report_cpu(undefined *param_1);
 char * task_name(void *task);
@@ -4634,6 +4623,8 @@ void selftest_lamps(char param_1);
 void selftest_uart(char param_1);
 void selftest_gps(char param_1);
 void selftest_power(char param_1);
+void selftest_interpolator_calibration(uint8_t pass);
+void selftest_interpolator_sample(uint8_t pass);
 void selftest_begin(void);
 void selftest_end(void);
 bool selftest_may_report(char param_1);
@@ -4648,6 +4639,9 @@ undefined1 selftest_abort_wait(void);
 void internal_pps_test(void);
 void lamp_test(void);
 void supplies_test(void);
+uint32_t selftest_cpu_result(void);
+uint32_t selftest_ram_result(void);
+uint32_t selftest_eeprom_result(void);
 void selftest_print_failure(char param_1);
 ushort shift_right_36(ushort *param_1);
 undefined1 qspi_hex_dac_test(void);
@@ -4660,9 +4654,14 @@ void ram_pattern_test_locked(void);
 void selftest_nv_slot(void);
 void selftest_qspi_run(void);
 int16_t selftest_qspi_with_lamp(void);
+uint32_t selftest_fpga_with_lamp(void);
 int16_t selftest_interpolator_with_lamp(void);
 int16_t selftest_internal_reference_with_lamp(void);
 undefined4 lamp_test_command(void);
+uint32_t selftest_uart_with_lamp(void);
+uint32_t selftest_gps_with_lamp(void);
+uint32_t selftest_power_with_lamp(void);
+int console_exception_hook();
 int forth_abort();
 int forth_interpret();
 int forth_parse_number();
@@ -4818,6 +4817,7 @@ int forth_0x();
 int forth_execute();
 int forth_watch();
 int forth_psos_call();
+int forth_spawned_task();
 int forth_spawn();
 int forth_pack_name(forth_user_end user) __asm__("c_forth_pack_name");
 int forth_space_if_zero();
@@ -4852,6 +4852,7 @@ void pforth_link_word(void *word) __asm__("c_pforth_link_word");
 void console_set_halt_hook(void *param_1);
 void console_set_device(undefined4 param_1);
 undefined4 console_task_create(void);
+int console_task();
 int string_device_open(void) __asm__("c_string_device_open");
 int string_device_init(void) __asm__("c_string_device_init");
 int string_device_control(char *string) __asm__("c_string_device_control");
@@ -4948,6 +4949,7 @@ void diag_leapsec(undefined4 param_1,uint32_t param_2);
 void diag_es_ascii(int param_1);
 void diag_fp_u(void);
 void diag_words_define(void);
+void duartb_echo_none(char c);
 int gp_port_select(char param_1);
 void duartb_mode_from_settings(void);
 void duartb_baud_from_settings(void);
@@ -4967,6 +4969,7 @@ ulong console_write(char *s);
 int printf(char *format,...);
 undefined4 console_read(void *param_1,undefined4 param_2,undefined1 *param_3);
 void scpi_port_open(void);
+void scpi_port_close(void);
 void duartb_settings_done(void);
 int console_write_polled(char *s);
 void printf_polled(char *format,...);
@@ -5016,6 +5019,7 @@ void hdac_set(byte param_1,byte param_2);
 void hdac_write_all(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,byte param_6);
 void hdac_update(void);
 void efc_write(undefined2 param_1);
+void sci_echo_none(char c);
 void sci_baud_set(char param_1);
 ushort sci_putc_polled(char param_1);
 int sci_puts(int param_1);
@@ -5225,13 +5229,19 @@ undefined1 rtcm_supported(void);
 void scpi_prompt(int param_1);
 undefined4 scpi_session_init(void);
 undefined4 scpi_console_port(void);
+void scpi_session_close(void);
+int scpi_console_return_zero(void);
 int scpi_console_read(undefined1 *param_1,int param_2);
 int32_t console_port_read(void);
 void scpi_input_ended(void);
-void scpi_console_putc(int param_1);
+void scpi_console_putc(undefined4 param_1,int param_2);
+int scpi_console_write();
+void scpi_console_write_loop(void *port,char *s,int n);
 void status_byte_set_bits(undefined4 param_1);
 void status_byte_clear_bits(undefined4 param_1);
 void status_sre_set(undefined4 param_1);
+uint8_t status_sre_get(void);
+uint8_t status_byte_get(void);
 void status_update_rqs(void);
 undefined4 scpi_message_done(void);
 undefined4 scpi_input_closed(void);
@@ -5578,13 +5588,19 @@ int scpi_query_SYSTem_PRINt(void *parameters,void *response,void *call);
 int scpi_query_RVST(void *parameters,void *response,void *call);
 int scpi_query_SYSTem_PRINt_LENGth(void *parameters,void *response,void *call);
 uint16_t record_checksum(void *record,uint16_t length);
+void duartb_parity_restrict(void);
+void duartb_eight_bits_restrict(void);
+void douglas_duration_changed(void);
 undefined4 lifetime_record_read(void);
 undefined4 lifetime_record_write(void);
+void lifetime_event_run(void);
 void lifetime_update(int param_1);
 bool calibration_block_read(void);
 undefined4 save_calibration_block(undefined4 param_1);
 undefined2 parameter_record_read(void);
 bool save_parameter_record(byte param_1);
+void duartb_settings_preset(int32_t index,int32_t source);
+void sci_settings_preset(int32_t index,int32_t source);
 void eeprom_lock_init(void);
 void eeprom_init(void);
 char eeprom_lock(void);
@@ -5657,6 +5673,8 @@ undefined4 log_entry_text(int param_1,char *param_2,char *param_3);
 undefined4 reset_record_write(undefined4 param_1,undefined4 param_2,char *param_3);
 void interpolator_calibration_init(undefined1 *param_1);
 uint8_t interpolator_measure(uint8_t mode);
+uint8_t interpolator_measure_low(uint8_t hdac_2);
+uint8_t interpolator_measure_high(uint8_t hdac_3);
 char dac_search_bisect(char param_1,byte param_2,byte param_3,byte param_4,byte param_5,
                       undefined *param_6);
 byte dac_search_step(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,
@@ -5698,6 +5716,7 @@ undefined4 int64_divide(int param_1,int param_2,int param_3);
 undefined4 uint64_divide(uint param_1,undefined4 param_2,undefined4 param_3);
 double int64_to_double(uint param_1,uint param_2);
 undefined8 double_to_int64(uint param_1,undefined4 param_2);
+void pll_action_nothing(int32_t index,int32_t source);
 void efc_history_update(void);
 void curv_signal(void);
 void aging_fit_collect(void);
@@ -5737,6 +5756,7 @@ void pll_scpi_command(int param_1,char *param_2);
 void pll_scpi_receive(void);
 void pll_scpi_complete(int *param_1,char param_2);
 void gps_diag_complete(int *param_1);
+void sample_action_print(int32_t index,int32_t source);
 void questionable_user_done(void);
 void status_enable_restore(undefined4 param_1,undefined4 param_2);
 void status_ptr_restore(undefined4 param_1,undefined4 param_2);
@@ -5761,7 +5781,15 @@ void interval_wait_reading(void);
 char coarse(void);
 char fine(void);
 void time_zone_changed(void);
+void time_zone_done(void);
+void time_offset_done(int32_t a,int32_t b);
+void holdover_recovery_initiate(int32_t index,int32_t source);
+void holdover_initiate(int32_t index,int32_t source);
+void temporary_hold_set(int32_t index,int32_t source);
 void antenna_delay_done(void);
+void holdover_recovery_limit_ignore(int32_t index,int32_t source);
+void sync_immediate_request(int32_t index,int32_t source);
+void nv_param_field_b8_done(void);
 undefined4 pll_mode(void);
 undefined1 pll_powerup_suffix_index(void);
 undefined1 recovery_suffix_index(void);
@@ -5774,6 +5802,9 @@ void pwma_force_level(char param_1);
 undefined1 powerup(char param_1);
 undefined1 pll_check_reference(char param_1);
 void clock_set_from_reference(void);
+void selftest_request(int32_t index,int32_t source);
+void douglas_state_done(void);
+void douglas_finish_request(int32_t index,int32_t source);
 void leap_settings_clear(void);
 void leap_event_delete(void);
 void leap_event_create(void);
@@ -5787,6 +5818,7 @@ void gps_init_sequence(void);
 void gps_leap_sequence(void);
 void gps_leap_ack(void);
 undefined4 leap_ack_pending(void);
+void leap_ack_request(int32_t index,int32_t source);
 void gps_command_send(void);
 undefined1 gps_diag_sequence(char param_1);
 void pll_init(void);
@@ -5851,6 +5883,7 @@ void command_monitor_init(void);
 void command_monitor(void);
 void gps_response_reset(void);
 undefined4 gps_response_lookup(char param_1,char param_2,undefined2 *param_3,short *param_4);
+void gps_receive_expect(uint8_t c,uint8_t expected);
 uint8_t gps_receive(void);
 undefined4 gps_response_timed_out(short param_1,uint *param_2);
 bool gps_count_response(char param_1,int param_2);
@@ -5909,6 +5942,7 @@ bool gps_position_get(int32_t *param_1,int32_t *param_2,int32_t *param_3);
 bool gps_time_local_get(uint32_t *param_1,uint32_t *param_2);
 undefined4 survey_progress_percent(undefined2 *param_1);
 undefined4 survey_progress_text(char *param_1);
+uint8_t status_screen_length(void);
 byte * oncore_position_message(byte *param_1,byte *param_2);
 void oncore_visibility_message(byte *param_1,byte *param_2);
 void oncore_dop_message(byte *param_1,byte *param_2);
@@ -7465,10 +7499,10 @@ klok_entry * leap_event_schedule_gps(uint32_t param_1,int param_2)
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0001062e)[(short)(param_2 + -0x3d)]) {
     case 6:
-      event.function = &LAB_00013666;
+      event.function = leap_minute_59_arm;
       break;
     case 0x10:
-      event.function = &LAB_0001366c;
+      event.function = leap_minute_61_arm;
       break;
     case 0x24:
       goto override_jmp_00010626_case_1;
@@ -7535,13 +7569,13 @@ klok_entry * leap_event_schedule_utc(uint32_t param_1,int param_2)
   change.date = 0;
   datetime_subtract(&change,(packed_datetime *)&event.time);
   if (param_2 == 0x3b) {
-    event.function = &LAB_000136a2;
+    event.function = offset_step_down_arm;
   }
   else {
     if (param_2 != 0x3d) {
       return (klok_entry *)0x0;
     }
-    event.function = &LAB_000136bc;
+    event.function = offset_step_up_arm;
   }
   pkVar1 = clk_do(&event);
   return pkVar1;
@@ -8637,6 +8671,23 @@ void exception_hook_reset(void)
 }
 
 
+/* 000118c2 */
+
+/* stores the running task's exception hook, at +0x82 of its record, and returns 0; the console task
+   passes console_exception_hook; exception_hook_get reads it only while the byte at 0x1037d4 is
+   set, which no referred-to code does */
+
+int exception_hook_set_task(void *hook)
+
+{
+  ulong uVar1;
+  
+  uVar1 = psos_my_pid();
+  *(void **)(uVar1 + 0x82) = hook;
+  return 0;
+}
+
+
 /* 000118fe */
 
 /* the exception hook: the running task's, at +0x82 of its record, or the global one */
@@ -9338,6 +9389,19 @@ undefined4 power_of_ten_float(short param_1)
 }
 
 
+/* 00012af0 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* a bare rts: the changed hook of most numeric and setting descriptors, and the done hook of some
+   the changed hook of most descriptors */
+
+void scpi_param_hook_nothing(void)
+
+{
+  return;
+}
+
+
 /* 00012af2 */
 
 /* a small signed random value: rand, shaped by dither_table */
@@ -9711,6 +9775,48 @@ void console_halt_hook(void)
 }
 
 
+/* 00012f86 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* os_process_report(0)
+   console_init's word ps */
+
+void ps_word(void)
+
+{
+  os_process_report(0);
+  return;
+}
+
+
+/* 00012f92 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* os_memory_report(0)
+   console_init's word mem_rep */
+
+void mem_rep_word(void)
+
+{
+  os_memory_report(0);
+  return;
+}
+
+
+/* 00012f9e */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* task_stack_report(0)
+   console_init's word s_rep */
+
+void s_rep_word(void)
+
+{
+  task_stack_report(0);
+  return;
+}
+
+
 /* 00012faa */
 
 /* allocates the pForth dictionary, defines ps, mem_rep, s_rep and the diagnostic words, opens the
@@ -9722,9 +9828,9 @@ void console_init(void)
 {
   pforth_dictionary_init(0x1000);
   console_set_halt_hook(console_halt_hook);
-  pforth_define_word("ps",&LAB_00012f86,0,0);
-  pforth_define_word("mem_rep",&LAB_00012f92,0,0);
-  pforth_define_word("s_rep",&LAB_00012f9e,0,0);
+  pforth_define_word("ps",ps_word,0,0);
+  pforth_define_word("mem_rep",mem_rep_word,0,0);
+  pforth_define_word("s_rep",s_rep_word,0,0);
   diag_words_define();
   psos_io_control(0x200,0x18dbc,0);
   console_set_device(0x200);
@@ -10691,29 +10797,6 @@ __asm__(
 	".Lg_13662:\n"
 	"	move %d6,%sr\n"
 	"	rts\n"
-	"	.byte 0x10,0x3c,0x00,0x3b | move.b #0x3b,D0b\n"
-	"	bra.b .Lg_13670\n"
-	"	.byte 0x10,0x3c,0x00,0x3d | move.b #0x3d,D0b\n"
-	".Lg_13670:\n"
-	"	.byte 0x48,0xe7,0x02,0x02 | movem.l {  A6 D6},-(SP)\n"
-	"	.byte 0x2c,0x7c,0x00,0x10,0x09,0xb8 | movea.l #0x1009b8,A6\n"
-	"	.byte 0x1d,0x40,0x00,0x2e | move.b D0b,(0x2e,A6)\n"
-	"	.byte 0x13,0xfc,0x00,0x01,0x00,0x10,0x0b,0xc8 | move.b #0x1,(0x00100bc8).l\n"
-	"	.byte 0x4e,0xb9,0x00,0x01,0x34,0x22 | jsr 0x00013422.l\n"
-	"	.byte 0x3f,0x00 | move.w D0w,-(SP)\n"
-	"	bsr.w clock_record_checksum\n"
-	"	.byte 0x46,0xdf | move (SP)+,SR\n"
-	"	.byte 0x4c,0xdf,0x40,0x40 | movem.l (SP)+,{  D6 A6}\n"
-	"	.byte 0x13,0xfc,0x00,0x01,0x00,0x10,0x25,0x43 | move.b #0x1,(0x00102543).l\n"
-	"	.byte 0x4e,0x75 | rts\n"
-	"	.byte 0x33,0xfc,0xff,0xff,0x00,0x10,0x0b,0xce | move.w #-0x1,(0x00100bce).l\n"
-	"	.byte 0x13,0xfc,0x00,0x01,0x00,0x10,0x0b,0xc9 | move.b #0x1,(0x00100bc9).l\n"
-	"	.byte 0x13,0xfc,0x00,0x01,0x00,0x10,0x25,0x43 | move.b #0x1,(0x00102543).l\n"
-	"	.byte 0x4e,0x75 | rts\n"
-	"	.byte 0x33,0xfc,0x00,0x01,0x00,0x10,0x0b,0xce | move.w #0x1,(0x00100bce).l\n"
-	"	.byte 0x13,0xfc,0x00,0x01,0x00,0x10,0x0b,0xc9 | move.b #0x1,(0x00100bc9).l\n"
-	"	.byte 0x13,0xfc,0x00,0x01,0x00,0x10,0x25,0x43 | move.b #0x1,(0x00102543).l\n"
-	"	.byte 0x4e,0x75 | rts\n"
 	"	.size clock_record_advance_utc, .-clock_record_advance_utc\n"
 	"	.popsection\n"
 );
@@ -10731,6 +10814,75 @@ __asm__(
 	"	.size c_clock_record_advance_utc, .-c_clock_record_advance_utc\n"
 	"	.popsection\n"
 );
+
+/* 00013666 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* makes the clock's minute 59 seconds, sets leap_minute_pending and clock_change_armed, and
+   checksums the clock record in supervisor mode
+   leap_event_schedule_gps's clock event */
+
+void leap_minute_59_arm(void)
+
+{
+  clock.minute_length = 0x3b;
+  leap_minute_pending = 1;
+  enter_supervisor();
+  clock_record_checksum(&clock);
+  clock_change_armed = 1;
+  return;
+}
+
+
+/* 0001366c */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* the same with a 61-second minute
+   leap_event_schedule_gps's clock event */
+
+void leap_minute_61_arm(void)
+
+{
+  clock.minute_length = 0x3d;
+  leap_minute_pending = 1;
+  enter_supervisor();
+  clock_record_checksum(&clock);
+  clock_change_armed = 1;
+  return;
+}
+
+
+/* 000136a2 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* sets offset_step -1, offset_step_pending and clock_change_armed
+   leap_event_schedule_utc's clock event, a 59-second minute */
+
+void offset_step_down_arm(void)
+
+{
+  offset_step = -1;
+  offset_step_pending = 1;
+  clock_change_armed = 1;
+  return;
+}
+
+
+/* 000136bc */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* sets offset_step 1, offset_step_pending and clock_change_armed
+   leap_event_schedule_utc's clock event, a 61-second minute */
+
+void offset_step_up_arm(void)
+
+{
+  offset_step = 1;
+  offset_step_pending = 1;
+  clock_change_armed = 1;
+  return;
+}
+
 
 /* 000136d6 */
 
@@ -13071,7 +13223,9 @@ __asm__(
 	"	movea.l (%a5),%a5\n"
 	"	movea.l (%a5),%a6\n"
 	"	cmpi.w #0x5,%d7\n"
-	"	bhi.b .Lg_14c70\n"
+	"	.byte 0x62 | bhi.b 0x00014c70\n"
+	"	.reloc ., R_68K_PC8, .Lg_14c70-1\n"
+	"	.byte 0\n"
 	"	move.l (0x30,%a6),%d6\n"
 	"	beq.b .Lg_14c34\n"
 	"	addq.w #0x1,(0x24,%a6)\n"
@@ -13084,7 +13238,9 @@ __asm__(
 	"	move.w %d0,%d6\n"
 	"	lsr.w #0x8,%d6\n"
 	"	cmp.w (0x22,%a5),%d6\n"
-	"	bhi.b .Lg_14c6a\n"
+	"	.byte 0x62 | bhi.b 0x00014c6a\n"
+	"	.reloc ., R_68K_PC8, .Lg_14c6a-1\n"
+	"	.byte 0\n"
 	"	lsl.w #0x1,%d6\n"
 	"	add.w %d6,%d7\n"
 	"	lsl.w #0x1,%d6\n"
@@ -13094,14 +13250,14 @@ __asm__(
 	"	lsl.w #0x1,%d7\n"
 	"	add.w %d6,%d7\n"
 	"	movea.l (0x24,%a5),%a6\n"
-	"	pea (.Lg_14c64,%pc)\n"
+	"	pea (kernel_io_return:w,%pc)\n"
 	"	nop\n"
 	"	pea (0x0,%a6,%d7.w*0x1)\n"
 	"	movem.l (0x8,%sp),%d6/%a5/%a6\n"
 	"	rts\n"
-	".Lg_14c64:\n"
-	"	.byte 0xde,0xfc,0x00,0x0c | adda.w #0xc,SP\n"
-	"	.byte 0x4e,0x73 | rte\n"
+	"	.size kernel_dispatch_io, .-kernel_dispatch_io\n"
+	"	.popsection\n"
+	"	.pushsection .text.kernel_dispatch_io.14c6a,\"ax\",@progbits\n"
 	".Lg_14c6a:\n"
 	"	move.b #0x1,%d7\n"
 	"	bra.b .Lg_14c74\n"
@@ -13110,7 +13266,6 @@ __asm__(
 	".Lg_14c74:\n"
 	"	movem.l (%sp)+,%d6/%a5/%a6\n"
 	"	rte\n"
-	"	.size kernel_dispatch_io, .-kernel_dispatch_io\n"
 	"	.popsection\n"
 );
 /* kernel_dispatch_io from gcc's convention: its arguments from the stack into its registers */
@@ -13126,6 +13281,33 @@ __asm__(
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_kernel_dispatch_io, .-c_kernel_dispatch_io\n"
+	"	.popsection\n"
+);
+
+/* 00014c64 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* where kernel_dispatch_io has its I/O routine return, the address it pushes: drops 12 bytes and
+   returns from the trap
+   Not a C function (exception; read): entered by the processor, not called.
+   psos.md */
+
+__exception void kernel_io_return(void)
+
+{
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl kernel_io_return\n"
+	"	.type kernel_io_return, @function\n"
+	"	.pushsection .text.kernel_io_return.14c64,\"ax\",@progbits\n"
+	"kernel_io_return:\n"
+	"	adda.w #0xc,%sp\n"
+	"	rte\n"
+	"	.size kernel_io_return, .-kernel_io_return\n"
 	"	.popsection\n"
 );
 
@@ -18427,7 +18609,7 @@ __asm__(
 	"	moveq #0x3,%d7\n"
 	"	bra.b .Lg_15ec4\n"
 	".Lg_15eaa:\n"
-	"	lea (__ghidra_15f84:w,%pc),%a1\n"
+	"	lea (kernel_idle_task:w,%pc),%a1\n"
 	"	nop\n"
 	"	bsr.w kernel_start\n"
 	"	ori.w #0x2000,(0x44,%a0)\n"
@@ -18566,13 +18748,38 @@ __asm__(
 	"	move.l %a2,(%a2)\n"
 	"	move.l %a2,(0x68,%a6)\n"
 	"	rts\n"
-	"	.byte 0x4e\n"
-	"	.byte 0x72\n"
-	"	.byte 0x20\n"
-	"	.byte 0x00\n"
-	"	.byte 0x60\n"
-	"	.byte 0xfa\n"
 	"	.size kernel_region_init, .-kernel_region_init\n"
+	"	.popsection\n"
+);
+
+/* 00015f84 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the task kernel_init creates as IDLE and starts here: stop #0x2000, forever
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
+   psos.md */
+
+__naked void kernel_idle_task(void)
+
+{
+  do {
+                    /* stop: halts here; the loop stands for not continuing */
+    stop();
+  } while( true );
+}
+
+
+#endif
+__asm__(
+	"	.globl kernel_idle_task\n"
+	"	.type kernel_idle_task, @function\n"
+	"	.pushsection .text.kernel_idle_task.15f84,\"ax\",@progbits\n"
+	"kernel_idle_task:\n"
+	".Lg_15f84:\n"
+	"	stop #0x2000\n"
+	"	bra.b .Lg_15f84\n"
+	"	.size kernel_idle_task, .-kernel_idle_task\n"
 	"	.popsection\n"
 );
 
@@ -21690,6 +21897,38 @@ void selftest_power(char param_1)
 }
 
 
+/* 00017fc0 */
+
+/* WARNING: Unknown calling convention */
+/* on selftest_execute's second pass, its argument 1, runs interpolator_selftest
+   the self-test table 0x18458's entry 12 */
+
+void selftest_interpolator_calibration(uint8_t pass)
+
+{
+  if (pass == 1) {
+    interpolator_selftest();
+  }
+  return;
+}
+
+
+/* 00017fd0 */
+
+/* WARNING: Unknown calling convention */
+/* on selftest_execute's second pass, its argument 1, runs interpolator_sample_test
+   entry 13 */
+
+void selftest_interpolator_sample(uint8_t pass)
+
+{
+  if (pass == 1) {
+    interpolator_sample_test();
+  }
+  return;
+}
+
+
 /* 000182c4 */
 
 /* clears selftest_abort before a test */
@@ -21955,6 +22194,45 @@ void supplies_test(void)
   }
   selftest.power = selftest.power | 4;
   return;
+}
+
+
+/* 000185e2 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* returns selftest.cpu, the reset code's CPU test
+   selftest_print_failure's table 0x186b0, "PROC" */
+
+uint32_t selftest_cpu_result(void)
+
+{
+  return (uint)(ushort)selftest.cpu;
+}
+
+
+/* 000185ec */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* returns selftest.ram, the reset code's RAM test
+   table 0x186b0, "RAM" */
+
+uint32_t selftest_ram_result(void)
+
+{
+  return (uint)selftest.ram;
+}
+
+
+/* 000185f6 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* returns selftest.eeprom
+   table 0x186b0, "EEPROM" */
+
+uint32_t selftest_eeprom_result(void)
+
+{
+  return (uint)(ushort)selftest.eeprom;
 }
 
 
@@ -22336,7 +22614,8 @@ void selftest_qspi_run(void)
 
 /* 00018c9c */
 
-/* the QSPI tests, lighting the failure lamp on a failure; called by nothing */
+/* the QSPI tests, lighting OP7 on a failure; selftest_print_failure's check "QSPI" in its table at
+   0x186b0 */
 
 int16_t selftest_qspi_with_lamp(void)
 
@@ -22350,9 +22629,27 @@ int16_t selftest_qspi_with_lamp(void)
 }
 
 
+/* 00018cc6 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* counter_selftest, lighting OP7 on a failure; returns selftest.fpga
+   table 0x186b0, "FPGA" */
+
+uint32_t selftest_fpga_with_lamp(void)
+
+{
+  counter_selftest();
+  if (selftest.fpga != 0) {
+    duart_output_bits(0x80,0);
+  }
+  return (uint)(ushort)selftest.fpga;
+}
+
+
 /* 00018cec */
 
-/* the interpolator test, lighting the failure lamp on a failure; called by nothing */
+/* the interpolator test, lighting OP7 on a failure; the check "INTERP" in selftest_print_failure's
+   table */
 
 int16_t selftest_interpolator_with_lamp(void)
 
@@ -22368,7 +22665,8 @@ int16_t selftest_interpolator_with_lamp(void)
 
 /* 00018d16 */
 
-/* the internal 1PPS test, lighting the failure lamp on a failure; called by nothing */
+/* the internal 1PPS test, lighting OP7 on a failure; the check "INT_REF" in
+   selftest_print_failure's table */
 
 int16_t selftest_internal_reference_with_lamp(void)
 
@@ -22384,7 +22682,7 @@ int16_t selftest_internal_reference_with_lamp(void)
 
 /* 00018d40 */
 
-/* runs the lamp test and returns 0; called by nothing */
+/* runs the lamp test and returns 0; the check "DISP", first in selftest_print_failure's table */
 
 undefined4 lamp_test_command(void)
 
@@ -22393,6 +22691,91 @@ undefined4 lamp_test_command(void)
   return 0;
 }
 
+
+/* 00018d4a */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* duart_test, lighting OP6 on a failure; returns selftest.uart
+   table 0x186b0, "UART" */
+
+uint32_t selftest_uart_with_lamp(void)
+
+{
+  duart_test();
+  if (selftest.uart != 0) {
+    duart_output_bits(0x40,0);
+  }
+  return (uint)(ushort)selftest.uart;
+}
+
+
+/* 00018d70 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* gps_selftest_run, lighting OP7 on a failure; returns selftest.gps
+   table 0x186b0, "GPS" */
+
+uint32_t selftest_gps_with_lamp(void)
+
+{
+  gps_selftest_run();
+  if (selftest.gps != 0) {
+    duart_output_bits(0x80,0);
+  }
+  return (uint)(ushort)selftest.gps;
+}
+
+
+/* 00018d96 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* supplies_test, lighting OP7 on a failure; returns selftest.power
+   table 0x186b0, "POWER" */
+
+uint32_t selftest_power_with_lamp(void)
+
+{
+  supplies_test();
+  if (selftest.power != 0) {
+    duart_output_bits(0x80,0);
+  }
+  return (uint)(ushort)selftest.power;
+}
+
+
+/* 00018e62 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the console task's exception hook: exception_name of the frame's vector into D0, then rte to
+   0x18ec8, which prints it and enters forth_abort; never reached while the byte at 0x1037d4 is
+   clear
+   Not a C function (exception; read): entered by the processor, not called. */
+
+__exception void console_exception_hook(undefined4 param_1)
+
+{
+  exception_name(__ghidra_piece(unsigned short, param_1, 2));
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl console_exception_hook\n"
+	"	.type console_exception_hook, @function\n"
+	"	.pushsection .text.console_exception_hook.18e62,\"ax\",@progbits\n"
+	"console_exception_hook:\n"
+	"	movem.l %a1/%a0,-(%sp)\n"
+	"	move.w (0xe,%sp),-(%sp)\n"
+	"	jsr (exception_name).l\n"
+	"	addq.l #0x2,%sp\n"
+	"	movem.l (%sp)+,%a0/%a1\n"
+	"	move.l #0x18ec8,(0x2,%sp)\n"
+	"	.byte 0x4e,0x73,0x45,0x52,0x52,0x4f,0x52,0x3a,0x20,0x22,0x00\n"
+	"	.byte 0x22,0x20,0x69,0x73,0x20,0x6f,0x6e,0x6c,0x79,0x20,0x76,0x61,0x6c,0x69,0x64,0x20,0x69,0x6e,0x73,0x69,0x64,0x65,0x20,0x61,0x20,0x64,0x65,0x66,0x69,0x6e,0x69,0x74,0x69,0x6f,0x6e,0x2e,0x0d,0x0a,0x00\n"
+	"	.size console_exception_hook, .-console_exception_hook\n"
+	"	.popsection\n"
+);
 
 /* 00018ed6 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -28643,95 +29026,7 @@ __asm__(
 	"	.byte 0x00\n"
 	"	.byte 0x20,0x66,0x72,0x6f,0x6d,0x20,0x66,0x75,0x6e,0x63,0x74,0x69,0x6f,0x6e,0x00\n"
 	"	.popsection\n"
-	"	.pushsection .text.forth_expect.19f42,\"ax\",@progbits\n"
-	"	.byte 0x20\n"
-	"	.byte 0x1f\n"
-	"	.byte 0x32\n"
-	"	.byte 0x1f\n"
-	"	.byte 0x24\n"
-	"	.byte 0x1f\n"
-	"	.byte 0x26\n"
-	"	.byte 0x1f\n"
-	"	.byte 0x28\n"
-	"	.byte 0x4f\n"
-	"	.byte 0x98\n"
-	"	.byte 0xc1\n"
-	"	.byte 0x98\n"
-	"	.byte 0xc1\n"
-	"	.byte 0x4e\n"
-	"	.byte 0x55\n"
-	"	.byte 0xff\n"
-	"	.byte 0xd8\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x4f\n"
-	"	.byte 0xff\n"
-	"	.byte 0xfc\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x43\n"
-	"	.byte 0xff\n"
-	"	.byte 0xda\n"
-	"	.byte 0x04\n"
-	"	.byte 0x41\n"
-	"	.byte 0xff\n"
-	"	.byte 0xec\n"
-	"	.byte 0x2c\n"
-	"	.byte 0x4f\n"
-	"	.byte 0x9c\n"
-	"	.byte 0xc1\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x4e\n"
-	"	.byte 0xff\n"
-	"	.byte 0xf8\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x7c\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x0a\n"
-	"	.byte 0xff\n"
-	"	.byte 0xf2\n"
-	"	.byte 0x42\n"
-	"	.byte 0x6d\n"
-	"	.byte 0xff\n"
-	"	.byte 0xf6\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x40\n"
-	"	.byte 0xff\n"
-	"	.byte 0xea\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x40\n"
-	"	.byte 0xff\n"
-	"	.byte 0xe6\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x4c\n"
-	"	.byte 0xff\n"
-	"	.byte 0xee\n"
-	"	.byte 0x70\n"
-	"	.byte 0xff\n"
-	"	.byte 0x3b\n"
-	"	.byte 0x40\n"
-	"	.byte 0xff\n"
-	"	.byte 0xd8\n"
-	"	.byte 0x97\n"
-	"	.byte 0xcb\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x4b\n"
-	"	.byte 0xff\n"
-	"	.byte 0xe2\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x4b\n"
-	"	.byte 0xff\n"
-	"	.byte 0xde\n"
-	"	.byte 0x48\n"
-	"	.byte 0x7a\n"
-	"	.byte 0x00\n"
-	"	.byte 0x08\n"
-	"	.byte 0x4e\n"
-	"	.byte 0x71\n"
-	"	.byte 0x2f\n"
-	"	.byte 0x02\n"
-	"	.byte 0x4e\n"
-	"	.byte 0x75\n"
+	"	.pushsection .text.forth_expect.19f9a,\"ax\",@progbits\n"
 	".Lg_19f9a:\n"
 	"	suba.l %a0,%a0\n"
 	"	moveq #0x4,%d7\n"
@@ -29105,7 +29400,7 @@ __asm__(
 __pforth void forth_unfence(forth_user_end user)
 
 {
-  ADJ(user)->fence = &UNK_0001ad0e;
+  ADJ(user)->fence = &PTR_PTR_0001ad0e;
   return;
 }
 
@@ -29508,95 +29803,61 @@ __asm__(
 	"	bsr.w forth_print_string\n"
 	"	movea.l (-0x12,%a5),%a4\n"
 	"	bra.w forth_abort\n"
-	"	.byte 0x20\n"
-	"	.byte 0x1f\n"
-	"	.byte 0x32\n"
-	"	.byte 0x1f\n"
-	"	.byte 0x24\n"
-	"	.byte 0x1f\n"
-	"	.byte 0x26\n"
-	"	.byte 0x1f\n"
-	"	.byte 0x28\n"
-	"	.byte 0x4f\n"
-	"	.byte 0x98\n"
-	"	.byte 0xc1\n"
-	"	.byte 0x98\n"
-	"	.byte 0xc1\n"
-	"	.byte 0x4e\n"
-	"	.byte 0x55\n"
-	"	.byte 0xff\n"
-	"	.byte 0xd8\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x4f\n"
-	"	.byte 0xff\n"
-	"	.byte 0xfc\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x43\n"
-	"	.byte 0xff\n"
-	"	.byte 0xda\n"
-	"	.byte 0x04\n"
-	"	.byte 0x41\n"
-	"	.byte 0xff\n"
-	"	.byte 0xec\n"
-	"	.byte 0x2c\n"
-	"	.byte 0x4f\n"
-	"	.byte 0x9c\n"
-	"	.byte 0xc1\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x4e\n"
-	"	.byte 0xff\n"
-	"	.byte 0xf8\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x7c\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x00\n"
-	"	.byte 0x0a\n"
-	"	.byte 0xff\n"
-	"	.byte 0xf2\n"
-	"	.byte 0x42\n"
-	"	.byte 0x6d\n"
-	"	.byte 0xff\n"
-	"	.byte 0xf6\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x40\n"
-	"	.byte 0xff\n"
-	"	.byte 0xea\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x40\n"
-	"	.byte 0xff\n"
-	"	.byte 0xe6\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x4c\n"
-	"	.byte 0xff\n"
-	"	.byte 0xee\n"
-	"	.byte 0x70\n"
-	"	.byte 0xff\n"
-	"	.byte 0x3b\n"
-	"	.byte 0x40\n"
-	"	.byte 0xff\n"
-	"	.byte 0xd8\n"
-	"	.byte 0x97\n"
-	"	.byte 0xcb\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x4b\n"
-	"	.byte 0xff\n"
-	"	.byte 0xe2\n"
-	"	.byte 0x2b\n"
-	"	.byte 0x4b\n"
-	"	.byte 0xff\n"
-	"	.byte 0xde\n"
-	"	.byte 0x48\n"
-	"	.byte 0x7a\n"
-	"	.byte 0x00\n"
-	"	.byte 0x08\n"
-	"	.byte 0x4e\n"
-	"	.byte 0x71\n"
-	"	.byte 0x2f\n"
-	"	.byte 0x02\n"
-	"	.byte 0x4e\n"
-	"	.byte 0x75\n"
 	"	.size forth_psos_call, .-forth_psos_call\n"
+	"	.popsection\n"
+);
+
+/* 00019f42 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the code spawn starts its task at: takes its arguments from the stack, builds the interpreter's
+   frame at A5 and jumps to the word in D2
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
+   console.md */
+
+__naked void forth_spawned_task(forth_user_end user /* a5 */,long *sp /* a6 */,void *dp /* a4 */,char *input /* a3 */)
+
+{
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl forth_spawned_task\n"
+	"	.type forth_spawned_task, @function\n"
+	"	.pushsection .text.forth_spawned_task.19f42,\"ax\",@progbits\n"
+	"forth_spawned_task:\n"
+	"	move.l (%sp)+,%d0\n"
+	"	move.w (%sp)+,%d1\n"
+	"	move.l (%sp)+,%d2\n"
+	"	move.l (%sp)+,%d3\n"
+	"	movea.l %sp,%a4\n"
+	"	suba.w %d1,%a4\n"
+	"	suba.w %d1,%a4\n"
+	"	link.w %a5,#-0x28\n"
+	"	move.l %sp,(-0x4,%a5)\n"
+	"	move.l %d3,(-0x26,%a5)\n"
+	"	subi.w #-0x14,%d1\n"
+	"	movea.l %sp,%a6\n"
+	"	suba.w %d1,%a6\n"
+	"	move.l %a6,(-0x8,%a5)\n"
+	"	move.l #0xa,(-0xe,%a5)\n"
+	"	clr.w (-0xa,%a5)\n"
+	"	move.l %d0,(-0x16,%a5)\n"
+	"	move.l %d0,(-0x1a,%a5)\n"
+	"	move.l %a4,(-0x12,%a5)\n"
+	"	moveq #-0x1,%d0\n"
+	"	move.w %d0,(-0x28,%a5)\n"
+	"	suba.l %a3,%a3\n"
+	"	move.l %a3,(-0x1e,%a5)\n"
+	"	move.l %a3,(-0x22,%a5)\n"
+	"	pea (forth_expect+0x23c:w,%pc)\n"
+	"	nop\n"
+	"	move.l %d2,-(%sp)\n"
+	"	rts\n"
+	"	.size forth_spawned_task, .-forth_spawned_task\n"
 	"	.popsection\n"
 );
 
@@ -29701,7 +29962,7 @@ __asm__(
 	"	move.l (-0x16,%a5),(-0x1a,%a5)\n"
 	"	movem.l %a1/%a0,-(%sp)\n"
 	"	movea.l %d4,%a0\n"
-	"	lea (__ghidra_19f42:w,%pc),%a1\n"
+	"	lea (forth_spawned_task:w,%pc),%a1\n"
 	"	move.w #0x2,%d7\n"
 	"	bsr.w forth_psos_call\n"
 	"	movem.l (%sp)+,%a0/%a1\n"
@@ -30769,7 +31030,7 @@ __asm__(
 __pforth void forth_user(long *sp)
 
 {
-  sp[-1] = (long)&UNK_0001ad0e;
+  sp[-1] = (long)&PTR_PTR_0001ad0e;
   return;
 }
 
@@ -30948,6 +31209,138 @@ undefined4 console_task_create(void)
   return 1;
 }
 
+
+/* 0001aedc */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the code console_task_create starts p4th at: sets console_exception_hook, builds the
+   interpreter's frame at A5 with A4 from pforth_dictionary_next, prints the pForth banner and
+   enters forth_abort's loop
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.
+   structures.md */
+
+__naked void console_task(void)
+
+{
+  void *dp;
+  uint16_t *sp;
+  uint in_stack_00000000;
+  uint16_t local_28 [3];
+  undefined *local_22;
+  undefined2 *local_1e;
+  undefined **local_1a;
+  void *local_16;
+  void *local_12;
+  undefined4 uStackY_e;
+  short local_a;
+  uint16_t *local_8;
+  uint16_t *puVar1;
+  
+  local_8 = (uint16_t *)0x1aee6;
+  exception_hook_set_task(console_exception_hook);
+  dp = pforth_dictionary_next;
+  puVar1 = local_28;
+  local_8 = local_28 + -(in_stack_00000000 >> 0x10);
+  local_12 = pforth_dictionary_next;
+  local_16 = pforth_latest_word;
+  local_1a = &PTR_PTR_0001ad0e;
+  local_1e = (undefined2 *)&DAT_00100a04;
+  local_22 = &DAT_00100a8a;
+  local_28[1] = 0x7034;
+  local_28[2] = 0x7468;
+  local_28[0] = console_device;
+  local_a = 0;
+  __m68k_trap(4);
+  forth_print_string("\r\npForth $Revision: 1.2 $\r\n",&stack0x00000000);
+  forth_print_string("\r\n",&stack0x00000000);
+  forth_print_string("\r\n",&stack0x00000000);
+  sp = local_8;
+  *local_1e = 0;
+  if (local_a != 0) {
+    *(undefined4 *)((int)puVar1 + -4) = 0x18eee;
+    forth_unlink_latest(&stack0x00000000,dp);
+  }
+  local_a = 0;
+  uStackY_e = 10;
+  forth_interpret(&stack0x00000000,(long *)sp,dp);
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl console_task\n"
+	"	.type console_task, @function\n"
+	"	.pushsection .text.console_task.1aedc,\"ax\",@progbits\n"
+	"console_task:\n"
+	"	pea (console_exception_hook:w,%pc)\n"
+	"	jsr (exception_hook_set_task).l\n"
+	"	addq.w #0x4,%sp\n"
+	"	moveq #0x0,%d0\n"
+	"	move.w (%sp)+,%d0\n"
+	"	asl.l #0x1,%d0\n"
+	"	clr.l %d1\n"
+	"	move.w (%sp)+,%d1\n"
+	"	asl.l #0x1,%d1\n"
+	"	link.w %a5,#-0x28\n"
+	"	move.l %sp,(-0x4,%a5)\n"
+	"	movea.l %sp,%a6\n"
+	"	suba.l %d0,%a6\n"
+	"	move.l %a6,(-0x8,%a5)\n"
+	"	movea.l (pforth_dictionary_next).l,%a4\n"
+	"	move.l %a4,(-0x12,%a5)\n"
+	"	move.l (pforth_latest_word).l,(-0x16,%a5)\n"
+	"	move.l #0x1ad0e,(-0x1a,%a5)\n"
+	"	move.l #0x100a04,(-0x1e,%a5)\n"
+	"	move.l #0x100a8a,(-0x22,%a5)\n"
+	"	move.l #0x70347468,(-0x26,%a5)\n"
+	"	move.w (console_device).l,(-0x28,%a5)\n"
+	"	clr.w (-0xa,%a5)\n"
+	"	move.w (-0x28,%a5),%d0\n"
+	"	moveq #0x1,%d7\n"
+	"	trap #0x4\n"
+	"	move.l #0x18dc6,%d0\n"
+	"	bsr.w forth_print_string\n"
+	"	move.l #0x18ddf,%d0\n"
+	"	bra.w forth_parse_number-0xa0\n"
+	"	.byte 0x2f\n"
+	"	.byte 0x1e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0xde\n"
+	"	.byte 0xfc\n"
+	"	.byte 0x00\n"
+	"	.byte 0xff\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x2d\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x2d\n"
+	"	.byte 0x01\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.size console_task, .-console_task\n"
+	"	.popsection\n"
+);
 
 /* 0001af80 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -33114,6 +33507,20 @@ void diag_words_define(void)
 }
 
 
+/* 0001d570 */
+
+/* WARNING: Unknown calling convention */
+/* a bare rts: duart_init and duartb_reconfigure put it in duartb.echo when the settings' echo is
+   off, drtb_putc when it is on
+   duartb_driver: echo */
+
+void duartb_echo_none(char c)
+
+{
+  return;
+}
+
+
 /* 0001d572 */
 
 /* WARNING: Unknown calling convention */
@@ -33611,7 +34018,7 @@ undefined8 duart_init(void)
   duartb.in_transmit_interrupt = 0;
   duartb.async_allowed = 0;
   if (duartb_settings.echo == 0) {
-    duartb.echo = &UNK_0001d570;
+    duartb.echo = duartb_echo_none;
   }
   else {
     duartb.echo = drtb_putc;
@@ -33658,7 +34065,7 @@ void duartb_reconfigure(void)
     duartb.xon_xoff = 1;
   }
   if (duartb_settings.echo == 0) {
-    duartb.echo = &UNK_0001d570;
+    duartb.echo = duartb_echo_none;
   }
   else {
     duartb.echo = drtb_putc;
@@ -33798,6 +34205,19 @@ void scpi_port_open(void)
 
 {
   psos_io_open(0,0);
+  return;
+}
+
+
+/* 0001def4 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* closes the SCPI port, device 0: psos_io_close(0) */
+
+void scpi_port_close(void)
+
+{
+  psos_io_close(0);
   return;
 }
 
@@ -35257,6 +35677,19 @@ void efc_write(undefined2 param_1)
 }
 
 
+/* 0001f6c8 */
+
+/* WARNING: Unknown calling convention */
+/* a bare rts: sci_init and sci_reconfigure put it in sci.echo when the settings' echo is off
+   sci_driver: echo */
+
+void sci_echo_none(char c)
+
+{
+  return;
+}
+
+
 /* 0001f6ca */
 
 /* WARNING: Unknown calling convention */
@@ -35977,7 +36410,7 @@ undefined8 sci_init(void)
   sci.field_11 = 0;
   sci.async_allowed = 1;
   if (sci_settings.echo == 0) {
-    sci.echo = (undefined1 *)&USHORT_0001f6c8;
+    sci.echo = sci_echo_none;
   }
   else {
     sci.echo = sci_putc;
@@ -36074,7 +36507,7 @@ LAB_000200ce:
     sci.flow = sci.flow & 0xdf;
   }
   if (sci_settings.echo == 0) {
-    sci.echo = (undefined1 *)&USHORT_0001f6c8;
+    sci.echo = sci_echo_none;
   }
   else {
     sci.echo = sci_putc;
@@ -44369,13 +44802,40 @@ undefined4 scpi_session_init(void)
 
 /* 00029b82 */
 
-/* returns 0x29e18, the console port's object: two routines, then the "E%+04d> " and "scpi > "
-   prompts; queries compare a request's source with it */
+/* returns 0x29e18, the console port's object: console_port_read, its method table at 0x29dd4, then
+   the "E%+04d> " and "scpi > " prompts; queries compare a request's source with it */
 
 undefined4 scpi_console_port(void)
 
 {
   return 0x29e18;
+}
+
+
+/* 00029b8a */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* closes the SCPI port; scpi_task calls it when scpi_interpret returns
+   method table 0x29dd4, +4 */
+
+void scpi_session_close(void)
+
+{
+  scpi_port_close();
+  return;
+}
+
+
+/* 00029b92 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* returns 0; the four methods at +0x20 to +0x2c
+   method table 0x29dd4, +0x20 to +0x2c */
+
+int scpi_console_return_zero(void)
+
+{
+  return 0;
 }
 
 
@@ -44493,20 +44953,41 @@ void scpi_input_ended(void)
 
 /* writes a character to the console, keeping it in the echo buffer, or CR LF for an end */
 
-void scpi_console_putc(int param_1)
+void scpi_console_putc(undefined4 param_1,int param_2)
 
 {
   char local_6 [2];
   
-  if (param_1 < 0x100) {
+  if (param_2 < 0x100) {
     local_6[1] = 0;
-    local_6[0] = (char)param_1;
+    local_6[0] = (char)param_2;
     console_write(local_6);
-    scpi_echo_text[scpi_echo_length] = (char)param_1;
+    scpi_echo_text[scpi_echo_length] = (char)param_2;
     scpi_echo_length = scpi_echo_length + 1;
   }
   else {
     console_write("\r\n");
+  }
+  return;
+}
+
+
+/* 00029d22 */
+/* a thunk to scpi_console_write_loop */
+__asm__(".set scpi_console_write, scpi_console_write_loop");
+
+/* 00029d40 */
+
+/* scpi_console_write's loop, from its test of n, which its entry branches to
+   read */
+
+void scpi_console_write_loop(void *port,char *s,int n)
+
+{
+  while ((0 < n && (*s != '\0'))) {
+    scpi_console_putc(port,(int)*s);
+    n = n + -1;
+    s = s + 1;
   }
   return;
 }
@@ -44548,6 +45029,32 @@ void status_sre_set(undefined4 param_1)
   service_request_enable = (uint8_t)param_1;
   status_update_rqs();
   return;
+}
+
+
+/* 00029d88 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* the status output object's method: returns the service request enable
+   the console port's method table 0x29dd4, +0x40 */
+
+uint8_t status_sre_get(void)
+
+{
+  return service_request_enable;
+}
+
+
+/* 00029d90 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* the status output object's method: returns the status byte
+   method table 0x29dd4, +0x38 */
+
+uint8_t status_byte_get(void)
+
+{
+  return status_byte;
 }
 
 
@@ -48902,7 +49409,7 @@ int scpi_set_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_b(&scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated,0,(char)iVar1);
+  pllc_request_b(&scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate,0,(char)iVar1);
   return 0;
 }
 
@@ -51254,7 +51761,7 @@ int scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_b(&scpi_action_SOURce_ROSCillator_HOLDover_RECovery_AUTO,0,(char)iVar1);
+  pllc_request_b(&scpi_action_SOURce_ROSCillator_HOLDover_RECovery_INITiate,0,(char)iVar1);
   return 0;
 }
 
@@ -51284,7 +51791,7 @@ int scpi_set_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_b(&scpi_action_RMHO,0,(char)iVar1);
+  pllc_request_b(&scpi_action_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore,0,(char)iVar1);
   return 0;
 }
 
@@ -52215,10 +52722,10 @@ int scpi_query_RVST(void *parameters,void *response,void *call)
 int scpi_query_SYSTem_PRINt_LENGth(void *parameters,void *response,void *call)
 
 {
-  byte bVar1;
+  uint8_t uVar1;
   
-  bVar1 = func_0x0004f596();
-  *(ushort *)response = (ushort)bVar1;
+  uVar1 = status_screen_length();
+  *(ushort *)response = (ushort)uVar1;
   return 0;
 }
 
@@ -52250,6 +52757,54 @@ uint16_t record_checksum(void *record,uint16_t length)
     uVar1 = CONCAT11(bVar2,~bVar2);
   }
   return uVar1;
+}
+
+
+/* 0003086a */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* with nv_settings.serial_restricted set, clears channel B's eight_bits when its parity is also set
+   DUART channel B's parity and scpi_param_DIAGnostic_SER1_RESTricted: changed */
+
+void duartb_parity_restrict(void)
+
+{
+  if (((nv_settings.serial_restricted != 0) && (duartb_settings.eight_bits == 1)) &&
+     (duartb_settings.parity != 0)) {
+    duartb_settings.eight_bits = 0;
+  }
+  return;
+}
+
+
+/* 0003088c */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* with nv_settings.serial_restricted set, clears channel B's parity when eight_bits is also set
+   DUART channel B's eight_bits: changed */
+
+void duartb_eight_bits_restrict(void)
+
+{
+  if (((nv_settings.serial_restricted != 0) && (duartb_settings.eight_bits == 1)) &&
+     (duartb_settings.parity != 0)) {
+    duartb_settings.parity = 0;
+  }
+  return;
+}
+
+
+/* 000308ae */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* clears nv_settings.douglas_duration_infinite
+   scpi_param_DOUGlas_DURation: changed */
+
+void douglas_duration_changed(void)
+
+{
+  nv_settings.douglas_duration_infinite = 0;
+  return;
 }
 
 
@@ -52322,6 +52877,31 @@ undefined4 lifetime_record_write(void)
 }
 
 
+/* 00030b30 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* takes the GPS date into lifetime.date when time_valid, counts lifetime.count, takes pll.efc in
+   normal PLL, and lifetime_record_write
+   lifetime_update's clock event */
+
+void lifetime_event_run(void)
+
+{
+  char cVar1;
+  
+  cVar1 = time_valid();
+  if (cVar1 != '\0') {
+    lifetime.date = get_gps_date();
+  }
+  lifetime.count = lifetime.count + 1;
+  if (pll.stage == PLL_STAGE_NORMAL_PLL) {
+    lifetime.efc = pll.efc;
+  }
+  lifetime_record_write();
+  return;
+}
+
+
 /* 00030b66 */
 
 /* on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules
@@ -52338,7 +52918,7 @@ void lifetime_update(int param_1)
   undefined1 auStack_1e [8];
   uint32_t uStack_16;
   packed_datetime local_12;
-  undefined1 *local_a;
+  code *local_a;
   
   sVar3 = 0x19;
   puVar4 = auStack_1e;
@@ -52364,7 +52944,7 @@ void lifetime_update(int param_1)
   get_gps_datetime(&uStack_16,(uint32_t *)(auStack_1e + 4));
   local_12.time = 0x30000;
   datetime_add(&local_12,(packed_datetime *)(auStack_1e + 4));
-  local_a = &LAB_00030b30;
+  local_a = lifetime_event_run;
   lifetime_event = clk_do((klok_entry *)auStack_1e);
   return;
 }
@@ -52504,6 +53084,38 @@ bool save_parameter_record(byte param_1)
     status_report_from(0x10,param_1);
   }
   return cVar1 != '\0';
+}
+
+
+/* 00030ea0 */
+
+/* copies duartb_settings_defaults over duartb_settings, duartb_settings_done, then
+   save_parameter_record given the source
+   scpi_action_SER1_PRESet: action */
+
+void duartb_settings_preset(int32_t index,int32_t source)
+
+{
+  memcpy(&duartb_settings,&duartb_settings_defaults,9);
+  duartb_settings_done();
+  save_parameter_record((byte)source);
+  return;
+}
+
+
+/* 00030ed4 */
+
+/* copies sci_settings_defaults over sci_settings, sci_settings_done, then save_parameter_record
+   given the source
+   scpi_action_SER2_PRESet: action */
+
+void sci_settings_preset(int32_t index,int32_t source)
+
+{
+  memcpy(&sci_settings,&sci_settings_defaults,6);
+  sci_settings_done();
+  save_parameter_record((byte)source);
+  return;
 }
 
 
@@ -54463,6 +55075,40 @@ uint8_t interpolator_measure(uint8_t mode)
 }
 
 
+/* 0004007e */
+
+/* WARNING: Unknown calling convention */
+/* hdac_set of HDAC channel 2, then interpolator_measure(0)
+   interpolator_calibrate */
+
+uint8_t interpolator_measure_low(uint8_t hdac_2)
+
+{
+  uint8_t uVar1;
+  
+  hdac_set(hdac_2,2);
+  uVar1 = interpolator_measure(0);
+  return uVar1;
+}
+
+
+/* 00040096 */
+
+/* WARNING: Unknown calling convention */
+/* hdac_set of HDAC channel 3, then interpolator_measure(1)
+   interpolator_calibrate */
+
+uint8_t interpolator_measure_high(uint8_t hdac_3)
+
+{
+  uint8_t uVar1;
+  
+  hdac_set(hdac_3,3);
+  uVar1 = interpolator_measure(1);
+  return uVar1;
+}
+
+
 /* 000400b0 */
 
 /* WARNING: Removing unreachable block (ram,0x00040102) */
@@ -54630,19 +55276,19 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
   }
   else {
     if ((calibration->reading_high < 0xc9) || (0xe1 < calibration->reading_high)) {
-      uVar2 = dac_search_bisect(calibration->hdac_3,0,0x3f,0xc9,0xe1,&LAB_00040096);
+      uVar2 = dac_search_bisect(calibration->hdac_3,0,0x3f,0xc9,0xe1,interpolator_measure_high);
       calibration->hdac_3 = uVar2;
     }
     uVar2 = interpolator_measure(0);
     calibration->reading_low = uVar2;
     if ((uVar2 == 0) || (0x19 < uVar2)) {
-      uVar2 = dac_search_bisect(calibration->hdac_2,0,0x3f,1,0x19,&LAB_0004007e);
+      uVar2 = dac_search_bisect(calibration->hdac_2,0,0x3f,1,0x19,interpolator_measure_low);
       calibration->hdac_2 = uVar2;
     }
     uVar2 = interpolator_measure(0);
     calibration->reading_low = uVar2;
     uVar2 = dac_search_step(calibration->hdac_3,0,0x3f,calibration->reading_low - 0x3c,
-                            calibration->reading_low - 0x34,&LAB_00040096);
+                            calibration->reading_low - 0x34,interpolator_measure_high);
     calibration->hdac_3 = uVar2;
     uVar2 = interpolator_measure(1);
     calibration->reading_high = uVar2;
@@ -54655,7 +55301,7 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
       calibration->hdac_2 = uVar2;
       cVar4 = cVar4 + -1;
       if ((calibration->reading_high < 0xc9) || (0xe1 < calibration->reading_high)) {
-        uVar2 = dac_search_step(calibration->hdac_3,0,0x3f,0xc9,0xe1,&LAB_00040096);
+        uVar2 = dac_search_step(calibration->hdac_3,0,0x3f,0xc9,0xe1,interpolator_measure_high);
         calibration->hdac_3 = uVar2;
       }
       uVar2 = interpolator_measure(1);
@@ -54858,8 +55504,8 @@ void interpolator_selftest(void)
 
 /* 000406e2 */
 
-/* samples the interpolator with its calibrated DACs and keeps both ends' readings; called by
-   nothing */
+/* samples the interpolator with its calibrated DACs and keeps both ends' readings; self-test 13,
+   selftest_interpolator_sample */
 
 void interpolator_sample_test(void)
 
@@ -55546,6 +56192,18 @@ undefined8 double_to_int64(uint param_1,undefined4 param_2)
     uVar4 = int64_negate(u,uVar2);
   }
   return uVar4;
+}
+
+
+/* 00041328 */
+
+/* a bare rts
+   scpi_action_DIAGnostic_PTIMe_TINTerval: action */
+
+void pll_action_nothing(int32_t index,int32_t source)
+
+{
+  return;
 }
 
 
@@ -57275,6 +57933,37 @@ void gps_diag_complete(int *param_1)
   else {
     pll_scpi_reply_pending = 0;
     psos_signal_v(pll_scpi_waiting_task,0x20);
+  }
+  return;
+}
+
+
+/* 00043426 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* task_debug_message of "sample action 1" to "3" for index 1 to 3; index 0 does nothing
+   scpi_action_SAMPle_ACTion: action */
+
+void sample_action_print(int32_t index,int32_t source)
+
+{
+  int iVar1;
+  char *message;
+  
+  iVar1 = (char)index + -3;
+  if ((int)(char)index - 1U < 2U || iVar1 == 0) {
+                    /* WARNING: Switch is manually overridden */
+    switch((&WORD_00043448)[(short)iVar1]) {
+    case 6:
+      message = "sample action 1\r\n";
+      break;
+    case 0xe:
+      message = "sample action 2\r\n";
+      break;
+    case 0x16:
+      message = "sample action 3\r\n";
+    }
+    task_debug_message(message);
   }
   return;
 }
@@ -59142,6 +59831,100 @@ void time_zone_changed(void)
 }
 
 
+/* 00045a2e */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* clock_record_refresh, then clears time_zone_change_pending
+   scpi_param_SOURce_PTIMe_TZONe: done */
+
+void time_zone_done(void)
+
+{
+  clock_record_refresh();
+  time_zone_change_pending = 0;
+  return;
+}
+
+
+/* 00045a3c */
+
+/* antenna_delay_done, clearing the temporary-mode hold cause, then save_calibration_block given its
+   two stack arguments, which finish_scpi_cmd does not push for a numeric done hook
+   scpi_param_DIAGnostic_TOFFset: done */
+
+void time_offset_done(int32_t a,int32_t b)
+
+{
+  antenna_delay_done();
+  save_calibration_block((int)(char)b);
+  return;
+}
+
+
+/* 00045a5c */
+
+/* in manual holdover clears pll.manual and the manual hold cause and status_happening(0x2a); else
+   status_report_from(8)
+   scpi_action_SOURce_ROSCillator_HOLDover_RECovery_INITiate: action; 097-59551-02 p. 5-28 */
+
+void holdover_recovery_initiate(int32_t index,int32_t source)
+
+{
+  if ((pll.stage == PLL_STAGE_HOLDOVER) && (pll.manual != 0)) {
+    pll.manual = 0;
+    pll.hold_causes =
+         pll.hold_causes &
+         (HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
+         HOLD_CAUSE_GPS);
+    status_happening('*');
+  }
+  else {
+    status_report_from(8,(byte)source);
+  }
+  return;
+}
+
+
+/* 00045aaa */
+
+/* past power-up sets the manual hold cause, pll.manual and pll_scpi_signal_delay, and
+   status_happening(0x28) in holdover; in power-up status_report_from(8)
+   scpi_action_SOURce_ROSCillator_HOLDover_INITiate: action; 097-59551-02 p. 5-27 */
+
+void holdover_initiate(int32_t index,int32_t source)
+
+{
+  if (pll.stage == PLL_STAGE_POWERUP) {
+    status_report_from(8,(byte)source);
+  }
+  else {
+    pll.hold_causes = pll.hold_causes | HOLD_CAUSE_MANUAL;
+    pll.manual = 1;
+    pll_scpi_signal_delay = 1;
+    if (pll.stage == PLL_STAGE_HOLDOVER) {
+      status_happening('(');
+    }
+  }
+  return;
+}
+
+
+/* 00045af0 */
+
+/* sets the temporary-mode hold cause, 0x20 of pll.hold_causes, and pll_scpi_signal_delay;
+   antenna_delay_done clears it
+   scpi_action_temporary_hold: action */
+
+void temporary_hold_set(int32_t index,int32_t source)
+
+{
+  pll.hold_causes = pll.hold_causes | HOLD_CAUSE_TEMPORARY_MODE;
+  pll_scpi_signal_delay = 1;
+  return;
+}
+
+
 /* 00045b02 */
 
 /* clears bit 5 of pll's byte at +0x11 once the antenna delay changes
@@ -59154,6 +59937,62 @@ void antenna_delay_done(void)
        pll.hold_causes &
        (HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_HARDWARE_FAILURE|
         HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL);
+  return;
+}
+
+
+/* 00045b0c */
+
+/* in holdover not manual, with no hold cause but the TI limit's, sets pll.ti_limit_override; else
+   status_report_from(8)
+   scpi_action_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore: action; 097-59551-02 p. 5-28 */
+
+void holdover_recovery_limit_ignore(int32_t index,int32_t source)
+
+{
+  if (((pll.stage == PLL_STAGE_HOLDOVER) && (pll.manual == 0)) &&
+     ((pll.hold_causes &
+      (HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+       HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|HOLD_CAUSE_MANUAL)) ==
+      ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
+        HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS|
+       HOLD_CAUSE_MANUAL))) {
+    pll.ti_limit_override = 1;
+  }
+  else {
+    status_report_from(8,(byte)source);
+  }
+  return;
+}
+
+
+/* 00045b42 */
+
+/* in power-up or holdover recovery sets pll.sync_requested; else status_report_from(8)
+   scpi_action_SOURce_PTIMe_SYNChronization_IMMediate: action; 097-59551-02 p. 5-28 */
+
+void sync_immediate_request(int32_t index,int32_t source)
+
+{
+  if ((pll.stage == PLL_STAGE_POWERUP) || (pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)) {
+    pll.sync_requested = 1;
+  }
+  else {
+    status_report_from(8,(byte)source);
+  }
+  return;
+}
+
+
+/* 00045b6e */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* a bare rts
+   nv_param_field_b8: done */
+
+void nv_param_field_b8_done(void)
+
+{
   return;
 }
 
@@ -59671,6 +60510,52 @@ void clock_set_from_reference(void)
   get_gps_datetime(&local_c.date,&local_c.time);
   datetime_add(&local_14,&local_c);
   set_timedate_unflagged(local_c.date,local_c.time);
+  return;
+}
+
+
+/* 00046326 */
+
+/* unless selftest_requested is set, stores the index in selftest_number and sets selftest_requested
+   scpi_action_self_test: action */
+
+void selftest_request(int32_t index,int32_t source)
+
+{
+  if (selftest_requested == 0) {
+    selftest_number = index;
+    selftest_requested = 1;
+  }
+  return;
+}
+
+
+/* 00046340 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* sets douglas_start_requested and clears douglas_stop_requested when nv_settings.douglas_state is
+   0, the reverse when it is set
+   scpi_param_DOUGlas_STATe: done */
+
+void douglas_state_done(void)
+
+{
+  douglas_stop_requested = nv_settings.douglas_state != 0;
+  douglas_start_requested = nv_settings.douglas_state == 0;
+  return;
+}
+
+
+/* 00046368 */
+
+/* sets douglas_finish_requested and stores the source in douglas_finish_nv_argument
+   scpi_action_SOURce_GPSystem_POSition: action */
+
+void douglas_finish_request(int32_t index,int32_t source)
+
+{
+  douglas_finish_requested = 1;
+  douglas_finish_nv_argument = (uint8_t)source;
   return;
 }
 
@@ -60499,6 +61384,21 @@ undefined4 leap_ack_pending(void)
     uVar1 = 1;
   }
   return uVar1;
+}
+
+
+/* 00047090 */
+
+/* in holdover to normal PLL, stages 3 to 6, sets pll.leap_ack_requested
+   scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate: action */
+
+void leap_ack_request(int32_t index,int32_t source)
+
+{
+  if (('\x02' < (char)pll.stage) && ((char)pll.stage < '\a')) {
+    pll.leap_ack_requested = 1;
+  }
+  return;
 }
 
 
@@ -64622,6 +65522,40 @@ undefined4 gps_response_lookup(char param_1,char param_2,undefined2 *param_3,sho
 }
 
 
+/* 0004b800 */
+
+/* WARNING: Unknown calling convention */
+/* stores a byte that is the one expected and steps gps_receive_state; else counts
+   gps_counts.frame_errors and, at an @, starts gps_response_buffer again with it at state 1, or
+   gps_response_reset
+   gps_receive, in A4 */
+
+void gps_receive_expect(uint8_t c,uint8_t expected)
+
+{
+  uint8_t *puVar1;
+  
+  if (c == expected) {
+    puVar1 = gps_response_cursor + 1;
+    *gps_response_cursor = c;
+    gps_response_cursor = puVar1;
+    gps_receive_state = gps_receive_state + 1;
+  }
+  else {
+    gps_counts.frame_errors = gps_counts.frame_errors + 1;
+    if (c == 0x40) {
+      gps_response_cursor = gps_response_buffer + 1;
+      gps_response_buffer[0] = 0x40;
+      gps_receive_state = 1;
+    }
+    else {
+      gps_response_reset();
+    }
+  }
+  return;
+}
+
+
 /* 0004b846 */
 
 /* reads bytes from the engine and frames its messages from their @ into gps_response_buffer,
@@ -64632,39 +65566,41 @@ uint8_t gps_receive(void)
 {
   int iVar1;
   uint8_t *puVar2;
+  byte c;
   byte bVar3;
-  byte bVar4;
-  char cVar5;
+  char cVar4;
+  uint8_t expected;
   
 LAB_0004b98c:
   do {
-    cVar5 = duarta_rx_pending();
-    if ((cVar5 == '\0') || (gps_receive_state == 7)) {
+    cVar4 = duarta_rx_pending();
+    if ((cVar4 == '\0') || (gps_receive_state == 7)) {
       return gps_receive_state;
     }
-    bVar3 = drta_get_byte((char *)0x0);
+    c = drta_get_byte((char *)0x0);
     iVar1 = (int)(char)gps_receive_state - 6;
   } while (5 < (uint)(int)(char)gps_receive_state && iVar1 != 0);
                     /* WARNING: Switch is manually overridden */
   switch((&WORD_0004b89e)[(short)iVar1]) {
   case 0xe:
+    expected = 0x40;
     break;
   case 0x16:
-    if (((&DAT_0005ed99)[bVar3] & 1) != 0) {
+    if (((&DAT_0005ed99)[c] & 1) != 0) {
       puVar2 = gps_response_cursor + 1;
-      *gps_response_cursor = bVar3;
+      *gps_response_cursor = c;
       gps_response_cursor = puVar2;
       goto LAB_0004b8c0;
     }
     gps_counts.frame_errors = gps_counts.frame_errors + 1;
-    if (bVar3 != 0x40) {
+    if (c != 0x40) {
       gps_response_reset();
     }
     goto LAB_0004b98c;
   case 0x4a:
-    if (((&DAT_0005ed99)[bVar3] & 3) == 0) {
+    if (((&DAT_0005ed99)[c] & 3) == 0) {
       gps_counts.frame_errors = gps_counts.frame_errors + 1;
-      if (bVar3 == 0x40) {
+      if (c == 0x40) {
         gps_response_cursor = gps_response_buffer + 1;
         gps_response_buffer[0] = 0x40;
         gps_receive_state = 1;
@@ -64675,11 +65611,11 @@ LAB_0004b98c:
     }
     else {
       puVar2 = gps_response_cursor + 1;
-      *gps_response_cursor = bVar3;
+      *gps_response_cursor = c;
       gps_response_cursor = puVar2;
-      cVar5 = gps_response_lookup(gps_response_cursor[-2],gps_response_cursor[-1],
+      cVar4 = gps_response_lookup(gps_response_cursor[-2],gps_response_cursor[-1],
                                   &gps_response_length,&gps_response_index);
-      if (cVar5 != '\0') {
+      if (cVar4 != '\0') {
         gps_response_remaining = gps_response_length + -6;
         gps_receive_state = gps_receive_state + 1;
       }
@@ -64688,19 +65624,21 @@ LAB_0004b98c:
   case 0xb8:
     goto override_jmp_0004b88e_case_4;
   case 0xea:
+    expected = 0xd;
     break;
   case 0xf0:
+    expected = 10;
   }
-  (*(code *)&UNK_0004b800)();
+  gps_receive_expect(c,expected);
   goto LAB_0004b98c;
 override_jmp_0004b88e_case_4:
   puVar2 = gps_response_cursor + 1;
-  *gps_response_cursor = bVar3;
+  *gps_response_cursor = c;
   gps_response_cursor = puVar2;
   gps_response_remaining = gps_response_remaining + -1;
   if (gps_response_remaining == 0) {
-    bVar4 = oncore_checksum(gps_response_buffer + 2,gps_response_cursor + -1);
-    if (bVar3 == bVar4) {
+    bVar3 = oncore_checksum(gps_response_buffer + 2,gps_response_cursor + -1);
+    if (c == bVar3) {
 LAB_0004b8c0:
       gps_receive_state = gps_receive_state + 1;
     }
@@ -66896,6 +67834,19 @@ undefined4 survey_progress_text(char *param_1)
     uVar2 = 0;
   }
   return uVar2;
+}
+
+
+/* 0004f596 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* returns 23, :SYSTem:PRINt:LENGth?'s answer
+   scpi_query_SYSTem_PRINt_LENGth */
+
+uint8_t status_screen_length(void)
+
+{
+  return 0x17;
 }
 
 

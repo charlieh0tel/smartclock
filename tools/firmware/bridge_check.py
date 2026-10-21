@@ -162,7 +162,7 @@ def main() -> int:
         elf = work + "/rebuilt.elf"
         linked = link(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work, elf)
         linked_symbols = symbols(elf)
-    machine = rebuilt_machine(open(image_path, "rb").read(), linked)
+    machine = rebuilt_machine(open(image_path, "rb").read(), linked, linked_symbols)
     types = Types(c)
     counts = {"agreeing": 0, "skipped": 0, "failed": 0}
     runnable = bridges(c, conventions)

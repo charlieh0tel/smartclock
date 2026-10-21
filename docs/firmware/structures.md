@@ -137,7 +137,7 @@ given one.
 | `+0x06` | `minimum` | the queries' `MINimum` reads through it; `:GPS:EMANgle`'s is 0 |
 | `+0x0a` | `maximum` | `MAXimum` reads through it; `:GPS:EMANgle`'s is 89 |
 | `+0x0e` | `validate` | `validate_num` checks each new value with it, given the minimum and maximum; `clamp_to_limits` for most; `scpi_numeric_get` passes it the bounds for `MINimum` and `MAXimum` |
-| `+0x12` | `changed` | `finish_scpi_cmd` calls it as each value is stored; for most a bare `rts` (`0x12af0`) |
+| `+0x12` | `changed` | `finish_scpi_cmd` calls it as each value is stored; for most a bare `rts`, `scpi_param_hook_nothing` (`0x12af0`) |
 | `+0x16` | `value`, the current value, in RAM | `scpi_numeric_get` reads it; `finish_scpi_cmd` stores it |
 | `+0x1a` | `done` | `finish_scpi_cmd` calls it once the values are stored |
 | `+0x1e` | `flags` | 2: `finish_scpi_cmd` calls `nv_save`; 4: it writes the EEPROM record at `0x400000` (`0x30dea`) |
@@ -194,9 +194,10 @@ parameters' first word: 0 picks channel B's, so channel B's are
 `SERial1`'s and the SCI's `SERial2`'s.  The `:BITS` and `:SBITs`
 setters refuse any other port, and `:PARity ONE` is refused on port 0
 (status `0xb`), the rules 097-59551-02 gives for PORT 1 and PORT 2
-(pp. 4-13, 5-80, 5-83, 5-84); `:PRESet`'s two routines, `0x30ea0` and
-`0x30ed4`, copy channel B's and the SCI's defaults.  The setters store
-each value through a setting descriptor (`0x33328` to `0x333dc`, and
+(pp. 4-13, 5-80, 5-83, 5-84); `:PRESet`'s two actions,
+`duartb_settings_preset` (`0x30ea0`) and `sci_settings_preset`
+(`0x30ed4`), copy channel B's and the SCI's defaults.  The setters
+store each value through a setting descriptor (`0x33328` to `0x333dc`, and
 `0x33aa2` to `0x33afc`) whose flags write the EEPROM record.
 
 | Field | Values | Read by |
@@ -214,8 +215,12 @@ with the rest, as 097-59551-02 gives PORT 2 (p. 2-9) and as its
 bits, one stop bit, no pacing, echo on (`0x30a34` and `0x30a2c`), are
 those 097-59551-02 gives (pp. 2-9, 5-80 to 5-84).  With
 `nv_settings.serial_restricted` (`:DIAG:SER1:RESTricted`) set,
-channel B's `parity` and `eight_bits` hooks (`0x3086a`, `0x3088c`)
-clear the other when both would be set.  Channel B's `field_05` is
+channel B's `parity` and `eight_bits` changed hooks,
+`duartb_parity_restrict` (`0x3086a`, also `:DIAG:SER1:RESTricted`'s)
+and `duartb_eight_bits_restrict` (`0x3088c`), clear the other when
+both would be set.  Each driver's `echo` is its `putc` with echo on
+and a bare `rts` with it off, `duartb_echo_none` (`0x1d570`) or
+`sci_echo_none` (`0x1f6c8`).  Channel B's `field_05` is
 saved and restored, and has a descriptor (`0x33364`) no setter uses;
 the two `field_00` bytes only the defaults' copy writes.
 
@@ -366,7 +371,7 @@ Its other named fields, by the routines that use them:
 | `+0x06` | `reference_check_state` | `pll_check_reference`'s sub-state |
 | `+0x0c`, `+0x0e`, `+0x10` | `startup_state`, `normal_state`, `holdover_state` | `startup_pll`'s, `pll_normal`'s and `holdover`'s sub-states |
 | `+0x11` | `hold_causes` | why the loop holds over, a set of `pll_hold_cause` bits as the console's `pr_hold_cause` prints them: manual 1, GPS 2, TI error 4, TI limit exceeded 8, hardware failure 0x10, temporary mode 0x20, 1PPS selection 0x40; 0x80, which `pr_hold_cause` does not print, is set by `holdover_recovery` while `gps.command_monitor_failed` is set and cleared by `holdover` once it is not, and `enter_holdover` logs it as code 0x14, a plain "Holdover started" |
-| `+0x13` | `ti_limit_override` | `holdover` checks the TI limit while it is 0; only `pll_init` and `holdover` write it, both 0 |
+| `+0x13` | `ti_limit_override` | `holdover` checks the TI limit while it is 0; `pll_init` and `holdover` clear it, and `holdover_recovery_limit_ignore` (`0x45b0c`), `:ROSC:HOLDover:RECovery:LIMit:IGNore`'s action, sets it in holdover with no cause but the TI limit's |
 | `+0x14` | `recovery_countdown` | `holdover_recovery`'s, as `powerup_countdown` |
 | `+0x16` | `coarse_state` | `coarse`'s sub-state |
 | `+0x18` | `frequency_adjusted` | set when `fine` applies a frequency correction; `holdover_limit_exceeded` counts the limit exceeded while it is |
@@ -1012,6 +1017,21 @@ interpolator tests, two details to `+0x3a`: what `*TST?` and
 within the record, so the reset code's results and the rest up to the
 interpolator's survive a warm restart.
 
+Two ROM tables run the tests.  `selftest_execute` (`0x182ec`) calls
+entry n of the 14 at `0x18458` twice, with 0 and then 1: entry 0 is
+`selftest_all`, 1 to 11 the named tests, 12 and 13
+`selftest_interpolator_calibration` and `selftest_interpolator_sample`,
+which run `interpolator_selftest` and `interpolator_sample_test` on
+the second call.  `selftest_print_failure` (`0x18600`), which
+`pllp_task` calls when the stage is `PLL_STAGE_POWERUP`, walks the
+pairs at `0x186b0`, a check and its name to a null check: "DISP"
+`lamp_test_command`; "PROC", "RAM" and "EEPROM", which return
+`selftest`'s `cpu`, `ram` and `eeprom`; then "UART", "QSPI", "FPGA",
+"INTERP", "INT_REF", "GPS" and "POWER", the `selftest_*_with_lamp`
+routines, each running its test, lighting OP6 for the UART and OP7
+for the rest on a failure (`outputs.md`) and returning its word.  It
+prints "FAIL: NAME, error code: %02X" for each nonzero result.
+
 ## The GPS request ring
 
 `gpsm_task` keeps the GPS requests it has taken from `gpsx_exchange`
@@ -1214,13 +1234,13 @@ pass:
 | `0x102541` | `pll_debug_enabled` | `diag_pll_debug` (`0x1b7d0`) | the loop routines' debug messages |
 | `0x102542` | `clock_change_applied` | `clock_record_advance` (`0x13502`), applying a pending leap second or offset change | `nv_save(4)` |
 | `0x10254e` | `pll_scpi_reply_pending` | `pll_scpi_command` (`0x432bc`) | `pll_scpi_receive` takes no new request until `pll_scpi_complete` or `gps_diag_complete` clears it |
-| `0x10254f` | `pll_scpi_signal_delay` | the actions at `0x45aaa`, `0x45af0` | `pll_scpi_receive` waits that many passes before signaling the SCPI task |
+| `0x10254f` | `pll_scpi_signal_delay` | the actions `holdover_initiate` (`0x45aaa`) and `temporary_hold_set` (`0x45af0`) | `pll_scpi_receive` waits that many passes before signaling the SCPI task |
 | `0x102550` | `gps_reference_good` | `pllp_task`, while `gps.reference_qualified` and not `gps_pps_dead` | status happening `0x1e`, `0x1f` on clearing; clear, the stages add `HOLD_CAUSE_GPS` |
 | `0x102587` | `gps_ack_abandoned` | `pll_restart` and a stage change, while an acknowledgment is awaited | the next acknowledgment or its timeout only clears `gps_ack_awaited` |
-| `0x102588` | `douglas_start_requested` | `:DOUGlas:STATe`'s done routine (`0x46340`), `douglas_state` 0 | `gps_init_sequence` (`0x46838`) returns from state `0x11` to `0xe`, averaging |
+| `0x102588` | `douglas_start_requested` | `:DOUGlas:STATe`'s done hook, `douglas_state_done` (`0x46340`), `douglas_state` 0 | `gps_init_sequence` (`0x46838`) returns from state `0x11` to `0xe`, averaging |
 | `0x102589` | `douglas_stop_requested` | the same, `douglas_state` set | states `0xe` to `0x10` go to `0x11` |
-| `0x10258a`, `0x10258b` | `douglas_finish_requested`, `douglas_finish_nv_argument` | the action at `0x4135a`, from `:GPS:POSition` while averaging, and its argument | state `0xe` saves the averaged position, `nv_save` given the argument; 4 otherwise |
-| `0x10258d`, `0x102590` | `selftest_requested`, `selftest_number` | the self-test action at `0x46326` and its argument | `PLL_STAGE_DIAG`; `gps_diag_sequence` (`0x471fc`) runs `selftest_run` on the number |
+| `0x10258a`, `0x10258b` | `douglas_finish_requested`, `douglas_finish_nv_argument` | `douglas_finish_request` (`0x46368`), the action at `0x4135a`, from `:GPS:POSition` while averaging, and its source argument | state `0xe` saves the averaged position, `nv_save` given the argument; 4 otherwise |
+| `0x10258d`, `0x102590` | `selftest_requested`, `selftest_number` | the self-test action, `selftest_request` (`0x46326`), and its index | `PLL_STAGE_DIAG`; `gps_diag_sequence` (`0x471fc`) runs `selftest_run` on the number |
 | `0x10258e` | `leap_recheck_requested` | `diag_leapsec`, entering powerup recovery | `gps_leap_sequence`'s wait returns to state 1 |
 
 `gps_ack_wait_count` (`0x102582`, a word) counts the passes an
@@ -1232,13 +1252,13 @@ which `clock_set_from_reference` (`0x46290`) counts from, with
 found.  `clock_gps_mismatch` (`0x102552`) is
 `clock_check_against_gps`'s (`0x43f18`) first mismatch, cleared on a
 match or once it has set the clock.  Three are only written:
-`clock_change_armed` (`0x102543`), set by the clock-event stubs at
-`0x13666`, `0x1366c`, `0x136a2` and `0x136bc` that arm a leap second
-or offset change; `pll_lock` (`0x102546`, a long), 1 from `diag_lock`
+`clock_change_armed` (`0x102543`), set by the clock events
+`leap_minute_59_arm`, `leap_minute_61_arm`, `offset_step_down_arm`
+and `offset_step_up_arm` that arm a leap second or offset change; `pll_lock` (`0x102546`, a long), 1 from `diag_lock`
 and on entering holdover recovery and PLL startup, 0 on entering
 powerup; and `time_zone_change_pending` (`0x102551`), set by
-`time_zone_changed`, cleared by `:PTIMe:TZONe`'s done routine
-(`0x45a2e`) and `pll_init`.  `0x10253e` and `0x10253f` are only
+`time_zone_changed`, cleared by `:PTIMe:TZONe`'s done hook,
+`time_zone_done` (`0x45a2e`), and `pll_init`.  `0x10253e` and `0x10253f` are only
 cleared, by `pllp_task`.
 
 ## ROM tables
@@ -1284,6 +1304,39 @@ each referred to at its own address.  `validate_or_doaction`
 caller's flag, so `pll_scpi_command` neither calls `finish_scpi_cmd`
 nor saves; `pll_scpi_do_action` calls `action` with the index and the
 source, and sets `pll_scpi_reply_pending` for the self-test's alone.
+Each descriptor's label names the command whose handler sends it; the
+actions, which nothing calls directly:
+
+| Descriptor | Sent by | Action |
+| ---------- | ------- | ------ |
+| `0x4132a` | `:DIAG:PTIMe:TINTerval?` | `pll_action_nothing` (`0x41328`), a bare `rts` |
+| `0x41330` | `:ROSC:HOLDover:RECovery:INITiate` | `holdover_recovery_initiate` (`0x45a5c`): ends a manual holdover, clearing `manual` and the manual hold cause |
+| `0x41336` | `:ROSC:HOLDover:INITiate` | `holdover_initiate` (`0x45aaa`): sets them, past power-up |
+| `0x4133c` | `:DIAG:TOFFset`, `:GPS:ADELay` | `temporary_hold_set` (`0x45af0`): the temporary-mode hold cause |
+| `0x41342` | `:SAMPle:ACTion` | `sample_action_print` (`0x43426`): "sample action 1" to "3" through `task_debug_message` |
+| `0x41348` | `*TST?`, `:DIAG:TEST?` | `selftest_request` (`0x46326`) |
+| `0x4134e` | `:PTIMe:SYNChronization:IMMediate` | `sync_immediate_request` (`0x45b42`): `pll.sync_requested` in power-up or holdover recovery |
+| `0x41354` | `:ROSC:HOLDover:RECovery:LIMit:IGNore` | `holdover_recovery_limit_ignore` (`0x45b0c`): `pll.ti_limit_override` |
+| `0x4135a` | `:GPS:POSition`, while averaging | `douglas_finish_request` (`0x46368`) |
+| `0x41360` | `:SYSTem:PRESet` | `nv_clear_and_reset` |
+| `0x41366`, `0x4136c` | `:SYST:COMM:SER1:PRESet` | `duartb_settings_preset` (`0x30ea0`), `sci_settings_preset` (`0x30ed4`) |
+| `0x41372` | `:STATus:PRESet` and its `ALARm` form | `status_preset_done` |
+| `0x41378` | `:PTIMe:LEAPsecond:ACCumulated:CALCulate` | `leap_ack_request` (`0x47090`): `pll.leap_ack_requested`, stages 3 to 6 |
+
+An action that refuses calls `status_report_from(8)` with the
+source.  097-59551-02 gives the 58503A's forms of the holdover and
+synchronization commands (pp. 5-27, 5-28).
+
+`scpi_console_port` (`0x29b82`) returns the console port's object at
+`0x29e18`; its word at `+4` points at its methods, 17 longs at
+`0x29dd4`, which `scpi_interpret`, `scpi_task` and the status system
+call by offset: `+0` `scpi_session_init`, `+4` `scpi_session_close`
+(`0x29b8a`), `+8` `console_port_read`, `+0xc` `scpi_input_ended`,
+`+0x10` `scpi_console_read`, `+0x14` `scpi_console_putc`, `+0x18` and
+`+0x1c` `scpi_console_write` (`0x29d22`), `+0x20` to `+0x2c`
+`scpi_console_return_zero` (`0x29b92`), then `status_byte_set_bits`,
+`status_byte_clear_bits`, `status_byte_get` (`0x29d90`),
+`status_sre_set` and `status_sre_get` (`0x29d88`).
 
 | Table | Type | Extent |
 | ----- | ---- | ------ |
@@ -1345,13 +1398,16 @@ ends the minute at `minute_length`, and `clock_record_advance_utc`
 (`0x135f0`) too; `clock_record_derive` (`0x13882`) stores `utc_to_local`
 of `gps_time` and `gps_date` at `+6` and `+0xa`.
 
-The stubs at `0x13666` and `0x1366c` make the minute 59 or 61 seconds
+The clock events `leap_minute_59_arm` (`0x13666`) and
+`leap_minute_61_arm` (`0x1366c`), which `leap_event_schedule_gps`
+queues, make the minute 59 or 61 seconds
 and set `leap_minute_pending` (`0x100bc8`); at that minute's end
 `clock_record_advance` clears it, sets `clock_change_applied`, calls
 `leap_settings_clear` (`0x4637a`), takes 1 from `gps_utc_offset` after
-59 or adds 1 after 61, and the minute is 60 seconds again.  The stubs
-at `0x136a2` and
-`0x136bc` set `offset_step` (`0x100bce`, a word) to -1 or 1 and
+59 or adds 1 after 61, and the minute is 60 seconds again.
+`offset_step_down_arm` (`0x136a2`) and `offset_step_up_arm`
+(`0x136bc`), which `leap_event_schedule_utc` queues for a 59- or
+61-second minute, set `offset_step` (`0x100bce`, a word) to -1 or 1 and
 `offset_step_pending` (`0x100bc9`); when `clock.time` reaches
 `offset_step_time` (`0x100bca`), which `leap_event_schedule_utc`
 (`0x10656`) sets to 24:00:00 of the leap date moved by the offset as it
@@ -1393,8 +1449,15 @@ word at `pforth_dictionary_next` and stores its end there, and
 `pforth_link_word` (`0x1ae36`) stores `pforth_latest_word` in the new
 word and the word in `pforth_latest_word`.  `console_task_create`
 (`0x1ae5c`) passes `pforth_dictionary_start` to service 10, and the
-code it starts the task at (`0x1aedc`) loads A4, the dictionary pointer, from
-`pforth_dictionary_next`.
+code it starts the task at, `console_task` (`0x1aedc`), loads A4, the
+dictionary pointer, from `pforth_dictionary_next`.  It first gives
+the task `console_exception_hook` (`0x18e62`) through
+`exception_hook_set_task` (`0x118c2`), which would print
+`exception_name`'s string and enter `forth_abort`; but
+`exception_hook_get` reads a task's hook only while the byte at
+`0x1037d4` is set, and only `0x118b6`, which nothing refers to, sets
+it.  `0x118d8`, which sets the global hook, and `0x118f4`, which
+clears the task's, are not referred to either.
 
 ## The GPS task's link
 

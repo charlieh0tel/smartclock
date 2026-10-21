@@ -323,6 +323,7 @@
 0x101e84	label	max_loop_time	structures.md	pll_rep's max loop time	float
 0x1d93e	function	duart_init	structures.md	creates drtR and drtW, "Unable to create drtR"
 0x1fdb6	function	sci_init	structures.md	creates sciR and sciW, "Unable to create sciR"
+0x1f6c8	function	sci_echo_none	sci_driver: echo	a bare rts: sci_init and sci_reconfigure put it in sci.echo when the settings' echo is off	void sci_echo_none(char c)
 0x1fd0e	function	sci_lock	structures.md	"Unable to acquire SCI token"
 0x1fc20	function	sci_unlock	structures.md	"Unable to release SCI token"
 0x30f10	function	eeprom_init	structures.md	creates eepx, "Unable to create eepx"
@@ -488,23 +489,23 @@
 0x102540	label	pll_restart_requested	structures.md	diag_pll_restart sets it; pllp_task calls pll_restart and clears it	uint8_t
 0x102541	label	pll_debug_enabled	structures.md	diag_pll_debug sets it; while set, efc_history_update, fine and the other loop routines that test it print their debug messages	uint8_t
 0x102542	label	clock_change_applied	structures.md	clock_record_advance sets it when it applies a pending leap second or offset change and clears the leap settings; pllp_task then calls nv_save(4)	uint8_t
-0x102543	label	clock_change_armed	structures.md	set by the clock-event stubs at 0x13666, 0x1366c, 0x136a2 and 0x136bc that arm a leap second or offset change; pllp_task clears it with clock_change_applied; nothing reads it	uint8_t
+0x102543	label	clock_change_armed	structures.md	set by the clock events leap_minute_59_arm, leap_minute_61_arm, offset_step_down_arm and offset_step_up_arm that arm a leap second or offset change; pllp_task clears it with clock_change_applied; nothing reads it	uint8_t
 0x102546	label	pll_lock	structures.md	only written: 1 by diag_lock and on entering holdover recovery and PLL startup, 0 on entering powerup	int32_t
 0x10254e	label	pll_scpi_reply_pending	structures.md	pll_scpi_command sets it when a request waits on a reply; pll_scpi_receive takes nothing new while it is set; pll_scpi_complete and gps_diag_complete clear it	uint8_t
-0x10254f	label	pll_scpi_signal_delay	structures.md	pll_scpi_receive's passes to wait before signaling the SCPI task; set to 1 by the actions at 0x45aaa and 0x45af0	uint8_t
+0x10254f	label	pll_scpi_signal_delay	structures.md	pll_scpi_receive's passes to wait before signaling the SCPI task; set to 1 by holdover_initiate and temporary_hold_set	uint8_t
 0x102550	label	gps_reference_good	structures.md	set while gps.reference_qualified and not gps_pps_dead, by pllp_task, with status_happening 0x1e on setting and 0x1f on clearing; clear, the stages add HOLD_CAUSE_GPS	uint8_t
-0x102551	label	time_zone_change_pending	structures.md	only written: time_zone_changed sets it; :PTIMe:TZONe's done routine at 0x45a2e clears it after clock_record_refresh, and pll_init clears it	uint8_t
+0x102551	label	time_zone_change_pending	structures.md	only written: time_zone_changed sets it; :PTIMe:TZONe's done hook time_zone_done clears it after clock_record_refresh, and pll_init clears it	uint8_t
 0x102552	label	clock_gps_mismatch	structures.md	clock_check_against_gps sets it on a first mismatch with gps.status and clears it on a match or once it has set the clock	uint8_t
 0x102582	label	gps_ack_wait_count	structures.md	pllp_task's passes waiting for the GPS acknowledgment; past 0x4b0, gps_ack_code 8 and "GPS acknowledgment timed out"	uint16_t
 0x102587	label	gps_ack_abandoned	structures.md	pll_restart and pllp_task's stage change set it while an acknowledgment is awaited and not ready; the next one, or its timeout, then only clears gps_ack_awaited	uint8_t
-0x102588	label	douglas_start_requested	structures.md	the :DOUGlas:STATe done routine at 0x46340 sets it when douglas_state is 0; gps_init_sequence's state 0x11 then returns to 0xe, the position averaging	uint8_t
-0x102589	label	douglas_stop_requested	structures.md	the :DOUGlas:STATe done routine at 0x46340 sets it when douglas_state is set; gps_init_sequence's states 0xe to 0x10 then go to 0x11	uint8_t
-0x10258a	label	douglas_finish_requested	structures.md	the action at 0x4135a, from :GPS:POSition while averaging, sets it; gps_init_sequence's state 0xe then saves the averaged position	uint8_t
-0x10258b	label	douglas_finish_nv_argument	structures.md	the action at 0x4135a's argument, nv_save's when gps_init_sequence saves the averaged position; 4 otherwise	uint8_t
+0x102588	label	douglas_start_requested	structures.md	douglas_state_done, :DOUGlas:STATe's done hook, sets it when douglas_state is 0; gps_init_sequence's state 0x11 then returns to 0xe, the position averaging	uint8_t
+0x102589	label	douglas_stop_requested	structures.md	douglas_state_done sets it when douglas_state is set; gps_init_sequence's states 0xe to 0x10 then go to 0x11	uint8_t
+0x10258a	label	douglas_finish_requested	structures.md	douglas_finish_request, :GPS:POSition's action while averaging, sets it; gps_init_sequence's state 0xe then saves the averaged position	uint8_t
+0x10258b	label	douglas_finish_nv_argument	structures.md	douglas_finish_request's source argument, nv_save's when gps_init_sequence saves the averaged position; 4 otherwise	uint8_t
 0x10258c	label	restart_reference_seconds	structures.md	pll.reference_seconds as pllp_task found it at its start; clock_set_from_reference counts from it, with the uptime at 0x102594	uint8_t
-0x10258d	label	selftest_requested	structures.md	the self-test action at 0x46326 sets it; pllp_task then enters PLL_STAGE_DIAG and gps_diag_sequence clears it	uint8_t
+0x10258d	label	selftest_requested	structures.md	selftest_request, the self-test action, sets it; pllp_task then enters PLL_STAGE_DIAG and gps_diag_sequence clears it	uint8_t
 0x10258e	label	leap_recheck_requested	structures.md	set by diag_leapsec and on entering powerup recovery; gps_leap_sequence's wait state then returns to state 1	uint8_t
-0x102590	label	selftest_number	structures.md	the self-test action at 0x46326's argument, which gps_diag_sequence passes to selftest_run	int32_t
+0x102590	label	selftest_number	structures.md	selftest_request's index, which gps_diag_sequence passes to selftest_run	int32_t
 0x102040	label	douglas_log_event	structures.md	the log_event code finish_scpi_cmd logs for a :DOUGlas:STATe change, with status_happening 0x1d or 0x1c: 3 "Survey mode started" when it is cleared, 4 "Position hold mode started" when set from 0; pll_scpi_command clears it	uint8_t
 0x10207a	label	interval_tick_wait	structures.md	set while interval_wait_reading and interval_next_reading wait on event 0x200 with a 1PPS dead; the periodic interrupt then signals pllp 0x199 ticks after the last pps_interrupt	uint8_t
 0x10207b	label	interval_armed_without_pps	structures.md	set when interval_rearm or interval_next_reading arms a reading with a 1PPS dead; interval_wait_reading and interval_next_reading then report no happening 'H' for its being invalid	uint8_t
@@ -537,6 +538,8 @@
 0x26ee0	function	scpi_scan_token	context	the SCPI lexer: reads characters through the input's own routine and classifies them by the table at 0x277ec
 0x40248	function	interpolator_calibrate	context	sets HDAC channels 2 and 3 until interpolator_measure gives 1 to 25 and 201 to 225, 200 apart; ovens.md's Z3816A 0x43b56	uint8_t interpolator_calibrate(interpolator_calibration *calibration)
 0x40030	function	interpolator_measure	context	pulses the FPGA bits for a measurement and returns interpolator_read	uint8_t interpolator_measure(uint8_t mode)
+0x4007e	function	interpolator_measure_low	interpolator_calibrate	hdac_set of HDAC channel 2, then interpolator_measure(0)	uint8_t interpolator_measure_low(uint8_t hdac_2)
+0x40096	function	interpolator_measure_high	interpolator_calibrate	hdac_set of HDAC channel 3, then interpolator_measure(1)	uint8_t interpolator_measure_high(uint8_t hdac_3)
 0x40c56	function	interpolator_read	context	the complement of FPGA register 0x10
 
 0x101fce	label	interpolator_calibration_state	context	the record interpolator_calibrate is given, besides a copy on one caller's stack	interpolator_calibration
@@ -562,7 +565,11 @@
 0x405bc	function	counter_calibrate	context	runs interpolator_calibrate when the configuration asks, then stores reading_low and the spread at its +0x18 and +0x1c	void counter_calibrate(interval_reading_fields *reading, counter_configuration_fields *configuration)
 0x40c6a	function	counter_arm	context	reloads fconf_regs[0..3] from the configuration and re-arms the FPGA	void counter_arm(interval_reading_fields *reading, counter_configuration_fields *configuration)
 0x40d34	function	counter_read	context	interval.md's one reading: the coarse count plus (interpolator_read - +0x18) / +0x1c, times 1e-7, less the configuration's double at +4, into *reading	void counter_read(interval_reading_fields *reading, counter_configuration_fields *configuration)
-0x29b82	function	scpi_console_port	context	returns 0x29e18, the console port's object: two routines, then the "E%+04d> " and "scpi > " prompts; queries compare a request's source with it
+0x29b82	function	scpi_console_port	context	returns 0x29e18, the console port's object: console_port_read, its method table at 0x29dd4, then the "E%+04d> " and "scpi > " prompts; queries compare a request's source with it
+0x29b8a	function	scpi_session_close	method table 0x29dd4, +4	closes the SCPI port; scpi_task calls it when scpi_interpret returns	void scpi_session_close(void)
+0x29b92	function	scpi_console_return_zero	method table 0x29dd4, +0x20 to +0x2c	returns 0; the four methods at +0x20 to +0x2c	int scpi_console_return_zero(void)
+0x29d22	function	scpi_console_write	method table 0x29dd4, +0x18 and +0x1c	writes up to n characters of a string, stopping at its NUL, through scpi_console_putc; its entry is a branch to scpi_console_write_loop, so Ghidra takes it for a thunk
+0x29d40	function	scpi_console_write_loop	read	scpi_console_write's loop, from its test of n, which its entry branches to	void scpi_console_write_loop(void *port, char *s, int n)
 0x29bce	function	console_port_read	context	the first of the console port's routines; the SCPI input loop reads characters with it
 0x11396	function	datetime_add	context	adds the first packed time and date to the second, carrying seconds, minutes, hours and days; klok adds an entry's period to its time	void datetime_add(packed_datetime *change, packed_datetime *value)
 0x10f46	function	date_to_days	context	a packed date as a day count, for datetime_add
@@ -571,6 +578,7 @@
 0x139a2	function	set_gps_utc_offset	context	sets clock.gps_utc_offset, from D1, and clock.gps_utc_offset_valid; 0x46e70 computes it from the engine's GPS and UTC times
 0x4b79a	function	gps_response_reset	context	points gps_response_cursor at gps_response_buffer and clears gps_receive_state
 0x4b846	function	gps_receive	context	reads bytes from the engine and frames its messages from their @ into gps_response_buffer, counting frame errors
+0x4b800	function	gps_receive_expect	gps_receive, in A4	stores a byte that is the one expected and steps gps_receive_state; else counts gps_counts.frame_errors and, at an @, starts gps_response_buffer again with it at state 1, or gps_response_reset	void gps_receive_expect(uint8_t c, uint8_t expected)
 0x10138c	label	gps_response_cursor	context	where gps_receive stores the next byte	uint8_t *
 0x101394	label	gps_receive_state	context	gps_receive's state; 7 when a message is complete	uint8_t
 0x101396	label	gps_response_index	structures.md	gps_response_lookup's index of the response's ID among the 49 at 0x4fece; gpsm_task gives it gps_response_decode and gps_response_match	int16_t
@@ -678,10 +686,10 @@
 0x3167c	function	log_init	structures.md	creates log_mutex, "logr", and finds the event log's page to write next among 0x4b
 0x100bc4	label	pps_exchange	structures.md	pps_init creates the "1pps" exchange with create_x, service 20, and keeps its id here	uint32_t
 0x100bac	label	pps_message	structures.md	pps_interrupt's message to pps_exchange, the GPS time and date at the pulse; pps_wait_time receives into it and returns them	pps_exchange_message
-0x100bc8	label	leap_minute_pending	structures.md	set by the stubs at 0x13666 and 0x1366c with a 59- or 61-second minute; clock_record_advance clears it at the minute's end, setting clock_change_applied and calling leap_settings_clear	uint8_t
-0x100bc9	label	offset_step_pending	structures.md	set by the stubs at 0x136a2 and 0x136bc with offset_step -1 or 1; clock_record_advance clears it when clock.time is offset_step_time, adding offset_step to clock.gps_utc_offset	uint8_t
+0x100bc8	label	leap_minute_pending	structures.md	set by leap_minute_59_arm and leap_minute_61_arm with a 59- or 61-second minute; clock_record_advance clears it at the minute's end, setting clock_change_applied and calling leap_settings_clear	uint8_t
+0x100bc9	label	offset_step_pending	structures.md	set by offset_step_down_arm and offset_step_up_arm with offset_step -1 or 1; clock_record_advance clears it when clock.time is offset_step_time, adding offset_step to clock.gps_utc_offset	uint8_t
 0x100bca	label	offset_step_time	structures.md	leap_event_schedule_utc's 24:00:00 on the leap date, moved by the GPS-UTC offset as it will be; clock_record_advance compares clock.time with it	uint32_t
-0x100bce	label	offset_step	structures.md	-1 or 1, from the stubs at 0x136a2 and 0x136bc; clock_record_advance adds it to clock.gps_utc_offset	int16_t
+0x100bce	label	offset_step	structures.md	-1 or 1, from offset_step_down_arm and offset_step_up_arm; clock_record_advance adds it to clock.gps_utc_offset	int16_t
 0x100bd0	label	es_compare_wraps	structures.md	es_schedule's delay's high word: output compare 4 matches primary_user_87 lets pass, counting down, before sci_send_async sends es_message	int16_t
 0x100bd2	label	timecode_compare_wraps	structures.md	timecode_schedule's delay's high word: output compare 3 matches primary_user_86 lets pass, counting down, before drtb_send_async sends tcode_message	int16_t
 #
@@ -711,6 +719,8 @@
 0x17946	function	selftest_internal_reference	entry 9; "Internal reference:"	the self-test of the internal reference
 0x17d94	function	selftest_gps	entry 10; "GPS: Channel 1 Correlation" .. "GPS: Engine timeout", @@Ca's bits	the self-test of the GPS engine, reading its own self-test's result bits
 0x17f2c	function	selftest_power	entry 11; "POWER: 5V", "15V", "-15V"	the self-test of the 5 V, 15 V and -15 V supplies
+0x17fc0	function	selftest_interpolator_calibration	the self-test table 0x18458's entry 12	on selftest_execute's second pass, its argument 1, runs interpolator_selftest	void selftest_interpolator_calibration(uint8_t pass)
+0x17fd0	function	selftest_interpolator_sample	entry 13	on selftest_execute's second pass, its argument 1, runs interpolator_sample_test	void selftest_interpolator_sample(uint8_t pass)
 0x18600	function	selftest_print_failure	"FAIL:", "%s, error code: %02X"	prints a failed self-test's name and error code
 0x1606c	function	os_report_cpu	"Free CPU cycles: count 0x%08X, approx %2d%%"; os_process_report calls it	prints the free CPU cycles counted and the share they make
 0x16118	function	os_report_exchange	an exchange's line, "fifo", "prio"	prints one exchange's line of the kernel report
@@ -822,6 +832,7 @@
 # the pSOS kernel, psos.md; services by the table at 0x14b6e
 0x14b26	function	kernel_dispatch_service	psos.md	trap #3: the service in D7, 0 to 0x26, through the bra.w table at 0x14b6e; error 0x55 for any other		convention=exception; confidence=documented; in=D7 char service, D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 0x14c0a	function	kernel_dispatch_io	psos.md	trap #4: I/O function 0 to 5 in D7, the device in D0's high byte		convention=exception; confidence=documented; in=D7 char function, D0 int device; family=psos
+0x14c64	function	kernel_io_return	psos.md	where kernel_dispatch_io has its I/O routine return, the address it pushes: drops 12 bytes and returns from the trap		convention=exception; confidence=read; family=psos
 0x14c7a	function	kernel_switch_task	psos.md	on the way out of the kernel: runs pending ticks, saves the running task's registers in its record and switches to the first ready		convention=other; confidence=read; family=psos
 0x14cc6	function	kernel_process_ticks	psos.md	one clock tick: advances the date, runs the tick hook, wakes the tasks whose delays expire and ends the running task's time slice		convention=undetermined; confidence=derived; family=psos
 0x14da2	function	kernel_service_0	psos.md	service 0		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
@@ -876,6 +887,7 @@
 0x15c54	function	kernel_ready_insert	psos.md	inserts the task in A2 in the ready queue by priority and resets its time slice		convention=undetermined; confidence=derived; family=psos
 0x15c96	function	kernel_queue_remove	psos.md	unlinks the task in A5 from its queue		convention=undetermined; confidence=derived; family=psos
 0x15cd8	function	kernel_init	psos.md	trap #6: carves the configuration's memory into task records (0xb2 bytes), exchanges (0x22) and message buffers (0x18), and starts the kernel		convention=exception; confidence=read; family=psos
+0x15f84	function	kernel_idle_task	psos.md	the task kernel_init creates as IDLE and starts here: stop #0x2000, forever		convention=other; confidence=read; family=psos
 0x15ece	function	kernel_region_init	psos.md	sets up regions 0 and 1 from the configuration		convention=undetermined; confidence=derived; family=psos
 0x15f8a	function	kernel_return_from_interrupt	psos.md	trap #5: an interrupt handler's exit, switching tasks if it made a higher one ready		convention=exception; confidence=read; family=psos
 #
@@ -1002,6 +1014,29 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x43466	function	questionable_user_done	scpi_param_STATus_QUEStionable_USER: done	reports status event M when the user bit is set and N when it is cleared	void questionable_user_done(void)
 0x45b02	function	antenna_delay_done	scpi_param_SOURce_GPSystem_ADELay: done	clears bit 5 of pll's byte at +0x11 once the antenna delay changes
 0x30c60	function	save_calibration_block	scpi_param_DIAGnostic_ROSCillator_TCOefficient: done; interval.md's calibration block	rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs from it, reporting status 0x10 if the EEPROM write fails
+0x12af0	function	scpi_param_hook_nothing	the changed hook of most descriptors	a bare rts: the changed hook of most numeric and setting descriptors, and the done hook of some	void scpi_param_hook_nothing(void)
+0x3086a	function	duartb_parity_restrict	DUART channel B's parity and scpi_param_DIAGnostic_SER1_RESTricted: changed	with nv_settings.serial_restricted set, clears channel B's eight_bits when its parity is also set	void duartb_parity_restrict(void)
+0x3088c	function	duartb_eight_bits_restrict	DUART channel B's eight_bits: changed	with nv_settings.serial_restricted set, clears channel B's parity when eight_bits is also set	void duartb_eight_bits_restrict(void)
+0x308ae	function	douglas_duration_changed	scpi_param_DOUGlas_DURation: changed	clears nv_settings.douglas_duration_infinite	void douglas_duration_changed(void)
+0x45a2e	function	time_zone_done	scpi_param_SOURce_PTIMe_TZONe: done	clock_record_refresh, then clears time_zone_change_pending	void time_zone_done(void)
+0x45a3c	function	time_offset_done	scpi_param_DIAGnostic_TOFFset: done	antenna_delay_done, clearing the temporary-mode hold cause, then save_calibration_block given its two stack arguments, which finish_scpi_cmd does not push for a numeric done hook	void time_offset_done(int32_t a, int32_t b)
+0x45b6e	function	nv_param_field_b8_done	nv_param_field_b8: done	a bare rts	void nv_param_field_b8_done(void)
+0x46340	function	douglas_state_done	scpi_param_DOUGlas_STATe: done	sets douglas_start_requested and clears douglas_stop_requested when nv_settings.douglas_state is 0, the reverse when it is set	void douglas_state_done(void)
+#
+# the SCPI actions' routines, which pll_scpi_do_action calls with the index
+# and the source; docs/firmware/structures.md, "ROM tables"
+0x41328	function	pll_action_nothing	scpi_action_DIAGnostic_PTIMe_TINTerval: action	a bare rts	void pll_action_nothing(int32_t index, int32_t source)
+0x45a5c	function	holdover_recovery_initiate	scpi_action_SOURce_ROSCillator_HOLDover_RECovery_INITiate: action; 097-59551-02 p. 5-28	in manual holdover clears pll.manual and the manual hold cause and status_happening(0x2a); else status_report_from(8)	void holdover_recovery_initiate(int32_t index, int32_t source)
+0x45aaa	function	holdover_initiate	scpi_action_SOURce_ROSCillator_HOLDover_INITiate: action; 097-59551-02 p. 5-27	past power-up sets the manual hold cause, pll.manual and pll_scpi_signal_delay, and status_happening(0x28) in holdover; in power-up status_report_from(8)	void holdover_initiate(int32_t index, int32_t source)
+0x45af0	function	temporary_hold_set	scpi_action_temporary_hold: action	sets the temporary-mode hold cause, 0x20 of pll.hold_causes, and pll_scpi_signal_delay; antenna_delay_done clears it	void temporary_hold_set(int32_t index, int32_t source)
+0x43426	function	sample_action_print	scpi_action_SAMPle_ACTion: action	task_debug_message of "sample action 1" to "3" for index 1 to 3; index 0 does nothing	void sample_action_print(int32_t index, int32_t source)
+0x46326	function	selftest_request	scpi_action_self_test: action	unless selftest_requested is set, stores the index in selftest_number and sets selftest_requested	void selftest_request(int32_t index, int32_t source)
+0x45b42	function	sync_immediate_request	scpi_action_SOURce_PTIMe_SYNChronization_IMMediate: action; 097-59551-02 p. 5-28	in power-up or holdover recovery sets pll.sync_requested; else status_report_from(8)	void sync_immediate_request(int32_t index, int32_t source)
+0x45b0c	function	holdover_recovery_limit_ignore	scpi_action_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore: action; 097-59551-02 p. 5-28	in holdover not manual, with no hold cause but the TI limit's, sets pll.ti_limit_override; else status_report_from(8)	void holdover_recovery_limit_ignore(int32_t index, int32_t source)
+0x46368	function	douglas_finish_request	scpi_action_SOURce_GPSystem_POSition: action	sets douglas_finish_requested and stores the source in douglas_finish_nv_argument	void douglas_finish_request(int32_t index, int32_t source)
+0x30ea0	function	duartb_settings_preset	scpi_action_SER1_PRESet: action	copies duartb_settings_defaults over duartb_settings, duartb_settings_done, then save_parameter_record given the source	void duartb_settings_preset(int32_t index, int32_t source)
+0x30ed4	function	sci_settings_preset	scpi_action_SER2_PRESet: action	copies sci_settings_defaults over sci_settings, sci_settings_done, then save_parameter_record given the source	void sci_settings_preset(int32_t index, int32_t source)
+0x47090	function	leap_ack_request	scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate: action	in holdover to normal PLL, stages 3 to 6, sets pll.leap_ack_requested	void leap_ack_request(int32_t index, int32_t source)
 #
 # the PLL task's routines, loop.md
 0x45e8e	function	powerup	loop.md's power-up stage	the power-up stage: steps its sub-state, pll +3, through start, the oven warm-ups and waiting for GPS, then coarse and fine, setting tfom to 1e-3 and then 2e-6
@@ -1025,6 +1060,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x433b6	function	pll_scpi_complete	context	once the reply flag is set: clears it, reports failure, finishes the SCPI command and signals its task; otherwise counts
 0x433fc	function	gps_diag_complete	context	once the reply flag is set: clears it and signals the waiting task; otherwise counts
 0x30b66	function	lifetime_update	context	on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules its clock event
+0x30b30	function	lifetime_event_run	lifetime_update's clock event	takes the GPS date into lifetime.date when time_valid, counts lifetime.count, takes pll.efc in normal PLL, and lifetime_record_write	void lifetime_event_run(void)
 #
 # the clock, the leap second and the counter, under the PLL task
 0x1075a	function	leap_event_schedule	context	queues the leap second's clock event, in GPS time or in UTC as nv_settings.gps_utc says	int leap_event_schedule(undefined4 param_1, undefined4 param_2)
@@ -1136,6 +1172,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 #
 # the root, curv, hmon, klok and scpi tasks' routines
 0x12faa	function	console_init	console.md	allocates the pForth dictionary, defines ps, mem_rep, s_rep and the diagnostic words, opens the console's device and starts its task
+0x12f86	function	ps_word	console_init's word ps	os_process_report(0)	void forth_ps(void)
+0x12f92	function	mem_rep_word	console_init's word mem_rep	os_memory_report(0)	void forth_mem_rep(void)
+0x12f9e	function	s_rep_word	console_init's word s_rep	task_stack_report(0)	void forth_s_rep(void)
 0x1ad28	function	pforth_dictionary_init	console.md	allocates the dictionary's segment through trap #3 and clears its pointers	void pforth_dictionary_init(int size)
 0x1ad8a	function	pforth_define_word	console.md	adds a word to the dictionary: links it, copies its name and compiles its code
 0x1c18e	function	diag_words_define	console.md	defines every diagnostic word in the table at 0x1c8ac
@@ -1143,6 +1182,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1ae50	function	console_set_device	context	stores the console's device, 0x200 for device 2
 0x100a02	label	console_device	read	the console's device, set by console_set_device	uint16_t
 0x1ae5c	function	console_task_create	context	creates the console's task, p4th, through trap #3	undefined4 console_task_create(void)
+0x1aedc	function	console_task	structures.md	the code console_task_create starts p4th at: sets console_exception_hook, builds the interpreter's frame at A5 with A4 from pforth_dictionary_next, prints the pForth banner and enters forth_abort's loop		convention=other; confidence=read; family=pforth
+0x18e62	function	console_exception_hook	context	the console task's exception hook: exception_name of the frame's vector into D0, then rte to 0x18ec8, which prints it and enters forth_abort; never reached while the byte at 0x1037d4 is clear		convention=exception; confidence=read; family=pforth
 0x1ae36	function	pforth_link_word	console.md	links the word at A4 to the latest in the dictionary		convention=register; confidence=read; in=A4 void *word; family=pforth
 0x12f30	function	scpi_task_start	restart.md	starts scpi_task_create at priority 0x19
 0x12004	function	periodic_interrupt_enable	context	sets the SIM's PICR: the periodic interrupt at level 5, or off
@@ -1190,6 +1231,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x12e9e	function	pps_wait_time	context	waits up to 1200 ticks on pps_exchange for the next 1PPS and returns its time and date
 0x1303c	function	klok_take_pending	context	takes and clears the pending cell at 0x10382c
 0x1dee6	function	scpi_port_open	context	opens the SCPI port, device 0
+0x1def4	function	scpi_port_close	context	closes the SCPI port, device 0: psos_io_close(0)	void scpi_port_close(void)
 0x29b42	function	scpi_session_init	context	clears the SCPI input, opens the port and prompts
 0x29d98	function	status_update_rqs	context	sets or clears RQS, 0x40, in the status byte from the service request enable
 #
@@ -1232,6 +1274,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x117b6	function	local_to_utc	context	takes nv_settings.time_zone off a date and time; called by nothing
 0x118a8	function	exception_hook_reset	context	clears the exception hook and its per-task switch
 0x118fe	function	exception_hook_get	context	the exception hook: the running task's, at +0x82 of its record, or the global one
+0x118c2	function	exception_hook_set_task	context	stores the running task's exception hook, at +0x82 of its record, and returns 0; the console task passes console_exception_hook; exception_hook_get reads it only while the byte at 0x1037d4 is set, which no referred-to code does	int exception_hook_set_task(void *hook)
 0x12026	function	qsm_init	context	sets the QSM up: QSMCR, QILR and QIVR, the QS port's pins and directions
 0x12050	function	gpt_init	context	sets the GPT up: GPTMCR, GPT_ICR, its port, output compares and pulse accumulator
 0x120e6	function	int_abs	context	an int's magnitude; called by nothing
@@ -1260,6 +1303,10 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 #
 # the clock, the kernel's reports and the self-tests
 0x135f0	function	clock_record_advance_utc	context	adds a second to the clock record's UTC pair at +0x1a and +0x1e, carrying through the date by its month table		convention=register; confidence=read; in=A6 clock_record *record; family=clock
+0x13666	function	leap_minute_59_arm	leap_event_schedule_gps's clock event	makes the clock's minute 59 seconds, sets leap_minute_pending and clock_change_armed, and checksums the clock record in supervisor mode	void leap_minute_59_arm(void)
+0x1366c	function	leap_minute_61_arm	leap_event_schedule_gps's clock event	the same with a 61-second minute	void leap_minute_61_arm(void)
+0x136a2	function	offset_step_down_arm	leap_event_schedule_utc's clock event, a 59-second minute	sets offset_step -1, offset_step_pending and clock_change_armed	void offset_step_down_arm(void)
+0x136bc	function	offset_step_up_arm	leap_event_schedule_utc's clock event, a 61-second minute	sets offset_step 1, offset_step_pending and clock_change_armed	void offset_step_up_arm(void)
 0x13782	function	clock_record_refresh	context	recomputes the clock record's local time from its UTC and checksums it, in supervisor mode
 0x13908	function	clock_init	context	sets the clock record up: its month tables, uptime and time zero, the date from the lifetime record, a 60-second minute
 0x13ee4	function	timecode_init	context	clears the time code's and the ES message's state
@@ -1292,12 +1339,19 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1876c	function	shift_right_36	context	shifts three 12-bit words right one bit as a 36-bit number
 0x18c48	function	ram_pattern_test_locked	context	ram_pattern_test with interrupts held off, unless the self-test is aborted
 0x18c8e	function	selftest_qspi_run	context	clears the QSPI failure bits and runs the tests
-0x18c9c	function	selftest_qspi_with_lamp	context	the QSPI tests, lighting the failure lamp on a failure; called by nothing
-0x18cec	function	selftest_interpolator_with_lamp	context	the interpolator test, lighting the failure lamp on a failure; called by nothing
-0x18d16	function	selftest_internal_reference_with_lamp	context	the internal 1PPS test, lighting the failure lamp on a failure; called by nothing
+0x18c9c	function	selftest_qspi_with_lamp	context	the QSPI tests, lighting OP7 on a failure; selftest_print_failure's check "QSPI" in its table at 0x186b0
+0x18cec	function	selftest_interpolator_with_lamp	context	the interpolator test, lighting OP7 on a failure; the check "INTERP" in selftest_print_failure's table
+0x18d16	function	selftest_internal_reference_with_lamp	context	the internal 1PPS test, lighting OP7 on a failure; the check "INT_REF" in selftest_print_failure's table
+0x185e2	function	selftest_cpu_result	selftest_print_failure's table 0x186b0, "PROC"	returns selftest.cpu, the reset code's CPU test	uint32_t selftest_cpu_result(void)
+0x185ec	function	selftest_ram_result	table 0x186b0, "RAM"	returns selftest.ram, the reset code's RAM test	uint32_t selftest_ram_result(void)
+0x185f6	function	selftest_eeprom_result	table 0x186b0, "EEPROM"	returns selftest.eeprom	uint32_t selftest_eeprom_result(void)
+0x18cc6	function	selftest_fpga_with_lamp	table 0x186b0, "FPGA"	counter_selftest, lighting OP7 on a failure; returns selftest.fpga	uint32_t selftest_fpga_with_lamp(void)
+0x18d4a	function	selftest_uart_with_lamp	table 0x186b0, "UART"	duart_test, lighting OP6 on a failure; returns selftest.uart	uint32_t selftest_uart_with_lamp(void)
+0x18d70	function	selftest_gps_with_lamp	table 0x186b0, "GPS"	gps_selftest_run, lighting OP7 on a failure; returns selftest.gps	uint32_t selftest_gps_with_lamp(void)
+0x18d96	function	selftest_power_with_lamp	table 0x186b0, "POWER"	supplies_test, lighting OP7 on a failure; returns selftest.power	uint32_t selftest_power_with_lamp(void)
 #
 # the serial drivers and the self-test's DUART and lamp tests
-0x18d40	function	lamp_test_command	context	runs the lamp test and returns 0; called by nothing
+0x18d40	function	lamp_test_command	context	runs the lamp test and returns 0; the check "DISP", first in selftest_print_failure's table
 0x1af98	function	console_read_from_string	console.md	reads a line into the buffer at A1, D2 long, from the string at 0x100ba8 while one is set, else from the console device		convention=register; confidence=read; in=A1, D2; family=pforth
 0x1d572	function	gp_port_select	context	sets GP port bits 2 to 4 to a selection 0 to 6
 0x1d594	function	duartb_mode_from_settings	context	DUART channel B's mode bits from the serial settings: parity, data bits, stop bits
@@ -1308,6 +1362,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1dd98	function	drtb_write	context	the console device's write: drtb_puts under the write lock
 0x1ddd6	function	drtb_read	context	the console device's read: drtb_gets
 0x1ddf6	function	drtb_putc	context	writes a character to channel B under the write lock
+0x1d570	function	duartb_echo_none	duartb_driver: echo	a bare rts: duart_init and duartb_reconfigure put it in duartb.echo when the settings' echo is off, drtb_putc when it is on	void duartb_echo_none(char c)
 0x1de32	function	drtb_send_async	context	queues a block for channel B to send by interrupt
 0x1debc	function	console_read	context	reads from the console, device 0, and its last status
 0x1df6e	function	drtb_try_lock_write	context	1 if channel B's write mutex is held by another
@@ -1397,6 +1452,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x29d50	function	status_byte_set_bits	context	the status output object's method: sets bits in the status byte and updates RQS
 0x29d62	function	status_byte_clear_bits	context	the status output object's method: clears bits in the status byte and updates RQS
 0x29d76	function	status_sre_set	context	the status output object's method: sets the service request enable and updates RQS
+0x29d88	function	status_sre_get	the console port's method table 0x29dd4, +0x40	the status output object's method: returns the service request enable	uint8_t status_sre_get(void)
+0x29d90	function	status_byte_get	method table 0x29dd4, +0x38	the status output object's method: returns the status byte	uint8_t status_byte_get(void)
 0x2b578	function	log_print	context	prints the event log, its status and each entry, through the callbacks given
 0x2d148	function	satellite_number_valid	context	1 for a satellite number from 1 to 32
 0x2d160	function	satellite_in_mask	context	1 if a satellite's bit is set in a mask
@@ -1452,7 +1509,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x33114	function	reset_record_count	context	counts the valid reset-cause records into log_entry_count
 0x40670	function	interpolator_selftest_calibrate	context	calibrates the interpolator, up to 20 tries, and verifies it
 0x406c8	function	interpolator_selftest	context	the interpolator's self-test: its failure flag from the calibration
-0x406e2	function	interpolator_sample_test	context	samples the interpolator with its calibrated DACs and keeps both ends' readings; called by nothing
+0x406e2	function	interpolator_sample_test	context	samples the interpolator with its calibrated DACs and keeps both ends' readings; self-test 13, selftest_interpolator_sample
 0x407d4	function	fpga_bit_test	context	1 if bits are set in an FPGA register; called by nothing
 0x4085e	function	fpga_address_sweep_debug	context	steps an FPGA register's address bits through 32 values, printing each; called by nothing
 0x40bda	function	counter_offset_apply	context	takes 0x555555 off the counter's 64-bit count
@@ -1480,6 +1537,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4a4c0	function	bits_6_7_any	context	1 if bit 6 or 7 is set
 0x4a4ec	function	bits_8_9_any	context	1 if bit 8 or 9 is set
 0x4afd6	function	status_screen_print	context	prints the status screen, for :SYSTem:PRINt?
+0x4f596	function	status_screen_length	scpi_query_SYSTem_PRINt_LENGth	returns 23, :SYSTem:PRINt:LENGth?'s answer	uint8_t status_screen_length(void)
 0x4eee0	function	long_array_get_word	context	a long's low word from an array by index, stored high byte first and the pointer advanced	char * long_array_get_word(long *array, uint8_t index, char *out)
 0x4ef02	function	long_array_get_long	context	a long from an array by index, stored high byte first and the pointer advanced	char * long_array_get_long(long *array, uint8_t index, char *out)
 0x4ef3a	function	long_array_get_long_prefixed	context	a zero byte, then long_array_get_long	void long_array_get_long_prefixed(long *array, uint8_t index, char *out)
@@ -1736,6 +1794,7 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x19360	function	forth_resolve_forward	console.md	patches a forward branch at the address on the data stack to land here: its word before it gets here less it, plus 2; if, else, while		convention=pforth; confidence=read; preserves=all; family=pforth
 0x19688	function	forth_parse_create_header	console.md	forth_parse_word, then falls into forth_create_header, four bytes on		convention=pforth; confidence=read; in=D3; family=pforth
 0x1a01c	function	forth_pack_name	console.md	the first four characters of the word in pad, a NUL made a space, packed into D0 for the kernel		convention=pforth; confidence=read; out=D0 int name; family=pforth
+0x19f42	function	forth_spawned_task	console.md	the code spawn starts its task at: takes its arguments from the stack, builds the interpreter's frame at A5 and jumps to the word in D2		convention=other; confidence=read; family=pforth
 #
 # the decompiled C names these tables and cells
 0x12b32	label	dither_table	context	random_dither's 128 bytes, read from both ends by the top bits of a random number	char[128]
@@ -1794,20 +1853,20 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x5fa46	label	powers_of_ten_64	structures.md	10 to the 0 through 17, 64 bits each, high long then low; double_to_digits clamps its index to 0 to 0x11	uint32_t[36]
 0x51382	label	os_report_format	structures.md	"%s", the format the kernel's reports pass their print routine	char[3]
 0x512e6	label	os_report_newline	structures.md	"\r\n", which the kernel's reports print	char[3]
-0x4132a	label	scpi_action_DIAGnostic_PTIMe_TINTerval	structures.md	its handler's action; a bare rts at 0x41328	scpi_action_param
-0x41330	label	scpi_action_SOURce_ROSCillator_HOLDover_RECovery_AUTO	structures.md	its handler's action, 0x45a5c	scpi_action_param
-0x41336	label	scpi_action_SOURce_ROSCillator_HOLDover_INITiate	structures.md	its handler's action, 0x45aaa	scpi_action_param
-0x4133c	label	scpi_action_temporary_hold	structures.md	the :DIAG:TOFFset and :GPS:ADELay setters' action, 0x45af0, which sets the temporary-mode hold cause, 0x20 of pll.hold_causes	scpi_action_param
-0x41342	label	scpi_action_SAMPle_ACTion	structures.md	its handler's action, 0x43426, indexes 0 to 3	scpi_action_param
-0x41348	label	scpi_action_self_test	structures.md	*TST? and :DIAG:TEST?'s action, 0x46326, indexes 0 to 14; for it alone pll_scpi_do_action sets pll_scpi_reply_pending	scpi_action_param
-0x4134e	label	scpi_action_SOURce_PTIMe_SYNChronization_IMMediate	structures.md	its handler's action, 0x45b42	scpi_action_param
-0x41354	label	scpi_action_RMHO	structures.md	its handler's action, 0x45b0c	scpi_action_param
-0x4135a	label	scpi_action_SOURce_GPSystem_POSition	structures.md	its handler's action, 0x46368	scpi_action_param
+0x4132a	label	scpi_action_DIAGnostic_PTIMe_TINTerval	structures.md	:DIAG:PTIMe:TINTerval?'s action, pll_action_nothing, a bare rts	scpi_action_param
+0x41330	label	scpi_action_SOURce_ROSCillator_HOLDover_RECovery_INITiate	structures.md	:ROSC:HOLDover:RECovery:INITiate's action, holdover_recovery_initiate	scpi_action_param
+0x41336	label	scpi_action_SOURce_ROSCillator_HOLDover_INITiate	structures.md	its setter's action, holdover_initiate	scpi_action_param
+0x4133c	label	scpi_action_temporary_hold	structures.md	the :DIAG:TOFFset and :GPS:ADELay setters' action, temporary_hold_set, which sets the temporary-mode hold cause, 0x20 of pll.hold_causes	scpi_action_param
+0x41342	label	scpi_action_SAMPle_ACTion	structures.md	its setter's action, sample_action_print, indexes 0 to 3	scpi_action_param
+0x41348	label	scpi_action_self_test	structures.md	*TST? and :DIAG:TEST?'s action, selftest_request, indexes 0 to 14; for it alone pll_scpi_do_action sets pll_scpi_reply_pending	scpi_action_param
+0x4134e	label	scpi_action_SOURce_PTIMe_SYNChronization_IMMediate	structures.md	its setter's action, sync_immediate_request	scpi_action_param
+0x41354	label	scpi_action_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore	structures.md	:ROSC:HOLDover:RECovery:LIMit:IGNore's action, holdover_recovery_limit_ignore	scpi_action_param
+0x4135a	label	scpi_action_SOURce_GPSystem_POSition	structures.md	its setter's action while averaging, douglas_finish_request	scpi_action_param
 0x41360	label	scpi_action_SYSTem_PRESet	structures.md	its handler's action, nv_clear_and_reset	scpi_action_param
-0x41366	label	scpi_action_SER1_PRESet	structures.md	:SYST:COMM:SER1:PRESet's action for port 0, 0x30ea0, which copies duartb_settings_defaults	scpi_action_param
-0x4136c	label	scpi_action_SER2_PRESet	structures.md	:SYST:COMM:SER1:PRESet's action for another port, 0x30ed4, which copies sci_settings_defaults	scpi_action_param
+0x41366	label	scpi_action_SER1_PRESet	structures.md	:SYST:COMM:SER1:PRESet's action for port 0, duartb_settings_preset, which copies duartb_settings_defaults	scpi_action_param
+0x4136c	label	scpi_action_SER2_PRESet	structures.md	:SYST:COMM:SER1:PRESet's action for another port, sci_settings_preset, which copies sci_settings_defaults	scpi_action_param
 0x41372	label	scpi_action_STATus_PRESet	structures.md	:STATus:PRESet's action, index 0, and its ALARm form's, index 1; status_preset_done	scpi_action_param
-0x41378	label	scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated	structures.md	its handler's action, 0x47090, indexes 0 and 1	scpi_action_param
+0x41378	label	scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate	structures.md	:PTIMe:LEAPsecond:ACCumulated:CALCulate's action, leap_ack_request, indexes 0 and 1	scpi_action_param
 #
 # the MC68331's modules, types/mc68331.h; MC68331UM Tables D-2, D-3, D-13
 0xfff900	label	gpt	MC68331UM	the general-purpose timer	gpt_registers

@@ -173,7 +173,7 @@ def main() -> int:
         elf = work + "/rebuilt.elf"
         linked = link(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work, elf)
         linked_symbols = symbols(elf)
-    machine = rebuilt_machine(open(image_path, "rb").read(), linked)
+    machine = rebuilt_machine(open(image_path, "rb").read(), linked, linked_symbols)
     # a stray write to code faults, rather than changing later cases
     machine.uc.mem_protect(ROM, ROM_SIZE, UC_PROT_READ | UC_PROT_EXEC)
     machine.uc.mem_protect(REBUILT, REBUILT_DATA - REBUILT, UC_PROT_READ | UC_PROT_EXEC)

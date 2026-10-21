@@ -654,7 +654,9 @@ C, not a gate (PLAN.md, "A rebuild that runs, in readable C").  Both
 checks (`tools/firmware/harness.py`) take a pointer left in RAM, at an
 even address, as the same when the two point at the same place in the
 same text, not empty, in ROM or among gcc's constants: gcc keeps its
-own copy of a literal the image keeps in ROM.  And a call starts with
+own copy of a literal the image keeps in ROM; and a pointer to a C
+function's image copy and one to gcc's copy are the same (a driver's
+echo routine).  And a call starts with
 A6 at a caller's frame on the harness's stack, its saved frame pointer
 0 and its return address the harness's, since the image's code may
 walk its caller's frame (`float_raise` reads the return address there).
@@ -687,11 +689,11 @@ service the harness does not model stops a call, as an unmapped
 address does.  And the stack is filled with `0xa5` at a call's start,
 so that a local read before it is written reads the same in both.
 
-In the Z3805A 3543B image this gives 1755 functions, and every one but
+In the Z3805A 3543B image this gives 1811 functions, and every one but
 the ten thunks decompiles.  136 switches are recovered; `0x24ff2` and `0x25140`, a
 `jmp (d8,PC,D6.w)` with no table load, are not, and need not be: each
 enters an unrolled run of shifts part way, all of it code already
-(`docs/scpi/README.md`).  1755 of the functions are named.  The output
+(`docs/scpi/README.md`).  1811 of the functions are named.  The output
 is `third_party/firmware/decompiled/z3805a-3543b.c`.
 
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,

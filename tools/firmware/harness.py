@@ -42,7 +42,7 @@ from unicorn.m68k_const import (
 )
 
 from libc_check import BUFFER, BUFFER_SPACING, RAM, RAM_SIZE, RETURN, ROM, ROM_SIZE, STEP_LIMIT, Machine
-from rebuild_link import REBUILT, REBUILT_DATA, Section
+from rebuild_link import IMAGE_PREFIX, REBUILT, REBUILT_DATA, Section
 
 # Every register a routine might take, by the sidecar's name.
 REGISTERS = {
@@ -296,6 +296,8 @@ class RebuiltMachine(Machine):
     def __init__(self, image: bytes):
         super().__init__(image)
         self.effects: list[KernelCall | DeviceWrite] = []
+        # each C function's two copies, gcc's address and the image's
+        self.copies: set[tuple[int, int]] = set()
         for start, size in DEVICES:
             self.uc.mem_map(start, size)
             self.uc.hook_add(UC_HOOK_MEM_WRITE, self.device_write, begin=start, end=start + size - 1)
@@ -304,10 +306,16 @@ class RebuiltMachine(Machine):
         self.effects.append(DeviceWrite(address, size, value & ((1 << 8 * size) - 1)))
 
 
-def rebuilt_machine(image: bytes, linked: list[Section]) -> RebuiltMachine:
+def rebuilt_machine(image: bytes, linked: list[Section], linked_symbols: dict[str, int]) -> RebuiltMachine:
     """The image, with the rebuilt image's code at REBUILT, a stack, the
-    EEPROM and the devices."""
+    EEPROM and the devices, and which of the link's symbols name a C
+    function's copies, gcc's and the image's."""
     m = RebuiltMachine(image)
+    m.copies = {
+        (address, linked_symbols[IMAGE_PREFIX + name])
+        for name, address in linked_symbols.items()
+        if IMAGE_PREFIX + name in linked_symbols
+    }
     m.uc.mem_map(REBUILT, REBUILT_SIZE)
     for section in linked:
         if section.name in (".rebuilt", ".rebuilt_data"):
@@ -522,10 +530,17 @@ def same_literal(m: Machine, a: int, b: int) -> bool:
         return False
 
 
-def ram_difference(m: Machine, a: Run, b: Run) -> str | None:
+def same_pointer(m: RebuiltMachine, a: int, b: int) -> bool:
+    """Whether two pointers name the same thing in the two copies: the
+    same literal, or the same C function, the image's copy and gcc's (a
+    driver's echo routine it stores)."""
+    return (a, b) in m.copies or (b, a) in m.copies or same_literal(m, a, b)
+
+
+def ram_difference(m: RebuiltMachine, a: Run, b: Run) -> str | None:
     """None if two calls left RAM the same, but for pointers, at even
-    addresses as the 68k keeps a long, to the same literal, and the
-    EEPROM the same; else where it first differs."""
+    addresses as the 68k keeps a long, to the same literal or function,
+    and the EEPROM the same; else where it first differs."""
     at = 0
     while a.ram[at:] != b.ram[at:]:
         first = next(i for i in range(at, len(a.ram)) if a.ram[i] != b.ram[i])
@@ -536,7 +551,7 @@ def ram_difference(m: Machine, a: Run, b: Run) -> str | None:
                 start
                 for start in starts
                 if start + POINTER_SIZE <= len(a.ram)
-                and same_literal(m, *(struct.unpack_from(">I", run.ram, start)[0] for run in (a, b)))
+                and same_pointer(m, *(struct.unpack_from(">I", run.ram, start)[0] for run in (a, b)))
             ),
             None,
         )

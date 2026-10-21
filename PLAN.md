@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1211 run, 848 agree, 229 reach what the
-     harness does not model and are skipped, and 134 differ, in the
+     original reads them: of 1261 run, 887 agree, 233 reach what the
+     harness does not model and are skipped, and 141 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): `trap #7` runs the image's handler;

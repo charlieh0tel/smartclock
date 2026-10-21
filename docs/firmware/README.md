@@ -688,7 +688,12 @@ A6 at a caller's frame on the harness's stack, its saved frame pointer
 walk its caller's frame (`float_raise` reads the return address there).
 gcc keeps a frame pointer too (`-fno-omit-frame-pointer`), as the
 original compiler did: `psos_pack_name` reads its caller's first
-argument through the caller's A6.  The EEPROM, chip select 9's 8 KB at
+argument through the caller's A6.  The stack is filled with one byte
+at a call's start, and each frame a `link` makes is filled with it
+again, so that a local read before it is written, a message's bytes
+its sender leaves unset among them, reads the same in both copies,
+not what an earlier callee left where each copy's frames happen to
+lie.  The EEPROM, chip select 9's 8 KB at
 `0x400000`, is erased for each call and compared after it as RAM is;
 gcc's code is above every chip select so that a read of the EEPROM
 finds no code, and its data, a bridge's `__ghidra_ccr` and libgcc's

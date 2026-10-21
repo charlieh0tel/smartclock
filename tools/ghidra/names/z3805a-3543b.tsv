@@ -264,7 +264,7 @@
 0x2be9c	function	status_report	structures.md	puts a code into the status system once status_ready
 0x2f53c	function	status_happening	structures.md	:DIAG:STAT:HAPP passes it a condition, 0 to 0x38
 0x298fc	function	scpi_numeric_get	structures.md	a parameter's value, or its minimum or maximum, from its descriptor	float scpi_numeric_get(scpi_numeric_param *param, int index, int16_t which, int16_t bound)	convention=c; confidence=documented; out=D0 float
-0x2982c	function	scpi_numeric_set	structures.md	sends a parameter's new value, or its minimum or maximum, to pllc
+0x2982c	function	scpi_numeric_set	structures.md	sends a parameter's new value, or its minimum or maximum, to pllc: a float's value, its address as values[1], or an integer's as values[0]; every caller pushes both, the other 0	void scpi_numeric_set(void *param, int index, short kind, short bound, uint32_t float_value, int32_t integer_value, uint8_t source)
 0x1304a	function	root_task	structures.md	stores its own task id in task_root, sets up the status system, creates the exchanges and tasks and starts them
 0x4bf4a	function	gpsm_task	structures.md	root_task starts gpsm here
 0x4bf4a	local	received	structures.md	the request it takes from gpsx_exchange	gps_request_entry @ -0xde
@@ -764,6 +764,7 @@
 0x4c940	function	gps_print_command_log	"GPS Receiver Command Log", "Task  ID  Command     Date and Time Issued"	prints the GPS receiver command log	void gps_print_command_log(gps_command_log *log)
 0x4c754	function	gps_print_command	a command log line, "SCPI1", "GPSc", "GPSs"	prints one entry of the GPS receiver command log	int gps_print_command(gps_command_log *log, char *line)
 0x46838	function	gps_init_sequence	the states print_gps_init_state names, each with its "... ack failure: %02X"	steps the GPS engine's initialization: each setting sent, then its acknowledgment checked
+0x46838	local	arguments	structures.md	the four longs it gives gpsx_send, which copies all four to gpsx_arguments	uint32_t[4] @ -0x64
 0x46d98	function	gps_leap_sequence	the states print_leap_check_state names; "leap pending ack failure: %02X"	steps the leap second check with the GPS engine
 0x46394	function	leap_event_delete	"Error in deleting old leapsecond event"	deletes the pending leap second event
 0x463c2	function	leap_event_create	"Error in creating leapsecond event"	creates the leap second event
@@ -1032,7 +1033,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 # the SCPI settings' descriptor callbacks, and the helpers they use
 0x3232c	function	mask_to_limits	scpi_param_STATus_ENABle, PTRansition, NTRansition: validate	a register's new value ANDed with its maximum, the mask of the bits it has
 0x3233a	function	clamp_to_step_and_limits	scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore, nv_param_leap_date: validate	rounds a value down to the step its descriptor gives, then clamps it to its minimum and maximum, reporting each clamp
-0x323fa	function	clamp_float_to_step_and_limits	scpi_param_SAMPle_FLOat, FARR, SOURce_ROSCillator_LIMit_THReshold: validate	clamps a float to its minimum and maximum and rounds it to its step	void clamp_float_to_step_and_limits (float *param_1,undefined4 param_2,float *param_3,float *param_4,int param_5, int param_6)
+0x323fa	function	clamp_float_to_step_and_limits	scpi_param_SAMPle_FLOat, FARR, SOURce_ROSCillator_LIMit_THReshold: validate	clamps a float to its minimum and maximum and rounds it to its step	float clamp_float_to_step_and_limits (float *param_1,undefined4 param_2,float *param_3,float *param_4,int param_5, int param_6)
 0x3209c	function	clamp_float	context	clamps a float to its minimum and maximum, reporting each clamp; 1 if it clamped
 0x3217e	function	round_float_to_step	context	rounds a float to the nearest multiple of its step, half away from zero, the step a thousand times coarser beyond 1e9 steps	float round_float_to_step(float *value, float *step)
 0x42b1c	function	pulse_settings_done	scpi_param_SOURce_PULSe_CONTinuous_STATe, PERiod, STARt_TIME and DATE: done	hands the pulse start time, date, state and period from nv_settings to pulse_program
@@ -1532,7 +1533,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x322aa	function	load_double	context	the double at a pointer
 0x323b2	function	float_max_of	context	the larger of two floats at pointers
 0x323d6	function	float_min_of	context	the smaller of two floats at pointers
-0x3244a	function	clamp_float_to_step_double	context	validate for :GPS:ADELay and the positions: clamps a float and rounds it to its step in double	void clamp_float_to_step_double (float *param_1,undefined4 param_2,float *param_3,float *param_4,int param_5, int param_6)
+0x3244a	function	clamp_float_to_step_double	context	validate for :GPS:ADELay and the positions: clamps a float and rounds it to its step in double	int32_t clamp_float_to_step_double (float *param_1,undefined4 param_2,float *param_3,float *param_4,int param_5, int param_6)
 0x32596	function	clamp_double_to_step_and_limits	context	clamps a double to its minimum and maximum and rounds it to its step
 0x326d2	function	clamp_double_to_limits	context	clamps a double to its minimum and maximum
 0x32b5e	function	nv_slot_valid	context	0 if the current NV slot holds S, a good checksum and the firmware revision 3543B

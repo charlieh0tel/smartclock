@@ -127,7 +127,16 @@ are register 6's (`outputs.md`, "The Z3805A's lamps").
 Each numeric parameter the SCPI commands set and query has a
 descriptor in ROM, `0x2c` bytes, its small tables just before it.
 `scpi_numeric_get` (`0x298fc`) and `scpi_numeric_set` (`0x2982c`) are
-given one.
+given one.  Every setter that calls `scpi_numeric_set` pushes both a
+float's value (`+0x10`) and an integer's (`+0x14`), the one it does
+not use 0: for `is_integer` 0 it sends the float's address, from
+which `pllc_request_c` takes `values[1]`, and otherwise the integer as
+`values[0]` (the pushes at `0x2e5f4` and `0x2e4e6`, the reads at
+`0x29886` and `0x2988e`).  Its validate routines
+`clamp_float_to_step_and_limits` (`0x323fa`) and
+`clamp_float_to_step_double` (`0x3244a`) return the value they
+settle on, a float and a long in D0, which `:SOURce:GPSystem:ADELay`
+and the position setters send.
 
 | Offset | Field | Shown by |
 | ------ | ----- | -------- |
@@ -1635,7 +1644,10 @@ no more, and `gps_print_1pps` (`0x4c9e2`) prints the last two and the
 log's copy instead of "(no GPS receiver errors were logged)".
 `gpsm_task` clears both.
 `gpsx_send` (`0x46636`) copies its four arguments to `gpsx_arguments`
-(`0x1025ac`) and points its message at them.  Five longs `pllp_task`
+(`0x1025ac`) and points its message at them.  It copies all four
+whatever the request, so `gps_init_sequence` (`0x46838`) keeps them as
+one array on its stack, typed by a `local` row, which a request of one
+long fills only the first of.  Five longs `pllp_task`
 clears at its start are only counted: `gpsx_sent_count` (`0x102598`),
 `gpsx_send`'s messages; `plla_received_count` (`0x10259c`), the
 messages it takes from `plla`; `plla_failed_count` (`0x1025a8`), those

@@ -88,6 +88,14 @@ STACK_TOP = STACK + STACK_SIZE - 0x10
 # What the stack holds at a call's start, so that a local read before
 # it is written reads the same in both calls, wherever their frames lie.
 CLEAN_STACK = b"\xa5" * STACK_SIZE
+# link.w An,#d: its opcode, with the register's bits masked, and its
+# bytes with the displacement.  Each frame it makes starts as
+# CLEAN_STACK, so that a local read before it is written does not read
+# what an earlier callee left there, which lies where each copy's
+# frames put it.
+LINK = 0x4E50
+LINK_MASK = 0xFFF8
+LINK_INSTRUCTION = struct.Struct(">Hh")
 # A6 at a call's start: a caller's frame above the call's stack, its
 # saved frame pointer 0 and its return address RETURN.  The image's code
 # may walk its caller's frame (float_raise reads the return address
@@ -640,10 +648,22 @@ class Run:
             invalid.append(address)
             return False
 
+        def clean_frame(uc, access, address, size, value, _):
+            # at link's push of the frame pointer, the frame below it
+            opcode, displacement = LINK_INSTRUCTION.unpack(
+                uc.mem_read(uc.reg_read(UC_M68K_REG_PC), LINK_INSTRUCTION.size)
+            )
+            if opcode & LINK_MASK == LINK and displacement < 0 and address + displacement >= STACK:
+                uc.mem_write(address + displacement, CLEAN_STACK[:-displacement])
+
         sp = STACK_TOP - 4 - len(stack_arguments)
         m.uc.mem_write(sp, struct.pack(">I", RETURN) + stack_arguments + FRAME_CONTENTS)
         m.uc.reg_write(UC_M68K_REG_A7, sp)
-        hooks = [m.uc.hook_add(UC_HOOK_INTR, trap), m.uc.hook_add(UC_HOOK_MEM_INVALID, fault)]
+        hooks = [
+            m.uc.hook_add(UC_HOOK_INTR, trap),
+            m.uc.hook_add(UC_HOOK_MEM_INVALID, fault),
+            m.uc.hook_add(UC_HOOK_MEM_WRITE, clean_frame, begin=STACK, end=STACK + STACK_SIZE - 1),
+        ]
         try:
             m.uc.emu_start(start, RETURN, count=STEP_LIMIT)
             self.stopped = f"trap {trapped[0]}" if trapped else None

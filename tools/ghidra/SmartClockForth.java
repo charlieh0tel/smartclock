@@ -1,7 +1,7 @@
 // Gives the pForth console's kernel its register convention, so its
 // words decompile as reading their user area and data stack rather than
 // unaffected registers.  Run after SmartClockSetup.java with the names
-// (the kernel is found by its forth_ names).  docs/firmware/console.md,
+// (the kernel is the longest run of forth_ functions).  docs/firmware/console.md,
 // "The kernel's registers", sets out what each register and user
 // variable is and which words show it.
 //
@@ -189,18 +189,31 @@ public class SmartClockForth extends GhidraScript {
 		return pointer;
 	}
 
-	/** From the first forth_ function to the end of the last. */
+	/**
+	 * The longest run of functions, in address order, all named forth_:
+	 * the kernel, every function in which is one of its words' routines.
+	 * A word's code field elsewhere, named for its word, cannot stretch it
+	 * over the C between.
+	 */
 	private AddressSet kernelSpan() {
 		Address first = null;
 		Address last = null;
+		Address runFirst = null;
+		int longest = 0;
+		int run = 0;
 		for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
 			if (!function.getName().startsWith(KERNEL_PREFIX)) {
+				run = 0;
 				continue;
 			}
-			if (first == null) {
-				first = function.getEntryPoint();
+			if (run++ == 0) {
+				runFirst = function.getEntryPoint();
 			}
-			last = function.getBody().getMaxAddress();
+			if (run > longest) {
+				longest = run;
+				first = runFirst;
+				last = function.getBody().getMaxAddress();
+			}
 		}
 		return new AddressSet(first, last);
 	}

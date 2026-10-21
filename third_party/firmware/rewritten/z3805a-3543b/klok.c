@@ -1,9 +1,11 @@
-/* The klok task and its mutexes, written by hand in place of the
- * decompiler's (docs/firmware/README.md, "Hand-written C"): a list of
- * clock entries, klok_entries, kept in time order, a free list,
- * klok_free, of five in klok_pool, and klok_mutex guarding both
- * (docs/firmware/structures.md, "The clock and the log").  Each second
- * klok_task takes the 1PPS's GPS time and runs the entries due.
+/* The klok task, written by hand in place of the decompiler's
+ * (docs/firmware/README.md, "Hand-written C"): a list of clock entries,
+ * klok_entries, kept in time order, a free list, klok_free, of five in
+ * klok_pool, and klok_mutex guarding both (docs/firmware/structures.md,
+ * "The clock and the log").  Each second klok_task takes the 1PPS's GPS
+ * time and runs the entries due.  The exported C includes this file
+ * after its own, so the types and prototypes it declares are in scope;
+ * each function here keeps its generated prototype.
  *
  * list_unlink, list_push and klok_insert_sorted take each list as an
  * int32_t pointer, by their prototypes; their callers here cast. */
@@ -12,68 +14,41 @@
 
 enum {
 	/* log_event's code for "Clk_do: out of event buffers" (0x10598). */
-	CLOCK_KLOK_LOG_OUT_OF_BUFFERS = 0x19,
+	KLOK_LOG_OUT_OF_BUFFERS = 0x19,
 	/* klok_cancel's result for an entry outside klok_pool (0x107b0). */
-	CLOCK_KLOK_NOT_IN_POOL = -3,
+	KLOK_NOT_IN_POOL = -3,
 	/* klok_entry_state's results. */
-	CLOCK_KLOK_ON_LIST = 0,
-	CLOCK_KLOK_ON_FREE_LIST = 1,
-	CLOCK_KLOK_ON_NEITHER = -1,
+	KLOK_ON_LIST = 0,
+	KLOK_ON_FREE_LIST = 1,
+	KLOK_ON_NEITHER = -1,
 	/* The klok task's supervisor and user stacks, in words (psos.md,
 	 * service 1). */
-	CLOCK_KLOK_SUPERVISOR_STACK = 0x100,
-	CLOCK_KLOK_USER_STACK = 0x10,
-	CLOCK_KLOK_POOL_SIZE = 5,
+	KLOK_SUPERVISOR_STACK = 0x100,
+	KLOK_USER_STACK = 0x10,
+	KLOK_POOL_SIZE = 5,
 	/* pps_wait_time's argument to wait for the next 1PPS. */
-	CLOCK_KLOK_WAIT = 1,
-	CLOCK_KLOK_MESSAGE_SIZE = 80,
+	KLOK_WAIT = 1,
+	KLOK_MESSAGE_SIZE = 80,
 };
 
 /* The time, then the date, of the 1PPS klok_task last received, at
  * 0x1037ac, which the names file does not name: the "now" klok_run_due
  * compares each entry with. */
-#define CLOCK_KLOK_NOW ((uint32_t *)0x1037ac)
+#define KLOK_NOW ((uint32_t *)0x1037ac)
 
 /* A clock entry's time and date, laid out as a packed_datetime is, which
  * datetime_add and datetime_subtract take; the image passes the entry's
  * +4 (0x10bca) as one. */
-static packed_datetime *clock_klok_when(uint32_t *time)
+static packed_datetime *klok_when(uint32_t *time)
 {
 	return (packed_datetime *)time;
-}
-
-/* Packs the name and creates the mutex as an exchange of that name;
- * psos_pack_name reads the name as this function's caller's first
- * argument (0x104e6). */
-int32_t mutex_create(char *name, void *mutex)
-{
-	return mutex_init(psos_pack_name(), mutex);
-}
-
-/* mutex_acquire on its argument (0x10502). */
-int32_t mutex_lock(void *mutex)
-{
-	return mutex_acquire(mutex);
-}
-
-/* mutex_release on its argument (0x10518). */
-int32_t mutex_unlock(void *mutex)
-{
-	return mutex_release(mutex);
-}
-
-/* The count of idle loops in the last second, which os_report_cpu
- * prints (0x10538). */
-uint32_t idle_count(void)
-{
-	return idle_loops_last_second;
 }
 
 /* Queues a copy of an event on the clock list from the free list; NULL
  * with none free or the mutex not taken (0x10540). */
 klok_entry *clk_do(klok_entry *event)
 {
-	char message[CLOCK_KLOK_MESSAGE_SIZE];
+	char message[KLOK_MESSAGE_SIZE];
 	uint32_t status = mutex_lock(&klok_mutex);
 
 	if (status != 0) {
@@ -85,7 +60,7 @@ klok_entry *clk_do(klok_entry *event)
 
 	if (entry == NULL) {
 		task_dmessage("Clk_do: out of event buffers");
-		log_event(CLOCK_KLOK_LOG_OUT_OF_BUFFERS);
+		log_event(KLOK_LOG_OUT_OF_BUFFERS);
 	} else {
 		klok_free = entry->next;
 		*entry = *event;
@@ -96,7 +71,7 @@ klok_entry *clk_do(klok_entry *event)
 }
 
 /* Takes an entry off the clock list and puts it on the free list, under
- * klok_mutex: the mutex's error, CLOCK_KLOK_NOT_IN_POOL, list_unlink's -2
+ * klok_mutex: the mutex's error, KLOK_NOT_IN_POOL, list_unlink's -2
  * for an entry not on the list, or 0 (0x10786). */
 int32_t klok_cancel(klok_entry *entry)
 {
@@ -104,8 +79,8 @@ int32_t klok_cancel(klok_entry *entry)
 
 	if (status != 0)
 		return status;
-	if (entry < klok_pool || entry > &klok_pool[CLOCK_KLOK_POOL_SIZE - 1]) {
-		status = CLOCK_KLOK_NOT_IN_POOL;
+	if (entry < klok_pool || entry > &klok_pool[KLOK_POOL_SIZE - 1]) {
+		status = KLOK_NOT_IN_POOL;
 	} else {
 		status = list_unlink((int32_t *)&klok_entries, (int32_t *)entry);
 		if (status == 0)
@@ -161,16 +136,16 @@ klok_entry *klok_find(int16_t event_class)
 int32_t klok_entry_state(klok_entry *entry)
 {
 	if (entry == NULL || mutex_lock(&klok_mutex) != 0)
-		return CLOCK_KLOK_ON_NEITHER;
-	int32_t state = CLOCK_KLOK_ON_NEITHER;
+		return KLOK_ON_NEITHER;
+	int32_t state = KLOK_ON_NEITHER;
 
 	for (klok_entry *on = klok_entries; on != NULL; on = on->next)
 		if (on == entry)
-			state = CLOCK_KLOK_ON_LIST;
-	if (state == CLOCK_KLOK_ON_NEITHER)
+			state = KLOK_ON_LIST;
+	if (state == KLOK_ON_NEITHER)
 		for (klok_entry *on = klok_free; on != NULL; on = on->next)
 			if (on == entry)
-				state = CLOCK_KLOK_ON_FREE_LIST;
+				state = KLOK_ON_FREE_LIST;
 	mutex_unlock(&klok_mutex);
 	return state;
 }
@@ -181,7 +156,7 @@ int32_t klok_entry_state(klok_entry *entry)
  * nothing failed, as the image's is (0x109ae). */
 uint32_t klok_task_create(uint32_t priority)
 {
-	char message[CLOCK_KLOK_MESSAGE_SIZE];
+	char message[KLOK_MESSAGE_SIZE];
 	uint32_t status = (uint8_t)psos_ident("klok", NULL, NULL) == 0;
 
 	if (status == 0) {
@@ -195,18 +170,18 @@ uint32_t klok_task_create(uint32_t priority)
 		psos_set_time(lifetime.date, 0, 0);
 		klok_entries = NULL;
 		klok_free = klok_pool;
-		for (klok_entry *entry = klok_pool; entry < &klok_pool[CLOCK_KLOK_POOL_SIZE]; entry++) {
+		for (klok_entry *entry = klok_pool; entry < &klok_pool[KLOK_POOL_SIZE]; entry++) {
 			entry->period_date = 0;
 			entry->date = 0;
 			entry->period_time = 0;
 			entry->time = 0;
 			entry->next = entry + 1;
 		}
-		klok_pool[CLOCK_KLOK_POOL_SIZE - 1].next = NULL;
+		klok_pool[KLOK_POOL_SIZE - 1].next = NULL;
 	}
 	if (status == 0)
-		status = (uint8_t)psos_create("klok", 0, priority, CLOCK_KLOK_SUPERVISOR_STACK,
-					      CLOCK_KLOK_USER_STACK, NULL, &task_klok);
+		status = (uint8_t)psos_create("klok", 0, priority, KLOK_SUPERVISOR_STACK,
+					      KLOK_USER_STACK, NULL, &task_klok);
 	if (status == 0)
 		status = (uint8_t)psos_start(task_klok, klok_task);
 	if (status == 0)
@@ -224,7 +199,7 @@ void klok_task(void)
 {
 	psos_supervisor();
 	for (;;) {
-		pps_wait_time(&CLOCK_KLOK_NOW[0], &CLOCK_KLOK_NOW[1], CLOCK_KLOK_WAIT);
+		pps_wait_time(&KLOK_NOW[0], &KLOK_NOW[1], KLOK_WAIT);
 		idle_loops_last_second = klok_take_pending();
 		if (klok_entries != NULL)
 			klok_run_due();
@@ -242,14 +217,14 @@ void klok_run_due(void)
 	int32_t order;
 
 	mutex_lock(&klok_mutex);
-	while (entry != NULL && (order = datetime_compare(&entry->time, CLOCK_KLOK_NOW)) <= 0) {
+	while (entry != NULL && (order = datetime_compare(&entry->time, KLOK_NOW)) <= 0) {
 		if (order == 0 && entry->function != NULL)
 			spoo_run((spoo_function *)entry->function, 0, 0, 0);
 		list_unlink((int32_t *)&klok_entries, (int32_t *)entry);
 		if (entry->period_time == 0 && entry->period_date == 0) {
 			list_push((uint32_t *)&klok_free, (uint32_t *)&entry->next);
 		} else {
-			datetime_add(clock_klok_when(&entry->period_time), clock_klok_when(&entry->time));
+			datetime_add(klok_when(&entry->period_time), klok_when(&entry->time));
 			klok_insert_sorted((int32_t *)&klok_entries, (int32_t *)entry);
 		}
 		entry = klok_entries;

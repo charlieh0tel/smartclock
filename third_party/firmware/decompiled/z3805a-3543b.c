@@ -7633,7 +7633,7 @@ __asm__(
 );
 
 /* 000104e6 */
-#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* packs the name and creates the mutex as an exchange of that name; "klok" for klok_mutex, "logr"
    for log_mutex
@@ -7652,7 +7652,7 @@ int32_t mutex_create(char *name,void *mutex)
 #endif
 
 /* 00010502 */
-#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* mutex_acquire on its argument */
 
@@ -7668,7 +7668,7 @@ int32_t mutex_lock(void *mutex)
 #endif
 
 /* 00010518 */
-#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* mutex_release on its argument */
 
@@ -7695,7 +7695,7 @@ uint32_t mutex_owner(void *mutex)
 
 
 /* 00010538 */
-#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* the count of free CPU cycles os_report_cpu prints */
 
@@ -7708,7 +7708,7 @@ uint32_t idle_count(void)
 #endif
 
 /* 00010540 */
-#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
+#if 0 /* the decompiler's reading; rewritten in klok.c */
 
 /* queues an event for the clock task
    the firmware's own name, "Clk_do: out of event buffers" */
@@ -7893,7 +7893,7 @@ int32_t leap_event_schedule(uint32_t param_1,int32_t param_2)
 
 
 /* 00010786 */
-#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
+#if 0 /* the decompiler's reading; rewritten in klok.c */
 
 /* under klok_mutex, unlinks an entry from the clock list and returns it to the free list; -3 for a
    pointer outside the pool */
@@ -7922,7 +7922,7 @@ int32_t klok_cancel(klok_entry *param_1)
 #endif
 
 /* 000107ee */
-#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
+#if 0 /* the decompiler's reading; rewritten in klok.c */
 
 /* "at:", "period:", "function address:", "event class:" for each klok entry
    structures.md */
@@ -7966,7 +7966,7 @@ void klok_print_entries(void)
 #endif
 
 /* 000108fe */
-#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
+#if 0 /* the decompiler's reading; rewritten in klok.c */
 
 /* under klok_mutex, the first entry of the clock list of a class */
 
@@ -7992,7 +7992,7 @@ klok_entry * klok_find(int16_t param_1)
 #endif
 
 /* 00010946 */
-#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
+#if 0 /* the decompiler's reading; rewritten in klok.c */
 
 /* 0 if an entry is on the clock list, 1 if on the free list, -1 if on neither */
 
@@ -8030,7 +8030,7 @@ int32_t klok_entry_state(klok_entry *param_1)
 #endif
 
 /* 000109ae */
-#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
+#if 0 /* the decompiler's reading; rewritten in klok.c */
 
 /* psos_create("klok") into task_klok, then psos_start(task_klok, klok_task); "Pps_init error",
    "Clk_go error" */
@@ -8101,7 +8101,7 @@ void clock_set(time_of_day time,uint32_t date)
 #endif
 
 /* 00010b1e */
-#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
+#if 0 /* the decompiler's reading; rewritten in klok.c */
 
 /* klok_task_create starts the klok task here */
 
@@ -8122,7 +8122,7 @@ void klok_task(void)
 #endif
 
 /* 00010b62 */
-#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
+#if 0 /* the decompiler's reading; rewritten in klok.c */
 
 /* runs the clock list's due entries and reschedules the periodic ones, under klok_mutex */
 
@@ -9020,7 +9020,7 @@ void local_to_utc(uint32_t *date,time_of_day *time)
 #endif
 
 /* 000118a8 */
-#if 0 /* the decompiler's reading; rewritten in clock.c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* clears the exception hook and its per-task switch */
 
@@ -9173,7 +9173,7 @@ __asm__(
 );
 
 /* 00011942 */
-#if 0 /* the decompiler's reading; rewritten in clock.c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* prints an exception's name, PC, SR and address
    "%s: %s", ": PC = %#8x, SR = %#04x", ", address = %#8x", "RESET to recover." */
@@ -9230,7 +9230,7 @@ void print_exception(uint16_t param_1,uint32_t param_2,uint16_t param_3,uint32_t
 #endif
 
 /* 00011a2a */
-#if 0 /* the decompiler's reading; rewritten in clock.c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* the "%s: %s" of an exception; "Oooh! That tickles. I don't know that vector."
    structures.md */
@@ -9333,7 +9333,7 @@ __asm__(
 );
 
 /* 00012004 */
-#if 0 /* the decompiler's reading; rewritten in clock_start.c */
+#if 0 /* the decompiler's reading; rewritten in startup.c */
 
 /* sets the SIM's PICR: the periodic interrupt at level 5, or off */
 
@@ -9395,7 +9395,7 @@ void gpt_init(void)
 
 
 /* 000120aa */
-#if 0 /* the decompiler's reading; rewritten in clock_start.c */
+#if 0 /* the decompiler's reading; rewritten in startup.c */
 
 /* Shutdown
    restart.md */
@@ -9422,7 +9422,7 @@ void shutdown(void)
 #endif
 
 /* 000120e6 */
-#if 0 /* the decompiler's reading; rewritten in clock_math.c */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* an int's magnitude; called by nothing */
 
@@ -9438,7 +9438,7 @@ int32_t int_abs(int32_t param_1)
 #endif
 
 /* 0001211a */
-#if 0 /* the decompiler's reading; rewritten in clock_math.c */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* a value clamped between two bounds; called by nothing */
 
@@ -9454,7 +9454,7 @@ int32_t int_clamp(int32_t param_1,int32_t param_2,int32_t param_3)
 #endif
 
 /* 0001213a */
-#if 0 /* the decompiler's reading; rewritten in clock_math.c */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* the reflected CRC-16, polynomial 0x8408 from 0xffff, over bytes; called by nothing */
 
@@ -9556,7 +9556,7 @@ code_r0x000121f4:
 
 
 /* 00012206 */
-#if 0 /* the decompiler's reading; rewritten in clock_math.c */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* an int shifted right with rounding, half away from zero; called by nothing */
 
@@ -9614,7 +9614,7 @@ int32_t double_round_to_long(double x)
 
 
 /* 000122d0 */
-#if 0 /* the decompiler's reading; rewritten in clock_math.c */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* an int divided with rounding, half away from zero; called by nothing */
 
@@ -9704,7 +9704,7 @@ uint32_t double_decimal_exponent(uint32_t param_1,uint32_t param_2)
 
 
 /* 000125e2 */
-#if 0 /* the decompiler's reading; rewritten in clock_math.c */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* 10 to a power clamped to plus or minus 30, from the table of doubles at 0x12704; called by
    nothing */
@@ -9751,7 +9751,7 @@ int16_t tfom_table_index(uint32_t tfom)
 
 
 /* 000129d0 */
-#if 0 /* the decompiler's reading; rewritten in clock_math.c */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* 10 to a power clamped to plus or minus 30, from the table of floats at 0x12a74; called by nothing
     */
@@ -9771,7 +9771,7 @@ float power_of_ten_float(int16_t param_1)
 #endif
 
 /* 00012af0 */
-#if 0 /* the decompiler's reading; rewritten in clock_start.c */
+#if 0 /* the decompiler's reading; rewritten in startup.c */
 
 /* a bare rts: the changed hook of most numeric and setting descriptors, and the done hook of some
    the changed hook of most descriptors */
@@ -9785,7 +9785,7 @@ void scpi_param_hook_nothing(void)
 #endif
 
 /* 00012af2 */
-#if 0 /* the decompiler's reading; rewritten in clock_math.c */
+#if 0 /* the decompiler's reading; rewritten in arithmetic.c */
 
 /* a small signed random value: rand, shaped by dither_table */
 
@@ -9811,7 +9811,7 @@ int32_t random_dither(void)
 #endif
 
 /* 00012bb2 */
-#if 0 /* the decompiler's reading; rewritten in clock_start.c */
+#if 0 /* the decompiler's reading; rewritten in startup.c */
 
 /* does nothing; primary_start calls it between gpt_init and system_init */
 
@@ -9942,7 +9942,7 @@ void system_init(void)
 
 
 /* 00012d6e */
-#if 0 /* the decompiler's reading; rewritten in clock_start.c */
+#if 0 /* the decompiler's reading; rewritten in startup.c */
 
 /* the reset's path: services the watchdog, sets the QSM and GPT up, runs system_init and starts the
    kernel with trap #6 */
@@ -10163,7 +10163,7 @@ void console_halt_hook(void)
 
 
 /* 00012f86 */
-#if 0 /* the decompiler's reading; rewritten in clock_start.c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* os_process_report(0)
    console_init's word ps */
@@ -10178,7 +10178,7 @@ void ps_word(void)
 #endif
 
 /* 00012f92 */
-#if 0 /* the decompiler's reading; rewritten in clock_start.c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* os_memory_report(0)
    console_init's word mem_rep */
@@ -10193,7 +10193,7 @@ void mem_rep_word(void)
 #endif
 
 /* 00012f9e */
-#if 0 /* the decompiler's reading; rewritten in clock_start.c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* task_stack_report(0)
    console_init's word s_rep */
@@ -10230,7 +10230,7 @@ void console_init(void)
 
 
 /* 0001303c */
-#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
+#if 0 /* the decompiler's reading; rewritten in klok.c */
 
 /* takes and clears the pending cell at 0x10382c */
 
@@ -10552,7 +10552,7 @@ __asm__(
 );
 
 /* 000132f4 */
-#if 0 /* the decompiler's reading; rewritten in clock_start.c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* prints a task's user and supervisor stack use
    "User: %5u of %5u b   Supv: %5u of %5u b" */
@@ -10605,7 +10605,7 @@ uint16_t set_interrupt_mask(uint16_t sr)
 
 
 /* 0001339e */
-#if 0 /* the decompiler's reading; rewritten in clock_start.c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* sets a task's priority, returning the old */
 
@@ -10734,7 +10734,7 @@ __asm__(
 );
 
 /* 00013428 */
-#if 0 /* the decompiler's reading; rewritten in clock_start.c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* spins 729 empty loops for each count */
 
@@ -10761,7 +10761,7 @@ void busy_wait(uint32_t param_1)
 #endif
 
 /* 00013448 */
-#if 0 /* the decompiler's reading; rewritten in clock_start.c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* pauses for a float number of seconds, at 1024 ticks a second, at least one tick; called by
    nothing */
@@ -11901,7 +11901,7 @@ uint8_t get_gps_utc_offset(int16_t *seconds)
 #endif
 
 /* 000139e4 */
-#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
+#if 0 /* the decompiler's reading; rewritten in timecode.c */
 
 /* the time code's cc, printed %02X and appended
    structures.md */
@@ -11921,7 +11921,7 @@ char tcode_checksum(char *param_1)
 #endif
 
 /* 000139f6 */
-#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
+#if 0 /* the decompiler's reading; rewritten in timecode.c */
 
 /* WARNING: Switch with 1 destination removed at 0x00013a16 */
 /* sets tcode_format and tcode_pending
@@ -11951,7 +11951,7 @@ char tcode_request(uint8_t param_1)
 #endif
 
 /* 00013a48 */
-#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
+#if 0 /* the decompiler's reading; rewritten in timecode.c */
 
 /* the time code's t, from pll.tfom; given pll.tfom, a float, which it passes on whole (0x13a48)
    structures.md */
@@ -11976,7 +11976,7 @@ int16_t tfom_code(uint32_t tfom)
 #endif
 
 /* 00013a6a */
-#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
+#if 0 /* the decompiler's reading; rewritten in timecode.c */
 
 /* builds es_message
    structures.md */
@@ -12051,7 +12051,7 @@ void es_build(uint32_t param_1,uint32_t param_2)
 #endif
 
 /* 00013c50 */
-#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
+#if 0 /* the decompiler's reading; rewritten in timecode.c */
 
 /* builds tcode_message, T1 or T2, and the es message
    structures.md */
@@ -12172,7 +12172,7 @@ void timecode_update(void)
 #endif
 
 /* 00013ee4 */
-#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
+#if 0 /* the decompiler's reading; rewritten in timecode.c */
 
 /* clears the time code's and the ES message's state */
 
@@ -12190,7 +12190,7 @@ void timecode_init(void)
 #endif
 
 /* 00013fa6 */
-#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
+#if 0 /* the decompiler's reading; rewritten in timecode.c */
 
 /* sets output compare 3 to fire a time code character a delay after the 1PPS capture */
 
@@ -12294,7 +12294,7 @@ __asm__(
 );
 
 /* 0001406a */
-#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
+#if 0 /* the decompiler's reading; rewritten in timecode.c */
 
 /* sets output compare 4 to fire an ES message character a delay after the 1PPS capture */
 
@@ -34152,7 +34152,7 @@ void diag_words_define(void)
 
 
 /* 0001d570 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* a bare rts: duart_init and duartb_reconfigure put it in duartb.echo when the settings' echo is
    off, drtb_putc when it is on
@@ -34167,7 +34167,7 @@ void duartb_echo_none(char c)
 #endif
 
 /* 0001d572 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* sets GP port bits 2 to 4 to a selection 0 to 6 */
 
@@ -34189,7 +34189,7 @@ int32_t gp_port_select(char param_1)
 #endif
 
 /* 0001d594 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* DUART channel B's mode bits from the serial settings: parity, data bits, stop bits */
 
@@ -34231,7 +34231,7 @@ void duartb_mode_from_settings(void)
 #endif
 
 /* 0001d632 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* DUART channel B's baud rate code from the serial settings */
 
@@ -34271,7 +34271,7 @@ override_jmp_0001d646_case_3:
 #endif
 
 /* 0001d680 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* waits for DUART channel B's transmitter and writes a character */
 
@@ -34290,7 +34290,7 @@ uint8_t duartb_putc_polled(uint8_t param_1)
 #endif
 
 /* 0001d6ba */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* writes a string to DUART channel B, waiting for room
    the firmware's own name, "wait_v SIG_SOQ error in _drtb_puts" */
@@ -34325,7 +34325,7 @@ int32_t drtb_puts(char *param_1)
 #endif
 
 /* 0001d74a */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* reads a character from DUART channel B, waiting for one
    "wait_v SIG_SIQ error in getc", DUART channel B */
@@ -34357,7 +34357,7 @@ uint8_t drtb_getc(void)
 #endif
 
 /* 0001d7e4 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* reads a line of up to the given length from DUART channel B; "DRTB receiver error" */
 
@@ -34897,7 +34897,7 @@ __asm__(
 );
 
 /* 0001dc7e */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* resets DUART channel B and applies the serial settings' mode and baud rate */
 
@@ -35022,7 +35022,7 @@ void drtb_read(void)
 
 
 /* 0001ddf6 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* writes a character to channel B under the write lock */
 
@@ -35045,7 +35045,7 @@ void drtb_putc(char param_1)
 #endif
 
 /* 0001de32 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* queues a block for channel B to send by interrupt */
 
@@ -35066,7 +35066,7 @@ void drtb_send_async(char *param_1,uint8_t param_2)
 #endif
 
 /* 0001de76 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* writes the string to I/O device 0, returns the length; printf ends here */
 
@@ -35098,7 +35098,7 @@ int32_t printf(char *format,...)
 
 
 /* 0001debc */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* reads from the console, device 0, and its last status */
 
@@ -35115,7 +35115,7 @@ uint32_t console_read(void *param_1,uint32_t param_2,uint8_t *param_3)
 #endif
 
 /* 0001dee6 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* opens the SCPI port, device 0 */
 
@@ -35129,7 +35129,7 @@ void scpi_port_open(void)
 #endif
 
 /* 0001def4 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* closes the SCPI port, device 0: psos_io_close(0) */
 
@@ -35143,7 +35143,7 @@ void scpi_port_close(void)
 #endif
 
 /* 0001df00 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* the done hook of DUART channel B's setting descriptors (0x33338 on) and of its PRESet at 0x30ea0:
    psos_io_control(0, 0, 0)
@@ -35159,7 +35159,7 @@ void duartb_settings_done(void)
 #endif
 
 /* 0001df12 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* in supervisor mode, writes the string a character at a time through 0x1d680; debug_write uses it
     */
@@ -35197,7 +35197,7 @@ void printf_polled(char *format,...)
 
 
 /* 0001df6e */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* 1 if channel B's write mutex is held by another */
 
@@ -35213,7 +35213,7 @@ bool drtb_try_lock_write(void)
 #endif
 
 /* 0001df8a */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* closes the console device so that channel B can send the time code */
 
@@ -35233,7 +35233,7 @@ uint8_t drtb_release_for_timecode(void)
 #endif
 
 /* 0001dfe6 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* sets or clears the DUART's output port bit 0 */
 
@@ -35258,7 +35258,7 @@ void duart_op0_set(char param_1)
 #endif
 
 /* 0001e02c */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* sets or clears the DUART's output port bit 1 */
 
@@ -35283,7 +35283,7 @@ void duart_op1_set(char param_1)
 #endif
 
 /* 0001e126 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* sets and clears the DUART's output port bits, interrupts held off */
 
@@ -35303,7 +35303,7 @@ void duart_output_bits(uint8_t param_1,uint8_t param_2)
 #endif
 
 /* 0001e18a */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* sends a message to the GPS engine on DUART channel A
    the firmware's own name, "wait_v SIG_SOQA error in drta_send_message" */
@@ -35341,7 +35341,7 @@ uint8_t drta_send_message(char *param_1,int16_t param_2)
 #endif
 
 /* 0001e222 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* 1 if DUART channel A's receive ring is not empty */
 
@@ -35354,7 +35354,7 @@ bool duarta_rx_pending(void)
 #endif
 
 /* 0001e238 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* reads a byte from the GPS engine on DUART channel A, waiting for one
    the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine
@@ -35388,7 +35388,7 @@ uint8_t drta_get_byte(char *param_1)
 #endif
 
 /* 0001e2c0 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* puts channel A in local loopback and sends "DUART test string"; sets the UART self-test's bit 8
    at 0x100c2e if it fails */
@@ -35452,7 +35452,7 @@ void duart_loopback_test_a(void)
 #endif
 
 /* 0001e41a */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* the same for channel B */
 
@@ -35515,7 +35515,7 @@ void duart_loopback_test_b(void)
 #endif
 
 /* 0001e574 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* the DUART self-test's counter and timer test */
 
@@ -35555,7 +35555,7 @@ void duart_counter_test(void)
 #endif
 
 /* 0001e650 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* the DUART self-test: its interrupt vector register, its counter, both channels' loopbacks */
 
@@ -35590,7 +35590,7 @@ void duart_test(void)
 #endif
 
 /* 0001e6be */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* the loopback test's receive on channel A: compares with the next expected character */
 
@@ -35612,7 +35612,7 @@ void duart_test_rx_a(void)
 #endif
 
 /* 0001e6e2 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* the loopback test's receive on channel B */
 
@@ -35634,7 +35634,7 @@ void duart_test_rx_b(void)
 #endif
 
 /* 0001e706 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* the loopback test's transmit on channel A: sends the next character, or stops at the end */
 
@@ -35655,7 +35655,7 @@ void duart_test_tx_a(void)
 #endif
 
 /* 0001e736 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* the loopback test's transmit on channel B */
 
@@ -35715,7 +35715,7 @@ uint32_t duarta_isr(void)
 
 
 /* 0001e7f6 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* the interrupt handler for DUART channel B
    "DUARTB isr signaling SIGINTR", "SIG_SIQ" */
@@ -35802,7 +35802,7 @@ uint8_t duartb_isr(void)
 #endif
 
 /* 0001e9ca */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* sends the next byte to the GPS engine, signaling the GPS task 0x800 once the message is out */
 
@@ -35825,7 +35825,7 @@ void duarta_tx_interrupt(void)
 #endif
 
 /* 0001ea10 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* with channel B's queue empty, disables its transmit interrupt and signals the writer; "DUARTB isr
    signaling SIG_SOQ" */
@@ -36004,7 +36004,7 @@ __asm__(
 );
 
 /* 0001ebbc */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* resets both DUART channels and masks its interrupts */
 
@@ -36022,7 +36022,7 @@ void duart_stop(void)
 #endif
 
 /* 0001ebe4 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* sends "DUART" through channel B in local loopback and checks each character back */
 
@@ -36071,7 +36071,7 @@ void duartb_loopback_check(void)
 #endif
 
 /* 0001ecae */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in duart.c */
 
 /* at reset: tests the DUART's interrupt vector register and sets channel B up for the console */
 
@@ -36105,7 +36105,7 @@ void duart_early_init(void)
 #endif
 
 /* 0001eefc */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in spool.c */
 
 /* a length-prefixed message and ", %08X" with a code, to fatal_error */
 
@@ -36143,7 +36143,7 @@ int32_t debug_sprintf(char *s,char *format,...)
 
 
 /* 0001ef74 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in spool.c */
 
 /* writes through 0x1df12 while debug_enabled */
 
@@ -36198,7 +36198,7 @@ void debug_printf(char *format,...)
 
 
 /* 0001eff6 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in spool.c */
 
 /* prints "task: message" with the calling task's name, while debug_enabled */
 
@@ -36224,7 +36224,7 @@ void task_debug_message(char *message)
 #endif
 
 /* 0001f056 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in spool.c */
 
 /* the calling task's message, printed only while its dmes_ flag is set */
 
@@ -36264,7 +36264,7 @@ void task_dmessage(char *message)
 #endif
 
 /* 0001f176 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in spool.c */
 
 /* keeps the message and task name at crash_message, prints them and "RESET to recover.", then hangs
     */
@@ -36316,7 +36316,7 @@ void fatal_error(char *message)
 #endif
 
 /* 0001f2c0 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* sends 0xc000 | channel << 11 to device 1 minor 1 and returns the reply shifted down 2;
    diag_adc_read and diag_cal call it */
@@ -36338,7 +36338,7 @@ int32_t adc_read(adc_channel channel)
 #endif
 
 /* 0001f308 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* adc_temp's and :DIAG:TEMP?'s reading, "Temperature: %f": channel 0 times 0.273
    structures.md */
@@ -36358,7 +36358,7 @@ float read_adc_temp(void)
 #endif
 
 /* 0001f32e */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* adc_5v's reading, "5V reading: %f": channel 4 times 0.0242
    structures.md */
@@ -36378,7 +36378,7 @@ float read_adc_5v(void)
 #endif
 
 /* 0001f356 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* adc_doven's reading, "Double oven: %f": channel 1 against channel 4
    structures.md */
@@ -36405,7 +36405,7 @@ float read_adc_doven(void)
 #endif
 
 /* 0001f3ae */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* adc_oven's reading, "Oven: %f": channel 5 against channel 4
    structures.md */
@@ -36432,7 +36432,7 @@ float read_adc_oven(void)
 #endif
 
 /* 0001f406 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* adc_p15v's reading, "+15V reading: %f": channel 2 times 0.0763
    structures.md */
@@ -36452,7 +36452,7 @@ float read_adc_p15v(void)
 #endif
 
 /* 0001f42e */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* adc_m15v's reading, "-15V reading: %f": channel 6 against channel 4
    structures.md */
@@ -36479,7 +36479,7 @@ float read_adc_m15v(void)
 #endif
 
 /* 0001f486 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* :DIAG:ROSC:CURR?'s reading, the same as read_adc_ant_curr
    structures.md */
@@ -36500,7 +36500,7 @@ float read_adc_osc_curr(void)
 #endif
 
 /* 0001f4ba */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* adc_ant_curr's reading, "Antenna current: %f": channel 3 times 250/255
    structures.md */
@@ -36521,7 +36521,7 @@ float read_adc_ant_curr(void)
 #endif
 
 /* 0001f4ee */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* the hdac_write word's, a value into one of six HDAC channels through hdac_set
    structures.md */
@@ -36565,7 +36565,7 @@ LAB_0001f528:
 #endif
 
 /* 0001f53a */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* a 6-bit value into one half of an hdac word, written with device1_write; hdac_write leads here
    structures.md */
@@ -36600,7 +36600,7 @@ void hdac_set(uint8_t param_1,uint8_t param_2)
 #endif
 
 /* 0001f5bc */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* the hdac_all word's: six 6-bit values packed two to a word into hdac_shadow, written to device 2
    structures.md */
@@ -36619,7 +36619,7 @@ void hdac_write_all(uint8_t param_1,uint8_t param_2,uint8_t param_3,uint8_t para
 #endif
 
 /* 0001f62e */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* sends the hex DAC's three shadow words to QSPI device 2 */
 
@@ -36633,7 +36633,7 @@ void hdac_update(void)
 #endif
 
 /* 0001f646 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* the efc_write word's: the value to device 7, then a strobe at 0x306000
    structures.md */
@@ -36649,7 +36649,7 @@ void efc_write(uint16_t param_1)
 #endif
 
 /* 0001f6c8 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* a bare rts: sci_init and sci_reconfigure put it in sci.echo when the settings' echo is off
    sci_driver: echo */
@@ -36663,7 +36663,7 @@ void sci_echo_none(char c)
 #endif
 
 /* 0001f6ca */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* the SCI's baud rate from a code */
 
@@ -36704,7 +36704,7 @@ LAB_0001f70c:
 #endif
 
 /* 0001f71a */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* waits for the SCI's transmitter and writes a character, with the parity bit if set */
 
@@ -36730,7 +36730,7 @@ uint16_t sci_putc_polled(char param_1)
 #endif
 
 /* 0001f76c */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* writes a string to the SCI port, waiting for room
    the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts" */
@@ -36760,7 +36760,7 @@ int32_t sci_puts(char *text)
 #endif
 
 /* 0001f7d0 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* reads a character from the SCI port, waiting for one
    "wait_v SIG_SIQ_SCI error in getc" */
@@ -36792,7 +36792,7 @@ uint8_t sci_getc(void)
 #endif
 
 /* 0001f868 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* reads a line of up to the given length from the SCI; "SCI receiver error ocurred" */
 
@@ -37941,7 +37941,7 @@ void sci_read(void)
 
 
 /* 000201b0 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* writes a character to the SCI under its lock */
 
@@ -37964,7 +37964,7 @@ void sci_putc(char param_1)
 #endif
 
 /* 000201e0 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* queues a block for the SCI to send by interrupt */
 
@@ -37986,7 +37986,7 @@ void sci_send_async(char *param_1,uint8_t param_2)
 #endif
 
 /* 0002021a */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* writes a string to the SCI device, 3 */
 
@@ -38017,7 +38017,7 @@ void sci_printf(char *param_1)
 
 
 /* 000202ac */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* the done hook of the SCI's setting descriptors (0x33ab2 on) and of its PRESet at 0x30ed4:
    psos_io_control(0x300, 0, 0)
@@ -38033,7 +38033,7 @@ void sci_settings_done(void)
 #endif
 
 /* 000202c0 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in sci.c */
 
 /* writes a string to the SCI by polling, in supervisor mode */
 
@@ -38069,7 +38069,7 @@ void sci_printf_polled(char *param_1)
 
 
 /* 0002050c */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in qspi.c */
 
 /* signals the next task in the QSPI owner queue; "SPI isr signaling SPI owner" */
 
@@ -38287,7 +38287,7 @@ override_jmp_000205c0_case_3:
 
 
 /* 0002081e */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in qspi.c */
 
 /* sets a transfer up and starts it, or releases the QSPI, and waits until it is done */
 
@@ -38316,7 +38316,7 @@ void qspi_start(uint8_t param_1,uint16_t *param_2,uint16_t param_3,char param_4)
 #endif
 
 /* 00020874 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in qspi.c */
 
 /* waits in the QSPI owner queue while it is busy; "wait_v SIG_QSPI" */
 
@@ -38495,7 +38495,7 @@ __asm__(
 );
 
 /* 00020972 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in qspi.c */
 
 /* the transfer's end: copies the QSPI receive RAM out and hands the QSPI on */
 
@@ -38731,7 +38731,7 @@ __asm__(
 );
 
 /* 00020acc */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in qspi.c */
 
 /* psos_io_write to device 0x100 | n; hdac_write_all writes device 2, efc_write device 7
    structures.md */
@@ -38746,7 +38746,7 @@ void qspi_write(uint8_t param_1,void *param_2,uint32_t param_3)
 #endif
 
 /* 00020aec */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in qspi.c */
 
 /* psos_io_read to device 0x100 | n
    structures.md */
@@ -38761,7 +38761,7 @@ void qspi_read(uint8_t param_1,void *param_2,uint32_t param_3)
 #endif
 
 /* 00020b0c */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in qspi.c */
 
 /* qspi_transfer without the copy back from receive RAM */
 
@@ -38852,7 +38852,7 @@ void qspi_transfer(uint8_t param_1,uint32_t *param_2,uint16_t param_3)
 
 
 /* 00020c96 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in spool.c */
 
 /* psos_create("spoo") into task_spoo, then psos_start(task_spoo, spoo_task) */
 
@@ -38890,7 +38890,7 @@ uint32_t spoo_task_create(uint32_t param_1)
 #endif
 
 /* 00020d66 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in spool.c */
 
 /* calls a function directly, or posts it to the spooler task's exchange while the spooler runs */
 
@@ -38928,7 +38928,7 @@ uint32_t spoo_run(spoo_function *function,uint32_t a,uint32_t b,uint32_t c)
 #endif
 
 /* 00020dd2 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in spool.c */
 
 /* vsprintf into deferred_text at deferred_end
    structures.md */
@@ -38957,7 +38957,7 @@ int32_t deferred_vprintf(char *format,void *arguments)
 #endif
 
 /* 00020e4e */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in spool.c */
 
 /* spoo_task_create starts the spoo task here; it takes requests from spoo_exchange */
 
@@ -38985,7 +38985,7 @@ void spoo_task(void)
 #endif
 
 /* 00020ebe */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in spool.c */
 
 /* prints deferred_text from deferred_start to deferred_end
    structures.md */
@@ -39009,7 +39009,7 @@ void deferred_flush(void)
 #endif
 
 /* 00022d4a */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in spool.c */
 
 /* task_debug_message when with_task_name is set, else debug_write; callers push the flag with
    move.b */
@@ -39029,7 +39029,7 @@ void debug_message(char *message,char with_task_name)
 #endif
 
 /* 00022d70 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in startup.c */
 
 /* sets the FPGA up
    "setup fpga" */
@@ -39580,7 +39580,7 @@ bool fpga_verify_chip(uint8_t param_1,char param_2,uint8_t param_3)
 
 
 /* 00023980 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in startup.c */
 
 /* fpga_verify_chip for chip 0 or 1 */
 
@@ -39628,7 +39628,7 @@ int32_t monitors_reset(void)
 
 
 /* 00023c5a */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* adds a reading to a monitor's 10-sample moving average */
 
@@ -39660,7 +39660,7 @@ void monitor_average_add(adc_monitor *monitor,float reading)
 #endif
 
 /* 00023cc4 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* adds a reading to a monitor's filter, 0.9 of the old and 0.1 of the new */
 
@@ -39691,7 +39691,7 @@ void monitor_filter_add(adc_monitor *monitor,float reading)
 #endif
 
 /* 00023d28 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* counts a monitor's readings outside its range, true once past a limit */
 
@@ -39721,7 +39721,7 @@ uint8_t monitor_out_of_range(adc_monitor *monitor,float minimum,float maximum,ui
 #endif
 
 /* 00023d80 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* checks the supplies and the secondary oven voltage against their tolerances, reporting each that
    leaves or returns
@@ -39858,7 +39858,7 @@ LAB_000240f0:
 #endif
 
 /* 0002410e */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a
    default when there is no reading */
@@ -39925,7 +39925,7 @@ float adc_average(adc_channel channel)
 #endif
 
 /* 000241cc */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* 1 once the double oven's ADC reads above 1.5; called by nothing */
 
@@ -39943,7 +39943,7 @@ bool double_oven_warmed_up(void)
 #endif
 
 /* 000241f4 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* 1 once the oven ADC reads below -2.0; powerup's warm-up test */
 
@@ -39961,7 +39961,7 @@ bool oven_warmed_up(void)
 #endif
 
 /* 0002421c */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* writes the EFC rounded, plus random_dither, clamped to 0 to 0xffff0 */
 
@@ -39995,7 +39995,7 @@ LAB_0002425e:
 #endif
 
 /* 0002426e */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* clamps the EFC to 0 to 1048560, reporting event B when clamped and C when back in range; takes a
    float on the stack and returns it in D0 (0x24272, 0x242d4) */
@@ -40031,7 +40031,7 @@ float efc_clamp(float efc)
 #endif
 
 /* 000242de */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in adc.c */
 
 /* clears efc_clamp's flags */
 
@@ -40047,7 +40047,7 @@ void efc_clamp_reset(void)
 #endif
 
 /* 000242f0 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* "EFC near end of range" when pll.efc stays outside 52428 to 996132, 5% to 95% of 2^20, five
    checks */
@@ -40080,7 +40080,7 @@ void hmon_check_efc(void)
 #endif
 
 /* 0002437a */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* prints the tasks' watchdog counts
    "watchdog: clock: %4d gps: %4d pll: %4d mon: %4d spool %4d" */
@@ -40116,7 +40116,7 @@ void watchdog_report(void)
 #endif
 
 /* 0002442c */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* clears the last exception and the crash message */
 
@@ -40132,7 +40132,7 @@ void exception_record_clear(void)
 #endif
 
 /* 00024440 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* logs the last reset's cause with the time: "Exception: %s, vector %04X, PC = %08X" or "Watchdog
    timeout: clk %1d ..." */
@@ -40179,7 +40179,7 @@ void log_reset_cause(void)
 #endif
 
 /* 0002458c */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* clears the GPS 1PPS monitor's state */
 
@@ -40196,7 +40196,7 @@ void gps_pps_monitor_reset(void)
 #endif
 
 /* 000245a6 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* "GPS 1pps signal is dead", "short gate, count %d", "long gate, count %d"
    structures.md */
@@ -40287,7 +40287,7 @@ uint8_t gps_pps_check(void)
 #endif
 
 /* 0002470c */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* clears the internal 1PPS monitor's state */
 
@@ -40302,7 +40302,7 @@ void internal_pps_monitor_reset(void)
 #endif
 
 /* 0002471a */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* "Internal 1pps signal is dead", "count %d"
    structures.md */
@@ -40462,7 +40462,7 @@ void hmon_task(void)
 
 
 /* 00024976 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* sets the FPGA up again and reloads the counter's registers */
 
@@ -40477,7 +40477,7 @@ void counter_reset(void)
 #endif
 
 /* 00024984 */
-#if 0 /* the decompiler's reading; rewritten in drivers.c */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* clears both 1PPS monitors */
 
@@ -71308,8 +71308,8 @@ __regcall double double_subtract_reversed_pointer(double a /* d0 */,double *b /*
   int16_t sVar15;
   bool bVar16;
   bool bVar17;
-  double raised;
-  uint64_t uVar19;
+  double dVar18;
+  uint64_t raised;
   uint32_t uVar20;
   
   uVar13 = (uint32_t)((uint64_t)a >> 0x20);
@@ -71337,15 +71337,15 @@ __regcall double double_subtract_reversed_pointer(double a /* d0 */,double *b /*
       }
       if (uVar8 == 0) {
         if ((int32_t)(uVar5 ^ uVar13) < 0) {
-          raised = (double)float_raise(0x82000);
-          return raised;
+          dVar18 = (double)float_raise(0x82000);
+          return dVar18;
         }
         goto LAB_0005d2b6;
       }
     }
 LAB_0005d2c6:
-    raised = (double)float_raise(0x84000,uVar3,uVar20);
-    return raised;
+    dVar18 = (double)float_raise(0x84000,uVar3,uVar20);
+    return dVar18;
   }
   if (0x7fefffff < uVar7) {
     if ((uVar7 < 0x7ff00001) && (uVar8 == 0)) {
@@ -71469,7 +71469,7 @@ LAB_0005d2b6:
       }
       return (double)CONCAT44((uint32_t)uVar12 << 0x10 | uVar4,uVar5);
     }
-    uVar19 = float_raise(0x81000);
+    raised = float_raise(0x81000);
     sVar15 = extraout_A1w;
     goto LAB_0005d63e;
   }
@@ -71487,8 +71487,8 @@ LAB_0005d5ae:
         if ((__ghidra_piece(uint8_t, float_control, 0) & 2) != 0) {
 LAB_0005d484:
           float_status = float_status | 0x200;
-          raised = (double)float_raise(0x80200);
-          return raised;
+          dVar18 = (double)float_raise(0x80200);
+          return dVar18;
         }
         bVar17 = CARRY4(uVar4,uVar4);
         uVar4 = uVar4 * 2;
@@ -71576,14 +71576,14 @@ LAB_0005d5ee:
                               uVar5);
     }
   }
-  uVar19 = float_raise(0xc0800,CONCAT22(uVar10,1 - uVar14),uVar3,uVar5,uVar4);
+  raised = float_raise(0xc0800,CONCAT22(uVar10,1 - uVar14),uVar3,uVar5,uVar4);
   sVar15 = extraout_A1w_00;
 LAB_0005d63e:
-  uVar5 = (uint32_t)(uVar19 >> 0x20);
+  uVar5 = (uint32_t)(raised >> 0x20);
   if (sVar15 < 0) {
     uVar5 = uVar5 | 0x80000000;
   }
-  return (double)CONCAT44(uVar5,(int32_t)uVar19);
+  return (double)CONCAT44(uVar5,(int32_t)raised);
 }
 
 
@@ -72137,8 +72137,8 @@ __regcall double double_add_pointers(double *a /* a0 */,double *b /* a1 */)
   int16_t sVar16;
   bool bVar17;
   bool bVar18;
-  double raised;
-  uint64_t uVar20;
+  double dVar19;
+  uint64_t raised;
   
   uVar5 = *(uint32_t *)a;
   uVar8 = *(uint32_t *)((int32_t)a + 4);
@@ -72162,15 +72162,15 @@ __regcall double double_add_pointers(double *a /* a0 */,double *b /* a1 */)
       }
       if (uVar8 == 0) {
         if ((int32_t)(uVar4 ^ uVar5) < 0) {
-          raised = (double)float_raise(0x82000);
-          return raised;
+          dVar19 = (double)float_raise(0x82000);
+          return dVar19;
         }
         goto LAB_0005d2b6;
       }
     }
 LAB_0005d2c6:
-    raised = (double)float_raise(0x84000,uVar3,uVar14);
-    return raised;
+    dVar19 = (double)float_raise(0x84000,uVar3,uVar14);
+    return dVar19;
   }
   if (0x7fefffff < uVar7) {
     if ((uVar7 < 0x7ff00001) && (uVar8 == 0)) {
@@ -72294,7 +72294,7 @@ LAB_0005d2b6:
       }
       return (double)CONCAT44((uint32_t)uVar13 << 0x10 | uVar4,uVar5);
     }
-    uVar20 = float_raise(0x81000);
+    raised = float_raise(0x81000);
     sVar16 = extraout_A1w;
     goto LAB_0005d63e;
   }
@@ -72312,8 +72312,8 @@ LAB_0005d5ae:
         if ((__ghidra_piece(uint8_t, float_control, 0) & 2) != 0) {
 LAB_0005d484:
           float_status = float_status | 0x200;
-          raised = (double)float_raise(0x80200);
-          return raised;
+          dVar19 = (double)float_raise(0x80200);
+          return dVar19;
         }
         bVar18 = CARRY4(uVar4,uVar4);
         uVar4 = uVar4 * 2;
@@ -72401,14 +72401,14 @@ LAB_0005d5ee:
                               uVar5);
     }
   }
-  uVar20 = float_raise(0xc0800,CONCAT22(uVar11,1 - uVar15),uVar3,uVar5,uVar4);
+  raised = float_raise(0xc0800,CONCAT22(uVar11,1 - uVar15),uVar3,uVar5,uVar4);
   sVar16 = extraout_A1w_00;
 LAB_0005d63e:
-  uVar5 = (uint32_t)(uVar20 >> 0x20);
+  uVar5 = (uint32_t)(raised >> 0x20);
   if (sVar16 < 0) {
     uVar5 = uVar5 | 0x80000000;
   }
-  return (double)CONCAT44(uVar5,(int32_t)uVar20);
+  return (double)CONCAT44(uVar5,(int32_t)raised);
 }
 
 
@@ -92002,20 +92002,32 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 }
 
 
+#include "../rewritten/z3805a-3543b/adc.c"
+
+#include "../rewritten/z3805a-3543b/arithmetic.c"
+
 #include "../rewritten/z3805a-3543b/clock.c"
 
-#include "../rewritten/z3805a-3543b/clock_klok.c"
+#include "../rewritten/z3805a-3543b/duart.c"
 
-#include "../rewritten/z3805a-3543b/clock_math.c"
-
-#include "../rewritten/z3805a-3543b/clock_start.c"
-
-#include "../rewritten/z3805a-3543b/clock_timecode.c"
-
-#include "../rewritten/z3805a-3543b/drivers.c"
+#include "../rewritten/z3805a-3543b/klok.c"
 
 #include "../rewritten/z3805a-3543b/libc.c"
 
+#include "../rewritten/z3805a-3543b/monitors.c"
+
+#include "../rewritten/z3805a-3543b/os.c"
+
+#include "../rewritten/z3805a-3543b/qspi.c"
+
 #include "../rewritten/z3805a-3543b/records.c"
 
+#include "../rewritten/z3805a-3543b/sci.c"
+
 #include "../rewritten/z3805a-3543b/scpi.c"
+
+#include "../rewritten/z3805a-3543b/spool.c"
+
+#include "../rewritten/z3805a-3543b/startup.c"
+
+#include "../rewritten/z3805a-3543b/timecode.c"

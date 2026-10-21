@@ -1,21 +1,25 @@
-/* Small integer and table routines that lie among the clock's, written by
- * hand in place of the decompiler's (docs/firmware/README.md,
- * "Hand-written C").  Most are called by nothing. */
+/* Small integer and table routines, written by hand in place of the
+ * decompiler's (docs/firmware/README.md, "Hand-written C"): absolute
+ * value, clamp, CRC-16, rounding shifts and division, the powers of ten
+ * and the random dither.  Most are called by nothing.  The exported C
+ * includes this file after its own, so the types and prototypes it
+ * declares are in scope; each function here keeps its generated
+ * prototype. */
 
 enum {
 	/* 0x8408, the CCITT polynomial 0x1021 reflected. */
-	CLOCK_CRC16_POLYNOMIAL = 0x8408,
-	CLOCK_CRC16_MASK = 0xffff,
+	ARITHMETIC_CRC16_POLYNOMIAL = 0x8408,
+	ARITHMETIC_CRC16_MASK = 0xffff,
 	/* power_of_ten_double and _float's tables hold 1e-30 to 1e30. */
-	CLOCK_POWER_OF_TEN_LIMIT = 30,
+	ARITHMETIC_POWER_OF_TEN_LIMIT = 30,
 	/* random_dither: a rand value of 1 to 0x7fff, its top 8 bits read
 	 * from either end of dither_table. */
-	CLOCK_DITHER_RAND_MAX = 0x7fff,
-	CLOCK_DITHER_SHIFT = 7,
-	CLOCK_DITHER_SIZE = 128,
+	ARITHMETIC_DITHER_RAND_MAX = 0x7fff,
+	ARITHMETIC_DITHER_SHIFT = 7,
+	ARITHMETIC_DITHER_SIZE = 128,
 	/* The 68000's shifts take their count modulo 64. */
-	CLOCK_SHIFT_COUNT_MASK = 63,
-	CLOCK_LONG_BITS = 32,
+	ARITHMETIC_SHIFT_COUNT_MASK = 63,
+	ARITHMETIC_LONG_BITS = 32,
 };
 
 /* An int's magnitude; nothing calls it (0x120e6). */
@@ -51,26 +55,26 @@ uint32_t crc16_ccitt(uint8_t *bytes, int16_t count)
 		sum += *bytes;
 		for (int bit = 0; bit < 8; bit++) {
 			if ((crc ^ *bytes) & 1)
-				crc = crc >> 1 ^ CLOCK_CRC16_POLYNOMIAL;
+				crc = crc >> 1 ^ ARITHMETIC_CRC16_POLYNOMIAL;
 			else
 				crc >>= 1;
 		}
 	}
-	return (uint32_t)(uint8_t)~sum << 24 | (uint32_t)sum << 16 | (crc & CLOCK_CRC16_MASK);
+	return (uint32_t)(uint8_t)~sum << 24 | (uint32_t)sum << 16 | (crc & ARITHMETIC_CRC16_MASK);
 }
 
 /* A long shifted as the processor shifts it: the count modulo 64, and 32
  * or more shifting every bit out. */
-static uint32_t clock_shift_left(uint32_t value, uint32_t count)
+static uint32_t arithmetic_shift_left(uint32_t value, uint32_t count)
 {
-	count &= CLOCK_SHIFT_COUNT_MASK;
-	return count >= CLOCK_LONG_BITS ? 0 : value << count;
+	count &= ARITHMETIC_SHIFT_COUNT_MASK;
+	return count >= ARITHMETIC_LONG_BITS ? 0 : value << count;
 }
 
-static int32_t clock_shift_right(int32_t value, uint32_t count)
+static int32_t arithmetic_shift_right(int32_t value, uint32_t count)
 {
-	count &= CLOCK_SHIFT_COUNT_MASK;
-	if (count >= CLOCK_LONG_BITS)
+	count &= ARITHMETIC_SHIFT_COUNT_MASK;
+	if (count >= ARITHMETIC_LONG_BITS)
 		return value < 0 ? -1 : 0;
 	return value >> count;
 }
@@ -79,11 +83,11 @@ static int32_t clock_shift_right(int32_t value, uint32_t count)
  * it (0x12206). */
 int32_t round_shift_right(int32_t value, uint32_t shift)
 {
-	int32_t half = clock_shift_left(1, shift - 1);
+	int32_t half = arithmetic_shift_left(1, shift - 1);
 
 	if (value < 0)
-		return -clock_shift_right(half - value, shift);
-	return clock_shift_right(value + half, shift);
+		return -arithmetic_shift_right(half - value, shift);
+	return arithmetic_shift_right(value + half, shift);
 }
 
 /* An int divided with rounding, half away from zero; nothing calls it
@@ -99,21 +103,21 @@ int32_t round_divide(int32_t dividend, int32_t divisor)
  * (0x125e2). */
 double power_of_ten_double(int16_t power)
 {
-	if (power < -CLOCK_POWER_OF_TEN_LIMIT)
-		power = -CLOCK_POWER_OF_TEN_LIMIT;
-	else if (power > CLOCK_POWER_OF_TEN_LIMIT)
-		power = CLOCK_POWER_OF_TEN_LIMIT;
-	return powers_of_ten_double[power + CLOCK_POWER_OF_TEN_LIMIT];
+	if (power < -ARITHMETIC_POWER_OF_TEN_LIMIT)
+		power = -ARITHMETIC_POWER_OF_TEN_LIMIT;
+	else if (power > ARITHMETIC_POWER_OF_TEN_LIMIT)
+		power = ARITHMETIC_POWER_OF_TEN_LIMIT;
+	return powers_of_ten_double[power + ARITHMETIC_POWER_OF_TEN_LIMIT];
 }
 
 /* The same as a float; nothing calls it (0x129d0). */
 float power_of_ten_float(int16_t power)
 {
-	if (power < -CLOCK_POWER_OF_TEN_LIMIT)
-		power = -CLOCK_POWER_OF_TEN_LIMIT;
-	else if (power > CLOCK_POWER_OF_TEN_LIMIT)
-		power = CLOCK_POWER_OF_TEN_LIMIT;
-	return powers_of_ten_float[power + CLOCK_POWER_OF_TEN_LIMIT];
+	if (power < -ARITHMETIC_POWER_OF_TEN_LIMIT)
+		power = -ARITHMETIC_POWER_OF_TEN_LIMIT;
+	else if (power > ARITHMETIC_POWER_OF_TEN_LIMIT)
+		power = ARITHMETIC_POWER_OF_TEN_LIMIT;
+	return powers_of_ten_float[power + ARITHMETIC_POWER_OF_TEN_LIMIT];
 }
 
 /* A small signed random value for the EFC's dither: rand's 1 to 0x7fff,
@@ -125,10 +129,10 @@ int32_t random_dither(void)
 {
 	int32_t value = 0;
 
-	while (value < 1 || value > CLOCK_DITHER_RAND_MAX)
+	while (value < 1 || value > ARITHMETIC_DITHER_RAND_MAX)
 		value = rand();
-	value >>= CLOCK_DITHER_SHIFT;
-	if (value >= CLOCK_DITHER_SIZE)
-		return (int8_t)dither_table[value - CLOCK_DITHER_SIZE];
-	return -(int8_t)dither_table[CLOCK_DITHER_SIZE - value];
+	value >>= ARITHMETIC_DITHER_SHIFT;
+	if (value >= ARITHMETIC_DITHER_SIZE)
+		return (int8_t)dither_table[value - ARITHMETIC_DITHER_SIZE];
+	return -(int8_t)dither_table[ARITHMETIC_DITHER_SIZE - value];
 }

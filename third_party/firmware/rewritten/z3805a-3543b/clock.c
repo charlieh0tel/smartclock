@@ -1,10 +1,10 @@
 /* The clock and calendar, written by hand in place of the decompiler's
  * (docs/firmware/README.md, "Hand-written C"): dates, times and their
- * conversions, the leap second's clock events, the clock record's readers
- * (docs/firmware/structures.md, "The clock record") and the exceptions'
- * report.  The exported C includes this file after
- * its own, so the types and prototypes it declares are in scope; each
- * function here keeps its generated prototype.
+ * conversions, the leap second's clock events, and the clock record's
+ * readers and setters (docs/firmware/structures.md, "The clock
+ * record").  The exported C includes this file after its own, so the
+ * types and prototypes it declares are in scope; each function here
+ * keeps its generated prototype.
  *
  * A time is a long, hour << 16 | minute << 8 | second, or a time_of_day
  * where the code works on it byte by byte; a date year << 16 | month << 8
@@ -62,14 +62,6 @@ enum {
 	/* leap_event_schedule_utc's event comes this many seconds before the
 	 * offset steps (0x1070a). */
 	CLOCK_LEAP_EVENT_LEAD = 5,
-
-	/* An exception frame's format and vector word: the format in the top
-	 * four bits, the vector's offset in the rest; exception_names names
-	 * the vectors from 2, bus error, to 58 (offset 0xe8). */
-	CLOCK_VECTOR_FORMAT_MASK = 0xf000,
-	CLOCK_VECTOR_OFFSET_MASK = 0x0fff,
-	CLOCK_VECTOR_OFFSET_FIRST_NAMED = 2 * 4,
-	CLOCK_VECTOR_OFFSET_LAST = 0xe8,
 };
 
 /* A time of day as seconds since midnight (0x1111e). */
@@ -707,60 +699,4 @@ uint8_t get_gps_utc_offset(int16_t *seconds)
 	if (seconds)
 		*seconds = clock.gps_utc_offset;
 	return clock.gps_utc_offset_valid;
-}
-
-/* Clears the exception hook and its per-task switch (0x118a8). */
-void exception_hook_reset(void)
-{
-	exception_hook_per_task = 0;
-	exception_hook = NULL;
-}
-
-/* An exception's name, from its frame's format and vector word: the
- * vector's offset, 4 times its number, indexes exception_names as bytes
- * from vector 2's, the first named, unchecked below it and unaligned as
- * the image's is (0x11a2a). */
-char *exception_name(uint16_t vector)
-{
-	uint16_t offset = vector & CLOCK_VECTOR_OFFSET_MASK;
-
-	if (offset > CLOCK_VECTOR_OFFSET_LAST)
-		return "Oooh! That tickles. I don't know that vector.";
-	return *(char **)((char *)exception_names + offset - CLOCK_VECTOR_OFFSET_FIRST_NAMED);
-}
-
-/* Records an exception in last_exception, with the running task's name
- * while the kernel runs; prints it while debug_enabled; and stops with the
- * interrupts masked (0x11942).  The fault address is kept and printed only
- * for a frame whose format is not 0. */
-void print_exception(uint16_t sr, uint32_t pc, uint16_t vector, uint32_t address)
-{
-	bool has_address = (vector & CLOCK_VECTOR_FORMAT_MASK) != 0;
-
-	last_exception.pending = 1;
-	last_exception.name[0] = 0;
-	last_exception.sr = sr;
-	last_exception.pc = pc;
-	last_exception.vector = vector;
-	last_exception.address = has_address ? address : 0;
-	if (kernel_running) {
-		const char *name = task_name((void *)psos_my_pid());
-		char *to = last_exception.name;
-
-		while ((*to++ = *name++) != 0)
-			;
-	}
-	if (debug_enabled) {
-		printf_polled("\r\n");
-		printf_polled("%s: %s", last_exception.name, exception_name(vector));
-		printf_polled(": PC = %#8x, SR = %#04x", pc, (uint32_t)sr);
-		if (has_address)
-			printf_polled(", address = %#8x", address);
-		printf_polled((char *)reset_to_recover_text);
-		if (kernel_running)
-			psos_pause(1);
-	}
-	set_interrupt_mask(CLOCK_SR_INTERRUPTS_MASKED);
-	for (;;)
-		;
 }

@@ -1227,10 +1227,17 @@ view cannot drift apart.  The library, bottom up:
      agreeing.  Found on the way: the decompiled C drops every write of
      the status register, the interrupt mask a driver raises around a
      DUART, SCI or QSPI access and restores, which the harness does not
-     compare (`drivers.c` writes them with `move` to and from SR in a
-     line of assembly); and the image's `duart_op0_set` and its kin pass
-     6 to `set_interrupt_mask`, which keeps only bits 10 to 8, so the
-     mask they set is level 0.
+     compare (the hand-written drivers write them with `move` to and
+     from SR in a line of assembly); and the image's `duart_op0_set` and
+     its kin pass 6 to `set_interrupt_mask`, which keeps only bits 10 to
+     8, so the mask they set is level 0.
+     Those six files, split by address range, are regrouped by subject,
+     the bodies unchanged but for their file-scope names' prefixes:
+     `clock.c`, the calendar, leap seconds and the clock record;
+     `arithmetic.c`; `startup.c`; `os.c`, the mutexes, task reports,
+     waits and exceptions; `klok.c`; `timecode.c`; and the drivers by
+     device, `duart.c`, `sci.c`, `qspi.c`, `adc.c` (with the DACs and
+     the EFC), `monitors.c` and `spool.c`.
      `scpi.c`, the SCPI engine, 122 more: the converters and parsers,
      the formatters, the lexer, keyword and suffix matching, the status
      system and error queue, and the call path, checked beyond the

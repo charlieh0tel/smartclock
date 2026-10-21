@@ -86,6 +86,32 @@ CHECK_FIELD(duartb_driver, async_allowed, 0x10313a - 0x1030ec);
 CHECK_FIELD(duartb_driver, echo, 0x10313c - 0x1030ec);
 CHECK_FIELD(duartb_driver, last_terminator, 0x103140 - 0x1030ec);
 
+/* The installer's copies, laid out as the primary's. */
+CHECK_SIZE(duartb_applied_settings, 0x10ad40 - 0x10ad3c);
+CHECK_SIZE(duart_shadow_registers, 0x10ad4d - 0x10ad40);
+CHECK_FIELD(duart_shadow_registers, imr, 0x10ad44 - 0x10ad40);
+CHECK_FIELD(duart_shadow_registers, mr1b, 0x10ad47 - 0x10ad40);
+CHECK_FIELD(duart_shadow_registers, csrb, 0x10ad49 - 0x10ad40);
+CHECK_SIZE(serial_ring, 0x10ae4f - 0x10ad4d);
+CHECK_FIELD(duarta_driver, overrun, 0x10ae56 - 0x10ae50);
+CHECK_FIELD(duarta_driver, least_free, 0x10ae59 - 0x10ae50);
+CHECK_SIZE(duarta_driver, 0x10ae5a - 0x10ae50);
+CHECK_SIZE(serial_ring, 0x10af5c - 0x10ae5a);
+CHECK_FIELD(duartb_driver, async_next, 0x10af60 - 0x10af5c);
+CHECK_FIELD(duartb_driver, transmit_count, 0x10af64 - 0x10af5c);
+CHECK_FIELD(duartb_driver, async_pending, 0x10af67 - 0x10af5c);
+CHECK_FIELD(duartb_driver, flow, 0x10af68 - 0x10af5c);
+CHECK_FIELD(duartb_driver, read_errors, 0x10af6a - 0x10af5c);
+CHECK_FIELD(duartb_driver, xon_xoff, 0x10af6c - 0x10af5c);
+CHECK_FIELD(duartb_driver, parity, 0x10af6e - 0x10af5c);
+CHECK_FIELD(duartb_driver, in_transmit_interrupt, 0x10af70 - 0x10af5c);
+CHECK_FIELD(duartb_driver, read_token.task, 0x10af82 - 0x10af5c);
+CHECK_FIELD(duartb_driver, write_token.task, 0x10af9a - 0x10af5c);
+CHECK_FIELD(duartb_driver, async_allowed, 0x10afaa - 0x10af5c);
+CHECK_FIELD(duartb_driver, echo, 0x10afac - 0x10af5c);
+CHECK_FIELD(duartb_driver, last_terminator, 0x10afb0 - 0x10af5c);
+CHECK_SIZE(duartb_driver, 0x10afb2 - 0x10af5c);
+
 CHECK_SIZE(efc_gain_values, 0x10256c - 0x102554);
 CHECK_FIELD(efc_gain_values, reciprocal_tau, 0x102560 - 0x102554);
 CHECK_FIELD(efc_gain_values, step_limit, 0x102564 - 0x102554);

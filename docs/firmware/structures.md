@@ -829,6 +829,41 @@ once, so that a task takes the exchange before it uses the port; if
 the send fails, "Unable to initialize drtR: %X" prints its error code.
 Nothing reads a token's status.
 
+## The installer's RAM
+
+The installer's DUART driver keeps its state in plain RAM past its
+image, in the primary's order and types, each field used at the
+primary's offset: `installer_duartb_applied` (`0x10ad3c`),
+`installer_duart_shadow` (`0x10ad40`), `installer_duarta_ring`
+(`0x10ad4d`), `installer_duarta` (`0x10ae50`, aligned past the ring's
+odd end), `installer_duartb_ring` (`0x10ae5a`) and `installer_duartb`
+(`0x10af5c`, to `0x10afb1`).  `installer_duartb_mode_from_settings`
+(`0x103016`) and `installer_duartb_baud_from_settings` (`0x1030b4`)
+build MR1B, MR2B and CSRB in the shadow at `+7` to `+9` from the
+settings at `0x10ab32` to `0x10ab37`, as the primary's do from
+`0x101f5a` to `0x101f5f`, and copy them to the applied settings;
+`installer_duartb_isr` (`0x103aa8`), `installer_duartb_transmit_interrupt`
+(`0x103c90`), `installer_drtb_getc` (`0x1031cc`) and `installer_drtb_gets`
+(`0x103266`) use the ring, flow, error, token and echo fields as
+`duartb_isr`, `duartb_transmit_interrupt`, `drtb_getc` and `drtb_gets`
+do, and `installer_duart_interrupt` (`0x103d74`) tests each source
+against the shadow's IMR at `+4`.  Channel A's side is only a
+receiver: `installer_duarta_receive` (`0x103a44`) fills its ring and
+keeps the least free space at `+9`, but nothing in the installer reads
+the ring, and the overrun flag at `+6` is only written.
+
+The boot code uses cells in the same RAM.  `boot_duart_early_init`
+(`0x4cc`) and `boot_duartb_loopback_check` (`0x400`) report at
+`boot_selftest_uart` (`0x10ab2c`) as the primary's report at
+`selftest.uart`: 1 if the IVR does not read back, `0x10` ORed for a
+character back wrong, `0x20` for none; `boot_reset` lights OP6 if it is
+nonzero.  The loopback check's two cursors in "DUART" (`0x54a`),
+`boot_loopback_send_next` (`0x10afb2`) and `boot_loopback_expect_next`
+(`0x10afb6`), lie just past `installer_duartb`, as
+`loopback_send_next` (`0x103142`) and `loopback_expect_next`
+(`0x103146`), which `duartb_loopback_check` and the DUART self-tests
+step, lie past `duartb`.
+
 ## The SCI port's driver
 
 The QSM's SCI port is driven as DUART channel B is.  Its exchanges,

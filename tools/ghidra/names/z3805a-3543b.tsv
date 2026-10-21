@@ -298,6 +298,8 @@
 0x102fe0	label	duarta	structures.md	DUART channel A's driver state, the GPS receiver's link	duarta_driver
 0x102fea	label	duartb_ring	structures.md	DUART channel B's receive ring, the host port's	serial_ring
 0x1030ec	label	duartb	structures.md	DUART channel B's driver state, the host port	duartb_driver
+0x103142	label	loopback_send_next	read	the next character duart_test_tx_a and _b send in the loopback self-tests; at 0 they mask their port's TxRDY interrupt	uint8_t *
+0x103146	label	loopback_expect_next	read	the next character duart_test_rx_a and _b expect back; one wrong sets selftest.uart 4 for channel A, 0x10 for B	char *
 0x101d18	label	eepx_exchange	structures.md	create_x("eepx")	uint32_t
 0x103150	label	sci_exchanges	structures.md	the SCI port's exchanges, sciR and sciW, and their token messages	sci_exchange_state
 0x103188	label	sci_ring	structures.md	the SCI port's receive ring	serial_ring
@@ -1479,6 +1481,19 @@ installer::0x109c7e	function	installer_next_decimal_digit	libc.md	the installer'
 installer::0x109cb4	function	installer_doprnt	libc.md	the installer's doprnt
 installer::0x10aa3e	function	installer_sprintf	libc.md	the installer's sprintf	int installer_sprintf(char *s, char *format, ...)
 installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
+#
+# the installer's DUART driver state, in plain RAM after its image, laid
+# out as the primary's from duartb_applied to duartb's end; and the boot
+# code's cells there; docs/firmware/structures.md, "The installer's RAM"
+0x10ab2c	label	boot_selftest_uart	structures.md	the boot code's selftest.uart: boot_duart_early_init sets 1 if the IVR fails, boot_duartb_loopback_check ORs 0x10 for a character back wrong, 0x20 for none; boot_reset lights OP6 if nonzero	int16_t
+0x10ad3c	label	installer_duartb_applied	structures.md	the installer's duartb_applied: installer_duartb_baud_from_settings and _mode_from_settings copy the settings at 0x10ab32 to 0x10ab37 to it; installer_duartb_isr strips the top bit unless +2 is set	duartb_applied_settings
+0x10ad40	label	installer_duart_shadow	structures.md	the installer's duart_shadow: IMR at +4, MR1B, MR2B and CSRB at +7 to +9	duart_shadow_registers
+0x10ad4d	label	installer_duarta_ring	structures.md	the installer's duarta_ring, which installer_duarta_receive fills; nothing in the installer reads it	serial_ring
+0x10ae50	label	installer_duarta	structures.md	the installer's duarta: installer_duarta_receive sets +6 on an overrun, which nothing reads, and keeps the ring's least free space at +9	duarta_driver
+0x10ae5a	label	installer_duartb_ring	structures.md	the installer's duartb_ring: installer_duartb_isr writes, installer_drtb_getc reads	serial_ring
+0x10af5c	label	installer_duartb	structures.md	the installer's duartb, every field at the primary's offset	duartb_driver
+0x10afb2	label	boot_loopback_send_next	structures.md	the next character boot_duartb_loopback_check sends, from 0x54b, the "DUART" it expects back less its first; just past installer_duartb, as loopback_send_next is past duartb	uint8_t *
+0x10afb6	label	boot_loopback_expect_next	structures.md	the next character boot_duartb_loopback_check expects back; as loopback_expect_next	char *
 #
 # the last application routines
 0x110d6	function	oncore_date_unpack	context	the inverse of oncore_date_pack: year << 16 | month << 8 | day back to month << 24 | day << 16 | year; called by nothing

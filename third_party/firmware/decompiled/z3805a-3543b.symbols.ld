@@ -56,7 +56,6 @@ __ghidra_10ab22 = 0x10ab22;
 __ghidra_10ab24 = 0x10ab24;
 __ghidra_10ab26 = 0x10ab26;
 __ghidra_10ab28 = 0x10ab28;
-__ghidra_10ab2c = 0x10ab2c;
 __ghidra_10ab2e = 0x10ab2e;
 __ghidra_20000b = 0x20000b;
 __ghidra_20001d = 0x20001d;

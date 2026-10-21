@@ -1939,6 +1939,8 @@ extern serial_ring duarta_ring; /* 00102edd */
 extern duarta_driver duarta; /* 00102fe0 */
 extern serial_ring duartb_ring; /* 00102fea */
 extern duartb_driver duartb; /* 001030ec */
+extern uint8_t * loopback_send_next; /* 00103142 */
+extern char * loopback_expect_next; /* 00103146 */
 extern uint16_t hdac_shadow[3]; /* 0010314a */
 extern sci_exchange_state sci_exchanges; /* 00103150 */
 extern serial_ring sci_ring; /* 00103188 */
@@ -1986,6 +1988,15 @@ extern uint32_t rand_seed; /* 00103936 */
 extern int32_t errno; /* 0010393a */
 extern qsort_compare_function * qsort_compare; /* 00103940 */
 extern uint32_t qsort_size; /* 00103944 */
+extern int16_t boot_selftest_uart; /* 0010ab2c */
+extern duartb_applied_settings installer_duartb_applied; /* 0010ad3c */
+extern duart_shadow_registers installer_duart_shadow; /* 0010ad40 */
+extern serial_ring installer_duarta_ring; /* 0010ad4d */
+extern duarta_driver installer_duarta; /* 0010ae50 */
+extern serial_ring installer_duartb_ring; /* 0010ae5a */
+extern duartb_driver installer_duartb; /* 0010af5c */
+extern uint8_t * boot_loopback_send_next; /* 0010afb2 */
+extern char * boot_loopback_expect_next; /* 0010afb6 */
 extern volatile duart_registers duart; /* 00200000 */
 extern volatile gpt_registers gpt; /* 00fff900 */
 extern volatile sim_registers sim; /* 00fffa00 */
@@ -2285,8 +2296,6 @@ extern undefined DAT_00102d6c; /* 00102d6c */
 extern undefined DAT_00102d70; /* 00102d70 */
 extern undefined1 DAT_00102d74; /* 00102d74 */
 extern undefined DAT_00102ebc; /* 00102ebc */
-extern undefined DAT_00103142; /* 00103142 */
-extern undefined DAT_00103146; /* 00103146 */
 extern char DAT_001032fc; /* 001032fc */
 extern undefined DAT_0010370a; /* 0010370a */
 extern undefined DAT_0010370e; /* 0010370e */
@@ -2308,14 +2317,13 @@ extern undefined1 DAT_0010aad3; /* 0010aad3 */
 extern char DAT_0010aaf2; /* 0010aaf2 */
 extern undefined1 DAT_0010aaf3; /* 0010aaf3 */
 extern undefined1 DAT_0010ab1f; /* 0010ab1f */
-extern short DAT_0010ab2c; /* 0010ab2c */
 extern undefined DAT_0010ab30; /* 0010ab30 */
-extern char DAT_0010ab32; /* 0010ab32 */
-extern char DAT_0010ab33; /* 0010ab33 */
+extern uint8_t DAT_0010ab32; /* 0010ab32 */
+extern uint8_t DAT_0010ab33; /* 0010ab33 */
 extern undefined1 DAT_0010ab34; /* 0010ab34 */
 extern undefined1 DAT_0010ab35; /* 0010ab35 */
-extern char DAT_0010ab36; /* 0010ab36 */
-extern char DAT_0010ab37; /* 0010ab37 */
+extern uint8_t DAT_0010ab36; /* 0010ab36 */
+extern uint8_t DAT_0010ab37; /* 0010ab37 */
 extern undefined1 DAT_0010ab38; /* 0010ab38 */
 extern undefined DAT_0010ab3a; /* 0010ab3a */
 extern undefined DAT_0010ab4c; /* 0010ab4c */
@@ -2325,45 +2333,10 @@ extern undefined4 DAT_0010ab84; /* 0010ab84 */
 extern undefined1 DAT_0010acf8; /* 0010acf8 */
 extern undefined1 DAT_0010ad04; /* 0010ad04 */
 extern int DAT_0010ad06; /* 0010ad06 */
-extern char DAT_0010ad3c; /* 0010ad3c */
-extern char DAT_0010ad3d; /* 0010ad3d */
-extern char DAT_0010ad3e; /* 0010ad3e */
-extern char DAT_0010ad3f; /* 0010ad3f */
-extern byte DAT_0010ad44; /* 0010ad44 */
-extern byte DAT_0010ad47; /* 0010ad47 */
-extern byte DAT_0010ad48; /* 0010ad48 */
-extern uint8_t DAT_0010ad49; /* 0010ad49 */
-extern byte DAT_0010ad4d; /* 0010ad4d */
-extern char DAT_0010ad4e; /* 0010ad4e */
-extern undefined DAT_0010ad4f; /* 0010ad4f */
-extern undefined1 DAT_0010ae56; /* 0010ae56 */
-extern byte DAT_0010ae59; /* 0010ae59 */
-extern byte DAT_0010ae5a; /* 0010ae5a */
-extern byte DAT_0010ae5b; /* 0010ae5b */
-extern undefined DAT_0010ae5c; /* 0010ae5c */
-extern uint8_t *DAT_0010af5c; /* 0010af5c */
-extern uint8_t *DAT_0010af60; /* 0010af60 */
-extern short DAT_0010af64; /* 0010af64 */
-extern char DAT_0010af66; /* 0010af66 */
-extern char DAT_0010af67; /* 0010af67 */
-extern byte DAT_0010af68; /* 0010af68 */
-extern char DAT_0010af69; /* 0010af69 */
-extern char DAT_0010af6a; /* 0010af6a */
-extern char DAT_0010af6c; /* 0010af6c */
-extern byte DAT_0010af6d; /* 0010af6d */
-extern undefined1 DAT_0010af6e; /* 0010af6e */
-extern char DAT_0010af6f; /* 0010af6f */
-extern undefined1 DAT_0010af70; /* 0010af70 */
-extern ulong DAT_0010af82; /* 0010af82 */
-extern ulong DAT_0010af9a; /* 0010af9a */
-extern char DAT_0010afaa; /* 0010afaa */
-extern undefined DAT_0010afac; /* 0010afac */
-extern uint8_t *DAT_0010afb2; /* 0010afb2 */
-extern char *DAT_0010afb6; /* 0010afb6 */
 extern int DAT_0010afe0; /* 0010afe0 */
 extern char DAT_0010afe4; /* 0010afe4 */
 extern char DAT_0010afe6; /* 0010afe6 */
-extern ulong DAT_0010aff0; /* 0010aff0 */
+extern uint32_t DAT_0010aff0; /* 0010aff0 */
 extern ulong DAT_0010affc; /* 0010affc */
 extern undefined DAT_0010b038; /* 0010b038 */
 extern byte DAT_0010b03a; /* 0010b03a */
@@ -2514,7 +2487,6 @@ extern undefined UNK_0010aa27; /* 0010aa27 */
 extern undefined UNK_0010aa38; /* 0010aa38 */
 extern undefined UNK_0010aa3b; /* 0010aa3b */
 extern undefined UNK_0010aa6c; /* 0010aa6c */
-extern byte UNK_0010afb0; /* 0010afb0 */
 extern ushort USHORT_0001f6c8; /* 0001f6c8 */
 extern ushort USHORT_0002f32a; /* 0002f32a */
 extern ushort USHORT_0002f76e; /* 0002f76e */
@@ -2635,6 +2607,7 @@ extern undefined nv_records; /* 004000c0 */
 extern undefined nv_settings_defaults; /* 00030966 */
 extern int *psos_config; /* 0010264c */
 extern uint8_t reference_valid_override_request; /* 00100c68 */
+extern char s_DUART_test_string_0001ee6e[]; /* 0001ee6e */
 extern word switchD_000205c0; /* 000205c4 */
 extern undefined task_table; /* 001026b8 */
 
@@ -2930,8 +2903,6 @@ __asm__(".set DAT_00102d6c, 0x00102d6c");
 __asm__(".set DAT_00102d70, 0x00102d70");
 __asm__(".set DAT_00102d74, 0x00102d74");
 __asm__(".set DAT_00102ebc, 0x00102ebc");
-__asm__(".set DAT_00103142, 0x00103142");
-__asm__(".set DAT_00103146, 0x00103146");
 __asm__(".set DAT_001032fc, 0x001032fc");
 __asm__(".set DAT_0010370a, 0x0010370a");
 __asm__(".set DAT_0010370e, 0x0010370e");
@@ -2953,7 +2924,6 @@ __asm__(".set DAT_0010aad3, 0x0010aad3");
 __asm__(".set DAT_0010aaf2, 0x0010aaf2");
 __asm__(".set DAT_0010aaf3, 0x0010aaf3");
 __asm__(".set DAT_0010ab1f, 0x0010ab1f");
-__asm__(".set DAT_0010ab2c, 0x0010ab2c");
 __asm__(".set DAT_0010ab30, 0x0010ab30");
 __asm__(".set DAT_0010ab32, 0x0010ab32");
 __asm__(".set DAT_0010ab33, 0x0010ab33");
@@ -2970,41 +2940,6 @@ __asm__(".set DAT_0010ab84, 0x0010ab84");
 __asm__(".set DAT_0010acf8, 0x0010acf8");
 __asm__(".set DAT_0010ad04, 0x0010ad04");
 __asm__(".set DAT_0010ad06, 0x0010ad06");
-__asm__(".set DAT_0010ad3c, 0x0010ad3c");
-__asm__(".set DAT_0010ad3d, 0x0010ad3d");
-__asm__(".set DAT_0010ad3e, 0x0010ad3e");
-__asm__(".set DAT_0010ad3f, 0x0010ad3f");
-__asm__(".set DAT_0010ad44, 0x0010ad44");
-__asm__(".set DAT_0010ad47, 0x0010ad47");
-__asm__(".set DAT_0010ad48, 0x0010ad48");
-__asm__(".set DAT_0010ad49, 0x0010ad49");
-__asm__(".set DAT_0010ad4d, 0x0010ad4d");
-__asm__(".set DAT_0010ad4e, 0x0010ad4e");
-__asm__(".set DAT_0010ad4f, 0x0010ad4f");
-__asm__(".set DAT_0010ae56, 0x0010ae56");
-__asm__(".set DAT_0010ae59, 0x0010ae59");
-__asm__(".set DAT_0010ae5a, 0x0010ae5a");
-__asm__(".set DAT_0010ae5b, 0x0010ae5b");
-__asm__(".set DAT_0010ae5c, 0x0010ae5c");
-__asm__(".set DAT_0010af5c, 0x0010af5c");
-__asm__(".set DAT_0010af60, 0x0010af60");
-__asm__(".set DAT_0010af64, 0x0010af64");
-__asm__(".set DAT_0010af66, 0x0010af66");
-__asm__(".set DAT_0010af67, 0x0010af67");
-__asm__(".set DAT_0010af68, 0x0010af68");
-__asm__(".set DAT_0010af69, 0x0010af69");
-__asm__(".set DAT_0010af6a, 0x0010af6a");
-__asm__(".set DAT_0010af6c, 0x0010af6c");
-__asm__(".set DAT_0010af6d, 0x0010af6d");
-__asm__(".set DAT_0010af6e, 0x0010af6e");
-__asm__(".set DAT_0010af6f, 0x0010af6f");
-__asm__(".set DAT_0010af70, 0x0010af70");
-__asm__(".set DAT_0010af82, 0x0010af82");
-__asm__(".set DAT_0010af9a, 0x0010af9a");
-__asm__(".set DAT_0010afaa, 0x0010afaa");
-__asm__(".set DAT_0010afac, 0x0010afac");
-__asm__(".set DAT_0010afb2, 0x0010afb2");
-__asm__(".set DAT_0010afb6, 0x0010afb6");
 __asm__(".set DAT_0010afe0, 0x0010afe0");
 __asm__(".set DAT_0010afe4, 0x0010afe4");
 __asm__(".set DAT_0010afe6, 0x0010afe6");
@@ -3159,7 +3094,6 @@ __asm__(".set UNK_0010aa27, 0x0010aa27");
 __asm__(".set UNK_0010aa38, 0x0010aa38");
 __asm__(".set UNK_0010aa3b, 0x0010aa3b");
 __asm__(".set UNK_0010aa6c, 0x0010aa6c");
-__asm__(".set UNK_0010afb0, 0x0010afb0");
 __asm__(".set USHORT_0001f6c8, 0x0001f6c8");
 __asm__(".set USHORT_0002f32a, 0x0002f32a");
 __asm__(".set USHORT_0002f76e, 0x0002f76e");
@@ -3275,6 +3209,9 @@ __asm__(".set WORD_0005ed48, 0x0005ed48");
 __asm__(".set aging_curve, 0x00101fd8");
 __asm__(".set atexit_count, 0x00103934");
 __asm__(".set atexit_functions, 0x001038b4");
+__asm__(".set boot_loopback_expect_next, 0x0010afb6");
+__asm__(".set boot_loopback_send_next, 0x0010afb2");
+__asm__(".set boot_selftest_uart, 0x0010ab2c");
 __asm__(".set boot_vectors, 0x00000000");
 __asm__(".set clock_date, 0x001009c2");
 __asm__(".set clock_invalid, 0x001009e7");
@@ -3351,6 +3288,12 @@ __asm__(".set holdover_steering, 0x00102042");
 __asm__(".set idn_model, 0x00101f68");
 __asm__(".set idn_serial, 0x00101f7a");
 __asm__(".set idn_suffix, 0x00101f8c");
+__asm__(".set installer_duart_shadow, 0x0010ad40");
+__asm__(".set installer_duarta, 0x0010ae50");
+__asm__(".set installer_duarta_ring, 0x0010ad4d");
+__asm__(".set installer_duartb, 0x0010af5c");
+__asm__(".set installer_duartb_applied, 0x0010ad3c");
+__asm__(".set installer_duartb_ring, 0x0010ae5a");
 __asm__(".set internal_pps_count, 0x00101b70");
 __asm__(".set internal_pps_dead, 0x00101b6f");
 __asm__(".set internal_pps_last_count, 0x00101cfe");
@@ -3372,6 +3315,8 @@ __asm__(".set log_mutex, 0x00101d36");
 __asm__(".set log_page_buffer, 0x00101d94");
 __asm__(".set log_page_number, 0x00101dd4");
 __asm__(".set loop_steering, 0x0010205e");
+__asm__(".set loopback_expect_next, 0x00103146");
+__asm__(".set loopback_send_next, 0x00103142");
 __asm__(".set max_loop_time, 0x00101e84");
 __asm__(".set nv_bytes_loaded, 0x00101f66");
 __asm__(".set nv_numeric_bytes_loaded, 0x00101f64");
@@ -3409,6 +3354,7 @@ __asm__(".set qspi, 0x001032a6");
 __asm__(".set rand_seed, 0x00103936");
 __asm__(".set reference_valid_override_request, 0x00100c68");
 __asm__(".set reset_to_recover_text, 0x00011b8c");
+__asm__(".set s_DUART_test_string_0001ee6e, 0x0001ee6e");
 __asm__(".set sci, 0x0010328a");
 __asm__(".set sci_exchanges, 0x00103150");
 __asm__(".set sci_ring, 0x00103188");
@@ -4203,10 +4149,6 @@ extern undefined4 _DAT_00102d6c;
 __asm__(".set _DAT_00102d6c, 0x00102d6c");
 extern undefined4 _DAT_00102d70;
 __asm__(".set _DAT_00102d70, 0x00102d70");
-extern char *_DAT_00103142;
-__asm__(".set _DAT_00103142, 0x00103142");
-extern char *_DAT_00103146;
-__asm__(".set _DAT_00103146, 0x00103146");
 extern code *_DAT_0010370a;
 __asm__(".set _DAT_0010370a, 0x0010370a");
 extern undefined4 _DAT_0010370e;
@@ -4235,8 +4177,6 @@ extern undefined4 _DAT_0010ab26;
 __asm__(".set _DAT_0010ab26, 0x0010ab26");
 extern undefined4 _DAT_0010ab28;
 __asm__(".set _DAT_0010ab28, 0x0010ab28");
-extern code *_DAT_0010afac;
-__asm__(".set _DAT_0010afac, 0x0010afac");
 extern ushort _DAT_0010b038;
 __asm__(".set _DAT_0010b038, 0x0010b038");
 extern undefined4 _DAT_0010b03a;
@@ -4269,8 +4209,6 @@ extern undefined4 _interval_mean_flag;
 __asm__(".set _interval_mean_flag, 0x0010253c");
 extern undefined4 _task_table;
 __asm__(".set _task_table, 0x001026b8");
-extern byte bRam0010afb0;
-__asm__(".set bRam0010afb0, 0x0010afb0");
 extern char cRam00101bfe;
 __asm__(".set cRam00101bfe, 0x00101bfe");
 extern char cRam00101c00;
@@ -6290,29 +6228,29 @@ void boot_duartb_loopback_check(void)
   
   uVar2 = duart.b.mr;
   duart.b.mr = 0x87;
-  DAT_0010afb6 = "DUART";
+  boot_loopback_expect_next = "DUART";
   duart.b.cr = 5;
   duart.b.rb_tb = 'D';
-  DAT_0010afb2 = (uint8_t *)0x54b;
-  while ((*DAT_0010afb6 != '\0' && (DAT_0010ab2c == 0))) {
+  boot_loopback_send_next = (uint8_t *)0x54b;
+  while ((*boot_loopback_expect_next != '\0' && (boot_selftest_uart == 0))) {
     iVar3 = 3000;
     while ((0 < iVar3 && (uVar2 = duart.b.sr_csr, (uVar2 & 1) == 0))) {
       iVar3 = iVar3 + -1;
     }
     uVar2 = duart.b.sr_csr;
     if ((uVar2 & 1) == 0) {
-      DAT_0010ab2c = 0x20;
+      boot_selftest_uart = 0x20;
     }
     else {
-      pcVar1 = DAT_0010afb6 + 1;
+      pcVar1 = boot_loopback_expect_next + 1;
       uVar2 = duart.b.rb_tb;
-      if ((uint)uVar2 != (int)*DAT_0010afb6) {
-        DAT_0010ab2c = 0x10;
+      if ((uint)uVar2 != (int)*boot_loopback_expect_next) {
+        boot_selftest_uart = 0x10;
       }
-      DAT_0010afb6 = pcVar1;
-      if (*DAT_0010afb2 != 0) {
-        duart.b.rb_tb = *DAT_0010afb2;
-        DAT_0010afb2 = DAT_0010afb2 + 1;
+      boot_loopback_expect_next = pcVar1;
+      if (*boot_loopback_send_next != 0) {
+        duart.b.rb_tb = *boot_loopback_send_next;
+        boot_loopback_send_next = boot_loopback_send_next + 1;
       }
     }
   }
@@ -6336,14 +6274,14 @@ void boot_duart_early_init(void)
   
   duart.ivr = 0x55;
   uVar1 = duart.ivr;
-  DAT_0010ab2c = (ushort)(uVar1 != 0x55);
+  boot_selftest_uart = (int16_t)(uVar1 != 0x55);
   duart.ivr = 0xaa;
   uVar1 = duart.ivr;
   if (uVar1 != 0xaa) {
-    DAT_0010ab2c = 1;
+    boot_selftest_uart = 1;
   }
   duart.ivr = 0x43;
-  if (DAT_0010ab2c == 0) {
+  if (boot_selftest_uart == 0) {
     duart.b.cr = CR_RESET_RECEIVER;
     duart.b.cr = CR_RESET_TRANSMITTER;
     duart.b.cr = CR_RESET_MR_POINTER;
@@ -6583,7 +6521,7 @@ LAB_00000a22:
   }
   *(undefined4 *)(puVar20 + -1) = 0xa40;
   boot_duart_early_init();
-  if (DAT_0010ab2c != 0) {
+  if (boot_selftest_uart != 0) {
     duart.stop_ropbc = 0x40;
     DAT_0010ab2e = DAT_0010ab2e | 0x40;
   }
@@ -6971,7 +6909,7 @@ __asm__(
 	"	ori.b #0x20,(__ghidra_10ab2e).l\n"
 	".Lg_a3a:\n"
 	"	jsr (boot_duart_early_init).l\n"
-	"	tst.w (__ghidra_10ab2c).l\n"
+	"	tst.w (boot_selftest_uart).l\n"
 	"	.byte 0x67 | beq.b 0x00000a58\n"
 	"	.reloc ., R_68K_PC8, boot_trap_11-1\n"
 	"	.byte 0\n"
@@ -33710,7 +33648,6 @@ uint8_t drta_get_byte(char *param_1)
 
 /* 0001e2c0 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* puts channel A in local loopback and sends "DUART test string"; sets the UART self-test's bit 8
    at 0x100c2e if it fails */
 
@@ -33741,21 +33678,21 @@ void duart_loopback_test_a(void)
   uVar4 = (uint)uVar1;
   duart_shadow.mr2a = duart_shadow.mr2a & 0x3f | 0x80;
   duart.a.mr = duart_shadow.mr2a;
-  _DAT_00103142 = "DUART test string\r\n";
-  _DAT_00103146 = "DUART test string\r\n";
+  loopback_send_next = (uint8_t *)s_DUART_test_string_0001ee6e;
+  loopback_expect_next = "DUART test string\r\n";
   duart_shadow.imr = duart_shadow.imr | (IMR_RXRDYA | IMR_TXRDYA);
   duart.isr_imr = duart_shadow.imr;
   duart.a.cr = 5;
   set_interrupt_mask(uVar2);
-  while (((int)uVar4 < 10000 && (*_DAT_00103146 != '\0'))) {
+  while (((int)uVar4 < 10000 && (*loopback_expect_next != '\0'))) {
     uVar4 = uVar4 + 1;
   }
   uVar2 = set_interrupt_mask(0x700);
-  if (*_DAT_00103146 != '\0') {
+  if (*loopback_expect_next != '\0') {
     selftest.uart = selftest.uart | 8;
   }
-  _DAT_00103142 = &DAT_0001ed2c;
-  _DAT_00103146 = &DAT_0001ed2c;
+  loopback_send_next = &DAT_0001ed2c;
+  loopback_expect_next = "";
   duart.a.cr = CR_RESET_RECEIVER;
   duart.a.cr = CR_RESET_TRANSMITTER;
   uVar1 = duart.a.mr;
@@ -33773,7 +33710,6 @@ void duart_loopback_test_a(void)
 
 /* 0001e41a */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the same for channel B */
 
 void duart_loopback_test_b(void)
@@ -33803,21 +33739,21 @@ void duart_loopback_test_b(void)
   uVar4 = (uint)uVar1;
   duart_shadow.mr2b = duart_shadow.mr2b & 0x3f | 0x80;
   duart.b.mr = duart_shadow.mr2b;
-  _DAT_00103142 = "DUART test string\r\n";
-  _DAT_00103146 = "DUART test string\r\n";
+  loopback_send_next = (uint8_t *)s_DUART_test_string_0001ee6e;
+  loopback_expect_next = "DUART test string\r\n";
   duart_shadow.imr = duart_shadow.imr | (IMR_RXRDYB | IMR_TXRDYB);
   duart.isr_imr = duart_shadow.imr;
   duart.b.cr = 5;
   set_interrupt_mask(uVar2);
-  while (((int)uVar4 < 10000 && (*_DAT_00103146 != '\0'))) {
+  while (((int)uVar4 < 10000 && (*loopback_expect_next != '\0'))) {
     uVar4 = uVar4 + 1;
   }
   uVar2 = set_interrupt_mask(0x700);
-  if (*_DAT_00103146 != '\0') {
+  if (*loopback_expect_next != '\0') {
     selftest.uart = selftest.uart | 0x20;
   }
-  _DAT_00103142 = &DAT_0001ed2c;
-  _DAT_00103146 = &DAT_0001ed2c;
+  loopback_send_next = &DAT_0001ed2c;
+  loopback_expect_next = "";
   duart.b.cr = CR_RESET_RECEIVER;
   duart.b.cr = CR_RESET_TRANSMITTER;
   uVar1 = duart.b.mr;
@@ -33906,7 +33842,6 @@ void duart_test(void)
 
 /* 0001e6be */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the loopback test's receive on channel A: compares with the next expected character */
 
 void duart_test_rx_a(void)
@@ -33915,8 +33850,8 @@ void duart_test_rx_a(void)
   uint8_t uVar1;
   char *pcVar2;
   
-  pcVar2 = _DAT_00103146;
-  _DAT_00103146 = _DAT_00103146 + 1;
+  pcVar2 = loopback_expect_next;
+  loopback_expect_next = loopback_expect_next + 1;
   uVar1 = duart.a.rb_tb;
   if ((uint)uVar1 != (int)*pcVar2) {
     selftest.uart = selftest.uart | 4;
@@ -33927,7 +33862,6 @@ void duart_test_rx_a(void)
 
 /* 0001e6e2 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the loopback test's receive on channel B */
 
 void duart_test_rx_b(void)
@@ -33936,8 +33870,8 @@ void duart_test_rx_b(void)
   uint8_t uVar1;
   char *pcVar2;
   
-  pcVar2 = _DAT_00103146;
-  _DAT_00103146 = _DAT_00103146 + 1;
+  pcVar2 = loopback_expect_next;
+  loopback_expect_next = loopback_expect_next + 1;
   uVar1 = duart.b.rb_tb;
   if ((uint)uVar1 != (int)*pcVar2) {
     selftest.uart = selftest.uart | 0x10;
@@ -33948,19 +33882,18 @@ void duart_test_rx_b(void)
 
 /* 0001e706 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the loopback test's transmit on channel A: sends the next character, or stops at the end */
 
 void duart_test_tx_a(void)
 
 {
-  if (*_DAT_00103142 == 0) {
+  if (*loopback_send_next == 0) {
     duart_shadow.imr = duart_shadow.imr & ~IMR_TXRDYA;
     duart.isr_imr = duart_shadow.imr;
   }
   else {
-    duart.a.rb_tb = *_DAT_00103142;
-    _DAT_00103142 = _DAT_00103142 + 1;
+    duart.a.rb_tb = *loopback_send_next;
+    loopback_send_next = loopback_send_next + 1;
   }
   return;
 }
@@ -33968,19 +33901,18 @@ void duart_test_tx_a(void)
 
 /* 0001e736 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the loopback test's transmit on channel B */
 
 void duart_test_tx_b(void)
 
 {
-  if (*_DAT_00103142 == 0) {
+  if (*loopback_send_next == 0) {
     duart_shadow.imr = duart_shadow.imr & ~IMR_TXRDYB;
     duart.isr_imr = duart_shadow.imr;
   }
   else {
-    duart.b.rb_tb = *_DAT_00103142;
-    _DAT_00103142 = _DAT_00103142 + 1;
+    duart.b.rb_tb = *loopback_send_next;
+    loopback_send_next = loopback_send_next + 1;
   }
   return;
 }
@@ -34327,7 +34259,6 @@ void duart_stop(void)
 
 /* 0001ebe4 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* sends "DUART" through channel B in local loopback and checks each character back */
 
 void duartb_loopback_check(void)
@@ -34339,11 +34270,11 @@ void duartb_loopback_check(void)
   
   uVar2 = duart.b.mr;
   duart.b.mr = 0x87;
-  _DAT_00103146 = "DUART";
+  loopback_expect_next = "DUART";
   duart.b.cr = 5;
   duart.b.rb_tb = 'D';
-  _DAT_00103142 = (uint8_t *)0x1eef7;
-  while ((*_DAT_00103146 != '\0' && (selftest.uart == 0))) {
+  loopback_send_next = (uint8_t *)0x1eef7;
+  while ((*loopback_expect_next != '\0' && (selftest.uart == 0))) {
     iVar3 = 3000;
     while ((0 < iVar3 && (uVar2 = duart.b.sr_csr, (uVar2 & 1) == 0))) {
       iVar3 = iVar3 + -1;
@@ -34353,15 +34284,15 @@ void duartb_loopback_check(void)
       selftest.uart = 0x20;
     }
     else {
-      pcVar1 = _DAT_00103146 + 1;
+      pcVar1 = loopback_expect_next + 1;
       uVar2 = duart.b.rb_tb;
-      if ((uint)uVar2 != (int)*_DAT_00103146) {
+      if ((uint)uVar2 != (int)*loopback_expect_next) {
         selftest.uart = 0x10;
       }
-      _DAT_00103146 = pcVar1;
-      if (*_DAT_00103142 != 0) {
-        duart.b.rb_tb = *_DAT_00103142;
-        _DAT_00103142 = _DAT_00103142 + 1;
+      loopback_expect_next = pcVar1;
+      if (*loopback_send_next != 0) {
+        duart.b.rb_tb = *loopback_send_next;
+        loopback_send_next = loopback_send_next + 1;
       }
     }
   }
@@ -85760,35 +85691,35 @@ int installer_gp_port_select(char param_1)
 void installer_duartb_mode_from_settings(void)
 
 {
-  DAT_0010ad47 = DAT_0010ad47 & 0xe0;
-  if (DAT_0010ab33 == '\0') {
-    DAT_0010af6e = 0;
-    DAT_0010ad47 = DAT_0010ad47 | 0x10;
+  installer_duart_shadow.mr1b = installer_duart_shadow.mr1b & 0xe0;
+  if (DAT_0010ab33 == 0) {
+    installer_duartb.parity = 0;
+    installer_duart_shadow.mr1b = installer_duart_shadow.mr1b | 0x10;
   }
   else {
-    DAT_0010af6e = 1;
-    if (DAT_0010ab33 == '\x02') {
-      DAT_0010ad47 = DAT_0010ad47 | 4;
+    installer_duartb.parity = 1;
+    if (DAT_0010ab33 == 2) {
+      installer_duart_shadow.mr1b = installer_duart_shadow.mr1b | 4;
     }
   }
-  if (DAT_0010ab36 == '\0') {
-    DAT_0010ad47 = DAT_0010ad47 | 2;
+  if (DAT_0010ab36 == 0) {
+    installer_duart_shadow.mr1b = installer_duart_shadow.mr1b | 2;
   }
   else {
-    DAT_0010ad47 = DAT_0010ad47 | 3;
+    installer_duart_shadow.mr1b = installer_duart_shadow.mr1b | 3;
   }
-  if (DAT_0010ab37 == '\0') {
-    DAT_0010ad48 = DAT_0010ad48 & 0xf0 | 7;
+  if (DAT_0010ab37 == 0) {
+    installer_duart_shadow.mr2b = installer_duart_shadow.mr2b & 0xf0 | 7;
   }
   else {
-    DAT_0010ad48 = DAT_0010ad48 & 0xf0 | 0xf;
+    installer_duart_shadow.mr2b = installer_duart_shadow.mr2b & 0xf0 | 0xf;
   }
   duart.b.cr = CR_RESET_MR_POINTER;
-  duart.b.mr = DAT_0010ad47;
-  duart.b.mr = DAT_0010ad48;
-  DAT_0010ad3d = DAT_0010ab33;
-  DAT_0010ad3e = DAT_0010ab36;
-  DAT_0010ad3f = DAT_0010ab37;
+  duart.b.mr = installer_duart_shadow.mr1b;
+  duart.b.mr = installer_duart_shadow.mr2b;
+  installer_duartb_applied.parity = DAT_0010ab33;
+  installer_duartb_applied.eight_bits = DAT_0010ab36;
+  installer_duartb_applied.two_stop_bits = DAT_0010ab37;
   return;
 }
 
@@ -85803,8 +85734,8 @@ void installer_duartb_baud_from_settings(void)
   int iVar1;
   char cVar2;
   
-  iVar1 = (int)DAT_0010ab32 - 3;
-  if ((uint)(int)DAT_0010ab32 < 3 || iVar1 == 0) {
+  iVar1 = (int)(char)DAT_0010ab32 - 3;
+  if ((uint)(int)(char)DAT_0010ab32 < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_installer__001030d2)[(short)iVar1]) {
     case 8:
@@ -85824,9 +85755,9 @@ void installer_duartb_baud_from_settings(void)
 switchD_installer__001030c8_caseD_3:
     cVar2 = '\f';
   }
-  DAT_0010ad49 = cVar2 * '\x11';
+  installer_duart_shadow.csrb = cVar2 * '\x11';
   duart.b.sr_csr = cVar2 * '\x11';
-  DAT_0010ad3c = DAT_0010ab32;
+  installer_duartb_applied.baud = DAT_0010ab32;
   return;
 }
 
@@ -85856,25 +85787,26 @@ byte installer_duartb_putc_polled(byte param_1)
 undefined4 installer_drtb_getc(void)
 
 {
-  undefined1 uVar1;
-  char cVar2;
+  uint8_t uVar1;
+  uint8_t uVar2;
   undefined3 uVar3;
   undefined3 extraout_var;
   ulong uVar4;
   
   installer_psos_get_v(0x4000,0,(undefined4 *)0x0);
-  if (DAT_0010ae5a == DAT_0010ae5b) {
+  if (installer_duartb_ring.write == installer_duartb_ring.read) {
     uVar4 = installer_psos_wait_v(0x4000,0,0,(ulong *)0x0);
     if ((char)uVar4 != '\0') {
       installer_fatal_error(s_wait_v_SIG_SIQ_error_in_getc_installer__00103dfc);
     }
   }
-  cVar2 = DAT_0010ae5b + 1;
+  uVar2 = installer_duartb_ring.read + 1;
   uVar3 = 0;
-  uVar1 = (&DAT_0010ae5c)[DAT_0010ae5b];
-  DAT_0010ae5b = cVar2;
-  if ((((DAT_0010af68 & 0x20) != 0) && (uVar3 = 0, 0x10 < (byte)(cVar2 - DAT_0010ae5a))) &&
-     (DAT_0010af68 = DAT_0010af68 & 0xdf, DAT_0010af6c != '\0')) {
+  uVar1 = installer_duartb_ring.data[installer_duartb_ring.read];
+  installer_duartb_ring.read = uVar2;
+  if ((((installer_duartb.flow & 0x20) != 0) &&
+      (uVar3 = 0, 0x10 < (byte)(uVar2 - installer_duartb_ring.write))) &&
+     (installer_duartb.flow = installer_duartb.flow & 0xdf, installer_duartb.xon_xoff != 0)) {
     installer_drtb_putc(0x11);
     uVar3 = extraout_var;
   }
@@ -85884,7 +85816,6 @@ undefined4 installer_drtb_getc(void)
 
 /* installer::00103266 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the installer's drtb_gets */
 
 int installer_drtb_gets(byte *param_1,int param_2)
@@ -85903,12 +85834,12 @@ LAB_installer__00103352:
   while( true ) {
     if (param_2 == 0) {
       *pbVar4 = 0;
-      if (DAT_0010af69 == '\0') {
-        DAT_0010af6a = '\0';
+      if (installer_duartb.receive_errors == 0) {
+        installer_duartb.read_errors = 0;
       }
       else {
-        DAT_0010af6a = DAT_0010af69;
-        DAT_0010af69 = '\0';
+        installer_duartb.read_errors = installer_duartb.receive_errors;
+        installer_duartb.receive_errors = 0;
       }
       return iVar2;
     }
@@ -85917,7 +85848,7 @@ LAB_installer__00103352:
     if (0x1f < bVar1) break;
     if (0x10 < bVar1 - 8) {
 switchD_installer__001032b2_caseD_b:
-      (*_DAT_0010afac)();
+      (*(code *)installer_duartb.echo)();
       pbVar3 = pbVar4;
       goto LAB_installer__0010334c;
     }
@@ -85934,15 +85865,16 @@ switchD_installer__001032b2_caseD_b:
       goto LAB_installer__00103344;
     case 2:
     case 5:
-      if (((bRam0010afb0 == 0xd) && (bVar1 == 10)) || ((bRam0010afb0 == 10 && (bVar1 == 0xd)))) {
-        bRam0010afb0 = 0;
+      if (((installer_duartb.last_terminator == 0xd) && (bVar1 == 10)) ||
+         ((installer_duartb.last_terminator == 10 && (bVar1 == 0xd)))) {
+        installer_duartb.last_terminator = 0;
       }
       else {
-        (*_DAT_0010afac)();
-        (*_DAT_0010afac)(uVar5);
+        (*(code *)installer_duartb.echo)();
+        (*(code *)installer_duartb.echo)(uVar5);
         iVar2 = iVar2 - param_2;
         param_2 = 0;
-        bRam0010afb0 = bVar1;
+        installer_duartb.last_terminator = bVar1;
       }
       break;
     default:
@@ -85953,17 +85885,17 @@ switchD_installer__001032b2_caseD_b:
   }
 LAB_installer__00103344:
   pbVar3 = pbVar4 + 1;
-  bRam0010afb0 = bVar1;
+  installer_duartb.last_terminator = bVar1;
   *pbVar4 = bVar1;
   param_2 = param_2 + -1;
   goto LAB_installer__0010334c;
 switchD_installer__001032b2_caseD_18:
   if (iVar2 != param_2) {
-    (*_DAT_0010afac)();
+    (*(code *)installer_duartb.echo)();
     param_2 = iVar2;
     pbVar3 = param_1;
 LAB_installer__0010334c:
-    (*_DAT_0010afac)();
+    (*(code *)installer_duartb.echo)();
     pbVar4 = pbVar3;
   }
   goto LAB_installer__00103352;
@@ -86039,17 +85971,18 @@ uint installer_duarta_receive(void)
   while( true ) {
     uVar1 = duart.a.sr_csr;
     if ((uVar1 & 1) == 0) break;
-    in_D0 = (uint)DAT_0010ad4d;
+    in_D0 = (uint)installer_duarta_ring.write;
     uVar1 = duart.a.rb_tb;
-    DAT_0010ad4d = DAT_0010ad4d + 1;
-    (&DAT_0010ad4f)[in_D0] = uVar1;
+    installer_duarta_ring.write = installer_duarta_ring.write + 1;
+    installer_duarta_ring.data[in_D0] = uVar1;
   }
-  if ((byte)(DAT_0010ad4e - DAT_0010ad4d) < DAT_0010ae59) {
-    DAT_0010ae59 = DAT_0010ad4e - DAT_0010ad4d;
+  if ((byte)(installer_duarta_ring.read - installer_duarta_ring.write) < installer_duarta.least_free
+     ) {
+    installer_duarta.least_free = installer_duarta_ring.read - installer_duarta_ring.write;
   }
   uVar1 = duart.a.sr_csr;
   if ((uVar1 & 0x10) != 0) {
-    DAT_0010ae56 = 1;
+    installer_duarta.overrun = 1;
     duart.a.cr = CR_RESET_ERROR;
   }
   return CONCAT31((int3)(in_D0 >> 8),uVar1) & 0xffffff10;
@@ -86074,66 +86007,71 @@ byte installer_duartb_isr(void)
     uVar1 = duart.b.sr_csr;
     if ((uVar1 & 1) == 0) break;
     uVar1 = duart.b.sr_csr;
-    DAT_0010af69 = uVar1 & 0xe0 | DAT_0010af69;
+    installer_duartb.receive_errors = uVar1 & 0xe0 | installer_duartb.receive_errors;
     bVar5 = duart.b.rb_tb;
-    if (DAT_0010ad3e == '\0') {
+    if (installer_duartb_applied.eight_bits == 0) {
       bVar5 = bVar5 & 0x7f;
     }
-    if ((bVar5 == 3) && (DAT_0010af82 == DAT_0010aff0)) {
-      if (DAT_0010af82 != 0) {
-        uVar4 = installer_psos_signal_v(DAT_0010af82,0x800);
+    if ((bVar5 == 3) && (installer_duartb.read_token.task == DAT_0010aff0)) {
+      if (installer_duartb.read_token.task != 0) {
+        uVar4 = installer_psos_signal_v(installer_duartb.read_token.task,0x800);
         if ((char)uVar4 != '\0') {
           installer_fatal_error(s_DUARTB_isr_signaling_SIGINTR_installer__00103e93);
         }
       }
-      if (DAT_0010af6c != '\0') {
-        DAT_0010af68 = DAT_0010af68 & 0x7f;
+      if (installer_duartb.xon_xoff != 0) {
+        installer_duartb.flow = installer_duartb.flow & 0x7f;
       }
-      if (DAT_0010af6f == '\0') {
-        DAT_0010ad44 = DAT_0010ad44 | 0x10;
-        duart.isr_imr = DAT_0010ad44;
+      if (installer_duartb.reconfiguring == 0) {
+        installer_duart_shadow.imr = installer_duart_shadow.imr | IMR_TXRDYB;
+        duart.isr_imr = installer_duart_shadow.imr;
       }
     }
     else if (bVar5 == 0x11) {
-      if ((DAT_0010af6c != '\0') && (DAT_0010af68 = DAT_0010af68 & 0x7f, DAT_0010af6f == '\0')) {
-        DAT_0010ad44 = DAT_0010ad44 | 0x10;
-        duart.isr_imr = DAT_0010ad44;
+      if ((installer_duartb.xon_xoff != 0) &&
+         (installer_duartb.flow = installer_duartb.flow & 0x7f, installer_duartb.reconfiguring == 0)
+         ) {
+        installer_duart_shadow.imr = installer_duart_shadow.imr | 0x10;
+        duart.isr_imr = installer_duart_shadow.imr;
       }
     }
     else if (bVar5 == 0x13) {
-      if ((DAT_0010af6c != '\0') && (DAT_0010af68 = DAT_0010af68 | 0x80, DAT_0010afaa == '\0')) {
-        DAT_0010ad44 = DAT_0010ad44 & 0xef;
-        duart.isr_imr = DAT_0010ad44;
+      if ((installer_duartb.xon_xoff != 0) &&
+         (installer_duartb.flow = installer_duartb.flow | 0x80, installer_duartb.async_allowed == 0)
+         ) {
+        installer_duart_shadow.imr = installer_duart_shadow.imr & 0xef;
+        duart.isr_imr = installer_duart_shadow.imr;
       }
     }
-    else if (DAT_0010af82 != 0) {
-      uVar3 = (uint)DAT_0010ae5a;
-      DAT_0010ae5a = DAT_0010ae5a + 1;
-      (&DAT_0010ae5c)[uVar3] = bVar5;
-      if (DAT_0010ae5a == DAT_0010ae5b) {
-        DAT_0010af69 = DAT_0010af69 | 0x10;
+    else if (installer_duartb.read_token.task != 0) {
+      uVar3 = (uint)installer_duartb_ring.write;
+      installer_duartb_ring.write = installer_duartb_ring.write + 1;
+      installer_duartb_ring.data[uVar3] = bVar5;
+      if (installer_duartb_ring.write == installer_duartb_ring.read) {
+        installer_duartb.receive_errors = installer_duartb.receive_errors | 0x10;
       }
       bVar2 = true;
-      if ((byte)(DAT_0010ae5b - DAT_0010ae5a) < 0x40) {
-        DAT_0010af68 = DAT_0010af68 | 0x20;
-        if (DAT_0010af6c != '\0') {
+      if ((byte)(installer_duartb_ring.read - installer_duartb_ring.write) < 0x40) {
+        installer_duartb.flow = installer_duartb.flow | 0x20;
+        if (installer_duartb.xon_xoff != 0) {
           installer_duartb_putc_polled(0x13);
         }
       }
-      if ((byte)(DAT_0010ae5b - DAT_0010ae5a) < DAT_0010af6d) {
-        DAT_0010af6d = DAT_0010ae5b - DAT_0010ae5a;
+      if ((byte)(installer_duartb_ring.read - installer_duartb_ring.write) <
+          installer_duartb.least_free) {
+        installer_duartb.least_free = installer_duartb_ring.read - installer_duartb_ring.write;
       }
     }
   }
   if (bVar2) {
-    uVar4 = installer_psos_signal_v(DAT_0010af82,0x4000);
+    uVar4 = installer_psos_signal_v(installer_duartb.read_token.task,0x4000);
     if ((char)uVar4 != '\0') {
       installer_fatal_error(s_DUARTB_isr_signaling_SIG_SIQ_installer__00103eb0);
     }
   }
   uVar1 = duart.b.sr_csr;
   if ((uVar1 & 0x10) != 0) {
-    DAT_0010af69 = DAT_0010af69 | 0x10;
+    installer_duartb.receive_errors = installer_duartb.receive_errors | 0x10;
     duart.b.cr = CR_RESET_ERROR;
   }
   return uVar1 & 0x10;
@@ -86147,8 +86085,8 @@ byte installer_duartb_isr(void)
 void installer_duarta_transmit_interrupt(void)
 
 {
-  DAT_0010ad44 = DAT_0010ad44 & 0xfe;
-  duart.isr_imr = DAT_0010ad44;
+  installer_duart_shadow.imr = installer_duart_shadow.imr & ~IMR_TXRDYA;
+  duart.isr_imr = installer_duart_shadow.imr;
   return;
 }
 
@@ -86162,41 +86100,41 @@ void installer_duartb_transmit_interrupt(void)
 {
   ulong uVar1;
   
-  DAT_0010af70 = 1;
-  if (DAT_0010af66 == '\0') {
-    if (DAT_0010af64 == 0) {
-      DAT_0010ad44 = DAT_0010ad44 & 0xef;
-      duart.isr_imr = DAT_0010ad44;
-      if (DAT_0010af9a != 0) {
-        uVar1 = installer_psos_signal_v(DAT_0010af9a,0x1000);
+  installer_duartb.in_transmit_interrupt = 1;
+  if (installer_duartb.async_count == 0) {
+    if (installer_duartb.transmit_count == 0) {
+      installer_duart_shadow.imr = installer_duart_shadow.imr & ~IMR_TXRDYB;
+      duart.isr_imr = installer_duart_shadow.imr;
+      if (installer_duartb.write_token.task != 0) {
+        uVar1 = installer_psos_signal_v(installer_duartb.write_token.task,0x1000);
         if ((char)uVar1 != '\0') {
           installer_fatal_error(s_DUARTB_isr_signaling_SIG_SOQ_installer__00103ecd);
         }
       }
     }
-    else if ((DAT_0010af68 & 0x80) == 0) {
-      duart.b.rb_tb = *DAT_0010af5c;
-      DAT_0010af64 = DAT_0010af64 + -1;
-      DAT_0010af5c = DAT_0010af5c + 1;
+    else if ((installer_duartb.flow & 0x80) == 0) {
+      duart.b.rb_tb = *installer_duartb.transmit_next;
+      installer_duartb.transmit_count = installer_duartb.transmit_count + -1;
+      installer_duartb.transmit_next = installer_duartb.transmit_next + 1;
     }
     else {
-      DAT_0010ad44 = DAT_0010ad44 & 0xef;
-      duart.isr_imr = DAT_0010ad44;
+      installer_duart_shadow.imr = installer_duart_shadow.imr & ~IMR_TXRDYB;
+      duart.isr_imr = installer_duart_shadow.imr;
     }
   }
   else {
-    duart.b.rb_tb = *DAT_0010af60;
-    DAT_0010af66 = DAT_0010af66 + -1;
-    DAT_0010af60 = DAT_0010af60 + 1;
+    duart.b.rb_tb = *installer_duartb.async_next;
+    installer_duartb.async_count = installer_duartb.async_count - 1;
+    installer_duartb.async_next = installer_duartb.async_next + 1;
   }
-  if ((DAT_0010af67 != '\0') && (DAT_0010af66 == '\0')) {
-    DAT_0010af67 = '\0';
-    DAT_0010afaa = 0;
+  if ((installer_duartb.async_pending != 0) && (installer_duartb.async_count == 0)) {
+    installer_duartb.async_pending = 0;
+    installer_duartb.async_allowed = 0;
     if (DAT_0010affc != 0) {
       installer_psos_signal_v(DAT_0010affc,0x20);
     }
   }
-  DAT_0010af70 = 0;
+  installer_duartb.in_transmit_interrupt = 0;
   return;
 }
 
@@ -86211,19 +86149,19 @@ void installer_duart_interrupt(void)
   uint8_t uVar1;
   
   uVar1 = duart.isr_imr;
-  if ((DAT_0010ad44 & uVar1 & 2) != 0) {
+  if ((installer_duart_shadow.imr & uVar1 & 2) != 0) {
     installer_duarta_receive();
   }
   uVar1 = duart.isr_imr;
-  if ((DAT_0010ad44 & uVar1 & 1) != 0) {
+  if ((installer_duart_shadow.imr & uVar1 & 1) != 0) {
     installer_duarta_transmit_interrupt();
   }
   uVar1 = duart.isr_imr;
-  if ((DAT_0010ad44 & uVar1 & 0x20) != 0) {
+  if ((installer_duart_shadow.imr & uVar1 & 0x20) != 0) {
     installer_duartb_isr();
   }
   uVar1 = duart.isr_imr;
-  if ((DAT_0010ad44 & uVar1 & 0x10) != 0) {
+  if ((installer_duart_shadow.imr & uVar1 & 0x10) != 0) {
     installer_duartb_transmit_interrupt();
   }
   do {

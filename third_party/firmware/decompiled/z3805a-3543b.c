@@ -500,6 +500,29 @@ struct fpga_bit {
     uint8_t field_3;
 };
 
+typedef struct gps_command_log gps_command_log, *Pgps_command_log;
+
+typedef struct gps_command_log_entry gps_command_log_entry, *Pgps_command_log_entry;
+
+struct gps_command_log_entry {
+    int16_t code;
+    uint8_t sender;
+    uint8_t field_03;
+    int16_t message;
+    char argument_text[3];
+    uint8_t query;
+    uint8_t clock_invalid;
+    uint8_t field_0b;
+    uint32_t date;
+    uint32_t time;
+};
+
+struct gps_command_log {
+    struct gps_command_log_entry entries[21];
+    struct gps_command_log_entry *read;
+    struct gps_command_log_entry *write;
+};
+
 typedef struct gps_command_mailbox gps_command_mailbox, *Pgps_command_mailbox;
 
 struct gps_command_mailbox {
@@ -1576,6 +1599,8 @@ _Static_assert(sizeof(exception_record) == 18, "exception_record");
 _Static_assert(sizeof(exchange_token) == 16, "exchange_token");
 _Static_assert(sizeof(forth_user_area) == 40, "forth_user_area");
 _Static_assert(sizeof(fpga_bit) == 4, "fpga_bit");
+_Static_assert(sizeof(gps_command_log) == 428, "gps_command_log");
+_Static_assert(sizeof(gps_command_log_entry) == 20, "gps_command_log_entry");
 _Static_assert(sizeof(gps_command_mailbox) == 22, "gps_command_mailbox");
 _Static_assert(sizeof(gps_request_entry) == 26, "gps_request_entry");
 _Static_assert(sizeof(gps_request_ring) == 138, "gps_request_ring");
@@ -1900,6 +1925,8 @@ extern uint8_t gps_receive_state; /* 00101394 */
 extern gps_request_ring gps_requests; /* 0010139e */
 extern gps_statistics gps_counts; /* 001017bc */
 extern void * gps_last_command; /* 001017f2 */
+extern gps_command_log command_log; /* 001017f6 */
+extern gps_command_log command_log_snapshot; /* 001019a2 */
 extern uint32_t raim_suspect_time; /* 00101b4e */
 extern uint8_t status_message_arrived; /* 00101b54 */
 extern uint8_t traim_message_arrived; /* 00101b55 */
@@ -2252,12 +2279,6 @@ extern byte DAT_0010142a; /* 0010142a */
 extern undefined DAT_0010142c; /* 0010142c */
 extern char DAT_0010155a; /* 0010155a */
 extern undefined DAT_0010155c; /* 0010155c */
-extern undefined DAT_001017f6; /* 001017f6 */
-extern undefined DAT_0010199a; /* 0010199a */
-extern undefined DAT_0010199e; /* 0010199e */
-extern undefined DAT_001019a2; /* 001019a2 */
-extern undefined DAT_00101b46; /* 00101b46 */
-extern undefined DAT_00101b4a; /* 00101b4a */
 extern undefined DAT_00101d8e; /* 00101d8e */
 extern char DAT_00101dd6; /* 00101dd6 */
 extern char DAT_00101dd7; /* 00101dd7 */
@@ -2806,12 +2827,6 @@ __asm__(".set DAT_0010142a, 0x0010142a");
 __asm__(".set DAT_0010142c, 0x0010142c");
 __asm__(".set DAT_0010155a, 0x0010155a");
 __asm__(".set DAT_0010155c, 0x0010155c");
-__asm__(".set DAT_001017f6, 0x001017f6");
-__asm__(".set DAT_0010199a, 0x0010199a");
-__asm__(".set DAT_0010199e, 0x0010199e");
-__asm__(".set DAT_001019a2, 0x001019a2");
-__asm__(".set DAT_00101b46, 0x00101b46");
-__asm__(".set DAT_00101b4a, 0x00101b4a");
 __asm__(".set DAT_00101d8e, 0x00101d8e");
 __asm__(".set DAT_00101dd6, 0x00101dd6");
 __asm__(".set DAT_00101dd7, 0x00101dd7");
@@ -3179,6 +3194,8 @@ __asm__(".set clock_date, 0x001009c2");
 __asm__(".set clock_gps_mismatch, 0x00102552");
 __asm__(".set clock_invalid, 0x001009e7");
 __asm__(".set clock_time, 0x001009be");
+__asm__(".set command_log, 0x001017f6");
+__asm__(".set command_log_snapshot, 0x001019a2");
 __asm__(".set console_device, 0x00100a02");
 __asm__(".set console_halt_hook_cell, 0x001009fe");
 __asm__(".set counter_configuration, 0x00101fae");
@@ -4058,14 +4075,6 @@ extern short _DAT_00100bd2;
 __asm__(".set _DAT_00100bd2, 0x00100bd2");
 extern undefined *_DAT_0010155c;
 __asm__(".set _DAT_0010155c, 0x0010155c");
-extern undefined *_DAT_0010199a;
-__asm__(".set _DAT_0010199a, 0x0010199a");
-extern undefined *_DAT_0010199e;
-__asm__(".set _DAT_0010199e, 0x0010199e");
-extern undefined *_DAT_00101b46;
-__asm__(".set _DAT_00101b46, 0x00101b46");
-extern undefined *_DAT_00101b4a;
-__asm__(".set _DAT_00101b4a, 0x00101b4a");
 extern short _DAT_00101d8e;
 __asm__(".set _DAT_00101d8e, 0x00101d8e");
 extern short _DAT_00101dd8;
@@ -4192,8 +4201,6 @@ extern undefined4 _interval_mean_flag;
 __asm__(".set _interval_mean_flag, 0x0010253c");
 extern undefined4 _task_table;
 __asm__(".set _task_table, 0x001026b8");
-extern code func_0x0004c9d4;
-__asm__(".set func_0x0004c9d4, 0x0004c9d4");
 extern code func_0x0004f596;
 __asm__(".set func_0x0004f596, 0x0004f596");
 extern code func_0x0010135c;
@@ -5879,11 +5886,12 @@ void gpsm_task(void);
 void raim_request_arguments(void);
 void gps_console_request(short param_1,undefined4 *param_2,undefined1 param_3);
 void command_log_clear(void);
-undefined4 command_log_add(int param_1,int param_2);
-undefined4 gps_print_command(int param_1,char *param_2);
+int command_log_add(void *request,char *text);
+int gps_print_command(gps_command_log *log,char *line);
 void status_snapshot_update(undefined *param_1);
 void clear_gps_debug(void);
-void gps_print_command_log(int param_1);
+void gps_print_command_log(gps_command_log *log);
+void gps_print_commands(void);
 void gps_print_1pps(void);
 void gps_print_process_monitor(void);
 long long_array_get(long *array,uint8_t index);
@@ -31874,7 +31882,7 @@ void diag_clr_gps_debug(void)
 void diag_pr_gps_cmds(void)
 
 {
-  func_0x0004c9d4();
+  gps_print_commands();
   return;
 }
 
@@ -65334,7 +65342,7 @@ LAB_0004c17a:
               bStack_10 = bStack_10 + 1;
               gps_counts.commands_sent = gps_counts.commands_sent + 1;
               gps_message_to_text(&DAT_001011c6,bVar8,gps_last_program_message);
-              command_log_add((int)auStack_aa,0x101216);
+              command_log_add(auStack_aa,gps_last_program_message);
               if ((&DAT_0004feec)[sVar2 * 0x38] == '\0') goto LAB_0004c1e6;
               DAT_0010139c = '\x02';
             }
@@ -65521,42 +65529,46 @@ void gps_console_request(short param_1,undefined4 *param_2,undefined1 param_3)
 
 /* 0004c65e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* empties the GPS Receiver Command Log ring at 0x1017f6 */
 
 void command_log_clear(void)
 
 {
-  _DAT_0010199e = &DAT_001017f6;
-  _DAT_0010199a = &DAT_001017f6;
+  command_log.write = command_log.entries;
+  command_log.read = command_log.entries;
   return;
 }
 
 
 /* 0004c66e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* adds an entry to the GPS Receiver Command Log, with its date and time */
 
-undefined4 command_log_add(int param_1,int param_2)
+int command_log_add(void *request,char *text)
 
 {
-  undefined1 uVar1;
-  int iVar2;
-  undefined4 *puVar3;
+  undefined2 uVar1;
+  undefined2 uVar2;
+  undefined1 uVar3;
+  char cVar4;
+  char cVar5;
+  undefined1 uVar6;
+  int iVar7;
+  gps_command_log *pgVar8;
   undefined4 local_20;
   undefined4 local_1c;
   undefined4 local_18;
   uint32_t local_c;
   uint32_t local_8;
   
-  local_20 = CONCAT22(*(undefined2 *)(param_1 + 10),
-                      CONCAT11(*(undefined1 *)(param_1 + 8),(undefined1)local_20));
-  local_1c = CONCAT31(CONCAT21(*(undefined2 *)(param_1 + 0x1e),*(undefined1 *)(param_2 + 4)),
-                      *(undefined1 *)(param_2 + 5));
-  uVar1 = *(undefined1 *)(param_1 + 0x20);
-  iVar2 = get_date_time(&local_c,&local_8);
-  if ((char)iVar2 == '\0') {
+  uVar3 = *(undefined1 *)((int)request + 8);
+  uVar1 = *(undefined2 *)((int)request + 10);
+  uVar2 = *(undefined2 *)((int)request + 0x1e);
+  cVar4 = text[4];
+  cVar5 = text[5];
+  uVar6 = *(undefined1 *)((int)request + 0x20);
+  iVar7 = get_date_time(&local_c,&local_8);
+  if ((char)iVar7 == '\0') {
     __ghidra_piece(unsigned short, local_18, 2) = CONCAT11(1,(byte)local_18);
   }
   else {
@@ -65568,21 +65580,26 @@ undefined4 command_log_add(int param_1,int param_2)
     __ghidra_piece(unsigned char, local_8, 3) = gps.status.second;
     utc_to_local(&local_c,&local_8);
   }
-  local_18 = (uint)CONCAT12(uVar1,__ghidra_piece(unsigned short, local_18, 2));
-  puVar3 = _DAT_0010199e + 5;
-  if ((undefined4 *)0x101999 < puVar3) {
-    puVar3 = (undefined4 *)&DAT_001017f6;
+  local_18 = (uint)CONCAT12(uVar6,__ghidra_piece(unsigned short, local_18, 2));
+  pgVar8 = (gps_command_log *)(command_log.write + 1);
+  if ((gps_command_log *)((int)&command_log.entries[0x14].time + 3) < pgVar8) {
+    pgVar8 = &command_log;
   }
-  if ((puVar3 == _DAT_0010199a) &&
-     (_DAT_0010199a = _DAT_0010199a + 5, (undefined4 *)0x101999 < _DAT_0010199a)) {
-    _DAT_0010199a = (undefined4 *)&DAT_001017f6;
+  if ((pgVar8 == (gps_command_log *)command_log.read) &&
+     (command_log.read = command_log.read + 1,
+     (gps_command_log_entry *)((int)&command_log.entries[0x14].time + 3) < command_log.read)) {
+    command_log.read = command_log.entries;
   }
-  *_DAT_0010199e = local_20;
-  _DAT_0010199e[1] = local_1c;
-  _DAT_0010199e[2] = local_18;
-  _DAT_0010199e[3] = local_c;
-  _DAT_0010199e[4] = local_8;
-  _DAT_0010199e = puVar3;
+  (command_log.write)->code = uVar1;
+  (command_log.write)->sender = uVar3;
+  (command_log.write)->field_03 = (undefined1)local_20;
+  (command_log.write)->message = uVar2;
+  (command_log.write)->argument_text[0] = cVar4;
+  (command_log.write)->argument_text[1] = cVar5;
+  *(uint *)((command_log.write)->argument_text + 2) = local_18;
+  (command_log.write)->date = local_c;
+  (command_log.write)->time = local_8;
+  command_log.write = pgVar8->entries;
   return 1;
 }
 
@@ -65592,13 +65609,13 @@ undefined4 command_log_add(int param_1,int param_2)
 /* prints one entry of the GPS receiver command log
    a command log line, "SCPI1", "GPSc", "GPSs" */
 
-undefined4 gps_print_command(int param_1,char *param_2)
+int gps_print_command(gps_command_log *log,char *line)
 
 {
-  undefined4 *puVar1;
-  uint uVar2;
-  int iVar3;
-  undefined4 uVar4;
+  undefined2 uVar1;
+  undefined1 uVar2;
+  gps_command_log_entry *pgVar3;
+  int iVar4;
   char *param9;
   char *param6;
   char *param2;
@@ -65606,34 +65623,35 @@ undefined4 gps_print_command(int param_1,char *param_2)
   char local_2c;
   undefined4 local_2a;
   undefined4 uStack_26;
-  undefined4 local_22;
+  uint32_t local_22;
   uint local_1e;
   char acStack_1a [12];
   char acStack_e [10];
   
-  if (*(int *)(param_1 + 0x1a4) == *(int *)(param_1 + 0x1a8)) {
-    uVar4 = 0;
+  if (log->read == log->write) {
+    iVar4 = 0;
   }
   else {
-    puVar1 = *(undefined4 **)(param_1 + 0x1a4);
-    uVar4 = *puVar1;
-    local_2a = puVar1[1];
-    uStack_26 = puVar1[2];
-    local_22 = puVar1[3];
-    local_1e = puVar1[4];
-    uVar2 = *(int *)(param_1 + 0x1a4) + 0x14;
-    *(uint *)(param_1 + 0x1a4) = uVar2;
-    if (param_1 + 0x1a4U <= uVar2) {
-      *(int *)(param_1 + 0x1a4) = param_1;
+    pgVar3 = log->read;
+    uVar1 = pgVar3->code;
+    uVar2 = pgVar3->sender;
+    __ghidra_piece(unsigned short, local_2a, 0) = pgVar3->message;
+    __ghidra_piece(unsigned char, local_2a, 2) = pgVar3->argument_text[0];
+    __ghidra_piece(unsigned char, local_2a, 3) = pgVar3->argument_text[1];
+    uStack_26 = *(undefined4 *)(pgVar3->argument_text + 2);
+    local_22 = pgVar3->date;
+    local_1e = pgVar3->time;
+    pgVar3 = log->read;
+    log->read = pgVar3 + 1;
+    if (&log->read <= pgVar3 + 1) {
+      log->read = log->entries;
     }
-    format_date((ushort)((uint)local_22 >> 0x10),(byte)((uint)local_22 >> 8),(byte)local_22,
-                acStack_1a);
+    format_date((ushort)(local_22 >> 0x10),(byte)(local_22 >> 8),(byte)local_22,acStack_1a);
     format_time(local_1e,acStack_e);
-    local_2c = (char)((uint)uVar4 >> 8);
-    iVar3 = local_2c + -4;
-    if ((int)local_2c - 1U < 3U || iVar3 == 0) {
+    iVar4 = (char)uVar2 + -4;
+    if ((int)(char)uVar2 - 1U < 3U || iVar4 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_0004c7d4)[(short)iVar3]) {
+      switch((&WORD_0004c7d4)[(short)iVar4]) {
       case 8:
         param2 = "SCPI1";
         break;
@@ -65662,13 +65680,12 @@ undefined4 gps_print_command(int param_1,char *param_2)
     else {
       param6 = "q";
     }
-    local_2e = (short)((uint)uVar4 >> 0x10);
-    sprintf(param_2,"%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s",param2,(int)local_2e,
+    sprintf(line,"%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s",param2,(int)(short)uVar1,
             (&PTR_DAT_0004fece)[__ghidra_piece(short, local_2a, 0) * 0xe],(char *)((int)&local_2a + 2),param6,acStack_1a
             ,acStack_e,param9);
-    uVar4 = 1;
+    iVar4 = 1;
   }
-  return uVar4;
+  return iVar4;
 }
 
 
@@ -65681,9 +65698,11 @@ undefined4 gps_print_command(int param_1,char *param_2)
 void status_snapshot_update(undefined *param_1)
 
 {
-  short sVar1;
-  undefined4 *puVar2;
-  undefined4 *puVar3;
+  uint8_t uVar1;
+  uint8_t uVar2;
+  short sVar3;
+  gps_command_log *pgVar4;
+  gps_command_log *pgVar5;
   
   if (DAT_0010155a == '\0') {
     if ((param_1 == &UNK_00061c0f) || (param_1 == (undefined *)0x30e07)) {
@@ -65692,17 +65711,25 @@ void status_snapshot_update(undefined *param_1)
         return;
       }
       status_snapshot((pll_stage *)0x10168e);
-      sVar1 = 0x6a;
-      puVar2 = (undefined4 *)&DAT_001019a2;
-      puVar3 = (undefined4 *)&DAT_001017f6;
+      sVar3 = 0x6a;
+      pgVar4 = &command_log_snapshot;
+      pgVar5 = &command_log;
       do {
-        *puVar2 = *puVar3;
-        sVar1 = sVar1 + -1;
-        puVar2 = puVar2 + 1;
-        puVar3 = puVar3 + 1;
-      } while (sVar1 != -1);
-      _DAT_00101b46 = &DAT_001019a2 + ((int)(_DAT_00101b46 + -0x1017f6) / 0x14) * 0x14;
-      _DAT_00101b4a = &DAT_001019a2 + ((int)(_DAT_00101b4a + -0x1017f6) / 0x14) * 0x14;
+        uVar1 = pgVar5->entries[0].sender;
+        uVar2 = pgVar5->entries[0].field_03;
+        pgVar4->entries[0].code = pgVar5->entries[0].code;
+        pgVar4->entries[0].sender = uVar1;
+        pgVar4->entries[0].field_03 = uVar2;
+        sVar3 = sVar3 + -1;
+        pgVar4 = (gps_command_log *)&pgVar4->entries[0].message;
+        pgVar5 = (gps_command_log *)&pgVar5->entries[0].message;
+      } while (sVar3 != -1);
+      command_log_snapshot.read =
+           command_log_snapshot.entries +
+           (int)&command_log_snapshot.read[-0xce00].clock_invalid / 0x14;
+      command_log_snapshot.write =
+           command_log_snapshot.entries +
+           (int)&command_log_snapshot.write[-0xce00].clock_invalid / 0x14;
     }
     else {
       status_snapshot((pll_stage *)0x101560);
@@ -65734,10 +65761,10 @@ void clear_gps_debug(void)
 /* prints the GPS receiver command log
    "GPS Receiver Command Log", "Task  ID  Command     Date and Time Issued" */
 
-void gps_print_command_log(int param_1)
+void gps_print_command_log(gps_command_log *log)
 
 {
-  char cVar1;
+  int iVar1;
   byte bVar2;
   char acStack_32 [46];
   
@@ -65748,8 +65775,8 @@ void gps_print_command_log(int param_1)
   console_write("Task  ID  Command     Date and Time Issued\r\n");
   console_write("---------------------------------------------\r\n");
   for (bVar2 = 0; bVar2 < 0x14; bVar2 = bVar2 + 1) {
-    cVar1 = gps_print_command(param_1,acStack_32);
-    if (cVar1 != '\x01') break;
+    iVar1 = gps_print_command(log,acStack_32);
+    if ((char)iVar1 != '\x01') break;
     printf("%s\r\n",acStack_32);
   }
   if (bVar2 == 0) {
@@ -65759,16 +65786,29 @@ void gps_print_command_log(int param_1)
 }
 
 
+/* 0004c9d4 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* the pr_gps_cmds word's: prints command_log, emptying it
+   structures.md */
+
+void gps_print_commands(void)
+
+{
+  gps_print_command_log(&command_log);
+  return;
+}
+
+
 /* 0004c9e2 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* pr_1pps's request, 0x37
    structures.md */
 
 void gps_print_1pps(void)
 
 {
-  undefined4 uVar1;
+  gps_command_log_entry *pgVar1;
   
   psos_pause(1);
   console_write("\r\n");
@@ -65780,9 +65820,9 @@ void gps_print_1pps(void)
     console_write("\r\n\r\n");
     status_screen((char *)0x10168e,'\0',console_write,printf);
     console_write("\r\n\r\n");
-    uVar1 = _DAT_00101b46;
-    gps_print_command_log(0x1019a2);
-    _DAT_00101b46 = uVar1;
+    pgVar1 = command_log_snapshot.read;
+    gps_print_command_log(&command_log_snapshot);
+    command_log_snapshot.read = pgVar1;
   }
   return;
 }

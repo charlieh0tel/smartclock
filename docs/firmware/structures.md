@@ -938,6 +938,37 @@ first.  The ring's routines (`request_ring_clear` to
 `request_ring_newest_replaceable`, `0x4baaa` to `0x4bc1c`) read
 nothing else of an entry.
 
+## The GPS command log
+
+`command_log` (`0x1017f6`, `gps_command_log`, `0x1ac` bytes) is the
+"GPS Receiver Command Log": 21 20-byte entries,
+`gps_command_log_entry`, then the oldest's address at `+0x1a4` and the
+next free one's at `+0x1a8`.  It is empty when the two are equal;
+`command_log_add` (`0x4c66e`), which `gpsm_task` calls on each command
+it sends, drops the oldest when the ring is full, so it holds 20, the
+page's "[last 20]".  `command_log_clear` (`0x4c65e`) empties it, from
+`gpsm_task`'s start and `clear_gps_debug` (`0x4c918`).
+`command_log_add` takes the request's sender (`+8`), code (`+0xa`),
+message index (`+0x1e`) and query flag (`+0x20`), the two characters
+after the ID in `gps_last_program_message` (`gps_message_to_text`'s
+text, the first byte after the ID in hex), and a date and time: when
+`get_date_time` (`0x136fe`) returns valid, `@@Ba`'s
+(`gps.status`) through `oncore_date_pack` and `utc_to_local`, else the
+clock's, setting `clock_invalid`.  Nothing writes `+3` or `+0xb`.
+
+`gps_print_command` (`0x4c754`) prints the oldest entry of the log it
+is given and advances past it, returning 0 when the log is empty; so
+`gps_print_command_log` (`0x4c940`) empties the log it prints, "(no
+commands were issued since last read)".  `gps_print_commands`
+(`0x4c9d4`), the `pr_gps_cmds` word's (`0x1b746`), prints
+`command_log`.
+
+`command_log_snapshot` (`0x1019a2`, the same type) is a copy:
+`status_snapshot_update` (`0x4c870`) copies `command_log` over it
+when it takes the snapshot at `0x10168e`, and moves the copy's two
+addresses into the copy.  `gps_print_1pps` (`0x4c9e2`) prints it after
+the two snapshots, keeping its `+0x1a4` so it can be printed again.
+
 ## A date and time
 
 `datetime_add` (`0x11396`) and `datetime_subtract` (`0x11428`) take

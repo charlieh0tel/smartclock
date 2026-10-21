@@ -1469,6 +1469,7 @@
 {"address":"0004c870","name":"status_snapshot_update","note":"takes a status snapshot into 0x101560 for each @@Ea, and at 03:14:07 or 06:28:15 exactly into 0x10168e as well, with a copy of the command log","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0004c918","name":"clear_gps_debug","note":"the clr_gps_debug word's: clears gps_counts, gps_last_command and gps_last_program_message","convention":"unknown"}
 {"address":"0004c940","name":"gps_print_command_log","note":"prints the GPS receiver command log","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"0004c9d4","name":"gps_print_commands","note":"the pr_gps_cmds word's: prints command_log, emptying it","convention":"unknown"}
 {"address":"0004c9e2","name":"gps_print_1pps","note":"pr_1pps's request, 0x37","convention":"unknown"}
 {"address":"0004ca6c","name":"gps_print_process_monitor","note":"\"GPS Process Monitor\", gps_counts","convention":"unknown"}
 {"address":"0004ee8c","name":"long_array_get","note":"a long from an array by index","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1}]}

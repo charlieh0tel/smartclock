@@ -151,6 +151,21 @@ CHECK_SIZE(gps_request_ring, 0x101428 - 0x10139e);
 CHECK_FIELD(gps_request_ring, read, 0x101420 - 0x10139e);
 CHECK_FIELD(gps_request_ring, write, 0x101424 - 0x10139e);
 
+CHECK_SIZE(gps_command_log_entry, 0x14);
+CHECK_FIELD(gps_command_log_entry, sender, 0x02);
+CHECK_FIELD(gps_command_log_entry, message, 0x04);
+CHECK_FIELD(gps_command_log_entry, argument_text, 0x06);
+CHECK_FIELD(gps_command_log_entry, query, 0x09);
+CHECK_FIELD(gps_command_log_entry, clock_invalid, 0x0a);
+CHECK_FIELD(gps_command_log_entry, date, 0x0c);
+CHECK_FIELD(gps_command_log_entry, time, 0x10);
+CHECK_SIZE(gps_command_log, 0x1019a2 - 0x1017f6);
+CHECK_SIZE(gps_command_log, 0x101b4e - 0x1019a2);
+CHECK_FIELD(gps_command_log, read, 0x10199a - 0x1017f6);
+CHECK_FIELD(gps_command_log, write, 0x10199e - 0x1017f6);
+CHECK_FIELD(gps_command_log, read, 0x101b46 - 0x1019a2);
+CHECK_FIELD(gps_command_log, write, 0x101b4a - 0x1019a2);
+
 CHECK_SIZE(packed_datetime, 8);
 CHECK_FIELD(packed_datetime, date, 4);
 

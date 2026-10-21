@@ -536,6 +536,33 @@ typedef struct gps_request_ring {
 	gps_request_entry *write;    /* +0x86 */
 } gps_request_ring;
 
+/* A GPS Receiver Command Log entry: what command_log_add takes of a
+ * request gpsm_task has sent, and gps_print_command prints as
+ * "%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s". */
+typedef struct gps_command_log_entry {
+	int16_t code;          /* +0x00: the request's +0xa, printed under "ID" */
+	uint8_t sender;        /* +0x02: the request's +8; 1 SCPI1, 2 PLL, 3 GPSc, 4 GPSs, else "?" */
+	uint8_t field_03;      /* never written */
+	int16_t message;       /* +0x04: the request's +0x1e, its index in the message table at 0x4fece, whose ID prints */
+	char argument_text[3]; /* +0x06: characters 4 and 5 of gps_message_to_text's text, the first byte after the ID in hex; NUL */
+	uint8_t query;         /* +0x09: the request's +0x20, gps_request_build's query form; printed q, else c */
+	uint8_t clock_invalid; /* +0x0a: get_date_time returned 0; printed blank, else e */
+	uint8_t field_0b;      /* never written */
+	uint32_t date;         /* +0x0c: @@Ba's, local; the clock's while clock_invalid */
+	uint32_t time;         /* +0x10: likewise */
+} gps_command_log_entry;
+
+/* The GPS Receiver Command Log, a ring at 0x1017f6, and its copy at
+ * 0x1019a2, which status_snapshot_update takes with the snapshot at
+ * 0x10168e: 21 entries, the oldest at read, the next free at write;
+ * empty when the two are equal, and full at 20, when command_log_add
+ * drops the oldest.  gps_print_command takes the oldest. */
+typedef struct gps_command_log {
+	gps_command_log_entry entries[21];
+	gps_command_log_entry *read;  /* +0x1a4 */
+	gps_command_log_entry *write; /* +0x1a8 */
+} gps_command_log;
+
 /* A date and time as datetime_add and datetime_subtract take them: the
  * time's hours, minutes and seconds in its low three bytes, and the date
  * packed as date_to_days reads it, or, in their first argument, a count

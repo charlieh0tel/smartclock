@@ -665,8 +665,8 @@
 0x1b99c	function	print_leap_check_state	"Leap chk state:", "leap start", "leap pending send", "leap wait"	prints the leap second check's state
 0x1ba32	function	print_fine_state	": fine start" .. ": fine fine slew", ": fine unknown"	the suffix naming the fine adjustment's sub-state
 0x11942	function	print_exception	"%s: %s", ": PC = %#8x, SR = %#04x", ", address = %#8x", "RESET to recover."	prints an exception's name, PC, SR and address
-0x4c940	function	gps_print_command_log	"GPS Receiver Command Log", "Task  ID  Command     Date and Time Issued"	prints the GPS receiver command log
-0x4c754	function	gps_print_command	a command log line, "SCPI1", "GPSc", "GPSs"	prints one entry of the GPS receiver command log
+0x4c940	function	gps_print_command_log	"GPS Receiver Command Log", "Task  ID  Command     Date and Time Issued"	prints the GPS receiver command log	void gps_print_command_log(gps_command_log *log)
+0x4c754	function	gps_print_command	a command log line, "SCPI1", "GPSc", "GPSs"	prints one entry of the GPS receiver command log	int gps_print_command(gps_command_log *log, char *line)
 0x46838	function	gps_init_sequence	the states print_gps_init_state names, each with its "... ack failure: %02X"	steps the GPS engine's initialization: each setting sent, then its acknowledgment checked
 0x46d98	function	gps_leap_sequence	the states print_leap_check_state names; "leap pending ack failure: %02X"	steps the leap second check with the GPS engine
 0x46394	function	leap_event_delete	"Error in deleting old leapsecond event"	deletes the pending leap second event
@@ -1032,8 +1032,11 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4b426	function	command_monitor_init	context	clears the command monitor's state and reports status event G
 0x4c4e8	function	raim_request_arguments	context	the RAIM request's four arguments: 1, raim_state and raim_threshold for position hold or not, then 1
 0x4c65e	function	command_log_clear	context	empties the GPS Receiver Command Log ring at 0x1017f6
-0x4c66e	function	command_log_add	context	adds an entry to the GPS Receiver Command Log, with its date and time
+0x4c66e	function	command_log_add	context	adds an entry to the GPS Receiver Command Log, with its date and time	int command_log_add(void *request, char *text)
 0x4c870	function	status_snapshot_update	context	takes a status snapshot into 0x101560 for each @@Ea, and at 03:14:07 or 06:28:15 exactly into 0x10168e as well, with a copy of the command log
+0x1017f6	label	command_log	structures.md	the GPS Receiver Command Log, the last 20 GPS commands sent	gps_command_log
+0x1019a2	label	command_log_snapshot	structures.md	command_log as status_snapshot_update copied it with the snapshot at 0x10168e, which gps_print_1pps prints	gps_command_log
+0x4c9d4	function	gps_print_commands	structures.md	the pr_gps_cmds word's: prints command_log, emptying it	void gps_print_commands(void)
 0x4f118	function	channel_position_satellite	context	a channel's satellite if it is valid and used for position, else 0
 0x4f162	function	satellite_used_for_position	context	1 if a channel uses the satellite for position
 0x4f18c	function	channels_reset	context	sets every channel's mode to code search

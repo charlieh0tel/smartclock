@@ -476,7 +476,7 @@ API keeps its own spelling, the C library's and pSOS's.  The script
 then makes `uint8_t` and `int8_t` Ghidra's `byte` and `sbyte`: the
 decompiler prints a char type's constants as characters, so
 `fpga_set_bit('\x01','\b')`, and these two's as numbers,
-`fpga_set_bit(1,8)`.  The header's coded values are enums, declared
+`fpga_set_bit(1,8)`; the exporter prints any other that is no text as a number too.  The header's coded values are enums, declared
 `__attribute__((packed))` so gcc makes each the smallest integer that
 holds its values; Ghidra's parser makes every enum 4 bytes, so the
 script resizes each to 1, 2 or 4 bytes the same way, and the packed
@@ -501,6 +501,13 @@ the `forth_` words that uses A6, A5, A4 or A3, and has no frame,
 takes those registers as parameters -- `sp`, `user`, `dp`, `input` --
 with `user` a pointer to the end of a `forth_user_area` structure, so
 `*(A5 - 0xe)` reads as `ADJ(user)->base`.
+
+Setup last gives every function that is C Ghidra's default convention,
+the stack one the image's compiler used, and leaves one tagged `not-c`
+"unknown", as Forth does the kernel's: Ghidra has no model of theirs.
+A prototype applied from a signature, or laid out in custom storage,
+names none, and the decompiler, which takes the default for it anyway,
+heads its C with "WARNING: Unknown calling convention".
 
 **StackParameters** gives functions the stack parameters their code
 uses, where Ghidra's default convention misplaces them (see "The
@@ -694,6 +701,22 @@ decompiler wrote it, and reported.
   Where the trial misses a target, the decompiler switches on the
   table's entry instead, labeled by its value, as the machine does,
   and that is left.
+- A character constant that is no text is an integer: the decompiler
+  prints every constant of a char type as a character, so a flag's 0
+  and 1 read `'\0'` and `'\x01'`.  A printable character and `\n`,
+  `\r`, `\t` stay.
+- A value the code pushes on the stack and pops again gets a variable
+  of its own, `pushed_n`.  Where the slot is also written at other
+  widths, a byte pushed for a call or half a double, the decompiler
+  takes it a piece at a time: the C stores each byte of the value in a
+  variable and reads it back as their `CONCAT`, `holdover`'s
+  `(float)CONCAT31(CONCAT21(CONCAT11(uVar12,uVar13),uVar14),uVar15)`
+  for a float kept while it converts another.  Where the p-code shows
+  every piece is the `SUBPIECE` at its offset of one value, kept across
+  the calls between (`INDIRECT`), and nothing else reads the pieces,
+  the first piece's statement becomes `pushed_1 = fVar2;`, the others
+  go, and the `CONCAT` is `pushed_1` (283 of the 1546 idioms in the
+  file's C).
 
 `tools/firmware/rebuild_link.py` links it into a rebuilt image: each
 piece of assembly at its own address, where it must be, and is, the

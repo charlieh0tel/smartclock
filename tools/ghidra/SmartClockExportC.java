@@ -56,6 +56,7 @@ import ghidra.app.decompiler.ClangSyntaxToken;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.ClangTokenGroup;
 import ghidra.app.decompiler.ClangTypeToken;
+import ghidra.app.decompiler.ClangVariableDecl;
 import ghidra.app.decompiler.ClangVariableToken;
 import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.decompiler.DecompileOptions;
@@ -1204,6 +1205,8 @@ public class SmartClockExportC extends GhidraScript {
 		registerResults(tokens, results.getHighFunction(), edits);
 		preservedRegisters(tokens, results.getHighFunction(), edits);
 		switchLabels(tokens, edits);
+		byteConstants(tokens, edits);
+		pushedValues(lines, tokens, edits);
 		List<Boolean> signedPieces = new ArrayList<>();
 		for (int i = 0; i < tokens.size(); i++) {
 			ClangToken token = tokens.get(i);
@@ -1313,6 +1316,311 @@ public class SmartClockExportC extends GhidraScript {
 				edits.after.merge(token, constant.getSize() > INT_BYTES ? "ULL" : "U", String::concat);
 			}
 		}
+	}
+
+	/** A character constant as the decompiler prints a char: the character, or an escape. */
+	private static final Pattern CHARACTER = Pattern.compile("'(\\\\(?:x[0-9a-fA-F]+|[0-7]{1,3}|[abfnrtv'\"?\\\\])|[^'\\\\])'");
+	/** The escapes a character constant keeps: those text holds. */
+	private static final Set<String> TEXT_ESCAPES = Set.of("\\n", "\\r", "\\t", "\\'", "\\\"", "\\\\", "\\?");
+	/** The value of each escape that names a control character. */
+	private static final Map<Character, Integer> NAMED_ESCAPES =
+		Map.of('a', 7, 'b', 8, 'f', 12, 'v', 11);
+	/** The first value the decompiler prints in hex. */
+	private static final int HEX_FROM = 10;
+
+	/**
+	 * Prints as an integer each character constant that is no text: the
+	 * decompiler prints every constant of a char type as a character, so
+	 * that a byte's 0 and 1 read '\0' and '\x01'.  A printable character
+	 * and a text escape stay; one past 0x7f, a negative char to gcc, keeps
+	 * its value.
+	 */
+	private static void byteConstants(List<ClangToken> tokens, TokenEdits edits) {
+		for (ClangToken token : tokens) {
+			Matcher character = CHARACTER.matcher(token.getText());
+			if (token instanceof ClangCommentToken || !character.matches()
+				|| TEXT_ESCAPES.contains(character.group(1))) {
+				continue;
+			}
+			String body = character.group(1);
+			int value;
+			if (!body.startsWith("\\")) {
+				value = body.charAt(0);
+				if (value >= ' ' && value < 0x7f) {
+					continue;
+				}
+			}
+			else if (body.charAt(1) == 'x') {
+				value = Integer.parseInt(body.substring(2), 16);
+			}
+			else if (Character.isDigit(body.charAt(1))) {
+				value = Integer.parseInt(body.substring(1), 8);
+			}
+			else {
+				value = NAMED_ESCAPES.get(body.charAt(1));
+			}
+			int signed = (byte) value;
+			edits.replaced.put(token, Math.abs(signed) < HEX_FROM ? Integer.toString(signed)
+				: (signed < 0 ? "-" : "") + String.format("0x%x", Math.abs(signed)));
+		}
+	}
+
+	/** The name of a variable pushedValues gives a value pushed and popped, before its number. */
+	private static final String PUSHED = "pushed_";
+
+	/**
+	 * Gives each value the code pushes on the stack and pops again a
+	 * variable of its own.  Where the stack slot is also written at other
+	 * widths, the decompiler takes it a byte or word at a time: the C
+	 * stores each piece of the value in a variable and reads the value
+	 * back as their CONCAT, (float)CONCAT31(CONCAT21(CONCAT11(uVar12,
+	 * uVar13),uVar14),uVar15) for a float holdover pushed while it
+	 * converted another.  Where the p-code shows each piece is the
+	 * SUBPIECE at its offset of the one value, kept across the calls in
+	 * between (INDIRECT), the CONCAT is that value: the first piece's
+	 * statement becomes pushed_n = value, the others go, and the CONCAT
+	 * and a cast to the value's type become pushed_n.  A piece read
+	 * anywhere else leaves the value as it is.
+	 */
+	private static void pushedValues(List<ClangLine> lines, List<ClangToken> tokens, TokenEdits edits) {
+		Map<PcodeOp, ClangLine> statementLines = new IdentityHashMap<>();
+		Map<ClangToken, ClangLine> lineOf = new IdentityHashMap<>();
+		ClangToken open = null;
+		for (ClangLine line : lines) {
+			for (ClangToken token : line.getAllTokens()) {
+				lineOf.put(token, line);
+				if (open == null && token instanceof ClangSyntaxToken && token.getText().equals("{")) {
+					open = token;
+				}
+				if (token instanceof ClangVariableToken && token.getPcodeOp() != null
+					&& token.getPcodeOp().getOpcode() == PcodeOp.SUBPIECE
+					&& token.getVarnode() == token.getPcodeOp().getOutput()) {
+					statementLines.putIfAbsent(token.getPcodeOp(), line);
+				}
+			}
+		}
+		Map<Integer, Pushed> roots = new LinkedHashMap<>();
+		for (int i = 0; i < tokens.size(); i++) {
+			PcodeOp op = tokens.get(i).getPcodeOp();
+			if (tokens.get(i) instanceof ClangOpToken && op != null && op.getOpcode() == PcodeOp.PIECE
+				&& tokens.get(i).getText().startsWith("CONCAT") && !readByPiece(op.getOutput())) {
+				Pushed pushed = pushed(op.getOutput());
+				if (pushed != null) {
+					roots.put(i, pushed);
+				}
+			}
+		}
+		// a CONCAT whose pieces are read elsewhere stays, and its reads are
+		// then reads elsewhere of the pieces it shares with the others
+		for (boolean changed = true; changed; ) {
+			Set<PcodeOp> handled = Collections.newSetFromMap(new IdentityHashMap<>());
+			for (Pushed pushed : roots.values()) {
+				handled.addAll(pushed.ops());
+			}
+			changed = roots.values().removeIf(pushed -> !pushed.pieces().stream()
+				.allMatch(p -> statementLines.containsKey(p) && singleStatement(statementLines.get(p))
+					&& onlyReadBy(p.getOutput(), handled, Collections.newSetFromMap(new IdentityHashMap<>()))));
+		}
+		Map<Varnode, String> names = new IdentityHashMap<>();
+		Set<HighVariable> pieceVariables = Collections.newSetFromMap(new IdentityHashMap<>());
+		Set<ClangLine> rewritten = Collections.newSetFromMap(new IdentityHashMap<>());
+		Set<PcodeOp> placed = Collections.newSetFromMap(new IdentityHashMap<>());
+		for (Map.Entry<Integer, Pushed> root : roots.entrySet()) {
+			Pushed pushed = root.getValue();
+			String name = names.get(pushed.value());
+			if (name == null) {
+				name = PUSHED + (names.size() + 1);
+				names.put(pushed.value(), name);
+				edits.after.merge(open, StringUtilities.LINE_SEPARATOR + "  "
+					+ pushed.value().getHigh().getDataType().getDisplayName() + " " + name + ";",
+					String::concat);
+			}
+			for (PcodeOp piece : pushed.pieces()) {
+				if (!placed.add(piece)) {
+					continue;
+				}
+				ClangLine line = statementLines.get(piece);
+				if (piece == pushed.pieces().get(0)) {
+					rewritten.add(line);
+					List<ClangToken> statement = line.getAllTokens();
+					for (int k = 0; k < statement.size(); k++) {
+						edits.replaced.put(statement.get(k),
+							k == 0 ? name + " = " + namedHigh(pushed.value()) + ";" : "");
+					}
+				}
+				else {
+					edits.dropped.add(line);
+				}
+			}
+			int start = root.getKey();
+			int close = closingParenthesis(tokens, start);
+			StringBuilder text = new StringBuilder(name);
+			for (int k = start; k <= close; k++) {
+				take(tokens.get(k), edits);
+			}
+			// what follows the CONCAT on its last line joins its first
+			int first = lines.indexOf(lineOf.get(tokens.get(start)));
+			int last = lines.indexOf(lineOf.get(tokens.get(close)));
+			if (last > first) {
+				List<ClangToken> rest = lines.get(last).getAllTokens();
+				for (ClangToken token : rest.subList(rest.indexOf(tokens.get(close)) + 1, rest.size())) {
+					text.append(take(token, edits));
+				}
+				for (int k = first + 1; k <= last; k++) {
+					edits.dropped.add(lines.get(k));
+				}
+			}
+			edits.replaced.put(tokens.get(start), text.toString());
+			String type = pushed.value().getHigh().getDataType().getDisplayName();
+			List<Integer> cast = new ArrayList<>();
+			for (int k = start - 1; k >= 0 && cast.size() < 3; k--) {
+				if (!tokens.get(k).getText().isBlank()) {
+					cast.add(k);
+				}
+			}
+			if (cast.size() == 3 && tokens.get(cast.get(0)).getText().equals(")")
+				&& tokens.get(cast.get(1)).getText().equals(type) && tokens.get(cast.get(2)).getText().equals("(")) {
+				for (int k = cast.get(2); k < start; k++) {
+					take(tokens.get(k), edits);
+				}
+			}
+			for (PcodeOp piece : pushed.pieces()) {
+				pieceVariables.add(piece.getOutput().getHigh());
+			}
+		}
+		// a piece's variable nothing else reads is no longer declared
+		for (HighVariable variable : pieceVariables) {
+			ClangLine declaration = null;
+			boolean read = false;
+			for (ClangToken token : tokens) {
+				if (!(token instanceof ClangVariableToken named) || named.getHighVariable() != variable) {
+					continue;
+				}
+				if (token.Parent() instanceof ClangVariableDecl) {
+					declaration = lineOf.get(token);
+				}
+				else if (!edits.dropped.contains(lineOf.get(token)) && !rewritten.contains(lineOf.get(token))
+					&& !"".equals(edits.replaced.get(token))) {
+					read = true;
+				}
+			}
+			if (declaration != null && !read) {
+				edits.dropped.add(declaration);
+			}
+		}
+	}
+
+	/** A token's text as edits make it, which it then gives up: it prints nothing. */
+	private static String take(ClangToken token, TokenEdits edits) {
+		String text = edits.before.getOrDefault(token, "") + edits.replaced.getOrDefault(token, printedText(token))
+			+ edits.after.getOrDefault(token, "");
+		edits.before.remove(token);
+		edits.after.remove(token);
+		edits.replaced.put(token, "");
+		return text;
+	}
+
+	/**
+	 * A value read back from its pieces: the value, the SUBPIECE that
+	 * makes each piece, most significant first, and every operation from
+	 * them to the CONCAT.
+	 */
+	private record Pushed(Varnode value, List<PcodeOp> pieces, Set<PcodeOp> ops) {}
+
+	/**
+	 * The value whose pieces a CONCAT's output is, whole and in order,
+	 * each kept through copies and calls; null if it is not one.
+	 */
+	private static Pushed pushed(Varnode concat) {
+		List<Varnode> leaves = new ArrayList<>();
+		Set<PcodeOp> ops = Collections.newSetFromMap(new IdentityHashMap<>());
+		concatLeaves(concat, leaves, ops);
+		Varnode value = null;
+		List<PcodeOp> pieces = new ArrayList<>();
+		int offset = concat.getSize();
+		for (Varnode leaf : leaves) {
+			offset -= leaf.getSize();
+			PcodeOp def = leaf.getDef();
+			while (def != null && (def.getOpcode() == PcodeOp.INDIRECT || def.getOpcode() == PcodeOp.COPY)) {
+				ops.add(def);
+				def = def.getInput(0).getDef();
+			}
+			if (def == null || def.getOpcode() != PcodeOp.SUBPIECE) {
+				return null;
+			}
+			Varnode whole = def.getInput(0);
+			long at = def.getInput(1).getOffset();
+			// the decompiler's (char)((uint)value >> 0x18): a shift by whole
+			// bytes of the value's bits, within them
+			for (PcodeOp shift = whole.getDef(); shift != null; shift = whole.getDef()) {
+				int opcode = shift.getOpcode();
+				if ((opcode == PcodeOp.INT_RIGHT || opcode == PcodeOp.INT_SRIGHT) && shift.getInput(1).isConstant()
+					&& shift.getInput(1).getOffset() % Byte.SIZE == 0 && namedHigh(whole) == null) {
+					at += shift.getInput(1).getOffset() / Byte.SIZE;
+				}
+				else if (opcode != PcodeOp.CAST || namedHigh(whole) != null) {
+					break;
+				}
+				ops.add(shift);
+				whole = shift.getInput(0);
+			}
+			if (at != offset || at + leaf.getSize() > whole.getSize() || value != null && whole != value) {
+				return null;
+			}
+			value = whole;
+			pieces.add(def);
+			ops.add(def);
+		}
+		return value != null && leaves.size() > 1 && value.getSize() == concat.getSize()
+			&& namedHigh(value) != null && value.getHigh().getDataType() != null ? new Pushed(value, pieces, ops)
+				: null;
+	}
+
+	/** The pieces a CONCAT joins, most significant first, through the CONCATs printed inside it. */
+	private static void concatLeaves(Varnode value, List<Varnode> leaves, Set<PcodeOp> ops) {
+		PcodeOp def = value.getDef();
+		if (def != null && def.getOpcode() == PcodeOp.PIECE && namedHigh(value) == null) {
+			ops.add(def);
+			concatLeaves(def.getInput(0), leaves, ops);
+			concatLeaves(def.getInput(1), leaves, ops);
+		}
+		else {
+			leaves.add(value);
+		}
+	}
+
+	/** Whether a CONCAT's output is printed inside another. */
+	private static boolean readByPiece(Varnode output) {
+		for (Iterator<PcodeOp> readers = output.getDescendants(); readers.hasNext();) {
+			if (readers.next().getOpcode() == PcodeOp.PIECE && namedHigh(output) == null) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Whether every reader of value is among ops, through the copies,
+	 * calls and joins it passes on by, which may themselves be read by
+	 * nothing else.
+	 */
+	private static boolean onlyReadBy(Varnode value, Set<PcodeOp> ops, Set<PcodeOp> seen) {
+		for (Iterator<PcodeOp> readers = value.getDescendants(); readers.hasNext();) {
+			PcodeOp reader = readers.next();
+			int opcode = reader.getOpcode();
+			boolean passes = opcode == PcodeOp.INDIRECT || opcode == PcodeOp.COPY || opcode == PcodeOp.MULTIEQUAL;
+			if (!passes && !ops.contains(reader)
+				|| passes && seen.add(reader) && !onlyReadBy(reader.getOutput(), ops, seen)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/** Whether a line holds one statement and nothing else. */
+	private static boolean singleStatement(ClangLine line) {
+		long ends = line.getAllTokens().stream().filter(t -> t.getText().equals(";")).count();
+		return ends == 1 && line.getAllTokens().get(line.getAllTokens().size() - 1).getText().equals(";");
 	}
 
 	/** The p-code's equality tests. */

@@ -367,6 +367,27 @@ public class SmartClockSetup extends GhidraScript {
 		repairFlow();
 		commentVectors(BOOT_VECTORS, "boot");
 		commentVectors(PRIMARY_VECTORS, "primary");
+		nameConventions();
+	}
+
+	/**
+	 * Gives each function C calls the default convention, the C one the
+	 * image's compiler used, and leaves one that is not C unknown, which
+	 * is what Ghidra has for it.  Without one the decompiler takes the
+	 * default anyway, and warns of an unknown convention in the C.
+	 */
+	private void nameConventions() throws Exception {
+		String c = currentProgram.getCompilerSpec().getDefaultCallingConvention().getName();
+		int named = 0;
+		for (Function function : currentProgram.getFunctionManager().getFunctions(true)) {
+			boolean notC = function.getTags().stream().anyMatch(tag -> tag.getName().equals(NOT_C_TAG));
+			String convention = notC ? Function.UNKNOWN_CALLING_CONVENTION_STRING : c;
+			if (!convention.equals(function.getCallingConventionName())) {
+				function.setCallingConvention(convention);
+				named++;
+			}
+		}
+		println("conventions named: " + named);
 	}
 
 	/**

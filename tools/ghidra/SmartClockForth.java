@@ -134,6 +134,7 @@ public class SmartClockForth extends GhidraScript {
 			if (!dryRun && conventions.getString(function.getEntryPoint()) == null) {
 				conventions.add(function.getEntryPoint(), CONVENTION);
 				function.addTag(NOT_C_TAG);
+				function.setCallingConvention(Function.UNKNOWN_CALLING_CONVENTION_STRING);
 			}
 			Map<String, KernelRegister> used = usedRegisters(function, registers);
 			for (Parameter existing : function.getParameters()) {

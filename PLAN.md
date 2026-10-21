@@ -1099,6 +1099,22 @@ view cannot drift apart.  The library, bottom up:
      out: the installer's 68 agree and none is skipped or differs (63
      agreeing, 3 skipped and 8 differing before).  The
      primary's are unchanged.
+     Then the idioms themselves, now that the harness checks every
+     function after each change.  The C that compiles held 1546 in 224
+     functions (`__ghidra_piece` 521, `CONCAT` 416, `__ghidra_bits`
+     210, `__ghidra_as` 154; the assembly routines' `#if 0` readings
+     aside).  A value pushed and popped around a call, which the
+     decompiler took a byte at a time where the slot is also written at
+     other widths, is a variable of its own, `pushed_n`, where the
+     p-code shows the pieces are its own (1546 to 1263, most of
+     `holdover`'s, `startup_pll`'s and `fine`'s); a character constant
+     that is no text, `'\0'` and `'\x01'` for a byte's 0 and 1, is an
+     integer; and every function that is C has Ghidra's default
+     convention, so no longer reads "Unknown calling convention" (219
+     to 8, the rest not C).  The counts are unchanged.  Left: the
+     byte and word pieces of variables the decompiler types too wide
+     (`__ghidra_piece`, `CONCAT22`, `CONCAT31` on `local_8`), the soft
+     float library's own bit work, and then by hand.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

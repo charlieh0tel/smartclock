@@ -32,6 +32,31 @@ word is the one that may be 0, and only when it is not is bit 0x1000
 of the task record's `+0x44` set (`0x14e62`), as `t_create`'s user
 stack may be 0 for a task that runs only in supervisor mode.
 
+The earliest description found is Force Computers' brochure for
+pSOS-68K, Software Components Group's kernel for the 68000
+(<https://bitsavers.trailing-edge.com/pdf/forceComputers/brochures/Force_pSOS-68K_Brochure.pdf>),
+undated, which names its "twenty-nine kernel calls" and six I/O
+calls in a table.  Its vocabulary is 4.1's -- processes, exchanges,
+spawn -- and its list runs in this kernel's service order where the
+services are known: `Spawn_process` and `Activate_process` are 1 and
+2, `spawn`'s two halves; `Identify`, `Delete`, `Suspend` and
+`Resume_process` and the priority call 3 to 7 (Identify and Delete in
+the other order); then `Allocate_segment`, `Free_segment` and
+`Assign_segment`, which fit 8, 9 and 10 -- `pforth_dictionary_init`
+gets the dictionary's segment with 8, and `console_task_create` gives
+it to the new task with 10 -- and the six calls the brochure marks
+"for MMU implementation only", which fit 11 to 15 and 17, those that
+only succeed, there being no MMU.  `Create_exchange`,
+`Delete_exchange`, `Attach_exchange`, `Send_message` and
+`Request_message` fit 20 to 24, 21 taking a name and returning an
+exchange's id; `Get_time_of_day` and `Set_time_of_day` fit 30, which
+returns two longs and a word, and 31, which takes three longs.  The
+I/O supervisor's six device procedures are trap #4's functions 0 to 5,
+`Device_init` to `Device_control`.  4.1 has more than twenty-nine
+services, 0 to `0x26`: the variables (`signal_v`, `wait_v`, `get_v`)
+where the brochure has a process event, and others the brochure does
+not name.
+
 ## Calls
 
 A program calls the kernel with `trap #3`, the service's number in D7
@@ -125,14 +150,14 @@ reports an error.  A service no word calls keeps its number.
 | 5 | `0x17020` | `suspend` | the task |
 | 6 | `0x17038` | `resume` | the task |
 | 7 | `0x17050` | `priority` | the task, the new priority; the old through the last |
-| 8 | `0x170c0` | | four longs; a long through the last |
-| 9 | `0x170f4` | | one long |
-| 10 | `0x1710c` | | two longs |
+| 8 | `0x170c0` | allocate segment, by the brochure (above) | four longs; a long through the last |
+| 9 | `0x170f4` | free segment, likewise | one long |
+| 10 | `0x1710c` | assign segment, likewise | two longs |
 | 16 | `0x17128` | | two longs |
 | 18 | `0x1728a` | | three longs; two bytes through the next two |
 | 19 | `0x1726e` | `jam_x` | the exchange, the message |
 | 20 | `0x171ce` | `create_x` | name, two longs; the exchange's id through the last |
-| 21 | `0x171fe` | | name; three longs through the next three |
+| 21 | `0x171fe` | attach exchange, likewise | name; three longs through the next three |
 | 22 | `0x1723a` | `delete_x` | the exchange |
 | 23 | `0x17252` | `send_x` | the exchange, the message |
 | 24 | `0x172c4` | `request_x` | the exchange, the buffer, two longs |
@@ -141,8 +166,8 @@ reports an error.  A service no word calls keeps its number.
 | 27 | `0x17332` | `get_v` | two longs; a long through the last |
 | 28 | `0x17076` | `pause` | one long |
 | 29 | `0x1735c` | | none |
-| 30 | `0x17370` | | none; two longs and a word through three pointers |
-| 31 | `0x173a6` | | three longs |
+| 30 | `0x17370` | get time of day, likewise | none; two longs and a word through three pointers |
+| 31 | `0x173a6` | set time of day, likewise | three longs |
 | 32 | `0x1708e` | `mode` | two longs; the old mode, a byte, through the last |
 | 33 | `0x170b4` | | made by a trap in line, D7 kept |
 | 35 | `0x17144` | | three longs; a long through the last |

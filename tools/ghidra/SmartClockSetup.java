@@ -94,6 +94,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.AbstractFloatDataType;
 import ghidra.program.model.data.AbstractIntegerDataType;
+import ghidra.program.model.data.Array;
 import ghidra.program.model.data.ArchiveType;
 import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.data.DataType;
@@ -107,6 +108,7 @@ import ghidra.program.model.data.ParameterDefinition;
 import ghidra.program.model.data.InvalidDataTypeException;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.data.SignedByteDataType;
+import ghidra.program.model.data.Structure;
 import ghidra.program.model.data.TerminatedStringDataType;
 import ghidra.program.model.data.TypedefDataType;
 import ghidra.program.model.data.WordDataType;
@@ -1544,11 +1546,17 @@ public class SmartClockSetup extends GhidraScript {
 	}
 
 	/**
-	 * Types [first, nul] as a C string unless a named function lies in it.
-	 * Leading bytes that belong to a function begun before the string, code
-	 * running into it with no NUL between, are left out.
+	 * Types [first, nul] as a C string unless a named function lies in it
+	 * or an array or structure, as a names-file label types a table, holds
+	 * it.  Leading bytes that belong to a function begun before the string,
+	 * code running into it with no NUL between, are left out.
 	 */
 	private boolean typeString(Address first, Address nul) throws Exception {
+		Data holder = getDataContaining(first);
+		if (holder != null && (holder.getDataType() instanceof Array
+			|| holder.getDataType() instanceof Structure)) {
+			return false;
+		}
 		Instruction leading = getInstructionContaining(first);
 		while (leading != null && first.compareTo(nul) < 0) {
 			Function owner = getFunctionContaining(leading.getAddress());

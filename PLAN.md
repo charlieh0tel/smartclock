@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1210 run, 652 agree, 538 reach the kernel
-     or a peripheral and are skipped, and 20 differ, in the function or
+     original reads them: of 1212 run, 654 agree, 540 reach the kernel
+     or a peripheral and are skipped, and 18 differ, in the function or
      in gcc's callees.
      Unicorn has no CPU32 and the 68020 stands in: the image uses none
      of the CPU32's own instructions (`tbl`, `lpstop`, `bgnd`; a scan of
@@ -751,7 +751,10 @@ view cannot drift apart.  The library, bottom up:
      operand with a negative constant compares its unsigned value.  The
      harness has an EEPROM, and gcc's code moved above every chip
      select, off it: twelve functions that agreed reading gcc's code as
-     the EEPROM's records agree on an erased one (21 to 20).
+     the EEPROM's records agree on an erased one (21 to 20).  The
+     Oncore field tables and the installer's records, which the
+     decompiler took for short strings, are typed byte arrays (20 to 18:
+     `oncore_traim_message`, `boot_unpack_installer`).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

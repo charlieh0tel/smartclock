@@ -230,11 +230,13 @@ functions address it through a base register, at offsets `0x1` to
 its fields are the VP Oncore reference's
 (`third_party/motorola/VPCommands.pdf`), in the message's order.  A
 decoder copies a field, a byte, word or long, or runs a field table
-through `0x4f02a`, a byte code: n copies n bytes, `00` skips a RAM
-byte, `0x85` writes a sign byte for the next, `0x83` writes 0 for a
-byte it drops, `0x82` drops one, `0xc0` and up repeat the group to
-`0x81` that many times less `0x100`, and `0x80` ends.  The tables pad
-some messages so their words and longs fall on even addresses.
+through `oncore_decode_fields` (`0x4f02a`), a byte code: n copies n
+bytes, `00` skips a RAM byte, `0x85` writes a sign byte for the next,
+`0x84` writes 0, `0x83` writes 0 for a byte it drops, `0x82` drops
+one, `0xc1` and up repeat the group to `0x81` `0x100` less that many
+times, and `0x80` ends; a group does not nest.  The tables pad some
+messages so their words and longs fall on even addresses.  "ROM
+tables" gives each table's extent.
 
 | Offset | Member | Message | Printed after |
 | ------ | ------ | ------- | ------------- |
@@ -1150,3 +1152,58 @@ powerup; and `time_zone_change_pending` (`0x102551`), set by
 `time_zone_changed`, cleared by `:PTIMe:TZONe`'s done routine
 (`0x45a2e`) and `pll_init`.  `0x10253e` and `0x10253f` are only
 cleared, by `pllp_task`.
+
+## ROM tables
+
+Each ROM table the names file types covers its bytes exactly; the
+code, or a neighbor the code reads, gives its length.
+
+`installer_records` (`0xbbc`): `boot_unpack_installer` (`0xaa0`)
+loads the length, 42861, with the address, returns 0 at once if it is
+2 or less, and walks an `S`, 17 records of a `C`, a 32-bit count, a
+32-bit RAM address and that many bytes, then an `E` at `0xb328`, the
+last byte (`restart.md`).
+
+The Oncore field tables run from `0x50fd2` to `0x5100e`, each to its
+`0x80`, the next beginning after it; `0x5100f` is
+`survey_progress_text`'s `"%+.1f"`.  Each decoder passes its own with `pea`, and the bytes each
+table writes are the size of its record above:
+
+| Table | Message | Bytes | Program | Writes |
+| ----- | ------- | ----- | ------- | ------ |
+| `0x50fd2` | `@@Ba` | 6 | `04 00 1d 00 1c 80` | 63 |
+| `0x50fd8` | `@@Bb` | 10 | `01`, 12 times `00 01 00 03 00 03` | 121 |
+| `0x50fe2` | `@@Bc` | 2 | `4b 80` | 75 |
+| `0x50fe4` | `@@Bk` | 2 | `3e 80` | 62 |
+| `0x50fe6` | `@@Bn` | 16 | `02 00 03 00 85 03 04 00 0a 00`, 6 times `01 00 04` | 63 |
+| `0x50ff6` | `@@Ce` | 12 | `85 03`, 6 times `01 00 85 03 02 01 00` | 64 |
+| `0x51002` | `@@Bd` | 2 | `10 80` | 16 |
+| `0x51004` | `@@Cj` | 11 | `82 82 21 83 82`, 9 times `1a 83 82` | 277 |
+
+`oncore_messages` (`0x4fece`, `oncore_message_entry`, 56 bytes):
+`gps_response_lookup` (`0x4b7ac`) searches entries 0 to `0x30`, and
+the ID strings start at `0x50986`, 49 entries on.  The layout is
+`oncore/README.md`'s; `gps_response_timed_out` (`0x4b9a6`) compares
+the uptime elapsed with the byte at `+0x1a`, `gps_response_lookup`
+returns the word at `+0x1c`, `gps_response_match` (`0x4fb86`)
+switches on the byte at `+0x1e`, and `gps_response_decode`
+(`0x4faa2`) calls up to three decoders from `+0x20`.
+
+The SCPI action descriptors (`scpi_action_param`, 6 bytes, type 2)
+run from `0x4132a` to `efc_history_update` at `0x4137e`, 14 of them,
+each referred to at its own address.  `validate_or_doaction`
+(`0x42d02`) refuses an index above `last_index` and clears its
+caller's flag, so `pll_scpi_command` neither calls `finish_scpi_cmd`
+nor saves; `pll_scpi_do_action` calls `action` with the index and the
+source, and sets `pll_scpi_reply_pending` for the self-test's alone.
+
+| Table | Type | Extent |
+| ----- | ---- | ------ |
+| `sci_settings_defaults` (`0x30a2c`), `duartb_settings_defaults` (`0x30a34`) | the records | `memcpy` 6 and 9 bytes |
+| `retained_block_defaults` (`0x3094c`) | 25 bytes | `system_init`'s `memcpy` over `0x101e70`, `0x19` bytes |
+| `decimal_digit_pairs` (`0x25c82`) | `char[200]` | `"00"` to `"99"`, indexed by a value below 100 times 2; instructions follow at `0x25d4a` |
+| `si_prefixes` (`0x4cfc5`) | `char[8]` | `format_si` takes exponents -12 to 11, `(e + 12) / 3` from 0 to 7 |
+| `low_bit_masks` (`0x314b2`) | `uint32_t[33]` | 0 to `0xffffffff`; `log_erase` begins at `0x31536` |
+| `days_before_month`, `_leap` (`0x1186c`, `0x11884`) | `int16_t[12]` | `day_of_year` reads `0x1186a` and `0x11882` plus twice the month, 1 to 12 |
+| `powers_of_ten_64` (`0x5fa46`) | `uint32_t[36]` | `double_to_digits` clamps the index to 0 to `0x11`; the bytes after are not powers of ten |
+| `os_report_format` (`0x51382`), `os_report_newline` (`0x512e6`) | `char[3]` | `"%s"` and `"\r\n"` with their NULs |

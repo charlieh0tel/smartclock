@@ -93,11 +93,12 @@ typedef enum __attribute__((packed)) counter_error {
 } counter_error;
 
 /* A SCPI parameter descriptor's structure, its first byte, which the
- * pllc task's finish_scpi_cmd switches on; it accepts 2 and 3 and does
- * nothing with them. */
+ * pllc task's validate_or_doaction and finish_scpi_cmd switch on; both
+ * accept 3 and do nothing with it. */
 typedef enum __attribute__((packed)) scpi_param_type {
 	SCPI_PARAM_NUMERIC = 0, /* scpi_numeric_param */
-	SCPI_PARAM_SETTING = 1  /* scpi_setting_param */
+	SCPI_PARAM_SETTING = 1, /* scpi_setting_param */
+	SCPI_PARAM_ACTION = 2   /* scpi_action_param */
 } scpi_param_type;
 
 /* The VP Oncore reference's codes (third_party/motorola/VPCommands.pdf). */
@@ -1221,6 +1222,38 @@ typedef struct scpi_setting_param {
 	uint8_t field_17;
 	void *group_cell;     /* +0x18: 0x101f92 to 0x101f9a by command group; no code reads it */
 } scpi_setting_param;
+
+/* A SCPI action's descriptor, in ROM, 6 bytes, from 0x4132a to 0x4137d.
+ * validate_or_doaction refuses an index above last_index, then
+ * pll_scpi_do_action calls action with the index and the source; it
+ * stores nothing and leaves finish_scpi_cmd uncalled. */
+typedef struct scpi_action_param {
+	scpi_param_type type; /* SCPI_PARAM_ACTION */
+	uint8_t last_index;   /* +0x01: indexes less one */
+	void *action;         /* +0x02: called with the index and the source */
+} scpi_action_param;
+
+/* A decoder of an Oncore message and the record in gps it fills. */
+typedef struct oncore_decoder {
+	void *decode;         /* gps_response_decode calls it with the cursor and record, and takes the cursor back */
+	void *record;
+} oncore_decoder;
+
+/* An entry of the GPS task's Oncore message table, oncore_messages: 56
+ * bytes (docs/firmware/oncore/README.md, "The message table"). */
+typedef struct oncore_message_entry {
+	char *id;             /* +0x00: the two-letter ID; zero for an empty slot */
+	uint8_t kind;         /* +0x04: gps_request_build composes kinds 1 and 3 */
+	uint8_t field_05;
+	void *encoders[4];    /* +0x06: argument encoders */
+	char *query;          /* +0x16: the query form; zero if none */
+	uint8_t timeout;      /* +0x1a: gps_response_timed_out's limit on the uptime elapsed */
+	uint8_t field_1b;
+	uint16_t length;      /* +0x1c: the response's, @@ to line end; gps_response_lookup returns it */
+	uint8_t match_kind;   /* +0x1e: what gps_response_match switches on when below 10 */
+	uint8_t field_1f;
+	oncore_decoder decoders[3]; /* +0x20: gps_response_decode runs them to the first zero */
+} oncore_message_entry;
 
 /* The settings nv_save keeps in the NV register and nv_restore loads:
  * each field the value of the descriptor in nv_save's tables that points

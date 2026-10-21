@@ -423,6 +423,23 @@ CHECK_FIELD(scpi_setting_param, maximum, 0x06);
 CHECK_FIELD(scpi_setting_param, gps_request, 0x16);
 CHECK_FIELD(scpi_setting_param, group_cell, 0x18);
 CHECK_FIELD(scpi_setting_param, value, 0xc);
+/* 14 action descriptors, each referred to at its own address, from
+ * 0x4132a to efc_history_update at 0x4137e */
+CHECK_SIZE(scpi_action_param, (0x4137e - 0x4132a) / 14);
+CHECK_FIELD(scpi_action_param, action, 0x02);
+/* the Oncore message table: 49 entries from 0x4fece to the ID strings
+ * at 0x50986; gps_response_timed_out reads +0x1a, gps_response_lookup
+ * +0x1c, gps_response_match +0x1e, gps_response_decode +0x20 and +0x24 */
+CHECK_SIZE(oncore_decoder, 8);
+CHECK_SIZE(oncore_message_entry, (0x50986 - 0x4fece) / 49);
+CHECK_FIELD(oncore_message_entry, kind, 0x4fed2 - 0x4fece);
+CHECK_FIELD(oncore_message_entry, encoders, 0x4fed4 - 0x4fece);
+CHECK_FIELD(oncore_message_entry, query, 0x4fee4 - 0x4fece);
+CHECK_FIELD(oncore_message_entry, timeout, 0x4fee8 - 0x4fece);
+CHECK_FIELD(oncore_message_entry, length, 0x4feea - 0x4fece);
+CHECK_FIELD(oncore_message_entry, match_kind, 0x4feec - 0x4fece);
+CHECK_FIELD(oncore_message_entry, decoders, 0x4feee - 0x4fece);
+CHECK_FIELD(oncore_message_entry, decoders[0].record, 0x4fef2 - 0x4fece);
 CHECK_FIELD(nv_settings_fields, elevation_mask, 0x101e8c - 0x101e8a);
 CHECK_FIELD(nv_settings_fields, douglas_duration_infinite, 0x101e98 - 0x101e8a);
 CHECK_FIELD(nv_settings_fields, holdover_status_threshold, 0x101e9a - 0x101e8a);

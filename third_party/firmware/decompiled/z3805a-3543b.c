@@ -1164,6 +1164,29 @@ struct nv_settings_fields {
     uint8_t debug_output;
 };
 
+typedef struct oncore_decoder oncore_decoder, *Poncore_decoder;
+
+struct oncore_decoder {
+    void *decode;
+    void *record;
+};
+
+typedef struct oncore_message_entry oncore_message_entry, *Poncore_message_entry;
+
+struct oncore_message_entry {
+    char *id;
+    uint8_t kind;
+    uint8_t field_05;
+    void *encoders[4];
+    char *query;
+    uint8_t timeout;
+    uint8_t field_1b;
+    uint16_t length;
+    uint8_t match_kind;
+    uint8_t field_1f;
+    struct oncore_decoder decoders[3];
+};
+
 typedef struct packed_datetime packed_datetime, *Ppacked_datetime;
 
 struct packed_datetime {
@@ -1380,6 +1403,20 @@ struct sci_settings_record {
     uint8_t echo;
 };
 
+typedef struct scpi_action_param scpi_action_param, *Pscpi_action_param;
+
+typedef enum __attribute__((packed)) scpi_param_type {
+    SCPI_PARAM_NUMERIC=0,
+    SCPI_PARAM_SETTING=1,
+    SCPI_PARAM_ACTION=2
+} scpi_param_type;
+
+struct scpi_action_param {
+    enum scpi_param_type type;
+    uint8_t last_index;
+    void *action;
+};
+
 typedef struct scpi_decimal scpi_decimal, *Pscpi_decimal;
 
 struct scpi_decimal {
@@ -1389,11 +1426,6 @@ struct scpi_decimal {
 };
 
 typedef struct scpi_numeric_param scpi_numeric_param, *Pscpi_numeric_param;
-
-typedef enum __attribute__((packed)) scpi_param_type {
-    SCPI_PARAM_NUMERIC=0,
-    SCPI_PARAM_SETTING=1
-} scpi_param_type;
 
 typedef long (scpi_validate_function)(void *, int, void *, void *, void *, int);
 
@@ -1624,6 +1656,7 @@ _Static_assert(sizeof(oncore_channel_status) == 4, "oncore_channel_status");
 _Static_assert(sizeof(oncore_correction_channel) == 10, "oncore_correction_channel");
 _Static_assert(sizeof(oncore_corrections_fields) == 64, "oncore_corrections_fields");
 _Static_assert(sizeof(oncore_date_fields) == 4, "oncore_date_fields");
+_Static_assert(sizeof(oncore_decoder) == 8, "oncore_decoder");
 _Static_assert(sizeof(oncore_dop_type) == 1, "oncore_dop_type");
 _Static_assert(sizeof(oncore_extension_fields) == 62, "oncore_extension_fields");
 _Static_assert(sizeof(oncore_fix_mode) == 1, "oncore_fix_mode");
@@ -1631,6 +1664,7 @@ _Static_assert(sizeof(oncore_gmt_offset_fields) == 3, "oncore_gmt_offset_fields"
 _Static_assert(sizeof(oncore_health) == 1, "oncore_health");
 _Static_assert(sizeof(oncore_hold_position_fields) == 12, "oncore_hold_position_fields");
 _Static_assert(sizeof(oncore_leap_pending) == 1, "oncore_leap_pending");
+_Static_assert(sizeof(oncore_message_entry) == 56, "oncore_message_entry");
 _Static_assert(sizeof(oncore_position_fields) == 16, "oncore_position_fields");
 _Static_assert(sizeof(oncore_pps_mode) == 1, "oncore_pps_mode");
 _Static_assert(sizeof(oncore_pulse_sync) == 1, "oncore_pulse_sync");
@@ -1659,6 +1693,7 @@ _Static_assert(sizeof(satellite_list) == 1, "satellite_list");
 _Static_assert(sizeof(sci_driver) == 28, "sci_driver");
 _Static_assert(sizeof(sci_exchange_state) == 56, "sci_exchange_state");
 _Static_assert(sizeof(sci_settings_record) == 6, "sci_settings_record");
+_Static_assert(sizeof(scpi_action_param) == 6, "scpi_action_param");
 _Static_assert(sizeof(scpi_decimal) == 20, "scpi_decimal");
 _Static_assert(sizeof(scpi_numeric_param) == 44, "scpi_numeric_param");
 _Static_assert(sizeof(scpi_param_type) == 1, "scpi_param_type");
@@ -1843,12 +1878,20 @@ _Static_assert(sizeof(three_point_fit) == 16, "three_point_fit");
 #define OPCR_OP2_MASK   0x03
 
 extern void *boot_vectors; /* 00000000 */
+extern uint8_t installer_records[42861]; /* 00000bbc */
 extern void *primary_vectors; /* 00010000 */
+extern int16_t days_before_month[12]; /* 0001186c */
+extern int16_t days_before_month_leap[12]; /* 00011884 */
 extern byte reset_to_recover_text[20]; /* 00011b8c */
 extern char * exception_names[57]; /* 00011ba0 */
 extern char dither_table[128]; /* 00012b32 */
+extern char decimal_digit_pairs[200]; /* 00025c82 */
 extern ushort status_register_setup_table; /* 0002f7ac */
 extern status_condition status_conditions[79]; /* 0002f838 */
+extern uint8_t retained_block_defaults[25]; /* 0003094c */
+extern sci_settings_record sci_settings_defaults; /* 00030a2c */
+extern duartb_settings_record duartb_settings_defaults; /* 00030a34 */
+extern uint32_t low_bit_masks[33]; /* 000314b2 */
 extern scpi_numeric_param * nv_numeric_params[21]; /* 00032d5e */
 extern scpi_setting_param * nv_setting_params[18]; /* 00032db2 */
 extern scpi_numeric_param scpi_param_SAMPle_INTeger; /* 000334de */
@@ -1897,6 +1940,33 @@ extern scpi_numeric_param scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THRe
 extern scpi_numeric_param scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; /* 00034336 */
 extern scpi_numeric_param nv_param_field_b8; /* 00034374 */
 extern fpga_bit fpga_bit_table[6]; /* 00041310 */
+extern scpi_action_param scpi_action_DIAGnostic_PTIMe_TINTerval; /* 0004132a */
+extern scpi_action_param scpi_action_SOURce_ROSCillator_HOLDover_RECovery_AUTO; /* 00041330 */
+extern scpi_action_param scpi_action_SOURce_ROSCillator_HOLDover_INITiate; /* 00041336 */
+extern scpi_action_param scpi_action_temporary_hold; /* 0004133c */
+extern scpi_action_param scpi_action_SAMPle_ACTion; /* 00041342 */
+extern scpi_action_param scpi_action_self_test; /* 00041348 */
+extern scpi_action_param scpi_action_SOURce_PTIMe_SYNChronization_IMMediate; /* 0004134e */
+extern scpi_action_param scpi_action_RMHO; /* 00041354 */
+extern scpi_action_param scpi_action_SOURce_GPSystem_POSition; /* 0004135a */
+extern scpi_action_param scpi_action_SYSTem_PRESet; /* 00041360 */
+extern scpi_action_param scpi_action_SER1_PRESet; /* 00041366 */
+extern scpi_action_param scpi_action_SER2_PRESet; /* 0004136c */
+extern scpi_action_param scpi_action_STATus_PRESet; /* 00041372 */
+extern scpi_action_param scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated; /* 00041378 */
+extern char si_prefixes[8]; /* 0004cfc5 */
+extern oncore_message_entry oncore_messages[49]; /* 0004fece */
+extern uint8_t oncore_status_field_codes[6]; /* 00050fd2 */
+extern uint8_t oncore_visibility_field_codes[10]; /* 00050fd8 */
+extern uint8_t oncore_xdop_table_field_codes[2]; /* 00050fe2 */
+extern uint8_t oncore_extension_field_codes[2]; /* 00050fe4 */
+extern uint8_t oncore_raim_field_codes[16]; /* 00050fe6 */
+extern uint8_t oncore_corrections_field_codes[12]; /* 00050ff6 */
+extern uint8_t oncore_almanac_field_codes[2]; /* 00051002 */
+extern uint8_t oncore_receiver_id_field_codes[11]; /* 00051004 */
+extern char os_report_newline[3]; /* 000512e6 */
+extern char os_report_format[3]; /* 00051382 */
+extern uint32_t powers_of_ten_64[36]; /* 0005fa46 */
 extern char crash_message[80]; /* 0010094e */
 extern exception_record last_exception; /* 0010099e */
 extern uint8_t watchdog_clock; /* 001009b2 */
@@ -2096,15 +2166,8 @@ extern volatile qsm_registers qsm; /* 00fffc00 */
 
 #define ADJ(p) _Generic((p), forth_user_end: (forth_user_area *)((char *)(p) - 40))
 
-extern undefined DAT_00001388; /* 00001388 */
-extern undefined DAT_00002580; /* 00002580 */
-extern undefined DAT_00003c19; /* 00003c19 */
-extern undefined DAT_00004b00; /* 00004b00 */
 extern undefined1 DAT_00010cb0; /* 00010cb0 */
 extern undefined1 DAT_00010cca; /* 00010cca */
-extern undefined2 DAT_0001186c; /* 0001186c */
-extern undefined DAT_00011882; /* 00011882 */
-extern undefined2 DAT_00011884; /* 00011884 */
 extern undefined DAT_0001189c; /* 0001189c */
 extern undefined DAT_0001234c; /* 0001234c */
 extern undefined4 DAT_00012614; /* 00012614 */
@@ -2117,7 +2180,6 @@ extern undefined DAT_00017fe0; /* 00017fe0 */
 extern undefined DAT_0001ed2c; /* 0001ed2c */
 extern undefined DAT_00021e3b; /* 00021e3b */
 extern undefined DAT_00021e48; /* 00021e48 */
-extern undefined2 DAT_00025c82; /* 00025c82 */
 extern undefined DAT_000279ca; /* 000279ca */
 extern undefined2 DAT_00027b2e; /* 00027b2e */
 extern undefined2 DAT_00028910; /* 00028910 */
@@ -2131,11 +2193,7 @@ extern undefined DAT_0002d918; /* 0002d918 */
 extern undefined DAT_0002d91a; /* 0002d91a */
 extern undefined DAT_00030816; /* 00030816 */
 extern undefined DAT_000308b6; /* 000308b6 */
-extern undefined DAT_0003094c; /* 0003094c */
-extern undefined DAT_00030a2c; /* 00030a2c */
-extern undefined DAT_00030a34; /* 00030a34 */
 extern undefined1 DAT_00030cec; /* 00030cec */
-extern undefined DAT_000314b2; /* 000314b2 */
 extern undefined DAT_00032704; /* 00032704 */
 extern undefined DAT_00032e26; /* 00032e26 */
 extern undefined DAT_00032ff5; /* 00032ff5 */
@@ -2149,27 +2207,9 @@ extern undefined DAT_00033898; /* 00033898 */
 extern undefined DAT_0003393a; /* 0003393a */
 extern undefined DAT_00033d20; /* 00033d20 */
 extern undefined DAT_00033d3e; /* 00033d3e */
-extern undefined DAT_0004132a; /* 0004132a */
-extern undefined DAT_00041330; /* 00041330 */
-extern undefined DAT_00041336; /* 00041336 */
-extern undefined DAT_0004133c; /* 0004133c */
-extern undefined DAT_00041342; /* 00041342 */
-extern undefined DAT_00041348; /* 00041348 */
-extern undefined DAT_0004134e; /* 0004134e */
-extern undefined DAT_00041354; /* 00041354 */
-extern undefined DAT_0004135a; /* 0004135a */
-extern undefined DAT_00041360; /* 00041360 */
-extern undefined DAT_00041366; /* 00041366 */
-extern undefined DAT_0004136c; /* 0004136c */
-extern undefined DAT_00041372; /* 00041372 */
-extern undefined DAT_00041378; /* 00041378 */
 extern undefined DAT_0004cfce; /* 0004cfce */
 extern undefined1 DAT_0004d10b; /* 0004d10b */
 extern undefined1 DAT_0004e016; /* 0004e016 */
-extern undefined DAT_0004fed2; /* 0004fed2 */
-extern undefined DAT_0004fee8; /* 0004fee8 */
-extern undefined2 DAT_0004feea; /* 0004feea */
-extern undefined DAT_0004feec; /* 0004feec */
 extern undefined DAT_00050cca; /* 00050cca */
 extern undefined DAT_00050d32; /* 00050d32 */
 extern undefined DAT_00050da6; /* 00050da6 */
@@ -2189,17 +2229,9 @@ extern undefined DAT_00050f72; /* 00050f72 */
 extern undefined DAT_00050f8a; /* 00050f8a */
 extern undefined DAT_00050fa2; /* 00050fa2 */
 extern undefined DAT_00050fce; /* 00050fce */
-extern undefined DAT_00050fd8; /* 00050fd8 */
-extern undefined DAT_00050fe2; /* 00050fe2 */
-extern undefined DAT_00050fe4; /* 00050fe4 */
-extern undefined DAT_00050ff6; /* 00050ff6 */
-extern undefined DAT_00051002; /* 00051002 */
-extern undefined DAT_00051004; /* 00051004 */
 extern undefined DAT_0005122a; /* 0005122a */
 extern undefined DAT_000512cd; /* 000512cd */
 extern undefined DAT_000512d2; /* 000512d2 */
-extern undefined DAT_000512e6; /* 000512e6 */
-extern undefined DAT_00051382; /* 00051382 */
 extern undefined DAT_00051385; /* 00051385 */
 extern undefined DAT_0005171a; /* 0005171a */
 extern undefined DAT_00053034; /* 00053034 */
@@ -2209,7 +2241,6 @@ extern undefined DAT_0005f864; /* 0005f864 */
 extern undefined DAT_0005f938; /* 0005f938 */
 extern undefined DAT_0005f96e; /* 0005f96e */
 extern undefined DAT_0005f972; /* 0005f972 */
-extern undefined DAT_0005fa46; /* 0005fa46 */
 extern undefined DAT_00060868; /* 00060868 */
 extern undefined DAT_0006086a; /* 0006086a */
 extern undefined DAT_0006086c; /* 0006086c */
@@ -2444,21 +2475,13 @@ extern undefined LAB_00040096; /* 00040096 */
 extern undefined4 *PTR_DAT_00021e2e; /* 00021e2e */
 extern undefined4 *PTR_DAT_00021e32; /* 00021e32 */
 extern undefined4 *PTR_DAT_0004cf80; /* 0004cf80 */
-extern undefined4 *PTR_DAT_0004fece; /* 0004fece */
-extern undefined4 *PTR_DAT_0004fee4; /* 0004fee4 */
 extern undefined4 *PTR_DAT_00050e5e; /* 00050e5e */
 extern undefined4 *PTR_DAT_00050e66; /* 00050e66 */
 extern undefined4 *PTR_diag_cal_0001c8ac; /* 0001c8ac */
 extern undefined4 *PTR_gps_request_step_00050cc2; /* 00050cc2 */
 extern undefined4 *PTR_lamp_test_command_000186b0; /* 000186b0 */
-extern undefined4 *PTR_long_array_get_byte_0004fed4; /* 0004fed4 */
 extern undefined4 *PTR_s_Self_Test_0004d076; /* 0004d076 */
 extern undefined4 *PTR_selftest_all_00018458; /* 00018458 */
-extern undefined UNK_00002a30; /* 00002a30 */
-extern undefined UNK_00003039; /* 00003039 */
-extern undefined UNK_00003c1a; /* 00003c1a */
-extern undefined UNK_00004d10; /* 00004d10 */
-extern undefined UNK_00004d11; /* 00004d11 */
 extern undefined UNK_00012350; /* 00012350 */
 extern undefined UNK_0001d570; /* 0001d570 */
 extern undefined UNK_00028720; /* 00028720 */
@@ -2467,11 +2490,7 @@ extern undefined UNK_00032700; /* 00032700 */
 extern undefined UNK_00033cc6; /* 00033cc6 */
 extern undefined UNK_00041300; /* 00041300 */
 extern undefined UNK_0004b800; /* 0004b800 */
-extern undefined UNK_0004cfc5; /* 0004cfc5 */
-extern undefined UNK_0004feee; /* 0004feee */
-extern undefined UNK_0004fef2; /* 0004fef2 */
 extern undefined UNK_0005fa2d; /* 0005fa2d */
-extern undefined UNK_0005fa4a; /* 0005fa4a */
 extern undefined UNK_0006184c; /* 0006184c */
 extern undefined UNK_00061854; /* 00061854 */
 extern undefined UNK_00061864; /* 00061864 */
@@ -2644,15 +2663,8 @@ extern char s_DUART_test_string_0001ee6e[]; /* 0001ee6e */
 extern word switchD_000205c0; /* 000205c4 */
 extern undefined task_table; /* 001026b8 */
 
-__asm__(".set DAT_00001388, 0x00001388");
-__asm__(".set DAT_00002580, 0x00002580");
-__asm__(".set DAT_00003c19, 0x00003c19");
-__asm__(".set DAT_00004b00, 0x00004b00");
 __asm__(".set DAT_00010cb0, 0x00010cb0");
 __asm__(".set DAT_00010cca, 0x00010cca");
-__asm__(".set DAT_0001186c, 0x0001186c");
-__asm__(".set DAT_00011882, 0x00011882");
-__asm__(".set DAT_00011884, 0x00011884");
 __asm__(".set DAT_0001189c, 0x0001189c");
 __asm__(".set DAT_0001234c, 0x0001234c");
 __asm__(".set DAT_00012614, 0x00012614");
@@ -2665,7 +2677,6 @@ __asm__(".set DAT_00017fe0, 0x00017fe0");
 __asm__(".set DAT_0001ed2c, 0x0001ed2c");
 __asm__(".set DAT_00021e3b, 0x00021e3b");
 __asm__(".set DAT_00021e48, 0x00021e48");
-__asm__(".set DAT_00025c82, 0x00025c82");
 __asm__(".set DAT_000279ca, 0x000279ca");
 __asm__(".set DAT_00027b2e, 0x00027b2e");
 __asm__(".set DAT_00028910, 0x00028910");
@@ -2679,11 +2690,7 @@ __asm__(".set DAT_0002d918, 0x0002d918");
 __asm__(".set DAT_0002d91a, 0x0002d91a");
 __asm__(".set DAT_00030816, 0x00030816");
 __asm__(".set DAT_000308b6, 0x000308b6");
-__asm__(".set DAT_0003094c, 0x0003094c");
-__asm__(".set DAT_00030a2c, 0x00030a2c");
-__asm__(".set DAT_00030a34, 0x00030a34");
 __asm__(".set DAT_00030cec, 0x00030cec");
-__asm__(".set DAT_000314b2, 0x000314b2");
 __asm__(".set DAT_00032704, 0x00032704");
 __asm__(".set DAT_00032e26, 0x00032e26");
 __asm__(".set DAT_00032ff5, 0x00032ff5");
@@ -2697,27 +2704,9 @@ __asm__(".set DAT_00033898, 0x00033898");
 __asm__(".set DAT_0003393a, 0x0003393a");
 __asm__(".set DAT_00033d20, 0x00033d20");
 __asm__(".set DAT_00033d3e, 0x00033d3e");
-__asm__(".set DAT_0004132a, 0x0004132a");
-__asm__(".set DAT_00041330, 0x00041330");
-__asm__(".set DAT_00041336, 0x00041336");
-__asm__(".set DAT_0004133c, 0x0004133c");
-__asm__(".set DAT_00041342, 0x00041342");
-__asm__(".set DAT_00041348, 0x00041348");
-__asm__(".set DAT_0004134e, 0x0004134e");
-__asm__(".set DAT_00041354, 0x00041354");
-__asm__(".set DAT_0004135a, 0x0004135a");
-__asm__(".set DAT_00041360, 0x00041360");
-__asm__(".set DAT_00041366, 0x00041366");
-__asm__(".set DAT_0004136c, 0x0004136c");
-__asm__(".set DAT_00041372, 0x00041372");
-__asm__(".set DAT_00041378, 0x00041378");
 __asm__(".set DAT_0004cfce, 0x0004cfce");
 __asm__(".set DAT_0004d10b, 0x0004d10b");
 __asm__(".set DAT_0004e016, 0x0004e016");
-__asm__(".set DAT_0004fed2, 0x0004fed2");
-__asm__(".set DAT_0004fee8, 0x0004fee8");
-__asm__(".set DAT_0004feea, 0x0004feea");
-__asm__(".set DAT_0004feec, 0x0004feec");
 __asm__(".set DAT_00050cca, 0x00050cca");
 __asm__(".set DAT_00050d32, 0x00050d32");
 __asm__(".set DAT_00050da6, 0x00050da6");
@@ -2737,17 +2726,9 @@ __asm__(".set DAT_00050f72, 0x00050f72");
 __asm__(".set DAT_00050f8a, 0x00050f8a");
 __asm__(".set DAT_00050fa2, 0x00050fa2");
 __asm__(".set DAT_00050fce, 0x00050fce");
-__asm__(".set DAT_00050fd8, 0x00050fd8");
-__asm__(".set DAT_00050fe2, 0x00050fe2");
-__asm__(".set DAT_00050fe4, 0x00050fe4");
-__asm__(".set DAT_00050ff6, 0x00050ff6");
-__asm__(".set DAT_00051002, 0x00051002");
-__asm__(".set DAT_00051004, 0x00051004");
 __asm__(".set DAT_0005122a, 0x0005122a");
 __asm__(".set DAT_000512cd, 0x000512cd");
 __asm__(".set DAT_000512d2, 0x000512d2");
-__asm__(".set DAT_000512e6, 0x000512e6");
-__asm__(".set DAT_00051382, 0x00051382");
 __asm__(".set DAT_00051385, 0x00051385");
 __asm__(".set DAT_0005171a, 0x0005171a");
 __asm__(".set DAT_00053034, 0x00053034");
@@ -2757,7 +2738,6 @@ __asm__(".set DAT_0005f864, 0x0005f864");
 __asm__(".set DAT_0005f938, 0x0005f938");
 __asm__(".set DAT_0005f96e, 0x0005f96e");
 __asm__(".set DAT_0005f972, 0x0005f972");
-__asm__(".set DAT_0005fa46, 0x0005fa46");
 __asm__(".set DAT_00060868, 0x00060868");
 __asm__(".set DAT_0006086a, 0x0006086a");
 __asm__(".set DAT_0006086c, 0x0006086c");
@@ -2992,21 +2972,13 @@ __asm__(".set LAB_00040096, 0x00040096");
 __asm__(".set PTR_DAT_00021e2e, 0x00021e2e");
 __asm__(".set PTR_DAT_00021e32, 0x00021e32");
 __asm__(".set PTR_DAT_0004cf80, 0x0004cf80");
-__asm__(".set PTR_DAT_0004fece, 0x0004fece");
-__asm__(".set PTR_DAT_0004fee4, 0x0004fee4");
 __asm__(".set PTR_DAT_00050e5e, 0x00050e5e");
 __asm__(".set PTR_DAT_00050e66, 0x00050e66");
 __asm__(".set PTR_diag_cal_0001c8ac, 0x0001c8ac");
 __asm__(".set PTR_gps_request_step_00050cc2, 0x00050cc2");
 __asm__(".set PTR_lamp_test_command_000186b0, 0x000186b0");
-__asm__(".set PTR_long_array_get_byte_0004fed4, 0x0004fed4");
 __asm__(".set PTR_s_Self_Test_0004d076, 0x0004d076");
 __asm__(".set PTR_selftest_all_00018458, 0x00018458");
-__asm__(".set UNK_00002a30, 0x00002a30");
-__asm__(".set UNK_00003039, 0x00003039");
-__asm__(".set UNK_00003c1a, 0x00003c1a");
-__asm__(".set UNK_00004d10, 0x00004d10");
-__asm__(".set UNK_00004d11, 0x00004d11");
 __asm__(".set UNK_00012350, 0x00012350");
 __asm__(".set UNK_0001d570, 0x0001d570");
 __asm__(".set UNK_00028720, 0x00028720");
@@ -3015,11 +2987,7 @@ __asm__(".set UNK_00032700, 0x00032700");
 __asm__(".set UNK_00033cc6, 0x00033cc6");
 __asm__(".set UNK_00041300, 0x00041300");
 __asm__(".set UNK_0004b800, 0x0004b800");
-__asm__(".set UNK_0004cfc5, 0x0004cfc5");
-__asm__(".set UNK_0004feee, 0x0004feee");
-__asm__(".set UNK_0004fef2, 0x0004fef2");
 __asm__(".set UNK_0005fa2d, 0x0005fa2d");
-__asm__(".set UNK_0005fa4a, 0x0005fa4a");
 __asm__(".set UNK_0006184c, 0x0006184c");
 __asm__(".set UNK_00061854, 0x00061854");
 __asm__(".set UNK_00061864, 0x00061864");
@@ -3200,7 +3168,10 @@ __asm__(".set console_device, 0x00100a02");
 __asm__(".set console_halt_hook_cell, 0x001009fe");
 __asm__(".set counter_configuration, 0x00101fae");
 __asm__(".set crash_message, 0x0010094e");
+__asm__(".set days_before_month, 0x0001186c");
+__asm__(".set days_before_month_leap, 0x00011884");
 __asm__(".set debug_enabled, 0x001037dd");
+__asm__(".set decimal_digit_pairs, 0x00025c82");
 __asm__(".set deferred_end, 0x001036fe");
 __asm__(".set deferred_start, 0x00103700");
 __asm__(".set deferred_text, 0x001032fd");
@@ -3225,6 +3196,7 @@ __asm__(".set duartb, 0x001030ec");
 __asm__(".set duartb_applied, 0x00102ecc");
 __asm__(".set duartb_ring, 0x00102fea");
 __asm__(".set duartb_settings, 0x00101f58");
+__asm__(".set duartb_settings_defaults, 0x00030a34");
 __asm__(".set eeprom_writing, 0x00101d34");
 __asm__(".set eepx_exchange, 0x00101d18");
 __asm__(".set eepx_token, 0x00101d1c");
@@ -3286,6 +3258,7 @@ __asm__(".set installer_duarta_ring, 0x0010ad4d");
 __asm__(".set installer_duartb, 0x0010af5c");
 __asm__(".set installer_duartb_applied, 0x0010ad3c");
 __asm__(".set installer_duartb_ring, 0x0010ae5a");
+__asm__(".set installer_records, 0x00000bbc");
 __asm__(".set internal_pps_count, 0x00101b70");
 __asm__(".set internal_pps_dead, 0x00101b6f");
 __asm__(".set internal_pps_last_count, 0x00101cfe");
@@ -3310,6 +3283,7 @@ __asm__(".set log_page_number, 0x00101dd4");
 __asm__(".set loop_steering, 0x0010205e");
 __asm__(".set loopback_expect_next, 0x00103146");
 __asm__(".set loopback_send_next, 0x00103142");
+__asm__(".set low_bit_masks, 0x000314b2");
 __asm__(".set max_loop_time, 0x00101e84");
 __asm__(".set nv_bytes_loaded, 0x00101f66");
 __asm__(".set nv_numeric_bytes_loaded, 0x00101f64");
@@ -3325,6 +3299,17 @@ __asm__(".set nv_setting_params, 0x00032db2");
 __asm__(".set nv_settings, 0x00101e8a");
 __asm__(".set nv_settings_defaults, 0x00030966");
 __asm__(".set nv_slot, 0x00101f62");
+__asm__(".set oncore_almanac_field_codes, 0x00051002");
+__asm__(".set oncore_corrections_field_codes, 0x00050ff6");
+__asm__(".set oncore_extension_field_codes, 0x00050fe4");
+__asm__(".set oncore_messages, 0x0004fece");
+__asm__(".set oncore_raim_field_codes, 0x00050fe6");
+__asm__(".set oncore_receiver_id_field_codes, 0x00051004");
+__asm__(".set oncore_status_field_codes, 0x00050fd2");
+__asm__(".set oncore_visibility_field_codes, 0x00050fd8");
+__asm__(".set oncore_xdop_table_field_codes, 0x00050fe2");
+__asm__(".set os_report_format, 0x00051382");
+__asm__(".set os_report_newline, 0x000512e6");
 __asm__(".set outer_oven_enabled, 0x00101b71");
 __asm__(".set pll, 0x00102162");
 __asm__(".set pll_debug_enabled, 0x00102541");
@@ -3342,6 +3327,7 @@ __asm__(".set pll_scpi_values, 0x00102020");
 __asm__(".set pll_scpi_waiting_task, 0x00102018");
 __asm__(".set plla_exchange, 0x00103800");
 __asm__(".set pllc_exchange, 0x00103804");
+__asm__(".set powers_of_ten_64, 0x0005fa46");
 __asm__(".set pps_exchange, 0x00100bc4");
 __asm__(".set primary_vectors, 0x00010000");
 __asm__(".set psos_config, 0x0010264c");
@@ -3355,11 +3341,27 @@ __asm__(".set rand_seed, 0x00103936");
 __asm__(".set reference_valid_override_request, 0x00100c68");
 __asm__(".set reset_to_recover_text, 0x00011b8c");
 __asm__(".set restart_reference_seconds, 0x0010258c");
+__asm__(".set retained_block_defaults, 0x0003094c");
 __asm__(".set s_DUART_test_string_0001ee6e, 0x0001ee6e");
 __asm__(".set sci, 0x0010328a");
 __asm__(".set sci_exchanges, 0x00103150");
 __asm__(".set sci_ring, 0x00103188");
 __asm__(".set sci_settings, 0x00101f50");
+__asm__(".set sci_settings_defaults, 0x00030a2c");
+__asm__(".set scpi_action_DIAGnostic_PTIMe_TINTerval, 0x0004132a");
+__asm__(".set scpi_action_RMHO, 0x00041354");
+__asm__(".set scpi_action_SAMPle_ACTion, 0x00041342");
+__asm__(".set scpi_action_SER1_PRESet, 0x00041366");
+__asm__(".set scpi_action_SER2_PRESet, 0x0004136c");
+__asm__(".set scpi_action_SOURce_GPSystem_POSition, 0x0004135a");
+__asm__(".set scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated, 0x00041378");
+__asm__(".set scpi_action_SOURce_PTIMe_SYNChronization_IMMediate, 0x0004134e");
+__asm__(".set scpi_action_SOURce_ROSCillator_HOLDover_INITiate, 0x00041336");
+__asm__(".set scpi_action_SOURce_ROSCillator_HOLDover_RECovery_AUTO, 0x00041330");
+__asm__(".set scpi_action_STATus_PRESet, 0x00041372");
+__asm__(".set scpi_action_SYSTem_PRESet, 0x00041360");
+__asm__(".set scpi_action_self_test, 0x00041348");
+__asm__(".set scpi_action_temporary_hold, 0x0004133c");
 __asm__(".set scpi_language, 0x00102c62");
 __asm__(".set scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe, 0x000342ba");
 __asm__(".set scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold, 0x000342f8");
@@ -3409,6 +3411,7 @@ __asm__(".set scpi_value_SAMPle_INTeger, 0x00101de4");
 __asm__(".set selftest, 0x00100c24");
 __asm__(".set selftest_number, 0x00102590");
 __asm__(".set selftest_requested, 0x0010258d");
+__asm__(".set si_prefixes, 0x0004cfc5");
 __asm__(".set sim, 0x00fffa00");
 __asm__(".set spoo_exchange, 0x001032f8");
 __asm__(".set status_conditions, 0x0002f838");
@@ -4982,6 +4985,7 @@ ulong console_write(char *s);
 int printf(char *format,...);
 undefined4 console_read(void *param_1,undefined4 param_2,undefined1 *param_3);
 void scpi_port_open(void);
+void duartb_settings_done(void);
 int console_write_polled(char *s);
 void printf_polled(char *format,...);
 bool drtb_try_lock_write(void);
@@ -5046,6 +5050,7 @@ void sci_putc(undefined1 param_1);
 void sci_send_async(char *param_1,uint8_t param_2);
 ulong sci_port_write(void *param_1);
 void sci_printf(char *param_1);
+void sci_settings_done(void);
 int sci_puts_polled(char *param_1);
 void sci_printf_polled(char *param_1);
 void qspi_release(void);
@@ -6946,23 +6951,23 @@ undefined4 boot_unpack_installer(void)
 
 {
   int iVar1;
-  char *pcVar2;
+  uint8_t *puVar2;
   
-  pcVar2 = "C";
+  puVar2 = installer_records + 1;
   while( true ) {
-    if (*pcVar2 == 'E') {
+    if (*puVar2 == 0x45) {
       return 0;
     }
-    if (*pcVar2 != 'C') break;
+    if (*puVar2 != 0x43) break;
                     /* WARNING: Switch is manually overridden */
-    iVar1 = CONCAT31((uint3)(byte)pcVar2[3] |
-                     (uint3)(((uint)(byte)pcVar2[2] << 0x10) >> 8) |
-                     (uint3)(((uint)(byte)pcVar2[1] << 0x18) >> 8),pcVar2[4]);
+    iVar1 = CONCAT31((uint3)puVar2[3] |
+                     (uint3)(((uint)puVar2[2] << 0x10) >> 8) |
+                     (uint3)(((uint)puVar2[1] << 0x18) >> 8),puVar2[4]);
     boot_memcpy((undefined1 *)
-                CONCAT31((uint3)(byte)pcVar2[7] |
-                         (uint3)(((uint)(byte)pcVar2[6] << 0x10) >> 8) |
-                         (uint3)(((uint)(byte)pcVar2[5] << 0x18) >> 8),pcVar2[8]),pcVar2 + 9,iVar1);
-    pcVar2 = pcVar2 + 9 + iVar1;
+                CONCAT31((uint3)puVar2[7] |
+                         (uint3)(((uint)puVar2[6] << 0x10) >> 8) |
+                         (uint3)(((uint)puVar2[5] << 0x18) >> 8),puVar2[8]),puVar2 + 9,iVar1);
+    puVar2 = puVar2 + 9 + iVar1;
   }
   return 2;
 }
@@ -7890,7 +7895,7 @@ int16_t day_of_year(uint32_t date)
     sVar1 = *(short *)(uVar2 * 2 + 0x1186a);
   }
   else {
-    sVar1 = *(short *)(&DAT_00011882 + uVar2 * 2);
+    sVar1 = days_before_month[uVar2 + 0xb];
   }
   return sVar1 + ((ushort)date & 0xff);
 }
@@ -7921,8 +7926,8 @@ undefined4 days_to_date(undefined *param_1)
   char cVar4;
   byte bVar5;
   
-  if (param_1 < &UNK_00003c1a) {
-    param_1 = &DAT_00003c19;
+  if (param_1 < installer_records + 0x305e) {
+    param_1 = installer_records + 0x305d;
   }
   uVar3 = (uint)((int)(param_1 + -0x3c18) * 4) / 0x5b5;
   uVar2 = (int)(param_1 + -0x3c18) - (((int)(uVar3 & 0xffff) >> 2) + (uVar3 & 0xffff) * 0x16d);
@@ -7930,16 +7935,16 @@ undefined4 days_to_date(undefined *param_1)
   bVar5 = 1;
   cVar4 = is_leap_year(uVar1);
   if (cVar4 == '\0') {
-    while ((bVar5 < 0xc && ((ushort)(&DAT_0001186c)[bVar5] < uVar2))) {
+    while ((bVar5 < 0xc && ((ushort)days_before_month[bVar5] < uVar2))) {
       bVar5 = bVar5 + 1;
     }
     cVar4 = (char)*(undefined2 *)((uint)bVar5 * 2 + 0x1186a);
   }
   else {
-    while ((bVar5 < 0xc && ((ushort)(&DAT_00011884)[bVar5] < uVar2))) {
+    while ((bVar5 < 0xc && ((ushort)days_before_month_leap[bVar5] < uVar2))) {
       bVar5 = bVar5 + 1;
     }
-    cVar4 = (char)*(undefined2 *)(&DAT_00011882 + (uint)bVar5 * 2);
+    cVar4 = (char)days_before_month[bVar5 + 0xb];
   }
   return CONCAT31((uint3)bVar5 | (uint3)(((uint)uVar1 << 0x10) >> 8),(char)uVar2 - cVar4);
 }
@@ -9444,7 +9449,7 @@ void system_init(void)
       DAT_001037df = '\x01';
     }
     else {
-      memcpy(&DAT_00101e70,&DAT_0003094c,0x19);
+      memcpy(&DAT_00101e70,retained_block_defaults,0x19);
       gps_init();
       pll_init();
       _DAT_00100002 = 0;
@@ -9452,7 +9457,7 @@ void system_init(void)
     }
   }
   else {
-    memcpy(&DAT_00101e70,&DAT_0003094c,0x19);
+    memcpy(&DAT_00101e70,retained_block_defaults,0x19);
     gps_init();
     pll_init();
     _DAT_00100002 = 1;
@@ -18813,13 +18818,13 @@ void os_report_exchange(undefined4 *param_1,undefined *param_2)
   task = (int *)*param_1;
   while (task != param_1) {
     pcVar4 = task_name(task);
-    (*(code *)param_2)(&DAT_00051382,pcVar4);
+    (*(code *)param_2)("%s",pcVar4);
     task = (int *)*task;
     if (task != param_1) {
       (*(code *)param_2)(&DAT_00051385);
     }
   }
-  (*(code *)param_2)(&DAT_00051382,&DAT_000512e6);
+  (*(code *)param_2)("%s","\r\n");
   return;
 }
 
@@ -19001,11 +19006,11 @@ LAB_0001639a:
       (*(code *)print)(pcVar2);
       do {
         if (piVar8 == (int *)0x0) {
-          (*(code *)print)(&DAT_00051382,&DAT_000512e6);
+          (*(code *)print)("%s","\r\n");
           goto LAB_000164c2;
         }
         puVar4 = object_name(piVar8[1]);
-        (*(code *)print)(&DAT_00051382,puVar4);
+        (*(code *)print)("%s",puVar4);
         piVar8 = (int *)*piVar8;
       } while (piVar8 == (int *)0x0);
       pcVar2 = ",";
@@ -19145,7 +19150,7 @@ void os_report_exchanges(undefined *param_1)
     pcVar2 = pcVar2 + 1;
     pcVar3 = pcVar3 + 1;
   } while (sVar1 != -1);
-  (*(code *)param_1)(&DAT_00051382,acStack_36);
+  (*(code *)param_1)("%s",acStack_36);
   for (puVar4 = *(undefined4 **)(psos_config + 0x14); puVar4 != (undefined4 *)0x0;
       puVar4 = (undefined4 *)puVar4[7]) {
     os_report_exchange(puVar4,param_1);
@@ -19228,9 +19233,9 @@ int os_report_processes(undefined *param_1)
   int iVar7;
   undefined *print;
   
-  (*(code *)param_1)(&DAT_00051382,"    pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CPU\r\n");
+  (*(code *)param_1)("%s","    pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CPU\r\n");
   os_report_process(_task_table," RUN",0,(uint)*(ushort *)((int)_task_table + 0x1a),param_1);
-  (*(code *)param_1)(&DAT_00051382,&DAT_000512e6);
+  (*(code *)param_1)("%s","\r\n");
   iVar6 = 0;
   do {
     bVar2 = false;
@@ -19251,7 +19256,7 @@ int os_report_processes(undefined *param_1)
       }
     }
     if (bVar2) {
-      (*(code *)param_1)(&DAT_00051382,&DAT_000512e6);
+      (*(code *)param_1)("%s","\r\n");
     }
     iVar7 = iVar6 + 1;
     iVar3 = iVar6 + -1;
@@ -19286,8 +19291,7 @@ void os_report_regions(undefined *param_1)
   undefined4 local_a;
   char local_6;
   
-  (*(code *)param_1)(&DAT_00051382,
-                     "Region strt       end  min     max    pend   USED  cnt  AVAIL cnt\r\n");
+  (*(code *)param_1)("%s","Region strt       end  min     max    pend   USED  cnt  AVAIL cnt\r\n");
   local_32 = psos_config;
   local_2e = _DAT_00102658;
   local_36 = 0;
@@ -19338,7 +19342,7 @@ void os_report_regions(undefined *param_1)
       (*(code *)param_1)(pcVar7);
       do {
         if (task == piVar2) {
-          (*(code *)param_1)(&DAT_00051382,&DAT_000512e6);
+          (*(code *)param_1)("%s","\r\n");
           goto LAB_000169e4;
         }
         uVar6 = *(undefined4 *)((int)task + 0x52);
@@ -19353,7 +19357,7 @@ void os_report_regions(undefined *param_1)
     } while( true );
   }
 LAB_000169e4:
-  (*(code *)param_1)(&DAT_00051382,&DAT_000512e6);
+  (*(code *)param_1)("%s","\r\n");
   return;
 }
 
@@ -33653,6 +33657,21 @@ void scpi_port_open(void)
 }
 
 
+/* 0001df00 */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* the done hook of DUART channel B's setting descriptors (0x33338 on) and of its PRESet at 0x30ea0:
+   psos_io_control(0, 0, 0)
+   read */
+
+void duartb_settings_done(void)
+
+{
+  psos_io_control(0,0,0);
+  return;
+}
+
+
 /* 0001df12 */
 
 /* in supervisor mode, writes the string a character at a time through 0x1d680; debug_write uses it
@@ -35837,7 +35856,6 @@ uint sci_reconfigure(void)
   uint3 uVar4;
   short sVar5;
   int iVar6;
-  undefined *puVar7;
   
   sci.reconfiguring = 1;
   uVar1 = qsm.sccr1;
@@ -35849,9 +35867,9 @@ uint sci_reconfigure(void)
   }
   uVar1 = qsm.sccr1;
   qsm.sccr1 = uVar1 & ~SCCR1_TE;
-  puVar7 = &DAT_00001388;
-  while ((0 < (int)puVar7 && (uVar1 = qsm.scsr, (uVar1 & 0x80) == 0))) {
-    puVar7 = puVar7 + -1;
+  iVar6 = 5000;
+  while ((0 < iVar6 && (uVar1 = qsm.scsr, (uVar1 & 0x80) == 0))) {
+    iVar6 = iVar6 + -1;
   }
   sci_baud_set(sci_settings.baud);
   iVar6 = (int)(char)sci_settings.parity - 3;
@@ -36026,6 +36044,21 @@ void sci_printf(char *param_1)
   
   vsprintf(acStack_a4,param_1,&stack0x00000008);
   sci_port_write(acStack_a4);
+  return;
+}
+
+
+/* 000202ac */
+
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
+/* the done hook of the SCI's setting descriptors (0x33ab2 on) and of its PRESet at 0x30ed4:
+   psos_io_control(0x300, 0, 0)
+   read */
+
+void sci_settings_done(void)
+
+{
+  psos_io_control(0x300,0,0);
   return;
 }
 
@@ -38549,8 +38582,10 @@ __regcall void scpi_decimal_to_text_unused(char *record /* a0 */,char *text /* a
     *pbVar5 = *pbVar5 | 0x30;
     sVar2 = sVar2 + (short)((int)sVar2 / 100) * -100;
   }
-  pcVar4[3] = *(char *)((int)&DAT_00025c82 + (int)(short)(sVar2 * 2));
-  pcVar4[4] = *(char *)((int)&DAT_00025c82 + (short)(sVar2 * 2) + 1);
+  pcVar4[3] = "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
+              [(short)(sVar2 * 2)];
+  pcVar4[4] = "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
+              [(short)(sVar2 * 2) + 1];
   pcVar4[5] = '\0';
   return;
 }
@@ -38777,7 +38812,10 @@ LAB_00024e22:
             uVar13 = (ushort)((uint)(iVar11 * 0x10000) >> 0x10);
             uVar10 = (CONCAT22(uVar13,uVar12) & 0xffff00ff) << 0x10 | (uint)uVar13;
             *(undefined2 *)puVar16 =
-                 *(undefined2 *)((int)&DAT_00025c82 + (int)(short)((uVar12 >> 8) * 2));
+                 *(undefined2 *)
+                  (
+                  "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
+                  + (short)((uVar12 >> 8) * 2));
             sVar17 = sVar17 + -2;
             puVar16 = (undefined4 *)((int)puVar16 + 2);
           } while (-1 < sVar17);
@@ -40448,9 +40486,13 @@ LAB_00025618:
     param_6 = -param_6;
   }
   local_8 = *(undefined2 *)
-             ((int)&DAT_00025c82 + (int)(short)((short)((uint)(int)param_6 / 100) << 1));
+             (
+             "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
+             + (short)((short)((uint)(int)param_6 / 100) << 1));
   local_6 = *(undefined2 *)
-             ((int)&DAT_00025c82 + (int)(short)((short)((uint)(int)param_6 % 100) << 1));
+             (
+             "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
+             + (short)((short)((uint)(int)param_6 % 100) << 1));
   if (0 < param_5) {
     bVar1 = 4 - (char)param_5;
     if (SBORROW1('\x04',(char)param_5) == (short)((ushort)bVar1 << 8) < 0) {
@@ -44893,7 +44935,7 @@ int scpi_query_common_TST(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_b(&DAT_00041348,0,(char)iVar1);
+  pllc_request_b(&scpi_action_self_test,0,(char)iVar1);
   *(uint32_t *)response = selftest.result;
   return 0;
 }
@@ -45334,7 +45376,7 @@ int scpi_set_STATus_PRESet(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_b(&DAT_00041372,0,(char)iVar1);
+  pllc_request_b(&scpi_action_STATus_PRESet,0,(char)iVar1);
   return 0;
 }
 
@@ -45349,7 +45391,7 @@ int scpi_set_STATus_PRESet_ALARm(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_b(&DAT_00041372,1,(char)iVar1);
+  pllc_request_b(&scpi_action_STATus_PRESet,1,(char)iVar1);
   return 0;
 }
 
@@ -46207,7 +46249,7 @@ int scpi_query_DIAGnostic_PTIMe_TINTerval(void *parameters,void *response,void *
   float fVar2;
   
   iVar1 = return_zero();
-  pllc_request_b(&DAT_0004132a,0,(char)iVar1);
+  pllc_request_b(&scpi_action_DIAGnostic_PTIMe_TINTerval,0,(char)iVar1);
   sr = set_interrupt_mask(0x100);
   if (interval_reading.valid == 0) {
     set_interrupt_mask(sr);
@@ -46594,7 +46636,7 @@ int scpi_query_DIAGnostic_TEST(void *parameters,void *response,void *call)
     }
   }
   iVar1 = return_zero();
-  pllc_request_b(&DAT_00041348,unaff_D2b,(char)iVar1);
+  pllc_request_b(&scpi_action_self_test,unaff_D2b,(char)iVar1);
   *(uint32_t *)response = selftest.result;
   *(uint32_t *)((int)response + 6) = selftest.details[0];
   *(uint32_t *)((int)response + 0xc) = selftest.details[1];
@@ -46670,7 +46712,7 @@ int scpi_set_DIAGnostic_TOFFset(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_b(&DAT_0004133c,0,(char)iVar1);
+  pllc_request_b(&scpi_action_temporary_hold,0,(char)iVar1);
   iVar1 = return_zero();
   scpi_numeric_set(0x33fd2,0,*(short *)parameters,*(short *)((int)parameters + 2),0,(char)iVar1);
   return 0;
@@ -46907,7 +46949,7 @@ int scpi_set_SOURce_GPSystem_ADELay(void *parameters,void *response,void *call)
   code *local_8;
   
   iVar1 = return_zero();
-  pllc_request_b(&DAT_0004133c,0,(char)iVar1);
+  pllc_request_b(&scpi_action_temporary_hold,0,(char)iVar1);
   if (*(short *)parameters == 2) {
     if (*(short *)((int)parameters + 2) == 1) {
       uVar4 = 0;
@@ -47248,7 +47290,7 @@ int scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *call
         return 0;
       }
       if ((nv_settings.douglas_state == 0) && (gps.average_count != 0)) {
-        pllc_request_b(&DAT_0004135a,0,bVar1);
+        pllc_request_b(&scpi_action_SOURce_GPSystem_POSition,0,bVar1);
         return 0;
       }
       copy_longs_locked(0x101e78,(uVar2 & 0xff) * 0xc + 0x102a0e,3);
@@ -48717,7 +48759,7 @@ int scpi_set_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_b(&DAT_00041378,0,(char)iVar1);
+  pllc_request_b(&scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated,0,(char)iVar1);
   return 0;
 }
 
@@ -49113,7 +49155,7 @@ int scpi_set_SAMPle_ACTion(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_b(&DAT_00041342,(char)*(undefined4 *)((int)parameters + 2),(char)iVar1);
+  pllc_request_b(&scpi_action_SAMPle_ACTion,(char)*(undefined4 *)((int)parameters + 2),(char)iVar1);
   return 0;
 }
 
@@ -50935,7 +50977,7 @@ int scpi_set_SOURce_ROSCillator_HOLDover_INITiate(void *parameters,void *respons
   set_interrupt_mask(sr);
   if (cVar2 != '\x01') {
     iVar1 = return_zero();
-    pllc_request_b(&DAT_00041336,0,(char)iVar1);
+    pllc_request_b(&scpi_action_SOURce_ROSCillator_HOLDover_INITiate,0,(char)iVar1);
   }
   return 0;
 }
@@ -51072,7 +51114,7 @@ int scpi_set_SOURce_ROSCillator_HOLDover_RECovery_INITiate
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_b(&DAT_00041330,0,(char)iVar1);
+  pllc_request_b(&scpi_action_SOURce_ROSCillator_HOLDover_RECovery_AUTO,0,(char)iVar1);
   return 0;
 }
 
@@ -51102,7 +51144,7 @@ int scpi_set_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_b(&DAT_00041354,0,(char)iVar1);
+  pllc_request_b(&scpi_action_RMHO,0,(char)iVar1);
   return 0;
 }
 
@@ -51385,7 +51427,7 @@ int scpi_set_SOURce_PTIMe_SYNChronization_IMMediate(void *parameters,void *respo
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_b(&DAT_0004134e,0,(char)iVar1);
+  pllc_request_b(&scpi_action_SOURce_PTIMe_SYNChronization_IMMediate,0,(char)iVar1);
   return 0;
 }
 
@@ -51474,19 +51516,19 @@ int scpi_set_SYSTem_COMMunicate_SER1_PRESet(void *parameters,void *response,void
 {
   int iVar1;
   undefined1 uVar2;
-  undefined *puVar3;
+  scpi_action_param *psVar3;
   
   if (*(short *)parameters == 0) {
     iVar1 = return_zero();
     uVar2 = (undefined1)iVar1;
-    puVar3 = &DAT_00041366;
+    psVar3 = &scpi_action_SER1_PRESet;
   }
   else {
     iVar1 = return_zero();
     uVar2 = (undefined1)iVar1;
-    puVar3 = &DAT_0004136c;
+    psVar3 = &scpi_action_SER2_PRESet;
   }
-  pllc_request_b(puVar3,0,uVar2);
+  pllc_request_b(psVar3,0,uVar2);
   return 0;
 }
 
@@ -51555,7 +51597,7 @@ switchD_00030304_caseD_0:
       return 0;
     }
 switchD_00030304_caseD_3:
-    *(undefined **)response = &DAT_00004b00;
+    *(undefined4 *)response = 0x4b00;
   }
   else {
     uVar2 = sci_settings.baud;
@@ -51574,7 +51616,7 @@ switchD_00030304_caseD_3:
       *(undefined4 *)response = 0x960;
       break;
     case 0x18:
-      *(undefined **)response = &DAT_00002580;
+      *(undefined4 *)response = 0x2580;
       break;
     case 0x20:
       goto switchD_00030304_caseD_3;
@@ -51987,7 +52029,7 @@ int scpi_set_SYSTem_PRESet(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_b(&DAT_00041360,0,(char)iVar1);
+  pllc_request_b(&scpi_action_SYSTem_PRESet,0,(char)iVar1);
   return 0;
 }
 
@@ -52261,8 +52303,8 @@ undefined2 parameter_record_read(void)
   uVar3 = record_checksum(&DAT_00400000,0x10);
   bVar4 = uVar3 != DAT_00400000;
   if (bVar4) {
-    memcpy(&duartb_settings,&DAT_00030a34,9);
-    pvVar1 = memcpy(&sci_settings,&DAT_00030a2c,6);
+    memcpy(&duartb_settings,&duartb_settings_defaults,9);
+    pvVar1 = memcpy(&sci_settings,&sci_settings_defaults,6);
     uVar2 = (char)((uint)pvVar1 >> 8);
   }
   else {
@@ -52273,7 +52315,7 @@ undefined2 parameter_record_read(void)
     duartb_settings.eight_bits = DAT_00400006;
     duartb_settings.two_stop_bits = DAT_00400007;
     duartb_settings.echo = DAT_00400008;
-    pvVar1 = memcpy(&sci_settings,&DAT_00030a2c,6);
+    pvVar1 = memcpy(&sci_settings,&sci_settings_defaults,6);
     uVar2 = (char)((uint)pvVar1 >> 8);
   }
   return CONCAT11(uVar2,!bVar4);
@@ -53768,8 +53810,8 @@ char nv_save(byte param_1)
         uVar7 = *(uint *)((int)__ghidra_bits(psVar1->value) + cVar5 * 4);
       }
       else {
-        uVar7 = *(uint *)((int)__ghidra_bits(psVar1->value) + cVar5 * 4) &
-                *(uint *)(&DAT_000314b2 + (uVar4 & 0xff) * 4) | __ghidra_shl(uVar7, (uVar4 & 0x3f));
+        uVar7 = *(uint *)((int)__ghidra_bits(psVar1->value) + cVar5 * 4) & low_bit_masks[uVar4 & 0xff] |
+                __ghidra_shl(uVar7, (uVar4 & 0x3f));
       }
       bVar6 = cVar8 + bVar6;
       puVar11 = puVar10;
@@ -53791,7 +53833,7 @@ char nv_save(byte param_1)
         uVar7 = 0;
       }
       bVar6 = (char)uVar4 + bVar6;
-      uVar7 = *(uint *)(&DAT_000314b2 + (uVar4 & 0xff) * 4) & (int)(char)psVar2->value[cVar5] |
+      uVar7 = low_bit_masks[uVar4 & 0xff] & (int)(char)psVar2->value[cVar5] |
               __ghidra_shl(uVar7, (uVar4 & 0x3f));
       puVar11 = puVar10;
     }
@@ -53898,10 +53940,10 @@ undefined4 nv_load_slot(void)
         else {
           uVar6 = rotate_left(uVar6,bVar8);
           if (psVar1->nv_widths[cVar9] < 0) {
-            uVar5 = sign_extend_bits(*(uint *)(&DAT_000314b2 + (uVar5 & 0xff) * 4) & uVar6,bVar8);
+            uVar5 = sign_extend_bits(low_bit_masks[uVar5 & 0xff] & uVar6,bVar8);
           }
           else {
-            uVar5 = *(uint *)(&DAT_000314b2 + (uVar5 & 0xff) * 4) & uVar6;
+            uVar5 = low_bit_masks[uVar5 & 0xff] & uVar6;
           }
           *(uint *)((int)__ghidra_bits(psVar1->value) + cVar9 * 4) = uVar5;
         }
@@ -53924,8 +53966,7 @@ undefined4 nv_load_slot(void)
         }
         cVar7 = bVar8 + cVar7;
         uVar6 = rotate_left(uVar6,bVar8);
-        psVar2->value[cVar9] =
-             (byte)*(undefined4 *)(&DAT_000314b2 + (uVar5 & 0xff) * 4) & (byte)uVar6;
+        psVar2->value[cVar9] = (byte)low_bit_masks[uVar5 & 0xff] & (byte)uVar6;
         puVar12 = puVar11;
       }
     }
@@ -55381,26 +55422,25 @@ void efc_history_update(void)
 
 {
   float fVar1;
-  undefined *puVar2;
-  uint32_t uVar3;
-  int iVar4;
-  float fVar5;
+  uint32_t uVar2;
+  int iVar3;
+  float fVar4;
   uint param4;
   undefined4 extraout_A0;
   undefined4 extraout_A1;
+  double dVar5;
   double dVar6;
   double dVar7;
   double dVar8;
-  double dVar9;
   char acStack_68 [100];
   
   aging_fit_collect();
-  iVar4 = (int)(char)pll.aging_state - 3;
-  if (2 < (uint)(int)(char)pll.aging_state && iVar4 != 0) {
+  iVar3 = (int)(char)pll.aging_state - 3;
+  if (2 < (uint)(int)(char)pll.aging_state && iVar3 != 0) {
     return;
   }
                     /* WARNING: Switch is manually overridden */
-  switch((&WORD_000413ba)[(short)iVar4]) {
+  switch((&WORD_000413ba)[(short)iVar3]) {
   case 8:
     pll.aging_state = 1;
     pll.predicted_uncertainty = 0.000432;
@@ -55434,24 +55474,24 @@ void efc_history_update(void)
     }
     if (pll.efc_history.summed_count == 0) {
       if (pll_debug_enabled != 0) {
-        dVar6 = float_to_double(pll.tfom);
-        dVar9 = 0.0;
-        iVar4 = 0;
-        uVar3 = get_uptime();
-        fVar1 = unsigned_to_float(uVar3);
+        dVar5 = float_to_double(pll.tfom);
+        dVar8 = 0.0;
+        iVar3 = 0;
+        uVar2 = get_uptime();
+        fVar1 = unsigned_to_float(uVar2);
         fVar1 = float_divide(fVar1,2700.0);
         fVar1 = float_divide(fVar1,32.0);
-        dVar7 = float_to_double(fVar1);
+        dVar6 = float_to_double(fVar1);
         fVar1 = float_divide(pll.efc_history.efc_sum,2700.0);
-        dVar8 = float_to_double(fVar1);
-        debug_sprintf(acStack_68,"e_avg= %.1f time= %f weight= %d log= %.2f  tfom= %.1e\r\n",dVar8,
-                      dVar7,iVar4,dVar9,dVar6);
+        dVar7 = float_to_double(fVar1);
+        debug_sprintf(acStack_68,"e_avg= %.1f time= %f weight= %d log= %.2f  tfom= %.1e\r\n",dVar7,
+                      dVar6,iVar3,dVar8,dVar5);
         task_dmessage(acStack_68);
       }
     }
     else {
       if (((pll.efc_history.summed_count < 0x2a3) && (pll.efc_history.summed_count != 0)) ||
-         (puVar2 = (undefined *)get_uptime(), puVar2 < &UNK_00002a30)) {
+         (uVar2 = get_uptime(), uVar2 < 0x2a30)) {
         pll.efc_history.weights[pll.efc_history.stop_ptr] = 1;
       }
       else if (pll.efc_history.summed_count == 0xa8c) {
@@ -55463,38 +55503,38 @@ void efc_history_update(void)
       fVar1 = unsigned_to_float((uint)pll.efc_history.summed_count);
       fVar1 = float_divide_reversed(fVar1,pll.efc_history.efc_sum);
       pll.efc_history.averages[pll.efc_history.stop_ptr] = fVar1;
-      uVar3 = get_uptime();
-      fVar1 = unsigned_to_float(uVar3);
+      uVar2 = get_uptime();
+      fVar1 = unsigned_to_float(uVar2);
       fVar1 = float_divide(fVar1,2700.0);
       pll.efc_history.times[pll.efc_history.stop_ptr] = fVar1;
-      iVar4 = float_compare(1.0,fVar1);
-      if (iVar4 < 0) {
-        fVar5 = float_add(fVar1,-1.0);
-        fVar5 = float_divide_reversed(fVar5,fVar1);
-        dVar6 = float_to_double(fVar5);
+      iVar3 = float_compare(1.0,fVar1);
+      if (iVar3 < 0) {
+        fVar4 = float_add(fVar1,-1.0);
+        fVar4 = float_divide_reversed(fVar4,fVar1);
+        dVar5 = float_to_double(fVar4);
+        dVar5 = log(dVar5);
+        dVar6 = float_to_double(fVar1);
+        dVar5 = double_multiply(dVar5,dVar6);
+        fVar4 = float_add(fVar1,-1.0);
+        dVar6 = float_to_double(fVar4);
         dVar6 = log(dVar6);
-        dVar7 = float_to_double(fVar1);
-        dVar6 = double_multiply(dVar6,dVar7);
-        fVar5 = float_add(fVar1,-1.0);
-        dVar7 = float_to_double(fVar5);
-        dVar7 = log(dVar7);
-        ({ __auto_type __c = ({ __auto_type __c = double_add(dVar7,dVar6); __ghidra_also(extraout_A0, __c, 4); __c; }); __ghidra_also(extraout_A1, __c, 0); __c; });
-        dVar6 = double_add(-1.0,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
-        fVar5 = double_to_float(dVar6);
-        pll.efc_history.logs[pll.efc_history.stop_ptr] = fVar5;
+        ({ __auto_type __c = ({ __auto_type __c = double_add(dVar6,dVar5); __ghidra_also(extraout_A0, __c, 4); __c; }); __ghidra_also(extraout_A1, __c, 0); __c; });
+        dVar5 = double_add(-1.0,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
+        fVar4 = double_to_float(dVar5);
+        pll.efc_history.logs[pll.efc_history.stop_ptr] = fVar4;
       }
       else {
         pll.efc_history.logs[pll.efc_history.stop_ptr] = -1.0;
       }
       if (pll_debug_enabled != 0) {
-        dVar6 = float_to_double(pll.tfom);
-        dVar7 = float_to_double(pll.efc_history.logs[pll.efc_history.stop_ptr]);
+        dVar5 = float_to_double(pll.tfom);
+        dVar6 = float_to_double(pll.efc_history.logs[pll.efc_history.stop_ptr]);
         param4 = (uint)pll.efc_history.weights[pll.efc_history.stop_ptr];
         fVar1 = float_divide(fVar1,32.0);
-        dVar8 = float_to_double(fVar1);
-        dVar9 = float_to_double(pll.efc_history.averages[pll.efc_history.stop_ptr]);
-        debug_sprintf(acStack_68,"e_avg= %.1f time= %f weight= %d log= %.2f tfom= %.1e\r\n",dVar9,
-                      dVar8,param4,dVar7,dVar6);
+        dVar7 = float_to_double(fVar1);
+        dVar8 = float_to_double(pll.efc_history.averages[pll.efc_history.stop_ptr]);
+        debug_sprintf(acStack_68,"e_avg= %.1f time= %f weight= %d log= %.2f tfom= %.1e\r\n",dVar8,
+                      dVar7,param4,dVar6,dVar5);
         task_dmessage(acStack_68);
       }
       pll.efc_history.stop_ptr = pll.efc_history.stop_ptr + 1 & 0x3f;
@@ -56548,7 +56588,7 @@ void output_state_done(void)
 void pll_scpi_do_action(undefined1 *param_1)
 
 {
-  if (pll_scpi_param == &DAT_00041348) {
+  if (pll_scpi_param == &scpi_action_self_test) {
     *param_1 = 1;
   }
   else {
@@ -62642,7 +62682,7 @@ void format_si(int param_1,int param_2,char param_3,byte param_4,char *param_5,c
       else {
         bVar6 = (byte)((int)sVar4 % 3);
       }
-      cVar5 = (&UNK_0004cfc5)[((short)(sVar4 - (ushort)bVar6) + 0xc) / 3];
+      cVar5 = "pnum"[((short)(sVar4 - (ushort)bVar6) + 0xc) / 3];
       if ((bVar6 != 0) && (param_6[1] != '0')) {
         pcVar3 = strchr(param_6,0x2e);
         if (pcVar3 == (char *)0x0) {
@@ -64430,12 +64470,11 @@ undefined4 gps_response_lookup(char param_1,char param_2,undefined2 *param_3,sho
       gps_counts.unknown_response = gps_counts.unknown_response + 1;
       return 0;
     }
-    if ((param_1 == *(&PTR_DAT_0004fece)[sVar1 * 0xe]) &&
-       (param_2 == (&PTR_DAT_0004fece)[sVar1 * 0xe][1])) break;
+    if ((param_1 == *oncore_messages[sVar1].id) && (param_2 == oncore_messages[sVar1].id[1])) break;
     sVar1 = sVar1 + 1;
   }
   *param_4 = sVar1;
-  *param_3 = (&DAT_0004feea)[sVar1 * 0x1c];
+  *param_3 = oncore_messages[sVar1].length;
   return 1;
 }
 
@@ -64543,7 +64582,7 @@ undefined4 gps_response_timed_out(short param_1,uint *param_2)
   uint local_8;
   
   cVar2 = uptime_elapsed(param_2,(int *)&local_8);
-  if ((cVar2 == '\0') || (local_8 <= (byte)(&DAT_0004fee8)[param_1 * 0x38])) {
+  if ((cVar2 == '\0') || (local_8 <= oncore_messages[param_1].timeout)) {
     uVar1 = 0;
   }
   else {
@@ -65343,7 +65382,7 @@ LAB_0004c17a:
               gps_counts.commands_sent = gps_counts.commands_sent + 1;
               gps_message_to_text(&DAT_001011c6,bVar8,gps_last_program_message);
               command_log_add(auStack_aa,gps_last_program_message);
-              if ((&DAT_0004feec)[sVar2 * 0x38] == '\0') goto LAB_0004c1e6;
+              if (oncore_messages[sVar2].match_kind == 0) goto LAB_0004c1e6;
               DAT_0010139c = '\x02';
             }
           }
@@ -65681,8 +65720,8 @@ int gps_print_command(gps_command_log *log,char *line)
       param6 = "q";
     }
     sprintf(line,"%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s",param2,(int)(short)uVar1,
-            (&PTR_DAT_0004fece)[__ghidra_piece(short, local_2a, 0) * 0xe],(char *)((int)&local_2a + 2),param6,acStack_1a
-            ,acStack_e,param9);
+            oncore_messages[__ghidra_piece(short, local_2a, 0)].id,(char *)((int)&local_2a + 2),param6,acStack_1a,
+            acStack_e,param9);
     iVar4 = 1;
   }
   return iVar4;
@@ -66727,7 +66766,7 @@ byte * oncore_position_message(byte *param_1,byte *param_2)
 
 {
   if (gps.fix_mode == ONCORE_POSITION_FIX) {
-    param_1 = oncore_decode_fields(param_1,param_2,"\x04");
+    param_1 = oncore_decode_fields(param_1,param_2,(char *)oncore_status_field_codes);
     gps_receiver_status_update('\0',0);
     if ((gps.position_hold == 0) &&
        (((nv_settings.douglas_duration_infinite == 1 ||
@@ -66763,7 +66802,7 @@ byte * oncore_position_message(byte *param_1,byte *param_2)
 void oncore_visibility_message(byte *param_1,byte *param_2)
 
 {
-  oncore_decode_fields(param_1,param_2,&DAT_00050fd8);
+  oncore_decode_fields(param_1,param_2,(char *)oncore_visibility_field_codes);
   gps.visibility_received = 1;
   return;
 }
@@ -66777,7 +66816,7 @@ void oncore_visibility_message(byte *param_1,byte *param_2)
 void oncore_dop_message(byte *param_1,byte *param_2)
 
 {
-  oncore_decode_fields(param_1,param_2,&DAT_00050fe2);
+  oncore_decode_fields(param_1,param_2,(char *)oncore_xdop_table_field_codes);
   return;
 }
 
@@ -66790,7 +66829,7 @@ void oncore_dop_message(byte *param_1,byte *param_2)
 void oncore_almanac_status_message(byte *param_1,byte *param_2)
 
 {
-  oncore_decode_fields(param_1,param_2,&DAT_00051002);
+  oncore_decode_fields(param_1,param_2,(char *)oncore_almanac_field_codes);
   return;
 }
 
@@ -66819,7 +66858,7 @@ byte * oncore_corrections_message(byte *param_1,byte *param_2)
   __ghidra_piece(unsigned int, accumulator_1, 4) = 0;
   __ghidra_piece(unsigned int, accumulator_2, 0) = 0;
   __ghidra_piece(unsigned int, accumulator_2, 4) = 0;
-  pbVar1 = oncore_decode_fields(param_1,param_2,&DAT_00050ff6);
+  pbVar1 = oncore_decode_fields(param_1,param_2,(char *)oncore_corrections_field_codes);
   bVar4 = 1;
   do {
     cVar2 = satellite_used_for_position(poVar5->satellite);
@@ -66867,7 +66906,7 @@ byte * oncore_corrections_message(byte *param_1,byte *param_2)
 void oncore_extension_message(byte *param_1,byte *param_2)
 
 {
-  oncore_decode_fields(param_1,param_2,&DAT_00050fe4);
+  oncore_decode_fields(param_1,param_2,(char *)oncore_extension_field_codes);
   return;
 }
 
@@ -66880,7 +66919,7 @@ void oncore_extension_message(byte *param_1,byte *param_2)
 void oncore_traim_message(byte *param_1,byte *param_2)
 
 {
-  oncore_decode_fields(param_1,param_2,"\x02");
+  oncore_decode_fields(param_1,param_2,(char *)oncore_raim_field_codes);
   traim_message_arrived = 1;
   return;
 }
@@ -66894,7 +66933,7 @@ void oncore_traim_message(byte *param_1,byte *param_2)
 void oncore_receiver_id_message(byte *param_1,byte *param_2)
 
 {
-  oncore_decode_fields(param_1,param_2,&DAT_00051004);
+  oncore_decode_fields(param_1,param_2,(char *)oncore_receiver_id_field_codes);
   gps.receiver_id_received = 1;
   return;
 }
@@ -66985,10 +67024,10 @@ int gps_request_build(short param_1,char param_2,int param_3,char *param_4)
   }
   else {
     *param_4 = '\0';
-    if (((&DAT_0004fed2)[iVar1 * 0x38] == '\x01') ||
-       (pbVar6 = (byte *)param_4, (&DAT_0004fed2)[iVar1 * 0x38] == '\x03')) {
+    if ((oncore_messages[iVar1].kind == 1) ||
+       (pbVar6 = (byte *)param_4, oncore_messages[iVar1].kind == 3)) {
       strcat(param_4,"@@");
-      strcat(param_4,(&PTR_DAT_0004fece)[iVar1 * 0xe]);
+      strcat(param_4,oncore_messages[iVar1].id);
       iVar2 = -1;
       pcVar5 = param_4;
       do {
@@ -66998,11 +67037,9 @@ int gps_request_build(short param_1,char param_2,int param_3,char *param_4)
       } while (cVar3 != '\0');
       out = (byte *)(param_4 + iVar2);
       if (param_2 == '\0') {
-        for (bVar4 = 0;
-            ((&PTR_long_array_get_byte_0004fed4)[iVar1 * 0xe + (uint)bVar4] != (undefined *)0x0 &&
-            (bVar4 < 4)); bVar4 = bVar4 + 1) {
-          out = (byte *)(*(code *)(&PTR_long_array_get_byte_0004fed4)[iVar1 * 0xe + (uint)bVar4])
-                                  ((short)param_3);
+        for (bVar4 = 0; (*(int *)(iVar1 * 0x38 + 0x4fed4 + (uint)bVar4 * 4) != 0 && (bVar4 < 4));
+            bVar4 = bVar4 + 1) {
+          out = (byte *)(**(code **)(iVar1 * 0x38 + 0x4fed4 + (uint)bVar4 * 4))((short)param_3);
         }
         if (param_1 == 0x1e) {
           long_array_get_byte((long *)param_3,0,(char *)local_8);
@@ -67023,7 +67060,7 @@ int gps_request_build(short param_1,char param_2,int param_3,char *param_4)
         }
       }
       else {
-        pbVar6 = (&PTR_DAT_0004fee4)[iVar1 * 0xe];
+        pbVar6 = (byte *)oncore_messages[iVar1].query;
         if (pbVar6 == (byte *)0x0) {
           *param_4 = '\0';
           return 0;
@@ -67086,17 +67123,17 @@ int gps_response_decode(short param_1,int param_2)
     pcVar5 = pcVar5 + 1;
   } while (cVar1 != '\0');
   iVar3 = -1;
-  pcVar5 = (&PTR_DAT_0004fece)[param_1 * 0xe];
+  pcVar5 = oncore_messages[param_1].id;
   do {
     iVar3 = iVar3 + 1;
     cVar1 = *pcVar5;
     pcVar5 = pcVar5 + 1;
   } while (cVar1 != '\0');
   iVar3 = iVar3 + (uint)bVar4 + param_2;
-  for (bVar4 = 0; (*(int *)(&UNK_0004feee + (uint)bVar4 * 8 + iVar2) != 0 && (bVar4 < 3));
+  for (bVar4 = 0; (*(int *)(iVar2 + 0x4feee + (uint)bVar4 * 8) != 0 && (bVar4 < 3));
       bVar4 = bVar4 + 1) {
-    iVar3 = (**(code **)(&UNK_0004feee + (uint)bVar4 * 8 + iVar2))
-                      (iVar3,*(undefined4 *)(&UNK_0004fef2 + (uint)bVar4 * 8 + iVar2));
+    iVar3 = (**(code **)(iVar2 + 0x4feee + (uint)bVar4 * 8))
+                      (iVar3,*(undefined4 *)(iVar2 + 0x4fef2 + (uint)bVar4 * 8));
   }
   psos_mode(0,0x80,(uchar *)0x0);
   if (param_1 == 0x1e) {
@@ -67154,10 +67191,10 @@ gps_response_match(short param_1,undefined1 *param_2,char param_3,char param_4,s
   int iStack_c;
   int iStack_8;
   
-  iVar4 = param_1 * 0x38;
-  if ((byte)(&DAT_0004feec)[iVar4] < 10) {
+  iVar4 = (int)param_1;
+  if (oncore_messages[iVar4].match_kind < 10) {
                     /* WARNING: Switch is manually overridden */
-    switch((&DAT_0004feec)[iVar4]) {
+    switch(oncore_messages[iVar4].match_kind) {
     case 0:
       uVar8 = 2;
       break;
@@ -67172,7 +67209,7 @@ gps_response_match(short param_1,undefined1 *param_2,char param_3,char param_4,s
           pcVar12 = pcVar12 + 1;
         } while (cVar7 != '\0');
         cVar7 = -1;
-        pcVar12 = (&PTR_DAT_0004fece)[param_1 * 0xe];
+        pcVar12 = oncore_messages[iVar4].id;
         do {
           cVar7 = cVar7 + '\x01';
           cVar1 = *pcVar12;
@@ -67181,9 +67218,9 @@ gps_response_match(short param_1,undefined1 *param_2,char param_3,char param_4,s
         bVar9 = cVar7 + cVar6;
         bVar11 = param_3 - bVar9;
         if ((param_4 != '\x01') &&
-           (((&DAT_0004feec)[iVar4] != '\x05' || (param_2[bVar9] != '\x02')))) {
+           ((oncore_messages[iVar4].match_kind != 5 || (param_2[bVar9] != '\x02')))) {
           cVar6 = -1;
-          pcVar12 = (&PTR_DAT_0004fece)[param_5 * 0xe];
+          pcVar12 = oncore_messages[param_5].id;
           do {
             cVar6 = cVar6 + '\x01';
             cVar7 = *pcVar12;
@@ -67198,8 +67235,8 @@ gps_response_match(short param_1,undefined1 *param_2,char param_3,char param_4,s
           } while (cVar1 != '\0');
           bVar2 = cVar6 + cVar7;
           sVar10 = param_7 - (ushort)bVar2;
-          iVar3 = (char)(&DAT_0004feec)[iVar4] + -4;
-          if ((int)(char)(&DAT_0004feec)[iVar4] - 2U < 2U || iVar3 == 0) {
+          iVar3 = (char)oncore_messages[iVar4].match_kind + -4;
+          if ((int)(char)oncore_messages[iVar4].match_kind - 2U < 2U || iVar3 == 0) {
                     /* WARNING: Switch is manually overridden */
             switch((&WORD_0004fc90)[(short)iVar3]) {
             case 6:
@@ -77095,11 +77132,8 @@ void qsort(void *base,uint nmemb,uint size,void *compar)
 int rand(void)
 
 {
-  int iVar1;
-  
-  iVar1 = rand_seed * 0x41c64e6d;
-  rand_seed = (uint32_t)(&UNK_00003039 + iVar1);
-  return (uint)(&UNK_00003039 + iVar1) >> 0x10 & 0x7fff;
+  rand_seed = rand_seed * 0x41c64e6d + 0x3039;
+  return rand_seed >> 0x10 & 0x7fff;
 }
 
 
@@ -77343,12 +77377,11 @@ void double_to_digits(double value,int count,int *exponent,uint *negative,char *
   uint uVar4;
   int iVar5;
   uint uVar6;
-  undefined *puVar7;
+  int iVar7;
   ushort uVar8;
   uint unaff_D7;
   short sVar9;
-  int iVar10;
-  char *pcVar11;
+  char *pcVar10;
   int local_26;
   uint local_1e;
   uint local_1a [4];
@@ -77419,24 +77452,24 @@ void double_to_digits(double value,int count,int *exponent,uint *negative,char *
         *digits = '-';
         digits[1] = '-';
       }
-      pcVar11 = digits + 2;
+      pcVar10 = digits + 2;
       iVar1 = 2;
     }
     else {
-      pcVar11 = digits + 1;
+      pcVar10 = digits + 1;
       *digits = '?';
       iVar1 = 1;
     }
     *exponent = iVar1;
-    *pcVar11 = '\0';
+    *pcVar10 = '\0';
     return;
   }
-  puVar7 = &UNK_00004d10;
+  iVar7 = 0x4d10;
   iVar1 = ((int)uVar6 >> 0x14) + -0x3ff;
   if (iVar1 < 0) {
-    puVar7 = &UNK_00004d11;
+    iVar7 = 0x4d11;
   }
-  local_a = (short)((uint)(iVar1 * (int)puVar7) >> 0x10);
+  local_a = (short)((uint)(iVar1 * iVar7) >> 0x10);
   if (count < 0) {
     count = 0;
   }
@@ -77458,17 +77491,17 @@ void double_to_digits(double value,int count,int *exponent,uint *negative,char *
   do {
     sVar9 = ((short)local_26 - local_a) + -1;
     iVar5 = (int)sVar9 / 0x19;
-    iVar10 = (short)iVar5 * -0x19 + (int)sVar9;
-    if (iVar10 < 0) {
+    iVar7 = (short)iVar5 * -0x19 + (int)sVar9;
+    if (iVar7 < 0) {
       iVar5 = iVar5 + -1;
-      iVar10 = iVar10 + 0x19;
+      iVar7 = iVar7 + 0x19;
     }
     sVar9 = -(short)iVar1 + 0x52;
-    if (iVar10 == 0) {
+    if (iVar7 == 0) {
       if (iVar5 != 0) {
-        iVar10 = (iVar5 + 0xd) * 8;
-        local_1a[0] = *(uint *)(&DAT_0005f860 + iVar10);
-        local_1a[1] = *(uint *)(&DAT_0005f864 + iVar10);
+        iVar7 = (iVar5 + 0xd) * 8;
+        local_1a[0] = *(uint *)(&DAT_0005f860 + iVar7);
+        local_1a[1] = *(uint *)(&DAT_0005f864 + iVar7);
         sVar9 = sVar9 - *(short *)(&DAT_0005f938 + (iVar5 + 0xd) * 2);
         goto LAB_0005f65a;
       }
@@ -77479,18 +77512,18 @@ void double_to_digits(double value,int count,int *exponent,uint *negative,char *
       uVar8 = -(short)iVar1 + 0x54;
     }
     else {
-      iVar2 = (iVar10 + -1) * 8;
+      iVar2 = (iVar7 + -1) * 8;
       local_1a[0] = *(uint *)(&DAT_0005f96e + iVar2);
       local_1a[1] = *(uint *)(&DAT_0005f972 + iVar2);
-      sVar9 = sVar9 - (ushort)(byte)(&UNK_0005fa2d)[iVar10];
+      sVar9 = sVar9 - (ushort)(byte)(&UNK_0005fa2d)[iVar7];
       if (iVar5 == 0) {
 LAB_0005f65a:
         uVar8 = sVar9 + 1;
       }
       else {
-        iVar10 = (iVar5 + 0xd) * 8;
-        local_1a[2] = *(uint *)(&DAT_0005f860 + iVar10);
-        local_1a[3] = *(uint *)(&DAT_0005f864 + iVar10);
+        iVar7 = (iVar5 + 0xd) * 8;
+        local_1a[2] = *(uint *)(&DAT_0005f860 + iVar7);
+        local_1a[3] = *(uint *)(&DAT_0005f864 + iVar7);
         uVar8 = sVar9 - *(short *)(&DAT_0005f938 + (iVar5 + 0xd) * 2);
         double_to_digits_multiply(local_1a);
         if ((int)local_1a[2] < 0) {
@@ -77556,15 +77589,15 @@ LAB_0005f74e:
         local_1a[1] = local_1a[1] & 0xfffffffe;
       }
     }
-    if (local_1a[0] < *(uint *)(&DAT_0005fa46 + local_26 * 8)) goto LAB_0005f7ae;
-    if (local_1a[0] == *(uint *)(&DAT_0005fa46 + local_26 * 8)) {
-      if (local_1a[1] < *(uint *)(&UNK_0005fa4a + local_26 * 8)) goto LAB_0005f7ae;
-      if (local_1a[1] == *(uint *)(&UNK_0005fa4a + local_26 * 8)) {
+    if (local_1a[0] < powers_of_ten_64[local_26 * 2]) goto LAB_0005f7ae;
+    if (local_1a[0] == powers_of_ten_64[local_26 * 2]) {
+      if (local_1a[1] < powers_of_ten_64[local_26 * 2 + 1]) goto LAB_0005f7ae;
+      if (local_1a[1] == powers_of_ten_64[local_26 * 2 + 1]) {
         local_a = local_a + 1;
         if (mode != 0) {
           if (local_26 != 0) {
-            local_1a[0] = *(uint *)(&DAT_0005fa46 + (local_26 + -1) * 8);
-            local_1a[1] = *(uint *)(&UNK_0005fa4a + (local_26 + -1) * 8);
+            local_1a[0] = powers_of_ten_64[(local_26 + -1) * 2];
+            local_1a[1] = powers_of_ten_64[(local_26 + -1) * 2 + 1];
           }
           goto LAB_0005f7ae;
         }
@@ -77583,46 +77616,46 @@ LAB_0005f7ae:
       }
       else {
         sVar9 = (short)local_26;
-        pcVar11 = digits;
+        pcVar10 = digits;
         while (sVar9 = sVar9 + -1, local_1a[0] != 0) {
-          *pcVar11 = '0';
-          uVar4 = *(uint *)(&DAT_0005fa46 + sVar9 * 8);
-          uVar6 = *(uint *)(&UNK_0005fa4a + sVar9 * 8);
+          *pcVar10 = '0';
+          uVar4 = powers_of_ten_64[sVar9 * 2];
+          uVar6 = powers_of_ten_64[sVar9 * 2 + 1];
           for (; (uVar4 < local_1a[0] || ((uVar4 == local_1a[0] && (uVar6 <= local_1a[1]))));
               local_1a[1] = local_1a[1] - uVar6) {
-            *pcVar11 = *pcVar11 + '\x01';
+            *pcVar10 = *pcVar10 + '\x01';
             if (local_1a[1] < uVar6) {
               local_1a[0] = local_1a[0] - 1;
             }
             local_1a[0] = local_1a[0] - uVar4;
           }
-          pcVar11 = pcVar11 + 1;
+          pcVar10 = pcVar10 + 1;
         }
-        while (*(int *)(&DAT_0005fa46 + sVar9 * 8) != 0) {
+        while (powers_of_ten_64[sVar9 * 2] != 0) {
           sVar9 = sVar9 + -1;
-          if (digits < pcVar11) {
-            *pcVar11 = '0';
-            pcVar11 = pcVar11 + 1;
+          if (digits < pcVar10) {
+            *pcVar10 = '0';
+            pcVar10 = pcVar10 + 1;
           }
         }
         while (sVar9 != 0) {
-          *pcVar11 = '0';
-          uVar4 = *(uint *)(&UNK_0005fa4a + sVar9 * 8);
+          *pcVar10 = '0';
+          uVar4 = powers_of_ten_64[sVar9 * 2 + 1];
           for (; uVar4 <= local_1a[1]; local_1a[1] = local_1a[1] - uVar4) {
-            *pcVar11 = *pcVar11 + '\x01';
+            *pcVar10 = *pcVar10 + '\x01';
           }
-          pcVar11 = pcVar11 + 1;
+          pcVar10 = pcVar10 + 1;
           sVar9 = sVar9 + -1;
         }
-        *pcVar11 = (char)local_1a[1] + '0';
+        *pcVar10 = (char)local_1a[1] + '0';
         iVar1 = count - local_26;
         while( true ) {
-          pcVar11 = pcVar11 + 1;
+          pcVar10 = pcVar10 + 1;
           if (iVar1 == 0) break;
-          *pcVar11 = '0';
+          *pcVar10 = '0';
           iVar1 = iVar1 + -1;
         }
-        *pcVar11 = '\0';
+        *pcVar10 = '\0';
         *exponent = local_a + 1;
       }
       return;
@@ -87604,12 +87637,11 @@ void installer_double_to_digits(uint param_1,int *param_2,uint *param_3,char *pa
   uint uVar4;
   int iVar5;
   uint uVar6;
-  undefined *puVar7;
+  int iVar7;
   ushort uVar8;
   uint unaff_D7;
   short sVar9;
-  int iVar10;
-  char *pcVar11;
+  char *pcVar10;
   uint in_stack_00000004;
   uint in_stack_00000008;
   uint local_26;
@@ -87682,24 +87714,24 @@ void installer_double_to_digits(uint param_1,int *param_2,uint *param_3,char *pa
         *param_4 = '-';
         param_4[1] = '-';
       }
-      pcVar11 = param_4 + 2;
+      pcVar10 = param_4 + 2;
       iVar1 = 2;
     }
     else {
-      pcVar11 = param_4 + 1;
+      pcVar10 = param_4 + 1;
       *param_4 = '?';
       iVar1 = 1;
     }
     *param_2 = iVar1;
-    *pcVar11 = '\0';
+    *pcVar10 = '\0';
     return;
   }
-  puVar7 = &UNK_00004d10;
+  iVar7 = 0x4d10;
   iVar1 = ((int)uVar6 >> 0x14) + -0x3ff;
   if (iVar1 < 0) {
-    puVar7 = &UNK_00004d11;
+    iVar7 = 0x4d11;
   }
-  local_a = (short)((uint)(iVar1 * (int)puVar7) >> 0x10);
+  local_a = (short)((uint)(iVar1 * iVar7) >> 0x10);
   if ((int)param_1 < 0) {
     param_1 = 0;
   }
@@ -87721,17 +87753,17 @@ void installer_double_to_digits(uint param_1,int *param_2,uint *param_3,char *pa
   do {
     sVar9 = ((short)local_26 - local_a) + -1;
     iVar5 = (int)sVar9 / 0x19;
-    iVar10 = (short)iVar5 * -0x19 + (int)sVar9;
-    if (iVar10 < 0) {
+    iVar7 = (short)iVar5 * -0x19 + (int)sVar9;
+    if (iVar7 < 0) {
       iVar5 = iVar5 + -1;
-      iVar10 = iVar10 + 0x19;
+      iVar7 = iVar7 + 0x19;
     }
     sVar9 = -(short)iVar1 + 0x52;
-    if (iVar10 == 0) {
+    if (iVar7 == 0) {
       if (iVar5 != 0) {
-        iVar10 = (iVar5 + 0xd) * 8;
-        local_1a[0] = *(uint *)(&DAT_installer__00109a08 + iVar10);
-        local_1a[1] = *(uint *)(&DAT_installer__00109a0c + iVar10);
+        iVar7 = (iVar5 + 0xd) * 8;
+        local_1a[0] = *(uint *)(&DAT_installer__00109a08 + iVar7);
+        local_1a[1] = *(uint *)(&DAT_installer__00109a0c + iVar7);
         sVar9 = sVar9 - *(short *)(&DAT_installer__00109ae0 + (iVar5 + 0xd) * 2);
         goto LAB_installer__00109802;
       }
@@ -87742,18 +87774,18 @@ void installer_double_to_digits(uint param_1,int *param_2,uint *param_3,char *pa
       uVar8 = -(short)iVar1 + 0x54;
     }
     else {
-      iVar2 = (iVar10 + -1) * 8;
+      iVar2 = (iVar7 + -1) * 8;
       local_1a[0] = *(uint *)(&DAT_installer__00109b16 + iVar2);
       local_1a[1] = *(uint *)(&DAT_installer__00109b1a + iVar2);
-      sVar9 = sVar9 - (ushort)*(byte *)(iVar10 + 0x109bd5);
+      sVar9 = sVar9 - (ushort)*(byte *)(iVar7 + 0x109bd5);
       if (iVar5 == 0) {
 LAB_installer__00109802:
         uVar8 = sVar9 + 1;
       }
       else {
-        iVar10 = (iVar5 + 0xd) * 8;
-        local_1a[2] = *(uint *)(&DAT_installer__00109a08 + iVar10);
-        local_1a[3] = *(uint *)(&DAT_installer__00109a0c + iVar10);
+        iVar7 = (iVar5 + 0xd) * 8;
+        local_1a[2] = *(uint *)(&DAT_installer__00109a08 + iVar7);
+        local_1a[3] = *(uint *)(&DAT_installer__00109a0c + iVar7);
         uVar8 = sVar9 - *(short *)(&DAT_installer__00109ae0 + (iVar5 + 0xd) * 2);
         installer_double_to_digits_multiply(local_1a);
         if ((int)local_1a[2] < 0) {
@@ -87847,46 +87879,46 @@ LAB_installer__00109956:
       }
       else {
         sVar9 = (short)local_26;
-        pcVar11 = param_4;
+        pcVar10 = param_4;
         while (sVar9 = sVar9 + -1, local_1a[0] != 0) {
-          *pcVar11 = '0';
+          *pcVar10 = '0';
           uVar4 = *(uint *)(&DAT_installer__00109bee + sVar9 * 8);
           uVar6 = *(uint *)(sVar9 * 8 + 0x109bf2);
           for (; (uVar4 < local_1a[0] || ((uVar4 == local_1a[0] && (uVar6 <= local_1a[1]))));
               local_1a[1] = local_1a[1] - uVar6) {
-            *pcVar11 = *pcVar11 + '\x01';
+            *pcVar10 = *pcVar10 + '\x01';
             if (local_1a[1] < uVar6) {
               local_1a[0] = local_1a[0] - 1;
             }
             local_1a[0] = local_1a[0] - uVar4;
           }
-          pcVar11 = pcVar11 + 1;
+          pcVar10 = pcVar10 + 1;
         }
         while (*(int *)(&DAT_installer__00109bee + sVar9 * 8) != 0) {
           sVar9 = sVar9 + -1;
-          if (param_4 < pcVar11) {
-            *pcVar11 = '0';
-            pcVar11 = pcVar11 + 1;
+          if (param_4 < pcVar10) {
+            *pcVar10 = '0';
+            pcVar10 = pcVar10 + 1;
           }
         }
         while (sVar9 != 0) {
-          *pcVar11 = '0';
+          *pcVar10 = '0';
           uVar4 = *(uint *)(sVar9 * 8 + 0x109bf2);
           for (; uVar4 <= local_1a[1]; local_1a[1] = local_1a[1] - uVar4) {
-            *pcVar11 = *pcVar11 + '\x01';
+            *pcVar10 = *pcVar10 + '\x01';
           }
-          pcVar11 = pcVar11 + 1;
+          pcVar10 = pcVar10 + 1;
           sVar9 = sVar9 + -1;
         }
-        *pcVar11 = (char)local_1a[1] + '0';
+        *pcVar10 = (char)local_1a[1] + '0';
         iVar1 = param_1 - local_26;
         while( true ) {
-          pcVar11 = pcVar11 + 1;
+          pcVar10 = pcVar10 + 1;
           if (iVar1 == 0) break;
-          *pcVar11 = '0';
+          *pcVar10 = '0';
           iVar1 = iVar1 + -1;
         }
-        *pcVar11 = '\0';
+        *pcVar10 = '\0';
         *param_2 = local_a + 1;
       }
       return;

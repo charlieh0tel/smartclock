@@ -1362,6 +1362,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x30d2e	function	parameter_record_read	structures.md	reads DUART channel B's serial settings from the parameter record at EEPROM 0x400000, or sets their defaults if its checksum fails; always sets the SCI's defaults
 0x101f50	label	sci_settings	structures.md	the SCI's serial settings, SERial2's; parameter_record_read always sets their defaults	sci_settings_record
 0x101f58	label	duartb_settings	structures.md	DUART channel B's serial settings, SERial1's, from the parameter record at EEPROM 0x400000	duartb_settings_record
+0x1df00	function	duartb_settings_done	read	the done hook of DUART channel B's setting descriptors (0x33338 on) and of its PRESet at 0x30ea0: psos_io_control(0, 0, 0)	void duartb_settings_done(void)
+0x202ac	function	sci_settings_done	read	the done hook of the SCI's setting descriptors (0x33ab2 on) and of its PRESet at 0x30ed4: psos_io_control(0x300, 0, 0)	void sci_settings_done(void)
 0x3145a	function	sign_extend_bits	context	sign-extends a value of so many bits to a long
 0x3161a	function	log_erase_checked	context	erases the event log under log_mutex if its count is the one given, else 0xff
 0x31662	function	log_entry_total	context	the event log's entry count, and whether it is full
@@ -1630,6 +1632,43 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x11700	local	value	read	the date and time it is changed in	packed_datetime @ -0x20
 0x117b6	local	change	read	what to add or take away	packed_datetime @ -0x18
 0x117b6	local	value	read	the date and time it is changed in	packed_datetime @ -0x20
+#
+# ROM tables, each typed to the bytes its code reads; docs/firmware/structures.md, "ROM tables"
+0xbbc	label	installer_records	restart.md	boot_unpack_installer's 42861 bytes, the length it loads with their address: an S, 17 records of a C, a count, a RAM address and the bytes, and an E at 0xb328	uint8_t[42861]
+0x4fece	label	oncore_messages	structures.md	the GPS task's 49 Oncore messages, its index the request's; gps_response_lookup searches 0 to 0x30	oncore_message_entry[49]
+0x50fd2	label	oncore_status_field_codes	structures.md	oncore_position_message's field table for @@Ba, 63 bytes of gps.status; 0x80 ends it	uint8_t[6]
+0x50fd8	label	oncore_visibility_field_codes	structures.md	oncore_visibility_message's field table for @@Bb: a count, then 12 satellites of 10 bytes; 0x80 ends it	uint8_t[10]
+0x50fe2	label	oncore_xdop_table_field_codes	structures.md	oncore_dop_message's field table for @@Bc: 75 bytes as they come; 0x80 ends it	uint8_t[2]
+0x50fe4	label	oncore_extension_field_codes	structures.md	oncore_extension_message's field table for @@Bk: 62 bytes as they come; 0x80 ends it	uint8_t[2]
+0x50fe6	label	oncore_raim_field_codes	structures.md	oncore_traim_message's field table for @@Bn, 63 bytes of gps.raim; 0x80 ends it	uint8_t[16]
+0x50ff6	label	oncore_corrections_field_codes	structures.md	oncore_corrections_message's field table for @@Ce: the time, then six channels of 10 bytes; 0x80 ends it	uint8_t[12]
+0x51002	label	oncore_almanac_field_codes	structures.md	oncore_almanac_status_message's field table for @@Bd: 16 bytes as they come; 0x80 ends it	uint8_t[2]
+0x51004	label	oncore_receiver_id_field_codes	structures.md	oncore_receiver_id_message's field table for @@Cj: each line's CR made a NUL, its LF dropped; 0x80 ends it	uint8_t[11]
+0x30a2c	label	sci_settings_defaults	structures.md	what parameter_record_read and scpi_action_SER2_PRESet's routine copy over sci_settings	sci_settings_record
+0x30a34	label	duartb_settings_defaults	structures.md	what parameter_record_read and scpi_action_SER1_PRESet's routine copy over duartb_settings	duartb_settings_record
+0x3094c	label	retained_block_defaults	structures.md	system_init copies these 25 bytes over the block at 0x101e70 unless it restores pllp_task's battery-backed copy at 0x100934; max_loop_time's 1000 at +0x14	uint8_t[25]
+0x25c82	label	decimal_digit_pairs	structures.md	"00" to "99", two characters a value; scpi_real_to_text and scpi_double_to_decimal index it by the value times 2	char[200]
+0x4cfc5	label	si_prefixes	structures.md	format_si's prefix for each third power of ten from -12 to 9, a NUL for none	char[8]
+0x314b2	label	low_bit_masks	structures.md	the mask of the low n bits, n 0 to 32; nv_save and nv_load_slot index it by a value's NV width	uint32_t[33]
+0x1186c	label	days_before_month	structures.md	the days before each month in a common year; day_of_year and days_to_date	int16_t[12]
+0x11884	label	days_before_month_leap	structures.md	the days before each month in a leap year; day_of_year and days_to_date	int16_t[12]
+0x5fa46	label	powers_of_ten_64	structures.md	10 to the 0 through 17, 64 bits each, high long then low; double_to_digits clamps its index to 0 to 0x11	uint32_t[36]
+0x51382	label	os_report_format	structures.md	"%s", the format the kernel's reports pass their print routine	char[3]
+0x512e6	label	os_report_newline	structures.md	"\r\n", which the kernel's reports print	char[3]
+0x4132a	label	scpi_action_DIAGnostic_PTIMe_TINTerval	structures.md	its handler's action; a bare rts at 0x41328	scpi_action_param
+0x41330	label	scpi_action_SOURce_ROSCillator_HOLDover_RECovery_AUTO	structures.md	its handler's action, 0x45a5c	scpi_action_param
+0x41336	label	scpi_action_SOURce_ROSCillator_HOLDover_INITiate	structures.md	its handler's action, 0x45aaa	scpi_action_param
+0x4133c	label	scpi_action_temporary_hold	structures.md	the :DIAG:TOFFset and :GPS:ADELay setters' action, 0x45af0, which sets the temporary-mode hold cause, 0x20 of pll.hold_causes	scpi_action_param
+0x41342	label	scpi_action_SAMPle_ACTion	structures.md	its handler's action, 0x43426, indexes 0 to 3	scpi_action_param
+0x41348	label	scpi_action_self_test	structures.md	*TST? and :DIAG:TEST?'s action, 0x46326, indexes 0 to 14; for it alone pll_scpi_do_action sets pll_scpi_reply_pending	scpi_action_param
+0x4134e	label	scpi_action_SOURce_PTIMe_SYNChronization_IMMediate	structures.md	its handler's action, 0x45b42	scpi_action_param
+0x41354	label	scpi_action_RMHO	structures.md	its handler's action, 0x45b0c	scpi_action_param
+0x4135a	label	scpi_action_SOURce_GPSystem_POSition	structures.md	its handler's action, 0x46368	scpi_action_param
+0x41360	label	scpi_action_SYSTem_PRESet	structures.md	its handler's action, nv_clear_and_reset	scpi_action_param
+0x41366	label	scpi_action_SER1_PRESet	structures.md	:SYST:COMM:SER1:PRESet's action for port 0, 0x30ea0, which copies duartb_settings_defaults	scpi_action_param
+0x4136c	label	scpi_action_SER2_PRESet	structures.md	:SYST:COMM:SER1:PRESet's action for another port, 0x30ed4, which copies sci_settings_defaults	scpi_action_param
+0x41372	label	scpi_action_STATus_PRESet	structures.md	:STATus:PRESet's action, index 0, and its ALARm form's, index 1; status_preset_done	scpi_action_param
+0x41378	label	scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated	structures.md	its handler's action, 0x47090, indexes 0 and 1	scpi_action_param
 #
 # the MC68331's modules, types/mc68331.h; MC68331UM Tables D-2, D-3, D-13
 0xfff900	label	gpt	MC68331UM	the general-purpose timer	gpt_registers

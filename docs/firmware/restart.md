@@ -327,7 +327,8 @@ installer through `0xaa0`, copies its vectors to RAM at `0x100000`,
 sets VBR there and jumps to `0x10135c`.  The unpacker at `0xaa0` reads
 records from `0xbbc`: an `S`, then records of a `C`, a 32-bit count, a
 32-bit RAM destination and that many bytes inline, up to an `E` at
-`0xb328`.  So everything it copies comes from below `0x10000`, into
+`0xb328`: 17 records, 42861 bytes in all, the length the unpacker
+loads at `0xaa8` before the address.  So everything it copies comes from below `0x10000`, into
 `0x100400`--`0x10aad2`.  This entry and unpacker are identical in the
 two dumps.  The normal PRIMARY trap handler reaches this entry, but
 the entry itself calls no PRIMARY code.

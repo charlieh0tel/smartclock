@@ -281,7 +281,9 @@ GPT, SIM and QSM, the I/O ones volatile; types both
 vector tables, the boot one at `0x0` and the primary's at `0x10000`,
 and makes a function at each handler; and types the string tables,
 removing the code analysis decoded in them (a 0x61, `a`, is a `bsr`, so
-code begun in a string "calls" on through the table).
+code begun in a string "calls" on through the table), but not text inside
+a table the names file types as an array or structure (the installer's
+records at `0xbbc`).
 
 It recovers the switches.  The bound check before a table is a `cmpi`,
 `cmpa`, `subq` or `subi` and a `bhi`.  After `subq #k` or `subi #k`
@@ -652,11 +654,11 @@ gcc's code is above every chip select so that a read of the EEPROM
 finds no code, and its data, a bridge's `__ghidra_ccr`, apart from its
 code, which the function check keeps read-only.
 
-In the Z3805A 3543B image this gives 1753 functions, and every one but
+In the Z3805A 3543B image this gives 1755 functions, and every one but
 the ten thunks decompiles.  136 switches are recovered; `0x24ff2` and `0x25140`, a
 `jmp (d8,PC,D6.w)` with no table load, are not, and need not be: each
 enters an unrolled run of shifts part way, all of it code already
-(`docs/scpi/README.md`).  1753 of the functions are named.  The output
+(`docs/scpi/README.md`).  1755 of the functions are named.  The output
 is `third_party/firmware/decompiled/z3805a-3543b.c`.
 
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,

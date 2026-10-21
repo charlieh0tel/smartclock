@@ -619,6 +619,7 @@
 {"address":"0001de96","name":"printf","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001debc","name":"console_read","note":"reads from the console, device 0, and its last status","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0001dee6","name":"scpi_port_open","note":"opens the SCPI port, device 0","convention":"unknown"}
+{"address":"0001df00","name":"duartb_settings_done","note":"the done hook of DUART channel B's setting descriptors (0x33338 on) and of its PRESet at 0x30ea0: psos_io_control(0, 0, 0)","convention":"unknown"}
 {"address":"0001df12","name":"console_write_polled","note":"in supervisor mode, writes the string a character at a time through 0x1d680; debug_write uses it","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001df48","name":"printf_polled","note":"vsprintf into a buffer, then console_write_polled","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001df6e","name":"drtb_try_lock_write","note":"1 if channel B's write mutex is held by another","convention":"unknown"}
@@ -683,6 +684,7 @@
 {"address":"000201e0","name":"sci_send_async","note":"queues a block for the SCI to send by interrupt","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1}]}
 {"address":"0002021a","name":"sci_port_write","note":"writes a string to the SCI device, 3","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0002023c","name":"sci_printf","note":"formats into 160 bytes and writes to the SCI device; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"000202ac","name":"sci_settings_done","note":"the done hook of the SCI's setting descriptors (0x33ab2 on) and of its PRESet at 0x30ed4: psos_io_control(0x300, 0, 0)","convention":"unknown"}
 {"address":"000202c0","name":"sci_puts_polled","note":"writes a string to the SCI by polling, in supervisor mode","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000202f6","name":"sci_printf_polled","note":"formats into 80 bytes and writes to the SCI by polling; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0002050c","name":"qspi_release","note":"signals the next task in the QSPI owner queue; \"SPI isr signaling SPI owner\"","convention":"unknown"}

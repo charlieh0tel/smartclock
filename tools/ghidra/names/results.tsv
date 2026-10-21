@@ -1,0 +1,14 @@
+# The name of each function's result, which the exporter gives the local
+# variable a call's result is assigned to (SmartClockExportC.java,
+# resultVariables): function, the result's name, a note.  Shared by the
+# images, whose names files name their functions alike.
+get_uptime	uptime	seconds since the clock started (clock.uptime)
+sqrt	root
+float_multiply	product
+double_multiply	product
+float_divide	quotient
+double_divide	quotient
+float_add	sum
+double_add	sum
+float_subtract	difference
+double_subtract	difference

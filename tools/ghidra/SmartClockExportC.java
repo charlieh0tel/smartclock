@@ -99,6 +99,8 @@ import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighGlobal;
+import ghidra.program.model.pcode.HighLocal;
+import ghidra.program.model.pcode.HighParam;
 import ghidra.program.model.pcode.HighSymbol;
 import ghidra.program.model.pcode.HighVariable;
 import ghidra.program.model.pcode.LocalSymbolMap;
@@ -1367,6 +1369,7 @@ public class SmartClockExportC extends GhidraScript {
 			tokens.addAll(line.getAllTokens());
 		}
 		TokenEdits edits = new TokenEdits();
+		resultVariables(tokens, edits);
 		unsignedCompares(tokens, edits);
 		unsignedEqualities(tokens, edits);
 		RegisterPairs pairs = registerPairs(tokens, results.getHighFunction());
@@ -1488,6 +1491,104 @@ public class SmartClockExportC extends GhidraScript {
 			if (!other.isConstant() && inline && other.getDef() != null
 				&& ARITHMETIC.contains(other.getDef().getOpcode())) {
 				edits.after.merge(token, constant.getSize() > INT_BYTES ? "ULL" : "U", String::concat);
+			}
+		}
+	}
+
+	/** The argument naming the table of result names: results=FILE. */
+	private static final String RESULT_NAMES = "results=";
+	/** A function's result's name, by the function's, from the results= tables. */
+	private Map<String, String> resultNames;
+	/** The variables resultVariables names in the function being printed, which namedHigh gives. */
+	private static final Map<HighVariable, String> RENAMED = new IdentityHashMap<>();
+	/** The words C keeps, which no variable may be named. */
+	private static final Set<String> KEYWORDS = Set.of("auto", "break", "case", "char", "const", "continue",
+		"default", "do", "double", "else", "enum", "extern", "float", "for", "goto", "if", "int", "long",
+		"register", "return", "short", "signed", "sizeof", "static", "struct", "switch", "typedef", "union",
+		"unsigned", "void", "volatile", "while");
+
+	/**
+	 * The results= tables: each line a function's name, its result's name
+	 * and a note, tab separated; # begins a comment.  The tables are the
+	 * images', keyed by the functions' names, which the images share.
+	 */
+	private Map<String, String> resultNames() throws Exception {
+		if (resultNames == null) {
+			resultNames = new HashMap<>();
+			for (String arg : getScriptArgs()) {
+				if (!arg.startsWith(RESULT_NAMES)) {
+					continue;
+				}
+				for (String line : Files.readAllLines(new File(arg.substring(RESULT_NAMES.length())).toPath())) {
+					String[] fields = line.split("\t");
+					if (!line.isBlank() && !line.startsWith("#") && fields.length >= 2) {
+						resultNames.put(fields[0], fields[1]);
+					}
+				}
+			}
+		}
+		return resultNames;
+	}
+
+	/**
+	 * Names each local variable a call's result is assigned to as the
+	 * results= tables name the callee's result: dVar5 = sqrt(x) is
+	 * root = sqrt(x) wherever the variable is read.  A variable gets the
+	 * name only if every value it holds is a result so named, as the
+	 * decompiler reuses a variable for several values, only if its name
+	 * is the decompiler's own, not one given on purpose, and only if no
+	 * other name in the function is the same; the first such variable has
+	 * it where several would.
+	 */
+	private void resultVariables(List<ClangToken> tokens, TokenEdits edits) throws Exception {
+		RENAMED.clear();
+		Map<String, String> names = resultNames();
+		if (names.isEmpty()) {
+			return;
+		}
+		Set<String> taken = new HashSet<>(KEYWORDS);
+		Map<HighVariable, List<ClangToken>> uses = new IdentityHashMap<>();
+		for (ClangToken token : tokens) {
+			if (!(token instanceof ClangCommentToken)) {
+				taken.add(token.getText());
+			}
+			if (token instanceof ClangVariableToken variable && variable.getHighVariable() != null) {
+				uses.computeIfAbsent(variable.getHighVariable(), k -> new ArrayList<>()).add(token);
+			}
+		}
+		for (Map.Entry<HighVariable, List<ClangToken>> use : uses.entrySet()) {
+			HighVariable variable = use.getKey();
+			// a name given on purpose, by a local row or the decompiler's own, stays
+			if (!(variable instanceof HighLocal) || variable instanceof HighParam
+				|| variable.getSymbol() != null && variable.getSymbol().isNameLocked()) {
+				continue;
+			}
+			String name = null;
+			boolean named = true;
+			for (Varnode instance : variable.getInstances()) {
+				PcodeOp def = instance.getDef();
+				// a join of its own values, or one kept across a call, is no new value
+				if (def != null && (def.getOpcode() == PcodeOp.MULTIEQUAL || def.getOpcode() == PcodeOp.INDIRECT)) {
+					continue;
+				}
+				if (def != null && def.getOpcode() == PcodeOp.CAST) {
+					def = def.getInput(0).getDef();
+				}
+				Function callee = def == null || def.getOpcode() != PcodeOp.CALL ? null
+					: getFunctionAt(def.getInput(0).getAddress());
+				String result = callee == null ? null : names.get(callee.getName());
+				if (result == null || name != null && !name.equals(result)) {
+					named = false;
+					break;
+				}
+				name = result;
+			}
+			if (named && name != null && !taken.contains(name)) {
+				taken.add(name);
+				RENAMED.put(variable, name);
+				for (ClangToken token : use.getValue()) {
+					edits.replaced.put(token, name);
+				}
 			}
 		}
 	}
@@ -2508,6 +2609,9 @@ public class SmartClockExportC extends GhidraScript {
 
 	/** The name of a varnode's variable in the C, or null if it has none. */
 	private static String namedHigh(Varnode varnode) {
+		if (varnode != null && RENAMED.containsKey(varnode.getHigh())) {
+			return RENAMED.get(varnode.getHigh());
+		}
 		String name = varnode == null || varnode.getHigh() == null ? null : varnode.getHigh().getName();
 		return name == null || name.equals("UNNAMED") ? null : name;
 	}

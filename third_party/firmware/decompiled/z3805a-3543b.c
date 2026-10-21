@@ -10634,7 +10634,7 @@ void sleep_seconds(float param_1)
 
 {
   int iVar1;
-  float f;
+  float product;
   uint a;
   
   iVar1 = float_compare(0.0,param_1);
@@ -10647,8 +10647,8 @@ void sleep_seconds(float param_1)
   else {
     param_1 = 0.0009765625;
   }
-  f = float_multiply(param_1,1024.0);
-  a = float_to_unsigned(f);
+  product = float_multiply(param_1,1024.0);
+  a = float_to_unsigned(product);
   if (a == 0) {
     a = 1;
   }
@@ -32366,7 +32366,7 @@ void diag_pll_rep(void)
 
 {
   int param1;
-  float f;
+  float product;
   double dVar1;
   byte local_6 [2];
   
@@ -32380,8 +32380,8 @@ void diag_pll_rep(void)
   printf("tfom = %.1e secs\r\n",dVar1);
   dVar1 = float_to_double(pll.efc_history.averages[pll.efc_history.stop_ptr]);
   printf("last efc average = %.1f\r\n",dVar1);
-  f = float_multiply(pll.efc_history.drift,5.4e-08);
-  dVar1 = float_to_double(f);
+  product = float_multiply(pll.efc_history.drift,5.4e-08);
+  dVar1 = float_to_double(product);
   printf("current drift = %.1e / day\r\n",dVar1);
   return;
 }
@@ -33941,13 +33941,13 @@ void diag_es_ascii(int param_1)
 void diag_fp_u(void)
 
 {
-  float f;
+  float product;
   double param3;
   double param2;
   double param1;
   
-  f = float_multiply(1e-20,2e-20);
-  param3 = float_to_double(f);
+  product = float_multiply(1e-20,2e-20);
+  param3 = float_to_double(product);
   param2 = float_to_double(2e-20);
   param1 = float_to_double(1e-20);
   printf("%.1f * %.1f = %.1f\r\n",param1,param2,param3);
@@ -39328,7 +39328,7 @@ void monitor_filter_add(adc_monitor *monitor,float reading)
 
 {
   float fVar1;
-  float b;
+  float product;
   int iVar2;
   
   if (monitor->valid == 0) {
@@ -39337,8 +39337,8 @@ void monitor_filter_add(adc_monitor *monitor,float reading)
   }
   else {
     fVar1 = float_multiply(monitor->value,0.9);
-    b = float_multiply(reading,0.1);
-    fVar1 = float_add(fVar1,b);
+    product = float_multiply(reading,0.1);
+    fVar1 = float_add(fVar1,product);
     monitor->value = fVar1;
     iVar2 = float_compare(1e-20,fVar1);
     if (0 < iVar2) {
@@ -57138,7 +57138,7 @@ void efc_history_update(void)
 {
   double result_1;
   float fVar1;
-  uint32_t uVar2;
+  uint32_t uptime;
   int iVar3;
   float fVar4;
   uint param4;
@@ -57191,8 +57191,8 @@ void efc_history_update(void)
         dVar5 = float_to_double(pll.tfom);
         dVar8 = 0.0;
         iVar3 = 0;
-        uVar2 = get_uptime();
-        fVar1 = unsigned_to_float(uVar2);
+        uptime = get_uptime();
+        fVar1 = unsigned_to_float(uptime);
         fVar1 = float_divide(fVar1,2700.0);
         fVar1 = float_divide(fVar1,32.0);
         dVar6 = float_to_double(fVar1);
@@ -57205,7 +57205,7 @@ void efc_history_update(void)
     }
     else {
       if (((pll.efc_history.summed_count < 0x2a3) && (pll.efc_history.summed_count != 0)) ||
-         (uVar2 = get_uptime(), uVar2 < 0x2a30)) {
+         (uptime = get_uptime(), uptime < 0x2a30)) {
         pll.efc_history.weights[pll.efc_history.stop_ptr] = 1;
       }
       else if (pll.efc_history.summed_count == 0xa8c) {
@@ -57217,8 +57217,8 @@ void efc_history_update(void)
       fVar1 = unsigned_to_float((uint)pll.efc_history.summed_count);
       fVar1 = float_divide_reversed(fVar1,pll.efc_history.efc_sum);
       pll.efc_history.averages[pll.efc_history.stop_ptr] = fVar1;
-      uVar2 = get_uptime();
-      fVar1 = unsigned_to_float(uVar2);
+      uptime = get_uptime();
+      fVar1 = unsigned_to_float(uptime);
       fVar1 = float_divide(fVar1,2700.0);
       pll.efc_history.times[pll.efc_history.stop_ptr] = fVar1;
       iVar3 = float_compare(1.0,fVar1);
@@ -57328,7 +57328,7 @@ void aging_fit(void)
   double pushed_2;
   uint uVar1;
   uint uVar2;
-  float fVar3;
+  float product;
   int param2;
   int iVar4;
   int iVar5;
@@ -57379,8 +57379,8 @@ void aging_fit(void)
         uVar1 = fit_logarithmic(&candidate);
         uVar1 = uVar1 | uVar2;
         aging_curve.mode = 3;
-        fVar3 = float_multiply(aging_curve.rms,0.75);
-        iVar5 = float_compare(fVar3,candidate.rms);
+        product = float_multiply(aging_curve.rms,0.75);
+        iVar5 = float_compare(product,candidate.rms);
         if ((0 < iVar5) || (param2 < 0x10)) {
           aging_curve.a = candidate.a;
           aging_curve.b = candidate.b;
@@ -57398,8 +57398,8 @@ void aging_fit(void)
       uVar1 = fit_logarithmic(&candidate);
       uVar1 = uVar1 | uVar2;
       aging_curve.mode = 3;
-      fVar3 = float_multiply(aging_curve.rms,0.75);
-      iVar5 = float_compare(fVar3,candidate.rms);
+      product = float_multiply(aging_curve.rms,0.75);
+      iVar5 = float_compare(product,candidate.rms);
       if ((0 < iVar5) || (param2 < 0x10)) {
         aging_curve.a = candidate.a;
         aging_curve.b = candidate.b;
@@ -57577,7 +57577,7 @@ int fit_logarithmic(aging_curve_state *curve)
   double result_1;
   float a;
   uint32_t uVar1;
-  float f;
+  float difference;
   int iVar2;
   double a_00;
   double a_01;
@@ -57590,8 +57590,8 @@ int fit_logarithmic(aging_curve_state *curve)
     a = curve->rms;
     uVar1 = fit_log_search(curve,1);
     float_divide_in_place(&curve->c_step,10.0);
-    f = float_subtract(a,curve->rms);
-    a_00 = float_to_double(f);
+    difference = float_subtract(a,curve->rms);
+    a_00 = float_to_double(difference);
     a_01 = float_to_double(a);
     result_1 = double_multiply(a_01,0.01);
     iVar2 = double_compare(a_00,result_1);
@@ -57650,12 +57650,12 @@ void fit_evaluate_latest(aging_curve_state *curve,float *fitted)
 
 {
   float fVar1;
-  float b;
+  float product;
   
   fVar1 = unsigned_to_float(curve->newest_time);
   fVar1 = float_multiply(fVar1,curve->b);
-  b = float_multiply(curve->c,pll.efc_history.logs[curve->newest_index]);
-  fVar1 = float_add(fVar1,b);
+  product = float_multiply(curve->c,pll.efc_history.logs[curve->newest_index]);
+  fVar1 = float_add(fVar1,product);
   *fitted = fVar1;
   fVar1 = float_subtract(pll.efc_history.averages[curve->newest_index],*fitted);
   curve->a = fVar1;
@@ -57902,7 +57902,7 @@ int linear_regression(regression_record *record,int with_slope)
 
 {
   float fVar1;
-  float fVar2;
+  float difference;
   int iVar3;
   ushort uVar4;
   float unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); __ghidra_as(float, __entry); });
@@ -57941,16 +57941,16 @@ int linear_regression(regression_record *record,int with_slope)
   do {
     if (record->minimum_weight <= record->weights[iVar3]) {
       fVar1 = float_subtract(record->x[iVar3],unaff_D5);
-      fVar2 = float_subtract(record->x[iVar3],unaff_D5);
-      fVar1 = float_multiply(fVar1,fVar2);
+      difference = float_subtract(record->x[iVar3],unaff_D5);
+      fVar1 = float_multiply(fVar1,difference);
       fVar5 = float_add(fVar5,fVar1);
       fVar1 = float_subtract(record->x[iVar3],unaff_D5);
-      fVar2 = float_subtract(record->y[iVar3],unaff_D4);
-      fVar1 = float_multiply(fVar1,fVar2);
+      difference = float_subtract(record->y[iVar3],unaff_D4);
+      fVar1 = float_multiply(fVar1,difference);
       float_add_in_place(&local_10,fVar1);
       fVar1 = float_subtract(record->y[iVar3],unaff_D4);
-      fVar2 = float_subtract(record->y[iVar3],unaff_D4);
-      fVar1 = float_multiply(fVar1,fVar2);
+      difference = float_subtract(record->y[iVar3],unaff_D4);
+      fVar1 = float_multiply(fVar1,difference);
       float_add_in_place(&local_c,fVar1);
     }
     iVar3 = iVar3 + 1;
@@ -59046,12 +59046,12 @@ undefined1 holdover_correction_valid(void)
 
 {
   float fVar1;
-  float b;
+  float product;
   int iVar2;
   
   fVar1 = float_multiply(holdover_steering.ti_weighted_sum,10.0);
-  b = float_multiply(holdover_steering.ti_sum,45.0);
-  fVar1 = float_subtract(fVar1,b);
+  product = float_multiply(holdover_steering.ti_sum,45.0);
+  fVar1 = float_subtract(fVar1,product);
   fVar1 = float_divide(fVar1,825.0);
   fVar1 = float_divide(fVar1,efc_gains.gain);
   fVar1 = float_add(fVar1,pll.efc);
@@ -59213,7 +59213,7 @@ undefined1 holdover(char param_1)
   uint8_t uVar4;
   float fVar2;
   int iVar3;
-  uint32_t u;
+  uint32_t uptime;
   char cVar5;
   undefined1 uVar6;
   double dVar7;
@@ -59296,8 +59296,8 @@ override_jmp_00043ae6_case_0:
   if (0 < iVar3) {
     pll.tfom = 1e-06;
   }
-  u = get_uptime();
-  fVar2 = unsigned_to_float(u);
+  uptime = get_uptime();
+  fVar2 = unsigned_to_float(uptime);
   dVar7 = float_to_double(fVar2);
   dVar7 = double_divide_reversed(2700.0,dVar7);
   fVar2 = double_to_float(dVar7);
@@ -59599,7 +59599,7 @@ char startup_pll(char param_1)
   int iVar2;
   char cVar5;
   uint32_t uVar3;
-  float a;
+  float sum;
   char cVar6;
   double dVar7;
   float local_88;
@@ -59757,10 +59757,10 @@ char startup_pll(char param_1)
       pushed_6 = fVar1;
       fVar1 = float_multiply(pll.efc_history.fit_c,2700.0);
       fVar1 = float_divide(fVar1,pushed_6);
-      a = float_add(fVar1,pll.efc_history.fit_b);
-      iVar2 = float_compare(a,efc_gains.step_limit);
+      sum = float_add(fVar1,pll.efc_history.fit_b);
+      iVar2 = float_compare(sum,efc_gains.step_limit);
       fVar1 = efc_gains.step_limit;
-      if ((iVar2 < 1) && (iVar2 = float_compare(-efc_gains.step_limit,a), fVar1 = a, 0 < iVar2)) {
+      if ((iVar2 < 1) && (iVar2 = float_compare(-efc_gains.step_limit,sum), fVar1 = sum, 0 < iVar2)) {
         fVar1 = -efc_gains.step_limit;
       }
       fVar1 = float_divide(fVar1,local_7c);
@@ -59830,7 +59830,7 @@ undefined1 pll_normal(char param_1)
   int iVar3;
   char cVar6;
   uint32_t uVar4;
-  float a;
+  float sum;
   double dVar7;
   float local_82;
   float local_7e;
@@ -59925,10 +59925,10 @@ undefined1 pll_normal(char param_1)
       pushed_2 = fVar2;
       fVar2 = float_multiply(*(float *)(local_10 + 0x362),2700.0);
       fVar2 = float_divide(fVar2,pushed_2);
-      a = float_add(fVar2,*(float *)(local_10 + 0x35e));
-      iVar3 = float_compare(a,efc_gains.step_limit);
+      sum = float_add(fVar2,*(float *)(local_10 + 0x35e));
+      iVar3 = float_compare(sum,efc_gains.step_limit);
       fVar2 = efc_gains.step_limit;
-      if ((iVar3 < 1) && (iVar3 = float_compare(-efc_gains.step_limit,a), fVar2 = a, 0 < iVar3)) {
+      if ((iVar3 < 1) && (iVar3 = float_compare(-efc_gains.step_limit,sum), fVar2 = sum, 0 < iVar3)) {
         fVar2 = -efc_gains.step_limit;
       }
       fVar2 = float_divide(fVar2,loop_steering.integral_gain);
@@ -59987,7 +59987,7 @@ undefined1 fine_sync_adjust(float param_1)
 
 {
   int iVar1;
-  float fVar2;
+  float quotient;
   uint uVar3;
   undefined1 uVar4;
   
@@ -60000,8 +60000,8 @@ undefined1 fine_sync_adjust(float param_1)
     else {
       iVar1 = float_compare(-3e-07,param_1);
       if (iVar1 < 0) {
-        fVar2 = float_divide(param_1,-1e-07);
-        uVar3 = float_to_unsigned(fVar2);
+        quotient = float_divide(param_1,-1e-07);
+        uVar3 = float_to_unsigned(quotient);
         uVar4 = (undefined1)uVar3;
         sync_request(2,uVar3 & 0xff);
       }
@@ -60014,8 +60014,8 @@ undefined1 fine_sync_adjust(float param_1)
   else {
     iVar1 = float_compare(param_1,3e-07);
     if (iVar1 < 0) {
-      fVar2 = float_divide(param_1,1e-07);
-      uVar3 = float_to_unsigned(fVar2);
+      quotient = float_divide(param_1,1e-07);
+      uVar3 = float_to_unsigned(quotient);
       uVar4 = (undefined1)uVar3;
       sync_request(1,uVar3 & 0xff);
     }
@@ -61209,7 +61209,7 @@ void clock_set_from_reference(void)
 
 {
   byte bVar2;
-  uint32_t uVar1;
+  uint32_t uptime;
   packed_datetime local_14;
   packed_datetime local_c;
   
@@ -61219,13 +61219,13 @@ void clock_set_from_reference(void)
   if (bVar2 <= restart_reference_seconds) {
     bVar2 = bVar2 + 0x10;
   }
-  uVar1 = get_uptime();
-  if (uVar1 < restart_reference_uptime) {
+  uptime = get_uptime();
+  if (uptime < restart_reference_uptime) {
     restart_reference_uptime = 0;
   }
   local_14.time =
        __ghidra_as(time_of_day, 
-       ((restart_reference_uptime - uVar1) + ((uint)bVar2 - (uint)restart_reference_seconds)));
+       ((restart_reference_uptime - uptime) + ((uint)bVar2 - (uint)restart_reference_seconds)));
   if ((int)__ghidra_aggregate_bits(local_14.time) < 0) {
     local_14.time.reserved = 0;
     local_14.time.hour = 0;
@@ -65698,18 +65698,18 @@ bool uptime_elapsed(uint *param_1,int *param_2)
 
 {
   uint uVar1;
-  uint32_t uVar2;
+  uint32_t uptime;
   
-  uVar2 = get_uptime();
+  uptime = get_uptime();
   uVar1 = *param_1;
-  if (uVar1 <= uVar2) {
-    *param_2 = uVar2 - *param_1;
+  if (uVar1 <= uptime) {
+    *param_2 = uptime - *param_1;
   }
   else {
-    *param_1 = uVar2;
+    *param_1 = uptime;
     *param_2 = 0;
   }
-  return uVar1 <= uVar2;
+  return uVar1 <= uptime;
 }
 
 
@@ -69271,12 +69271,12 @@ undefined4 primary_unpack_records(void)
 __regcall float float_subtract_in_place(float *x /* a0 */,float y /* d1 */)
 
 {
-  float fVar1;
+  float difference;
   float *extraout_A0;
   
-  fVar1 = float_subtract(*x,y);
-  *extraout_A0 = fVar1;
-  return fVar1;
+  difference = float_subtract(*x,y);
+  *extraout_A0 = difference;
+  return difference;
 }
 
 
@@ -69321,12 +69321,12 @@ __asm__(
 __regcall float float_add_in_place(float *x /* a0 */,float y /* d1 */)
 
 {
-  float fVar1;
+  float sum;
   float *extraout_A0;
   
-  fVar1 = float_add(*x,y);
-  *extraout_A0 = fVar1;
-  return fVar1;
+  sum = float_add(*x,y);
+  *extraout_A0 = sum;
+  return sum;
 }
 
 
@@ -71367,11 +71367,11 @@ __asm__(
 __regcall double double_add_in_place(double *x /* a0 */,double y /* d0 */)
 
 {
-  double dVar1;
+  double sum;
   
-  dVar1 = double_add(y,*x);
-  *x = dVar1;
-  return dVar1;
+  sum = double_add(y,*x);
+  *x = sum;
+  return sum;
 }
 
 
@@ -73021,12 +73021,12 @@ __asm__(
 __regcall float float_divide_in_place(float *x /* a0 */,float y /* d1 */)
 
 {
-  float fVar1;
+  float quotient;
   float *extraout_A0;
   
-  fVar1 = float_divide(*x,y);
-  *extraout_A0 = fVar1;
-  return fVar1;
+  quotient = float_divide(*x,y);
+  *extraout_A0 = quotient;
+  return quotient;
 }
 
 
@@ -76381,12 +76381,12 @@ __asm__(
 __regcall float float_multiply_in_place(float *x /* a0 */,float y /* d1 */)
 
 {
-  float fVar1;
+  float product;
   float *extraout_A0;
   
-  fVar1 = float_multiply(*x,y);
-  *extraout_A0 = fVar1;
-  return fVar1;
+  product = float_multiply(*x,y);
+  *extraout_A0 = product;
+  return product;
 }
 
 
@@ -76768,11 +76768,11 @@ __asm__(
 __regcall double double_multiply_in_place(double *x /* a0 */,double y /* d0 */)
 
 {
-  double dVar1;
+  double product;
   
-  dVar1 = double_multiply(y,*x);
-  *x = dVar1;
-  return dVar1;
+  product = double_multiply(y,*x);
+  *x = product;
+  return product;
 }
 
 

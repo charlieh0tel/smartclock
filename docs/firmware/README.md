@@ -282,7 +282,8 @@ part of what they change.  In order:
 6. `SmartClockFormatStrings.java`.
 7. `SmartClockExportC.java FILE defines=tools/ghidra/types/mc68331.h
    defines=tools/ghidra/types/mc68681.h
-   defines=tools/ghidra/types/psos-signals.h`.
+   defines=tools/ghidra/types/psos-signals.h
+   results=tools/ghidra/names/results.tsv`.
 
 **Setup** makes the ROM read-only, so values loaded from it fold to
 constants; maps RAM, the DUART, EEPROM, the CS4 and CS5 ranges and the
@@ -727,6 +728,13 @@ decompiler wrote it, and reported.
   Where the trial misses a target, the decompiler switches on the
   table's entry instead, labeled by its value, as the machine does,
   and that is left.
+- A local variable a call's result is assigned to is named as
+  `names/results.tsv` names the callee's result, `uptime =
+  get_uptime()`, so that a result reads the same at every call: only a
+  variable every value of which is a result so named, whose name is the
+  decompiler's own rather than one given on purpose, and where no other
+  name in the function is the same.  The table is keyed by the
+  functions' names, which the images share.
 - A character constant that is no text is an integer: the decompiler
   prints every constant of a char type as a character, so a flag's 0
   and 1 read `'\0'` and `'\x01'`.  A printable character and `\n`,

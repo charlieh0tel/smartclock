@@ -1176,6 +1176,9 @@ view cannot drift apart.  The library, bottom up:
      That routine keeps D0, and what the `dbf` leaves there is the count
      less one in its low word, which the exporter now assigns after the
      call (1240 agreeing to 1241, 11 differing to 10).
+     And a call's result has a name, `names/results.tsv`, which the
+     variable it is assigned to takes where every value the variable
+     holds is so named: `uptime = get_uptime()` at every call.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

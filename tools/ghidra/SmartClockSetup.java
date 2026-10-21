@@ -103,13 +103,17 @@ import ghidra.program.model.data.DataTypeConflictHandler;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.data.EnumDataType;
+import ghidra.program.model.data.FunctionDefinition;
 import ghidra.program.model.data.FunctionDefinitionDataType;
 import ghidra.program.model.data.ParameterDefinition;
+import ghidra.program.model.data.ParameterDefinitionImpl;
 import ghidra.program.model.data.InvalidDataTypeException;
+import ghidra.program.model.data.Pointer;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.data.SignedByteDataType;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.data.TerminatedStringDataType;
+import ghidra.program.model.data.TypeDef;
 import ghidra.program.model.data.TypedefDataType;
 import ghidra.program.model.data.WordDataType;
 import ghidra.program.model.lang.Register;
@@ -608,6 +612,18 @@ public class SmartClockSetup extends GhidraScript {
 			throw new IllegalArgumentException("cannot parse prototype at " + address + ": "
 				+ prototype);
 		}
+		int open = prototype.indexOf('(');
+		int close = prototype.lastIndexOf(')');
+		String[] declared = prototype.substring(open + 1, close).split(",");
+		ParameterDefinition[] parsed = signature.getArguments();
+		for (int i = 0; i < parsed.length; i++) {
+			DataType routine = routinePointer(declared[i]);
+			if (routine != null) {
+				parsed[i] = new ParameterDefinitionImpl(parsed[i].getName(), routine,
+					parsed[i].getComment());
+			}
+		}
+		signature.setArguments(parsed);
 		boolean narrow = false;
 		for (ParameterDefinition argument : signature.getArguments()) {
 			narrow |= argument.getDataType().getLength() < STACK_SLOT;
@@ -618,9 +634,6 @@ public class SmartClockSetup extends GhidraScript {
 					.applyTo(currentProgram, monitor);
 			return;
 		}
-		int open = prototype.indexOf('(');
-		int close = prototype.lastIndexOf(')');
-		String[] declared = prototype.substring(open + 1, close).split(",");
 		ParameterDefinition[] types = signature.getArguments();
 		List<Parameter> parameters = new ArrayList<>();
 		int stackOffset = FIRST_ARGUMENT_OFFSET;
@@ -813,6 +826,25 @@ public class SmartClockSetup extends GhidraScript {
 			throw new IllegalArgumentException("a call needs a function and a prototype: " + line);
 		}
 		HighFunctionDBUtil.writeOverride(function, address, signature);
+	}
+
+	/**
+	 * A parameter's type when it points at a function typedef, as
+	 * "printf_function *print", which the signature parser does not find
+	 * either; null for any other.
+	 */
+	private DataType routinePointer(String parameter) {
+		String declaration =
+			ANNOTATION.matcher(parameter).replaceAll("").strip().replaceFirst("\\w+$", "");
+		DataType type = namedPointer(currentProgram.getDataTypeManager(), declaration.strip());
+		DataType pointee = type instanceof Pointer pointer ? pointer.getDataType() : null;
+		if (pointee instanceof TypeDef def) {
+			pointee = def.getBaseDataType();
+		}
+		// a pointer to the typedef, rather than to its function, the decompiler prints as undefined1 *
+		return pointee instanceof FunctionDefinition routine
+				? new PointerDataType(routine, currentProgram.getDataTypeManager())
+				: null;
 	}
 
 	/**

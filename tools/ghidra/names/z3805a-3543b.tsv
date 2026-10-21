@@ -746,15 +746,15 @@
 0x17fc0	function	selftest_interpolator_calibration	the self-test table 0x18458's entry 12	on selftest_execute's second pass, its argument 1, runs interpolator_selftest	void selftest_interpolator_calibration(char_slot run)
 0x17fd0	function	selftest_interpolator_sample	entry 13	on selftest_execute's second pass, its argument 1, runs interpolator_sample_test	void selftest_interpolator_sample(char_slot run)
 0x18600	function	selftest_print_failure	"FAIL:", "%s, error code: %02X"	prints a failed self-test's name and error code
-0x1606c	function	os_report_cpu	"Free CPU cycles: count 0x%08X, approx %2d%%"; os_process_report calls it	prints the free CPU cycles counted and the share they make
-0x16118	function	os_report_exchange	an exchange's line, "fifo", "prio"	prints one exchange's line of the kernel report
+0x1606c	function	os_report_cpu	"Free CPU cycles: count 0x%08X, approx %2d%%"; os_process_report calls it	prints the free CPU cycles counted and the share they make	void os_report_cpu(printf_function *print)
+0x16118	function	os_report_exchange	an exchange's line, "fifo", "prio"	prints one exchange's line of the kernel report	void os_report_exchange(undefined4 *param_1, printf_function *print)
 0x161f6	function	task_status_name	"susp", "paus", "vblk", "xblk", "mblk", "spwn"	the four-letter name of a task's state	char *task_status_name(void *task)
 0x162d4	function	os_report_process	a process's line, ">> RESOURCES:", ">> EVENTS: W(0x%04x) S(0x%04x)"	prints one process's line of the kernel report, with its resources and events	void os_report_process(void *param_1, char *param_2, int param_3, undefined4 param_4, printf_function *print)
-0x1660a	function	os_report_process_summary	"%d Process(s) (%d avail); Total time: %-d ticks."	prints how many processes there are and the time they have used
-0x1665e	function	os_report_exchanges	"xid   XNAME  TYPE  ACC  maxQ  Qlen BLOCKED"	prints the kernel's exchanges, one line each
-0x166b0	function	os_report_exchange_summary	"%d Exchange(s) (%d avail).", "%d Msg buffer(s)"	prints how many exchanges and message buffers there are and are free
-0x1675a	function	os_report_processes	"pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CP"	prints the kernel's processes, one line each
-0x16828	function	os_report_regions	"Region strt       end  min     max    pend   USED"	prints the kernel's memory regions and their use
+0x1660a	function	os_report_process_summary	"%d Process(s) (%d avail); Total time: %-d ticks."	prints how many processes there are and the time they have used	void os_report_process_summary(printf_function *print)
+0x1665e	function	os_report_exchanges	"xid   XNAME  TYPE  ACC  maxQ  Qlen BLOCKED"	prints the kernel's exchanges, one line each	void os_report_exchanges(printf_function *print)
+0x166b0	function	os_report_exchange_summary	"%d Exchange(s) (%d avail).", "%d Msg buffer(s)"	prints how many exchanges and message buffers there are and are free	void os_report_exchange_summary(printf_function *print)
+0x1675a	function	os_report_processes	"pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CP"	prints the kernel's processes, one line each	int os_report_processes(printf_function *print)
+0x16828	function	os_report_regions	"Region strt       end  min     max    pend   USED"	prints the kernel's memory regions and their use	void os_report_regions(printf_function *print)
 0x16bb6	function	task_stack_info	"no system stack found"; task_stack_report's per-task stacks	measures a task's stacks for the stack report	void task_stack_info(void *task, uint32_t *user_top, uint32_t *user_pointer, uint32_t *user_size, uint32_t *supervisor_top, uint32_t *supervisor_pointer, uint32_t *supervisor_size)
 0x132f4	function	stack_usage_report	"User: %5u of %5u b   Supv: %5u of %5u b"	prints a task's user and supervisor stack use	void stack_usage_report(void *task)
 0x132f4	local	usage	read	the four longs stack_measure fills and it prints: user used and size, supervisor used and size (0x132f8 to 0x13318)	uint32_t[4] @ -0x64
@@ -778,7 +778,7 @@
 0x463c2	function	leap_event_create	"Error in creating leapsecond event"	creates the leap second event
 0x44f5e	function	sync_perform	"Peforming sync"	synchronizes the outputs to GPS time
 0x45bb8	function	pll_powerup_suffix_index	screen-format-strings.md's ladder: the power-up sub-state's suffix index	the power-up sub-state, as the status screen's suffix index
-0x4a8ea	function	status_screen	"Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status"	prints the receiver status screen
+0x4a8ea	function	status_screen	"Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status"	prints the receiver status screen	void status_screen(char *param_1, char param_2, write_function *write, printf_function *print)
 0x49db0	function	status_screen_sync	"Synchronized to UTC", "Synchronized to GPS Time", "Assessing stability"	the status screen's synchronization line	void status_screen_sync(status_snapshot_record *snapshot, char *line)
 0x4a518	function	status_screen_mode_suffix	screen-format-strings.md's mode suffixes, ": OCXO warm-up" .. ": leap second determination", "[TI %9.9s]"	the status screen's suffix for the power-up sub-state	void status_screen_mode_suffix(char param_1, status_snapshot_record *snapshot, char *text)
 0x4a29c	function	status_screen_tfom	"TFOM     %d%13sFFOM    %2s", "1PPS TI %s", "HOLD THR %s", "Holdover Uncertainty"	the status screen's TFOM, FFOM, 1PPS TI and holdover lines
@@ -1293,7 +1293,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x13368	function	enter_supervisor_mode	context	C's wrapper for enter_supervisor	uint16_t enter_supervisor_mode(void)
 0x1d680	function	duartb_putc_polled	context	waits for DUART channel B's transmitter and writes a character
 0x1eefc	function	fatal_error_with_code	context	a length-prefixed message and ", %08X" with a code, to fatal_error	void fatal_error_with_code(char *param_1,undefined4 param_2,undefined4 param_3,uint param_4)
-0x20d66	function	spoo_run	context	calls a function directly, or posts it to the spooler task's exchange while the spooler runs
+0x20d66	function	spoo_run	context	calls a function directly, or posts it to the spooler task's exchange while the spooler runs	uint spoo_run(spoo_function *function, uint32_t a, uint32_t b, uint32_t c)
 0x27fca	function	status_event_set	structures.md's status registers	ORs bits into a register's event word and propagates	void status_event_set(status_model *status, status_register *reg, int bits)
 0x27fe8	function	status_condition_set	structures.md's status registers	sets condition bits; those rising through the positive transition mask become events
 0x28044	function	status_condition_clear	structures.md's status registers	clears condition bits; those falling through the negative transition mask become events
@@ -1361,7 +1361,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x149a8	function	program_exit	context	runs the atexit functions and reports "Prog end, returned" with the code; never returns
 0x149bc	function	program_end_report	context	builds "Prog end, returned N" and stops with fatal_error_with_code, its code the long above value, which program_exit does not push: program_exit's return address (0x149ae to 0x149b2)	void program_end_report(uint value, uint32_t return_address)
 0x160de	function	object_name	context	a task's or exchange's four-character name, from its record at +0x14	char *object_name(void *object)
-0x16280	function	os_report_region_line	context	prints one memory region's line of the kernel report
+0x16280	function	os_report_region_line	context	prints one memory region's line of the kernel report	void os_report_region_line(char *name, undefined4 *param_2, printf_function *print)
 0x162b2	function	region_segment_containing	context	the segment of a region that holds an address	void *region_segment_containing(void *region, uint32_t address)
 0x164f2	function	timer_ticks_until	context	the ticks until a task's delay expires: the sum of the delta list's ticks up to it	int timer_ticks_until(void *task)
 0x16540	function	task_table_build	context	snapshots the kernel's tasks and their states into task_table for the reports
@@ -1505,7 +1505,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x29d76	function	status_sre_set	context	the status output object's method: sets the service request enable and updates RQS
 0x29d88	function	status_sre_get	the console port's method table 0x29dd4, +0x40	the status output object's method: returns the service request enable	uint8_t status_sre_get(void)
 0x29d90	function	status_byte_get	method table 0x29dd4, +0x38	the status output object's method: returns the status byte	uint8_t status_byte_get(void)
-0x2b578	function	log_print	context	prints the event log, its status and each entry, through the callbacks given
+0x2b578	function	log_print	context	prints the event log, its status and each entry, through the callbacks given	void log_print(char param_1, write_function *write, printf_function *print)
 0x2d148	function	satellite_number_valid	context	1 for a satellite number from 1 to 32
 0x2d160	function	satellite_in_mask	context	1 if a satellite's bit is set in a mask
 0x2d17a	function	satellite_mask_add	context	sets a valid satellite's bit in a mask
@@ -1590,7 +1590,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4a494	function	bits_4_5_any	context	1 if bit 4 or 5 is set
 0x4a4c0	function	bits_6_7_any	context	1 if bit 6 or 7 is set
 0x4a4ec	function	bits_8_9_any	context	1 if bit 8 or 9 is set
-0x4afd6	function	status_screen_print	context	prints the status screen, for :SYSTem:PRINt?
+0x4afd6	function	status_screen_print	context	prints the status screen, for :SYSTem:PRINt?	void status_screen_print(undefined1 param_1, write_function *write, printf_function *print)
 0x4f596	function	status_screen_length	scpi_query_SYSTem_PRINt_LENGth	returns 23, :SYSTem:PRINt:LENGth?'s answer	uint8_t status_screen_length(void)
 0x4eee0	function	long_array_get_word	context	a long's low word from an array by index, stored high byte first and the pointer advanced	char * long_array_get_word(long *array, uint8_t index, char *out)
 0x4ef02	function	long_array_get_long	context	a long from an array by index, stored high byte first and the pointer advanced	char * long_array_get_long(long *array, uint8_t index, char *out)
@@ -1808,8 +1808,8 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x208fa	function	qspi_control	psos.md	the QSPI device's control: does nothing		convention=register; confidence=read; out=D7 int error; family=device
 0x208fe	function	qspi_open	psos.md	the QSPI device's open and close: do nothing		convention=register; confidence=read; out=D7 int error; family=device
 0x20ab0	function	qspi_device_write	psos.md	the QSPI device's write: queues for the QSPI, then runs the transfer		convention=register; confidence=read; in=D0 char device, A0 void *buffers, D2 short count; family=device
-0x278f4	function	scpi_parameter_match	context	finds the next parameter descriptor that takes a parameter of the kind, marking optional ones it passes 0xffff
-0x2797a	function	scpi_parameters_finish	context	marks the descriptors left 0xffff, omitted, unless one is required
+0x278f4	function	scpi_parameter_match	context	finds the next parameter descriptor that takes a parameter of the kind, marking optional ones it passes 0xffff	int scpi_parameter_match(int *param_1, undefined4 param_2, void *param_3, short *param_4)
+0x2797a	function	scpi_parameters_finish	context	marks the descriptors left 0xffff, omitted, unless one is required	undefined4 scpi_parameters_finish(int *param_1, void *param_2, short *param_3)
 0x27d80	function	scpi_header_resolve	context	resolves a command header to its node and handler, through defaults and numeric suffixes, and takes room for its parameters
 0x27f10	function	scpi_common_header_resolve	context	resolves a common command's header to its node and handler and takes room for its parameters
 0x292d6	function	scpi_interpret	context	the parser's loop: parses each message unit, calls its handler, writes its response and reports errors, until the input ends	undefined4 scpi_interpret(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5, undefined4 param_6,undefined4 param_7,undefined4 param_8,undefined4 param_9)

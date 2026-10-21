@@ -5,10 +5,12 @@ and calls into either from the same RAM and registers.
 A call starts in supervisor mode with interrupts masked, as the
 firmware runs, every register a distinct sentinel but A6, which holds a
 caller's frame, and its own stack at STACK, filled and never compared;
-RAM zeroed but the kernel's tables, the running task's record and the
-exchanges' ids; the EEPROM erased and the pointees filled, each
-compared after it as RAM is; and the devices' registers zeroed but the
-status bits the routines poll for.  The harness stands in for what
+RAM zeroed but the kernel's tables, its data area as kernel_init makes
+it, the running task's record and the exchanges' ids; the EEPROM
+erased and the pointees filled, each compared after it as RAM is; the
+devices' registers zeroed but the status bits the routines poll for;
+and a routine of the harness's own for each parameter that points at
+one, whose calls are effects.  The harness stands in for what
 lies outside memory, the same for both calls: traps #1 and #7 run the
 image's own handlers; the kernel's traps, #3 and #4, are answered by a
 model of each service; a trap that never returns, a zero divide, a
@@ -24,6 +26,7 @@ import struct
 from dataclasses import dataclass
 
 from unicorn import (
+    UC_HOOK_CODE,
     UC_HOOK_INTR,
     UC_HOOK_MEM_INVALID,
     UC_HOOK_MEM_READ,
@@ -309,6 +312,17 @@ TASK_RECORD_SIZE = 0xB2
 # and which RAM starts each case with.
 PSOS_CONFIG = 0x10264C
 KERNEL_TABLES = [(0x5122A, PSOS_CONFIG, 0x62), (0x5171A, 0x1025BC, 0x90)]
+# What kernel_init (0x15cd8), trap #6, makes of the data area, which RAM
+# starts each case with, from the image's own code run on the tables:
+# from its start to its loop calling each device's function 0, and from
+# after that loop to its create of ROOT (0x15e6a).  It carves the area
+# into the supervisor stack, the exchanges, the message buffers and the
+# task records, each kind in a free list; makes its own record at +0x8c
+# the running one, which a call's start replaces with RUNNING_TASK's;
+# and sets up regions 0 and 1, the segment headers and
+# the empty queue of tasks waiting on a region at +0x64, pointing at
+# itself (kernel_region_init, 0x15ece), which os_report_regions walks.
+KERNEL_INIT = [(0x15CD8, 0x15E3A), (0x15E5C, 0x15E6A)]
 # The configuration's first long is the data area's address, and the
 # data area's first long the running task's record, which most of the
 # kernel's handlers load (psos.md, "Inside the kernel") and the
@@ -383,6 +397,31 @@ STATUS_REGISTERS = [
 
 
 @dataclass(frozen=True)
+class Stub:
+    """A routine at ROUTINES: the parameter it is given as, and where
+    it reads each argument above its return address, as (offset, bytes,
+    whether it is text), or None if it formats them."""
+
+    position: int
+    layout: tuple[tuple[int, int, bool], ...] | None
+
+
+@dataclass(frozen=True)
+class RoutineCall:
+    """A call of a routine at ROUTINES: the parameter it was given as,
+    and its arguments, each a value or a text, or the text it
+    formatted."""
+
+    position: int
+    arguments: tuple[int | bytes, ...]
+
+    def __str__(self) -> str:
+        parts = [f"call of parameter {self.position}'s routine"]
+        parts += [repr(a) if isinstance(a, bytes) else f"{a:x}" for a in self.arguments]
+        return " ".join(parts)
+
+
+@dataclass(frozen=True)
 class DeviceWrite:
     """A write to a device: its address, its bytes and its value."""
 
@@ -425,6 +464,46 @@ FILLED = POINTER_FILL * (POINTEES_SIZE // len(POINTER_FILL))
 # that is compared after it as RAM is: by name, its address and those
 # contents.  Neither holds code, so that a jump into either faults.
 COMPARED = {"EEPROM": (EEPROM, ERASED), "pointee memory": (POINTEES, FILLED)}
+# What a parameter that points at a routine, a function typedef of the
+# C's with its parameters declared, is given: a routine of the
+# harness's own at ROUTINES, one for each position, ROUTINE_SPACING
+# apart, the same in both calls, which records its call as an effect,
+# compared as kernel calls are, and returns.  One whose type takes a
+# format and a variable list, printf's, formats them as printf does
+# (docs/firmware/libc.md): it calls the image's own vsprintf, at
+# VSPRINTF, into ROUTINE_TEXT and returns the length, and records the
+# text.  Any other records each argument where the image's routines
+# read it, as SmartClockSetup.java lays a prototype out: a char or
+# short in a 2-byte slot, its value at the slot's start, and a
+# char_slot so, its char first and the rest unread (smartclock.h); a
+# char pointer's by its text, as a service's string, and the rest by
+# their bytes; and returns ROUTINE_RESULT, in D0, as a service does.
+ROUTINES = 0x31400000
+ROUTINES_SIZE = 0x1000
+ROUTINE_SPACING = 0x20
+ROUTINE_TEXT = ROUTINES + ROUTINES_SIZE // 2
+ROUTINE_RESULT = KERNEL_RESULT
+VSPRINTF = 0x608FE
+# The routines' code: an rts, and printf's: pea (8,sp), the arguments
+# after the format; move.l (8,sp),-(sp), the format; pea ROUTINE_TEXT;
+# jsr VSPRINTF; lea (12,sp),sp; and an rts, at which it records.
+RETURN_INSTRUCTION = bytes.fromhex("4e75")
+FORMATTING = (
+    bytes.fromhex("486f00082f2f00084879")
+    + struct.pack(">I", ROUTINE_TEXT)
+    + bytes.fromhex("4eb9")
+    + struct.pack(">I", VSPRINTF)
+    + bytes.fromhex("4fef000c")
+    + RETURN_INSTRUCTION
+)
+VARIABLE = "..."
+FORMAT = "char *"
+CHAR_SLOT = "char_slot"
+# A stack argument's offset above the stack pointer at entry, past the
+# return address, and the narrowest slot the image's routines read one
+# from.
+FIRST_ARGUMENT = 4
+STACK_SLOT_MINIMUM = 2
 # How far apart in the lists one case's successive arguments are taken,
 # so that arguments swapped or one loaded twice show.
 POSITION_STRIDE = 1
@@ -443,14 +522,32 @@ BASE_SIZES = {
 UNSIGNED = {"byte", "uchar", "undefined1", "uint8_t", "bool", "ushort", "undefined2", "uint16_t"}
 
 
+@dataclass(frozen=True)
+class Routine:
+    """A function typedef of the C's: its result and parameter types,
+    VARIABLE last for a variable list."""
+
+    result: str
+    parameters: tuple[str, ...]
+
+
 class Types:
-    """The sizes of the C file's types, and which name pointers."""
+    """The sizes of the C file's types, which name pointers, and its
+    routine types, by name, those whose parameters it declares."""
 
     def __init__(self, c: str):
         self.pointers = set(re.findall(r"^typedef [^;()]*\*\s*(\w+);$", c, re.M))
         self.sizes = dict(BASE_SIZES)
         for name, size in re.findall(r"^_Static_assert\(sizeof\((\w+)\) == (\d+),", c, re.M):
             self.sizes[name] = int(size)
+        self.routines = {
+            name: Routine(result, tuple(p.strip().removeprefix("struct ") for p in parameters.split(",")))
+            for result, name, parameters in re.findall(r"^typedef ([^;()]+?) ?\((\w+)\)\(([^()]+)\);$", c, re.M)
+        }
+
+    def routine(self, kind: str) -> Routine | None:
+        """The routine type a pointer type points at; None if it is not one."""
+        return self.routines.get(kind.removesuffix("*").strip()) if kind.endswith("*") else None
 
     def is_pointer(self, kind: str) -> bool:
         return kind.endswith("*") or kind in self.pointers
@@ -467,13 +564,20 @@ class RebuiltMachine(Machine):
 
     def __init__(self, image: bytes):
         super().__init__(image)
-        self.effects: list[KernelCall | DeviceWrite] = []
+        self.effects: list[KernelCall | DeviceWrite | RoutineCall] = []
         # each C function's two copies, gcc's address and the image's
         self.copies: set[tuple[int, int]] = set()
         # where service 8's next segment starts, and the task records
         # service 3 has returned, by name
         self.next_allocation = ALLOCATIONS
         self.tasks: dict[int, int] = {}
+        # RAM zeroed but the kernel's tables and its data area, as
+        # KERNEL_INIT leaves them
+        self.kernel_ram = bytes(RAM_SIZE)
+        # the routines at ROUTINES, by the address each records at
+        self.stubs: dict[int, Stub] = {}
+        self.uc.mem_map(ROUTINES, ROUTINES_SIZE)
+        self.uc.hook_add(UC_HOOK_CODE, self.routine_call, begin=ROUTINES, end=ROUTINES + ROUTINES_SIZE - 1)
         for start, size in DEVICES:
             self.uc.mem_map(start, size)
             self.uc.hook_add(UC_HOOK_MEM_WRITE, self.device_write, begin=start, end=start + size - 1)
@@ -490,11 +594,32 @@ class RebuiltMachine(Machine):
     def device_write(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
         self.effects.append(DeviceWrite(address, size, value & ((1 << 8 * size) - 1)))
 
+    def routine_call(self, uc: Uc, address: int, size: int, _) -> None:
+        """Records a call of a routine at ROUTINES, at the instruction it
+        records at, and returns its result."""
+        stub = self.stubs.get(address)
+        if stub is None:
+            return
+        if stub.layout is None:
+            self.effects.append(RoutineCall(stub.position, (string(uc, ROUTINE_TEXT),)))
+            return
+        sp = uc.reg_read(UC_M68K_REG_A7)
+        arguments = []
+        for offset, length, text in stub.layout:
+            value = int.from_bytes(uc.mem_read(sp + offset, length), "big")
+            try:
+                contents = string(uc, value) if text else None
+            except UcError:
+                contents = None
+            arguments.append(value if contents is None else contents)
+        self.effects.append(RoutineCall(stub.position, tuple(arguments)))
+        uc.reg_write(UC_M68K_REG_D0, ROUTINE_RESULT)
+
 
 def rebuilt_machine(image: bytes, linked: list[Section], linked_symbols: dict[str, int]) -> RebuiltMachine:
     """The image, with the rebuilt image's code at REBUILT, a stack, the
-    EEPROM and the devices, and which of the link's symbols name a C
-    function's copies, gcc's and the image's."""
+    EEPROM and the devices, which of the link's symbols name a C
+    function's copies, gcc's and the image's, and the kernel's RAM."""
     m = RebuiltMachine(image)
     m.copies = {
         (address, linked_symbols[IMAGE_PREFIX + name])
@@ -508,14 +633,54 @@ def rebuilt_machine(image: bytes, linked: list[Section], linked_symbols: dict[st
     m.uc.mem_map(STACK, STACK_SIZE)
     for start, contents in COMPARED.values():
         m.uc.mem_map(start, len(contents), UC_PROT_READ | UC_PROT_WRITE)
+    m.uc.mem_write(RAM, bytes(RAM_SIZE))
+    for source, destination, size in KERNEL_TABLES:
+        m.uc.mem_write(destination, m.read(source, size))
+    m.uc.reg_write(UC_M68K_REG_SR, SUPERVISOR)
+    for start, end in KERNEL_INIT:
+        m.uc.emu_start(start, end, count=STEP_LIMIT)
+    m.kernel_ram = m.read(RAM, RAM_SIZE)
     return m
 
 
-def argument(m: Machine, types: Types, kind: str, case: int, pointing: bool = False) -> bytes:
-    """The case'th argument of a kind, as its bytes, a pointer to a fresh
+def stub(m: RebuiltMachine, types: Types, routine: Routine, position: int) -> int | None:
+    """The routine at ROUTINES for a parameter's position, of a routine
+    type; None if the harness has none for it, a variable list without
+    a format or an argument of no known size."""
+    start = ROUTINES + position * ROUTINE_SPACING
+    for address in range(start, start + ROUTINE_SPACING):
+        m.stubs.pop(address, None)
+    if routine.parameters[-1] == VARIABLE:
+        if routine.parameters[0] != FORMAT:
+            return None
+        m.uc.mem_write(start, FORMATTING)
+        m.stubs[start + len(FORMATTING) - len(RETURN_INSTRUCTION)] = Stub(position, None)
+        return start
+    layout, offset = [], FIRST_ARGUMENT
+    for kind in routine.parameters:
+        if kind == "void":
+            continue
+        size = 1 if kind == CHAR_SLOT else types.size(kind)
+        if size is None:
+            return None
+        layout.append((offset, size, kind == FORMAT))
+        slot = max(size, STACK_SLOT_MINIMUM)
+        offset += slot + slot % 2
+    m.uc.mem_write(start, RETURN_INSTRUCTION)
+    m.stubs[start] = Stub(position, tuple(layout))
+    return start
+
+
+def argument(m: RebuiltMachine, types: Types, kind: str, case: int, pointing: bool = False, position: int = 0) -> bytes:
+    """The case'th argument of a kind, as its bytes: a routine at
+    ROUTINES for a pointer to a routine type, or a pointer to a fresh
     buffer of what it points at, POINTER_FILL where pointing but for
     text and reals."""
     real = REALS[case % len(REALS)]
+    routine = types.routine(kind)
+    routine_at = None if routine is None else stub(m, types, routine, position)
+    if routine_at is not None:
+        return struct.pack(">I", routine_at)
     if types.is_pointer(kind):
         pointee = kind.removesuffix("*").strip()
         contents = (
@@ -544,10 +709,10 @@ def argument(m: Machine, types: Types, kind: str, case: int, pointing: bool = Fa
     return struct.pack(">I", INTEGERS[case % len(INTEGERS)] & 0xFFFFFFFF)
 
 
-def arguments(m: Machine, types: Types, kinds: list[str], case: int) -> list[bytes]:
+def arguments(m: RebuiltMachine, types: Types, kinds: list[str], case: int) -> list[bytes]:
     """A case's arguments, each position taking a different value."""
     pointing = case >= PLAIN_CASES
-    return [argument(m, types, kind, case + POSITION_STRIDE * i, pointing) for i, kind in enumerate(kinds)]
+    return [argument(m, types, kind, case + POSITION_STRIDE * i, pointing, i) for i, kind in enumerate(kinds)]
 
 
 def gcc_slots(values: list[bytes]) -> bytes:
@@ -559,13 +724,12 @@ def gcc_slots(values: list[bytes]) -> bytes:
     )
 
 
-def fresh_ram(m: Machine) -> None:
-    """RAM zeroed but the kernel's tables and the exchanges' ids, and the
-    buffers' allocator: a case's starting point."""
+def fresh_ram(m: RebuiltMachine) -> None:
+    """RAM zeroed but the kernel's tables, its data area as kernel_init
+    makes it and the exchanges' ids, and the buffers' allocator: a
+    case's starting point."""
     m.next_buffer = BUFFER
-    m.uc.mem_write(RAM, bytes(RAM_SIZE))
-    for source, destination, size in KERNEL_TABLES:
-        m.uc.mem_write(destination, m.read(source, size))
+    m.uc.mem_write(RAM, m.kernel_ram)
     for cell, exchange in EXCHANGE_IDS.items():
         m.uc.mem_write(cell, struct.pack(">I", exchange))
 

@@ -754,9 +754,14 @@ record there, one per name, each from the same place in both calls, so
 that a caller uses it and RAM compares it.  RAM starts each case zeroed
 but for the kernel's configuration and I/O table, which
 `psos_config_init` copies from ROM at start-up (`structures.md`, "The
-kernel's configuration"), and the first long of the data area the
-configuration names, the running task's record, which is `ident`'s for
-the name 0.  The devices -- the DUART
+kernel's configuration"); the data area the configuration names as
+`kernel_init` (`0x15cd8`) makes it, the image's own code run once on
+those tables but for its calls of each device's function 0 and its
+creates of ROOT and IDLE: the supervisor stack, the free lists of
+exchanges, message buffers and task records, regions 0 and 1 and the
+empty queue of tasks waiting on a region at `+0x64`, which
+`os_report_regions` walks; and the first long of the data area, the
+running task's record, which is `ident`'s for the name 0.  The devices -- the DUART
 at `0x200000`, `0x300000` to `0x30ffff`, `0x500000` and the MC68331's
 modules from `0xfff000` -- are memory zeroed for each call, and each
 write to them is recorded; but the registers the polled routines wait
@@ -784,7 +789,17 @@ routine given a record of pointers runs on: into memory of the
 harness's own at `0x31300000`, filled the same way, `1010` as text,
 with a NULL in every 16 bytes to end a list.  That memory, as the
 EEPROM, is filled for each call, compared after it as RAM is, and
-holds no code, so that a jump into either faults.
+holds no code, so that a jump into either faults.  A parameter that
+points at a routine, of a function typedef whose parameters the C
+declares (`printf_function`, `spoo_function`, `dac_measure`,
+`write_function`), is given a routine of the harness's own at
+`0x31400000`, one for each position, the same in both calls, whose call
+is an effect, compared as kernel calls are: a `printf_function` formats
+its arguments with the image's own `vsprintf` (`0x608fe`) into a buffer
+of its own, records the text and returns its length; any other records
+each argument where the image's routines read it, a char or `char_slot`
+at a 2-byte slot's start and a char pointer by its text, and returns
+`0x6b000000`, as a kernel service does.
 
 In the Z3805A 3543B image this gives 1813 functions, and every one but
 the ten thunks decompiles.  137 switches are recovered; `0x24ff2` and `0x25140`, a

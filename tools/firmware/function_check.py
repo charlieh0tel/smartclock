@@ -40,6 +40,7 @@ from unicorn import UC_PROT_EXEC, UC_PROT_READ, UcError
 
 from harness import (
     CASES,
+    FIRST_ARGUMENT,
     UNSIGNED,
     Machine,
     Run,
@@ -57,9 +58,6 @@ from harness import (
 from libc_check import RAM, RAM_SIZE, ROM, ROM_SIZE
 from rebuild_link import IMAGE_PREFIX, REBUILT, REBUILT_DATA, link, symbols
 
-# A stack argument's offset above the stack pointer at entry, past the
-# return address.
-FIRST_ARGUMENT = 4
 # The widest argument or result the harness lays out.
 WIDEST = 8
 

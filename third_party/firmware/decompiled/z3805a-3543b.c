@@ -1946,6 +1946,8 @@ struct three_point_fit {
     float vertex_y;
 };
 
+typedef ulong (write_function)(char *);
+
 #pragma pack(pop)
 
 /* each type's size in the image, which gcc's layout must give */
@@ -4606,22 +4608,23 @@ int kernel_init();
 int kernel_region_init();
 int kernel_idle_task();
 int kernel_return_from_interrupt();
-void os_report_cpu(undefined *param_1);
+void os_report_cpu(printf_function *print);
 char * task_name(void *task);
 char * object_name(void *object);
-void os_report_exchange(undefined4 *param_1,undefined *param_2);
+void os_report_exchange(undefined4 *param_1,printf_function *print);
 char * task_status_name(void *task);
-void os_report_region_line(undefined4 param_1,undefined4 *param_2,undefined *param_3);
+void os_report_region_line(char *name,undefined4 *param_2,printf_function *print);
 void * region_segment_containing(void *region,uint32_t address);
-void os_report_process(void *param_1,char *param_2,int param_3,undefined4 param_4,undefined1 *print);
+void os_report_process(void *param_1,char *param_2,int param_3,undefined4 param_4,
+                      printf_function *print);
 int timer_ticks_until(void *task);
 int task_table_build(void);
-void os_report_process_summary(undefined *param_1);
-void os_report_exchanges(undefined *param_1);
-void os_report_exchange_summary(undefined *param_1);
+void os_report_process_summary(printf_function *print);
+void os_report_exchanges(printf_function *print);
+void os_report_exchange_summary(printf_function *print);
 int ready_queue_position(undefined4 *param_1);
-int os_report_processes(undefined *param_1);
-void os_report_regions(undefined *param_1);
+int os_report_processes(printf_function *print);
+void os_report_regions(printf_function *print);
 undefined4 exchange_id_valid(uint param_1);
 undefined4 task_id_valid(uint param_1);
 void os_process_report(undefined1 param_1);
@@ -5124,7 +5127,7 @@ void qspi_read(byte param_1,void *param_2,undefined4 param_3);
 void qspi_send(byte param_1,undefined2 *param_2,ushort param_3);
 void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3);
 uint spoo_task_create(ulong param_1);
-uint spoo_run(undefined *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4);
+uint spoo_run(spoo_function *function,uint32_t a,uint32_t b,uint32_t c);
 int deferred_vprintf(char *format,void *arguments);
 void spoo_task(void);
 void deferred_flush(void);
@@ -5216,8 +5219,8 @@ void scpi_skip_to_terminator(undefined4 *param_1);
 int scpi_scan_number(int param_1,undefined4 param_2,undefined4 param_3,undefined4 *param_4);
 undefined4 scpi_scan_exponent(undefined4 param_1,int param_2,undefined4 *param_3);
 uint scpi_char_upper(uint param_1);
-int scpi_parameter_match(int *param_1,undefined4 param_2,int param_3,short *param_4);
-undefined4 scpi_parameters_finish(int *param_1,int param_2,short *param_3);
+int scpi_parameter_match(int *param_1,undefined4 param_2,void *param_3,short *param_4);
+undefined4 scpi_parameters_finish(int *param_1,void *param_2,short *param_3);
 short scpi_suffix_compare_tail(char *suffix,int length,char *name);
 undefined4 scpi_multiplier_exponent(undefined2 param_1,short param_2);
 short scpi_match_suffix(int length,char *suffix,scpi_unit *units,int16_t *scale);
@@ -5385,7 +5388,7 @@ int scpi_set_DIAGnostic_LOG_CLEar(void *parameters,void *response,void *call);
 int scpi_set_DIAGnostic_SLOG_CLEar(void *parameters,void *response,void *call);
 int scpi_query_DIAGnostic_LOG_COUNt(void *parameters,void *response,void *call);
 void log_status(char *param_1,char param_2);
-void log_print(char param_1,undefined *param_2,undefined *param_3);
+void log_print(char param_1,write_function *write,printf_function *print);
 int scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,void *call);
 int scpi_query_DIAGnostic_LOG_READ_ALL(void *parameters,void *response,void *call);
 int scpi_set_DIAGnostic_LOG_WRITe(void *parameters,void *response,void *call);
@@ -5745,9 +5748,9 @@ uint8_t interpolator_measure(uint8_t mode);
 uint8_t interpolator_measure_low(char_slot dac);
 uint8_t interpolator_measure_high(char_slot dac);
 uint8_t dac_search_bisect(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t low,uint8_t high,
-                         undefined1 *measure);
+                         dac_measure *measure);
 uint8_t dac_search_step(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t low,uint8_t high,
-                       undefined1 *measure);
+                       dac_measure *measure);
 byte hdac_nudge(int param_1,byte param_2);
 undefined4 interpolator_prepare(void);
 uint8_t interpolator_calibrate(interpolator_calibration *calibration);
@@ -5941,8 +5944,8 @@ byte bits_6_7_any(short param_1);
 byte bits_8_9_any(short param_1);
 void status_screen_mode_suffix(char param_1,status_snapshot_record *snapshot,char *text);
 void status_snapshot(pll_stage *param_1);
-void status_screen(char *param_1,char param_2,undefined *param_3,undefined *param_4);
-void status_screen_print(undefined1 param_1,undefined *param_2,undefined *param_3);
+void status_screen(char *param_1,char param_2,write_function *write,printf_function *print);
+void status_screen_print(undefined1 param_1,write_function *write,printf_function *print);
 bool uptime_elapsed(uint *param_1,int *param_2);
 uint32_t raim_monitor(void);
 void gps_receiver_status_reset(void);
@@ -19164,14 +19167,14 @@ __asm__(
 /* prints the free CPU cycles counted and the share they make
    "Free CPU cycles: count 0x%08X, approx %2d%%"; os_process_report calls it */
 
-void os_report_cpu(undefined *param_1)
+void os_report_cpu(printf_function *print)
 
 {
   int iVar1;
   
   iVar1 = idle_count();
-  (*(code *)param_1)("Free CPU cycles: count 0x%08X, approx %2d%%\r\n",iVar1,
-                     (uint)(&UNK_0007a120 + iVar1 * 0xac) / 1000000);
+  (*print)("Free CPU cycles: count 0x%08X, approx %2d%%\r\n",iVar1,
+           (uint)(&UNK_0007a120 + iVar1 * 0xac) / 1000000);
   return;
 }
 
@@ -19223,7 +19226,7 @@ char * object_name(void *object)
 /* prints one exchange's line of the kernel report
    an exchange's line, "fifo", "prio" */
 
-void os_report_exchange(undefined4 *param_1,undefined *param_2)
+void os_report_exchange(undefined4 *param_1,printf_function *print)
 
 {
   char cVar1;
@@ -19263,18 +19266,17 @@ void os_report_exchange(undefined4 *param_1,undefined *param_2)
   uVar2 = (uint)*(byte *)((int)param_1 + 0x21);
   pcVar6 = acStack_2c;
   pcVar3 = object_name(param_1);
-  (*(code *)param_2)("0x%07x  %4s  %4s %4s  %3s    %d    ",param_1,pcVar3,pcVar4,pcVar5,pcVar6,uVar2
-                    );
+  (*print)("0x%07x  %4s  %4s %4s  %3s    %d    ",param_1,pcVar3,pcVar4,pcVar5,pcVar6,uVar2);
   task = (int *)*param_1;
   while (task != param_1) {
     pcVar4 = task_name(task);
-    (*(code *)param_2)("%s",pcVar4);
+    (*print)("%s",pcVar4);
     task = (int *)*task;
     if (task != param_1) {
-      (*(code *)param_2)(",");
+      (*print)(",");
     }
   }
-  (*(code *)param_2)("%s","\r\n");
+  (*print)("%s","\r\n");
   return;
 }
 
@@ -19333,11 +19335,11 @@ char * task_status_name(void *task)
 
 /* prints one memory region's line of the kernel report */
 
-void os_report_region_line(undefined4 param_1,undefined4 *param_2,undefined *param_3)
+void os_report_region_line(char *name,undefined4 *param_2,printf_function *print)
 
 {
-  (*(code *)param_3)("%4s 0x%08x %7d   0x%08x  0x%08x  0x%08x 0x%04x\r\n",param_1,param_2,param_2[3]
-                     ,*param_2,param_2[1],param_2[2],*(undefined2 *)(param_2 + 4));
+  (*print)("%4s 0x%08x %7d   0x%08x  0x%08x  0x%08x 0x%04x\r\n",name,param_2,param_2[3],*param_2,
+           param_2[1],param_2[2],(uint)*(ushort *)(param_2 + 4));
   return;
 }
 
@@ -19365,7 +19367,8 @@ void * region_segment_containing(void *region,uint32_t address)
 /* prints one process's line of the kernel report, with its resources and events
    a process's line, ">> RESOURCES:", ">> EVENTS: W(0x%04x) S(0x%04x)" */
 
-void os_report_process(void *param_1,char *param_2,int param_3,undefined4 param_4,undefined1 *print)
+void os_report_process(void *param_1,char *param_2,int param_3,undefined4 param_4,
+                      printf_function *print)
 
 {
   char cVar1;
@@ -19444,31 +19447,30 @@ LAB_0001639a:
   if ((*(byte *)((int)param_1 + 0x11) & 0x80) != 0) {
     strcat(acStack_1c,"*");
   }
-  (*(code *)print)("$%08X %4s  %6s  %3d %2d  %2s %5d %4dkB %2d%% %2d%%\r\n",param_1,pcVar2,
-                   acStack_1c,*(undefined1 *)((int)param_1 + 0x10),
-                   *(undefined1 *)((int)param_1 + 0x14),local_2c,param_4,(unaff_D6 + 0x200) / 0x400,
-                   unaff_D5,uVar6);
+  (*print)("$%08X %4s  %6s  %3d %2d  %2s %5d %4dkB %2d%% %2d%%\r\n",param_1,pcVar2,acStack_1c,
+           (uint)*(byte *)((int)param_1 + 0x10),(uint)*(byte *)((int)param_1 + 0x14),local_2c,
+           param_4,(unaff_D6 + 0x200) / 0x400,unaff_D5,uVar6);
   piVar8 = *(int **)((int)param_1 + 0x1c);
   if (piVar8 != (int *)0x0) {
     pcVar2 = "\t   >> RESOURCES: ";
     do {
-      (*(code *)print)(pcVar2);
+      (*print)(pcVar2);
       do {
         if (piVar8 == (int *)0x0) {
-          (*(code *)print)("%s","\r\n");
+          (*print)("%s","\r\n");
           goto LAB_000164c2;
         }
         pcVar2 = object_name((void *)piVar8[1]);
-        (*(code *)print)("%s",pcVar2);
+        (*print)("%s",pcVar2);
         piVar8 = (int *)*piVar8;
       } while (piVar8 == (int *)0x0);
       pcVar2 = ",";
     } while( true );
   }
 LAB_000164c2:
-  if (*(short *)((int)param_1 + 0x16) != 0 || *(short *)((int)param_1 + 0x18) != 0) {
-    (*(code *)print)("\t   >> EVENTS: W(0x%04x) S(0x%04x)\r\n",*(undefined2 *)((int)param_1 + 0x16),
-                     *(short *)((int)param_1 + 0x18));
+  if (*(short *)((int)param_1 + 0x16) != 0 || *(ushort *)((int)param_1 + 0x18) != 0) {
+    (*print)("\t   >> EVENTS: W(0x%04x) S(0x%04x)\r\n",(uint)*(ushort *)((int)param_1 + 0x16),
+             (uint)*(ushort *)((int)param_1 + 0x18));
   }
   return;
 }
@@ -19548,7 +19550,7 @@ int task_table_build(void)
 /* prints how many processes there are and the time they have used
    "%d Process(s) (%d avail); Total time: %-d ticks." */
 
-void os_report_process_summary(undefined *param_1)
+void os_report_process_summary(printf_function *print)
 
 {
   int iVar1;
@@ -19572,7 +19574,7 @@ void os_report_process_summary(undefined *param_1)
       iVar5 = *(int *)(iVar5 + 0x30)) {
     iVar1 = iVar1 + 1;
   }
-  (*(code *)param_1)(acStack_38,task_count,iVar1,task_ticks_total);
+  (*print)(acStack_38,task_count,iVar1,task_ticks_total);
   return;
 }
 
@@ -19582,7 +19584,7 @@ void os_report_process_summary(undefined *param_1)
 /* prints the kernel's exchanges, one line each
    "xid   XNAME  TYPE  ACC  maxQ  Qlen BLOCKED" */
 
-void os_report_exchanges(undefined *param_1)
+void os_report_exchanges(printf_function *print)
 
 {
   short sVar1;
@@ -19600,10 +19602,10 @@ void os_report_exchanges(undefined *param_1)
     pcVar2 = pcVar2 + 1;
     pcVar3 = pcVar3 + 1;
   } while (sVar1 != -1);
-  (*(code *)param_1)("%s",acStack_36);
+  (*print)("%s",acStack_36);
   for (puVar4 = *(undefined4 **)((int)psos_config.data_area + 0x14); puVar4 != (undefined4 *)0x0;
       puVar4 = (undefined4 *)puVar4[7]) {
-    os_report_exchange(puVar4,param_1);
+    os_report_exchange(puVar4,print);
   }
   return;
 }
@@ -19614,7 +19616,7 @@ void os_report_exchanges(undefined *param_1)
 /* prints how many exchanges and message buffers there are and are free
    "%d Exchange(s) (%d avail).", "%d Msg buffer(s)" */
 
-void os_report_exchange_summary(undefined *param_1)
+void os_report_exchange_summary(printf_function *print)
 
 {
   int iVar1;
@@ -19639,8 +19641,8 @@ void os_report_exchange_summary(undefined *param_1)
     iVar3 = iVar3 + 1;
   }
   iVar4 = (int)(short)psos_config.message_buffers;
-  (*(code *)param_1)("\t%d Exchange(s) (%d avail).\r\n",iVar2,iVar1);
-  (*(code *)param_1)("\t%d Msg buffer(s) (%d avail).\r\n",iVar4 - iVar3,iVar3);
+  (*print)("\t%d Exchange(s) (%d avail).\r\n",iVar2,iVar1);
+  (*print)("\t%d Msg buffer(s) (%d avail).\r\n",iVar4 - iVar3,iVar3);
   return;
 }
 
@@ -19672,7 +19674,7 @@ int ready_queue_position(undefined4 *param_1)
 /* prints the kernel's processes, one line each
    "pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CP" */
 
-int os_report_processes(undefined *param_1)
+int os_report_processes(printf_function *print)
 
 {
   undefined4 *task;
@@ -19682,12 +19684,12 @@ int os_report_processes(undefined *param_1)
   char *pcVar4;
   int iVar5;
   int iVar6;
-  undefined *print;
+  printf_function *print_00;
   
-  (*(code *)param_1)("%s","    pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CPU\r\n");
+  (*print)("%s","    pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CPU\r\n");
   os_report_process(task_table[0].task," RUN",0,(uint)*(ushort *)((int)task_table[0].task + 0x1a),
-                    param_1);
-  (*(code *)param_1)("%s","\r\n");
+                    print);
+  (*print)("%s","\r\n");
   iVar5 = 0;
   do {
     bVar1 = false;
@@ -19701,14 +19703,14 @@ int os_report_processes(undefined *param_1)
         else {
           uVar3 = (uint)*(ushort *)((int)task + 0x1a);
         }
-        print = param_1;
+        print_00 = print;
         pcVar4 = task_status_name(task);
-        os_report_process(task,pcVar4,iVar2,uVar3,print);
+        os_report_process(task,pcVar4,iVar2,uVar3,print_00);
         bVar1 = true;
       }
     }
     if (bVar1) {
-      (*(code *)param_1)("%s","\r\n");
+      (*print)("%s","\r\n");
     }
     iVar6 = iVar5 + 1;
     iVar2 = iVar5 + -1;
@@ -19723,7 +19725,7 @@ int os_report_processes(undefined *param_1)
 /* prints the kernel's memory regions and their use
    "Region strt       end  min     max    pend   USED" */
 
-void os_report_regions(undefined *param_1)
+void os_report_regions(printf_function *print)
 
 {
   ushort uVar1;
@@ -19743,7 +19745,7 @@ void os_report_regions(undefined *param_1)
   undefined4 local_a;
   char local_6;
   
-  (*(code *)param_1)("%s","Region strt       end  min     max    pend   USED  cnt  AVAIL cnt\r\n");
+  (*print)("%s","Region strt       end  min     max    pend   USED  cnt  AVAIL cnt\r\n");
   local_32 = psos_config.data_area;
   local_2e = psos_config.region_2_start;
   local_36 = 0;
@@ -19779,10 +19781,10 @@ void os_report_regions(undefined *param_1)
       local_2a[iVar3 + 4] = *(undefined4 *)((int)psos_config.data_area + iVar3 * 4 + 0x3c);
       local_2a[iVar3 + 6] = *(undefined4 *)((int)psos_config.data_area + iVar3 * 4 + 0x44);
     }
-    (*(code *)param_1)("%1d 0x%08x 0x%08x %4d %8d %8d %4dkB %4d %4dkB %3d\r\n",iVar3 + 1,
-                       (&local_32)[iVar3],local_2a[iVar3],local_2a[iVar3 + 2],local_2a[iVar3 + 4],
-                       local_2a[iVar3 + 6],(local_4a[iVar3 + 4] + 0x200) / 0x400,local_4a[iVar3],
-                       (local_4a[iVar3 + 2] + 0x200) / 0x400,iVar4);
+    (*print)("%1d 0x%08x 0x%08x %4d %8d %8d %4dkB %4d %4dkB %3d\r\n",iVar3 + 1,(&local_32)[iVar3],
+             local_2a[iVar3],local_2a[iVar3 + 2],local_2a[iVar3 + 4],local_2a[iVar3 + 6],
+             (local_4a[iVar3 + 4] + 0x200) / 0x400,local_4a[iVar3],
+             (local_4a[iVar3 + 2] + 0x200) / 0x400,iVar4);
     iVar3 = iVar3 + 1;
   } while (iVar3 < 2);
   piVar2 = (int *)((int)psos_config.data_area + 100);
@@ -19790,10 +19792,10 @@ void os_report_regions(undefined *param_1)
   if (task != piVar2) {
     pcVar7 = "   >> BLOCKED: ";
     do {
-      (*(code *)param_1)(pcVar7);
+      (*print)(pcVar7);
       do {
         if (task == piVar2) {
-          (*(code *)param_1)("%s","\r\n");
+          (*print)("%s","\r\n");
           goto LAB_000169e4;
         }
         uVar6 = *(undefined4 *)((int)task + 0x52);
@@ -19801,14 +19803,14 @@ void os_report_regions(undefined *param_1)
         iVar3 = (int)local_6;
         local_a = uVar6;
         pcVar7 = task_name(task);
-        (*(code *)param_1)("%s %d(%d)",pcVar7,uVar6,iVar3);
+        (*print)("%s %d(%d)",pcVar7,uVar6,iVar3);
         task = (int *)*task;
       } while (task == piVar2);
       pcVar7 = ",";
     } while( true );
   }
 LAB_000169e4:
-  (*(code *)param_1)("%s","\r\n");
+  (*print)("%s","\r\n");
   return;
 }
 
@@ -19888,38 +19890,38 @@ void os_memory_report(undefined1 param_1)
 
 {
   void *task;
-  char *pcVar1;
-  int iVar2;
+  char *name;
+  int iVar1;
+  undefined4 *puVar2;
   undefined4 *puVar3;
-  undefined4 *puVar4;
-  code *pcVar5;
+  code *print;
   
   printf("%s","\r\n");
   printf("%s","=================================================================\r\n");
   task_count = task_table_build();
   printf("%s","\r\n");
   printf("%s","Process  Memseg size(bytes)     next        last    neighbor   key\r\n");
-  for (iVar2 = 0; iVar2 < task_count; iVar2 = iVar2 + 1) {
-    task = task_table[iVar2].task;
-    for (puVar3 = *(undefined4 **)((int)task + 0x20); puVar3 != (undefined4 *)0x0;
-        puVar3 = (undefined4 *)*puVar3) {
-      pcVar5 = printf;
-      puVar4 = puVar3;
-      pcVar1 = task_name(task);
-      os_report_region_line(pcVar1,puVar4,pcVar5);
+  for (iVar1 = 0; iVar1 < task_count; iVar1 = iVar1 + 1) {
+    task = task_table[iVar1].task;
+    for (puVar2 = *(undefined4 **)((int)task + 0x20); puVar2 != (undefined4 *)0x0;
+        puVar2 = (undefined4 *)*puVar2) {
+      print = printf;
+      puVar3 = puVar2;
+      name = task_name(task);
+      os_report_region_line(name,puVar3,print);
     }
   }
-  iVar2 = 0;
+  iVar1 = 0;
   do {
-    puVar3 = *(undefined4 **)((int)psos_config.data_area + iVar2 * 4 + 0x54);
-    if (puVar3 != (undefined4 *)0x0) {
-      printf(">> Free memory - region: %d\r\n",iVar2);
+    puVar2 = *(undefined4 **)((int)psos_config.data_area + iVar1 * 4 + 0x54);
+    if (puVar2 != (undefined4 *)0x0) {
+      printf(">> Free memory - region: %d\r\n",iVar1);
     }
-    for (; puVar3 != (undefined4 *)0x0; puVar3 = (undefined4 *)*puVar3) {
-      os_report_region_line("****",puVar3,printf);
+    for (; puVar2 != (undefined4 *)0x0; puVar2 = (undefined4 *)*puVar2) {
+      os_report_region_line("****",puVar2,printf);
     }
-    iVar2 = iVar2 + 1;
-  } while (iVar2 < 2);
+    iVar1 = iVar1 + 1;
+  } while (iVar1 < 2);
   printf("%s","\r\n");
   os_report_regions(printf);
   printf("%s","=================================================================\r\n");
@@ -38413,31 +38415,31 @@ uint spoo_task_create(ulong param_1)
 
 /* calls a function directly, or posts it to the spooler task's exchange while the spooler runs */
 
-uint spoo_run(undefined *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4)
+uint spoo_run(spoo_function *function,uint32_t a,uint32_t b,uint32_t c)
 
 {
   uint uVar1;
   ulong uVar2;
   undefined1 auStack_1c [4];
   undefined4 local_18;
-  undefined *local_14;
-  undefined4 local_10;
-  undefined4 local_c;
-  undefined4 local_8;
+  spoo_function *local_14;
+  uint32_t local_10;
+  uint32_t local_c;
+  uint32_t local_8;
   
-  if (param_1 == (undefined *)0x0) {
+  if (function == (spoo_function *)0x0) {
     uVar1 = 0;
   }
   else if (spoo_started == 0) {
-    (*(code *)param_1)(param_2,param_3,param_4);
+    (*function)(a,b,c);
     uVar1 = 1;
   }
   else {
     local_18 = 0;
-    local_14 = param_1;
-    local_10 = param_2;
-    local_c = param_3;
-    local_8 = param_4;
+    local_14 = function;
+    local_10 = a;
+    local_c = b;
+    local_8 = c;
     uVar2 = psos_send_x(spoo_exchange,auStack_1c);
     uVar1 = uVar2 & 0xff;
   }
@@ -43171,7 +43173,7 @@ LAB_00026bae:
                 }
                 local_6 = (short)*(char *)(iVar2 + 0x26ecb);
                 iVar4 = scpi_parameter_match
-                                  ((int *)&local_32,(int)local_6,*(int *)((int)param_1 + 10),
+                                  ((int *)&local_32,(int)local_6,*(void **)((int)param_1 + 10),
                                    &local_2e);
                 if (iVar4 != 0) goto LAB_00026e5a;
                 unaff_D7 = (short *)local_32[1];
@@ -43268,7 +43270,7 @@ LAB_00026bf0:
       return -100;
     }
     if ((local_32 == (undefined4 *)0x0) ||
-       (iVar4 = scpi_parameters_finish((int *)&local_32,*(int *)((int)param_1 + 10),&local_2e),
+       (iVar4 = scpi_parameters_finish((int *)&local_32,*(void **)((int)param_1 + 10),&local_2e),
        iVar4 == 0)) {
       return 0;
     }
@@ -43832,7 +43834,7 @@ uint scpi_char_upper(uint param_1)
 /* finds the next parameter descriptor that takes a parameter of the kind, marking optional ones it
    passes 0xffff */
 
-int scpi_parameter_match(int *param_1,undefined4 param_2,int param_3,short *param_4)
+int scpi_parameter_match(int *param_1,undefined4 param_2,void *param_3,short *param_4)
 
 {
   int iVar1;
@@ -43846,12 +43848,12 @@ int scpi_parameter_match(int *param_1,undefined4 param_2,int param_3,short *para
     if (*(short *)(*(int *)(*param_1 + 4) + 2) == 0) {
       return (int)scpi_parameter_kind_errors[__ghidra_piece(short, param_2, 2)];
     }
-    *(undefined2 *)(*(int *)(param_3 + 10) + (int)*param_4) = 0xffff;
+    *(undefined2 *)(*(int *)((int)param_3 + 10) + (int)*param_4) = 0xffff;
     *param_4 = *param_4 + **(short **)(*param_1 + 4) + 2;
     iVar1 = *(int *)*param_1;
     *param_1 = iVar1;
   }
-  *(short *)(*(int *)(param_3 + 10) + (int)*param_4) = __ghidra_piece(unsigned short, param_2, 2);
+  *(short *)(*(int *)((int)param_3 + 10) + (int)*param_4) = __ghidra_piece(unsigned short, param_2, 2);
   *param_4 = *param_4 + 2;
   return 0;
 }
@@ -43861,7 +43863,7 @@ int scpi_parameter_match(int *param_1,undefined4 param_2,int param_3,short *para
 
 /* marks the descriptors left 0xffff, omitted, unless one is required */
 
-undefined4 scpi_parameters_finish(int *param_1,int param_2,short *param_3)
+undefined4 scpi_parameters_finish(int *param_1,void *param_2,short *param_3)
 
 {
   while( true ) {
@@ -43869,7 +43871,7 @@ undefined4 scpi_parameters_finish(int *param_1,int param_2,short *param_3)
       return 0;
     }
     if (*(short *)(*(int *)(*param_1 + 4) + 2) == 0) break;
-    *(undefined2 *)(*(int *)(param_2 + 10) + (int)*param_3) = 0xffff;
+    *(undefined2 *)(*(int *)((int)param_2 + 10) + (int)*param_3) = 0xffff;
     *param_3 = *param_3 + **(short **)(*param_1 + 4) + 2;
     *param_1 = *(int *)*param_1;
   }
@@ -47559,7 +47561,7 @@ void log_status(char *param_1,char param_2)
 /* WARNING: Unknown calling convention */
 /* prints the event log, its status and each entry, through the callbacks given */
 
-void log_print(char param_1,undefined *param_2,undefined *param_3)
+void log_print(char param_1,write_function *write,printf_function *print)
 
 {
   short sVar2;
@@ -47580,8 +47582,8 @@ void log_print(char param_1,undefined *param_2,undefined *param_3)
   uVar5 = 0;
   pcVar4 = acStack_a4;
   log_status(pcVar4,param_1);
-  (*(code *)param_3)(0xbe78,(short)acStack_a4,(short)pcVar4,uVar5);
-  (*(code *)param_2)("\r\n");
+  (*print)("%s\r\n",(short)acStack_a4,(short)pcVar4,uVar5);
+  (*write)("\r\n");
   for (sVar3 = 1; sVar3 <= sVar2; sVar3 = sVar3 + 1) {
     if (param_1 == '\0') {
       log_read((int)sVar3,acStack_a4,acStack_54);
@@ -47589,9 +47591,9 @@ void log_print(char param_1,undefined *param_2,undefined *param_3)
     else {
       log_entry_text((int)sVar3,acStack_a4,acStack_54);
     }
-    (*(code *)param_3)(0xbe80,(short)acStack_54,(char)acStack_a4);
+    (*print)("%s:  %s\r\n",(short)acStack_54,(char)acStack_a4);
   }
-  (*(code *)param_2)(0x7d);
+  (*write)("\r\n");
   return;
 }
 
@@ -55983,7 +55985,7 @@ uint8_t interpolator_measure_high(char_slot dac)
 /* halves a DAC's range, up to 10 times, until a measurement falls in a window */
 
 uint8_t dac_search_bisect(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t low,uint8_t high,
-                         undefined1 *measure)
+                         dac_measure *measure)
 
 {
   char_slot dac_00;
@@ -56005,7 +56007,7 @@ LAB_00040122:
       dac_00.value = dac;
       dac_00.field_01 = in_stack_ffffffe7;
       dac_00.field_02 = uVar4;
-      uVar2 = (*(code *)measure)(dac_00);
+      uVar2 = (*measure)(dac_00);
       if ((uVar2 < low) || (high < uVar2)) break;
       cVar3 = '\0';
     }
@@ -56034,7 +56036,7 @@ LAB_0004011c:
 /* moves a DAC a step at a time, up to 20, until a measurement falls in a window */
 
 uint8_t dac_search_step(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t low,uint8_t high,
-                       undefined1 *measure)
+                       dac_measure *measure)
 
 {
   char_slot dac_00;
@@ -56051,7 +56053,7 @@ uint8_t dac_search_step(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t low,
     dac_00.value = dac;
     dac_00.field_01 = in_stack_ffffffef;
     dac_00.field_02 = uVar3;
-    uVar1 = (*(code *)measure)(dac_00);
+    uVar1 = (*measure)(dac_00);
     if ((uVar1 < low) || (high < uVar1)) {
       if ((dac < maximum) && (minimum < dac)) {
         if (uVar1 < low) {
@@ -65450,7 +65452,7 @@ void status_snapshot(pll_stage *param_1)
 /* prints the receiver status screen
    "Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status" */
 
-void status_screen(char *param_1,char param_2,undefined *param_3,undefined *param_4)
+void status_screen(char *param_1,char param_2,write_function *write,printf_function *print)
 
 {
   undefined4 uVar1;
@@ -65487,13 +65489,11 @@ void status_screen(char *param_1,char param_2,undefined *param_3,undefined *para
   
   local_7e[0] = '\0';
   if (param_2 == '\x01') {
-    (*(code *)param_4)(0xe3ff,0x1b,0x5b,0x32,0x4a,0x1b,0x5b,0x48);
+    (*print)("%c%c%c%c%c%c%c",0x1b,0x5b,0x32,0x4a,0x1b,0x5b,0x48);
   }
-  (*(code *)param_3)(
-                    "------------------------------- Receiver Status -------------------------------\r\n"
-                    );
-  (*(code *)param_3)(0x60);
-  (*(code *)param_3)(100);
+  (*write)("------------------------------- Receiver Status -------------------------------\r\n");
+  (*write)(" \r\n");
+  (*write)("SYNCHRONIZATION ............................");
   iVar2 = *param_1 + -9;
   if ((int)*param_1 - 1U < 8U || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
@@ -65515,8 +65515,8 @@ override_jmp_0004a96c_case_1:
     local_7f = '\0';
     pcVar8 = " [ Outputs Valid/Reduced Accuracy ]";
   }
-  (*(code *)param_4)(0xfd,pcVar8);
-  (*(code *)param_3)(2);
+  (*print)("%s\r\n",pcVar8);
+  (*write)("SmartClock Mode ___________________________   Reference Outputs _______________\r\n");
   iVar2 = (int)param_1[1] - 5;
   if ((uint)(int)param_1[1] < 5 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
@@ -65624,9 +65624,9 @@ LAB_0004ab10:
     } while (cVar10 != '\0');
     strcat(local_7e + 1,*(char **)(local_84 + 2));
     strcat(local_7e + 1,pcVar3);
-    (*(code *)param_4)("%-46.46s",(short)local_7e + 1);
+    (*print)("%-46.46s",(short)local_7e + 1);
     status_screen_tfom(local_ae,(int)param_1,local_7e + 1);
-    (*(code *)param_4)(0xfd,(short)(local_7e + 1));
+    (*print)("%s\r\n",(short)(local_7e + 1));
     local_ae = local_ae + 1;
   }
   if (param_1[0x30] == '\0') {
@@ -65651,7 +65651,7 @@ LAB_0004ab10:
               (char *)CONCAT31(CONCAT21(uVar12,uVar13),uVar14),pcVar8);
     strcat(acStack_2d,"/initial 24 hrs");
   }
-  (*(code *)param_4)(0xd,0xb,acStack_2d + 1);
+  (*print)("%43s   Predict  %s\r\n",0xb,acStack_2d + 1);
   if ((cVar5 == '\x01') || (cVar5 == '\x02')) {
     pcVar8 = local_7e;
     pcVar3 = "Holdover Duration:";
@@ -65691,8 +65691,8 @@ LAB_0004ab10:
     format_si((int)((ulonglong)__ghidra_bits(dVar9) >> 0x20),SUB84(dVar9,0),cVar5,bVar11,
               (char *)CONCAT31(CONCAT21(uVar12,uVar14),uVar15),pcVar8);
   }
-  (*(code *)param_4)(0xe63d,(char)local_7e + '\x01',uVar13,acStack_2d + 1);
-  (*(code *)param_3)(0xe64d);
+  (*print)("%43s   %s  %s\r\n",(char)local_7e + '\x01',uVar13,acStack_2d + 1);
+  (*write)("ACQUISITION ..........................................");
   if (param_1[0xef] == '\0') {
     if ((param_1[0xf0] == '\0') || (param_1[0xf1] != '\0')) {
       pcVar8 = " [ GPS 1PPS CLK Invalid ]";
@@ -65707,7 +65707,7 @@ LAB_0004ab10:
   else {
     pcVar8 = ".. [ EXT 1PPS CLK Valid ]";
   }
-  (*(code *)param_4)(0xfd,pcVar8);
+  (*print)("%s\r\n",pcVar8);
   iVar2 = (int)param_1[0x10a] - 2;
   if ((uint)(int)param_1[0x10a] < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
@@ -65725,11 +65725,12 @@ LAB_0004ab10:
 override_jmp_0004acdc_case_0:
     uVar13 = 0xec;
   }
-  (*(code *)param_3)("Satellite Status __________________________   ");
-  (*(code *)param_4)(99,uVar13);
-  (*(code *)param_4)(0x72,param_1[0xee],param_1[0xed],0xd10b);
+  (*write)("Satellite Status __________________________   ");
+  (*print)("Time _____%s\r\n",uVar13);
+  (*print)("Tracking: %d        Not Tracking: %-2d%11s",(uint)(byte)param_1[0xee],
+           (ushort)(byte)param_1[0xed],0xd10b);
   status_screen_time((status_snapshot_record *)param_1,local_7e + 1);
-  (*(code *)param_4)(0xe4fd,(short)local_7e + 1);
+  (*print)("%s\r\n",(short)local_7e + 1);
   if (param_1[0xee] == '\0') {
     uVar12 = 0xd10b;
   }
@@ -65748,7 +65749,7 @@ override_jmp_0004acdc_case_0:
   else {
     uVar14 = 0xae;
   }
-  (*(code *)param_4)(0xe7ba,uVar12,uVar13,uVar14,"");
+  (*print)("%-16.16s   %-11.11s  %-11.11s%3s",uVar12,uVar13,uVar14,"");
   if (param_1[0xef] == '\0') {
     uVar12 = 0xe7db;
   }
@@ -65756,7 +65757,7 @@ override_jmp_0004acdc_case_0:
     uVar12 = 0xe7e4;
   }
   status_screen_sync((status_snapshot_record *)param_1,acStack_2d);
-  (*(code *)param_4)(0xe7ed,uVar12,(char)acStack_2d);
+  (*print)("%s %s\r\n",uVar12,(char)acStack_2d);
   local_b2 = param_1 + 0xbc;
   pcVar8 = param_1 + 0x5c;
   local_ae = 0;
@@ -65779,9 +65780,8 @@ override_jmp_0004acdc_case_0:
     format_satellite_cell
               ((char)((uint)uVar1 >> 0x18),(byte)((uint)uVar1 >> 0x10),(ushort)uVar1,acStack_8c);
     status_screen_position(local_ae,(int)param_1,local_7e + 1);
-    (*(code *)param_4)("%3.3s  %6.6s  %3.3s   %3.3s  %6.6s  %3.3s  %6.6s%3s%s\r\n",acStack_ad,
-                       acStack_a4,acStack_a8,acStack_9d,acStack_98,acStack_91,acStack_8c,"",
-                       local_7e + 1);
+    (*print)("%3.3s  %6.6s  %3.3s   %3.3s  %6.6s  %3.3s  %6.6s%3s%s\r\n",acStack_ad,acStack_a4,
+             acStack_a8,acStack_9d,acStack_98,acStack_91,acStack_8c,"",local_7e + 1);
     local_b2 = local_b2 + 8;
     pcVar8 = pcVar8 + 8;
   }
@@ -65791,9 +65791,9 @@ override_jmp_0004acdc_case_0:
   else {
     uVar13 = 0x2d;
   }
-  (*(code *)param_4)(0xe842,param_1[0x110],0xb,uVar13,"");
+  (*print)("ELEV MASK %2d deg%3s%-25.25s%2s",(ushort)(byte)param_1[0x110],0xb,uVar13,"");
   status_screen_height((status_snapshot_record *)param_1,local_7e + 1);
-  (*(code *)param_4)(0xfd,(short)local_7e + 1);
+  (*print)("%s\r\n",(short)local_7e + 1);
   local_7e[1] = 0;
   local_80 = '\0';
   for (ppuVar6 = &PTR_s_Self_Test_0004d076; *ppuVar6 != (undefined *)0x0;
@@ -65814,15 +65814,15 @@ override_jmp_0004acdc_case_0:
   if ((cVar5 == '\0') || (local_7e[0] == '\0')) {
     local_6e = 0x7c;
   }
-  (*(code *)param_3)("HEALTH MONITOR ......................................................");
+  (*write)("HEALTH MONITOR ......................................................");
   if (local_80 == '\0') {
     pcVar8 = "... [ OK ]";
   }
   else {
     pcVar8 = " [ ERROR ]";
   }
-  (*(code *)param_4)(0xfd,pcVar8);
-  (*(code *)param_4)(0xe8cd,(char)local_7e + '\x01');
+  (*print)("%s\r\n",pcVar8);
+  (*print)("%s",(char)local_7e + '\x01');
   return;
 }
 
@@ -65831,10 +65831,10 @@ override_jmp_0004acdc_case_0:
 
 /* prints the status screen, for :SYSTem:PRINt? */
 
-void status_screen_print(undefined1 param_1,undefined *param_2,undefined *param_3)
+void status_screen_print(undefined1 param_1,write_function *write,printf_function *print)
 
 {
-  status_screen((char *)&status_screen_snapshot,'\0',param_2,param_3);
+  status_screen((char *)&status_screen_snapshot,'\0',write,print);
   return;
 }
 

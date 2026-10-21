@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1251 run, 1166 agree, 77 reach what the
-     harness does not model and are skipped, and 8 differ, in the
+     original reads them: of 1251 run, 1176 agree, 57 reach what the
+     harness does not model and are skipped, and 18 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): traps #1 and #7 run the image's handlers;
@@ -892,6 +892,31 @@ view cannot drift apart.  The library, bottom up:
      reads unset ("no system stack found" at `0x16c28` to `0x16c32`),
      still differ: gcc takes them as 0, where the image faults on the
      filled frame.
+     Then the kernel's data area as `kernel_init` makes it, its own
+     code run once on the configuration but for the devices' function 0
+     and the creates of ROOT and IDLE: the queue of tasks waiting on a
+     region, at `+0x64`, points at itself, where a zeroed one led
+     `os_report_regions` through address 0 past RAM (77 skipped to 71, 8 differing to 14).  The six now run differ, every one through
+     two reports: `os_report_process` prints a stack share from D5 its
+     caller left (`unaff_D5`) when no segment holds the stack, and
+     `os_report_regions` a region's use, 7232 kB where the image's
+     prints 0 (`ps_word`, `mem_rep_word`, `os_process_report`,
+     `os_memory_report` and the DIAG OS queries).  And a parameter that
+     points at a routine of a function typedef is given a routine of the
+     harness's own, whose call and arguments are an effect, `printf`'s
+     text by the image's own `vsprintf`; the names file types the kernel
+     reports', `spoo_run`'s, `log_print`'s and the status screen's
+     routines, and Setup now gives a prototype's parameter a pointer to
+     a function typedef's function, which Ghidra's parser drops and the
+     decompiler prints as a byte pointer when it points at the typedef,
+     as `os_report_process`'s and the DAC searches' showed (`undefined1
+     *`).  Of the 71 skipped, 14 now run: 10 agree and four differ,
+     `log_print`, whose C passes its formats' low words, `os_report_regions`, and
+     `status_screen` and `status_screen_print`, whose C hands `strcat`
+     a text's bytes as its address.  `scpi_parameter_match` and
+     `scpi_parameters_finish` take a pointer to a record with a pointer
+     at `+0xa`, where Ghidra had an integer, and the first then agrees
+     (1166 agreeing to 1176, 71 skipped to 57, 14 differing to 18).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

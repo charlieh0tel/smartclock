@@ -199,6 +199,54 @@ typedef int printf_function(char *format, ...);
 /* qsort's comparator. */
 typedef int qsort_compare_function(void *a, void *b);
 
+/* A DUART channel's receive ring: its interrupt stores at write, its
+ * reader takes at read, each index wrapping in a byte; empty when the
+ * two are equal. */
+typedef struct serial_ring {
+	uint8_t write;
+	uint8_t read;
+	uint8_t data[256];
+} serial_ring;
+
+/* DUART channel A's driver, the GPS receiver's link, at 0x102fe0; only
+ * the GPS task sends on it.  Its receive ring is at 0x102edd. */
+typedef struct duarta_driver {
+	char *transmit_next;     /* +0x00: drta_send_message's next character */
+	int16_t transmit_count;  /* +0x04: its characters left; at 0 the GPS task is signaled 0x800 */
+	uint8_t overrun;         /* +0x06: the receiver overran ("DRTA receiver overrun ocurred") */
+	uint8_t loopback_test;   /* +0x07: set while duart_loopback_test_a runs */
+	uint8_t held;            /* +0x08: set while that test has the port, so a send leaves the transmit interrupt off */
+	uint8_t least_free;      /* +0x09: the receive ring's least free space seen */
+} duarta_driver;
+
+/* Channel B's serial settings as last applied to the DUART, at
+ * 0x102ecc: copies of the parameter record's, which
+ * duartb_baud_from_settings and duartb_mode_from_settings program. */
+typedef struct duartb_applied_settings {
+	uint8_t baud;
+	uint8_t parity;
+	uint8_t eight_bits;      /* +0x02: else seven, and duartb_isr strips the top bit */
+	uint8_t two_stop_bits;   /* +0x03: else one */
+} duartb_applied_settings;
+
+/* What the code last wrote to the 68681's write-only registers, at
+ * 0x102ed0, so that it can change some bits of one and write it whole. */
+typedef struct duart_shadow {
+	uint8_t mr1a;
+	uint8_t mr2a;
+	uint8_t csra;
+	uint8_t acr;
+	uint8_t imr;            /* +0x04: 0x10 channel B's transmitter, 0x20 its receiver */
+	uint8_t ctur;
+	uint8_t ctlr;
+	uint8_t mr1b;
+	uint8_t mr2b;
+	uint8_t csrb;
+	uint8_t opcr;
+	uint8_t output_reset;   /* +0x0b: the output bits reset, the failed self-tests' lamps */
+	uint8_t field_0c;       /* +0x0c: duart_init zeroes it; nothing reads it */
+} duart_shadow;
+
 /* A routine that writes a character to a port. */
 typedef void putc_function(char c);
 
@@ -214,7 +262,7 @@ typedef struct exchange_token {
 } exchange_token;
 
 /* DUART channel B's driver, the host port, at 0x1030ec.  Its receive
- * buffer is beside channel A's, at 0x102fec. */
+ * ring is just before it, at 0x102fea. */
 typedef struct duartb_driver {
 	char *transmit_next;          /* +0x00: drtb_puts's next character */
 	char *async_next;             /* +0x04: drtb_send_async's */

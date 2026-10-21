@@ -676,6 +676,33 @@ restored, but only their descriptors refer to them.  In
 `fconf_regs[3]` (`counter_set_sync`, `0x40a84`) while counting the
 count down.
 
+## The DUART's shadows
+
+The 68681's mode, clock-select, auxiliary-control, interrupt-mask,
+counter and output-configuration registers cannot be read back, so
+the code keeps what it last wrote to each in `duart_registers`
+(`0x102ed0`, `duart_shadow`, 13 bytes, in the order MR1A, MR2A, CSRA,
+ACR, IMR, CTUR, CTLR, MR1B, MR2B, CSRB, OPCR), changes the bits it
+wants and writes the whole: `duartb_isr` and `drtb_puts` turn channel
+B's transmit interrupt on and off through the IMR's at `+4`.  `+0xb`
+is the output bits reset, the failed self-tests' lamps (`outputs.md`).
+Channel B's serial settings as last applied, its baud, parity, data
+bits and stop bits, are at `duartb_applied` (`0x102ecc`).
+
+## DUART channel A's driver
+
+Channel A is the GPS receiver's link, and only the GPS task uses it.
+`duarta_isr` stores each byte it receives in `duarta_ring` (`0x102edd`,
+`serial_ring`: the write and read indexes, each wrapping in a byte,
+then 256 bytes) and signals the task `0x4000`; `drta_get_byte` waits
+for that when the ring is empty, reporting an overrun first ("DRTA
+receiver overrun ocurred").  `drta_send_message` puts a message's
+address and length in `duarta` (`0x102fe0`, `duarta_driver`), enables
+the transmit interrupt and waits for `0x800`, which
+`duarta_tx_interrupt` signals when the count runs out.  Channel B's
+ring, `duartb_ring` (`0x102fea`), has the same shape and ends where its
+driver, below, begins.
+
 ## DUART channel B's driver
 
 `duartb` (`0x1030ec`, `duartb_driver`, 86 bytes) is the host port's
@@ -685,7 +712,7 @@ which `duartb_transmit_interrupt` signals the task in the write token
 when the count runs out; `drtb_send_async` sends a second string,
 `+4` and `+0xa`, without waiting, and the interrupt signals the SCPI
 task `0x20` when it ends.  `duartb_isr` takes each received byte into
-the ring at `0x102fec` (its indexes at `0x102fea` and `0x102feb`),
+the ring `duartb_ring` (`0x102fea`, `serial_ring`),
 signals the read token's task `0x4000`, or `0x800` for a ctrl-C, and,
 with XON/XOFF on (`+0x10`, from the serial settings), sends XOFF when
 fewer than 64 bytes are free and holds transmission on an XOFF

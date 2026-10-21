@@ -16,6 +16,22 @@ byte and the banner's last letter, the `A` at `0x14b21`, in its low,
 `0x3341`, which pForth's `ver` prints as the "pSOS version ID".  A
 second copy of the banner and headers is at `0x1cac`.
 
+No manual for pSOS 4.1 is at hand.  Its successor's, Integrated
+Systems' *pSOSystem System Calls* (000-5070-002, September 1996, for
+pSOS+), is a guide to what some of the services mean, not to their
+numbers or registers: none of 4.1's calls (`spawn`, `create_x`,
+`request_x`, `signal_v`, `wait_v`, `get_v`) and not the trap #3 binding
+are in it.  `create` (`kernel_create`, `0x14dac`) fails as pSOS+'s
+`t_create` does, the same four cases in the same order, numbered 0xD
+lower: 1 no task record free (`ERR_NOTCB`, 0x0E), 2 no segment for the
+stack (`ERR_NOSTK`, 0x0F), 3 a stack too small for the block it is to
+start with (`ERR_TINYSTK`, 0x10), 4 priority 0 (`ERR_PRIOR`, 0x11).
+And its two stack sizes, in D3's words, counted in words (`lsl.l #1`
+at `0x14dee`), match `t_create`'s supervisor and user stacks: the high
+word is the one that may be 0, and only when it is not is bit 0x1000
+of the task record's `+0x44` set (`0x14e62`), as `t_create`'s user
+stack may be 0 for a task that runs only in supervisor mode.
+
 ## Calls
 
 A program calls the kernel with `trap #3`, the service's number in D7
@@ -102,7 +118,7 @@ reports an error.  A service no word calls keeps its number.
 | Service | Stub | Word | Arguments, in order, and results |
 | ------- | ---- | ---- | -------------------------------- |
 | 0 | | `ver` | returns the version in D7 |
-| 1 | `0x16f74` | `spawn` (create) | name, a long, the priority, two words that look like stack sizes, a long; the task's id through the last |
+| 1 | `0x16f74` | `spawn` (create) | name, a long, the priority, two stack sizes in words (supervisor and user, as `t_create`'s, above), a long; the task's id through the last |
 | 2 | `0x16fae` | `spawn` (start) | the task, its entry point |
 | 3 | `0x16fca` | `ident`, `my_pid` | name; the id and a byte through the next two; `0x16ff8` passes no name and returns the caller's own |
 | 4 | `0x17008` | `delete` | the task |

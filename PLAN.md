@@ -674,7 +674,7 @@ view cannot drift apart.  The library, bottom up:
      absolutely, and places the rebuilt functions around it.  Done for
      the harness: `tools/firmware/rebuild_link.py` puts every piece of
      assembly at its address, all 418 the image's bytes, and gcc's code
-     at `0x400000`; the ROM's data and its original C stay where they
+     at `0x600000`, above every chip select; the ROM's data and its original C stay where they
      are, and the assembly calls the original C (`__image_NAME`).  A
      link for the board, gcc's C in the ROM's free space and the
      original C gone, waits on the replaced functions.
@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1209 run, 648 agree, 540 reach the kernel
-     or a peripheral and are skipped, and 21 differ, in the function or
+     original reads them: of 1209 run, 652 agree, 537 reach the kernel
+     or a peripheral and are skipped, and 20 differ, in the function or
      in gcc's callees.
      Unicorn has no CPU32 and the 68020 stands in: the image uses none
      of the CPU32's own instructions (`tbl`, `lpstop`, `bgnd`; a scan of
@@ -744,7 +744,14 @@ view cannot drift apart.  The library, bottom up:
      (`__ghidra_also`), as is `float_raise`'s and
      `double_truncate_sixteenths`'s in D0:D1 where `pow` calls them
      through a register, and an infinity assigned to an integer variable
-     is its bits (23 to 21: `log`, `pow`).
+     is its bits (23 to 21: `log`, `pow`).  A routine that returns its
+     result in the condition codes has its bridge keep them, and the C
+     reads its flags after the call from there, not from a compare made
+     before it (`clock_init`); and an equality test of a narrow unsigned
+     operand with a negative constant compares its unsigned value.  The
+     harness has an EEPROM, and gcc's code moved above every chip
+     select, off it: twelve functions that agreed reading gcc's code as
+     the EEPROM's records agree on an erased one (21 to 20).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

@@ -37,7 +37,6 @@ from unicorn import UC_PROT_EXEC, UC_PROT_READ, UcError
 
 from harness import (
     CASES,
-    REBUILT_SIZE,
     UNSIGNED,
     Machine,
     Run,
@@ -52,7 +51,7 @@ from harness import (
     stopped_outcome,
 )
 from libc_check import RAM, RAM_SIZE, ROM, ROM_SIZE
-from rebuild_link import IMAGE_PREFIX, REBUILT, link, symbols
+from rebuild_link import IMAGE_PREFIX, REBUILT, REBUILT_DATA, link, symbols
 
 # A stack argument's offset above the stack pointer at entry, past the
 # return address.
@@ -172,7 +171,7 @@ def main() -> int:
     machine = rebuilt_machine(open(image_path, "rb").read(), linked)
     # a stray write to code faults, rather than changing later cases
     machine.uc.mem_protect(ROM, ROM_SIZE, UC_PROT_READ | UC_PROT_EXEC)
-    machine.uc.mem_protect(REBUILT, REBUILT_SIZE, UC_PROT_READ | UC_PROT_EXEC)
+    machine.uc.mem_protect(REBUILT, REBUILT_DATA - REBUILT, UC_PROT_READ | UC_PROT_EXEC)
     types = Types(c)
     conventions = {}
     for line in open(c_path.removesuffix(".c") + ".conventions.jsonl"):

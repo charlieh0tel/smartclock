@@ -50,6 +50,9 @@ extern code *UNRECOVERED_JUMPTABLE;
 #define __ghidra_concat(y, a, b) 	((__ghidra_bits(a) << (8 * (y))) | (__ghidra_bits(b) & __ghidra_mask(y)))
 #define __ghidra_sub(y, v, n) ((__ghidra_bits(v) >> (8 * (n))) & __ghidra_mask(y))
 #define __ghidra_also(var, v, n) (var = __ghidra_as(__typeof__(var), __ghidra_sub(sizeof var, v, n)))
+/* the condition codes a routine that returns them left, as its bridge keeps them */
+unsigned short __ghidra_ccr;
+#define __ghidra_flag(bit) ((__ghidra_ccr & (bit)) != 0)
 #define CARRY1(a, b) ((unsigned char)((a) + (b)) < (unsigned char)(a))
 #define CARRY2(a, b) ((unsigned short)((a) + (b)) < (unsigned short)(a))
 #define CARRY4(a, b) ((unsigned int)((a) + (b)) < (unsigned int)(a))
@@ -7002,10 +7005,10 @@ __regcall void mutex_init(int name /* d0 */,void *mutex /* a1 */)
   bool bVar1;
   
   bVar1 = false;
-  psos_call('\x15',name,in_D1,unaff_D2,unaff_D3,in_A0,mutex);
+  ({ __auto_type __c = psos_call('\x15',name,in_D1,unaff_D2,unaff_D3,in_A0,mutex); bVar1 = __ghidra_flag(4); __c; });
   if (!bVar1) {
     bVar1 = false;
-    psos_call('\x14',d0,0,0,unaff_D3,a0,a1);
+    ({ __auto_type __c = psos_call('\x14',d0,0,0,unaff_D3,a0,a1); bVar1 = __ghidra_flag(4); __c; });
     if (bVar1) {
       mutex_clear(mutex_00);
       *(void **)((int)a1_00 + 4) = a0_00;
@@ -7091,7 +7094,7 @@ __regcall int mutex_acquire(void *mutex /* a1 */)
   }
   else {
     bVar2 = false;
-    iVar1 = psos_call('\x18',0,0,unaff_D2,unaff_D3,*(void **)((int)a1 + 4),a1);
+    iVar1 = ({ __auto_type __c = psos_call('\x18',0,0,unaff_D2,unaff_D3,*(void **)((int)a1 + 4),a1); bVar2 = __ghidra_flag(4); __c; });
     if (bVar2) {
       *(int *)(extraout_A1 + 8) = extraout_A0;
     }
@@ -10296,10 +10299,11 @@ __asm__(
 /* 000134ca */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* clock_record_checksum's loop, A6 the record
+/* clock_record_checksum's loop, A6 the record; Z set if the checksum word at +0 matches
    Not a C function (register; read): its arguments and results in registers.  In: A6 char *record.
-    */
+   Returns: ccr. */
 
+/* returns ccr */
 __regcall void clock_record_sum(char *record /* a6 */)
 
 {
@@ -10345,6 +10349,7 @@ __asm__(
 	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
 	"	move.l (48,%sp),%a6\n"
 	"	jsr clock_record_sum\n"
+	"	move.w %ccr,__ghidra_ccr\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_clock_record_sum, .-c_clock_record_sum\n"
@@ -11112,7 +11117,7 @@ void clock_init(short param_1)
   
   bVar1 = param_1 == 0;
   if (bVar1) {
-    clock_record_sum((char *)0x1009b8);
+    clock_record_sum((char *)0x1009b8), bVar1 = __ghidra_flag(4);
     if (bVar1) goto LAB_00013974;
   }
   _DAT_001009c6 = 0x1f001f1e;
@@ -19695,6 +19700,7 @@ __asm__(
 	"	move.l (68,%sp),%a0\n"
 	"	move.l (72,%sp),%a1\n"
 	"	jsr psos_call\n"
+	"	move.w %ccr,__ghidra_ccr\n"
 	"	move.l %d7,%d0\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
@@ -19758,6 +19764,7 @@ __asm__(
 	"	move.l (48,%sp),%d7\n"
 	"	move.l (52,%sp),%d0\n"
 	"	jsr psos_io_call\n"
+	"	move.w %ccr,__ghidra_ccr\n"
 	"	move.l %d7,%d0\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
@@ -19891,7 +19898,7 @@ ulong psos_ident(char *name,ulong *id,uchar *b)
   
   d0 = psos_pack_name();
   bVar2 = false;
-  uVar1 = psos_call('\x03',d0,d1,unaff_D2,unaff_D3,a0,a1);
+  uVar1 = ({ __auto_type __c = psos_call('\x03',d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; });
   if (bVar2) {
     if (id != (ulong *)0x0) {
       *id = extraout_A0;
@@ -20266,7 +20273,7 @@ ulong psos_service_21(char *name,ulong *out1,ulong *out2,ulong *out3)
   
   d0 = psos_pack_name();
   bVar2 = false;
-  uVar1 = psos_call('\x15',d0,d1,unaff_D2,unaff_D3,a0,a1);
+  uVar1 = ({ __auto_type __c = psos_call('\x15',d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; });
   if (bVar2) {
     if (out1 != (ulong *)0x0) {
       *out1 = extraout_A0;
@@ -20356,7 +20363,7 @@ ulong psos_service_18(ulong a,ulong b,ulong c,uchar *out1,uchar *out2)
   bool bVar2;
   
   bVar2 = false;
-  uVar1 = psos_call('\x12',c,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b);
+  uVar1 = ({ __auto_type __c = psos_call('\x12',c,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b); bVar2 = __ghidra_flag(4); __c; });
   if (bVar2) {
     if (out1 != (uchar *)0x0) {
       *out1 = extraout_D0b;
@@ -39005,6 +39012,7 @@ __asm__(
 	"	move.l (56,%sp),%d7\n"
 	"	move.l (60,%sp),%a0\n"
 	"	jsr scpi_double_to_decimal\n"
+	"	move.w %ccr,__ghidra_ccr\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_scpi_double_to_decimal, .-c_scpi_double_to_decimal\n"
@@ -39225,9 +39233,9 @@ LAB_000251da:
       puVar12 = extraout_A1;
     }
     bVar13 = *(int *)(puVar12 + (short)(uVar10 << 3) + 4) == 0;
-    dVar14 = scpi_double_multiply
+    dVar14 = ({ __auto_type __c = scpi_double_multiply
                        (a,(double)CONCAT44(*(undefined4 *)(puVar12 + (short)(uVar10 << 3)),
-                                           *(int *)(puVar12 + (short)(uVar10 << 3) + 4)));
+                                           *(int *)(puVar12 + (short)(uVar10 << 3) + 4))); bVar13 = __ghidra_flag(4); __c; });
     if (!bVar13) {
       return dVar14;
     }
@@ -39534,6 +39542,7 @@ __asm__(
 	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
 	"	move.l (48,%sp),%a0\n"
 	"	jsr scpi_bcd_to_double\n"
+	"	move.w %ccr,__ghidra_ccr\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_scpi_bcd_to_double, .-c_scpi_bcd_to_double\n"
@@ -39594,9 +39603,9 @@ __regcall double scpi_scale_by_power_of_ten(double value /* d0 */,short *exponen
     }
     iVar1 = *(int *)((int)powers + (short)(sVar6 << 3) + 4);
     bVar7 = iVar1 == 0;
-    dVar8 = scpi_double_multiply
+    dVar8 = ({ __auto_type __c = scpi_double_multiply
                       (a,(double)CONCAT44(*(undefined4 *)((int)powers + (int)(short)(sVar6 << 3)),
-                                          iVar1));
+                                          iVar1)); bVar7 = __ghidra_flag(4); __c; });
     if (!bVar7) {
       return dVar8;
     }
@@ -39674,6 +39683,7 @@ __asm__(
 	"	move.l (56,%sp),%a0\n"
 	"	move.l (60,%sp),%a1\n"
 	"	jsr scpi_scale_by_power_of_ten\n"
+	"	move.w %ccr,__ghidra_ccr\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_scpi_scale_by_power_of_ten, .-c_scpi_scale_by_power_of_ten\n"
@@ -40101,6 +40111,7 @@ __asm__(
 	"	move.l (56,%sp),%d2\n"
 	"	move.l (60,%sp),%d3\n"
 	"	jsr scpi_double_multiply\n"
+	"	move.w %ccr,__ghidra_ccr\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_scpi_double_multiply, .-c_scpi_double_multiply\n"
@@ -40233,9 +40244,9 @@ int scpi_number_to_double(char *number,double *value,int scale)
   char acStack_30 [20];
   
   bVar1 = __ghidra_piece(unsigned short, scale, 2) == 0;
-  scpi_number_to_bcd(number,__ghidra_piece(unsigned short, scale, 2),acStack_30);
+  ({ __auto_type __c = scpi_number_to_bcd(number,__ghidra_piece(unsigned short, scale, 2),acStack_30); bVar1 = __ghidra_flag(4); __c; });
   if (bVar1) {
-    dVar2 = scpi_bcd_to_double(acStack_30);
+    dVar2 = ({ __auto_type __c = scpi_bcd_to_double(acStack_30); bVar1 = __ghidra_flag(4); __c; });
     if (!bVar1) {
       *value = dVar2;
       return 0;
@@ -40251,10 +40262,11 @@ int scpi_number_to_double(char *number,double *value,int scale)
 /* a parsed number at A0 packed into the BCD record at A1, its exponent plus D0 plus 16 at +0xa; -1
    beyond 309
    Not a C function (register; read): its arguments and results in registers.  In: A0 char *number,
-   D0 short scale, A1 char *bcd.  Out: D0 int status.  Error: D0 -1 exponent beyond 309.
+   D0 short scale, A1 char *bcd.  Out: D0 int status.  Returns: ccr.  Error: D0 -1 exponent beyond
+   309.
    docs/scpi/README.md, read */
 
-/* out D0 int status; error D0 -1 exponent beyond 309 */
+/* out D0 int status; returns ccr; error D0 -1 exponent beyond 309 */
 __regcall int scpi_number_to_bcd(char *number /* a0 */,short scale /* d0 */,char *bcd /* a1 */)
 
 {
@@ -40323,6 +40335,7 @@ __asm__(
 	"	move.l (52,%sp),%d0\n"
 	"	move.l (56,%sp),%a1\n"
 	"	jsr scpi_number_to_bcd\n"
+	"	move.w %ccr,__ghidra_ccr\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_scpi_number_to_bcd, .-c_scpi_number_to_bcd\n"
@@ -40356,7 +40369,7 @@ scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,shor
       return 1;
     }
     bVar6 = param_4 == 0;
-    scpi_double_to_decimal(__ghidra_as(double, CONCAT44(param_1,param_2)),param_4,(char *)&decimal);
+    scpi_double_to_decimal(__ghidra_as(double, CONCAT44(param_1,param_2)),param_4,(char *)&decimal), bVar6 = __ghidra_flag(4);
     if (bVar6) {
       return 1;
     }
@@ -53577,7 +53590,7 @@ clamp_double_to_limits(double *param_1,double *param_2,double *param_3,undefined
 void nv_slot_erase(byte param_1)
 
 {
-  if ((&nv_records)[(uint)param_1 * 0x80] != -1) {
+  if ((&nv_records)[(uint)param_1 * 0x80] != 0xff) {
     eeprom_write_byte(&nv_records + (uint)param_1 * 0x80,-1);
   }
   return;

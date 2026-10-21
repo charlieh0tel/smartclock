@@ -36,8 +36,13 @@ from dataclasses import dataclass
 
 from decompiled_check import RAM, TOOLS, assembly_lines, installer_image
 
-# Where gcc's code is linked.
-REBUILT = 0x400000
+# Where gcc's code is linked: above the chip selects the reset code
+# programs, the last of which, CS10, is at 0x500000 (docs/firmware/README.md),
+# so that a read of the EEPROM at 0x400000 reaches no code.
+REBUILT = 0x600000
+# Where gcc's own data is, apart from its code, which the harness keeps
+# read-only: a bridge's __ghidra_ccr.
+REBUILT_DATA = 0x6F0000
 # A piece's section, its routine's name and its address.
 PIECE = re.compile(r"^\.text\.(\w+)\.([0-9a-f]+)$")
 # An __asm__ block that holds code: a routine's pieces or a bridge.
@@ -86,9 +91,9 @@ def script(pieces: list[str], image_names: dict[str, int]) -> str:
         address = int(PIECE.match(piece).group(2), 16)
         lines.append(f"  {piece} 0x{address:x} : {{ *({piece}) }}")
     lines.append(
-        f"  .rebuilt 0x{REBUILT:x} : {{ *(.text) *(.text.*) *(.rodata) *(.rodata.*)"
-        " *(.data) *(.data.*) *(.bss) *(.bss.*) *(COMMON) }"
+        f"  .rebuilt 0x{REBUILT:x} : {{ *(.text) *(.text.*) *(.rodata) *(.rodata.*) }}"
     )
+    lines.append(f"  .rebuilt_data 0x{REBUILT_DATA:x} : {{ *(.data) *(.data.*) *(.bss) *(.bss.*) *(COMMON) }}")
     lines.append("  /DISCARD/ : { *(.comment) *(.note.*) }")
     lines.append("}")
     return "\n".join(lines) + "\n"
@@ -104,10 +109,18 @@ def link(c_path: str, cflags: list[str], work: str, elf_path: str) -> list[Secti
         addresses[function["name"]] = int(function["address"].split(":")[-1], 16)
     made = set(re.findall(r"^(\w+) = 0x", open(base + ".symbols.ld").read(), re.M))
 
+    c_only, compiled = work + "/c.c", work + "/c.o"
+    open(c_only, "w").write(CODE_BLOCK.sub("", c))
+    run(TOOLS + "gcc", *cflags, "-c", "-o", compiled, c_only)
+    # what the C defines that is not a function, a bridge's __ghidra_ccr
+    c_data = {
+        name for kind, name in re.findall(r"^\S* ([BCDRbdr]) (\S+)$", run(TOOLS + "nm", compiled), re.M)
+    }
+
     assembly, assembled, renamed = work + "/a.s", work + "/a.o", work + "/a-image.o"
     open(assembly, "w").write("".join(assembly_lines(c)))
     run(TOOLS + "as", "-mcpu=cpu32", "-o", assembled, assembly)
-    undefined = run(TOOLS + "nm", "-u", assembled).split()[1::2]
+    undefined = [name for name in run(TOOLS + "nm", "-u", assembled).split()[1::2] if name not in c_data]
     image_names = {name: addresses[name] for name in undefined if name not in made}
     unknown = [name for name in undefined if name not in made and name not in addresses]
     if unknown:
@@ -115,10 +128,6 @@ def link(c_path: str, cflags: list[str], work: str, elf_path: str) -> list[Secti
     with open(work + "/rename", "w") as rename:
         rename.writelines(f"{name} {IMAGE_PREFIX}{name}\n" for name in image_names)
     run(TOOLS + "objcopy", "--redefine-syms", work + "/rename", assembled, renamed)
-
-    c_only, compiled = work + "/c.c", work + "/c.o"
-    open(c_only, "w").write(CODE_BLOCK.sub("", c))
-    run(TOOLS + "gcc", *cflags, "-c", "-o", compiled, c_only)
 
     listing = run(TOOLS + "readelf", "-SW", renamed)
     pieces = [name for name in re.findall(r"\]\s+(\.text\.\S+)", listing) if PIECE.match(name)]

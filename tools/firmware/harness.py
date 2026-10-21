@@ -4,7 +4,8 @@ and calls into either from the same RAM and registers.
 
 A call starts in supervisor mode with interrupts masked, as the
 firmware runs, every register a distinct sentinel but A6, which holds a
-caller's frame, and its own stack at STACK, which is never compared.
+caller's frame, and its own stack at STACK, which is never compared;
+the EEPROM erased, and compared after it as RAM is.
 Unicorn has no CPU32; the 68020 stands in, and the image uses none of
 the instructions either has alone (PLAN.md, "A rebuild that runs").
 """
@@ -35,7 +36,7 @@ from unicorn.m68k_const import (
 )
 
 from libc_check import BUFFER, BUFFER_SPACING, RAM, RAM_SIZE, RETURN, ROM, ROM_SIZE, STEP_LIMIT, Machine
-from rebuild_link import REBUILT, Section
+from rebuild_link import REBUILT, REBUILT_DATA, Section
 
 # Every register a routine might take, by the sidecar's name.
 REGISTERS = {
@@ -61,7 +62,7 @@ SUPERVISOR = 0x2700
 SENTINEL = 0x5A5A0000
 # The calls' stack, clear of ROM, RAM, the peripherals, the return
 # address and the rebuilt code.
-STACK = 0x500000
+STACK = 0x700000
 STACK_SIZE = 0x10000
 STACK_TOP = STACK + STACK_SIZE - 0x10
 # A6 at a call's start: a caller's frame above the call's stack, its
@@ -74,6 +75,11 @@ FRAME_CONTENTS = struct.pack(">II", 0, RETURN)
 # Each register's value at a call's start.
 STARTING = {name: FRAME if name == "A6" else SENTINEL + i for i, name in enumerate(REGISTERS)}
 REBUILT_SIZE = 0x100000
+# The EEPROM, chip select 9's 8 KB (docs/firmware/README.md), erased at a
+# call's start and compared after it as RAM is.
+EEPROM = 0x400000
+EEPROM_SIZE = 0x2000
+ERASED = b"\xff" * EEPROM_SIZE
 # Where a literal's text may lie: the image's ROM and gcc's code and
 # constants.
 LITERALS = [(ROM, ROM_SIZE), (REBUILT, REBUILT_SIZE)]
@@ -125,8 +131,11 @@ def rebuilt_machine(image: bytes, linked: list[Section]) -> Machine:
     """The image, with the rebuilt image's code at REBUILT and a stack."""
     m = Machine(image)
     m.uc.mem_map(REBUILT, REBUILT_SIZE)
-    m.uc.mem_write(REBUILT, next(s for s in linked if s.name == ".rebuilt").data)
+    for section in linked:
+        if section.name in (".rebuilt", ".rebuilt_data"):
+            m.uc.mem_write(section.address, section.data)
     m.uc.mem_map(STACK, STACK_SIZE)
+    m.uc.mem_map(EEPROM, EEPROM_SIZE)
     return m
 
 
@@ -182,6 +191,7 @@ def fresh_ram(m: Machine) -> None:
 
 def reset(m: Machine, ram: bytes) -> None:
     m.uc.mem_write(RAM, ram)
+    m.uc.mem_write(EEPROM, ERASED)
     m.uc.reg_write(UC_M68K_REG_SR, SUPERVISOR)
     for name, register in REGISTERS.items():
         m.uc.reg_write(register, STARTING[name])
@@ -189,8 +199,8 @@ def reset(m: Machine, ram: bytes) -> None:
 
 class Run:
     """One call: its stack arguments laid above the return address, its
-    registers after, RAM after, and the fault or trap that stopped it, if
-    one did."""
+    registers after, RAM and the EEPROM after, and the fault or trap that
+    stopped it, if one did."""
 
     def __init__(self, m: Machine, start: int, stack_arguments: bytes = b""):
         trapped = []
@@ -214,6 +224,7 @@ class Run:
             self.stopped = f"no return in {STEP_LIMIT} steps"
         self.registers = {name: m.uc.reg_read(register) for name, register in REGISTERS.items()}
         self.ram = m.read(RAM, RAM_SIZE)
+        self.eeprom = m.read(EEPROM, EEPROM_SIZE)
 
     def value(self, register: str) -> int:
         """A result in a register or pair, high register first."""
@@ -254,8 +265,8 @@ def same_literal(m: Machine, a: int, b: int) -> bool:
 
 def ram_difference(m: Machine, a: Run, b: Run) -> str | None:
     """None if two calls left RAM the same, but for pointers, at even
-    addresses as the 68k keeps a long, to the same literal; else where
-    it first differs."""
+    addresses as the 68k keeps a long, to the same literal, and the
+    EEPROM the same; else where it first differs."""
     at = 0
     while a.ram[at:] != b.ram[at:]:
         first = next(i for i in range(at, len(a.ram)) if a.ram[i] != b.ram[i])
@@ -273,6 +284,9 @@ def ram_difference(m: Machine, a: Run, b: Run) -> str | None:
         if literal is None:
             return f"RAM differs from {RAM + first:x}"
         at = literal + POINTER_SIZE
+    if a.eeprom != b.eeprom:
+        first = next(i for i in range(EEPROM_SIZE) if a.eeprom[i] != b.eeprom[i])
+        return f"EEPROM differs from {EEPROM + first:x}"
     return None
 
 

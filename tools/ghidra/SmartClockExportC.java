@@ -76,11 +76,13 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeComponent;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.DataTypeWriter;
+import ghidra.program.model.data.DefaultDataType;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.data.Pointer;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.data.TypeDef;
 import ghidra.program.model.data.Undefined;
+import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Data;
@@ -198,6 +200,9 @@ public class SmartClockExportC extends GhidraScript {
 			((__ghidra_bits(a) << (8 * (y))) | (__ghidra_bits(b) & __ghidra_mask(y)))
 		#define __ghidra_sub(y, v, n) ((__ghidra_bits(v) >> (8 * (n))) & __ghidra_mask(y))
 		#define __ghidra_also(var, v, n) (var = __ghidra_as(__typeof__(var), __ghidra_sub(sizeof var, v, n)))
+		/* the condition codes a routine that returns them left, as its bridge keeps them */
+		unsigned short __ghidra_ccr;
+		#define __ghidra_flag(bit) ((__ghidra_ccr & (bit)) != 0)
 		#define CARRY1(a, b) ((unsigned char)((a) + (b)) < (unsigned char)(a))
 		#define CARRY2(a, b) ((unsigned short)((a) + (b)) < (unsigned short)(a))
 		#define CARRY4(a, b) ((unsigned int)((a) + (b)) < (unsigned int)(a))
@@ -573,7 +578,9 @@ public class SmartClockExportC extends GhidraScript {
 			.append(quoted("\t.globl " + wrapper)).append(quoted("\t.type " + wrapper + ", @function"))
 			.append(quoted(wrapper + ":"))
 			.append(quoted("\tmovem.l " + SAVED + ",-(%sp)"));
-		for (String part : (load.toString() + line("jsr " + name) + give
+		// the condition codes first, before the moves that give the result set them
+		String keep = returnsConditionCodes(function) ? line("move.w %ccr," + CONDITION_CODES) : "";
+		for (String part : (load.toString() + line("jsr " + name) + keep + give
 				+ line("movem.l (%sp)+," + SAVED) + line("rts")).split("\n")) {
 			assembly.append(quoted(part));
 		}
@@ -1089,7 +1096,9 @@ public class SmartClockExportC extends GhidraScript {
 		}
 		TokenEdits edits = new TokenEdits();
 		unsignedCompares(tokens, edits);
+		unsignedEqualities(tokens, edits);
 		resultCopies(tokens, results.getHighFunction(), edits);
+		conditionCodeResults(tokens, results.getHighFunction(), edits);
 		switchLabels(tokens, edits);
 		List<Boolean> signedPieces = new ArrayList<>();
 		for (int i = 0; i < tokens.size(); i++) {
@@ -1202,6 +1211,43 @@ public class SmartClockExportC extends GhidraScript {
 		}
 	}
 
+	/** The p-code's equality tests. */
+	private static final Set<Integer> EQUALITIES = Set.of(PcodeOp.INT_EQUAL, PcodeOp.INT_NOTEQUAL);
+	/** A negative constant as the decompiler prints one. */
+	private static final Pattern NEGATIVE = Pattern.compile("-(0x[0-9a-fA-F]+|[0-9]+)");
+
+	/**
+	 * Gives a negative constant an equality test compares with a narrower
+	 * unsigned operand that operand's value: the decompiler prints the
+	 * byte 0xff as -1, but C promotes the operand to int, so that
+	 * nv_records[i] != -1 is true for an erased 0xff, which the image's
+	 * cmpi.b #-1 (nv_slot_erase) finds equal.
+	 */
+	private static void unsignedEqualities(List<ClangToken> tokens, TokenEdits edits) {
+		for (ClangToken token : tokens) {
+			PcodeOp op = token.getPcodeOp();
+			Varnode constant = token.getVarnode();
+			Matcher negative = NEGATIVE.matcher(token.getText());
+			if (!(token instanceof ClangVariableToken) || op == null || constant == null
+				|| !EQUALITIES.contains(op.getOpcode()) || !constant.isConstant()
+				|| constant.getSize() >= INT_BYTES || !negative.matches()) {
+				continue;
+			}
+			Varnode other = op.getInput(op.getInput(0) == constant ? 1 : 0);
+			if (other.getHigh() != null && isUnsigned(other.getHigh().getDataType())) {
+				long mask = (1L << (8 * constant.getSize())) - 1;
+				edits.replaced.put(token, String.format("0x%x", constant.getOffset() & mask));
+			}
+		}
+	}
+
+	/** Whether C reads a value of the type unsigned: an unsigned integer or the decompiler's undefined. */
+	private static boolean isUnsigned(DataType type) {
+		DataType base = type instanceof TypeDef typedef ? typedef.getBaseDataType() : type;
+		return base instanceof Undefined || base instanceof DefaultDataType
+			|| base instanceof AbstractIntegerDataType integer && !integer.isSigned();
+	}
+
 	/** The registers a routine's convention says its result is also left in, and their confidence. */
 	private static final Pattern COPIES = Pattern.compile("\"copies\":\"([DA][0-7](?::[DA][0-7])*)\"");
 	private static final Pattern COPIES_CONFIDENCE = Pattern.compile("\"copies\\.confidence\":\"(\\w+)\"");
@@ -1250,6 +1296,67 @@ public class SmartClockExportC extends GhidraScript {
 					edits.after.merge(tokens.get(close), "; " + ALSO + "(" + variable + ", __c, "
 						+ (copies.size() - 1 - k) * REGISTER_BYTES + "); __c; })", String::concat);
 				}
+			}
+		}
+	}
+
+	/** Where a bridge keeps the condition codes its routine returns, a C global. */
+	private static final String CONDITION_CODES = "__ghidra_ccr";
+	private static final Pattern RETURNS_CCR = Pattern.compile("\"returns\":\"ccr\"");
+	/** Each condition-code flag's register, by its bit in the CCR. */
+	private static final Map<String, Integer> FLAG_BITS =
+		Map.of("CF", 0x1, "VF", 0x2, "ZF", 0x4, "NF", 0x8, "XF", 0x10);
+
+	/** Whether the function's trusted convention says it returns its result in the condition codes. */
+	private boolean returnsConditionCodes(Function function) {
+		String convention = function == null ? null : recorded(CONVENTION_MAP, function);
+		Matcher confidence = convention == null ? null : CONFIDENCE.matcher(convention);
+		return convention != null && RETURNS_CCR.matcher(convention).find() && confidence.find()
+			&& TRUSTED.contains(confidence.group(1));
+	}
+
+	/**
+	 * Gives each flag the C reads after a call to a routine that returns
+	 * its result in the condition codes the routine's: the decompiler takes
+	 * the call to keep the flags it had before, an INDIRECT at the call, so
+	 * the C tests a compare made before it.  After the call each such
+	 * variable is assigned its flag from __ghidra_ccr, where the routine's
+	 * bridge keeps the condition codes: a call with no result becomes
+	 * call(...), flag = __ghidra_flag(bit), and one with a result
+	 * ({ __auto_type __c = call(...); flag = ...; __c; }).
+	 */
+	private void conditionCodeResults(List<ClangToken> tokens, HighFunction high, TokenEdits edits) {
+		for (int i = 0; i < tokens.size(); i++) {
+			PcodeOp call = tokens.get(i).getPcodeOp();
+			if (!(tokens.get(i) instanceof ClangFuncNameToken) || call == null
+				|| call.getOpcode() != PcodeOp.CALL
+				|| !returnsConditionCodes(getFunctionAt(call.getInput(0).getAddress()))) {
+				continue;
+			}
+			StringBuilder flags = new StringBuilder();
+			for (Iterator<PcodeOpAST> ops = high.getPcodeOps(call.getSeqnum().getTarget()); ops.hasNext();) {
+				PcodeOp op = ops.next();
+				Varnode output = op.getOutput();
+				Register register = output == null ? null : currentProgram.getRegister(output);
+				Integer bit = register == null ? null : FLAG_BITS.get(register.getName());
+				String name = output == null || output.getHigh() == null ? null : output.getHigh().getName();
+				if (op.getOpcode() == PcodeOp.INDIRECT && bit != null && name != null
+					&& !name.equals("UNNAMED")) {
+					flags.append(", " + name + " = __ghidra_flag(" + bit + ")");
+				}
+			}
+			int close = flags.isEmpty() ? -1 : closingParenthesis(tokens, i);
+			if (close < 0) {
+				continue;
+			}
+			Function callee = getFunctionAt(call.getInput(0).getAddress());
+			if (callee.getReturnType() instanceof VoidDataType) {
+				edits.after.merge(tokens.get(close), flags.toString(), String::concat);
+			}
+			else {
+				edits.before.merge(tokens.get(i), ALSO_OPEN, String::concat);
+				edits.after.merge(tokens.get(close),
+					"; " + flags.substring(2).replace(", ", "; ") + "; __c; })", String::concat);
 			}
 		}
 	}

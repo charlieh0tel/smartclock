@@ -589,6 +589,21 @@ decompiler wrote it, and reported.
   macro's argument at the macro, and the conversion pass would wrap the
   whole call.  `log` and `pow` pass a double routine's result to the
   next that way.
+- A call to a routine whose convention has `returns=ccr` -- the pSOS
+  bindings, `clock_record_sum` and the SCPI engine's number routines --
+  gives the flags the C reads after it the routine's.  The decompiler
+  takes the call to keep the flags, an `INDIRECT` at the call, so the C
+  tested a compare made before it (`bVar6 = param_4 == 0;` then the
+  call, then `if (bVar6)`); the bridge keeps the condition codes in
+  `__ghidra_ccr` right after its `jsr`, and each flag variable is
+  assigned its bit after the call, `bVar6 = __ghidra_flag(4)` for Z.  A
+  scan of the image for a call followed by a conditional branch found
+  the routines that return flags; those called only from assembly
+  (the kernel's checks, the Forth words, the boot code) need none.
+- A negative constant an equality test compares with a narrower
+  unsigned operand is that operand's value, `!= 0xff`: the decompiler
+  prints the byte as -1, but C promotes the operand to int
+  (`nv_slot_erase`, on an erased EEPROM).
 - An infinity or NaN assigned to an integer variable becomes its bits,
   `local_14 = __ghidra_bits(-__builtin_inf())`: the decompiler copies
   the constant's bits, where C converts its value, undefined for an
@@ -615,7 +630,8 @@ decompiler wrote it, and reported.
 `tools/firmware/rebuild_link.py` links it into a rebuilt image: each
 piece of assembly at its own address, where it must be, and is, the
 image's bytes, and gcc's code -- the C, the bridges, its constants -- at
-`0x400000`, with libgcc for the float comparisons the decompiler wrote
+`0x600000`, above every chip select the reset code programs, and its
+data at `0x6f0000`, with libgcc for the float comparisons the decompiler wrote
 as operators.  A C function the assembly calls is the image's own copy,
 `__image_NAME`, so that the original's callers keep the original's
 callees and argument layout until a function is replaced; gcc's C calls
@@ -630,7 +646,11 @@ own copy of a literal the image keeps in ROM.  And a call starts with
 A6 at a caller's frame on the harness's stack, its saved frame pointer
 0 and its return address the harness's, since the image's code may
 walk its caller's frame (`float_raise` reads the return address there)
-where gcc's keeps no frame pointer.
+where gcc's keeps no frame pointer.  The EEPROM, chip select 9's 8 KB at
+`0x400000`, is erased for each call and compared after it as RAM is;
+gcc's code is above every chip select so that a read of the EEPROM
+finds no code, and its data, a bridge's `__ghidra_ccr`, apart from its
+code, which the function check keeps read-only.
 
 In the Z3805A 3543B image this gives 1752 functions, and every one but
 the ten thunks decompiles.  136 switches are recovered; `0x24ff2` and `0x25140`, a

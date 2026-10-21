@@ -683,7 +683,7 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/bridge_check.py` (Unicorn, run with uv) calls each
      wrapper as gcc would and its routine from its registers, from the
      same RAM, and requires the same result, RAM and effects and gcc's
-     callee-saved registers kept; 81 of 90 agree, none disagree.
+     callee-saved registers kept; 82 of 91 agree, none disagree.
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
@@ -896,8 +896,9 @@ view cannot drift apart.  The library, bottom up:
      code run once on the configuration but for the devices' function 0
      and the creates of ROOT and IDLE: the queue of tasks waiting on a
      region, at `+0x64`, points at itself, where a zeroed one led
-     `os_report_regions` through address 0 past RAM (77 skipped to 71, 8 differing to 14).  The six now run differ, every one through
-     two reports: `os_report_process` prints a stack share from D5 its
+     `os_report_regions` through address 0 past RAM (77 skipped to 71,
+     8 differing to 14).  The six now run differ, every one through two
+     reports: `os_report_process` prints a stack share from D5 its
      caller left (`unaff_D5`) when no segment holds the stack, and
      `os_report_regions` a region's use, 7232 kB where the image's
      prints 0 (`ps_word`, `mem_rep_word`, `os_process_report`,

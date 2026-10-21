@@ -1634,6 +1634,21 @@ struct scpi_decimal {
     int16_t exponent;
 };
 
+typedef struct scpi_error_message scpi_error_message, *Pscpi_error_message;
+
+struct scpi_error_message {
+    int16_t code;
+    char *text;
+};
+
+typedef struct scpi_multiplier scpi_multiplier, *Pscpi_multiplier;
+
+struct scpi_multiplier {
+    uint16_t name;
+    int8_t exponent;
+    uint8_t unused;
+};
+
 typedef struct scpi_numeric_param scpi_numeric_param, *Pscpi_numeric_param;
 
 typedef long (scpi_validate_function)(void *, int, void *, void *, void *, int);
@@ -1655,6 +1670,15 @@ struct scpi_numeric_param {
     uint8_t is_integer;
     uint8_t field_27;
     void *steps;
+};
+
+typedef struct scpi_root_children scpi_root_children, *Pscpi_root_children;
+
+struct scpi_root_children {
+    uint16_t id;
+    uint16_t count;
+    uint16_t flags;
+    void *children[49];
 };
 
 typedef struct scpi_setting_param scpi_setting_param, *Pscpi_setting_param;
@@ -2009,8 +2033,11 @@ _Static_assert(sizeof(sci_exchange_state) == 56, "sci_exchange_state");
 _Static_assert(sizeof(sci_settings_record) == 6, "sci_settings_record");
 _Static_assert(sizeof(scpi_action_param) == 6, "scpi_action_param");
 _Static_assert(sizeof(scpi_decimal) == 20, "scpi_decimal");
+_Static_assert(sizeof(scpi_error_message) == 6, "scpi_error_message");
+_Static_assert(sizeof(scpi_multiplier) == 4, "scpi_multiplier");
 _Static_assert(sizeof(scpi_numeric_param) == 44, "scpi_numeric_param");
 _Static_assert(sizeof(scpi_param_type) == 1, "scpi_param_type");
+_Static_assert(sizeof(scpi_root_children) == 202, "scpi_root_children");
 _Static_assert(sizeof(scpi_setting_param) == 28, "scpi_setting_param");
 _Static_assert(sizeof(scpi_step) == 8, "scpi_step");
 _Static_assert(sizeof(selftest_results) == 68, "selftest_results");
@@ -2198,26 +2225,69 @@ _Static_assert(sizeof(three_point_fit) == 16, "three_point_fit");
 extern void *boot_vectors; /* 00000000 */
 extern uint8_t installer_records[42861]; /* 00000bbc */
 extern void *primary_vectors; /* 00010000 */
+extern klok_entry leap_event_gps_template; /* 00010cb0 */
+extern klok_entry leap_event_utc_template; /* 00010cca */
 extern int16_t days_before_month[12]; /* 0001186c */
 extern int16_t days_before_month_leap[12]; /* 00011884 */
+extern uint8_t month_lengths[12]; /* 0001189c */
 extern byte reset_to_recover_text[20]; /* 00011b8c */
 extern char * exception_names[57]; /* 00011ba0 */
+extern double powers_of_ten_times_five[61]; /* 0001234c */
+extern double powers_of_ten_double[61]; /* 00012614 */
+extern float powers_of_ten_float[61]; /* 000129fc */
 extern char dither_table[128]; /* 00012b32 */
 extern selftest_entry selftest_list[12]; /* 00017fe0 */
 extern selftest_entry selftest_table[14]; /* 00018458 */
+extern uint8_t forth_character_classes[128]; /* 00018de2 */
+extern char forth_base_letters[15]; /* 00019086 */
+extern char forth_do_tag[16]; /* 0001942d */
+extern char forth_if_tag[7]; /* 000194de */
+extern char forth_begin_tag[10]; /* 00019556 */
+extern char forth_while_tag[10]; /* 0001956a */
+extern int32_t forth_sine_table[91]; /* 00019a2c */
+extern char loopback_idle_text[1]; /* 0001ed2c */
+extern uint8_t fpga_readback_mask[3847]; /* 00021e3b */
+extern uint16_t scpi_normalize_exponents[32]; /* 00025144 */
+extern double scpi_powers_of_ten[145]; /* 000256ae */
+extern double scpi_powers_of_ten_64[9]; /* 00025b36 */
 extern char decimal_digit_pairs[200]; /* 00025c82 */
+extern int16_t scpi_parameter_kind_errors[6]; /* 000279ca */
+extern scpi_multiplier scpi_multipliers[13]; /* 00027b2e */
+extern status_condition status_negative_conditions[63]; /* 00028720 */
+extern scpi_error_message scpi_error_messages[101]; /* 00028910 */
+extern uint32_t scpi_response_begin_code; /* 00029636 */
+extern uint32_t scpi_message_end_code; /* 0002963a */
+extern uint32_t scpi_input_end_code; /* 0002963e */
+extern char opc_response[2]; /* 0002acb6 */
+extern char log_print_newline[3]; /* 0002be7d */
+extern char * status_report_messages[23]; /* 0002bf30 */
+extern char douglas_state_text_0[2]; /* 0002d918 */
+extern char douglas_state_text_once[5]; /* 0002d91a */
 extern ushort status_register_setup_table; /* 0002f7ac */
 extern status_condition status_conditions[79]; /* 0002f838 */
+extern char error_message_none[1]; /* 00030816 */
+extern uint8_t sample_values_defaults[148]; /* 000308b6 */
 extern uint8_t retained_block_defaults[25]; /* 0003094c */
 extern sci_settings_record sci_settings_defaults; /* 00030a2c */
 extern duartb_settings_record duartb_settings_defaults; /* 00030a34 */
+extern klok_entry lifetime_event_template; /* 00030cec */
 extern uint32_t low_bit_masks[33]; /* 000314b2 */
+extern float powers_of_ten_float_21[43]; /* 00032700 */
 extern scpi_numeric_param * nv_numeric_params[21]; /* 00032d5e */
 extern scpi_setting_param * nv_setting_params[18]; /* 00032db2 */
+extern char identification_tag[2]; /* 00032ff5 */
+extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER1_RECeive_BITS; /* 000333a0 */
+extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER1_RECeive_SBITs; /* 000333be */
+extern scpi_setting_param scpi_param_SAMPle_TOGGle; /* 00033490 */
+extern scpi_setting_param scpi_param_SAMPle_TARR; /* 000334b0 */
 extern scpi_numeric_param scpi_param_SAMPle_INTeger; /* 000334de */
 extern scpi_numeric_param scpi_param_SAMPle_IARR; /* 0003354e */
 extern scpi_numeric_param scpi_param_SAMPle_FLOat; /* 0003367a */
 extern scpi_numeric_param scpi_param_SAMPle_FARR; /* 000336da */
+extern scpi_numeric_param scpi_param_SOURce_GPSystem_INITial_DATE; /* 000337e4 */
+extern scpi_numeric_param scpi_param_SOURce_GPSystem_INITial_TIME; /* 0003382c */
+extern scpi_numeric_param scpi_param_SOURce_GPSystem_INITial_POSition_longitude; /* 00033898 */
+extern scpi_numeric_param scpi_param_DOUGlas_STATe_request; /* 0003393a */
 extern scpi_setting_param scpi_param_OUTPut_STATe; /* 00033968 */
 extern scpi_setting_param scpi_param_SOURce_PULSe_CONTinuous_STATe; /* 00033986 */
 extern scpi_numeric_param scpi_param_SOURce_PULSe_CONTinuous_PERiod; /* 000339b4 */
@@ -2229,6 +2299,9 @@ extern scpi_numeric_param scpi_param_STATus_PTRansition; /* 00033c30 */
 extern scpi_numeric_param scpi_param_STATus_NTRansition; /* 00033c5c */
 extern scpi_setting_param scpi_param_DIAGnostic_SYSTem_PSTartup; /* 00033c8a */
 extern scpi_setting_param scpi_param_DIAGnostic_SYSTem_DOUTput; /* 00033ca8 */
+extern scpi_setting_param scpi_param_LED_ACTive; /* 00033cc6 */
+extern scpi_setting_param scpi_param_LED_ENABled; /* 00033d20 */
+extern scpi_setting_param scpi_param_SOURce_ROSCillator_HOLDover_RECovery_AUTO; /* 00033d3e */
 extern scpi_setting_param scpi_param_DOUGlas_STATe; /* 00033d5c */
 extern scpi_setting_param nv_param_field_1e; /* 00033d7a */
 extern scpi_setting_param scpi_param_DIAGnostic_GPSystem_UTC; /* 00033d98 */
@@ -2259,6 +2332,7 @@ extern scpi_setting_param scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STAT
 extern scpi_numeric_param scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold; /* 000342f8 */
 extern scpi_numeric_param scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold; /* 00034336 */
 extern scpi_numeric_param nv_param_field_b8; /* 00034374 */
+extern double two_to_32; /* 00041300 */
 extern fpga_bit fpga_bit_table[6]; /* 00041310 */
 extern scpi_action_param scpi_action_DIAGnostic_PTIMe_TINTerval; /* 0004132a */
 extern scpi_action_param scpi_action_SOURce_ROSCillator_HOLDover_RECovery_INITiate; /* 00041330 */
@@ -2275,7 +2349,30 @@ extern scpi_action_param scpi_action_SER2_PRESet; /* 0004136c */
 extern scpi_action_param scpi_action_STATus_PRESet; /* 00041372 */
 extern scpi_action_param scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate; /* 00041378 */
 extern uint8_t si_prefixes[8]; /* 0004cfc5 */
+extern char * month_names[13]; /* 0004cfce */
+extern char status_screen_blank[1]; /* 0004d10b */
+extern uint8_t satellite_status_blank_entry[8]; /* 0004e016 */
 extern oncore_message_entry oncore_messages[49]; /* 0004fece */
+extern gps_script_step * gps_script_47[26]; /* 00050cca */
+extern gps_script_step * gps_script_48[29]; /* 00050d32 */
+extern gps_script_step * gps_script_49[5]; /* 00050da6 */
+extern gps_script_step * gps_script_4a[5]; /* 00050dba */
+extern gps_script_step * gps_script_4b[4]; /* 00050dce */
+extern gps_script_step * gps_script_4c[5]; /* 00050dde */
+extern gps_script_step * gps_script_4d[27]; /* 00050df2 */
+extern gps_script_step * gps_script_4e[3]; /* 00050e66 */
+extern gps_script_step * gps_script_4f[9]; /* 00050e72 */
+extern gps_script_step * gps_script_50[8]; /* 00050e96 */
+extern gps_script_step * gps_script_51[10]; /* 00050eb6 */
+extern gps_script_step * gps_script_52[13]; /* 00050ede */
+extern gps_script_step * gps_script_53[5]; /* 00050f12 */
+extern gps_script_step * gps_script_54[5]; /* 00050f26 */
+extern gps_script_step * gps_script_55[8]; /* 00050f3a */
+extern gps_script_step * gps_script_56[6]; /* 00050f5a */
+extern gps_script_step * gps_script_57[6]; /* 00050f72 */
+extern gps_script_step * gps_script_58[6]; /* 00050f8a */
+extern gps_script_step * gps_script_59[11]; /* 00050fa2 */
+extern gps_script_step * gps_script_none[1]; /* 00050fce */
 extern uint8_t oncore_status_field_codes[6]; /* 00050fd2 */
 extern uint8_t oncore_visibility_field_codes[10]; /* 00050fd8 */
 extern uint8_t oncore_xdop_table_field_codes[2]; /* 00050fe2 */
@@ -2284,9 +2381,51 @@ extern uint8_t oncore_raim_field_codes[16]; /* 00050fe6 */
 extern uint8_t oncore_corrections_field_codes[12]; /* 00050ff6 */
 extern uint8_t oncore_almanac_field_codes[2]; /* 00051002 */
 extern uint8_t oncore_receiver_id_field_codes[11]; /* 00051004 */
+extern psos_configuration psos_config_defaults; /* 0005122a */
+extern char os_report_group_text[4]; /* 000512cd */
+extern char os_report_any_text[4]; /* 000512d2 */
 extern char os_report_newline[3]; /* 000512e6 */
 extern char os_report_format[3]; /* 00051382 */
+extern char os_report_comma[2]; /* 00051385 */
+extern io_device_jumps io_table_defaults[4]; /* 0005171a */
+extern scpi_root_children scpi_main_tree; /* 00053034 */
+extern uint8_t ctype_table[257]; /* 0005ed98 */
+extern uint32_t powers_of_ten_by_25_mantissas[54]; /* 0005f860 */
+extern int16_t powers_of_ten_by_25_exponents[27]; /* 0005f938 */
+extern uint32_t powers_of_ten_1_to_24_mantissas[48]; /* 0005f96e */
+extern uint8_t powers_of_ten_1_to_24_exponents[24]; /* 0005fa2e */
 extern uint32_t powers_of_ten_64[36]; /* 0005fa46 */
+extern char doprnt_minus[2]; /* 00060868 */
+extern char doprnt_plus[2]; /* 0006086a */
+extern char doprnt_space[2]; /* 0006086c */
+extern char doprnt_hex_prefix[3]; /* 00060890 */
+extern double log_ln2_high; /* 00060d48 */
+extern double log_ln2_low; /* 00060d50 */
+extern double log_a0; /* 00060d58 */
+extern double log_a1; /* 00060d60 */
+extern double log_a2; /* 00060d68 */
+extern double log_b0; /* 00060d70 */
+extern double log_b1; /* 00060d78 */
+extern double log_b2; /* 00060d80 */
+extern double pow_error_result; /* 00060d88 */
+extern double pow_log_p1; /* 000617e4 */
+extern double pow_log_p2; /* 000617ec */
+extern double pow_log_p3; /* 000617f4 */
+extern double pow_log_p4; /* 000617fc */
+extern double pow_exp2_q1; /* 00061804 */
+extern double pow_exp2_q2; /* 0006180c */
+extern double pow_exp2_q3; /* 00061814 */
+extern double pow_exp2_q4; /* 0006181c */
+extern double pow_exp2_q5; /* 00061824 */
+extern double pow_exp2_q6; /* 0006182c */
+extern double pow_exp2_q7; /* 00061834 */
+extern double log2_e_minus_1; /* 0006183c */
+extern double pow_two_powers[17]; /* 0006184c */
+extern double pow_two_power_tails[9]; /* 000618d4 */
+extern double sqrt_seed_a; /* 00061b94 */
+extern double sqrt_seed_b; /* 00061b9c */
+extern double sqrt_half_high; /* 00061ba4 */
+extern double sqrt_half_low; /* 00061bac */
 extern preserved_region_fields preserved_region; /* 00100000 */
 extern char crash_message[80]; /* 0010094e */
 extern exception_record last_exception; /* 0010099e */
@@ -2303,6 +2442,11 @@ extern void * pforth_dictionary_start; /* 001009f6 */
 extern void * pforth_dictionary_end; /* 001009fa */
 extern void * console_halt_hook_cell; /* 001009fe */
 extern uint16_t console_device; /* 00100a02 */
+extern char forth_terminal_input[134]; /* 00100a04 */
+extern char forth_pad_buffer[134]; /* 00100a8a */
+extern uint32_t console_task_id; /* 00100b10 */
+extern char forth_prompt[10]; /* 00100b14 */
+extern char * string_device_cursor; /* 00100ba8 */
 extern pps_exchange_message pps_message; /* 00100bac */
 extern uint32_t pps_exchange; /* 00100bc4 */
 extern uint8_t leap_minute_pending; /* 00100bc8 */
@@ -2565,6 +2709,7 @@ extern uint32_t rand_seed; /* 00103936 */
 extern int32_t errno; /* 0010393a */
 extern qsort_compare_function * qsort_compare; /* 00103940 */
 extern uint32_t qsort_size; /* 00103944 */
+extern uint8_t installer_float_exception_message[32]; /* 0010aad2 */
 extern uint8_t installer_program_end_digits_end; /* 0010ab1f */
 extern boot_selftest_results boot_selftest; /* 0010ab20 */
 extern duartb_settings_record installer_duartb_settings; /* 0010ab30 */
@@ -2605,152 +2750,30 @@ extern uint16_t installer_atexit_count; /* 0010b0bc */
 extern uint32_t installer_rand_seed; /* 0010b0be */
 extern int32_t installer_errno; /* 0010b0c2 */
 extern volatile duart_registers duart; /* 00200000 */
+extern volatile uint8_t lamp_latch; /* 00300000 */
+extern volatile uint8_t fpga_port[4]; /* 00304000 */
+extern volatile uint8_t efc_strobe; /* 00306000 */
+extern parameter_record eeprom_parameter_record; /* 00400000 */
+extern identification_record eeprom_identification_record; /* 00400010 */
+extern lifetime_record eeprom_lifetime_record; /* 00400060 */
+extern calibration_block eeprom_calibration_block; /* 00400080 */
+extern nv_record nv_records[2]; /* 004000c0 */
 extern volatile gpt_registers gpt; /* 00fff900 */
 extern volatile sim_registers sim; /* 00fffa00 */
 extern volatile qsm_registers qsm; /* 00fffc00 */
 
 #define ADJ(p) _Generic((p), forth_user_end: (forth_user_area *)((char *)(p) - 40))
 
-extern undefined1 DAT_00010cb0; /* 00010cb0 */
-extern undefined1 DAT_00010cca; /* 00010cca */
-extern undefined DAT_0001189c; /* 0001189c */
-extern undefined DAT_0001234c; /* 0001234c */
-extern undefined4 DAT_00012614; /* 00012614 */
-extern undefined4 DAT_00012618; /* 00012618 */
-extern undefined4 DAT_00012704; /* 00012704 */
-extern undefined4 DAT_000129fc; /* 000129fc */
-extern undefined4 DAT_00012a74; /* 00012a74 */
-extern undefined4 DAT_00012ab0; /* 00012ab0 */
-extern undefined DAT_0001ed2c; /* 0001ed2c */
-extern undefined DAT_00021e3b; /* 00021e3b */
-extern undefined DAT_00021e48; /* 00021e48 */
-extern undefined DAT_000279ca; /* 000279ca */
-extern undefined2 DAT_00027b2e; /* 00027b2e */
-extern undefined2 DAT_00028910; /* 00028910 */
-extern undefined DAT_00029636; /* 00029636 */
-extern undefined DAT_0002963a; /* 0002963a */
-extern undefined DAT_0002963e; /* 0002963e */
-extern undefined DAT_0002acb6; /* 0002acb6 */
-extern undefined DAT_0002be7d; /* 0002be7d */
-extern undefined DAT_0002bf30; /* 0002bf30 */
-extern undefined DAT_0002d918; /* 0002d918 */
-extern undefined DAT_0002d91a; /* 0002d91a */
-extern undefined DAT_00030816; /* 00030816 */
-extern undefined DAT_000308b6; /* 000308b6 */
-extern undefined1 DAT_00030cec; /* 00030cec */
-extern undefined DAT_00032704; /* 00032704 */
-extern undefined DAT_00032e26; /* 00032e26 */
-extern undefined DAT_00032ff5; /* 00032ff5 */
-extern undefined DAT_000333a0; /* 000333a0 */
-extern undefined DAT_000333be; /* 000333be */
-extern undefined DAT_00033490; /* 00033490 */
-extern undefined DAT_000334b0; /* 000334b0 */
-extern undefined DAT_000337e4; /* 000337e4 */
-extern undefined DAT_0003382c; /* 0003382c */
-extern undefined DAT_00033898; /* 00033898 */
-extern undefined DAT_0003393a; /* 0003393a */
-extern undefined DAT_00033d20; /* 00033d20 */
-extern undefined DAT_00033d3e; /* 00033d3e */
-extern undefined DAT_0004cfce; /* 0004cfce */
-extern undefined1 DAT_0004d10b; /* 0004d10b */
-extern undefined1 DAT_0004e016; /* 0004e016 */
-extern undefined DAT_00050cca; /* 00050cca */
-extern undefined DAT_00050d32; /* 00050d32 */
-extern undefined DAT_00050da6; /* 00050da6 */
-extern undefined DAT_00050dba; /* 00050dba */
-extern undefined DAT_00050dce; /* 00050dce */
-extern undefined DAT_00050dde; /* 00050dde */
-extern undefined DAT_00050df2; /* 00050df2 */
-extern undefined DAT_00050e72; /* 00050e72 */
-extern undefined DAT_00050e96; /* 00050e96 */
-extern undefined DAT_00050eb6; /* 00050eb6 */
-extern undefined DAT_00050ede; /* 00050ede */
-extern undefined DAT_00050f12; /* 00050f12 */
-extern undefined DAT_00050f26; /* 00050f26 */
-extern undefined DAT_00050f3a; /* 00050f3a */
-extern undefined DAT_00050f5a; /* 00050f5a */
-extern undefined DAT_00050f72; /* 00050f72 */
-extern undefined DAT_00050f8a; /* 00050f8a */
-extern undefined DAT_00050fa2; /* 00050fa2 */
-extern undefined DAT_00050fce; /* 00050fce */
-extern undefined DAT_0005122a; /* 0005122a */
-extern undefined DAT_000512cd; /* 000512cd */
-extern undefined DAT_000512d2; /* 000512d2 */
-extern undefined DAT_00051385; /* 00051385 */
-extern undefined DAT_0005171a; /* 0005171a */
-extern undefined DAT_00053034; /* 00053034 */
-extern undefined DAT_0005ed99; /* 0005ed99 */
-extern undefined DAT_0005f860; /* 0005f860 */
-extern undefined DAT_0005f864; /* 0005f864 */
-extern undefined DAT_0005f938; /* 0005f938 */
-extern undefined DAT_0005f96e; /* 0005f96e */
-extern undefined DAT_0005f972; /* 0005f972 */
-extern undefined DAT_00060868; /* 00060868 */
-extern undefined DAT_0006086a; /* 0006086a */
-extern undefined DAT_0006086c; /* 0006086c */
-extern undefined DAT_00060890; /* 00060890 */
-extern undefined DAT_00060d48; /* 00060d48 */
-extern undefined DAT_00060d50; /* 00060d50 */
-extern undefined DAT_00060d58; /* 00060d58 */
-extern undefined DAT_00060d60; /* 00060d60 */
-extern undefined DAT_00060d68; /* 00060d68 */
-extern undefined DAT_00060d70; /* 00060d70 */
-extern undefined DAT_00060d78; /* 00060d78 */
-extern undefined DAT_00060d80; /* 00060d80 */
-extern undefined4 DAT_00060d88; /* 00060d88 */
-extern undefined DAT_000617e4; /* 000617e4 */
-extern undefined DAT_000617ec; /* 000617ec */
-extern undefined DAT_000617f4; /* 000617f4 */
-extern undefined DAT_000617fc; /* 000617fc */
-extern undefined DAT_00061804; /* 00061804 */
-extern undefined DAT_0006180c; /* 0006180c */
-extern undefined DAT_00061814; /* 00061814 */
-extern undefined DAT_0006181c; /* 0006181c */
-extern undefined DAT_00061824; /* 00061824 */
-extern undefined DAT_0006182c; /* 0006182c */
-extern undefined DAT_00061834; /* 00061834 */
-extern undefined DAT_0006183c; /* 0006183c */
-extern undefined DAT_000618d4; /* 000618d4 */
-extern undefined DAT_00061b94; /* 00061b94 */
-extern undefined DAT_00061b9c; /* 00061b9c */
-extern undefined DAT_00061ba4; /* 00061ba4 */
-extern undefined DAT_00061bac; /* 00061bac */
-extern undefined DAT_00101e70; /* 00101e70 */
 extern undefined1 DAT_0010253e; /* 0010253e */
 extern undefined1 DAT_0010253f; /* 0010253f */
 extern undefined1 DAT_00102c60; /* 00102c60 */
-extern undefined1 DAT_0010aad3; /* 0010aad3 */
-extern undefined1 DAT_0010aaf3; /* 0010aaf3 */
+extern undefined DAT_0010aaf3; /* 0010aaf3 */
 extern undefined4 DAT_0010ffe6; /* 0010ffe6 */
 extern undefined4 DAT_0010ffea; /* 0010ffea */
 extern undefined4 DAT_0010ffee; /* 0010ffee */
 extern undefined4 DAT_0010fff2; /* 0010fff2 */
 extern undefined4 DAT_0010fff6; /* 0010fff6 */
 extern undefined4 DAT_0010fffa; /* 0010fffa */
-extern volatile undefined DAT_00300000; /* 00300000 */
-extern volatile undefined DAT_00304000; /* 00304000 */
-extern volatile undefined DAT_00306000; /* 00306000 */
-extern uint16_t DAT_00400000; /* 00400000 */
-extern uint8_t DAT_00400002; /* 00400002 */
-extern uint8_t DAT_00400003; /* 00400003 */
-extern uint8_t DAT_00400004; /* 00400004 */
-extern uint8_t DAT_00400005; /* 00400005 */
-extern uint8_t DAT_00400006; /* 00400006 */
-extern uint8_t DAT_00400007; /* 00400007 */
-extern uint8_t DAT_00400008; /* 00400008 */
-extern uint16_t DAT_00400010; /* 00400010 */
-extern undefined DAT_00400012; /* 00400012 */
-extern undefined DAT_00400024; /* 00400024 */
-extern char DAT_00400036; /* 00400036 */
-extern undefined DAT_00400060; /* 00400060 */
-extern undefined DAT_00400062; /* 00400062 */
-extern undefined DAT_00400066; /* 00400066 */
-extern undefined DAT_0040006a; /* 0040006a */
-extern undefined DAT_00400080; /* 00400080 */
-extern undefined DAT_00400082; /* 00400082 */
-extern undefined DAT_00400086; /* 00400086 */
-extern undefined DAT_004000c4; /* 004000c4 */
-extern undefined DAT_00400144; /* 00400144 */
 extern undefined DAT_00700000; /* 00700000 */
 extern undefined LAB_000277ec; /* 000277ec */
 extern undefined LAB_00033454; /* 00033454 */
@@ -2763,21 +2786,10 @@ extern undefined4 *PTR_DAT_00021e2e; /* 00021e2e */
 extern undefined4 *PTR_DAT_00021e32; /* 00021e32 */
 extern undefined4 *PTR_DAT_0004cf80; /* 0004cf80 */
 extern undefined4 *PTR_DAT_00050e5e; /* 00050e5e */
-extern undefined4 *PTR_DAT_00050e66; /* 00050e66 */
 extern undefined4 *PTR_diag_cal_0001c8ac; /* 0001c8ac */
 extern undefined4 *PTR_gps_request_step_00050cc2; /* 00050cc2 */
 extern undefined4 *PTR_lamp_test_command_000186b0; /* 000186b0 */
 extern undefined4 *PTR_s_Self_Test_0004d076; /* 0004d076 */
-extern undefined UNK_00012350; /* 00012350 */
-extern undefined UNK_00028720; /* 00028720 */
-extern undefined UNK_00028722; /* 00028722 */
-extern undefined UNK_00032700; /* 00032700 */
-extern undefined UNK_00033cc6; /* 00033cc6 */
-extern undefined UNK_00041300; /* 00041300 */
-extern undefined UNK_0005fa2d; /* 0005fa2d */
-extern undefined UNK_0006184c; /* 0006184c */
-extern undefined UNK_00061854; /* 00061854 */
-extern undefined UNK_00061864; /* 00061864 */
 extern undefined UNK_00061c0f; /* 00061c0f */
 extern undefined UNK_0007a120; /* 0007a120 */
 extern undefined UNK_00100b84; /* 00100b84 */
@@ -2930,126 +2942,19 @@ extern word WORD_0004fc90; /* 0004fc90 */
 extern word WORD_0005ed48; /* 0005ed48 */
 extern undefined atexit_functions; /* 001038b4 */
 extern undefined installer_atexit_functions; /* 0010b03c */
-extern char installer_float_exception_message; /* 0010aad2 */
 extern char installer_program_end_message; /* 0010aaf2 */
 extern undefined klok_mutex; /* 001037b4 */
 extern undefined log_mutex; /* 00101d36 */
-extern undefined nv_records; /* 004000c0 */
 extern undefined nv_settings_defaults; /* 00030966 */
 extern uint8_t reference_valid_override_request; /* 00100c68 */
+extern undefined retained_block; /* 00101e70 */
 extern char s_DUART_test_string_0001ee6e[]; /* 0001ee6e */
 extern word switchD_000205c0; /* 000205c4 */
 extern uint8_t uint8_t_0010142a; /* 0010142a */
 
-__asm__(".set DAT_00010cb0, 0x00010cb0");
-__asm__(".set DAT_00010cca, 0x00010cca");
-__asm__(".set DAT_0001189c, 0x0001189c");
-__asm__(".set DAT_0001234c, 0x0001234c");
-__asm__(".set DAT_00012614, 0x00012614");
-__asm__(".set DAT_00012618, 0x00012618");
-__asm__(".set DAT_00012704, 0x00012704");
-__asm__(".set DAT_000129fc, 0x000129fc");
-__asm__(".set DAT_00012a74, 0x00012a74");
-__asm__(".set DAT_00012ab0, 0x00012ab0");
-__asm__(".set DAT_0001ed2c, 0x0001ed2c");
-__asm__(".set DAT_00021e3b, 0x00021e3b");
-__asm__(".set DAT_00021e48, 0x00021e48");
-__asm__(".set DAT_000279ca, 0x000279ca");
-__asm__(".set DAT_00027b2e, 0x00027b2e");
-__asm__(".set DAT_00028910, 0x00028910");
-__asm__(".set DAT_00029636, 0x00029636");
-__asm__(".set DAT_0002963a, 0x0002963a");
-__asm__(".set DAT_0002963e, 0x0002963e");
-__asm__(".set DAT_0002acb6, 0x0002acb6");
-__asm__(".set DAT_0002be7d, 0x0002be7d");
-__asm__(".set DAT_0002bf30, 0x0002bf30");
-__asm__(".set DAT_0002d918, 0x0002d918");
-__asm__(".set DAT_0002d91a, 0x0002d91a");
-__asm__(".set DAT_00030816, 0x00030816");
-__asm__(".set DAT_000308b6, 0x000308b6");
-__asm__(".set DAT_00030cec, 0x00030cec");
-__asm__(".set DAT_00032704, 0x00032704");
-__asm__(".set DAT_00032e26, 0x00032e26");
-__asm__(".set DAT_00032ff5, 0x00032ff5");
-__asm__(".set DAT_000333a0, 0x000333a0");
-__asm__(".set DAT_000333be, 0x000333be");
-__asm__(".set DAT_00033490, 0x00033490");
-__asm__(".set DAT_000334b0, 0x000334b0");
-__asm__(".set DAT_000337e4, 0x000337e4");
-__asm__(".set DAT_0003382c, 0x0003382c");
-__asm__(".set DAT_00033898, 0x00033898");
-__asm__(".set DAT_0003393a, 0x0003393a");
-__asm__(".set DAT_00033d20, 0x00033d20");
-__asm__(".set DAT_00033d3e, 0x00033d3e");
-__asm__(".set DAT_0004cfce, 0x0004cfce");
-__asm__(".set DAT_0004d10b, 0x0004d10b");
-__asm__(".set DAT_0004e016, 0x0004e016");
-__asm__(".set DAT_00050cca, 0x00050cca");
-__asm__(".set DAT_00050d32, 0x00050d32");
-__asm__(".set DAT_00050da6, 0x00050da6");
-__asm__(".set DAT_00050dba, 0x00050dba");
-__asm__(".set DAT_00050dce, 0x00050dce");
-__asm__(".set DAT_00050dde, 0x00050dde");
-__asm__(".set DAT_00050df2, 0x00050df2");
-__asm__(".set DAT_00050e72, 0x00050e72");
-__asm__(".set DAT_00050e96, 0x00050e96");
-__asm__(".set DAT_00050eb6, 0x00050eb6");
-__asm__(".set DAT_00050ede, 0x00050ede");
-__asm__(".set DAT_00050f12, 0x00050f12");
-__asm__(".set DAT_00050f26, 0x00050f26");
-__asm__(".set DAT_00050f3a, 0x00050f3a");
-__asm__(".set DAT_00050f5a, 0x00050f5a");
-__asm__(".set DAT_00050f72, 0x00050f72");
-__asm__(".set DAT_00050f8a, 0x00050f8a");
-__asm__(".set DAT_00050fa2, 0x00050fa2");
-__asm__(".set DAT_00050fce, 0x00050fce");
-__asm__(".set DAT_0005122a, 0x0005122a");
-__asm__(".set DAT_000512cd, 0x000512cd");
-__asm__(".set DAT_000512d2, 0x000512d2");
-__asm__(".set DAT_00051385, 0x00051385");
-__asm__(".set DAT_0005171a, 0x0005171a");
-__asm__(".set DAT_00053034, 0x00053034");
-__asm__(".set DAT_0005ed99, 0x0005ed99");
-__asm__(".set DAT_0005f860, 0x0005f860");
-__asm__(".set DAT_0005f864, 0x0005f864");
-__asm__(".set DAT_0005f938, 0x0005f938");
-__asm__(".set DAT_0005f96e, 0x0005f96e");
-__asm__(".set DAT_0005f972, 0x0005f972");
-__asm__(".set DAT_00060868, 0x00060868");
-__asm__(".set DAT_0006086a, 0x0006086a");
-__asm__(".set DAT_0006086c, 0x0006086c");
-__asm__(".set DAT_00060890, 0x00060890");
-__asm__(".set DAT_00060d48, 0x00060d48");
-__asm__(".set DAT_00060d50, 0x00060d50");
-__asm__(".set DAT_00060d58, 0x00060d58");
-__asm__(".set DAT_00060d60, 0x00060d60");
-__asm__(".set DAT_00060d68, 0x00060d68");
-__asm__(".set DAT_00060d70, 0x00060d70");
-__asm__(".set DAT_00060d78, 0x00060d78");
-__asm__(".set DAT_00060d80, 0x00060d80");
-__asm__(".set DAT_00060d88, 0x00060d88");
-__asm__(".set DAT_000617e4, 0x000617e4");
-__asm__(".set DAT_000617ec, 0x000617ec");
-__asm__(".set DAT_000617f4, 0x000617f4");
-__asm__(".set DAT_000617fc, 0x000617fc");
-__asm__(".set DAT_00061804, 0x00061804");
-__asm__(".set DAT_0006180c, 0x0006180c");
-__asm__(".set DAT_00061814, 0x00061814");
-__asm__(".set DAT_0006181c, 0x0006181c");
-__asm__(".set DAT_00061824, 0x00061824");
-__asm__(".set DAT_0006182c, 0x0006182c");
-__asm__(".set DAT_00061834, 0x00061834");
-__asm__(".set DAT_0006183c, 0x0006183c");
-__asm__(".set DAT_000618d4, 0x000618d4");
-__asm__(".set DAT_00061b94, 0x00061b94");
-__asm__(".set DAT_00061b9c, 0x00061b9c");
-__asm__(".set DAT_00061ba4, 0x00061ba4");
-__asm__(".set DAT_00061bac, 0x00061bac");
-__asm__(".set DAT_00101e70, 0x00101e70");
 __asm__(".set DAT_0010253e, 0x0010253e");
 __asm__(".set DAT_0010253f, 0x0010253f");
 __asm__(".set DAT_00102c60, 0x00102c60");
-__asm__(".set DAT_0010aad3, 0x0010aad3");
 __asm__(".set DAT_0010aaf3, 0x0010aaf3");
 __asm__(".set DAT_0010ffe6, 0x0010ffe6");
 __asm__(".set DAT_0010ffea, 0x0010ffea");
@@ -3057,30 +2962,6 @@ __asm__(".set DAT_0010ffee, 0x0010ffee");
 __asm__(".set DAT_0010fff2, 0x0010fff2");
 __asm__(".set DAT_0010fff6, 0x0010fff6");
 __asm__(".set DAT_0010fffa, 0x0010fffa");
-__asm__(".set DAT_00300000, 0x00300000");
-__asm__(".set DAT_00304000, 0x00304000");
-__asm__(".set DAT_00306000, 0x00306000");
-__asm__(".set DAT_00400000, 0x00400000");
-__asm__(".set DAT_00400002, 0x00400002");
-__asm__(".set DAT_00400003, 0x00400003");
-__asm__(".set DAT_00400004, 0x00400004");
-__asm__(".set DAT_00400005, 0x00400005");
-__asm__(".set DAT_00400006, 0x00400006");
-__asm__(".set DAT_00400007, 0x00400007");
-__asm__(".set DAT_00400008, 0x00400008");
-__asm__(".set DAT_00400010, 0x00400010");
-__asm__(".set DAT_00400012, 0x00400012");
-__asm__(".set DAT_00400024, 0x00400024");
-__asm__(".set DAT_00400036, 0x00400036");
-__asm__(".set DAT_00400060, 0x00400060");
-__asm__(".set DAT_00400062, 0x00400062");
-__asm__(".set DAT_00400066, 0x00400066");
-__asm__(".set DAT_0040006a, 0x0040006a");
-__asm__(".set DAT_00400080, 0x00400080");
-__asm__(".set DAT_00400082, 0x00400082");
-__asm__(".set DAT_00400086, 0x00400086");
-__asm__(".set DAT_004000c4, 0x004000c4");
-__asm__(".set DAT_00400144, 0x00400144");
 __asm__(".set DAT_00700000, 0x00700000");
 __asm__(".set LAB_000277ec, 0x000277ec");
 __asm__(".set LAB_00033454, 0x00033454");
@@ -3093,21 +2974,10 @@ __asm__(".set PTR_DAT_00021e2e, 0x00021e2e");
 __asm__(".set PTR_DAT_00021e32, 0x00021e32");
 __asm__(".set PTR_DAT_0004cf80, 0x0004cf80");
 __asm__(".set PTR_DAT_00050e5e, 0x00050e5e");
-__asm__(".set PTR_DAT_00050e66, 0x00050e66");
 __asm__(".set PTR_diag_cal_0001c8ac, 0x0001c8ac");
 __asm__(".set PTR_gps_request_step_00050cc2, 0x00050cc2");
 __asm__(".set PTR_lamp_test_command_000186b0, 0x000186b0");
 __asm__(".set PTR_s_Self_Test_0004d076, 0x0004d076");
-__asm__(".set UNK_00012350, 0x00012350");
-__asm__(".set UNK_00028720, 0x00028720");
-__asm__(".set UNK_00028722, 0x00028722");
-__asm__(".set UNK_00032700, 0x00032700");
-__asm__(".set UNK_00033cc6, 0x00033cc6");
-__asm__(".set UNK_00041300, 0x00041300");
-__asm__(".set UNK_0005fa2d, 0x0005fa2d");
-__asm__(".set UNK_0006184c, 0x0006184c");
-__asm__(".set UNK_00061854, 0x00061854");
-__asm__(".set UNK_00061864, 0x00061864");
 __asm__(".set UNK_00061c0f, 0x00061c0f");
 __asm__(".set UNK_0007a120, 0x0007a120");
 __asm__(".set UNK_00100b84, 0x00100b84");
@@ -3275,8 +3145,10 @@ __asm__(".set command_log_snapshot, 0x001019a2");
 __asm__(".set command_monitor_result, 0x00101428");
 __asm__(".set console_device, 0x00100a02");
 __asm__(".set console_halt_hook_cell, 0x001009fe");
+__asm__(".set console_task_id, 0x00100b10");
 __asm__(".set counter_configuration, 0x00101fae");
 __asm__(".set crash_message, 0x0010094e");
+__asm__(".set ctype_table, 0x0005ed98");
 __asm__(".set days_before_month, 0x0001186c");
 __asm__(".set days_before_month_leap, 0x00011884");
 __asm__(".set debug_enabled, 0x001037dd");
@@ -3295,10 +3167,16 @@ __asm__(".set dmes_pllp, 0x00103814");
 __asm__(".set dmes_root, 0x00103818");
 __asm__(".set dmes_scpi, 0x0010381c");
 __asm__(".set dmes_spoo, 0x00103820");
+__asm__(".set doprnt_hex_prefix, 0x00060890");
+__asm__(".set doprnt_minus, 0x00060868");
+__asm__(".set doprnt_plus, 0x0006086a");
+__asm__(".set doprnt_space, 0x0006086c");
 __asm__(".set douglas_finish_nv_argument, 0x0010258b");
 __asm__(".set douglas_finish_requested, 0x0010258a");
 __asm__(".set douglas_log_event, 0x00102040");
 __asm__(".set douglas_start_requested, 0x00102588");
+__asm__(".set douglas_state_text_0, 0x0002d918");
+__asm__(".set douglas_state_text_once, 0x0002d91a");
 __asm__(".set douglas_stop_requested, 0x00102589");
 __asm__(".set duart, 0x00200000");
 __asm__(".set duart_shadow, 0x00102ed0");
@@ -3311,12 +3189,18 @@ __asm__(".set duartb_settings, 0x00101f58");
 __asm__(".set duartb_settings_defaults, 0x00030a34");
 __asm__(".set early_status_happenings, 0x00102ec4");
 __asm__(".set early_status_reports, 0x00102ebc");
+__asm__(".set eeprom_calibration_block, 0x00400080");
+__asm__(".set eeprom_identification_record, 0x00400010");
+__asm__(".set eeprom_lifetime_record, 0x00400060");
+__asm__(".set eeprom_parameter_record, 0x00400000");
 __asm__(".set eeprom_writing, 0x00101d34");
 __asm__(".set eepx_exchange, 0x00101d18");
 __asm__(".set eepx_token, 0x00101d1c");
 __asm__(".set efc_gains, 0x00102554");
 __asm__(".set efc_range, 0x00101cf4");
+__asm__(".set efc_strobe, 0x00306000");
 __asm__(".set errno, 0x0010393a");
+__asm__(".set error_message_none, 0x00030816");
 __asm__(".set es_ascii, 0x00103830");
 __asm__(".set es_compare_wraps, 0x00100bd0");
 __asm__(".set es_enabled, 0x00103831");
@@ -3337,8 +3221,20 @@ __asm__(".set first_satellite_logged, 0x00102160");
 __asm__(".set float_control, 0x001038b2");
 __asm__(".set float_exception_message, 0x00100bd4");
 __asm__(".set float_status, 0x001038b0");
+__asm__(".set forth_base_letters, 0x00019086");
+__asm__(".set forth_begin_tag, 0x00019556");
+__asm__(".set forth_character_classes, 0x00018de2");
+__asm__(".set forth_do_tag, 0x0001942d");
+__asm__(".set forth_if_tag, 0x000194de");
+__asm__(".set forth_pad_buffer, 0x00100a8a");
+__asm__(".set forth_prompt, 0x00100b14");
+__asm__(".set forth_sine_table, 0x00019a2c");
+__asm__(".set forth_terminal_input, 0x00100a04");
+__asm__(".set forth_while_tag, 0x0001956a");
 __asm__(".set fpga_bit_table, 0x00041310");
+__asm__(".set fpga_port, 0x00304000");
 __asm__(".set fpga_programming, 0x00101b6c");
+__asm__(".set fpga_readback_mask, 0x00021e3b");
 __asm__(".set gps, 0x00100c6a");
 __asm__(".set gps_ack_abandoned, 0x00102587");
 __asm__(".set gps_ack_awaited, 0x00102586");
@@ -3367,6 +3263,26 @@ __asm__(".set gps_response_cursor, 0x0010138c");
 __asm__(".set gps_response_index, 0x00101396");
 __asm__(".set gps_response_length, 0x00101398");
 __asm__(".set gps_response_remaining, 0x0010139a");
+__asm__(".set gps_script_47, 0x00050cca");
+__asm__(".set gps_script_48, 0x00050d32");
+__asm__(".set gps_script_49, 0x00050da6");
+__asm__(".set gps_script_4a, 0x00050dba");
+__asm__(".set gps_script_4b, 0x00050dce");
+__asm__(".set gps_script_4c, 0x00050dde");
+__asm__(".set gps_script_4d, 0x00050df2");
+__asm__(".set gps_script_4e, 0x00050e66");
+__asm__(".set gps_script_4f, 0x00050e72");
+__asm__(".set gps_script_50, 0x00050e96");
+__asm__(".set gps_script_51, 0x00050eb6");
+__asm__(".set gps_script_52, 0x00050ede");
+__asm__(".set gps_script_53, 0x00050f12");
+__asm__(".set gps_script_54, 0x00050f26");
+__asm__(".set gps_script_55, 0x00050f3a");
+__asm__(".set gps_script_56, 0x00050f5a");
+__asm__(".set gps_script_57, 0x00050f72");
+__asm__(".set gps_script_58, 0x00050f8a");
+__asm__(".set gps_script_59, 0x00050fa2");
+__asm__(".set gps_script_none, 0x00050fce");
 __asm__(".set gps_status_print_count, 0x00101b6b");
 __asm__(".set gps_status_print_interval, 0x00101b6a");
 __asm__(".set gps_task_state, 0x0010139c");
@@ -3380,6 +3296,7 @@ __asm__(".set hmon_tick_countdown, 0x001037d6");
 __asm__(".set holdover_duration_exceeded, 0x00101e88");
 __asm__(".set holdover_recovery_auto, 0x00101e76");
 __asm__(".set holdover_steering, 0x00102042");
+__asm__(".set identification_tag, 0x00032ff5");
 __asm__(".set idle_loops, 0x0010382c");
 __asm__(".set idle_loops_last_second, 0x001037cc");
 __asm__(".set idn_model, 0x00101f68");
@@ -3436,12 +3353,16 @@ __asm__(".set interval_mean_flag, 0x0010253c");
 __asm__(".set interval_reading, 0x00101f9c");
 __asm__(".set interval_tick_wait, 0x0010207a");
 __asm__(".set io_table, 0x001025bc");
+__asm__(".set io_table_defaults, 0x0005171a");
 __asm__(".set kernel_running, 0x001037dc");
 __asm__(".set klok_entries, 0x00103722");
 __asm__(".set klok_free, 0x00103726");
 __asm__(".set klok_mutex, 0x001037b4");
 __asm__(".set klok_pool, 0x0010372a");
+__asm__(".set lamp_latch, 0x00300000");
 __asm__(".set last_exception, 0x0010099e");
+__asm__(".set leap_event_gps_template, 0x00010cb0");
+__asm__(".set leap_event_utc_template, 0x00010cca");
 __asm__(".set leap_minute_pending, 0x00100bc8");
 __asm__(".set leap_recheck_requested, 0x0010258e");
 __asm__(".set led_active, 0x00101e74");
@@ -3449,21 +3370,35 @@ __asm__(".set led_alarm, 0x00101e72");
 __asm__(".set led_enabled, 0x00101e75");
 __asm__(".set lifetime, 0x00101d00");
 __asm__(".set lifetime_event, 0x00101d14");
+__asm__(".set lifetime_event_template, 0x00030cec");
+__asm__(".set log2_e_minus_1, 0x0006183c");
+__asm__(".set log_a0, 0x00060d58");
+__asm__(".set log_a1, 0x00060d60");
+__asm__(".set log_a2, 0x00060d68");
+__asm__(".set log_b0, 0x00060d70");
+__asm__(".set log_b1, 0x00060d78");
+__asm__(".set log_b2, 0x00060d80");
 __asm__(".set log_cursor, 0x00101d90");
 __asm__(".set log_entries, 0x00101dd8");
 __asm__(".set log_entry_count, 0x00101f8e");
 __asm__(".set log_full, 0x00101dd6");
+__asm__(".set log_ln2_high, 0x00060d48");
+__asm__(".set log_ln2_low, 0x00060d50");
 __asm__(".set log_mutex, 0x00101d36");
 __asm__(".set log_page_buffer, 0x00101d94");
 __asm__(".set log_page_number, 0x00101dd4");
+__asm__(".set log_print_newline, 0x0002be7d");
 __asm__(".set log_write_page, 0x00101d4e");
 __asm__(".set log_write_page_number, 0x00101d8e");
 __asm__(".set log_write_page_open, 0x00101dd7");
 __asm__(".set loop_steering, 0x0010205e");
 __asm__(".set loopback_expect_next, 0x00103146");
+__asm__(".set loopback_idle_text, 0x0001ed2c");
 __asm__(".set loopback_send_next, 0x00103142");
 __asm__(".set low_bit_masks, 0x000314b2");
 __asm__(".set max_loop_time, 0x00101e84");
+__asm__(".set month_lengths, 0x0001189c");
+__asm__(".set month_names, 0x0004cfce");
 __asm__(".set nv_bytes_loaded, 0x00101f66");
 __asm__(".set nv_numeric_bytes_loaded, 0x00101f64");
 __asm__(".set nv_numeric_params, 0x00032d5e");
@@ -3491,7 +3426,11 @@ __asm__(".set oncore_receiver_id_field_codes, 0x00051004");
 __asm__(".set oncore_status_field_codes, 0x00050fd2");
 __asm__(".set oncore_visibility_field_codes, 0x00050fd8");
 __asm__(".set oncore_xdop_table_field_codes, 0x00050fe2");
+__asm__(".set opc_response, 0x0002acb6");
+__asm__(".set os_report_any_text, 0x000512d2");
+__asm__(".set os_report_comma, 0x00051385");
 __asm__(".set os_report_format, 0x00051382");
+__asm__(".set os_report_group_text, 0x000512cd");
 __asm__(".set os_report_newline, 0x000512e6");
 __asm__(".set outer_oven_enabled, 0x00101b71");
 __asm__(".set pforth_dictionary_end, 0x001009fa");
@@ -3518,13 +3457,36 @@ __asm__(".set plla_received_count, 0x0010259c");
 __asm__(".set plla_unexpected_count, 0x001025a4");
 __asm__(".set plla_unknown_count, 0x001025a0");
 __asm__(".set pllc_exchange, 0x00103804");
+__asm__(".set pow_error_result, 0x00060d88");
+__asm__(".set pow_exp2_q1, 0x00061804");
+__asm__(".set pow_exp2_q2, 0x0006180c");
+__asm__(".set pow_exp2_q3, 0x00061814");
+__asm__(".set pow_exp2_q4, 0x0006181c");
+__asm__(".set pow_exp2_q5, 0x00061824");
+__asm__(".set pow_exp2_q6, 0x0006182c");
+__asm__(".set pow_exp2_q7, 0x00061834");
+__asm__(".set pow_log_p1, 0x000617e4");
+__asm__(".set pow_log_p2, 0x000617ec");
+__asm__(".set pow_log_p3, 0x000617f4");
+__asm__(".set pow_log_p4, 0x000617fc");
+__asm__(".set pow_two_power_tails, 0x000618d4");
+__asm__(".set pow_two_powers, 0x0006184c");
+__asm__(".set powers_of_ten_1_to_24_exponents, 0x0005fa2e");
+__asm__(".set powers_of_ten_1_to_24_mantissas, 0x0005f96e");
 __asm__(".set powers_of_ten_64, 0x0005fa46");
+__asm__(".set powers_of_ten_by_25_exponents, 0x0005f938");
+__asm__(".set powers_of_ten_by_25_mantissas, 0x0005f860");
+__asm__(".set powers_of_ten_double, 0x00012614");
+__asm__(".set powers_of_ten_float, 0x000129fc");
+__asm__(".set powers_of_ten_float_21, 0x00032700");
+__asm__(".set powers_of_ten_times_five, 0x0001234c");
 __asm__(".set pps_exchange, 0x00100bc4");
 __asm__(".set pps_message, 0x00100bac");
 __asm__(".set preserved_region, 0x00100000");
 __asm__(".set primary_vectors, 0x00010000");
 __asm__(".set program_end_message, 0x00100bf4");
 __asm__(".set psos_config, 0x0010264c");
+__asm__(".set psos_config_defaults, 0x0005122a");
 __asm__(".set psos_debug_enabled, 0x001037de");
 __asm__(".set qsm, 0x00fffc00");
 __asm__(".set qsort_compare, 0x00103940");
@@ -3536,9 +3498,12 @@ __asm__(".set reference_valid_override_request, 0x00100c68");
 __asm__(".set reset_to_recover_text, 0x00011b8c");
 __asm__(".set restart_reference_seconds, 0x0010258c");
 __asm__(".set restart_reference_uptime, 0x00102594");
+__asm__(".set retained_block, 0x00101e70");
 __asm__(".set retained_block_defaults, 0x0003094c");
 __asm__(".set robin_keyword_code, 0x00102d74");
 __asm__(".set s_DUART_test_string_0001ee6e, 0x0001ee6e");
+__asm__(".set sample_values_defaults, 0x000308b6");
+__asm__(".set satellite_status_blank_entry, 0x0004e016");
 __asm__(".set sci, 0x0010328a");
 __asm__(".set sci_exchanges, 0x00103150");
 __asm__(".set sci_ring, 0x00103188");
@@ -3561,12 +3526,18 @@ __asm__(".set scpi_action_temporary_hold, 0x0004133c");
 __asm__(".set scpi_echo_length, 0x00102a46");
 __asm__(".set scpi_echo_response, 0x00102c64");
 __asm__(".set scpi_echo_text, 0x00102a47");
+__asm__(".set scpi_error_messages, 0x00028910");
 __asm__(".set scpi_input_end, 0x00102c52");
+__asm__(".set scpi_input_end_code, 0x0002963e");
 __asm__(".set scpi_input_line, 0x00102b4e");
 __asm__(".set scpi_input_next, 0x00102c4e");
 __asm__(".set scpi_input_repeat, 0x00102b4a");
 __asm__(".set scpi_language, 0x00102c62");
 __asm__(".set scpi_last_input, 0x00102b46");
+__asm__(".set scpi_main_tree, 0x00053034");
+__asm__(".set scpi_message_end_code, 0x0002963a");
+__asm__(".set scpi_multipliers, 0x00027b2e");
+__asm__(".set scpi_normalize_exponents, 0x00025144");
 __asm__(".set scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe, 0x000342ba");
 __asm__(".set scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold, 0x000342f8");
 __asm__(".set scpi_param_DIAGnostic_GPSystem_UTC, 0x00033d98");
@@ -3579,16 +3550,24 @@ __asm__(".set scpi_param_DOUGlas_DURation, 0x00033eda");
 __asm__(".set scpi_param_DOUGlas_DURation_INFinity, 0x0003427e");
 __asm__(".set scpi_param_DOUGlas_STATe, 0x00033d5c");
 __asm__(".set scpi_param_DOUGlas_STATe_POWerup, 0x00033df2");
+__asm__(".set scpi_param_DOUGlas_STATe_request, 0x0003393a");
 __asm__(".set scpi_param_FORMat_DATA, 0x00034224");
 __asm__(".set scpi_param_KENneth_PREDicted_DURation, 0x0003409c");
+__asm__(".set scpi_param_LED_ACTive, 0x00033cc6");
+__asm__(".set scpi_param_LED_ENABled, 0x00033d20");
 __asm__(".set scpi_param_OUTPut_STATe, 0x00033968");
 __asm__(".set scpi_param_ROBin_MEMory_SAVE, 0x00034260");
 __asm__(".set scpi_param_SAMPle_FARR, 0x000336da");
 __asm__(".set scpi_param_SAMPle_FLOat, 0x0003367a");
 __asm__(".set scpi_param_SAMPle_IARR, 0x0003354e");
 __asm__(".set scpi_param_SAMPle_INTeger, 0x000334de");
+__asm__(".set scpi_param_SAMPle_TARR, 0x000334b0");
+__asm__(".set scpi_param_SAMPle_TOGGle, 0x00033490");
 __asm__(".set scpi_param_SOURce_GPSystem_ADELay, 0x00033f94");
 __asm__(".set scpi_param_SOURce_GPSystem_EMANgle, 0x00033f56");
+__asm__(".set scpi_param_SOURce_GPSystem_INITial_DATE, 0x000337e4");
+__asm__(".set scpi_param_SOURce_GPSystem_INITial_POSition_longitude, 0x00033898");
+__asm__(".set scpi_param_SOURce_GPSystem_INITial_TIME, 0x0003382c");
 __asm__(".set scpi_param_SOURce_GPSystem_POSition, 0x00034178");
 __asm__(".set scpi_param_SOURce_GPSystem_SATellite_TRACking_IGNore, 0x00034010");
 __asm__(".set scpi_param_SOURce_PTIMe_TCODe_FORMat, 0x00034206");
@@ -3601,13 +3580,20 @@ __asm__(".set scpi_param_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THResh
 __asm__(".set scpi_param_SOURce_ROSCillator_HOLDover_DURation_STATus_THReshold, 0x00033f18");
 __asm__(".set scpi_param_SOURce_ROSCillator_HOLDover_LIMit_STATe, 0x00033dd4");
 __asm__(".set scpi_param_SOURce_ROSCillator_HOLDover_LIMit_THReshold, 0x00033e5e");
+__asm__(".set scpi_param_SOURce_ROSCillator_HOLDover_RECovery_AUTO, 0x00033d3e");
 __asm__(".set scpi_param_SOURce_ROSCillator_LIMit_THReshold, 0x00033e20");
 __asm__(".set scpi_param_STATus_ENABle, 0x00033bae");
 __asm__(".set scpi_param_STATus_NTRansition, 0x00033c5c");
 __asm__(".set scpi_param_STATus_PTRansition, 0x00033c30");
 __asm__(".set scpi_param_STATus_QUEStionable_USER, 0x00033b1a");
+__asm__(".set scpi_param_SYSTem_COMMunicate_SER1_RECeive_BITS, 0x000333a0");
+__asm__(".set scpi_param_SYSTem_COMMunicate_SER1_RECeive_SBITs, 0x000333be");
+__asm__(".set scpi_parameter_kind_errors, 0x000279ca");
+__asm__(".set scpi_powers_of_ten, 0x000256ae");
+__asm__(".set scpi_powers_of_ten_64, 0x00025b36");
 __asm__(".set scpi_prompt_enabled, 0x00102c63");
 __asm__(".set scpi_prompt_text, 0x00102c56");
+__asm__(".set scpi_response_begin_code, 0x00029636");
 __asm__(".set scpi_value_DIAGnostic_ROSCillator_TCOefficient, 0x00101d0c");
 __asm__(".set scpi_value_DIAGnostic_TOFFset, 0x00101d10");
 __asm__(".set scpi_value_SAMPle_BARR, 0x00101ddd");
@@ -3633,14 +3619,21 @@ __asm__(".set spoo_exchange, 0x001032f8");
 __asm__(".set spoo_message, 0x00103702");
 __asm__(".set spoo_receive_error, 0x0010371a");
 __asm__(".set spoo_started, 0x001032fc");
+__asm__(".set sqrt_half_high, 0x00061ba4");
+__asm__(".set sqrt_half_low, 0x00061bac");
+__asm__(".set sqrt_seed_a, 0x00061b94");
+__asm__(".set sqrt_seed_b, 0x00061b9c");
 __asm__(".set status_byte, 0x00102b4c");
 __asm__(".set status_conditions, 0x0002f838");
 __asm__(".set status_message_arrived, 0x00101b54");
 __asm__(".set status_monitor_result, 0x00101429");
+__asm__(".set status_negative_conditions, 0x00028720");
 __asm__(".set status_object, 0x00102eb8");
 __asm__(".set status_ready, 0x00102eb7");
 __asm__(".set status_register_setup_table, 0x0002f7ac");
+__asm__(".set status_report_messages, 0x0002bf30");
 __asm__(".set status_request_service, 0x00102eb6");
+__asm__(".set status_screen_blank, 0x0004d10b");
 __asm__(".set status_screen_print_interval, 0x001011c5");
 __asm__(".set status_screen_snapshot, 0x0010142c");
 __asm__(".set status_snapshot_flagged, 0x0010168e");
@@ -3649,6 +3642,7 @@ __asm__(".set status_snapshot_latest, 0x00101560");
 __asm__(".set status_snapshots_frozen, 0x0010155a");
 __asm__(".set status_summary, 0x00102544");
 __asm__(".set status_without_traim_count, 0x0010142a");
+__asm__(".set string_device_cursor, 0x00100ba8");
 __asm__(".set survey_position, 0x00101e78");
 __asm__(".set survey_position_valid, 0x00101e77");
 __asm__(".set switchD_000205c0, 0x000205c4");
@@ -3675,6 +3669,7 @@ __asm__(".set ticks_since_pps, 0x001037d8");
 __asm__(".set time_zone_change_pending, 0x00102551");
 __asm__(".set timecode_compare_wraps, 0x00100bd2");
 __asm__(".set traim_message_arrived, 0x00101b55");
+__asm__(".set two_to_32, 0x00041300");
 __asm__(".set uint8_t_0010142a, 0x0010142a");
 __asm__(".set warm_start, 0x001037df");
 __asm__(".set watchdog_clock, 0x001009b2");
@@ -3684,34 +3679,8 @@ __asm__(".set watchdog_monitor, 0x001009b5");
 __asm__(".set watchdog_pll, 0x001009b4");
 __asm__(".set watchdog_spool, 0x001009b6");
 
-extern undefined1 DAT_00018de2;
-__asm__(".set DAT_00018de2, 0x00018de2");
-extern undefined1 DAT_00019086;
-__asm__(".set DAT_00019086, 0x00019086");
-extern undefined1 DAT_00019a2c;
-__asm__(".set DAT_00019a2c, 0x00019a2c");
-extern undefined1 DAT_00025144;
-__asm__(".set DAT_00025144, 0x00025144");
-extern undefined1 DAT_000256ae;
-__asm__(".set DAT_000256ae, 0x000256ae");
-extern undefined1 DAT_0002572e;
-__asm__(".set DAT_0002572e, 0x0002572e");
-extern undefined1 DAT_00025732;
-__asm__(".set DAT_00025732, 0x00025732");
-extern undefined1 DAT_00025b36;
-__asm__(".set DAT_00025b36, 0x00025b36");
-extern undefined1 DAT_00025b3a;
-__asm__(".set DAT_00025b3a, 0x00025b3a");
 extern undefined1 DAT_001009ec;
 __asm__(".set DAT_001009ec, 0x001009ec");
-extern undefined1 DAT_00100a04;
-__asm__(".set DAT_00100a04, 0x00100a04");
-extern undefined1 DAT_00100a8a;
-__asm__(".set DAT_00100a8a, 0x00100a8a");
-extern undefined1 DAT_00100b10;
-__asm__(".set DAT_00100b10, 0x00100b10");
-extern undefined1 DAT_00100b14;
-__asm__(".set DAT_00100b14, 0x00100b14");
 extern undefined1 DAT_0010ffd0;
 __asm__(".set DAT_0010ffd0, 0x0010ffd0");
 extern undefined1 DAT_0010fffe;
@@ -3854,8 +3823,6 @@ extern undefined1 LAB_00025618;
 __asm__(".set LAB_00025618, 0x00025618");
 extern undefined1 LAB_0002568a;
 __asm__(".set LAB_0002568a, 0x0002568a");
-extern undefined1 LAB_000256ee;
-__asm__(".set LAB_000256ee, 0x000256ee");
 extern undefined1 LAB_00026132;
 __asm__(".set LAB_00026132, 0x00026132");
 extern undefined1 LAB_00026138;
@@ -4250,14 +4217,6 @@ extern undefined4 * PTR_PTR_00025b7e;
 __asm__(".set PTR_PTR_00025b7e, 0x00025b7e");
 extern undefined4 * PTR_PTR_installer__001014c8;
 __asm__(".set PTR_PTR_installer__001014c8, 0x001014c8");
-extern undefined1 UNK_0001942d;
-__asm__(".set UNK_0001942d, 0x0001942d");
-extern undefined1 UNK_000194de;
-__asm__(".set UNK_000194de, 0x000194de");
-extern undefined1 UNK_00019556;
-__asm__(".set UNK_00019556, 0x00019556");
-extern undefined1 UNK_0001956a;
-__asm__(".set UNK_0001956a, 0x0001956a");
 extern word WORD_installer__001030d2;
 __asm__(".set WORD_installer__001030d2, 0x001030d2");
 extern word WORD_installer__00105f12;
@@ -4266,32 +4225,6 @@ extern word WORD_installer__00105fd4;
 __asm__(".set WORD_installer__00105fd4, 0x00105fd4");
 extern word WORD_installer__0010921e;
 __asm__(".set WORD_installer__0010921e, 0x0010921e");
-extern undefined4 _DAT_00100b14;
-__asm__(".set _DAT_00100b14, 0x00100b14");
-extern undefined4 _DAT_00100b18;
-__asm__(".set _DAT_00100b18, 0x00100b18");
-extern undefined4 _DAT_00100b1a;
-__asm__(".set _DAT_00100b1a, 0x00100b1a");
-extern undefined4 _DAT_00100ba8;
-__asm__(".set _DAT_00100ba8, 0x00100ba8");
-extern uint16_t _DAT_00400060;
-__asm__(".set _DAT_00400060, 0x00400060");
-extern uint32_t _DAT_00400062;
-__asm__(".set _DAT_00400062, 0x00400062");
-extern int32_t _DAT_00400066;
-__asm__(".set _DAT_00400066, 0x00400066");
-extern float _DAT_0040006a;
-__asm__(".set _DAT_0040006a, 0x0040006a");
-extern uint16_t _DAT_00400080;
-__asm__(".set _DAT_00400080, 0x00400080");
-extern float _DAT_00400082;
-__asm__(".set _DAT_00400082, 0x00400082");
-extern float _DAT_00400086;
-__asm__(".set _DAT_00400086, 0x00400086");
-extern uint _DAT_004000c4;
-__asm__(".set _DAT_004000c4, 0x004000c4");
-extern uint _DAT_00400144;
-__asm__(".set _DAT_00400144, 0x00400144");
 extern undefined4 _DAT_00700000;
 __asm__(".set _DAT_00700000, 0x00700000");
 extern undefined4 _interval_mean_flag;
@@ -4322,8 +4255,6 @@ extern void * pvRam00100b58;
 __asm__(".set pvRam00100b58, 0x00100b58");
 extern void * pvRam00100b98;
 __asm__(".set pvRam00100b98, 0x00100b98");
-extern undefined4 ram0x00400001;
-__asm__(".set ram0x00400001, 0x00400001");
 extern char s_00000000000000000000_installer__0010a9fb[];
 __asm__(".set s_00000000000000000000_installer__0010a9fb, 0x0010a9fb");
 extern char s_0123456789ABCDEF_installer__0010aa16[];
@@ -4474,7 +4405,7 @@ int time_packed_to_seconds(uint param_1);
 undefined4 days_to_date(undefined *param_1);
 int date_to_days(uint param_1);
 int date_to_mjd(uint param_1);
-undefined1 days_in_month(ushort param_1,byte param_2);
+uint8_t days_in_month(ushort param_1,byte param_2);
 undefined4 date_normalize(uint param_1);
 undefined3 oncore_date_unpack(undefined4 param_1);
 undefined4 oncore_date_pack(undefined4 param_1);
@@ -4513,9 +4444,9 @@ int double_round_to_long(undefined4 param_1,undefined4 param_2);
 int round_divide(int param_1,int param_2);
 undefined4 double_decimal_exponent_rounded(uint param_1,uint param_2);
 undefined4 double_decimal_exponent(uint param_1,uint param_2);
-undefined8 power_of_ten_double(short param_1);
+double power_of_ten_double(short param_1);
 undefined4 tfom_table_index(uint param_1);
-undefined4 power_of_ten_float(short param_1);
+float power_of_ten_float(short param_1);
 void scpi_param_hook_nothing(void);
 int random_dither(void);
 void start_nothing(void);
@@ -4681,6 +4612,7 @@ void task_stack_info(int param_1,undefined4 *param_2,undefined4 *param_3,int *pa
                     undefined4 *param_6,int *param_7);
 void task_stack_report(undefined1 param_1);
 void psos_debug_output(char param_1);
+void tick_account(short mode) __asm__("c_tick_account");
 void task_count_tick(void);
 int psos_call(char service, int d0, int d1, int d2, int d3, void *a0, void *a1) __asm__("c_psos_call");
 int psos_io_call(char function, int device, int d1, int d2, int d3, void *a0, void *a1) __asm__("c_psos_io_call");
@@ -5315,7 +5247,7 @@ void status_register_set_ptr(int param_1,int param_2,undefined4 param_3);
 void status_register_set_ntr(int param_1,int param_2,undefined4 param_3);
 void status_register_get_ptr(int param_1,int param_2,undefined2 *param_3);
 void status_register_get_ntr(int param_1,int param_2,undefined2 *param_3);
-undefined4 error_message_lookup(undefined4 param_1);
+char * error_message_lookup(undefined4 param_1);
 undefined4
 scpi_interpret(int param_1,int param_2,int *param_3,uint param_4,undefined4 param_5,int param_6,
               status_model *param_7,undefined4 param_8,undefined4 param_9);
@@ -5744,7 +5676,7 @@ uint log_page_free_entry(int param_1);
 undefined1 log_flush(void);
 undefined4 log_append(char *param_1,int32_t param_2,int32_t param_3);
 void report_clamped(char param_1,byte param_2);
-undefined4 float_table_index(float *param_1,short param_2);
+float float_table_index(float *param_1,short param_2);
 undefined4 clamp_float(float *param_1,float *param_2,float *param_3,float *param_4,byte param_5);
 undefined4
 clamp_double(double *param_1,undefined4 *param_2,double *param_3,double *param_4,byte param_5);
@@ -5777,6 +5709,7 @@ undefined4 nv_record_differs(int *param_1,int *param_2);
 char nv_save(byte param_1);
 undefined1 nv_slot_valid(void);
 undefined4 nv_load_slot(void);
+undefined4 load_long_unit_step(undefined4 *param_1);
 undefined4 load_long(undefined4 *param_1);
 undefined8 load_double_param(undefined8 *param_1);
 void idn_model_default(void);
@@ -5927,7 +5860,7 @@ void leap_settings_clear(void);
 void leap_event_delete(void);
 void leap_event_create(void);
 void status_summary_update(void);
-byte leds_update(void);
+uint8_t leds_update(void);
 void pll_stage_status(void);
 uint8_t gps_ack_received(void);
 undefined1 gpsx_send(int16_t param_1,uint8_t param_2,int param_3,char param_4);
@@ -6017,7 +5950,7 @@ undefined4 request_kind_valid(char param_1);
 void gps_request_queue(char param_1,int param_2,int param_3);
 bool gps_request_post(char param_1,short param_2,int *param_3,uint8_t param_4);
 undefined1 gps_request_class(short param_1,char param_2);
-undefined ** gps_script_lookup(short param_1);
+gps_script_step ** gps_script_lookup(short param_1);
 void gps_init(void);
 void gps_link_reset(void);
 void gpsm_task(void);
@@ -7604,19 +7537,19 @@ klok_entry * leap_event_schedule_gps(uint32_t param_1,int param_2)
 {
   short sVar1;
   klok_entry *pkVar2;
-  undefined1 *puVar3;
+  klok_entry *pkVar3;
   klok_entry *pkVar4;
   klok_entry event;
   
   pkVar4 = (klok_entry *)0x0;
   sVar1 = 0x19;
   pkVar2 = &event;
-  puVar3 = &DAT_00010cb0;
+  pkVar3 = &leap_event_gps_template;
   do {
-    *(undefined1 *)&pkVar2->next = *puVar3;
+    *(undefined1 *)&pkVar2->next = *(undefined1 *)&pkVar3->next;
     sVar1 = sVar1 + -1;
     pkVar2 = (klok_entry *)((int)&pkVar2->next + 1);
-    puVar3 = puVar3 + 1;
+    pkVar3 = (klok_entry *)((int)&pkVar3->next + 1);
   } while (sVar1 != -1);
   event.date = param_1;
   if (param_2 - 0x3bU < 2U || param_2 + -0x3d == 0) {
@@ -7649,7 +7582,7 @@ klok_entry * leap_event_schedule_utc(uint32_t param_1,int param_2)
   uint8_t uVar2;
   klok_entry *pkVar1;
   short sVar3;
-  undefined1 *puVar4;
+  klok_entry *pkVar4;
   bool bVar5;
   klok_entry event;
   packed_datetime change;
@@ -7657,12 +7590,12 @@ klok_entry * leap_event_schedule_utc(uint32_t param_1,int param_2)
   
   sVar3 = 0x19;
   pkVar1 = &event;
-  puVar4 = &DAT_00010cca;
+  pkVar4 = &leap_event_utc_template;
   do {
-    *(undefined1 *)&pkVar1->next = *puVar4;
+    *(undefined1 *)&pkVar1->next = *(undefined1 *)&pkVar4->next;
     sVar3 = sVar3 + -1;
     pkVar1 = (klok_entry *)((int)&pkVar1->next + 1);
-    puVar4 = puVar4 + 1;
+    pkVar4 = (klok_entry *)((int)&pkVar4->next + 1);
   } while (sVar3 != -1);
   event.date = param_1;
   event.time = 0x180000;
@@ -8177,11 +8110,11 @@ int date_to_mjd(uint param_1)
 
 /* the days in a month, 28 or 29 for February by is_leap_year */
 
-undefined1 days_in_month(ushort param_1,byte param_2)
+uint8_t days_in_month(ushort param_1,byte param_2)
 
 {
   char cVar1;
-  undefined1 uVar2;
+  uint8_t uVar2;
   byte bVar3;
   
   if (param_2 == 2) {
@@ -8200,7 +8133,7 @@ undefined1 days_in_month(ushort param_1,byte param_2)
     else {
       bVar3 = param_2 - 1;
     }
-    uVar2 = (&DAT_0001189c)[bVar3];
+    uVar2 = month_lengths[bVar3];
   }
   return uVar2;
 }
@@ -9388,27 +9321,29 @@ int round_divide(int param_1,int param_2)
 undefined4 double_decimal_exponent_rounded(uint param_1,uint param_2)
 
 {
-  ushort uVar1;
+  uint uVar1;
   ushort uVar2;
   ushort uVar3;
   ushort uVar4;
   ushort uVar5;
+  ushort uVar6;
   
   param_1 = param_1 & 0x7fffffff;
-  uVar2 = 0;
-  uVar3 = 0x1e8;
+  uVar3 = 0;
+  uVar4 = 0x1e8;
   do {
+    uVar6 = uVar4;
     uVar5 = uVar3;
+    uVar2 = (short)(uVar6 + uVar5) >> 1 & 0xfff8;
+    if (uVar2 == uVar5) break;
+    uVar3 = uVar5;
     uVar4 = uVar2;
-    uVar1 = (short)(uVar5 + uVar4) >> 1 & 0xfff8;
-    if (uVar1 == uVar4) break;
-    uVar2 = uVar4;
-    uVar3 = uVar1;
-  } while (((((int)param_1 < *(int *)(&DAT_0001234c + (short)uVar1)) ||
-            (uVar2 = uVar1, uVar3 = uVar5, *(int *)(&DAT_0001234c + (short)uVar1) < (int)param_1))
-           || (uVar2 = uVar4, uVar3 = uVar1, param_2 < *(uint *)(&UNK_00012350 + (short)uVar1))) ||
-          (uVar2 = uVar1, uVar3 = uVar5, param_2 != *(uint *)(&UNK_00012350 + (short)uVar1)));
-  return CONCAT22((short)(param_1 >> 0x10),(short)(uVar1 - 0xe8) >> 3);
+  } while (((((int)param_1 < *(int *)((int)powers_of_ten_times_five + (int)(short)uVar2)) ||
+            (uVar3 = uVar2, uVar4 = uVar6,
+            *(int *)((int)powers_of_ten_times_five + (int)(short)uVar2) < (int)param_1)) ||
+           (uVar1 = *(uint *)((int)powers_of_ten_times_five + (short)uVar2 + 4), uVar3 = uVar5,
+           uVar4 = uVar2, param_2 < uVar1)) || (uVar3 = uVar2, uVar4 = uVar6, param_2 != uVar1));
+  return CONCAT22((short)(param_1 >> 0x10),(short)(uVar2 - 0xe8) >> 3);
 }
 
 
@@ -9420,30 +9355,30 @@ undefined4 double_decimal_exponent_rounded(uint param_1,uint param_2)
 undefined4 double_decimal_exponent(uint param_1,uint param_2)
 
 {
-  ushort uVar1;
+  uint uVar1;
   ushort uVar2;
   ushort uVar3;
   ushort uVar4;
   ushort uVar5;
+  ushort uVar6;
   
   param_1 = param_1 & 0x7fffffff;
-  uVar2 = 0;
-  uVar3 = 0x1e8;
+  uVar3 = 0;
+  uVar4 = 0x1e8;
   do {
+    uVar6 = uVar4;
     uVar5 = uVar3;
+    uVar2 = (short)(uVar6 + uVar5) >> 1 & 0xfff8;
+    if (uVar2 == uVar5) break;
+    uVar3 = uVar5;
     uVar4 = uVar2;
-    uVar1 = (short)(uVar5 + uVar4) >> 1 & 0xfff8;
-    if (uVar1 == uVar4) break;
-    uVar2 = uVar4;
-    uVar3 = uVar1;
-  } while (((((int)param_1 < *(int *)((int)&DAT_00012614 + (int)(short)uVar1)) ||
-            (uVar2 = uVar1, uVar3 = uVar5,
-            *(int *)((int)&DAT_00012614 + (int)(short)uVar1) < (int)param_1)) ||
-           (uVar2 = uVar4, uVar3 = uVar1,
-           param_2 < *(uint *)((int)&DAT_00012618 + (int)(short)uVar1))) ||
-          (uVar2 = uVar1, uVar3 = uVar5, uVar5 = uVar1,
-          param_2 != *(uint *)((int)&DAT_00012618 + (int)(short)uVar1)));
-  return CONCAT22((short)(param_1 >> 0x10),(short)(uVar5 - 0xf0) >> 3);
+  } while (((((int)param_1 < *(int *)((int)powers_of_ten_double + (int)(short)uVar2)) ||
+            (uVar3 = uVar2, uVar4 = uVar6,
+            *(int *)((int)powers_of_ten_double + (int)(short)uVar2) < (int)param_1)) ||
+           (uVar1 = *(uint *)((int)powers_of_ten_double + (short)uVar2 + 4), uVar3 = uVar5,
+           uVar4 = uVar2, param_2 < uVar1)) ||
+          (uVar3 = uVar2, uVar4 = uVar6, uVar6 = uVar2, param_2 != uVar1));
+  return CONCAT22((short)(param_1 >> 0x10),(short)(uVar6 - 0xf0) >> 3);
 }
 
 
@@ -9453,7 +9388,7 @@ undefined4 double_decimal_exponent(uint param_1,uint param_2)
 /* 10 to a power clamped to plus or minus 30, from the table of doubles at 0x12704; called by
    nothing */
 
-undefined8 power_of_ten_double(short param_1)
+double power_of_ten_double(short param_1)
 
 {
   if (param_1 < -0x1e) {
@@ -9462,7 +9397,7 @@ undefined8 power_of_ten_double(short param_1)
   else if (0x1e < param_1) {
     param_1 = 0x1e;
   }
-  return *(undefined8 *)(&DAT_00012704 + param_1 * 2);
+  return powers_of_ten_double[param_1 + 0x1e];
 }
 
 
@@ -9487,9 +9422,9 @@ undefined4 tfom_table_index(uint param_1)
     uVar1 = (short)(uVar5 + uVar4) >> 1 & 0xfffc;
     if (uVar1 == uVar4) break;
     uVar2 = uVar1;
-  } while (((int)uVar3 < (int)*(uint *)((int)&DAT_000129fc + (int)(short)uVar1)) ||
+  } while (((int)uVar3 < (int)*(uint *)((int)powers_of_ten_float + (int)(short)uVar1)) ||
           (uVar4 = uVar1, uVar2 = uVar5, uVar5 = uVar1,
-          uVar3 != *(uint *)((int)&DAT_000129fc + (int)(short)uVar1)));
+          uVar3 != *(uint *)((int)powers_of_ten_float + (int)(short)uVar1)));
   return CONCAT22((short)(uVar3 >> 0x10),(short)(uVar5 - 0x78) >> 2);
 }
 
@@ -9500,7 +9435,7 @@ undefined4 tfom_table_index(uint param_1)
 /* 10 to a power clamped to plus or minus 30, from the table of floats at 0x12a74; called by nothing
     */
 
-undefined4 power_of_ten_float(short param_1)
+float power_of_ten_float(short param_1)
 
 {
   if (param_1 < -0x1e) {
@@ -9509,7 +9444,7 @@ undefined4 power_of_ten_float(short param_1)
   else if (0x1e < param_1) {
     param_1 = 0x1e;
   }
-  return (&DAT_00012a74)[param_1];
+  return powers_of_ten_float[param_1 + 0x1e];
 }
 
 
@@ -9544,7 +9479,7 @@ int random_dither(void)
     iVar1 = -(int)(char)((char *)start_nothing)[-iVar1];
   }
   else {
-    iVar1 = (int)*(char *)((int)&DAT_00012ab0 + iVar1 + 2);
+    iVar1 = (int)*(char *)((int)powers_of_ten_float + iVar1 + 0xb6);
   }
   return iVar1;
 }
@@ -9592,7 +9527,7 @@ void system_init(void)
   parameter_record_read();
   identification_record_read();
   hmon_tick_countdown = 0;
-  memcpy((void *)0x101dda,&DAT_000308b6,0x94);
+  memcpy((void *)0x101dda,sample_values_defaults,0x94);
   nv_restore();
   debug_enabled = nv_settings.debug_output;
   psos_debug_enabled = nv_settings.debug_output;
@@ -9606,7 +9541,7 @@ void system_init(void)
   uVar7 = record_checksum(&preserved_region,0x94e);
   if ((uVar7 == preserved_region.checksum) && (uVar1 = sim.rsr, (uVar1 & 0xc0) == 0)) {
     if (preserved_region.restore == 1) {
-      memcpy(&DAT_00101e70,preserved_region.values,0x19);
+      memcpy(&retained_block,preserved_region.values,0x19);
       sVar8 = 0x155;
       pgVar10 = &gps;
       pgVar13 = &preserved_region.gps;
@@ -9647,7 +9582,7 @@ void system_init(void)
       warm_start = 1;
     }
     else {
-      memcpy(&DAT_00101e70,retained_block_defaults,0x19);
+      memcpy(&retained_block,retained_block_defaults,0x19);
       gps_init();
       pll_init();
       preserved_region.restore = 0;
@@ -9655,7 +9590,7 @@ void system_init(void)
     }
   }
   else {
-    memcpy(&DAT_00101e70,retained_block_defaults,0x19);
+    memcpy(&retained_block,retained_block_defaults,0x19);
     gps_init();
     pll_init();
     preserved_region.restore = 1;
@@ -19262,7 +19197,7 @@ void os_report_exchange(undefined4 *param_1,undefined *param_2)
   uint uVar2;
   undefined *puVar3;
   char *pcVar4;
-  undefined *puVar5;
+  char *pcVar5;
   char *pcVar6;
   char *pcVar7;
   int *task;
@@ -19275,10 +19210,10 @@ void os_report_exchange(undefined4 *param_1,undefined *param_2)
     pcVar4 = "prio";
   }
   if (*(char *)((int)param_1 + 0x11) == '\0') {
-    puVar5 = &DAT_000512d2;
+    pcVar5 = "any";
   }
   else {
-    puVar5 = &DAT_000512cd;
+    pcVar5 = "grp";
   }
   if (*(char *)((int)param_1 + 0x12) == '\0') {
     pcVar6 = "inf";
@@ -19296,7 +19231,7 @@ void os_report_exchange(undefined4 *param_1,undefined *param_2)
   uVar2 = (uint)*(byte *)((int)param_1 + 0x21);
   pcVar6 = acStack_2c;
   puVar3 = object_name((int)param_1);
-  (*(code *)param_2)("0x%07x  %4s  %4s %4s  %3s    %d    ",param_1,puVar3,pcVar4,puVar5,pcVar6,uVar2
+  (*(code *)param_2)("0x%07x  %4s  %4s %4s  %3s    %d    ",param_1,puVar3,pcVar4,pcVar5,pcVar6,uVar2
                     );
   task = (int *)*param_1;
   while (task != param_1) {
@@ -19304,7 +19239,7 @@ void os_report_exchange(undefined4 *param_1,undefined *param_2)
     (*(code *)param_2)("%s",pcVar4);
     task = (int *)*task;
     if (task != param_1) {
-      (*(code *)param_2)(&DAT_00051385);
+      (*(code *)param_2)(",");
     }
   }
   (*(code *)param_2)("%s","\r\n");
@@ -20122,6 +20057,73 @@ void psos_debug_output(char param_1)
   return;
 }
 
+
+/* 00016eb6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* counts a tick by D6: below 1 at +0x9a of the kernel's data area (through 0x51226), at 1 at +0x9e,
+   above 1 to the running task through task_count_tick, which follows it
+   Not a C function (register; read): its arguments and results in registers.  In: D6 short mode.
+   read */
+
+__regcall void tick_account(short mode /* d6 */)
+
+{
+  if (-1 < (short)(mode + -1)) {
+    *(int *)(*(int *)psos_config.data_area + 0xae) =
+         *(int *)(*(int *)psos_config.data_area + 0xae) + 1;
+    return;
+  }
+  if (mode != 1) {
+    *(int *)(*(int *)psos_config.data_area + 0x9a) =
+         *(int *)(*(int *)psos_config.data_area + 0x9a) + 1;
+    return;
+  }
+  *(int *)(*(int *)psos_config.data_area + 0x9e) =
+       *(int *)(*(int *)psos_config.data_area + 0x9e) + 1;
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl tick_account\n"
+	"	.type tick_account, @function\n"
+	"	.pushsection .text.tick_account.16eb6,\"ax\",@progbits\n"
+	"tick_account:\n"
+	"	cmpi.w #0x1,%d6\n"
+	"	bpl.w task_count_tick\n"
+	"	beq.w .Lg_16ed6\n"
+	"	move.l %a5,-(%sp)\n"
+	"	movea.l (__ghidra_51226).l,%a5\n"
+	"	movea.l (%a5),%a5\n"
+	"	movea.l (%a5),%a5\n"
+	"	addq.l #0x1,(0x9a,%a5)\n"
+	"	movea.l (%sp)+,%a5\n"
+	"	rts\n"
+	".Lg_16ed6:\n"
+	"	movea.l (__ghidra_51226).l,%a6\n"
+	"	movea.l (%a6),%a6\n"
+	"	movea.l (%a6),%a6\n"
+	"	addq.l #0x1,(0x9e,%a6)\n"
+	"	rts\n"
+	"	.size tick_account, .-tick_account\n"
+	"	.popsection\n"
+);
+/* tick_account from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_tick_account,\"ax\",@progbits\n"
+	"	.globl c_tick_account\n"
+	"	.type c_tick_account, @function\n"
+	"c_tick_account:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d6\n"
+	"	jsr tick_account\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_tick_account, .-c_tick_account\n"
+	"	.popsection\n"
+);
 
 /* 00016ee6 */
 
@@ -22340,14 +22342,14 @@ void lamp_test(void)
 {
   ushort uVar1;
   
-  DAT_00300000 = 0xff;
+  lamp_latch = 0xff;
   psos_pause(0x133);
-  DAT_00300000 = 0;
+  lamp_latch = 0;
   psos_pause(0x133);
   watchdog_pll = watchdog_pll + 1;
   uVar1 = 1;
   do {
-    DAT_00300000 = (char)uVar1;
+    lamp_latch = (uint8_t)uVar1;
     psos_pause(0x133);
     watchdog_pll = watchdog_pll + 1;
     uVar1 = uVar1 << 1;
@@ -23428,8 +23430,8 @@ __pforth void forth_digit(void)
   ushort in_D0w;
   byte unaff_D2b;
   
-  if ((-1 < (char)(&DAT_00018de2)[(short)(in_D0w & 0x7f)]) &&
-     ((byte)(&DAT_00018de2)[(short)(in_D0w & 0x7f)] < unaff_D2b)) {
+  if ((-1 < (char)forth_character_classes[(short)(in_D0w & 0x7f)]) &&
+     (forth_character_classes[(short)(in_D0w & 0x7f)] < unaff_D2b)) {
     return;
   }
   return;
@@ -23546,21 +23548,7 @@ __asm__(
 	"	.byte 0x20,0x2a\n"
 	"	.byte 0x3e,0x3e,0x20,0x00\n"
 	"	.byte 0x20,0x3e,0x20,0x00\n"
-	"	.byte 0x32\n"
-	"	.byte 0x33\n"
-	"	.byte 0x34\n"
-	"	.byte 0x35\n"
-	"	.byte 0x36\n"
-	"	.byte 0x37\n"
-	"	.byte 0x38\n"
-	"	.byte 0x39\n"
-	"	.byte 0x44\n"
-	"	.byte 0x2a\n"
-	"	.byte 0x2a\n"
-	"	.byte 0x2a\n"
-	"	.byte 0x2a\n"
-	"	.byte 0x2a\n"
-	"	.byte 0x58\n"
+	"	.byte 0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,0x44,0x2a,0x2a,0x2a,0x2a,0x2a,0x58\n"
 	"	.byte 0xff\n"
 	"	.size forth_skip_spaces, .-forth_skip_spaces\n"
 	"	.popsection\n"
@@ -23569,7 +23557,6 @@ __asm__(
 /* 00019096 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the prompt at 0x100b14: p4th, the base's letter, then > or >> while compiling (console.md)
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
    data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
@@ -23581,17 +23568,19 @@ __pforth void forth_build_prompt(forth_user_end user /* a5 */)
 {
   int iVar1;
   
-  _DAT_00100b14 = ADJ(user)->field1_0x2;
-  _DAT_00100b18 = 0x202a;
+  __ghidra_piece(unsigned int, forth_prompt, 0) = ADJ(user)->field1_0x2;
+  forth_prompt[4] = ' ';
+  forth_prompt[5] = '*';
   iVar1 = ADJ(user)->base + -2;
   if ((1 < ADJ(user)->base) && (iVar1 < 0xf)) {
-    _DAT_00100b18 = CONCAT11(0x20,(&DAT_00019086)[(short)iVar1]);
+    forth_prompt[4] = ' ';
+    forth_prompt[5] = "23456789D*****X"[(short)iVar1];
   }
   if (ADJ(user)->state == 0) {
-    _DAT_00100b1a = 0x203e2000;
+    builtin_strncpy(forth_prompt + 6," > ",4);
   }
   else {
-    _DAT_00100b1a = 0x3e3e2000;
+    builtin_strncpy(forth_prompt + 6,">> ",4);
   }
   return;
 }
@@ -23604,7 +23593,7 @@ __asm__(
 	"	.pushsection .text.forth_build_prompt.19096,\"ax\",@progbits\n"
 	"forth_build_prompt:\n"
 	"	movem.l %a0/%d1,-(%sp)\n"
-	"	move.l (-0x26,%a5),(__ghidra_100b14).l\n"
+	"	move.l (-0x26,%a5),(forth_prompt).l\n"
 	"	move.w (__ghidra_1907c:w,%pc),(__ghidra_100b18).l\n"
 	"	move.l (-0xe,%a5),%d1\n"
 	"	subq.l #0x2,%d1\n"
@@ -23747,7 +23736,7 @@ __pforth void forth_refill(forth_user_end user /* a5 */,char *input /* a3 */)
     if (*input != '\0') break;
     if (((forth_user_area *)(user + -0x28))->iodev == 0) {
       forth_build_prompt(user);
-      forth_print_string(&DAT_00100b14,user);
+      forth_print_string(forth_prompt,user);
     }
     forth_read_line(user,input);
   }
@@ -25741,22 +25730,7 @@ __asm__(
 	".Lg_19418:\n"
 	"	.byte 0x4a,0xfc | illegal\n"
 	"	.byte 0x45,0x52,0x52,0x4f,0x52,0x3a,0x20,0x4d,0x69,0x73,0x6d,0x61,0x74,0x63,0x68,0x65,0x64,0x20,0x00\n"
-	"	.byte 0x22\n"
-	"	.byte 0x64\n"
-	"	.byte 0x6f\n"
-	"	.byte 0x22\n"
-	"	.byte 0x20\n"
-	"	.byte 0x6f\n"
-	"	.byte 0x72\n"
-	"	.byte 0x20\n"
-	"	.byte 0x22\n"
-	"	.byte 0x3f\n"
-	"	.byte 0x64\n"
-	"	.byte 0x6f\n"
-	"	.byte 0x22\n"
-	"	.byte 0x0d\n"
-	"	.byte 0x0a\n"
-	"	.byte 0x00\n"
+	"	.byte 0x22,0x64,0x6f,0x22,0x20,0x6f,0x72,0x20,0x22,0x3f,0x64,0x6f,0x22,0x0d,0x0a,0x00\n"
 	"	.byte 0xff\n"
 	"	.size forth_unlink_latest, .-forth_unlink_latest\n"
 	"	.popsection\n"
@@ -25776,7 +25750,7 @@ __pforth void forth_do(long *sp,void *dp)
   forth_compile_code(dp);
   sp[-1] = (long)dp;
   sp[-2] = (long)dp;
-  sp[-3] = (long)&UNK_0001942d;
+  sp[-3] = (long)"\"do\" or \"?do\"\r\n";
   return;
 }
 
@@ -25812,7 +25786,7 @@ __pforth void forth_query_do(long *sp,void *dp)
   sp[-1] = (long)dp;
   forth_compile_code(dp);
   sp[-2] = (long)dp;
-  sp[-3] = (long)&UNK_0001942d;
+  sp[-3] = (long)"\"do\" or \"?do\"\r\n";
   return;
 }
 
@@ -25934,13 +25908,7 @@ __asm__(
 	".Lg_194da:\n"
 	"	addq.w #0x4,%a6\n"
 	"	rts\n"
-	"	.byte 0x22\n"
-	"	.byte 0x69\n"
-	"	.byte 0x66\n"
-	"	.byte 0x22\n"
-	"	.byte 0x0d\n"
-	"	.byte 0x0a\n"
-	"	.byte 0x00\n"
+	"	.byte 0x22,0x69,0x66,0x22,0x0d,0x0a,0x00\n"
 	"	.byte 0xff\n"
 	"	.size forth_loop, .-forth_loop\n"
 	"	.popsection\n"
@@ -25959,7 +25927,7 @@ __pforth void forth_if(long *sp,void *dp)
 {
   forth_compile_code(dp);
   sp[-1] = (long)dp;
-  sp[-2] = (long)&UNK_000194de;
+  sp[-2] = (long)"\"if\"\r\n";
   return;
 }
 
@@ -26004,7 +25972,7 @@ __pforth void forth_else(long *sp,void *dp)
   forth_compile_code(dp);
   forth_resolve_forward(sp,dp);
   sp[-1] = (long)dp;
-  sp[-2] = (long)&UNK_000194de;
+  sp[-2] = (long)"\"if\"\r\n";
   return;
 }
 
@@ -26059,16 +26027,7 @@ __asm__(
 	"	bsr.w forth_check_pairs\n"
 	"	bsr.w forth_resolve_forward\n"
 	"	rts\n"
-	"	.byte 0x22\n"
-	"	.byte 0x62\n"
-	"	.byte 0x65\n"
-	"	.byte 0x67\n"
-	"	.byte 0x69\n"
-	"	.byte 0x6e\n"
-	"	.byte 0x22\n"
-	"	.byte 0x0d\n"
-	"	.byte 0x0a\n"
-	"	.byte 0x00\n"
+	"	.byte 0x22,0x62,0x65,0x67,0x69,0x6e,0x22,0x0d,0x0a,0x00\n"
 	"	.size forth_endif, .-forth_endif\n"
 	"	.popsection\n"
 );
@@ -26085,7 +26044,7 @@ __pforth void forth_begin(long *sp,void *dp)
 
 {
   sp[-1] = (long)dp;
-  sp[-2] = (long)&UNK_00019556;
+  sp[-2] = (long)"\"begin\"\r\n";
   return;
 }
 
@@ -26099,16 +26058,7 @@ __asm__(
 	"	move.l %a4,-(%a6)\n"
 	"	move.l #0x19556,-(%a6)\n"
 	"	rts\n"
-	"	.byte 0x22\n"
-	"	.byte 0x77\n"
-	"	.byte 0x68\n"
-	"	.byte 0x69\n"
-	"	.byte 0x6c\n"
-	"	.byte 0x65\n"
-	"	.byte 0x22\n"
-	"	.byte 0x0d\n"
-	"	.byte 0x0a\n"
-	"	.byte 0x00\n"
+	"	.byte 0x22,0x77,0x68,0x69,0x6c,0x65,0x22,0x0d,0x0a,0x00\n"
 	"	.size forth_begin, .-forth_begin\n"
 	"	.popsection\n"
 );
@@ -26127,7 +26077,7 @@ __pforth void forth_while(long *sp,void *dp)
   forth_check_pairs(sp);
   forth_compile_code(dp);
   sp[-1] = (long)dp;
-  sp[-2] = (long)&UNK_0001956a;
+  sp[-2] = (long)"\"while\"\r\n";
   return;
 }
 
@@ -28417,7 +28367,7 @@ __pforth void forth_sin(long *sp)
   if (0x5a < uVar1) {
     uVar1 = 0xb4 - uVar1;
   }
-  iVar2 = *(int *)(&DAT_00019a2c + (short)(uVar1 << 2));
+  iVar2 = *(int *)((int)forth_sine_table + (int)(short)(uVar1 << 2));
   if (iVar3 != 0) {
     iVar2 = -iVar2;
   }
@@ -29033,7 +28983,7 @@ __asm__(
 __pforth void forth_root(long *sp)
 
 {
-  sp[-1] = (long)&DAT_00100b10;
+  sp[-1] = (long)&console_task_id;
   return;
 }
 
@@ -31474,7 +31424,7 @@ __asm__(
 	"	movea.l %d4,%sp\n"
 	"	tst.b %d7\n"
 	"	bne.b .Lg_1aed6\n"
-	"	move.l %a0,(__ghidra_100b10).l\n"
+	"	move.l %a0,(console_task_id).l\n"
 	"	move.l %a0,-(%sp)\n"
 	"	movea.l %a0,%a1\n"
 	"	movea.l (pforth_dictionary_start).l,%a0\n"
@@ -31519,8 +31469,8 @@ __naked void console_task(void)
   uint16_t *sp;
   uint in_stack_00000000;
   uint16_t local_28 [3];
-  undefined *local_22;
-  undefined2 *local_1e;
+  char *local_22;
+  char *local_1e;
   undefined **local_1a;
   void *local_16;
   void *local_12;
@@ -31537,8 +31487,8 @@ __naked void console_task(void)
   local_12 = pforth_dictionary_next;
   local_16 = pforth_latest_word;
   local_1a = &PTR_PTR_0001ad0e;
-  local_1e = (undefined2 *)&DAT_00100a04;
-  local_22 = &DAT_00100a8a;
+  local_1e = forth_terminal_input;
+  local_22 = forth_pad_buffer;
   local_28[1] = 0x7034;
   local_28[2] = 0x7468;
   local_28[0] = console_device;
@@ -31548,7 +31498,8 @@ __naked void console_task(void)
   forth_print_string("\r\n",&stack0x00000000);
   forth_print_string("\r\n",&stack0x00000000);
   sp = local_8;
-  *local_1e = 0;
+  local_1e[0] = '\0';
+  local_1e[1] = '\0';
   if (local_a != 0) {
     *(undefined4 *)((int)puVar1 + -4) = 0x18eee;
     forth_unlink_latest(&stack0x00000000,dp);
@@ -31678,7 +31629,6 @@ __asm__(
 /* 0001af84 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the console string device's init: clears the string at 0x100ba8
    Not a C function (register; read): its arguments and results in registers.  Out: D7 int error.
    console.md */
@@ -31687,7 +31637,7 @@ __asm__(
 __regcall int string_device_init(void)
 
 {
-  _DAT_00100ba8 = 0;
+  string_device_cursor = (char *)0x0;
   return 0;
 }
 
@@ -31699,7 +31649,7 @@ __asm__(
 	"	.pushsection .text.string_device_init.1af84,\"ax\",@progbits\n"
 	"string_device_init:\n"
 	"	moveq #0x0,%d7\n"
-	"	move.l %d7,(__ghidra_100ba8).l\n"
+	"	move.l %d7,(string_device_cursor).l\n"
 	"	rts\n"
 	"	.size string_device_init, .-string_device_init\n"
 	"	.popsection\n"
@@ -31722,7 +31672,6 @@ __asm__(
 /* 0001af8e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the console string device's control: sets the string console_read_from_string reads
    Not a C function (register; read): its arguments and results in registers.  In: D2 char *string.
    Out: D7 int error.
@@ -31732,7 +31681,7 @@ __asm__(
 __regcall int string_device_control(char *string /* d2 */)
 
 {
-  _DAT_00100ba8 = string;
+  string_device_cursor = string;
   return 0;
 }
 
@@ -31743,7 +31692,7 @@ __asm__(
 	"	.type string_device_control, @function\n"
 	"	.pushsection .text.string_device_control.1af8e,\"ax\",@progbits\n"
 	"string_device_control:\n"
-	"	move.l %d2,(__ghidra_100ba8).l\n"
+	"	move.l %d2,(string_device_cursor).l\n"
 	"	moveq #0x0,%d7\n"
 	"	rts\n"
 	"	.size string_device_control, .-string_device_control\n"
@@ -31768,7 +31717,6 @@ __asm__(
 /* 0001af98 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* reads a line into the buffer at A1, D2 long, from the string at 0x100ba8 while one is set, else
    from the console device
    Not a C function (register; read): its arguments and results in registers.  In: A1, D2.
@@ -31786,15 +31734,15 @@ __regcall void console_read_from_string(void)
   char *in_A1;
   ushort uVar3;
   
-  if ((_DAT_00100ba8 == (char *)0x0) || (*_DAT_00100ba8 == '\0')) {
-    psos_call('\x05',in_D0,(int)_DAT_00100ba8,unaff_D2,unaff_D3,(void *)0x0,in_A1);
+  if ((string_device_cursor == (char *)0x0) || (*string_device_cursor == '\0')) {
+    psos_call('\x05',in_D0,(int)string_device_cursor,unaff_D2,unaff_D3,(void *)0x0,in_A1);
   }
   else {
     uVar2 = unaff_D2 - 1;
-    pcVar4 = _DAT_00100ba8;
+    pcVar4 = string_device_cursor;
     if (-1 < (int)uVar2) {
       do {
-        _DAT_00100ba8 = pcVar4 + 1;
+        string_device_cursor = pcVar4 + 1;
         cVar1 = *pcVar4;
         *in_A1 = cVar1;
         if (cVar1 == '\0') {
@@ -31802,7 +31750,7 @@ __regcall void console_read_from_string(void)
         }
         uVar3 = (short)uVar2 - 1;
         uVar2 = (uint)uVar3;
-        pcVar4 = _DAT_00100ba8;
+        pcVar4 = string_device_cursor;
         in_A1 = in_A1 + 1;
       } while (uVar3 != 0xffff);
     }
@@ -31818,7 +31766,7 @@ __asm__(
 	"	.pushsection .text.console_read_from_string.1af98,\"ax\",@progbits\n"
 	"console_read_from_string:\n"
 	"	movem.l %a0/%d1,-(%sp)\n"
-	"	move.l (__ghidra_100ba8).l,%d1\n"
+	"	move.l (string_device_cursor).l,%d1\n"
 	"	beq.w .Lg_1afca\n"
 	"	movea.l %d1,%a0\n"
 	"	tst.b (%a0)\n"
@@ -31828,7 +31776,7 @@ __asm__(
 	".Lg_1afb4:\n"
 	"	move.b (%a0)+,(%a1)+\n"
 	"	dbeq %d2,.Lg_1afb4\n"
-	"	move.l %a0,(__ghidra_100ba8).l\n"
+	"	move.l %a0,(string_device_cursor).l\n"
 	".Lg_1afc0:\n"
 	"	move.l %a1,%d2\n"
 	"	moveq #0x0,%d7\n"
@@ -33716,7 +33664,7 @@ void diag_crash(uint param_1)
       _DAT_00700000 = 1;
       break;
     case 0x1a:
-      ram0x00400001 = 1;
+      __ghidra_piece(unsigned int, eeprom_parameter_record, 1) = 1;
       break;
     case 0x26:
       break;
@@ -34828,7 +34776,7 @@ void duart_loopback_test_a(void)
   if (*loopback_expect_next != '\0') {
     selftest.uart = selftest.uart | 8;
   }
-  loopback_send_next = &DAT_0001ed2c;
+  loopback_send_next = (uint8_t *)loopback_idle_text;
   loopback_expect_next = "";
   duart.a.cr = CR_RESET_RECEIVER;
   duart.a.cr = CR_RESET_TRANSMITTER;
@@ -34889,7 +34837,7 @@ void duart_loopback_test_b(void)
   if (*loopback_expect_next != '\0') {
     selftest.uart = selftest.uart | 0x20;
   }
-  loopback_send_next = &DAT_0001ed2c;
+  loopback_send_next = (uint8_t *)loopback_idle_text;
   loopback_expect_next = "";
   duart.b.cr = CR_RESET_RECEIVER;
   duart.b.cr = CR_RESET_TRANSMITTER;
@@ -36002,7 +35950,7 @@ void efc_write(undefined2 param_1)
 
 {
   qspi_write(7,&param_1,1);
-  DAT_00306000 = 0;
+  efc_strobe = 0;
   return;
 }
 
@@ -38847,7 +38795,7 @@ bool fpga_verify_chip(byte param_1,char param_2,byte param_3)
   uint uVar5;
   byte bVar6;
   byte *pbVar7;
-  byte *pbVar8;
+  uint8_t *puVar8;
   char acStack_54 [80];
   
   pbVar7 = (&PTR_DAT_00021e2e)[(uint)param_1 * 2] + 5;
@@ -38868,30 +38816,30 @@ bool fpga_verify_chip(byte param_1,char param_2,byte param_3)
   sim.portf0 = bVar6 | uVar1;
   uVar1 = sim.portf0;
   sim.portf0 = uVar1 & 0xf7;
-  cVar3 = fpga_verify_first(pbVar7,&DAT_00021e3b,param_2);
+  cVar3 = fpga_verify_first(pbVar7,fpga_readback_mask,param_2);
   if (cVar3 == '\0') {
     bVar2 = false;
   }
   else {
     pbVar7 = pbVar7 + 0xd;
-    pbVar8 = &DAT_00021e48;
+    puVar8 = fpga_readback_mask + 0xd;
     bVar2 = true;
     for (uVar5 = 2; (bVar2 && ((int)uVar5 < 0x11e)); uVar5 = uVar5 + 1) {
       if ((uVar5 & 1) == 0) {
-        cVar3 = fpga_verify_even(pbVar7,pbVar8,param_2);
+        cVar3 = fpga_verify_even(pbVar7,puVar8,param_2);
         if (cVar3 == '\0') {
           bVar2 = false;
         }
         pbVar7 = pbVar7 + 0xe;
-        pbVar8 = pbVar8 + 0xe;
+        puVar8 = puVar8 + 0xe;
       }
       else {
-        cVar3 = fpga_verify_odd(pbVar7,pbVar8,param_2);
+        cVar3 = fpga_verify_odd(pbVar7,puVar8,param_2);
         if (cVar3 == '\0') {
           bVar2 = false;
         }
         pbVar7 = pbVar7 + 0xd;
-        pbVar8 = pbVar8 + 0xd;
+        puVar8 = puVar8 + 0xd;
       }
     }
     if (bVar2 == false) {
@@ -40048,25 +39996,26 @@ __regcall void scpi_double_to_decimal(double value /* d0 */,short digits /* d7 *
   uint uVar7;
   ushort uVar8;
   uint uVar9;
-  uint uVar10;
-  int iVar11;
-  ushort uVar12;
+  int iVar10;
+  uint uVar11;
+  int iVar12;
   ushort uVar13;
-  short sVar14;
-  byte bVar15;
+  ushort uVar14;
+  short sVar15;
+  byte bVar16;
   undefined4 *extraout_A0;
-  undefined4 *puVar16;
+  undefined4 *puVar17;
   short extraout_A1w;
   short extraout_A1w_00;
-  short sVar17;
-  bool bVar18;
+  short sVar18;
   bool bVar19;
-  double dVar20;
+  bool bVar20;
+  double dVar21;
   
   uVar9 = (uint)((ulonglong)value >> 0x20);
-  iVar11 = SUB84(value,0);
+  iVar12 = SUB84(value,0);
   if (uVar9 == 0) {
-    if (iVar11 == 0) {
+    if (iVar12 == 0) {
       record[0] = '\0';
       record[1] = '\0';
 LAB_00024e22:
@@ -40086,108 +40035,113 @@ LAB_00024e22:
       record[0] = '\0';
       record[1] = '\0';
     }
-    dVar20 = (double)CONCAT44(uVar9,iVar11);
-    uVar13 = ((ushort)(uVar9 >> 0x10) & 0x7ff0) >> 4;
-    if ((uVar13 != 0) && (sVar17 = uVar13 - 0x3ff, sVar17 < 0x400)) {
-      sVar14 = 0x4d10;
-      if (sVar17 < 0) {
-        sVar14 = 0x4d11;
+    dVar21 = (double)CONCAT44(uVar9,iVar12);
+    uVar14 = ((ushort)(uVar9 >> 0x10) & 0x7ff0) >> 4;
+    if ((uVar14 != 0) && (sVar18 = uVar14 - 0x3ff, sVar18 < 0x400)) {
+      sVar15 = 0x4d10;
+      if (sVar18 < 0) {
+        sVar15 = 0x4d11;
       }
-      sVar17 = (short)((uint)((int)sVar17 * (int)sVar14) >> 0x10);
-      uVar13 = sVar17 + 0x41;
-      if (((int)((uint)uVar13 << 0x10) < 0) || (0x80 < (short)uVar13)) {
-        sVar17 = (short)(sVar17 + 1) >> 6;
-        if (sVar17 < 0) {
-          sVar17 = sVar17 + 1;
+      sVar18 = (short)((uint)((int)sVar18 * (int)sVar15) >> 0x10);
+      uVar14 = sVar18 + 0x41;
+      if (((int)((uint)uVar14 << 0x10) < 0) || (0x80 < (short)uVar14)) {
+        sVar18 = (short)(sVar18 + 1) >> 6;
+        if (sVar18 < 0) {
+          sVar18 = sVar18 + 1;
         }
-        sVar17 = (4 - sVar17) * 8;
-        dVar20 = scpi_double_multiply
-                           ((double)CONCAT44(uVar9,iVar11),
-                            (double)CONCAT44(*(undefined4 *)(&DAT_00025b36 + sVar17),
-                                             *(undefined4 *)(&DAT_00025b3a + sVar17)));
-        sVar17 = extraout_A1w >> 6;
-        if (sVar17 < 0) {
-          sVar17 = sVar17 + 1;
+        sVar18 = (4 - sVar18) * 8;
+        dVar21 = scpi_double_multiply
+                           ((double)CONCAT44(uVar9,iVar12),
+                            (double)CONCAT44(*(undefined4 *)
+                                              ((int)scpi_powers_of_ten_64 + (int)sVar18),
+                                             *(undefined4 *)
+                                              ((int)scpi_powers_of_ten_64 + sVar18 + 4)));
+        sVar18 = extraout_A1w >> 6;
+        if (sVar18 < 0) {
+          sVar18 = sVar18 + 1;
         }
-        uVar13 = extraout_A1w + sVar17 * -0x40 + 0x40;
+        uVar14 = extraout_A1w + sVar18 * -0x40 + 0x40;
       }
-      iVar11 = (int)((ulonglong)dVar20 >> 0x20);
-      sVar17 = uVar13 * 8;
-      if ((*(int *)(&DAT_0002572e + sVar17) <= iVar11) &&
-         ((*(int *)(&DAT_0002572e + sVar17) < iVar11 ||
-          (*(uint *)(&DAT_00025732 + sVar17) <= SUB84(dVar20,0))))) {
-        sVar17 = sVar17 + 8;
+      iVar10 = (int)((ulonglong)dVar21 >> 0x20);
+      sVar18 = uVar14 * 8;
+      iVar12 = *(int *)((int)scpi_powers_of_ten + sVar18 + 0x80);
+      if ((iVar12 <= iVar10) &&
+         ((iVar12 < iVar10 ||
+          (*(uint *)((int)scpi_powers_of_ten + sVar18 + 0x84) <= SUB84(dVar21,0))))) {
+        sVar18 = sVar18 + 8;
       }
-      sVar17 = 0x200 - (sVar17 + -0x200);
-      dVar20 = ({ __auto_type __c = scpi_double_multiply
-                         (dVar20,(double)CONCAT44(*(undefined4 *)(&DAT_0002572e + sVar17),
-                                                  *(undefined4 *)(&DAT_00025732 + sVar17))); extraout_A0 = (__typeof__(extraout_A0))0x0; __c; });
-      uVar9 = SUB84(dVar20,0);
-      sVar17 = extraout_A1w_00 + 1;
-      if ((0x3fb99999ffffffff < (longlong)dVar20) || (0x99999999 < uVar9)) {
-        if ((int)((ulonglong)dVar20 >> 0x20) != 0x3ff00000) {
-          uVar12 = (ushort)((ulonglong)dVar20 >> 0x30);
-          uVar13 = (uVar12 >> 4) - 0x3fb;
-          uVar8 = (ushort)((ulonglong)dVar20 >> 0x20);
-          uVar10 = (CONCAT22(uVar8,uVar12) & 0xffff000f | 0x10) << 0x10 | (uint)uVar8;
-          bVar15 = (byte)uVar13;
-          while (bVar15 != 0) {
-            bVar18 = CARRY4(uVar9,uVar9);
+      sVar18 = 0x200 - (sVar18 + -0x200);
+      dVar21 = ({ __auto_type __c = scpi_double_multiply
+                         (dVar21,(double)CONCAT44(*(undefined4 *)
+                                                   ((int)scpi_powers_of_ten + sVar18 + 0x80),
+                                                  *(undefined4 *)
+                                                   ((int)scpi_powers_of_ten + sVar18 + 0x84))); extraout_A0 = (__typeof__(extraout_A0))0x0; __c; });
+      uVar9 = SUB84(dVar21,0);
+      sVar18 = extraout_A1w_00 + 1;
+      if ((0x3fb99999ffffffff < (longlong)dVar21) || (0x99999999 < uVar9)) {
+        if ((int)((ulonglong)dVar21 >> 0x20) != 0x3ff00000) {
+          uVar13 = (ushort)((ulonglong)dVar21 >> 0x30);
+          uVar14 = (uVar13 >> 4) - 0x3fb;
+          uVar8 = (ushort)((ulonglong)dVar21 >> 0x20);
+          uVar11 = (CONCAT22(uVar8,uVar13) & 0xffff000f | 0x10) << 0x10 | (uint)uVar8;
+          bVar16 = (byte)uVar14;
+          while (bVar16 != 0) {
+            bVar19 = CARRY4(uVar9,uVar9);
             uVar9 = uVar9 * 2;
-            uVar10 = uVar10 * 2 + (uint)bVar18;
-            bVar15 = (char)uVar13 - 1;
-            uVar13 = (ushort)bVar15;
+            uVar11 = uVar11 * 2 + (uint)bVar19;
+            bVar16 = (char)uVar14 - 1;
+            uVar14 = (ushort)bVar16;
           }
-          *(short *)(extraout_A0 + 4) = sVar17;
-          if ((sVar17 < 1) || (0xf < digits)) {
-            sVar17 = 0xf;
-            puVar16 = extraout_A0;
+          *(short *)(extraout_A0 + 4) = sVar18;
+          if ((sVar18 < 1) || (0xf < digits)) {
+            sVar18 = 0xf;
+            puVar17 = extraout_A0;
           }
           else {
-            bVar15 = (byte)digits;
+            bVar16 = (byte)digits;
             uVar1 = (undefined1)((ushort)digits >> 8);
-            puVar16 = extraout_A0;
+            puVar17 = extraout_A0;
             if ((digits & 1U) == 0) {
-              sVar17 = CONCAT11(uVar1,(bVar15 >> 1) << 1 | bVar15 & 1) + 1;
+              sVar18 = CONCAT11(uVar1,(bVar16 >> 1) << 1 | bVar16 & 1) + 1;
             }
             else {
-              sVar17 = CONCAT11(uVar1,(bVar15 >> 1) << 1 | bVar15 & 1);
+              sVar18 = CONCAT11(uVar1,(bVar16 >> 1) << 1 | bVar16 & 1);
             }
           }
           do {
-            bVar18 = CARRY4(uVar9,uVar9);
+            bVar19 = CARRY4(uVar9,uVar9);
             uVar2 = uVar9 * 2;
-            bVar19 = CARRY4(uVar9 * 4,uVar9);
+            bVar20 = CARRY4(uVar9 * 4,uVar9);
             uVar6 = uVar9 * 5;
             uVar3 = uVar9 * 10;
             uVar4 = uVar9 * 0x14;
             uVar5 = uVar9 * 0x28;
             uVar7 = uVar9 * 0x32;
             uVar9 = uVar9 * 100;
-            iVar11 = (((uVar10 * 5 + (uint)bVar18 * 2 + (uint)CARRY4(uVar2,uVar2) + (uint)bVar19) *
+            iVar12 = (((uVar11 * 5 + (uint)bVar19 * 2 + (uint)CARRY4(uVar2,uVar2) + (uint)bVar20) *
                        2 + (uint)CARRY4(uVar6,uVar6)) * 5 + (uint)CARRY4(uVar3,uVar3) * 2 +
                       (uint)CARRY4(uVar4,uVar4) + (uint)CARRY4(uVar5,uVar3)) * 2 +
                      (uint)CARRY4(uVar7,uVar7);
-            uVar12 = (ushort)((uint)iVar11 >> 0x10);
-            uVar13 = (ushort)((uint)(iVar11 * 0x10000) >> 0x10);
-            uVar10 = (CONCAT22(uVar13,uVar12) & 0xffff00ff) << 0x10 | (uint)uVar13;
-            *(undefined2 *)puVar16 =
+            uVar13 = (ushort)((uint)iVar12 >> 0x10);
+            uVar14 = (ushort)((uint)(iVar12 * 0x10000) >> 0x10);
+            uVar11 = (CONCAT22(uVar14,uVar13) & 0xffff00ff) << 0x10 | (uint)uVar14;
+            *(undefined2 *)puVar17 =
                  *(undefined2 *)
                   (
                   "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
-                  + (short)((uVar12 >> 8) * 2));
-            sVar17 = sVar17 + -2;
-            puVar16 = (undefined4 *)((int)puVar16 + 2);
-          } while (-1 < sVar17);
+                  + (short)((uVar13 >> 8) * 2));
+            sVar18 = sVar18 + -2;
+            puVar17 = (undefined4 *)((int)puVar17 + 2);
+          } while (-1 < sVar18);
           return;
         }
-        sVar17 = extraout_A1w_00 + 2;
+        sVar18 = extraout_A1w_00 + 2;
       }
       *extraout_A0 = 0x31303030;
       extraout_A0[1] = 0x30303030;
       extraout_A0[2] = 0x30303030;
       extraout_A0[3] = 0x30303030;
-      *(short *)(extraout_A0 + 4) = sVar17;
+      *(short *)(extraout_A0 + 4) = sVar18;
       return;
     }
   }
@@ -40448,8 +40402,8 @@ __regcall double scpi_bcd_to_double(char *bcd /* a0 */)
   short sVar9;
   ushort uVar10;
   byte *pbVar11;
-  undefined *puVar12;
-  undefined *extraout_A1;
+  double *pdVar12;
+  double *extraout_A1;
   bool bVar13;
   double dVar14;
   double a;
@@ -40472,7 +40426,7 @@ __regcall double scpi_bcd_to_double(char *bcd /* a0 */)
                          ((double)((ulonglong)
                                    ((uint)(ushort)((0x40b - uVar10) * 0x10) * 0x10000 +
                                    (iVar4 << (uVar10 & 0x3f))) << 0x20),(short *)(bcd + 10),
-                          (double *)&LAB_00025706_8);
+                          scpi_powers_of_ten + 0xc);
       return dVar14;
     }
     uVar5 = (uint)*(byte *)((int)&PTR_PTR_00025b7e + (int)(short)(ushort)(byte)bcd[5]) +
@@ -40508,7 +40462,7 @@ __regcall double scpi_bcd_to_double(char *bcd /* a0 */)
                                                                                     ::
                                                   switchdataD_00025016 + (int)(short)uVar10)) * 0x10
                                                   ) * 0x10000 + uVar6,uVar7),(short *)(bcd + 10),
-                          (double *)&LAB_000256ee);
+                          scpi_powers_of_ten + 8);
       return dVar14;
     }
   }
@@ -40611,8 +40565,8 @@ LAB_000251d6:
   uVar6 = uVar6 >> 1;
   uVar5 = (uint)(uVar7 != 0) << 0x1f | uVar5 >> 1;
 LAB_000251da:
-  uVar6 = (uint)*(ushort *)(&DAT_00025144 + (short)uVar10) * 0x10000 + uVar6;
-  puVar12 = &DAT_000256ae;
+  uVar6 = (uint)*(ushort *)((int)scpi_normalize_exponents + (int)(short)uVar10) * 0x10000 + uVar6;
+  pdVar12 = scpi_powers_of_ten;
   if (*(short *)bcd != 0) {
     uVar6 = uVar6 | 0x80000000;
   }
@@ -40630,18 +40584,19 @@ LAB_000251da:
       sVar8 = (sVar8 + 4) * 8;
       a = scpi_double_multiply
                     ((double)CONCAT44(uVar6,uVar5),
-                     (double)CONCAT44(*(undefined4 *)(&DAT_00025b36 + sVar8),
-                                      *(undefined4 *)(&DAT_00025b3a + sVar8)));
+                     (double)CONCAT44(*(undefined4 *)((int)scpi_powers_of_ten_64 + (int)sVar8),
+                                      *(undefined4 *)((int)scpi_powers_of_ten_64 + sVar8 + 4)));
       if (sVar9 < 0) {
         sVar9 = sVar9 + 1;
       }
       uVar10 = sVar1 + sVar9 * -0x40 + 0x40;
-      puVar12 = extraout_A1;
+      pdVar12 = extraout_A1;
     }
-    bVar13 = *(int *)(puVar12 + (short)(uVar10 << 3) + 4) == 0;
+    iVar4 = *(int *)((int)pdVar12 + (short)(uVar10 << 3) + 4);
+    bVar13 = iVar4 == 0;
     dVar14 = ({ __auto_type __c = scpi_double_multiply
-                       (a,(double)CONCAT44(*(undefined4 *)(puVar12 + (short)(uVar10 << 3)),
-                                           *(int *)(puVar12 + (short)(uVar10 << 3) + 4))); bVar13 = __ghidra_flag(4); __c; });
+                       (a,(double)CONCAT44(*(undefined4 *)((int)pdVar12 + (int)(short)(uVar10 << 3))
+                                           ,iVar4)); bVar13 = __ghidra_flag(4); __c; });
     if (!bVar13) {
       return dVar14;
     }
@@ -40819,70 +40774,7 @@ __asm__(
 	"	move.w (.Lg_25144,%pc,%d6.w*0x1),%d7\n"
 	"	jmp (.Lg_25184,%pc,%d6.w*0x1)\n"
 	".Lg_25144:\n"
-	"	.byte 0x42\n"
-	"	.byte 0xe0\n"
-	"	.byte 0x42\n"
-	"	.byte 0xf0\n"
-	"	.byte 0x43\n"
-	"	.byte 0x00\n"
-	"	.byte 0x43\n"
-	"	.byte 0x00\n"
-	"	.byte 0x43\n"
-	"	.byte 0x10\n"
-	"	.byte 0x43\n"
-	"	.byte 0x10\n"
-	"	.byte 0x43\n"
-	"	.byte 0x10\n"
-	"	.byte 0x43\n"
-	"	.byte 0x10\n"
-	"	.byte 0x43\n"
-	"	.byte 0x20\n"
-	"	.byte 0x43\n"
-	"	.byte 0x20\n"
-	"	.byte 0x43\n"
-	"	.byte 0x20\n"
-	"	.byte 0x43\n"
-	"	.byte 0x20\n"
-	"	.byte 0x43\n"
-	"	.byte 0x20\n"
-	"	.byte 0x43\n"
-	"	.byte 0x20\n"
-	"	.byte 0x43\n"
-	"	.byte 0x20\n"
-	"	.byte 0x43\n"
-	"	.byte 0x20\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
-	"	.byte 0x43\n"
-	"	.byte 0x30\n"
+	"	.byte 0x42,0xe0,0x42,0xf0,0x43,0x00,0x43,0x00,0x43,0x10,0x43,0x10,0x43,0x10,0x43,0x10,0x43,0x20,0x43,0x20,0x43,0x20,0x43,0x20,0x43,0x20,0x43,0x20,0x43,0x20,0x43,0x20,0x43,0x30,0x43,0x30,0x43,0x30,0x43,0x30,0x43,0x30,0x43,0x30,0x43,0x30,0x43,0x30,0x43,0x30,0x43,0x30,0x43,0x30,0x43,0x30,0x43,0x30,0x43,0x30,0x43,0x30,0x43,0x30\n"
 	".Lg_25184:\n"
 	"	bra.b .Lg_251ca\n"
 	"	bra.b .Lg_251ce\n"
@@ -40999,8 +40891,8 @@ __regcall double scpi_scale_by_power_of_ten(double value /* d0 */,short *exponen
       sVar6 = (sVar6 + 4) * 8;
       a = scpi_double_multiply
                     ((double)CONCAT44(uVar3,uVar4),
-                     (double)CONCAT44(*(undefined4 *)(&DAT_00025b36 + sVar6),
-                                      *(undefined4 *)(&DAT_00025b3a + sVar6)));
+                     (double)CONCAT44(*(undefined4 *)((int)scpi_powers_of_ten_64 + (int)sVar6),
+                                      *(undefined4 *)((int)scpi_powers_of_ten_64 + sVar6 + 4)));
       if (sVar5 < 0) {
         sVar5 = sVar5 + 1;
       }
@@ -43724,7 +43616,7 @@ int scpi_parameter_match(int *param_1,undefined4 param_2,int param_3,short *para
     }
     if (*(int *)(*(int *)(*param_1 + 4) + 0xc + __ghidra_piece(short, param_2, 2) * 4) != 0) break;
     if (*(short *)(*(int *)(*param_1 + 4) + 2) == 0) {
-      return (int)*(short *)(&DAT_000279ca + __ghidra_piece(short, param_2, 2) * 2);
+      return (int)scpi_parameter_kind_errors[__ghidra_piece(short, param_2, 2)];
     }
     *(undefined2 *)(*(int *)(param_3 + 10) + (int)*param_4) = 0xffff;
     *param_4 = *param_4 + **(short **)(*param_1 + 4) + 2;
@@ -43786,16 +43678,16 @@ undefined4 scpi_multiplier_exponent(undefined2 param_1,short param_2)
 
 {
   undefined4 in_D0;
-  short *psVar1;
+  scpi_multiplier *psVar1;
   
-  psVar1 = &DAT_00027b2e;
+  psVar1 = scpi_multipliers;
   do {
     in_D0 = CONCAT22((short)((uint)in_D0 >> 0x10),param_2);
-    if (param_2 == *psVar1) {
-      return CONCAT31((int3)((uint)in_D0 >> 8),*(undefined1 *)(psVar1 + 1));
+    if (param_2 == psVar1->name) {
+      return CONCAT31((int3)((uint)in_D0 >> 8),psVar1->exponent);
     }
-    psVar1 = psVar1 + 2;
-  } while (*psVar1 != 0);
+    psVar1 = psVar1 + 1;
+  } while (psVar1->name != 0);
   return 0xffffff80;
 }
 
@@ -44445,7 +44337,7 @@ int16_t status_set_bit(status_model *status,int condition,int value)
   
   iVar5 = 1;
   if (condition < 0) {
-    psVar4 = (status_condition *)(&UNK_00028720 + condition * -6);
+    psVar4 = status_negative_conditions + -condition;
   }
   else {
     psVar4 = status->conditions + condition;
@@ -44486,18 +44378,18 @@ void status_apply_condition(int param_1,int param_2,undefined4 param_3)
   short sVar1;
   short sVar2;
   int iVar3;
-  short *psVar4;
+  status_condition *psVar4;
   
   if (param_2 < 0) {
-    psVar4 = (short *)(&UNK_00028720 + param_2 * -6);
+    psVar4 = status_negative_conditions + -param_2;
   }
   else {
-    psVar4 = (short *)(*(int *)(param_1 + 10) + param_2 * 6);
+    psVar4 = (status_condition *)(*(int *)(param_1 + 10) + param_2 * 6);
   }
-  sVar1 = psVar4[1];
-  sVar2 = psVar4[2];
-  iVar3 = (int)*psVar4 - 4;
-  if ((uint)(int)*psVar4 < 4 || iVar3 == 0) {
+  sVar1 = psVar4->register_index;
+  sVar2 = psVar4->bit;
+  iVar3 = (int)psVar4->kind - 4;
+  if ((uint)(int)psVar4->kind < 4 || iVar3 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00028326)[(short)iVar3]) {
     case 10:
@@ -44539,17 +44431,17 @@ void status_clear_bit(status_model *param_1,int param_2)
 undefined4 condition_is_command_error(int param_1)
 
 {
-  int iVar1;
-  undefined4 uVar2;
+  undefined4 uVar1;
   
-  if ((((param_1 < 0) && (iVar1 = param_1 * -6, *(short *)(&UNK_00028720 + iVar1) == 3)) &&
-      (*(short *)(&UNK_00028722 + iVar1) < -99)) && (-200 < *(short *)(&UNK_00028722 + iVar1))) {
-    uVar2 = 1;
+  if ((((param_1 < 0) && (status_negative_conditions[-param_1].kind == 3)) &&
+      (status_negative_conditions[-param_1].register_index < -99)) &&
+     (-200 < status_negative_conditions[-param_1].register_index)) {
+    uVar1 = 1;
   }
   else {
-    uVar2 = 0;
+    uVar1 = 0;
   }
-  return uVar2;
+  return uVar1;
 }
 
 
@@ -44874,20 +44766,20 @@ void status_register_get_ntr(int param_1,int param_2,undefined2 *param_3)
 
 /* an error code's message, from the table at 0x28910 */
 
-undefined4 error_message_lookup(undefined4 param_1)
+char * error_message_lookup(undefined4 param_1)
 
 {
-  short *psVar1;
+  scpi_error_message *psVar1;
   
-  psVar1 = &DAT_00028910;
+  psVar1 = scpi_error_messages;
   while( true ) {
-    if (*psVar1 == -1) {
-      return 0;
+    if (psVar1->code == -1) {
+      return (char *)0x0;
     }
-    if (*psVar1 == __ghidra_piece(unsigned short, param_1, 2)) break;
-    psVar1 = psVar1 + 3;
+    if (psVar1->code == __ghidra_piece(unsigned short, param_1, 2)) break;
+    psVar1 = psVar1 + 1;
   }
-  return *(undefined4 *)(psVar1 + 1);
+  return psVar1->text;
 }
 
 
@@ -44907,7 +44799,7 @@ scpi_interpret(int param_1,int param_2,int *param_3,uint param_4,undefined4 para
   int unaff_D3;
   code *pcVar4;
   int *piVar5;
-  undefined *puVar6;
+  uint32_t *puVar6;
   undefined4 uVar7;
   undefined4 auStack_92 [5];
   int local_7c;
@@ -44970,11 +44862,11 @@ LAB_00029436:
         else {
           if (local_52 == '\0') {
             local_52 = '\x01';
-            puVar6 = &DAT_00029636;
+            puVar6 = &scpi_response_begin_code;
             pcVar4 = *(code **)(*(int *)(param_2 + 4) + 0x28);
           }
           else {
-            puVar6 = (undefined *)0x3b;
+            puVar6 = (uint32_t *)0x3b;
             pcVar4 = *(code **)(*(int *)(param_2 + 4) + 0x14);
           }
           (*pcVar4)(param_2,puVar6);
@@ -44997,7 +44889,8 @@ LAB_000294de:
           uVar7 = 0;
           piVar5 = &local_7c;
           local_42 = scpi_message_done();
-          iVar2 = (**(code **)(*(int *)(param_2 + 4) + 0x28))(param_2,&DAT_0002963a,piVar5,uVar7);
+          iVar2 = (**(code **)(*(int *)(param_2 + 4) + 0x28))
+                            (param_2,&scpi_message_end_code,piVar5,uVar7);
           if (iVar2 == 0) {
             if (local_52 != '\0') {
               (**(code **)(*(int *)(param_2 + 4) + 0x14))(param_2,0x10a);
@@ -45043,7 +44936,7 @@ LAB_000294de:
     local_78 = local_2c;
   } while( true );
   if (iVar2 == -0x66) {
-    (**(code **)(*(int *)(param_1 + 4) + 0x28))(param_1,&DAT_0002963e);
+    (**(code **)(*(int *)(param_1 + 4) + 0x28))(param_1,&scpi_input_end_code);
     scpi_input_closed();
   }
   else if (iVar2 == -0x67) {
@@ -45059,7 +44952,7 @@ LAB_000294de:
       local_3e = 1;
     }
     if ((iVar2 != -0xc) && (iVar2 != -0xd)) goto LAB_00029622;
-    (**(code **)(*(int *)(param_1 + 4) + 0x28))(param_1,&DAT_0002963e);
+    (**(code **)(*(int *)(param_1 + 4) + 0x28))(param_1,&scpi_input_end_code);
   }
 LAB_0002961c:
   local_3e = 1;
@@ -46091,7 +45984,7 @@ void scpi_task(void)
       console_write("scpi: error opening stream\n");
     }
     else {
-      scpi_interpret(iVar2,iVar2,local_8,2000,&DAT_00053034,0x526f6,status_object,0,unaff_D2);
+      scpi_interpret(iVar2,iVar2,local_8,2000,&scpi_main_tree,0x526f6,status_object,0,unaff_D2);
       psos_service_9(local_8);
       (**(code **)(*(int *)(iVar2 + 4) + 4))(iVar2);
       if (scpi_language == 0) {
@@ -46268,7 +46161,7 @@ int scpi_set_common_OPC(void *parameters,void *response,void *call)
 int scpi_query_common_OPC(void *parameters,void *response,void *call)
 
 {
-  *(undefined **)response = &DAT_0002acb6;
+  *(char **)response = "1";
   return 0;
 }
 
@@ -47132,7 +47025,7 @@ int scpi_query_DIAGnostic_IDENtification_DEFault(void *parameters,void *response
 
 {
   *(char **)response = "Z3805A";
-  *(undefined **)((int)response + 4) = &DAT_00032ff5;
+  *(char **)((int)response + 4) = "S";
   return 0;
 }
 
@@ -47458,7 +47351,7 @@ void log_print(char param_1,undefined *param_2,undefined *param_3)
   pcVar4 = acStack_a4;
   log_status(pcVar4,param_1);
   (*(code *)param_3)(0xbe78,(short)acStack_a4,(short)pcVar4,uVar5);
-  (*(code *)param_2)(&DAT_0002be7d);
+  (*(code *)param_2)("\r\n");
   for (sVar3 = 1; sVar3 <= sVar2; sVar3 = sVar3 + 1) {
     if (param_1 == '\0') {
       log_read((int)sVar3,acStack_a4,acStack_54);
@@ -48155,24 +48048,24 @@ int scpi_query_DIAGnostic_TOFFset(void *parameters,void *response,void *call)
 undefined4 status_report(short param_1)
 
 {
-  int value;
+  char *value;
   
   if (status_ready == '\0') {
     status_event_hook(&early_status_reports,(char)param_1);
   }
   else {
     if (param_1 < 1) {
-      value = error_message_lookup
-                        (CONCAT31(CONCAT21(param_1 >> 0xf,(char)((ushort)param_1 >> 8)),
-                                  (char)param_1));
+      value = (char *)error_message_lookup
+                                (CONCAT31(CONCAT21(param_1 >> 0xf,(char)((ushort)param_1 >> 8)),
+                                          (char)param_1));
     }
     else if (param_1 < 0x17) {
-      value = *(int *)(&DAT_0002bf30 + param_1 * 4);
+      value = status_report_messages[param_1];
     }
     else {
-      value = 0;
+      value = (char *)0x0;
     }
-    status_set_bit(status_object,(int)param_1,value);
+    status_set_bit(status_object,(int)param_1,(int)value);
   }
   return 0;
 }
@@ -48469,7 +48362,7 @@ int scpi_set_SOURce_GPSystem_INITial_DATE(void *parameters,void *response,void *
     *(int *)(iVar2 + 0x102a0e) = (int)*(short *)((int)parameters + 2);
     *(int *)(iVar2 + 0x102a12) = (int)*(short *)((int)parameters + 8);
     *(int *)(iVar2 + 0x102a16) = (int)*(short *)((int)parameters + 0xe);
-    pllc_request_d(&DAT_000337e4,2,iVar2 + 0x102a0e,(byte)uVar1);
+    pllc_request_d(&scpi_param_SOURce_GPSystem_INITial_DATE,2,iVar2 + 0x102a0e,(byte)uVar1);
   }
   else {
     status_report_from(8,(byte)uVar1);
@@ -48496,7 +48389,7 @@ int scpi_set_SOURce_GPSystem_INITial_TIME(void *parameters,void *response,void *
     *(int *)(iVar2 + 0x102a0e) = (int)*(short *)((int)parameters + 2);
     *(int *)(iVar2 + 0x102a12) = (int)*(short *)((int)parameters + 8);
     *(int *)(iVar2 + 0x102a16) = (int)*(short *)((int)parameters + 0xe);
-    pllc_request_d(&DAT_0003382c,2,iVar2 + 0x102a0e,(byte)uVar1);
+    pllc_request_d(&scpi_param_SOURce_GPSystem_INITial_TIME,2,iVar2 + 0x102a0e,(byte)uVar1);
   }
   else {
     status_report_from(8,(byte)uVar1);
@@ -48543,7 +48436,7 @@ int scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *response,vo
   set_interrupt_mask(sr);
   if (local_36 == '\0') {
     unit_step.value = 1;
-    unit_step.function = &DAT_00032e26;
+    unit_step.function = load_long_unit_step;
     milli_step.value = 0x3a83126f;
     milli_step.function = load_long;
     local_1c = 0;
@@ -48632,7 +48525,8 @@ int scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *response,vo
     iVar1 = return_zero();
     pllc_request_c(&LAB_00033862,0,local_42,(undefined4 *)0x0,(char)iVar1);
     iVar1 = return_zero();
-    pllc_request_c(&DAT_00033898,0,local_3e,(undefined4 *)0x0,(char)iVar1);
+    pllc_request_c(&scpi_param_SOURce_GPSystem_INITial_POSition_longitude,0,local_3e,
+                   (undefined4 *)0x0,(char)iVar1);
     iVar1 = return_zero();
     pllc_request_c(&LAB_000338ce,0,local_3a,(undefined4 *)0x0,(char)iVar1);
   }
@@ -48711,7 +48605,7 @@ int scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *call
       return 0;
     }
     unit_step.value = 1;
-    unit_step.function = &DAT_00032e26;
+    unit_step.function = load_long_unit_step;
     milli_step.value = 0x3a83126f;
     milli_step.function = load_long;
     local_1c = 0;
@@ -49098,7 +48992,7 @@ int scpi_set_DOUGlas_STATe(void *parameters,void *response,void *call)
   cVar2 = return_byte(nv_settings.douglas_state);
   if (cVar2 == '\0') {
     iVar1 = return_zero();
-    pllc_request_c(&DAT_0003393a,0,0,(undefined4 *)0x0,(char)iVar1);
+    pllc_request_c(&scpi_param_DOUGlas_STATe_request,0,0,(undefined4 *)0x0,(char)iVar1);
   }
   else {
     iVar1 = return_zero();
@@ -49133,10 +49027,10 @@ int scpi_query_DOUGlas_STATe(void *parameters,void *response,void *call)
   
   cVar1 = return_byte(nv_settings.douglas_state);
   if (cVar1 == '\0') {
-    *(undefined **)response = &DAT_0002d91a;
+    *(char **)response = "ONCE";
   }
   else {
-    *(undefined **)response = &DAT_0002d918;
+    *(char **)response = "0";
   }
   return 0;
 }
@@ -49738,7 +49632,7 @@ int scpi_set_LED_ACTive(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_a(&UNK_00033cc6,0,(char)*(undefined2 *)((int)parameters + 2),(char)iVar1);
+  pllc_request_a(&scpi_param_LED_ACTive,0,(char)*(undefined2 *)((int)parameters + 2),(char)iVar1);
   return 0;
 }
 
@@ -49819,7 +49713,7 @@ int scpi_set_LED_ENABled(void *parameters,void *response,void *call)
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_a(&DAT_00033d20,0,(char)*(undefined2 *)((int)parameters + 2),(char)iVar1);
+  pllc_request_a(&scpi_param_LED_ENABled,0,(char)*(undefined2 *)((int)parameters + 2),(char)iVar1);
   return 0;
 }
 
@@ -50640,7 +50534,7 @@ int scpi_set_SAMPle_TOGGle(void *parameters,void *response,void *call)
     }
   }
   iVar1 = return_zero();
-  pllc_request_a(&DAT_00033490,0,unaff_D2b,(char)iVar1);
+  pllc_request_a(&scpi_param_SAMPle_TOGGle,0,unaff_D2b,(char)iVar1);
   return 0;
 }
 
@@ -50691,7 +50585,7 @@ int scpi_set_SAMPle_TARR(void *parameters,void *response,void *call)
     }
   }
   iVar1 = return_zero();
-  pllc_request_a(&DAT_000334b0,(char)*(undefined2 *)parameters,unaff_D2b,(char)iVar1);
+  pllc_request_a(&scpi_param_SAMPle_TARR,(char)*(undefined2 *)parameters,unaff_D2b,(char)iVar1);
   return 0;
 }
 
@@ -52483,7 +52377,8 @@ int scpi_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO(void *parameters,void *re
   int iVar1;
   
   iVar1 = return_zero();
-  pllc_request_a(&DAT_00033d3e,0,(char)*(undefined2 *)((int)parameters + 2),(char)iVar1);
+  pllc_request_a(&scpi_param_SOURce_ROSCillator_HOLDover_RECovery_AUTO,0,
+                 (char)*(undefined2 *)((int)parameters + 2),(char)iVar1);
   return 0;
 }
 
@@ -53050,7 +52945,7 @@ LAB_0003034c:
   uVar2 = 1;
 LAB_0003035a:
   iVar1 = return_zero();
-  pllc_request_a(&DAT_000333a0,0,uVar2,(char)iVar1);
+  pllc_request_a(&scpi_param_SYSTem_COMMunicate_SER1_RECeive_BITS,0,uVar2,(char)iVar1);
   return 0;
 }
 
@@ -53258,7 +53153,7 @@ LAB_00030582:
   uVar2 = 1;
 LAB_00030590:
   iVar1 = return_zero();
-  pllc_request_a(&DAT_000333be,0,uVar2,(char)iVar1);
+  pllc_request_a(&scpi_param_SYSTem_COMMunicate_SER1_RECeive_SBITs,0,uVar2,(char)iVar1);
   return 0;
 }
 
@@ -53310,18 +53205,18 @@ int scpi_query_DANA(void *parameters,void *response,void *call)
 
 {
   undefined4 local_c;
-  undefined *local_8;
+  char *local_8;
   
-  local_8 = (undefined *)0x0;
+  local_8 = (char *)0x0;
   error_queue_read(*(int *)((int)call + 0x1a),&local_c,&local_8);
   *(short *)response = (short)local_c;
-  if (local_8 == (undefined *)0x0) {
-    local_8 = (undefined *)error_message_lookup(local_c);
+  if (local_8 == (char *)0x0) {
+    local_8 = (char *)error_message_lookup(local_c);
   }
-  if (local_8 == (undefined *)0x0) {
-    local_8 = &DAT_00030816;
+  if (local_8 == (char *)0x0) {
+    local_8 = "";
   }
-  *(undefined **)((int)response + 4) = local_8;
+  *(char **)((int)response + 4) = local_8;
   return 0;
 }
 
@@ -53563,7 +53458,6 @@ void douglas_duration_changed(void)
 
 /* 00030a3e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* reads the lifetime record from EEPROM 0x400060, or sets its defaults: 1994-01-01 and the EFC at
    mid-scale */
 
@@ -53575,17 +53469,17 @@ undefined4 lifetime_record_read(void)
   undefined1 uVar3;
   uint uVar1;
   
-  uVar2 = record_checksum(&DAT_00400060,0x20);
+  uVar2 = record_checksum(&eeprom_lifetime_record,0x20);
   uVar1 = CONCAT22(extraout_D0u,uVar2);
-  if (uVar2 == _DAT_00400060) {
-    lifetime.date = _DAT_00400062;
-    lifetime.count = _DAT_00400066;
-    uVar1 = (uint)_DAT_0040006a & 0xe8000000;
+  if (uVar2 == eeprom_lifetime_record.checksum) {
+    lifetime.date = eeprom_lifetime_record.date;
+    lifetime.count = eeprom_lifetime_record.count;
+    uVar1 = (uint)__ghidra_bits(eeprom_lifetime_record.efc) & 0xe8000000;
     if (uVar1 == 0xe8000000) {
       lifetime.efc = 524288.0;
     }
     else {
-      lifetime.efc = _DAT_0040006a;
+      lifetime.efc = eeprom_lifetime_record.efc;
     }
     uVar3 = 1;
   }
@@ -53616,12 +53510,12 @@ undefined4 lifetime_record_write(void)
   record.date = lifetime.date;
   record.efc = lifetime.efc;
   record.checksum = record_checksum(&record,0x20);
-  iVar1 = memcmp(&record,&DAT_00400060,0x20);
+  iVar1 = memcmp(&record,&eeprom_lifetime_record,0x20);
   if (iVar1 == 0) {
     uVar2 = 1;
   }
   else {
-    uVar2 = eeprom_write(&DAT_00400060,(char *)&record,0x20);
+    uVar2 = eeprom_write((char *)&eeprom_lifetime_record,(char *)&record,0x20);
   }
   return uVar2;
 }
@@ -53663,17 +53557,17 @@ void lifetime_update(int param_1)
   klok_entry *pkVar1;
   int iVar2;
   short sVar3;
-  undefined1 *puVar4;
+  klok_entry *pkVar4;
   klok_entry event;
   
   sVar3 = 0x19;
   pkVar1 = &event;
-  puVar4 = &DAT_00030cec;
+  pkVar4 = &lifetime_event_template;
   do {
-    *(undefined1 *)&pkVar1->next = *puVar4;
+    *(undefined1 *)&pkVar1->next = *(undefined1 *)&pkVar4->next;
     sVar3 = sVar3 + -1;
     pkVar1 = (klok_entry *)((int)&pkVar1->next + 1);
-    puVar4 = puVar4 + 1;
+    pkVar4 = (klok_entry *)((int)&pkVar4->next + 1);
   } while (sVar3 != -1);
   if (lifetime.date != param_1) {
     lifetime.date = param_1;
@@ -53698,7 +53592,6 @@ void lifetime_update(int param_1)
 
 /* 00030c1e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* reads the time offset and TC from the calibration block at EEPROM 0x400080, or zeros if its
    checksum fails
    interval.md's calibration block */
@@ -53708,22 +53601,21 @@ bool calibration_block_read(void)
 {
   uint16_t uVar1;
   
-  uVar1 = record_checksum(&DAT_00400080,0x40);
-  if (uVar1 != _DAT_00400080) {
+  uVar1 = record_checksum(&eeprom_calibration_block,0x40);
+  if (uVar1 != eeprom_calibration_block.checksum) {
     scpi_value_DIAGnostic_TOFFset = 0.0;
     scpi_value_DIAGnostic_ROSCillator_TCOefficient = 0.0;
   }
   else {
-    scpi_value_DIAGnostic_TOFFset = _DAT_00400086;
-    scpi_value_DIAGnostic_ROSCillator_TCOefficient = _DAT_00400082;
+    scpi_value_DIAGnostic_TOFFset = eeprom_calibration_block.time_offset;
+    scpi_value_DIAGnostic_ROSCillator_TCOefficient = eeprom_calibration_block.tc_coefficient;
   }
-  return uVar1 == _DAT_00400080;
+  return uVar1 == eeprom_calibration_block.checksum;
 }
 
 
 /* 00030c60 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs
    from it, reporting status 0x10 if the EEPROM write fails
    scpi_param_DIAGnostic_ROSCillator_TCOefficient: done; interval.md's calibration block */
@@ -53734,13 +53626,13 @@ undefined4 save_calibration_block(undefined4 param_1)
   char cVar1;
   calibration_block block;
   
-  if ((_DAT_00400086 != scpi_value_DIAGnostic_TOFFset) ||
-     (_DAT_00400082 != scpi_value_DIAGnostic_ROSCillator_TCOefficient)) {
+  if ((eeprom_calibration_block.time_offset != scpi_value_DIAGnostic_TOFFset) ||
+     (eeprom_calibration_block.tc_coefficient != scpi_value_DIAGnostic_ROSCillator_TCOefficient)) {
     memset(&block,0xff,0x40);
     block.time_offset = scpi_value_DIAGnostic_TOFFset;
     block.tc_coefficient = scpi_value_DIAGnostic_ROSCillator_TCOefficient;
     block.checksum = record_checksum(&block,0x40);
-    cVar1 = eeprom_write(&DAT_00400080,(char *)&block,0x40);
+    cVar1 = eeprom_write((char *)&eeprom_calibration_block,(char *)&block,0x40);
     if (cVar1 == '\0') {
       status_report_from(0x10,(byte)param_1);
       return 0;
@@ -53764,21 +53656,21 @@ undefined2 parameter_record_read(void)
   void *pvVar1;
   bool bVar4;
   
-  uVar3 = record_checksum(&DAT_00400000,0x10);
-  bVar4 = uVar3 != DAT_00400000;
+  uVar3 = record_checksum(&eeprom_parameter_record,0x10);
+  bVar4 = uVar3 != eeprom_parameter_record.checksum;
   if (bVar4) {
     memcpy(&duartb_settings,&duartb_settings_defaults,9);
     pvVar1 = memcpy(&sci_settings,&sci_settings_defaults,6);
     uVar2 = (char)((uint)pvVar1 >> 8);
   }
   else {
-    duartb_settings.baud = DAT_00400002;
-    duartb_settings.parity = DAT_00400003;
-    duartb_settings.xon_xoff = DAT_00400004;
-    duartb_settings.field_05 = DAT_00400005;
-    duartb_settings.eight_bits = DAT_00400006;
-    duartb_settings.two_stop_bits = DAT_00400007;
-    duartb_settings.echo = DAT_00400008;
+    duartb_settings.baud = eeprom_parameter_record.duartb_baud;
+    duartb_settings.parity = eeprom_parameter_record.duartb_parity;
+    duartb_settings.xon_xoff = eeprom_parameter_record.duartb_xon_xoff;
+    duartb_settings.field_05 = eeprom_parameter_record.duartb_field_05;
+    duartb_settings.eight_bits = eeprom_parameter_record.duartb_eight_bits;
+    duartb_settings.two_stop_bits = eeprom_parameter_record.duartb_two_stop_bits;
+    duartb_settings.echo = eeprom_parameter_record.duartb_echo;
     pvVar1 = memcpy(&sci_settings,&sci_settings_defaults,6);
     uVar2 = (char)((uint)pvVar1 >> 8);
   }
@@ -53812,7 +53704,7 @@ bool save_parameter_record(byte param_1)
   record.sci_xon_xoff = sci_settings.xon_xoff;
   record.sci_echo = sci_settings.echo;
   record.checksum = record_checksum(&record,0x10);
-  cVar1 = eeprom_write((char *)&DAT_00400000,(char *)&record,0x10);
+  cVar1 = eeprom_write((char *)&eeprom_parameter_record,(char *)&record,0x10);
   if (cVar1 == '\0') {
     status_report_from(0x10,param_1);
   }
@@ -54702,7 +54594,7 @@ void report_clamped(char param_1,byte param_2)
 /* WARNING: Unknown calling convention */
 /* the index of a float's magnitude in the table at 0x32700, by bisection; called by nothing */
 
-undefined4 float_table_index(float *param_1,short param_2)
+float float_table_index(float *param_1,short param_2)
 
 {
   uint uVar1;
@@ -54728,14 +54620,14 @@ undefined4 float_table_index(float *param_1,short param_2)
       iVar6 = iVar6 + 1;
     }
     uVar1 = iVar6 >> 1;
-    iVar6 = float_compare(a,*(float *)(&UNK_00032700 + (short)uVar1 * 4));
+    iVar6 = float_compare(a,powers_of_ten_float_21[(short)uVar1]);
     uVar2 = uVar1 & 0xffff;
     if (iVar6 < 0) {
       uVar5 = uVar1 & 0xffff;
       uVar2 = uVar3;
     }
   }
-  return *(undefined4 *)(&DAT_00032704 + ((int)sVar4 - (int)param_2) * 4);
+  return powers_of_ten_float_21[((int)sVar4 - (int)param_2) + 1];
 }
 
 
@@ -55121,8 +55013,8 @@ clamp_double_to_limits(double *param_1,double *param_2,double *param_3,undefined
 void nv_slot_erase(byte param_1)
 
 {
-  if ((&nv_records)[(uint)param_1 * 0x80] != 0xff) {
-    eeprom_write_byte(&nv_records + (uint)param_1 * 0x80,-1);
+  if (nv_records[param_1].tag[0] != -1) {
+    eeprom_write_byte(nv_records[param_1].tag,-1);
   }
   return;
 }
@@ -55144,7 +55036,6 @@ void clear_nv(void)
 
 /* 0003282c */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* loads slot 0, else slot 1, else copies nv_settings_defaults over nv_settings, erases the older
    slot and saves
    structures.md */
@@ -55164,8 +55055,9 @@ void nv_restore(void)
     if (cVar1 == '\0') {
       selftest.eeprom = 1;
       memcpy(&nv_settings,&nv_settings_defaults,0xc5);
-      if ((_DAT_004000c4 == 0xffffffff) ||
-         ((_DAT_004000c4 <= _DAT_00400144 && (_DAT_00400144 != 0xffffffff)))) {
+      if ((nv_records[0].sequence == -1) ||
+         (((uint)nv_records[0].sequence <= (uint)nv_records[1].sequence &&
+          (nv_records[1].sequence != -1)))) {
         nv_slot = 0;
         bVar2 = 1;
       }
@@ -55263,7 +55155,7 @@ char nv_save(byte param_1)
   nv_record record;
   
   strncpy(record.tag,"S",2);
-  record.sequence = *(int *)(&DAT_004000c4 + (uint)nv_slot * 0x80) + 1;
+  record.sequence = nv_records[nv_slot].sequence + 1;
   strncpy(record.revision,"3543B",8);
   puVar11 = record.packed;
   bVar6 = 0;
@@ -55331,12 +55223,12 @@ char nv_save(byte param_1)
     *puVar10 = 0xffffffff;
   }
   record.checksum = nv_checksum((int)&record);
-  cVar5 = nv_record_differs((int *)(&nv_records + (uint)nv_slot * 0x80),(int *)&record);
+  cVar5 = nv_record_differs((int *)(nv_records + nv_slot),(int *)&record);
   if (cVar5 == '\0') {
     cVar5 = '\x01';
   }
   else {
-    cVar5 = eeprom_write(&nv_records + (uint)nv_slot * 0x80,record.tag,0x80);
+    cVar5 = eeprom_write(nv_records[nv_slot].tag,record.tag,0x80);
   }
   if (cVar5 == '\0') {
     if (kernel_running != 0) {
@@ -55355,15 +55247,15 @@ char nv_save(byte param_1)
 undefined1 nv_slot_valid(void)
 
 {
-  int iVar1;
+  uint uVar1;
   int iVar2;
-  short sVar3;
+  uint16_t uVar3;
   
-  iVar1 = (uint)nv_slot * 0x80;
-  iVar2 = strncmp(&nv_records + iVar1,"S",2);
+  uVar1 = (uint)nv_slot;
+  iVar2 = strncmp(nv_records[uVar1].tag,"S",2);
   if (((iVar2 == 0) &&
-      (sVar3 = nv_checksum((int)(&nv_records + iVar1)), sVar3 == *(short *)(iVar1 + 0x4000c2))) &&
-     (iVar1 = strncmp((char *)(iVar1 + 0x4000c8),"3543B",8), iVar1 == 0)) {
+      (uVar3 = nv_checksum((int)(nv_records + uVar1)), uVar3 == nv_records[uVar1].checksum)) &&
+     (iVar2 = strncmp(nv_records[uVar1].revision,"3543B",8), iVar2 == 0)) {
     return 0;
   }
   return 1;
@@ -55396,7 +55288,7 @@ undefined4 nv_load_slot(void)
   
   cVar7 = nv_slot_valid();
   if (cVar7 == '\0') {
-    memcpy(auStack_84,&nv_records + (uint)nv_slot * 0x80,0x80);
+    memcpy(auStack_84,nv_records + nv_slot,0x80);
     cVar7 = '\0';
     puVar12 = auStack_70;
     uVar6 = uStack_74;
@@ -55458,6 +55350,17 @@ undefined4 nv_load_slot(void)
 }
 
 
+/* 00032e26 */
+
+/* the long at a pointer, load_long's code again; the position setters give it unit_step */
+
+undefined4 load_long_unit_step(undefined4 *param_1)
+
+{
+  return *param_1;
+}
+
+
 /* 00032e2e */
 
 /* the long at a pointer; the position setters pass it as a descriptor's getter */
@@ -55504,17 +55407,17 @@ undefined1 identification_record_read(void)
   int iVar1;
   undefined1 uVar3;
   
-  uVar2 = record_checksum(&DAT_00400010,0x30);
-  if (uVar2 == DAT_00400010) {
-    iVar1 = strncmp((char *)0x400037,"S",3);
+  uVar2 = record_checksum(&eeprom_identification_record,0x30);
+  if (uVar2 == eeprom_identification_record.checksum) {
+    iVar1 = strncmp(eeprom_identification_record.tag,"S",3);
     if (iVar1 == 0) {
-      strncpy(idn_model,&DAT_00400012,0x12);
+      strncpy(idn_model,eeprom_identification_record.model,0x12);
     }
     else {
       idn_model_default();
     }
-    strncpy(idn_serial,&DAT_00400024,0x12);
-    idn_suffix = DAT_00400036;
+    strncpy(idn_serial,eeprom_identification_record.serial,0x12);
+    idn_suffix = eeprom_identification_record.suffix;
     uVar3 = 1;
   }
   else {
@@ -55538,9 +55441,11 @@ undefined4 identification_record_write(void)
   undefined4 uVar2;
   identification_record record;
   
-  iVar1 = strncmp(&DAT_00400012,idn_model,0x12);
-  if ((((iVar1 == 0) && (iVar1 = strncmp(&DAT_00400024,idn_serial,0x12), iVar1 == 0)) &&
-      (iVar1 = strncmp((char *)0x400037,"S",3), iVar1 == 0)) && (DAT_00400036 == idn_suffix)) {
+  iVar1 = strncmp(eeprom_identification_record.model,idn_model,0x12);
+  if ((((iVar1 == 0) &&
+       (iVar1 = strncmp(eeprom_identification_record.serial,idn_serial,0x12), iVar1 == 0)) &&
+      (iVar1 = strncmp(eeprom_identification_record.tag,"S",3), iVar1 == 0)) &&
+     (eeprom_identification_record.suffix == idn_suffix)) {
     return 1;
   }
   memset(&record,0xff,0x30);
@@ -55549,7 +55454,7 @@ undefined4 identification_record_write(void)
   record.suffix = idn_suffix;
   strncpy(record.tag,"S",3);
   record.checksum = record_checksum(&record,0x30);
-  uVar2 = eeprom_write((char *)&DAT_00400010,(char *)&record,0x30);
+  uVar2 = eeprom_write((char *)&eeprom_identification_record,(char *)&record,0x30);
   return uVar2;
 }
 
@@ -56261,7 +56166,7 @@ void interpolator_sample_test(void)
 void fpga_write(uint8_t reg,uint8_t value)
 
 {
-  (&DAT_00304000)[reg] = value;
+  fpga_port[reg] = value;
   return;
 }
 
@@ -56282,7 +56187,7 @@ uint8_t fpga_read(uint8_t reg)
   uVar2 = fconf_regs[1];
   fconf_regs[1] = reg << 3 | fconf_regs[1] & 7;
   fpga_write(1,fconf_regs[1]);
-  uVar1 = DAT_00304000;
+  uVar1 = fpga_port[0];
   fconf_regs[1] = uVar2 | fconf_regs[1] & 7;
   fpga_write(1,fconf_regs[1]);
   return uVar1;
@@ -56873,14 +56778,14 @@ double int64_to_double(uint param_1,uint param_2)
   if ((param_1 & 0x80000000) == 0) {
     dStack_c = unsigned_to_double(param_2);
     dVar2 = unsigned_to_double(param_1);
-    dVar2 = double_multiply_pointer(dVar2,(double *)&UNK_00041300);
+    dVar2 = double_multiply_pointer(dVar2,&two_to_32);
     double_add_in_place(&dStack_c,dVar2);
   }
   else {
     uVar1 = int64_negate(param_1,param_2);
     dStack_c = unsigned_to_double((uint)uVar1);
     dVar2 = unsigned_to_double((uint)((ulonglong)uVar1 >> 0x20));
-    dVar2 = double_multiply_pointer(dVar2,(double *)&UNK_00041300);
+    dVar2 = double_multiply_pointer(dVar2,&two_to_32);
     double_add_in_place(&dStack_c,dVar2);
     dStack_c = -dStack_c;
   }
@@ -56905,10 +56810,10 @@ undefined8 double_to_int64(uint param_1,undefined4 param_2)
   if (iVar1 < 0) {
     param_1 = param_1 ^ 0x80000000;
   }
-  dVar3 = double_divide_reversed_pointers((double *)&UNK_00041300,(double *)&param_1);
+  dVar3 = double_divide_reversed_pointers(&two_to_32,(double *)&param_1);
   u = double_to_unsigned(dVar3);
   dVar3 = unsigned_to_double(u);
-  dVar3 = double_multiply_pointer(dVar3,(double *)&UNK_00041300);
+  dVar3 = double_multiply_pointer(dVar3,&two_to_32);
   double_subtract_in_place((double *)&param_1,dVar3);
   uVar2 = double_to_unsigned(__ghidra_as(double, CONCAT44(param_1,param_2)));
   uVar4 = CONCAT44(u,uVar2);
@@ -61396,26 +61301,26 @@ void status_summary_update(void)
 /* writes the status flags to the latch at 0x300000, which the self-test walks a bit through: the
    front-panel lamps */
 
-byte leds_update(void)
+uint8_t leds_update(void)
 
 {
-  byte bVar1;
+  uint8_t uVar1;
   
-  bVar1 = led_enabled != 0;
+  uVar1 = led_enabled != 0;
   if (led_active != 0) {
-    bVar1 = bVar1 | 2;
+    uVar1 = uVar1 | 2;
   }
   if (led_alarm != 0) {
-    bVar1 = bVar1 | 4;
+    uVar1 = uVar1 | 4;
   }
   if (pll.led_gps_lock != 0) {
-    bVar1 = bVar1 | 0x10;
+    uVar1 = uVar1 | 0x10;
   }
   if (pll.led_holdover != 0) {
-    bVar1 = bVar1 | 0x20;
+    uVar1 = uVar1 | 0x20;
   }
-  DAT_00300000 = bVar1;
-  return bVar1;
+  lamp_latch = uVar1;
+  return uVar1;
 }
 
 
@@ -62762,7 +62667,7 @@ LAB_00047940:
       gps_command_send();
     }
     pll_scpi_receive();
-    memcpy(preserved_region.values,&DAT_00101e70,0x19);
+    memcpy(preserved_region.values,&retained_block,0x19);
     sVar10 = 0x155;
     pgVar11 = &preserved_region.gps;
     pgVar14 = &gps;
@@ -64141,9 +64046,7 @@ void satellite_status_list
   uint8_t *puVar9;
   uint8_t *puVar10;
   uint8_t *puVar11;
-  undefined4 *puVar12;
-  undefined1 *puVar13;
-  bool bVar14;
+  bool bVar12;
   uint local_2e;
   uint8_t local_2a [24];
   char local_12;
@@ -64153,13 +64056,13 @@ void satellite_status_list
   
   local_10 = param_6 + (uint)param_2 * 8;
   sVar7 = 7;
-  puVar12 = &uStack_c;
-  puVar13 = &DAT_0004e016;
+  puVar11 = (uint8_t *)&uStack_c;
+  puVar10 = satellite_status_blank_entry;
   do {
-    *(undefined1 *)puVar12 = *puVar13;
+    *puVar11 = *puVar10;
     sVar7 = sVar7 + -1;
-    puVar12 = (undefined4 *)((int)puVar12 + 1);
-    puVar13 = puVar13 + 1;
+    puVar11 = puVar11 + 1;
+    puVar10 = puVar10 + 1;
   } while (sVar7 != -1);
   if (param_1 == '\x01') {
     local_2e = *(uint *)(param_3 + 4);
@@ -64190,7 +64093,7 @@ void satellite_status_list
       cVar4 = count_bits((uint)bVar8);
       cVar5 = count_bits(local_2e);
       local_12 = '\f' - (cVar4 + cVar5);
-      while (cVar4 = local_12 + -1, bVar14 = local_12 != '\0', local_12 = cVar4, bVar14) {
+      while (cVar4 = local_12 + -1, bVar12 = local_12 != '\0', local_12 = cVar4, bVar12) {
         puVar10 = puVar10 + -2;
         satellite_add_to_set(SATELLITE_GPS,*puVar10,&local_2e);
       }
@@ -64671,8 +64574,7 @@ undefined4 format_date(ushort param_1,byte param_2,byte param_3,char *param_4)
     uVar2 = 0;
   }
   else {
-    sprintf(param_4,"%02d %s %04d",(uint)param_3,*(char **)(&DAT_0004cfce + (uint)param_2 * 4),
-            (uint)param_1);
+    sprintf(param_4,"%02d %s %04d",(uint)param_3,month_names[param_2],(uint)param_1);
     uVar2 = 1;
   }
   return uVar2;
@@ -64929,8 +64831,7 @@ int status_screen_tfom(byte param_1,int param_2,char *param_3)
   char *pcVar6;
   double dVar7;
   undefined4 uVar8;
-  undefined1 *puVar9;
-  char *pcVar10;
+  char *pcVar9;
   char acStack_26 [34];
   
   iVar2 = param_1 - 4;
@@ -64941,40 +64842,40 @@ int status_screen_tfom(byte param_1,int param_2,char *param_3)
     case 8:
       if (*(char *)(param_2 + 9) == '\0') {
         pcVar6 = "--";
-        pcVar10 = acStack_26;
+        pcVar9 = acStack_26;
         do {
           cVar1 = *pcVar6;
-          *pcVar10 = cVar1;
+          *pcVar9 = cVar1;
           pcVar6 = pcVar6 + 1;
-          pcVar10 = pcVar10 + 1;
+          pcVar9 = pcVar9 + 1;
         } while (cVar1 != '\0');
       }
       else {
         sprintf(acStack_26,"%d",(uint)*(byte *)(param_2 + 8));
       }
       pcVar6 = acStack_26;
-      puVar9 = &DAT_0004d10b;
+      pcVar9 = "";
       sVar4 = tfom_code(*(undefined4 *)(param_2 + 4));
-      iVar3 = sprintf(param_3,"TFOM     %d%13sFFOM    %2s",(int)sVar4,puVar9,pcVar6);
+      iVar3 = sprintf(param_3,"TFOM     %d%13sFFOM    %2s",(int)sVar4,pcVar9,pcVar6);
       break;
     case 0x66:
       if (*(char *)(param_2 + 0x1a) == '\0') {
         pcVar6 = " --";
-        pcVar10 = acStack_26;
+        pcVar9 = acStack_26;
         do {
           cVar1 = *pcVar6;
-          *pcVar10 = cVar1;
+          *pcVar9 = cVar1;
           pcVar6 = pcVar6 + 1;
-          pcVar10 = pcVar10 + 1;
+          pcVar9 = pcVar9 + 1;
         } while (cVar1 != '\0');
       }
       else {
         pcVar6 = acStack_26;
-        pcVar10 = "s ";
+        pcVar9 = "s ";
         uVar8 = 0xf6000000;
         dVar7 = float_to_double(*(float *)(param_2 + 0x16));
         format_si((int)((ulonglong)__ghidra_bits(dVar7) >> 0x20),SUB84(dVar7,0),(char)((uint)uVar8 >> 0x18),
-                  (byte)((uint)uVar8 >> 8),pcVar10,pcVar6);
+                  (byte)((uint)uVar8 >> 8),pcVar9,pcVar6);
         bVar5 = 0xff;
         pcVar6 = acStack_26;
         do {
@@ -64998,21 +64899,21 @@ int status_screen_tfom(byte param_1,int param_2,char *param_3)
     case 0xf6:
       if (*(char *)(param_2 + 0x1d) == '\x01') {
         pcVar6 = " Off";
-        pcVar10 = acStack_26;
+        pcVar9 = acStack_26;
         do {
           cVar1 = *pcVar6;
-          *pcVar10 = cVar1;
+          *pcVar9 = cVar1;
           pcVar6 = pcVar6 + 1;
-          pcVar10 = pcVar10 + 1;
+          pcVar9 = pcVar9 + 1;
         } while (cVar1 != '\0');
       }
       else {
         pcVar6 = acStack_26;
-        pcVar10 = "s";
+        pcVar9 = "s";
         uVar8 = 0xf7000000;
         dVar7 = float_to_double(*(float *)(param_2 + 0x1e));
         format_si((int)((ulonglong)__ghidra_bits(dVar7) >> 0x20),SUB84(dVar7,0),(char)((uint)uVar8 >> 0x18),
-                  (byte)((uint)uVar8 >> 8),pcVar10,pcVar6);
+                  (byte)((uint)uVar8 >> 8),pcVar9,pcVar6);
       }
       iVar3 = sprintf(param_3,"HOLD THR %s",acStack_26 + 1);
       break;
@@ -65312,7 +65213,7 @@ void status_snapshot(pll_stage *param_1)
         *(char **)(param_1 + 0x114) = "INIT ";
       }
       else {
-        *(undefined1 **)(param_1 + 0x114) = &DAT_0004d10b;
+        *(char **)(param_1 + 0x114) = "";
       }
       *(int32_t *)(param_1 + 0x118) = gps.status.latitude;
       *(int32_t *)(param_1 + 0x11c) = gps.status.longitude;
@@ -65332,7 +65233,7 @@ void status_snapshot(pll_stage *param_1)
     }
   }
   else {
-    *(undefined1 **)(param_1 + 0x114) = &DAT_0004d10b;
+    *(char **)(param_1 + 0x114) = "";
     *(int32_t *)(param_1 + 0x118) = gps.hold_position.latitude;
     *(int32_t *)(param_1 + 0x11c) = gps.hold_position.longitude;
     *(int32_t *)(param_1 + 0x120) = gps.hold_position.height;
@@ -65645,7 +65546,7 @@ override_jmp_0004acdc_case_0:
   else {
     uVar14 = 0xae;
   }
-  (*(code *)param_4)(0xe7ba,uVar12,uVar13,uVar14,&DAT_0004d10b);
+  (*(code *)param_4)(0xe7ba,uVar12,uVar13,uVar14,"");
   if (param_1[0xef] == '\0') {
     uVar12 = 0xe7db;
   }
@@ -65677,8 +65578,8 @@ override_jmp_0004acdc_case_0:
               ((char)((uint)uVar1 >> 0x18),(byte)((uint)uVar1 >> 0x10),(ushort)uVar1,acStack_8c);
     status_screen_position(local_ae,(int)param_1,local_7e + 1);
     (*(code *)param_4)("%3.3s  %6.6s  %3.3s   %3.3s  %6.6s  %3.3s  %6.6s%3s%s\r\n",acStack_ad,
-                       acStack_a4,acStack_a8,acStack_9d,acStack_98,acStack_91,acStack_8c,
-                       &DAT_0004d10b,local_7e + 1);
+                       acStack_a4,acStack_a8,acStack_9d,acStack_98,acStack_91,acStack_8c,"",
+                       local_7e + 1);
     local_b2 = local_b2 + 8;
     pcVar8 = pcVar8 + 8;
   }
@@ -65688,7 +65589,7 @@ override_jmp_0004acdc_case_0:
   else {
     uVar13 = 0x2d;
   }
-  (*(code *)param_4)(0xe842,param_1[0x110],0xb,uVar13,&DAT_0004d10b);
+  (*(code *)param_4)(0xe842,param_1[0x110],0xb,uVar13,"");
   status_screen_height((int)param_1,local_7e + 1);
   (*(code *)param_4)(0xfd,(short)local_7e + 1);
   local_7e[1] = 0;
@@ -66295,7 +66196,7 @@ LAB_0004b98c:
     expected = 0x40;
     break;
   case 0x16:
-    if (((&DAT_0005ed99)[c] & 1) != 0) {
+    if ((ctype_table[c + 1] & 1) != 0) {
       puVar2 = gps_response_cursor + 1;
       *gps_response_cursor = c;
       gps_response_cursor = puVar2;
@@ -66307,7 +66208,7 @@ LAB_0004b98c:
     }
     goto LAB_0004b98c;
   case 0x4a:
-    if (((&DAT_0005ed99)[c] & 3) == 0) {
+    if ((ctype_table[c + 1] & 3) == 0) {
       gps_counts.frame_errors = gps_counts.frame_errors + 1;
       if (c == 0x40) {
         gps_response_cursor = gps_response_buffer + 1;
@@ -66819,77 +66720,77 @@ undefined1 gps_request_class(short param_1,char param_2)
 /* WARNING: Unknown calling convention */
 /* a script index from 0x47 on to its script, the first also resetting gps */
 
-undefined ** gps_script_lookup(short param_1)
+gps_script_step ** gps_script_lookup(short param_1)
 
 {
-  undefined **ppuVar1;
+  gps_script_step **ppgVar1;
   
   if ((int)param_1 - 0x47U < 0x13U) {
                     /* WARNING: Switch is manually overridden */
     switch((short)((int)param_1 - 0x47U)) {
     case 0:
       gps_init();
-      ppuVar1 = (undefined **)&DAT_00050cca;
+      ppgVar1 = gps_script_47;
       break;
     case 1:
-      ppuVar1 = (undefined **)&DAT_00050d32;
+      ppgVar1 = gps_script_48;
       break;
     case 2:
-      ppuVar1 = (undefined **)&DAT_00050da6;
+      ppgVar1 = gps_script_49;
       break;
     case 3:
-      ppuVar1 = (undefined **)&DAT_00050dba;
+      ppgVar1 = gps_script_4a;
       break;
     case 4:
-      ppuVar1 = (undefined **)&DAT_00050dce;
+      ppgVar1 = gps_script_4b;
       break;
     case 5:
-      ppuVar1 = (undefined **)&DAT_00050dde;
+      ppgVar1 = gps_script_4c;
       break;
     case 6:
-      ppuVar1 = (undefined **)&DAT_00050df2;
+      ppgVar1 = gps_script_4d;
       break;
     case 7:
-      ppuVar1 = &PTR_DAT_00050e66;
+      ppgVar1 = gps_script_4e;
       break;
     case 8:
-      ppuVar1 = (undefined **)&DAT_00050e72;
+      ppgVar1 = gps_script_4f;
       break;
     case 9:
-      ppuVar1 = (undefined **)&DAT_00050e96;
+      ppgVar1 = gps_script_50;
       break;
     case 10:
-      ppuVar1 = (undefined **)&DAT_00050eb6;
+      ppgVar1 = gps_script_51;
       break;
     case 0xb:
-      ppuVar1 = (undefined **)&DAT_00050ede;
+      ppgVar1 = gps_script_52;
       break;
     case 0xc:
-      ppuVar1 = (undefined **)&DAT_00050f12;
+      ppgVar1 = gps_script_53;
       break;
     case 0xd:
-      ppuVar1 = (undefined **)&DAT_00050f26;
+      ppgVar1 = gps_script_54;
       break;
     case 0xe:
-      ppuVar1 = (undefined **)&DAT_00050f3a;
+      ppgVar1 = gps_script_55;
       break;
     case 0xf:
-      ppuVar1 = (undefined **)&DAT_00050f5a;
+      ppgVar1 = gps_script_56;
       break;
     case 0x10:
-      ppuVar1 = (undefined **)&DAT_00050f72;
+      ppgVar1 = gps_script_57;
       break;
     case 0x11:
-      ppuVar1 = (undefined **)&DAT_00050f8a;
+      ppgVar1 = gps_script_58;
       break;
     case 0x12:
-      ppuVar1 = (undefined **)&DAT_00050fa2;
+      ppgVar1 = gps_script_59;
     }
   }
   else {
-    ppuVar1 = (undefined **)&DAT_00050fce;
+    ppgVar1 = gps_script_none;
   }
-  return ppuVar1;
+  return ppgVar1;
 }
 
 
@@ -69192,8 +69093,8 @@ int gps_message_to_text(char *param_1,byte param_2,char *param_3)
 void psos_config_init(void)
 
 {
-  memcpy(&psos_config,&DAT_0005122a,0x62);
-  memcpy(io_table,&DAT_0005171a,0x90);
+  memcpy(&psos_config,&psos_config_defaults,0x62);
+  memcpy(io_table,io_table_defaults,0x90);
   return;
 }
 
@@ -78644,8 +78545,8 @@ int atoi(char *s)
   
   bVar1 = false;
   iVar2 = (int)*s;
-  if (((&DAT_0005ed99)[iVar2] & 4) == 0) {
-    while (((&DAT_0005ed99)[iVar2] & 8) != 0) {
+  if ((ctype_table[iVar2 + 1] & 4) == 0) {
+    while ((ctype_table[iVar2 + 1] & 8) != 0) {
       s = s + 1;
       iVar2 = (int)*s;
     }
@@ -78659,14 +78560,14 @@ int atoi(char *s)
         iVar2 = (int)*s;
       }
     }
-    if (((&DAT_0005ed99)[iVar2] & 4) == 0) {
+    if ((ctype_table[iVar2 + 1] & 4) == 0) {
       return 0;
     }
   }
   iVar2 = 0x30 - iVar2;
   while( true ) {
     s = s + 1;
-    if (((&DAT_0005ed99)[*s] & 4) == 0) break;
+    if ((ctype_table[*s + 1] & 4) == 0) break;
     iVar2 = (0x30 - *s) + iVar2 * 10;
   }
   if (!bVar1) {
@@ -79166,7 +79067,7 @@ void double_to_digits_multiply(uint *param_1)
 void double_to_digits(double value,int count,int *exponent,uint *negative,char *digits,int mode)
 
 {
-  int iVar1;
+  ushort uVar1;
   int iVar2;
   uint uVar3;
   uint uVar4;
@@ -79179,9 +79080,8 @@ void double_to_digits(double value,int count,int *exponent,uint *negative,char *
   char *pcVar10;
   int local_26;
   uint local_1e;
-  uint local_1a [4];
+  uint32_t product [4];
   short local_a;
-  ushort local_8;
   short local_6;
   
   *negative = (uint)((longlong)__ghidra_bits(value) < 0);
@@ -79248,28 +79148,28 @@ void double_to_digits(double value,int count,int *exponent,uint *negative,char *
         digits[1] = '-';
       }
       pcVar10 = digits + 2;
-      iVar1 = 2;
+      iVar2 = 2;
     }
     else {
       pcVar10 = digits + 1;
       *digits = '?';
-      iVar1 = 1;
+      iVar2 = 1;
     }
-    *exponent = iVar1;
+    *exponent = iVar2;
     *pcVar10 = '\0';
     return;
   }
   iVar7 = 0x4d10;
-  iVar1 = ((int)uVar6 >> 0x14) + -0x3ff;
-  if (iVar1 < 0) {
+  iVar2 = ((int)uVar6 >> 0x14) + -0x3ff;
+  if (iVar2 < 0) {
     iVar7 = 0x4d11;
   }
-  local_a = (short)((uint)(iVar1 * iVar7) >> 0x10);
+  sVar9 = (short)((uint)(iVar2 * iVar7) >> 0x10);
   if (count < 0) {
     count = 0;
   }
   if (mode == 0) {
-    count = local_a + 1 + count;
+    count = sVar9 + 1 + count;
   }
   if (0x15c < count) {
     count = 0x15c;
@@ -79284,6 +79184,7 @@ void double_to_digits(double value,int count,int *exponent,uint *negative,char *
     local_26 = 0x11;
   }
   do {
+    local_a = sVar9;
     sVar9 = ((short)local_26 - local_a) + -1;
     iVar5 = (int)sVar9 / 0x19;
     iVar7 = (short)iVar5 * -0x19 + (int)sVar9;
@@ -79291,117 +79192,118 @@ void double_to_digits(double value,int count,int *exponent,uint *negative,char *
       iVar5 = iVar5 + -1;
       iVar7 = iVar7 + 0x19;
     }
-    sVar9 = -(short)iVar1 + 0x52;
+    sVar9 = -(short)iVar2 + 0x52;
     if (iVar7 == 0) {
       if (iVar5 != 0) {
-        iVar7 = (iVar5 + 0xd) * 8;
-        local_1a[0] = *(uint *)(&DAT_0005f860 + iVar7);
-        local_1a[1] = *(uint *)(&DAT_0005f864 + iVar7);
-        sVar9 = sVar9 - *(short *)(&DAT_0005f938 + (iVar5 + 0xd) * 2);
+        iVar5 = iVar5 + 0xd;
+        product[0] = powers_of_ten_by_25_mantissas[iVar5 * 2];
+        product[1] = powers_of_ten_by_25_mantissas[iVar5 * 2 + 1];
+        sVar9 = sVar9 - powers_of_ten_by_25_exponents[iVar5];
         goto LAB_0005f65a;
       }
-      local_1a[0] = uVar4 | 0x100000;
-      local_1a[1] = local_1e;
-      local_1a[2] = 0;
-      local_1a[3] = 0;
-      uVar8 = -(short)iVar1 + 0x54;
+      product[0] = uVar4 | 0x100000;
+      product[1] = local_1e;
+      product[2] = 0;
+      product[3] = 0;
+      uVar8 = -(short)iVar2 + 0x54;
     }
     else {
-      iVar2 = (iVar7 + -1) * 8;
-      local_1a[0] = *(uint *)(&DAT_0005f96e + iVar2);
-      local_1a[1] = *(uint *)(&DAT_0005f972 + iVar2);
-      sVar9 = sVar9 - (ushort)(byte)(&UNK_0005fa2d)[iVar7];
+      product[0] = powers_of_ten_1_to_24_mantissas[(iVar7 + -1) * 2];
+      product[1] = powers_of_ten_1_to_24_mantissas[(iVar7 + -1) * 2 + 1];
+      sVar9 = sVar9 - (ushort)*(byte *)((int)powers_of_ten_1_to_24_mantissas + iVar7 + 0xbf);
       if (iVar5 == 0) {
 LAB_0005f65a:
         uVar8 = sVar9 + 1;
       }
       else {
-        iVar7 = (iVar5 + 0xd) * 8;
-        local_1a[2] = *(uint *)(&DAT_0005f860 + iVar7);
-        local_1a[3] = *(uint *)(&DAT_0005f864 + iVar7);
-        uVar8 = sVar9 - *(short *)(&DAT_0005f938 + (iVar5 + 0xd) * 2);
-        double_to_digits_multiply(local_1a);
-        if ((int)local_1a[2] < 0) {
-          local_1a[1] = local_1a[1] + 1;
-          if (local_1a[1] == 0) {
-            local_1a[0] = local_1a[0] + 1;
+        iVar5 = iVar5 + 0xd;
+        product[2] = powers_of_ten_by_25_mantissas[iVar5 * 2];
+        product[3] = powers_of_ten_by_25_mantissas[iVar5 * 2 + 1];
+        uVar8 = sVar9 - powers_of_ten_by_25_exponents[iVar5];
+        double_to_digits_multiply(product);
+        if ((int)product[2] < 0) {
+          product[1] = product[1] + 1;
+          if (product[1] == 0) {
+            product[0] = product[0] + 1;
           }
-          if (local_1a[3] == 0 && (local_1a[2] & 0x7fffffff) == 0) {
-            local_1a[1] = local_1a[1] & 0xfffffffe;
+          if (product[3] == 0 && (product[2] & 0x7fffffff) == 0) {
+            product[1] = product[1] & 0xfffffffe;
           }
         }
       }
-      local_1a[3] = local_1e;
-      local_1a[2] = uVar4 | 0x100000;
-      double_to_digits_multiply(local_1a);
+      product[3] = local_1e;
+      product[2] = uVar4 | 0x100000;
+      double_to_digits_multiply(product);
     }
     local_6 = -((short)uVar8 >> 5) + 2;
-    local_8 = uVar8 & 0x1f;
-    if (local_8 == 0) {
+    uVar1 = uVar8 & 0x1f;
+    if (uVar1 == 0) {
       uVar6 = 0x80000000;
       local_6 = -((short)uVar8 >> 5) + 3;
     }
     else {
-      uVar6 = __ghidra_shl(1, ((int)(short)local_8 - 1U & 0x3f));
+      uVar6 = __ghidra_shl(1, ((int)(short)uVar1 - 1U & 0x3f));
     }
-    uVar6 = local_1a[local_6] & uVar6;
+    uVar6 = product[local_6] & uVar6;
     if (uVar6 != 0) {
-      unaff_D7 = ~-uVar6 & local_1a[local_6];
+      unaff_D7 = ~-uVar6 & product[local_6];
       do {
         local_6 = local_6 + 1;
-        unaff_D7 = local_1a[local_6] | unaff_D7;
+        unaff_D7 = product[local_6] | unaff_D7;
       } while (local_6 < 3);
     }
-    if (local_8 == 0) {
-      uVar3 = local_1a[0];
+    if (uVar1 == 0) {
+      uVar3 = product[0];
       if (uVar8 == 0x40) {
 LAB_0005f74e:
-        local_1a[0] = 0;
-        local_1a[1] = uVar3;
+        product[0] = 0;
+        product[1] = uVar3;
       }
     }
     else if ((short)uVar8 < 0x20) {
-      local_1a[0] = __ghidra_shr(local_1a[1], (int)(short)local_8) |
-                    __ghidra_shl(local_1a[0], (0x20U - (int)(short)local_8 & 0x3f));
-      local_1a[1] = __ghidra_shr(local_1a[2], (int)(short)local_8) |
-                    __ghidra_shl(local_1a[1], (0x20U - (int)(short)local_8 & 0x3f));
+      product[0] = __ghidra_shr(product[1], (int)(short)uVar1) |
+                   __ghidra_shl(product[0], (0x20U - (int)(short)uVar1 & 0x3f));
+      product[1] = __ghidra_shr(product[2], (int)(short)uVar1) |
+                   __ghidra_shl(product[1], (0x20U - (int)(short)uVar1 & 0x3f));
     }
     else {
       if (0x40 < (short)uVar8) {
-        uVar3 = __ghidra_shr(local_1a[0], (int)(short)local_8);
+        uVar3 = __ghidra_shr(product[0], (int)(short)uVar1);
         goto LAB_0005f74e;
       }
-      local_1a[1] = __ghidra_shl(local_1a[0], (0x20U - (int)(short)local_8 & 0x3f)) |
-                    __ghidra_shr(local_1a[1], (int)(short)local_8);
-      local_1a[0] = __ghidra_shr(local_1a[0], (int)(short)local_8);
+      product[1] = __ghidra_shl(product[0], (0x20U - (int)(short)uVar1 & 0x3f)) |
+                   __ghidra_shr(product[1], (int)(short)uVar1);
+      product[0] = __ghidra_shr(product[0], (int)(short)uVar1);
     }
     if (uVar6 != 0) {
-      local_1a[1] = local_1a[1] + 1;
-      if (local_1a[1] == 0) {
-        local_1a[0] = local_1a[0] + 1;
+      product[1] = product[1] + 1;
+      if (product[1] == 0) {
+        product[0] = product[0] + 1;
       }
       if (unaff_D7 == 0) {
-        local_1a[1] = local_1a[1] & 0xfffffffe;
+        product[1] = product[1] & 0xfffffffe;
       }
     }
-    if (local_1a[0] < powers_of_ten_64[local_26 * 2]) goto LAB_0005f7ae;
-    if (local_1a[0] == powers_of_ten_64[local_26 * 2]) {
-      if (local_1a[1] < powers_of_ten_64[local_26 * 2 + 1]) goto LAB_0005f7ae;
-      if (local_1a[1] == powers_of_ten_64[local_26 * 2 + 1]) {
-        local_a = local_a + 1;
+    if (product[0] < powers_of_ten_64[local_26 * 2]) goto LAB_0005f7ae;
+    if (product[0] == powers_of_ten_64[local_26 * 2]) {
+      if (product[1] < powers_of_ten_64[local_26 * 2 + 1]) goto LAB_0005f7ae;
+      if (product[1] == powers_of_ten_64[local_26 * 2 + 1]) {
+        sVar9 = local_a + 1;
         if (mode != 0) {
+          local_a = sVar9;
           if (local_26 != 0) {
-            local_1a[0] = powers_of_ten_64[(local_26 + -1) * 2];
-            local_1a[1] = powers_of_ten_64[(local_26 + -1) * 2 + 1];
+            product[0] = powers_of_ten_64[(local_26 + -1) * 2];
+            product[1] = powers_of_ten_64[(local_26 + -1) * 2 + 1];
           }
           goto LAB_0005f7ae;
         }
         goto LAB_0005f7a6;
       }
     }
-    local_a = local_a + 1;
+    sVar9 = local_a + 1;
     if (mode == 0) {
 LAB_0005f7a6:
+      local_a = local_a + 1;
       local_26 = local_26 + 1;
       count = count + 1;
 LAB_0005f7ae:
@@ -79412,17 +79314,17 @@ LAB_0005f7ae:
       else {
         sVar9 = (short)local_26;
         pcVar10 = digits;
-        while (sVar9 = sVar9 + -1, local_1a[0] != 0) {
+        while (sVar9 = sVar9 + -1, product[0] != 0) {
           *pcVar10 = '0';
           uVar4 = powers_of_ten_64[sVar9 * 2];
           uVar6 = powers_of_ten_64[sVar9 * 2 + 1];
-          for (; (uVar4 < local_1a[0] || ((uVar4 == local_1a[0] && (uVar6 <= local_1a[1]))));
-              local_1a[1] = local_1a[1] - uVar6) {
+          for (; (uVar4 < product[0] || ((uVar4 == product[0] && (uVar6 <= product[1]))));
+              product[1] = product[1] - uVar6) {
             *pcVar10 = *pcVar10 + '\x01';
-            if (local_1a[1] < uVar6) {
-              local_1a[0] = local_1a[0] - 1;
+            if (product[1] < uVar6) {
+              product[0] = product[0] - 1;
             }
-            local_1a[0] = local_1a[0] - uVar4;
+            product[0] = product[0] - uVar4;
           }
           pcVar10 = pcVar10 + 1;
         }
@@ -79436,19 +79338,19 @@ LAB_0005f7ae:
         while (sVar9 != 0) {
           *pcVar10 = '0';
           uVar4 = powers_of_ten_64[sVar9 * 2 + 1];
-          for (; uVar4 <= local_1a[1]; local_1a[1] = local_1a[1] - uVar4) {
+          for (; uVar4 <= product[1]; product[1] = product[1] - uVar4) {
             *pcVar10 = *pcVar10 + '\x01';
           }
           pcVar10 = pcVar10 + 1;
           sVar9 = sVar9 + -1;
         }
-        *pcVar10 = (char)local_1a[1] + '0';
-        iVar1 = count - local_26;
+        *pcVar10 = (char)product[1] + '0';
+        iVar2 = count - local_26;
         while( true ) {
           pcVar10 = pcVar10 + 1;
-          if (iVar1 == 0) break;
+          if (iVar2 == 0) break;
           *pcVar10 = '0';
-          iVar1 = iVar1 + -1;
+          iVar2 = iVar2 + -1;
         }
         *pcVar10 = '\0';
         *exponent = local_a + 1;
@@ -79514,7 +79416,7 @@ byte * doprnt(byte *param_1,uint *param_2,undefined *param_3,undefined4 param_4)
   char *local_1ca;
   char conversion [20];
   char acStack_1b2 [352];
-  undefined *local_52;
+  char *local_52;
   char *local_4e;
   char local_47;
   char local_46 [2];
@@ -79642,7 +79544,7 @@ LAB_0005fb72:
         while( true ) {
           local_8 = (char *)(uVar14 - 0x30);
           uVar14 = (uint)*param_1;
-          if ((0x7f < uVar14) || (((&DAT_0005ed99)[uVar14] & 4) == 0)) break;
+          if ((0x7f < uVar14) || ((ctype_table[uVar14 + 1] & 4) == 0)) break;
           uVar14 = uVar14 + (int)local_8 * 10;
           param_1 = param_1 + 1;
         }
@@ -79711,16 +79613,16 @@ LAB_000600fa:
           pbVar19 = (byte *)(acStack_1b2 + 1);
           if (local_1c == 0) {
             if (bVar7) {
-              local_52 = &DAT_0006086a;
+              local_52 = "+";
               local_44 = 1;
             }
             else if (bVar8) {
-              local_52 = &DAT_0006086c;
+              local_52 = " ";
               local_44 = 1;
             }
           }
           else {
-            local_52 = &DAT_00060868;
+            local_52 = "-";
             local_44 = 1;
           }
           if (acStack_1b2[1] == '\0') {
@@ -79772,7 +79674,7 @@ LAB_000600fa:
             cVar11 = '+';
           }
           local_4e[-1] = cVar11;
-          if (((&DAT_0005ed99)[uVar14] & 1) == 0) {
+          if ((ctype_table[uVar14 + 1] & 1) == 0) {
             cVar11 = 'e';
           }
           else {
@@ -79790,16 +79692,16 @@ LAB_000602cc:
           param_2 = param_2 + 2;
           if (((local_1c == 0) || (local_20 <= -(int)local_1d2)) || (acStack_1b2[1] == '0')) {
             if (bVar7) {
-              local_52 = &DAT_0006086a;
+              local_52 = "+";
               local_44 = 1;
             }
             else if (bVar8) {
-              local_52 = &DAT_0006086c;
+              local_52 = " ";
               local_44 = 1;
             }
           }
           else {
-            local_52 = &DAT_00060868;
+            local_52 = "-";
             local_44 = 1;
           }
           local_8 = (char *)local_20;
@@ -79884,11 +79786,11 @@ LAB_000602cc:
         param_2 = puVar3;
         if (bVar6) {
           if (uVar14 == 0x70) {
-            local_52 = &DAT_00060890;
+            local_52 = "0x";
             local_44 = 2;
           }
           else {
-            local_52 = (undefined *)0x60893;
+            local_52 = "0X";
             local_44 = 2;
           }
         }
@@ -79936,7 +79838,7 @@ LAB_000602cc:
         }
         pbVar20 = (byte *)(conversion + 0xb);
         if ((int)local_38 < 0) {
-          local_52 = &DAT_00060868;
+          local_52 = "-";
           local_44 = 1;
           if (local_38 == (char *)0x80000000) {
             conversion[10] = next_decimal_digit((uint *)&local_38);
@@ -79947,11 +79849,11 @@ LAB_000602cc:
           }
         }
         else if (bVar7) {
-          local_52 = &DAT_0006086a;
+          local_52 = "+";
           local_44 = 1;
         }
         else if (bVar8) {
-          local_52 = &DAT_0006086c;
+          local_52 = " ";
           local_44 = 1;
         }
         goto LAB_0005fdc4;
@@ -80037,7 +79939,7 @@ LAB_0005febe:
         }
         if ((bVar6) && (local_38 != (char *)0x0)) {
           if (uVar14 == 0x58) {
-            local_52 = (undefined *)0x60893;
+            local_52 = "0X";
             local_44 = 2;
           }
           else if (uVar14 == 0x6f) {
@@ -80048,7 +79950,7 @@ LAB_0005febe:
             }
           }
           else if (uVar14 == 0x78) {
-            local_52 = &DAT_00060890;
+            local_52 = "0x";
             local_44 = 2;
           }
         }
@@ -80423,22 +80325,22 @@ double log(double x)
         }
         local_c = __ghidra_bits(double_multiply_pointers((double *)&local_14,(double *)&local_14));
         dStack_1c = integer_to_double(iVar5);
-        dVar8 = double_multiply_pointers((double *)&local_c,(double *)&DAT_00060d68);
-        dVar8 = double_add_pointer(dVar8,(double *)&DAT_00060d60);
+        dVar8 = double_multiply_pointers((double *)&local_c,&log_a2);
+        dVar8 = double_add_pointer(dVar8,&log_a1);
         dVar8 = double_multiply_pointer(dVar8,(double *)&local_c);
-        dVar8 = double_add_pointer(dVar8,(double *)&DAT_00060d58);
+        dVar8 = double_add_pointer(dVar8,&log_a0);
         dVar8 = double_multiply_pointer(dVar8,(double *)&local_c);
-        dVar9 = double_add_pointers((double *)&local_c,(double *)&DAT_00060d80);
+        dVar9 = double_add_pointers((double *)&local_c,&log_b2);
         dVar9 = double_multiply_pointer(dVar9,(double *)&local_c);
-        dVar9 = double_add_pointer(dVar9,(double *)&DAT_00060d78);
+        dVar9 = double_add_pointer(dVar9,&log_b1);
         dVar9 = double_multiply_pointer(dVar9,(double *)&local_c);
-        dVar9 = double_add_pointer(dVar9,(double *)&DAT_00060d70);
+        dVar9 = double_add_pointer(dVar9,&log_b0);
         dVar8 = double_divide_reversed(dVar9,dVar8);
         dVar8 = double_multiply_pointer(dVar8,(double *)&local_14);
         dVar8 = double_add_pointer(dVar8,(double *)&local_14);
-        ({ __auto_type __c = ({ __auto_type __c = double_multiply_pointers((double *)&DAT_00060d50,&dStack_1c); __ghidra_also(extraout_A0_01, __c, 4); __c; }); __ghidra_also(extraout_A1_01, __c, 0); __c; });
+        ({ __auto_type __c = ({ __auto_type __c = double_multiply_pointers(&log_ln2_low,&dStack_1c); __ghidra_also(extraout_A0_01, __c, 4); __c; }); __ghidra_also(extraout_A1_01, __c, 0); __c; });
         dVar8 = double_add(dVar8,__ghidra_as(double, CONCAT44(extraout_A0_01,extraout_A1_01)));
-        dVar9 = double_multiply_pointers((double *)&DAT_00060d48,&dStack_1c);
+        dVar9 = double_multiply_pointers(&log_ln2_high,&dStack_1c);
         dVar8 = double_add(dVar9,dVar8);
         return dVar8;
       }
@@ -80642,9 +80544,9 @@ double pow(double x,double y)
   double dStack_20;
   undefined8 local_18;
   double high_part;
-  undefined *local_8;
+  double *local_8;
   
-  local_8 = &DAT_000618d4;
+  local_8 = pow_two_power_tails;
   local_60 = __ghidra_bits(x);
   local_48 = __ghidra_bits(y);
   iVar12 = 2;
@@ -80765,7 +80667,7 @@ LAB_0006122a:
         goto LAB_0006107e;
       }
       iVar12 = 3;
-      pdVar14 = (double *)&DAT_00060d88;
+      pdVar14 = &pow_error_result;
 LAB_000611e2:
       local_50 = __ghidra_bits(__ghidra_as(double, CONCAT44(*(undefined4 *)pdVar14,__ghidra_piece(unsigned int, local_50, 4))));
       local_50 = __ghidra_bits(*pdVar14);
@@ -80801,35 +80703,35 @@ LAB_000611e2:
       if (-1 < iVar10) {
         iVar12 = 9;
       }
-      iVar10 = double_compare(dStack_58,*(double *)(&UNK_00061864 + iVar12 * 8));
+      iVar10 = double_compare(dStack_58,pow_two_powers[iVar12 + 3]);
       if (-1 < iVar10) {
         iVar12 = iVar12 + 4;
       }
-      iVar10 = double_compare(dStack_58,*(double *)(&UNK_00061854 + iVar12 * 8));
+      iVar10 = double_compare(dStack_58,pow_two_powers[iVar12 + 1]);
       if (-1 < iVar10) {
         iVar12 = iVar12 + 2;
       }
-      dVar15 = double_subtract_reversed_pointers((double *)(&UNK_0006184c + iVar12 * 8),&dStack_58);
-      dVar15 = double_subtract_pointer(dVar15,(double *)(local_8 + (iVar12 + 1 >> 1) * 8));
+      dVar15 = double_subtract_reversed_pointers(pow_two_powers + iVar12,&dStack_58);
+      dVar15 = double_subtract_pointer(dVar15,local_8 + (iVar12 + 1 >> 1));
       uVar9 = (undefined4)((ulonglong)__ghidra_bits(dVar15) >> 0x20);
       uVar11 = SUB84(dVar15,0);
-      dVar15 = double_add_pointers(&dStack_58,(double *)(&UNK_0006184c + iVar12 * 8));
+      dVar15 = double_add_pointers(&dStack_58,pow_two_powers + iVar12);
       dVar15 = double_divide_reversed(dVar15,__ghidra_as(double, CONCAT44(uVar9,uVar11)));
       __ghidra_piece(unsigned int, local_50, 0) = (uint)((ulonglong)__ghidra_bits(dVar15) >> 0x20);
       __ghidra_piece(unsigned int, local_50, 4) = SUB84(dVar15,0);
       local_50 = __ghidra_bits(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, local_50, 0) + 0x100000,__ghidra_piece(unsigned int, local_50, 4))));
       dStack_40 = double_multiply_pointers((double *)&local_50,(double *)&local_50);
-      dVar15 = double_multiply_pointers(&dStack_40,(double *)&DAT_000617fc);
-      dVar15 = double_add_pointer(dVar15,(double *)&DAT_000617f4);
+      dVar15 = double_multiply_pointers(&dStack_40,&pow_log_p4);
+      dVar15 = double_add_pointer(dVar15,&pow_log_p3);
       dVar15 = double_multiply_pointer(dVar15,&dStack_40);
-      dVar15 = double_add_pointer(dVar15,(double *)&DAT_000617ec);
+      dVar15 = double_add_pointer(dVar15,&pow_log_p2);
       dVar15 = double_multiply_pointer(dVar15,&dStack_40);
-      dVar15 = double_add_pointer(dVar15,(double *)&DAT_000617e4);
+      dVar15 = double_add_pointer(dVar15,&pow_log_p1);
       dVar15 = double_multiply_pointer(dVar15,&dStack_40);
       dStack_38 = double_multiply_pointer(dVar15,(double *)&local_50);
-      dVar15 = double_multiply_pointers(&dStack_38,(double *)&DAT_0006183c);
+      dVar15 = double_multiply_pointers(&dStack_38,&log2_e_minus_1);
       double_add_in_place(&dStack_38,dVar15);
-      dVar15 = double_multiply_pointers((double *)&DAT_0006183c,(double *)&local_50);
+      dVar15 = double_multiply_pointers(&log2_e_minus_1,(double *)&local_50);
       dVar15 = double_add_pointer(dVar15,&dStack_38);
       dStack_30 = double_add_pointer(dVar15,(double *)&local_50);
       dVar15 = integer_to_double(local_64 * 0x10 - iVar12);
@@ -80875,22 +80777,21 @@ LAB_000611e2:
         }
         iVar10 = (iVar12 >> 4) + 1;
         iVar12 = iVar10 * 0x10 - iVar12;
-        dVar15 = double_multiply_pointers((double *)&local_48,(double *)&DAT_00061834);
-        dVar15 = double_add_pointer(dVar15,(double *)&DAT_0006182c);
+        dVar15 = double_multiply_pointers((double *)&local_48,&pow_exp2_q7);
+        dVar15 = double_add_pointer(dVar15,&pow_exp2_q6);
         dVar15 = double_multiply_pointer(dVar15,(double *)&local_48);
-        dVar15 = double_add_pointer(dVar15,(double *)&DAT_00061824);
+        dVar15 = double_add_pointer(dVar15,&pow_exp2_q5);
         dVar15 = double_multiply_pointer(dVar15,(double *)&local_48);
-        dVar15 = double_add_pointer(dVar15,(double *)&DAT_0006181c);
+        dVar15 = double_add_pointer(dVar15,&pow_exp2_q4);
         dVar15 = double_multiply_pointer(dVar15,(double *)&local_48);
-        dVar15 = double_add_pointer(dVar15,(double *)&DAT_00061814);
+        dVar15 = double_add_pointer(dVar15,&pow_exp2_q3);
         dVar15 = double_multiply_pointer(dVar15,(double *)&local_48);
-        dVar15 = double_add_pointer(dVar15,(double *)&DAT_0006180c);
+        dVar15 = double_add_pointer(dVar15,&pow_exp2_q2);
         dVar15 = double_multiply_pointer(dVar15,(double *)&local_48);
-        dVar15 = double_add_pointer(dVar15,(double *)&DAT_00061804);
+        dVar15 = double_add_pointer(dVar15,&pow_exp2_q1);
         local_50 = __ghidra_bits(double_multiply_pointer(dVar15,(double *)&local_48));
-        dVar15 = double_multiply_pointers
-                           ((double *)&local_50,(double *)(&UNK_0006184c + iVar12 * 8));
-        dVar15 = double_add_pointer(dVar15,(double *)(&UNK_0006184c + iVar12 * 8));
+        dVar15 = double_multiply_pointers((double *)&local_50,pow_two_powers + iVar12);
+        dVar15 = double_add_pointer(dVar15,pow_two_powers + iVar12);
         __ghidra_piece(unsigned int, local_50, 0) = (uint)((ulonglong)__ghidra_bits(dVar15) >> 0x20);
         iVar12 = iVar10 + (__ghidra_piece(unsigned int, local_50, 0) >> 0x14);
         uVar16 = (uint)float_status;
@@ -81023,8 +80924,8 @@ double sqrt(double x)
         iVar2 = (uVar1 - 0x3fd) - uVar4;
       }
       __ghidra_piece(unsigned int, local_1c, 0) = __ghidra_piece(unsigned int, local_1c, 0) & 0xfffff | 0x3fe00000;
-      dVar6 = double_multiply_pointers((double *)&local_1c,(double *)&DAT_00061b9c);
-      local_14 = __ghidra_bits(double_add_pointer(dVar6,(double *)&DAT_00061b94));
+      dVar6 = double_multiply_pointers((double *)&local_1c,&sqrt_seed_b);
+      local_14 = __ghidra_bits(double_add_pointer(dVar6,&sqrt_seed_a));
       dVar6 = double_divide_reversed_pointers((double *)&local_14,(double *)&local_1c);
       double_add_in_place((double *)&local_14,dVar6);
       __ghidra_piece(unsigned int, quarter, 4) = __ghidra_piece(unsigned int, local_14, 4);
@@ -81039,12 +80940,12 @@ double sqrt(double x)
         __ghidra_piece(unsigned int, quarter, 0) = __ghidra_piece(unsigned int, local_14, 0);
         __ghidra_piece(unsigned int, quarter, 4) = 0;
         double_subtract_in_place((double *)&local_14,__ghidra_as(double, ((ulonglong)__ghidra_piece(unsigned int, local_14, 0) << 0x20)));
-        dVar6 = double_multiply_pointers((double *)&DAT_00061bac,(double *)&local_14);
-        dVar7 = double_multiply_pointers((double *)&DAT_00061ba4,(double *)&local_14);
+        dVar6 = double_multiply_pointers(&sqrt_half_low,(double *)&local_14);
+        dVar7 = double_multiply_pointers(&sqrt_half_high,(double *)&local_14);
         dVar6 = double_add(dVar7,dVar6);
-        dVar7 = double_multiply_pointers((double *)&DAT_00061bac,&quarter);
+        dVar7 = double_multiply_pointers(&sqrt_half_low,&quarter);
         dVar6 = double_add(dVar7,dVar6);
-        dVar7 = double_multiply_pointers((double *)&DAT_00061ba4,&quarter);
+        dVar7 = double_multiply_pointers(&sqrt_half_high,&quarter);
         local_14 = __ghidra_bits(double_add(dVar7,dVar6));
       }
       local_14 = __ghidra_bits(__ghidra_as(double, CONCAT44(uVar1 * 0x80000 + __ghidra_piece(unsigned int, local_14, 0),__ghidra_piece(unsigned int, local_14, 4))));
@@ -81442,13 +81343,14 @@ void installer_float_exception_report(uint param_1,undefined4 param_2)
   ushort uVar1;
   short sVar2;
   char *pcVar3;
-  char *pcVar4;
-  char *pcVar5;
+  uint8_t *puVar4;
+  uint8_t *puVar5;
+  uint8_t *puVar6;
   undefined4 in_stack_00000000;
   
-  installer_float_exception_message = '\0';
+  installer_float_exception_message[0] = 0;
+  puVar5 = installer_float_exception_message + 1;
   pcVar3 = s_fp_signaling_NaN__installer__00101124;
-  pcVar4 = &DAT_0010aad3;
   if ((((((param_1 & 0x4000) == 0) &&
         (pcVar3 = s_fp_operand_error__installer__00101111, (param_1 & 0x2000) == 0)) &&
        (pcVar3 = s_fp_overflow__installer__00101103, (param_1 & 0x1000) == 0)) &&
@@ -81458,10 +81360,10 @@ void installer_float_exception_report(uint param_1,undefined4 param_2)
       (pcVar3 = s_fp_all_precision_lost__installer__001010b5, (param_1 & 0x80) == 0)))) {
     pcVar3 = s_fp_unknown_exception__installer__0010109e;
   }
-  for (; *pcVar3 != '\0'; pcVar3 = pcVar3 + 1) {
-    *pcVar4 = *pcVar3;
-    installer_float_exception_message = installer_float_exception_message + '\x01';
-    pcVar4 = pcVar4 + 1;
+  for (; *pcVar3 != 0; pcVar3 = pcVar3 + 1) {
+    *puVar5 = *pcVar3;
+    installer_float_exception_message[0] = installer_float_exception_message[0] + 1;
+    puVar5 = puVar5 + 1;
   }
   uVar1 = __ghidra_piece(unsigned short, param_1, 0);
   if ((param_1 & 0x800000) == 0) {
@@ -81477,21 +81379,21 @@ void installer_float_exception_report(uint param_1,undefined4 param_2)
       uVar1 = 0xed;
     }
   }
-  pcVar3 = pcVar3 + (short)((uVar1 & 0x3f) << 3);
+  puVar4 = (uint8_t *)(pcVar3 + (short)((uVar1 & 0x3f) << 3));
   sVar2 = 7;
   do {
-    pcVar5 = pcVar4;
-    if (*pcVar3 != ' ') {
-      pcVar5 = pcVar4 + 1;
-      *pcVar4 = *pcVar3;
-      installer_float_exception_message = installer_float_exception_message + '\x01';
+    puVar6 = puVar5;
+    if (*puVar4 != 0x20) {
+      puVar6 = puVar5 + 1;
+      *puVar5 = *puVar4;
+      installer_float_exception_message[0] = installer_float_exception_message[0] + 1;
     }
-    pcVar3 = pcVar3 + 1;
+    puVar4 = puVar4 + 1;
     sVar2 = sVar2 + -1;
-    pcVar4 = pcVar5;
+    puVar5 = puVar6;
   } while (sVar2 != -1);
   installer_fatal_error_with_code
-            (&installer_float_exception_message,in_stack_00000000,param_1,param_2);
+            ((char *)installer_float_exception_message,in_stack_00000000,param_1,param_2);
   do {
                     /* WARNING: Do nothing block with infinite loop */
   } while( true );
@@ -88811,22 +88713,22 @@ undefined2 installer_record_checksum(int param_1,ushort param_2)
 bool installer_parameter_record_read(void)
 
 {
-  short sVar1;
+  uint16_t uVar1;
   bool bVar2;
   
-  sVar1 = installer_record_checksum(0x400000,0x10);
-  bVar2 = sVar1 != DAT_00400000;
+  uVar1 = installer_record_checksum(0x400000,0x10);
+  bVar2 = uVar1 != eeprom_parameter_record.checksum;
   if (bVar2) {
     installer_memcpy(installer_duartb_settings.field_00,&DAT_installer__001081a2,9);
   }
   else {
-    installer_duartb_settings.baud = DAT_00400002;
-    installer_duartb_settings.parity = DAT_00400003;
-    installer_duartb_settings.xon_xoff = DAT_00400004;
-    installer_duartb_settings.field_05 = DAT_00400005;
-    installer_duartb_settings.eight_bits = DAT_00400006;
-    installer_duartb_settings.two_stop_bits = DAT_00400007;
-    installer_duartb_settings.echo = DAT_00400008;
+    installer_duartb_settings.baud = eeprom_parameter_record.duartb_baud;
+    installer_duartb_settings.parity = eeprom_parameter_record.duartb_parity;
+    installer_duartb_settings.xon_xoff = eeprom_parameter_record.duartb_xon_xoff;
+    installer_duartb_settings.field_05 = eeprom_parameter_record.duartb_field_05;
+    installer_duartb_settings.eight_bits = eeprom_parameter_record.duartb_eight_bits;
+    installer_duartb_settings.two_stop_bits = eeprom_parameter_record.duartb_two_stop_bits;
+    installer_duartb_settings.echo = eeprom_parameter_record.duartb_echo;
   }
   return !bVar2;
 }
@@ -88854,11 +88756,11 @@ undefined2 installer_identification_record_read(void)
   undefined1 extraout_var;
   undefined1 extraout_var_00;
   undefined1 uVar1;
-  short sVar2;
+  uint16_t uVar2;
   bool bVar3;
   
-  sVar2 = installer_record_checksum(0x400010,0x30);
-  bVar3 = sVar2 != DAT_00400010;
+  uVar2 = installer_record_checksum(0x400010,0x30);
+  bVar3 = uVar2 != eeprom_identification_record.checksum;
   if (bVar3) {
     installer_idn_model_default();
     installer_strncpy(installer_idn_serial,&DAT_installer__001082d7,0x12);
@@ -88866,9 +88768,9 @@ undefined2 installer_identification_record_read(void)
     uVar1 = extraout_var_00;
   }
   else {
-    installer_strncpy(installer_idn_model,&DAT_00400012,0x12);
-    installer_strncpy(installer_idn_serial,&DAT_00400024,0x12);
-    installer_idn_suffix = DAT_00400036;
+    installer_strncpy(installer_idn_model,eeprom_identification_record.model,0x12);
+    installer_strncpy(installer_idn_serial,eeprom_identification_record.serial,0x12);
+    installer_idn_suffix = eeprom_identification_record.suffix;
     uVar1 = extraout_var;
   }
   return CONCAT11(uVar1,!bVar3);

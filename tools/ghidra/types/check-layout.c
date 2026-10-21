@@ -248,6 +248,9 @@ CHECK_FIELD(reset_record, text, 0xc);
 CHECK_SIZE(sprintf_output, 8);
 CHECK_SIZE(scpi_decimal, 20);
 CHECK_FIELD(scpi_decimal, exponent, 0x12);
+CHECK_SIZE(scpi_multiplier[13], 0x27b62 - 0x27b2e);
+CHECK_SIZE(scpi_error_message[101], 0x28b6e - 0x28910);
+CHECK_SIZE(scpi_root_children, 0x530fe - 0x53034);
 CHECK_FIELD(sprintf_output, cursor, 4);
 
 CHECK_SIZE(status_register, 16);

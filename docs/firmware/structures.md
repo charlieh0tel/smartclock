@@ -116,7 +116,7 @@ The seven registers, by the index the SCPI handlers pass, which the
 
 A condition, an entry of `status_conditions` (`0x2f838`), is 6 bytes:
 a kind, a register and a bit.  `status_set_bit` (`0x2820a`) looks the
-condition up (a negative one in a table at `0x28720`), and by its kind
+condition up (a negative one in `status_negative_conditions`, `0x28720`), and by its kind
 sets, clears or transfers the register's bit, or puts the condition in
 the queue.  The table has 79, 0 to `0x4e`: `:DIAG:STAT:HAPP n`, n from 0
 to `0x38`, raises condition n + `0x16`, and conditions `0x34` to `0x4b`
@@ -181,7 +181,9 @@ query returns the 8 bytes, and its setter (`0x2e68c`) only returns 0.
 `record_checksum` (`0x3082e`) sums a record's bytes after its first two
 and returns the sum and its complement, which a record keeps in those
 two bytes.  It is called on the EEPROM's records at `0x400000` (16
-bytes), `0x400010` (48), `0x400060` (32) and `0x400080` (64), and on
+bytes), `0x400010` (48), `0x400060` (32) and `0x400080` (64), labeled `eeprom_parameter_record`,
+`eeprom_identification_record`, `eeprom_lifetime_record` and
+`eeprom_calibration_block` with their writers' types, and on
 `0x94e` bytes of RAM from `0x100000`.  Each writer builds its record
 on its stack, erased to `0xff` and filled, then checksummed:
 `save_parameter_record` (`0x30dea`, `parameter_record`: channel B's
@@ -1404,6 +1406,58 @@ call by offset: `+0` `scpi_session_init`, `+4` `scpi_session_close`
 | `days_before_month`, `_leap` (`0x1186c`, `0x11884`) | `int16_t[12]` | `day_of_year` reads `0x1186a` and `0x11882` plus twice the month, 1 to 12 |
 | `powers_of_ten_64` (`0x5fa46`) | `uint32_t[36]` | `double_to_digits` clamps the index to 0 to `0x11`; the bytes after are not powers of ten |
 | `os_report_format` (`0x51382`), `os_report_newline` (`0x512e6`) | `char[3]` | `"%s"` and `"\r\n"` with their NULs |
+| `leap_event_gps_template`, `_utc_template` (`0x10cb0`, `0x10cca`), `lifetime_event_template` (`0x30cec`) | `klok_entry` | each copied, 26 bytes, to the event its routine queues |
+| `month_lengths` (`0x1189c`) | `uint8_t[12]` | `days_in_month` indexes it by the month less 1; code at `0x118a8` |
+| `powers_of_ten_times_five`, `powers_of_ten_double` (`0x1234c`, `0x12614`) | `double[61]` | 5e-30 to 5e30 and 1e-30 to 1e30; their bisections' bound `0x1e8` |
+| `powers_of_ten_float` (`0x129fc`) | `float[61]` | 1e-30 to 1e30; bound `0xf4`, code at `0x12af0`; `0x12a74` is entry 30 |
+| `powers_of_ten_float_21` (`0x32700`) | `float[43]` | 1e-21 to 1e21; `float_table_index` bisects 0 to 41 and returns the one past |
+| `scpi_powers_of_ten` (`0x256ae`), `scpi_powers_of_ten_64` (`0x25b36`) | `double[145]`, `double[9]` | 1e-80 to 1e64, which `scpi_scale_by_power_of_ten` reads 0 to 128 and `scpi_double_to_decimal` 16 to 144; 1e-256 to 1e256, by the exponent / 64 plus 4 |
+| `scpi_normalize_exponents` (`0x25144`) | `uint16_t[32]` | `scpi_bcd_to_double` indexes it by `(high >> 16) & 0x3e`; its jump table follows at `0x25184` |
+| `powers_of_ten_by_25_mantissas`, `_exponents` (`0x5f860`, `0x5f938`) | `uint32_t[54]`, `int16_t[27]` | `double_to_digits`: 10 to 25k, k -13 to 13, the decimal exponent's range over 25 |
+| `powers_of_ten_1_to_24_mantissas`, `_exponents` (`0x5f96e`, `0x5fa2e`) | `uint32_t[48]`, `uint8_t[24]` | the same for 10 to n mod 25, 1 to 24; `powers_of_ten_64` follows |
+| `forth_character_classes` (`0x18de2`) | `uint8_t[128]` | indexed by the character `& 0x7f` |
+| `forth_base_letters` (`0x19086`) | `char[15]` | bases 2 to 16, `forth_build_prompt`'s bound `0xf` |
+| `forth_do_tag` to `forth_while_tag` (`0x1942d` to `0x1956a`) | `char[N]` | the control words' tags, quoted names `forth_check_pairs` prints, each to its NUL |
+| `forth_sine_table` (`0x19a2c`) | `int32_t[91]` | 10000 sin(n degrees), n 0 to 90; code at `0x19b98` |
+| `fpga_readback_mask` (`0x21e3b`) | `uint8_t[3847]` | `fpga_verify_chip`'s steps: 13 bytes, then frames 2 to 285 of 14 and 13 |
+| `scpi_parameter_kind_errors` (`0x279ca`) | `int16_t[6]` | by parameter kind; code at `0x279d6` |
+| `scpi_multipliers` (`0x27b2e`) | `scpi_multiplier[13]` | `M`, `K`, `U`, `MA` to `EX`, to the zero name |
+| `status_negative_conditions` (`0x28720`) | `status_condition[63]` | conditions -1 to -62 at -6 times it; code at `0x2889a` |
+| `scpi_error_messages` (`0x28910`) | `scpi_error_message[101]` | `error_message_lookup`'s, to the code -1 |
+| `status_report_messages` (`0x2bf30`) | `char *[23]` | `status_report`'s for codes 1 to 22, 0 "No error" |
+| `sample_values_defaults` (`0x308b6`) | `uint8_t[148]` | `system_init`'s `memcpy` over `0x101dda`, `0x94` bytes |
+| `month_names` (`0x4cfce`) | `char *[13]` | `format_date`'s for months 1 to 12, 0 `"---"` |
+| `gps_script_47` to `gps_script_59`, `gps_script_none` (`0x50cca` to `0x50fce`) | `gps_script_step *[N]` | `gps_script_lookup`'s scripts, each to its NULL (`oncore/z3805a-3543b.txt`); `0x50e5e`, two pointers no code loads, is left |
+| `psos_config_defaults` (`0x5122a`), `io_table_defaults` (`0x5171a`) | the RAM tables' types | `psos_config_init`'s copies, `0x62` and `0x90` bytes |
+| `scpi_main_tree` (`0x53034`) | `scpi_root_children` | the main tree's root list, 49 nodes; `0x5d014` points at it |
+| `pow_two_powers`, `pow_two_power_tails` (`0x6184c`, `0x618d4`) | `double[17]`, `double[9]` | 2 to -k/16, k 0 to 16, and the even entries' low parts; code at `0x6191c` |
+
+The soft-float library's constants are labeled one by one:
+`two_to_32` (`0x41300`); `log`'s `log_ln2_high` and `_low` and its
+rational coefficients `log_a0` to `log_b2` (`0x60d48` to `0x60d80`);
+`pow`'s `pow_error_result`, `pow_log_p1` to `_p4`, `pow_exp2_q1` to
+`_q7` and `log2_e_minus_1` (`0x60d88`, `0x617e4` to `0x6183c`);
+`sqrt`'s `sqrt_seed_a` and `_b` and `sqrt_half_high` and `_low`
+(`0x61b94` to `0x61bac`).  Short strings are typed to their NULs, and
+the setting and numeric descriptors the remaining setters pass are
+`scpi_param_` labels.  `0x32e26` is code, `load_long`'s again, which the
+position setters give `unit_step`: `load_long_unit_step`.
+
+Left unnamed: `0x7a120` is `os_report_cpu`'s 500000 and `0x61c0f`
+`status_snapshot_update`'s 06:28:15, constants the decompiler took for
+addresses; the 36 `UNK_` addresses from `0x100b84` to `0x10aa6c` are
+installer-overlay references Ghidra also made in plain RAM, whose
+targets carry the overlay's names; `0x10253e`, `0x10253f` and
+`0x102c60` are only cleared; `0x1009ec`, the first byte
+`primary_reset` and `primary_trap_12` zero, and `0x10ffd0` to `0x10fffe`
+(below) are bounds and stack, not cells.
+
+Outside RAM and ROM: `lamp_latch` (`0x300000`), `fpga_port`
+(`0x304000`, the four registers `fpga_write` writes), `efc_strobe`
+(`0x306000`), the EEPROM records above, `nv_records` typed
+`nv_record[2]`.  `crash 0` writes a long to `0x700000`, where no chip
+select answers and Ghidra has no memory to label.
+
 ## The preserved region
 
 `preserved_region` (`0x100000`, `preserved_region_fields`, `0x94e`
@@ -1432,7 +1486,9 @@ alone, so each has its own label:
 | `0x101e84` | `max_loop_time` | ("The loop's state", above) |
 | `0x101e88` | `holdover_duration_exceeded` | set by `holdover` and `holdover_recovery` once `pll.holdover_duration` passes `nv_settings.holdover_status_threshold`, with happening `'.'`; `status_summary` bit `0x20`; `:ROSCillator:HOLDover:DURation:STATus:THReshold:EXCeeded?` |
 
-`0x101e70`, `0x101e71` and `0x101e73` are only copied; the setting
+`retained_block` (`0x101e70`) labels the block, untyped, since its
+cells have their own labels.  `0x101e70`, `0x101e71` and `0x101e73`
+are only copied; the setting
 descriptor at `0x33d02` points at `0x101e73`, but no handler refers to
 it.
 

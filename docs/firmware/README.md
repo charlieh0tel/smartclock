@@ -719,11 +719,11 @@ service the harness does not model stops a call, as an unmapped
 address does.  And the stack is filled with `0xa5` at a call's start,
 so that a local read before it is written reads the same in both.
 
-In the Z3805A 3543B image this gives 1811 functions, and every one but
+In the Z3805A 3543B image this gives 1813 functions, and every one but
 the ten thunks decompiles.  136 switches are recovered; `0x24ff2` and `0x25140`, a
 `jmp (d8,PC,D6.w)` with no table load, are not, and need not be: each
 enters an unrolled run of shifts part way, all of it code already
-(`docs/scpi/README.md`).  1811 of the functions are named.  The output
+(`docs/scpi/README.md`).  1813 of the functions are named.  The output
 is `third_party/firmware/decompiled/z3805a-3543b.c`.
 
 The project is kept as `third_party/firmware/ghidra/smartclock.gar`,

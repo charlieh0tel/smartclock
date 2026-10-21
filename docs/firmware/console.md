@@ -60,6 +60,12 @@ The words that show each user variable name it:
 | `-0x8` | the data stack's base | `depth` is it less A6, over 4; `abort` reloads A6 from it |
 | `-0x4` | the return stack's base | `abort` reloads SP from it |
 
+`console_task` points `tib` at `forth_terminal_input` (`0x100a04`) and
+`pad` at `forth_pad_buffer` (`0x100a8a`), 134 bytes each, the second
+up to `console_task_id` (`0x100b10`), the p4th task's id, which
+`console_task_create` stores and the word `root` pushes the address
+of.  `forth_build_prompt` writes `forth_prompt` (`0x100b14`, 10
+bytes) from `-0x26` and `forth_base_letters`.
 `-0x26` to `-0x23` are not read by any word.  `0x19150` writes the
 string in D0 to `iodev` with I/O function 4, which is `type`'s work.
 

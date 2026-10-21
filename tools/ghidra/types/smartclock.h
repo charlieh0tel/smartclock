@@ -712,6 +712,30 @@ typedef struct scpi_decimal {
 	int16_t exponent;     /* +0x12 */
 } scpi_decimal;
 
+/* A unit multiplier, one of scpi_multipliers at 0x27b2e, which
+ * scpi_multiplier_exponent walks to the entry whose name is 0. */
+typedef struct scpi_multiplier {
+	uint16_t name;    /* +0x00: one or two letters, "M" milli, "MA" mega */
+	int8_t exponent;  /* +0x02: the power of ten */
+	uint8_t unused;   /* +0x03: 0 */
+} scpi_multiplier;
+
+/* An error code's message, one of scpi_error_messages at 0x28910, which
+ * error_message_lookup walks to the entry whose code is -1. */
+typedef struct scpi_error_message {
+	int16_t code;  /* +0x00 */
+	char *text;    /* +0x02 */
+} scpi_error_message;
+
+/* The main tree's root child list at 0x53034 (docs/scpi/README.md, "How
+ * it is read"): scpi_interpret's tree, beside the common commands'. */
+typedef struct scpi_root_children {
+	uint16_t id;          /* +0x00 */
+	uint16_t count;       /* +0x02: 49 */
+	uint16_t flags;       /* +0x04 */
+	void *children[49];   /* +0x06: the nodes */
+} scpi_root_children;
+
 typedef struct scpi_numeric_param {
 	scpi_param_type type; /* SCPI_PARAM_NUMERIC */
 	uint8_t last_index;   /* +0x01: values less one */

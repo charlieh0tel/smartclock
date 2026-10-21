@@ -94,6 +94,12 @@
 0x1009f2	label	pforth_dictionary_next	structures.md	where pforth_define_word builds the next word, and stores its end; the console task's A4 starts from it	void *
 0x1009f6	label	pforth_dictionary_start	structures.md	the segment pforth_dictionary_init gets with trap #3 service 8; console_task_create passes it to service 10	void *
 0x1009fa	label	pforth_dictionary_end	structures.md	pforth_dictionary_start plus the size; only written	void *
+0x100a04	label	forth_terminal_input	console.md	tib: console_task stores its address in the user area at -0x1e and clears its first word; 134 bytes to forth_pad_buffer	char[134]
+0x100a8a	label	forth_pad_buffer	console.md	pad: console_task stores its address in the user area at -0x22; forth_parse_word copies each word here; 134 bytes to console_task_id	char[134]
+0x100b10	label	console_task_id	console.md	console_task_create stores the p4th task's id from service 1 here; the word root pushes its address	uint32_t
+0x100b14	label	forth_prompt	console.md	forth_build_prompt's "p4th", a space and the base's letter, then " > " or ">> " and a NUL; forth_refill prints it	char[10]
+0x100ba8	label	string_device_cursor	console.md	the string console_read_from_string reads, advanced as it reads; string_device_init clears it, string_device_control sets it	char *
+0x101e70	label	retained_block	structures.md	the 0x19 bytes system_init and pllp_task copy whole with preserved_region; its own cells have their own labels, so untyped
 0x29fce	function	scpi_task_create	console.md	creator of the SCPI task
 #
 # the rest of the float library, docs/firmware/libc.md
@@ -105,7 +111,7 @@
 0x5ec9e	function	abs	libc.md		int abs(int j)
 0x5ef02	function	labs	libc.md		long labs(long j)
 0x5ecfa	function	atoi	libc.md		int atoi(char *s)
-0x5ed98	label	ctype_table	libc.md	indexed from 0x5ed99, bit 2 digit, bit 3 space
+0x5ed98	label	ctype_table	libc.md	indexed from 0x5ed99, bit 2 digit, bit 3 space; 257 bytes, EOF then 0 to 255, gps_receive, atoi and doprnt index it by a character	uint8_t[257]
 0x5eea2	function	div	libc.md	quotient in D0, remainder in D1
 0x5eed2	function	ldiv	libc.md	quotient in D0, remainder in D1	long long ldiv(int numerator, int denominator)	convention=c; confidence=read; out=D0:D1 long long; copies=D0:D1
 0x5ef12	function	memcmp	libc.md		int memcmp(void *s1, void *s2, unsigned int n)
@@ -624,7 +630,7 @@
 0x101f66	label	nv_bytes_loaded	structures.md	the packed bytes nv_load_slot read for all the values, from the record's +0x10; nothing reads it	int16_t
 0x101e8a	label	nv_settings	structures.md	the saved settings, 0xc5 bytes; each field the value of a descriptor in nv_save's tables	nv_settings_fields
 0x30966	label	nv_settings_defaults	structures.md	nv_restore copies them over nv_settings when no slot loads
-0x4000c0	label	nv_records	structures.md	the EEPROM's two NV register records, 0x80 bytes each: "S", a sequence number at +4, "3543B", the packed settings, a checksum
+0x4000c0	label	nv_records	structures.md	the EEPROM's two NV register records, 0x80 bytes each: "S", a sequence number at +4, "3543B", the packed settings, a checksum; reset records follow at 0x4001c0	nv_record[2]
 #
 # the preserved region a warm restart restores, and the cells from
 # 0x101e70 to 0x101e88 it keeps a copy of; docs/firmware/structures.md,
@@ -808,6 +814,7 @@
 0x60efa	function	double_truncate_sixteenths	libc.md, run	a double truncated to a multiple of 1/16; pow's	double double_truncate_sixteenths(double value)	convention=c; confidence=read; out=D0:D1 double; copies=D0:D1
 0x5fad6	function	next_decimal_digit	libc.md, run	'0' plus *n % 10, dividing *n by ten; the formatting engine's
 0x5f3ba	function	double_to_digits	libc.md, run	a double's decimal digits, sign and exponent, significant or after the point; the formatting engine's	void double_to_digits(double value, int count, int *exponent, uint *negative, char *digits, int mode)
+0x5f3ba	local	product	read	the 128-bit product double_to_digits_multiply works in, the power of ten's mantissa at its first two longs	uint32_t[4] @ -0x1a
 0x5f1d6	function	double_to_digits_multiply	libc.md, read	double_to_digits's product of two 64-bit numbers, one a power of ten from 0x5f864
 0x5e83c	function	float_normalize	softfloat.md, read	shifts an unpacked mantissa on the caller's stack until bit 23 is set, adjusting its exponent		convention=other; confidence=read; family=softfloat
 0x5e882	function	double_normalize	softfloat.md, read	the same over 64 bits		convention=other; confidence=read; family=softfloat
@@ -1347,6 +1354,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x16730	function	ready_queue_position	context	a task's place in the ready queue; -1 if it is not there
 0x169fa	function	exchange_id_valid	context	1 if an exchange ID is one, by the swapped address its record holds; called by nothing
 0x16a20	function	task_id_valid	context	1 if a task ID is one, by the complemented address its record holds; called by nothing
+0x16eb6	function	tick_account	read	counts a tick by D6: below 1 at +0x9a of the kernel's data area (through 0x51226), at 1 at +0x9e, above 1 to the running task through task_count_tick, which follows it		convention=register; confidence=read; in=D6 short mode; family=psos
 0x16ee6	function	task_count_tick	context	counts a tick to the running task, at +0xae of its record; called by nothing
 0x17628	function	ram_pattern_test	context, read	the RAM self-test's pattern pass, saving and restoring each block around 0xaaaaaaaa and its complement; called as C, but saves each 48-byte block of RAM on the stack and walks all of it, which C cannot say		convention=other; confidence=read; family=selftest
 0x17750	function	rom_lane_checksum	context	sums a ROM's even and odd byte lanes, one checksum for each chip; called by nothing
@@ -1727,8 +1735,8 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 #
 # the installer's cells, laid out as the primary's; docs/firmware/structures.md,
 # "The installer's RAM"
-0x10aad2	label	installer_float_exception_message	structures.md	the installer's float_exception_message, length-prefixed
-0x10aaf2	label	installer_program_end_message	structures.md	installer_program_end_report's "Prog end, returned N", length-prefixed
+0x10aad2	label	installer_float_exception_message	structures.md	the installer's float_exception_message, length-prefixed; 32 bytes to installer_program_end_message, as the primary's	uint8_t[32]
+0x10aaf2	label	installer_program_end_message	structures.md	installer_program_end_report's "Prog end, returned N", length-prefixed; 46 bytes to boot_selftest at 0x10ab20, its 0xff at 0x10ab1f, as the primary's	uint8_t[46]
 0x10ab1f	label	installer_program_end_digits_end	structures.md	installer_program_end_report puts 0xff here and N's digits below it	uint8_t
 0x10ab20	label	boot_selftest	structures.md	the boot code's self-test results; the installer's :DIAGnostic:TEST? 1 to 4 return +0, +2, +4 and +0xc	boot_selftest_results
 0x10ab30	label	installer_duartb_settings	structures.md	the installer's duartb_settings: installer_parameter_record_read loads it from the parameter record, or the defaults at 0x1081a2	duartb_settings_record
@@ -1899,9 +1907,128 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x4136c	label	scpi_action_SER2_PRESet	structures.md	:SYST:COMM:SER1:PRESet's action for another port, sci_settings_preset, which copies sci_settings_defaults	scpi_action_param
 0x41372	label	scpi_action_STATus_PRESet	structures.md	:STATus:PRESet's action, index 0, and its ALARm form's, index 1; status_preset_done	scpi_action_param
 0x41378	label	scpi_action_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate	structures.md	:PTIMe:LEAPsecond:ACCumulated:CALCulate's action, leap_ack_request, indexes 0 and 1	scpi_action_param
+0x10cb0	label	leap_event_gps_template	structures.md	leap_event_schedule_gps copies its 26 bytes to the event it queues: 23:59:55, class 1	klok_entry
+0x10cca	label	leap_event_utc_template	structures.md	leap_event_schedule_utc copies its 26 bytes to the event it queues: zeros, class 1	klok_entry
+0x30cec	label	lifetime_event_template	structures.md	lifetime_update copies its 26 bytes to the event it queues: zeros, class 2	klok_entry
+0x1189c	label	month_lengths	structures.md	31, 28, 31 to 31; days_in_month indexes it by the month less 1, 0 to 11, February apart; code at 0x118a8	uint8_t[12]
+0x1234c	label	powers_of_ten_times_five	structures.md	5e-30 to 5e30; double_decimal_exponent_rounded bisects 61 entries, its bound 0x1e8; code at 0x12534	double[61]
+0x12614	label	powers_of_ten_double	structures.md	1e-30 to 1e30; power_of_ten_double reads 0x12704, entry 30, plus its clamped power, double_decimal_exponent bisects the 61	double[61]
+0x129fc	label	powers_of_ten_float	structures.md	1e-30 to 1e30; power_of_ten_float reads 0x12a74, entry 30, plus its clamped power, tfom_table_index bisects the 61, its bound 0xf4; code at 0x12af0	float[61]
+0x32700	label	powers_of_ten_float_21	structures.md	1e-21 to 1e21; float_table_index bisects entries 0 to 41 and returns the one past, less its second argument	float[43]
+0x256ae	label	scpi_powers_of_ten	structures.md	1e-80 to 1e64 by single steps: scpi_scale_by_power_of_ten reads entries 0 to 128, scpi_double_to_decimal 16 to 144 from 0x2572e	double[145]
+0x25b36	label	scpi_powers_of_ten_64	structures.md	1e-256 to 1e256 by steps of 64; both routines index it by the exponent / 64 plus 4, the exponent within 309	double[9]
+0x25144	label	scpi_normalize_exponents	structures.md	the word scpi_bcd_to_double adds to its result's high long, by (high >> 16) & 0x3e; the jmp at 0x25140 indexes its shifts at 0x25184 the same way	uint16_t[32]
+0x5f860	label	powers_of_ten_by_25_mantissas	structures.md	double_to_digits's 64-bit mantissas of 10 to 25k, k -13 to 13, high long then low, by (k + 13) * 8; k 0 zero, not read	uint32_t[54]
+0x5f938	label	powers_of_ten_by_25_exponents	structures.md	their binary exponents, -1080 to 1079, by (k + 13) * 2	int16_t[27]
+0x5f96e	label	powers_of_ten_1_to_24_mantissas	structures.md	double_to_digits's 64-bit mantissas of 10 to 1 through 24, by (n - 1) * 8	uint32_t[48]
+0x5fa2e	label	powers_of_ten_1_to_24_exponents	structures.md	their binary exponents, 3 to 79, by n - 1; powers_of_ten_64 follows	uint8_t[24]
+0x18de2	label	forth_character_classes	console.md	forth_digit's and forth_is_space's table, by the character & 0x7f: a digit's value, 0x80 for none, 0x81 a space; code at 0x18e62	uint8_t[128]
+0x19086	label	forth_base_letters	console.md	forth_build_prompt's letter for bases 2 to 16, "23456789D*****X", by the base less 2 below 0xf	char[15]
+0x1942d	label	forth_do_tag	console.md	"\"do\" or \"?do\"\r\n": do and ?do push it, forth_check_pairs prints it after "ERROR: Mismatched "	char[16]
+0x194de	label	forth_if_tag	console.md	"\"if\"\r\n": if and else push it for forth_check_pairs	char[7]
+0x19556	label	forth_begin_tag	console.md	"\"begin\"\r\n": begin pushes it for forth_check_pairs	char[10]
+0x1956a	label	forth_while_tag	console.md	"\"while\"\r\n": while pushes it for forth_check_pairs	char[10]
+0x19a2c	label	forth_sine_table	console.md	sin's 10000 sin(n degrees), n 0 to 90, which it indexes after folding the angle; code at 0x19b98	int32_t[91]
+0x1ed2c	label	loopback_idle_text	structures.md	an empty string the DUART loopback tests leave loopback_send_next at	char[1]
+0x21e3b	label	fpga_readback_mask	context	fpga_verify_chip's mask: 13 bytes for the first frame, then frames 2 to 285, even 14 bytes and odd 13, as it steps	uint8_t[3847]
+0x279ca	label	scpi_parameter_kind_errors	structures.md	scpi_parameter_match's return for a missing required parameter, by its kind: -46, -48, -47, -49, -46, -50; code at 0x279d6	int16_t[6]
+0x27b2e	label	scpi_multipliers	structures.md	scpi_multiplier_exponent's unit multipliers, to the entry whose name is 0	scpi_multiplier[13]
+0x28720	label	status_negative_conditions	structures.md	the conditions status_set_bit, status_apply_condition and condition_is_command_error take by a negative number, -1 to -62, at -6 times it; entry 0, zeros, unused; code at 0x2889a	status_condition[63]
+0x28910	label	scpi_error_messages	structures.md	error_message_lookup's codes and messages, "No error" to the code -1	scpi_error_message[101]
+0x29636	label	scpi_response_begin_code	structures.md	8, which scpi_interpret passes the output port's method +0x28 before a message's first response	uint32_t
+0x2963a	label	scpi_message_end_code	structures.md	7, which scpi_interpret passes the output port's method +0x28 at a message's end	uint32_t
+0x2963e	label	scpi_input_end_code	structures.md	6, which scpi_interpret passes the input port's method +0x28 when the input ends or for errors -12 and -13	uint32_t
+0x2acb6	label	opc_response	structures.md	"1", *OPC?'s response	char[2]
+0x2be7d	label	log_print_newline	structures.md	"\r\n", which log_print prints after the status	char[3]
+0x2bf30	label	status_report_messages	structures.md	status_report's value for codes 1 to 22, "Parameter not allowed" to "Input buffer overrun"; entry 0 "No error"; the strings follow at 0x2bf8c	char *[23]
+0x2d918	label	douglas_state_text_0	structures.md	"0", :DOUGlas:STATe?'s response while nv_settings.douglas_state is set	char[2]
+0x2d91a	label	douglas_state_text_once	structures.md	"ONCE", :DOUGlas:STATe?'s response while it is clear	char[5]
+0x30816	label	error_message_none	structures.md	"", the message the error queue's query gives a code error_message_lookup does not know	char[1]
+0x308b6	label	sample_values_defaults	structures.md	system_init copies these 0x94 bytes over 0x101dda to 0x101e6d, the :SAMPle and INITial values	uint8_t[148]
+0x32ff5	label	identification_tag	structures.md	"S", the identification record's tag; :DIAGnostic:IDENtification:DEFault? returns it after "Z3805A"	char[2]
+0x333a0	label	scpi_param_SYSTem_COMMunicate_SER1_RECeive_BITS	structures.md	its setter's setting descriptor: duartb_settings.eight_bits, flags 4	scpi_setting_param
+0x333be	label	scpi_param_SYSTem_COMMunicate_SER1_RECeive_SBITs	structures.md	its setter's setting descriptor: duartb_settings.two_stop_bits, flags 4	scpi_setting_param
+0x33490	label	scpi_param_SAMPle_TOGGle	structures.md	its setter's setting descriptor, value scpi_value_SAMPle_TOGGle	scpi_setting_param
+0x334b0	label	scpi_param_SAMPle_TARR	structures.md	its setter's setting descriptor, value scpi_value_SAMPle_TARR, last index 2	scpi_setting_param
+0x33cc6	label	scpi_param_LED_ACTive	structures.md	its setter's setting descriptor, value led_active	scpi_setting_param
+0x33d20	label	scpi_param_LED_ENABled	structures.md	its setter's setting descriptor, value led_enabled	scpi_setting_param
+0x33d3e	label	scpi_param_SOURce_ROSCillator_HOLDover_RECovery_AUTO	structures.md	its setter's setting descriptor, value holdover_recovery_auto, flags 2	scpi_setting_param
+0x337e4	label	scpi_param_SOURce_GPSystem_INITial_DATE	structures.md	its setter's numeric descriptor, three values at 0x101e4a	scpi_numeric_param
+0x3382c	label	scpi_param_SOURce_GPSystem_INITial_TIME	structures.md	its setter's numeric descriptor, three values at 0x101e56	scpi_numeric_param
+0x33898	label	scpi_param_SOURce_GPSystem_INITial_POSition_longitude	structures.md	the second of the three descriptors its setter gives pllc_request_c, after 0x33862 and before 0x338ce; value 0x101e66	scpi_numeric_param
+0x3393a	label	scpi_param_DOUGlas_STATe_request	structures.md	scpi_param_SAMPle_INTeger's bytes but for gps_request 0x53; :DOUGlas:STATe's setter gives it pllc_request_c while nv_settings.douglas_state is 0	scpi_numeric_param
+0x41300	label	two_to_32	softfloat.md	4294967296.0, by which int64_to_double and double_to_int64 scale the high long	double
+0x4cfce	label	month_names	structures.md	format_date's "Jan" to "Dec" for months 1 to 12; entry 0 "---"	char *[13]
+0x4d10b	label	status_screen_blank	structures.md	an empty string status_screen and status_snapshot print or store for a field with nothing	char[1]
+0x4e016	label	satellite_status_blank_entry	structures.md	satellite_status_list copies its 8 bytes over each unused entry of the list	uint8_t[8]
+0x50cca	label	gps_script_47	oncore/z3805a-3543b.txt	script 0x47, gps_script_lookup's first, which also calls gps_init; to its NULL	gps_script_step *[26]
+0x50d32	label	gps_script_48	oncore/z3805a-3543b.txt	script 0x48; to its NULL	gps_script_step *[29]
+0x50da6	label	gps_script_49	oncore/z3805a-3543b.txt	script 0x49; to its NULL	gps_script_step *[5]
+0x50dba	label	gps_script_4a	oncore/z3805a-3543b.txt	script 0x4a; to its NULL	gps_script_step *[5]
+0x50dce	label	gps_script_4b	oncore/z3805a-3543b.txt	script 0x4b; to its NULL	gps_script_step *[4]
+0x50dde	label	gps_script_4c	oncore/z3805a-3543b.txt	script 0x4c; to its NULL	gps_script_step *[5]
+0x50df2	label	gps_script_4d	oncore/z3805a-3543b.txt	script 0x4d; to its NULL, then a two-pointer list at 0x50e5e no code loads	gps_script_step *[27]
+0x50e66	label	gps_script_4e	oncore/z3805a-3543b.txt	script 0x4e; to its NULL	gps_script_step *[3]
+0x50e72	label	gps_script_4f	oncore/z3805a-3543b.txt	script 0x4f; to its NULL	gps_script_step *[9]
+0x50e96	label	gps_script_50	oncore/z3805a-3543b.txt	script 0x50; to its NULL	gps_script_step *[8]
+0x50eb6	label	gps_script_51	oncore/z3805a-3543b.txt	script 0x51; to its NULL	gps_script_step *[10]
+0x50ede	label	gps_script_52	oncore/z3805a-3543b.txt	script 0x52; to its NULL	gps_script_step *[13]
+0x50f12	label	gps_script_53	oncore/z3805a-3543b.txt	script 0x53; to its NULL	gps_script_step *[5]
+0x50f26	label	gps_script_54	oncore/z3805a-3543b.txt	script 0x54; to its NULL	gps_script_step *[5]
+0x50f3a	label	gps_script_55	oncore/z3805a-3543b.txt	script 0x55; to its NULL	gps_script_step *[8]
+0x50f5a	label	gps_script_56	oncore/z3805a-3543b.txt	script 0x56; to its NULL	gps_script_step *[6]
+0x50f72	label	gps_script_57	oncore/z3805a-3543b.txt	script 0x57; to its NULL	gps_script_step *[6]
+0x50f8a	label	gps_script_58	oncore/z3805a-3543b.txt	script 0x58; to its NULL	gps_script_step *[6]
+0x50fa2	label	gps_script_59	oncore/z3805a-3543b.txt	script 0x59; to its NULL	gps_script_step *[11]
+0x50fce	label	gps_script_none	oncore/z3805a-3543b.txt	the empty script gps_script_lookup returns for an index outside 0x47 to 0x59	gps_script_step *[1]
+0x5122a	label	psos_config_defaults	structures.md	psos_config_init copies these 0x62 bytes over psos_config	psos_configuration
+0x5171a	label	io_table_defaults	structures.md	psos_config_init copies these 0x90 bytes, four devices' jmp.l instructions, over io_table	io_device_jumps[4]
+0x512cd	label	os_report_group_text	structures.md	"grp", which os_report_exchange prints when the exchange's +0x11 is set	char[4]
+0x512d2	label	os_report_any_text	structures.md	"any", which it prints when that byte is clear	char[4]
+0x51385	label	os_report_comma	structures.md	",", which os_report_exchange prints between the tasks waiting	char[2]
+0x53034	label	scpi_main_tree	docs/scpi/README.md	the main tree's root child list, 49 nodes, which scpi_interpret is given; the pair at 0x5d014 points at it and the common list at 0x526f6	scpi_root_children
+0x60868	label	doprnt_minus	libc.md	"-", doprnt's sign for a negative number	char[2]
+0x6086a	label	doprnt_plus	libc.md	"+", its sign with the + flag	char[2]
+0x6086c	label	doprnt_space	libc.md	" ", its sign with the space flag	char[2]
+0x60890	label	doprnt_hex_prefix	libc.md	"0x", its prefix for %p	char[3]
+0x60d48	label	log_ln2_high	libc.md	0.693359375, ln 2's high part, by which log scales the exponent	double
+0x60d50	label	log_ln2_low	libc.md	-2.1219444005469057e-4, ln 2 less log_ln2_high	double
+0x60d58	label	log_a0	libc.md	-64.12494342374558, the constant term of log's numerator	double
+0x60d60	label	log_a1	libc.md	16.383943563021536, its second	double
+0x60d68	label	log_a2	libc.md	-0.7895611288749126, its third, multiplied first	double
+0x60d70	label	log_b0	libc.md	-769.4993210849487, the constant term of log's denominator	double
+0x60d78	label	log_b1	libc.md	312.03222091924533, its second	double
+0x60d80	label	log_b2	libc.md	-35.66797773903465, its third	double
+0x60d88	label	pow_error_result	libc.md	0x7fffffffffffffff, a NaN, the result one of pow's error paths loads	double
+0x617e4	label	pow_log_p1	libc.md	0.0833333333333332, about 1/12: pow's log2 series, added last	double
+0x617ec	label	pow_log_p2	libc.md	0.0125000000005038, about 1/80	double
+0x617f4	label	pow_log_p3	libc.md	0.002232142128592426, about 1/448	double
+0x617fc	label	pow_log_p4	libc.md	0.0004344577567216312, multiplied first	double
+0x61804	label	pow_exp2_q1	libc.md	0.6931471805599453, ln 2: pow's 2^x series, added last	double
+0x6180c	label	pow_exp2_q2	libc.md	0.24022650695909537, (ln 2)^2 / 2	double
+0x61814	label	pow_exp2_q3	libc.md	0.055504108664085595	double
+0x6181c	label	pow_exp2_q4	libc.md	0.009618129059517241	double
+0x61824	label	pow_exp2_q5	libc.md	0.0013333541313585784	double
+0x6182c	label	pow_exp2_q6	libc.md	0.00015400290440989765	double
+0x61834	label	pow_exp2_q7	libc.md	1.4928852680595609e-05, multiplied first	double
+0x6183c	label	log2_e_minus_1	libc.md	0.4426950408889634, log2(e) - 1, by which pow scales	double
+0x6184c	label	pow_two_powers	libc.md	2 to -k/16, k 0 to 16, 1.0 to 0.5; pow bisects the mantissa from frexp over them, index up to 15; tails at 0x618d4	double[17]
+0x618d4	label	pow_two_power_tails	libc.md	the even entries' low parts, k 0 to 16 by 2; pow reads entry (i + 1) / 2; code at 0x6191c	double[9]
+0x61b94	label	sqrt_seed_a	libc.md	0.41731, sqrt's first estimate's constant	double
+0x61b9c	label	sqrt_seed_b	libc.md	0.59016, its slope	double
+0x61ba4	label	sqrt_half_high	libc.md	sqrt(0.5) to 21 mantissa bits, by which sqrt scales the root of an odd exponent	double
+0x61bac	label	sqrt_half_low	libc.md	2.2725427813161828e-10, sqrt(0.5) less sqrt_half_high	double
+0x32e26	function	load_long_unit_step	context	the long at a pointer, load_long's code again; the position setters give it unit_step		convention=c; confidence=read
 #
 # the MC68331's modules, types/mc68331.h; MC68331UM Tables D-2, D-3, D-13
 0xfff900	label	gpt	MC68331UM	the general-purpose timer	gpt_registers
 0xfffa00	label	sim	MC68331UM	the system integration module	sim_registers
 0xfffc00	label	qsm	MC68331UM	the queued serial module: the SCI and the QSPI	qsm_registers
 0x200000	label	duart	MC68681	the 68681 DUART on chip select 8: channel A the GPS receiver's, channel B the host port	duart_registers
+0x300000	label	lamp_latch	outputs.md	the front-panel lamps' latch; leds_update writes it whole, lamp_test walks a bit through it	uint8_t
+0x304000	label	fpga_port	interval.md	the FPGA's registers 0 to 3, which fpga_write writes from fconf_regs; fpga_read reads 0x304000 after selecting a register in register 1	uint8_t[4]
+0x306000	label	efc_strobe	structures.md	efc_write writes 0 here after sending the EFC to QSPI device 7	uint8_t
+0x400000	label	eeprom_parameter_record	structures.md	the EEPROM's parameter record, 16 bytes	parameter_record
+0x400010	label	eeprom_identification_record	structures.md	the EEPROM's identification record, 48 bytes	identification_record
+0x400060	label	eeprom_lifetime_record	structures.md	the EEPROM's lifetime record, 32 bytes	lifetime_record
+0x400080	label	eeprom_calibration_block	structures.md	the EEPROM's calibration block, 64 bytes	calibration_block

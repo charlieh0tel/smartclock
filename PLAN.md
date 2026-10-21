@@ -683,12 +683,12 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/bridge_check.py` (Unicorn, run with uv) calls each
      wrapper as gcc would and its routine from its registers, from the
      same RAM, and requires the same result, RAM and effects and gcc's
-     callee-saved registers kept; 79 of 89 agree, none disagree.
+     callee-saved registers kept; 81 of 90 agree, none disagree.
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1251 run, 1183 agree, 57 reach what the
-     harness does not model and are skipped, and 11 differ, in the
+     original reads them: of 1251 run, 1230 agree, 9 reach what the
+     harness does not model and are skipped, and 12 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): traps #1 and #7 run the image's handlers;
@@ -940,6 +940,38 @@ view cannot drift apart.  The library, bottom up:
      332674% for a task whose stack is in no segment; its MEMORY sum
      starts from the caller's D6 the same way.  Like
      `task_stack_info`'s, it is left.
+     Then the image's own state where the skipped read it, each model
+     the same for both calls.  RAM starts as `status_init` leaves it,
+     the image's own run once as `kernel_init` is, its segments kept:
+     `status_object`, its registers and queue, where a zeroed pointer had
+     led 14 through ROM's first bytes (57 skipped to 46; three
+     `:STATus:OPERation:HARDware` queries, which agreed reading ROM
+     there, now index the registers by their parameters' garbage past
+     RAM and are skipped).  `qsort`'s size and comparator, which its
+     swaps read as 0 and looped 2^32 times, are as its one call sets
+     them (2).  The second pointer case's fill points each of a record's
+     first three longs at the next and the third at a NULL, where every
+     long of the first's holds itself, so that a list through them ends
+     (7; one fill for both cases gained seven and lost eight, an error
+     queue's indexes among them, so each fill has a case).  The pllc
+     task's request is in the variables its readers take it from, as the
+     image's own `get_setup_vars` stores it (4).  A parameter is given the
+     image's object its callers pass: an SCPI formatter's `output` the
+     console port (8); the status model, its registers and `aging_curve`
+     by type, and a `scpi_step` (8); a header `path` set back to the
+     main tree (2).  A trap from a task's user stack takes its frame on
+     the supervisor stack, which ran `primary_start` through the boot,
+     and `rtr`, which Unicorn lacks, is done in its place, which runs
+     `console_init` and finds gcc's `pforth_define_word` calling
+     `forth_compile_code` without its dictionary pointer in A4.  Prototypes
+     that name `scpi_scan_token`'s and `scpi_skip_to_terminator`'s
+     `input`, `scpi_format_text`'s and `scpi_format_choice`'s `output`,
+     `scpi_header_step`'s `path` and `error_queue_push`'s `error_queue`
+     run four more (1183 agreeing to 1230, 57 skipped to 9, 11 differing
+     to 12).  Left: the SCPI parser's records (`scpi_parse_message_unit`,
+     `scpi_call_handler`, `scpi_format_response`, the HARDware queries'
+     parameters), an exchange's queue (`os_report_exchange`) and
+     `status_screen_height`.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

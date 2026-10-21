@@ -558,7 +558,7 @@
 0x182cc	function	selftest_end	context	clears selftest_abort after a test
 0x183ce	function	selftest_aborted	context	selftest_abort is set
 0x182d4	function	selftest_may_report	context	true for mode 0 or when the test was not aborted
-0x26ee0	function	scpi_scan_token	context	the SCPI lexer: reads characters through the input's own routine and classifies them by the table at 0x277ec
+0x26ee0	function	scpi_scan_token	context	the SCPI lexer: reads characters through the input's own routine and classifies them by the table at 0x277ec	int scpi_scan_token(void *input, ushort *param_2, int *param_3)
 0x40248	function	interpolator_calibrate	context	sets HDAC channels 2 and 3 until interpolator_measure gives 1 to 25 and 201 to 225, 200 apart; ovens.md's Z3816A 0x43b56	uint8_t interpolator_calibrate(interpolator_calibration *calibration)
 0x40030	function	interpolator_measure	context	pulses the FPGA bits for a measurement and returns interpolator_read	uint8_t interpolator_measure(uint8_t mode)
 0x4007e	function	interpolator_measure_low	interpolator_calibrate	hdac_set of HDAC channel 2, then interpolator_measure(0)	uint8_t interpolator_measure_low(char_slot dac)
@@ -1045,11 +1045,11 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2cd94	local	position	read	the three longs copy_longs_locked copies from 0x101eaa	int32_t[3] @ -0x1c
 0x2553a	local	decimal	read	scpi_double_to_decimal's record	scpi_decimal @ -0x1c
 0x264e0	function	scpi_unsigned_to_digits	docs/scpi/README.md, read	decimal digits right-aligned in a 17-byte buffer, -40 if they do not fit	int scpi_unsigned_to_digits(uint32_t value, char *digits, short *start)
-0x2636e	function	scpi_format_text	docs/scpi/README.md, read	a string as it is
+0x2636e	function	scpi_format_text	docs/scpi/README.md, read	a string as it is	int scpi_format_text(void *output, char **value)
 0x2639e	function	scpi_format_string	docs/scpi/README.md, read	a string in double quotes, each quote doubled	int scpi_format_string(void *output, char **value)
 0x26438	function	scpi_format_counted_text	docs/scpi/README.md, read	text of a given length; returns -90 always, for a reason not known	int scpi_format_counted_text(void *output, short *text)
 0x2640c	function	scpi_format_boolean	docs/scpi/README.md, read	0 or 1	int scpi_format_boolean(void *output, short *value)
-0x26460	function	scpi_format_choice	docs/scpi/README.md, read	the keyword for the value, from the node's list
+0x26460	function	scpi_format_choice	docs/scpi/README.md, read	the keyword for the value, from the node's list	int scpi_format_choice(void *output, short *value, int *param_3)
 0x26522	function	scpi_format_long	docs/scpi/README.md, read	+ or -, then the digits	int scpi_format_long(void *output, int32_t *value)
 0x265a2	function	scpi_format_short	docs/scpi/README.md, read	through scpi_format_long	int scpi_format_short(void *output, short *value)
 0x265c2	function	scpi_format_unsigned_long	docs/scpi/README.md, read	+ and the digits	int scpi_format_unsigned_long(void *output, uint32_t *value)
@@ -1324,7 +1324,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x28044	function	status_condition_clear	structures.md's status registers	clears condition bits; those falling through the negative transition mask become events
 0x280a4	function	status_propagate	structures.md's status registers	sets or clears a register's summary bit in its parent from its event and enable words	void status_propagate(status_model *status, status_register *reg)
 0x282ce	function	status_apply_condition	structures.md's status registers	applies a condition by its kind: event set, condition set, condition clear, or the error queue	void status_apply_condition(status_model *status, int condition, int param_3)
-0x285d4	function	error_queue_push	context	adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full
+0x285d4	function	error_queue_push	context	adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full	bool error_queue_push(short *error_queue, undefined4 param_2, undefined4 param_3)
 0x288ee	function	error_message_lookup	context	an error code's message, from the table at 0x28910
 0x2f626	function	status_hardware_condition	structures.md's status registers	the :STATus:OPERation:HARDware condition, register 6, which status_summary folds	undefined2 status_hardware_condition(void)
 0x29e3c	function	status_prompt_refresh	context	prompts again when the status object that changed is the main one; a method of the status output object	void status_prompt_refresh(status_model *param_1,undefined4 param_2)
@@ -1481,7 +1481,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x24984	function	pps_monitors_reset	context	clears both 1PPS monitors
 0x26a80	function	scpi_context_init	context	fills a parser context's eight fields; called by nothing
 0x26ab6	function	scpi_parse_message_unit	context	parses one program message unit: its header, then its parameters, token by token
-0x27388	function	scpi_skip_to_terminator	context	reads characters until a message terminator
+0x27388	function	scpi_skip_to_terminator	context	reads characters until a message terminator	void scpi_skip_to_terminator(void *input)
 0x273cc	function	scpi_scan_number	context	scans a decimal number's digits, point and exponent into a parsed number
 0x2766e	function	scpi_scan_exponent	context	scans a number's exponent after its E
 0x277d2	function	scpi_char_upper	context	a letter in upper case, by the parser's character classes
@@ -1491,7 +1491,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x27baa	function	scpi_node_find	context	finds a keyword in a child list, by bisection	void *scpi_node_find(void *list, scpi_keyword *keyword)
 0x27c22	function	scpi_node_find_with_defaults	context	finds a keyword, else follows the default nodes, recording their suffixes	int scpi_node_find_with_defaults(int *path, short *keyword, void *unused)
 0x27c94	function	scpi_node_find_numbered	context	finds a keyword with its numeric suffix stripped and kept	int scpi_node_find_numbered(int *path, short *keyword, void *unused)
-0x27e9e	function	scpi_header_step	context	moves the path one keyword down a compound header	undefined4 scpi_header_step(undefined4 param_1,int *param_2,undefined4 param_3)
+0x27e9e	function	scpi_header_step	context	moves the path one keyword down a compound header	undefined4 scpi_header_step(short *keyword, int *path, void *unused)
 0x27efe	function	scpi_path_reset	context	sets a header path back to a root list
 0x27f7e	function	scpi_trg_defined	context	looks _TRG up in a list: whether the common list defines it	void *scpi_trg_defined(void *list, uint16_t *no_setter)
 0x27f7e	local	keyword	read	"_TRG", copied in and looked up	scpi_keyword @ -0x18

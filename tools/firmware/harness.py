@@ -6,13 +6,15 @@ A call starts in supervisor mode with interrupts masked, as the
 firmware runs, every register a distinct sentinel but A6, which holds a
 caller's frame, and its own stack at STACK, filled and never compared;
 RAM zeroed but the kernel's tables, its data area as kernel_init makes
-it, the running task's record and the exchanges' ids; the EEPROM
-erased and the pointees filled, each compared after it as RAM is; the
-devices' registers zeroed but the status bits the routines poll for;
-and a routine of the harness's own for each parameter that points at
-one, whose calls are effects.  The harness stands in for what
-lies outside memory, the same for both calls: traps #1 and #7 run the
-image's own handlers; the kernel's traps, #3 and #4, are answered by a
+it, what the image's own INITIALIZERS make, the running task's record
+and the exchanges' ids; the EEPROM erased and the pointees filled, each
+compared after it as RAM is; the devices' registers zeroed but the
+status bits the routines poll for; a routine of the harness's own for
+each parameter that points at one, whose calls are effects; and the
+image's own object for a parameter whose callers pass one.  The harness
+stands in for what lies outside memory, the same for both calls: traps
+#1 and #7 run the image's own handlers, and rtr, which Unicorn lacks,
+is done in its place; the kernel's traps, #3 and #4, are answered by a
 model of each service; a trap that never returns, a zero divide, a
 write to code, a branch to itself and the KERNEL_CALL_LIMIT'th kernel
 call end a call; and the kernel calls and device writes a call makes,
@@ -163,6 +165,14 @@ FRAME_FORMAT_SHIFT = 12
 # What QEMU, under Unicorn, raises for an rte, which the interrupt hook
 # is then called with in place of the processor's return (EXCP_RTE).
 RETURN_FROM_EXCEPTION = 0x100
+# rtr, which pops the condition codes and then the return address
+# (MC68331UM, table 5-1): QEMU, under Unicorn, takes it for an illegal
+# instruction, vector 4, at it, and the harness does it in its place.
+# pForth's code words end with it (forth_compile_code, 0x19338).
+ILLEGAL_INSTRUCTION = 4
+RETURN_AND_RESTORE = bytes.fromhex("4e77")
+RESTORED = struct.Struct(">HI")
+CONDITION_CODES = 0xFF
 
 
 @dataclass(frozen=True)
@@ -283,9 +293,10 @@ MESSAGE_SIZE = len(MESSAGE)
 # SCPI requests" and "Numeric SCPI parameters").
 SPOO_EXCHANGE = 0x1032F8
 PLLC_EXCHANGE = 0x103804
+SAMPLE_INTEGER = 0x334DE
 RECEIVED = {
     SPOO_EXCHANGE: struct.pack(">5I", 0, 0x29FCE, 0x19, 0, 0),
-    PLLC_EXCHANGE: struct.pack(">IIBBBBII", 0, 0x334DE, 0, 0, 0, 0, 7, 0),
+    PLLC_EXCHANGE: struct.pack(">IIBBBBII", 0, SAMPLE_INTEGER, 0, 0, 0, 0, 7, 0),
 }
 FIRST_EXCHANGE_ID = KERNEL_RESULT + 1
 EXCHANGE_IDS = {cell: FIRST_EXCHANGE_ID + i for i, cell in enumerate(RECEIVED)}
@@ -323,6 +334,14 @@ KERNEL_TABLES = [(0x5122A, PSOS_CONFIG, 0x62), (0x5171A, 0x1025BC, 0x90)]
 # the empty queue of tasks waiting on a region at +0x64, pointing at
 # itself (kernel_region_init, 0x15ece), which os_report_regions walks.
 KERNEL_INIT = [(0x15CD8, 0x15E3A), (0x15E5C, 0x15E6A)]
+# The image's own set-up past the kernel's, which RAM starts each case
+# with too: routines root_task (0x1304a) calls before it creates the
+# tasks, each run once as a call is, its kernel calls answered by the
+# model and the segments it allocates kept, from ALLOCATIONS: status_init
+# (0x2f480), which builds status_object and its registers, through
+# status_create, and sets status_ready (docs/firmware/structures.md, "The
+# status system").
+INITIALIZERS = [0x2F480]
 # The configuration's first long is the data area's address, and the
 # data area's first long the running task's record, which most of the
 # kernel's handlers load (psos.md, "Inside the kernel") and the
@@ -445,25 +464,43 @@ CHARS = [-1, 0x41, 0x7F, 0, -0x80, 3]
 SHORTS = [-2, 0x1234, -30000, 0, 0x7FFF, 9]
 REALS = [1.5, -2.25, 1e10, 3.0e-5, 0.0, 123.456]
 # The cases: in the first PLAIN_CASES a pointer's buffer holds bytes,
-# in the rest POINTER_FILL, whose longs are pointers, so that a routine
-# given a record that holds pointers, or a pointer to one, runs on.
+# in the rest one of POINTER_FILLS each, whose longs are pointers, so
+# that a routine given a record that holds pointers, or a pointer to
+# one, runs on.
 PLAIN_CASES = 6
-POINTER_CASES = 2
+# What a pointer case's buffers hold, and the pointees, the harness's
+# own memory, a POINTEES_SIZE page at each address a long at an even
+# offset in a fill points into but for NULL and ROM, filled with the
+# case's fill, the first in a plain case.  Each fill is 16 bytes over,
+# text and then a NULL, which ends a list, and the long after the NULL,
+# 0x3130, is in ROM.  In the first, "1010" over, every long in the text
+# is 0x31303130, which holds itself, so that a list linked through any
+# of a record's first three longs never ends; in the second,
+# "10141018101<", the first three longs point at the next one's place
+# in a 16 bytes and the third at the NULL's, so that such a list ends,
+# and the longs between, "14" "10" and the like, point into the
+# pointees as well.  The pointees are filled at a call's start and
+# compared after it, as RAM is.
+NULL_LONG = b"\0\0\0\0"
+POINTER_FILLS = [b"10" * 6 + NULL_LONG, b"10141018101<" + NULL_LONG]
+POINTER_CASES = len(POINTER_FILLS)
 CASES = PLAIN_CASES + POINTER_CASES
-# What a pointer case's buffers hold, and POINTEES, the harness's own
-# memory, which every long whose high word is "10" lies in, filled
-# with it too: a long at an even offset in it is a pointer into
-# POINTEES, "1010..." as text, but one in each 16 bytes that is NULL,
-# which ends a list, and the next, 0x3130, in ROM.  POINTEES is filled
-# at a call's start and compared after it, as RAM is.
-POINTER_FILL = b"10" * 6 + b"\0\0\0\0"
-POINTEES = 0x31300000
 POINTEES_SIZE = 0x10000
-FILLED = POINTER_FILL * (POINTEES_SIZE // len(POINTER_FILL))
+POINTEES = sorted(
+    {
+        pointer & -POINTEES_SIZE
+        for fill in POINTER_FILLS
+        for at in range(0, len(fill), POINTER_ALIGNMENT)
+        if (pointer := int.from_bytes((fill * 2)[at : at + POINTER_SIZE], "big")) >= ROM + ROM_SIZE
+    }
+)
 # Memory beside RAM that a call starts with the same contents in and
-# that is compared after it as RAM is: by name, its address and those
-# contents.  Neither holds code, so that a jump into either faults.
-COMPARED = {"EEPROM": (EEPROM, ERASED), "pointee memory": (POINTEES, FILLED)}
+# that is compared after it as RAM is: by name, its address and its
+# bytes.  None holds code, so that a jump into one faults.
+COMPARED = {
+    "EEPROM": (EEPROM, EEPROM_SIZE),
+    **{f"pointee memory at {start:x}": (start, POINTEES_SIZE) for start in POINTEES},
+}
 # What a parameter that points at a routine, a function typedef of the
 # C's with its parameters declared, is given: a routine of the
 # harness's own at ROUTINES, one for each position, ROUTINE_SPACING
@@ -509,6 +546,44 @@ STACK_SLOT_MINIMUM = 2
 POSITION_STRIDE = 1
 # What a char pointer's buffer holds.
 TEXT = b"123.456\0"
+# The objects of the image's own a parameter is given, by the name its
+# prototype gives it: an SCPI formatter's output, which
+# scpi_format_response's callers pass, and the SCPI lexer's input, the
+# console port's object, which scpi_console_port (0x29b82) returns:
+# its read routine at +0, which the lexer calls, and its methods from
+# the pointer at +4 (docs/firmware/structures.md).
+CONSOLE_PORT = 0x29E18
+OBJECTS = {"output": CONSOLE_PORT, "input": CONSOLE_PORT}
+# And an SCPI header path, a fresh buffer, as scpi_path_reset (0x27efe)
+# sets one back: the long at +0 the main tree's root list,
+# scpi_main_tree (0x53034), which scpi_interpret is given, and the
+# word at +4, the suffixes it holds, 0 (docs/scpi/README.md).
+PATH = "path"
+SCPI_MAIN_TREE = 0x53034
+RESET_PATH = struct.pack(">IH", SCPI_MAIN_TREE, 0)
+# And by its type: the status model status_init builds (INITIALIZERS),
+# which status_object keeps and every caller passes, and one of its
+# registers, by the case, from the pointers at its +0x12, as many as
+# the word at its +0 counts; and by its name, its error queue, from
+# the pointer at its +6 (structures.md, "The status system").
+STATUS_MODEL = "status_model *"
+STATUS_REGISTER = "status_register *"
+ERROR_QUEUE = "error_queue"
+STATUS_OBJECT = 0x102EB8
+STATUS_REGISTER_COUNT = 0
+STATUS_MODEL_QUEUE = 6
+STATUS_MODEL_REGISTERS = 0x12
+# And the variables whose address the callers of a parameter's type
+# pass: aging_curve (0x101fd8), which aging_fit (0x417c6) hands each fit
+# routine, or a copy of it on its stack (structures.md, "The aging fit's
+# curve").
+VARIABLES = {"aging_curve_state *": 0x101FD8}
+# And a numeric value's step, which validate_num (0x42c10) passes its
+# descriptor's validate from the pointer at the descriptor's +0x28, one
+# for each value: the first of :SAMPle:INTeger's, the descriptor of the
+# request RECEIVED from pllc_exchange.
+SCPI_STEP = "scpi_step *"
+DESCRIPTOR_STEPS = 0x28
 # The sizes of the base types the decompiled C's prototypes use; the
 # rest are pointers or are asserted in the C.
 BASE_SIZES = {
@@ -567,13 +642,17 @@ class RebuiltMachine(Machine):
         self.effects: list[KernelCall | DeviceWrite | RoutineCall] = []
         # each C function's two copies, gcc's address and the image's
         self.copies: set[tuple[int, int]] = set()
-        # where service 8's next segment starts, and the task records
-        # service 3 has returned, by name
+        # where a call's first segment of service 8 starts, past those
+        # INITIALIZERS keep, and its next; and the task records service 3
+        # has returned, by name
+        self.first_allocation = ALLOCATIONS
         self.next_allocation = ALLOCATIONS
         self.tasks: dict[int, int] = {}
-        # RAM zeroed but the kernel's tables and its data area, as
-        # KERNEL_INIT leaves them
-        self.kernel_ram = bytes(RAM_SIZE)
+        # what each page of the pointees holds at a call's start
+        self.pointees = b""
+        # RAM zeroed but the kernel's tables, its data area and what
+        # INITIALIZERS make, as KERNEL_INIT and they leave them
+        self.initialized_ram = bytes(RAM_SIZE)
         # the routines at ROUTINES, by the address each records at
         self.stubs: dict[int, Stub] = {}
         self.uc.mem_map(ROUTINES, ROUTINES_SIZE)
@@ -631,15 +710,23 @@ def rebuilt_machine(image: bytes, linked: list[Section], linked_symbols: dict[st
         if section.name in LOADED:
             m.uc.mem_write(section.address, section.data)
     m.uc.mem_map(STACK, STACK_SIZE)
-    for start, contents in COMPARED.values():
-        m.uc.mem_map(start, len(contents), UC_PROT_READ | UC_PROT_WRITE)
+    for start, size in COMPARED.values():
+        m.uc.mem_map(start, size, UC_PROT_READ | UC_PROT_WRITE)
     m.uc.mem_write(RAM, bytes(RAM_SIZE))
     for source, destination, size in KERNEL_TABLES:
         m.uc.mem_write(destination, m.read(source, size))
     m.uc.reg_write(UC_M68K_REG_SR, SUPERVISOR)
     for start, end in KERNEL_INIT:
         m.uc.emu_start(start, end, count=STEP_LIMIT)
-    m.kernel_ram = m.read(RAM, RAM_SIZE)
+    m.initialized_ram = m.read(RAM, RAM_SIZE)
+    for routine in INITIALIZERS:
+        fresh_ram(m)
+        reset(m, m.read(RAM, RAM_SIZE))
+        run = Run(m, routine)
+        if run.stopped is not None or run.ended is not None:
+            raise RuntimeError(f"initializer {routine:x}: {run.stopped or run.end()}")
+        m.first_allocation = m.next_allocation
+        m.initialized_ram = run.ram
     return m
 
 
@@ -671,11 +758,13 @@ def stub(m: RebuiltMachine, types: Types, routine: Routine, position: int) -> in
     return start
 
 
-def argument(m: RebuiltMachine, types: Types, kind: str, case: int, pointing: bool = False, position: int = 0) -> bytes:
+def argument(
+    m: RebuiltMachine, types: Types, kind: str, case: int, fill: bytes | None = None, position: int = 0
+) -> bytes:
     """The case'th argument of a kind, as its bytes: a routine at
     ROUTINES for a pointer to a routine type, or a pointer to a fresh
-    buffer of what it points at, POINTER_FILL where pointing but for
-    text and reals."""
+    buffer of what it points at, a pointer case's fill but for text and
+    reals."""
     real = REALS[case % len(REALS)]
     routine = types.routine(kind)
     routine_at = None if routine is None else stub(m, types, routine, position)
@@ -690,8 +779,8 @@ def argument(m: RebuiltMachine, types: Types, kind: str, case: int, pointing: bo
             if pointee == "float"
             else TEXT
             if pointee == "char"
-            else POINTER_FILL * (BUFFER_SPACING // len(POINTER_FILL))
-            if pointing
+            else fill * (BUFFER_SPACING // len(fill))
+            if fill
             else bytes((case * 37 + i * 11) & 0xFF for i in range(BUFFER_SPACING))
         )
         return struct.pack(">I", m.buffer(contents))
@@ -709,10 +798,45 @@ def argument(m: RebuiltMachine, types: Types, kind: str, case: int, pointing: bo
     return struct.pack(">I", INTEGERS[case % len(INTEGERS)] & 0xFFFFFFFF)
 
 
-def arguments(m: RebuiltMachine, types: Types, kinds: list[str], case: int) -> list[bytes]:
-    """A case's arguments, each position taking a different value."""
-    pointing = case >= PLAIN_CASES
-    return [argument(m, types, kind, case + POSITION_STRIDE * i, pointing, i) for i, kind in enumerate(kinds)]
+def arguments(
+    m: RebuiltMachine, types: Types, kinds: list[str], case: int, names: list[str] | None = None
+) -> list[bytes]:
+    """A case's arguments, each position taking a different value, or
+    the image's object for its name or type."""
+    fill = pointer_fill(case) if case >= PLAIN_CASES else None
+    values = []
+    for i, (kind, name) in enumerate(zip(kinds, names or [None] * len(kinds))):
+        at = image_object(m, kind, name, case + POSITION_STRIDE * i)
+        values.append(
+            argument(m, types, kind, case + POSITION_STRIDE * i, fill, i) if at is None else struct.pack(">I", at)
+        )
+    return values
+
+
+def image_object(m: RebuiltMachine, kind: str, name: str | None, case: int) -> int | None:
+    """The image's object a parameter of a name and type is given, the
+    case'th of those it may be; None if it is given none."""
+    if name in OBJECTS:
+        return OBJECTS[name]
+    if name == PATH:
+        return m.buffer(RESET_PATH)
+    if kind in VARIABLES:
+        return VARIABLES[kind]
+    if kind == SCPI_STEP:
+        return pointer_at(m, SAMPLE_INTEGER + DESCRIPTOR_STEPS)
+    if kind not in (STATUS_MODEL, STATUS_REGISTER) and name != ERROR_QUEUE:
+        return None
+    status = pointer_at(m, STATUS_OBJECT)
+    if kind == STATUS_MODEL:
+        return status
+    if name == ERROR_QUEUE:
+        return pointer_at(m, status + STATUS_MODEL_QUEUE)
+    count = struct.unpack(">h", m.read(status + STATUS_REGISTER_COUNT, 2))[0]
+    return pointer_at(m, status + STATUS_MODEL_REGISTERS + case % count * POINTER_SIZE)
+
+
+def pointer_at(m: Machine, address: int) -> int:
+    return struct.unpack(">I", m.read(address, POINTER_SIZE))[0]
 
 
 def gcc_slots(values: list[bytes]) -> bytes:
@@ -724,24 +848,32 @@ def gcc_slots(values: list[bytes]) -> bytes:
     )
 
 
-def fresh_ram(m: RebuiltMachine) -> None:
-    """RAM zeroed but the kernel's tables, its data area as kernel_init
-    makes it and the exchanges' ids, and the buffers' allocator: a
-    case's starting point."""
+def pointer_fill(case: int) -> bytes:
+    """The fill of a case's pointees, and of its buffers in a pointer
+    case."""
+    return POINTER_FILLS[max(case - PLAIN_CASES, 0)]
+
+
+def fresh_ram(m: RebuiltMachine, case: int = 0) -> None:
+    """RAM zeroed but what the kernel's tables, kernel_init and
+    INITIALIZERS make and the exchanges' ids, the buffers' allocator,
+    and the pointees' fill: a case's starting point."""
     m.next_buffer = BUFFER
-    m.uc.mem_write(RAM, m.kernel_ram)
+    m.pointees = pointer_fill(case) * (POINTEES_SIZE // len(pointer_fill(case)))
+    m.uc.mem_write(RAM, m.initialized_ram)
     for cell, exchange in EXCHANGE_IDS.items():
         m.uc.mem_write(cell, struct.pack(">I", exchange))
 
 
 def reset(m: RebuiltMachine, ram: bytes) -> None:
     m.uc.mem_write(RAM, ram)
-    m.next_allocation = ALLOCATIONS
+    m.next_allocation = m.first_allocation
     m.tasks = {RUNNING_TASK: allocate(m, TASK_RECORD_SIZE)}
     data_area = struct.unpack(">I", m.read(PSOS_CONFIG, POINTER_SIZE))[0]
     m.uc.mem_write(data_area, struct.pack(">I", m.tasks[RUNNING_TASK]))
-    for start, contents in COMPARED.values():
-        m.uc.mem_write(start, contents)
+    m.uc.mem_write(EEPROM, ERASED)
+    for start in POINTEES:
+        m.uc.mem_write(start, m.pointees)
     m.uc.mem_write(STACK, CLEAN_STACK)
     for start, size in DEVICES:
         m.uc.mem_write(start, bytes(size))
@@ -752,17 +884,31 @@ def reset(m: RebuiltMachine, ram: bytes) -> None:
 
 def take_exception(uc: Uc, vector: int) -> None:
     """Enters a vector's handler as the processor does: a format 0 frame
-    on the supervisor stack, returning past the trap, and the handler's
+    on the supervisor stack, which setting the supervisor bit makes A7
+    from a task's user stack, returning past the trap, and the handler's
     address from the primary's table.  Unicorn calls the interrupt hook
     in place of doing this, with PC at the trap."""
-    frame = struct.pack(
-        FRAME_FORMAT, uc.reg_read(UC_M68K_REG_SR), uc.reg_read(UC_M68K_REG_PC) + TRAP_SIZE, vector * VECTOR_SIZE
-    )
+    sr = uc.reg_read(UC_M68K_REG_SR)
+    frame = struct.pack(FRAME_FORMAT, sr, uc.reg_read(UC_M68K_REG_PC) + TRAP_SIZE, vector * VECTOR_SIZE)
+    uc.reg_write(UC_M68K_REG_SR, sr | SUPERVISOR_BIT)
     sp = uc.reg_read(UC_M68K_REG_A7) - len(frame)
     uc.mem_write(sp, frame)
     uc.reg_write(UC_M68K_REG_A7, sp)
-    uc.reg_write(UC_M68K_REG_SR, uc.reg_read(UC_M68K_REG_SR) | SUPERVISOR_BIT)
     uc.reg_write(UC_M68K_REG_PC, struct.unpack(">I", uc.mem_read(VECTORS + vector * VECTOR_SIZE, VECTOR_SIZE))[0])
+
+
+def return_and_restore(uc: Uc) -> bool:
+    """Does an rtr at PC as the processor does; False, nothing done, if
+    the instruction there is another."""
+    pc = uc.reg_read(UC_M68K_REG_PC)
+    if bytes(uc.mem_read(pc, len(RETURN_AND_RESTORE))) != RETURN_AND_RESTORE:
+        return False
+    sp = uc.reg_read(UC_M68K_REG_A7)
+    ccr, address = RESTORED.unpack(uc.mem_read(sp, RESTORED.size))
+    uc.reg_write(UC_M68K_REG_A7, sp + RESTORED.size)
+    uc.reg_write(UC_M68K_REG_SR, uc.reg_read(UC_M68K_REG_SR) & ~CONDITION_CODES | ccr & CONDITION_CODES)
+    uc.reg_write(UC_M68K_REG_PC, address)
+    return True
 
 
 def return_from_exception(uc: Uc) -> bool:
@@ -882,6 +1028,8 @@ class Run:
                 return
             if number == RETURN_FROM_EXCEPTION and return_from_exception(uc):
                 return
+            if number == ILLEGAL_INSTRUCTION and return_and_restore(uc):
+                return
             if number in KERNEL_TRAPS and kernel_calls == KERNEL_CALL_LIMIT:
                 ended.append(STILL_RUNNING)
                 uc.emu_stop()
@@ -937,7 +1085,7 @@ class Run:
         self.ended = ended[0] if ended else None
         self.registers = {name: m.uc.reg_read(register) for name, register in REGISTERS.items()}
         self.ram = m.read(RAM, RAM_SIZE)
-        self.compared = {name: m.read(start, len(contents)) for name, (start, contents) in COMPARED.items()}
+        self.compared = {name: m.read(start, size) for name, (start, size) in COMPARED.items()}
 
     def end(self) -> str:
         if self.ended is None:

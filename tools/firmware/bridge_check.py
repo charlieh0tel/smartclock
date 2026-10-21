@@ -116,7 +116,7 @@ def check(m: Machine, types: Types, bridge: Bridge, wrapper: int, address: int):
     """Yields (description, outcome) for each case: outcome None if the
     bridge agrees with its routine, else what differs."""
     for case in range(CASES):
-        fresh_ram(m)
+        fresh_ram(m, case)
         values = arguments(m, types, bridge.parameters, case)
         ram = m.read(RAM, RAM_SIZE)
 

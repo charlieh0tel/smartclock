@@ -735,8 +735,12 @@ What lies outside memory the harness models, the same for both calls,
 at its boundary rather than routine by routine.  `trap #7`, and
 `trap #1`, which saves or restores a status register for `setjmp` and
 `longjmp`, take the exception through the primary's vector table to
-the image's own handler, and `rte` returns from it, which Unicorn
-leaves to its interrupt hook.  The kernel's traps, `#3` and `#4`, are
+the image's own handler, on the supervisor stack, which setting the
+supervisor bit makes A7 from a task's user stack, and `rte` returns from
+it, which Unicorn leaves to its interrupt hook; and `rtr`, which ends
+pForth's code words (`forth_compile_code`, `0x19338`) and which Unicorn
+takes for an illegal instruction, pops the condition codes and the
+return address as the processor does (MC68331UM, table 5-1).  The kernel's traps, `#3` and `#4`, are
 answered: for each service and I/O function (`psos.md`) the harness
 knows, from the binding's stubs, the registers it reads and returns
 in; a call records the service and those registers, a message by the
@@ -766,7 +770,11 @@ creates of ROOT and IDLE: the supervisor stack, the free lists of
 exchanges, message buffers and task records, regions 0 and 1 and the
 empty queue of tasks waiting on a region at `+0x64`, which
 `os_report_regions` walks; and the first long of the data area, the
-running task's record, which is `ident`'s for the name 0.  The devices -- the DUART
+running task's record, which is `ident`'s for the name 0.  And as the
+image's own `status_init` (`0x2f480`) makes them, run once as a call
+is, the segments it allocates kept: `status_object` and its seven
+registers, its error queue and `status_ready` (`structures.md`, "The
+status system"), which `root_task` sets up before it creates the tasks.  The devices -- the DUART
 at `0x200000`, `0x300000` to `0x30ffff`, `0x500000` and the MC68331's
 modules from `0xfff000` -- are memory zeroed for each call, and each
 write to them is recorded; but the registers the polled routines wait
@@ -791,10 +799,30 @@ so that a local read before it is written reads the same in both.
 Each function runs eight cases: in the first six a pointer's buffer
 holds bytes, and in the last two longs that are pointers, so that a
 routine given a record of pointers runs on: into memory of the
-harness's own at `0x31300000`, filled the same way, `1010` as text,
-with a NULL in every 16 bytes to end a list.  That memory, as the
-EEPROM, is filled for each call, compared after it as RAM is, and
-holds no code, so that a jump into either faults.  A parameter that
+harness's own, 64 KB at each address the fill's longs point into from
+`0x31300000`, filled the same way, each 16 bytes text and a NULL.  The
+seventh case's fill is `1010` over, every long of it `0x31303130`,
+which holds itself, so that a list linked through a record's first
+three longs never ends; the eighth's, `10141018101<`, points each of
+those longs at the next one's place and the third at the NULL, so that
+such a list ends (`list_unlink`, `klok_insert_sorted`,
+`region_segment_containing`, `os_report_process`).  That memory, as
+the EEPROM, is filled for each call, compared after it as RAM is, and
+holds no code, so that a jump into either faults.  Some parameters are
+given the image's own object their callers pass: by its name, an SCPI
+formatter's `output` and the lexer's `input`, the console port's
+object (`0x29e18`), and a header `path`, a buffer set back to the main
+tree's root list (`0x53034`), as `scpi_path_reset` does; and by its
+type, `status_object`'s model, one of its registers by the case, and
+by the name `error_queue` its queue, `aging_curve` for an
+`aging_curve_state *`, and for a `scpi_step *` the first step of
+`:SAMPle:INTeger`'s descriptor, the request's.  And
+`function_check.py` starts the functions that read what their callers
+set with it: `qsort`'s element size and comparator for its sorts and
+swaps, as its one call gives them (2 and `satellite_compare`), and the
+pllc task's request for those that read it after `get_setup_vars`,
+the image's own run on the request `request_x` receives, or for
+`pll_scpi_do_action` on `*TST?`'s action.  A parameter that
 points at a routine, of a function typedef whose parameters the C
 declares (`printf_function`, `spoo_function`, `dac_measure`,
 `write_function`), is given a routine of the harness's own at

@@ -8,7 +8,8 @@ called with its arguments where the .conventions.jsonl sidecar says the
 original reads them, as Ghidra's storage has them, and gcc's copy as
 gcc's callers lay them, in 4-byte slots.  From the same RAM, the two must give
 the same result, leave RAM the same, and make the same kernel calls and
-device writes in the same order (harness.py).
+device writes in the same order (harness.py), each starting with what
+its callers set where it reads that (ESTABLISHED, SET_UP_REQUESTS).
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/function_check.py \\
         third_party/firmware/decompiled/z3805a-3543b.c \\
@@ -41,6 +42,9 @@ from unicorn import UC_PROT_EXEC, UC_PROT_READ, UcError
 from harness import (
     CASES,
     FIRST_ARGUMENT,
+    MESSAGE_OFFSET,
+    PLLC_EXCHANGE,
+    RECEIVED,
     UNSIGNED,
     Machine,
     Run,
@@ -60,17 +64,51 @@ from rebuild_link import IMAGE_PREFIX, REBUILT, REBUILT_DATA, link, symbols
 
 # The widest argument or result the harness lays out.
 WIDEST = 8
+# What a function's callers set before they call it, which each case
+# starts with: by function, each variable's name and its value, a name
+# for the image's copy of that C function.  qsort stores its element
+# size and comparator for qsort_range and its swaps (docs/firmware/libc.md),
+# and its one call, satellite_status_list's (0x497c8), sorts the
+# satellites' 2-byte entries with satellite_compare.
+ESTABLISHED_QSORT = {"qsort_size": 2, "qsort_compare": "satellite_compare"}
+ESTABLISHED = {name: ESTABLISHED_QSORT for name in ("qsort_range", "qsort_swap", "qsort_rotate")}
+# The functions that read the pllc task's request from the variables
+# get_setup_vars (0x431f4) stores it in, which pll_scpi_command
+# (0x432bc) calls first, and the request, its message from +4, that
+# each case starts with as the image's own get_setup_vars stores it:
+# for those the numeric request's path through validate_num reaches,
+# and pll_scpi_complete, which finishes a request the loop took, the one
+# the harness's request_x receives from pllc_exchange (harness.RECEIVED);
+# for pll_scpi_do_action, an action's, *TST?'s: its descriptor
+# (0x41348), index 0 and source 0 (docs/firmware/structures.md, "The
+# SCPI action descriptors").
+SET_UP = "get_setup_vars"
+NUMERIC_REQUEST = RECEIVED[PLLC_EXCHANGE]
+ACTION_REQUEST = struct.pack(">IIBBBBII", 0, 0x41348, 0, 0, 0, 0, 0, 0)
+SET_UP_REQUESTS = {
+    "validate_or_doaction": NUMERIC_REQUEST,
+    "validate_num": NUMERIC_REQUEST,
+    "pll_scpi_needs_loop": NUMERIC_REQUEST,
+    "pll_scpi_send_to_loop": NUMERIC_REQUEST,
+    "scpi_param_saved_in_nv": NUMERIC_REQUEST,
+    "scpi_param_saved_in_record": NUMERIC_REQUEST,
+    "finish_scpi_cmd": NUMERIC_REQUEST,
+    "pll_scpi_complete": NUMERIC_REQUEST,
+    "pll_scpi_do_action": ACTION_REQUEST,
+}
 
 
 @dataclass
 class Function:
-    """A C function: its prototype's parameter and result types, and
-    each parameter's offset in the original's stack."""
+    """A C function: its prototype's parameter and result types, each
+    parameter's offset in the original's stack, and its parameters'
+    names."""
 
     name: str
     result: str
     parameters: list[str]
     offsets: list[int]
+    names: list[str]
 
 
 def functions(c: str, types: Types, conventions: dict) -> tuple[list[Function], int]:
@@ -81,7 +119,8 @@ def functions(c: str, types: Types, conventions: dict) -> tuple[list[Function], 
         convention = conventions.get(name)
         if parameters == "" or convention is None or convention["address"].startswith("installer"):
             continue
-        kinds = [] if parameters == "void" else [re.sub(r"\w+$", "", p.strip()).strip() for p in parameters.split(",")]
+        declared = [] if parameters == "void" else [p.strip() for p in parameters.split(",")]
+        kinds = [re.sub(r"\w+$", "", p).strip() for p in declared]
         result = result.strip()
         sizes = [types.size(kind) for kind in kinds]
         result_size = 0 if result == "void" else types.size(result)
@@ -95,7 +134,8 @@ def functions(c: str, types: Types, conventions: dict) -> tuple[list[Function], 
         ):
             unrunnable += 1
             continue
-        found.append(Function(name, result, kinds, [item["offset"] for item in stack]))
+        names = [re.search(r"\w*$", p).group() for p in declared]
+        found.append(Function(name, result, kinds, [item["offset"] for item in stack], names))
     return found, unrunnable
 
 
@@ -134,12 +174,28 @@ def same_text(m: Machine, function: Function, a: int, b: int) -> bool:
         return False
 
 
-def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int):
+def establish(m: Machine, function: Function, linked_symbols: dict[str, int]) -> None:
+    """Sets the variables ESTABLISHED says a function's callers set, and
+    runs SET_UP on its request for each of SET_UP_REQUESTS."""
+    for variable, value in ESTABLISHED.get(function.name, {}).items():
+        if isinstance(value, str):
+            value = linked_symbols[IMAGE_PREFIX + value]
+        m.uc.mem_write(linked_symbols[variable], struct.pack(">I", value))
+    if function.name in SET_UP_REQUESTS:
+        request = m.buffer(bytes(MESSAGE_OFFSET) + SET_UP_REQUESTS[function.name])
+        reset(m, m.read(RAM, RAM_SIZE))
+        run = Run(m, linked_symbols[IMAGE_PREFIX + SET_UP], struct.pack(">I", request))
+        if run.stopped is not None or run.ended is not None:
+            raise RuntimeError(f"{SET_UP}: {run.stopped or run.end()}")
+
+
+def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int, linked_symbols: dict[str, int]):
     """Yields (description, outcome) for each case: outcome None if gcc's
     copy agrees with the image's, else what differs."""
     for case in range(CASES):
-        fresh_ram(m)
-        values = arguments(m, types, function.parameters, case)
+        fresh_ram(m, case)
+        establish(m, function, linked_symbols)
+        values = arguments(m, types, function.parameters, case, function.names)
         ram = m.read(RAM, RAM_SIZE)
 
         reset(m, ram)
@@ -190,7 +246,7 @@ def main() -> int:
         rebuilt = linked_symbols.get(function.name)
         if names and function.name not in names or image is None or rebuilt is None or rebuilt < REBUILT:
             continue
-        counts[report(function.name, list(check(machine, types, function, image, rebuilt)))] += 1
+        counts[report(function.name, list(check(machine, types, function, image, rebuilt, linked_symbols)))] += 1
     print(
         f"functions agreeing: {counts['agreeing']}, skipped: {counts['skipped']}, failed: {counts['failed']}; "
         f"prototypes not laid out: {unrunnable}"

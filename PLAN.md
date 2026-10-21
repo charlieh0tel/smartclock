@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1251 run, 1065 agree, 141 reach what the
-     harness does not model and are skipped, and 45 differ, in the
+     original reads them: of 1251 run, 1074 agree, 141 reach what the
+     harness does not model and are skipped, and 36 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): traps #1 and #7 run the image's handlers;
@@ -836,7 +836,9 @@ view cannot drift apart.  The library, bottom up:
      writes match; `scpi_numeric_set` takes its float and integer values,
      two slots StackParameters missed because only their address
      escapes; the two step validators return their results; and
-     `gps_init_sequence`'s four arguments are one array (62 to 45).
+     `gps_init_sequence`'s four arguments are one array (62 to 45).  A
+     register a function reads as its caller left it is that value, not
+     an unset local (45 to 36).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

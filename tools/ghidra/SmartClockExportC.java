@@ -271,8 +271,8 @@ public class SmartClockExportC extends GhidraScript {
 				functions.append("\n/* ").append(function.getEntryPoint()).append(" */\n");
 				if (results.decompileCompleted()) {
 					Printed printed = printed(function, results);
-					String c = indexedFunctions(identifiers(nonfiniteBits(pieces(frameEnds(results.getHighFunction(), notC(function, printed.c())),
-						printed.signedPieces()))));
+					String c = indexedFunctions(identifiers(nonfiniteBits(entryRegisters(pieces(frameEnds(results.getHighFunction(), notC(function, printed.c())),
+						printed.signedPieces())))));
 					if (notCMacro(function) != null) {
 						functions.append(READING).append(c).append("\n#endif\n")
 							.append(assembly(function, declared, madeSymbols));
@@ -1004,6 +1004,31 @@ public class SmartClockExportC extends GhidraScript {
 				writer.println("__asm__(\".set " + name + ", 0x" + Long.toHexString(UNEXPRESSED) + "\");");
 			}
 		}
+	}
+
+	/** A local the decompiler reads a register's value at entry from: its type, register and width. */
+	private static final Pattern UNAFFECTED = Pattern.compile(
+		"^(  (?!return\\b)[A-Za-z_][\\w ]*?\\**) (unaff_([DA][0-5]|D[67])[bw]?);$", Pattern.MULTILINE);
+
+	/**
+	 * c with each unaff_ local, the value a register held at entry, given
+	 * that value: the decompiler reads it where the routine uses a
+	 * register its caller left, as a switch with no case for a value
+	 * passes the caller's D2 on, and C left it unset.  A register
+	 * variable reads it at the declaration, before the function's own
+	 * code sets it.  A6, the frame pointer, and A7 are left unset.
+	 */
+	private static String entryRegisters(String c) {
+		Matcher local = UNAFFECTED.matcher(c);
+		StringBuilder out = new StringBuilder();
+		while (local.find()) {
+			String register = local.group(3).toLowerCase();
+			local.appendReplacement(out, Matcher.quoteReplacement(local.group(1) + " " + local.group(2)
+				+ " = ({ register long __entry __asm__(\"" + register + "\"); __asm__(\"\" : \"=r\"(__entry)); ("
+				+ local.group(1).strip() + ")__entry; });"));
+		}
+		local.appendTail(out);
+		return out.toString();
 	}
 
 	/** The address of a view of the routine's own frame, as the decompiler writes one. */

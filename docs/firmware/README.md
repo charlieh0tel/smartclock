@@ -638,6 +638,11 @@ decompiler wrote it, and reported.
   decompiler writes a loop to a stack record's end as
   `&stack0xfffffffc`, the frame offset where it ends, which has no C
   (`nv_save`, `nv_restore`, once their record is typed).
+- A local the decompiler reads a register's value at entry from,
+  `unaff_D2b`, is given that value by a register variable at its
+  declaration, before the function's code sets the register: a switch
+  with no case for a value passes its caller's D2 on, which C left
+  unset (the SCPI setters' `setting`).  A6 and A7 are left alone.
 - An infinity or NaN assigned to an integer variable becomes its bits,
   `local_14 = __ghidra_bits(-__builtin_inf())`: the decompiler copies
   the constant's bits, where C converts its value, undefined for an

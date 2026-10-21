@@ -7104,8 +7104,8 @@ __regcall int mutex_init(int name /* d0 */,void *mutex /* a1 */)
   int d0_00;
   int in_D1;
   int d1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int iVar1;
   void *in_A0;
   void *a0;
@@ -7190,8 +7190,8 @@ __regcall int mutex_acquire(void *mutex /* a1 */)
 
 {
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int iVar1;
   void *in_A0;
   int extraout_A0;
@@ -7282,8 +7282,8 @@ __regcall int mutex_release(void *mutex /* a1 */)
 {
   int in_D1;
   int d1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int iVar1;
   void *in_A0;
   int extraout_A0;
@@ -9647,8 +9647,8 @@ void pps_interrupt(void)
 
 {
   int d1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   
   clock_tick();
   ticks_since_pps = 0;
@@ -9717,7 +9717,7 @@ int pps_init(void)
 
 {
   ushort uVar1;
-  int unaff_D3;
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int iVar2;
   void *in_A0;
   uint32_t extraout_A0;
@@ -9746,8 +9746,8 @@ int pps_interrupt_stop(void)
 {
   ushort uVar1;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int iVar2;
   void *in_A1;
   
@@ -9772,8 +9772,8 @@ int pps_interrupt_stop(void)
 int pps_wait_time(undefined4 *param_1,undefined4 *param_2,int param_3)
 
 {
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int iVar1;
   
   if ((param_3 != 0) &&
@@ -11074,7 +11074,7 @@ __naked int set_timedate_unflagged(uint32_t date,uint32_t time)
 
 {
   int time_00;
-  int unaff_D7;
+  int unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (int)__entry; });
   
   enter_supervisor();
   clock_record_store(&clock,date,time_00,0);
@@ -11123,7 +11123,7 @@ __naked int set_timedate(uint32_t date,uint32_t time)
 
 {
   int time_00;
-  int unaff_D7;
+  int unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (int)__entry; });
   
   enter_supervisor();
   clock_record_store(&clock,date,time_00,1);
@@ -13086,12 +13086,12 @@ __exception void kernel_dispatch_service(undefined2 param_1)
   ushort uVar8;
   undefined4 in_D1;
   undefined4 uVar9;
-  undefined4 unaff_D2;
-  undefined4 unaff_D3;
-  undefined4 unaff_D4;
-  undefined4 unaff_D5;
-  undefined4 unaff_D6;
-  undefined4 unaff_D7;
+  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 uVar10;
   undefined4 in_A0;
   undefined4 extraout_A0;
@@ -13100,10 +13100,10 @@ __exception void kernel_dispatch_service(undefined2 param_1)
   undefined4 in_A1;
   undefined4 extraout_A1;
   undefined4 extraout_A1_00;
-  undefined4 unaff_A2;
-  undefined4 unaff_A3;
-  undefined4 unaff_A4;
-  undefined4 unaff_A5;
+  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A6;
   undefined2 *puVar13;
   undefined2 *puVar14;
@@ -13451,20 +13451,20 @@ __naked void kernel_switch_task(void)
   ushort uVar7;
   undefined4 in_D1;
   undefined4 uVar8;
-  undefined4 unaff_D2;
-  undefined4 unaff_D3;
-  undefined4 unaff_D4;
-  undefined4 unaff_D5;
-  undefined4 unaff_D7;
+  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 in_A0;
   undefined4 extraout_A0;
   undefined2 *puVar9;
   undefined4 in_A1;
   undefined4 extraout_A1;
-  undefined4 unaff_A2;
-  undefined4 unaff_A3;
-  undefined4 unaff_A4;
-  int unaff_A5;
+  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int *unaff_A6;
   undefined2 *puVar10;
   undefined2 *puVar11;
@@ -13808,10 +13808,10 @@ __regcall void kernel_create(void)
   int iVar2;
   undefined4 uVar3;
   char in_D1b;
-  char unaff_D2b;
-  uint unaff_D3;
+  char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
+  uint unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   short sVar4;
-  char unaff_D7b;
+  char unaff_D7b = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (char)__entry; });
   ushort *in_A0;
   int extraout_A0;
   undefined2 *puVar5;
@@ -14114,7 +14114,7 @@ __regcall undefined8 kernel_delete(void)
 {
   int iVar1;
   int *piVar2;
-  short unaff_D7w;
+  short unaff_D7w = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (short)__entry; });
   int in_A0;
   int *piVar3;
   int *extraout_A0;
@@ -14542,7 +14542,7 @@ __regcall void kernel_allocate_segment(void)
   undefined4 *puVar1;
   int *piVar2;
   int iVar3;
-  char unaff_D3b;
+  char unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (char)__entry; });
   int *unaff_A6;
   undefined1 in_ZF;
   
@@ -14589,7 +14589,7 @@ __naked void kernel_allocate_for_task(void)
 {
   undefined4 *puVar1;
   int iVar2;
-  char unaff_D3b;
+  char unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (char)__entry; });
   int *unaff_A5;
   int unaff_A6;
   undefined1 in_ZF;
@@ -14807,7 +14807,7 @@ __naked void kernel_free_for_task(void)
   undefined4 extraout_A0_00;
   int *piVar7;
   int *piVar8;
-  int unaff_A5;
+  int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   undefined4 *puVar9;
   int unaff_A6;
   undefined1 in_ZF;
@@ -15056,11 +15056,11 @@ __asm__(
 __naked void kernel_allocate(void)
 
 {
-  char unaff_D2b;
+  char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
   undefined4 *extraout_A0;
   undefined4 *extraout_A0_00;
   undefined4 *puVar1;
-  int unaff_A5;
+  int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   bool bVar2;
   
   if (unaff_D2b < '\x02') {
@@ -15137,7 +15137,7 @@ __naked void kernel_region_allocate(void)
   uint uVar3;
   uint in_D1;
   ushort uVar4;
-  short unaff_D6w;
+  short unaff_D6w = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (short)__entry; });
   int *piVar5;
   int *piVar6;
   int unaff_A6;
@@ -15426,7 +15426,7 @@ __asm__(
 __regcall char kernel_service_none(void)
 
 {
-  uint unaff_D7;
+  uint unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   
   return (char)(unkfloat1)(float)(unaff_D7 & 0xffffff00);
 }
@@ -15475,7 +15475,7 @@ __regcall void kernel_create_x(void)
   int iVar1;
   undefined4 in_D0;
   byte in_D1b;
-  undefined1 unaff_D2b;
+  undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
   int *unaff_A6;
   
   iVar1 = unaff_A6[6];
@@ -15663,7 +15663,7 @@ __regcall void kernel_delete_x(void)
   undefined4 *extraout_A0;
   undefined4 *puVar2;
   undefined4 *extraout_A0_00;
-  int unaff_A2;
+  int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   undefined4 *puVar3;
   undefined4 *puVar4;
   undefined4 *unaff_A6;
@@ -16981,7 +16981,7 @@ __regcall void kernel_get_v(void)
   ushort *puVar1;
   ushort in_D1w;
   ushort uVar2;
-  char unaff_D2b;
+  char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
   int *unaff_A6;
   
   uVar2 = in_D1w & 0x7fff;
@@ -17027,8 +17027,8 @@ __regcall void kernel_wait_v(void)
   int in_D0;
   ushort in_D1w;
   ushort uVar5;
-  char unaff_D2b;
-  char unaff_D7b;
+  char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
+  char unaff_D7b = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (char)__entry; });
   int *unaff_A6;
   
   piVar1 = (int *)*unaff_A6;
@@ -17396,7 +17396,7 @@ __regcall void kernel_service_31(void)
 {
   ushort in_D0w;
   undefined4 in_D1;
-  ushort unaff_D2w;
+  ushort unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (ushort)__entry; });
   int unaff_A6;
   undefined8 uVar1;
   
@@ -17786,7 +17786,7 @@ __naked void kernel_set_leap_year(void)
 
 {
   uint uVar1;
-  uint unaff_D6;
+  uint unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   int unaff_A6;
   
   *(undefined1 *)(unaff_A6 + 0x7b) = 0x1c;
@@ -18019,7 +18019,7 @@ __naked void kernel_timer_cancel(void)
 {
   int iVar1;
   int iVar2;
-  int unaff_A2;
+  int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   
   if ('\0' < *(char *)(unaff_A2 + 0x12)) {
     iVar1 = *(int *)(unaff_A2 + 8);
@@ -18061,7 +18061,7 @@ __naked undefined4 kernel_timer_unlink(void)
   int iVar1;
   int iVar2;
   undefined4 in_D0;
-  int unaff_A2;
+  int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   
   iVar1 = *(int *)(unaff_A2 + 8);
   iVar2 = *(int *)(unaff_A2 + 0xc);
@@ -18116,7 +18116,7 @@ __naked void kernel_timer_insert(void)
   int in_D0;
   uint uVar4;
   int iVar5;
-  int unaff_A5;
+  int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int unaff_A6;
   
   uVar4 = in_D0 - 1U;
@@ -18920,21 +18920,21 @@ __exception void kernel_return_from_interrupt(ushort param_1)
   uint uVar6;
   ushort uVar7;
   undefined4 in_D1;
-  undefined4 unaff_D2;
-  undefined4 unaff_D3;
-  undefined4 unaff_D4;
-  undefined4 unaff_D5;
-  undefined4 unaff_D6;
-  undefined4 unaff_D7;
+  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 in_A0;
   undefined4 extraout_A0;
   undefined2 *puVar8;
   undefined4 in_A1;
   undefined4 extraout_A1;
-  undefined4 unaff_A2;
-  undefined4 unaff_A3;
-  undefined4 unaff_A4;
-  undefined4 unaff_A5;
+  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A6;
   undefined2 *puVar9;
   undefined2 *puVar10;
@@ -19341,8 +19341,8 @@ void os_report_process(void *param_1,char *param_2,int param_3,undefined4 param_
   int iVar3;
   undefined *puVar4;
   int iVar5;
-  uint unaff_D5;
-  int unaff_D6;
+  uint unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (uint)__entry; });
+  int unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (int)__entry; });
   uint uVar6;
   char *pcVar7;
   int *piVar8;
@@ -19942,7 +19942,7 @@ void task_stack_report(undefined1 param_1)
   void *task;
   uint param5;
   char *param2;
-  uint unaff_D2;
+  uint unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   ushort uVar1;
   short sVar2;
   short *param6;
@@ -20384,8 +20384,8 @@ ulong psos_start(ulong task,void *entry)
 {
   int in_D0;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   
   uVar1 = psos_call('\x02',in_D0,in_D1,unaff_D2,unaff_D3,(void *)task,entry);
@@ -20404,8 +20404,8 @@ ulong psos_ident(char *name,ulong *id,uchar *b)
   int d0;
   uchar extraout_D0b;
   int d1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *a0;
   ulong extraout_A0;
@@ -20437,8 +20437,8 @@ ulong psos_my_pid(void)
 
 {
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   void *in_A0;
   ulong extraout_A0;
   void *in_A1;
@@ -20458,8 +20458,8 @@ ulong psos_delete(ulong task)
 {
   int in_D0;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A1;
   
@@ -20478,8 +20478,8 @@ ulong psos_suspend(ulong task)
 {
   int in_D0;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A1;
   
@@ -20498,8 +20498,8 @@ ulong psos_resume(ulong task)
 {
   int in_D0;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A1;
   
@@ -20518,8 +20518,8 @@ ulong psos_priority(ulong task,ulong priority,uchar *old)
 {
   uchar extraout_D0b;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A1;
   
@@ -20540,8 +20540,8 @@ ulong psos_pause(ulong a)
 
 {
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A0;
   void *in_A1;
@@ -20560,8 +20560,8 @@ ulong psos_mode(ulong a,ulong b,uchar *old)
 
 {
   uchar extraout_D0b;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A0;
   void *in_A1;
@@ -20641,8 +20641,8 @@ ulong psos_service_9(ulong a)
 {
   int in_D0;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A1;
   
@@ -20660,8 +20660,8 @@ ulong psos_service_10(ulong a,ulong b)
 {
   int in_D0;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   
   uVar1 = psos_call('\n',in_D0,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b);
@@ -20678,8 +20678,8 @@ ulong psos_service_16(ulong a,ulong b)
 {
   int in_D0;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   
   uVar1 = psos_call('\x10',in_D0,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b);
@@ -20694,8 +20694,8 @@ ulong psos_service_16(ulong a,ulong b)
 ulong psos_service_35(ulong a,ulong b,ulong c,ulong *out)
 
 {
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   ulong extraout_A0;
   void *in_A1;
@@ -20716,8 +20716,8 @@ ulong psos_service_36(ulong a,ulong b)
 
 {
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A1;
   
@@ -20734,8 +20734,8 @@ ulong psos_service_37(ulong a,ulong b,ulong *out)
 
 {
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A1;
   ulong extraout_A1;
@@ -20757,8 +20757,8 @@ ulong psos_service_38(ulong a,ulong b)
 {
   int in_D0;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   
   uVar1 = psos_call('&',in_D0,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b);
@@ -20775,7 +20775,7 @@ ulong psos_create_x(char *name,ulong a,ulong b,ulong *exchange)
 
 {
   int d0;
-  int unaff_D3;
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *a0;
   ulong extraout_A0;
@@ -20800,8 +20800,8 @@ ulong psos_service_21(char *name,ulong *out1,ulong *out2,ulong *out3)
   int d0;
   int d1;
   ulong extraout_D1;
-  ulong unaff_D2;
-  int unaff_D3;
+  ulong unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (ulong)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *a0;
   ulong extraout_A0;
@@ -20836,8 +20836,8 @@ ulong psos_delete_x(ulong exchange)
 {
   int in_D0;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A1;
   
@@ -20856,8 +20856,8 @@ ulong psos_send_x(ulong exchange,void *message)
 {
   int in_D0;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   
   uVar1 = psos_call('\x17',in_D0,in_D1,unaff_D2,unaff_D3,(void *)exchange,message);
@@ -20875,8 +20875,8 @@ ulong psos_jam_x(ulong exchange,void *message)
 {
   int in_D0;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   
   uVar1 = psos_call('\x13',in_D0,in_D1,unaff_D2,unaff_D3,(void *)exchange,message);
@@ -20894,8 +20894,8 @@ ulong psos_service_18(ulong a,ulong b,ulong c,uchar *out1,uchar *out2)
   uchar extraout_D0b;
   int in_D1;
   uchar extraout_D1b;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   bool bVar2;
   
@@ -20921,8 +20921,8 @@ ulong psos_service_18(ulong a,ulong b,ulong c,uchar *out1,uchar *out2)
 ulong psos_request_x(ulong exchange,void *buffer,ulong a,ulong b)
 
 {
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   
   uVar1 = psos_call('\x18',b,a,unaff_D2,unaff_D3,(void *)exchange,buffer);
@@ -20939,8 +20939,8 @@ ulong psos_signal_v(ulong variable,ulong value)
 
 {
   int in_D0;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A1;
   
@@ -20958,7 +20958,7 @@ ulong psos_wait_v(ulong a,ulong b,ulong c,ulong *out)
 
 {
   ulong extraout_D1;
-  int unaff_D3;
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A0;
   void *in_A1;
@@ -20981,7 +20981,7 @@ ulong psos_get_v(ulong a,ulong b,ulong *out)
 {
   int in_D0;
   ulong extraout_D1;
-  int unaff_D3;
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A0;
   void *in_A1;
@@ -21004,8 +21004,8 @@ ulong psos_service_29(void)
 {
   int in_D0;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A0;
   void *in_A1;
@@ -21026,8 +21026,8 @@ ulong psos_service_30(ulong *out1,ulong *out2,ushort *out3)
   ulong extraout_D0;
   int in_D1;
   ulong extraout_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A0;
   void *in_A1;
@@ -21053,7 +21053,7 @@ ulong psos_service_30(ulong *out1,ulong *out2,ushort *out3)
 ulong psos_service_31(ulong a,ulong b,ulong c)
 
 {
-  int unaff_D3;
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A0;
   void *in_A1;
@@ -21072,8 +21072,8 @@ ulong psos_io_init(ulong device)
 
 {
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A0;
   void *in_A1;
@@ -21091,8 +21091,8 @@ ulong psos_io_init(ulong device)
 ulong psos_io_open(ulong device,ulong a)
 
 {
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A0;
   void *in_A1;
@@ -21111,8 +21111,8 @@ ulong psos_io_close(ulong device)
 
 {
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A0;
   void *in_A1;
@@ -21132,7 +21132,7 @@ ulong psos_io_read(ulong device,void *buffer,ulong *length)
 {
   ulong d2;
   int in_D1;
-  int unaff_D3;
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   
   d2 = *length;
@@ -21154,7 +21154,7 @@ ulong psos_io_write(ulong device,void *buffer,ulong *length)
 {
   ulong d2;
   int in_D1;
-  int unaff_D3;
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   
   d2 = *length;
@@ -23042,7 +23042,7 @@ __pforth void forth_interpret(forth_user_end user,long *sp,void *dp)
   short sVar3;
   code *extraout_A0;
   code *pcVar4;
-  int unaff_A2;
+  int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   char *unaff_A3;
   undefined4 *puVar5;
   undefined1 uVar6;
@@ -23184,7 +23184,7 @@ __pforth undefined4 forth_parse_number(forth_user_end user /* a5 */,long *sp /* 
   int iVar5;
   undefined4 uVar6;
   int iVar7;
-  undefined2 unaff_D7w;
+  undefined2 unaff_D7w = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined2)__entry; });
   char *in_A0;
   char *extraout_A0;
   void *unaff_A4;
@@ -23428,7 +23428,7 @@ __pforth void forth_digit(void)
 
 {
   ushort in_D0w;
-  byte unaff_D2b;
+  byte unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (byte)__entry; });
   
   if ((-1 < (char)forth_character_classes[(short)(in_D0w & 0x7f)]) &&
      (forth_character_classes[(short)(in_D0w & 0x7f)] < unaff_D2b)) {
@@ -23631,8 +23631,8 @@ __pforth undefined4 forth_read_line(forth_user_end user /* a5 */,char *input /* 
   undefined4 in_D0;
   undefined4 extraout_D0;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   
   if (-1 < ((forth_user_area *)(user + -0x28))->iodev) {
     __m68k_trap(4);
@@ -23784,8 +23784,8 @@ __pforth void forth_print_string(char *s /* d0 */,forth_user_end user /* a5 */)
 
 {
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   void *in_A1;
   
   if (-1 < ((forth_user_area *)(user + -0x28))->iodev) {
@@ -23847,8 +23847,8 @@ __pforth void forth_input_buffer(forth_user_end user /* a5 */)
 
 {
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   void *in_A1;
   
   if (ADJ(user)->tib == (char *)0x0) {
@@ -24734,7 +24734,7 @@ __pforth void forth_paren(char *input)
 
 {
   char cVar1;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   do {
     while( true ) {
@@ -25598,7 +25598,7 @@ __pforth void forth_check_pairs(long *sp /* a6 */)
   int in_D0;
   char *s;
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   if (in_D0 != *sp) {
     forth_print_string("ERROR: Mismatched ",unaff_A5);
@@ -26489,13 +26489,13 @@ __pforth void forth_parse_create_header(void)
 {
   void *pvVar1;
   char cVar2;
-  undefined4 unaff_D3;
+  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 *extraout_A1;
   char *pcVar3;
   char *unaff_A3;
   undefined4 *unaff_A4;
   char *dp;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   char *pcVar4;
   
   forth_parse_word(unaff_A5,unaff_A3);
@@ -26545,7 +26545,7 @@ __pforth void forth_create_header(forth_user_end user /* a5 */,void *dp /* a4 */
 {
   void *pvVar1;
   char cVar2;
-  undefined4 unaff_D3;
+  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 *extraout_A1;
   char *pcVar3;
   char *dp_00;
@@ -26700,7 +26700,7 @@ __pforth void forth_constant(void)
 
 {
   undefined2 *unaff_A4;
-  int unaff_A5;
+  int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   undefined4 *unaff_A6;
   
   forth_parse_create_header();
@@ -26826,7 +26826,7 @@ __pforth void forth_mod(long *sp)
   char *pcVar2;
   long extraout_D1;
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   if (*sp != 0) {
     forth_divide_signed();
@@ -26882,7 +26882,7 @@ __pforth void forth_slash_mod(long *sp)
   long *sp_00;
   char *pcVar2;
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   undefined8 uVar3;
   
   if (*sp != 0) {
@@ -26940,7 +26940,7 @@ __pforth void forth_star_slash_mod(long *sp)
   long *sp_00;
   char *pcVar2;
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   undefined8 uVar3;
   
   if (*sp != 0) {
@@ -27002,7 +27002,7 @@ __pforth void forth_star_slash(long *sp)
   char *pcVar2;
   long lVar3;
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   if (*sp != 0) {
     forth_star(sp + 1);
@@ -27062,7 +27062,7 @@ __pforth void forth_slash(long *sp)
   char *pcVar2;
   long lVar3;
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   if (*sp != 0) {
     lVar3 = forth_divide_signed();
@@ -27762,7 +27762,7 @@ __pforth void forth_space(void)
 
 {
   char *pcVar1;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   pcVar1 = ADJ(unaff_A5)->pad;
   *pcVar1 = ' ';
@@ -27853,7 +27853,7 @@ __asm__(
 __pforth void forth_cr(void)
 
 {
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_print_string("\r\n",unaff_A5);
   return;
@@ -27971,7 +27971,7 @@ __asm__(
 __pforth void forth_paren_dot_quote_close_paren(void)
 
 {
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   char *in_stack_00000000;
   
   forth_print_string(in_stack_00000000,unaff_A5);
@@ -28153,7 +28153,7 @@ __pforth void forth_u_dot_x(long *sp)
   uint uVar2;
   undefined1 extraout_D1b;
   short sVar3;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   undefined1 *puVar4;
   
   *(undefined1 *)((int)sp + 3) = 0;
@@ -28289,7 +28289,7 @@ __pforth void forth_dot_s(long *sp)
 {
   long *plVar1;
   int iVar2;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   long *sp_00;
   
   forth_depth(unaff_A5,sp);
@@ -28578,10 +28578,10 @@ __pforth void forth_tick(long *sp)
   void *pvVar1;
   long *sp_00;
   char *pcVar2;
-  int unaff_A2;
+  int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   char *unaff_A3;
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   undefined1 in_ZF;
   
   forth_parse_word(unaff_A5,unaff_A3);
@@ -28639,9 +28639,9 @@ __pforth void forth_bracket_tick_close_bracket(void *dp)
   void *pvVar1;
   long *sp;
   char *pcVar2;
-  int unaff_A2;
+  int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   char *unaff_A3;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   undefined1 in_ZF;
   
   forth_parse_word(unaff_A5,unaff_A3);
@@ -29013,7 +29013,7 @@ __pforth void forth_my_pid(long *sp)
 {
   long extraout_A0;
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp,unaff_A4);
   sp[-1] = extraout_A0;
@@ -29088,7 +29088,7 @@ __pforth void forth_expect(forth_user_end user,long *sp)
 {
   undefined4 in_D0;
   int in_D1;
-  int unaff_D3;
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   
   if (-1 < ((forth_user_area *)(user + -0x28))->iodev) {
     __m68k_trap(4);
@@ -29187,7 +29187,7 @@ __asm__(
 __pforth void forth_type(long *sp)
 
 {
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_print_string((char *)*sp,unaff_A5);
   return;
@@ -29572,7 +29572,7 @@ __pforth void forth_number(long *sp)
   int in_A1;
   char *extraout_A1;
   char *unaff_A3;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   bool bVar1;
   
   bVar1 = in_A1 == 0;
@@ -29761,18 +29761,18 @@ __pforth undefined8 forth_watch(forth_user_end user,long *sp,void *dp,char *inpu
   uint uVar4;
   undefined4 in_D1;
   uint uVar5;
-  undefined4 unaff_D2;
-  undefined4 unaff_D3;
-  undefined4 unaff_D4;
-  undefined4 unaff_D5;
-  undefined4 unaff_D6;
-  undefined4 unaff_D7;
+  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 extraout_A0;
   int *piVar6;
   undefined4 in_A1;
   undefined4 extraout_A1;
   int *piVar7;
-  undefined4 unaff_A2;
+  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   
   pcRam00100b48 = *(code **)*sp;
   uRam00100b28 = in_D0;
@@ -29869,10 +29869,10 @@ __pforth void forth_psos_call(forth_user_end user,long *sp,void *dp)
 {
   int in_D0;
   int in_D1;
-  int unaff_D2;
-  int unaff_D3;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   byte bVar1;
-  char unaff_D7b;
+  char unaff_D7b = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (char)__entry; });
   uint uVar2;
   void *in_A0;
   void *in_A1;
@@ -30280,7 +30280,7 @@ __pforth void forth_ident(long *sp)
   long extraout_A0;
   char *unaff_A3;
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_parse_word(unaff_A5,unaff_A3);
   forth_pack_name(unaff_A5);
@@ -30322,7 +30322,7 @@ __pforth void forth_delete(long *sp)
 
 {
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 1,unaff_A4);
   return;
@@ -30357,7 +30357,7 @@ __pforth void forth_suspend(long *sp)
 
 {
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 1,unaff_A4);
   return;
@@ -30392,7 +30392,7 @@ __pforth void forth_resume(long *sp)
 
 {
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 1,unaff_A4);
   return;
@@ -30428,7 +30428,7 @@ __pforth void forth_priority(long *sp)
 {
   uint uVar1;
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   uVar1 = forth_psos_call(unaff_A5,sp + 2,unaff_A4);
   sp[1] = uVar1 & 0xff;
@@ -30467,7 +30467,7 @@ __pforth void forth_jam_x(long *sp)
 
 {
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 2,unaff_A4);
   return;
@@ -30505,7 +30505,7 @@ __pforth void forth_create_x(long *sp)
   long extraout_A0;
   char *unaff_A3;
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_parse_word(unaff_A5,unaff_A3);
   forth_pack_name(unaff_A5);
@@ -30552,7 +30552,7 @@ __pforth void forth_delete_x(long *sp)
 
 {
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 1,unaff_A4);
   return;
@@ -30587,7 +30587,7 @@ __pforth void forth_send_x(long *sp)
 
 {
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 2,unaff_A4);
   return;
@@ -30623,7 +30623,7 @@ __pforth void forth_request_x(long *sp)
 
 {
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 4,unaff_A4);
   return;
@@ -30661,7 +30661,7 @@ __pforth void forth_signal_v(long *sp)
 
 {
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 2,unaff_A4);
   return;
@@ -30699,7 +30699,7 @@ __pforth void forth_wait_v(long *sp)
 {
   uint extraout_D1;
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 3,unaff_A4);
   sp[2] = extraout_D1 & 0xffff;
@@ -30840,9 +30840,9 @@ __pforth void forth_psos_io_call(long *sp)
   long *sp_00;
   char *pcVar2;
   long in_D0;
-  uint unaff_D7;
+  uint unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   void *unaff_A4;
-  forth_user_end unaff_A5;
+  forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   uint *sp_01;
   
   sp[-1] = unaff_D7;
@@ -31727,9 +31727,9 @@ __regcall void console_read_from_string(void)
 {
   char cVar1;
   int in_D0;
-  int unaff_D2;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   uint uVar2;
-  int unaff_D3;
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   char *pcVar4;
   char *in_A1;
   ushort uVar3;
@@ -34382,7 +34382,7 @@ __asm__(
 void drtb_read(void)
 
 {
-  int unaff_D2;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   byte *in_A1;
   
   drtb_gets(in_A1,unaff_D2);
@@ -36529,7 +36529,7 @@ __regcall char sci_unlock(char write /* d0 */)
 {
   ulong uVar1;
   uint32_t exchange;
-  undefined4 unaff_D7;
+  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   exchange_token *message;
   undefined1 local_66;
   char acStack_64 [80];
@@ -36686,7 +36686,7 @@ __regcall char sci_lock(char write /* d0 */)
   ulong uVar1;
   ulong uVar2;
   uint32_t exchange;
-  undefined4 unaff_D7;
+  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   exchange_token *buffer;
   undefined1 local_66;
   char acStack_64 [80];
@@ -37234,7 +37234,7 @@ __asm__(
 void sci_read(void)
 
 {
-  int unaff_D2;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   char *in_A1;
   
   sci_gets(in_A1,unaff_D2);
@@ -39598,7 +39598,7 @@ void hmon_task(void)
   bool bVar2;
   bool bVar3;
   ulong uVar4;
-  char unaff_D4b;
+  char unaff_D4b = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (char)__entry; });
   ushort uVar5;
   ushort uVar6;
   byte bVar7;
@@ -41431,11 +41431,11 @@ __naked undefined8 scpi_double_multiply_short(void)
   uint in_D0;
   uint uVar2;
   uint uVar3;
-  uint unaff_D2;
-  uint unaff_D3;
+  uint unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint)__entry; });
+  uint unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   uint uVar4;
   ushort uVar5;
-  ushort unaff_D7w;
+  ushort unaff_D7w = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (ushort)__entry; });
   uint in_A0;
   bool bVar6;
   
@@ -42895,7 +42895,7 @@ int scpi_parse_message_unit(int *param_1,undefined2 *param_2)
   int iVar2;
   int iVar3;
   int iVar4;
-  undefined4 unaff_D5;
+  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   short *unaff_D7;
   undefined4 uVar5;
   undefined4 *local_32;
@@ -44796,7 +44796,7 @@ scpi_interpret(int param_1,int param_2,int *param_3,uint param_4,undefined4 para
   bool bVar1;
   int iVar2;
   int iVar3;
-  int unaff_D3;
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   code *pcVar4;
   int *piVar5;
   uint32_t *puVar6;
@@ -45973,7 +45973,7 @@ void scpi_task(void)
 {
   ulong uVar1;
   int iVar2;
-  undefined4 unaff_D2;
+  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   ulong local_8;
   
   psos_mode(0x40,0x40,(uchar *)0x0);
@@ -46348,7 +46348,7 @@ int scpi_set_STATus_OPERation_ENABle(void *parameters,void *response,void *call)
 {
   int iVar1;
   char cVar2;
-  short unaff_D2w;
+  short unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (short)__entry; });
   
   if (*(short *)((int)parameters + 2) == 4) {
     unaff_D2w = (short)*(undefined4 *)((int)parameters + 4);
@@ -46398,7 +46398,7 @@ int scpi_set_STATus_OPERation_PTRansition(void *parameters,void *response,void *
 {
   int iVar1;
   char cVar2;
-  short unaff_D2w;
+  short unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (short)__entry; });
   
   if (*(short *)((int)parameters + 2) == 4) {
     unaff_D2w = (short)*(undefined4 *)((int)parameters + 4);
@@ -46448,7 +46448,7 @@ int scpi_set_STATus_OPERation_NTRansition(void *parameters,void *response,void *
 {
   int iVar1;
   char cVar2;
-  short unaff_D2w;
+  short unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (short)__entry; });
   
   if (*(short *)((int)parameters + 2) == 4) {
     unaff_D2w = (short)*(undefined4 *)((int)parameters + 4);
@@ -46523,7 +46523,7 @@ int scpi_set_STATus_OPERation_HARDware_ENABle(void *parameters,void *response,vo
 {
   int iVar1;
   char cVar2;
-  short unaff_D2w;
+  short unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (short)__entry; });
   
   if (*(short *)((int)parameters + 4) == 4) {
     unaff_D2w = (short)*(undefined4 *)((int)parameters + 6);
@@ -46575,7 +46575,7 @@ int scpi_set_STATus_OPERation_HARDware_PTRansition(void *parameters,void *respon
 {
   int iVar1;
   char cVar2;
-  short unaff_D2w;
+  short unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (short)__entry; });
   
   if (*(short *)((int)parameters + 4) == 4) {
     unaff_D2w = (short)*(undefined4 *)((int)parameters + 6);
@@ -46627,7 +46627,7 @@ int scpi_set_STATus_OPERation_HARDware_NTRansition(void *parameters,void *respon
 {
   int iVar1;
   char cVar2;
-  short unaff_D2w;
+  short unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (short)__entry; });
   
   if (*(short *)((int)parameters + 4) == 4) {
     unaff_D2w = (short)*(undefined4 *)((int)parameters + 6);
@@ -47895,7 +47895,7 @@ int scpi_query_DIAGnostic_TEST(void *parameters,void *response,void *call)
 
 {
   int iVar1;
-  undefined1 unaff_D2b;
+  undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
   
   if (*(ushort *)((int)parameters + 2) < 0xe) {
                     /* WARNING: Switch is manually overridden */
@@ -50519,7 +50519,7 @@ int scpi_set_SAMPle_TOGGle(void *parameters,void *response,void *call)
 
 {
   int iVar1;
-  undefined1 unaff_D2b;
+  undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
   
   iVar1 = *(short *)((int)parameters + 2) + -1;
   if (*(short *)((int)parameters + 2) == 0 || iVar1 == 0) {
@@ -50570,7 +50570,7 @@ int scpi_set_SAMPle_TARR(void *parameters,void *response,void *call)
 
 {
   int iVar1;
-  undefined1 unaff_D2b;
+  undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
   
   iVar1 = *(short *)((int)parameters + 4) + -1;
   if (*(short *)((int)parameters + 4) == 0 || iVar1 == 0) {
@@ -51494,7 +51494,7 @@ int scpi_set_FORMat_DATA(void *parameters,void *response,void *call)
 
 {
   int iVar1;
-  undefined1 unaff_D2b;
+  undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
   
   iVar1 = *(short *)((int)parameters + 2) + -1;
   if (*(short *)((int)parameters + 2) == 0 || iVar1 == 0) {
@@ -52021,7 +52021,7 @@ void happening_flush(char *param_1)
 
 {
   char cVar1;
-  char unaff_D2b;
+  char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
   
   if ((early_status_events *)param_1 == &early_status_reports) {
     unaff_D2b = '\0';
@@ -53060,7 +53060,7 @@ int scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(void *parameters,void *
 
 {
   int iVar1;
-  undefined1 unaff_D2b;
+  undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
   undefined2 uVar2;
   undefined1 uVar3;
   
@@ -55887,7 +55887,7 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
   byte bVar1;
   uint8_t uVar2;
   int iVar3;
-  uint8_t unaff_D3b;
+  uint8_t unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint8_t)__entry; });
   char cVar4;
   
   interpolator_prepare();
@@ -55982,7 +55982,7 @@ uint8_t interpolator_verify(interpolator_calibration *calibration)
 
 {
   uint8_t uVar1;
-  uint8_t unaff_D2b;
+  uint8_t unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint8_t)__entry; });
   
   if (calibration->initialized == 0) {
     return 0;
@@ -57631,8 +57631,8 @@ int linear_regression(regression_record *record,int with_slope)
   float fVar2;
   int iVar3;
   ushort uVar4;
-  float unaff_D4;
-  float unaff_D5;
+  float unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); __ghidra_as(float, __entry); });
+  float unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); __ghidra_as(float, __entry); });
   float fVar5;
   double dVar6;
   float local_18;
@@ -58336,7 +58336,7 @@ void finish_scpi_cmd(void)
   void *pvVar1;
   int iVar2;
   byte bVar3;
-  undefined1 unaff_D3b;
+  undefined1 unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
   char cVar4;
   
   pvVar1 = pll_scpi_param;
@@ -59255,7 +59255,7 @@ char holdover_recovery(char param_1)
   uint8_t uVar5;
   float fVar1;
   int iVar2;
-  char unaff_D3b;
+  char unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (char)__entry; });
   double a;
   float local_8;
   
@@ -67877,7 +67877,7 @@ undefined1 * bytes_to_long(undefined1 *param_1,undefined4 *param_2)
 {
   undefined1 *puVar1;
   byte bVar2;
-  undefined4 unaff_D3;
+  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   
   bVar2 = 0;
   do {
@@ -69196,18 +69196,18 @@ undefined4 setjmp(undefined4 *param_1)
 
 {
   undefined4 in_D1;
-  undefined4 unaff_D2;
-  undefined4 unaff_D3;
-  undefined4 unaff_D4;
-  undefined4 unaff_D5;
-  undefined4 unaff_D6;
-  undefined4 unaff_D7;
+  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 in_A0;
   undefined4 in_A1;
-  undefined4 unaff_A2;
-  undefined4 unaff_A3;
-  undefined4 unaff_A4;
-  undefined4 unaff_A5;
+  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A6;
   undefined4 in_stack_00000000;
   
@@ -74663,8 +74663,8 @@ __regcall void double_divide_next_word(void)
   int in_D1;
   ushort uVar5;
   uint uVar4;
-  uint unaff_D2;
-  uint unaff_D3;
+  uint unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint)__entry; });
+  uint unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   uint uVar6;
   int iVar7;
   ushort uVar8;
@@ -74755,9 +74755,9 @@ __regcall void double_divide_first_word(void)
   int in_D1;
   ushort uVar5;
   uint uVar4;
-  uint unaff_D2;
+  uint unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   uint uVar6;
-  uint unaff_D3;
+  uint unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   uint uVar7;
   int iVar8;
   ushort uVar9;
@@ -79081,7 +79081,7 @@ void double_to_digits(double value,int count,int *exponent,uint *negative,char *
   uint uVar6;
   int iVar7;
   ushort uVar8;
-  uint unaff_D7;
+  uint unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   short sVar9;
   char *pcVar10;
   int local_26;
@@ -81550,12 +81550,12 @@ __exception void installer_kernel_dispatch_service(undefined2 param_1)
   ushort uVar8;
   undefined4 in_D1;
   undefined4 uVar9;
-  undefined4 unaff_D2;
-  undefined4 unaff_D3;
-  undefined4 unaff_D4;
-  undefined4 unaff_D5;
-  undefined4 unaff_D6;
-  undefined4 unaff_D7;
+  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 uVar10;
   undefined4 in_A0;
   undefined4 extraout_A0;
@@ -81564,10 +81564,10 @@ __exception void installer_kernel_dispatch_service(undefined2 param_1)
   undefined4 in_A1;
   undefined4 extraout_A1;
   undefined4 extraout_A1_00;
-  undefined4 unaff_A2;
-  undefined4 unaff_A3;
-  undefined4 unaff_A4;
-  undefined4 unaff_A5;
+  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A6;
   undefined2 *puVar13;
   undefined2 *puVar14;
@@ -81886,20 +81886,20 @@ __naked void installer_kernel_switch_task(void)
   ushort uVar7;
   undefined4 in_D1;
   undefined4 uVar8;
-  undefined4 unaff_D2;
-  undefined4 unaff_D3;
-  undefined4 unaff_D4;
-  undefined4 unaff_D5;
-  undefined4 unaff_D7;
+  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 in_A0;
   undefined4 extraout_A0;
   undefined2 *puVar9;
   undefined4 in_A1;
   undefined4 extraout_A1;
-  undefined4 unaff_A2;
-  undefined4 unaff_A3;
-  undefined4 unaff_A4;
-  int unaff_A5;
+  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int *unaff_A6;
   undefined2 *puVar10;
   undefined2 *puVar11;
@@ -82242,10 +82242,10 @@ __regcall void installer_kernel_create(void)
   int iVar2;
   undefined4 uVar3;
   char in_D1b;
-  char unaff_D2b;
-  uint unaff_D3;
+  char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
+  uint unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   short sVar4;
-  char unaff_D7b;
+  char unaff_D7b = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (char)__entry; });
   ushort *in_A0;
   int extraout_A0;
   undefined2 *puVar5;
@@ -82549,7 +82549,7 @@ __regcall undefined8 installer_kernel_delete(void)
   int iVar1;
   int *piVar2;
   code *pcVar3;
-  short unaff_D7w;
+  short unaff_D7w = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (short)__entry; });
   int in_A0;
   int *piVar4;
   int *extraout_A0;
@@ -82979,7 +82979,7 @@ __regcall void installer_kernel_allocate_segment(void)
   undefined4 *puVar1;
   int *piVar2;
   int iVar3;
-  char unaff_D3b;
+  char unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (char)__entry; });
   int *unaff_A6;
   undefined1 in_ZF;
   
@@ -83025,7 +83025,7 @@ __naked void installer_kernel_allocate_for_task(void)
 {
   undefined4 *puVar1;
   int iVar2;
-  char unaff_D3b;
+  char unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (char)__entry; });
   int *unaff_A5;
   int unaff_A6;
   undefined1 in_ZF;
@@ -83242,7 +83242,7 @@ __naked void installer_kernel_free_for_task(void)
   undefined4 extraout_A0_00;
   int *piVar7;
   int *piVar8;
-  int unaff_A5;
+  int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   undefined4 *puVar9;
   int unaff_A6;
   undefined1 in_ZF;
@@ -83490,11 +83490,11 @@ __asm__(
 __naked void installer_kernel_allocate(void)
 
 {
-  char unaff_D2b;
+  char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
   undefined4 *extraout_A0;
   undefined4 *extraout_A0_00;
   undefined4 *puVar1;
-  int unaff_A5;
+  int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   bool bVar2;
   
   if (unaff_D2b < '\x02') {
@@ -83571,7 +83571,7 @@ __naked void installer_kernel_region_allocate(void)
   uint uVar3;
   uint in_D1;
   ushort uVar4;
-  short unaff_D6w;
+  short unaff_D6w = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (short)__entry; });
   int *piVar5;
   int *piVar6;
   int unaff_A6;
@@ -83860,7 +83860,7 @@ __asm__(
 __regcall char installer_kernel_service_none(void)
 
 {
-  uint unaff_D7;
+  uint unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   
   return (char)(unkfloat1)(float)(unaff_D7 & 0xffffff00);
 }
@@ -83909,7 +83909,7 @@ __regcall void installer_kernel_create_x(void)
   int iVar1;
   undefined4 in_D0;
   byte in_D1b;
-  undefined1 unaff_D2b;
+  undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
   int *unaff_A6;
   
   iVar1 = unaff_A6[6];
@@ -84097,7 +84097,7 @@ __regcall void installer_kernel_delete_x(void)
   undefined4 *extraout_A0;
   undefined4 *puVar2;
   undefined4 *extraout_A0_00;
-  int unaff_A2;
+  int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   undefined4 *puVar3;
   undefined4 *puVar4;
   undefined4 *unaff_A6;
@@ -85413,7 +85413,7 @@ __regcall void installer_kernel_get_v(void)
   ushort *puVar1;
   ushort in_D1w;
   ushort uVar2;
-  char unaff_D2b;
+  char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
   int *unaff_A6;
   
   uVar2 = in_D1w & 0x7fff;
@@ -85459,8 +85459,8 @@ __regcall void installer_kernel_wait_v(void)
   int in_D0;
   ushort in_D1w;
   ushort uVar5;
-  char unaff_D2b;
-  char unaff_D7b;
+  char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
+  char unaff_D7b = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (char)__entry; });
   int *unaff_A6;
   
   piVar1 = (int *)*unaff_A6;
@@ -85828,7 +85828,7 @@ __regcall void installer_kernel_service_31(void)
 {
   ushort in_D0w;
   undefined4 in_D1;
-  ushort unaff_D2w;
+  ushort unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (ushort)__entry; });
   int unaff_A6;
   undefined8 uVar1;
   
@@ -86217,7 +86217,7 @@ __naked void installer_kernel_set_leap_year(void)
 
 {
   uint uVar1;
-  uint unaff_D6;
+  uint unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   int unaff_A6;
   
   *(undefined1 *)(unaff_A6 + 0x7b) = 0x1c;
@@ -86450,7 +86450,7 @@ __naked void installer_kernel_timer_cancel(void)
 {
   int iVar1;
   int iVar2;
-  int unaff_A2;
+  int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   
   if ('\0' < *(char *)(unaff_A2 + 0x12)) {
     iVar1 = *(int *)(unaff_A2 + 8);
@@ -86492,7 +86492,7 @@ __naked undefined4 installer_kernel_timer_unlink(void)
   int iVar1;
   int iVar2;
   undefined4 in_D0;
-  int unaff_A2;
+  int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   
   iVar1 = *(int *)(unaff_A2 + 8);
   iVar2 = *(int *)(unaff_A2 + 0xc);
@@ -86547,7 +86547,7 @@ __naked void installer_kernel_timer_insert(void)
   int in_D0;
   uint uVar4;
   int iVar5;
-  int unaff_A5;
+  int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int unaff_A6;
   
   uVar4 = in_D0 - 1U;
@@ -87326,21 +87326,21 @@ __exception void installer_kernel_return_from_interrupt(ushort param_1)
   uint uVar6;
   ushort uVar7;
   undefined4 in_D1;
-  undefined4 unaff_D2;
-  undefined4 unaff_D3;
-  undefined4 unaff_D4;
-  undefined4 unaff_D5;
-  undefined4 unaff_D6;
-  undefined4 unaff_D7;
+  undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 in_A0;
   undefined4 extraout_A0;
   undefined2 *puVar8;
   undefined4 in_A1;
   undefined4 extraout_A1;
-  undefined4 unaff_A2;
-  undefined4 unaff_A3;
-  undefined4 unaff_A4;
-  undefined4 unaff_A5;
+  undefined4 unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
+  undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A6;
   undefined2 *puVar9;
   undefined2 *puVar10;
@@ -87539,7 +87539,7 @@ __asm__(
 void installer_psos_call(void)
 
 {
-  char unaff_D7b;
+  char unaff_D7b = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (char)__entry; });
   
   __m68k_trap(3);
   if (unaff_D7b != '\0') {
@@ -87947,7 +87947,7 @@ LAB_installer__0010334c:
 void installer_drtb_putc(undefined1 param_1)
 
 {
-  char unaff_D7b;
+  char unaff_D7b = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (char)__entry; });
   undefined1 local_6;
   undefined1 local_5;
   
@@ -89342,7 +89342,7 @@ void installer_double_to_digits(uint param_1,int *param_2,uint *param_3,char *pa
   uint uVar6;
   int iVar7;
   ushort uVar8;
-  uint unaff_D7;
+  uint unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   short sVar9;
   char *pcVar10;
   uint in_stack_00000004;

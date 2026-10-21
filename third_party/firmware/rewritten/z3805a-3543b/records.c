@@ -10,75 +10,43 @@
 
 /* An erased EEPROM byte, which every writer fills its record with
  * before it fills the fields. */
-#define RECORDS_ERASED 0xff
-#define RECORDS_ERASED_LONG 0xffffffffu
-
-/* What a record's checksum word does not cover: the word itself, its
- * first two bytes. */
-#define RECORDS_CHECKSUM_SIZE 2
+static const uint8_t RECORDS_ERASED = 0xff;
+static const uint32_t RECORDS_ERASED_LONG = 0xffffffffu;
 
 /* The EEPROM writes a page of 64 bytes at once (eeprom_write_page). */
-#define RECORDS_EEPROM_PAGE_SIZE 64u
+static const uint32_t RECORDS_EEPROM_PAGE_SIZE = 64u;
 /* Tries at a write, and polls of the last byte written for it to read
  * back, on each try. */
-#define RECORDS_EEPROM_TRIES 5
-#define RECORDS_EEPROM_POLLS 5000
+static const int32_t RECORDS_EEPROM_TRIES = 5;
+static const int16_t RECORDS_EEPROM_POLLS = 5000;
 
 /* The status register's interrupt mask; eeprom_lock and eeprom_unlock
  * take the lock only at mask 0. */
-#define RECORDS_SR_INTERRUPT_MASK 0x0700
-/* request_x's second long as eeprom_lock passes it; psos.md does not
- * give its meaning. */
-#define RECORDS_EEPX_REQUEST_WAIT 0x2800u
-/* The one error of request_x eeprom_lock returns to its caller rather
- * than calling fatal_error; not traced. */
-#define RECORDS_EEPX_ERROR_RETURNED 0x81
+static const uint16_t RECORDS_SR_INTERRUPT_MASK = 0x0700;
 /* The length of eeprom_init's, eeprom_lock's and eeprom_unlock's fatal
- * message. */
+ * message: an array size, so #define. */
 #define RECORDS_MESSAGE_SIZE 80
 
-/* status_report codes (status_report_messages, 0x2bf30). */
-#define RECORDS_STATUS_MEMORY_ERROR 0x10
-#define RECORDS_STATUS_CONFIGURATION_LOST 0x11
+/* A status_report code (status_report_messages, 0x2bf30). */
+static const int16_t RECORDS_STATUS_MEMORY_ERROR = 0x10;
 /* The status happening of a failed EEPROM write. */
-#define RECORDS_HAPPENING_EEPROM_WRITE 'I'
-/* log_event's "EEPROM save failed". */
-#define RECORDS_LOG_EEPROM_SAVE_FAILED 0x18
+static const char RECORDS_HAPPENING_EEPROM_WRITE = 'I';
 
 /* The tag the NV register's and the identification record's writers
  * store, and the firmware revision the NV register's must match. */
-#define RECORDS_TAG "S"
-#define RECORDS_FIRMWARE_REVISION "3543B"
-/* The source nv_restore gives nv_save and status_report_from. */
-#define RECORDS_NV_RESTORE_SOURCE 2
-
-/* The identification record's defaults. */
-#define RECORDS_DEFAULT_MODEL "Z3805A"
-#define RECORDS_DEFAULT_SERIAL "0"
-#define RECORDS_DEFAULT_SUFFIX 'A'
-
-/* The lifetime record's defaults: 1994-01-01 (year << 16 | month << 8 |
- * day) and the EFC at mid-scale. */
-#define RECORDS_LIFETIME_DEFAULT_DATE (1994u << 16 | 1u << 8 | 1u)
-#define RECORDS_EFC_MID_SCALE 524288.0f
-/* An EFC in the record with these bits all set, as an erased record's
- * 0xffffffff has, is taken as mid-scale. */
-#define RECORDS_LIFETIME_EFC_INVALID_BITS 0xe8000000u
-/* The clock event's class, and its period, three hours as a packed time
- * (hour << 16). */
-#define RECORDS_LIFETIME_EVENT_CLASS 2
-#define RECORDS_LIFETIME_EVENT_PERIOD (3u << 16)
+static const char RECORDS_TAG[] = "S";
+static const char RECORDS_FIRMWARE_REVISION[] = "3543B";
 
 /* A date's and a time's fields, a byte each (docs/firmware/structures.md,
  * "A date and time"). */
-#define RECORDS_FIELD_BITS 8
-#define RECORDS_FIELD_MASK 0xffu
+static const uint8_t RECORDS_FIELD_BITS = 8;
+static const uint32_t RECORDS_FIELD_MASK = 0xffu;
 
-/* The reset-cause log's records, and the text each keeps. */
-#define RECORDS_RESET_TEXT_SIZE ((int32_t)sizeof eeprom_reset_records[0].text)
-#define RECORDS_RESET_RECORDS ((int32_t)(sizeof eeprom_reset_records / sizeof eeprom_reset_records[0]))
+/* The reset-cause log's records. */
+static const int32_t RECORDS_RESET_RECORDS =
+	(int32_t)(sizeof eeprom_reset_records / sizeof eeprom_reset_records[0]);
 
-#define RECORDS_LONG_BITS 32
+static const uint8_t RECORDS_LONG_BITS = 32;
 
 /* The sum of so many bytes, as every record checksum takes it. */
 static uint8_t records_byte_sum(const uint8_t *bytes, uint32_t count)
@@ -101,21 +69,33 @@ static uint16_t records_sum_and_complement(uint8_t sum)
  * (0x3082e). */
 uint16_t record_checksum(void *record, uint16_t length)
 {
-	if (length < RECORDS_CHECKSUM_SIZE)
+	/* What a record's checksum word does not cover: the word itself,
+	 * its first two bytes. */
+	static const uint16_t CHECKSUM_SIZE = 2;
+
+	if (length < CHECKSUM_SIZE)
 		return 0;
-	return records_sum_and_complement(records_byte_sum((const uint8_t *)record + RECORDS_CHECKSUM_SIZE,
-							   (uint16_t)(length - RECORDS_CHECKSUM_SIZE)));
+	return records_sum_and_complement(records_byte_sum((const uint8_t *)record + CHECKSUM_SIZE,
+							   (uint16_t)(length - CHECKSUM_SIZE)));
 }
 
 /* Reads the lifetime record into lifetime, or its defaults; true when its
  * checksum holds (0x30a3e). */
 uint8_t lifetime_record_read(void)
 {
+	/* The lifetime record's defaults: 1994-01-01 (year << 16 | month << 8
+	 * | day) and the EFC at mid-scale. */
+	static const uint32_t LIFETIME_DEFAULT_DATE = 1994u << 16 | 1u << 8 | 1u;
+	static const float EFC_MID_SCALE = 524288.0f;
+	/* An EFC in the record with these bits all set, as an erased
+	 * record's 0xffffffff has, is taken as mid-scale. */
+	static const uint32_t LIFETIME_EFC_INVALID_BITS = 0xe8000000u;
+
 	if (record_checksum(&eeprom_lifetime_record, sizeof eeprom_lifetime_record) !=
 	    eeprom_lifetime_record.checksum) {
-		lifetime.date = RECORDS_LIFETIME_DEFAULT_DATE;
+		lifetime.date = LIFETIME_DEFAULT_DATE;
 		lifetime.count = 0;
-		lifetime.efc = RECORDS_EFC_MID_SCALE;
+		lifetime.efc = EFC_MID_SCALE;
 		return 0;
 	}
 	lifetime.date = eeprom_lifetime_record.date;
@@ -125,8 +105,8 @@ uint8_t lifetime_record_read(void)
 	uint32_t efc_bits;
 	float efc = eeprom_lifetime_record.efc;
 	memcpy(&efc_bits, &efc, sizeof efc_bits);
-	if ((efc_bits & RECORDS_LIFETIME_EFC_INVALID_BITS) == RECORDS_LIFETIME_EFC_INVALID_BITS)
-		lifetime.efc = RECORDS_EFC_MID_SCALE;
+	if ((efc_bits & LIFETIME_EFC_INVALID_BITS) == LIFETIME_EFC_INVALID_BITS)
+		lifetime.efc = EFC_MID_SCALE;
 	else
 		lifetime.efc = efc;
 	return 1;
@@ -172,20 +152,24 @@ void lifetime_event_run(void)
  * (0x30b66). */
 void lifetime_update(int32_t date)
 {
+	/* The clock event's class, and its period, three hours as a packed
+	 * time (hour << 16). */
+	static const int16_t LIFETIME_EVENT_CLASS = 2;
+	static const uint32_t LIFETIME_EVENT_PERIOD = 3u << 16;
 	klok_entry event = lifetime_event_template;
 
 	if (lifetime.date != (uint32_t)date) {
 		lifetime.date = date;
 		records_lifetime_count();
 	}
-	klok_entry *previous = klok_find(RECORDS_LIFETIME_EVENT_CLASS);
+	klok_entry *previous = klok_find(LIFETIME_EVENT_CLASS);
 	if (previous != 0 && klok_cancel(previous) != 0)
 		task_dmessage("Error in deleting old lifetime event\r\n");
 
 	/* klok_entry's time and date, and its period's, are each a
 	 * packed_datetime, which smartclock.h does not say. */
 	get_gps_datetime(&event.date, (time_of_day *)&event.time);
-	event.period_time = RECORDS_LIFETIME_EVENT_PERIOD;
+	event.period_time = LIFETIME_EVENT_PERIOD;
 	datetime_add((packed_datetime *)&event.period_time, (packed_datetime *)&event.time);
 	event.function = lifetime_event_run;
 	lifetime_event = clk_do(&event);
@@ -321,6 +305,12 @@ void eeprom_init(void)
  * a raised interrupt mask, or request_x's error (0x30fae). */
 char eeprom_lock(void)
 {
+	/* request_x's second long as eeprom_lock passes it; psos.md does
+	 * not give its meaning. */
+	static const uint32_t EEPX_REQUEST_WAIT = 0x2800u;
+	/* The one error of request_x eeprom_lock returns to its caller
+	 * rather than calling fatal_error; not traced. */
+	static const uint8_t EEPX_ERROR_RETURNED = 0x81;
 	int32_t sr = enter_supervisor();
 
 	if (!kernel_running)
@@ -333,14 +323,14 @@ char eeprom_lock(void)
 		eepx_token.depth++;
 		return 0;
 	}
-	uint32_t error = psos_request_x(eepx_exchange, &eepx_token, 0, RECORDS_EEPX_REQUEST_WAIT);
+	uint32_t error = psos_request_x(eepx_exchange, &eepx_token, 0, EEPX_REQUEST_WAIT);
 	uint8_t code = (uint8_t)error;
 	if (code == 0) {
 		eepx_token.owner = task;
 		eepx_token.depth = 0;
 		return 0;
 	}
-	if (code != RECORDS_EEPX_ERROR_RETURNED) {
+	if (code != EEPX_ERROR_RETURNED) {
 		char message[RECORDS_MESSAGE_SIZE];
 		sprintf(message, "Unable to acquire eepx token: %X", error & RECORDS_FIELD_MASK);
 		fatal_error(message);
@@ -509,19 +499,12 @@ static void records_log_unused(char *text, char *heading, int32_t number)
 
 /* The event log: RECORDS_LOG_PAGES pages of three entries, 64 bytes each,
  * in the EEPROM from 0x400d40 (log_page_read). */
-#define RECORDS_LOG_PAGES 75
-#define RECORDS_LOG_PAGE_ENTRIES ((int32_t)(sizeof log_write_page.entries / sizeof log_write_page.entries[0]))
+static const uint8_t RECORDS_LOG_PAGES = 75;
+static const int32_t RECORDS_LOG_PAGE_ENTRIES =
+	(int32_t)(sizeof log_write_page.entries / sizeof log_write_page.entries[0]);
 /* Past this many entries log_init and log_append report happening ' '. */
-#define RECORDS_LOG_ENTRIES_REPORTED 180
-#define RECORDS_HAPPENING_LOG_ENTRIES ' '
-/* log_page_read's result for a page whose checksum fails. */
-#define RECORDS_LOG_PAGE_BAD 0xff
-/* log_erase_checked's result for a count not the log's. */
-#define RECORDS_LOG_COUNT_DIFFERS 0xff
-/* log_event's result for a code it has no message for. */
-#define RECORDS_LOG_EVENT_UNKNOWN 0xfd
-/* log_append's result when the log is full. */
-#define RECORDS_LOG_FULL 0xfc
+static const uint8_t RECORDS_LOG_ENTRIES_REPORTED = 180;
+static const char RECORDS_HAPPENING_LOG_ENTRIES = ' ';
 /* The one format log_read gives a date and a time, not a byte and a
  * long; log_read knows it by its address, so log_first_satellite and
  * log_read share the one copy.  The casts drop const for the exported
@@ -549,11 +532,13 @@ int32_t log_erase_locked(uint8_t source)
 /* log_erase under log_mutex when the log holds count entries (0x3161a). */
 int32_t log_erase_checked(int32_t count, uint8_t source)
 {
+	/* The result for a count not the log's. */
+	static const uint8_t LOG_COUNT_DIFFERS = 0xff;
 	int32_t error = mutex_lock(&log_mutex);
 
 	if (error != 0)
 		return error;
-	int32_t status = count == log_entries ? log_erase(source) : RECORDS_LOG_COUNT_DIFFERS;
+	int32_t status = count == log_entries ? log_erase(source) : LOG_COUNT_DIFFERS;
 	mutex_unlock(&log_mutex);
 	return status;
 }
@@ -571,6 +556,8 @@ int32_t log_entry_total(uint8_t *full)
  * first with a free entry or whose checksum fails (0x3167c). */
 int32_t log_init(void)
 {
+	/* log_page_read's result for a page whose checksum fails. */
+	static const uint8_t LOG_PAGE_BAD = 0xff;
 	int32_t error = mutex_create("logr", &log_mutex);
 
 	if (error != 0 || (error = mutex_lock(&log_mutex)) != 0)
@@ -583,7 +570,7 @@ int32_t log_init(void)
 	for (;;) {
 		/* log_page_read's prototype takes the page as longs. */
 		uint32_t status = log_page_read((uint8_t)page, (uint32_t *)&log_write_page);
-		if (status == RECORDS_LOG_PAGE_BAD) {
+		if (status == LOG_PAGE_BAD) {
 			log_cursor = log_write_page.entries;
 			break;
 		}
@@ -705,8 +692,11 @@ static char *const records_log_events[] = {
 /* Logs one of log_event's messages by its code (0x319a2). */
 int32_t log_event(uint8_t code)
 {
+	/* The result for a code it has no message for. */
+	static const uint8_t LOG_EVENT_UNKNOWN = 0xfd;
+
 	if (code >= sizeof records_log_events / sizeof records_log_events[0])
-		return RECORDS_LOG_EVENT_UNKNOWN;
+		return LOG_EVENT_UNKNOWN;
 	return log_write(records_log_events[code]);
 }
 
@@ -735,8 +725,11 @@ uint8_t log_flush(void)
  * (0x31c42). */
 uint32_t log_append(char *format, int32_t argument_1, int32_t argument_2)
 {
+	/* The result when the log is full. */
+	static const uint8_t LOG_FULL = 0xfc;
+
 	if (log_full)
-		return RECORDS_LOG_FULL;
+		return LOG_FULL;
 	log_cursor->format = format;
 	log_cursor->argument_1 = argument_1;
 	log_cursor->argument_2 = argument_2;
@@ -805,12 +798,10 @@ static uint8_t records_nv_width(const int8_t *widths, int32_t index)
 	return (uint8_t)abs(widths[index]);
 }
 
-#define RECORDS_NV_NUMERIC_PARAMS ((uint32_t)(sizeof nv_numeric_params / sizeof nv_numeric_params[0]))
-#define RECORDS_NV_SETTING_PARAMS ((uint32_t)(sizeof nv_setting_params / sizeof nv_setting_params[0]))
-#define RECORDS_NV_PACKED_LONGS ((uint32_t)(sizeof nv_records[0].packed / sizeof nv_records[0].packed[0]))
-/* nv_record's sequence number, as nv_record_differs takes it, a long. */
-#define RECORDS_NV_SEQUENCE_LONG 1
-#define RECORDS_NV_LONGS ((int32_t)(sizeof(nv_record) / sizeof(int32_t)))
+static const uint32_t RECORDS_NV_NUMERIC_PARAMS =
+	(uint32_t)(sizeof nv_numeric_params / sizeof nv_numeric_params[0]);
+static const uint32_t RECORDS_NV_SETTING_PARAMS =
+	(uint32_t)(sizeof nv_setting_params / sizeof nv_setting_params[0]);
 
 /* Erases an NV register slot's tag, if it is not erased (0x327f4). */
 void nv_slot_erase(uint8_t slot)
@@ -832,6 +823,11 @@ void clear_nv(void)
  * (0x3282c). */
 void nv_restore(void)
 {
+	/* A status_report code (status_report_messages, 0x2bf30). */
+	static const int16_t STATUS_CONFIGURATION_LOST = 0x11;
+	/* The source nv_restore gives nv_save and status_report_from. */
+	static const uint8_t NV_RESTORE_SOURCE = 2;
+
 	selftest.eeprom = 0;
 	nv_slot = 0;
 	if (nv_load_slot())
@@ -851,8 +847,8 @@ void nv_restore(void)
 	else
 		nv_slot = 1;
 	nv_slot_erase(1 - nv_slot);
-	nv_save(RECORDS_NV_RESTORE_SOURCE);
-	status_report_from(RECORDS_STATUS_CONFIGURATION_LOST, RECORDS_NV_RESTORE_SOURCE);
+	nv_save(NV_RESTORE_SOURCE);
+	status_report_from(STATUS_CONFIGURATION_LOST, NV_RESTORE_SOURCE);
 }
 
 /* The sum and its complement of an NV register record's bytes from its
@@ -867,9 +863,14 @@ uint16_t nv_checksum(nv_record *record)
  * in their sequence numbers (0x3290e). */
 uint32_t nv_record_differs(int32_t *first, int32_t *second)
 {
+	/* nv_record's sequence number, as nv_record_differs takes it, a
+	 * long. */
+	static const int32_t NV_SEQUENCE_LONG = 1;
+	static const int32_t NV_LONGS = (int32_t)(sizeof(nv_record) / sizeof(int32_t));
+
 	if (first[0] != second[0])
 		return 1;
-	for (int32_t i = RECORDS_NV_SEQUENCE_LONG + 1; i < RECORDS_NV_LONGS; i++)
+	for (int32_t i = NV_SEQUENCE_LONG + 1; i < NV_LONGS; i++)
 		if (first[i] != second[i])
 			return 1;
 	return 0;
@@ -880,12 +881,16 @@ uint32_t nv_record_differs(int32_t *first, int32_t *second)
  * fails (0x3293a). */
 char nv_save(uint8_t source)
 {
+	/* log_event's "EEPROM save failed". */
+	static const uint8_t LOG_EEPROM_SAVE_FAILED = 0x18;
+	static const uint32_t NV_PACKED_LONGS =
+		(uint32_t)(sizeof nv_records[0].packed / sizeof nv_records[0].packed[0]);
 	nv_record record;
 	records_bit_stream stream = { .next = record.packed };
 
-	strncpy(record.tag, RECORDS_TAG, sizeof record.tag);
+	strncpy(record.tag, (char *)RECORDS_TAG, sizeof record.tag);
 	record.sequence = nv_records[nv_slot].sequence + 1;
-	strncpy(record.revision, RECORDS_FIRMWARE_REVISION, sizeof record.revision);
+	strncpy(record.revision, (char *)RECORDS_FIRMWARE_REVISION, sizeof record.revision);
 	for (uint32_t i = 0; i < RECORDS_NV_NUMERIC_PARAMS; i++) {
 		scpi_numeric_param *param = nv_numeric_params[i];
 		uint32_t *values = param->value;
@@ -900,7 +905,7 @@ char nv_save(uint8_t source)
 	if (stream.used != 0)
 		records_pack_flush(&stream);
 
-	uint32_t *end = record.packed + RECORDS_NV_PACKED_LONGS;
+	uint32_t *end = record.packed + NV_PACKED_LONGS;
 	if (stream.next >= end && kernel_running)
 		task_debug_message("Warning: Entire nv register is being used\r\n");
 	while (stream.next < end)
@@ -913,7 +918,7 @@ char nv_save(uint8_t source)
 		saved = eeprom_write(nv_records[nv_slot].tag, record.tag, sizeof record);
 	if (!saved) {
 		if (kernel_running)
-			log_event(RECORDS_LOG_EEPROM_SAVE_FAILED);
+			log_event(LOG_EEPROM_SAVE_FAILED);
 		status_report_from(RECORDS_STATUS_MEMORY_ERROR, source);
 	}
 	return saved;
@@ -925,8 +930,8 @@ uint8_t nv_slot_valid(void)
 {
 	nv_record *record = &nv_records[nv_slot];
 
-	if (strncmp(record->tag, RECORDS_TAG, sizeof record->tag) == 0 && nv_checksum(record) == record->checksum &&
-	    strncmp(record->revision, RECORDS_FIRMWARE_REVISION, sizeof record->revision) == 0)
+	if (strncmp(record->tag, (char *)RECORDS_TAG, sizeof record->tag) == 0 && nv_checksum(record) == record->checksum &&
+	    strncmp(record->revision, (char *)RECORDS_FIRMWARE_REVISION, sizeof record->revision) == 0)
 		return 0;
 	return 1;
 }
@@ -964,21 +969,28 @@ uint32_t nv_load_slot(void)
 /* Sets the *IDN? model to its default (0x32e40). */
 void idn_model_default(void)
 {
-	strncpy(idn_model, RECORDS_DEFAULT_MODEL, sizeof idn_model);
+	/* The identification record's default model. */
+	static const char DEFAULT_MODEL[] = "Z3805A";
+
+	strncpy(idn_model, (char *)DEFAULT_MODEL, sizeof idn_model);
 }
 
 /* Reads the model, serial and suffix from the identification record, or
  * their defaults; true when its checksum holds (0x32e5c). */
 uint8_t identification_record_read(void)
 {
+	/* The identification record's defaults. */
+	static const char DEFAULT_SERIAL[] = "0";
+	static const char DEFAULT_SUFFIX = 'A';
+
 	if (record_checksum(&eeprom_identification_record, sizeof eeprom_identification_record) !=
 	    eeprom_identification_record.checksum) {
 		idn_model_default();
-		strncpy(idn_serial, RECORDS_DEFAULT_SERIAL, sizeof idn_serial);
-		idn_suffix = RECORDS_DEFAULT_SUFFIX;
+		strncpy(idn_serial, (char *)DEFAULT_SERIAL, sizeof idn_serial);
+		idn_suffix = DEFAULT_SUFFIX;
 		return 0;
 	}
-	if (strncmp(eeprom_identification_record.tag, RECORDS_TAG, sizeof eeprom_identification_record.tag) == 0)
+	if (strncmp(eeprom_identification_record.tag, (char *)RECORDS_TAG, sizeof eeprom_identification_record.tag) == 0)
 		strncpy(idn_model, eeprom_identification_record.model, sizeof idn_model);
 	else
 		idn_model_default();
@@ -993,7 +1005,7 @@ uint32_t identification_record_write(void)
 {
 	if (strncmp(eeprom_identification_record.model, idn_model, sizeof idn_model) == 0 &&
 	    strncmp(eeprom_identification_record.serial, idn_serial, sizeof idn_serial) == 0 &&
-	    strncmp(eeprom_identification_record.tag, RECORDS_TAG, sizeof eeprom_identification_record.tag) == 0 &&
+	    strncmp(eeprom_identification_record.tag, (char *)RECORDS_TAG, sizeof eeprom_identification_record.tag) == 0 &&
 	    eeprom_identification_record.suffix == idn_suffix)
 		return 1;
 
@@ -1002,7 +1014,7 @@ uint32_t identification_record_write(void)
 	strncpy(record.model, idn_model, sizeof record.model);
 	strncpy(record.serial, idn_serial, sizeof record.serial);
 	record.suffix = idn_suffix;
-	strncpy(record.tag, RECORDS_TAG, sizeof record.tag);
+	strncpy(record.tag, (char *)RECORDS_TAG, sizeof record.tag);
 	record.checksum = record_checksum(&record, sizeof record);
 	return eeprom_write((char *)&eeprom_identification_record, (char *)&record, sizeof record);
 }
@@ -1065,6 +1077,8 @@ void reset_record_count(void)
  * when the number was clamped or the entry is unused (0x3313c). */
 uint32_t log_entry_text(int32_t number, char *text, char *heading)
 {
+	/* The text each reset-cause record keeps. */
+	static const int32_t RESET_TEXT_SIZE = (int32_t)sizeof eeprom_reset_records[0].text;
 	uint32_t clamped = 0;
 	int32_t index = number - 1;
 
@@ -1083,8 +1097,8 @@ uint32_t log_entry_text(int32_t number, char *text, char *heading)
 
 	reset_record *record = &eeprom_reset_records[index];
 	if (text != 0) {
-		strncpy(text, record->text, RECORDS_RESET_TEXT_SIZE);
-		text[RECORDS_RESET_TEXT_SIZE - 1] = '\0';
+		strncpy(text, record->text, RESET_TEXT_SIZE);
+		text[RESET_TEXT_SIZE - 1] = '\0';
 	}
 	if (heading != 0)
 		records_log_heading(heading, index + 1, record->date, record->time.hour, record->time.minute,

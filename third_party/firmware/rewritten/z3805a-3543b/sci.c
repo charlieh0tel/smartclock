@@ -9,9 +9,7 @@
  * and status register helpers duart.c defines. */
 
 /* The SCI's I/O device (kernel_dispatch_io, 0x14c36). */
-enum {
-	SCI_DEVICE = 0x300,
-};
+static const uint32_t SCI_DEVICE = 0x300;
 
 /* A no-op echo, a bare rts: sci_init and sci_reconfigure put it in
  * sci.echo when the settings' echo is off (0x1f6c8). */
@@ -19,41 +17,38 @@ void sci_echo_none(char c)
 {
 }
 
-/* The SCI's baud divisors for SCCR0 (MC68331UM D.4.4), and the
- * per-baud value sci_baud_set keeps beside each. */
-enum {
-	SCI_DIVISOR_1200 = 0x1b5,
-	SCI_DIVISOR_2400 = 0xda,
-	SCI_DIVISOR_9600 = 0x37,
-	SCI_DIVISOR_19200 = 0x1b,
-	SCI_CONSTANT_1200 = 0x2222,
-	SCI_CONSTANT_2400 = 0x1111,
-	SCI_CONSTANT_9600 = 0x444,
-	SCI_CONSTANT_19200 = 0x222,
-};
-
 /* Sets the SCI's baud rate from a settings code, 9600 for a code out of
  * range (0x1f6ca). */
 void sci_baud_set(char baud)
 {
+	/* The SCI's baud divisors for SCCR0 (MC68331UM D.4.4), and the
+	 * per-baud value sci_baud_set keeps beside each. */
+	static const uint16_t DIVISOR_1200 = 0x1b5;
+	static const uint16_t DIVISOR_2400 = 0xda;
+	static const uint16_t DIVISOR_9600 = 0x37;
+	static const uint16_t DIVISOR_19200 = 0x1b;
+	static const uint16_t CONSTANT_1200 = 0x2222;
+	static const uint16_t CONSTANT_2400 = 0x1111;
+	static const uint16_t CONSTANT_9600 = 0x444;
+	static const uint16_t CONSTANT_19200 = 0x222;
 	uint16_t divisor;
 
 	switch ((uint8_t)baud) {
 	case DUART_BAUD_1200:
-		divisor = SCI_DIVISOR_1200;
-		sci.baud_constant = SCI_CONSTANT_1200;
+		divisor = DIVISOR_1200;
+		sci.baud_constant = CONSTANT_1200;
 		break;
 	case DUART_BAUD_2400:
-		divisor = SCI_DIVISOR_2400;
-		sci.baud_constant = SCI_CONSTANT_2400;
+		divisor = DIVISOR_2400;
+		sci.baud_constant = CONSTANT_2400;
 		break;
 	case DUART_BAUD_19200:
-		divisor = SCI_DIVISOR_19200;
-		sci.baud_constant = SCI_CONSTANT_19200;
+		divisor = DIVISOR_19200;
+		sci.baud_constant = CONSTANT_19200;
 		break;
 	default:
-		divisor = SCI_DIVISOR_9600;
-		sci.baud_constant = SCI_CONSTANT_9600;
+		divisor = DIVISOR_9600;
+		sci.baud_constant = CONSTANT_9600;
 		break;
 	}
 	qsm.sccr0 = divisor;
@@ -63,13 +58,14 @@ void sci_baud_set(char baud)
  * set for mark parity; returns the word written (0x1f71a). */
 uint16_t sci_putc_polled(char c)
 {
+	static const uint16_t MARK_BIT = 0x80;
 	uint16_t sr = cpu_interrupts_at(CPU_IPL_3);
 	uint16_t data = c;
 
 	while ((qsm.scsr & SCSR_TDRE) == 0)
 		;
 	if (sci.mark_bit)
-		data |= DUART_MARK_BIT;
+		data |= MARK_BIT;
 	qsm.scdr = data;
 	cpu_sr_write(sr);
 	return data;

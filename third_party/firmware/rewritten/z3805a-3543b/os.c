@@ -10,14 +10,6 @@
 
 #include <stddef.h>
 
-enum {
-	/* exception_names names the vectors from 2, bus error, to 58
-	 * (offset 0xe8), by an exception frame's vector offset
-	 * (CPU_VECTOR_OFFSET_MASK). */
-	OS_VECTOR_OFFSET_FIRST_NAMED = 2 * 4,
-	OS_VECTOR_OFFSET_LAST = 0xe8,
-};
-
 /* Clears the exception hook and its per-task switch (0x118a8). */
 void exception_hook_reset(void)
 {
@@ -31,11 +23,18 @@ void exception_hook_reset(void)
  * the image's is (0x11a2a). */
 char *exception_name(uint16_t vector)
 {
-	uint16_t offset = vector & CPU_VECTOR_OFFSET_MASK;
+	/* The vector's offset in an exception frame's format and vector
+	 * word, below the format (CPU_VECTOR_FORMAT_MASK). */
+	static const uint16_t VECTOR_OFFSET_MASK = 0x0fff;
+	/* exception_names names the vectors from 2, bus error, to 58
+	 * (offset 0xe8), by an exception frame's vector offset. */
+	static const uint16_t VECTOR_OFFSET_FIRST_NAMED = 2 * 4;
+	static const uint16_t VECTOR_OFFSET_LAST = 0xe8;
+	uint16_t offset = vector & VECTOR_OFFSET_MASK;
 
-	if (offset > OS_VECTOR_OFFSET_LAST)
+	if (offset > VECTOR_OFFSET_LAST)
 		return "Oooh! That tickles. I don't know that vector.";
-	return *(char **)((char *)exception_names + offset - OS_VECTOR_OFFSET_FIRST_NAMED);
+	return *(char **)((char *)exception_names + offset - VECTOR_OFFSET_FIRST_NAMED);
 }
 
 /* Records an exception in last_exception, with the running task's name
@@ -101,18 +100,10 @@ uint32_t idle_count(void)
 	return idle_loops_last_second;
 }
 
-enum {
-	/* busy_wait's empty loops for each count (0x13432). */
-	OS_BUSY_WAIT_SPINS = 0x2d9,
-	/* sleep_seconds: the kernel's ticks a second, and the shortest and
-	 * longest pauses it takes, a tick and 2^21 seconds. */
-	OS_TICKS_PER_SECOND = 1024,
-	OS_SLEEP_LONGEST = 1 << 21,
-	/* stack_measure's user stack's use and size, then its supervisor
-	 * stack's. */
-	OS_STACK_USAGE_LONGS = 4,
-	OS_STACK_MESSAGE_SIZE = 80,
-};
+/* stack_measure's user stack's use and size, then its supervisor
+ * stack's: array sizes, so #define. */
+#define OS_STACK_USAGE_LONGS 4
+#define OS_STACK_MESSAGE_SIZE 80
 
 /* The console's words ps, mem_rep and s_rep: the kernel's process, memory
  * and stack reports (0x12f86, 0x12f92, 0x12f9e). */
@@ -160,12 +151,15 @@ uint8_t task_set_priority(uint32_t task, uint8_t priority)
  * 0 (0x13428). */
 void busy_wait(uint32_t count)
 {
+	/* busy_wait's empty loops for each count (0x13432). */
+	static const uint16_t BUSY_WAIT_SPINS = 0x2d9;
+
 	if (count == 0)
 		return;
 	uint16_t remaining = count;
 
 	do {
-		for (uint16_t spin = OS_BUSY_WAIT_SPINS; spin != 0; spin--)
+		for (uint16_t spin = BUSY_WAIT_SPINS; spin != 0; spin--)
 			__asm__ volatile("");
 		remaining--;
 	} while (remaining != 0);
@@ -176,11 +170,16 @@ void busy_wait(uint32_t count)
  * it (0x13448). */
 void sleep_seconds(float seconds)
 {
+	/* The kernel's ticks a second, and the shortest and longest pauses
+	 * it takes, a tick and 2^21 seconds. */
+	static const float TICKS_PER_SECOND = 1024;
+	static const float SLEEP_LONGEST = 1 << 21;
+
 	if (float_compare(0.0f, seconds) > 0)
-		seconds = 1.0f / OS_TICKS_PER_SECOND;
-	else if (float_compare(seconds, OS_SLEEP_LONGEST) > 0)
-		seconds = OS_SLEEP_LONGEST;
-	uint32_t ticks = float_to_unsigned(float_multiply(seconds, OS_TICKS_PER_SECOND));
+		seconds = 1.0f / TICKS_PER_SECOND;
+	else if (float_compare(seconds, SLEEP_LONGEST) > 0)
+		seconds = SLEEP_LONGEST;
+	uint32_t ticks = float_to_unsigned(float_multiply(seconds, TICKS_PER_SECOND));
 
 	psos_pause(ticks == 0 ? 1 : ticks);
 }

@@ -9,21 +9,15 @@
  * parameter's units", "The SCPI lexer's token and port" and "The SCPI
  * session"; docs/scpi/README.md describes the language. */
 
-/* The error the queue's last free entry takes, "Queue overflow" in
- * scpi_error_messages (0x28610). */
-enum {
-	SCPI_ERROR_QUEUE_OVERFLOW = -350,
-};
-
 /* An error code's class, by the greatest code of each, which
  * error_queue_push reports through the negative conditions -1 to -4
- * (0x2863c to 0x28674); a positive code is a device's. */
+ * (0x2863c to 0x28674); a positive code is a device's.  The command
+ * errors' bounds are here, the other classes' in
+ * scpi_engine_error_condition. */
+static const int16_t SCPI_ERROR_COMMAND_GREATEST = -100;
+
+/* The negative conditions for the error classes. */
 enum {
-	SCPI_ERROR_QUERY_GREATEST = -400,
-	SCPI_ERROR_DEVICE_GREATEST = -300,
-	SCPI_ERROR_EXECUTION_GREATEST = -200,
-	SCPI_ERROR_COMMAND_GREATEST = -100,
-	SCPI_ERROR_COMMAND_LEAST = -199,
 	SCPI_CONDITION_COMMAND_ERROR = -1,
 	SCPI_CONDITION_EXECUTION_ERROR = -2,
 	SCPI_CONDITION_DEVICE_ERROR = -3,
@@ -58,10 +52,7 @@ enum {
 
 /* The Status Byte's RQS bit (structures.md, "The SCPI session"), which
  * status_update_rqs keeps and the service request enable cannot set. */
-enum {
-	SCPI_STATUS_REQUEST_SERVICE = 0x40,
-	SCPI_STATUS_BYTE_BITS = 0xff,
-};
+static const uint8_t SCPI_STATUS_REQUEST_SERVICE = 0x40;
 
 /* The error queue, which error_queue_create allocates and
  * status_model.queue points at: a ring of entries, one more than it
@@ -83,17 +74,17 @@ typedef struct scpi_engine_error_queue {
 /* The console port's object in ROM: console_port_read, its method table
  * at 0x29dd4, then the prompts (structures.md, "The SCPI lexer's token
  * and port"). */
-enum {
-	SCPI_CONSOLE_PORT = 0x29e18,
-};
+static const uint32_t SCPI_CONSOLE_PORT = 0x29e18;
 
 /* What a port's read gives for the end of its input or a read error
- * (structures.md, "The SCPI session"), and the first value above a
- * character, which scpi_console_putc writes as CR LF. */
+ * (structures.md, "The SCPI session"). */
 enum {
 	SCPI_PORT_END = 0x101,
-	SCPI_PORT_CHARACTERS = 0x100,
 };
+
+/* The first value above a character, which scpi_console_putc writes as
+ * CR LF. */
+static const int16_t SCPI_PORT_CHARACTERS = 0x100;
 
 /* An arena, at the start of the buffer it hands out: its next free
  * byte and its last, as addresses (arena_init, 0x29770). */
@@ -215,22 +206,18 @@ enum {
 /* A number's digits: scpi_number.digits, d0 d1 ... d15, the integer
  * d0d1...d15 times 10 to the exponent, so that exponent + 16 of them
  * are its integer part.  A digit from 5 rounds the last kept up. */
-enum {
-	SCPI_NUMBER_DIGITS = 16,
-	SCPI_NUMBER_ROUND_UP = 5,
-	SCPI_NUMBER_BASE = 10,
-};
+static const uint8_t SCPI_NUMBER_DIGITS = 16;
+static const uint8_t SCPI_NUMBER_ROUND_UP = 5;
+static const uint8_t SCPI_NUMBER_BASE = 10;
 
 /* The most integer digits each converter takes, the decimal width of
  * its type. */
-enum {
-	SCPI_SHORT_DIGITS = 5,
-	SCPI_LONG_DIGITS = 10,
-};
+static const uint8_t SCPI_SHORT_DIGITS = 5;
+static const uint8_t SCPI_LONG_DIGITS = 10;
 
 /* The largest magnitude a real parameter takes (0x25ff2), SCPI's 9.9E37,
  * its infinity. */
-#define SCPI_REAL_LIMIT 9.9e37
+static const double SCPI_REAL_LIMIT = 9.9e37;
 
 /* A string parameter as scpi_parse_string gives it its handler. */
 typedef struct scpi_engine_string_value {
@@ -285,23 +272,20 @@ typedef struct scpi_engine_bcd {
 	int16_t exponent;  /* +0x0a */
 } scpi_engine_bcd;
 
-/* The condition codes' Z bit, which the bridge to scpi_bcd_to_double
- * keeps in __ghidra_ccr: set when the number does not fit a double
- * (0x2507a; MC68331UM, the CCR). */
-enum {
-	SCPI_CCR_ZERO = 0x04,
-};
-
 /* A number at a scale as a double; -1 when it does not fit (0x254ba). */
 int32_t scpi_number_to_double(scpi_number *number, double *value, int32_t scale)
 {
+	/* The condition codes' Z bit, which the bridge to scpi_bcd_to_double
+	 * keeps in __ghidra_ccr: set when the number does not fit a double
+	 * (0x2507a; MC68331UM, the CCR). */
+	static const uint8_t CCR_ZERO = 0x04;
 	scpi_engine_bcd bcd;
 
 	if (scpi_number_to_bcd(number, scale, (char *)&bcd) != 0)
 		return -1;
 	double converted = scpi_bcd_to_double((char *)&bcd);
 
-	if (__ghidra_ccr & SCPI_CCR_ZERO)
+	if (__ghidra_ccr & CCR_ZERO)
 		return -1;
 	*value = converted;
 	return 0;
@@ -404,7 +388,10 @@ int32_t scpi_parse_double(scpi_number *number, void *unused, double *value, scpi
 /* A number at a scale as a short, rounded (0x2609a). */
 int32_t scpi_number_to_short(scpi_number *number, int16_t *value, int32_t scale)
 {
-	enum { MOST_TENTHS = 0x7fff / SCPI_NUMBER_BASE, MOST_POSITIVE = 0x7fff, MOST_NEGATIVE = 0x8000 };
+	/* A const object is not a constant expression, so the base is 10 here. */
+	static const uint16_t MOST_TENTHS = 0x7fff / 10;
+	static const uint16_t MOST_POSITIVE = 0x7fff;
+	static const uint16_t MOST_NEGATIVE = 0x8000;
 
 	if (number->digits[0] == 0) {
 		*value = 0;
@@ -433,7 +420,9 @@ int32_t scpi_number_to_short(scpi_number *number, int16_t *value, int32_t scale)
 /* Its magnitude at a scale as an unsigned short, rounded (0x26140). */
 int32_t scpi_number_to_unsigned_short(scpi_number *number, uint16_t *value, int32_t scale)
 {
-	enum { MOST_TENTHS = 0xffff / SCPI_NUMBER_BASE, MOST_UNITS = 0xffff % SCPI_NUMBER_BASE };
+	/* A const object is not a constant expression, so the base is 10 here. */
+	static const uint16_t MOST_TENTHS = 0xffff / 10;
+	static const uint16_t MOST_UNITS = 0xffff % 10;
 
 	if (number->digits[0] == 0) {
 		*value = 0;
@@ -464,7 +453,8 @@ int32_t scpi_number_to_unsigned_short(scpi_number *number, uint16_t *value, int3
 /* A number at a scale as a long, rounded (0x261e4). */
 int32_t scpi_number_to_long(scpi_number *number, int32_t *value, int32_t scale)
 {
-	enum { MOST_TENTHS = 0x7fffffff / SCPI_NUMBER_BASE };
+	/* A const object is not a constant expression, so the base is 10 here. */
+	static const int32_t MOST_TENTHS = 0x7fffffff / 10;
 	const uint32_t most_positive = 0x7fffffff, most_negative = 0x80000000;
 
 	if (number->digits[0] == 0) {
@@ -531,27 +521,21 @@ void scpi_number_to_boolean(scpi_number *number, uint16_t *value, int32_t scale)
 }
 
 /* What scpi_real_to_text is given: 15 significant digits for a double,
- * 6 for a float, three exponent digits, the resolution -308 for every
- * digit, and 1 for "+0.dE" in place of "+dE" with one digit; and the
- * text's length with every digit, the sign, the point, "E", the
- * exponent's sign and digits. */
-enum {
-	SCPI_REAL_DOUBLE_DIGITS = 15,
-	SCPI_REAL_FLOAT_DIGITS = 6,
-	SCPI_REAL_EXPONENT_DIGITS = 3,
-	SCPI_REAL_EVERY_DIGIT = -308,
-	SCPI_REAL_POINT_ALWAYS = 1,
-	SCPI_REAL_TEXT_OVERHEAD = 4 + SCPI_REAL_EXPONENT_DIGITS,
-	SCPI_REAL_TEXT_SIZE = 24,
-};
+ * 6 for a float, and the resolution -308 for every digit (its exponent
+ * digits and point in scpi_engine_real_to_text); and the text's length
+ * with every digit, the sign, the point, "E", the exponent's sign and
+ * three digits.  The text's size is an array's, so #define. */
+static const int16_t SCPI_REAL_DOUBLE_DIGITS = 15;
+static const int16_t SCPI_REAL_FLOAT_DIGITS = 6;
+static const int16_t SCPI_REAL_EVERY_DIGIT = -308;
+static const int16_t SCPI_REAL_TEXT_OVERHEAD = 4 + 3;
+#define SCPI_REAL_TEXT_SIZE 24
 
 /* scpi_unsigned_to_digits' buffer: digits right-aligned to its index
- * 16, with room before them for a sign or a block's header. */
-enum {
-	SCPI_DIGITS_LAST = 16,
-	SCPI_DIGITS_END = SCPI_DIGITS_LAST + 1,
-	SCPI_DIGITS_SIZE = 20,
-};
+ * 16, with room before them for a sign or a block's header; its size an
+ * array's, so #define. */
+static const int16_t SCPI_DIGITS_END = 16 + 1;
+#define SCPI_DIGITS_SIZE 20
 
 /* A response's array, as scpi_format_double_array and _short_array take
  * it. */
@@ -602,12 +586,8 @@ typedef struct scpi_engine_float_resolution {
 	int16_t resolution; /* +0x04 */
 } scpi_engine_float_resolution;
 
-/* The characters a response's text puts beside its values. */
-enum {
-	SCPI_QUOTE = '"',
-	SCPI_SEPARATOR = ',',
-	SCPI_BLOCK_START = '#',
-};
+/* The character a response's text puts between its values. */
+static const char SCPI_SEPARATOR = ',';
 
 /* A text's length. */
 static int32_t scpi_engine_length(char *text)
@@ -623,13 +603,17 @@ static int32_t scpi_engine_length(char *text)
  * as two longs, high first. */
 static uint32_t scpi_engine_real_to_text(double value, char *text, int16_t digits, int16_t resolution)
 {
+	/* Three exponent digits, and 1 for "+0.dE" in place of "+dE" with
+	 * one digit. */
+	static const int16_t REAL_EXPONENT_DIGITS = 3;
+	static const int16_t REAL_POINT_ALWAYS = 1;
 	union {
 		double value;
 		int32_t words[2];
 	} bits = { value };
 
-	return scpi_real_to_text(bits.words[0], bits.words[1], (uint8_t *)text, digits, SCPI_REAL_EXPONENT_DIGITS,
-				 resolution, SCPI_REAL_POINT_ALWAYS);
+	return scpi_real_to_text(bits.words[0], bits.words[1], (uint8_t *)text, digits, REAL_EXPONENT_DIGITS,
+				 resolution, REAL_POINT_ALWAYS);
 }
 
 /* Writes text through the port. */
@@ -648,13 +632,15 @@ int32_t scpi_format_text(scpi_port *output, char **value)
 /* A string in double quotes, each quote doubled (0x2639e). */
 int32_t scpi_format_string(scpi_port *output, char **value)
 {
-	output->methods->put(output, SCPI_QUOTE);
+	static const char QUOTE = '"';
+
+	output->methods->put(output, QUOTE);
 	for (char *text = *value; *text != 0; text++) {
 		output->methods->put(output, *text);
-		if (*text == SCPI_QUOTE)
-			output->methods->put(output, SCPI_QUOTE);
+		if (*text == QUOTE)
+			output->methods->put(output, QUOTE);
 	}
-	output->methods->put(output, SCPI_QUOTE);
+	output->methods->put(output, QUOTE);
 	return 0;
 }
 
@@ -700,11 +686,13 @@ int32_t scpi_format_choice(scpi_port *output, int16_t *value, int32_t *list)
 	return SCPI_STATUS_FORMAT_FAILED;
 }
 
-/* A value's decimal digits right-aligned in digits, to SCPI_DIGITS_LAST,
+/* A value's decimal digits right-aligned in digits, to DIGITS_LAST,
  * and the first's index (0x264e0). */
 int32_t scpi_unsigned_to_digits(uint32_t value, char *digits, int16_t *start)
 {
-	for (int16_t index = SCPI_DIGITS_LAST; index > 0; index--) {
+	static const int16_t DIGITS_LAST = 16;
+
+	for (int16_t index = DIGITS_LAST; index > 0; index--) {
 		digits[index] = value % SCPI_NUMBER_BASE + '0';
 		value /= SCPI_NUMBER_BASE;
 		if (value == 0) {
@@ -765,6 +753,7 @@ int32_t scpi_format_unsigned_short(scpi_port *output, uint16_t *value)
  * length, then the data (0x2663e). */
 int32_t scpi_format_block(scpi_port *output, uint32_t *block)
 {
+	static const char BLOCK_START = '#';
 	scpi_engine_block *data = (scpi_engine_block *)block;
 	char header[SCPI_DIGITS_SIZE];
 	int16_t start;
@@ -774,7 +763,7 @@ int32_t scpi_format_block(scpi_port *output, uint32_t *block)
 	char count = SCPI_DIGITS_END - start;
 
 	header[--start] = '0' + count;
-	header[--start] = SCPI_BLOCK_START;
+	header[--start] = BLOCK_START;
 	scpi_engine_write(output, &header[start], (char)(count + 2));
 	output->methods->write_block(output, data->data, data->length);
 	return 0;
@@ -984,9 +973,7 @@ enum {
 /* A unit's exponent for one that takes a multiplier before it, and
  * scpi_multiplier_exponent's result for no multiplier (structures.md,
  * "A numeric parameter's units"). */
-enum {
-	SCPI_NO_MULTIPLIER = -128,
-};
+static const int8_t SCPI_NO_MULTIPLIER = -128;
 
 /* scpi_scan_token's kinds of token, by the character class it starts
  * with (the jump table at 0x26f20). */
@@ -1023,36 +1010,11 @@ enum {
 	SCPI_STATUS_TOO_MUCH_DATA = -52,      /* -223 Too much data */
 };
 
-/* A keyword's most characters, and a string's most with its NUL, the
- * room scpi_scan_token takes for it from the arena. */
-enum {
-	SCPI_KEYWORD_MOST = 16,
-	SCPI_STRING_SIZE = 0xff,
-};
-
-/* A non-decimal number's radix letters, and the value of a letter digit
- * in upper case, 'A' as 10. */
+/* A non-decimal number's radix letters. */
 enum {
 	SCPI_RADIX_HEXADECIMAL = 'H',
 	SCPI_RADIX_OCTAL = 'Q',
 	SCPI_RADIX_BINARY = 'B',
-	SCPI_LETTER_DIGIT_BIAS = 'A' - 10,
-};
-
-/* The suffix's last index scpi_scan_number writes: 12 in suffix's 12
- * bytes, so that a 13th character lands in scale (structures.md, "The
- * SCPI lexer's token and port"). */
-enum {
-	SCPI_SUFFIX_LAST = 12,
-	SCPI_EXPONENT_LETTER = 'E',
-};
-
-/* The most a number's exponent and shift take, a word's (scpi_scan_number and
- * scpi_scan_exponent). */
-enum {
-	SCPI_WORD_LEAST = -0x8000,
-	SCPI_WORD_MOST = 0x7fff,
-	SCPI_EXPONENT_MOST_TENTHS = 0xccb,
 };
 
 /* A port value's character class. */
@@ -1336,7 +1298,9 @@ static int32_t scpi_engine_reject(scpi_port *input, int16_t character, int32_t e
  * underscores as they are, to 16 (0x26f8c). */
 static int32_t scpi_engine_scan_keyword(scpi_port *input, scpi_keyword *keyword, int16_t first)
 {
-	enum { UPPER_CASE = 0xdf };
+	static const uint8_t UPPER_CASE = 0xdf;
+	/* A keyword's most characters. */
+	static const int16_t KEYWORD_MOST = 16;
 	int16_t count = 0;
 	int16_t character = first;
 	uint8_t class = SCPI_CLASS_LETTER;
@@ -1347,7 +1311,7 @@ static int32_t scpi_engine_scan_keyword(scpi_port *input, scpi_keyword *keyword,
 		class = scpi_engine_class(character);
 		if (class > SCPI_CLASS_UNDERSCORE)
 			break;
-		if (count >= SCPI_KEYWORD_MOST)
+		if (count >= KEYWORD_MOST)
 			return SCPI_STATUS_MNEMONIC_TOO_LONG;
 	}
 	keyword->length = count;
@@ -1386,7 +1350,10 @@ static int32_t scpi_engine_scan_block(scpi_port *input, scpi_token_block *block,
  * bits; digits past 32 bits make it out of range (0x27148). */
 static int32_t scpi_engine_scan_radix(scpi_port *input, scpi_token *token, int16_t base, int16_t bits)
 {
-	enum { UPPER_CASE = 0xdf, LONG_BITS = 32 };
+	static const uint8_t UPPER_CASE = 0xdf;
+	static const int16_t LONG_BITS = 32;
+	/* The value of a letter digit in upper case, 'A' as 10. */
+	static const int16_t LETTER_DIGIT_BIAS = 'A' - 10;
 	/* The value's top digit, which must be clear for another. */
 	uint32_t top = (uint32_t)(base - 1) << (LONG_BITS - bits);
 	uint32_t value = 0;
@@ -1399,7 +1366,7 @@ static int32_t scpi_engine_scan_radix(scpi_port *input, scpi_token *token, int16
 		int16_t digit;
 
 		if (class == SCPI_CLASS_LETTER) {
-			digit = (character & UPPER_CASE) - SCPI_LETTER_DIGIT_BIAS;
+			digit = (character & UPPER_CASE) - LETTER_DIGIT_BIAS;
 		} else if (class == SCPI_CLASS_DIGIT) {
 			digit = character - '0';
 		} else if (first) {
@@ -1429,7 +1396,10 @@ static int32_t scpi_engine_scan_radix(scpi_port *input, scpi_token *token, int16
  * radix letter (0x27064). */
 static int32_t scpi_engine_scan_hash(scpi_port *input, scpi_token *token)
 {
-	enum { UPPER_CASE = 0xdf, HEXADECIMAL = 16, OCTAL = 8, BINARY = 2 };
+	static const uint8_t UPPER_CASE = 0xdf;
+	static const int16_t HEXADECIMAL = 16;
+	static const int16_t OCTAL = 8;
+	static const int16_t BINARY = 2;
 	int16_t character = scpi_engine_read(input);
 
 	if (scpi_engine_class(character) == SCPI_CLASS_DIGIT)
@@ -1449,7 +1419,10 @@ static int32_t scpi_engine_scan_hash(scpi_port *input, scpi_token *token)
  * its text, NUL-terminated, the room after it given back (0x27212). */
 static int32_t scpi_engine_scan_string(scpi_port *input, scpi_token_string *string, int16_t quote, int32_t *arena)
 {
-	char *text = (char *)arena_alloc(SCPI_STRING_SIZE, arena);
+	/* A string's most characters with its NUL, the room scpi_scan_token
+	 * takes for it from the arena. */
+	static const int16_t STRING_SIZE = 0xff;
+	char *text = (char *)arena_alloc(STRING_SIZE, arena);
 	int16_t count = 0;
 	int16_t character;
 
@@ -1467,7 +1440,7 @@ static int32_t scpi_engine_scan_string(scpi_port *input, scpi_token_string *stri
 			return SCPI_TOKEN_STRING;
 		}
 		text[count++] = character;
-	} while (count < SCPI_STRING_SIZE);
+	} while (count < STRING_SIZE);
 	/* Too long: the rest of it, to its closing quote. */
 	for (;;) {
 		character = scpi_engine_read(input);
@@ -1574,6 +1547,13 @@ void scpi_skip_to_terminator(scpi_port *input)
  * place and the digits dropped take from the written exponent. */
 int32_t scpi_scan_number(scpi_number *number, int32_t have_character, int32_t character, scpi_port *input)
 {
+	/* The most a number's exponent and shift take, a word's. */
+	static const int16_t WORD_LEAST = -0x8000;
+	static const int16_t WORD_MOST = 0x7fff;
+	/* The suffix's last index it writes: 12 in suffix's 12 bytes, so
+	 * that a 13th character lands in scale (structures.md, "The SCPI
+	 * lexer's token and port"). */
+	static const int16_t SUFFIX_LAST = 12;
 	int16_t next = (int16_t)have_character != 0 ? (int16_t)character : (int16_t)scpi_engine_read(input);
 	uint8_t class = scpi_engine_class(next);
 	int16_t digits = 0;
@@ -1586,7 +1566,7 @@ int32_t scpi_scan_number(scpi_number *number, int32_t have_character, int32_t ch
 		if (next == '0') {
 			shift -= point;
 			leading_zero = true;
-			if (shift == SCPI_WORD_LEAST)
+			if (shift == WORD_LEAST)
 				return SCPI_STATUS_TOO_MANY_DIGITS;
 		} else if (next == '.') {
 			if (point != 0)
@@ -1607,7 +1587,7 @@ int32_t scpi_scan_number(scpi_number *number, int32_t have_character, int32_t ch
 		if (class == SCPI_CLASS_DIGIT) {
 			number->digits[digits++] = next - '0';
 			shift -= point;
-			if (shift == SCPI_WORD_LEAST)
+			if (shift == WORD_LEAST)
 				return SCPI_STATUS_TOO_MANY_DIGITS;
 			if (digits == SCPI_NUMBER_DIGITS)
 				break;
@@ -1619,7 +1599,7 @@ int32_t scpi_scan_number(scpi_number *number, int32_t have_character, int32_t ch
 			while (digits < SCPI_NUMBER_DIGITS) {
 				number->digits[digits++] = 0;
 				shift--;
-				if (shift == SCPI_WORD_LEAST)
+				if (shift == WORD_LEAST)
 					return SCPI_STATUS_TOO_MANY_DIGITS;
 			}
 			goto exponent;
@@ -1632,7 +1612,7 @@ int32_t scpi_scan_number(scpi_number *number, int32_t have_character, int32_t ch
 		next = scpi_engine_read(input);
 		class = scpi_engine_class(next);
 		if (class == SCPI_CLASS_DIGIT) {
-			if (point == 0 && ++shift > SCPI_WORD_MOST - 1)
+			if (point == 0 && ++shift > WORD_MOST - 1)
 				return SCPI_STATUS_TOO_MANY_DIGITS;
 		} else if (class == SCPI_CLASS_POINT) {
 			if (point != 0)
@@ -1654,7 +1634,7 @@ exponent:
 		return error;
 	int32_t exponent = number->exponent + shift;
 
-	if (exponent > SCPI_WORD_MOST || exponent < SCPI_WORD_LEAST)
+	if (exponent > WORD_MOST || exponent < WORD_LEAST)
 		return SCPI_STATUS_EXPONENT_TOO_LARGE;
 	number->exponent = exponent;
 	do {
@@ -1667,7 +1647,7 @@ exponent:
 	if (class == SCPI_CLASS_SLASH || class == SCPI_CLASS_LETTER) {
 		while (class == SCPI_CLASS_MINUS || class == SCPI_CLASS_SLASH || class == SCPI_CLASS_DIGIT ||
 		       class == SCPI_CLASS_POINT || class == SCPI_CLASS_LETTER) {
-			if (length > SCPI_SUFFIX_LAST)
+			if (length > SUFFIX_LAST)
 				return SCPI_STATUS_SUFFIX_TOO_LONG;
 			number->suffix[length++] = scpi_char_upper(next);
 			next = scpi_engine_read(input);
@@ -1692,7 +1672,12 @@ invalid:
  * mantissa; an E with no digits after it starts the suffix (0x2766e). */
 int32_t scpi_scan_exponent(int32_t character, scpi_number *number, scpi_port *input)
 {
-	if ((int16_t)scpi_char_upper((int16_t)character) != SCPI_EXPONENT_LETTER) {
+	static const char EXPONENT_LETTER = 'E';
+	/* The most an exponent takes before another digit, a word's
+	 * tenth. */
+	static const int16_t EXPONENT_MOST_TENTHS = 0xccb;
+
+	if ((int16_t)scpi_char_upper((int16_t)character) != EXPONENT_LETTER) {
 		input->methods->unread(input);
 		number->exponent = 0;
 		return 0;
@@ -1702,7 +1687,7 @@ int32_t scpi_scan_exponent(int32_t character, scpi_number *number, scpi_port *in
 
 	if (class != SCPI_CLASS_DIGIT && class != SCPI_CLASS_PLUS && class != SCPI_CLASS_MINUS &&
 	    class != SCPI_CLASS_WHITE) {
-		number->suffix[number->suffix_length++] = SCPI_EXPONENT_LETTER;
+		number->suffix[number->suffix_length++] = EXPONENT_LETTER;
 		input->methods->unread(input);
 		number->exponent = 0;
 		return 0;
@@ -1724,7 +1709,7 @@ int32_t scpi_scan_exponent(int32_t character, scpi_number *number, scpi_port *in
 			next = scpi_engine_read(input);
 			if (scpi_engine_class(next) != SCPI_CLASS_DIGIT)
 				break;
-			if (exponent > SCPI_EXPONENT_MOST_TENTHS)
+			if (exponent > EXPONENT_MOST_TENTHS)
 				return SCPI_STATUS_EXPONENT_TOO_LARGE;
 			exponent = exponent * SCPI_NUMBER_BASE + next - '0';
 		}
@@ -1827,7 +1812,8 @@ int8_t scpi_multiplier_exponent(int32_t name)
  * one; 0 for none (0x27a2a). */
 int16_t scpi_match_suffix(int32_t length, char *suffix, scpi_unit *units, int16_t *scale)
 {
-	enum { MULTIPLIER_MOST = 2, LETTER_BITS = 8 };
+	static const int16_t MULTIPLIER_MOST = 2;
+	static const uint8_t LETTER_BITS = 8;
 	int16_t count = length;
 
 	for (int16_t index = 0; units[index].name != 0; index++) {
@@ -1963,7 +1949,8 @@ int32_t scpi_node_find_with_defaults(int32_t *path, int16_t *keyword, void *unus
  * character itself when it sorts before '0' (0x27caa to 0x27cb6). */
 int32_t scpi_node_find_numbered(int32_t *path, int16_t *keyword, void *unused)
 {
-	enum { NUMBERED = '*', SUFFIX_MOST = 0xffff };
+	static const char NUMBERED = '*';
+	static const int32_t SUFFIX_MOST = 0xffff;
 	scpi_engine_path *header = (scpi_engine_path *)path;
 	scpi_keyword *name = (scpi_keyword *)keyword;
 	int16_t length = name->length;
@@ -2201,11 +2188,13 @@ int16_t status_clear_bit(status_model *status, int32_t condition)
  * (0x2839c). */
 uint32_t condition_is_command_error(int32_t condition)
 {
+	static const int16_t ERROR_COMMAND_LEAST = -199;
+
 	if (condition >= 0)
 		return 0;
 	status_condition *entry = &status_negative_conditions[-condition];
 
-	return entry->kind == SCPI_CONDITION_ERROR && entry->register_index >= SCPI_ERROR_COMMAND_LEAST &&
+	return entry->kind == SCPI_CONDITION_ERROR && entry->register_index >= ERROR_COMMAND_LEAST &&
 	       entry->register_index <= SCPI_ERROR_COMMAND_GREATEST;
 }
 
@@ -2227,11 +2216,12 @@ void status_condition_bit_get(status_model *status, int32_t condition, uint32_t 
  * (0x2842c). */
 void status_register_set_enable(status_model *status, int32_t index, int32_t enable)
 {
+	static const uint8_t STATUS_BYTE_BITS = 0xff;
 	status_register *reg = status->registers[index];
 
 	if (reg->parent_bit == 0) {
 		status->output->methods->sre_set(status->output,
-						 (uint16_t)enable & (SCPI_STATUS_BYTE_BITS & ~SCPI_STATUS_REQUEST_SERVICE));
+						 (uint16_t)enable & (STATUS_BYTE_BITS & ~SCPI_STATUS_REQUEST_SERVICE));
 		return;
 	}
 	reg->enable = enable;
@@ -2320,11 +2310,16 @@ uint32_t error_queue_create(int32_t *queue, int32_t capacity, uint32_t status)
  * code from -1 to -99 (0x2863c to 0x28670). */
 static int32_t scpi_engine_error_condition(int16_t code)
 {
-	if (code <= SCPI_ERROR_QUERY_GREATEST)
+	/* The greatest code of each other class (0x2863c to 0x28674). */
+	static const int16_t ERROR_QUERY_GREATEST = -400;
+	static const int16_t ERROR_DEVICE_GREATEST = -300;
+	static const int16_t ERROR_EXECUTION_GREATEST = -200;
+
+	if (code <= ERROR_QUERY_GREATEST)
 		return SCPI_CONDITION_QUERY_ERROR;
-	if (code <= SCPI_ERROR_DEVICE_GREATEST || code > 0)
+	if (code <= ERROR_DEVICE_GREATEST || code > 0)
 		return SCPI_CONDITION_DEVICE_ERROR;
-	if (code <= SCPI_ERROR_EXECUTION_GREATEST)
+	if (code <= ERROR_EXECUTION_GREATEST)
 		return SCPI_CONDITION_EXECUTION_ERROR;
 	if (code <= SCPI_ERROR_COMMAND_GREATEST)
 		return SCPI_CONDITION_COMMAND_ERROR;
@@ -2336,6 +2331,9 @@ static int32_t scpi_engine_error_condition(int16_t code)
  * overflows, else 0 (0x285d4). */
 int16_t error_queue_push(int16_t *error_queue, int32_t code, uint32_t value)
 {
+	/* The error the queue's last free entry takes, "Queue overflow" in
+	 * scpi_error_messages (0x28610). */
+	static const int16_t ERROR_QUEUE_OVERFLOW = -350;
 	scpi_engine_error_queue *queue = (scpi_engine_error_queue *)error_queue;
 	status_model *status = queue->status;
 	int16_t error = code;
@@ -2348,7 +2346,7 @@ int16_t error_queue_push(int16_t *error_queue, int32_t code, uint32_t value)
 		full = 1;
 	} else {
 		if (room == 2) {
-			error = SCPI_ERROR_QUEUE_OVERFLOW;
+			error = ERROR_QUEUE_OVERFLOW;
 			value = 0;
 			full = 1;
 		}
@@ -2424,7 +2422,7 @@ void status_register_get_ntr(status_model *status, int32_t index, uint16_t *filt
  * (0x288ee). */
 char *error_message_lookup(int32_t code)
 {
-	enum { END = -1 };
+	static const int16_t END = -1;
 
 	for (scpi_error_message *entry = scpi_error_messages; entry->code != END; entry++) {
 		if (entry->code == (int16_t)code)
@@ -2610,35 +2608,14 @@ float scpi_numeric_get(scpi_numeric_param *param, int32_t index, int16_t which, 
 	return value.real;
 }
 
-/* console_read's error bits, the DUART's received break and framing
- * error, overrun and parity error (MC68681, SRA), and its own bit 0,
- * each with the condition it raises: -362 Framing error, -363 Input
- * buffer overrun, -361 Parity error and -360 Communication error (the
- * kind 3 entries 0x13 to 0x16 of status_conditions, 0x2f8aa). */
+/* The conditions console_read's errors raise: -362 Framing error, -363
+ * Input buffer overrun, -361 Parity error and -360 Communication error
+ * (the kind 3 entries 0x13 to 0x16 of status_conditions, 0x2f8aa). */
 enum {
-	SCPI_CONSOLE_BREAK_OR_FRAMING = 0xc0,
-	SCPI_CONSOLE_OVERRUN = 0x10,
-	SCPI_CONSOLE_PARITY = 0x20,
-	SCPI_CONSOLE_COMMUNICATION = 0x01,
 	SCPI_CONDITION_COMMUNICATION_ERROR = 0x13,
 	SCPI_CONDITION_PARITY_ERROR = 0x14,
 	SCPI_CONDITION_FRAMING_ERROR = 0x15,
 	SCPI_CONDITION_INPUT_OVERRUN = 0x16,
-};
-
-/* The SCPI task's stacks in words, supervisor and user (psos.md,
- * "spawn"). */
-enum {
-	SCPI_TASK_SUPERVISOR_STACK_WORDS = 0x300,
-	SCPI_TASK_USER_STACK_WORDS = 0x400,
-};
-
-/* The task event the pllc task signals when it has done a request
- * (structures.md, "The pllc task's SCPI requests"), and the ticks
- * send_x_retry pauses between tries for request_and_wait. */
-enum {
-	SCPI_PLLC_DONE_EVENT = 0x20,
-	SCPI_PLLC_RETRY_TICKS = 5,
 };
 
 /* Returns its argument; the LED and DOUGlas queries call it (0x29a18). */
@@ -2670,12 +2647,6 @@ float float_identity(float x)
 	return x;
 }
 
-/* The :ROBin queries' responses, two of each kind, which robin_store
- * fills, unnamed in the export: blocks at 0x102a26 and arrays of shorts
- * at 0x102a36 (0x29a74, 0x29a7a). */
-#define SCPI_ROBIN_BLOCKS ((scpi_engine_block *)0x102a26)
-#define SCPI_ROBIN_ARRAYS ((scpi_engine_array *)0x102a36)
-
 /* A :ROBin query's response format, by the jump table at 0x29a96: an
  * array of its shorts, or a block of their bytes. */
 enum {
@@ -2687,11 +2658,16 @@ enum {
  * index'th record of that kind (0x29a68). */
 void robin_store(char *response, int16_t *points, int32_t count, char format, uint8_t index)
 {
+	/* The :ROBin queries' responses, two of each kind, unnamed in the
+	 * export: blocks at 0x102a26 and arrays of shorts at 0x102a36
+	 * (0x29a74, 0x29a7a). */
+	static scpi_engine_block *const ROBIN_BLOCKS = (scpi_engine_block *)0x102a26;
+	static scpi_engine_array *const ROBIN_ARRAYS = (scpi_engine_array *)0x102a36;
 	scpi_engine_array_record *record = (scpi_engine_array_record *)response;
 
 	switch (format) {
 	case SCPI_ROBIN_BLOCK: {
-		scpi_engine_block *block = &SCPI_ROBIN_BLOCKS[index];
+		scpi_engine_block *block = &ROBIN_BLOCKS[index];
 
 		block->length = count * sizeof *points;
 		block->data = (char *)points;
@@ -2700,7 +2676,7 @@ void robin_store(char *response, int16_t *points, int32_t count, char format, ui
 		break;
 	}
 	case SCPI_ROBIN_SHORTS: {
-		scpi_engine_array *array = &SCPI_ROBIN_ARRAYS[index];
+		scpi_engine_array *array = &ROBIN_ARRAYS[index];
 
 		array->count = count;
 		array->values = points;
@@ -2791,6 +2767,13 @@ int32_t scpi_console_return_zero(void)
  * marked it (0x29bce). */
 int16_t console_port_read(void)
 {
+	/* console_read's error bits, the DUART's received break and framing
+	 * error, overrun and parity error (MC68681, SRA), and its own bit 0. */
+	static const uint8_t CONSOLE_BREAK_OR_FRAMING = 0xc0;
+	static const uint8_t CONSOLE_OVERRUN = 0x10;
+	static const uint8_t CONSOLE_PARITY = 0x20;
+	static const uint8_t CONSOLE_COMMUNICATION = 0x01;
+
 	if (scpi_input_repeat != 0) {
 		scpi_input_repeat = 0;
 		return scpi_last_input;
@@ -2814,13 +2797,13 @@ int16_t console_port_read(void)
 		scpi_input_next = scpi_input_line + 1;
 		scpi_input_line[0] = 0;
 		character = SCPI_PORT_END;
-		if (errors & SCPI_CONSOLE_BREAK_OR_FRAMING)
+		if (errors & CONSOLE_BREAK_OR_FRAMING)
 			status_report(SCPI_CONDITION_FRAMING_ERROR);
-		if (errors & SCPI_CONSOLE_OVERRUN)
+		if (errors & CONSOLE_OVERRUN)
 			status_report(SCPI_CONDITION_INPUT_OVERRUN);
-		if (errors & SCPI_CONSOLE_PARITY)
+		if (errors & CONSOLE_PARITY)
 			status_report(SCPI_CONDITION_PARITY_ERROR);
-		if (errors & SCPI_CONSOLE_COMMUNICATION)
+		if (errors & CONSOLE_COMMUNICATION)
 			status_report(SCPI_CONDITION_COMMUNICATION_ERROR);
 	}
 	scpi_last_input = character;
@@ -2914,11 +2897,16 @@ void send_x_retry(uint32_t exchange, void *message, uint32_t ticks)
  * image passes them. */
 void request_and_wait(uint32_t exchange, void *message)
 {
+	/* The task event the pllc task signals when it has done a request
+	 * (structures.md, "The pllc task's SCPI requests"), and the ticks
+	 * send_x_retry pauses between tries. */
+	static const uint32_t PLLC_DONE_EVENT = 0x20;
+	static const uint32_t PLLC_RETRY_TICKS = 5;
 	uint32_t events = 0;
 
-	psos_get_v(SCPI_PLLC_DONE_EVENT, 1, &events);
-	send_x_retry(exchange, message, SCPI_PLLC_RETRY_TICKS);
-	psos_wait_v(SCPI_PLLC_DONE_EVENT, 0, 0, &events);
+	psos_get_v(PLLC_DONE_EVENT, 1, &events);
+	send_x_retry(exchange, message, PLLC_RETRY_TICKS);
+	psos_wait_v(PLLC_DONE_EVENT, 0, 0, &events);
 }
 
 /* pllc_request_a to _e: a pllc_request to pllc_exchange, by
@@ -2997,12 +2985,16 @@ void pllc_request_e(void *param, uint8_t index, uint32_t *values, uint8_t source
  * else the kernel's error (0x29fce). */
 uint32_t scpi_task_create(uint32_t priority)
 {
-	enum { ERROR_BITS = 0xff };
+	static const uint32_t ERROR_BITS = 0xff;
+	/* The SCPI task's stacks in words, supervisor and user (psos.md,
+	 * "spawn"). */
+	static const uint32_t TASK_SUPERVISOR_STACK_WORDS = 0x300;
+	static const uint32_t TASK_USER_STACK_WORDS = 0x400;
 	uint32_t existing;
 
 	if ((uint8_t)psos_ident("scpi", &existing, 0) == 0)
 		return -1;
-	uint32_t error = psos_create("scpi", 0, priority, SCPI_TASK_SUPERVISOR_STACK_WORDS, SCPI_TASK_USER_STACK_WORDS, 0,
+	uint32_t error = psos_create("scpi", 0, priority, TASK_SUPERVISOR_STACK_WORDS, TASK_USER_STACK_WORDS, 0,
 				     &task_scpi) & ERROR_BITS;
 
 	if (error != 0)

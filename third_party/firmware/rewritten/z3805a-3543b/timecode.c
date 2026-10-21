@@ -9,31 +9,19 @@
  * declares are in scope; each function here keeps its generated
  * prototype. */
 
+/* tcode_format: T1, the GPS seconds; T2 with a test prefix; T2. */
 enum {
-	/* tcode_format: T1, the GPS seconds; T2 with a test prefix; T2. */
 	TIMECODE_T1 = 0,
 	TIMECODE_T2_TEST = 1,
 	TIMECODE_T2 = 2,
-	/* tfom_code's t, 0 to 9: tfom_table_index's exponent moved by 9. */
-	TIMECODE_TFOM_BIAS = 9,
-	TIMECODE_TFOM_MAX = 9,
-	/* The delay after the 1PPS capture, in GPT ticks, at which
-	 * timecode_update and es_build send their messages (0x13eca,
-	 * 0x13c3c). */
-	TIMECODE_DELAY = 0x28f5,
-	TIMECODE_CHECKSUM_SIZE = 3,
-
-	/* The ES message's status bits. */
-	TIMECODE_ES_TIME_VALID = 0x01,
-	TIMECODE_ES_LEAP_ADD = 0x02,
-	TIMECODE_ES_LEAP_TODAY = 0x04,
-	TIMECODE_ES_HOLDOVER = 0x10,
-	/* The ES message as digits, one a byte, and as ASCII. */
-	TIMECODE_ES_DIGITS_LENGTH = 16,
-	TIMECODE_ES_ASCII_LENGTH = 18,
-
-	TIMECODE_TIMER_WRAP = 0x10000,
 };
+
+/* The delay after the 1PPS capture, in GPT ticks, at which
+ * timecode_update and es_build send their messages (0x13eca,
+ * 0x13c3c). */
+static const uint32_t TIMECODE_DELAY = 0x28f5;
+/* An array size, so #define. */
+#define TIMECODE_CHECKSUM_SIZE 3
 
 /* The digits of a byte's tens and ones. */
 static uint8_t timecode_tens(uint32_t value)
@@ -75,12 +63,15 @@ char tcode_request(uint8_t format)
  * and kept to 0 to 9 (0x13a48). */
 int16_t tfom_code(uint32_t tfom)
 {
-	int16_t code = tfom_table_index(tfom) + TIMECODE_TFOM_BIAS;
+	/* t, 0 to 9: tfom_table_index's exponent moved by 9. */
+	static const int16_t TFOM_BIAS = 9;
+	static const int16_t TFOM_MAX = 9;
+	int16_t code = tfom_table_index(tfom) + TFOM_BIAS;
 
 	if (code < 0)
 		return 0;
-	if (code > TIMECODE_TFOM_MAX)
-		return TIMECODE_TFOM_MAX;
+	if (code > TFOM_MAX)
+		return TFOM_MAX;
 	return code;
 }
 
@@ -90,21 +81,29 @@ int16_t tfom_code(uint32_t tfom)
  * tens are taken of it as unsigned, as the image takes them (0x13a6a). */
 void es_build(uint32_t date, uint32_t time)
 {
+	/* The ES message's status bits. */
+	static const uint16_t ES_TIME_VALID = 0x01;
+	static const uint16_t ES_LEAP_ADD = 0x02;
+	static const uint16_t ES_LEAP_TODAY = 0x04;
+	static const uint16_t ES_HOLDOVER = 0x10;
+	/* The ES message as digits, one a byte, and as ASCII. */
+	static const uint8_t ES_DIGITS_LENGTH = 16;
+	static const uint8_t ES_ASCII_LENGTH = 18;
 	int16_t offset;
 
 	es_length = 0;
 	if (!get_gps_utc_offset(&offset))
 		offset = 0;
 	uint16_t day = day_of_year(date);
-	uint16_t status = time_valid() == 0 ? TIMECODE_ES_TIME_VALID : 0;
+	uint16_t status = time_valid() == 0 ? ES_TIME_VALID : 0;
 
 	if (nv_settings.leap_pending && nv_settings.leap_date == date) {
-		status |= TIMECODE_ES_LEAP_TODAY;
+		status |= ES_LEAP_TODAY;
 		if (nv_settings.leap_minute_length > CLOCK_SECONDS_PER_MINUTE)
-			status |= TIMECODE_ES_LEAP_ADD;
+			status |= ES_LEAP_ADD;
 	}
 	if (pll.stage == PLL_STAGE_HOLDOVER || pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)
-		status |= TIMECODE_ES_HOLDOVER;
+		status |= ES_HOLDOVER;
 	uint8_t hour = time >> 16;
 	uint8_t minute = time >> 8;
 	uint8_t second = time;
@@ -130,12 +129,12 @@ void es_build(uint32_t date, uint32_t time)
 		es_message[13] = status;
 		es_message[14] = status_summary;
 		es_message[15] = '\r';
-		es_length = TIMECODE_ES_DIGITS_LENGTH;
+		es_length = ES_DIGITS_LENGTH;
 	} else {
 		sprintf(es_message, "%02d%03d%02d%02d%02d%02d%02X%02X\r", (uint32_t)year % 100,
 			(uint32_t)day, (uint32_t)hour, (uint32_t)minute, (uint32_t)second,
 			(int32_t)offset, (uint32_t)status, (uint32_t)status_summary);
-		es_length = TIMECODE_ES_ASCII_LENGTH;
+		es_length = ES_ASCII_LENGTH;
 	}
 	es_schedule(TIMECODE_DELAY);
 }
@@ -233,10 +232,11 @@ void timecode_init(void)
  * capture across its wrap, has reached it. */
 static bool timecode_compare_passed(uint32_t compare)
 {
+	static const uint32_t TIMER_WRAP = 0x10000;
 	uint32_t now = gpt.tcnt;
 
 	if (now < gpt.tic[0])
-		now += TIMECODE_TIMER_WRAP;
+		now += TIMER_WRAP;
 	return compare <= now;
 }
 

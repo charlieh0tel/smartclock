@@ -5,8 +5,8 @@
  * this file after its own, so the types and prototypes it declares are
  * in scope; each function here keeps its generated prototype.  The
  * EFC's clamp state is docs/firmware/structures.md's "The health
- * monitor's supplies and EFC".  monitors.c uses the EFC's bounds and
- * happenings defined here. */
+ * monitor's supplies and EFC".  monitors.c uses the EFC's happenings
+ * defined here. */
 
 /* The QSPI's devices, by the minor number of I/O device 1, the QSPI
  * (qspi_queue_setup's cases). */
@@ -16,23 +16,20 @@ enum {
 	ADC_QSPI_EFC = 7,
 };
 
-/* The ADC's command word, as adc_read builds it (0x1f2ce), and its
- * reply, the reading in bits 9 to 2. */
-enum {
-	ADC_COMMAND = 0xc000,
-	ADC_CHANNEL_SHIFT = 11,
-	ADC_REPLY_SHIFT = 2,
-};
-
 /* Reads an ADC channel through the QSPI (0x1f2c0). */
 int32_t adc_read(adc_channel channel)
 {
-	uint16_t command = channel << ADC_CHANNEL_SHIFT | ADC_COMMAND;
+	/* The ADC's command word, as adc_read builds it (0x1f2ce), and its
+	 * reply, the reading in bits 9 to 2. */
+	static const uint16_t COMMAND = 0xc000;
+	static const uint16_t CHANNEL_SHIFT = 11;
+	static const uint16_t REPLY_SHIFT = 2;
+	uint16_t command = channel << CHANNEL_SHIFT | COMMAND;
 	uint16_t reply;
 	qspi_buffers buffers = { &command, &reply };
 
 	qspi_read(ADC_QSPI_CONVERTER, &buffers, 1);
-	return reply >> ADC_REPLY_SHIFT;
+	return reply >> REPLY_SHIFT;
 }
 
 /* A channel's reading times a scale, of its low byte. */
@@ -52,26 +49,24 @@ static float adc_against_5v(adc_channel channel, float scale, float scale_5v)
 	return float_add(value, float_multiply(unsigned_to_float(reading_5v), scale_5v));
 }
 
-/* The ADC's scales, the image's own constants. */
-#define ADC_TEMPERATURE_SCALE 0.273f
-#define ADC_5V_SCALE 0.0242f
-#define ADC_OVEN_SCALE 0.0743f
-#define ADC_OVEN_5V_SCALE -0.0472f
-#define ADC_PLUS_15V_SCALE 0.0763f
-#define ADC_MINUS_15V_SCALE 0.0438f
-#define ADC_MINUS_15V_5V_SCALE -0.084f
-#define ADC_CURRENT_FULL_SCALE 250.0f
-#define ADC_FULL_SCALE 255.0f
+/* The ADC's scales, the image's own constants; the ovens' here, the
+ * others in the functions that read them. */
+static const float ADC_OVEN_SCALE = 0.0743f;
+static const float ADC_OVEN_5V_SCALE = -0.0472f;
 
 /* The temperature, "Temperature: %f" (0x1f308). */
 float read_adc_temp(void)
 {
-	return adc_scaled(ADC_TEMPERATURE, ADC_TEMPERATURE_SCALE);
+	static const float TEMPERATURE_SCALE = 0.273f;
+
+	return adc_scaled(ADC_TEMPERATURE, TEMPERATURE_SCALE);
 }
 
 /* The 5 V supply, "5V reading: %f" (0x1f32e). */
 float read_adc_5v(void)
 {
+	static const float ADC_5V_SCALE = 0.0242f;
+
 	return adc_scaled(ADC_5V, ADC_5V_SCALE);
 }
 
@@ -91,21 +86,29 @@ float read_adc_oven(void)
 /* The +15 V supply, "+15V reading: %f" (0x1f406). */
 float read_adc_p15v(void)
 {
-	return adc_scaled(ADC_PLUS_15V, ADC_PLUS_15V_SCALE);
+	static const float PLUS_15V_SCALE = 0.0763f;
+
+	return adc_scaled(ADC_PLUS_15V, PLUS_15V_SCALE);
 }
 
 /* The -15 V supply, "-15V reading: %f" (0x1f42e). */
 float read_adc_m15v(void)
 {
-	return adc_against_5v(ADC_MINUS_15V, ADC_MINUS_15V_SCALE,
-				      ADC_MINUS_15V_5V_SCALE);
+	static const float MINUS_15V_SCALE = 0.0438f;
+	static const float MINUS_15V_5V_SCALE = -0.084f;
+
+	return adc_against_5v(ADC_MINUS_15V, MINUS_15V_SCALE,
+				      MINUS_15V_5V_SCALE);
 }
 
 /* Channel 3's current, 250/255 a count. */
 static float adc_current(void)
 {
-	return float_divide(adc_scaled(ADC_CURRENT, ADC_CURRENT_FULL_SCALE),
-			    ADC_FULL_SCALE);
+	static const float CURRENT_FULL_SCALE = 250.0f;
+	static const float FULL_SCALE = 255.0f;
+
+	return float_divide(adc_scaled(ADC_CURRENT, CURRENT_FULL_SCALE),
+			    FULL_SCALE);
 }
 
 /* :DIAG:ROSC:CURR?'s reading, channel 3's current (0x1f486). */
@@ -123,19 +126,17 @@ float read_adc_ant_curr(void)
 
 /* The hex DAC: six 6-bit channels, two to each of hdac_shadow's three
  * words, sent to QSPI device 2. */
-enum {
-	ADC_HDAC_CHANNELS = 6,
-	ADC_HDAC_BITS = 6,
-	ADC_HDAC_MASK = 0x3f,
-	ADC_HDAC_WORDS = 3,
-	ADC_HDAC_DEFAULT_SLOT = 3,	/* a channel out of range */
-};
+static const uint8_t ADC_HDAC_CHANNELS = 6;
+static const uint8_t ADC_HDAC_BITS = 6;
+static const uint8_t ADC_HDAC_MASK = 0x3f;
+static const uint8_t ADC_HDAC_WORDS = 3;
 
 /* The hdac_write word's: a value into channel 1 to 6, slot 6 - channel,
  * or slot 3 for any other (0x1f4ee). */
 void hdac_write(uint8_t value, uint8_t channel)
 {
-	uint8_t slot = ADC_HDAC_DEFAULT_SLOT;
+	static const uint8_t HDAC_DEFAULT_SLOT = 3;	/* a channel out of range */
+	uint8_t slot = HDAC_DEFAULT_SLOT;
 
 	if (channel >= 1 && channel <= ADC_HDAC_CHANNELS)
 		slot = ADC_HDAC_CHANNELS - channel;
@@ -193,30 +194,22 @@ void efc_write(uint16_t value)
 	efc_strobe = 0;
 }
 
-/* The EFC's range: 20 bits, its DAC taking the top 16, and the clamps
- * and near-end bounds the health monitor keeps it to. */
-enum {
-	ADC_EFC_MOST = 0xffff0,
-	ADC_EFC_DAC_SHIFT = 4,
-	ADC_EFC_NEAR_END_CHECKS = 5,
-};
-#define ADC_EFC_MOST_FLOAT 1048560.0f
-#define ADC_EFC_NEAR_LOW 52428.0f	/* 5% of 2^20 */
-#define ADC_EFC_NEAR_HIGH 996132.0f	/* 95% */
-
 /* Writes pll.efc, rounded, plus random_dither, clamped to 0 to
  * 0xffff0, to the EFC's DAC (0x2421c). */
 void efc_write_dithered(void)
 {
+	/* The EFC's range: 20 bits, its DAC taking the top 16. */
+	static const int32_t EFC_MOST = 0xffff0;
+	static const int32_t EFC_DAC_SHIFT = 4;
 	int32_t efc = double_round_to_long(float_to_double(pll.efc));
 
-	if (efc >= 0 && efc <= ADC_EFC_MOST)
+	if (efc >= 0 && efc <= EFC_MOST)
 		efc += random_dither();
 	if (efc < 0)
 		efc = 0;
-	else if (efc > ADC_EFC_MOST)
-		efc = ADC_EFC_MOST;
-	efc_write(efc >> ADC_EFC_DAC_SHIFT);
+	else if (efc > EFC_MOST)
+		efc = EFC_MOST;
+	efc_write(efc >> EFC_DAC_SHIFT);
 }
 
 /* The status happenings efc_clamp and hmon_check_efc report. */
@@ -231,10 +224,13 @@ enum {
  * value back in range (0x2426e). */
 float efc_clamp(float efc)
 {
+	/* The EFC's clamp, the top of its 20 bits. */
+	static const float EFC_MOST = 1048560.0f;
+
 	if (float_compare(0.0f, efc) > 0) {
 		efc = 0.0f;
-	} else if (float_compare(efc, ADC_EFC_MOST_FLOAT) > 0) {
-		efc = ADC_EFC_MOST_FLOAT;
+	} else if (float_compare(efc, EFC_MOST) > 0) {
+		efc = EFC_MOST;
 	} else {
 		if (efc_range.clamped) {
 			status_happening(ADC_HAPPENING_EFC_IN_RANGE);

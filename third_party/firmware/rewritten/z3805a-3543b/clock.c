@@ -14,52 +14,35 @@
 
 #include <stddef.h>
 
-enum {
-	CLOCK_SECONDS_PER_MINUTE = 60,
-	CLOCK_MINUTES_PER_HOUR = 60,
-	CLOCK_HOURS_PER_DAY = 24,
-	CLOCK_SECONDS_PER_HOUR = CLOCK_SECONDS_PER_MINUTE * CLOCK_MINUTES_PER_HOUR,
-	CLOCK_SECONDS_PER_DAY = CLOCK_SECONDS_PER_HOUR * CLOCK_HOURS_PER_DAY,
-	CLOCK_LAST_HOUR = CLOCK_HOURS_PER_DAY - 1,
-	CLOCK_LAST_MINUTE = CLOCK_MINUTES_PER_HOUR - 1,
-	CLOCK_FIELD_BITS = 8,
-	CLOCK_FIELD_MASK = 0xff,
-	CLOCK_HIGH_SHIFT = 2 * CLOCK_FIELD_BITS,
+/* A const object is not a constant expression in C17, so the derived
+ * constants spell out their values. */
+static const uint8_t CLOCK_SECONDS_PER_MINUTE = 60;
+static const uint8_t CLOCK_MINUTES_PER_HOUR = 60;
+static const uint8_t CLOCK_HOURS_PER_DAY = 24;
+static const int32_t CLOCK_SECONDS_PER_DAY = 60 * 60 * 24;
+static const uint8_t CLOCK_LAST_HOUR = 24 - 1;
+static const uint8_t CLOCK_LAST_MINUTE = 60 - 1;
+static const uint8_t CLOCK_FIELD_BITS = 8;
+static const uint8_t CLOCK_FIELD_MASK = 0xff;
+static const uint8_t CLOCK_HIGH_SHIFT = 2 * 8;
 
-	CLOCK_MONTHS_PER_YEAR = 12,
-	CLOCK_FEBRUARY = 2,
-	CLOCK_MARCH = 3,
-	CLOCK_JUNE = 6,
-	CLOCK_SEPTEMBER = 9,
-	CLOCK_DECEMBER = 12,
-	CLOCK_FEBRUARY_DAYS = 28,
-	CLOCK_DAYS_PER_YEAR = 365,
-	CLOCK_DAYS_PER_4_YEARS = 4 * CLOCK_DAYS_PER_YEAR + 1,
-	CLOCK_YEARS_PER_LEAP = 4,
+static const uint8_t CLOCK_MONTHS_PER_YEAR = 12;
+static const uint8_t CLOCK_FEBRUARY = 2;
+static const uint8_t CLOCK_MARCH = 3;
+static const uint8_t CLOCK_JUNE = 6;
+static const uint8_t CLOCK_SEPTEMBER = 9;
+static const uint8_t CLOCK_DECEMBER = 12;
+static const uint16_t CLOCK_DAYS_PER_YEAR = 365;
+static const uint8_t CLOCK_YEARS_PER_LEAP = 4;
 
-	/* The Modified Julian Days of 1899-12-31 and 1900-12-31; days_to_date
-	 * counts its years from the second and makes no date before
-	 * 1901-01-01. */
-	CLOCK_MJD_1899_12_31 = 15019,
-	CLOCK_MJD_1900_12_31 = 15384,
-	CLOCK_YEAR_1900 = 1900,
-	CLOCK_YEAR_1901 = 1901,
-	CLOCK_YEAR_1904 = 1904,
-	/* The GPS epoch, 1980-01-06, and the first year whose seconds
-	 * gps_seconds counts. */
-	CLOCK_GPS_EPOCH_YEAR = 1980,
-	CLOCK_GPS_EPOCH_DAY = 6,
+/* The Modified Julian Day of 1899-12-31. */
+static const uint16_t CLOCK_MJD_1899_12_31 = 15019;
+static const uint16_t CLOCK_YEAR_1900 = 1900;
+static const uint16_t CLOCK_YEAR_1904 = 1904;
 
-	/* A minute 59 or 61 seconds long, nv_settings.leap_minute_length. */
-	CLOCK_LEAP_MINUTE_SHORT = CLOCK_SECONDS_PER_MINUTE - 1,
-	CLOCK_LEAP_MINUTE_LONG = CLOCK_SECONDS_PER_MINUTE + 1,
-	/* leap_second_near is true past 23:59:45. */
-	CLOCK_LEAP_NEAR_SECOND = 45,
-
-	/* leap_event_schedule_utc's event comes this many seconds before the
-	 * offset steps (0x1070a). */
-	CLOCK_LEAP_EVENT_LEAD = 5,
-};
+/* A minute 59 or 61 seconds long, nv_settings.leap_minute_length. */
+static const uint8_t CLOCK_LEAP_MINUTE_SHORT = 60 - 1;
+static const uint8_t CLOCK_LEAP_MINUTE_LONG = 60 + 1;
 
 /* A time of day as seconds since midnight (0x1111e). */
 int32_t hms_to_seconds(uint32_t time)
@@ -170,12 +153,18 @@ int16_t day_of_year(uint32_t date)
  * early. */
 uint32_t days_to_date(uint32_t days)
 {
-	if (days <= CLOCK_MJD_1900_12_31 + 1)
-		days = CLOCK_MJD_1900_12_31 + 1;
-	uint32_t since = days - CLOCK_MJD_1900_12_31;
-	uint16_t years = since * CLOCK_YEARS_PER_LEAP / CLOCK_DAYS_PER_4_YEARS;
+	/* The Modified Julian Day of 1900-12-31; days_to_date counts its
+	 * years from it and makes no date before 1901-01-01. */
+	static const uint16_t MJD_1900_12_31 = 15384;
+	static const uint16_t YEAR_1901 = 1901;
+	static const uint16_t DAYS_PER_4_YEARS = 4 * 365 + 1;
+
+	if (days <= MJD_1900_12_31 + 1)
+		days = MJD_1900_12_31 + 1;
+	uint32_t since = days - MJD_1900_12_31;
+	uint16_t years = since * CLOCK_YEARS_PER_LEAP / DAYS_PER_4_YEARS;
 	uint32_t day = since - (years / CLOCK_YEARS_PER_LEAP + (uint32_t)years * CLOCK_DAYS_PER_YEAR);
-	uint16_t year = years + CLOCK_YEAR_1901;
+	uint16_t year = years + YEAR_1901;
 	bool leap = is_leap_year(year);
 	uint8_t month = 1;
 
@@ -208,8 +197,10 @@ int32_t date_to_mjd(uint32_t date)
  * to 12 (0x11032). */
 uint8_t days_in_month(uint16_t year, uint8_t month)
 {
+	static const uint8_t FEBRUARY_DAYS = 28;
+
 	if (month == CLOCK_FEBRUARY)
-		return is_leap_year(year) ? CLOCK_FEBRUARY_DAYS + 1 : CLOCK_FEBRUARY_DAYS;
+		return is_leap_year(year) ? FEBRUARY_DAYS + 1 : FEBRUARY_DAYS;
 	if (month == 0 || month > CLOCK_MONTHS_PER_YEAR)
 		return month_lengths[0];
 	return month_lengths[month - 1];
@@ -256,8 +247,9 @@ uint32_t oncore_date_pack(oncore_date_fields fields)
  * byte (0x11186). */
 uint32_t seconds_to_hms(uint32_t seconds)
 {
-	uint8_t hour = seconds / CLOCK_SECONDS_PER_HOUR;
-	uint32_t rest = seconds % CLOCK_SECONDS_PER_HOUR;
+	static const uint16_t SECONDS_PER_HOUR = 60 * 60;
+	uint8_t hour = seconds / SECONDS_PER_HOUR;
+	uint32_t rest = seconds % SECONDS_PER_HOUR;
 
 	return clock_pack(hour, rest / CLOCK_SECONDS_PER_MINUTE, rest % CLOCK_SECONDS_PER_MINUTE);
 }
@@ -266,13 +258,17 @@ uint32_t seconds_to_hms(uint32_t seconds)
  * 1980; the T1 time code's #H%08X (0x111cc). */
 int32_t gps_seconds(uint32_t date, uint32_t time)
 {
+	/* The GPS epoch, 1980-01-06, and the first year whose seconds
+	 * gps_seconds counts. */
+	static const uint16_t GPS_EPOCH_YEAR = 1980;
+	static const uint8_t GPS_EPOCH_DAY = 6;
 	uint16_t year = clock_year(date);
 
-	if (year < CLOCK_GPS_EPOCH_YEAR)
+	if (year < GPS_EPOCH_YEAR)
 		return 0;
 	int32_t days = clock_days_since(year, clock_middle(date), clock_low(date),
-					CLOCK_GPS_EPOCH_YEAR, CLOCK_GPS_EPOCH_YEAR) -
-		       CLOCK_GPS_EPOCH_DAY;
+					GPS_EPOCH_YEAR, GPS_EPOCH_YEAR) -
+		       GPS_EPOCH_DAY;
 
 	return days * CLOCK_SECONDS_PER_DAY + hms_to_seconds(time);
 }
@@ -453,6 +449,8 @@ uint32_t leap_opportunity_date(void)
  * 23:59:45 on the last day of a quarter (0x11680). */
 uint8_t leap_second_near(void)
 {
+	/* leap_second_near is true past 23:59:45. */
+	static const uint8_t LEAP_NEAR_SECOND = 45;
 	uint32_t date;
 	time_of_day time;
 
@@ -467,7 +465,7 @@ uint8_t leap_second_near(void)
 			   month_day == (CLOCK_DECEMBER << CLOCK_FIELD_BITS | 31);
 
 	return quarter_end && time.hour == CLOCK_LAST_HOUR && time.minute == CLOCK_LAST_MINUTE &&
-	       time.second > CLOCK_LEAP_NEAR_SECOND;
+	       time.second > LEAP_NEAR_SECOND;
 }
 
 /* nv_settings.time_zone, hours and minutes, as a change to a date and time,
@@ -541,6 +539,9 @@ klok_entry *leap_event_schedule_gps(uint32_t date, int32_t minute_length)
  * (0x10656). */
 klok_entry *leap_event_schedule_utc(uint32_t date, int32_t minute_length)
 {
+	/* The event comes this many seconds before the offset steps
+	 * (0x1070a). */
+	static const uint8_t LEAP_EVENT_LEAD = 5;
 	klok_entry event = leap_event_utc_template;
 	packed_datetime when = { .time = { .hour = CLOCK_HOURS_PER_DAY }, .date = date };
 	int16_t offset;
@@ -562,7 +563,7 @@ klok_entry *leap_event_schedule_utc(uint32_t date, int32_t minute_length)
 	else
 		datetime_subtract(&change, &when);
 	offset_step_time = clock_time_bits(when.time);
-	change = (packed_datetime){ .time = { .second = CLOCK_LEAP_EVENT_LEAD }, .date = 0 };
+	change = (packed_datetime){ .time = { .second = LEAP_EVENT_LEAD }, .date = 0 };
 	datetime_subtract(&change, &when);
 	event.time = clock_time_bits(when.time);
 	event.date = when.date;

@@ -7,12 +7,10 @@
  * mc68331.h's. */
 
 /* The QSPI's I/O device, 1 (qspi_queue_setup's cases). */
-enum {
-	QSPI_DEVICE = 0x100,
-};
+static const uint32_t QSPI_DEVICE = 0x100;
 
 /* The QSPI lock's ring of waiting tasks wraps at 16. */
-#define QSPI_WAITING_MASK 0xf
+static const uint8_t QSPI_WAITING_MASK = 0xf;
 
 /* Hands the QSPI lock to the next task waiting, or frees it. */
 static void qspi_hand_on(void)

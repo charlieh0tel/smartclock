@@ -11,34 +11,27 @@
  * defined here, which spool.c's fatal_error uses too. */
 
 /* crash_message's size, which fatal_error fills and log_reset_cause
- * reads. */
-enum {
-	MONITORS_CRASH_MESSAGE_SIZE = 80,
-};
-
-/* The health monitor's averages: ten samples, and the oscillator
- * current's filter, 0.9 of the old value and 0.1 of the new, which goes
- * to 0 below 1e-20. */
-#define MONITORS_SAMPLES 10
-#define MONITORS_FILTER_KEEP 0.9f
-#define MONITORS_FILTER_TAKE 0.1f
-#define MONITORS_FILTER_FLOOR 1e-20f
+ * reads: an array size, so #define. */
+#define MONITORS_CRASH_MESSAGE_SIZE 80
 
 /* Puts a reading in a monitor's ring of ten and, once ten are in, keeps
  * their mean (0x23c5a). */
 void monitor_average_add(adc_monitor *monitor, float reading)
 {
+	/* The health monitor's averages: ten samples. */
+	static const uint32_t SAMPLES = 10;
+
 	monitor->samples[monitor->sample_index++] = reading;
-	if (monitor->sample_index >= MONITORS_SAMPLES) {
+	if (monitor->sample_index >= SAMPLES) {
 		monitor->sample_index = 0;
 		monitor->valid = 1;
 	}
 	if (monitor->valid) {
 		float sum = 0.0f;
 
-		for (uint32_t i = 0; i < MONITORS_SAMPLES; i++)
+		for (uint32_t i = 0; i < SAMPLES; i++)
 			sum = float_add(sum, monitor->samples[i]);
-		monitor->value = float_divide(sum, MONITORS_SAMPLES);
+		monitor->value = float_divide(sum, SAMPLES);
 	}
 }
 
@@ -46,14 +39,20 @@ void monitor_average_add(adc_monitor *monitor, float reading)
  * (0x23cc4). */
 void monitor_filter_add(adc_monitor *monitor, float reading)
 {
+	/* The oscillator current's filter, 0.9 of the old value and 0.1 of
+	 * the new, which goes to 0 below 1e-20. */
+	static const float FILTER_KEEP = 0.9f;
+	static const float FILTER_TAKE = 0.1f;
+	static const float FILTER_FLOOR = 1e-20f;
+
 	if (!monitor->valid) {
 		monitor->valid = 1;
 		monitor->value = reading;
 		return;
 	}
-	monitor->value = float_add(float_multiply(monitor->value, MONITORS_FILTER_KEEP),
-				   float_multiply(reading, MONITORS_FILTER_TAKE));
-	if (float_compare(MONITORS_FILTER_FLOOR, monitor->value) > 0)
+	monitor->value = float_add(float_multiply(monitor->value, FILTER_KEEP),
+				   float_multiply(reading, FILTER_TAKE));
+	if (float_compare(FILTER_FLOOR, monitor->value) > 0)
 		monitor->value = 0.0f;
 }
 
@@ -90,18 +89,6 @@ enum {
 	MONITORS_STEP_ANTENNA_CURRENT,
 	MONITORS_STEPS,
 };
-
-/* The supplies' tolerances and the readings outside one that count as
- * leaving it. */
-#define MONITORS_TOLERANCE_LIMIT 5
-#define MONITORS_5V_LEAST 4.5f
-#define MONITORS_5V_MOST 5.5f
-#define MONITORS_PLUS_15V_LEAST 14.0f
-#define MONITORS_PLUS_15V_MOST 16.0f
-#define MONITORS_MINUS_15V_LEAST -16.0f
-#define MONITORS_MINUS_15V_MOST -14.0f
-#define MONITORS_DOUBLE_OVEN_LEAST -1e37f
-#define MONITORS_DOUBLE_OVEN_MOST 6.8f
 
 /* A supply whose tolerance hmon_check_supplies reports: its name, as
  * the messages give it, and the status happenings for leaving and
@@ -162,6 +149,17 @@ static const monitors_supply monitors_minus_15v = {
  * steps on (0x23d80). */
 void hmon_check_supplies(void)
 {
+	/* The supplies' tolerances and the readings outside one that count
+	 * as leaving it. */
+	static const uint8_t TOLERANCE_LIMIT = 5;
+	static const float MONITORS_5V_LEAST = 4.5f;
+	static const float MONITORS_5V_MOST = 5.5f;
+	static const float PLUS_15V_LEAST = 14.0f;
+	static const float PLUS_15V_MOST = 16.0f;
+	static const float MINUS_15V_LEAST = -16.0f;
+	static const float MINUS_15V_MOST = -14.0f;
+	static const float DOUBLE_OVEN_LEAST = -1e37f;
+	static const float DOUBLE_OVEN_MOST = 6.8f;
 	adc_monitor *monitor = &adc_monitors[hmon_supply_step];
 
 	switch (hmon_supply_step) {
@@ -173,16 +171,16 @@ void hmon_check_supplies(void)
 		/* the double oven's tolerance only while the outer oven is on */
 		monitors_supply_report(&monitors_double_oven,
 				      outer_oven_enabled &&
-				      monitor_out_of_range(monitor, MONITORS_DOUBLE_OVEN_LEAST,
-							   MONITORS_DOUBLE_OVEN_MOST,
-							   MONITORS_TOLERANCE_LIMIT));
+				      monitor_out_of_range(monitor, DOUBLE_OVEN_LEAST,
+							   DOUBLE_OVEN_MOST,
+							   TOLERANCE_LIMIT));
 		break;
 	case MONITORS_STEP_PLUS_15V:
 		monitor_average_add(monitor, read_adc_p15v());
 		monitors_supply_report(&monitors_plus_15v,
-				      monitor_out_of_range(monitor, MONITORS_PLUS_15V_LEAST,
-							   MONITORS_PLUS_15V_MOST,
-							   MONITORS_TOLERANCE_LIMIT));
+				      monitor_out_of_range(monitor, PLUS_15V_LEAST,
+							   PLUS_15V_MOST,
+							   TOLERANCE_LIMIT));
 		break;
 	case MONITORS_STEP_OSCILLATOR_CURRENT:
 		monitor_filter_add(monitor, read_adc_osc_curr());
@@ -191,7 +189,7 @@ void hmon_check_supplies(void)
 		monitor_average_add(monitor, read_adc_5v());
 		monitors_supply_report(&monitors_5v,
 				      monitor_out_of_range(monitor, MONITORS_5V_LEAST, MONITORS_5V_MOST,
-							   MONITORS_TOLERANCE_LIMIT));
+							   TOLERANCE_LIMIT));
 		break;
 	case MONITORS_STEP_OVEN:
 		monitor_average_add(monitor, read_adc_oven());
@@ -199,9 +197,9 @@ void hmon_check_supplies(void)
 	case MONITORS_STEP_MINUS_15V:
 		monitor_average_add(monitor, read_adc_m15v());
 		monitors_supply_report(&monitors_minus_15v,
-				      monitor_out_of_range(monitor, MONITORS_MINUS_15V_LEAST,
-							   MONITORS_MINUS_15V_MOST,
-							   MONITORS_TOLERANCE_LIMIT));
+				      monitor_out_of_range(monitor, MINUS_15V_LEAST,
+							   MINUS_15V_MOST,
+							   TOLERANCE_LIMIT));
 		break;
 	case MONITORS_STEP_ANTENNA_CURRENT:
 		monitor_average_add(monitor, read_adc_ant_curr());
@@ -234,21 +232,23 @@ float adc_average(adc_channel channel)
 	return adc_monitors[channel].value;
 }
 
-/* The ovens' warm-up thresholds, in the readings' volts. */
-#define MONITORS_DOUBLE_OVEN_WARM 1.5f
-#define MONITORS_OVEN_WARM -2.0f
-
 /* Whether the double oven reads above 1.5; nothing calls it
  * (0x241cc). */
 bool double_oven_warmed_up(void)
 {
-	return float_compare(adc_average(ADC_DOUBLE_OVEN), MONITORS_DOUBLE_OVEN_WARM) > 0;
+	/* The double oven's warm-up threshold, in the reading's volts. */
+	static const float DOUBLE_OVEN_WARM = 1.5f;
+
+	return float_compare(adc_average(ADC_DOUBLE_OVEN), DOUBLE_OVEN_WARM) > 0;
 }
 
 /* Whether the oven reads below -2, powerup's warm-up test (0x241f4). */
 bool oven_warmed_up(void)
 {
-	return float_compare(adc_average(ADC_OVEN), MONITORS_OVEN_WARM) < 0;
+	/* The oven's warm-up threshold, in the reading's volts. */
+	static const float OVEN_WARM = -2.0f;
+
+	return float_compare(adc_average(ADC_OVEN), OVEN_WARM) < 0;
 }
 
 /* Reports pll.efc near the end of its range, outside 5% to 95%, once
@@ -256,8 +256,14 @@ bool oven_warmed_up(void)
  * (0x242f0). */
 void hmon_check_efc(void)
 {
-	if (float_compare(pll.efc, ADC_EFC_NEAR_LOW) >= 0 &&
-	    float_compare(pll.efc, ADC_EFC_NEAR_HIGH) <= 0) {
+	/* The near-end bounds the health monitor keeps the EFC's 20 bits
+	 * to, and the checks outside them it waits for. */
+	static const float EFC_NEAR_LOW = 52428.0f;	/* 5% of 2^20 */
+	static const float EFC_NEAR_HIGH = 996132.0f;	/* 95% */
+	static const uint8_t NEAR_END_CHECKS = 5;
+
+	if (float_compare(pll.efc, EFC_NEAR_LOW) >= 0 &&
+	    float_compare(pll.efc, EFC_NEAR_HIGH) <= 0) {
 		efc_range.near_end_checks = 0;
 		if (efc_range.near_end) {
 			efc_range.near_end = 0;
@@ -265,8 +271,8 @@ void hmon_check_efc(void)
 		}
 		return;
 	}
-	if (++efc_range.near_end_checks > ADC_EFC_NEAR_END_CHECKS) {
-		efc_range.near_end_checks = ADC_EFC_NEAR_END_CHECKS;
+	if (++efc_range.near_end_checks > NEAR_END_CHECKS) {
+		efc_range.near_end_checks = NEAR_END_CHECKS;
 		if (!efc_range.near_end) {
 			task_debug_message("EFC near end of range\r\n");
 			status_happening(ADC_HAPPENING_EFC_NEAR_END);
@@ -275,25 +281,23 @@ void hmon_check_efc(void)
 	}
 }
 
-/* The watchdog: each task counts its passes, and the health monitor
- * services the MC68331's software watchdog (MC68331UM D.3.15, SWSR's
- * CPU_SWSR_FIRST then CPU_SWSR_SECOND) only while every count since
- * the last report is enough, and for eight reports after. */
-enum {
-	MONITORS_WATCHDOG_GPS_LEAST = 21,
-	MONITORS_WATCHDOG_MONITOR_LEAST = 51,
-	MONITORS_WATCHDOG_GRACE = 8,
-};
-
 /* Checks the tasks' watchdog counts, printing them if one is short,
  * and services the watchdog while the grace lasts; then clears them
  * (0x2437a). */
 void watchdog_report(void)
 {
-	if (watchdog_clock != 0 && watchdog_gps >= MONITORS_WATCHDOG_GPS_LEAST &&
-	    watchdog_monitor >= MONITORS_WATCHDOG_MONITOR_LEAST && watchdog_spool != 0 &&
+	/* The watchdog: each task counts its passes, and the health monitor
+	 * services the MC68331's software watchdog (MC68331UM D.3.15, SWSR's
+	 * CPU_SWSR_FIRST then CPU_SWSR_SECOND) only while every count since
+	 * the last report is enough, and for eight reports after. */
+	static const uint8_t WATCHDOG_GPS_LEAST = 21;
+	static const uint8_t WATCHDOG_MONITOR_LEAST = 51;
+	static const int16_t WATCHDOG_GRACE = 8;
+
+	if (watchdog_clock != 0 && watchdog_gps >= WATCHDOG_GPS_LEAST &&
+	    watchdog_monitor >= WATCHDOG_MONITOR_LEAST && watchdog_spool != 0 &&
 	    watchdog_pll != 0)
-		watchdog_countdown = MONITORS_WATCHDOG_GRACE;
+		watchdog_countdown = WATCHDOG_GRACE;
 	else
 		debug_printf("watchdog: clock: %4d gps: %4d pll: %4d mon: %4d spool %4d\r\n",
 			     watchdog_clock, watchdog_gps, watchdog_pll, watchdog_monitor,
@@ -321,10 +325,6 @@ void exception_record_clear(void)
 	last_exception.pending = 0;
 	crash_message[0] = 0;
 }
-
-/* An exception's vector word: its format in the top nibble, 0 for a
- * frame with no fault address. */
-#define CPU_VECTOR_FORMAT_MASK 0xf000
 
 /* Logs why the last reset happened, with the time: the exception, the
  * fatal message, or, with neither and the watchdog's grace run out,
@@ -380,10 +380,8 @@ void internal_pps_monitor_reset(void)
 }
 
 /* The internal 1PPS's count between checks: 1 to 3 is alive. */
-enum {
-	MONITORS_PPS_LEAST = 1,
-	MONITORS_PPS_MOST = 3,
-};
+static const int8_t MONITORS_PPS_LEAST = 1;
+static const int8_t MONITORS_PPS_MOST = 3;
 
 /* Whether the 1PPS monitors may check: no self-test running and the
  * FPGA, which counts the internal 1PPS, loaded. */
@@ -421,24 +419,22 @@ uint8_t internal_pps_check(void)
 	return 1;
 }
 
-/* The GPS 1PPS monitor: the GPT's pulse accumulator counts its rising
- * edges (PACTL's PAEN and PEDGE, MC68331UM D.2.7); each check wants 1
- * to 3 pulses since the last, and every fifth check's gate 8 to 12 in
- * all.  While the check is unconfirmed it skips 15 checks first. */
-enum {
-	MONITORS_PACTL_COUNT_RISING = 0x50,
-	MONITORS_PPS_GATE_STEP = 2,
-	MONITORS_PPS_GATE = 10,
-	MONITORS_PPS_GATE_LEAST = 8,
-	MONITORS_PPS_GATE_MOST = 12,
-	MONITORS_PPS_SKIPS = 15,
-};
-
 /* Checks the GPS 1PPS by the pulses the GPT has counted, reporting it
  * dead, at the wrong frequency, or back; returns 0 when it could not
  * check (0x245a6). */
 uint8_t gps_pps_check(void)
 {
+	/* The GPS 1PPS monitor: the GPT's pulse accumulator counts its
+	 * rising edges (PACTL's PAEN and PEDGE, MC68331UM D.2.7); each check
+	 * wants 1 to 3 pulses since the last, and every fifth check's gate 8
+	 * to 12 in all.  While the check is unconfirmed it skips 15 checks
+	 * first. */
+	static const uint8_t PACTL_COUNT_RISING = 0x50;
+	static const uint8_t PPS_GATE_STEP = 2;
+	static const uint8_t PPS_GATE = 10;
+	static const uint8_t PPS_GATE_LEAST = 8;
+	static const uint8_t PPS_GATE_MOST = 12;
+	static const uint8_t PPS_SKIPS = 15;
 	uint8_t pulses;
 	int8_t since_last;
 	bool short_gate_bad = false;
@@ -453,14 +449,14 @@ uint8_t gps_pps_check(void)
 		gps_pps_last_count = 0;
 		return 1;
 	}
-	if (gps_pps_unconfirmed && gps_pps_skipped_checks < MONITORS_PPS_SKIPS) {
+	if (gps_pps_unconfirmed && gps_pps_skipped_checks < PPS_SKIPS) {
 		gps_pps_skipped_checks++;
 		return 1;
 	}
 	if (!monitors_pps_checkable() || !gps_pps_counting) {
 		gpt.pacnt = 0;
 		if (monitors_pps_checkable()) {
-			gpt.pactl = MONITORS_PACTL_COUNT_RISING;
+			gpt.pactl = PACTL_COUNT_RISING;
 			gps_pps_counting = 1;
 		}
 		gps_pps_gate = 0;
@@ -478,10 +474,10 @@ uint8_t gps_pps_check(void)
 			dead = 1;
 		}
 	}
-	gps_pps_gate += MONITORS_PPS_GATE_STEP;
-	if (gps_pps_gate == MONITORS_PPS_GATE) {
+	gps_pps_gate += PPS_GATE_STEP;
+	if (gps_pps_gate == PPS_GATE) {
 		gpt.pacnt = 0;
-		if (pulses < MONITORS_PPS_GATE_LEAST || pulses > MONITORS_PPS_GATE_MOST) {
+		if (pulses < PPS_GATE_LEAST || pulses > PPS_GATE_MOST) {
 			if (!dead) {
 				task_dmessage("GPS 1pps signal frequency is incorrect\r\n");
 				debug_printf("long gate, count %d\r\n", pulses);
@@ -494,7 +490,7 @@ uint8_t gps_pps_check(void)
 			}
 			gps_pps_unconfirmed = 0;
 		}
-	} else if (gps_pps_gate < MONITORS_PPS_GATE) {
+	} else if (gps_pps_gate < PPS_GATE) {
 		gps_pps_dead = dead;
 		gps_pps_last_count = pulses;
 		return 1;

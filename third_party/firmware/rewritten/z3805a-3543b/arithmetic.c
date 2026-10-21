@@ -6,21 +6,11 @@
  * declares are in scope; each function here keeps its generated
  * prototype. */
 
-enum {
-	/* 0x8408, the CCITT polynomial 0x1021 reflected. */
-	ARITHMETIC_CRC16_POLYNOMIAL = 0x8408,
-	ARITHMETIC_CRC16_MASK = 0xffff,
-	/* power_of_ten_double and _float's tables hold 1e-30 to 1e30. */
-	ARITHMETIC_POWER_OF_TEN_LIMIT = 30,
-	/* random_dither: a rand value of 1 to 0x7fff, its top 8 bits read
-	 * from either end of dither_table. */
-	ARITHMETIC_DITHER_RAND_MAX = 0x7fff,
-	ARITHMETIC_DITHER_SHIFT = 7,
-	ARITHMETIC_DITHER_SIZE = 128,
-	/* The 68000's shifts take their count modulo 64. */
-	ARITHMETIC_SHIFT_COUNT_MASK = 63,
-	ARITHMETIC_LONG_BITS = 32,
-};
+/* power_of_ten_double and _float's tables hold 1e-30 to 1e30. */
+static const int16_t ARITHMETIC_POWER_OF_TEN_LIMIT = 30;
+/* The 68000's shifts take their count modulo 64. */
+static const uint32_t ARITHMETIC_SHIFT_COUNT_MASK = 63;
+static const uint32_t ARITHMETIC_LONG_BITS = 32;
 
 /* An int's magnitude; nothing calls it (0x120e6). */
 int32_t int_abs(int32_t value)
@@ -46,6 +36,9 @@ int32_t int_clamp(int32_t value, int32_t low, int32_t high)
  * (0x1213a). */
 uint32_t crc16_ccitt(uint8_t *bytes, int16_t count)
 {
+	/* 0x8408, the CCITT polynomial 0x1021 reflected. */
+	static const uint32_t CRC16_POLYNOMIAL = 0x8408;
+	static const uint32_t CRC16_MASK = 0xffff;
 	uint32_t crc = 0xffffffff;
 	uint8_t sum = 0;
 
@@ -55,12 +48,12 @@ uint32_t crc16_ccitt(uint8_t *bytes, int16_t count)
 		sum += *bytes;
 		for (int bit = 0; bit < 8; bit++) {
 			if ((crc ^ *bytes) & 1)
-				crc = crc >> 1 ^ ARITHMETIC_CRC16_POLYNOMIAL;
+				crc = crc >> 1 ^ CRC16_POLYNOMIAL;
 			else
 				crc >>= 1;
 		}
 	}
-	return (uint32_t)(uint8_t)~sum << 24 | (uint32_t)sum << 16 | (crc & ARITHMETIC_CRC16_MASK);
+	return (uint32_t)(uint8_t)~sum << 24 | (uint32_t)sum << 16 | (crc & CRC16_MASK);
 }
 
 /* A long shifted as the processor shifts it: the count modulo 64, and 32
@@ -127,12 +120,17 @@ float power_of_ten_float(int16_t power)
  * (0x12af2). */
 int32_t random_dither(void)
 {
+	/* A rand value of 1 to 0x7fff, its top 8 bits read from either end
+	 * of dither_table. */
+	static const int32_t DITHER_RAND_MAX = 0x7fff;
+	static const int32_t DITHER_SHIFT = 7;
+	static const int32_t DITHER_SIZE = 128;
 	int32_t value = 0;
 
-	while (value < 1 || value > ARITHMETIC_DITHER_RAND_MAX)
+	while (value < 1 || value > DITHER_RAND_MAX)
 		value = rand();
-	value >>= ARITHMETIC_DITHER_SHIFT;
-	if (value >= ARITHMETIC_DITHER_SIZE)
-		return (int8_t)dither_table[value - ARITHMETIC_DITHER_SIZE];
-	return -(int8_t)dither_table[ARITHMETIC_DITHER_SIZE - value];
+	value >>= DITHER_SHIFT;
+	if (value >= DITHER_SIZE)
+		return (int8_t)dither_table[value - DITHER_SIZE];
+	return -(int8_t)dither_table[DITHER_SIZE - value];
 }

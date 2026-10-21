@@ -12,29 +12,21 @@
 
 #include <stddef.h>
 
+/* klok_entry_state's results. */
 enum {
-	/* log_event's code for "Clk_do: out of event buffers" (0x10598). */
-	KLOK_LOG_OUT_OF_BUFFERS = 0x19,
-	/* klok_cancel's result for an entry outside klok_pool (0x107b0). */
-	KLOK_NOT_IN_POOL = -3,
-	/* klok_entry_state's results. */
 	KLOK_ON_LIST = 0,
 	KLOK_ON_FREE_LIST = 1,
 	KLOK_ON_NEITHER = -1,
-	/* The klok task's supervisor and user stacks, in words (psos.md,
-	 * service 1). */
-	KLOK_SUPERVISOR_STACK = 0x100,
-	KLOK_USER_STACK = 0x10,
-	KLOK_POOL_SIZE = 5,
-	/* pps_wait_time's argument to wait for the next 1PPS. */
-	KLOK_WAIT = 1,
-	KLOK_MESSAGE_SIZE = 80,
 };
+
+static const uint32_t KLOK_POOL_SIZE = 5;
+/* An array size, so #define. */
+#define KLOK_MESSAGE_SIZE 80
 
 /* The time, then the date, of the 1PPS klok_task last received, at
  * 0x1037ac, which the names file does not name: the "now" klok_run_due
  * compares each entry with. */
-#define KLOK_NOW ((uint32_t *)0x1037ac)
+static uint32_t *const KLOK_NOW = (uint32_t *)0x1037ac;
 
 /* A clock entry's time and date, laid out as a packed_datetime is, which
  * datetime_add and datetime_subtract take; the image passes the entry's
@@ -48,6 +40,8 @@ static packed_datetime *klok_when(uint32_t *time)
  * with none free or the mutex not taken (0x10540). */
 klok_entry *clk_do(klok_entry *event)
 {
+	/* log_event's code for "Clk_do: out of event buffers" (0x10598). */
+	static const uint8_t LOG_OUT_OF_BUFFERS = 0x19;
 	char message[KLOK_MESSAGE_SIZE];
 	uint32_t status = mutex_lock(&klok_mutex);
 
@@ -60,7 +54,7 @@ klok_entry *clk_do(klok_entry *event)
 
 	if (entry == NULL) {
 		task_dmessage("Clk_do: out of event buffers");
-		log_event(KLOK_LOG_OUT_OF_BUFFERS);
+		log_event(LOG_OUT_OF_BUFFERS);
 	} else {
 		klok_free = entry->next;
 		*entry = *event;
@@ -71,16 +65,18 @@ klok_entry *clk_do(klok_entry *event)
 }
 
 /* Takes an entry off the clock list and puts it on the free list, under
- * klok_mutex: the mutex's error, KLOK_NOT_IN_POOL, list_unlink's -2
- * for an entry not on the list, or 0 (0x10786). */
+ * klok_mutex: the mutex's error, NOT_IN_POOL, list_unlink's -2 for an
+ * entry not on the list, or 0 (0x10786). */
 int32_t klok_cancel(klok_entry *entry)
 {
+	/* The result for an entry outside klok_pool (0x107b0). */
+	static const int32_t NOT_IN_POOL = -3;
 	int32_t status = mutex_lock(&klok_mutex);
 
 	if (status != 0)
 		return status;
 	if (entry < klok_pool || entry > &klok_pool[KLOK_POOL_SIZE - 1]) {
-		status = KLOK_NOT_IN_POOL;
+		status = NOT_IN_POOL;
 	} else {
 		status = list_unlink((int32_t *)&klok_entries, (int32_t *)entry);
 		if (status == 0)
@@ -156,6 +152,10 @@ int32_t klok_entry_state(klok_entry *entry)
  * nothing failed, as the image's is (0x109ae). */
 uint32_t klok_task_create(uint32_t priority)
 {
+	/* The klok task's supervisor and user stacks, in words (psos.md,
+	 * service 1). */
+	static const uint32_t SUPERVISOR_STACK = 0x100;
+	static const uint32_t USER_STACK = 0x10;
 	char message[KLOK_MESSAGE_SIZE];
 	uint32_t status = (uint8_t)psos_ident("klok", NULL, NULL) == 0;
 
@@ -180,8 +180,8 @@ uint32_t klok_task_create(uint32_t priority)
 		klok_pool[KLOK_POOL_SIZE - 1].next = NULL;
 	}
 	if (status == 0)
-		status = (uint8_t)psos_create("klok", 0, priority, KLOK_SUPERVISOR_STACK,
-					      KLOK_USER_STACK, NULL, &task_klok);
+		status = (uint8_t)psos_create("klok", 0, priority, SUPERVISOR_STACK,
+					      USER_STACK, NULL, &task_klok);
 	if (status == 0)
 		status = (uint8_t)psos_start(task_klok, klok_task);
 	if (status == 0)
@@ -197,9 +197,12 @@ uint32_t klok_task_create(uint32_t priority)
  * (0x10b1e). */
 void klok_task(void)
 {
+	/* pps_wait_time's argument to wait for the next 1PPS. */
+	static const int32_t WAIT = 1;
+
 	psos_supervisor();
 	for (;;) {
-		pps_wait_time(&KLOK_NOW[0], &KLOK_NOW[1], KLOK_WAIT);
+		pps_wait_time(&KLOK_NOW[0], &KLOK_NOW[1], WAIT);
 		idle_loops_last_second = klok_take_pending();
 		if (klok_entries != NULL)
 			klok_run_due();

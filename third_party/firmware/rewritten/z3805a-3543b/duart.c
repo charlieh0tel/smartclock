@@ -17,7 +17,8 @@
  * uses, and the line reader duart_gets, which drtb_gets and sci_gets
  * share.  The critical sections use cpu.h's status register helpers. */
 
-/* The control characters the drivers act on. */
+/* The control characters the drivers act on, which duart_gets'
+ * switch tests. */
 enum {
 	DUART_CTRL_C = 0x03,
 	DUART_BACKSPACE = 0x08,
@@ -27,51 +28,27 @@ enum {
 	DUART_XON = 0x11,
 	DUART_XOFF = 0x13,
 	DUART_CTRL_X = 0x18,	/* cancels the line */
-	DUART_FIRST_PRINTABLE = 0x20,
-	DUART_CARET = '^',	/* echoes a control character as ^ and its letter */
-	DUART_CONTROL_TO_LETTER = 0x40,
-	DUART_ASCII_MASK = 0x7f,
-	DUART_MARK_BIT = 0x80,
 };
 
 /* A driver's flow byte (duartb_driver.flow, sci_driver.flow). */
-enum {
-	DUART_FLOW_XOFF_SENT = 0x20,
-	DUART_FLOW_XOFF_RECEIVED = 0x80,	/* transmission held */
-};
+static const uint8_t DUART_FLOW_XOFF_SENT = 0x20;
+static const uint8_t DUART_FLOW_XOFF_RECEIVED = 0x80;	/* transmission held */
 
-/* The signal duartb_transmit_interrupt gives the SCPI task when an
- * asynchronous send ends; psos-signals.h has no name for it. */
-#define DUART_SIGNAL_ASYNC_DONE 0x0020
+/* XON/XOFF threshold, in free bytes of a 256-byte ring: a read sends
+ * XON once more are free. */
+static const uint8_t DUART_XON_ABOVE_FREE = 0x10;
 
-/* XON/XOFF thresholds, in free bytes of a 256-byte ring. */
-enum {
-	DUART_XOFF_BELOW_FREE = 0x40,	/* the interrupt sends XOFF with fewer free */
-	DUART_XON_ABOVE_FREE = 0x10,	/* a read sends XON once more are free */
-};
-
-/* The kernel's I/O devices, the device in the high byte, the minor in
+/* The kernel's I/O device, the device in the high byte, the minor in
  * the low (kernel_dispatch_io, 0x14c36). */
-enum {
-	DUART_DEVICE_B = 0x000,
-	DUART_DEVICE_B_MINOR_1 = 0x001,	/* drtb_release_for_timecode's close */
-};
+static const uint32_t DUART_DEVICE_B = 0x000;
 
-/* The 68681's channel B settings (MC68681 Table 4-5). */
-enum {
-	DUART_MR1_KEEP = MR1_RXRTS | MR1_RXIRQ_FFULL | MR1_ERROR_BLOCK,
-	DUART_MR1_SEVEN_BITS = 2,
-	DUART_MR1_EIGHT_BITS = 3,
-	DUART_MR2_ONE_STOP_BIT = 0x07,
-	DUART_MR2_TWO_STOP_BITS = 0x0f,
-	DUART_CSR_CLOCK_BITS = 4,	/* the receiver's clock in the high nibble, the transmitter's in the low */
-	/* baud-rate set 2's clock selects, which ACR_BRG_SET_2 picks */
-	DUART_CSR_1200 = 0x6,
-	DUART_CSR_2400 = 0x8,
-	DUART_CSR_9600 = 0xb,
-	DUART_CSR_19200 = 0xc,
-	DUART_RECEIVE_ERRORS = SR_RECEIVED_BREAK | SR_FRAMING_ERROR | SR_PARITY_ERROR,
-};
+/* The 68681's channel B settings (MC68681 Table 4-5) that several
+ * functions use; the rest are in the functions that use them. */
+static const uint8_t DUART_MR1_EIGHT_BITS = 3;
+static const uint8_t DUART_MR2_ONE_STOP_BIT = 0x07;
+static const uint8_t DUART_CSR_CLOCK_BITS = 4;	/* the receiver's clock in the high nibble, the transmitter's in the low */
+/* baud-rate set 2's clock select for 9600, which ACR_BRG_SET_2 picks */
+static const uint8_t DUART_CSR_9600 = 0xb;
 
 /* The serial settings' baud codes (duartb_settings_record.baud). */
 enum {
@@ -92,22 +69,7 @@ enum {
 
 /* How long a reconfiguration waits for the transmitter to empty, in
  * ticks. */
-#define DUART_DRAIN_PAUSES 100
-
-/* The GP port's bits 2 to 4, gp_port_select's selection. */
-enum {
-	DUART_GP_SELECT_SHIFT = 2,
-	DUART_GP_SELECT_MASK = 0x1c,
-	DUART_GP_SELECT_MAX = 6,
-};
-
-/* The output port's bits, by duart_shadow.output_reset: bits 0 and 1
- * each a routine's own, bits 2 to 7 duart_output_bits'. */
-enum {
-	DUART_OP0 = 0x01,
-	DUART_OP1 = 0x02,
-	DUART_OP_BITS = 0xfc,
-};
+static const int32_t DUART_DRAIN_PAUSES = 100;
 
 /* A no-op echo, a bare rts: duart_init and duartb_reconfigure put it in
  * duartb.echo when the settings' echo is off (0x1d570). */
@@ -119,18 +81,28 @@ void duartb_echo_none(char c)
  * it shifted there (0x1d572). */
 int32_t gp_port_select(char selection)
 {
-	if (selection > DUART_GP_SELECT_MAX)
+	/* The GP port's bits 2 to 4, gp_port_select's selection. */
+	static const uint8_t GP_SELECT_SHIFT = 2;
+	static const uint8_t GP_SELECT_MASK = 0x1c;
+	static const uint8_t GP_SELECT_MAX = 6;
+
+	if (selection > GP_SELECT_MAX)
 		selection = 0;
-	gpt.portgp &= ~DUART_GP_SELECT_MASK;
-	gpt.portgp |= selection << DUART_GP_SELECT_SHIFT;
-	return selection << DUART_GP_SELECT_SHIFT;
+	gpt.portgp &= ~GP_SELECT_MASK;
+	gpt.portgp |= selection << GP_SELECT_SHIFT;
+	return selection << GP_SELECT_SHIFT;
 }
 
 /* DUART channel B's mode registers from the serial settings: parity,
  * data bits and stop bits (0x1d594). */
 void duartb_mode_from_settings(void)
 {
-	duart_shadow.mr1b &= DUART_MR1_KEEP;
+	/* The 68681's channel B settings (MC68681 Table 4-5). */
+	static const uint8_t MR1_KEEP = MR1_RXRTS | MR1_RXIRQ_FFULL | MR1_ERROR_BLOCK;
+	static const uint8_t MR1_SEVEN_BITS = 2;
+	static const uint8_t MR2_TWO_STOP_BITS = 0x0f;
+
+	duart_shadow.mr1b &= MR1_KEEP;
 	if (duartb_settings.parity == DUART_PARITY_NONE) {
 		duartb.parity = 0;
 		duart_shadow.mr1b |= MR1_PARITY_NONE;
@@ -139,9 +111,9 @@ void duartb_mode_from_settings(void)
 		if (duartb_settings.parity == DUART_PARITY_ODD)
 			duart_shadow.mr1b |= MR1_PARITY_ODD;
 	}
-	duart_shadow.mr1b |= duartb_settings.eight_bits ? DUART_MR1_EIGHT_BITS : DUART_MR1_SEVEN_BITS;
+	duart_shadow.mr1b |= duartb_settings.eight_bits ? DUART_MR1_EIGHT_BITS : MR1_SEVEN_BITS;
 	duart_shadow.mr2b = (duart_shadow.mr2b & ~MR2_STOP_MASK) |
-		(duartb_settings.two_stop_bits ? DUART_MR2_TWO_STOP_BITS : DUART_MR2_ONE_STOP_BIT);
+		(duartb_settings.two_stop_bits ? MR2_TWO_STOP_BITS : DUART_MR2_ONE_STOP_BIT);
 	duart.b.cr = CR_RESET_MR_POINTER;
 	duart.b.mr = duart_shadow.mr1b;
 	duart.b.mr = duart_shadow.mr2b;
@@ -154,20 +126,24 @@ void duartb_mode_from_settings(void)
  * code out of range (0x1d632). */
 void duartb_baud_from_settings(void)
 {
+	/* baud-rate set 2's clock selects, which ACR_BRG_SET_2 picks */
+	static const uint8_t CSR_1200 = 0x6;
+	static const uint8_t CSR_2400 = 0x8;
+	static const uint8_t CSR_19200 = 0xc;
 	uint8_t clock;
 
 	switch (duartb_settings.baud) {
 	case DUART_BAUD_1200:
-		clock = DUART_CSR_1200;
+		clock = CSR_1200;
 		break;
 	case DUART_BAUD_2400:
-		clock = DUART_CSR_2400;
+		clock = CSR_2400;
 		break;
 	case DUART_BAUD_9600:
 		clock = DUART_CSR_9600;
 		break;
 	default:
-		clock = DUART_CSR_19200;
+		clock = CSR_19200;
 		break;
 	}
 	clock |= clock << DUART_CSR_CLOCK_BITS;
@@ -248,14 +224,17 @@ static int32_t duart_gets(uint8_t *buffer, int32_t length, uint8_t (*getc)(void)
 			    uint8_t *receive_errors, uint8_t *read_errors,
 			    char *error_message, bool top_bit_control)
 {
+	static const uint8_t FIRST_PRINTABLE = 0x20;
+	static const char CARET = '^';	/* echoes a control character as ^ and its letter */
+	static const uint8_t CONTROL_TO_LETTER = 0x40;
 	int32_t left = length - 1;
 	int32_t count = left;
 	uint8_t *next = buffer;
 
 	while (left != 0) {
 		uint8_t character = getc();
-		bool printable = top_bit_control ? (int8_t)character >= DUART_FIRST_PRINTABLE
-						 : character >= DUART_FIRST_PRINTABLE;
+		bool printable = top_bit_control ? (int8_t)character >= FIRST_PRINTABLE
+						 : character >= FIRST_PRINTABLE;
 
 		if (printable || character == DUART_TAB) {
 			*last_terminator = character;
@@ -294,8 +273,8 @@ static int32_t duart_gets(uint8_t *buffer, int32_t length, uint8_t (*getc)(void)
 			}
 			break;
 		default:
-			(*echo)(DUART_CARET);
-			(*echo)(character + DUART_CONTROL_TO_LETTER);
+			(*echo)(CARET);
+			(*echo)(character + CONTROL_TO_LETTER);
 			break;
 		}
 	}
@@ -445,9 +424,12 @@ bool drtb_try_lock_write(void)
  * whether it did (0x1df8a). */
 uint8_t drtb_release_for_timecode(void)
 {
+	/* The kernel's I/O device B, minor 1, for the close. */
+	static const uint32_t DEVICE_B_MINOR_1 = 0x001;
+
 	if ((duartb.flow & DUART_FLOW_XOFF_RECEIVED) == 0 && !drtb_try_lock_write()) {
 		duartb.async_allowed = 1;
-		psos_io_close(DUART_DEVICE_B_MINOR_1);
+		psos_io_close(DEVICE_B_MINOR_1);
 		return 1;
 	}
 	return 0;
@@ -473,26 +455,34 @@ static void duart_output_bit_set(uint8_t bit, char on)
 /* Sets or clears the output port's bit 0 (0x1dfe6). */
 void duart_op0_set(char on)
 {
-	duart_output_bit_set(DUART_OP0, on);
+	/* The output port's bit 0, by duart_shadow.output_reset. */
+	static const uint8_t OP0 = 0x01;
+
+	duart_output_bit_set(OP0, on);
 }
 
 /* Sets or clears the output port's bit 1 (0x1e02c). */
 void duart_op1_set(char on)
 {
-	duart_output_bit_set(DUART_OP1, on);
+	/* The output port's bit 1, by duart_shadow.output_reset. */
+	static const uint8_t OP1 = 0x02;
+
+	duart_output_bit_set(OP1, on);
 }
 
 /* Resets the output port's bits 2 to 7 in reset and sets those in set,
  * as duart_output_bit_set does (0x1e126). */
 void duart_output_bits(uint8_t reset, uint8_t set)
 {
+	/* The output port's bits 2 to 7, by duart_shadow.output_reset. */
+	static const uint8_t OP_BITS = 0xfc;
 	uint16_t sr = set_interrupt_mask(CPU_IPL_6_UNSHIFTED);
-	uint8_t resets = (reset | duart_shadow.output_reset) & DUART_OP_BITS;
+	uint8_t resets = (reset | duart_shadow.output_reset) & OP_BITS;
 
 	duart.stop_ropbc = resets;
-	duart_shadow.output_reset = (reset & DUART_OP_BITS | duart_shadow.output_reset) &
-		~(set & DUART_OP_BITS);
-	duart.start_sopbc = ~duart_shadow.output_reset & DUART_OP_BITS;
+	duart_shadow.output_reset = (reset & OP_BITS | duart_shadow.output_reset) &
+		~(set & OP_BITS);
+	duart.start_sopbc = ~duart_shadow.output_reset & OP_BITS;
 	set_interrupt_mask(sr);
 }
 
@@ -542,18 +532,10 @@ uint8_t drta_get_byte(char *overrun)
 	return duarta_ring.data[duarta_ring.read++];
 }
 
-/* The DUART self-test's bits in selftest.uart. */
-enum {
-	DUART_TEST_IVR_FAILED = 0x01,
-	DUART_TEST_COUNTER_FAILED = 0x02,
-	DUART_TEST_A_MISMATCH = 0x04,
-	DUART_TEST_A_TIMEOUT = 0x08,
-	DUART_TEST_B_MISMATCH = 0x10,
-	DUART_TEST_B_TIMEOUT = 0x20,
-};
-
-/* How long the loopback test spins for its string to come back. */
-#define DUART_LOOPBACK_SPINS 10000
+/* The DUART self-test's bits in selftest.uart that several functions
+ * set; the rest are in the functions that set them. */
+static const int16_t DUART_TEST_B_MISMATCH = 0x10;
+static const int16_t DUART_TEST_B_TIMEOUT = 0x20;
 
 /* A loopback test's channel: its registers and mode shadow, its
  * interrupts, the flag that keeps its driver off the transmitter, the
@@ -573,6 +555,8 @@ typedef struct duart_loopback_channel {
  * (duart_loopback_test_a and duart_loopback_test_b). */
 static void duart_loopback_test(const duart_loopback_channel *channel)
 {
+	/* How long the loopback test spins for its string to come back. */
+	static const int32_t LOOPBACK_SPINS = 10000;
 	uint16_t sr = set_interrupt_mask(CPU_IPL_7);
 	int32_t spins;
 
@@ -599,7 +583,7 @@ static void duart_loopback_test(const duart_loopback_channel *channel)
 	duart.isr_imr = duart_shadow.imr;
 	channel->registers->cr = CR_TX_ENABLE | CR_RX_ENABLE;
 	set_interrupt_mask(sr);
-	while (spins < DUART_LOOPBACK_SPINS && *loopback_expect_next != 0)
+	while (spins < LOOPBACK_SPINS && *loopback_expect_next != 0)
 		spins++;
 	sr = set_interrupt_mask(CPU_IPL_7);
 	if (*loopback_expect_next != 0)
@@ -622,9 +606,11 @@ static void duart_loopback_test(const duart_loopback_channel *channel)
 /* The loopback test on channel A, the GPS receiver's (0x1e2c0). */
 void duart_loopback_test_a(void)
 {
+	/* The DUART self-test's bit in selftest.uart. */
+	static const int16_t TEST_A_TIMEOUT = 0x08;
 	const duart_loopback_channel channel = {
 		&duart.a, &duart_shadow.mr2a, IMR_RXRDYA | IMR_TXRDYA,
-		&duarta.held, &duarta.loopback_test, DUART_TEST_A_TIMEOUT,
+		&duarta.held, &duarta.loopback_test, TEST_A_TIMEOUT,
 	};
 
 	duart_loopback_test(&channel);
@@ -641,25 +627,17 @@ void duart_loopback_test_b(void)
 	duart_loopback_test(&channel);
 }
 
-/* The counter test: the 68681's counter, preloaded with 0xffff, counts
- * down from the crystal over 16 for ten ticks, at the highest
- * priority. */
-enum {
-	DUART_COUNTER_PRELOAD = 0xff,	/* each half */
-	DUART_ACR_COUNTER_CRYSTAL_16 = 0x30,	/* MC68681 Table 4-4 */
-	DUART_ACR_COUNTER_TXCB = 0x20,
-	DUART_COUNTER_PAUSES = 10,
-	DUART_COUNTER_LEAST = 0xf533,
-	DUART_COUNTER_MOST = 0xf8cc,
-	DUART_PRIORITY_HIGHEST = 0xff,
-	DUART_BYTE_BITS = 8,
-};
+/* The counter's clock from TxCB, as the reset leaves it (MC68681
+ * Table 4-4). */
+static const uint8_t DUART_ACR_COUNTER_TXCB = 0x20;
 
 /* Preloads the DUART's counter with 0xffff, both halves, shadowed. */
 static void duart_counter_preload(void)
 {
-	duart_shadow.ctur = DUART_COUNTER_PRELOAD;
-	duart_shadow.ctlr = DUART_COUNTER_PRELOAD;
+	static const uint8_t COUNTER_PRELOAD = 0xff;	/* each half */
+
+	duart_shadow.ctur = COUNTER_PRELOAD;
+	duart_shadow.ctlr = COUNTER_PRELOAD;
 	duart.cur_ctur = duart_shadow.ctur;
 	duart.clr_ctlr = duart_shadow.ctlr;
 }
@@ -668,6 +646,17 @@ static void duart_counter_preload(void)
  * the count left is out of range (0x1e574). */
 void duart_counter_test(void)
 {
+	/* The counter test: the 68681's counter, preloaded with 0xffff,
+	 * counts down from the crystal over 16 for ten ticks, at the highest
+	 * priority. */
+	static const uint8_t ACR_COUNTER_CRYSTAL_16 = 0x30;	/* MC68681 Table 4-4 */
+	static const uint32_t COUNTER_PAUSES = 10;
+	static const uint16_t COUNTER_LEAST = 0xf533;
+	static const uint16_t COUNTER_MOST = 0xf8cc;
+	static const uint32_t PRIORITY_HIGHEST = 0xff;
+	static const uint8_t BYTE_BITS = 8;
+	/* The DUART self-test's bit in selftest.uart. */
+	static const int16_t TEST_COUNTER_FAILED = 0x02;
 	uint8_t priority;
 	uint8_t upper;
 	uint8_t lower;
@@ -675,11 +664,11 @@ void duart_counter_test(void)
 
 	(void)duart.stop_ropbc;
 	duart_counter_preload();
-	psos_priority(0, DUART_PRIORITY_HIGHEST, &priority);
-	duart_shadow.acr = (duart_shadow.acr & ~ACR_COUNTER_MASK) | DUART_ACR_COUNTER_CRYSTAL_16;
+	psos_priority(0, PRIORITY_HIGHEST, &priority);
+	duart_shadow.acr = (duart_shadow.acr & ~ACR_COUNTER_MASK) | ACR_COUNTER_CRYSTAL_16;
 	duart.ipcr_acr = duart_shadow.acr;
 	(void)duart.start_sopbc;
-	psos_pause(DUART_COUNTER_PAUSES);
+	psos_pause(COUNTER_PAUSES);
 	(void)duart.stop_ropbc;
 	upper = duart.cur_ctur;
 	lower = duart.clr_ctlr;
@@ -687,19 +676,10 @@ void duart_counter_test(void)
 	duart.ipcr_acr = duart_shadow.acr;
 	duart_counter_preload();
 	task_set_priority(0, priority);
-	count = upper << DUART_BYTE_BITS | lower;
-	if (count > DUART_COUNTER_MOST || count < DUART_COUNTER_LEAST)
-		selftest.uart |= DUART_TEST_COUNTER_FAILED;
+	count = upper << BYTE_BITS | lower;
+	if (count > COUNTER_MOST || count < COUNTER_LEAST)
+		selftest.uart |= TEST_COUNTER_FAILED;
 }
-
-/* Values the self-tests write to the interrupt vector register and
- * read back, and the vector it is left with, user vector 67, whose
- * handler is primary_user_67. */
-enum {
-	DUART_IVR_PATTERN_1 = 0x55,
-	DUART_IVR_PATTERN_2 = 0xaa,
-	DUART_IVR_VECTOR = 0x43,
-};
 
 /* Whether the interrupt vector register holds a value written to it. */
 static bool duart_ivr_holds(uint8_t value)
@@ -712,11 +692,20 @@ static bool duart_ivr_holds(uint8_t value)
  * vector. */
 static void duart_ivr_test(void)
 {
-	if (!duart_ivr_holds(DUART_IVR_PATTERN_1))
-		selftest.uart |= DUART_TEST_IVR_FAILED;
-	if (!duart_ivr_holds(DUART_IVR_PATTERN_2))
-		selftest.uart |= DUART_TEST_IVR_FAILED;
-	duart.ivr = DUART_IVR_VECTOR;
+	/* Values the self-tests write to the interrupt vector register and
+	 * read back, and the vector it is left with, user vector 67, whose
+	 * handler is primary_user_67. */
+	static const uint8_t IVR_PATTERN_1 = 0x55;
+	static const uint8_t IVR_PATTERN_2 = 0xaa;
+	static const uint8_t IVR_VECTOR = 0x43;
+	/* The DUART self-test's bit in selftest.uart. */
+	static const int16_t TEST_IVR_FAILED = 0x01;
+
+	if (!duart_ivr_holds(IVR_PATTERN_1))
+		selftest.uart |= TEST_IVR_FAILED;
+	if (!duart_ivr_holds(IVR_PATTERN_2))
+		selftest.uart |= TEST_IVR_FAILED;
+	duart.ivr = IVR_VECTOR;
 }
 
 /* The DUART self-test: its interrupt vector register, then its counter
@@ -750,7 +739,10 @@ static void duart_test_receive(volatile duart_channel *channel, int16_t mismatch
 /* The loopback test's receive on channel A (0x1e6be). */
 void duart_test_rx_a(void)
 {
-	duart_test_receive(&duart.a, DUART_TEST_A_MISMATCH);
+	/* The DUART self-test's bit in selftest.uart. */
+	static const int16_t TEST_A_MISMATCH = 0x04;
+
+	duart_test_receive(&duart.a, TEST_A_MISMATCH);
 }
 
 /* The loopback test's receive on channel B (0x1e6e2). */
@@ -790,16 +782,21 @@ void duart_test_tx_b(void)
  * Returns the overrun bit of the status register (0x1e7f6). */
 uint8_t duartb_isr(void)
 {
+	/* The 68681's receive errors (MC68681 Table 4-5). */
+	static const uint8_t RECEIVE_ERRORS = SR_RECEIVED_BREAK | SR_FRAMING_ERROR | SR_PARITY_ERROR;
+	static const uint8_t ASCII_MASK = 0x7f;
+	/* XON/XOFF threshold, in free bytes of a 256-byte ring. */
+	static const uint8_t XOFF_BELOW_FREE = 0x40;	/* the interrupt sends XOFF with fewer free */
 	bool received = false;
 	uint8_t status;
 
 	while ((duart.b.sr_csr & SR_RXRDY) != 0) {
 		uint8_t character;
 
-		duartb.receive_errors |= duart.b.sr_csr & DUART_RECEIVE_ERRORS;
+		duartb.receive_errors |= duart.b.sr_csr & RECEIVE_ERRORS;
 		character = duart.b.rb_tb;
 		if (!duartb_applied.eight_bits)
-			character &= DUART_ASCII_MASK;
+			character &= ASCII_MASK;
 		if (character == DUART_CTRL_C && duartb.read_token.task == task_console) {
 			if (duartb.read_token.task != 0 &&
 			    (uint8_t)psos_signal_v(duartb.read_token.task, SIGINTR) != 0)
@@ -833,7 +830,7 @@ uint8_t duartb_isr(void)
 			if (duartb_ring.write == duartb_ring.read)
 				duartb.receive_errors |= SR_OVERRUN;
 			received = true;
-			if ((uint8_t)(duartb_ring.read - duartb_ring.write) < DUART_XOFF_BELOW_FREE) {
+			if ((uint8_t)(duartb_ring.read - duartb_ring.write) < XOFF_BELOW_FREE) {
 				duartb.flow |= DUART_FLOW_XOFF_SENT;
 				if (duartb.xon_xoff)
 					duartb_putc_polled(DUART_XOFF);
@@ -874,6 +871,10 @@ void duarta_tx_interrupt(void)
  * block's end signals the SCPI task (0x1ea10). */
 void duartb_transmit_interrupt(void)
 {
+	/* The signal it gives the SCPI task when an asynchronous send ends;
+	 * psos-signals.h has no name for it. */
+	static const uint32_t SIGNAL_ASYNC_DONE = 0x0020;
+
 	duartb.in_transmit_interrupt = 1;
 	if (duartb.async_count != 0) {
 		duart.b.rb_tb = *duartb.async_next++;
@@ -893,7 +894,7 @@ void duartb_transmit_interrupt(void)
 		duartb.async_pending = 0;
 		duartb.async_allowed = 0;
 		if (task_scpi != 0)
-			psos_signal_v(task_scpi, DUART_SIGNAL_ASYNC_DONE);
+			psos_signal_v(task_scpi, SIGNAL_ASYNC_DONE);
 	}
 	duartb.in_transmit_interrupt = 0;
 }
@@ -908,13 +909,12 @@ void duart_stop(void)
 	duart.isr_imr = 0;
 }
 
-/* How long duartb_loopback_check spins for each character back. */
-#define DUART_LOOPBACK_CHECK_SPINS 3000
-
 /* At reset, before interrupts: sends "DUART" through channel B in local
  * loopback by polling and checks each character back (0x1ebe4). */
 void duartb_loopback_check(void)
 {
+	/* How long duartb_loopback_check spins for each character back. */
+	static const int32_t LOOPBACK_CHECK_SPINS = 3000;
 	char *text = "DUART";
 
 	(void)duart.b.mr;
@@ -924,7 +924,7 @@ void duartb_loopback_check(void)
 	duart.b.cr = CR_TX_ENABLE | CR_RX_ENABLE;
 	duart.b.rb_tb = *loopback_send_next++;
 	while (*loopback_expect_next != 0 && selftest.uart == 0) {
-		for (int32_t spins = DUART_LOOPBACK_CHECK_SPINS;
+		for (int32_t spins = LOOPBACK_CHECK_SPINS;
 		     spins > 0 && (duart.b.sr_csr & SR_RXRDY) == 0; spins--)
 			;
 		if ((duart.b.sr_csr & SR_RXRDY) != 0) {

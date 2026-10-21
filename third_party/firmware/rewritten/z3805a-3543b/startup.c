@@ -5,13 +5,6 @@
  * prototypes it declares are in scope; each function here keeps its
  * generated prototype. */
 
-enum {
-	/* The periodic interrupt, primary_user_66, 1024 a second: its
-	 * vector, 66, and its level (docs/firmware/structures.md). */
-	STARTUP_PERIODIC_VECTOR = 0x42,
-	STARTUP_PERIODIC_LEVEL = 5,
-};
-
 /* The reset's path: the exception hook cleared, the watchdog serviced, the
  * QSM and GPT set up, system_init, and the kernel started with trap #6
  * (0x12d6e). */
@@ -46,10 +39,15 @@ void scpi_param_hook_nothing(void)
  * off (0x12004). */
 void periodic_interrupt_enable(char enable)
 {
+	/* The periodic interrupt, primary_user_66, 1024 a second: its
+	 * vector, 66, and its level (docs/firmware/structures.md). */
+	static const uint16_t PERIODIC_VECTOR = 0x42;
+	static const uint16_t PERIODIC_LEVEL = 5;
+
 	if (enable)
-		sim.picr = STARTUP_PERIODIC_LEVEL << PICR_PIRQL_SHIFT | STARTUP_PERIODIC_VECTOR;
+		sim.picr = PERIODIC_LEVEL << PICR_PIRQL_SHIFT | PERIODIC_VECTOR;
 	else
-		sim.picr = STARTUP_PERIODIC_VECTOR;
+		sim.picr = PERIODIC_VECTOR;
 }
 
 /* Stops the interrupts and the serial devices: the periodic interrupt, the

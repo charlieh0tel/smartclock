@@ -23,24 +23,21 @@ union libc_double {
 	} word;
 };
 
-/* Fields of a double's high word, and of its 64 bits. */
-#define LIBC_SIGN 0x80000000u
-#define LIBC_EXPONENT_MASK 0x7ff00000u
-#define LIBC_MANTISSA_HIGH_MASK 0x000fffffu
-#define LIBC_INFINITY_HIGH LIBC_EXPONENT_MASK
-#define LIBC_MANTISSA_MASK 0x000fffffffffffffull
-#define LIBC_IMPLICIT_ONE (1ull << LIBC_MANTISSA_BITS)
+/* Fields of a double's high word, and of its 64 bits; an infinity's
+ * high word is the exponent's mask, all ones. */
+static const uint32_t LIBC_SIGN = 0x80000000u;
+static const uint32_t LIBC_INFINITY_HIGH = 0x7ff00000u;
+static const uint64_t LIBC_MANTISSA_MASK = 0x000fffffffffffffull;
+static const uint64_t LIBC_IMPLICIT_ONE = 1ull << 52;
 
-enum {
-	LIBC_EXPONENT_SHIFT = 20,
-	LIBC_EXPONENT_MAX = 0x7ff,
-	LIBC_EXPONENT_BIAS = 0x3ff,
-	LIBC_MANTISSA_BITS = 52,
-	/* The biased exponent of [0.5, 1), what frexp and the routines
-	 * that reduce their argument to it give a mantissa. */
-	LIBC_HALF_EXPONENT = 0x3fe,
-	LIBC_WORD_BITS = 32,
-};
+static const int32_t LIBC_EXPONENT_SHIFT = 20;
+static const int32_t LIBC_EXPONENT_MAX = 0x7ff;
+static const int32_t LIBC_EXPONENT_BIAS = 0x3ff;
+static const int32_t LIBC_MANTISSA_BITS = 52;
+/* The biased exponent of [0.5, 1), what frexp and the routines
+ * that reduce their argument to it give a mantissa. */
+static const int32_t LIBC_HALF_EXPONENT = 0x3fe;
+static const int32_t LIBC_WORD_BITS = 32;
 
 /* float_raise's code (libc.md, "Exception codes"): the high word names
  * the routine, here the math library's (LIBC_RAISE_MATH and its
@@ -62,20 +59,6 @@ enum {
 
 #define LIBC_RAISE_CODE(routine, cause) \
 	((uint32_t)(LIBC_RAISE_MATH | (routine)) << LIBC_WORD_BITS / 2 | (cause))
-
-/* ctype_table's bits (libc.md). */
-enum {
-	LIBC_CTYPE_DIGIT = 0x04,
-	LIBC_CTYPE_SPACE = 0x08,
-};
-
-/* rand's generator, the ANSI C example's. */
-enum {
-	LIBC_RAND_MULTIPLIER = 1103515245,
-	LIBC_RAND_INCREMENT = 12345,
-	LIBC_RAND_SHIFT = 16,
-	LIBC_RAND_MASK = 0x7fff,
-};
 
 /* float_raise's result, a double in D0:D1, as the uint64_t the export
  * declares it to return. */
@@ -119,11 +102,14 @@ int32_t abs(int32_t j)
  * down from zero, so that the most negative int parses. */
 int32_t atoi(char *s)
 {
+	/* ctype_table's bits (libc.md). */
+	static const uint8_t CTYPE_DIGIT = 0x04;
+	static const uint8_t CTYPE_SPACE = 0x08;
 	bool negative = false;
 	int32_t c = *s;
 
-	if ((ctype_table[c + 1] & LIBC_CTYPE_DIGIT) == 0) {
-		while ((ctype_table[c + 1] & LIBC_CTYPE_SPACE) != 0)
+	if ((ctype_table[c + 1] & CTYPE_DIGIT) == 0) {
+		while ((ctype_table[c + 1] & CTYPE_SPACE) != 0)
 			c = *++s;
 		if (c == '-') {
 			negative = true;
@@ -131,12 +117,12 @@ int32_t atoi(char *s)
 		} else if (c == '+') {
 			c = *++s;
 		}
-		if ((ctype_table[c + 1] & LIBC_CTYPE_DIGIT) == 0)
+		if ((ctype_table[c + 1] & CTYPE_DIGIT) == 0)
 			return 0;
 	}
 	int32_t value = '0' - c;
 
-	for (c = *++s; (ctype_table[c + 1] & LIBC_CTYPE_DIGIT) != 0; c = *++s)
+	for (c = *++s; (ctype_table[c + 1] & CTYPE_DIGIT) != 0; c = *++s)
 		value = value * 10 + ('0' - c);
 	return negative ? value : -value;
 }
@@ -312,8 +298,14 @@ void qsort(void *base, uint32_t nmemb, uint32_t size, void *compar)
 /* A pseudo-random number in 0 to 32767 (0x5f102). */
 int32_t rand(void)
 {
-	rand_seed = rand_seed * LIBC_RAND_MULTIPLIER + LIBC_RAND_INCREMENT;
-	return rand_seed >> LIBC_RAND_SHIFT & LIBC_RAND_MASK;
+	/* rand's generator, the ANSI C example's. */
+	static const uint32_t RAND_MULTIPLIER = 1103515245;
+	static const uint32_t RAND_INCREMENT = 12345;
+	static const uint32_t RAND_SHIFT = 16;
+	static const uint32_t RAND_MASK = 0x7fff;
+
+	rand_seed = rand_seed * RAND_MULTIPLIER + RAND_INCREMENT;
+	return rand_seed >> RAND_SHIFT & RAND_MASK;
 }
 
 /* Appends s2 to s1 (0x5f128). */
@@ -402,6 +394,7 @@ double fabs(double x)
  * shift (0x60974-0x60986). */
 double frexp(double value, int32_t *exponent)
 {
+	static const uint32_t MANTISSA_HIGH_MASK = 0x000fffffu;
 	union libc_double v = { .value = value };
 	uint32_t sign = v.word.high & LIBC_SIGN;
 	uint32_t magnitude = v.word.high & ~LIBC_SIGN;
@@ -425,7 +418,7 @@ double frexp(double value, int32_t *exponent)
 	}
 	*exponent = (int16_t)(field - LIBC_HALF_EXPONENT);
 	v.word.high = sign | (uint32_t)LIBC_HALF_EXPONENT << LIBC_EXPONENT_SHIFT |
-		      (v.word.high & LIBC_MANTISSA_HIGH_MASK);
+		      (v.word.high & MANTISSA_HIGH_MASK);
 	return v.value;
 }
 
@@ -501,7 +494,7 @@ uint32_t double_is_integer(uint32_t high, uint32_t low, uint32_t *odd)
  * +0 (0x60efa). */
 double double_truncate_sixteenths(double value)
 {
-	enum { SIXTEENTHS_BITS = 4 };
+	static const int32_t SIXTEENTHS_BITS = 4;
 	union libc_double v = { .value = value };
 	int32_t drop = LIBC_EXPONENT_BIAS + LIBC_MANTISSA_BITS - SIXTEENTHS_BITS -
 		       (int32_t)((v.word.high & ~LIBC_SIGN) >> LIBC_EXPONENT_SHIFT);
@@ -532,9 +525,6 @@ void double_to_digits_multiply(uint32_t *product)
 	product[2] = (uint32_t)middle;
 	product[3] = (uint32_t)low;
 }
-
-/* sqrt(1/2), where log and pow choose how to reduce their argument. */
-#define LIBC_SQRT_HALF 0.7071067811865476
 
 /* Adds n to a double's binary exponent, n << 20 to its high word:
  * multiplies a finite, normal x by 2^n. */
@@ -569,7 +559,9 @@ static double libc_reduce(union libc_double x, int32_t *exponent)
  * -infinity, with errno ERANGE. */
 double log(double x)
 {
-	enum { ERANGE = 34 };
+	static const int32_t ERANGE = 34;
+	/* sqrt(1/2), where log and pow choose how to reduce their argument. */
+	static const double SQRT_HALF = 0.7071067811865476;
 	union libc_double v = { .value = x };
 
 	if (libc_is_nan(v))
@@ -598,7 +590,7 @@ double log(double x)
 	double reduced = libc_reduce(v, &exponent);
 	double z;
 
-	if (double_compare(LIBC_SQRT_HALF, reduced) < 1) {
+	if (double_compare(SQRT_HALF, reduced) < 1) {
 		exponent--;
 		double numerator = double_add(-0.5, reduced);
 		double denominator = double_add(0.5, double_multiply(0.5, numerator));
@@ -673,29 +665,6 @@ double sqrt(double x)
 	return libc_scale(root, (int32_t)scale / 2);
 }
 
-/* double_to_digits's limits and constants. */
-enum {
-	/* The most digits it writes. */
-	LIBC_DIGITS_MAX = 0x15c,
-	/* The most it computes; those past them are zeros. */
-	LIBC_DIGITS_EXACT = 17,
-	/* log10(2) in 16 fractional bits, rounded down for a positive
-	 * exponent and up for a negative one, so that the decimal
-	 * exponent estimated from the binary one is never too large. */
-	LIBC_LOG10_2_DOWN = 0x4d10,
-	LIBC_LOG10_2_UP = 0x4d11,
-	LIBC_LOG10_2_BITS = 16,
-	/* The power of ten it scales by is a power of 10^25, from the
-	 * table's 10^-325 to 10^325 (index 13 is 10^0), times one of
-	 * 10^1 to 10^24 (libc.md, 0x5f864). */
-	LIBC_POWER_STEP = 25,
-	LIBC_POWER_STEP_ZERO = 13,
-	/* The scaled product's binary point: the shift that brings its
-	 * integer part to its low 64 bits is this less the binary
-	 * exponent and the powers' exponents. */
-	LIBC_DIGITS_POINT = 0x52,
-};
-
 /* mode: the count is of digits after the point, as %f wants, or of
  * significant digits, as %e does. */
 enum {
@@ -768,8 +737,28 @@ static uint64_t libc_digits_round(const uint32_t product[4], int16_t shift)
 void double_to_digits(double value, int32_t count, int32_t *exponent, uint32_t *negative, char *digits,
 		      int32_t mode)
 {
+	static const uint32_t EXPONENT_MASK = 0x7ff00000u;
+	/* The most digits it writes. */
+	static const int32_t DIGITS_MAX = 0x15c;
+	/* The most it computes; those past them are zeros. */
+	static const int32_t DIGITS_EXACT = 17;
+	/* log10(2) in 16 fractional bits, rounded down for a positive
+	 * exponent and up for a negative one, so that the decimal
+	 * exponent estimated from the binary one is never too large. */
+	static const int32_t LOG10_2_DOWN = 0x4d10;
+	static const int32_t LOG10_2_UP = 0x4d11;
+	static const int32_t LOG10_2_BITS = 16;
+	/* The power of ten it scales by is a power of 10^25, from the
+	 * table's 10^-325 to 10^325 (index 13 is 10^0), times one of
+	 * 10^1 to 10^24 (libc.md, 0x5f864). */
+	static const int32_t POWER_STEP = 25;
+	static const int32_t POWER_STEP_ZERO = 13;
+	/* The scaled product's binary point: the shift that brings its
+	 * integer part to its low 64 bits is this less the binary
+	 * exponent and the powers' exponents. */
+	static const int32_t DIGITS_POINT = 0x52;
 	union libc_double v = { .value = value };
-	uint32_t field = (v.word.high & LIBC_EXPONENT_MASK) >> LIBC_EXPONENT_SHIFT;
+	uint32_t field = (v.word.high & EXPONENT_MASK) >> LIBC_EXPONENT_SHIFT;
 	uint64_t mantissa = v.bits & LIBC_MANTISSA_MASK;
 
 	*negative = (v.word.high & LIBC_SIGN) != 0;
@@ -791,8 +780,8 @@ void double_to_digits(double value, int32_t count, int32_t *exponent, uint32_t *
 		if (mantissa == 0) {
 			if (count < 0)
 				count = 0;
-			else if (count > LIBC_DIGITS_MAX)
-				count = LIBC_DIGITS_MAX;
+			else if (count > DIGITS_MAX)
+				count = DIGITS_MAX;
 			for (; count != 0; count--)
 				*digits++ = '0';
 			*digits = '\0';
@@ -803,16 +792,16 @@ void double_to_digits(double value, int32_t count, int32_t *exponent, uint32_t *
 	}
 	mantissa |= LIBC_IMPLICIT_ONE;
 	int32_t binary_exponent = (int32_t)field - LIBC_EXPONENT_BIAS;
-	int32_t log10_2 = binary_exponent < 0 ? LIBC_LOG10_2_UP : LIBC_LOG10_2_DOWN;
-	int16_t decimal = (uint32_t)(binary_exponent * log10_2) >> LIBC_LOG10_2_BITS;
+	int32_t log10_2 = binary_exponent < 0 ? LOG10_2_UP : LOG10_2_DOWN;
+	int16_t decimal = (uint32_t)(binary_exponent * log10_2) >> LOG10_2_BITS;
 
 	if (count < 0)
 		count = 0;
 	if (mode == LIBC_DIGITS_AFTER_POINT)
 		count += decimal + 1;
-	if (count > LIBC_DIGITS_MAX)
-		count = LIBC_DIGITS_MAX;
-	int32_t significant = count < 0 ? 0 : count > LIBC_DIGITS_EXACT ? LIBC_DIGITS_EXACT : count;
+	if (count > DIGITS_MAX)
+		count = DIGITS_MAX;
+	int32_t significant = count < 0 ? 0 : count > DIGITS_EXACT ? DIGITS_EXACT : count;
 	int16_t guess;
 	uint64_t integer;
 
@@ -820,14 +809,14 @@ void double_to_digits(double value, int32_t count, int32_t *exponent, uint32_t *
 		guess = decimal;
 		/* The power of ten to scale by, 10^(25 big + small). */
 		int16_t power = (int16_t)significant - guess - 1;
-		int32_t big = power / LIBC_POWER_STEP;
-		int32_t small = power - (int16_t)big * LIBC_POWER_STEP;
+		int32_t big = power / POWER_STEP;
+		int32_t small = power - (int16_t)big * POWER_STEP;
 
 		if (small < 0) {
 			big--;
-			small += LIBC_POWER_STEP;
+			small += POWER_STEP;
 		}
-		int16_t shift = LIBC_DIGITS_POINT - (int16_t)binary_exponent;
+		int16_t shift = DIGITS_POINT - (int16_t)binary_exponent;
 		uint32_t product[4];
 
 		if (small == 0 && big == 0) {
@@ -838,9 +827,9 @@ void double_to_digits(double value, int32_t count, int32_t *exponent, uint32_t *
 			shift += 2;
 		} else {
 			if (small == 0) {
-				product[0] = powers_of_ten_by_25_mantissas[(big + LIBC_POWER_STEP_ZERO) * 2];
-				product[1] = powers_of_ten_by_25_mantissas[(big + LIBC_POWER_STEP_ZERO) * 2 + 1];
-				shift -= powers_of_ten_by_25_exponents[big + LIBC_POWER_STEP_ZERO];
+				product[0] = powers_of_ten_by_25_mantissas[(big + POWER_STEP_ZERO) * 2];
+				product[1] = powers_of_ten_by_25_mantissas[(big + POWER_STEP_ZERO) * 2 + 1];
+				shift -= powers_of_ten_by_25_exponents[big + POWER_STEP_ZERO];
 				shift++;
 			} else {
 				product[0] = powers_of_ten_1_to_24_mantissas[(small - 1) * 2];
@@ -849,9 +838,9 @@ void double_to_digits(double value, int32_t count, int32_t *exponent, uint32_t *
 				if (big == 0) {
 					shift++;
 				} else {
-					product[2] = powers_of_ten_by_25_mantissas[(big + LIBC_POWER_STEP_ZERO) * 2];
-					product[3] = powers_of_ten_by_25_mantissas[(big + LIBC_POWER_STEP_ZERO) * 2 + 1];
-					shift -= powers_of_ten_by_25_exponents[big + LIBC_POWER_STEP_ZERO];
+					product[2] = powers_of_ten_by_25_mantissas[(big + POWER_STEP_ZERO) * 2];
+					product[3] = powers_of_ten_by_25_mantissas[(big + POWER_STEP_ZERO) * 2 + 1];
+					shift -= powers_of_ten_by_25_exponents[big + POWER_STEP_ZERO];
 					double_to_digits_multiply(product);
 					/* The power's 128 bits rounded to their high 64, ties to even. */
 					if ((product[2] & LIBC_SIGN) != 0) {
@@ -940,27 +929,6 @@ static bool libc_is_infinity(union libc_double x)
 	return (x.word.high & ~LIBC_SIGN) == LIBC_INFINITY_HIGH && x.word.low == 0;
 }
 
-/* pow's tables: pow_two_powers[k] is 2^(-k/16), k from 0 to 16 (0x6184c),
- * and for an odd k pow_two_power_tails[(k + 1) / 2] the rest of 2^(-k/16)
- * that it leaves out (0x618d4). */
-enum {
-	LIBC_POW_SIXTEENTHS = 16,
-	LIBC_POW_SQRT_HALF = 8,
-};
-
-/* float_raise's underflow takes the result denormalized: the shift that
- * denormalizes it, its high and low words and a word of the bits below
- * them, whether any is set (0x5e990).  A shift past the mantissa's
- * bits, more than 0x37, gives zero (0x5e9f0). */
-enum {
-	LIBC_POW_UNDERFLOW_TO_ZERO = 100,
-	LIBC_POW_INEXACT_BITS = 1,
-};
-
-/* float_raise's causes, for float_control's trap enables. */
-#define LIBC_POW_UNTRAPPED \
-	((uint16_t) ~(LIBC_CAUSE_OPERAND_ERROR | LIBC_CAUSE_OVERFLOW | LIBC_CAUSE_UNDERFLOW | LIBC_CAUSE_INEXACT))
-
 /* x to the power y (0x60f5e), by Cody and Waite's method: log2 x in
  * sixteenths, from x's mantissa reduced by a power of 2^(1/16) and a
  * polynomial; y times it in high and low parts, each a multiple of
@@ -970,6 +938,20 @@ enum {
  * cases, a zero, an infinity or a NaN, it settles first. */
 double pow(double x, double y)
 {
+	/* pow's tables: pow_two_powers[k] is 2^(-k/16), k from 0 to 16
+	 * (0x6184c), and for an odd k pow_two_power_tails[(k + 1) / 2] the
+	 * rest of 2^(-k/16) that it leaves out (0x618d4). */
+	static const int32_t POW_SIXTEENTHS = 16;
+	static const int32_t POW_SQRT_HALF = 8;
+	/* float_raise's underflow takes the result denormalized: the shift
+	 * that denormalizes it, its high and low words and a word of the
+	 * bits below them, whether any is set (0x5e990).  A shift past the
+	 * mantissa's bits, more than 0x37, gives zero (0x5e9f0). */
+	static const int32_t POW_UNDERFLOW_TO_ZERO = 100;
+	static const int32_t POW_INEXACT_BITS = 1;
+	/* float_raise's causes, for float_control's trap enables. */
+	static const uint16_t POW_UNTRAPPED = (uint16_t)~(LIBC_CAUSE_OPERAND_ERROR | LIBC_CAUSE_OVERFLOW |
+							   LIBC_CAUSE_UNDERFLOW | LIBC_CAUSE_INEXACT);
 	union libc_double base = { .value = x };
 	union libc_double power = { .value = y };
 	union libc_double one = { .value = 1.0 };
@@ -1056,7 +1038,7 @@ double pow(double x, double y)
 		double mantissa = frexp(base.value, &binary_exponent);
 		int32_t k = 1;
 
-		if (double_compare(mantissa, pow_two_powers[LIBC_POW_SQRT_HALF]) >= 0)
+		if (double_compare(mantissa, pow_two_powers[POW_SQRT_HALF]) >= 0)
 			k = 9;
 		if (double_compare(mantissa, pow_two_powers[k + 3]) >= 0)
 			k += 4;
@@ -1079,7 +1061,7 @@ double pow(double x, double y)
 		t = double_add(double_multiply(t, log2_e_minus_1), t);
 		double log2_fraction = double_add(double_add(double_multiply(log2_e_minus_1, z), t), z);
 		/* log2 x less log2_fraction, a whole number of sixteenths. */
-		double log2_whole = libc_scale(integer_to_double(binary_exponent * LIBC_POW_SIXTEENTHS - k), -4);
+		double log2_whole = libc_scale(integer_to_double(binary_exponent * POW_SIXTEENTHS - k), -4);
 
 		/* y log2 x, untrapped, as a whole number of sixteenths and the
 		 * rest, y and the products each split at 1/16. */
@@ -1087,7 +1069,7 @@ double pow(double x, double y)
 		uint16_t saved_control = float_control;
 
 		float_status = 0;
-		float_control = saved_control & LIBC_POW_UNTRAPPED;
+		float_control = saved_control & POW_UNTRAPPED;
 		double y_high = double_truncate_sixteenths(y);
 		double y_low = double_subtract_reversed(y_high, y);
 		double product = double_multiply(y, log2_fraction);
@@ -1103,7 +1085,7 @@ double pow(double x, double y)
 
 		low = double_subtract_reversed(low_sixteenths, low);
 		int32_t sixteenths = double_to_integer(
-			double_multiply(LIBC_POW_SIXTEENTHS, double_truncate_sixteenths(double_add(high, low_sixteenths))));
+			double_multiply(POW_SIXTEENTHS, double_truncate_sixteenths(double_add(high, low_sixteenths))));
 
 		if ((float_status & LIBC_CAUSE_OPERAND_ERROR) != 0) {
 			/* Too many sixteenths for an int: the result overflows
@@ -1120,7 +1102,7 @@ double pow(double x, double y)
 			else
 				result.value = libc_from_bits(float_raise(
 					LIBC_RAISE_CODE(LIBC_RAISE_POW, LIBC_CAUSE_UNDERFLOW),
-					LIBC_POW_UNDERFLOW_TO_ZERO, 0, 0, LIBC_POW_INEXACT_BITS));
+					POW_UNDERFLOW_TO_ZERO, 0, 0, POW_INEXACT_BITS));
 		} else {
 			/* 2^(y log2 x) = 2^scale 2^(-k/16) 2^low, low in
 			 * (-1/16, 0]. */
@@ -1130,7 +1112,7 @@ double pow(double x, double y)
 			}
 			int32_t scale = (sixteenths >> 4) + 1;
 
-			k = scale * LIBC_POW_SIXTEENTHS - sixteenths;
+			k = scale * POW_SIXTEENTHS - sixteenths;
 			double r = double_multiply(low, pow_exp2_q7);
 
 			r = double_add(r, pow_exp2_q6);
@@ -1165,7 +1147,7 @@ double pow(double x, double y)
 			} else if ((status & LIBC_CAUSE_UNDERFLOW) != 0 || field < 1) {
 				result.value = libc_from_bits(
 					float_raise(LIBC_RAISE_CODE(LIBC_RAISE_POW, LIBC_CAUSE_UNDERFLOW), 1 - field,
-						    result.word.high, result.word.low, LIBC_POW_INEXACT_BITS));
+						    result.word.high, result.word.low, POW_INEXACT_BITS));
 			} else {
 				result.value = libc_from_bits(
 					float_raise(LIBC_RAISE_CODE(LIBC_RAISE_POW, LIBC_CAUSE_OVERFLOW)));

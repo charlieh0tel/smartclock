@@ -60,15 +60,11 @@ static inline uint16_t cpu_interrupts_at(uint16_t level)
 
 /* An exception frame's format and vector word: the format in the top
  * four bits, the vector's offset, 4 times its number, in the rest
- * (the CPU32's exception stack frame). */
-enum {
-	CPU_VECTOR_FORMAT_MASK = 0xf000,
-	CPU_VECTOR_OFFSET_MASK = 0x0fff,
-};
+ * (the CPU32's exception stack frame); os.c's exception_name masks the
+ * offset. */
+static const uint16_t CPU_VECTOR_FORMAT_MASK = 0xf000;
 
 /* The SIM's software watchdog is serviced by writing these two to SWSR
  * in turn (MC68331UM, "Software Watchdog"; D.3.15). */
-enum {
-	CPU_SWSR_FIRST = 0x55,
-	CPU_SWSR_SECOND = 0xaa,
-};
+static const uint8_t CPU_SWSR_FIRST = 0x55;
+static const uint8_t CPU_SWSR_SECOND = 0xaa;

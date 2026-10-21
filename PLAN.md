@@ -1151,7 +1151,10 @@ view cannot drift apart.  The library, bottom up:
      conversion.
      Then the exporter: a double moved as its two longs, read, stored a
      constant or another double, is moved whole (1000 to 898), and a
-     sign extension built of `CONCAT`s is a cast (898 to 859).
+     sign extension built of `CONCAT`s is a cast (898 to 859), and a
+     call's double read back from a register pair, its copy in A0:A1
+     or D0:D1 the decompiler took to be elsewhere, is kept in a
+     variable (859 to 788).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

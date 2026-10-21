@@ -26,7 +26,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -1311,6 +1313,30 @@ public class SmartClockExportC extends GhidraScript {
 		private final Map<ClangToken, String> replaced = new IdentityHashMap<>();
 		private final Map<ClangToken, String> after = new IdentityHashMap<>();
 		private final Set<ClangLine> dropped = Collections.newSetFromMap(new IdentityHashMap<>());
+		/** Lines whose rest, after a token, joins an earlier token, made last (applyJoins). */
+		private final List<Join> joins = new ArrayList<>();
+	}
+
+	/** The rest of lines[last] after close joins the text of start, on lines[first], and the lines between go. */
+	private record Join(ClangToken start, ClangToken close, int first, int last) {}
+
+	/**
+	 * Makes the joins the passes asked for, the last line's first, so
+	 * that text a join moved onto a line moves on with that line's rest.
+	 */
+	private static void applyJoins(List<ClangLine> lines, TokenEdits edits) {
+		edits.joins.sort(Comparator.comparingInt(Join::last).thenComparingInt(Join::first).reversed());
+		for (Join join : edits.joins) {
+			StringBuilder text = new StringBuilder(edits.replaced.getOrDefault(join.start(), printedText(join.start())));
+			List<ClangToken> rest = lines.get(join.last()).getAllTokens();
+			for (ClangToken token : rest.subList(rest.indexOf(join.close()) + 1, rest.size())) {
+				text.append(take(token, edits));
+			}
+			edits.replaced.put(join.start(), text.toString());
+			for (int k = join.first() + 1; k <= join.last(); k++) {
+				edits.dropped.add(lines.get(k));
+			}
+		}
 	}
 
 	/** How DecompileResults cleans the names the decompiler prints. */
@@ -1343,12 +1369,14 @@ public class SmartClockExportC extends GhidraScript {
 		TokenEdits edits = new TokenEdits();
 		unsignedCompares(tokens, edits);
 		unsignedEqualities(tokens, edits);
-		resultCopies(tokens, results.getHighFunction(), edits);
+		RegisterPairs pairs = registerPairs(tokens, results.getHighFunction());
+		resultCopies(tokens, results.getHighFunction(), pairs.names(), edits);
 		conditionCodeResults(tokens, results.getHighFunction(), edits);
 		registerResults(tokens, results.getHighFunction(), edits);
 		preservedRegisters(tokens, results.getHighFunction(), edits);
 		switchLabels(tokens, edits);
 		byteConstants(tokens, edits);
+		pairResults(lines, tokens, pairs, edits);
 		pushedValues(lines, tokens, edits);
 		signExtensions(lines, tokens, edits);
 		aggregateCasts(tokens, edits);
@@ -1359,6 +1387,7 @@ public class SmartClockExportC extends GhidraScript {
 				signedPieces.add(readSigned(fieldOperator(tokens, i)));
 			}
 		}
+		applyJoins(lines, edits);
 		return new Printed(text(lines, edits), signedPieces);
 	}
 
@@ -1634,18 +1663,12 @@ public class SmartClockExportC extends GhidraScript {
 		for (int k = start; k <= close; k++) {
 			take(tokens.get(k), edits);
 		}
+		edits.replaced.put(tokens.get(start), text.toString());
 		int first = lines.indexOf(lineOf.get(tokens.get(start)));
 		int last = lines.indexOf(lineOf.get(tokens.get(close)));
 		if (last > first) {
-			List<ClangToken> rest = lines.get(last).getAllTokens();
-			for (ClangToken token : rest.subList(rest.indexOf(tokens.get(close)) + 1, rest.size())) {
-				text.append(take(token, edits));
-			}
-			for (int k = first + 1; k <= last; k++) {
-				edits.dropped.add(lines.get(k));
-			}
+			edits.joins.add(new Join(tokens.get(start), tokens.get(close), first, last));
 		}
-		edits.replaced.put(tokens.get(start), text.toString());
 		List<Integer> cast = new ArrayList<>();
 		for (int k = start - 1; k >= 0 && cast.size() < 3; k--) {
 			if (!tokens.get(k).getText().isBlank()) {
@@ -2034,7 +2057,7 @@ public class SmartClockExportC extends GhidraScript {
 	 * otherwise, where the image's next double routine takes them as its
 	 * other operand.
 	 */
-	private void resultCopies(List<ClangToken> tokens, HighFunction high, TokenEdits edits) {
+	private void resultCopies(List<ClangToken> tokens, HighFunction high, Set<String> taken, TokenEdits edits) {
 		for (int i = 0; i < tokens.size(); i++) {
 			PcodeOp call = tokens.get(i).getPcodeOp();
 			if (!(tokens.get(i) instanceof ClangFuncNameToken) || call == null
@@ -2049,12 +2072,161 @@ public class SmartClockExportC extends GhidraScript {
 			}
 			for (int k = 0; k < copies.size(); k++) {
 				ExtraOutput output = outputs.get(copies.get(k));
-				if (output != null) {
+				if (output != null && !taken.contains(output.name())) {
 					edits.before.merge(tokens.get(i), ALSO_OPEN, String::concat);
 					edits.after.merge(tokens.get(close), "; " + ALSO + "(" + output.name() + ", __c, "
 						+ ((copies.size() - 1 - k) * REGISTER_BYTES + output.low()) + "); __c; })",
 						String::concat);
 				}
+			}
+		}
+	}
+
+	/** The prefix of the variable pairResults keeps a call's result in. */
+	private static final String RESULT = "result_";
+	/** The register pair a double result is in. */
+	private static final List<String> DOUBLE_RESULT = List.of("D0", "D1");
+
+	/**
+	 * The CONCATs that read a call's result back from a register pair, by
+	 * their tokens' index, and the variables of the decompiler's they
+	 * replace; resultCopies leaves those alone.
+	 */
+	private record RegisterPairs(Map<Integer, PcodeOp> roots, Set<String> names) {}
+
+	/**
+	 * The CONCATs the decompiler reads a call's result through: a double
+	 * routine's copy of its result in A0:A1, as its convention's copies
+	 * says, which the next routine takes, or the result in D0:D1 of a call
+	 * whose prototype the decompiler took to return it elsewhere (sqrt
+	 * through jsr (A4)).  Each CONCAT's two pieces are the registers' values
+	 * after one call, INDIRECTs at it, high first; a variable whose
+	 * values are read anywhere else leaves its CONCATs as they are.
+	 */
+	private RegisterPairs registerPairs(List<ClangToken> tokens, HighFunction high) {
+		Map<Integer, PcodeOp> roots = new LinkedHashMap<>();
+		Map<Integer, List<Varnode>> pieces = new HashMap<>();
+		Map<Integer, Set<PcodeOp>> concats = new HashMap<>();
+		for (int i = 0; i < tokens.size(); i++) {
+			PcodeOp op = tokens.get(i).getPcodeOp();
+			if (!(tokens.get(i) instanceof ClangOpToken) || op == null || op.getOpcode() != PcodeOp.PIECE
+				|| !tokens.get(i).getText().startsWith("CONCAT") || readByPiece(op.getOutput())) {
+				continue;
+			}
+			List<Varnode> leaves = new ArrayList<>();
+			Set<PcodeOp> ops = Collections.newSetFromMap(new IdentityHashMap<>());
+			concatLeaves(op.getOutput(), leaves, ops);
+			PcodeOp call = leaves.size() != 2 ? null : pairCall(high, leaves);
+			Function callee = call == null ? null : getFunctionAt(call.getInput(0).getAddress());
+			if (callee == null || callee.getReturnType().getLength() != op.getOutput().getSize()) {
+				continue;
+			}
+			List<String> pair = List.of(currentProgram.getRegister(leaves.get(0)).getName(),
+				currentProgram.getRegister(leaves.get(1)).getName());
+			if (pair.equals(DOUBLE_RESULT) || pair.equals(copies(callee))) {
+				roots.put(i, call);
+				pieces.put(i, leaves);
+				concats.put(i, ops);
+			}
+		}
+		// a variable read anywhere but these CONCATs keeps them all
+		for (boolean changed = true; changed; ) {
+			Set<PcodeOp> handled = Collections.newSetFromMap(new IdentityHashMap<>());
+			Set<Varnode> leaves = Collections.newSetFromMap(new IdentityHashMap<>());
+			for (Integer root : roots.keySet()) {
+				handled.addAll(concats.get(root));
+				leaves.addAll(pieces.get(root));
+			}
+			changed = roots.keySet().removeIf(root -> pieces.get(root).stream().anyMatch(leaf ->
+				leaf.getHigh() == null || Arrays.stream(leaf.getHigh().getInstances()).anyMatch(instance ->
+					!leaves.contains(instance) && instance.getDef() != null && instance.getDef().getOpcode() != PcodeOp.INDIRECT
+					|| !onlyReadBy(instance, handled, Collections.newSetFromMap(new IdentityHashMap<>())))));
+		}
+		Set<String> names = new HashSet<>();
+		for (Integer root : roots.keySet()) {
+			for (Varnode leaf : pieces.get(root)) {
+				names.add(namedHigh(leaf));
+			}
+		}
+		return new RegisterPairs(roots, names);
+	}
+
+	/** The call two pieces are registers' values after, INDIRECTs at it; null if they are not. */
+	private PcodeOp pairCall(HighFunction high, List<Varnode> leaves) {
+		PcodeOp first = leaves.get(0).getDef();
+		PcodeOp second = leaves.get(1).getDef();
+		if (first == null || second == null || first.getOpcode() != PcodeOp.INDIRECT
+			|| second.getOpcode() != PcodeOp.INDIRECT || currentProgram.getRegister(leaves.get(0)) == null
+			|| currentProgram.getRegister(leaves.get(1)) == null
+			|| !first.getSeqnum().getTarget().equals(second.getSeqnum().getTarget())) {
+			return null;
+		}
+		for (Iterator<PcodeOpAST> ops = high.getPcodeOps(first.getSeqnum().getTarget()); ops.hasNext();) {
+			PcodeOp op = ops.next();
+			if (op.getOpcode() == PcodeOp.CALL) {
+				return op;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Keeps the result of each call registerPairs found read back through
+	 * a register pair in a variable of its own, result_n, and reads it
+	 * there: the call becomes (result_n = call(...)), around whatever
+	 * else wraps it, and the CONCAT, and a cast to the result's type,
+	 * result_n.  The decompiler's variables for the registers, read
+	 * nowhere else, are no longer declared.
+	 */
+	private void pairResults(List<ClangLine> lines, List<ClangToken> tokens, RegisterPairs pairs,
+			TokenEdits edits) {
+		if (pairs.roots().isEmpty()) {
+			return;
+		}
+		Map<ClangToken, ClangLine> lineOf = new IdentityHashMap<>();
+		ClangToken open = null;
+		for (ClangLine line : lines) {
+			for (ClangToken token : line.getAllTokens()) {
+				lineOf.put(token, line);
+				if (open == null && token instanceof ClangSyntaxToken && token.getText().equals("{")) {
+					open = token;
+				}
+			}
+		}
+		Map<PcodeOp, String> names = new IdentityHashMap<>();
+		for (Map.Entry<Integer, PcodeOp> root : pairs.roots().entrySet()) {
+			PcodeOp call = root.getValue();
+			String type = getFunctionAt(call.getInput(0).getAddress()).getReturnType().getDisplayName();
+			String name = names.get(call);
+			if (name == null) {
+				name = RESULT + (names.size() + 1);
+				names.put(call, name);
+				declare(open, type, name, edits);
+				for (int i = 0; i < tokens.size(); i++) {
+					if (tokens.get(i) instanceof ClangFuncNameToken && tokens.get(i).getPcodeOp() == call) {
+						int close = closingParenthesis(tokens, i);
+						int before = nextPrinted(tokens, i, -1);
+						int after = nextPrinted(tokens, close, 1);
+						// a call that is its own statement takes no parentheses
+						boolean statement = !edits.before.containsKey(tokens.get(i)) && after >= 0
+							&& tokens.get(after).getText().equals(";") && (before < 0
+								|| tokens.get(before).getText().equals(";") || tokens.get(before).getText().equals("{")
+								|| tokens.get(before).getText().equals("}"));
+						edits.before.merge(tokens.get(i), statement ? name + " = " : "(" + name + " = ",
+							(kept, added) -> added + kept);
+						if (!statement) {
+							edits.after.merge(tokens.get(close), ")", String::concat);
+						}
+						break;
+					}
+				}
+			}
+			replaceConcat(lines, lineOf, tokens, root.getKey(), name, type, edits);
+		}
+		for (ClangToken token : tokens) {
+			if (token.Parent() instanceof ClangVariableDecl && token instanceof ClangVariableToken
+				&& pairs.names().contains(token.getText()) && singleStatement(lineOf.get(token))) {
+				edits.dropped.add(lineOf.get(token));
 			}
 		}
 	}

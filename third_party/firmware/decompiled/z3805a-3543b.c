@@ -33766,6 +33766,8 @@ void diag_doven(int param_1)
 void diag_cal(uint param_1)
 
 {
+  double result_1;
+  double result_2;
   int pushed_1;
   double pushed_2;
   double pushed_3;
@@ -33777,10 +33779,6 @@ void diag_cal(uint param_1)
   ushort uVar3;
   float fVar4;
   int iVar5;
-  undefined4 extraout_A0;
-  undefined4 extraout_A0_00;
-  undefined4 extraout_A1;
-  undefined4 extraout_A1_00;
   double dVar6;
   double accumulator_1;
   double accumulator_2;
@@ -33818,16 +33816,16 @@ void diag_cal(uint param_1)
   dVar6 = float_to_double(fVar4);
   dVar6 = double_multiply_pointer(dVar6,&accumulator_3);
   pushed_2 = dVar6;
-  ({ __auto_type __c = ({ __auto_type __c = double_multiply_pointers(&accumulator_2,&accumulator_1); __ghidra_also(extraout_A0, __c, 4); __c; }); __ghidra_also(extraout_A1, __c, 0); __c; });
+  result_1 = double_multiply_pointers(&accumulator_2,&accumulator_1);
   dVar6 = double_subtract_reversed
-                    (pushed_2,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
+                    (pushed_2,result_1);
   pushed_4 = dVar6;
   dVar6 = float_to_double(fVar4);
   dVar6 = double_multiply_pointer(dVar6,&accumulator_4);
   pushed_3 = dVar6;
-  ({ __auto_type __c = ({ __auto_type __c = double_multiply_pointers(&accumulator_1,&accumulator_1); __ghidra_also(extraout_A0_00, __c, 4); __c; }); __ghidra_also(extraout_A1_00, __c, 0); __c; });
+  result_2 = double_multiply_pointers(&accumulator_1,&accumulator_1);
   dVar6 = double_subtract_reversed
-                    (pushed_3,__ghidra_as(double, CONCAT44(extraout_A0_00,extraout_A1_00)));
+                    (pushed_3,result_2);
   dVar6 = double_divide_reversed
                     (dVar6,pushed_4);
   fVar4 = double_to_float(dVar6);
@@ -57104,13 +57102,12 @@ void pll_action_nothing(int32_t index,int32_t source)
 void efc_history_update(void)
 
 {
+  double result_1;
   float fVar1;
   uint32_t uVar2;
   int iVar3;
   float fVar4;
   uint param4;
-  undefined4 extraout_A0;
-  undefined4 extraout_A1;
   double dVar5;
   double dVar6;
   double dVar7;
@@ -57201,8 +57198,8 @@ void efc_history_update(void)
         fVar4 = float_add(fVar1,-1.0);
         dVar6 = float_to_double(fVar4);
         dVar6 = log(dVar6);
-        ({ __auto_type __c = ({ __auto_type __c = double_add(dVar6,dVar5); __ghidra_also(extraout_A0, __c, 4); __c; }); __ghidra_also(extraout_A1, __c, 0); __c; });
-        dVar5 = double_add(-1.0,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
+        result_1 = double_add(dVar6,dVar5);
+        dVar5 = double_add(-1.0,result_1);
         fVar4 = double_to_float(dVar5);
         pll.efc_history.logs[pll.efc_history.stop_ptr] = fVar4;
       }
@@ -57543,12 +57540,11 @@ int fit_constant(aging_curve_state *curve)
 int fit_logarithmic(aging_curve_state *curve)
 
 {
+  double result_1;
   float a;
   uint32_t uVar1;
   float f;
   int iVar2;
-  undefined4 extraout_A0;
-  undefined4 extraout_A1;
   double a_00;
   double a_01;
   float local_8;
@@ -57563,8 +57559,8 @@ int fit_logarithmic(aging_curve_state *curve)
     f = float_subtract(a,curve->rms);
     a_00 = float_to_double(f);
     a_01 = float_to_double(a);
-    ({ __auto_type __c = ({ __auto_type __c = double_multiply(a_01,0.01); __ghidra_also(extraout_A0, __c, 4); __c; }); __ghidra_also(extraout_A1, __c, 0); __c; });
-    iVar2 = double_compare(a_00,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
+    result_1 = double_multiply(a_01,0.01);
+    iVar2 = double_compare(a_00,result_1);
     if (-1 < iVar2) break;
   } while (uVar1 == 0);
   fit_evaluate_latest(curve,&local_8);
@@ -57641,12 +57637,11 @@ void fit_evaluate_latest(aging_curve_state *curve,float *fitted)
 int fit_log_initial(aging_curve_state *curve)
 
 {
+  double result_1;
   int iVar1;
   float fVar2;
   float f;
   int iVar3;
-  undefined4 extraout_A0;
-  undefined4 extraout_A1;
   double dVar4;
   double b;
   regression_record regression;
@@ -57661,8 +57656,8 @@ int fit_log_initial(aging_curve_state *curve)
   f = float_abs(fVar2);
   dVar4 = float_to_double(f);
   b = float_to_double(regression.rms);
-  ({ __auto_type __c = ({ __auto_type __c = double_multiply(10.0,b); __ghidra_also(extraout_A0, __c, 4); __c; }); __ghidra_also(extraout_A1, __c, 0); __c; });
-  iVar3 = double_compare(dVar4,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
+  result_1 = double_multiply(10.0,b);
+  iVar3 = double_compare(dVar4,result_1);
   if (0 < iVar3) {
     dVar4 = float_to_double(regression.rms);
     dVar4 = double_multiply(10.0,dVar4);
@@ -57996,29 +57991,20 @@ float float_abs(float param_1)
 void fit_quality(aging_curve_state *curve)
 
 {
+  double result_1;
+  double result_2;
+  double result_3;
+  double result_4;
+  double result_5;
+  double result_6;
+  double result_7;
+  double result_8;
+  double result_9;
   uint uVar1;
   float fVar2;
   float fVar3;
-  undefined4 extraout_D0;
-  undefined4 extraout_D0_00;
-  undefined4 extraout_D0_01;
-  undefined4 extraout_D0_02;
-  undefined4 extraout_D1;
-  undefined4 extraout_D1_00;
-  undefined4 extraout_D1_01;
-  undefined4 extraout_D1_02;
   int i;
   float fVar4;
-  undefined4 extraout_A0;
-  undefined4 extraout_A0_00;
-  undefined4 extraout_A0_01;
-  undefined4 extraout_A0_02;
-  undefined4 extraout_A0_03;
-  undefined4 extraout_A1;
-  undefined4 extraout_A1_00;
-  undefined4 extraout_A1_01;
-  undefined4 extraout_A1_02;
-  undefined4 extraout_A1_03;
   double dVar5;
   double dVar6;
   undefined4 uVar7;
@@ -58044,8 +58030,8 @@ void fit_quality(aging_curve_state *curve)
     fVar3 = float_subtract(fVar2,local_14);
     dVar5 = float_to_double(fVar3);
     dVar6 = float_to_double(fVar3);
-    ({ __auto_type __c = ({ __auto_type __c = double_multiply(dVar6,dVar5); __ghidra_also(extraout_A0, __c, 4); __c; }); __ghidra_also(extraout_A1, __c, 0); __c; });
-    dVar5 = double_multiply(0.5,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
+    result_1 = double_multiply(dVar6,dVar5);
+    dVar5 = double_multiply(0.5,result_1);
     dVar6 = float_to_double(fVar4);
     dVar5 = double_add(dVar6,dVar5);
     fVar4 = double_to_float(dVar5);
@@ -58059,10 +58045,10 @@ void fit_quality(aging_curve_state *curve)
     fVar3 = float_add(fVar3,-0.5);
     fVar3 = float_divide_reversed(fVar3,fVar4);
     dVar5 = float_to_double(fVar3);
-    sqrt(dVar5);
-    ({ __auto_type __c = ({ __auto_type __c = double_multiply(__ghidra_as(double, CONCAT44(extraout_D0,extraout_D1)),0.00025); __ghidra_also(extraout_A0_00, __c, 4); __c; }); __ghidra_also(extraout_A1_00, __c, 0); __c; });
-    ({ __auto_type __c = ({ __auto_type __c = double_divide_reversed(1e-11,__ghidra_as(double, CONCAT44(extraout_A0_00,extraout_A1_00))); __ghidra_also(extraout_A0_01, __c, 4); __c; }); __ghidra_also(extraout_A1_01, __c, 0); __c; });
-    dVar5 = double_divide_reversed(1600000000000.0,__ghidra_as(double, CONCAT44(extraout_A0_01,extraout_A1_01)));
+    result_2 = sqrt(dVar5);
+    result_3 = double_multiply(result_2,0.00025);
+    result_4 = double_divide_reversed(1e-11,result_3);
+    dVar5 = double_divide_reversed(1600000000000.0,result_4);
     uVar8 = 0;
     uVar7 = 0x3ff80000;
     fVar3 = float_divide(fVar2,2700.0);
@@ -58078,9 +58064,9 @@ void fit_quality(aging_curve_state *curve)
     fVar3 = float_add(fVar3,-0.5);
     fVar3 = float_divide_reversed(fVar3,fVar4);
     dVar5 = float_to_double(fVar3);
-    sqrt(dVar5);
-    ({ __auto_type __c = ({ __auto_type __c = double_multiply(__ghidra_as(double, CONCAT44(extraout_D0_00,extraout_D1_00)),5.5e-05); __ghidra_also(extraout_A0_02, __c, 4); __c; }); __ghidra_also(extraout_A1_02, __c, 0); __c; });
-    dVar5 = double_divide_reversed(16.0,__ghidra_as(double, CONCAT44(extraout_A0_02,extraout_A1_02)));
+    result_5 = sqrt(dVar5);
+    result_6 = double_multiply(result_5,5.5e-05);
+    dVar5 = double_divide_reversed(16.0,result_6);
     uVar8 = 0;
     uVar7 = 0x3ff80000;
     dVar6 = float_to_double(fVar2);
@@ -58092,19 +58078,19 @@ void fit_quality(aging_curve_state *curve)
   }
   fVar2 = float_divide(fVar4,fVar2);
   dVar5 = float_to_double(fVar2);
-  sqrt(dVar5);
-  dVar6 = __ghidra_as(double, CONCAT44(extraout_D0_01,extraout_D1_01));
+  result_7 = sqrt(dVar5);
+  dVar6 = result_7;
   fVar2 = float_multiply(curve->rms,86400.0);
   dVar5 = float_to_double(fVar2);
-  ({ __auto_type __c = ({ __auto_type __c = double_divide(dVar5,1600000000000.0); __ghidra_also(extraout_A0_03, __c, 4); __c; }); __ghidra_also(extraout_A1_03, __c, 0); __c; });
-  dVar5 = double_multiply(dVar6,__ghidra_as(double, CONCAT44(extraout_A0_03,extraout_A1_03)));
+  result_8 = double_divide(dVar5,1600000000000.0);
+  dVar5 = double_multiply(dVar6,result_8);
   fVar2 = double_to_float(dVar5);
   fVar2 = float_multiply(fVar2,fVar2);
   fVar3 = float_multiply(fVar3,fVar3);
   fVar2 = float_add(fVar2,fVar3);
   dVar5 = float_to_double(fVar2);
-  sqrt(dVar5);
-  dVar5 = double_multiply(2.5,__ghidra_as(double, CONCAT44(extraout_D0_02,extraout_D1_02)));
+  result_9 = sqrt(dVar5);
+  dVar5 = double_multiply(2.5,result_9);
   local_8 = double_to_float(dVar5);
 LAB_0004298e:
   curve->predicted_uncertainty = local_8;
@@ -80234,19 +80220,16 @@ LAB_000609ca:
 double log(double x)
 
 {
+  double result_1;
+  double result_2;
+  double result_3;
   bool bVar1;
   bool bVar2;
   uint uVar3;
   int iVar4;
   int iVar5;
   uint uVar6;
-  undefined4 extraout_A0;
-  undefined4 extraout_A0_00;
-  undefined4 extraout_A0_01;
   double *pdVar7;
-  undefined4 extraout_A1;
-  undefined4 extraout_A1_00;
-  undefined4 extraout_A1_01;
   double dVar8;
   double dVar9;
   double dStack_1c;
@@ -80301,14 +80284,14 @@ double log(double x)
         if (iVar4 < 1) {
           iVar5 = iVar5 + -1;
           local_c = __ghidra_bits(double_add_pointer(-0.5,(double *)&local_14));
-          ({ __auto_type __c = ({ __auto_type __c = double_multiply_pointer(0.5,(double *)&local_c); __ghidra_also(extraout_A0_00, __c, 4); __c; }); __ghidra_also(extraout_A1_00, __c, 0); __c; });
-          dVar8 = double_add(0.5,__ghidra_as(double, CONCAT44(extraout_A0_00,extraout_A1_00)));
+          result_1 = double_multiply_pointer(0.5,(double *)&local_c);
+          dVar8 = double_add(0.5,result_1);
           local_14 = __ghidra_bits(double_divide_reversed_pointer(dVar8,(double *)&local_c));
         }
         else {
           local_c = __ghidra_bits(__ghidra_as(double, CONCAT44((int)((ulonglong)local_14 >> 0x20) + -0x100000,__ghidra_piece(unsigned int, local_14, 4))));
-          ({ __auto_type __c = ({ __auto_type __c = double_add_pointer(-0.5,(double *)&local_14); __ghidra_also(extraout_A0, __c, 4); __c; }); __ghidra_also(extraout_A1, __c, 0); __c; });
-          dVar8 = double_add(-0.5,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
+          result_2 = double_add_pointer(-0.5,(double *)&local_14);
+          dVar8 = double_add(-0.5,result_2);
           dVar9 = double_add_pointer(0.5,(double *)&local_c);
           local_14 = __ghidra_bits(double_divide_reversed(dVar9,dVar8));
         }
@@ -80327,8 +80310,8 @@ double log(double x)
         dVar8 = double_divide_reversed(dVar9,dVar8);
         dVar8 = double_multiply_pointer(dVar8,(double *)&local_14);
         dVar8 = double_add_pointer(dVar8,(double *)&local_14);
-        ({ __auto_type __c = ({ __auto_type __c = double_multiply_pointers(&log_ln2_low,&dStack_1c); __ghidra_also(extraout_A0_01, __c, 4); __c; }); __ghidra_also(extraout_A1_01, __c, 0); __c; });
-        dVar8 = double_add(dVar8,__ghidra_as(double, CONCAT44(extraout_A0_01,extraout_A1_01)));
+        result_3 = double_multiply_pointers(&log_ln2_low,&dStack_1c);
+        dVar8 = double_add(dVar8,result_3);
         dVar9 = double_multiply_pointers(&log_ln2_high,&dStack_1c);
         dVar8 = double_add(dVar9,dVar8);
         return dVar8;
@@ -80484,6 +80467,9 @@ double double_truncate_sixteenths(double value)
 double pow(double x,double y)
 
 {
+  double result_1;
+  double result_2;
+  ulonglong result_3;
   double pushed_1;
   double pushed_2;
   ushort uVar1;
@@ -80501,22 +80487,16 @@ double pow(double x,double y)
   undefined4 extraout_D0_01;
   undefined4 extraout_D0_02;
   undefined4 extraout_D0_03;
-  undefined4 extraout_D0_04;
-  undefined4 extraout_D0_05;
   undefined4 extraout_D0_06;
   undefined4 extraout_D0_07;
-  undefined4 extraout_D0_08;
   undefined4 extraout_D1;
   undefined4 uVar11;
   undefined4 extraout_D1_00;
   undefined4 extraout_D1_01;
   undefined4 extraout_D1_02;
   undefined4 extraout_D1_03;
-  undefined4 extraout_D1_04;
-  undefined4 extraout_D1_05;
   undefined4 extraout_D1_06;
   undefined4 extraout_D1_07;
-  undefined4 extraout_D1_08;
   int iVar12;
   undefined8 *puVar13;
   double *pdVar14;
@@ -80752,12 +80732,12 @@ LAB_000611e2:
       __ghidra_piece(unsigned int, high_part, 4) = extraout_D1_03;
       dVar15 = double_subtract_reversed_pointers(&high_part,(double *)&local_18);
       double_add_in_place((double *)&local_48,dVar15);
-      ({ __auto_type __c = ({ __auto_type __c = double_truncate_sixteenths(__ghidra_as(double, local_48)); __ghidra_also(extraout_D0_04, __c, 4); __c; }); __ghidra_also(extraout_D1_04, __c, 0); __c; });
-      local_18 = __ghidra_bits(__ghidra_as(double, CONCAT44(extraout_D0_04,extraout_D1_04)));
+      result_1 = double_truncate_sixteenths(__ghidra_as(double, local_48));
+      local_18 = __ghidra_bits(result_1);
       double_subtract_in_place((double *)&local_48,__ghidra_as(double, local_18));
       dVar15 = double_add_pointers(&high_part,(double *)&local_18);
-      ({ __auto_type __c = ({ __auto_type __c = double_truncate_sixteenths(dVar15); __ghidra_also(extraout_D0_05, __c, 4); __c; }); __ghidra_also(extraout_D1_05, __c, 0); __c; });
-      dVar15 = double_multiply(16.0,__ghidra_as(double, CONCAT44(extraout_D0_05,extraout_D1_05)));
+      result_2 = double_truncate_sixteenths(dVar15);
+      dVar15 = double_multiply(16.0,result_2);
       iVar12 = double_to_integer(dVar15);
       if ((float_status & 0x2000) == 0) {
         if (((ulonglong)local_48 & 0x8000000000000000) == 0) {
@@ -80790,8 +80770,8 @@ LAB_000611e2:
           uVar1 = float_status & 0x200;
           float_status = uVar7;
           if ((uVar1 != 0) && (float_status = uVar7 | 0x200, (uVar8 & 0x200) != 0)) {
-            ({ __auto_type __c = ({ __auto_type __c = float_raise(0xe00200); __ghidra_also(extraout_D0_08, __c, 4); __c; }); __ghidra_also(extraout_D1_08, __c, 0); __c; });
-            local_50 = __ghidra_bits(__ghidra_as(double, CONCAT44(extraout_D0_08,extraout_D1_08)));
+            result_3 = float_raise(0xe00200);
+            local_50 = __ghidra_bits(__ghidra_as(double, result_3));
           }
           local_50 = __ghidra_bits(__ghidra_as(double, CONCAT44(iVar10 * 0x100000 + __ghidra_piece(unsigned int, local_50, 0),__ghidra_piece(unsigned int, local_50, 4))));
           goto LAB_000617c6;

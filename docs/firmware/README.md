@@ -644,7 +644,11 @@ decompiler wrote it, and reported.
   out, not a macro's argument, since gcc places a diagnostic inside a
   macro's argument at the macro, and the conversion pass would wrap the
   whole call.  `log` and `pow` pass a double routine's result to the
-  next that way.
+  next that way.  Where the C reads the pair back only as a `CONCAT44` of the two, the
+  call's result is kept instead in a variable of its own, `result_n =
+  call(...)`, and the `CONCAT` reads it; so too a double the decompiler
+  reads from D0:D1 after a call whose prototype it took to return
+  elsewhere (`sqrt` through `jsr (A4)`).
 - A call to a routine whose convention has `returns=ccr` -- the pSOS
   bindings, `clock_record_sum` and the SCPI engine's number routines --
   gives the flags the C reads after it the routine's.  The decompiler

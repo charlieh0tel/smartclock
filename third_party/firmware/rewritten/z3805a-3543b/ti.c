@@ -234,7 +234,7 @@ void counter_read(interval_reading_fields* reading,
           integer_to_double(configuration->interpolator_scale),
           integer_to_double(interpolated - configuration->interpolator_offset));
 
-      reading->value = int64_to_double((uint64_t)count >> 32, (uint32_t)count);
+      reading->value = int64_to_double(count >> 32, count);
       double_add_in_place(&reading->value, fraction);
       double_multiply_in_place(&reading->value, SECONDS_PER_TICK);
       double_subtract_in_place(&reading->value, configuration->calibration);

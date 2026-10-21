@@ -5,10 +5,7 @@
  * "The clock and the log").  Each second klok_task takes the 1PPS's GPS
  * time and runs the entries due.  The exported C includes this file
  * after its own, so the types and prototypes it declares are in scope;
- * each function here keeps its generated prototype.
- *
- * list_unlink, list_push and klok_insert_sorted take each list as an
- * int32_t pointer, by their prototypes; their callers here cast. */
+ * each function here keeps its generated prototype. */
 
 #include <stddef.h>
 

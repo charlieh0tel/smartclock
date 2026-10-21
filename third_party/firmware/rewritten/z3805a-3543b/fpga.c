@@ -236,8 +236,7 @@ static void fpga_readback_last(fpga_readback* readback, uint16_t bits) {
                         readback->byte_format);
   fpga_readback_advance(readback);
   fpga_readback_compare(readback, fpga_readback_low(readback),
-                        (uint8_t)(FPGA_BYTE_ALL << unused),
-                        readback->byte_format);
+                        FPGA_BYTE_ALL << unused, readback->byte_format);
 }
 
 /* Reports where a frame's readback stopped, if it differed. */

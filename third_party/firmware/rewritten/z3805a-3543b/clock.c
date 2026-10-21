@@ -105,9 +105,8 @@ static uint16_t clock_days_before_month(uint8_t month, bool leap) {
 static uint32_t clock_days_since(uint16_t year, uint8_t month, uint8_t day,
                                  uint16_t epoch_year,
                                  uint16_t first_leap_year) {
-  uint16_t leap_years =
-      ((int32_t)year - first_leap_year + CLOCK_YEARS_PER_LEAP - 1) /
-      CLOCK_YEARS_PER_LEAP;
+  uint16_t leap_years = (year - first_leap_year + CLOCK_YEARS_PER_LEAP - 1) /
+                        CLOCK_YEARS_PER_LEAP;
   uint32_t days = (uint32_t)year * CLOCK_DAYS_PER_YEAR -
                   (uint32_t)epoch_year * CLOCK_DAYS_PER_YEAR + leap_years +
                   clock_days_before_month(month, false) + day;
@@ -368,8 +367,7 @@ int32_t datetime_compare(uint32_t* first, uint32_t* second) {
 /* The GPS-UTC offset as a change to a date and time, and whether to add it
  * (or take it away): its magnitude as hours, minutes and seconds. */
 static bool clock_offset_change(int16_t offset, packed_datetime* change) {
-  change->time =
-      clock_time_of(seconds_to_hms(offset < 1 ? -(int32_t)offset : offset));
+  change->time = clock_time_of(seconds_to_hms(offset < 1 ? -offset : offset));
   return offset >= 1;
 }
 
@@ -466,7 +464,7 @@ static bool clock_time_zone_change(packed_datetime* change) {
               nv_settings.time_zone[1],
           CLOCK_MINUTES_PER_HOUR);
   int32_t hours = hours_minutes >> 32;
-  int32_t minutes = (uint32_t)hours_minutes;
+  int32_t minutes = hours_minutes;
   bool negative = hours < 0 || minutes < 0;
 
   change->time = (time_of_day){

@@ -64,7 +64,7 @@ void print_exception(uint16_t sr, uint32_t pc, uint16_t vector,
     if (has_address) {
       printf_polled(", address = %#8x", address);
     }
-    printf_polled((char*)reset_to_recover_text);
+    printf_polled(reset_to_recover_text);
     if (kernel_running) {
       psos_pause(1);
     }
@@ -124,7 +124,7 @@ uint8_t task_set_priority(uint32_t task, uint8_t priority) {
   uint8_t old;
 
   psos_priority(task, 0, &old);
-  psos_priority(task, (int16_t)(priority - old), &old);
+  psos_priority(task, priority - old, &old);
   return old;
 }
 

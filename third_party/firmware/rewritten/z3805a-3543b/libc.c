@@ -174,7 +174,7 @@ void* memset(void* s, int32_t c, uint32_t n) {
   uint8_t* to = s;
 
   for (; n != 0; n--) {
-    *to++ = (uint8_t)c;
+    *to++ = c;
   }
   return s;
 }
@@ -523,9 +523,9 @@ void double_to_digits_multiply(uint32_t* product) {
                   (cross_2 >> LIBC_WORD_BITS) + (middle >> LIBC_WORD_BITS);
 
   product[0] = high >> LIBC_WORD_BITS;
-  product[1] = (uint32_t)high;
-  product[2] = (uint32_t)middle;
-  product[3] = (uint32_t)low;
+  product[1] = high;
+  product[2] = middle;
+  product[3] = low;
 }
 
 /* Adds n to a double's binary exponent, n << 20 to its high word:
@@ -835,7 +835,7 @@ void double_to_digits(double value, int32_t count, int32_t* exponent,
 
     if (small == 0 && big == 0) {
       product[0] = mantissa >> LIBC_WORD_BITS;
-      product[1] = (uint32_t)mantissa;
+      product[1] = mantissa;
       product[2] = 0;
       product[3] = 0;
       shift += 2;
@@ -871,7 +871,7 @@ void double_to_digits(double value, int32_t count, int32_t* exponent,
         }
       }
       product[2] = mantissa >> LIBC_WORD_BITS;
-      product[3] = (uint32_t)mantissa;
+      product[3] = mantissa;
       double_to_digits_multiply(product);
     }
     integer = libc_digits_round(product, shift);
@@ -923,10 +923,10 @@ void double_to_digits(double value, int32_t count, int32_t* exponent,
       *out++ = '0';
     }
   }
-  uint32_t rest = (uint32_t)integer;
+  uint32_t rest = integer;
 
   for (; place != 0; place--) {
-    uint32_t power = (uint32_t)libc_power_of_ten(place);
+    uint32_t power = libc_power_of_ten(place);
 
     *out = '0';
     for (; power <= rest; rest -= power) {
@@ -973,8 +973,8 @@ double pow(double x, double y) {
   static const int32_t POW_INEXACT_BITS = 1;
   /* float_raise's causes, for float_control's trap enables. */
   static const uint16_t POW_UNTRAPPED =
-      (uint16_t)~(LIBC_CAUSE_OPERAND_ERROR | LIBC_CAUSE_OVERFLOW |
-                  LIBC_CAUSE_UNDERFLOW | LIBC_CAUSE_INEXACT);
+      ~(LIBC_CAUSE_OPERAND_ERROR | LIBC_CAUSE_OVERFLOW | LIBC_CAUSE_UNDERFLOW |
+        LIBC_CAUSE_INEXACT);
   union libc_double base = {.value = x};
   union libc_double power = {.value = y};
   union libc_double one = {.value = 1.0};

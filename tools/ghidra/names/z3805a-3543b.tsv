@@ -564,6 +564,9 @@
 0x10201c	label	pll_scpi_setting	structures.md	the new byte finish_scpi_cmd stores into a setting	uint8_t
 0x102020	label	pll_scpi_values	structures.md	the request's values, which validate_num checks	uint32_t[4]
 0x102030	label	pll_scpi_validated	structures.md	validate_num's results, which finish_scpi_cmd stores	uint32_t[4]
+0x10254a	label	ti_setpoint	loop.md	the time-interval setpoint pll_normal subtracts from each block's mean; phase_off sets it	float
+0x102042	label	holdover_steering	structures.md	the holdover stage's blocks and its slope accumulators	holdover_steering_state
+0x10205e	label	loop_steering	loop.md	startup_pll's and pll_normal's proportional-integral loop	loop_steering_state
 0x109ae	function	klok_task_create	context	psos_create("klok") into task_klok, then psos_start(task_klok, klok_task); "Pps_init error", "Clk_go error"
 0x10b1e	function	klok_task	context	klok_task_create starts the klok task here
 0x20c96	function	spoo_task_create	context	psos_create("spoo") into task_spoo, then psos_start(task_spoo, spoo_task)

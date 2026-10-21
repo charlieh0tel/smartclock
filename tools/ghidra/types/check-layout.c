@@ -25,6 +25,15 @@ CHECK_FIELD(scpi_numeric_param, steps, 0x28);
 CHECK_FIELD(scpi_numeric_param, gps_request, 0x20);
 CHECK_FIELD(scpi_numeric_param, group_cell, 0x22);
 
+CHECK_SIZE(holdover_steering_state, 0x10205e - 0x102042);
+CHECK_FIELD(holdover_steering_state, aging_limit, 0x10204a - 0x102042);
+CHECK_FIELD(holdover_steering_state, ti_sum, 0x10204e - 0x102042);
+CHECK_FIELD(holdover_steering_state, ti_count, 0x10205a - 0x102042);
+CHECK_SIZE(loop_steering_state, 0x10207a - 0x10205e);
+CHECK_FIELD(loop_steering_state, seconds, 0x10206a - 0x10205e);
+CHECK_FIELD(loop_steering_state, proportional_gain, 0x10206e - 0x10205e);
+CHECK_FIELD(loop_steering_state, filter_weight, 0x102076 - 0x10205e);
+
 CHECK_SIZE(serial_ring, 0x102fdf - 0x102edd);
 CHECK_SIZE(serial_ring, 0x1030ec - 0x102fea);
 CHECK_SIZE(duarta_driver, 0x102fea - 0x102fe0);

@@ -861,6 +861,21 @@ struct gps_statistics {
     uint16_t status_monitor_failures;
 };
 
+typedef struct holdover_steering_state holdover_steering_state, *Pholdover_steering_state;
+
+struct holdover_steering_state {
+    float ti_mean;
+    uint8_t readings;
+    uint8_t seconds;
+    uint8_t field_06;
+    uint8_t field_07;
+    float aging_limit;
+    float ti_sum;
+    float ti_weighted_sum;
+    float ti_largest;
+    int32_t ti_count;
+};
+
 typedef struct interpolator_calibration interpolator_calibration, *Pinterpolator_calibration;
 
 struct interpolator_calibration {
@@ -913,6 +928,21 @@ struct log_page {
     uint16_t write_count;
     uint16_t checksum;
     struct log_entry entries[3];
+};
+
+typedef struct loop_steering_state loop_steering_state, *Ploop_steering_state;
+
+struct loop_steering_state {
+    float integral;
+    float ti_sum;
+    int32_t large_offset_blocks;
+    uint8_t seconds;
+    uint8_t readings;
+    uint8_t measurement_failed;
+    uint8_t field_0f;
+    float proportional_gain;
+    float integral_gain;
+    float filter_weight;
 };
 
 typedef struct nv_settings_fields nv_settings_fields, *Pnv_settings_fields;
@@ -1223,11 +1253,13 @@ _Static_assert(sizeof(gps_request_entry) == 26, "gps_request_entry");
 _Static_assert(sizeof(gps_request_ring) == 138, "gps_request_ring");
 _Static_assert(sizeof(gps_state) == 1370, "gps_state");
 _Static_assert(sizeof(gps_statistics) == 54, "gps_statistics");
+_Static_assert(sizeof(holdover_steering_state) == 28, "holdover_steering_state");
 _Static_assert(sizeof(interpolator_calibration) == 9, "interpolator_calibration");
 _Static_assert(sizeof(interval_reading_fields) == 13, "interval_reading_fields");
 _Static_assert(sizeof(klok_entry) == 26, "klok_entry");
 _Static_assert(sizeof(log_entry) == 20, "log_entry");
 _Static_assert(sizeof(log_page) == 64, "log_page");
+_Static_assert(sizeof(loop_steering_state) == 28, "loop_steering_state");
 _Static_assert(sizeof(nv_settings_fields) == 197, "nv_settings_fields");
 _Static_assert(sizeof(oncore_almanac) == 8, "oncore_almanac");
 _Static_assert(sizeof(oncore_almanac_status_fields) == 16, "oncore_almanac_status_fields");
@@ -1394,11 +1426,14 @@ extern uint8_t pll_scpi_source; /* 00102017 */
 extern uint8_t pll_scpi_setting; /* 0010201c */
 extern uint32_t pll_scpi_values[4]; /* 00102020 */
 extern uint32_t pll_scpi_validated[4]; /* 00102030 */
+extern holdover_steering_state holdover_steering; /* 00102042 */
+extern loop_steering_state loop_steering; /* 0010205e */
 extern float fine_y0; /* 00102154 */
 extern pll_state pll; /* 00102162 */
 extern float interval_mean; /* 00102538 */
 extern uint8_t interval_mean_flag; /* 0010253c */
 extern uint8_t status_summary; /* 00102544 */
+extern float ti_setpoint; /* 0010254a */
 extern efc_gain_values efc_gains; /* 00102554 */
 extern gps_command_mailbox gps_command; /* 0010256c */
 extern uint8_t gps_ack_code; /* 00102584 */
@@ -1842,24 +1877,6 @@ extern undefined DAT_0010200a; /* 0010200a */
 extern undefined DAT_0010200e; /* 0010200e */
 extern uint32_t DAT_00102018; /* 00102018 */
 extern char DAT_00102040; /* 00102040 */
-extern undefined DAT_00102042; /* 00102042 */
-extern byte DAT_00102046; /* 00102046 */
-extern byte DAT_00102047; /* 00102047 */
-extern undefined1 DAT_00102048; /* 00102048 */
-extern undefined DAT_0010204a; /* 0010204a */
-extern undefined DAT_0010204e; /* 0010204e */
-extern undefined DAT_00102052; /* 00102052 */
-extern float DAT_00102056; /* 00102056 */
-extern undefined DAT_0010205a; /* 0010205a */
-extern float DAT_0010205e; /* 0010205e */
-extern float DAT_00102062; /* 00102062 */
-extern int DAT_00102066; /* 00102066 */
-extern byte DAT_0010206a; /* 0010206a */
-extern byte DAT_0010206b; /* 0010206b */
-extern char DAT_0010206c; /* 0010206c */
-extern undefined DAT_0010206e; /* 0010206e */
-extern undefined DAT_00102072; /* 00102072 */
-extern undefined DAT_00102076; /* 00102076 */
 extern undefined1 DAT_0010207a; /* 0010207a */
 extern char DAT_0010207b; /* 0010207b */
 extern undefined DAT_00102144; /* 00102144 */
@@ -1876,7 +1893,6 @@ extern char DAT_00102541; /* 00102541 */
 extern char DAT_00102542; /* 00102542 */
 extern undefined1 DAT_00102543; /* 00102543 */
 extern undefined DAT_00102546; /* 00102546 */
-extern float DAT_0010254a; /* 0010254a */
 extern char DAT_0010254e; /* 0010254e */
 extern char DAT_0010254f; /* 0010254f */
 extern char DAT_00102550; /* 00102550 */
@@ -2610,24 +2626,6 @@ __asm__(".set DAT_0010200a, 0x0010200a");
 __asm__(".set DAT_0010200e, 0x0010200e");
 __asm__(".set DAT_00102018, 0x00102018");
 __asm__(".set DAT_00102040, 0x00102040");
-__asm__(".set DAT_00102042, 0x00102042");
-__asm__(".set DAT_00102046, 0x00102046");
-__asm__(".set DAT_00102047, 0x00102047");
-__asm__(".set DAT_00102048, 0x00102048");
-__asm__(".set DAT_0010204a, 0x0010204a");
-__asm__(".set DAT_0010204e, 0x0010204e");
-__asm__(".set DAT_00102052, 0x00102052");
-__asm__(".set DAT_00102056, 0x00102056");
-__asm__(".set DAT_0010205a, 0x0010205a");
-__asm__(".set DAT_0010205e, 0x0010205e");
-__asm__(".set DAT_00102062, 0x00102062");
-__asm__(".set DAT_00102066, 0x00102066");
-__asm__(".set DAT_0010206a, 0x0010206a");
-__asm__(".set DAT_0010206b, 0x0010206b");
-__asm__(".set DAT_0010206c, 0x0010206c");
-__asm__(".set DAT_0010206e, 0x0010206e");
-__asm__(".set DAT_00102072, 0x00102072");
-__asm__(".set DAT_00102076, 0x00102076");
 __asm__(".set DAT_0010207a, 0x0010207a");
 __asm__(".set DAT_0010207b, 0x0010207b");
 __asm__(".set DAT_00102144, 0x00102144");
@@ -2644,7 +2642,6 @@ __asm__(".set DAT_00102541, 0x00102541");
 __asm__(".set DAT_00102542, 0x00102542");
 __asm__(".set DAT_00102543, 0x00102543");
 __asm__(".set DAT_00102546, 0x00102546");
-__asm__(".set DAT_0010254a, 0x0010254a");
 __asm__(".set DAT_0010254e, 0x0010254e");
 __asm__(".set DAT_0010254f, 0x0010254f");
 __asm__(".set DAT_00102550, 0x00102550");
@@ -3217,6 +3214,7 @@ __asm__(".set gps_utc_offset, 0x001009e8");
 __asm__(".set gps_utc_offset_valid, 0x001009ea");
 __asm__(".set gpsx_exchange, 0x001037fc");
 __asm__(".set hdac_shadow, 0x0010314a");
+__asm__(".set holdover_steering, 0x00102042");
 __asm__(".set idn_model, 0x00101f68");
 __asm__(".set idn_serial, 0x00101f7a");
 __asm__(".set idn_suffix, 0x00101f8c");
@@ -3239,6 +3237,7 @@ __asm__(".set log_entry_count, 0x00101f8e");
 __asm__(".set log_mutex, 0x00101d36");
 __asm__(".set log_page_buffer, 0x00101d94");
 __asm__(".set log_page_number, 0x00101dd4");
+__asm__(".set loop_steering, 0x0010205e");
 __asm__(".set max_loop_time, 0x00101e84");
 __asm__(".set nv_numeric_params, 0x00032d5e");
 __asm__(".set nv_param_field_1e, 0x00033d7a");
@@ -3343,6 +3342,7 @@ __asm__(".set tcode_format, 0x001038ac");
 __asm__(".set tcode_length, 0x001038ab");
 __asm__(".set tcode_message, 0x0010386f");
 __asm__(".set tcode_pending, 0x001038ad");
+__asm__(".set ti_setpoint, 0x0010254a");
 __asm__(".set uptime, 0x001009ba");
 __asm__(".set watchdog_clock, 0x001009b2");
 __asm__(".set watchdog_gps, 0x001009b3");
@@ -4066,22 +4066,6 @@ extern uint32_t _DAT_0010200a;
 __asm__(".set _DAT_0010200a, 0x0010200a");
 extern undefined4 _DAT_0010200e;
 __asm__(".set _DAT_0010200e, 0x0010200e");
-extern float _DAT_00102042;
-__asm__(".set _DAT_00102042, 0x00102042");
-extern undefined4 _DAT_0010204a;
-__asm__(".set _DAT_0010204a, 0x0010204a");
-extern float _DAT_0010204e;
-__asm__(".set _DAT_0010204e, 0x0010204e");
-extern float _DAT_00102052;
-__asm__(".set _DAT_00102052, 0x00102052");
-extern int _DAT_0010205a;
-__asm__(".set _DAT_0010205a, 0x0010205a");
-extern float _DAT_0010206e;
-__asm__(".set _DAT_0010206e, 0x0010206e");
-extern float _DAT_00102072;
-__asm__(".set _DAT_00102072, 0x00102072");
-extern float _DAT_00102076;
-__asm__(".set _DAT_00102076, 0x00102076");
 extern float _DAT_00102144;
 __asm__(".set _DAT_00102144, 0x00102144");
 extern float _DAT_00102148;
@@ -5815,7 +5799,7 @@ void status_preset_done(undefined4 param_1,undefined4 param_2);
 void holdover_ti_reset(void);
 void holdover_ti_add(float param_1);
 undefined1 holdover_correction_valid(void);
-undefined4 holdover_ti_max(void);
+float holdover_ti_max(void);
 undefined4 holdover_limit_exceeded(float param_1);
 uint enter_holdover(void);
 undefined1 holdover(char param_1);
@@ -31781,7 +31765,7 @@ void diag_pll_debug(undefined4 param_1)
 void diag_phase_off(int param_1)
 
 {
-  DAT_0010254a = integer_to_float(param_1);
+  ti_setpoint = integer_to_float(param_1);
   return;
 }
 
@@ -57101,23 +57085,21 @@ void status_preset_done(undefined4 param_1,undefined4 param_2)
 
 /* 00043804 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* clears holdover's TI statistics */
 
 void holdover_ti_reset(void)
 
 {
-  _DAT_0010204e = 0;
-  _DAT_00102052 = 0;
-  DAT_00102056 = 0;
-  _DAT_0010205a = 0;
+  holdover_steering.ti_sum = 0.0;
+  holdover_steering.ti_weighted_sum = 0.0;
+  holdover_steering.ti_largest = 0.0;
+  holdover_steering.ti_count = 0;
   return;
 }
 
 
 /* 0004381e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* adds a TI reading to holdover's statistics: a sum, a sum weighted by count, the count and the
    largest magnitude */
 
@@ -57127,15 +57109,15 @@ void holdover_ti_add(float param_1)
   float fVar1;
   int iVar2;
   
-  float_add_in_place((float *)&DAT_0010204e,param_1);
-  fVar1 = integer_to_float(_DAT_0010205a);
+  float_add_in_place(&holdover_steering.ti_sum,param_1);
+  fVar1 = integer_to_float(holdover_steering.ti_count);
   fVar1 = float_multiply(fVar1,param_1);
-  float_add_in_place((float *)&DAT_00102052,fVar1);
-  _DAT_0010205a = _DAT_0010205a + 1;
+  float_add_in_place(&holdover_steering.ti_weighted_sum,fVar1);
+  holdover_steering.ti_count = holdover_steering.ti_count + 1;
   fVar1 = float_absolute_on_stack(param_1);
-  iVar2 = float_compare(fVar1,DAT_00102056);
+  iVar2 = float_compare(fVar1,holdover_steering.ti_largest);
   if (0 < iVar2) {
-    DAT_00102056 = float_absolute_on_stack(param_1);
+    holdover_steering.ti_largest = float_absolute_on_stack(param_1);
   }
   return;
 }
@@ -57143,7 +57125,6 @@ void holdover_ti_add(float param_1)
 
 /* 00043888 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* 1 if holdover's TI statistics give an EFC within 0 to 1048560 from at least 10 readings; called
    by nothing */
 
@@ -57154,15 +57135,15 @@ undefined1 holdover_correction_valid(void)
   float b;
   int iVar2;
   
-  fVar1 = float_multiply(_DAT_00102052,10.0);
-  b = float_multiply(_DAT_0010204e,45.0);
+  fVar1 = float_multiply(holdover_steering.ti_weighted_sum,10.0);
+  b = float_multiply(holdover_steering.ti_sum,45.0);
   fVar1 = float_subtract(fVar1,b);
   fVar1 = float_divide(fVar1,825.0);
   fVar1 = float_divide(fVar1,efc_gains.gain);
   fVar1 = float_add(fVar1,pll.efc);
   iVar2 = float_compare(fVar1,0.0);
   if (((-1 < iVar2) && (iVar2 = float_compare(1.04856e+06,fVar1), -1 < iVar2)) &&
-     (9 < _DAT_0010205a)) {
+     (9 < holdover_steering.ti_count)) {
     return 1;
   }
   return 0;
@@ -57173,10 +57154,10 @@ undefined1 holdover_correction_valid(void)
 
 /* the largest TI magnitude holdover has seen, for holdover_limit_exceeded */
 
-undefined4 holdover_ti_max(void)
+float holdover_ti_max(void)
 
 {
-  return __ghidra_bits(DAT_00102056);
+  return holdover_steering.ti_largest;
 }
 
 
@@ -57326,7 +57307,6 @@ LAB_00043a88:
 
 /* 00043a90 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* the loop's holdover stage, steering the oscillator without GPS
    loop.md's stage; "holdover - Error with measurement" */
@@ -57372,22 +57352,22 @@ override_jmp_00043ae6_case_0:
       fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
       pll.efc_history.fit_a = float_subtract_reversed(fVar1,pll.efc);
     }
-    _DAT_0010204a = 0x3109705f;
+    holdover_steering.aging_limit = 2e-09;
     if (pll.aging_state == 3) {
       if ((pll.efc_history.stop_ptr + 1 & 0x3f) == pll.efc_history.start_ptr) {
-        _DAT_0010204a = 0x28d07fff;
+        holdover_steering.aging_limit = 2.3148148e-14;
       }
       else {
-        _DAT_0010204a = 0x3109705f;
+        holdover_steering.aging_limit = 2e-09;
       }
     }
     interval_next_reading('\0',(undefined4 *)0x0);
     get_date_time(&pll.holdover_start_date,&pll.holdover_start_time);
     pll.holdover_state = 1;
-    DAT_00102048 = 0;
-    DAT_00102047 = 0;
-    DAT_00102046 = 0;
-    _DAT_00102042 = 0.0;
+    holdover_steering.field_06 = 0;
+    holdover_steering.seconds = 0;
+    holdover_steering.readings = 0;
+    holdover_steering.ti_mean = 0.0;
     return 0;
   }
                     /* WARNING: Switch is manually overridden */
@@ -57411,11 +57391,11 @@ override_jmp_00043ae6_case_0:
   else if (DAT_00102550 != '\0') {
     holdover_ti_add(fStack_10);
     fVar2 = float_divide(fStack_10,10.0);
-    float_add_in_place((float *)&DAT_00102042,fVar2);
-    DAT_00102046 = DAT_00102046 + 1;
+    float_add_in_place(&holdover_steering.ti_mean,fVar2);
+    holdover_steering.readings = holdover_steering.readings + 1;
   }
-  DAT_00102047 = DAT_00102047 + 1;
-  if (DAT_00102047 < 10) {
+  holdover_steering.seconds = holdover_steering.seconds + 1;
+  if (holdover_steering.seconds < 10) {
     return 0;
   }
   fVar2 = unsigned_to_float(pll.holdover_duration);
@@ -57493,10 +57473,10 @@ override_jmp_00043ae6_case_0:
     fVar2 = double_to_float(dVar6);
   }
   pll.efc = __ghidra_as(float, efc_clamp(fVar2));
-  if ((DAT_00102046 != 10) && (DAT_00102046 != 0)) {
-    fVar2 = unsigned_to_float((uint)DAT_00102046);
+  if ((holdover_steering.readings != 10) && (holdover_steering.readings != 0)) {
+    fVar2 = unsigned_to_float((uint)holdover_steering.readings);
     fVar2 = float_divide_reversed(fVar2,10.0);
-    float_multiply_in_place((float *)&DAT_00102042,fVar2);
+    float_multiply_in_place(&holdover_steering.ti_mean,fVar2);
   }
   if (DAT_00102541 != '\0') {
     get_date_time((uint32_t *)&uStack_c,&uStack_8);
@@ -57508,7 +57488,7 @@ override_jmp_00043ae6_case_0:
     uVar15 = (undefined1)((ulonglong)__ghidra_bits(dVar6) >> 0x10);
     uVar16 = (undefined1)((ulonglong)__ghidra_bits(dVar6) >> 8);
     uVar17 = SUB81(dVar6,0);
-    fVar1 = float_multiply(_DAT_00102042,1e+09);
+    fVar1 = float_multiply(holdover_steering.ti_mean,1e+09);
     dVar6 = float_to_double(fVar1);
     uVar7 = (undefined2)((ulonglong)__ghidra_bits(dVar6) >> 0x30);
     uVar8 = (undefined2)((ulonglong)__ghidra_bits(dVar6) >> 0x20);
@@ -57532,13 +57512,13 @@ override_jmp_00043ae6_case_0:
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_GPS;
     goto LAB_00043ee6;
   }
-  if (DAT_00102046 != 10) goto LAB_00043ee6;
+  if (holdover_steering.readings != 10) goto LAB_00043ee6;
   pll.hold_causes =
        pll.hold_causes &
        (HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
         HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_MANUAL);
   interval_mean_flag = 1;
-  interval_mean = _DAT_00102042;
+  interval_mean = holdover_steering.ti_mean;
   if ((pll.ti_limit_override == 0) && (nv_settings.holdover_limit_state == 0)) {
     fVar1 = __ghidra_as(float, holdover_ti_max());
     cVar4 = holdover_limit_exceeded(fVar1);
@@ -57570,10 +57550,10 @@ LAB_00043ee6:
     uVar5 = 1;
     pll.ti_limit_override = 0;
   }
-  _DAT_00102042 = 0.0;
-  DAT_00102048 = 0;
-  DAT_00102047 = 0;
-  DAT_00102046 = 0;
+  holdover_steering.ti_mean = 0.0;
+  holdover_steering.field_06 = 0;
+  holdover_steering.seconds = 0;
+  holdover_steering.readings = 0;
   holdover_ti_reset();
   return uVar5;
 }
@@ -57635,7 +57615,7 @@ char holdover_recovery(char param_1)
   cVar3 = '\0';
   if ((param_1 == '\0') || ('\x05' < (char)pll.recovery_state)) {
     pll.recovery_state = 0;
-    DAT_00102047 = 0;
+    holdover_steering.seconds = 0;
     DAT_00102552 = '\0';
   }
   iVar2 = (int)(char)pll.recovery_state - 5;
@@ -57644,8 +57624,8 @@ override_jmp_00043ff8_case_0:
     unaff_D3b = interval_next_reading('\0',&local_8);
     if (unaff_D3b == '\0') {
       task_dmessage("holdover recovery - Error with measurement\r\n");
-      DAT_00102047 = DAT_00102047 + 1;
-      if (5 < DAT_00102047) {
+      holdover_steering.seconds = holdover_steering.seconds + 1;
+      if (5 < holdover_steering.seconds) {
         cVar3 = '\x02';
         pll.hold_causes = pll.hold_causes | HOLD_CAUSE_TI_ERROR;
       }
@@ -57805,14 +57785,14 @@ char startup_pll(char param_1)
   if ((param_1 == '\0') || ('\x03' < (char)pll.startup_state)) {
     pll.frequency_adjusted = 0;
     pll.ti_filtered = 0.0;
-    DAT_0010205e = 0.0;
+    loop_steering.integral = 0.0;
     fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,local_74);
     pll.efc_base = float_subtract_reversed(fVar1,pll.efc);
-    DAT_00102062 = 0.0;
-    DAT_0010206b = 0;
-    DAT_0010206a = 0;
-    DAT_0010206c = '\0';
-    DAT_00102066 = 0;
+    loop_steering.ti_sum = 0.0;
+    loop_steering.readings = 0;
+    loop_steering.seconds = 0;
+    loop_steering.measurement_failed = 0;
+    loop_steering.large_offset_blocks = 0;
     interval_next_reading('\0',(undefined4 *)0x0);
     pll.startup_state = 1;
   }
@@ -57821,15 +57801,15 @@ char startup_pll(char param_1)
     if (cVar4 == '\0') {
       if ((internal_pps_dead == 0) && (gps_pps_dead == 0)) {
         task_dmessage("startup_pll - Error with measurement\r\n");
-        DAT_0010206c = '\x01';
+        loop_steering.measurement_failed = 1;
       }
     }
     else {
       fVar1 = float_absolute_on_stack(local_88);
       iVar2 = float_compare(fVar1,nv_settings.holdover_limit_threshold);
       if ((iVar2 < 0) || (nv_settings.holdover_limit_state != 0)) {
-        float_add_in_place(&DAT_00102062,local_88);
-        DAT_0010206b = DAT_0010206b + 1;
+        float_add_in_place(&loop_steering.ti_sum,local_88);
+        loop_steering.readings = loop_steering.readings + 1;
       }
       else if (debug_enabled != 0) {
         get_date_time((uint32_t *)&local_c,&uStack_8);
@@ -57846,13 +57826,13 @@ char startup_pll(char param_1)
         pll.leap_ack_requested = 1;
       }
     }
-    DAT_0010206a = DAT_0010206a + 1;
-    if (9 < DAT_0010206a) {
-      if (DAT_0010206b == 0) {
-        DAT_00102062 = 0.0;
+    loop_steering.seconds = loop_steering.seconds + 1;
+    if (9 < loop_steering.seconds) {
+      if (loop_steering.readings == 0) {
+        loop_steering.ti_sum = 0.0;
         interval_mean_flag = 0;
         cVar5 = '\x02';
-        if (DAT_0010206c == '\0') {
+        if (loop_steering.measurement_failed == 0) {
           pll.hold_causes = pll.hold_causes | HOLD_CAUSE_TI_LIMIT_EXCEEDED;
         }
         else {
@@ -57860,25 +57840,25 @@ char startup_pll(char param_1)
         }
       }
       else {
-        fVar1 = unsigned_to_float((uint)DAT_0010206b);
-        float_divide_in_place(&DAT_00102062,fVar1);
+        fVar1 = unsigned_to_float((uint)loop_steering.readings);
+        float_divide_in_place(&loop_steering.ti_sum,fVar1);
         interval_mean_flag = 1;
-        interval_mean = DAT_00102062;
+        interval_mean = loop_steering.ti_sum;
       }
       iVar2 = (char)pll.startup_state + -3;
       if ((int)(char)pll.startup_state - 1U < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
         switch((&WORD_000444fc)[(short)iVar2]) {
         case 6:
-          if (DAT_00102066 < 0xf) {
-            fVar1 = float_absolute_on_stack(DAT_00102062);
+          if (loop_steering.large_offset_blocks < 0xf) {
+            fVar1 = float_absolute_on_stack(loop_steering.ti_sum);
             dVar6 = float_to_double(fVar1);
             iVar2 = double_compare(dVar6,1.5e-07);
             if (iVar2 < 1) {
-              DAT_00102066 = 0;
+              loop_steering.large_offset_blocks = 0;
             }
             else {
-              DAT_00102066 = DAT_00102066 + 1;
+              loop_steering.large_offset_blocks = loop_steering.large_offset_blocks + 1;
             }
           }
           else if (pll.aging_state == 3) {
@@ -57913,7 +57893,7 @@ char startup_pll(char param_1)
               uVar11 = SUB41(fVar1,0);
               fVar1 = float_multiply(efc_gains.reciprocal_ti,pll.ti_filtered);
               fVar1 = float_multiply(fVar1,__ghidra_as(float, CONCAT31(CONCAT21(uVar7,uVar10),uVar11)));
-              float_add_in_place(&DAT_0010205e,fVar1);
+              float_add_in_place(&loop_steering.integral,fVar1);
               cVar5 = '\x01';
             }
           }
@@ -57931,7 +57911,7 @@ char startup_pll(char param_1)
             uVar11 = SUB41(fVar1,0);
             fVar1 = float_multiply(efc_gains.reciprocal_ti,pll.ti_filtered);
             fVar1 = float_multiply(fVar1,__ghidra_as(float, CONCAT31(CONCAT21(uVar7,uVar10),uVar11)));
-            float_add_in_place(&DAT_0010205e,fVar1);
+            float_add_in_place(&loop_steering.integral,fVar1);
           }
         }
       }
@@ -57940,7 +57920,7 @@ char startup_pll(char param_1)
       fVar1 = float_divide(fVar1,pll.loop_time_constant);
       local_7c = float_divide(fVar1,4.0);
       local_78 = float_divide(29.75,pll.loop_time_constant);
-      local_84 = float_subtract(DAT_00102062,DAT_0010254a);
+      local_84 = float_subtract(loop_steering.ti_sum,ti_setpoint);
       fVar1 = float_subtract(1.0,local_78);
       fVar1 = float_multiply(fVar1,pll.ti_filtered);
       uVar7 = (undefined2)((uint)__ghidra_bits(fVar1) >> 0x10);
@@ -57966,10 +57946,10 @@ char startup_pll(char param_1)
       fVar1 = float_add(fVar1,pll.ti_filtered);
       fVar1 = float_multiply(fVar1,local_7c);
       fVar1 = float_multiply(fVar1,10.0);
-      float_add_in_place(&DAT_0010205e,fVar1);
+      float_add_in_place(&loop_steering.integral,fVar1);
       fVar1 = float_multiply(local_80,pll.ti_filtered);
       fVar1 = float_add(fVar1,pll.efc_base);
-      fVar1 = float_add(fVar1,DAT_0010205e);
+      fVar1 = float_add(fVar1,loop_steering.integral);
       uVar7 = (undefined2)((uint)__ghidra_bits(fVar1) >> 0x10);
       uVar10 = (undefined1)((uint)__ghidra_bits(fVar1) >> 8);
       uVar11 = SUB41(fVar1,0);
@@ -57988,7 +57968,7 @@ char startup_pll(char param_1)
         iVar2 = float_to_integer(pll.loop_time_constant);
         uVar7 = (undefined2)((uint)iVar2 >> 0x10);
         uVar8 = (undefined2)iVar2;
-        fVar1 = float_multiply(DAT_00102062,1e+09);
+        fVar1 = float_multiply(loop_steering.ti_sum,1e+09);
         dVar6 = float_to_double(fVar1);
         iVar2 = float_to_integer(pll.efc);
         debug_sprintf(acStack_70,"%d/%d/%d %02d:%02d:%02d efc= %d ti= %.1f loop= %d curr= %.2f\r\n",
@@ -57998,10 +57978,10 @@ char startup_pll(char param_1)
                                                          uVar12),uVar13),uVar14)));
         task_dmessage(acStack_70);
       }
-      DAT_00102062 = 0.0;
-      DAT_0010206b = 0;
-      DAT_0010206a = 0;
-      DAT_0010206c = '\0';
+      loop_steering.ti_sum = 0.0;
+      loop_steering.readings = 0;
+      loop_steering.seconds = 0;
+      loop_steering.measurement_failed = 0;
     }
   }
   if (DAT_00102550 == '\0') {
@@ -58022,7 +58002,6 @@ char startup_pll(char param_1)
 
 /* 000448fc */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* the loop's normal stage: averages interval readings, counting them to ten and storing the mean
    the firmware's own name, "pll_normal - Error with measurement"; interval.md's averaging routine,
@@ -58064,18 +58043,18 @@ undefined1 pll_normal(char param_1)
   if ((param_1 == '\0') || ('\x01' < (char)*local_14)) {
     pll.frequency_adjusted = 0;
     pll.tfom = 1e-06;
-    DAT_00102062 = 0.0;
-    DAT_0010206b = 0;
-    DAT_0010206a = 0;
-    DAT_0010206c = '\0';
+    loop_steering.ti_sum = 0.0;
+    loop_steering.readings = 0;
+    loop_steering.seconds = 0;
+    loop_steering.measurement_failed = 0;
     interval_next_reading('\0',(undefined4 *)0x0);
     *local_14 = 1;
-    _DAT_0010206e = float_divide(efc_gains.reciprocal_ti,max_loop_time);
+    loop_steering.proportional_gain = float_divide(efc_gains.reciprocal_ti,max_loop_time);
     fVar2 = float_divide(efc_gains.reciprocal_tau,max_loop_time);
     fVar2 = float_divide(fVar2,max_loop_time);
-    _DAT_00102072 = float_divide(fVar2,4.0);
-    _DAT_00102076 = float_divide(29.75,max_loop_time);
-    DAT_0010205e = 0.0;
+    loop_steering.integral_gain = float_divide(fVar2,4.0);
+    loop_steering.filter_weight = float_divide(29.75,max_loop_time);
+    loop_steering.integral = 0.0;
     fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
     pll.efc_base = float_subtract_reversed(fVar1,pll.efc);
     pll.frequency_tolerance = 1e-08;
@@ -58085,15 +58064,15 @@ undefined1 pll_normal(char param_1)
     if (cVar5 == '\0') {
       if ((internal_pps_dead == 0) && (gps_pps_dead == 0)) {
         task_dmessage("pll_normal - Error with measurement\r\n");
-        DAT_0010206c = '\x01';
+        loop_steering.measurement_failed = 1;
       }
     }
     else {
       fVar2 = float_absolute_on_stack(local_82);
       iVar3 = float_compare(fVar2,nv_settings.holdover_limit_threshold);
       if ((iVar3 < 0) || (nv_settings.holdover_limit_state != 0)) {
-        float_add_in_place(&DAT_00102062,local_82);
-        DAT_0010206b = DAT_0010206b + 1;
+        float_add_in_place(&loop_steering.ti_sum,local_82);
+        loop_steering.readings = loop_steering.readings + 1;
       }
       else if (debug_enabled != 0) {
         get_date_time((uint32_t *)&local_c,&uStack_8);
@@ -58110,12 +58089,12 @@ undefined1 pll_normal(char param_1)
         pll.leap_ack_requested = 1;
       }
     }
-    DAT_0010206a = DAT_0010206a + 1;
-    if (9 < DAT_0010206a) {
-      if (DAT_0010206b == 0) {
-        DAT_00102062 = 0.0;
+    loop_steering.seconds = loop_steering.seconds + 1;
+    if (9 < loop_steering.seconds) {
+      if (loop_steering.readings == 0) {
+        loop_steering.ti_sum = 0.0;
         interval_mean_flag = 0;
-        if (DAT_0010206c == '\0') {
+        if (loop_steering.measurement_failed == 0) {
           pll.hold_causes = pll.hold_causes | HOLD_CAUSE_TI_LIMIT_EXCEEDED;
         }
         else {
@@ -58123,18 +58102,18 @@ undefined1 pll_normal(char param_1)
         }
       }
       else {
-        fVar2 = unsigned_to_float((uint)DAT_0010206b);
-        float_divide_in_place(&DAT_00102062,fVar2);
+        fVar2 = unsigned_to_float((uint)loop_steering.readings);
+        float_divide_in_place(&loop_steering.ti_sum,fVar2);
         interval_mean_flag = 1;
-        interval_mean = DAT_00102062;
+        interval_mean = loop_steering.ti_sum;
       }
-      local_7e = float_subtract(DAT_00102062,DAT_0010254a);
-      fVar2 = float_subtract(1.0,_DAT_00102076);
+      local_7e = float_subtract(loop_steering.ti_sum,ti_setpoint);
+      fVar2 = float_subtract(1.0,loop_steering.filter_weight);
       fVar2 = float_multiply(fVar2,pll.ti_filtered);
       uVar7 = (undefined2)((uint)__ghidra_bits(fVar2) >> 0x10);
       uVar10 = (undefined1)((uint)__ghidra_bits(fVar2) >> 8);
       uVar11 = SUB41(fVar2,0);
-      fVar2 = float_multiply(_DAT_00102076,local_7e);
+      fVar2 = float_multiply(loop_steering.filter_weight,local_7e);
       pll.ti_filtered = float_add(__ghidra_as(float, CONCAT31(CONCAT21(uVar7,uVar10),uVar11)),fVar2);
       uVar4 = get_uptime();
       fVar2 = unsigned_to_float(uVar4);
@@ -58149,15 +58128,15 @@ undefined1 pll_normal(char param_1)
       if ((iVar3 < 1) && (iVar3 = float_compare(-efc_gains.step_limit,a), fVar2 = a, 0 < iVar3)) {
         fVar2 = -efc_gains.step_limit;
       }
-      fVar2 = float_divide(fVar2,_DAT_00102072);
+      fVar2 = float_divide(fVar2,loop_steering.integral_gain);
       fVar2 = float_divide(fVar2,2700.0);
       fVar2 = float_add(fVar2,pll.ti_filtered);
-      fVar2 = float_multiply(fVar2,_DAT_00102072);
+      fVar2 = float_multiply(fVar2,loop_steering.integral_gain);
       fVar2 = float_multiply(fVar2,10.0);
-      float_add_in_place(&DAT_0010205e,fVar2);
-      fVar2 = float_multiply(_DAT_0010206e,pll.ti_filtered);
+      float_add_in_place(&loop_steering.integral,fVar2);
+      fVar2 = float_multiply(loop_steering.proportional_gain,pll.ti_filtered);
       fVar2 = float_add(fVar2,pll.efc_base);
-      fVar2 = float_add(fVar2,DAT_0010205e);
+      fVar2 = float_add(fVar2,loop_steering.integral);
       uVar7 = (undefined2)((uint)__ghidra_bits(fVar2) >> 0x10);
       uVar10 = (undefined1)((uint)__ghidra_bits(fVar2) >> 8);
       uVar11 = SUB41(fVar2,0);
@@ -58176,7 +58155,7 @@ undefined1 pll_normal(char param_1)
         iVar3 = float_to_integer(max_loop_time);
         uVar7 = (undefined2)((uint)iVar3 >> 0x10);
         uVar8 = (undefined2)iVar3;
-        fVar1 = float_multiply(DAT_00102062,1e+09);
+        fVar1 = float_multiply(loop_steering.ti_sum,1e+09);
         dVar6 = float_to_double(fVar1);
         iVar3 = float_to_integer(pll.efc);
         debug_sprintf(acStack_79,"%d/%d/%d %02d:%02d:%02d efc= %d ti= %.1f loop= %d curr= %.2f\r\n",
@@ -58186,10 +58165,10 @@ undefined1 pll_normal(char param_1)
                                                          uVar12),uVar13),uVar14)));
         task_dmessage(acStack_79);
       }
-      DAT_00102062 = 0.0;
-      DAT_0010206b = 0;
-      DAT_0010206a = 0;
-      DAT_0010206c = '\0';
+      loop_steering.ti_sum = 0.0;
+      loop_steering.readings = 0;
+      loop_steering.seconds = 0;
+      loop_steering.measurement_failed = 0;
     }
   }
   if (DAT_00102550 == '\0') {
@@ -58601,7 +58580,7 @@ char fine(void)
           if (0 < iVar1) {
             _DAT_0010215c = float_absolute_on_stack(pll.fine_d);
           }
-          *(float *)((uint)pll.fine_index * 4 + 0x102078) = pll.fine_d;
+          *(float *)((int)&loop_steering.filter_weight + (uint)pll.fine_index * 4 + 2) = pll.fine_d;
           fVar2 = integer_to_float((uint)pll.fine_index);
           float_add_in_place((float *)&DAT_00102144,fVar2);
           fVar2 = integer_to_float((uint)pll.fine_index * (uint)pll.fine_index);
@@ -58667,7 +58646,9 @@ char fine(void)
         fVar2 = unsigned_to_float(1);
         fVar2 = float_multiply(fVar2,fine_y0);
         fVar2 = float_add(fVar2,_DAT_00102158);
-        fVar2 = float_subtract_reversed(fVar2,*(float *)((uint)pll.fine_index * 4 + 0x102078));
+        fVar2 = float_subtract_reversed
+                          (fVar2,*(float *)((int)&loop_steering.filter_weight +
+                                           (uint)pll.fine_index * 4 + 2));
         fVar2 = float_absolute_on_stack(fVar2);
         iVar1 = float_compare(fVar2,3e-07);
         if (0 < iVar1) {
@@ -60612,7 +60593,7 @@ void pllp_task(void)
     }
     log_event(2);
   }
-  DAT_0010254a = 0;
+  ti_setpoint = 0.0;
   counter_init();
   pllp_start_nothing_a();
   pllp_start_nothing_b();

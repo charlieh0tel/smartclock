@@ -408,7 +408,10 @@ the fit's `pts= %d a=` and `failed line fit`, the sampler's `e_avg= `,
 the console's `loop_time` -- and the constants of the update and the
 fit: 29.75, 2700.0, the clamp's 6.25 × 10⁻¹⁰ and HQ's 4.32 × 10⁻⁴.  The
 update law above was transcribed from the Z3816A only; in the others
-these show the same code is there, not that it is unchanged.  What
+these show the same code is there, not that it is unchanged -- but for
+the Z3805A 3543B, whose decompiled `pll_normal` (`0x4824a`, gcc's
+build of it agreeing with the image in the harness) gives the same
+law term for term, below.  What
 does differ is where τ and G come from.  Read on 2026-10-09.
 
 | Image | τ, as the ROM block sets it | Startup's constant | G |
@@ -534,6 +537,29 @@ oscillator current" is in the Z3816A, Z3815A and 58503B; the Z3801A,
 Z3805A and 58503A 3633 name `Double oven` instead, and 3704 neither.
 The console word `xcal` is in the Z3816A only, and its `tempco = `
 message in all but the Z3815A and 58503B.
+
+### The update in the Z3805A 3543B
+
+`pll_normal` keeps its block in `loop_steering` (`0x10205e`,
+`structures.md`) and its error and filtered error in `pll`
+(`0x102162`); τ is `max_loop_time` (`0x101e84`) and G
+`efc_gains.gain` (`0x102554`).
+
+| Symbol | Where | |
+| ------ | ----- | - |
+| x̄ | `loop_steering.ti_sum` | the ten seconds' valid readings, then their mean, copied to `interval_mean` |
+| x₀ | `0x10254a` | the setpoint, which the console word `phase_off` sets |
+| f | `pll.ti_filtered` | |
+| a | `loop_steering.filter_weight` | 29.75 / τ |
+| M | `efc_gains.step_limit` | 6.25 × 10⁻¹⁰ / \|G\| |
+| k | `loop_steering.integral_gain` | (1/G) / τ² / 4 |
+| I | `loop_steering.integral` | |
+| K | `loop_steering.proportional_gain` | (1/G) / τ |
+| B | `pll.efc_base` | |
+
+`startup_pll` uses the same block, and counts in
+`large_offset_blocks` the consecutive updates whose mean passes
+150 ns, to 15.
 
 ## How this was read
 

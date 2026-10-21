@@ -199,6 +199,39 @@ typedef int printf_function(char *format, ...);
 /* qsort's comparator. */
 typedef int qsort_compare_function(void *a, void *b);
 
+/* The holdover stage's steering, at 0x102042: each 10-second block's
+ * mean time interval, and the accumulators holdover_ti_add keeps of the
+ * readings for a least-squares slope, which holdover_correction_valid
+ * turns into an EFC correction. */
+typedef struct holdover_steering_state {
+	float ti_mean;           /* +0x00: the block's valid readings' sum over 10, scaled up at its end if some failed */
+	uint8_t readings;        /* +0x04: the block's valid readings */
+	uint8_t seconds;         /* +0x05: the block's seconds, to 10 */
+	uint8_t field_06;        /* +0x06: zeroed with the block; nothing reads it */
+	uint8_t field_07;
+	float aging_limit;       /* +0x08: 2e-9, or 2e-9 a day as a rate a second once the EFC history is full; nothing reads it */
+	float ti_sum;            /* +0x0c */
+	float ti_weighted_sum;   /* +0x10: each reading times its index */
+	float ti_largest;        /* +0x14: the largest reading's magnitude, holdover_ti_max's */
+	int32_t ti_count;        /* +0x18: at 10 or more the correction may be used */
+} holdover_steering_state;
+
+/* startup_pll's and pll_normal's steering, at 0x10205e: a
+ * proportional-integral loop on each 10-second block's mean time
+ * interval, its gains from the loop's time constant. */
+typedef struct loop_steering_state {
+	float integral;            /* +0x00: the integral term, in EFC counts */
+	float ti_sum;              /* +0x04: the block's valid readings, then their mean */
+	int32_t large_offset_blocks; /* +0x08: startup_pll's consecutive blocks whose mean passed 150 ns, to 15 */
+	uint8_t seconds;           /* +0x0c: the block's seconds, to 10 */
+	uint8_t readings;          /* +0x0d: the block's valid readings */
+	uint8_t measurement_failed; /* +0x0e: a reading failed; a block with none valid then holds for a TI error, not the limit */
+	uint8_t field_0f;
+	float proportional_gain;   /* +0x10: efc_gains.reciprocal_ti over max_loop_time */
+	float integral_gain;       /* +0x14: efc_gains.reciprocal_tau over max_loop_time squared, over 4 */
+	float filter_weight;       /* +0x18: 29.75 over max_loop_time, pll.ti_filtered's */
+} loop_steering_state;
+
 /* A DUART channel's receive ring: its interrupt stores at write, its
  * reader takes at read, each index wrapping in a byte; empty when the
  * two are equal. */

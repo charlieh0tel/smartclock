@@ -689,6 +689,21 @@ is the output bits reset, the failed self-tests' lamps (`outputs.md`).
 Channel B's serial settings as last applied, its baud, parity, data
 bits and stop bits, are at `duartb_applied` (`0x102ecc`).
 
+## The loop's steering
+
+`loop_steering` (`0x10205e`, 28 bytes) is `startup_pll`'s and
+`pll_normal`'s proportional-integral loop: the integral, each
+10-second block's sum and count of valid readings, and the three gains
+`pll_normal` computes from `max_loop_time` as it takes over (`loop.md`,
+"The update in the Z3805A 3543B").  `holdover_steering` (`0x102042`,
+28 bytes) is the holdover stage's: each block's mean, and the
+accumulators `holdover_ti_add` keeps -- the sum, the sum weighted by
+each reading's index, the largest magnitude and the count -- from which
+`holdover_correction_valid` takes the least-squares slope over ten
+readings, `(10·Σix − 45·Σx) / 825`, as an EFC correction, and accepts
+it only if the EFC it gives is in range and ten or more readings went
+in.
+
 ## DUART channel A's driver
 
 Channel A is the GPS receiver's link, and only the GPS task uses it.

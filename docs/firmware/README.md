@@ -413,10 +413,13 @@ D0:D1, so every function returning one has its return annotated.
 `types/mc68331.h` lays out the CPU's own modules as the names file
 types them: `gpt` (`0xfff900`), `sim` (`0xfffa00`) and `qsm`
 (`0xfffc00`), each register a field at its offset in MC68331UM Tables
-D-2, D-3 and D-13, so that the C reads `qsm.sccr1 = qsm.sccr1 | 0x80`;
-and it names their bits, `SCCR1_TIE`, from the registers' pages in
-Appendix D, as `#define`s, which Setup leaves out of what Ghidra parses
-and the exporter copies into the C (`defines=`).  The DUART is still
+D-2, D-3 and D-13; and it names their bits, `SCCR1_TIE`, from the
+registers' pages in Appendix D, as `#define`s, which Setup leaves out of
+what Ghidra parses and the exporter copies into the C (`defines=`).
+The exporter then names the constants written to or tested in a
+register by those bits, where every bit has a name, so that the C
+reads `qsm.sccr1 = uVar1 | SCCR1_TIE` and `uVar1 & ~SCCR1_PE`; the
+ports' bits, the board's wiring, stay numbers.  The DUART is still
 labeled register by register, its bits unnamed, for want of its data
 sheet here.
 

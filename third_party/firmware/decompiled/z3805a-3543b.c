@@ -8976,7 +8976,7 @@ void gpt_init(void)
   gpt.gptmcr = 0xc;
   gpt.icr = 0x650;
   uVar1 = gpt.cforc;
-  gpt.cforc = uVar1 | 2;
+  gpt.cforc = uVar1 | CFORC_FPWMA;
   gpt.ddrgp = 0xbc;
   gpt.portgp = 0x80;
   gpt.oc1m = 0;
@@ -34945,7 +34945,7 @@ int sci_puts(int param_1)
   sci.transmit_next = (char *)param_1;
   if (sci.reconfiguring == 0) {
     uVar2 = qsm.sccr1;
-    qsm.sccr1 = uVar2 | 0x80;
+    qsm.sccr1 = uVar2 | SCCR1_TIE;
   }
   uVar3 = psos_wait_v(0x200,0,0,(ulong *)0x0);
   if ((char)uVar3 != '\0') {
@@ -35530,14 +35530,14 @@ undefined8 sci_init(void)
     sci.seven_bits = 1;
     sci.mark_bit = 0;
     if (DAT_00101f53 == '\x01') {
-      qsm.sccr1 = 0x400;
+      qsm.sccr1 = SCCR1_PE;
     }
     else if (DAT_00101f53 == '\x02') {
-      qsm.sccr1 = 0xc00;
+      qsm.sccr1 = SCCR1_PT | SCCR1_PE;
     }
   }
   uVar1 = qsm.sccr1;
-  qsm.sccr1 = uVar1 | 0x2c;
+  qsm.sccr1 = uVar1 | (SCCR1_RIE | SCCR1_TE | SCCR1_RE);
   iVar3 = 0;
   do {
     iVar3 = iVar3 + 1;
@@ -35611,14 +35611,14 @@ uint sci_reconfigure(void)
   
   sci.reconfiguring = 1;
   uVar1 = qsm.sccr1;
-  qsm.sccr1 = uVar1 & 0xff5b;
+  qsm.sccr1 = uVar1 & ~(SCCR1_TIE | SCCR1_RIE | SCCR1_RE);
   iVar6 = 100;
   while ((0 < iVar6 && (uVar1 = qsm.scsr, (uVar1 & 0x100) == 0))) {
     psos_pause(1);
     iVar6 = iVar6 + -1;
   }
   uVar1 = qsm.sccr1;
-  qsm.sccr1 = uVar1 & 0xfff7;
+  qsm.sccr1 = uVar1 & ~SCCR1_TE;
   puVar7 = &DAT_00001388;
   while ((0 < (int)puVar7 && (uVar1 = qsm.scsr, (uVar1 & 0x80) == 0))) {
     puVar7 = puVar7 + -1;
@@ -35632,19 +35632,19 @@ uint sci_reconfigure(void)
     switch((&WORD_00020092)[sVar5]) {
     case 8:
       uVar1 = qsm.sccr1;
-      qsm.sccr1 = uVar1 | 0x400;
+      qsm.sccr1 = uVar1 | SCCR1_PE;
       uVar1 = qsm.sccr1;
-      qsm.sccr1 = uVar1 & 0xf7ff;
+      qsm.sccr1 = uVar1 & ~SCCR1_PT;
       sci.seven_bits = 1;
       break;
     case 0x18:
       uVar1 = qsm.sccr1;
-      qsm.sccr1 = uVar1 | 0xc00;
+      qsm.sccr1 = uVar1 | (SCCR1_PT | SCCR1_PE);
       sci.seven_bits = 1;
       break;
     case 0x24:
       uVar1 = qsm.sccr1;
-      qsm.sccr1 = uVar1 & 0xfbff;
+      qsm.sccr1 = uVar1 & ~SCCR1_PE;
       sci.seven_bits = 1;
       sci.mark_bit = 1;
       goto LAB_000200ce;
@@ -35655,13 +35655,13 @@ uint sci_reconfigure(void)
   else {
 switchD_00020088_caseD_0:
     uVar1 = qsm.sccr1;
-    qsm.sccr1 = uVar1 & 0xfbff;
+    qsm.sccr1 = uVar1 & ~SCCR1_PE;
     sci.seven_bits = 0;
   }
   sci.mark_bit = 0;
 LAB_000200ce:
   uVar1 = qsm.sccr1;
-  qsm.sccr1 = uVar1 | 8;
+  qsm.sccr1 = uVar1 | SCCR1_TE;
   uVar4 = (uint3)((uint)iVar6 >> 8);
   if (DAT_00101f54 == '\0') {
     if ((sci.xon_xoff != 0) && (iVar6 = (uint)uVar4 << 8, (sci.flow & 0x20) != 0)) {
@@ -35689,7 +35689,7 @@ LAB_000200ce:
     sci.echo = sci_putc;
   }
   uVar1 = qsm.sccr1;
-  qsm.sccr1 = uVar1 | 0xac;
+  qsm.sccr1 = uVar1 | (SCCR1_TIE | SCCR1_RIE | SCCR1_TE | SCCR1_RE);
   sci.reconfiguring = 0;
   return uVar2 & 0xffffff20;
 }
@@ -35765,7 +35765,7 @@ void sci_send_async(char *param_1,uint8_t param_2)
     sci.async_count = param_2;
     sci.async_pending = 1;
     uVar1 = qsm.sccr1;
-    qsm.sccr1 = uVar1 | 0x80;
+    qsm.sccr1 = uVar1 | SCCR1_TIE;
   }
   return;
 }
@@ -35902,7 +35902,7 @@ qspi_queue_setup(byte param_1,undefined2 *param_2,ushort param_3,char param_4,un
     qsm.tr[0] = *param_2;
     qsm.cr[0] = 0x41;
     qsm.spcr0 = 0x8318;
-    qsm.spcr2 = 0x8000;
+    qsm.spcr2 = SPCR2_SPIFIE;
     *param_5 = 0x8101;
     break;
   case 2:
@@ -35989,7 +35989,7 @@ override_jmp_000205c0_case_3:
     else {
       qsm.spcr0 = 0x8208;
     }
-    qsm.spcr2 = 0x8000;
+    qsm.spcr2 = SPCR2_SPIFIE;
     *param_5 = 0x8101;
     break;
   case 9:
@@ -36015,7 +36015,7 @@ override_jmp_000205c0_case_3:
     else {
       qsm.spcr0 = 0x8209;
     }
-    qsm.spcr2 = 0x8000;
+    qsm.spcr2 = SPCR2_SPIFIE;
     *param_5 = 0x8101;
     break;
   case 0xb:
@@ -36027,7 +36027,7 @@ override_jmp_000205c0_case_3:
     else {
       qsm.spcr0 = 0xa209;
     }
-    qsm.spcr2 = 0x8000;
+    qsm.spcr2 = SPCR2_SPIFIE;
     *param_5 = 0x8101;
     break;
   case 0xc:
@@ -36044,7 +36044,7 @@ override_jmp_000205c0_case_3:
     uVar2 = (uint)(param_3 & 0xf) << 10;
     uVar1 = uVar2 | 0x8209;
     qsm.spcr0 = (ushort)uVar2 | 0x8209;
-    qsm.spcr2 = 0x8000;
+    qsm.spcr2 = SPCR2_SPIFIE;
     *param_5 = 0x8101;
   }
   return CONCAT31((int3)(uVar1 >> 8),uVar3);
@@ -36203,8 +36203,8 @@ undefined8 qspi_init(void)
     puVar1 = puVar1 + 1;
   } while (puVar1 < (uint16_t *)0xfffd50);
   qsm.spcr0 = 0x8309;
-  qsm.spcr2 = 0x8000;
-  qsm.spcr3 = 2;
+  qsm.spcr2 = SPCR2_SPIFIE;
+  qsm.spcr3 = SPCR3_HMIE;
   qsm.spcr1 = 0x101;
   qsm.spsr = 0;
   qspi.write = 0;
@@ -59029,11 +59029,11 @@ void pwma_force_level(char param_1)
   
   if (param_1 == '\0') {
     uVar1 = gpt.pwmc;
-    gpt.pwmc = uVar1 | 2;
+    gpt.pwmc = uVar1 | PWMC_F1A;
   }
   else {
     uVar1 = gpt.pwmc;
-    gpt.pwmc = uVar1 & 0xfd;
+    gpt.pwmc = uVar1 & ~PWMC_F1A;
   }
   return;
 }
@@ -79226,7 +79226,7 @@ void installer_gpt_init(void)
   gpt.gptmcr = 0xc;
   gpt.icr = 0x650;
   uVar1 = gpt.cforc;
-  gpt.cforc = uVar1 | 2;
+  gpt.cforc = uVar1 | CFORC_FPWMA;
   gpt.ddrgp = 0xbc;
   gpt.portgp = 0x80;
   gpt.oc1m = 0;

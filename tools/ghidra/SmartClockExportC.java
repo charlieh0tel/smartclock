@@ -64,6 +64,7 @@ import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.DataTypeWriter;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.data.Pointer;
+import ghidra.program.model.data.Structure;
 import ghidra.program.model.data.TypeDef;
 import ghidra.program.model.data.Undefined;
 import ghidra.program.model.lang.Register;
@@ -254,7 +255,7 @@ public class SmartClockExportC extends GhidraScript {
 						}
 					}
 					else {
-						functions.append(registerShifts(reinterpretingCasts(c)));
+						functions.append(registerBits(registerShifts(reinterpretingCasts(c))));
 						collectGlobals(results.getHighFunction(), referenced);
 						String stack = stackArguments(results.getHighFunction());
 						if (stack != null) {
@@ -620,6 +621,135 @@ public class SmartClockExportC extends GhidraScript {
 	/** A #define, with any lines it continues onto. */
 	private static final Pattern DEFINE_LINE =
 		Pattern.compile("(?m)^#define\\b(?:[^\\n]*\\\\\\n)*[^\\n]*$");
+
+	/** A #define of a value, its name and value the groups. */
+	private static final Pattern DEFINE_VALUE =
+		Pattern.compile("(?m)^#define\\s+(\\w+)\\s+(0x[0-9a-fA-F]+|[0-9]+)\\b");
+	/** The suffix of a structure laying out a module's registers. */
+	private static final String REGISTERS_SUFFIX = "_registers";
+	/** A register field's assignment, test or constant store: groups variable, field, and the rest. */
+	private static final Pattern REGISTER_ASSIGNMENT = Pattern.compile(
+		"\\b(\\w+)\\.(\\w+) = ([^;]*?)([|&]) (0x[0-9a-f]+|[0-9]+);");
+	private static final Pattern REGISTER_TEST = Pattern.compile(
+		"\\b(\\w+)\\.(\\w+) & (0x[0-9a-f]+|[0-9]+)\\)");
+	private static final Pattern REGISTER_STORE = Pattern.compile(
+		"\\b(\\w+)\\.(\\w+) = (0x[0-9a-f]+|[0-9]+);");
+
+	/** Each register's single bits, by its name upper-cased, from the defines= headers. */
+	private Map<String, TreeMap<Long, String>> registerBitNames;
+	/** Each module variable's register fields and their widths in bits. */
+	private Map<String, Map<String, Integer>> moduleFields;
+
+	private void collectRegisterBits() throws Exception {
+		registerBitNames = new HashMap<>();
+		for (String arg : getScriptArgs()) {
+			if (!arg.startsWith(DEFINES)) {
+				continue;
+			}
+			Matcher define = DEFINE_VALUE.matcher(Files.readString(new File(
+				arg.substring(DEFINES.length())).toPath()));
+			while (define.find()) {
+				String name = define.group(1);
+				long value = Long.decode(define.group(2));
+				int underscore = name.indexOf('_');
+				if (underscore < 0 || name.endsWith("_MASK") || name.endsWith("_SHIFT")
+					|| Long.bitCount(value) != 1) {
+					continue;
+				}
+				registerBitNames.computeIfAbsent(name.substring(0, underscore), k -> new TreeMap<>())
+					.put(value, name);
+			}
+		}
+		moduleFields = new HashMap<>();
+		for (Data data : currentProgram.getListing().getDefinedData(true)) {
+			if (data.getLabel() != null && data.getDataType() instanceof Structure module
+				&& module.getName().endsWith(REGISTERS_SUFFIX)) {
+				Map<String, Integer> fields = new HashMap<>();
+				for (DataTypeComponent component : module.getDefinedComponents()) {
+					if (component.getFieldName() != null) {
+						fields.put(component.getFieldName(), 8 * component.getLength());
+					}
+				}
+				moduleFields.put(data.getLabel(), fields);
+			}
+		}
+	}
+
+	/**
+	 * A register's value as the OR of its bits' names, or, for a mask
+	 * that clears more bits than it keeps, ~ of the OR of the bits it
+	 * clears; null unless every bit has a name.
+	 */
+	private String bitNames(String variable, String field, long value, boolean mask) {
+		Map<String, Integer> fields = moduleFields.get(variable);
+		TreeMap<Long, String> bits = registerBitNames.get(field.toUpperCase());
+		if (fields == null || bits == null || !fields.containsKey(field)) {
+			return null;
+		}
+		int width = fields.get(field);
+		long all = width >= 64 ? -1L : (1L << width) - 1;
+		if (mask && Long.bitCount(value & all) > width / 2) {
+			String cleared = orOfBits(bits, ~value & all);
+			return cleared == null ? null : cleared.contains(" ") ? "~(" + cleared + ")" : "~" + cleared;
+		}
+		return orOfBits(bits, value);
+	}
+
+	private static String orOfBits(TreeMap<Long, String> bits, long value) {
+		if (value == 0) {
+			return null;
+		}
+		List<String> names = new ArrayList<>();
+		for (Map.Entry<Long, String> bit : bits.descendingMap().entrySet()) {
+			if ((value & bit.getKey()) != 0) {
+				names.add(bit.getValue());
+				value &= ~bit.getKey();
+			}
+		}
+		return value != 0 ? null : names.size() == 1 ? names.get(0) : String.join(" | ", names);
+	}
+
+	/**
+	 * c with the constants written to or tested in a module's register
+	 * named by the register's bits, as the defines= headers give them:
+	 * qsm.sccr1 = x | 0x80 becomes x | SCCR1_TIE.  Only a constant whose
+	 * every bit has a name is rewritten.
+	 */
+	private String registerBits(String c) throws Exception {
+		if (registerBitNames == null) {
+			collectRegisterBits();
+		}
+		Matcher assignment = REGISTER_ASSIGNMENT.matcher(c);
+		StringBuilder out = new StringBuilder();
+		while (assignment.find()) {
+			String names = bitNames(assignment.group(1), assignment.group(2),
+				Long.decode(assignment.group(5)), assignment.group(4).equals("&"));
+			assignment.appendReplacement(out, Matcher.quoteReplacement(names == null
+				? assignment.group()
+				: assignment.group(1) + "." + assignment.group(2) + " = " + assignment.group(3)
+					+ assignment.group(4) + " " + (names.contains(" ") && !names.startsWith("~")
+						? "(" + names + ")" : names) + ";"));
+		}
+		assignment.appendTail(out);
+		Matcher test = REGISTER_TEST.matcher(out.toString());
+		out = new StringBuilder();
+		while (test.find()) {
+			String names = bitNames(test.group(1), test.group(2), Long.decode(test.group(3)), false);
+			test.appendReplacement(out, Matcher.quoteReplacement(names == null ? test.group()
+				: test.group(1) + "." + test.group(2) + " & "
+					+ (names.contains(" ") ? "(" + names + ")" : names) + ")"));
+		}
+		test.appendTail(out);
+		Matcher store = REGISTER_STORE.matcher(out.toString());
+		out = new StringBuilder();
+		while (store.find()) {
+			String names = bitNames(store.group(1), store.group(2), Long.decode(store.group(3)), false);
+			store.appendReplacement(out, Matcher.quoteReplacement(names == null ? store.group()
+				: store.group(1) + "." + store.group(2) + " = " + names + ";"));
+		}
+		store.appendTail(out);
+		return out.toString();
+	}
 
 	/**
 	 * Copies the #defines of each header a defines= argument names, which

@@ -80,7 +80,7 @@ def functions(c: str, types: Types, conventions: dict) -> tuple[list[Function], 
         convention = conventions.get(name)
         if parameters == "" or convention is None or convention["address"].startswith("installer"):
             continue
-        kinds = [] if parameters == "void" else [re.sub(r"\w+$", "", p).strip() for p in parameters.split(",")]
+        kinds = [] if parameters == "void" else [re.sub(r"\w+$", "", p.strip()).strip() for p in parameters.split(",")]
         result = result.strip()
         sizes = [types.size(kind) for kind in kinds]
         result_size = 0 if result == "void" else types.size(result)

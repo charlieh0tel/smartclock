@@ -74,7 +74,7 @@ def bridges(c: str, conventions: dict) -> list[Bridge]:
         convention = conventions.get(name)
         if convention is None or convention["address"].startswith("installer"):
             continue
-        types = [] if parameters == "void" else [re.sub(r"\w+$", "", p).strip() for p in parameters.split(",")]
+        types = [] if parameters == "void" else [re.sub(r"\w+$", "", p.strip()).strip() for p in parameters.split(",")]
         items = convention.get("in") or []
         outs = convention.get("out") or []
         if len(items) != len(types):

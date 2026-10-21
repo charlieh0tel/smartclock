@@ -199,6 +199,28 @@ typedef int printf_function(char *format, ...);
 /* qsort's comparator. */
 typedef int qsort_compare_function(void *a, void *b);
 
+/* The EFC's gain and what efc_gain_set derives from it, at 0x102554:
+ * pllp_task sets the gain, the fractional frequency one EFC count
+ * moves, 6.25e-13. */
+typedef struct efc_gain_values {
+	float gain;            /* +0x00: fractional frequency a count */
+	float reciprocal_fine; /* +0x04: counts per unit fractional frequency, as fine and coarse use it */
+	float reciprocal_ti;   /* +0x08: the same, as startup_pll and pll_normal scale the time interval with it */
+	float reciprocal_tau;  /* +0x0c: the same, as they divide it by the loop's time constant */
+	float step_limit;      /* +0x10: 6.25e-10 in counts, the bound startup_pll and pll_normal compare a step with */
+	float aging_per_day;   /* +0x14: 5e-9 a day in counts a second; nothing reads it */
+} efc_gain_values;
+
+/* The GPS command the console's GPS words leave for pllp_task, at
+ * 0x10256c: gps_command_send maps the code to an Oncore request, code
+ * 0x20 sending request as it is, and sends it with the arguments. */
+typedef struct gps_command_mailbox {
+	uint8_t code;          /* +0x00: 0 when none is pending */
+	uint8_t field_01;
+	int32_t arguments[4];  /* +0x02 */
+	int32_t request;       /* +0x12: code 0x20's request */
+} gps_command_mailbox;
+
 /* The self-tests' results, at 0x100c24: each test's word nonzero if it
  * failed, and what selftest_run reports for test n, 0 to 13.  The
  * start-up clear begins at 0x100c3c, so the reset code's results

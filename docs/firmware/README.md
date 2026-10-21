@@ -411,7 +411,10 @@ D0:D1, so every function returning one has its return annotated.
 
 `types/smartclock.h` declares the structures (`structures.md`), parsed
 into the program before the names so a row may use them: a label's
-row may give its data type, `gps_state` or `uint8_t[6]`.  The header and
+row may give its data type, `gps_state` or `uint8_t[6]`.  Parsing adds
+and replaces types but removes none, and they sit beside Ghidra's own,
+so a type renamed or dropped from the header stays in the project, and
+in the exported C, until it is deleted there by hand.  The header and
 the firmware's own prototypes use `<stdint.h>`'s types, the header
 defining them, since Ghidra's C parser reads no includes; a published
 API keeps its own spelling, the C library's and pSOS's.  The script

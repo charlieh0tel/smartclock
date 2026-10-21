@@ -244,6 +244,17 @@ typedef enum __attribute__((packed)) counter_error {
     COUNTER_CALIBRATION_FAILURE=16
 } counter_error;
 
+typedef struct efc_gain_values efc_gain_values, *Pefc_gain_values;
+
+struct efc_gain_values {
+    float gain;
+    float reciprocal_fine;
+    float reciprocal_ti;
+    float reciprocal_tau;
+    float step_limit;
+    float aging_per_day;
+};
+
 typedef struct efc_ring efc_ring, *Pefc_ring;
 
 typedef ushort uint16_t;
@@ -309,6 +320,15 @@ struct fpga_bit {
     uint8_t mask;
     uint8_t is_flag;
     uint8_t field_3;
+};
+
+typedef struct gps_command_mailbox gps_command_mailbox, *Pgps_command_mailbox;
+
+struct gps_command_mailbox {
+    uint8_t code;
+    uint8_t field_01;
+    int32_t arguments[4];
+    int32_t request;
 };
 
 typedef struct gps_request_entry gps_request_entry, *Pgps_request_entry;
@@ -1100,10 +1120,12 @@ struct status_model {
 _Static_assert(sizeof(adc_channel) == 1, "adc_channel");
 _Static_assert(sizeof(counter_configuration_fields) == 32, "counter_configuration_fields");
 _Static_assert(sizeof(counter_error) == 1, "counter_error");
+_Static_assert(sizeof(efc_gain_values) == 24, "efc_gain_values");
 _Static_assert(sizeof(efc_ring) == 870, "efc_ring");
 _Static_assert(sizeof(exception_record) == 18, "exception_record");
 _Static_assert(sizeof(forth_user_area) == 40, "forth_user_area");
 _Static_assert(sizeof(fpga_bit) == 4, "fpga_bit");
+_Static_assert(sizeof(gps_command_mailbox) == 22, "gps_command_mailbox");
 _Static_assert(sizeof(gps_request_entry) == 26, "gps_request_entry");
 _Static_assert(sizeof(gps_request_ring) == 138, "gps_request_ring");
 _Static_assert(sizeof(gps_state) == 1370, "gps_state");
@@ -1283,6 +1305,8 @@ extern pll_state pll; /* 00102162 */
 extern float interval_mean; /* 00102538 */
 extern uint8_t interval_mean_flag; /* 0010253c */
 extern uint8_t status_summary; /* 00102544 */
+extern efc_gain_values efc_gains; /* 00102554 */
+extern gps_command_mailbox gps_command; /* 0010256c */
 extern uint8_t gps_ack_code; /* 00102584 */
 extern uint8_t gps_ack_ready; /* 00102585 */
 extern uint8_t gps_ack_awaited; /* 00102586 */
@@ -1762,18 +1786,6 @@ extern char DAT_0010254f; /* 0010254f */
 extern char DAT_00102550; /* 00102550 */
 extern undefined1 DAT_00102551; /* 00102551 */
 extern char DAT_00102552; /* 00102552 */
-extern undefined DAT_00102554; /* 00102554 */
-extern float DAT_00102558; /* 00102558 */
-extern float DAT_0010255c; /* 0010255c */
-extern float DAT_00102560; /* 00102560 */
-extern float DAT_00102564; /* 00102564 */
-extern undefined DAT_00102568; /* 00102568 */
-extern byte DAT_0010256c; /* 0010256c */
-extern undefined DAT_0010256e; /* 0010256e */
-extern undefined DAT_00102572; /* 00102572 */
-extern undefined DAT_00102576; /* 00102576 */
-extern undefined DAT_0010257a; /* 0010257a */
-extern undefined DAT_0010257e; /* 0010257e */
 extern undefined DAT_00102582; /* 00102582 */
 extern char DAT_00102587; /* 00102587 */
 extern char DAT_00102588; /* 00102588 */
@@ -2593,18 +2605,6 @@ __asm__(".set DAT_0010254f, 0x0010254f");
 __asm__(".set DAT_00102550, 0x00102550");
 __asm__(".set DAT_00102551, 0x00102551");
 __asm__(".set DAT_00102552, 0x00102552");
-__asm__(".set DAT_00102554, 0x00102554");
-__asm__(".set DAT_00102558, 0x00102558");
-__asm__(".set DAT_0010255c, 0x0010255c");
-__asm__(".set DAT_00102560, 0x00102560");
-__asm__(".set DAT_00102564, 0x00102564");
-__asm__(".set DAT_00102568, 0x00102568");
-__asm__(".set DAT_0010256c, 0x0010256c");
-__asm__(".set DAT_0010256e, 0x0010256e");
-__asm__(".set DAT_00102572, 0x00102572");
-__asm__(".set DAT_00102576, 0x00102576");
-__asm__(".set DAT_0010257a, 0x0010257a");
-__asm__(".set DAT_0010257e, 0x0010257e");
 __asm__(".set DAT_00102582, 0x00102582");
 __asm__(".set DAT_00102587, 0x00102587");
 __asm__(".set DAT_00102588, 0x00102588");
@@ -3185,6 +3185,7 @@ __asm__(".set drtW_exchange, 0x00103106");
 __asm__(".set drtW_status, 0x00103122");
 __asm__(".set eepx_exchange, 0x00101d18");
 __asm__(".set eepx_status, 0x00101d1c");
+__asm__(".set efc_gains, 0x00102554");
 __asm__(".set errno, 0x0010393a");
 __asm__(".set es_ascii, 0x00103830");
 __asm__(".set es_enabled, 0x00103831");
@@ -3201,6 +3202,7 @@ __asm__(".set gps, 0x00100c6a");
 __asm__(".set gps_ack_awaited, 0x00102586");
 __asm__(".set gps_ack_code, 0x00102584");
 __asm__(".set gps_ack_ready, 0x00102585");
+__asm__(".set gps_command, 0x0010256c");
 __asm__(".set gps_counts, 0x001017bc");
 __asm__(".set gps_date, 0x001009d6");
 __asm__(".set gps_last_command, 0x001017f2");
@@ -4098,20 +4100,6 @@ extern float _DAT_0010215c;
 __asm__(".set _DAT_0010215c, 0x0010215c");
 extern undefined4 _DAT_00102546;
 __asm__(".set _DAT_00102546, 0x00102546");
-extern float _DAT_00102554;
-__asm__(".set _DAT_00102554, 0x00102554");
-extern float _DAT_00102568;
-__asm__(".set _DAT_00102568, 0x00102568");
-extern int _DAT_0010256e;
-__asm__(".set _DAT_0010256e, 0x0010256e");
-extern undefined4 _DAT_00102572;
-__asm__(".set _DAT_00102572, 0x00102572");
-extern undefined4 _DAT_00102576;
-__asm__(".set _DAT_00102576, 0x00102576");
-extern undefined4 _DAT_0010257a;
-__asm__(".set _DAT_0010257a, 0x0010257a");
-extern undefined4 _DAT_0010257e;
-__asm__(".set _DAT_0010257e, 0x0010257e");
 extern ushort _DAT_00102582;
 __asm__(".set _DAT_00102582, 0x00102582");
 extern int _DAT_00102590;
@@ -4996,30 +4984,30 @@ void diag_pr_avg(void);
 void diag_pr_gps_istate(void);
 void diag_print_bc(void);
 void diag_print_ext_msg(void);
-void diag_abr_stat(undefined4 param_1);
-void diag_avg(undefined4 param_1);
+void diag_abr_stat(int32_t param_1);
+void diag_avg(int32_t param_1);
 void diag_master_reset(void);
 void diag_quiet_status(void);
 void diag_gps_query_all(void);
 void diag_init_gps(void);
 void diag_clr_avg(void);
-void diag_stat_rate(undefined4 param_1);
+void diag_stat_rate(int32_t param_1);
 void diag_vis_stat_rate(int param_1);
-void diag_xdop_stat_rate(undefined4 param_1);
-void diag_ext_msg_rate(undefined4 param_1);
-void diag_gps_time(undefined4 param_1,undefined4 param_2,undefined4 param_3);
-void diag_eman(undefined4 param_1);
+void diag_xdop_stat_rate(int32_t param_1);
+void diag_ext_msg_rate(int32_t param_1);
+void diag_gps_time(int32_t param_1,int32_t param_2,int32_t param_3);
+void diag_eman(int32_t param_1);
 void diag_q_eman(void);
-void diag_gps_date(undefined4 param_1,undefined4 param_2,undefined4 param_3);
-void diag_gps_php(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4);
+void diag_gps_date(int32_t param_1,int32_t param_2,int32_t param_3);
+void diag_gps_php(int32_t param_1,int32_t param_2,int32_t param_3,int32_t param_4);
 void diag_q_gps_php(void);
-void diag_gps_ph(undefined4 param_1);
+void diag_gps_ph(int32_t param_1);
 void diag_force_1pps(int param_1);
-void diag_gps_cable_dly(undefined4 param_1);
+void diag_gps_cable_dly(int32_t param_1);
 void diag_q_gps_cable_dly(void);
-void diag_gps_change(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
-                    undefined4 param_5);
-void diag_gps_query(undefined4 param_1);
+void diag_gps_change(int32_t param_1,int32_t param_2,int32_t param_3,int32_t param_4,int32_t param_5
+                    );
+void diag_gps_query(int32_t param_1);
 void diag_pr_gps_id(void);
 void diag_pr_1pps(void);
 void diag_pr_time_raim(void);
@@ -31261,7 +31249,7 @@ void diag_set_time(undefined4 param_1,undefined4 param_2,undefined4 param_3,unde
 void diag_print_stat(void)
 
 {
-  DAT_0010256c = 1;
+  gps_command.code = 1;
   return;
 }
 
@@ -31273,7 +31261,7 @@ void diag_print_stat(void)
 void diag_print_vis(void)
 
 {
-  DAT_0010256c = 0xf;
+  gps_command.code = 0xf;
   return;
 }
 
@@ -31285,7 +31273,7 @@ void diag_print_vis(void)
 void diag_pr_avg(void)
 
 {
-  DAT_0010256c = 0x1d;
+  gps_command.code = 0x1d;
   return;
 }
 
@@ -31297,7 +31285,7 @@ void diag_pr_avg(void)
 void diag_pr_gps_istate(void)
 
 {
-  DAT_0010256c = 0x1e;
+  gps_command.code = 0x1e;
   return;
 }
 
@@ -31309,7 +31297,7 @@ void diag_pr_gps_istate(void)
 void diag_print_bc(void)
 
 {
-  DAT_0010256c = 0x10;
+  gps_command.code = 0x10;
   return;
 }
 
@@ -31321,35 +31309,33 @@ void diag_print_bc(void)
 void diag_print_ext_msg(void)
 
 {
-  DAT_0010256c = 0x12;
+  gps_command.code = 0x12;
   return;
 }
 
 
 /* 0001b540 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word abr_stat */
 
-void diag_abr_stat(undefined4 param_1)
+void diag_abr_stat(int32_t param_1)
 
 {
-  _DAT_0010256e = param_1;
-  DAT_0010256c = 7;
+  gps_command.arguments[0] = param_1;
+  gps_command.code = 7;
   return;
 }
 
 
 /* 0001b552 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word avg */
 
-void diag_avg(undefined4 param_1)
+void diag_avg(int32_t param_1)
 
 {
-  _DAT_0010256e = param_1;
-  DAT_0010256c = 0x16;
+  gps_command.arguments[0] = param_1;
+  gps_command.code = 0x16;
   return;
 }
 
@@ -31361,7 +31347,7 @@ void diag_avg(undefined4 param_1)
 void diag_master_reset(void)
 
 {
-  DAT_0010256c = 0x19;
+  gps_command.code = 0x19;
   return;
 }
 
@@ -31373,7 +31359,7 @@ void diag_master_reset(void)
 void diag_quiet_status(void)
 
 {
-  DAT_0010256c = 0x1c;
+  gps_command.code = 0x1c;
   return;
 }
 
@@ -31385,7 +31371,7 @@ void diag_quiet_status(void)
 void diag_gps_query_all(void)
 
 {
-  DAT_0010256c = 0x1b;
+  gps_command.code = 0x1b;
   return;
 }
 
@@ -31397,7 +31383,7 @@ void diag_gps_query_all(void)
 void diag_init_gps(void)
 
 {
-  DAT_0010256c = 0x18;
+  gps_command.code = 0x18;
   return;
 }
 
@@ -31409,98 +31395,92 @@ void diag_init_gps(void)
 void diag_clr_avg(void)
 
 {
-  DAT_0010256c = 0x17;
+  gps_command.code = 0x17;
   return;
 }
 
 
 /* 0001b596 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word stat_rate */
 
-void diag_stat_rate(undefined4 param_1)
+void diag_stat_rate(int32_t param_1)
 
 {
-  _DAT_0010256e = param_1;
-  DAT_0010256c = 2;
+  gps_command.arguments[0] = param_1;
+  gps_command.code = 2;
   return;
 }
 
 
 /* 0001b5a8 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word vis_stat_rate */
 
 void diag_vis_stat_rate(int param_1)
 
 {
   if (param_1 == 0) {
-    _DAT_0010256e = param_1;
+    gps_command.arguments[0] = param_1;
   }
   else {
-    _DAT_0010256e = 1;
+    gps_command.arguments[0] = 1;
   }
-  DAT_0010256c = 0xd;
+  gps_command.code = 0xd;
   return;
 }
 
 
 /* 0001b5ca */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word xdop_stat_rate */
 
-void diag_xdop_stat_rate(undefined4 param_1)
+void diag_xdop_stat_rate(int32_t param_1)
 
 {
-  _DAT_0010256e = param_1;
-  DAT_0010256c = 0xe;
+  gps_command.arguments[0] = param_1;
+  gps_command.code = 0xe;
   return;
 }
 
 
 /* 0001b5dc */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word ext_msg_rate */
 
-void diag_ext_msg_rate(undefined4 param_1)
+void diag_ext_msg_rate(int32_t param_1)
 
 {
-  _DAT_0010256e = param_1;
-  DAT_0010256c = 0x11;
+  gps_command.arguments[0] = param_1;
+  gps_command.code = 0x11;
   return;
 }
 
 
 /* 0001b5ee */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word gps_time */
 
-void diag_gps_time(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void diag_gps_time(int32_t param_1,int32_t param_2,int32_t param_3)
 
 {
-  _DAT_0010256e = param_1;
-  _DAT_00102572 = param_2;
-  _DAT_00102576 = param_3;
-  DAT_0010256c = 3;
+  gps_command.arguments[0] = param_1;
+  gps_command.arguments[1] = param_2;
+  gps_command.arguments[2] = param_3;
+  gps_command.code = 3;
   return;
 }
 
 
 /* 0001b60e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word eman */
 
-void diag_eman(undefined4 param_1)
+void diag_eman(int32_t param_1)
 
 {
-  _DAT_0010256e = param_1;
-  DAT_0010256c = 8;
+  gps_command.arguments[0] = param_1;
+  gps_command.code = 8;
   return;
 }
 
@@ -31512,40 +31492,38 @@ void diag_eman(undefined4 param_1)
 void diag_q_eman(void)
 
 {
-  DAT_0010256c = 9;
+  gps_command.code = 9;
   return;
 }
 
 
 /* 0001b62a */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word gps_date */
 
-void diag_gps_date(undefined4 param_1,undefined4 param_2,undefined4 param_3)
+void diag_gps_date(int32_t param_1,int32_t param_2,int32_t param_3)
 
 {
-  _DAT_0010256e = param_1;
-  _DAT_00102572 = param_2;
-  _DAT_00102576 = param_3;
-  DAT_0010256c = 4;
+  gps_command.arguments[0] = param_1;
+  gps_command.arguments[1] = param_2;
+  gps_command.arguments[2] = param_3;
+  gps_command.code = 4;
   return;
 }
 
 
 /* 0001b64a */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word gps_php */
 
-void diag_gps_php(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4)
+void diag_gps_php(int32_t param_1,int32_t param_2,int32_t param_3,int32_t param_4)
 
 {
-  _DAT_0010256e = param_1;
-  _DAT_00102572 = param_2;
-  _DAT_00102576 = param_3;
-  _DAT_0010257a = param_4;
-  DAT_0010256c = 5;
+  gps_command.arguments[0] = param_1;
+  gps_command.arguments[1] = param_2;
+  gps_command.arguments[2] = param_3;
+  gps_command.arguments[3] = param_4;
+  gps_command.code = 5;
   return;
 }
 
@@ -31557,21 +31535,20 @@ void diag_gps_php(undefined4 param_1,undefined4 param_2,undefined4 param_3,undef
 void diag_q_gps_php(void)
 
 {
-  DAT_0010256c = 10;
+  gps_command.code = 10;
   return;
 }
 
 
 /* 0001b67a */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word gps_ph */
 
-void diag_gps_ph(undefined4 param_1)
+void diag_gps_ph(int32_t param_1)
 
 {
-  _DAT_0010256e = param_1;
-  DAT_0010256c = 6;
+  gps_command.arguments[0] = param_1;
+  gps_command.code = 6;
   return;
 }
 
@@ -31605,14 +31582,13 @@ override_jmp_0001b6a4_case_1:
 
 /* 0001b6be */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word gps_cable_dly */
 
-void diag_gps_cable_dly(undefined4 param_1)
+void diag_gps_cable_dly(int32_t param_1)
 
 {
-  DAT_0010256c = 0xb;
-  _DAT_0010256e = param_1;
+  gps_command.code = 0xb;
+  gps_command.arguments[0] = param_1;
   return;
 }
 
@@ -31624,40 +31600,38 @@ void diag_gps_cable_dly(undefined4 param_1)
 void diag_q_gps_cable_dly(void)
 
 {
-  DAT_0010256c = 0xc;
+  gps_command.code = 0xc;
   return;
 }
 
 
 /* 0001b6da */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word gps_change */
 
-void diag_gps_change(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
-                    undefined4 param_5)
+void diag_gps_change(int32_t param_1,int32_t param_2,int32_t param_3,int32_t param_4,int32_t param_5
+                    )
 
 {
-  DAT_0010256c = 0x1f;
-  _DAT_0010257e = param_1;
-  _DAT_0010256e = param_2;
-  _DAT_00102572 = param_3;
-  _DAT_00102576 = param_4;
-  _DAT_0010257a = param_5;
+  gps_command.code = 0x1f;
+  gps_command.request = param_1;
+  gps_command.arguments[0] = param_2;
+  gps_command.arguments[1] = param_3;
+  gps_command.arguments[2] = param_4;
+  gps_command.arguments[3] = param_5;
   return;
 }
 
 
 /* 0001b706 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word gps_query */
 
-void diag_gps_query(undefined4 param_1)
+void diag_gps_query(int32_t param_1)
 
 {
-  DAT_0010256c = 0x20;
-  _DAT_0010257e = param_1;
+  gps_command.code = 0x20;
+  gps_command.request = param_1;
   return;
 }
 
@@ -31669,7 +31643,7 @@ void diag_gps_query(undefined4 param_1)
 void diag_pr_gps_id(void)
 
 {
-  DAT_0010256c = 0x13;
+  gps_command.code = 0x13;
   return;
 }
 
@@ -31681,7 +31655,7 @@ void diag_pr_gps_id(void)
 void diag_pr_1pps(void)
 
 {
-  DAT_0010256c = 0x14;
+  gps_command.code = 0x14;
   return;
 }
 
@@ -31693,7 +31667,7 @@ void diag_pr_1pps(void)
 void diag_pr_time_raim(void)
 
 {
-  DAT_0010256c = 0x15;
+  gps_command.code = 0x15;
   return;
 }
 
@@ -57217,7 +57191,7 @@ undefined1 holdover_correction_valid(void)
   b = float_multiply(_DAT_0010204e,45.0);
   fVar1 = float_subtract(fVar1,b);
   fVar1 = float_divide(fVar1,825.0);
-  fVar1 = float_divide(fVar1,_DAT_00102554);
+  fVar1 = float_divide(fVar1,efc_gains.gain);
   fVar1 = float_add(fVar1,pll.efc);
   iVar2 = float_compare(fVar1,0.0);
   if (((-1 < iVar2) && (iVar2 = float_compare(1.04856e+06,fVar1), -1 < iVar2)) &&
@@ -57970,7 +57944,7 @@ char startup_pll(char param_1)
               uVar7 = (undefined2)((uint)__ghidra_bits(fVar1) >> 0x10);
               uVar10 = (undefined1)((uint)__ghidra_bits(fVar1) >> 8);
               uVar11 = SUB41(fVar1,0);
-              fVar1 = float_multiply(DAT_0010255c,pll.ti_filtered);
+              fVar1 = float_multiply(efc_gains.reciprocal_ti,pll.ti_filtered);
               fVar1 = float_multiply(fVar1,__ghidra_as(float, CONCAT31(CONCAT21(uVar7,uVar10),uVar11)));
               float_add_in_place(&DAT_0010205e,fVar1);
               cVar5 = '\x01';
@@ -57988,14 +57962,14 @@ char startup_pll(char param_1)
             uVar7 = (undefined2)((uint)__ghidra_bits(fVar1) >> 0x10);
             uVar10 = (undefined1)((uint)__ghidra_bits(fVar1) >> 8);
             uVar11 = SUB41(fVar1,0);
-            fVar1 = float_multiply(DAT_0010255c,pll.ti_filtered);
+            fVar1 = float_multiply(efc_gains.reciprocal_ti,pll.ti_filtered);
             fVar1 = float_multiply(fVar1,__ghidra_as(float, CONCAT31(CONCAT21(uVar7,uVar10),uVar11)));
             float_add_in_place(&DAT_0010205e,fVar1);
           }
         }
       }
-      local_80 = float_divide(DAT_0010255c,pll.loop_time_constant);
-      fVar1 = float_divide(DAT_00102560,pll.loop_time_constant);
+      local_80 = float_divide(efc_gains.reciprocal_ti,pll.loop_time_constant);
+      fVar1 = float_divide(efc_gains.reciprocal_tau,pll.loop_time_constant);
       fVar1 = float_divide(fVar1,pll.loop_time_constant);
       local_7c = float_divide(fVar1,4.0);
       local_78 = float_divide(29.75,pll.loop_time_constant);
@@ -58015,10 +57989,10 @@ char startup_pll(char param_1)
       fVar1 = float_multiply(pll.efc_history.fit_c,2700.0);
       fVar1 = float_divide(fVar1,__ghidra_as(float, CONCAT31(CONCAT21(uVar7,uVar10),uVar11)));
       a = float_add(fVar1,pll.efc_history.fit_b);
-      iVar2 = float_compare(a,DAT_00102564);
-      fVar1 = DAT_00102564;
-      if ((iVar2 < 1) && (iVar2 = float_compare(-DAT_00102564,a), fVar1 = a, 0 < iVar2)) {
-        fVar1 = -DAT_00102564;
+      iVar2 = float_compare(a,efc_gains.step_limit);
+      fVar1 = efc_gains.step_limit;
+      if ((iVar2 < 1) && (iVar2 = float_compare(-efc_gains.step_limit,a), fVar1 = a, 0 < iVar2)) {
+        fVar1 = -efc_gains.step_limit;
       }
       fVar1 = float_divide(fVar1,local_7c);
       fVar1 = float_divide(fVar1,2700.0);
@@ -58129,8 +58103,8 @@ undefined1 pll_normal(char param_1)
     DAT_0010206c = '\0';
     interval_next_reading('\0',(undefined4 *)0x0);
     *local_14 = 1;
-    _DAT_0010206e = float_divide(DAT_0010255c,max_loop_time);
-    fVar2 = float_divide(DAT_00102560,max_loop_time);
+    _DAT_0010206e = float_divide(efc_gains.reciprocal_ti,max_loop_time);
+    fVar2 = float_divide(efc_gains.reciprocal_tau,max_loop_time);
     fVar2 = float_divide(fVar2,max_loop_time);
     _DAT_00102072 = float_divide(fVar2,4.0);
     _DAT_00102076 = float_divide(29.75,max_loop_time);
@@ -58203,10 +58177,10 @@ undefined1 pll_normal(char param_1)
       fVar2 = float_multiply(*(float *)(local_10 + 0x362),2700.0);
       fVar2 = float_divide(fVar2,__ghidra_as(float, CONCAT31(CONCAT21(uVar7,uVar10),uVar11)));
       a = float_add(fVar2,*(float *)(local_10 + 0x35e));
-      iVar3 = float_compare(a,DAT_00102564);
-      fVar2 = DAT_00102564;
-      if ((iVar3 < 1) && (iVar3 = float_compare(-DAT_00102564,a), fVar2 = a, 0 < iVar3)) {
-        fVar2 = -DAT_00102564;
+      iVar3 = float_compare(a,efc_gains.step_limit);
+      fVar2 = efc_gains.step_limit;
+      if ((iVar3 < 1) && (iVar3 = float_compare(-efc_gains.step_limit,a), fVar2 = a, 0 < iVar3)) {
+        fVar2 = -efc_gains.step_limit;
       }
       fVar2 = float_divide(fVar2,_DAT_00102072);
       fVar2 = float_divide(fVar2,2700.0);
@@ -58523,7 +58497,7 @@ LAB_0004536e:
             goto LAB_0004536e;
           }
         }
-        fVar1 = float_multiply(pll.fine_d,DAT_00102558);
+        fVar1 = float_multiply(pll.fine_d,efc_gains.reciprocal_fine);
         fVar1 = float_subtract_reversed(fVar1,pll.efc);
         pll.efc = __ghidra_as(float, efc_clamp(fVar1));
         if (DAT_00102541 != '\0') {
@@ -58781,7 +58755,7 @@ LAB_00045812:
           iVar1 = float_compare(fVar2,pll.frequency_tolerance);
           if ((iVar1 < 1) ||
              ((uint)nv_settings.holdover_measurement_threshold <= pll.holdover_duration)) {
-            fVar2 = float_multiply(fine_y0,DAT_00102558);
+            fVar2 = float_multiply(fine_y0,efc_gains.reciprocal_fine);
             fVar2 = float_add(fVar2,pll.efc);
             pll.efc = __ghidra_as(float, efc_clamp(fVar2));
             pll.frequency_adjusted = 1;
@@ -60261,7 +60235,6 @@ undefined4 leap_ack_pending(void)
 
 /* 000470aa */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* maps the pending GPS command code at 0x10256c to an Oncore command and sends it */
 
 void gps_command_send(void)
@@ -60271,17 +60244,17 @@ void gps_command_send(void)
   undefined2 in_D1w;
   undefined2 uVar2;
   undefined1 uVar3;
-  undefined4 local_14;
-  undefined4 local_10;
-  undefined4 local_c;
-  undefined4 local_8;
+  int32_t local_14;
+  int32_t local_10;
+  int32_t local_c;
+  int32_t local_8;
   
   bVar1 = true;
   uVar3 = 0;
-  if (0x20 < DAT_0010256c) goto switchD_000470d4_caseD_0;
-  uVar2 = (undefined2)_DAT_0010257e;
+  if (0x20 < gps_command.code) goto switchD_000470d4_caseD_0;
+  uVar2 = (undefined2)gps_command.request;
                     /* WARNING: Switch is manually overridden */
-  switch(DAT_0010256c) {
+  switch(gps_command.code) {
   case 1:
     uVar2 = 0x32;
     break;
@@ -60301,7 +60274,7 @@ void gps_command_send(void)
     uVar2 = 0x13;
     break;
   case 7:
-    DAT_00101b6a = (undefined1)_DAT_0010256e;
+    DAT_00101b6a = (undefined1)gps_command.arguments[0];
   case 0:
 switchD_000470d4_caseD_0:
     bVar1 = false;
@@ -60385,13 +60358,13 @@ switchD_000470d4_caseD_0:
     uVar3 = 1;
   }
   if (bVar1) {
-    local_14 = _DAT_0010256e;
-    local_10 = _DAT_00102572;
-    local_c = _DAT_00102576;
-    local_8 = _DAT_0010257a;
+    local_14 = gps_command.arguments[0];
+    local_10 = gps_command.arguments[1];
+    local_c = gps_command.arguments[2];
+    local_8 = gps_command.arguments[3];
     gpsx_send(uVar2,uVar3,(int)&local_14,'\x04');
   }
-  DAT_0010256c = 0;
+  gps_command.code = 0;
   return;
 }
 
@@ -60579,7 +60552,6 @@ void pll_restart(void)
 
 /* 000474c2 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* sets the EFC's fractional frequency a count, 6.25e-13 from pllp_task, and the values derived from
    it: its reciprocal, 1 ns/s and 5e-9 a day in counts */
 
@@ -60588,13 +60560,13 @@ void efc_gain_set(float param_1)
 {
   float a;
   
-  _DAT_00102554 = param_1;
-  DAT_00102558 = float_divide(1.0,param_1);
-  DAT_0010255c = DAT_00102558;
-  DAT_00102560 = DAT_00102558;
-  a = float_absolute_on_stack(_DAT_00102554);
-  DAT_00102564 = float_divide_reversed(a,6.25e-10);
-  _DAT_00102568 = float_divide(5.787037e-14,_DAT_00102554);
+  efc_gains.gain = param_1;
+  efc_gains.reciprocal_fine = float_divide(1.0,param_1);
+  efc_gains.reciprocal_ti = efc_gains.reciprocal_fine;
+  efc_gains.reciprocal_tau = efc_gains.reciprocal_fine;
+  a = float_absolute_on_stack(efc_gains.gain);
+  efc_gains.step_limit = float_divide_reversed(a,6.25e-10);
+  efc_gains.aging_per_day = float_divide(5.787037e-14,efc_gains.gain);
   return;
 }
 
@@ -60904,7 +60876,7 @@ LAB_00047940:
       gps_leap_ack();
     }
     gps_leap_sequence();
-    if ((DAT_0010256c != '\0') && (gps_ack_awaited == 0)) {
+    if ((gps_command.code != 0) && (gps_ack_awaited == 0)) {
       gps_command_send();
     }
     pll_scpi_receive();

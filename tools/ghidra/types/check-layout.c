@@ -25,6 +25,13 @@ CHECK_FIELD(scpi_numeric_param, steps, 0x28);
 CHECK_FIELD(scpi_numeric_param, gps_request, 0x20);
 CHECK_FIELD(scpi_numeric_param, group_cell, 0x22);
 
+CHECK_SIZE(efc_gain_values, 0x10256c - 0x102554);
+CHECK_FIELD(efc_gain_values, reciprocal_tau, 0x102560 - 0x102554);
+CHECK_FIELD(efc_gain_values, step_limit, 0x102564 - 0x102554);
+CHECK_SIZE(gps_command_mailbox, 0x102582 - 0x10256c);
+CHECK_FIELD(gps_command_mailbox, arguments, 0x10256e - 0x10256c);
+CHECK_FIELD(gps_command_mailbox, request, 0x10257e - 0x10256c);
+
 CHECK_SIZE(selftest_results, 0x100c68 - 0x100c24);
 CHECK_FIELD(selftest_results, uart, 0x100c2e - 0x100c24);
 CHECK_FIELD(selftest_results, lamp_mask, 0x100c30 - 0x100c24);

@@ -355,8 +355,10 @@ whose messages name them:
 | `spoo` | `0x1032f8` | | |
 
 The GPS print words do not print: each leaves a code in the mailbox at
-`0x10256c`, which `0x470aa` turns into a request to the GPS task,
-sent with `gpsx_send`.  The GPS task gives requests `0x31` to `0x45`
+`0x10256c` (`gps_command`, `gps_command_mailbox`: the code, four long
+arguments from `+2`, and at `+0x12` the request code `0x20` sends as it
+is), which `gps_command_send` (`0x470aa`) turns into a request to the
+GPS task, sent with `gpsx_send`.  The GPS task gives requests `0x31` to `0x45`
 to `gps_console_request` (`0x4c572`), whose cases print the pages:
 
 | Word | Code | Request | Printer |
@@ -673,6 +675,17 @@ restored, but only their descriptors refer to them.  In
 `sync_kind` and a `sync_count`, and `counter_arm` writes the kind into
 `fconf_regs[3]` (`counter_set_sync`, `0x40a84`) while counting the
 count down.
+
+## The EFC's gain
+
+`efc_gains` (`0x102554`, `efc_gain_values`, 24 bytes) is the fractional
+frequency one EFC count moves, which `pllp_task` sets to 6.25e-13
+through `efc_gain_set` (`0x474c2`), and what that derives from it: its
+reciprocal three times, as `fine` and `coarse`, the time interval's
+scaling in `startup_pll` and `pll_normal`, and their division by the
+loop's time constant each take it; 6.25e-10 in counts, the bound those
+two compare a step with; and 5e-9 a day in counts a second, which
+nothing reads.
 
 ## The self-tests' results
 

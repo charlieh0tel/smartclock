@@ -350,6 +350,8 @@
 0x101f8c	label	idn_suffix	structures.md	*IDN?'s %c after "3543B-"	char
 0x102154	label	fine_y0	structures.md	"y0 = %f, efc =  %d", fine acquisition's intercept	float
 0x102544	label	status_summary	structures.md	six bits from status register 6's groups, the last field of the es message	uint8_t
+0x102554	label	efc_gains	structures.md	the EFC's gain and what efc_gain_set derives from it	efc_gain_values
+0x10256c	label	gps_command	structures.md	the GPS command the console's GPS words leave for pllp_task	gps_command_mailbox
 0x102584	label	gps_ack_code	structures.md	"mask angle ack failure: %02X" and eight more	uint8_t
 0x10264c	label	psos_config	structures.md	memcpy'd from ROM 0x5122a, 0x62 bytes; its first long is the data area the supervisor stack starts 200 bytes into
 0x102674	label	psos_supervisor_stack_size	structures.md	">> pSOS system supervisor stack:" divides by it	int32_t

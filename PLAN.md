@@ -1114,7 +1114,11 @@ view cannot drift apart.  The library, bottom up:
      to 8, the rest not C).  The counts are unchanged.  Left: the
      byte and word pieces of variables the decompiler types too wide
      (`__ghidra_piece`, `CONCAT22`, `CONCAT31` on `local_8`), the soft
-     float library's own bit work, and then by hand.
+     float library's own bit work, and then by hand.  Named, too: the
+     signals the drivers send their tasks, by the firmware's messages
+     (`SIG_SIQ`, `SIG_SOQA`; `types/psos-signals.h`), and a device
+     register's bits where the decompiler reads it into a local first
+     (`SCSR_TDRE`, `SR_RXRDY`).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

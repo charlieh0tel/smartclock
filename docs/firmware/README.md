@@ -281,7 +281,8 @@ part of what they change.  In order:
 5. `SmartClockStackParameters.java`.
 6. `SmartClockFormatStrings.java`.
 7. `SmartClockExportC.java FILE defines=tools/ghidra/types/mc68331.h
-   defines=tools/ghidra/types/mc68681.h`.
+   defines=tools/ghidra/types/mc68681.h
+   defines=tools/ghidra/types/psos-signals.h`.
 
 **Setup** makes the ROM read-only, so values loaded from it fold to
 constants; maps RAM, the DUART, EEPROM, the CS4 and CS5 ranges and the
@@ -442,6 +443,17 @@ stack.  Ghidra's 68000 convention returns a float or double in the FPU
 register FP0, but these images have no FPU and return one in D0 or
 D0:D1, so every function returning one has its return annotated.
 
+`types/psos-signals.h` names, as `#define`s, the signals the drivers
+send their tasks, bits of the events `signal_v` ORs into a task's
+pending word, by the firmware's own messages: `"wait_v SIG_SIQ error in
+getc"` beside `psos_wait_v(0x4000,...)`.  A bit is a task's -- 0x800 is
+`SIGINTR` to the console's and `SIG_SOQA` to the GPS task, 0x200 the
+SCI's output queue and the interpolator's reading -- so each name lists
+the functions of the driver its message comes from, and the exporter
+names a constant signal a call to `signal_v`, `wait_v` or `get_v`
+passes only there: `psos_wait_v(SIG_SIQ,0,0,(ulong *)0x0)`.  1, 0x20
+and 0x100, which no message names, stay numbers.
+
 `types/mc68331.h` lays out the CPU's own modules as the names file
 types them: `gpt` (`0xfff900`), `sim` (`0xfffa00`) and `qsm`
 (`0xfffc00`), each register a field at its offset in MC68331UM Tables
@@ -451,7 +463,12 @@ what Ghidra parses and the exporter copies into the C (`defines=`).
 The exporter then names the constants written to or tested in a
 register by those bits, where every bit has a name, so that the C
 reads `qsm.sccr1 = uVar1 | SCCR1_TIE` and `uVar1 & ~SCCR1_PE`; the
-ports' bits, the board's wiring, stay numbers.  `types/mc68681.h` does
+ports' bits, the board's wiring, stay numbers.  A register the
+decompiler reads into a local first, as it does a volatile one, names
+the local's tests too, `uVar1 = qsm.scsr;` then `(uVar1 & SCSR_TDRE)
+== 0`, where every copy into the local is of that one register or the
+test is the statement after the copy: `duarta_isr` reads `sr_csr` and
+`rb_tb` into one local.  `types/mc68681.h` does
 the same for the DUART, `duart` (`0x200000`), from Motorola's MC68681
 data sheet (Tables 4-1 and 4-5): a channel's registers are a
 `duart_channel`, `duart.a` and `duart.b`, and a register read and the

@@ -2253,6 +2253,15 @@ _Static_assert(sizeof(three_point_fit) == 16, "three_point_fit");
 #define OPCR_OP3_MASK   0x0c
 #define OPCR_OP2_MASK   0x03
 
+/* the #defines of psos-signals.h */
+#define SIG_SIQ_SCI 0x0040  /* "wait_v SIG_SIQ_SCI error in getc"; in: sci_getc */
+#define SIG_SOQ_SCI 0x0200  /* "wait_v SIG_SOQ_SCI error in _sci_puts"; in: sci_puts */
+#define SIG_QSPI    0x0400  /* "wait_v SIG_QSPI"; in: qspi_acquire qspi_release qspi_isr */
+#define SIGINTR     0x0800  /* "DUARTB isr signaling SIGINTR"; in: duartb_isr installer_duartb_isr sci_gets */
+#define SIG_SOQA    0x0800  /* "wait_v SIG_SOQA error in drta_send_message"; in: drta_send_message duarta_tx_interrupt */
+#define SIG_SOQ     0x1000  /* "wait_v SIG_SOQ error in _drtb_puts"; in: drtb_puts duartb_transmit_interrupt installer_duartb_transmit_interrupt */
+#define SIG_SIQ     0x4000  /* "wait_v SIG_SIQ error in getc"; in: drtb_getc installer_drtb_getc drta_get_byte duarta_isr duartb_isr installer_duartb_isr */
+
 extern void *boot_vectors; /* 00000000 */
 extern uint8_t installer_records[42861]; /* 00000bbc */
 extern void *primary_vectors; /* 00010000 */
@@ -6313,7 +6322,7 @@ void boot_duartb_loopback_check(void)
       iVar3 = iVar3 + -1;
     }
     uVar2 = duart.b.sr_csr;
-    if ((uVar2 & 1) == 0) {
+    if ((uVar2 & SR_RXRDY) == 0) {
       boot_selftest.uart = 0x20;
     }
     else {
@@ -33901,7 +33910,7 @@ byte duartb_putc_polled(byte param_1)
   
   do {
     uVar1 = duart.b.sr_csr;
-  } while ((uVar1 & 4) == 0);
+  } while ((uVar1 & SR_TXRDY) == 0);
   duart.b.rb_tb = param_1;
   return uVar1 & 4;
 }
@@ -33919,7 +33928,7 @@ int drtb_puts(char *param_1)
   ulong uVar2;
   char *pcVar3;
   
-  psos_get_v(0x1000,0,(ulong *)0x0);
+  psos_get_v(SIG_SOQ,0,(ulong *)0x0);
   duartb.transmit_next = param_1;
   duartb.transmit_count = -1;
   pcVar3 = param_1;
@@ -33932,7 +33941,7 @@ int drtb_puts(char *param_1)
     duart_shadow.imr = duart_shadow.imr | IMR_TXRDYB;
     duart.isr_imr = duart_shadow.imr;
   }
-  uVar2 = psos_wait_v(0x1000,0,0,(ulong *)0x0);
+  uVar2 = psos_wait_v(SIG_SOQ,0,0,(ulong *)0x0);
   if ((char)uVar2 != 0) {
     fatal_error("wait_v SIG_SOQ error in _drtb_puts");
   }
@@ -33954,9 +33963,9 @@ undefined4 drtb_getc(void)
   undefined3 extraout_var;
   ulong uVar4;
   
-  psos_get_v(0x4000,0,(ulong *)0x0);
+  psos_get_v(SIG_SIQ,0,(ulong *)0x0);
   if (duartb_ring.write == duartb_ring.read) {
-    uVar4 = psos_wait_v(0x4000,0,0,(ulong *)0x0);
+    uVar4 = psos_wait_v(SIG_SIQ,0,0,(ulong *)0x0);
     if ((char)uVar4 != 0) {
       fatal_error("wait_v SIG_SIQ error in getc");
     }
@@ -34905,7 +34914,7 @@ undefined1 drta_send_message(char *param_1,int16_t param_2)
   uVar2 = 0;
   uVar1 = psos_my_pid();
   if (uVar1 == task_gpsm) {
-    psos_get_v(0x800,0,(ulong *)0x0);
+    psos_get_v(SIG_SOQA,0,(ulong *)0x0);
     duarta.transmit_next = param_1;
     duarta.transmit_count = param_2;
     sr = set_interrupt_mask(0x600);
@@ -34914,7 +34923,7 @@ undefined1 drta_send_message(char *param_1,int16_t param_2)
       duart.isr_imr = duart_shadow.imr;
     }
     set_interrupt_mask(sr);
-    uVar1 = psos_wait_v(0x800,0,0,(ulong *)0x0);
+    uVar1 = psos_wait_v(SIG_SOQA,0,0,(ulong *)0x0);
     if ((char)uVar1 != 0) {
       fatal_error("wait_v SIG_SOQA error in drta_send_message");
     }
@@ -34956,9 +34965,9 @@ uint8_t drta_get_byte(char *param_1)
     task_debug_message("DRTA receiver overrun ocurred\r\n");
   }
   duarta.overrun = 0;
-  psos_get_v(0x4000,0,(ulong *)0x0);
+  psos_get_v(SIG_SIQ,0,(ulong *)0x0);
   if (duarta_ring.write == duarta_ring.read) {
-    uVar2 = psos_wait_v(0x4000,0,0,(ulong *)0x0);
+    uVar2 = psos_wait_v(SIG_SIQ,0,0,(ulong *)0x0);
     if ((char)uVar2 != 0) {
       fatal_error("wait_v SIG_SIQ error in drta_get_byte");
     }
@@ -35255,13 +35264,13 @@ uint duarta_isr(void)
   
   while( true ) {
     uVar1 = duart.a.sr_csr;
-    if ((uVar1 & 1) == 0) break;
+    if ((uVar1 & SR_RXRDY) == 0) break;
     in_D0 = (uint)duarta_ring.write;
     uVar1 = duart.a.rb_tb;
     duarta_ring.write = duarta_ring.write + 1;
     duarta_ring.data[in_D0] = uVar1;
     if (task_gpsm != 0) {
-      in_D0 = psos_signal_v(task_gpsm,0x4000);
+      in_D0 = psos_signal_v(task_gpsm,SIG_SIQ);
       if ((char)in_D0 != 0) {
         fatal_error("DUARTA isr signaling SIG_SIQ");
         in_D0 = extraout_D0;
@@ -35272,7 +35281,7 @@ uint duarta_isr(void)
     duarta.least_free = duarta_ring.read - duarta_ring.write;
   }
   uVar1 = duart.a.sr_csr;
-  if ((uVar1 & 0x10) != 0) {
+  if ((uVar1 & SR_OVERRUN) != 0) {
     duarta.overrun = 1;
     duart.a.cr = CR_RESET_ERROR;
   }
@@ -35297,7 +35306,7 @@ byte duartb_isr(void)
   bVar2 = false;
   while( true ) {
     uVar1 = duart.b.sr_csr;
-    if ((uVar1 & 1) == 0) break;
+    if ((uVar1 & SR_RXRDY) == 0) break;
     uVar1 = duart.b.sr_csr;
     duartb.receive_errors = uVar1 & 0xe0 | duartb.receive_errors;
     bVar5 = duart.b.rb_tb;
@@ -35306,7 +35315,7 @@ byte duartb_isr(void)
     }
     if ((bVar5 == 3) && (duartb.read_token.task == task_console)) {
       if (duartb.read_token.task != 0) {
-        uVar4 = psos_signal_v(duartb.read_token.task,0x800);
+        uVar4 = psos_signal_v(duartb.read_token.task,SIGINTR);
         if ((char)uVar4 != 0) {
           fatal_error("DUARTB isr signaling SIGINTR");
         }
@@ -35351,13 +35360,13 @@ byte duartb_isr(void)
     }
   }
   if (bVar2) {
-    uVar4 = psos_signal_v(duartb.read_token.task,0x4000);
+    uVar4 = psos_signal_v(duartb.read_token.task,SIG_SIQ);
     if ((char)uVar4 != 0) {
       fatal_error("DUARTB isr signaling SIG_SIQ");
     }
   }
   uVar1 = duart.b.sr_csr;
-  if ((uVar1 & 0x10) != 0) {
+  if ((uVar1 & SR_OVERRUN) != 0) {
     duartb.receive_errors = duartb.receive_errors | 0x10;
     duart.b.cr = CR_RESET_ERROR;
   }
@@ -35375,7 +35384,7 @@ void duarta_tx_interrupt(void)
   if (duarta.transmit_count == 0) {
     duart_shadow.imr = duart_shadow.imr & ~IMR_TXRDYA;
     duart.isr_imr = duart_shadow.imr;
-    psos_signal_v(task_gpsm,0x800);
+    psos_signal_v(task_gpsm,SIG_SOQA);
   }
   else {
     duart.a.rb_tb = *duarta.transmit_next;
@@ -35402,7 +35411,7 @@ void duartb_transmit_interrupt(void)
       duart_shadow.imr = duart_shadow.imr & ~IMR_TXRDYB;
       duart.isr_imr = duart_shadow.imr;
       if (duartb.write_token.task != 0) {
-        uVar1 = psos_signal_v(duartb.write_token.task,0x1000);
+        uVar1 = psos_signal_v(duartb.write_token.task,SIG_SOQ);
         if ((char)uVar1 != 0) {
           fatal_error("DUARTB isr signaling SIG_SOQ");
         }
@@ -35602,7 +35611,7 @@ void duartb_loopback_check(void)
       iVar3 = iVar3 + -1;
     }
     uVar2 = duart.b.sr_csr;
-    if ((uVar2 & 1) == 0) {
+    if ((uVar2 & SR_RXRDY) == 0) {
       selftest.uart = 0x20;
     }
     else {
@@ -36227,7 +36236,7 @@ ushort sci_putc_polled(char param_1)
   
   do {
     uVar1 = qsm.scsr;
-  } while ((uVar1 & 0x100) == 0);
+  } while ((uVar1 & SCSR_TDRE) == 0);
   if (sci.mark_bit == 0) {
     uVar2 = (ushort)param_1;
   }
@@ -36251,13 +36260,13 @@ int sci_puts(int param_1)
   uint16_t uVar2;
   ulong uVar3;
   
-  psos_get_v(0x200,0,(ulong *)0x0);
+  psos_get_v(SIG_SOQ_SCI,0,(ulong *)0x0);
   sci.transmit_next = (char *)param_1;
   if (sci.reconfiguring == 0) {
     uVar2 = qsm.sccr1;
     qsm.sccr1 = uVar2 | SCCR1_TIE;
   }
-  uVar3 = psos_wait_v(0x200,0,0,(ulong *)0x0);
+  uVar3 = psos_wait_v(SIG_SOQ_SCI,0,0,(ulong *)0x0);
   if ((char)uVar3 != 0) {
     fatal_error("wait_v SIG_SOQ_SCI error in _sci_puts");
   }
@@ -36281,9 +36290,9 @@ undefined4 sci_getc(void)
   undefined3 extraout_var;
   ulong uVar4;
   
-  psos_get_v(0x40,0,(ulong *)0x0);
+  psos_get_v(SIG_SIQ_SCI,0,(ulong *)0x0);
   if (sci_ring.write == sci_ring.read) {
-    uVar4 = psos_wait_v(0x40,0,0,(ulong *)0x0);
+    uVar4 = psos_wait_v(SIG_SIQ_SCI,0,0,(ulong *)0x0);
     if ((char)uVar4 != 0) {
       fatal_error("wait_v SIG_SIQ_SCI error in getc");
     }
@@ -37579,7 +37588,7 @@ void qspi_release(void)
     qspi.busy = 0;
   }
   else {
-    uVar1 = psos_signal_v(qspi.waiting[qspi.read],0x400);
+    uVar1 = psos_signal_v(qspi.waiting[qspi.read],SIG_QSPI);
     if ((char)uVar1 != 0) {
       fatal_error("SPI isr signaling SPI owner");
     }
@@ -37825,7 +37834,7 @@ void qspi_acquire(void)
     uVar1 = psos_my_pid();
     qspi.waiting[qspi.write] = uVar1;
     qspi.write = qspi.write + 1 & 0xf;
-    uVar1 = psos_wait_v(0x400,0,0,(ulong *)0x0);
+    uVar1 = psos_wait_v(SIG_QSPI,0,0,(ulong *)0x0);
     if ((char)uVar1 != 0) {
       fatal_error("wait_v SIG_QSPI");
     }
@@ -38013,7 +38022,7 @@ void qspi_isr(void)
     qspi.busy = 0;
   }
   else {
-    uVar3 = psos_signal_v(qspi.waiting[qspi.read],0x400);
+    uVar3 = psos_signal_v(qspi.waiting[qspi.read],SIG_QSPI);
     if ((char)uVar3 != 0) {
       fatal_error("SPI isr signaling SPI owner");
     }
@@ -38265,9 +38274,9 @@ void qspi_send(byte param_1,undefined2 *param_2,ushort param_3)
   qspi.field_00 = 1;
   do {
     uVar1 = qsm.spcr1;
-  } while ((uVar1 & 0x8000) != 0);
+  } while ((uVar1 & SPCR1_SPE) != 0);
   uVar2 = qsm.spsr;
-  if ((uVar2 & 0x80) != 0) {
+  if ((uVar2 & SPSR_SPIF) != 0) {
     qspi_isr();
   }
   cVar4 = qspi_queue_setup(param_1,param_2,param_3,0,&local_8);
@@ -38275,7 +38284,7 @@ void qspi_send(byte param_1,undefined2 *param_2,ushort param_3)
     qsm.spcr1 = local_8;
     do {
       uVar2 = qsm.spsr;
-    } while ((uVar2 & 0x80) == 0);
+    } while ((uVar2 & SPSR_SPIF) == 0);
     uVar2 = qsm.spsr;
     qsm.spsr = 0;
   }
@@ -38307,9 +38316,9 @@ void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3)
   qspi.field_00 = 1;
   do {
     uVar1 = qsm.spcr1;
-  } while ((uVar1 & 0x8000) != 0);
+  } while ((uVar1 & SPCR1_SPE) != 0);
   uVar2 = qsm.spsr;
-  if ((uVar2 & 0x80) != 0) {
+  if ((uVar2 & SPSR_SPIF) != 0) {
     qspi_isr();
   }
   cVar4 = qspi_queue_setup(param_1,(undefined2 *)*param_2,param_3,1,&local_8);
@@ -38317,7 +38326,7 @@ void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3)
     qsm.spcr1 = local_8;
     do {
       uVar2 = qsm.spsr;
-    } while ((uVar2 & 0x80) == 0);
+    } while ((uVar2 & SPSR_SPIF) == 0);
     if (param_1 == 0xc) {
       puVar7 = puVar6 + 1;
     }
@@ -88493,7 +88502,7 @@ byte installer_duartb_putc_polled(byte param_1)
   
   do {
     uVar1 = duart.b.sr_csr;
-  } while ((uVar1 & 4) == 0);
+  } while ((uVar1 & SR_TXRDY) == 0);
   duart.b.rb_tb = param_1;
   return uVar1 & 4;
 }
@@ -88512,9 +88521,9 @@ undefined4 installer_drtb_getc(void)
   undefined3 extraout_var;
   ulong uVar4;
   
-  installer_psos_get_v(0x4000,0,(ulong *)0x0);
+  installer_psos_get_v(SIG_SIQ,0,(ulong *)0x0);
   if (installer_duartb_ring.write == installer_duartb_ring.read) {
-    uVar4 = installer_psos_wait_v(0x4000,0,0,(ulong *)0x0);
+    uVar4 = installer_psos_wait_v(SIG_SIQ,0,0,(ulong *)0x0);
     if ((char)uVar4 != 0) {
       installer_fatal_error(s_wait_v_SIG_SIQ_error_in_getc_installer__00103dfc);
     }
@@ -88699,7 +88708,7 @@ void installer_duarta_receive(void)
     installer_duarta.least_free = installer_duarta_ring.read - installer_duarta_ring.write;
   }
   uVar1 = duart.a.sr_csr;
-  if ((uVar1 & 0x10) != 0) {
+  if ((uVar1 & SR_OVERRUN) != 0) {
     installer_duarta.overrun = 1;
     duart.a.cr = CR_RESET_ERROR;
   }
@@ -88723,7 +88732,7 @@ byte installer_duartb_isr(void)
   bVar2 = false;
   while( true ) {
     uVar1 = duart.b.sr_csr;
-    if ((uVar1 & 1) == 0) break;
+    if ((uVar1 & SR_RXRDY) == 0) break;
     uVar1 = duart.b.sr_csr;
     installer_duartb.receive_errors = uVar1 & 0xe0 | installer_duartb.receive_errors;
     bVar5 = duart.b.rb_tb;
@@ -88732,7 +88741,7 @@ byte installer_duartb_isr(void)
     }
     if ((bVar5 == 3) && (installer_duartb.read_token.task == installer_task_console)) {
       if (installer_duartb.read_token.task != 0) {
-        uVar4 = installer_psos_signal_v(installer_duartb.read_token.task,0x800);
+        uVar4 = installer_psos_signal_v(installer_duartb.read_token.task,SIGINTR);
         if ((char)uVar4 != 0) {
           installer_fatal_error(s_DUARTB_isr_signaling_SIGINTR_installer__00103e93);
         }
@@ -88782,13 +88791,13 @@ byte installer_duartb_isr(void)
     }
   }
   if (bVar2) {
-    uVar4 = installer_psos_signal_v(installer_duartb.read_token.task,0x4000);
+    uVar4 = installer_psos_signal_v(installer_duartb.read_token.task,SIG_SIQ);
     if ((char)uVar4 != 0) {
       installer_fatal_error(s_DUARTB_isr_signaling_SIG_SIQ_installer__00103eb0);
     }
   }
   uVar1 = duart.b.sr_csr;
-  if ((uVar1 & 0x10) != 0) {
+  if ((uVar1 & SR_OVERRUN) != 0) {
     installer_duartb.receive_errors = installer_duartb.receive_errors | 0x10;
     duart.b.cr = CR_RESET_ERROR;
   }
@@ -88824,7 +88833,7 @@ void installer_duartb_transmit_interrupt(void)
       installer_duart_shadow.imr = installer_duart_shadow.imr & ~IMR_TXRDYB;
       duart.isr_imr = installer_duart_shadow.imr;
       if (installer_duartb.write_token.task != 0) {
-        uVar1 = installer_psos_signal_v(installer_duartb.write_token.task,0x1000);
+        uVar1 = installer_psos_signal_v(installer_duartb.write_token.task,SIG_SOQ);
         if ((char)uVar1 != 0) {
           installer_fatal_error(s_DUARTB_isr_signaling_SIG_SOQ_installer__00103ecd);
         }

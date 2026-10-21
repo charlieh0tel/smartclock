@@ -291,7 +291,7 @@ public class SmartClockExportC extends GhidraScript {
 						}
 					}
 					else {
-						functions.append(registerBits(rotates(registerShifts(reinterpretingCasts(c)))));
+						functions.append(signals(function.getName(), registerBits(rotates(registerShifts(reinterpretingCasts(c))))));
 						collectGlobals(results.getHighFunction(), referenced);
 						String stack = stackArguments(results.getHighFunction());
 						if (stack != null) {
@@ -690,17 +690,157 @@ public class SmartClockExportC extends GhidraScript {
 	/** Each module's register fields and their widths in bits, by its path: duart.a for a channel. */
 	private Map<String, Map<String, Integer>> moduleFields;
 
+	/** What a signal's #define begins with, which no register's does. */
+	private static final String SIGNAL_PREFIX = "SIG";
+	/** A signal's #define: its name, value and the functions after "in:" in its comment, if any. */
+	private static final Pattern SIGNAL_DEFINE = Pattern.compile(
+		"(?m)^#define\\s+(" + SIGNAL_PREFIX + "\\w+)\\s+(0x[0-9a-fA-F]+|[0-9]+)\\b(?:[^\\n]*?\\bin:([\\w\\s]*?)\\*/)?");
+	/** A signal's name, and the functions it means that in. */
+	private record Signal(String name, Set<String> functions) {}
+	/** Each signal's names, by its bit. */
+	private Map<Long, List<Signal>> signalNames;
+	/** A call to a service that takes signals, and which of its arguments they are, by the service. */
+	private static final Pattern SIGNAL_CALL = Pattern.compile("\\b(?:installer_)?psos_(signal|wait|get)_v\\(");
+	private static final Map<String, Integer> SIGNAL_ARGUMENT = Map.of("signal", 1, "wait", 0, "get", 0);
+
+	/**
+	 * c, function's, with the signals each call to signal_v, wait_v or
+	 * get_v passes as a constant named, as the defines= headers name
+	 * them: psos_wait_v(0x4000,...) is psos_wait_v(SIG_SIQ,...).  A bit
+	 * is a task's, so a name is used only in the functions it lists.
+	 */
+	private String signals(String function, String c) throws Exception {
+		if (signalNames == null) {
+			collectRegisterBits();
+		}
+		StringBuilder out = new StringBuilder();
+		Matcher call = SIGNAL_CALL.matcher(c);
+		int copied = 0;
+		while (call.find()) {
+			int close = matching(c, call.end() - 1);
+			if (close < 0) {
+				continue;
+			}
+			List<int[]> arguments = new ArrayList<>();
+			int start = call.end();
+			for (int i = start, depth = 0; i <= close; i++) {
+				char ch = c.charAt(i);
+				depth += ch == '(' ? 1 : ch == ')' ? -1 : 0;
+				if (ch == ',' && depth == 0 || i == close) {
+					arguments.add(new int[] { start, i });
+					start = i + 1;
+				}
+			}
+			int index = SIGNAL_ARGUMENT.get(call.group(1));
+			if (index >= arguments.size()) {
+				continue;
+			}
+			int[] argument = arguments.get(index);
+			String text = c.substring(argument[0], argument[1]).trim();
+			String name = LITERAL.matcher(text).matches()
+				? signalName(function, Long.decode(text.replaceAll("[uUlL]+$", ""))) : null;
+			if (name != null) {
+				out.append(c, copied, argument[0]).append(name);
+				copied = argument[1];
+			}
+		}
+		return out.append(c.substring(copied)).toString();
+	}
+
+	/** The name of the signal bit in function, or null if it has none there. */
+	private String signalName(String function, long bit) {
+		for (Signal signal : signalNames.getOrDefault(bit, List.of())) {
+			if (signal.functions().contains(function)) {
+				return signal.name();
+			}
+		}
+		return null;
+	}
+
+	/** A copy of a register field into a variable: groups the variable, then the field's as MODULE_PATH's. */
+	private static final Pattern REGISTER_COPY = Pattern.compile("(?m)^\\s*(\\w+) = " + MODULE_PATH + ";$");
+	/** A line that only opens or closes a block, which control passes through. */
+	private static final Pattern BLOCK_LINE = Pattern.compile("^\\s*(?:do )?[{}]\\s*$");
+
+	/**
+	 * c with each test of a variable a register field was copied into
+	 * named by the register's bits, as a test of the field itself is: the
+	 * decompiler reads a volatile register into a local first,
+	 * uVar1 = qsm.scsr; then (uVar1 & 0x100) == 0, which becomes
+	 * (uVar1 & SCSR_TDRE) == 0.  The field is the variable's where every
+	 * copy into it is of that one field, or the test is in the statement
+	 * after the copy (duarta_isr reads sr_csr and rb_tb into one).
+	 */
+	private String copiedRegisterBits(String c) {
+		Map<String, Set<String>> copied = new HashMap<>();
+		Matcher copy = REGISTER_COPY.matcher(c);
+		while (copy.find()) {
+			copied.computeIfAbsent(copy.group(1), k -> new HashSet<>()).add(copy.group(2) + "." + copy.group(3));
+		}
+		if (copied.isEmpty()) {
+			return c;
+		}
+		String[] lines = c.split("\n", -1);
+		for (int n = 0; n < lines.length; n++) {
+			for (Map.Entry<String, Set<String>> variable : copied.entrySet()) {
+				String name = variable.getKey();
+				Matcher test = Pattern.compile("\\b" + name + " & (0x[0-9a-f]+|[0-9]+)\\)").matcher(lines[n]);
+				if (!test.find()) {
+					continue;
+				}
+				String field = null;
+				long assignments = Pattern.compile("\\b" + name + " = (?!=)").matcher(c).results().count();
+				long copies = Pattern.compile("(?m)^\\s*" + name + " = " + MODULE_PATH + ";$").matcher(c)
+					.results().count();
+				if (variable.getValue().size() == 1 && assignments == copies) {
+					field = variable.getValue().iterator().next();
+				}
+				else {
+					int before = n - 1;
+					while (before >= 0 && BLOCK_LINE.matcher(lines[before]).matches()) {
+						before--;
+					}
+					Matcher previous = before < 0 ? null : REGISTER_COPY.matcher(lines[before]);
+					if (previous != null && previous.matches() && previous.group(1).equals(name)) {
+						field = previous.group(2) + "." + previous.group(3);
+					}
+				}
+				if (field == null) {
+					continue;
+				}
+				int dot = field.lastIndexOf('.');
+				String names = bitNames(field.substring(0, dot), field.substring(dot + 1),
+					Long.decode(test.group(1)), false, false);
+				if (names != null) {
+					lines[n] = lines[n].substring(0, test.start()) + name + " & "
+						+ (names.contains(" ") ? "(" + names + ")" : names) + ")" + lines[n].substring(test.end());
+				}
+			}
+		}
+		return String.join("\n", lines);
+	}
+
 	private void collectRegisterBits() throws Exception {
 		registerBitNames = new HashMap<>();
+		signalNames = new HashMap<>();
 		Map<String, Map<Long, String>> values = new HashMap<>();
 		for (String arg : getScriptArgs()) {
 			if (!arg.startsWith(DEFINES)) {
 				continue;
 			}
-			Matcher define = DEFINE_VALUE.matcher(Files.readString(new File(
-				arg.substring(DEFINES.length())).toPath()));
+			String header = Files.readString(new File(arg.substring(DEFINES.length())).toPath());
+			Matcher signal = SIGNAL_DEFINE.matcher(header);
+			while (signal.find()) {
+				signalNames.computeIfAbsent(Long.decode(signal.group(2)), k -> new ArrayList<>())
+					.add(new Signal(signal.group(1), signal.group(3) == null ? Set.of()
+						: Set.of(signal.group(3).trim().split("\\s+"))));
+			}
+			Matcher define = DEFINE_VALUE.matcher(header);
 			while (define.find()) {
 				String name = define.group(1);
+				if (name.startsWith(SIGNAL_PREFIX)) {
+					continue;
+				}
 				long value = Long.decode(define.group(2));
 				int underscore = name.indexOf('_');
 				if (underscore < 0 || name.endsWith("_MASK") || name.endsWith("_SHIFT") || value == 0) {
@@ -827,7 +967,7 @@ public class SmartClockExportC extends GhidraScript {
 				: store.group(1) + "." + store.group(2) + " = " + names + ";"));
 		}
 		store.appendTail(out);
-		return out.toString();
+		return copiedRegisterBits(out.toString());
 	}
 
 	/**

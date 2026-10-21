@@ -49,6 +49,7 @@ extern code *UNRECOVERED_JUMPTABLE;
 #define __ghidra_mask(n) ((n) >= 8 ? ~0ULL : (1ULL << (8 * (n))) - 1)
 #define __ghidra_concat(y, a, b) 	((__ghidra_bits(a) << (8 * (y))) | (__ghidra_bits(b) & __ghidra_mask(y)))
 #define __ghidra_sub(y, v, n) ((__ghidra_bits(v) >> (8 * (n))) & __ghidra_mask(y))
+#define __ghidra_also(call, var, n) ({ __typeof__((call) + 0) __c = (call); 	var = __ghidra_as(__typeof__(var), __ghidra_sub(sizeof var, __c, n)); __c; })
 #define CARRY1(a, b) ((unsigned char)((a) + (b)) < (unsigned char)(a))
 #define CARRY2(a, b) ((unsigned short)((a) + (b)) < (unsigned short)(a))
 #define CARRY4(a, b) ((unsigned int)((a) + (b)) < (unsigned int)(a))
@@ -7435,7 +7436,7 @@ klok_entry * leap_event_schedule_gps(uint32_t param_1,int param_2)
     puVar3 = puVar3 + 1;
   } while (sVar1 != -1);
   event.date = param_1;
-  if (param_2 - 0x3bU < 2 || param_2 + -0x3d == 0) {
+  if (param_2 - 0x3bU < 2U || param_2 + -0x3d == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0001062e)[(short)(param_2 + -0x3d)]) {
     case 6:
@@ -8330,13 +8331,13 @@ void datetime_subtract(packed_datetime *change,packed_datetime *value)
   }
   cStack_a = (char)(uVar3 >> 8);
   __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(__ghidra_piece(unsigned char, local_8, 2) - cStack_a,(char)local_8);
-  while (__ghidra_piece(unsigned char, local_8, 2) < '\0') {
+  while (__ghidra_piece(signed char, local_8, 2) < '\0') {
     __ghidra_piece(unsigned short, local_8, 2) = CONCAT11(__ghidra_piece(unsigned char, local_8, 2) + '<',(char)local_8);
     __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) + -1,__ghidra_piece(unsigned short, local_8, 2));
   }
   cStack_b = (char)(uVar3 >> 0x10);
   __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) - cStack_b,__ghidra_piece(unsigned short, local_8, 2));
-  while (__ghidra_piece(unsigned char, local_8, 1) < '\0') {
+  while (__ghidra_piece(signed char, local_8, 1) < '\0') {
     __ghidra_piece(__ghidra_u3, local_8, 1).v = CONCAT12(__ghidra_piece(unsigned char, local_8, 1) + '\x18',__ghidra_piece(unsigned short, local_8, 2));
     puVar4 = puVar4 + -1;
   }
@@ -30687,7 +30688,7 @@ undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,undef
       sVar4 = forth_compile_code(pcVar6);
       *(short *)(dp + 4) = sVar4 << 2;
     }
-    if ((0 < __ghidra_piece(unsigned short, param_4, 2)) && (sVar4 = forth_compile_code(pcVar6), 1 < sVar4)) {
+    if ((0 < __ghidra_piece(short, param_4, 2)) && (sVar4 = forth_compile_code(pcVar6), 1 < sVar4)) {
       forth_compile_code(pcVar6);
     }
     forth_compile_code(pcVar6);
@@ -31723,7 +31724,7 @@ void diag_gps_ph(int32_t param_1)
 void diag_force_1pps(int param_1)
 
 {
-  if (param_1 + 1U < 2 || param_1 + -1 == 0) {
+  if (param_1 + 1U < 2U || param_1 + -1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0001b6ac)[(short)(param_1 + -1)]) {
     case 6:
@@ -32820,7 +32821,7 @@ void diag_cal(uint param_1)
   uVar11 = (undefined2)((ulonglong)__ghidra_bits(dVar6) >> 0x10);
   uVar12 = (undefined1)((ulonglong)__ghidra_bits(dVar6) >> 8);
   uVar13 = SUB81(dVar6,0);
-  double_multiply_pointers(&accumulator_2,&accumulator_1);
+  __ghidra_also(__ghidra_also(double_multiply_pointers(&accumulator_2,&accumulator_1), extraout_A0, 4), extraout_A1, 0);
   dVar6 = double_subtract_reversed
                     (__ghidra_as(double, CONCAT71(CONCAT61(CONCAT42(CONCAT22(uVar9,uVar10),uVar11),uVar12),
                                       uVar13)),__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
@@ -32833,7 +32834,7 @@ void diag_cal(uint param_1)
   dVar6 = double_multiply_pointer(dVar6,&accumulator_4);
   uVar7 = (undefined4)((ulonglong)__ghidra_bits(dVar6) >> 0x20);
   uVar8 = SUB84(dVar6,0);
-  double_multiply_pointers(&accumulator_1,&accumulator_1);
+  __ghidra_also(__ghidra_also(double_multiply_pointers(&accumulator_1,&accumulator_1), extraout_A0_00, 4), extraout_A1_00, 0);
   dVar6 = double_subtract_reversed
                     (__ghidra_as(double, CONCAT44(uVar7,uVar8)),__ghidra_as(double, CONCAT44(extraout_A0_00,extraout_A1_00)));
   dVar6 = double_divide_reversed
@@ -33168,7 +33169,7 @@ LAB_0001d8d0:
     uVar6 = 0x10;
     bVar1 = drtb_getc();
     if (0x1f < bVar1) break;
-    if (0x10 < bVar1 - 8) {
+    if (0x10U < bVar1 - 8) {
 switchD_0001d830_caseD_b:
       (*(code *)duartb.echo)();
       pbVar4 = pbVar5;
@@ -34970,7 +34971,7 @@ void hdac_write(byte param_1,byte param_2)
   byte bVar2;
   
   iVar1 = param_2 - 6;
-  if (param_2 - 1 < 5 || iVar1 == 0) {
+  if (param_2 - 1 < 5U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0001f510)[(short)iVar1]) {
     case 0xc:
@@ -35239,7 +35240,7 @@ LAB_0001f952:
     uVar6 = 0x94;
     uVar1 = sci_getc();
     if ('\x1f' < (char)uVar1) break;
-    if (0x10 < (int)(char)uVar1 - 8U) {
+    if (0x10U < (int)(char)uVar1 - 8U) {
 switchD_0001f8b2_caseD_b:
       (*(code *)sci.echo)();
       puVar4 = puVar5;
@@ -41631,7 +41632,7 @@ LAB_00026bae:
                 if (iVar4 != 0) goto LAB_00026e5a;
                 unaff_D7 = (short *)local_32[1];
                 pcVar1 = *(code **)(unaff_D7 + local_6 * 2 + 6);
-                if (5 < iVar2 - 0xdU && iVar2 + -0x13 != 0) goto LAB_00026d2a;
+                if (5U < iVar2 - 0xdU && iVar2 + -0x13 != 0) goto LAB_00026d2a;
                     /* WARNING: Switch is manually overridden */
                 switch((&WORD_00026c74)[(short)(iVar2 + -0x13)]) {
                 case 0xe:
@@ -42066,7 +42067,7 @@ int scpi_scan_number(int param_1,undefined4 param_2,undefined4 param_3,undefined
   if (__ghidra_piece(unsigned short, param_2, 2) == 0) {
     __ghidra_piece(unsigned short, param_3, 2) = (*(code *)*param_4)(param_4);
   }
-  cVar5 = (&LAB_000277ec)[__ghidra_piece(unsigned short, param_3, 2)];
+  cVar5 = (&LAB_000277ec)[__ghidra_piece(short, param_3, 2)];
   sVar8 = 0;
   sVar6 = 0;
   sVar7 = 0;
@@ -42091,7 +42092,7 @@ int scpi_scan_number(int param_1,undefined4 param_2,undefined4 param_3,undefined
       sVar6 = 1;
     }
     __ghidra_piece(unsigned short, param_3, 2) = (*(code *)*param_4)(param_4);
-    cVar5 = (&LAB_000277ec)[__ghidra_piece(unsigned short, param_3, 2)];
+    cVar5 = (&LAB_000277ec)[__ghidra_piece(short, param_3, 2)];
   } while( true );
 LAB_0002747e:
   if (cVar5 == '\x01') {
@@ -42119,12 +42120,12 @@ LAB_0002752c:
     sVar6 = 1;
   }
   __ghidra_piece(unsigned short, param_3, 2) = (*(code *)*param_4)(param_4);
-  cVar5 = (&LAB_000277ec)[__ghidra_piece(unsigned short, param_3, 2)];
+  cVar5 = (&LAB_000277ec)[__ghidra_piece(short, param_3, 2)];
   goto LAB_0002747e;
 LAB_000274a4:
   while( true ) {
     __ghidra_piece(unsigned short, param_3, 2) = (*(code *)*param_4)(param_4);
-    cVar5 = (&LAB_000277ec)[__ghidra_piece(unsigned short, param_3, 2)];
+    cVar5 = (&LAB_000277ec)[__ghidra_piece(short, param_3, 2)];
     if (cVar5 != '\x01') break;
     if ((sVar6 == 0) && (sVar7 = sVar7 + 1, 0x7ffe < sVar7)) {
       return -0x17;
@@ -42146,7 +42147,7 @@ LAB_00027502:
 LAB_00027568:
   while (cVar5 == '\x03') {
     __ghidra_piece(unsigned short, param_3, 2) = (*(code *)*param_4)(param_4);
-    cVar5 = (&LAB_000277ec)[__ghidra_piece(unsigned short, param_3, 2)];
+    cVar5 = (&LAB_000277ec)[__ghidra_piece(short, param_3, 2)];
   }
   *(undefined2 *)(param_1 + 0x14) = 0;
   iVar3 = scpi_scan_exponent((int)__ghidra_piece(short, param_3, 2),param_1,param_4);
@@ -42160,7 +42161,7 @@ LAB_00027568:
   *(short *)(param_1 + 0x12) = (short)iVar3;
   do {
     __ghidra_piece(unsigned short, param_3, 2) = (*(code *)*param_4)(param_4);
-    cVar5 = (&LAB_000277ec)[__ghidra_piece(unsigned short, param_3, 2)];
+    cVar5 = (&LAB_000277ec)[__ghidra_piece(short, param_3, 2)];
   } while (cVar5 == '\x03');
   sVar8 = *(short *)(param_1 + 0x14);
   if ((cVar5 == '\x13') || (cVar5 == '\0')) {
@@ -42173,7 +42174,7 @@ LAB_00027568:
       *(undefined1 *)(param_1 + 0x16 + (int)sVar8) = uVar4;
       __ghidra_piece(unsigned short, param_3, 2) = (*(code *)*param_4)(param_4);
       sVar8 = sVar8 + 1;
-      cVar5 = (&LAB_000277ec)[__ghidra_piece(unsigned short, param_3, 2)];
+      cVar5 = (&LAB_000277ec)[__ghidra_piece(short, param_3, 2)];
     }
   }
   if (cVar5 != '\x1b') {
@@ -42297,9 +42298,9 @@ int scpi_parameter_match(int *param_1,undefined4 param_2,int param_3,short *para
     if (iVar1 == 0) {
       return -0x26;
     }
-    if (*(int *)(*(int *)(*param_1 + 4) + 0xc + __ghidra_piece(unsigned short, param_2, 2) * 4) != 0) break;
+    if (*(int *)(*(int *)(*param_1 + 4) + 0xc + __ghidra_piece(short, param_2, 2) * 4) != 0) break;
     if (*(short *)(*(int *)(*param_1 + 4) + 2) == 0) {
-      return (int)*(short *)(&DAT_000279ca + __ghidra_piece(unsigned short, param_2, 2) * 2);
+      return (int)*(short *)(&DAT_000279ca + __ghidra_piece(short, param_2, 2) * 2);
     }
     *(undefined2 *)(*(int *)(param_3 + 10) + (int)*param_4) = 0xffff;
     *param_4 = *param_4 + **(short **)(*param_1 + 4) + 2;
@@ -42342,7 +42343,7 @@ short scpi_suffix_compare_tail(int param_1,undefined4 param_2,int param_3)
   short sVar1;
   
   for (sVar1 = 0;
-      (sVar1 < __ghidra_piece(unsigned short, param_2, 2) &&
+      (sVar1 < __ghidra_piece(short, param_2, 2) &&
       (*(char *)(param_1 + -1 + ((int)__ghidra_piece(short, param_2, 2) - (int)sVar1)) == *(char *)(param_3 + sVar1)));
       sVar1 = sVar1 + 1) {
   }
@@ -42467,7 +42468,7 @@ short scpi_keyword_compare(char *token,int length,char *keyword)
   short sVar4;
   
   bVar3 = true;
-  for (sVar4 = 0; sVar4 < __ghidra_piece(unsigned short, length, 2); sVar4 = sVar4 + 1) {
+  for (sVar4 = 0; sVar4 < __ghidra_piece(short, length, 2); sVar4 = sVar4 + 1) {
     if (*keyword < *token) {
       if (((*keyword != '\0') || (!bVar3)) || (keyword = keyword + 1, *keyword < *token)) {
         return 1;
@@ -43335,17 +43336,17 @@ bool error_queue_push(short *param_1,undefined4 param_2,undefined4 param_3)
     param_1[*param_1 * 3 + 5] = __ghidra_piece(unsigned short, param_2, 2);
     *(undefined4 *)(param_1 + *param_1 * 3 + 6) = param_3;
   }
-  if (__ghidra_piece(unsigned short, param_2, 2) < -399) {
+  if (__ghidra_piece(short, param_2, 2) < -399) {
     iVar4 = -4;
   }
-  else if ((__ghidra_piece(unsigned short, param_2, 2) < -299) || (0 < __ghidra_piece(unsigned short, param_2, 2))) {
+  else if ((__ghidra_piece(short, param_2, 2) < -299) || (0 < __ghidra_piece(short, param_2, 2))) {
     iVar4 = -3;
   }
-  else if (__ghidra_piece(unsigned short, param_2, 2) < -199) {
+  else if (__ghidra_piece(short, param_2, 2) < -199) {
     iVar4 = -2;
   }
   else {
-    if (-100 < __ghidra_piece(unsigned short, param_2, 2)) goto LAB_00028680;
+    if (-100 < __ghidra_piece(short, param_2, 2)) goto LAB_00028680;
     iVar4 = -1;
   }
   status_apply_condition((int)psVar1,iVar4,0);
@@ -43820,7 +43821,7 @@ undefined4 scpi_long_resolve_bound(undefined4 param_1,short *param_2)
   undefined4 in_stack_00000008;
   
   iVar1 = *param_2 + -2;
-  if ((int)*param_2 + 1U < 3 || iVar1 == 0) {
+  if ((int)*param_2 + 1U < 3U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_000297ea)[(short)iVar1]) {
     case 8:
@@ -45933,7 +45934,7 @@ void log_status(char *param_1,char param_2)
   }
   if ((local_6 == '\0') && (local_5 == 0)) {
     iVar1 = sVar2 + -1;
-    if ((int)sVar2 + 1U < 2 || iVar1 == 0) {
+    if ((int)sVar2 + 1U < 2U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
       switch((&WORD_0002b532)[(short)iVar1]) {
       case 6:
@@ -50705,7 +50706,7 @@ int scpi_query_SOURce_ROSCillator_HOLDover_DURation(void *parameters,void *respo
   set_interrupt_mask(sr);
   *(float *)response = fVar2;
   iVar1 = cVar3 + -5;
-  if ((int)cVar3 - 1U < 4 || iVar1 == 0) {
+  if ((int)cVar3 - 1U < 4U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0002fa68)[(short)iVar1]) {
     case 10:
@@ -51191,7 +51192,7 @@ int scpi_query_SOURce_ROSCillator_HOLDover_WAITing(void *parameters,void *respon
     uVar1 = set_interrupt_mask(0x100);
     bVar3 = holdover_waiting_reason();
     set_interrupt_mask(uVar1);
-    if (bVar3 - 1 < 0x10) {
+    if (bVar3 - 1 < 0x10U) {
                     /* WARNING: Switch is manually overridden */
       switch((short)(bVar3 - 1)) {
       case 0:
@@ -51200,7 +51201,7 @@ int scpi_query_SOURce_ROSCillator_HOLDover_WAITing(void *parameters,void *respon
       case 1:
         *(undefined2 *)response = 1;
         return 0;
-      case 3:
+      case 3: case 0xf:
         *(undefined2 *)response = 2;
         return 0;
       case 7:
@@ -51260,7 +51261,7 @@ int scpi_query_SOURce_ROSCillator_STATe(void *parameters,void *response,void *ca
   cVar2 = pll_mode();
   set_interrupt_mask(sr);
   iVar1 = cVar2 + -5;
-  if ((int)cVar2 - 1U < 4 || iVar1 == 0) {
+  if ((int)cVar2 - 1U < 4U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0003001c)[(short)iVar1]) {
     case 10:
@@ -55456,7 +55457,7 @@ void efc_history_update(void)
         fVar5 = float_add(fVar1,-1.0);
         dVar7 = float_to_double(fVar5);
         dVar7 = log(dVar7);
-        double_add(dVar7,dVar6);
+        __ghidra_also(__ghidra_also(double_add(dVar7,dVar6), extraout_A0, 4), extraout_A1, 0);
         dVar6 = double_add(-1.0,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
         fVar5 = double_to_float(dVar6);
         pll.efc_history.logs[pll.efc_history.stop_ptr] = fVar5;
@@ -55824,7 +55825,7 @@ int fit_logarithmic(aging_curve_state *curve)
     f = float_subtract(a,curve->rms);
     a_00 = float_to_double(f);
     a_01 = float_to_double(a);
-    double_multiply(a_01,0.01);
+    __ghidra_also(__ghidra_also(double_multiply(a_01,0.01), extraout_A0, 4), extraout_A1, 0);
     iVar2 = double_compare(a_00,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
     if (-1 < iVar2) break;
   } while (uVar1 == 0);
@@ -55922,7 +55923,7 @@ int fit_log_initial(aging_curve_state *curve)
   f = float_abs(fVar2);
   dVar4 = float_to_double(f);
   b = float_to_double(regression.rms);
-  double_multiply(10.0,b);
+  __ghidra_also(__ghidra_also(double_multiply(10.0,b), extraout_A0, 4), extraout_A1, 0);
   iVar3 = double_compare(dVar4,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
   if (0 < iVar3) {
     dVar4 = float_to_double(regression.rms);
@@ -56311,7 +56312,7 @@ void fit_quality(aging_curve_state *curve)
     fVar3 = float_subtract(fVar2,local_14);
     dVar5 = float_to_double(fVar3);
     dVar6 = float_to_double(fVar3);
-    double_multiply(dVar6,dVar5);
+    __ghidra_also(__ghidra_also(double_multiply(dVar6,dVar5), extraout_A0, 4), extraout_A1, 0);
     dVar5 = double_multiply(0.5,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
     dVar6 = float_to_double(fVar4);
     dVar5 = double_add(dVar6,dVar5);
@@ -56327,8 +56328,8 @@ void fit_quality(aging_curve_state *curve)
     fVar3 = float_divide_reversed(fVar3,fVar4);
     dVar5 = float_to_double(fVar3);
     sqrt(dVar5);
-    double_multiply(__ghidra_as(double, CONCAT44(extraout_D0,extraout_D1)),0.00025);
-    double_divide_reversed(1e-11,__ghidra_as(double, CONCAT44(extraout_A0_00,extraout_A1_00)));
+    __ghidra_also(__ghidra_also(double_multiply(__ghidra_as(double, CONCAT44(extraout_D0,extraout_D1)),0.00025), extraout_A0_00, 4), extraout_A1_00, 0);
+    __ghidra_also(__ghidra_also(double_divide_reversed(1e-11,__ghidra_as(double, CONCAT44(extraout_A0_00,extraout_A1_00))), extraout_A0_01, 4), extraout_A1_01, 0);
     dVar5 = double_divide_reversed(1600000000000.0,__ghidra_as(double, CONCAT44(extraout_A0_01,extraout_A1_01)));
     uVar8 = 0;
     uVar7 = 0x3ff80000;
@@ -56346,7 +56347,7 @@ void fit_quality(aging_curve_state *curve)
     fVar3 = float_divide_reversed(fVar3,fVar4);
     dVar5 = float_to_double(fVar3);
     sqrt(dVar5);
-    double_multiply(__ghidra_as(double, CONCAT44(extraout_D0_00,extraout_D1_00)),5.5e-05);
+    __ghidra_also(__ghidra_also(double_multiply(__ghidra_as(double, CONCAT44(extraout_D0_00,extraout_D1_00)),5.5e-05), extraout_A0_02, 4), extraout_A1_02, 0);
     dVar5 = double_divide_reversed(16.0,__ghidra_as(double, CONCAT44(extraout_A0_02,extraout_A1_02)));
     uVar8 = 0;
     uVar7 = 0x3ff80000;
@@ -56363,7 +56364,7 @@ void fit_quality(aging_curve_state *curve)
   dVar6 = __ghidra_as(double, CONCAT44(extraout_D0_01,extraout_D1_01));
   fVar2 = float_multiply(curve->rms,86400.0);
   dVar5 = float_to_double(fVar2);
-  double_divide(dVar5,1600000000000.0);
+  __ghidra_also(__ghidra_also(double_divide(dVar5,1600000000000.0), extraout_A0_03, 4), extraout_A1_03, 0);
   dVar5 = double_multiply(dVar6,__ghidra_as(double, CONCAT44(extraout_A0_03,extraout_A1_03)));
   fVar2 = double_to_float(dVar5);
   fVar2 = float_multiply(fVar2,fVar2);
@@ -56442,7 +56443,7 @@ undefined4 get_ffom(undefined1 *param_1)
   int iVar1;
   
   iVar1 = (char)pll.stage + -6;
-  if ((int)(char)pll.stage - 3U < 3 || iVar1 == 0) {
+  if ((int)(char)pll.stage - 3U < 3U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00042a3c)[(short)iVar1]) {
     case 8:
@@ -57980,7 +57981,7 @@ char startup_pll(char param_1)
         interval_mean = loop_steering.ti_sum;
       }
       iVar2 = (char)pll.startup_state + -3;
-      if ((int)(char)pll.startup_state - 1U < 2 || iVar2 == 0) {
+      if ((int)(char)pll.startup_state - 1U < 2U || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
         switch((&WORD_000444fc)[(short)iVar2]) {
         case 6:
@@ -58981,7 +58982,7 @@ undefined4 pll_mode(void)
   short sVar2;
   
   iVar1 = (char)pll.stage + -6;
-  if ((int)(char)pll.stage - 1U < 5 || iVar1 == 0) {
+  if ((int)(char)pll.stage - 1U < 5U || iVar1 == 0) {
     sVar2 = (short)iVar1;
     iVar1 = CONCAT22((short)((uint)iVar1 >> 0x10),(&WORD_00045b94)[sVar2]);
                     /* WARNING: Switch is manually overridden */
@@ -59028,7 +59029,7 @@ undefined1 pll_powerup_suffix_index(void)
   
   uVar2 = 0;
   if ((pll.stage == PLL_STAGE_POWERUP) &&
-     (iVar1 = (char)pll.powerup_state + -7, (int)(char)pll.powerup_state - 1U < 6 || iVar1 == 0)) {
+     (iVar1 = (char)pll.powerup_state + -7, (int)(char)pll.powerup_state - 1U < 6U || iVar1 == 0)) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00045bec)[(short)iVar1]) {
     case 0xe:
@@ -59638,7 +59639,7 @@ void pll_stage_status(void)
   char cVar2;
   
   iVar1 = (char)pll.stage + -9;
-  if ((int)(char)pll.stage - 1U < 8 || iVar1 == 0) {
+  if ((int)(char)pll.stage - 1U < 8U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0004655a)[(short)iVar1]) {
     case 0x12:
@@ -59661,7 +59662,7 @@ void pll_stage_status(void)
     }
   }
   iVar1 = (char)pll.stage + -9;
-  if (7 < (int)(char)pll.stage - 1U && iVar1 != 0) {
+  if (7U < (int)(char)pll.stage - 1U && iVar1 != 0) {
     return;
   }
                     /* WARNING: Switch is manually overridden */
@@ -60782,7 +60783,7 @@ LAB_00047758:
       status_happening(cVar11);
     }
     iVar1 = (char)pll.stage + -9;
-    if (7 < (int)(char)pll.stage - 1U && iVar1 != 0) {
+    if (7U < (int)(char)pll.stage - 1U && iVar1 != 0) {
       pll.stage = PLL_STAGE_POWERUP;
       goto LAB_00047940;
     }
@@ -61562,7 +61563,7 @@ void enabled_string(char param_1,char *param_2)
     case 0:
       pcVar3 = "Enabled";
       break;
-    case 2:
+    case -1:
       pcVar3 = "Disabled";
     }
   }
@@ -61662,7 +61663,7 @@ void gps_print_instrument_state(void)
     case 0:
       pcVar8 = "N-in-view";
       break;
-    case 2:
+    case -1:
       pcVar8 = "Best 4 satellites";
     }
   }
@@ -61676,7 +61677,7 @@ void gps_print_instrument_state(void)
     case 0:
       local_10 = "Pos Fix";
       break;
-    case 2:
+    case -1:
       local_10 = "Idle";
     }
   }
@@ -62934,7 +62935,7 @@ char * status_screen_position(byte param_1,int param_2,char *param_3)
   char acStack_e [10];
   
   iVar3 = param_1 - 6;
-  if (param_1 - 1 < 5 || iVar3 == 0) {
+  if (param_1 - 1 < 5U || iVar3 == 0) {
     pcVar4 = (char *)(uint)(&WORD_0004a010)[(short)iVar3];
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0004a010)[(short)iVar3]) {
@@ -63120,7 +63121,7 @@ int status_screen_tfom(byte param_1,int param_2,char *param_3)
   char acStack_26 [34];
   
   iVar2 = param_1 - 4;
-  if (param_1 - 1 < 3 || iVar2 == 0) {
+  if (param_1 - 1 < 3U || iVar2 == 0) {
     iVar3 = CONCAT22((short)((uint)iVar2 >> 0x10),(&WORD_0004a2d0)[(short)iVar2]);
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0004a2d0)[(short)iVar2]) {
@@ -63578,7 +63579,7 @@ void status_screen(char *param_1,char param_2,undefined *param_3,undefined *para
   (*(code *)param_3)(0x60);
   (*(code *)param_3)(100);
   iVar2 = *param_1 + -9;
-  if ((int)*param_1 - 1U < 8 || iVar2 == 0) {
+  if ((int)*param_1 - 1U < 8U || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0004a980)[(short)iVar2]) {
     case 0x12:
@@ -63670,7 +63671,7 @@ override_jmp_0004aaaa_case_0:
         pcVar3 = ": manually initiated";
         goto LAB_0004ab10;
       }
-      if ((byte)param_1[0x1c] - 1 < 0x10) {
+      if ((byte)param_1[0x1c] - 1 < 0x10U) {
                     /* WARNING: Switch is manually overridden */
         switch((short)((byte)param_1[0x1c] - 1)) {
         case 0:
@@ -64979,7 +64980,7 @@ undefined ** gps_script_lookup(short param_1)
 {
   undefined **ppuVar1;
   
-  if ((int)param_1 - 0x47U < 0x13) {
+  if ((int)param_1 - 0x47U < 0x13U) {
                     /* WARNING: Switch is manually overridden */
     switch((short)((int)param_1 - 0x47U)) {
     case 0:
@@ -65440,7 +65441,7 @@ void raim_request_arguments(void)
 void gps_console_request(short param_1,undefined4 *param_2,undefined1 param_3)
 
 {
-  if ((int)param_1 - 0x31U < 0x15) {
+  if ((int)param_1 - 0x31U < 0x15U) {
                     /* WARNING: Switch is manually overridden */
     switch((short)((int)param_1 - 0x31U)) {
     case 0:
@@ -65617,7 +65618,7 @@ undefined4 gps_print_command(int param_1,char *param_2)
     format_time(local_1e,acStack_e);
     local_2c = (char)((uint)uVar4 >> 8);
     iVar3 = local_2c + -4;
-    if ((int)local_2c - 1U < 3 || iVar3 == 0) {
+    if ((int)local_2c - 1U < 3U || iVar3 == 0) {
                     /* WARNING: Switch is manually overridden */
       switch((&WORD_0004c7d4)[(short)iVar3]) {
       case 8:
@@ -65650,7 +65651,7 @@ undefined4 gps_print_command(int param_1,char *param_2)
     }
     local_2e = (short)((uint)uVar4 >> 0x10);
     sprintf(param_2,"%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s",param2,(int)local_2e,
-            (&PTR_DAT_0004fece)[__ghidra_piece(unsigned short, local_2a, 0) * 0xe],(char *)((int)&local_2a + 2),param6,acStack_1a
+            (&PTR_DAT_0004fece)[__ghidra_piece(short, local_2a, 0) * 0xe],(char *)((int)&local_2a + 2),param6,acStack_1a
             ,acStack_e,param9);
     uVar4 = 1;
   }
@@ -65839,7 +65840,7 @@ void gps_print_process_monitor(void)
   }
   else {
     iVar2 = *(char *)((int)gps_last_command + 8) + -4;
-    if ((int)*(char *)((int)gps_last_command + 8) - 1U < 3 || iVar2 == 0) {
+    if ((int)*(char *)((int)gps_last_command + 8) - 1U < 3U || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
       switch((&WORD_0004cd06)[(short)iVar2]) {
       case 8:
@@ -65865,7 +65866,7 @@ void gps_print_process_monitor(void)
       case 0:
         pcVar4 = "query setting";
         break;
-      case 2:
+      case -1:
         pcVar4 = "change/execute";
       }
     }
@@ -67145,7 +67146,7 @@ gps_response_match(short param_1,undefined1 *param_2,char param_3,char param_4,s
           bVar2 = cVar6 + cVar7;
           sVar10 = param_7 - (ushort)bVar2;
           iVar3 = (char)(&DAT_0004feec)[iVar4] + -4;
-          if ((int)(char)(&DAT_0004feec)[iVar4] - 2U < 2 || iVar3 == 0) {
+          if ((int)(char)(&DAT_0004feec)[iVar4] - 2U < 2U || iVar3 == 0) {
                     /* WARNING: Switch is manually overridden */
             switch((&WORD_0004fc90)[(short)iVar3]) {
             case 6:
@@ -68399,10 +68400,10 @@ __asm__(
 
 /* D0:D1 - *A1
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
-   double *b.  Out: D0:D1 double.
+   double *b.  Out: D0:D1 double.  Copies (read): A0:A1.
    libc.md */
 
-/* out D0:D1 double */
+/* out D0:D1 double; copies A0:A1 */
 __regcall double double_subtract_pointer(double a /* d0 */,double *b /* a1 */)
 
 {
@@ -68451,10 +68452,10 @@ __asm__(
 
 /* *A1 - *A0
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *a, A1
-   double *b.  Out: D0:D1 double.
+   double *b.  Out: D0:D1 double.  Copies (read): A0:A1.
    libc.md */
 
-/* out D0:D1 double */
+/* out D0:D1 double; copies A0:A1 */
 __regcall double double_subtract_reversed_pointers(double *a /* a0 */,double *b /* a1 */)
 
 {
@@ -68788,10 +68789,10 @@ __asm__(
 
 /* *A1 - D0:D1
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
-   double *b.  Out: D0:D1 double.
+   double *b.  Out: D0:D1 double.  Copies (read): A0:A1.
    libc.md */
 
-/* out D0:D1 double */
+/* out D0:D1 double; copies A0:A1 */
 __regcall double double_subtract_reversed_pointer(double a /* d0 */,double *b /* a1 */)
 
 {
@@ -69126,10 +69127,10 @@ __asm__(
 
 /* A0:A1 - D0:D1
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a,
-   A0:A1 double b.  Out: D0:D1 double.
+   A0:A1 double b.  Out: D0:D1 double.  Copies (read): A0:A1.
    libc.md */
 
-/* out D0:D1 double */
+/* out D0:D1 double; copies A0:A1 */
 __regcall double double_subtract_reversed(double a /* d0 */,double b /* a0 */)
 
 {
@@ -69615,10 +69616,10 @@ __asm__(
 
 /* *A0 + *A1
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *a, A1
-   double *b.  Out: D0:D1 double.
+   double *b.  Out: D0:D1 double.  Copies (read): A0:A1.
    libc.md */
 
-/* out D0:D1 double */
+/* out D0:D1 double; copies A0:A1 */
 __regcall double double_add_pointers(double *a /* a0 */,double *b /* a1 */)
 
 {
@@ -69949,10 +69950,10 @@ __asm__(
 
 /* D0:D1 + *A1
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
-   double *b.  Out: D0:D1 double.
+   double *b.  Out: D0:D1 double.  Copies (read): A0:A1.
    libc.md */
 
-/* out D0:D1 double */
+/* out D0:D1 double; copies A0:A1 */
 __regcall double double_add_pointer(double a /* d0 */,double *b /* a1 */)
 
 {
@@ -70280,10 +70281,10 @@ __asm__(
 
 /* D0:D1 + A0:A1
    Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
-   double a, A0:A1 double b.  Out: D0:D1 double.
+   double a, A0:A1 double b.  Out: D0:D1 double.  Copies: A0:A1.
    softfloat.md */
 
-/* out D0:D1 double */
+/* out D0:D1 double; copies A0:A1 */
 __regcall double double_add(double a /* d0 */,double b /* a0 */)
 
 {
@@ -71965,10 +71966,10 @@ __asm__(
 
 /* D0:D1 / A0:A1
    Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
-   double a, A0:A1 double b.  Out: D0:D1 double.
+   double a, A0:A1 double b.  Out: D0:D1 double.  Copies: A0:A1.
    softfloat.md */
 
-/* out D0:D1 double */
+/* out D0:D1 double; copies A0:A1 */
 __regcall double double_divide(double a /* d0 */,double b /* a0 */)
 
 {
@@ -72016,10 +72017,10 @@ __asm__(
 
 /* *A1 / *A0
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *a, A1
-   double *b.  Out: D0:D1 double.
+   double *b.  Out: D0:D1 double.  Copies (read): A0:A1.
    libc.md */
 
-/* out D0:D1 double */
+/* out D0:D1 double; copies A0:A1 */
 __regcall double double_divide_reversed_pointers(double *a /* a0 */,double *b /* a1 */)
 
 {
@@ -72197,10 +72198,10 @@ __asm__(
 
 /* *A1 / D0:D1
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
-   double *b.  Out: D0:D1 double.
+   double *b.  Out: D0:D1 double.  Copies (read): A0:A1.
    libc.md */
 
-/* out D0:D1 double */
+/* out D0:D1 double; copies A0:A1 */
 __regcall double double_divide_reversed_pointer(double a /* d0 */,double *b /* a1 */)
 
 {
@@ -72373,10 +72374,10 @@ __asm__(
 
 /* A0:A1 / D0:D1
    Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
-   double a, A0:A1 double b.  Out: D0:D1 double.
+   double a, A0:A1 double b.  Out: D0:D1 double.  Copies: A0:A1.
    softfloat.md */
 
-/* out D0:D1 double */
+/* out D0:D1 double; copies A0:A1 */
 __regcall double double_divide_reversed(double a /* d0 */,double b /* a0 */)
 
 {
@@ -75012,10 +75013,10 @@ __asm__(
 
 /* *A0 x *A1
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *a, A1
-   double *b.  Out: D0:D1 double.
+   double *b.  Out: D0:D1 double.  Copies (read): A0:A1.
    libc.md */
 
-/* out D0:D1 double */
+/* out D0:D1 double; copies A0:A1 */
 __regcall double double_multiply_pointers(double *a /* a0 */,double *b /* a1 */)
 
 {
@@ -75303,10 +75304,10 @@ __asm__(
 
 /* D0:D1 x *A1
    Not a C function (register; run): its arguments and results in registers.  In: D0:D1 double a, A1
-   double *b.  Out: D0:D1 double.
+   double *b.  Out: D0:D1 double.  Copies (read): A0:A1.
    libc.md */
 
-/* out D0:D1 double */
+/* out D0:D1 double; copies A0:A1 */
 __regcall double double_multiply_pointer(double a /* d0 */,double *b /* a1 */)
 
 {
@@ -75589,10 +75590,10 @@ __asm__(
 
 /* D0:D1 x A0:A1
    Not a C function (register; documented): its arguments and results in registers.  In: D0:D1
-   double a, A0:A1 double b.  Out: D0:D1 double.
+   double a, A0:A1 double b.  Out: D0:D1 double.  Copies: A0:A1.
    softfloat.md */
 
-/* out D0:D1 double */
+/* out D0:D1 double; copies A0:A1 */
 __regcall double double_multiply(double a /* d0 */,double b /* a0 */)
 
 {
@@ -76763,7 +76764,7 @@ int atoi(char *s)
       s = s + 1;
       iVar2 = (int)*s;
     }
-    if (iVar2 - 0x2bU < 2 || iVar2 + -0x2d == 0) {
+    if (iVar2 - 0x2bU < 2U || iVar2 + -0x2d == 0) {
                     /* WARNING: Switch is manually overridden */
       switch((&WORD_0005ed48)[(short)(iVar2 + -0x2d)]) {
       case 6:
@@ -77690,7 +77691,7 @@ LAB_0005fb72:
     param_1 = pbVar19 + 1;
     uVar14 = (uint)*pbVar19;
     bVar5 = false;
-    if (uVar14 - 0x20 < 0x59) {
+    if (uVar14 - 0x20 < 0x59U) {
                     /* WARNING: Switch is manually overridden */
       switch((short)(uVar14 - 0x20)) {
       case 0:
@@ -78529,13 +78530,13 @@ double log(double x)
         if (iVar4 < 1) {
           iVar5 = iVar5 + -1;
           local_c = __ghidra_bits(double_add_pointer(-0.5,(double *)&local_14));
-          double_multiply_pointer(0.5,(double *)&local_c);
+          __ghidra_also(__ghidra_also(double_multiply_pointer(0.5,(double *)&local_c), extraout_A0_00, 4), extraout_A1_00, 0);
           dVar8 = double_add(0.5,__ghidra_as(double, CONCAT44(extraout_A0_00,extraout_A1_00)));
           local_14 = __ghidra_bits(double_divide_reversed_pointer(dVar8,(double *)&local_c));
         }
         else {
           local_c = __ghidra_bits(__ghidra_as(double, CONCAT44((int)((ulonglong)local_14 >> 0x20) + -0x100000,__ghidra_piece(unsigned int, local_14, 4))));
-          double_add_pointer(-0.5,(double *)&local_14);
+          __ghidra_also(__ghidra_also(double_add_pointer(-0.5,(double *)&local_14), extraout_A0, 4), extraout_A1, 0);
           dVar8 = double_add(-0.5,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
           dVar9 = double_add_pointer(0.5,(double *)&local_c);
           local_14 = __ghidra_bits(double_divide_reversed(dVar9,dVar8));
@@ -78555,7 +78556,7 @@ double log(double x)
         dVar8 = double_divide_reversed(dVar9,dVar8);
         dVar8 = double_multiply_pointer(dVar8,(double *)&local_14);
         dVar8 = double_add_pointer(dVar8,(double *)&local_14);
-        double_multiply_pointers((double *)&DAT_00060d50,&dStack_1c);
+        __ghidra_also(__ghidra_also(double_multiply_pointers((double *)&DAT_00060d50,&dStack_1c), extraout_A0_01, 4), extraout_A1_01, 0);
         dVar8 = double_add(dVar8,__ghidra_as(double, CONCAT44(extraout_A0_01,extraout_A1_01)));
         dVar9 = double_multiply_pointers((double *)&DAT_00060d48,&dStack_1c);
         dVar8 = double_add(dVar9,dVar8);
@@ -86111,7 +86112,7 @@ LAB_installer__00103352:
     uVar5 = 0x92;
     bVar1 = installer_drtb_getc();
     if (0x1f < bVar1) break;
-    if (0x10 < bVar1 - 8) {
+    if (0x10U < bVar1 - 8) {
 switchD_installer__001032b2_caseD_b:
       (*(code *)installer_duartb.echo)();
       pbVar3 = pbVar4;
@@ -86564,7 +86565,7 @@ short installer_scpi_suffix_compare_tail(int param_1,undefined4 param_2,int para
   short sVar1;
   
   for (sVar1 = 0;
-      (sVar1 < __ghidra_piece(unsigned short, param_2, 2) &&
+      (sVar1 < __ghidra_piece(short, param_2, 2) &&
       (*(char *)(param_1 + -1 + ((int)__ghidra_piece(short, param_2, 2) - (int)sVar1)) == *(char *)(param_3 + sVar1)));
       sVar1 = sVar1 + 1) {
   }
@@ -86827,17 +86828,17 @@ bool installer_error_queue_push(short *param_1,undefined4 param_2,undefined4 par
     param_1[*param_1 * 3 + 5] = __ghidra_piece(unsigned short, param_2, 2);
     *(undefined4 *)(param_1 + *param_1 * 3 + 6) = param_3;
   }
-  if (__ghidra_piece(unsigned short, param_2, 2) < -399) {
+  if (__ghidra_piece(short, param_2, 2) < -399) {
     iVar4 = -4;
   }
-  else if ((__ghidra_piece(unsigned short, param_2, 2) < -299) || (0 < __ghidra_piece(unsigned short, param_2, 2))) {
+  else if ((__ghidra_piece(short, param_2, 2) < -299) || (0 < __ghidra_piece(short, param_2, 2))) {
     iVar4 = -3;
   }
-  else if (__ghidra_piece(unsigned short, param_2, 2) < -199) {
+  else if (__ghidra_piece(short, param_2, 2) < -199) {
     iVar4 = -2;
   }
   else {
-    if (-100 < __ghidra_piece(unsigned short, param_2, 2)) goto LAB_installer__0010632e;
+    if (-100 < __ghidra_piece(short, param_2, 2)) goto LAB_installer__0010632e;
     iVar4 = -1;
   }
   installer_status_apply_condition(iVar1,iVar4,0);
@@ -87348,7 +87349,7 @@ int installer_strtol(char *param_1,undefined4 *param_2,int param_3)
         param_1 = param_1 + 1;
         uVar3 = (uint)*param_1;
       }
-      if (uVar3 - 0x2b < 2 || uVar3 - 0x2d == 0) {
+      if (uVar3 - 0x2b < 2U || uVar3 - 0x2d == 0) {
                     /* WARNING: Switch is manually overridden */
         switch((&WORD_installer__0010921e)[(short)(uVar3 - 0x2d)]) {
         case 6:
@@ -87972,7 +87973,7 @@ LAB_installer__00109d1a:
     param_1 = pbVar19 + 1;
     uVar14 = (uint)*pbVar19;
     bVar5 = false;
-    if (uVar14 - 0x20 < 0x59) {
+    if (uVar14 - 0x20 < 0x59U) {
                     /* WARNING: Switch is manually overridden */
       switch((short)(uVar14 - 0x20)) {
       case 0:

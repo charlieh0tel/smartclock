@@ -17,6 +17,8 @@
 #   in, out     items separated by ", ": a register, high first for a
 #               pair (D0:D1), then optionally a type and a name; an item
 #               without a register is a stack argument
+#   copies      registers the result is also left in, high first
+#               (A0:A1); SmartClockExportC.java gives a caller's C them
 #   returns     ccr, for the condition codes
 #   error       items: a register, a value, what it means
 #   preserves   registers
@@ -48,23 +50,23 @@
 0x5dcd2	function	double_to_float	softfloat.md	double to float		convention=register; confidence=documented; in=D0:D1 double d; out=D0 float; family=softfloat
 0x5ddde	function	double_to_integer	libc.md	double to signed integer		convention=register; confidence=run; in=D0:D1 double d; out=D0 int; family=softfloat
 0x5de9e	function	double_to_unsigned	libc.md	double to unsigned integer		convention=register; confidence=run; in=D0:D1 double d; out=D0 unsigned int; family=softfloat
-0x5d352	function	double_add	softfloat.md	D0:D1 + A0:A1		convention=register; confidence=documented; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; family=softfloat
-0x5d34a	function	double_add_pointers	libc.md	*A0 + *A1		convention=register; confidence=run; in=A0 double *a, A1 double *b; out=D0:D1 double; family=softfloat
-0x5d34e	function	double_add_pointer	libc.md	D0:D1 + *A1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; family=softfloat
+0x5d352	function	double_add	softfloat.md	D0:D1 + A0:A1		convention=register; confidence=documented; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; copies=A0:A1; family=softfloat
+0x5d34a	function	double_add_pointers	libc.md	*A0 + *A1		convention=register; confidence=run; in=A0 double *a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
+0x5d34e	function	double_add_pointer	libc.md	D0:D1 + *A1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
 0x5d338	function	double_add_in_place	libc.md	*A0 += D0:D1		convention=register; confidence=run; in=A0 double *x, D0:D1 double y; family=softfloat
-0x5d30e	function	double_subtract_reversed	libc.md	A0:A1 - D0:D1		convention=register; confidence=run; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; family=softfloat
-0x5d306	function	double_subtract_reversed_pointers	libc.md	*A1 - *A0		convention=register; confidence=run; in=A0 double *a, A1 double *b; out=D0:D1 double; family=softfloat
-0x5d30a	function	double_subtract_reversed_pointer	libc.md	*A1 - D0:D1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; family=softfloat
-0x5d2f8	function	double_subtract_pointer	libc.md	D0:D1 - *A1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; family=softfloat
+0x5d30e	function	double_subtract_reversed	libc.md	A0:A1 - D0:D1		convention=register; confidence=run; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
+0x5d306	function	double_subtract_reversed_pointers	libc.md	*A1 - *A0		convention=register; confidence=run; in=A0 double *a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
+0x5d30a	function	double_subtract_reversed_pointer	libc.md	*A1 - D0:D1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
+0x5d2f8	function	double_subtract_pointer	libc.md	D0:D1 - *A1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
 0x5d2e2	function	double_subtract_in_place	libc.md	*A0 -= D0:D1		convention=register; confidence=run; in=A0 double *x, D0:D1 double y; family=softfloat
-0x5e600	function	double_multiply	softfloat.md	D0:D1 x A0:A1		convention=register; confidence=documented; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; family=softfloat
-0x5e5f8	function	double_multiply_pointers	libc.md	*A0 x *A1		convention=register; confidence=run; in=A0 double *a, A1 double *b; out=D0:D1 double; family=softfloat
-0x5e5fc	function	double_multiply_pointer	libc.md	D0:D1 x *A1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; family=softfloat
+0x5e600	function	double_multiply	softfloat.md	D0:D1 x A0:A1		convention=register; confidence=documented; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; copies=A0:A1; family=softfloat
+0x5e5f8	function	double_multiply_pointers	libc.md	*A0 x *A1		convention=register; confidence=run; in=A0 double *a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
+0x5e5fc	function	double_multiply_pointer	libc.md	D0:D1 x *A1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
 0x5e5e6	function	double_multiply_in_place	libc.md	*A0 *= D0:D1		convention=register; confidence=run; in=A0 double *x, D0:D1 double y; family=softfloat
-0x5da58	function	double_divide	softfloat.md	D0:D1 / A0:A1		convention=register; confidence=documented; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; family=softfloat
-0x5da6a	function	double_divide_reversed	softfloat.md	A0:A1 / D0:D1		convention=register; confidence=documented; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; family=softfloat
-0x5da62	function	double_divide_reversed_pointers	libc.md	*A1 / *A0		convention=register; confidence=run; in=A0 double *a, A1 double *b; out=D0:D1 double; family=softfloat
-0x5da66	function	double_divide_reversed_pointer	libc.md	*A1 / D0:D1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; family=softfloat
+0x5da58	function	double_divide	softfloat.md	D0:D1 / A0:A1		convention=register; confidence=documented; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; copies=A0:A1; family=softfloat
+0x5da6a	function	double_divide_reversed	softfloat.md	A0:A1 / D0:D1		convention=register; confidence=documented; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; copies=A0:A1; family=softfloat
+0x5da62	function	double_divide_reversed_pointers	libc.md	*A1 / *A0		convention=register; confidence=run; in=A0 double *a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
+0x5da66	function	double_divide_reversed_pointer	libc.md	*A1 / D0:D1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
 0x5da3e	function	double_divide_in_place	libc.md	*A0 /= D0:D1		convention=register; confidence=run; in=A0 double *x, D0:D1 double y; family=softfloat
 0x5d6c6	function	double_compare	softfloat.md	negative when A0:A1 < D0:D1		convention=register; confidence=documented; in=D0:D1 double a, A0:A1 double b; out=D0 int; family=softfloat
 0x60f5e	function	pow	softfloat.md, libc.md	pow	double pow(double x, double y)	convention=c; confidence=run; out=D0:D1 double

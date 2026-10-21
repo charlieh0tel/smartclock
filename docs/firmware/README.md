@@ -291,7 +291,9 @@ its late copy of the table over the case bodies and decodes code from
 the wrong cases.  Starting from the real cases and following their
 flow, the script clears what overlaps each real instruction and
 disassembles it, rebuilds the owning function's body and records the
-targets as a decompiler jump-table override.  It removes the case
+targets as a decompiler jump-table override, and keeps each table's
+address, first index and length for the exporter, which labels the
+cases from them (below).  It removes the case
 labels analysis put at its late reading's targets; one that had become
 a function's name gives the function back its default name rather than
 deleting it, since deleting a function's name deletes the function.
@@ -342,7 +344,11 @@ out: its kind (`c`, `register`, `exception`, `pforth`, `psos-service`,
 `other` or `undetermined`), a confidence (`run`, `read`, `documented`,
 `derived` or `assumed`, strongest first, with `KEY.confidence` for one
 key weaker than the rest), the registers `in` and `out` with their
-types and names, `returns=ccr` for the condition codes, the `error`
+types and names, the registers a result is also left in, `copies=A0:A1`
+for each double routine but the in-place ones (`softfloat.md`; every
+exit of their shared bodies ends `movea.l D0,A0`, `movea.l D1,A1`,
+`rts`, at `0x5d47e`, `0x5d60c`, `0x5db90` and `0x5e7da`),
+`returns=ccr` for the condition codes, the `error`
 values, the registers it `preserves` and its `family`.  A function
 without one is unknown.  At `run`, `read` or `documented`, the
 function's prototype is built from `in` and `out`, so its C shows its
@@ -517,8 +523,11 @@ function, so that the file stands alone for `m68k-linux-gnu-gcc
 since a routine can fall into the next.  A global with a structure's
 type reads as `foo.bar`, a pointer to one as `foo->bar`; a piece of a
 variable the decompiler writes as `x._4_4_` becomes a cast at its
-offset, read signed under a signed cast, `(int)x._2_2_`, which is how
-the decompiler writes a sign extension, and unsigned elsewhere.  A thunk is a comment, since the decompiler gives it its
+offset, read signed where its p-code reads it signed -- a signed
+compare, extension, shift or division, so that `datetime_subtract`'s
+`tst.b`, `bmi` reads `__ghidra_piece(signed char, local_8, 2) < '\0'`
+-- or under a signed cast, `(int)x._2_2_`, which is how the decompiler
+writes a sign extension, and unsigned elsewhere.  A thunk is a comment, since the decompiler gives it its
 target's name, and one named otherwise an alias of its target.  A
 routine that is not C and whose prototype has every argument and its
 result in registers is declared under that prototype as an assembler
@@ -556,6 +565,42 @@ decompiler's shift, like the 68k's by a register (which it writes
 `x << (n & 0x3f)`, modulo 64), gives 0 for a count as wide as `x` or
 wider, or every bit the sign shifting a negative value right, where C
 leaves it undefined and gcc may test the bit modulo 32.
+
+The exporter prints each function from the decompiler's tokens, as the
+decompiler does, and adds there what the p-code says and the text does
+not; a function whose tokens do not print its text is left as the
+decompiler wrote it, and reported.
+
+- An unsigned compare whose other operand is arithmetic printed inline
+  gets an unsigned constant, `param_1 - 1 < 3U`: the decompiler types
+  the expression by the compare, but C types arithmetic on a narrower
+  value int, so that, of a byte, `param_1 - 1 < 3` is true for 0, which
+  the image's `subq`, `bhi` (`status_screen_tfom`,
+  `status_screen_position`) excludes.
+- A call to a routine whose convention has `copies` assigns the
+  variables the C reads those registers from after it, the
+  decompiler's `extraout_A0` and `extraout_A1`, which are otherwise
+  uninitialized: `__ghidra_also(call, extraout_A0, 4)` is the call's
+  result and gives the variable its four bytes 4 up from the least
+  significant end.  `log` and `pow` pass a double routine's result to
+  the next that way.
+- A recovered switch's cases get their own labels.  The override holds
+  only the targets, and the decompiler labels them by trying index
+  values from 0 up, ten misses in a row allowed, until it has seen every
+  target (`JumpBasicOverride::trialNorm`, in the decompiler's
+  `jumptable.cc`; Ghidra's Java writes no starting value).  An index
+  below 0, which every table after `subq #k` has, is never tried, so its
+  case falls to default; an entry after the last new target is not
+  tried either; and code read as entries past the table labels a case with
+  values the guard excludes.  The exporter repeats the trial over the
+  image, and, where it gives the decompiler's labels less a constant,
+  labels each case with every index whose entry targets it, less that
+  constant: `enabled_string` gets `case -1`, "Disabled", for 0, where it
+  had a `case 2`; `leap_opportunity_date` gets November and December,
+  which fell to default.  A target with no case is the default's.
+  Where the trial misses a target, the decompiler switches on the
+  table's entry instead, labeled by its value, as the machine does,
+  and that is left.
 
 `tools/firmware/rebuild_link.py` links it into a rebuilt image: each
 piece of assembly at its own address, where it must be, and is, the

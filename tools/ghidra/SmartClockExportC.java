@@ -26,9 +26,12 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,12 +44,23 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import ghidra.app.decompiler.ClangCaseToken;
+import ghidra.app.decompiler.ClangCommentToken;
+import ghidra.app.decompiler.ClangFieldToken;
+import ghidra.app.decompiler.ClangFuncNameToken;
+import ghidra.app.decompiler.ClangLabelToken;
+import ghidra.app.decompiler.ClangLine;
 import ghidra.app.decompiler.ClangNode;
+import ghidra.app.decompiler.ClangOpToken;
+import ghidra.app.decompiler.ClangSyntaxToken;
+import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.ClangTokenGroup;
+import ghidra.app.decompiler.ClangTypeToken;
 import ghidra.app.decompiler.ClangVariableToken;
 import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.decompiler.DecompileOptions;
 import ghidra.app.decompiler.DecompileResults;
+import ghidra.app.decompiler.PrettyPrinter;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.database.data.PointerTypedefInspector;
 import ghidra.program.model.address.Address;
@@ -80,12 +94,17 @@ import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighGlobal;
 import ghidra.program.model.pcode.HighSymbol;
 import ghidra.program.model.pcode.LocalSymbolMap;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.PcodeOpAST;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.scalar.Scalar;
+import ghidra.program.model.symbol.IllegalCharCppTransformer;
+import ghidra.program.model.symbol.NameTransformer;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.program.model.util.StringPropertyMap;
+import ghidra.util.StringUtilities;
 
 public class SmartClockExportC extends GhidraScript {
 
@@ -178,6 +197,8 @@ public class SmartClockExportC extends GhidraScript {
 		#define __ghidra_concat(y, a, b) \
 			((__ghidra_bits(a) << (8 * (y))) | (__ghidra_bits(b) & __ghidra_mask(y)))
 		#define __ghidra_sub(y, v, n) ((__ghidra_bits(v) >> (8 * (n))) & __ghidra_mask(y))
+		#define __ghidra_also(call, var, n) ({ __typeof__((call) + 0) __c = (call); \
+			var = __ghidra_as(__typeof__(var), __ghidra_sub(sizeof var, __c, n)); __c; })
 		#define CARRY1(a, b) ((unsigned char)((a) + (b)) < (unsigned char)(a))
 		#define CARRY2(a, b) ((unsigned short)((a) + (b)) < (unsigned short)(a))
 		#define CARRY4(a, b) ((unsigned int)((a) + (b)) < (unsigned int)(a))
@@ -239,8 +260,9 @@ public class SmartClockExportC extends GhidraScript {
 					decompiler.decompileFunction(function, TIMEOUT_SECONDS, monitor);
 				functions.append("\n/* ").append(function.getEntryPoint()).append(" */\n");
 				if (results.decompileCompleted()) {
-					String c = indexedFunctions(identifiers(pieces(notC(function,
-						results.getDecompiledFunction().getC()))));
+					Printed printed = printed(function, results);
+					String c = indexedFunctions(identifiers(pieces(notC(function, printed.c()),
+						printed.signedPieces())));
 					if (notCMacro(function) != null) {
 						functions.append(READING).append(c).append("\n#endif\n")
 							.append(assembly(function, declared, madeSymbols));
@@ -990,17 +1012,29 @@ public class SmartClockExportC extends GhidraScript {
 
 	/**
 	 * c with each piece of a variable a cast at its offset, which gcc
-	 * takes.  A piece has no sign of its own: a signed cast before it is
-	 * the decompiler's sign extension, so it is read signed there, and
-	 * unsigned anywhere else.
+	 * takes.  A piece has no sign of its own: it is read signed where its
+	 * p-code reads it so (signedPieces, each piece in c's code in order,
+	 * if they number as many) or a signed cast before it, the decompiler's
+	 * sign extension, says so, and unsigned anywhere else.
 	 */
-	private static String pieces(String c) {
+	private static String pieces(String c, List<Boolean> signedPieces) {
 		Matcher piece = PIECE.matcher(c);
+		boolean[] code = code(c);
+		List<Integer> inCode = new ArrayList<>();
+		while (piece.find()) {
+			if (code[piece.start()]) {
+				inCode.add(piece.start());
+			}
+		}
+		boolean counted = signedPieces != null && signedPieces.size() == inCode.size();
+		piece.reset();
 		StringBuilder out = new StringBuilder();
 		while (piece.find()) {
 			int bytes = Integer.parseInt(piece.group(3));
-			boolean signed = SIGNED_CAST.matcher(
-				c.substring(Math.max(0, piece.start() - CAST_REACH), piece.start())).find();
+			int index = inCode.indexOf(piece.start());
+			boolean signed = counted && index >= 0 && signedPieces.get(index)
+				|| SIGNED_CAST.matcher(
+					c.substring(Math.max(0, piece.start() - CAST_REACH), piece.start())).find();
 			String type = switch (bytes) {
 				case 1 -> signed ? "signed char" : "unsigned char";
 				case 2 -> signed ? "short" : "unsigned short";
@@ -1014,6 +1048,437 @@ public class SmartClockExportC extends GhidraScript {
 		}
 		piece.appendTail(out);
 		return out.toString();
+	}
+
+	/** A function's C as printed from its tokens, and whether each piece in its code is read signed. */
+	private record Printed(String c, List<Boolean> signedPieces) {}
+
+	/** Text put before, in place of or after tokens of the decompiler's C, and its lines left out. */
+	private static final class TokenEdits {
+		private final Map<ClangToken, String> before = new IdentityHashMap<>();
+		private final Map<ClangToken, String> replaced = new IdentityHashMap<>();
+		private final Map<ClangToken, String> after = new IdentityHashMap<>();
+		private final Set<ClangLine> dropped = Collections.newSetFromMap(new IdentityHashMap<>());
+	}
+
+	/** How DecompileResults cleans the names the decompiler prints. */
+	private static final NameTransformer NAMES = new IllegalCharCppTransformer();
+	/** The decompiler's name for a piece of a variable, the field of v._n_m_. */
+	private static final Pattern PIECE_FIELD = Pattern.compile("_\\d+_\\d+_");
+	/** The p-code operations that read their operands signed. */
+	private static final Set<Integer> SIGNED_READS = Set.of(PcodeOp.INT_SLESS,
+		PcodeOp.INT_SLESSEQUAL, PcodeOp.INT_SEXT, PcodeOp.INT_SRIGHT, PcodeOp.INT_SDIV,
+		PcodeOp.INT_SREM);
+
+	/**
+	 * The function's C, printed from its tokens as the decompiler prints
+	 * it, with what its p-code says and its text does not
+	 * (unsignedCompares, resultCopies, switchLabels), and whether each
+	 * piece of a variable in it is read signed.  The decompiler's own
+	 * text, unedited, if its tokens do not print it.
+	 */
+	private Printed printed(Function function, DecompileResults results) throws Exception {
+		String plain = results.getDecompiledFunction().getC();
+		List<ClangLine> lines = new PrettyPrinter(function, results.getCCodeMarkup(), null).getLines();
+		if (!text(lines, new TokenEdits()).equals(plain)) {
+			println(function.getName() + ": its tokens do not print its C, which is left unedited");
+			return new Printed(plain, null);
+		}
+		List<ClangToken> tokens = new ArrayList<>();
+		for (ClangLine line : lines) {
+			tokens.addAll(line.getAllTokens());
+		}
+		TokenEdits edits = new TokenEdits();
+		unsignedCompares(tokens, edits);
+		resultCopies(tokens, results.getHighFunction(), edits);
+		switchLabels(tokens, edits);
+		List<Boolean> signedPieces = new ArrayList<>();
+		for (int i = 0; i < tokens.size(); i++) {
+			ClangToken token = tokens.get(i);
+			if (!(token instanceof ClangCommentToken) && PIECE_FIELD.matcher(token.getText()).matches()) {
+				signedPieces.add(readSigned(fieldOperator(tokens, i)));
+			}
+		}
+		return new Printed(text(lines, edits), signedPieces);
+	}
+
+	/** The lines' text, each token's as edits make it, as PrettyPrinter.print writes it. */
+	private static String text(List<ClangLine> lines, TokenEdits edits) {
+		StringBuilder out = new StringBuilder();
+		for (ClangLine line : lines) {
+			if (edits.dropped.contains(line)) {
+				continue;
+			}
+			out.append(line.getIndentString());
+			for (ClangToken token : line.getAllTokens()) {
+				out.append(edits.before.getOrDefault(token, ""))
+					.append(edits.replaced.getOrDefault(token, printedText(token)))
+					.append(edits.after.getOrDefault(token, ""));
+			}
+			out.append(StringUtilities.LINE_SEPARATOR);
+		}
+		return out.toString();
+	}
+
+	/** A token's text as the decompiler prints it: a name cleaned, a constant not. */
+	private static String printedText(ClangToken token) {
+		boolean name = token instanceof ClangFuncNameToken || token instanceof ClangVariableToken
+			|| token instanceof ClangTypeToken || token instanceof ClangFieldToken
+			|| token instanceof ClangLabelToken;
+		return name && token.getSyntaxType() != ClangToken.CONST_COLOR
+			? NAMES.simplify(token.getText()) : token.getText();
+	}
+
+	/**
+	 * The operation the "." before the field at tokens[at] is printed for:
+	 * the field's own token has none, and the operator carries the one
+	 * that reads the piece; null if there is no such operator.
+	 */
+	private static PcodeOp fieldOperator(List<ClangToken> tokens, int at) {
+		for (int i = at - 1; i >= 0; i--) {
+			ClangToken token = tokens.get(i);
+			if (token instanceof ClangOpToken) {
+				return token.getText().equals(".") ? token.getPcodeOp() : null;
+			}
+			if (!token.getText().isEmpty()) {
+				return null;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Whether the operation a piece's token is printed for reads it signed:
+	 * a signed compare, extension, shift or division, itself or, for the
+	 * SUBPIECE that makes the piece, any reader of it.
+	 */
+	private static boolean readSigned(PcodeOp op) {
+		if (op == null) {
+			return false;
+		}
+		if (op.getOpcode() != PcodeOp.SUBPIECE || op.getOutput() == null) {
+			return SIGNED_READS.contains(op.getOpcode());
+		}
+		for (Iterator<PcodeOp> readers = op.getOutput().getDescendants(); readers.hasNext();) {
+			if (SIGNED_READS.contains(readers.next().getOpcode())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** The p-code's unsigned compares. */
+	private static final Set<Integer> UNSIGNED_COMPARES = Set.of(PcodeOp.INT_LESS, PcodeOp.INT_LESSEQUAL);
+	/** The operations whose result C types as its promoted operands, int for any narrower. */
+	private static final Set<Integer> ARITHMETIC = Set.of(PcodeOp.INT_ADD, PcodeOp.INT_SUB,
+		PcodeOp.INT_MULT, PcodeOp.INT_2COMP, PcodeOp.INT_NEGATE, PcodeOp.INT_LEFT);
+	/** A constant as the decompiler prints an integer, without a suffix. */
+	private static final Pattern UNSUFFIXED = Pattern.compile("0x[0-9a-fA-F]+|[0-9]+");
+	/** The most bytes a U suffix makes unsigned; a wider constant takes ULL. */
+	private static final int INT_BYTES = 4;
+
+	/**
+	 * Makes unsigned the constant of each unsigned compare whose other
+	 * operand is arithmetic printed inline.  The decompiler types such an
+	 * expression by the compare, but C types arithmetic on narrower values
+	 * int, so that param_1 - 1 < 3, of a byte, compares signed and is true
+	 * for 0, where the image's subq and bhi are not.  With 3U it compares
+	 * unsigned, as the p-code does.
+	 */
+	private static void unsignedCompares(List<ClangToken> tokens, TokenEdits edits) {
+		for (ClangToken token : tokens) {
+			PcodeOp op = token.getPcodeOp();
+			Varnode constant = token.getVarnode();
+			if (!(token instanceof ClangVariableToken) || op == null || constant == null
+				|| !UNSIGNED_COMPARES.contains(op.getOpcode()) || !constant.isConstant()
+				|| !UNSUFFIXED.matcher(token.getText()).matches()) {
+				continue;
+			}
+			Varnode other = op.getInput(op.getInput(0) == constant ? 1 : 0);
+			boolean inline = other.getHigh() == null || other.getHigh().getSymbol() == null;
+			if (!other.isConstant() && inline && other.getDef() != null
+				&& ARITHMETIC.contains(other.getDef().getOpcode())) {
+				edits.after.merge(token, constant.getSize() > INT_BYTES ? "ULL" : "U", String::concat);
+			}
+		}
+	}
+
+	/** The registers a routine's convention says its result is also left in, and their confidence. */
+	private static final Pattern COPIES = Pattern.compile("\"copies\":\"([DA][0-7](?::[DA][0-7])*)\"");
+	private static final Pattern COPIES_CONFIDENCE = Pattern.compile("\"copies\\.confidence\":\"(\\w+)\"");
+	/** Bytes in a data or address register. */
+	private static final int REGISTER_BYTES = 4;
+	/** The decompiler's name for a register's value after a call that sets it outside its prototype. */
+	private static final String EXTRA_OUTPUT = "extraout_";
+	/** The macro that gives a variable part of a call's result: __ghidra_also(call, var, n). */
+	private static final String ALSO = "__ghidra_also";
+
+	/**
+	 * Gives the variables the C reads a call's extra outputs from, its
+	 * extraout_A0 and extraout_A1, the copies of the result its routine
+	 * leaves in those registers, as the convention's copies names them,
+	 * high first: the call becomes __ghidra_also(call, variable, n), the
+	 * call's result, which assigns the variable the result's bytes n up
+	 * from its least significant end.  The C leaves them uninitialized
+	 * otherwise, where the image's next double routine takes them as its
+	 * other operand.
+	 */
+	private void resultCopies(List<ClangToken> tokens, HighFunction high, TokenEdits edits) {
+		for (int i = 0; i < tokens.size(); i++) {
+			PcodeOp call = tokens.get(i).getPcodeOp();
+			if (!(tokens.get(i) instanceof ClangFuncNameToken) || call == null
+				|| call.getOpcode() != PcodeOp.CALL) {
+				continue;
+			}
+			List<String> copies = copies(getFunctionAt(call.getInput(0).getAddress()));
+			Map<String, String> outputs = copies.isEmpty() ? Map.of() : extraOutputs(high, call);
+			int close = outputs.isEmpty() ? -1 : closingParenthesis(tokens, i);
+			if (close < 0) {
+				continue;
+			}
+			for (int k = 0; k < copies.size(); k++) {
+				String variable = outputs.get(copies.get(k));
+				if (variable != null) {
+					edits.before.merge(tokens.get(i), ALSO + "(", String::concat);
+					edits.after.merge(tokens.get(close), ", " + variable + ", "
+						+ (copies.size() - 1 - k) * REGISTER_BYTES + ")", String::concat);
+				}
+			}
+		}
+	}
+
+	/** The registers a function's trusted convention says its result is also in, high first. */
+	private List<String> copies(Function function) {
+		String convention = function == null ? null : recorded(CONVENTION_MAP, function);
+		Matcher copies = convention == null ? null : COPIES.matcher(convention);
+		if (copies == null || !copies.find()) {
+			return List.of();
+		}
+		Matcher own = COPIES_CONFIDENCE.matcher(convention);
+		Matcher confidence = CONFIDENCE.matcher(convention);
+		String level = own.find() ? own.group(1) : confidence.find() ? confidence.group(1) : "";
+		return TRUSTED.contains(level) ? List.of(copies.group(1).split(":")) : List.of();
+	}
+
+	/** The variable each register the call sets outside its prototype is read from, by register. */
+	private Map<String, String> extraOutputs(HighFunction high, PcodeOp call) {
+		Map<String, String> outputs = new HashMap<>();
+		for (Iterator<PcodeOpAST> ops = high.getPcodeOps(call.getSeqnum().getTarget()); ops.hasNext();) {
+			PcodeOp op = ops.next();
+			Varnode output = op.getOutput();
+			Register register = output == null ? null : currentProgram.getRegister(output);
+			String name = output == null || output.getHigh() == null ? null : output.getHigh().getName();
+			if (op.getOpcode() == PcodeOp.INDIRECT && register != null && name != null
+				&& name.startsWith(EXTRA_OUTPUT)) {
+				outputs.put(register.getName(), name);
+			}
+		}
+		return outputs;
+	}
+
+	/** The index of the token closing the parenthesis that opens after tokens[start], or -1. */
+	private static int closingParenthesis(List<ClangToken> tokens, int start) {
+		int depth = 0;
+		for (int i = start + 1; i < tokens.size(); i++) {
+			ClangToken token = tokens.get(i);
+			String text = token instanceof ClangSyntaxToken ? token.getText() : null;
+			if ("(".equals(text)) {
+				depth++;
+			}
+			else if (")".equals(text) && --depth == 0) {
+				return i;
+			}
+			else if (depth == 0 && (text == null || !text.isBlank())) {
+				return -1;
+			}
+		}
+		return -1;
+	}
+
+	/** SmartClockSetup.java's record of each recovered switch, by its jmp: "TABLE FIRST ENTRIES". */
+	private static final String SWITCH_MAP = "SmartClock.switch";
+	/** Bytes in a switch table's entry, a word offset from the table. */
+	private static final int ENTRY_BYTES = 2;
+	/**
+	 * The misses in a row JumpBasicOverride::trialNorm tolerates, and how
+	 * many labels past its targets' number it stops at.
+	 */
+	private static final int TRIAL_MISSES = 10;
+	private static final int TRIAL_EXCESS = 100;
+	/** The largest magnitude the decompiler prints in decimal. */
+	private static final long DECIMAL_MAX = 10;
+	/** What joins two labels of one case. */
+	private static final String CASE_JOIN = ": case ";
+
+	/**
+	 * Gives each recovered switch's cases their own labels.  The override
+	 * SmartClockSetup.java writes holds only the targets, so the decompiler
+	 * labels them itself, trying index values from 0 up until it has seen
+	 * every target, ten misses in a row allowed (JumpBasicOverride::trialNorm).
+	 * It never tries an index below 0, which every table after subq #k
+	 * has, so such a case has no label; an entry after the last new target
+	 * gets none either; and code read as entries past the table gives a
+	 * case labels it does not have.  This repeats that trial over the
+	 * image and, if it gives the decompiler's labels, less the constant
+	 * between index and the printed switch value, labels each case with
+	 * every index whose entry targets it.  A target with no case is the
+	 * default's.  A trial that misses a target is the decompiler's trivial
+	 * model, which switches on the entry itself, labeled by its value: that
+	 * is left as it is.
+	 */
+	private void switchLabels(List<ClangToken> tokens, TokenEdits edits) throws Exception {
+		StringPropertyMap records = currentProgram.getUsrPropertyManager().getStringPropertyMap(SWITCH_MAP);
+		if (records == null) {
+			return;
+		}
+		Map<Address, List<ClangCaseToken>> switches = new LinkedHashMap<>();
+		for (ClangToken token : tokens) {
+			if (token instanceof ClangCaseToken label && label.getSwitchOp() != null
+				&& label.getVarnode() != null) {
+				switches.computeIfAbsent(label.getSwitchOp().getSeqnum().getTarget(),
+					k -> new ArrayList<>()).add(label);
+			}
+		}
+		for (Map.Entry<Address, List<ClangCaseToken>> recovered : switches.entrySet()) {
+			String record = records.getString(recovered.getKey());
+			if (record != null) {
+				relabel(record, recovered.getValue(), edits);
+			}
+		}
+	}
+
+	/** One switch's relabeling, from its record; nothing if any of it cannot be done. */
+	private void relabel(String record, List<ClangCaseToken> cases, TokenEdits edits) throws Exception {
+		String[] fields = record.split(" ");
+		Address table = currentProgram.getAddressFactory().getAddress(fields[0]);
+		int first = Integer.parseInt(fields[1]);
+		List<Address> targets = new ArrayList<>();
+		for (int i = 0; i < Integer.parseInt(fields[2]); i++) {
+			targets.add(entryTarget(table, i));
+		}
+		Map<Long, Address> trial = trialLabels(table, first, targets);
+		int size = cases.get(0).getVarnode().getSize();
+		long mask = size >= MAX_BYTES ? -1L : (1L << (8 * size)) - 1;
+		Set<Long> printed = new HashSet<>();
+		for (ClangCaseToken label : cases) {
+			printed.add(label.getValue() & mask);
+		}
+		Long offset = trial == null ? null : labelOffset(printed, trial, mask);
+		if (offset == null) {
+			return;
+		}
+		Map<Address, Set<Long>> wanted = new HashMap<>();
+		for (int i = 0; i < targets.size(); i++) {
+			wanted.computeIfAbsent(targets.get(i), k -> new HashSet<>()).add((i + first + offset) & mask);
+		}
+		Map<Address, List<ClangCaseToken>> byTarget = new LinkedHashMap<>();
+		for (ClangCaseToken label : cases) {
+			byTarget.computeIfAbsent(trial.get((label.getValue() - offset) & mask),
+				k -> new ArrayList<>()).add(label);
+		}
+		Scalar scalar = cases.get(0).getScalar();
+		boolean signed = scalar == null || scalar.isSigned();
+		TokenEdits mine = new TokenEdits();
+		for (Map.Entry<Address, List<ClangCaseToken>> target : byTarget.entrySet()) {
+			List<ClangCaseToken> labels = target.getValue();
+			Set<Long> have = new HashSet<>();
+			for (ClangCaseToken label : labels) {
+				have.add(label.getValue() & mask);
+			}
+			if (have.equals(wanted.get(target.getKey()))) {
+				continue;
+			}
+			List<String> texts = wanted.get(target.getKey()).stream()
+				.map(value -> labelValue(value, size, signed)).sorted()
+				.map(SmartClockExportC::labelText).toList();
+			mine.replaced.put(labels.get(0), String.join(CASE_JOIN, texts));
+			for (ClangCaseToken extra : labels.subList(1, labels.size())) {
+				ClangLine line = extra.getLineParent();
+				if (line == null || !line.getAllTokens().stream()
+					.allMatch(t -> t == extra || t instanceof ClangSyntaxToken)) {
+					return;
+				}
+				mine.dropped.add(line);
+			}
+		}
+		edits.replaced.putAll(mine.replaced);
+		edits.dropped.addAll(mine.dropped);
+	}
+
+	/** Where a switch table's entry sends the jmp: the table plus the entry's word. */
+	private Address entryTarget(Address table, long index) throws Exception {
+		return table.add(currentProgram.getMemory().getShort(table.add(index * ENTRY_BYTES)));
+	}
+
+	/**
+	 * The labels the decompiler's trial gives, each value from 0 up to the
+	 * target its entry gives, or null if the trial does not see every target.
+	 */
+	private Map<Long, Address> trialLabels(Address table, int first, List<Address> targets) {
+		Set<Address> all = new HashSet<>(targets);
+		Set<Address> seen = new HashSet<>();
+		Map<Long, Address> hits = new LinkedHashMap<>();
+		int misses = 0;
+		for (long value = 0; seen.size() < all.size(); value++) {
+			Address target;
+			try {
+				target = entryTarget(table, value - first);
+			}
+			catch (Exception e) {
+				break;
+			}
+			if (all.contains(target)) {
+				seen.add(target);
+				hits.put(value, target);
+				misses = 0;
+				if (hits.size() > all.size() + TRIAL_EXCESS) {
+					break;
+				}
+			}
+			else if (++misses >= TRIAL_MISSES) {
+				break;
+			}
+		}
+		return seen.size() == all.size() ? hits : null;
+	}
+
+	/**
+	 * The constant between the trial's values and the printed labels, or
+	 * null if none gives them: each label a value's, and each value whose
+	 * target has a case one of its labels.
+	 */
+	private static Long labelOffset(Set<Long> printed, Map<Long, Address> trial, long mask) {
+		for (long label : printed) {
+			for (long value : trial.keySet()) {
+				long offset = label - value;
+				Set<Address> labeled = new HashSet<>();
+				boolean fits = true;
+				for (long other : printed) {
+					Address target = trial.get((other - offset) & mask);
+					fits &= target != null;
+					labeled.add(target);
+				}
+				boolean complete = trial.entrySet().stream()
+					.filter(hit -> labeled.contains(hit.getValue()))
+					.allMatch(hit -> printed.contains((hit.getKey() + offset) & mask));
+				if (fits && complete) {
+					return offset;
+				}
+			}
+		}
+		return null;
+	}
+
+	/** A label's value in the switch value's size, sign extended if it is signed. */
+	private static long labelValue(long value, int size, boolean signed) {
+		int unused = Long.SIZE - 8 * size;
+		return signed && unused > 0 ? (value << unused) >> unused : value;
+	}
+
+	/** A label as the decompiler prints it: decimal up to ten, hexadecimal beyond. */
+	private static String labelText(long value) {
+		return Math.abs(value) <= DECIMAL_MAX ? Long.toString(value)
+			: (value < 0 ? "-0x" + Long.toHexString(-value) : "0x" + Long.toHexString(value));
 	}
 
 	/**
@@ -1821,6 +2286,30 @@ public class SmartClockExportC extends GhidraScript {
 		return -1;
 	}
 
+	/** The first argument in a parenthesized argument list: to its first comma outside brackets. */
+	private static String firstArgument(String arguments) {
+		int depth = 0;
+		for (int i = 1; i < arguments.length() - 1; i++) {
+			char ch = arguments.charAt(i);
+			if (ch == '"' || ch == '\'') {
+				i++;
+				while (i < arguments.length() && arguments.charAt(i) != ch) {
+					i += arguments.charAt(i) == '\\' ? 2 : 1;
+				}
+			}
+			else if (ch == '(' || ch == '[') {
+				depth++;
+			}
+			else if (ch == ')' || ch == ']') {
+				depth--;
+			}
+			else if (ch == ',' && depth == 0) {
+				return arguments.substring(1, i);
+			}
+		}
+		return arguments.substring(1, arguments.length() - 1);
+	}
+
 	/** Whether a cast's operand is a floating value. */
 	private boolean floatingOperand(String operand, Set<String> variables, Set<String> pointers) {
 		String s = operand.strip();
@@ -1842,7 +2331,10 @@ public class SmartClockExportC extends GhidraScript {
 			return stars == 0 ? variables.contains(name) : stars == 1 && pointers.contains(name);
 		}
 		if (rest.startsWith("(") && matching(rest, 0) == rest.length() - 1) {
-			return stars == 0 && floatingFunctions.contains(name);
+			// __ghidra_also(call, var, n) is its call
+			return stars == 0 && (name.equals(ALSO)
+				? floatingOperand(firstArgument(rest), variables, pointers)
+				: floatingFunctions.contains(name));
 		}
 		if (rest.startsWith("[") && matching(rest, 0) == rest.length() - 1) {
 			return stars == 0 && pointers.contains(name);

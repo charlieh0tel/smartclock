@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1209 run, 641 agree, 540 reach the kernel
-     or a peripheral and are skipped, and 28 differ, in the function or
+     original reads them: of 1209 run, 646 agree, 540 reach the kernel
+     or a peripheral and are skipped, and 23 differ, in the function or
      in gcc's callees.
      Unicorn has no CPU32 and the 68020 stands in: the image uses none
      of the CPU32's own instructions (`tbl`, `lpstop`, `bgnd`; a scan of
@@ -735,7 +735,13 @@ view cannot drift apart.  The library, bottom up:
      divide's and multiply's error tails, entered by a branch and left
      through their callers' epilogues, and the CPU and RAM self-tests --
      are assembly and no longer run, and `long_array_get_byte` and
-     `happening_replay` take pointers (35 to 28).
+     `happening_replay` take pointers, as do the other `long_array_`
+     routines (35 to 28).  Then the exporter: a piece is read signed
+     where its p-code reads it so, a constant in an unsigned compare
+     with arithmetic takes a `U`, and a switch's cases are labeled as the
+     table indexes them, from its first index, not 0 (28 to 23).  The
+     soft-float routines' copy of their result in A0:A1 is passed on
+     (`__ghidra_also`), though `log` and `pow` still differ.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

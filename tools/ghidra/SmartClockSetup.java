@@ -142,8 +142,12 @@ public class SmartClockSetup extends GhidraScript {
 
 	/** A named register: absolute address and width in bytes (1 or 2). */
 
-	/** A recovered switch: the jmp, its table, and each case target in index order. */
-	private record Switch(Address jmp, Address table, List<Address> targets) {}
+	/**
+	 * A recovered switch: the jmp, its table, the index of the table's
+	 * first entry (-k after subq #k, else 0), and each case target in
+	 * index order.
+	 */
+	private record Switch(Address jmp, Address table, int first, List<Address> targets) {}
 
 	private static final long PRIMARY_VECTORS = 0x10000;
 	private static final long BOOT_VECTORS = 0x0;
@@ -203,7 +207,7 @@ public class SmartClockSetup extends GhidraScript {
 	private static final String ITEM_SEPARATOR = ", ";
 	/** The convention's keys, in the order the comment gives them. */
 	private static final List<String> CONVENTION_KEYS = List.of("convention", "confidence", "in",
-		"out", "returns", "error", "preserves", "family");
+		"out", "copies", "returns", "error", "preserves", "family");
 	/** A key's own confidence: KEY.confidence. */
 	private static final String CONFIDENCE_SUFFIX = ".confidence";
 	private static final String CONFIDENCE = "confidence";
@@ -233,7 +237,10 @@ public class SmartClockSetup extends GhidraScript {
 	/** What C cannot say of a function that is not C, for its signature line. */
 	private static final String SIGNATURE_MAP = "SmartClock.signature";
 	/** The keys that SIGNATURE_MAP gives, in its order. */
-	private static final List<String> SIGNATURE_KEYS = List.of("out", "returns", "error", "preserves");
+	private static final List<String> SIGNATURE_KEYS =
+		List.of("out", "copies", "returns", "error", "preserves");
+	/** Each recovered switch, by its jmp: "TABLE FIRST ENTRIES", for SmartClockExportC.java. */
+	private static final String SWITCH_MAP = "SmartClock.switch";
 	/** The tag every function that is not C carries. */
 	private static final String NOT_C_TAG = "not-c";
 	/** What the exception handlers' recorded convention says. */
@@ -1801,7 +1808,7 @@ public class SmartClockSetup extends GhidraScript {
 			println("switch at " + jmp + ": no bound check, " + targets.size()
 				+ " cases from table extent");
 		}
-		return targets.isEmpty() ? null : new Switch(jmp, table, targets);
+		return targets.isEmpty() ? null : new Switch(jmp, table, (int) (bias / 2), targets);
 	}
 
 	/** True if a bhi of any length immediately precedes the table load at move. */
@@ -1893,7 +1900,12 @@ public class SmartClockSetup extends GhidraScript {
 		return opcode == LINK_A6 || opcode == MOVEM_L_SAVE;
 	}
 
-	/** Records each switch's targets as a decompiler jump-table override. */
+	/**
+	 * Records each switch's targets as a decompiler jump-table override,
+	 * and its table, first index and entries in SWITCH_MAP: an override
+	 * holds only the targets, so the decompiler labels the cases itself,
+	 * and SmartClockExportC.java corrects the labels from this.
+	 */
 	private void overrideSwitches(List<Switch> switches) throws Exception {
 		int stale = 0;
 		for (Switch recovered : switches) {
@@ -1904,6 +1916,8 @@ public class SmartClockSetup extends GhidraScript {
 			}
 			new JumpTable(recovered.jmp(), new ArrayList<>(recovered.targets()), true, 0)
 					.writeOverride(function);
+			propertyMap(SWITCH_MAP).add(recovered.jmp(), recovered.table() + " " + recovered.first()
+				+ " " + recovered.targets().size());
 			stale += removeStaleCases(recovered);
 		}
 		if (stale > 0) {

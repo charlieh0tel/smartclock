@@ -14,7 +14,7 @@ enum {
 };
 
 /* A time of day as seconds since midnight (0x1111e). */
-int hms_to_seconds(uint32_t time)
+int32_t hms_to_seconds(uint32_t time)
 {
 	uint32_t hour = time >> (2 * TIME_FIELD_BITS) & TIME_FIELD_MASK;
 	uint32_t minute = time >> TIME_FIELD_BITS & TIME_FIELD_MASK;
@@ -24,13 +24,13 @@ int hms_to_seconds(uint32_t time)
 }
 
 /* The same, a second copy in the image (0x11152). */
-int time_to_seconds(uint32_t time)
+int32_t time_to_seconds(uint32_t time)
 {
 	return hms_to_seconds(time);
 }
 
 /* The same, a third copy, which nothing calls (0x10e3a). */
-int time_packed_to_seconds(uint32_t time)
+int32_t time_packed_to_seconds(uint32_t time)
 {
 	return hms_to_seconds(time);
 }

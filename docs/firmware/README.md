@@ -743,9 +743,12 @@ decompiler wrote it, and reported.
   decompiler's own rather than one given on purpose, and where no other
   name in the function is the same.  The table is keyed by the
   functions' names, which the images share.
-- A type of the decompiler's that says only a size, `undefined4` and
-  the like, is the standard unsigned type of that size, `uint32_t`,
-  which it is; only the odd sizes, `undefined3` and the like, stay.
+- An integer type named by its size on the machine is the
+  `<stdint.h>` type it is on this target, where `int` and `long` are
+  32 bits: the decompiler's `undefined4` and `uint`, and C's `unsigned
+  int` and `long`, are `uint32_t` and `int32_t`.  `char` stays, the
+  type of text, and `bool`; only the odd sizes, `undefined3` and the
+  like, keep their names.
 - A character constant that is no text is an integer: the decompiler
   prints every constant of a char type as a character, so a flag's 0
   and 1 read `'\0'` and `'\x01'`.  A printable character and `\n`,

@@ -41,6 +41,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -174,7 +175,14 @@ public class SmartClockExportC extends GhidraScript {
 		 * end, taken from its bits whatever its type.
 		 */
 		typedef unsigned int undefined3;
-		typedef unsigned long long uint64_t; /* standardTypes' undefined8; the type header has none */
+		/* <stdint.h>'s, as the type header has them, for standardTypes */
+		typedef unsigned char uint8_t;
+		typedef char int8_t; /* Ghidra's sbyte, which Setup makes the header's int8_t: signed here */
+		typedef unsigned short uint16_t;
+		typedef short int16_t;
+		typedef unsigned long uint32_t;
+		typedef long int32_t;
+		typedef unsigned long long uint64_t;
 		typedef long long int64_t;
 		typedef unsigned long long undefined5;
 		typedef unsigned long long undefined7;
@@ -3958,19 +3966,39 @@ public class SmartClockExportC extends GhidraScript {
 		return stars == 0 && member.find() && floatingFields.contains(member.group(1));
 	}
 
-	/** The decompiler's types of a size it knows and nothing else, and the standard type of that size. */
-	private static final Map<String, String> SIZED_TYPES = Map.of("undefined", "uint8_t", "undefined1", "uint8_t",
-		"undefined2", "uint16_t", "undefined4", "uint32_t", "undefined8", "uint64_t");
-	private static final Pattern SIZED_TYPE = Pattern.compile("\\bundefined[1248]?\\b");
+	/**
+	 * Each integer type's name whose size is the machine's, the
+	 * decompiler's or C's, and the <stdint.h> type it is on this target
+	 * (gcc for m68k: int and long 32 bits): the decompiler's types of a
+	 * size alone, undefined4 and the like, its own names, uint and the
+	 * like, and C's.  char stays, the type of text, as does bool.
+	 */
+	private static final Map<String, String> SIZED_TYPES = Map.ofEntries(
+		Map.entry("undefined", "uint8_t"), Map.entry("undefined1", "uint8_t"),
+		Map.entry("undefined2", "uint16_t"), Map.entry("undefined4", "uint32_t"),
+		Map.entry("undefined8", "uint64_t"),
+		Map.entry("byte", "uint8_t"), Map.entry("sbyte", "int8_t"), Map.entry("uchar", "uint8_t"),
+		Map.entry("ushort", "uint16_t"), Map.entry("uint", "uint32_t"), Map.entry("ulong", "uint32_t"),
+		Map.entry("longlong", "int64_t"), Map.entry("ulonglong", "uint64_t"),
+		Map.entry("unsigned long long", "uint64_t"), Map.entry("signed long long", "int64_t"),
+		Map.entry("long long", "int64_t"), Map.entry("unsigned long", "uint32_t"),
+		Map.entry("unsigned int", "uint32_t"), Map.entry("unsigned short", "uint16_t"),
+		Map.entry("unsigned char", "uint8_t"), Map.entry("signed char", "int8_t"),
+		Map.entry("unsigned", "uint32_t"), Map.entry("long", "int32_t"), Map.entry("int", "int32_t"),
+		Map.entry("short", "int16_t"));
+	/** Any of SIZED_TYPES, the longest first, its words apart by any space. */
+	private static final Pattern SIZED_TYPE = Pattern.compile("\\b(?:" + SIZED_TYPES.keySet().stream()
+		.sorted(Comparator.comparingInt(String::length).reversed())
+		.map(name -> name.replace(" ", "\\s+")).collect(Collectors.joining("|")) + ")\\b");
 	/** A line that defines a type, which keeps the decompiler's. */
 	private static final String TYPEDEF = "typedef ";
 
 	/**
-	 * Writes each of the decompiler's types of a known size alone,
-	 * undefined4 and the like, as the standard unsigned type of that size,
-	 * which it is (the typedefs above the C, which stay): uint32_t.  The
-	 * odd sizes, undefined3 and the like, have none and stay.  Returns
-	 * what it did.
+	 * Writes each integer type named by its machine size as the
+	 * <stdint.h> type it is (SIZED_TYPES): undefined4, uint and unsigned
+	 * int are uint32_t, the typedefs above the C, which stay, making it
+	 * so.  The odd sizes, undefined3 and the like, have none and stay.
+	 * Returns what it did.
 	 */
 	private static String standardTypes(File output) throws Exception {
 		String c = Files.readString(output.toPath());
@@ -3982,12 +4010,13 @@ public class SmartClockExportC extends GhidraScript {
 			int lineStart = c.lastIndexOf('\n', type.start()) + 1;
 			// a string's or a comment's text, and a typedef's, stays
 			boolean typedef = c.startsWith(TYPEDEF, lineStart);
-			type.appendReplacement(out, !code[type.start()] || typedef ? type.group() : SIZED_TYPES.get(type.group()));
+			type.appendReplacement(out, !code[type.start()] || typedef ? type.group()
+				: SIZED_TYPES.get(type.group().replaceAll("\\s+", " ")));
 			replaced += !code[type.start()] || typedef ? 0 : 1;
 		}
 		type.appendTail(out);
 		Files.writeString(output.toPath(), out);
-		return "sized types made standard: " + replaced;
+		return "integer types made <stdint.h>'s: " + replaced;
 	}
 
 	/** The compiler that finds the conversions reinterpretConversions makes bitwise. */

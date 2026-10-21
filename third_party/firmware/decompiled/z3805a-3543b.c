@@ -215,11 +215,30 @@ typedef enum __attribute__((packed)) adc_channel {
     ADC_MINUS_15V=6
 } adc_channel;
 
-typedef struct counter_configuration_fields counter_configuration_fields, *Pcounter_configuration_fields;
+typedef struct aging_curve_state aging_curve_state, *Paging_curve_state;
 
 typedef byte uint8_t;
 
+typedef ulong uint32_t;
+
 typedef long int32_t;
+
+struct aging_curve_state {
+    uint8_t mode;
+    uint8_t minimum_weight;
+    uint32_t oldest_time;
+    uint32_t newest_time;
+    int32_t oldest_index;
+    int32_t newest_index;
+    float a;
+    float b;
+    float c;
+    float c_step;
+    float rms;
+    float predicted_uncertainty;
+};
+
+typedef struct counter_configuration_fields counter_configuration_fields, *Pcounter_configuration_fields;
 
 struct counter_configuration_fields {
     uint8_t fpga_registers[4];
@@ -322,8 +341,6 @@ struct duartb_applied_settings {
 
 typedef struct duartb_driver duartb_driver, *Pduartb_driver;
 
-typedef ulong uint32_t;
-
 typedef struct exchange_token exchange_token, *Pexchange_token;
 
 typedef void (putc_function)(char);
@@ -364,6 +381,28 @@ struct duartb_driver {
     uint8_t field_55;
 };
 
+typedef struct duartb_settings_record duartb_settings_record, *Pduartb_settings_record;
+
+struct duartb_settings_record {
+    uint8_t field_00[2];
+    uint8_t baud;
+    uint8_t parity;
+    uint8_t xon_xoff;
+    uint8_t field_05;
+    uint8_t eight_bits;
+    uint8_t two_stop_bits;
+    uint8_t echo;
+};
+
+typedef struct eeprom_lock_token eeprom_lock_token, *Peeprom_lock_token;
+
+struct eeprom_lock_token {
+    uint32_t status;
+    uint32_t exchange;
+    uint32_t owner;
+    int32_t depth;
+};
+
 typedef struct efc_gain_values efc_gain_values, *Pefc_gain_values;
 
 struct efc_gain_values {
@@ -373,6 +412,14 @@ struct efc_gain_values {
     float reciprocal_tau;
     float step_limit;
     float aging_per_day;
+};
+
+typedef struct efc_range_state efc_range_state, *Pefc_range_state;
+
+struct efc_range_state {
+    uint8_t clamped;
+    uint8_t near_end;
+    uint8_t near_end_checks;
 };
 
 typedef struct efc_ring efc_ring, *Pefc_ring;
@@ -980,6 +1027,14 @@ struct klok_entry {
     int16_t event_class;
 };
 
+typedef struct lifetime_state lifetime_state, *Plifetime_state;
+
+struct lifetime_state {
+    float efc;
+    uint32_t date;
+    int32_t count;
+};
+
 typedef struct log_entry log_entry, *Plog_entry;
 
 struct log_entry {
@@ -1208,6 +1263,19 @@ struct qspi_state {
     uint8_t running;
 };
 
+typedef struct regression_record regression_record, *Pregression_record;
+
+struct regression_record {
+    uint8_t minimum_weight;
+    uint8_t field_01;
+    float *x;
+    float *y;
+    uint8_t *weights;
+    float slope;
+    float intercept;
+    float rms;
+};
+
 typedef enum __attribute__((packed)) satellite_kind {
     SATELLITE_GPS=0,
     SATELLITE_PSEUDOLITE=1,
@@ -1253,6 +1321,16 @@ struct sci_exchange_state {
     uint32_t write_exchange;
     struct exchange_token write_token;
     uint8_t field_34[8];
+};
+
+typedef struct sci_settings_record sci_settings_record, *Psci_settings_record;
+
+struct sci_settings_record {
+    uint8_t field_00[2];
+    uint8_t baud;
+    uint8_t parity;
+    uint8_t xon_xoff;
+    uint8_t echo;
 };
 
 typedef struct scpi_numeric_param scpi_numeric_param, *Pscpi_numeric_param;
@@ -1434,10 +1512,20 @@ struct status_model {
     struct status_register *registers[7];
 };
 
+typedef struct three_point_fit three_point_fit, *Pthree_point_fit;
+
+struct three_point_fit {
+    float *x;
+    float *y;
+    float vertex_x;
+    float vertex_y;
+};
+
 #pragma pack(pop)
 
 /* each type's size in the image, which gcc's layout must give */
 _Static_assert(sizeof(adc_channel) == 1, "adc_channel");
+_Static_assert(sizeof(aging_curve_state) == 42, "aging_curve_state");
 _Static_assert(sizeof(counter_configuration_fields) == 32, "counter_configuration_fields");
 _Static_assert(sizeof(counter_error) == 1, "counter_error");
 _Static_assert(sizeof(duart_channel) == 8, "duart_channel");
@@ -1446,7 +1534,10 @@ _Static_assert(sizeof(duart_shadow_registers) == 13, "duart_shadow_registers");
 _Static_assert(sizeof(duarta_driver) == 10, "duarta_driver");
 _Static_assert(sizeof(duartb_applied_settings) == 4, "duartb_applied_settings");
 _Static_assert(sizeof(duartb_driver) == 86, "duartb_driver");
+_Static_assert(sizeof(duartb_settings_record) == 9, "duartb_settings_record");
+_Static_assert(sizeof(eeprom_lock_token) == 16, "eeprom_lock_token");
 _Static_assert(sizeof(efc_gain_values) == 24, "efc_gain_values");
+_Static_assert(sizeof(efc_range_state) == 3, "efc_range_state");
 _Static_assert(sizeof(efc_ring) == 870, "efc_ring");
 _Static_assert(sizeof(exception_record) == 18, "exception_record");
 _Static_assert(sizeof(exchange_token) == 16, "exchange_token");
@@ -1462,6 +1553,7 @@ _Static_assert(sizeof(holdover_steering_state) == 28, "holdover_steering_state")
 _Static_assert(sizeof(interpolator_calibration) == 9, "interpolator_calibration");
 _Static_assert(sizeof(interval_reading_fields) == 13, "interval_reading_fields");
 _Static_assert(sizeof(klok_entry) == 26, "klok_entry");
+_Static_assert(sizeof(lifetime_state) == 12, "lifetime_state");
 _Static_assert(sizeof(log_entry) == 20, "log_entry");
 _Static_assert(sizeof(log_page) == 64, "log_page");
 _Static_assert(sizeof(loop_steering_state) == 28, "loop_steering_state");
@@ -1502,10 +1594,12 @@ _Static_assert(sizeof(pll_stage) == 1, "pll_stage");
 _Static_assert(sizeof(pll_state) == 982, "pll_state");
 _Static_assert(sizeof(qsm_registers) == 336, "qsm_registers");
 _Static_assert(sizeof(qspi_state) == 78, "qspi_state");
+_Static_assert(sizeof(regression_record) == 26, "regression_record");
 _Static_assert(sizeof(satellite_kind) == 1, "satellite_kind");
 _Static_assert(sizeof(satellite_list) == 1, "satellite_list");
 _Static_assert(sizeof(sci_driver) == 28, "sci_driver");
 _Static_assert(sizeof(sci_exchange_state) == 56, "sci_exchange_state");
+_Static_assert(sizeof(sci_settings_record) == 6, "sci_settings_record");
 _Static_assert(sizeof(scpi_numeric_param) == 44, "scpi_numeric_param");
 _Static_assert(sizeof(scpi_param_type) == 1, "scpi_param_type");
 _Static_assert(sizeof(scpi_setting_param) == 28, "scpi_setting_param");
@@ -1517,6 +1611,7 @@ _Static_assert(sizeof(sprintf_output) == 8, "sprintf_output");
 _Static_assert(sizeof(status_condition) == 6, "status_condition");
 _Static_assert(sizeof(status_model) == 46, "status_model");
 _Static_assert(sizeof(status_register) == 16, "status_register");
+_Static_assert(sizeof(three_point_fit) == 16, "three_point_fit");
 
 /* the #defines of mc68331.h */
 #define QSMCR_STOP     0x8000
@@ -1772,16 +1867,22 @@ extern void * gps_last_command; /* 001017f2 */
 extern uint8_t gps_pps_dead; /* 00101b6e */
 extern uint8_t internal_pps_dead; /* 00101b6f */
 extern uint8_t internal_pps_count; /* 00101b70 */
+extern uint8_t hmon_supply_step; /* 00101cf2 */
+extern efc_range_state efc_range; /* 00101cf4 */
 extern uint8_t internal_pps_started; /* 00101cf8 */
+extern uint8_t gps_pps_skipped_checks; /* 00101cf9 */
+extern uint8_t gps_pps_unconfirmed; /* 00101cfa */
 extern uint8_t gps_pps_counting; /* 00101cfb */
 extern uint8_t gps_pps_last_count; /* 00101cfc */
 extern uint8_t gps_pps_gate; /* 00101cfd */
 extern uint8_t internal_pps_last_count; /* 00101cfe */
-extern float lifetime_efc; /* 00101d00 */
+extern lifetime_state lifetime; /* 00101d00 */
 extern float scpi_value_DIAGnostic_ROSCillator_TCOefficient; /* 00101d0c */
 extern float scpi_value_DIAGnostic_TOFFset; /* 00101d10 */
+extern klok_entry * lifetime_event; /* 00101d14 */
 extern uint32_t eepx_exchange; /* 00101d18 */
-extern uint32_t eepx_status; /* 00101d1c */
+extern eeprom_lock_token eepx_token; /* 00101d1c */
+extern uint8_t eeprom_writing; /* 00101d34 */
 extern log_entry * log_cursor; /* 00101d90 */
 extern log_page log_page_buffer; /* 00101d94 */
 extern int16_t log_page_number; /* 00101dd4 */
@@ -1791,7 +1892,11 @@ extern float scpi_value_SAMPle_FLOat; /* 00101e18 */
 extern float scpi_value_SAMPle_FARR; /* 00101e1c */
 extern float max_loop_time; /* 00101e84 */
 extern nv_settings_fields nv_settings; /* 00101e8a */
+extern sci_settings_record sci_settings; /* 00101f50 */
+extern duartb_settings_record duartb_settings; /* 00101f58 */
 extern uint8_t nv_slot; /* 00101f62 */
+extern int16_t nv_numeric_bytes_loaded; /* 00101f64 */
+extern int16_t nv_bytes_loaded; /* 00101f66 */
 extern char idn_model[18]; /* 00101f68 */
 extern char idn_serial[18]; /* 00101f7a */
 extern char idn_suffix; /* 00101f8c */
@@ -1800,9 +1905,12 @@ extern interval_reading_fields interval_reading; /* 00101f9c */
 extern uint8_t fconf_regs[4]; /* 00101fa9 */
 extern counter_configuration_fields counter_configuration; /* 00101fae */
 extern interpolator_calibration interpolator_calibration_state; /* 00101fce */
+extern aging_curve_state aging_curve; /* 00101fd8 */
+extern uint32_t pll_scpi_gps_arguments[4]; /* 00102002 */
 extern void * pll_scpi_param; /* 00102012 */
 extern uint8_t pll_scpi_index; /* 00102016 */
 extern uint8_t pll_scpi_source; /* 00102017 */
+extern uint32_t pll_scpi_waiting_task; /* 00102018 */
 extern uint8_t pll_scpi_setting; /* 0010201c */
 extern uint32_t pll_scpi_values[4]; /* 00102020 */
 extern uint32_t pll_scpi_validated[4]; /* 00102030 */
@@ -2090,19 +2198,6 @@ extern undefined DAT_00101ba0; /* 00101ba0 */
 extern undefined DAT_00101ba1; /* 00101ba1 */
 extern char DAT_00101bce; /* 00101bce */
 extern char DAT_00101bd0; /* 00101bd0 */
-extern byte DAT_00101cf2; /* 00101cf2 */
-extern char DAT_00101cf4; /* 00101cf4 */
-extern char DAT_00101cf5; /* 00101cf5 */
-extern byte DAT_00101cf6; /* 00101cf6 */
-extern byte DAT_00101cf9; /* 00101cf9 */
-extern char DAT_00101cfa; /* 00101cfa */
-extern undefined DAT_00101d04; /* 00101d04 */
-extern undefined DAT_00101d08; /* 00101d08 */
-extern undefined DAT_00101d14; /* 00101d14 */
-extern undefined DAT_00101d20; /* 00101d20 */
-extern undefined DAT_00101d24; /* 00101d24 */
-extern undefined DAT_00101d28; /* 00101d28 */
-extern char DAT_00101d34; /* 00101d34 */
 extern undefined DAT_00101d8e; /* 00101d8e */
 extern char DAT_00101dd6; /* 00101dd6 */
 extern char DAT_00101dd7; /* 00101dd7 */
@@ -2125,33 +2220,6 @@ extern undefined DAT_00101e78; /* 00101e78 */
 extern undefined DAT_00101e7c; /* 00101e7c */
 extern undefined DAT_00101e80; /* 00101e80 */
 extern char DAT_00101e88; /* 00101e88 */
-extern char DAT_00101f52; /* 00101f52 */
-extern char DAT_00101f53; /* 00101f53 */
-extern char DAT_00101f54; /* 00101f54 */
-extern char DAT_00101f55; /* 00101f55 */
-extern uint8_t DAT_00101f5a; /* 00101f5a */
-extern uint8_t DAT_00101f5b; /* 00101f5b */
-extern char DAT_00101f5c; /* 00101f5c */
-extern undefined1 DAT_00101f5d; /* 00101f5d */
-extern uint8_t DAT_00101f5e; /* 00101f5e */
-extern uint8_t DAT_00101f5f; /* 00101f5f */
-extern char DAT_00101f60; /* 00101f60 */
-extern undefined DAT_00101f64; /* 00101f64 */
-extern undefined DAT_00101f66; /* 00101f66 */
-extern byte DAT_00101fd8; /* 00101fd8 */
-extern undefined1 DAT_00101fd9; /* 00101fd9 */
-extern undefined DAT_00101fda; /* 00101fda */
-extern undefined DAT_00101fde; /* 00101fde */
-extern undefined DAT_00101fea; /* 00101fea */
-extern undefined DAT_00101fee; /* 00101fee */
-extern undefined DAT_00101ff2; /* 00101ff2 */
-extern undefined DAT_00101ffa; /* 00101ffa */
-extern undefined DAT_00101ffe; /* 00101ffe */
-extern undefined DAT_00102002; /* 00102002 */
-extern undefined DAT_00102006; /* 00102006 */
-extern undefined DAT_0010200a; /* 0010200a */
-extern undefined DAT_0010200e; /* 0010200e */
-extern uint32_t DAT_00102018; /* 00102018 */
 extern char DAT_00102040; /* 00102040 */
 extern undefined1 DAT_0010207a; /* 0010207a */
 extern char DAT_0010207b; /* 0010207b */
@@ -2315,13 +2383,13 @@ extern volatile undefined DAT_00300000; /* 00300000 */
 extern volatile undefined DAT_00304000; /* 00304000 */
 extern volatile undefined DAT_00306000; /* 00306000 */
 extern uint16_t DAT_00400000; /* 00400000 */
-extern undefined1 DAT_00400002; /* 00400002 */
-extern undefined1 DAT_00400003; /* 00400003 */
-extern undefined1 DAT_00400004; /* 00400004 */
-extern undefined1 DAT_00400005; /* 00400005 */
-extern undefined1 DAT_00400006; /* 00400006 */
-extern undefined1 DAT_00400007; /* 00400007 */
-extern undefined1 DAT_00400008; /* 00400008 */
+extern uint8_t DAT_00400002; /* 00400002 */
+extern uint8_t DAT_00400003; /* 00400003 */
+extern uint8_t DAT_00400004; /* 00400004 */
+extern uint8_t DAT_00400005; /* 00400005 */
+extern uint8_t DAT_00400006; /* 00400006 */
+extern uint8_t DAT_00400007; /* 00400007 */
+extern uint8_t DAT_00400008; /* 00400008 */
 extern uint16_t DAT_00400010; /* 00400010 */
 extern undefined DAT_00400012; /* 00400012 */
 extern undefined DAT_00400024; /* 00400024 */
@@ -2775,19 +2843,6 @@ __asm__(".set DAT_00101ba0, 0x00101ba0");
 __asm__(".set DAT_00101ba1, 0x00101ba1");
 __asm__(".set DAT_00101bce, 0x00101bce");
 __asm__(".set DAT_00101bd0, 0x00101bd0");
-__asm__(".set DAT_00101cf2, 0x00101cf2");
-__asm__(".set DAT_00101cf4, 0x00101cf4");
-__asm__(".set DAT_00101cf5, 0x00101cf5");
-__asm__(".set DAT_00101cf6, 0x00101cf6");
-__asm__(".set DAT_00101cf9, 0x00101cf9");
-__asm__(".set DAT_00101cfa, 0x00101cfa");
-__asm__(".set DAT_00101d04, 0x00101d04");
-__asm__(".set DAT_00101d08, 0x00101d08");
-__asm__(".set DAT_00101d14, 0x00101d14");
-__asm__(".set DAT_00101d20, 0x00101d20");
-__asm__(".set DAT_00101d24, 0x00101d24");
-__asm__(".set DAT_00101d28, 0x00101d28");
-__asm__(".set DAT_00101d34, 0x00101d34");
 __asm__(".set DAT_00101d8e, 0x00101d8e");
 __asm__(".set DAT_00101dd6, 0x00101dd6");
 __asm__(".set DAT_00101dd7, 0x00101dd7");
@@ -2810,33 +2865,6 @@ __asm__(".set DAT_00101e78, 0x00101e78");
 __asm__(".set DAT_00101e7c, 0x00101e7c");
 __asm__(".set DAT_00101e80, 0x00101e80");
 __asm__(".set DAT_00101e88, 0x00101e88");
-__asm__(".set DAT_00101f52, 0x00101f52");
-__asm__(".set DAT_00101f53, 0x00101f53");
-__asm__(".set DAT_00101f54, 0x00101f54");
-__asm__(".set DAT_00101f55, 0x00101f55");
-__asm__(".set DAT_00101f5a, 0x00101f5a");
-__asm__(".set DAT_00101f5b, 0x00101f5b");
-__asm__(".set DAT_00101f5c, 0x00101f5c");
-__asm__(".set DAT_00101f5d, 0x00101f5d");
-__asm__(".set DAT_00101f5e, 0x00101f5e");
-__asm__(".set DAT_00101f5f, 0x00101f5f");
-__asm__(".set DAT_00101f60, 0x00101f60");
-__asm__(".set DAT_00101f64, 0x00101f64");
-__asm__(".set DAT_00101f66, 0x00101f66");
-__asm__(".set DAT_00101fd8, 0x00101fd8");
-__asm__(".set DAT_00101fd9, 0x00101fd9");
-__asm__(".set DAT_00101fda, 0x00101fda");
-__asm__(".set DAT_00101fde, 0x00101fde");
-__asm__(".set DAT_00101fea, 0x00101fea");
-__asm__(".set DAT_00101fee, 0x00101fee");
-__asm__(".set DAT_00101ff2, 0x00101ff2");
-__asm__(".set DAT_00101ffa, 0x00101ffa");
-__asm__(".set DAT_00101ffe, 0x00101ffe");
-__asm__(".set DAT_00102002, 0x00102002");
-__asm__(".set DAT_00102006, 0x00102006");
-__asm__(".set DAT_0010200a, 0x0010200a");
-__asm__(".set DAT_0010200e, 0x0010200e");
-__asm__(".set DAT_00102018, 0x00102018");
 __asm__(".set DAT_00102040, 0x00102040");
 __asm__(".set DAT_0010207a, 0x0010207a");
 __asm__(".set DAT_0010207b, 0x0010207b");
@@ -3244,6 +3272,7 @@ __asm__(".set WORD_0004cf2a, 0x0004cf2a");
 __asm__(".set WORD_0004f0f2, 0x0004f0f2");
 __asm__(".set WORD_0004fc90, 0x0004fc90");
 __asm__(".set WORD_0005ed48, 0x0005ed48");
+__asm__(".set aging_curve, 0x00101fd8");
 __asm__(".set atexit_count, 0x00103934");
 __asm__(".set atexit_functions, 0x001038b4");
 __asm__(".set boot_vectors, 0x00000000");
@@ -3273,9 +3302,12 @@ __asm__(".set duarta_ring, 0x00102edd");
 __asm__(".set duartb, 0x001030ec");
 __asm__(".set duartb_applied, 0x00102ecc");
 __asm__(".set duartb_ring, 0x00102fea");
+__asm__(".set duartb_settings, 0x00101f58");
+__asm__(".set eeprom_writing, 0x00101d34");
 __asm__(".set eepx_exchange, 0x00101d18");
-__asm__(".set eepx_status, 0x00101d1c");
+__asm__(".set eepx_token, 0x00101d1c");
 __asm__(".set efc_gains, 0x00102554");
+__asm__(".set efc_range, 0x00101cf4");
 __asm__(".set errno, 0x0010393a");
 __asm__(".set es_ascii, 0x00103830");
 __asm__(".set es_enabled, 0x00103831");
@@ -3301,6 +3333,8 @@ __asm__(".set gps_pps_counting, 0x00101cfb");
 __asm__(".set gps_pps_dead, 0x00101b6e");
 __asm__(".set gps_pps_gate, 0x00101cfd");
 __asm__(".set gps_pps_last_count, 0x00101cfc");
+__asm__(".set gps_pps_skipped_checks, 0x00101cf9");
+__asm__(".set gps_pps_unconfirmed, 0x00101cfa");
 __asm__(".set gps_print_cursor, 0x00101390");
 __asm__(".set gps_receive_state, 0x00101394");
 __asm__(".set gps_requests, 0x0010139e");
@@ -3312,6 +3346,7 @@ __asm__(".set gps_utc_offset_valid, 0x001009ea");
 __asm__(".set gpsx_exchange, 0x001037fc");
 __asm__(".set gpt, 0x00fff900");
 __asm__(".set hdac_shadow, 0x0010314a");
+__asm__(".set hmon_supply_step, 0x00101cf2");
 __asm__(".set holdover_steering, 0x00102042");
 __asm__(".set idn_model, 0x00101f68");
 __asm__(".set idn_serial, 0x00101f7a");
@@ -3329,7 +3364,8 @@ __asm__(".set klok_free, 0x00103726");
 __asm__(".set klok_mutex, 0x001037b4");
 __asm__(".set klok_pool, 0x0010372a");
 __asm__(".set last_exception, 0x0010099e");
-__asm__(".set lifetime_efc, 0x00101d00");
+__asm__(".set lifetime, 0x00101d00");
+__asm__(".set lifetime_event, 0x00101d14");
 __asm__(".set log_cursor, 0x00101d90");
 __asm__(".set log_entry_count, 0x00101f8e");
 __asm__(".set log_mutex, 0x00101d36");
@@ -3337,6 +3373,8 @@ __asm__(".set log_page_buffer, 0x00101d94");
 __asm__(".set log_page_number, 0x00101dd4");
 __asm__(".set loop_steering, 0x0010205e");
 __asm__(".set max_loop_time, 0x00101e84");
+__asm__(".set nv_bytes_loaded, 0x00101f66");
+__asm__(".set nv_numeric_bytes_loaded, 0x00101f64");
 __asm__(".set nv_numeric_params, 0x00032d5e");
 __asm__(".set nv_param_field_1e, 0x00033d7a");
 __asm__(".set nv_param_field_b8, 0x00034374");
@@ -3350,12 +3388,14 @@ __asm__(".set nv_settings, 0x00101e8a");
 __asm__(".set nv_settings_defaults, 0x00030966");
 __asm__(".set nv_slot, 0x00101f62");
 __asm__(".set pll, 0x00102162");
+__asm__(".set pll_scpi_gps_arguments, 0x00102002");
 __asm__(".set pll_scpi_index, 0x00102016");
 __asm__(".set pll_scpi_param, 0x00102012");
 __asm__(".set pll_scpi_setting, 0x0010201c");
 __asm__(".set pll_scpi_source, 0x00102017");
 __asm__(".set pll_scpi_validated, 0x00102030");
 __asm__(".set pll_scpi_values, 0x00102020");
+__asm__(".set pll_scpi_waiting_task, 0x00102018");
 __asm__(".set plla_exchange, 0x00103800");
 __asm__(".set pllc_exchange, 0x00103804");
 __asm__(".set pps_exchange, 0x00100bc4");
@@ -3372,6 +3412,7 @@ __asm__(".set reset_to_recover_text, 0x00011b8c");
 __asm__(".set sci, 0x0010328a");
 __asm__(".set sci_exchanges, 0x00103150");
 __asm__(".set sci_ring, 0x00103188");
+__asm__(".set sci_settings, 0x00101f50");
 __asm__(".set scpi_language, 0x00102c62");
 __asm__(".set scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe, 0x000342ba");
 __asm__(".set scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold, 0x000342f8");
@@ -4090,18 +4131,6 @@ extern undefined *_DAT_00101b46;
 __asm__(".set _DAT_00101b46, 0x00101b46");
 extern undefined *_DAT_00101b4a;
 __asm__(".set _DAT_00101b4a, 0x00101b4a");
-extern ulong _DAT_00101d04;
-__asm__(".set _DAT_00101d04, 0x00101d04");
-extern int _DAT_00101d08;
-__asm__(".set _DAT_00101d08, 0x00101d08");
-extern undefined4 _DAT_00101d14;
-__asm__(".set _DAT_00101d14, 0x00101d14");
-extern uint32_t _DAT_00101d20;
-__asm__(".set _DAT_00101d20, 0x00101d20");
-extern ulong _DAT_00101d24;
-__asm__(".set _DAT_00101d24, 0x00101d24");
-extern int _DAT_00101d28;
-__asm__(".set _DAT_00101d28, 0x00101d28");
 extern short _DAT_00101d8e;
 __asm__(".set _DAT_00101d8e, 0x00101d8e");
 extern short _DAT_00101dd8;
@@ -4124,32 +4153,6 @@ extern int32_t _DAT_00101e7c;
 __asm__(".set _DAT_00101e7c, 0x00101e7c");
 extern int32_t _DAT_00101e80;
 __asm__(".set _DAT_00101e80, 0x00101e80");
-extern short _DAT_00101f64;
-__asm__(".set _DAT_00101f64, 0x00101f64");
-extern short _DAT_00101f66;
-__asm__(".set _DAT_00101f66, 0x00101f66");
-extern uint _DAT_00101fda;
-__asm__(".set _DAT_00101fda, 0x00101fda");
-extern uint _DAT_00101fde;
-__asm__(".set _DAT_00101fde, 0x00101fde");
-extern float _DAT_00101fea;
-__asm__(".set _DAT_00101fea, 0x00101fea");
-extern float _DAT_00101fee;
-__asm__(".set _DAT_00101fee, 0x00101fee");
-extern float _DAT_00101ff2;
-__asm__(".set _DAT_00101ff2, 0x00101ff2");
-extern float _DAT_00101ffa;
-__asm__(".set _DAT_00101ffa, 0x00101ffa");
-extern float _DAT_00101ffe;
-__asm__(".set _DAT_00101ffe, 0x00101ffe");
-extern uint32_t _DAT_00102002;
-__asm__(".set _DAT_00102002, 0x00102002");
-extern uint32_t _DAT_00102006;
-__asm__(".set _DAT_00102006, 0x00102006");
-extern uint32_t _DAT_0010200a;
-__asm__(".set _DAT_0010200a, 0x0010200a");
-extern undefined4 _DAT_0010200e;
-__asm__(".set _DAT_0010200e, 0x0010200e");
 extern float _DAT_00102144;
 __asm__(".set _DAT_00102144, 0x00102144");
 extern float _DAT_00102148;
@@ -4244,9 +4247,9 @@ extern undefined4 _DAT_0010b0c2;
 __asm__(".set _DAT_0010b0c2, 0x0010b0c2");
 extern uint16_t _DAT_00400060;
 __asm__(".set _DAT_00400060, 0x00400060");
-extern undefined4 _DAT_00400062;
+extern uint32_t _DAT_00400062;
 __asm__(".set _DAT_00400062, 0x00400062");
-extern undefined4 _DAT_00400066;
+extern int32_t _DAT_00400066;
 __asm__(".set _DAT_00400066, 0x00400066");
 extern float _DAT_0040006a;
 __asm__(".set _DAT_0040006a, 0x0040006a");
@@ -5817,19 +5820,19 @@ void curv_signal(void);
 void aging_fit_collect(void);
 void curv_task(void);
 void aging_fit(void);
-undefined4 fit_linear_halves(int param_1);
-undefined4 fit_linear(int param_1);
-bool fit_constant(int param_1);
-int fit_logarithmic(int param_1);
-void fit_span(int param_1);
-void fit_evaluate_latest(int param_1,float *param_2);
-undefined4 fit_log_initial(int param_1);
-uint fit_log_search(int param_1,undefined4 param_2);
-void fit_log_residuals(int param_1,int param_2);
-undefined4 fit_three_point(int *param_1);
-undefined4 linear_regression(byte *param_1,int param_2);
+int fit_linear_halves(aging_curve_state *curve);
+int fit_linear(aging_curve_state *curve);
+bool fit_constant(aging_curve_state *curve);
+int fit_logarithmic(aging_curve_state *curve);
+void fit_span(aging_curve_state *curve);
+void fit_evaluate_latest(aging_curve_state *curve,float *fitted);
+int fit_log_initial(aging_curve_state *curve);
+uint32_t fit_log_search(aging_curve_state *curve,int with_slope);
+int fit_log_residuals(aging_curve_state *curve,int with_slope);
+int fit_three_point(three_point_fit *fit);
+int linear_regression(regression_record *record,int with_slope);
 float float_abs(float param_1);
-void fit_quality(char *param_1);
+void fit_quality(aging_curve_state *curve);
 undefined4 kenneth_present_get(float *param_1,undefined1 *param_2);
 undefined4 kenneth_predicted_get(float *param_1,undefined1 *param_2,undefined1 *param_3);
 undefined4 get_ffom(undefined1 *param_1);
@@ -7785,7 +7788,6 @@ int klok_entry_state(klok_entry *param_1)
 
 /* 000109ae */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* psos_create("klok") into task_klok, then psos_start(task_klok, klok_task); "Pps_init error",
    "Clk_go error" */
 
@@ -7807,7 +7809,7 @@ uint klok_task_create(ulong param_1)
     }
   }
   if (param2 == 0) {
-    psos_service_31(_DAT_00101d04,0,0);
+    psos_service_31(lifetime.date,0,0);
     klok_entries = (klok_entry *)0x0;
     klok_free = klok_pool;
     for (pkVar2 = klok_pool; pkVar2 < (klok_entry *)0x1037ac; pkVar2 = pkVar2 + 1) {
@@ -11238,8 +11240,8 @@ void clock_init(short param_1)
   _DAT_001009e2 = 0x1e1f1e1f;
   uptime = 0;
   gps_time = 0;
-  gps_date = _DAT_00101d04;
-  clock_set_leap_year((char *)0x1009db,_DAT_00101d04);
+  gps_date = lifetime.date;
+  clock_set_leap_year((char *)0x1009db,lifetime.date);
   clock_record_derive((char *)0x1009b8);
   DAT_001009e6 = 0x3c;
   gps_utc_offset = 0;
@@ -32832,23 +32834,23 @@ void duartb_mode_from_settings(void)
 
 {
   duart_shadow.mr1b = duart_shadow.mr1b & 0xe0;
-  if (DAT_00101f5b == 0) {
+  if (duartb_settings.parity == 0) {
     duartb.parity = 0;
     duart_shadow.mr1b = duart_shadow.mr1b | 0x10;
   }
   else {
     duartb.parity = 1;
-    if (DAT_00101f5b == 2) {
+    if (duartb_settings.parity == 2) {
       duart_shadow.mr1b = duart_shadow.mr1b | 4;
     }
   }
-  if (DAT_00101f5e == 0) {
+  if (duartb_settings.eight_bits == 0) {
     duart_shadow.mr1b = duart_shadow.mr1b | 2;
   }
   else {
     duart_shadow.mr1b = duart_shadow.mr1b | 3;
   }
-  if (DAT_00101f5f == 0) {
+  if (duartb_settings.two_stop_bits == 0) {
     duart_shadow.mr2b = duart_shadow.mr2b & 0xf0 | 7;
   }
   else {
@@ -32857,9 +32859,9 @@ void duartb_mode_from_settings(void)
   duart.b.cr = CR_RESET_MR_POINTER;
   duart.b.mr = duart_shadow.mr1b;
   duart.b.mr = duart_shadow.mr2b;
-  duartb_applied.parity = DAT_00101f5b;
-  duartb_applied.eight_bits = DAT_00101f5e;
-  duartb_applied.two_stop_bits = DAT_00101f5f;
+  duartb_applied.parity = duartb_settings.parity;
+  duartb_applied.eight_bits = duartb_settings.eight_bits;
+  duartb_applied.two_stop_bits = duartb_settings.two_stop_bits;
   return;
 }
 
@@ -32875,8 +32877,8 @@ void duartb_baud_from_settings(void)
   int iVar1;
   char cVar2;
   
-  iVar1 = (int)(char)DAT_00101f5a - 3;
-  if ((uint)(int)(char)DAT_00101f5a < 3 || iVar1 == 0) {
+  iVar1 = (int)(char)duartb_settings.baud - 3;
+  if ((uint)(int)(char)duartb_settings.baud < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0001d650)[(short)iVar1]) {
     case 8:
@@ -32898,7 +32900,7 @@ override_jmp_0001d646_case_3:
   }
   duart_shadow.csrb = cVar2 * '\x11';
   duart.b.sr_csr = cVar2 * '\x11';
-  duartb_applied.baud = DAT_00101f5a;
+  duartb_applied.baud = duartb_settings.baud;
   return;
 }
 
@@ -33294,12 +33296,12 @@ undefined8 duart_init(void)
   duartb.flow = 0;
   duartb.receive_errors = 0;
   duartb.least_free = 0xff;
-  duartb.xon_xoff = DAT_00101f5c != '\0';
+  duartb.xon_xoff = duartb_settings.xon_xoff != 0;
   duarta.held = 0;
   duartb.reconfiguring = 0;
   duartb.in_transmit_interrupt = 0;
   duartb.async_allowed = 0;
-  if (DAT_00101f60 == '\0') {
+  if (duartb_settings.echo == 0) {
     duartb.echo = &UNK_0001d570;
   }
   else {
@@ -33333,7 +33335,7 @@ void duartb_reconfigure(void)
   duartb_mode_from_settings();
   duartb_baud_from_settings();
   duart.b.cr = CR_TX_ENABLE;
-  if (DAT_00101f5c == '\0') {
+  if (duartb_settings.xon_xoff == 0) {
     if ((duartb.xon_xoff != 0) && ((duartb.flow & 0x20) != 0)) {
       duartb_putc_polled(0x11);
     }
@@ -33346,7 +33348,7 @@ void duartb_reconfigure(void)
     }
     duartb.xon_xoff = 1;
   }
-  if (DAT_00101f60 == '\0') {
+  if (duartb_settings.echo == 0) {
     duartb.echo = &UNK_0001d570;
   }
   else {
@@ -35592,22 +35594,22 @@ undefined8 sci_init(void)
   int iVar3;
   char acStack_64 [80];
   
-  sci_baud_set(DAT_00101f52);
-  if (DAT_00101f53 == '\0') {
+  sci_baud_set(sci_settings.baud);
+  if (sci_settings.parity == 0) {
     sci.seven_bits = 0;
     sci.mark_bit = 0;
   }
-  else if (DAT_00101f53 == '\x03') {
+  else if (sci_settings.parity == 3) {
     sci.seven_bits = 1;
     sci.mark_bit = 1;
   }
   else {
     sci.seven_bits = 1;
     sci.mark_bit = 0;
-    if (DAT_00101f53 == '\x01') {
+    if (sci_settings.parity == 1) {
       qsm.sccr1 = SCCR1_PE;
     }
-    else if (DAT_00101f53 == '\x02') {
+    else if (sci_settings.parity == 2) {
       qsm.sccr1 = SCCR1_PT | SCCR1_PE;
     }
   }
@@ -35655,11 +35657,11 @@ undefined8 sci_init(void)
   sci_ring.read = 0;
   sci.flow = 0;
   sci.receive_errors = 0;
-  sci.xon_xoff = DAT_00101f54 != '\0';
+  sci.xon_xoff = sci_settings.xon_xoff != 0;
   sci.reconfiguring = 0;
   sci.field_11 = 0;
   sci.async_allowed = 1;
-  if (DAT_00101f55 == '\0') {
+  if (sci_settings.echo == 0) {
     sci.echo = (undefined1 *)&USHORT_0001f6c8;
   }
   else {
@@ -35698,9 +35700,9 @@ uint sci_reconfigure(void)
   while ((0 < (int)puVar7 && (uVar1 = qsm.scsr, (uVar1 & 0x80) == 0))) {
     puVar7 = puVar7 + -1;
   }
-  sci_baud_set(DAT_00101f52);
-  iVar6 = (int)DAT_00101f53 - 3;
-  if ((uint)(int)DAT_00101f53 < 3 || iVar6 == 0) {
+  sci_baud_set(sci_settings.baud);
+  iVar6 = (int)(char)sci_settings.parity - 3;
+  if ((uint)(int)(char)sci_settings.parity < 3 || iVar6 == 0) {
     sVar5 = (short)iVar6;
     iVar6 = CONCAT22((short)((uint)iVar6 >> 0x10),(&WORD_00020092)[sVar5]);
                     /* WARNING: Switch is manually overridden */
@@ -35738,7 +35740,7 @@ LAB_000200ce:
   uVar1 = qsm.sccr1;
   qsm.sccr1 = uVar1 | SCCR1_TE;
   uVar4 = (uint3)((uint)iVar6 >> 8);
-  if (DAT_00101f54 == '\0') {
+  if (sci_settings.xon_xoff == 0) {
     if ((sci.xon_xoff != 0) && (iVar6 = (uint)uVar4 << 8, (sci.flow & 0x20) != 0)) {
       iVar6 = sci_putc_polled('\x11');
     }
@@ -35757,7 +35759,7 @@ LAB_000200ce:
   if (((sci.flow & 0x20) != 0) && (!bVar3)) {
     sci.flow = sci.flow & 0xdf;
   }
-  if (DAT_00101f55 == '\0') {
+  if (sci_settings.echo == 0) {
     sci.echo = (undefined1 *)&USHORT_0001f6c8;
   }
   else {
@@ -37398,7 +37400,7 @@ int monitors_reset(void)
     iVar1 = iVar3 + -6;
     iVar3 = iVar2;
   } while (iVar1 == 0 || iVar2 < 7);
-  DAT_00101cf2 = 0;
+  hmon_supply_step = 0;
   return iVar1;
 }
 
@@ -37506,8 +37508,8 @@ void hmon_check_supplies(void)
   double dVar4;
   char acStack_54 [80];
   
-  iVar3 = DAT_00101cf2 - 7;
-  if (6 < DAT_00101cf2 && iVar3 != 0) goto LAB_000240f0;
+  iVar3 = hmon_supply_step - 7;
+  if (6 < hmon_supply_step && iVar3 != 0) goto LAB_000240f0;
                     /* WARNING: Switch is manually overridden */
   switch((&WORD_00023dd8)[(short)iVar3]) {
   case 0x10:
@@ -37621,9 +37623,9 @@ LAB_000240e6:
     monitor_average_add(iVar3,__ghidra_bits(fVar1));
   }
 LAB_000240f0:
-  DAT_00101cf2 = DAT_00101cf2 + 1;
-  if (7 < DAT_00101cf2) {
-    DAT_00101cf2 = 0;
+  hmon_supply_step = hmon_supply_step + 1;
+  if (7 < hmon_supply_step) {
+    hmon_supply_step = 0;
   }
   return;
 }
@@ -37772,21 +37774,21 @@ float efc_clamp(float param_1)
   if (iVar1 < 1) {
     iVar1 = float_compare(param_1,1.04856e+06);
     if (iVar1 < 1) {
-      if (DAT_00101cf4 != '\0') {
+      if (efc_range.clamped != 0) {
         status_happening('C');
-        DAT_00101cf4 = '\0';
+        efc_range.clamped = 0;
       }
     }
     else {
       param_1 = 1.04856e+06;
       status_happening('B');
-      DAT_00101cf4 = '\x01';
+      efc_range.clamped = 1;
     }
   }
   else {
     param_1 = 0.0;
     status_happening('B');
-    DAT_00101cf4 = '\x01';
+    efc_range.clamped = 1;
   }
   return param_1;
 }
@@ -37799,9 +37801,9 @@ float efc_clamp(float param_1)
 void efc_clamp_reset(void)
 
 {
-  DAT_00101cf4 = 0;
-  DAT_00101cf5 = 0;
-  DAT_00101cf6 = 0;
+  efc_range.clamped = 0;
+  efc_range.near_end = 0;
+  efc_range.near_end_checks = 0;
   return;
 }
 
@@ -37818,20 +37820,20 @@ void hmon_check_efc(void)
   
   iVar1 = float_compare(pll.efc,52428.0);
   if ((-1 < iVar1) && (iVar1 = float_compare(pll.efc,996132.0), iVar1 < 1)) {
-    DAT_00101cf6 = 0;
-    if (DAT_00101cf5 == '\0') {
-      DAT_00101cf6 = 0;
+    efc_range.near_end_checks = 0;
+    if (efc_range.near_end == 0) {
+      efc_range.near_end_checks = 0;
       return;
     }
-    DAT_00101cf5 = 0;
+    efc_range.near_end = 0;
     status_happening('A');
     return;
   }
-  DAT_00101cf6 = DAT_00101cf6 + 1;
-  if ((5 < DAT_00101cf6) && (DAT_00101cf6 = 5, DAT_00101cf5 == '\0')) {
+  efc_range.near_end_checks = efc_range.near_end_checks + 1;
+  if ((5 < efc_range.near_end_checks) && (efc_range.near_end_checks = 5, efc_range.near_end == 0)) {
     task_debug_message("EFC near end of range\r\n");
     status_happening('@');
-    DAT_00101cf5 = '\x01';
+    efc_range.near_end = 1;
   }
   return;
 }
@@ -37939,8 +37941,8 @@ void log_reset_cause(void)
 void gps_pps_monitor_reset(void)
 
 {
-  DAT_00101cf9 = 0;
-  DAT_00101cfa = 0;
+  gps_pps_skipped_checks = 0;
+  gps_pps_unconfirmed = 0;
   gps_pps_dead = 0;
   gps_pps_counting = 0;
   return;
@@ -37964,7 +37966,7 @@ undefined1 gps_pps_check(void)
   uVar5 = 1;
   bVar3 = false;
   if (gps.pps_check_disabled == 0) {
-    if ((DAT_00101cfa == '\0') || (0xe < DAT_00101cf9)) {
+    if ((gps_pps_unconfirmed == 0) || (0xe < gps_pps_skipped_checks)) {
       if ((selftest.running == 0) && ((pll.fpga_loaded != 0 && (DAT_00101b6c == '\0')))) {
         if (gps_pps_counting != 0) {
           uVar2 = gpt.pacnt;
@@ -37991,7 +37993,7 @@ undefined1 gps_pps_check(void)
                 task_dmessage("GPS 1pps signal is ok\r\n");
                 uVar4 = 0;
               }
-              DAT_00101cfa = '\0';
+              gps_pps_unconfirmed = 0;
             }
             gps_pps_dead = uVar4;
             gps_pps_last_count = 0;
@@ -38021,12 +38023,12 @@ undefined1 gps_pps_check(void)
       uVar5 = 0;
     }
     else {
-      DAT_00101cf9 = DAT_00101cf9 + 1;
+      gps_pps_skipped_checks = gps_pps_skipped_checks + 1;
     }
   }
   else {
-    DAT_00101cfa = '\x01';
-    DAT_00101cf9 = 0;
+    gps_pps_unconfirmed = 1;
+    gps_pps_skipped_checks = 0;
     gps_pps_dead = 1;
     gpt.pacnt = 0;
     gps_pps_gate = 0;
@@ -38148,8 +38150,8 @@ void hmon_task(void)
       duart_output_bits(bVar7,bVar8);
     }
     if (gps.pps_check_disabled != 0) {
-      DAT_00101cfa = '\x01';
-      DAT_00101cf9 = 0;
+      gps_pps_unconfirmed = 1;
+      gps_pps_skipped_checks = 0;
       gps_pps_dead = 1;
     }
     local_c = local_c + 1;
@@ -38168,7 +38170,7 @@ void hmon_task(void)
       else if (uVar6 < 0x201) {
         uVar6 = uVar6 + 1;
       }
-      else if ((DAT_00101cfa == '\0') && (!bVar2)) {
+      else if ((gps_pps_unconfirmed == 0) && (!bVar2)) {
         status_happening('D');
         bVar2 = true;
       }
@@ -45683,13 +45685,12 @@ int scpi_set_DIAGnostic_IDENtification_SERial(void *parameters,void *response,vo
 
 /* 0002b3b6 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the query handler for :DIAGnostic:LIFetime:COUNt? */
 
 int scpi_query_DIAGnostic_LIFetime_COUNt(void *parameters,void *response,void *call)
 
 {
-  *(undefined4 *)response = _DAT_00101d08;
+  *(int32_t *)response = lifetime.count;
   return 0;
 }
 
@@ -51299,13 +51300,13 @@ int scpi_set_SYSTem_COMMunicate_SER1_FDUPlex(void *parameters,void *response,voi
 int scpi_query_SYSTem_COMMunicate_SER1_FDUPlex(void *parameters,void *response,void *call)
 
 {
-  char cVar1;
+  uint8_t uVar1;
   
-  cVar1 = DAT_00101f55;
+  uVar1 = sci_settings.echo;
   if (*(short *)parameters == 0) {
-    cVar1 = DAT_00101f60;
+    uVar1 = duartb_settings.echo;
   }
-  *(short *)response = (short)cVar1;
+  *(short *)response = (short)(char)uVar1;
   return 0;
 }
 
@@ -51391,7 +51392,7 @@ int scpi_query_SYSTem_COMMunicate_SER1_RECeive_BAUD(void *parameters,void *respo
 
 {
   int iVar1;
-  char cVar2;
+  uint8_t uVar2;
   
   if (*(short *)((int)parameters + 2) == 2) {
     if (*(short *)((int)parameters + 4) == 1) {
@@ -51403,12 +51404,12 @@ switchD_00030304_caseD_3:
     *(undefined **)response = &DAT_00004b00;
   }
   else {
-    cVar2 = DAT_00101f52;
+    uVar2 = sci_settings.baud;
     if (*(short *)parameters == 0) {
-      cVar2 = DAT_00101f5a;
+      uVar2 = duartb_settings.baud;
     }
-    iVar1 = (int)cVar2 - 3;
-    if (2 < (uint)(int)cVar2 && iVar1 != 0) {
+    iVar1 = (int)(char)uVar2 - 3;
+    if (2 < (uint)(int)(char)uVar2 && iVar1 != 0) {
       return 0;
     }
                     /* WARNING: Switch is manually overridden */
@@ -51477,8 +51478,8 @@ override_jmp_000303c0_case_0:
       }
     }
     else {
-      iVar1 = DAT_00101f5e + -1;
-      if (DAT_00101f5e != 0 && iVar1 != 0) {
+      iVar1 = (char)duartb_settings.eight_bits + -1;
+      if ((char)duartb_settings.eight_bits != 0 && iVar1 != 0) {
         return 0;
       }
                     /* WARNING: Switch is manually overridden */
@@ -51490,8 +51491,8 @@ override_jmp_000303c0_case_0:
     }
   }
   else {
-    iVar1 = (int)DAT_00101f53 - 3;
-    if (2 < (uint)(int)DAT_00101f53 && iVar1 != 0) {
+    iVar1 = (int)(char)sci_settings.parity - 3;
+    if (2 < (uint)(int)(char)sci_settings.parity && iVar1 != 0) {
       return 0;
     }
                     /* WARNING: Switch is manually overridden */
@@ -51541,13 +51542,13 @@ int scpi_set_SYSTem_COMMunicate_SER1_RECeive_PACE(void *parameters,void *respons
 int scpi_query_SYSTem_COMMunicate_SER1_RECeive_PACE(void *parameters,void *response,void *call)
 
 {
-  char cVar1;
+  uint8_t uVar1;
   
-  cVar1 = DAT_00101f54;
+  uVar1 = sci_settings.xon_xoff;
   if (*(short *)parameters == 0) {
-    cVar1 = DAT_00101f5c;
+    uVar1 = duartb_settings.xon_xoff;
   }
-  *(short *)response = (short)cVar1;
+  *(short *)response = (short)(char)uVar1;
   return 0;
 }
 
@@ -51610,14 +51611,14 @@ int scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE
 
 {
   int iVar1;
-  char cVar2;
+  uint8_t uVar2;
   
-  cVar2 = DAT_00101f53;
+  uVar2 = sci_settings.parity;
   if (*(short *)parameters == 0) {
-    cVar2 = DAT_00101f5b;
+    uVar2 = duartb_settings.parity;
   }
-  iVar1 = (int)cVar2 - 3;
-  if ((uint)(int)cVar2 < 3 || iVar1 == 0) {
+  iVar1 = (int)(char)uVar2 - 3;
+  if ((uint)(int)(char)uVar2 < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_0003054e)[(short)iVar1]) {
     case 8:
@@ -51684,8 +51685,8 @@ int scpi_query_SYSTem_COMMunicate_SER1_RECeive_SBITs(void *parameters,void *resp
       }
     }
     else {
-      iVar1 = DAT_00101f5f + -1;
-      if (DAT_00101f5f != 0 && iVar1 != 0) {
+      iVar1 = (char)duartb_settings.two_stop_bits + -1;
+      if ((char)duartb_settings.two_stop_bits != 0 && iVar1 != 0) {
         return 0;
       }
                     /* WARNING: Switch is manually overridden */
@@ -51933,21 +51934,21 @@ undefined4 lifetime_record_read(void)
   uVar2 = record_checksum(&DAT_00400060,0x20);
   uVar1 = CONCAT22(extraout_D0u,uVar2);
   if (uVar2 == _DAT_00400060) {
-    _DAT_00101d04 = _DAT_00400062;
-    _DAT_00101d08 = _DAT_00400066;
+    lifetime.date = _DAT_00400062;
+    lifetime.count = _DAT_00400066;
     uVar1 = (uint)_DAT_0040006a & 0xe8000000;
     if (uVar1 == 0xe8000000) {
-      lifetime_efc = 524288.0;
+      lifetime.efc = 524288.0;
     }
     else {
-      lifetime_efc = _DAT_0040006a;
+      lifetime.efc = _DAT_0040006a;
     }
     uVar3 = 1;
   }
   else {
-    _DAT_00101d04 = 0x7ca0101;
-    _DAT_00101d08 = 0;
-    lifetime_efc = 524288.0;
+    lifetime.date = 0x7ca0101;
+    lifetime.count = 0;
+    lifetime.efc = 524288.0;
     uVar3 = 0;
   }
   return CONCAT31((int3)(uVar1 >> 8),uVar3);
@@ -51956,7 +51957,6 @@ undefined4 lifetime_record_read(void)
 
 /* 00030ab4 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* writes the 32-byte checksummed lifetime record at EEPROM 0x400060, the date, its count and the
    EFC, when it has changed */
 
@@ -51966,14 +51966,14 @@ undefined4 lifetime_record_write(void)
   int iVar1;
   undefined4 uVar2;
   uint16_t local_24;
-  undefined4 local_22;
-  undefined4 local_1e;
+  uint32_t local_22;
+  int32_t local_1e;
   float local_1a;
   
   memset(&local_24,0xff,0x20);
-  local_1e = _DAT_00101d08;
-  local_22 = _DAT_00101d04;
-  local_1a = lifetime_efc;
+  local_1e = lifetime.count;
+  local_22 = lifetime.date;
+  local_1a = lifetime.efc;
   local_24 = record_checksum(&local_24,0x20);
   iVar1 = memcmp(&local_24,&DAT_00400060,0x20);
   if (iVar1 == 0) {
@@ -51988,7 +51988,6 @@ undefined4 lifetime_record_write(void)
 
 /* 00030b66 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules
    its clock event */
 
@@ -52014,11 +52013,11 @@ void lifetime_update(int param_1)
     puVar4 = (undefined4 *)((int)puVar4 + 1);
     puVar5 = puVar5 + 1;
   } while (sVar3 != -1);
-  if (_DAT_00101d04 != param_1) {
-    _DAT_00101d04 = param_1;
-    _DAT_00101d08 = _DAT_00101d08 + 1;
+  if (lifetime.date != param_1) {
+    lifetime.date = param_1;
+    lifetime.count = lifetime.count + 1;
     if (pll.stage == PLL_STAGE_NORMAL_PLL) {
-      lifetime_efc = pll.efc;
+      lifetime.efc = pll.efc;
     }
     lifetime_record_write();
   }
@@ -52030,7 +52029,7 @@ void lifetime_update(int param_1)
   local_12.time = 0x30000;
   datetime_add(&local_12,&pStack_1a);
   local_a = &LAB_00030b30;
-  _DAT_00101d14 = clk_do(&uStack_1e);
+  lifetime_event = (klok_entry *)clk_do(&uStack_1e);
   return;
 }
 
@@ -52093,8 +52092,8 @@ undefined4 save_calibration_block(undefined4 param_1)
 
 /* 00030d2e */
 
-/* reads the serial settings from the parameter record at EEPROM 0x400000, or sets their defaults if
-   its checksum fails
+/* reads DUART channel B's serial settings from the parameter record at EEPROM 0x400000, or sets
+   their defaults if its checksum fails; always sets the SCI's defaults
    structures.md */
 
 undefined2 parameter_record_read(void)
@@ -52108,19 +52107,19 @@ undefined2 parameter_record_read(void)
   uVar3 = record_checksum(&DAT_00400000,0x10);
   bVar4 = uVar3 != DAT_00400000;
   if (bVar4) {
-    memcpy((void *)0x101f58,&DAT_00030a34,9);
-    pvVar1 = memcpy((void *)0x101f50,&DAT_00030a2c,6);
+    memcpy(&duartb_settings,&DAT_00030a34,9);
+    pvVar1 = memcpy(&sci_settings,&DAT_00030a2c,6);
     uVar2 = (char)((uint)pvVar1 >> 8);
   }
   else {
-    DAT_00101f5a = DAT_00400002;
-    DAT_00101f5b = DAT_00400003;
-    DAT_00101f5c = DAT_00400004;
-    DAT_00101f5d = DAT_00400005;
-    DAT_00101f5e = DAT_00400006;
-    DAT_00101f5f = DAT_00400007;
-    DAT_00101f60 = DAT_00400008;
-    pvVar1 = memcpy((void *)0x101f50,&DAT_00030a2c,6);
+    duartb_settings.baud = DAT_00400002;
+    duartb_settings.parity = DAT_00400003;
+    duartb_settings.xon_xoff = DAT_00400004;
+    duartb_settings.field_05 = DAT_00400005;
+    duartb_settings.eight_bits = DAT_00400006;
+    duartb_settings.two_stop_bits = DAT_00400007;
+    duartb_settings.echo = DAT_00400008;
+    pvVar1 = memcpy(&sci_settings,&DAT_00030a2c,6);
     uVar2 = (char)((uint)pvVar1 >> 8);
   }
   return CONCAT11(uVar2,!bVar4);
@@ -52139,30 +52138,30 @@ bool save_parameter_record(byte param_1)
 {
   char cVar1;
   uint16_t local_14;
-  undefined1 local_12;
-  undefined1 local_11;
-  undefined1 local_10;
-  undefined1 local_f;
-  undefined1 local_e;
-  undefined1 local_d;
-  undefined1 local_c;
-  undefined1 local_b;
-  undefined1 local_a;
-  undefined1 local_9;
-  undefined1 local_8;
+  uint8_t local_12;
+  uint8_t local_11;
+  uint8_t local_10;
+  uint8_t local_f;
+  uint8_t local_e;
+  uint8_t local_d;
+  uint8_t local_c;
+  uint8_t local_b;
+  uint8_t local_a;
+  uint8_t local_9;
+  uint8_t local_8;
   
   memset(&local_14,0xff,0x10);
-  local_12 = DAT_00101f5a;
-  local_11 = DAT_00101f5b;
-  local_10 = DAT_00101f5c;
-  local_f = DAT_00101f5d;
-  local_e = DAT_00101f5e;
-  local_d = DAT_00101f5f;
-  local_c = DAT_00101f60;
-  local_b = DAT_00101f52;
-  local_a = DAT_00101f53;
-  local_9 = DAT_00101f54;
-  local_8 = DAT_00101f55;
+  local_12 = duartb_settings.baud;
+  local_11 = duartb_settings.parity;
+  local_10 = duartb_settings.xon_xoff;
+  local_f = duartb_settings.field_05;
+  local_e = duartb_settings.eight_bits;
+  local_d = duartb_settings.two_stop_bits;
+  local_c = duartb_settings.echo;
+  local_b = sci_settings.baud;
+  local_a = sci_settings.parity;
+  local_9 = sci_settings.xon_xoff;
+  local_8 = sci_settings.echo;
   local_14 = record_checksum(&local_14,0x10);
   cVar1 = eeprom_write((char *)&DAT_00400000,(char *)&local_14,0x10);
   if (cVar1 == '\0') {
@@ -52179,14 +52178,13 @@ bool save_parameter_record(byte param_1)
 void eeprom_lock_init(void)
 
 {
-  DAT_00101d34 = 0;
+  eeprom_writing = 0;
   return;
 }
 
 
 /* 00030f10 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* creates eepx, "Unable to create eepx"
    structures.md */
 
@@ -52201,11 +52199,11 @@ void eeprom_init(void)
     sprintf(acStack_54,"Unable to create eepx: %X",uVar1 & 0xff);
     fatal_error(acStack_54);
   }
-  eepx_status = 0;
-  _DAT_00101d20 = eepx_exchange;
-  _DAT_00101d24 = 0;
-  _DAT_00101d28 = 0;
-  uVar1 = psos_send_x(eepx_exchange,&eepx_status);
+  eepx_token.status = 0;
+  eepx_token.exchange = eepx_exchange;
+  eepx_token.owner = 0;
+  eepx_token.depth = 0;
+  uVar1 = psos_send_x(eepx_exchange,&eepx_token);
   if ((char)uVar1 != '\0') {
     sprintf(acStack_54,"Unable to initialize eepx: %X",uVar1 & 0xff);
     fatal_error(acStack_54);
@@ -52216,7 +52214,6 @@ void eeprom_init(void)
 
 /* 00030fae */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* "Unable to acquire eepx token"
    structures.md */
 
@@ -52233,15 +52230,15 @@ char eeprom_lock(void)
   if (DAT_001037dc != '\0') {
     if ((local_6 & 0x700) == 0) {
       uVar1 = psos_my_pid();
-      if (uVar1 == _DAT_00101d24) {
-        _DAT_00101d28 = _DAT_00101d28 + 1;
+      if (uVar1 == eepx_token.owner) {
+        eepx_token.depth = eepx_token.depth + 1;
         return '\0';
       }
-      uVar2 = psos_request_x(eepx_exchange,&eepx_status,0,0x2800);
+      uVar2 = psos_request_x(eepx_exchange,&eepx_token,0,0x2800);
       cVar3 = (char)uVar2;
       if (cVar3 == '\0') {
-        _DAT_00101d24 = uVar1;
-        _DAT_00101d28 = 0;
+        eepx_token.owner = uVar1;
+        eepx_token.depth = 0;
         return '\0';
       }
       if (cVar3 == -0x7f) {
@@ -52251,7 +52248,7 @@ char eeprom_lock(void)
       fatal_error(acStack_56);
       return cVar3;
     }
-    if (DAT_00101d34 != '\0') {
+    if (eeprom_writing != 0) {
       return '\x01';
     }
   }
@@ -52261,7 +52258,6 @@ char eeprom_lock(void)
 
 /* 0003105e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* "Unable to release eepx token"
    structures.md */
 
@@ -52275,23 +52271,23 @@ void eeprom_unlock(void)
   local_6 = enter_supervisor();
   if ((DAT_001037dc != '\0') && ((local_6 & 0x700) == 0)) {
     uVar1 = psos_my_pid();
-    if (uVar1 == _DAT_00101d24) {
-      if (_DAT_00101d28 == 0) {
-        _DAT_00101d24 = 0;
-        if (_DAT_00101d20 != eepx_exchange) {
+    if (uVar1 == eepx_token.owner) {
+      if (eepx_token.depth == 0) {
+        eepx_token.owner = 0;
+        if (eepx_token.exchange != eepx_exchange) {
           fatal_error("eepx semaphore has been corrupted");
         }
-        uVar1 = psos_send_x(eepx_exchange,&eepx_status);
+        uVar1 = psos_send_x(eepx_exchange,&eepx_token);
         if ((char)uVar1 != '\0') {
           sprintf(acStack_56,"Unable to release eepx token: %X",uVar1 & 0xff);
           fatal_error(acStack_56);
         }
       }
-      else if (_DAT_00101d28 < 0) {
+      else if (eepx_token.depth < 0) {
         fatal_error("eepx semaphore count is < 0");
       }
       else {
-        _DAT_00101d28 = _DAT_00101d28 + -1;
+        eepx_token.depth = eepx_token.depth + -1;
       }
     }
     else {
@@ -52328,7 +52324,7 @@ bool eeprom_write_byte(char *param_1,char param_2)
         bVar2 = true;
       }
     }
-    DAT_00101d34 = 0;
+    eeprom_writing = 0;
     eeprom_unlock();
     if (bVar2 == false) {
       status_happening('I');
@@ -52364,7 +52360,7 @@ bool eeprom_write_page(char *param_1,char *param_2,ushort param_3)
       (pcVar1 = param_1 + (param_3 - 1), ((uint)param_1 & 0xffffffc0) == ((uint)pcVar1 & 0xffffffc0)
       )) && (cVar4 = eeprom_lock(), cVar4 == '\0')) {
     bVar3 = false;
-    DAT_00101d34 = 1;
+    eeprom_writing = 1;
     for (iVar5 = 5; (bVar3 == false && (0 < iVar5)); iVar5 = iVar5 + -1) {
       sr = enter_supervisor_mode();
       pcVar8 = param_2;
@@ -52389,7 +52385,7 @@ bool eeprom_write_page(char *param_1,char *param_2,ushort param_3)
         }
       }
     }
-    DAT_00101d34 = 0;
+    eeprom_writing = 0;
     eeprom_unlock();
     return bVar3;
   }
@@ -53702,7 +53698,6 @@ undefined1 nv_slot_valid(void)
 
 /* 00032bc2 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* loads the settings from slot nv_slot when its record is good
    structures.md */
 
@@ -53760,7 +53755,7 @@ undefined4 nv_load_slot(void)
         puVar12 = puVar11;
       }
     }
-    _DAT_00101f64 = (short)puVar12 - (short)&uStack_74;
+    nv_numeric_bytes_loaded = (short)puVar12 - (short)&uStack_74;
     for (uVar10 = 0; uVar10 < 0x12; uVar10 = uVar10 + 1) {
       psVar2 = nv_setting_params[uVar10];
       for (cVar9 = '\0'; cVar9 <= (char)psVar2->last_index; cVar9 = cVar9 + '\x01') {
@@ -53780,7 +53775,7 @@ undefined4 nv_load_slot(void)
         puVar12 = puVar11;
       }
     }
-    _DAT_00101f66 = (short)puVar12 - (short)&uStack_74;
+    nv_bytes_loaded = (short)puVar12 - (short)&uStack_74;
     uVar4 = 1;
   }
   else {
@@ -55376,7 +55371,6 @@ void curv_signal(void)
 
 /* 0004173e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* if the curv task has signaled 0x100, copies its fit's results into pll; efc_history_update calls
    it first */
 
@@ -55387,10 +55381,10 @@ void aging_fit_collect(void)
   
   uVar1 = psos_get_v(0x100,0,(ulong *)0x0);
   if ((char)uVar1 == '\0') {
-    pll.efc_history.fit_a = _DAT_00101fea;
-    pll.efc_history.fit_b = _DAT_00101fee;
-    pll.efc_history.fit_c = _DAT_00101ff2;
-    pll.predicted_uncertainty = _DAT_00101ffe;
+    pll.efc_history.fit_a = aging_curve.a;
+    pll.efc_history.fit_b = aging_curve.b;
+    pll.efc_history.fit_c = aging_curve.c;
+    pll.predicted_uncertainty = aging_curve.predicted_uncertainty;
   }
   return;
 }
@@ -55415,7 +55409,6 @@ void curv_task(void)
 
 /* 000417c6 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* fits the oscillator's aging curve, for the curv task
    loop.md's aging fit, in curv: "failed line fit", "pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f",
    "HQ= %.1e mode= %d" */
@@ -55423,124 +55416,122 @@ void curv_task(void)
 void aging_fit(void)
 
 {
+  undefined3 extraout_var;
   uint uVar1;
   uint uVar2;
   float fVar3;
+  bool bVar4;
   int param2;
-  int iVar4;
   int iVar5;
-  double dVar6;
+  int iVar6;
+  double dVar7;
   double param3;
-  undefined4 uVar7;
   undefined4 uVar8;
   undefined4 uVar9;
   undefined4 uVar10;
+  undefined4 uVar11;
   char *message;
-  undefined1 uStack_7e;
-  undefined1 local_7d;
-  float local_6c;
-  float local_68;
-  float local_64;
-  float local_5c;
+  aging_curve_state candidate;
   char acStack_54 [80];
   
   param2 = 0;
+  iVar6 = 0;
+  aging_curve.minimum_weight = 2;
+  fit_span(&aging_curve);
   iVar5 = 0;
-  DAT_00101fd9 = 2;
-  fit_span(0x101fd8);
-  iVar4 = 0;
   do {
-    if (1 < pll.efc_history.weights[iVar4]) {
+    if (1 < pll.efc_history.weights[iVar5]) {
       param2 = param2 + 1;
     }
-    if (pll.efc_history.weights[iVar4] != 0) {
-      iVar5 = iVar5 + 1;
+    if (pll.efc_history.weights[iVar5] != 0) {
+      iVar6 = iVar6 + 1;
     }
-    iVar4 = iVar4 + 1;
-  } while (iVar4 < 0x40);
-  if ((param2 == 0x40) && (0x80 < _DAT_00101fde)) {
-    DAT_00101fd9 = 2;
-    uVar1 = fit_linear_halves(0x101fd8);
-    DAT_00101fd8 = 4;
-    fit_quality((char *)&DAT_00101fd8);
+    iVar5 = iVar5 + 1;
+  } while (iVar5 < 0x40);
+  if ((param2 == 0x40) && (0x80 < aging_curve.newest_time)) {
+    aging_curve.minimum_weight = 2;
+    uVar1 = fit_linear_halves(&aging_curve);
+    aging_curve.mode = 4;
+    fit_quality(&aging_curve);
   }
-  else if ((_DAT_00101fda < 0x81) || (param2 < 3)) {
+  else if ((aging_curve.oldest_time < 0x81) || (param2 < 3)) {
     if (param2 < 6) {
-      if (iVar5 < 10) {
-        if (iVar5 < 3) {
-          DAT_00101fd9 = 1;
-          uVar1 = fit_constant(0x101fd8);
+      if (iVar6 < 10) {
+        if (iVar6 < 3) {
+          aging_curve.minimum_weight = 1;
+          bVar4 = fit_constant(&aging_curve);
+          uVar1 = CONCAT31(extraout_var,bVar4);
         }
         else {
-          DAT_00101fd9 = 1;
-          uVar1 = fit_linear(0x101fd8);
+          aging_curve.minimum_weight = 1;
+          uVar1 = fit_linear(&aging_curve);
         }
-        DAT_00101fd8 = iVar5 >= 3;
-        _DAT_00101ffe = 0.000432;
+        aging_curve.mode = iVar6 >= 3;
+        aging_curve.predicted_uncertainty = 0.000432;
       }
       else {
-        DAT_00101fd9 = 1;
-        local_7d = 1;
-        uVar2 = fit_linear(0x101fd8);
-        uVar1 = fit_logarithmic((int)&uStack_7e);
+        aging_curve.minimum_weight = 1;
+        candidate.minimum_weight = 1;
+        uVar2 = fit_linear(&aging_curve);
+        uVar1 = fit_logarithmic(&candidate);
         uVar1 = uVar1 | uVar2;
-        DAT_00101fd8 = 3;
-        fVar3 = float_multiply(_DAT_00101ffa,0.75);
-        iVar5 = float_compare(fVar3,local_5c);
-        if ((0 < iVar5) || (param2 < 0x10)) {
-          _DAT_00101fea = local_6c;
-          _DAT_00101fee = local_68;
-          _DAT_00101ff2 = local_64;
-          _DAT_00101ffa = local_5c;
-          DAT_00101fd8 = 2;
+        aging_curve.mode = 3;
+        fVar3 = float_multiply(aging_curve.rms,0.75);
+        iVar6 = float_compare(fVar3,candidate.rms);
+        if ((0 < iVar6) || (param2 < 0x10)) {
+          aging_curve.a = candidate.a;
+          aging_curve.b = candidate.b;
+          aging_curve.c = candidate.c;
+          aging_curve.rms = candidate.rms;
+          aging_curve.mode = 2;
         }
-        fit_quality((char *)&DAT_00101fd8);
+        fit_quality(&aging_curve);
       }
     }
     else {
-      DAT_00101fd9 = 2;
-      local_7d = 2;
-      uVar2 = fit_linear(0x101fd8);
-      uVar1 = fit_logarithmic((int)&uStack_7e);
+      aging_curve.minimum_weight = 2;
+      candidate.minimum_weight = 2;
+      uVar2 = fit_linear(&aging_curve);
+      uVar1 = fit_logarithmic(&candidate);
       uVar1 = uVar1 | uVar2;
-      DAT_00101fd8 = 3;
-      fVar3 = float_multiply(_DAT_00101ffa,0.75);
-      iVar5 = float_compare(fVar3,local_5c);
-      if ((0 < iVar5) || (param2 < 0x10)) {
-        _DAT_00101fea = local_6c;
-        _DAT_00101fee = local_68;
-        _DAT_00101ff2 = local_64;
-        _DAT_00101ffa = local_5c;
-        DAT_00101fd8 = 2;
+      aging_curve.mode = 3;
+      fVar3 = float_multiply(aging_curve.rms,0.75);
+      iVar6 = float_compare(fVar3,candidate.rms);
+      if ((0 < iVar6) || (param2 < 0x10)) {
+        aging_curve.a = candidate.a;
+        aging_curve.b = candidate.b;
+        aging_curve.c = candidate.c;
+        aging_curve.rms = candidate.rms;
+        aging_curve.mode = 2;
       }
-      fit_quality((char *)&DAT_00101fd8);
+      fit_quality(&aging_curve);
     }
   }
   else {
-    DAT_00101fd9 = 2;
-    uVar1 = fit_linear(0x101fd8);
-    DAT_00101fd8 = 3;
-    fit_quality((char *)&DAT_00101fd8);
+    aging_curve.minimum_weight = 2;
+    uVar1 = fit_linear(&aging_curve);
+    aging_curve.mode = 3;
+    fit_quality(&aging_curve);
   }
   if (DAT_00102541 != '\0') {
     if (uVar1 == 1) {
       message = "failed line fit\r\n";
     }
     else {
-      dVar6 = float_to_double(_DAT_00101ffa);
-      uVar9 = (undefined4)((ulonglong)__ghidra_bits(dVar6) >> 0x20);
-      uVar10 = SUB84(dVar6,0);
-      dVar6 = float_to_double(_DAT_00101ff2);
-      uVar7 = (undefined4)((ulonglong)__ghidra_bits(dVar6) >> 0x20);
-      uVar8 = SUB84(dVar6,0);
-      dVar6 = float_to_double(_DAT_00101fee);
-      param3 = float_to_double(_DAT_00101fea);
-      debug_sprintf(acStack_54,"pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f\r\n",param2,param3,dVar6,
-                    __ghidra_as(double, CONCAT44(uVar7,uVar8)),__ghidra_as(double, CONCAT44(uVar9,uVar10)));
+      dVar7 = float_to_double(aging_curve.rms);
+      uVar10 = (undefined4)((ulonglong)__ghidra_bits(dVar7) >> 0x20);
+      uVar11 = SUB84(dVar7,0);
+      dVar7 = float_to_double(aging_curve.c);
+      uVar8 = (undefined4)((ulonglong)__ghidra_bits(dVar7) >> 0x20);
+      uVar9 = SUB84(dVar7,0);
+      dVar7 = float_to_double(aging_curve.b);
+      param3 = float_to_double(aging_curve.a);
+      debug_sprintf(acStack_54,"pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f\r\n",param2,param3,dVar7,
+                    __ghidra_as(double, CONCAT44(uVar8,uVar9)),__ghidra_as(double, CONCAT44(uVar10,uVar11)));
       task_dmessage(acStack_54);
-      uVar1 = (uint)DAT_00101fd8;
-      dVar6 = float_to_double(_DAT_00101ffe);
-      debug_sprintf(acStack_54,"HQ= %.1e mode= %d\r\n",dVar6,uVar1);
+      uVar1 = (uint)aging_curve.mode;
+      dVar7 = float_to_double(aging_curve.predicted_uncertainty);
+      debug_sprintf(acStack_54,"HQ= %.1e mode= %d\r\n",dVar7,uVar1);
       message = acStack_54;
     }
     task_dmessage(message);
@@ -55554,7 +55545,7 @@ void aging_fit(void)
 /* a slope from the two halves of the last 64 averages, and its residuals
    loop.md's aging fit */
 
-undefined4 fit_linear_halves(int param_1)
+int fit_linear_halves(aging_curve_state *curve)
 
 {
   uint uVar1;
@@ -55569,27 +55560,27 @@ undefined4 fit_linear_halves(int param_1)
   fVar5 = 0.0;
   local_8 = 0.0;
   a = 0.0;
-  fit_span(param_1);
-  for (uVar3 = *(uint *)(param_1 + 0xe); uVar1 = *(int *)(param_1 + 0xe) - 0x20U & 0x3f,
-      fVar2 = fVar5, uVar3 != uVar1; uVar3 = uVar3 - 1 & 0x3f) {
+  fit_span(curve);
+  for (uVar3 = curve->newest_index; uVar1 = curve->newest_index - 0x20U & 0x3f, fVar2 = fVar5,
+      uVar3 != uVar1; uVar3 = uVar3 - 1 & 0x3f) {
     fVar5 = float_add(fVar5,pll.efc_history.averages[uVar3]);
   }
-  for (; uVar1 != *(uint *)(param_1 + 0xe); uVar1 = uVar1 - 1 & 0x3f) {
+  for (; uVar1 != curve->newest_index; uVar1 = uVar1 - 1 & 0x3f) {
     fVar5 = float_subtract(fVar5,pll.efc_history.averages[uVar1]);
     fVar2 = float_add(fVar2,pll.efc_history.averages[uVar1]);
   }
   fVar5 = float_divide(fVar5,1024.0);
-  *(float *)(param_1 + 0x16) = fVar5;
-  *(undefined4 *)(param_1 + 0x1a) = 0;
-  fVar5 = float_add(pll.efc_history.times[*(int *)(param_1 + 0xe)],-32.5);
-  fVar5 = float_multiply(fVar5,*(float *)(param_1 + 0x16));
+  curve->b = fVar5;
+  curve->c = 0.0;
+  fVar5 = float_add(pll.efc_history.times[curve->newest_index],-32.5);
+  fVar5 = float_multiply(fVar5,curve->b);
   fVar2 = float_divide(fVar2,64.0);
   fVar5 = float_subtract(fVar2,fVar5);
-  *(float *)(param_1 + 0x12) = fVar5;
+  curve->a = fVar5;
   iVar4 = 0;
   do {
-    fVar5 = float_multiply(*(float *)(param_1 + 0x16),pll.efc_history.times[iVar4]);
-    fVar5 = float_add(fVar5,*(float *)(param_1 + 0x12));
+    fVar5 = float_multiply(curve->b,pll.efc_history.times[iVar4]);
+    fVar5 = float_add(fVar5,curve->a);
     fVar5 = float_subtract_reversed(fVar5,pll.efc_history.averages[iVar4]);
     fVar5 = float_multiply(fVar5,fVar5);
     a = float_add(a,fVar5);
@@ -55600,8 +55591,8 @@ undefined4 fit_linear_halves(int param_1)
   dVar6 = float_to_double(fVar5);
   dVar6 = sqrt(dVar6);
   fVar5 = double_to_float(dVar6);
-  *(float *)(param_1 + 0x22) = fVar5;
-  fit_evaluate_latest(param_1,&local_8);
+  curve->rms = fVar5;
+  fit_evaluate_latest(curve,&local_8);
   return 0;
 }
 
@@ -55611,32 +55602,26 @@ undefined4 fit_linear_halves(int param_1)
 /* fits the EFC history as a line in time, by linear_regression
    loop.md's aging fit */
 
-undefined4 fit_linear(int param_1)
+int fit_linear(aging_curve_state *curve)
 
 {
-  undefined4 uVar1;
-  byte local_22 [2];
-  undefined4 local_20;
-  undefined4 local_1c;
-  undefined4 local_18;
-  undefined4 local_14;
-  undefined4 local_10;
-  undefined4 local_c;
+  int iVar1;
+  regression_record regression;
   float local_8;
   
   local_8 = 0.0;
-  fit_span(param_1);
-  local_22[0] = *(byte *)(param_1 + 1);
-  local_20 = 0x1022f6;
-  local_1c = 0x1021b6;
-  local_18 = 0x1022b6;
-  uVar1 = linear_regression(local_22,1);
-  *(undefined4 *)(param_1 + 0x12) = local_10;
-  *(undefined4 *)(param_1 + 0x16) = local_14;
-  *(undefined4 *)(param_1 + 0x1a) = 0;
-  *(undefined4 *)(param_1 + 0x22) = local_c;
-  fit_evaluate_latest(param_1,&local_8);
-  return uVar1;
+  fit_span(curve);
+  regression.minimum_weight = curve->minimum_weight;
+  regression.x = pll.efc_history.times;
+  regression.y = pll.efc_history.averages;
+  regression.weights = pll.efc_history.weights;
+  iVar1 = linear_regression(&regression,1);
+  curve->a = regression.intercept;
+  curve->b = regression.slope;
+  curve->c = 0.0;
+  curve->rms = regression.rms;
+  fit_evaluate_latest(curve,&local_8);
+  return iVar1;
 }
 
 
@@ -55645,7 +55630,7 @@ undefined4 fit_linear(int param_1)
 /* fits the EFC history as a constant, its weighted mean
    loop.md's aging fit */
 
-bool fit_constant(int param_1)
+bool fit_constant(aging_curve_state *curve)
 
 {
   float a;
@@ -55657,23 +55642,23 @@ bool fit_constant(int param_1)
   fVar2 = 0.0;
   iVar1 = 0;
   do {
-    if (*(byte *)(param_1 + 1) <= pll.efc_history.weights[iVar1]) {
+    if (curve->minimum_weight <= pll.efc_history.weights[iVar1]) {
       i = i + 1;
       fVar2 = float_add(fVar2,pll.efc_history.averages[iVar1]);
     }
     iVar1 = iVar1 + 1;
   } while (iVar1 < 0x40);
   if (i == 0) {
-    *(undefined4 *)(param_1 + 0x12) = 0;
+    curve->a = 0.0;
   }
   else {
     a = integer_to_float(i);
     fVar2 = float_divide_reversed(a,fVar2);
-    *(float *)(param_1 + 0x12) = fVar2;
+    curve->a = fVar2;
   }
-  *(undefined4 *)(param_1 + 0x16) = 0;
-  *(undefined4 *)(param_1 + 0x1a) = 0;
-  *(undefined4 *)(param_1 + 0x22) = 0;
+  curve->b = 0.0;
+  curve->c = 0.0;
+  curve->rms = 0.0;
   return i == 0;
 }
 
@@ -55684,11 +55669,11 @@ bool fit_constant(int param_1)
    each pass
    loop.md's aging fit */
 
-int fit_logarithmic(int param_1)
+int fit_logarithmic(aging_curve_state *curve)
 
 {
   float a;
-  int iVar1;
+  uint32_t uVar1;
   float f;
   int iVar2;
   undefined4 extraout_A0;
@@ -55698,21 +55683,21 @@ int fit_logarithmic(int param_1)
   float local_8;
   
   local_8 = 0.0;
-  fit_span(param_1);
-  fit_log_initial(param_1);
+  fit_span(curve);
+  fit_log_initial(curve);
   do {
-    a = *(float *)(param_1 + 0x22);
-    iVar1 = fit_log_search(param_1,1);
-    float_divide_in_place((float *)(param_1 + 0x1e),10.0);
-    f = float_subtract(a,*(float *)(param_1 + 0x22));
+    a = curve->rms;
+    uVar1 = fit_log_search(curve,1);
+    float_divide_in_place(&curve->c_step,10.0);
+    f = float_subtract(a,curve->rms);
     a_00 = float_to_double(f);
     a_01 = float_to_double(a);
     double_multiply(a_01,0.01);
     iVar2 = double_compare(a_00,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
     if (-1 < iVar2) break;
-  } while (iVar1 == 0);
-  fit_evaluate_latest(param_1,&local_8);
-  return iVar1;
+  } while (uVar1 == 0);
+  fit_evaluate_latest(curve,&local_8);
+  return uVar1;
 }
 
 
@@ -55721,7 +55706,7 @@ int fit_logarithmic(int param_1)
 /* the first and last sample times among the weighted entries
    loop.md's aging fit */
 
-void fit_span(int param_1)
+void fit_span(aging_curve_state *curve)
 
 {
   float fVar1;
@@ -55729,24 +55714,24 @@ void fit_span(int param_1)
   uint uVar3;
   int iVar4;
   
-  *(undefined4 *)(param_1 + 2) = 0;
-  *(undefined4 *)(param_1 + 6) = 0;
+  curve->oldest_time = 0;
+  curve->newest_time = 0;
   iVar4 = 0;
   do {
-    if (*(byte *)(param_1 + 1) <= pll.efc_history.weights[iVar4]) {
-      fVar1 = unsigned_to_float(*(uint *)(param_1 + 6));
+    if (curve->minimum_weight <= pll.efc_history.weights[iVar4]) {
+      fVar1 = unsigned_to_float(curve->newest_time);
       iVar2 = float_compare(fVar1,pll.efc_history.times[iVar4]);
-      if ((iVar2 < 0) || (*(int *)(param_1 + 6) == 0)) {
-        *(int *)(param_1 + 0xe) = iVar4;
+      if ((iVar2 < 0) || (curve->newest_time == 0)) {
+        curve->newest_index = iVar4;
         uVar3 = float_to_unsigned(pll.efc_history.times[iVar4]);
-        *(uint *)(param_1 + 6) = uVar3;
+        curve->newest_time = uVar3;
       }
-      fVar1 = unsigned_to_float(*(uint *)(param_1 + 2));
+      fVar1 = unsigned_to_float(curve->oldest_time);
       iVar2 = float_compare(fVar1,pll.efc_history.times[iVar4]);
-      if ((0 < iVar2) || (*(int *)(param_1 + 2) == 0)) {
-        *(int *)(param_1 + 10) = iVar4;
+      if ((0 < iVar2) || (curve->oldest_time == 0)) {
+        curve->oldest_index = iVar4;
         uVar3 = float_to_unsigned(pll.efc_history.times[iVar4]);
-        *(uint *)(param_1 + 2) = uVar3;
+        curve->oldest_time = uVar3;
       }
     }
     iVar4 = iVar4 + 1;
@@ -55760,19 +55745,19 @@ void fit_span(int param_1)
 /* the fit at the latest sample, and its residual
    loop.md's aging fit */
 
-void fit_evaluate_latest(int param_1,float *param_2)
+void fit_evaluate_latest(aging_curve_state *curve,float *fitted)
 
 {
   float fVar1;
   float b;
   
-  fVar1 = unsigned_to_float(*(uint *)(param_1 + 6));
-  fVar1 = float_multiply(fVar1,*(float *)(param_1 + 0x16));
-  b = float_multiply(*(float *)(param_1 + 0x1a),pll.efc_history.logs[*(int *)(param_1 + 0xe)]);
+  fVar1 = unsigned_to_float(curve->newest_time);
+  fVar1 = float_multiply(fVar1,curve->b);
+  b = float_multiply(curve->c,pll.efc_history.logs[curve->newest_index]);
   fVar1 = float_add(fVar1,b);
-  *param_2 = fVar1;
-  fVar1 = float_subtract(pll.efc_history.averages[*(int *)(param_1 + 0xe)],*param_2);
-  *(float *)(param_1 + 0x12) = fVar1;
+  *fitted = fVar1;
+  fVar1 = float_subtract(pll.efc_history.averages[curve->newest_index],*fitted);
+  curve->a = fVar1;
   return;
 }
 
@@ -55782,10 +55767,10 @@ void fit_evaluate_latest(int param_1,float *param_2)
 /* the log term's first coefficient and step
    loop.md's aging fit */
 
-undefined4 fit_log_initial(int param_1)
+int fit_log_initial(aging_curve_state *curve)
 
 {
-  undefined4 uVar1;
+  int iVar1;
   float fVar2;
   float f;
   int iVar3;
@@ -55793,36 +55778,31 @@ undefined4 fit_log_initial(int param_1)
   undefined4 extraout_A1;
   double dVar4;
   double b;
-  byte local_1e [2];
-  undefined4 local_1c;
-  undefined4 local_18;
-  undefined4 local_14;
-  float local_10;
-  float local_8;
+  regression_record regression;
   
-  local_1e[0] = *(byte *)(param_1 + 1);
-  local_1c = 0x1022f6;
-  local_18 = 0x1021b6;
-  local_14 = 0x1022b6;
-  uVar1 = linear_regression(local_1e,1);
-  fVar2 = unsigned_to_float(*(int *)(param_1 + 6) - *(int *)(param_1 + 2));
-  fVar2 = float_multiply(fVar2,local_10);
+  regression.minimum_weight = curve->minimum_weight;
+  regression.x = pll.efc_history.times;
+  regression.y = pll.efc_history.averages;
+  regression.weights = pll.efc_history.weights;
+  iVar1 = linear_regression(&regression,1);
+  fVar2 = unsigned_to_float(curve->newest_time - curve->oldest_time);
+  fVar2 = float_multiply(fVar2,regression.slope);
   f = float_abs(fVar2);
   dVar4 = float_to_double(f);
-  b = float_to_double(local_8);
+  b = float_to_double(regression.rms);
   double_multiply(10.0,b);
   iVar3 = double_compare(dVar4,__ghidra_as(double, CONCAT44(extraout_A0,extraout_A1)));
   if (0 < iVar3) {
-    dVar4 = float_to_double(local_8);
+    dVar4 = float_to_double(regression.rms);
     dVar4 = double_multiply(10.0,dVar4);
     fVar2 = double_to_float(dVar4);
   }
-  fVar2 = float_divide(fVar2,pll.efc_history.averages[*(int *)(param_1 + 0xe)]);
-  fVar2 = float_subtract(fVar2,pll.efc_history.averages[*(int *)(param_1 + 10)]);
-  *(float *)(param_1 + 0x1e) = fVar2;
-  *(float *)(param_1 + 0x1a) = fVar2;
-  *(float *)(param_1 + 0x22) = local_8;
-  return uVar1;
+  fVar2 = float_divide(fVar2,pll.efc_history.averages[curve->newest_index]);
+  fVar2 = float_subtract(fVar2,pll.efc_history.averages[curve->oldest_index]);
+  curve->c_step = fVar2;
+  curve->c = fVar2;
+  curve->rms = regression.rms;
+  return iVar1;
 }
 
 
@@ -55831,80 +55811,69 @@ undefined4 fit_log_initial(int param_1)
 /* steps the log term's coefficient while the fit improves
    loop.md's aging fit */
 
-uint fit_log_search(int param_1,undefined4 param_2)
+uint32_t fit_log_search(aging_curve_state *curve,int with_slope)
 
 {
   float fVar1;
-  undefined4 uVar2;
-  uint extraout_D0;
-  undefined4 extraout_D0_00;
-  uint extraout_D0_01;
-  int iVar3;
-  undefined4 extraout_D0_02;
-  uint extraout_D0_03;
-  undefined4 extraout_D0_04;
-  uint extraout_D0_05;
+  float fVar2;
+  uint uVar3;
+  float extraout_D0;
   uint uVar4;
-  uint extraout_D0_06;
-  uint uVar5;
-  float local_2c;
-  float local_28;
-  float local_24;
-  undefined4 local_20;
-  undefined4 local_1c;
-  undefined4 local_18;
-  undefined4 *local_14;
-  float *local_10;
-  undefined4 local_c;
+  int iVar5;
+  float extraout_D0_00;
+  float extraout_D0_01;
+  uint uVar6;
+  float rms_values [3];
+  float c_values [3];
+  three_point_fit three_point;
   
-  fit_log_residuals(param_1,param_2);
-  local_28 = *(float *)(param_1 + 0x22);
-  local_1c = *(undefined4 *)(param_1 + 0x1a);
-  float_add_in_place((float *)(param_1 + 0x1a),*(float *)(param_1 + 0x1e));
-  local_18 = extraout_D0_00;
-  fit_log_residuals(param_1,param_2);
-  uVar5 = extraout_D0_01 | extraout_D0;
-  local_24 = *(float *)(param_1 + 0x22);
-  iVar3 = float_compare(local_28,local_24);
-  if (iVar3 < 1) {
-    float_subtract_in_place((float *)(param_1 + 0x1a),*(float *)(param_1 + 0x1e));
-    uVar2 = local_18;
-    fVar1 = local_24;
-    local_18 = local_1c;
-    local_1c = uVar2;
-    local_24 = local_28;
-    local_28 = fVar1;
-    while ((iVar3 = float_compare(local_28,local_24), 0 < iVar3 && (uVar5 == 0))) {
-      local_20 = local_1c;
-      local_1c = local_18;
-      float_subtract_in_place((float *)(param_1 + 0x1a),*(float *)(param_1 + 0x1e));
-      local_18 = extraout_D0_04;
-      fit_log_residuals(param_1,param_2);
-      local_2c = local_28;
-      local_28 = local_24;
-      local_24 = *(float *)(param_1 + 0x22);
-      uVar5 = extraout_D0_05;
+  uVar3 = fit_log_residuals(curve,with_slope);
+  rms_values[1] = curve->rms;
+  c_values[1] = curve->c;
+  float_add_in_place(&curve->c,curve->c_step);
+  c_values[2] = extraout_D0;
+  uVar4 = fit_log_residuals(curve,with_slope);
+  uVar4 = uVar4 | uVar3;
+  rms_values[2] = curve->rms;
+  iVar5 = float_compare(rms_values[1],rms_values[2]);
+  if (iVar5 < 1) {
+    float_subtract_in_place(&curve->c,curve->c_step);
+    fVar2 = c_values[2];
+    fVar1 = rms_values[2];
+    c_values[2] = c_values[1];
+    c_values[1] = fVar2;
+    rms_values[2] = rms_values[1];
+    rms_values[1] = fVar1;
+    while ((iVar5 = float_compare(rms_values[1],rms_values[2]), 0 < iVar5 && (uVar4 == 0))) {
+      c_values[0] = c_values[1];
+      c_values[1] = c_values[2];
+      float_subtract_in_place(&curve->c,curve->c_step);
+      c_values[2] = extraout_D0_01;
+      uVar4 = fit_log_residuals(curve,with_slope);
+      rms_values[0] = rms_values[1];
+      rms_values[1] = rms_values[2];
+      rms_values[2] = curve->rms;
     }
   }
   else {
-    while (iVar3 = float_compare(local_24,local_28), iVar3 < 0) {
-      local_20 = local_1c;
-      local_1c = local_18;
-      float_add_in_place((float *)(param_1 + 0x1a),*(float *)(param_1 + 0x1e));
-      local_18 = extraout_D0_02;
-      fit_log_residuals(param_1,param_2);
-      uVar5 = extraout_D0_03 | uVar5;
-      local_2c = local_28;
-      local_28 = local_24;
-      local_24 = *(float *)(param_1 + 0x22);
+    while (iVar5 = float_compare(rms_values[2],rms_values[1]), iVar5 < 0) {
+      c_values[0] = c_values[1];
+      c_values[1] = c_values[2];
+      float_add_in_place(&curve->c,curve->c_step);
+      c_values[2] = extraout_D0_00;
+      uVar3 = fit_log_residuals(curve,with_slope);
+      uVar4 = uVar3 | uVar4;
+      rms_values[0] = rms_values[1];
+      rms_values[1] = rms_values[2];
+      rms_values[2] = curve->rms;
     }
   }
-  local_14 = &local_20;
-  local_10 = &local_2c;
-  uVar4 = fit_three_point((int *)&local_14);
-  *(undefined4 *)(param_1 + 0x1a) = local_c;
-  fit_log_residuals(param_1,param_2);
-  return uVar4 | uVar5 | extraout_D0_06;
+  three_point.x = c_values;
+  three_point.y = rms_values;
+  uVar3 = fit_three_point(&three_point);
+  curve->c = three_point.vertex_x;
+  uVar6 = fit_log_residuals(curve,with_slope);
+  return uVar3 | uVar4 | uVar6;
 }
 
 
@@ -55913,47 +55882,41 @@ uint fit_log_search(int param_1,undefined4 param_2)
 /* the history less the log term, regressed on time
    loop.md's aging fit */
 
-void fit_log_residuals(int param_1,int param_2)
+int fit_log_residuals(aging_curve_state *curve,int with_slope)
 
 {
   float fVar1;
   int iVar2;
   float local_11e [64];
-  byte local_1e [2];
-  undefined4 local_1c;
-  float *local_18;
-  undefined4 local_14;
-  undefined4 local_10;
-  undefined4 local_c;
-  undefined4 local_8;
+  regression_record regression;
   
   iVar2 = 0;
   do {
-    if (*(byte *)(param_1 + 1) <= pll.efc_history.weights[iVar2]) {
-      fVar1 = float_multiply(*(float *)(param_1 + 0x1a),pll.efc_history.logs[iVar2]);
+    if (curve->minimum_weight <= pll.efc_history.weights[iVar2]) {
+      fVar1 = float_multiply(curve->c,pll.efc_history.logs[iVar2]);
       fVar1 = float_subtract_reversed(fVar1,pll.efc_history.averages[iVar2]);
       local_11e[iVar2] = fVar1;
     }
     iVar2 = iVar2 + 1;
   } while (iVar2 < 0x40);
-  local_1e[0] = *(byte *)(param_1 + 1);
-  local_1c = 0x1022f6;
-  local_18 = local_11e;
-  local_14 = 0x1022b6;
-  linear_regression(local_1e,param_2);
-  *(undefined4 *)(param_1 + 0x22) = local_8;
-  *(undefined4 *)(param_1 + 0x12) = local_c;
-  *(undefined4 *)(param_1 + 0x16) = local_10;
-  return;
+  regression.minimum_weight = curve->minimum_weight;
+  regression.x = pll.efc_history.times;
+  regression.y = local_11e;
+  regression.weights = pll.efc_history.weights;
+  iVar2 = linear_regression(&regression,with_slope);
+  curve->rms = regression.rms;
+  curve->a = regression.intercept;
+  curve->b = regression.slope;
+  return iVar2;
 }
 
 
 /* 00042128 */
 
-/* solves a curve through three points
+/* the parabola through three points' vertex, 1 and zeros if the points are degenerate
    loop.md's aging fit */
 
-undefined4 fit_three_point(int *param_1)
+int fit_three_point(three_point_fit *fit)
 
 {
   float *pfVar1;
@@ -55969,13 +55932,13 @@ undefined4 fit_three_point(int *param_1)
   float fVar10;
   float fVar11;
   
-  pfVar1 = (float *)*param_1;
+  pfVar1 = fit->x;
   fVar9 = *pfVar1;
   fVar10 = pfVar1[1];
   b = pfVar1[2];
-  fVar7 = *(float *)param_1[1];
-  fVar11 = ((float *)param_1[1])[1];
-  fVar8 = *(float *)(param_1[1] + 8);
+  fVar7 = *fit->y;
+  fVar11 = fit->y[1];
+  fVar8 = fit->y[2];
   fVar2 = float_subtract(fVar7,fVar11);
   fVar3 = float_subtract(fVar10,b);
   fVar2 = float_multiply(fVar2,fVar3);
@@ -56006,7 +55969,7 @@ undefined4 fit_three_point(int *param_1)
       fVar10 = float_subtract(fVar10,fVar11);
       fVar11 = float_subtract(fVar8,fVar7);
       fVar10 = float_divide(fVar10,fVar11);
-      param_1[2] = (int)__ghidra_bits(fVar10);
+      fit->vertex_x = fVar10;
       fVar7 = float_subtract(fVar8,fVar7);
       fVar9 = float_subtract(b,fVar9);
       fVar9 = float_divide(fVar7,fVar9);
@@ -56020,18 +55983,18 @@ undefined4 fit_three_point(int *param_1)
       fVar9 = float_add(fVar9,b);
       fVar9 = float_divide(fVar9,2.0);
       fVar9 = float_subtract(fVar9,fVar7);
-      param_1[2] = (int)__ghidra_bits(fVar9);
+      fit->vertex_x = fVar9;
       fVar9 = float_subtract(fVar10,fVar9);
       fVar9 = float_multiply(fVar9,fVar2);
-      fVar7 = float_subtract(fVar10,__ghidra_as(float, param_1[2]));
+      fVar7 = float_subtract(fVar10,fit->vertex_x);
       fVar9 = float_multiply(fVar9,fVar7);
       fVar9 = float_subtract_reversed(fVar9,fVar11);
     }
-    param_1[3] = (int)__ghidra_bits(fVar9);
+    fit->vertex_y = fVar9;
     return 0;
   }
-  param_1[2] = 0;
-  param_1[3] = 0;
+  fit->vertex_x = 0.0;
+  fit->vertex_y = 0.0;
   return 1;
 }
 
@@ -56041,7 +56004,7 @@ undefined4 fit_three_point(int *param_1)
 /* the means, Sxx and Sxy of the weighted entries of two arrays
    loop.md's aging fit */
 
-undefined4 linear_regression(byte *param_1,int param_2)
+int linear_regression(regression_record *record,int with_slope)
 
 {
   float fVar1;
@@ -56067,9 +56030,9 @@ undefined4 linear_regression(byte *param_1,int param_2)
   uVar4 = 0;
   iVar3 = 0;
   do {
-    if (*param_1 <= *(byte *)(*(int *)(param_1 + 10) + iVar3)) {
-      float_add_in_place(&local_18,*(float *)(*(int *)(param_1 + 2) + iVar3 * 4));
-      float_add_in_place(&local_14,*(float *)(*(int *)(param_1 + 6) + iVar3 * 4));
+    if (record->minimum_weight <= record->weights[iVar3]) {
+      float_add_in_place(&local_18,record->x[iVar3]);
+      float_add_in_place(&local_14,record->y[iVar3]);
       uVar4 = uVar4 + 1;
     }
     iVar3 = iVar3 + 1;
@@ -56082,17 +56045,17 @@ undefined4 linear_regression(byte *param_1,int param_2)
   }
   iVar3 = 0;
   do {
-    if (*param_1 <= *(byte *)(*(int *)(param_1 + 10) + iVar3)) {
-      fVar1 = float_subtract(*(float *)(*(int *)(param_1 + 2) + iVar3 * 4),unaff_D5);
-      fVar2 = float_subtract(*(float *)(*(int *)(param_1 + 2) + iVar3 * 4),unaff_D5);
+    if (record->minimum_weight <= record->weights[iVar3]) {
+      fVar1 = float_subtract(record->x[iVar3],unaff_D5);
+      fVar2 = float_subtract(record->x[iVar3],unaff_D5);
       fVar1 = float_multiply(fVar1,fVar2);
       fVar5 = float_add(fVar5,fVar1);
-      fVar1 = float_subtract(*(float *)(*(int *)(param_1 + 2) + iVar3 * 4),unaff_D5);
-      fVar2 = float_subtract(*(float *)(*(int *)(param_1 + 6) + iVar3 * 4),unaff_D4);
+      fVar1 = float_subtract(record->x[iVar3],unaff_D5);
+      fVar2 = float_subtract(record->y[iVar3],unaff_D4);
       fVar1 = float_multiply(fVar1,fVar2);
       float_add_in_place(&local_10,fVar1);
-      fVar1 = float_subtract(*(float *)(*(int *)(param_1 + 6) + iVar3 * 4),unaff_D4);
-      fVar2 = float_subtract(*(float *)(*(int *)(param_1 + 6) + iVar3 * 4),unaff_D4);
+      fVar1 = float_subtract(record->y[iVar3],unaff_D4);
+      fVar2 = float_subtract(record->y[iVar3],unaff_D4);
       fVar1 = float_multiply(fVar1,fVar2);
       float_add_in_place(&local_c,fVar1);
     }
@@ -56103,27 +56066,24 @@ undefined4 linear_regression(byte *param_1,int param_2)
   if ((0 < iVar3) &&
      (dVar6 = float_to_double(fVar5),
      ((ulonglong)__ghidra_bits(dVar6) & 0x7fffffff00000000) != 0 || SUB84(dVar6,0) != 0)) {
-    if (param_2 == 0) {
+    if (with_slope == 0) {
       fVar5 = integer_to_float(uVar4 - 2);
       fVar5 = float_divide_reversed(fVar5,local_c);
       fVar5 = float_abs(fVar5);
       dVar6 = float_to_double(fVar5);
       dVar6 = sqrt(dVar6);
       fVar5 = double_to_float(dVar6);
-      *(float *)(param_1 + 0x16) = fVar5;
-      *(float *)(param_1 + 0x12) = unaff_D4;
-      param_1[0xe] = 0;
-      param_1[0xf] = 0;
-      param_1[0x10] = 0;
-      param_1[0x11] = 0;
+      record->rms = fVar5;
+      record->intercept = unaff_D4;
+      record->slope = 0.0;
     }
     else {
       fVar1 = float_divide(local_10,fVar5);
-      *(float *)(param_1 + 0xe) = fVar1;
+      record->slope = fVar1;
       fVar1 = float_multiply(fVar1,fVar1);
       fVar5 = float_multiply(fVar1,fVar5);
       fVar5 = float_add(fVar5,local_c);
-      fVar1 = float_multiply(*(float *)(param_1 + 0xe),local_10);
+      fVar1 = float_multiply(record->slope,local_10);
       fVar1 = float_multiply(fVar1,2.0);
       local_8 = float_subtract(fVar5,fVar1);
       fVar5 = integer_to_float(uVar4 - 2);
@@ -56132,25 +56092,16 @@ undefined4 linear_regression(byte *param_1,int param_2)
       dVar6 = float_to_double(fVar5);
       dVar6 = sqrt(dVar6);
       fVar5 = double_to_float(dVar6);
-      *(float *)(param_1 + 0x16) = fVar5;
-      fVar5 = float_multiply(*(float *)(param_1 + 0xe),unaff_D5);
+      record->rms = fVar5;
+      fVar5 = float_multiply(record->slope,unaff_D5);
       fVar5 = float_subtract_reversed(fVar5,unaff_D4);
-      *(float *)(param_1 + 0x12) = fVar5;
+      record->intercept = fVar5;
     }
     return 0;
   }
-  param_1[0xe] = 0;
-  param_1[0xf] = 0;
-  param_1[0x10] = 0;
-  param_1[0x11] = 0;
-  param_1[0x16] = 0;
-  param_1[0x17] = 0;
-  param_1[0x18] = 0;
-  param_1[0x19] = 0;
-  param_1[0x12] = 0;
-  param_1[0x13] = 0;
-  param_1[0x14] = 0;
-  param_1[0x15] = 0;
+  record->slope = 0.0;
+  record->rms = 0.0;
+  record->intercept = 0.0;
   return 1;
 }
 
@@ -56177,7 +56128,7 @@ float float_abs(float param_1)
 /* half the summed squares of successive residuals' differences, scaled to the span
    loop.md's aging fit */
 
-void fit_quality(char *param_1)
+void fit_quality(aging_curve_state *curve)
 
 {
   uint uVar1;
@@ -56212,17 +56163,17 @@ void fit_quality(char *param_1)
   
   fVar4 = 0.0;
   i = 0;
-  fVar2 = float_multiply(*(float *)(param_1 + 0x16),pll.efc_history.times[*(int *)(param_1 + 10)]);
-  fVar2 = float_add(fVar2,*(float *)(param_1 + 0x12));
-  fVar3 = float_multiply(*(float *)(param_1 + 0x1a),pll.efc_history.logs[*(int *)(param_1 + 10)]);
+  fVar2 = float_multiply(curve->b,pll.efc_history.times[curve->oldest_index]);
+  fVar2 = float_add(fVar2,curve->a);
+  fVar3 = float_multiply(curve->c,pll.efc_history.logs[curve->oldest_index]);
   fVar2 = float_add(fVar2,fVar3);
-  local_14 = float_subtract_reversed(fVar2,pll.efc_history.averages[*(int *)(param_1 + 10)]);
-  uVar1 = *(uint *)(param_1 + 10);
-  while (uVar1 = uVar1 + 1 & 0x3f, uVar1 != (*(int *)(param_1 + 0xe) + 1U & 0x3f)) {
+  local_14 = float_subtract_reversed(fVar2,pll.efc_history.averages[curve->oldest_index]);
+  uVar1 = curve->oldest_index;
+  while (uVar1 = uVar1 + 1 & 0x3f, uVar1 != (curve->newest_index + 1U & 0x3f)) {
     i = i + 1;
-    fVar2 = float_multiply(*(float *)(param_1 + 0x16),pll.efc_history.times[uVar1]);
-    fVar2 = float_add(fVar2,*(float *)(param_1 + 0x12));
-    fVar3 = float_multiply(*(float *)(param_1 + 0x1a),pll.efc_history.logs[uVar1]);
+    fVar2 = float_multiply(curve->b,pll.efc_history.times[uVar1]);
+    fVar2 = float_add(fVar2,curve->a);
+    fVar3 = float_multiply(curve->c,pll.efc_history.logs[uVar1]);
     fVar2 = float_add(fVar2,fVar3);
     fVar2 = float_subtract_reversed(fVar2,pll.efc_history.averages[uVar1]);
     fVar3 = float_subtract(fVar2,local_14);
@@ -56235,10 +56186,10 @@ void fit_quality(char *param_1)
     fVar4 = double_to_float(dVar5);
     local_14 = fVar2;
   }
-  fVar2 = unsigned_to_float(*(int *)(param_1 + 6) - *(int *)(param_1 + 2));
+  fVar2 = unsigned_to_float(curve->newest_time - curve->oldest_time);
   fVar2 = float_multiply(fVar2,86400.0);
   fVar2 = float_divide(fVar2,32.0);
-  if (*param_1 == '\x02') {
+  if (curve->mode == 2) {
     fVar3 = integer_to_float(i);
     fVar3 = float_add(fVar3,-0.5);
     fVar3 = float_divide_reversed(fVar3,fVar4);
@@ -56257,7 +56208,7 @@ void fit_quality(char *param_1)
     fVar4 = 345600.0;
   }
   else {
-    if ((*param_1 != '\x03') && (*param_1 != '\x04')) goto LAB_0004298e;
+    if ((curve->mode != 3) && (curve->mode != 4)) goto LAB_0004298e;
     fVar3 = integer_to_float(i);
     fVar3 = float_add(fVar3,-0.5);
     fVar3 = float_divide_reversed(fVar3,fVar4);
@@ -56278,7 +56229,7 @@ void fit_quality(char *param_1)
   dVar5 = float_to_double(fVar2);
   sqrt(dVar5);
   dVar6 = __ghidra_as(double, CONCAT44(extraout_D0_01,extraout_D1_01));
-  fVar2 = float_multiply(*(float *)(param_1 + 0x22),86400.0);
+  fVar2 = float_multiply(curve->rms,86400.0);
   dVar5 = float_to_double(fVar2);
   double_divide(dVar5,1600000000000.0);
   dVar5 = double_multiply(dVar6,__ghidra_as(double, CONCAT44(extraout_A0_03,extraout_A1_03)));
@@ -56291,7 +56242,7 @@ void fit_quality(char *param_1)
   dVar5 = double_multiply(2.5,__ghidra_as(double, CONCAT44(extraout_D0_02,extraout_D1_02)));
   local_8 = double_to_float(dVar5);
 LAB_0004298e:
-  *(float *)(param_1 + 0x26) = local_8;
+  curve->predicted_uncertainty = local_8;
   return;
 }
 
@@ -56590,7 +56541,6 @@ undefined4 pll_scpi_needs_loop(void)
 
 /* 00042dc4 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* puts a request's validated values in the loop's message at 0x102002 by the setting's action code,
    and sends it */
 
@@ -56605,7 +56555,7 @@ undefined4 pll_scpi_send_to_loop(undefined1 param_1,undefined1 *param_2)
   undefined1 local_15;
   short local_14;
   undefined1 local_12;
-  undefined *local_10;
+  uint32_t *local_10;
   
   if (*(char *)pll_scpi_param == '\x01') {
     cVar2 = *(char *)((int)pll_scpi_param + 0x16);
@@ -56619,15 +56569,15 @@ undefined4 pll_scpi_send_to_loop(undefined1 param_1,undefined1 *param_2)
     if (local_14 < 5) {
       if (local_14 < 3) {
         if (local_14 == 0) {
-          _DAT_00102002 = pll_scpi_validated[0];
-          _DAT_00102006 = pll_scpi_validated[1];
-          _DAT_0010200a = pll_scpi_validated[2];
+          pll_scpi_gps_arguments[0] = pll_scpi_validated[0];
+          pll_scpi_gps_arguments[1] = pll_scpi_validated[1];
+          pll_scpi_gps_arguments[2] = pll_scpi_validated[2];
         }
         else {
           if (local_14 != 2) goto LAB_0004300c;
-          _DAT_00102002 = pll_scpi_validated[1];
-          _DAT_00102006 = pll_scpi_validated[2];
-          _DAT_0010200a = pll_scpi_validated[0];
+          pll_scpi_gps_arguments[0] = pll_scpi_validated[1];
+          pll_scpi_gps_arguments[1] = pll_scpi_validated[2];
+          pll_scpi_gps_arguments[2] = pll_scpi_validated[0];
         }
         goto LAB_00042fca;
       }
@@ -56635,8 +56585,8 @@ undefined4 pll_scpi_send_to_loop(undefined1 param_1,undefined1 *param_2)
     }
     else if (local_14 < 0xc) {
       if (local_14 == 5) {
-        _DAT_00102002 = pll_scpi_validated[0];
-        _DAT_00102006 = 1;
+        pll_scpi_gps_arguments[0] = pll_scpi_validated[0];
+        pll_scpi_gps_arguments[1] = 1;
         goto LAB_00042fca;
       }
       if (local_14 != 6) goto LAB_0004300c;
@@ -56646,12 +56596,12 @@ undefined4 pll_scpi_send_to_loop(undefined1 param_1,undefined1 *param_2)
       if (local_14 != 0x13) goto LAB_0004300c;
       goto LAB_00042ed2;
     }
-    _DAT_00102002 = pll_scpi_validated[0];
+    pll_scpi_gps_arguments[0] = pll_scpi_validated[0];
   }
   else if (local_14 < 0x4f) {
     if (local_14 < 0x28) {
       if ((local_14 != 0x18) && (local_14 != 0x19)) goto LAB_0004300c;
-      _DAT_00102002 = pll_scpi_validated[0];
+      pll_scpi_gps_arguments[0] = pll_scpi_validated[0];
     }
     else if (local_14 == 0x28) {
       if (((pll_scpi_index != 0) || (nv_settings.douglas_state == 0)) &&
@@ -56659,15 +56609,15 @@ undefined4 pll_scpi_send_to_loop(undefined1 param_1,undefined1 *param_2)
         *param_2 = 0;
         return 0;
       }
-      _DAT_00102002 = 1;
-      _DAT_0010200e = 1;
+      pll_scpi_gps_arguments[0] = 1;
+      pll_scpi_gps_arguments[3] = 1;
       if (*(char *)pll_scpi_param == '\x01') {
-        _DAT_00102006 = (uint32_t)(char)pll_scpi_setting;
-        _DAT_0010200a = nv_settings.raim_threshold[(char)pll_scpi_index];
+        pll_scpi_gps_arguments[1] = (uint32_t)(char)pll_scpi_setting;
+        pll_scpi_gps_arguments[2] = nv_settings.raim_threshold[(char)pll_scpi_index];
       }
       else {
-        _DAT_00102006 = (uint32_t)(char)nv_settings.raim_state[(char)pll_scpi_index];
-        _DAT_0010200a = pll_scpi_validated[0];
+        pll_scpi_gps_arguments[1] = (uint32_t)(char)nv_settings.raim_state[(char)pll_scpi_index];
+        pll_scpi_gps_arguments[2] = pll_scpi_validated[0];
       }
     }
     else if (local_14 != 0x31) goto LAB_0004300c;
@@ -56675,15 +56625,15 @@ undefined4 pll_scpi_send_to_loop(undefined1 param_1,undefined1 *param_2)
   else if (local_14 < 0x53) {
     if (local_14 == 0x4f) {
 LAB_00042f24:
-      _DAT_00102002 = pll_scpi_validated[0];
-      _DAT_00102006 = pll_scpi_validated[1];
-      _DAT_0010200a = pll_scpi_validated[2];
-      _DAT_0010200e = 1;
+      pll_scpi_gps_arguments[0] = pll_scpi_validated[0];
+      pll_scpi_gps_arguments[1] = pll_scpi_validated[1];
+      pll_scpi_gps_arguments[2] = pll_scpi_validated[2];
+      pll_scpi_gps_arguments[3] = 1;
     }
     else {
       if (local_14 != 0x51) goto LAB_0004300c;
 LAB_00042ed2:
-      _DAT_00102002 = (uint32_t)(char)pll_scpi_setting;
+      pll_scpi_gps_arguments[0] = (uint32_t)(char)pll_scpi_setting;
       if ((nv_settings.douglas_state == 0) || (pll_scpi_setting != 0)) {
         if ((nv_settings.douglas_state == 0) && (pll_scpi_setting != 0)) {
           DAT_00102040 = 4;
@@ -56707,7 +56657,7 @@ LAB_00042fca:
   local_12 = 0;
   local_15 = 1;
   local_16 = param_1;
-  local_10 = &DAT_00102002;
+  local_10 = pll_scpi_gps_arguments;
   uVar1 = psos_send_x(gpsx_exchange,&local_1e);
   if ((char)uVar1 == '\0') {
     *param_2 = 0;
@@ -56846,7 +56796,7 @@ void get_setup_vars(int param_1)
   
   pll_scpi_source = *(uint8_t *)(param_1 + 0xd);
   if (pll_scpi_source == 0) {
-    DAT_00102018 = task_scpi;
+    pll_scpi_waiting_task = task_scpi;
   }
   pll_scpi_index = *(uint8_t *)(param_1 + 0xc);
   pll_scpi_param = *(void **)(param_1 + 8);
@@ -56957,7 +56907,7 @@ void pll_scpi_receive(void)
     }
     DAT_0010254e = cVar1;
     if (DAT_0010254f == '\0') {
-      psos_signal_v(DAT_00102018,0x20);
+      psos_signal_v(pll_scpi_waiting_task,0x20);
     }
   }
   return;
@@ -56982,7 +56932,7 @@ void pll_scpi_complete(int *param_1,char param_2)
       status_report_from(6,pll_scpi_source);
     }
     finish_scpi_cmd();
-    psos_signal_v(DAT_00102018,0x20);
+    psos_signal_v(pll_scpi_waiting_task,0x20);
   }
   return;
 }
@@ -57000,7 +56950,7 @@ void gps_diag_complete(int *param_1)
   }
   else {
     DAT_0010254e = '\0';
-    psos_signal_v(DAT_00102018,0x20);
+    psos_signal_v(pll_scpi_waiting_task,0x20);
   }
   return;
 }
@@ -60497,7 +60447,7 @@ void pll_init(void)
   pll.stage = PLL_STAGE_INVALID;
   pll.gps_init_state = 0;
   pll.aging_state = 0;
-  pll.efc = __ghidra_as(float, efc_clamp(lifetime_efc));
+  pll.efc = __ghidra_as(float, efc_clamp(lifetime.efc));
   pll.loop_time_constant = 150.0;
   DAT_00101e76 = 1;
   pll.hold_causes =

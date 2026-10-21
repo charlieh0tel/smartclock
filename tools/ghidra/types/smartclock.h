@@ -252,8 +252,40 @@ typedef struct duarta_driver {
 	uint8_t least_free;      /* +0x09: the receive ring's least free space seen */
 } duarta_driver;
 
+/* DUART channel B's serial settings, SERial1's, at 0x101f58: the
+ * :SYSTem:COMMunicate:SERial1 setters store them, through setting
+ * descriptors that save the EEPROM parameter record, and
+ * duartb_reconfigure applies them.  parameter_record_read loads +2 to
+ * +8 from the record's bytes 2 to 8, or copies the defaults at 0x30a34
+ * over all 9 bytes when its checksum fails; save_parameter_record
+ * writes them back. */
+typedef struct duartb_settings_record {
+	uint8_t field_00[2];    /* +0x00: only the defaults' copy writes them, 0; nothing reads them */
+	uint8_t baud;           /* +0x02: 0 1200, 1 2400, 2 9600, 3 19200 */
+	uint8_t parity;         /* +0x03: 0 none, 1 even, 2 odd */
+	uint8_t xon_xoff;       /* +0x04: :PACE XON when nonzero, else NONE */
+	uint8_t field_05;       /* +0x05: saved and restored; its setting descriptor, 0x33364, no setter uses */
+	uint8_t eight_bits;     /* +0x06: else seven; with nv_settings.serial_restricted set, parity set with 8 bits clears it, and 8 bits set with parity clears parity */
+	uint8_t two_stop_bits;  /* +0x07: else one */
+	uint8_t echo;           /* +0x08: :FDUPlex ON, each character received echoed */
+} duartb_settings_record;
+
+/* The SCI's serial settings, SERial2's, at 0x101f50: one byte for
+ * parity and data bits together and no stop-bit setting, as 097-59551-02
+ * gives the 59551A's PORT 2.  sci_init and sci_reconfigure apply them.
+ * parameter_record_read copies the defaults at 0x30a2c over all 6
+ * bytes whatever the EEPROM holds; save_parameter_record writes +2 to +5
+ * to the record's bytes 9 to 0xc, which nothing reads back. */
+typedef struct sci_settings_record {
+	uint8_t field_00[2];    /* +0x00: only the defaults' copy writes them, 0; nothing reads them */
+	uint8_t baud;           /* +0x02: as duartb_settings_record's */
+	uint8_t parity;         /* +0x03: 0 none, eight data bits; 1 even, 2 odd, 3 ONE, the top bit set, each with seven */
+	uint8_t xon_xoff;       /* +0x04: :PACE XON when nonzero, else NONE */
+	uint8_t echo;           /* +0x05: :FDUPlex ON, each character received echoed */
+} sci_settings_record;
+
 /* Channel B's serial settings as last applied to the DUART, at
- * 0x102ecc: copies of the parameter record's, which
+ * 0x102ecc: copies of duartb_settings', which
  * duartb_baud_from_settings and duartb_mode_from_settings program. */
 typedef struct duartb_applied_settings {
 	uint8_t baud;
@@ -289,7 +321,7 @@ typedef void putc_function(char c);
  * status, the exchange's id, and the task that holds it, which the
  * driver's interrupts signal. */
 typedef struct exchange_token {
-	uint32_t status;    /* +0x00: printed if the send fails ("Unable to initialize drtR: %X") */
+	uint32_t status;    /* +0x00: zeroed before the send; nothing reads it */
 	uint32_t exchange;  /* +0x04 */
 	uint32_t task;      /* +0x08: the task waiting on the port, 0 for none */
 	uint32_t field_0c;
@@ -379,6 +411,17 @@ typedef struct qspi_state {
 	uint8_t running;           /* +0x4d: qspi_start waits while it is set; the interrupt clears it */
 } qspi_state;
 
+/* The EEPROM lock's token, at 0x101d1c: the 16-byte message eeprom_init
+ * sends the eepx exchange, which eeprom_lock receives into the same
+ * cells and eeprom_unlock sends back.  The lock is recursive, as
+ * mutex_acquire's is: the holder at +0x08, its nested holds at +0x0c. */
+typedef struct eeprom_lock_token {
+	uint32_t status;    /* +0x00: eeprom_init zeroes it; nothing reads it */
+	uint32_t exchange;  /* +0x04: eepx's id; eeprom_unlock checks it against eepx_exchange ("eepx semaphore has been corrupted") */
+	uint32_t owner;     /* +0x08: the task holding the lock, 0 for none */
+	int32_t depth;      /* +0x0c: the holder's nested eeprom_lock calls, which eeprom_unlock counts down before it sends */
+} eeprom_lock_token;
+
 /* The EFC's gain and what efc_gain_set derives from it, at 0x102554:
  * pllp_task sets the gain, the fractional frequency one EFC count
  * moves, 6.25e-13. */
@@ -390,6 +433,15 @@ typedef struct efc_gain_values {
 	float step_limit;      /* +0x10: 6.25e-10 in counts, the bound startup_pll and pll_normal compare a step with */
 	float aging_per_day;   /* +0x14: 5e-9 a day in counts a second; nothing reads it */
 } efc_gain_values;
+
+/* Whether the EFC is at or near the end of its range, at 0x101cf4:
+ * efc_clamp and hmon_check_efc report each change as a status
+ * happening, and efc_clamp_reset clears all three. */
+typedef struct efc_range_state {
+	uint8_t clamped;          /* +0x00: efc_clamp clamped it to 0 or 1048560, happening 'B'; cleared with 'C' */
+	uint8_t near_end;         /* +0x01: "EFC near end of range", happening '@'; cleared with 'A' */
+	uint8_t near_end_checks;  /* +0x02: hmon_check_efc's consecutive checks outside 52428 to 996132, held at 5 */
+} efc_range_state;
 
 /* The GPS command the console's GPS words leave for pllp_task, at
  * 0x10256c: gps_command_send maps the code to an Oncore request, code
@@ -466,6 +518,15 @@ typedef struct packed_datetime {
 	uint32_t time;
 	uint32_t date;
 } packed_datetime;
+
+/* The lifetime record in RAM, at 0x101d00: what lifetime_record_read
+ * loads from EEPROM 0x400060 and lifetime_record_write saves there,
+ * the EEPROM's order being the date, the count, then the EFC. */
+typedef struct lifetime_state {
+	float efc;      /* +0x00: the EFC lifetime_update saves in normal PLL, mid-scale 524288 by default; pll_init starts from it */
+	uint32_t date;  /* +0x04: year << 16 | month << 8 | day, 1994-01-01 by default; clock_init takes the date from it */
+	int32_t count;  /* +0x08: one more for each new date lifetime_update is given; :DIAGnostic:LIFetime:COUNt? returns it */
+} lifetime_state;
 
 /* What sprintf and vsprintf hand doprnt to pass to sprintf_put, on
  * their own stacks: sprintf_put writes at cursor and advances it.
@@ -611,6 +672,50 @@ typedef struct efc_ring {
 	float fit_b; /* +0x35e */
 	float fit_c; /* +0x362 */
 } efc_ring;
+
+/* The curv task's aging fit, at 0x101fd8: the curve a + b y + c w
+ * aging_fit fits to the EFC history's weighted entries, which
+ * aging_fit_collect copies into pll.  aging_fit fits a second one on
+ * its stack for the three-term fit, and keeps it when it fits better. */
+typedef struct aging_curve_state {
+	uint8_t mode;             /* +0x00: 0 to 4, "mode= %d"; fit_quality's constants by it */
+	uint8_t minimum_weight;   /* +0x01: only entries of this weight or more are fitted, 1 or 2 */
+	uint32_t oldest_time;     /* +0x02: fit_span's, the fitted entries' least time, truncated */
+	uint32_t newest_time;     /* +0x06: their greatest */
+	int32_t oldest_index;     /* +0x0a: the entry with oldest_time */
+	int32_t newest_index;     /* +0x0e: the entry with newest_time */
+	float a;                  /* +0x12: fit_evaluate_latest moves it so the curve meets the newest entry */
+	float b;                  /* +0x16: the slope in time */
+	float c;                  /* +0x1a: the coefficient of the log term, 0 for a line */
+	float c_step;             /* +0x1e: fit_log_search's step in c, a tenth as large each pass */
+	float rms;                /* +0x22: the residuals' */
+	float predicted_uncertainty; /* +0x26: fit_quality's HQ, or 4.32e-4 in modes 0 and 1 */
+} aging_curve_state;
+
+/* What a fit routine gives linear_regression, on its own stack: the
+ * arrays to regress and the weight an entry needs, and the line it
+ * fits back. */
+typedef struct regression_record {
+	uint8_t minimum_weight;   /* +0x00: only entries of this weight or more */
+	uint8_t field_01;
+	float *x;                 /* +0x02: pll.efc_history.times */
+	float *y;                 /* +0x06 */
+	uint8_t *weights;         /* +0x0a: pll.efc_history.weights */
+	float slope;              /* +0x0e: 0 unless with_slope */
+	float intercept;          /* +0x12: the mean of y when no slope is fitted */
+	float rms;                /* +0x16: the residuals' */
+} regression_record;
+
+/* What fit_log_search gives fit_three_point, on its stack: three values
+ * of the log coefficient and the rms each gave, through which
+ * fit_three_point puts a parabola, and the parabola's vertex it writes
+ * back. */
+typedef struct three_point_fit {
+	float *x;                 /* +0x00: three values of aging_curve_state.c */
+	float *y;                 /* +0x04: the rms at each */
+	float vertex_x;           /* +0x08: the c fit_log_search keeps */
+	float vertex_y;           /* +0x0c */
+} three_point_fit;
 
 /* @@Ba, the position/status/data message: one channel's status. */
 typedef struct oncore_channel_status {

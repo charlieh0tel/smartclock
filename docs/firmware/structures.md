@@ -169,6 +169,50 @@ two bytes.  It is called on the EEPROM's records at `0x400000` (16
 bytes), `0x400010` (48), `0x400060` (32) and `0x400080` (64), and on
 `0x94e` bytes of RAM from `0x100000`.
 
+## The serial settings
+
+Each serial port's settings are a record in RAM: `duartb_settings`
+(`0x101f58`, `duartb_settings_record`, 9 bytes) for DUART channel B and
+`sci_settings` (`0x101f50`, `sci_settings_record`, 6 bytes) for the
+SCI.  The `:SYSTem:COMMunicate` handlers take the port from their
+parameters' first word: 0 picks channel B's, so channel B's are
+`SERial1`'s and the SCI's `SERial2`'s.  The `:BITS` and `:SBITs`
+setters refuse any other port, and `:PARity ONE` is refused on port 0
+(status `0xb`), the rules 097-59551-02 gives for PORT 1 and PORT 2
+(pp. 4-13, 5-80, 5-83, 5-84); `:PRESet`'s two routines, `0x30ea0` and
+`0x30ed4`, copy channel B's and the SCI's defaults.  The setters store
+each value through a setting descriptor (`0x33328` to `0x333dc`, and
+`0x33aa2` to `0x33afc`) whose flags write the EEPROM record.
+
+| Field | Values | Read by |
+| --- | --- | --- |
+| `baud` (`+2`) | 0 1200, 1 2400, 2 9600, 3 19200 | `duartb_baud_from_settings` (`0x1d632`); `sci_init` and `sci_reconfigure` pass it to `sci_baud_set` (`0x1f6ca`); `:BAUD?` (`0x302c4`) |
+| `parity` (`+3`) | 0 none, 1 even, 2 odd; the SCI's also 3 `ONE`, its top bit set | `duartb_mode_from_settings` (`0x1d594`), `sci_init` (`0x1fdb6`), `sci_reconfigure` (`0x1fffa`), `:PARity?` (`0x3051a`) |
+| `xon_xoff` (`+4`) | nonzero `XON`, 0 `NONE` | `duart_init` (`0x1d93e`), `duartb_reconfigure` (`0x1dc7e`), the SCI's two, `:PACE?` (`0x30460`) |
+| `eight_bits` (B `+6`) | 1 eight, 0 seven | `duartb_mode_from_settings`, `:BITS?` (`0x30388`) |
+| `two_stop_bits` (B `+7`) | 1 two, 0 one | `duartb_mode_from_settings`, `:SBITs?` (`0x305be`) |
+| `echo` (B `+8`, SCI `+5`) | nonzero `FDUPlex ON` | the drivers' init and reconfigure, `:FDUPlex?` (`0x301bc`) |
+
+The SCI's `parity` carries its data bits too: eight with none, seven
+with the rest, as 097-59551-02 gives PORT 2 (p. 2-9) and as its
+`:BITS?` answers.  The values and the defaults, 9600, no parity, eight
+bits, one stop bit, no pacing, echo on (`0x30a34` and `0x30a2c`), are
+those 097-59551-02 gives (pp. 2-9, 5-80 to 5-84).  With
+`nv_settings.serial_restricted` (`:DIAG:SER1:RESTricted`) set,
+channel B's `parity` and `eight_bits` hooks (`0x3086a`, `0x3088c`)
+clear the other when both would be set.  Channel B's `field_05` is
+saved and restored, and has a descriptor (`0x33364`) no setter uses;
+the two `field_00` bytes only the defaults' copy writes.
+
+The parameter record at EEPROM `0x400000` is 16 bytes: the checksum at
+`+0`, channel B's `+2` to `+8` at `+2` to `+8`, the SCI's `+2` to `+5`
+at `+9` to `+0xc`, and `0xff` to the end.  `save_parameter_record`
+(`0x30dea`) builds and writes it.  `parameter_record_read` (`0x30d2e`)
+loads only channel B's settings from it, or copies their defaults when
+the checksum fails, and always copies the SCI's defaults: its saved
+settings are never read back, though the manual has every setting
+survive power-up (pp. 5-80 to 5-84).
+
 ## Globals the console prints
 
 The console's print words label what they print, so the firmware names
@@ -444,7 +488,14 @@ expects 1 to 3 edges since `gps_pps_last_count` ("short gate, count
 gate, count %d"), setting `gps_pps_dead` with "GPS 1pps signal is dead"
 and clearing it with "is ok".  `internal_pps_check` (`0x2471a`) does the
 same for the internal 1PPS from `internal_pps_count` ("Internal 1pps
-signal is dead", "count %d").
+signal is dead", "count %d").  While `gps.pps_check_disabled` is set,
+`gps_pps_check` and `hmon_task` set `gps_pps_dead` and
+`gps_pps_unconfirmed` (`0x101cfa`) and zero `gps_pps_skipped_checks`
+(`0x101cf9`).  Once checking resumes, `gps_pps_check` skips 15 checks,
+counting them in `gps_pps_skipped_checks`, and `gps_pps_unconfirmed`
+stays set until a long gate counts 8 to 12 with that check's short gate
+good; meanwhile `hmon_task` withholds happening `'D'`.
+`gps_pps_monitor_reset` (`0x2458c`) clears both.
 
 **Exceptions and the watchdog.**  `last_exception` (`0x10099e`,
 `exception_record`) is what "Exception: %s, vector %04X, PC = %08X, SR
@@ -502,10 +553,10 @@ the calibration double the configuration's `+4`.  `interval_next_reading`
 is `interval_wait_reading` (`0x4513c`), then `interval_rearm`
 (`0x450c4`).
 "mask angle ack failure: %02X" and eight like it print `gps_ack_code`
-(`0x102584`); "Unable to initialize eepx: %X" and the like print
-`eepx_status`, `duartb.read_token.status`, `duartb.write_token.status`,
-`sci_exchanges.read_token.status` and `sci_exchanges.write_token.status`.  `fine_y0` (`0x102154`), `pll.fine_index` and
-`pll.fine_d` are fine acquisition's "y0", "i" and "d" (`loop.md`).
+(`0x102584`); "Unable to initialize drtR: %X" and the like print the
+error code `psos_send_x` returns, not anything the token holds.
+`fine_y0` (`0x102154`), `pll.fine_index` and `pll.fine_d` are fine
+acquisition's "y0", "i" and "d" (`loop.md`).
 
 ## What the words name
 
@@ -578,7 +629,10 @@ tables at `0x32d5e` and `0x32db2`, packed into longs, then `0xff`
 with `nv_checksum` (`0x328e0`) over bytes 8 to `0x7f` -- and writes it
 to slot `nv_slot` (`0x101f62`) when `nv_record_differs` (`0x3290e`)
 says it changed.  `nv_restore` (`0x3282c`) loads slot 0, else slot 1
-(`nv_load_slot`, `0x32bc2`); when neither is good it copies
+(`nv_load_slot`, `0x32bc2`, which leaves the packed bytes it read,
+counted from `+0x10`, in `nv_numeric_bytes_loaded`, `0x101f64`, after
+the numeric values and in `nv_bytes_loaded`, `0x101f66`, after all;
+nothing reads either); when neither is good it copies
 `nv_settings_defaults` (`0x30966`) over the settings, takes the slot
 with the older sequence number, erases it (`nv_slot_erase`, `0x327f4`)
 and saves.  `clear_nv` erases both slots.
@@ -635,6 +689,11 @@ value to the `pllc` exchange, and the loop task takes the request there
 structure type").  The request's descriptor, value index, source and
 values are kept in `pll_scpi_param`, `pll_scpi_index`,
 `pll_scpi_source` and `pll_scpi_values` (`0x102012` to `0x102020`).
+`get_setup_vars` (`0x431f4`) sets `pll_scpi_waiting_task`
+(`0x102018`) to `task_scpi` when the source is 0; when the request is
+done `pll_scpi_receive`, `pll_scpi_complete` (`0x433b6`) and
+`gps_diag_complete` (`0x433fc`) signal that task event 0x20, which
+`request_and_wait` (`0x29e7e`) waits for.
 `validate_num` (`0x42c10`) runs each value through the descriptor's
 `validate` into `pll_scpi_validated` (`0x102030`).  `finish_scpi_cmd`
 (`0x4306a`) switches on the descriptor's `type`: a numeric one's values
@@ -658,7 +717,10 @@ an Oncore message table entry below `0x31` -- 6 `@@Ag` for the
 elevation mask, `0xc` `@@Am` for the ignored satellites, `0x19` `@@Az`
 for the antenna delay, `0x28` `@@Bn` for the Time RAIM limit -- or the
 GPS task's own request above, `0x4f` for the position and `0x51` for
-`:DOUGlas:STATe`; `0xff` sends nothing.  Both point a `group_cell`
+`:DOUGlas:STATe`; `0xff` sends nothing.  The message's `+0xe` points
+at `pll_scpi_gps_arguments` (`0x102002`), four longs it fills by that
+request: for `0x28` 1, the RAIM state and the limit, and a last long
+of 1.  Both point a `group_cell`
 (`+0x22`, `+0x18`) at one of four words by command group: `0x101f92`
 `:SAMPle`, `0x101f94` `:PULSe`, `0x101f98` `:STATus` and `0x101f9a`
 the rest.  No code reads the pointer but `scpi_numeric_get_double`,
@@ -688,6 +750,36 @@ B's transmit interrupt on and off through the IMR's at `+4`.  `+0xb`
 is the output bits reset, the failed self-tests' lamps (`outputs.md`).
 Channel B's serial settings as last applied, its baud, parity, data
 bits and stop bits, are at `duartb_applied` (`0x102ecc`).
+
+## The aging fit's curve
+
+`aging_curve` (`0x101fd8`, `aging_curve_state`, `0x2a` bytes) is the
+record `aging_fit` (`0x417c6`) hands each fit routine (`loop.md`, "The
+aging fit"): the mode at `+0`; at `+1` the least weight an entry of
+`pll.efc_history` needs to be fitted, 2 or 1; the fitted entries'
+oldest and newest times and their indexes (`fit_span`, `0x41d30`,
+`+2` to `+0xe`); a, b and c (`+0x12` to `+0x1a`); the step in c
+(`+0x1e`) that `fit_log_initial` (`0x41e32`) sets, `fit_log_search`
+(`0x41f2a`) moves c by and `fit_logarithmic` (`0x41c8e`) divides by
+10 each pass; the rms (`+0x22`); and HQ (`+0x26`), `fit_quality`'s
+(`0x42644`).  `aging_fit` runs the three-term fit in a second record
+on its stack, at fp − 0x7a, and copies its a, b, c and rms over when
+it is kept.  `aging_fit_collect` (`0x4173e`) copies a, b and c to
+`pll.efc_history`'s `fit_a` to `fit_c` and HQ to
+`pll.predicted_uncertainty`.
+
+`linear_regression` (`0x42390`) takes a 26-byte record,
+`regression_record`, which `fit_linear`, `fit_log_initial` and
+`fit_log_residuals` keep on their stacks: the weight an entry needs at
+`+0`, pointers to the x and y arrays and the weights at `+2`, `+6` and
+`+0xa`, and the fitted slope, intercept and rms it writes back at
+`+0xe`, `+0x12` and `+0x16`.  Its second argument asks for a slope;
+without one the slope is 0 and the intercept the mean of the y the
+weight test admits.  `fit_log_search` (`0x41f2a`) keeps its last three
+values of c and the rms each gave on its stack and hands them to
+`fit_three_point` (`0x42128`) in a `three_point_fit`, which puts a
+parabola through them and writes back its vertex; the vertex's x is the
+c kept.
 
 ## The loop's steering
 
@@ -733,8 +825,9 @@ with XON/XOFF on (`+0x10`, from the serial settings), sends XOFF when
 fewer than 64 bytes are free and holds transmission on an XOFF
 received (`+0xc`, bits `0x20` and `0x80`).  The two exchange tokens,
 `exchange_token`, are the messages `duart_init` sends `drtR` and `drtW`
-once, so that a task takes the exchange before it uses the port; their
-status is what "Unable to initialize drtR: %X" prints.
+once, so that a task takes the exchange before it uses the port; if
+the send fails, "Unable to initialize drtR: %X" prints its error code.
+Nothing reads a token's status.
 
 ## The SCI port's driver
 
@@ -834,3 +927,65 @@ and which the caller ends with a NUL.  Nothing reads `+0`.  The
 decompiler, given no type for it, splits the record into two locals,
 which a compiler need not keep adjacent; the names file types it
 (`local` rows).
+
+## The health monitor's supplies and EFC
+
+`hmon_task` (`0x247d4`) calls `hmon_check_supplies` (`0x23d80`) every
+tenth pass, and each call takes one reading, `hmon_supply_step`
+(`0x101cf2`) choosing it through the jump table at `0x23dca` and then
+advancing, 0 to 7: the temperature, the double oven, +15 V, the
+oscillator current, 5 V, the oven, -15 V and the antenna current.  Each
+goes to its 0x30-byte monitor, eight from `0x101b72` to `0x101cf1`,
+which the step follows.  `monitors_reset` (`0x23c2a`) zeroes it.
+
+`efc_range` (`0x101cf4`, `efc_range_state`, 3 bytes) is what the code
+reaches through `0x101cf4` in A0 or A2.  `efc_clamp` (`0x2426e`) sets
+`clamped` with happening `'B'` when it clamps the EFC to 0 or 1048560,
+and clears it with `'C'` when a value is back in range.
+`hmon_check_efc` (`0x242f0`), every 1024th pass, counts in
+`near_end_checks` the consecutive checks with `pll.efc` outside 52428
+to 996132, held at 5; past 5 it prints "EFC near end of range" and sets
+`near_end` with `'@'`, and a check inside clears the count and `near_end`
+with `'A'`.  `efc_clamp_reset` (`0x242de`) zeroes the three.
+
+## The EEPROM's lock
+
+`eeprom_init` (`0x30f10`) creates `eepx` into `eepx_exchange`
+(`0x101d18`) and sends it one 16-byte message, `eepx_token`
+(`0x101d1c`, `eeprom_lock_token`): a zero status, the exchange's id, no
+owner and no depth.  `eeprom_lock` (`0x30fae`) receives the message into
+the same cells with `request_x`, then stores its task (`psos_my_pid`)
+as `owner` and zeroes `depth`; called again by the owner, it adds one to
+`depth` instead.  `eeprom_unlock` (`0x3105e`) counts `depth` down, and at
+0 clears `owner`, checks `exchange` against `eepx_exchange` ("eepx
+semaphore has been corrupted") and sends the message back; "eepx_close
+and not owner" when another task calls it.  It is the recursive lock
+`mutex_acquire` (`0x1043a`) keeps, owner at `+8` and count at `+0xc`.
+"Unable to initialize eepx: %X" and "Unable to acquire eepx token: %X"
+print pSOS's error code, not `status`, which nothing reads.
+
+Both routines do this only while the flag at `0x1037dc` is set and the
+interrupt mask is 0; with the flag clear they do nothing, and
+`eeprom_lock` returns 0.  With it set at a higher mask, `eeprom_lock`
+returns 1, failing, while `eeprom_writing` (`0x101d34`) is set: `eeprom_write_byte`
+(`0x31128`) and `eeprom_write_page` (`0x3119e`) set it while they write
+and poll, and clear it before `eeprom_unlock`; `eeprom_lock_init`
+(`0x30f08`) clears it.
+
+## The lifetime record
+
+`lifetime` (`0x101d00`, `lifetime_state`, 12 bytes) is the EEPROM's
+lifetime record at `0x400060` (32 bytes, "EEPROM records" above) in
+RAM: `lifetime_record_read` (`0x30a3e`) loads its date (`+2`), count
+(`+6`) and EFC (`+0xa`) when the checksum is good, the EFC as mid-scale,
+524288, when it has the bits `0xe8000000` set; else it sets 1994-01-01
+(`0x7ca0101`), 0 and 524288.  `lifetime_record_write` (`0x30ab4`) writes
+them back in that order when they differ from the EEPROM's.
+`lifetime_update` (`0x30b66`), given a date unlike `date`, stores it,
+adds one to `count`, takes `pll.efc` as `efc` in normal PLL, and writes
+the record; it then cancels the clock event of class 2 and schedules
+another with `clk_do`, keeping its return in `lifetime_event`
+(`0x101d14`), which nothing reads.  `clock_init` (`0x13908`) takes the date from `date`, and
+`klok_task_create` (`0x109ae`) passes it to pSOS service 31; `pll_init`
+(`0x473d2`) starts the EFC from `efc` through `efc_clamp`, and
+`:DIAGnostic:LIFetime:COUNt?` (`0x2b3b6`) returns `count`.

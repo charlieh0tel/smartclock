@@ -42,6 +42,14 @@ CHECK_SIZE(duarta_driver, 0x102fea - 0x102fe0);
 CHECK_FIELD(duarta_driver, overrun, 0x102fe6 - 0x102fe0);
 CHECK_FIELD(duarta_driver, least_free, 0x102fe9 - 0x102fe0);
 
+CHECK_SIZE(sci_settings_record, 0x101f56 - 0x101f50);
+CHECK_FIELD(sci_settings_record, baud, 0x101f52 - 0x101f50);
+CHECK_FIELD(sci_settings_record, echo, 0x101f55 - 0x101f50);
+CHECK_SIZE(duartb_settings_record, 0x101f61 - 0x101f58);
+CHECK_FIELD(duartb_settings_record, baud, 0x101f5a - 0x101f58);
+CHECK_FIELD(duartb_settings_record, field_05, 0x101f5d - 0x101f58);
+CHECK_FIELD(duartb_settings_record, eight_bits, 0x101f5e - 0x101f58);
+CHECK_FIELD(duartb_settings_record, echo, 0x101f60 - 0x101f58);
 CHECK_SIZE(duartb_applied_settings, 0x102ed0 - 0x102ecc);
 CHECK_SIZE(duart_shadow_registers, 0x102edd - 0x102ed0);
 CHECK_FIELD(duart_shadow_registers, imr, 0x102ed4 - 0x102ed0);
@@ -60,6 +68,9 @@ CHECK_FIELD(qspi_state, waiting, 0x1032aa - 0x1032a6);
 CHECK_FIELD(qspi_state, busy, 0x1032ea - 0x1032a6);
 CHECK_FIELD(qspi_state, receive_buffer, 0x1032ec - 0x1032a6);
 CHECK_FIELD(qspi_state, running, 0x1032f3 - 0x1032a6);
+CHECK_SIZE(eeprom_lock_token, 0x101d2c - 0x101d1c);
+CHECK_FIELD(eeprom_lock_token, owner, 0x101d24 - 0x101d1c);
+CHECK_FIELD(eeprom_lock_token, depth, 0x101d28 - 0x101d1c);
 CHECK_FIELD(sci_driver, flow, 0x103294 - 0x10328a);
 CHECK_FIELD(sci_driver, async_allowed, 0x10329c - 0x10328a);
 CHECK_FIELD(sci_driver, baud_constant, 0x10329e - 0x10328a);
@@ -78,6 +89,8 @@ CHECK_FIELD(duartb_driver, last_terminator, 0x103140 - 0x1030ec);
 CHECK_SIZE(efc_gain_values, 0x10256c - 0x102554);
 CHECK_FIELD(efc_gain_values, reciprocal_tau, 0x102560 - 0x102554);
 CHECK_FIELD(efc_gain_values, step_limit, 0x102564 - 0x102554);
+CHECK_SIZE(efc_range_state, 0x101cf7 - 0x101cf4);
+CHECK_FIELD(efc_range_state, near_end_checks, 0x101cf6 - 0x101cf4);
 CHECK_SIZE(gps_command_mailbox, 0x102582 - 0x10256c);
 CHECK_FIELD(gps_command_mailbox, arguments, 0x10256e - 0x10256c);
 CHECK_FIELD(gps_command_mailbox, request, 0x10257e - 0x10256c);
@@ -104,6 +117,17 @@ CHECK_FIELD(gps_request_ring, write, 0x101424 - 0x10139e);
 
 CHECK_SIZE(packed_datetime, 8);
 CHECK_FIELD(packed_datetime, date, 4);
+
+CHECK_SIZE(regression_record, 0x1a);
+CHECK_FIELD(regression_record, weights, 0x0a);
+CHECK_FIELD(regression_record, rms, 0x16);
+
+CHECK_SIZE(three_point_fit, 0x10);
+CHECK_FIELD(three_point_fit, vertex_x, 8);
+
+CHECK_SIZE(lifetime_state, 0x101d0c - 0x101d00);
+CHECK_FIELD(lifetime_state, date, 0x101d04 - 0x101d00);
+CHECK_FIELD(lifetime_state, count, 0x101d08 - 0x101d00);
 
 CHECK_SIZE(sprintf_output, 8);
 CHECK_FIELD(sprintf_output, cursor, 4);
@@ -163,6 +187,15 @@ CHECK_FIELD(efc_ring, drift, 0x1024fe - 0x1021ac);
 CHECK_FIELD(efc_ring, fit_a, 0x102506 - 0x1021ac);
 CHECK_FIELD(efc_ring, fit_b, 0x10250a - 0x1021ac);
 CHECK_FIELD(efc_ring, fit_c, 0x10250e - 0x1021ac);
+CHECK_SIZE(aging_curve_state, 0x102002 - 0x101fd8);
+CHECK_FIELD(aging_curve_state, minimum_weight, 0x101fd9 - 0x101fd8);
+CHECK_FIELD(aging_curve_state, oldest_time, 0x101fda - 0x101fd8);
+CHECK_FIELD(aging_curve_state, newest_time, 0x101fde - 0x101fd8);
+CHECK_FIELD(aging_curve_state, a, 0x101fea - 0x101fd8);
+CHECK_FIELD(aging_curve_state, b, 0x101fee - 0x101fd8);
+CHECK_FIELD(aging_curve_state, c, 0x101ff2 - 0x101fd8);
+CHECK_FIELD(aging_curve_state, rms, 0x101ffa - 0x101fd8);
+CHECK_FIELD(aging_curve_state, predicted_uncertainty, 0x101ffe - 0x101fd8);
 
 /* The GPS task's state, memset(&gps, 0, 0x55a) at 0x100c6a, with each
  * message's record at the cell its decoder fills. */

@@ -343,7 +343,10 @@
 0x101cfe	label	internal_pps_last_count	structures.md	internal_pps_count at the last check	uint8_t
 0x101b6f	label	internal_pps_dead	structures.md	set with "Internal 1pps signal is dead", cleared with "is ok"	uint8_t
 0x101cf8	label	internal_pps_started	structures.md	set on internal_pps_check's first pass	uint8_t
-0x101d1c	label	eepx_status	structures.md	"Unable to initialize eepx: %X", "Unable to acquire eepx token: %X"	uint32_t
+0x101cfa	label	gps_pps_unconfirmed	structures.md	set while gps.pps_check_disabled; cleared once a long gate finds the GPS 1PPS good; hmon_task withholds happening 'D' while set	uint8_t
+0x101cf9	label	gps_pps_skipped_checks	structures.md	gps_pps_check's checks skipped while gps_pps_unconfirmed, to 15	uint8_t
+0x101d1c	label	eepx_token	structures.md	the EEPROM lock's token message: eepx's id, the holder and its nested holds	eeprom_lock_token
+0x101d34	label	eeprom_writing	structures.md	set while eeprom_write_byte or eeprom_write_page writes; eeprom_lock fails at interrupt level while it is set	uint8_t
 0x101d94	label	log_page_buffer	structures.md	log_read loads a page here and formats its entries	log_page
 0x101dd4	label	log_page_number	structures.md	the page log_page_buffer holds	int16_t
 0x102eb6	label	status_request_service	structures.md	the time code's r, the Status Byte's request-for-service summary	uint8_t
@@ -516,6 +519,8 @@
 0x3290e	function	nv_record_differs	structures.md	compares two records, nonzero when they differ
 0x327f4	function	nv_slot_erase	structures.md	clear_nv erases slots 0 and 1 with it
 0x101f62	label	nv_slot	structures.md	the slot nv_load_slot and nv_save use, 0 or 1	uint8_t
+0x101f64	label	nv_numeric_bytes_loaded	structures.md	the packed bytes nv_load_slot read for the numeric values, from the record's +0x10; nothing reads it	int16_t
+0x101f66	label	nv_bytes_loaded	structures.md	the packed bytes nv_load_slot read for all the values, from the record's +0x10; nothing reads it	int16_t
 0x101e8a	label	nv_settings	structures.md	the saved settings, 0xc5 bytes; each field the value of a descriptor in nv_save's tables	nv_settings_fields
 0x30966	label	nv_settings_defaults	structures.md	nv_restore copies them over nv_settings when no slot loads
 0x4000c0	label	nv_records	structures.md	the EEPROM's two NV register records, 0x80 bytes each: "S", a sequence number at +4, "3543B", the packed settings, a checksum
@@ -564,6 +569,8 @@
 0x10201c	label	pll_scpi_setting	structures.md	the new byte finish_scpi_cmd stores into a setting	uint8_t
 0x102020	label	pll_scpi_values	structures.md	the request's values, which validate_num checks	uint32_t[4]
 0x102030	label	pll_scpi_validated	structures.md	validate_num's results, which finish_scpi_cmd stores	uint32_t[4]
+0x102002	label	pll_scpi_gps_arguments	structures.md	the four longs pll_scpi_send_to_loop's gpsx_exchange message points at, filled by the descriptor's gps_request	uint32_t[4]
+0x102018	label	pll_scpi_waiting_task	structures.md	get_setup_vars sets it to task_scpi for source 0; pll_scpi_receive, pll_scpi_complete and gps_diag_complete signal it event 0x20	uint32_t
 0x10254a	label	ti_setpoint	loop.md	the time-interval setpoint pll_normal subtracts from each block's mean; phase_off sets it	float
 0x102042	label	holdover_steering	structures.md	the holdover stage's blocks and its slope accumulators	holdover_steering_state
 0x10205e	label	loop_steering	loop.md	startup_pll's and pll_normal's proportional-integral loop	loop_steering_state
@@ -619,6 +626,7 @@
 0x22d70	function	fpga_setup	"setup fpga"	sets the FPGA up
 0x22da4	function	fpga_program	"FPGA programmed", "ERROR: FPGA programming failed", "FPGA INIT did not go high"; outputs.md's loader	loads the FPGA's configuration
 0x23d80	function	hmon_check_supplies	"5V is out of tolerance, value: %.2f", "Secondary oven voltage", "15V", "-15V"	checks the supplies and the secondary oven voltage against their tolerances, reporting each that leaves or returns
+0x101cf2	label	hmon_supply_step	structures.md	hmon_check_supplies's next reading, 0 to 7: temperature, double oven, +15V, oscillator current, 5V, oven, -15V, antenna current	uint8_t
 0x2437a	function	watchdog_report	"watchdog: clock: %4d gps: %4d pll: %4d mon: %4d spool %4d"	prints the tasks' watchdog counts
 0x1b7ee	function	print_gps_init_state	"Gen GPS state:", "start", "init ack", .. "survey", "done"	prints the GPS initialization sequence's state
 0x1b99c	function	print_leap_check_state	"Leap chk state:", "leap start", "leap pending send", "leap wait"	prints the leap second check's state
@@ -657,6 +665,7 @@
 0x2353a	function	fpga_verify_even	context	the same for the even frames; "even: inv read"
 0x2384a	function	fpga_verify_chip	context	verifies one chip through the port F lines; "chip %1d failed compare"
 0x242f0	function	hmon_check_efc	context	"EFC near end of range" when pll.efc stays outside 52428 to 996132, 5% to 95% of 2^20, five checks
+0x101cf4	label	efc_range	structures.md	efc_clamp's and hmon_check_efc's flags: clamped, near the end of range, and the checks outside it	efc_range_state
 0x24440	function	log_reset_cause	context	logs the last reset's cause with the time: "Exception: %s, vector %04X, PC = %08X" or "Watchdog timeout: clk %1d ..."
 0x46e70	function	gps_leap_ack	context	the leap second's acknowledgement step; "Error in leapsecond ack"; sets the GPS-UTC offset
 0x471fc	function	gps_diag_sequence	context	the GPS diagnostic reset and test; "Error in DIAG GPS RST ack", "TST ack"
@@ -1036,19 +1045,27 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x32ffa	function	reset_record_checksum	context	a reset-cause record's checksum: the sum of its 0x58 bytes and its complement
 0x2842c	function	status_register_set_enable	context	sets one status register's enable mask, as :ENABle and *ESE do
 0x2f3d0	function	status_enables_init	context	sets the seven status registers' enable masks from the table at 0x2f7a8
-0x42390	function	linear_regression	loop.md's aging fit	the means, Sxx and Sxy of the weighted entries of two arrays
+0x42390	function	linear_regression	loop.md's aging fit	the means, Sxx and Sxy of the weighted entries of two arrays	int linear_regression(regression_record *record, int with_slope)
+0x42092	local	regression	read	fit_log_residuals's record for linear_regression	regression_record @ -0x1e
+0x41e32	local	regression	read	fit_log_initial's record for linear_regression	regression_record @ -0x1e
+0x41ba0	local	regression	read	fit_linear's record for linear_regression	regression_record @ -0x22
 0x42626	function	float_abs	context	a float's magnitude	float float_abs(float param_1)
-0x41c20	function	fit_constant	loop.md's aging fit	fits the EFC history as a constant, its weighted mean
-0x41ba0	function	fit_linear	loop.md's aging fit	fits the EFC history as a line in time, by linear_regression
-0x41a42	function	fit_linear_halves	loop.md's aging fit	a slope from the two halves of the last 64 averages, and its residuals
-0x41c8e	function	fit_logarithmic	loop.md's aging fit	fits the EFC history with a term in log time, searching its coefficient in steps a tenth as large each pass
-0x41e32	function	fit_log_initial	loop.md's aging fit	the log term's first coefficient and step
-0x41f2a	function	fit_log_search	loop.md's aging fit	steps the log term's coefficient while the fit improves
-0x42092	function	fit_log_residuals	loop.md's aging fit	the history less the log term, regressed on time	void fit_log_residuals(int param_1,undefined4 param_2)
-0x41d30	function	fit_span	loop.md's aging fit	the first and last sample times among the weighted entries	void fit_span(int param_1)
-0x41dcc	function	fit_evaluate_latest	loop.md's aging fit	the fit at the latest sample, and its residual
-0x42128	function	fit_three_point	loop.md's aging fit	solves a curve through three points
-0x42644	function	fit_quality	loop.md's aging fit	half the summed squares of successive residuals' differences, scaled to the span
+0x41c20	function	fit_constant	loop.md's aging fit	fits the EFC history as a constant, its weighted mean	bool fit_constant(aging_curve_state *curve)
+0x41ba0	function	fit_linear	loop.md's aging fit	fits the EFC history as a line in time, by linear_regression	int fit_linear(aging_curve_state *curve)
+0x41a42	function	fit_linear_halves	loop.md's aging fit	a slope from the two halves of the last 64 averages, and its residuals	int fit_linear_halves(aging_curve_state *curve)
+0x41c8e	function	fit_logarithmic	loop.md's aging fit	fits the EFC history with a term in log time, searching its coefficient in steps a tenth as large each pass	int fit_logarithmic(aging_curve_state *curve)
+0x41e32	function	fit_log_initial	loop.md's aging fit	the log term's first coefficient and step	int fit_log_initial(aging_curve_state *curve)
+0x41f2a	function	fit_log_search	loop.md's aging fit	steps the log term's coefficient while the fit improves	uint32_t fit_log_search(aging_curve_state *curve, int with_slope)
+0x42092	function	fit_log_residuals	loop.md's aging fit	the history less the log term, regressed on time	int fit_log_residuals(aging_curve_state *curve, int with_slope)
+0x41d30	function	fit_span	loop.md's aging fit	the first and last sample times among the weighted entries	void fit_span(aging_curve_state *curve)
+0x41dcc	function	fit_evaluate_latest	loop.md's aging fit	the fit at the latest sample, and its residual	void fit_evaluate_latest(aging_curve_state *curve,float *fitted)
+0x42128	function	fit_three_point	loop.md's aging fit	the parabola through three points' vertex, 1 and zeros if the points are degenerate	int fit_three_point(three_point_fit *fit)
+0x41f2a	local	three_point	read	fit_log_search's its record for fit_three_point	three_point_fit @ -0x14
+0x41f2a	local	c_values	read	fit_log_search's the last three c, the oldest first	float[3] @ -0x20
+0x41f2a	local	rms_values	read	fit_log_search's the rms each gave	float[3] @ -0x2c
+0x42644	function	fit_quality	loop.md's aging fit	half the summed squares of successive residuals' differences, scaled to the span	void fit_quality(aging_curve_state *curve)
+0x101fd8	label	aging_curve	loop.md	aging_fit's record, which the fit routines are given and aging_fit_collect copies a, b, c and HQ from	aging_curve_state
+0x417c6	local	candidate	loop.md	aging_fit's three-term fit, whose a, b, c and rms it keeps when that fits better	aging_curve_state @ -0x7e
 0x2421c	function	efc_write_dithered	context	writes the EFC rounded, plus random_dither, clamped to 0 to 0xffff0
 0x12af2	function	random_dither	context	a small signed random value: rand, shaped by dither_table
 0x1223c	function	double_round_to_long	context	a double rounded half away from zero to a long, saturating
@@ -1296,11 +1313,14 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2f680	function	happening_replay	context	replays buffered status events through status_report or status_happening
 0x2f6dc	function	happening_flush	context	replays one of the two buffers of early status events
 0x30a3e	function	lifetime_record_read	context	reads the lifetime record from EEPROM 0x400060, or sets its defaults: 1994-01-01 and the EFC at mid-scale
-0x101d00	label	lifetime_efc	context	the lifetime record's EFC, which lifetime_record_read loads from EEPROM 0x40006a or sets to mid-scale, 524288	float
+0x101d00	label	lifetime	structures.md	the lifetime record in RAM, its EFC, date and count, which lifetime_record_read loads from EEPROM 0x400060	lifetime_state
+0x101d14	label	lifetime_event	structures.md	the clock event lifetime_update schedules, clk_do's return; only written	klok_entry *
 #
 # the EEPROM records, the clamps and the counter's self-tests
 0x30c1e	function	calibration_block_read	interval.md's calibration block	reads the time offset and TC from the calibration block at EEPROM 0x400080, or zeros if its checksum fails
-0x30d2e	function	parameter_record_read	structures.md	reads the serial settings from the parameter record at EEPROM 0x400000, or sets their defaults if its checksum fails
+0x30d2e	function	parameter_record_read	structures.md	reads DUART channel B's serial settings from the parameter record at EEPROM 0x400000, or sets their defaults if its checksum fails; always sets the SCI's defaults
+0x101f50	label	sci_settings	structures.md	the SCI's serial settings, SERial2's; parameter_record_read always sets their defaults	sci_settings_record
+0x101f58	label	duartb_settings	structures.md	DUART channel B's serial settings, SERial1's, from the parameter record at EEPROM 0x400000	duartb_settings_record
 0x3145a	function	sign_extend_bits	context	sign-extends a value of so many bits to a long
 0x3161a	function	log_erase_checked	context	erases the event log under log_mutex if its count is the one given, else 0xff
 0x31662	function	log_entry_total	context	the event log's entry count, and whether it is full

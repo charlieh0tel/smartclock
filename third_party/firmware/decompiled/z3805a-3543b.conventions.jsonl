@@ -1189,7 +1189,7 @@
 {"address":"00030b66","name":"lifetime_update","note":"on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules its clock event","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00030c1e","name":"calibration_block_read","note":"reads the time offset and TC from the calibration block at EEPROM 0x400080, or zeros if its checksum fails","convention":"unknown"}
 {"address":"00030c60","name":"save_calibration_block","note":"rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs from it, reporting status 0x10 if the EEPROM write fails","convention":"unknown","stack":[{"offset":8,"size":4}]}
-{"address":"00030d2e","name":"parameter_record_read","note":"reads the serial settings from the parameter record at EEPROM 0x400000, or sets their defaults if its checksum fails","convention":"unknown"}
+{"address":"00030d2e","name":"parameter_record_read","note":"reads DUART channel B's serial settings from the parameter record at EEPROM 0x400000, or sets their defaults if its checksum fails; always sets the SCI's defaults","convention":"unknown"}
 {"address":"00030dea","name":"save_parameter_record","note":"writes the 16-byte checksummed parameter record at EEPROM 0x400000, reporting status 0x10 if it fails","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"00030f08","name":"eeprom_lock_init","note":"clears the EEPROM's busy flag at 0x101d34","convention":"unknown"}
 {"address":"00030f10","name":"eeprom_init","note":"creates eepx, \"Unable to create eepx\"","convention":"unknown"}
@@ -1305,7 +1305,7 @@
 {"address":"00041e32","name":"fit_log_initial","note":"the log term's first coefficient and step","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00041f2a","name":"fit_log_search","note":"steps the log term's coefficient while the fit improves","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00042092","name":"fit_log_residuals","note":"the history less the log term, regressed on time","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"00042128","name":"fit_three_point","note":"solves a curve through three points","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00042128","name":"fit_three_point","note":"the parabola through three points' vertex, 1 and zeros if the points are degenerate","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00042390","name":"linear_regression","note":"the means, Sxx and Sxy of the weighted entries of two arrays","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00042626","name":"float_abs","note":"a float's magnitude","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00042644","name":"fit_quality","note":"half the summed squares of successive residuals' differences, scaled to the span","convention":"unknown","stack":[{"offset":4,"size":4}]}

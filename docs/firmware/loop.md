@@ -243,6 +243,26 @@ to 4 at `0x4b36a`), seeds a with u − c·s when a is zero (`0x47440` to
 The console's `last efc average = %.1f` (`0x2c3a5`) prints the newest
 e; `dmes_curv` (`0x2befe`) sets the byte at `0x103d8a`.
 
+### The aging fit in the Z3805A 3543B
+
+The record is `aging_curve` (`0x101fd8`, `structures.md`), the same
+layout, and the ring is `pll.efc_history`.
+
+| Above | Here | |
+| ----- | ---- | - |
+| `FUN_00045116` | `aging_fit` (`0x417c6`) | |
+| `FUN_00045680` | `fit_span` (`0x41d30`) | |
+| `FUN_00045392` | `fit_linear_halves` (`0x41a42`) | mode 4 |
+| `FUN_00045ce0` | `fit_linear` (`0x41ba0`) | through `linear_regression` (`0x42390`) |
+| `FUN_000455de` | `fit_logarithmic` (`0x41c8e`) | |
+| `FUN_00045570` | `fit_constant` (`0x41c20`) | mode 0 |
+| `FUN_00045782` | `fit_log_initial` (`0x41e32`) | |
+| `FUN_0004587a` | `fit_log_search` (`0x41f2a`) | |
+| `FUN_00045a78` | `fit_three_point` (`0x42128`) | |
+| `FUN_0004571c` | `fit_evaluate_latest` (`0x41dcc`) | |
+| `FUN_00045f94` | `fit_quality` (`0x42644`) | |
+| `FUN_0004508e` | `aging_fit_collect` (`0x4173e`) | into `fit_a` to `fit_c` and `predicted_uncertainty` |
+
 ## s, the oscillator current
 
 `FUN_000324b0(n)` returns channel n of eight measured channels, each a

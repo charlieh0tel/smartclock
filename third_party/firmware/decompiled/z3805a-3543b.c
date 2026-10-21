@@ -4425,8 +4425,8 @@ int date_to_days(uint param_1);
 int date_to_mjd(uint param_1);
 uint8_t days_in_month(ushort param_1,byte param_2);
 undefined4 date_normalize(uint param_1);
-undefined3 oncore_date_unpack(undefined4 param_1);
-undefined4 oncore_date_pack(undefined4 param_1);
+uint32_t oncore_date_unpack(uint32_t packed);
+uint32_t oncore_date_pack(uint32_t fields);
 int hms_to_seconds(uint param_1);
 int time_to_seconds(uint param_1);
 uint seconds_to_hms(uint param_1);
@@ -8197,35 +8197,35 @@ undefined4 date_normalize(uint param_1)
 /* the inverse of oncore_date_pack: year << 16 | month << 8 | day back to month << 24 | day << 16 |
    year; called by nothing */
 
-undefined3 oncore_date_unpack(undefined4 param_1)
+uint32_t oncore_date_unpack(uint32_t packed)
 
 {
   undefined2 local_c;
+  undefined1 uStack_a;
   undefined1 uStack_9;
-  undefined1 auStack_7 [3];
+  undefined4 local_8;
   
-  local_c = (undefined2)((uint)param_1 >> 0x10);
-  uStack_9 = (undefined1)param_1;
-  auStack_7[0] = uStack_9;
-  __ghidra_piece(unsigned short, auStack_7, 1) = local_c;
-  return auStack_7;
+  local_c = (undefined2)(packed >> 0x10);
+  uStack_a = (undefined1)(packed >> 8);
+  uStack_9 = (undefined1)packed;
+  local_8 = CONCAT13(uStack_a,CONCAT12(uStack_9,local_c));
+  return local_8;
 }
 
 
 /* 000110fa */
 
-/* WARNING: Unknown calling convention -- yet parameter storage is locked */
 /* @@Ba's month, day and year into year << 16 | month << 8 | day */
 
-undefined4 oncore_date_pack(undefined4 param_1)
+uint32_t oncore_date_pack(uint32_t fields)
 
 {
   undefined1 local_8;
   undefined1 uStack_7;
   
-  local_8 = (undefined1)((uint)param_1 >> 0x18);
-  uStack_7 = (undefined1)((uint)param_1 >> 0x10);
-  return CONCAT31(CONCAT21((short)param_1,local_8),uStack_7);
+  local_8 = (undefined1)(fields >> 0x18);
+  uStack_7 = (undefined1)(fields >> 0x10);
+  return CONCAT31(CONCAT21((short)fields,local_8),uStack_7);
 }
 
 
@@ -61042,10 +61042,10 @@ undefined1 powerup(char param_1)
 
 {
   int iVar1;
-  uint32_t uVar2;
   char cVar4;
   uint16_t sr;
-  undefined4 uVar3;
+  undefined4 uVar2;
+  uint32_t uVar3;
   undefined1 uVar5;
   undefined2 uVar6;
   uint8_t uVar7;
@@ -61108,8 +61108,8 @@ undefined1 powerup(char param_1)
       if (cVar4 == '\x01') {
         pll.tfom = 2e-06;
         if ((gps_reference_good != 0) && (internal_pps_dead == 0)) {
-          uVar2 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
-          clock_set(__ghidra_piece(unsigned int, gps.status, 4),uVar2);
+          uVar3 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
+          clock_set(__ghidra_piece(unsigned int, gps.status, 4),uVar3);
           status_happening('&');
           cVar4 = leap_second_near();
           if (cVar4 == '\0') {
@@ -61157,8 +61157,8 @@ override_jmp_00045f06_case_0:
   }
   if (first_satellite_logged == 0) {
     sr = set_interrupt_mask(0x100);
-    uVar3 = satellites_in_use(&local_6,&uStack_5,(undefined4 *)0x0,(undefined1 *)0x0);
-    if ((char)uVar3 == '\0') {
+    uVar2 = satellites_in_use(&local_6,&uStack_5,(undefined4 *)0x0,(undefined1 *)0x0);
+    if ((char)uVar2 == '\0') {
       local_6 = '\0';
     }
     set_interrupt_mask(sr);

@@ -577,7 +577,7 @@
 0x2979c	function	scpi_check_range	context	reports 9 when value is outside min..max; *ESE, *SRE and the STATus ENABle and transition setters
 0x3124a	function	eeprom_write	context	writes data split at 64-byte page boundaries with eeprom_write_page; happening 'I' on a failure
 0x3119e	function	eeprom_write_page	context	writes within one 64-byte EEPROM page under eeprom_lock, five tries
-0x110fa	function	oncore_date_pack	context	@@Ba's month, day and year into year << 16 | month << 8 | day	undefined4 oncore_date_pack(undefined4 param_1)
+0x110fa	function	oncore_date_pack	context	@@Ba's month, day and year into year << 16 | month << 8 | day	uint32_t oncore_date_pack(uint32_t fields)
 0x495e2	function	satellite_in_set	context	bit prn - 1 of a mask, or prn - 0x21 for the second kind	int satellite_in_set(satellite_kind kind, uint8_t id, uint32_t mask)
 0x4f1a6	function	satellite_add_to_set	context	sets bit prn - 1 of a mask, or prn - 0x21 for the second kind	void satellite_add_to_set(satellite_kind kind, uint8_t id, uint32_t *mask)
 0x2d226	function	satellites_in_mask	context	lists the PRNs whose bits are set; the SAT:TRAC:IGN? and INCL? queries
@@ -1785,7 +1785,7 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x10b0c2	label	installer_errno	structures.md	as errno; installer_float_raise and installer_strtol set it	int32_t
 #
 # the last application routines
-0x110d6	function	oncore_date_unpack	context	the inverse of oncore_date_pack: year << 16 | month << 8 | day back to month << 24 | day << 16 | year; called by nothing
+0x110d6	function	oncore_date_unpack	context	the inverse of oncore_date_pack: year << 16 | month << 8 | day back to month << 24 | day << 16 | year; called by nothing	uint32_t oncore_date_unpack(uint32_t packed)
 0x122f6	function	double_decimal_exponent_rounded	context	the decimal exponent of a double's magnitude rounded, by bisection over 5e-30 to 5e30 at 0x1234c; called by nothing
 0x1258a	function	double_decimal_exponent	context	floor(log10) of a double's magnitude, by bisection over power_of_ten_double's table, 1e-30 to 1e30 at 0x12614; called by nothing
 0x1749e	function	cpu_register_test	context, read	selftest_cpu's register test: 0x55555555 and 0xaaaaaaaa through every data and address register; 1 at 0x100c24 on a failure; called as C, D0.w 0 on a pass, but its body is the registers themselves, which C cannot say		convention=other; confidence=read; family=selftest

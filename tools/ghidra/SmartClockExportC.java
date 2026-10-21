@@ -81,6 +81,7 @@ import ghidra.program.model.data.DefaultDataType;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.data.Pointer;
 import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.data.TypeDef;
 import ghidra.program.model.data.Undefined;
 import ghidra.program.model.data.VoidDataType;
@@ -1357,7 +1358,7 @@ public class SmartClockExportC extends GhidraScript {
 				signedPieces.add(readSigned(fieldOperator(tokens, i)));
 			}
 		}
-		return new Printed(aggregateOperands(text(lines, edits)), signedPieces);
+		return new Printed(text(lines, edits), signedPieces);
 	}
 
 	/** The lines' text, each token's as edits make it, as PrettyPrinter.print writes it. */
@@ -1766,40 +1767,103 @@ public class SmartClockExportC extends GhidraScript {
 		return ends == 1 && line.getAllTokens().get(line.getAllTokens().size() - 1).getText().equals(";");
 	}
 
-	/** What aggregateCasts puts after a cast of a structure, for aggregateOperands. */
-	private static final String AGGREGATE_MARK = "__ghidra_aggregate_bits@";
 	/** The macro that gives a structure's bytes as an integer, its last byte the least significant. */
 	private static final String AGGREGATE_BITS = "__ghidra_aggregate_bits";
 
+	/** The operations that read their operands as integers, which a structure is not to C. */
+	private static final Set<Integer> INTEGER_READS = Set.of(PcodeOp.INT_EQUAL, PcodeOp.INT_NOTEQUAL,
+		PcodeOp.INT_LESS, PcodeOp.INT_SLESS, PcodeOp.INT_LESSEQUAL, PcodeOp.INT_SLESSEQUAL, PcodeOp.INT_ADD,
+		PcodeOp.INT_SUB, PcodeOp.INT_AND, PcodeOp.INT_OR, PcodeOp.INT_XOR, PcodeOp.INT_LEFT, PcodeOp.INT_RIGHT,
+		PcodeOp.INT_SRIGHT, PcodeOp.INT_MULT);
+
 	/**
-	 * Marks each cast of a structure to an integer, which C has none of:
-	 * the decompiler reads a structure's bytes as the integer they make,
-	 * (uint32_t)value.time of a time_of_day.  The p-code's CAST says the
-	 * operand is a structure, which the text cannot.
+	 * Makes each structure the decompiler reads as an integer one C can:
+	 * it reads a structure's bytes as the integer they make, where C has
+	 * no conversion.  An operand -- a variable and the members after it
+	 * -- of a structure type under a cast to another type, or compared or
+	 * computed with, is marked for __ghidra_aggregate_bits, so that
+	 * (uint32_t)value.time of a time_of_day reads its bytes; and a cast of
+	 * an integer to a structure only so to compare it goes, the integer
+	 * compared as it is.  The tokens give each operand's type, which the
+	 * text cannot.
 	 */
 	private static void aggregateCasts(List<ClangToken> tokens, TokenEdits edits) {
 		for (int i = 0; i < tokens.size(); i++) {
-			if (!(tokens.get(i) instanceof ClangTypeToken)) {
+			if (!(tokens.get(i) instanceof ClangVariableToken) || tokens.get(i).getPcodeOp() == null) {
 				continue;
 			}
-			int open = nextPrinted(tokens, i, -1);
-			int close = nextPrinted(tokens, i, 1);
-			int operand = close < 0 ? -1 : nextPrinted(tokens, close, 1);
-			if (open < 0 || operand < 0 || !tokens.get(open).getText().equals("(")
-				|| !tokens.get(close).getText().equals(")")) {
+			PcodeOp op = tokens.get(i).getPcodeOp();
+			// the operand: the variable and any members after it, all printed for op
+			int last = i;
+			DataType type = tokens.get(i).getHighVariable() == null ? null
+				: tokens.get(i).getHighVariable().getDataType();
+			for (int next = nextPrinted(tokens, last, 1); next >= 0 && tokens.get(next) instanceof ClangOpToken
+				&& (tokens.get(next).getText().equals(".") || tokens.get(next).getText().equals("->"));
+				next = nextPrinted(tokens, last, 1)) {
+				int field = nextPrinted(tokens, next, 1);
+				if (field < 0 || !(tokens.get(field) instanceof ClangFieldToken member)) {
+					break;
+				}
+				type = memberType(member);
+				last = field;
+			}
+			int after = nextPrinted(tokens, last, 1);
+			if (after >= 0 && tokens.get(after).getText().equals("[")) {
+				i = last;
 				continue;
 			}
-			// the cast's own tokens carry no operation; its operand's carry the CAST
-			PcodeOp op = tokens.get(operand).getPcodeOp();
-			if (op == null || op.getOpcode() != PcodeOp.CAST || op.getInput(0).getHigh() == null) {
-				continue;
+			int close = nextPrinted(tokens, i, -1);
+			int castType = close < 0 ? -1 : nextPrinted(tokens, close, -1);
+			// a pointer cast's stars come between its type and the close
+			while (castType >= 0 && tokens.get(castType).getText().equals("*")) {
+				castType = nextPrinted(tokens, castType, -1);
 			}
-			DataType input = op.getInput(0).getHigh().getDataType();
-			DataType base = input instanceof TypeDef typedef ? typedef.getBaseDataType() : input;
-			if (base instanceof Composite) {
-				edits.after.merge(tokens.get(close), AGGREGATE_MARK, String::concat);
+			int open = castType < 0 ? -1 : nextPrinted(tokens, castType, -1);
+			boolean cast = open >= 0 && tokens.get(close).getText().equals(")")
+				&& tokens.get(castType) instanceof ClangTypeToken && tokens.get(open).getText().equals("(");
+			DataType castTo = !cast ? null : nextPrinted(tokens, castType, 1) != close
+				? PointerDataType.dataType : ((ClangTypeToken) tokens.get(castType)).getDataType();
+			if (isComposite(type) && (cast && !isComposite(castTo) || !cast && INTEGER_READS.contains(op.getOpcode()))) {
+				edits.before.merge(tokens.get(i), AGGREGATE_BITS + "(", String::concat);
+				edits.after.merge(tokens.get(last), ")", String::concat);
 			}
+			else if (cast && isComposite(castTo) && !isComposite(type) && op.getOpcode() == PcodeOp.CAST
+				&& onlyIntegerReads(op.getOutput())) {
+				for (int k = open; k <= close; k++) {
+					edits.replaced.put(tokens.get(k), "");
+				}
+			}
+			i = last;
 		}
+	}
+
+	/** The type of the member a field token prints, or null. */
+	private static DataType memberType(ClangFieldToken member) {
+		DataType parent = member.getDataType();
+		DataType base = parent instanceof TypeDef typedef ? typedef.getBaseDataType() : parent;
+		if (!(base instanceof Structure structure)) {
+			return null;
+		}
+		DataTypeComponent component = structure.getComponentContaining(member.getOffset());
+		return component == null ? null : component.getDataType();
+	}
+
+	private static boolean isComposite(DataType type) {
+		DataType base = type instanceof TypeDef typedef ? typedef.getBaseDataType() : type;
+		return base instanceof Composite;
+	}
+
+	/** Whether a value is read only by operations that read it as an integer. */
+	private static boolean onlyIntegerReads(Varnode value) {
+		Iterator<PcodeOp> readers = value == null ? Collections.emptyIterator() : value.getDescendants();
+		boolean any = false;
+		while (readers.hasNext()) {
+			if (!INTEGER_READS.contains(readers.next().getOpcode())) {
+				return false;
+			}
+			any = true;
+		}
+		return any;
 	}
 
 	/** The index of the next token from tokens[from] in direction step that prints something, or -1. */
@@ -1810,25 +1874,6 @@ public class SmartClockExportC extends GhidraScript {
 			}
 		}
 		return -1;
-	}
-
-	/** c with each operand aggregateCasts marked read as __ghidra_aggregate_bits(operand). */
-	private static String aggregateOperands(String c) {
-		StringBuilder out = new StringBuilder(c);
-		for (int at = out.lastIndexOf(AGGREGATE_MARK); at >= 0; at = out.lastIndexOf(AGGREGATE_MARK, at - 1)) {
-			int start = at + AGGREGATE_MARK.length();
-			int end = operandEnd(out, start);
-			if (end < 0) {
-				out.replace(at, start, "");
-				continue;
-			}
-			out.replace(start, end, "(" + out.substring(start, end) + ")");
-			out.replace(at, start, AGGREGATE_BITS);
-			if (at == 0) {
-				break;
-			}
-		}
-		return out.toString();
 	}
 
 	/** The p-code's equality tests. */

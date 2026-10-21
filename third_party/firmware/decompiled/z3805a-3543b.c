@@ -294,13 +294,22 @@ struct char_slot {
 
 typedef struct clock_record clock_record, *Pclock_record;
 
+typedef struct time_of_day time_of_day, *Ptime_of_day;
+
+struct time_of_day {
+    uint8_t reserved;
+    uint8_t hour;
+    uint8_t minute;
+    uint8_t second;
+};
+
 struct clock_record {
     uint16_t checksum;
     uint32_t uptime;
-    uint32_t time;
+    struct time_of_day time;
     uint32_t date;
     uint8_t month_days[12];
-    uint32_t gps_time;
+    struct time_of_day gps_time;
     uint32_t gps_date;
     uint8_t gps_month_days[12];
     uint8_t minute_length;
@@ -835,13 +844,8 @@ struct oncore_channel_status {
 };
 
 struct oncore_status_fields {
-    uint8_t month;
-    uint8_t day;
-    uint16_t year;
-    uint8_t pad_04;
-    uint8_t hour;
-    uint8_t minute;
-    uint8_t second;
+    struct oncore_date_fields date;
+    struct time_of_day time;
     uint32_t fraction;
     int32_t latitude;
     int32_t longitude;
@@ -1303,15 +1307,6 @@ struct oncore_message_entry {
 
 typedef struct packed_datetime packed_datetime, *Ppacked_datetime;
 
-typedef struct time_of_day time_of_day, *Ptime_of_day;
-
-struct time_of_day {
-    uint8_t reserved;
-    uint8_t hour;
-    uint8_t minute;
-    uint8_t second;
-};
-
 struct packed_datetime {
     struct time_of_day time;
     uint32_t date;
@@ -1560,7 +1555,7 @@ typedef struct reset_record reset_record, *Preset_record;
 struct reset_record {
     int16_t sequence;
     uint16_t checksum;
-    uint32_t time;
+    struct time_of_day time;
     uint32_t date;
     char text[80];
 };
@@ -4464,7 +4459,7 @@ void klok_print_entries(void);
 klok_entry * klok_find(short param_1);
 int klok_entry_state(klok_entry *param_1);
 uint klok_task_create(ulong param_1);
-void clock_set(uint32_t param_1,uint32_t param_2);
+void clock_set(time_of_day time,uint32_t date);
 void klok_task(void);
 void klok_run_due(void);
 undefined4 list_unlink(int *param_1,int *param_2);
@@ -4472,16 +4467,16 @@ void klok_insert_sorted(int *param_1,int *param_2);
 void list_push(undefined4 *param_1,undefined4 *param_2);
 undefined4 is_leap_year(ushort param_1);
 int16_t day_of_year(uint32_t date);
-int time_packed_to_seconds(uint param_1);
+int time_packed_to_seconds(uint32_t time);
 undefined4 days_to_date(undefined *param_1);
 int date_to_days(uint param_1);
 int date_to_mjd(uint param_1);
 uint8_t days_in_month(ushort param_1,byte param_2);
 undefined4 date_normalize(uint param_1);
 uint32_t oncore_date_unpack(uint32_t packed);
-uint32_t oncore_date_pack(uint32_t fields);
-int hms_to_seconds(uint param_1);
-int time_to_seconds(uint param_1);
+uint32_t oncore_date_pack(oncore_date_fields fields);
+int hms_to_seconds(uint32_t time);
+int time_to_seconds(uint32_t time);
 uint seconds_to_hms(uint param_1);
 int gps_seconds(uint32_t date,uint32_t time);
 int leap_gps_time(void);
@@ -4566,8 +4561,8 @@ uint32_t get_clock_time(void);
 uint32_t get_gps_date(void);
 uint32_t get_gps_time(void);
 uint32_t get_uptime(void);
-int get_date_time(uint32_t *date,uint32_t *time);
-bool get_gps_datetime(uint32_t *param_1,uint32_t *param_2);
+int get_date_time(uint32_t *date,time_of_day *time);
+bool get_gps_datetime(uint32_t *date,time_of_day *time);
 void clock_record_refresh(void);
 int set_timedate_unflagged();
 int set_timedate();
@@ -5267,7 +5262,7 @@ scpi_context_init(undefined4 *param_1,undefined4 param_2,undefined4 param_3,unde
 int scpi_parse_message_unit(void *context,short *reset_path);
 int scpi_scan_token(void *input,ushort *param_2,int *param_3);
 void scpi_skip_to_terminator(void *input);
-int scpi_scan_number(int param_1,undefined4 param_2,undefined4 param_3,undefined4 *param_4);
+int scpi_scan_number(void *token,int have_character,int character,void *input);
 undefined4 scpi_scan_exponent(undefined4 param_1,int param_2,undefined4 *param_3);
 uint scpi_char_upper(uint param_1);
 int scpi_parameter_match(int *param_1,undefined4 param_2,void *param_3,short *param_4);
@@ -5793,7 +5788,7 @@ int log_clear(void);
 int log_count(uint8_t *full);
 void reset_record_count(void);
 undefined4 log_entry_text(int param_1,char *param_2,char *param_3);
-undefined4 reset_record_write(uint32_t param_1,uint32_t param_2,char *param_3);
+uint32_t reset_record_write(uint32_t date,time_of_day time,char *text);
 void interpolator_calibration_init(interpolator_calibration *calibration);
 uint8_t interpolator_measure(uint8_t mode);
 uint8_t interpolator_measure_low(char_slot dac);
@@ -5983,7 +5978,7 @@ void status_screen_height(status_snapshot_record *snapshot,char *line);
 void format_si(int param_1,int param_2,char param_3,byte param_4,char *param_5,char *param_6);
 void format_duration_short(uint param_1,char *param_2);
 void status_screen_sync(status_snapshot_record *snapshot,char *line);
-undefined4 format_time(uint param_1,char *param_2);
+int format_time(time_of_day time,char *text);
 undefined4 format_date(ushort param_1,byte param_2,byte param_3,char *param_4);
 void status_screen_time(status_snapshot_record *snapshot,char *line);
 char * status_screen_position(byte param_1,int param_2,char *param_3);
@@ -7920,11 +7915,11 @@ uint klok_task_create(ulong param_1)
 
 /* sets the date and time, then lifetime_update */
 
-void clock_set(uint32_t param_1,uint32_t param_2)
+void clock_set(time_of_day time,uint32_t date)
 
 {
-  set_timedate(param_2,param_1);
-  lifetime_update(param_2);
+  set_timedate(date,(uint32_t)__ghidra_aggregate_bits(time));
+  lifetime_update(date);
   return;
 }
 
@@ -8080,10 +8075,10 @@ int16_t day_of_year(uint32_t date)
 
 /* a packed time as seconds; a third copy of hms_to_seconds, called by nothing */
 
-int time_packed_to_seconds(uint param_1)
+int time_packed_to_seconds(uint32_t time)
 
 {
-  return (param_1 >> 0x10 & 0xff) * 0xe10 + (param_1 >> 8 & 0xff) * 0x3c + (param_1 & 0xff);
+  return (time >> 0x10 & 0xff) * 0xe10 + (time >> 8 & 0xff) * 0x3c + (time & 0xff);
 }
 
 
@@ -8272,15 +8267,15 @@ uint32_t oncore_date_unpack(uint32_t packed)
 
 /* @@Ba's month, day and year into year << 16 | month << 8 | day */
 
-uint32_t oncore_date_pack(uint32_t fields)
+uint32_t oncore_date_pack(oncore_date_fields fields)
 
 {
   undefined1 local_8;
   undefined1 uStack_7;
   
-  local_8 = (undefined1)(fields >> 0x18);
-  uStack_7 = (undefined1)(fields >> 0x10);
-  return CONCAT31(CONCAT21((short)fields,local_8),uStack_7);
+  local_8 = fields.month;
+  uStack_7 = fields.day;
+  return CONCAT31(CONCAT21(fields.year,local_8),uStack_7);
 }
 
 
@@ -8288,10 +8283,10 @@ uint32_t oncore_date_pack(uint32_t fields)
 
 /* hours, minutes and seconds as seconds */
 
-int hms_to_seconds(uint param_1)
+int hms_to_seconds(uint32_t time)
 
 {
-  return (param_1 & 0xff) + (param_1 >> 8 & 0xff) * 0x3c + (param_1 >> 0x10 & 0xff) * 0xe10;
+  return (time & 0xff) + (time >> 8 & 0xff) * 0x3c + (time >> 0x10 & 0xff) * 0xe10;
 }
 
 
@@ -8299,10 +8294,10 @@ int hms_to_seconds(uint param_1)
 
 /* a packed time as seconds; the same code as hms_to_seconds, a second copy */
 
-int time_to_seconds(uint param_1)
+int time_to_seconds(uint32_t time)
 
 {
-  return (param_1 & 0xff) + (param_1 >> 8 & 0xff) * 0x3c + (param_1 >> 0x10 & 0xff) * 0xe10;
+  return (time & 0xff) + (time >> 8 & 0xff) * 0x3c + (time >> 0x10 & 0xff) * 0xe10;
 }
 
 
@@ -8684,16 +8679,16 @@ undefined1 leap_second_near(void)
 {
   undefined1 uVar1;
   uint local_c;
-  undefined4 uStack_8;
+  time_of_day tStack_8;
   
   uVar1 = 0;
-  get_gps_datetime(&local_c,&uStack_8);
+  get_gps_datetime(&local_c,&tStack_8);
   if (nv_settings.gps_utc == 0) {
-    gps_to_utc(&local_c,&uStack_8);
+    gps_to_utc(&local_c,(uint32_t *)&tStack_8);
   }
   local_c = local_c & 0xffff;
   if (((((local_c == 799) || (local_c == 0x61e)) || (local_c == 0x91e)) || (local_c == 0xc1f)) &&
-     (((__ghidra_piece(unsigned char, uStack_8, 1) == 0x17 && (__ghidra_piece(unsigned char, uStack_8, 2) == ';')) && (0x2d < (byte)uStack_8)))) {
+     (((tStack_8.hour == 0x17 && (tStack_8.minute == 0x3b)) && (0x2d < tStack_8.second)))) {
     uVar1 = 1;
   }
   return uVar1;
@@ -10666,21 +10661,25 @@ void clock_tick(void)
 __regcall void clock_record_advance(clock_record *record /* a6 */)
 
 {
-  uint32_t uVar1;
-  char cVar2;
-  byte bVar3;
-  short sVar4;
-  ushort uVar5;
-  undefined2 uVar6;
-  undefined3 uVar7;
-  uint32_t uVar8;
+  time_of_day tVar1;
+  uint32_t uVar2;
+  uint8_t uVar3;
+  char cVar4;
+  byte bVar5;
+  short sVar6;
+  ushort uVar7;
+  undefined2 uVar8;
+  undefined3 uVar9;
+  time_of_day tVar10;
   uint32_t extraout_D0;
+  uint32_t uVar11;
   
   record->uptime = record->uptime + 1;
-  uVar1 = record->time;
-  cVar2 = (char)uVar1 + 1;
-  uVar8 = CONCAT31((int3)(uVar1 >> 8),cVar2);
-  if ((char)record->minute_length <= cVar2) {
+  tVar1 = record->time;
+  uVar3 = tVar1.second + 1;
+  __ghidra_piece(__ghidra_u3, tVar10, 0).v = __ghidra_piece(__ghidra_u3, tVar1, 0).v;
+  tVar10.second = uVar3;
+  if ((char)record->minute_length <= (char)uVar3) {
     if (leap_minute_pending != 0) {
       leap_minute_pending = 0;
       clock_change_applied = 1;
@@ -10693,33 +10692,34 @@ __regcall void clock_record_advance(clock_record *record /* a6 */)
       }
     }
     record->minute_length = 0x3c;
-    sVar4 = (short)(uVar1 >> 8) * 0x100 + 0x100;
-    uVar8 = CONCAT22((short)(uVar1 >> 0x10),sVar4);
-    if (sVar4 == 0x3c00) {
-      cVar2 = (char)(uVar1 >> 0x10) + 1;
-      uVar5 = CONCAT11((char)(uVar1 >> 0x18),cVar2);
-      if (cVar2 == 0x18) {
-        record->time = (uint)(ushort)(uVar5 - 0x18) << 0x10;
-        uVar1 = record->date;
-        bVar3 = (char)uVar1 + 1;
-        uVar7 = (undefined3)(uVar1 >> 8);
-        uVar8 = CONCAT31(uVar7,bVar3);
-        if (record->month_days[(short)((ushort)(uVar1 >> 8) & 0xff) + -1] < bVar3) {
-          sVar4 = (short)CONCAT31(uVar7,1) + 0x100;
-          uVar6 = (undefined2)(uVar1 >> 0x10);
-          uVar8 = CONCAT22(uVar6,sVar4);
-          if (sVar4 == 0xd01) {
-            clock_set_leap_year((char *)(record->month_days + 1),CONCAT22(uVar6,0x101) + 0x10000);
-            uVar8 = extraout_D0;
+    sVar6 = __ghidra_piece(unsigned short, tVar1, 1) * 0x100 + 0x100;
+    __ghidra_piece(unsigned short, tVar10, 0) = __ghidra_piece(unsigned short, tVar1, 0);
+    __ghidra_piece(unsigned short, tVar10, 2) = sVar6;
+    if (sVar6 == 0x3c00) {
+      cVar4 = tVar1.hour + 1;
+      uVar7 = CONCAT11(tVar1.reserved,cVar4);
+      if (cVar4 == 0x18) {
+        record->time = (time_of_day)((uint)(ushort)(uVar7 - 0x18) << 0x10);
+        uVar2 = record->date;
+        bVar5 = (char)uVar2 + 1;
+        uVar9 = (undefined3)(uVar2 >> 8);
+        uVar11 = CONCAT31(uVar9,bVar5);
+        if (record->month_days[(short)((ushort)(uVar2 >> 8) & 0xff) + -1] < bVar5) {
+          sVar6 = (short)CONCAT31(uVar9,1) + 0x100;
+          uVar8 = (undefined2)(uVar2 >> 0x10);
+          uVar11 = CONCAT22(uVar8,sVar6);
+          if (sVar6 == 0xd01) {
+            clock_set_leap_year((char *)(record->month_days + 1),CONCAT22(uVar8,0x101) + 0x10000);
+            uVar11 = extraout_D0;
           }
         }
-        record->date = uVar8;
+        record->date = uVar11;
         goto LAB_000135ba;
       }
-      uVar8 = (uint)uVar5 << 0x10;
+      tVar10 = (time_of_day)((uint)uVar7 << 0x10);
     }
   }
-  record->time = uVar8;
+  record->time = tVar10;
 LAB_000135ba:
   if ((offset_step_pending != 0) && (record->time == offset_step_time)) {
     offset_step_pending = 0;
@@ -10838,45 +10838,49 @@ __asm__(
 __regcall void clock_record_advance_utc(clock_record *record /* a6 */)
 
 {
-  uint32_t uVar1;
-  char cVar2;
-  byte bVar3;
-  short sVar4;
-  ushort uVar5;
-  undefined2 uVar6;
-  undefined3 uVar7;
-  uint32_t uVar8;
+  time_of_day tVar1;
+  uint32_t uVar2;
+  uint8_t uVar3;
+  char cVar4;
+  byte bVar5;
+  short sVar6;
+  ushort uVar7;
+  undefined2 uVar8;
+  undefined3 uVar9;
+  time_of_day tVar10;
   uint32_t extraout_D0;
+  uint32_t uVar11;
   
-  uVar1 = record->gps_time;
-  cVar2 = (char)uVar1 + 1;
-  uVar8 = CONCAT31((int3)(uVar1 >> 8),cVar2);
-  if (((char)record->minute_length <= cVar2) &&
-     (sVar4 = (short)(uVar1 >> 8) * 0x100 + 0x100, uVar8 = CONCAT22((short)(uVar1 >> 0x10),sVar4),
-     sVar4 == 0x3c00)) {
-    cVar2 = (char)(uVar1 >> 0x10) + 1;
-    uVar5 = CONCAT11((char)(uVar1 >> 0x18),cVar2);
-    if (cVar2 == 0x18) {
-      record->gps_time = (uint)(ushort)(uVar5 - 0x18) << 0x10;
-      uVar1 = record->gps_date;
-      bVar3 = (char)uVar1 + 1;
-      uVar7 = (undefined3)(uVar1 >> 8);
-      uVar8 = CONCAT31(uVar7,bVar3);
-      if (record->gps_month_days[(short)((ushort)(uVar1 >> 8) & 0xff) + -1] < bVar3) {
-        sVar4 = (short)CONCAT31(uVar7,1) + 0x100;
-        uVar6 = (undefined2)(uVar1 >> 0x10);
-        uVar8 = CONCAT22(uVar6,sVar4);
-        if (sVar4 == 0xd01) {
-          clock_set_leap_year((char *)(record->gps_month_days + 1),CONCAT22(uVar6,0x101) + 0x10000);
-          uVar8 = extraout_D0;
+  tVar1 = record->gps_time;
+  uVar3 = tVar1.second + 1;
+  __ghidra_piece(__ghidra_u3, tVar10, 0).v = __ghidra_piece(__ghidra_u3, tVar1, 0).v;
+  tVar10.second = uVar3;
+  if (((char)record->minute_length <= (char)uVar3) &&
+     (sVar6 = __ghidra_piece(unsigned short, tVar1, 1) * 0x100 + 0x100, __ghidra_piece(unsigned short, tVar10, 0) = __ghidra_piece(unsigned short, tVar1, 0), __ghidra_piece(unsigned short, tVar10, 2) = sVar6,
+     sVar6 == 0x3c00)) {
+    cVar4 = tVar1.hour + 1;
+    uVar7 = CONCAT11(tVar1.reserved,cVar4);
+    if (cVar4 == 0x18) {
+      record->gps_time = (time_of_day)((uint)(ushort)(uVar7 - 0x18) << 0x10);
+      uVar2 = record->gps_date;
+      bVar5 = (char)uVar2 + 1;
+      uVar9 = (undefined3)(uVar2 >> 8);
+      uVar11 = CONCAT31(uVar9,bVar5);
+      if (record->gps_month_days[(short)((ushort)(uVar2 >> 8) & 0xff) + -1] < bVar5) {
+        sVar6 = (short)CONCAT31(uVar9,1) + 0x100;
+        uVar8 = (undefined2)(uVar2 >> 0x10);
+        uVar11 = CONCAT22(uVar8,sVar6);
+        if (sVar6 == 0xd01) {
+          clock_set_leap_year((char *)(record->gps_month_days + 1),CONCAT22(uVar8,0x101) + 0x10000);
+          uVar11 = extraout_D0;
         }
       }
-      record->gps_date = uVar8;
+      record->gps_date = uVar11;
       return;
     }
-    uVar8 = (uint)uVar5 << 0x10;
+    tVar10 = (time_of_day)((uint)uVar7 << 0x10);
   }
-  record->gps_time = uVar8;
+  record->gps_time = tVar10;
   return;
 }
 
@@ -11033,7 +11037,7 @@ uint32_t get_clock_date(void)
 uint32_t get_clock_time(void)
 
 {
-  return clock.time;
+  return (uint32_t)__ghidra_aggregate_bits(clock.time);
 }
 
 
@@ -11057,7 +11061,7 @@ uint32_t get_gps_date(void)
 uint32_t get_gps_time(void)
 
 {
-  return clock.gps_time;
+  return (uint32_t)__ghidra_aggregate_bits(clock.gps_time);
 }
 
 
@@ -11077,17 +11081,17 @@ uint32_t get_uptime(void)
 /* :PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns valid unless clock.invalid
     */
 
-int get_date_time(uint32_t *date,uint32_t *time)
+int get_date_time(uint32_t *date,time_of_day *time)
 
 {
-  uint32_t uVar1;
+  time_of_day tVar1;
   
-  uVar1 = clock.time;
+  tVar1 = clock.time;
   if (date != (uint32_t *)0x0) {
     *date = clock.date;
   }
-  if (time != (uint32_t *)0x0) {
-    *time = uVar1;
+  if (time != (time_of_day *)0x0) {
+    *time = tVar1;
   }
   return (uint)(clock.invalid == 0);
 }
@@ -11097,17 +11101,17 @@ int get_date_time(uint32_t *date,uint32_t *time)
 
 /* gps_date and gps_time through pointers; 1 if the clock is valid */
 
-bool get_gps_datetime(uint32_t *param_1,uint32_t *param_2)
+bool get_gps_datetime(uint32_t *date,time_of_day *time)
 
 {
-  uint32_t uVar1;
+  time_of_day tVar1;
   
-  uVar1 = clock.gps_time;
-  if (param_1 != (uint32_t *)0x0) {
-    *param_1 = clock.gps_date;
+  tVar1 = clock.gps_time;
+  if (date != (uint32_t *)0x0) {
+    *date = clock.gps_date;
   }
-  if (param_2 != (uint32_t *)0x0) {
-    *param_2 = uVar1;
+  if (time != (time_of_day *)0x0) {
+    *time = tVar1;
   }
   return clock.invalid == 0;
 }
@@ -11237,7 +11241,7 @@ __regcall void clock_record_store(clock_record *record /* a6 */,int date /* d0 *
 {
   uint uVar1;
   uint32_t extraout_D0;
-  uint32_t extraout_D1;
+  time_of_day extraout_D1;
   
   uVar1 = time & 0xffffff;
   if (((((byte)uVar1 < 0x3c) && ((byte)(uVar1 >> 8) < 0x3c)) && ((byte)(uVar1 >> 0x10) < 0x18)) &&
@@ -11344,18 +11348,18 @@ __asm__(
 __regcall void clock_record_derive(clock_record *record /* a6 */)
 
 {
-  uint32_t uVar1;
+  time_of_day tVar1;
   uint32_t local_c;
-  uint32_t local_8;
+  time_of_day local_8;
   
   do {
     do {
-      uVar1 = record->gps_time;
+      tVar1 = record->gps_time;
       local_c = record->gps_date;
-    } while (uVar1 != record->gps_time);
-    local_8 = uVar1;
-    utc_to_local(&local_c,&local_8);
-  } while (uVar1 != record->gps_time);
+    } while (__ghidra_aggregate_bits(tVar1) != record->gps_time);
+    local_8 = tVar1;
+    utc_to_local(&local_c,(uint32_t *)&local_8);
+  } while (__ghidra_aggregate_bits(tVar1) != record->gps_time);
   record->time = local_8;
   record->date = local_c;
   clock_set_leap_year((char *)(record->month_days + 1),local_c);
@@ -11523,7 +11527,10 @@ void clock_init(short param_1)
   clock.gps_month_days[10] = 0x1e;
   clock.gps_month_days[0xb] = 0x1f;
   clock.uptime = 0;
-  clock.gps_time = 0;
+  clock.gps_time.reserved = 0;
+  clock.gps_time.hour = 0;
+  clock.gps_time.minute = 0;
+  clock.gps_time.second = 0;
   clock.gps_date = lifetime.date;
   clock_set_leap_year((char *)(clock.gps_month_days + 1),lifetime.date);
   clock_record_derive(&clock);
@@ -32250,12 +32257,12 @@ void diag_get_time(void)
   ushort local_c;
   byte local_a;
   byte local_9;
-  undefined4 uStack_8;
+  time_of_day tStack_8;
   
-  uVar1 = get_date_time((uint32_t *)&local_c,&uStack_8);
+  uVar1 = get_date_time((uint32_t *)&local_c,&tStack_8);
   bVar2 = time_valid();
   printf("%02d/%02d/%04d\t%02d:%02d:%02d, %1d, valid: %1d\r\n",(uint)local_a,(uint)local_9,
-         (uint)local_c,(uint)__ghidra_piece(unsigned char, uStack_8, 1),(uint)__ghidra_piece(unsigned char, uStack_8, 2),(uint)(byte)uStack_8,uVar1 & 0xff,
+         (uint)local_c,(uint)tStack_8.hour,(uint)tStack_8.minute,(uint)tStack_8.second,uVar1 & 0xff,
          (uint)bVar2);
   return;
 }
@@ -39617,7 +39624,7 @@ void log_reset_cause(void)
   char local_5c [79];
   undefined1 local_d;
   uint32_t local_c;
-  uint32_t local_8;
+  time_of_day local_8;
   
   reset_record_count();
   get_date_time(&local_c,&local_8);
@@ -43340,7 +43347,7 @@ LAB_00026fb6:
   case 0x12:
     *param_2 = 0;
 LAB_0002704a:
-    iVar7 = scpi_scan_number((int)param_2,1,(int)(short)uVar8,input);
+    iVar7 = scpi_scan_number(param_2,1,(int)(short)uVar8,input);
     break;
   default:
     goto LAB_00027380;
@@ -43568,144 +43575,155 @@ void scpi_skip_to_terminator(void *input)
 /* 000273cc */
 
 /* WARNING: Type propagation algorithm not settling */
-/* scans a decimal number's digits, point and exponent into a parsed number */
+/* scans a decimal number's digits, point and exponent into a parsed number; scpi_scan_token passes
+   1 and the character it has read, each a long whose low word it reads */
 
-int scpi_scan_number(int param_1,undefined4 param_2,undefined4 param_3,undefined4 *param_4)
+int scpi_scan_number(void *token,int have_character,int character,void *input)
 
 {
-  short sVar1;
-  bool bVar2;
-  int iVar3;
-  undefined1 uVar4;
-  char cVar5;
-  short sVar6;
-  short sVar7;
+  bool bVar1;
+  ushort uVar3;
+  int iVar2;
+  short sVar4;
+  undefined1 uVar5;
+  char cVar6;
+  uint uVar7;
   short sVar8;
+  short sVar9;
+  short sVar10;
   
-  if (__ghidra_piece(unsigned short, param_2, 2) == 0) {
-    __ghidra_piece(unsigned short, param_3, 2) = (*(code *)*param_4)(param_4);
+  uVar7 = character & 0xffff;
+  if ((short)have_character == 0) {
+    uVar3 = (**(code **)input)(input);
+    uVar7 = (uint)uVar3;
   }
-  cVar5 = (&LAB_000277ec)[__ghidra_piece(short, param_3, 2)];
+  cVar6 = (&LAB_000277ec)[(short)uVar7];
+  sVar10 = 0;
   sVar8 = 0;
-  sVar6 = 0;
-  sVar7 = 0;
-  bVar2 = false;
+  sVar9 = 0;
+  bVar1 = false;
   do {
-    if (__ghidra_piece(unsigned short, param_3, 2) == 0x30) {
-      sVar7 = sVar7 - sVar6;
-      bVar2 = true;
-      if (sVar7 == -0x8000) {
+    sVar4 = (short)uVar7;
+    if (sVar4 == 0x30) {
+      sVar9 = sVar9 - sVar8;
+      bVar1 = true;
+      if (sVar9 == -0x8000) {
         return -0x17;
       }
     }
     else {
-      if (__ghidra_piece(unsigned short, param_3, 2) != 0x2e) {
-        if (cVar5 == 1) break;
-        if (!bVar2) goto joined_r0x0002750e;
-        sVar8 = 1;
-        *(undefined1 *)(param_1 + 2) = 0;
+      if (sVar4 != 0x2e) {
+        if (cVar6 == 1) break;
+        if (!bVar1) goto joined_r0x0002750e;
+        sVar10 = 1;
+        *(undefined1 *)((int)token + 2) = 0;
         break;
       }
-      if (sVar6 != 0) goto LAB_0002752c;
-      sVar6 = 1;
+      if (sVar8 != 0) goto LAB_0002752c;
+      sVar8 = 1;
     }
-    __ghidra_piece(unsigned short, param_3, 2) = (*(code *)*param_4)(param_4);
-    cVar5 = (&LAB_000277ec)[__ghidra_piece(short, param_3, 2)];
+    uVar3 = (**(code **)input)(input);
+    uVar7 = (uint)uVar3;
+    cVar6 = (&LAB_000277ec)[(short)uVar3];
   } while( true );
 LAB_0002747e:
-  if (cVar5 == 1) {
-    sVar1 = sVar8 + 1;
-    *(char *)(param_1 + 2 + (int)sVar8) = (char)__ghidra_piece(short, param_3, 2) + -0x30;
-    sVar7 = sVar7 - sVar6;
-    if (sVar7 == -0x8000) {
+  sVar4 = (short)uVar7;
+  if (cVar6 == 1) {
+    sVar4 = sVar10 + 1;
+    *(char *)((int)token + sVar10 + 2) = (char)uVar7 + -0x30;
+    sVar9 = sVar9 - sVar8;
+    if (sVar9 == -0x8000) {
       return -0x17;
     }
-    sVar8 = sVar1;
-    if (sVar1 == 0x10) goto LAB_000274a4;
+    sVar10 = sVar4;
+    if (sVar4 == 0x10) goto LAB_000274a4;
   }
   else {
-    if (cVar5 != 0x12) {
-      if (sVar8 != 0) goto LAB_00027502;
+    if (cVar6 != 0x12) {
+      if (sVar10 != 0) goto LAB_00027502;
 joined_r0x0002750e:
-      if (cVar5 != 0x1b) {
+      if (cVar6 != 0x1b) {
 LAB_0002752c:
-        (**(code **)(param_4[1] + 0xc))(param_4);
+        (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
         return -0x11;
       }
       goto joined_r0x00027514;
     }
-    if (sVar6 != 0) goto LAB_0002752c;
-    sVar6 = 1;
+    if (sVar8 != 0) goto LAB_0002752c;
+    sVar8 = 1;
   }
-  __ghidra_piece(unsigned short, param_3, 2) = (*(code *)*param_4)(param_4);
-  cVar5 = (&LAB_000277ec)[__ghidra_piece(short, param_3, 2)];
+  uVar3 = (**(code **)input)(input);
+  uVar7 = (uint)uVar3;
+  cVar6 = (&LAB_000277ec)[(short)uVar3];
   goto LAB_0002747e;
 LAB_000274a4:
   while( true ) {
-    __ghidra_piece(unsigned short, param_3, 2) = (*(code *)*param_4)(param_4);
-    cVar5 = (&LAB_000277ec)[__ghidra_piece(short, param_3, 2)];
-    if (cVar5 != 1) break;
-    if ((sVar6 == 0) && (sVar7 = sVar7 + 1, 0x7ffe < sVar7)) {
+    uVar3 = (**(code **)input)(input);
+    uVar7 = (uint)uVar3;
+    cVar6 = (&LAB_000277ec)[(short)uVar3];
+    if (cVar6 != 1) break;
+    if ((sVar8 == 0) && (sVar9 = sVar9 + 1, 0x7ffe < sVar9)) {
       return -0x17;
     }
   }
-  if (cVar5 != 0x12) goto LAB_00027568;
-  if (sVar6 != 0) goto LAB_0002752c;
-  sVar6 = 1;
+  if (cVar6 != 0x12) goto LAB_00027568;
+  if (sVar8 != 0) goto LAB_0002752c;
+  sVar8 = 1;
   goto LAB_000274a4;
 LAB_00027502:
-  while (sVar8 < 0x10) {
-    *(undefined1 *)(param_1 + 2 + (int)sVar8) = 0;
-    sVar7 = sVar7 + -1;
-    sVar8 = sVar8 + 1;
-    if (sVar7 == -0x8000) {
+  while (sVar10 < 0x10) {
+    *(undefined1 *)((int)token + sVar10 + 2) = 0;
+    sVar9 = sVar9 + -1;
+    sVar10 = sVar10 + 1;
+    if (sVar9 == -0x8000) {
       return -0x17;
     }
   }
 LAB_00027568:
-  while (cVar5 == 3) {
-    __ghidra_piece(unsigned short, param_3, 2) = (*(code *)*param_4)(param_4);
-    cVar5 = (&LAB_000277ec)[__ghidra_piece(short, param_3, 2)];
+  while (cVar6 == 3) {
+    uVar3 = (**(code **)input)(input);
+    uVar7 = (uint)uVar3;
+    cVar6 = (&LAB_000277ec)[(short)uVar3];
   }
-  *(undefined2 *)(param_1 + 0x14) = 0;
-  iVar3 = scpi_scan_exponent((int)__ghidra_piece(short, param_3, 2),param_1,param_4);
-  if (iVar3 != 0) {
-    return iVar3;
+  *(undefined2 *)((int)token + 0x14) = 0;
+  iVar2 = scpi_scan_exponent((int)(short)uVar7,(int)token,input);
+  if (iVar2 != 0) {
+    return iVar2;
   }
-  iVar3 = (int)*(short *)(param_1 + 0x12) + (int)sVar7;
-  if ((0x7fff < iVar3) || (iVar3 < -0x8000)) {
+  iVar2 = (int)*(short *)((int)token + 0x12) + (int)sVar9;
+  if ((0x7fff < iVar2) || (iVar2 < -0x8000)) {
     return -0x2d;
   }
-  *(short *)(param_1 + 0x12) = (short)iVar3;
+  *(short *)((int)token + 0x12) = (short)iVar2;
   do {
-    __ghidra_piece(unsigned short, param_3, 2) = (*(code *)*param_4)(param_4);
-    cVar5 = (&LAB_000277ec)[__ghidra_piece(short, param_3, 2)];
-  } while (cVar5 == 3);
-  sVar8 = *(short *)(param_1 + 0x14);
-  if ((cVar5 == 0x13) || (cVar5 == 0)) {
-    while (((cVar5 == 0x11 || (((cVar5 == 0x13 || (cVar5 == 1)) || (cVar5 == 0x12)))) ||
-           (cVar5 == 0))) {
-      if (0xc < sVar8) {
+    sVar4 = (**(code **)input)(input);
+    cVar6 = (&LAB_000277ec)[sVar4];
+  } while (cVar6 == 3);
+  sVar10 = *(short *)((int)token + 0x14);
+  if ((cVar6 == 0x13) || (cVar6 == 0)) {
+    while (((cVar6 == 0x11 || (((cVar6 == 0x13 || (cVar6 == 1)) || (cVar6 == 0x12)))) ||
+           (cVar6 == 0))) {
+      if (0xc < sVar10) {
         return -0x35;
       }
-      uVar4 = scpi_char_upper((int)__ghidra_piece(short, param_3, 2));
-      *(undefined1 *)(param_1 + 0x16 + (int)sVar8) = uVar4;
-      __ghidra_piece(unsigned short, param_3, 2) = (*(code *)*param_4)(param_4);
-      sVar8 = sVar8 + 1;
-      cVar5 = (&LAB_000277ec)[__ghidra_piece(short, param_3, 2)];
+      uVar5 = scpi_char_upper((int)sVar4);
+      *(undefined1 *)((int)token + sVar10 + 0x16) = uVar5;
+      sVar4 = (**(code **)input)(input);
+      sVar10 = sVar10 + 1;
+      cVar6 = (&LAB_000277ec)[sVar4];
     }
   }
-  if (cVar5 != 0x1b) {
-    (**(code **)(param_4[1] + 0xc))(param_4);
-    *(short *)(param_1 + 0x14) = sVar8;
+  if (cVar6 != 0x1b) {
+    (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
+    *(short *)((int)token + 0x14) = sVar10;
     return 0xe;
   }
 joined_r0x00027514:
-  if (__ghidra_piece(unsigned short, param_3, 2) == 0x103) {
+  if (sVar4 == 0x103) {
     return -0x66;
   }
-  if (__ghidra_piece(unsigned short, param_3, 2) != 0x104) {
-    if (__ghidra_piece(unsigned short, param_3, 2) != 0x105) {
+  if (sVar4 != 0x104) {
+    if (sVar4 != 0x105) {
       return -0x67;
     }
     return -0xd;
@@ -50189,7 +50207,7 @@ int scpi_query_SOURce_PTIMe_DATE(void *parameters,void *response,void *call)
   byte local_6;
   byte local_5;
   
-  iVar1 = get_date_time((uint32_t *)&local_8,(uint32_t *)0x0);
+  iVar1 = get_date_time((uint32_t *)&local_8,(time_of_day *)0x0);
   if ((char)iVar1 == 0) {
     *(undefined2 *)response = local_8;
     *(ushort *)((int)response + 4) = (ushort)local_6;
@@ -50465,13 +50483,13 @@ int scpi_query_SOURce_PTIMe_TIME(void *parameters,void *response,void *call)
 
 {
   int iVar1;
-  undefined4 uStack_8;
+  time_of_day tStack_8;
   
-  iVar1 = get_date_time((uint32_t *)0x0,&uStack_8);
+  iVar1 = get_date_time((uint32_t *)0x0,&tStack_8);
   if ((char)iVar1 == 0) {
-    *(ushort *)response = (ushort)__ghidra_piece(unsigned char, uStack_8, 1);
-    *(ushort *)((int)response + 4) = (ushort)__ghidra_piece(unsigned char, uStack_8, 2);
-    *(ushort *)((int)response + 8) = (ushort)(byte)uStack_8;
+    *(ushort *)response = (ushort)tStack_8.hour;
+    *(ushort *)((int)response + 4) = (ushort)tStack_8.minute;
+    *(ushort *)((int)response + 8) = (ushort)tStack_8.second;
     iVar1 = 0;
   }
   else {
@@ -50536,14 +50554,13 @@ int scpi_query_SOURce_PTIMe_TIME_STRing(void *parameters,void *response,void *ca
 {
   uint uVar1;
   int iVar2;
-  char cVar3;
-  uint local_8;
+  time_of_day local_8;
   
   uVar1 = return_zero();
   iVar2 = get_date_time((uint32_t *)0x0,&local_8);
   if ((char)iVar2 == 0) {
-    cVar3 = format_time(local_8,(char *)((uVar1 & 0xff) * 0x11a + 0x10272a));
-    if (cVar3 == 0) {
+    iVar2 = format_time(local_8,(char *)((uVar1 & 0xff) * 0x11a + 0x10272a));
+    if ((char)iVar2 == 0) {
       iVar2 = scpi_query_failed(0xe,call);
     }
     else {
@@ -53758,7 +53775,7 @@ void lifetime_update(int param_1)
   if ((pkVar1 != (klok_entry *)0x0) && (iVar2 = klok_cancel(pkVar1), iVar2 != 0)) {
     task_dmessage("Error in deleting old lifetime event\r\n");
   }
-  get_gps_datetime(&event.date,&event.time);
+  get_gps_datetime(&event.date,(time_of_day *)&event.time);
   event.period_time = 0x30000;
   datetime_add((packed_datetime *)&event.period_time,(packed_datetime *)&event.time);
   event.function = lifetime_event_run;
@@ -54709,7 +54726,7 @@ undefined4 log_append(char *param_1,int32_t param_2,int32_t param_3)
     log_cursor->format = param_1;
     log_cursor->argument_1 = param_2;
     log_cursor->argument_2 = param_3;
-    get_date_time(&log_cursor->date,&log_cursor->time);
+    get_date_time(&log_cursor->date,(time_of_day *)log_cursor);
     uVar1 = log_flush();
     if (log_cursor == log_write_page.entries + 2) {
       log_write_page_number = log_write_page_number + 1;
@@ -55629,13 +55646,13 @@ uint16_t reset_record_checksum(reset_record *record)
 {
   byte bVar1;
   uint uVar2;
-  uint32_t *puVar3;
+  time_of_day *ptVar3;
   
   bVar1 = 0;
-  puVar3 = &record->time;
+  ptVar3 = &record->time;
   for (uVar2 = 0; uVar2 < 0x58; uVar2 = uVar2 + 1) {
-    bVar1 = *(char *)puVar3 + bVar1;
-    puVar3 = (uint32_t *)((int)puVar3 + 1);
+    bVar1 = ptVar3->reserved + bVar1;
+    ptVar3 = (time_of_day *)&ptVar3->hour;
   }
   return CONCAT11(bVar1,~bVar1);
 }
@@ -55670,7 +55687,7 @@ int log_clear(void)
   int iVar3;
   char local_e [2];
   uint32_t local_c;
-  uint32_t local_8;
+  time_of_day local_8;
   
   iVar3 = 0;
   local_e[0] = 0;
@@ -55798,7 +55815,7 @@ LAB_00033166:
 /* writes the next 0x5c-byte reset-cause record at EEPROM 0x4001c0, its time and text, with its
    checksum */
 
-undefined4 reset_record_write(uint32_t param_1,uint32_t param_2,char *param_3)
+uint32_t reset_record_write(uint32_t date,time_of_day time,char *text)
 
 {
   uint uVar1;
@@ -55809,9 +55826,9 @@ undefined4 reset_record_write(uint32_t param_1,uint32_t param_2,char *param_3)
   
   uVar1 = log_count(local_62);
   if (local_62[0] == 0) {
-    record.date = param_1;
-    record.time = param_2;
-    strncpy(record.text,param_3,0x50);
+    record.date = date;
+    record.time = time;
+    strncpy(record.text,text,0x50);
     record.checksum = reset_record_checksum(&record);
     iVar3 = (uVar1 & 0xff) * 0x5c;
     record.sequence = *(short *)(iVar3 + 0x4001c0) + 1;
@@ -59099,7 +59116,7 @@ undefined1 holdover(char param_1)
   ushort uStack_c;
   byte bStack_a;
   byte bStack_9;
-  undefined4 uStack_8;
+  time_of_day tStack_8;
   
   uVar5 = 0;
   fVar1 = adc_average(ADC_CURRENT);
@@ -59124,7 +59141,7 @@ override_jmp_00043ae6_case_0:
       }
     }
     interval_next_reading(0,(undefined4 *)0x0);
-    get_date_time(&pll.holdover_start_date,&pll.holdover_start_time);
+    get_date_time(&pll.holdover_start_date,(time_of_day *)&pll.holdover_start_time);
     pll.holdover_state = 1;
     holdover_steering.field_06 = 0;
     holdover_steering.seconds = 0;
@@ -59211,7 +59228,7 @@ override_jmp_00043ae6_case_0:
     float_multiply_in_place(&holdover_steering.ti_mean,fVar2);
   }
   if (pll_debug_enabled != 0) {
-    get_date_time((uint32_t *)&uStack_c,&uStack_8);
+    get_date_time((uint32_t *)&uStack_c,&tStack_8);
     dVar6 = float_to_double(fVar1);
     pushed_8 = dVar6;
     fVar1 = float_multiply(holdover_steering.ti_mean,1e+09);
@@ -59219,8 +59236,8 @@ override_jmp_00043ae6_case_0:
     pushed_7 = dVar6;
     iVar3 = float_to_integer(pll.efc);
     debug_sprintf(acStack_74,"%d/%d/%d %02d:%02d:%02d efc= %d ti= %.1f hold= 0 curr= %.2f\r\n",
-                  (uint)bStack_a,(uint)bStack_9,(uint)uStack_c,(uint)__ghidra_piece(unsigned char, uStack_8, 1),
-                  (uint)__ghidra_piece(unsigned char, uStack_8, 2),(uint)(byte)uStack_8,iVar3,
+                  (uint)bStack_a,(uint)bStack_9,(uint)uStack_c,(uint)tStack_8.hour,
+                  (uint)tStack_8.minute,(uint)tStack_8.second,iVar3,
                   pushed_7,
                   pushed_8);
     task_dmessage(acStack_74);
@@ -59282,28 +59299,27 @@ LAB_00043ee6:
 undefined4 clock_check_against_gps(void)
 
 {
-  char cVar3;
+  bool bVar3;
   uint32_t uVar1;
   undefined4 uVar2;
-  bool bVar4;
   uint32_t local_c;
-  uint32_t local_8;
+  time_of_day local_8;
   
-  cVar3 = get_gps_datetime(&local_c,&local_8);
-  if (((cVar3 == 0) && (uVar1 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0)), uVar1 == local_c)) &&
-     (local_8 == __ghidra_piece(unsigned int, gps.status, 4))) {
-    clock_gps_mismatch = 0;
-    uVar2 = 1;
-  }
-  else {
-    bVar4 = clock_gps_mismatch != 0;
-    if (bVar4) {
-      uVar1 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
-      clock_set(__ghidra_piece(unsigned int, gps.status, 4),uVar1);
+  bVar3 = get_gps_datetime(&local_c,&local_8);
+  if (((bVar3) || (uVar1 = oncore_date_pack(gps.status.date), uVar1 != local_c)) ||
+     (__ghidra_aggregate_bits(local_8) != __ghidra_aggregate_bits(gps.status.time))) {
+    bVar3 = clock_gps_mismatch != 0;
+    if (bVar3) {
+      uVar1 = oncore_date_pack(gps.status.date);
+      clock_set(gps.status.time,uVar1);
       status_happening('L');
     }
-    clock_gps_mismatch = !bVar4;
+    clock_gps_mismatch = !bVar3;
     uVar2 = 0;
+  }
+  else {
+    clock_gps_mismatch = 0;
+    uVar2 = 1;
   }
   return uVar2;
 }
@@ -59489,7 +59505,7 @@ char startup_pll(char param_1)
   ushort local_c;
   byte local_a;
   byte local_9;
-  undefined4 uStack_8;
+  time_of_day tStack_8;
   
   cVar5 = 0;
   local_74 = adc_average(ADC_CURRENT);
@@ -59523,12 +59539,12 @@ char startup_pll(char param_1)
         loop_steering.readings = loop_steering.readings + 1;
       }
       else if (debug_enabled != 0) {
-        get_date_time((uint32_t *)&local_c,&uStack_8);
+        get_date_time((uint32_t *)&local_c,&tStack_8);
         fVar1 = float_multiply(local_88,1e+09);
         dVar6 = float_to_double(fVar1);
         debug_sprintf(acStack_70,"%d/%d/%d %02d:%02d:%02d TI result: %.1fns\r\n",(uint)local_a,
-                      (uint)local_9,(uint)local_c,(uint)__ghidra_piece(unsigned char, uStack_8, 1),(uint)__ghidra_piece(unsigned char, uStack_8, 2),
-                      (uint)(byte)uStack_8,dVar6);
+                      (uint)local_9,(uint)local_c,(uint)tStack_8.hour,(uint)tStack_8.minute,
+                      (uint)tStack_8.second,dVar6);
         task_dmessage(acStack_70);
       }
       if ((((gps_reference_good != 0) && (cVar4 = leap_ack_pending(), cVar4 == 0)) &&
@@ -59654,7 +59670,7 @@ char startup_pll(char param_1)
       fVar1 = float_add(pushed_7,fVar1);
       pll.efc = __ghidra_as(float, efc_clamp(fVar1));
       if (pll_debug_enabled != 0) {
-        get_date_time((uint32_t *)&local_c,&uStack_8);
+        get_date_time((uint32_t *)&local_c,&tStack_8);
         dVar6 = float_to_double(local_74);
         pushed_9 = dVar6;
         iVar2 = float_to_integer(pll.loop_time_constant);
@@ -59663,8 +59679,8 @@ char startup_pll(char param_1)
         dVar6 = float_to_double(fVar1);
         iVar2 = float_to_integer(pll.efc);
         debug_sprintf(acStack_70,"%d/%d/%d %02d:%02d:%02d efc= %d ti= %.1f loop= %d curr= %.2f\r\n",
-                      (uint)local_a,(uint)local_9,(uint)local_c,(uint)__ghidra_piece(unsigned char, uStack_8, 1),
-                      (uint)__ghidra_piece(unsigned char, uStack_8, 2),(uint)(byte)uStack_8,iVar2,dVar6,pushed_8,
+                      (uint)local_a,(uint)local_9,(uint)local_c,(uint)tStack_8.hour,
+                      (uint)tStack_8.minute,(uint)tStack_8.second,iVar2,dVar6,pushed_8,
                       pushed_9);
         task_dmessage(acStack_70);
       }
@@ -59717,7 +59733,7 @@ undefined1 pll_normal(char param_1)
   ushort local_c;
   byte local_a;
   byte local_9;
-  undefined4 uStack_8;
+  time_of_day tStack_8;
   
   local_7a = 0;
   local_14 = &pll.normal_state;
@@ -59758,12 +59774,12 @@ undefined1 pll_normal(char param_1)
         loop_steering.readings = loop_steering.readings + 1;
       }
       else if (debug_enabled != 0) {
-        get_date_time((uint32_t *)&local_c,&uStack_8);
+        get_date_time((uint32_t *)&local_c,&tStack_8);
         fVar2 = float_multiply(local_82,1e+09);
         dVar6 = float_to_double(fVar2);
         debug_sprintf(acStack_79,"%d/%d/%d %02d:%02d:%02d TI result: %.1fns\r\n",(uint)local_a,
-                      (uint)local_9,(uint)local_c,(uint)__ghidra_piece(unsigned char, uStack_8, 1),(uint)__ghidra_piece(unsigned char, uStack_8, 2),
-                      (uint)(byte)uStack_8,dVar6);
+                      (uint)local_9,(uint)local_c,(uint)tStack_8.hour,(uint)tStack_8.minute,
+                      (uint)tStack_8.second,dVar6);
         task_dmessage(acStack_79);
       }
       if ((((gps_reference_good != 0) && (cVar5 = leap_ack_pending(), cVar5 == 0)) &&
@@ -59821,7 +59837,7 @@ undefined1 pll_normal(char param_1)
       fVar2 = float_add(pushed_3,fVar2);
       pll.efc = __ghidra_as(float, efc_clamp(fVar2));
       if (pll_debug_enabled != 0) {
-        get_date_time((uint32_t *)&local_c,&uStack_8);
+        get_date_time((uint32_t *)&local_c,&tStack_8);
         dVar6 = float_to_double(fVar1);
         pushed_5 = dVar6;
         iVar3 = float_to_integer(max_loop_time);
@@ -59830,8 +59846,8 @@ undefined1 pll_normal(char param_1)
         dVar6 = float_to_double(fVar1);
         iVar3 = float_to_integer(pll.efc);
         debug_sprintf(acStack_79,"%d/%d/%d %02d:%02d:%02d efc= %d ti= %.1f loop= %d curr= %.2f\r\n",
-                      (uint)local_a,(uint)local_9,(uint)local_c,(uint)__ghidra_piece(unsigned char, uStack_8, 1),
-                      (uint)__ghidra_piece(unsigned char, uStack_8, 2),(uint)(byte)uStack_8,iVar3,dVar6,pushed_4,
+                      (uint)local_a,(uint)local_9,(uint)local_c,(uint)tStack_8.hour,
+                      (uint)tStack_8.minute,(uint)tStack_8.second,iVar3,dVar6,pushed_4,
                       pushed_5);
         task_dmessage(acStack_79);
       }
@@ -60911,8 +60927,8 @@ undefined1 powerup(char param_1)
       if (cVar4 == 1) {
         pll.tfom = 2e-06;
         if ((gps_reference_good != 0) && (internal_pps_dead == 0)) {
-          uVar3 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
-          clock_set(__ghidra_piece(unsigned int, gps.status, 4),uVar3);
+          uVar3 = oncore_date_pack(gps.status.date);
+          clock_set(gps.status.time,uVar3);
           status_happening('&');
           cVar4 = leap_second_near();
           if (cVar4 == 0) {
@@ -60968,10 +60984,10 @@ override_jmp_00045f06_case_0:
     if (local_6 != 0) {
       status_happening('\"');
       first_satellite_logged = 1;
-      uVar6 = __ghidra_piece(unsigned short, gps.status, 4);
-      uVar7 = gps.status.minute;
-      uVar8 = gps.status.second;
-      uVar3 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
+      uVar6 = __ghidra_piece(unsigned short, gps.status.time, 0);
+      uVar7 = gps.status.time.minute;
+      uVar8 = gps.status.time.second;
+      uVar3 = oncore_date_pack(gps.status.date);
       log_first_satellite(uVar3,CONCAT31(CONCAT21(uVar6,uVar7),uVar8));
     }
   }
@@ -61111,7 +61127,7 @@ void clock_set_from_reference(void)
     local_14.time.second = 0x3b;
   }
   local_14.date = 0;
-  get_gps_datetime(&local_c.date,(uint32_t *)&local_c);
+  get_gps_datetime(&local_c.date,&local_c.time);
   datetime_add(&local_14,&local_c);
   set_timedate_unflagged(local_c.date,(uint32_t)__ghidra_aggregate_bits(local_c.time));
   return;
@@ -61849,20 +61865,20 @@ void gps_leap_ack(void)
 
 {
   undefined4 pushed_1;
-  undefined2 pushed_2;
-  int iVar1;
-  undefined4 uVar2;
-  undefined2 uVar3;
-  short sVar4;
-  uint8_t uVar5;
-  char cVar6;
+  undefined4 uVar1;
+  int iVar2;
+  uint8_t uVar3;
+  char cVar4;
+  short sVar5;
+  undefined1 uVar7;
+  undefined1 uVar8;
   uint uStack_20;
-  uint uStack_1c;
+  time_of_day tStack_1c;
   int iStack_18;
   uint auStack_14 [4];
   
-  iVar1 = (int)(char)pll.leap_ack_state - 7;
-  if (6 < (uint)(int)(char)pll.leap_ack_state && iVar1 != 0) {
+  iVar2 = (int)(char)pll.leap_ack_state - 7;
+  if (6 < (uint)(int)(char)pll.leap_ack_state && iVar2 != 0) {
 override_jmp_00046eb8_case_0:
     if (pll.leap_ack_requested == 0) {
       return;
@@ -61873,7 +61889,7 @@ override_jmp_00046eb8_case_0:
     return;
   }
                     /* WARNING: Switch is manually overridden */
-  switch((&switchD_00046eb8_index_zero)[(short)iVar1]) {
+  switch((&switchD_00046eb8_index_zero)[(short)iVar2]) {
   case 0x10:
     goto override_jmp_00046eb8_case_0;
   case 0x28:
@@ -61885,14 +61901,14 @@ override_jmp_00046eb8_case_0:
     goto LAB_00046efe;
   case 0x52:
     auStack_14[0] = (uint)(char)nv_settings.gps_utc;
-    uVar5 = gpsx_send(0x16,0,(int32_t *)auStack_14,2);
-    if (uVar5 != 0) {
+    uVar3 = gpsx_send(0x16,0,(int32_t *)auStack_14,2);
+    if (uVar3 != 0) {
       pll.leap_ack_state = 3;
     }
     break;
   case 0x80:
-    cVar6 = gps_ack_received();
-    if (cVar6 == 0) {
+    cVar4 = gps_ack_received();
+    if (cVar4 == 0) {
       return;
     }
     if (gps_ack_code != 0) {
@@ -61904,30 +61920,31 @@ LAB_00046efe:
     break;
   case 0x98:
     auStack_14[0] = (uint)(gps.utc_time == ONCORE_TIME_GPS);
-    uVar5 = gpsx_send(0x4e,0,(int32_t *)auStack_14,2);
-    if (uVar5 != 0) {
+    uVar3 = gpsx_send(0x4e,0,(int32_t *)auStack_14,2);
+    if (uVar3 != 0) {
       pll.leap_ack_state = 5;
     }
     break;
   case 0xcc:
-    cVar6 = gps_ack_received();
-    if (cVar6 == 0) {
+    cVar4 = gps_ack_received();
+    if (cVar4 == 0) {
       return;
     }
     if (gps_ack_code == 0) {
-      get_gps_datetime(&uStack_20,&uStack_1c);
-      uVar2 = date_to_mjd(__ghidra_piece(unsigned int, gps.status, 0));
-      pushed_1 = uVar2;
+      get_gps_datetime(&uStack_20,&tStack_1c);
+      uVar1 = date_to_mjd((uint)__ghidra_aggregate_bits(gps.status.date));
+      pushed_1 = uVar1;
       iStack_18 = date_to_days(uStack_20);
       iStack_18 = pushed_1 - iStack_18;
-      uVar3 = hms_to_seconds(__ghidra_piece(unsigned int, gps.status, 4));
-      pushed_2 = uVar3;
-      sVar4 = time_to_seconds(uStack_1c);
-      sVar4 = (short)iStack_18 * 0x5180 + (pushed_2 - sVar4);
+      iVar2 = hms_to_seconds((uint32_t)__ghidra_aggregate_bits(gps.status.time));
+      uVar7 = (undefined1)((uint)iVar2 >> 8);
+      uVar8 = (undefined1)iVar2;
+      iVar2 = time_to_seconds((uint32_t)__ghidra_aggregate_bits(tStack_1c));
+      sVar5 = (short)iStack_18 * 0x5180 + (CONCAT11(uVar7,uVar8) - (short)iVar2);
       if (gps.utc_time == ONCORE_TIME_UTC) {
-        sVar4 = -sVar4;
+        sVar5 = -sVar5;
       }
-      set_gps_utc_offset(sVar4);
+      set_gps_utc_offset(sVar5);
       pll.leap_ack_state = 6;
       return;
     }
@@ -61935,14 +61952,14 @@ LAB_00046efe:
     goto LAB_0004706a;
   case 0x15c:
     auStack_14[0] = (uint)(gps.utc_time == ONCORE_TIME_GPS);
-    uVar5 = gpsx_send(0x16,0,(int32_t *)auStack_14,2);
-    if (uVar5 != 0) {
+    uVar3 = gpsx_send(0x16,0,(int32_t *)auStack_14,2);
+    if (uVar3 != 0) {
       pll.leap_ack_state = 7;
     }
     break;
   case 0x18c:
-    cVar6 = gps_ack_received();
-    if (cVar6 == 0) {
+    cVar4 = gps_ack_received();
+    if (cVar4 == 0) {
       return;
     }
     if (gps_ack_code == 0) {
@@ -63628,9 +63645,9 @@ void gps_print_status(oncore_status_fields *status)
   char acStack_54 [80];
   
   psos_pause(1);
-  printf("TIME %2d:%02d:%02d.%09d\tDATE  %2d/%02d/%04d\r\n",(uint)status->hour,(uint)status->minute,
-         (uint)status->second,status->fraction,(uint)status->month,(uint)status->day,
-         (uint)status->year);
+  printf("TIME %2d:%02d:%02d.%09d\tDATE  %2d/%02d/%04d\r\n",(uint)(status->time).hour,
+         (uint)(status->time).minute,(uint)(status->time).second,status->fraction,
+         (uint)(status->date).month,(uint)(status->date).day,(uint)(status->date).year);
   format_angle(acStack_54,status->latitude,1);
   printf("LAT  %s\r\n",acStack_54);
   format_angle(acStack_54,status->longitude,0);
@@ -63693,9 +63710,9 @@ void gps_debug_status(void)
   char acStack_a4 [80];
   char acStack_54 [80];
   
-  debug_sprintf(acStack_54,"gs: %02d:%02d:%02d.%09d,%2d/%02d/%04d,",(uint)gps.status.hour,
-                (uint)gps.status.minute,(uint)gps.status.second,gps.status.fraction,
-                (uint)gps.status.month,(uint)gps.status.day,(uint)gps.status.year);
+  debug_sprintf(acStack_54,"gs: %02d:%02d:%02d.%09d,%2d/%02d/%04d,",(uint)gps.status.time.hour,
+                (uint)gps.status.time.minute,(uint)gps.status.time.second,gps.status.fraction,
+                (uint)gps.status.date.month,(uint)gps.status.date.day,(uint)gps.status.date.year);
   format_angle(acStack_a4,gps.status.latitude,1);
   strcat(acStack_54,acStack_a4);
   format_angle(acStack_a4,gps.status.longitude,0);
@@ -64505,28 +64522,28 @@ void status_screen_sync(status_snapshot_record *snapshot,char *line)
 
 /* a packed time as "%02d:%02d:%02d", or "--:--:--" */
 
-undefined4 format_time(uint param_1,char *param_2)
+int format_time(time_of_day time,char *text)
 
 {
   char cVar1;
-  undefined4 uVar2;
+  int iVar2;
   char *pcVar3;
   
-  if (((__ghidra_piece(unsigned char, param_1, 1) < 0x18) && (__ghidra_piece(unsigned char, param_1, 2) < 0x3c)) && ((byte)param_1 < 0x3d)) {
-    sprintf(param_2,"%02d:%02d:%02d",(uint)__ghidra_piece(unsigned char, param_1, 1),(uint)__ghidra_piece(unsigned char, param_1, 2),param_1 & 0xff);
-    uVar2 = 1;
+  if (((time.hour < 0x18) && (time.minute < 0x3c)) && (time.second < 0x3d)) {
+    sprintf(text,"%02d:%02d:%02d",(uint)time.hour,(uint)time.minute,(uint)__ghidra_aggregate_bits(time) & 0xff);
+    iVar2 = 1;
   }
   else {
     pcVar3 = "--:--:--";
     do {
       cVar1 = *pcVar3;
-      *param_2 = cVar1;
+      *text = cVar1;
       pcVar3 = pcVar3 + 1;
-      param_2 = param_2 + 1;
+      text = text + 1;
     } while (cVar1 != 0);
-    uVar2 = 0;
+    iVar2 = 0;
   }
-  return uVar2;
+  return iVar2;
 }
 
 
@@ -64587,7 +64604,7 @@ void status_screen_time(status_snapshot_record *snapshot,char *line)
   else {
     param2 = "LOCAL";
   }
-  format_time(snapshot->time,acStack_1a);
+  format_time(__ghidra_as(time_of_day, snapshot->time),acStack_1a);
   uVar1 = snapshot->date;
   format_date((ushort)(uVar1 >> 0x10),(byte)(uVar1 >> 8),(byte)uVar1,acStack_11);
   if (snapshot->clock_invalid == 0) {
@@ -65087,72 +65104,63 @@ override_jmp_0004a55c_case_0:
 void status_snapshot(pll_stage *param_1)
 
 {
-  uint8_t uVar1;
-  uint8_t uVar2;
-  uint8_t uVar3;
   uint16_t sr;
-  pll_stage pVar7;
-  int iVar4;
-  undefined4 uVar5;
-  undefined1 uVar8;
-  undefined2 uVar6;
-  undefined4 local_e;
+  pll_stage pVar4;
+  int iVar1;
+  undefined4 uVar2;
+  undefined1 uVar5;
+  undefined2 uVar3;
+  time_of_day local_e;
   undefined4 local_a;
   undefined1 auStack_6 [2];
   
   sr = set_interrupt_mask(0x100);
   *param_1 = pll.stage;
-  pVar7 = pll_mode();
-  param_1[1] = pVar7;
-  pVar7 = pll_powerup_suffix_index();
-  param_1[2] = pVar7;
-  pVar7 = recovery_suffix_index();
-  param_1[3] = pVar7;
+  pVar4 = pll_mode();
+  param_1[1] = pVar4;
+  pVar4 = pll_powerup_suffix_index();
+  param_1[2] = pVar4;
+  pVar4 = recovery_suffix_index();
+  param_1[3] = pVar4;
   *(undefined4 *)(param_1 + 10) = __ghidra_piece(unsigned int, interval_reading.value, 0);
   *(undefined4 *)(param_1 + 0xe) = __ghidra_piece(unsigned int, interval_reading.value, 4);
   *(undefined4 *)(param_1 + 0x12) = __ghidra_piece(unsigned int, interval_reading, 8);
   *(float *)(param_1 + 0x16) = interval_mean;
   *(undefined2 *)(param_1 + 0x1a) = _interval_mean_flag;
   *(float *)(param_1 + 4) = pll.tfom;
-  pVar7 = get_ffom(param_1 + 8);
-  param_1[9] = pVar7;
-  pVar7 = kenneth_present_get((float *)(param_1 + 0x26),param_1 + 0x2b);
-  param_1[0x2a] = pVar7;
-  pVar7 = kenneth_predicted_get((float *)(param_1 + 0x2c),param_1 + 0x31,auStack_6);
-  param_1[0x30] = pVar7;
-  pVar7 = holdover_waiting_reason();
-  param_1[0x1c] = pVar7;
+  pVar4 = get_ffom(param_1 + 8);
+  param_1[9] = pVar4;
+  pVar4 = kenneth_present_get((float *)(param_1 + 0x26),param_1 + 0x2b);
+  param_1[0x2a] = pVar4;
+  pVar4 = kenneth_predicted_get((float *)(param_1 + 0x2c),param_1 + 0x31,auStack_6);
+  param_1[0x30] = pVar4;
+  pVar4 = holdover_waiting_reason();
+  param_1[0x1c] = pVar4;
   *(uint32_t *)(param_1 + 0x22) = pll.holdover_duration;
   param_1[0x1d] = nv_settings.holdover_limit_state;
   *(float *)(param_1 + 0x1e) = nv_settings.holdover_limit_threshold;
   *(int32_t *)(param_1 + 0x100) = nv_settings.time_zone[0];
   *(int32_t *)(param_1 + 0x104) = nv_settings.time_zone[1];
-  iVar4 = get_date_time(&local_a,&local_e);
-  if ((char)iVar4 == 0) {
+  iVar1 = get_date_time(&local_a,&local_e);
+  if ((char)iVar1 == 0) {
     param_1[0x108] = PLL_STAGE_POWERUP;
-    *(undefined4 *)(param_1 + 0xf8) = local_e;
+    *(time_of_day *)(param_1 + 0xf8) = local_e;
     *(undefined4 *)(param_1 + 0xfc) = local_a;
   }
   else {
     param_1[0x108] = PLL_STAGE_INVALID;
-    uVar1 = gps.status.hour;
-    uVar2 = gps.status.minute;
-    uVar3 = gps.status.second;
-    param_1[0xf8] = gps.status.pad_04;
-    param_1[0xf9] = uVar1;
-    param_1[0xfa] = uVar2;
-    param_1[0xfb] = uVar3;
-    uVar5 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
-    *(undefined4 *)(param_1 + 0xfc) = uVar5;
+    *(time_of_day *)(param_1 + 0xf8) = gps.status.time;
+    uVar2 = oncore_date_pack(gps.status.date);
+    *(undefined4 *)(param_1 + 0xfc) = uVar2;
     utc_to_local((uint32_t *)(param_1 + 0xfc),(uint32_t *)(param_1 + 0xf8));
   }
   param_1[0xef] = pll.field_3d5;
   gps_receiver_status_update(0,0);
-  uVar8 = gps_status_alternate();
-  gps_receiver_status_update(1,uVar8);
+  uVar5 = gps_status_alternate();
+  gps_receiver_status_update(1,uVar5);
   param_1[0x112] = nv_settings.douglas_duration_infinite;
-  uVar6 = status_hardware_condition();
-  *(undefined2 *)(param_1 + 300) = uVar6;
+  uVar3 = status_hardware_condition();
+  *(undefined2 *)(param_1 + 300) = uVar3;
   set_interrupt_mask(sr);
   param_1[0xf6] = gps.fix_mode;
   param_1[0xf0] = gps.reference_valid;
@@ -65192,15 +65200,15 @@ void status_snapshot(pll_stage *param_1)
     }
     else {
       *(char **)(param_1 + 0x114) = "AVG ";
-      uVar5 = double_to_integer(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_latitude, 0),
+      uVar2 = double_to_integer(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_latitude, 0),
                                                  __ghidra_piece(unsigned int, gps.average_latitude, 4))));
-      *(undefined4 *)(param_1 + 0x118) = uVar5;
-      uVar5 = double_to_integer(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_longitude, 0),
+      *(undefined4 *)(param_1 + 0x118) = uVar2;
+      uVar2 = double_to_integer(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_longitude, 0),
                                                  __ghidra_piece(unsigned int, gps.average_longitude, 4))));
-      *(undefined4 *)(param_1 + 0x11c) = uVar5;
-      uVar5 = double_to_integer(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_height_msl, 0),
+      *(undefined4 *)(param_1 + 0x11c) = uVar2;
+      uVar2 = double_to_integer(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_height_msl, 0),
                                                  __ghidra_piece(unsigned int, gps.average_height_msl, 4))));
-      *(undefined4 *)(param_1 + 0x120) = uVar5;
+      *(undefined4 *)(param_1 + 0x120) = uVar2;
     }
   }
   else {
@@ -65991,15 +65999,15 @@ LAB_0004b4d2:
               status_message_arrived = 0;
               gps.status_monitor_time = get_uptime();
               gps.status_monitor_timed_out = 0;
-              if (__ghidra_piece(unsigned int, gps.status, 4) == gps.status_last_time) {
+              if (__ghidra_aggregate_bits(gps.status.time) == gps.status_last_time) {
                 gps.status_repeat_count = gps.status_repeat_count + 1;
               }
               else {
                 gps.status_repeat_count = 0;
-                __ghidra_piece(unsigned char, gps.status_last_time, 0) = gps.status.pad_04;
-                __ghidra_piece(unsigned char, gps.status_last_time, 1) = gps.status.hour;
-                __ghidra_piece(unsigned char, gps.status_last_time, 2) = gps.status.minute;
-                __ghidra_piece(unsigned char, gps.status_last_time, 3) = gps.status.second;
+                __ghidra_piece(unsigned char, gps.status_last_time, 0) = gps.status.time.reserved;
+                __ghidra_piece(unsigned char, gps.status_last_time, 1) = gps.status.time.hour;
+                __ghidra_piece(unsigned char, gps.status_last_time, 2) = gps.status.time.minute;
+                __ghidra_piece(unsigned char, gps.status_last_time, 3) = gps.status.time.second;
                 if (gps.raim.rate == 0) {
                   status_without_traim_count = 0;
                 }
@@ -67228,7 +67236,7 @@ int command_log_add(void *request,char *text)
   undefined4 local_1c;
   undefined4 local_18;
   uint32_t local_c;
-  uint32_t local_8;
+  time_of_day local_8;
   
   uVar3 = *(undefined1 *)((int)request + 8);
   uVar1 = *(undefined2 *)((int)request + 10);
@@ -67242,12 +67250,9 @@ int command_log_add(void *request,char *text)
   }
   else {
     __ghidra_piece(unsigned short, local_18, 2) = (ushort)(byte)local_18;
-    local_c = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
-    __ghidra_piece(unsigned char, local_8, 0) = gps.status.pad_04;
-    __ghidra_piece(unsigned char, local_8, 1) = gps.status.hour;
-    __ghidra_piece(unsigned char, local_8, 2) = gps.status.minute;
-    __ghidra_piece(unsigned char, local_8, 3) = gps.status.second;
-    utc_to_local(&local_c,&local_8);
+    local_c = oncore_date_pack(gps.status.date);
+    local_8 = gps.status.time;
+    utc_to_local(&local_c,(uint32_t *)&local_8);
   }
   local_18 = (uint)CONCAT12(uVar6,__ghidra_piece(unsigned short, local_18, 2));
   pgVar8 = (gps_command_log *)(command_log.write + 1);
@@ -67267,7 +67272,7 @@ int command_log_add(void *request,char *text)
   (command_log.write)->argument_text[1] = cVar5;
   *(uint *)((command_log.write)->argument_text + 2) = local_18;
   (command_log.write)->date = local_c;
-  (command_log.write)->time = local_8;
+  (command_log.write)->time = (uint32_t)__ghidra_aggregate_bits(local_8);
   command_log.write = pgVar8->entries;
   return 1;
 }
@@ -67293,7 +67298,7 @@ int gps_print_command(gps_command_log *log,char *line)
   undefined4 local_2a;
   undefined4 uStack_26;
   uint32_t local_22;
-  uint local_1e;
+  time_of_day local_1e;
   char acStack_1a [12];
   char acStack_e [10];
   
@@ -67309,7 +67314,7 @@ int gps_print_command(gps_command_log *log,char *line)
     __ghidra_piece(unsigned char, local_2a, 3) = pgVar3->argument_text[1];
     uStack_26 = *(undefined4 *)(pgVar3->argument_text + 2);
     local_22 = pgVar3->date;
-    local_1e = pgVar3->time;
+    local_1e = __ghidra_as(time_of_day, pgVar3->time);
     pgVar3 = log->read;
     log->read = pgVar3 + 1;
     if (&log->read <= pgVar3 + 1) {
@@ -68267,15 +68272,15 @@ bool gps_time_local_get(uint32_t *param_1,uint32_t *param_2)
 
 {
   bool bVar1;
-  uint32_t local_c;
+  time_of_day local_c;
   uint32_t local_8;
   
   bVar1 = gps.status_received != 0;
   if (bVar1) {
-    local_c = __ghidra_piece(unsigned int, gps.status, 4);
-    local_8 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
-    utc_to_local(&local_8,&local_c);
-    *param_1 = local_c;
+    local_c = gps.status.time;
+    local_8 = oncore_date_pack(gps.status.date);
+    utc_to_local(&local_8,(uint32_t *)&local_c);
+    *param_1 = (uint32_t)__ghidra_aggregate_bits(local_c);
     *param_2 = local_8;
   }
   return bVar1;
@@ -68771,7 +68776,7 @@ char * gps_response_decode(int16_t message,char *response)
   }
   psos_mode(0,0x80,(uchar *)0x0);
   if (message == 0x1e) {
-    status_snapshot_update((undefined *)__ghidra_piece(unsigned int, gps.status, 4));
+    status_snapshot_update((undefined *)__ghidra_aggregate_bits(gps.status.time));
   }
   return pcVar5;
 }

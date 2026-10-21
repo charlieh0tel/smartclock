@@ -1124,7 +1124,14 @@ view cannot drift apart.  The library, bottom up:
      (`datetime_add`, `time_next_second`), the GPT's TMSK and TFLG
      pairs as the words the firmware moves, and `error_queue_push`'s
      code an `int` whose low word it reads (1263 to 1157; the counts
-     unchanged).
+     unchanged).  The clock's own times, the Oncore status's date and
+     time, the reset record's, and the getters' and setters' are
+     `time_of_day` too, and a structure the decompiler reads as an
+     integer -- cast, compared, computed with -- reads its bytes
+     (`__ghidra_aggregate_bits`), the tokens saying which operands are
+     structures (1157 to 1098).  A conversion routine that shifts a
+     time's bytes out of the whole (`hms_to_seconds`) keeps it an
+     integer: the decompiler does not map those shifts to fields.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

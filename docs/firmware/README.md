@@ -737,11 +737,14 @@ decompiler wrote it, and reported.
   the first piece's statement becomes `pushed_1 = fVar2;`, the others
   go, and the `CONCAT` is `pushed_1` (283 of the 1546 idioms in the
   file's C).
-- A cast of a structure to an integer, which C has none of, reads the
-  structure's bytes as the integer they make:
-  `(uint32_t)__ghidra_aggregate_bits(value.time)` of a `time_of_day`.
-  The p-code's `CAST` says its operand is a structure, which the text
-  cannot.
+- A structure the decompiler reads as an integer, which C has no
+  conversion for, reads its bytes as the integer they make: an operand
+  -- a variable and the members after it -- of a structure type under
+  a cast to another type, or compared or computed with, is
+  `__ghidra_aggregate_bits(operand)`, so that
+  `(uint32_t)__ghidra_aggregate_bits(value.time)` of a `time_of_day`;
+  and a cast of an integer to a structure only to compare it goes.  The
+  tokens give each operand's type, which the text cannot.
 
 `tools/firmware/rebuild_link.py` links it into a rebuilt image: each
 piece of assembly at its own address, where it must be, and is, the

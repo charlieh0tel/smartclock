@@ -709,7 +709,7 @@ typedef struct nv_record {
 typedef struct reset_record {
 	int16_t sequence;   /* +0x00: one past the slot's stored record's */
 	uint16_t checksum;  /* +0x02 */
-	uint32_t time;      /* +0x04: get_date_time's time */
+	time_of_day time;   /* +0x04: get_date_time's time */
 	uint32_t date;      /* +0x08: its date */
 	char text[80];      /* +0x0c */
 } reset_record;
@@ -974,16 +974,11 @@ typedef struct oncore_channel_status {
 } oncore_channel_status;
 
 /* @@Ba, as its decoder's table (0x50fd2) lays it out: a pad byte
- * before the hour, and another before the DOP type, put the longs and
+ * before the hour (time_of_day's own), and another before the DOP type, put the longs and
  * words on even addresses. */
 typedef struct oncore_status_fields {
-	uint8_t month;
-	uint8_t day;
-	uint16_t year;
-	uint8_t pad_04;
-	uint8_t hour;
-	uint8_t minute;
-	uint8_t second;
+	oncore_date_fields date;
+	time_of_day time;   /* its reserved byte the pad */
 	uint32_t fraction;  /* ns */
 	int32_t latitude;   /* mas */
 	int32_t longitude;
@@ -1559,10 +1554,10 @@ typedef struct preserved_region_fields {
 typedef struct clock_record {
 	uint16_t checksum;           /* +0x00: the sum's complement, then the sum */
 	uint32_t uptime;             /* +0x02: seconds since the clock started; addq.l #1 at 0x13508, each second; cleared only by clock_init */
-	uint32_t time;               /* +0x06: get_date_time's time; clock_record_derive's utc_to_local of gps_time */
+	time_of_day time;            /* +0x06: get_date_time's time; clock_record_derive's utc_to_local of gps_time */
 	uint32_t date;               /* +0x0a: get_date_time's date */
 	uint8_t month_days[12];      /* +0x0e: date's days a month, January first; clock_set_leap_year sets February's */
-	uint32_t gps_time;           /* +0x1a: get_gps_time's; hour << 16 | minute << 8 | second */
+	time_of_day gps_time;        /* +0x1a: get_gps_time's */
 	uint32_t gps_date;           /* +0x1e: get_gps_date's; year << 16 | month << 8 | day */
 	uint8_t gps_month_days[12];  /* +0x22: gps_date's */
 	uint8_t minute_length;       /* +0x2e: seconds in this minute, 60; 59 or 61 from the leap stubs at 0x13666 and 0x1366c */

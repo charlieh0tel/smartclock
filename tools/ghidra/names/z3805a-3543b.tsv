@@ -233,7 +233,7 @@
 0x10381c	label	dmes_scpi	context	set by the console's dmes_scpi	uint32_t
 0x103820	label	dmes_spoo	context	set by the console's dmes_spoo	uint32_t
 0x103824	label	dmes_curv	context	set by the console's dmes_curv	uint32_t
-0x136fe	function	get_date_time	context	:PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns valid unless clock.invalid	int get_date_time(uint32_t *date, uint32_t *time)
+0x136fe	function	get_date_time	context	:PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns valid unless clock.invalid	int get_date_time(uint32_t *date, time_of_day *time)
 0x1009b8	label	clock	structures.md	the clock record the clock_record_ routines are given in A6, or reach through A4: uptime, date and time, GPS date and time, their month tables, the minute's length, the GPS-UTC offset; once the labels uptime, clock_time, clock_date, gps_time, gps_date, clock_invalid, gps_utc_offset and gps_utc_offset_valid	clock_record
 0x2410e	function	adc_average	context	diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a default when there is no reading	float adc_average(adc_channel channel)	convention=c; confidence=documented; out=D0 float
 0x1043a	function	mutex_acquire	context	recursive lock, owner at +8, count at +0xc, a token through request_x when not already owned		convention=register; confidence=read; in=A1 void *mutex; out=D7 int error; error=D7 0x80 nested hold; preserves=D0, D1, A0, A2; family=mutex
@@ -578,7 +578,7 @@
 0x2979c	function	scpi_check_range	context	reports 9 when value is outside min..max; *ESE, *SRE and the STATus ENABle and transition setters
 0x3124a	function	eeprom_write	context	writes data split at 64-byte page boundaries with eeprom_write_page; happening 'I' on a failure
 0x3119e	function	eeprom_write_page	context	writes within one 64-byte EEPROM page under eeprom_lock, five tries
-0x110fa	function	oncore_date_pack	context	@@Ba's month, day and year into year << 16 | month << 8 | day	uint32_t oncore_date_pack(uint32_t fields)
+0x110fa	function	oncore_date_pack	context	@@Ba's month, day and year into year << 16 | month << 8 | day	uint32_t oncore_date_pack(oncore_date_fields fields)
 0x495e2	function	satellite_in_set	context	bit prn - 1 of a mask, or prn - 0x21 for the second kind	int satellite_in_set(satellite_kind kind, uint8_t id, uint32_t mask)
 0x4f1a6	function	satellite_add_to_set	context	sets bit prn - 1 of a mask, or prn - 0x21 for the second kind	void satellite_add_to_set(satellite_kind kind, uint8_t id, uint32_t *mask)
 0x2d226	function	satellites_in_mask	context	lists the PRNs whose bits are set; the SAT:TRAC:IGN? and INCL? queries
@@ -841,7 +841,7 @@
 0x417c6	function	aging_fit	loop.md's aging fit, in curv: "failed line fit", "pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f", "HQ= %.1e mode= %d"	fits the oscillator's aging curve, for the curv task
 0x40556	function	interpolator_sample	context	sets HDAC channels 2 and 3 and takes both interpolator readings; "First-time interp test."	void interpolator_sample(interpolator_calibration *calibration)
 0x49a6e	function	format_satellite_cell	context	a satellite's status screen cell: "%2d %3d", "Ignore", "Not OK", "Acq"
-0x49e5a	function	format_time	context	a packed time as "%02d:%02d:%02d", or "--:--:--"
+0x49e5a	function	format_time	context	a packed time as "%02d:%02d:%02d", or "--:--:--"	int format_time(time_of_day time, char *text)
 0x49eb4	function	format_date	context	a date as "%02d %s %04d", or "-- --- ----"
 0x49f30	function	status_screen_time	context	the screen's time with its reference, "GPS", "UTC", "LOCL GPS" or "LOCAL"	void status_screen_time(status_snapshot_record *snapshot, char *line)
 0x4816c	function	format_duration	context	seconds as "%02d:%02d:%04.1f [%s]"	void format_duration(double param_1,char *param_2)
@@ -1137,14 +1137,14 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x10656	local	event	read	the entry clk_do copies	klok_entry @ -0x28
 0x10786	function	klok_cancel	context	under klok_mutex, unlinks an entry from the clock list and returns it to the free list; -3 for a pointer outside the pool
 0x108fe	function	klok_find	context	under klok_mutex, the first entry of the clock list of a class
-0x10b00	function	clock_set	context	sets the date and time, then lifetime_update
+0x10b00	function	clock_set	context	sets the date and time, then lifetime_update	void clock_set(time_of_day time, uint32_t date)
 0x10fbc	function	date_to_mjd	context	a date as its Modified Julian Day: 1994-01-01 is 49353; the days before each month at 0x1186a
-0x1111e	function	hms_to_seconds	context	hours, minutes and seconds as seconds
+0x1111e	function	hms_to_seconds	context	hours, minutes and seconds as seconds	int hms_to_seconds(uint32_t time)
 0x11186	function	seconds_to_hms	context	seconds as hours, minutes and seconds
 0x11580	function	gps_to_utc	context	applies the GPS-UTC offset to a date and time
 0x11606	function	leap_opportunity_date	context	the end of the coming quarter, when a leap second may come: Mar 31, Jun 30, Sep 30 or Dec 31
 0x11680	function	leap_second_near	context	1 at 23:59:46 or later, in UTC, on the last day of a quarter
-0x13740	function	get_gps_datetime	context	gps_date and gps_time through pointers; 1 if the clock is valid
+0x13740	function	get_gps_datetime	context	gps_date and gps_time through pointers; 1 if the clock is valid	bool get_gps_datetime(uint32_t *date, time_of_day *time)
 0x137a4	function	set_timedate_unflagged	context	set_timedate's twin: sets the clock record's date and time without marking it set; assembly as set_timedate is		convention=other; confidence=read; family=clock
 0x13428	function	busy_wait	context	spins 729 empty loops for each count
 0x1380c	function	clock_record_store	context	checks a date and time and stores them in the clock record, marking it set if D2 says so		convention=register; confidence=read; in=A6 clock_record *record, D0 int date, D1 int time, D2 int mark; family=clock
@@ -1264,7 +1264,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x3141a	function	log_page_read	context	reads the event log's 64-byte EEPROM page at 0x400d40 plus 0x40 times its number; 0xff if its checksum fails
 0x31536	function	log_erase	context	clears the event log's pages and resets its state, reporting event !
 0x315e8	function	log_erase_locked	context	log_erase under log_mutex
-0x33238	function	reset_record_write	context	writes the next 0x5c-byte reset-cause record at EEPROM 0x4001c0, its time and text, with its checksum
+0x33238	function	reset_record_write	context	writes the next 0x5c-byte reset-cause record at EEPROM 0x4001c0, its time and text, with its checksum	uint32_t reset_record_write(uint32_t date, time_of_day time, char *text)
 0x33238	local	record	read	the reset-cause record it builds and writes	reset_record @ -0x60
 0x33028	function	reset_record_valid	context	1 if a reset-cause record's checksum holds
 0x32ffa	function	reset_record_checksum	context	a reset-cause record's checksum: the sum of its 0x58 bytes and its complement	uint16_t reset_record_checksum(reset_record *record)
@@ -1313,7 +1313,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x10c68	function	list_push	context	pushes an item onto a singly linked list
 0x10c34	function	klok_insert_sorted	context	inserts an entry into the clock list in time order
 0x10db6	function	is_leap_year	context	1 for a leap year, by the Gregorian rule
-0x11152	function	time_to_seconds	context	a packed time as seconds; the same code as hms_to_seconds, a second copy
+0x11152	function	time_to_seconds	context	a packed time as seconds; the same code as hms_to_seconds, a second copy	int time_to_seconds(uint32_t time)
 0x11428	function	datetime_subtract	context	subtracts a time from a date and time, borrowing through the date	void datetime_subtract(packed_datetime *change, packed_datetime *value)
 0x11428	local	change_time	read	the first argument's time, copied (0x11436)	time_of_day @ -0xc
 0x11428	local	time	read	the second argument's time, which the difference is made in and copied back (0x1143a, 0x114aa)	time_of_day @ -0x8
@@ -1341,7 +1341,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1052e	function	mutex_owner	context	a mutex's owner, at +8	uint32_t mutex_owner(void *mutex)
 0x10538	function	idle_count	context	the count of free CPU cycles os_report_cpu prints
 0x10946	function	klok_entry_state	context	0 if an entry is on the clock list, 1 if on the free list, -1 if on neither
-0x10e3a	function	time_packed_to_seconds	context	a packed time as seconds; a third copy of hms_to_seconds, called by nothing
+0x10e3a	function	time_packed_to_seconds	context	a packed time as seconds; a third copy of hms_to_seconds, called by nothing	int time_packed_to_seconds(uint32_t time)
 0x11032	function	days_in_month	context	the days in a month, 28 or 29 for February by is_leap_year
 0x11076	function	date_normalize	context	carries a date's overflowing months and days into the next
 0x11300	function	time_next_second	context	advances a time by a second, the minute 59 or 61 seconds long at a pending leap second's 23:59	void time_next_second(uint32_t *date, time_of_day *value)
@@ -1487,7 +1487,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x26a80	function	scpi_context_init	context	fills a parser context's eight fields; called by nothing
 0x26ab6	function	scpi_parse_message_unit	context	parses one program message unit: its header, then its parameters, token by token; sets *reset_path, which has scpi_interpret reset the path before the next	int scpi_parse_message_unit(void *context, short *reset_path)
 0x27388	function	scpi_skip_to_terminator	context	reads characters until a message terminator	void scpi_skip_to_terminator(void *input)
-0x273cc	function	scpi_scan_number	context	scans a decimal number's digits, point and exponent into a parsed number
+0x273cc	function	scpi_scan_number	context	scans a decimal number's digits, point and exponent into a parsed number; scpi_scan_token passes 1 and the character it has read, each a long whose low word it reads	int scpi_scan_number(void *token, int have_character, int character, void *input)
 0x2766e	function	scpi_scan_exponent	context	scans a number's exponent after its E
 0x277d2	function	scpi_char_upper	context	a letter in upper case, by the parser's character classes
 0x279d6	function	scpi_suffix_compare_tail	context	how much of a token's end matches a unit's name	short scpi_suffix_compare_tail(char *suffix, int length, char *name)

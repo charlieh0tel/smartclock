@@ -1054,8 +1054,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x49a26	function	mark_flag	context	writes * for a set flag
 0x12984	function	tfom_table_index	context	tfom_code's bisection of the table at 0x129fc
 0x1e222	function	duarta_rx_pending	context	1 if DUART channel A's receive ring is not empty
-0x4ee8c	function	long_array_get	context	a long from an array by index
-0x4eeac	function	long_array_set	context	stores a long into an array by index
+0x4ee8c	function	long_array_get	context	a long from an array by index	long long_array_get(long *array, uint8_t index)
+0x4eeac	function	long_array_set	context	stores a long into an array by index	void long_array_set(long value, long *array, uint8_t index)
 0x4eec2	function	long_array_get_byte	context	a long's low byte from an array by index, stored and the pointer advanced	char * long_array_get_byte(long *array, uint8_t index, char *out)
 0x4fb54	function	bytes_equal_n	context	1 if two byte strings have the same nonzero length and bytes
 #
@@ -1403,9 +1403,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4a4c0	function	bits_6_7_any	context	1 if bit 6 or 7 is set
 0x4a4ec	function	bits_8_9_any	context	1 if bit 8 or 9 is set
 0x4afd6	function	status_screen_print	context	prints the status screen, for :SYSTem:PRINt?
-0x4eee0	function	long_array_get_word	context	a long's low word from an array by index, stored high byte first and the pointer advanced
-0x4ef02	function	long_array_get_long	context	a long from an array by index, stored high byte first and the pointer advanced
-0x4ef3a	function	long_array_get_long_prefixed	context	a zero byte, then long_array_get_long
+0x4eee0	function	long_array_get_word	context	a long's low word from an array by index, stored high byte first and the pointer advanced	char * long_array_get_word(long *array, uint8_t index, char *out)
+0x4ef02	function	long_array_get_long	context	a long from an array by index, stored high byte first and the pointer advanced	char * long_array_get_long(long *array, uint8_t index, char *out)
+0x4ef3a	function	long_array_get_long_prefixed	context	a zero byte, then long_array_get_long	void long_array_get_long_prefixed(long *array, uint8_t index, char *out)
 0x4ef54	function	byte_copy_optional	context	copies a byte if there is somewhere to put it
 0x4ef70	function	word_copy_advance	context	copies a word and advances the source
 0x4ef8e	function	bytes_to_long	context	four bytes, high first, as a long

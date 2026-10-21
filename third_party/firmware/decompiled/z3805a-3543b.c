@@ -2822,6 +2822,11 @@ extern undefined4 *PTR_diag_cal_0001c8ac; /* 0001c8ac */
 extern undefined4 *PTR_gps_request_step_00050cc2; /* 00050cc2 */
 extern undefined4 *PTR_lamp_test_command_000186b0; /* 000186b0 */
 extern undefined4 *PTR_s_Self_Test_0004d076; /* 0004d076 */
+extern undefined UNK_0001af5e; /* 0001af5e */
+extern undefined UNK_0001af64; /* 0001af64 */
+extern undefined UNK_0001af6c; /* 0001af6c */
+extern undefined UNK_0001af72; /* 0001af72 */
+extern undefined UNK_0001af78; /* 0001af78 */
 extern undefined UNK_00061c0f; /* 00061c0f */
 extern undefined UNK_0007a120; /* 0007a120 */
 extern undefined UNK_00100b84; /* 00100b84 */
@@ -3010,6 +3015,11 @@ __asm__(".set PTR_diag_cal_0001c8ac, 0x0001c8ac");
 __asm__(".set PTR_gps_request_step_00050cc2, 0x00050cc2");
 __asm__(".set PTR_lamp_test_command_000186b0, 0x000186b0");
 __asm__(".set PTR_s_Self_Test_0004d076, 0x0004d076");
+__asm__(".set UNK_0001af5e, 0x0001af5e");
+__asm__(".set UNK_0001af64, 0x0001af64");
+__asm__(".set UNK_0001af6c, 0x0001af6c");
+__asm__(".set UNK_0001af72, 0x0001af72");
+__asm__(".set UNK_0001af78, 0x0001af78");
 __asm__(".set UNK_00061c0f, 0x00061c0f");
 __asm__(".set UNK_0007a120, 0x0007a120");
 __asm__(".set UNK_00100b84, 0x00100b84");
@@ -4248,6 +4258,12 @@ extern undefined4 * PTR_PTR_00025b7e;
 __asm__(".set PTR_PTR_00025b7e, 0x00025b7e");
 extern undefined4 * PTR_PTR_installer__001014c8;
 __asm__(".set PTR_PTR_installer__001014c8, 0x001014c8");
+extern undefined1 UNK_00019406;
+__asm__(".set UNK_00019406, 0x00019406");
+extern undefined1 UNK_00019410;
+__asm__(".set UNK_00019410, 0x00019410");
+extern undefined1 UNK_00019dce;
+__asm__(".set UNK_00019dce, 0x00019dce");
 extern word WORD_installer__001030d2;
 __asm__(".set WORD_installer__001030d2, 0x001030d2");
 extern word WORD_installer__00105f12;
@@ -4804,7 +4820,7 @@ int forth_cmove_greater();
 int forth_2drop();
 int forth_drop();
 int forth_depth();
-int forth_compile_code();
+void *forth_compile_code(uint16_t *code, void *dp) __asm__("c_forth_compile_code");
 int forth_resolve_branch();
 int forth_resolve_forward();
 int forth_check_pairs();
@@ -4930,7 +4946,7 @@ int forth_store_iodev();
 int forth_user();
 int pforth_dictionary_init();
 undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,undefined4 param_4);
-void pforth_link_word(void *word) __asm__("c_pforth_link_word");
+void *pforth_link_word(void *word) __asm__("c_pforth_link_word");
 void console_set_halt_hook(void *param_1);
 void console_set_device(undefined4 param_1);
 int console_task_create();
@@ -5224,7 +5240,7 @@ undefined4
 scpi_context_init(undefined4 *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
                  undefined4 param_5,undefined4 param_6,undefined4 param_7,undefined4 param_8,
                  undefined4 param_9);
-int scpi_parse_message_unit(int *param_1,undefined2 *param_2);
+int scpi_parse_message_unit(void *context,short *reset_path);
 int scpi_scan_token(void *input,ushort *param_2,int *param_3);
 void scpi_skip_to_terminator(void *input);
 int scpi_scan_number(int param_1,undefined4 param_2,undefined4 param_3,undefined4 *param_4);
@@ -5283,8 +5299,8 @@ char * error_message_lookup(undefined4 param_1);
 undefined4
 scpi_interpret(int param_1,int param_2,int *param_3,uint param_4,undefined4 param_5,void *param_6,
               status_model *param_7,undefined4 param_8,undefined4 param_9);
-undefined4 scpi_call_handler(int *param_1,int *param_2);
-int scpi_format_response(void *output,void *items,void *param_3);
+int scpi_call_handler(void *call,void **response);
+int scpi_format_response(void *output,void *items,void *call);
 int arena_alloc(int param_1,int *param_2);
 int arena_remaining(int *param_1,int *param_2);
 int arena_take(int param_1,int param_2,int *param_3);
@@ -9925,7 +9941,7 @@ void console_init(void)
   diag_words_define();
   psos_io_control(0x200,0x18dbc,0);
   console_set_device(0x200);
-  task_console = console_task_create();
+  task_console = console_task_create(0x200,0x200,0x180,0x32);
   return;
 }
 
@@ -25501,37 +25517,37 @@ __asm__(
 /* 00019338 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* copies a run of code words into the dictionary, up to a zero
+/* copies runs of code words, each ended by a zero, from A0 into the dictionary at A4, up to an
+   empty run, leaving A4 on the last zero; keeps D0 and the condition codes
    Not a C function (pforth; read): a routine of the pForth console's kernel, which runs with the
    data stack in A6, the end of the user area in A5, the dictionary pointer in A4 and the input in
-   A3.  In: A0.
+   A3.  In: A0 uint16_t *code, A4 void *dp.  Out: A4 void *dp.  Preserves: D0.
    console.md */
 
-__pforth undefined2 forth_compile_code(void *dp /* a4 */)
+/* out A4 void *dp; preserves D0 */
+__pforth void * forth_compile_code(uint16_t *code /* a0 */,void *dp /* a4 */)
 
 {
-  short sVar1;
-  undefined2 in_D0w;
-  short *in_A0;
-  short *psVar2;
-  short *psVar3;
+  uint16_t uVar1;
+  uint16_t *puVar2;
+  uint16_t *puVar3;
   
   while( true ) {
     do {
-      psVar3 = dp;
-      psVar2 = in_A0;
-      sVar1 = *psVar2;
-      *psVar3 = sVar1;
-      in_A0 = psVar2 + 1;
-      dp = psVar3 + 1;
-    } while (sVar1 != 0);
-    sVar1 = psVar2[1];
-    if (sVar1 == 0) break;
-    psVar3[1] = sVar1;
-    in_A0 = psVar2 + 2;
-    dp = psVar3 + 2;
+      puVar3 = dp;
+      puVar2 = code;
+      uVar1 = *puVar2;
+      *puVar3 = uVar1;
+      code = puVar2 + 1;
+      dp = puVar3 + 1;
+    } while (uVar1 != 0);
+    uVar1 = puVar2[1];
+    if (uVar1 == 0) break;
+    puVar3[1] = uVar1;
+    code = puVar2 + 2;
+    dp = puVar3 + 2;
   }
-  return in_D0w;
+  return puVar3;
 }
 
 
@@ -25555,6 +25571,23 @@ __asm__(
 	"	move.w (%sp)+,%d0\n"
 	"	rtr\n"
 	"	.size forth_compile_code, .-forth_compile_code\n"
+	"	.popsection\n"
+);
+/* forth_compile_code from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_forth_compile_code,\"ax\",@progbits\n"
+	"	.globl c_forth_compile_code\n"
+	"	.type c_forth_compile_code, @function\n"
+	"c_forth_compile_code:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a0\n"
+	"	move.l (52,%sp),%a4\n"
+	"	jsr forth_compile_code\n"
+	"	move.l %a4,%d0\n"
+	"	move.l %d0,%a0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_forth_compile_code, .-c_forth_compile_code\n"
 	"	.popsection\n"
 );
 
@@ -25802,9 +25835,11 @@ __asm__(
 __pforth void forth_do(long *sp,void *dp)
 
 {
-  forth_compile_code(dp);
-  sp[-1] = (long)dp;
-  sp[-2] = (long)dp;
+  void *pvVar1;
+  
+  pvVar1 = forth_compile_code((uint16_t *)0x1939c,dp);
+  sp[-1] = (long)pvVar1;
+  sp[-2] = (long)pvVar1;
   sp[-3] = (long)"\"do\" or \"?do\"\r\n";
   return;
 }
@@ -25837,10 +25872,12 @@ __asm__(
 __pforth void forth_query_do(long *sp,void *dp)
 
 {
-  forth_compile_code(dp);
-  sp[-1] = (long)dp;
-  forth_compile_code(dp);
-  sp[-2] = (long)dp;
+  void *pvVar1;
+  
+  pvVar1 = forth_compile_code((uint16_t *)0x193a4,dp);
+  sp[-1] = (long)pvVar1;
+  pvVar1 = forth_compile_code((uint16_t *)0x1939c,pvVar1);
+  sp[-2] = (long)pvVar1;
   sp[-3] = (long)"\"do\" or \"?do\"\r\n";
   return;
 }
@@ -25880,16 +25917,17 @@ __pforth void forth_plus_loop(void)
 
 {
   void *unaff_A4;
+  void *pvVar1;
   long *unaff_A6;
-  undefined1 uVar1;
+  undefined1 uVar2;
   
   forth_check_pairs(unaff_A6);
-  forth_compile_code(unaff_A4);
-  uVar1 = *unaff_A6 == unaff_A6[1];
-  forth_resolve_branch(unaff_A6,unaff_A4);
-  forth_compile_code(unaff_A4);
-  if (!(bool)uVar1) {
-    forth_resolve_forward(unaff_A6,unaff_A4);
+  pvVar1 = forth_compile_code((uint16_t *)0x193d0,unaff_A4);
+  uVar2 = *unaff_A6 == unaff_A6[1];
+  forth_resolve_branch(unaff_A6,pvVar1);
+  pvVar1 = forth_compile_code((uint16_t *)0x193ca,pvVar1);
+  if (!(bool)uVar2) {
+    forth_resolve_forward(unaff_A6,pvVar1);
     return;
   }
   return;
@@ -25926,15 +25964,16 @@ __pforth void forth_loop(long *sp)
 
 {
   void *unaff_A4;
-  undefined1 uVar1;
+  void *pvVar1;
+  undefined1 uVar2;
   
   forth_check_pairs(sp);
-  forth_compile_code(unaff_A4);
-  uVar1 = *sp == sp[1];
-  forth_resolve_branch(sp,unaff_A4);
-  forth_compile_code(unaff_A4);
-  if (!(bool)uVar1) {
-    forth_resolve_forward(sp,unaff_A4);
+  pvVar1 = forth_compile_code((uint16_t *)0x193b6,unaff_A4);
+  uVar2 = *sp == sp[1];
+  forth_resolve_branch(sp,pvVar1);
+  pvVar1 = forth_compile_code((uint16_t *)0x193ca,pvVar1);
+  if (!(bool)uVar2) {
+    forth_resolve_forward(sp,pvVar1);
     return;
   }
   return;
@@ -25980,8 +26019,10 @@ __asm__(
 __pforth void forth_if(long *sp,void *dp)
 
 {
-  forth_compile_code(dp);
-  sp[-1] = (long)dp;
+  void *pvVar1;
+  
+  pvVar1 = forth_compile_code((uint16_t *)0x193f4,dp);
+  sp[-1] = (long)pvVar1;
   sp[-2] = (long)"\"if\"\r\n";
   return;
 }
@@ -26023,10 +26064,12 @@ __asm__(
 __pforth void forth_else(long *sp,void *dp)
 
 {
+  void *dp_00;
+  
   forth_check_pairs(sp);
-  forth_compile_code(dp);
-  forth_resolve_forward(sp,dp);
-  sp[-1] = (long)dp;
+  dp_00 = forth_compile_code((uint16_t *)0x193fe,dp);
+  forth_resolve_forward(sp,dp_00);
+  sp[-1] = (long)dp_00;
   sp[-2] = (long)"\"if\"\r\n";
   return;
 }
@@ -26129,9 +26172,11 @@ __asm__(
 __pforth void forth_while(long *sp,void *dp)
 
 {
+  void *pvVar1;
+  
   forth_check_pairs(sp);
-  forth_compile_code(dp);
-  sp[-1] = (long)dp;
+  pvVar1 = forth_compile_code((uint16_t *)&UNK_00019406,dp);
+  sp[-1] = (long)pvVar1;
   sp[-2] = (long)"\"while\"\r\n";
   return;
 }
@@ -26181,13 +26226,14 @@ __pforth void forth_repeat(void)
 
 {
   void *unaff_A4;
+  void *dp;
   long *unaff_A6;
   
   forth_check_pairs(unaff_A6);
-  forth_compile_code(unaff_A4);
+  dp = forth_compile_code((uint16_t *)&UNK_00019410,unaff_A4);
   forth_swap(unaff_A6);
-  forth_resolve_branch(unaff_A6,unaff_A4);
-  forth_resolve_forward(unaff_A6,unaff_A4);
+  forth_resolve_branch(unaff_A6,dp);
+  forth_resolve_forward(unaff_A6,dp);
   return;
 }
 
@@ -26233,11 +26279,12 @@ __pforth void forth_again(void)
 
 {
   void *unaff_A4;
+  void *dp;
   long *unaff_A6;
   
   forth_check_pairs(unaff_A6);
-  forth_compile_code(unaff_A4);
-  forth_resolve_branch(unaff_A6,unaff_A4);
+  dp = forth_compile_code((uint16_t *)&UNK_00019410,unaff_A4);
+  forth_resolve_branch(unaff_A6,dp);
   return;
 }
 
@@ -26281,11 +26328,12 @@ __pforth void forth_until(void)
 
 {
   void *unaff_A4;
+  void *dp;
   long *unaff_A6;
   
   forth_check_pairs(unaff_A6);
-  forth_compile_code(unaff_A4);
-  forth_resolve_branch(unaff_A6,unaff_A4);
+  dp = forth_compile_code((uint16_t *)&UNK_00019406,unaff_A4);
+  forth_resolve_branch(unaff_A6,dp);
   return;
 }
 
@@ -29474,7 +29522,7 @@ __pforth void forth_does_greater(void)
 {
   void *unaff_A4;
   
-  forth_compile_code(unaff_A4);
+  forth_compile_code((uint16_t *)&UNK_00019dce,unaff_A4);
   return;
 }
 
@@ -31309,10 +31357,13 @@ undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,undef
 
 {
   char cVar1;
-  undefined4 *word;
+  void *word;
+  int extraout_D0;
   int iVar2;
-  short sVar4;
+  int extraout_D0_00;
+  short extraout_D0w;
   undefined4 uVar3;
+  undefined4 *puVar4;
   char *dp;
   char *pcVar5;
   
@@ -31322,12 +31373,12 @@ undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,undef
   else {
     word = pforth_dictionary_next;
     if (((uint)pforth_dictionary_next & 1) != 0) {
-      word = (undefined4 *)((int)pforth_dictionary_next + 1);
+      word = (void *)((int)pforth_dictionary_next + 1);
     }
-    pforth_link_word(word);
-    *word = 0;
-    word[1] = 0;
-    dp = (char *)(word + 2);
+    puVar4 = pforth_link_word(word);
+    *puVar4 = 0;
+    puVar4[1] = 0;
+    dp = (char *)(puVar4 + 2);
     do {
       pcVar5 = dp;
       cVar1 = *param_1;
@@ -31338,25 +31389,26 @@ undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,undef
     if (((uint)dp & 1) != 0) {
       dp = pcVar5 + 2;
     }
-    *word = dp;
+    *puVar4 = dp;
     iVar2 = param_3;
     while ((short)iVar2 != 0) {
-      iVar2 = forth_compile_code(dp);
+      dp = forth_compile_code((uint16_t *)&UNK_0001af5e,dp);
+      iVar2 = extraout_D0;
     }
     dp[0] = 'N';
     dp[1] = -0x47;
     pcVar5 = dp + 6;
     *(undefined4 *)(dp + 2) = param_2;
     if (param_3 != 0) {
-      sVar4 = forth_compile_code(pcVar5);
-      *(short *)(dp + 4) = sVar4 << 2;
+      pcVar5 = ({ __auto_type __c = forth_compile_code((uint16_t *)&UNK_0001af64,pcVar5); extraout_D0_00 = (__typeof__(extraout_D0_00))param_3; __c; });
+      *(short *)(pcVar5 + -2) = (short)(extraout_D0_00 << 2);
     }
-    if ((0 < __ghidra_piece(short, param_4, 2)) && (sVar4 = forth_compile_code(pcVar5), 1 < sVar4)) {
-      forth_compile_code(pcVar5);
+    if ((0 < __ghidra_piece(short, param_4, 2)) &&
+       (pcVar5 = ({ __auto_type __c = forth_compile_code((uint16_t *)&UNK_0001af6c,pcVar5); extraout_D0w = (__typeof__(extraout_D0w))param_4; __c; }), 1 < extraout_D0w)) {
+      pcVar5 = forth_compile_code((uint16_t *)&UNK_0001af72,pcVar5);
     }
-    forth_compile_code(pcVar5);
+    pforth_dictionary_next = forth_compile_code((uint16_t *)&UNK_0001af78,pcVar5);
     uVar3 = 0;
-    pforth_dictionary_next = pcVar5;
   }
   return uVar3;
 }
@@ -31365,16 +31417,18 @@ undefined4 pforth_define_word(char *param_1,undefined4 param_2,int param_3,undef
 /* 0001ae36 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* links the word at A4 to the latest in the dictionary
+/* links the word at A4 to the latest in the dictionary, leaving A4 past the link and the word in D0
    Not a C function (register; read): its arguments and results in registers.  In: A4 void *word.
+   Out: A4 void *dp.  Results: D0.
    console.md */
 
-__regcall void pforth_link_word(void *word /* a4 */)
+/* out A4 void *dp; results D0 */
+__regcall void * pforth_link_word(void *word /* a4 */)
 
 {
   *(void **)word = pforth_latest_word;
   pforth_latest_word = word;
-  return;
+  return (void *)((int)word + 4);
 }
 
 
@@ -31400,6 +31454,9 @@ __asm__(
 	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
 	"	move.l (48,%sp),%a4\n"
 	"	jsr pforth_link_word\n"
+	"	move.l %d0,__ghidra_result_d0\n"
+	"	move.l %a4,%d0\n"
+	"	move.l %d0,%a0\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
 	"	.size c_pforth_link_word, .-c_pforth_link_word\n"
@@ -31436,13 +31493,15 @@ void console_set_device(undefined4 param_1)
 /* WARNING: Removing unreachable block (ram,0x0001aea4) */
 /* WARNING: Removing unreachable block (ram,0x0001aebe) */
 /* WARNING: Removing unreachable block (ram,0x0001aecc) */
-/* WARNING: Unknown calling convention -- yet parameter storage is locked */
 /* creates the console's task, p4th, from four stack arguments, through traps in line, services 1,
-   10 and 2, which C cannot say; the task starts at 0x1aedc
+   10 and 2, which C cannot say: service 1's parameter block 2, block_a and block_b in A0, its
+   priority, and stack_a and block_a + block_b + 10 for psos_create's stack_a and stack_b; the task
+   starts at 0x1aedc
    Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
-   called. */
+   called.  In: int block_a, int block_b, int stack_a, int priority.  Out: D0 uint32_t task. */
 
-__naked undefined4 console_task_create(void)
+/* out D0 uint32_t task */
+__naked uint32_t console_task_create(int block_a,int block_b,int stack_a,int priority)
 
 {
   __m68k_trap(3);
@@ -43123,9 +43182,10 @@ scpi_context_init(undefined4 *param_1,undefined4 param_2,undefined4 param_3,unde
 
 /* 00026ab6 */
 
-/* parses one program message unit: its header, then its parameters, token by token */
+/* parses one program message unit: its header, then its parameters, token by token; sets
+   *reset_path, which has scpi_interpret reset the path before the next */
 
-int scpi_parse_message_unit(int *param_1,undefined2 *param_2)
+int scpi_parse_message_unit(void *context,short *reset_path)
 
 {
   code *pcVar1;
@@ -43140,33 +43200,33 @@ int scpi_parse_message_unit(int *param_1,undefined2 *param_2)
   ushort auStack_2c [19];
   short local_6;
   
-  *(undefined4 *)(*(int *)((int)param_1 + 10) + 10) = 0;
-  iVar2 = scpi_scan_token((void *)*param_1,auStack_2c,*(int **)((int)param_1 + 0xe));
+  *(undefined4 *)(*(int *)((int)context + 10) + 10) = 0;
+  iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
   if ((iVar2 == 4) &&
-     (iVar2 = scpi_scan_token((void *)*param_1,auStack_2c,*(int **)((int)param_1 + 0xe)), iVar2 == 3
-     )) {
+     (iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe)),
+     iVar2 == 3)) {
     iVar4 = -0x36;
     goto LAB_00026e5a;
   }
   if (iVar2 == 0xc) {
-    scpi_path_reset(*(undefined4 **)((int)param_1 + 6),*(undefined4 *)((int)param_1 + 0x12));
-    iVar2 = scpi_scan_token((void *)*param_1,auStack_2c,*(int **)((int)param_1 + 0xe));
+    scpi_path_reset(*(undefined4 **)((int)context + 6),*(undefined4 *)((int)context + 0x12));
+    iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
     if (0x12 < iVar2) {
 LAB_00026b6e:
       while (iVar2 == 0x15) {
-        iVar4 = scpi_header_step((short *)auStack_2c,*(int **)((int)param_1 + 6),unaff_D5);
+        iVar4 = scpi_header_step((short *)auStack_2c,*(int **)((int)context + 6),unaff_D5);
         if (iVar4 != 0) goto LAB_00026e5a;
-        iVar2 = scpi_scan_token((void *)*param_1,auStack_2c,*(int **)((int)param_1 + 0xe));
+        iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
       }
       if (0x12 < iVar2) {
-        iVar4 = scpi_header_resolve(auStack_2c,*(int **)((int)param_1 + 10),&local_2e,&local_32,
-                                    *(undefined4 **)((int)param_1 + 6),0,(ushort)(iVar2 == 0x14),
-                                    *(undefined4 *)((int)param_1 + 0xe),unaff_D5);
+        iVar4 = scpi_header_resolve(auStack_2c,*(int **)((int)context + 10),&local_2e,&local_32,
+                                    *(undefined4 **)((int)context + 6),0,(ushort)(iVar2 == 0x14),
+                                    *(undefined4 *)((int)context + 0xe),unaff_D5);
 LAB_00026bae:
         if (iVar4 != 0) goto LAB_00026e5a;
-        iVar2 = scpi_scan_token((void *)*param_1,auStack_2c,*(int **)((int)param_1 + 0xe));
+        iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
         if (iVar2 != 4) goto LAB_00026e12;
-        iVar2 = scpi_scan_token((void *)*param_1,auStack_2c,*(int **)((int)param_1 + 0xe));
+        iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
         if (iVar2 != 2) {
           if (iVar2 != 1) {
             if ((0xc < iVar2) && (iVar2 < 0x14)) {
@@ -43177,7 +43237,7 @@ LAB_00026bae:
                 }
                 local_6 = (short)*(char *)(iVar2 + 0x26ecb);
                 iVar4 = scpi_parameter_match
-                                  ((int *)&local_32,(int)local_6,*(void **)((int)param_1 + 10),
+                                  ((int *)&local_32,(int)local_6,*(void **)((int)context + 10),
                                    &local_2e);
                 if (iVar4 != 0) goto LAB_00026e5a;
                 unaff_D7 = (short *)local_32[1];
@@ -43191,41 +43251,41 @@ LAB_00026bae:
                 case 0x16:
                   uVar5 = *(undefined4 *)(unaff_D7 + 4);
 LAB_00026c84:
-                  iVar4 = (*pcVar1)(auStack_2c,*(undefined4 *)((int)param_1 + 10),
-                                    *(int *)(*(int *)((int)param_1 + 10) + 10) + (int)local_2e,uVar5
+                  iVar4 = (*pcVar1)(auStack_2c,*(undefined4 *)((int)context + 10),
+                                    *(int *)(*(int *)((int)context + 10) + 10) + (int)local_2e,uVar5
                                    );
                   break;
                 case 0x40:
-                  iVar4 = (*pcVar1)(auStack_2c,*(undefined4 *)((int)param_1 + 10),
-                                    *(int *)(*(int *)((int)param_1 + 10) + 10) + (int)local_2e);
+                  iVar4 = (*pcVar1)(auStack_2c,*(undefined4 *)((int)context + 10),
+                                    *(int *)(*(int *)((int)context + 10) + 10) + (int)local_2e);
                   break;
                 case 0x62:
-                  iVar4 = (*pcVar1)(auStack_2c,*(undefined4 *)((int)param_1 + 10),
-                                    *(int *)(*(int *)((int)param_1 + 10) + 10) + (int)local_2e,
-                                    *(undefined2 *)(param_1 + 1),*param_1,
-                                    *(undefined4 *)((int)param_1 + 0xe),
-                                    *(undefined4 *)((int)param_1 + 0x1e));
+                  iVar4 = (*pcVar1)(auStack_2c,*(undefined4 *)((int)context + 10),
+                                    *(int *)(*(int *)((int)context + 10) + 10) + (int)local_2e,
+                                    *(undefined2 *)((int)context + 4),*(undefined4 *)context,
+                                    *(undefined4 *)((int)context + 0xe),
+                                    *(undefined4 *)((int)context + 0x1e));
                   break;
                 case 0x94:
-                  iVar4 = (*pcVar1)(*(undefined4 *)((int)param_1 + 10),
-                                    *(int *)(*(int *)((int)param_1 + 10) + 10) + (int)local_2e,
-                                    *(undefined2 *)(param_1 + 1),*param_1,
-                                    *(undefined4 *)((int)param_1 + 0xe));
+                  iVar4 = (*pcVar1)(*(undefined4 *)((int)context + 10),
+                                    *(int *)(*(int *)((int)context + 10) + 10) + (int)local_2e,
+                                    *(undefined2 *)((int)context + 4),*(undefined4 *)context,
+                                    *(undefined4 *)((int)context + 0xe));
                 }
 LAB_00026d2a:
                 if (iVar4 != 0) goto LAB_00026e5a;
                 local_2e = *unaff_D7 + local_2e;
                 local_32 = (undefined4 *)*local_32;
-                iVar2 = scpi_scan_token((void *)*param_1,auStack_2c,*(int **)((int)param_1 + 0xe));
+                iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
                 if (iVar2 == 4) {
-                  iVar2 = scpi_scan_token((void *)*param_1,auStack_2c,*(int **)((int)param_1 + 0xe))
-                  ;
+                  iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe)
+                                         );
                 }
                 if (iVar2 != 9) goto LAB_00026e12;
-                iVar2 = scpi_scan_token((void *)*param_1,auStack_2c,*(int **)((int)param_1 + 0xe));
+                iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
                 if (iVar2 == 4) {
-                  iVar2 = scpi_scan_token((void *)*param_1,auStack_2c,*(int **)((int)param_1 + 0xe))
-                  ;
+                  iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe)
+                                         );
                 }
                 if ((iVar2 < 0xd) || (0x13 < iVar2)) goto LAB_00026e12;
               } while( true );
@@ -43243,12 +43303,12 @@ LAB_00026b32:
   else {
     if (0x12 < iVar2) goto LAB_00026b6e;
     if (iVar2 == 10) {
-      iVar2 = scpi_scan_token((void *)*param_1,auStack_2c,*(int **)((int)param_1 + 0xe));
+      iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
       if ((iVar2 != 0x13) && (iVar2 != 0x14)) goto LAB_00026b32;
       iVar4 = scpi_common_header_resolve
-                        (auStack_2c,*(int **)((int)param_1 + 10),&local_2e,(int *)&local_32,0,
-                         (ushort)(iVar2 == 0x14),*(undefined4 *)((int)param_1 + 0xe),
-                         *(undefined4 *)((int)param_1 + 0x16));
+                        (auStack_2c,*(int **)((int)context + 10),&local_2e,(int *)&local_32,0,
+                         (ushort)(iVar2 == 0x14),*(undefined4 *)((int)context + 0xe),
+                         *(undefined4 *)((int)context + 0x16));
       goto LAB_00026bae;
     }
     if (iVar2 == 3) {
@@ -43257,7 +43317,7 @@ LAB_00026b32:
 LAB_00026e12:
     if (iVar2 == 2) {
 LAB_00026be2:
-      *param_2 = 1;
+      *reset_path = 1;
     }
     else {
       if (iVar2 != 1) {
@@ -43265,13 +43325,13 @@ LAB_00026be2:
         goto LAB_00026e5a;
       }
 LAB_00026bf0:
-      *param_2 = 0;
+      *reset_path = 0;
     }
-    if (*(int *)(*(int *)((int)param_1 + 10) + 10) == 0) {
+    if (*(int *)(*(int *)((int)context + 10) + 10) == 0) {
       return -100;
     }
     if ((local_32 == (undefined4 *)0x0) ||
-       (iVar4 = scpi_parameters_finish((int *)&local_32,*(void **)((int)param_1 + 10),&local_2e),
+       (iVar4 = scpi_parameters_finish((int *)&local_32,*(void **)((int)context + 10),&local_2e),
        iVar4 == 0)) {
       return 0;
     }
@@ -43284,17 +43344,17 @@ LAB_00026e5a:
     iVar3 = condition_is_command_error(iVar4);
     if (iVar3 == 0) {
       while ((3 < iVar2 || (iVar2 < 1))) {
-        iVar2 = scpi_scan_token((void *)*param_1,auStack_2c,*(int **)((int)param_1 + 0xe));
+        iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
       }
       if (iVar2 == 1) {
-        *param_2 = 0;
+        *reset_path = 0;
       }
       else {
-        *param_2 = 1;
+        *reset_path = 1;
       }
     }
     else if ((iVar2 == 2) || (iVar2 == 3)) {
-      (**(code **)(*(int *)(*param_1 + 4) + 0xc))(*param_1);
+      (**(code **)(*(int *)(*(int *)context + 4) + 0xc))(*(undefined4 *)context);
     }
   }
   return iVar4;
@@ -45036,7 +45096,7 @@ scpi_interpret(int param_1,int param_2,int *param_3,uint param_4,undefined4 para
   void *local_7c;
   uint16_t local_78;
   undefined4 *local_76;
-  int iStack_6e;
+  void *pvStack_6e;
   int local_6a;
   int local_66;
   status_model *local_62;
@@ -45054,7 +45114,7 @@ scpi_interpret(int param_1,int param_2,int *param_3,uint param_4,undefined4 para
   void *local_30;
   uint16_t local_2c;
   void *local_2a;
-  int aiStack_26 [8];
+  undefined4 auStack_26 [8];
   
   arena_init(param_3,param_4,(int *)&local_3c);
   local_34 = arena_current(local_3c);
@@ -45067,7 +45127,7 @@ scpi_interpret(int param_1,int param_2,int *param_3,uint param_4,undefined4 para
   local_56 = param_6;
   local_48 = 0;
   local_46 = param_9;
-  scpi_context_init(aiStack_26,param_1,0,auStack_92,&local_7c,local_3c,local_38,param_5,param_6);
+  scpi_context_init(auStack_26,param_1,0,auStack_92,&local_7c,local_3c,local_38,param_5,param_6);
   local_3e = 1;
   bVar1 = false;
 LAB_0002937c:
@@ -45080,10 +45140,10 @@ LAB_0002937c:
     scpi_skip_to_terminator((void *)param_1);
     bVar1 = false;
   }
-  iVar2 = scpi_parse_message_unit(aiStack_26,&local_3e);
+  iVar2 = scpi_parse_message_unit(auStack_26,&local_3e);
   if (iVar2 != 0) goto LAB_000294de;
   do {
-    unaff_D3 = scpi_call_handler((int *)&local_7c,&iStack_6e);
+    unaff_D3 = scpi_call_handler(&local_7c,&pvStack_6e);
     if (unaff_D3 == 0) {
 LAB_00029436:
       if (local_78 != 0) {
@@ -45197,25 +45257,26 @@ LAB_00029622:
 
 /* 00029642 */
 
-/* calls a node's handler, giving it room in the arena for its parameters */
+/* calls a node's handler with the call record's parameters, its response and the record, first
+   taking room in the arena for a query's response */
 
-undefined4 scpi_call_handler(int *param_1,int *param_2)
+int scpi_call_handler(void *call,void **response)
 
 {
   code *pcVar1;
-  int iVar2;
-  undefined4 uVar3;
+  void *pvVar2;
+  int iVar3;
   
-  pcVar1 = *(code **)(*param_1 + 8 + (uint)*(ushort *)(param_1 + 1) * 10);
-  if (*(short *)(param_1 + 1) != 0) {
-    iVar2 = arena_alloc((int)*(short *)(*param_1 + 0x20),*(int **)((int)param_1 + 6));
-    *param_2 = iVar2;
-    if (iVar2 == 0) {
-      return 0xffffffc8;
+  pcVar1 = *(code **)(*(int *)call + 8 + (uint)*(ushort *)((int)call + 4) * 10);
+  if (*(short *)((int)call + 4) != 0) {
+    pvVar2 = (void *)arena_alloc((int)*(short *)(*(int *)call + 0x20),*(int **)((int)call + 6));
+    *response = pvVar2;
+    if (pvVar2 == (void *)0x0) {
+      return -0x38;
     }
   }
-  uVar3 = (*pcVar1)(*(undefined4 *)((int)param_1 + 10),*param_2,param_1);
-  return uVar3;
+  iVar3 = (*pcVar1)(*(undefined4 *)((int)call + 10),*response,call);
+  return iVar3;
 }
 
 
@@ -45223,7 +45284,7 @@ undefined4 scpi_call_handler(int *param_1,int *param_2)
 
 /* writes a response's items through their formatters */
 
-int scpi_format_response(void *output,void *items,void *param_3)
+int scpi_format_response(void *output,void *items,void *call)
 
 {
   void *pvVar1;
@@ -45239,8 +45300,8 @@ int scpi_format_response(void *output,void *items,void *param_3)
     DAT_00102c60 = 0;
   }
   while( true ) {
-    iVar2 = (**(code **)items)(output,*(int *)((int)param_3 + 0xe) + (int)sVar3,
-                               *(undefined4 *)((int)items + 6),param_3);
+    iVar2 = (**(code **)items)(output,*(int *)((int)call + 0xe) + (int)sVar3,
+                               *(undefined4 *)((int)items + 6),call);
     if (iVar2 != 0) {
       return iVar2;
     }

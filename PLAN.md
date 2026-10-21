@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1251 run, 1230 agree, 9 reach what the
-     harness does not model and are skipped, and 12 differ, in the
+     original reads them: of 1251 run, 1238 agree, 2 reach what the
+     harness does not model and are skipped, and 11 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): traps #1 and #7 run the image's handlers;
@@ -968,10 +968,27 @@ view cannot drift apart.  The library, bottom up:
      `input`, `scpi_format_text`'s and `scpi_format_choice`'s `output`,
      `scpi_header_step`'s `path` and `error_queue_push`'s `error_queue`
      run four more (1183 agreeing to 1230, 57 skipped to 9, 11 differing
-     to 12).  Left: the SCPI parser's records (`scpi_parse_message_unit`,
-     `scpi_call_handler`, `scpi_format_response`, the HARDware queries'
-     parameters), an exchange's queue (`os_report_exchange`) and
-     `status_screen_height`.
+     to 12).  Then an SCPI handler is given the parameters and call
+     record `scpi_call_handler` passes it for its path, its nodes' ids
+     first (the three HARDware queries, and `:DIAGnostic:QUERy:RESPonse?`,
+     which compares the record's input with the console port); the
+     parser's routines a record, its items and slot and a parser context
+     by name (`scpi_parse_message_unit`, `scpi_call_handler`,
+     `scpi_format_response`, by the names file's prototypes); and a `status_snapshot_record *` `status_screen_snapshot`
+     (`status_screen_height`, whose `position_source` lay past the
+     harness's buffer) (1230 agreeing to 1238, 9 skipped to 2, 12
+     differing to 11).  Left
+     skipped: an exchange's queue (`os_report_exchange`), whose callers
+     take it from the kernel's list, empty in the harness, and
+     `scpi_format_resolution_array_record`.  `forth_compile_code` takes
+     its code at A0 and leaves A4, the dictionary pointer, past it,
+     keeping D0; `pforth_link_word` leaves A4 past the link; their
+     conventions now say so (`out=A4`), so that `pforth_define_word`
+     appends where the routines leave A4 and counts its loop in D0.
+     `console_init` then defines its words as the image does, and differs
+     at `console_task_create`'s service 1: the high word of D1, which its
+     `clr.w` leaves as its caller had it, and A0, the parameter block on
+     its own stack, neither of which C can give.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

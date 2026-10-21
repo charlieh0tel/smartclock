@@ -1297,7 +1297,8 @@ public class SmartClockSetup extends GhidraScript {
 	/**
 	 * The prototype to apply: a C function's own, with out's register for
 	 * its result if one is given; for one not C, one built from in and out
-	 * when every item has a type and both are trusted; otherwise null.
+	 * when every item has a type and both are trusted, an in item without
+	 * a register a stack argument; otherwise null.
 	 */
 	private static String prototypeFor(String name, String prototype,
 			Map<String, String> convention, String line) {
@@ -1326,10 +1327,15 @@ public class SmartClockSetup extends GhidraScript {
 		List<String> arguments = new ArrayList<>();
 		for (String item : items(convention.get("in"))) {
 			String[] parts = registerItem(item);
-			if (parts == null) {
+			if (parts != null) {
+				arguments.add(parts[1] + " @ " + parts[0]);
+			}
+			else if (stackItem(item)) {
+				arguments.add(item.strip());
+			}
+			else {
 				return null;
 			}
-			arguments.add(parts[1] + " @ " + parts[0]);
 		}
 		String returned = "void";
 		String returnRegister = "";
@@ -1368,6 +1374,12 @@ public class SmartClockSetup extends GhidraScript {
 			return null;
 		}
 		return new String[] { register.group(1), words[1].strip() };
+	}
+
+	/** True if an item is "TYPE NAME" with no register: a stack argument. */
+	private static boolean stackItem(String item) {
+		String[] words = item.strip().split("\\s+", 2);
+		return !REGISTER.matcher(words[0]).matches() && words.length == 2;
 	}
 
 	/** The convention as a JSON object, its lists split into items. */

@@ -870,7 +870,7 @@
 0x1910e	function	forth_parse_word	console.md	refills and copies the next word into pad		convention=pforth; confidence=read; family=pforth
 0x1912a	function	forth_refill	console.md	skips spaces and, at the input's end, prints the prompt and reads a line		convention=pforth; confidence=read; family=pforth
 0x1916e	function	forth_input_buffer	console.md	tib, or one from the kernel when there is none		convention=pforth; confidence=read; family=pforth
-0x19338	function	forth_compile_code	console.md	copies a run of code words into the dictionary, up to a zero		convention=pforth; confidence=read; in=A0; family=pforth
+0x19338	function	forth_compile_code	console.md	copies runs of code words, each ended by a zero, from A0 into the dictionary at A4, up to an empty run, leaving A4 on the last zero; keeps D0 and the condition codes		convention=pforth; confidence=read; in=A0 uint16_t *code, A4 void *dp; out=A4 void *dp; preserves=D0; family=pforth
 0x1934e	function	forth_resolve_branch	console.md	patches a branch's offset; loop, until, again, repeat		convention=pforth; confidence=read; family=pforth
 0x19378	function	forth_check_pairs	console.md	"ERROR: Mismatched " and the word, then aborts, when a control word's tag does not match		convention=pforth; confidence=read; in=D0; family=pforth
 0x1938e	function	forth_unlink_latest	console.md	latest = *latest: drops the word being defined		convention=pforth; confidence=read; family=pforth
@@ -1251,10 +1251,10 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1ae46	function	console_set_halt_hook	context	stores the routine the console calls on halt
 0x1ae50	function	console_set_device	context	stores the console's device, 0x200 for device 2
 0x100a02	label	console_device	read	the console's device, set by console_set_device	uint16_t
-0x1ae5c	function	console_task_create	context	creates the console's task, p4th, from four stack arguments, through traps in line, services 1, 10 and 2, which C cannot say; the task starts at 0x1aedc		convention=other; confidence=read; family=pforth
+0x1ae5c	function	console_task_create	context	creates the console's task, p4th, from four stack arguments, through traps in line, services 1, 10 and 2, which C cannot say: service 1's parameter block 2, block_a and block_b in A0, its priority, and stack_a and block_a + block_b + 10 for psos_create's stack_a and stack_b; the task starts at 0x1aedc		convention=other; confidence=read; in=int block_a, int block_b, int stack_a, int priority; out=D0 uint32_t task; family=pforth
 0x1aedc	function	console_task	structures.md	the code console_task_create starts p4th at: sets console_exception_hook, builds the interpreter's frame at A5 with A4 from pforth_dictionary_next, prints the pForth banner and enters forth_abort's loop		convention=other; confidence=read; family=pforth
 0x18e62	function	console_exception_hook	context	the console task's exception hook: exception_name of the frame's vector into D0, then rte to 0x18ec8, which prints it and enters forth_abort; never reached while the byte at 0x1037d4 is clear		convention=exception; confidence=read; family=pforth
-0x1ae36	function	pforth_link_word	console.md	links the word at A4 to the latest in the dictionary		convention=register; confidence=read; in=A4 void *word; family=pforth
+0x1ae36	function	pforth_link_word	console.md	links the word at A4 to the latest in the dictionary, leaving A4 past the link and the word in D0		convention=register; confidence=read; in=A4 void *word; out=A4 void *dp; results=D0; family=pforth
 0x12f30	function	scpi_task_start	restart.md	starts scpi_task_create at priority 0x19
 0x12004	function	periodic_interrupt_enable	context	sets the SIM's PICR: the periodic interrupt at level 5, or off
 0x10400	function	mutex_init	context	mutex_create's inside: creates the mutex's exchange for the name in D0 and clears the mutex at A1		convention=register; confidence=read; in=D0 int name, A1 void *mutex; out=D7 int error; error=D7 3 service 21 finds the name; preserves=D1, D2, A0; family=mutex
@@ -1480,7 +1480,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2470c	function	internal_pps_monitor_reset	context	clears the internal 1PPS monitor's state
 0x24984	function	pps_monitors_reset	context	clears both 1PPS monitors
 0x26a80	function	scpi_context_init	context	fills a parser context's eight fields; called by nothing
-0x26ab6	function	scpi_parse_message_unit	context	parses one program message unit: its header, then its parameters, token by token
+0x26ab6	function	scpi_parse_message_unit	context	parses one program message unit: its header, then its parameters, token by token; sets *reset_path, which has scpi_interpret reset the path before the next	int scpi_parse_message_unit(void *context, short *reset_path)
 0x27388	function	scpi_skip_to_terminator	context	reads characters until a message terminator	void scpi_skip_to_terminator(void *input)
 0x273cc	function	scpi_scan_number	context	scans a decimal number's digits, point and exponent into a parsed number
 0x2766e	function	scpi_scan_exponent	context	scans a number's exponent after its E
@@ -1511,8 +1511,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x288ae	function	status_register_set_ntr	structures.md's status registers	sets a register's negative transition filter, for :NTRansition	void status_register_set_ntr(status_model *status, int index, int filter)
 0x288c2	function	status_register_get_ptr	structures.md's status registers	a register's positive transition filter, for :PTRansition?	void status_register_get_ptr(status_model *status, int index, uint16_t *filter)
 0x288d8	function	status_register_get_ntr	structures.md's status registers	a register's negative transition filter, for :NTRansition?	void status_register_get_ntr(status_model *status, int index, uint16_t *filter)
-0x29642	function	scpi_call_handler	context	calls a node's handler, giving it room in the arena for its parameters
-0x29690	function	scpi_format_response	context	writes a response's items through their formatters	int scpi_format_response(void *output, void *items, void *param_3)
+0x29642	function	scpi_call_handler	context	calls a node's handler with the call record's parameters, its response and the record, first taking room in the arena for a query's response	int scpi_call_handler(void *call, void **response)
+0x29690	function	scpi_format_response	context	writes a response's items through their formatters	int scpi_format_response(void *output, void *items, void *call)
 0x29700	function	arena_alloc	context	takes so many bytes, rounded up to even, from an arena; 0 if it is full
 0x2972c	function	arena_remaining	context	the bytes left in an arena, and its next free byte
 0x29742	function	arena_take	context	takes so many bytes, rounded up to even, from a buffer

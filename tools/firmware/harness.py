@@ -576,14 +576,77 @@ STATUS_MODEL_REGISTERS = 0x12
 # And the variables whose address the callers of a parameter's type
 # pass: aging_curve (0x101fd8), which aging_fit (0x417c6) hands each fit
 # routine, or a copy of it on its stack (structures.md, "The aging fit's
-# curve").
-VARIABLES = {"aging_curve_state *": 0x101FD8}
+# curve"), and status_screen_snapshot (0x10142c), which status_screen
+# and its lines are given to print.
+VARIABLES = {"aging_curve_state *": 0x101FD8, "status_snapshot_record *": 0x10142C}
 # And a numeric value's step, which validate_num (0x42c10) passes its
 # descriptor's validate from the pointer at the descriptor's +0x28, one
 # for each value: the first of :SAMPle:INTeger's, the descriptor of the
 # request RECEIVED from pllc_exchange.
 SCPI_STEP = "scpi_step *"
 DESCRIPTOR_STEPS = 0x28
+# What scpi_call_handler (0x29642) gives a handler, named for its path
+# (SmartClockSetup.java), from the call record scpi_interpret (0x292d6)
+# builds on its stack: its parameters, which scpi_header_resolve
+# (0x27d80) takes from the arena and starts with the word at +0x22 of
+# each node of the header that holds one, 0xffff for none, as
+# scpi_header_step (0x27e9e) keeps them in the path, the parsed
+# parameters after them; its response; and the call record, with the
+# node at +0, the handler's index at +4, 0 for the setter at the node's
+# +8 and 1 for the query at its +0x12, 10 bytes each, the arena at +6,
+# the parameters at +0xa, the response at +0xe, scpi_interpret's input
+# and output at +0x12 and +0x16, its status model at +0x1a, and the main
+# tree's root list and the common commands' at +0x22 and +0x26, as
+# scpi_task (0x2a04a) passes them.  A node's keyword pair is at its +0,
+# its child list at +4 and its response's items at +0x1c; a child list's
+# count is at +2, its nodes' pointers from +6 (docs/scpi/README.md).  An
+# arena, as arena_init (0x29770) makes one of a buffer, holds its next
+# free byte at +0, from +8, and its last at +4.
+HANDLER = re.compile(r"scpi_(query|set)_(\w+)$")
+HANDLER_NAMES = ["parameters", "response", "call"]
+QUERY = "query"
+COMMON_PREFIX = "common_"
+SCPI_COMMON_LIST = 0x526F6
+KEYWORD_SEPARATOR = "_"
+NODE_CHILDREN = 4
+NODE_ITEMS = 0x1C
+NODE_ID = 0x22
+NO_ID = 0xFFFF
+LIST_COUNT = 2
+LIST_NODES = 6
+CALL_NODE = 0
+CALL_INDEX = 4
+CALL_ARENA = 6
+CALL_PARAMETERS = 0xA
+CALL_RESPONSE = 0xE
+CALL_INPUT = 0x12
+CALL_OUTPUT = 0x16
+CALL_STATUS = 0x1A
+CALL_MAIN_TREE = 0x22
+CALL_COMMON_LIST = 0x26
+ARENA_START = 8
+# The parameters of the parser's own routines named for what
+# scpi_interpret gives them: a call record, a fresh one for SAMPLE_CALL,
+# the query of :STATus:OPERation:HARDware:ENABle?; the response's items,
+# that node's (scpi_format_response); the record's response slot, where
+# scpi_call_handler leaves the response it takes; and the parser's
+# context, as scpi_context_init (0x26a80) fills it: the input at +0,
+# a word 0 at +4, the path at +6, as scpi_path_reset sets it, the call record
+# at +0xa, the arena at +0xe, and the main tree and common list at +0x12
+# and +0x16.
+CALL = "call"
+ITEMS = "items"
+RESPONSE_SLOT = "response"
+CONTEXT = "context"
+SAMPLE_CALL = (True, "STATus_OPERation_HARDware_ENABle")
+CONTEXT_INPUT = 0
+CONTEXT_WORD = 4
+CONTEXT_WORD_SIZE = 2
+CONTEXT_PATH = 6
+CONTEXT_CALL = 0xA
+CONTEXT_ARENA = 0xE
+CONTEXT_MAIN_TREE = 0x12
+CONTEXT_COMMON_LIST = 0x16
 # The sizes of the base types the decompiled C's prototypes use; the
 # rest are pointers or are asserted in the C.
 BASE_SIZES = {
@@ -799,10 +862,16 @@ def argument(
 
 
 def arguments(
-    m: RebuiltMachine, types: Types, kinds: list[str], case: int, names: list[str] | None = None
+    m: RebuiltMachine,
+    types: Types,
+    kinds: list[str],
+    case: int,
+    names: list[str] | None = None,
+    function: str | None = None,
 ) -> list[bytes]:
     """A case's arguments, each position taking a different value, or
-    the image's object for its name or type."""
+    the image's object for its name or type; an SCPI handler's as
+    scpi_call_handler gives them."""
     fill = pointer_fill(case) if case >= PLAIN_CASES else None
     values = []
     for i, (kind, name) in enumerate(zip(kinds, names or [None] * len(kinds))):
@@ -810,7 +879,103 @@ def arguments(
         values.append(
             argument(m, types, kind, case + POSITION_STRIDE * i, fill, i) if at is None else struct.pack(">I", at)
         )
+    handler = HANDLER.match(function or "")
+    if handler and names == HANDLER_NAMES:
+        parameters, response, call = (struct.unpack(">I", value)[0] for value in values)
+        call_record(m, handler.group(1) == QUERY, handler.group(2), parameters, response, call)
+    elif names and (CALL in names or CONTEXT in names):
+        record = sample_call(m)
+        node = pointer_at(m, record + CALL_NODE)
+        given = {
+            CALL: record,
+            ITEMS: pointer_at(m, node + NODE_ITEMS),
+            RESPONSE_SLOT: record + CALL_RESPONSE,
+            CONTEXT: parser_context(m, record),
+        }
+        values = [struct.pack(">I", given[name]) if name in given else value for name, value in zip(names, values)]
     return values
+
+
+def call_record(m: RebuiltMachine, query: bool, path: str, parameters: int, response: int, record: int) -> bool:
+    """Makes record, a buffer, what scpi_interpret's call record holds for
+    a handler's path, and parameters what scpi_header_resolve starts
+    them with; False, leaving them, for a path not in the tree."""
+    common = path.startswith(COMMON_PREFIX)
+    nodes = header_nodes(m, SCPI_COMMON_LIST if common else SCPI_MAIN_TREE, path.removeprefix(COMMON_PREFIX))
+    if not nodes:
+        return False
+    ids = [i for i in (struct.unpack(">H", m.read(node + NODE_ID, 2))[0] for node in nodes) if i != NO_ID]
+    m.uc.mem_write(parameters, struct.pack(f">{len(ids)}H", *ids))
+    for offset, layout, value in (
+        (CALL_NODE, ">I", nodes[-1]),
+        (CALL_INDEX, ">H", int(query)),
+        (CALL_ARENA, ">I", arena(m)),
+        (CALL_PARAMETERS, ">I", parameters),
+        (CALL_RESPONSE, ">I", response),
+        (CALL_INPUT, ">I", CONSOLE_PORT),
+        (CALL_OUTPUT, ">I", CONSOLE_PORT),
+        (CALL_STATUS, ">I", pointer_at(m, STATUS_OBJECT)),
+        (CALL_MAIN_TREE, ">I", SCPI_MAIN_TREE),
+        (CALL_COMMON_LIST, ">I", SCPI_COMMON_LIST),
+    ):
+        m.uc.mem_write(record + offset, struct.pack(layout, value))
+    return True
+
+
+def sample_call(m: RebuiltMachine) -> int:
+    """A fresh call record for SAMPLE_CALL, with fresh parameters and response."""
+    record = m.buffer()
+    if not call_record(m, *SAMPLE_CALL, m.buffer(), m.buffer(), record):
+        raise RuntimeError(f"no node for {SAMPLE_CALL}")
+    return record
+
+
+def arena(m: RebuiltMachine) -> int:
+    """An arena of a fresh buffer, as arena_init makes it."""
+    at = m.buffer()
+    m.uc.mem_write(at, struct.pack(">II", at + ARENA_START, at + BUFFER_SPACING - 1))
+    return at
+
+
+def parser_context(m: RebuiltMachine, record: int) -> int:
+    """A fresh parser context, as scpi_interpret has scpi_context_init fill it."""
+    context = m.buffer()
+    for offset, value in (
+        (CONTEXT_INPUT, CONSOLE_PORT),
+        (CONTEXT_PATH, m.buffer(RESET_PATH)),
+        (CONTEXT_CALL, record),
+        (CONTEXT_ARENA, pointer_at(m, record + CALL_ARENA)),
+        (CONTEXT_MAIN_TREE, SCPI_MAIN_TREE),
+        (CONTEXT_COMMON_LIST, SCPI_COMMON_LIST),
+    ):
+        m.uc.mem_write(context + offset, struct.pack(">I", value))
+    m.uc.mem_write(context + CONTEXT_WORD, bytes(CONTEXT_WORD_SIZE))
+    return context
+
+
+def header_nodes(m: Machine, root: int, path: str) -> list[int]:
+    """The nodes a header's keywords, separated by KEYWORD_SEPARATOR,
+    name from a child list down, each matched whole against its keyword
+    pair's two forms joined; none if one is not found."""
+    nodes, children = [], root
+    for keyword in path.split(KEYWORD_SEPARATOR):
+        if children == 0:
+            return []
+        count = struct.unpack(">H", m.read(children + LIST_COUNT, 2))[0]
+        pointers = struct.unpack(f">{count}I", m.read(children + LIST_NODES, count * POINTER_SIZE))
+        found = [node for node in pointers if keyword_text(m, node).upper() == keyword.upper()]
+        if not found:
+            return []
+        nodes.append(found[0])
+        children = pointer_at(m, found[0] + NODE_CHILDREN)
+    return nodes
+
+
+def keyword_text(m: Machine, node: int) -> str:
+    """A node's keyword, its short form and the rest of its long form."""
+    short = m.string(pointer_at(m, node))
+    rest = m.string(pointer_at(m, node) + len(short) + 1)
+    return (short + rest).decode("ascii", "replace")
 
 
 def image_object(m: RebuiltMachine, kind: str, name: str | None, case: int) -> int | None:

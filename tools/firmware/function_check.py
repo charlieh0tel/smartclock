@@ -195,7 +195,7 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
     for case in range(CASES):
         fresh_ram(m, case)
         establish(m, function, linked_symbols)
-        values = arguments(m, types, function.parameters, case, function.names)
+        values = arguments(m, types, function.parameters, case, function.names, function.name)
         ram = m.read(RAM, RAM_SIZE)
 
         reset(m, ram)

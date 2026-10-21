@@ -365,7 +365,9 @@ out: its kind (`c`, `register`, `exception`, `pforth`, `psos-service`,
 `other` or `undetermined`), a confidence (`run`, `read`, `documented`,
 `derived` or `assumed`, strongest first, with `KEY.confidence` for one
 key weaker than the rest), the registers `in` and `out` with their
-types and names, the registers a result is also left in, `copies=A0:A1`
+types and names, an `in` item without a register a stack argument
+(`console_task_create`'s, which a C caller pushes), the registers a
+result is also left in, `copies=A0:A1`
 for each double routine but the in-place ones (`softfloat.md`; every
 exit of their shared bodies ends `movea.l D0,A0`, `movea.l D1,A1`,
 `rts`, at `0x5d47e`, `0x5d60c`, `0x5db90` and `0x5e7da`), and
@@ -815,8 +817,23 @@ object (`0x29e18`), and a header `path`, a buffer set back to the main
 tree's root list (`0x53034`), as `scpi_path_reset` does; and by its
 type, `status_object`'s model, one of its registers by the case, and
 by the name `error_queue` its queue, `aging_curve` for an
-`aging_curve_state *`, and for a `scpi_step *` the first step of
-`:SAMPle:INTeger`'s descriptor, the request's.  And
+`aging_curve_state *`, `status_screen_snapshot` for a
+`status_snapshot_record *`, and for a `scpi_step *` the first step of
+`:SAMPle:INTeger`'s descriptor, the request's.  An SCPI handler,
+named for its path, is given what `scpi_call_handler` (`0x29642`)
+passes from the call record `scpi_interpret` builds: its parameters
+start with the word at `+0x22` of each node of its path that holds
+one, as `scpi_header_resolve` (`0x27d80`) lays them, the register
+indexes of the `:STATus` queries (`:OPERation:HARDware` is 2 and 6);
+and its record holds its node, its index, 0 for the setter or 1 for
+the query, an arena, the parameters, the response, the console port as
+input and output and the status model, as `scpi_task` passes them.
+The parser's own routines get such a record for
+`:STATus:OPERation:HARDware:ENABle?` by the names `call`, `items` (its
+node's response items, for `scpi_format_response`), `response` (the
+record's response slot, for `scpi_call_handler`) and `context` (a parser
+context as `scpi_context_init` fills it, for
+`scpi_parse_message_unit`).  And
 `function_check.py` starts the functions that read what their callers
 set with it: `qsort`'s element size and comparator for its sorts and
 swaps, as its one call gives them (2 and `satellite_compare`), and the

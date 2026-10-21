@@ -52,8 +52,9 @@ uint32_t crc16_ccitt(uint8_t* bytes, int16_t count) {
       }
     }
   }
-  return (uint32_t)(uint8_t)~sum << 24 | (uint32_t)sum << 16 |
-         (crc & CRC16_MASK);
+  const uint8_t complement = ~sum;
+
+  return (uint32_t)complement << 24 | (uint32_t)sum << 16 | (crc & CRC16_MASK);
 }
 
 /* A long shifted as the processor shifts it: the count modulo 64, and 32

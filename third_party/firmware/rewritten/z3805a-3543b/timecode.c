@@ -112,7 +112,7 @@ void es_build(uint32_t date, uint32_t time) {
 
   if (es_ascii == 0) {
     uint32_t day_ones = day % 100;
-    uint8_t offset_tens = (uint32_t)(int32_t)offset / 10;
+    uint8_t offset_tens = (uint32_t)offset / 10;
 
     es_message[0] = timecode_tens(year % 100);
     es_message[1] = timecode_ones(year % 100);
@@ -146,7 +146,7 @@ static uint8_t timecode_finish(void) {
   char checksum[TIMECODE_CHECKSUM_SIZE];
   uint8_t length = 0;
 
-  sprintf(checksum, "%02X", (uint32_t)(uint8_t)tcode_checksum(tcode_message));
+  sprintf(checksum, "%02X", (uint8_t)tcode_checksum(tcode_message));
   strcat(tcode_message, checksum);
   while (tcode_message[length] != 0) {
     length++;

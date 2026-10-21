@@ -482,10 +482,10 @@ uint32_t eeprom_write(char* destination, char* source, uint32_t length) {
 /* A value of so many bits sign-extended to a long (0x3145a). */
 uint32_t sign_extend_bits(uint32_t value, uint8_t width) {
   if (width == 8) {
-    return (uint32_t)(int32_t)(int8_t)value;
+    return (uint32_t)(int8_t)value;
   }
   if (width == 16) {
-    return (uint32_t)(int32_t)(int16_t)value;
+    return (uint32_t)(int16_t)value;
   }
   if (width == 0 || width >= RECORDS_LONG_BITS) {
     return value;
@@ -1007,7 +1007,7 @@ uint32_t nv_load_slot(void) {
     }
   }
   nv_numeric_bytes_loaded =
-      (int16_t)((char*)stream.next - (char*)record.packed);
+      (int16_t)((stream.next - record.packed) * sizeof *record.packed);
   for (uint32_t i = 0; i < RECORDS_NV_SETTING_PARAMS; i++) {
     scpi_setting_param* param = nv_setting_params[i];
     for (int32_t v = 0; v <= (int8_t)param->last_index; v++) {
@@ -1015,7 +1015,8 @@ uint32_t nv_load_slot(void) {
           &stream, records_nv_width(param->nv_widths, v));
     }
   }
-  nv_bytes_loaded = (int16_t)((char*)stream.next - (char*)record.packed);
+  nv_bytes_loaded =
+      (int16_t)((stream.next - record.packed) * sizeof *record.packed);
   return 1;
 }
 

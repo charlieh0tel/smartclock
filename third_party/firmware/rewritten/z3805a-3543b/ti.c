@@ -190,7 +190,7 @@ uint8_t counter_wait_ready(uint8_t mask) {
 uint64_t counter_offset_apply(int32_t high, uint32_t low) {
   static const uint64_t PRESET = 0x555555;
 
-  return ((uint64_t)(uint32_t)high << 32 | low) - PRESET;
+  return ((uint64_t)high << 32 | low) - PRESET;
 }
 
 /* The counter's 24-bit count of 100 ns ticks, from FPGA registers 0x16

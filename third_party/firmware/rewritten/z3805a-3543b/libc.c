@@ -129,7 +129,7 @@ uint64_t div(int32_t numerator, int32_t denominator) {
   int32_t quotient = numerator / denominator;
   int32_t remainder = numerator - denominator * quotient;
 
-  return (uint64_t)(uint32_t)quotient << LIBC_WORD_BITS | (uint32_t)remainder;
+  return (uint64_t)quotient << LIBC_WORD_BITS | (uint32_t)remainder;
 }
 
 /* The same, ldiv (0x5eed2). */

@@ -1576,9 +1576,7 @@ public class SmartClockExportC extends GhidraScript {
 			if (name == null) {
 				name = PUSHED + (names.size() + 1);
 				names.put(pushed.value(), name);
-				edits.after.merge(open, StringUtilities.LINE_SEPARATOR + "  "
-					+ pushed.value().getHigh().getDataType().getDisplayName() + " " + name + ";",
-					String::concat);
+				declare(open, pushed.value().getHigh().getDataType().getDisplayName(), name, edits);
 			}
 			for (PcodeOp piece : pushed.pieces()) {
 				if (!placed.add(piece)) {
@@ -1597,38 +1595,8 @@ public class SmartClockExportC extends GhidraScript {
 					edits.dropped.add(line);
 				}
 			}
-			int start = root.getKey();
-			int close = closingParenthesis(tokens, start);
-			StringBuilder text = new StringBuilder(name);
-			for (int k = start; k <= close; k++) {
-				take(tokens.get(k), edits);
-			}
-			// what follows the CONCAT on its last line joins its first
-			int first = lines.indexOf(lineOf.get(tokens.get(start)));
-			int last = lines.indexOf(lineOf.get(tokens.get(close)));
-			if (last > first) {
-				List<ClangToken> rest = lines.get(last).getAllTokens();
-				for (ClangToken token : rest.subList(rest.indexOf(tokens.get(close)) + 1, rest.size())) {
-					text.append(take(token, edits));
-				}
-				for (int k = first + 1; k <= last; k++) {
-					edits.dropped.add(lines.get(k));
-				}
-			}
-			edits.replaced.put(tokens.get(start), text.toString());
-			String type = pushed.value().getHigh().getDataType().getDisplayName();
-			List<Integer> cast = new ArrayList<>();
-			for (int k = start - 1; k >= 0 && cast.size() < 3; k--) {
-				if (!tokens.get(k).getText().isBlank()) {
-					cast.add(k);
-				}
-			}
-			if (cast.size() == 3 && tokens.get(cast.get(0)).getText().equals(")")
-				&& tokens.get(cast.get(1)).getText().equals(type) && tokens.get(cast.get(2)).getText().equals("(")) {
-				for (int k = cast.get(2); k < start; k++) {
-					take(tokens.get(k), edits);
-				}
-			}
+			replaceConcat(lines, lineOf, tokens, root.getKey(), name,
+				pushed.value().getHigh().getDataType().getDisplayName(), edits);
 			for (PcodeOp piece : pushed.pieces()) {
 				pieceVariables.add(piece.getOutput().getHigh());
 			}
@@ -1653,6 +1621,48 @@ public class SmartClockExportC extends GhidraScript {
 				edits.dropped.add(declaration);
 			}
 		}
+	}
+
+	/**
+	 * Replaces the CONCAT at tokens[start] with name, and a cast to type
+	 * before it; what follows it on its last line joins its first.
+	 */
+	private static void replaceConcat(List<ClangLine> lines, Map<ClangToken, ClangLine> lineOf,
+			List<ClangToken> tokens, int start, String name, String type, TokenEdits edits) {
+		int close = closingParenthesis(tokens, start);
+		StringBuilder text = new StringBuilder(name);
+		for (int k = start; k <= close; k++) {
+			take(tokens.get(k), edits);
+		}
+		int first = lines.indexOf(lineOf.get(tokens.get(start)));
+		int last = lines.indexOf(lineOf.get(tokens.get(close)));
+		if (last > first) {
+			List<ClangToken> rest = lines.get(last).getAllTokens();
+			for (ClangToken token : rest.subList(rest.indexOf(tokens.get(close)) + 1, rest.size())) {
+				text.append(take(token, edits));
+			}
+			for (int k = first + 1; k <= last; k++) {
+				edits.dropped.add(lines.get(k));
+			}
+		}
+		edits.replaced.put(tokens.get(start), text.toString());
+		List<Integer> cast = new ArrayList<>();
+		for (int k = start - 1; k >= 0 && cast.size() < 3; k--) {
+			if (!tokens.get(k).getText().isBlank()) {
+				cast.add(k);
+			}
+		}
+		if (cast.size() == 3 && tokens.get(cast.get(0)).getText().equals(")")
+			&& tokens.get(cast.get(1)).getText().equals(type) && tokens.get(cast.get(2)).getText().equals("(")) {
+			for (int k = cast.get(2); k < start; k++) {
+				take(tokens.get(k), edits);
+			}
+		}
+	}
+
+	/** Declares a variable of type at the function's open brace. */
+	private static void declare(ClangToken open, String type, String name, TokenEdits edits) {
+		edits.after.merge(open, StringUtilities.LINE_SEPARATOR + "  " + type + " " + name + ";", String::concat);
 	}
 
 	/** A token's text as edits make it, which it then gives up: it prints nothing. */

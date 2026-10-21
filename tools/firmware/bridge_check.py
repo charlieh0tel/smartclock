@@ -18,8 +18,11 @@ saves.
 
 A routine that reaches beyond what the harness maps, calls a kernel
 service the harness does not model, or traps, the same way both times
-is skipped.  Installer routines are not run.  make check-decompiled runs it
-with its flags.  Exits nonzero if any bridge disagrees with its routine.
+is skipped.  Installer routines are not run, nor is an exception
+handler, which its trap enters with an exception frame for its rte to
+return through, where a wrapper's jsr leaves only a return address.
+make check-decompiled runs it with its flags.  Exits nonzero if any
+bridge disagrees with its routine.
 """
 
 import json
@@ -52,6 +55,8 @@ from harness import (
 from libc_check import RAM, RAM_SIZE
 from rebuild_link import link, symbols
 
+# The sidecar's convention of a routine a trap or interrupt enters.
+EXCEPTION = "exception"
 # The registers gcc's callee must keep.
 CALLEE_SAVED = ["D2", "D3", "D4", "D5", "D6", "D7", "A2", "A3", "A4", "A5", "A6"]
 
@@ -69,12 +74,12 @@ class Bridge:
 
 
 def bridges(c: str, conventions: dict) -> list[Bridge]:
-    """Every bridge of a routine in ROM whose sidecar gives a register for
-    each argument and its result."""
+    """Every bridge of a routine in ROM, not an exception handler, whose
+    sidecar gives a register for each argument and its result."""
     found = []
     for result, name, parameters in re.findall(r'^(.+?)\b(\w+)\((.*)\) __asm__\("c_\w+"\);$', c, re.M):
         convention = conventions.get(name)
-        if convention is None or convention["address"].startswith("installer"):
+        if convention is None or convention["address"].startswith("installer") or convention["convention"] == EXCEPTION:
             continue
         types = [] if parameters == "void" else [re.sub(r"\w+$", "", p.strip()).strip() for p in parameters.split(",")]
         items = convention.get("in") or []
@@ -173,7 +178,7 @@ def main() -> int:
     wrappers = sum(name.startswith("c_") for name in linked_symbols)
     print(
         f"bridges agreeing: {counts['agreeing']}, skipped: {counts['skipped']}, failed: {counts['failed']}; "
-        f"not run: {wrappers - len(runnable)} (the installer's, or no register in the sidecar)"
+        f"not run: {wrappers - len(runnable)} (the installer's, an exception handler's, or no register in the sidecar)"
     )
     return 1 if counts["failed"] else 0
 

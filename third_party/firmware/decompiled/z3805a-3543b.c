@@ -5230,7 +5230,7 @@ int scpi_format_double_array(int param_1,int *param_2);
 int scpi_format_short_array(void *param_1,int *param_2);
 int scpi_format_resolution_array(int param_1,int *param_2);
 int scpi_format_array(void *param_1,char *param_2);
-int scpi_format_resolution_array_record(char *param_1);
+int scpi_format_resolution_array_record(void *output,char *record);
 int scpi_format_double(void *output,double *value);
 int scpi_format_float(void *output,float *value);
 int scpi_format_double_precision(int param_1,int *param_2);
@@ -42982,27 +42982,26 @@ int scpi_format_array(void *param_1,char *param_2)
 /* by its kind, a block or a resolution array, then the record's release callback
    docs/scpi/README.md, read */
 
-int scpi_format_resolution_array_record(char *param_1)
+int scpi_format_resolution_array_record(void *output,char *record)
 
 {
   int iVar1;
-  void *in_stack_00000004;
   
-  iVar1 = *param_1 + -1;
-  if (*param_1 == 0 || iVar1 == 0) {
+  iVar1 = *record + -1;
+  if (*record == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_00026832_index_zero)[(short)iVar1]) {
     case 4:
-      iVar1 = scpi_format_block(in_stack_00000004,*(uint32_t **)(param_1 + 2));
+      iVar1 = scpi_format_block(output,*(uint32_t **)(record + 2));
       break;
     case 0x14:
-      iVar1 = scpi_format_resolution_array((int)in_stack_00000004,*(int **)(param_1 + 2));
+      iVar1 = scpi_format_resolution_array((int)output,*(int **)(record + 2));
     }
   }
   else {
     iVar1 = 0;
   }
-  (**(code **)(param_1 + 6))();
+  (**(code **)(record + 6))();
   return iVar1;
 }
 

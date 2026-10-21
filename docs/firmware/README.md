@@ -560,9 +560,11 @@ label, `c_NAME`: a generated wrapper that moves the arguments from
 gcc's stack into the routine's registers and its result into D0, D0:D1
 or A0.  `tools/firmware/bridge_check.py` runs each wrapper in Unicorn
 against its routine called directly, from the registers the sidecar
-names: of the 89, 79 give the same result, RAM and effects and keep
-gcc's callee-saved registers, 3 reach what the harness does not model
-and are skipped, and 7 (the installer's) are not run.  The
+names: of the 91, 83 give the same result, RAM and effects and keep
+gcc's callee-saved registers, and 8 are not run: the installer's 5,
+two with a register the sidecar does not name, and
+`kernel_dispatch_io`'s, an exception handler that `trap #4` enters
+with a frame for its `rte`, which a wrapper's `jsr` cannot give.  The
 whole file compiles to an object (`make check-decompiled`, whose flags
 add `-fno-builtin -fno-tree-loop-distribute-patterns`, since the image's
 C library has no `puts`, `strlen` or `strcmp` for gcc to call).  The
@@ -714,11 +716,12 @@ and a pointer to a C
 function's image copy and one to gcc's copy are the same (a driver's
 echo routine).  And a call starts with
 A6 at a caller's frame on the harness's stack, its saved frame pointer
-0 and its return address the harness's, since the image's code may
-walk its caller's frame (`float_raise` reads the return address there).
+0, its return address the harness's and its first argument a name,
+`"gpsx"` as `root_task` passes it, since the image's code may walk its
+caller's frame (`float_raise` reads the return address there).
 gcc keeps a frame pointer too (`-fno-omit-frame-pointer`), as the
 original compiler did: `psos_pack_name` reads its caller's first
-argument through the caller's A6.  The stack is filled with one byte
+argument, the task or exchange creator's name, through the caller's A6.  The stack is filled with one byte
 at a call's start, and each frame a `link` makes is filled with it
 again, so that a local read before it is written, a message's bytes
 its sender leaves unset among them, reads the same in both copies,
@@ -771,7 +774,10 @@ those tables but for its calls of each device's function 0 and its
 creates of ROOT and IDLE: the supervisor stack, the free lists of
 exchanges, message buffers and task records, regions 0 and 1 and the
 empty queue of tasks waiting on a region at `+0x64`, which
-`os_report_regions` walks; and the first long of the data area, the
+`os_report_regions` walks; the exchanges `root_task` creates, `gpsx`,
+`plla` and `pllc`, each made by the kernel's own code for service 20,
+`kernel_create_x` (`0x1537e`), on the list at the data area's `+0x14`
+that `os_report_exchanges` walks; and the first long of the data area, the
 running task's record, which is `ident`'s for the name 0.  And as the
 image's own `status_init` (`0x2f480`) makes them, run once as a call
 is, the segments it allocates kept: `status_object` and its seven
@@ -819,7 +825,9 @@ type, `status_object`'s model, one of its registers by the case, and
 by the name `error_queue` its queue, `aging_curve` for an
 `aging_curve_state *`, `status_screen_snapshot` for a
 `status_snapshot_record *`, and for a `scpi_step *` the first step of
-`:SAMPle:INTeger`'s descriptor, the request's.  An SCPI handler,
+`:SAMPle:INTeger`'s descriptor, the request's; and
+`os_report_exchange` an exchange from the kernel's list, the case'th,
+as `os_report_exchanges` passes each.  An SCPI handler,
 named for its path, is given what `scpi_call_handler` (`0x29642`)
 passes from the call record `scpi_interpret` builds: its parameters
 start with the word at `+0x22` of each node of its path that holds

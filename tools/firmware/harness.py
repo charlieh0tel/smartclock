@@ -6,8 +6,8 @@ A call starts in supervisor mode with interrupts masked, as the
 firmware runs, every register a distinct sentinel but A6, which holds a
 caller's frame, and its own stack at STACK, filled and never compared;
 RAM zeroed but the kernel's tables, its data area as kernel_init makes
-it, what the image's own INITIALIZERS make, the running task's record
-and the exchanges' ids; the EEPROM erased and the pointees filled, each
+it, with the exchanges root_task creates, what the image's own
+INITIALIZERS make, the running task's record and the exchanges' ids; the EEPROM erased and the pointees filled, each
 compared after it as RAM is; the devices' registers zeroed but the
 status bits the routines poll for; a routine of the harness's own for
 each parameter that points at one, whose calls are effects; and the
@@ -106,12 +106,16 @@ LINK = 0x4E50
 LINK_MASK = 0xFFF8
 LINK_INSTRUCTION = struct.Struct(">Hh")
 # A6 at a call's start: a caller's frame above the call's stack, its
-# saved frame pointer 0 and its return address RETURN.  The image's code
-# may walk its caller's frame (float_raise reads the return address
-# there); gcc's keeps no frame pointer, so its callees find the caller's
-# A6 instead, and must find a frame there too.
+# saved frame pointer 0, its return address RETURN and its first
+# argument a name, CALLER_NAME.  The image's code may walk its caller's
+# frame (float_raise reads the return address there, and psos_pack_name,
+# 0x16f50, the name its callers, the task and exchange creators, take
+# first); gcc's copy, called with the same A6, finds the same frame.
+# The name is root_task's
+# first exchange's, "gpsx", which it passes psos_create_x (ROOT_EXCHANGES).
 FRAME = STACK_TOP
-FRAME_CONTENTS = struct.pack(">II", 0, RETURN)
+CALLER_NAME = 0x131F7
+FRAME_CONTENTS = struct.pack(">III", 0, RETURN, CALLER_NAME)
 # Each register's value at a call's start.
 STARTING = {name: FRAME if name == "A6" else SENTINEL + i for i, name in enumerate(REGISTERS)}
 REBUILT_SIZE = 0x100000
@@ -334,6 +338,22 @@ KERNEL_TABLES = [(0x5122A, PSOS_CONFIG, 0x62), (0x5171A, 0x1025BC, 0x90)]
 # the empty queue of tasks waiting on a region at +0x64, pointing at
 # itself (kernel_region_init, 0x15ece), which os_report_regions walks.
 KERNEL_INIT = [(0x15CD8, 0x15E3A), (0x15E5C, 0x15E6A)]
+# And the exchanges root_task (0x1304a) creates, gpsx, plla and pllc,
+# as (name, flags, queue limit), psos_create_x's arguments
+# (docs/firmware/structures.md, "The tasks and exchanges"), each made by
+# the kernel's own code for service 20, kernel_create_x (0x1537e), run
+# to its rts, KERNEL_CREATE_END, as kernel_dispatch_service (0x14b26)
+# calls it: the data area in A6, the name packed as psos_pack_name packs
+# it, a character a byte, the first highest, and the flags and the
+# limit in D0, D1 and D2.  It takes each from the free list at the data
+# area's +0x18 and puts it at the head of the list at +0x14, linked
+# through its +0x1c, its queue of waiting tasks empty, pointing at
+# itself, which os_report_exchanges (0x1665e) walks.
+KERNEL_CREATE = 0x1537E
+KERNEL_CREATE_END = 0x153DE
+ROOT_EXCHANGES = [(b"gpsx", 0, 0), (b"plla", 0, 0), (b"pllc", 2, 8)]
+EXCHANGE_LIST = 0x14
+EXCHANGE_NEXT = 0x1C
 # The image's own set-up past the kernel's, which RAM starts each case
 # with too: routines root_task (0x1304a) calls before it creates the
 # tasks, each run once as a call is, its kernel calls answered by the
@@ -579,6 +599,10 @@ STATUS_MODEL_REGISTERS = 0x12
 # curve"), and status_screen_snapshot (0x10142c), which status_screen
 # and its lines are given to print.
 VARIABLES = {"aging_curve_state *": 0x101FD8, "status_snapshot_record *": 0x10142C}
+# And by its function and position, an exchange on the kernel's list,
+# the case'th of ROOT_EXCHANGES, as os_report_exchanges passes each to
+# os_report_exchange.
+EXCHANGE_PARAMETERS = {"os_report_exchange": 0}
 # And a numeric value's step, which validate_num (0x42c10) passes its
 # descriptor's validate from the pointer at the descriptor's +0x28, one
 # for each value: the first of :SAMPle:INTeger's, the descriptor of the
@@ -781,6 +805,11 @@ def rebuilt_machine(image: bytes, linked: list[Section], linked_symbols: dict[st
     m.uc.reg_write(UC_M68K_REG_SR, SUPERVISOR)
     for start, end in KERNEL_INIT:
         m.uc.emu_start(start, end, count=STEP_LIMIT)
+    for name, flags, limit in ROOT_EXCHANGES:
+        m.uc.reg_write(UC_M68K_REG_A6, data_area(m))
+        for register, value in zip(("D0", "D1", "D2"), (int.from_bytes(name, "big"), flags, limit)):
+            m.uc.reg_write(REGISTERS[register], value)
+        m.uc.emu_start(KERNEL_CREATE, KERNEL_CREATE_END, count=STEP_LIMIT)
     m.initialized_ram = m.read(RAM, RAM_SIZE)
     for routine in INITIALIZERS:
         fresh_ram(m)
@@ -875,7 +904,11 @@ def arguments(
     fill = pointer_fill(case) if case >= PLAIN_CASES else None
     values = []
     for i, (kind, name) in enumerate(zip(kinds, names or [None] * len(kinds))):
-        at = image_object(m, kind, name, case + POSITION_STRIDE * i)
+        at = (
+            exchange(m, case)
+            if EXCHANGE_PARAMETERS.get(function) == i
+            else image_object(m, kind, name, case + POSITION_STRIDE * i)
+        )
         values.append(
             argument(m, types, kind, case + POSITION_STRIDE * i, fill, i) if at is None else struct.pack(">I", at)
         )
@@ -1004,6 +1037,21 @@ def pointer_at(m: Machine, address: int) -> int:
     return struct.unpack(">I", m.read(address, POINTER_SIZE))[0]
 
 
+def data_area(m: Machine) -> int:
+    """The kernel's data area, the configuration's first long."""
+    return pointer_at(m, PSOS_CONFIG)
+
+
+def exchange(m: Machine, case: int) -> int:
+    """The case'th of the exchanges on the kernel's list, from its head."""
+    exchanges = []
+    at = pointer_at(m, data_area(m) + EXCHANGE_LIST)
+    while at:
+        exchanges.append(at)
+        at = pointer_at(m, at + EXCHANGE_NEXT)
+    return exchanges[case % len(exchanges)]
+
+
 def gcc_slots(values: list[bytes]) -> bytes:
     """Arguments as gcc pushes them: a char or short promoted to a whole
     int in a 4-byte slot."""
@@ -1034,8 +1082,7 @@ def reset(m: RebuiltMachine, ram: bytes) -> None:
     m.uc.mem_write(RAM, ram)
     m.next_allocation = m.first_allocation
     m.tasks = {RUNNING_TASK: allocate(m, TASK_RECORD_SIZE)}
-    data_area = struct.unpack(">I", m.read(PSOS_CONFIG, POINTER_SIZE))[0]
-    m.uc.mem_write(data_area, struct.pack(">I", m.tasks[RUNNING_TASK]))
+    m.uc.mem_write(data_area(m), struct.pack(">I", m.tasks[RUNNING_TASK]))
     m.uc.mem_write(EEPROM, ERASED)
     for start in POINTEES:
         m.uc.mem_write(start, m.pointees)

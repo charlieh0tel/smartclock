@@ -804,7 +804,7 @@
 {"address":"0002671c","name":"scpi_format_short_array","note":"comma-separated, by scpi_format_short","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00026768","name":"scpi_format_resolution_array","note":"comma-separated, by scpi_format_double_resolution, a resolution for each","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000267c0","name":"scpi_format_array","note":"by its kind, a block, a double array or a short array","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"00026816","name":"scpi_format_resolution_array_record","note":"by its kind, a block or a resolution array, then the record's release callback","convention":"unknown","stack":[{"offset":8,"size":4}]}
+{"address":"00026816","name":"scpi_format_resolution_array_record","note":"by its kind, a block or a resolution array, then the record's release callback","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00026870","name":"scpi_format_double","note":"15 significant digits by scpi_real_to_text","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000268c4","name":"scpi_format_float","note":"6 significant digits by scpi_real_to_text","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0002692c","name":"scpi_format_double_precision","note":"a double whose record gives either its digits or its resolution","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}

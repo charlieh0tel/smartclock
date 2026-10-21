@@ -683,12 +683,12 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/bridge_check.py` (Unicorn, run with uv) calls each
      wrapper as gcc would and its routine from its registers, from the
      same RAM, and requires the same result, RAM and effects and gcc's
-     callee-saved registers kept; 82 of 91 agree, none disagree.
+     callee-saved registers kept; 83 of 91 agree, none disagree.
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1251 run, 1238 agree, 2 reach what the
-     harness does not model and are skipped, and 11 differ, in the
+     original reads them: of 1251 run, 1239 agree, 1 reaches what the
+     harness does not model and is skipped, and 11 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): traps #1 and #7 run the image's handlers;
@@ -990,6 +990,48 @@ view cannot drift apart.  The library, bottom up:
      at `console_task_create`'s service 1: the high word of D1, which its
      `clr.w` leaves as its caller had it, and A0, the parameter block on
      its own stack, neither of which C can give.
+     Then the kernel's list of exchanges, which RAM now starts with as
+     `root_task`'s three creates leave it, `gpsx`, `plla` and `pllc`,
+     each made by the kernel's own `kernel_create_x` (`0x1537e`) run on
+     the data area, and `os_report_exchange` given one of them, as
+     `os_report_exchanges` passes each (1238 agreeing to 1239, 2
+     skipped to 1).  The caller's frame a call starts with holds a
+     first argument, `"gpsx"`'s address, which `psos_pack_name` reads
+     through A6 as its callers' name: its bridge agrees (82 to 83).
+     `kernel_dispatch_io`'s bridge is not run: trap #4 enters it with
+     an exception frame, which its `rte` returns through, and a
+     wrapper's `jsr` leaves only a return address, so no wrapper of
+     this kind can call it, and nothing in the C does.  The exporter
+     should give an exception entry no bridge, or one that enters by
+     its trap.  Left skipped: `scpi_format_resolution_array_record`
+     (`0x26816`), which nothing in the image calls.  It reads its
+     output at `+4` and its record at `+8` (`move.l (8,fp)` pushed to
+     `scpi_format_block`, `movea.l (12,fp),a2`), where the C has only the
+     record and reads the output from it: the names file now gives
+     the prototype `(void *output, char *record)`.  It ends by calling the routine at the record's `+6`,
+     which no caller shows and the harness's buffer does not hold.
+     Not yet run: the installer's copies, 79 C functions whose
+     prototypes lay out and 5 bridges (`installer::` in the sidecar).
+     They run where the boot code unpacks them, in RAM from `0x100400`
+     to `0x10aad2` (`docs/firmware/restart.md`, "Forced installer entry
+     with an unusable primary"), the RAM the harness starts as the
+     primary's, and its state is the primary's throughout: the vector
+     table at `0x10000` (the installer's is copied to `0x100000`),
+     `psos_config` and its data area (the installer's at `0x10ab84`,
+     from `0x10b0c8`; `docs/firmware/structures.md`), the `kernel_init`
+     and `status_init` runs, the exchange cells, `vsprintf`, the
+     console port and status object, and the arguments' buffers at
+     `0x108000`, inside the installer's code.  Not a contained change:
+     every module-level constant of `harness.py` that names the primary
+     becomes a field of a profile, one for each overlay; the
+     installer's has RAM the unpacked image, runs
+     `installer_psos_config_init` (`0x1083b6`), `installer_kernel_init`
+     (`0x1026de`) and its status set-up (`0x107a00`) as the primary's
+     are run, takes traps #1 and #7 through its own vectors, puts the
+     buffers and segments in compared memory of the harness's own
+     outside RAM, as the pointees are, and write-protects its code in
+     RAM as the ROM is; then `function_check.py` and `bridge_check.py`
+     run each copy on its overlay's machine.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

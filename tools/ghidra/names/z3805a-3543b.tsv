@@ -1064,7 +1064,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x266d0	function	scpi_format_double_array	docs/scpi/README.md, read	comma-separated, by scpi_format_double
 0x26768	function	scpi_format_resolution_array	docs/scpi/README.md, read	comma-separated, by scpi_format_double_resolution, a resolution for each
 0x267c0	function	scpi_format_array	docs/scpi/README.md, read	by its kind, a block, a double array or a short array
-0x26816	function	scpi_format_resolution_array_record	docs/scpi/README.md, read	by its kind, a block or a resolution array, then the record's release callback
+0x26816	function	scpi_format_resolution_array_record	docs/scpi/README.md, read	by its kind, a block or a resolution array, then the record's release callback	int scpi_format_resolution_array_record(void *output, char *record)
 #
 # the SCPI settings' descriptor callbacks, and the helpers they use
 0x3232c	function	mask_to_limits	scpi_param_STATus_ENABle, PTRansition, NTRansition: validate	a register's new value ANDed with its maximum, the mask of the bits it has

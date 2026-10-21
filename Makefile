@@ -17,7 +17,7 @@ CARGO ?= cargo
 # identical version as a no-op: the binaries change or they do not, and
 # nothing from the outside says which.
 
-.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types check-decompiled report-decompiled clean deb release release-notes install-service
+.PHONY: all build windows hooks ci fmt fmt-check clippy test test-hw web-deps test-web screenshots doc docs check-pages check-types format-c check-format-c check-decompiled report-decompiled clean deb release release-notes install-service
 
 all: build
 
@@ -46,6 +46,16 @@ fmt-check:
 
 clippy:
 	$(CARGO) clippy --workspace --all-targets --all-features -- -D warnings
+
+# The project's own C, the Ghidra type headers and the hand-written
+# firmware, in .clang-format's style; needs clang-format, not part of ci.
+CLANG_FORMAT ?= clang-format
+C_SOURCES = $(shell git ls-files 'tools/ghidra/types/*.[ch]' 'third_party/firmware/rewritten/*.[ch]')
+format-c:
+	$(CLANG_FORMAT) -i $(C_SOURCES)
+
+check-format-c:
+	$(CLANG_FORMAT) --dry-run -Werror $(C_SOURCES)
 
 # Everything that runs without a receiver.
 test:

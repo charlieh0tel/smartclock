@@ -11,6 +11,8 @@
  * #defines into the C (defines=) and names a signal a call to
  * signal_v, wait_v or get_v passes only in those functions. */
 
+/* The exporter reads each signal from one line. */
+/* clang-format off */
 #define SIG_SIQ_SCI 0x0040  /* "wait_v SIG_SIQ_SCI error in getc"; in: sci_getc */
 #define SIG_SOQ_SCI 0x0200  /* "wait_v SIG_SOQ_SCI error in _sci_puts"; in: sci_puts */
 #define SIG_QSPI    0x0400  /* "wait_v SIG_QSPI"; in: qspi_acquire qspi_release qspi_isr */
@@ -18,3 +20,4 @@
 #define SIG_SOQA    0x0800  /* "wait_v SIG_SOQA error in drta_send_message"; in: drta_send_message duarta_tx_interrupt */
 #define SIG_SOQ     0x1000  /* "wait_v SIG_SOQ error in _drtb_puts"; in: drtb_puts duartb_transmit_interrupt installer_duartb_transmit_interrupt */
 #define SIG_SIQ     0x4000  /* "wait_v SIG_SIQ error in getc"; in: drtb_getc installer_drtb_getc drta_get_byte duarta_isr duartb_isr installer_duartb_isr */
+/* clang-format on */

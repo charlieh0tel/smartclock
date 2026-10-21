@@ -13,7 +13,7 @@
 
 #define CHECK_SIZE(type, size) _Static_assert(sizeof(type) == (size), #type)
 #define CHECK_FIELD(type, field, offset) \
-	_Static_assert(offsetof(type, field) == (offset), #type "." #field)
+  _Static_assert(offsetof(type, field) == (offset), #type "." #field)
 
 CHECK_SIZE(scpi_numeric_param, 0x2c);
 CHECK_FIELD(scpi_numeric_param, minimum, 0x06);
@@ -298,7 +298,8 @@ CHECK_FIELD(oncore_extension_fields, correction_age, 0x100fc0 - 0x100fae);
 CHECK_FIELD(oncore_extension_fields, ecef_x, 0x100fc2 - 0x100fae);
 CHECK_FIELD(oncore_extension_fields, ecef_z, 0x100fca - 0x100fae);
 CHECK_FIELD(oncore_extension_fields, ura, 0x100fce - 0x100fae);
-CHECK_FIELD(oncore_extension_fields, least_squares_inverse, 0x100fd4 - 0x100fae);
+CHECK_FIELD(oncore_extension_fields, least_squares_inverse,
+            0x100fd4 - 0x100fae);
 CHECK_FIELD(oncore_extension_fields, clock_bias, 0x100fe8 - 0x100fae);
 CHECK_FIELD(oncore_extension_fields, oscillator_offset, 0x100fea - 0x100fae);
 
@@ -363,7 +364,8 @@ CHECK_FIELD(gps_state, xdop_table.combinations, 0x100dfa - 0x100c6a);
 CHECK_FIELD(gps_state, almanac, 0x100e44 - 0x100c6a);
 CHECK_FIELD(gps_state, corrections, 0x100f12 - 0x100c6a);
 CHECK_FIELD(gps_state, corrections.channels, 0x100f16 - 0x100c6a);
-CHECK_FIELD(gps_state, corrections.channels[0].range_correction, 0x100f18 - 0x100c6a);
+CHECK_FIELD(gps_state, corrections.channels[0].range_correction,
+            0x100f18 - 0x100c6a);
 CHECK_FIELD(gps_state, raim, 0x100f65 - 0x100c6a);
 CHECK_FIELD(gps_state, raim.sawtooth, 0x100f7e - 0x100c6a);
 CHECK_FIELD(gps_state, leap_second_pending, 0x100fa4 - 0x100c6a);
@@ -457,7 +459,8 @@ CHECK_FIELD(exception_record, address, 0x1009ac - 0x10099e);
 CHECK_SIZE(klok_entry, (0x1037ac - 0x10372a) / 5);
 CHECK_FIELD(klok_entry, function, 5 * 4);
 CHECK_FIELD(klok_entry, event_class, 6 * 4);
-/* log_read: entry n's fields at 0x101d98, 0x101d9c, 0x101da0, ... + n * 0x14. */
+/* log_read: entry n's fields at 0x101d98, 0x101d9c, 0x101da0, ... + n * 0x14.
+ */
 CHECK_SIZE(log_page, 0x101dd4 - 0x101d94);
 CHECK_SIZE(log_entry, 0x14);
 CHECK_FIELD(log_page, entries, 0x101d98 - 0x101d94);
@@ -537,8 +540,10 @@ CHECK_FIELD(nv_settings_fields, leap_pending, 0x101ece - 0x101e8a);
 CHECK_FIELD(nv_settings_fields, raim_state, 0x101ecf - 0x101e8a);
 CHECK_FIELD(nv_settings_fields, raim_threshold, 0x101ed2 - 0x101e8a);
 CHECK_FIELD(nv_settings_fields, status_enable, 0x101ede - 0x101e8a);
-CHECK_FIELD(nv_settings_fields, status_positive_transition, 0x101efa - 0x101e8a);
-CHECK_FIELD(nv_settings_fields, status_negative_transition, 0x101f0e - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, status_positive_transition,
+            0x101efa - 0x101e8a);
+CHECK_FIELD(nv_settings_fields, status_negative_transition,
+            0x101f0e - 0x101e8a);
 CHECK_FIELD(nv_settings_fields, questionable_user, 0x101f22 - 0x101e8a);
 CHECK_FIELD(nv_settings_fields, pulse_period, 0x101f26 - 0x101e8a);
 CHECK_FIELD(nv_settings_fields, pulse_start_date, 0x101f36 - 0x101e8a);
@@ -572,7 +577,7 @@ CHECK_FIELD(preserved_region_fields, restore, 0x100002 - 0x100000);
 CHECK_FIELD(preserved_region_fields, gps, 0x100004 - 0x100000);
 CHECK_FIELD(preserved_region_fields, pll, 0x10055e - 0x100000);
 CHECK_FIELD(preserved_region_fields, values, 0x100934 - 0x100000);
-CHECK_SIZE(((preserved_region_fields *)0)->values, 0x101e89 - 0x101e70);
+CHECK_SIZE(((preserved_region_fields*)0)->values, 0x101e89 - 0x101e70);
 
 /* The clock record at 0x1009b8: the routines' offsets, and the
  * addresses get_date_time, get_gps_time and clock_init use. */

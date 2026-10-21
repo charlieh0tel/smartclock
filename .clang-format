@@ -1,0 +1,9 @@
+# The C written in this project: the Ghidra type headers and the
+# hand-written firmware C.  Includes keep their order: the hand-written
+# files are included into the exported C in sequence.
+BasedOnStyle: Google
+SortIncludes: Never
+# Braces on every control statement's body, which is never on its line.
+InsertBraces: true
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false

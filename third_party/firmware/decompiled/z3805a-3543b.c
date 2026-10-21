@@ -2324,183 +2324,183 @@ _Static_assert(sizeof(three_point_fit) == 16, "three_point_fit");
 _Static_assert(sizeof(time_of_day) == 4, "time_of_day");
 
 /* the #defines of mc68331.h */
-#define QSMCR_STOP     0x8000
-#define QSMCR_FRZ1     0x4000
-#define QSMCR_FRZ0     0x2000
-#define QSMCR_SUPV     0x0080
+#define QSMCR_STOP 0x8000
+#define QSMCR_FRZ1 0x4000
+#define QSMCR_FRZ0 0x2000
+#define QSMCR_SUPV 0x0080
 #define QSMCR_IARB_MASK 0x000f
-#define SCCR1_LOOPS    0x4000
-#define SCCR1_WOMS     0x2000
-#define SCCR1_ILT      0x1000
-#define SCCR1_PT       0x0800  /* odd parity, else even */
-#define SCCR1_PE       0x0400  /* parity enabled */
-#define SCCR1_M        0x0200  /* an 11-bit frame, else 10 */
-#define SCCR1_WAKE     0x0100
-#define SCCR1_TIE      0x0080  /* the transmit-data-register-empty interrupt */
-#define SCCR1_TCIE     0x0040
-#define SCCR1_RIE      0x0020  /* the receive and overrun interrupt */
-#define SCCR1_ILIE     0x0010
-#define SCCR1_TE       0x0008
-#define SCCR1_RE       0x0004
-#define SCCR1_RWU      0x0002
-#define SCCR1_SBK      0x0001
-#define SCSR_TDRE      0x0100
-#define SCSR_TC        0x0080
-#define SCSR_RDRF      0x0040
-#define SCSR_RAF       0x0020
-#define SCSR_IDLE      0x0010
-#define SCSR_OR        0x0008  /* overrun */
-#define SCSR_NF        0x0004  /* noise */
-#define SCSR_FE        0x0002  /* framing error or break */
-#define SCSR_PF        0x0001  /* parity error */
-#define SPCR0_MSTR     0x8000
-#define SPCR0_WOMQ     0x4000
+#define SCCR1_LOOPS 0x4000
+#define SCCR1_WOMS 0x2000
+#define SCCR1_ILT 0x1000
+#define SCCR1_PT 0x0800 /* odd parity, else even */
+#define SCCR1_PE 0x0400 /* parity enabled */
+#define SCCR1_M 0x0200  /* an 11-bit frame, else 10 */
+#define SCCR1_WAKE 0x0100
+#define SCCR1_TIE 0x0080 /* the transmit-data-register-empty interrupt */
+#define SCCR1_TCIE 0x0040
+#define SCCR1_RIE 0x0020 /* the receive and overrun interrupt */
+#define SCCR1_ILIE 0x0010
+#define SCCR1_TE 0x0008
+#define SCCR1_RE 0x0004
+#define SCCR1_RWU 0x0002
+#define SCCR1_SBK 0x0001
+#define SCSR_TDRE 0x0100
+#define SCSR_TC 0x0080
+#define SCSR_RDRF 0x0040
+#define SCSR_RAF 0x0020
+#define SCSR_IDLE 0x0010
+#define SCSR_OR 0x0008 /* overrun */
+#define SCSR_NF 0x0004 /* noise */
+#define SCSR_FE 0x0002 /* framing error or break */
+#define SCSR_PF 0x0001 /* parity error */
+#define SPCR0_MSTR 0x8000
+#define SPCR0_WOMQ 0x4000
 #define SPCR0_BITS_MASK 0x3c00
 #define SPCR0_BITS_SHIFT 10
-#define SPCR0_CPOL     0x0200
-#define SPCR0_CPHA     0x0100
+#define SPCR0_CPOL 0x0200
+#define SPCR0_CPHA 0x0100
 #define SPCR0_SPBR_MASK 0x00ff
-#define SPCR1_SPE      0x8000  /* the QSPI runs its queue */
+#define SPCR1_SPE 0x8000 /* the QSPI runs its queue */
 #define SPCR1_DSCKL_MASK 0x7f00
 #define SPCR1_DSCKL_SHIFT 8
 #define SPCR1_DTL_MASK 0x00ff
-#define SPCR2_SPIFIE   0x8000  /* the end-of-queue interrupt */
-#define SPCR2_WREN     0x4000
-#define SPCR2_WRTO     0x2000
+#define SPCR2_SPIFIE 0x8000 /* the end-of-queue interrupt */
+#define SPCR2_WREN 0x4000
+#define SPCR2_WRTO 0x2000
 #define SPCR2_ENDQP_MASK 0x0f00
 #define SPCR2_ENDQP_SHIFT 8
 #define SPCR2_NEWQP_MASK 0x000f
-#define SPCR3_LOOPQ    0x04
-#define SPCR3_HMIE     0x02
-#define SPCR3_HALT     0x01
-#define SPSR_SPIF      0x80  /* the queue is done */
-#define SPSR_MODF      0x40
-#define SPSR_HALTA     0x20
+#define SPCR3_LOOPQ 0x04
+#define SPCR3_HMIE 0x02
+#define SPCR3_HALT 0x01
+#define SPSR_SPIF 0x80 /* the queue is done */
+#define SPSR_MODF 0x40
+#define SPSR_HALTA 0x20
 #define SPSR_CPTQP_MASK 0x0f
-#define QSPI_CR_CONT   0x80
-#define QSPI_CR_BITSE  0x40
-#define QSPI_CR_DT     0x20
-#define QSPI_CR_DSCK   0x10
+#define QSPI_CR_CONT 0x80
+#define QSPI_CR_BITSE 0x40
+#define QSPI_CR_DT 0x20
+#define QSPI_CR_DSCK 0x10
 #define QSPI_CR_PCS_MASK 0x0f
-#define SIMCR_EXOFF    0x8000
-#define SIMCR_FRZSW    0x4000
-#define SIMCR_FRZBM    0x2000
-#define SIMCR_SLVEN    0x0800
+#define SIMCR_EXOFF 0x8000
+#define SIMCR_FRZSW 0x4000
+#define SIMCR_FRZBM 0x2000
+#define SIMCR_SLVEN 0x0800
 #define SIMCR_SHEN_MASK 0x0300
-#define SIMCR_SUPV     0x0080
-#define SIMCR_MM       0x0040  /* the modules at 0xfff000, else 0x7ff000 */
+#define SIMCR_SUPV 0x0080
+#define SIMCR_MM 0x0040 /* the modules at 0xfff000, else 0x7ff000 */
 #define SIMCR_IARB_MASK 0x000f
-#define SYPCR_SWE      0x80  /* the software watchdog enabled */
-#define SYPCR_SWP      0x40
+#define SYPCR_SWE 0x80 /* the software watchdog enabled */
+#define SYPCR_SWP 0x40
 #define SYPCR_SWT_MASK 0x30
-#define SYPCR_HME      0x08
-#define SYPCR_BME      0x04
+#define SYPCR_HME 0x08
+#define SYPCR_BME 0x04
 #define SYPCR_BMT_MASK 0x03
 #define PICR_PIRQL_MASK 0x0700
 #define PICR_PIRQL_SHIFT 8
-#define PICR_PIV_MASK  0x00ff
-#define PITR_PTP       0x0100
+#define PICR_PIV_MASK 0x00ff
+#define PITR_PTP 0x0100
 #define PITR_PITM_MASK 0x00ff
-#define TMSK_I4O5I     0x8000
-#define TMSK_OCI4      0x4000
-#define TMSK_OCI3      0x2000
-#define TMSK_OCI2      0x1000
-#define TMSK_OCI1      0x0800
-#define TMSK_ICI3      0x0400
-#define TMSK_ICI2      0x0200
-#define TMSK_ICI1      0x0100
-#define TMSK_TOI       0x0080
-#define TMSK_PAOVI     0x0020
-#define TMSK_PAII      0x0010
-#define TMSK_CPROUT    0x0008
-#define TMSK_CPR_MASK  0x0007
-#define TFLG_I4O5F     0x8000
-#define TFLG_OCF4      0x4000
-#define TFLG_OCF3      0x2000
-#define TFLG_OCF2      0x1000
-#define TFLG_OCF1      0x0800
-#define TFLG_ICF3      0x0400
-#define TFLG_ICF2      0x0200
-#define TFLG_ICF1      0x0100
-#define TFLG_TOF       0x0080
-#define TFLG_PAOVF     0x0020
-#define TFLG_PAIF      0x0010
+#define TMSK_I4O5I 0x8000
+#define TMSK_OCI4 0x4000
+#define TMSK_OCI3 0x2000
+#define TMSK_OCI2 0x1000
+#define TMSK_OCI1 0x0800
+#define TMSK_ICI3 0x0400
+#define TMSK_ICI2 0x0200
+#define TMSK_ICI1 0x0100
+#define TMSK_TOI 0x0080
+#define TMSK_PAOVI 0x0020
+#define TMSK_PAII 0x0010
+#define TMSK_CPROUT 0x0008
+#define TMSK_CPR_MASK 0x0007
+#define TFLG_I4O5F 0x8000
+#define TFLG_OCF4 0x4000
+#define TFLG_OCF3 0x2000
+#define TFLG_OCF2 0x1000
+#define TFLG_OCF1 0x0800
+#define TFLG_ICF3 0x0400
+#define TFLG_ICF2 0x0200
+#define TFLG_ICF1 0x0100
+#define TFLG_TOF 0x0080
+#define TFLG_PAOVF 0x0020
+#define TFLG_PAIF 0x0010
 #define CFORC_FOC_MASK 0xf8
-#define CFORC_FPWMA    0x02  /* PWMA forced to F1A's level */
-#define CFORC_FPWMB    0x01
-#define PWMC_PPROUT    0x80
-#define PWMC_PPR_MASK  0x70
-#define PWMC_SFA       0x08
-#define PWMC_SFB       0x04
-#define PWMC_F1A       0x02
-#define PWMC_F1B       0x01
+#define CFORC_FPWMA 0x02 /* PWMA forced to F1A's level */
+#define CFORC_FPWMB 0x01
+#define PWMC_PPROUT 0x80
+#define PWMC_PPR_MASK 0x70
+#define PWMC_SFA 0x08
+#define PWMC_SFB 0x04
+#define PWMC_F1A 0x02
+#define PWMC_F1B 0x01
 
 /* the #defines of mc68681.h */
-#define MR1_RXRTS       0x80  /* the receiver negates RTS when the FIFO is full */
-#define MR1_RXIRQ_FFULL 0x40  /* the receive interrupt on FIFO full, else on RxRDY */
-#define MR1_ERROR_BLOCK 0x20  /* the error bits accumulate, else per character */
+#define MR1_RXRTS 0x80 /* the receiver negates RTS when the FIFO is full */
+#define MR1_RXIRQ_FFULL 0x40
+#define MR1_ERROR_BLOCK 0x20
 #define MR1_PARITY_MASK 0x18
 #define MR1_PARITY_WITH 0x00
 #define MR1_PARITY_FORCE 0x08
 #define MR1_PARITY_NONE 0x10
-#define MR1_MULTIDROP   0x18
-#define MR1_PARITY_ODD  0x04  /* with parity, odd; forced, high */
-#define MR1_BITS_MASK   0x03  /* 5 to 8 bits, 0 to 3 */
-#define MR2_MODE_MASK   0xc0
+#define MR1_MULTIDROP 0x18
+#define MR1_PARITY_ODD 0x04 /* with parity, odd; forced, high */
+#define MR1_BITS_MASK 0x03  /* 5 to 8 bits, 0 to 3 */
+#define MR2_MODE_MASK 0xc0
 #define MR2_MODE_NORMAL 0x00
-#define MR2_MODE_ECHO   0x40
+#define MR2_MODE_ECHO 0x40
 #define MR2_MODE_LOCAL_LOOPBACK 0x80
 #define MR2_MODE_REMOTE_LOOPBACK 0xc0
-#define MR2_TXRTS       0x20
-#define MR2_CTS         0x10  /* the transmitter waits for CTS */
-#define MR2_STOP_MASK   0x0f  /* 7 is one stop bit, 0xf two */
+#define MR2_TXRTS 0x20
+#define MR2_CTS 0x10       /* the transmitter waits for CTS */
+#define MR2_STOP_MASK 0x0f /* 7 is one stop bit, 0xf two */
 #define CR_RESET_MR_POINTER 0x10
 #define CR_RESET_RECEIVER 0x20
 #define CR_RESET_TRANSMITTER 0x30
-#define CR_RESET_ERROR  0x40
+#define CR_RESET_ERROR 0x40
 #define CR_RESET_BREAK_CHANGE 0x50
-#define CR_START_BREAK  0x60
-#define CR_STOP_BREAK   0x70
-#define CR_TX_ENABLE    0x04
-#define CR_TX_DISABLE   0x08
-#define CR_RX_ENABLE    0x01
-#define CR_RX_DISABLE   0x02
+#define CR_START_BREAK 0x60
+#define CR_STOP_BREAK 0x70
+#define CR_TX_ENABLE 0x04
+#define CR_TX_DISABLE 0x08
+#define CR_RX_ENABLE 0x01
+#define CR_RX_DISABLE 0x02
 #define SR_RECEIVED_BREAK 0x80
 #define SR_FRAMING_ERROR 0x40
 #define SR_PARITY_ERROR 0x20
-#define SR_OVERRUN      0x10
-#define SR_TXEMT        0x08
-#define SR_TXRDY        0x04
-#define SR_FFULL        0x02
-#define SR_RXRDY        0x01
-#define ACR_BRG_SET_2   0x80  /* baud-rate set 2, else set 1 */
+#define SR_OVERRUN 0x10
+#define SR_TXEMT 0x08
+#define SR_TXRDY 0x04
+#define SR_FFULL 0x02
+#define SR_RXRDY 0x01
+#define ACR_BRG_SET_2 0x80 /* baud-rate set 2, else set 1 */
 #define ACR_COUNTER_MASK 0x70
-#define ACR_IP3_IRQ     0x08
-#define ACR_IP2_IRQ     0x04
-#define ACR_IP1_IRQ     0x02
-#define ACR_IP0_IRQ     0x01
+#define ACR_IP3_IRQ 0x08
+#define ACR_IP2_IRQ 0x04
+#define ACR_IP1_IRQ 0x02
+#define ACR_IP0_IRQ 0x01
 #define ISR_INPUT_CHANGE 0x80
-#define ISR_BREAK_B     0x40
-#define ISR_RXRDYB      0x20
-#define ISR_TXRDYB      0x10
-#define ISR_COUNTER     0x08
-#define ISR_BREAK_A     0x04
-#define ISR_RXRDYA      0x02
-#define ISR_TXRDYA      0x01
+#define ISR_BREAK_B 0x40
+#define ISR_RXRDYB 0x20
+#define ISR_TXRDYB 0x10
+#define ISR_COUNTER 0x08
+#define ISR_BREAK_A 0x04
+#define ISR_RXRDYA 0x02
+#define ISR_TXRDYA 0x01
 #define IMR_INPUT_CHANGE 0x80
-#define IMR_BREAK_B     0x40
-#define IMR_RXRDYB      0x20
-#define IMR_TXRDYB      0x10
-#define IMR_COUNTER     0x08
-#define IMR_BREAK_A     0x04
-#define IMR_RXRDYA      0x02
-#define IMR_TXRDYA      0x01
+#define IMR_BREAK_B 0x40
+#define IMR_RXRDYB 0x20
+#define IMR_TXRDYB 0x10
+#define IMR_COUNTER 0x08
+#define IMR_BREAK_A 0x04
+#define IMR_RXRDYA 0x02
+#define IMR_TXRDYA 0x01
 #define OPCR_OP7_TXRDYB 0x80
 #define OPCR_OP6_TXRDYA 0x40
 #define OPCR_OP5_RXRDYB 0x20
 #define OPCR_OP4_RXRDYA 0x10
-#define OPCR_OP3_MASK   0x0c
-#define OPCR_OP2_MASK   0x03
+#define OPCR_OP3_MASK 0x0c
+#define OPCR_OP2_MASK 0x03
 
 /* the #defines of psos-signals.h */
 #define SIG_SIQ_SCI 0x0040  /* "wait_v SIG_SIQ_SCI error in getc"; in: sci_getc */

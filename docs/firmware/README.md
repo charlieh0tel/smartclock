@@ -812,6 +812,12 @@ only where C wants a constant expression, a `case` label, an array's
 size or a static initializer, which a `const` object is not before
 C23.
 
+The hand-written C and the Ghidra type headers are in Google's style
+(`.clang-format`), with braces on every control statement's body:
+`make format-c` formats them and `make check-format-c` fails on one
+that is not.  A signal's `#define` in `psos-signals.h` stays on one
+line, which is how the exporter reads it.
+
 `tools/firmware/rebuild_link.py` links it into a rebuilt image: each
 piece of assembly at its own address, where it must be, and is, the
 image's bytes, and gcc's code -- the C, the bridges, its constants -- at

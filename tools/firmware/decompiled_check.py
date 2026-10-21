@@ -45,14 +45,22 @@ def run(*command):
     return subprocess.run(command, capture_output=True, text=True).stdout
 
 
-def installer_image(image):
-    """The installer's RAM, from RAM up, as the boot code unpacks it."""
-    ram = bytearray(0x10000)
+def installer_records(image):
+    """The boot code's records, each one's RAM destination and bytes."""
+    records = []
     at = RECORDS
     while image[at:at + 1] == b'C':
         count, destination = struct.unpack('>II', image[at + 1:at + 9])
-        ram[destination - RAM:destination - RAM + count] = image[at + 9:at + 9 + count]
+        records.append((destination, image[at + 9:at + 9 + count]))
         at += 9 + count
+    return records
+
+
+def installer_image(image):
+    """The installer's RAM, from RAM up, as the boot code unpacks it."""
+    ram = bytearray(0x10000)
+    for destination, data in installer_records(image):
+        ram[destination - RAM:destination - RAM + len(data)] = data
     return bytes(ram)
 
 

@@ -1010,28 +1010,58 @@ view cannot drift apart.  The library, bottom up:
      record and reads the output from it: the names file now gives
      the prototype `(void *output, char *record)`.  It ends by calling the routine at the record's `+6`,
      which no caller shows and the harness's buffer does not hold.
-     Not yet run: the installer's copies, 79 C functions whose
-     prototypes lay out and 5 bridges (`installer::` in the sidecar).
-     They run where the boot code unpacks them, in RAM from `0x100400`
-     to `0x10aad2` (`docs/firmware/restart.md`, "Forced installer entry
-     with an unusable primary"), the RAM the harness starts as the
-     primary's, and its state is the primary's throughout: the vector
-     table at `0x10000` (the installer's is copied to `0x100000`),
-     `psos_config` and its data area (the installer's at `0x10ab84`,
-     from `0x10b0c8`; `docs/firmware/structures.md`), the `kernel_init`
-     and `status_init` runs, the exchange cells, `vsprintf`, the
-     console port and status object, and the arguments' buffers at
-     `0x108000`, inside the installer's code.  Not a contained change:
-     every module-level constant of `harness.py` that names the primary
-     becomes a field of a profile, one for each overlay; the
-     installer's has RAM the unpacked image, runs
-     `installer_psos_config_init` (`0x1083b6`), `installer_kernel_init`
-     (`0x1026de`) and its status set-up (`0x107a00`) as the primary's
-     are run, takes traps #1 and #7 through its own vectors, puts the
-     buffers and segments in compared memory of the harness's own
-     outside RAM, as the pointees are, and write-protects its code in
-     RAM as the ROM is; then `function_check.py` and `bridge_check.py`
-     run each copy on its overlay's machine.
+     Then the installer's copies, 79 C functions whose prototypes lay
+     out and 5 bridges (`installer::` in the sidecar), which run where
+     the boot code unpacks them, in RAM from `0x100400` to `0x10aad2`
+     (`docs/firmware/restart.md`, "Forced installer entry with an
+     unusable primary"), the RAM the harness had started as the
+     primary's.  Each module-level constant of `harness.py` that names
+     the primary's state is now a field of a profile, one for each
+     image (`harness.Profile`): the installer's has RAM the unpacked
+     image, with ROM's first `0x400` bytes, the boot vector table, at
+     `0x100000`, as the entry at `0xa58` copies them, so that traps #1
+     and #7 take its own handlers; its configuration and I/O table as
+     `installer_psos_config_init` (`0x1083b6`) copies them, its data
+     area from `installer_kernel_init` (`0x1026de`), `kernel_init`'s
+     bytes, and its status object from `0x107a00`, as its root task
+     (`0x100d40`) calls it; its spool's exchange (`0x10afbe`) and the
+     message the root task sends it, its caller's name (`"spoo"`), its
+     one string device and its own `vsprintf`; the arguments' buffers at
+     `0x900000`, outside RAM, compared as RAM is; and the unpacked image
+     read-only and a place literals lie, as ROM is (docs/firmware/README.md).
+     The primary's results are unchanged (1239 agreeing, 1 skipped, 11
+     differing; bridges 83).  The installer's: 43 agree, 5 are skipped
+     and 31 differ; 4 bridges agree, and `installer_kernel_dispatch_io`'s,
+     an exception entry, is not run (91 bridges: 87 agreeing, 4 not run).
+     What differs is the installer's rows, not the harness: their
+     primary twins have conventions the installer's copies lack, so
+     that the exporter wrote them as C, and gcc's copies of their
+     callers call that C.  `installer_psos_call` (`psos_call`,
+     `register`, the service in D7) runs every binding's trap with no
+     service (`installer_psos_my_pid` to `_service_29`, `_mutex_acquire`
+     and `_release`, `_periodic_interrupt`, `_drtb_getc`, `_gets` and
+     `_putc`); `installer_enter_supervisor` (`other`, a `jmp (a0)`
+     through its popped return address) jumps nowhere, which every
+     polled print reaches (`installer_set_interrupt_mask`,
+     `_enter_supervisor_mode`, `_console_write_polled`, `_fatal_error`,
+     `_print_exception`, `_float_raise`, `_float_exception_report`,
+     `_program_exit`, `_program_end_report`); `installer_psos_pack_name`
+     (`other`, its caller's A6) reads no frame; `installer_trap_1`,
+     `_trap_7`, `_default_exception` and `installer_return`, an `rte`,
+     are exception entries (`exception`) run as functions.  And two
+     prototypes are not their twins': `installer_identification_record_read`
+     returns a short where `identification_record_read` returns a
+     byte, and `installer_duarta_receive` a `uint` it never sets.  The 5
+     skipped are the status system's (`installer_status_propagate`,
+     `_set_bit`, `_apply_condition`, `_read_event`,
+     `installer_error_queue_push`), whose prototypes take `int` where
+     their twins take a `status_model *` and `status_register *`, which
+     the harness gives by type, and `installer_status_set_bit` two
+     parameters where `status_set_bit` has three: their models are
+     garbage.  The fix is the Ghidra project's, giving each installer
+     copy its twin's convention and prototype; with them, the installer's
+     profile would need the primary's objects by type, its status object
+     at `0x10ad06`.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

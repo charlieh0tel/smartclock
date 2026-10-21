@@ -560,11 +560,13 @@ label, `c_NAME`: a generated wrapper that moves the arguments from
 gcc's stack into the routine's registers and its result into D0, D0:D1
 or A0.  `tools/firmware/bridge_check.py` runs each wrapper in Unicorn
 against its routine called directly, from the registers the sidecar
-names: of the 91, 83 give the same result, RAM and effects and keep
-gcc's callee-saved registers, and 8 are not run: the installer's 5,
+names, the installer's on the installer's machine (below): of the 91,
+87 give the same result, RAM and effects and keep gcc's callee-saved
+registers, 83 the primary's and 4 the installer's, and 4 are not run:
 two with a register the sidecar does not name, and
-`kernel_dispatch_io`'s, an exception handler that `trap #4` enters
-with a frame for its `rte`, which a wrapper's `jsr` cannot give.  The
+`kernel_dispatch_io`'s and `installer_kernel_dispatch_io`'s, exception
+handlers that `trap #4` enters with a frame for its `rte`, which a
+wrapper's `jsr` cannot give.  The
 whole file compiles to an object (`make check-decompiled`, whose flags
 add `-fno-builtin -fno-tree-loop-distribute-patterns`, since the image's
 C library has no `puts`, `strlen` or `strcmp` for gcc to call).  The
@@ -858,6 +860,36 @@ of its own, records the text and returns its length; any other records
 each argument where the image's routines read it, a char or `char_slot`
 at a 2-byte slot's start and a char pointer by its text, and returns
 `0x6b000000`, as a kernel service does.
+
+The installer's functions (`installer::` in the sidecar) run on a
+machine of their own, a profile of the harness's (`harness.Profile`)
+in place of the primary's constants, and are counted apart.  Its RAM
+starts as the entry at `0xa58` leaves it (`restart.md`, "Forced
+installer entry with an unusable primary"): the records unpacked to
+`0x100400`--`0x10aad2`, `decompiled_check.py`'s `installer_records`,
+and ROM's first `0x400` bytes, the boot vector table, copied to
+`0x100000`, its vector base, so that trap #1 and trap #7 take
+`installer_trap_1` (`0x108466`) and `installer_trap_7` (`0x100f32`).
+Its kernel's tables are as `installer_psos_config_init` (`0x1083b6`)
+copies them, from `0x1084da` and `0x108578` to `0x10ab84` and
+`0x10ab60`, and its data area, from `0x10b0c8`, as
+`installer_kernel_init` (`0x1026de`) makes it, run to the same places
+as `kernel_init`, whose bytes it is; its status object as its root task
+(`0x100d40`) has `0x107a00` make it.  The root task creates no exchange
+itself; its spool's id, at `0x10afbe`, which `0x103efe` creates as
+`"spoo"`, is a distinct id, from which `request_x` receives the SCPI
+task's creator, `0x107886`, at priority `0x19`, as the root task sends
+it (`0x100d20`), and a call's caller's first argument is that name,
+`0x104088`.  Its one device, DUART channel B, writes through
+`0x10380a`, `drtb_write`'s code, and a `printf_function` formats with
+`installer_vsprintf` (`0x10aaa6`).  The arguments' buffers lie at
+`0x900000`, outside RAM, which the installer's code fills, and are
+compared as RAM is, pointers to the same literal or function the same;
+the unpacked image is a place literals lie, as ROM is, and is kept
+read-only: Unicorn protects whole 4 KB pages, and the image shares its
+first and last with the vectors and its data, so a write there is
+undone and ends the call as one to ROM does.  The primary's objects,
+the console port to the SCPI handlers' records, are not given.
 
 In the Z3805A 3543B image this gives 1813 functions, and every one but
 the ten thunks decompiles.  137 switches are recovered; `0x24ff2` and `0x25140`, a

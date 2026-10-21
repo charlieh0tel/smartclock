@@ -18,11 +18,13 @@ saves.
 
 A routine that reaches beyond what the harness maps, calls a kernel
 service the harness does not model, or traps, the same way both times
-is skipped.  Installer routines are not run, nor is an exception
-handler, which its trap enters with an exception frame for its rte to
-return through, where a wrapper's jsr leaves only a return address.
-make check-decompiled runs it with its flags.  Exits nonzero if any
-bridge disagrees with its routine.
+is skipped.  The installer's run on a machine of their own, whose RAM is
+the installer as the boot code unpacks it (harness.installer_profile),
+and are counted apart.  An exception handler is not run, which its trap
+enters with an exception frame for its rte to return through, where a
+wrapper's jsr leaves only a return address.  make check-decompiled runs
+it with its flags.  Exits nonzero if any bridge disagrees with its
+routine.
 """
 
 import json
@@ -36,6 +38,7 @@ from dataclasses import dataclass
 
 from harness import (
     CASES,
+    PRIMARY,
     REGISTERS,
     STARTING,
     UNSIGNED,
@@ -46,13 +49,15 @@ from harness import (
     effects_difference,
     fresh_ram,
     gcc_slots,
+    installer_profile,
+    overlay,
     ram_difference,
     rebuilt_machine,
     report,
     reset,
+    snapshot,
     stopped_outcome,
 )
-from libc_check import RAM, RAM_SIZE
 from rebuild_link import link, symbols
 
 # The sidecar's convention of a routine a trap or interrupt enters.
@@ -73,13 +78,14 @@ class Bridge:
     result_register: str | None
 
 
-def bridges(c: str, conventions: dict) -> list[Bridge]:
-    """Every bridge of a routine in ROM, not an exception handler, whose
-    sidecar gives a register for each argument and its result."""
+def bridges(c: str, conventions: dict, image: str | None) -> list[Bridge]:
+    """Every bridge of a routine of an image, the primary's or an
+    overlay's, not an exception handler, whose sidecar gives a register
+    for each argument and its result."""
     found = []
     for result, name, parameters in re.findall(r'^(.+?)\b(\w+)\((.*)\) __asm__\("c_\w+"\);$', c, re.M):
         convention = conventions.get(name)
-        if convention is None or convention["address"].startswith("installer") or convention["convention"] == EXCEPTION:
+        if convention is None or overlay(convention) != image or convention["convention"] == EXCEPTION:
             continue
         types = [] if parameters == "void" else [re.sub(r"\w+$", "", p.strip()).strip() for p in parameters.split(",")]
         items = convention.get("in") or []
@@ -123,12 +129,12 @@ def check(m: Machine, types: Types, bridge: Bridge, wrapper: int, address: int):
     for case in range(CASES):
         fresh_ram(m, case)
         values = arguments(m, types, bridge.parameters, case)
-        ram = m.read(RAM, RAM_SIZE)
+        memory = snapshot(m)
 
-        reset(m, ram)
+        reset(m, memory)
         load_registers(m, bridge.registers, values)
         direct = Run(m, address)
-        reset(m, ram)
+        reset(m, memory)
         bridged = Run(m, wrapper, gcc_slots(values))
 
         stopped = stopped_outcome(direct, bridged, ("direct", "bridged"))
@@ -168,19 +174,25 @@ def main() -> int:
         elf = work + "/rebuilt.elf"
         linked = link(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work, elf)
         linked_symbols = symbols(elf)
-    machine = rebuilt_machine(open(image_path, "rb").read(), linked, linked_symbols)
+    image = open(image_path, "rb").read()
     types = Types(c)
-    counts = {"agreeing": 0, "skipped": 0, "failed": 0}
-    runnable = bridges(c, conventions)
-    for bridge in runnable:
-        outcomes = check(machine, types, bridge, linked_symbols["c_" + bridge.name], linked_symbols[bridge.name])
-        counts[report(bridge.name, list(outcomes))] += 1
+    run, failed = 0, 0
+    for profile in (PRIMARY, installer_profile(image)):
+        machine = rebuilt_machine(image, linked, linked_symbols, profile)
+        counts = {"agreeing": 0, "skipped": 0, "failed": 0}
+        runnable = bridges(c, conventions, profile.overlay)
+        for bridge in runnable:
+            outcomes = check(machine, types, bridge, linked_symbols["c_" + bridge.name], linked_symbols[bridge.name])
+            counts[report(bridge.name, list(outcomes))] += 1
+        label = f"{profile.overlay} " if profile.overlay else ""
+        print(
+            f"{label}bridges agreeing: {counts['agreeing']}, skipped: {counts['skipped']}, failed: {counts['failed']}"
+        )
+        run += len(runnable)
+        failed += counts["failed"]
     wrappers = sum(name.startswith("c_") for name in linked_symbols)
-    print(
-        f"bridges agreeing: {counts['agreeing']}, skipped: {counts['skipped']}, failed: {counts['failed']}; "
-        f"not run: {wrappers - len(runnable)} (the installer's, an exception handler's, or no register in the sidecar)"
-    )
-    return 1 if counts["failed"] else 0
+    print(f"bridges not run: {wrappers - run} (an exception handler's, or no register in the sidecar)")
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

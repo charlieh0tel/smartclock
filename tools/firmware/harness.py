@@ -1,6 +1,9 @@
 """The emulator harness the rebuild's checks share: the image with the
 rebuilt image's code loaded beside it in Unicorn (libc_check.Machine),
-and calls into either from the same RAM and registers.
+and calls into either from the same RAM and registers.  A machine runs
+one image's profile (Profile): the primary's, or the installer's, whose
+RAM starts as the boot code unpacks it and whose own vectors, kernel
+and status set-up stand where the primary's do below.
 
 A call starts in supervisor mode with interrupts masked, as the
 firmware runs, every register a distinct sentinel but A6, which holds a
@@ -34,6 +37,7 @@ from unicorn import (
     UC_HOOK_MEM_READ,
     UC_HOOK_MEM_WRITE,
     UC_MEM_WRITE_PROT,
+    UC_PROT_EXEC,
     UC_PROT_READ,
     UC_PROT_WRITE,
     Uc,
@@ -60,6 +64,7 @@ from unicorn.m68k_const import (
     UC_M68K_REG_SR,
 )
 
+from decompiled_check import installer_records
 from libc_check import BUFFER, BUFFER_SPACING, RAM, RAM_SIZE, RETURN, ROM, ROM_SIZE, STEP_LIMIT, Machine
 from rebuild_link import IMAGE_PREFIX, LOADED, REBUILT, REBUILT_DATA, Section
 
@@ -115,7 +120,7 @@ LINK_INSTRUCTION = struct.Struct(">Hh")
 # first exchange's, "gpsx", which it passes psos_create_x (ROOT_EXCHANGES).
 FRAME = STACK_TOP
 CALLER_NAME = 0x131F7
-FRAME_CONTENTS = struct.pack(">III", 0, RETURN, CALLER_NAME)
+FRAME_CONTENTS = struct.Struct(">III")
 # Each register's value at a call's start.
 STARTING = {name: FRAME if name == "A6" else SENTINEL + i for i, name in enumerate(REGISTERS)}
 REBUILT_SIZE = 0x100000
@@ -303,8 +308,6 @@ RECEIVED = {
     PLLC_EXCHANGE: struct.pack(">IIBBBBII", 0, SAMPLE_INTEGER, 0, 0, 0, 0, 7, 0),
 }
 FIRST_EXCHANGE_ID = KERNEL_RESULT + 1
-EXCHANGE_IDS = {cell: FIRST_EXCHANGE_ID + i for i, cell in enumerate(RECEIVED)}
-RECEIVED_BY_ID = {EXCHANGE_IDS[cell]: message for cell, message in RECEIVED.items()}
 # The most a service's buffer may hold: RAM's size.
 LONGEST_BUFFER = RAM_SIZE
 # Where service 8, alloc_seg, takes its segments, D1 bytes each rounded
@@ -473,7 +476,7 @@ class DeviceWrite:
 
 
 # Where a literal's text may lie: the image's ROM and gcc's code and
-# constants.
+# constants, and an overlay's code in RAM (Profile.code).
 LITERALS = [(ROM, ROM_SIZE), (REBUILT, REBUILT_SIZE)]
 # A pointer's bytes, and the alignment the 68k keeps one at in RAM.
 POINTER_SIZE = 4
@@ -543,16 +546,11 @@ ROUTINE_RESULT = KERNEL_RESULT
 VSPRINTF = 0x608FE
 # The routines' code: an rts, and printf's: pea (8,sp), the arguments
 # after the format; move.l (8,sp),-(sp), the format; pea ROUTINE_TEXT;
-# jsr VSPRINTF; lea (12,sp),sp; and an rts, at which it records.
+# jsr to the image's vsprintf; lea (12,sp),sp; and an rts, at which it
+# records.
 RETURN_INSTRUCTION = bytes.fromhex("4e75")
-FORMATTING = (
-    bytes.fromhex("486f00082f2f00084879")
-    + struct.pack(">I", ROUTINE_TEXT)
-    + bytes.fromhex("4eb9")
-    + struct.pack(">I", VSPRINTF)
-    + bytes.fromhex("4fef000c")
-    + RETURN_INSTRUCTION
-)
+FORMATTING_START = bytes.fromhex("486f00082f2f00084879") + struct.pack(">I", ROUTINE_TEXT) + bytes.fromhex("4eb9")
+FORMATTING_END = bytes.fromhex("4fef000c") + RETURN_INSTRUCTION
 VARIABLE = "..."
 FORMAT = "char *"
 CHAR_SLOT = "char_slot"
@@ -719,13 +717,146 @@ class Types:
         return 4 if self.is_pointer(kind) else self.sizes.get(kind)
 
 
-class RebuiltMachine(Machine):
-    """The image with the rebuilt image's code, and the effects the call
-    running has had on what lies outside memory, in order: kernel calls
-    and device writes."""
+@dataclass(frozen=True)
+class Profile:
+    """An image's own code and state, which a call runs on and starts
+    with: the primary's, in ROM, or an overlay's, which the boot code
+    unpacks into RAM.  overlay is its name in the sidecar's addresses,
+    None for the primary; ram what RAM holds before its kernel's set-up;
+    code the overlay's image in RAM, as (start, bytes), which a check
+    keeps read-only and where its literals lie, as the ROM is; vectors
+    its vector table; kernel_tables to initializers its kernel's tables,
+    data area and set-up, as KERNEL_TABLES, PSOS_CONFIG, KERNEL_INIT,
+    KERNEL_CREATE and KERNEL_CREATE_END, ROOT_EXCHANGES and INITIALIZERS
+    are the primary's; received the messages its exchanges give, as
+    RECEIVED; string_devices as STRING_DEVICES; caller_name the name in
+    a call's caller's frame, as CALLER_NAME; vsprintf its own, as
+    VSPRINTF; buffers its arguments' buffers, as (start, bytes), in RAM
+    or apart from it; and objects whether its parameters are given the
+    primary's objects, OBJECTS to EXCHANGE_PARAMETERS and an SCPI
+    handler's."""
 
-    def __init__(self, image: bytes):
+    overlay: str | None
+    ram: bytes
+    code: tuple[int, int] | None
+    vectors: int
+    kernel_tables: tuple[tuple[int, int, int], ...]
+    psos_config: int
+    kernel_init: tuple[tuple[int, int], ...]
+    kernel_create: tuple[int, int]
+    root_exchanges: tuple[tuple[bytes, int, int], ...]
+    initializers: tuple[int, ...]
+    received: dict[int, bytes]
+    string_devices: frozenset[int]
+    caller_name: int
+    vsprintf: int
+    buffers: tuple[int, int]
+    objects: bool
+
+    def exchange_ids(self) -> dict[int, int]:
+        """A distinct id for each cell of received, as its creates leave one."""
+        return {cell: FIRST_EXCHANGE_ID + i for i, cell in enumerate(self.received)}
+
+    def buffers_apart(self) -> bool:
+        """Whether the arguments' buffers lie outside RAM, in memory of
+        their own."""
+        return not RAM <= self.buffers[0] < RAM + RAM_SIZE
+
+
+# The sidecar writes an overlay's address as its name, OVERLAY_SEPARATOR
+# and the address.
+OVERLAY_SEPARATOR = "::"
+PRIMARY = Profile(
+    overlay=None,
+    ram=bytes(RAM_SIZE),
+    code=None,
+    vectors=VECTORS,
+    kernel_tables=tuple(KERNEL_TABLES),
+    psos_config=PSOS_CONFIG,
+    kernel_init=tuple(KERNEL_INIT),
+    kernel_create=(KERNEL_CREATE, KERNEL_CREATE_END),
+    root_exchanges=tuple(ROOT_EXCHANGES),
+    initializers=tuple(INITIALIZERS),
+    received=RECEIVED,
+    string_devices=frozenset(STRING_DEVICES),
+    caller_name=CALLER_NAME,
+    vsprintf=VSPRINTF,
+    buffers=(BUFFER, ALLOCATIONS - BUFFER),
+    objects=True,
+)
+# The installer (docs/firmware/restart.md, "Forced installer entry with
+# an unusable primary"): the entry at 0xa58 unpacks its records into RAM
+# (boot_unpack_installer, 0xaa0), copies the boot vector table, ROM's
+# first VECTOR_TABLE_SIZE bytes, to RAM's start, makes that the vector
+# base and jumps to installer_entry (0x10135c).  Its vectors take trap #1
+# to installer_trap_1 (0x108466) and trap #7 to installer_trap_7
+# (0x100f32).  installer_psos_config_init (0x1083b6) copies its
+# configuration and I/O table from 0x1084da and 0x108578 to 0x10ab84 and
+# 0x10ab60: a data area from 0x10b0c8 and one device, DUART channel B,
+# whose write, 0x10380a, is drtb_write's code (docs/firmware/structures.md,
+# "The installer's RAM").  installer_kernel_init (0x1026de) and
+# installer_kernel_create_x (0x101d84) are kernel_init's and
+# kernel_create_x's bytes, 0xeca06 higher, so that they run to the same
+# places.  The installer's root task (0x100d40) creates no exchange
+# itself and sets up the status system with 0x107a00 before it starts
+# its spool (0x103efe), which creates "spoo" (0x104088), passing the
+# name to ident, psos_create_x and psos_create_t, and keeps its id at
+# 0x10afbe; the root task then sends the spool the SCPI task's creator,
+# 0x107886, and priority 0x19 (0x100d20), as scpi_task_start does.  Its
+# arguments' buffers lie outside RAM, which its code fills, at
+# INSTALLER_BUFFERS, compared as RAM is.
+INSTALLER = "installer"
+VECTOR_TABLE_SIZE = 0x400
+INSTALLER_PSOS_CONFIG = 0x10AB84
+INSTALLER_SPOO_EXCHANGE = 0x10AFBE
+INSTALLER_BUFFERS = 0x900000
+
+
+def installer_profile(image: bytes) -> Profile:
+    """The installer's profile, its RAM as the boot code leaves it."""
+    ram = bytearray(image[ROM : ROM + VECTOR_TABLE_SIZE].ljust(RAM_SIZE, b"\0"))
+    records = installer_records(image)
+    for destination, data in records:
+        ram[destination - RAM : destination - RAM + len(data)] = data
+    start = min(destination for destination, _ in records)
+    end = max(destination + len(data) for destination, data in records)
+    return Profile(
+        overlay=INSTALLER,
+        ram=bytes(ram),
+        code=(start, end - start),
+        vectors=RAM,
+        kernel_tables=((0x1084DA, INSTALLER_PSOS_CONFIG, 0x62), (0x108578, 0x10AB60, 0x24)),
+        psos_config=INSTALLER_PSOS_CONFIG,
+        kernel_init=((0x1026DE, 0x102840), (0x102862, 0x102870)),
+        kernel_create=(0x101D84, 0x101DE4),
+        root_exchanges=(),
+        initializers=(0x107A00,),
+        received={INSTALLER_SPOO_EXCHANGE: struct.pack(">5I", 0, 0x107886, 0x19, 0, 0)},
+        string_devices=frozenset({0}),
+        caller_name=0x104088,
+        vsprintf=0x10AAA6,
+        buffers=(INSTALLER_BUFFERS, PRIMARY.buffers[1]),
+        objects=False,
+    )
+
+
+def overlay(convention: dict) -> str | None:
+    """The overlay a sidecar row's routine is in; None for the primary."""
+    address = convention["address"]
+    return address.split(OVERLAY_SEPARATOR)[0] if OVERLAY_SEPARATOR in address else None
+
+
+class RebuiltMachine(Machine):
+    """The image with the rebuilt image's code, run as a profile has it,
+    and the effects the call running has had on what lies outside
+    memory, in order: kernel calls and device writes."""
+
+    def __init__(self, image: bytes, profile: Profile):
         super().__init__(image)
+        self.profile = profile
+        # where literals lie, and whether the code there is kept read-only
+        self.literals = LITERALS + ([profile.code] if profile.code else [])
+        self.protected = False
         self.effects: list[KernelCall | DeviceWrite | RoutineCall] = []
         # each C function's two copies, gcc's address and the image's
         self.copies: set[tuple[int, int]] = set()
@@ -737,9 +868,10 @@ class RebuiltMachine(Machine):
         self.tasks: dict[int, int] = {}
         # what each page of the pointees holds at a call's start
         self.pointees = b""
-        # RAM zeroed but the kernel's tables, its data area and what
-        # INITIALIZERS make, as KERNEL_INIT and they leave them
-        self.initialized_ram = bytes(RAM_SIZE)
+        # RAM as the profile has it but the kernel's tables, its data area
+        # and what its initializers make, as its kernel_init and they
+        # leave them
+        self.initialized_ram = profile.ram
         # the routines at ROUTINES, by the address each records at
         self.stubs: dict[int, Stub] = {}
         self.uc.mem_map(ROUTINES, ROUTINES_SIZE)
@@ -782,11 +914,14 @@ class RebuiltMachine(Machine):
         uc.reg_write(UC_M68K_REG_D0, ROUTINE_RESULT)
 
 
-def rebuilt_machine(image: bytes, linked: list[Section], linked_symbols: dict[str, int]) -> RebuiltMachine:
+def rebuilt_machine(
+    image: bytes, linked: list[Section], linked_symbols: dict[str, int], profile: Profile = PRIMARY
+) -> RebuiltMachine:
     """The image, with the rebuilt image's code at REBUILT, a stack, the
     EEPROM and the devices, which of the link's symbols name a C
-    function's copies, gcc's and the image's, and the kernel's RAM."""
-    m = RebuiltMachine(image)
+    function's copies, gcc's and the image's, and the profile's kernel's
+    RAM."""
+    m = RebuiltMachine(image, profile)
     m.copies = {
         (address, linked_symbols[IMAGE_PREFIX + name])
         for name, address in linked_symbols.items()
@@ -799,27 +934,38 @@ def rebuilt_machine(image: bytes, linked: list[Section], linked_symbols: dict[st
     m.uc.mem_map(STACK, STACK_SIZE)
     for start, size in COMPARED.values():
         m.uc.mem_map(start, size, UC_PROT_READ | UC_PROT_WRITE)
-    m.uc.mem_write(RAM, bytes(RAM_SIZE))
-    for source, destination, size in KERNEL_TABLES:
+    if profile.buffers_apart():
+        m.uc.mem_map(*profile.buffers, UC_PROT_READ | UC_PROT_WRITE)
+    m.uc.mem_write(RAM, profile.ram)
+    for source, destination, size in profile.kernel_tables:
         m.uc.mem_write(destination, m.read(source, size))
     m.uc.reg_write(UC_M68K_REG_SR, SUPERVISOR)
-    for start, end in KERNEL_INIT:
+    for start, end in profile.kernel_init:
         m.uc.emu_start(start, end, count=STEP_LIMIT)
-    for name, flags, limit in ROOT_EXCHANGES:
+    for name, flags, limit in profile.root_exchanges:
         m.uc.reg_write(UC_M68K_REG_A6, data_area(m))
         for register, value in zip(("D0", "D1", "D2"), (int.from_bytes(name, "big"), flags, limit)):
             m.uc.reg_write(REGISTERS[register], value)
-        m.uc.emu_start(KERNEL_CREATE, KERNEL_CREATE_END, count=STEP_LIMIT)
+        m.uc.emu_start(*profile.kernel_create, count=STEP_LIMIT)
     m.initialized_ram = m.read(RAM, RAM_SIZE)
-    for routine in INITIALIZERS:
+    for routine in profile.initializers:
         fresh_ram(m)
-        reset(m, m.read(RAM, RAM_SIZE))
+        reset(m, snapshot(m))
         run = Run(m, routine)
         if run.stopped is not None or run.ended is not None:
             raise RuntimeError(f"initializer {routine:x}: {run.stopped or run.end()}")
         m.first_allocation = m.next_allocation
-        m.initialized_ram = run.ram
+        m.initialized_ram = run.memory[RAM]
     return m
+
+
+def protect_code(m: RebuiltMachine) -> None:
+    """Keeps the image's code read-only, ROM's, gcc's and the overlay's,
+    so that a stray write to it faults, rather than changing later
+    cases."""
+    m.uc.mem_protect(ROM, ROM_SIZE, UC_PROT_READ | UC_PROT_EXEC)
+    m.uc.mem_protect(REBUILT, REBUILT_DATA - REBUILT, UC_PROT_READ | UC_PROT_EXEC)
+    m.protected = True
 
 
 def stub(m: RebuiltMachine, types: Types, routine: Routine, position: int) -> int | None:
@@ -832,8 +978,9 @@ def stub(m: RebuiltMachine, types: Types, routine: Routine, position: int) -> in
     if routine.parameters[-1] == VARIABLE:
         if routine.parameters[0] != FORMAT:
             return None
-        m.uc.mem_write(start, FORMATTING)
-        m.stubs[start + len(FORMATTING) - len(RETURN_INSTRUCTION)] = Stub(position, None)
+        formatting = FORMATTING_START + struct.pack(">I", m.profile.vsprintf) + FORMATTING_END
+        m.uc.mem_write(start, formatting)
+        m.stubs[start + len(formatting) - len(RETURN_INSTRUCTION)] = Stub(position, None)
         return start
     layout, offset = [], FIRST_ARGUMENT
     for kind in routine.parameters:
@@ -898,25 +1045,28 @@ def arguments(
     names: list[str] | None = None,
     function: str | None = None,
 ) -> list[bytes]:
-    """A case's arguments, each position taking a different value, or
-    the image's object for its name or type; an SCPI handler's as
-    scpi_call_handler gives them."""
+    """A case's arguments, each position taking a different value, or,
+    where the profile gives them, the image's object for its name or
+    type; an SCPI handler's as scpi_call_handler gives them."""
     fill = pointer_fill(case) if case >= PLAIN_CASES else None
+    objects = m.profile.objects
     values = []
     for i, (kind, name) in enumerate(zip(kinds, names or [None] * len(kinds))):
         at = (
-            exchange(m, case)
+            None
+            if not objects
+            else exchange(m, case)
             if EXCHANGE_PARAMETERS.get(function) == i
             else image_object(m, kind, name, case + POSITION_STRIDE * i)
         )
         values.append(
             argument(m, types, kind, case + POSITION_STRIDE * i, fill, i) if at is None else struct.pack(">I", at)
         )
-    handler = HANDLER.match(function or "")
+    handler = HANDLER.match(function or "") if objects else None
     if handler and names == HANDLER_NAMES:
         parameters, response, call = (struct.unpack(">I", value)[0] for value in values)
         call_record(m, handler.group(1) == QUERY, handler.group(2), parameters, response, call)
-    elif names and (CALL in names or CONTEXT in names):
+    elif objects and names and (CALL in names or CONTEXT in names):
         record = sample_call(m)
         node = pointer_at(m, record + CALL_NODE)
         given = {
@@ -1037,12 +1187,12 @@ def pointer_at(m: Machine, address: int) -> int:
     return struct.unpack(">I", m.read(address, POINTER_SIZE))[0]
 
 
-def data_area(m: Machine) -> int:
+def data_area(m: RebuiltMachine) -> int:
     """The kernel's data area, the configuration's first long."""
-    return pointer_at(m, PSOS_CONFIG)
+    return pointer_at(m, m.profile.psos_config)
 
 
-def exchange(m: Machine, case: int) -> int:
+def exchange(m: RebuiltMachine, case: int) -> int:
     """The case'th of the exchanges on the kernel's list, from its head."""
     exchanges = []
     at = pointer_at(m, data_area(m) + EXCHANGE_LIST)
@@ -1068,18 +1218,35 @@ def pointer_fill(case: int) -> bytes:
 
 
 def fresh_ram(m: RebuiltMachine, case: int = 0) -> None:
-    """RAM zeroed but what the kernel's tables, kernel_init and
-    INITIALIZERS make and the exchanges' ids, the buffers' allocator,
-    and the pointees' fill: a case's starting point."""
-    m.next_buffer = BUFFER
+    """RAM as the profile has it but what its kernel's tables,
+    kernel_init and initializers make, and the exchanges' ids; the
+    buffers' allocator, their memory zeroed where it lies apart, and the
+    pointees' fill: a case's starting point."""
+    start, size = m.profile.buffers
+    m.next_buffer = start
+    if m.profile.buffers_apart():
+        m.uc.mem_write(start, bytes(size))
     m.pointees = pointer_fill(case) * (POINTEES_SIZE // len(pointer_fill(case)))
     m.uc.mem_write(RAM, m.initialized_ram)
-    for cell, exchange in EXCHANGE_IDS.items():
+    for cell, exchange in m.profile.exchange_ids().items():
         m.uc.mem_write(cell, struct.pack(">I", exchange))
 
 
-def reset(m: RebuiltMachine, ram: bytes) -> None:
-    m.uc.mem_write(RAM, ram)
+def memory_compared(m: RebuiltMachine) -> list[tuple[int, int]]:
+    """The memory a call compares as RAM, pointers to the same literal or
+    function the same: RAM and, where they lie apart, the arguments'
+    buffers, as (start, bytes)."""
+    return [(RAM, RAM_SIZE)] + ([m.profile.buffers] if m.profile.buffers_apart() else [])
+
+
+def snapshot(m: RebuiltMachine) -> dict[int, bytes]:
+    """What the memory_compared holds, by its start, for reset."""
+    return {start: m.read(start, size) for start, size in memory_compared(m)}
+
+
+def reset(m: RebuiltMachine, memory: dict[int, bytes]) -> None:
+    for start, contents in memory.items():
+        m.uc.mem_write(start, contents)
     m.next_allocation = m.first_allocation
     m.tasks = {RUNNING_TASK: allocate(m, TASK_RECORD_SIZE)}
     m.uc.mem_write(data_area(m), struct.pack(">I", m.tasks[RUNNING_TASK]))
@@ -1094,19 +1261,19 @@ def reset(m: RebuiltMachine, ram: bytes) -> None:
         m.uc.reg_write(register, STARTING[name])
 
 
-def take_exception(uc: Uc, vector: int) -> None:
+def take_exception(uc: Uc, vectors: int, vector: int) -> None:
     """Enters a vector's handler as the processor does: a format 0 frame
     on the supervisor stack, which setting the supervisor bit makes A7
     from a task's user stack, returning past the trap, and the handler's
-    address from the primary's table.  Unicorn calls the interrupt hook
-    in place of doing this, with PC at the trap."""
+    address from a vector table.  Unicorn calls the interrupt hook in
+    place of doing this, with PC at the trap."""
     sr = uc.reg_read(UC_M68K_REG_SR)
     frame = struct.pack(FRAME_FORMAT, sr, uc.reg_read(UC_M68K_REG_PC) + TRAP_SIZE, vector * VECTOR_SIZE)
     uc.reg_write(UC_M68K_REG_SR, sr | SUPERVISOR_BIT)
     sp = uc.reg_read(UC_M68K_REG_A7) - len(frame)
     uc.mem_write(sp, frame)
     uc.reg_write(UC_M68K_REG_A7, sp)
-    uc.reg_write(UC_M68K_REG_PC, struct.unpack(">I", uc.mem_read(VECTORS + vector * VECTOR_SIZE, VECTOR_SIZE))[0])
+    uc.reg_write(UC_M68K_REG_PC, struct.unpack(">I", uc.mem_read(vectors + vector * VECTOR_SIZE, VECTOR_SIZE))[0])
 
 
 def return_and_restore(uc: Uc) -> bool:
@@ -1166,7 +1333,7 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
     number = uc.reg_read(REGISTERS[SERVICE_REGISTER]) & SERVICE_MASK
     service = KERNEL_TRAPS[vector].get(number)
     device = uc.reg_read(UC_M68K_REG_D0) >> DEVICE_SHIFT & DEVICE_MASK
-    if vector == IO_TRAP and number == WRITE and device in STRING_DEVICES:
+    if vector == IO_TRAP and number == WRITE and device in m.profile.string_devices:
         service = STRING_WRITE
     if service is None:
         return f"service {number}"
@@ -1182,7 +1349,9 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
             data = bytes(uc.mem_read(start, size))
         if service.fills:
             buffer, exchange = (uc.reg_read(REGISTERS[name]) for name in service.fills)
-            uc.mem_write(buffer + MESSAGE_OFFSET, RECEIVED_BY_ID.get(exchange, MESSAGE))
+            ids = m.profile.exchange_ids()
+            received = {ids[cell]: message for cell, message in m.profile.received.items()}
+            uc.mem_write(buffer + MESSAGE_OFFSET, received.get(exchange, MESSAGE))
         if service.text:
             data = string(uc, uc.reg_read(REGISTERS[service.text[0]]))
             if data is None:
@@ -1220,19 +1389,23 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
 
 class Run:
     """One call: its stack arguments laid above the return address, its
-    registers after, RAM and the COMPARED memory after, its effects,
-    the ENDING vector, HALTED or STILL_RUNNING it ended at instead of
-    returning, and the fault or trap that stopped it, if one did."""
+    registers after, the memory_compared and the COMPARED memory after,
+    its effects, the ENDING vector, HALTED or STILL_RUNNING it ended at
+    instead of returning, and the fault or trap that stopped it, if one
+    did."""
 
     def __init__(self, m: RebuiltMachine, start: int, stack_arguments: bytes = b""):
         trapped, invalid, ended = [], [], []
+        # writes to an overlay's code, which Unicorn protects only by
+        # whole pages: each one's address and the bytes it overwrote
+        written: list[tuple[int, bytes]] = []
         self.effects = m.effects = []
         kernel_calls = 0
 
         def trap(uc, number, _):
             nonlocal kernel_calls
             if number in HANDLED:
-                take_exception(uc, number)
+                take_exception(uc, m.profile.vectors, number)
                 return
             if number in ENDING:
                 ended.append(number)
@@ -1258,10 +1431,19 @@ class Run:
             uc.emu_stop()
 
         def fault(uc, access, address, size, value, _):
-            if access == UC_MEM_WRITE_PROT and literal_region(uc.reg_read(UC_M68K_REG_PC)) is not None:
+            if access == UC_MEM_WRITE_PROT and literal_region(m, uc.reg_read(UC_M68K_REG_PC)) is not None:
                 ended.append(BUS_ERROR)
             invalid.append(address)
             return False
+
+        def code_write(uc, access, address, size, value, _):
+            # the write is made after the hook, and undone after the call
+            written.append((address, bytes(uc.mem_read(address, size))))
+            if literal_region(m, uc.reg_read(UC_M68K_REG_PC)) is not None:
+                ended.append(BUS_ERROR)
+            else:
+                invalid.append(address)
+            uc.emu_stop()
 
         def clean_frame(uc, access, address, size, value, _):
             # at link's push of the frame pointer, the frame below it
@@ -1272,13 +1454,17 @@ class Run:
                 uc.mem_write(address + displacement, CLEAN_STACK[:-displacement])
 
         sp = STACK_TOP - 4 - len(stack_arguments)
-        m.uc.mem_write(sp, struct.pack(">I", RETURN) + stack_arguments + FRAME_CONTENTS)
+        frame = FRAME_CONTENTS.pack(0, RETURN, m.profile.caller_name)
+        m.uc.mem_write(sp, struct.pack(">I", RETURN) + stack_arguments + frame)
         m.uc.reg_write(UC_M68K_REG_A7, sp)
         hooks = [
             m.uc.hook_add(UC_HOOK_INTR, trap),
             m.uc.hook_add(UC_HOOK_MEM_INVALID, fault),
             m.uc.hook_add(UC_HOOK_MEM_WRITE, clean_frame, begin=STACK, end=STACK + STACK_SIZE - 1),
         ]
+        if m.protected and m.profile.code:
+            code, size = m.profile.code
+            hooks.append(m.uc.hook_add(UC_HOOK_MEM_WRITE, code_write, begin=code, end=code + size - 1))
         try:
             m.uc.emu_start(start, RETURN, count=STEP_LIMIT)
             self.stopped = f"trap {trapped[0]}" if trapped else None
@@ -1289,6 +1475,10 @@ class Run:
             for hook in hooks:
                 m.uc.hook_del(hook)
         pc = m.uc.reg_read(UC_M68K_REG_PC)
+        for address, contents in reversed(written):
+            m.uc.mem_write(address, contents)
+        if written and not ended:
+            self.stopped = f"write to code of {invalid[0]:x} at {pc:x}"
         if self.stopped is None and not ended and pc != RETURN:
             if any(m.read(pc, len(branch)) == branch for branch in SELF_BRANCHES):
                 ended.append(HALTED)
@@ -1296,7 +1486,7 @@ class Run:
                 self.stopped = f"no return in {STEP_LIMIT} steps"
         self.ended = ended[0] if ended else None
         self.registers = {name: m.uc.reg_read(register) for name, register in REGISTERS.items()}
-        self.ram = m.read(RAM, RAM_SIZE)
+        self.memory = snapshot(m)
         self.compared = {name: m.read(start, size) for name, (start, size) in COMPARED.items()}
 
     def end(self) -> str:
@@ -1314,24 +1504,25 @@ class Run:
         return value
 
 
-def literal_region(at: int) -> int | None:
-    """The start of the LITERALS region, the image's ROM or gcc's code
-    and constants, an address lies in; None if neither."""
-    return next((start for start, size in LITERALS if start <= at < start + size), None)
+def literal_region(m: RebuiltMachine, at: int) -> int | None:
+    """The start of the region of the machine's literals, the image's
+    ROM, gcc's code and constants or an overlay's code, an address lies
+    in; None if none."""
+    return next((start for start, size in m.literals if start <= at < start + size), None)
 
 
-def preceding(m: Machine, at: int) -> bytes | None:
-    """Up to BUFFER_SPACING bytes before an address in ROM or gcc's
-    constants; None if it is in neither."""
-    region = literal_region(at)
+def preceding(m: RebuiltMachine, at: int) -> bytes | None:
+    """Up to BUFFER_SPACING bytes before an address where literals lie;
+    None if it is not there."""
+    region = literal_region(m, at)
     if region is None:
         return None
     start = max(region, at - BUFFER_SPACING)
     return m.read(start, at - start)
 
 
-def same_literal(m: Machine, a: int, b: int) -> bool:
-    """Whether two pointers, each in ROM or gcc's constants, name the same
+def same_literal(m: RebuiltMachine, a: int, b: int) -> bool:
+    """Whether two pointers, each where literals lie, name the same
     place in the same text: gcc keeps its own copy of a literal the
     image keeps in ROM, and a pointer may be part way along one or at
     its end.  The text runs back over the bytes, not NUL, the two have
@@ -1348,7 +1539,7 @@ def same_literal(m: Machine, a: int, b: int) -> bool:
         text = m.string(a - back)
         if text != m.string(b - back):
             return False
-        return text != b"" or literal_region(a) != literal_region(b)
+        return text != b"" or literal_region(m, a) != literal_region(m, b)
     except (UcError, ValueError):
         return False
 
@@ -1360,27 +1551,39 @@ def same_pointer(m: RebuiltMachine, a: int, b: int) -> bool:
     return (a, b) in m.copies or (b, a) in m.copies or same_literal(m, a, b)
 
 
-def ram_difference(m: RebuiltMachine, a: Run, b: Run) -> str | None:
-    """None if two calls left RAM the same, but for pointers, at even
-    addresses as the 68k keeps a long, to the same literal or function,
-    and the EEPROM the same; else where it first differs."""
+def pointers_difference(m: RebuiltMachine, a: bytes, b: bytes) -> int | None:
+    """None if two copies of memory are the same, but for pointers, at
+    even offsets as the 68k keeps a long, to the same literal or
+    function; else the offset where they first differ."""
     at = 0
-    while a.ram[at:] != b.ram[at:]:
-        first = next(i for i in range(at, len(a.ram)) if a.ram[i] != b.ram[i])
+    while a[at:] != b[at:]:
+        first = next(i for i in range(at, len(a)) if a[i] != b[i])
         even = first - first % POINTER_ALIGNMENT
         starts = range(max(at, even - POINTER_SIZE + POINTER_ALIGNMENT), even + 1, POINTER_ALIGNMENT)
         literal = next(
             (
                 start
                 for start in starts
-                if start + POINTER_SIZE <= len(a.ram)
-                and same_pointer(m, *(struct.unpack_from(">I", run.ram, start)[0] for run in (a, b)))
+                if start + POINTER_SIZE <= len(a)
+                and same_pointer(m, *(struct.unpack_from(">I", memory, start)[0] for memory in (a, b)))
             ),
             None,
         )
         if literal is None:
-            return f"RAM differs from {RAM + first:x}"
+            return first
         at = literal + POINTER_SIZE
+    return None
+
+
+def ram_difference(m: RebuiltMachine, a: Run, b: Run) -> str | None:
+    """None if two calls left the memory_compared the same, but for
+    pointers to the same literal or function, and the EEPROM the same;
+    else where it first differs."""
+    for start, memory in a.memory.items():
+        first = pointers_difference(m, memory, b.memory[start])
+        if first is not None:
+            name = "RAM" if start == RAM else "the arguments' buffers"
+            return f"{name} differs from {start + first:x}"
     for name, (start, _) in COMPARED.items():
         if a.compared[name] != b.compared[name]:
             first = next(i for i, (x, y) in enumerate(zip(a.compared[name], b.compared[name])) if x != y)

@@ -23,9 +23,11 @@ call is compared up to there, but for its result.  A function that
 reaches beyond what the harness maps, calls a kernel service the
 harness does not model, or traps the same way both times is skipped.  A function whose prototype has an
 argument of no known size, a structure passed whole, a variable
-argument list, or an argument not on the stack is not run, nor is the
-installer's, whose image copy the boot code unpacks into RAM.  This is the rebuild's measure, not a gate:
-it exits zero whatever it finds.
+argument list, or an argument not on the stack is not run.  The
+installer's functions run on a machine of its own, whose RAM is the
+installer as the boot code unpacks it (harness.installer_profile), and
+are counted apart.  This is the rebuild's measure, not a gate: it exits
+zero whatever it finds.
 """
 
 import json
@@ -37,13 +39,14 @@ import sys
 import tempfile
 from dataclasses import dataclass
 
-from unicorn import UC_PROT_EXEC, UC_PROT_READ, UcError
+from unicorn import UcError
 
 from harness import (
     CASES,
     FIRST_ARGUMENT,
     MESSAGE_OFFSET,
     PLLC_EXCHANGE,
+    PRIMARY,
     RECEIVED,
     UNSIGNED,
     Machine,
@@ -53,14 +56,17 @@ from harness import (
     effects_difference,
     fresh_ram,
     gcc_slots,
+    installer_profile,
+    overlay,
+    protect_code,
     ram_difference,
     rebuilt_machine,
     report,
     reset,
+    snapshot,
     stopped_outcome,
 )
-from libc_check import RAM, RAM_SIZE, ROM, ROM_SIZE
-from rebuild_link import IMAGE_PREFIX, REBUILT, REBUILT_DATA, link, symbols
+from rebuild_link import IMAGE_PREFIX, REBUILT, link, symbols
 
 # The widest argument or result the harness lays out.
 WIDEST = 8
@@ -111,13 +117,13 @@ class Function:
     names: list[str]
 
 
-def functions(c: str, types: Types, conventions: dict) -> tuple[list[Function], int]:
-    """Every C function in ROM whose prototype the harness can lay out,
-    and how many it cannot."""
+def functions(c: str, types: Types, conventions: dict, image: str | None) -> tuple[list[Function], int]:
+    """Every C function of an image, the primary's or an overlay's, whose
+    prototype the harness can lay out, and how many it cannot."""
     found, unrunnable = [], 0
     for result, name, parameters in re.findall(r"^([A-Za-z_][\w \*]*?)\b(\w+)\(([^()]*)\);$", c, re.M):
         convention = conventions.get(name)
-        if parameters == "" or convention is None or convention["address"].startswith("installer"):
+        if parameters == "" or convention is None or overlay(convention) != image:
             continue
         declared = [] if parameters == "void" else [p.strip() for p in parameters.split(",")]
         kinds = [re.sub(r"\w+$", "", p).strip() for p in declared]
@@ -183,7 +189,7 @@ def establish(m: Machine, function: Function, linked_symbols: dict[str, int]) ->
         m.uc.mem_write(linked_symbols[variable], struct.pack(">I", value))
     if function.name in SET_UP_REQUESTS:
         request = m.buffer(bytes(MESSAGE_OFFSET) + SET_UP_REQUESTS[function.name])
-        reset(m, m.read(RAM, RAM_SIZE))
+        reset(m, snapshot(m))
         run = Run(m, linked_symbols[IMAGE_PREFIX + SET_UP], struct.pack(">I", request))
         if run.stopped is not None or run.ended is not None:
             raise RuntimeError(f"{SET_UP}: {run.stopped or run.end()}")
@@ -196,11 +202,11 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
         fresh_ram(m, case)
         establish(m, function, linked_symbols)
         values = arguments(m, types, function.parameters, case, function.names, function.name)
-        ram = m.read(RAM, RAM_SIZE)
+        memory = snapshot(m)
 
-        reset(m, ram)
+        reset(m, memory)
         original = Run(m, image, original_layout(function, values))
-        reset(m, ram)
+        reset(m, memory)
         gcc = Run(m, rebuilt, gcc_slots(values))
 
         stopped = stopped_outcome(original, gcc, ("image", "gcc"))
@@ -230,27 +236,29 @@ def main() -> int:
         elf = work + "/rebuilt.elf"
         linked = link(c_path, shlex.split(os.environ["DECOMPILED_CFLAGS"]), work, elf)
         linked_symbols = symbols(elf)
-    machine = rebuilt_machine(open(image_path, "rb").read(), linked, linked_symbols)
-    # a stray write to code faults, rather than changing later cases
-    machine.uc.mem_protect(ROM, ROM_SIZE, UC_PROT_READ | UC_PROT_EXEC)
-    machine.uc.mem_protect(REBUILT, REBUILT_DATA - REBUILT, UC_PROT_READ | UC_PROT_EXEC)
+    image_bytes = open(image_path, "rb").read()
     types = Types(c)
     conventions = {}
     for line in open(c_path.removesuffix(".c") + ".conventions.jsonl"):
         function = json.loads(line)
         conventions[function["name"]] = function
-    runnable, unrunnable = functions(c, types, conventions)
-    counts = {"agreeing": 0, "skipped": 0, "failed": 0}
-    for function in runnable:
-        image = linked_symbols.get(IMAGE_PREFIX + function.name)
-        rebuilt = linked_symbols.get(function.name)
-        if names and function.name not in names or image is None or rebuilt is None or rebuilt < REBUILT:
-            continue
-        counts[report(function.name, list(check(machine, types, function, image, rebuilt, linked_symbols)))] += 1
-    print(
-        f"functions agreeing: {counts['agreeing']}, skipped: {counts['skipped']}, failed: {counts['failed']}; "
-        f"prototypes not laid out: {unrunnable}"
-    )
+    for profile in (PRIMARY, installer_profile(image_bytes)):
+        machine = rebuilt_machine(image_bytes, linked, linked_symbols, profile)
+        protect_code(machine)
+        runnable, unrunnable = functions(c, types, conventions, profile.overlay)
+        counts = {"agreeing": 0, "skipped": 0, "failed": 0}
+        for function in runnable:
+            image = linked_symbols.get(IMAGE_PREFIX + function.name)
+            rebuilt = linked_symbols.get(function.name)
+            if names and function.name not in names or image is None or rebuilt is None or rebuilt < REBUILT:
+                continue
+            outcomes = list(check(machine, types, function, image, rebuilt, linked_symbols))
+            counts[report(function.name, outcomes)] += 1
+        label = f"{profile.overlay} " if profile.overlay else ""
+        print(
+            f"{label}functions agreeing: {counts['agreeing']}, skipped: {counts['skipped']}, "
+            f"failed: {counts['failed']}; prototypes not laid out: {unrunnable}"
+        )
     return 0
 
 

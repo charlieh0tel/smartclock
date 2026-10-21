@@ -49,6 +49,7 @@ from harness import (
     PRIMARY,
     RECEIVED,
     UNSIGNED,
+    Known,
     Machine,
     Run,
     Types,
@@ -101,6 +102,43 @@ SET_UP_REQUESTS = {
     "finish_scpi_cmd": NUMERIC_REQUEST,
     "pll_scpi_complete": NUMERIC_REQUEST,
     "pll_scpi_do_action": ACTION_REQUEST,
+}
+
+
+# The differences whose cause is found and is not the C's (PLAN.md,
+# "A rebuild that runs"), each counted as known while every failing case
+# is that difference, so that another in the same routine still fails.
+# The firmware's own: task_stack_info reads two locals it never sets
+# ("no system stack found", 0x16c28 to 0x16c32), which gcc takes as 0
+# where the image faults on the filled frame; os_report_processes holds
+# the address of "%s" in D5 across its calls (0x16768), which
+# os_report_process prints as a task's stack share.  And what C cannot
+# say: setjmp reads its caller's registers; int64_divide and
+# uint64_divide, on a quotient too wide for 32 bits, return the
+# dividend's low long, as divs.l leaves it; log_erase checksums a
+# pointer's bytes.
+UNSET_LOCALS = Known(
+    "task_stack_info reads two locals it never sets (0x16c28 to 0x16c32), the image faulting on the filled frame",
+    r"^one stopped: image Invalid memory read .* at 16c32, gcc None$",
+)
+D5_SHARE = Known(
+    "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x16768)",
+    r"^effect \d+ trap #4 service 4 ",
+)
+WIDE_QUOTIENT = Known(
+    "a quotient too wide for 32 bits: the image returns the dividend's low long, as divs.l leaves it",
+    r"^result [0-9a-f]+, image's [0-9a-f]+$",
+)
+KNOWN = {
+    **{name: UNSET_LOCALS for name in ("task_stack_report", "s_rep_word", "scpi_query_DIAGnostic_OS_STACk")},
+    **{name: D5_SHARE for name in ("os_process_report", "ps_word", "scpi_query_DIAGnostic_OS_PROCess")},
+    "int64_divide": WIDE_QUOTIENT,
+    "uint64_divide": WIDE_QUOTIENT,
+    "setjmp": Known(
+        "setjmp reads its caller's registers, which C has no name for",
+        r"^one stopped: image None, gcc Invalid memory read \(UC_ERR_READ_UNMAPPED\) of fffff000 ",
+    ),
+    "log_erase": Known("log_erase checksums a pointer's bytes", r"^RAM differs from 101d50$"),
 }
 
 
@@ -246,18 +284,18 @@ def main() -> int:
         machine = rebuilt_machine(image_bytes, linked, linked_symbols, profile)
         protect_code(machine)
         runnable, unrunnable = functions(c, types, conventions, profile.overlay)
-        counts = {"agreeing": 0, "skipped": 0, "failed": 0}
+        counts = {"agreeing": 0, "skipped": 0, "known": 0, "failed": 0}
         for function in runnable:
             image = linked_symbols.get(IMAGE_PREFIX + function.name)
             rebuilt = linked_symbols.get(function.name)
             if names and function.name not in names or image is None or rebuilt is None or rebuilt < REBUILT:
                 continue
             outcomes = list(check(machine, types, function, image, rebuilt, linked_symbols))
-            counts[report(function.name, outcomes)] += 1
+            counts[report(function.name, outcomes, KNOWN.get(function.name))] += 1
         label = f"{profile.overlay} " if profile.overlay else ""
         print(
             f"{label}functions agreeing: {counts['agreeing']}, skipped: {counts['skipped']}, "
-            f"failed: {counts['failed']}; prototypes not laid out: {unrunnable}"
+            f"known: {counts['known']}, failed: {counts['failed']}; prototypes not laid out: {unrunnable}"
         )
     return 0
 

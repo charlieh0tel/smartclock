@@ -1633,6 +1633,16 @@ def effects_difference(a: Run, b: Run, names: tuple[str, str]) -> str | None:
     return None
 
 
+@dataclass(frozen=True)
+class Known:
+    """A difference between a routine's image copy and gcc's whose cause
+    is found and is not the C's to fix: its cause, and a pattern each
+    failing case's outcome matches."""
+
+    cause: str
+    outcome: str
+
+
 def stopped_outcome(a: Run, b: Run, names: tuple[str, str]) -> str | None:
     """None if both calls returned or ended at the same vector; a skip if
     both stopped, what the harness does not model deciding; else the
@@ -1644,11 +1654,16 @@ def stopped_outcome(a: Run, b: Run, names: tuple[str, str]) -> str | None:
     return f"one stopped: {names[0]} {a.stopped}, {names[1]} {b.stopped}"
 
 
-def report(name: str, outcomes: list[tuple[str, str | None]]) -> str:
-    """ok, skip or FAIL for a routine's cases, printing why; which of
-    agreeing, skipped or failed it counts as."""
+def report(name: str, outcomes: list[tuple[str, str | None]], known: "Known | None" = None) -> str:
+    """ok, skip, known or FAIL for a routine's cases, printing why; which
+    of agreeing, skipped, known or failed it counts as.  A routine with a
+    known difference whose every failing case is that difference counts
+    as known; one failing otherwise fails as any does."""
     failures = [(d, o) for d, o in outcomes if o and not o.startswith("skipped")]
     skips = [o for _, o in outcomes if o and o.startswith("skipped")]
+    if failures and known is not None and all(re.search(known.outcome, o) for _, o in failures):
+        print(f"known {name}: {len(failures)} of {len(outcomes)} cases, {known.cause}")
+        return "known"
     if failures:
         for description, outcome in failures:
             print(f"FAIL {name} {description}: {outcome}")

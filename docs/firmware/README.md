@@ -774,7 +774,10 @@ callees and argument layout until a function is replaced; gcc's C calls
 gcc's.  `tools/firmware/function_check.py` (`make report-decompiled`)
 then calls each C function's image copy and gcc's copy in Unicorn, from
 the same RAM, and compares result and RAM: a measure of the decompiled
-C, not a gate (PLAN.md, "A rebuild that runs, in readable C").  Both
+C, not a gate (PLAN.md, "A rebuild that runs, in readable C").  A
+difference whose cause is found and is not the C's is known
+(`KNOWN`): the function counts as known while each failing case
+matches the difference's pattern, and fails as any does otherwise.  Both
 checks (`tools/firmware/harness.py`) take a pointer left in RAM, at an
 even address, as the same when the two point at the same place in the
 same text, in ROM or among gcc's constants: gcc keeps its

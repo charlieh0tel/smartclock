@@ -688,8 +688,15 @@ view cannot drift apart.  The library, bottom up:
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
      original reads them: of 1252 run, 1241 agree, 1 reaches what the
-     harness does not model and is skipped, and 10 differ, in the
-     function or in gcc's callees.  The harness models what lies
+     harness does not model and is skipped, 10 differ as known, and
+     none differs otherwise.  A known difference is one whose cause is
+     found and is not the C's, `function_check.py`'s `KNOWN`: the
+     firmware's own reads of what nothing set (`task_stack_info`'s
+     locals, `os_report_processes`' D5) and what C cannot say
+     (`setjmp`, the 64-bit divides' overflow, `log_erase`'s checksum of
+     a pointer); each is counted so only while every failing case
+     matches its pattern, so that a new difference in the same function
+     still fails.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): traps #1 and #7 run the image's handlers;
      the kernel's traps are answered by a model of each service, from

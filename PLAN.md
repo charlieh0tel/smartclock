@@ -1141,7 +1141,14 @@ view cannot drift apart.  The library, bottom up:
      `satellites_in_use`, whose prototype it now has, runs and agrees:
      1240), and the loop's (`format_si`'s double and char arguments,
      `efc_clamp`'s float result, the snapshot's time and interval
-     status, byte and word results; 1043 to 1009).
+     status, byte and word results; 1043 to 1009), and the SCPI
+     engine's (`scpi_number`, `scpi_token` and `scpi_port` for the
+     lexer, its number and its port; 1009 to 1000).  A short its
+     callers pass in a long slot is an `int`, not an `int16_t`, which
+     Setup lays out at the slot's start: so typed, 106 more functions
+     differed.  And a TFOM the code compares by its bits stays a
+     `uint32_t`: as a `float` the decompiler writes `ABS(tfom)`, a
+     conversion.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

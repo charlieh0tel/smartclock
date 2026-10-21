@@ -809,6 +809,98 @@ typedef struct scpi_keyword {
 	char text[18];  /* +0x02 */
 } scpi_keyword;
 
+/* A decimal number scpi_scan_number parses into the lexer's token, and
+ * the converters scpi_number_to_short to _double read: the parameters'
+ * number docs/scpi/README.md describes.  0x26 bytes, the token's frame
+ * in scpi_parse_message_unit (-0x28 to -0x2 of A6, 0x26ad8 and the
+ * word at -0x2). */
+typedef struct scpi_number {
+	int16_t negative;      /* +0x00: 1 for a leading '-' (0x27002 to 0x2700c), which the signed converters test (0x26118) */
+	int8_t digits[16];     /* +0x02: the digits' values, 0 to 9 (0x27490), zero-filled to 16 (0x274f4); digits[0] 0 for a zero */
+	int16_t exponent;      /* +0x12: the written exponent, scpi_scan_exponent's, adjusted by the point's place (0x2758c to 0x275b0) */
+	int16_t suffix_length; /* +0x14: the units suffix's characters (0x27660), 0 for none */
+	char suffix[12];       /* +0x16: the suffix in upper case (0x275f8); a 13th character, which the limit at 0x275dc allows, lands in scale, which scpi_apply_suffix then sets */
+	int16_t scale;         /* +0x22: the suffix's power of ten, scpi_match_suffix's, 0 for no suffix (scpi_apply_suffix); the converters' scale */
+	int16_t unit;          /* +0x24: the matched unit's index plus one, 0 for no suffix; the parsers copy it after the value (0x25eda) */
+} scpi_number;
+
+/* A non-decimal number, #H, #Q or #B, token 0xd (0x27200). */
+typedef struct scpi_token_non_decimal {
+	uint16_t base;  /* +0x00: 16, 8 or 2 */
+	uint32_t value; /* +0x02 */
+} scpi_token_non_decimal;
+
+/* A quoted string, token 0xf (0x27278, 0x2727c): its text, NUL
+ * terminated, taken from the arena scpi_scan_token is given. */
+typedef struct scpi_token_string {
+	uint16_t length; /* +0x00: without the NUL */
+	char *text;      /* +0x02 */
+} scpi_token_string;
+
+/* A definite or indefinite length block's header, #0 or #n and n
+ * digits, token 0x12. */
+typedef struct scpi_token_block {
+	uint32_t length;     /* +0x00: the digits' value (0x270e4) */
+	uint16_t indefinite; /* +0x04: 1 for #0 (0x270e8), else 0 (0x2708c) */
+} scpi_token_block;
+
+/* The SCPI lexer's token: scpi_scan_token fills the member for the
+ * kind of token it returns, and the parameter converters take the
+ * number.  A keyword (0x13, 0x14 with '?', 0x15 with ':') is its length
+ * and up to 16 upper-case characters (0x26f98, 0x26fcc); '$' and a
+ * digit 1 to 9 (0x11) is the digit, at +0 (0x2734a). */
+typedef union scpi_token {
+	scpi_number number;
+	scpi_keyword keyword;
+	scpi_token_non_decimal non_decimal;
+	scpi_token_string string;
+	scpi_token_block block;
+	int16_t digit;
+} scpi_token;
+
+struct scpi_port;
+/* A port's character routines.  read gives the next character, or
+ * above 0xff an end: the console's gives 0x101 for a NUL; 0x103 to 0x105,
+ * which the lexer reports as errors -102, -12 and -13 (0x2735c). */
+typedef int32_t scpi_port_read_function(struct scpi_port *port);
+typedef void scpi_port_unread_function(struct scpi_port *port);
+typedef void scpi_port_put_function(struct scpi_port *port, int character);
+typedef void scpi_port_write_function(struct scpi_port *port, char *text, int length);
+typedef void scpi_port_bits_function(struct scpi_port *port, int bits);
+typedef uint8_t scpi_port_byte_function(struct scpi_port *port);
+
+/* A port's method table, the console's at 0x29dd4: what the SCPI parser
+ * reads commands through, the formatters write responses through, and
+ * the status system keeps the status byte through.  Untyped entries are
+ * those whose arguments no caller shows. */
+typedef struct scpi_port_methods {
+	void *open;                                 /* +0x00: scpi_session_init, which returns the port */
+	void *close;                                /* +0x04: scpi_session_close */
+	scpi_port_read_function *read;              /* +0x08: console_port_read, as the port's own */
+	scpi_port_unread_function *unread;          /* +0x0c: scpi_input_ended: the next read gives the last character again; the lexer calls it on the character after a token (0x26f78) */
+	void *read_text;                            /* +0x10: scpi_console_read, up to so many characters */
+	scpi_port_put_function *put;                /* +0x14: scpi_console_putc; above 0xff, CR LF */
+	scpi_port_write_function *write;            /* +0x18: scpi_console_write, up to length characters */
+	scpi_port_write_function *write_block;      /* +0x1c: scpi_console_write; scpi_format_block's */
+	void *field_20;                             /* +0x20: scpi_console_return_zero */
+	void *field_24;                             /* +0x24: scpi_console_return_zero */
+	void *signal;                               /* +0x28: scpi_console_return_zero; scpi_interpret passes it scpi_response_begin_code, scpi_message_end_code or scpi_input_end_code */
+	void *field_2c;                             /* +0x2c: scpi_console_return_zero */
+	scpi_port_bits_function *status_set_bits;   /* +0x30: status_byte_set_bits; status_condition_set's */
+	scpi_port_bits_function *status_clear_bits; /* +0x34: status_byte_clear_bits; status_condition_clear's */
+	scpi_port_byte_function *status_byte_get;   /* +0x38: status_byte_get */
+	scpi_port_bits_function *sre_set;           /* +0x3c: status_sre_set */
+	scpi_port_byte_function *sre_get;           /* +0x40: status_sre_get */
+} scpi_port_methods;
+
+/* A port: the console's is at 0x29e18, which scpi_session_init returns.
+ * The lexer reads through read, and through methods for the rest
+ * (0x26ef6, 0x26f7a). */
+typedef struct scpi_port {
+	scpi_port_read_function *read;     /* +0x00: console_port_read */
+	scpi_port_methods *methods;        /* +0x04: 0x29dd4 */
+} scpi_port;
+
 struct scpi_step;
 /* A step's routine: the step for value, the setting at index. */
 typedef int scpi_step_function(struct scpi_step *step, void *value, int index);
@@ -840,7 +932,7 @@ typedef struct status_condition {
  * at it. */
 typedef struct status_model {
 	int16_t register_count;        /* +0x00: 7 */
-	void *output;                  /* +0x02: set for the top register */
+	scpi_port *output;             /* +0x02: set for the top register; the port whose status byte it keeps (status_condition_set, 0x2802a) */
 	void *queue;                   /* +0x06: built with room for 30 */
 	status_condition *conditions;  /* +0x0a */
 	int32_t field_0e;              /* +0x0e: status_create's last argument, 0; nothing reads it */

@@ -1693,6 +1693,18 @@ struct scpi_multiplier {
     uint8_t unused;
 };
 
+typedef struct scpi_number scpi_number, *Pscpi_number;
+
+struct scpi_number {
+    int16_t negative;
+    int8_t digits[16];
+    int16_t exponent;
+    int16_t suffix_length;
+    char suffix[12];
+    int16_t scale;
+    int16_t unit;
+};
+
 typedef struct scpi_numeric_param scpi_numeric_param, *Pscpi_numeric_param;
 
 typedef long (scpi_validate_function)(void *, int, void *, void *, void *, int);
@@ -1714,6 +1726,47 @@ struct scpi_numeric_param {
     uint8_t is_integer;
     uint8_t field_27;
     void *steps;
+};
+
+typedef struct scpi_port scpi_port, *Pscpi_port;
+
+typedef int32_t (scpi_port_read_function)(struct scpi_port *);
+
+typedef struct scpi_port_methods scpi_port_methods, *Pscpi_port_methods;
+
+typedef void (scpi_port_unread_function)(struct scpi_port *);
+
+typedef void (scpi_port_put_function)(struct scpi_port *, int);
+
+typedef void (scpi_port_write_function)(struct scpi_port *, char *, int);
+
+typedef void (scpi_port_bits_function)(struct scpi_port *, int);
+
+typedef uint8_t (scpi_port_byte_function)(struct scpi_port *);
+
+struct scpi_port_methods {
+    void *open;
+    void *close;
+    scpi_port_read_function *read;
+    scpi_port_unread_function *unread;
+    void *read_text;
+    scpi_port_put_function *put;
+    scpi_port_write_function *write;
+    scpi_port_write_function *write_block;
+    void *field_20;
+    void *field_24;
+    void *signal;
+    void *field_2c;
+    scpi_port_bits_function *status_set_bits;
+    scpi_port_bits_function *status_clear_bits;
+    scpi_port_byte_function *status_byte_get;
+    scpi_port_bits_function *sre_set;
+    scpi_port_byte_function *sre_get;
+};
+
+struct scpi_port {
+    scpi_port_read_function *read;
+    struct scpi_port_methods *methods;
 };
 
 typedef struct scpi_root_children scpi_root_children, *Pscpi_root_children;
@@ -1749,6 +1802,38 @@ typedef int (scpi_step_function)(struct scpi_step *, void *, int);
 struct scpi_step {
     uint32_t value;
     scpi_step_function *function;
+};
+
+typedef union scpi_token scpi_token, *Pscpi_token;
+
+typedef struct scpi_token_non_decimal scpi_token_non_decimal, *Pscpi_token_non_decimal;
+
+typedef struct scpi_token_string scpi_token_string, *Pscpi_token_string;
+
+typedef struct scpi_token_block scpi_token_block, *Pscpi_token_block;
+
+struct scpi_token_string {
+    uint16_t length;
+    char *text;
+};
+
+struct scpi_token_block {
+    uint32_t length;
+    uint16_t indefinite;
+};
+
+struct scpi_token_non_decimal {
+    uint16_t base;
+    uint32_t value;
+};
+
+union scpi_token {
+    struct scpi_number number;
+    struct scpi_keyword keyword;
+    struct scpi_token_non_decimal non_decimal;
+    struct scpi_token_string string;
+    struct scpi_token_block block;
+    int16_t digit;
 };
 
 typedef struct scpi_unit scpi_unit, *Pscpi_unit;
@@ -1900,7 +1985,7 @@ struct status_register {
 
 struct status_model {
     int16_t register_count;
-    void *output;
+    struct scpi_port *output;
     void *queue;
     struct status_condition *conditions;
     int32_t field_0e;
@@ -2103,11 +2188,18 @@ _Static_assert(sizeof(scpi_decimal) == 20, "scpi_decimal");
 _Static_assert(sizeof(scpi_error_message) == 6, "scpi_error_message");
 _Static_assert(sizeof(scpi_keyword) == 20, "scpi_keyword");
 _Static_assert(sizeof(scpi_multiplier) == 4, "scpi_multiplier");
+_Static_assert(sizeof(scpi_number) == 38, "scpi_number");
 _Static_assert(sizeof(scpi_numeric_param) == 44, "scpi_numeric_param");
 _Static_assert(sizeof(scpi_param_type) == 1, "scpi_param_type");
+_Static_assert(sizeof(scpi_port) == 8, "scpi_port");
+_Static_assert(sizeof(scpi_port_methods) == 68, "scpi_port_methods");
 _Static_assert(sizeof(scpi_root_children) == 202, "scpi_root_children");
 _Static_assert(sizeof(scpi_setting_param) == 28, "scpi_setting_param");
 _Static_assert(sizeof(scpi_step) == 8, "scpi_step");
+_Static_assert(sizeof(scpi_token) == 38, "scpi_token");
+_Static_assert(sizeof(scpi_token_block) == 6, "scpi_token_block");
+_Static_assert(sizeof(scpi_token_non_decimal) == 6, "scpi_token_non_decimal");
+_Static_assert(sizeof(scpi_token_string) == 6, "scpi_token_string");
 _Static_assert(sizeof(scpi_unit) == 6, "scpi_unit");
 _Static_assert(sizeof(selftest_results) == 68, "selftest_results");
 _Static_assert(sizeof(serial_ring) == 258, "serial_ring");
@@ -4609,7 +4701,7 @@ void set_gps_utc_offset(undefined2 param_1);
 uint8_t get_gps_utc_offset(int16_t *seconds);
 char tcode_checksum(char *param_1);
 char tcode_request(byte param_1);
-short tfom_code(uint32_t param_1);
+short tfom_code(uint32_t tfom);
 void es_build(uint32_t param_1,uint param_2);
 void timecode_update(void);
 void timecode_init(void);
@@ -5248,63 +5340,63 @@ double scpi_bcd_to_double(char *bcd) __asm__("c_scpi_bcd_to_double");
 double scpi_scale_by_power_of_ten(double value, short *exponent, double *powers) __asm__("c_scpi_scale_by_power_of_ten");
 double scpi_double_multiply(double a, double b) __asm__("c_scpi_double_multiply");
 int scpi_double_multiply_short();
-int scpi_number_to_double(char *number,double *value,int scale);
-int scpi_number_to_bcd(char *number, short scale, char *bcd) __asm__("c_scpi_number_to_bcd");
+int scpi_number_to_double(scpi_number *number,double *value,int scale);
+int scpi_number_to_bcd(scpi_number *number, short scale, char *bcd) __asm__("c_scpi_number_to_bcd");
 undefined4
 scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,short param_5,
                  short param_6,char param_7);
 undefined4 scpi_parse_string(undefined2 *param_1,undefined4 *param_2);
 undefined4 scpi_parse_boolean(short *param_1,undefined2 *param_2);
-int scpi_parse_boolean_number(char *number,void *param_2,uint16_t *value,void *param_4);
+int scpi_parse_boolean_number(scpi_number *number,void *param_2,uint16_t *value,void *param_4);
 undefined4 scpi_parse_choice(short *param_1,short *param_2,int *param_3);
-int scpi_parse_short(char *number,void *param_2,int16_t *value,scpi_unit *units);
-int scpi_parse_unsigned_short(char *number,void *param_2,uint16_t *value,scpi_unit *units);
-int scpi_parse_long(char *number,void *param_2,int32_t *value,scpi_unit *units);
-int scpi_parse_unsigned_long(char *number,void *param_2,uint32_t *value,scpi_unit *units);
-int scpi_parse_float(char *number,void *param_2,float *value,scpi_unit *units);
-int scpi_parse_double(char *number,void *param_2,double *value,scpi_unit *units);
-int scpi_number_to_short(char *number,int16_t *value,int scale);
-int scpi_number_to_unsigned_short(char *number,uint16_t *value,int scale);
-int scpi_number_to_long(char *number,int32_t *value,int scale);
-int scpi_number_to_unsigned_long(char *number,uint32_t *value,int scale);
-void scpi_number_to_boolean(char *number,uint16_t *value,int scale);
-int scpi_format_text(void *output,char **value);
-int scpi_format_string(void *output,char **value);
-int scpi_format_boolean(void *output,short *value);
-int scpi_format_counted_text(void *output,short *text);
-int scpi_format_choice(void *output,short *value,int *param_3);
+int scpi_parse_short(scpi_number *number,void *param_2,int16_t *value,scpi_unit *units);
+int scpi_parse_unsigned_short(scpi_number *number,void *param_2,uint16_t *value,scpi_unit *units);
+int scpi_parse_long(scpi_number *number,void *param_2,int32_t *value,scpi_unit *units);
+int scpi_parse_unsigned_long(scpi_number *number,void *param_2,uint32_t *value,scpi_unit *units);
+int scpi_parse_float(scpi_number *number,void *param_2,float *value,scpi_unit *units);
+int scpi_parse_double(scpi_number *number,void *param_2,double *value,scpi_unit *units);
+int scpi_number_to_short(scpi_number *number,int16_t *value,int scale);
+int scpi_number_to_unsigned_short(scpi_number *number,uint16_t *value,int scale);
+int scpi_number_to_long(scpi_number *number,int32_t *value,int scale);
+int scpi_number_to_unsigned_long(scpi_number *number,uint32_t *value,int scale);
+void scpi_number_to_boolean(scpi_number *number,uint16_t *value,int scale);
+int scpi_format_text(scpi_port *output,char **value);
+int scpi_format_string(scpi_port *output,char **value);
+int scpi_format_boolean(scpi_port *output,short *value);
+int scpi_format_counted_text(scpi_port *output,short *text);
+int scpi_format_choice(scpi_port *output,short *value,int *param_3);
 int scpi_unsigned_to_digits(uint32_t value,char *digits,short *start);
-int scpi_format_long(void *output,int32_t *value);
-int scpi_format_short(void *output,short *value);
-int scpi_format_unsigned_long(void *output,uint32_t *value);
-int scpi_format_unsigned_short(void *output,uint16_t *value);
-int scpi_format_block(void *output,uint32_t *block);
+int scpi_format_long(scpi_port *output,int32_t *value);
+int scpi_format_short(scpi_port *output,short *value);
+int scpi_format_unsigned_long(scpi_port *output,uint32_t *value);
+int scpi_format_unsigned_short(scpi_port *output,uint16_t *value);
+int scpi_format_block(scpi_port *output,uint32_t *block);
 int scpi_format_double_array(int param_1,int *param_2);
 int scpi_format_short_array(void *param_1,int *param_2);
 int scpi_format_resolution_array(int param_1,int *param_2);
 int scpi_format_array(void *param_1,char *param_2);
-int scpi_format_resolution_array_record(void *output,char *record);
-int scpi_format_double(void *output,double *value);
-int scpi_format_float(void *output,float *value);
-int scpi_format_double_precision(int param_1,int *param_2);
-int scpi_format_double_resolution(void *output,double *value,short *resolution);
-int scpi_format_float_resolution(void *output,float *value);
+int scpi_format_resolution_array_record(scpi_port *output,char *record);
+int scpi_format_double(scpi_port *output,double *value);
+int scpi_format_float(scpi_port *output,float *value);
+int scpi_format_double_precision(scpi_port *output,int *param_2);
+int scpi_format_double_resolution(scpi_port *output,double *value,short *resolution);
+int scpi_format_float_resolution(scpi_port *output,float *value);
 undefined4
 scpi_context_init(undefined4 *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4,
                  undefined4 param_5,undefined4 param_6,undefined4 param_7,undefined4 param_8,
                  undefined4 param_9);
 int scpi_parse_message_unit(void *context,short *reset_path);
-int scpi_scan_token(void *input,ushort *param_2,int *param_3);
-void scpi_skip_to_terminator(void *input);
-int scpi_scan_number(void *token,int have_character,int character,void *input);
-undefined4 scpi_scan_exponent(undefined4 param_1,int param_2,undefined4 *param_3);
+int scpi_scan_token(scpi_port *input,scpi_token *token,int *param_3);
+void scpi_skip_to_terminator(scpi_port *input);
+int scpi_scan_number(scpi_number *number,int have_character,int character,scpi_port *input);
+int scpi_scan_exponent(int character,scpi_number *number,scpi_port *input);
 uint scpi_char_upper(uint param_1);
-int scpi_parameter_match(int *param_1,undefined4 param_2,void *param_3,short *param_4);
+int scpi_parameter_match(int *param_1,int kind,void *param_3,short *param_4);
 undefined4 scpi_parameters_finish(int *param_1,void *param_2,short *param_3);
 short scpi_suffix_compare_tail(char *suffix,int length,char *name);
-undefined4 scpi_multiplier_exponent(undefined2 param_1,short param_2);
+int8_t scpi_multiplier_exponent(int name);
 short scpi_match_suffix(int length,char *suffix,scpi_unit *units,int16_t *scale);
-int scpi_apply_suffix(char *number,scpi_unit *units);
+int scpi_apply_suffix(scpi_number *number,scpi_unit *units);
 short scpi_keyword_compare(char *token,int length,char *keyword);
 void * scpi_node_find(void *list,scpi_keyword *keyword);
 int scpi_node_find_with_defaults(int *path,short *keyword,void *unused);
@@ -5319,18 +5411,18 @@ scpi_common_header_resolve
           (scpi_keyword *param_1,int *param_2,undefined2 *param_3,int *param_4,undefined2 param_5,
           short param_6,int *param_7,void *param_8);
 void * scpi_trg_defined(void *list,uint16_t *no_setter);
-void status_event_set(status_model *status,status_register *reg,int bits);
-void status_condition_set(int param_1,ushort *param_2,undefined4 param_3);
-void status_condition_clear(int param_1,ushort *param_2,undefined4 param_3);
+void status_event_set(status_model *status,status_register *reg,uint32_t bits);
+void status_condition_set(status_model *status,status_register *reg,int bits);
+void status_condition_clear(status_model *status,status_register *reg,int bits);
 void status_propagate(status_model *status,status_register *reg);
 undefined4 status_create(int *param_1,int param_2,int param_3,undefined4 param_4,undefined4 param_5);
-void status_destroy(short *param_1);
+void status_destroy(status_model *status);
 void status_register_setup
                (int param_1,int param_2,undefined4 param_3,undefined4 param_4,int param_5,
                undefined4 param_6,int param_7);
 int16_t status_set_bit(status_model *status,int condition,int value);
 void status_apply_condition(status_model *status,int condition,int param_3);
-void status_clear_bit(status_model *param_1,int param_2);
+int16_t status_clear_bit(status_model *status,int condition);
 undefined4 condition_is_command_error(int param_1);
 void status_condition_bit_get(status_model *status,int condition,uint32_t *bit);
 void status_register_set_enable(status_model *status,int index,int enable);
@@ -5341,19 +5433,19 @@ undefined4 status_clear_events(short *param_1);
 void error_queue_clear(status_model *status,int *code);
 void error_queue_read(status_model *status,int *code,uint32_t *message);
 undefined4 error_queue_create(int *param_1,int param_2,undefined4 param_3);
-bool error_queue_push(short *error_queue,int code,uint32_t value);
+int16_t error_queue_push(short *error_queue,int code,uint32_t value);
 void error_queue_pop(short *param_1,int *param_2,undefined4 *param_3);
 void error_queue_destroy(ulong param_1);
-void status_register_set_ptr(status_model *status,int index,int filter);
-void status_register_set_ntr(status_model *status,int index,int filter);
+void status_register_set_ptr(status_model *status,int index,uint32_t filter);
+void status_register_set_ntr(status_model *status,int index,uint32_t filter);
 void status_register_get_ptr(status_model *status,int index,uint16_t *filter);
 void status_register_get_ntr(status_model *status,int index,uint16_t *filter);
-char * error_message_lookup(undefined4 param_1);
+char * error_message_lookup(int code);
 undefined4
 scpi_interpret(int param_1,int param_2,int *param_3,uint param_4,undefined4 param_5,void *param_6,
               status_model *param_7,undefined4 param_8,undefined4 param_9);
 int scpi_call_handler(void *call,void **response);
-int scpi_format_response(void *output,void *items,void *call);
+int scpi_format_response(scpi_port *output,void *items,void *call);
 int arena_alloc(int param_1,int *param_2);
 int arena_remaining(int *param_1,int *param_2);
 int arena_take(int param_1,int param_2,int *param_3);
@@ -9508,7 +9600,8 @@ double power_of_ten_double(short param_1)
 
 /* 00012984 */
 
-/* tfom_code's bisection of the table at 0x129fc; a word in D0 (0x129c6) */
+/* tfom_code's bisection of the table at 0x129fc; compares the float's bits, its sign cleared
+   (0x12990), with the table's; the index a word (0x129c6) */
 
 int16_t tfom_table_index(uint32_t tfom)
 
@@ -11680,16 +11773,16 @@ char tcode_request(byte param_1)
 
 /* 00013a48 */
 
-/* the time code's t, from pll.tfom
+/* the time code's t, from pll.tfom; given pll.tfom, a float, which it passes on whole (0x13a48)
    structures.md */
 
-short tfom_code(uint32_t param_1)
+short tfom_code(uint32_t tfom)
 
 {
   int16_t iVar1;
   short sVar2;
   
-  iVar1 = tfom_table_index(param_1);
+  iVar1 = tfom_table_index(tfom);
   sVar2 = iVar1 + 9;
   if (sVar2 < 0) {
     sVar2 = 0;
@@ -11806,7 +11899,7 @@ void timecode_update(void)
   }
   if (tcode_pending != 0) {
     tcode_length = 0;
-    sVar4 = tfom_code(__ghidra_bits(pll.tfom));
+    sVar4 = tfom_code((uint32_t)__ghidra_bits(pll.tfom));
     bVar6 = (byte)sVar4;
     get_ffom(&local_8);
     if (nv_settings.leap_pending == 0) {
@@ -41790,10 +41883,10 @@ __asm__(
 
 /* 000254ba */
 
-/* as a double
+/* as a double; the scale a word (0x254c2)
    docs/scpi/README.md, run */
 
-int scpi_number_to_double(char *number,double *value,int scale)
+int scpi_number_to_double(scpi_number *number,double *value,int scale)
 
 {
   bool bVar1;
@@ -41818,30 +41911,30 @@ int scpi_number_to_double(char *number,double *value,int scale)
 
 /* a parsed number at A0 packed into the BCD record at A1, its exponent plus D0 plus 16 at +0xa; -1
    beyond 309
-   Not a C function (register; read): its arguments and results in registers.  In: A0 char *number,
-   D0 short scale, A1 char *bcd.  Out: D0 int status.  Returns: ccr.  Error: D0 -1 exponent beyond
-   309.
+   Not a C function (register; read): its arguments and results in registers.  In: A0 scpi_number
+   *number, D0 short scale, A1 char *bcd.  Out: D0 int status.  Returns: ccr.  Error: D0 -1 exponent
+   beyond 309.
    docs/scpi/README.md, read */
 
 /* out D0 int status; returns ccr; error D0 -1 exponent beyond 309 */
-__regcall int scpi_number_to_bcd(char *number /* a0 */,short scale /* d0 */,char *bcd /* a1 */)
+__regcall int scpi_number_to_bcd(scpi_number *number /* a0 */,short scale /* d0 */,char *bcd /* a1 */)
 
 {
   int iVar1;
   short sVar2;
   byte *pbVar3;
   
-  iVar1 = (int)*(short *)(number + 0x12) + (int)scale + 0x10;
+  iVar1 = (int)number->exponent + (int)scale + 0x10;
   if ((iVar1 < 0x136) && (-0x136 < iVar1)) {
     *(short *)(bcd + 10) = (short)iVar1;
-    *(undefined2 *)bcd = *(undefined2 *)number;
+    *(int16_t *)bcd = number->negative;
     sVar2 = 7;
     pbVar3 = (byte *)(bcd + 2);
     do {
-      *pbVar3 = number[3] | number[2] << 4;
+      *pbVar3 = number->digits[1] | number->digits[0] << 4;
       sVar2 = sVar2 + -1;
       pbVar3 = pbVar3 + 1;
-      number = number + 2;
+      number = (scpi_number *)number->digits;
     } while (sVar2 != -1);
     return 0;
   }
@@ -42095,13 +42188,13 @@ undefined4 scpi_parse_boolean(short *param_1,undefined2 *param_2)
 /* a number as a boolean by scpi_number_to_boolean; -9 with a suffix
    docs/scpi/README.md, read */
 
-int scpi_parse_boolean_number(char *number,void *param_2,uint16_t *value,void *param_4)
+int scpi_parse_boolean_number(scpi_number *number,void *param_2,uint16_t *value,void *param_4)
 
 {
   int iVar1;
   uint16_t local_6;
   
-  if (*(short *)(number + 0x14) == 0) {
+  if (number->suffix_length == 0) {
     scpi_number_to_boolean(number,&local_6,0);
     *value = local_6;
     iVar1 = 0;
@@ -42157,15 +42250,15 @@ undefined4 scpi_parse_choice(short *param_1,short *param_2,int *param_3)
 /* the suffix by scpi_apply_suffix, then scpi_number_to_short
    docs/scpi/README.md, read */
 
-int scpi_parse_short(char *number,void *param_2,int16_t *value,scpi_unit *units)
+int scpi_parse_short(scpi_number *number,void *param_2,int16_t *value,scpi_unit *units)
 
 {
   int iVar1;
   
   iVar1 = scpi_apply_suffix(number,units);
   if (iVar1 == 0) {
-    iVar1 = scpi_number_to_short(number,value,(int)*(short *)(number + 0x22));
-    value[1] = *(int16_t *)(number + 0x24);
+    iVar1 = scpi_number_to_short(number,value,(int)number->scale);
+    value[1] = number->unit;
   }
   return iVar1;
 }
@@ -42176,15 +42269,15 @@ int scpi_parse_short(char *number,void *param_2,int16_t *value,scpi_unit *units)
 /* the suffix, then scpi_number_to_unsigned_short
    docs/scpi/README.md, read */
 
-int scpi_parse_unsigned_short(char *number,void *param_2,uint16_t *value,scpi_unit *units)
+int scpi_parse_unsigned_short(scpi_number *number,void *param_2,uint16_t *value,scpi_unit *units)
 
 {
   int iVar1;
   
   iVar1 = scpi_apply_suffix(number,units);
   if (iVar1 == 0) {
-    iVar1 = scpi_number_to_unsigned_short(number,value,(int)*(short *)(number + 0x22));
-    value[1] = *(uint16_t *)(number + 0x24);
+    iVar1 = scpi_number_to_unsigned_short(number,value,(int)number->scale);
+    value[1] = number->unit;
   }
   return iVar1;
 }
@@ -42195,15 +42288,15 @@ int scpi_parse_unsigned_short(char *number,void *param_2,uint16_t *value,scpi_un
 /* the suffix, then scpi_number_to_long
    docs/scpi/README.md, read */
 
-int scpi_parse_long(char *number,void *param_2,int32_t *value,scpi_unit *units)
+int scpi_parse_long(scpi_number *number,void *param_2,int32_t *value,scpi_unit *units)
 
 {
   int iVar1;
   
   iVar1 = scpi_apply_suffix(number,units);
   if (iVar1 == 0) {
-    iVar1 = scpi_number_to_long(number,value,(int)*(short *)(number + 0x22));
-    *(undefined2 *)(value + 1) = *(undefined2 *)(number + 0x24);
+    iVar1 = scpi_number_to_long(number,value,(int)number->scale);
+    *(int16_t *)(value + 1) = number->unit;
   }
   return iVar1;
 }
@@ -42214,15 +42307,15 @@ int scpi_parse_long(char *number,void *param_2,int32_t *value,scpi_unit *units)
 /* the suffix, then scpi_number_to_unsigned_long
    docs/scpi/README.md, read */
 
-int scpi_parse_unsigned_long(char *number,void *param_2,uint32_t *value,scpi_unit *units)
+int scpi_parse_unsigned_long(scpi_number *number,void *param_2,uint32_t *value,scpi_unit *units)
 
 {
   int iVar1;
   
   iVar1 = scpi_apply_suffix(number,units);
   if (iVar1 == 0) {
-    iVar1 = scpi_number_to_unsigned_long(number,value,(int)*(short *)(number + 0x22));
-    *(undefined2 *)(value + 1) = *(undefined2 *)(number + 0x24);
+    iVar1 = scpi_number_to_unsigned_long(number,value,(int)number->scale);
+    *(int16_t *)(value + 1) = number->unit;
   }
   return iVar1;
 }
@@ -42233,25 +42326,24 @@ int scpi_parse_unsigned_long(char *number,void *param_2,uint32_t *value,scpi_uni
 /* the suffix, then a float within 9.9e37, else -11
    docs/scpi/README.md, read */
 
-int scpi_parse_float(char *number,void *param_2,float *value,scpi_unit *units)
+int scpi_parse_float(scpi_number *number,void *param_2,float *value,scpi_unit *units)
 
 {
   int iVar1;
   float fVar2;
   double a;
-  undefined4 local_c;
-  undefined4 local_8;
+  double parsed;
   
   iVar1 = scpi_apply_suffix(number,units);
   if (iVar1 == 0) {
-    iVar1 = scpi_number_to_double(number,(double *)&local_c,(int)*(short *)(number + 0x22));
+    iVar1 = scpi_number_to_double(number,&parsed,(int)number->scale);
     if (iVar1 == 0) {
-      a = fabs(__ghidra_as(double, CONCAT44(local_c,local_8)));
+      a = fabs(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, parsed, 0),__ghidra_piece(unsigned int, parsed, 4))));
       iVar1 = double_compare(a,9.9e+37);
       if (-1 < iVar1) {
-        fVar2 = double_to_float(__ghidra_as(double, CONCAT44(local_c,local_8)));
+        fVar2 = double_to_float(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, parsed, 0),__ghidra_piece(unsigned int, parsed, 4))));
         *value = fVar2;
-        *(undefined2 *)(value + 1) = *(undefined2 *)(number + 0x24);
+        *(int16_t *)(value + 1) = number->unit;
         return 0;
       }
     }
@@ -42266,7 +42358,7 @@ int scpi_parse_float(char *number,void *param_2,float *value,scpi_unit *units)
 /* the suffix, then a double within 9.9e37, else -11
    docs/scpi/README.md, read */
 
-int scpi_parse_double(char *number,void *param_2,double *value,scpi_unit *units)
+int scpi_parse_double(scpi_number *number,void *param_2,double *value,scpi_unit *units)
 
 {
   int iVar1;
@@ -42274,12 +42366,12 @@ int scpi_parse_double(char *number,void *param_2,double *value,scpi_unit *units)
   
   iVar1 = scpi_apply_suffix(number,units);
   if (iVar1 == 0) {
-    iVar1 = scpi_number_to_double(number,value,(int)*(short *)(number + 0x22));
+    iVar1 = scpi_number_to_double(number,value,(int)number->scale);
     if (iVar1 == 0) {
       a = fabs(*value);
       iVar1 = double_compare(a,9.9e+37);
       if (-1 < iVar1) {
-        *(undefined2 *)(value + 1) = *(undefined2 *)(number + 0x24);
+        *(int16_t *)(value + 1) = number->unit;
         return 0;
       }
     }
@@ -42291,10 +42383,10 @@ int scpi_parse_double(char *number,void *param_2,double *value,scpi_unit *units)
 
 /* 0002609a */
 
-/* a parsed number as a signed 16-bit value, -11 out of range
+/* a parsed number as a signed 16-bit value, -11 out of range; the scale a word (0x260b2)
    docs/scpi/README.md, run */
 
-int scpi_number_to_short(char *number,int16_t *value,int scale)
+int scpi_number_to_short(scpi_number *number,int16_t *value,int scale)
 
 {
   int iVar1;
@@ -42302,25 +42394,25 @@ int scpi_number_to_short(char *number,int16_t *value,int scale)
   short sVar3;
   int iVar4;
   
-  if (number[2] == 0) {
+  if (number->digits[0] == 0) {
     *value = 0;
     goto LAB_00026138;
   }
-  iVar4 = (int)*(short *)(number + 0x12) + (int)__ghidra_piece(short, scale, 2);
+  iVar4 = (int)number->exponent + (int)__ghidra_piece(short, scale, 2);
   iVar1 = iVar4 + 0x10;
   if (iVar1 < 6) {
     uVar2 = 0;
     if (0 < iVar1) {
       for (sVar3 = 0; (int)sVar3 < iVar4 + 0xf; sVar3 = sVar3 + 1) {
-        uVar2 = (short)number[sVar3 + 2] + uVar2 * 10;
+        uVar2 = (short)number->digits[sVar3] + uVar2 * 10;
       }
       if (0xccc < uVar2) goto LAB_00026132;
-      uVar2 = (short)number[sVar3 + 2] + uVar2 * 10;
+      uVar2 = (short)number->digits[sVar3] + uVar2 * 10;
     }
-    if ((-1 < iVar1) && (4 < number[iVar4 + 0x12])) {
+    if ((-1 < iVar1) && (4 < number->suffix[iVar4 + -4])) {
       uVar2 = uVar2 + 1;
     }
-    if (*(short *)number == 0) {
+    if (number->negative == 0) {
       if (0x7fff < uVar2) goto LAB_00026132;
       *value = uVar2;
     }
@@ -42341,10 +42433,10 @@ LAB_00026132:
 
 /* 00026140 */
 
-/* its magnitude as an unsigned 16-bit value
+/* its magnitude as an unsigned 16-bit value; the scale a word (0x26158)
    docs/scpi/README.md, run */
 
-int scpi_number_to_unsigned_short(char *number,uint16_t *value,int scale)
+int scpi_number_to_unsigned_short(scpi_number *number,uint16_t *value,int scale)
 
 {
   ushort uVar2;
@@ -42353,26 +42445,26 @@ int scpi_number_to_unsigned_short(char *number,uint16_t *value,int scale)
   short sVar4;
   int iVar5;
   
-  if (number[2] == 0) {
+  if (number->digits[0] == 0) {
     *value = 0;
 LAB_000261dc:
     iVar1 = 0;
   }
   else {
-    iVar5 = (int)*(short *)(number + 0x12) + (int)__ghidra_piece(short, scale, 2);
+    iVar5 = (int)number->exponent + (int)__ghidra_piece(short, scale, 2);
     iVar1 = iVar5 + 0x10;
     if (iVar1 < 6) {
       uVar3 = 0;
       uVar2 = 0;
       if (0 < iVar1) {
         for (sVar4 = 0; (int)sVar4 < iVar5 + 0xf; sVar4 = sVar4 + 1) {
-          uVar3 = (short)number[sVar4 + 2] + uVar3 * 10;
+          uVar3 = (short)number->digits[sVar4] + uVar3 * 10;
         }
         if (0x1999 < uVar3) goto LAB_000261cc;
         uVar3 = uVar3 * 10;
-        uVar2 = (ushort)number[sVar4 + 2];
+        uVar2 = (ushort)number->digits[sVar4];
       }
-      if ((-1 < iVar1) && (4 < number[iVar5 + 0x12])) {
+      if ((-1 < iVar1) && (4 < number->suffix[iVar5 + -4])) {
         uVar2 = uVar2 + 1;
       }
       if ((uVar3 != 0xfffa) || (uVar2 < 6)) {
@@ -42389,10 +42481,10 @@ LAB_000261cc:
 
 /* 000261e4 */
 
-/* as a signed 32-bit value
+/* as a signed 32-bit value; the scale a word (0x261fc)
    docs/scpi/README.md, run */
 
-int scpi_number_to_long(char *number,int32_t *value,int scale)
+int scpi_number_to_long(scpi_number *number,int32_t *value,int scale)
 
 {
   int iVar1;
@@ -42400,11 +42492,11 @@ int scpi_number_to_long(char *number,int32_t *value,int scale)
   short sVar3;
   int iVar4;
   
-  if (number[2] == 0) {
+  if (number->digits[0] == 0) {
     *value = 0;
   }
   else {
-    iVar4 = (int)*(short *)(number + 0x12) + (int)__ghidra_piece(short, scale, 2);
+    iVar4 = (int)number->exponent + (int)__ghidra_piece(short, scale, 2);
     iVar1 = iVar4 + 0x10;
     if (10 < iVar1) {
       return -0xb;
@@ -42412,17 +42504,17 @@ int scpi_number_to_long(char *number,int32_t *value,int scale)
     uVar2 = 0;
     if (0 < iVar1) {
       for (sVar3 = 0; (int)sVar3 < iVar4 + 0xf; sVar3 = sVar3 + 1) {
-        uVar2 = (int)number[sVar3 + 2] + uVar2 * 10;
+        uVar2 = (int)number->digits[sVar3] + uVar2 * 10;
       }
       if (0xccccccc < uVar2) {
         return -0xb;
       }
-      uVar2 = (int)number[sVar3 + 2] + uVar2 * 10;
+      uVar2 = (int)number->digits[sVar3] + uVar2 * 10;
     }
-    if ((-1 < iVar1) && (4 < number[iVar4 + 0x12])) {
+    if ((-1 < iVar1) && (4 < number->suffix[iVar4 + -4])) {
       uVar2 = uVar2 + 1;
     }
-    if (*(short *)number == 0) {
+    if (number->negative == 0) {
       if (0x7fffffff < uVar2) {
         return -0xb;
       }
@@ -42441,10 +42533,10 @@ int scpi_number_to_long(char *number,int32_t *value,int scale)
 
 /* 0002628a */
 
-/* its magnitude as an unsigned 32-bit value
+/* its magnitude as an unsigned 32-bit value; the scale a word (0x262a2)
    docs/scpi/README.md, run */
 
-int scpi_number_to_unsigned_long(char *number,uint32_t *value,int scale)
+int scpi_number_to_unsigned_long(scpi_number *number,uint32_t *value,int scale)
 
 {
   int iVar1;
@@ -42453,26 +42545,26 @@ int scpi_number_to_unsigned_long(char *number,uint32_t *value,int scale)
   short sVar4;
   int iVar5;
   
-  if (number[2] == 0) {
+  if (number->digits[0] == 0) {
     *value = 0;
 LAB_00026324:
     iVar1 = 0;
   }
   else {
-    iVar5 = (int)*(short *)(number + 0x12) + (int)__ghidra_piece(short, scale, 2);
+    iVar5 = (int)number->exponent + (int)__ghidra_piece(short, scale, 2);
     iVar1 = iVar5 + 0x10;
     if (iVar1 < 0xb) {
       uVar2 = 0;
       uVar3 = 0;
       if (0 < iVar1) {
         for (sVar4 = 0; (int)sVar4 < iVar5 + 0xf; sVar4 = sVar4 + 1) {
-          uVar2 = (int)number[sVar4 + 2] + uVar2 * 10;
+          uVar2 = (int)number->digits[sVar4] + uVar2 * 10;
         }
         if (0x19999999 < uVar2) goto LAB_00026316;
         uVar2 = uVar2 * 10;
-        uVar3 = (uint)number[sVar4 + 2];
+        uVar3 = (uint)number->digits[sVar4];
       }
-      if ((-1 < iVar1) && (4 < number[iVar5 + 0x12])) {
+      if ((-1 < iVar1) && (4 < number->suffix[iVar5 + -4])) {
         uVar3 = uVar3 + 1;
       }
       if ((uVar2 != 0xfffffffa) || (uVar3 < 6)) {
@@ -42489,18 +42581,21 @@ LAB_00026316:
 
 /* 0002632c */
 
-/* nonzero after rounding
+/* nonzero after rounding; the scale a word (0x26340)
    docs/scpi/README.md, read */
 
-void scpi_number_to_boolean(char *number,uint16_t *value,int scale)
+void scpi_number_to_boolean(scpi_number *number,uint16_t *value,int scale)
 
 {
-  if (number[2] != 0) {
-    if ((int)*(short *)(number + 0x12) + (int)__ghidra_piece(short, scale, 2) == -0x10) {
-      *value = (ushort)(4 < number[2]);
+  int iVar1;
+  
+  if (number->digits[0] != 0) {
+    iVar1 = (int)number->exponent + (int)__ghidra_piece(short, scale, 2);
+    if (iVar1 == -0x10) {
+      *value = (ushort)(4 < number->digits[0]);
       return;
     }
-    if (-0x11 < (int)*(short *)(number + 0x12) + (int)__ghidra_piece(short, scale, 2)) {
+    if (-0x11 < iVar1) {
       *value = 1;
       return;
     }
@@ -42515,7 +42610,7 @@ void scpi_number_to_boolean(char *number,uint16_t *value,int scale)
 /* a string as it is
    docs/scpi/README.md, read */
 
-int scpi_format_text(void *output,char **value)
+int scpi_format_text(scpi_port *output,char **value)
 
 {
   char cVar1;
@@ -42529,7 +42624,7 @@ int scpi_format_text(void *output,char **value)
     cVar1 = *pcVar3;
     pcVar3 = pcVar3 + 1;
   } while (cVar1 != 0);
-  (**(code **)(*(int *)((int)output + 4) + 0x18))(output,*value,iVar2);
+  (*(code *)output->methods->write)(output,*value,iVar2);
   return 0;
 }
 
@@ -42539,20 +42634,20 @@ int scpi_format_text(void *output,char **value)
 /* a string in double quotes, each quote doubled
    docs/scpi/README.md, read */
 
-int scpi_format_string(void *output,char **value)
+int scpi_format_string(scpi_port *output,char **value)
 
 {
   char *pcVar1;
   
   pcVar1 = *value;
-  (**(code **)(*(int *)((int)output + 4) + 0x14))(output,0x22);
+  (*(code *)output->methods->put)(output,0x22);
   for (; *pcVar1 != 0; pcVar1 = pcVar1 + 1) {
-    (**(code **)(*(int *)((int)output + 4) + 0x14))(output,(int)*pcVar1);
+    (*(code *)output->methods->put)(output,(int)*pcVar1);
     if (*pcVar1 == '\"') {
-      (**(code **)(*(int *)((int)output + 4) + 0x14))(output,0x22);
+      (*(code *)output->methods->put)(output,0x22);
     }
   }
-  (**(code **)(*(int *)((int)output + 4) + 0x14))(output,0x22);
+  (*(code *)output->methods->put)(output,0x22);
   return 0;
 }
 
@@ -42562,7 +42657,7 @@ int scpi_format_string(void *output,char **value)
 /* 0 or 1
    docs/scpi/README.md, read */
 
-int scpi_format_boolean(void *output,short *value)
+int scpi_format_boolean(scpi_port *output,short *value)
 
 {
   undefined1 uVar1;
@@ -42573,7 +42668,7 @@ int scpi_format_boolean(void *output,short *value)
   else {
     uVar1 = 0x31;
   }
-  (**(code **)(*(int *)((int)output + 4) + 0x14))(output,uVar1);
+  (*(code *)output->methods->put)(output,uVar1);
   return 0;
 }
 
@@ -42583,10 +42678,10 @@ int scpi_format_boolean(void *output,short *value)
 /* text of a given length; returns -90 always, for a reason not known
    docs/scpi/README.md, read */
 
-int scpi_format_counted_text(void *output,short *text)
+int scpi_format_counted_text(scpi_port *output,short *text)
 
 {
-  (**(code **)(*(int *)((int)output + 4) + 0x18))(output,*(undefined4 *)(text + 1),(int)*text);
+  (*(code *)output->methods->write)(output,*(undefined4 *)(text + 1),(int)*text);
   return -0x5a;
 }
 
@@ -42596,7 +42691,7 @@ int scpi_format_counted_text(void *output,short *text)
 /* the keyword for the value, from the node's list
    docs/scpi/README.md, read */
 
-int scpi_format_choice(void *output,short *value,int *param_3)
+int scpi_format_choice(scpi_port *output,short *value,int *param_3)
 
 {
   char cVar1;
@@ -42621,7 +42716,7 @@ int scpi_format_choice(void *output,short *value,int *param_3)
         pcVar5 = pcVar5 + 1;
       } while (cVar1 != 0);
 LAB_000264c6:
-      (**(code **)(*(int *)((int)output + 4) + 0x18))(output,pcVar4,iVar2);
+      (*(code *)output->methods->write)(output,pcVar4,iVar2);
       iVar2 = 0;
     }
     else {
@@ -42678,7 +42773,7 @@ int scpi_unsigned_to_digits(uint32_t value,char *digits,short *start)
 /* + or -, then the digits
    docs/scpi/README.md, read */
 
-int scpi_format_long(void *output,int32_t *value)
+int scpi_format_long(scpi_port *output,int32_t *value)
 
 {
   int iVar1;
@@ -42702,7 +42797,7 @@ int scpi_format_long(void *output,int32_t *value)
       local_6 = local_6 + -1;
       acStack_18[local_6] = '-';
     }
-    (**(code **)(*(int *)((int)output + 4) + 0x18))(output,acStack_18 + local_6,0x11 - local_6);
+    (*(code *)output->methods->write)(output,acStack_18 + local_6,0x11 - local_6);
     iVar1 = 0;
   }
   return iVar1;
@@ -42714,7 +42809,7 @@ int scpi_format_long(void *output,int32_t *value)
 /* through scpi_format_long
    docs/scpi/README.md, read */
 
-int scpi_format_short(void *output,short *value)
+int scpi_format_short(scpi_port *output,short *value)
 
 {
   int iVar1;
@@ -42731,7 +42826,7 @@ int scpi_format_short(void *output,short *value)
 /* + and the digits
    docs/scpi/README.md, read */
 
-int scpi_format_unsigned_long(void *output,uint32_t *value)
+int scpi_format_unsigned_long(scpi_port *output,uint32_t *value)
 
 {
   int iVar1;
@@ -42742,7 +42837,7 @@ int scpi_format_unsigned_long(void *output,uint32_t *value)
   if (iVar1 == 0) {
     local_6 = local_6 + -1;
     acStack_18[local_6] = '+';
-    (**(code **)(*(int *)((int)output + 4) + 0x18))(output,acStack_18 + local_6,0x11 - local_6);
+    (*(code *)output->methods->write)(output,acStack_18 + local_6,0x11 - local_6);
     iVar1 = 0;
   }
   return iVar1;
@@ -42754,7 +42849,7 @@ int scpi_format_unsigned_long(void *output,uint32_t *value)
 /* through scpi_format_unsigned_long
    docs/scpi/README.md, read */
 
-int scpi_format_unsigned_short(void *output,uint16_t *value)
+int scpi_format_unsigned_short(scpi_port *output,uint16_t *value)
 
 {
   int iVar1;
@@ -42771,7 +42866,7 @@ int scpi_format_unsigned_short(void *output,uint16_t *value)
 /* a definite-length block, #, the count of length digits, the length, then the data
    docs/scpi/README.md, read */
 
-int scpi_format_block(void *output,uint32_t *block)
+int scpi_format_block(scpi_port *output,uint32_t *block)
 
 {
   char cVar1;
@@ -42786,9 +42881,8 @@ int scpi_format_block(void *output,uint32_t *block)
     acStack_1a[local_6] = -cVar1 + 'A';
     local_6 = local_6 + -1;
     acStack_1a[local_6] = '#';
-    (**(code **)(*(int *)((int)output + 4) + 0x18))
-              (output,acStack_1a + local_6,(char)(-cVar1 + 0x11) + 2);
-    (**(code **)(*(int *)((int)output + 4) + 0x1c))(output,block[1],*block);
+    (*(code *)output->methods->write)(output,acStack_1a + local_6,(char)(-cVar1 + 0x11) + 2);
+    (*(code *)output->methods->write_block)(output,block[1],*block);
     iVar2 = 0;
   }
   else {
@@ -42821,7 +42915,7 @@ int scpi_format_double_array(int param_1,int *param_2)
     if (iVar3 != 0) {
       (**(code **)(*(int *)(param_1 + 4) + 0x14))(param_1,0x2c);
     }
-    iVar2 = scpi_format_double((void *)param_1,value);
+    iVar2 = scpi_format_double((scpi_port *)param_1,value);
     if (iVar2 != 0) break;
     iVar3 = iVar3 + 1;
     value = value + 1;
@@ -42887,7 +42981,7 @@ int scpi_format_resolution_array(int param_1,int *param_2)
     if (iVar3 != 0) {
       (**(code **)(*(int *)(param_1 + 4) + 0x14))(param_1,0x2c);
     }
-    iVar2 = scpi_format_double_resolution((void *)param_1,value,resolution);
+    iVar2 = scpi_format_double_resolution((scpi_port *)param_1,value,resolution);
     if (iVar2 != 0) break;
     iVar3 = iVar3 + 1;
     value = value + 1;
@@ -42933,7 +43027,7 @@ int scpi_format_array(void *param_1,char *param_2)
 /* by its kind, a block or a resolution array, then the record's release callback
    docs/scpi/README.md, read */
 
-int scpi_format_resolution_array_record(void *output,char *record)
+int scpi_format_resolution_array_record(scpi_port *output,char *record)
 
 {
   int iVar1;
@@ -42962,7 +43056,7 @@ int scpi_format_resolution_array_record(void *output,char *record)
 /* 15 significant digits by scpi_real_to_text
    docs/scpi/README.md, read */
 
-int scpi_format_double(void *output,double *value)
+int scpi_format_double(scpi_port *output,double *value)
 
 {
   int iVar1;
@@ -42970,7 +43064,7 @@ int scpi_format_double(void *output,double *value)
   
   iVar1 = scpi_real_to_text(*(int *)value,*(int *)((int)value + 4),auStack_1c,0xf,3,-0x134,1);
   if (iVar1 == 0) {
-    (**(code **)(*(int *)((int)output + 4) + 0x18))(output,auStack_1c,0x16);
+    (*(code *)output->methods->write)(output,auStack_1c,0x16);
     iVar1 = 0;
   }
   return iVar1;
@@ -42982,7 +43076,7 @@ int scpi_format_double(void *output,double *value)
 /* 6 significant digits by scpi_real_to_text
    docs/scpi/README.md, read */
 
-int scpi_format_float(void *output,float *value)
+int scpi_format_float(scpi_port *output,float *value)
 
 {
   int iVar1;
@@ -42996,7 +43090,7 @@ int scpi_format_float(void *output,float *value)
   local_20 = (int)((ulonglong)__ghidra_bits(dVar2) >> 0x20);
   iVar1 = scpi_real_to_text(local_20,local_1c,auStack_18,6,3,-0x134,1);
   if (iVar1 == 0) {
-    (**(code **)(*(int *)((int)output + 4) + 0x18))(output,auStack_18,0xd);
+    (*(code *)output->methods->write)(output,auStack_18,0xd);
     iVar1 = 0;
   }
   return iVar1;
@@ -43008,7 +43102,7 @@ int scpi_format_float(void *output,float *value)
 /* a double whose record gives either its digits or its resolution
    docs/scpi/README.md, read */
 
-int scpi_format_double_precision(int param_1,int *param_2)
+int scpi_format_double_precision(scpi_port *output,int *param_2)
 
 {
   char cVar1;
@@ -43036,7 +43130,7 @@ int scpi_format_double_precision(int param_1,int *param_2)
       cVar1 = *pcVar3;
       pcVar3 = pcVar3 + 1;
     } while (cVar1 != 0);
-    (**(code **)(*(int *)(param_1 + 4) + 0x18))(param_1,acStack_1c,iVar2);
+    (*(code *)output->methods->write)(output,acStack_1c,iVar2);
     iVar2 = 0;
   }
   return iVar2;
@@ -43048,7 +43142,7 @@ int scpi_format_double_precision(int param_1,int *param_2)
 /* 15 digits to the resolution given
    docs/scpi/README.md, read */
 
-int scpi_format_double_resolution(void *output,double *value,short *resolution)
+int scpi_format_double_resolution(scpi_port *output,double *value,short *resolution)
 
 {
   char cVar1;
@@ -43066,7 +43160,7 @@ int scpi_format_double_resolution(void *output,double *value,short *resolution)
       cVar1 = *pcVar3;
       pcVar3 = pcVar3 + 1;
     } while (cVar1 != 0);
-    (**(code **)(*(int *)((int)output + 4) + 0x18))(output,acStack_1c,iVar2);
+    (*(code *)output->methods->write)(output,acStack_1c,iVar2);
     iVar2 = 0;
   }
   return iVar2;
@@ -43078,7 +43172,7 @@ int scpi_format_double_resolution(void *output,double *value,short *resolution)
 /* 6 digits to the resolution the value carries
    docs/scpi/README.md, read */
 
-int scpi_format_float_resolution(void *output,float *value)
+int scpi_format_float_resolution(scpi_port *output,float *value)
 
 {
   char cVar1;
@@ -43101,7 +43195,7 @@ int scpi_format_float_resolution(void *output,float *value)
       cVar1 = *pcVar3;
       pcVar3 = pcVar3 + 1;
     } while (cVar1 != 0);
-    (**(code **)(*(int *)((int)output + 4) + 0x18))(output,acStack_18,iVar2);
+    (*(code *)output->methods->write)(output,acStack_18,iVar2);
     iVar2 = 0;
   }
   return iVar2;
@@ -43147,36 +43241,36 @@ int scpi_parse_message_unit(void *context,short *reset_path)
   undefined4 uVar5;
   undefined4 *local_32;
   short local_2e;
-  ushort auStack_2c [19];
+  scpi_token token;
   short local_6;
   
   *(undefined4 *)(*(int *)((int)context + 10) + 10) = 0;
-  iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
+  iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe));
   if ((iVar2 == 4) &&
-     (iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe)),
+     (iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe)),
      iVar2 == 3)) {
     iVar4 = -0x36;
     goto LAB_00026e5a;
   }
   if (iVar2 == 0xc) {
     scpi_path_reset(*(undefined4 **)((int)context + 6),*(undefined4 *)((int)context + 0x12));
-    iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
+    iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe));
     if (0x12 < iVar2) {
 LAB_00026b6e:
       while (iVar2 == 0x15) {
-        iVar4 = scpi_header_step((short *)auStack_2c,*(int **)((int)context + 6),unaff_D5);
+        iVar4 = scpi_header_step(&token.digit,*(int **)((int)context + 6),unaff_D5);
         if (iVar4 != 0) goto LAB_00026e5a;
-        iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
+        iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe));
       }
       if (0x12 < iVar2) {
-        iVar4 = scpi_header_resolve(auStack_2c,*(int **)((int)context + 10),&local_2e,&local_32,
+        iVar4 = scpi_header_resolve(&token,*(int **)((int)context + 10),&local_2e,&local_32,
                                     *(undefined4 **)((int)context + 6),0,(ushort)(iVar2 == 0x14),
                                     *(undefined4 *)((int)context + 0xe),unaff_D5);
 LAB_00026bae:
         if (iVar4 != 0) goto LAB_00026e5a;
-        iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
+        iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe));
         if (iVar2 != 4) goto LAB_00026e12;
-        iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
+        iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe));
         if (iVar2 != 2) {
           if (iVar2 != 1) {
             if ((0xc < iVar2) && (iVar2 < 0x14)) {
@@ -43201,16 +43295,16 @@ LAB_00026bae:
                 case 0x16:
                   uVar5 = *(undefined4 *)(unaff_D7 + 4);
 LAB_00026c84:
-                  iVar4 = (*pcVar1)(auStack_2c,*(undefined4 *)((int)context + 10),
+                  iVar4 = (*pcVar1)(&token,*(undefined4 *)((int)context + 10),
                                     *(int *)(*(int *)((int)context + 10) + 10) + (int)local_2e,uVar5
                                    );
                   break;
                 case 0x40:
-                  iVar4 = (*pcVar1)(auStack_2c,*(undefined4 *)((int)context + 10),
+                  iVar4 = (*pcVar1)(&token,*(undefined4 *)((int)context + 10),
                                     *(int *)(*(int *)((int)context + 10) + 10) + (int)local_2e);
                   break;
                 case 0x62:
-                  iVar4 = (*pcVar1)(auStack_2c,*(undefined4 *)((int)context + 10),
+                  iVar4 = (*pcVar1)(&token,*(undefined4 *)((int)context + 10),
                                     *(int *)(*(int *)((int)context + 10) + 10) + (int)local_2e,
                                     *(undefined2 *)((int)context + 4),*(undefined4 *)context,
                                     *(undefined4 *)((int)context + 0xe),
@@ -43226,16 +43320,18 @@ LAB_00026d2a:
                 if (iVar4 != 0) goto LAB_00026e5a;
                 local_2e = *unaff_D7 + local_2e;
                 local_32 = (undefined4 *)*local_32;
-                iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
+                iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe))
+                ;
                 if (iVar2 == 4) {
-                  iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe)
-                                         );
+                  iVar2 = scpi_scan_token(*(scpi_port **)context,&token,
+                                          *(int **)((int)context + 0xe));
                 }
                 if (iVar2 != 9) goto LAB_00026e12;
-                iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
+                iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe))
+                ;
                 if (iVar2 == 4) {
-                  iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe)
-                                         );
+                  iVar2 = scpi_scan_token(*(scpi_port **)context,&token,
+                                          *(int **)((int)context + 0xe));
                 }
                 if ((iVar2 < 0xd) || (0x13 < iVar2)) goto LAB_00026e12;
               } while( true );
@@ -43253,10 +43349,10 @@ LAB_00026b32:
   else {
     if (0x12 < iVar2) goto LAB_00026b6e;
     if (iVar2 == 10) {
-      iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
+      iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe));
       if ((iVar2 != 0x13) && (iVar2 != 0x14)) goto LAB_00026b32;
       iVar4 = scpi_common_header_resolve
-                        (auStack_2c,*(int **)((int)context + 10),&local_2e,(int *)&local_32,0,
+                        (&token,*(int **)((int)context + 10),&local_2e,(int *)&local_32,0,
                          (ushort)(iVar2 == 0x14),*(undefined4 *)((int)context + 0xe),
                          *(undefined4 *)((int)context + 0x16));
       goto LAB_00026bae;
@@ -43294,7 +43390,7 @@ LAB_00026e5a:
     iVar3 = condition_is_command_error(iVar4);
     if (iVar3 == 0) {
       while ((3 < iVar2 || (iVar2 < 1))) {
-        iVar2 = scpi_scan_token(*(void **)context,auStack_2c,*(int **)((int)context + 0xe));
+        iVar2 = scpi_scan_token(*(scpi_port **)context,&token,*(int **)((int)context + 0xe));
       }
       if (iVar2 == 1) {
         *reset_path = 0;
@@ -43316,267 +43412,265 @@ LAB_00026e5a:
 /* the SCPI lexer: reads characters through the input's own routine and classifies them by the table
    at 0x277ec */
 
-int scpi_scan_token(void *input,ushort *param_2,int *param_3)
+int scpi_scan_token(scpi_port *input,scpi_token *token,int *param_3)
 
 {
   code *pcVar1;
   char cVar2;
-  ushort uVar3;
+  bool bVar3;
   bool bVar4;
-  bool bVar5;
-  ushort uVar8;
-  short sVar9;
-  ushort uVar10;
-  undefined4 uVar6;
-  ushort uVar11;
-  int iVar7;
-  short sVar13;
-  uint uVar12;
+  ushort uVar7;
+  short sVar8;
+  ushort uVar9;
+  uint32_t uVar5;
+  int iVar6;
+  short sVar10;
+  uint uVar11;
   short local_e;
   
-  pcVar1 = *(code **)input;
-  uVar8 = (*pcVar1)(input);
-  if (0x1f < (ushort)(short)(char)(&LAB_000277ec)[(short)uVar8]) {
+  pcVar1 = (code *)input->read;
+  uVar7 = (*pcVar1)(input);
+  if (0x1f < (ushort)(short)(char)(&LAB_000277ec)[(short)uVar7]) {
 LAB_00027380:
     return -0x27;
   }
                     /* WARNING: Switch is manually overridden */
-  switch((short)(char)(&LAB_000277ec)[(short)uVar8]) {
+  switch((short)(char)(&LAB_000277ec)[(short)uVar7]) {
   case 0:
-    uVar11 = 0;
+    sVar8 = 0;
     do {
-      uVar8 = uVar8 & 0xdf;
-      uVar10 = uVar11;
+      uVar7 = uVar7 & 0xdf;
+      sVar10 = sVar8;
       while( true ) {
-        uVar11 = uVar10 + 1;
-        *(char *)((int)param_2 + (short)uVar10 + 2) = (char)uVar8;
-        uVar8 = (*pcVar1)(input);
-        cVar2 = (&LAB_000277ec)[(short)uVar8];
+        sVar8 = sVar10 + 1;
+        *(char *)((int)token + sVar10 + 2) = (char)uVar7;
+        uVar7 = (*pcVar1)(input);
+        cVar2 = (&LAB_000277ec)[(short)uVar7];
         if (cVar2 == 0) break;
         if (2 < cVar2) {
-          *param_2 = uVar11;
-          if (uVar8 == 0x3f) {
+          (token->number).negative = sVar8;
+          if (uVar7 == 0x3f) {
             return 0x14;
           }
-          if (uVar8 == 0x3a) {
+          if (uVar7 == 0x3a) {
             return 0x15;
           }
           if (cVar2 != 0x1b) {
-            (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
+            (*(code *)input->methods->unread)(input);
             return 0x13;
           }
           goto switchD_00026f1c_caseD_1b;
         }
-        uVar10 = uVar11;
-        if (0xf < (short)uVar11) goto LAB_00026fb6;
+        sVar10 = sVar8;
+        if (0xf < sVar8) goto LAB_00026fb6;
       }
-    } while ((short)uVar11 < 0x10);
+    } while (sVar8 < 0x10);
 LAB_00026fb6:
-    iVar7 = -0x10;
+    iVar6 = -0x10;
     break;
   case 1:
   case 0x12:
-    *param_2 = 0;
+    (token->number).negative = 0;
 LAB_0002704a:
-    iVar7 = scpi_scan_number(param_2,1,(int)(short)uVar8,input);
+    iVar6 = scpi_scan_number(&token->number,1,(int)(short)uVar7,input);
     break;
   default:
     goto LAB_00027380;
   case 3:
     do {
-      sVar9 = (*pcVar1)(input);
-    } while ((&LAB_000277ec)[sVar9] == 3);
-    (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
-    iVar7 = 4;
+      sVar8 = (*pcVar1)(input);
+    } while ((&LAB_000277ec)[sVar8] == 3);
+    (*(code *)input->methods->unread)(input);
+    iVar6 = 4;
     break;
   case 4:
-    uVar8 = (*pcVar1)(input);
-    if ((&LAB_000277ec)[(short)uVar8] == 1) {
-      iVar7 = 0;
-      sVar9 = uVar8 - 0x30;
-      if (uVar8 == 0x30) {
-        param_2[2] = 1;
+    uVar7 = (*pcVar1)(input);
+    if ((&LAB_000277ec)[(short)uVar7] == 1) {
+      uVar5 = 0;
+      sVar8 = uVar7 - 0x30;
+      if (uVar7 == 0x30) {
+        (token->block).indefinite = 1;
       }
       else {
-        param_2[2] = 0;
-        for (sVar13 = 0; sVar13 < sVar9; sVar13 = sVar13 + 1) {
-          uVar8 = (*pcVar1)(input);
-          if ((&LAB_000277ec)[(short)uVar8] != 1) {
-            if ((&LAB_000277ec)[(short)uVar8] != 0x1b) {
-              (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
+        (token->block).indefinite = 0;
+        for (sVar10 = 0; sVar10 < sVar8; sVar10 = sVar10 + 1) {
+          uVar7 = (*pcVar1)(input);
+          if ((&LAB_000277ec)[(short)uVar7] != 1) {
+            if ((&LAB_000277ec)[(short)uVar7] != 0x1b) {
+              (*(code *)input->methods->unread)(input);
               return -0x12;
             }
             goto switchD_00026f1c_caseD_1b;
           }
-          iVar7 = (short)uVar8 + -0x30 + iVar7 * 10;
+          uVar5 = (short)uVar7 + -0x30 + uVar5 * 10;
         }
-        *(int *)param_2 = iVar7;
+        (token->block).length = uVar5;
       }
       return 0x12;
     }
-    uVar12 = 0;
-    uVar11 = uVar8 & 0xdf;
-    if (uVar11 == 0x48) {
-      uVar11 = 0x10;
+    uVar11 = 0;
+    uVar9 = uVar7 & 0xdf;
+    if (uVar9 == 0x48) {
+      sVar8 = 0x10;
       local_e = 4;
 LAB_00027148:
+      bVar3 = true;
       bVar4 = true;
-      bVar5 = true;
       do {
-        uVar8 = (*pcVar1)(input);
-        cVar2 = (&LAB_000277ec)[(short)uVar8];
+        uVar7 = (*pcVar1)(input);
+        cVar2 = (&LAB_000277ec)[(short)uVar7];
         if (cVar2 == 0) {
-          sVar9 = (uVar8 & 0xdf) - 0x37;
+          sVar10 = (uVar7 & 0xdf) - 0x37;
         }
         else {
           if (cVar2 != 1) {
-            if (bVar4) {
+            if (bVar3) {
               if (cVar2 != 0x1b) {
-                (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
+                (*(code *)input->methods->unread)(input);
                 return -0x14;
               }
             }
             else {
-              (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
+              (*(code *)input->methods->unread)(input);
               if (cVar2 != 0x1b) {
-                if (!bVar5) {
+                if (!bVar4) {
                   return -0xb;
                 }
-                *param_2 = uVar11;
-                *(uint *)(param_2 + 1) = uVar12;
+                (token->number).negative = sVar8;
+                (token->non_decimal).value = uVar11;
                 return 0xd;
               }
             }
             goto switchD_00026f1c_caseD_1b;
           }
-          sVar9 = uVar8 - 0x30;
+          sVar10 = uVar7 - 0x30;
         }
-        if ((short)uVar11 <= sVar9) {
+        if (sVar8 <= sVar10) {
           return -0x14;
         }
-        if ((__ghidra_shl((short)uVar11 + -1, (0x20U - (int)local_e & 0x3f)) & uVar12) == 0) {
-          uVar12 = (int)sVar9 | __ghidra_shl(uVar12, (int)local_e);
-          bVar4 = false;
+        if ((__ghidra_shl(sVar8 + -1, (0x20U - (int)local_e & 0x3f)) & uVar11) == 0) {
+          uVar11 = (int)sVar10 | __ghidra_shl(uVar11, (int)local_e);
+          bVar3 = false;
         }
         else {
-          bVar5 = false;
+          bVar4 = false;
         }
       } while( true );
     }
-    if (uVar11 == 0x42) {
-      uVar11 = 2;
+    if (uVar9 == 0x42) {
+      sVar8 = 2;
       local_e = 1;
       goto LAB_00027148;
     }
-    if (uVar11 == 0x51) {
-      uVar11 = 8;
+    if (uVar9 == 0x51) {
+      sVar8 = 8;
       local_e = 3;
       goto LAB_00027148;
     }
-    if ((&LAB_000277ec)[(short)uVar8] != 0x1b) {
-      (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
+    if ((&LAB_000277ec)[(short)uVar7] != 0x1b) {
+      (*(code *)input->methods->unread)(input);
       return -0x13;
     }
   case 0x1b:
 switchD_00026f1c_caseD_1b:
-    if (uVar8 == 0x103) {
-      iVar7 = -0x66;
+    if (uVar7 == 0x103) {
+      iVar6 = -0x66;
     }
-    else if (uVar8 == 0x104) {
-      iVar7 = -0xc;
+    else if (uVar7 == 0x104) {
+      iVar6 = -0xc;
     }
-    else if (uVar8 == 0x105) {
-      iVar7 = -0xd;
+    else if (uVar7 == 0x105) {
+      iVar6 = -0xd;
     }
     else {
-      iVar7 = -0x67;
+      iVar6 = -0x67;
     }
     break;
   case 5:
-    iVar7 = arena_alloc(0xff,param_3);
-    uVar11 = 0;
-    if (iVar7 != 0) {
+    iVar6 = arena_alloc(0xff,param_3);
+    sVar8 = 0;
+    if (iVar6 != 0) {
       do {
-        uVar10 = (*pcVar1)(input);
-        if (0xff < (short)uVar10) goto LAB_000272a6;
-        if ((uVar10 == uVar8) && (uVar10 = (*pcVar1)(input), uVar10 != uVar8)) {
-          (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
-          *(undefined1 *)(iVar7 + (short)uVar11) = 0;
-          uVar6 = arena_take(iVar7,(short)uVar11 + 1,param_3);
-          *(undefined4 *)(param_2 + 1) = uVar6;
-          *param_2 = uVar11;
+        uVar9 = (*pcVar1)(input);
+        if (0xff < (short)uVar9) goto LAB_000272a6;
+        if ((uVar9 == uVar7) && (uVar9 = (*pcVar1)(input), uVar9 != uVar7)) {
+          (*(code *)input->methods->unread)(input);
+          *(undefined1 *)(iVar6 + sVar8) = 0;
+          uVar5 = arena_take(iVar6,sVar8 + 1,param_3);
+          (token->non_decimal).value = uVar5;
+          (token->number).negative = sVar8;
           return 0xf;
         }
-        uVar3 = uVar11 + 1;
-        *(char *)(iVar7 + (short)uVar11) = (char)uVar10;
-        uVar11 = uVar3;
-      } while ((short)uVar3 < 0xff);
+        sVar10 = sVar8 + 1;
+        *(char *)(iVar6 + sVar8) = (char)uVar9;
+        sVar8 = sVar10;
+      } while (sVar10 < 0xff);
       do {
-        uVar10 = (*pcVar1)(input);
-        if (0xff < (short)uVar10) goto LAB_000272a6;
-      } while ((uVar10 != uVar8) || (uVar11 = (*pcVar1)(input), uVar11 == uVar8));
-      (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
+        uVar9 = (*pcVar1)(input);
+        if (0xff < (short)uVar9) goto LAB_000272a6;
+      } while ((uVar9 != uVar7) || (uVar9 = (*pcVar1)(input), uVar9 == uVar7));
+      (*(code *)input->methods->unread)(input);
     }
-    iVar7 = -0x34;
+    iVar6 = -0x34;
     break;
   case 7:
-    iVar7 = 0xc;
+    iVar6 = 0xc;
     break;
   case 8:
-    iVar7 = 1;
+    iVar6 = 1;
     break;
   case 9:
-    iVar7 = 0xb;
+    iVar6 = 0xb;
     break;
   case 10:
-    iVar7 = 0x10;
+    iVar6 = 0x10;
     break;
   case 0xb:
-    iVar7 = 5;
+    iVar6 = 5;
     break;
   case 0xf:
-    iVar7 = 10;
+    iVar6 = 10;
     break;
   case 0x10:
   case 0x11:
-    *param_2 = (ushort)(uVar8 == 0x2d);
-    uVar8 = (*pcVar1)(input);
-    cVar2 = (&LAB_000277ec)[(short)uVar8];
+    *(ushort *)token = (ushort)(uVar7 == 0x2d);
+    uVar7 = (*pcVar1)(input);
+    cVar2 = (&LAB_000277ec)[(short)uVar7];
     if ((cVar2 == 1) || (cVar2 == 0x12)) goto LAB_0002704a;
     if (cVar2 != 0x1b) {
-      (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
+      (*(code *)input->methods->unread)(input);
       return -0x11;
     }
     goto switchD_00026f1c_caseD_1b;
   case 0x14:
-    iVar7 = 9;
+    iVar6 = 9;
     break;
   case 0x19:
   case 0x1a:
-    iVar7 = 2;
+    iVar6 = 2;
     break;
   case 0x1c:
-    iVar7 = 3;
+    iVar6 = 3;
     break;
   case 0x1e:
-    uVar8 = (*pcVar1)(input);
-    if (((&LAB_000277ec)[(short)uVar8] == 1) && (uVar8 != 0x30)) {
-      *param_2 = uVar8 - 0x30;
+    uVar7 = (*pcVar1)(input);
+    if (((&LAB_000277ec)[(short)uVar7] == 1) && (uVar7 != 0x30)) {
+      (token->number).negative = uVar7 - 0x30;
       return 0x11;
     }
-    if ((&LAB_000277ec)[(short)uVar8] != 0x1b) {
-      (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
+    if ((&LAB_000277ec)[(short)uVar7] != 0x1b) {
+      (*(code *)input->methods->unread)(input);
       return -0x27;
     }
     goto switchD_00026f1c_caseD_1b;
   case 0x1f:
-    iVar7 = 6;
+    iVar6 = 6;
   }
-  return iVar7;
+  return iVar6;
 LAB_000272a6:
-  uVar8 = uVar10;
-  if ((&LAB_000277ec)[(short)uVar8] != 0x1b) {
-    (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
+  uVar7 = uVar9;
+  if ((&LAB_000277ec)[(short)uVar7] != 0x1b) {
+    (*(code *)input->methods->unread)(input);
     return -0x15;
   }
   goto switchD_00026f1c_caseD_1b;
@@ -43587,18 +43681,18 @@ LAB_000272a6:
 
 /* reads characters until a message terminator */
 
-void scpi_skip_to_terminator(void *input)
+void scpi_skip_to_terminator(scpi_port *input)
 
 {
   code *pcVar1;
   short sVar2;
   
-  pcVar1 = *(code **)input;
+  pcVar1 = (code *)input->read;
   do {
     sVar2 = (*pcVar1)(input);
     if ((0xff < sVar2) && (sVar2 != 0x102)) break;
   } while ((&LAB_000277ec)[sVar2] != 0x19);
-  (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
+  (*(code *)input->methods->unread)(input);
   return;
 }
 
@@ -43609,144 +43703,143 @@ void scpi_skip_to_terminator(void *input)
 /* scans a decimal number's digits, point and exponent into a parsed number; scpi_scan_token passes
    1 and the character it has read, each a long whose low word it reads */
 
-int scpi_scan_number(void *token,int have_character,int character,void *input)
+int scpi_scan_number(scpi_number *number,int have_character,int character,scpi_port *input)
 
 {
   bool bVar1;
   ushort uVar3;
   int iVar2;
   short sVar4;
-  undefined1 uVar5;
-  char cVar6;
-  uint uVar7;
+  char cVar5;
+  uint uVar6;
+  short sVar7;
   short sVar8;
   short sVar9;
-  short sVar10;
   
-  uVar7 = character & 0xffff;
+  uVar6 = character & 0xffff;
   if ((short)have_character == 0) {
-    uVar3 = (**(code **)input)(input);
-    uVar7 = (uint)uVar3;
+    uVar3 = (*(code *)input->read)(input);
+    uVar6 = (uint)uVar3;
   }
-  cVar6 = (&LAB_000277ec)[(short)uVar7];
-  sVar10 = 0;
-  sVar8 = 0;
+  cVar5 = (&LAB_000277ec)[(short)uVar6];
   sVar9 = 0;
+  sVar7 = 0;
+  sVar8 = 0;
   bVar1 = false;
   do {
-    sVar4 = (short)uVar7;
+    sVar4 = (short)uVar6;
     if (sVar4 == 0x30) {
-      sVar9 = sVar9 - sVar8;
+      sVar8 = sVar8 - sVar7;
       bVar1 = true;
-      if (sVar9 == -0x8000) {
+      if (sVar8 == -0x8000) {
         return -0x17;
       }
     }
     else {
       if (sVar4 != 0x2e) {
-        if (cVar6 == 1) break;
+        if (cVar5 == 1) break;
         if (!bVar1) goto joined_r0x0002750e;
-        sVar10 = 1;
-        *(undefined1 *)((int)token + 2) = 0;
+        sVar9 = 1;
+        number->digits[0] = 0;
         break;
       }
-      if (sVar8 != 0) goto LAB_0002752c;
-      sVar8 = 1;
+      if (sVar7 != 0) goto LAB_0002752c;
+      sVar7 = 1;
     }
-    uVar3 = (**(code **)input)(input);
-    uVar7 = (uint)uVar3;
-    cVar6 = (&LAB_000277ec)[(short)uVar3];
+    uVar3 = (*(code *)input->read)(input);
+    uVar6 = (uint)uVar3;
+    cVar5 = (&LAB_000277ec)[(short)uVar3];
   } while( true );
 LAB_0002747e:
-  sVar4 = (short)uVar7;
-  if (cVar6 == 1) {
-    sVar4 = sVar10 + 1;
-    *(char *)((int)token + sVar10 + 2) = (char)uVar7 + -0x30;
-    sVar9 = sVar9 - sVar8;
-    if (sVar9 == -0x8000) {
+  sVar4 = (short)uVar6;
+  if (cVar5 == 1) {
+    sVar4 = sVar9 + 1;
+    number->digits[sVar9] = (char)uVar6 + -0x30;
+    sVar8 = sVar8 - sVar7;
+    if (sVar8 == -0x8000) {
       return -0x17;
     }
-    sVar10 = sVar4;
+    sVar9 = sVar4;
     if (sVar4 == 0x10) goto LAB_000274a4;
   }
   else {
-    if (cVar6 != 0x12) {
-      if (sVar10 != 0) goto LAB_00027502;
+    if (cVar5 != 0x12) {
+      if (sVar9 != 0) goto LAB_00027502;
 joined_r0x0002750e:
-      if (cVar6 != 0x1b) {
+      if (cVar5 != 0x1b) {
 LAB_0002752c:
-        (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
+        (*(code *)input->methods->unread)(input);
         return -0x11;
       }
       goto joined_r0x00027514;
     }
-    if (sVar8 != 0) goto LAB_0002752c;
-    sVar8 = 1;
+    if (sVar7 != 0) goto LAB_0002752c;
+    sVar7 = 1;
   }
-  uVar3 = (**(code **)input)(input);
-  uVar7 = (uint)uVar3;
-  cVar6 = (&LAB_000277ec)[(short)uVar3];
+  uVar3 = (*(code *)input->read)(input);
+  uVar6 = (uint)uVar3;
+  cVar5 = (&LAB_000277ec)[(short)uVar3];
   goto LAB_0002747e;
 LAB_000274a4:
   while( true ) {
-    uVar3 = (**(code **)input)(input);
-    uVar7 = (uint)uVar3;
-    cVar6 = (&LAB_000277ec)[(short)uVar3];
-    if (cVar6 != 1) break;
-    if ((sVar8 == 0) && (sVar9 = sVar9 + 1, 0x7ffe < sVar9)) {
+    uVar3 = (*(code *)input->read)(input);
+    uVar6 = (uint)uVar3;
+    cVar5 = (&LAB_000277ec)[(short)uVar3];
+    if (cVar5 != 1) break;
+    if ((sVar7 == 0) && (sVar8 = sVar8 + 1, 0x7ffe < sVar8)) {
       return -0x17;
     }
   }
-  if (cVar6 != 0x12) goto LAB_00027568;
-  if (sVar8 != 0) goto LAB_0002752c;
-  sVar8 = 1;
+  if (cVar5 != 0x12) goto LAB_00027568;
+  if (sVar7 != 0) goto LAB_0002752c;
+  sVar7 = 1;
   goto LAB_000274a4;
 LAB_00027502:
-  while (sVar10 < 0x10) {
-    *(undefined1 *)((int)token + sVar10 + 2) = 0;
-    sVar9 = sVar9 + -1;
-    sVar10 = sVar10 + 1;
-    if (sVar9 == -0x8000) {
+  while (sVar9 < 0x10) {
+    number->digits[sVar9] = 0;
+    sVar8 = sVar8 + -1;
+    sVar9 = sVar9 + 1;
+    if (sVar8 == -0x8000) {
       return -0x17;
     }
   }
 LAB_00027568:
-  while (cVar6 == 3) {
-    uVar3 = (**(code **)input)(input);
-    uVar7 = (uint)uVar3;
-    cVar6 = (&LAB_000277ec)[(short)uVar3];
+  while (cVar5 == 3) {
+    uVar3 = (*(code *)input->read)(input);
+    uVar6 = (uint)uVar3;
+    cVar5 = (&LAB_000277ec)[(short)uVar3];
   }
-  *(undefined2 *)((int)token + 0x14) = 0;
-  iVar2 = scpi_scan_exponent((int)(short)uVar7,(int)token,input);
+  number->suffix_length = 0;
+  iVar2 = scpi_scan_exponent((int)(short)uVar6,number,input);
   if (iVar2 != 0) {
     return iVar2;
   }
-  iVar2 = (int)*(short *)((int)token + 0x12) + (int)sVar9;
+  iVar2 = (int)number->exponent + (int)sVar8;
   if ((0x7fff < iVar2) || (iVar2 < -0x8000)) {
     return -0x2d;
   }
-  *(short *)((int)token + 0x12) = (short)iVar2;
+  number->exponent = (int16_t)iVar2;
   do {
-    sVar4 = (**(code **)input)(input);
-    cVar6 = (&LAB_000277ec)[sVar4];
-  } while (cVar6 == 3);
-  sVar10 = *(short *)((int)token + 0x14);
-  if ((cVar6 == 0x13) || (cVar6 == 0)) {
-    while (((cVar6 == 0x11 || (((cVar6 == 0x13 || (cVar6 == 1)) || (cVar6 == 0x12)))) ||
-           (cVar6 == 0))) {
-      if (0xc < sVar10) {
+    sVar4 = (*(code *)input->read)(input);
+    cVar5 = (&LAB_000277ec)[sVar4];
+  } while (cVar5 == 3);
+  sVar9 = number->suffix_length;
+  if ((cVar5 == 0x13) || (cVar5 == 0)) {
+    while (((cVar5 == 0x11 || (((cVar5 == 0x13 || (cVar5 == 1)) || (cVar5 == 0x12)))) ||
+           (cVar5 == 0))) {
+      if (0xc < sVar9) {
         return -0x35;
       }
-      uVar5 = scpi_char_upper((int)sVar4);
-      *(undefined1 *)((int)token + sVar10 + 0x16) = uVar5;
-      sVar4 = (**(code **)input)(input);
-      sVar10 = sVar10 + 1;
-      cVar6 = (&LAB_000277ec)[sVar4];
+      cVar5 = scpi_char_upper((int)sVar4);
+      number->suffix[sVar9] = cVar5;
+      sVar4 = (*(code *)input->read)(input);
+      sVar9 = sVar9 + 1;
+      cVar5 = (&LAB_000277ec)[sVar4];
     }
   }
-  if (cVar6 != 0x1b) {
-    (**(code **)(*(int *)((int)input + 4) + 0xc))(input);
-    *(short *)((int)token + 0x14) = sVar10;
+  if (cVar5 != 0x1b) {
+    (*(code *)input->methods->unread)(input);
+    number->suffix_length = sVar9;
     return 0xe;
   }
 joined_r0x00027514:
@@ -43765,9 +43858,10 @@ joined_r0x00027514:
 
 /* 0002766e */
 
-/* scans a number's exponent after its E */
+/* scans a number's exponent after its E; the character a long whose low word it reads (0x27676);
+   -45 for an exponent beyond 32767 */
 
-undefined4 scpi_scan_exponent(undefined4 param_1,int param_2,undefined4 *param_3)
+int scpi_scan_exponent(int character,scpi_number *number,scpi_port *input)
 
 {
   bool bVar1;
@@ -43775,23 +43869,23 @@ undefined4 scpi_scan_exponent(undefined4 param_1,int param_2,undefined4 *param_3
   short sVar3;
   char cVar4;
   
-  sVar2 = scpi_char_upper((int)__ghidra_piece(short, param_1, 2));
+  sVar2 = scpi_char_upper((int)(short)character);
   if (sVar2 != 0x45) {
 LAB_000276d0:
-    (**(code **)(param_3[1] + 0xc))(param_3);
-    *(undefined2 *)(param_2 + 0x12) = 0;
+    (*(code *)input->methods->unread)(input);
+    number->exponent = 0;
     return 0;
   }
-  sVar2 = (*(code *)*param_3)(param_3);
+  sVar2 = (*(code *)input->read)(input);
   cVar4 = (&LAB_000277ec)[sVar2];
   if ((((cVar4 != 1) && (cVar4 != 0x10)) && (cVar4 != 0x11)) && (cVar4 != 3)) {
-    sVar2 = *(short *)(param_2 + 0x14);
-    *(short *)(param_2 + 0x14) = *(short *)(param_2 + 0x14) + 1;
-    *(undefined1 *)(param_2 + 0x16 + (int)sVar2) = 0x45;
+    sVar2 = number->suffix_length;
+    number->suffix_length = number->suffix_length + 1;
+    number->suffix[sVar2] = 'E';
     goto LAB_000276d0;
   }
   while (cVar4 == 3) {
-    sVar2 = (*(code *)*param_3)(param_3);
+    sVar2 = (*(code *)input->read)(input);
     cVar4 = (&LAB_000277ec)[sVar2];
   }
   bVar1 = false;
@@ -43799,40 +43893,40 @@ LAB_000276d0:
     bVar1 = true;
   }
   else if (cVar4 != 0x10) goto LAB_00027728;
-  sVar2 = (*(code *)*param_3)(param_3);
+  sVar2 = (*(code *)input->read)(input);
   cVar4 = (&LAB_000277ec)[sVar2];
 LAB_00027728:
   if (cVar4 == 1) {
     sVar2 = sVar2 + -0x30;
     while( true ) {
-      sVar3 = (*(code *)*param_3)(param_3);
+      sVar3 = (*(code *)input->read)(input);
       if ((&LAB_000277ec)[sVar3] != 1) {
         if (bVar1) {
           sVar2 = -sVar2;
         }
-        *(short *)(param_2 + 0x12) = sVar2;
-        (**(code **)(param_3[1] + 0xc))(param_3);
+        number->exponent = sVar2;
+        (*(code *)input->methods->unread)(input);
         return 0;
       }
       if (0xccb < sVar2) break;
       sVar2 = sVar3 + -0x30 + sVar2 * 10;
     }
-    return 0xffffffd3;
+    return -0x2d;
   }
   if (cVar4 != 0x1b) {
-    (**(code **)(param_3[1] + 0xc))(param_3);
-    return 0xffffffef;
+    (*(code *)input->methods->unread)(input);
+    return -0x11;
   }
   if (sVar2 != 0x103) {
     if (sVar2 == 0x104) {
-      return 0xfffffff4;
+      return -0xc;
     }
     if (sVar2 != 0x105) {
-      return 0xffffff99;
+      return -0x67;
     }
-    return 0xfffffff3;
+    return -0xd;
   }
-  return 0xffffff9a;
+  return -0x66;
 }
 
 
@@ -43853,28 +43947,30 @@ uint scpi_char_upper(uint param_1)
 /* 000278f4 */
 
 /* finds the next parameter descriptor that takes a parameter of the kind, marking optional ones it
-   passes 0xffff */
+   passes 0xffff; the kind a long whose low word it reads (0x27900) */
 
-int scpi_parameter_match(int *param_1,undefined4 param_2,void *param_3,short *param_4)
+int scpi_parameter_match(int *param_1,int kind,void *param_3,short *param_4)
 
 {
   int iVar1;
+  short sVar2;
   
+  sVar2 = (short)kind;
   iVar1 = *param_1;
   while( true ) {
     if (iVar1 == 0) {
       return -0x26;
     }
-    if (*(int *)(*(int *)(*param_1 + 4) + 0xc + __ghidra_piece(short, param_2, 2) * 4) != 0) break;
+    if (*(int *)(*(int *)(*param_1 + 4) + 0xc + sVar2 * 4) != 0) break;
     if (*(short *)(*(int *)(*param_1 + 4) + 2) == 0) {
-      return (int)scpi_parameter_kind_errors[__ghidra_piece(short, param_2, 2)];
+      return (int)scpi_parameter_kind_errors[sVar2];
     }
     *(undefined2 *)(*(int *)((int)param_3 + 10) + (int)*param_4) = 0xffff;
     *param_4 = *param_4 + **(short **)(*param_1 + 4) + 2;
     iVar1 = *(int *)*param_1;
     *param_1 = iVar1;
   }
-  *(short *)(*(int *)((int)param_3 + 10) + (int)*param_4) = __ghidra_piece(unsigned short, param_2, 2);
+  *(short *)(*(int *)((int)param_3 + 10) + (int)*param_4) = sVar2;
   *param_4 = *param_4 + 2;
   return 0;
 }
@@ -43902,7 +43998,7 @@ undefined4 scpi_parameters_finish(int *param_1,void *param_2,short *param_3)
 
 /* 000279d6 */
 
-/* how much of a token's end matches a unit's name */
+/* how much of a token's end matches a unit's name; the length a word (0x279da, 0x279f4) */
 
 short scpi_suffix_compare_tail(char *suffix,int length,char *name)
 
@@ -43922,23 +44018,22 @@ short scpi_suffix_compare_tail(char *suffix,int length,char *name)
 
 /* 00027a0c */
 
-/* a unit multiplier's power of ten, from the table at 0x27b2e; -128 for none */
+/* a unit multiplier's power of ten, from the table at 0x27b2e; -128 for none; the name a word
+   (0x27a12), the exponent a byte (0x27a1a, 0x27a26) */
 
-undefined4 scpi_multiplier_exponent(undefined2 param_1,short param_2)
+int8_t scpi_multiplier_exponent(int name)
 
 {
-  undefined4 in_D0;
   scpi_multiplier *psVar1;
   
   psVar1 = scpi_multipliers;
   do {
-    in_D0 = CONCAT22((short)((uint)in_D0 >> 0x10),param_2);
-    if (param_2 == psVar1->name) {
-      return CONCAT31((int3)((uint)in_D0 >> 8),psVar1->exponent);
+    if (__ghidra_piece(unsigned short, name, 2) == psVar1->name) {
+      return psVar1->exponent;
     }
     psVar1 = psVar1 + 1;
   } while (psVar1->name != 0);
-  return 0xffffff80;
+  return -0x80;
 }
 
 
@@ -43954,8 +44049,8 @@ short scpi_match_suffix(int length,char *suffix,scpi_unit *units,int16_t *scale)
   short sVar1;
   short sVar2;
   short sVar3;
-  short sVar4;
-  char cVar5;
+  ushort uVar4;
+  int8_t iVar5;
   short sVar6;
   
   sVar2 = (short)length;
@@ -43971,13 +44066,13 @@ short scpi_match_suffix(int length,char *suffix,scpi_unit *units,int16_t *scale)
     } while ((sVar3 == 0) || (2 < (int)sVar2 - (int)sVar3));
     if (sVar2 == sVar3) break;
     if (units[sVar1].exponent == -0x80) {
-      sVar4 = (short)*suffix;
+      uVar4 = (ushort)*suffix;
       if (sVar3 + 1 < (int)sVar2) {
-        sVar4 = (short)suffix[1] + sVar4 * 0x100;
+        uVar4 = (short)suffix[1] + uVar4 * 0x100;
       }
-      cVar5 = scpi_multiplier_exponent(0,sVar4);
-      *scale = (short)cVar5;
-      if (cVar5 != -0x80) {
+      iVar5 = scpi_multiplier_exponent((uint)uVar4);
+      *scale = (short)iVar5;
+      if (iVar5 != -0x80) {
 LAB_00027a86:
         return sVar6 + 2;
       }
@@ -43998,24 +44093,21 @@ LAB_00027a86:
    is allowed, -31 if unknown
    docs/scpi/README.md, read */
 
-int scpi_apply_suffix(char *number,scpi_unit *units)
+int scpi_apply_suffix(scpi_number *number,scpi_unit *units)
 
 {
   short sVar1;
   
-  if (*(short *)(number + 0x14) == 0) {
-    number[0x24] = 0;
-    number[0x25] = 0;
-    number[0x22] = 0;
-    number[0x23] = 0;
+  if (number->suffix_length == 0) {
+    number->unit = 0;
+    number->scale = 0;
   }
   else {
     if (units == (scpi_unit *)0x0) {
       return -9;
     }
-    sVar1 = scpi_match_suffix((int)*(short *)(number + 0x14),number + 0x16,units,
-                              (int16_t *)(number + 0x22));
-    *(short *)(number + 0x24) = sVar1;
+    sVar1 = scpi_match_suffix((int)number->suffix_length,number->suffix,units,&number->scale);
+    number->unit = sVar1;
     if (sVar1 == 0) {
       return -0x1f;
     }
@@ -44026,7 +44118,7 @@ int scpi_apply_suffix(char *number,scpi_unit *units)
 
 /* 00027b62 */
 
-/* compares a token with a keyword's short and long forms */
+/* compares a token with a keyword's short and long forms; the length a word (0x27b94) */
 
 short scpi_keyword_compare(char *token,int length,char *keyword)
 
@@ -44410,10 +44502,10 @@ void * scpi_trg_defined(void *list,uint16_t *no_setter)
 
 /* 00027fca */
 
-/* ORs bits into a register's event word and propagates
+/* ORs bits into a register's event word and propagates; the bits a word (0x27fce)
    structures.md's status registers */
 
-void status_event_set(status_model *status,status_register *reg,int bits)
+void status_event_set(status_model *status,status_register *reg,uint32_t bits)
 
 {
   reg->event = __ghidra_piece(unsigned short, bits, 2) | reg->event;
@@ -44424,25 +44516,27 @@ void status_event_set(status_model *status,status_register *reg,int bits)
 
 /* 00027fe8 */
 
-/* sets condition bits; those rising through the positive transition mask become events
+/* sets condition bits; those rising through the positive transition mask become events; the bits a
+   long whose low word it reads (0x27ff8)
    structures.md's status registers */
 
-void status_condition_set(int param_1,ushort *param_2,undefined4 param_3)
+void status_condition_set(status_model *status,status_register *reg,int bits)
 
 {
   ushort uVar1;
+  ushort uVar2;
   
-  if (param_2[7] == 0) {
-    (**(code **)(*(int *)(*(int *)(param_1 + 2) + 4) + 0x30))
-              (*(undefined4 *)(param_1 + 2),(int)(short)__ghidra_piece(short, param_3, 2));
+  uVar2 = (ushort)bits;
+  if (reg->parent_bit == 0) {
+    (*(code *)status->output->methods->status_set_bits)(status->output,(int)(short)uVar2);
   }
   else {
-    uVar1 = __ghidra_piece(unsigned short, param_3, 2) & param_2[2] & ~*param_2;
+    uVar1 = uVar2 & reg->positive_transition & ~reg->condition;
     if (uVar1 != 0) {
-      param_2[4] = uVar1 | param_2[4];
-      status_propagate((status_model *)param_1,(status_register *)param_2);
+      reg->event = uVar1 | reg->event;
+      status_propagate(status,reg);
     }
-    *param_2 = __ghidra_piece(unsigned short, param_3, 2) | *param_2;
+    reg->condition = uVar2 | reg->condition;
   }
   return;
 }
@@ -44450,25 +44544,27 @@ void status_condition_set(int param_1,ushort *param_2,undefined4 param_3)
 
 /* 00028044 */
 
-/* clears condition bits; those falling through the negative transition mask become events
+/* clears condition bits; those falling through the negative transition mask become events; the bits
+   a long whose low word it reads
    structures.md's status registers */
 
-void status_condition_clear(int param_1,ushort *param_2,undefined4 param_3)
+void status_condition_clear(status_model *status,status_register *reg,int bits)
 
 {
   ushort uVar1;
+  ushort uVar2;
   
-  if (param_2[7] == 0) {
-    (**(code **)(*(int *)(*(int *)(param_1 + 2) + 4) + 0x34))
-              (*(undefined4 *)(param_1 + 2),(int)(short)__ghidra_piece(short, param_3, 2));
+  uVar2 = (ushort)bits;
+  if (reg->parent_bit == 0) {
+    (*(code *)status->output->methods->status_clear_bits)(status->output,(int)(short)uVar2);
   }
   else {
-    uVar1 = __ghidra_piece(unsigned short, param_3, 2) & param_2[1] & *param_2;
+    uVar1 = uVar2 & reg->negative_transition & reg->condition;
     if (uVar1 != 0) {
-      param_2[4] = uVar1 | param_2[4];
-      status_propagate((status_model *)param_1,(status_register *)param_2);
+      reg->event = uVar1 | reg->event;
+      status_propagate(status,reg);
     }
-    *param_2 = ~__ghidra_piece(unsigned short, param_3, 2) & *param_2;
+    reg->condition = ~uVar2 & reg->condition;
   }
   return;
 }
@@ -44483,10 +44579,10 @@ void status_propagate(status_model *status,status_register *reg)
 
 {
   if ((reg->event & reg->enable) == 0) {
-    status_condition_clear((int)status,&reg->parent->condition,(int)reg->parent_bit);
+    status_condition_clear(status,reg->parent,(int)reg->parent_bit);
   }
   else {
-    status_condition_set((int)status,&reg->parent->condition,(int)reg->parent_bit);
+    status_condition_set(status,reg->parent,(int)reg->parent_bit);
   }
   return;
 }
@@ -44529,16 +44625,16 @@ LAB_0002810c:
 
 /* frees the status model's queue and registers; called by nothing */
 
-void status_destroy(short *param_1)
+void status_destroy(status_model *status)
 
 {
   int iVar1;
   
-  error_queue_destroy(*(undefined4 *)(param_1 + 3));
-  for (iVar1 = 0; iVar1 < *param_1; iVar1 = iVar1 + 1) {
-    memory_free(*(ulong *)(param_1 + iVar1 * 2 + 9));
+  error_queue_destroy(status->queue);
+  for (iVar1 = 0; iVar1 < status->register_count; iVar1 = iVar1 + 1) {
+    memory_free((ulong)status->registers[iVar1]);
   }
-  memory_free((ulong)param_1);
+  memory_free((ulong)status);
   return;
 }
 
@@ -44585,12 +44681,10 @@ int16_t status_set_bit(status_model *status,int condition,int value)
   short sVar1;
   short sVar2;
   int iVar3;
-  undefined3 extraout_var;
   status_condition *psVar4;
-  bool bVar5;
-  int16_t iVar6;
+  int16_t iVar5;
   
-  iVar6 = 1;
+  iVar5 = 1;
   if (condition < 0) {
     psVar4 = status_negative_conditions + -condition;
   }
@@ -44607,19 +44701,16 @@ int16_t status_set_bit(status_model *status,int condition,int value)
       status_event_set(status,status->registers[sVar1],__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x20:
-      status_condition_set
-                ((int)status,&status->registers[sVar1]->condition,__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
+      status_condition_set(status,status->registers[sVar1],__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x36:
-      status_condition_clear
-                ((int)status,&status->registers[sVar1]->condition,__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
+      status_condition_clear(status,status->registers[sVar1],__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x50:
-      bVar5 = error_queue_push(status->queue,(int)sVar1,value);
-      iVar6 = (int16_t)CONCAT31(extraout_var,bVar5);
+      iVar5 = error_queue_push(status->queue,(int)sVar1,value);
     }
   }
-  return iVar6;
+  return iVar5;
 }
 
 
@@ -44652,12 +44743,10 @@ void status_apply_condition(status_model *status,int condition,int param_3)
       status_event_set(status,status->registers[sVar1],__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x20:
-      status_condition_set
-                ((int)status,&status->registers[sVar1]->condition,__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
+      status_condition_set(status,status->registers[sVar1],__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x36:
-      status_condition_clear
-                ((int)status,&status->registers[sVar1]->condition,__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
+      status_condition_clear(status,status->registers[sVar1],__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x4c:
       error_queue_push(status->queue,(int)sVar1,param_3);
@@ -44672,11 +44761,13 @@ void status_apply_condition(status_model *status,int condition,int param_3)
 /* status_set_bit with 0
    structures.md */
 
-void status_clear_bit(status_model *param_1,int param_2)
+int16_t status_clear_bit(status_model *status,int condition)
 
 {
-  status_set_bit(param_1,param_2,0);
-  return;
+  int16_t iVar1;
+  
+  iVar1 = status_set_bit(status,condition,0);
+  return iVar1;
 }
 
 
@@ -44731,7 +44822,7 @@ void status_register_set_enable(status_model *status,int index,int enable)
   
   reg = status->registers[index];
   if (reg->parent_bit == 0) {
-    (**(code **)(*(int *)((int)status->output + 4) + 0x3c))(status->output,(ushort)enable & 0xbf);
+    (*(code *)status->output->methods->sre_set)(status->output,(ushort)enable & 0xbf);
   }
   else {
     reg->enable = (ushort)enable;
@@ -44751,7 +44842,7 @@ void status_register_get_enable(status_model *status,int index,uint16_t *enable)
   byte bVar1;
   
   if (status->registers[index]->parent_bit == 0) {
-    bVar1 = (**(code **)(*(int *)((int)status->output + 4) + 0x40))(status->output);
+    bVar1 = (*(code *)status->output->methods->sre_get)(status->output);
     *enable = (ushort)bVar1;
   }
   else {
@@ -44774,7 +44865,7 @@ void status_read_event(status_model *status,int index,uint16_t *event)
   
   reg = status->registers[index];
   if (reg->parent_bit == 0) {
-    bVar1 = (**(code **)(*(int *)((int)status->output + 4) + 0x38))(status->output);
+    bVar1 = (*(code *)status->output->methods->status_byte_get)(status->output);
     *event = (ushort)bVar1;
   }
   else {
@@ -44875,13 +44966,13 @@ undefined4 error_queue_create(int *param_1,int param_2,undefined4 param_3)
 
 /* adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full */
 
-bool error_queue_push(short *error_queue,int code,uint32_t value)
+int16_t error_queue_push(short *error_queue,int code,uint32_t value)
 
 {
   status_model *status;
   short sVar1;
   short sVar2;
-  bool bVar3;
+  ushort uVar3;
   int condition;
   
   sVar2 = (short)code;
@@ -44891,14 +44982,14 @@ bool error_queue_push(short *error_queue,int code,uint32_t value)
     sVar1 = error_queue[4] + sVar1;
   }
   if (sVar1 == 1) {
-    bVar3 = true;
+    uVar3 = 1;
   }
   else {
-    bVar3 = sVar1 == 2;
-    if (bVar3) {
+    if (sVar1 == 2) {
       sVar2 = -0x15e;
       value = 0;
     }
+    uVar3 = (ushort)(sVar1 == 2);
     *error_queue = *error_queue + 1;
     if (*error_queue == error_queue[4]) {
       *error_queue = 0;
@@ -44922,7 +45013,7 @@ bool error_queue_push(short *error_queue,int code,uint32_t value)
   status_apply_condition(status,condition,0);
 LAB_00028680:
   status_prompt_refresh(status,(int)sVar2);
-  return bVar3;
+  return uVar3;
 }
 
 
@@ -44966,10 +45057,10 @@ void error_queue_destroy(ulong param_1)
 
 /* 0002889a */
 
-/* sets a register's positive transition filter, for :PTRansition
+/* sets a register's positive transition filter, for :PTRansition; the filter a word (0x288a6)
    structures.md's status registers */
 
-void status_register_set_ptr(status_model *status,int index,int filter)
+void status_register_set_ptr(status_model *status,int index,uint32_t filter)
 
 {
   status->registers[index]->positive_transition = __ghidra_piece(unsigned short, filter, 2);
@@ -44979,10 +45070,10 @@ void status_register_set_ptr(status_model *status,int index,int filter)
 
 /* 000288ae */
 
-/* sets a register's negative transition filter, for :NTRansition
+/* sets a register's negative transition filter, for :NTRansition; the filter a word (0x288ba)
    structures.md's status registers */
 
-void status_register_set_ntr(status_model *status,int index,int filter)
+void status_register_set_ntr(status_model *status,int index,uint32_t filter)
 
 {
   status->registers[index]->negative_transition = __ghidra_piece(unsigned short, filter, 2);
@@ -45018,9 +45109,9 @@ void status_register_get_ntr(status_model *status,int index,uint16_t *filter)
 
 /* 000288ee */
 
-/* an error code's message, from the table at 0x28910 */
+/* an error code's message, from the table at 0x28910; the code a word (0x288f6) */
 
-char * error_message_lookup(undefined4 param_1)
+char * error_message_lookup(int code)
 
 {
   scpi_error_message *psVar1;
@@ -45030,7 +45121,7 @@ char * error_message_lookup(undefined4 param_1)
     if (psVar1->code == -1) {
       return (char *)0x0;
     }
-    if (psVar1->code == __ghidra_piece(unsigned short, param_1, 2)) break;
+    if (psVar1->code == __ghidra_piece(unsigned short, code, 2)) break;
     psVar1 = psVar1 + 1;
   }
   return psVar1->text;
@@ -45100,7 +45191,7 @@ LAB_0002937c:
     arena_set(local_34,local_3c);
   }
   if (bVar1) {
-    scpi_skip_to_terminator((void *)param_1);
+    scpi_skip_to_terminator((scpi_port *)param_1);
     bVar1 = false;
   }
   iVar2 = scpi_parse_message_unit(auStack_26,&local_3e);
@@ -45125,7 +45216,7 @@ LAB_00029436:
           }
           (*pcVar4)(param_2,puVar6);
           local_2a = *(void **)((int)local_7c + 0x1c);
-          iVar3 = scpi_format_response((void *)param_2,local_2a,&local_7c);
+          iVar3 = scpi_format_response((scpi_port *)param_2,local_2a,&local_7c);
           if (iVar3 != 0) {
             if (iVar3 != -0x5a) {
               status_clear_bit(param_7,iVar3);
@@ -45247,16 +45338,16 @@ int scpi_call_handler(void *call,void **response)
 
 /* writes a response's items through their formatters */
 
-int scpi_format_response(void *output,void *items,void *call)
+int scpi_format_response(scpi_port *output,void *items,void *call)
 
 {
-  void *pvVar1;
+  scpi_port *psVar1;
   int iVar2;
   short sVar3;
   
   sVar3 = 0;
-  pvVar1 = (void *)scpi_console_port();
-  if (output == pvVar1) {
+  psVar1 = (scpi_port *)scpi_console_port();
+  if (output == psVar1) {
     scpi_echo_length = 0;
   }
   else {
@@ -45271,7 +45362,7 @@ int scpi_format_response(void *output,void *items,void *call)
     sVar3 = *(short *)((int)items + 4) + sVar3;
     items = (void *)((int)items + 10);
     if (*(int *)items == 0) break;
-    (**(code **)(*(int *)((int)output + 4) + 0x14))(output,0x2c);
+    (*(code *)output->methods->put)(output,0x2c);
   }
   return 0;
 }
@@ -48284,9 +48375,9 @@ undefined4 status_report(short param_1)
   }
   else {
     if (param_1 < 1) {
-      value = (char *)error_message_lookup
-                                (CONCAT31(CONCAT21(param_1 >> 0xf,(char)((ushort)param_1 >> 8)),
-                                          (char)param_1));
+      value = error_message_lookup
+                        (CONCAT31(CONCAT21(param_1 >> 0xf,(char)((ushort)param_1 >> 8)),
+                                  (char)param_1));
     }
     else if (param_1 < 0x17) {
       value = status_report_messages[param_1];
@@ -52046,9 +52137,9 @@ void status_transitions_init(void)
   do {
     status_register_set_ptr
               (status_object,(uint)bVar1,
-               **(int **)(&status_register_setup_table + (uint)bVar1 * 0xb));
+               **(uint32_t **)(&status_register_setup_table + (uint)bVar1 * 0xb));
     status_register_set_ntr
-              (status_object,(uint)bVar1,**(int **)(&USHORT_0002f7b0 + (uint)bVar1 * 0xb));
+              (status_object,(uint)bVar1,**(uint32_t **)(&USHORT_0002f7b0 + (uint)bVar1 * 0xb));
     bVar1 = bVar1 + 1;
   } while (bVar1 < 7);
   return;
@@ -52892,7 +52983,7 @@ int scpi_query_SOURce_PTIMe_FFOMerit(void *parameters,void *response,void *call)
     uVar2 = (ushort)local_6[0];
   }
   else {
-    uVar2 = tfom_code(__ghidra_bits(pll.tfom));
+    uVar2 = tfom_code((uint32_t)__ghidra_bits(pll.tfom));
   }
   *(ushort *)response = uVar2;
   return 0;
@@ -53423,7 +53514,7 @@ int scpi_query_DANA(void *parameters,void *response,void *call)
   error_queue_read(*(status_model **)((int)call + 0x1a),&local_c,(uint32_t *)&local_8);
   *(short *)response = (short)local_c;
   if (local_8 == (char *)0x0) {
-    local_8 = (char *)error_message_lookup(local_c);
+    local_8 = error_message_lookup(local_c);
   }
   if (local_8 == (char *)0x0) {
     local_8 = "";
@@ -64838,7 +64929,7 @@ void status_screen_tfom(uint8_t row,status_snapshot_record *snapshot,char *line)
       }
       pcVar5 = acStack_26;
       pcVar8 = "";
-      sVar3 = tfom_code(__ghidra_bits(snapshot->tfom));
+      sVar3 = tfom_code((uint32_t)__ghidra_bits(snapshot->tfom));
       sprintf(line,"TFOM     %d%13sFFOM    %2s",(int)sVar3,pcVar8,pcVar5);
       break;
     case 0x66:
@@ -89304,7 +89395,7 @@ void installer_status_read_event(status_model *status,int index,uint16_t *event)
   
   reg = status->registers[index];
   if (reg->parent_bit == 0) {
-    bVar1 = (**(code **)(*(int *)((int)status->output + 4) + 0x38))(status->output);
+    bVar1 = (*(code *)status->output->methods->status_byte_get)(status->output);
     *event = (ushort)bVar1;
   }
   else {

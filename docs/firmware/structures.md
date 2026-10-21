@@ -1159,6 +1159,15 @@ carrying seconds into minutes, hours and days.  Their callers --
 names file types them (`local` rows), since the decompiler splits each
 into two longs.
 
+A time is a `time_of_day`, its reserved byte, hour, minute and second,
+and a date a `calendar_date`, its year word, month and day, where the
+code works on them byte by byte: the clock record's times, the Oncore
+status's time after its date (`oncore_date_fields`), the reset record's
+and the command log's, and the locals the clock routines carry in.  A
+routine that shifts the bytes out of the whole value
+(`hms_to_seconds`) keeps it a long, whose shifts the decompiler would
+not read as fields.
+
 ## sprintf's output
 
 `sprintf` (`0x60896`) and `vsprintf` keep an 8-byte record on their
@@ -1201,6 +1210,29 @@ bisection; the keyword is a `scpi_keyword`, its length at `+0` and its
 text from `+2` (`0x27bb2`, `0x27bc6`).  `scpi_trg_defined` builds one
 for `_TRG` in its 20-byte frame (`0x27f7e`), a `local` row, so that gcc
 keeps the length beside the text.
+
+## The SCPI lexer's token and port
+
+`scpi_scan_token` (`0x26ee0`) reads a command through a port,
+`scpi_port` -- the console's at `0x29e18`, its read routine and its
+method table, `scpi_port_methods`, at `0x29dd4` -- and fills a token,
+`scpi_token`, by kind: a keyword, a number, a non-decimal number, a
+string, a block or a `$` digit.  A number, `scpi_number` (`0x26`
+bytes, the token's frame in `scpi_parse_message_unit`), holds its sign,
+16 digit values, its exponent and units suffix, and the suffix's scale
+and unit index that `scpi_apply_suffix` stores; the converters
+`scpi_number_to_short` to `_double` read it.  The status system writes
+the status byte through the port's methods at `+0x30` to `+0x40`.
+
+## The snapshot's satellite sets
+
+`satellite_sets_build` (`0x49474`) fills the snapshot's
+`satellite_sets`, `0x2a` bytes: the visible, used and tracked GPS
+satellites as bits of a long and the pseudolites as bits of a byte, and
+the tracked but unused ones in three bands by the `@@Ba` channel's
+mode, 1 to 4, 5 and 6, and 7 and 8 (`0x494f6` to `0x4951a`).  The
+bands' names, `acquiring`, `synchronized` and `ephemeris`, are ours,
+read from the modes; the firmware names none.
 
 ## The health monitor's supplies and EFC
 

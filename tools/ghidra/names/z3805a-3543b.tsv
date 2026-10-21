@@ -132,14 +132,14 @@
 0x5f15a	function	strncmp	libc.md		int strncmp(char *s1, char *s2, unsigned int n)
 0x5f190	function	strncpy	libc.md		char * strncpy(char *s1, char *s2, unsigned int n)
 0x5f1be	function	toupper	libc.md		int toupper(int c)
-0x5fb0c	function	doprnt	libc.md	the formatting engine under sprintf, by the classic C library's name for it
+0x5fb0c	function	doprnt	libc.md	the formatting engine under sprintf, by the classic C library's name for it	int32_t doprnt(char *format, void *arguments, sprintf_put_function *put, sprintf_output *output)
 0x5fb0c	local	conversion	read	the conversion's text: hex and decimal written back from its 11th byte, %f forward from its first	char[20] @ -0x1c6
 0x5fb0c	local	precision	read	the conversion's precision, 6 when it gives none (moveq #6 at 0x600a6, 0x60274, 0x603d8); an int, which Ghidra otherwise types char * and prints 6 as the text at address 6	int @ -0x1d2
 0x5fb0c	local	count	read	the count its loops run down: digits, padding, the exponent's value; %p's 8 digits (0x60022)	int @ -0x8
 0x5fb0c	local	fraction_limit	read	%f's most fraction digits, 60 (0x6027a); past it, and past the precision, zeros	int @ -0x2c
 0x5fb0c	local	exponent	read	%e's exponent text, written back from its last byte (0x60190 to 0x60250): e, the sign, at least two digits, the terminator	char[6] @ -0x4a
 0x60896	function	sprintf	libc.md		int sprintf(char *s, char *format, ...)
-0x608c4	function	sprintf_put	libc.md	copies the engine's output into sprintf's buffer
+0x608c4	function	sprintf_put	libc.md	copies the engine's output into sprintf's buffer	int32_t sprintf_put(char *text, int32_t size, int32_t count, sprintf_output *output)
 0x608fe	function	vsprintf	libc.md		int vsprintf(char *s, char *format, void *arg)
 0x1de96	function	printf	libc.md		int printf(char *format, ...)
 0x6092a	function	fabs	libc.md		double fabs(double x)	convention=c; confidence=run; out=D0:D1 double
@@ -147,7 +147,7 @@
 0x60d94	function	modf	libc.md		double modf(double value, double *iptr)	convention=c; confidence=run; out=D0:D1 double
 0x10393a	label	errno	libc.md	log sets it to 34, ERANGE	int32_t
 0x5ecf0	function	call_atexit_functions	libc.md
-0x1038b4	label	atexit_functions	libc.md
+0x1038b4	label	atexit_functions	libc.md		atexit_function *[32]
 0x103934	label	atexit_count	libc.md		uint16_t
 0x1412e	function	float_exception_report	libc.md		void float_exception_report(uint32_t code)
 0x100bd4	label	float_exception_message	libc.md, structures.md	length-prefixed: its length, then the text from 0x100bd5, at most 30 characters, to program_end_message	uint8_t[32]
@@ -161,7 +161,7 @@
 0x16f1e	function	psos_call	psos.md	trap #3, the service in D7, the error back in D7		convention=register; confidence=read; in=D7 char service, D0 int d0, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1; out=D7 int error; returns=ccr; results=D0, D1, D2, D3, A0, A1; family=psos-binding
 0x16f36	function	psos_io_call	psos.md	trap #4, the function in D7, the device in D0's high byte		convention=register; confidence=read; in=D7 char function, D0 int device, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1; out=D7 int error; returns=ccr; results=D0, D1, D2, D3, A0, A1; family=psos-binding
 0x16f50	function	psos_pack_name	psos.md	packs a 4-character name into D0		convention=other; confidence=read; out=D0 int name; family=psos-binding
-0x13422	function	enter_supervisor	psos.md	trap #7, then a jump back through the return address it pops; returns the caller's status register in D0		convention=other; confidence=read; out=D0 int status; preserves=D1, D2, D3, D4, D5, D6, D7, A1, A2, A3, A4, A5, A6; family=supervisor
+0x13422	function	enter_supervisor	psos.md	trap #7, then a jump back through the return address it pops; returns the caller's status register in D0		convention=other; confidence=read; out=D0 uint32_t status; preserves=D1, D2, D3, D4, D5, D6, D7, A1, A2, A3, A4, A5, A6; family=supervisor
 0x13378	function	set_interrupt_mask	psos.md	sets SR's interrupt mask from the argument, returns the old SR	uint16_t set_interrupt_mask(uint16_t sr)
 0x19ed0	function	forth_psos_call	psos.md	the console words' service call, reporting an error
 0x16f74	function	psos_create	psos.md	service 1, spawn's create	unsigned long psos_create(char *name, unsigned long a, unsigned long priority, unsigned long stack_a, unsigned long stack_b, void *e, unsigned long *task)
@@ -496,7 +496,7 @@
 0x136ee	function	get_gps_time	structures.md	returns gps_time	uint32_t get_gps_time(void)
 0x10de4	function	day_of_year	structures.md	the es message's %03d, from a packed date	int16_t day_of_year(uint32_t date)
 0x11a2a	function	exception_name	structures.md	the "%s: %s" of an exception; "Oooh! That tickles. I don't know that vector."	char * exception_name(uint16_t vector)
-0x11b8c	label	reset_to_recover_text	read	"\r\nRESET to recover.", which print_exception ends a report with; its NUL is the first byte of exception_names, and exception_name reads that table from 12 bytes in, so it is bytes, not a string, to keep the C reading the ROM	byte[20]
+0x11b8c	label	reset_to_recover_text	read	"\r\nRESET to recover.", which print_exception ends a report with; its NUL is the first byte of exception_names, and exception_name reads that table from 12 bytes in, so it is bytes, not a string, to keep the C reading the ROM	char[20]
 0x11ba0	label	exception_names	read	the name of each exception vector from 2, bus error, to 58, PMMU access violation, which exception_name indexes by the vector offset less 8	char *[57]
 #
 # batch 3, the most-called unnamed functions, by their code and callers
@@ -642,7 +642,7 @@
 0x101f64	label	nv_numeric_bytes_loaded	structures.md	the packed bytes nv_load_slot read for the numeric values, from the record's +0x10; nothing reads it	int16_t
 0x101f66	label	nv_bytes_loaded	structures.md	the packed bytes nv_load_slot read for all the values, from the record's +0x10; nothing reads it	int16_t
 0x101e8a	label	nv_settings	structures.md	the saved settings, 0xc5 bytes; each field the value of a descriptor in nv_save's tables	nv_settings_fields
-0x30966	label	nv_settings_defaults	structures.md	nv_restore copies them over nv_settings when no slot loads
+0x30966	label	nv_settings_defaults	structures.md	nv_restore copies them over nv_settings when no slot loads	nv_settings_fields
 0x4000c0	label	nv_records	structures.md	the EEPROM's two NV register records, 0x80 bytes each: "S", a sequence number at +4, "3543B", the packed settings, a checksum; reset records follow at 0x4001c0	nv_record[2]
 #
 # the preserved region a warm restart restores, and the cells from
@@ -768,7 +768,7 @@
 0x16bb6	function	task_stack_info	"no system stack found"; task_stack_report's per-task stacks	measures a task's stacks for the stack report	void task_stack_info(void *task, uint32_t *user_top, uint32_t *user_pointer, uint32_t *user_size, uint32_t *supervisor_top, uint32_t *supervisor_pointer, uint32_t *supervisor_size)
 0x132f4	function	stack_usage_report	"User: %5u of %5u b   Supv: %5u of %5u b"	prints a task's user and supervisor stack use	void stack_usage_report(void *task)
 0x132f4	local	usage	read	the four longs stack_measure fills and it prints: user used and size, supervisor used and size (0x132f8 to 0x13318)	uint32_t[4] @ -0x64
-0x1e766	function	duarta_isr	"DUARTA isr signaling SIG_SIQ"	the interrupt handler for DUART channel A, the GPS engine's
+0x1e766	function	duarta_isr	"DUARTA isr signaling SIG_SIQ"	the interrupt handler for DUART channel A, the GPS engine's	uint8_t duarta_isr(void)
 0x1e7f6	function	duartb_isr	"DUARTB isr signaling SIGINTR", "SIG_SIQ"	the interrupt handler for DUART channel B
 0x22d70	function	fpga_setup	"setup fpga"	sets the FPGA up
 0x22da4	function	fpga_program	"FPGA programmed", "ERROR: FPGA programming failed", "FPGA INIT did not go high"; outputs.md's loader	loads the FPGA's configuration
@@ -1031,10 +1031,10 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x25fa6	function	scpi_parse_float	docs/scpi/README.md, read	the suffix, then a float within 9.9e37, else -11	int scpi_parse_float(scpi_number *number, void *param_2, float *value, scpi_unit *units)
 0x25fa6	local	parsed	read	the double scpi_number_to_double gives (0x25fc8), compared with 9.9e37 and made a float (0x25fe0, 0x26008)	double @ -0xc
 0x2602e	function	scpi_parse_double	docs/scpi/README.md, read	the suffix, then a double within 9.9e37, else -11	int scpi_parse_double(scpi_number *number, void *param_2, double *value, scpi_unit *units)
-0x25d8c	function	scpi_parse_boolean	docs/scpi/README.md, read	ON as 1, OFF as 0
+0x25d8c	function	scpi_parse_boolean	docs/scpi/README.md, read	ON as 1, OFF as 0	uint32_t scpi_parse_boolean(int16_t *token, void *unused, uint16_t *value)
 0x25de0	function	scpi_parse_boolean_number	docs/scpi/README.md, read	a number as a boolean by scpi_number_to_boolean; -9 with a suffix	int scpi_parse_boolean_number(scpi_number *number, void *param_2, uint16_t *value, void *param_4)
-0x25e42	function	scpi_parse_choice	docs/scpi/README.md, read	the index of the keyword in the node's list, or the value mapped to it; -28 with no list, -27 for no match
-0x25d70	function	scpi_parse_string	docs/scpi/README.md, read	the string's pointer and length
+0x25e42	function	scpi_parse_choice	docs/scpi/README.md, read	the index of the keyword in the node's list, or the value mapped to it; -28 with no list, -27 for no match	uint32_t scpi_parse_choice(int16_t *token, void *unused, int16_t *value, int32_t *list)
+0x25d70	function	scpi_parse_string	docs/scpi/README.md, read	the string's pointer and length	uint32_t scpi_parse_string(uint16_t *token, void *unused, uint32_t *value)
 0x27ae4	function	scpi_apply_suffix	docs/scpi/README.md, read	matches the token's units suffix against the node's table, setting its scale and unit; -9 if none is allowed, -31 if unknown	int scpi_apply_suffix(scpi_number *number, scpi_unit *units)
 0x27a2a	function	scpi_match_suffix	docs/scpi/README.md, read	scans the 6-byte unit table, text and exponent, allowing a two-character multiplier before the unit	short scpi_match_suffix(int length, char *suffix, scpi_unit *units, int16_t *scale)
 0x24e18	function	scpi_double_to_decimal	docs/scpi/README.md, run	the double in D0:D1 as a sign word, ASCII digits, D7 and two more, and the exponent of 0.d1d2..., into the record at A0; Z is set on failure, for a subnormal, infinite or NaN double, and its caller reads nothing else, though D0.w holds -8		convention=register; confidence=run; in=D0:D1 double value, D7 short digits, A0 char *record; returns=ccr; family=scpi-engine
@@ -1142,7 +1142,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x30b66	local	event	read	the clock event it copies from 0x30cec and gives clk_do	klok_entry @ -0x1e
 #
 # the clock, the leap second and the counter, under the PLL task
-0x1075a	function	leap_event_schedule	context	queues the leap second's clock event, in GPS time or in UTC as nv_settings.gps_utc says	int leap_event_schedule(undefined4 param_1, undefined4 param_2)
+0x1075a	function	leap_event_schedule	context	queues the leap second's clock event, in GPS time or in UTC as nv_settings.gps_utc says	klok_entry *leap_event_schedule(uint32_t param_1, int32_t param_2)
 0x105ee	function	leap_event_schedule_gps	context	queues the clock event for a 59- or 61-second minute, in GPS time
 0x105ee	local	event	read	the entry clk_do copies	klok_entry @ -0x1e
 0x10656	function	leap_event_schedule_utc	context	queues the clock event for a 59- or 61-second minute, converted to UTC with the GPS-UTC offset as it will be
@@ -1311,7 +1311,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x23c5a	function	monitor_average_add	context	adds a reading to a monitor's 10-sample moving average	void monitor_average_add(adc_monitor *monitor, float reading)
 0x23cc4	function	monitor_filter_add	context	adds a reading to a monitor's filter, 0.9 of the old and 0.1 of the new	void monitor_filter_add(adc_monitor *monitor, float reading)
 0x23d28	function	monitor_out_of_range	context	counts a monitor's readings outside its range, true once past a limit	uint8_t monitor_out_of_range(adc_monitor *monitor, float minimum, float maximum, uint8_t limit)
-0x23c2a	function	monitors_reset	context	clears all eight adc_monitors' valid, sample_index, out_of_tolerance and out_of_range_count, and hmon_supply_step
+0x23c2a	function	monitors_reset	context	clears all eight adc_monitors' valid, sample_index, out_of_tolerance and out_of_range_count, and hmon_supply_step	void monitors_reset(void)
 0x1e126	function	duart_output_bits	context	sets and clears the DUART's output port bits, interrupts held off
 0x242de	function	efc_clamp_reset	context	clears efc_clamp's flags
 0x10b62	function	klok_run_due	context	runs the clock list's due entries and reschedules the periodic ones, under klok_mutex
@@ -1473,19 +1473,19 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1ebbc	function	duart_stop	context	resets both DUART channels and masks its interrupts
 0x1ebe4	function	duartb_loopback_check	context	sends "DUART" through channel B in local loopback and checks each character back
 0x1ecae	function	duart_early_init	context	at reset: tests the DUART's interrupt vector register and sets channel B up for the console
-0x1ef90	function	debug_printf_polled	context	formats and writes to the console by polling, when debug output is on; called by nothing
+0x1ef90	function	debug_printf_polled	context	formats and writes to the console by polling, when debug output is on; called by nothing	int32_t debug_printf_polled(char *format, ...)
 0x1f62e	function	hdac_update	context	sends the hex DAC's three shadow words to QSPI device 2
 0x1f6ca	function	sci_baud_set	context	the SCI's baud rate from a code
 0x1f71a	function	sci_putc_polled	context	waits for the SCI's transmitter and writes a character, with the parity bit if set
-0x1fffa	function	sci_reconfigure	context	resets the SCI and applies the serial settings' baud rate and mode
+0x1fffa	function	sci_reconfigure	context	resets the SCI and applies the serial settings' baud rate and mode	void sci_reconfigure(void)
 0x20152	function	sci_write	context	the SCI device's write: sci_puts under its lock, unless the byte at 0x10329c is set		convention=register; confidence=read; in=A0 char *buffer; out=D7 char error, D2 int count, A0 char *end; family=device
 0x20190	function	sci_read	context	the SCI device's read: sci_gets
 0x201b0	function	sci_putc	context	writes a character to the SCI under its lock
 0x201e0	function	sci_send_async	context	queues a block for the SCI to send by interrupt
 0x2021a	function	sci_port_write	context	writes a string to the SCI device, 3
-0x2023c	function	sci_printf	context	formats into 160 bytes and writes to the SCI device; called by nothing
+0x2023c	function	sci_printf	context	formats into 160 bytes and writes to the SCI device; called by nothing	void sci_printf(char *format, ...)
 0x202c0	function	sci_puts_polled	context	writes a string to the SCI by polling, in supervisor mode
-0x202f6	function	sci_printf_polled	context	formats into 80 bytes and writes to the SCI by polling; called by nothing
+0x202f6	function	sci_printf_polled	context	formats into 80 bytes and writes to the SCI by polling; called by nothing	void sci_printf_polled(char *format, ...)
 #
 # the QSPI driver, the 1PPS monitors and the SCPI parser
 0x20578	function	qspi_queue_setup	context	writes a QSPI device's transfer into the QSM's queue RAM and command words, by the device's number
@@ -1542,12 +1542,12 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x29a24	function	copy_longs_locked	context	copies so many longs with interrupts held off	void copy_longs_locked(uint32_t *source, uint32_t *destination, uint8_t count)
 0x29a68	function	robin_store	context	stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36	void robin_store(char *response, short *points, long count, char format, uint8_t index)
 0x29b08	function	rtcm_supported	context	0: RTCM corrections are not supported	undefined1 rtcm_supported(void)
-0x29b96	function	scpi_console_read	context	reads up to so many characters from the console, marking the input ended at its end
+0x29b96	function	scpi_console_read	context	reads up to so many characters from the console, marking the input ended at its end	int32_t scpi_console_read(scpi_port *port, uint8_t *buffer, int32_t length)
 0x29cc6	function	scpi_input_ended	context	marks the SCPI input ended
 0x29cd0	function	scpi_console_putc	context	writes a character to the console, keeping it in the echo buffer, or CR LF for an end
-0x29d50	function	status_byte_set_bits	context	the status output object's method: sets bits in the status byte and updates RQS
-0x29d62	function	status_byte_clear_bits	context	the status output object's method: clears bits in the status byte and updates RQS
-0x29d76	function	status_sre_set	context	the status output object's method: sets the service request enable and updates RQS
+0x29d50	function	status_byte_set_bits	context	the status output object's method: sets bits in the status byte and updates RQS	void status_byte_set_bits(scpi_port *port, int32_t bits)
+0x29d62	function	status_byte_clear_bits	context	the status output object's method: clears bits in the status byte and updates RQS	void status_byte_clear_bits(scpi_port *port, int32_t bits)
+0x29d76	function	status_sre_set	context	the status output object's method: sets the service request enable and updates RQS	void status_sre_set(scpi_port *port, int32_t bits)
 0x29d88	function	status_sre_get	the console port's method table 0x29dd4, +0x40	the status output object's method: returns the service request enable	uint8_t status_sre_get(void)
 0x29d90	function	status_byte_get	method table 0x29dd4, +0x38	the status output object's method: returns the status byte	uint8_t status_byte_get(void)
 0x2b578	function	log_print	context	prints the event log, its status and each entry, through the callbacks given	void log_print(char param_1, write_function *write, printf_function *print)

@@ -56,9 +56,6 @@ enum {
 	/* leap_second_near is true past 23:59:45. */
 	CLOCK_LEAP_NEAR_SECOND = 45,
 
-	/* The status register's interrupt mask, all levels masked. */
-	CLOCK_SR_INTERRUPTS_MASKED = 0x700,
-
 	/* leap_event_schedule_utc's event comes this many seconds before the
 	 * offset steps (0x1070a). */
 	CLOCK_LEAP_EVENT_LEAD = 5,
@@ -284,7 +281,7 @@ int32_t gps_seconds(uint32_t date, uint32_t time)
  * minute, for :PTIM:LEAP:GPST?; 0 with none pending (0x11284). */
 int32_t leap_gps_time(void)
 {
-	uint16_t sr = set_interrupt_mask(CLOCK_SR_INTERRUPTS_MASKED);
+	uint16_t sr = set_interrupt_mask(CPU_IPL_7);
 	uint8_t pending = nv_settings.leap_pending;
 	int32_t minute_length = nv_settings.leap_minute_length;
 	uint32_t date = nv_settings.leap_date;

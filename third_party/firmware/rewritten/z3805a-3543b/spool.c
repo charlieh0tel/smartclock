@@ -116,7 +116,7 @@ void fatal_error(char *message)
 			printf_polled("%s\r\nRESET to recover.\r\n", message);
 			psos_pause(SPOOL_FATAL_PAUSES);
 		}
-		set_interrupt_mask(DUART_SR_IPL_4);
+		set_interrupt_mask(CPU_IPL_4);
 	}
 	for (;;)
 		;
@@ -127,30 +127,30 @@ void fatal_error(char *message)
  * psos.md leaves unnamed, and the request error on which it prints the
  * deferred messages instead (structures.md, "Others"). */
 enum {
-	SPOOL_SPOO_SUPERVISOR_STACK = 0x600,
-	SPOOL_SPOO_USER_STACK = 0x10,
-	SPOOL_SPOO_EXCHANGE_A = 2,
-	SPOOL_SPOO_EXCHANGE_B = 5,
-	SPOOL_SPOO_REQUEST_B = 0x400,
-	SPOOL_SPOO_FLUSH_ERROR = 0x81,
+	SPOOL_SUPERVISOR_STACK = 0x600,
+	SPOOL_USER_STACK = 0x10,
+	SPOOL_EXCHANGE_A = 2,
+	SPOOL_EXCHANGE_B = 5,
+	SPOOL_REQUEST_B = 0x400,
+	SPOOL_FLUSH_ERROR = 0x81,
 	SPOOL_MODE_NO_PREEMPT = 0x80,	/* mode's bit (psos.md, service 32) */
 };
-#define SPOOL_SPOO_NAME "spoo"
+#define SPOOL_NAME "spoo"
 
 /* Creates the spool task at a priority, unless one is running, with its
  * exchange, and starts it; returns 0, else the kernel's error, or 1 for
  * a spool task already there (0x20c96). */
 uint32_t spoo_task_create(uint32_t priority)
 {
-	uint32_t error = (uint8_t)psos_ident(SPOOL_SPOO_NAME, 0, 0) == 0;
+	uint32_t error = (uint8_t)psos_ident(SPOOL_NAME, 0, 0) == 0;
 	char text[80];
 
 	if (error == 0)
-		error = (uint8_t)psos_create_x(SPOOL_SPOO_NAME, SPOOL_SPOO_EXCHANGE_A,
-					       SPOOL_SPOO_EXCHANGE_B, &spoo_exchange);
+		error = (uint8_t)psos_create_x(SPOOL_NAME, SPOOL_EXCHANGE_A,
+					       SPOOL_EXCHANGE_B, &spoo_exchange);
 	if (error == 0)
-		error = (uint8_t)psos_create(SPOOL_SPOO_NAME, 0, priority,
-					     SPOOL_SPOO_SUPERVISOR_STACK, SPOOL_SPOO_USER_STACK, 0,
+		error = (uint8_t)psos_create(SPOOL_NAME, 0, priority,
+					     SPOOL_SUPERVISOR_STACK, SPOOL_USER_STACK, 0,
 					     &task_spoo);
 	if (error == 0)
 		error = (uint8_t)psos_start(task_spoo, spoo_task);
@@ -209,19 +209,19 @@ int32_t deferred_vprintf(char *format, void *arguments)
 }
 
 /* The spool task: runs each function spoo_run sends, and prints the
- * deferred messages when its request ends with SPOOL_SPOO_FLUSH_ERROR
+ * deferred messages when its request ends with SPOOL_FLUSH_ERROR
  * (0x20e4e). */
 void spoo_task(void)
 {
 	psos_supervisor();
 	for (;;) {
 		spoo_receive_error = (uint8_t)psos_request_x(spoo_exchange, &spoo_message, 0,
-							     SPOOL_SPOO_REQUEST_B);
+							     SPOOL_REQUEST_B);
 		watchdog_spool++;
 		if (spoo_receive_error == 0)
 			spoo_message.function(spoo_message.arguments[0], spoo_message.arguments[1],
 					      spoo_message.arguments[2]);
-		else if (spoo_receive_error == SPOOL_SPOO_FLUSH_ERROR)
+		else if (spoo_receive_error == SPOOL_FLUSH_ERROR)
 			deferred_flush();
 	}
 }

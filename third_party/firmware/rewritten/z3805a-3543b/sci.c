@@ -10,7 +10,7 @@
 
 /* The SCI's I/O device (kernel_dispatch_io, 0x14c36). */
 enum {
-	SCI_DEVICE_SCI = 0x300,
+	SCI_DEVICE = 0x300,
 };
 
 /* A no-op echo, a bare rts: sci_init and sci_reconfigure put it in
@@ -63,7 +63,7 @@ void sci_baud_set(char baud)
  * set for mark parity; returns the word written (0x1f71a). */
 uint16_t sci_putc_polled(char c)
 {
-	uint16_t sr = duart_interrupts_at(DUART_SR_IPL_3);
+	uint16_t sr = cpu_interrupts_at(CPU_IPL_3);
 	uint16_t data = c;
 
 	while ((qsm.scsr & SCSR_TDRE) == 0)
@@ -71,7 +71,7 @@ uint16_t sci_putc_polled(char c)
 	if (sci.mark_bit)
 		data |= DUART_MARK_BIT;
 	qsm.scdr = data;
-	duart_sr_write(sr);
+	cpu_sr_write(sr);
 	return data;
 }
 
@@ -151,7 +151,7 @@ uint32_t sci_port_write(void *text)
 {
 	uint32_t length;
 
-	psos_io_write(SCI_DEVICE_SCI, text, &length);
+	psos_io_write(SCI_DEVICE, text, &length);
 	return length;
 }
 
@@ -159,7 +159,7 @@ uint32_t sci_port_write(void *text)
  * reconfigures device 3 (0x202ac). */
 void sci_settings_done(void)
 {
-	psos_io_control(SCI_DEVICE_SCI, 0, 0);
+	psos_io_control(SCI_DEVICE, 0, 0);
 }
 
 /* Writes a string to the SCI by polling, in supervisor mode; returns
@@ -171,6 +171,6 @@ int32_t sci_puts_polled(char *text)
 
 	for (; *text != 0; text++, count++)
 		sci_putc_polled(*text);
-	duart_sr_write(sr);
+	cpu_sr_write(sr);
 	return count;
 }

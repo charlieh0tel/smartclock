@@ -267,6 +267,8 @@ struct aging_curve_state {
     float predicted_uncertainty;
 };
 
+typedef void (atexit_function)(void);
+
 typedef struct boot_selftest_results boot_selftest_results, *Pboot_selftest_results;
 
 typedef short int16_t;
@@ -1981,6 +1983,8 @@ struct sprintf_output {
     char *cursor;
 };
 
+typedef int32_t (sprintf_put_function)(char *, int32_t, int32_t, struct sprintf_output *);
+
 typedef struct status_condition status_condition, *Pstatus_condition;
 
 struct status_condition {
@@ -2433,7 +2437,7 @@ extern klok_entry leap_event_utc_template; /* 00010cca */
 extern int16_t days_before_month[12]; /* 0001186c */
 extern int16_t days_before_month_leap[12]; /* 00011884 */
 extern uint8_t month_lengths[12]; /* 0001189c */
-extern uint8_t reset_to_recover_text[20]; /* 00011b8c */
+extern char reset_to_recover_text[20]; /* 00011b8c */
 extern char * exception_names[57]; /* 00011ba0 */
 extern double powers_of_ten_times_five[61]; /* 0001234c */
 extern double powers_of_ten_double[61]; /* 00012614 */
@@ -2471,6 +2475,7 @@ extern status_condition status_conditions[79]; /* 0002f838 */
 extern char error_message_none[1]; /* 00030816 */
 extern uint8_t sample_values_defaults[148]; /* 000308b6 */
 extern uint8_t retained_block_defaults[25]; /* 0003094c */
+extern nv_settings_fields nv_settings_defaults; /* 00030966 */
 extern sci_settings_record sci_settings_defaults; /* 00030a2c */
 extern duartb_settings_record duartb_settings_defaults; /* 00030a34 */
 extern klok_entry lifetime_event_template; /* 00030cec */
@@ -2908,6 +2913,7 @@ extern uint8_t tcode_format; /* 001038ac */
 extern uint8_t tcode_pending; /* 001038ad */
 extern uint16_t float_status; /* 001038b0 */
 extern uint16_t float_control; /* 001038b2 */
+extern atexit_function * atexit_functions[32]; /* 001038b4 */
 extern uint16_t atexit_count; /* 00103934 */
 extern uint32_t rand_seed; /* 00103936 */
 extern int32_t errno; /* 0010393a */
@@ -3048,11 +3054,9 @@ extern uint16_t USHORT_0002f7a2; /* 0002f7a2 */
 extern uint16_t USHORT_0002f7a4; /* 0002f7a4 */
 extern uint16_t USHORT_0002f7a8; /* 0002f7a8 */
 extern uint16_t USHORT_0002f7b0; /* 0002f7b0 */
-extern uint8_t atexit_functions; /* 001038b4 */
 extern uint8_t installer_atexit_functions; /* 0010b03c */
 extern uint8_t klok_mutex; /* 001037b4 */
 extern uint8_t log_mutex; /* 00101d36 */
-extern uint8_t nv_settings_defaults; /* 00030966 */
 extern uint8_t reference_valid_override_request; /* 00100c68 */
 extern uint8_t retained_block; /* 00101e70 */
 extern char s_DUART_test_string_0001ee6e[]; /* 0001ee6e */
@@ -4602,7 +4606,7 @@ uint32_t idle_count(void);
 klok_entry * clk_do(klok_entry *event);
 klok_entry * leap_event_schedule_gps(uint32_t param_1,int32_t param_2);
 klok_entry * leap_event_schedule_utc(uint32_t param_1,int32_t param_2);
-int32_t leap_event_schedule(uint32_t param_1,int32_t param_2);
+klok_entry * leap_event_schedule(uint32_t param_1,int32_t param_2);
 int32_t klok_cancel(klok_entry *param_1);
 void klok_print_entries(void);
 klok_entry * klok_find(int16_t param_1);
@@ -4693,7 +4697,7 @@ float float_absolute_on_stack(float f);
 uint64_t double_abs(uint32_t param_1,uint32_t param_2);
 uint32_t rotate_left(uint32_t param_1,uint8_t param_2);
 int32_t primary_trap_7();
-int32_t enter_supervisor(void) __asm__("c_enter_supervisor");
+uint32_t enter_supervisor(void) __asm__("c_enter_supervisor");
 void busy_wait(uint32_t param_1);
 void sleep_seconds(float param_1);
 void clock_record_checksum(clock_record *record) __asm__("c_clock_record_checksum");
@@ -5255,7 +5259,7 @@ void duart_test_rx_a(void);
 void duart_test_rx_b(void);
 void duart_test_tx_a(void);
 void duart_test_tx_b(void);
-uint32_t duarta_isr(void);
+uint8_t duarta_isr(void);
 uint8_t duartb_isr(void);
 void duarta_tx_interrupt(void);
 void duartb_transmit_interrupt(void);
@@ -5266,7 +5270,7 @@ void duart_early_init(void);
 void fatal_error_with_code(char *param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4);
 int32_t debug_sprintf(char *s,char *format,...);
 int32_t debug_write(char *param_1);
-int32_t debug_printf_polled(char *param_1);
+int32_t debug_printf_polled(char *format,...);
 void debug_printf(char *format,...);
 void task_debug_message(char *message);
 void task_dmessage(char *message);
@@ -5295,16 +5299,16 @@ int32_t primary_user_64();
 char sci_unlock(char write) __asm__("c_sci_unlock");
 char sci_lock(char write) __asm__("c_sci_lock");
 int32_t sci_init();
-uint32_t sci_reconfigure(void);
+void sci_reconfigure(void);
 int32_t sci_write();
 void sci_read(void);
 void sci_putc(char param_1);
 void sci_send_async(char *param_1,uint8_t param_2);
 uint32_t sci_port_write(void *param_1);
-void sci_printf(char *param_1);
+void sci_printf(char *format,...);
 void sci_settings_done(void);
 int32_t sci_puts_polled(char *param_1);
-void sci_printf_polled(char *param_1);
+void sci_printf_polled(char *format,...);
 void qspi_release(void);
 uint32_t
 qspi_queue_setup(uint8_t param_1,uint16_t *param_2,uint16_t param_3,char param_4,uint16_t *param_5);
@@ -5334,7 +5338,7 @@ bool fpga_verify_odd(uint8_t *param_1,uint8_t *param_2,char param_3);
 bool fpga_verify_even(uint8_t *param_1,uint8_t *param_2,char param_3);
 bool fpga_verify_chip(uint8_t param_1,char param_2,uint8_t param_3);
 uint8_t fpga_verify(uint8_t param_1,char param_2);
-int32_t monitors_reset(void);
+void monitors_reset(void);
 void monitor_average_add(adc_monitor *monitor,float reading);
 void monitor_filter_add(adc_monitor *monitor,float reading);
 uint8_t monitor_out_of_range(adc_monitor *monitor,float minimum,float maximum,uint8_t limit);
@@ -5368,10 +5372,10 @@ int32_t scpi_number_to_bcd(scpi_number *number, int16_t scale, char *bcd) __asm_
 uint32_t
 scpi_real_to_text(int32_t param_1,int32_t param_2,uint8_t *param_3,int16_t param_4,int16_t param_5,
                  int16_t param_6,char param_7);
-uint32_t scpi_parse_string(uint16_t *param_1,uint32_t *param_2);
-uint32_t scpi_parse_boolean(int16_t *param_1,uint16_t *param_2);
+uint32_t scpi_parse_string(uint16_t *token,void *unused,uint32_t *value);
+uint32_t scpi_parse_boolean(int16_t *token,void *unused,uint16_t *value);
 int32_t scpi_parse_boolean_number(scpi_number *number,void *param_2,uint16_t *value,void *param_4);
-uint32_t scpi_parse_choice(int16_t *param_1,int16_t *param_2,int32_t *param_3);
+uint32_t scpi_parse_choice(int16_t *token,void *unused,int16_t *value,int32_t *list);
 int32_t scpi_parse_short(scpi_number *number,void *param_2,int16_t *value,scpi_unit *units);
 int32_t scpi_parse_unsigned_short(scpi_number *number,void *param_2,uint16_t *value,scpi_unit *units);
 int32_t scpi_parse_long(scpi_number *number,void *param_2,int32_t *value,scpi_unit *units);
@@ -5497,15 +5501,15 @@ uint32_t scpi_session_init(void);
 uint32_t scpi_console_port(void);
 void scpi_session_close(void);
 int32_t scpi_console_return_zero(void);
-int32_t scpi_console_read(uint8_t *param_1,int32_t param_2);
+int32_t scpi_console_read(scpi_port *port,uint8_t *buffer,int32_t length);
 int16_t console_port_read(void);
 void scpi_input_ended(void);
 void scpi_console_putc(uint32_t param_1,int32_t param_2);
 int32_t scpi_console_write();
 void scpi_console_write_loop(void *port,char *s,int32_t n);
-void status_byte_set_bits(uint32_t param_1);
-void status_byte_clear_bits(uint32_t param_1);
-void status_sre_set(uint32_t param_1);
+void status_byte_set_bits(scpi_port *port,int32_t bits);
+void status_byte_clear_bits(scpi_port *port,int32_t bits);
+void status_sre_set(scpi_port *port,int32_t bits);
 uint8_t status_sre_get(void);
 uint8_t status_byte_get(void);
 void status_update_rqs(void);
@@ -6306,9 +6310,9 @@ int32_t toupper(int32_t c);
 void double_to_digits_multiply(uint32_t *param_1);
 void double_to_digits(double value,int32_t count,int32_t *exponent,uint32_t *negative,char *digits,int32_t mode);
 uint64_t next_decimal_digit(uint32_t *param_1);
-uint8_t * doprnt(uint8_t *param_1,uint32_t *param_2,uint8_t *param_3,uint32_t param_4);
+int32_t doprnt(char *format,void *arguments,sprintf_put_function *put,sprintf_output *output);
 int32_t sprintf(char *s,char *format,...);
-int32_t sprintf_put(uint8_t *param_1,int32_t param_2,int32_t param_3,int32_t param_4);
+int32_t sprintf_put(char *text,int32_t size,int32_t count,sprintf_output *output);
 int32_t vsprintf(char *s,char *format,void *arg);
 double fabs(double x);
 double frexp(double value,int32_t *exp);
@@ -7877,16 +7881,16 @@ klok_entry * leap_event_schedule_utc(uint32_t param_1,int32_t param_2)
 
 /* queues the leap second's clock event, in GPS time or in UTC as nv_settings.gps_utc says */
 
-int32_t leap_event_schedule(uint32_t param_1,int32_t param_2)
+klok_entry * leap_event_schedule(uint32_t param_1,int32_t param_2)
 
 {
-  int32_t entry;
+  klok_entry *entry;
   
   if (nv_settings.gps_utc == 0) {
-    entry = leap_event_schedule_utc(param_1,param_2);
+    entry = (klok_entry *)leap_event_schedule_utc(param_1,param_2);
   }
   else {
-    entry = leap_event_schedule_gps(param_1,param_2);
+    entry = (klok_entry *)leap_event_schedule_gps(param_1,param_2);
   }
   return entry;
 }
@@ -9137,7 +9141,7 @@ __exception uint64_t primary_default_exception(void)
     if ((in_stack_0000000a & 0xf000) != 0) {
       printf_polled(", address = %#8x",(int16_t)in_stack_0000000c);
     }
-    printf_polled((char *)reset_to_recover_text);
+    printf_polled("\r\nRESET to recover.");
     if (kernel_running != 0) {
       psos_pause(1);
     }
@@ -9216,7 +9220,7 @@ void print_exception(uint16_t param_1,uint32_t param_2,uint16_t param_3,uint32_t
     if ((param_3 & 0xf000) != 0) {
       printf_polled(", address = %#8x",(int16_t)param_4);
     }
-    printf_polled((char *)reset_to_recover_text);
+    printf_polled("\r\nRESET to recover.");
     if (kernel_running != 0) {
       psos_pause(1);
     }
@@ -9241,7 +9245,7 @@ char * exception_name(uint16_t vector)
   char *pcVar1;
   
   if ((vector & 0xfff) < 0xe9) {
-    pcVar1 = *(char **)(reset_to_recover_text + (vector & 0xffff0fff) + 0xc);
+    pcVar1 = *(char **)("\r\nRESET to recover." + (vector & 0xffff0fff) + 0xc);
   }
   else {
     pcVar1 = "Oooh! That tickles. I don\'t know that vector.";
@@ -10582,10 +10586,10 @@ void stack_usage_report(void *task)
 uint16_t enter_supervisor_mode(void)
 
 {
-  int32_t iVar1;
+  uint32_t uVar1;
   
-  iVar1 = enter_supervisor();
-  return (uint16_t)iVar1;
+  uVar1 = enter_supervisor();
+  return (uint16_t)uVar1;
 }
 
 
@@ -10597,10 +10601,10 @@ uint16_t enter_supervisor_mode(void)
 uint16_t set_interrupt_mask(uint16_t sr)
 
 {
-  int32_t iVar1;
+  uint32_t uVar1;
   
-  iVar1 = enter_supervisor();
-  return (uint16_t)iVar1;
+  uVar1 = enter_supervisor();
+  return (uint16_t)uVar1;
 }
 
 
@@ -10689,21 +10693,21 @@ __asm__(
 /* trap #7, then a jump back through the return address it pops; returns the caller's status
    register in D0
    Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
-   called.  Out: D0 int status.  Preserves: D1, D2, D3, D4, D5, D6, D7, A1, A2, A3, A4, A5, A6.
+   called.  Out: D0 uint32_t status.  Preserves: D1, D2, D3, D4, D5, D6, D7, A1, A2, A3, A4, A5, A6.
    psos.md */
 
-/* out D0 int status; preserves D1, D2, D3, D4, D5, D6, D7, A1, A2, A3, A4, A5, A6 */
-__naked int32_t enter_supervisor(void)
+/* out D0 uint32_t status; preserves D1, D2, D3, D4, D5, D6, D7, A1, A2, A3, A4, A5, A6 */
+__naked uint32_t enter_supervisor(void)
 
 {
-  int32_t iVar1;
+  uint32_t uVar1;
   code *UNRECOVERED_JUMPTABLE;
   
   __m68k_trap(7);
                     /* WARNING: Could not recover jumptable at 0x00013426. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-  iVar1 = (*UNRECOVERED_JUMPTABLE)();
-  return iVar1;
+  uVar1 = (*UNRECOVERED_JUMPTABLE)();
+  return uVar1;
 }
 
 
@@ -35680,25 +35684,22 @@ void duart_test_tx_b(void)
 /* the interrupt handler for DUART channel A, the GPS engine's
    "DUARTA isr signaling SIG_SIQ" */
 
-uint32_t duarta_isr(void)
+uint8_t duarta_isr(void)
 
 {
   uint8_t uVar1;
-  uint32_t in_D0;
-  uint32_t extraout_D0;
+  uint32_t uVar2;
+  uint32_t uVar3;
   
-  while( true ) {
-    uVar1 = duart.a.sr_csr;
-    if ((uVar1 & SR_RXRDY) == 0) break;
-    in_D0 = (uint32_t)duarta_ring.write;
+  while (uVar1 = duart.a.sr_csr, (uVar1 & 1) != 0) {
+    uVar2 = (uint32_t)duarta_ring.write;
     uVar1 = duart.a.rb_tb;
     duarta_ring.write = duarta_ring.write + 1;
-    duarta_ring.data[in_D0] = uVar1;
+    duarta_ring.data[uVar2] = uVar1;
     if (task_gpsm != 0) {
-      in_D0 = psos_signal_v(task_gpsm,SIG_SIQ);
-      if ((char)in_D0 != 0) {
+      uVar3 = psos_signal_v(task_gpsm,SIG_SIQ);
+      if ((char)uVar3 != 0) {
         fatal_error("DUARTA isr signaling SIG_SIQ");
-        in_D0 = extraout_D0;
       }
     }
   }
@@ -35710,7 +35711,7 @@ uint32_t duarta_isr(void)
     duarta.overrun = 1;
     duart.a.cr = CR_RESET_ERROR;
   }
-  return CONCAT31((int3)(in_D0 >> 8),uVar1) & 0xffffff10;
+  return uVar1 & 0x10;
 }
 
 
@@ -36165,7 +36166,7 @@ int32_t debug_write(char *param_1)
 
 /* formats and writes to the console by polling, when debug output is on; called by nothing */
 
-int32_t debug_printf_polled(char *param_1)
+int32_t debug_printf_polled(char *format,...)
 
 {
   int32_t iVar1;
@@ -36173,7 +36174,7 @@ int32_t debug_printf_polled(char *param_1)
   
   iVar1 = 0;
   if (debug_enabled != 0) {
-    vsprintf(acStack_54,param_1,&stack0x00000008);
+    vsprintf(acStack_54,format,&stack0x00000008);
     iVar1 = console_write_polled(acStack_54);
   }
   return iVar1;
@@ -36387,16 +36388,16 @@ float read_adc_doven(void)
 
 {
   float pushed_1;
+  uint32_t uVar1;
   uint32_t reading;
-  uint32_t uVar2;
   float fVar3;
   
-  reading = adc_read(ADC_DOUBLE_OVEN);
-  uVar2 = adc_read(ADC_5V);
-  fVar3 = unsigned_to_float(reading & 0xff);
+  uVar1 = adc_read(ADC_DOUBLE_OVEN);
+  reading = adc_read(ADC_5V);
+  fVar3 = unsigned_to_float(uVar1 & 0xff);
   fVar3 = float_multiply(fVar3,0.0743);
   pushed_1 = fVar3;
-  fVar3 = unsigned_to_float(uVar2 & 0xff);
+  fVar3 = unsigned_to_float(reading & 0xff);
   fVar3 = float_multiply(fVar3,-0.0472);
   fVar3 = float_add(pushed_1,fVar3);
   return fVar3;
@@ -36461,16 +36462,16 @@ float read_adc_m15v(void)
 
 {
   float pushed_1;
+  uint32_t uVar1;
   uint32_t reading;
-  uint32_t uVar2;
   float fVar3;
   
-  reading = adc_read(ADC_MINUS_15V);
-  uVar2 = adc_read(ADC_5V);
-  fVar3 = unsigned_to_float(reading & 0xff);
+  uVar1 = adc_read(ADC_MINUS_15V);
+  reading = adc_read(ADC_5V);
+  fVar3 = unsigned_to_float(uVar1 & 0xff);
   fVar3 = float_multiply(fVar3,0.0438);
   pushed_1 = fVar3;
-  fVar3 = unsigned_to_float(uVar2 & 0xff);
+  fVar3 = unsigned_to_float(reading & 0xff);
   fVar3 = float_multiply(fVar3,-0.084);
   fVar3 = float_add(pushed_1,fVar3);
   return fVar3;
@@ -37772,37 +37773,32 @@ __asm__(
 
 /* resets the SCI and applies the serial settings' baud rate and mode */
 
-uint32_t sci_reconfigure(void)
+void sci_reconfigure(void)
 
 {
   uint16_t uVar1;
-  uint32_t uVar2;
-  bool bVar3;
-  uint3 uVar4;
-  int16_t sVar5;
-  int32_t iVar6;
+  bool bVar2;
+  int32_t iVar3;
   
   sci.reconfiguring = 1;
   uVar1 = qsm.sccr1;
   qsm.sccr1 = uVar1 & ~(SCCR1_TIE | SCCR1_RIE | SCCR1_RE);
-  iVar6 = 100;
-  while ((0 < iVar6 && (uVar1 = qsm.scsr, (uVar1 & 0x100) == 0))) {
+  iVar3 = 100;
+  while ((0 < iVar3 && (uVar1 = qsm.scsr, (uVar1 & 0x100) == 0))) {
     psos_pause(1);
-    iVar6 = iVar6 + -1;
+    iVar3 = iVar3 + -1;
   }
   uVar1 = qsm.sccr1;
   qsm.sccr1 = uVar1 & ~SCCR1_TE;
-  iVar6 = 5000;
-  while ((0 < iVar6 && (uVar1 = qsm.scsr, (uVar1 & 0x80) == 0))) {
-    iVar6 = iVar6 + -1;
+  iVar3 = 5000;
+  while ((0 < iVar3 && (uVar1 = qsm.scsr, (uVar1 & 0x80) == 0))) {
+    iVar3 = iVar3 + -1;
   }
   sci_baud_set(sci_settings.baud);
-  iVar6 = (int32_t)(char)sci_settings.parity - 3;
-  if ((uint32_t)(int32_t)(char)sci_settings.parity < 3 || iVar6 == 0) {
-    sVar5 = (int16_t)iVar6;
-    iVar6 = CONCAT22((int16_t)((uint32_t)iVar6 >> 0x10),(&switchD_00020088_index_zero)[sVar5]);
+  iVar3 = (int32_t)(char)sci_settings.parity - 3;
+  if ((uint32_t)(int32_t)(char)sci_settings.parity < 3 || iVar3 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&switchD_00020088_index_zero)[sVar5]) {
+    switch((&switchD_00020088_index_zero)[(int16_t)iVar3]) {
     case 8:
       uVar1 = qsm.sccr1;
       qsm.sccr1 = uVar1 | SCCR1_PE;
@@ -37835,24 +37831,22 @@ switchD_00020088_caseD_0:
 LAB_000200ce:
   uVar1 = qsm.sccr1;
   qsm.sccr1 = uVar1 | SCCR1_TE;
-  uVar4 = (uint3)((uint32_t)iVar6 >> 8);
   if (sci_settings.xon_xoff == 0) {
-    if ((sci.xon_xoff != 0) && (iVar6 = (uint32_t)uVar4 << 8, (sci.flow & 0x20) != 0)) {
-      iVar6 = sci_putc_polled(0x11);
+    if ((sci.xon_xoff != 0) && ((sci.flow & 0x20) != 0)) {
+      sci_putc_polled(0x11);
     }
     sci.xon_xoff = 0;
-    bVar3 = false;
+    bVar2 = false;
     sci.flow = sci.flow & 0x7f;
   }
   else {
-    if ((sci.xon_xoff == 0) && (iVar6 = (uint32_t)uVar4 << 8, (sci.flow & 0x20) != 0)) {
-      iVar6 = sci_putc_polled(0x13);
+    if ((sci.xon_xoff == 0) && ((sci.flow & 0x20) != 0)) {
+      sci_putc_polled(0x13);
     }
     sci.xon_xoff = 1;
-    bVar3 = true;
+    bVar2 = true;
   }
-  uVar2 = CONCAT31((int3)((uint32_t)iVar6 >> 8),sci.flow);
-  if (((sci.flow & 0x20) != 0) && (!bVar3)) {
+  if (((sci.flow & 0x20) != 0) && (!bVar2)) {
     sci.flow = sci.flow & 0xdf;
   }
   if (sci_settings.echo == 0) {
@@ -37864,7 +37858,7 @@ LAB_000200ce:
   uVar1 = qsm.sccr1;
   qsm.sccr1 = uVar1 | (SCCR1_TIE | SCCR1_RIE | SCCR1_TE | SCCR1_RE);
   sci.reconfiguring = 0;
-  return uVar2 & 0xffffff20;
+  return;
 }
 
 
@@ -38005,12 +37999,12 @@ uint32_t sci_port_write(void *param_1)
 
 /* formats into 160 bytes and writes to the SCI device; called by nothing */
 
-void sci_printf(char *param_1)
+void sci_printf(char *format,...)
 
 {
   char acStack_a4 [160];
   
-  vsprintf(acStack_a4,param_1,&stack0x00000008);
+  vsprintf(acStack_a4,format,&stack0x00000008);
   sci_port_write(acStack_a4);
   return;
 }
@@ -38057,12 +38051,12 @@ int32_t sci_puts_polled(char *param_1)
 
 /* formats into 80 bytes and writes to the SCI by polling; called by nothing */
 
-void sci_printf_polled(char *param_1)
+void sci_printf_polled(char *format,...)
 
 {
   char acStack_54 [80];
   
-  vsprintf(acStack_54,param_1,&stack0x00000008);
+  vsprintf(acStack_54,format,&stack0x00000008);
   sci_puts_polled(acStack_54);
   return;
 }
@@ -38770,13 +38764,13 @@ void qspi_send(uint8_t param_1,uint16_t *param_2,uint16_t param_3)
 {
   uint16_t uVar1;
   uint8_t uVar2;
-  int32_t iVar3;
+  uint32_t uVar3;
   char unknown_device;
   uint16_t local_8;
   uint16_t local_6;
   
-  iVar3 = enter_supervisor();
-  local_6 = (uint16_t)iVar3;
+  uVar3 = enter_supervisor();
+  local_6 = (uint16_t)uVar3;
   qspi.field_00 = 1;
   do {
     uVar1 = qsm.spcr1;
@@ -38808,7 +38802,7 @@ void qspi_transfer(uint8_t param_1,uint32_t *param_2,uint16_t param_3)
 {
   uint16_t uVar1;
   uint8_t uVar2;
-  int32_t iVar3;
+  uint32_t uVar3;
   char unknown_device;
   uint16_t *puVar5;
   uint16_t *puVar6;
@@ -38818,8 +38812,8 @@ void qspi_transfer(uint8_t param_1,uint32_t *param_2,uint16_t param_3)
   
   puVar5 = qsm.rr;
   puVar6 = (uint16_t *)param_2[1];
-  iVar3 = enter_supervisor();
-  local_6 = (uint16_t)iVar3;
+  uVar3 = enter_supervisor();
+  local_6 = (uint16_t)uVar3;
   qspi.field_00 = 1;
   do {
     uVar1 = qsm.spcr1;
@@ -39029,7 +39023,7 @@ void debug_message(char *message,char with_task_name)
 #endif
 
 /* 00022d70 */
-#if 0 /* the decompiler's reading; rewritten in startup.c */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* sets the FPGA up
    "setup fpga" */
@@ -39580,7 +39574,7 @@ bool fpga_verify_chip(uint8_t param_1,char param_2,uint8_t param_3)
 
 
 /* 00023980 */
-#if 0 /* the decompiler's reading; rewritten in startup.c */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* fpga_verify_chip for chip 0 or 1 */
 
@@ -39605,25 +39599,21 @@ uint8_t fpga_verify(uint8_t param_1,char param_2)
 /* clears all eight adc_monitors' valid, sample_index, out_of_tolerance and out_of_range_count, and
    hmon_supply_step */
 
-int32_t monitors_reset(void)
+void monitors_reset(void)
 
 {
   int32_t iVar1;
-  int32_t iVar2;
-  int32_t iVar3;
   
-  iVar3 = 0;
+  iVar1 = 0;
   do {
-    adc_monitors[iVar3].valid = 0;
-    adc_monitors[iVar3].sample_index = 0;
-    adc_monitors[iVar3].out_of_range_count = 0;
-    adc_monitors[iVar3].out_of_tolerance = 0;
-    iVar1 = iVar3 + 1;
-    iVar2 = iVar3 + -6;
-    iVar3 = iVar1;
-  } while (iVar2 == 0 || iVar1 < 7);
+    adc_monitors[iVar1].valid = 0;
+    adc_monitors[iVar1].sample_index = 0;
+    adc_monitors[iVar1].out_of_range_count = 0;
+    adc_monitors[iVar1].out_of_tolerance = 0;
+    iVar1 = iVar1 + 1;
+  } while (iVar1 < 8);
   hmon_supply_step = 0;
-  return iVar2;
+  return;
 }
 
 
@@ -42542,11 +42532,11 @@ LAB_00025618:
 /* the string's pointer and length
    docs/scpi/README.md, read */
 
-uint32_t scpi_parse_string(uint16_t *param_1,uint32_t *param_2)
+uint32_t scpi_parse_string(uint16_t *token,void *unused,uint32_t *value)
 
 {
-  *param_2 = *(uint32_t *)(param_1 + 1);
-  *(uint16_t *)(param_2 + 1) = *param_1;
+  *value = *(uint32_t *)(token + 1);
+  *(uint16_t *)(value + 1) = *token;
   return 0;
 }
 
@@ -42556,38 +42546,38 @@ uint32_t scpi_parse_string(uint16_t *param_1,uint32_t *param_2)
 /* ON as 1, OFF as 0
    docs/scpi/README.md, read */
 
-uint32_t scpi_parse_boolean(int16_t *param_1,uint16_t *param_2)
+uint32_t scpi_parse_boolean(int16_t *token,void *unused,uint16_t *value)
 
 {
   char cVar1;
   char cVar2;
   char *pcVar3;
-  int16_t *psVar4;
+  int16_t *piVar4;
   
-  *(uint8_t *)((int32_t)param_1 + *param_1 + 2) = 0;
+  *(uint8_t *)((int32_t)token + *token + 2) = 0;
   pcVar3 = "ON";
-  psVar4 = param_1 + 1;
+  piVar4 = token + 1;
   do {
-    if (*(char *)psVar4 == 0 && *pcVar3 == 0) {
-      *param_2 = 1;
+    if (*(char *)piVar4 == 0 && *pcVar3 == 0) {
+      *value = 1;
       return 0;
     }
     cVar1 = *pcVar3;
     pcVar3 = pcVar3 + 1;
-    cVar2 = *(char *)psVar4;
-    psVar4 = (int16_t *)((int32_t)psVar4 + 1);
+    cVar2 = *(char *)piVar4;
+    piVar4 = (int16_t *)((int32_t)piVar4 + 1);
   } while (cVar2 == cVar1);
   pcVar3 = "OFF";
-  psVar4 = param_1 + 1;
+  piVar4 = token + 1;
   do {
-    if (*(char *)psVar4 == 0 && *pcVar3 == 0) {
-      *param_2 = 0;
+    if (*(char *)piVar4 == 0 && *pcVar3 == 0) {
+      *value = 0;
       return 0;
     }
     cVar1 = *pcVar3;
     pcVar3 = pcVar3 + 1;
-    cVar2 = *(char *)psVar4;
-    psVar4 = (int16_t *)((int32_t)psVar4 + 1);
+    cVar2 = *(char *)piVar4;
+    piVar4 = (int16_t *)((int32_t)piVar4 + 1);
   } while (cVar2 == cVar1);
   return 0xffffffe5;
 }
@@ -42624,7 +42614,7 @@ int32_t scpi_parse_boolean_number(scpi_number *number,void *param_2,uint16_t *va
    no match
    docs/scpi/README.md, read */
 
-uint32_t scpi_parse_choice(int16_t *param_1,int16_t *param_2,int32_t *param_3)
+uint32_t scpi_parse_choice(int16_t *token,void *unused,int16_t *value,int32_t *list)
 
 {
   int32_t iVar1;
@@ -42633,19 +42623,18 @@ uint32_t scpi_parse_choice(int16_t *param_1,int16_t *param_2,int32_t *param_3)
   int16_t sVar4;
   
   sVar4 = 0;
-  if ((param_3 == (int32_t *)0x0) || (iVar1 = *param_3, iVar1 == 0)) {
+  if ((list == (int32_t *)0x0) || (iVar1 = *list, iVar1 == 0)) {
     uVar2 = 0xffffffe4;
   }
   else {
     while (*(int32_t *)(iVar1 + sVar4 * 4) != 0) {
-      order = scpi_keyword_compare
-                        ((char *)(param_1 + 1),(int32_t)*param_1,*(char **)(iVar1 + sVar4 * 4));
+      order = scpi_keyword_compare((char *)(token + 1),(int32_t)*token,*(char **)(iVar1 + sVar4 * 4));
       if (order == 0) {
-        if (param_3[1] == 0) {
-          *param_2 = sVar4;
+        if (list[1] == 0) {
+          *value = sVar4;
         }
         else {
-          *param_2 = *(int16_t *)(param_3[1] + sVar4 * 2);
+          *value = *(int16_t *)(list[1] + sVar4 * 2);
         }
         return 0;
       }
@@ -46470,7 +46459,7 @@ int32_t scpi_console_return_zero(void)
 
 /* reads up to so many characters from the console, marking the input ended at its end */
 
-int32_t scpi_console_read(uint8_t *param_1,int32_t param_2)
+int32_t scpi_console_read(scpi_port *port,uint8_t *buffer,int32_t length)
 
 {
   int16_t character;
@@ -46478,14 +46467,14 @@ int32_t scpi_console_read(uint8_t *param_1,int32_t param_2)
   
   iVar2 = 0;
   while( true ) {
-    if (param_2 <= iVar2) {
+    if (length <= iVar2) {
       return iVar2;
     }
     character = console_port_read();
     if (0xff < character) break;
-    *param_1 = (char)character;
+    *buffer = (uint8_t)character;
     iVar2 = iVar2 + 1;
-    param_1 = param_1 + 1;
+    buffer = buffer + 1;
   }
   scpi_input_ended();
   return iVar2;
@@ -46619,10 +46608,10 @@ void scpi_console_write_loop(void *port,char *s,int32_t n)
 
 /* the status output object's method: sets bits in the status byte and updates RQS */
 
-void status_byte_set_bits(uint32_t param_1)
+void status_byte_set_bits(scpi_port *port,int32_t bits)
 
 {
-  status_byte = (uint8_t)param_1 | status_byte;
+  status_byte = (uint8_t)bits | status_byte;
   status_update_rqs();
   return;
 }
@@ -46632,10 +46621,10 @@ void status_byte_set_bits(uint32_t param_1)
 
 /* the status output object's method: clears bits in the status byte and updates RQS */
 
-void status_byte_clear_bits(uint32_t param_1)
+void status_byte_clear_bits(scpi_port *port,int32_t bits)
 
 {
-  status_byte = ~(uint8_t)param_1 & status_byte;
+  status_byte = ~(uint8_t)bits & status_byte;
   status_update_rqs();
   return;
 }
@@ -46645,10 +46634,10 @@ void status_byte_clear_bits(uint32_t param_1)
 
 /* the status output object's method: sets the service request enable and updates RQS */
 
-void status_sre_set(uint32_t param_1)
+void status_sre_set(scpi_port *port,int32_t bits)
 
 {
-  service_request_enable = (uint8_t)param_1;
+  service_request_enable = (uint8_t)bits;
   status_update_rqs();
   return;
 }
@@ -49208,16 +49197,16 @@ int32_t scpi_query_RSSU(void *parameters,void *response,void *call)
 int32_t scpi_set_SOURce_GPSystem_ADELay(void *parameters,void *response,void *call)
 
 {
-  int32_t zero;
+  int32_t iVar1;
   float fVar2;
-  uint32_t uVar3;
+  uint32_t zero;
   int32_t iVar4;
   float local_14;
   float local_10;
   scpi_step step;
   
-  zero = return_zero();
-  pllc_request_b(&scpi_action_temporary_hold,0,(char)zero);
+  iVar1 = return_zero();
+  pllc_request_b(&scpi_action_temporary_hold,0,(char)iVar1);
   if (*(int16_t *)parameters == 2) {
     if (*(int16_t *)((int32_t)parameters + 2) == 1) {
       iVar4 = 0;
@@ -49233,13 +49222,13 @@ int32_t scpi_set_SOURce_GPSystem_ADELay(void *parameters,void *response,void *ca
     local_14 = float_multiply(fVar2,1e-09);
     fVar2 = integer_to_float(999999);
     local_10 = float_multiply(fVar2,1e-09);
-    uVar3 = return_zero();
+    zero = return_zero();
     iVar4 = clamp_float_to_step_double
-                      ((float *)((int32_t)parameters + 2),0,&local_14,&local_10,(int32_t)&step,uVar3 & 0xff)
+                      ((float *)((int32_t)parameters + 2),0,&local_14,&local_10,(int32_t)&step,zero & 0xff)
     ;
   }
-  zero = return_zero();
-  pllc_request_c(&scpi_param_SOURce_GPSystem_ADELay,0,iVar4,(uint32_t *)0x0,(char)zero);
+  iVar1 = return_zero();
+  pllc_request_c(&scpi_param_SOURce_GPSystem_ADELay,0,iVar4,(uint32_t *)0x0,(char)iVar1);
   return 0;
 }
 
@@ -62034,7 +62023,8 @@ void leap_event_create(void)
 
 {
   uint32_t date;
-  int32_t iVar2;
+  klok_entry *entry;
+  int32_t iVar3;
   
   if (gps.leap_second_pending == ONCORE_NO_LEAP_SECOND) {
     if (nv_settings.leap_pending != 0) {
@@ -62045,25 +62035,25 @@ void leap_event_create(void)
   }
   else {
     if (gps.leap_second_pending == ONCORE_LEAP_SECOND_ADD) {
-      iVar2 = 0x3d;
+      iVar3 = 0x3d;
     }
     else if (gps.leap_second_pending == ONCORE_LEAP_SECOND_SUBTRACT) {
-      iVar2 = 0x3b;
+      iVar3 = 0x3b;
     }
     else {
-      iVar2 = 0x3c;
+      iVar3 = 0x3c;
     }
     date = leap_opportunity_date();
-    if (((nv_settings.leap_pending == 0) || (iVar2 != nv_settings.leap_minute_length)) ||
+    if (((nv_settings.leap_pending == 0) || (iVar3 != nv_settings.leap_minute_length)) ||
        (date != nv_settings.leap_date)) {
       nv_settings.leap_pending = 1;
       nv_settings.leap_date = date;
-      nv_settings.leap_minute_length = iVar2;
+      nv_settings.leap_minute_length = iVar3;
       nv_save(4);
     }
     leap_event_delete();
-    iVar2 = leap_event_schedule(date,iVar2);
-    if (iVar2 == 0) {
+    entry = leap_event_schedule(date,iVar3);
+    if (entry == (klok_entry *)0x0) {
       task_debug_message("Error in creating leapsecond event\r\n");
     }
   }
@@ -71308,8 +71298,8 @@ __regcall double double_subtract_reversed_pointer(double a /* d0 */,double *b /*
   int16_t sVar15;
   bool bVar16;
   bool bVar17;
-  double dVar18;
-  uint64_t raised;
+  double raised;
+  uint64_t uVar19;
   uint32_t uVar20;
   
   uVar13 = (uint32_t)((uint64_t)a >> 0x20);
@@ -71337,15 +71327,15 @@ __regcall double double_subtract_reversed_pointer(double a /* d0 */,double *b /*
       }
       if (uVar8 == 0) {
         if ((int32_t)(uVar5 ^ uVar13) < 0) {
-          dVar18 = (double)float_raise(0x82000);
-          return dVar18;
+          raised = (double)float_raise(0x82000);
+          return raised;
         }
         goto LAB_0005d2b6;
       }
     }
 LAB_0005d2c6:
-    dVar18 = (double)float_raise(0x84000,uVar3,uVar20);
-    return dVar18;
+    raised = (double)float_raise(0x84000,uVar3,uVar20);
+    return raised;
   }
   if (0x7fefffff < uVar7) {
     if ((uVar7 < 0x7ff00001) && (uVar8 == 0)) {
@@ -71469,7 +71459,7 @@ LAB_0005d2b6:
       }
       return (double)CONCAT44((uint32_t)uVar12 << 0x10 | uVar4,uVar5);
     }
-    raised = float_raise(0x81000);
+    uVar19 = float_raise(0x81000);
     sVar15 = extraout_A1w;
     goto LAB_0005d63e;
   }
@@ -71487,8 +71477,8 @@ LAB_0005d5ae:
         if ((__ghidra_piece(uint8_t, float_control, 0) & 2) != 0) {
 LAB_0005d484:
           float_status = float_status | 0x200;
-          dVar18 = (double)float_raise(0x80200);
-          return dVar18;
+          raised = (double)float_raise(0x80200);
+          return raised;
         }
         bVar17 = CARRY4(uVar4,uVar4);
         uVar4 = uVar4 * 2;
@@ -71576,14 +71566,14 @@ LAB_0005d5ee:
                               uVar5);
     }
   }
-  raised = float_raise(0xc0800,CONCAT22(uVar10,1 - uVar14),uVar3,uVar5,uVar4);
+  uVar19 = float_raise(0xc0800,CONCAT22(uVar10,1 - uVar14),uVar3,uVar5,uVar4);
   sVar15 = extraout_A1w_00;
 LAB_0005d63e:
-  uVar5 = (uint32_t)(raised >> 0x20);
+  uVar5 = (uint32_t)(uVar19 >> 0x20);
   if (sVar15 < 0) {
     uVar5 = uVar5 | 0x80000000;
   }
-  return (double)CONCAT44(uVar5,(int32_t)raised);
+  return (double)CONCAT44(uVar5,(int32_t)uVar19);
 }
 
 
@@ -79241,7 +79231,7 @@ void call_atexit_functions(void)
 {
   while (0 < (int16_t)atexit_count) {
     atexit_count = atexit_count - 1;
-    (**(code **)(&atexit_functions + (int16_t)atexit_count * 4))();
+    (*(code *)atexit_functions[(int16_t)atexit_count])();
   }
   return;
 }
@@ -80137,31 +80127,32 @@ uint64_t next_decimal_digit(uint32_t *param_1)
 /* the formatting engine under sprintf, by the classic C library's name for it
    libc.md */
 
-uint8_t * doprnt(uint8_t *param_1,uint32_t *param_2,uint8_t *param_3,uint32_t param_4)
+int32_t doprnt(char *format,void *arguments,sprintf_put_function *put,sprintf_output *output)
 
 {
-  bool bVar1;
+  uint32_t uVar1;
   bool bVar2;
-  uint32_t *puVar3;
-  bool bVar4;
+  bool bVar3;
+  void *pvVar4;
   bool bVar5;
   bool bVar6;
   bool bVar7;
   bool bVar8;
   bool bVar9;
-  char cVar10;
-  uint8_t bVar11;
-  int32_t iVar12;
-  uint32_t uVar13;
-  uint8_t *pbVar14;
+  bool bVar10;
+  char cVar11;
+  uint8_t bVar12;
+  int32_t iVar13;
+  uint32_t uVar14;
   uint8_t *pbVar15;
-  uint32_t uVar16;
-  char *pcVar17;
-  uint8_t *pbVar18;
+  uint8_t *pbVar16;
+  uint32_t uVar17;
+  char *pcVar18;
   uint8_t *pbVar19;
   uint8_t *pbVar20;
   uint8_t *pbVar21;
   uint8_t *pbVar22;
+  uint8_t *pbVar23;
   char *local_1d6;
   int32_t precision;
   char *local_1ce;
@@ -80176,7 +80167,7 @@ uint8_t * doprnt(uint8_t *param_1,uint32_t *param_2,uint8_t *param_3,uint32_t pa
   char *local_3c;
   uint32_t local_38;
   uint32_t local_34;
-  uint32_t local_30;
+  int32_t local_30;
   int32_t fraction_limit;
   int32_t local_28;
   uint32_t local_24;
@@ -80188,99 +80179,99 @@ uint8_t * doprnt(uint8_t *param_1,uint32_t *param_2,uint8_t *param_3,uint32_t pa
   uint32_t local_c;
   int32_t count;
   
-  pbVar14 = (uint8_t *)0x0;
   pbVar15 = (uint8_t *)0x0;
+  pbVar16 = (uint8_t *)0x0;
 LAB_0005fb1c:
   do {
-    pbVar18 = param_1 + 1;
-    bVar11 = *param_1;
-    if ((bVar11 != 0) && (pbVar19 = pbVar18, bVar11 != 0x25)) {
+    pbVar19 = (uint8_t *)(format + 1);
+    bVar12 = *format;
+    if ((bVar12 != 0) && (pbVar20 = pbVar19, bVar12 != 0x25)) {
       do {
-        pbVar18 = pbVar19 + 1;
-        bVar11 = *pbVar19;
-        if (bVar11 == 0) break;
-        pbVar19 = pbVar18;
-      } while (bVar11 != 0x25);
-      pbVar19 = pbVar18 + (-1 - (int32_t)param_1);
-      pbVar14 = pbVar19 + (int32_t)pbVar14;
-      pbVar15 = pbVar19 + (int32_t)pbVar15;
-      (*(code *)param_3)(param_1,1,pbVar19,param_4);
+        pbVar19 = pbVar20 + 1;
+        bVar12 = *pbVar20;
+        if (bVar12 == 0) break;
+        pbVar20 = pbVar19;
+      } while (bVar12 != 0x25);
+      pbVar20 = pbVar19 + (-1 - (int32_t)format);
+      pbVar15 = pbVar20 + (int32_t)pbVar15;
+      pbVar16 = pbVar20 + (int32_t)pbVar16;
+      (*put)(format,1,(int32_t)pbVar20,output);
     }
-    if (bVar11 == 0) {
-      return pbVar14;
+    if (bVar12 == 0) {
+      return (int32_t)pbVar15;
     }
-    uVar16 = 0;
-    bVar8 = false;
+    uVar17 = 0;
     bVar9 = false;
-    bVar5 = false;
-    bVar1 = false;
-    bVar7 = false;
+    bVar10 = false;
     bVar6 = false;
+    bVar2 = false;
+    bVar8 = false;
+    bVar7 = false;
     local_3c = (char *)0x0;
     local_44 = 0;
     local_1d6 = (char *)0x0;
 LAB_0005fb72:
-    bVar2 = false;
-    param_1 = pbVar18 + 1;
-    uVar13 = (uint32_t)*pbVar18;
-    bVar4 = false;
-    if (uVar13 - 0x20 < 0x59U) {
+    bVar3 = false;
+    format = (char *)(pbVar19 + 1);
+    uVar14 = (uint32_t)*pbVar19;
+    bVar5 = false;
+    if (uVar14 - 0x20 < 0x59U) {
                     /* WARNING: Switch is manually overridden */
-      switch((int16_t)(uVar13 - 0x20)) {
+      switch((int16_t)(uVar14 - 0x20)) {
       case 0:
-        bVar7 = true;
-        pbVar18 = param_1;
+        bVar8 = true;
+        pbVar19 = (uint8_t *)format;
         goto LAB_0005fb72;
       default:
         goto switchD_0005fb90_caseD_21;
       case 3:
-        bVar5 = true;
-        pbVar18 = param_1;
+        bVar6 = true;
+        pbVar19 = (uint8_t *)format;
         goto LAB_0005fb72;
       case 5:
-        pbVar19 = (uint8_t *)conversion;
-        pbVar22 = (uint8_t *)(conversion + 1);
-        conversion[0] = *pbVar18;
+        pbVar20 = (uint8_t *)conversion;
+        pbVar23 = (uint8_t *)(conversion + 1);
+        conversion[0] = *pbVar19;
         break;
       case 10:
-        if ((uVar16 & 0x40) == 0) {
-          puVar3 = param_2 + 1;
-          local_1d6 = (char *)*param_2;
-          pbVar18 = param_1;
-          param_2 = puVar3;
+        if ((uVar17 & 0x40) == 0) {
+          pvVar4 = (void *)((int32_t)arguments + 4);
+          local_1d6 = *(char **)arguments;
+          pbVar19 = (uint8_t *)format;
+          arguments = pvVar4;
           if ((int32_t)local_1d6 < 0) {
             local_1d6 = (char *)-(int32_t)local_1d6;
-            uVar16 = uVar16 ^ 4;
+            uVar17 = uVar17 ^ 4;
           }
         }
         else {
-          puVar3 = param_2 + 1;
-          precision = *param_2;
-          pbVar18 = param_1;
-          param_2 = puVar3;
+          pvVar4 = (void *)((int32_t)arguments + 4);
+          precision = *(int32_t *)arguments;
+          pbVar19 = (uint8_t *)format;
+          arguments = pvVar4;
           if (precision < 0) {
-            uVar16 = uVar16 ^ 0x40;
+            uVar17 = uVar17 ^ 0x40;
           }
         }
         goto LAB_0005fb72;
       case 0xb:
-        bVar6 = true;
-        pbVar18 = param_1;
+        bVar7 = true;
+        pbVar19 = (uint8_t *)format;
         goto LAB_0005fb72;
       case 0xd:
-        uVar16 = uVar16 | 4;
-        bVar8 = false;
-        pbVar18 = param_1;
+        uVar17 = uVar17 | 4;
+        bVar9 = false;
+        pbVar19 = (uint8_t *)format;
         goto LAB_0005fb72;
       case 0xe:
-        uVar16 = uVar16 | 0x40;
+        uVar17 = uVar17 | 0x40;
         precision = 0;
-        pbVar18 = param_1;
+        pbVar19 = (uint8_t *)format;
         goto LAB_0005fb72;
       case 0x10:
-        pbVar18 = param_1;
-        if (uVar16 == 0) {
-          bVar8 = true;
+        pbVar19 = (uint8_t *)format;
+        if (uVar17 == 0) {
+          bVar9 = true;
         }
         goto LAB_0005fb72;
       case 0x11:
@@ -80293,14 +80284,14 @@ LAB_0005fb72:
       case 0x18:
       case 0x19:
         while( true ) {
-          count = uVar13 - 0x30;
-          uVar13 = (uint32_t)*param_1;
-          if ((0x7f < uVar13) || ((ctype_table[uVar13 + 1] & 4) == 0)) break;
-          uVar13 = uVar13 + count * 10;
-          param_1 = param_1 + 1;
+          count = uVar14 - 0x30;
+          uVar14 = (uint32_t)(uint8_t)*format;
+          if ((0x7f < uVar14) || ((ctype_table[uVar14 + 1] & 4) == 0)) break;
+          uVar14 = uVar14 + count * 10;
+          format = format + 1;
         }
-        pbVar18 = param_1;
-        if ((uVar16 & 0x40) == 0) {
+        pbVar19 = (uint8_t *)format;
+        if ((uVar17 & 0x40) == 0) {
           local_1d6 = (char *)count;
         }
         else {
@@ -80309,22 +80300,22 @@ LAB_0005fb72:
         goto LAB_0005fb72;
       case 0x25:
       case 0x45:
-        if ((uVar16 & 0x40) == 0) {
+        if ((uVar17 & 0x40) == 0) {
           precision = 6;
         }
-        local_34 = *param_2;
-        local_30 = param_2[1];
+        local_34 = *(uint32_t *)arguments;
+        local_30 = *(int32_t *)((int32_t)arguments + 4);
         if (precision + 1 < 0x11) {
-          iVar12 = precision + 1;
+          iVar13 = precision + 1;
         }
         else {
-          iVar12 = 0x11;
+          iVar13 = 0x11;
         }
-        double_to_digits(*(double *)param_2,iVar12,&local_20,&local_1c,acStack_1b2 + 1,1);
+        double_to_digits(*(double *)arguments,iVar13,&local_20,&local_1c,acStack_1b2 + 1,1);
         goto LAB_000600fa;
       case 0x27:
       case 0x47:
-        if ((uVar16 & 0x40) == 0) {
+        if ((uVar17 & 0x40) == 0) {
           precision = 6;
         }
         else if (precision == 0) {
@@ -80332,27 +80323,27 @@ LAB_0005fb72:
         }
         fraction_limit = 0x3c;
         local_28 = 0x11;
-        local_34 = *param_2;
-        local_30 = param_2[1];
-        iVar12 = precision;
+        local_34 = *(uint32_t *)arguments;
+        local_30 = *(int32_t *)((int32_t)arguments + 4);
+        iVar13 = precision;
         if (0x10 < precision) {
-          iVar12 = 0x11;
+          iVar13 = 0x11;
         }
-        double_to_digits(*(double *)param_2,iVar12,&local_20,&local_1c,acStack_1b2 + 1,1);
+        double_to_digits(*(double *)arguments,iVar13,&local_20,&local_1c,acStack_1b2 + 1,1);
         if (local_30 == 0 && (local_34 & 0x7fffffff) == 0) {
           local_20 = 1;
         }
         count = precision;
-        if (!bVar5) {
-          iVar12 = -1;
-          pcVar17 = acStack_1b2 + 1;
+        if (!bVar6) {
+          iVar13 = -1;
+          pcVar18 = acStack_1b2 + 1;
           do {
-            iVar12 = iVar12 + 1;
-            cVar10 = *pcVar17;
-            pcVar17 = pcVar17 + 1;
-          } while (cVar10 != 0);
-          if (iVar12 < precision) {
-            count = iVar12;
+            iVar13 = iVar13 + 1;
+            cVar11 = *pcVar18;
+            pcVar18 = pcVar18 + 1;
+          } while (cVar11 != 0);
+          if (iVar13 < precision) {
+            count = iVar13;
           }
           for (; (0 < count && (acStack_1b2[count] == '0')); count = count + -1) {
           }
@@ -80360,14 +80351,14 @@ LAB_0005fb72:
         if ((local_20 < -3) || (precision + 1 <= local_20)) {
           precision = count + -1;
 LAB_000600fa:
-          param_2 = param_2 + 2;
-          pbVar18 = (uint8_t *)(acStack_1b2 + 1);
+          arguments = (void *)((int32_t)arguments + 8);
+          pbVar19 = (uint8_t *)(acStack_1b2 + 1);
           if (local_1c == 0) {
-            if (bVar6) {
+            if (bVar7) {
               local_52 = "+";
               local_44 = 1;
             }
-            else if (bVar7) {
+            else if (bVar8) {
               local_52 = " ";
               local_44 = 1;
             }
@@ -80380,26 +80371,26 @@ LAB_000600fa:
             conversion[0] = '0';
           }
           else {
-            pbVar18 = (uint8_t *)(acStack_1b2 + 2);
+            pbVar19 = (uint8_t *)(acStack_1b2 + 2);
             conversion[0] = acStack_1b2[1];
           }
-          pbVar22 = (uint8_t *)(conversion + 1);
-          if ((precision != 0) || (bVar5)) {
-            pbVar22 = (uint8_t *)(conversion + 2);
+          pbVar23 = (uint8_t *)(conversion + 1);
+          if ((precision != 0) || (bVar6)) {
+            pbVar23 = (uint8_t *)(conversion + 2);
             conversion[1] = '.';
           }
           count = precision;
-          for (; (0 < count && (*pbVar18 != 0)); pbVar18 = pbVar18 + 1) {
-            *pbVar22 = *pbVar18;
+          for (; (0 < count && (*pbVar19 != 0)); pbVar19 = pbVar19 + 1) {
+            *pbVar23 = *pbVar19;
             count = count + -1;
-            pbVar22 = pbVar22 + 1;
+            pbVar23 = pbVar23 + 1;
           }
           if (0 < count) {
             local_1ca = (char *)count;
             local_3c = (char *)count;
-            uVar16 = uVar16 | 0x100;
+            uVar17 = uVar17 | 0x100;
           }
-          pbVar19 = (uint8_t *)conversion;
+          pbVar20 = (uint8_t *)conversion;
           local_4e = exponent + 5;
           exponent[5] = 0;
           if (local_30 != 0 || (local_34 & 0x7fffffff) != 0) {
@@ -80419,34 +80410,34 @@ LAB_000600fa:
             *local_4e = '0';
           }
           if ((local_20 < 1) && (local_30 != 0 || (local_34 & 0x7fffffff) != 0)) {
-            cVar10 = '-';
+            cVar11 = '-';
           }
           else {
-            cVar10 = '+';
+            cVar11 = '+';
           }
-          local_4e[-1] = cVar10;
-          if ((ctype_table[uVar13 + 1] & 1) == 0) {
-            cVar10 = 'e';
+          local_4e[-1] = cVar11;
+          if ((ctype_table[uVar14 + 1] & 1) == 0) {
+            cVar11 = 'e';
           }
           else {
-            cVar10 = 'E';
+            cVar11 = 'E';
           }
           local_4e = local_4e + -2;
-          *local_4e = cVar10;
+          *local_4e = cVar11;
           local_40 = exponent + (5 - (int32_t)local_4e);
           local_3c = local_40 + (int32_t)local_3c;
-          uVar16 = uVar16 | 0x80;
+          uVar17 = uVar17 | 0x80;
         }
         else {
           precision = count - local_20;
 LAB_000602cc:
-          param_2 = param_2 + 2;
+          arguments = (void *)((int32_t)arguments + 8);
           if (((local_1c == 0) || (local_20 <= -precision)) || (acStack_1b2[1] == '0')) {
-            if (bVar6) {
+            if (bVar7) {
               local_52 = "+";
               local_44 = 1;
             }
-            else if (bVar7) {
+            else if (bVar8) {
               local_52 = " ";
               local_44 = 1;
             }
@@ -80457,86 +80448,86 @@ LAB_000602cc:
           }
           count = local_20;
           local_14 = (char *)0x0;
-          pbVar18 = (uint8_t *)(acStack_1b2 + 1);
-          pbVar19 = (uint8_t *)conversion;
+          pbVar19 = (uint8_t *)(acStack_1b2 + 1);
+          pbVar20 = (uint8_t *)conversion;
           do {
-            pbVar21 = pbVar19;
-            if (((count < 1) || (*pbVar18 == 0)) || (local_28 <= (int32_t)local_14)) {
-              bVar11 = 0x30;
-              pbVar20 = pbVar18;
+            pbVar22 = pbVar20;
+            if (((count < 1) || (*pbVar19 == 0)) || (local_28 <= (int32_t)local_14)) {
+              bVar12 = 0x30;
+              pbVar21 = pbVar19;
             }
             else {
               local_14 = (char *)((int32_t)local_14 + 1);
-              pbVar20 = pbVar18 + 1;
-              bVar11 = *pbVar18;
+              pbVar21 = pbVar19 + 1;
+              bVar12 = *pbVar19;
             }
-            pbVar19 = pbVar21 + 1;
-            *pbVar21 = bVar11;
+            pbVar20 = pbVar22 + 1;
+            *pbVar22 = bVar12;
             count = count + -1;
-            pbVar18 = pbVar20;
+            pbVar19 = pbVar21;
           } while (0 < count);
-          if ((bVar5) || (pbVar22 = pbVar19, 0 < precision)) {
-            pbVar22 = pbVar21 + 2;
-            *pbVar19 = 0x2e;
+          if ((bVar6) || (pbVar23 = pbVar20, 0 < precision)) {
+            pbVar23 = pbVar22 + 2;
+            *pbVar20 = 0x2e;
           }
           count = fraction_limit;
           if (precision < fraction_limit) {
             count = precision;
           }
           if (count < precision) {
-            uVar16 = uVar16 | 0x100;
+            uVar17 = uVar17 | 0x100;
             local_1ca = (char *)(precision - count);
             local_3c = local_1ca;
           }
           while (count = count + -1, -1 < count) {
             local_20 = local_20 + 1;
-            if (((local_20 < 1) || (*pbVar20 == 0)) || (local_28 <= (int32_t)local_14)) {
-              bVar11 = 0x30;
-              pbVar18 = pbVar20;
+            if (((local_20 < 1) || (*pbVar21 == 0)) || (local_28 <= (int32_t)local_14)) {
+              bVar12 = 0x30;
+              pbVar19 = pbVar21;
             }
             else {
               local_14 = (char *)((int32_t)local_14 + 1);
-              pbVar18 = pbVar20 + 1;
-              bVar11 = *pbVar20;
+              pbVar19 = pbVar21 + 1;
+              bVar12 = *pbVar21;
             }
-            *pbVar22 = bVar11;
-            pbVar20 = pbVar18;
-            pbVar22 = pbVar22 + 1;
+            *pbVar23 = bVar12;
+            pbVar21 = pbVar19;
+            pbVar23 = pbVar23 + 1;
           }
-          pbVar19 = (uint8_t *)conversion;
+          pbVar20 = (uint8_t *)conversion;
         }
         break;
       case 0x2c:
-        pbVar18 = param_1;
+        pbVar19 = (uint8_t *)format;
         goto LAB_0005fb72;
       case 0x30:
       case 0x50:
-        puVar3 = param_2 + 1;
-        local_24 = *param_2;
-        if (uVar13 == 0x50) {
+        pvVar4 = (void *)((int32_t)arguments + 4);
+        local_24 = *(uint32_t *)arguments;
+        if (uVar14 == 0x50) {
           local_18 = "0123456789ABCDEF";
         }
         else {
           local_18 = "0123456789abcdef";
         }
-        pbVar22 = (uint8_t *)(conversion + 0xb);
+        pbVar23 = (uint8_t *)(conversion + 0xb);
         count = 8;
-        pbVar19 = pbVar22;
+        pbVar20 = pbVar23;
         do {
-          pbVar19 = pbVar19 + -1;
-          *pbVar19 = local_18[local_24 & 0xf];
+          pbVar20 = pbVar20 + -1;
+          *pbVar20 = local_18[local_24 & 0xf];
           local_24 = (int32_t)local_24 >> 4;
           count = count + -1;
         } while (0 < count);
-        if (((uVar16 & 0x40) != 0) && (count = precision - ((int32_t)pbVar22 - (int32_t)pbVar19), 0 < count)
+        if (((uVar17 & 0x40) != 0) && (count = precision - ((int32_t)pbVar23 - (int32_t)pbVar20), 0 < count)
            ) {
-          bVar2 = true;
+          bVar3 = true;
           local_1ce = (char *)count;
           local_3c = (char *)count;
         }
-        param_2 = puVar3;
-        if (bVar5) {
-          if (uVar13 == 0x70) {
+        arguments = pvVar4;
+        if (bVar6) {
+          if (uVar14 == 0x70) {
             local_52 = "0x";
             local_44 = 2;
           }
@@ -80547,23 +80538,23 @@ LAB_000602cc:
         }
         break;
       case 0x33:
-        puVar3 = param_2 + 1;
-        pbVar19 = (uint8_t *)*param_2;
-        pbVar22 = pbVar19;
-        param_2 = puVar3;
-        if (pbVar19 != (uint8_t *)0x0) {
-          if ((uVar16 & 0x40) == 0) {
-            for (; *pbVar22 != 0; pbVar22 = pbVar22 + 1) {
+        pvVar4 = (void *)((int32_t)arguments + 4);
+        pbVar20 = *(uint8_t **)arguments;
+        pbVar23 = pbVar20;
+        arguments = pvVar4;
+        if (pbVar20 != (uint8_t *)0x0) {
+          if ((uVar17 & 0x40) == 0) {
+            for (; *pbVar23 != 0; pbVar23 = pbVar23 + 1) {
             }
           }
           else {
-            for (; (*pbVar22 != 0 && (0 < precision)); precision = precision + -1) {
-              count = (int32_t)*pbVar22;
-              pbVar22 = pbVar22 + 1;
+            for (; (*pbVar23 != 0 && (0 < precision)); precision = precision + -1) {
+              count = (int32_t)*pbVar23;
+              pbVar23 = pbVar23 + 1;
             }
             if (precision < 0) {
-              bVar4 = true;
-              pbVar22 = pbVar22 + -1;
+              bVar5 = true;
+              pbVar23 = pbVar23 + -1;
             }
           }
         }
@@ -80573,280 +80564,280 @@ LAB_000602cc:
         local_10 = 3;
         goto LAB_0005febe;
       case 0x43:
-        uVar13 = *param_2;
-        pbVar19 = (uint8_t *)conversion;
-        pbVar22 = (uint8_t *)(conversion + 1);
-        param_2 = param_2 + 1;
-        conversion[0] = (char)uVar13;
+        uVar1 = *(uint32_t *)arguments;
+        pbVar20 = (uint8_t *)conversion;
+        pbVar23 = (uint8_t *)(conversion + 1);
+        arguments = (void *)((int32_t)arguments + 4);
+        conversion[0] = (char)uVar1;
         break;
       case 0x44:
       case 0x49:
-        if (bVar9) {
-          local_38 = *param_2;
+        if (bVar10) {
+          local_38 = *(uint32_t *)arguments;
         }
         else {
-          local_38 = *param_2;
+          local_38 = *(uint32_t *)arguments;
         }
-        pbVar19 = (uint8_t *)(conversion + 0xb);
+        pbVar20 = (uint8_t *)(conversion + 0xb);
         if ((int32_t)local_38 < 0) {
           local_52 = "-";
           local_44 = 1;
           if (local_38 == 0x80000000) {
             conversion[10] = next_decimal_digit(&local_38);
-            pbVar19 = (uint8_t *)(conversion + 10);
+            pbVar20 = (uint8_t *)(conversion + 10);
           }
           else {
             local_38 = -local_38;
           }
         }
-        else if (bVar6) {
+        else if (bVar7) {
           local_52 = "+";
           local_44 = 1;
         }
-        else if (bVar7) {
+        else if (bVar8) {
           local_52 = " ";
           local_44 = 1;
         }
         goto LAB_0005fdc4;
       case 0x46:
-        if ((uVar16 & 0x40) == 0) {
+        if ((uVar17 & 0x40) == 0) {
           precision = 6;
         }
         fraction_limit = 0x3c;
         local_28 = 0x11;
-        local_34 = *param_2;
-        local_30 = param_2[1];
-        iVar12 = precision;
+        local_34 = *(uint32_t *)arguments;
+        local_30 = *(int32_t *)((int32_t)arguments + 4);
+        iVar13 = precision;
         if (0x3b < precision) {
-          iVar12 = 0x3c;
+          iVar13 = 0x3c;
         }
-        double_to_digits(*(double *)param_2,iVar12,&local_20,&local_1c,acStack_1b2 + 1,0);
+        double_to_digits(*(double *)arguments,iVar13,&local_20,&local_1c,acStack_1b2 + 1,0);
         goto LAB_000602cc;
       case 0x48:
-        bVar1 = true;
-        pbVar18 = param_1;
+        bVar2 = true;
+        pbVar19 = (uint8_t *)format;
         goto LAB_0005fb72;
       case 0x4c:
         goto switchD_0005fb90_caseD_6c;
       case 0x4e:
-        if (bVar1) {
-          *(int16_t *)*param_2 = (int16_t)pbVar15;
-          param_2 = param_2 + 1;
+        if (bVar2) {
+          **(uint16_t **)arguments = (int16_t)pbVar16;
+          arguments = (void *)((int32_t)arguments + 4);
         }
-        else if (bVar9) {
-          *(uint8_t **)*param_2 = pbVar15;
-          param_2 = param_2 + 1;
+        else if (bVar10) {
+          **(uint32_t **)arguments = pbVar16;
+          arguments = (void *)((int32_t)arguments + 4);
         }
         else {
-          *(uint8_t **)*param_2 = pbVar15;
-          param_2 = param_2 + 1;
+          **(uint32_t **)arguments = pbVar16;
+          arguments = (void *)((int32_t)arguments + 4);
         }
         goto LAB_0005fb1c;
       case 0x4f:
         local_c = 7;
         local_10 = 2;
 LAB_0005febe:
-        if (bVar9) {
-          local_38 = *param_2;
+        if (bVar10) {
+          local_38 = *(uint32_t *)arguments;
         }
         else {
-          local_38 = *param_2;
+          local_38 = *(uint32_t *)arguments;
         }
-        param_2 = param_2 + 1;
-        if (bVar1) {
+        arguments = (void *)((int32_t)arguments + 4);
+        if (bVar2) {
           local_38 = local_38 & 0xffff;
         }
-        if (uVar13 == 0x58) {
+        if (uVar14 == 0x58) {
           local_18 = "0123456789ABCDEF";
         }
         else {
           local_18 = "0123456789abcdef";
         }
-        pbVar22 = (uint8_t *)(conversion + 0xb);
+        pbVar23 = (uint8_t *)(conversion + 0xb);
         count = local_38;
-        pbVar19 = pbVar22;
+        pbVar20 = pbVar23;
         if (local_38 == 0) {
-          if ((uVar16 & 0x40) == 0) {
+          if ((uVar17 & 0x40) == 0) {
             local_1ce = (char *)0x1;
             local_3c = (char *)0x1;
-            bVar2 = true;
+            bVar3 = true;
           }
         }
         else {
           do {
-            pbVar19 = pbVar19 + -1;
-            *pbVar19 = local_18[local_c & count];
+            pbVar20 = pbVar20 + -1;
+            *pbVar20 = local_18[local_c & count];
             count = __ghidra_shr((int32_t)(count >> 1 & 0x7fffffffU), local_10);
           } while (count != 0);
         }
-        if ((uVar16 & 0x40) != 0) {
-          count = precision - ((int32_t)pbVar22 - (int32_t)pbVar19);
+        if ((uVar17 & 0x40) != 0) {
+          count = precision - ((int32_t)pbVar23 - (int32_t)pbVar20);
           if (0 < count) {
-            bVar2 = true;
+            bVar3 = true;
             local_1ce = (char *)count;
             local_3c = (char *)count;
           }
-          bVar8 = false;
+          bVar9 = false;
         }
-        if ((bVar5) && (local_38 != 0)) {
-          if (uVar13 == 0x58) {
+        if ((bVar6) && (local_38 != 0)) {
+          if (uVar14 == 0x58) {
             local_52 = "0X";
             local_44 = 2;
           }
-          else if (uVar13 == 0x6f) {
-            if (!bVar2) {
+          else if (uVar14 == 0x6f) {
+            if (!bVar3) {
               local_1ce = (char *)0x1;
               local_3c = (char *)0x1;
-              bVar2 = true;
+              bVar3 = true;
             }
           }
-          else if (uVar13 == 0x78) {
+          else if (uVar14 == 0x78) {
             local_52 = "0x";
             local_44 = 2;
           }
         }
         break;
       case 0x53:
-        puVar3 = param_2 + 1;
-        pbVar19 = (uint8_t *)*param_2;
-        pbVar22 = pbVar19;
-        param_2 = puVar3;
-        if (pbVar19 != (uint8_t *)0x0) {
-          if ((uVar16 & 0x40) == 0) {
-            for (; *pbVar22 != 0; pbVar22 = pbVar22 + 1) {
+        pvVar4 = (void *)((int32_t)arguments + 4);
+        pbVar20 = *(uint8_t **)arguments;
+        pbVar23 = pbVar20;
+        arguments = pvVar4;
+        if (pbVar20 != (uint8_t *)0x0) {
+          if ((uVar17 & 0x40) == 0) {
+            for (; *pbVar23 != 0; pbVar23 = pbVar23 + 1) {
             }
           }
           else {
-            while ((*pbVar22 != 0 &&
-                   (iVar12 = precision + -1, bVar1 = 0 < precision, precision = iVar12, bVar1))) {
-              pbVar22 = pbVar22 + 1;
+            while ((*pbVar23 != 0 &&
+                   (iVar13 = precision + -1, bVar2 = 0 < precision, precision = iVar13, bVar2))) {
+              pbVar23 = pbVar23 + 1;
             }
           }
         }
         break;
       case 0x55:
-        if (bVar9) {
-          local_38 = *param_2;
+        if (bVar10) {
+          local_38 = *(uint32_t *)arguments;
         }
         else {
-          local_38 = *param_2;
+          local_38 = *(uint32_t *)arguments;
         }
-        if (bVar1) {
+        if (bVar2) {
           local_38 = local_38 & 0xffff;
         }
-        pbVar19 = (uint8_t *)(conversion + 0xb);
+        pbVar20 = (uint8_t *)(conversion + 0xb);
         if ((local_38 & 0x80000000) != 0) {
           conversion[10] = next_decimal_digit(&local_38);
-          pbVar19 = (uint8_t *)(conversion + 10);
+          pbVar20 = (uint8_t *)(conversion + 10);
         }
 LAB_0005fdc4:
-        param_2 = param_2 + 1;
-        pbVar22 = (uint8_t *)(conversion + 0xb);
+        arguments = (void *)((int32_t)arguments + 4);
+        pbVar23 = (uint8_t *)(conversion + 0xb);
         count = local_38;
         if ((int32_t)local_38 < 10) {
-          if ((local_38 != 0) || ((uVar16 & 0x40) == 0)) {
-            pbVar19 = pbVar19 + -1;
-            *pbVar19 = (char)local_38 + 0x30;
+          if ((local_38 != 0) || ((uVar17 & 0x40) == 0)) {
+            pbVar20 = pbVar20 + -1;
+            *pbVar20 = (char)local_38 + 0x30;
           }
         }
         else {
           do {
-            pbVar18 = pbVar19;
-            iVar12 = count / 10;
-            pbVar19 = pbVar18 + -1;
-            *pbVar19 = (char)count + (char)iVar12 * -10 + 0x30;
-            count = iVar12;
-          } while (9 < iVar12);
-          pbVar19 = pbVar18 + -2;
-          *pbVar19 = (char)iVar12 + 0x30;
+            pbVar19 = pbVar20;
+            iVar13 = count / 10;
+            pbVar20 = pbVar19 + -1;
+            *pbVar20 = (char)count + (char)iVar13 * -10 + 0x30;
+            count = iVar13;
+          } while (9 < iVar13);
+          pbVar20 = pbVar19 + -2;
+          *pbVar20 = (char)iVar13 + 0x30;
         }
-        if ((uVar16 & 0x40) != 0) {
-          count = precision - ((int32_t)pbVar22 - (int32_t)pbVar19);
-          bVar2 = 0 < count;
-          if (bVar2) {
+        if ((uVar17 & 0x40) != 0) {
+          count = precision - ((int32_t)pbVar23 - (int32_t)pbVar20);
+          bVar3 = 0 < count;
+          if (bVar3) {
             local_1ce = (char *)count;
             local_3c = (char *)count;
           }
-          bVar8 = false;
+          bVar9 = false;
         }
       }
-      iVar12 = (int32_t)pbVar22 - (int32_t)pbVar19;
-      local_14 = local_3c + local_44 + iVar12;
+      iVar13 = (int32_t)pbVar23 - (int32_t)pbVar20;
+      local_14 = local_3c + local_44 + iVar13;
       if ((int32_t)local_14 < (int32_t)local_1d6) {
-        pbVar14 = (uint8_t *)(local_1d6 + (int32_t)pbVar14);
-        bVar4 = false;
-        if (bVar8) {
-          if (bVar2) {
+        pbVar15 = (uint8_t *)(local_1d6 + (int32_t)pbVar15);
+        bVar5 = false;
+        if (bVar9) {
+          if (bVar3) {
             local_1ce = local_1ce + ((int32_t)local_1d6 - (int32_t)local_14);
           }
           else {
-            bVar2 = true;
+            bVar3 = true;
             local_1ce = local_1d6 + -(int32_t)local_14;
           }
           local_14 = local_1d6;
         }
-        else if ((uVar16 & 4) == 0) {
+        else if ((uVar17 & 4) == 0) {
           for (count = (int32_t)local_1d6 - (int32_t)local_14; 0x14 < count; count = count + -0x14) {
-            pbVar15 = pbVar15 + 0x14;
-            (*(code *)param_3)("                    ",1,0x14,param_4);
+            pbVar16 = pbVar16 + 0x14;
+            (*put)("                    ",1,0x14,output);
           }
-          pbVar15 = pbVar15 + count;
-          (*(code *)param_3)("                    ",1,count,param_4);
+          pbVar16 = pbVar16 + count;
+          (*put)("                    ",1,count,output);
         }
       }
       else {
-        pbVar14 = (uint8_t *)(local_14 + (int32_t)pbVar14);
+        pbVar15 = (uint8_t *)(local_14 + (int32_t)pbVar15);
       }
       if (local_44 != 0) {
-        pbVar15 = pbVar15 + local_44;
-        (*(code *)param_3)(local_52,1,local_44,param_4);
+        pbVar16 = pbVar16 + local_44;
+        (*put)(local_52,1,local_44,output);
       }
-      if (bVar2) {
-        if (bVar4) {
+      if (bVar3) {
+        if (bVar5) {
           local_1ce = local_1ce + 1;
         }
         for (count = (int32_t)local_1ce; 0x14 < count; count = count + -0x14) {
-          pbVar15 = pbVar15 + 0x14;
-          (*(code *)param_3)("00000000000000000000",1,0x14,param_4);
+          pbVar16 = pbVar16 + 0x14;
+          (*put)("00000000000000000000",1,0x14,output);
         }
-        pbVar15 = pbVar15 + count;
-        (*(code *)param_3)("00000000000000000000",1,count,param_4);
+        pbVar16 = pbVar16 + count;
+        (*put)("00000000000000000000",1,count,output);
       }
-      if (0 < iVar12) {
-        pbVar15 = pbVar15 + iVar12;
-        (*(code *)param_3)(pbVar19,1,iVar12,param_4);
+      if (0 < iVar13) {
+        pbVar16 = pbVar16 + iVar13;
+        (*put)((char *)pbVar20,1,iVar13,output);
       }
-      if ((uVar16 & 0x184) != 0) {
-        if ((uVar16 & 0x100) != 0) {
+      if ((uVar17 & 0x184) != 0) {
+        if ((uVar17 & 0x100) != 0) {
           for (count = (int32_t)local_1ca; 0x14 < count; count = count + -0x14) {
-            pbVar15 = pbVar15 + 0x14;
-            (*(code *)param_3)("00000000000000000000",1,0x14,param_4);
+            pbVar16 = pbVar16 + 0x14;
+            (*put)("00000000000000000000",1,0x14,output);
           }
-          pbVar15 = pbVar15 + count;
-          (*(code *)param_3)("00000000000000000000",1,count,param_4);
+          pbVar16 = pbVar16 + count;
+          (*put)("00000000000000000000",1,count,output);
         }
-        if ((uVar16 & 0x80) != 0) {
-          pbVar15 = (uint8_t *)(local_40 + (int32_t)pbVar15);
-          (*(code *)param_3)(local_4e,1,local_40,param_4);
+        if ((uVar17 & 0x80) != 0) {
+          pbVar16 = (uint8_t *)(local_40 + (int32_t)pbVar16);
+          (*put)(local_4e,1,(int32_t)local_40,output);
         }
-        if (((uVar16 & 4) != 0) && ((int32_t)local_14 < (int32_t)local_1d6)) {
+        if (((uVar17 & 4) != 0) && ((int32_t)local_14 < (int32_t)local_1d6)) {
           for (count = (int32_t)local_1d6 - (int32_t)local_14; 0x14 < count; count = count + -0x14) {
-            pbVar15 = pbVar15 + 0x14;
-            (*(code *)param_3)("                    ",1,0x14,param_4);
+            pbVar16 = pbVar16 + 0x14;
+            (*put)("                    ",1,0x14,output);
           }
-          pbVar15 = pbVar15 + count;
-          (*(code *)param_3)("                    ",1,count,param_4);
+          pbVar16 = pbVar16 + count;
+          (*put)("                    ",1,count,output);
         }
       }
     }
     else {
 switchD_0005fb90_caseD_21:
-      param_1 = pbVar18;
+      format = (char *)pbVar19;
     }
   } while( true );
 switchD_0005fb90_caseD_6c:
-  bVar9 = true;
-  pbVar18 = param_1;
+  bVar10 = true;
+  pbVar19 = (uint8_t *)format;
   goto LAB_0005fb72;
 }
 
@@ -80862,7 +80853,7 @@ int32_t sprintf(char *s,char *format,...)
   sprintf_output output;
   
   output.cursor = s;
-  length = doprnt((uint8_t *)format,(uint32_t *)&stack0x0000000c,sprintf_put,&output);
+  length = doprnt(format,&stack0x0000000c,sprintf_put,&output);
   *output.cursor = 0;
   return length;
 }
@@ -80873,26 +80864,26 @@ int32_t sprintf(char *s,char *format,...)
 /* copies the engine's output into sprintf's buffer
    libc.md */
 
-int32_t sprintf_put(uint8_t *param_1,int32_t param_2,int32_t param_3,int32_t param_4)
+int32_t sprintf_put(char *text,int32_t size,int32_t count,sprintf_output *output)
 
 {
-  uint8_t *puVar1;
+  char *pcVar1;
   int32_t iVar2;
   
-  iVar2 = param_3;
-  if (param_2 == 1) {
+  iVar2 = count;
+  if (size == 1) {
     while (0 < iVar2) {
-      puVar1 = *(uint8_t **)(param_4 + 4);
-      *(int32_t *)(param_4 + 4) = *(int32_t *)(param_4 + 4) + 1;
-      *puVar1 = *param_1;
+      pcVar1 = output->cursor;
+      output->cursor = output->cursor + 1;
+      *pcVar1 = *text;
       iVar2 = iVar2 + -1;
-      param_1 = param_1 + 1;
+      text = text + 1;
     }
   }
   else {
-    param_3 = 0;
+    count = 0;
   }
-  return param_3;
+  return count;
 }
 
 
@@ -80907,7 +80898,7 @@ int32_t vsprintf(char *s,char *format,void *arg)
   sprintf_output output;
   
   output.cursor = s;
-  length = doprnt((uint8_t *)format,arg,sprintf_put,&output);
+  length = doprnt(format,arg,sprintf_put,&output);
   *output.cursor = 0;
   return length;
 }
@@ -92002,6 +91993,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 }
 
 
+#include "../rewritten/z3805a-3543b/cpu.h"
+
 #include "../rewritten/z3805a-3543b/adc.c"
 
 #include "../rewritten/z3805a-3543b/arithmetic.c"
@@ -92009,6 +92002,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 #include "../rewritten/z3805a-3543b/clock.c"
 
 #include "../rewritten/z3805a-3543b/duart.c"
+
+#include "../rewritten/z3805a-3543b/fpga.c"
 
 #include "../rewritten/z3805a-3543b/klok.c"
 

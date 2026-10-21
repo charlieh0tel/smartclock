@@ -2656,8 +2656,7 @@ uint32_t long_identity(uint32_t value)
 /* Copies so many longs with interrupts held off (0x29a24). */
 void copy_longs_locked(uint32_t *source, uint32_t *destination, uint8_t count)
 {
-	enum { INTERRUPTS_OFF = 0x100 };
-	uint16_t sr = set_interrupt_mask(INTERRUPTS_OFF);
+	uint16_t sr = set_interrupt_mask(CPU_IPL_1);
 
 	for (uint8_t index = 0; index < count; index++)
 		destination[index] = source[index];

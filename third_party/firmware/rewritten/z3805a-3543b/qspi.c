@@ -30,10 +30,10 @@ static void qspi_hand_on(void)
  * 4 (0x2050c). */
 void qspi_release(void)
 {
-	uint16_t sr = duart_interrupts_at(DUART_SR_IPL_4);
+	uint16_t sr = cpu_interrupts_at(CPU_IPL_4);
 
 	qspi_hand_on();
-	duart_sr_write(sr);
+	cpu_sr_write(sr);
 }
 
 /* Sets a transfer up and starts it, or on a device it does not know
@@ -60,16 +60,16 @@ void qspi_start(uint8_t device, uint16_t *transmit, uint16_t count, char read)
  * on, at interrupt level 4 while it looks (0x20874). */
 void qspi_acquire(void)
 {
-	uint16_t sr = duart_interrupts_at(DUART_SR_IPL_4);
+	uint16_t sr = cpu_interrupts_at(CPU_IPL_4);
 
 	if (!qspi.busy) {
 		qspi.busy = 1;
-		duart_sr_write(sr);
+		cpu_sr_write(sr);
 		return;
 	}
 	qspi.waiting[qspi.write] = psos_my_pid();
 	qspi.write = (qspi.write + 1) & QSPI_WAITING_MASK;
-	duart_sr_write(sr);
+	cpu_sr_write(sr);
 	if ((uint8_t)psos_wait_v(SIG_QSPI, 0, 0, 0) != 0)
 		fatal_error("wait_v SIG_QSPI");
 }
@@ -113,7 +113,7 @@ void qspi_send(uint8_t device, uint16_t *transmit, uint16_t count)
 	uint16_t sr = enter_supervisor();
 	uint16_t spcr1;
 
-	duart_interrupts_raise(DUART_SR_IPL_7);
+	cpu_interrupts_raise(CPU_IPL_7);
 	qspi.field_00 = 1;
 	while ((qsm.spcr1 & SPCR1_SPE) != 0)
 		;
@@ -126,5 +126,5 @@ void qspi_send(uint8_t device, uint16_t *transmit, uint16_t count)
 		(void)qsm.spsr;
 		qsm.spsr = 0;
 	}
-	duart_sr_write(sr);
+	cpu_sr_write(sr);
 }

@@ -11,11 +11,9 @@
 #include <stddef.h>
 
 enum {
-	/* An exception frame's format and vector word: the format in the top
-	 * four bits, the vector's offset in the rest; exception_names names
-	 * the vectors from 2, bus error, to 58 (offset 0xe8). */
-	OS_VECTOR_FORMAT_MASK = 0xf000,
-	OS_VECTOR_OFFSET_MASK = 0x0fff,
+	/* exception_names names the vectors from 2, bus error, to 58
+	 * (offset 0xe8), by an exception frame's vector offset
+	 * (CPU_VECTOR_OFFSET_MASK). */
 	OS_VECTOR_OFFSET_FIRST_NAMED = 2 * 4,
 	OS_VECTOR_OFFSET_LAST = 0xe8,
 };
@@ -33,7 +31,7 @@ void exception_hook_reset(void)
  * the image's is (0x11a2a). */
 char *exception_name(uint16_t vector)
 {
-	uint16_t offset = vector & OS_VECTOR_OFFSET_MASK;
+	uint16_t offset = vector & CPU_VECTOR_OFFSET_MASK;
 
 	if (offset > OS_VECTOR_OFFSET_LAST)
 		return "Oooh! That tickles. I don't know that vector.";
@@ -46,7 +44,7 @@ char *exception_name(uint16_t vector)
  * for a frame whose format is not 0. */
 void print_exception(uint16_t sr, uint32_t pc, uint16_t vector, uint32_t address)
 {
-	bool has_address = (vector & OS_VECTOR_FORMAT_MASK) != 0;
+	bool has_address = (vector & CPU_VECTOR_FORMAT_MASK) != 0;
 
 	last_exception.pending = 1;
 	last_exception.name[0] = 0;
@@ -71,7 +69,7 @@ void print_exception(uint16_t sr, uint32_t pc, uint16_t vector, uint32_t address
 		if (kernel_running)
 			psos_pause(1);
 	}
-	set_interrupt_mask(CLOCK_SR_INTERRUPTS_MASKED);
+	set_interrupt_mask(CPU_IPL_7);
 	for (;;)
 		;
 }

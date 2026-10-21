@@ -11,20 +11,17 @@
 
 enum {
 	/* tcode_format: T1, the GPS seconds; T2 with a test prefix; T2. */
-	TIMECODE_TCODE_T1 = 0,
-	TIMECODE_TCODE_T2_TEST = 1,
-	TIMECODE_TCODE_T2 = 2,
+	TIMECODE_T1 = 0,
+	TIMECODE_T2_TEST = 1,
+	TIMECODE_T2 = 2,
 	/* tfom_code's t, 0 to 9: tfom_table_index's exponent moved by 9. */
-	TIMECODE_TCODE_TFOM_BIAS = 9,
-	TIMECODE_TCODE_TFOM_MAX = 9,
+	TIMECODE_TFOM_BIAS = 9,
+	TIMECODE_TFOM_MAX = 9,
 	/* The delay after the 1PPS capture, in GPT ticks, at which
 	 * timecode_update and es_build send their messages (0x13eca,
 	 * 0x13c3c). */
-	TIMECODE_TCODE_DELAY = 0x28f5,
-	/* The longest minute; a leap second removed makes it 59. */
-	TIMECODE_TCODE_MINUTE = 60,
-	TIMECODE_TCODE_MINUTE_SHORT = 59,
-	TIMECODE_TCODE_CHECKSUM_SIZE = 3,
+	TIMECODE_DELAY = 0x28f5,
+	TIMECODE_CHECKSUM_SIZE = 3,
 
 	/* The ES message's status bits. */
 	TIMECODE_ES_TIME_VALID = 0x01,
@@ -35,7 +32,7 @@ enum {
 	TIMECODE_ES_DIGITS_LENGTH = 16,
 	TIMECODE_ES_ASCII_LENGTH = 18,
 
-	TIMECODE_TCODE_TIMER_WRAP = 0x10000,
+	TIMECODE_TIMER_WRAP = 0x10000,
 };
 
 /* The digits of a byte's tens and ones. */
@@ -64,7 +61,7 @@ char tcode_checksum(char *text)
  * frees the port; its result, 0 for a request refused (0x139f6). */
 char tcode_request(uint8_t format)
 {
-	if (tcode_pending != 0 || format > TIMECODE_TCODE_T2)
+	if (tcode_pending != 0 || format > TIMECODE_T2)
 		return 0;
 	tcode_format = format;
 	char released = drtb_release_for_timecode();
@@ -78,12 +75,12 @@ char tcode_request(uint8_t format)
  * and kept to 0 to 9 (0x13a48). */
 int16_t tfom_code(uint32_t tfom)
 {
-	int16_t code = tfom_table_index(tfom) + TIMECODE_TCODE_TFOM_BIAS;
+	int16_t code = tfom_table_index(tfom) + TIMECODE_TFOM_BIAS;
 
 	if (code < 0)
 		return 0;
-	if (code > TIMECODE_TCODE_TFOM_MAX)
-		return TIMECODE_TCODE_TFOM_MAX;
+	if (code > TIMECODE_TFOM_MAX)
+		return TIMECODE_TFOM_MAX;
 	return code;
 }
 
@@ -103,7 +100,7 @@ void es_build(uint32_t date, uint32_t time)
 
 	if (nv_settings.leap_pending && nv_settings.leap_date == date) {
 		status |= TIMECODE_ES_LEAP_TODAY;
-		if (nv_settings.leap_minute_length > TIMECODE_TCODE_MINUTE)
+		if (nv_settings.leap_minute_length > CLOCK_SECONDS_PER_MINUTE)
 			status |= TIMECODE_ES_LEAP_ADD;
 	}
 	if (pll.stage == PLL_STAGE_HOLDOVER || pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)
@@ -140,13 +137,13 @@ void es_build(uint32_t date, uint32_t time)
 			(int32_t)offset, (uint32_t)status, (uint32_t)status_summary);
 		es_length = TIMECODE_ES_ASCII_LENGTH;
 	}
-	es_schedule(TIMECODE_TCODE_DELAY);
+	es_schedule(TIMECODE_DELAY);
 }
 
 /* The time code's length, and its checksum appended. */
-static uint8_t timecode_tcode_finish(void)
+static uint8_t timecode_finish(void)
 {
-	char checksum[TIMECODE_TCODE_CHECKSUM_SIZE];
+	char checksum[TIMECODE_CHECKSUM_SIZE];
 	uint8_t length = 0;
 
 	sprintf(checksum, "%02X", (uint32_t)(uint8_t)tcode_checksum(tcode_message));
@@ -181,19 +178,19 @@ void timecode_update(void)
 	char leap = '0';
 
 	if (nv_settings.leap_pending)
-		leap = nv_settings.leap_minute_length == TIMECODE_TCODE_MINUTE_SHORT ? '-' : '+';
+		leap = nv_settings.leap_minute_length == CLOCK_LEAP_MINUTE_SHORT ? '-' : '+';
 	char request = status_request_service ? '1' : '0';
 	char valid = time_valid() ? '0' : '1';
 
-	if (tcode_format == TIMECODE_TCODE_T1) {
+	if (tcode_format == TIMECODE_T1) {
 		uint32_t gps_date = get_gps_date();
 		uint32_t gps_time = get_gps_time();
 
 		sprintf(tcode_message, "T1#H%08X%01d%01d%1c%1c%1c", gps_seconds(gps_date, gps_time) + 1,
 			(uint32_t)tfom_digit, (uint32_t)ffom, (int32_t)leap, (int32_t)request,
 			(int32_t)valid);
-		tcode_length = timecode_tcode_finish();
-	} else if (tcode_format == TIMECODE_TCODE_T2_TEST || tcode_format == TIMECODE_TCODE_T2) {
+		tcode_length = timecode_finish();
+	} else if (tcode_format == TIMECODE_T2_TEST || tcode_format == TIMECODE_T2) {
 		uint32_t next_date = get_clock_date();
 		time_of_day next = clock_time_of(get_clock_time());
 
@@ -202,7 +199,7 @@ void timecode_update(void)
 		uint32_t month = (uint8_t)(next_date >> 8);
 		uint32_t day = (uint8_t)next_date;
 
-		if (tcode_format == TIMECODE_TCODE_T2_TEST)
+		if (tcode_format == TIMECODE_T2_TEST)
 			sprintf(tcode_message, "rtcm? %u,T2%04d%02d%02d%02d%02d%02d%01d%01d%1c%1c%1c",
 				0xffffffff, year, month, day, (uint32_t)next.hour,
 				(uint32_t)next.minute, (uint32_t)next.second, (uint32_t)tfom_digit,
@@ -212,12 +209,12 @@ void timecode_update(void)
 				month, day, (uint32_t)next.hour, (uint32_t)next.minute,
 				(uint32_t)next.second, (uint32_t)tfom_digit, (uint32_t)ffom,
 				(int32_t)leap, (int32_t)request, (int32_t)valid);
-		tcode_length = timecode_tcode_finish();
+		tcode_length = timecode_finish();
 	} else {
 		tcode_length = 0;
 	}
 	if (tcode_length != 0)
-		timecode_schedule(TIMECODE_TCODE_DELAY);
+		timecode_schedule(TIMECODE_DELAY);
 	tcode_pending = 0;
 }
 
@@ -239,7 +236,7 @@ static bool timecode_compare_passed(uint32_t compare)
 	uint32_t now = gpt.tcnt;
 
 	if (now < gpt.tic[0])
-		now += TIMECODE_TCODE_TIMER_WRAP;
+		now += TIMECODE_TIMER_WRAP;
 	return compare <= now;
 }
 

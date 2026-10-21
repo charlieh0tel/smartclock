@@ -19,7 +19,7 @@ enum {
 /* The health monitor's averages: ten samples, and the oscillator
  * current's filter, 0.9 of the old value and 0.1 of the new, which goes
  * to 0 below 1e-20. */
-#define MONITORS_MONITOR_SAMPLES 10
+#define MONITORS_SAMPLES 10
 #define MONITORS_FILTER_KEEP 0.9f
 #define MONITORS_FILTER_TAKE 0.1f
 #define MONITORS_FILTER_FLOOR 1e-20f
@@ -29,16 +29,16 @@ enum {
 void monitor_average_add(adc_monitor *monitor, float reading)
 {
 	monitor->samples[monitor->sample_index++] = reading;
-	if (monitor->sample_index >= MONITORS_MONITOR_SAMPLES) {
+	if (monitor->sample_index >= MONITORS_SAMPLES) {
 		monitor->sample_index = 0;
 		monitor->valid = 1;
 	}
 	if (monitor->valid) {
 		float sum = 0.0f;
 
-		for (uint32_t i = 0; i < MONITORS_MONITOR_SAMPLES; i++)
+		for (uint32_t i = 0; i < MONITORS_SAMPLES; i++)
 			sum = float_add(sum, monitor->samples[i]);
-		monitor->value = float_divide(sum, MONITORS_MONITOR_SAMPLES);
+		monitor->value = float_divide(sum, MONITORS_SAMPLES);
 	}
 }
 
@@ -277,14 +277,12 @@ void hmon_check_efc(void)
 
 /* The watchdog: each task counts its passes, and the health monitor
  * services the MC68331's software watchdog (MC68331UM D.3.15, SWSR's
- * 0x55 then 0xaa) only while every count since the last report is
- * enough, and for eight reports after. */
+ * CPU_SWSR_FIRST then CPU_SWSR_SECOND) only while every count since
+ * the last report is enough, and for eight reports after. */
 enum {
 	MONITORS_WATCHDOG_GPS_LEAST = 21,
 	MONITORS_WATCHDOG_MONITOR_LEAST = 51,
 	MONITORS_WATCHDOG_GRACE = 8,
-	MONITORS_SWSR_FIRST = 0x55,
-	MONITORS_SWSR_SECOND = 0xaa,
 };
 
 /* Checks the tasks' watchdog counts, printing them if one is short,
@@ -305,9 +303,9 @@ void watchdog_report(void)
 	if (watchdog_countdown != 0) {
 		uint16_t sr = enter_supervisor();
 
-		sim.swsr = MONITORS_SWSR_FIRST;
-		sim.swsr = MONITORS_SWSR_SECOND;
-		duart_sr_write(sr);
+		sim.swsr = CPU_SWSR_FIRST;
+		sim.swsr = CPU_SWSR_SECOND;
+		cpu_sr_write(sr);
 	}
 	watchdog_clock = 0;
 	watchdog_gps = 0;
@@ -326,7 +324,7 @@ void exception_record_clear(void)
 
 /* An exception's vector word: its format in the top nibble, 0 for a
  * frame with no fault address. */
-#define MONITORS_VECTOR_FORMAT_MASK 0xf000
+#define CPU_VECTOR_FORMAT_MASK 0xf000
 
 /* Logs why the last reset happened, with the time: the exception, the
  * fatal message, or, with neither and the watchdog's grace run out,
@@ -341,7 +339,7 @@ void log_reset_cause(void)
 	get_date_time(&date, &time);
 	text[0] = 0;
 	if (last_exception.pending) {
-		if ((last_exception.vector & MONITORS_VECTOR_FORMAT_MASK) == 0)
+		if ((last_exception.vector & CPU_VECTOR_FORMAT_MASK) == 0)
 			sprintf(text, "Exception: %s, vector %04X, PC = %08X, SR = %04X",
 				last_exception.name, last_exception.vector, last_exception.pc,
 				last_exception.sr);

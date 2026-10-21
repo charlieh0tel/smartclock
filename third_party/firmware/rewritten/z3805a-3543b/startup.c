@@ -1,15 +1,11 @@
 /* The start-up's path, written by hand in place of the decompiler's
  * (docs/firmware/README.md, "Hand-written C"): primary_start, its no-op
- * hooks, the periodic interrupt's enable, the FPGA's loading and
- * verifying, and the shutdown.  The exported C includes this file after
- * its own, so the types and prototypes it declares are in scope; each
- * function here keeps its generated prototype. */
+ * hooks, the periodic interrupt's enable and the shutdown.  The
+ * exported C includes this file after its own, so the types and
+ * prototypes it declares are in scope; each function here keeps its
+ * generated prototype. */
 
 enum {
-	/* The SIM's software watchdog is serviced by writing these two to
-	 * SWSR in turn (MC68331UM, "Software Watchdog"). */
-	STARTUP_WATCHDOG_SERVICE_FIRST = 0x55,
-	STARTUP_WATCHDOG_SERVICE_SECOND = 0xaa,
 	/* The periodic interrupt, primary_user_66, 1024 a second: its
 	 * vector, 66, and its level (docs/firmware/structures.md). */
 	STARTUP_PERIODIC_VECTOR = 0x42,
@@ -22,15 +18,15 @@ enum {
 void primary_start(uint32_t a, uint32_t b, uint32_t c)
 {
 	exception_hook_reset();
-	sim.swsr = STARTUP_WATCHDOG_SERVICE_FIRST;
-	sim.swsr = STARTUP_WATCHDOG_SERVICE_SECOND;
+	sim.swsr = CPU_SWSR_FIRST;
+	sim.swsr = CPU_SWSR_SECOND;
 	qsm_init();
 	gpt_init();
 	start_nothing();
 	system_init();
 	psos_config_init();
-	sim.swsr = STARTUP_WATCHDOG_SERVICE_FIRST;
-	sim.swsr = STARTUP_WATCHDOG_SERVICE_SECOND;
+	sim.swsr = CPU_SWSR_FIRST;
+	sim.swsr = CPU_SWSR_SECOND;
 	primary_trap_6();
 }
 
@@ -71,31 +67,4 @@ void shutdown(void)
 	qsm.spsr = 0;
 	qsm.sccr1 = 0;
 	duart_stop();
-}
-
-/* Loads the FPGA's first configuration, under the kernel, and marks it
- * loaded if it took (0x22d70). */
-void fpga_setup(void)
-{
-	task_dmessage("setup fpga\r\n");
-	if (fpga_program(0, 1)) {
-		pll.fpga_load_pending = 0;
-		pll.fpga_loaded = 1;
-	}
-}
-
-/* The FPGA's configurations, which fpga_program and fpga_verify take
- * by number, and the chip fpga_verify checks. */
-enum {
-	STARTUP_FPGA_CONFIGURATIONS = 2,
-	STARTUP_FPGA_VERIFY_CHIP = 1,
-};
-
-/* Verifies a configuration, 0 or 1, against the FPGA's readback; false
- * for another (0x23980). */
-uint8_t fpga_verify(uint8_t configuration, char with_task_name)
-{
-	if (configuration >= STARTUP_FPGA_CONFIGURATIONS)
-		return 0;
-	return fpga_verify_chip(configuration, with_task_name, STARTUP_FPGA_VERIFY_CHIP);
 }

@@ -80,7 +80,7 @@ modf	fraction
 double_is_integer	integral	whether an integer
 double_truncate_sixteenths	truncated
 pow	power
-# The drivers, 0x1d000 to 0x24fff (rewritten/z3805a-3543b/: adc.c, duart.c, monitors.c, qspi.c, sci.c, spool.c, startup.c)
+# The drivers, 0x1d000 to 0x24fff (rewritten/z3805a-3543b/: adc.c, duart.c, monitors.c, qspi.c, sci.c, spool.c, fpga.c)
 gp_port_select	port_bits	the selection shifted to GP port bits 2 to 4
 duartb_putc_polled	ready	SR_TXRDY, the status bit it waited on
 drtb_puts	sent	the characters the interrupt sent

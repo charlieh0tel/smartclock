@@ -97,6 +97,7 @@ import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.Array;
 import ghidra.program.model.data.ArchiveType;
 import ghidra.program.model.data.ByteDataType;
+import ghidra.program.model.data.ArrayDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.data.DataTypeConflictHandler;
@@ -868,12 +869,22 @@ public class SmartClockSetup extends GhidraScript {
 				: null;
 	}
 
+	/** An array of a declaration: the element's and the count, as "name *[32]". */
+	private static final Pattern ARRAY_DECLARATION = Pattern.compile("^(.*?)\\s*\\[(\\d+)\\]$");
+
 	/**
-	 * A pointer to a type the header defines by name, as "name *", which
-	 * the data type parser does not find when the type is a function
-	 * typedef; null if declaration is not that.
+	 * A pointer to a type the header defines by name, as "name *", or an
+	 * array of them, "name *[32]", which the data type parser does not
+	 * find when the type is a function typedef; null if declaration is
+	 * not that.
 	 */
 	private static DataType namedPointer(DataTypeManager types, String declaration) {
+		Matcher array = ARRAY_DECLARATION.matcher(declaration);
+		if (array.matches()) {
+			DataType element = namedPointer(types, array.group(1));
+			int count = Integer.parseInt(array.group(2));
+			return element == null ? null : new ArrayDataType(element, count, element.getLength(), types);
+		}
 		int stars = declaration.length() - declaration.replaceFirst("[\\s*]+$", "").length();
 		String name = declaration.replaceFirst("[\\s*]+$", "");
 		long pointers = declaration.chars().filter(c -> c == '*').count();

@@ -14,11 +14,8 @@
  * The files are included in sorted order, and this one comes before the
  * other drivers', so it also holds what they share: the control
  * characters, flow byte, thresholds and baud and parity codes sci.c
- * uses, the line reader duart_gets, which drtb_gets and sci_gets share,
- * and the status register's helpers.  The image's critical sections
- * move to and from the status register itself, which the decompiler's C
- * leaves out; here they are duart_sr_read and duart_sr_write, which
- * monitors.c, qspi.c, sci.c and spool.c use too. */
+ * uses, and the line reader duart_gets, which drtb_gets and sci_gets
+ * share.  The critical sections use cpu.h's status register helpers. */
 
 /* The control characters the drivers act on. */
 enum {
@@ -56,8 +53,8 @@ enum {
 /* The kernel's I/O devices, the device in the high byte, the minor in
  * the low (kernel_dispatch_io, 0x14c36). */
 enum {
-	DUART_DEVICE_DUARTB = 0x000,
-	DUART_DEVICE_DUARTB_MINOR_1 = 0x001,	/* drtb_release_for_timecode's close */
+	DUART_DEVICE_B = 0x000,
+	DUART_DEVICE_B_MINOR_1 = 0x001,	/* drtb_release_for_timecode's close */
 };
 
 /* The 68681's channel B settings (MC68681 Table 4-5). */
@@ -111,56 +108,6 @@ enum {
 	DUART_OP1 = 0x02,
 	DUART_OP_BITS = 0xfc,
 };
-
-/* The status register's interrupt mask, set_interrupt_mask's argument,
- * which it takes from bits 10 to 8 (0x1338e). */
-enum {
-	DUART_SR_IPL_MASK = 0x700,
-	DUART_SR_IPL_2 = 0x200,
-	DUART_SR_IPL_3 = 0x300,
-	DUART_SR_IPL_4 = 0x400,
-	DUART_SR_IPL_6 = 0x600,
-	DUART_SR_IPL_7 = 0x700,
-	/* what the output-port routines pass, meaning level 6 but taken as
-	 * level 0, so that they leave interrupts enabled */
-	DUART_SR_IPL_6_UNSHIFTED = 6,
-};
-
-/* The status register, which C has no name for: the image's critical
- * sections save it, change its interrupt mask in place with ori and
- * andi, and move the saved word back, all in supervisor mode. */
-static inline uint16_t duart_sr_read(void)
-{
-	uint16_t sr;
-
-	__asm__ volatile ("move.w %%sr,%0" : "=d"(sr) : : "memory");
-	return sr;
-}
-
-static inline void duart_sr_write(uint16_t sr)
-{
-	__asm__ volatile ("move.w %0,%%sr" : : "d"(sr) : "memory", "cc");
-}
-
-/* Raises the interrupt mask by ORing bits into it; returns the status
- * register as it was. */
-static inline uint16_t duart_interrupts_raise(uint16_t mask)
-{
-	uint16_t saved = duart_sr_read();
-
-	duart_sr_write(saved | mask);
-	return saved;
-}
-
-/* Sets the interrupt mask to a level, as ori and then andi do; returns
- * the status register as it was. */
-static inline uint16_t duart_interrupts_at(uint16_t level)
-{
-	uint16_t saved = duart_interrupts_raise(level);
-
-	duart_sr_write(duart_sr_read() & ~(DUART_SR_IPL_MASK & ~level));
-	return saved;
-}
 
 /* A no-op echo, a bare rts: duart_init and duartb_reconfigure put it in
  * duartb.echo when the settings' echo is off (0x1d570). */
@@ -233,14 +180,14 @@ void duartb_baud_from_settings(void)
  * returns the status bit it waited on (0x1d680). */
 uint8_t duartb_putc_polled(uint8_t c)
 {
-	uint16_t sr = duart_interrupts_at(DUART_SR_IPL_2);
+	uint16_t sr = cpu_interrupts_at(CPU_IPL_2);
 	uint8_t status;
 
 	do
 		status = duart.b.sr_csr;
 	while ((status & SR_TXRDY) == 0);
 	duart.b.rb_tb = c;
-	duart_sr_write(sr);
+	cpu_sr_write(sr);
 	return status & SR_TXRDY;
 }
 
@@ -256,12 +203,12 @@ int32_t drtb_puts(char *text)
 	while (*end != 0)
 		end++;
 	duartb.transmit_count = end - text;
-	sr = duart_interrupts_raise(DUART_SR_IPL_6);
+	sr = cpu_interrupts_raise(CPU_IPL_6);
 	if (!duartb.reconfiguring) {
 		duart_shadow.imr |= IMR_TXRDYB;
 		duart.isr_imr = duart_shadow.imr;
 	}
-	duart_sr_write(sr);
+	cpu_sr_write(sr);
 	if ((uint8_t)psos_wait_v(SIG_SOQ, 0, 0, 0) != 0)
 		fatal_error("wait_v SIG_SOQ error in _drtb_puts");
 	return duartb.transmit_next - text;
@@ -375,19 +322,19 @@ int32_t drtb_gets(uint8_t *buffer, int32_t length)
  * rate, flow control and echo (0x1dc7e). */
 void duartb_reconfigure(void)
 {
-	uint16_t sr = duart_interrupts_raise(DUART_SR_IPL_2);
+	uint16_t sr = cpu_interrupts_raise(CPU_IPL_2);
 
 	duartb.reconfiguring = 1;
 	duart_shadow.imr &= ~(IMR_RXRDYB | IMR_TXRDYB);
 	duart.isr_imr = duart_shadow.imr;
 	duart.b.cr = CR_RX_DISABLE;
-	duart_sr_write(sr);
+	cpu_sr_write(sr);
 	for (int32_t pauses = DUART_DRAIN_PAUSES; pauses > 0 && (duart.b.sr_csr & SR_TXEMT) == 0;
 	     pauses--)
 		psos_pause(1);
 	duart.b.cr = CR_RESET_RECEIVER;
 	duart.b.cr = CR_RESET_TRANSMITTER;
-	sr = duart_interrupts_raise(DUART_SR_IPL_2);
+	sr = cpu_interrupts_raise(CPU_IPL_2);
 	duartb_mode_from_settings();
 	duartb_baud_from_settings();
 	duart.b.cr = CR_TX_ENABLE;
@@ -406,7 +353,7 @@ void duartb_reconfigure(void)
 	duart.isr_imr = duart_shadow.imr;
 	duart.b.cr = CR_RX_ENABLE;
 	duartb.reconfiguring = 0;
-	duart_sr_write(sr);
+	cpu_sr_write(sr);
 }
 
 /* Writes a character to channel B under the write lock, if it can take
@@ -441,7 +388,7 @@ uint32_t console_write(char *s)
 {
 	uint32_t length;
 
-	psos_io_write(DUART_DEVICE_DUARTB, s, &length);
+	psos_io_write(DUART_DEVICE_B, s, &length);
 	return length;
 }
 
@@ -449,7 +396,7 @@ uint32_t console_write(char *s)
  * (0x1debc). */
 uint32_t console_read(void *buffer, uint32_t length, uint8_t *errors)
 {
-	psos_io_read(DUART_DEVICE_DUARTB, buffer, &length);
+	psos_io_read(DUART_DEVICE_B, buffer, &length);
 	if (errors != 0)
 		*errors = duartb.read_errors;
 	return length;
@@ -458,20 +405,20 @@ uint32_t console_read(void *buffer, uint32_t length, uint8_t *errors)
 /* Opens the SCPI port, device 0 (0x1dee6). */
 void scpi_port_open(void)
 {
-	psos_io_open(DUART_DEVICE_DUARTB, 0);
+	psos_io_open(DUART_DEVICE_B, 0);
 }
 
 /* Closes the SCPI port, device 0 (0x1def4). */
 void scpi_port_close(void)
 {
-	psos_io_close(DUART_DEVICE_DUARTB);
+	psos_io_close(DUART_DEVICE_B);
 }
 
 /* The done hook of channel B's setting descriptors and its PRESet:
  * reconfigures device 0 (0x1df00). */
 void duartb_settings_done(void)
 {
-	psos_io_control(DUART_DEVICE_DUARTB, 0, 0);
+	psos_io_control(DUART_DEVICE_B, 0, 0);
 }
 
 /* Writes a string to channel B by polling, in supervisor mode; returns
@@ -483,7 +430,7 @@ int32_t console_write_polled(char *s)
 
 	for (; *s != 0; s++, count++)
 		duartb_putc_polled(*s);
-	duart_sr_write(sr);
+	cpu_sr_write(sr);
 	return count;
 }
 
@@ -500,18 +447,18 @@ uint8_t drtb_release_for_timecode(void)
 {
 	if ((duartb.flow & DUART_FLOW_XOFF_RECEIVED) == 0 && !drtb_try_lock_write()) {
 		duartb.async_allowed = 1;
-		psos_io_close(DUART_DEVICE_DUARTB_MINOR_1);
+		psos_io_close(DUART_DEVICE_B_MINOR_1);
 		return 1;
 	}
 	return 0;
 }
 
 /* Sets or clears one of the output port's own bits, with interrupts
- * meant to be held off (DUART_SR_IPL_6_UNSHIFTED): the register holds each pin's complement, so a bit kept set in
+ * meant to be held off (CPU_IPL_6_UNSHIFTED): the register holds each pin's complement, so a bit kept set in
  * output_reset is reset in the port (MC68681 4.2.12). */
 static void duart_output_bit_set(uint8_t bit, char on)
 {
-	uint16_t sr = set_interrupt_mask(DUART_SR_IPL_6_UNSHIFTED);
+	uint16_t sr = set_interrupt_mask(CPU_IPL_6_UNSHIFTED);
 
 	if (!on) {
 		duart_shadow.output_reset &= ~bit;
@@ -539,7 +486,7 @@ void duart_op1_set(char on)
  * as duart_output_bit_set does (0x1e126). */
 void duart_output_bits(uint8_t reset, uint8_t set)
 {
-	uint16_t sr = set_interrupt_mask(DUART_SR_IPL_6_UNSHIFTED);
+	uint16_t sr = set_interrupt_mask(CPU_IPL_6_UNSHIFTED);
 	uint8_t resets = (reset | duart_shadow.output_reset) & DUART_OP_BITS;
 
 	duart.stop_ropbc = resets;
@@ -561,7 +508,7 @@ uint8_t drta_send_message(char *message, int16_t length)
 	psos_get_v(SIG_SOQA, 0, 0);
 	duarta.transmit_next = message;
 	duarta.transmit_count = length;
-	sr = set_interrupt_mask(DUART_SR_IPL_6);
+	sr = set_interrupt_mask(CPU_IPL_6);
 	if (!duarta.held) {
 		duart_shadow.imr |= IMR_TXRDYA;
 		duart.isr_imr = duart_shadow.imr;
@@ -597,12 +544,12 @@ uint8_t drta_get_byte(char *overrun)
 
 /* The DUART self-test's bits in selftest.uart. */
 enum {
-	DUART_UART_IVR_FAILED = 0x01,
-	DUART_UART_COUNTER_FAILED = 0x02,
-	DUART_UART_A_MISMATCH = 0x04,
-	DUART_UART_A_TIMEOUT = 0x08,
-	DUART_UART_B_MISMATCH = 0x10,
-	DUART_UART_B_TIMEOUT = 0x20,
+	DUART_TEST_IVR_FAILED = 0x01,
+	DUART_TEST_COUNTER_FAILED = 0x02,
+	DUART_TEST_A_MISMATCH = 0x04,
+	DUART_TEST_A_TIMEOUT = 0x08,
+	DUART_TEST_B_MISMATCH = 0x10,
+	DUART_TEST_B_TIMEOUT = 0x20,
 };
 
 /* How long the loopback test spins for its string to come back. */
@@ -626,7 +573,7 @@ typedef struct duart_loopback_channel {
  * (duart_loopback_test_a and duart_loopback_test_b). */
 static void duart_loopback_test(const duart_loopback_channel *channel)
 {
-	uint16_t sr = set_interrupt_mask(DUART_SR_IPL_7);
+	uint16_t sr = set_interrupt_mask(CPU_IPL_7);
 	int32_t spins;
 
 	*channel->held = 1;
@@ -637,7 +584,7 @@ static void duart_loopback_test(const duart_loopback_channel *channel)
 	for (int32_t pauses = DUART_DRAIN_PAUSES;
 	     pauses > 0 && (channel->registers->sr_csr & SR_TXEMT) == 0; pauses--)
 		psos_pause(1);
-	sr = set_interrupt_mask(DUART_SR_IPL_7);
+	sr = set_interrupt_mask(CPU_IPL_7);
 	channel->registers->cr = CR_RESET_RECEIVER;
 	channel->registers->cr = CR_RESET_TRANSMITTER;
 	*channel->loopback_test = 1;
@@ -654,7 +601,7 @@ static void duart_loopback_test(const duart_loopback_channel *channel)
 	set_interrupt_mask(sr);
 	while (spins < DUART_LOOPBACK_SPINS && *loopback_expect_next != 0)
 		spins++;
-	sr = set_interrupt_mask(DUART_SR_IPL_7);
+	sr = set_interrupt_mask(CPU_IPL_7);
 	if (*loopback_expect_next != 0)
 		selftest.uart |= channel->timeout_bit;
 	loopback_send_next = (uint8_t *)loopback_idle_text;
@@ -677,7 +624,7 @@ void duart_loopback_test_a(void)
 {
 	const duart_loopback_channel channel = {
 		&duart.a, &duart_shadow.mr2a, IMR_RXRDYA | IMR_TXRDYA,
-		&duarta.held, &duarta.loopback_test, DUART_UART_A_TIMEOUT,
+		&duarta.held, &duarta.loopback_test, DUART_TEST_A_TIMEOUT,
 	};
 
 	duart_loopback_test(&channel);
@@ -688,7 +635,7 @@ void duart_loopback_test_b(void)
 {
 	const duart_loopback_channel channel = {
 		&duart.b, &duart_shadow.mr2b, IMR_RXRDYB | IMR_TXRDYB,
-		&duartb.reconfiguring, &duartb.loopback_test, DUART_UART_B_TIMEOUT,
+		&duartb.reconfiguring, &duartb.loopback_test, DUART_TEST_B_TIMEOUT,
 	};
 
 	duart_loopback_test(&channel);
@@ -742,7 +689,7 @@ void duart_counter_test(void)
 	task_set_priority(0, priority);
 	count = upper << DUART_BYTE_BITS | lower;
 	if (count > DUART_COUNTER_MOST || count < DUART_COUNTER_LEAST)
-		selftest.uart |= DUART_UART_COUNTER_FAILED;
+		selftest.uart |= DUART_TEST_COUNTER_FAILED;
 }
 
 /* Values the self-tests write to the interrupt vector register and
@@ -766,9 +713,9 @@ static bool duart_ivr_holds(uint8_t value)
 static void duart_ivr_test(void)
 {
 	if (!duart_ivr_holds(DUART_IVR_PATTERN_1))
-		selftest.uart |= DUART_UART_IVR_FAILED;
+		selftest.uart |= DUART_TEST_IVR_FAILED;
 	if (!duart_ivr_holds(DUART_IVR_PATTERN_2))
-		selftest.uart |= DUART_UART_IVR_FAILED;
+		selftest.uart |= DUART_TEST_IVR_FAILED;
 	duart.ivr = DUART_IVR_VECTOR;
 }
 
@@ -779,7 +726,7 @@ void duart_test(void)
 	uint16_t sr;
 
 	selftest.uart = 0;
-	sr = set_interrupt_mask(DUART_SR_IPL_7);
+	sr = set_interrupt_mask(CPU_IPL_7);
 	duart_ivr_test();
 	set_interrupt_mask(sr);
 	if (selftest.uart == 0) {
@@ -803,13 +750,13 @@ static void duart_test_receive(volatile duart_channel *channel, int16_t mismatch
 /* The loopback test's receive on channel A (0x1e6be). */
 void duart_test_rx_a(void)
 {
-	duart_test_receive(&duart.a, DUART_UART_A_MISMATCH);
+	duart_test_receive(&duart.a, DUART_TEST_A_MISMATCH);
 }
 
 /* The loopback test's receive on channel B (0x1e6e2). */
 void duart_test_rx_b(void)
 {
-	duart_test_receive(&duart.b, DUART_UART_B_MISMATCH);
+	duart_test_receive(&duart.b, DUART_TEST_B_MISMATCH);
 }
 
 /* The loopback test's transmit: sends the next character, or at the
@@ -984,11 +931,11 @@ void duartb_loopback_check(void)
 			char expected = *loopback_expect_next++;
 
 			if (duart.b.rb_tb != expected)
-				selftest.uart |= DUART_UART_B_MISMATCH;
+				selftest.uart |= DUART_TEST_B_MISMATCH;
 			if (*loopback_send_next != 0)
 				duart.b.rb_tb = *loopback_send_next++;
 		} else {
-			selftest.uart |= DUART_UART_B_TIMEOUT;
+			selftest.uart |= DUART_TEST_B_TIMEOUT;
 		}
 	}
 	duart.b.cr = CR_RESET_RECEIVER;

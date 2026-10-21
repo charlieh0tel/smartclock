@@ -11,7 +11,7 @@
 /* The QSPI's devices, by the minor number of I/O device 1, the QSPI
  * (qspi_queue_setup's cases). */
 enum {
-	ADC_QSPI_ADC = 1,
+	ADC_QSPI_CONVERTER = 1,
 	ADC_QSPI_HDAC = 2,
 	ADC_QSPI_EFC = 7,
 };
@@ -31,7 +31,7 @@ int32_t adc_read(adc_channel channel)
 	uint16_t reply;
 	qspi_buffers buffers = { &command, &reply };
 
-	qspi_read(ADC_QSPI_ADC, &buffers, 1);
+	qspi_read(ADC_QSPI_CONVERTER, &buffers, 1);
 	return reply >> ADC_REPLY_SHIFT;
 }
 

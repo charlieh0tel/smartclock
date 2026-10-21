@@ -687,7 +687,7 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1252 run, 1240 agree, 1 reaches what the
+     original reads them: of 1249 run, 1238 agree, 1 reaches what the
      harness does not model and is skipped, 10 differ as known, and
      none otherwise.  A known difference is one whose cause is
      found and is not the C's, `function_check.py`'s `KNOWN`: the
@@ -1237,7 +1237,10 @@ view cannot drift apart.  The library, bottom up:
      `arithmetic.c`; `startup.c`; `os.c`, the mutexes, task reports,
      waits and exceptions; `klok.c`; `timecode.c`; and the drivers by
      device, `duart.c`, `sci.c`, `qspi.c`, `adc.c` (with the DACs and
-     the EFC), `monitors.c` and `spool.c`.
+     the EFC), `monitors.c` and `spool.c`; then `fpga.c` from
+     `startup.c`, and `cpu.h`, the status register's helpers, interrupt
+     levels, exception frame masks and watchdog service values, each
+     constant that two files held merged into one.
      `scpi.c`, the SCPI engine, 122 more: the converters and parsers,
      the formatters, the lexer, keyword and suffix matching, the status
      system and error queue, and the call path, checked beyond the
@@ -1245,6 +1248,14 @@ view cannot drift apart.  The library, bottom up:
      hand in all.  Its structures are its own for now and belong in
      `smartclock.h`; seven of its routines wait on prototypes that skip
      an argument's slot.
+     Then the prototypes the rewriters found wrong, those whose callers
+     are still the decompiler's: `doprnt` and `sprintf_put` take a
+     `sprintf_output` and a `sprintf_put_function`, `atexit_functions`
+     is 32 `atexit_function` pointers (Setup now parses an array of a
+     named function pointer), the SCPI parsers and port methods take
+     the slot they skipped, `duarta_isr` returns a byte, three print
+     routines are variadic, and the harness, which does not run a
+     variadic function, runs three fewer (1241 to 1238).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

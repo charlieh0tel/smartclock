@@ -208,6 +208,10 @@ typedef unsigned long write_function(char *s);
 /* qsort's comparator. */
 typedef int qsort_compare_function(void *a, void *b);
 
+/* A function atexit registers and call_atexit_functions calls, the
+ * last first (atexit_functions, 0x1038b4, 32 of them). */
+typedef void atexit_function(void);
+
 /* The holdover stage's steering, at 0x102042: each 10-second block's
  * mean time interval, and the accumulators holdover_ti_add keeps of the
  * readings for a least-squares slope, which holdover_correction_valid
@@ -750,6 +754,11 @@ typedef struct sprintf_output {
 	uint32_t unused;
 	char *cursor;
 } sprintf_output;
+
+/* What doprnt writes its output through, as fwrite is called: the
+ * text, the size of an element, the count, and the output; sprintf's
+ * is sprintf_put (0x608c4).  The count written comes back. */
+typedef int32_t sprintf_put_function(char *text, int32_t size, int32_t count, sprintf_output *output);
 
 /* The record scpi_double_to_decimal fills at A0, on its caller's stack:
  * the double's sign, its significant digits in ASCII, and the exponent

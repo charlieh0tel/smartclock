@@ -311,6 +311,8 @@ public class SmartClockSetup extends GhidraScript {
 	private static final int CASE_BODY_WINDOW = 0x400;
 	/** The namespace analysis puts a switch's case labels in, and their prefix. */
 	private static final String SWITCH_NAMESPACE_PREFIX = "switchD_";
+	/** A switch table's entry for index 0, where the index can run below it. */
+	private static final String INDEX_ZERO_SUFFIX = "_index_zero";
 	private static final String CASE_LABEL_PREFIX = "caseD_";
 	/** The sizes sizeEnums tries, smallest first. */
 	private static final List<Integer> ENUM_SIZES = List.of(1, 2, 4);
@@ -1663,6 +1665,12 @@ public class SmartClockSetup extends GhidraScript {
 				createData(recovered.table().add(i * 2L), WordDataType.dataType);
 			}
 			createLabel(recovered.table(), SWITCH_NAMESPACE_PREFIX + jmp, true, SourceType.USER_DEFINED);
+			if (recovered.first() != 0 && !jmp.getAddressSpace().isOverlaySpace()) {
+				// the table load's displacement, which the decompiler indexes from; the
+				// exporter declares no overlay's labels
+				createLabel(recovered.table().add(-recovered.first() * 2L),
+					SWITCH_NAMESPACE_PREFIX + jmp + INDEX_ZERO_SUFFIX, true, SourceType.USER_DEFINED);
+			}
 			for (Address target : recovered.targets()) {
 				references.addMemoryReference(jmp, target, RefType.COMPUTED_JUMP,
 					SourceType.USER_DEFINED, 0);

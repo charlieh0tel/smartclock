@@ -303,7 +303,10 @@ flow, the script clears what overlaps each real instruction and
 disassembles it, rebuilds the owning function's body and records the
 targets as a decompiler jump-table override, and keeps each table's
 address, first index and length for the exporter, which labels the
-cases from them (below).  It removes the case
+cases from them (below).  It labels each table `switchD_JMP` and, in
+the primary image, the entry for index 0 that a late table load points
+at `switchD_JMP_index_zero`, which the decompiler reads the case value
+from.  It removes the case
 labels analysis put at its late reading's targets; one that had become
 a function's name gives the function back its default name rather than
 deleting it, since deleting a function's name deletes the function.
@@ -779,7 +782,7 @@ EEPROM, is filled for each call, compared after it as RAM is, and
 holds no code, so that a jump into either faults.
 
 In the Z3805A 3543B image this gives 1813 functions, and every one but
-the ten thunks decompiles.  136 switches are recovered; `0x24ff2` and `0x25140`, a
+the ten thunks decompiles.  137 switches are recovered; `0x24ff2` and `0x25140`, a
 `jmp (d8,PC,D6.w)` with no table load, are not, and need not be: each
 enters an unrolled run of shifts part way, all of it code already
 (`docs/scpi/README.md`).  1813 of the functions are named.  The output

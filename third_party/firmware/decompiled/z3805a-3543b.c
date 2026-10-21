@@ -2859,107 +2859,6 @@ extern ushort USHORT_0002f7a2; /* 0002f7a2 */
 extern ushort USHORT_0002f7a4; /* 0002f7a4 */
 extern ushort USHORT_0002f7a8; /* 0002f7a8 */
 extern ushort USHORT_0002f7b0; /* 0002f7b0 */
-extern word WORD_0001062e; /* 0001062e */
-extern word WORD_00013d10; /* 00013d10 */
-extern word WORD_0001b6ac; /* 0001b6ac */
-extern word WORD_0001b9cc; /* 0001b9cc */
-extern word WORD_0001bb60; /* 0001bb60 */
-extern word WORD_0001bc60; /* 0001bc60 */
-extern word WORD_0001bd1c; /* 0001bd1c */
-extern word WORD_0001c0a2; /* 0001c0a2 */
-extern word WORD_0001d650; /* 0001d650 */
-extern word WORD_0001f510; /* 0001f510 */
-extern word WORD_0001f564; /* 0001f564 */
-extern word WORD_0001f6ec; /* 0001f6ec */
-extern word WORD_00020092; /* 00020092 */
-extern word WORD_00023dd8; /* 00023dd8 */
-extern word WORD_00024136; /* 00024136 */
-extern word WORD_000267e0; /* 000267e0 */
-extern word WORD_00026838; /* 00026838 */
-extern word WORD_00026c74; /* 00026c74 */
-extern word WORD_00028264; /* 00028264 */
-extern word WORD_00028326; /* 00028326 */
-extern word WORD_000297ea; /* 000297ea */
-extern word WORD_00029818; /* 00029818 */
-extern word WORD_00029a98; /* 00029a98 */
-extern word WORD_0002b532; /* 0002b532 */
-extern word WORD_0002bf1e; /* 0002bf1e */
-extern word WORD_0002d1f6; /* 0002d1f6 */
-extern word WORD_0002e070; /* 0002e070 */
-extern word WORD_0002e3e0; /* 0002e3e0 */
-extern word WORD_0002e42c; /* 0002e42c */
-extern word WORD_0002e460; /* 0002e460 */
-extern word WORD_0002e4ba; /* 0002e4ba */
-extern word WORD_0002e92a; /* 0002e92a */
-extern word WORD_0002ec6a; /* 0002ec6a */
-extern word WORD_0002ee86; /* 0002ee86 */
-extern word WORD_0002eed2; /* 0002eed2 */
-extern word WORD_0002f38a; /* 0002f38a */
-extern word WORD_0002f6b4; /* 0002f6b4 */
-extern word WORD_0002fa68; /* 0002fa68 */
-extern word WORD_0003001c; /* 0003001c */
-extern word WORD_0003030e; /* 0003030e */
-extern word WORD_000303c6; /* 000303c6 */
-extern word WORD_000303f0; /* 000303f0 */
-extern word WORD_000304b0; /* 000304b0 */
-extern word WORD_0003054e; /* 0003054e */
-extern word WORD_000305fe; /* 000305fe */
-extern word WORD_000413ba; /* 000413ba */
-extern word WORD_00042a3c; /* 00042a3c */
-extern word WORD_00042d3c; /* 00042d3c */
-extern word WORD_00043090; /* 00043090 */
-extern word WORD_00043238; /* 00043238 */
-extern word WORD_00043262; /* 00043262 */
-extern word WORD_00043448; /* 00043448 */
-extern word WORD_00043562; /* 00043562 */
-extern word WORD_000439fe; /* 000439fe */
-extern word WORD_00043aec; /* 00043aec */
-extern word WORD_00044006; /* 00044006 */
-extern word WORD_000444fc; /* 000444fc */
-extern word WORD_00045206; /* 00045206 */
-extern word WORD_00045b94; /* 00045b94 */
-extern word WORD_00045bec; /* 00045bec */
-extern word WORD_00045f18; /* 00045f18 */
-extern word WORD_000461c4; /* 000461c4 */
-extern word WORD_0004655a; /* 0004655a */
-extern word WORD_000465da; /* 000465da */
-extern word WORD_00046dc0; /* 00046dc0 */
-extern word WORD_00046eca; /* 00046eca */
-extern word WORD_00047266; /* 00047266 */
-extern word WORD_00047786; /* 00047786 */
-extern word WORD_0004856a; /* 0004856a */
-extern word WORD_000485e8; /* 000485e8 */
-extern word WORD_00048642; /* 00048642 */
-extern word WORD_0004867a; /* 0004867a */
-extern word WORD_000486c8; /* 000486c8 */
-extern word WORD_00048a88; /* 00048a88 */
-extern word WORD_00048d00; /* 00048d00 */
-extern word WORD_00048d4e; /* 00048d4e */
-extern word WORD_00048e42; /* 00048e42 */
-extern word WORD_0004963e; /* 0004963e */
-extern word WORD_00049ac2; /* 00049ac2 */
-extern word WORD_0004a010; /* 0004a010 */
-extern word WORD_0004a2d0; /* 0004a2d0 */
-extern word WORD_0004a56c; /* 0004a56c */
-extern word WORD_0004a980; /* 0004a980 */
-extern word WORD_0004a9de; /* 0004a9de */
-extern word WORD_0004ace4; /* 0004ace4 */
-extern word WORD_0004b08c; /* 0004b08c */
-extern word WORD_0004b4ba; /* 0004b4ba */
-extern word WORD_0004b58c; /* 0004b58c */
-extern word WORD_0004b5f4; /* 0004b5f4 */
-extern word WORD_0004b89e; /* 0004b89e */
-extern word WORD_0004ba1c; /* 0004ba1c */
-extern word WORD_0004c060; /* 0004c060 */
-extern word WORD_0004c0c8; /* 0004c0c8 */
-extern word WORD_0004c7d4; /* 0004c7d4 */
-extern word WORD_0004caca; /* 0004caca */
-extern word WORD_0004cd06; /* 0004cd06 */
-extern word WORD_0004ceb8; /* 0004ceb8 */
-extern word WORD_0004cf2a; /* 0004cf2a */
-extern word WORD_0004f0f2; /* 0004f0f2 */
-extern word WORD_0004fc90; /* 0004fc90 */
-extern word WORD_0005ed48; /* 0005ed48 */
 extern undefined atexit_functions; /* 001038b4 */
 extern undefined installer_atexit_functions; /* 0010b03c */
 extern char installer_program_end_message; /* 0010aaf2 */
@@ -2969,7 +2868,108 @@ extern undefined nv_settings_defaults; /* 00030966 */
 extern uint8_t reference_valid_override_request; /* 00100c68 */
 extern undefined retained_block; /* 00101e70 */
 extern char s_DUART_test_string_0001ee6e[]; /* 0001ee6e */
+extern word switchD_00010626_index_zero; /* 0001062e */
+extern word switchD_00013d08_index_zero; /* 00013d10 */
+extern word switchD_0001b6a4_index_zero; /* 0001b6ac */
+extern word switchD_0001b9c2_index_zero; /* 0001b9cc */
+extern word switchD_0001bb4e_index_zero; /* 0001bb60 */
+extern word switchD_0001bc52_index_zero; /* 0001bc60 */
+extern word switchD_0001bd0e_index_zero; /* 0001bd1c */
+extern word switchD_0001c096_index_zero; /* 0001c0a2 */
+extern word switchD_0001d646_index_zero; /* 0001d650 */
+extern word switchD_0001f502_index_zero; /* 0001f510 */
+extern word switchD_0001f556_index_zero; /* 0001f564 */
+extern word switchD_0001f6e2_index_zero; /* 0001f6ec */
+extern word switchD_00020088_index_zero; /* 00020092 */
 extern word switchD_000205c0; /* 000205c4 */
+extern word switchD_00023dc6_index_zero; /* 00023dd8 */
+extern word switchD_00024126_index_zero; /* 00024136 */
+extern word switchD_000267d8_index_zero; /* 000267e0 */
+extern word switchD_00026832_index_zero; /* 00026838 */
+extern word switchD_00026c64_index_zero; /* 00026c74 */
+extern word switchD_00028258_index_zero; /* 00028264 */
+extern word switchD_0002831a_index_zero; /* 00028326 */
+extern word switchD_000297e0_index_zero; /* 000297ea */
+extern word switchD_00029812_index_zero; /* 00029818 */
+extern word switchD_00029a92_index_zero; /* 00029a98 */
+extern word switchD_0002b52a_index_zero; /* 0002b532 */
+extern word switchD_0002bf12_index_zero; /* 0002bf1e */
+extern word switchD_0002d1ec_index_zero; /* 0002d1f6 */
+extern word switchD_0002e068_index_zero; /* 0002e070 */
+extern word switchD_0002e3da_index_zero; /* 0002e3e0 */
+extern word switchD_0002e426_index_zero; /* 0002e42c */
+extern word switchD_0002e45a_index_zero; /* 0002e460 */
+extern word switchD_0002e4b4_index_zero; /* 0002e4ba */
+extern word switchD_0002e91a_index_zero; /* 0002e92a */
+extern word switchD_0002ec60_index_zero; /* 0002ec6a */
+extern word switchD_0002ee80_index_zero; /* 0002ee86 */
+extern word switchD_0002eecc_index_zero; /* 0002eed2 */
+extern word switchD_0002f382_index_zero; /* 0002f38a */
+extern word switchD_0002f6ae_index_zero; /* 0002f6b4 */
+extern word switchD_0002fa5c_index_zero; /* 0002fa68 */
+extern word switchD_00030010_index_zero; /* 0003001c */
+extern word switchD_00030304_index_zero; /* 0003030e */
+extern word switchD_000303c0_index_zero; /* 000303c6 */
+extern word switchD_000303e6_index_zero; /* 000303f0 */
+extern word switchD_000304a6_index_zero; /* 000304b0 */
+extern word switchD_00030544_index_zero; /* 0003054e */
+extern word switchD_000305f8_index_zero; /* 000305fe */
+extern word switchD_000413b0_index_zero; /* 000413ba */
+extern word switchD_00042a32_index_zero; /* 00042a3c */
+extern word switchD_00042d32_index_zero; /* 00042d3c */
+extern word switchD_00043086_index_zero; /* 00043090 */
+extern word switchD_0004322e_index_zero; /* 00043238 */
+extern word switchD_00043258_index_zero; /* 00043262 */
+extern word switchD_00043440_index_zero; /* 00043448 */
+extern word switchD_0004355c_index_zero; /* 00043562 */
+extern word switchD_000439f2_index_zero; /* 000439fe */
+extern word switchD_00043ae6_index_zero; /* 00043aec */
+extern word switchD_00043ff8_index_zero; /* 00044006 */
+extern word switchD_000444f4_index_zero; /* 000444fc */
+extern word switchD_000451fa_index_zero; /* 00045206 */
+extern word switchD_00045b86_index_zero; /* 00045b94 */
+extern word switchD_00045bdc_index_zero; /* 00045bec */
+extern word switchD_00045f06_index_zero; /* 00045f18 */
+extern word switchD_000461bc_index_zero; /* 000461c4 */
+extern word switchD_00046546_index_zero; /* 0004655a */
+extern word switchD_000465c6_index_zero; /* 000465da */
+extern word switchD_00046db6_index_zero; /* 00046dc0 */
+extern word switchD_00046eb8_index_zero; /* 00046eca */
+extern word switchD_00047258_index_zero; /* 00047266 */
+extern word switchD_00047772_index_zero; /* 00047786 */
+extern word switchD_00048560_index_zero; /* 0004856a */
+extern word switchD_000485e0_index_zero; /* 000485e8 */
+extern word switchD_0004863a_index_zero; /* 00048642 */
+extern word switchD_00048670_index_zero; /* 0004867a */
+extern word switchD_000486c0_index_zero; /* 000486c8 */
+extern word switchD_00048a7c_index_zero; /* 00048a88 */
+extern word switchD_00048cf8_index_zero; /* 00048d00 */
+extern word switchD_00048d42_index_zero; /* 00048d4e */
+extern word switchD_00048e3a_index_zero; /* 00048e42 */
+extern word switchD_00049634_index_zero; /* 0004963e */
+extern word switchD_00049ab0_index_zero; /* 00049ac2 */
+extern word switchD_0004a002_index_zero; /* 0004a010 */
+extern word switchD_0004a2c6_index_zero; /* 0004a2d0 */
+extern word switchD_0004a55c_index_zero; /* 0004a56c */
+extern word switchD_0004a96c_index_zero; /* 0004a980 */
+extern word switchD_0004a9d0_index_zero; /* 0004a9de */
+extern word switchD_0004acdc_index_zero; /* 0004ace4 */
+extern word switchD_0004b082_index_zero; /* 0004b08c */
+extern word switchD_0004b4b0_index_zero; /* 0004b4ba */
+extern word switchD_0004b578_index_zero; /* 0004b58c */
+extern word switchD_0004b5ec_index_zero; /* 0004b5f4 */
+extern word switchD_0004b88e_index_zero; /* 0004b89e */
+extern word switchD_0004ba08_index_zero; /* 0004ba1c */
+extern word switchD_0004c058_index_zero; /* 0004c060 */
+extern word switchD_0004c0c0_index_zero; /* 0004c0c8 */
+extern word switchD_0004c7ca_index_zero; /* 0004c7d4 */
+extern word switchD_0004cac2_index_zero; /* 0004caca */
+extern word switchD_0004ccfc_index_zero; /* 0004cd06 */
+extern word switchD_0004ceae_index_zero; /* 0004ceb8 */
+extern word switchD_0004cf22_index_zero; /* 0004cf2a */
+extern word switchD_0004f0ea_index_zero; /* 0004f0f2 */
+extern word switchD_0004fc88_index_zero; /* 0004fc90 */
+extern word switchD_0005ed40_index_zero; /* 0005ed48 */
 extern uint8_t uint8_t_0010142a; /* 0010142a */
 
 __asm__(".set DAT_0010253e, 0x0010253e");
@@ -3047,107 +3047,6 @@ __asm__(".set USHORT_0002f7a2, 0x0002f7a2");
 __asm__(".set USHORT_0002f7a4, 0x0002f7a4");
 __asm__(".set USHORT_0002f7a8, 0x0002f7a8");
 __asm__(".set USHORT_0002f7b0, 0x0002f7b0");
-__asm__(".set WORD_0001062e, 0x0001062e");
-__asm__(".set WORD_00013d10, 0x00013d10");
-__asm__(".set WORD_0001b6ac, 0x0001b6ac");
-__asm__(".set WORD_0001b9cc, 0x0001b9cc");
-__asm__(".set WORD_0001bb60, 0x0001bb60");
-__asm__(".set WORD_0001bc60, 0x0001bc60");
-__asm__(".set WORD_0001bd1c, 0x0001bd1c");
-__asm__(".set WORD_0001c0a2, 0x0001c0a2");
-__asm__(".set WORD_0001d650, 0x0001d650");
-__asm__(".set WORD_0001f510, 0x0001f510");
-__asm__(".set WORD_0001f564, 0x0001f564");
-__asm__(".set WORD_0001f6ec, 0x0001f6ec");
-__asm__(".set WORD_00020092, 0x00020092");
-__asm__(".set WORD_00023dd8, 0x00023dd8");
-__asm__(".set WORD_00024136, 0x00024136");
-__asm__(".set WORD_000267e0, 0x000267e0");
-__asm__(".set WORD_00026838, 0x00026838");
-__asm__(".set WORD_00026c74, 0x00026c74");
-__asm__(".set WORD_00028264, 0x00028264");
-__asm__(".set WORD_00028326, 0x00028326");
-__asm__(".set WORD_000297ea, 0x000297ea");
-__asm__(".set WORD_00029818, 0x00029818");
-__asm__(".set WORD_00029a98, 0x00029a98");
-__asm__(".set WORD_0002b532, 0x0002b532");
-__asm__(".set WORD_0002bf1e, 0x0002bf1e");
-__asm__(".set WORD_0002d1f6, 0x0002d1f6");
-__asm__(".set WORD_0002e070, 0x0002e070");
-__asm__(".set WORD_0002e3e0, 0x0002e3e0");
-__asm__(".set WORD_0002e42c, 0x0002e42c");
-__asm__(".set WORD_0002e460, 0x0002e460");
-__asm__(".set WORD_0002e4ba, 0x0002e4ba");
-__asm__(".set WORD_0002e92a, 0x0002e92a");
-__asm__(".set WORD_0002ec6a, 0x0002ec6a");
-__asm__(".set WORD_0002ee86, 0x0002ee86");
-__asm__(".set WORD_0002eed2, 0x0002eed2");
-__asm__(".set WORD_0002f38a, 0x0002f38a");
-__asm__(".set WORD_0002f6b4, 0x0002f6b4");
-__asm__(".set WORD_0002fa68, 0x0002fa68");
-__asm__(".set WORD_0003001c, 0x0003001c");
-__asm__(".set WORD_0003030e, 0x0003030e");
-__asm__(".set WORD_000303c6, 0x000303c6");
-__asm__(".set WORD_000303f0, 0x000303f0");
-__asm__(".set WORD_000304b0, 0x000304b0");
-__asm__(".set WORD_0003054e, 0x0003054e");
-__asm__(".set WORD_000305fe, 0x000305fe");
-__asm__(".set WORD_000413ba, 0x000413ba");
-__asm__(".set WORD_00042a3c, 0x00042a3c");
-__asm__(".set WORD_00042d3c, 0x00042d3c");
-__asm__(".set WORD_00043090, 0x00043090");
-__asm__(".set WORD_00043238, 0x00043238");
-__asm__(".set WORD_00043262, 0x00043262");
-__asm__(".set WORD_00043448, 0x00043448");
-__asm__(".set WORD_00043562, 0x00043562");
-__asm__(".set WORD_000439fe, 0x000439fe");
-__asm__(".set WORD_00043aec, 0x00043aec");
-__asm__(".set WORD_00044006, 0x00044006");
-__asm__(".set WORD_000444fc, 0x000444fc");
-__asm__(".set WORD_00045206, 0x00045206");
-__asm__(".set WORD_00045b94, 0x00045b94");
-__asm__(".set WORD_00045bec, 0x00045bec");
-__asm__(".set WORD_00045f18, 0x00045f18");
-__asm__(".set WORD_000461c4, 0x000461c4");
-__asm__(".set WORD_0004655a, 0x0004655a");
-__asm__(".set WORD_000465da, 0x000465da");
-__asm__(".set WORD_00046dc0, 0x00046dc0");
-__asm__(".set WORD_00046eca, 0x00046eca");
-__asm__(".set WORD_00047266, 0x00047266");
-__asm__(".set WORD_00047786, 0x00047786");
-__asm__(".set WORD_0004856a, 0x0004856a");
-__asm__(".set WORD_000485e8, 0x000485e8");
-__asm__(".set WORD_00048642, 0x00048642");
-__asm__(".set WORD_0004867a, 0x0004867a");
-__asm__(".set WORD_000486c8, 0x000486c8");
-__asm__(".set WORD_00048a88, 0x00048a88");
-__asm__(".set WORD_00048d00, 0x00048d00");
-__asm__(".set WORD_00048d4e, 0x00048d4e");
-__asm__(".set WORD_00048e42, 0x00048e42");
-__asm__(".set WORD_0004963e, 0x0004963e");
-__asm__(".set WORD_00049ac2, 0x00049ac2");
-__asm__(".set WORD_0004a010, 0x0004a010");
-__asm__(".set WORD_0004a2d0, 0x0004a2d0");
-__asm__(".set WORD_0004a56c, 0x0004a56c");
-__asm__(".set WORD_0004a980, 0x0004a980");
-__asm__(".set WORD_0004a9de, 0x0004a9de");
-__asm__(".set WORD_0004ace4, 0x0004ace4");
-__asm__(".set WORD_0004b08c, 0x0004b08c");
-__asm__(".set WORD_0004b4ba, 0x0004b4ba");
-__asm__(".set WORD_0004b58c, 0x0004b58c");
-__asm__(".set WORD_0004b5f4, 0x0004b5f4");
-__asm__(".set WORD_0004b89e, 0x0004b89e");
-__asm__(".set WORD_0004ba1c, 0x0004ba1c");
-__asm__(".set WORD_0004c060, 0x0004c060");
-__asm__(".set WORD_0004c0c8, 0x0004c0c8");
-__asm__(".set WORD_0004c7d4, 0x0004c7d4");
-__asm__(".set WORD_0004caca, 0x0004caca");
-__asm__(".set WORD_0004cd06, 0x0004cd06");
-__asm__(".set WORD_0004ceb8, 0x0004ceb8");
-__asm__(".set WORD_0004cf2a, 0x0004cf2a");
-__asm__(".set WORD_0004f0f2, 0x0004f0f2");
-__asm__(".set WORD_0004fc90, 0x0004fc90");
-__asm__(".set WORD_0005ed48, 0x0005ed48");
 __asm__(".set adc_monitors, 0x00101b72");
 __asm__(".set aging_curve, 0x00101fd8");
 __asm__(".set atexit_count, 0x00103934");
@@ -3665,7 +3564,108 @@ __asm__(".set status_without_traim_count, 0x0010142a");
 __asm__(".set string_device_cursor, 0x00100ba8");
 __asm__(".set survey_position, 0x00101e78");
 __asm__(".set survey_position_valid, 0x00101e77");
+__asm__(".set switchD_00010626_index_zero, 0x0001062e");
+__asm__(".set switchD_00013d08_index_zero, 0x00013d10");
+__asm__(".set switchD_0001b6a4_index_zero, 0x0001b6ac");
+__asm__(".set switchD_0001b9c2_index_zero, 0x0001b9cc");
+__asm__(".set switchD_0001bb4e_index_zero, 0x0001bb60");
+__asm__(".set switchD_0001bc52_index_zero, 0x0001bc60");
+__asm__(".set switchD_0001bd0e_index_zero, 0x0001bd1c");
+__asm__(".set switchD_0001c096_index_zero, 0x0001c0a2");
+__asm__(".set switchD_0001d646_index_zero, 0x0001d650");
+__asm__(".set switchD_0001f502_index_zero, 0x0001f510");
+__asm__(".set switchD_0001f556_index_zero, 0x0001f564");
+__asm__(".set switchD_0001f6e2_index_zero, 0x0001f6ec");
+__asm__(".set switchD_00020088_index_zero, 0x00020092");
 __asm__(".set switchD_000205c0, 0x000205c4");
+__asm__(".set switchD_00023dc6_index_zero, 0x00023dd8");
+__asm__(".set switchD_00024126_index_zero, 0x00024136");
+__asm__(".set switchD_000267d8_index_zero, 0x000267e0");
+__asm__(".set switchD_00026832_index_zero, 0x00026838");
+__asm__(".set switchD_00026c64_index_zero, 0x00026c74");
+__asm__(".set switchD_00028258_index_zero, 0x00028264");
+__asm__(".set switchD_0002831a_index_zero, 0x00028326");
+__asm__(".set switchD_000297e0_index_zero, 0x000297ea");
+__asm__(".set switchD_00029812_index_zero, 0x00029818");
+__asm__(".set switchD_00029a92_index_zero, 0x00029a98");
+__asm__(".set switchD_0002b52a_index_zero, 0x0002b532");
+__asm__(".set switchD_0002bf12_index_zero, 0x0002bf1e");
+__asm__(".set switchD_0002d1ec_index_zero, 0x0002d1f6");
+__asm__(".set switchD_0002e068_index_zero, 0x0002e070");
+__asm__(".set switchD_0002e3da_index_zero, 0x0002e3e0");
+__asm__(".set switchD_0002e426_index_zero, 0x0002e42c");
+__asm__(".set switchD_0002e45a_index_zero, 0x0002e460");
+__asm__(".set switchD_0002e4b4_index_zero, 0x0002e4ba");
+__asm__(".set switchD_0002e91a_index_zero, 0x0002e92a");
+__asm__(".set switchD_0002ec60_index_zero, 0x0002ec6a");
+__asm__(".set switchD_0002ee80_index_zero, 0x0002ee86");
+__asm__(".set switchD_0002eecc_index_zero, 0x0002eed2");
+__asm__(".set switchD_0002f382_index_zero, 0x0002f38a");
+__asm__(".set switchD_0002f6ae_index_zero, 0x0002f6b4");
+__asm__(".set switchD_0002fa5c_index_zero, 0x0002fa68");
+__asm__(".set switchD_00030010_index_zero, 0x0003001c");
+__asm__(".set switchD_00030304_index_zero, 0x0003030e");
+__asm__(".set switchD_000303c0_index_zero, 0x000303c6");
+__asm__(".set switchD_000303e6_index_zero, 0x000303f0");
+__asm__(".set switchD_000304a6_index_zero, 0x000304b0");
+__asm__(".set switchD_00030544_index_zero, 0x0003054e");
+__asm__(".set switchD_000305f8_index_zero, 0x000305fe");
+__asm__(".set switchD_000413b0_index_zero, 0x000413ba");
+__asm__(".set switchD_00042a32_index_zero, 0x00042a3c");
+__asm__(".set switchD_00042d32_index_zero, 0x00042d3c");
+__asm__(".set switchD_00043086_index_zero, 0x00043090");
+__asm__(".set switchD_0004322e_index_zero, 0x00043238");
+__asm__(".set switchD_00043258_index_zero, 0x00043262");
+__asm__(".set switchD_00043440_index_zero, 0x00043448");
+__asm__(".set switchD_0004355c_index_zero, 0x00043562");
+__asm__(".set switchD_000439f2_index_zero, 0x000439fe");
+__asm__(".set switchD_00043ae6_index_zero, 0x00043aec");
+__asm__(".set switchD_00043ff8_index_zero, 0x00044006");
+__asm__(".set switchD_000444f4_index_zero, 0x000444fc");
+__asm__(".set switchD_000451fa_index_zero, 0x00045206");
+__asm__(".set switchD_00045b86_index_zero, 0x00045b94");
+__asm__(".set switchD_00045bdc_index_zero, 0x00045bec");
+__asm__(".set switchD_00045f06_index_zero, 0x00045f18");
+__asm__(".set switchD_000461bc_index_zero, 0x000461c4");
+__asm__(".set switchD_00046546_index_zero, 0x0004655a");
+__asm__(".set switchD_000465c6_index_zero, 0x000465da");
+__asm__(".set switchD_00046db6_index_zero, 0x00046dc0");
+__asm__(".set switchD_00046eb8_index_zero, 0x00046eca");
+__asm__(".set switchD_00047258_index_zero, 0x00047266");
+__asm__(".set switchD_00047772_index_zero, 0x00047786");
+__asm__(".set switchD_00048560_index_zero, 0x0004856a");
+__asm__(".set switchD_000485e0_index_zero, 0x000485e8");
+__asm__(".set switchD_0004863a_index_zero, 0x00048642");
+__asm__(".set switchD_00048670_index_zero, 0x0004867a");
+__asm__(".set switchD_000486c0_index_zero, 0x000486c8");
+__asm__(".set switchD_00048a7c_index_zero, 0x00048a88");
+__asm__(".set switchD_00048cf8_index_zero, 0x00048d00");
+__asm__(".set switchD_00048d42_index_zero, 0x00048d4e");
+__asm__(".set switchD_00048e3a_index_zero, 0x00048e42");
+__asm__(".set switchD_00049634_index_zero, 0x0004963e");
+__asm__(".set switchD_00049ab0_index_zero, 0x00049ac2");
+__asm__(".set switchD_0004a002_index_zero, 0x0004a010");
+__asm__(".set switchD_0004a2c6_index_zero, 0x0004a2d0");
+__asm__(".set switchD_0004a55c_index_zero, 0x0004a56c");
+__asm__(".set switchD_0004a96c_index_zero, 0x0004a980");
+__asm__(".set switchD_0004a9d0_index_zero, 0x0004a9de");
+__asm__(".set switchD_0004acdc_index_zero, 0x0004ace4");
+__asm__(".set switchD_0004b082_index_zero, 0x0004b08c");
+__asm__(".set switchD_0004b4b0_index_zero, 0x0004b4ba");
+__asm__(".set switchD_0004b578_index_zero, 0x0004b58c");
+__asm__(".set switchD_0004b5ec_index_zero, 0x0004b5f4");
+__asm__(".set switchD_0004b88e_index_zero, 0x0004b89e");
+__asm__(".set switchD_0004ba08_index_zero, 0x0004ba1c");
+__asm__(".set switchD_0004c058_index_zero, 0x0004c060");
+__asm__(".set switchD_0004c0c0_index_zero, 0x0004c0c8");
+__asm__(".set switchD_0004c7ca_index_zero, 0x0004c7d4");
+__asm__(".set switchD_0004cac2_index_zero, 0x0004caca");
+__asm__(".set switchD_0004ccfc_index_zero, 0x0004cd06");
+__asm__(".set switchD_0004ceae_index_zero, 0x0004ceb8");
+__asm__(".set switchD_0004cf22_index_zero, 0x0004cf2a");
+__asm__(".set switchD_0004f0ea_index_zero, 0x0004f0f2");
+__asm__(".set switchD_0004fc88_index_zero, 0x0004fc90");
+__asm__(".set switchD_0005ed40_index_zero, 0x0005ed48");
 __asm__(".set task_console, 0x001037e8");
 __asm__(".set task_count, 0x0010271c");
 __asm__(".set task_curv, 0x001037f8");
@@ -7572,7 +7572,7 @@ klok_entry * leap_event_schedule_gps(uint32_t param_1,int param_2)
   event.date = param_1;
   if (param_2 - 0x3bU < 2U || param_2 + -0x3d == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0001062e)[(short)(param_2 + -0x3d)]) {
+    switch((&switchD_00010626_index_zero)[(short)(param_2 + -0x3d)]) {
     case 6:
       event.function = leap_minute_59_arm;
       break;
@@ -11741,7 +11741,7 @@ void timecode_update(void)
     iVar3 = (int)(char)tcode_format - 2;
     if ((uint)(int)(char)tcode_format < 2 || iVar3 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_00013d10)[(short)iVar3]) {
+      switch((&switchD_00013d08_index_zero)[(short)iVar3]) {
       case 6:
         uVar1 = get_gps_date();
         uVar2 = get_gps_time();
@@ -32530,7 +32530,7 @@ void diag_force_1pps(int param_1)
 {
   if (param_1 + 1U < 2U || param_1 + -1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0001b6ac)[(short)(param_1 + -1)]) {
+    switch((&switchD_0001b6a4_index_zero)[(short)(param_1 + -1)]) {
     case 6:
       reference_valid_override_request = 0xff;
       break;
@@ -33012,7 +33012,7 @@ void print_leap_check_state(void)
   iVar2 = (int)(char)pll.leap_check_state - 3;
   if ((uint)(int)(char)pll.leap_check_state < 3 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0001b9cc)[(short)iVar2]) {
+    switch((&switchD_0001b9c2_index_zero)[(short)iVar2]) {
     case 8:
       pcVar3 = "leap start";
       pcVar4 = acStack_54;
@@ -33171,7 +33171,7 @@ void diag_pr_pll(void)
     iVar2 = (int)(char)pll.powerup_state - 7;
     if ((uint)(int)(char)pll.powerup_state < 7 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_0001bb60)[(short)iVar2]) {
+      switch((&switchD_0001bb4e_index_zero)[(short)iVar2]) {
       case 0x10:
         strcat(acStack_54,": start");
         break;
@@ -33234,7 +33234,7 @@ void diag_pr_pll(void)
     iVar2 = (int)(char)pll.recovery_state - 5;
     if ((uint)(int)(char)pll.recovery_state < 5 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_0001bc60)[(short)iVar2]) {
+      switch((&switchD_0001bc52_index_zero)[(short)iVar2]) {
       case 0xc:
         strcat(acStack_54,": start");
         break;
@@ -33291,7 +33291,7 @@ override_jmp_0001bc52_case_2:
     iVar2 = (int)(char)pll.gps_diag_state - 5;
     if ((uint)(int)(char)pll.gps_diag_state < 5 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_0001bd1c)[(short)iVar2]) {
+      switch((&switchD_0001bd0e_index_zero)[(short)iVar2]) {
       case 0xc:
         strcat(acStack_54,": reset send");
         break;
@@ -33665,7 +33665,7 @@ void diag_crash(uint param_1)
   
   if (param_1 < 4 || param_1 - 4 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0001c0a2)[(short)(param_1 - 4)]) {
+    switch((&switchD_0001c096_index_zero)[(short)(param_1 - 4)]) {
     case 10:
       _DAT_00700000 = 1;
       break;
@@ -33842,7 +33842,7 @@ void duartb_baud_from_settings(void)
   iVar1 = (int)(char)duartb_settings.baud - 3;
   if ((uint)(int)(char)duartb_settings.baud < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0001d650)[(short)iVar1]) {
+    switch((&switchD_0001d646_index_zero)[(short)iVar1]) {
     case 8:
       cVar2 = '\x06';
       break;
@@ -36072,7 +36072,7 @@ void hdac_write(byte param_1,byte param_2)
   iVar1 = param_2 - 6;
   if (param_2 - 1 < 5U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0001f510)[(short)iVar1]) {
+    switch((&switchD_0001f502_index_zero)[(short)iVar1]) {
     case 0xc:
       bVar2 = 5;
       break;
@@ -36115,7 +36115,7 @@ void hdac_set(byte param_1,byte param_2)
   iVar1 = param_2 - 5;
   if (param_2 < 5 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0001f564)[(short)iVar1]) {
+    switch((&switchD_0001f556_index_zero)[(short)iVar1]) {
     case 0xc:
       iVar1 = (int)(uint)param_2 >> 1;
       hdac_shadow[iVar1] = hdac_shadow[iVar1] & 0x3f;
@@ -36205,7 +36205,7 @@ void sci_baud_set(char param_1)
   iVar1 = (int)param_1 - 3;
   if ((uint)(int)param_1 < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0001f6ec)[(short)iVar1]) {
+    switch((&switchD_0001f6e2_index_zero)[(short)iVar1]) {
     case 8:
       uVar2 = 0x1b5;
       sci.baud_constant = 0x2222;
@@ -37325,9 +37325,9 @@ uint sci_reconfigure(void)
   iVar6 = (int)(char)sci_settings.parity - 3;
   if ((uint)(int)(char)sci_settings.parity < 3 || iVar6 == 0) {
     sVar5 = (short)iVar6;
-    iVar6 = CONCAT22((short)((uint)iVar6 >> 0x10),(&WORD_00020092)[sVar5]);
+    iVar6 = CONCAT22((short)((uint)iVar6 >> 0x10),(&switchD_00020088_index_zero)[sVar5]);
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00020092)[sVar5]) {
+    switch((&switchD_00020088_index_zero)[sVar5]) {
     case 8:
       uVar1 = qsm.sccr1;
       qsm.sccr1 = uVar1 | SCCR1_PE;
@@ -39232,7 +39232,7 @@ void hmon_check_supplies(void)
   iVar1 = hmon_supply_step - 7;
   if (6 < hmon_supply_step && iVar1 != 0) goto LAB_000240f0;
                     /* WARNING: Switch is manually overridden */
-  switch((&WORD_00023dd8)[(short)iVar1]) {
+  switch((&switchD_00023dc6_index_zero)[(short)iVar1]) {
   case 0x10:
     monitor = adc_monitors;
     fVar2 = read_adc_temp();
@@ -39367,7 +39367,7 @@ float adc_average(adc_channel channel)
   iVar1 = channel - 6;
   if (channel < 6 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00024136)[(short)iVar1]) {
+    switch((&switchD_00024126_index_zero)[(short)iVar1]) {
     case 0xe:
       fVar2 = adc_monitors[0].value;
       if (adc_monitors[0].valid == 0) {
@@ -42876,7 +42876,7 @@ int scpi_format_array(void *param_1,char *param_2)
   iVar1 = (int)*param_2 - 2;
   if ((uint)(int)*param_2 < 2 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_000267e0)[(short)iVar1]) {
+    switch((&switchD_000267d8_index_zero)[(short)iVar1]) {
     case 6:
       iVar1 = scpi_format_block(param_1,*(uint32_t **)(param_2 + 2));
       break;
@@ -42908,7 +42908,7 @@ int scpi_format_resolution_array_record(char *param_1)
   iVar1 = *param_1 + -1;
   if (*param_1 == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00026838)[(short)iVar1]) {
+    switch((&switchD_00026832_index_zero)[(short)iVar1]) {
     case 4:
       iVar1 = scpi_format_block(in_stack_00000004,*(uint32_t **)(param_1 + 2));
       break;
@@ -43163,7 +43163,7 @@ LAB_00026bae:
                 pcVar1 = *(code **)(unaff_D7 + local_6 * 2 + 6);
                 if (5U < iVar2 - 0xdU && iVar2 + -0x13 != 0) goto LAB_00026d2a;
                     /* WARNING: Switch is manually overridden */
-                switch((&WORD_00026c74)[(short)(iVar2 + -0x13)]) {
+                switch((&switchD_00026c64_index_zero)[(short)(iVar2 + -0x13)]) {
                 case 0xe:
                   uVar5 = *(undefined4 *)(unaff_D7 + 2);
                   goto LAB_00026c84;
@@ -44562,7 +44562,7 @@ int16_t status_set_bit(status_model *status,int condition,int value)
   iVar3 = (int)psVar4->kind - 4;
   if ((uint)(int)psVar4->kind < 4 || iVar3 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00028264)[(short)iVar3]) {
+    switch((&switchD_00028258_index_zero)[(short)iVar3]) {
     case 10:
       status_event_set(status,status->registers[sVar1],__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
@@ -44606,7 +44606,7 @@ void status_apply_condition(status_model *status,int condition,int param_3)
   iVar3 = (int)psVar4->kind - 4;
   if ((uint)(int)psVar4->kind < 4 || iVar3 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00028326)[(short)iVar3]) {
+    switch((&switchD_0002831a_index_zero)[(short)iVar3]) {
     case 10:
       status_event_set(status,status->registers[sVar1],__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
@@ -45352,7 +45352,7 @@ undefined4 scpi_long_resolve_bound(undefined4 param_1,short *param_2)
   iVar1 = *param_2 + -2;
   if ((int)*param_2 + 1U < 3U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_000297ea)[(short)iVar1]) {
+    switch((&switchD_000297e0_index_zero)[(short)iVar1]) {
     case 8:
       param_1 = *(undefined4 *)(param_2 + 1);
       break;
@@ -45360,7 +45360,7 @@ undefined4 scpi_long_resolve_bound(undefined4 param_1,short *param_2)
       iVar1 = param_2[1] + -1;
       if (param_2[1] == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-        switch((&WORD_00029818)[(short)iVar1]) {
+        switch((&switchD_00029812_index_zero)[(short)iVar1]) {
         case 4:
           param_1 = in_stack_00000004;
           break;
@@ -45579,7 +45579,7 @@ void robin_store(undefined1 *param_1,char param_2,byte param_3)
   iVar1 = param_2 + -1;
   if (param_2 == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00029a98)[(short)iVar1]) {
+    switch((&switchD_00029a92_index_zero)[(short)iVar1]) {
     case 4:
       iVar1 = (uint)param_3 * 8;
       *(int *)(iVar1 + 0x102a26) = in_stack_0000000c * 2;
@@ -47518,7 +47518,7 @@ void log_status(char *param_1,char param_2)
     iVar1 = sVar2 + -1;
     if ((int)sVar2 + 1U < 2U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_0002b532)[(short)iVar1]) {
+      switch((&switchD_0002b52a_index_zero)[(short)iVar1]) {
       case 6:
         sprintf(param_1,"Log status: Error");
       case 0x12:
@@ -48305,9 +48305,9 @@ int status_report_from(short param_1,byte param_2)
   iVar1 = param_2 - 4;
   if (param_2 < 4 || iVar1 == 0) {
     sVar2 = (short)iVar1;
-    iVar1 = CONCAT22((short)((uint)iVar1 >> 0x10),(&WORD_0002bf1e)[sVar2]);
+    iVar1 = CONCAT22((short)((uint)iVar1 >> 0x10),(&switchD_0002bf12_index_zero)[sVar2]);
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0002bf1e)[sVar2]) {
+    switch((&switchD_0002bf12_index_zero)[sVar2]) {
     case 10:
       iVar1 = status_report(param_1);
       break;
@@ -49384,7 +49384,7 @@ void satellite_list_limits
   iVar1 = (int)(char)kind - 3;
   if ((uint)(int)(char)kind < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0002d1f6)[(short)iVar1]) {
+    switch((&switchD_0002d1ec_index_zero)[(short)iVar1]) {
     case 8:
       *id_count = 0x20;
       *max_listed = 6;
@@ -50478,7 +50478,7 @@ int scpi_query_SOURce_PTIMe_TCODe_FORMat(void *parameters,void *response,void *c
   iVar1 = (int)(char)nv_settings.tcode_format - 2;
   if ((uint)(int)(char)nv_settings.tcode_format < 2 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0002e070)[(short)iVar1]) {
+    switch((&switchD_0002e068_index_zero)[(short)iVar1]) {
     case 6:
       *(undefined2 *)response = 0;
       break;
@@ -50742,7 +50742,7 @@ int scpi_set_SAMPle_TOGGle(void *parameters,void *response,void *call)
   iVar1 = *(short *)((int)parameters + 2) + -1;
   if (*(short *)((int)parameters + 2) == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0002e3e0)[(short)iVar1]) {
+    switch((&switchD_0002e3da_index_zero)[(short)iVar1]) {
     case 4:
       unaff_D2b = 0;
       break;
@@ -50768,7 +50768,7 @@ int scpi_query_SAMPle_TOGGle(void *parameters,void *response,void *call)
   iVar1 = (char)scpi_value_SAMPle_TOGGle + -1;
   if ((char)scpi_value_SAMPle_TOGGle == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0002e42c)[(short)iVar1]) {
+    switch((&switchD_0002e426_index_zero)[(short)iVar1]) {
     case 4:
       *(undefined2 *)response = 0;
       break;
@@ -50793,7 +50793,7 @@ int scpi_set_SAMPle_TARR(void *parameters,void *response,void *call)
   iVar1 = *(short *)((int)parameters + 4) + -1;
   if (*(short *)((int)parameters + 4) == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0002e460)[(short)iVar1]) {
+    switch((&switchD_0002e45a_index_zero)[(short)iVar1]) {
     case 4:
       unaff_D2b = 0;
       break;
@@ -50819,7 +50819,7 @@ int scpi_query_SAMPle_TARR(void *parameters,void *response,void *call)
   iVar1 = (char)scpi_value_SAMPle_TARR[*(short *)parameters] + -1;
   if ((char)scpi_value_SAMPle_TARR[*(short *)parameters] == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0002e4ba)[(short)iVar1]) {
+    switch((&switchD_0002e4b4_index_zero)[(short)iVar1]) {
     case 4:
       *(undefined2 *)response = 0;
       break;
@@ -51280,7 +51280,7 @@ int robin_parse_arguments(int *param_1,uint param_2,undefined4 *param_3,undefine
     return iVar3;
   }
                     /* WARNING: Switch is manually overridden */
-  switch((&WORD_0002e92a)[(short)iVar3]) {
+  switch((&switchD_0002e91a_index_zero)[(short)iVar3]) {
   case 0xe:
     if (*(char *)*param_1 == '\0') {
       return 0;
@@ -51535,7 +51535,7 @@ void robin_point_list(uint16_t *points,uint16_t *count,char kind)
   iVar1 = (int)kind - 3;
   if ((uint)(int)kind < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0002ec6a)[(short)iVar1]) {
+    switch((&switchD_0002ec60_index_zero)[(short)iVar1]) {
     case 8:
       bVar2 = 0;
       do {
@@ -51717,7 +51717,7 @@ int scpi_set_FORMat_DATA(void *parameters,void *response,void *call)
   iVar1 = *(short *)((int)parameters + 2) + -1;
   if (*(short *)((int)parameters + 2) == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0002ee86)[(short)iVar1]) {
+    switch((&switchD_0002ee80_index_zero)[(short)iVar1]) {
     case 4:
       unaff_D2b = 0;
       break;
@@ -51743,7 +51743,7 @@ int scpi_query_FORMat_DATA(void *parameters,void *response,void *call)
   iVar1 = (char)nv_settings.format_data + -1;
   if ((char)nv_settings.format_data == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0002eed2)[(short)iVar1]) {
+    switch((&switchD_0002eecc_index_zero)[(short)iVar1]) {
     case 4:
       *(undefined2 *)response = 0;
       break;
@@ -52003,7 +52003,7 @@ undefined4 status_preset_register(char param_1,char param_2,short param_3,short 
     iVar1 = (int)param_1 - 2;
     if ((uint)(int)param_1 < 2 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_0002f38a)[(short)iVar1]) {
+      switch((&switchD_0002f382_index_zero)[(short)iVar1]) {
       case 6:
         status_register_set_enable(status_object,(int)param_3,(int)param_4);
         break;
@@ -52216,7 +52216,7 @@ void happening_replay(char *events,char mode,char first,char last)
     iVar1 = mode + -1;
     if (mode == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_0002f6b4)[(short)iVar1]) {
+      switch((&switchD_0002f6ae_index_zero)[(short)iVar1]) {
       case 4:
         status_report((short)events[first]);
         break;
@@ -52282,7 +52282,7 @@ int scpi_query_SOURce_ROSCillator_HOLDover_DURation(void *parameters,void *respo
   iVar1 = cVar3 + -5;
   if ((int)cVar3 - 1U < 4U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0002fa68)[(short)iVar1]) {
+    switch((&switchD_0002fa5c_index_zero)[(short)iVar1]) {
     case 10:
       *(undefined2 *)((int)response + 6) = 1;
       return 0;
@@ -52845,7 +52845,7 @@ int scpi_query_SOURce_ROSCillator_STATe(void *parameters,void *response,void *ca
   iVar1 = cVar2 + -5;
   if ((int)cVar2 - 1U < 4U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0003001c)[(short)iVar1]) {
+    switch((&switchD_00030010_index_zero)[(short)iVar1]) {
     case 10:
       *(undefined2 *)response = 0;
       break;
@@ -53128,7 +53128,7 @@ switchD_00030304_caseD_3:
       return 0;
     }
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0003030e)[(short)iVar1]) {
+    switch((&switchD_00030304_index_zero)[(short)iVar1]) {
     case 8:
       goto switchD_00030304_caseD_0;
     case 0x10:
@@ -53198,7 +53198,7 @@ override_jmp_000303c0_case_0:
         return 0;
       }
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_000303c6)[(short)iVar1]) {
+      switch((&switchD_000303c0_index_zero)[(short)iVar1]) {
       case 4:
         goto override_jmp_000303c0_case_0;
       case 10:
@@ -53211,7 +53211,7 @@ override_jmp_000303c0_case_0:
       return 0;
     }
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_000303f0)[(short)iVar1]) {
+    switch((&switchD_000303e6_index_zero)[(short)iVar1]) {
     case 8:
       uVar2 = 7;
       goto LAB_000303f8;
@@ -53283,7 +53283,7 @@ int scpi_set_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE(void *parameters,void *
   iVar1 = (int)*(short *)((int)parameters + 4) - 3;
   if ((uint)(int)*(short *)((int)parameters + 4) < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_000304b0)[(short)iVar1]) {
+    switch((&switchD_000304a6_index_zero)[(short)iVar1]) {
     case 8:
       unaff_D2b = 1;
       break;
@@ -53335,7 +53335,7 @@ int scpi_query_SYSTem_COMMunicate_SER1_RECeive_PARity_TYPE
   iVar1 = (int)(char)uVar2 - 3;
   if ((uint)(int)(char)uVar2 < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0003054e)[(short)iVar1]) {
+    switch((&switchD_00030544_index_zero)[(short)iVar1]) {
     case 8:
       *(undefined2 *)response = 0;
       break;
@@ -53405,7 +53405,7 @@ int scpi_query_SYSTem_COMMunicate_SER1_RECeive_SBITs(void *parameters,void *resp
         return 0;
       }
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_000305fe)[(short)iVar1]) {
+      switch((&switchD_000305f8_index_zero)[(short)iVar1]) {
       case 4:
         break;
       case 6:
@@ -57101,7 +57101,7 @@ void efc_history_update(void)
     return;
   }
                     /* WARNING: Switch is manually overridden */
-  switch((&WORD_000413ba)[(short)iVar3]) {
+  switch((&switchD_000413b0_index_zero)[(short)iVar3]) {
   case 8:
     pll.aging_state = 1;
     pll.predicted_uncertainty = 0.000432;
@@ -58161,7 +58161,7 @@ undefined4 get_ffom(undefined1 *param_1)
   iVar1 = (char)pll.stage + -6;
   if ((int)(char)pll.stage - 3U < 3U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00042a3c)[(short)iVar1]) {
+    switch((&switchD_00042a32_index_zero)[(short)iVar1]) {
     case 8:
       *param_1 = 0;
       break;
@@ -58339,7 +58339,7 @@ void validate_or_doaction(undefined1 *param_1)
     iVar1 = (int)*(char *)pll_scpi_param - 3;
     if ((uint)(int)*(char *)pll_scpi_param < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_00042d3c)[(short)iVar1]) {
+      switch((&switchD_00042d32_index_zero)[(short)iVar1]) {
       case 8:
         *param_1 = 0;
         pll_scpi_do_action(in_stack_00000008);
@@ -58572,7 +58572,7 @@ void finish_scpi_cmd(void)
   iVar2 = (int)*(char *)pll_scpi_param - 3;
   if ((uint)(int)*(char *)pll_scpi_param < 3 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00043090)[(short)iVar2]) {
+    switch((&switchD_00043086_index_zero)[(short)iVar2]) {
     case 8:
       *(uint8_t *)(*(int *)((int)pll_scpi_param + 0xc) + (int)(char)pll_scpi_index) =
            pll_scpi_setting;
@@ -58649,7 +58649,7 @@ void get_setup_vars(pllc_request *request)
     return;
   }
                     /* WARNING: Switch is manually overridden */
-  switch((&WORD_00043238)[(short)iVar1]) {
+  switch((&switchD_0004322e_index_zero)[(short)iVar1]) {
   case 8:
     pll_scpi_setting = request->setting;
   case 0xe:
@@ -58660,7 +58660,7 @@ void get_setup_vars(pllc_request *request)
       return;
     }
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00043262)[(short)iVar1]) {
+    switch((&switchD_00043258_index_zero)[(short)iVar1]) {
     case 8:
       pll_scpi_values[0] = request->values[1];
       break;
@@ -58815,7 +58815,7 @@ void sample_action_print(int32_t index,int32_t source)
   iVar1 = (char)index + -3;
   if ((int)(char)index - 1U < 2U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00043448)[(short)iVar1]) {
+    switch((&switchD_00043440_index_zero)[(short)iVar1]) {
     case 6:
       message = "sample action 1\r\n";
       break;
@@ -58925,7 +58925,7 @@ void status_preset_done(undefined4 param_1,undefined4 param_2)
   iVar2 = (char)param_1 + -1;
   if ((char)param_1 == 0 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00043562)[(short)iVar2]) {
+    switch((&switchD_0004355c_index_zero)[(short)iVar2]) {
     case 4:
       bVar4 = 2;
       do {
@@ -59127,7 +59127,7 @@ override_jmp_000439f2_case_0:
   iVar1 = (int)(char)gps.status_reported - 4;
   if ((uint)(int)(char)gps.status_reported < 4 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_000439fe)[(short)iVar1]) {
+    switch((&switchD_000439f2_index_zero)[(short)iVar1]) {
     case 10:
       goto override_jmp_000439f2_case_0;
     case 0x12:
@@ -59221,7 +59221,7 @@ override_jmp_00043ae6_case_0:
     return 0;
   }
                     /* WARNING: Switch is manually overridden */
-  switch((&WORD_00043aec)[(short)iVar3]) {
+  switch((&switchD_00043ae6_index_zero)[(short)iVar3]) {
   case 4:
     goto override_jmp_00043ae6_case_0;
   }
@@ -59481,7 +59481,7 @@ override_jmp_00043ff8_case_0:
     goto LAB_0004411a;
   }
                     /* WARNING: Switch is manually overridden */
-  switch((&WORD_00044006)[(short)iVar2]) {
+  switch((&switchD_00043ff8_index_zero)[(short)iVar2]) {
   case 0xc:
     goto override_jmp_00043ff8_case_0;
   case 0x4e:
@@ -59689,7 +59689,7 @@ char startup_pll(char param_1)
       iVar2 = (char)pll.startup_state + -3;
       if ((int)(char)pll.startup_state - 1U < 2U || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-        switch((&WORD_000444fc)[(short)iVar2]) {
+        switch((&switchD_000444f4_index_zero)[(short)iVar2]) {
         case 6:
           if (loop_steering.large_offset_blocks < 0xf) {
             fVar1 = float_absolute_on_stack(loop_steering.ti_sum);
@@ -60226,7 +60226,7 @@ char coarse(void)
   iVar2 = (int)(char)pll.coarse_state - 4;
   if ((uint)(int)(char)pll.coarse_state < 4 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00045206)[(short)iVar2]) {
+    switch((&switchD_000451fa_index_zero)[(short)iVar2]) {
     case 0xc:
       goto override_jmp_000451fa_case_0;
     case 0x1e:
@@ -60831,9 +60831,9 @@ undefined4 pll_mode(void)
   iVar1 = (char)pll.stage + -6;
   if ((int)(char)pll.stage - 1U < 5U || iVar1 == 0) {
     sVar2 = (short)iVar1;
-    iVar1 = CONCAT22((short)((uint)iVar1 >> 0x10),(&WORD_00045b94)[sVar2]);
+    iVar1 = CONCAT22((short)((uint)iVar1 >> 0x10),(&switchD_00045b86_index_zero)[sVar2]);
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00045b94)[sVar2]) {
+    switch((&switchD_00045b86_index_zero)[sVar2]) {
     case 0xc:
       uVar3 = 4;
       break;
@@ -60878,7 +60878,7 @@ undefined1 pll_powerup_suffix_index(void)
   if ((pll.stage == PLL_STAGE_POWERUP) &&
      (iVar1 = (char)pll.powerup_state + -7, (int)(char)pll.powerup_state - 1U < 6U || iVar1 == 0)) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00045bec)[(short)iVar1]) {
+    switch((&switchD_00045bdc_index_zero)[(short)iVar1]) {
     case 0xe:
       uVar2 = 1;
       break;
@@ -61064,7 +61064,7 @@ undefined1 powerup(char param_1)
   iVar1 = (int)(char)pll.powerup_state - 7;
   if ((uint)(int)(char)pll.powerup_state < 7 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00045f18)[(short)iVar1]) {
+    switch((&switchD_00045f06_index_zero)[(short)iVar1]) {
     case 0x10:
       goto override_jmp_00045f06_case_0;
     case 0x26:
@@ -61206,7 +61206,7 @@ undefined1 pll_check_reference(char param_1)
   iVar1 = (int)(char)pll.reference_check_state - 2;
   if ((uint)(int)(char)pll.reference_check_state < 2 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_000461c4)[(short)iVar1]) {
+    switch((&switchD_000461bc_index_zero)[(short)iVar1]) {
     case 6:
       goto override_jmp_000461bc_case_0;
     case 0x28:
@@ -61510,7 +61510,7 @@ void pll_stage_status(void)
   iVar1 = (char)pll.stage + -9;
   if ((int)(char)pll.stage - 1U < 8U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004655a)[(short)iVar1]) {
+    switch((&switchD_00046546_index_zero)[(short)iVar1]) {
     case 0x12:
       if (pll.led_gps_lock != 0) {
         pll.led_gps_lock = 0;
@@ -61535,7 +61535,7 @@ void pll_stage_status(void)
     return;
   }
                     /* WARNING: Switch is manually overridden */
-  switch((&WORD_000465da)[(short)iVar1]) {
+  switch((&switchD_000465c6_index_zero)[(short)iVar1]) {
   case 0x12:
     if (pll.led_holdover == 0) {
       return;
@@ -61980,7 +61980,7 @@ void gps_leap_sequence(void)
   iVar1 = (int)(char)pll.leap_check_state - 3;
   if ((uint)(int)(char)pll.leap_check_state < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00046dc0)[(short)iVar1]) {
+    switch((&switchD_00046db6_index_zero)[(short)iVar1]) {
     case 8:
       goto override_jmp_00046db6_case_0;
     case 0x14:
@@ -62065,7 +62065,7 @@ override_jmp_00046eb8_case_0:
     return;
   }
                     /* WARNING: Switch is manually overridden */
-  switch((&WORD_00046eca)[(short)iVar1]) {
+  switch((&switchD_00046eb8_index_zero)[(short)iVar1]) {
   case 0x10:
     goto override_jmp_00046eb8_case_0;
   case 0x28:
@@ -62361,7 +62361,7 @@ undefined4 gps_diag_sequence(char param_1)
   iVar1 = (int)(char)pll.gps_diag_state - 5;
   if ((uint)(int)(char)pll.gps_diag_state < 5 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00047266)[(short)iVar1]) {
+    switch((&switchD_00047258_index_zero)[(short)iVar1]) {
     case 0xc:
       goto override_jmp_00047258_case_0;
     case 0x54:
@@ -62680,7 +62680,7 @@ LAB_00047758:
       goto LAB_00047940;
     }
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00047786)[(short)iVar1]) {
+    switch((&switchD_00047772_index_zero)[(short)iVar1]) {
     case 0x12:
       if (!bVar2) {
         pll_lock = 0;
@@ -63266,7 +63266,7 @@ void gps_print_time_raim(void)
     iVar2 = (int)(char)gps.raim_assessment - 3;
     if ((uint)(int)(char)gps.raim_assessment < 3 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_0004856a)[(short)iVar2]) {
+      switch((&switchD_00048560_index_zero)[(short)iVar2]) {
       case 8:
         pcVar4 = "Inactive";
         break;
@@ -63290,7 +63290,7 @@ void gps_print_time_raim(void)
     iVar2 = (int)(char)gps.raim.solution_status - 2;
     if ((uint)(int)(char)gps.raim.solution_status < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_000485e8)[(short)iVar2]) {
+      switch((&switchD_000485e0_index_zero)[(short)iVar2]) {
       case 6:
         pcVar4 = "OK";
         break;
@@ -63314,7 +63314,7 @@ void gps_print_time_raim(void)
     iVar2 = (int)(char)gps.raim.raim_status - 2;
     if ((uint)(int)(char)gps.raim.raim_status < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_00048642)[(short)iVar2]) {
+      switch((&switchD_0004863a_index_zero)[(short)iVar2]) {
       case 6:
         pcVar4 = "Detection/Isolation";
         break;
@@ -63331,7 +63331,7 @@ void gps_print_time_raim(void)
     iVar2 = (int)(char)gps.raim.pps_mode - 3;
     if ((uint)(int)(char)gps.raim.pps_mode < 3 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_0004867a)[(short)iVar2]) {
+      switch((&switchD_00048670_index_zero)[(short)iVar2]) {
       case 8:
         pcVar5 = "Always Off";
         break;
@@ -63352,7 +63352,7 @@ void gps_print_time_raim(void)
     iVar2 = gps.raim.pulse_sync - 2;
     if (gps.raim.pulse_sync < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_000486c8)[(short)iVar2]) {
+      switch((&switchD_000486c0_index_zero)[(short)iVar2]) {
       case 6:
         pcVar4 = "UTC";
         break;
@@ -63539,7 +63539,7 @@ void gps_print_instrument_state(void)
   iVar2 = (int)(char)gps.application_type - 4;
   if ((uint)(int)(char)gps.application_type < 4 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00048a88)[(short)iVar2]) {
+    switch((&switchD_00048a7c_index_zero)[(short)iVar2]) {
     case 10:
       pcVar8 = "Air";
       break;
@@ -63651,7 +63651,7 @@ void gps_print_instrument_state(void)
   iVar2 = (int)(char)gps.satellite_select - 2;
   if ((uint)(int)(char)gps.satellite_select < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00048d00)[(short)iVar2]) {
+    switch((&switchD_00048cf8_index_zero)[(short)iVar2]) {
     case 6:
       pcVar8 = "Automatic";
       break;
@@ -63669,7 +63669,7 @@ void gps_print_instrument_state(void)
   iVar2 = (int)(char)gps.xdop_type - 4;
   if ((uint)(int)(char)gps.xdop_type < 4 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00048d4e)[(short)iVar2]) {
+    switch((&switchD_00048d42_index_zero)[(short)iVar2]) {
     case 10:
       pcVar8 = "GDOP";
       break;
@@ -63709,7 +63709,7 @@ void gps_print_instrument_state(void)
   iVar2 = (int)(char)gps.leap_second_pending - 2;
   if ((uint)(int)(char)gps.leap_second_pending < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00048e42)[(short)iVar2]) {
+    switch((&switchD_00048e3a_index_zero)[(short)iVar2]) {
     case 6:
       pcVar8 = "None pending";
       break;
@@ -64084,7 +64084,7 @@ uint8_t satellite_track_class(oncore_visible_satellite *satellite)
   }
   else {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004963e)[(short)iVar1]) {
+    switch((&switchD_00049634_index_zero)[(short)iVar1]) {
     case 8:
       uVar2 = 1;
       break;
@@ -64420,7 +64420,7 @@ void format_satellite_cell(char param_1,byte param_2,ushort param_3,char *param_
   iVar2 = (int)param_1 - 7;
   if ((uint)(int)param_1 < 7 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_00049ac2)[(short)iVar2]) {
+    switch((&switchD_00049ab0_index_zero)[(short)iVar2]) {
     case 0x10:
       goto override_jmp_00049ab0_case_0;
     case 0x18:
@@ -64837,9 +64837,9 @@ char * status_screen_position(byte param_1,int param_2,char *param_3)
   
   iVar3 = param_1 - 6;
   if (param_1 - 1 < 5U || iVar3 == 0) {
-    pcVar4 = (char *)(uint)(&WORD_0004a010)[(short)iVar3];
+    pcVar4 = (char *)(uint)(&switchD_0004a002_index_zero)[(short)iVar3];
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004a010)[(short)iVar3]) {
+    switch((&switchD_0004a002_index_zero)[(short)iVar3]) {
     case 0xc:
       pcVar4 = &cStack_1e;
       uVar9 = 4;
@@ -65022,9 +65022,9 @@ int status_screen_tfom(byte param_1,int param_2,char *param_3)
   
   iVar2 = param_1 - 4;
   if (param_1 - 1 < 3U || iVar2 == 0) {
-    iVar3 = CONCAT22((short)((uint)iVar2 >> 0x10),(&WORD_0004a2d0)[(short)iVar2]);
+    iVar3 = CONCAT22((short)((uint)iVar2 >> 0x10),(&switchD_0004a2c6_index_zero)[(short)iVar2]);
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004a2d0)[(short)iVar2]) {
+    switch((&switchD_0004a2c6_index_zero)[(short)iVar2]) {
     case 8:
       if (*(char *)(param_2 + 9) == '\0') {
         pcVar6 = "--";
@@ -65236,7 +65236,7 @@ void status_screen_mode_suffix(char param_1,status_snapshot_record *snapshot,cha
   iVar2 = (int)(char)uVar4 - 6;
   if ((uint)(int)(char)uVar4 < 6 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004a56c)[(short)iVar2]) {
+    switch((&switchD_0004a55c_index_zero)[(short)iVar2]) {
     case 0xe:
       pcVar5 = ": OCXO warm-up";
       break;
@@ -65482,7 +65482,7 @@ void status_screen(char *param_1,char param_2,undefined *param_3,undefined *para
   iVar2 = *param_1 + -9;
   if ((int)*param_1 - 1U < 8U || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004a980)[(short)iVar2]) {
+    switch((&switchD_0004a96c_index_zero)[(short)iVar2]) {
     case 0x12:
       local_7f = '\0';
       pcVar8 = "............... [ Outputs Invalid ]";
@@ -65505,7 +65505,7 @@ override_jmp_0004a96c_case_1:
   iVar2 = (int)param_1[1] - 5;
   if ((uint)(int)param_1[1] < 5 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004a9de)[(short)iVar2]) {
+    switch((&switchD_0004a9d0_index_zero)[(short)iVar2]) {
     case 0xc:
       cVar5 = '\0';
       break;
@@ -65696,7 +65696,7 @@ LAB_0004ab10:
   iVar2 = (int)param_1[0x10a] - 2;
   if ((uint)(int)param_1[0x10a] < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004ace4)[(short)iVar2]) {
+    switch((&switchD_0004acdc_index_zero)[(short)iVar2]) {
     case 6:
       goto override_jmp_0004acdc_case_0;
     case 0xe:
@@ -65871,9 +65871,9 @@ uint32_t raim_monitor(void)
   }
   else {
     sVar2 = (short)uVar1;
-    uVar1 = CONCAT22((short)(uVar1 >> 0x10),(&WORD_0004b08c)[sVar2]);
+    uVar1 = CONCAT22((short)(uVar1 >> 0x10),(&switchD_0004b082_index_zero)[sVar2]);
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004b08c)[sVar2]) {
+    switch((&switchD_0004b082_index_zero)[sVar2]) {
     case 8:
       if (gps.raim.solution_status != ONCORE_RAIM_OK) {
         gps.raim_assessment = 2;
@@ -66122,7 +66122,7 @@ void command_monitor(void)
   iVar1 = (int)(char)gps.command_monitor_state - 3;
   if ((uint)(int)(char)gps.command_monitor_state < 3 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004b4ba)[(short)iVar1]) {
+    switch((&switchD_0004b4b0_index_zero)[(short)iVar1]) {
     case 8:
       if (gps.command_monitor_enabled == 1) {
         gps.command_monitor_state = 1;
@@ -66164,7 +66164,7 @@ LAB_0004b4d2:
         iVar1 = (int)command_monitor_result - 8;
         if ((uint)(int)command_monitor_result < 8 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-          switch((&WORD_0004b58c)[(short)iVar1]) {
+          switch((&switchD_0004b578_index_zero)[(short)iVar1]) {
           case 0x12:
             gps.command_monitor_query = (void *)((int)gps.command_monitor_query + 4);
             if (*(int *)gps.command_monitor_query == 0) {
@@ -66184,7 +66184,7 @@ LAB_0004b4d2:
   iVar1 = (int)(char)gps.status_monitor_state - 2;
   if ((uint)(int)(char)gps.status_monitor_state < 2 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004b5f4)[(short)iVar1]) {
+    switch((&switchD_0004b5ec_index_zero)[(short)iVar1]) {
     case 6:
       if (!bVar2) goto LAB_0004b754;
       gps.status_last_time = 0xffffff;
@@ -66378,7 +66378,7 @@ LAB_0004b98c:
     iVar1 = (int)(char)gps_receive_state - 6;
   } while (5 < (uint)(int)(char)gps_receive_state && iVar1 != 0);
                     /* WARNING: Switch is manually overridden */
-  switch((&WORD_0004b89e)[(short)iVar1]) {
+  switch((&switchD_0004b88e_index_zero)[(short)iVar1]) {
   case 0xe:
     expected = 0x40;
     break;
@@ -66486,7 +66486,7 @@ int gps_count_response(char kind,gps_request_entry *request)
   iVar1 = (int)kind - 8;
   if ((uint)(int)kind < 8 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004ba1c)[(short)iVar1]) {
+    switch((&switchD_0004ba08_index_zero)[(short)iVar1]) {
     case 0x12:
       gps_counts.successes = gps_counts.successes + 1;
       break;
@@ -67097,7 +67097,7 @@ void gpsm_task(void)
     iVar5 = (int)(char)gps_task_state - 2;
     if ((uint)(int)(char)gps_task_state < 2 || iVar5 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_0004c060)[(short)iVar5]) {
+      switch((&switchD_0004c058_index_zero)[(short)iVar5]) {
       case 6:
         if ((bool)local_33) {
           gps_response_decode(gps_response_index,(char *)gps_response_buffer);
@@ -67125,7 +67125,7 @@ void gpsm_task(void)
           iVar5 = (int)cStack_32 - 2;
           if ((uint)(int)cStack_32 < 2 || iVar5 == 0) {
                     /* WARNING: Switch is manually overridden */
-            switch((&WORD_0004c0c8)[(short)iVar5]) {
+            switch((&switchD_0004c0c0_index_zero)[(short)iVar5]) {
             case 6:
               if (gps_commands_blocked == 0) {
                 gps_request_step.code = gStack_aa.code;
@@ -67547,7 +67547,7 @@ int gps_print_command(gps_command_log *log,char *line)
     iVar4 = (char)uVar2 + -4;
     if ((int)(char)uVar2 - 1U < 3U || iVar4 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_0004c7d4)[(short)iVar4]) {
+      switch((&switchD_0004c7ca_index_zero)[(short)iVar4]) {
       case 8:
         param2 = "SCPI1";
         break;
@@ -67744,7 +67744,7 @@ void gps_print_process_monitor(void)
   iVar2 = (int)(char)gps_task_state - 2;
   if ((uint)(int)(char)gps_task_state < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004caca)[(short)iVar2]) {
+    switch((&switchD_0004cac2_index_zero)[(short)iVar2]) {
     case 6:
       pcVar5 = "________ State: Task Idle";
       break;
@@ -67790,7 +67790,7 @@ void gps_print_process_monitor(void)
     iVar2 = *(char *)((int)gps_last_command + 8) + -4;
     if ((int)*(char *)((int)gps_last_command + 8) - 1U < 3U || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_0004cd06)[(short)iVar2]) {
+      switch((&switchD_0004ccfc_index_zero)[(short)iVar2]) {
       case 8:
         pcVar5 = "SCPI1";
         break;
@@ -67878,7 +67878,7 @@ void gps_print_process_monitor(void)
   iVar2 = (int)(char)gps.command_monitor_state - 3;
   if ((uint)(int)(char)gps.command_monitor_state < 3 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004ceb8)[(short)iVar2]) {
+    switch((&switchD_0004ceae_index_zero)[(short)iVar2]) {
     case 8:
       pcVar5 = "disabled";
       break;
@@ -67906,7 +67906,7 @@ void gps_print_process_monitor(void)
   iVar2 = (int)(char)gps.status_monitor_state - 2;
   if ((uint)(int)(char)gps.status_monitor_state < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&WORD_0004cf2a)[(short)iVar2]) {
+    switch((&switchD_0004cf22_index_zero)[(short)iVar2]) {
     case 6:
       pcVar5 = "disabled";
       break;
@@ -68198,7 +68198,7 @@ int satellite_id_valid(satellite_kind kind,uint8_t id)
     return 0;
   }
                     /* WARNING: Switch is manually overridden */
-  switch((&WORD_0004f0f2)[(short)iVar1]) {
+  switch((&switchD_0004f0ea_index_zero)[(short)iVar1]) {
   case 6:
     bVar3 = 1;
     bVar2 = 0x20;
@@ -69107,7 +69107,7 @@ gps_response_match(short param_1,undefined1 *param_2,char param_3,char param_4,s
           iVar3 = (char)oncore_messages[iVar4].match_kind + -4;
           if ((int)(char)oncore_messages[iVar4].match_kind - 2U < 2U || iVar3 == 0) {
                     /* WARNING: Switch is manually overridden */
-            switch((&WORD_0004fc90)[(short)iVar3]) {
+            switch((&switchD_0004fc88_index_zero)[(short)iVar3]) {
             case 6:
               pcVar12 = param_2 + bVar9;
               if ((*pcVar12 == -1) && (pcVar12[1] == '\0')) {
@@ -78733,7 +78733,7 @@ int atoi(char *s)
     }
     if (iVar2 - 0x2bU < 2U || iVar2 + -0x2d == 0) {
                     /* WARNING: Switch is manually overridden */
-      switch((&WORD_0005ed48)[(short)(iVar2 + -0x2d)]) {
+      switch((&switchD_0005ed40_index_zero)[(short)(iVar2 + -0x2d)]) {
       case 6:
         bVar1 = true;
       case 8:

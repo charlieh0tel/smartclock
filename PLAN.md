@@ -1150,7 +1150,8 @@ view cannot drift apart.  The library, bottom up:
      `uint32_t`: as a `float` the decompiler writes `ABS(tfom)`, a
      conversion.
      Then the exporter: a double moved as its two longs, read, stored a
-     constant or another double, is moved whole (1000 to 898).
+     constant or another double, is moved whole (1000 to 898), and a
+     sign extension built of `CONCAT`s is a cast (898 to 859).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

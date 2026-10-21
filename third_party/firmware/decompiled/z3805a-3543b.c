@@ -52201,7 +52201,7 @@ void status_happening(char param_1)
     status_event_hook(&early_status_happenings,param_1);
   }
   else if (param_1 != 0x16) {
-    status_clear_bit(status_object,CONCAT31(CONCAT21(param_1 >> 7,param_1 >> 7),param_1));
+    status_clear_bit(status_object,(int)(signed char)param_1);
     if (param_1 < '*') {
       if (param_1 == 0x1a) {
         status_clear_bit(status_object,0x29);
@@ -55433,7 +55433,7 @@ char nv_save(byte param_1)
     psVar1 = nv_numeric_params[uVar9];
     for (cVar5 = 0; cVar5 <= (char)psVar1->last_index; cVar5 = cVar5 + 1) {
       iVar3 = psVar1->nv_widths[cVar5];
-      uVar4 = abs(CONCAT31(CONCAT21(iVar3 >> 7,iVar3 >> 7),iVar3));
+      uVar4 = abs((int)(signed char)iVar3);
       cVar8 = (char)uVar4;
       puVar10 = puVar11;
       if (0x20 < (byte)(cVar8 + bVar6)) {
@@ -55460,7 +55460,7 @@ char nv_save(byte param_1)
     psVar2 = nv_setting_params[uVar9];
     for (cVar5 = 0; cVar5 <= (char)psVar2->last_index; cVar5 = cVar5 + 1) {
       iVar3 = psVar2->nv_widths[cVar5];
-      uVar4 = abs(CONCAT31(CONCAT21(iVar3 >> 7,iVar3 >> 7),iVar3));
+      uVar4 = abs((int)(signed char)iVar3);
       puVar10 = puVar11;
       if (0x20 < (byte)((char)uVar4 + bVar6)) {
         for (; bVar6 < 0x20; bVar6 = bVar6 + 1) {
@@ -55565,7 +55565,7 @@ undefined4 nv_load_slot(void)
       psVar1 = nv_numeric_params[uVar11];
       for (cVar10 = 0; cVar10 <= (char)psVar1->last_index; cVar10 = cVar10 + 1) {
         iVar3 = psVar1->nv_widths[cVar10];
-        uVar6 = abs(CONCAT31(CONCAT21(iVar3 >> 7,iVar3 >> 7),iVar3));
+        uVar6 = abs((int)(signed char)iVar3);
         bVar9 = (byte)uVar6;
         puVar12 = puVar13;
         if (0x20 < (byte)(bVar9 + cVar8)) {
@@ -55595,7 +55595,7 @@ undefined4 nv_load_slot(void)
       psVar2 = nv_setting_params[uVar11];
       for (cVar10 = 0; cVar10 <= (char)psVar2->last_index; cVar10 = cVar10 + 1) {
         iVar3 = psVar2->nv_widths[cVar10];
-        uVar6 = abs(CONCAT31(CONCAT21(iVar3 >> 7,iVar3 >> 7),iVar3));
+        uVar6 = abs((int)(signed char)iVar3);
         bVar9 = (byte)uVar6;
         puVar12 = puVar13;
         if (0x20 < (byte)(bVar9 + cVar8)) {
@@ -61647,9 +61647,8 @@ switchD_0004688c_caseD_0:
       }
       else {
         pll.gps_init_state = 0;
-        cVar2 = gps_ack_code >> 7;
         debug_sprintf(acStack_54,"gps init ack failure: %02X\r\n",
-                      CONCAT31(CONCAT21(CONCAT11(cVar2,cVar2),cVar2),gps_ack_code));
+                      (int)(signed char)gps_ack_code);
         task_dmessage(acStack_54);
       }
     }
@@ -61669,9 +61668,8 @@ switchD_0004688c_caseD_0:
       }
       else {
         pll.gps_init_state = 2;
-        cVar2 = gps_ack_code >> 7;
         debug_sprintf(acStack_54,"utc corr ack failure: %02X\r\n",
-                      CONCAT31(CONCAT21(CONCAT11(cVar2,cVar2),cVar2),gps_ack_code));
+                      (int)(signed char)gps_ack_code);
         task_dmessage(acStack_54);
       }
     }
@@ -61691,9 +61689,8 @@ switchD_0004688c_caseD_0:
       }
       else {
         pll.gps_init_state = 4;
-        cVar2 = gps_ack_code >> 7;
         debug_sprintf(acStack_54,"mask angle ack failure: %02X\r\n",
-                      CONCAT31(CONCAT21(CONCAT11(cVar2,cVar2),cVar2),gps_ack_code));
+                      (int)(signed char)gps_ack_code);
         task_dmessage(acStack_54);
       }
     }
@@ -61713,9 +61710,8 @@ switchD_0004688c_caseD_0:
       }
       else {
         pll.gps_init_state = 6;
-        cVar2 = gps_ack_code >> 7;
         debug_sprintf(acStack_54,"ant delay ack failure: %02X\r\n",
-                      CONCAT31(CONCAT21(CONCAT11(cVar2,cVar2),cVar2),gps_ack_code));
+                      (int)(signed char)gps_ack_code);
         task_dmessage(acStack_54);
       }
     }
@@ -61740,9 +61736,8 @@ switchD_0004688c_caseD_0:
       }
       else {
         pll.gps_init_state = 8;
-        cVar2 = gps_ack_code >> 7;
         debug_sprintf(acStack_54,"sat ign ack failure: %02X\r\n",
-                      CONCAT31(CONCAT21(CONCAT11(cVar2,cVar2),cVar2),gps_ack_code));
+                      (int)(signed char)gps_ack_code);
         task_dmessage(acStack_54);
       }
     }
@@ -61766,9 +61761,8 @@ switchD_0004688c_caseD_0:
       }
       else {
         pll.gps_init_state = 10;
-        cVar2 = gps_ack_code >> 7;
         debug_sprintf(acStack_54,"pos location ack failure: %02X\r\n",
-                      CONCAT31(CONCAT21(CONCAT11(cVar2,cVar2),cVar2),gps_ack_code));
+                      (int)(signed char)gps_ack_code);
         task_dmessage(acStack_54);
       }
     }
@@ -61789,9 +61783,8 @@ switchD_0004688c_caseD_0:
       }
       else {
         pll.gps_init_state = 0xc;
-        cVar2 = gps_ack_code >> 7;
         debug_sprintf(acStack_54,"disable pos hold ack failure: %02X\r\n",
-                      CONCAT31(CONCAT21(CONCAT11(cVar2,cVar2),cVar2),gps_ack_code));
+                      (int)(signed char)gps_ack_code);
         task_dmessage(acStack_54);
       }
     }
@@ -61848,9 +61841,8 @@ switchD_0004688c_caseD_0:
         return;
       }
       pll.gps_init_state = 0xf;
-      cVar2 = gps_ack_code >> 7;
       debug_sprintf(acStack_54,"set survey location ack failure: %02X\r\n",
-                    CONCAT31(CONCAT21(CONCAT11(cVar2,cVar2),cVar2),gps_ack_code));
+                    (int)(signed char)gps_ack_code);
       task_dmessage(acStack_54);
       return;
     }
@@ -61915,7 +61907,7 @@ void gps_leap_sequence(void)
         else {
           pll.leap_check_state = 1;
           debug_sprintf(acStack_54,"leap pending ack failure: %02X\r\n",
-                        CONCAT31(CONCAT21(gps_ack_code >> 7,gps_ack_code >> 7),gps_ack_code));
+                        (int)(signed char)gps_ack_code);
           task_dmessage(acStack_54);
         }
       }
@@ -67158,8 +67150,7 @@ LAB_0004c1e6:
       status_screen(&status_screen_snapshot,1,console_write,printf);
       local_c = get_uptime();
       if (status_screen_print_interval < 0) {
-        cVar7 = status_screen_print_interval >> 7;
-        iVar5 = abs(CONCAT31(CONCAT21(CONCAT11(cVar7,cVar7),cVar7),status_screen_print_interval));
+        iVar5 = abs((int)(signed char)status_screen_print_interval);
         status_screen_print_interval = (int8_t)iVar5;
       }
     }

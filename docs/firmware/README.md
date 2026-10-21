@@ -751,6 +751,11 @@ decompiler wrote it, and reported.
   (`interval_reading.value = 9.91E37`, SCPI's NaN), and stored another
   double's, that double.  Only a floating operand, a double where its
   halves are 4 bytes apart.
+- A sign extension the decompiler builds of `CONCAT`s is a cast:
+  `s = x >> 7` is x's sign, and `CONCAT31(CONCAT21(CONCAT11(s,s),s),x)`
+  is `(int)(signed char)x`, where the p-code shows every high piece is
+  x shifted right signed by its width less one; the sign's statement
+  goes where nothing else reads it.
 
 `tools/firmware/rebuild_link.py` links it into a rebuilt image: each
 piece of assembly at its own address, where it must be, and is, the

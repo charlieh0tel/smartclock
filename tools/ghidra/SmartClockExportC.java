@@ -1350,6 +1350,7 @@ public class SmartClockExportC extends GhidraScript {
 		switchLabels(tokens, edits);
 		byteConstants(tokens, edits);
 		pushedValues(lines, tokens, edits);
+		signExtensions(lines, tokens, edits);
 		aggregateCasts(tokens, edits);
 		List<Boolean> signedPieces = new ArrayList<>();
 		for (int i = 0; i < tokens.size(); i++) {
@@ -1663,6 +1664,88 @@ public class SmartClockExportC extends GhidraScript {
 		edits.replaced.put(token, "");
 		return text;
 	}
+
+	/**
+	 * Writes each sign extension the decompiler makes of CONCATs as a
+	 * cast: s = x >> 7 is x's sign, and CONCAT31(CONCAT21(CONCAT11(s,s),
+	 * s),x) is x extended to a long, (int)(signed char)x.  Where the
+	 * p-code shows every high piece is x shifted right signed by its width
+	 * less one, the CONCAT is the cast, and the sign's statement goes
+	 * where nothing else reads it.
+	 */
+	private static void signExtensions(List<ClangLine> lines, List<ClangToken> tokens, TokenEdits edits) {
+		Map<PcodeOp, ClangLine> statementLines = new IdentityHashMap<>();
+		for (ClangLine line : lines) {
+			for (ClangToken token : line.getAllTokens()) {
+				PcodeOp op = token.getPcodeOp();
+				if (token instanceof ClangVariableToken && op != null && op.getOpcode() == PcodeOp.INT_SRIGHT
+					&& token.getVarnode() == op.getOutput()) {
+					statementLines.putIfAbsent(op, line);
+				}
+			}
+		}
+		Set<PcodeOp> handled = Collections.newSetFromMap(new IdentityHashMap<>());
+		Set<PcodeOp> signs = Collections.newSetFromMap(new IdentityHashMap<>());
+		for (int i = 0; i < tokens.size(); i++) {
+			PcodeOp op = tokens.get(i).getPcodeOp();
+			if (!(tokens.get(i) instanceof ClangOpToken) || op == null || op.getOpcode() != PcodeOp.PIECE
+				|| !tokens.get(i).getText().startsWith("CONCAT") || readByPiece(op.getOutput())
+				|| edits.replaced.containsKey(tokens.get(i))) {
+				continue;
+			}
+			List<Varnode> leaves = new ArrayList<>();
+			Set<PcodeOp> ops = Collections.newSetFromMap(new IdentityHashMap<>());
+			concatLeaves(op.getOutput(), leaves, ops);
+			Varnode value = leaves.get(leaves.size() - 1);
+			String extended = SIGNED_BY_SIZE.get(op.getOutput().getSize());
+			String narrow = SIGNED_BY_SIZE.get(value.getSize());
+			List<PcodeOp> shifts = new ArrayList<>();
+			for (Varnode leaf : leaves.subList(0, leaves.size() - 1)) {
+				PcodeOp def = leaf.getDef();
+				while (def != null && def.getOpcode() == PcodeOp.COPY) {
+					def = def.getInput(0).getDef();
+				}
+				if (def != null && def.getOpcode() == PcodeOp.INT_SRIGHT && def.getInput(0) == value
+					&& def.getInput(1).isConstant() && def.getInput(1).getOffset() == 8L * value.getSize() - 1) {
+					shifts.add(def);
+				}
+			}
+			int close = closingParenthesis(tokens, i);
+			int comma = -1;
+			for (int k = i + 1, depth = 0; k < close; k++) {
+				String text = tokens.get(k).getText();
+				depth += text.equals("(") ? 1 : text.equals(")") ? -1 : 0;
+				if (depth == 1 && text.equals(",")) {
+					comma = k;
+				}
+			}
+			if (extended == null || narrow == null || leaves.size() < 2 || shifts.size() != leaves.size() - 1
+				|| close < 0 || comma < 0) {
+				continue;
+			}
+			StringBuilder text = new StringBuilder("(" + extended + ")(" + narrow + ")");
+			for (int k = comma + 1; k < close; k++) {
+				text.append(take(tokens.get(k), edits));
+			}
+			for (int k = i; k <= close; k++) {
+				take(tokens.get(k), edits);
+			}
+			edits.replaced.put(tokens.get(i), text.toString());
+			handled.addAll(ops);
+			signs.addAll(shifts);
+		}
+		for (PcodeOp sign : signs) {
+			ClangLine line = statementLines.get(sign);
+			if (line != null && singleStatement(line)
+				&& onlyReadBy(sign.getOutput(), handled, Collections.newSetFromMap(new IdentityHashMap<>()))) {
+				edits.dropped.add(line);
+			}
+		}
+	}
+
+	/** The signed C type of each size, for signExtensions. */
+	private static final Map<Integer, String> SIGNED_BY_SIZE =
+		Map.of(1, "signed char", 2, "short", 4, "int", 8, "long long");
 
 	/**
 	 * A value read back from its pieces: the value, the SUBPIECE that

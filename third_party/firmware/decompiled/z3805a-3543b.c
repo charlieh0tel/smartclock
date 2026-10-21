@@ -4443,7 +4443,7 @@ float float_absolute_on_stack(float f);
 ulonglong double_abs(undefined4 param_1,undefined4 param_2);
 uint rotate_left(uint param_1,byte param_2);
 int primary_trap_7();
-uint16_t enter_supervisor(void);
+int enter_supervisor(void) __asm__("c_enter_supervisor");
 void busy_wait(uint param_1);
 void sleep_seconds(float param_1);
 void clock_record_checksum(clock_record *record) __asm__("c_clock_record_checksum");
@@ -4573,7 +4573,7 @@ void task_stack_report(undefined1 param_1);
 void psos_debug_output(char param_1);
 void task_count_tick(void);
 int psos_call(char service, int d0, int d1, int d2, int d3, void *a0, void *a1) __asm__("c_psos_call");
-int psos_io_call(char function, int device) __asm__("c_psos_io_call");
+int psos_io_call(char function, int device, int d1, int d2, int d3, void *a0, void *a1) __asm__("c_psos_io_call");
 int psos_pack_name(void) __asm__("c_psos_pack_name");
 ulong psos_create(char *name,ulong a,ulong priority,ulong stack_a,ulong stack_b,void *e,ulong *task);
 ulong psos_start(ulong task,void *entry);
@@ -10067,10 +10067,10 @@ void stack_usage_report(undefined4 param_1)
 uint16_t enter_supervisor_mode(void)
 
 {
-  uint16_t uVar1;
+  int iVar1;
   
-  uVar1 = enter_supervisor();
-  return uVar1;
+  iVar1 = enter_supervisor();
+  return (uint16_t)iVar1;
 }
 
 
@@ -10082,10 +10082,10 @@ uint16_t enter_supervisor_mode(void)
 uint16_t set_interrupt_mask(uint16_t sr)
 
 {
-  uint16_t uVar1;
+  int iVar1;
   
-  uVar1 = enter_supervisor();
-  return uVar1;
+  iVar1 = enter_supervisor();
+  return (uint16_t)iVar1;
 }
 
 
@@ -10168,24 +10168,54 @@ __asm__(
 );
 
 /* 00013422 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* WARNING: Unknown calling convention -- yet parameter storage is locked */
-/* trap #7; returns the caller's status register in D0
+/* trap #7, then a jump back through the return address it pops; returns the caller's status
+   register in D0
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.  Out: D0 int status.
    psos.md */
 
-uint16_t enter_supervisor(void)
+/* out D0 int status */
+__naked int enter_supervisor(void)
 
 {
-  uint16_t uVar1;
+  int iVar1;
   code *UNRECOVERED_JUMPTABLE;
   
   __m68k_trap(7);
                     /* WARNING: Could not recover jumptable at 0x00013426. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-  uVar1 = (*UNRECOVERED_JUMPTABLE)();
-  return uVar1;
+  iVar1 = (*UNRECOVERED_JUMPTABLE)();
+  return iVar1;
 }
 
+
+#endif
+__asm__(
+	"	.globl enter_supervisor\n"
+	"	.type enter_supervisor, @function\n"
+	"	.pushsection .text.enter_supervisor.13422,\"ax\",@progbits\n"
+	"enter_supervisor:\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	trap #0x7\n"
+	"	jmp (%a0)\n"
+	"	.size enter_supervisor, .-enter_supervisor\n"
+	"	.popsection\n"
+);
+/* enter_supervisor from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_enter_supervisor,\"ax\",@progbits\n"
+	"	.globl c_enter_supervisor\n"
+	"	.type c_enter_supervisor, @function\n"
+	"c_enter_supervisor:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	jsr enter_supervisor\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_enter_supervisor, .-c_enter_supervisor\n"
+	"	.popsection\n"
+);
 
 /* 00013428 */
 
@@ -19786,11 +19816,12 @@ __asm__(
 
 /* trap #4, the function in D7, the device in D0's high byte
    Not a C function (register; read): its arguments and results in registers.  In: D7 char function,
-   D0 int device.  Out: D7 int error.  Returns: ccr.
+   D0 int device, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1.  Out: D7 int error.
+   Returns: ccr.
    psos.md */
 
 /* out D7 int error; returns ccr */
-__regcall int psos_io_call(char function /* d7 */,int device /* d0 */)
+__regcall int psos_io_call(char function /* d7 */,int device /* d0 */,int d1 /* d1 */,int d2 /* d2 */,int d3 /* d3 */,void *a0 /* a0 */,void *a1 /* a1 */)
 
 {
   undefined3 unaff_0000001c;
@@ -19836,6 +19867,11 @@ __asm__(
 	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
 	"	move.l (48,%sp),%d7\n"
 	"	move.l (52,%sp),%d0\n"
+	"	move.l (56,%sp),%d1\n"
+	"	move.l (60,%sp),%d2\n"
+	"	move.l (64,%sp),%d3\n"
+	"	move.l (68,%sp),%a0\n"
+	"	move.l (72,%sp),%a1\n"
 	"	jsr psos_io_call\n"
 	"	move.w %ccr,__ghidra_ccr\n"
 	"	move.l %d7,%d0\n"
@@ -20607,9 +20643,14 @@ ulong psos_service_31(ulong a,ulong b,ulong c)
 ulong psos_io_init(ulong device)
 
 {
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
   ulong uVar1;
+  void *in_A0;
+  void *in_A1;
   
-  uVar1 = psos_io_call('\0',device);
+  uVar1 = psos_io_call('\0',device,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
   return uVar1;
 }
 
@@ -20622,9 +20663,13 @@ ulong psos_io_init(ulong device)
 ulong psos_io_open(ulong device,ulong a)
 
 {
+  int unaff_D2;
+  int unaff_D3;
   ulong uVar1;
+  void *in_A0;
+  void *in_A1;
   
-  uVar1 = psos_io_call('\x01',device);
+  uVar1 = psos_io_call('\x01',device,a,unaff_D2,unaff_D3,in_A0,in_A1);
   return uVar1;
 }
 
@@ -20637,9 +20682,14 @@ ulong psos_io_open(ulong device,ulong a)
 ulong psos_io_close(ulong device)
 
 {
+  int in_D1;
+  int unaff_D2;
+  int unaff_D3;
   ulong uVar1;
+  void *in_A0;
+  void *in_A1;
   
-  uVar1 = psos_io_call('\x02',device);
+  uVar1 = psos_io_call('\x02',device,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
   return uVar1;
 }
 
@@ -20652,15 +20702,17 @@ ulong psos_io_close(ulong device)
 ulong psos_io_read(ulong device,void *buffer,ulong *length)
 
 {
+  ulong d2;
+  int in_D1;
+  int unaff_D3;
   ulong uVar1;
-  ulong uVar2;
   
-  uVar1 = *length;
-  uVar2 = psos_io_call('\x03',device);
-  if ((uVar2 == 0) && (length != (ulong *)0x0)) {
-    *length = uVar1;
+  d2 = *length;
+  uVar1 = psos_io_call('\x03',device,in_D1,d2,unaff_D3,length,buffer);
+  if ((uVar1 == 0) && (length != (ulong *)0x0)) {
+    *length = d2;
   }
-  return uVar2;
+  return uVar1;
 }
 
 
@@ -20672,15 +20724,17 @@ ulong psos_io_read(ulong device,void *buffer,ulong *length)
 ulong psos_io_write(ulong device,void *buffer,ulong *length)
 
 {
+  ulong d2;
+  int in_D1;
+  int unaff_D3;
   ulong uVar1;
-  ulong uVar2;
   
-  uVar1 = *length;
-  uVar2 = psos_io_call('\x04',device);
-  if ((uVar2 == 0) && (length != (ulong *)0x0)) {
-    *length = uVar1;
+  d2 = *length;
+  uVar1 = psos_io_call('\x04',device,in_D1,d2,unaff_D3,buffer,length);
+  if ((uVar1 == 0) && (length != (ulong *)0x0)) {
+    *length = d2;
   }
-  return uVar2;
+  return uVar1;
 }
 
 
@@ -20692,9 +20746,12 @@ ulong psos_io_write(ulong device,void *buffer,ulong *length)
 ulong psos_io_control(ulong device,ulong a,ulong b)
 
 {
+  int in_D1;
   ulong uVar1;
+  void *in_A0;
+  void *in_A1;
   
-  uVar1 = psos_io_call('\x05',device);
+  uVar1 = psos_io_call('\x05',device,in_D1,a,b,in_A0,in_A1);
   return uVar1;
 }
 
@@ -36818,11 +36875,13 @@ void qspi_send(byte param_1,undefined2 *param_2,ushort param_3)
 {
   uint16_t uVar1;
   uint8_t uVar2;
-  char cVar3;
+  int iVar3;
+  char cVar4;
   uint16_t local_8;
-  uint16_t local_6;
+  undefined2 local_6;
   
-  local_6 = enter_supervisor();
+  iVar3 = enter_supervisor();
+  local_6 = (undefined2)iVar3;
   qspi.field_00 = 1;
   do {
     uVar1 = qsm.spcr1;
@@ -36831,8 +36890,8 @@ void qspi_send(byte param_1,undefined2 *param_2,ushort param_3)
   if ((uVar2 & 0x80) != 0) {
     qspi_isr();
   }
-  cVar3 = qspi_queue_setup(param_1,param_2,param_3,'\0',&local_8);
-  if (cVar3 == '\0') {
+  cVar4 = qspi_queue_setup(param_1,param_2,param_3,'\0',&local_8);
+  if (cVar4 == '\0') {
     qsm.spcr1 = local_8;
     do {
       uVar2 = qsm.spsr;
@@ -36854,16 +36913,18 @@ void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3)
 {
   uint16_t uVar1;
   uint8_t uVar2;
-  char cVar3;
-  uint16_t *puVar4;
+  int iVar3;
+  char cVar4;
   uint16_t *puVar5;
   uint16_t *puVar6;
+  uint16_t *puVar7;
   uint16_t local_8;
-  uint16_t local_6;
+  undefined2 local_6;
   
-  puVar4 = qsm.rr;
-  puVar5 = (uint16_t *)param_2[1];
-  local_6 = enter_supervisor();
+  puVar5 = qsm.rr;
+  puVar6 = (uint16_t *)param_2[1];
+  iVar3 = enter_supervisor();
+  local_6 = (undefined2)iVar3;
   qspi.field_00 = 1;
   do {
     uVar1 = qsm.spcr1;
@@ -36872,21 +36933,21 @@ void qspi_transfer(byte param_1,undefined4 *param_2,ushort param_3)
   if ((uVar2 & 0x80) != 0) {
     qspi_isr();
   }
-  cVar3 = qspi_queue_setup(param_1,(undefined2 *)*param_2,param_3,'\x01',&local_8);
-  if (cVar3 == '\0') {
+  cVar4 = qspi_queue_setup(param_1,(undefined2 *)*param_2,param_3,'\x01',&local_8);
+  if (cVar4 == '\0') {
     qsm.spcr1 = local_8;
     do {
       uVar2 = qsm.spsr;
     } while ((uVar2 & 0x80) == 0);
     if (param_1 == 0xc) {
-      puVar6 = puVar5 + 1;
+      puVar7 = puVar6 + 1;
     }
     else {
-      puVar6 = puVar5 + param_3;
+      puVar7 = puVar6 + param_3;
     }
-    for (; puVar5 < puVar6; puVar5 = puVar5 + 1) {
-      *puVar5 = *puVar4;
-      puVar4 = puVar4 + 1;
+    for (; puVar6 < puVar7; puVar6 = puVar6 + 1) {
+      *puVar6 = *puVar5;
+      puVar5 = puVar5 + 1;
     }
     uVar2 = qsm.spsr;
     qsm.spsr = 0;
@@ -52480,33 +52541,35 @@ void eeprom_init(void)
 char eeprom_lock(void)
 
 {
-  ulong uVar1;
+  uint uVar1;
   ulong uVar2;
-  char cVar3;
+  ulong uVar3;
+  char cVar4;
   char acStack_56 [80];
-  uint16_t local_6;
+  undefined2 local_6;
   
-  local_6 = enter_supervisor();
+  uVar1 = enter_supervisor();
+  local_6 = (undefined2)uVar1;
   if (kernel_running != 0) {
-    if ((local_6 & 0x700) == 0) {
-      uVar1 = psos_my_pid();
-      if (uVar1 == eepx_token.owner) {
+    if ((uVar1 & 0x700) == 0) {
+      uVar2 = psos_my_pid();
+      if (uVar2 == eepx_token.owner) {
         eepx_token.depth = eepx_token.depth + 1;
         return '\0';
       }
-      uVar2 = psos_request_x(eepx_exchange,&eepx_token,0,0x2800);
-      cVar3 = (char)uVar2;
-      if (cVar3 == '\0') {
-        eepx_token.owner = uVar1;
+      uVar3 = psos_request_x(eepx_exchange,&eepx_token,0,0x2800);
+      cVar4 = (char)uVar3;
+      if (cVar4 == '\0') {
+        eepx_token.owner = uVar2;
         eepx_token.depth = 0;
         return '\0';
       }
-      if (cVar3 == -0x7f) {
+      if (cVar4 == -0x7f) {
         return -0x7f;
       }
-      sprintf(acStack_56,"Unable to acquire eepx token: %X",uVar2 & 0xff);
+      sprintf(acStack_56,"Unable to acquire eepx token: %X",uVar3 & 0xff);
       fatal_error(acStack_56);
-      return cVar3;
+      return cVar4;
     }
     if (eeprom_writing != 0) {
       return '\x01';
@@ -52524,22 +52587,24 @@ char eeprom_lock(void)
 void eeprom_unlock(void)
 
 {
-  ulong uVar1;
+  uint uVar1;
+  ulong uVar2;
   char acStack_56 [80];
-  uint16_t local_6;
+  undefined2 local_6;
   
-  local_6 = enter_supervisor();
-  if ((kernel_running != 0) && ((local_6 & 0x700) == 0)) {
-    uVar1 = psos_my_pid();
-    if (uVar1 == eepx_token.owner) {
+  uVar1 = enter_supervisor();
+  local_6 = (undefined2)uVar1;
+  if ((kernel_running != 0) && ((uVar1 & 0x700) == 0)) {
+    uVar2 = psos_my_pid();
+    if (uVar2 == eepx_token.owner) {
       if (eepx_token.depth == 0) {
         eepx_token.owner = 0;
         if (eepx_token.exchange != eepx_exchange) {
           fatal_error("eepx semaphore has been corrupted");
         }
-        uVar1 = psos_send_x(eepx_exchange,&eepx_token);
-        if ((char)uVar1 != '\0') {
-          sprintf(acStack_56,"Unable to release eepx token: %X",uVar1 & 0xff);
+        uVar2 = psos_send_x(eepx_exchange,&eepx_token);
+        if ((char)uVar2 != '\0') {
+          sprintf(acStack_56,"Unable to release eepx token: %X",uVar2 & 0xff);
           fatal_error(acStack_56);
         }
       }

@@ -133,7 +133,7 @@ check-types:
 # routine.  Needs an m68k
 # gcc and binutils, and uv; not part of ci.
 DECOMPILED_CFLAGS = -std=gnu17 -mcpu=cpu32 -O1 -fno-toplevel-reorder -fno-builtin -ffunction-sections \
-	-fno-tree-loop-distribute-patterns -w \
+	-fno-tree-loop-distribute-patterns -fno-omit-frame-pointer -w \
 	-Wno-error=int-conversion -Wno-error=incompatible-pointer-types
 check-decompiled:
 	$(M68K_CC) $(DECOMPILED_CFLAGS) -c -o target/decompiled.o third_party/firmware/decompiled/z3805a-3543b.c

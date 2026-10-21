@@ -647,8 +647,10 @@ same text, not empty, in ROM or among gcc's constants: gcc keeps its
 own copy of a literal the image keeps in ROM.  And a call starts with
 A6 at a caller's frame on the harness's stack, its saved frame pointer
 0 and its return address the harness's, since the image's code may
-walk its caller's frame (`float_raise` reads the return address there)
-where gcc's keeps no frame pointer.  The EEPROM, chip select 9's 8 KB at
+walk its caller's frame (`float_raise` reads the return address there).
+gcc keeps a frame pointer too (`-fno-omit-frame-pointer`), as the
+original compiler did: `psos_pack_name` reads its caller's first
+argument through the caller's A6.  The EEPROM, chip select 9's 8 KB at
 `0x400000`, is erased for each call and compared after it as RAM is;
 gcc's code is above every chip select so that a read of the EEPROM
 finds no code, and its data, a bridge's `__ghidra_ccr`, apart from its

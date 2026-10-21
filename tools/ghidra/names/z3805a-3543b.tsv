@@ -95,7 +95,7 @@
 0x29fce	function	scpi_task_create	console.md	creator of the SCPI task
 #
 # the rest of the float library, docs/firmware/libc.md
-0x5e93c	function	float_raise	libc.md	raises a floating-point exception	unsigned long long float_raise(unsigned int code, ...)	convention=c; confidence=read; copies=D0:D1
+0x5e93c	function	float_raise	libc.md	raises a floating-point exception	unsigned long long float_raise(unsigned int code, ...)	convention=c; confidence=read; copies=D0:D1; preserves=D3, D4, D5, D6, D7, A0, A1
 0x1038b0	label	float_status	libc.md	floating-point status word	uint16_t
 0x1038b2	label	float_control	libc.md	floating-point control word	uint16_t
 #
@@ -145,9 +145,9 @@
 # the real-time kernel, docs/firmware/psos.md; the console's words name
 # the services
 0x16f1e	function	psos_call	psos.md	trap #3, the service in D7, the error back in D7		convention=register; confidence=read; in=D7 char service, D0 int d0, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1; out=D7 int error; returns=ccr; family=psos-binding
-0x16f36	function	psos_io_call	psos.md	trap #4, the function in D7, the device in D0's high byte		convention=register; confidence=read; in=D7 char function, D0 int device; out=D7 int error; returns=ccr; family=psos-binding
+0x16f36	function	psos_io_call	psos.md	trap #4, the function in D7, the device in D0's high byte		convention=register; confidence=read; in=D7 char function, D0 int device, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1; out=D7 int error; returns=ccr; family=psos-binding
 0x16f50	function	psos_pack_name	psos.md	packs a 4-character name into D0		convention=other; confidence=read; out=D0 int name; family=psos-binding
-0x13422	function	enter_supervisor	psos.md	trap #7; returns the caller's status register in D0	uint16_t enter_supervisor(void)
+0x13422	function	enter_supervisor	psos.md	trap #7, then a jump back through the return address it pops; returns the caller's status register in D0		convention=other; confidence=read; out=D0 int status; family=supervisor
 0x13378	function	set_interrupt_mask	psos.md	sets SR's interrupt mask from the argument, returns the old SR	uint16_t set_interrupt_mask(uint16_t sr)
 0x19ed0	function	forth_psos_call	psos.md	the console words' service call, reporting an error
 0x16f74	function	psos_create	psos.md	service 1, spawn's create	unsigned long psos_create(char *name, unsigned long a, unsigned long priority, unsigned long stack_a, unsigned long stack_b, void *e, unsigned long *task)

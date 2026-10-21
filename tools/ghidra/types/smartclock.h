@@ -199,6 +199,41 @@ typedef int printf_function(char *format, ...);
 /* qsort's comparator. */
 typedef int qsort_compare_function(void *a, void *b);
 
+/* The self-tests' results, at 0x100c24: each test's word nonzero if it
+ * failed, and what selftest_run reports for test n, 0 to 13.  The
+ * start-up clear begins at 0x100c3c, so the reset code's results
+ * before it (CPU, RAM, UART) and the rest up to the interpolator's
+ * survive a warm restart. */
+typedef struct selftest_results {
+	int16_t cpu;                     /* +0x00: the reset code's CPU test; lights OP4 */
+	uint16_t ram;                    /* +0x02: the RAM test's, bit 0 a pattern, bit 1 an address line; lights OP5 */
+	uint16_t ram_data_bits;          /* +0x04: the bits that failed a pattern, both halves of a long ORed */
+	uint32_t ram_address_lines;      /* +0x06: the address lines that alias */
+	int16_t uart;                    /* +0x0a: duart_early_init's IVR and loopback checks; lights OP6 */
+	uint8_t lamp_mask;               /* +0x0c: the DUART output bits the failures reset, which duart_init writes back */
+	uint8_t field_0d;
+	uint16_t summary;                /* +0x0e: selftest_summary's failure flags as bits */
+	int16_t eeprom;                  /* +0x10 */
+	int16_t fpga;                    /* +0x12: the FPGA's counters, counter_selftest */
+	int16_t gps;                     /* +0x14: the receiver's @@Ca result, its bits as the VP reference gives them */
+	int16_t interpolator;            /* +0x16 */
+	uint8_t interpolator_calibrated; /* +0x18: 1 once a calibration succeeded */
+	uint8_t interpolator_tries;      /* +0x19: the calibrations it took, up to 20 */
+	uint16_t interpolator_readings[2]; /* +0x1a: both ends' readings, interpolator_sample_test's */
+	uint8_t field_1e;
+	uint8_t running;                 /* +0x1f: set while selftest_execute runs a test */
+	int16_t power;                   /* +0x20: the 5 V, +15 V and -15 V supplies */
+	int16_t internal_reference;      /* +0x22: the internal 1PPS's count */
+	int16_t qspi;                    /* +0x24: the QSPI's devices: ADC, DACs, FPGA, EFC */
+	uint8_t field_26[14];
+	uint8_t passed;                  /* +0x34: 1 unless a test selftest_print_failure ran failed */
+	uint8_t field_35;
+	uint32_t result;                 /* +0x36: selftest_run's test's result, what *TST? and :DIAGnostic:TEST? report */
+	uint32_t details[2];             /* +0x3a: the RAM test's bits and lines, or the interpolator's tries and outcome or readings */
+	uint8_t test;                    /* +0x42: the test selftest_run was asked for */
+	uint8_t in_run;                  /* +0x43: set during selftest_run; nothing reads it */
+} selftest_results;
+
 /* A GPS request waiting in gpsm_task's ring: a copy of the 26-byte
  * message it took from gpsx_exchange.  Only the fields the ring's
  * routines read are named. */

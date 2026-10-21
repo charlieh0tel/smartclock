@@ -25,6 +25,18 @@ CHECK_FIELD(scpi_numeric_param, steps, 0x28);
 CHECK_FIELD(scpi_numeric_param, gps_request, 0x20);
 CHECK_FIELD(scpi_numeric_param, group_cell, 0x22);
 
+CHECK_SIZE(selftest_results, 0x100c68 - 0x100c24);
+CHECK_FIELD(selftest_results, uart, 0x100c2e - 0x100c24);
+CHECK_FIELD(selftest_results, lamp_mask, 0x100c30 - 0x100c24);
+CHECK_FIELD(selftest_results, gps, 0x100c38 - 0x100c24);
+CHECK_FIELD(selftest_results, interpolator_calibrated, 0x100c3c - 0x100c24);
+CHECK_FIELD(selftest_results, running, 0x100c43 - 0x100c24);
+CHECK_FIELD(selftest_results, qspi, 0x100c48 - 0x100c24);
+CHECK_FIELD(selftest_results, passed, 0x100c58 - 0x100c24);
+CHECK_FIELD(selftest_results, result, 0x100c5a - 0x100c24);
+CHECK_FIELD(selftest_results, details, 0x100c5e - 0x100c24);
+CHECK_FIELD(selftest_results, test, 0x100c66 - 0x100c24);
+
 CHECK_SIZE(gps_request_entry, 26);
 CHECK_FIELD(gps_request_entry, id, 0x08);
 CHECK_FIELD(gps_request_entry, code, 0x0a);

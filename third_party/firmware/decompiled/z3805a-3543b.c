@@ -1024,6 +1024,38 @@ struct scpi_setting_param {
     void *group_cell;
 };
 
+typedef struct selftest_results selftest_results, *Pselftest_results;
+
+struct selftest_results {
+    int16_t cpu;
+    uint16_t ram;
+    uint16_t ram_data_bits;
+    uint32_t ram_address_lines;
+    int16_t uart;
+    uint8_t lamp_mask;
+    uint8_t field_0d;
+    uint16_t summary;
+    int16_t eeprom;
+    int16_t fpga;
+    int16_t gps;
+    int16_t interpolator;
+    uint8_t interpolator_calibrated;
+    uint8_t interpolator_tries;
+    uint16_t interpolator_readings[2];
+    uint8_t field_1e;
+    uint8_t running;
+    int16_t power;
+    int16_t internal_reference;
+    int16_t qspi;
+    uint8_t field_26[14];
+    uint8_t passed;
+    uint8_t field_35;
+    uint32_t result;
+    uint32_t details[2];
+    uint8_t test;
+    uint8_t in_run;
+};
+
 typedef struct sprintf_output sprintf_output, *Psprintf_output;
 
 struct sprintf_output {
@@ -1121,6 +1153,7 @@ _Static_assert(sizeof(satellite_list) == 1, "satellite_list");
 _Static_assert(sizeof(scpi_numeric_param) == 44, "scpi_numeric_param");
 _Static_assert(sizeof(scpi_param_type) == 1, "scpi_param_type");
 _Static_assert(sizeof(scpi_setting_param) == 28, "scpi_setting_param");
+_Static_assert(sizeof(selftest_results) == 68, "selftest_results");
 _Static_assert(sizeof(sprintf_output) == 8, "sprintf_output");
 _Static_assert(sizeof(status_condition) == 6, "status_condition");
 _Static_assert(sizeof(status_model) == 46, "status_model");
@@ -1198,8 +1231,7 @@ extern int16_t gps_utc_offset; /* 001009e8 */
 extern uint8_t gps_utc_offset_valid; /* 001009ea */
 extern void * console_halt_hook_cell; /* 001009fe */
 extern uint32_t pps_exchange; /* 00100bc4 */
-extern uint8_t selftest_abort; /* 00100c42 */
-extern uint8_t selftest_running; /* 00100c43 */
+extern selftest_results selftest; /* 00100c24 */
 extern gps_state gps; /* 00100c6a */
 extern char gps_last_program_message[80]; /* 00101216 */
 extern uint8_t gps_response_buffer[20]; /* 00101266 */
@@ -1594,30 +1626,6 @@ extern undefined DAT_00100bd5; /* 00100bd5 */
 extern char DAT_00100bf4; /* 00100bf4 */
 extern undefined DAT_00100bf5; /* 00100bf5 */
 extern undefined DAT_00100c21; /* 00100c21 */
-extern undefined DAT_00100c24; /* 00100c24 */
-extern undefined DAT_00100c26; /* 00100c26 */
-extern undefined DAT_00100c28; /* 00100c28 */
-extern undefined DAT_00100c2a; /* 00100c2a */
-extern undefined DAT_00100c2e; /* 00100c2e */
-extern byte DAT_00100c30; /* 00100c30 */
-extern undefined DAT_00100c32; /* 00100c32 */
-extern undefined DAT_00100c34; /* 00100c34 */
-extern undefined DAT_00100c36; /* 00100c36 */
-extern undefined DAT_00100c38; /* 00100c38 */
-extern undefined DAT_00100c3a; /* 00100c3a */
-extern byte DAT_00100c3c; /* 00100c3c */
-extern byte DAT_00100c3d; /* 00100c3d */
-extern undefined DAT_00100c3e; /* 00100c3e */
-extern undefined DAT_00100c40; /* 00100c40 */
-extern undefined DAT_00100c44; /* 00100c44 */
-extern undefined DAT_00100c46; /* 00100c46 */
-extern short DAT_00100c48; /* 00100c48 */
-extern char DAT_00100c58; /* 00100c58 */
-extern uint DAT_00100c5a; /* 00100c5a */
-extern uint DAT_00100c5e; /* 00100c5e */
-extern uint DAT_00100c62; /* 00100c62 */
-extern byte DAT_00100c66; /* 00100c66 */
-extern undefined1 DAT_00100c67; /* 00100c67 */
 extern bool DAT_001011c4; /* 001011c4 */
 extern char DAT_001011c5; /* 001011c5 */
 extern undefined DAT_001011c6; /* 001011c6 */
@@ -1824,7 +1832,7 @@ extern byte DAT_00102ed7; /* 00102ed7 */
 extern byte DAT_00102ed8; /* 00102ed8 */
 extern byte DAT_00102ed9; /* 00102ed9 */
 extern undefined1 DAT_00102eda; /* 00102eda */
-extern byte DAT_00102edb; /* 00102edb */
+extern uint8_t DAT_00102edb; /* 00102edb */
 extern undefined1 DAT_00102edc; /* 00102edc */
 extern char DAT_00102edd; /* 00102edd */
 extern char DAT_00102ede; /* 00102ede */
@@ -2449,30 +2457,6 @@ __asm__(".set DAT_00100bd5, 0x00100bd5");
 __asm__(".set DAT_00100bf4, 0x00100bf4");
 __asm__(".set DAT_00100bf5, 0x00100bf5");
 __asm__(".set DAT_00100c21, 0x00100c21");
-__asm__(".set DAT_00100c24, 0x00100c24");
-__asm__(".set DAT_00100c26, 0x00100c26");
-__asm__(".set DAT_00100c28, 0x00100c28");
-__asm__(".set DAT_00100c2a, 0x00100c2a");
-__asm__(".set DAT_00100c2e, 0x00100c2e");
-__asm__(".set DAT_00100c30, 0x00100c30");
-__asm__(".set DAT_00100c32, 0x00100c32");
-__asm__(".set DAT_00100c34, 0x00100c34");
-__asm__(".set DAT_00100c36, 0x00100c36");
-__asm__(".set DAT_00100c38, 0x00100c38");
-__asm__(".set DAT_00100c3a, 0x00100c3a");
-__asm__(".set DAT_00100c3c, 0x00100c3c");
-__asm__(".set DAT_00100c3d, 0x00100c3d");
-__asm__(".set DAT_00100c3e, 0x00100c3e");
-__asm__(".set DAT_00100c40, 0x00100c40");
-__asm__(".set DAT_00100c44, 0x00100c44");
-__asm__(".set DAT_00100c46, 0x00100c46");
-__asm__(".set DAT_00100c48, 0x00100c48");
-__asm__(".set DAT_00100c58, 0x00100c58");
-__asm__(".set DAT_00100c5a, 0x00100c5a");
-__asm__(".set DAT_00100c5e, 0x00100c5e");
-__asm__(".set DAT_00100c62, 0x00100c62");
-__asm__(".set DAT_00100c66, 0x00100c66");
-__asm__(".set DAT_00100c67, 0x00100c67");
 __asm__(".set DAT_001011c4, 0x001011c4");
 __asm__(".set DAT_001011c5, 0x001011c5");
 __asm__(".set DAT_001011c6, 0x001011c6");
@@ -3338,8 +3322,7 @@ __asm__(".set scpi_value_SAMPle_FARR, 0x00101e1c");
 __asm__(".set scpi_value_SAMPle_FLOat, 0x00101e18");
 __asm__(".set scpi_value_SAMPle_IARR, 0x00101de8");
 __asm__(".set scpi_value_SAMPle_INTeger, 0x00101de4");
-__asm__(".set selftest_abort, 0x00100c42");
-__asm__(".set selftest_running, 0x00100c43");
+__asm__(".set selftest, 0x00100c24");
 __asm__(".set spoo_exchange, 0x001032f8");
 __asm__(".set status_conditions, 0x0002f838");
 __asm__(".set status_object, 0x00102eb8");
@@ -4015,34 +3998,6 @@ extern short _DAT_00100bd0;
 __asm__(".set _DAT_00100bd0, 0x00100bd0");
 extern short _DAT_00100bd2;
 __asm__(".set _DAT_00100bd2, 0x00100bd2");
-extern short _DAT_00100c24;
-__asm__(".set _DAT_00100c24, 0x00100c24");
-extern ushort _DAT_00100c26;
-__asm__(".set _DAT_00100c26, 0x00100c26");
-extern ushort _DAT_00100c28;
-__asm__(".set _DAT_00100c28, 0x00100c28");
-extern uint _DAT_00100c2a;
-__asm__(".set _DAT_00100c2a, 0x00100c2a");
-extern short _DAT_00100c2e;
-__asm__(".set _DAT_00100c2e, 0x00100c2e");
-extern ushort _DAT_00100c32;
-__asm__(".set _DAT_00100c32, 0x00100c32");
-extern short _DAT_00100c34;
-__asm__(".set _DAT_00100c34, 0x00100c34");
-extern short _DAT_00100c36;
-__asm__(".set _DAT_00100c36, 0x00100c36");
-extern short _DAT_00100c38;
-__asm__(".set _DAT_00100c38, 0x00100c38");
-extern short _DAT_00100c3a;
-__asm__(".set _DAT_00100c3a, 0x00100c3a");
-extern ushort _DAT_00100c3e;
-__asm__(".set _DAT_00100c3e, 0x00100c3e");
-extern ushort _DAT_00100c40;
-__asm__(".set _DAT_00100c40, 0x00100c40");
-extern short _DAT_00100c44;
-__asm__(".set _DAT_00100c44, 0x00100c44");
-extern short _DAT_00100c46;
-__asm__(".set _DAT_00100c46, 0x00100c46");
 extern undefined *_DAT_0010155c;
 __asm__(".set _DAT_0010155c, 0x0010155c");
 extern undefined *_DAT_0010199a;
@@ -4816,9 +4771,9 @@ void selftest_run(undefined4 param_1);
 void ram_pattern_test_locked(void);
 void selftest_nv_slot(void);
 void selftest_qspi_run(void);
-short selftest_qspi_with_lamp(void);
-short selftest_interpolator_with_lamp(void);
-short selftest_internal_reference_with_lamp(void);
+int16_t selftest_qspi_with_lamp(void);
+int16_t selftest_interpolator_with_lamp(void);
+int16_t selftest_internal_reference_with_lamp(void);
 undefined4 lamp_test_command(void);
 int forth_abort();
 int forth_interpret();
@@ -9538,7 +9493,7 @@ void system_init(void)
   debug_enabled = nv_settings.debug_output;
   DAT_001037de = nv_settings.debug_output;
   lifetime_record_read();
-  clock_init(_DAT_00100c34);
+  clock_init(selftest.eeprom);
   cVar8 = '\0';
   do {
     (&dmes_gpsm)[cVar8] = 1;
@@ -9903,7 +9858,7 @@ void root_task(void)
   eeprom_init();
   status_init();
   log_init();
-  if (_DAT_00100c34 != 0) {
+  if (selftest.eeprom != 0) {
     log_erase_locked(4);
     log_clear();
   }
@@ -11930,7 +11885,6 @@ __asm__(
 /* WARNING: This function may have set the stack pointer */
 /* WARNING: Removing unreachable block (ram,0x00014798) */
 /* WARNING: Removing unreachable block (ram,0x000147a0) */
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* Not a C function: an exception handler, entered by the processor through the primary table's
    vector 1 (reset), not called. */
 
@@ -12006,12 +11960,12 @@ __exception void primary_reset(void)
     local_4 = 0x55aa5555;
     bcdAdjust(0xaa);
   }
-  _DAT_00100c24 = 1;
+  selftest.cpu = 1;
   DUART_STOP_ROPBC = 0x10;
-  DAT_00100c30 = 0x10;
-  _DAT_00100c26 = 0;
-  _DAT_00100c28 = 0;
-  _DAT_00100c2a = 0;
+  selftest.lamp_mask = 0x10;
+  selftest.ram = 0;
+  selftest.ram_data_bits = 0;
+  selftest.ram_address_lines = 0;
   puVar8 = &DAT_00100000;
   puVar11 = (undefined2 *)register0x0000003c;
   while( true ) {
@@ -12091,7 +12045,7 @@ __exception void primary_reset(void)
           DAT_00100000 = -0x5556;
           *puVar8 = 0x5555;
           if (DAT_00100000 == 0x5555) {
-            _DAT_00100c26 = _DAT_00100c26 | 2;
+            selftest.ram = selftest.ram | 2;
             uVar3 = uVar4 | uVar3;
           }
           DAT_00100000 = uVar2;
@@ -12100,25 +12054,25 @@ __exception void primary_reset(void)
           uVar4 = uVar4 << 1;
           sVar5 = sVar5 + -1;
         } while (sVar5 != -1);
-        _DAT_00100c2a = uVar3 >> 1 | _DAT_00100c2a;
+        selftest.ram_address_lines = uVar3 >> 1 | selftest.ram_address_lines;
         goto LAB_000148e6;
       }
       puVar8 = &DAT_0010ffd0;
       puVar11 = puVar14 + 1;
     }
   }
-  _DAT_00100c28 = (ushort)(uVar3 >> 0x10) | (ushort)uVar3 | _DAT_00100c28;
-  _DAT_00100c26 = _DAT_00100c26 | 1;
+  selftest.ram_data_bits = (ushort)(uVar3 >> 0x10) | (ushort)uVar3 | selftest.ram_data_bits;
+  selftest.ram = selftest.ram | 1;
 LAB_000148e6:
-  if (_DAT_00100c26 != 0) {
+  if (selftest.ram != 0) {
     DUART_STOP_ROPBC = 0x20;
-    DAT_00100c30 = DAT_00100c30 | 0x20;
+    selftest.lamp_mask = selftest.lamp_mask | 0x20;
   }
   *(undefined4 *)(puVar14 + -1) = 0x14904;
   duart_early_init();
-  if (_DAT_00100c2e != 0) {
+  if (selftest.uart != 0) {
     DUART_STOP_ROPBC = 0x40;
-    DAT_00100c30 = DAT_00100c30 | 0x40;
+    selftest.lamp_mask = selftest.lamp_mask | 0x40;
   }
   *(undefined4 *)(puVar14 + -1) = 0x14922;
   primary_unpack_records();
@@ -12213,7 +12167,7 @@ __asm__(
 	".Lg_14636:\n"
 	"	.byte 0x55,0x55,0x55,0x55\n"
 	".Lg_1463a:\n"
-	"	clr.w (__ghidra_100c24).l\n"
+	"	clr.w (selftest).l\n"
 	"	move.b #0x55,%d0\n"
 	"	cmpi.b #0x55,%d0\n"
 	"	bne.w .Lg_147a8\n"
@@ -12334,9 +12288,9 @@ __asm__(
 	".Lg_147a6:\n"
 	"	addq.l #0x4,%sp\n"
 	".Lg_147a8:\n"
-	"	ori.w #0x1,(__ghidra_100c24).l\n"
+	"	ori.w #0x1,(selftest).l\n"
 	".Lg_147b0:\n"
-	"	tst.w (__ghidra_100c24).l\n"
+	"	tst.w (selftest).l\n"
 	"	beq.b .Lg_147c8\n"
 	"	move.b #0x10,(DUART_STOP_ROPBC).l\n"
 	"	ori.b #0x10,(__ghidra_100c30).l\n"
@@ -12510,7 +12464,6 @@ __asm__(
 /* WARNING: This function may have set the stack pointer */
 /* WARNING: Removing unreachable block (ram,0x00014798) */
 /* WARNING: Removing unreachable block (ram,0x000147a0) */
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* Not a C function: an exception handler, entered by the processor through the primary table's
    vector 44 (trap_12), not called. */
 
@@ -12581,8 +12534,8 @@ __exception void primary_trap_12(void)
     *puVar7 = 0;
     puVar7 = puVar8;
   } while (puVar8 < (undefined4 *)0x110000);
-  DAT_00100c30 = 0;
-  _DAT_00100c24 = 0;
+  selftest.lamp_mask = 0;
+  selftest.cpu = 0;
   *(undefined4 *)((int)puVar13 + -4) = 0xaaaaaaaa;
   if (((undefined2 *)((int)puVar13 + -4) != puVar13) && (*(int *)((int)puVar13 + -4) == -0x55555556)
      ) {
@@ -12604,14 +12557,14 @@ __exception void primary_trap_12(void)
       }
     }
   }
-  _DAT_00100c24 = _DAT_00100c24 | 1;
-  if (_DAT_00100c24 != 0) {
+  selftest.cpu = selftest.cpu | 1;
+  if (selftest.cpu != 0) {
     DUART_STOP_ROPBC = 0x10;
-    DAT_00100c30 = DAT_00100c30 | 0x10;
+    selftest.lamp_mask = selftest.lamp_mask | 0x10;
   }
-  _DAT_00100c26 = 0;
-  _DAT_00100c28 = 0;
-  _DAT_00100c2a = 0;
+  selftest.ram = 0;
+  selftest.ram_data_bits = 0;
+  selftest.ram_address_lines = 0;
   puVar9 = &DAT_00100000;
   while( true ) {
     uVar4 = 0;
@@ -12690,7 +12643,7 @@ __exception void primary_trap_12(void)
           DAT_00100000 = -0x5556;
           *puVar13 = 0x5555;
           if (DAT_00100000 == 0x5555) {
-            _DAT_00100c26 = _DAT_00100c26 | 2;
+            selftest.ram = selftest.ram | 2;
             uVar4 = uVar5 | uVar4;
           }
           DAT_00100000 = uVar3;
@@ -12699,25 +12652,25 @@ __exception void primary_trap_12(void)
           uVar5 = uVar5 << 1;
           sVar6 = sVar6 + -1;
         } while (sVar6 != -1);
-        _DAT_00100c2a = uVar4 >> 1 | _DAT_00100c2a;
+        selftest.ram_address_lines = uVar4 >> 1 | selftest.ram_address_lines;
         goto LAB_000148e6;
       }
       puVar9 = &DAT_0010ffd0;
       puVar13 = puVar16 + 1;
     }
   }
-  _DAT_00100c28 = (ushort)(uVar4 >> 0x10) | (ushort)uVar4 | _DAT_00100c28;
-  _DAT_00100c26 = _DAT_00100c26 | 1;
+  selftest.ram_data_bits = (ushort)(uVar4 >> 0x10) | (ushort)uVar4 | selftest.ram_data_bits;
+  selftest.ram = selftest.ram | 1;
 LAB_000148e6:
-  if (_DAT_00100c26 != 0) {
+  if (selftest.ram != 0) {
     DUART_STOP_ROPBC = 0x20;
-    DAT_00100c30 = DAT_00100c30 | 0x20;
+    selftest.lamp_mask = selftest.lamp_mask | 0x20;
   }
   *(undefined4 *)(puVar16 + -1) = 0x14904;
   duart_early_init();
-  if (_DAT_00100c2e != 0) {
+  if (selftest.uart != 0) {
     DUART_STOP_ROPBC = 0x40;
-    DAT_00100c30 = DAT_00100c30 | 0x40;
+    selftest.lamp_mask = selftest.lamp_mask | 0x40;
   }
   *(undefined4 *)(puVar16 + -1) = 0x14922;
   primary_unpack_records();
@@ -20781,7 +20734,6 @@ ulong psos_io_control(ulong device,ulong a,ulong b)
 
 /* WARNING: Removing unreachable block (ram,0x0001760a) */
 /* WARNING: Removing unreachable block (ram,0x00017612) */
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* selftest_cpu's register test: 0x55555555 and 0xaaaaaaaa through every data and address register;
    1 at 0x100c24 on a failure */
 
@@ -20793,14 +20745,13 @@ undefined4 cpu_register_test(void)
   if (local_30 != &stack0xffffffd4) {
     bcdAdjust(0xaa);
   }
-  _DAT_00100c24 = 1;
+  selftest.cpu = 1;
   return 0xaaaaaaaa;
 }
 
 
 /* 00017628 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the RAM self-test's pattern pass, saving and restoring each block around 0xaaaaaaaa and its
    complement */
 
@@ -20822,9 +20773,9 @@ void ram_pattern_test(void)
   undefined1 *puVar11;
   undefined2 *puVar13;
   
-  _DAT_00100c26 = 0;
-  _DAT_00100c28 = 0;
-  _DAT_00100c2a = 0;
+  selftest.ram = 0;
+  selftest.ram_data_bits = 0;
+  selftest.ram_address_lines = 0;
   puVar6 = &DAT_00100000;
   puVar9 = (undefined2 *)&stack0xffffffd4;
   while( true ) {
@@ -20905,7 +20856,7 @@ void ram_pattern_test(void)
           DAT_00100000 = -0x5556;
           *puVar6 = 0x5555;
           if (DAT_00100000 == 0x5555) {
-            _DAT_00100c26 = _DAT_00100c26 | 2;
+            selftest.ram = selftest.ram | 2;
             uVar3 = uVar4 | uVar3;
           }
           DAT_00100000 = uVar2;
@@ -20914,15 +20865,15 @@ void ram_pattern_test(void)
           uVar4 = uVar4 << 1;
           sVar5 = sVar5 + -1;
         } while (sVar5 != -1);
-        _DAT_00100c2a = uVar3 >> 1 | _DAT_00100c2a;
+        selftest.ram_address_lines = uVar3 >> 1 | selftest.ram_address_lines;
         return;
       }
       puVar6 = &DAT_0010ffd0;
       puVar9 = puVar13;
     }
   }
-  _DAT_00100c28 = (ushort)(uVar3 >> 0x10) | (ushort)uVar3 | _DAT_00100c28;
-  _DAT_00100c26 = _DAT_00100c26 | 1;
+  selftest.ram_data_bits = (ushort)(uVar3 >> 0x10) | (ushort)uVar3 | selftest.ram_data_bits;
+  selftest.ram = selftest.ram | 1;
   return;
 }
 
@@ -20990,7 +20941,6 @@ void selftest_run_all_counted(void)
 
 /* 000177fa */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the self-test's failure flags as bits; reports status event 4 on a failure and 5 on none */
 
 void selftest_summary(void)
@@ -20998,38 +20948,38 @@ void selftest_summary(void)
 {
   char cVar1;
   
-  _DAT_00100c32 = 0;
-  if (_DAT_00100c24 != 0) {
-    _DAT_00100c32 = 2;
+  selftest.summary = 0;
+  if (selftest.cpu != 0) {
+    selftest.summary = 2;
   }
-  if (_DAT_00100c26 != 0) {
-    _DAT_00100c32 = _DAT_00100c32 | 4;
+  if (selftest.ram != 0) {
+    selftest.summary = selftest.summary | 4;
   }
-  if (_DAT_00100c34 != 0) {
-    _DAT_00100c32 = _DAT_00100c32 | 8;
+  if (selftest.eeprom != 0) {
+    selftest.summary = selftest.summary | 8;
   }
-  if (_DAT_00100c2e != 0) {
-    _DAT_00100c32 = _DAT_00100c32 | 0x10;
+  if (selftest.uart != 0) {
+    selftest.summary = selftest.summary | 0x10;
   }
-  if (DAT_00100c48 != 0) {
-    _DAT_00100c32 = _DAT_00100c32 | 0x20;
+  if (selftest.qspi != 0) {
+    selftest.summary = selftest.summary | 0x20;
   }
-  if (_DAT_00100c36 != 0) {
-    _DAT_00100c32 = _DAT_00100c32 | 0x40;
+  if (selftest.fpga != 0) {
+    selftest.summary = selftest.summary | 0x40;
   }
-  if (_DAT_00100c3a != 0) {
-    _DAT_00100c32 = _DAT_00100c32 | 0x80;
+  if (selftest.interpolator != 0) {
+    selftest.summary = selftest.summary | 0x80;
   }
-  if (_DAT_00100c46 != 0) {
-    _DAT_00100c32 = _DAT_00100c32 | 0x100;
+  if (selftest.internal_reference != 0) {
+    selftest.summary = selftest.summary | 0x100;
   }
-  if (_DAT_00100c38 != 0) {
-    _DAT_00100c32 = _DAT_00100c32 | 0x200;
+  if (selftest.gps != 0) {
+    selftest.summary = selftest.summary | 0x200;
   }
-  if (_DAT_00100c44 != 0) {
-    _DAT_00100c32 = _DAT_00100c32 | 0x400;
+  if (selftest.power != 0) {
+    selftest.summary = selftest.summary | 0x400;
   }
-  if (_DAT_00100c32 == 0) {
+  if (selftest.summary == 0) {
     cVar1 = '5';
   }
   else {
@@ -21042,7 +20992,6 @@ void selftest_summary(void)
 
 /* 00017892 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* self-test 0, first in the table at 0x18458: runs every test, counting watchdog_pll for a nonzero
    argument, then summarizes and reports any failures */
 
@@ -21059,10 +21008,10 @@ void selftest_all(char param_1)
     selftest_run_all_counted();
     selftest_summary();
     iVar1 = selftest_aborted();
-    if ((iVar1 == 0) && (_DAT_00100c32 != 0)) {
+    if ((iVar1 == 0) && (selftest.summary != 0)) {
       cVar2 = debug_is_enabled();
       if (cVar2 != '\0') {
-        selftest_report_fail((uint)_DAT_00100c32,"ALL:",'\0');
+        selftest_report_fail((uint)selftest.summary,"ALL:",'\0');
       }
     }
   }
@@ -21072,7 +21021,6 @@ void selftest_all(char param_1)
 
 /* 000178e0 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* the self-test of the time interpolator
    entry 8; "Interpolator: A, MRC mode" */
@@ -21090,10 +21038,10 @@ void selftest_interpolator(char param_1)
     }
   }
   cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c3a != 0)) {
+  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.interpolator != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      selftest_report_fail((uint)(_DAT_00100c3a & 1),"Interpolator: A, MRC mode",'\0');
+      selftest_report_fail((uint)(selftest.interpolator & 1),"Interpolator: A, MRC mode",'\0');
     }
   }
   return;
@@ -21102,7 +21050,6 @@ void selftest_interpolator(char param_1)
 
 /* 00017946 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* the self-test of the internal reference
    entry 9; "Internal reference:" */
@@ -21120,10 +21067,10 @@ void selftest_internal_reference(char param_1)
     }
   }
   cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c46 != 0)) {
+  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.internal_reference != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      selftest_report_fail((uint)(_DAT_00100c46 & 1),"Internal reference: ",'\0');
+      selftest_report_fail((uint)(selftest.internal_reference & 1),"Internal reference: ",'\0');
     }
   }
   return;
@@ -21132,7 +21079,6 @@ void selftest_internal_reference(char param_1)
 
 /* 000179ac */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* the self-test of system RAM, its data and address lines
    entry 3; "System RAM: D15-D0:", "adr line A18-A1:" */
@@ -21153,15 +21099,15 @@ void selftest_ram(char param_1)
     }
   }
   cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c26 != 0)) {
+  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.ram != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      format_binary((uint)_DAT_00100c28,(int)acStack_51,0x10);
+      format_binary((uint)selftest.ram_data_bits,(int)acStack_51,0x10);
       sprintf(acStack_40,"%s %s","System RAM: D15-D0:",acStack_51);
-      selftest_report_fail((uint)(_DAT_00100c26 & 1),acStack_40,'\0');
-      format_binary(_DAT_00100c2a,(int)acStack_64,0x12);
+      selftest_report_fail((uint)(selftest.ram & 1),acStack_40,'\0');
+      format_binary(selftest.ram_address_lines,(int)acStack_64,0x12);
       sprintf(acStack_40,"%s %s","System RAM: adr line A18-A1:",acStack_64);
-      selftest_report_fail((uint)(_DAT_00100c26 & 2),acStack_40,'\0');
+      selftest_report_fail((uint)(selftest.ram & 2),acStack_40,'\0');
     }
   }
   return;
@@ -21170,7 +21116,6 @@ void selftest_ram(char param_1)
 
 /* 00017a96 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* the self-test of the CPU
    the self-test table 0x18458's entry 2; "CPU:" */
@@ -21189,11 +21134,11 @@ void selftest_cpu(char param_1)
     }
   }
   cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c24 != 0)) {
+  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.cpu != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
       sprintf(acStack_40,"%s","CPU:");
-      selftest_report_fail((uint)(_DAT_00100c24 & 1),acStack_40,'\0');
+      selftest_report_fail((uint)(selftest.cpu & 1),acStack_40,'\0');
     }
   }
   return;
@@ -21202,7 +21147,6 @@ void selftest_cpu(char param_1)
 
 /* 00017b16 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* the self-test of the EEPROM
    entry 4; "EEPROM:" */
@@ -21221,11 +21165,11 @@ void selftest_eeprom(char param_1)
     }
   }
   cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c34 != 0)) {
+  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.eeprom != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
       sprintf(acStack_40,"%s","EEPROM:");
-      selftest_report_fail((uint)(_DAT_00100c34 & 1),acStack_40,'\0');
+      selftest_report_fail((uint)(selftest.eeprom & 1),acStack_40,'\0');
     }
   }
   return;
@@ -21251,13 +21195,13 @@ void selftest_qspi(char param_1)
     }
   }
   cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (DAT_00100c48 != 0)) {
+  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.qspi != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      selftest_report_fail((uint)(DAT_00100c48 & 2),"QSPI: ADC",'\0');
-      selftest_report_fail((uint)(DAT_00100c48 & 4),"QSPI: Hex DAC",'\0');
-      selftest_report_fail((uint)(DAT_00100c48 & 0x40),"QSPI: FPGA",'\0');
-      selftest_report_fail((uint)(DAT_00100c48 & 0x80),"QSPI: EFC",'\0');
+      selftest_report_fail((uint)(selftest.qspi & 2),"QSPI: ADC",'\0');
+      selftest_report_fail((uint)(selftest.qspi & 4),"QSPI: Hex DAC",'\0');
+      selftest_report_fail((uint)(selftest.qspi & 0x40),"QSPI: FPGA",'\0');
+      selftest_report_fail((uint)(selftest.qspi & 0x80),"QSPI: EFC",'\0');
     }
   }
   return;
@@ -21266,7 +21210,6 @@ void selftest_qspi(char param_1)
 
 /* 00017c3e */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* the self-test of the FPGA's counters
    entry 7; "FPGA: counters not preset" */
@@ -21284,10 +21227,10 @@ void selftest_fpga(char param_1)
     }
   }
   cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c36 != 0)) {
+  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.fpga != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      selftest_report_fail((uint)(_DAT_00100c36 & 1),"FPGA: counters not preset",'\0');
+      selftest_report_fail((uint)(selftest.fpga & 1),"FPGA: counters not preset",'\0');
     }
   }
   return;
@@ -21316,7 +21259,6 @@ void selftest_lamps(char param_1)
 
 /* 00017cbe */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* the self-test of the DUART: its registers, counter and both channels
    entry 5; "UART: register read/write", "channel A data" */
@@ -21334,15 +21276,15 @@ void selftest_uart(char param_1)
     }
   }
   cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c2e != 0)) {
+  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.uart != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      selftest_report_fail((uint)(_DAT_00100c2e & 1),"UART: register read/write",'\0');
-      selftest_report_fail((uint)(_DAT_00100c2e & 2),"UART: counter",'\0');
-      selftest_report_fail((uint)(_DAT_00100c2e & 4),"UART: channel A data",'\0');
-      selftest_report_fail((uint)(_DAT_00100c2e & 8),"UART: channel A timeout",'\0');
-      selftest_report_fail((uint)(_DAT_00100c2e & 0x10),"UART: channel B data",'\0');
-      selftest_report_fail((uint)(_DAT_00100c2e & 0x20),"UART: channel B timeout",'\0');
+      selftest_report_fail((uint)(selftest.uart & 1),"UART: register read/write",'\0');
+      selftest_report_fail((uint)(selftest.uart & 2),"UART: counter",'\0');
+      selftest_report_fail((uint)(selftest.uart & 4),"UART: channel A data",'\0');
+      selftest_report_fail((uint)(selftest.uart & 8),"UART: channel A timeout",'\0');
+      selftest_report_fail((uint)(selftest.uart & 0x10),"UART: channel B data",'\0');
+      selftest_report_fail((uint)(selftest.uart & 0x20),"UART: channel B timeout",'\0');
     }
   }
   return;
@@ -21351,7 +21293,6 @@ void selftest_uart(char param_1)
 
 /* 00017d94 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* the self-test of the GPS engine, reading its own self-test's result bits
    entry 10; "GPS: Channel 1 Correlation" .. "GPS: Engine timeout", @@Ca's bits */
@@ -21365,25 +21306,25 @@ void selftest_gps(char param_1)
     selftest_aborted();
   }
   cVar1 = selftest_may_report(param_1);
-  if (((cVar1 != '\0') && (param_1 == '\x01')) && (_DAT_00100c38 != 0)) {
+  if (((cVar1 != '\0') && (param_1 == '\x01')) && (selftest.gps != 0)) {
     cVar1 = debug_is_enabled();
     if (cVar1 != '\0') {
-      selftest_report_fail((uint)(_DAT_00100c38 & 1),"GPS: Channel 1 Correlation",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 2),"GPS: Channel 2 Correlation",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 4),"GPS: Channel 3 Correlation",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 8),"GPS: Channel 4 Correlation",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 0x10),"GPS: Channel 5 Correlation",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 0x20),"GPS: Channel 6 Correlation",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 0x40),"GPS: 1 KHz Presence",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 0x80),"GPS: ROM LSByte",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 0x100),"GPS: ROM MSByte",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 0x200),"GPS: RAM LSByte",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 0x400),"GPS: RAM MSByte",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 0x800),"GPS: EEPROM",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 0x1000),"GPS: DCXO SPI Comm",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 0x2000),"GPS: RTC Comm & Time",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 0x4000),"GPS: SW problem",'\0');
-      selftest_report_fail((uint)(_DAT_00100c38 & 0x8000),"GPS: Engine timeout",'\0');
+      selftest_report_fail((uint)(selftest.gps & 1),"GPS: Channel 1 Correlation",'\0');
+      selftest_report_fail((uint)(selftest.gps & 2),"GPS: Channel 2 Correlation",'\0');
+      selftest_report_fail((uint)(selftest.gps & 4),"GPS: Channel 3 Correlation",'\0');
+      selftest_report_fail((uint)(selftest.gps & 8),"GPS: Channel 4 Correlation",'\0');
+      selftest_report_fail((uint)(selftest.gps & 0x10),"GPS: Channel 5 Correlation",'\0');
+      selftest_report_fail((uint)(selftest.gps & 0x20),"GPS: Channel 6 Correlation",'\0');
+      selftest_report_fail((uint)(selftest.gps & 0x40),"GPS: 1 KHz Presence",'\0');
+      selftest_report_fail((uint)(selftest.gps & 0x80),"GPS: ROM LSByte",'\0');
+      selftest_report_fail((uint)(selftest.gps & 0x100),"GPS: ROM MSByte",'\0');
+      selftest_report_fail((uint)(selftest.gps & 0x200),"GPS: RAM LSByte",'\0');
+      selftest_report_fail((uint)(selftest.gps & 0x400),"GPS: RAM MSByte",'\0');
+      selftest_report_fail((uint)(selftest.gps & 0x800),"GPS: EEPROM",'\0');
+      selftest_report_fail((uint)(selftest.gps & 0x1000),"GPS: DCXO SPI Comm",'\0');
+      selftest_report_fail((uint)(selftest.gps & 0x2000),"GPS: RTC Comm & Time",'\0');
+      selftest_report_fail((uint)(selftest.gps & 0x4000),"GPS: SW problem",'\0');
+      selftest_report_fail((uint)(selftest.gps & 0x8000),"GPS: Engine timeout",'\0');
     }
   }
   return;
@@ -21392,7 +21333,6 @@ void selftest_gps(char param_1)
 
 /* 00017f2c */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* the self-test of the 5 V, 15 V and -15 V supplies
    entry 11; "POWER: 5V", "15V", "-15V" */
@@ -21410,12 +21350,12 @@ void selftest_power(char param_1)
     }
   }
   cVar2 = selftest_may_report(param_1);
-  if (((cVar2 != '\0') && (param_1 == '\x01')) && (_DAT_00100c44 != 0)) {
+  if (((cVar2 != '\0') && (param_1 == '\x01')) && (selftest.power != 0)) {
     cVar2 = debug_is_enabled();
     if (cVar2 != '\0') {
-      selftest_report_fail((uint)(_DAT_00100c44 & 1),"POWER: 5V",'\0');
-      selftest_report_fail((uint)(_DAT_00100c44 & 2),"POWER: 15V",'\0');
-      selftest_report_fail((uint)(_DAT_00100c44 & 4),"POWER: -15V",'\0');
+      selftest_report_fail((uint)(selftest.power & 1),"POWER: 5V",'\0');
+      selftest_report_fail((uint)(selftest.power & 2),"POWER: 15V",'\0');
+      selftest_report_fail((uint)(selftest.power & 4),"POWER: -15V",'\0');
     }
   }
   return;
@@ -21429,7 +21369,7 @@ void selftest_power(char param_1)
 void selftest_begin(void)
 
 {
-  selftest_abort = 0;
+  selftest.field_1e = 0;
   return;
 }
 
@@ -21441,7 +21381,7 @@ void selftest_begin(void)
 void selftest_end(void)
 
 {
-  selftest_abort = 0;
+  selftest.field_1e = 0;
   return;
 }
 
@@ -21454,7 +21394,7 @@ void selftest_end(void)
 bool selftest_may_report(char param_1)
 
 {
-  return param_1 == '\0' || selftest_abort == 0;
+  return param_1 == '\0' || selftest.field_1e == 0;
 }
 
 
@@ -21462,14 +21402,14 @@ bool selftest_may_report(char param_1)
 
 /* WARNING: Unknown calling convention */
 /* runs entry n of the test table 0x18458 twice between selftest_begin and selftest_end, with
-   selftest_running set */
+   selftest.running set */
 
 void selftest_execute(char param_1)
 
 {
   code *pcVar1;
   
-  selftest_running = 1;
+  selftest.running = 1;
   watchdog_pll = watchdog_pll + 1;
   pcVar1 = (code *)(&PTR_selftest_all_00018458)[param_1];
   selftest_begin();
@@ -21477,7 +21417,7 @@ void selftest_execute(char param_1)
   (*pcVar1)();
   selftest_end();
   watchdog_pll = watchdog_pll + 1;
-  selftest_running = 0;
+  selftest.running = 0;
   return;
 }
 
@@ -21548,7 +21488,7 @@ void format_binary(uint param_1,int param_2,int param_3)
 bool selftest_aborted(void)
 
 {
-  return selftest_abort != 0;
+  return selftest.field_1e != 0;
 }
 
 
@@ -21578,14 +21518,14 @@ void selftest_delay(uint param_1)
 
 /* 00018404 */
 
-/* clears selftest_running and selftest_abort */
+/* clears selftest.running and selftest_abort */
 
 void selftest_init(void)
 
 {
-  selftest_running = 0;
-  selftest_abort = 0;
-  DAT_00100c58 = 1;
+  selftest.running = 0;
+  selftest.field_1e = 0;
+  selftest.passed = 1;
   return;
 }
 
@@ -21599,13 +21539,13 @@ undefined1 selftest_abort_wait(void)
 {
   undefined1 uVar1;
   
-  if (selftest_running == 0) {
+  if (selftest.running == 0) {
     uVar1 = 0;
   }
   else {
     uVar1 = 1;
-    selftest_abort = 1;
-    while (selftest_running != 0) {
+    selftest.field_1e = 1;
+    while (selftest.running != 0) {
       psos_pause(1);
     }
   }
@@ -21615,7 +21555,6 @@ undefined1 selftest_abort_wait(void)
 
 /* 000184a4 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* counts the internal 1PPS over 1024 ticks; fails unless one to three came */
 
 void internal_pps_test(void)
@@ -21624,11 +21563,11 @@ void internal_pps_test(void)
   uint8_t uVar1;
   
   uVar1 = internal_pps_count;
-  _DAT_00100c46 = 0;
+  selftest.internal_reference = 0;
   psos_pause(0x400);
   if (((char)(internal_pps_count - uVar1) < '\x01') || ('\x03' < (char)(internal_pps_count - uVar1))
      ) {
-    _DAT_00100c46 = _DAT_00100c46 | 1;
+    selftest.internal_reference = selftest.internal_reference | 1;
   }
   return;
 }
@@ -21662,7 +21601,6 @@ void lamp_test(void)
 
 /* 00018546 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* checks the 5 V, +15 V and -15 V supplies within 10 percent */
 
 void supplies_test(void)
@@ -21671,30 +21609,29 @@ void supplies_test(void)
   float fVar1;
   int iVar2;
   
-  _DAT_00100c44 = 0;
+  selftest.power = 0;
   fVar1 = read_adc_5v();
   iVar2 = float_compare(fVar1,4.5);
   if ((iVar2 < 0) || (iVar2 = float_compare(fVar1,5.5), 0 < iVar2)) {
-    _DAT_00100c44 = _DAT_00100c44 | 1;
+    selftest.power = selftest.power | 1;
   }
   fVar1 = read_adc_p15v();
   iVar2 = float_compare(fVar1,14.0);
   if ((iVar2 < 0) || (iVar2 = float_compare(fVar1,16.0), 0 < iVar2)) {
-    _DAT_00100c44 = _DAT_00100c44 | 2;
+    selftest.power = selftest.power | 2;
   }
   fVar1 = read_adc_m15v();
   iVar2 = float_compare(fVar1,-16.0);
   if ((-1 < iVar2) && (iVar2 = float_compare(fVar1,-14.0), iVar2 < 1)) {
     return;
   }
-  _DAT_00100c44 = _DAT_00100c44 | 4;
+  selftest.power = selftest.power | 4;
   return;
 }
 
 
 /* 00018600 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* prints a failed self-test's name and error code
    "FAIL:", "%s, error code: %02X" */
@@ -21710,15 +21647,15 @@ void selftest_print_failure(char param_1)
   char acStack_12 [14];
   
   ppuVar4 = &PTR_lamp_test_command_000186b0;
-  DAT_00100c58 = '\x01';
+  selftest.passed = 1;
   if (param_1 != '\0') {
-    _DAT_00100c34 = 0;
+    selftest.eeprom = 0;
   }
-  selftest_running = 1;
+  selftest.running = 1;
   for (; *ppuVar4 != (undefined *)0x0; ppuVar4 = ppuVar4 + 2) {
     param2 = (*(code *)*ppuVar4)();
     if (param2 != 0) {
-      DAT_00100c58 = '\0';
+      selftest.passed = 0;
       pcVar2 = "FAIL: ";
       pcVar3 = acStack_12;
       do {
@@ -21733,10 +21670,10 @@ void selftest_print_failure(char param_1)
     watchdog_pll = watchdog_pll + 1;
   }
   selftest_summary();
-  DAT_00100c5a = (uint)_DAT_00100c32;
-  DAT_00100c66 = 0;
-  selftest_running = 0;
-  if (DAT_00100c58 == '\0') {
+  selftest.result = (uint32_t)selftest.summary;
+  selftest.test = 0;
+  selftest.running = 0;
+  if (selftest.passed == 0) {
     log_event(0x17);
   }
   return;
@@ -21910,25 +21847,25 @@ void qspi_tests_run(void)
   uVar1 = set_interrupt_mask(0x700);
   cVar2 = qspi_adc_test();
   if (cVar2 == '\0') {
-    DAT_00100c48 = DAT_00100c48 | 2;
+    selftest.qspi = selftest.qspi | 2;
   }
   set_interrupt_mask(uVar1);
   uVar1 = set_interrupt_mask(0x700);
   cVar2 = qspi_hex_dac_test();
   if (cVar2 == '\0') {
-    DAT_00100c48 = DAT_00100c48 | 4;
+    selftest.qspi = selftest.qspi | 4;
   }
   set_interrupt_mask(uVar1);
   uVar1 = set_interrupt_mask(0x700);
   cVar2 = fpga_load_test();
   if (cVar2 == '\0') {
-    DAT_00100c48 = DAT_00100c48 | 0x40;
+    selftest.qspi = selftest.qspi | 0x40;
   }
   set_interrupt_mask(uVar1);
   uVar1 = set_interrupt_mask(0x700);
   cVar2 = qspi_efc_test();
   if (cVar2 == '\0') {
-    DAT_00100c48 = DAT_00100c48 | 0x80;
+    selftest.qspi = selftest.qspi | 0x80;
   }
   set_interrupt_mask(uVar1);
   return;
@@ -21937,85 +21874,84 @@ void qspi_tests_run(void)
 
 /* 00018a74 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* runs self-test n, 0 to 13, through selftest_execute and copies its result cells */
 
 void selftest_run(undefined4 param_1)
 
 {
-  DAT_00100c66 = (byte)param_1;
-  DAT_00100c67 = 1;
-  DAT_00100c5a = 0;
-  DAT_00100c5e = 0;
-  DAT_00100c62 = 0;
+  selftest.test = (byte)param_1;
+  selftest.in_run = 1;
+  selftest.result = 0;
+  selftest.details[0] = 0;
+  selftest.details[1] = 0;
   if ((byte)param_1 < 0xe) {
                     /* WARNING: Switch is manually overridden */
     switch((byte)param_1) {
     case 0:
       selftest_execute('\0');
-      DAT_00100c5a = (uint)_DAT_00100c32;
+      selftest.result = (uint32_t)selftest.summary;
       break;
     case 1:
       selftest_execute('\x01');
-      DAT_00100c5a = 0;
+      selftest.result = 0;
       break;
     case 2:
       selftest_execute('\x02');
-      DAT_00100c5a = (uint)_DAT_00100c24;
+      selftest.result = (uint32_t)(ushort)selftest.cpu;
       break;
     case 3:
       selftest_execute('\x03');
-      DAT_00100c5a = (uint)_DAT_00100c26;
-      DAT_00100c5e = (uint)_DAT_00100c28;
-      DAT_00100c62 = _DAT_00100c2a;
+      selftest.result = (uint32_t)selftest.ram;
+      selftest.details[0] = (uint32_t)selftest.ram_data_bits;
+      selftest.details[1] = selftest.ram_address_lines;
       break;
     case 4:
       selftest_execute('\x04');
-      DAT_00100c5a = (uint)_DAT_00100c34;
+      selftest.result = (uint32_t)(ushort)selftest.eeprom;
       break;
     case 5:
       selftest_execute('\x05');
-      DAT_00100c5a = (uint)_DAT_00100c2e;
+      selftest.result = (uint32_t)(ushort)selftest.uart;
       break;
     case 6:
       selftest_execute('\x06');
-      DAT_00100c5a = (uint)DAT_00100c48;
+      selftest.result = (uint32_t)(ushort)selftest.qspi;
       break;
     case 7:
       selftest_execute('\a');
-      DAT_00100c5a = (uint)_DAT_00100c36;
+      selftest.result = (uint32_t)(ushort)selftest.fpga;
       break;
     case 8:
       selftest_execute('\b');
-      DAT_00100c5a = (uint)_DAT_00100c3a;
+      selftest.result = (uint32_t)(ushort)selftest.interpolator;
       break;
     case 9:
       selftest_execute('\t');
-      DAT_00100c5a = (uint)_DAT_00100c46;
+      selftest.result = (uint32_t)(ushort)selftest.internal_reference;
       break;
     case 10:
       selftest_execute('\n');
-      DAT_00100c5a = (uint)_DAT_00100c38;
+      selftest.result = (uint32_t)(ushort)selftest.gps;
       break;
     case 0xb:
       selftest_execute('\v');
-      DAT_00100c5a = (uint)_DAT_00100c44;
+      selftest.result = (uint32_t)(ushort)selftest.power;
       break;
     case 0xc:
       selftest_execute('\f');
-      DAT_00100c5a = (uint)_DAT_00100c3a;
-      DAT_00100c5e = (uint)DAT_00100c3d;
-      DAT_00100c62 = (uint)DAT_00100c3c;
+      selftest.result = (uint32_t)(ushort)selftest.interpolator;
+      selftest.details[0] = (uint32_t)selftest.interpolator_tries;
+      selftest.details[1] = (uint32_t)selftest.interpolator_calibrated;
       break;
     case 0xd:
       selftest_execute('\r');
-      DAT_00100c5a = (uint)_DAT_00100c3a;
-      DAT_00100c5e = (uint)_DAT_00100c3e;
-      DAT_00100c62 = (uint)_DAT_00100c40;
+      selftest.result = (uint32_t)(ushort)selftest.interpolator;
+      selftest.details[0] = (uint32_t)selftest.interpolator_readings[0];
+      selftest.details[1] = (uint32_t)selftest.interpolator_readings[1];
     }
   }
   else {
-    DAT_00100c67 = 0;
+    selftest.in_run = 0;
   }
   return;
 }
@@ -22043,7 +21979,6 @@ void ram_pattern_test_locked(void)
 
 /* 00018c74 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the EEPROM self-test's settings check: nv_slot_valid's result at 0x100c34 */
 
 void selftest_nv_slot(void)
@@ -22051,9 +21986,9 @@ void selftest_nv_slot(void)
 {
   byte bVar1;
   
-  _DAT_00100c34 = 0;
+  selftest.eeprom = 0;
   bVar1 = nv_slot_valid();
-  _DAT_00100c34 = (ushort)bVar1;
+  selftest.eeprom = (ushort)bVar1;
   return;
 }
 
@@ -22065,7 +22000,7 @@ void selftest_nv_slot(void)
 void selftest_qspi_run(void)
 
 {
-  DAT_00100c48 = 0;
+  selftest.qspi = 0;
   qspi_tests_run();
   return;
 }
@@ -22075,49 +22010,47 @@ void selftest_qspi_run(void)
 
 /* the QSPI tests, lighting the failure lamp on a failure; called by nothing */
 
-short selftest_qspi_with_lamp(void)
+int16_t selftest_qspi_with_lamp(void)
 
 {
-  DAT_00100c48 = 0;
+  selftest.qspi = 0;
   qspi_tests_run();
-  if (DAT_00100c48 != 0) {
+  if (selftest.qspi != 0) {
     duart_output_bits(0x80,0);
   }
-  return DAT_00100c48;
+  return selftest.qspi;
 }
 
 
 /* 00018cec */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the interpolator test, lighting the failure lamp on a failure; called by nothing */
 
-short selftest_interpolator_with_lamp(void)
+int16_t selftest_interpolator_with_lamp(void)
 
 {
-  _DAT_00100c3a = 0;
+  selftest.interpolator = 0;
   interpolator_selftest();
-  if (_DAT_00100c3a != 0) {
+  if (selftest.interpolator != 0) {
     duart_output_bits(0x80,0);
   }
-  return _DAT_00100c3a;
+  return selftest.interpolator;
 }
 
 
 /* 00018d16 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the internal 1PPS test, lighting the failure lamp on a failure; called by nothing */
 
-short selftest_internal_reference_with_lamp(void)
+int16_t selftest_internal_reference_with_lamp(void)
 
 {
-  _DAT_00100c46 = 0;
+  selftest.internal_reference = 0;
   internal_pps_test();
-  if (_DAT_00100c46 != 0) {
+  if (selftest.internal_reference != 0) {
     duart_output_bits(0x80,0);
   }
-  return _DAT_00100c46;
+  return selftest.internal_reference;
 }
 
 
@@ -33307,9 +33240,9 @@ undefined8 duart_init(void)
   DUART_IVR = 0x43;
   DAT_00102eda = 0;
   DUART_IP_OPCR = 0;
-  DAT_00102edb = DAT_00100c30;
-  DUART_STOP_ROPBC = DAT_00100c30;
-  DUART_START_SOPBC = ~DAT_00100c30;
+  DAT_00102edb = selftest.lamp_mask;
+  DUART_STOP_ROPBC = selftest.lamp_mask;
+  DUART_START_SOPBC = ~selftest.lamp_mask;
   bVar1 = DUART_STOP_ROPBC;
   DUART_CUR_CTUR = DAT_00102ed5;
   DUART_CLR_CTLR = DAT_00102ed6;
@@ -33831,7 +33764,7 @@ void duart_loopback_test_a(void)
   }
   uVar2 = set_interrupt_mask(0x700);
   if (*_DAT_00103146 != '\0') {
-    _DAT_00100c2e = _DAT_00100c2e | 8;
+    selftest.uart = selftest.uart | 8;
   }
   _DAT_00103142 = &DAT_0001ed2c;
   _DAT_00103146 = &DAT_0001ed2c;
@@ -33893,7 +33826,7 @@ void duart_loopback_test_b(void)
   }
   uVar2 = set_interrupt_mask(0x700);
   if (*_DAT_00103146 != '\0') {
-    _DAT_00100c2e = _DAT_00100c2e | 0x20;
+    selftest.uart = selftest.uart | 0x20;
   }
   _DAT_00103142 = &DAT_0001ed2c;
   _DAT_00103146 = &DAT_0001ed2c;
@@ -33914,7 +33847,6 @@ void duart_loopback_test_b(void)
 
 /* 0001e574 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the DUART self-test's counter and timer test */
 
 void duart_counter_test(void)
@@ -33945,7 +33877,7 @@ void duart_counter_test(void)
   DUART_CLR_CTLR = 0xff;
   task_set_priority(0,local_6[0]);
   if ((0xf8cc < CONCAT11(bVar1,bVar2)) || (CONCAT11(bVar1,bVar2) < 0xf533)) {
-    _DAT_00100c2e = _DAT_00100c2e | 2;
+    selftest.uart = selftest.uart | 2;
   }
   return;
 }
@@ -33953,7 +33885,6 @@ void duart_counter_test(void)
 
 /* 0001e650 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the DUART self-test: its interrupt vector register, its counter, both channels' loopbacks */
 
 void duart_test(void)
@@ -33962,21 +33893,21 @@ void duart_test(void)
   byte bVar1;
   uint16_t sr;
   
-  _DAT_00100c2e = 0;
+  selftest.uart = 0;
   sr = set_interrupt_mask(0x700);
   DUART_IVR = 0x55;
   bVar1 = DUART_IVR;
   if (bVar1 != 0x55) {
-    _DAT_00100c2e = _DAT_00100c2e | 1;
+    selftest.uart = selftest.uart | 1;
   }
   DUART_IVR = 0xaa;
   bVar1 = DUART_IVR;
   if (bVar1 != 0xaa) {
-    _DAT_00100c2e = _DAT_00100c2e | 1;
+    selftest.uart = selftest.uart | 1;
   }
   DUART_IVR = 0x43;
   set_interrupt_mask(sr);
-  if (_DAT_00100c2e == 0) {
+  if (selftest.uart == 0) {
     duart_counter_test();
     duart_loopback_test_a();
     duart_loopback_test_b();
@@ -34000,7 +33931,7 @@ void duart_test_rx_a(void)
   _DAT_00103146 = _DAT_00103146 + 1;
   bVar1 = DUART_RBA_TBA;
   if ((uint)bVar1 != (int)*pcVar2) {
-    _DAT_00100c2e = _DAT_00100c2e | 4;
+    selftest.uart = selftest.uart | 4;
   }
   return;
 }
@@ -34021,7 +33952,7 @@ void duart_test_rx_b(void)
   _DAT_00103146 = _DAT_00103146 + 1;
   bVar1 = DUART_RBB_TBB;
   if ((uint)bVar1 != (int)*pcVar2) {
-    _DAT_00100c2e = _DAT_00100c2e | 0x10;
+    selftest.uart = selftest.uart | 0x10;
   }
   return;
 }
@@ -34425,20 +34356,20 @@ void duartb_loopback_check(void)
   DUART_CRB = 5;
   DUART_RBB_TBB = 'D';
   _DAT_00103142 = (byte *)0x1eef7;
-  while ((*_DAT_00103146 != '\0' && (_DAT_00100c2e == 0))) {
+  while ((*_DAT_00103146 != '\0' && (selftest.uart == 0))) {
     iVar3 = 3000;
     while ((0 < iVar3 && (bVar2 = DUART_SRB_CSRB, (bVar2 & 1) == 0))) {
       iVar3 = iVar3 + -1;
     }
     bVar2 = DUART_SRB_CSRB;
     if ((bVar2 & 1) == 0) {
-      _DAT_00100c2e = 0x20;
+      selftest.uart = 0x20;
     }
     else {
       pcVar1 = _DAT_00103146 + 1;
       bVar2 = DUART_RBB_TBB;
       if ((uint)bVar2 != (int)*_DAT_00103146) {
-        _DAT_00100c2e = 0x10;
+        selftest.uart = 0x10;
       }
       _DAT_00103146 = pcVar1;
       if (*_DAT_00103142 != 0) {
@@ -34457,7 +34388,6 @@ void duartb_loopback_check(void)
 
 /* 0001ecae */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* at reset: tests the DUART's interrupt vector register and sets channel B up for the console */
 
 void duart_early_init(void)
@@ -34467,14 +34397,14 @@ void duart_early_init(void)
   
   DUART_IVR = 0x55;
   bVar1 = DUART_IVR;
-  _DAT_00100c2e = (ushort)(bVar1 != 0x55);
+  selftest.uart = (int16_t)(bVar1 != 0x55);
   DUART_IVR = 0xaa;
   bVar1 = DUART_IVR;
   if (bVar1 != 0xaa) {
-    _DAT_00100c2e = 1;
+    selftest.uart = 1;
   }
   DUART_IVR = 0x43;
-  if (_DAT_00100c2e == 0) {
+  if (selftest.uart == 0) {
     DUART_CRB = 0x20;
     DUART_CRB = 0x30;
     DUART_CRB = 0x10;
@@ -38058,7 +37988,7 @@ undefined1 gps_pps_check(void)
   bVar3 = false;
   if (gps.pps_check_disabled == 0) {
     if ((DAT_00101cfa == '\0') || (0xe < DAT_00101cf9)) {
-      if ((selftest_running == 0) && ((pll.fpga_loaded != 0 && (DAT_00101b6c == '\0')))) {
+      if ((selftest.running == 0) && ((pll.fpga_loaded != 0 && (DAT_00101b6c == '\0')))) {
         if (gps_pps_counting != 0) {
           bVar2 = PACNT;
           cVar1 = bVar2 - gps_pps_last_count;
@@ -38152,7 +38082,7 @@ undefined1 internal_pps_check(void)
 {
   char cVar1;
   
-  if (((selftest_running == 0) && (pll.fpga_loaded != 0)) && (DAT_00101b6c == '\0')) {
+  if (((selftest.running == 0) && (pll.fpga_loaded != 0)) && (DAT_00101b6c == '\0')) {
     if (internal_pps_started != 0) {
       cVar1 = internal_pps_count - internal_pps_last_count;
       internal_pps_last_count = internal_pps_count;
@@ -44830,7 +44760,7 @@ int scpi_query_common_TST(void *parameters,void *response,void *call)
   
   iVar1 = return_zero();
   pllc_request_b(&DAT_00041348,0,(char)iVar1);
-  *(undefined4 *)response = DAT_00100c5a;
+  *(uint32_t *)response = selftest.result;
   return 0;
 }
 
@@ -46533,9 +46463,9 @@ int scpi_query_DIAGnostic_TEST(void *parameters,void *response,void *call)
   }
   iVar1 = return_zero();
   pllc_request_b(&DAT_00041348,unaff_D2b,(char)iVar1);
-  *(undefined4 *)response = DAT_00100c5a;
-  *(undefined4 *)((int)response + 6) = DAT_00100c5e;
-  *(undefined4 *)((int)response + 0xc) = DAT_00100c62;
+  *(uint32_t *)response = selftest.result;
+  *(uint32_t *)((int)response + 6) = selftest.details[0];
+  *(uint32_t *)((int)response + 0xc) = selftest.details[1];
   return 0;
 }
 
@@ -46547,10 +46477,10 @@ int scpi_query_DIAGnostic_TEST(void *parameters,void *response,void *call)
 int scpi_query_DIAGnostic_TEST_RESult(void *parameters,void *response,void *call)
 
 {
-  *(undefined4 *)response = DAT_00100c5a;
-  if (DAT_00100c66 < 0xe) {
+  *(uint32_t *)response = selftest.result;
+  if (selftest.test < 0xe) {
                     /* WARNING: Switch is manually overridden */
-    switch(DAT_00100c66) {
+    switch(selftest.test) {
     case 0:
       *(undefined2 *)((int)response + 6) = 0;
       break;
@@ -53575,14 +53505,14 @@ void nv_restore(void)
   char cVar1;
   byte bVar2;
   
-  _DAT_00100c34 = 0;
+  selftest.eeprom = 0;
   nv_slot = 0;
   cVar1 = nv_load_slot();
   if (cVar1 == '\0') {
     nv_slot = 1;
     cVar1 = nv_load_slot();
     if (cVar1 == '\0') {
-      _DAT_00100c34 = 1;
+      selftest.eeprom = 1;
       memcpy(&nv_settings,&nv_settings_defaults,0xc5);
       if ((_DAT_004000c4 == 0xffffffff) ||
          ((_DAT_004000c4 <= _DAT_00400144 && (_DAT_00400144 != 0xffffffff)))) {
@@ -54591,7 +54521,7 @@ uint8_t interpolator_selftest_calibrate(void)
   int iVar2;
   interpolator_calibration iStack_e;
   
-  DAT_00100c3c = 0;
+  selftest.interpolator_calibrated = 0;
   iVar2 = 0;
   do {
     interpolator_calibration_init(&iStack_e.initialized);
@@ -54599,9 +54529,9 @@ uint8_t interpolator_selftest_calibrate(void)
     iVar2 = iVar2 + 1;
     if (uVar1 != 0) break;
   } while (iVar2 < 0x14);
-  DAT_00100c3d = (undefined1)iVar2;
+  selftest.interpolator_tries = (uint8_t)iVar2;
   if (uVar1 == 0) {
-    DAT_00100c3c = 1;
+    selftest.interpolator_calibrated = 1;
     uVar1 = interpolator_verify((char *)&iStack_e);
   }
   return uVar1;
@@ -54610,7 +54540,6 @@ uint8_t interpolator_selftest_calibrate(void)
 
 /* 000406c8 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the interpolator's self-test: its failure flag from the calibration */
 
 void interpolator_selftest(void)
@@ -54619,14 +54548,13 @@ void interpolator_selftest(void)
   char cVar1;
   
   cVar1 = interpolator_selftest_calibrate();
-  _DAT_00100c3a = (ushort)(cVar1 == '\0');
+  selftest.interpolator = (int16_t)(cVar1 == '\0');
   return;
 }
 
 
 /* 000406e2 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* samples the interpolator with its calibrated DACs and keeps both ends' readings; called by
    nothing */
 
@@ -54646,9 +54574,9 @@ void interpolator_sample_test(void)
     local_b = interpolator_calibration_state.hdac_3;
   }
   interpolator_sample((char *)local_e);
-  _DAT_00100c3a = 0;
-  _DAT_00100c3e = (ushort)local_7;
-  _DAT_00100c40 = (ushort)local_6;
+  selftest.interpolator = 0;
+  selftest.interpolator_readings[0] = (ushort)local_7;
+  selftest.interpolator_readings[1] = (ushort)local_6;
   return;
 }
 
@@ -55175,7 +55103,6 @@ void counter_init(void)
 
 /* 00040f98 */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the FPGA self-test: presets the counters and fails unless the count reads zero */
 
 void counter_selftest(void)
@@ -55189,10 +55116,10 @@ void counter_selftest(void)
   lVar1 = counter_read_raw();
   local_c = (int)((ulonglong)lVar1 >> 0x20);
   if ((local_c == 0) && (local_8 = (int)lVar1, local_8 == 0)) {
-    _DAT_00100c36 = 0;
+    selftest.fpga = 0;
   }
   else {
-    _DAT_00100c36 = 1;
+    selftest.fpga = 1;
   }
   return;
 }
@@ -59781,7 +59708,6 @@ undefined1 gpsx_send(undefined2 param_1,undefined1 param_2,int param_3,char para
 
 /* 000466ca */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* asks the GPS engine for its self-test, up to 20 tries, failing the self-test's GPS bit 0x4000 if
    it never answers */
 
@@ -59802,7 +59728,7 @@ void gps_selftest_run(void)
     watchdog_pll = watchdog_pll + 1;
   }
   if (cVar3 == '\0') {
-    _DAT_00100c38 = 0x4000;
+    selftest.gps = 0x4000;
   }
   if (gps_ack_awaited != 0) {
     for (cVar3 = -0x7e;
@@ -59812,17 +59738,17 @@ void gps_selftest_run(void)
       watchdog_pll = watchdog_pll + 1;
     }
     if ((cVar3 == '\0') || ((local_25 != '\0' && (local_25 != '\b')))) {
-      _DAT_00100c38 = 0x4000;
+      selftest.gps = 0x4000;
     }
     else if (local_25 == '\0') {
-      _DAT_00100c38 = gps.self_test;
+      selftest.gps = gps.self_test;
     }
     else {
-      _DAT_00100c38 = 0x8000;
+      selftest.gps = -0x8000;
     }
   }
   gps_ack_awaited = 0;
-  if (_DAT_00100c38 == 0) {
+  if (selftest.gps == 0) {
     for (cVar3 = '\x14';
         (cVar2 = gpsx_send(0x4a,0,(int)auStack_14,'\x05'), cVar2 == '\0' && (cVar3 != '\0'));
         cVar3 = cVar3 + -1) {
@@ -59830,7 +59756,7 @@ void gps_selftest_run(void)
       watchdog_pll = watchdog_pll + 1;
     }
     if (cVar3 == '\0') {
-      _DAT_00100c38 = 0x4000;
+      selftest.gps = 0x4000;
     }
     if (gps_ack_awaited != 0) {
       for (cVar3 = '\x1e';
@@ -59840,13 +59766,13 @@ void gps_selftest_run(void)
         watchdog_pll = watchdog_pll + 1;
       }
       if ((cVar3 == '\0') || ((local_25 != '\0' && (local_25 != '\b')))) {
-        _DAT_00100c38 = 0x4000;
+        selftest.gps = 0x4000;
       }
       else if (local_25 == '\0') {
-        _DAT_00100c38 = gps.self_test;
+        selftest.gps = gps.self_test;
       }
       else {
-        _DAT_00100c38 = 0x8000;
+        selftest.gps = -0x8000;
       }
     }
   }
@@ -60506,7 +60432,7 @@ undefined1 gps_diag_sequence(char param_1)
       if (cVar2 == '\0') {
         pll.gps_diag_substate = pll.gps_diag_substate + 1;
         if (0x1e < pll.gps_diag_substate) {
-          _DAT_00100c38 = 0x4000;
+          selftest.gps = 0x4000;
           pll.gps_diag_state = 4;
         }
       }
@@ -60523,7 +60449,7 @@ undefined1 gps_diag_sequence(char param_1)
       if (cVar2 == '\0') {
         pll.gps_diag_substate = pll.gps_diag_substate + 1;
         if (0x14 < pll.gps_diag_substate) {
-          _DAT_00100c38 = 0x4000;
+          selftest.gps = 0x4000;
           pll.gps_diag_state = 4;
         }
       }
@@ -60538,20 +60464,20 @@ undefined1 gps_diag_sequence(char param_1)
       if (cVar2 == '\0') {
         pll.gps_diag_substate = pll.gps_diag_substate + 1;
         if (0x1e < pll.gps_diag_substate) {
-          _DAT_00100c38 = 0x4000;
+          selftest.gps = 0x4000;
           pll.gps_diag_state = 4;
         }
       }
       else {
         if (gps_ack_code == 0) {
-          _DAT_00100c38 = gps.self_test;
+          selftest.gps = gps.self_test;
         }
         else if (gps_ack_code == 8) {
-          _DAT_00100c38 = 0x8000;
+          selftest.gps = -0x8000;
         }
         else {
           task_dmessage("Error in DIAG GPS TST ack\r\n");
-          _DAT_00100c38 = 0x4000;
+          selftest.gps = 0x4000;
         }
         pll.gps_diag_state = 4;
       }
@@ -60574,7 +60500,7 @@ override_jmp_00047258_case_0:
     if (cVar2 == '\0') {
       pll.gps_diag_substate = pll.gps_diag_substate + 1;
       if (0x14 < pll.gps_diag_substate) {
-        _DAT_00100c38 = 0x4000;
+        selftest.gps = 0x4000;
         pll.gps_diag_state = 4;
       }
     }

@@ -447,12 +447,12 @@
 0x102586	label	gps_ack_awaited	context	gpsx_send stores its last argument there	uint8_t
 0x46524	function	pll_stage_status	context	by pll.stage, sets two pll flags and the status happenings they imply (0x1a, 0x1b, 0x28, 0x2a, 0x2c), with log_event(6); pllp_task calls it at start and on stage changes
 0x18a74	function	selftest_run	context	runs self-test n, 0 to 13, through selftest_execute and copies its result cells
-0x182ec	function	selftest_execute	context	runs entry n of the test table 0x18458 twice between selftest_begin and selftest_end, with selftest_running set
+0x182ec	function	selftest_execute	context	runs entry n of the test table 0x18458 twice between selftest_begin and selftest_end, with selftest.running set
 0x1833c	function	selftest_report_fail	context	prints "%s FAIL" when its test failed and selftest_aborted is false
 0x100c42	label	selftest_abort	context	selftest_abort_wait sets it while a test runs; selftest_begin, selftest_end and selftest_init clear it	uint8_t
-0x100c43	label	selftest_running	context	set while selftest_execute runs a test	uint8_t
+0x100c24	label	selftest	structures.md	the self-tests' results and what selftest_run reports	selftest_results
 0x1841a	function	selftest_abort_wait	context	if a test is running, sets selftest_abort and waits until it stops; returns whether one was
-0x18404	function	selftest_init	context	clears selftest_running and selftest_abort
+0x18404	function	selftest_init	context	clears selftest.running and selftest_abort
 0x182c4	function	selftest_begin	context	clears selftest_abort before a test
 0x182cc	function	selftest_end	context	clears selftest_abort after a test
 0x183ce	function	selftest_aborted	context	selftest_abort is set

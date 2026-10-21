@@ -292,13 +292,13 @@
 {"address":"000182c4","name":"selftest_begin","note":"clears selftest_abort before a test","convention":"unknown"}
 {"address":"000182cc","name":"selftest_end","note":"clears selftest_abort after a test","convention":"unknown"}
 {"address":"000182d4","name":"selftest_may_report","note":"true for mode 0 or when the test was not aborted","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"000182ec","name":"selftest_execute","note":"runs entry n of the test table 0x18458 twice between selftest_begin and selftest_end, with selftest_running set","convention":"unknown","stack":[{"offset":4,"size":1}]}
+{"address":"000182ec","name":"selftest_execute","note":"runs entry n of the test table 0x18458 twice between selftest_begin and selftest_end, with selftest.running set","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"00018334","name":"debug_is_enabled","note":"returns debug_enabled","convention":"unknown"}
 {"address":"0001833c","name":"selftest_report_fail","note":"prints \"%s FAIL\" when its test failed and selftest_aborted is false","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":1}]}
 {"address":"00018396","name":"format_binary","note":"a number as a string of binary digits","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"000183ce","name":"selftest_aborted","note":"selftest_abort is set","convention":"unknown"}
 {"address":"000183de","name":"selftest_delay","note":"pauses so many ticks, stopping if the self-test is aborted","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"00018404","name":"selftest_init","note":"clears selftest_running and selftest_abort","convention":"unknown"}
+{"address":"00018404","name":"selftest_init","note":"clears selftest.running and selftest_abort","convention":"unknown"}
 {"address":"0001841a","name":"selftest_abort_wait","note":"if a test is running, sets selftest_abort and waits until it stops; returns whether one was","convention":"unknown"}
 {"address":"000184a4","name":"internal_pps_test","note":"counts the internal 1PPS over 1024 ticks; fails unless one to three came","convention":"unknown"}
 {"address":"000184ee","name":"lamp_test","note":"lights every lamp, then none, then each in turn, then restores them","convention":"unknown"}

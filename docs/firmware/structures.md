@@ -674,6 +674,26 @@ restored, but only their descriptors refer to them.  In
 `fconf_regs[3]` (`counter_set_sync`, `0x40a84`) while counting the
 count down.
 
+## The self-tests' results
+
+`selftest` (`0x100c24`, `selftest_results`, 68 bytes) holds a word for
+each self-test, nonzero if it failed: the reset code's CPU, RAM and UART
+tests, whose failures also light OP4 to OP6 (`outputs.md`, with the
+mask at `+0xc` that `duart_init` writes back), then the EEPROM, the
+FPGA's counters, the receiver's `@@Ca` result (`console.md`), the
+interpolator, the supplies, the internal reference and the QSPI's
+devices.  The RAM test's word has bit 0 for a pattern that failed, its
+bits at `+4`, and bit 1 for an address line that aliases, the lines at
+`+6`; the interpolator's calibration leaves at `+0x18` whether it
+succeeded and the tries it took, and its sample test both ends'
+readings at `+0x1a`.  `selftest_summary` makes the failures bits at
+`+0xe`.  `selftest_run` (`0x18a74`) runs test n, 0 to 13, keeps n at
+`+0x42`, and copies its result to `+0x36` and, for the RAM and
+interpolator tests, two details to `+0x3a`: what `*TST?` and
+`:DIAGnostic:TEST?` report.  The start-up clear begins at `0x100c3c`,
+within the record, so the reset code's results and the rest up to the
+interpolator's survive a warm restart.
+
 ## The GPS request ring
 
 `gpsm_task` keeps the GPS requests it has taken from `gpsx_exchange`

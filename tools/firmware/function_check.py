@@ -231,7 +231,7 @@ def functions(c: str, types: Types, conventions: dict, image: str | None) -> tup
     """Every C function of an image, the primary's or an overlay's, whose
     prototype the harness can lay out, and how many it cannot."""
     found, unrunnable = [], 0
-    for result, name, parameters in re.findall(r"^([A-Za-z_][\w \*]*?)\b(\w+)\n?\s*\(([^()]*)\);$", c, re.M):
+    for result, name, parameters in re.findall(r"^([A-Za-z_][\w \*]*?)\n?\b(\w+)\n?\s*\(([^()]*)\);$", c, re.M):
         convention = conventions.get(name)
         if parameters == "" or convention is None or overlay(convention) != image:
             continue

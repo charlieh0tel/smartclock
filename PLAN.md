@@ -1274,10 +1274,11 @@ view cannot drift apart.  The library, bottom up:
      routines take them, and `memory_allocate` and `memory_free` a
      `void *`: 65 casts of pointers as integers gone.  And a blind spot:
      the harness read only prototypes on one line, and Ghidra wraps a
-     long one, so 29 functions had never run; of them 24 agree, 4 the
-     image's own code faults on (skipped), and
-     `clamp_double_to_step_and_limits` differs in `float_status`
-     (1263 agreeing, 5 skipped, 10 known, 1 differing).
+     long one, after its result or before its parameters, so 43
+     functions had never run; of them 36 agree, 6 the image's own code
+     faults on (skipped), and `clamp_double_to_step_and_limits` differs
+     in `float_status` (1272 agreeing, 7 skipped, 10 known, 1
+     differing).
      Then the plan for regrouping all 1300 C functions, hand-written
      or not, by subject in four layers, platform, devices, services and
      applications, each calling only its own or a lower one:

@@ -12,3 +12,43 @@ float_add	sum
 double_add	sum
 float_subtract	difference
 double_subtract	difference
+# 0x30000 to 0x33fff: the EEPROM, its lock and records, the NV register, the logs (records.c)
+record_checksum	checksum	a record's byte sum and its complement
+lifetime_record_read	valid	1 when the record's checksum holds
+lifetime_record_write	written	1 when the EEPROM holds the record
+calibration_block_read	valid	true when the block's checksum holds
+save_calibration_block	saved	1 unless the EEPROM write failed
+parameter_record_read	valid	1 when the record's checksum holds
+save_parameter_record	written	true unless the EEPROM write failed
+eeprom_lock	locked	0 when the lock is held, else 1 or request_x's error
+eeprom_write_byte	written	true when the byte reads back
+eeprom_write_page	written	true when the bytes read back
+eeprom_write	written	1 unless a page's write failed
+log_page_checksum	checksum	an event log page's byte sum and its complement
+log_page_write	status	0, or 0xfffffffe when the EEPROM write failed
+log_page_read	status	0, or 0xff when the page's checksum fails
+sign_extend_bits	extended	the value sign-extended to a long
+log_erase	status	log_page_write's status
+log_erase_locked	status	log_erase's, or mutex_lock's error
+log_erase_checked	status	log_erase's, 0xff for another count, or mutex_lock's error
+log_entry_total	entries	the event log's entry count
+log_init	error	mutex_create's, mutex_lock's or mutex_unlock's error
+log_read	error	0, or mutex_lock's error
+log_write	status	log_append's, or mutex_lock's error
+log_event	status	log_write's, 0xfd for an unknown code
+log_page_free_entry	entry	the page's first entry with no format, or 0
+log_flush	status	log_page_write's status
+log_append	status	log_flush's, 0xfc when the log is full
+nv_checksum	checksum	an NV register record's byte sum and its complement
+nv_record_differs	differs	nonzero when the records differ but in sequence
+nv_save	saved	nonzero unless the EEPROM write failed
+nv_slot_valid	invalid	0 when slot nv_slot's record is good
+nv_load_slot	loaded	1 when slot nv_slot's record was good and loaded
+identification_record_read	valid	1 when the record's checksum holds
+identification_record_write	written	1 when the EEPROM holds the record
+reset_record_checksum	checksum	a reset-cause record's byte sum and its complement
+reset_record_valid	valid	1 when the record's checksum holds
+log_clear	failed	1 when a record's erasure failed
+log_count	count	the reset-cause log's entry count
+log_entry_text	clamped	1 when the number was clamped or the entry is unused
+reset_record_write	failed	1 when the log is full or the write failed

@@ -23032,11 +23032,11 @@ void ram_pattern_test_locked(void)
 void selftest_nv_slot(void)
 
 {
-  uint8_t bVar1;
+  uint8_t invalid;
   
   selftest.eeprom = 0;
-  bVar1 = nv_slot_valid();
-  selftest.eeprom = (uint16_t)bVar1;
+  invalid = nv_slot_valid();
+  selftest.eeprom = (uint16_t)invalid;
   return;
 }
 
@@ -33759,10 +33759,10 @@ void diag_dmes_all(uint32_t param_1)
 uint8_t diag_wr_eeprom(char *param_1,uint32_t param_2)
 
 {
-  uint8_t uVar1;
+  uint8_t written;
   
-  uVar1 = eeprom_write_byte(param_1,(char)param_2);
-  return uVar1;
+  written = eeprom_write_byte(param_1,(char)param_2);
+  return written;
 }
 
 
@@ -47560,19 +47560,19 @@ int32_t scpi_set_DIAGnostic_LOG_CLEar(void *parameters,void *response,void *call
 
 {
   int32_t iVar1;
-  int16_t sVar2;
+  int16_t status;
   uint32_t uVar3;
   
   if (*(int16_t *)((int32_t)parameters + 2) == -1) {
     iVar1 = return_zero();
-    sVar2 = log_erase_locked((uint8_t)iVar1);
+    status = log_erase_locked((uint8_t)iVar1);
   }
   else {
     iVar1 = return_zero();
-    sVar2 = log_erase_checked((int32_t)*(int16_t *)((int32_t)parameters + 4),(uint8_t)iVar1);
+    status = log_erase_checked((int32_t)*(int16_t *)((int32_t)parameters + 4),(uint8_t)iVar1);
   }
-  if ((sVar2 != 0) && (sVar2 != 0xfe)) {
-    if (sVar2 == 0xff) {
+  if ((status != 0) && (status != 0xfe)) {
+    if (status == 0xff) {
       iVar1 = return_zero();
       uVar3 = CONCAT22(9,(uint16_t)(uint8_t)iVar1 << 8);
     }
@@ -47593,11 +47593,11 @@ int32_t scpi_set_DIAGnostic_LOG_CLEar(void *parameters,void *response,void *call
 int32_t scpi_set_DIAGnostic_SLOG_CLEar(void *parameters,void *response,void *call)
 
 {
-  int16_t sVar2;
+  int16_t failed;
   int32_t iVar1;
   
-  sVar2 = log_clear();
-  if (sVar2 != 0) {
+  failed = log_clear();
+  if (failed != 0) {
     iVar1 = return_zero();
     status_report_from(0x10,(uint8_t)iVar1);
   }
@@ -47688,7 +47688,7 @@ void log_print(char param_1,write_function *write,printf_function *print)
 
 {
   int16_t sVar2;
-  int32_t iVar1;
+  int32_t count;
   int16_t sVar3;
   char acStack_a4 [80];
   char acStack_54 [80];
@@ -47697,8 +47697,8 @@ void log_print(char param_1,write_function *write,printf_function *print)
     sVar2 = log_entry_total((uint8_t *)0x0);
   }
   else {
-    iVar1 = log_count((uint8_t *)0x0);
-    sVar2 = (int16_t)iVar1;
+    count = log_count((uint8_t *)0x0);
+    sVar2 = (int16_t)count;
   }
   log_status(acStack_a4,param_1);
   (*print)("%s\r\n",acStack_a4);
@@ -53718,6 +53718,7 @@ int32_t scpi_query_SYSTem_PRINt_LENGth(void *parameters,void *response,void *cal
 
 
 /* 0003082e */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* the sum and its complement of an EEPROM record's bytes after the first two
    structures.md */
@@ -53745,6 +53746,7 @@ uint16_t record_checksum(void *record,uint16_t length)
   return uVar1;
 }
 
+#endif
 
 /* 0003086a */
 
@@ -53792,6 +53794,7 @@ void douglas_duration_changed(void)
 
 
 /* 00030a3e */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* reads the lifetime record from EEPROM 0x400060, or sets its defaults: 1994-01-01 and the EFC at
    mid-scale (a char result, 0x30aac) */
@@ -53823,8 +53826,10 @@ uint8_t lifetime_record_read(void)
   return uVar2;
 }
 
+#endif
 
 /* 00030ab4 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* writes the 32-byte checksummed lifetime record at EEPROM 0x400060, the date, its count and the
    EFC, when it has changed */
@@ -53851,8 +53856,10 @@ uint32_t lifetime_record_write(void)
   return uVar2;
 }
 
+#endif
 
 /* 00030b30 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* takes the GPS date into lifetime.date when time_valid, counts lifetime.count, takes pll.efc in
    normal PLL, and lifetime_record_write
@@ -53875,8 +53882,10 @@ void lifetime_event_run(void)
   return;
 }
 
+#endif
 
 /* 00030b66 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules
    its clock event */
@@ -53919,8 +53928,10 @@ void lifetime_update(int32_t param_1)
   return;
 }
 
+#endif
 
 /* 00030c1e */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* reads the time offset and TC from the calibration block at EEPROM 0x400080, or zeros if its
    checksum fails
@@ -53943,8 +53954,10 @@ bool calibration_block_read(void)
   return uVar1 == eeprom_calibration_block.checksum;
 }
 
+#endif
 
 /* 00030c60 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs
    from it, reporting status 0x10 if the EEPROM write fails
@@ -53953,7 +53966,7 @@ bool calibration_block_read(void)
 uint32_t save_calibration_block(uint32_t param_1)
 
 {
-  char cVar1;
+  char written;
   calibration_block block;
   
   if ((eeprom_calibration_block.time_offset != scpi_value_DIAGnostic_TOFFset) ||
@@ -53962,8 +53975,8 @@ uint32_t save_calibration_block(uint32_t param_1)
     block.time_offset = scpi_value_DIAGnostic_TOFFset;
     block.tc_coefficient = scpi_value_DIAGnostic_ROSCillator_TCOefficient;
     block.checksum = record_checksum(&block,0x40);
-    cVar1 = eeprom_write((char *)&eeprom_calibration_block,(char *)&block,0x40);
-    if (cVar1 == 0) {
+    written = eeprom_write((char *)&eeprom_calibration_block,(char *)&block,0x40);
+    if (written == 0) {
       status_report_from(0x10,(uint8_t)param_1);
       return 0;
     }
@@ -53971,8 +53984,10 @@ uint32_t save_calibration_block(uint32_t param_1)
   return 1;
 }
 
+#endif
 
 /* 00030d2e */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* reads DUART channel B's serial settings from the parameter record at EEPROM 0x400000, or sets
    their defaults if its checksum fails; always sets the SCI's defaults (a char result, 0x30de0)
@@ -54003,8 +54018,10 @@ uint8_t parameter_record_read(void)
   return !bVar2;
 }
 
+#endif
 
 /* 00030dea */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* writes the 16-byte checksummed parameter record at EEPROM 0x400000, reporting status 0x10 if it
    fails
@@ -54013,7 +54030,7 @@ uint8_t parameter_record_read(void)
 bool save_parameter_record(uint8_t param_1)
 
 {
-  char cVar1;
+  char written;
   parameter_record record;
   
   memset(&record,0xff,0x10);
@@ -54029,15 +54046,17 @@ bool save_parameter_record(uint8_t param_1)
   record.sci_xon_xoff = sci_settings.xon_xoff;
   record.sci_echo = sci_settings.echo;
   record.checksum = record_checksum(&record,0x10);
-  cVar1 = eeprom_write((char *)&eeprom_parameter_record,(char *)&record,0x10);
-  if (cVar1 == 0) {
+  written = eeprom_write((char *)&eeprom_parameter_record,(char *)&record,0x10);
+  if (written == 0) {
     status_report_from(0x10,param_1);
   }
-  return cVar1 != 0;
+  return written != 0;
 }
 
+#endif
 
 /* 00030ea0 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* copies duartb_settings_defaults over duartb_settings, duartb_settings_done, then
    save_parameter_record given the source
@@ -54052,8 +54071,10 @@ void duartb_settings_preset(int32_t index,int32_t source)
   return;
 }
 
+#endif
 
 /* 00030ed4 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* copies sci_settings_defaults over sci_settings, sci_settings_done, then save_parameter_record
    given the source
@@ -54068,6 +54089,7 @@ void sci_settings_preset(int32_t index,int32_t source)
   return;
 }
 
+#endif
 
 /* 00030f08 */
 
@@ -54082,6 +54104,7 @@ void eeprom_lock_init(void)
 
 
 /* 00030f10 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* creates eepx, "Unable to create eepx"
    structures.md */
@@ -54109,8 +54132,10 @@ void eeprom_init(void)
   return;
 }
 
+#endif
 
 /* 00030fae */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* "Unable to acquire eepx token"
    structures.md */
@@ -54155,8 +54180,10 @@ char eeprom_lock(void)
   return 0;
 }
 
+#endif
 
 /* 0003105e */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* "Unable to release eepx token"
    structures.md */
@@ -54199,8 +54226,10 @@ void eeprom_unlock(void)
   return;
 }
 
+#endif
 
 /* 00031128 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* the wr_eeprom word's: writes a byte, polls until it reads back, retries five times
    structures.md */
@@ -54208,15 +54237,15 @@ void eeprom_unlock(void)
 bool eeprom_write_byte(char *param_1,char param_2)
 
 {
-  char cVar1;
+  char locked;
   bool bVar2;
   int32_t iVar3;
   int16_t sVar4;
   
   bVar2 = false;
   iVar3 = 5;
-  cVar1 = eeprom_lock();
-  if (cVar1 == 0) {
+  locked = eeprom_lock();
+  if (locked == 0) {
     for (; (!bVar2 && (0 < iVar3)); iVar3 = iVar3 + -1) {
       *param_1 = param_2;
       for (sVar4 = 5000; (param_2 != *param_1 && (0 < sVar4)); sVar4 = sVar4 + -1) {
@@ -54238,8 +54267,10 @@ bool eeprom_write_byte(char *param_1,char param_2)
   return bVar2;
 }
 
+#endif
 
 /* 0003119e */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* writes within one 64-byte EEPROM page under eeprom_lock, five tries */
 
@@ -54292,8 +54323,10 @@ bool eeprom_write_page(char *param_1,char *param_2,uint16_t param_3)
   return false;
 }
 
+#endif
 
 /* 0003124a */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* writes data split at 64-byte page boundaries with eeprom_write_page; happening 'I' on a failure
     */
@@ -54301,7 +54334,7 @@ bool eeprom_write_page(char *param_1,char *param_2,uint16_t param_3)
 uint32_t eeprom_write(char *param_1,char *param_2,uint32_t param_3)
 
 {
-  char cVar1;
+  char written;
   uint32_t uVar2;
   
   while( true ) {
@@ -54312,8 +54345,8 @@ uint32_t eeprom_write(char *param_1,char *param_2,uint32_t param_3)
     if (param_3 < uVar2) {
       uVar2 = param_3;
     }
-    cVar1 = eeprom_write_page(param_1,param_2,(uint16_t)uVar2);
-    if (cVar1 == 0) break;
+    written = eeprom_write_page(param_1,param_2,(uint16_t)uVar2);
+    if (written == 0) break;
     param_3 = param_3 - uVar2;
     param_1 = param_1 + uVar2;
     param_2 = param_2 + uVar2;
@@ -54322,8 +54355,10 @@ uint32_t eeprom_write(char *param_1,char *param_2,uint32_t param_3)
   return 0;
 }
 
+#endif
 
 /* 0003137a */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* an event log page's checksum: the sum of its 0x3c bytes and its complement */
 
@@ -54342,6 +54377,7 @@ uint16_t log_page_checksum(log_page *page)
   return CONCAT11(bVar2,~bVar2);
 }
 
+#endif
 
 /* 000313a4 */
 
@@ -54352,16 +54388,16 @@ uint32_t log_page_write(uint8_t param_1,int16_t *param_2)
 
 {
   int32_t iVar1;
-  uint16_t uVar2;
-  char cVar3;
+  uint16_t checksum;
+  char written;
   
   iVar1 = memcmp((void *)((uint32_t)param_1 * 0x40 + 0x400d44),param_2 + 2,0x3c);
   if (iVar1 != 0) {
     *param_2 = *(int16_t *)((uint32_t)param_1 * 0x40 + 0x400d40) + 1;
-    uVar2 = log_page_checksum((log_page *)param_2);
-    param_2[1] = uVar2;
-    cVar3 = eeprom_write((char *)((uint32_t)param_1 * 0x40 + 0x400d40),(char *)param_2,0x40);
-    if (cVar3 == 0) {
+    checksum = log_page_checksum((log_page *)param_2);
+    param_2[1] = checksum;
+    written = eeprom_write((char *)((uint32_t)param_1 * 0x40 + 0x400d40),(char *)param_2,0x40);
+    if (written == 0) {
       return 0xfffffffe;
     }
   }
@@ -54377,7 +54413,7 @@ uint32_t log_page_write(uint8_t param_1,int16_t *param_2)
 uint32_t log_page_read(uint8_t param_1,uint32_t *param_2)
 
 {
-  uint16_t uVar1;
+  uint16_t checksum;
   int16_t sVar2;
   uint32_t uVar3;
   uint32_t *puVar4;
@@ -54393,8 +54429,8 @@ uint32_t log_page_read(uint8_t param_1,uint32_t *param_2)
     puVar4 = puVar4 + 1;
     puVar5 = puVar5 + 1;
   } while (sVar2 != -1);
-  uVar1 = log_page_checksum((log_page *)param_2);
-  if (uVar1 != *(uint16_t *)((int32_t)param_2 + 2)) {
+  checksum = log_page_checksum((log_page *)param_2);
+  if (checksum != *(uint16_t *)((int32_t)param_2 + 2)) {
     uVar3 = 0xff;
   }
   return uVar3;
@@ -54402,6 +54438,7 @@ uint32_t log_page_read(uint8_t param_1,uint32_t *param_2)
 
 
 /* 0003145a */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* sign-extends a value of so many bits to a long */
 
@@ -54430,6 +54467,7 @@ uint32_t sign_extend_bits(uint32_t param_1,uint8_t param_2)
   return param_1;
 }
 
+#endif
 
 /* 00031536 */
 
@@ -54438,16 +54476,16 @@ uint32_t sign_extend_bits(uint32_t param_1,uint8_t param_2)
 char log_erase(uint8_t param_1)
 
 {
-  char cVar1;
+  char status;
   int32_t iVar2;
   
   log_page_clear(&log_write_page);
   log_page_clear(&log_page_buffer);
   iVar2 = 0;
   do {
-    cVar1 = log_page_write((uint8_t)iVar2,(int16_t *)&log_write_page);
-    if (cVar1 != 0) {
-      if (cVar1 == -2) {
+    status = log_page_write((uint8_t)iVar2,(int16_t *)&log_write_page);
+    if (status != 0) {
+      if (status == -2) {
         status_report_from(0x10,param_1);
       }
       break;
@@ -54461,14 +54499,15 @@ char log_erase(uint8_t param_1)
   log_write_page_open = 0;
   log_full = 0;
   status_happening('!');
-  if (cVar1 == 0) {
+  if (status == 0) {
     log_append("Log cleared",0,0);
   }
-  return cVar1;
+  return status;
 }
 
 
 /* 000315e8 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* log_erase under log_mutex */
 
@@ -54485,8 +54524,10 @@ int32_t log_erase_locked(uint8_t param_1)
   return iVar1;
 }
 
+#endif
 
 /* 0003161a */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* erases the event log under log_mutex if its count is the one given, else 0xff */
 
@@ -54508,8 +54549,10 @@ int32_t log_erase_checked(int32_t param_1,uint8_t param_2)
   return iVar1;
 }
 
+#endif
 
 /* 00031662 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* the event log's entry count, and whether it is full */
 
@@ -54522,8 +54565,10 @@ int32_t log_entry_total(uint8_t *param_1)
   return (int32_t)log_entries;
 }
 
+#endif
 
 /* 0003167c */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* creates log_mutex, "logr", and finds the event log's page to write next among 0x4b
    structures.md */
@@ -54533,7 +54578,7 @@ int32_t log_init(void)
 {
   log_entry *plVar1;
   int32_t iVar2;
-  int32_t iVar3;
+  int32_t status;
   
   iVar2 = mutex_create("logr",&log_mutex);
   if ((iVar2 == 0) && (iVar2 = mutex_lock(&log_mutex), iVar2 == 0)) {
@@ -54542,10 +54587,10 @@ int32_t log_init(void)
     log_page_number = -1;
     iVar2 = 0;
     plVar1 = log_cursor;
-    while (log_cursor = plVar1, iVar3 = log_page_read((uint8_t)iVar2,(uint32_t *)&log_write_page),
-          iVar3 != 0xff) {
-      if (iVar3 != 0) {
-        return iVar3;
+    while (log_cursor = plVar1, status = log_page_read((uint8_t)iVar2,(uint32_t *)&log_write_page),
+          status != 0xff) {
+      if (status != 0) {
+        return status;
       }
       log_cursor = log_page_free_entry(&log_write_page);
       if ((log_cursor != (log_entry *)0x0) ||
@@ -54567,8 +54612,10 @@ LAB_00031708:
   return iVar2;
 }
 
+#endif
 
 /* 00031762 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* formats a log entry, "Log %03d:%04d%02d%02d.%02d:%02d:%02d"
    structures.md */
@@ -54655,6 +54702,7 @@ int32_t log_read(int32_t param_1,char *param_2,char *param_3)
   return iVar4;
 }
 
+#endif
 
 /* 0003195a */
 
@@ -54677,6 +54725,7 @@ int32_t log_write(char *format,...)
 
 
 /* 000319a2 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* log_write of one of 27 fixed messages by code, "Log cleared", "Power on", "Survey mode
    started"... */
@@ -54777,8 +54826,10 @@ int32_t log_event(uint8_t code)
   return iVar1;
 }
 
+#endif
 
 /* 00031ba2 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* logs the time the first satellite was tracked
    log_write("First satellite tracked at %04d%02d%02d.%02d:%02d:%02d") */
@@ -54790,6 +54841,7 @@ void log_first_satellite(uint32_t param_1,uint32_t param_2)
   return;
 }
 
+#endif
 
 /* 00031bba */
 
@@ -54805,6 +54857,7 @@ void log_page_clear(void *param_1)
 
 
 /* 00031bd0 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* the first entry of a page with no format
    structures.md */
@@ -54825,26 +54878,30 @@ log_entry * log_page_free_entry(log_page *page)
   return (log_entry *)plVar1;
 }
 
+#endif
 
 /* 00031bf6 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* writes the current event log page */
 
 uint8_t log_flush(void)
 
 {
-  uint8_t uVar1;
+  uint8_t status;
   
   log_write_page_open = 0;
   if (log_page_number == log_write_page_number) {
     memcpy(&log_page_buffer,&log_write_page,0x40);
   }
-  uVar1 = log_page_write((uint8_t)log_write_page_number,(int16_t *)&log_write_page);
-  return uVar1;
+  status = log_page_write((uint8_t)log_write_page_number,(int16_t *)&log_write_page);
+  return status;
 }
 
+#endif
 
 /* 00031c42 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* adds an entry with its date and time to the event log, writing the page; reports event space past
    180 entries */
@@ -54881,6 +54938,7 @@ uint32_t log_append(char *param_1,int32_t param_2,int32_t param_3)
   return uVar1;
 }
 
+#endif
 
 /* 00031ff8 */
 
@@ -55317,6 +55375,7 @@ clamp_double_to_limits(double *param_1,double *param_2,double *param_3,uint32_t 
 
 
 /* 000327f4 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* clear_nv erases slots 0 and 1 with it
    structures.md */
@@ -55330,8 +55389,10 @@ void nv_slot_erase(uint8_t param_1)
   return;
 }
 
+#endif
 
 /* 0003281a */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* the clear_nv word's
    structures.md */
@@ -55344,8 +55405,10 @@ void clear_nv(void)
   return;
 }
 
+#endif
 
 /* 0003282c */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* loads slot 0, else slot 1, else copies nv_settings_defaults over nv_settings, erases the older
    slot and saves
@@ -55354,16 +55417,16 @@ void clear_nv(void)
 void nv_restore(void)
 
 {
-  char cVar1;
+  char loaded;
   uint8_t bVar2;
   
   selftest.eeprom = 0;
   nv_slot = 0;
-  cVar1 = nv_load_slot();
-  if (cVar1 == 0) {
+  loaded = nv_load_slot();
+  if (loaded == 0) {
     nv_slot = 1;
-    cVar1 = nv_load_slot();
-    if (cVar1 == 0) {
+    loaded = nv_load_slot();
+    if (loaded == 0) {
       selftest.eeprom = 1;
       memcpy(&nv_settings,&nv_settings_defaults,0xc5);
       if ((nv_records[0].sequence == -1) ||
@@ -55387,8 +55450,10 @@ void nv_restore(void)
   return;
 }
 
+#endif
 
 /* 000328e0 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* the sum of a record's bytes 8 to 0x7f
    structures.md */
@@ -55411,8 +55476,10 @@ uint16_t nv_checksum(nv_record *record)
   return CONCAT11(bVar1,~bVar1);
 }
 
+#endif
 
 /* 0003290e */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* compares two records, nonzero when they differ
    structures.md */
@@ -55441,8 +55508,10 @@ uint32_t nv_record_differs(int32_t *param_1,int32_t *param_2)
   return 1;
 }
 
+#endif
 
 /* 0003293a */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* packs the settings into a 0x80-byte NV register record and writes it to slot nv_slot when it
    differs; "Warning: Entire nv register is being used"
@@ -55549,8 +55618,10 @@ char nv_save(uint8_t param_1)
   return cVar5;
 }
 
+#endif
 
 /* 00032b5e */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* 0 if the current NV slot holds S, a good checksum and the firmware revision 3543B */
 
@@ -55571,8 +55642,10 @@ uint8_t nv_slot_valid(void)
   return 1;
 }
 
+#endif
 
 /* 00032bc2 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* loads the settings from slot nv_slot when its record is good
    structures.md */
@@ -55659,6 +55732,7 @@ uint32_t nv_load_slot(void)
   return uVar5;
 }
 
+#endif
 
 /* 00032e26 */
 
@@ -55694,6 +55768,7 @@ uint64_t load_double_param(uint64_t *param_1)
 
 
 /* 00032e40 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* sets the *IDN? model to Z3805A */
 
@@ -55704,8 +55779,10 @@ void idn_model_default(void)
   return;
 }
 
+#endif
 
 /* 00032e5c */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* reads the model, serial and suffix from the identification record at EEPROM 0x400010, or their
    defaults */
@@ -55739,8 +55816,10 @@ uint8_t identification_record_read(void)
   return uVar3;
 }
 
+#endif
 
 /* 00032f00 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* writes the model, serial and suffix to the identification record when they have changed */
 
@@ -55748,7 +55827,7 @@ uint32_t identification_record_write(void)
 
 {
   int32_t iVar1;
-  uint32_t uVar2;
+  uint32_t written;
   identification_record record;
   
   iVar1 = strncmp(eeprom_identification_record.model,idn_model,0x12);
@@ -55764,12 +55843,14 @@ uint32_t identification_record_write(void)
   record.suffix = idn_suffix;
   strncpy(record.tag,"S",3);
   record.checksum = record_checksum(&record,0x30);
-  uVar2 = eeprom_write((char *)&eeprom_identification_record,(char *)&record,0x30);
-  return uVar2;
+  written = eeprom_write((char *)&eeprom_identification_record,(char *)&record,0x30);
+  return written;
 }
 
+#endif
 
 /* 00032ffa */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* a reset-cause record's checksum: the sum of its 0x58 bytes and its complement */
 
@@ -55789,8 +55870,10 @@ uint16_t reset_record_checksum(reset_record *record)
   return CONCAT11(bVar1,~bVar1);
 }
 
+#endif
 
 /* 00033028 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* 1 if a reset-cause record's checksum holds (a char result, 0x33058) */
 
@@ -55803,8 +55886,10 @@ uint8_t reset_record_valid(uint8_t index)
   return uVar1 == eeprom_reset_records[index].checksum;
 }
 
+#endif
 
 /* 0003305e */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* clears the event log
    "Log cleared" */
@@ -55812,8 +55897,8 @@ uint8_t reset_record_valid(uint8_t index)
 int32_t log_clear(void)
 
 {
-  uint8_t uVar1;
-  char cVar2;
+  uint8_t valid;
+  char written;
   int32_t iVar3;
   int32_t iVar4;
   char local_e [2];
@@ -55825,10 +55910,10 @@ int32_t log_clear(void)
   local_e[1] = 0;
   iVar3 = 0;
   do {
-    uVar1 = reset_record_valid((uint8_t)iVar3);
-    if (uVar1 != 0) {
-      cVar2 = eeprom_write((char *)&eeprom_reset_records[iVar3].checksum,local_e,2);
-      if (cVar2 == 0) {
+    valid = reset_record_valid((uint8_t)iVar3);
+    if (valid != 0) {
+      written = eeprom_write((char *)&eeprom_reset_records[iVar3].checksum,local_e,2);
+      if (written == 0) {
         iVar4 = 1;
       }
     }
@@ -55842,8 +55927,10 @@ int32_t log_clear(void)
   return iVar4;
 }
 
+#endif
 
 /* 000330ee */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* "Log status: %-3d entries"; sets *full when more than 31
    structures.md */
@@ -55857,22 +55944,24 @@ int32_t log_count(uint8_t *full)
   return (int32_t)log_entry_count;
 }
 
+#endif
 
 /* 00033114 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* counts the valid reset-cause records into log_entry_count */
 
 void reset_record_count(void)
 
 {
-  uint8_t uVar1;
+  uint8_t valid;
   uint8_t index;
   
   log_entry_count = 0;
   index = 0;
   do {
-    uVar1 = reset_record_valid(index);
-    if (uVar1 == 0) {
+    valid = reset_record_valid(index);
+    if (valid == 0) {
       return;
     }
     log_entry_count = log_entry_count + 1;
@@ -55881,8 +55970,10 @@ void reset_record_count(void)
   return;
 }
 
+#endif
 
 /* 0003313c */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* one of 32 log entries as "Log %03d:%04d%02d%02d.%02d:%02d:%02d", or "Unused" */
 
@@ -55892,7 +55983,7 @@ uint32_t log_entry_text(int32_t param_1,char *param_2,char *param_3)
   time_of_day tVar1;
   uint32_t uVar2;
   char cVar3;
-  uint8_t uVar4;
+  uint8_t valid;
   int32_t iVar5;
   uint32_t uVar6;
   char *pcVar7;
@@ -55908,8 +55999,8 @@ uint32_t log_entry_text(int32_t param_1,char *param_2,char *param_3)
   }
   uVar6 = 1;
 LAB_00033166:
-  uVar4 = reset_record_valid((uint8_t)iVar5);
-  if (uVar4 == 0) {
+  valid = reset_record_valid((uint8_t)iVar5);
+  if (valid == 0) {
     uVar6 = 1;
     if (param_2 != (char *)0x0) {
       pcVar7 = "Unused";
@@ -55940,8 +56031,10 @@ LAB_00033166:
   return uVar6;
 }
 
+#endif
 
 /* 00033238 */
+#if 0 /* the decompiler's reading; rewritten in records.c */
 
 /* writes the next 0x5c-byte reset-cause record at EEPROM 0x4001c0, its time and text, with its
    checksum */
@@ -55949,20 +56042,20 @@ LAB_00033166:
 uint32_t reset_record_write(uint32_t date,time_of_day time,char *text)
 
 {
-  uint32_t uVar1;
-  char cVar2;
+  uint32_t count;
+  char written;
   uint8_t local_62 [2];
   reset_record record;
   
-  uVar1 = log_count(local_62);
+  count = log_count(local_62);
   if (local_62[0] == 0) {
     record.date = date;
     record.time = time;
     strncpy(record.text,text,0x50);
     record.checksum = reset_record_checksum(&record);
-    record.sequence = eeprom_reset_records[uVar1 & 0xff].sequence + 1;
-    cVar2 = eeprom_write((char *)(eeprom_reset_records + (uVar1 & 0xff)),(char *)&record,0x5c);
-    if (cVar2 != 0) {
+    record.sequence = eeprom_reset_records[count & 0xff].sequence + 1;
+    written = eeprom_write((char *)(eeprom_reset_records + (count & 0xff)),(char *)&record,0x5c);
+    if (written != 0) {
       log_entry_count = log_entry_count + 1;
       return 0;
     }
@@ -55970,6 +56063,7 @@ uint32_t reset_record_write(uint32_t date,time_of_day time,char *text)
   return 1;
 }
 
+#endif
 
 /* 00040000 */
 
@@ -59117,7 +59211,7 @@ uint32_t enter_holdover(void)
 
 {
   int32_t iVar1;
-  uint32_t uVar2;
+  uint32_t status;
   uint8_t code;
   
   if (pll.stage != PLL_STAGE_HOLDOVER_RECOVERY) {
@@ -59193,8 +59287,8 @@ override_jmp_000439f2_case_1:
     }
   }
 LAB_00043a88:
-  uVar2 = log_event(code);
-  return uVar2;
+  status = log_event(code);
+  return status;
 }
 
 
@@ -91237,3 +91331,5 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 
 #include "../rewritten/z3805a-3543b/clock.c"
+
+#include "../rewritten/z3805a-3543b/records.c"

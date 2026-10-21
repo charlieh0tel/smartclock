@@ -1205,6 +1205,11 @@ view cannot drift apart.  The library, bottom up:
      decompiler's `undefined4` and `uint` and C's `int` and `long`, is
      written as the `<stdint.h>` type it is here, `uint32_t` and
      `int32_t`; `char` stays for text.
+     Then the rewrite, by agents a subsystem each: `records.c`, the
+     EEPROM, the NV register, the parameter, identification, lifetime and
+     calibration records and the two logs, 47 functions written by hand,
+     each agreeing (`log_page_read` and `log_page_write` wait on their
+     prototypes, which should take a `log_page *`).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

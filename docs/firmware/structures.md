@@ -713,10 +713,12 @@ says it changed.  `nv_restore` (`0x3282c`) loads slot 0, else slot 1
 (`nv_load_slot`, `0x32bc2`, which leaves the packed bytes it read,
 counted from `+0x10`, in `nv_numeric_bytes_loaded`, `0x101f64`, after
 the numeric values and in `nv_bytes_loaded`, `0x101f66`, after all;
-nothing reads either); when neither is good it copies
-`nv_settings_defaults` (`0x30966`) over the settings, takes the slot
-with the older sequence number, erases it (`nv_slot_erase`, `0x327f4`)
-and saves.  `clear_nv` erases both slots.
+nothing reads either), erasing slot 0 (`nv_slot_erase`, `0x327f4`) when
+it takes slot 1; when neither is good it copies `nv_settings_defaults`
+(`0x30966`, 0xc5 bytes) over the settings, saves them into slot 0 when
+slot 0 is erased or no newer than slot 1, else into slot 1, erases the
+other slot (`0x32898` to `0x328bc`), and reports "Configuration memory
+lost" (status 0x11).  `clear_nv` erases both slots.
 
 Each value a descriptor in `nv_save`'s two tables points at is a field
 of `nv_settings`; the descriptors are the SCPI setters' own, so each

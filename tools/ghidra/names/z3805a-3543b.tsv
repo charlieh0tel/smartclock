@@ -821,12 +821,12 @@ installer::0x1028d4	function	installer_kernel_region_init	psos.md	the installer'
 installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the installer's copy of kernel_return_from_interrupt, at 0x15f8a plus 0xeca06, byte for byte		convention=exception; confidence=read; family=psos
 #
 # the SCPI parser's parameters and responses, docs/scpi/README.md
-0x2609a	function	scpi_number_to_short	docs/scpi/README.md, run	a parsed number as a signed 16-bit value, -11 out of range
-0x26140	function	scpi_number_to_unsigned_short	docs/scpi/README.md, run	its magnitude as an unsigned 16-bit value
-0x261e4	function	scpi_number_to_long	docs/scpi/README.md, run	as a signed 32-bit value
-0x2628a	function	scpi_number_to_unsigned_long	docs/scpi/README.md, run	its magnitude as an unsigned 32-bit value
-0x254ba	function	scpi_number_to_double	docs/scpi/README.md, run	as a double
-0x2632c	function	scpi_number_to_boolean	docs/scpi/README.md, read	nonzero after rounding
+0x2609a	function	scpi_number_to_short	docs/scpi/README.md, run	a parsed number as a signed 16-bit value, -11 out of range	int scpi_number_to_short(char *number, int16_t *value, int scale)
+0x26140	function	scpi_number_to_unsigned_short	docs/scpi/README.md, run	its magnitude as an unsigned 16-bit value	int scpi_number_to_unsigned_short(char *number, uint16_t *value, int scale)
+0x261e4	function	scpi_number_to_long	docs/scpi/README.md, run	as a signed 32-bit value	int scpi_number_to_long(char *number, int32_t *value, int scale)
+0x2628a	function	scpi_number_to_unsigned_long	docs/scpi/README.md, run	its magnitude as an unsigned 32-bit value	int scpi_number_to_unsigned_long(char *number, uint32_t *value, int scale)
+0x254ba	function	scpi_number_to_double	docs/scpi/README.md, run	as a double	int scpi_number_to_double(char *number, double *value, int scale)
+0x2632c	function	scpi_number_to_boolean	docs/scpi/README.md, read	nonzero after rounding	void scpi_number_to_boolean(char *number, uint16_t *value, int scale)
 0x25ea6	function	scpi_parse_short	docs/scpi/README.md, read	the suffix by scpi_apply_suffix, then scpi_number_to_short
 0x25ee6	function	scpi_parse_unsigned_short	docs/scpi/README.md, read	the suffix, then scpi_number_to_unsigned_short
 0x25f26	function	scpi_parse_long	docs/scpi/README.md, read	the suffix, then scpi_number_to_long

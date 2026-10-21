@@ -68,7 +68,7 @@
 {"address":"0001213a","name":"crc16_ccitt","note":"the reflected CRC-16, polynomial 0x8408 from 0xffff, over bytes; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":2}]}
 {"address":"0001219a","name":"isqrt16","note":"a 16-bit integer square root; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00012206","name":"round_shift_right","note":"an int shifted right with rounding, half away from zero; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"0001223c","name":"double_round_to_long","note":"a double rounded half away from zero to a long, saturating","convention":"unknown","stack":[{"offset":4,"size":8}]}
+{"address":"0001223c","name":"double_round_to_long","note":"a double rounded half away from zero to a long, saturating","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000122d0","name":"round_divide","note":"an int divided with rounding, half away from zero; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000122f6","name":"double_decimal_exponent_rounded","note":"the decimal exponent of a double's magnitude rounded, by bisection over 5e-30 to 5e30 at 0x1234c; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0001258a","name":"double_decimal_exponent","note":"floor(log10) of a double's magnitude, by bisection over power_of_ten_double's table, 1e-30 to 1e30 at 0x12614; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
@@ -78,7 +78,7 @@
 {"address":"00012af2","name":"random_dither","note":"a small signed random value: rand, shaped by dither_table","convention":"unknown"}
 {"address":"00012bb2","name":"start_nothing","note":"does nothing; primary_start calls it between gpt_init and system_init","convention":"unknown"}
 {"address":"00012bb4","name":"system_init","note":"the start-up's setup: status, NV settings restored, debug flags, the battery-backed RAM's checksum and the reset's cause","convention":"unknown"}
-{"address":"00012d6e","name":"primary_start","note":"the reset's path: services the watchdog, sets the QSM and GPT up, runs system_init and starts the kernel with trap #6","convention":"unknown"}
+{"address":"00012d6e","name":"primary_start","note":"the reset's path: services the watchdog, sets the QSM and GPT up, runs system_init and starts the kernel with trap #6","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00012db6","name":"pps_interrupt","note":"the 1PPS interrupt's work: ticks the clock, updates the time code and posts the time to pps_exchange","convention":"unknown"}
 {"address":"00012e04","name":"primary_user_81","convention":"exception","confidence":"derived","family":"exception"}
 {"address":"00012e24","name":"pps_init","note":"\"Pps_init error %#04x\" prints its result","convention":"unknown"}
@@ -99,7 +99,7 @@
 {"address":"00013378","name":"set_interrupt_mask","note":"sets SR's interrupt mask from the argument, returns the old SR","convention":"unknown","stack":[{"offset":4,"size":2}]}
 {"address":"0001339e","name":"task_set_priority","note":"sets a task's priority, returning the old","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1}]}
 {"address":"000133e2","name":"float_absolute_on_stack","note":"absolute value of the float on the stack","convention":"c","confidence":"documented","out":[{"register":"D0","type":"float"}],"stack":[{"offset":4,"size":4}]}
-{"address":"000133f2","name":"double_abs","note":"a double's magnitude; called by nothing","convention":"unknown","stack":[{"offset":4,"size":8}]}
+{"address":"000133f2","name":"double_abs","note":"a double's magnitude; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00013406","name":"rotate_left","note":"a long rotated left","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1}]}
 {"address":"0001341a","name":"primary_trap_7","convention":"exception","confidence":"derived","family":"exception"}
 {"address":"00013422","name":"enter_supervisor","note":"trap #7; returns the caller's status register in D0","convention":"unknown"}
@@ -273,7 +273,7 @@
 {"address":"0001747a","name":"psos_io_control","note":"I/O function 5, dev_ctrl","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0001749e","name":"cpu_register_test","note":"selftest_cpu's register test: 0x55555555 and 0xaaaaaaaa through every data and address register; 1 at 0x100c24 on a failure","convention":"unknown"}
 {"address":"00017628","name":"ram_pattern_test","note":"the RAM self-test's pattern pass, saving and restoring each block around 0xaaaaaaaa and its complement","convention":"unknown"}
-{"address":"00017750","name":"rom_lane_checksum","note":"sums a ROM's even and odd byte lanes, one checksum for each chip; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":10,"size":2}]}
+{"address":"00017750","name":"rom_lane_checksum","note":"sums a ROM's even and odd byte lanes, one checksum for each chip; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000177ac","name":"selftest_run_all","note":"runs each self-test in the list at 0x17fe0","convention":"unknown"}
 {"address":"000177cc","name":"selftest_run_all_counted","note":"runs each self-test in the list at 0x17fe0, counting watchdog_pll before each","convention":"unknown"}
 {"address":"000177fa","name":"selftest_summary","note":"the self-test's failure flags as bits; reports status event 4 on a failure and 5 on none","convention":"unknown"}
@@ -310,7 +310,7 @@
 {"address":"00018918","name":"fpga_load_test","note":"loads the FPGA and checks it","convention":"unknown"}
 {"address":"0001895e","name":"qspi_efc_test","note":"writes 0x5555 and 0xaaaa to QSPI device 7, the EFC DAC, and reads each back","convention":"unknown"}
 {"address":"000189f2","name":"qspi_tests_run","note":"runs the ADC, hex DAC, FPGA and EFC tests with interrupts held off, a failure bit for each","convention":"unknown"}
-{"address":"00018a74","name":"selftest_run","note":"runs self-test n, 0 to 13, through selftest_execute and copies its result cells","convention":"unknown","stack":[{"offset":7,"size":1}]}
+{"address":"00018a74","name":"selftest_run","note":"runs self-test n, 0 to 13, through selftest_execute and copies its result cells","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00018c48","name":"ram_pattern_test_locked","note":"ram_pattern_test with interrupts held off, unless the self-test is aborted","convention":"unknown"}
 {"address":"00018c74","name":"selftest_nv_slot","note":"the EEPROM self-test's settings check: nv_slot_valid's result at 0x100c34","convention":"unknown"}
 {"address":"00018c8e","name":"selftest_qspi_run","note":"clears the QSPI failure bits and runs the tests","convention":"unknown"}
@@ -502,10 +502,10 @@
 {"address":"0001a278","name":"forth_store_iodev","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001ad20","name":"forth_user","convention":"pforth","confidence":"assumed","family":"pforth"}
 {"address":"0001ad28","name":"pforth_dictionary_init","note":"allocates the dictionary's segment through trap #3 and clears its pointers","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"0001ad8a","name":"pforth_define_word","note":"adds a word to the dictionary: links it, copies its name and compiles its code","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":18,"size":2}]}
+{"address":"0001ad8a","name":"pforth_define_word","note":"adds a word to the dictionary: links it, copies its name and compiles its code","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"0001ae36","name":"pforth_link_word","note":"links the word at A4 to the latest in the dictionary","convention":"register","confidence":"read","in":[{"register":"A4","type":"void *","name":"word"}],"family":"pforth"}
 {"address":"0001ae46","name":"console_set_halt_hook","note":"stores the routine the console calls on halt","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"0001ae50","name":"console_set_device","note":"stores the console's device, 0x200 for device 2","convention":"unknown","stack":[{"offset":6,"size":2}]}
+{"address":"0001ae50","name":"console_set_device","note":"stores the console's device, 0x200 for device 2","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001ae5c","name":"console_task_create","note":"creates the console's task, p4th, through trap #3","convention":"unknown"}
 {"address":"0001af80","name":"string_device_open","note":"the console string device's open and close: do nothing","convention":"register","confidence":"read","out":[{"register":"D7","type":"int","name":"error"}],"family":"device"}
 {"address":"0001af84","name":"string_device_init","note":"the console string device's init: clears the string at 0x100ba8","convention":"register","confidence":"read","out":[{"register":"D7","type":"int","name":"error"}],"family":"device"}
@@ -521,16 +521,16 @@
 {"address":"0001b0d4","name":"diag_adc_ant_curr","convention":"unknown"}
 {"address":"0001b0f6","name":"diag_pr_adc_avg","convention":"unknown"}
 {"address":"0001b1d0","name":"diag_pr_hold_cause","convention":"unknown"}
-{"address":"0001b282","name":"diag_efc_write","convention":"unknown","stack":[{"offset":6,"size":2}]}
-{"address":"0001b292","name":"diag_hdac_write","convention":"unknown","stack":[{"offset":7,"size":1},{"offset":11,"size":1}]}
-{"address":"0001b2a8","name":"diag_hdac_all","convention":"unknown","stack":[{"offset":7,"size":1},{"offset":11,"size":1},{"offset":15,"size":1},{"offset":19,"size":1},{"offset":23,"size":1},{"offset":27,"size":1}]}
+{"address":"0001b282","name":"diag_efc_write","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"0001b292","name":"diag_hdac_write","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"0001b2a8","name":"diag_hdac_all","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4}]}
 {"address":"0001b2d8","name":"diag_clk_synch","convention":"unknown","stack":[{"offset":7,"size":1},{"offset":8,"size":4}]}
 {"address":"0001b2ec","name":"diag_sync_imm","convention":"unknown"}
 {"address":"0001b2fe","name":"diag_loop_time","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001b310","name":"diag_pll_rep","convention":"unknown"}
 {"address":"0001b3de","name":"diag_efc_rep","convention":"unknown"}
 {"address":"0001b430","name":"diag_get_time","convention":"unknown"}
-{"address":"0001b4a0","name":"diag_set_time","convention":"unknown","stack":[{"offset":6,"size":2},{"offset":11,"size":1},{"offset":15,"size":1},{"offset":19,"size":1},{"offset":23,"size":1},{"offset":27,"size":1}]}
+{"address":"0001b4a0","name":"diag_set_time","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4}]}
 {"address":"0001b504","name":"diag_print_stat","convention":"unknown"}
 {"address":"0001b50e","name":"diag_print_vis","convention":"unknown"}
 {"address":"0001b518","name":"diag_pr_avg","convention":"unknown"}
@@ -567,12 +567,12 @@
 {"address":"0001b73e","name":"diag_clr_gps_debug","convention":"unknown"}
 {"address":"0001b746","name":"diag_pr_gps_cmds","convention":"unknown"}
 {"address":"0001b74e","name":"diag_disable_gps_cmds","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"0001b766","name":"diag_pstat","convention":"unknown","stack":[{"offset":7,"size":1}]}
+{"address":"0001b766","name":"diag_pstat","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001b77c","name":"diag_efc_wr","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001b79a","name":"diag_pr_efc","convention":"unknown"}
 {"address":"0001b7bc","name":"diag_lock","convention":"unknown"}
 {"address":"0001b7c6","name":"diag_pll_restart","convention":"unknown"}
-{"address":"0001b7d0","name":"diag_pll_debug","convention":"unknown","stack":[{"offset":7,"size":1}]}
+{"address":"0001b7d0","name":"diag_pll_debug","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001b7dc","name":"diag_phase_off","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001b7ee","name":"print_gps_init_state","note":"prints the GPS initialization sequence's state","convention":"unknown"}
 {"address":"0001b99c","name":"print_leap_check_state","note":"prints the leap second check's state","convention":"unknown"}
@@ -590,13 +590,13 @@
 {"address":"0001be54","name":"diag_dmes_spoo","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001be5e","name":"diag_dmes_curv","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001be68","name":"diag_dmes_all","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"0001be84","name":"diag_wr_eeprom","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":11,"size":1}]}
+{"address":"0001be84","name":"diag_wr_eeprom","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0001be9e","name":"diag_clear_nv","convention":"unknown"}
 {"address":"0001bea6","name":"diag_debug_psos","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001bebe","name":"diag_doven","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001bed8","name":"diag_cal","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001c07c","name":"diag_crash","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"0001c108","name":"diag_leapsec","convention":"unknown","stack":[{"offset":7,"size":1},{"offset":8,"size":4}]}
+{"address":"0001c108","name":"diag_leapsec","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0001c124","name":"diag_es_ascii","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0001c13c","name":"diag_fp_u","convention":"unknown"}
 {"address":"0001c18e","name":"diag_words_define","note":"defines every diagnostic word in the table at 0x1c8ac","convention":"unknown"}
@@ -742,24 +742,24 @@
 {"address":"000251e4","name":"scpi_scale_by_power_of_ten","note":"the double in D0:D1 times 10 to the word at A0 less 16, by the tables at 0x256ae and 0x25b36; the sign from the word 10 bytes before; -9 beyond 309","convention":"register","confidence":"run","in":[{"register":"D0:D1","type":"double","name":"value"},{"register":"A0","type":"short *","name":"exponent"},{"register":"A1","type":"double *","name":"powers"}],"out":[{"register":"D0:D1","type":"double"}],"returns":"ccr","error":[{"register":"D0.w","value":"-9","meaning":"beyond 309"}],"family":"scpi-engine"}
 {"address":"000252bc","name":"scpi_double_multiply","note":"D0:D1 times D2:D3, the engine's own IEEE multiply","convention":"register","confidence":"run","in":[{"register":"D0:D1","type":"double","name":"a"},{"register":"D2:D3","type":"double","name":"b"}],"out":[{"register":"D0:D1","type":"double"}],"returns":"ccr","error":[{"register":"D2","value":"-2","meaning":"underflow"},{"register":"D2","value":"-1","meaning":"overflow"}],"preserves":["A0"],"family":"scpi-engine"}
 {"address":"00025468","name":"scpi_double_multiply_short","note":"scpi_double_multiply's path for an operand whose mantissa fits in 16 bits","convention":"other","confidence":"read","family":"scpi-engine"}
-{"address":"000254ba","name":"scpi_number_to_double","note":"as a double","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
+{"address":"000254ba","name":"scpi_number_to_double","note":"as a double","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"000254fe","name":"scpi_number_to_bcd","note":"a parsed number at A0 packed into the BCD record at A1, its exponent plus D0 plus 16 at +0xa; -1 beyond 309","convention":"register","confidence":"read","in":[{"register":"A0","type":"char *","name":"number"},{"register":"D0","type":"short","name":"scale"},{"register":"A1","type":"char *","name":"bcd"}],"out":[{"register":"D0","type":"int","name":"status"}],"error":[{"register":"D0","value":"-1","meaning":"exponent beyond 309"}],"family":"scpi-engine"}
 {"address":"0002553a","name":"scpi_real_to_text","note":"a double as NR3 text, so many significant digits and no digit below the resolution given; -308 keeps them all","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":2},{"offset":18,"size":2},{"offset":20,"size":2},{"offset":22,"size":1}]}
-{"address":"00025d70","name":"scpi_parse_string","note":"the string's pointer and length","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"00025d8c","name":"scpi_parse_boolean","note":"ON as 1, OFF as 0","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"00025de0","name":"scpi_parse_boolean_number","note":"a number as a boolean by scpi_number_to_boolean; -9 with a suffix","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"00025e42","name":"scpi_parse_choice","note":"the index of the keyword in the node's list, or the value mapped to it; -28 with no list, -27 for no match","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
-{"address":"00025ea6","name":"scpi_parse_short","note":"the suffix by scpi_apply_suffix, then scpi_number_to_short","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
-{"address":"00025ee6","name":"scpi_parse_unsigned_short","note":"the suffix, then scpi_number_to_unsigned_short","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
-{"address":"00025f26","name":"scpi_parse_long","note":"the suffix, then scpi_number_to_long","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
-{"address":"00025f66","name":"scpi_parse_unsigned_long","note":"the suffix, then scpi_number_to_unsigned_long","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
-{"address":"00025fa6","name":"scpi_parse_float","note":"the suffix, then a float within 9.9e37, else -11","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
-{"address":"0002602e","name":"scpi_parse_double","note":"the suffix, then a double within 9.9e37, else -11","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
-{"address":"0002609a","name":"scpi_number_to_short","note":"a parsed number as a signed 16-bit value, -11 out of range","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
-{"address":"00026140","name":"scpi_number_to_unsigned_short","note":"its magnitude as an unsigned 16-bit value","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
-{"address":"000261e4","name":"scpi_number_to_long","note":"as a signed 32-bit value","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
-{"address":"0002628a","name":"scpi_number_to_unsigned_long","note":"its magnitude as an unsigned 32-bit value","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
-{"address":"0002632c","name":"scpi_number_to_boolean","note":"nonzero after rounding","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
+{"address":"00025d70","name":"scpi_parse_string","note":"the string's pointer and length","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":12,"size":4}]}
+{"address":"00025d8c","name":"scpi_parse_boolean","note":"ON as 1, OFF as 0","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":12,"size":4}]}
+{"address":"00025de0","name":"scpi_parse_boolean_number","note":"a number as a boolean by scpi_number_to_boolean; -9 with a suffix","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":12,"size":4}]}
+{"address":"00025e42","name":"scpi_parse_choice","note":"the index of the keyword in the node's list, or the value mapped to it; -28 with no list, -27 for no match","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"00025ea6","name":"scpi_parse_short","note":"the suffix by scpi_apply_suffix, then scpi_number_to_short","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"00025ee6","name":"scpi_parse_unsigned_short","note":"the suffix, then scpi_number_to_unsigned_short","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"00025f26","name":"scpi_parse_long","note":"the suffix, then scpi_number_to_long","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"00025f66","name":"scpi_parse_unsigned_long","note":"the suffix, then scpi_number_to_unsigned_long","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"00025fa6","name":"scpi_parse_float","note":"the suffix, then a float within 9.9e37, else -11","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"0002602e","name":"scpi_parse_double","note":"the suffix, then a double within 9.9e37, else -11","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"0002609a","name":"scpi_number_to_short","note":"a parsed number as a signed 16-bit value, -11 out of range","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"00026140","name":"scpi_number_to_unsigned_short","note":"its magnitude as an unsigned 16-bit value","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"000261e4","name":"scpi_number_to_long","note":"as a signed 32-bit value","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"0002628a","name":"scpi_number_to_unsigned_long","note":"its magnitude as an unsigned 32-bit value","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"0002632c","name":"scpi_number_to_boolean","note":"nonzero after rounding","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0002636e","name":"scpi_format_text","note":"a string as it is","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0002639e","name":"scpi_format_string","note":"a string in double quotes, each quote doubled","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0002640c","name":"scpi_format_boolean","note":"0 or 1","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
@@ -775,26 +775,26 @@
 {"address":"0002671c","name":"scpi_format_short_array","note":"comma-separated, by scpi_format_short","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00026768","name":"scpi_format_resolution_array","note":"comma-separated, by scpi_format_double_resolution, a resolution for each","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000267c0","name":"scpi_format_array","note":"by its kind, a block, a double array or a short array","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"00026816","name":"scpi_format_resolution_array_record","note":"by its kind, a block or a resolution array, then the record's release callback","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"00026816","name":"scpi_format_resolution_array_record","note":"by its kind, a block or a resolution array, then the record's release callback","convention":"unknown","stack":[{"offset":8,"size":4}]}
 {"address":"00026870","name":"scpi_format_double","note":"15 significant digits by scpi_real_to_text","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000268c4","name":"scpi_format_float","note":"6 significant digits by scpi_real_to_text","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0002692c","name":"scpi_format_double_precision","note":"a double whose record gives either its digits or its resolution","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000269a6","name":"scpi_format_double_resolution","note":"15 digits to the resolution given","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00026a06","name":"scpi_format_float_resolution","note":"6 digits to the resolution the value carries","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"00026a80","name":"scpi_context_init","note":"fills a parser context's eight fields; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4},{"offset":32,"size":4},{"offset":36,"size":4}]}
+{"address":"00026a80","name":"scpi_context_init","note":"fills a parser context's eight fields; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4},{"offset":32,"size":4},{"offset":36,"size":4}]}
 {"address":"00026ab6","name":"scpi_parse_message_unit","note":"parses one program message unit: its header, then its parameters, token by token","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00026ee0","name":"scpi_scan_token","note":"the SCPI lexer: reads characters through the input's own routine and classifies them by the table at 0x277ec","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00027388","name":"scpi_skip_to_terminator","note":"reads characters until a message terminator","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"000273cc","name":"scpi_scan_number","note":"scans a decimal number's digits, point and exponent into a parsed number","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":10,"size":2},{"offset":14,"size":2},{"offset":16,"size":4}]}
-{"address":"0002766e","name":"scpi_scan_exponent","note":"scans a number's exponent after its E","convention":"unknown","stack":[{"offset":6,"size":2},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"000273cc","name":"scpi_scan_number","note":"scans a decimal number's digits, point and exponent into a parsed number","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"0002766e","name":"scpi_scan_exponent","note":"scans a number's exponent after its E","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"000277d2","name":"scpi_char_upper","note":"a letter in upper case, by the parser's character classes","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"000278f4","name":"scpi_parameter_match","note":"finds the next parameter descriptor that takes a parameter of the kind, marking optional ones it passes 0xffff","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":10,"size":2},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"000278f4","name":"scpi_parameter_match","note":"finds the next parameter descriptor that takes a parameter of the kind, marking optional ones it passes 0xffff","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"0002797a","name":"scpi_parameters_finish","note":"marks the descriptors left 0xffff, omitted, unless one is required","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"000279d6","name":"scpi_suffix_compare_tail","note":"how much of a token's end matches a unit's name","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":10,"size":2},{"offset":12,"size":4}]}
+{"address":"000279d6","name":"scpi_suffix_compare_tail","note":"how much of a token's end matches a unit's name","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00027a0c","name":"scpi_multiplier_exponent","note":"a unit multiplier's power of ten, from the table at 0x27b2e; -128 for none","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":2}]}
-{"address":"00027a2a","name":"scpi_match_suffix","note":"scans the 6-byte unit table, text and exponent, allowing a two-character multiplier before the unit","convention":"unknown","stack":[{"offset":6,"size":2},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"00027a2a","name":"scpi_match_suffix","note":"scans the 6-byte unit table, text and exponent, allowing a two-character multiplier before the unit","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"00027ae4","name":"scpi_apply_suffix","note":"matches the token's units suffix against the node's table, setting its scale and unit; -9 if none is allowed, -31 if unknown","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"00027b62","name":"scpi_keyword_compare","note":"compares a token with a keyword's short and long forms","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":10,"size":2},{"offset":12,"size":4}]}
+{"address":"00027b62","name":"scpi_keyword_compare","note":"compares a token with a keyword's short and long forms","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00027baa","name":"scpi_node_find","note":"finds a keyword in a child list, by bisection","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00027c22","name":"scpi_node_find_with_defaults","note":"finds a keyword, else follows the default nodes, recording their suffixes","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00027c94","name":"scpi_node_find_numbered","note":"finds a keyword with its numeric suffix stripped and kept","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
@@ -803,19 +803,19 @@
 {"address":"00027efe","name":"scpi_path_reset","note":"sets a header path back to a root list","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00027f10","name":"scpi_common_header_resolve","note":"resolves a common command's header to its node and handler and takes room for its parameters","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":2},{"offset":22,"size":2},{"offset":24,"size":4},{"offset":28,"size":4}]}
 {"address":"00027f7e","name":"scpi_trg_defined","note":"looks _TRG up in a list: whether the common list defines it","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"00027fca","name":"status_event_set","note":"ORs bits into a register's event word and propagates","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
-{"address":"00027fe8","name":"status_condition_set","note":"sets condition bits; those rising through the positive transition mask become events","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
-{"address":"00028044","name":"status_condition_clear","note":"clears condition bits; those falling through the negative transition mask become events","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
+{"address":"00027fca","name":"status_event_set","note":"ORs bits into a register's event word and propagates","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"00027fe8","name":"status_condition_set","note":"sets condition bits; those rising through the positive transition mask become events","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"00028044","name":"status_condition_clear","note":"clears condition bits; those falling through the negative transition mask become events","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"000280a4","name":"status_propagate","note":"sets or clears a register's summary bit in its parent from its event and enable words","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000280ea","name":"status_create","note":"allocates the status model and its registers, builds the queue","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4}]}
 {"address":"00028160","name":"status_destroy","note":"frees the status model's queue and registers; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"0002819c","name":"status_register_setup","note":"one register's fields and its parent","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2},{"offset":18,"size":2},{"offset":20,"size":4},{"offset":26,"size":2},{"offset":28,"size":4}]}
+{"address":"0002819c","name":"status_register_setup","note":"one register's fields and its parent","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4}]}
 {"address":"0002820a","name":"status_set_bit","note":"sets a condition's register bit through status_conditions","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"000282ce","name":"status_apply_condition","note":"applies a condition by its kind: event set, condition set, condition clear, or the error queue","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00028388","name":"status_clear_bit","note":"status_set_bit with 0","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0002839c","name":"condition_is_command_error","note":"1 for a negative condition of the error kind with a code from -199 to -100, a command error","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000283d2","name":"status_condition_bit_get","note":"a condition's bit in its register's condition word, inverted for kind 2","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"0002842c","name":"status_register_set_enable","note":"sets one status register's enable mask, as :ENABle and *ESE do","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
+{"address":"0002842c","name":"status_register_set_enable","note":"sets one status register's enable mask, as :ENABle and *ESE do","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00028474","name":"status_register_get_enable","note":"a status register's enable mask, as the :ENABle? and *ESE? queries read it","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"000284b6","name":"status_read_event","note":"the STATus EVENt, *ESR? and *STB? queries' read of a register's event value","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00028506","name":"status_read_condition","note":"the STATus CONDition queries' read of a register's condition","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
@@ -823,14 +823,14 @@
 {"address":"0002854a","name":"error_queue_clear","note":"empties the error queue, for *CLS","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0002856c","name":"error_queue_read","note":"takes the oldest error from the queue","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00028588","name":"error_queue_create","note":"allocates the error queue ring with room for so many entries","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"000285d4","name":"error_queue_push","note":"adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":10,"size":2},{"offset":12,"size":4}]}
+{"address":"000285d4","name":"error_queue_push","note":"adds an error to the SCPI error queue ring; -350, Queue overflow, when it is full","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0002869e","name":"error_queue_pop","note":"takes the oldest error and its message, prompting again once the queue is empty; 0 when empty","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00028712","name":"error_queue_destroy","note":"frees the error queue","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"0002889a","name":"status_register_set_ptr","note":"sets a register's positive transition filter, for :PTRansition","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
-{"address":"000288ae","name":"status_register_set_ntr","note":"sets a register's negative transition filter, for :NTRansition","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
+{"address":"0002889a","name":"status_register_set_ptr","note":"sets a register's positive transition filter, for :PTRansition","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"000288ae","name":"status_register_set_ntr","note":"sets a register's negative transition filter, for :NTRansition","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"000288c2","name":"status_register_get_ptr","note":"a register's positive transition filter, for :PTRansition?","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"000288d8","name":"status_register_get_ntr","note":"a register's negative transition filter, for :NTRansition?","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"000288ee","name":"error_message_lookup","note":"an error code's message, from the table at 0x28910","convention":"unknown","stack":[{"offset":6,"size":2}]}
+{"address":"000288ee","name":"error_message_lookup","note":"an error code's message, from the table at 0x28910","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000292d6","name":"scpi_interpret","note":"the parser's loop: parses each message unit, calls its handler, writes its response and reports errors, until the input ends","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4},{"offset":32,"size":4},{"offset":36,"size":4}]}
 {"address":"00029642","name":"scpi_call_handler","note":"calls a node's handler, giving it room in the arena for its parameters","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00029690","name":"scpi_format_response","note":"writes a response's items through their formatters","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
@@ -841,7 +841,7 @@
 {"address":"00029766","name":"arena_set","note":"sets an arena's next free byte","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00029770","name":"arena_init","note":"makes an arena of a buffer of so many bytes","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0002979c","name":"scpi_check_range","note":"reports 9 when value is outside min..max; *ESE, *SRE and the STATus ENABle and transition setters","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":1}]}
-{"address":"000297c4","name":"scpi_long_resolve_bound","note":"a long parameter's value: its own, the first or second argument for keyword 0 or 1, else the third; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"000297c4","name":"scpi_long_resolve_bound","note":"a long parameter's value: its own, the first or second argument for keyword 0 or 1, else the third; called by nothing","convention":"unknown","stack":[{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"0002982c","name":"scpi_numeric_set","note":"sends a parameter's new value, or its minimum or maximum, to pllc","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":2},{"offset":14,"size":2},{"offset":20,"size":4},{"offset":24,"size":1}]}
 {"address":"000298b2","name":"scpi_numeric_set_double","note":"scpi_numeric_set for a parameter of doubles; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":2},{"offset":14,"size":2},{"offset":16,"size":4},{"offset":20,"size":1}]}
 {"address":"000298fc","name":"scpi_numeric_get","note":"a parameter's value, or its minimum or maximum, from its descriptor","convention":"c","confidence":"documented","out":[{"register":"D0","type":"float"}],"stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":2},{"offset":14,"size":2}]}
@@ -857,13 +857,13 @@
 {"address":"00029b0e","name":"scpi_prompt","note":"makes the SCPI prompt, with the latest error when there is one","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00029b42","name":"scpi_session_init","note":"clears the SCPI input, opens the port and prompts","convention":"unknown"}
 {"address":"00029b82","name":"scpi_console_port","note":"returns 0x29e18, the console port's object: two routines, then the \"E%+04d> \" and \"scpi > \" prompts; queries compare a request's source with it","convention":"unknown"}
-{"address":"00029b96","name":"scpi_console_read","note":"reads up to so many characters from the console, marking the input ended at its end","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"00029b96","name":"scpi_console_read","note":"reads up to so many characters from the console, marking the input ended at its end","convention":"unknown","stack":[{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00029bce","name":"console_port_read","note":"the first of the console port's routines; the SCPI input loop reads characters with it","convention":"unknown"}
 {"address":"00029cc6","name":"scpi_input_ended","note":"marks the SCPI input ended","convention":"unknown"}
-{"address":"00029cd0","name":"scpi_console_putc","note":"writes a character to the console, keeping it in the echo buffer, or CR LF for an end","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"00029d50","name":"status_byte_set_bits","note":"the status output object's method: sets bits in the status byte and updates RQS","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":11,"size":1}]}
-{"address":"00029d62","name":"status_byte_clear_bits","note":"the status output object's method: clears bits in the status byte and updates RQS","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":11,"size":1}]}
-{"address":"00029d76","name":"status_sre_set","note":"the status output object's method: sets the service request enable and updates RQS","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":11,"size":1}]}
+{"address":"00029cd0","name":"scpi_console_putc","note":"writes a character to the console, keeping it in the echo buffer, or CR LF for an end","convention":"unknown","stack":[{"offset":8,"size":4}]}
+{"address":"00029d50","name":"status_byte_set_bits","note":"the status output object's method: sets bits in the status byte and updates RQS","convention":"unknown","stack":[{"offset":8,"size":4}]}
+{"address":"00029d62","name":"status_byte_clear_bits","note":"the status output object's method: clears bits in the status byte and updates RQS","convention":"unknown","stack":[{"offset":8,"size":4}]}
+{"address":"00029d76","name":"status_sre_set","note":"the status output object's method: sets the service request enable and updates RQS","convention":"unknown","stack":[{"offset":8,"size":4}]}
 {"address":"00029d98","name":"status_update_rqs","note":"sets or clears RQS, 0x40, in the status byte from the service request enable","convention":"unknown"}
 {"address":"00029e34","name":"scpi_message_done","note":"scpi_interpret's hook at each message's end and error: returns 0, no further error","convention":"unknown"}
 {"address":"00029e38","name":"scpi_input_closed","note":"scpi_interpret's hook when the input closes: returns 0","convention":"unknown"}
@@ -1188,7 +1188,7 @@
 {"address":"00030ab4","name":"lifetime_record_write","note":"writes the 32-byte checksummed lifetime record at EEPROM 0x400060, the date, its count and the EFC, when it has changed","convention":"unknown"}
 {"address":"00030b66","name":"lifetime_update","note":"on a new date: counts it, saves the EFC in normal PLL, writes the lifetime record and reschedules its clock event","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00030c1e","name":"calibration_block_read","note":"reads the time offset and TC from the calibration block at EEPROM 0x400080, or zeros if its checksum fails","convention":"unknown"}
-{"address":"00030c60","name":"save_calibration_block","note":"rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs from it, reporting status 0x10 if the EEPROM write fails","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":11,"size":1}]}
+{"address":"00030c60","name":"save_calibration_block","note":"rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs from it, reporting status 0x10 if the EEPROM write fails","convention":"unknown","stack":[{"offset":8,"size":4}]}
 {"address":"00030d2e","name":"parameter_record_read","note":"reads the serial settings from the parameter record at EEPROM 0x400000, or sets their defaults if its checksum fails","convention":"unknown"}
 {"address":"00030dea","name":"save_parameter_record","note":"writes the 16-byte checksummed parameter record at EEPROM 0x400000, reporting status 0x10 if it fails","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"00030f08","name":"eeprom_lock_init","note":"clears the EEPROM's busy flag at 0x101d34","convention":"unknown"}
@@ -1222,14 +1222,14 @@
 {"address":"0003217e","name":"round_float_to_step","note":"rounds a float to the nearest multiple of its step, half away from zero, the step a thousand times coarser beyond 1e9 steps","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000322aa","name":"load_double","note":"the double at a pointer","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000322b4","name":"clamp_to_limits","note":"clamps *value to *min and *max, reporting through report_clamped","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":1}]}
-{"address":"0003232c","name":"mask_to_limits","note":"a register's new value ANDed with its maximum, the mask of the bits it has","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"0003233a","name":"clamp_to_step_and_limits","note":"rounds a value down to the step its descriptor gives, then clamps it to its minimum and maximum, reporting each clamp","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":27,"size":1}]}
+{"address":"0003232c","name":"mask_to_limits","note":"a register's new value ANDed with its maximum, the mask of the bits it has","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":20,"size":4}]}
+{"address":"0003233a","name":"clamp_to_step_and_limits","note":"rounds a value down to the step its descriptor gives, then clamps it to its minimum and maximum, reporting each clamp","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4}]}
 {"address":"000323b2","name":"float_max_of","note":"the larger of two floats at pointers","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000323d6","name":"float_min_of","note":"the smaller of two floats at pointers","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000323fa","name":"clamp_float_to_step_and_limits","note":"clamps a float to its minimum and maximum and rounds it to its step","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4}]}
 {"address":"0003244a","name":"clamp_float_to_step_double","note":"validate for :GPS:ADELay and the positions: clamps a float and rounds it to its step in double","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4}]}
-{"address":"00032596","name":"clamp_double_to_step_and_limits","note":"clamps a double to its minimum and maximum and rounds it to its step","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":27,"size":1}]}
-{"address":"000326d2","name":"clamp_double_to_limits","note":"clamps a double to its minimum and maximum","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":27,"size":1}]}
+{"address":"00032596","name":"clamp_double_to_step_and_limits","note":"clamps a double to its minimum and maximum and rounds it to its step","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4}]}
+{"address":"000326d2","name":"clamp_double_to_limits","note":"clamps a double to its minimum and maximum","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":24,"size":4}]}
 {"address":"000327f4","name":"nv_slot_erase","note":"clear_nv erases slots 0 and 1 with it","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"0003281a","name":"clear_nv","note":"the clear_nv word's","convention":"unknown"}
 {"address":"0003282c","name":"nv_restore","note":"loads slot 0, else slot 1, else copies nv_settings_defaults over nv_settings, erases the older slot and saves","convention":"unknown"}
@@ -1288,7 +1288,7 @@
 {"address":"0004111e","name":"int64_negate","note":"negates a 64-bit number","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00041132","name":"int64_add_long","note":"adds a signed long to a 64-bit number; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0004115c","name":"int64_divide","note":"a 64-bit number divided by a long; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"0004117e","name":"uint64_divide","note":"an unsigned 64-bit number divided by an unsigned long; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":8}]}
+{"address":"0004117e","name":"uint64_divide","note":"an unsigned 64-bit number divided by an unsigned long; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0004119c","name":"int64_to_double","note":"a signed 64-bit number as a double, through 2^32 at 0x41300","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00041244","name":"double_to_int64","note":"a double as a signed 64-bit number, through 2^32 at 0x41300; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0004137e","name":"efc_history_update","note":"sums the EFC and stores each 2700 samples an entry of efc_history","convention":"unknown"}
@@ -1319,7 +1319,7 @@
 {"address":"00042b8a","name":"pll_scpi_do_action","note":"carries out a request's action, flagging the self-test's descriptor at 0x41348","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00042bc4","name":"toggle_change","note":"applies a change to a PLL setting that toggles, refusing a value above its maximum","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00042c10","name":"validate_num","note":"the firmware's own name, \"pll_scpi: validate_num() -- too many in multiple\": each new value through its descriptor's validate, into pll_scpi_validated","convention":"unknown"}
-{"address":"00042d02","name":"validate_or_doaction","note":"checks a PLL SCPI request's value against its setting's descriptor, or carries it out","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"00042d02","name":"validate_or_doaction","note":"checks a PLL SCPI request's value against its setting's descriptor, or carries it out","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00042d78","name":"pll_scpi_needs_loop","note":"1 if a request's setting goes to the loop, its descriptor's flag bit 0; a survey start instead marks 0x102040","convention":"unknown"}
 {"address":"00042dc4","name":"pll_scpi_send_to_loop","note":"puts a request's validated values in the loop's message at 0x102002 by the setting's action code, and sends it","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4}]}
 {"address":"0004301a","name":"scpi_param_saved_in_nv","note":"the descriptor's flags & 2; finish_scpi_cmd then calls nv_save","convention":"unknown"}
@@ -1331,10 +1331,10 @@
 {"address":"000433b6","name":"pll_scpi_complete","note":"once the reply flag is set: clears it, reports failure, finishes the SCPI command and signals its task; otherwise counts","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1}]}
 {"address":"000433fc","name":"gps_diag_complete","note":"once the reply flag is set: clears it and signals the waiting task; otherwise counts","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00043466","name":"questionable_user_done","note":"reports status event M when the user bit is set and N when it is cleared","convention":"unknown"}
-{"address":"00043482","name":"status_enable_restore","note":"restores a status register's enable mask from the NV settings, reporting 0xe if it fails","convention":"unknown","stack":[{"offset":7,"size":1},{"offset":11,"size":1}]}
-{"address":"000434c2","name":"status_ptr_restore","note":"restores a status register's positive transition filter from the NV settings","convention":"unknown","stack":[{"offset":7,"size":1},{"offset":11,"size":1}]}
-{"address":"00043504","name":"status_ntr_restore","note":"restores a status register's negative transition filter from the NV settings","convention":"unknown","stack":[{"offset":7,"size":1},{"offset":11,"size":1}]}
-{"address":"00043546","name":"status_preset_done","note":"done for :STATus:PRESet: the enables and transition filters back to their defaults, saved","convention":"unknown","stack":[{"offset":7,"size":1},{"offset":11,"size":1}]}
+{"address":"00043482","name":"status_enable_restore","note":"restores a status register's enable mask from the NV settings, reporting 0xe if it fails","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"000434c2","name":"status_ptr_restore","note":"restores a status register's positive transition filter from the NV settings","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"00043504","name":"status_ntr_restore","note":"restores a status register's negative transition filter from the NV settings","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"00043546","name":"status_preset_done","note":"done for :STATus:PRESet: the enables and transition filters back to their defaults, saved","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00043804","name":"holdover_ti_reset","note":"clears holdover's TI statistics","convention":"unknown"}
 {"address":"0004381e","name":"holdover_ti_add","note":"adds a TI reading to holdover's statistics: a sum, a sum weighted by count, the count and the largest magnitude","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00043888","name":"holdover_correction_valid","note":"1 if holdover's TI statistics give an EFC within 0 to 1048560 from at least 10 readings; called by nothing","convention":"unknown"}
@@ -1590,7 +1590,7 @@
 {"address":"0005f190","name":"strncpy","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0005f1be","name":"toupper","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0005f1d6","name":"double_to_digits_multiply","note":"double_to_digits's product of two 64-bit numbers, one a power of ten from 0x5f864","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"0005f3ba","name":"double_to_digits","note":"a double's decimal digits, sign and exponent, significant or after the point; the formatting engine's","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4}]}
+{"address":"0005f3ba","name":"double_to_digits","note":"a double's decimal digits, sign and exponent, significant or after the point; the formatting engine's","convention":"unknown","stack":[{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4}]}
 {"address":"0005fad6","name":"next_decimal_digit","note":"'0' plus *n % 10, dividing *n by ten; the formatting engine's","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0005fb0c","name":"doprnt","note":"the formatting engine under sprintf, by the classic C library's name for it","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"00060896","name":"sprintf","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
@@ -1692,10 +1692,10 @@
 {"address":"installer::00102a72","name":"installer_psos_call","note":"the installer's psos_call","convention":"unknown"}
 {"address":"installer::00102aa4","name":"installer_psos_pack_name","note":"the installer's psos_pack_name","convention":"unknown"}
 {"address":"installer::00102b4c","name":"installer_psos_my_pid","note":"the installer's psos_my_pid","convention":"unknown"}
-{"address":"installer::00102b5c","name":"installer_psos_delete","note":"the installer's psos_delete, service 4","convention":"unknown"}
+{"address":"installer::00102b5c","name":"installer_psos_delete","note":"the installer's psos_delete, service 4","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::00102bca","name":"installer_psos_pause","note":"the installer's psos_pause, service 28","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"installer::00102d22","name":"installer_psos_create_x","note":"the installer's psos_create_x, service 20","convention":"unknown"}
-{"address":"installer::00102da6","name":"installer_psos_send_x","note":"the installer's psos_send_x, service 23","convention":"unknown"}
+{"address":"installer::00102d22","name":"installer_psos_create_x","note":"the installer's psos_create_x, service 20","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
+{"address":"installer::00102da6","name":"installer_psos_send_x","note":"the installer's psos_send_x, service 23","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"installer::00102e3c","name":"installer_psos_signal_v","note":"the installer's psos_signal_v, service 25","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"installer::00102e58","name":"installer_psos_wait_v","note":"the installer's psos_wait_v, service 26","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"installer::00102e86","name":"installer_psos_get_v","note":"the installer's psos_get_v, service 27","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
@@ -1716,19 +1716,19 @@
 {"address":"installer::00103d74","name":"installer_duart_interrupt","note":"the DUART's interrupt: dispatches each pending, enabled source","convention":"unknown"}
 {"address":"installer::00103eea","name":"installer_fatal_error","note":"holds off interrupts and hangs","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::001040a2","name":"installer_fatal_error_with_code","note":"the installer's fatal_error_with_code","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
-{"address":"installer::0010531c","name":"installer_scpi_scan_exponent","note":"the installer's scpi_scan_exponent","convention":"unknown","stack":[{"offset":6,"size":2},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::0010531c","name":"installer_scpi_scan_exponent","note":"the installer's scpi_scan_exponent","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00105480","name":"installer_scpi_char_upper","note":"the installer's scpi_char_upper","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"installer::00105684","name":"installer_scpi_suffix_compare_tail","note":"the installer's scpi_suffix_compare_tail","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":10,"size":2},{"offset":12,"size":4}]}
+{"address":"installer::00105684","name":"installer_scpi_suffix_compare_tail","note":"the installer's scpi_suffix_compare_tail","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::001056ba","name":"installer_scpi_multiplier_exponent","note":"the installer's scpi_multiplier_exponent","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":2}]}
-{"address":"installer::00105c78","name":"installer_status_event_set","note":"the installer's status_event_set","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
-{"address":"installer::00105c96","name":"installer_status_condition_set","note":"the installer's status_condition_set","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
-{"address":"installer::00105cf2","name":"installer_status_condition_clear","note":"the installer's status_condition_clear","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":14,"size":2}]}
+{"address":"installer::00105c78","name":"installer_status_event_set","note":"the installer's status_event_set","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::00105c96","name":"installer_status_condition_set","note":"the installer's status_condition_set","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::00105cf2","name":"installer_status_condition_clear","note":"the installer's status_condition_clear","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00105d52","name":"installer_status_propagate","note":"the installer's status_propagate","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"installer::00105eb8","name":"installer_status_set_bit","note":"the installer's status_set_bit","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::00105eb8","name":"installer_status_set_bit","note":"the installer's status_set_bit","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"installer::00105f7c","name":"installer_status_apply_condition","note":"the installer's status_apply_condition","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00106164","name":"installer_status_read_event","note":"the installer's status_read_event","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
-{"address":"installer::00106282","name":"installer_error_queue_push","note":"the installer's error_queue_push","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":10,"size":2},{"offset":12,"size":4}]}
-{"address":"installer::00106548","name":"installer_error_message_lookup","note":"the installer's error_message_lookup","convention":"unknown","stack":[{"offset":6,"size":2}]}
+{"address":"installer::00106282","name":"installer_error_queue_push","note":"the installer's error_queue_push","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
+{"address":"installer::00106548","name":"installer_error_message_lookup","note":"the installer's error_message_lookup","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::001073f6","name":"installer_scpi_prompt","note":"the installer's scpi_prompt","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::001076f4","name":"installer_status_prompt_refresh","note":"the installer's status_prompt_refresh","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"installer::00108166","name":"installer_record_checksum","note":"the installer's record_checksum","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":2}]}
@@ -1737,7 +1737,7 @@
 {"address":"installer::0010824a","name":"installer_identification_record_read","note":"the installer's identification_record_read","convention":"unknown"}
 {"address":"installer::001083b6","name":"installer_psos_config_init","note":"the installer's psos_config_init","convention":"unknown"}
 {"address":"installer::00108466","name":"installer_trap_1","note":"the installer's primary_trap_1","convention":"unknown"}
-{"address":"installer::00108ca8","name":"installer_float_raise","note":"the installer's float_raise","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4}]}
+{"address":"installer::00108ca8","name":"installer_float_raise","note":"the installer's float_raise","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::00109036","name":"installer_call_atexit_functions","convention":"unknown"}
 {"address":"installer::0010904c","name":"installer_call_atexit_functions","note":"the installer's call_atexit_functions","convention":"unknown"}
 {"address":"installer::00109160","name":"installer_memcpy","note":"the installer's memcpy","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
@@ -1745,7 +1745,7 @@
 {"address":"installer::001091ac","name":"installer_strtol","note":"strtol: a long from a string in a base up to 36, and where it ended","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00109366","name":"installer_toupper","note":"the installer's toupper","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::0010937e","name":"installer_double_to_digits_multiply","note":"the installer's double_to_digits_multiply","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"installer::00109562","name":"installer_double_to_digits","note":"the installer's double_to_digits","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4}]}
+{"address":"installer::00109562","name":"installer_double_to_digits","note":"the installer's double_to_digits","convention":"unknown","stack":[{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4}]}
 {"address":"installer::00109c7e","name":"installer_next_decimal_digit","note":"the installer's next_decimal_digit","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::00109cb4","name":"installer_doprnt","note":"the installer's doprnt","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"installer::0010aa3e","name":"installer_sprintf","note":"the installer's sprintf","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}

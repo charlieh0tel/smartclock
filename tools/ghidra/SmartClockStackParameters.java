@@ -25,7 +25,10 @@
 //
 // A function is given them if it does not decompile, if its arguments do
 // not fit the default convention (one at an offset not a multiple of 4,
-// or narrower than 4), or if an earlier run gave it stack parameters.  A
+// or narrower than 4), if its signature is still the analyzer's, with
+// none, while it has arguments -- each caller's decompilation would then
+// guess its own from what it pushes, and the C would disagree with the
+// function -- or if an earlier run gave it stack parameters.  A
 // signature from the names file or given by hand is kept, and so is one
 // with register parameters; but a kept stack signature is checked
 // against its callers' pushes, and reported where its parameters do not
@@ -99,9 +102,13 @@ public class SmartClockStackParameters extends GhidraScript {
 				boolean earlier = function.hasCustomVariableStorage();
 				boolean misfit = arguments.entrySet().stream()
 						.anyMatch(a -> a.getKey() % DEFAULT_SLOT != 0 || a.getValue() < DEFAULT_SLOT);
-				boolean fails = !earlier && !misfit
+				// the analyzer's signature has no parameters, and each caller's
+				// decompilation then guesses its own from what it pushes
+				boolean unset = function.getSignatureSource() == SourceType.DEFAULT
+					&& !arguments.isEmpty();
+				boolean fails = !earlier && !misfit && !unset
 						&& !decompile(decompiler, function).decompileCompleted();
-				if (!earlier && !misfit && !fails) {
+				if (!earlier && !misfit && !unset && !fails) {
 					continue;
 				}
 				if (earlier && matches(function, arguments)) {

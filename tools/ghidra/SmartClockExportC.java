@@ -788,17 +788,30 @@ public class SmartClockExportC extends GhidraScript {
 	private static final Pattern PIECE = Pattern.compile(
 		"([A-Za-z_]\\w*(?:(?:\\.|->)[A-Za-z_]\\w*|\\[[^\\[\\]]*\\])*)\\._(\\d+)_(\\d+)_");
 
-	/** c with each piece of a variable a cast at its offset, which gcc takes. */
+	/** A signed integer cast, as the decompiler writes a sign extension, ending text. */
+	private static final Pattern SIGNED_CAST =
+		Pattern.compile("\\((?:char|sbyte|short|int|long|longlong|int8_t|int16_t|int32_t|int64_t)\\)$");
+	/** How far before a piece its cast may begin. */
+	private static final int CAST_REACH = 12;
+
+	/**
+	 * c with each piece of a variable a cast at its offset, which gcc
+	 * takes.  A piece has no sign of its own: a signed cast before it is
+	 * the decompiler's sign extension, so it is read signed there, and
+	 * unsigned anywhere else.
+	 */
 	private static String pieces(String c) {
 		Matcher piece = PIECE.matcher(c);
 		StringBuilder out = new StringBuilder();
 		while (piece.find()) {
 			int bytes = Integer.parseInt(piece.group(3));
+			boolean signed = SIGNED_CAST.matcher(
+				c.substring(Math.max(0, piece.start() - CAST_REACH), piece.start())).find();
 			String type = switch (bytes) {
-				case 1 -> "unsigned char";
-				case 2 -> "unsigned short";
-				case 4 -> "unsigned int";
-				case 8 -> "unsigned long long";
+				case 1 -> signed ? "signed char" : "unsigned char";
+				case 2 -> signed ? "short" : "unsigned short";
+				case 4 -> signed ? "int" : "unsigned int";
+				case 8 -> signed ? "long long" : "unsigned long long";
 				default -> "__ghidra_u" + bytes;
 			};
 			String access = "__ghidra_piece(" + type + ", " + piece.group(1) + ", "

@@ -446,8 +446,12 @@ with `user` a pointer to the end of a `forth_user_area` structure, so
 
 **StackParameters** gives functions the stack parameters their code
 uses, where Ghidra's default convention misplaces them (see "The
-calling convention", above) or the decompiler rejects a function
-("Cannot properly adjust input varnodes").  The layout comes from the
+calling convention", above), where the decompiler rejects a function
+("Cannot properly adjust input varnodes"), or where its signature is
+still the analyzer's, with none, though it takes arguments: each
+caller's decompilation would then guess its own from what it pushes
+(`(short, char, char)` for `robin_parse`, which takes three pointers),
+and the C would call it unlike its definition.  The layout comes from the
 callers where their pushes agree and add up to what they pop -- a
 `move.b` or `clr.b` push a 2-byte slot holding a byte at its start --
 and otherwise from the stack references on the function's own
@@ -486,7 +490,8 @@ function, so that the file stands alone for `m68k-linux-gnu-gcc
 since a routine can fall into the next.  A global with a structure's
 type reads as `foo.bar`, a pointer to one as `foo->bar`; a piece of a
 variable the decompiler writes as `x._4_4_` becomes a cast at its
-offset.  A thunk is a comment, since the decompiler gives it its
+offset, read signed under a signed cast, `(int)x._2_2_`, which is how
+the decompiler writes a sign extension, and unsigned elsewhere.  A thunk is a comment, since the decompiler gives it its
 target's name, and one named otherwise an alias of its target.  A
 routine that is not C and whose prototype has every argument and its
 result in registers is declared under that prototype as an assembler

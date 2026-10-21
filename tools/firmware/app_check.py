@@ -98,8 +98,10 @@ def token(m: Machine, value: int) -> int:
 
 
 def call_packed(m: Machine, name: str, arguments: bytes) -> int:
-    """Calls name with arguments laid on the stack as given: these routines
-    take words and bytes in 2-byte slots, which Machine.call does not."""
+    """Calls name with arguments laid on the stack as given: some of these
+    routines take words and bytes in 2-byte slots, which Machine.call does
+    not.  The converters' scale is a long, its low word read: their
+    callers push it sign-extended."""
     sp = STACK_TOP - len(arguments) - 4
     m.uc.mem_write(sp, struct.pack(">I", RETURN) + arguments)
     m.uc.reg_write(UC_M68K_REG_A7, sp)
@@ -131,7 +133,7 @@ def checks(m: Machine):
     ):
         for value in (1234, -1234, 40000, -40000, 70000, 3_000_000_000):
             out = m.buffer(b"\0" * 8)
-            status = call_packed(m, name, struct.pack(">IIh", token(m, value), out, 0))
+            status = call_packed(m, name, struct.pack(">IIi", token(m, value), out, 0))
             wanted = value if signed_result else abs(value)
             if not low <= wanted <= high:
                 yield name, f"{value}", status == OUT_OF_RANGE
@@ -141,7 +143,7 @@ def checks(m: Machine):
 
     for value in (1234, -5):
         out = m.buffer(b"\0" * 8)
-        status = call_packed(m, "scpi_number_to_double", struct.pack(">IIh", token(m, value), out, 0))
+        status = call_packed(m, "scpi_number_to_double", struct.pack(">IIi", token(m, value), out, 0))
         yield "scpi_number_to_double", f"{value}", status == 0 and read_double(m, out) == value
 
     # Significant digits, and the resolution: the power of ten of the last

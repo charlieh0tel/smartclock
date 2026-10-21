@@ -35,10 +35,10 @@
 0x5d7e6	function	float_divide	softfloat.md	D0 / D1		convention=register; confidence=documented; in=D0 float a, D1 float b; out=D0 float; family=softfloat
 0x5d7e4	function	float_divide_reversed	softfloat.md	D1 / D0		convention=register; confidence=documented; in=D0 float a, D1 float b; out=D0 float; family=softfloat
 0x5d65c	function	float_compare	softfloat.md	compare D0 with D1; 1, 0 or -1		convention=register; confidence=documented; in=D0 float a, D1 float b; out=D0 int; family=softfloat
-0x5d08a	function	float_add_in_place	softfloat.md, libc.md	*A0 += D1		convention=register; confidence=run; in=A0 float *x, D1 float y; family=softfloat
-0x5d080	function	float_subtract_in_place	softfloat.md, libc.md	*A0 -= D1		convention=register; confidence=run; in=A0 float *x, D1 float y; family=softfloat
-0x5e316	function	float_multiply_in_place	libc.md	*A0 *= D1		convention=register; confidence=run; in=A0 float *x, D1 float y; family=softfloat
-0x5d7da	function	float_divide_in_place	softfloat.md, libc.md	*A0 /= D1		convention=register; confidence=run; in=A0 float *x, D1 float y; family=softfloat
+0x5d08a	function	float_add_in_place	softfloat.md, libc.md	*A0 += D1		convention=register; confidence=run; in=A0 float *x, D1 float y; out=D0 float; out.confidence=read; family=softfloat
+0x5d080	function	float_subtract_in_place	softfloat.md, libc.md	*A0 -= D1		convention=register; confidence=run; in=A0 float *x, D1 float y; out=D0 float; out.confidence=read; family=softfloat
+0x5e316	function	float_multiply_in_place	libc.md	*A0 *= D1		convention=register; confidence=run; in=A0 float *x, D1 float y; out=D0 float; out.confidence=read; family=softfloat
+0x5d7da	function	float_divide_in_place	softfloat.md, libc.md	*A0 /= D1		convention=register; confidence=run; in=A0 float *x, D1 float y; out=D0 float; out.confidence=read; family=softfloat
 0x133e2	function	float_absolute_on_stack	softfloat.md	absolute value of the float on the stack	float float_absolute_on_stack(float f)	convention=c; confidence=documented; out=D0 float
 0x5e168	function	integer_to_float	softfloat.md, libc.md	signed integer to float		convention=register; confidence=run; in=D0 int i; out=D0 float; family=softfloat
 0x5e20e	function	unsigned_to_float	softfloat.md, libc.md	unsigned integer to float		convention=register; confidence=run; in=D0 unsigned int u; out=D0 float; family=softfloat
@@ -53,21 +53,21 @@
 0x5d352	function	double_add	softfloat.md	D0:D1 + A0:A1		convention=register; confidence=documented; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; copies=A0:A1; family=softfloat
 0x5d34a	function	double_add_pointers	libc.md	*A0 + *A1		convention=register; confidence=run; in=A0 double *a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
 0x5d34e	function	double_add_pointer	libc.md	D0:D1 + *A1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
-0x5d338	function	double_add_in_place	libc.md	*A0 += D0:D1		convention=register; confidence=run; in=A0 double *x, D0:D1 double y; family=softfloat
+0x5d338	function	double_add_in_place	libc.md	*A0 += D0:D1		convention=register; confidence=run; in=A0 double *x, D0:D1 double y; out=D0:D1 double; out.confidence=read; family=softfloat
 0x5d30e	function	double_subtract_reversed	libc.md	A0:A1 - D0:D1		convention=register; confidence=run; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
 0x5d306	function	double_subtract_reversed_pointers	libc.md	*A1 - *A0		convention=register; confidence=run; in=A0 double *a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
 0x5d30a	function	double_subtract_reversed_pointer	libc.md	*A1 - D0:D1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
 0x5d2f8	function	double_subtract_pointer	libc.md	D0:D1 - *A1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
-0x5d2e2	function	double_subtract_in_place	libc.md	*A0 -= D0:D1		convention=register; confidence=run; in=A0 double *x, D0:D1 double y; family=softfloat
+0x5d2e2	function	double_subtract_in_place	libc.md	*A0 -= D0:D1		convention=register; confidence=run; in=A0 double *x, D0:D1 double y; out=D0:D1 double; out.confidence=read; family=softfloat
 0x5e600	function	double_multiply	softfloat.md	D0:D1 x A0:A1		convention=register; confidence=documented; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; copies=A0:A1; family=softfloat
 0x5e5f8	function	double_multiply_pointers	libc.md	*A0 x *A1		convention=register; confidence=run; in=A0 double *a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
 0x5e5fc	function	double_multiply_pointer	libc.md	D0:D1 x *A1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
-0x5e5e6	function	double_multiply_in_place	libc.md	*A0 *= D0:D1		convention=register; confidence=run; in=A0 double *x, D0:D1 double y; family=softfloat
+0x5e5e6	function	double_multiply_in_place	libc.md	*A0 *= D0:D1		convention=register; confidence=run; in=A0 double *x, D0:D1 double y; out=D0:D1 double; out.confidence=read; family=softfloat
 0x5da58	function	double_divide	softfloat.md	D0:D1 / A0:A1		convention=register; confidence=documented; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; copies=A0:A1; family=softfloat
 0x5da6a	function	double_divide_reversed	softfloat.md	A0:A1 / D0:D1		convention=register; confidence=documented; in=D0:D1 double a, A0:A1 double b; out=D0:D1 double; copies=A0:A1; family=softfloat
 0x5da62	function	double_divide_reversed_pointers	libc.md	*A1 / *A0		convention=register; confidence=run; in=A0 double *a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
 0x5da66	function	double_divide_reversed_pointer	libc.md	*A1 / D0:D1		convention=register; confidence=run; in=D0:D1 double a, A1 double *b; out=D0:D1 double; copies=A0:A1; copies.confidence=read; family=softfloat
-0x5da3e	function	double_divide_in_place	libc.md	*A0 /= D0:D1		convention=register; confidence=run; in=A0 double *x, D0:D1 double y; family=softfloat
+0x5da3e	function	double_divide_in_place	libc.md	*A0 /= D0:D1		convention=register; confidence=run; in=A0 double *x, D0:D1 double y; out=D0:D1 double; out.confidence=read; family=softfloat
 0x5d6c6	function	double_compare	softfloat.md	negative when A0:A1 < D0:D1		convention=register; confidence=documented; in=D0:D1 double a, A0:A1 double b; out=D0 int; family=softfloat
 0x60f5e	function	pow	softfloat.md, libc.md	pow	double pow(double x, double y)	convention=c; confidence=run; out=D0:D1 double
 0x60a10	function	log	softfloat.md, libc.md	natural log	double log(double x)	convention=c; confidence=run; out=D0:D1 double
@@ -105,7 +105,7 @@
 0x5ecfa	function	atoi	libc.md		int atoi(char *s)
 0x5ed98	label	ctype_table	libc.md	indexed from 0x5ed99, bit 2 digit, bit 3 space
 0x5eea2	function	div	libc.md	quotient in D0, remainder in D1
-0x5eed2	function	ldiv	libc.md	quotient in D0, remainder in D1	undefined8 ldiv(int param_1,int param_2)
+0x5eed2	function	ldiv	libc.md	quotient in D0, remainder in D1	long long ldiv(int numerator, int denominator)	convention=c; confidence=read; out=D0:D1 long long; copies=D0:D1
 0x5ef12	function	memcmp	libc.md		int memcmp(void *s1, void *s2, unsigned int n)
 0x5ef48	function	memcpy	libc.md		void * memcpy(void *s1, void *s2, unsigned int n)
 0x5ef66	function	memset	libc.md		void * memset(void *s, int c, unsigned int n)
@@ -123,6 +123,7 @@
 0x5f190	function	strncpy	libc.md		char * strncpy(char *s1, char *s2, unsigned int n)
 0x5f1be	function	toupper	libc.md		int toupper(int c)
 0x5fb0c	function	doprnt	libc.md	the formatting engine under sprintf, by the classic C library's name for it
+0x5fb0c	local	conversion	read	the conversion's text: hex and decimal written back from its 11th byte, %f forward from its first	char[20] @ -0x1c6
 0x60896	function	sprintf	libc.md		int sprintf(char *s, char *format, ...)
 0x608c4	function	sprintf_put	libc.md	copies the engine's output into sprintf's buffer
 0x608fe	function	vsprintf	libc.md		int vsprintf(char *s, char *format, void *arg)
@@ -964,6 +965,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x252bc	function	scpi_double_multiply	docs/scpi/README.md, run	D0:D1 times D2:D3, the engine's own IEEE multiply		convention=register; confidence=run; in=D0:D1 double a, D2:D3 double b; out=D0:D1 double; returns=ccr; error=D2 -2 underflow, D2 -1 overflow; preserves=A0; family=scpi-engine
 0x25468	function	scpi_double_multiply_short	docs/scpi/README.md, read	scpi_double_multiply's path for an operand whose mantissa fits in 16 bits		convention=other; confidence=read; family=scpi-engine
 0x2553a	function	scpi_real_to_text	docs/scpi/README.md, run	a double as NR3 text, so many significant digits and no digit below the resolution given; -308 keeps them all
+0x2553a	local	exponent_digits	read	the exponent's four digits, two from decimal_digit_pairs for its hundreds and two for the rest	char[4] @ -0x8
 0x2553a	local	decimal	read	scpi_double_to_decimal's record	scpi_decimal @ -0x1c
 0x264e0	function	scpi_unsigned_to_digits	docs/scpi/README.md, read	decimal digits right-aligned in a 17-byte buffer, -40 if they do not fit
 0x2636e	function	scpi_format_text	docs/scpi/README.md, read	a string as it is
@@ -1759,7 +1761,6 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 # the records datetime_add and datetime_subtract take, which the decompiler
 # splits into two longs; docs/firmware/structures.md, "A date and time"
 0x10656	local	change	read	what to add or take away	packed_datetime @ -0xe
-0x10656	local	value	read	the date and time it is changed in	packed_datetime @ -0x24
 0x114fa	local	change	read	what to add or take away	packed_datetime @ -0xe
 0x114fa	local	value	read	the date and time it is changed in	packed_datetime @ -0x16
 0x11580	local	change	read	what to add or take away	packed_datetime @ -0xe

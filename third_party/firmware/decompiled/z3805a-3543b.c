@@ -2631,6 +2631,8 @@ extern undefined LAB_00012f92; /* 00012f92 */
 extern undefined LAB_00012f9e; /* 00012f9e */
 extern undefined LAB_00013666; /* 00013666 */
 extern undefined LAB_0001366c; /* 0001366c */
+extern undefined LAB_000136a2; /* 000136a2 */
+extern undefined LAB_000136bc; /* 000136bc */
 extern undefined LAB_000277ec; /* 000277ec */
 extern undefined LAB_00030b30; /* 00030b30 */
 extern undefined LAB_00033454; /* 00033454 */
@@ -2973,6 +2975,8 @@ __asm__(".set LAB_00012f92, 0x00012f92");
 __asm__(".set LAB_00012f9e, 0x00012f9e");
 __asm__(".set LAB_00013666, 0x00013666");
 __asm__(".set LAB_0001366c, 0x0001366c");
+__asm__(".set LAB_000136a2, 0x000136a2");
+__asm__(".set LAB_000136bc, 0x000136bc");
 __asm__(".set LAB_000277ec, 0x000277ec");
 __asm__(".set LAB_00030b30, 0x00030b30");
 __asm__(".set LAB_00033454, 0x00033454");
@@ -5927,26 +5931,26 @@ int primary_trap_1();
 undefined8 longjmp(undefined4 *param_1,undefined4 param_2);
 undefined4 setjmp(undefined4 *param_1);
 undefined4 primary_unpack_records(void);
-void float_subtract_in_place(float *x, float y) __asm__("c_float_subtract_in_place");
-void float_add_in_place(float *x, float y) __asm__("c_float_add_in_place");
+float float_subtract_in_place(float *x, float y) __asm__("c_float_subtract_in_place");
+float float_add_in_place(float *x, float y) __asm__("c_float_add_in_place");
 float float_subtract_reversed(float a, float b) __asm__("c_float_subtract_reversed");
 float float_subtract(float a, float b) __asm__("c_float_subtract");
 float float_add(float a, float b) __asm__("c_float_add");
-void double_subtract_in_place(double *x, double y) __asm__("c_double_subtract_in_place");
+double double_subtract_in_place(double *x, double y) __asm__("c_double_subtract_in_place");
 double double_subtract_pointer(double a, double *b) __asm__("c_double_subtract_pointer");
 double double_subtract_reversed_pointers(double *a, double *b) __asm__("c_double_subtract_reversed_pointers");
 double double_subtract_reversed_pointer(double a, double *b) __asm__("c_double_subtract_reversed_pointer");
 double double_subtract_reversed(double a, double b) __asm__("c_double_subtract_reversed");
-void double_add_in_place(double *x, double y) __asm__("c_double_add_in_place");
+double double_add_in_place(double *x, double y) __asm__("c_double_add_in_place");
 double double_add_pointers(double *a, double *b) __asm__("c_double_add_pointers");
 double double_add_pointer(double a, double *b) __asm__("c_double_add_pointer");
 double double_add(double a, double b) __asm__("c_double_add");
 int float_compare(float a, float b) __asm__("c_float_compare");
 int double_compare(double a, double b) __asm__("c_double_compare");
-void float_divide_in_place(float *x, float y) __asm__("c_float_divide_in_place");
+float float_divide_in_place(float *x, float y) __asm__("c_float_divide_in_place");
 float float_divide_reversed(float a, float b) __asm__("c_float_divide_reversed");
 float float_divide(float a, float b) __asm__("c_float_divide");
-void double_divide_in_place(double *x, double y) __asm__("c_double_divide_in_place");
+double double_divide_in_place(double *x, double y) __asm__("c_double_divide_in_place");
 double double_divide(double a, double b) __asm__("c_double_divide");
 double double_divide_reversed_pointers(double *a, double *b) __asm__("c_double_divide_reversed_pointers");
 double double_divide_reversed_pointer(double a, double *b) __asm__("c_double_divide_reversed_pointer");
@@ -5965,9 +5969,9 @@ double integer_to_double(int i) __asm__("c_integer_to_double");
 double unsigned_to_double(uint u) __asm__("c_unsigned_to_double");
 float integer_to_float(int i) __asm__("c_integer_to_float");
 float unsigned_to_float(uint u) __asm__("c_unsigned_to_float");
-void float_multiply_in_place(float *x, float y) __asm__("c_float_multiply_in_place");
+float float_multiply_in_place(float *x, float y) __asm__("c_float_multiply_in_place");
 float float_multiply(float a, float b) __asm__("c_float_multiply");
-void double_multiply_in_place(double *x, double y) __asm__("c_double_multiply_in_place");
+double double_multiply_in_place(double *x, double y) __asm__("c_double_multiply_in_place");
 double double_multiply_pointers(double *a, double *b) __asm__("c_double_multiply_pointers");
 double double_multiply_pointer(double a, double *b) __asm__("c_double_multiply_pointer");
 double double_multiply(double a, double b) __asm__("c_double_multiply");
@@ -5979,7 +5983,7 @@ int abs(int j);
 void call_atexit_functions(void);
 int atoi(char *s);
 undefined8 div(int param_1,int param_2);
-undefined8 ldiv(int param_1,int param_2);
+longlong ldiv(int numerator,int denominator);
 long labs(long j);
 int memcmp(void *s1,void *s2,uint n);
 void * memcpy(void *s1,void *s2,uint n);
@@ -7481,31 +7485,28 @@ override_jmp_00010626_case_1:
 klok_entry * leap_event_schedule_utc(uint32_t param_1,int param_2)
 
 {
-  uint8_t uVar1;
-  short sVar2;
-  undefined1 *puVar3;
+  uint8_t uVar2;
+  klok_entry *pkVar1;
+  short sVar3;
   undefined1 *puVar4;
-  klok_entry *pkVar5;
-  bool bVar6;
-  undefined1 auStack_28 [4];
-  packed_datetime value;
+  bool bVar5;
+  klok_entry event;
   packed_datetime change;
   int16_t local_6;
   
-  pkVar5 = (klok_entry *)0x0;
-  sVar2 = 0x19;
-  puVar3 = auStack_28;
+  sVar3 = 0x19;
+  pkVar1 = &event;
   puVar4 = &DAT_00010cca;
   do {
-    *puVar3 = *puVar4;
-    sVar2 = sVar2 + -1;
-    puVar3 = puVar3 + 1;
+    *(undefined1 *)&pkVar1->next = *puVar4;
+    sVar3 = sVar3 + -1;
+    pkVar1 = (klok_entry *)((int)&pkVar1->next + 1);
     puVar4 = puVar4 + 1;
-  } while (sVar2 != -1);
-  value.date = param_1;
-  value.time = 0x180000;
-  uVar1 = get_gps_utc_offset(&local_6);
-  if (uVar1 == 0) {
+  } while (sVar3 != -1);
+  event.date = param_1;
+  event.time = 0x180000;
+  uVar2 = get_gps_utc_offset(&local_6);
+  if (uVar2 == 0) {
     local_6 = 0;
   }
   if (param_2 == 0x3b) {
@@ -7514,26 +7515,33 @@ klok_entry * leap_event_schedule_utc(uint32_t param_1,int param_2)
   else if (param_2 == 0x3d) {
     local_6 = local_6 + 1;
   }
-  bVar6 = -1 < local_6;
-  if (!bVar6) {
+  bVar5 = -1 < local_6;
+  if (!bVar5) {
     local_6 = -local_6;
   }
   change.date = 0;
   change.time = seconds_to_hms((int)local_6);
-  if (bVar6) {
-    datetime_add(&change,&value);
+  if (bVar5) {
+    datetime_add(&change,(packed_datetime *)&event.time);
   }
   else {
-    datetime_subtract(&change,&value);
+    datetime_subtract(&change,(packed_datetime *)&event.time);
   }
-  offset_step_time = value.time;
+  offset_step_time = event.time;
   change.time = 5;
   change.date = 0;
-  datetime_subtract(&change,&value);
-  if ((param_2 == 0x3b) || (param_2 == 0x3d)) {
-    pkVar5 = clk_do((klok_entry *)auStack_28);
+  datetime_subtract(&change,(packed_datetime *)&event.time);
+  if (param_2 == 0x3b) {
+    event.function = &LAB_000136a2;
   }
-  return pkVar5;
+  else {
+    if (param_2 != 0x3d) {
+      return (klok_entry *)0x0;
+    }
+    event.function = &LAB_000136bc;
+  }
+  pkVar1 = clk_do(&event);
+  return pkVar1;
 }
 
 
@@ -40467,8 +40475,7 @@ scpi_real_to_text(int param_1,int param_2,undefined1 *param_3,short param_4,shor
   char *pcVar5;
   bool bVar6;
   scpi_decimal decimal;
-  undefined2 local_8;
-  undefined2 local_6;
+  char exponent_digits [4];
   
   if (((param_2 != 0) || (param_1 != 0)) || (param_6 == -0x134)) {
     if (param_4 < 1) {
@@ -40545,28 +40552,30 @@ LAB_00025618:
     pcVar4[1] = '-';
     param_6 = -param_6;
   }
-  local_8 = *(undefined2 *)
-             (
-             "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
-             + (short)((short)((uint)(int)param_6 / 100) << 1));
-  local_6 = *(undefined2 *)
-             (
-             "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
-             + (short)((short)((uint)(int)param_6 % 100) << 1));
+  __ghidra_piece(unsigned short, exponent_digits, 0) =
+       *(undefined2 *)
+        (
+        "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
+        + (short)((short)((uint)(int)param_6 / 100) << 1));
+  __ghidra_piece(unsigned short, exponent_digits, 2) =
+       *(undefined2 *)
+        (
+        "00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899"
+        + (short)((short)((uint)(int)param_6 % 100) << 1));
   if (0 < param_5) {
     bVar1 = 4 - (char)param_5;
     if (SBORROW1('\x04',(char)param_5) == (short)((ushort)bVar1 << 8) < 0) {
       if (bVar1 != 0) {
         sVar2 = bVar1 - 1;
         do {
-          if (*(char *)((int)&local_8 + (int)sVar2) != '0') {
+          if (exponent_digits[sVar2] != '0') {
             return 1;
           }
           sVar2 = sVar2 + -1;
         } while (sVar2 != -1);
       }
       sVar2 = param_5 + -1;
-      pcVar3 = (char *)((int)&local_8 + (int)(short)(ushort)bVar1);
+      pcVar3 = exponent_digits + (short)(ushort)bVar1;
       pcVar4 = pcVar4 + 2;
       do {
         pcVar5 = pcVar4 + 1;
@@ -56058,11 +56067,8 @@ uint32_t fit_log_search(aging_curve_state *curve,int with_slope)
   float fVar1;
   float fVar2;
   uint uVar3;
-  float extraout_D0;
   uint uVar4;
   int iVar5;
-  float extraout_D0_00;
-  float extraout_D0_01;
   uint uVar6;
   float rms_values [3];
   float c_values [3];
@@ -56071,8 +56077,7 @@ uint32_t fit_log_search(aging_curve_state *curve,int with_slope)
   uVar3 = fit_log_residuals(curve,with_slope);
   rms_values[1] = curve->rms;
   c_values[1] = curve->c;
-  float_add_in_place(&curve->c,curve->c_step);
-  c_values[2] = extraout_D0;
+  c_values[2] = float_add_in_place(&curve->c,curve->c_step);
   uVar4 = fit_log_residuals(curve,with_slope);
   uVar4 = uVar4 | uVar3;
   rms_values[2] = curve->rms;
@@ -56088,8 +56093,7 @@ uint32_t fit_log_search(aging_curve_state *curve,int with_slope)
     while ((iVar5 = float_compare(rms_values[1],rms_values[2]), 0 < iVar5 && (uVar4 == 0))) {
       c_values[0] = c_values[1];
       c_values[1] = c_values[2];
-      float_subtract_in_place(&curve->c,curve->c_step);
-      c_values[2] = extraout_D0_01;
+      c_values[2] = float_subtract_in_place(&curve->c,curve->c_step);
       uVar4 = fit_log_residuals(curve,with_slope);
       rms_values[0] = rms_values[1];
       rms_values[1] = rms_values[2];
@@ -56100,8 +56104,7 @@ uint32_t fit_log_search(aging_curve_state *curve,int with_slope)
     while (iVar5 = float_compare(rms_values[2],rms_values[1]), iVar5 < 0) {
       c_values[0] = c_values[1];
       c_values[1] = c_values[2];
-      float_add_in_place(&curve->c,curve->c_step);
-      c_values[2] = extraout_D0_00;
+      c_values[2] = float_add_in_place(&curve->c,curve->c_step);
       uVar3 = fit_log_residuals(curve,with_slope);
       uVar4 = uVar3 | uVar4;
       rms_values[0] = rms_values[1];
@@ -61143,23 +61146,23 @@ void running_average_update(int param_1,double *param_2,uint param_3)
 void mas_to_dms(long param_1,undefined2 *param_2,undefined1 *param_3,double *param_4)
 
 {
-  long lVar1;
-  undefined8 uVar2;
-  double dVar3;
-  int iVar4;
+  long numerator;
+  longlong lVar1;
+  double dVar2;
+  int denominator;
   undefined4 local_8;
   
-  iVar4 = 3600000;
-  lVar1 = labs(param_1);
-  uVar2 = ldiv(lVar1,iVar4);
-  *param_2 = (short)((ulonglong)uVar2 >> 0x20);
-  local_8 = (int)uVar2;
-  uVar2 = ldiv(local_8,60000);
-  *param_3 = (char)((ulonglong)uVar2 >> 0x20);
-  local_8 = (int)uVar2;
-  dVar3 = integer_to_double(local_8);
-  dVar3 = double_divide_reversed(1000.0,dVar3);
-  *param_4 = dVar3;
+  denominator = 3600000;
+  numerator = labs(param_1);
+  lVar1 = ldiv(numerator,denominator);
+  *param_2 = (short)((ulonglong)lVar1 >> 0x20);
+  local_8 = (int)lVar1;
+  lVar1 = ldiv(local_8,60000);
+  *param_3 = (char)((ulonglong)lVar1 >> 0x20);
+  local_8 = (int)lVar1;
+  dVar2 = integer_to_double(local_8);
+  dVar2 = double_divide_reversed(1000.0,dVar2);
+  *param_4 = dVar2;
   return;
 }
 
@@ -61328,23 +61331,23 @@ void format_angle(char *param_1,int param_2,char param_3)
 void format_duration(double param_1,char *param_2)
 
 {
-  int iVar1;
+  int numerator;
   char extraout_D0b;
   uint extraout_D0;
   uint extraout_D0_00;
   float f;
-  int extraout_D1;
-  int extraout_D1_00;
+  int numerator_00;
+  int numerator_01;
   int i;
   double param4;
-  int iVar2;
+  int denominator;
   char *param5;
   
-  iVar2 = 0x15180;
-  iVar1 = double_to_integer(param_1);
-  ldiv(iVar1,iVar2);
-  ldiv(extraout_D1,0xe10);
-  ldiv(extraout_D1_00,0x3c);
+  denominator = 0x15180;
+  numerator = double_to_integer(param_1);
+  ldiv(numerator,denominator);
+  ({ __auto_type __c = ldiv(numerator_00,0xe10); __ghidra_also(extraout_D0, __c, 4); __c; });
+  ({ __auto_type __c = ldiv(numerator_01,0x3c); __ghidra_also(extraout_D0_00, __c, 4); __c; });
   f = integer_to_float(i);
   param5 = (&PTR_DAT_0004cf80)[(byte)(extraout_D0b + 1)];
   param4 = float_to_double(f);
@@ -62828,7 +62831,7 @@ void format_duration_short(uint param_1,char *param_2)
   uchar param5;
   uchar param3;
   char *pcVar4;
-  undefined8 uVar5;
+  longlong lVar5;
   uint local_c;
   uint local_8;
   
@@ -62845,9 +62848,9 @@ void format_duration_short(uint param_1,char *param_2)
       uVar3 = 0xe10;
       uVar2 = 0x3c;
     }
-    uVar5 = ldiv(param_1,(uint)uVar3);
-    local_8 = (uint)uVar5;
-    local_c = (uint)((ulonglong)uVar5 >> 0x20);
+    lVar5 = ldiv(param_1,(uint)uVar3);
+    local_8 = (uint)lVar5;
+    local_c = (uint)((ulonglong)lVar5 >> 0x20);
     sprintf(param_2,"%3d%c %02d%c",local_c & 0xffff,param3,(local_8 & 0xffff) / (uint)uVar2,param5);
   }
   else {
@@ -67621,10 +67624,11 @@ undefined4 primary_unpack_records(void)
 
 /* *A0 -= D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 float *x, D1
-   float y.
+   float y.  Out (read): D0 float.
    softfloat.md, libc.md */
 
-__regcall void float_subtract_in_place(float *x /* a0 */,float y /* d1 */)
+/* out D0 float */
+__regcall float float_subtract_in_place(float *x /* a0 */,float y /* d1 */)
 
 {
   float fVar1;
@@ -67632,7 +67636,7 @@ __regcall void float_subtract_in_place(float *x /* a0 */,float y /* d1 */)
   
   fVar1 = float_subtract(*x,y);
   *extraout_A0 = fVar1;
-  return;
+  return fVar1;
 }
 
 
@@ -67670,10 +67674,11 @@ __asm__(
 
 /* *A0 += D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 float *x, D1
-   float y.
+   float y.  Out (read): D0 float.
    softfloat.md, libc.md */
 
-__regcall void float_add_in_place(float *x /* a0 */,float y /* d1 */)
+/* out D0 float */
+__regcall float float_add_in_place(float *x /* a0 */,float y /* d1 */)
 
 {
   float fVar1;
@@ -67681,7 +67686,7 @@ __regcall void float_add_in_place(float *x /* a0 */,float y /* d1 */)
   
   fVar1 = float_add(*x,y);
   *extraout_A0 = fVar1;
-  return;
+  return fVar1;
 }
 
 
@@ -68494,17 +68499,18 @@ __asm__(
 
 /* *A0 -= D0:D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *x,
-   D0:D1 double y.
+   D0:D1 double y.  Out (read): D0:D1 double.
    libc.md */
 
-__regcall void double_subtract_in_place(double *x /* a0 */,double y /* d0 */)
+/* out D0:D1 double */
+__regcall double double_subtract_in_place(double *x /* a0 */,double y /* d0 */)
 
 {
   double dVar1;
   
   dVar1 = double_subtract_reversed(y,*x);
   *x = dVar1;
-  return;
+  return dVar1;
 }
 
 
@@ -69714,17 +69720,18 @@ __asm__(
 
 /* *A0 += D0:D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *x,
-   D0:D1 double y.
+   D0:D1 double y.  Out (read): D0:D1 double.
    libc.md */
 
-__regcall void double_add_in_place(double *x /* a0 */,double y /* d0 */)
+/* out D0:D1 double */
+__regcall double double_add_in_place(double *x /* a0 */,double y /* d0 */)
 
 {
   double dVar1;
   
   dVar1 = double_add(y,*x);
   *x = dVar1;
-  return;
+  return dVar1;
 }
 
 
@@ -71367,10 +71374,11 @@ __asm__(
 
 /* *A0 /= D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 float *x, D1
-   float y.
+   float y.  Out (read): D0 float.
    softfloat.md, libc.md */
 
-__regcall void float_divide_in_place(float *x /* a0 */,float y /* d1 */)
+/* out D0 float */
+__regcall float float_divide_in_place(float *x /* a0 */,float y /* d1 */)
 
 {
   float fVar1;
@@ -71378,7 +71386,7 @@ __regcall void float_divide_in_place(float *x /* a0 */,float y /* d1 */)
   
   fVar1 = float_divide(*x,y);
   *extraout_A0 = fVar1;
-  return;
+  return fVar1;
 }
 
 
@@ -72056,17 +72064,18 @@ __asm__(
 
 /* *A0 /= D0:D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *x,
-   D0:D1 double y.
+   D0:D1 double y.  Out (read): D0:D1 double.
    libc.md */
 
-__regcall void double_divide_in_place(double *x /* a0 */,double y /* d0 */)
+/* out D0:D1 double */
+__regcall double double_divide_in_place(double *x /* a0 */,double y /* d0 */)
 
 {
   double dVar1;
   
   dVar1 = double_divide_reversed(y,*x);
   *x = dVar1;
-  return;
+  return dVar1;
 }
 
 
@@ -74725,10 +74734,11 @@ __asm__(
 
 /* *A0 *= D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 float *x, D1
-   float y.
+   float y.  Out (read): D0 float.
    libc.md */
 
-__regcall void float_multiply_in_place(float *x /* a0 */,float y /* d1 */)
+/* out D0 float */
+__regcall float float_multiply_in_place(float *x /* a0 */,float y /* d1 */)
 
 {
   float fVar1;
@@ -74736,7 +74746,7 @@ __regcall void float_multiply_in_place(float *x /* a0 */,float y /* d1 */)
   
   fVar1 = float_multiply(*x,y);
   *extraout_A0 = fVar1;
-  return;
+  return fVar1;
 }
 
 
@@ -75111,17 +75121,18 @@ __asm__(
 
 /* *A0 *= D0:D1
    Not a C function (register; run): its arguments and results in registers.  In: A0 double *x,
-   D0:D1 double y.
+   D0:D1 double y.  Out (read): D0:D1 double.
    libc.md */
 
-__regcall void double_multiply_in_place(double *x /* a0 */,double y /* d0 */)
+/* out D0:D1 double */
+__regcall double double_multiply_in_place(double *x /* a0 */,double y /* d0 */)
 
 {
   double dVar1;
   
   dVar1 = double_multiply(y,*x);
   *x = dVar1;
-  return;
+  return dVar1;
 }
 
 
@@ -76957,10 +76968,10 @@ undefined8 div(int param_1,int param_2)
 /* quotient in D0, remainder in D1
    libc.md */
 
-undefined8 ldiv(int param_1,int param_2)
+longlong ldiv(int numerator,int denominator)
 
 {
-  return CONCAT44(param_1 / param_2,param_1 - param_2 * (param_1 / param_2));
+  return CONCAT44(numerator / denominator,numerator - denominator * (numerator / denominator));
 }
 
 
@@ -77776,8 +77787,7 @@ byte * doprnt(byte *param_1,uint *param_2,undefined *param_3,undefined4 param_4)
   char *local_1d2;
   char *local_1ce;
   char *local_1ca;
-  byte local_1c6 [10];
-  byte local_1bc [10];
+  char conversion [20];
   char acStack_1b2 [352];
   undefined *local_52;
   char *local_4e;
@@ -77850,9 +77860,9 @@ LAB_0005fb72:
         pbVar19 = param_1;
         goto LAB_0005fb72;
       case 5:
-        pbVar20 = local_1c6;
-        pbVar23 = local_1c6 + 1;
-        local_1c6[0] = *pbVar19;
+        pbVar20 = (byte *)conversion;
+        pbVar23 = (byte *)(conversion + 1);
+        conversion[0] = *pbVar19;
         break;
       case 10:
         if ((uVar17 & 0x40) == 0) {
@@ -77988,17 +77998,17 @@ LAB_000600fa:
             local_52 = &DAT_00060868;
             local_44 = 1;
           }
-          if (acStack_1b2[1] == 0) {
-            local_1c6[0] = 0x30;
+          if (acStack_1b2[1] == '\0') {
+            conversion[0] = '0';
           }
           else {
             pbVar19 = (byte *)(acStack_1b2 + 2);
-            local_1c6[0] = acStack_1b2[1];
+            conversion[0] = acStack_1b2[1];
           }
-          pbVar23 = local_1c6 + 1;
+          pbVar23 = (byte *)(conversion + 1);
           if ((local_1d2 != (char *)0x0) || (bVar6)) {
-            pbVar23 = local_1c6 + 2;
-            local_1c6[1] = 0x2e;
+            pbVar23 = (byte *)(conversion + 2);
+            conversion[1] = '.';
           }
           local_8 = local_1d2;
           for (; (0 < (int)local_8 && (*pbVar19 != 0)); pbVar19 = pbVar19 + 1) {
@@ -78011,7 +78021,7 @@ LAB_000600fa:
             local_3c = local_8;
             uVar17 = uVar17 | 0x100;
           }
-          pbVar20 = local_1c6;
+          pbVar20 = (byte *)conversion;
           local_4e = local_46 + 1;
           local_46[1] = 0;
           if (local_30 != 0 || (local_34 & 0x7fffffff) != 0) {
@@ -78053,7 +78063,7 @@ LAB_000600fa:
           local_1d2 = local_8 + -local_20;
 LAB_000602cc:
           param_2 = param_2 + 2;
-          if (((local_1c == 0) || (local_20 <= -(int)local_1d2)) || (acStack_1b2[1] == 0x30)) {
+          if (((local_1c == 0) || (local_20 <= -(int)local_1d2)) || (acStack_1b2[1] == '0')) {
             if (bVar7) {
               local_52 = &DAT_0006086a;
               local_44 = 1;
@@ -78070,7 +78080,7 @@ LAB_000602cc:
           local_8 = (char *)local_20;
           local_14 = (char *)0x0;
           pbVar19 = (byte *)(acStack_1b2 + 1);
-          pbVar20 = local_1c6;
+          pbVar20 = (byte *)conversion;
           do {
             pbVar22 = pbVar20;
             if ((((int)local_8 < 1) || (*pbVar19 == 0)) || (local_28 <= (int)local_14)) {
@@ -78115,7 +78125,7 @@ LAB_000602cc:
             pbVar21 = pbVar19;
             pbVar23 = pbVar23 + 1;
           }
-          pbVar20 = local_1c6;
+          pbVar20 = (byte *)conversion;
         }
         break;
       case 0x2c:
@@ -78131,7 +78141,7 @@ LAB_000602cc:
         else {
           local_18 = "0123456789abcdef";
         }
-        pbVar23 = local_1bc + 1;
+        pbVar23 = (byte *)(conversion + 0xb);
         local_8 = "";
         pbVar20 = pbVar23;
         do {
@@ -78186,10 +78196,10 @@ LAB_000602cc:
         goto LAB_0005febe;
       case 0x43:
         uVar14 = *param_2;
-        pbVar20 = local_1c6;
-        pbVar23 = local_1c6 + 1;
+        pbVar20 = (byte *)conversion;
+        pbVar23 = (byte *)(conversion + 1);
         param_2 = param_2 + 1;
-        local_1c6[0] = (byte)uVar14;
+        conversion[0] = (char)uVar14;
         break;
       case 0x44:
       case 0x49:
@@ -78199,13 +78209,13 @@ LAB_000602cc:
         else {
           local_38 = (char *)*param_2;
         }
-        pbVar20 = local_1bc + 1;
+        pbVar20 = (byte *)(conversion + 0xb);
         if ((int)local_38 < 0) {
           local_52 = &DAT_00060868;
           local_44 = 1;
           if (local_38 == (char *)0x80000000) {
-            local_1bc[0] = next_decimal_digit((uint *)&local_38);
-            pbVar20 = local_1bc;
+            conversion[10] = next_decimal_digit((uint *)&local_38);
+            pbVar20 = (byte *)(conversion + 10);
           }
           else {
             local_38 = (char *)-(int)local_38;
@@ -78274,7 +78284,7 @@ LAB_0005febe:
         else {
           local_18 = "0123456789abcdef";
         }
-        pbVar23 = local_1bc + 1;
+        pbVar23 = (byte *)(conversion + 0xb);
         local_8 = local_38;
         pbVar20 = pbVar23;
         if (local_38 == (char *)0x0) {
@@ -78347,14 +78357,14 @@ LAB_0005febe:
         if (bVar1) {
           local_38 = (char *)((uint)local_38 & 0xffff);
         }
-        pbVar20 = local_1bc + 1;
+        pbVar20 = (byte *)(conversion + 0xb);
         if (((uint)local_38 & 0x80000000) != 0) {
-          local_1bc[0] = next_decimal_digit((uint *)&local_38);
-          pbVar20 = local_1bc;
+          conversion[10] = next_decimal_digit((uint *)&local_38);
+          pbVar20 = (byte *)(conversion + 10);
         }
 LAB_0005fdc4:
         param_2 = param_2 + 1;
-        pbVar23 = local_1bc + 1;
+        pbVar23 = (byte *)(conversion + 0xb);
         local_8 = local_38;
         if ((int)local_38 < 10) {
           if ((local_38 != (char *)0x0) || ((uVar17 & 0x40) == 0)) {

@@ -272,7 +272,7 @@ void duartb_settings_preset(int32_t index, int32_t source) {
   (void)index;
   memcpy(&duartb_settings, &duartb_settings_defaults, sizeof duartb_settings);
   duartb_settings_done();
-  save_parameter_record((uint8_t)source);
+  save_parameter_record(source);
 }
 
 /* The same for the SCI (0x30ed4). */
@@ -280,7 +280,7 @@ void sci_settings_preset(int32_t index, int32_t source) {
   (void)index;
   memcpy(&sci_settings, &sci_settings_defaults, sizeof sci_settings);
   sci_settings_done();
-  save_parameter_record((uint8_t)source);
+  save_parameter_record(source);
 }
 
 /* Creates eepx and sends it the lock's one message (0x30f10). */
@@ -590,7 +590,7 @@ int32_t log_init(void) {
 
   int32_t page = 0;
   for (;;) {
-    uint32_t status = log_page_read((uint8_t)page, &log_write_page);
+    uint32_t status = log_page_read(page, &log_write_page);
     if (status == LOG_PAGE_BAD) {
       log_cursor = log_write_page.entries;
       break;
@@ -643,8 +643,8 @@ int32_t log_read(int32_t number, char* text, char* heading) {
 
   uint32_t status = 0;
   if (page != log_page_number) {
-    status = log_page_read((uint8_t)page, &log_page_buffer);
-    log_page_number = (int16_t)page;
+    status = log_page_read(page, &log_page_buffer);
+    log_page_number = page;
     if (status != 0) {
       log_page_clear(&log_page_buffer);
     }
@@ -749,8 +749,7 @@ uint8_t log_flush(void) {
   if (log_page_number == log_write_page_number) {
     memcpy(&log_page_buffer, &log_write_page, sizeof log_page_buffer);
   }
-  return (uint8_t)log_page_write((uint8_t)log_write_page_number,
-                                 &log_write_page);
+  return log_page_write(log_write_page_number, &log_write_page);
 }
 
 /* Adds an entry, its format, arguments, date and time, to the event log
@@ -1093,7 +1092,7 @@ int32_t log_clear(void) {
   char zero_checksum[sizeof eeprom_reset_records[0].checksum] = {0};
 
   for (int32_t i = 0; i < RECORDS_RESET_RECORDS; i++) {
-    if (reset_record_valid((uint8_t)i) &&
+    if (reset_record_valid(i) &&
         !eeprom_write((char*)&eeprom_reset_records[i].checksum, zero_checksum,
                       sizeof zero_checksum)) {
       failed = 1;
@@ -1146,7 +1145,7 @@ uint32_t log_entry_text(int32_t number, char* text, char* heading) {
     clamped = 1;
   }
 
-  if (!reset_record_valid((uint8_t)index)) {
+  if (!reset_record_valid(index)) {
     records_log_unused(text, heading, index + 1);
     return 1;
   }

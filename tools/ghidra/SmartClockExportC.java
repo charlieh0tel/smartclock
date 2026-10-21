@@ -340,7 +340,10 @@ public class SmartClockExportC extends GhidraScript {
 				}
 			}
 			writer.print(functions);
-			for (File file : new TreeSet<>(rewritten().values())) {
+			// a folder's headers first, what its files share, then its files
+			List<File> included = new ArrayList<>(rewrittenHeaders());
+			included.addAll(new TreeSet<>(rewritten().values()));
+			for (File file : included) {
 				writer.println();
 				writer.println("#include \"" + output.getAbsoluteFile().getParentFile().toPath()
 					.relativize(file.getAbsoluteFile().toPath()) + "\"");
@@ -4168,6 +4171,19 @@ public class SmartClockExportC extends GhidraScript {
 		Pattern.compile("(?m)^[A-Za-z_][\\w \\*]*?\\b(\\w+)\\([^;{}]*\\)\\s*\\{");
 	/** Each hand-written function's file, by its name, from the rewritten= folder. */
 	private Map<String, File> rewritten;
+
+	/** The rewritten= folder's .h files, what its .c files share, which the C includes before them. */
+	private List<File> rewrittenHeaders() {
+		List<File> headers = new ArrayList<>();
+		for (String arg : getScriptArgs()) {
+			if (arg.startsWith(REWRITTEN)) {
+				File[] files = new File(arg.substring(REWRITTEN.length())).listFiles((dir, name) -> name.endsWith(".h"));
+				Arrays.sort(files);
+				headers.addAll(List.of(files));
+			}
+		}
+		return headers;
+	}
 
 	/**
 	 * The functions the rewritten= folder's .c files define, by name, and

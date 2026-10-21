@@ -793,7 +793,9 @@ subsystem (`clock.c`).  The exporter finds the functions those files
 define (`rewritten=`), keeps the decompiler's reading of each in the
 exported C inside `#if 0`, for reference, and includes the files after
 its own C, so that they see the types, globals and prototypes it
-declares; a function keeps its generated prototype.  The files are
+declares, and before them the folder's `.h` files, what the files
+share (`cpu.h`, the status register's helpers); a function keeps its
+generated prototype.  The files are
 included in sorted order and compiled as one translation unit, so each
 file-scope name takes its file's name as a prefix (`DUART_`,
 `duart_`), and one that several files share lives in the one that sorts

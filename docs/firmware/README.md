@@ -675,7 +675,7 @@ handler, and `rte` returns from it, which Unicorn leaves to its
 interrupt hook.  The kernel's traps, `#3` and `#4`, are answered: for
 each service and I/O function (`psos.md`) the harness knows, from the
 binding's stubs, the registers it reads and returns in; a call records
-the service and those registers, a message by its 16 bytes and a
+the service and those registers, a message by the 20 bytes from its `+4` the kernel copies and a
 write's buffer by its contents, since a caller's buffer on its stack
 lies where its own frame puts it, and returns no error and
 `0x6b000000`, an address nothing is mapped at, in each result register;

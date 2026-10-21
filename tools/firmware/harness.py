@@ -186,10 +186,12 @@ SERVICE_MASK = 0xFF
 # faults.
 NO_ERROR = 0
 KERNEL_RESULT = 0x6B000000
-# A message, four longs, which the kernel copies (docs/firmware/structures.md,
-# "The EEPROM's lock"); the one a service fills a buffer with, every
+# A message's five longs from +4, which the kernel copies from a sender's
+# record to a receiver's (moveml a1@(4),d3-d7 at 0x1562e and 0x156c6;
+# +0 is the kernel's link); the one a service fills a buffer with, every
 # long KERNEL_RESULT.
-MESSAGE_LONGS = 4
+MESSAGE_OFFSET = 4
+MESSAGE_LONGS = 5
 MESSAGE = struct.pack(">I", KERNEL_RESULT) * MESSAGE_LONGS
 MESSAGE_SIZE = len(MESSAGE)
 # The most a service's buffer may hold: RAM's size.
@@ -430,9 +432,10 @@ def answer_kernel(uc: Uc, vector: int) -> KernelCall | str:
             size = MESSAGE_SIZE if length is None else uc.reg_read(REGISTERS[length])
             if size > LONGEST_BUFFER:
                 return out_of_reach
-            data = bytes(uc.mem_read(uc.reg_read(REGISTERS[pointer]), size))
+            start = uc.reg_read(REGISTERS[pointer]) + (MESSAGE_OFFSET if length is None else 0)
+            data = bytes(uc.mem_read(start, size))
         if service.fills:
-            uc.mem_write(uc.reg_read(REGISTERS[service.fills]), MESSAGE)
+            uc.mem_write(uc.reg_read(REGISTERS[service.fills]) + MESSAGE_OFFSET, MESSAGE)
     except UcError:
         return out_of_reach
     call = KernelCall(vector, number, tuple((name, uc.reg_read(REGISTERS[name])) for name in service.arguments), data)

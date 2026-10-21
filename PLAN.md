@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1261 run, 936 agree, 233 reach what the
-     harness does not model and are skipped, and 92 differ, in the
+     original reads them: of 1261 run, 931 agree, 233 reach what the
+     harness does not model and are skipped, and 97 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): `trap #7` runs the image's handler;
@@ -794,6 +794,9 @@ view cannot drift apart.  The library, bottom up:
      and the GPS requests, are typed records on their senders' stacks,
      which the decompiler had split into locals gcc lays apart (141 to
      92); three status setters whose first case now runs differ there.
+     A message is compared by the 20 bytes from its `+4` the kernel
+     copies, not 16, which shows five setters sending a value's low half
+     where the image sends all of it (92 to 97).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

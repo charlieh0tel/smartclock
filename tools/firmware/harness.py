@@ -5,14 +5,16 @@ and calls into either from the same RAM and registers.
 A call starts in supervisor mode with interrupts masked, as the
 firmware runs, every register a distinct sentinel but A6, which holds a
 caller's frame, and its own stack at STACK, filled and never compared;
-the EEPROM erased, and compared after it as RAM is; and the devices'
-registers zeroed but the status bits the routines poll for.  The
-harness stands in for what lies outside memory, the same for both
-calls: traps #1 and #7 run the image's own handlers; the kernel's
-traps, #3 and #4, are answered by a model of each service; a trap that
-never returns, or a write to code, ends a call; and the kernel calls
-and device writes a call makes, in order, are its effects, compared as
-RAM is.
+RAM zeroed but the kernel's tables, the running task's record and the
+exchanges' ids; the EEPROM erased and the pointees filled, each
+compared after it as RAM is; and the devices' registers zeroed but the
+status bits the routines poll for.  The harness stands in for what
+lies outside memory, the same for both calls: traps #1 and #7 run the
+image's own handlers; the kernel's traps, #3 and #4, are answered by a
+model of each service; a trap that never returns, a zero divide, a
+write to code, a branch to itself and the KERNEL_CALL_LIMIT'th kernel
+call end a call; and the kernel calls and device writes a call makes,
+in order, are its effects, compared as RAM is.
 Unicorn has no CPU32; the 68020 stands in, and the image uses none of
 the instructions either has alone (PLAN.md, "A rebuild that runs").
 """
@@ -27,6 +29,8 @@ from unicorn import (
     UC_HOOK_MEM_READ,
     UC_HOOK_MEM_WRITE,
     UC_MEM_WRITE_PROT,
+    UC_PROT_READ,
+    UC_PROT_WRITE,
     Uc,
     UcError,
 )
@@ -126,8 +130,22 @@ HANDLED = {TRAP_VECTORS + 1, TRAP_VECTORS + 7}
 # them, the two calls then compared as if it had returned, but for its
 # result: trap #5, which ends an interrupt by switching to the first
 # ready task (docs/firmware/psos.md, "Inside the kernel"), and traps #11
-# and #12, which shut down and restart (docs/firmware/restart.md).
-ENDING = {TRAP_VECTORS + 5, TRAP_VECTORS + 11, TRAP_VECTORS + 12}
+# and #12, which shut down and restart (docs/firmware/restart.md); and
+# a zero divide, vector 5, whose handler, the common entry at 0x11924,
+# finds no task's handler in the harness's RAM, records the exception,
+# masks interrupts and spins (restart.md, "Both end in the watchdog").
+ZERO_DIVIDE = 5
+ENDING = {ZERO_DIVIDE, TRAP_VECTORS + 5, TRAP_VECTORS + 11, TRAP_VECTORS + 12}
+# A call that reaches a branch to itself, bra.s or bra.w, has halted:
+# with no interrupt in the harness it never leaves, and ends there, as
+# fatal_error's spin does.
+SELF_BRANCHES = [bytes.fromhex("60fe"), bytes.fromhex("6000fffe")]
+HALTED = "halted"
+# A call still running at its KERNEL_CALL_LIMIT'th kernel call, a
+# task's loop waiting for its next message or tick, ends there, before
+# making it, and is compared up to there, both calls alike.
+KERNEL_CALL_LIMIT = 1000
+STILL_RUNNING = "still running"
 # A write to code, the image's ROM or gcc's, which the checks protect,
 # made by code, not by data a call runs, ends the call the same way, at
 # the bus error it would raise: the boot chip select is read only
@@ -153,7 +171,9 @@ class Service:
     KERNEL_RESULT; the bytes it reads through a pointer, as (pointer,
     length) registers, the length None for a message, which a call
     records by their contents, since a caller's buffer on its stack
-    lies where its own frame puts it; a buffer it fills with MESSAGE;
+    lies where its own frame puts it; a buffer it fills, as (buffer,
+    exchange) registers, with the exchange's RECEIVED message or else
+    MESSAGE;
     a count it returns as none done; and a NUL-terminated string it
     reads, as (pointer, count) registers, recorded by its contents and
     returned as its length in the count and its end in the pointer; and
@@ -165,7 +185,7 @@ class Service:
     arguments: tuple[str, ...] = ()
     results: tuple[str, ...] = ()
     reads: tuple[str, str | None] | None = None
-    fills: str | None = None
+    fills: tuple[str, str] | None = None
     none_done: str | None = None
     text: tuple[str, str] | None = None
     allocates: tuple[str, str] | None = None
@@ -193,7 +213,7 @@ KERNEL_SERVICES = {
     21: Service(("D0",), ("A0", "D1", "D2")),
     22: Service(("A0",)),
     23: Service(("A0",), reads=("A1", None)),
-    24: Service(("A0", "D0", "D1"), fills="A1"),
+    24: Service(("A0", "D0", "D1"), fills=("A1", "A0")),
     25: Service(("A0", "D1")),
     26: Service(("D0", "D1", "D2"), ("D1",)),
     27: Service(("D1", "D2"), ("D1",)),
@@ -248,6 +268,25 @@ MESSAGE_OFFSET = 4
 MESSAGE_LONGS = 5
 MESSAGE = struct.pack(">I", KERNEL_RESULT) * MESSAGE_LONGS
 MESSAGE_SIZE = len(MESSAGE)
+# The exchanges whose receivers' messages docs/firmware/structures.md
+# documents, by the cell that keeps each one's id, and the message,
+# its MESSAGE_SIZE bytes from +4, that request_x receives from it in
+# place of MESSAGE.  A case starts with a distinct id in each cell, as
+# root_task's creates leave one, an address nothing is mapped at.  To
+# spoo, a spoo_request: scpi_task_create (0x29fce) and its priority,
+# 0x19, as scpi_task_start sends it (structures.md, spoo_run); to pllc,
+# a pllc_request: :SAMPle:INTeger's descriptor (0x334de), index 0,
+# source 0 and values[0] 7, in its range of 0 to 256 ("The pllc task's
+# SCPI requests" and "Numeric SCPI parameters").
+SPOO_EXCHANGE = 0x1032F8
+PLLC_EXCHANGE = 0x103804
+RECEIVED = {
+    SPOO_EXCHANGE: struct.pack(">5I", 0, 0x29FCE, 0x19, 0, 0),
+    PLLC_EXCHANGE: struct.pack(">IIBBBBII", 0, 0x334DE, 0, 0, 0, 0, 7, 0),
+}
+FIRST_EXCHANGE_ID = KERNEL_RESULT + 1
+EXCHANGE_IDS = {cell: FIRST_EXCHANGE_ID + i for i, cell in enumerate(RECEIVED)}
+RECEIVED_BY_ID = {EXCHANGE_IDS[cell]: message for cell, message in RECEIVED.items()}
 # The most a service's buffer may hold: RAM's size.
 LONGEST_BUFFER = RAM_SIZE
 # Where service 8, alloc_seg, takes its segments, D1 bytes each rounded
@@ -264,6 +303,18 @@ SEGMENT_ALIGNMENT = 2
 # 0x14ed0), and a record's bytes (docs/firmware/psos.md, "Inside the
 # kernel").
 TASK_RECORD_SIZE = 0xB2
+# The kernel's configuration, psos_config, and its I/O table, which
+# psos_config_init (0x51038) copies from ROM at start-up, as (from, to,
+# bytes) (docs/firmware/structures.md, "The kernel's configuration"),
+# and which RAM starts each case with.
+PSOS_CONFIG = 0x10264C
+KERNEL_TABLES = [(0x5122A, PSOS_CONFIG, 0x62), (0x5171A, 0x1025BC, 0x90)]
+# The configuration's first long is the data area's address, and the
+# data area's first long the running task's record, which most of the
+# kernel's handlers load (psos.md, "Inside the kernel") and the
+# routines that count into it read.  A call starts with that record
+# from ALLOCATIONS, which ident returns for the name 0.
+RUNNING_TASK = 0
 
 
 @dataclass(frozen=True)
@@ -354,7 +405,26 @@ INTEGERS = [0, 1, -1, 0x12345678, -100000, 7]
 CHARS = [-1, 0x41, 0x7F, 0, -0x80, 3]
 SHORTS = [-2, 0x1234, -30000, 0, 0x7FFF, 9]
 REALS = [1.5, -2.25, 1e10, 3.0e-5, 0.0, 123.456]
-CASES = 6
+# The cases: in the first PLAIN_CASES a pointer's buffer holds bytes,
+# in the rest POINTER_FILL, whose longs are pointers, so that a routine
+# given a record that holds pointers, or a pointer to one, runs on.
+PLAIN_CASES = 6
+POINTER_CASES = 2
+CASES = PLAIN_CASES + POINTER_CASES
+# What a pointer case's buffers hold, and POINTEES, the harness's own
+# memory, which every long whose high word is "10" lies in, filled
+# with it too: a long at an even offset in it is a pointer into
+# POINTEES, "1010..." as text, but one in each 16 bytes that is NULL,
+# which ends a list, and the next, 0x3130, in ROM.  POINTEES is filled
+# at a call's start and compared after it, as RAM is.
+POINTER_FILL = b"10" * 6 + b"\0\0\0\0"
+POINTEES = 0x31300000
+POINTEES_SIZE = 0x10000
+FILLED = POINTER_FILL * (POINTEES_SIZE // len(POINTER_FILL))
+# Memory beside RAM that a call starts with the same contents in and
+# that is compared after it as RAM is: by name, its address and those
+# contents.  Neither holds code, so that a jump into either faults.
+COMPARED = {"EEPROM": (EEPROM, ERASED), "pointee memory": (POINTEES, FILLED)}
 # How far apart in the lists one case's successive arguments are taken,
 # so that arguments swapped or one loaded twice show.
 POSITION_STRIDE = 1
@@ -436,13 +506,15 @@ def rebuilt_machine(image: bytes, linked: list[Section], linked_symbols: dict[st
         if section.name in LOADED:
             m.uc.mem_write(section.address, section.data)
     m.uc.mem_map(STACK, STACK_SIZE)
-    m.uc.mem_map(EEPROM, EEPROM_SIZE)
+    for start, contents in COMPARED.values():
+        m.uc.mem_map(start, len(contents), UC_PROT_READ | UC_PROT_WRITE)
     return m
 
 
-def argument(m: Machine, types: Types, kind: str, case: int) -> bytes:
+def argument(m: Machine, types: Types, kind: str, case: int, pointing: bool = False) -> bytes:
     """The case'th argument of a kind, as its bytes, a pointer to a fresh
-    buffer of what it points at."""
+    buffer of what it points at, POINTER_FILL where pointing but for
+    text and reals."""
     real = REALS[case % len(REALS)]
     if types.is_pointer(kind):
         pointee = kind.removesuffix("*").strip()
@@ -453,6 +525,8 @@ def argument(m: Machine, types: Types, kind: str, case: int) -> bytes:
             if pointee == "float"
             else TEXT
             if pointee == "char"
+            else POINTER_FILL * (BUFFER_SPACING // len(POINTER_FILL))
+            if pointing
             else bytes((case * 37 + i * 11) & 0xFF for i in range(BUFFER_SPACING))
         )
         return struct.pack(">I", m.buffer(contents))
@@ -472,7 +546,8 @@ def argument(m: Machine, types: Types, kind: str, case: int) -> bytes:
 
 def arguments(m: Machine, types: Types, kinds: list[str], case: int) -> list[bytes]:
     """A case's arguments, each position taking a different value."""
-    return [argument(m, types, kind, case + POSITION_STRIDE * i) for i, kind in enumerate(kinds)]
+    pointing = case >= PLAIN_CASES
+    return [argument(m, types, kind, case + POSITION_STRIDE * i, pointing) for i, kind in enumerate(kinds)]
 
 
 def gcc_slots(values: list[bytes]) -> bytes:
@@ -485,16 +560,24 @@ def gcc_slots(values: list[bytes]) -> bytes:
 
 
 def fresh_ram(m: Machine) -> None:
-    """Zero RAM and the buffers' allocator: a case's starting point."""
+    """RAM zeroed but the kernel's tables and the exchanges' ids, and the
+    buffers' allocator: a case's starting point."""
     m.next_buffer = BUFFER
     m.uc.mem_write(RAM, bytes(RAM_SIZE))
+    for source, destination, size in KERNEL_TABLES:
+        m.uc.mem_write(destination, m.read(source, size))
+    for cell, exchange in EXCHANGE_IDS.items():
+        m.uc.mem_write(cell, struct.pack(">I", exchange))
 
 
 def reset(m: RebuiltMachine, ram: bytes) -> None:
     m.uc.mem_write(RAM, ram)
     m.next_allocation = ALLOCATIONS
-    m.tasks = {}
-    m.uc.mem_write(EEPROM, ERASED)
+    m.tasks = {RUNNING_TASK: allocate(m, TASK_RECORD_SIZE)}
+    data_area = struct.unpack(">I", m.read(PSOS_CONFIG, POINTER_SIZE))[0]
+    m.uc.mem_write(data_area, struct.pack(">I", m.tasks[RUNNING_TASK]))
+    for start, contents in COMPARED.values():
+        m.uc.mem_write(start, contents)
     m.uc.mem_write(STACK, CLEAN_STACK)
     for start, size in DEVICES:
         m.uc.mem_write(start, bytes(size))
@@ -576,7 +659,8 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
             start = uc.reg_read(REGISTERS[pointer]) + (MESSAGE_OFFSET if length is None else 0)
             data = bytes(uc.mem_read(start, size))
         if service.fills:
-            uc.mem_write(uc.reg_read(REGISTERS[service.fills]) + MESSAGE_OFFSET, MESSAGE)
+            buffer, exchange = (uc.reg_read(REGISTERS[name]) for name in service.fills)
+            uc.mem_write(buffer + MESSAGE_OFFSET, RECEIVED_BY_ID.get(exchange, MESSAGE))
         if service.text:
             data = string(uc, uc.reg_read(REGISTERS[service.text[0]]))
             if data is None:
@@ -614,15 +698,17 @@ def answer_kernel(m: RebuiltMachine, vector: int) -> KernelCall | str:
 
 class Run:
     """One call: its stack arguments laid above the return address, its
-    registers after, RAM and the EEPROM after, its effects, the ENDING
-    vector it ended at instead of returning, and the fault or trap that
-    stopped it, if one did."""
+    registers after, RAM and the COMPARED memory after, its effects,
+    the ENDING vector, HALTED or STILL_RUNNING it ended at instead of
+    returning, and the fault or trap that stopped it, if one did."""
 
     def __init__(self, m: RebuiltMachine, start: int, stack_arguments: bytes = b""):
         trapped, invalid, ended = [], [], []
         self.effects = m.effects = []
+        kernel_calls = 0
 
         def trap(uc, number, _):
+            nonlocal kernel_calls
             if number in HANDLED:
                 take_exception(uc, number)
                 return
@@ -632,9 +718,14 @@ class Run:
                 return
             if number == RETURN_FROM_EXCEPTION and return_from_exception(uc):
                 return
+            if number in KERNEL_TRAPS and kernel_calls == KERNEL_CALL_LIMIT:
+                ended.append(STILL_RUNNING)
+                uc.emu_stop()
+                return
             if number in KERNEL_TRAPS:
                 call = answer_kernel(m, number)
                 if isinstance(call, KernelCall):
+                    kernel_calls += 1
                     m.effects.append(call)
                     return
                 trapped.append(f"{number}, {call}")
@@ -673,16 +764,22 @@ class Run:
         finally:
             for hook in hooks:
                 m.uc.hook_del(hook)
+        pc = m.uc.reg_read(UC_M68K_REG_PC)
+        if self.stopped is None and not ended and pc != RETURN:
+            if any(m.read(pc, len(branch)) == branch for branch in SELF_BRANCHES):
+                ended.append(HALTED)
+            else:
+                self.stopped = f"no return in {STEP_LIMIT} steps"
         self.ended = ended[0] if ended else None
-        if self.stopped is None and self.ended is None and m.uc.reg_read(UC_M68K_REG_PC) != RETURN:
-            self.stopped = f"no return in {STEP_LIMIT} steps"
         self.registers = {name: m.uc.reg_read(register) for name, register in REGISTERS.items()}
         self.ram = m.read(RAM, RAM_SIZE)
-        self.eeprom = m.read(EEPROM, EEPROM_SIZE)
+        self.compared = {name: m.read(start, len(contents)) for name, (start, contents) in COMPARED.items()}
 
     def end(self) -> str:
         if self.ended is None:
             return "returned"
+        if isinstance(self.ended, str):
+            return self.ended
         return f"vector {self.ended}" if self.ended < TRAP_VECTORS else f"trap #{self.ended - TRAP_VECTORS}"
 
     def value(self, register: str) -> int:
@@ -760,9 +857,10 @@ def ram_difference(m: RebuiltMachine, a: Run, b: Run) -> str | None:
         if literal is None:
             return f"RAM differs from {RAM + first:x}"
         at = literal + POINTER_SIZE
-    if a.eeprom != b.eeprom:
-        first = next(i for i in range(EEPROM_SIZE) if a.eeprom[i] != b.eeprom[i])
-        return f"EEPROM differs from {EEPROM + first:x}"
+    for name, (start, _) in COMPARED.items():
+        if a.compared[name] != b.compared[name]:
+            first = next(i for i, (x, y) in enumerate(zip(a.compared[name], b.compared[name])) if x != y)
+            return f"{name} differs from {start + first:x}"
     return None
 
 

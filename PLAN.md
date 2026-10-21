@@ -683,12 +683,12 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/bridge_check.py` (Unicorn, run with uv) calls each
      wrapper as gcc would and its routine from its registers, from the
      same RAM, and requires the same result, RAM and effects and gcc's
-     callee-saved registers kept; 77 of 89 agree, none disagree.
+     callee-saved registers kept; 79 of 89 agree, none disagree.
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1250 run, 1085 agree, 160 reach what the
-     harness does not model and are skipped, and 5 differ, in the
+     original reads them: of 1250 run, 1159 agree, 77 reach what the
+     harness does not model and are skipped, and 14 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): traps #1 and #7 run the image's handlers;
@@ -857,6 +857,28 @@ view cannot drift apart.  The library, bottom up:
      inside another's left operand is rewritten where it now is (28 to
      5).  Left: `setjmp`, the 64-bit divides' overflow, `log_erase`'s
      checksum over a pointer and the DIAG query's caller's registers.
+     Then the harness turned 59 of the 141 skipped into comparisons
+     (1085 agreeing to 1159, 5 differing to 14), each model the same
+     for both calls: a branch to itself, `fatal_error`'s spin, ends a
+     call halted, a zero divide at its vector, and a task's loop at its
+     1000th kernel call, still running (16); RAM starts with the
+     kernel's configuration and I/O table and the running task's
+     record (5); `request_x` from `spoo` and `pllc` receives a
+     well-formed `spoo_request` and `pllc_request` (2); and two cases
+     more give each pointer a buffer of pointers, into compared memory
+     of the harness's own (36).  The limit cuts short no call that
+     returned before it; `selftest_execute`, whose gcc copy outran the
+     step limit, now agrees.  The new differences: `program_exit`
+     prints its return address, which gcc's copy reads as 0;
+     `stack_measure` and `stack_usage_report` on the buffers of
+     pointers; `task_stack_info`,
+     whose image copy reads an unset local the decompiled C keeps
+     (`task_stack_report`, `s_rep_word`,
+     `scpi_query_DIAGnostic_OS_STACk`); and `fpga_verify_first`,
+     `_odd` and `_even`, which agreed, return 0 where the image's
+     return 1 on the buffers of pointers, after the first QSPI read:
+     perhaps the buffer pair, which the C keeps as two locals, as the
+     self-tests' was.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

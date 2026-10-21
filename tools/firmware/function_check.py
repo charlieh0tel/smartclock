@@ -16,8 +16,9 @@ device writes in the same order (harness.py).
 
 With NAMEs, only those.  gcc's copy calls gcc's C and, through their
 names and the bridges, the assembly; so a difference may lie in a
-callee.  A call that ends at a trap that never returns, or at a write
-to code, is compared up to there, but for its result.  A function that
+callee.  A call that ends at a trap that never returns, a zero divide,
+a write to code, a branch to itself or its KERNEL_CALL_LIMIT'th kernel
+call is compared up to there, but for its result.  A function that
 reaches beyond what the harness maps, calls a kernel service the
 harness does not model, or traps the same way both times is skipped.  A function whose prototype has an
 argument of no known size, a structure passed whole, a variable

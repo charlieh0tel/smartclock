@@ -550,8 +550,8 @@ label, `c_NAME`: a generated wrapper that moves the arguments from
 gcc's stack into the routine's registers and its result into D0, D0:D1
 or A0.  `tools/firmware/bridge_check.py` runs each wrapper in Unicorn
 against its routine called directly, from the registers the sidecar
-names: of the 85, 74 give the same result, RAM and effects and keep
-gcc's callee-saved registers, 4 reach what the harness does not model
+names: of the 89, 79 give the same result, RAM and effects and keep
+gcc's callee-saved registers, 3 reach what the harness does not model
 and are skipped, and 7 (the installer's) are not run.  The
 whole file compiles to an object (`make check-decompiled`, whose flags
 add `-fno-builtin -fno-tree-loop-distribute-patterns`, since the image's
@@ -732,13 +732,23 @@ contents, since a caller's buffer on its stack lies where its own
 frame puts it, and returns no error and `0x6b000000`, an address
 nothing is mapped at, in each result register; `request_x` fills its
 buffer with that value, a read reads nothing and a write writes all it
-is given.  But the write of DUART channel B, the console's string
+is given.  But a case starts with an id, another such address, in
+`spoo_exchange` and `pllc_exchange`, as `root_task`'s creates leave
+one, and `request_x` from either receives the message its receiver
+expects (`structures.md`): a `spoo_request` for `scpi_task_create` at
+priority `0x19`, as `scpi_task_start` sends it, and a `pllc_request`
+setting `:SAMPle:INTeger` (descriptor `0x334de`) to 7.  The write of DUART channel B, the console's string
 device and the SCI (devices 0, 2 and 3: `drtb_write`, `sci_write`)
 sends the string at A0 whatever D2 holds and returns its length in D2,
 as the routines do; service 8, `alloc_seg`, returns a segment of the
 size in D1 from RAM's top quarter, and service 3, `ident`, a task
 record there, one per name, each from the same place in both calls, so
-that a caller uses it and RAM compares it.  The devices -- the DUART
+that a caller uses it and RAM compares it.  RAM starts each case zeroed
+but for the kernel's configuration and I/O table, which
+`psos_config_init` copies from ROM at start-up (`structures.md`, "The
+kernel's configuration"), and the first long of the data area the
+configuration names, the running task's record, which is `ident`'s for
+the name 0.  The devices -- the DUART
 at `0x200000`, `0x300000` to `0x30ffff`, `0x500000` and the MC68331's
 modules from `0xfff000` -- are memory zeroed for each call, and each
 write to them is recorded; but the registers the polled routines wait
@@ -750,11 +760,23 @@ order, are a call's effects, which the two calls must make alike; a
 service the harness does not model stops a call, as an unmapped
 address does.  A trap whose handler never comes back -- `#5`, the
 kernel's return from interrupt, and `#11` and `#12`, which restart --
-ends a call, as does a write to code, which on the board raises a bus
-error (the boot chip select is read only, CSORBT `0x6870`, and the bus
-monitor on, SYPCR `0xcc`); two calls that end at the same vector are
+ends a call, as does a zero divide, which the common exception entry,
+with no task's handler set, records before it spins (`restart.md`,
+"Both end in the watchdog"), and a write to code, which on the board
+raises a bus error (the boot chip select is read only, CSORBT
+`0x6870`, and the bus monitor on, SYPCR `0xcc`).  A branch to itself,
+`fatal_error`'s spin, ends a call halted, since no interrupt comes;
+and a call still running at its 1000th kernel call, a task's loop,
+ends there, before making it.  Two calls that end the same way are
 compared as if they had returned, but for their result.  And the stack is filled with `0xa5` at a call's start,
 so that a local read before it is written reads the same in both.
+Each function runs eight cases: in the first six a pointer's buffer
+holds bytes, and in the last two longs that are pointers, so that a
+routine given a record of pointers runs on: into memory of the
+harness's own at `0x31300000`, filled the same way, `1010` as text,
+with a NULL in every 16 bytes to end a list.  That memory, as the
+EEPROM, is filled for each call, compared after it as RAM is, and
+holds no code, so that a jump into either faults.
 
 In the Z3805A 3543B image this gives 1813 functions, and every one but
 the ten thunks decompiles.  136 switches are recovered; `0x24ff2` and `0x25140`, a

@@ -28,12 +28,6 @@ enum {
   TI_STATUS_COUNTED = 0x02,
 };
 
-/* interpolator_measure's reference, fpga_bit_table entry 3. */
-enum {
-  TI_REFERENCE_LOW = 0,
-  TI_REFERENCE_HIGH = 1,
-};
-
 /* The hex DAC's slots, hdac_set's second, that trim the interpolator's
  * low and high references. */
 enum {
@@ -152,10 +146,10 @@ void counter_arm(interval_reading_fields* reading,
     return;
   }
   ti_registers_load_wanted(configuration);
-  fpga_set_bit(1, 8);   /* preset */
-  fpga_set_field(0, 0); /* mode: count */
-  fpga_set_bit(2, 0);   /* start */
-  fpga_set_field(4, 0); /* address */
+  fpga_set_bit(FPGA_BIT_PRESET, 8);
+  fpga_set_field(FPGA_BIT_MODE, 0); /* count */
+  fpga_set_bit(FPGA_BIT_START, 0);
+  fpga_set_field(FPGA_BIT_ADDRESS, 0);
   if (configuration->sync_mode == 2 &&
       configuration->sync_state == TI_STATE_WANTED) {
     counter_set_sync(configuration->sync_kind);
@@ -164,17 +158,16 @@ void counter_arm(interval_reading_fields* reading,
       configuration->sync_state = TI_STATE_DONE;
     }
   }
-  fpga_set_bit(1, 0); /* preset */
+  fpga_set_bit(FPGA_BIT_PRESET, 0);
 }
 
 /* Polls the FPGA's status register for a bit, up to 512 times 10 ticks;
  * the reading is disarmed if it never comes or a 1PPS dies (0x4091a). */
 uint8_t counter_wait_ready(uint8_t mask) {
-  static const uint8_t STATUS_REGISTER = 0;
   static const uint32_t POLL_TICKS = 10;
   uint16_t polls = 0x200;
   bool ready = false;
-  uint8_t status = fpga_read(STATUS_REGISTER);
+  uint8_t status = fpga_read(FPGA_REGISTER_STATUS);
 
   while (!gps_pps_dead && !internal_pps_dead && interval_reading.armed &&
          polls != 0) {
@@ -184,7 +177,7 @@ uint8_t counter_wait_ready(uint8_t mask) {
     }
     psos_pause(POLL_TICKS);
     polls--;
-    status = fpga_read(STATUS_REGISTER);
+    status = fpga_read(FPGA_REGISTER_STATUS);
   }
   if (polls == 0 || gps_pps_dead || internal_pps_dead) {
     interval_reading.armed = 0;
@@ -203,13 +196,11 @@ uint64_t counter_offset_apply(int32_t high, uint32_t low) {
 /* The counter's 24-bit count of 100 ns ticks, from FPGA registers 0x16
  * (its high byte) down to 0x12, less its preset (0x40c06). */
 int64_t counter_read_raw(void) {
-  static const uint8_t COUNT_HIGH_REGISTER = 0x16;
-  static const uint8_t COUNT_LOW_REGISTER = 0x12;
   /* a byte is two registers' nibbles, fpga_read_byte's */
   static const uint8_t REGISTERS_PER_BYTE = 2;
   uint32_t count = 0;
 
-  for (uint8_t reg = COUNT_HIGH_REGISTER; reg >= COUNT_LOW_REGISTER;
+  for (uint8_t reg = FPGA_REGISTER_COUNT_HIGH; reg >= FPGA_REGISTER_COUNT_LOW;
        reg -= REGISTERS_PER_BYTE) {
     count = count << 8 | fpga_read_byte(reg);
   }
@@ -219,9 +210,7 @@ int64_t counter_read_raw(void) {
 /* The interpolator's reading, the complement of FPGA register 0x10's
  * byte (0x40c56). */
 uint32_t interpolator_read(void) {
-  static const uint8_t INTERPOLATOR_REGISTER = 0x10;
-
-  return ~(uint32_t)fpga_read_byte(INTERPOLATOR_REGISTER);
+  return ~(uint32_t)fpga_read_byte(FPGA_REGISTER_INTERPOLATOR);
 }
 
 /* The interval's reading, into the reading: the count plus the
@@ -280,21 +269,21 @@ void counter_read(interval_reading_fields* reading,
  * to measure the interpolator's references; 1 (0x401c4). */
 uint32_t interpolator_prepare(void) {
   ti_registers_load_wanted(&counter_configuration);
-  fpga_set_bit(1, 8);   /* preset */
-  fpga_set_field(0, 3); /* mode: the interpolator's references */
-  fpga_set_bit(2, 0);   /* start */
-  fpga_set_field(4, 0); /* address */
+  fpga_set_bit(FPGA_BIT_PRESET, 8);
+  fpga_set_field(FPGA_BIT_MODE, 3); /* the interpolator's references */
+  fpga_set_bit(FPGA_BIT_START, 0);
+  fpga_set_field(FPGA_BIT_ADDRESS, 0);
   return 1;
 }
 
 /* Pulses a measurement of one of the interpolator's references and
  * returns its reading (0x40030). */
-uint8_t interpolator_measure(uint8_t reference) {
-  fpga_set_bit(3, reference); /* reference */
-  fpga_set_bit(1, 8);         /* preset */
-  fpga_set_bit(2, 1);         /* start */
-  fpga_set_bit(1, 0);         /* preset */
-  fpga_set_bit(2, 0);         /* start */
+uint8_t interpolator_measure(interpolator_reference reference) {
+  fpga_set_bit(FPGA_BIT_REFERENCE, reference);
+  fpga_set_bit(FPGA_BIT_PRESET, 8);
+  fpga_set_bit(FPGA_BIT_START, 1);
+  fpga_set_bit(FPGA_BIT_PRESET, 0);
+  fpga_set_bit(FPGA_BIT_START, 0);
   counter_wait_ready(TI_STATUS_INTERPOLATED);
   return interpolator_read();
 }
@@ -303,14 +292,14 @@ uint8_t interpolator_measure(uint8_t reference) {
  * (0x4007e). */
 uint8_t interpolator_measure_low(char_slot dac) {
   hdac_set(dac.value, TI_HDAC_SLOT_LOW);
-  return interpolator_measure(TI_REFERENCE_LOW);
+  return interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
 }
 
 /* The high reference's reading with its DAC at a value, a dac_measure
  * (0x40096). */
 uint8_t interpolator_measure_high(char_slot dac) {
   hdac_set(dac.value, TI_HDAC_SLOT_HIGH);
-  return interpolator_measure(TI_REFERENCE_HIGH);
+  return interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
 }
 
 /* Sets both DACs from the calibration and keeps both references'
@@ -318,8 +307,8 @@ uint8_t interpolator_measure_high(char_slot dac) {
 static void ti_measure_both(interpolator_calibration* calibration) {
   hdac_set(calibration->hdac_2, TI_HDAC_SLOT_LOW);
   hdac_set(calibration->hdac_3, TI_HDAC_SLOT_HIGH);
-  calibration->reading_low = interpolator_measure(TI_REFERENCE_LOW);
-  calibration->reading_high = interpolator_measure(TI_REFERENCE_HIGH);
+  calibration->reading_low = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
+  calibration->reading_high = interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
 }
 
 static bool ti_low_in_range(uint8_t reading) {
@@ -371,19 +360,19 @@ uint8_t interpolator_calibrate(interpolator_calibration* calibration) {
         calibration->hdac_3, HDAC_MINIMUM, HDAC_MAXIMUM, TI_HIGH_MINIMUM,
         TI_HIGH_MAXIMUM, interpolator_measure_high);
   }
-  calibration->reading_low = interpolator_measure(TI_REFERENCE_LOW);
+  calibration->reading_low = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
   if (!ti_low_in_range(calibration->reading_low)) {
     calibration->hdac_2 = dac_search_bisect(
         calibration->hdac_2, HDAC_MINIMUM, HDAC_MAXIMUM, TI_LOW_MINIMUM,
         TI_LOW_MAXIMUM, interpolator_measure_low);
   }
-  calibration->reading_low = interpolator_measure(TI_REFERENCE_LOW);
+  calibration->reading_low = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
   calibration->hdac_3 = dac_search_step(
       calibration->hdac_3, HDAC_MINIMUM, HDAC_MAXIMUM,
       calibration->reading_low - STEP_BELOW_FAR,
       calibration->reading_low - STEP_BELOW_NEAR, interpolator_measure_high);
-  calibration->reading_high = interpolator_measure(TI_REFERENCE_HIGH);
-  calibration->reading_low = interpolator_measure(TI_REFERENCE_LOW);
+  calibration->reading_high = interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
+  calibration->reading_low = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
 
   for (uint8_t nudge = 0; nudge < NUDGES && !calibrated; nudge++) {
     calibration->hdac_2 = hdac_nudge(
@@ -394,8 +383,9 @@ uint8_t interpolator_calibrate(interpolator_calibration* calibration) {
           calibration->hdac_3, HDAC_MINIMUM, HDAC_MAXIMUM, TI_HIGH_MINIMUM,
           TI_HIGH_MAXIMUM, interpolator_measure_high);
     }
-    calibration->reading_high = interpolator_measure(TI_REFERENCE_HIGH);
-    calibration->reading_low = interpolator_measure(TI_REFERENCE_LOW);
+    calibration->reading_high =
+        interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
+    calibration->reading_low = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
     spread = calibration->reading_high - calibration->reading_low;
     calibrated = spread == TI_SPREAD;
   }
@@ -508,7 +498,7 @@ void interpolator_sample_test(void) {
 /* The FPGA's self-test: fails unless the preset counter reads zero
  * (0x40f98). */
 void counter_selftest(void) {
-  fpga_set_bit(1, 8); /* preset */
+  fpga_set_bit(FPGA_BIT_PRESET, 8);
   selftest.fpga = counter_read_raw() != 0;
 }
 
@@ -539,14 +529,13 @@ void interval_wait_reading(void) {
   efc_history_update();
 }
 
-/* Arms the next reading: calibrating the interpolator first for mode 0,
- * syncing the counter for 2, plainly for 1 (0x450c4). */
-void interval_rearm(char arm_mode) {
+/* Arms the next reading, as its interval_arm_mode says (0x450c4). */
+void interval_rearm(interval_arm_mode arm_mode) {
   interval_reading.armed = 1;
   interval_reading.errors = 0;
-  if (arm_mode == 0) {
+  if (arm_mode == INTERVAL_ARM_CALIBRATE) {
     counter_calibrate(&interval_reading, &counter_configuration);
-  } else if (arm_mode == 2) {
+  } else if (arm_mode == INTERVAL_ARM_SYNC) {
     sync_request(3, 1); /* a sync_kind, once */
   }
   interval_armed_without_pps = ti_pps_dead();
@@ -556,7 +545,7 @@ void interval_rearm(char arm_mode) {
 /* The next one-second reading, into *reading as a float if given, and
  * its valid flag; then the next armed, as interval_rearm (0x44fbc).  The
  * image has the two halves' code inline. */
-uint8_t interval_next_reading(char arm_mode, float* reading) {
+uint8_t interval_next_reading(interval_arm_mode arm_mode, float* reading) {
   uint8_t valid;
 
   interval_wait_reading();

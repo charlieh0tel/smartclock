@@ -494,6 +494,21 @@ typedef struct qspi_state {
                       clears it */
 } qspi_state;
 
+/* A device on the QSPI, by the minor number of I/O device 1, which
+ * qspi_queue_setup (0x205a0) takes and sets up a queue for, cases 0 to
+ * 0xc.  Only those a caller passes are named: the ADC (one word), the
+ * hex DAC (three), the EFC DAC (one), and the FPGA's configuration in
+ * blocks of up to 16 words and a tail of two, and its readback of 8 to
+ * 16 bits (fpga_program 0x22da4, fpga_verify_chip 0x2384a). */
+typedef enum __attribute__((packed)) qspi_device {
+  QSPI_ADC = 1,
+  QSPI_HDAC = 2,
+  QSPI_FPGA_BLOCK = 6,
+  QSPI_EFC = 7,
+  QSPI_FPGA_TAIL = 9,
+  QSPI_FPGA_READBACK = 0xc,
+} qspi_device;
+
 /* A QSPI transfer's two buffers, on its caller's stack, which
  * qspi_transfer takes, and qspi_read hands its device's read: the words
  * to send and where the words received go.  adc_read and the FPGA's
@@ -1552,6 +1567,49 @@ typedef struct gps_state {
   uint8_t raim_option; /* its options list has an I */
   uint8_t field_559;
 } gps_state;
+
+/* An entry of fpga_bit_table (0x41310), which fpga_set_bit and
+ * fpga_set_field take: a register of fconf_regs and its mask.  The
+ * names are from how ti.c's routines use them; only the address and
+ * sync are in structures.md. */
+typedef enum __attribute__((packed)) fpga_bit_index {
+  FPGA_BIT_MODE = 0,   /* register 0, 0x03: 0 counts, 3 the interpolator's
+                          references (counter_arm, interpolator_prepare) */
+  FPGA_BIT_PRESET = 1, /* register 0, 0x40: set around arming; counter_selftest
+                          reads a count of 0 under it */
+  FPGA_BIT_START = 2,  /* register 1, 0x01: pulsed by interpolator_measure */
+  FPGA_BIT_REFERENCE = 3, /* register 1, 0x02: an interpolator_reference */
+  FPGA_BIT_ADDRESS = 4, /* register 1, 0xf8: the address bits fpga_read uses */
+  FPGA_BIT_SYNC = 5,    /* register 3, 0x03: counter_set_sync */
+} fpga_bit_index;
+
+/* A register the FPGA reads back through fpga_read and fpga_read_byte,
+ * by the number fpga_read puts in fpga_bit_table entry 4's address
+ * bits.  The count is 24 bits, three bytes, each two registers'
+ * nibbles (counter_read_raw 0x40c06). */
+typedef enum __attribute__((packed)) fpga_register {
+  FPGA_REGISTER_STATUS = 0x00,       /* the counter's ready bits and the seconds
+                                        (counter_wait_ready, fpga_read_seconds) */
+  FPGA_REGISTER_INTERPOLATOR = 0x10, /* interpolator_read */
+  FPGA_REGISTER_COUNT_LOW = 0x12,
+  FPGA_REGISTER_COUNT_MIDDLE = 0x14,
+  FPGA_REGISTER_COUNT_HIGH = 0x16,
+} fpga_register;
+
+/* The reference interpolator_measure measures, fpga_bit_table entry 3. */
+typedef enum __attribute__((packed)) interpolator_reference {
+  INTERPOLATOR_REFERENCE_LOW = 0,
+  INTERPOLATOR_REFERENCE_HIGH = 1,
+} interpolator_reference;
+
+/* How interval_rearm (0x450c4), and interval_next_reading after its
+ * reading, arm the next: calibrating the interpolator first, plainly,
+ * or syncing the counter to the 1PPS first (0x4506e, 0x45082). */
+typedef enum __attribute__((packed)) interval_arm_mode {
+  INTERVAL_ARM_CALIBRATE = 0,
+  INTERVAL_ARM_PLAIN = 1,
+  INTERVAL_ARM_SYNC = 2,
+} interval_arm_mode;
 
 /* An FPGA configuration, a bitstream fpga_program loads and
  * fpga_verify checks, by its index in fpga_configurations.  The table

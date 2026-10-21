@@ -249,8 +249,8 @@
 0x18334	function	debug_is_enabled	context	returns debug_enabled	char debug_is_enabled(void)
 0x29a18	function	return_byte	context	returns its argument; the LED and DOUGlas queries call it	char return_byte(char b)
 0x40756	function	fpga_write	context	writes a byte to FPGA register reg at 0x304000 (interval.md: the FPGA port)	void fpga_write(uint8_t reg, uint8_t value)
-0x409a4	function	fpga_set_bit	context	sets or clears a bit in fconf_regs, register and mask from fpga_bit_table, then fpga_write	void fpga_set_bit(uint8_t bit, uint8_t on)
-0x20b8a	function	qspi_transfer	context	waits for SPCR1 and SPSR, runs a QSPI transfer, copies the receive RAM at 0xfffd00 out	void qspi_transfer(uint8_t device, qspi_buffers *buffers, uint16_t count)
+0x409a4	function	fpga_set_bit	context	sets or clears a bit in fconf_regs, register and mask from fpga_bit_table, then fpga_write	void fpga_set_bit(fpga_bit_index bit, uint8_t on)
+0x20b8a	function	qspi_transfer	context	waits for SPCR1 and SPSR, runs a QSPI transfer, copies the receive RAM at 0xfffd00 out	void qspi_transfer(qspi_device device, qspi_buffers *buffers, uint16_t count)
 0x1f2c0	function	adc_read	context	sends 0xc000 | channel << 11 to device 1 minor 1 and returns the reply shifted down 2; diag_adc_read and diag_cal call it	int adc_read(adc_channel channel)
 0x1f2c0	local	buffers	read	the transfer adc_read hands qspi_read: its command word and its reply	qspi_buffers @ -0x10
 0x1df12	function	console_write_polled	context	in supervisor mode, writes the string a character at a time through 0x1d680; debug_write uses it	int console_write_polled(char *s)
@@ -472,8 +472,8 @@
 0x1f5bc	function	hdac_write_all	structures.md	the hdac_all word's: six 6-bit values packed two to a word into hdac_shadow, written to device 2
 0x10314a	label	hdac_shadow	structures.md	hdac_write_all's three words, two 6-bit HDAC values each; hdac_set masks one half	uint16_t[3]
 0x1f646	function	efc_write	structures.md	the efc_write word's: the value to device 7, then a strobe at 0x306000
-0x20acc	function	qspi_write	structures.md	psos_io_write to device 0x100 | n; hdac_write_all writes device 2, efc_write device 7
-0x20aec	function	qspi_read	structures.md	psos_io_read to device 0x100 | n
+0x20acc	function	qspi_write	structures.md	psos_io_write to device 0x100 | n; hdac_write_all writes device 2, efc_write device 7	void qspi_write(qspi_device device, void *buffers, uint32_t count)
+0x20aec	function	qspi_read	structures.md	psos_io_read to device 0x100 | n	void qspi_read(qspi_device device, void *buffers, uint32_t count)
 0x284b6	function	status_read_event	structures.md	the STATus EVENt, *ESR? and *STB? queries' read of a register's event value	void status_read_event(status_model *status, int index, uint16_t *event)
 0x28506	function	status_read_condition	structures.md	the STATus CONDition queries' read of a register's condition	void status_read_condition(status_model *status, int index, uint16_t *condition)
 0x16a4c	function	os_process_report	structures.md	:DIAG:OS:PROC?'s report of the tasks
@@ -504,7 +504,7 @@
 0x2bf00	function	status_report_from	context	status_report(code) for a command from source 0 or 2, not 1, 3 or 4; every caller passes return_zero()
 0x2e6fc	function	skip_spaces	context	advances a char ** past spaces
 0x136f6	function	get_uptime	context	returns uptime; efc_history_update divides it by 2700 for an entry's time	uint32_t get_uptime(void)
-0x44fbc	function	interval_next_reading	context	the next one-second interval reading, into *reading as a float, and its flag; waits instead while a 1PPS is dead; updates the EFC history; arm_mode 0 calibrates, 2 syncs (0x4506e, 0x45082); *reading takes double_to_float's result (0x45060)	uint8_t interval_next_reading(char arm_mode, float *reading)
+0x44fbc	function	interval_next_reading	context	the next one-second interval reading, into *reading as a float, and its flag; waits instead while a 1PPS is dead; updates the EFC history; arm_mode 0 calibrates, 2 syncs (0x4506e, 0x45082); *reading takes double_to_float's result (0x45060)	uint8_t interval_next_reading(interval_arm_mode arm_mode, float *reading)
 0x4b9e6	function	gps_count_response	context	counts a GPS response by its kind in gps_counts: successes, rejects, aborts, unknown_sender, unknown_command, busy and the rest	int gps_count_response(char kind, gps_request_entry *request)
 0x46620	function	gps_ack_received	context	returns gps_ack_ready, clearing gps_ack_awaited once it is set; the ack checker 0x46838 polls it
 0x102585	label	gps_ack_ready	context	gpsx_send clears it; pllp_task sets it with gps_ack_code when the GPS task's answer comes back on plla	uint8_t
@@ -562,7 +562,7 @@
 0x182d4	function	selftest_may_report	context	true for mode 0 or when the test was not aborted
 0x26ee0	function	scpi_scan_token	context	the SCPI lexer: reads characters through the input's own routine and classifies them by the table at 0x277ec	int scpi_scan_token(scpi_port *input, scpi_token *token, int *param_3)
 0x40248	function	interpolator_calibrate	context	sets HDAC channels 2 and 3 until interpolator_measure gives 1 to 25 and 201 to 225, 200 apart; ovens.md's Z3816A 0x43b56	uint8_t interpolator_calibrate(interpolator_calibration *calibration)
-0x40030	function	interpolator_measure	context	pulses the FPGA bits for a measurement and returns interpolator_read	uint8_t interpolator_measure(uint8_t mode)
+0x40030	function	interpolator_measure	context	pulses the FPGA bits for a measurement and returns interpolator_read	uint8_t interpolator_measure(interpolator_reference reference)
 0x4007e	function	interpolator_measure_low	interpolator_calibrate	hdac_set of HDAC channel 2, then interpolator_measure(0)	uint8_t interpolator_measure_low(char_slot dac)
 0x40096	function	interpolator_measure_high	interpolator_calibrate	hdac_set of HDAC channel 3, then interpolator_measure(1)	uint8_t interpolator_measure_high(char_slot dac)
 0x40c56	function	interpolator_read	context	the complement of FPGA register 0x10
@@ -586,7 +586,7 @@
 0x2d226	function	satellites_in_mask	context	lists the PRNs whose bits are set; the SAT:TRAC:IGN? and INCL? queries
 0x4aff2	function	uptime_elapsed	context	get_uptime() less *start into *elapsed, restarting *start if the clock went back
 0x4513c	function	interval_wait_reading	context	the wait half of interval_next_reading: the FPGA's reading, or a wait while a 1PPS is dead; updates the EFC history
-0x450c4	function	interval_rearm	context	the other half of interval_next_reading: counter_calibrate, or sync_request(3, 1) for mode 2, then counter_arm
+0x450c4	function	interval_rearm	context	the other half of interval_next_reading: counter_calibrate, or sync_request(3, 1) for mode 2, then counter_arm	void interval_rearm(interval_arm_mode arm_mode)
 0x405bc	function	counter_calibrate	context	runs interpolator_calibrate when the configuration asks, then stores reading_low and the spread at its +0x18 and +0x1c	void counter_calibrate(interval_reading_fields *reading, counter_configuration_fields *configuration)
 0x40c6a	function	counter_arm	context	reloads fconf_regs[0..3] from the configuration and re-arms the FPGA	void counter_arm(interval_reading_fields *reading, counter_configuration_fields *configuration)
 0x40d34	function	counter_read	context	interval.md's one reading: the coarse count plus (interpolator_read - +0x18) / +0x1c, times 1e-7, less the configuration's double at +4, into *reading	void counter_read(interval_reading_fields *reading, counter_configuration_fields *configuration)
@@ -623,7 +623,7 @@
 0x1011c4	label	gps_commands_blocked	structures.md	disable_gps_cmds sets it; while set gpsm_task answers a class 0 or 1 request with code 0 and does not run it, and the GPS Process Monitor prints "GPS receiver commands are blocked"; gps_init clears it	uint8_t
 0x1011c5	label	status_screen_print_interval	structures.md	pstat's argument, made negative: gpsm_task prints status_screen_snapshot at once when it is negative and makes it positive, then every that many seconds; 0 for never; gps_init clears it	int8_t
 0x1011c6	label	gps_command_message	structures.md	gps_request_build's message, which gpsm_task sends with drta_send_message and turns into gps_last_program_message	uint8_t[80]
-0x20b0c	function	qspi_send	context	qspi_transfer without the copy back from receive RAM
+0x20b0c	function	qspi_send	context	qspi_transfer without the copy back from receive RAM	void qspi_send(qspi_device device, uint16_t *transmit, uint16_t count)
 0x4f0d6	function	satellite_id_valid	context	kind 0 accepts 1 to 32, kind 1 33 to 37, the VP reference's pseudolites, kind 2 either	int satellite_id_valid(satellite_kind kind, uint8_t id)
 0x4f8fc	function	gps_message_supported	context	@@Bn, message 0x28, needs the receiver ID and its Time RAIM option, gps.raim_option; any other is supported
 0x4f8b6	function	gps_parse_options	context	sets gps.raim_option when the receiver ID's "OPTIONS LIST " has an I
@@ -1177,9 +1177,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x40ed8	function	counter_configuration_init	context	the counter configuration's defaults, and the interval reading marked invalid	void counter_configuration_init(counter_configuration_fields *configuration)
 0x40000	function	interpolator_calibration_init	context	clears the interpolator calibration, both DACs at 0x1f	void interpolator_calibration_init(interpolator_calibration *calibration)
 0x40ea2	function	counter_load_registers	context	writes counter_configuration's four FPGA registers to the FPGA
-0x40a0e	function	fpga_set_field	context	sets one fpga_bit_table field in its register's image and writes the register
+0x40a0e	function	fpga_set_field	context	sets one fpga_bit_table field in its register's image and writes the register	void fpga_set_field(fpga_bit_index field, uint8_t value)
 0x40afe	function	fpga_fields_to_registers	context	builds the four FPGA register images from field values, by fpga_bit_table	void fpga_fields_to_registers(uint8_t *fields, uint8_t *registers)
-0x40ba6	function	fpga_read_byte	context	a byte from two FPGA registers' low nibbles
+0x40ba6	function	fpga_read_byte	context	a byte from two FPGA registers' low nibbles	uint8_t fpga_read_byte(fpga_register reg)
 0x407fa	function	fpga_read_seconds	context	FPGA register 0's high nibble, read until two reads agree: a count of seconds modulo 16
 0x4091a	function	counter_wait_ready	context	polls FPGA register 0 for a bit, up to 512 times 10 ticks, giving up and disarming the reading if a 1PPS dies; a byte in D0 (0x40998)	uint8_t counter_wait_ready(uint8_t mask)
 0x401c4	function	interpolator_prepare	context	loads any pending FPGA registers and sets the fields for an interpolator measurement	undefined4 interpolator_prepare(void)
@@ -1490,7 +1490,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 #
 # the QSPI driver, the 1PPS monitors and the SCPI parser
 0x20578	function	qspi_queue_setup	context	writes a QSPI device's transfer into the QSM's queue RAM and command words, by the device's number
-0x2081e	function	qspi_start	context	sets a transfer up and starts it, or releases the QSPI, and waits until it is done
+0x2081e	function	qspi_start	context	sets a transfer up and starts it, or releases the QSPI, and waits until it is done	void qspi_start(qspi_device device, uint16_t *transmit, uint16_t count, char read)
 0x20902	function	qspi_init	context	the QSPI device's init, device 1's function 0: clears the QSM's queue RAM and sets SPCR0 to SPCR3 up		convention=register; confidence=read; preserves=D0, D1, A0, A1; family=device
 0x20a62	function	qspi_transfer_raw	context	takes the QSPI and runs a transfer, D0 the device, A1 the buffers and D2 the count		convention=register; confidence=read; in=D0 char device, A1 void *buffers, D2 short count; family=qspi
 0x23980	function	fpga_verify	context	fpga_verify_chip for chip 0 or 1	uint8_t fpga_verify(fpga_configuration_index configuration, char with_task_name)

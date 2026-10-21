@@ -594,6 +594,15 @@ struct fpga_bit {
     uint8_t field_3;
 };
 
+typedef enum __attribute__((packed)) fpga_bit_index {
+    FPGA_BIT_MODE=0,
+    FPGA_BIT_PRESET=1,
+    FPGA_BIT_START=2,
+    FPGA_BIT_REFERENCE=3,
+    FPGA_BIT_ADDRESS=4,
+    FPGA_BIT_SYNC=5
+} fpga_bit_index;
+
 typedef enum __attribute__((packed)) fpga_chip {
     FPGA_CHIP_FIRST=1,
     FPGA_CHIP_SECOND=2
@@ -617,6 +626,14 @@ struct fpga_configuration_table {
     uint8_t field_01;
     struct fpga_configuration_entry entries[1];
 };
+
+typedef enum __attribute__((packed)) fpga_register {
+    FPGA_REGISTER_STATUS=0,
+    FPGA_REGISTER_INTERPOLATOR=16,
+    FPGA_REGISTER_COUNT_LOW=18,
+    FPGA_REGISTER_COUNT_MIDDLE=20,
+    FPGA_REGISTER_COUNT_HIGH=22
+} fpga_register;
 
 typedef struct gps_command_log gps_command_log, *Pgps_command_log;
 
@@ -1192,6 +1209,17 @@ struct interpolator_calibration {
     uint8_t reading_high;
 };
 
+typedef enum __attribute__((packed)) interpolator_reference {
+    INTERPOLATOR_REFERENCE_LOW=0,
+    INTERPOLATOR_REFERENCE_HIGH=1
+} interpolator_reference;
+
+typedef enum __attribute__((packed)) interval_arm_mode {
+    INTERVAL_ARM_CALIBRATE=0,
+    INTERVAL_ARM_PLAIN=1,
+    INTERVAL_ARM_SYNC=2
+} interval_arm_mode;
+
 typedef struct interval_reading_fields interval_reading_fields, *Pinterval_reading_fields;
 
 struct interval_reading_fields {
@@ -1588,6 +1616,15 @@ struct qspi_buffers {
     uint16_t *transmit;
     uint16_t *receive;
 };
+
+typedef enum __attribute__((packed)) qspi_device {
+    QSPI_ADC=1,
+    QSPI_HDAC=2,
+    QSPI_FPGA_BLOCK=6,
+    QSPI_EFC=7,
+    QSPI_FPGA_TAIL=9,
+    QSPI_FPGA_READBACK=12
+} qspi_device;
 
 typedef struct qspi_state qspi_state, *Pqspi_state;
 
@@ -2219,10 +2256,12 @@ _Static_assert(sizeof(exception_record) == 18, "exception_record");
 _Static_assert(sizeof(exchange_token) == 16, "exchange_token");
 _Static_assert(sizeof(forth_user_area) == 40, "forth_user_area");
 _Static_assert(sizeof(fpga_bit) == 4, "fpga_bit");
+_Static_assert(sizeof(fpga_bit_index) == 1, "fpga_bit_index");
 _Static_assert(sizeof(fpga_chip) == 1, "fpga_chip");
 _Static_assert(sizeof(fpga_configuration_entry) == 8, "fpga_configuration_entry");
 _Static_assert(sizeof(fpga_configuration_index) == 1, "fpga_configuration_index");
 _Static_assert(sizeof(fpga_configuration_table) == 10, "fpga_configuration_table");
+_Static_assert(sizeof(fpga_register) == 1, "fpga_register");
 _Static_assert(sizeof(gps_command_log) == 428, "gps_command_log");
 _Static_assert(sizeof(gps_command_log_entry) == 20, "gps_command_log_entry");
 _Static_assert(sizeof(gps_command_mailbox) == 22, "gps_command_mailbox");
@@ -2237,6 +2276,8 @@ _Static_assert(sizeof(gpt_registers) == 46, "gpt_registers");
 _Static_assert(sizeof(holdover_steering_state) == 28, "holdover_steering_state");
 _Static_assert(sizeof(identification_record) == 48, "identification_record");
 _Static_assert(sizeof(interpolator_calibration) == 9, "interpolator_calibration");
+_Static_assert(sizeof(interpolator_reference) == 1, "interpolator_reference");
+_Static_assert(sizeof(interval_arm_mode) == 1, "interval_arm_mode");
 _Static_assert(sizeof(interval_reading_fields) == 13, "interval_reading_fields");
 _Static_assert(sizeof(io_device_jumps) == 36, "io_device_jumps");
 _Static_assert(sizeof(io_jump) == 6, "io_jump");
@@ -2292,6 +2333,7 @@ _Static_assert(sizeof(preserved_region_fields) == 2382, "preserved_region_fields
 _Static_assert(sizeof(psos_configuration) == 98, "psos_configuration");
 _Static_assert(sizeof(qsm_registers) == 336, "qsm_registers");
 _Static_assert(sizeof(qspi_buffers) == 8, "qspi_buffers");
+_Static_assert(sizeof(qspi_device) == 1, "qspi_device");
 _Static_assert(sizeof(qspi_state) == 78, "qspi_state");
 _Static_assert(sizeof(regression_record) == 26, "regression_record");
 _Static_assert(sizeof(reset_record) == 92, "reset_record");
@@ -5404,7 +5446,7 @@ void sci_printf_polled(char *format,...);
 void qspi_release(void);
 uint32_t
 qspi_queue_setup(uint8_t param_1,uint16_t *param_2,uint16_t param_3,char param_4,uint16_t *param_5);
-void qspi_start(uint8_t param_1,uint16_t *param_2,uint16_t param_3,char param_4);
+void qspi_start(qspi_device device,uint16_t *transmit,uint16_t count,char read);
 void qspi_acquire(void);
 int32_t qspi_control(void) __asm__("c_qspi_control");
 int32_t qspi_open(void) __asm__("c_qspi_open");
@@ -5413,10 +5455,10 @@ void qspi_isr(void);
 int32_t primary_user_65();
 void qspi_transfer_raw(char device, void *buffers, int16_t count) __asm__("c_qspi_transfer_raw");
 void qspi_device_write(char device, void *buffers, int16_t count) __asm__("c_qspi_device_write");
-void qspi_write(uint8_t param_1,void *param_2,uint32_t param_3);
-void qspi_read(uint8_t param_1,void *param_2,uint32_t param_3);
-void qspi_send(uint8_t param_1,uint16_t *param_2,uint16_t param_3);
-void qspi_transfer(uint8_t device,qspi_buffers *buffers,uint16_t count);
+void qspi_write(qspi_device device,void *buffers,uint32_t count);
+void qspi_read(qspi_device device,void *buffers,uint32_t count);
+void qspi_send(qspi_device device,uint16_t *transmit,uint16_t count);
+void qspi_transfer(qspi_device device,qspi_buffers *buffers,uint16_t count);
 uint32_t spoo_task_create(uint32_t param_1);
 uint32_t spoo_run(spoo_function *function,uint32_t a,uint32_t b,uint32_t c);
 int32_t deferred_vprintf(char *format,void *arguments);
@@ -6035,7 +6077,7 @@ void reset_record_count(void);
 uint32_t log_entry_text(int32_t param_1,char *param_2,char *param_3);
 uint32_t reset_record_write(uint32_t date,time_of_day time,char *text);
 void interpolator_calibration_init(interpolator_calibration *calibration);
-uint8_t interpolator_measure(uint8_t mode);
+uint8_t interpolator_measure(interpolator_reference reference);
 uint8_t interpolator_measure_low(char_slot dac);
 uint8_t interpolator_measure_high(char_slot dac);
 uint8_t dac_search_bisect(uint8_t dac,uint8_t minimum,uint8_t maximum,uint8_t low,uint8_t high,
@@ -6057,12 +6099,12 @@ bool fpga_bit_test(uint8_t param_1,char param_2);
 char fpga_read_seconds(void);
 void fpga_address_sweep_debug(void);
 uint8_t counter_wait_ready(uint8_t mask);
-void fpga_set_bit(uint8_t bit,uint8_t on);
-void fpga_set_field(uint8_t param_1,uint8_t param_2);
+void fpga_set_bit(fpga_bit_index bit,uint8_t on);
+void fpga_set_field(fpga_bit_index field,uint8_t value);
 void sync_request(uint8_t param_1,int32_t param_2);
 void counter_set_sync(uint8_t param_1);
 void fpga_fields_to_registers(uint8_t *fields,uint8_t *registers);
-uint8_t fpga_read_byte(char param_1);
+uint8_t fpga_read_byte(fpga_register reg);
 uint64_t counter_offset_apply(int32_t param_1,uint32_t param_2);
 int64_t counter_read_raw(void);
 uint32_t interpolator_read(void);
@@ -6138,8 +6180,8 @@ char startup_pll(char param_1);
 uint8_t pll_normal(char param_1);
 uint8_t fine_sync_adjust(float param_1);
 uint8_t sync_perform(float param_1);
-uint8_t interval_next_reading(char arm_mode,float *reading);
-void interval_rearm(char param_1);
+uint8_t interval_next_reading(interval_arm_mode arm_mode,float *reading);
+void interval_rearm(interval_arm_mode arm_mode);
 void interval_wait_reading(void);
 uint8_t coarse(void);
 char fine(void);
@@ -23044,8 +23086,8 @@ uint8_t qspi_hex_dac_test(void)
   local_18[0] = 0x555;
   local_18[1] = 0x123;
   local_18[2] = 0x456;
-  qspi_send(2,local_18,3);
-  qspi_transfer(2,&buffers,3);
+  qspi_send(QSPI_HDAC,local_18,3);
+  qspi_transfer(QSPI_HDAC,&buffers,3);
   shift_right_36(local_18 + 3);
   uVar1 = 0;
   do {
@@ -23057,8 +23099,8 @@ uint8_t qspi_hex_dac_test(void)
   local_18[0] = 0x2aa;
   local_18[1] = 0xfed;
   local_18[2] = 0xcba;
-  qspi_send(2,local_18,3);
-  qspi_transfer(2,&buffers,3);
+  qspi_send(QSPI_HDAC,local_18,3);
+  qspi_transfer(QSPI_HDAC,&buffers,3);
   shift_right_36(local_18 + 3);
   uVar1 = 0;
   do {
@@ -23086,7 +23128,7 @@ uint8_t qspi_adc_test(void)
   buffers.transmit = &local_10;
   buffers.receive = &local_e;
   local_10 = 0xe000;
-  qspi_transfer(1,&buffers,1);
+  qspi_transfer(QSPI_ADC,&buffers,1);
   if (((((local_e & 0x400) == 0) && ((int32_t)(uint32_t)(local_e & 0x10) >> 4 == (uint32_t)(local_e & 1))) &&
       ((int32_t)(uint32_t)(local_e & 8) >> 2 == (uint32_t)(local_e & 2))) &&
      ((((int32_t)(uint32_t)local_e >> 2 & 0xffU) != 0 &&
@@ -23134,12 +23176,12 @@ bool qspi_efc_test(void)
   buffers.transmit = &local_10;
   buffers.receive = &local_e;
   local_10 = 0x5555;
-  qspi_send(7,&local_10,1);
-  qspi_transfer(7,&buffers,1);
+  qspi_send(QSPI_EFC,&local_10,1);
+  qspi_transfer(QSPI_EFC,&buffers,1);
   bVar1 = local_10 == local_e;
   local_10 = 0xaaaa;
-  qspi_send(7,&local_10,1);
-  qspi_transfer(7,&buffers,1);
+  qspi_send(QSPI_EFC,&local_10,1);
+  qspi_transfer(QSPI_EFC,&buffers,1);
   return local_10 == local_e && bVar1;
 }
 
@@ -36431,7 +36473,7 @@ int32_t adc_read(adc_channel channel)
   local_8 = (uint16_t)channel << 0xb | 0xc000;
   buffers.transmit = &local_8;
   buffers.receive = &local_6;
-  qspi_read(1,&buffers,1);
+  qspi_read(QSPI_ADC,&buffers,1);
   return (int32_t)(uint32_t)local_6 >> 2;
 }
 
@@ -36692,7 +36734,7 @@ void hdac_set(uint8_t param_1,uint8_t param_2)
     }
     hdac_shadow[iVar1] = uVar2 | hdac_shadow[iVar1];
   }
-  qspi_write(2,hdac_shadow,3);
+  qspi_write(QSPI_HDAC,hdac_shadow,3);
   psos_pause(1);
   return;
 }
@@ -36711,7 +36753,7 @@ void hdac_write_all(uint8_t param_1,uint8_t param_2,uint8_t param_3,uint8_t para
   hdac_shadow[0] = param_5 & 0x3f | (param_6 & 0x3f) << 6;
   hdac_shadow[1] = param_3 & 0x3f | (param_4 & 0x3f) << 6;
   hdac_shadow[2] = param_1 & 0x3f | (param_2 & 0x3f) << 6;
-  qspi_write(2,hdac_shadow,3);
+  qspi_write(QSPI_HDAC,hdac_shadow,3);
   psos_pause(1);
   return;
 }
@@ -36726,7 +36768,7 @@ void hdac_write_all(uint8_t param_1,uint8_t param_2,uint8_t param_3,uint8_t para
 void hdac_update(void)
 
 {
-  qspi_send(2,hdac_shadow,3);
+  qspi_send(QSPI_HDAC,hdac_shadow,3);
   return;
 }
 
@@ -36741,7 +36783,7 @@ void hdac_update(void)
 void efc_write(uint16_t param_1)
 
 {
-  qspi_write(7,&param_1,1);
+  qspi_write(QSPI_EFC,&param_1,1);
   efc_strobe = 0;
   return;
 }
@@ -38384,20 +38426,20 @@ override_jmp_000205c0_case_3:
 
 /* sets a transfer up and starts it, or releases the QSPI, and waits until it is done */
 
-void qspi_start(uint8_t param_1,uint16_t *param_2,uint16_t param_3,char param_4)
+void qspi_start(qspi_device device,uint16_t *transmit,uint16_t count,char read)
 
 {
   char unknown_device;
   uint16_t local_8 [2];
   
   qspi.running = 0;
-  unknown_device = qspi_queue_setup(param_1,param_2,param_3,param_4,local_8);
+  unknown_device = qspi_queue_setup(device,transmit,count,read,local_8);
   if (unknown_device == 0) {
     qsm.spcr1 = local_8[0];
   }
   else {
     qspi_release();
-    if (param_4 != 0) {
+    if (read != 0) {
       qspi.copy_pending = 0;
     }
   }
@@ -38708,7 +38750,7 @@ __regcall void qspi_transfer_raw(char device /* d0 */,void *buffers /* a1 */,int
   qspi_acquire();
   qspi.receive_buffer = *(uint16_t **)((int32_t)buffers + 4);
   qspi.receive_count = count;
-  if (device == 0xc) {
+  if (device == QSPI_FPGA_READBACK) {
     qspi.receive_count = 1;
   }
   qspi.copy_pending = 1;
@@ -38778,12 +38820,12 @@ __asm__(
 __regcall void qspi_device_write(char device /* d0 */,void *buffers /* a0 */,int16_t count /* d2 */)
 
 {
-  char cVar1;
+  char read;
   
-  cVar1 = 0;
+  read = 0;
   qspi_acquire();
   qspi.copy_pending = 0;
-  qspi_start(device,buffers,count,cVar1);
+  qspi_start(device,buffers,count,read);
   return;
 }
 
@@ -38829,10 +38871,10 @@ __asm__(
 /* psos_io_write to device 0x100 | n; hdac_write_all writes device 2, efc_write device 7
    structures.md */
 
-void qspi_write(uint8_t param_1,void *param_2,uint32_t param_3)
+void qspi_write(qspi_device device,void *buffers,uint32_t count)
 
 {
-  psos_io_write(param_1 | 0x100,param_2,&param_3);
+  psos_io_write(device | 0x100,buffers,&count);
   return;
 }
 
@@ -38844,10 +38886,10 @@ void qspi_write(uint8_t param_1,void *param_2,uint32_t param_3)
 /* psos_io_read to device 0x100 | n
    structures.md */
 
-void qspi_read(uint8_t param_1,void *param_2,uint32_t param_3)
+void qspi_read(qspi_device device,void *buffers,uint32_t count)
 
 {
-  psos_io_read(param_1 | 0x100,param_2,&param_3);
+  psos_io_read(device | 0x100,buffers,&count);
   return;
 }
 
@@ -38858,7 +38900,7 @@ void qspi_read(uint8_t param_1,void *param_2,uint32_t param_3)
 
 /* qspi_transfer without the copy back from receive RAM */
 
-void qspi_send(uint8_t param_1,uint16_t *param_2,uint16_t param_3)
+void qspi_send(qspi_device device,uint16_t *transmit,uint16_t count)
 
 {
   uint16_t uVar1;
@@ -38878,7 +38920,7 @@ void qspi_send(uint8_t param_1,uint16_t *param_2,uint16_t param_3)
   if ((uVar2 & SPSR_SPIF) != 0) {
     qspi_isr();
   }
-  unknown_device = qspi_queue_setup(param_1,param_2,param_3,0,&local_8);
+  unknown_device = qspi_queue_setup(device,transmit,count,0,&local_8);
   if (unknown_device == 0) {
     qsm.spcr1 = local_8;
     do {
@@ -38896,7 +38938,7 @@ void qspi_send(uint8_t param_1,uint16_t *param_2,uint16_t param_3)
 
 /* waits for SPCR1 and SPSR, runs a QSPI transfer, copies the receive RAM at 0xfffd00 out */
 
-void qspi_transfer(uint8_t device,qspi_buffers *buffers,uint16_t count)
+void qspi_transfer(qspi_device device,qspi_buffers *buffers,uint16_t count)
 
 {
   uint16_t uVar1;
@@ -38927,7 +38969,7 @@ void qspi_transfer(uint8_t device,qspi_buffers *buffers,uint16_t count)
     do {
       uVar2 = qsm.spsr;
     } while ((uVar2 & SPSR_SPIF) == 0);
-    if (device == 0xc) {
+    if (device == QSPI_FPGA_READBACK) {
       puVar7 = puVar6 + 1;
     }
     else {
@@ -39153,7 +39195,7 @@ void fpga_setup(void)
 uint8_t fpga_program(fpga_configuration_index configuration,char with_task_name)
 
 {
-  uint8_t *puVar1;
+  uint16_t *puVar1;
   char cVar2;
   uint8_t uVar3;
   bool bVar4;
@@ -39161,7 +39203,7 @@ uint8_t fpga_program(fpga_configuration_index configuration,char with_task_name)
   uint8_t uVar6;
   char *pcVar7;
   char *pcVar8;
-  uint8_t *puVar9;
+  uint16_t *transmit;
   char acStack_54 [80];
   
   uVar6 = 1;
@@ -39219,22 +39261,22 @@ uint8_t fpga_program(fpga_configuration_index configuration,char with_task_name)
         } while (cVar2 != 0);
         debug_message(acStack_54,with_task_name);
       }
-      puVar9 = fpga_configurations.entries[configuration].start;
-      puVar1 = fpga_configurations.entries[configuration].end;
+      transmit = (uint16_t *)fpga_configurations.entries[configuration].start;
+      puVar1 = (uint16_t *)fpga_configurations.entries[configuration].end;
       if (with_task_name == 0) {
-        for (; puVar9 + 0x20 < puVar1; puVar9 = puVar9 + 0x20) {
-          qspi_send(6,(uint16_t *)puVar9,0x10);
+        for (; transmit + 0x10 < puVar1; transmit = transmit + 0x10) {
+          qspi_send(QSPI_FPGA_BLOCK,transmit,0x10);
         }
-        for (; puVar9 < puVar1; puVar9 = puVar9 + 4) {
-          qspi_send(9,(uint16_t *)puVar9,2);
+        for (; transmit < puVar1; transmit = transmit + 2) {
+          qspi_send(QSPI_FPGA_TAIL,transmit,2);
         }
       }
       else {
-        for (; puVar9 + 0x20 < puVar1; puVar9 = puVar9 + 0x20) {
-          qspi_write(6,puVar9,0x10);
+        for (; transmit + 0x10 < puVar1; transmit = transmit + 0x10) {
+          qspi_write(QSPI_FPGA_BLOCK,transmit,0x10);
         }
-        for (; puVar9 < puVar1; puVar9 = puVar9 + 4) {
-          qspi_write(9,puVar9,2);
+        for (; transmit < puVar1; transmit = transmit + 2) {
+          qspi_write(QSPI_FPGA_TAIL,transmit,2);
         }
       }
       if (with_task_name == 0) {
@@ -39314,10 +39356,10 @@ bool fpga_verify_first(uint8_t *param_1,uint8_t *param_2,char param_3)
   buffers.receive = &local_58;
   local_56 = 0xffff;
   if (param_3 == 0) {
-    qspi_transfer(0xc,&buffers,0xb);
+    qspi_transfer(QSPI_FPGA_READBACK,&buffers,0xb);
   }
   else {
-    qspi_read(0xc,&buffers,0xb);
+    qspi_read(QSPI_FPGA_READBACK,&buffers,0xb);
   }
   bVar1 = (*param_2 & (*param_1 ^ ~(uint8_t)local_58)) == 0;
   param2 = param_1 + 1;
@@ -39325,10 +39367,10 @@ bool fpga_verify_first(uint8_t *param_1,uint8_t *param_2,char param_3)
   if (bVar1) {
     for (local_64 = 0; (bVar1 != false && (local_64 < 5)); local_64 = local_64 + 1) {
       if (param_3 == 0) {
-        qspi_transfer(0xc,&buffers,0x10);
+        qspi_transfer(QSPI_FPGA_READBACK,&buffers,0x10);
       }
       else {
-        qspi_read(0xc,&buffers,0x10);
+        qspi_read(QSPI_FPGA_READBACK,&buffers,0x10);
       }
       if ((*param3 & (*param2 ^ ~(uint8_t)(local_58 >> 8))) != 0) {
         bVar1 = false;
@@ -39359,10 +39401,10 @@ bool fpga_verify_first(uint8_t *param_1,uint8_t *param_2,char param_3)
   }
   if (bVar1 != false) {
     if (param_3 == 0) {
-      qspi_transfer(0xc,&buffers,8);
+      qspi_transfer(QSPI_FPGA_READBACK,&buffers,8);
     }
     else {
-      qspi_read(0xc,&buffers,8);
+      qspi_read(QSPI_FPGA_READBACK,&buffers,8);
     }
     if ((*param3 & (*param2 ^ ~(uint8_t)local_58)) != 0) {
       bVar1 = false;
@@ -39377,10 +39419,10 @@ bool fpga_verify_first(uint8_t *param_1,uint8_t *param_2,char param_3)
   }
   if (bVar1 != false) {
     if (param_3 == 0) {
-      qspi_transfer(0xc,&buffers,10);
+      qspi_transfer(QSPI_FPGA_READBACK,&buffers,10);
     }
     else {
-      qspi_read(0xc,&buffers,10);
+      qspi_read(QSPI_FPGA_READBACK,&buffers,10);
     }
     local_58 = local_58 << 6;
     if ((*param3 & (*param2 ^ ~(uint8_t)(local_58 >> 8))) != 0) {
@@ -39433,10 +39475,10 @@ bool fpga_verify_odd(uint8_t *param_1,uint8_t *param_2,char param_3)
   local_56 = 0xffff;
   for (iVar2 = 0; (bVar1 != false && (iVar2 < 6)); iVar2 = iVar2 + 1) {
     if (param_3 == 0) {
-      qspi_transfer(0xc,&buffers,0x10);
+      qspi_transfer(QSPI_FPGA_READBACK,&buffers,0x10);
     }
     else {
-      qspi_read(0xc,&buffers,0x10);
+      qspi_read(QSPI_FPGA_READBACK,&buffers,0x10);
     }
     if ((*param_2 & (*param_1 ^ ~(uint8_t)(local_58 >> 8))) != 0) {
       bVar1 = false;
@@ -39459,10 +39501,10 @@ bool fpga_verify_odd(uint8_t *param_1,uint8_t *param_2,char param_3)
   }
   if (bVar1 != false) {
     if (param_3 == 0) {
-      qspi_transfer(0xc,&buffers,10);
+      qspi_transfer(QSPI_FPGA_READBACK,&buffers,10);
     }
     else {
-      qspi_read(0xc,&buffers,10);
+      qspi_read(QSPI_FPGA_READBACK,&buffers,10);
     }
     local_58 = local_58 << 6;
     if ((*param_2 & (*param_1 ^ ~(uint8_t)(local_58 >> 8))) != 0) {
@@ -39517,10 +39559,10 @@ bool fpga_verify_even(uint8_t *param_1,uint8_t *param_2,char param_3)
   buffers.receive = &local_58;
   local_56 = 0xffff;
   if (param_3 == 0) {
-    qspi_transfer(0xc,&buffers,0xc);
+    qspi_transfer(QSPI_FPGA_READBACK,&buffers,0xc);
   }
   else {
-    qspi_read(0xc,&buffers,0xc);
+    qspi_read(QSPI_FPGA_READBACK,&buffers,0xc);
   }
   bVar3 = (*param_2 & (*param_1 ^ ~(uint8_t)(local_58 >> 8)) & 0xf) == 0;
   if (!bVar3) {
@@ -39539,10 +39581,10 @@ bool fpga_verify_even(uint8_t *param_1,uint8_t *param_2,char param_3)
       param3 = param_2 + 2;
       if ((bVar1 == false) || (4 < iVar2)) break;
       if (param_3 == 0) {
-        qspi_transfer(0xc,&buffers,0x10);
+        qspi_transfer(QSPI_FPGA_READBACK,&buffers,0x10);
       }
       else {
-        qspi_read(0xc,&buffers,0x10);
+        qspi_read(QSPI_FPGA_READBACK,&buffers,0x10);
       }
       if ((*param3 & (*param2 ^ ~(uint8_t)(local_58 >> 8))) != 0) {
         bVar1 = false;
@@ -39572,10 +39614,10 @@ bool fpga_verify_even(uint8_t *param_1,uint8_t *param_2,char param_3)
   }
   if (bVar1 != false) {
     if (param_3 == 0) {
-      qspi_transfer(0xc,&buffers,0xe);
+      qspi_transfer(QSPI_FPGA_READBACK,&buffers,0xe);
     }
     else {
-      qspi_read(0xc,&buffers,0xe);
+      qspi_read(QSPI_FPGA_READBACK,&buffers,0xe);
     }
     local_58 = local_58 << 2;
     if ((*param3 & (*param2 ^ ~(uint8_t)(local_58 >> 8))) != 0) {
@@ -56827,16 +56869,16 @@ void interpolator_calibration_init(interpolator_calibration *calibration)
 
 /* pulses the FPGA bits for a measurement and returns interpolator_read */
 
-uint8_t interpolator_measure(uint8_t mode)
+uint8_t interpolator_measure(interpolator_reference reference)
 
 {
   uint8_t reading;
   
-  fpga_set_bit(3,mode);
-  fpga_set_bit(1,8);
-  fpga_set_bit(2,1);
-  fpga_set_bit(1,0);
-  fpga_set_bit(2,0);
+  fpga_set_bit(FPGA_BIT_REFERENCE,reference);
+  fpga_set_bit(FPGA_BIT_PRESET,8);
+  fpga_set_bit(FPGA_BIT_START,1);
+  fpga_set_bit(FPGA_BIT_PRESET,0);
+  fpga_set_bit(FPGA_BIT_START,0);
   counter_wait_ready(1);
   reading = interpolator_read();
   return reading;
@@ -56856,7 +56898,7 @@ uint8_t interpolator_measure_low(char_slot dac)
   uint8_t reading;
   
   hdac_set(dac.value,2);
-  reading = interpolator_measure(0);
+  reading = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
   return reading;
 }
 
@@ -56874,7 +56916,7 @@ uint8_t interpolator_measure_high(char_slot dac)
   uint8_t reading;
   
   hdac_set(dac.value,3);
-  reading = interpolator_measure(1);
+  reading = interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
   return reading;
 }
 
@@ -57020,10 +57062,10 @@ uint32_t interpolator_prepare(void)
     } while (iVar1 < 4);
     counter_configuration.registers_state = 1;
   }
-  fpga_set_bit(1,8);
-  fpga_set_field(0,3);
-  fpga_set_bit(2,0);
-  fpga_set_field(4,0);
+  fpga_set_bit(FPGA_BIT_PRESET,8);
+  fpga_set_field(FPGA_BIT_MODE,3);
+  fpga_set_bit(FPGA_BIT_START,0);
+  fpga_set_field(FPGA_BIT_ADDRESS,0);
   return 1;
 }
 
@@ -57052,9 +57094,9 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
   }
   hdac_set(calibration->hdac_2,2);
   hdac_set(calibration->hdac_3,3);
-  uVar2 = interpolator_measure(0);
+  uVar2 = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
   calibration->reading_low = uVar2;
-  uVar2 = interpolator_measure(1);
+  uVar2 = interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
   calibration->reading_high = uVar2;
   bVar1 = calibration->reading_low;
   iVar3 = (uint32_t)uVar2 - (uint32_t)bVar1;
@@ -57067,20 +57109,20 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
       uVar2 = dac_search_bisect(calibration->hdac_3,0,0x3f,0xc9,0xe1,interpolator_measure_high);
       calibration->hdac_3 = uVar2;
     }
-    uVar2 = interpolator_measure(0);
+    uVar2 = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
     calibration->reading_low = uVar2;
     if ((uVar2 == 0) || (0x19 < uVar2)) {
       uVar2 = dac_search_bisect(calibration->hdac_2,0,0x3f,1,0x19,interpolator_measure_low);
       calibration->hdac_2 = uVar2;
     }
-    uVar2 = interpolator_measure(0);
+    uVar2 = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
     calibration->reading_low = uVar2;
     uVar2 = dac_search_step(calibration->hdac_3,0,0x3f,calibration->reading_low - 0x3c,
                             calibration->reading_low - 0x34,interpolator_measure_high);
     calibration->hdac_3 = uVar2;
-    uVar2 = interpolator_measure(1);
+    uVar2 = interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
     calibration->reading_high = uVar2;
-    uVar2 = interpolator_measure(0);
+    uVar2 = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
     calibration->reading_low = uVar2;
     cVar4 = 0x14;
     while (cVar4 != 0) {
@@ -57092,9 +57134,9 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
         uVar2 = dac_search_step(calibration->hdac_3,0,0x3f,0xc9,0xe1,interpolator_measure_high);
         calibration->hdac_3 = uVar2;
       }
-      uVar2 = interpolator_measure(1);
+      uVar2 = interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
       calibration->reading_high = uVar2;
-      uVar2 = interpolator_measure(0);
+      uVar2 = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
       calibration->reading_low = uVar2;
       iVar3 = (uint32_t)calibration->reading_high - (uint32_t)uVar2;
       if (iVar3 == 200) {
@@ -57146,9 +57188,9 @@ uint8_t interpolator_verify(interpolator_calibration *calibration)
   interpolator_prepare();
   hdac_set(calibration->hdac_2,2);
   hdac_set(calibration->hdac_3,3);
-  reading = interpolator_measure(0);
+  reading = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
   calibration->reading_low = reading;
-  reading = interpolator_measure(1);
+  reading = interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
   calibration->reading_high = reading;
   if ((((calibration->reading_low == 0) || (0x19 < calibration->reading_low)) || (reading < 0xc9)) ||
      (0xe1 < reading)) {
@@ -57159,9 +57201,9 @@ uint8_t interpolator_verify(interpolator_calibration *calibration)
     calibration->hdac_3 = calibration->result_hdac_3;
     hdac_set(calibration->hdac_2,2);
     hdac_set(calibration->hdac_3,3);
-    reading = interpolator_measure(0);
+    reading = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
     calibration->reading_low = reading;
-    reading = interpolator_measure(1);
+    reading = interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
     calibration->reading_high = reading;
     if (calibration->reading_low == 0) {
       return unaff_D2b;
@@ -57199,9 +57241,9 @@ void interpolator_sample(interpolator_calibration *calibration)
   }
   hdac_set(calibration->hdac_2,2);
   hdac_set(calibration->hdac_3,3);
-  reading = interpolator_measure(0);
+  reading = interpolator_measure(INTERPOLATOR_REFERENCE_LOW);
   calibration->reading_low = reading;
-  reading = interpolator_measure(1);
+  reading = interpolator_measure(INTERPOLATOR_REFERENCE_HIGH);
   calibration->reading_high = reading;
   return;
 }
@@ -57482,7 +57524,7 @@ uint8_t counter_wait_ready(uint8_t mask)
 
 /* sets or clears a bit in fconf_regs, register and mask from fpga_bit_table, then fpga_write */
 
-void fpga_set_bit(uint8_t bit,uint8_t on)
+void fpga_set_bit(fpga_bit_index bit,uint8_t on)
 
 {
   if (on == 0) {
@@ -57504,15 +57546,15 @@ void fpga_set_bit(uint8_t bit,uint8_t on)
 
 /* sets one fpga_bit_table field in its register's image and writes the register */
 
-void fpga_set_field(uint8_t param_1,uint8_t param_2)
+void fpga_set_field(fpga_bit_index field,uint8_t value)
 
 {
   uint32_t uVar1;
   
-  uVar1 = (uint32_t)param_1;
+  uVar1 = (uint32_t)field;
   fconf_regs[fpga_bit_table[uVar1].reg] =
        ~fpga_bit_table[uVar1].mask & fconf_regs[fpga_bit_table[uVar1].reg];
-  fconf_regs[fpga_bit_table[uVar1].reg] = param_2 | fconf_regs[fpga_bit_table[uVar1].reg];
+  fconf_regs[fpga_bit_table[uVar1].reg] = value | fconf_regs[fpga_bit_table[uVar1].reg];
   fpga_write(fpga_bit_table[uVar1].reg,fconf_regs[fpga_bit_table[uVar1].reg]);
   return;
 }
@@ -57603,14 +57645,14 @@ LAB_00040b90:
 
 /* a byte from two FPGA registers' low nibbles */
 
-uint8_t fpga_read_byte(char param_1)
+uint8_t fpga_read_byte(fpga_register reg)
 
 {
   uint8_t value;
   uint8_t uVar2;
   
-  value = fpga_read(param_1 + 1);
-  uVar2 = fpga_read(param_1);
+  value = fpga_read(reg + 1);
+  uVar2 = fpga_read(reg);
   return uVar2 & 0xf | value << 4;
 }
 
@@ -57644,17 +57686,17 @@ int64_t counter_read_raw(void)
   uint3 uVar1;
   uint3 uVar2;
   uint8_t value;
-  uint8_t bVar4;
+  fpga_register reg;
   int64_t count;
   
-  bVar4 = 0x16;
+  reg = FPGA_REGISTER_COUNT_HIGH;
   uVar2 = 0;
   do {
     uVar1 = uVar2;
-    value = fpga_read_byte(bVar4);
-    bVar4 = bVar4 - 2;
+    value = fpga_read_byte(reg);
+    reg = reg - 2;
     uVar2 = (uint3)value | uVar1 << 8;
-  } while (0x11 < bVar4);
+  } while (0x11 < reg);
   count = counter_offset_apply(0,CONCAT31(uVar1,value));
   return count;
 }
@@ -57671,7 +57713,7 @@ uint32_t interpolator_read(void)
 {
   uint8_t value;
   
-  value = fpga_read_byte(0x10);
+  value = fpga_read_byte(FPGA_REGISTER_INTERPOLATOR);
   return ~(uint32_t)value;
 }
 
@@ -57700,10 +57742,10 @@ void counter_arm(interval_reading_fields *reading,counter_configuration_fields *
       } while (iVar1 < 4);
       configuration->registers_state = 1;
     }
-    fpga_set_bit(1,8);
-    fpga_set_field(0,0);
-    fpga_set_bit(2,0);
-    fpga_set_field(4,0);
+    fpga_set_bit(FPGA_BIT_PRESET,8);
+    fpga_set_field(FPGA_BIT_MODE,0);
+    fpga_set_bit(FPGA_BIT_START,0);
+    fpga_set_field(FPGA_BIT_ADDRESS,0);
     if ((configuration->sync_mode == 2) && (configuration->sync_state == 2)) {
       counter_set_sync(configuration->sync_kind);
       configuration->sync_count = configuration->sync_count + -1;
@@ -57711,7 +57753,7 @@ void counter_arm(interval_reading_fields *reading,counter_configuration_fields *
         configuration->sync_state = 1;
       }
     }
-    fpga_set_bit(1,0);
+    fpga_set_bit(FPGA_BIT_PRESET,0);
   }
   return;
 }
@@ -57877,7 +57919,7 @@ void counter_selftest(void)
   uint32_t local_c;
   uint32_t local_8;
   
-  fpga_set_bit(1,8);
+  fpga_set_bit(FPGA_BIT_PRESET,8);
   count = counter_read_raw();
   local_c = (int32_t)((uint64_t)count >> 0x20);
   if ((local_c == 0) && (local_8 = (int32_t)count, local_8 == 0)) {
@@ -60142,7 +60184,7 @@ override_jmp_00043ae6_case_0:
         holdover_steering.aging_limit = 2e-09;
       }
     }
-    interval_next_reading(0,(float *)0x0);
+    interval_next_reading(INTERVAL_ARM_CALIBRATE,(float *)0x0);
     get_date_time(&pll.holdover_start_date,(time_of_day *)&pll.holdover_start_time);
     pll.holdover_state = 1;
     holdover_steering.field_06 = 0;
@@ -60163,7 +60205,7 @@ override_jmp_00043ae6_case_0:
     pwma_force_level(1);
     status_happening(STATUS_HOLDOVER_THRESHOLD_SET);
   }
-  valid = interval_next_reading(0,&fStack_10);
+  valid = interval_next_reading(INTERVAL_ARM_CALIBRATE,&fStack_10);
   if (valid == 0) {
     if ((gps_pps_dead == 0) && (internal_pps_dead == 0)) {
       task_dmessage("holdover - Error with measurement\r\n");
@@ -60353,7 +60395,7 @@ char holdover_recovery(char param_1)
   iVar2 = (int32_t)(char)pll.recovery_state - 5;
   if (4 < (uint32_t)(int32_t)(char)pll.recovery_state && iVar2 != 0) {
 override_jmp_00043ff8_case_0:
-    unaff_D3b = interval_next_reading(0,&local_8);
+    unaff_D3b = interval_next_reading(INTERVAL_ARM_CALIBRATE,&local_8);
     if (unaff_D3b == 0) {
       task_dmessage("holdover recovery - Error with measurement\r\n");
       holdover_steering.seconds = holdover_steering.seconds + 1;
@@ -60386,7 +60428,7 @@ override_jmp_00043ff8_case_0:
     }
     goto LAB_0004411a;
   case 0x7e:
-    unaff_D3b = interval_next_reading(1,&local_8);
+    unaff_D3b = interval_next_reading(INTERVAL_ARM_PLAIN,&local_8);
     pll.recovery_countdown = pll.recovery_countdown - 1;
     if ((pll.recovery_countdown != 0) || (cVar4 = leap_ack_pending(), cVar4 != 0))
     goto LAB_0004411a;
@@ -60397,7 +60439,7 @@ override_jmp_00043ff8_case_0:
     }
     break;
   case 0xb2:
-    unaff_D3b = interval_next_reading(1,&local_8);
+    unaff_D3b = interval_next_reading(INTERVAL_ARM_PLAIN,&local_8);
     if ((pll.leap_ack_requested == 0) && (pll.leap_ack_done != 0)) {
       pll.recovery_state = 5;
     }
@@ -60407,7 +60449,7 @@ override_jmp_00043ff8_case_0:
     }
     goto LAB_0004411a;
   case 0xea:
-    unaff_D3b = interval_next_reading(0,&local_8);
+    unaff_D3b = interval_next_reading(INTERVAL_ARM_CALIBRATE,&local_8);
     cVar4 = leap_ack_pending();
     if (cVar4 != 0) goto LAB_0004411a;
     cVar4 = clock_check_against_gps();
@@ -60523,11 +60565,11 @@ char startup_pll(char param_1)
     loop_steering.seconds = 0;
     loop_steering.measurement_failed = 0;
     loop_steering.large_offset_blocks = 0;
-    interval_next_reading(0,(float *)0x0);
+    interval_next_reading(INTERVAL_ARM_CALIBRATE,(float *)0x0);
     pll.startup_state = 1;
   }
   else {
-    valid = interval_next_reading(0,&local_88);
+    valid = interval_next_reading(INTERVAL_ARM_CALIBRATE,&local_88);
     if (valid == 0) {
       if ((internal_pps_dead == 0) && (gps_pps_dead == 0)) {
         task_dmessage("startup_pll - Error with measurement\r\n");
@@ -60750,7 +60792,7 @@ uint8_t pll_normal(char param_1)
     loop_steering.readings = 0;
     loop_steering.seconds = 0;
     loop_steering.measurement_failed = 0;
-    interval_next_reading(0,(float *)0x0);
+    interval_next_reading(INTERVAL_ARM_CALIBRATE,(float *)0x0);
     *local_14 = 1;
     loop_steering.proportional_gain = float_divide(efc_gains.reciprocal_ti,max_loop_time);
     fVar2 = float_divide(efc_gains.reciprocal_tau,max_loop_time);
@@ -60763,7 +60805,7 @@ uint8_t pll_normal(char param_1)
     pll.frequency_tolerance = 1e-08;
   }
   else {
-    valid = interval_next_reading(0,&local_82);
+    valid = interval_next_reading(INTERVAL_ARM_CALIBRATE,&local_82);
     if (valid == 0) {
       if ((internal_pps_dead == 0) && (gps_pps_dead == 0)) {
         task_dmessage("pll_normal - Error with measurement\r\n");
@@ -60958,7 +61000,7 @@ uint8_t sync_perform(float param_1)
    a 1PPS is dead; updates the EFC history; arm_mode 0 calibrates, 2 syncs (0x4506e, 0x45082);
    *reading takes double_to_float's result (0x45060) */
 
-uint8_t interval_next_reading(char arm_mode,float *reading)
+uint8_t interval_next_reading(interval_arm_mode arm_mode,float *reading)
 
 {
   uint8_t uVar1;
@@ -60985,10 +61027,10 @@ uint8_t interval_next_reading(char arm_mode,float *reading)
   }
   interval_reading.armed = 1;
   interval_reading.errors = 0;
-  if (arm_mode == 0) {
+  if (arm_mode == INTERVAL_ARM_CALIBRATE) {
     counter_calibrate(&interval_reading,&counter_configuration);
   }
-  else if (arm_mode == 2) {
+  else if (arm_mode == INTERVAL_ARM_SYNC) {
     sync_request(3,1);
   }
   if ((gps_pps_dead == 0) && (internal_pps_dead == 0)) {
@@ -61009,15 +61051,15 @@ uint8_t interval_next_reading(char arm_mode,float *reading)
 /* the other half of interval_next_reading: counter_calibrate, or sync_request(3, 1) for mode 2,
    then counter_arm */
 
-void interval_rearm(char param_1)
+void interval_rearm(interval_arm_mode arm_mode)
 
 {
   interval_reading.armed = 1;
   interval_reading.errors = 0;
-  if (param_1 == 0) {
+  if (arm_mode == INTERVAL_ARM_CALIBRATE) {
     counter_calibrate(&interval_reading,&counter_configuration);
   }
-  else if (param_1 == 2) {
+  else if (arm_mode == INTERVAL_ARM_SYNC) {
     sync_request(3,1);
   }
   if ((gps_pps_dead == 0) && (internal_pps_dead == 0)) {
@@ -61084,16 +61126,16 @@ uint8_t coarse(void)
     case 0xc:
       goto override_jmp_000451fa_case_0;
     case 0x1e:
-      interval_next_reading(1,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
       pll.coarse_state = 2;
       break;
     case 0x30:
-      interval_next_reading(0,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_CALIBRATE,(float *)0x0);
       pll.coarse_state = 3;
       pll.fine_retries = 0;
       break;
     case 0x44:
-      uVar3 = interval_next_reading(0,&pll.fine_d);
+      uVar3 = interval_next_reading(INTERVAL_ARM_CALIBRATE,&pll.fine_d);
       if (uVar3 == 0) {
         task_dmessage("coarse - Error with measurement 1\r\n");
         pll.fine_retries = pll.fine_retries + 1;
@@ -61118,7 +61160,7 @@ uint8_t coarse(void)
           uVar4 = 2;
         }
 LAB_0004536e:
-        interval_rearm(0);
+        interval_rearm(INTERVAL_ARM_CALIBRATE);
       }
       else {
         fVar1 = double_to_float(interval_reading.value);
@@ -61143,7 +61185,7 @@ LAB_0004536e:
                         pushed_1);
           task_dmessage(acStack_54);
         }
-        interval_rearm(2);
+        interval_rearm(INTERVAL_ARM_SYNC);
         pll.coarse_state = 1;
       }
     }
@@ -61151,7 +61193,7 @@ LAB_0004536e:
   else {
     pll.coarse_state = 0;
 override_jmp_000451fa_case_0:
-    interval_next_reading(2,(float *)0x0);
+    interval_next_reading(INTERVAL_ARM_SYNC,(float *)0x0);
     pll.coarse_state = 1;
   }
   if (uVar4 == 2) {
@@ -61218,18 +61260,18 @@ char fine(void)
           cVar4 = cVar5;
         }
       }
-      interval_rearm(0);
+      interval_rearm(INTERVAL_ARM_CALIBRATE);
       break;
     case 2:
-      interval_next_reading(1,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
       pll.fine_state = 3;
       break;
     case 3:
-      interval_next_reading(0,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_CALIBRATE,(float *)0x0);
       pll.fine_state = 4;
       break;
     case 4:
-      interval_next_reading(1,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
       pll.fine_state = 5;
       pll.fine_retries = 0;
       pll.fine_index = 1;
@@ -61241,7 +61283,7 @@ char fine(void)
       break;
     case 5:
       if (pll.fine_index < 0x33) {
-        uVar3 = interval_next_reading(0,&pll.fine_d);
+        uVar3 = interval_next_reading(INTERVAL_ARM_CALIBRATE,&pll.fine_d);
         if (uVar3 == 0) {
           task_dmessage("fine - Error with measurement 1\r\n");
           pll.fine_retries = pll.fine_retries + 1;
@@ -61307,7 +61349,7 @@ char fine(void)
         }
       }
       else {
-        interval_next_reading(0,(float *)0x0);
+        interval_next_reading(INTERVAL_ARM_CALIBRATE,(float *)0x0);
         pll.fine_state = 6;
         pll.fine_index = 1;
         fVar2 = unsigned_to_float(1);
@@ -61337,7 +61379,7 @@ char fine(void)
         else {
           cVar4 = 2;
         }
-        interval_rearm(0);
+        interval_rearm(INTERVAL_ARM_CALIBRATE);
         break;
       }
       fVar2 = double_to_float(interval_reading.value);
@@ -61409,10 +61451,10 @@ LAB_00045812:
         task_dmessage("fine - ti too far off\r\n");
         cVar4 = 2;
       }
-      interval_rearm(1);
+      interval_rearm(INTERVAL_ARM_PLAIN);
       break;
     case 7:
-      interval_next_reading(0,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_CALIBRATE,(float *)0x0);
       pll.fine_retries = 0;
       pll.fine_state = 8;
       break;
@@ -61442,10 +61484,10 @@ LAB_00045812:
           cVar4 = cVar5;
         }
       }
-      interval_rearm(0);
+      interval_rearm(INTERVAL_ARM_CALIBRATE);
       break;
     case 9:
-      interval_next_reading(1,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
       pll.fine_index = pll.fine_index - 1;
       if (pll.fine_index == 0) {
         cVar4 = 1;
@@ -61455,7 +61497,7 @@ LAB_00045812:
   else {
     pll.fine_state = 0;
 switchD_000453f0_caseD_0:
-    interval_next_reading(0,(float *)0x0);
+    interval_next_reading(INTERVAL_ARM_CALIBRATE,(float *)0x0);
     pll.fine_retries = 0;
     pll.fine_state = 1;
   }
@@ -61887,7 +61929,7 @@ uint8_t powerup(char param_1)
     case 0x10:
       goto override_jmp_00045f06_case_0;
     case 0x26:
-      interval_next_reading(1,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
       cVar4 = oven_warmed_up();
       if (cVar4 != 0) {
         pll.powerup_state = 2;
@@ -61897,12 +61939,12 @@ uint8_t powerup(char param_1)
       }
       break;
     case 0x56:
-      interval_next_reading(1,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
       pll.powerup_state = 3;
       status_happening(STATUS_OVEN_WARMED_SET);
       break;
     case 0x74:
-      interval_next_reading(1,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
       pll.powerup_reference_lost = 0;
       if ((((gps_reference_good != 0) && (internal_pps_dead == 0)) &&
           ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) == HOLD_CAUSE_NONE)) &&
@@ -61946,7 +61988,7 @@ uint8_t powerup(char param_1)
       }
       break;
     case 0x166:
-      interval_next_reading(1,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
       pll.powerup_countdown = pll.powerup_countdown - 1;
       if (pll.powerup_countdown == 0) {
         cVar4 = leap_ack_pending();
@@ -61963,7 +62005,7 @@ uint8_t powerup(char param_1)
       }
       break;
     case 0x1a6:
-      interval_next_reading(1,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
       if ((pll.leap_ack_requested == 0) && (pll.leap_ack_done != 0)) {
         uVar5 = 1;
       }
@@ -61971,7 +62013,7 @@ uint8_t powerup(char param_1)
   }
   else {
 override_jmp_00045f06_case_0:
-    interval_rearm(1);
+    interval_rearm(INTERVAL_ARM_PLAIN);
     pll.powerup_state = 1;
   }
   if (first_satellite_logged == 0) {
@@ -62048,10 +62090,10 @@ uint8_t pll_check_reference(char param_1)
           uVar3 = 2;
         }
       }
-      interval_rearm(0);
+      interval_rearm(INTERVAL_ARM_CALIBRATE);
       break;
     case 0x78:
-      uVar2 = interval_next_reading(0,(float *)0x0);
+      uVar2 = interval_next_reading(INTERVAL_ARM_CALIBRATE,(float *)0x0);
       if (uVar2 == 0) {
         if (internal_pps_dead == 0) {
           pll.hold_causes = pll.hold_causes | HOLD_CAUSE_TI_ERROR;
@@ -62080,7 +62122,7 @@ override_jmp_000461bc_case_0:
     uVar2 = gpt.portgp;
     gpt.portgp = uVar2 | 0x20;
     outer_oven_enabled = 1;
-    interval_rearm(0);
+    interval_rearm(INTERVAL_ARM_CALIBRATE);
     pll.reference_check_state = 1;
   }
   return uVar3;
@@ -63166,7 +63208,7 @@ bool gps_diag_sequence(bool same_stage)
     case 0xc:
       goto override_jmp_00047258_case_0;
     case 0x54:
-      interval_next_reading(1,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
       cVar3 = gps_ack_received();
       if (cVar3 == 0) {
         pll.gps_diag_substate = pll.gps_diag_substate + 1;
@@ -63183,7 +63225,7 @@ bool gps_diag_sequence(bool same_stage)
       }
       break;
     case 0x9c:
-      interval_next_reading(1,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
       uVar2 = gpsx_send(0x4a,0,aiStack_14,5);
       if (uVar2 == 0) {
         pll.gps_diag_substate = pll.gps_diag_substate + 1;
@@ -63198,7 +63240,7 @@ bool gps_diag_sequence(bool same_stage)
       }
       break;
     case 0xe4:
-      interval_next_reading(1,(float *)0x0);
+      interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
       cVar3 = gps_ack_received();
       if (cVar3 == 0) {
         pll.gps_diag_substate = pll.gps_diag_substate + 1;
@@ -63234,7 +63276,7 @@ bool gps_diag_sequence(bool same_stage)
   }
   else {
 override_jmp_00047258_case_0:
-    interval_next_reading(1,(float *)0x0);
+    interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
     uVar2 = gpsx_send(0x45,0,aiStack_14,5);
     if (uVar2 == 0) {
       pll.gps_diag_substate = pll.gps_diag_substate + 1;

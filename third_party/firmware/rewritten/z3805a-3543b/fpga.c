@@ -21,15 +21,6 @@ static const uint8_t FPGA_DONE = 0x08;            /* PORTF bit 3 */
 static const uint8_t FPGA_READBACK_FIRST = 0x40;  /* PORTF bit 6 */
 static const uint8_t FPGA_READBACK_SECOND = 0x80; /* PORTF bit 7 */
 
-/* The QSPI's devices the FPGA is on, by the minor number of I/O device
- * 1, the QSPI (qspi_queue_setup's cases): device 6 sends a configuration
- * in up to 16 words, 9 in two, and 12 reads 8 to 16 bits of readback. */
-enum {
-  FPGA_QSPI_BLOCK = 6,
-  FPGA_QSPI_TAIL = 9,
-  FPGA_QSPI_READBACK = 12,
-};
-
 /* Pauses, through the kernel when called from a task, else by busy
  * waiting. */
 static void fpga_pause(uint32_t ticks, char with_task_name) {
@@ -97,17 +88,17 @@ uint8_t fpga_program(fpga_configuration_index configuration,
   /* qspi_send takes the bitstream's bytes as the words it sends */
   if (with_task_name) {
     for (; next + BLOCK_BYTES < end; next += BLOCK_BYTES) {
-      qspi_write(FPGA_QSPI_BLOCK, next, BLOCK_WORDS);
+      qspi_write(QSPI_FPGA_BLOCK, next, BLOCK_WORDS);
     }
     for (; next < end; next += TAIL_BYTES) {
-      qspi_write(FPGA_QSPI_TAIL, next, TAIL_WORDS);
+      qspi_write(QSPI_FPGA_TAIL, next, TAIL_WORDS);
     }
   } else {
     for (; next + BLOCK_BYTES < end; next += BLOCK_BYTES) {
-      qspi_send(FPGA_QSPI_BLOCK, (uint16_t*)next, BLOCK_WORDS);
+      qspi_send(QSPI_FPGA_BLOCK, (uint16_t*)next, BLOCK_WORDS);
     }
     for (; next < end; next += TAIL_BYTES) {
-      qspi_send(FPGA_QSPI_TAIL, (uint16_t*)next, TAIL_WORDS);
+      qspi_send(QSPI_FPGA_TAIL, (uint16_t*)next, TAIL_WORDS);
     }
   }
   fpga_pause(2, with_task_name);
@@ -176,9 +167,9 @@ static void fpga_readback_start(fpga_readback* readback, uint8_t* configuration,
  * a task. */
 static void fpga_readback_read(fpga_readback* readback, uint16_t bits) {
   if (readback->with_task_name) {
-    qspi_read(FPGA_QSPI_READBACK, &readback->buffers, bits);
+    qspi_read(QSPI_FPGA_READBACK, &readback->buffers, bits);
   } else {
-    qspi_transfer(FPGA_QSPI_READBACK, &readback->buffers, bits);
+    qspi_transfer(QSPI_FPGA_READBACK, &readback->buffers, bits);
   }
 }
 
@@ -439,7 +430,7 @@ static void fpga_field_store(uint8_t field, uint8_t bits) {
 
 /* Sets or clears an fpga_bit_table bit and writes its register
  * (0x409a4). */
-void fpga_set_bit(uint8_t bit, uint8_t on) {
+void fpga_set_bit(fpga_bit_index bit, uint8_t on) {
   const fpga_bit* entry = &fpga_bit_table[bit];
 
   if (on) {
@@ -452,7 +443,7 @@ void fpga_set_bit(uint8_t bit, uint8_t on) {
 
 /* Sets an fpga_bit_table field to a value already in its place and
  * writes its register (0x40a0e). */
-void fpga_set_field(uint8_t field, uint8_t value) {
+void fpga_set_field(fpga_bit_index field, uint8_t value) {
   fpga_field_store(field, value);
 }
 
@@ -484,24 +475,23 @@ void fpga_fields_to_registers(uint8_t* fields, uint8_t* registers) {
 
 /* The field of fpga_bit_table that selects the register a read of the
  * FPGA returns, fconf_regs[1]'s top five bits (structures.md). */
-static const uint8_t FPGA_ADDRESS_FIELD = 4; /* FPGA_BIT_ADDRESS */
 static const uint8_t FPGA_ADDRESS_SHIFT = 3;
 
 /* Reads an FPGA register: puts its number in the address field, reads
  * the FPGA, and puts the field back (0x4076a). */
 uint8_t fpga_read(uint8_t reg) {
-  const uint8_t saved = fconf_regs[fpga_bit_table[FPGA_ADDRESS_FIELD].reg];
+  const uint8_t saved = fconf_regs[fpga_bit_table[FPGA_BIT_ADDRESS].reg];
 
-  fpga_field_store(FPGA_ADDRESS_FIELD, reg << FPGA_ADDRESS_SHIFT);
+  fpga_field_store(FPGA_BIT_ADDRESS, reg << FPGA_ADDRESS_SHIFT);
   /* a read at the FPGA's base returns the register addressed */
   const uint8_t value = fpga_port[0];
-  fpga_field_store(FPGA_ADDRESS_FIELD, saved);
+  fpga_field_store(FPGA_BIT_ADDRESS, saved);
   return value;
 }
 
 /* A byte from two FPGA registers' low nibbles, the next register's the
  * high one (0x40ba6). */
-uint8_t fpga_read_byte(char reg) {
+uint8_t fpga_read_byte(fpga_register reg) {
   static const uint8_t NIBBLE = 0xf;
   static const uint8_t NIBBLE_BITS = 4;
   const uint8_t high = fpga_read(reg + 1);
@@ -522,12 +512,12 @@ char fpga_read_seconds(void) {
   static const int32_t RETRIES = 20;
   static const uint8_t SECONDS_SHIFT = 4;
   /* fpga_read's register 0, the counter's status */
-  uint8_t first = fpga_read(0) >> SECONDS_SHIFT;
-  uint8_t second = fpga_read(0) >> SECONDS_SHIFT;
+  uint8_t first = fpga_read(FPGA_REGISTER_STATUS) >> SECONDS_SHIFT;
+  uint8_t second = fpga_read(FPGA_REGISTER_STATUS) >> SECONDS_SHIFT;
 
   for (int32_t retries = RETRIES; first != second && retries > 0; retries--) {
-    first = fpga_read(0) >> SECONDS_SHIFT;
-    second = fpga_read(0) >> SECONDS_SHIFT;
+    first = fpga_read(FPGA_REGISTER_STATUS) >> SECONDS_SHIFT;
+    second = fpga_read(FPGA_REGISTER_STATUS) >> SECONDS_SHIFT;
   }
   return first;
 }
@@ -537,11 +527,11 @@ char fpga_read_seconds(void) {
  * (0x4085e). */
 void fpga_address_sweep_debug(void) {
   static const uint8_t ADDRESSES = 32;
-  const uint8_t reg = fpga_bit_table[FPGA_ADDRESS_FIELD].reg;
+  const uint8_t reg = fpga_bit_table[FPGA_BIT_ADDRESS].reg;
   char text[80];
 
   for (uint8_t address = 0; address < ADDRESSES; address++) {
-    fpga_field_store(FPGA_ADDRESS_FIELD, address << FPGA_ADDRESS_SHIFT);
+    fpga_field_store(FPGA_BIT_ADDRESS, address << FPGA_ADDRESS_SHIFT);
     debug_sprintf(text, "old_addr, fconf_regs[1] = %x %x \r\n", address,
                   fconf_regs[reg]);
     task_dmessage(text);

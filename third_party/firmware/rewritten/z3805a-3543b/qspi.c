@@ -36,7 +36,8 @@ void qspi_release(void) {
 /* Sets a transfer up and starts it, or on a device it does not know
  * releases the lock; then waits while the interrupt has the transfer
  * running (0x2081e). */
-void qspi_start(uint8_t device, uint16_t* transmit, uint16_t count, char read) {
+void qspi_start(qspi_device device, uint16_t* transmit, uint16_t count,
+                char read) {
   uint16_t spcr1;
 
   qspi.running = 0;
@@ -91,19 +92,19 @@ void qspi_isr(void) {
 }
 
 /* Writes a QSPI device through the kernel, device 1 (0x20acc). */
-void qspi_write(uint8_t device, void* buffers, uint32_t count) {
+void qspi_write(qspi_device device, void* buffers, uint32_t count) {
   psos_io_write(QSPI_DEVICE | device, buffers, &count);
 }
 
 /* Reads a QSPI device through the kernel, device 1 (0x20aec). */
-void qspi_read(uint8_t device, void* buffers, uint32_t count) {
+void qspi_read(qspi_device device, void* buffers, uint32_t count) {
   psos_io_read(QSPI_DEVICE | device, buffers, &count);
 }
 
 /* Sends to a QSPI device by polling, in supervisor mode with interrupts
  * masked, without the receive RAM's copy; finishes a transfer still
  * pending first (0x20b0c). */
-void qspi_send(uint8_t device, uint16_t* transmit, uint16_t count) {
+void qspi_send(qspi_device device, uint16_t* transmit, uint16_t count) {
   uint16_t sr = enter_supervisor();
   uint16_t spcr1;
 

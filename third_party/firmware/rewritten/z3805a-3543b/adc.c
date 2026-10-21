@@ -7,14 +7,6 @@
  * EFC's clamp state is docs/firmware/structures.md's "The health
  * monitor's supplies and EFC". */
 
-/* The QSPI's devices, by the minor number of I/O device 1, the QSPI
- * (qspi_queue_setup's cases). */
-enum {
-  ADC_QSPI_CONVERTER = 1,
-  ADC_QSPI_HDAC = 2,
-  ADC_QSPI_EFC = 7,
-};
-
 /* Reads an ADC channel through the QSPI (0x1f2c0). */
 int32_t adc_read(adc_channel channel) {
   /* The ADC's command word, as adc_read builds it (0x1f2ce), and its
@@ -26,7 +18,7 @@ int32_t adc_read(adc_channel channel) {
   uint16_t reply;
   qspi_buffers buffers = {&command, &reply};
 
-  qspi_read(ADC_QSPI_CONVERTER, &buffers, 1);
+  qspi_read(QSPI_ADC, &buffers, 1);
   return reply >> REPLY_SHIFT;
 }
 
@@ -139,7 +131,7 @@ void hdac_set(uint8_t value, uint8_t slot) {
       *word |= value & ADC_HDAC_MASK;
     }
   }
-  qspi_write(ADC_QSPI_HDAC, hdac_shadow, ADC_HDAC_WORDS);
+  qspi_write(QSPI_HDAC, hdac_shadow, ADC_HDAC_WORDS);
   psos_pause(1);
 }
 
@@ -154,19 +146,17 @@ void hdac_write_all(uint8_t channel_1, uint8_t channel_2, uint8_t channel_3,
   hdac_shadow[0] = adc_hdac_word(channel_5, channel_6);
   hdac_shadow[1] = adc_hdac_word(channel_3, channel_4);
   hdac_shadow[2] = adc_hdac_word(channel_1, channel_2);
-  qspi_write(ADC_QSPI_HDAC, hdac_shadow, ADC_HDAC_WORDS);
+  qspi_write(QSPI_HDAC, hdac_shadow, ADC_HDAC_WORDS);
   psos_pause(1);
 }
 
 /* Sends hdac_shadow to the DAC by polling (0x1f62e). */
-void hdac_update(void) {
-  qspi_send(ADC_QSPI_HDAC, hdac_shadow, ADC_HDAC_WORDS);
-}
+void hdac_update(void) { qspi_send(QSPI_HDAC, hdac_shadow, ADC_HDAC_WORDS); }
 
 /* The efc_write word's: the value to the EFC's DAC, then its strobe
  * (0x1f646). */
 void efc_write(uint16_t value) {
-  qspi_write(ADC_QSPI_EFC, &value, 1);
+  qspi_write(QSPI_EFC, &value, 1);
   efc_strobe = 0;
 }
 

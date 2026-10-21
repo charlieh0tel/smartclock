@@ -221,18 +221,17 @@ uint8_t drtb_getc(void) {
  * character as a signed char, so that one with its top bit set is a
  * control character (0x1f89a), where channel B's is printable
  * (0x1d816). */
-static int32_t duart_gets(uint8_t* buffer, int32_t length,
-                          uint8_t (*getc)(void), putc_function* const* echo,
-                          uint8_t* last_terminator, uint8_t* receive_errors,
-                          uint8_t* read_errors, char* error_message,
-                          bool top_bit_control) {
+static int32_t duart_gets(char* buffer, int32_t length, uint8_t (*getc)(void),
+                          putc_function* const* echo, uint8_t* last_terminator,
+                          uint8_t* receive_errors, uint8_t* read_errors,
+                          char* error_message, bool top_bit_control) {
   static const uint8_t FIRST_PRINTABLE = 0x20;
   static const char CARET =
       '^'; /* echoes a control character as ^ and its letter */
   static const uint8_t CONTROL_TO_LETTER = 0x40;
   int32_t left = length - 1;
   int32_t count = left;
-  uint8_t* next = buffer;
+  char* next = buffer;
 
   while (left != 0) {
     uint8_t character = getc();
@@ -293,7 +292,7 @@ static int32_t duart_gets(uint8_t* buffer, int32_t length,
 }
 
 /* Reads a line from DUART channel B (0x1d7e4). */
-int32_t drtb_gets(uint8_t* buffer, int32_t length) {
+int32_t drtb_gets(char* buffer, int32_t length) {
   return duart_gets(buffer, length, drtb_getc, &duartb.echo,
                     &duartb.last_terminator, &duartb.receive_errors,
                     &duartb.read_errors, "DRTB receiver error\r\n", false);
@@ -565,8 +564,8 @@ static void duart_loopback_test(const duart_loopback_channel* channel) {
   spins = channel->registers->mr;
   *channel->mr2 = (*channel->mr2 & ~MR2_MODE_MASK) | MR2_MODE_LOCAL_LOOPBACK;
   channel->registers->mr = *channel->mr2;
-  loopback_send_next = (uint8_t*)s_DUART_test_string_0001ee6e;
-  loopback_expect_next = s_DUART_test_string_0001ee6e;
+  loopback_send_next = loopback_test_text;
+  loopback_expect_next = loopback_test_text;
   duart_shadow.imr |= channel->interrupts;
   duart.isr_imr = duart_shadow.imr;
   channel->registers->cr = CR_TX_ENABLE | CR_RX_ENABLE;
@@ -578,7 +577,7 @@ static void duart_loopback_test(const duart_loopback_channel* channel) {
   if (*loopback_expect_next != 0) {
     selftest.uart |= channel->timeout_bit;
   }
-  loopback_send_next = (uint8_t*)loopback_idle_text;
+  loopback_send_next = loopback_idle_text;
   loopback_expect_next = loopback_idle_text;
   channel->registers->cr = CR_RESET_RECEIVER;
   channel->registers->cr = CR_RESET_TRANSMITTER;
@@ -912,7 +911,7 @@ void duartb_loopback_check(void) {
 
   (void)duart.b.mr;
   duart.b.mr = MR2_MODE_LOCAL_LOOPBACK | DUART_MR2_ONE_STOP_BIT;
-  loopback_send_next = (uint8_t*)text;
+  loopback_send_next = text;
   loopback_expect_next = text;
   duart.b.cr = CR_TX_ENABLE | CR_RX_ENABLE;
   duart.b.rb_tb = *loopback_send_next++;

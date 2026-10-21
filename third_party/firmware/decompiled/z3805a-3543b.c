@@ -2589,6 +2589,7 @@ extern char forth_begin_tag[10]; /* 00019556 */
 extern char forth_while_tag[10]; /* 0001956a */
 extern int32_t forth_sine_table[91]; /* 00019a2c */
 extern char loopback_idle_text[1]; /* 0001ed2c */
+extern char loopback_test_text[20]; /* 0001ee6e */
 extern fpga_configuration_table fpga_configurations; /* 00021e2c */
 extern uint8_t fpga_readback_mask[3847]; /* 00021e3b */
 extern uint16_t scpi_normalize_exponents[32]; /* 00025144 */
@@ -2993,7 +2994,7 @@ extern serial_ring duarta_ring; /* 00102edd */
 extern duarta_driver duarta; /* 00102fe0 */
 extern serial_ring duartb_ring; /* 00102fea */
 extern duartb_driver duartb; /* 001030ec */
-extern uint8_t * loopback_send_next; /* 00103142 */
+extern char * loopback_send_next; /* 00103142 */
 extern char * loopback_expect_next; /* 00103146 */
 extern uint16_t hdac_shadow[3]; /* 0010314a */
 extern sci_exchange_state sci_exchanges; /* 00103150 */
@@ -3194,7 +3195,6 @@ extern uint16_t USHORT_0002f7b0; /* 0002f7b0 */
 extern uint8_t installer_atexit_functions; /* 0010b03c */
 extern uint8_t reference_valid_override_request; /* 00100c68 */
 extern uint8_t retained_block; /* 00101e70 */
-extern char s_DUART_test_string_0001ee6e[]; /* 0001ee6e */
 extern word switchD_00010626_index_zero; /* 0001062e */
 extern word switchD_00013d08_index_zero; /* 00013d10 */
 extern word switchD_0001b6a4_index_zero; /* 0001b6ac */
@@ -3644,6 +3644,7 @@ __asm__(".set loop_steering, 0x0010205e");
 __asm__(".set loopback_expect_next, 0x00103146");
 __asm__(".set loopback_idle_text, 0x0001ed2c");
 __asm__(".set loopback_send_next, 0x00103142");
+__asm__(".set loopback_test_text, 0x0001ee6e");
 __asm__(".set low_bit_masks, 0x000314b2");
 __asm__(".set max_loop_time, 0x00101e84");
 __asm__(".set month_lengths, 0x0001189c");
@@ -3750,7 +3751,6 @@ __asm__(".set restart_reference_uptime, 0x00102594");
 __asm__(".set retained_block, 0x00101e70");
 __asm__(".set retained_block_defaults, 0x0003094c");
 __asm__(".set robin_keyword_code, 0x00102d74");
-__asm__(".set s_DUART_test_string_0001ee6e, 0x0001ee6e");
 __asm__(".set sample_values_defaults, 0x000308b6");
 __asm__(".set satellite_status_blank_entry, 0x0004e016");
 __asm__(".set sci, 0x0010328a");
@@ -5360,7 +5360,7 @@ void duartb_baud_from_settings(void);
 uint8_t duartb_putc_polled(uint8_t param_1);
 int32_t drtb_puts(char *param_1);
 uint8_t drtb_getc(void);
-int32_t drtb_gets(uint8_t *param_1,int32_t param_2);
+int32_t drtb_gets(char *buffer,int32_t length);
 void drtb_unlock(char write) __asm__("c_drtb_unlock");
 void drtb_lock(char write) __asm__("c_drtb_lock");
 int32_t duart_init();
@@ -34506,23 +34506,23 @@ uint8_t drtb_getc(void)
 
 /* reads a line of up to the given length from DUART channel B; "DRTB receiver error" */
 
-int32_t drtb_gets(uint8_t *param_1,int32_t param_2)
+int32_t drtb_gets(char *buffer,int32_t length)
 
 {
   uint8_t character;
   int32_t iVar2;
   int32_t iVar3;
   uint8_t *puVar4;
-  uint8_t *pbVar5;
+  uint8_t *puVar5;
   uint8_t uVar6;
   
-  iVar2 = param_2 + -1;
+  iVar2 = length + -1;
   iVar3 = iVar2;
-  pbVar5 = param_1;
+  puVar5 = (uint8_t *)buffer;
 LAB_0001d8d0:
   while( true ) {
     if (iVar2 == 0) {
-      *pbVar5 = 0;
+      *puVar5 = 0;
       if (duartb.receive_errors == 0) {
         duartb.read_errors = 0;
       }
@@ -34539,14 +34539,14 @@ LAB_0001d8d0:
     if (0x10U < character - 8) {
 switchD_0001d830_caseD_b:
       (*(code *)duartb.echo)();
-      puVar4 = pbVar5;
+      puVar4 = puVar5;
       goto LAB_0001d8ca;
     }
                     /* WARNING: Switch is manually overridden */
     switch((int16_t)(character - 8)) {
     case 0:
       if (iVar3 != iVar2) {
-        puVar4 = pbVar5 + -1;
+        puVar4 = puVar5 + -1;
         iVar2 = iVar2 + 1;
         goto LAB_0001d8ca;
       }
@@ -34574,19 +34574,19 @@ switchD_0001d830_caseD_b:
     }
   }
 LAB_0001d8c2:
-  puVar4 = pbVar5 + 1;
+  puVar4 = puVar5 + 1;
   duartb.last_terminator = character;
-  *pbVar5 = character;
+  *puVar5 = character;
   iVar2 = iVar2 + -1;
   goto LAB_0001d8ca;
 switchD_0001d830_caseD_18:
   if (iVar3 != iVar2) {
     (*(code *)duartb.echo)();
     iVar2 = iVar3;
-    puVar4 = param_1;
+    puVar4 = (uint8_t *)buffer;
 LAB_0001d8ca:
     (*(code *)duartb.echo)();
-    pbVar5 = puVar4;
+    puVar5 = puVar4;
   }
   goto LAB_0001d8d0;
 }
@@ -35159,7 +35159,7 @@ void drtb_read(void)
 
 {
   int32_t unaff_D2 = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
-  uint8_t *in_A1;
+  char *in_A1;
   
   drtb_gets(in_A1,unaff_D2);
   return;
@@ -35565,7 +35565,7 @@ void duart_loopback_test_a(void)
   uVar4 = (uint32_t)uVar1;
   duart_shadow.mr2a = duart_shadow.mr2a & 0x3f | 0x80;
   duart.a.mr = duart_shadow.mr2a;
-  loopback_send_next = (uint8_t *)s_DUART_test_string_0001ee6e;
+  loopback_send_next = "DUART test string\r\n";
   loopback_expect_next = "DUART test string\r\n";
   duart_shadow.imr = duart_shadow.imr | (IMR_RXRDYA | IMR_TXRDYA);
   duart.isr_imr = duart_shadow.imr;
@@ -35578,7 +35578,7 @@ void duart_loopback_test_a(void)
   if (*loopback_expect_next != 0) {
     selftest.uart = selftest.uart | 8;
   }
-  loopback_send_next = (uint8_t *)loopback_idle_text;
+  loopback_send_next = "";
   loopback_expect_next = "";
   duart.a.cr = CR_RESET_RECEIVER;
   duart.a.cr = CR_RESET_TRANSMITTER;
@@ -35628,7 +35628,7 @@ void duart_loopback_test_b(void)
   uVar4 = (uint32_t)uVar1;
   duart_shadow.mr2b = duart_shadow.mr2b & 0x3f | 0x80;
   duart.b.mr = duart_shadow.mr2b;
-  loopback_send_next = (uint8_t *)s_DUART_test_string_0001ee6e;
+  loopback_send_next = "DUART test string\r\n";
   loopback_expect_next = "DUART test string\r\n";
   duart_shadow.imr = duart_shadow.imr | (IMR_RXRDYB | IMR_TXRDYB);
   duart.isr_imr = duart_shadow.imr;
@@ -35641,7 +35641,7 @@ void duart_loopback_test_b(void)
   if (*loopback_expect_next != 0) {
     selftest.uart = selftest.uart | 0x20;
   }
-  loopback_send_next = (uint8_t *)loopback_idle_text;
+  loopback_send_next = "";
   loopback_expect_next = "";
   duart.b.cr = CR_RESET_RECEIVER;
   duart.b.cr = CR_RESET_TRANSMITTER;
@@ -36180,7 +36180,7 @@ void duartb_loopback_check(void)
   loopback_expect_next = "DUART";
   duart.b.cr = 5;
   duart.b.rb_tb = 'D';
-  loopback_send_next = (uint8_t *)0x1eef7;
+  loopback_send_next = "UART";
   while ((*loopback_expect_next != 0 && (selftest.uart == 0))) {
     iVar3 = 3000;
     while ((0 < iVar3 && (uVar2 = duart.b.sr_csr, (uVar2 & 1) == 0))) {

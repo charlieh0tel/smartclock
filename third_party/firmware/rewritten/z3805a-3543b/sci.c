@@ -109,8 +109,8 @@ uint8_t sci_getc(void) {
 
 /* Reads a line from the SCI (0x1f868). */
 int32_t sci_gets(char* buffer, int32_t length) {
-  return duart_gets((uint8_t*)buffer, length, sci_getc, &sci.echo,
-                    &sci.last_terminator, &sci.receive_errors, &sci.read_errors,
+  return duart_gets(buffer, length, sci_getc, &sci.echo, &sci.last_terminator,
+                    &sci.receive_errors, &sci.read_errors,
                     "SCI receiver error ocurred\r\n", true);
 }
 

@@ -334,7 +334,7 @@
 0x102fe0	label	duarta	structures.md	DUART channel A's driver state, the GPS receiver's link	duarta_driver
 0x102fea	label	duartb_ring	structures.md	DUART channel B's receive ring, the host port's	serial_ring
 0x1030ec	label	duartb	structures.md	DUART channel B's driver state, the host port	duartb_driver
-0x103142	label	loopback_send_next	read	the next character duart_test_tx_a and _b send in the loopback self-tests; at 0 they mask their port's TxRDY interrupt	uint8_t *
+0x103142	label	loopback_send_next	read	the next character duart_test_tx_a and _b send in the loopback self-tests; at 0 they mask their port's TxRDY interrupt	char *
 0x103146	label	loopback_expect_next	read	the next character duart_test_rx_a and _b expect back; one wrong sets selftest.uart 4 for channel A, 0x10 for B	char *
 0x101d18	label	eepx_exchange	structures.md	create_x("eepx")	uint32_t
 0x103150	label	sci_exchanges	structures.md	the SCI port's exchanges, sciR and sciW, and their token messages	sci_exchange_state
@@ -828,7 +828,7 @@
 0x31ba2	function	log_first_satellite	log_write("First satellite tracked at %04d%02d%02d.%02d:%02d:%02d")	logs the time the first satellite was tracked	void log_first_satellite(undefined4 param_1,undefined4 param_2)
 0x3305e	function	log_clear	"Log cleared"	clears the event log
 0x2b4c2	function	log_status	"Log status: Error", "Empty", "One entry", "%-3d entries", "Full"	prints the event log's state
-0x1d7e4	function	drtb_gets	context	reads a line of up to the given length from DUART channel B; "DRTB receiver error"	int drtb_gets(byte *param_1,int param_2)
+0x1d7e4	function	drtb_gets	context	reads a line of up to the given length from DUART channel B; "DRTB receiver error"	int32_t drtb_gets(char *buffer, int32_t length)
 0x1f868	function	sci_gets	context	reads a line of up to the given length from the SCI; "SCI receiver error ocurred"	int sci_gets(char *param_1,int param_2)
 0x1ea10	function	duartb_transmit_interrupt	context	with channel B's queue empty, disables its transmit interrupt and signals the writer; "DUARTB isr signaling SIG_SOQ"
 0x1e2c0	function	duart_loopback_test_a	context	puts channel A in local loopback and sends "DUART test string"; sets the UART self-test's bit 8 at 0x100c2e if it fails
@@ -2004,6 +2004,7 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x1956a	label	forth_while_tag	console.md	"\"while\"\r\n": while pushes it for forth_check_pairs	char[10]
 0x19a2c	label	forth_sine_table	console.md	sin's 10000 sin(n degrees), n 0 to 90, which it indexes after folding the angle; code at 0x19b98	int32_t[91]
 0x1ed2c	label	loopback_idle_text	structures.md	an empty string the DUART loopback tests leave loopback_send_next at	char[1]
+0x1ee6e	label	loopback_test_text	context	the text duart_loopback_test sends through channel B in local loopback	char[20]
 0x21e3b	label	fpga_readback_mask	context	fpga_verify_chip's mask: 13 bytes for the first frame, then frames 2 to 285, even 14 bytes and odd 13, as it steps	uint8_t[3847]
 0x279ca	label	scpi_parameter_kind_errors	structures.md	scpi_parameter_match's return for a missing required parameter, by its kind: -46, -48, -47, -49, -46, -50; code at 0x279d6	int16_t[6]
 0x27b2e	label	scpi_multipliers	structures.md	scpi_multiplier_exponent's unit multipliers, to the entry whose name is 0	scpi_multiplier[13]

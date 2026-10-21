@@ -80,3 +80,119 @@ modf	fraction
 double_is_integer	integral	whether an integer
 double_truncate_sixteenths	truncated
 pow	power
+# The drivers, 0x1d000 to 0x24fff (rewritten/z3805a-3543b/drivers.c)
+gp_port_select	port_bits	the selection shifted to GP port bits 2 to 4
+duartb_putc_polled	ready	SR_TXRDY, the status bit it waited on
+drtb_puts	sent	the characters the interrupt sent
+drtb_getc	character	the character read
+drtb_gets	count	the characters read
+console_write	length	the length written
+console_read	length	the length read
+console_write_polled	count	the characters written
+drtb_try_lock_write	busy	another task holds the write lock
+drtb_release_for_timecode	released	the console's device was closed
+drta_send_message	refused	1 when the caller is not the GPS task
+duarta_rx_pending	pending	the receive ring holds a byte
+drta_get_byte	byte	the byte read
+duarta_isr	overrun	SR_OVERRUN from the status register, in D0's low byte
+duartb_isr	overrun	SR_OVERRUN from the status register
+debug_sprintf	count	vsprintf's count, 0 with debug output off
+debug_write	count	the characters written, 0 with debug output off
+debug_printf_polled	count	the characters written, 0 with debug output off
+adc_read	reading	the ADC's reply shifted down 2
+read_adc_temp	temperature
+read_adc_5v	volts
+read_adc_doven	volts
+read_adc_oven	volts
+read_adc_p15v	volts
+read_adc_m15v	volts
+read_adc_osc_curr	current
+read_adc_ant_curr	current
+sci_putc_polled	data	the word written to SCDR
+sci_puts	sent	the characters the interrupt sent
+sci_getc	character	the character read
+sci_gets	count	the characters read
+sci_port_write	length	the length written
+sci_puts_polled	count	the characters written
+qspi_queue_setup	unknown_device	its low byte, 1 for a device it does not know
+spoo_task_create	error	the kernel's error, or 1 for a spool task already there
+spoo_run	result	1 when run at once, else send_x's error; 0 for no function
+deferred_vprintf	count	vsprintf's count, -1 with no room
+fpga_program	programmed
+fpga_verify_first	matches
+fpga_verify_odd	matches
+fpga_verify_even	matches
+fpga_verify_chip	matches
+fpga_verify	matches
+monitor_out_of_range	out_of_range	past the limit
+adc_average	average	the monitor's value, or the channel's default
+double_oven_warmed_up	warm
+oven_warmed_up	warm
+efc_clamp	clamped	the EFC clamped to 0 to 1048560
+gps_pps_check	checked	0 when the monitor could not check
+internal_pps_check	checked	0 when the monitor could not check
+# The clock and calendar, the primary's 0x10000 to 0x15fff.
+mutex_create	status	mutex_init's: 0 or the kernel's error
+mutex_lock	status	mutex_acquire's: 0 or the kernel's error
+mutex_unlock	status	mutex_release's: 0 or the kernel's error
+mutex_owner	owner	the task holding a mutex, at its +8
+idle_count	idle	idle loops in the last second
+clk_do	entry	the clock entry queued, or NULL
+leap_event_schedule_gps	entry	the clock entry queued, or NULL
+leap_event_schedule_utc	entry	the clock entry queued, or NULL
+leap_event_schedule	entry	the clock entry queued, or NULL
+klok_cancel	status	0, the mutex's error, -2 not on the list or -3 not in the pool
+klok_find	entry	the first clock entry of a class, or NULL
+klok_entry_state	state	0 on the clock list, 1 on the free list, -1 on neither
+klok_task_create	status	0 or the first error
+list_unlink	status	0, or -2 for an item not on the list
+klok_take_pending	loops	the idle loops counted since the last call
+is_leap_year	leap	1 for a leap year
+day_of_year	day	1 to 366
+days_to_date	date	year << 16 | month << 8 | day
+date_to_days	days	a Modified Julian Day
+date_to_mjd	days	a Modified Julian Day, of an Oncore date
+days_in_month	days	28 to 31
+date_normalize	date	the date with its overflows carried
+oncore_date_unpack	oncore_date	month << 24 | day << 16 | year
+oncore_date_pack	date	year << 16 | month << 8 | day
+hms_to_seconds	seconds	since midnight
+time_to_seconds	seconds	since midnight
+time_packed_to_seconds	seconds	since midnight
+seconds_to_hms	time	hour << 16 | minute << 8 | second
+gps_seconds	seconds	since the GPS epoch, 1980-01-06
+leap_gps_time	leap_seconds	the pending leap second's GPS seconds, or 0
+datetime_compare	order	negative, 0 or positive, by days then seconds
+leap_opportunity_date	date	the last day of the GPS date's quarter
+leap_second_near	near	1 in a quarter's last 14 seconds
+get_clock_date	date	clock.date
+get_clock_time	time	clock.time
+get_gps_date	gps_date	clock.gps_date
+get_gps_time	gps_time	clock.gps_time
+get_date_time	valid	1 unless clock.invalid
+get_gps_datetime	valid	1 unless clock.invalid
+time_valid	invalid	clock.invalid, despite the function's name
+get_gps_utc_offset	offset_valid	clock.gps_utc_offset_valid
+tcode_checksum	checksum	the time code's characters' sum
+tcode_request	released	drtb_release_for_timecode's, 0 for a request refused
+tfom_code	tfom_digit	the time code's t, 0 to 9
+tfom_table_index	exponent	the decimal exponent of the TFOM's magnitude
+exception_name	name	the exception's text
+exception_hook_get	hook	the running task's exception hook, or the global one
+exception_hook_set_task	status	0
+int_abs	magnitude
+int_clamp	clamped
+crc16_ccitt	crc	~sum << 24 | sum << 16 | crc
+round_shift_right	rounded
+round_divide	quotient	rounded half away from zero
+double_round_to_long	rounded
+power_of_ten_double	power
+power_of_ten_float	power
+random_dither	dither	a small signed value
+task_set_priority	old_priority
+pps_init	status	0 or the kernel's error
+pps_interrupt_stop	status	0, 4 with no exchange, or the kernel's error
+pps_wait_time	status	0 or the kernel's error
+stack_measure	status	0
+enter_supervisor_mode	sr	the status register as it was
+set_interrupt_mask	sr	the status register as it was

@@ -1168,6 +1168,13 @@ carrying seconds into minutes, hours and days.  Their callers --
 names file types them (`local` rows), since the decompiler splits each
 into two longs.
 
+`days_to_date` makes December 31 of a leap year the next year's
+January 0 (2024-12-31 comes out 2025-01-00), and `datetime_add`, and so
+`utc_to_local` and the periodic klok entries, inherit it; `gps_to_utc`
+takes the GPS-UTC offset as 0 while it is valid and the real one only
+while it is not (`0x115a6`), where `utc_to_gps` tests it the other way.
+The hand-written C keeps both, as the firmware has them.
+
 A time is a `time_of_day`, its reserved byte, hour, minute and second,
 and a date a `calendar_date`, its year word, month and day, where the
 code works on them byte by byte: the clock record's times, the Oncore

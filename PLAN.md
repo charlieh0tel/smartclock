@@ -1218,6 +1218,19 @@ view cannot drift apart.  The library, bottom up:
      1241 agree, 1 is skipped, 10 differ as known and none otherwise.
      Left: `doprnt`, `sprintf_put` and `vsprintf` on their prototypes,
      `call_atexit_functions` on the type of `atexit_functions`.
+     `drivers.c`, 104 functions: the DUART's channels, their rings and
+     self-tests, the SCI, the QSPI, the spool and deferred messages, the
+     ADC and DACs, the health monitor and the PPS monitors; and the
+     clock's five files, 84 more, the calendar and time arithmetic,
+     leap seconds, the klok task, the time code, the start-up and the
+     small arithmetic.  264 functions are written by hand, every one
+     agreeing.  Found on the way: the decompiled C drops every write of
+     the status register, the interrupt mask a driver raises around a
+     DUART, SCI or QSPI access and restores, which the harness does not
+     compare (`drivers.c` writes them with `move` to and from SR in a
+     line of assembly); and the image's `duart_op0_set` and its kin pass
+     6 to `set_interrupt_mask`, which keeps only bits 10 to 8, so the
+     mask they set is level 0.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

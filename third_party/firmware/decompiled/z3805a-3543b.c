@@ -7633,6 +7633,7 @@ __asm__(
 );
 
 /* 000104e6 */
+#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
 
 /* packs the name and creates the mutex as an exchange of that name; "klok" for klok_mutex, "logr"
    for log_mutex
@@ -7648,8 +7649,10 @@ int32_t mutex_create(char *name,void *mutex)
   return iVar1;
 }
 
+#endif
 
 /* 00010502 */
+#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
 
 /* mutex_acquire on its argument */
 
@@ -7662,8 +7665,10 @@ int32_t mutex_lock(void *mutex)
   return iVar1;
 }
 
+#endif
 
 /* 00010518 */
+#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
 
 /* mutex_release on its argument */
 
@@ -7676,6 +7681,7 @@ int32_t mutex_unlock(void *mutex)
   return iVar1;
 }
 
+#endif
 
 /* 0001052e */
 
@@ -7689,6 +7695,7 @@ uint32_t mutex_owner(void *mutex)
 
 
 /* 00010538 */
+#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
 
 /* the count of free CPU cycles os_report_cpu prints */
 
@@ -7698,8 +7705,10 @@ uint32_t idle_count(void)
   return idle_loops_last_second;
 }
 
+#endif
 
 /* 00010540 */
+#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
 
 /* queues an event for the clock task
    the firmware's own name, "Clk_do: out of event buffers" */
@@ -7708,14 +7717,14 @@ klok_entry * clk_do(klok_entry *event)
 
 {
   klok_entry **ppkVar1;
-  uint32_t param2;
+  uint32_t status;
   klok_entry *pkVar2;
   uint32_t *puVar3;
   char acStack_54 [80];
   
-  param2 = mutex_lock(&klok_mutex);
+  status = mutex_lock(&klok_mutex);
   pkVar2 = klok_free;
-  if (param2 == 0) {
+  if (status == 0) {
     if (klok_free == (klok_entry *)0x0) {
       task_dmessage("Clk_do: out of event buffers");
       log_event(0x19);
@@ -7737,15 +7746,17 @@ klok_entry * clk_do(klok_entry *event)
     mutex_unlock(&klok_mutex);
   }
   else {
-    debug_sprintf(acStack_54,"Clk_do: error %#04x\r\n",param2);
+    debug_sprintf(acStack_54,"Clk_do: error %#04x\r\n",status);
     task_dmessage(acStack_54);
     pkVar2 = (klok_entry *)0x0;
   }
   return pkVar2;
 }
 
+#endif
 
 /* 000105ee */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* queues the clock event for a 59- or 61-second minute, in GPS time */
 
@@ -7787,8 +7798,10 @@ override_jmp_00010626_case_1:
   return pkVar4;
 }
 
+#endif
 
 /* 00010656 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* queues the clock event for a 59- or 61-second minute, converted to UTC with the GPS-UTC offset as
    it will be */
@@ -7796,7 +7809,7 @@ override_jmp_00010626_case_1:
 klok_entry * leap_event_schedule_utc(uint32_t param_1,int32_t param_2)
 
 {
-  uint8_t uVar2;
+  uint8_t offset_valid;
   klok_entry *pkVar1;
   int16_t sVar3;
   klok_entry *pkVar4;
@@ -7816,8 +7829,8 @@ klok_entry * leap_event_schedule_utc(uint32_t param_1,int32_t param_2)
   } while (sVar3 != -1);
   event.date = param_1;
   event.time = 0x180000;
-  uVar2 = get_gps_utc_offset(&local_6);
-  if (uVar2 == 0) {
+  offset_valid = get_gps_utc_offset(&local_6);
+  if (offset_valid == 0) {
     local_6 = 0;
   }
   if (param_2 == 0x3b) {
@@ -7858,6 +7871,7 @@ klok_entry * leap_event_schedule_utc(uint32_t param_1,int32_t param_2)
   return pkVar1;
 }
 
+#endif
 
 /* 0001075a */
 
@@ -7866,19 +7880,20 @@ klok_entry * leap_event_schedule_utc(uint32_t param_1,int32_t param_2)
 int32_t leap_event_schedule(uint32_t param_1,int32_t param_2)
 
 {
-  int32_t iVar1;
+  int32_t entry;
   
   if (nv_settings.gps_utc == 0) {
-    iVar1 = leap_event_schedule_utc(param_1,param_2);
+    entry = leap_event_schedule_utc(param_1,param_2);
   }
   else {
-    iVar1 = leap_event_schedule_gps(param_1,param_2);
+    entry = leap_event_schedule_gps(param_1,param_2);
   }
-  return iVar1;
+  return entry;
 }
 
 
 /* 00010786 */
+#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
 
 /* under klok_mutex, unlinks an entry from the clock list and returns it to the free list; -3 for a
    pointer outside the pool */
@@ -7904,8 +7919,10 @@ int32_t klok_cancel(klok_entry *param_1)
   return iVar1;
 }
 
+#endif
 
 /* 000107ee */
+#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
 
 /* "at:", "period:", "function address:", "event class:" for each klok entry
    structures.md */
@@ -7915,11 +7932,11 @@ void klok_print_entries(void)
 {
   uint32_t uVar1;
   uint32_t uVar2;
-  int32_t iVar3;
+  int32_t status;
   klok_entry *pkVar4;
   
-  iVar3 = mutex_lock(&klok_mutex);
-  if (iVar3 == 0) {
+  status = mutex_lock(&klok_mutex);
+  if (status == 0) {
     pkVar4 = klok_entries;
     if (klok_entries == (klok_entry *)0x0) {
       debug_printf("No clock entries\r\n");
@@ -7946,22 +7963,24 @@ void klok_print_entries(void)
   return;
 }
 
+#endif
 
 /* 000108fe */
+#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
 
 /* under klok_mutex, the first entry of the clock list of a class */
 
 klok_entry * klok_find(int16_t param_1)
 
 {
-  int32_t iVar1;
+  int32_t status;
   klok_entry *pkVar2;
   klok_entry *pkVar3;
   
-  iVar1 = mutex_lock(&klok_mutex);
+  status = mutex_lock(&klok_mutex);
   pkVar2 = klok_entries;
   pkVar3 = (klok_entry *)0x0;
-  if (iVar1 == 0) {
+  if (status == 0) {
     for (; (pkVar3 = (klok_entry *)0x0, pkVar2 != (klok_entry *)0x0 &&
            (pkVar3 = pkVar2, pkVar2->event_class != param_1)); pkVar2 = pkVar2->next) {
     }
@@ -7970,21 +7989,23 @@ klok_entry * klok_find(int16_t param_1)
   return pkVar3;
 }
 
+#endif
 
 /* 00010946 */
+#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
 
 /* 0 if an entry is on the clock list, 1 if on the free list, -1 if on neither */
 
 int32_t klok_entry_state(klok_entry *param_1)
 
 {
-  int32_t iVar1;
+  int32_t status;
   int32_t iVar2;
   klok_entry *pkVar3;
   
   iVar2 = -1;
   if ((param_1 == (klok_entry *)0x0) ||
-     (iVar1 = mutex_lock(&klok_mutex), pkVar3 = klok_entries, iVar1 != 0)) {
+     (status = mutex_lock(&klok_mutex), pkVar3 = klok_entries, status != 0)) {
     iVar2 = -1;
   }
   else {
@@ -8006,8 +8027,10 @@ int32_t klok_entry_state(klok_entry *param_1)
   return iVar2;
 }
 
+#endif
 
 /* 000109ae */
+#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
 
 /* psos_create("klok") into task_klok, then psos_start(task_klok, klok_task); "Pps_init error",
    "Clk_go error" */
@@ -8060,8 +8083,10 @@ uint32_t klok_task_create(uint32_t param_1)
   return param2;
 }
 
+#endif
 
 /* 00010b00 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* sets the date and time, then lifetime_update */
 
@@ -8073,8 +8098,10 @@ void clock_set(time_of_day time,uint32_t date)
   return;
 }
 
+#endif
 
 /* 00010b1e */
+#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
 
 /* klok_task_create starts the klok task here */
 
@@ -8092,22 +8119,24 @@ void klok_task(void)
   } while( true );
 }
 
+#endif
 
 /* 00010b62 */
+#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
 
 /* runs the clock list's due entries and reschedules the periodic ones, under klok_mutex */
 
 void klok_run_due(void)
 
 {
-  int32_t iVar1;
+  int32_t order;
   klok_entry *pkVar2;
   
   pkVar2 = klok_entries;
   mutex_lock(&klok_mutex);
   while ((pkVar2 != (klok_entry *)0x0 &&
-         (iVar1 = datetime_compare(&pkVar2->time,(uint32_t *)0x1037ac), iVar1 < 1))) {
-    if ((iVar1 == 0) && (pkVar2->function != (void *)0x0)) {
+         (order = datetime_compare(&pkVar2->time,(uint32_t *)0x1037ac), order < 1))) {
+    if ((order == 0) && (pkVar2->function != (void *)0x0)) {
       spoo_run(pkVar2->function,0,0,0);
     }
     list_unlink((int32_t *)&klok_entries,(int32_t *)pkVar2);
@@ -8125,6 +8154,7 @@ void klok_run_due(void)
   return;
 }
 
+#endif
 
 /* 00010c10 */
 
@@ -8152,11 +8182,11 @@ uint32_t list_unlink(int32_t *param_1,int32_t *param_2)
 void klok_insert_sorted(int32_t *param_1,int32_t *param_2)
 
 {
-  int32_t iVar1;
+  int32_t order;
   
   for (; *param_1 != 0; param_1 = (int32_t *)*param_1) {
-    iVar1 = datetime_compare((uint32_t *)(*param_1 + 4),(uint32_t *)(param_2 + 1));
-    if (0 < iVar1) break;
+    order = datetime_compare((uint32_t *)(*param_1 + 4),(uint32_t *)(param_2 + 1));
+    if (0 < order) break;
   }
   *param_2 = *param_1;
   *param_1 = (int32_t)param_2;
@@ -8178,6 +8208,7 @@ void list_push(uint32_t *param_1,uint32_t *param_2)
 
 
 /* 00010db6 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* 1 for a leap year, by the Gregorian rule */
 
@@ -8196,8 +8227,10 @@ uint32_t is_leap_year(uint16_t param_1)
   return uVar2;
 }
 
+#endif
 
 /* 00010de4 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* the es message's %03d, from a packed date
    structures.md */
@@ -8207,11 +8240,11 @@ int16_t day_of_year(uint32_t date)
 {
   int16_t sVar1;
   uint32_t uVar2;
-  char cVar3;
+  char leap;
   
   uVar2 = date >> 8 & 0xff;
-  cVar3 = is_leap_year((uint16_t)(date >> 0x10));
-  if (cVar3 == 0) {
+  leap = is_leap_year((uint16_t)(date >> 0x10));
+  if (leap == 0) {
     sVar1 = *(int16_t *)(uVar2 * 2 + 0x1186a);
   }
   else {
@@ -8220,6 +8253,7 @@ int16_t day_of_year(uint32_t date)
   return sVar1 + ((uint16_t)date & 0xff);
 }
 
+#endif
 
 /* 00010e3a */
 #if 0 /* the decompiler's reading; rewritten in clock.c */
@@ -8235,6 +8269,7 @@ int32_t time_packed_to_seconds(uint32_t time)
 #endif
 
 /* 00010e72 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* WARNING: Removing unreachable block (ram,0x00010eaa) */
 /* a day count as a packed date, for datetime_add (an unsigned count, 0x10e76) */
@@ -8271,8 +8306,10 @@ uint32_t days_to_date(uint32_t days)
   return CONCAT31((uint3)bVar5 | (uint3)(((uint32_t)uVar1 << 0x10) >> 8),(char)uVar2 - cVar4);
 }
 
+#endif
 
 /* 00010f46 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* a packed date as a day count, for datetime_add */
 
@@ -8282,7 +8319,7 @@ int32_t date_to_days(uint32_t param_1)
   uint8_t bVar1;
   uint16_t uVar3;
   int32_t iVar2;
-  char cVar4;
+  char leap;
   
   uVar3 = (uint16_t)(param_1 >> 0x10);
   bVar1 = (uint8_t)(param_1 >> 8);
@@ -8292,15 +8329,17 @@ int32_t date_to_days(uint32_t param_1)
   }
   iVar2 = (param_1 & 0xff) + (uint32_t)*(uint16_t *)((uint32_t)bVar1 * 2 + 0x1186a) +
           (iVar2 >> 2 & 0xffffU) + (uint32_t)uVar3 * 0x16d + -0xa5a51;
-  cVar4 = is_leap_year(uVar3);
-  if ((cVar4 != 0) && (2 < bVar1)) {
+  leap = is_leap_year(uVar3);
+  if ((leap != 0) && (2 < bVar1)) {
     iVar2 = iVar2 + 1;
   }
   return iVar2;
 }
 
+#endif
 
 /* 00010fbc */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* a date as its Modified Julian Day: 1994-01-01 is 49353; the days before each month at 0x1186a */
 
@@ -8309,7 +8348,7 @@ int32_t date_to_mjd(uint32_t param_1)
 {
   uint8_t bVar1;
   int32_t iVar2;
-  char cVar3;
+  char leap;
   
   bVar1 = (uint8_t)(param_1 >> 0x18);
   iVar2 = (param_1 & 0xffff) - 0x76d;
@@ -8318,28 +8357,30 @@ int32_t date_to_mjd(uint32_t param_1)
   }
   iVar2 = (param_1 >> 0x10 & 0xff) + (uint32_t)*(uint16_t *)((uint32_t)bVar1 * 2 + 0x1186a) +
           (iVar2 >> 2 & 0xffffU) + (param_1 & 0xffff) * 0x16d + -0xa5a51;
-  cVar3 = is_leap_year((uint16_t)param_1);
-  if ((cVar3 != 0) && (2 < bVar1)) {
+  leap = is_leap_year((uint16_t)param_1);
+  if ((leap != 0) && (2 < bVar1)) {
     iVar2 = iVar2 + 1;
   }
   return iVar2;
 }
 
+#endif
 
 /* 00011032 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* the days in a month, 28 or 29 for February by is_leap_year */
 
 uint8_t days_in_month(uint16_t param_1,uint8_t param_2)
 
 {
-  char cVar1;
+  char leap;
   uint8_t uVar2;
   uint8_t bVar3;
   
   if (param_2 == 2) {
-    cVar1 = is_leap_year(param_1);
-    if (cVar1 == 0) {
+    leap = is_leap_year(param_1);
+    if (leap == 0) {
       uVar2 = 0x1c;
     }
     else {
@@ -8358,8 +8399,10 @@ uint8_t days_in_month(uint16_t param_1,uint8_t param_2)
   return uVar2;
 }
 
+#endif
 
 /* 00011076 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* carries a date's overflowing months and days into the next */
 
@@ -8367,7 +8410,7 @@ uint32_t date_normalize(uint32_t param_1)
 
 {
   uint16_t uVar1;
-  uint8_t bVar2;
+  uint8_t days;
   uint32_t uVar3;
   uint8_t bVar4;
   uint32_t uVar5;
@@ -8380,10 +8423,10 @@ uint32_t date_normalize(uint32_t param_1)
   }
   while( true ) {
     bVar4 = (uint8_t)uVar3;
-    bVar2 = days_in_month(uVar1,bVar4);
+    days = days_in_month(uVar1,bVar4);
     bVar6 = (uint8_t)uVar5;
-    if (bVar6 <= bVar2) break;
-    uVar5 = (uint32_t)(uint8_t)(bVar6 - bVar2);
+    if (bVar6 <= days) break;
+    uVar5 = (uint32_t)(uint8_t)(bVar6 - days);
     uVar3 = (uint32_t)(uint8_t)(bVar4 + 1);
     if (0xc < (uint8_t)(bVar4 + 1)) {
       uVar3 = (uint32_t)(uint8_t)(bVar4 - 0xb);
@@ -8393,8 +8436,10 @@ uint32_t date_normalize(uint32_t param_1)
   return CONCAT31((uint3)uVar3 | (uint3)(((uint32_t)uVar1 << 0x10) >> 8),bVar6);
 }
 
+#endif
 
 /* 000110d6 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* the inverse of oncore_date_pack: year << 16 | month << 8 | day back to month << 24 | day << 16 |
    year; called by nothing */
@@ -8416,8 +8461,10 @@ uint32_t oncore_date_unpack(uint32_t packed)
   return (uint32_t)__ghidra_aggregate_bits(fields);
 }
 
+#endif
 
 /* 000110fa */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* @@Ba's month, day and year into year << 16 | month << 8 | day */
 
@@ -8432,6 +8479,7 @@ uint32_t oncore_date_pack(oncore_date_fields fields)
   return CONCAT31(CONCAT21(fields.year,local_8),uStack_7);
 }
 
+#endif
 
 /* 0001111e */
 #if 0 /* the decompiler's reading; rewritten in clock.c */
@@ -8460,6 +8508,7 @@ int32_t time_to_seconds(uint32_t time)
 #endif
 
 /* 00011186 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* seconds as hours, minutes and seconds */
 
@@ -8473,8 +8522,10 @@ uint32_t seconds_to_hms(uint32_t param_1)
   return local_8;
 }
 
+#endif
 
 /* 000111cc */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* the T1 time code's #H%08X, seconds since 1980 from a date and time
    structures.md */
@@ -8483,7 +8534,7 @@ int32_t gps_seconds(uint32_t date,uint32_t time)
 
 {
   int32_t iVar1;
-  char cVar2;
+  char leap;
   uint16_t local_c;
   uint8_t uStack_a;
   
@@ -8499,8 +8550,8 @@ int32_t gps_seconds(uint32_t date,uint32_t time)
     uStack_a = (uint8_t)(date >> 8);
     iVar1 = (date & 0xff) + (uint32_t)*(uint16_t *)((uint32_t)uStack_a * 2 + 0x1186a) +
             (iVar1 >> 2 & 0xffffU) + (uint32_t)local_c * 0x16d + -0xb0712;
-    cVar2 = is_leap_year(local_c);
-    if ((cVar2 != 0) && (2 < uStack_a)) {
+    leap = is_leap_year(local_c);
+    if ((leap != 0) && (2 < uStack_a)) {
       iVar1 = iVar1 + 1;
     }
     iVar1 = ((time >> 8 & 0xff) + (time >> 0x10 & 0xff) * 0x3c) * 0x3c + iVar1 * 0x15180 +
@@ -8509,8 +8560,10 @@ int32_t gps_seconds(uint32_t date,uint32_t time)
   return iVar1;
 }
 
+#endif
 
 /* 00011284 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* :PTIM:LEAP:GPST?'s "#H%08X", from nv_settings.leap_pending and leap_minute_length
    structures.md */
@@ -8549,8 +8602,10 @@ int32_t leap_gps_time(void)
   return iVar2;
 }
 
+#endif
 
 /* 00011300 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* advances a time by a second, the minute 59 or 61 seconds long at a pending leap second's 23:59 */
 
@@ -8598,8 +8653,10 @@ void time_next_second(uint32_t *date,time_of_day *value)
   return;
 }
 
+#endif
 
 /* 00011396 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* adds the first packed time and date to the second, carrying seconds, minutes, hours and days;
    klok adds an entry's period to its time */
@@ -8609,15 +8666,15 @@ void datetime_add(packed_datetime *change,packed_datetime *value)
 {
   time_of_day tVar1;
   time_of_day tVar2;
-  int32_t iVar3;
+  int32_t days;
   uint32_t uVar4;
   time_of_day change_time;
   time_of_day time;
   
   tVar1 = change->time;
   tVar2 = value->time;
-  iVar3 = date_to_days(value->date);
-  uVar4 = change->date + iVar3;
+  days = date_to_days(value->date);
+  uVar4 = change->date + days;
   change_time.second = tVar1.second;
   time.second = tVar2.second;
   __ghidra_piece(__ghidra_u3, time, 0).v = __ghidra_piece(__ghidra_u3, tVar2, 0).v;
@@ -8644,8 +8701,10 @@ void datetime_add(packed_datetime *change,packed_datetime *value)
   return;
 }
 
+#endif
 
 /* 00011428 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* subtracts a time from a date and time, borrowing through the date */
 
@@ -8654,15 +8713,15 @@ void datetime_subtract(packed_datetime *change,packed_datetime *value)
 {
   time_of_day tVar1;
   time_of_day tVar2;
-  int32_t iVar3;
+  int32_t days;
   uint32_t uVar4;
   time_of_day change_time;
   time_of_day time;
   
   tVar1 = change->time;
   tVar2 = value->time;
-  iVar3 = date_to_days(value->date);
-  uVar4 = iVar3 - change->date;
+  days = date_to_days(value->date);
+  uVar4 = days - change->date;
   change_time.second = tVar1.second;
   time.second = tVar2.second;
   __ghidra_piece(__ghidra_u3, time, 0).v = __ghidra_piece(__ghidra_u3, tVar2, 0).v;
@@ -8689,8 +8748,10 @@ void datetime_subtract(packed_datetime *change,packed_datetime *value)
   return;
 }
 
+#endif
 
 /* 000114b4 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* compares two dates and times: by days, then by seconds */
 
@@ -8711,15 +8772,17 @@ int32_t datetime_compare(uint32_t *param_1,uint32_t *param_2)
   return iVar1;
 }
 
+#endif
 
 /* 000114fa */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* applies the GPS-UTC offset the other way, UTC to GPS time; called by nothing */
 
 void utc_to_gps(uint32_t *date,time_of_day *time)
 
 {
-  uint8_t uVar1;
+  uint8_t offset_valid;
   packed_datetime value;
   packed_datetime change;
   int16_t local_6;
@@ -8727,8 +8790,8 @@ void utc_to_gps(uint32_t *date,time_of_day *time)
   value.date = *date;
   value.time = *time;
   change.date = 0;
-  uVar1 = get_gps_utc_offset(&local_6);
-  if (uVar1 == 0) {
+  offset_valid = get_gps_utc_offset(&local_6);
+  if (offset_valid == 0) {
     local_6 = 0;
   }
   if (local_6 < 1) {
@@ -8744,8 +8807,10 @@ void utc_to_gps(uint32_t *date,time_of_day *time)
   return;
 }
 
+#endif
 
 /* 00011580 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* applies the GPS-UTC offset to a date and time (leap_second_near passes get_gps_datetime's
    time_of_day) */
@@ -8753,7 +8818,7 @@ void utc_to_gps(uint32_t *date,time_of_day *time)
 void gps_to_utc(uint32_t *date,time_of_day *time)
 
 {
-  uint8_t uVar1;
+  uint8_t offset_valid;
   packed_datetime value;
   packed_datetime change;
   int16_t local_6;
@@ -8761,8 +8826,8 @@ void gps_to_utc(uint32_t *date,time_of_day *time)
   value.date = *date;
   value.time = *time;
   change.date = 0;
-  uVar1 = get_gps_utc_offset(&local_6);
-  if (uVar1 != 0) {
+  offset_valid = get_gps_utc_offset(&local_6);
+  if (offset_valid != 0) {
     local_6 = 0;
   }
   if (local_6 < 1) {
@@ -8778,8 +8843,10 @@ void gps_to_utc(uint32_t *date,time_of_day *time)
   return;
 }
 
+#endif
 
 /* 00011606 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* the end of the coming quarter, when a leap second may come: Mar 31, Jun 30, Sep 30 or Dec 31 (a
    calendar_date local, 0x11610 to 0x11678) */
@@ -8789,12 +8856,12 @@ uint32_t leap_opportunity_date(void)
 {
   uint32_t uVar1;
   int16_t sVar2;
-  uint32_t uVar3;
+  uint32_t gps_date;
   calendar_date date;
   
-  uVar3 = get_gps_date();
-  uVar1 = (uVar3 >> 8 & 0xff) - 1;
-  date.year = (uint16_t)(uVar3 >> 0x10);
+  gps_date = get_gps_date();
+  uVar1 = (gps_date >> 8 & 0xff) - 1;
+  date.year = (uint16_t)(gps_date >> 0x10);
   if (uVar1 < 0xc) {
                     /* WARNING: Switch is manually overridden */
     switch((int16_t)uVar1) {
@@ -8830,8 +8897,10 @@ LAB_00011672:
   return (uint32_t)__ghidra_aggregate_bits(date);
 }
 
+#endif
 
 /* 00011680 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* 1 at 23:59:46 or later, in UTC, on the last day of a quarter */
 
@@ -8855,8 +8924,10 @@ uint8_t leap_second_near(void)
   return uVar1;
 }
 
+#endif
 
 /* 00011700 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* applies nv_settings.time_zone's hours and minutes to a date and time (command_log_add passes
    get_date_time's time_of_day, 0x4c6e0) */
@@ -8900,8 +8971,10 @@ void utc_to_local(uint32_t *date,time_of_day *time)
   return;
 }
 
+#endif
 
 /* 000117b6 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* takes nv_settings.time_zone off a date and time; called by nothing */
 
@@ -8944,8 +9017,10 @@ void local_to_utc(uint32_t *date,time_of_day *time)
   return;
 }
 
+#endif
 
 /* 000118a8 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* clears the exception hook and its per-task switch */
 
@@ -8957,6 +9032,7 @@ void exception_hook_reset(void)
   return;
 }
 
+#endif
 
 /* 000118c2 */
 
@@ -9009,7 +9085,7 @@ __exception uint64_t primary_default_exception(void)
 {
   char cVar1;
   uint32_t in_D0;
-  int32_t iVar2;
+  int32_t hook;
   void *task;
   char *pcVar3;
   uint32_t in_D1;
@@ -9025,8 +9101,8 @@ __exception uint64_t primary_default_exception(void)
   
   uVar5 = (uint16_t)((uint32_t)in_D0 >> 0x10);
   uVar6 = (uint16_t)in_D0;
-  iVar2 = exception_hook_get();
-  if (iVar2 != 0) {
+  hook = exception_hook_get();
+  if (hook != 0) {
     return CONCAT44(CONCAT22(uVar5,uVar6),in_D1);
   }
   print_exception(in_stack_00000000,in_stack_00000002,in_stack_00000006,
@@ -9097,6 +9173,7 @@ __asm__(
 );
 
 /* 00011942 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* prints an exception's name, PC, SR and address
    "%s: %s", ": PC = %#8x, SR = %#04x", ", address = %#8x", "RESET to recover." */
@@ -9150,8 +9227,10 @@ void print_exception(uint16_t param_1,uint32_t param_2,uint16_t param_3,uint32_t
   } while( true );
 }
 
+#endif
 
 /* 00011a2a */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* the "%s: %s" of an exception; "Oooh! That tickles. I don't know that vector."
    structures.md */
@@ -9170,6 +9249,7 @@ char * exception_name(uint16_t vector)
   return pcVar1;
 }
 
+#endif
 
 /* 00011f82 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -9253,6 +9333,7 @@ __asm__(
 );
 
 /* 00012004 */
+#if 0 /* the decompiler's reading; rewritten in clock_start.c */
 
 /* sets the SIM's PICR: the periodic interrupt at level 5, or off */
 
@@ -9268,6 +9349,7 @@ void periodic_interrupt_enable(char param_1)
   return;
 }
 
+#endif
 
 /* 00012026 */
 
@@ -9313,6 +9395,7 @@ void gpt_init(void)
 
 
 /* 000120aa */
+#if 0 /* the decompiler's reading; rewritten in clock_start.c */
 
 /* Shutdown
    restart.md */
@@ -9336,8 +9419,10 @@ void shutdown(void)
   return;
 }
 
+#endif
 
 /* 000120e6 */
+#if 0 /* the decompiler's reading; rewritten in clock_math.c */
 
 /* an int's magnitude; called by nothing */
 
@@ -9350,8 +9435,10 @@ int32_t int_abs(int32_t param_1)
   return param_1;
 }
 
+#endif
 
 /* 0001211a */
+#if 0 /* the decompiler's reading; rewritten in clock_math.c */
 
 /* a value clamped between two bounds; called by nothing */
 
@@ -9364,8 +9451,10 @@ int32_t int_clamp(int32_t param_1,int32_t param_2,int32_t param_3)
   return param_3;
 }
 
+#endif
 
 /* 0001213a */
+#if 0 /* the decompiler's reading; rewritten in clock_math.c */
 
 /* the reflected CRC-16, polynomial 0x8408 from 0xffff, over bytes; called by nothing */
 
@@ -9402,6 +9491,7 @@ uint32_t crc16_ccitt(uint8_t *param_1,int16_t param_2)
   return local_8;
 }
 
+#endif
 
 /* 0001219a */
 
@@ -9466,6 +9556,7 @@ code_r0x000121f4:
 
 
 /* 00012206 */
+#if 0 /* the decompiler's reading; rewritten in clock_math.c */
 
 /* an int shifted right with rounding, half away from zero; called by nothing */
 
@@ -9484,6 +9575,7 @@ int32_t round_shift_right(int32_t param_1,uint32_t param_2)
   return iVar1;
 }
 
+#endif
 
 /* 0001223c */
 
@@ -9522,6 +9614,7 @@ int32_t double_round_to_long(double x)
 
 
 /* 000122d0 */
+#if 0 /* the decompiler's reading; rewritten in clock_math.c */
 
 /* an int divided with rounding, half away from zero; called by nothing */
 
@@ -9539,6 +9632,7 @@ int32_t round_divide(int32_t param_1,int32_t param_2)
   return iVar1;
 }
 
+#endif
 
 /* 000122f6 */
 
@@ -9610,6 +9704,7 @@ uint32_t double_decimal_exponent(uint32_t param_1,uint32_t param_2)
 
 
 /* 000125e2 */
+#if 0 /* the decompiler's reading; rewritten in clock_math.c */
 
 /* 10 to a power clamped to plus or minus 30, from the table of doubles at 0x12704; called by
    nothing */
@@ -9626,6 +9721,7 @@ double power_of_ten_double(int16_t param_1)
   return powers_of_ten_double[param_1 + 0x1e];
 }
 
+#endif
 
 /* 00012984 */
 
@@ -9655,6 +9751,7 @@ int16_t tfom_table_index(uint32_t tfom)
 
 
 /* 000129d0 */
+#if 0 /* the decompiler's reading; rewritten in clock_math.c */
 
 /* 10 to a power clamped to plus or minus 30, from the table of floats at 0x12a74; called by nothing
     */
@@ -9671,8 +9768,10 @@ float power_of_ten_float(int16_t param_1)
   return powers_of_ten_float[param_1 + 0x1e];
 }
 
+#endif
 
 /* 00012af0 */
+#if 0 /* the decompiler's reading; rewritten in clock_start.c */
 
 /* a bare rts: the changed hook of most numeric and setting descriptors, and the done hook of some
    the changed hook of most descriptors */
@@ -9683,8 +9782,10 @@ void scpi_param_hook_nothing(void)
   return;
 }
 
+#endif
 
 /* 00012af2 */
+#if 0 /* the decompiler's reading; rewritten in clock_math.c */
 
 /* a small signed random value: rand, shaped by dither_table */
 
@@ -9707,8 +9808,10 @@ int32_t random_dither(void)
   return iVar1;
 }
 
+#endif
 
 /* 00012bb2 */
+#if 0 /* the decompiler's reading; rewritten in clock_start.c */
 
 /* does nothing; primary_start calls it between gpt_init and system_init */
 
@@ -9718,6 +9821,7 @@ void start_nothing(void)
   return;
 }
 
+#endif
 
 /* 00012bb4 */
 
@@ -9838,6 +9942,7 @@ void system_init(void)
 
 
 /* 00012d6e */
+#if 0 /* the decompiler's reading; rewritten in clock_start.c */
 
 /* the reset's path: services the watchdog, sets the QSM and GPT up, runs system_init and starts the
    kernel with trap #6 */
@@ -9859,6 +9964,7 @@ void primary_start(uint32_t param_1,uint32_t param_2,uint32_t param_3)
   return;
 }
 
+#endif
 
 /* 00012db6 */
 
@@ -10057,6 +10163,7 @@ void console_halt_hook(void)
 
 
 /* 00012f86 */
+#if 0 /* the decompiler's reading; rewritten in clock_start.c */
 
 /* os_process_report(0)
    console_init's word ps */
@@ -10068,8 +10175,10 @@ void ps_word(void)
   return;
 }
 
+#endif
 
 /* 00012f92 */
+#if 0 /* the decompiler's reading; rewritten in clock_start.c */
 
 /* os_memory_report(0)
    console_init's word mem_rep */
@@ -10081,8 +10190,10 @@ void mem_rep_word(void)
   return;
 }
 
+#endif
 
 /* 00012f9e */
+#if 0 /* the decompiler's reading; rewritten in clock_start.c */
 
 /* task_stack_report(0)
    console_init's word s_rep */
@@ -10094,6 +10205,7 @@ void s_rep_word(void)
   return;
 }
 
+#endif
 
 /* 00012faa */
 
@@ -10118,6 +10230,7 @@ void console_init(void)
 
 
 /* 0001303c */
+#if 0 /* the decompiler's reading; rewritten in clock_klok.c */
 
 /* takes and clears the pending cell at 0x10382c */
 
@@ -10131,6 +10244,7 @@ uint32_t klok_take_pending(void)
   return uVar1;
 }
 
+#endif
 
 /* 0001304a */
 
@@ -10438,6 +10552,7 @@ __asm__(
 );
 
 /* 000132f4 */
+#if 0 /* the decompiler's reading; rewritten in clock_start.c */
 
 /* prints a task's user and supervisor stack use
    "User: %5u of %5u b   Supv: %5u of %5u b" */
@@ -10445,12 +10560,12 @@ __asm__(
 void stack_usage_report(void *task)
 
 {
-  int32_t iVar1;
+  int32_t status;
   uint32_t usage [4];
   char acStack_54 [80];
   
-  iVar1 = stack_measure(task,usage);
-  if (iVar1 == 0) {
+  status = stack_measure(task,usage);
+  if (status == 0) {
     sprintf(acStack_54,"User: %5u of %5u b   Supv: %5u of %5u b\r\n",usage[0],usage[1],usage[2],
             usage[3]);
     task_debug_message(acStack_54);
@@ -10458,6 +10573,7 @@ void stack_usage_report(void *task)
   return;
 }
 
+#endif
 
 /* 00013368 */
 
@@ -10489,6 +10605,7 @@ uint16_t set_interrupt_mask(uint16_t sr)
 
 
 /* 0001339e */
+#if 0 /* the decompiler's reading; rewritten in clock_start.c */
 
 /* sets a task's priority, returning the old */
 
@@ -10502,6 +10619,7 @@ uint8_t task_set_priority(uint32_t param_1,uint8_t param_2)
   return local_6[0];
 }
 
+#endif
 
 /* 000133e2 */
 
@@ -10616,6 +10734,7 @@ __asm__(
 );
 
 /* 00013428 */
+#if 0 /* the decompiler's reading; rewritten in clock_start.c */
 
 /* spins 729 empty loops for each count */
 
@@ -10639,8 +10758,10 @@ void busy_wait(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 00013448 */
+#if 0 /* the decompiler's reading; rewritten in clock_start.c */
 
 /* pauses for a float number of seconds, at 1024 ticks a second, at least one tick; called by
    nothing */
@@ -10671,6 +10792,7 @@ void sleep_seconds(float param_1)
   return;
 }
 
+#endif
 
 /* 000134a8 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -10798,6 +10920,7 @@ __asm__(
 );
 
 /* 000134e8 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* advances the clock a second and checksums its record */
 
@@ -10810,6 +10933,7 @@ void clock_tick(void)
   return;
 }
 
+#endif
 
 /* 00013502 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -11149,6 +11273,7 @@ void leap_minute_61_arm(void)
 
 
 /* 000136a2 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* sets offset_step -1, offset_step_pending and clock_change_armed
    leap_event_schedule_utc's clock event, a 59-second minute */
@@ -11162,8 +11287,10 @@ void offset_step_down_arm(void)
   return;
 }
 
+#endif
 
 /* 000136bc */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* sets offset_step 1, offset_step_pending and clock_change_armed
    leap_event_schedule_utc's clock event, a 61-second minute */
@@ -11177,8 +11304,10 @@ void offset_step_up_arm(void)
   return;
 }
 
+#endif
 
 /* 000136d6 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* returns clock.date; the T2 time code's date
    structures.md */
@@ -11189,8 +11318,10 @@ uint32_t get_clock_date(void)
   return clock.date;
 }
 
+#endif
 
 /* 000136de */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* returns clock.time; the T2 time code's time
    structures.md */
@@ -11201,8 +11332,10 @@ uint32_t get_clock_time(void)
   return (uint32_t)__ghidra_aggregate_bits(clock.time);
 }
 
+#endif
 
 /* 000136e6 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* returns gps_date; with get_gps_time, the T1 time code's GPS time
    structures.md */
@@ -11213,8 +11346,10 @@ uint32_t get_gps_date(void)
   return clock.gps_date;
 }
 
+#endif
 
 /* 000136ee */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* returns gps_time
    structures.md */
@@ -11225,8 +11360,10 @@ uint32_t get_gps_time(void)
   return (uint32_t)__ghidra_aggregate_bits(clock.gps_time);
 }
 
+#endif
 
 /* 000136f6 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* returns uptime; efc_history_update divides it by 2700 for an entry's time */
 
@@ -11236,8 +11373,10 @@ uint32_t get_uptime(void)
   return clock.uptime;
 }
 
+#endif
 
 /* 000136fe */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* :PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns valid unless clock.invalid
     */
@@ -11257,8 +11396,10 @@ int32_t get_date_time(uint32_t *date,time_of_day *time)
   return (uint32_t)(clock.invalid == 0);
 }
 
+#endif
 
 /* 00013740 */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* gps_date and gps_time through pointers; 1 if the clock is valid */
 
@@ -11277,6 +11418,7 @@ bool get_gps_datetime(uint32_t *date,time_of_day *time)
   return clock.invalid == 0;
 }
 
+#endif
 
 /* 00013782 */
 
@@ -11710,6 +11852,7 @@ LAB_00013974:
 
 
 /* 0001399a */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* the time code's v is 0 when it returns nonzero
    structures.md */
@@ -11720,6 +11863,7 @@ uint8_t time_valid(void)
   return clock.invalid;
 }
 
+#endif
 
 /* 000139a2 */
 
@@ -11740,6 +11884,7 @@ void set_gps_utc_offset(uint16_t param_1)
 
 
 /* 000139ce */
+#if 0 /* the decompiler's reading; rewritten in clock.c */
 
 /* returns clock.gps_utc_offset_valid and stores clock.gps_utc_offset; the es message's leap value
    and leap_gps_time */
@@ -11753,8 +11898,10 @@ uint8_t get_gps_utc_offset(int16_t *seconds)
   return clock.gps_utc_offset_valid;
 }
 
+#endif
 
 /* 000139e4 */
+#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
 
 /* the time code's cc, printed %02X and appended
    structures.md */
@@ -11771,8 +11918,10 @@ char tcode_checksum(char *param_1)
   return cVar1;
 }
 
+#endif
 
 /* 000139f6 */
+#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
 
 /* WARNING: Switch with 1 destination removed at 0x00013a16 */
 /* sets tcode_format and tcode_pending
@@ -11799,8 +11948,10 @@ char tcode_request(uint8_t param_1)
   return cVar1;
 }
 
+#endif
 
 /* 00013a48 */
+#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
 
 /* the time code's t, from pll.tfom; given pll.tfom, a float, which it passes on whole (0x13a48)
    structures.md */
@@ -11808,11 +11959,11 @@ char tcode_request(uint8_t param_1)
 int16_t tfom_code(uint32_t tfom)
 
 {
-  int16_t iVar1;
+  int16_t exponent;
   int16_t sVar2;
   
-  iVar1 = tfom_table_index(tfom);
-  sVar2 = iVar1 + 9;
+  exponent = tfom_table_index(tfom);
+  sVar2 = exponent + 9;
   if (sVar2 < 0) {
     sVar2 = 0;
   }
@@ -11822,8 +11973,10 @@ int16_t tfom_code(uint32_t tfom)
   return sVar2;
 }
 
+#endif
 
 /* 00013a6a */
+#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
 
 /* builds es_message
    structures.md */
@@ -11832,9 +11985,9 @@ void es_build(uint32_t param_1,uint32_t param_2)
 
 {
   uint32_t uVar1;
-  uint8_t uVar3;
-  uint16_t uVar2;
-  char cVar4;
+  uint8_t offset_valid;
+  uint16_t day;
+  char invalid;
   uint16_t uVar5;
   uint16_t uVar6;
   uint16_t local_e;
@@ -11844,15 +11997,15 @@ void es_build(uint32_t param_1,uint32_t param_2)
   int16_t local_6;
   
   es_length = 0;
-  uVar3 = get_gps_utc_offset(&local_6);
-  if (uVar3 == 0) {
+  offset_valid = get_gps_utc_offset(&local_6);
+  if (offset_valid == 0) {
     local_6 = 0;
   }
-  uVar2 = day_of_year(param_1);
-  cVar4 = time_valid();
-  uVar5 = (uint16_t)(cVar4 == 0);
+  day = day_of_year(param_1);
+  invalid = time_valid();
+  uVar5 = (uint16_t)(invalid == 0);
   if ((nv_settings.leap_pending != 0) && (nv_settings.leap_date == param_1)) {
-    uVar6 = (uint16_t)(cVar4 == 0);
+    uVar6 = (uint16_t)(invalid == 0);
     uVar5 = uVar6 | 4;
     if (0x3c < nv_settings.leap_minute_length) {
       uVar5 = uVar6 | 6;
@@ -11868,8 +12021,8 @@ void es_build(uint32_t param_1,uint32_t param_2)
   if (es_ascii == 0) {
     es_message[0] = (char)(((uint32_t)local_e % 100) / 10);
     es_message[1] = (char)((uint32_t)local_e % 100) + es_message[0] * -10;
-    es_message[2] = (char)(uVar2 / 100);
-    uVar1 = (uint32_t)uVar2 % 100;
+    es_message[2] = (char)(day / 100);
+    uVar1 = (uint32_t)day % 100;
     es_message[3] = (char)(uVar1 / 10);
     es_message[4] = (char)uVar1 + es_message[3] * -10;
     es_message[5] = bStack_9 / 10;
@@ -11886,7 +12039,7 @@ void es_build(uint32_t param_1,uint32_t param_2)
     es_length = 0x10;
   }
   else {
-    sprintf(es_message,"%02d%03d%02d%02d%02d%02d%02X%02X\r",(uint32_t)local_e % 100,(uint32_t)uVar2,
+    sprintf(es_message,"%02d%03d%02d%02d%02d%02d%02X%02X\r",(uint32_t)local_e % 100,(uint32_t)day,
             (uint32_t)bStack_9,(uint32_t)bStack_8,param_2 & 0xff,(int32_t)local_6,(uint32_t)uVar5,
             (uint32_t)status_summary);
     es_length = 0x12;
@@ -11895,8 +12048,10 @@ void es_build(uint32_t param_1,uint32_t param_2)
   return;
 }
 
+#endif
 
 /* 00013c50 */
+#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
 
 /* builds tcode_message, T1 or T2, and the es message
    structures.md */
@@ -11906,7 +12061,7 @@ void timecode_update(void)
 {
   uint32_t uVar1;
   uint32_t uVar2;
-  int16_t sVar4;
+  int16_t tfom_digit;
   char cVar5;
   uint32_t param4;
   uint32_t param3;
@@ -11928,8 +12083,8 @@ void timecode_update(void)
   }
   if (tcode_pending != 0) {
     tcode_length = 0;
-    sVar4 = tfom_code((uint32_t)__ghidra_bits(pll.tfom));
-    bVar6 = (uint8_t)sVar4;
+    tfom_digit = tfom_code((uint32_t)__ghidra_bits(pll.tfom));
+    bVar6 = (uint8_t)tfom_digit;
     get_ffom(&local_8);
     if (nv_settings.leap_pending == 0) {
       param10 = '0';
@@ -12014,8 +12169,10 @@ void timecode_update(void)
   return;
 }
 
+#endif
 
 /* 00013ee4 */
+#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
 
 /* clears the time code's and the ES message's state */
 
@@ -12030,8 +12187,10 @@ void timecode_init(void)
   return;
 }
 
+#endif
 
 /* 00013fa6 */
+#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
 
 /* sets output compare 3 to fire a time code character a delay after the 1PPS capture */
 
@@ -12072,6 +12231,7 @@ void timecode_schedule(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 00014020 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -12134,6 +12294,7 @@ __asm__(
 );
 
 /* 0001406a */
+#if 0 /* the decompiler's reading; rewritten in clock_timecode.c */
 
 /* sets output compare 4 to fire an ES message character a delay after the 1PPS capture */
 
@@ -12174,6 +12335,7 @@ void es_schedule(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 000140e4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -19380,11 +19542,11 @@ __asm__(
 void os_report_cpu(printf_function *print)
 
 {
-  int32_t iVar1;
+  int32_t idle;
   
-  iVar1 = idle_count();
-  (*print)("Free CPU cycles: count 0x%08X, approx %2d%%\r\n",iVar1,
-           (uint32_t)(&UNK_0007a120 + iVar1 * 0xac) / 1000000);
+  idle = idle_count();
+  (*print)("Free CPU cycles: count 0x%08X, approx %2d%%\r\n",idle,
+           (uint32_t)(&UNK_0007a120 + idle * 0xac) / 1000000);
   return;
 }
 
@@ -22629,23 +22791,23 @@ void lamp_test(void)
 void supplies_test(void)
 
 {
-  float fVar1;
+  float volts;
   int32_t iVar2;
   
   selftest.power = 0;
-  fVar1 = read_adc_5v();
-  iVar2 = float_compare(fVar1,4.5);
-  if ((iVar2 < 0) || (iVar2 = float_compare(fVar1,5.5), 0 < iVar2)) {
+  volts = read_adc_5v();
+  iVar2 = float_compare(volts,4.5);
+  if ((iVar2 < 0) || (iVar2 = float_compare(volts,5.5), 0 < iVar2)) {
     selftest.power = selftest.power | 1;
   }
-  fVar1 = read_adc_p15v();
-  iVar2 = float_compare(fVar1,14.0);
-  if ((iVar2 < 0) || (iVar2 = float_compare(fVar1,16.0), 0 < iVar2)) {
+  volts = read_adc_p15v();
+  iVar2 = float_compare(volts,14.0);
+  if ((iVar2 < 0) || (iVar2 = float_compare(volts,16.0), 0 < iVar2)) {
     selftest.power = selftest.power | 2;
   }
-  fVar1 = read_adc_m15v();
-  iVar2 = float_compare(fVar1,-16.0);
-  if ((-1 < iVar2) && (iVar2 = float_compare(fVar1,-14.0), iVar2 < 1)) {
+  volts = read_adc_m15v();
+  iVar2 = float_compare(volts,-16.0);
+  if ((-1 < iVar2) && (iVar2 = float_compare(volts,-14.0), iVar2 < 1)) {
     return;
   }
   selftest.power = selftest.power | 4;
@@ -22842,11 +23004,11 @@ uint8_t qspi_adc_test(void)
 uint8_t fpga_load_test(void)
 
 {
-  char cVar1;
+  char programmed;
   uint8_t uVar2;
   
-  cVar1 = fpga_program(0,0);
-  if (cVar1 == 0) {
+  programmed = fpga_program(0,0);
+  if (programmed == 0) {
     uVar2 = 0;
   }
   else {
@@ -22888,34 +23050,34 @@ bool qspi_efc_test(void)
 void qspi_tests_run(void)
 
 {
-  uint16_t uVar1;
+  uint16_t sr;
   uint8_t uVar2;
   char cVar3;
   
-  uVar1 = set_interrupt_mask(0x700);
+  sr = set_interrupt_mask(0x700);
   uVar2 = qspi_adc_test();
   if (uVar2 == 0) {
     selftest.qspi = selftest.qspi | 2;
   }
-  set_interrupt_mask(uVar1);
-  uVar1 = set_interrupt_mask(0x700);
+  set_interrupt_mask(sr);
+  sr = set_interrupt_mask(0x700);
   cVar3 = qspi_hex_dac_test();
   if (cVar3 == 0) {
     selftest.qspi = selftest.qspi | 4;
   }
-  set_interrupt_mask(uVar1);
-  uVar1 = set_interrupt_mask(0x700);
+  set_interrupt_mask(sr);
+  sr = set_interrupt_mask(0x700);
   cVar3 = fpga_load_test();
   if (cVar3 == 0) {
     selftest.qspi = selftest.qspi | 0x40;
   }
-  set_interrupt_mask(uVar1);
-  uVar1 = set_interrupt_mask(0x700);
+  set_interrupt_mask(sr);
+  sr = set_interrupt_mask(0x700);
   cVar3 = qspi_efc_test();
   if (cVar3 == 0) {
     selftest.qspi = selftest.qspi | 0x80;
   }
-  set_interrupt_mask(uVar1);
+  set_interrupt_mask(sr);
   return;
 }
 
@@ -32089,7 +32251,7 @@ __asm__(
 uint32_t diag_adc_read(uint8_t param_1)
 
 {
-  uint32_t uVar1;
+  uint32_t reading;
   adc_channel channel;
   
   if ((param_1 & 1) == 0) {
@@ -32098,8 +32260,8 @@ uint32_t diag_adc_read(uint8_t param_1)
   else {
     channel = (adc_channel)((int32_t)(uint32_t)param_1 >> 1) | ADC_5V;
   }
-  uVar1 = adc_read(channel);
-  return uVar1 & 0xff;
+  reading = adc_read(channel);
+  return reading & 0xff;
 }
 
 
@@ -32110,11 +32272,11 @@ uint32_t diag_adc_read(uint8_t param_1)
 void diag_adc_temp(void)
 
 {
-  float f;
+  float temperature;
   double param1;
   
-  f = read_adc_temp();
-  param1 = float_to_double(f);
+  temperature = read_adc_temp();
+  param1 = float_to_double(temperature);
   printf("Temperature: %f\r\n",param1);
   return;
 }
@@ -32127,11 +32289,11 @@ void diag_adc_temp(void)
 void diag_adc_5v(void)
 
 {
-  float f;
+  float volts;
   double param1;
   
-  f = read_adc_5v();
-  param1 = float_to_double(f);
+  volts = read_adc_5v();
+  param1 = float_to_double(volts);
   printf("5V reading: %f\r\n",param1);
   return;
 }
@@ -32144,11 +32306,11 @@ void diag_adc_5v(void)
 void diag_adc_p15v(void)
 
 {
-  float f;
+  float volts;
   double param1;
   
-  f = read_adc_p15v();
-  param1 = float_to_double(f);
+  volts = read_adc_p15v();
+  param1 = float_to_double(volts);
   printf("+15V reading: %f\r\n",param1);
   return;
 }
@@ -32161,11 +32323,11 @@ void diag_adc_p15v(void)
 void diag_adc_m15v(void)
 
 {
-  float f;
+  float volts;
   double param1;
   
-  f = read_adc_m15v();
-  param1 = float_to_double(f);
+  volts = read_adc_m15v();
+  param1 = float_to_double(volts);
   printf("-15V reading: %f\r\n",param1);
   return;
 }
@@ -32178,11 +32340,11 @@ void diag_adc_m15v(void)
 void diag_adc_oven(void)
 
 {
-  float f;
+  float volts;
   double param1;
   
-  f = read_adc_oven();
-  param1 = float_to_double(f);
+  volts = read_adc_oven();
+  param1 = float_to_double(volts);
   printf("Oven: %f\r\n",param1);
   return;
 }
@@ -32195,11 +32357,11 @@ void diag_adc_oven(void)
 void diag_adc_doven(void)
 
 {
-  float f;
+  float volts;
   double param1;
   
-  f = read_adc_doven();
-  param1 = float_to_double(f);
+  volts = read_adc_doven();
+  param1 = float_to_double(volts);
   printf("Double oven: %f\r\n",param1);
   return;
 }
@@ -32212,11 +32374,11 @@ void diag_adc_doven(void)
 void diag_adc_ant_curr(void)
 
 {
-  float f;
+  float current;
   double param1;
   
-  f = read_adc_ant_curr();
-  param1 = float_to_double(f);
+  current = read_adc_ant_curr();
+  param1 = float_to_double(current);
   printf("Antenna current: %f\r\n",param1);
   return;
 }
@@ -32229,29 +32391,29 @@ void diag_adc_ant_curr(void)
 void diag_pr_adc_avg(void)
 
 {
-  float fVar1;
+  float average;
   double dVar2;
   
-  fVar1 = adc_average(ADC_TEMPERATURE);
-  dVar2 = float_to_double(fVar1);
+  average = adc_average(ADC_TEMPERATURE);
+  dVar2 = float_to_double(average);
   printf("Temperature: %.2f\r\n",dVar2);
-  fVar1 = adc_average(ADC_5V);
-  dVar2 = float_to_double(fVar1);
+  average = adc_average(ADC_5V);
+  dVar2 = float_to_double(average);
   printf("5V: %.2f\r\n",dVar2);
-  fVar1 = adc_average(ADC_PLUS_15V);
-  dVar2 = float_to_double(fVar1);
+  average = adc_average(ADC_PLUS_15V);
+  dVar2 = float_to_double(average);
   printf("+15V: %.2f\r\n",dVar2);
-  fVar1 = adc_average(ADC_MINUS_15V);
-  dVar2 = float_to_double(fVar1);
+  average = adc_average(ADC_MINUS_15V);
+  dVar2 = float_to_double(average);
   printf("-15V: %.2f\r\n",dVar2);
-  fVar1 = adc_average(ADC_OVEN);
-  dVar2 = float_to_double(fVar1);
+  average = adc_average(ADC_OVEN);
+  dVar2 = float_to_double(average);
   printf("Oven: %.2f\r\n",dVar2);
-  fVar1 = adc_average(ADC_DOUBLE_OVEN);
-  dVar2 = float_to_double(fVar1);
+  average = adc_average(ADC_DOUBLE_OVEN);
+  dVar2 = float_to_double(average);
   printf("Double oven: %.2f\r\n",dVar2);
-  fVar1 = adc_average(ADC_CURRENT);
-  dVar2 = float_to_double(fVar1);
+  average = adc_average(ADC_CURRENT);
+  dVar2 = float_to_double(average);
   printf("Oven current: %.2f\r\n",dVar2);
   return;
 }
@@ -32433,16 +32595,16 @@ void diag_efc_rep(void)
 void diag_get_time(void)
 
 {
-  uint32_t uVar1;
-  uint8_t bVar2;
+  uint32_t valid;
+  uint8_t invalid;
   calendar_date date;
   time_of_day tStack_8;
   
-  uVar1 = get_date_time((uint32_t *)&date,&tStack_8);
-  bVar2 = time_valid();
+  valid = get_date_time((uint32_t *)&date,&tStack_8);
+  invalid = time_valid();
   printf("%02d/%02d/%04d\t%02d:%02d:%02d, %1d, valid: %1d\r\n",(uint32_t)date.month,(uint32_t)date.day,
          (uint32_t)date.year,(uint32_t)tStack_8.hour,(uint32_t)tStack_8.minute,(uint32_t)tStack_8.second,
-         uVar1 & 0xff,(uint32_t)bVar2);
+         valid & 0xff,(uint32_t)invalid);
   return;
 }
 
@@ -33825,7 +33987,7 @@ void diag_cal(uint32_t param_1)
   double pushed_3;
   double pushed_4;
   float f;
-  uint32_t uVar1;
+  uint32_t reading;
   uint32_t i;
   float fVar2;
   uint16_t uVar3;
@@ -33843,14 +34005,14 @@ void diag_cal(uint32_t param_1)
   accumulator_4 = 0.0;
   fVar4 = 0.0;
   for (uVar3 = 0; uVar3 < param_1; uVar3 = uVar3 + 10) {
-    uVar1 = adc_read(ADC_CURRENT);
+    reading = adc_read(ADC_CURRENT);
     f = pll.efc;
-    i = uVar1 & 0xff;
+    i = reading & 0xff;
     dVar6 = integer_to_double(i);
     double_add_in_place(&accumulator_1,dVar6);
     dVar6 = float_to_double(f);
     double_add_in_place(&accumulator_2,dVar6);
-    fVar2 = unsigned_to_float((uint32_t)(uint16_t)(uint8_t)uVar1);
+    fVar2 = unsigned_to_float((uint32_t)(uint16_t)(uint8_t)reading);
     fVar2 = float_multiply(fVar2,f);
     dVar6 = float_to_double(fVar2);
     double_add_in_place(&accumulator_3,dVar6);
@@ -33860,7 +34022,7 @@ void diag_cal(uint32_t param_1)
     iVar5 = param_1 - uVar3;
     pushed_1 = iVar5;
     dVar6 = float_to_double(f);
-    printf("curr= %d efc= %.1f, sec remaining= %d\r\n",(uint32_t)(uint16_t)(uint8_t)uVar1,dVar6,
+    printf("curr= %d efc= %.1f, sec remaining= %d\r\n",(uint32_t)(uint16_t)(uint8_t)reading,dVar6,
            pushed_1);
     psos_pause(10000);
   }
@@ -33990,6 +34152,7 @@ void diag_words_define(void)
 
 
 /* 0001d570 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* a bare rts: duart_init and duartb_reconfigure put it in duartb.echo when the settings' echo is
    off, drtb_putc when it is on
@@ -34001,8 +34164,10 @@ void duartb_echo_none(char c)
   return;
 }
 
+#endif
 
 /* 0001d572 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* sets GP port bits 2 to 4 to a selection 0 to 6 */
 
@@ -34021,8 +34186,10 @@ int32_t gp_port_select(char param_1)
   return (int32_t)param_1 << 2;
 }
 
+#endif
 
 /* 0001d594 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* DUART channel B's mode bits from the serial settings: parity, data bits, stop bits */
 
@@ -34061,8 +34228,10 @@ void duartb_mode_from_settings(void)
   return;
 }
 
+#endif
 
 /* 0001d632 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* DUART channel B's baud rate code from the serial settings */
 
@@ -34099,8 +34268,10 @@ override_jmp_0001d646_case_3:
   return;
 }
 
+#endif
 
 /* 0001d680 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* waits for DUART channel B's transmitter and writes a character */
 
@@ -34116,8 +34287,10 @@ uint8_t duartb_putc_polled(uint8_t param_1)
   return uVar1 & 4;
 }
 
+#endif
 
 /* 0001d6ba */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* writes a string to DUART channel B, waiting for room
    the firmware's own name, "wait_v SIG_SOQ error in _drtb_puts" */
@@ -34149,8 +34322,10 @@ int32_t drtb_puts(char *param_1)
   return (int32_t)duartb.transmit_next - (int32_t)param_1;
 }
 
+#endif
 
 /* 0001d74a */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* reads a character from DUART channel B, waiting for one
    "wait_v SIG_SIQ error in getc", DUART channel B */
@@ -34179,15 +34354,17 @@ uint8_t drtb_getc(void)
   return uVar1;
 }
 
+#endif
 
 /* 0001d7e4 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* reads a line of up to the given length from DUART channel B; "DRTB receiver error" */
 
 int32_t drtb_gets(uint8_t *param_1,int32_t param_2)
 
 {
-  uint8_t uVar1;
+  uint8_t character;
   int32_t iVar2;
   int32_t iVar3;
   uint8_t *puVar4;
@@ -34212,16 +34389,16 @@ LAB_0001d8d0:
       return iVar3;
     }
     uVar6 = 0x10;
-    uVar1 = drtb_getc();
-    if (0x1f < uVar1) break;
-    if (0x10U < uVar1 - 8) {
+    character = drtb_getc();
+    if (0x1f < character) break;
+    if (0x10U < character - 8) {
 switchD_0001d830_caseD_b:
       (*(code *)duartb.echo)();
       puVar4 = pbVar5;
       goto LAB_0001d8ca;
     }
                     /* WARNING: Switch is manually overridden */
-    switch((int16_t)(uVar1 - 8)) {
+    switch((int16_t)(character - 8)) {
     case 0:
       if (iVar3 != iVar2) {
         puVar4 = pbVar5 + -1;
@@ -34233,8 +34410,8 @@ switchD_0001d830_caseD_b:
       goto LAB_0001d8c2;
     case 2:
     case 5:
-      if (((duartb.last_terminator == 0xd) && (uVar1 == 10)) ||
-         ((duartb.last_terminator == 10 && (uVar1 == 0xd)))) {
+      if (((duartb.last_terminator == 0xd) && (character == 10)) ||
+         ((duartb.last_terminator == 10 && (character == 0xd)))) {
         duartb.last_terminator = 0;
       }
       else {
@@ -34242,7 +34419,7 @@ switchD_0001d830_caseD_b:
         (*(code *)duartb.echo)(uVar6);
         iVar3 = iVar3 - iVar2;
         iVar2 = 0;
-        duartb.last_terminator = uVar1;
+        duartb.last_terminator = character;
       }
       break;
     default:
@@ -34253,8 +34430,8 @@ switchD_0001d830_caseD_b:
   }
 LAB_0001d8c2:
   puVar4 = pbVar5 + 1;
-  duartb.last_terminator = uVar1;
-  *pbVar5 = uVar1;
+  duartb.last_terminator = character;
+  *pbVar5 = character;
   iVar2 = iVar2 + -1;
   goto LAB_0001d8ca;
 switchD_0001d830_caseD_18:
@@ -34269,6 +34446,7 @@ LAB_0001d8ca:
   goto LAB_0001d8d0;
 }
 
+#endif
 
 /* 0001d906 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -34719,6 +34897,7 @@ __asm__(
 );
 
 /* 0001dc7e */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* resets DUART channel B and applies the serial settings' mode and baud rate */
 
@@ -34768,6 +34947,7 @@ void duartb_reconfigure(void)
   return;
 }
 
+#endif
 
 /* 0001dd98 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -34842,6 +35022,7 @@ void drtb_read(void)
 
 
 /* 0001ddf6 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* writes a character to channel B under the write lock */
 
@@ -34861,8 +35042,10 @@ void drtb_putc(char param_1)
   return;
 }
 
+#endif
 
 /* 0001de32 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* queues a block for channel B to send by interrupt */
 
@@ -34880,8 +35063,10 @@ void drtb_send_async(char *param_1,uint8_t param_2)
   return;
 }
 
+#endif
 
 /* 0001de76 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* writes the string to I/O device 0, returns the length; printf ends here */
 
@@ -34894,6 +35079,7 @@ uint32_t console_write(char *s)
   return local_8;
 }
 
+#endif
 
 /* 0001de96 */
 
@@ -34902,16 +35088,17 @@ uint32_t console_write(char *s)
 int32_t printf(char *format,...)
 
 {
-  uint32_t uVar1;
+  uint32_t length;
   char acStack_a4 [160];
   
   vsprintf(acStack_a4,format,&stack0x00000008);
-  uVar1 = console_write(acStack_a4);
-  return uVar1;
+  length = console_write(acStack_a4);
+  return length;
 }
 
 
 /* 0001debc */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* reads from the console, device 0, and its last status */
 
@@ -34925,8 +35112,10 @@ uint32_t console_read(void *param_1,uint32_t param_2,uint8_t *param_3)
   return param_2;
 }
 
+#endif
 
 /* 0001dee6 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* opens the SCPI port, device 0 */
 
@@ -34937,8 +35126,10 @@ void scpi_port_open(void)
   return;
 }
 
+#endif
 
 /* 0001def4 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* closes the SCPI port, device 0: psos_io_close(0) */
 
@@ -34949,8 +35140,10 @@ void scpi_port_close(void)
   return;
 }
 
+#endif
 
 /* 0001df00 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the done hook of DUART channel B's setting descriptors (0x33338 on) and of its PRESet at 0x30ea0:
    psos_io_control(0, 0, 0)
@@ -34963,8 +35156,10 @@ void duartb_settings_done(void)
   return;
 }
 
+#endif
 
 /* 0001df12 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* in supervisor mode, writes the string a character at a time through 0x1d680; debug_write uses it
     */
@@ -34983,6 +35178,7 @@ int32_t console_write_polled(char *s)
   return iVar1;
 }
 
+#endif
 
 /* 0001df48 */
 
@@ -35001,6 +35197,7 @@ void printf_polled(char *format,...)
 
 
 /* 0001df6e */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* 1 if channel B's write mutex is held by another */
 
@@ -35013,17 +35210,19 @@ bool drtb_try_lock_write(void)
   return 0 < (char)iVar1;
 }
 
+#endif
 
 /* 0001df8a */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* closes the console device so that channel B can send the time code */
 
 uint8_t drtb_release_for_timecode(void)
 
 {
-  char cVar1;
+  char busy;
   
-  if (((duartb.flow & 0x80) == 0) && (cVar1 = drtb_try_lock_write(), cVar1 == 0)) {
+  if (((duartb.flow & 0x80) == 0) && (busy = drtb_try_lock_write(), busy == 0)) {
     duartb.async_allowed = 1;
     psos_io_close(1);
     return 1;
@@ -35031,8 +35230,10 @@ uint8_t drtb_release_for_timecode(void)
   return 0;
 }
 
+#endif
 
 /* 0001dfe6 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* sets or clears the DUART's output port bit 0 */
 
@@ -35054,8 +35255,10 @@ void duart_op0_set(char param_1)
   return;
 }
 
+#endif
 
 /* 0001e02c */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* sets or clears the DUART's output port bit 1 */
 
@@ -35077,8 +35280,10 @@ void duart_op1_set(char param_1)
   return;
 }
 
+#endif
 
 /* 0001e126 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* sets and clears the DUART's output port bits, interrupts held off */
 
@@ -35095,8 +35300,10 @@ void duart_output_bits(uint8_t param_1,uint8_t param_2)
   return;
 }
 
+#endif
 
 /* 0001e18a */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* sends a message to the GPS engine on DUART channel A
    the firmware's own name, "wait_v SIG_SOQA error in drta_send_message" */
@@ -35131,8 +35338,10 @@ uint8_t drta_send_message(char *param_1,int16_t param_2)
   return uVar2;
 }
 
+#endif
 
 /* 0001e222 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* 1 if DUART channel A's receive ring is not empty */
 
@@ -35142,8 +35351,10 @@ bool duarta_rx_pending(void)
   return duarta_ring.write != duarta_ring.read;
 }
 
+#endif
 
 /* 0001e238 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* reads a byte from the GPS engine on DUART channel A, waiting for one
    the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine
@@ -35174,8 +35385,10 @@ uint8_t drta_get_byte(char *param_1)
   return duarta_ring.data[uVar1];
 }
 
+#endif
 
 /* 0001e2c0 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* puts channel A in local loopback and sends "DUART test string"; sets the UART self-test's bit 8
    at 0x100c2e if it fails */
@@ -35184,22 +35397,22 @@ void duart_loopback_test_a(void)
 
 {
   uint8_t uVar1;
-  uint16_t uVar2;
+  uint16_t sr;
   int32_t iVar3;
   uint32_t uVar4;
   
-  uVar2 = set_interrupt_mask(0x700);
+  sr = set_interrupt_mask(0x700);
   duarta.held = 1;
   duart_shadow.imr = duart_shadow.imr & ~(IMR_RXRDYA | IMR_TXRDYA);
   duart.isr_imr = duart_shadow.imr;
   duart.a.cr = CR_RX_DISABLE;
-  set_interrupt_mask(uVar2);
+  set_interrupt_mask(sr);
   iVar3 = 100;
   while ((0 < iVar3 && (uVar1 = duart.a.sr_csr, (uVar1 & 8) == 0))) {
     psos_pause(1);
     iVar3 = iVar3 + -1;
   }
-  uVar2 = set_interrupt_mask(0x700);
+  sr = set_interrupt_mask(0x700);
   duart.a.cr = CR_RESET_RECEIVER;
   duart.a.cr = CR_RESET_TRANSMITTER;
   duarta.loopback_test = 1;
@@ -35212,11 +35425,11 @@ void duart_loopback_test_a(void)
   duart_shadow.imr = duart_shadow.imr | (IMR_RXRDYA | IMR_TXRDYA);
   duart.isr_imr = duart_shadow.imr;
   duart.a.cr = 5;
-  set_interrupt_mask(uVar2);
+  set_interrupt_mask(sr);
   while (((int32_t)uVar4 < 10000 && (*loopback_expect_next != 0))) {
     uVar4 = uVar4 + 1;
   }
-  uVar2 = set_interrupt_mask(0x700);
+  sr = set_interrupt_mask(0x700);
   if (*loopback_expect_next != 0) {
     selftest.uart = selftest.uart | 8;
   }
@@ -35232,12 +35445,14 @@ void duart_loopback_test_a(void)
   duart.a.cr = 5;
   duarta.held = 0;
   duarta.loopback_test = 0;
-  set_interrupt_mask(uVar2);
+  set_interrupt_mask(sr);
   return;
 }
 
+#endif
 
 /* 0001e41a */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the same for channel B */
 
@@ -35245,22 +35460,22 @@ void duart_loopback_test_b(void)
 
 {
   uint8_t uVar1;
-  uint16_t uVar2;
+  uint16_t sr;
   int32_t iVar3;
   uint32_t uVar4;
   
-  uVar2 = set_interrupt_mask(0x700);
+  sr = set_interrupt_mask(0x700);
   duartb.reconfiguring = 1;
   duart_shadow.imr = duart_shadow.imr & ~(IMR_RXRDYB | IMR_TXRDYB);
   duart.isr_imr = duart_shadow.imr;
   duart.b.cr = CR_RX_DISABLE;
-  set_interrupt_mask(uVar2);
+  set_interrupt_mask(sr);
   iVar3 = 100;
   while ((0 < iVar3 && (uVar1 = duart.b.sr_csr, (uVar1 & 8) == 0))) {
     psos_pause(1);
     iVar3 = iVar3 + -1;
   }
-  uVar2 = set_interrupt_mask(0x700);
+  sr = set_interrupt_mask(0x700);
   duart.b.cr = CR_RESET_RECEIVER;
   duart.b.cr = CR_RESET_TRANSMITTER;
   duartb.loopback_test = 1;
@@ -35273,11 +35488,11 @@ void duart_loopback_test_b(void)
   duart_shadow.imr = duart_shadow.imr | (IMR_RXRDYB | IMR_TXRDYB);
   duart.isr_imr = duart_shadow.imr;
   duart.b.cr = 5;
-  set_interrupt_mask(uVar2);
+  set_interrupt_mask(sr);
   while (((int32_t)uVar4 < 10000 && (*loopback_expect_next != 0))) {
     uVar4 = uVar4 + 1;
   }
-  uVar2 = set_interrupt_mask(0x700);
+  sr = set_interrupt_mask(0x700);
   if (*loopback_expect_next != 0) {
     selftest.uart = selftest.uart | 0x20;
   }
@@ -35293,12 +35508,14 @@ void duart_loopback_test_b(void)
   duart.b.cr = 5;
   duartb.reconfiguring = 0;
   duartb.loopback_test = 0;
-  set_interrupt_mask(uVar2);
+  set_interrupt_mask(sr);
   return;
 }
 
+#endif
 
 /* 0001e574 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the DUART self-test's counter and timer test */
 
@@ -35335,8 +35552,10 @@ void duart_counter_test(void)
   return;
 }
 
+#endif
 
 /* 0001e650 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the DUART self-test: its interrupt vector register, its counter, both channels' loopbacks */
 
@@ -35368,8 +35587,10 @@ void duart_test(void)
   return;
 }
 
+#endif
 
 /* 0001e6be */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the loopback test's receive on channel A: compares with the next expected character */
 
@@ -35388,8 +35609,10 @@ void duart_test_rx_a(void)
   return;
 }
 
+#endif
 
 /* 0001e6e2 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the loopback test's receive on channel B */
 
@@ -35408,8 +35631,10 @@ void duart_test_rx_b(void)
   return;
 }
 
+#endif
 
 /* 0001e706 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the loopback test's transmit on channel A: sends the next character, or stops at the end */
 
@@ -35427,8 +35652,10 @@ void duart_test_tx_a(void)
   return;
 }
 
+#endif
 
 /* 0001e736 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the loopback test's transmit on channel B */
 
@@ -35446,6 +35673,7 @@ void duart_test_tx_b(void)
   return;
 }
 
+#endif
 
 /* 0001e766 */
 
@@ -35487,6 +35715,7 @@ uint32_t duarta_isr(void)
 
 
 /* 0001e7f6 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the interrupt handler for DUART channel B
    "DUARTB isr signaling SIGINTR", "SIG_SIQ" */
@@ -35570,8 +35799,10 @@ uint8_t duartb_isr(void)
   return uVar1 & 0x10;
 }
 
+#endif
 
 /* 0001e9ca */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* sends the next byte to the GPS engine, signaling the GPS task 0x800 once the message is out */
 
@@ -35591,8 +35822,10 @@ void duarta_tx_interrupt(void)
   return;
 }
 
+#endif
 
 /* 0001ea10 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* with channel B's queue empty, disables its transmit interrupt and signals the writer; "DUARTB isr
    signaling SIG_SOQ" */
@@ -35640,6 +35873,7 @@ void duartb_transmit_interrupt(void)
   return;
 }
 
+#endif
 
 /* 0001eaf4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -35770,6 +36004,7 @@ __asm__(
 );
 
 /* 0001ebbc */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* resets both DUART channels and masks its interrupts */
 
@@ -35784,8 +36019,10 @@ void duart_stop(void)
   return;
 }
 
+#endif
 
 /* 0001ebe4 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* sends "DUART" through channel B in local loopback and checks each character back */
 
@@ -35831,8 +36068,10 @@ void duartb_loopback_check(void)
   return;
 }
 
+#endif
 
 /* 0001ecae */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* at reset: tests the DUART's interrupt vector register and sets channel B up for the console */
 
@@ -35863,8 +36102,10 @@ void duart_early_init(void)
   return;
 }
 
+#endif
 
 /* 0001eefc */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* a length-prefixed message and ", %08X" with a code, to fatal_error */
 
@@ -35879,6 +36120,7 @@ void fatal_error_with_code(char *param_1,uint32_t param_2,uint32_t param_3,uint3
   return;
 }
 
+#endif
 
 /* 0001ef46 */
 
@@ -35901,6 +36143,7 @@ int32_t debug_sprintf(char *s,char *format,...)
 
 
 /* 0001ef74 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* writes through 0x1df12 while debug_enabled */
 
@@ -35916,6 +36159,7 @@ int32_t debug_write(char *param_1)
   return iVar1;
 }
 
+#endif
 
 /* 0001ef90 */
 
@@ -35954,6 +36198,7 @@ void debug_printf(char *format,...)
 
 
 /* 0001eff6 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* prints "task: message" with the calling task's name, while debug_enabled */
 
@@ -35976,8 +36221,10 @@ void task_debug_message(char *message)
   return;
 }
 
+#endif
 
 /* 0001f056 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the calling task's message, printed only while its dmes_ flag is set */
 
@@ -36014,8 +36261,10 @@ void task_dmessage(char *message)
   return;
 }
 
+#endif
 
 /* 0001f176 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* keeps the message and task name at crash_message, prints them and "RESET to recover.", then hangs
     */
@@ -36064,8 +36313,10 @@ void fatal_error(char *message)
   } while( true );
 }
 
+#endif
 
 /* 0001f2c0 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* sends 0xc000 | channel << 11 to device 1 minor 1 and returns the reply shifted down 2;
    diag_adc_read and diag_cal call it */
@@ -36084,8 +36335,10 @@ int32_t adc_read(adc_channel channel)
   return (int32_t)(uint32_t)local_6 >> 2;
 }
 
+#endif
 
 /* 0001f308 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* adc_temp's and :DIAG:TEMP?'s reading, "Temperature: %f": channel 0 times 0.273
    structures.md */
@@ -36093,17 +36346,19 @@ int32_t adc_read(adc_channel channel)
 float read_adc_temp(void)
 
 {
-  uint32_t uVar1;
+  uint32_t reading;
   float fVar2;
   
-  uVar1 = adc_read(ADC_TEMPERATURE);
-  fVar2 = unsigned_to_float(uVar1 & 0xff);
+  reading = adc_read(ADC_TEMPERATURE);
+  fVar2 = unsigned_to_float(reading & 0xff);
   fVar2 = float_multiply(fVar2,0.273);
   return fVar2;
 }
 
+#endif
 
 /* 0001f32e */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* adc_5v's reading, "5V reading: %f": channel 4 times 0.0242
    structures.md */
@@ -36111,17 +36366,19 @@ float read_adc_temp(void)
 float read_adc_5v(void)
 
 {
-  uint32_t uVar1;
+  uint32_t reading;
   float fVar2;
   
-  uVar1 = adc_read(ADC_5V);
-  fVar2 = unsigned_to_float(uVar1 & 0xff);
+  reading = adc_read(ADC_5V);
+  fVar2 = unsigned_to_float(reading & 0xff);
   fVar2 = float_multiply(fVar2,0.0242);
   return fVar2;
 }
 
+#endif
 
 /* 0001f356 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* adc_doven's reading, "Double oven: %f": channel 1 against channel 4
    structures.md */
@@ -36130,13 +36387,13 @@ float read_adc_doven(void)
 
 {
   float pushed_1;
-  uint32_t uVar1;
+  uint32_t reading;
   uint32_t uVar2;
   float fVar3;
   
-  uVar1 = adc_read(ADC_DOUBLE_OVEN);
+  reading = adc_read(ADC_DOUBLE_OVEN);
   uVar2 = adc_read(ADC_5V);
-  fVar3 = unsigned_to_float(uVar1 & 0xff);
+  fVar3 = unsigned_to_float(reading & 0xff);
   fVar3 = float_multiply(fVar3,0.0743);
   pushed_1 = fVar3;
   fVar3 = unsigned_to_float(uVar2 & 0xff);
@@ -36145,8 +36402,10 @@ float read_adc_doven(void)
   return fVar3;
 }
 
+#endif
 
 /* 0001f3ae */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* adc_oven's reading, "Oven: %f": channel 5 against channel 4
    structures.md */
@@ -36155,13 +36414,13 @@ float read_adc_oven(void)
 
 {
   float pushed_1;
-  uint32_t uVar1;
+  uint32_t reading;
   uint32_t uVar2;
   float fVar3;
   
-  uVar1 = adc_read(ADC_OVEN);
+  reading = adc_read(ADC_OVEN);
   uVar2 = adc_read(ADC_5V);
-  fVar3 = unsigned_to_float(uVar1 & 0xff);
+  fVar3 = unsigned_to_float(reading & 0xff);
   fVar3 = float_multiply(fVar3,0.0743);
   pushed_1 = fVar3;
   fVar3 = unsigned_to_float(uVar2 & 0xff);
@@ -36170,8 +36429,10 @@ float read_adc_oven(void)
   return fVar3;
 }
 
+#endif
 
 /* 0001f406 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* adc_p15v's reading, "+15V reading: %f": channel 2 times 0.0763
    structures.md */
@@ -36179,17 +36440,19 @@ float read_adc_oven(void)
 float read_adc_p15v(void)
 
 {
-  uint32_t uVar1;
+  uint32_t reading;
   float fVar2;
   
-  uVar1 = adc_read(ADC_PLUS_15V);
-  fVar2 = unsigned_to_float(uVar1 & 0xff);
+  reading = adc_read(ADC_PLUS_15V);
+  fVar2 = unsigned_to_float(reading & 0xff);
   fVar2 = float_multiply(fVar2,0.0763);
   return fVar2;
 }
 
+#endif
 
 /* 0001f42e */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* adc_m15v's reading, "-15V reading: %f": channel 6 against channel 4
    structures.md */
@@ -36199,22 +36462,24 @@ float read_adc_m15v(void)
 {
   float pushed_1;
   uint32_t uVar1;
-  uint32_t uVar2;
+  uint32_t reading;
   float fVar3;
   
   uVar1 = adc_read(ADC_MINUS_15V);
-  uVar2 = adc_read(ADC_5V);
+  reading = adc_read(ADC_5V);
   fVar3 = unsigned_to_float(uVar1 & 0xff);
   fVar3 = float_multiply(fVar3,0.0438);
   pushed_1 = fVar3;
-  fVar3 = unsigned_to_float(uVar2 & 0xff);
+  fVar3 = unsigned_to_float(reading & 0xff);
   fVar3 = float_multiply(fVar3,-0.084);
   fVar3 = float_add(pushed_1,fVar3);
   return fVar3;
 }
 
+#endif
 
 /* 0001f486 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* :DIAG:ROSC:CURR?'s reading, the same as read_adc_ant_curr
    structures.md */
@@ -36222,18 +36487,20 @@ float read_adc_m15v(void)
 float read_adc_osc_curr(void)
 
 {
-  uint32_t uVar1;
+  uint32_t reading;
   float fVar2;
   
-  uVar1 = adc_read(ADC_CURRENT);
-  fVar2 = unsigned_to_float(uVar1 & 0xff);
+  reading = adc_read(ADC_CURRENT);
+  fVar2 = unsigned_to_float(reading & 0xff);
   fVar2 = float_multiply(fVar2,250.0);
   fVar2 = float_divide(fVar2,255.0);
   return fVar2;
 }
 
+#endif
 
 /* 0001f4ba */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* adc_ant_curr's reading, "Antenna current: %f": channel 3 times 250/255
    structures.md */
@@ -36241,18 +36508,20 @@ float read_adc_osc_curr(void)
 float read_adc_ant_curr(void)
 
 {
-  uint32_t uVar1;
+  uint32_t reading;
   float fVar2;
   
-  uVar1 = adc_read(ADC_CURRENT);
-  fVar2 = unsigned_to_float(uVar1 & 0xff);
+  reading = adc_read(ADC_CURRENT);
+  fVar2 = unsigned_to_float(reading & 0xff);
   fVar2 = float_multiply(fVar2,250.0);
   fVar2 = float_divide(fVar2,255.0);
   return fVar2;
 }
 
+#endif
 
 /* 0001f4ee */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the hdac_write word's, a value into one of six HDAC channels through hdac_set
    structures.md */
@@ -36293,8 +36562,10 @@ LAB_0001f528:
   return;
 }
 
+#endif
 
 /* 0001f53a */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* a 6-bit value into one half of an hdac word, written with device1_write; hdac_write leads here
    structures.md */
@@ -36326,8 +36597,10 @@ void hdac_set(uint8_t param_1,uint8_t param_2)
   return;
 }
 
+#endif
 
 /* 0001f5bc */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the hdac_all word's: six 6-bit values packed two to a word into hdac_shadow, written to device 2
    structures.md */
@@ -36343,8 +36616,10 @@ void hdac_write_all(uint8_t param_1,uint8_t param_2,uint8_t param_3,uint8_t para
   return;
 }
 
+#endif
 
 /* 0001f62e */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* sends the hex DAC's three shadow words to QSPI device 2 */
 
@@ -36355,8 +36630,10 @@ void hdac_update(void)
   return;
 }
 
+#endif
 
 /* 0001f646 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the efc_write word's: the value to device 7, then a strobe at 0x306000
    structures.md */
@@ -36369,8 +36646,10 @@ void efc_write(uint16_t param_1)
   return;
 }
 
+#endif
 
 /* 0001f6c8 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* a bare rts: sci_init and sci_reconfigure put it in sci.echo when the settings' echo is off
    sci_driver: echo */
@@ -36381,8 +36660,10 @@ void sci_echo_none(char c)
   return;
 }
 
+#endif
 
 /* 0001f6ca */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the SCI's baud rate from a code */
 
@@ -36420,8 +36701,10 @@ LAB_0001f70c:
   return;
 }
 
+#endif
 
 /* 0001f71a */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* waits for the SCI's transmitter and writes a character, with the parity bit if set */
 
@@ -36444,8 +36727,10 @@ uint16_t sci_putc_polled(char param_1)
   return uVar2;
 }
 
+#endif
 
 /* 0001f76c */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* writes a string to the SCI port, waiting for room
    the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts" */
@@ -36472,8 +36757,10 @@ int32_t sci_puts(char *text)
   return iVar1;
 }
 
+#endif
 
 /* 0001f7d0 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* reads a character from the SCI port, waiting for one
    "wait_v SIG_SIQ_SCI error in getc" */
@@ -36502,15 +36789,17 @@ uint8_t sci_getc(void)
   return uVar1;
 }
 
+#endif
 
 /* 0001f868 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* reads a line of up to the given length from the SCI; "SCI receiver error ocurred" */
 
 int32_t sci_gets(char *param_1,int32_t param_2)
 
 {
-  uint8_t uVar1;
+  uint8_t character;
   int32_t iVar2;
   int32_t iVar3;
   uint8_t *puVar4;
@@ -36535,16 +36824,16 @@ LAB_0001f952:
       return iVar3;
     }
     uVar6 = 0x94;
-    uVar1 = sci_getc();
-    if (0x1f < (char)uVar1) break;
-    if (0x10U < (int32_t)(char)uVar1 - 8U) {
+    character = sci_getc();
+    if (0x1f < (char)character) break;
+    if (0x10U < (int32_t)(char)character - 8U) {
 switchD_0001f8b2_caseD_b:
       (*(code *)sci.echo)();
       puVar4 = puVar5;
       goto LAB_0001f94c;
     }
                     /* WARNING: Switch is manually overridden */
-    switch((int16_t)((int32_t)(char)uVar1 - 8U)) {
+    switch((int16_t)((int32_t)(char)character - 8U)) {
     case 0:
       if (iVar3 != iVar2) {
         puVar4 = puVar5 + -1;
@@ -36556,8 +36845,8 @@ switchD_0001f8b2_caseD_b:
       goto LAB_0001f944;
     case 2:
     case 5:
-      if (((sci.last_terminator == 0xd) && (uVar1 == 10)) ||
-         ((sci.last_terminator == 10 && (uVar1 == 0xd)))) {
+      if (((sci.last_terminator == 0xd) && (character == 10)) ||
+         ((sci.last_terminator == 10 && (character == 0xd)))) {
         sci.last_terminator = 0;
       }
       else {
@@ -36565,7 +36854,7 @@ switchD_0001f8b2_caseD_b:
         (*(code *)sci.echo)(uVar6);
         iVar3 = iVar3 - iVar2;
         iVar2 = 0;
-        sci.last_terminator = uVar1;
+        sci.last_terminator = character;
       }
       break;
     default:
@@ -36576,8 +36865,8 @@ switchD_0001f8b2_caseD_b:
   }
 LAB_0001f944:
   puVar4 = puVar5 + 1;
-  sci.last_terminator = uVar1;
-  *puVar5 = uVar1;
+  sci.last_terminator = character;
+  *puVar5 = character;
   iVar2 = iVar2 + -1;
   goto LAB_0001f94c;
 switchD_0001f8b2_caseD_18:
@@ -36592,6 +36881,7 @@ LAB_0001f94c:
   goto LAB_0001f952;
 }
 
+#endif
 
 /* 0001f988 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -37651,6 +37941,7 @@ void sci_read(void)
 
 
 /* 000201b0 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* writes a character to the SCI under its lock */
 
@@ -37670,8 +37961,10 @@ void sci_putc(char param_1)
   return;
 }
 
+#endif
 
 /* 000201e0 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* queues a block for the SCI to send by interrupt */
 
@@ -37690,8 +37983,10 @@ void sci_send_async(char *param_1,uint8_t param_2)
   return;
 }
 
+#endif
 
 /* 0002021a */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* writes a string to the SCI device, 3 */
 
@@ -37704,6 +37999,7 @@ uint32_t sci_port_write(void *param_1)
   return local_8;
 }
 
+#endif
 
 /* 0002023c */
 
@@ -37721,6 +38017,7 @@ void sci_printf(char *param_1)
 
 
 /* 000202ac */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the done hook of the SCI's setting descriptors (0x33ab2 on) and of its PRESet at 0x30ed4:
    psos_io_control(0x300, 0, 0)
@@ -37733,8 +38030,10 @@ void sci_settings_done(void)
   return;
 }
 
+#endif
 
 /* 000202c0 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* writes a string to the SCI by polling, in supervisor mode */
 
@@ -37752,6 +38051,7 @@ int32_t sci_puts_polled(char *param_1)
   return iVar1;
 }
 
+#endif
 
 /* 000202f6 */
 
@@ -37769,6 +38069,7 @@ void sci_printf_polled(char *param_1)
 
 
 /* 0002050c */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* signals the next task in the QSPI owner queue; "SPI isr signaling SPI owner" */
 
@@ -37790,6 +38091,7 @@ void qspi_release(void)
   return;
 }
 
+#endif
 
 /* 00020578 */
 
@@ -37985,18 +38287,19 @@ override_jmp_000205c0_case_3:
 
 
 /* 0002081e */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* sets a transfer up and starts it, or releases the QSPI, and waits until it is done */
 
 void qspi_start(uint8_t param_1,uint16_t *param_2,uint16_t param_3,char param_4)
 
 {
-  char cVar1;
+  char unknown_device;
   uint16_t local_8 [2];
   
   qspi.running = 0;
-  cVar1 = qspi_queue_setup(param_1,param_2,param_3,param_4,local_8);
-  if (cVar1 == 0) {
+  unknown_device = qspi_queue_setup(param_1,param_2,param_3,param_4,local_8);
+  if (unknown_device == 0) {
     qsm.spcr1 = local_8[0];
   }
   else {
@@ -38010,8 +38313,10 @@ void qspi_start(uint8_t param_1,uint16_t *param_2,uint16_t param_3,char param_4)
   return;
 }
 
+#endif
 
 /* 00020874 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* waits in the QSPI owner queue while it is busy; "wait_v SIG_QSPI" */
 
@@ -38035,6 +38340,7 @@ void qspi_acquire(void)
   return;
 }
 
+#endif
 
 /* 000208fa */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -38189,6 +38495,7 @@ __asm__(
 );
 
 /* 00020972 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* the transfer's end: copies the QSPI receive RAM out and hands the QSPI on */
 
@@ -38226,6 +38533,7 @@ void qspi_isr(void)
   return;
 }
 
+#endif
 
 /* 00020a10 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -38423,6 +38731,7 @@ __asm__(
 );
 
 /* 00020acc */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* psos_io_write to device 0x100 | n; hdac_write_all writes device 2, efc_write device 7
    structures.md */
@@ -38434,8 +38743,10 @@ void qspi_write(uint8_t param_1,void *param_2,uint32_t param_3)
   return;
 }
 
+#endif
 
 /* 00020aec */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* psos_io_read to device 0x100 | n
    structures.md */
@@ -38447,8 +38758,10 @@ void qspi_read(uint8_t param_1,void *param_2,uint32_t param_3)
   return;
 }
 
+#endif
 
 /* 00020b0c */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* qspi_transfer without the copy back from receive RAM */
 
@@ -38458,7 +38771,7 @@ void qspi_send(uint8_t param_1,uint16_t *param_2,uint16_t param_3)
   uint16_t uVar1;
   uint8_t uVar2;
   int32_t iVar3;
-  char cVar4;
+  char unknown_device;
   uint16_t local_8;
   uint16_t local_6;
   
@@ -38472,8 +38785,8 @@ void qspi_send(uint8_t param_1,uint16_t *param_2,uint16_t param_3)
   if ((uVar2 & SPSR_SPIF) != 0) {
     qspi_isr();
   }
-  cVar4 = qspi_queue_setup(param_1,param_2,param_3,0,&local_8);
-  if (cVar4 == 0) {
+  unknown_device = qspi_queue_setup(param_1,param_2,param_3,0,&local_8);
+  if (unknown_device == 0) {
     qsm.spcr1 = local_8;
     do {
       uVar2 = qsm.spsr;
@@ -38484,6 +38797,7 @@ void qspi_send(uint8_t param_1,uint16_t *param_2,uint16_t param_3)
   return;
 }
 
+#endif
 
 /* 00020b8a */
 
@@ -38495,7 +38809,7 @@ void qspi_transfer(uint8_t param_1,uint32_t *param_2,uint16_t param_3)
   uint16_t uVar1;
   uint8_t uVar2;
   int32_t iVar3;
-  char cVar4;
+  char unknown_device;
   uint16_t *puVar5;
   uint16_t *puVar6;
   uint16_t *puVar7;
@@ -38514,8 +38828,8 @@ void qspi_transfer(uint8_t param_1,uint32_t *param_2,uint16_t param_3)
   if ((uVar2 & SPSR_SPIF) != 0) {
     qspi_isr();
   }
-  cVar4 = qspi_queue_setup(param_1,(uint16_t *)*param_2,param_3,1,&local_8);
-  if (cVar4 == 0) {
+  unknown_device = qspi_queue_setup(param_1,(uint16_t *)*param_2,param_3,1,&local_8);
+  if (unknown_device == 0) {
     qsm.spcr1 = local_8;
     do {
       uVar2 = qsm.spsr;
@@ -38538,6 +38852,7 @@ void qspi_transfer(uint8_t param_1,uint32_t *param_2,uint16_t param_3)
 
 
 /* 00020c96 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* psos_create("spoo") into task_spoo, then psos_start(task_spoo, spoo_task) */
 
@@ -38572,8 +38887,10 @@ uint32_t spoo_task_create(uint32_t param_1)
   return param2;
 }
 
+#endif
 
 /* 00020d66 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* calls a function directly, or posts it to the spooler task's exchange while the spooler runs */
 
@@ -38608,8 +38925,10 @@ uint32_t spoo_run(spoo_function *function,uint32_t a,uint32_t b,uint32_t c)
   return uVar1;
 }
 
+#endif
 
 /* 00020dd2 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* vsprintf into deferred_text at deferred_end
    structures.md */
@@ -38635,8 +38954,10 @@ int32_t deferred_vprintf(char *format,void *arguments)
   return iVar1;
 }
 
+#endif
 
 /* 00020e4e */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* spoo_task_create starts the spoo task here; it takes requests from spoo_exchange */
 
@@ -38661,8 +38982,10 @@ void spoo_task(void)
   } while( true );
 }
 
+#endif
 
 /* 00020ebe */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* prints deferred_text from deferred_start to deferred_end
    structures.md */
@@ -38683,8 +39006,10 @@ void deferred_flush(void)
   return;
 }
 
+#endif
 
 /* 00022d4a */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* task_debug_message when with_task_name is set, else debug_write; callers push the flag with
    move.b */
@@ -38701,8 +39026,10 @@ void debug_message(char *message,char with_task_name)
   return;
 }
 
+#endif
 
 /* 00022d70 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* sets the FPGA up
    "setup fpga" */
@@ -38710,17 +39037,18 @@ void debug_message(char *message,char with_task_name)
 void fpga_setup(void)
 
 {
-  char cVar1;
+  char programmed;
   
   task_dmessage("setup fpga\r\n");
-  cVar1 = fpga_program(0,1);
-  if (cVar1 != 0) {
+  programmed = fpga_program(0,1);
+  if (programmed != 0) {
     pll.fpga_load_pending = 0;
     pll.fpga_loaded = 1;
   }
   return;
 }
 
+#endif
 
 /* 00022da4 */
 
@@ -39186,7 +39514,7 @@ bool fpga_verify_chip(uint8_t param_1,char param_2,uint8_t param_3)
 {
   uint8_t uVar1;
   bool bVar2;
-  char cVar3;
+  char matches;
   int32_t iVar4;
   uint32_t uVar5;
   uint8_t bVar6;
@@ -39212,8 +39540,8 @@ bool fpga_verify_chip(uint8_t param_1,char param_2,uint8_t param_3)
   sim.portf0 = bVar6 | uVar1;
   uVar1 = sim.portf0;
   sim.portf0 = uVar1 & 0xf7;
-  cVar3 = fpga_verify_first(pbVar7,fpga_readback_mask,param_2);
-  if (cVar3 == 0) {
+  matches = fpga_verify_first(pbVar7,fpga_readback_mask,param_2);
+  if (matches == 0) {
     bVar2 = false;
   }
   else {
@@ -39222,16 +39550,16 @@ bool fpga_verify_chip(uint8_t param_1,char param_2,uint8_t param_3)
     bVar2 = true;
     for (uVar5 = 2; (bVar2 && ((int32_t)uVar5 < 0x11e)); uVar5 = uVar5 + 1) {
       if ((uVar5 & 1) == 0) {
-        cVar3 = fpga_verify_even(pbVar7,puVar8,param_2);
-        if (cVar3 == 0) {
+        matches = fpga_verify_even(pbVar7,puVar8,param_2);
+        if (matches == 0) {
           bVar2 = false;
         }
         pbVar7 = pbVar7 + 0xe;
         puVar8 = puVar8 + 0xe;
       }
       else {
-        cVar3 = fpga_verify_odd(pbVar7,puVar8,param_2);
-        if (cVar3 == 0) {
+        matches = fpga_verify_odd(pbVar7,puVar8,param_2);
+        if (matches == 0) {
           bVar2 = false;
         }
         pbVar7 = pbVar7 + 0xd;
@@ -39252,6 +39580,7 @@ bool fpga_verify_chip(uint8_t param_1,char param_2,uint8_t param_3)
 
 
 /* 00023980 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* fpga_verify_chip for chip 0 or 1 */
 
@@ -39269,6 +39598,7 @@ uint8_t fpga_verify(uint8_t param_1,char param_2)
   return uVar1;
 }
 
+#endif
 
 /* 00023c2a */
 
@@ -39298,6 +39628,7 @@ int32_t monitors_reset(void)
 
 
 /* 00023c5a */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* adds a reading to a monitor's 10-sample moving average */
 
@@ -39326,8 +39657,10 @@ void monitor_average_add(adc_monitor *monitor,float reading)
   return;
 }
 
+#endif
 
 /* 00023cc4 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* adds a reading to a monitor's filter, 0.9 of the old and 0.1 of the new */
 
@@ -39355,8 +39688,10 @@ void monitor_filter_add(adc_monitor *monitor,float reading)
   return;
 }
 
+#endif
 
 /* 00023d28 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* counts a monitor's readings outside its range, true once past a limit */
 
@@ -39383,8 +39718,10 @@ uint8_t monitor_out_of_range(adc_monitor *monitor,float minimum,float maximum,ui
   return 0;
 }
 
+#endif
 
 /* 00023d80 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* checks the supplies and the secondary oven voltage against their tolerances, reporting each that
    leaves or returns
@@ -39394,7 +39731,7 @@ void hmon_check_supplies(void)
 
 {
   int32_t iVar1;
-  uint8_t uVar3;
+  uint8_t out_of_range;
   float fVar2;
   adc_monitor *monitor;
   double dVar4;
@@ -39411,8 +39748,8 @@ void hmon_check_supplies(void)
   case 0x1c:
     fVar2 = read_adc_5v();
     monitor_average_add(adc_monitors + 4,fVar2);
-    uVar3 = monitor_out_of_range(adc_monitors + 4,4.5,5.5,5);
-    if (uVar3 == 0) {
+    out_of_range = monitor_out_of_range(adc_monitors + 4,4.5,5.5,5);
+    if (out_of_range == 0) {
       if (adc_monitors[4].out_of_tolerance != 0) {
         task_debug_message("5V is now within tolerance\r\n");
         status_happening(';');
@@ -39434,7 +39771,7 @@ void hmon_check_supplies(void)
     fVar2 = read_adc_doven();
     monitor_average_add(adc_monitors + 1,fVar2);
     if ((outer_oven_enabled == 0) ||
-       (uVar3 = monitor_out_of_range(adc_monitors + 1,-1e+37,6.8,5), uVar3 == 0)) {
+       (out_of_range = monitor_out_of_range(adc_monitors + 1,-1e+37,6.8,5), out_of_range == 0)) {
       if (adc_monitors[1].out_of_tolerance != 0) {
         task_debug_message("Secondary oven voltage is now within tolerance\r\n");
         status_happening('?');
@@ -39459,8 +39796,8 @@ void hmon_check_supplies(void)
   case 0x19c:
     fVar2 = read_adc_p15v();
     monitor_average_add(adc_monitors + 2,fVar2);
-    uVar3 = monitor_out_of_range(adc_monitors + 2,14.0,16.0,5);
-    if (uVar3 == 0) {
+    out_of_range = monitor_out_of_range(adc_monitors + 2,14.0,16.0,5);
+    if (out_of_range == 0) {
       if (adc_monitors[2].out_of_tolerance != 0) {
         task_debug_message("15V is now within tolerance\r\n");
         status_happening('7');
@@ -39481,8 +39818,8 @@ void hmon_check_supplies(void)
   case 0x24e:
     fVar2 = read_adc_m15v();
     monitor_average_add(adc_monitors + 6,fVar2);
-    uVar3 = monitor_out_of_range(adc_monitors + 6,-16.0,-14.0,5);
-    if (uVar3 == 0) {
+    out_of_range = monitor_out_of_range(adc_monitors + 6,-16.0,-14.0,5);
+    if (out_of_range == 0) {
       if (adc_monitors[6].out_of_tolerance != 0) {
         task_debug_message("-15V is now within tolerance\r\n");
         status_happening('9');
@@ -39518,8 +39855,10 @@ LAB_000240f0:
   return;
 }
 
+#endif
 
 /* 0002410e */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a
    default when there is no reading */
@@ -39583,60 +39922,66 @@ float adc_average(adc_channel channel)
   return fVar2;
 }
 
+#endif
 
 /* 000241cc */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* 1 once the double oven's ADC reads above 1.5; called by nothing */
 
 bool double_oven_warmed_up(void)
 
 {
-  float a;
+  float average;
   int32_t iVar1;
   
-  a = adc_average(ADC_DOUBLE_OVEN);
-  iVar1 = float_compare(a,1.5);
+  average = adc_average(ADC_DOUBLE_OVEN);
+  iVar1 = float_compare(average,1.5);
   return 0 < iVar1;
 }
 
+#endif
 
 /* 000241f4 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* 1 once the oven ADC reads below -2.0; powerup's warm-up test */
 
 bool oven_warmed_up(void)
 
 {
-  float a;
+  float average;
   int32_t iVar1;
   
-  a = adc_average(ADC_OVEN);
-  iVar1 = float_compare(a,-2.0);
+  average = adc_average(ADC_OVEN);
+  iVar1 = float_compare(average,-2.0);
   return iVar1 < 0;
 }
 
+#endif
 
 /* 0002421c */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* writes the EFC rounded, plus random_dither, clamped to 0 to 0xffff0 */
 
 void efc_write_dithered(void)
 
 {
-  int32_t iVar1;
+  int32_t rounded;
   int32_t iVar2;
   double x;
   
   x = float_to_double(pll.efc);
-  iVar1 = double_round_to_long(x);
-  if (iVar1 < 0) {
+  rounded = double_round_to_long(x);
+  if (rounded < 0) {
 LAB_0002423a:
     iVar2 = 0;
   }
   else {
-    if (iVar1 < 0xffff1) {
+    if (rounded < 0xffff1) {
       iVar2 = random_dither();
-      iVar2 = iVar2 + iVar1;
+      iVar2 = iVar2 + rounded;
       if (iVar2 < 0) goto LAB_0002423a;
       if (iVar2 < 0xffff1) goto LAB_0002425e;
     }
@@ -39647,8 +39992,10 @@ LAB_0002425e:
   return;
 }
 
+#endif
 
 /* 0002426e */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* clamps the EFC to 0 to 1048560, reporting event B when clamped and C when back in range; takes a
    float on the stack and returns it in D0 (0x24272, 0x242d4) */
@@ -39681,8 +40028,10 @@ float efc_clamp(float efc)
   return efc;
 }
 
+#endif
 
 /* 000242de */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* clears efc_clamp's flags */
 
@@ -39695,8 +40044,10 @@ void efc_clamp_reset(void)
   return;
 }
 
+#endif
 
 /* 000242f0 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* "EFC near end of range" when pll.efc stays outside 52428 to 996132, 5% to 95% of 2^20, five
    checks */
@@ -39726,8 +40077,10 @@ void hmon_check_efc(void)
   return;
 }
 
+#endif
 
 /* 0002437a */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* prints the tasks' watchdog counts
    "watchdog: clock: %4d gps: %4d pll: %4d mon: %4d spool %4d" */
@@ -39760,8 +40113,10 @@ void watchdog_report(void)
   return;
 }
 
+#endif
 
 /* 0002442c */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* clears the last exception and the crash message */
 
@@ -39774,8 +40129,10 @@ void exception_record_clear(void)
   return;
 }
 
+#endif
 
 /* 00024440 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* logs the last reset's cause with the time: "Exception: %s, vector %04X, PC = %08X" or "Watchdog
    timeout: clk %1d ..." */
@@ -39819,8 +40176,10 @@ void log_reset_cause(void)
   return;
 }
 
+#endif
 
 /* 0002458c */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* clears the GPS 1PPS monitor's state */
 
@@ -39834,8 +40193,10 @@ void gps_pps_monitor_reset(void)
   return;
 }
 
+#endif
 
 /* 000245a6 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* "GPS 1pps signal is dead", "short gate, count %d", "long gate, count %d"
    structures.md */
@@ -39923,8 +40284,10 @@ uint8_t gps_pps_check(void)
   return uVar5;
 }
 
+#endif
 
 /* 0002470c */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* clears the internal 1PPS monitor's state */
 
@@ -39936,8 +40299,10 @@ void internal_pps_monitor_reset(void)
   return;
 }
 
+#endif
 
 /* 0002471a */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* "Internal 1pps signal is dead", "count %d"
    structures.md */
@@ -39975,6 +40340,7 @@ uint8_t internal_pps_check(void)
   return 0;
 }
 
+#endif
 
 /* 000247d4 */
 
@@ -40096,6 +40462,7 @@ void hmon_task(void)
 
 
 /* 00024976 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* sets the FPGA up again and reloads the counter's registers */
 
@@ -40107,8 +40474,10 @@ void counter_reset(void)
   return;
 }
 
+#endif
 
 /* 00024984 */
+#if 0 /* the decompiler's reading; rewritten in drivers.c */
 
 /* clears both 1PPS monitors */
 
@@ -40121,6 +40490,7 @@ void pps_monitors_reset(void)
   return;
 }
 
+#endif
 
 /* 00024d42 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -45923,7 +46293,7 @@ int16_t console_port_read(void)
 
 {
   char *pcVar1;
-  int32_t iVar2;
+  int32_t length;
   int16_t iVar3;
   uint8_t local_6 [2];
   
@@ -45934,8 +46304,8 @@ int16_t console_port_read(void)
         console_write(scpi_prompt_text);
       }
       scpi_input_next = scpi_input_line;
-      iVar2 = console_read(scpi_input_line,0xff,local_6);
-      scpi_input_end = scpi_input_line + iVar2;
+      length = console_read(scpi_input_line,0xff,local_6);
+      scpi_input_end = scpi_input_line + length;
     }
     if (local_6[0] == 0) {
       pcVar1 = scpi_input_next + 1;
@@ -48040,10 +48410,10 @@ int32_t scpi_query_DIAGnostic_SER1_EGResponse(void *parameters,void *response,vo
 int32_t scpi_query_DIAGnostic_ROSCillator_CURRent(void *parameters,void *response,void *call)
 
 {
-  float fVar1;
+  float current;
   
-  fVar1 = read_adc_osc_curr();
-  *(float *)response = fVar1;
+  current = read_adc_osc_curr();
+  *(float *)response = current;
   return 0;
 }
 
@@ -48227,10 +48597,10 @@ int32_t scpi_query_DIAGnostic_SYSTem_PSTartup(void *parameters,void *response,vo
 int32_t scpi_query_DIAGnostic_TEMPerature(void *parameters,void *response,void *call)
 
 {
-  float fVar1;
+  float temperature;
   
-  fVar1 = read_adc_temp();
-  *(float *)response = fVar1;
+  temperature = read_adc_temp();
+  *(float *)response = temperature;
   return 0;
 }
 
@@ -48704,12 +49074,12 @@ int32_t scpi_set_SOURce_GPSystem_INITial_DATE(void *parameters,void *response,vo
 
 {
   uint32_t uVar1;
-  char cVar3;
+  char invalid;
   int32_t iVar2;
   
   uVar1 = return_zero();
-  cVar3 = time_valid();
-  if (cVar3 == 0) {
+  invalid = time_valid();
+  if (invalid == 0) {
     iVar2 = (uVar1 & 0xff) * 0xc;
     *(int32_t *)(iVar2 + 0x102a0e) = (int32_t)*(int16_t *)((int32_t)parameters + 2);
     *(int32_t *)(iVar2 + 0x102a12) = (int32_t)*(int16_t *)((int32_t)parameters + 8);
@@ -48731,12 +49101,12 @@ int32_t scpi_set_SOURce_GPSystem_INITial_TIME(void *parameters,void *response,vo
 
 {
   uint32_t uVar1;
-  char cVar3;
+  char invalid;
   int32_t iVar2;
   
   uVar1 = return_zero();
-  cVar3 = time_valid();
-  if (cVar3 == 0) {
+  invalid = time_valid();
+  if (invalid == 0) {
     iVar2 = (uVar1 & 0xff) * 0xc;
     *(int32_t *)(iVar2 + 0x102a0e) = (int32_t)*(int16_t *)((int32_t)parameters + 2);
     *(int32_t *)(iVar2 + 0x102a12) = (int32_t)*(int16_t *)((int32_t)parameters + 8);
@@ -50369,14 +50739,14 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_ACCumulated(void *parameters,void *re
 
 {
   uint16_t sr;
-  uint8_t uVar2;
+  uint8_t offset_valid;
   int32_t iVar1;
   int16_t local_6;
   
   sr = enter_supervisor_mode();
-  uVar2 = get_gps_utc_offset(&local_6);
+  offset_valid = get_gps_utc_offset(&local_6);
   set_interrupt_mask(sr);
-  if (uVar2 == 0) {
+  if (offset_valid == 0) {
     iVar1 = scpi_query_failed(0xc,call);
   }
   else {
@@ -50473,14 +50843,14 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime(void *parameters,void *respon
 
 {
   uint32_t uVar1;
-  uint32_t param2;
+  uint32_t leap_seconds;
   int32_t iVar2;
   
   uVar1 = return_zero();
-  param2 = leap_gps_time();
-  sprintf((char *)((uVar1 & 0xff) * 0x11a + 0x10272a),"#H%08X",param2);
+  leap_seconds = leap_gps_time();
+  sprintf((char *)((uVar1 & 0xff) * 0x11a + 0x10272a),"#H%08X",leap_seconds);
   *(uint32_t *)response = (uVar1 & 0xff) * 0x11a + 0x10272a;
-  if (param2 == 0) {
+  if (leap_seconds == 0) {
     iVar2 = scpi_query_failed(0xc,call);
   }
   else {
@@ -50513,14 +50883,14 @@ int32_t scpi_query_SOURce_PTIMe_TCODe(void *parameters,void *response,void *call
 
 {
   int32_t iVar1;
-  char cVar2;
+  char released;
   uint32_t uStack_8;
   
   iVar1 = scpi_console_port();
   if (iVar1 == *(int32_t *)((int32_t)call + 0x12)) {
     psos_get_v(0x20,1,&uStack_8);
-    cVar2 = tcode_request(nv_settings.tcode_format);
-    if (cVar2 == 0) {
+    released = tcode_request(nv_settings.tcode_format);
+    if (released == 0) {
       iVar1 = scpi_query_failed(0xc,call);
       return iVar1;
     }
@@ -50540,7 +50910,7 @@ int32_t scpi_query_RTCM(void *parameters,void *response,void *call)
 {
   int32_t iVar1;
   uint8_t bVar2;
-  char cVar3;
+  char released;
   uint32_t uStack_8;
   
   iVar1 = scpi_console_port();
@@ -50552,8 +50922,8 @@ int32_t scpi_query_RTCM(void *parameters,void *response,void *call)
       return iVar1;
     }
     psos_get_v(0x20,1,&uStack_8);
-    cVar3 = tcode_request(1);
-    if (cVar3 == 0) {
+    released = tcode_request(1);
+    if (released == 0) {
       iVar1 = scpi_query_failed(0xc,call);
       return iVar1;
     }
@@ -52876,17 +53246,17 @@ int32_t scpi_query_KENneth_PRESent(void *parameters,void *response,void *call)
 int32_t scpi_query_SOURce_ROSCillator_HOLDover_WAITing(void *parameters,void *response,void *call)
 
 {
-  uint16_t uVar1;
+  uint16_t sr;
   uint8_t uVar2;
   uint8_t bVar3;
   
-  uVar1 = set_interrupt_mask(0x100);
+  sr = set_interrupt_mask(0x100);
   uVar2 = pll_mode();
-  set_interrupt_mask(uVar1);
+  set_interrupt_mask(sr);
   if (uVar2 == 2) {
-    uVar1 = set_interrupt_mask(0x100);
+    sr = set_interrupt_mask(0x100);
     bVar3 = holdover_waiting_reason();
-    set_interrupt_mask(uVar1);
+    set_interrupt_mask(sr);
     if (bVar3 - 1 < 0x10U) {
                     /* WARNING: Switch is manually overridden */
       switch((int16_t)(bVar3 - 1)) {
@@ -53868,10 +54238,10 @@ uint32_t lifetime_record_write(void)
 void lifetime_event_run(void)
 
 {
-  char cVar1;
+  char invalid;
   
-  cVar1 = time_valid();
-  if (cVar1 != 0) {
+  invalid = time_valid();
+  if (invalid != 0) {
     lifetime.date = get_gps_date();
   }
   lifetime.count = lifetime.count + 1;
@@ -53894,7 +54264,7 @@ void lifetime_update(int32_t param_1)
 
 {
   klok_entry *pkVar1;
-  int32_t iVar2;
+  int32_t status;
   int16_t sVar3;
   klok_entry *pkVar4;
   klok_entry event;
@@ -53917,7 +54287,7 @@ void lifetime_update(int32_t param_1)
     lifetime_record_write();
   }
   pkVar1 = (klok_entry *)klok_find(2);
-  if ((pkVar1 != (klok_entry *)0x0) && (iVar2 = klok_cancel(pkVar1), iVar2 != 0)) {
+  if ((pkVar1 != (klok_entry *)0x0) && (status = klok_cancel(pkVar1), status != 0)) {
     task_dmessage("Error in deleting old lifetime event\r\n");
   }
   get_gps_datetime(&event.date,(time_of_day *)&event.time);
@@ -54514,14 +54884,14 @@ char log_erase(uint8_t param_1)
 int32_t log_erase_locked(uint8_t param_1)
 
 {
-  int32_t iVar1;
+  int32_t status;
   
-  iVar1 = mutex_lock(&log_mutex);
-  if (iVar1 == 0) {
-    iVar1 = log_erase(param_1);
+  status = mutex_lock(&log_mutex);
+  if (status == 0) {
+    status = log_erase(param_1);
     mutex_unlock(&log_mutex);
   }
-  return iVar1;
+  return status;
 }
 
 #endif
@@ -54711,16 +55081,16 @@ int32_t log_read(int32_t param_1,char *param_2,char *param_3)
 int32_t log_write(char *format,...)
 
 {
-  int32_t iVar1;
+  int32_t status;
   int32_t in_stack_00000008 = *(int32_t *)((char *)__builtin_frame_address(0) + 12);
   int32_t in_stack_0000000c = *(int32_t *)((char *)__builtin_frame_address(0) + 16);
   
-  iVar1 = mutex_lock(&log_mutex);
-  if (iVar1 == 0) {
-    iVar1 = log_append(format,in_stack_00000008,in_stack_0000000c);
+  status = mutex_lock(&log_mutex);
+  if (status == 0) {
+    status = log_append(format,in_stack_00000008,in_stack_0000000c);
     mutex_unlock(&log_mutex);
   }
-  return iVar1;
+  return status;
 }
 
 
@@ -59540,7 +59910,7 @@ char holdover_recovery(char param_1)
 {
   char cVar3;
   char cVar4;
-  uint8_t uVar5;
+  uint8_t offset_valid;
   float fVar1;
   int32_t iVar2;
   uint8_t unaff_D3b = ({ register int32_t __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (uint8_t)__entry; });
@@ -59642,8 +60012,8 @@ LAB_0004411a:
   if (cVar3 == 1) {
     cVar4 = leap_second_near();
     if (cVar4 == 0) {
-      uVar5 = get_gps_utc_offset((int16_t *)0x0);
-      if (uVar5 == 0) {
+      offset_valid = get_gps_utc_offset((int16_t *)0x0);
+      if (offset_valid == 0) {
         pll.recovery_state = 4;
         pll.leap_ack_requested = 1;
         cVar3 = 0;
@@ -61397,13 +61767,13 @@ void leap_settings_clear(void)
 void leap_event_delete(void)
 
 {
-  klok_entry *pkVar1;
-  int32_t iVar2;
+  klok_entry *entry;
+  int32_t status;
   
-  pkVar1 = (klok_entry *)klok_find(1);
-  if (pkVar1 != (klok_entry *)0x0) {
-    iVar2 = klok_cancel(pkVar1);
-    if (iVar2 != 0) {
+  entry = (klok_entry *)klok_find(1);
+  if (entry != (klok_entry *)0x0) {
+    status = klok_cancel(entry);
+    if (status != 0) {
       task_debug_message("Error in deleting old leapsecond event\r\n");
     }
   }
@@ -61419,7 +61789,7 @@ void leap_event_delete(void)
 void leap_event_create(void)
 
 {
-  uint32_t uVar1;
+  uint32_t date;
   int32_t iVar2;
   
   if (gps.leap_second_pending == ONCORE_NO_LEAP_SECOND) {
@@ -61439,16 +61809,16 @@ void leap_event_create(void)
     else {
       iVar2 = 0x3c;
     }
-    uVar1 = leap_opportunity_date();
+    date = leap_opportunity_date();
     if (((nv_settings.leap_pending == 0) || (iVar2 != nv_settings.leap_minute_length)) ||
-       (uVar1 != nv_settings.leap_date)) {
+       (date != nv_settings.leap_date)) {
       nv_settings.leap_pending = 1;
-      nv_settings.leap_date = uVar1;
+      nv_settings.leap_date = date;
       nv_settings.leap_minute_length = iVar2;
       nv_save(4);
     }
     leap_event_delete();
-    iVar2 = leap_event_schedule(uVar1,iVar2);
+    iVar2 = leap_event_schedule(date,iVar2);
     if (iVar2 == 0) {
       task_debug_message("Error in creating leapsecond event\r\n");
     }
@@ -62050,7 +62420,7 @@ void gps_leap_ack(void)
 
 {
   uint32_t pushed_1;
-  uint32_t uVar1;
+  uint32_t days;
   int32_t iVar2;
   uint8_t uVar3;
   char cVar4;
@@ -62117,8 +62487,8 @@ LAB_00046efe:
     }
     if (gps_ack_code == 0) {
       get_gps_datetime(&uStack_20,&tStack_1c);
-      uVar1 = date_to_mjd((uint32_t)__ghidra_aggregate_bits(gps.status.date));
-      pushed_1 = uVar1;
+      days = date_to_mjd((uint32_t)__ghidra_aggregate_bits(gps.status.date));
+      pushed_1 = days;
       iStack_18 = date_to_days(uStack_20);
       iStack_18 = pushed_1 - iStack_18;
       iVar2 = hms_to_seconds((uint32_t)__ghidra_aggregate_bits(gps.status.time));
@@ -64982,7 +65352,7 @@ void status_screen_tfom(uint8_t row,status_snapshot_record *snapshot,char *line)
 {
   char cVar1;
   int32_t iVar2;
-  int16_t sVar3;
+  int16_t tfom_digit;
   uint8_t bVar4;
   char *pcVar5;
   double dVar6;
@@ -65010,8 +65380,8 @@ void status_screen_tfom(uint8_t row,status_snapshot_record *snapshot,char *line)
       }
       pcVar5 = acStack_26;
       pcVar8 = "";
-      sVar3 = tfom_code((uint32_t)__ghidra_bits(snapshot->tfom));
-      sprintf(line,"TFOM     %d%13sFFOM    %2s",(int32_t)sVar3,pcVar8,pcVar5);
+      tfom_digit = tfom_code((uint32_t)__ghidra_bits(snapshot->tfom));
+      sprintf(line,"TFOM     %d%13sFFOM    %2s",(int32_t)tfom_digit,pcVar8,pcVar5);
       break;
     case 0x66:
       if (*(char *)&snapshot->interval_mean_flag == 0) {
@@ -67386,7 +67756,7 @@ int32_t command_log_add(gps_running_command *command,char *text)
   uint8_t uVar3;
   char cVar4;
   char cVar5;
-  int32_t iVar6;
+  int32_t valid;
   gps_command_log *pgVar7;
   gps_command_log_entry entry;
   uint32_t local_c;
@@ -67398,8 +67768,8 @@ int32_t command_log_add(gps_running_command *command,char *text)
   cVar4 = text[4];
   cVar5 = text[5];
   entry.query = command->query;
-  iVar6 = get_date_time(&local_c,&local_8);
-  if ((char)iVar6 == 0) {
+  valid = get_date_time(&local_c,&local_8);
+  if ((char)valid == 0) {
     entry.clock_invalid = 1;
   }
   else {
@@ -70357,8 +70727,8 @@ __regcall double double_subtract_reversed_pointers(double *a /* a0 */,double *b 
   int16_t sVar15;
   bool bVar16;
   bool bVar17;
-  double raised;
-  uint64_t uVar19;
+  double dVar18;
+  uint64_t raised;
   uint32_t uVar20;
   
   uVar13 = *(uint32_t *)a;
@@ -70386,15 +70756,15 @@ __regcall double double_subtract_reversed_pointers(double *a /* a0 */,double *b 
       }
       if (uVar7 == 0) {
         if ((int32_t)(uVar4 ^ uVar13) < 0) {
-          raised = (double)float_raise(0x82000);
-          return raised;
+          dVar18 = (double)float_raise(0x82000);
+          return dVar18;
         }
         goto LAB_0005d2b6;
       }
     }
 LAB_0005d2c6:
-    raised = (double)float_raise(0x84000,uVar3,uVar20);
-    return raised;
+    dVar18 = (double)float_raise(0x84000,uVar3,uVar20);
+    return dVar18;
   }
   if (0x7fefffff < uVar6) {
     if ((uVar6 < 0x7ff00001) && (uVar7 == 0)) {
@@ -70518,7 +70888,7 @@ LAB_0005d2b6:
       }
       return (double)CONCAT44((uint32_t)uVar12 << 0x10 | uVar4,uVar13);
     }
-    uVar19 = float_raise(0x81000);
+    raised = float_raise(0x81000);
     sVar15 = extraout_A1w;
     goto LAB_0005d63e;
   }
@@ -70536,8 +70906,8 @@ LAB_0005d5ae:
         if ((__ghidra_piece(uint8_t, float_control, 0) & 2) != 0) {
 LAB_0005d484:
           float_status = float_status | 0x200;
-          raised = (double)float_raise(0x80200);
-          return raised;
+          dVar18 = (double)float_raise(0x80200);
+          return dVar18;
         }
         bVar17 = CARRY4(uVar4,uVar4);
         uVar4 = uVar4 * 2;
@@ -70625,14 +70995,14 @@ LAB_0005d5ee:
                               uVar13);
     }
   }
-  uVar19 = float_raise(0xc0800,CONCAT22(uVar10,1 - uVar14),uVar3,uVar13,uVar4);
+  raised = float_raise(0xc0800,CONCAT22(uVar10,1 - uVar14),uVar3,uVar13,uVar4);
   sVar15 = extraout_A1w_00;
 LAB_0005d63e:
-  uVar13 = (uint32_t)(uVar19 >> 0x20);
+  uVar13 = (uint32_t)(raised >> 0x20);
   if (sVar15 < 0) {
     uVar13 = uVar13 | 0x80000000;
   }
-  return (double)CONCAT44(uVar13,(int32_t)uVar19);
+  return (double)CONCAT44(uVar13,(int32_t)raised);
 }
 
 
@@ -70694,8 +71064,8 @@ __regcall double double_subtract_reversed_pointer(double a /* d0 */,double *b /*
   int16_t sVar15;
   bool bVar16;
   bool bVar17;
-  double dVar18;
-  uint64_t raised;
+  double raised;
+  uint64_t uVar19;
   uint32_t uVar20;
   
   uVar13 = (uint32_t)((uint64_t)a >> 0x20);
@@ -70723,15 +71093,15 @@ __regcall double double_subtract_reversed_pointer(double a /* d0 */,double *b /*
       }
       if (uVar8 == 0) {
         if ((int32_t)(uVar5 ^ uVar13) < 0) {
-          dVar18 = (double)float_raise(0x82000);
-          return dVar18;
+          raised = (double)float_raise(0x82000);
+          return raised;
         }
         goto LAB_0005d2b6;
       }
     }
 LAB_0005d2c6:
-    dVar18 = (double)float_raise(0x84000,uVar3,uVar20);
-    return dVar18;
+    raised = (double)float_raise(0x84000,uVar3,uVar20);
+    return raised;
   }
   if (0x7fefffff < uVar7) {
     if ((uVar7 < 0x7ff00001) && (uVar8 == 0)) {
@@ -70855,7 +71225,7 @@ LAB_0005d2b6:
       }
       return (double)CONCAT44((uint32_t)uVar12 << 0x10 | uVar4,uVar5);
     }
-    raised = float_raise(0x81000);
+    uVar19 = float_raise(0x81000);
     sVar15 = extraout_A1w;
     goto LAB_0005d63e;
   }
@@ -70873,8 +71243,8 @@ LAB_0005d5ae:
         if ((__ghidra_piece(uint8_t, float_control, 0) & 2) != 0) {
 LAB_0005d484:
           float_status = float_status | 0x200;
-          dVar18 = (double)float_raise(0x80200);
-          return dVar18;
+          raised = (double)float_raise(0x80200);
+          return raised;
         }
         bVar17 = CARRY4(uVar4,uVar4);
         uVar4 = uVar4 * 2;
@@ -70962,14 +71332,14 @@ LAB_0005d5ee:
                               uVar5);
     }
   }
-  raised = float_raise(0xc0800,CONCAT22(uVar10,1 - uVar14),uVar3,uVar5,uVar4);
+  uVar19 = float_raise(0xc0800,CONCAT22(uVar10,1 - uVar14),uVar3,uVar5,uVar4);
   sVar15 = extraout_A1w_00;
 LAB_0005d63e:
-  uVar5 = (uint32_t)(raised >> 0x20);
+  uVar5 = (uint32_t)(uVar19 >> 0x20);
   if (sVar15 < 0) {
     uVar5 = uVar5 | 0x80000000;
   }
-  return (double)CONCAT44(uVar5,(int32_t)raised);
+  return (double)CONCAT44(uVar5,(int32_t)uVar19);
 }
 
 
@@ -91389,6 +91759,16 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 
 #include "../rewritten/z3805a-3543b/clock.c"
+
+#include "../rewritten/z3805a-3543b/clock_klok.c"
+
+#include "../rewritten/z3805a-3543b/clock_math.c"
+
+#include "../rewritten/z3805a-3543b/clock_start.c"
+
+#include "../rewritten/z3805a-3543b/clock_timecode.c"
+
+#include "../rewritten/z3805a-3543b/drivers.c"
 
 #include "../rewritten/z3805a-3543b/libc.c"
 

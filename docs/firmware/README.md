@@ -804,6 +804,14 @@ which `sci.c` uses).  The checks run
 the hand-written function as they ran the decompiled one, against the
 image's own.
 
+A constant is typed: `static const uint32_t SECONDS_PER_MINUTE = 60;`,
+inside the function that uses it when only one does, at file scope with
+the file's prefix when several do.  A set of coded values, an ADC
+channel or a task's state, is an `enum`.  A `#define` names a constant
+only where C wants a constant expression, a `case` label, an array's
+size or a static initializer, which a `const` object is not before
+C23.
+
 `tools/firmware/rebuild_link.py` links it into a rebuilt image: each
 piece of assembly at its own address, where it must be, and is, the
 image's bytes, and gcc's code -- the C, the bridges, its constants -- at

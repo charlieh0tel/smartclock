@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1209 run, 646 agree, 540 reach the kernel
-     or a peripheral and are skipped, and 23 differ, in the function or
+     original reads them: of 1209 run, 648 agree, 540 reach the kernel
+     or a peripheral and are skipped, and 21 differ, in the function or
      in gcc's callees.
      Unicorn has no CPU32 and the 68020 stands in: the image uses none
      of the CPU32's own instructions (`tbl`, `lpstop`, `bgnd`; a scan of
@@ -741,7 +741,10 @@ view cannot drift apart.  The library, bottom up:
      with arithmetic takes a `U`, and a switch's cases are labeled as the
      table indexes them, from its first index, not 0 (28 to 23).  The
      soft-float routines' copy of their result in A0:A1 is passed on
-     (`__ghidra_also`), though `log` and `pow` still differ.
+     (`__ghidra_also`), as is `float_raise`'s and
+     `double_truncate_sixteenths`'s in D0:D1 where `pow` calls them
+     through a register, and an infinity assigned to an integer variable
+     is its bits (23 to 21: `log`, `pow`).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

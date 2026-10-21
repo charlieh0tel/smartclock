@@ -197,8 +197,7 @@ public class SmartClockExportC extends GhidraScript {
 		#define __ghidra_concat(y, a, b) \
 			((__ghidra_bits(a) << (8 * (y))) | (__ghidra_bits(b) & __ghidra_mask(y)))
 		#define __ghidra_sub(y, v, n) ((__ghidra_bits(v) >> (8 * (n))) & __ghidra_mask(y))
-		#define __ghidra_also(call, var, n) ({ __typeof__((call) + 0) __c = (call); \
-			var = __ghidra_as(__typeof__(var), __ghidra_sub(sizeof var, __c, n)); __c; })
+		#define __ghidra_also(var, v, n) (var = __ghidra_as(__typeof__(var), __ghidra_sub(sizeof var, v, n)))
 		#define CARRY1(a, b) ((unsigned char)((a) + (b)) < (unsigned char)(a))
 		#define CARRY2(a, b) ((unsigned short)((a) + (b)) < (unsigned short)(a))
 		#define CARRY4(a, b) ((unsigned int)((a) + (b)) < (unsigned int)(a))
@@ -261,8 +260,8 @@ public class SmartClockExportC extends GhidraScript {
 				functions.append("\n/* ").append(function.getEntryPoint()).append(" */\n");
 				if (results.decompileCompleted()) {
 					Printed printed = printed(function, results);
-					String c = indexedFunctions(identifiers(pieces(notC(function, printed.c()),
-						printed.signedPieces())));
+					String c = indexedFunctions(identifiers(nonfiniteBits(pieces(notC(function, printed.c()),
+						printed.signedPieces()))));
 					if (notCMacro(function) != null) {
 						functions.append(READING).append(c).append("\n#endif\n")
 							.append(assembly(function, declared, madeSymbols));
@@ -1210,16 +1209,24 @@ public class SmartClockExportC extends GhidraScript {
 	private static final int REGISTER_BYTES = 4;
 	/** The decompiler's name for a register's value after a call that sets it outside its prototype. */
 	private static final String EXTRA_OUTPUT = "extraout_";
-	/** The macro that gives a variable part of a call's result: __ghidra_also(call, var, n). */
+	/** The macro that gives a variable part of a value: __ghidra_also(var, v, n). */
 	private static final String ALSO = "__ghidra_also";
+	/**
+	 * What a call whose result is also left elsewhere is written in: the
+	 * call keeps its result in __c, written out rather than a macro's
+	 * argument, since gcc places a diagnostic inside a macro's argument at
+	 * the macro and reinterpretConversions would wrap the whole call.
+	 */
+	private static final String ALSO_OPEN = "({ __auto_type __c = ";
 
 	/**
 	 * Gives the variables the C reads a call's extra outputs from, its
 	 * extraout_A0 and extraout_A1, the copies of the result its routine
 	 * leaves in those registers, as the convention's copies names them,
-	 * high first: the call becomes __ghidra_also(call, variable, n), the
-	 * call's result, which assigns the variable the result's bytes n up
-	 * from its least significant end.  The C leaves them uninitialized
+	 * high first: the call becomes ({ __auto_type __c = call;
+	 * __ghidra_also(variable, __c, n); __c; }), the call's result, which
+	 * assigns the variable the result's bytes n up from its least
+	 * significant end.  The C leaves them uninitialized
 	 * otherwise, where the image's next double routine takes them as its
 	 * other operand.
 	 */
@@ -1239,9 +1246,9 @@ public class SmartClockExportC extends GhidraScript {
 			for (int k = 0; k < copies.size(); k++) {
 				String variable = outputs.get(copies.get(k));
 				if (variable != null) {
-					edits.before.merge(tokens.get(i), ALSO + "(", String::concat);
-					edits.after.merge(tokens.get(close), ", " + variable + ", "
-						+ (copies.size() - 1 - k) * REGISTER_BYTES + ")", String::concat);
+					edits.before.merge(tokens.get(i), ALSO_OPEN, String::concat);
+					edits.after.merge(tokens.get(close), "; " + ALSO + "(" + variable + ", __c, "
+						+ (copies.size() - 1 - k) * REGISTER_BYTES + "); __c; })", String::concat);
 				}
 			}
 		}
@@ -1895,6 +1902,46 @@ public class SmartClockExportC extends GhidraScript {
 		return out.toString();
 	}
 
+	/** An infinity or NaN the C assigns a variable: its indent, the variable and the value. */
+	private static final Pattern NONFINITE_ASSIGNED =
+		Pattern.compile("^(\\s*)(\\w+) = (-?(?:INFINITY|NAN));$", Pattern.MULTILINE);
+	/** A local's declaration, its type and its name. */
+	private static final Pattern LOCAL_DECLARATION =
+		Pattern.compile("^  ([A-Za-z_]\\w*) (\\w+);$", Pattern.MULTILINE);
+	/** The integer types as wide as a double; a narrower one holds a float's bits. */
+	private static final Set<String> DOUBLE_WIDE = Set.of("undefined8", "longlong", "ulonglong",
+		"int64_t", "uint64_t");
+
+	/**
+	 * c with each infinity or NaN it assigns an integer variable that
+	 * variable's bits: the decompiler copies the constant's bits where C
+	 * converts its value, which for an infinity is undefined, and gcc
+	 * gives no diagnostic for reinterpretConversions to find.
+	 */
+	private static String nonfiniteBits(String c) {
+		Map<String, String> types = new HashMap<>();
+		Matcher declaration = LOCAL_DECLARATION.matcher(c);
+		while (declaration.find()) {
+			types.put(declaration.group(2), declaration.group(1));
+		}
+		Matcher assigned = NONFINITE_ASSIGNED.matcher(c);
+		StringBuilder out = new StringBuilder();
+		while (assigned.find()) {
+			String type = types.get(assigned.group(2));
+			String value = assigned.group(3);
+			if (type != null && INTEGERS.contains(type)) {
+				// INFINITY and NAN are floats; a cast would be made a reinterpretation
+				value = "__ghidra_bits(" + (DOUBLE_WIDE.contains(type)
+					? value.replace("INFINITY", "__builtin_inf()").replace("NAN", "__builtin_nan(\"\")")
+					: value) + ")";
+			}
+			assigned.appendReplacement(out,
+				Matcher.quoteReplacement(assigned.group(1) + assigned.group(2) + " = " + value + ";"));
+		}
+		assigned.appendTail(out);
+		return out.toString();
+	}
+
 	/** A cast to a type named in one or two words. */
 	private static final Pattern CAST = Pattern.compile("\\(((?:unsigned |signed )?[A-Za-z_]\\w*)\\)");
 	/** The decompiler's floating types; its unkfloatN are integers here. */
@@ -2286,15 +2333,15 @@ public class SmartClockExportC extends GhidraScript {
 		return -1;
 	}
 
-	/** The first argument in a parenthesized argument list: to its first comma outside brackets. */
-	private static String firstArgument(String arguments) {
+	/** Where the statement in text from start ends: its first semicolon outside brackets. */
+	private static int statementEnd(String text, int start) {
 		int depth = 0;
-		for (int i = 1; i < arguments.length() - 1; i++) {
-			char ch = arguments.charAt(i);
+		for (int i = start; i < text.length(); i++) {
+			char ch = text.charAt(i);
 			if (ch == '"' || ch == '\'') {
 				i++;
-				while (i < arguments.length() && arguments.charAt(i) != ch) {
-					i += arguments.charAt(i) == '\\' ? 2 : 1;
+				while (i < text.length() && text.charAt(i) != ch) {
+					i += text.charAt(i) == '\\' ? 2 : 1;
 				}
 			}
 			else if (ch == '(' || ch == '[') {
@@ -2303,11 +2350,11 @@ public class SmartClockExportC extends GhidraScript {
 			else if (ch == ')' || ch == ']') {
 				depth--;
 			}
-			else if (ch == ',' && depth == 0) {
-				return arguments.substring(1, i);
+			else if (ch == ';' && depth == 0) {
+				return i;
 			}
 		}
-		return arguments.substring(1, arguments.length() - 1);
+		return text.length();
 	}
 
 	/** Whether a cast's operand is a floating value. */
@@ -2315,6 +2362,11 @@ public class SmartClockExportC extends GhidraScript {
 		String s = operand.strip();
 		if (s.startsWith("__ghidra_as(float") || s.startsWith("__ghidra_as(double")) {
 			return true;
+		}
+		if (s.startsWith(ALSO_OPEN)) {
+			// a call whose result is also left elsewhere is its call
+			return floatingOperand(s.substring(ALSO_OPEN.length(), statementEnd(s, ALSO_OPEN.length())),
+				variables, pointers);
 		}
 		int stars = 0;
 		while (!s.isEmpty() && "-~!*".indexOf(s.charAt(0)) >= 0) {
@@ -2331,10 +2383,7 @@ public class SmartClockExportC extends GhidraScript {
 			return stars == 0 ? variables.contains(name) : stars == 1 && pointers.contains(name);
 		}
 		if (rest.startsWith("(") && matching(rest, 0) == rest.length() - 1) {
-			// __ghidra_also(call, var, n) is its call
-			return stars == 0 && (name.equals(ALSO)
-				? floatingOperand(firstArgument(rest), variables, pointers)
-				: floatingFunctions.contains(name));
+			return stars == 0 && floatingFunctions.contains(name);
 		}
 		if (rest.startsWith("[") && matching(rest, 0) == rest.length() - 1) {
 			return stars == 0 && pointers.contains(name);

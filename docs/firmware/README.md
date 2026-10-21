@@ -347,8 +347,10 @@ key weaker than the rest), the registers `in` and `out` with their
 types and names, the registers a result is also left in, `copies=A0:A1`
 for each double routine but the in-place ones (`softfloat.md`; every
 exit of their shared bodies ends `movea.l D0,A0`, `movea.l D1,A1`,
-`rts`, at `0x5d47e`, `0x5d60c`, `0x5db90` and `0x5e7da`),
-`returns=ccr` for the condition codes, the `error`
+`rts`, at `0x5d47e`, `0x5d60c`, `0x5db90` and `0x5e7da`), and
+`copies=D0:D1` for `float_raise` and `double_truncate_sixteenths`,
+whose result in D0:D1 the decompiler does not take at `pow`'s calls
+through a register, `returns=ccr` for the condition codes, the `error`
 values, the registers it `preserves` and its `family`.  A function
 without one is unknown.  At `run`, `read` or `documented`, the
 function's prototype is built from `in` and `out`, so its C shows its
@@ -580,10 +582,18 @@ decompiler wrote it, and reported.
 - A call to a routine whose convention has `copies` assigns the
   variables the C reads those registers from after it, the
   decompiler's `extraout_A0` and `extraout_A1`, which are otherwise
-  uninitialized: `__ghidra_also(call, extraout_A0, 4)` is the call's
-  result and gives the variable its four bytes 4 up from the least
-  significant end.  `log` and `pow` pass a double routine's result to
-  the next that way.
+  uninitialized: `({ __auto_type __c = call; __ghidra_also(extraout_A0,
+  __c, 4); __c; })` is the call's result and gives the variable its
+  four bytes 4 up from the least significant end.  The call is written
+  out, not a macro's argument, since gcc places a diagnostic inside a
+  macro's argument at the macro, and the conversion pass would wrap the
+  whole call.  `log` and `pow` pass a double routine's result to the
+  next that way.
+- An infinity or NaN assigned to an integer variable becomes its bits,
+  `local_14 = __ghidra_bits(-__builtin_inf())`: the decompiler copies
+  the constant's bits, where C converts its value, undefined for an
+  infinity, and gcc gives no diagnostic for the conversion pass to find
+  (`log` of 0, `pow`).
 - A recovered switch's cases get their own labels.  The override holds
   only the targets, and the decompiler labels them by trying index
   values from 0 up, ten misses in a row allowed, until it has seen every

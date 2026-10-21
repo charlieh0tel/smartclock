@@ -1023,25 +1023,19 @@ uint32_t nv_load_slot(void) {
 }
 
 /* Sets the *IDN? model to its default (0x32e40). */
-void idn_model_default(void) {
-  /* The identification record's default model. */
-  static const char DEFAULT_MODEL[] = "Z3805A";
-
-  strncpy(idn_model, (char*)DEFAULT_MODEL, sizeof idn_model);
-}
+void idn_model_default(void) { strncpy(idn_model, "Z3805A", sizeof idn_model); }
 
 /* Reads the model, serial and suffix from the identification record, or
  * their defaults; true when its checksum holds (0x32e5c). */
 uint8_t identification_record_read(void) {
-  /* The identification record's defaults. */
-  static const char DEFAULT_SERIAL[] = "0";
+  /* The identification record's default suffix. */
   static const char DEFAULT_SUFFIX = 'A';
 
   if (record_checksum(&eeprom_identification_record,
                       sizeof eeprom_identification_record) !=
       eeprom_identification_record.checksum) {
     idn_model_default();
-    strncpy(idn_serial, (char*)DEFAULT_SERIAL, sizeof idn_serial);
+    strncpy(idn_serial, "0", sizeof idn_serial);
     idn_suffix = DEFAULT_SUFFIX;
     return 0;
   }

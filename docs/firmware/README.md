@@ -810,7 +810,7 @@ the file's prefix when several do.  A set of coded values, an ADC
 channel or a task's state, is an `enum`.  A `#define` names a constant
 only where C wants a constant expression, a `case` label, an array's
 size or a static initializer, which a `const` object is not before
-C23.
+C23.  A string used in one place is a literal there.
 
 The hand-written C and the Ghidra type headers are in Google's style
 (`.clang-format`), with braces on every control statement's body:

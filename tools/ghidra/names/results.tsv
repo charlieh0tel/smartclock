@@ -308,3 +308,9 @@ interpolator_measure_high	reading	the high reference's reading
 interpolator_calibrate	calibrated	1 when the references read 200 apart, or 199 or 201
 interpolator_selftest_calibrate	calibrated	1 when a calibration took, else interpolator_verify's
 interval_next_reading	valid	interval_reading.valid before the rearm
+# The FPGA's registers and self-tests, 0x17000 to 0x18fff and 0x40000 to 0x40fff (rewritten/z3805a-3543b/fpga.c)
+fpga_read	value	the register addressed
+fpga_read_byte	value	two registers' low nibbles
+fpga_bit_test	set	any of the bits set
+fpga_read_seconds	seconds	register 0's high nibble, modulo 16
+selftest_fpga_with_lamp	failures	selftest.fpga

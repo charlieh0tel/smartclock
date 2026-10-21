@@ -1264,6 +1264,12 @@ view cannot drift apart.  The library, bottom up:
      `klok_entry **`, the log pages as `log_page *` and `qspi_transfer`'s
      `qspi_buffers *`, the hand-written callers' casts gone.  The C is in
      Google's style with braces everywhere (`make format-c`).
+     And two more subjects by hand: `fpga.c`, the FPGA's loading,
+     readback checks, registers and self-tests (19 functions), and
+     `ti.c`, the time-interval counter and interpolator (25); 430 in
+     all, every one agreeing.  `interpolator_verify` stays the
+     decompiler's, returning on its failure paths a register its caller
+     left.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

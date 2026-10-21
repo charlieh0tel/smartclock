@@ -220,7 +220,9 @@ entry from the second block's first bytes.  The boot code at `0x22d70`
 loads index 0, `FPGA_CONFIGURATION_COUNTER` (`smartclock.h`), and
 keeps it at `0x102533`, `pll.fpga_configuration`; the only other
 caller, `0x18938`, reloads that stored index.  The loader drives PROGRAM with
-PORTE bit 6 and reads INIT and DONE on `0xfff90c` bit 3.  The second
+PORTE bit 6, reads INIT on `0xfff90c` bit 3, PACTL's PCLKS, and reads
+DONE on PORTF bit 3 (`0x22e6e`, `0x22f40`), which it drives low while
+it waits for INIT (`0x22dea` to `0x22e44`).  The second
 block starts right after the table, at `0x21e36`.  No table entry and
 no code address points to it.
 

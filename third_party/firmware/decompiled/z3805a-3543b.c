@@ -22464,6 +22464,7 @@ void selftest_qspi(char_slot run)
 
 
 /* 00017c3e */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* the self-test of the FPGA's counters
    entry 7; "FPGA: counters not preset" */
@@ -22490,6 +22491,7 @@ void selftest_fpga(char_slot run)
   return;
 }
 
+#endif
 
 /* 00017ca4 */
 
@@ -23333,6 +23335,7 @@ int16_t selftest_qspi_with_lamp(void)
 
 
 /* 00018cc6 */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* counter_selftest, lighting OP7 on a failure; returns selftest.fpga
    table 0x186b0, "FPGA" */
@@ -23347,6 +23350,7 @@ uint32_t selftest_fpga_with_lamp(void)
   return (uint32_t)(uint16_t)selftest.fpga;
 }
 
+#endif
 
 /* 00018cec */
 
@@ -39140,6 +39144,7 @@ void fpga_setup(void)
 #endif
 
 /* 00022da4 */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* loads the FPGA's configuration
    "FPGA programmed", "ERROR: FPGA programming failed", "FPGA INIT did not go high"; outputs.md's
@@ -39285,8 +39290,10 @@ uint8_t fpga_program(fpga_configuration_index configuration,char with_task_name)
   return 0;
 }
 
+#endif
 
 /* 00022fc6 */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* reads the FPGA's configuration back over QSPI device 0xc and checks it against the image under a
    mask; "first: inv read" */
@@ -39403,8 +39410,10 @@ bool fpga_verify_first(uint8_t *param_1,uint8_t *param_2,char param_3)
   return bVar1;
 }
 
+#endif
 
 /* 00023304 */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* the same for the odd frames; "odd: inv read" */
 
@@ -39483,8 +39492,10 @@ bool fpga_verify_odd(uint8_t *param_1,uint8_t *param_2,char param_3)
   return bVar1;
 }
 
+#endif
 
 /* 0002353a */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* the same for the even frames; "even: inv read" */
 
@@ -39593,8 +39604,10 @@ bool fpga_verify_even(uint8_t *param_1,uint8_t *param_2,char param_3)
   return bVar1;
 }
 
+#endif
 
 /* 0002384a */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* verifies one chip through the port F lines; "chip %1d failed compare" */
 
@@ -39669,6 +39682,7 @@ bool fpga_verify_chip(fpga_configuration_index configuration,char with_task_name
   return bVar2;
 }
 
+#endif
 
 /* 00023980 */
 #if 0 /* the decompiler's reading; rewritten in fpga.c */
@@ -57313,6 +57327,7 @@ void interpolator_sample_test(void)
 #endif
 
 /* 00040756 */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* writes a byte to FPGA register reg at 0x304000 (interval.md: the FPGA port) */
 
@@ -57323,8 +57338,10 @@ void fpga_write(uint8_t reg,uint8_t value)
   return;
 }
 
+#endif
 
 /* 0004076a */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* sets the register in fconf_regs[1]'s address bits, reads 0x304000, restores them; "old_addr,
    fconf_regs[1] = %x"
@@ -57345,49 +57362,55 @@ uint8_t fpga_read(uint8_t reg)
   return uVar1;
 }
 
+#endif
 
 /* 000407d4 */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* 1 if bits are set in an FPGA register; called by nothing */
 
 bool fpga_bit_test(uint8_t param_1,char param_2)
 
 {
-  uint8_t uVar1;
+  uint8_t value;
   
-  uVar1 = fpga_read(param_2);
-  return (param_1 & uVar1) != 0;
+  value = fpga_read(param_2);
+  return (param_1 & value) != 0;
 }
 
+#endif
 
 /* 000407fa */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* FPGA register 0's high nibble, read until two reads agree: a count of seconds modulo 16 */
 
 char fpga_read_seconds(void)
 
 {
-  uint8_t uVar1;
+  uint8_t value;
   uint8_t uVar2;
   char cVar3;
   int32_t iVar4;
   char cVar5;
   
-  uVar1 = fpga_read(0);
+  value = fpga_read(0);
   uVar2 = fpga_read(0);
-  cVar3 = (char)((int32_t)(uint32_t)uVar1 >> 4);
+  cVar3 = (char)((int32_t)(uint32_t)value >> 4);
   cVar5 = (char)((int32_t)(uint32_t)uVar2 >> 4);
   for (iVar4 = 0x14; (cVar3 != cVar5 && (0 < iVar4)); iVar4 = iVar4 + -1) {
-    uVar1 = fpga_read(0);
+    value = fpga_read(0);
     uVar2 = fpga_read(0);
-    cVar3 = (char)((int32_t)(uint32_t)uVar1 >> 4);
+    cVar3 = (char)((int32_t)(uint32_t)value >> 4);
     cVar5 = (char)((int32_t)(uint32_t)uVar2 >> 4);
   }
   return cVar3;
 }
 
+#endif
 
 /* 0004085e */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* steps an FPGA register's address bits through 32 values, printing each; called by nothing */
 
@@ -57414,6 +57437,7 @@ void fpga_address_sweep_debug(void)
   return;
 }
 
+#endif
 
 /* 0004091a */
 #if 0 /* the decompiler's reading; rewritten in ti.c */
@@ -57425,7 +57449,7 @@ uint8_t counter_wait_ready(uint8_t mask)
 
 {
   bool bVar1;
-  uint8_t uVar2;
+  uint8_t value;
   int16_t sVar3;
   uint8_t uVar4;
   
@@ -57433,7 +57457,7 @@ uint8_t counter_wait_ready(uint8_t mask)
   bVar1 = true;
   uVar4 = 0;
   do {
-    uVar2 = fpga_read(0);
+    value = fpga_read(0);
     while( true ) {
       if ((((!bVar1) || (gps_pps_dead != 0)) || (internal_pps_dead != 0)) ||
          ((interval_reading.armed == 0 || (sVar3 == 0)))) {
@@ -57442,7 +57466,7 @@ uint8_t counter_wait_ready(uint8_t mask)
         }
         return uVar4;
       }
-      if ((mask & uVar2) == 0) break;
+      if ((mask & value) == 0) break;
       bVar1 = false;
       uVar4 = 1;
     }
@@ -57454,6 +57478,7 @@ uint8_t counter_wait_ready(uint8_t mask)
 #endif
 
 /* 000409a4 */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* sets or clears a bit in fconf_regs, register and mask from fpga_bit_table, then fpga_write */
 
@@ -57472,8 +57497,10 @@ void fpga_set_bit(uint8_t bit,uint8_t on)
   return;
 }
 
+#endif
 
 /* 00040a0e */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* sets one fpga_bit_table field in its register's image and writes the register */
 
@@ -57490,6 +57517,7 @@ void fpga_set_field(uint8_t param_1,uint8_t param_2)
   return;
 }
 
+#endif
 
 /* 00040a64 */
 
@@ -57526,6 +57554,7 @@ void counter_set_sync(uint8_t param_1)
 #endif
 
 /* 00040afe */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* builds the four FPGA register images from field values, by fpga_bit_table */
 
@@ -57567,22 +57596,25 @@ LAB_00040b90:
   } while( true );
 }
 
+#endif
 
 /* 00040ba6 */
+#if 0 /* the decompiler's reading; rewritten in fpga.c */
 
 /* a byte from two FPGA registers' low nibbles */
 
 uint8_t fpga_read_byte(char param_1)
 
 {
-  uint8_t uVar1;
+  uint8_t value;
   uint8_t uVar2;
   
-  uVar1 = fpga_read(param_1 + 1);
+  value = fpga_read(param_1 + 1);
   uVar2 = fpga_read(param_1);
-  return uVar2 & 0xf | uVar1 << 4;
+  return uVar2 & 0xf | value << 4;
 }
 
+#endif
 
 /* 00040bda */
 #if 0 /* the decompiler's reading; rewritten in ti.c */
@@ -57611,7 +57643,7 @@ int64_t counter_read_raw(void)
 {
   uint3 uVar1;
   uint3 uVar2;
-  uint8_t bVar3;
+  uint8_t value;
   uint8_t bVar4;
   int64_t count;
   
@@ -57619,11 +57651,11 @@ int64_t counter_read_raw(void)
   uVar2 = 0;
   do {
     uVar1 = uVar2;
-    bVar3 = fpga_read_byte(bVar4);
+    value = fpga_read_byte(bVar4);
     bVar4 = bVar4 - 2;
-    uVar2 = (uint3)bVar3 | uVar1 << 8;
+    uVar2 = (uint3)value | uVar1 << 8;
   } while (0x11 < bVar4);
-  count = counter_offset_apply(0,CONCAT31(uVar1,bVar3));
+  count = counter_offset_apply(0,CONCAT31(uVar1,value));
   return count;
 }
 
@@ -57637,10 +57669,10 @@ int64_t counter_read_raw(void)
 uint32_t interpolator_read(void)
 
 {
-  uint8_t bVar1;
+  uint8_t value;
   
-  bVar1 = fpga_read_byte(0x10);
-  return ~(uint32_t)bVar1;
+  value = fpga_read_byte(0x10);
+  return ~(uint32_t)value;
 }
 
 #endif

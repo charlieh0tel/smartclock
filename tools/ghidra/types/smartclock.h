@@ -600,7 +600,9 @@ typedef struct time_of_day {
  * routine keeps it in memory and reads or writes it by its parts:
  * leap_opportunity_date sets the month and day bytes (0x11648 to
  * 0x11672), diag_get_time and timecode_update print the year word and
- * the month and day bytes (0x1b474 to 0x1b484, 0x13e04 to 0x13e14). */
+ * the month and day bytes (0x1b474 to 0x1b484, 0x13e04 to 0x13e14),
+ * and pulse_settings_done builds one from three longs (0x42b48 to
+ * 0x42b58). */
 typedef struct calendar_date {
 	uint16_t year;  /* +0x00: the full year, 1994 on */
 	uint8_t month;  /* +0x02: 1 to 12 */
@@ -1634,7 +1636,9 @@ typedef struct status_snapshot_record {
 	uint8_t ffom;                    /* +0x008: get_ffom's */
 	uint8_t ffom_valid;              /* +0x009: get_ffom's result */
 	double interval;                 /* +0x00a: interval_reading.value */
-	uint8_t interval_status[4];      /* +0x012: interval_reading's +8 to +0xb */
+	uint8_t interval_valid;          /* +0x012: interval_reading.valid; status_screen_mode_suffix prints the TI while set */
+	counter_error interval_errors;   /* +0x013: interval_reading.errors */
+	uint16_t interval_tag;           /* +0x014: interval_reading.tag; its low byte is format_si's resolution for the TI (0x4a5de) */
 	float interval_mean;             /* +0x016 */
 	uint16_t interval_mean_flag;     /* +0x01a: the word at interval_mean_flag */
 	uint8_t holdover_waiting_reason; /* +0x01c */
@@ -1661,7 +1665,7 @@ typedef struct status_snapshot_record {
 	uint8_t status_code_reset;       /* +0x0f5: gps' */
 	uint8_t fix_mode;                /* +0x0f6: gps' */
 	uint8_t receiver_status;         /* +0x0f7: gps.status' */
-	uint32_t time;                   /* +0x0f8: gps.status' time made local; the clock's while clock_invalid */
+	time_of_day time;                /* +0x0f8: gps.status' time made local (0x4a720); get_date_time's while clock_invalid (0x4a74e) */
 	uint32_t date;                   /* +0x0fc: the same's date */
 	int32_t time_zone[2];            /* +0x100: nv_settings' */
 	uint8_t clock_invalid;           /* +0x108: 1 when get_date_time reports no date or time */

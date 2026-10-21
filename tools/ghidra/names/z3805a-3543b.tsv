@@ -481,7 +481,7 @@
 0x31128	function	eeprom_write_byte	structures.md	the wr_eeprom word's: writes a byte, polls until it reads back, retries five times
 0x3281a	function	clear_nv	structures.md	the clear_nv word's
 0x40a64	function	sync_request	structures.md	the clk_synch and sync_imm words': stores a mode and a time and sets two states to 2
-0x45b70	function	pll_mode	screen-format-strings.md, "Mode suffixes"	the status screen's mode accessor, from pll.stage and pll.manual; the HOLDover queries and HOLD:INIT test it
+0x45b70	function	pll_mode	screen-format-strings.md, "Mode suffixes"	the status screen's mode accessor, from pll.stage and pll.manual; the HOLDover queries and HOLD:INIT test it; a byte in D0 (0x45bb4)	uint8_t pll_mode(void)
 0x4c918	function	clear_gps_debug	structures.md	the clr_gps_debug word's: clears gps_counts, gps_last_command and gps_last_program_message
 0x330ee	function	log_count	structures.md	"Log status: %-3d entries"; sets *full when more than 31	int log_count(uint8_t *full)
 0x101f8e	label	log_entry_count	structures.md	log_count returns it	int16_t
@@ -503,7 +503,7 @@
 0x2bf00	function	status_report_from	context	status_report(code) for a command from source 0 or 2, not 1, 3 or 4; every caller passes return_zero()
 0x2e6fc	function	skip_spaces	context	advances a char ** past spaces
 0x136f6	function	get_uptime	context	returns uptime; efc_history_update divides it by 2700 for an entry's time	uint32_t get_uptime(void)
-0x44fbc	function	interval_next_reading	context	the next one-second interval reading, into *reading as a float, and its flag; waits instead while a 1PPS is dead; updates the EFC history
+0x44fbc	function	interval_next_reading	context	the next one-second interval reading, into *reading as a float, and its flag; waits instead while a 1PPS is dead; updates the EFC history; arm_mode 0 calibrates, 2 syncs (0x4506e, 0x45082); *reading takes double_to_float's result (0x45060)	uint8_t interval_next_reading(char arm_mode, float *reading)
 0x4b9e6	function	gps_count_response	context	counts a GPS response by its kind in gps_counts: successes, rejects, aborts, unknown_sender, unknown_command, busy and the rest	int gps_count_response(char kind, gps_request_entry *request)
 0x46620	function	gps_ack_received	context	returns gps_ack_ready, clearing gps_ack_awaited once it is set; the ack checker 0x46838 polls it
 0x102585	label	gps_ack_ready	context	gpsx_send clears it; pllp_task sets it with gps_ack_code when the GPS task's answer comes back on plla	uint8_t
@@ -626,7 +626,7 @@
 0x4f0d6	function	satellite_id_valid	context	kind 0 accepts 1 to 32, kind 1 33 to 37, the VP reference's pseudolites, kind 2 either	int satellite_id_valid(satellite_kind kind, uint8_t id)
 0x4f8fc	function	gps_message_supported	context	@@Bn, message 0x28, needs the receiver ID and its Time RAIM option, gps.raim_option; any other is supported
 0x4f8b6	function	gps_parse_options	context	sets gps.raim_option when the receiver ID's "OPTIONS LIST " has an I
-0x49b88	function	format_si	context	formats a double with an SI prefix from "pnum kMG" by its exponent / 3; "ANT DLY %s"
+0x49b88	function	format_si	context	formats a double with an SI prefix from "pnum kMG" by its exponent / 3; "ANT DLY %s"; the double at SP+4 goes to scpi_real_to_text with the resolution exponent at +0xc and the significant digits at +0xe, 0 for 15 (0x49b8c to 0x49bb8); unit appended (0x49cf2); text at +0x14 (0x49b90)	void format_si(double value, char resolution, uint8_t digits, char *unit, char *text)
 0x101fae	label	counter_configuration	context	the configuration counter_calibrate, counter_arm and counter_read are given: fconf_regs' four values at +0, the calibration double at +4, the interpolator's offset and scale at +0x18 and +0x1c	counter_configuration_fields
 0x2d1cc	function	satellite_list_limits	context	the ID count, the most listed and the ID base for satellites_in_mask: kind 0 :SAT:TRAC? (32, 6), 1 its pseudolites (5, 6, from 0x20), 2 :SAT:VIS:PRED? (32, 12), 3 the ignore and include lists (32, 32)	void satellite_list_limits(satellite_list kind, uint8_t *id_count, uint8_t *max_listed, uint8_t *id_base)
 0x3293a	function	nv_save	structures.md	packs the settings into a 0x80-byte NV register record and writes it to slot nv_slot when it differs; "Warning: Entire nv register is being used"
@@ -792,7 +792,7 @@
 0x463c2	function	leap_event_create	"Error in creating leapsecond event"	creates the leap second event
 0x44f5e	function	sync_perform	"Peforming sync"	synchronizes the outputs to GPS time
 0x45bb8	function	pll_powerup_suffix_index	screen-format-strings.md's ladder: the power-up sub-state's suffix index	the power-up sub-state, as the status screen's suffix index
-0x4a8ea	function	status_screen	"Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status"	prints the receiver status screen	void status_screen(char *param_1, char param_2, write_function *write, printf_function *print)
+0x4a8ea	function	status_screen	"Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status"	prints the receiver status screen; clear 1 clears the terminal first (0x4a908)	void status_screen(status_snapshot_record *snapshot, char clear, write_function *write, printf_function *print)
 0x4a8ea	local	raim_option	read	gps_message_supported's answer for @@Bn, cleared first (0x4a904)	uint8_t @ -0x7e
 0x4a8ea	local	line	read	the line it builds and prints: a mode line, the holdover line, a right-hand column, the health monitor's tests, with a | at 15 (0x4af8e) without Time RAIM	char[80] @ -0x7d
 0x4ab42	call	print	read	a mode line	int print(char *format, char *line)
@@ -806,12 +806,13 @@
 0x4adc8	call	print	read	the reference's label and status_screen_sync's text	int print(char *format, char *label, char *sync)
 0x4aee8	call	print	read	the elevation mask line	int print(char *format, int mask, char *blank, char *attempting, char *blank_2)
 0x4aefe	call	print	read	status_screen_height's line	int print(char *format, char *line)
+0x4af22	call	health_monitor_test	read	a health monitor test from the table at 0x4d076, bit_is_set or a bits_*_any: the snapshot's hardware condition, then the entry's word at +8 (0x4af16, 0x4af1a); status_screen tests D0's byte (0x4af26)	uint8_t health_monitor_test(uint16_t condition, uint16_t bits)
 0x4af52	call	sprintf	read	a health monitor test's name, OK or Err, and its separator	int sprintf(char *s, char *format, char *name, char *result, char *separator)
 0x4afc8	call	print	read	the health monitor's tests	int print(char *format, char *line)
 0x49db0	function	status_screen_sync	"Synchronized to UTC", "Synchronized to GPS Time", "Assessing stability"	the status screen's synchronization line	void status_screen_sync(status_snapshot_record *snapshot, char *line)
 0x4a518	function	status_screen_mode_suffix	screen-format-strings.md's mode suffixes, ": OCXO warm-up" .. ": leap second determination", "[TI %9.9s]"	the status screen's suffix for the power-up sub-state	void status_screen_mode_suffix(char param_1, status_snapshot_record *snapshot, char *text)
-0x4a29c	function	status_screen_tfom	"TFOM     %d%13sFFOM    %2s", "1PPS TI %s", "HOLD THR %s", "Holdover Uncertainty"	the status screen's TFOM, FFOM, 1PPS TI and holdover lines
-0x49fcc	function	status_screen_position	"ANT DLY  %s", "Position", "Survey:", "% complete", "Suspended:"	the status screen's position and survey lines
+0x4a29c	function	status_screen_tfom	"TFOM     %d%13sFFOM    %2s", "1PPS TI %s", "HOLD THR %s", "Holdover Uncertainty"	the status screen's TFOM, FFOM, 1PPS TI and holdover lines; row a byte (0x4a2b4), the snapshot (0x4a2a4), the line (0x4a2a8); status_screen ignores D0	void status_screen_tfom(uint8_t row, status_snapshot_record *snapshot, char *line)
+0x49fcc	function	status_screen_position	"ANT DLY  %s", "Position", "Survey:", "% complete", "Suspended:"	the status screen's position and survey lines; status_screen pushes the row byte, the snapshot and the line (0x4ae70 to 0x4ae76) and ignores D0	void status_screen_position(uint8_t row, status_snapshot_record *snapshot, char *line)
 0x49fcc	local	text	read	the number, survey percentage or angle it formats; format_si's from its second byte (0x4a046)	char[16] @ -0x1e
 0x4a144	call	sprintf	read	the survey's percentage, through A0	int sprintf(char *s, char *format, double percent)
 0x4a1e6	call	sprintf	read	why the survey is suspended, through A0	int sprintf(char *s, char *format, char *blank, char *reason)
@@ -1082,7 +1083,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x3209c	function	clamp_float	context	clamps a float to its minimum and maximum, reporting each clamp; 1 if it clamped
 0x3217e	function	round_float_to_step	context	rounds a float to the nearest multiple of its step, half away from zero, the step a thousand times coarser beyond 1e9 steps	float round_float_to_step(float *value, float *step)
 0x42b1c	function	pulse_settings_done	scpi_param_SOURce_PULSe_CONTinuous_STATe, PERiod, STARt_TIME and DATE: done	hands the pulse start time, date, state and period from nv_settings to pulse_program
-0x42b1a	function	pulse_program	context	a bare rts in this image: what pulse_settings_done hands it goes no further here, and no code reads the pulse settings by address but it and the SCPI queries; whatever programs the pulse output reads them some other way, through the descriptors or a copy
+0x42b1c	local	start_time	read	the start time, its hour, minute and second the low bytes of nv_settings.pulse_start_time's three longs, the reserved byte cleared (0x42b2c to 0x42b42)	time_of_day @ -0xc
+0x42b1c	local	start_date	read	the start date, its year the low word and its month and day the low bytes of nv_settings.pulse_start_date's three longs (0x42b46 to 0x42b58)	calendar_date @ -0x8
+0x42b1a	function	pulse_program	context	a bare rts in this image: what pulse_settings_done hands it goes no further here, and no code reads the pulse settings by address but it and the SCPI queries; whatever programs the pulse output reads them some other way, through the descriptors or a copy; pulse_settings_done pushes the time and date it builds, the state byte and the period (0x42b5c to 0x42b6c)	void pulse_program(time_of_day time, calendar_date date, uint8_t state, int32_t period)
 0x43466	function	questionable_user_done	scpi_param_STATus_QUEStionable_USER: done	reports status event M when the user bit is set and N when it is cleared	void questionable_user_done(void)
 0x45b02	function	antenna_delay_done	scpi_param_SOURce_GPSystem_ADELay: done	clears bit 5 of pll's byte at +0x11 once the antenna delay changes
 0x30c60	function	save_calibration_block	scpi_param_DIAGnostic_ROSCillator_TCOefficient: done; interval.md's calibration block	rewrites the checksummed 64-byte calibration block at 0x400080 when the time offset or TC differs from it, reporting status 0x10 if the EEPROM write fails
@@ -1123,7 +1126,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4391e	function	holdover_limit_exceeded	context	1 unless the holdover is younger than holdover_measurement_threshold and the TI is within its age times a rate plus holdover_limit_threshold
 0x43804	function	holdover_ti_reset	context	clears holdover's TI statistics
 0x4381e	function	holdover_ti_add	context	adds a TI reading to holdover's statistics: a sum, a sum weighted by count, the count and the largest magnitude
-0x43916	function	holdover_ti_max	context	the largest TI magnitude holdover has seen, for holdover_limit_exceeded
+0x43916	function	holdover_ti_max	context	the largest TI magnitude holdover has seen, for holdover_limit_exceeded; a float in D0 (0x43916)	float holdover_ti_max(void)
 0x46188	function	pll_check_reference	context	waits for an interval reading, sets fault bits at pll +0x11 (2 no GPS, 4 no reading, 0x10 internal 1PPS dead) and sets the clock from the reference; 1 if all is well, 2 if faulted
 0x44e8e	function	fine_sync_adjust	context	for a TI beyond 1e-7 requests a sync of one to three steps of 100 ns, and returns the steps, 4 for beyond 3e-7; fine stores it as pll.fine_index
 0x46290	function	clock_set_from_reference	context	takes the seconds from an FPGA count and the uptime, clamped to 0 to 59, adds them to the clock's time and sets it
@@ -1161,7 +1164,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x138e4	function	clock_set_leap_year	context	sets February's days at A0, 28 or 29 by the Gregorian rule for the year in D7's high word; kernel_set_leap_year's copy		convention=register; confidence=read; in=A0 char *february, D7 int year; family=clock
 0x177fa	function	selftest_summary	context	the self-test's failure flags as bits; reports status event 4 on a failure and 5 on none
 0x241f4	function	oven_warmed_up	context	1 once the oven ADC reads below -2.0; powerup's warm-up test
-0x2426e	function	efc_clamp	context	clamps the EFC to 0 to 1048560, reporting event B when clamped and C when back in range
+0x2426e	function	efc_clamp	context	clamps the EFC to 0 to 1048560, reporting event B when clamped and C when back in range; takes a float on the stack and returns it in D0 (0x24272, 0x242d4)	float efc_clamp(float efc)
 0x24976	function	counter_reset	context	sets the FPGA up again and reloads the counter's registers
 0x30ab4	function	lifetime_record_write	context	writes the 32-byte checksummed lifetime record at EEPROM 0x400060, the date, its count and the EFC, when it has changed
 0x30ab4	local	record	read	the lifetime record it builds and writes	lifetime_record @ -0x24
@@ -1175,7 +1178,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x40afe	function	fpga_fields_to_registers	context	builds the four FPGA register images from field values, by fpga_bit_table	void fpga_fields_to_registers(uint8_t *fields, uint8_t *registers)
 0x40ba6	function	fpga_read_byte	context	a byte from two FPGA registers' low nibbles
 0x407fa	function	fpga_read_seconds	context	FPGA register 0's high nibble, read until two reads agree: a count of seconds modulo 16
-0x4091a	function	counter_wait_ready	context	polls FPGA register 0 for a bit, up to 512 times 10 ticks, giving up and disarming the reading if a 1PPS dies
+0x4091a	function	counter_wait_ready	context	polls FPGA register 0 for a bit, up to 512 times 10 ticks, giving up and disarming the reading if a 1PPS dies; a byte in D0 (0x40998)	uint8_t counter_wait_ready(uint8_t mask)
 0x401c4	function	interpolator_prepare	context	loads any pending FPGA registers and sets the fields for an interpolator measurement	undefined4 interpolator_prepare(void)
 0x4047c	function	interpolator_verify	context	sets both DACs, measures both ends of the interpolator against [1, 25] and [201, 225], and retries with the saved DACs if they fail	uint8_t interpolator_verify(interpolator_calibration *calibration)
 0x400b0	function	dac_search_bisect	context	halves a DAC's range, up to 10 times, until a measurement falls in a window	uint8_t dac_search_bisect(uint8_t dac, uint8_t minimum, uint8_t maximum, uint8_t low, uint8_t high, dac_measure *measure)
@@ -1234,7 +1237,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x49688	function	satellite_status	context	for status_snapshot: a satellite's status code for the screen	void satellite_status(char param_1,byte param_2,int param_3,int param_4,undefined1 *param_5)
 0x49612	function	satellite_track_class	context	a track record's class, 1 to 3	uint8_t satellite_track_class(oncore_visible_satellite *satellite)
 0x497c8	function	satellite_status_list	context	for status_snapshot: the screen's list of satellites, built and sorted
-0x4a636	function	status_snapshot	context	gathers the loop's stage, mode and suffix indexes, the TI, TFOM, FFOM, holdover, time zone, date and satellites into a record, under a raised interrupt mask
+0x4a636	function	status_snapshot	context	gathers the loop's stage, mode and suffix indexes, the TI, TFOM, FFOM, holdover, time zone, date and satellites into a record, under a raised interrupt mask	void status_snapshot(status_snapshot_record *snapshot)
 0x45c18	function	recovery_suffix_index	screen-format-strings.md, "Mode suffixes"	in holdover recovery's first state: 1 fine freq adj, 2 phase alignment; pll_powerup_suffix_index's companion
 0x45c48	function	holdover_waiting_reason	context	for :HOLDover:WAITing?: which fault bit holds the loop in holdover, 0x10, 2 or 8
 0x4299c	function	kenneth_present_get	undocumented.md, ":KENneth"	for :KENneth:PRESent?: in holdover or its recovery, pll.tfom, resolution 1e-7
@@ -1244,7 +1247,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x499f2	function	format_satellite_number	context	a satellite number as %2d, or blanks for none
 0x49a3c	function	format_level	context	a level as %3d, or blanks when negative
 0x49a26	function	mark_flag	context	writes * for a set flag
-0x12984	function	tfom_table_index	context	tfom_code's bisection of the table at 0x129fc
+0x12984	function	tfom_table_index	context	tfom_code's bisection of the table at 0x129fc; a word in D0 (0x129c6)	int16_t tfom_table_index(uint32_t tfom)
 0x1e222	function	duarta_rx_pending	context	1 if DUART channel A's receive ring is not empty
 0x4ee8c	function	long_array_get	context	a long from an array by index	long long_array_get(long *array, uint8_t index)
 0x4eeac	function	long_array_set	context	stores a long into an array by index	void long_array_set(long value, long *array, uint8_t index)
@@ -1284,7 +1287,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x41e32	local	regression	read	fit_log_initial's record for linear_regression	regression_record @ -0x1e
 0x41ba0	local	regression	read	fit_linear's record for linear_regression	regression_record @ -0x22
 0x42626	function	float_abs	context	a float's magnitude	float float_abs(float param_1)
-0x41c20	function	fit_constant	loop.md's aging fit	fits the EFC history as a constant, its weighted mean	bool fit_constant(aging_curve_state *curve)
+0x41c20	function	fit_constant	loop.md's aging fit	fits the EFC history as a constant, its weighted mean; a long in D0, 1 when no entry has the weight (0x41c78, 0x41c86)	int fit_constant(aging_curve_state *curve)
 0x41ba0	function	fit_linear	loop.md's aging fit	fits the EFC history as a line in time, by linear_regression	int fit_linear(aging_curve_state *curve)
 0x41a42	function	fit_linear_halves	loop.md's aging fit	a slope from the two halves of the last 64 averages, and its residuals	int fit_linear_halves(aging_curve_state *curve)
 0x41c8e	function	fit_logarithmic	loop.md's aging fit	fits the EFC history with a term in log time, searching its coefficient in steps a tenth as large each pass	int fit_logarithmic(aging_curve_state *curve)
@@ -1302,7 +1305,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x417c6	local	candidate	loop.md	aging_fit's three-term fit, whose a, b, c and rms it keeps when that fits better	aging_curve_state @ -0x7e
 0x2421c	function	efc_write_dithered	context	writes the EFC rounded, plus random_dither, clamped to 0 to 0xffff0
 0x12af2	function	random_dither	context	a small signed random value: rand, shaped by dither_table
-0x1223c	function	double_round_to_long	context	a double rounded half away from zero to a long, saturating
+0x1223c	function	double_round_to_long	context	a double rounded half away from zero to a long, saturating; the double at SP+4 (0x1223c)	int32_t double_round_to_long(double x)
 0x23c5a	function	monitor_average_add	context	adds a reading to a monitor's 10-sample moving average	void monitor_average_add(adc_monitor *monitor, float reading)
 0x23cc4	function	monitor_filter_add	context	adds a reading to a monitor's filter, 0.9 of the old and 0.1 of the new	void monitor_filter_add(adc_monitor *monitor, float reading)
 0x23d28	function	monitor_out_of_range	context	counts a monitor's readings outside its range, true once past a limit	uint8_t monitor_out_of_range(adc_monitor *monitor, float minimum, float maximum, uint8_t limit)
@@ -1600,7 +1603,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x32f00	function	identification_record_write	context	writes the model, serial and suffix to the identification record when they have changed
 0x32f00	local	record	read	the identification record it builds and writes	identification_record @ -0x34
 0x33114	function	reset_record_count	context	counts the valid reset-cause records into log_entry_count
-0x40670	function	interpolator_selftest_calibrate	context	calibrates the interpolator, up to 20 tries, and verifies it
+0x40670	function	interpolator_selftest_calibrate	context	calibrates the interpolator, up to 20 tries, and verifies it; a byte in D0 (0x406be)	uint8_t interpolator_selftest_calibrate(void)
 0x406c8	function	interpolator_selftest	context	the interpolator's self-test: its failure flag from the calibration
 0x406e2	function	interpolator_sample_test	context	samples the interpolator with its calibrated DACs and keeps both ends' readings; self-test 13, selftest_interpolator_sample
 0x406e2	local	calibration	read	interpolator_calibration_init's record, which interpolator_sample takes	interpolator_calibration @ -0xe

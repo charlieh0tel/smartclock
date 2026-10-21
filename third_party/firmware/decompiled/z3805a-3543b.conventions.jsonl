@@ -69,12 +69,12 @@
 {"address":"0001213a","name":"crc16_ccitt","note":"the reflected CRC-16, polynomial 0x8408 from 0xffff, over bytes; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":2}]}
 {"address":"0001219a","name":"isqrt16","note":"a 16-bit integer square root; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00012206","name":"round_shift_right","note":"an int shifted right with rounding, half away from zero; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"0001223c","name":"double_round_to_long","note":"a double rounded half away from zero to a long, saturating","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"0001223c","name":"double_round_to_long","note":"a double rounded half away from zero to a long, saturating; the double at SP+4 (0x1223c)","convention":"unknown","stack":[{"offset":4,"size":8}]}
 {"address":"000122d0","name":"round_divide","note":"an int divided with rounding, half away from zero; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000122f6","name":"double_decimal_exponent_rounded","note":"the decimal exponent of a double's magnitude rounded, by bisection over 5e-30 to 5e30 at 0x1234c; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0001258a","name":"double_decimal_exponent","note":"floor(log10) of a double's magnitude, by bisection over power_of_ten_double's table, 1e-30 to 1e30 at 0x12614; called by nothing","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000125e2","name":"power_of_ten_double","note":"10 to a power clamped to plus or minus 30, from the table of doubles at 0x12704; called by nothing","convention":"unknown","stack":[{"offset":4,"size":2}]}
-{"address":"00012984","name":"tfom_table_index","note":"tfom_code's bisection of the table at 0x129fc","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00012984","name":"tfom_table_index","note":"tfom_code's bisection of the table at 0x129fc; a word in D0 (0x129c6)","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000129d0","name":"power_of_ten_float","note":"10 to a power clamped to plus or minus 30, from the table of floats at 0x12a74; called by nothing","convention":"unknown","stack":[{"offset":4,"size":2}]}
 {"address":"00012af0","name":"scpi_param_hook_nothing","note":"a bare rts: the changed hook of most numeric and setting descriptors, and the done hook of some","convention":"unknown"}
 {"address":"00012af2","name":"random_dither","note":"a small signed random value: rand, shaped by dither_table","convention":"unknown"}
@@ -751,7 +751,7 @@
 {"address":"000241cc","name":"double_oven_warmed_up","note":"1 once the double oven's ADC reads above 1.5; called by nothing","convention":"unknown"}
 {"address":"000241f4","name":"oven_warmed_up","note":"1 once the oven ADC reads below -2.0; powerup's warm-up test","convention":"unknown"}
 {"address":"0002421c","name":"efc_write_dithered","note":"writes the EFC rounded, plus random_dither, clamped to 0 to 0xffff0","convention":"unknown"}
-{"address":"0002426e","name":"efc_clamp","note":"clamps the EFC to 0 to 1048560, reporting event B when clamped and C when back in range","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"0002426e","name":"efc_clamp","note":"clamps the EFC to 0 to 1048560, reporting event B when clamped and C when back in range; takes a float on the stack and returns it in D0 (0x24272, 0x242d4)","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000242de","name":"efc_clamp_reset","note":"clears efc_clamp's flags","convention":"unknown"}
 {"address":"000242f0","name":"hmon_check_efc","note":"\"EFC near end of range\" when pll.efc stays outside 52428 to 996132, 5% to 95% of 2^20, five checks","convention":"unknown"}
 {"address":"0002437a","name":"watchdog_report","note":"prints the tasks' watchdog counts","convention":"unknown"}
@@ -1304,7 +1304,7 @@
 {"address":"0004047c","name":"interpolator_verify","note":"sets both DACs, measures both ends of the interpolator against [1, 25] and [201, 225], and retries with the saved DACs if they fail","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00040556","name":"interpolator_sample","note":"sets HDAC channels 2 and 3 and takes both interpolator readings; \"First-time interp test.\"","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000405bc","name":"counter_calibrate","note":"runs interpolator_calibrate when the configuration asks, then stores reading_low and the spread at its +0x18 and +0x1c","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"00040670","name":"interpolator_selftest_calibrate","note":"calibrates the interpolator, up to 20 tries, and verifies it","convention":"unknown"}
+{"address":"00040670","name":"interpolator_selftest_calibrate","note":"calibrates the interpolator, up to 20 tries, and verifies it; a byte in D0 (0x406be)","convention":"unknown"}
 {"address":"000406c8","name":"interpolator_selftest","note":"the interpolator's self-test: its failure flag from the calibration","convention":"unknown"}
 {"address":"000406e2","name":"interpolator_sample_test","note":"samples the interpolator with its calibrated DACs and keeps both ends' readings; self-test 13, selftest_interpolator_sample","convention":"unknown"}
 {"address":"00040756","name":"fpga_write","note":"writes a byte to FPGA register reg at 0x304000 (interval.md: the FPGA port)","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":1}]}
@@ -1312,7 +1312,7 @@
 {"address":"000407d4","name":"fpga_bit_test","note":"1 if bits are set in an FPGA register; called by nothing","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":1}]}
 {"address":"000407fa","name":"fpga_read_seconds","note":"FPGA register 0's high nibble, read until two reads agree: a count of seconds modulo 16","convention":"unknown"}
 {"address":"0004085e","name":"fpga_address_sweep_debug","note":"steps an FPGA register's address bits through 32 values, printing each; called by nothing","convention":"unknown"}
-{"address":"0004091a","name":"counter_wait_ready","note":"polls FPGA register 0 for a bit, up to 512 times 10 ticks, giving up and disarming the reading if a 1PPS dies","convention":"unknown","stack":[{"offset":4,"size":1}]}
+{"address":"0004091a","name":"counter_wait_ready","note":"polls FPGA register 0 for a bit, up to 512 times 10 ticks, giving up and disarming the reading if a 1PPS dies; a byte in D0 (0x40998)","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"000409a4","name":"fpga_set_bit","note":"sets or clears a bit in fconf_regs, register and mask from fpga_bit_table, then fpga_write","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":1}]}
 {"address":"00040a0e","name":"fpga_set_field","note":"sets one fpga_bit_table field in its register's image and writes the register","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":1}]}
 {"address":"00040a64","name":"sync_request","note":"the clk_synch and sync_imm words': stores a mode and a time and sets two states to 2","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4}]}
@@ -1343,7 +1343,7 @@
 {"address":"000417c6","name":"aging_fit","note":"fits the oscillator's aging curve, for the curv task","convention":"unknown"}
 {"address":"00041a42","name":"fit_linear_halves","note":"a slope from the two halves of the last 64 averages, and its residuals","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00041ba0","name":"fit_linear","note":"fits the EFC history as a line in time, by linear_regression","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"00041c20","name":"fit_constant","note":"fits the EFC history as a constant, its weighted mean","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"00041c20","name":"fit_constant","note":"fits the EFC history as a constant, its weighted mean; a long in D0, 1 when no entry has the weight (0x41c78, 0x41c86)","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00041c8e","name":"fit_logarithmic","note":"fits the EFC history with a term in log time, searching its coefficient in steps a tenth as large each pass","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00041d30","name":"fit_span","note":"the first and last sample times among the weighted entries","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00041dcc","name":"fit_evaluate_latest","note":"the fit at the latest sample, and its residual","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
@@ -1358,7 +1358,7 @@
 {"address":"000429c6","name":"kenneth_predicted_get","note":"for :KENneth:PREDicted?: from startup PLL on, the float at pll +0x3a, resolution 1e-7, and whether in holdover","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"00042a18","name":"get_ffom","note":"the time code's f; pll_rep's \"ffom = %1d\"","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00042b18","name":"output_state_program","note":"a bare rts: what output_state_done hands it, :OUTPut:STATe, goes no further here","convention":"unknown","stack":[{"offset":4,"size":1}]}
-{"address":"00042b1a","name":"pulse_program","note":"a bare rts in this image: what pulse_settings_done hands it goes no further here, and no code reads the pulse settings by address but it and the SCPI queries; whatever programs the pulse output reads them some other way, through the descriptors or a copy","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":1},{"offset":14,"size":4}]}
+{"address":"00042b1a","name":"pulse_program","note":"a bare rts in this image: what pulse_settings_done hands it goes no further here, and no code reads the pulse settings by address but it and the SCPI queries; whatever programs the pulse output reads them some other way, through the descriptors or a copy; pulse_settings_done pushes the time and date it builds, the state byte and the period (0x42b5c to 0x42b6c)","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":1},{"offset":14,"size":4}]}
 {"address":"00042b1c","name":"pulse_settings_done","note":"hands the pulse start time, date, state and period from nv_settings to pulse_program","convention":"unknown"}
 {"address":"00042b7c","name":"output_state_done","note":"scpi_param_OUTPut_STATe's done hook: hands the output state to output_state_program","convention":"unknown"}
 {"address":"00042b8a","name":"pll_scpi_do_action","note":"carries out a request's action, flagging the self-test's descriptor at 0x41348","convention":"unknown","stack":[{"offset":4,"size":4}]}
@@ -1384,7 +1384,7 @@
 {"address":"00043804","name":"holdover_ti_reset","note":"clears holdover's TI statistics","convention":"unknown"}
 {"address":"0004381e","name":"holdover_ti_add","note":"adds a TI reading to holdover's statistics: a sum, a sum weighted by count, the count and the largest magnitude","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00043888","name":"holdover_correction_valid","note":"1 if holdover's TI statistics give an EFC within 0 to 1048560 from at least 10 readings; called by nothing","convention":"unknown"}
-{"address":"00043916","name":"holdover_ti_max","note":"the largest TI magnitude holdover has seen, for holdover_limit_exceeded","convention":"unknown"}
+{"address":"00043916","name":"holdover_ti_max","note":"the largest TI magnitude holdover has seen, for holdover_limit_exceeded; a float in D0 (0x43916)","convention":"unknown"}
 {"address":"0004391e","name":"holdover_limit_exceeded","note":"1 unless the holdover is younger than holdover_measurement_threshold and the TI is within its age times a rate plus holdover_limit_threshold","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"0004397a","name":"enter_holdover","note":"sets the stage to holdover and the manual flag from fault bit 0, and logs the cause: a code for each fault bit at pll +0x11, the GPS receiver's status for bit 1","convention":"unknown"}
 {"address":"00043a90","name":"holdover","note":"the loop's holdover stage, steering the oscillator without GPS","convention":"unknown","stack":[{"offset":4,"size":1}]}
@@ -1394,7 +1394,7 @@
 {"address":"000448fc","name":"pll_normal","note":"the loop's normal stage: averages interval readings, counting them to ten and storing the mean","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"00044e8e","name":"fine_sync_adjust","note":"for a TI beyond 1e-7 requests a sync of one to three steps of 100 ns, and returns the steps, 4 for beyond 3e-7; fine stores it as pll.fine_index","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"00044f5e","name":"sync_perform","note":"synchronizes the outputs to GPS time","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"00044fbc","name":"interval_next_reading","note":"the next one-second interval reading, into *reading as a float, and its flag; waits instead while a 1PPS is dead; updates the EFC history","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4}]}
+{"address":"00044fbc","name":"interval_next_reading","note":"the next one-second interval reading, into *reading as a float, and its flag; waits instead while a 1PPS is dead; updates the EFC history; arm_mode 0 calibrates, 2 syncs (0x4506e, 0x45082); *reading takes double_to_float's result (0x45060)","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4}]}
 {"address":"000450c4","name":"interval_rearm","note":"the other half of interval_next_reading: counter_calibrate, or sync_request(3, 1) for mode 2, then counter_arm","convention":"unknown","stack":[{"offset":4,"size":1}]}
 {"address":"0004513c","name":"interval_wait_reading","note":"the wait half of interval_next_reading: the FPGA's reading, or a wait while a 1PPS is dead; updates the EFC history","convention":"unknown"}
 {"address":"000451c2","name":"coarse","note":"the power-up step that sets the oscillator's frequency coarsely","convention":"unknown"}
@@ -1409,7 +1409,7 @@
 {"address":"00045b0c","name":"holdover_recovery_limit_ignore","note":"in holdover not manual, with no hold cause but the TI limit's, sets pll.ti_limit_override; else status_report_from(8)","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00045b42","name":"sync_immediate_request","note":"in power-up or holdover recovery sets pll.sync_requested; else status_report_from(8)","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00045b6e","name":"nv_param_field_b8_done","note":"a bare rts","convention":"unknown"}
-{"address":"00045b70","name":"pll_mode","note":"the status screen's mode accessor, from pll.stage and pll.manual; the HOLDover queries and HOLD:INIT test it","convention":"unknown"}
+{"address":"00045b70","name":"pll_mode","note":"the status screen's mode accessor, from pll.stage and pll.manual; the HOLDover queries and HOLD:INIT test it; a byte in D0 (0x45bb4)","convention":"unknown"}
 {"address":"00045bb8","name":"pll_powerup_suffix_index","note":"the power-up sub-state, as the status screen's suffix index","convention":"unknown"}
 {"address":"00045c18","name":"recovery_suffix_index","note":"in holdover recovery's first state: 1 fine freq adj, 2 phase alignment; pll_powerup_suffix_index's companion","convention":"unknown"}
 {"address":"00045c48","name":"holdover_waiting_reason","note":"for :HOLDover:WAITing?: which fault bit holds the loop in holdover, 0x10, 2 or 8","convention":"unknown"}
@@ -1474,14 +1474,14 @@
 {"address":"00049a3c","name":"format_level","note":"a level as %3d, or blanks when negative","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":4}]}
 {"address":"00049a6e","name":"format_satellite_cell","note":"a satellite's status screen cell: \"%2d %3d\", \"Ignore\", \"Not OK\", \"Acq\"","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":5,"size":1},{"offset":6,"size":2},{"offset":8,"size":4}]}
 {"address":"00049b06","name":"status_screen_height","note":"the status screen's height line, HGT and %+9.2f m (MSL)","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"00049b88","name":"format_si","note":"formats a double with an SI prefix from \"pnum kMG\" by its exponent / 3; \"ANT DLY %s\"","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":1},{"offset":14,"size":1},{"offset":16,"size":4},{"offset":20,"size":4}]}
+{"address":"00049b88","name":"format_si","note":"formats a double with an SI prefix from \"pnum kMG\" by its exponent / 3; \"ANT DLY %s\"; the double at SP+4 goes to scpi_real_to_text with the resolution exponent at +0xc and the significant digits at +0xe, 0 for 15 (0x49b8c to 0x49bb8); unit appended (0x49cf2); text at +0x14 (0x49b90)","convention":"unknown","stack":[{"offset":4,"size":8},{"offset":12,"size":1},{"offset":14,"size":1},{"offset":16,"size":4},{"offset":20,"size":4}]}
 {"address":"00049d14","name":"format_duration_short","note":"a duration as minutes and seconds or hours and minutes, or 1000+ hr","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00049db0","name":"status_screen_sync","note":"the status screen's synchronization line","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00049e5a","name":"format_time","note":"a packed time as \"%02d:%02d:%02d\", or \"--:--:--\"","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00049eb4","name":"format_date","note":"a date as \"%02d %s %04d\", or \"-- --- ----\"","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":1},{"offset":7,"size":1},{"offset":8,"size":4}]}
 {"address":"00049f30","name":"status_screen_time","note":"the screen's time with its reference, \"GPS\", \"UTC\", \"LOCL GPS\" or \"LOCAL\"","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"00049fcc","name":"status_screen_position","note":"the status screen's position and survey lines","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4},{"offset":10,"size":4}]}
-{"address":"0004a29c","name":"status_screen_tfom","note":"the status screen's TFOM, FFOM, 1PPS TI and holdover lines","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4},{"offset":10,"size":4}]}
+{"address":"00049fcc","name":"status_screen_position","note":"the status screen's position and survey lines; status_screen pushes the row byte, the snapshot and the line (0x4ae70 to 0x4ae76) and ignores D0","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4},{"offset":10,"size":4}]}
+{"address":"0004a29c","name":"status_screen_tfom","note":"the status screen's TFOM, FFOM, 1PPS TI and holdover lines; row a byte (0x4a2b4), the snapshot (0x4a2a4), the line (0x4a2a8); status_screen ignores D0","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4},{"offset":10,"size":4}]}
 {"address":"0004a42c","name":"bit_is_set","note":"value & 1 << bit","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":2}]}
 {"address":"0004a448","name":"bits_1_to_3_any","note":"1 if any of bits 1 to 3 is set","convention":"unknown","stack":[{"offset":4,"size":2}]}
 {"address":"0004a494","name":"bits_4_5_any","note":"1 if bit 4 or 5 is set","convention":"unknown","stack":[{"offset":4,"size":2}]}
@@ -1489,7 +1489,7 @@
 {"address":"0004a4ec","name":"bits_8_9_any","note":"1 if bit 8 or 9 is set","convention":"unknown","stack":[{"offset":4,"size":2}]}
 {"address":"0004a518","name":"status_screen_mode_suffix","note":"the status screen's suffix for the power-up sub-state","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4},{"offset":10,"size":4}]}
 {"address":"0004a636","name":"status_snapshot","note":"gathers the loop's stage, mode and suffix indexes, the TI, TFOM, FFOM, holdover, time zone, date and satellites into a record, under a raised interrupt mask","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"0004a8ea","name":"status_screen","note":"prints the receiver status screen","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1},{"offset":10,"size":4},{"offset":14,"size":4}]}
+{"address":"0004a8ea","name":"status_screen","note":"prints the receiver status screen; clear 1 clears the terminal first (0x4a908)","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1},{"offset":10,"size":4},{"offset":14,"size":4}]}
 {"address":"0004afd6","name":"status_screen_print","note":"prints the status screen, for :SYSTem:PRINt?","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":4},{"offset":10,"size":4}]}
 {"address":"0004aff2","name":"uptime_elapsed","note":"get_uptime() less *start into *elapsed, restarting *start if the clock went back","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0004b01e","name":"raim_monitor","note":"the RAIM alarm's state machine, counting raim_detected","convention":"unknown"}

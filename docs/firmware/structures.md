@@ -963,6 +963,15 @@ decompiler, given no type for it, splits the record into two locals,
 which a compiler need not keep adjacent; the names file types it
 (`local` rows).
 
+## A double's decimal digits
+
+`scpi_double_to_decimal` (`0x24e18`) writes a 20-byte record at A0,
+`scpi_decimal`: the sign word at `+0`, sixteen ASCII digits at `+2`,
+and at `+0x12` the exponent of 0.d1d2...  `scpi_real_to_text`
+(`0x2553a`) keeps it on its stack, typed by a `local` row; untyped,
+the decompiler took it for a single byte, and gcc's copy of the routine
+wrote the record over the buffer pointer beside it.
+
 ## The health monitor's supplies and EFC
 
 `hmon_task` (`0x247d4`) calls `hmon_check_supplies` (`0x23d80`) every

@@ -602,6 +602,15 @@ decompiler wrote it, and reported.
   scan of the image for a call followed by a conditional branch found
   the routines that return flags; those called only from assembly
   (the kernel's checks, the Forth words, the boot code) need none.
+- A call to a routine whose convention lists `results` -- the pSOS
+  bindings, `psos_call` and `psos_io_call`, whose services return in D0
+  to D3, A0 and A1 past the error in D7 -- gives the registers the C
+  reads after it the routine's.  The decompiler takes each as a register
+  the call happens to change, `extraout_A0`, which nothing set
+  (`psos_ident`'s id, `psos_my_pid`); the bridge keeps each listed
+  register in `__ghidra_result_d0` and the like right after its `jsr`,
+  and each `extraout_` variable the C reads is assigned from it after
+  the call.
 - A negative constant an equality test compares with a narrower
   unsigned operand is that operand's value, `!= 0xff`: the decompiler
   prints the byte as -1, but C promotes the operand to int

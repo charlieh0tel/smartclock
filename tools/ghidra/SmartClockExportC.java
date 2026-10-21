@@ -202,6 +202,9 @@ public class SmartClockExportC extends GhidraScript {
 		#define __ghidra_also(var, v, n) (var = __ghidra_as(__typeof__(var), __ghidra_sub(sizeof var, v, n)))
 		/* the condition codes a routine that returns them left, as its bridge keeps them */
 		unsigned short __ghidra_ccr;
+		/* the registers a routine also leaves results in, as its bridge keeps them */
+		unsigned long __ghidra_result_d0, __ghidra_result_d1, __ghidra_result_d2,
+			__ghidra_result_d3, __ghidra_result_a0, __ghidra_result_a1;
 		#define __ghidra_flag(bit) ((__ghidra_ccr & (bit)) != 0)
 		#define CARRY1(a, b) ((unsigned char)((a) + (b)) < (unsigned char)(a))
 		#define CARRY2(a, b) ((unsigned short)((a) + (b)) < (unsigned short)(a))
@@ -580,6 +583,9 @@ public class SmartClockExportC extends GhidraScript {
 			.append(quoted("\tmovem.l " + SAVED + ",-(%sp)"));
 		// the condition codes first, before the moves that give the result set them
 		String keep = returnsConditionCodes(function) ? line("move.w %ccr," + CONDITION_CODES) : "";
+		for (String register : results(function)) {
+			keep += line("move.l %" + register.toLowerCase() + "," + RESULT_PREFIX + register.toLowerCase());
+		}
 		for (String part : (load.toString() + line("jsr " + name) + keep + give
 				+ line("movem.l (%sp)+," + SAVED) + line("rts")).split("\n")) {
 			assembly.append(quoted(part));
@@ -1099,6 +1105,7 @@ public class SmartClockExportC extends GhidraScript {
 		unsignedEqualities(tokens, edits);
 		resultCopies(tokens, results.getHighFunction(), edits);
 		conditionCodeResults(tokens, results.getHighFunction(), edits);
+		registerResults(tokens, results.getHighFunction(), edits);
 		switchLabels(tokens, edits);
 		List<Boolean> signedPieces = new ArrayList<>();
 		for (int i = 0; i < tokens.size(); i++) {
@@ -1303,6 +1310,9 @@ public class SmartClockExportC extends GhidraScript {
 	/** Where a bridge keeps the condition codes its routine returns, a C global. */
 	private static final String CONDITION_CODES = "__ghidra_ccr";
 	private static final Pattern RETURNS_CCR = Pattern.compile("\"returns\":\"ccr\"");
+	private static final Pattern RESULTS = Pattern.compile("\"results\":\\[([^\\]]*)\\]");
+	/** Where a bridge keeps a register its routine also leaves a result in, by its name. */
+	private static final String RESULT_PREFIX = "__ghidra_result_";
 	/** Each condition-code flag's register, by its bit in the CCR. */
 	private static final Map<String, Integer> FLAG_BITS =
 		Map.of("CF", 0x1, "VF", 0x2, "ZF", 0x4, "NF", 0x8, "XF", 0x10);
@@ -1321,9 +1331,7 @@ public class SmartClockExportC extends GhidraScript {
 	 * the call to keep the flags it had before, an INDIRECT at the call, so
 	 * the C tests a compare made before it.  After the call each such
 	 * variable is assigned its flag from __ghidra_ccr, where the routine's
-	 * bridge keeps the condition codes: a call with no result becomes
-	 * call(...), flag = __ghidra_flag(bit), and one with a result
-	 * ({ __auto_type __c = call(...); flag = ...; __c; }).
+	 * bridge keeps the condition codes.
 	 */
 	private void conditionCodeResults(List<ClangToken> tokens, HighFunction high, TokenEdits edits) {
 		for (int i = 0; i < tokens.size(); i++) {
@@ -1333,32 +1341,98 @@ public class SmartClockExportC extends GhidraScript {
 				|| !returnsConditionCodes(getFunctionAt(call.getInput(0).getAddress()))) {
 				continue;
 			}
-			StringBuilder flags = new StringBuilder();
-			for (Iterator<PcodeOpAST> ops = high.getPcodeOps(call.getSeqnum().getTarget()); ops.hasNext();) {
-				PcodeOp op = ops.next();
-				Varnode output = op.getOutput();
-				Register register = output == null ? null : currentProgram.getRegister(output);
+			List<String> assignments = new ArrayList<>();
+			for (PcodeOp op : indirects(high, call)) {
+				Register register = currentProgram.getRegister(op.getOutput());
 				Integer bit = register == null ? null : FLAG_BITS.get(register.getName());
-				String name = output == null || output.getHigh() == null ? null : output.getHigh().getName();
-				if (op.getOpcode() == PcodeOp.INDIRECT && bit != null && name != null
-					&& !name.equals("UNNAMED")) {
-					flags.append(", " + name + " = __ghidra_flag(" + bit + ")");
+				String name = namedHigh(op.getOutput());
+				if (bit != null && name != null) {
+					assignments.add(name + " = __ghidra_flag(" + bit + ")");
 				}
 			}
-			int close = flags.isEmpty() ? -1 : closingParenthesis(tokens, i);
-			if (close < 0) {
+			assignAfterCall(tokens, edits, i, call, assignments);
+		}
+	}
+
+	/**
+	 * Gives each register the C reads after a call to a routine whose
+	 * convention lists it among its results the routine's: the decompiler
+	 * takes it as a register the call happens to change, extraout_, which
+	 * nothing sets (psos_ident's id in A0, psos_get_v's value in D1).
+	 * After the call each is assigned from __ghidra_result_REGISTER, where
+	 * the routine's bridge keeps it, a narrower one its low bytes.
+	 */
+	private void registerResults(List<ClangToken> tokens, HighFunction high, TokenEdits edits) {
+		for (int i = 0; i < tokens.size(); i++) {
+			PcodeOp call = tokens.get(i).getPcodeOp();
+			if (!(tokens.get(i) instanceof ClangFuncNameToken) || call == null
+				|| call.getOpcode() != PcodeOp.CALL) {
 				continue;
 			}
-			Function callee = getFunctionAt(call.getInput(0).getAddress());
-			if (callee.getReturnType() instanceof VoidDataType) {
-				edits.after.merge(tokens.get(close), flags.toString(), String::concat);
+			List<String> results = results(getFunctionAt(call.getInput(0).getAddress()));
+			List<String> assignments = new ArrayList<>();
+			for (PcodeOp op : indirects(high, call)) {
+				Register register = currentProgram.getRegister(op.getOutput());
+				String base = register == null ? null : register.getBaseRegister().getName();
+				String name = namedHigh(op.getOutput());
+				if (base != null && results.contains(base) && name != null && name.startsWith(EXTRA_OUTPUT)) {
+					assignments.add(name + " = (__typeof__(" + name + "))" + RESULT_PREFIX + base.toLowerCase());
+				}
 			}
-			else {
-				edits.before.merge(tokens.get(i), ALSO_OPEN, String::concat);
-				edits.after.merge(tokens.get(close),
-					"; " + flags.substring(2).replace(", ", "; ") + "; __c; })", String::concat);
+			assignAfterCall(tokens, edits, i, call, assignments);
+		}
+	}
+
+	/** The INDIRECTs at a call, which give the registers the decompiler takes it to change. */
+	private static List<PcodeOp> indirects(HighFunction high, PcodeOp call) {
+		List<PcodeOp> found = new ArrayList<>();
+		for (Iterator<PcodeOpAST> ops = high.getPcodeOps(call.getSeqnum().getTarget()); ops.hasNext();) {
+			PcodeOp op = ops.next();
+			if (op.getOpcode() == PcodeOp.INDIRECT && op.getOutput() != null) {
+				found.add(op);
 			}
 		}
+		return found;
+	}
+
+	/** The name of a varnode's variable in the C, or null if it has none. */
+	private static String namedHigh(Varnode varnode) {
+		String name = varnode == null || varnode.getHigh() == null ? null : varnode.getHigh().getName();
+		return name == null || name.equals("UNNAMED") ? null : name;
+	}
+
+	/**
+	 * Makes assignments right after the call whose name is tokens[name]: a
+	 * call with no result becomes call(...), a = ..., and one with a
+	 * result ({ __auto_type __c = call(...); a = ...; __c; }).
+	 */
+	private void assignAfterCall(List<ClangToken> tokens, TokenEdits edits, int name, PcodeOp call,
+			List<String> assignments) {
+		int close = assignments.isEmpty() ? -1 : closingParenthesis(tokens, name);
+		if (close < 0) {
+			return;
+		}
+		Function callee = getFunctionAt(call.getInput(0).getAddress());
+		if (callee.getReturnType() instanceof VoidDataType) {
+			edits.after.merge(tokens.get(close), ", " + String.join(", ", assignments), String::concat);
+		}
+		else {
+			edits.before.merge(tokens.get(name), ALSO_OPEN, String::concat);
+			edits.after.merge(tokens.get(close), "; " + String.join("; ", assignments) + "; __c; })",
+				String::concat);
+		}
+	}
+
+	/** The registers a function's trusted convention says it also leaves results in. */
+	private List<String> results(Function function) {
+		String convention = function == null ? null : recorded(CONVENTION_MAP, function);
+		Matcher results = convention == null ? null : RESULTS.matcher(convention);
+		Matcher confidence = convention == null ? null : CONFIDENCE.matcher(convention);
+		if (results == null || !results.find() || !confidence.find()
+			|| !TRUSTED.contains(confidence.group(1))) {
+			return List.of();
+		}
+		return List.of(results.group(1).replace("\"", "").split(","));
 	}
 
 	/** The registers a function's trusted convention says its result is also in, high first. */

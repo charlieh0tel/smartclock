@@ -20,6 +20,8 @@
 #   copies      registers the result is also left in, high first
 #               (A0:A1); SmartClockExportC.java gives a caller's C them
 #   returns     ccr, for the condition codes
+#   results     registers it also leaves results in, past out;
+#               SmartClockExportC.java gives a caller's C them
 #   error       items: a register, a value, what it means
 #   preserves   registers
 #   family      the routines it belongs with
@@ -144,8 +146,8 @@
 #
 # the real-time kernel, docs/firmware/psos.md; the console's words name
 # the services
-0x16f1e	function	psos_call	psos.md	trap #3, the service in D7, the error back in D7		convention=register; confidence=read; in=D7 char service, D0 int d0, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1; out=D7 int error; returns=ccr; family=psos-binding
-0x16f36	function	psos_io_call	psos.md	trap #4, the function in D7, the device in D0's high byte		convention=register; confidence=read; in=D7 char function, D0 int device, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1; out=D7 int error; returns=ccr; family=psos-binding
+0x16f1e	function	psos_call	psos.md	trap #3, the service in D7, the error back in D7		convention=register; confidence=read; in=D7 char service, D0 int d0, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1; out=D7 int error; returns=ccr; results=D0, D1, D2, D3, A0, A1; family=psos-binding
+0x16f36	function	psos_io_call	psos.md	trap #4, the function in D7, the device in D0's high byte		convention=register; confidence=read; in=D7 char function, D0 int device, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1; out=D7 int error; returns=ccr; results=D0, D1, D2, D3, A0, A1; family=psos-binding
 0x16f50	function	psos_pack_name	psos.md	packs a 4-character name into D0		convention=other; confidence=read; out=D0 int name; family=psos-binding
 0x13422	function	enter_supervisor	psos.md	trap #7, then a jump back through the return address it pops; returns the caller's status register in D0		convention=other; confidence=read; out=D0 int status; family=supervisor
 0x13378	function	set_interrupt_mask	psos.md	sets SR's interrupt mask from the argument, returns the old SR	uint16_t set_interrupt_mask(uint16_t sr)

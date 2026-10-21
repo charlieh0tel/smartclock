@@ -209,7 +209,7 @@ public class SmartClockSetup extends GhidraScript {
 	private static final String ITEM_SEPARATOR = ", ";
 	/** The convention's keys, in the order the comment gives them. */
 	private static final List<String> CONVENTION_KEYS = List.of("convention", "confidence", "in",
-		"out", "copies", "returns", "error", "preserves", "family");
+		"out", "copies", "returns", "results", "error", "preserves", "family");
 	/** A key's own confidence: KEY.confidence. */
 	private static final String CONFIDENCE_SUFFIX = ".confidence";
 	private static final String CONFIDENCE = "confidence";
@@ -240,7 +240,7 @@ public class SmartClockSetup extends GhidraScript {
 	private static final String SIGNATURE_MAP = "SmartClock.signature";
 	/** The keys that SIGNATURE_MAP gives, in its order. */
 	private static final List<String> SIGNATURE_KEYS =
-		List.of("out", "copies", "returns", "error", "preserves");
+		List.of("out", "copies", "returns", "results", "error", "preserves");
 	/** Each recovered switch, by its jmp: "TABLE FIRST ENTRIES", for SmartClockExportC.java. */
 	private static final String SWITCH_MAP = "SmartClock.switch";
 	/** The tag every function that is not C carries. */
@@ -1307,7 +1307,7 @@ public class SmartClockSetup extends GhidraScript {
 			switch (key) {
 				case "in", "out" -> json = itemsJson(value, false);
 				case "error" -> json = itemsJson(value, true);
-				case "preserves" -> json = "[" + String.join(",", items(value).stream()
+				case "preserves", "results" -> json = "[" + String.join(",", items(value).stream()
 					.map(SmartClockSetup::jsonString).toList()) + "]";
 				default -> json = jsonString(value);
 			}

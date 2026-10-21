@@ -52,6 +52,9 @@ extern code *UNRECOVERED_JUMPTABLE;
 #define __ghidra_also(var, v, n) (var = __ghidra_as(__typeof__(var), __ghidra_sub(sizeof var, v, n)))
 /* the condition codes a routine that returns them left, as its bridge keeps them */
 unsigned short __ghidra_ccr;
+/* the registers a routine also leaves results in, as its bridge keeps them */
+unsigned long __ghidra_result_d0, __ghidra_result_d1, __ghidra_result_d2,
+	__ghidra_result_d3, __ghidra_result_a0, __ghidra_result_a1;
 #define __ghidra_flag(bit) ((__ghidra_ccr & (bit)) != 0)
 #define CARRY1(a, b) ((unsigned char)((a) + (b)) < (unsigned char)(a))
 #define CARRY2(a, b) ((unsigned short)((a) + (b)) < (unsigned short)(a))
@@ -7104,7 +7107,7 @@ __regcall int mutex_acquire(void *mutex /* a1 */)
   int extraout_A1;
   bool bVar2;
   
-  iVar1 = psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,mutex);
+  iVar1 = ({ __auto_type __c = psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
   if (extraout_A0 == *(int *)((int)a1 + 8)) {
     iVar1 = CONCAT22((short)((uint)iVar1 >> 0x10),0x80);
     *(int *)((int)a1 + 0xc) = *(int *)((int)a1 + 0xc) + 1;
@@ -7114,7 +7117,7 @@ __regcall int mutex_acquire(void *mutex /* a1 */)
   }
   else {
     bVar2 = false;
-    iVar1 = ({ __auto_type __c = psos_call('\x18',0,0,unaff_D2,unaff_D3,*(void **)((int)a1 + 4),a1); bVar2 = __ghidra_flag(4); __c; });
+    iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call('\x18',0,0,unaff_D2,unaff_D3,*(void **)((int)a1 + 4),a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A1 = (__typeof__(extraout_A1))__ghidra_result_a1; __c; });
     if (bVar2) {
       *(int *)(extraout_A1 + 8) = extraout_A0;
     }
@@ -7194,7 +7197,7 @@ __regcall int mutex_release(void *mutex /* a1 */)
   int extraout_A0;
   void *a1;
   
-  iVar1 = psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,mutex);
+  iVar1 = ({ __auto_type __c = psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
   if (extraout_A0 == *(int *)((int)a1 + 8)) {
     if (*(int *)((int)a1 + 0xc) == 0) {
       *(undefined4 *)((int)a1 + 8) = 0;
@@ -9598,7 +9601,7 @@ int pps_init(void)
   void *in_A1;
   
   pps_exchange = 0;
-  iVar2 = psos_call('\x14',0x31707073,0,0,unaff_D3,in_A0,in_A1);
+  iVar2 = ({ __auto_type __c = psos_call('\x14',0x31707073,0,0,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
   if (iVar2 == 0) {
     pps_exchange = extraout_A0;
     mutex_clear(&pps_message);
@@ -19749,10 +19752,10 @@ void task_count_tick(void)
 /* trap #3, the service in D7, the error back in D7
    Not a C function (register; read): its arguments and results in registers.  In: D7 char service,
    D0 int d0, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1.  Out: D7 int error.
-   Returns: ccr.
+   Returns: ccr.  Results: D0, D1, D2, D3, A0, A1.
    psos.md */
 
-/* out D7 int error; returns ccr */
+/* out D7 int error; returns ccr; results D0, D1, D2, D3, A0, A1 */
 __regcall int psos_call(char service /* d7 */,int d0 /* d0 */,int d1 /* d1 */,int d2 /* d2 */,int d3 /* d3 */,void *a0 /* a0 */,void *a1 /* a1 */)
 
 {
@@ -19804,6 +19807,12 @@ __asm__(
 	"	move.l (72,%sp),%a1\n"
 	"	jsr psos_call\n"
 	"	move.w %ccr,__ghidra_ccr\n"
+	"	move.l %d0,__ghidra_result_d0\n"
+	"	move.l %d1,__ghidra_result_d1\n"
+	"	move.l %d2,__ghidra_result_d2\n"
+	"	move.l %d3,__ghidra_result_d3\n"
+	"	move.l %a0,__ghidra_result_a0\n"
+	"	move.l %a1,__ghidra_result_a1\n"
 	"	move.l %d7,%d0\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
@@ -19817,10 +19826,10 @@ __asm__(
 /* trap #4, the function in D7, the device in D0's high byte
    Not a C function (register; read): its arguments and results in registers.  In: D7 char function,
    D0 int device, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1.  Out: D7 int error.
-   Returns: ccr.
+   Returns: ccr.  Results: D0, D1, D2, D3, A0, A1.
    psos.md */
 
-/* out D7 int error; returns ccr */
+/* out D7 int error; returns ccr; results D0, D1, D2, D3, A0, A1 */
 __regcall int psos_io_call(char function /* d7 */,int device /* d0 */,int d1 /* d1 */,int d2 /* d2 */,int d3 /* d3 */,void *a0 /* a0 */,void *a1 /* a1 */)
 
 {
@@ -19874,6 +19883,12 @@ __asm__(
 	"	move.l (72,%sp),%a1\n"
 	"	jsr psos_io_call\n"
 	"	move.w %ccr,__ghidra_ccr\n"
+	"	move.l %d0,__ghidra_result_d0\n"
+	"	move.l %d1,__ghidra_result_d1\n"
+	"	move.l %d2,__ghidra_result_d2\n"
+	"	move.l %d3,__ghidra_result_d3\n"
+	"	move.l %a0,__ghidra_result_a0\n"
+	"	move.l %a1,__ghidra_result_a1\n"
 	"	move.l %d7,%d0\n"
 	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
 	"	rts\n"
@@ -19959,7 +19974,7 @@ ulong psos_create(char *name,ulong a,ulong priority,ulong stack_a,ulong stack_b,
   void *a1;
   
   d0 = psos_pack_name();
-  uVar1 = psos_call('\x01',d0,a,priority,CONCAT22(__ghidra_piece(unsigned short, stack_a, 2),__ghidra_piece(unsigned short, stack_b, 2)),e,a1);
+  uVar1 = ({ __auto_type __c = psos_call('\x01',d0,a,priority,CONCAT22(__ghidra_piece(unsigned short, stack_a, 2),__ghidra_piece(unsigned short, stack_b, 2)),e,a1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
   if ((uVar1 == 0) && (task != (ulong *)0x0)) {
     *task = extraout_A0;
   }
@@ -20007,7 +20022,7 @@ ulong psos_ident(char *name,ulong *id,uchar *b)
   
   d0 = psos_pack_name();
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = psos_call('\x03',d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; });
+  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call('\x03',d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; extraout_D0b = (__typeof__(extraout_D0b))__ghidra_result_d0; __c; });
   if (bVar2) {
     if (id != (ulong *)0x0) {
       *id = extraout_A0;
@@ -20036,7 +20051,7 @@ ulong psos_my_pid(void)
   ulong extraout_A0;
   void *in_A1;
   
-  psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
+  ({ __auto_type __c = psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
   return extraout_A0;
 }
 
@@ -20116,7 +20131,7 @@ ulong psos_priority(ulong task,ulong priority,uchar *old)
   ulong uVar1;
   void *in_A1;
   
-  uVar1 = psos_call('\a',priority,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1);
+  uVar1 = ({ __auto_type __c = psos_call('\a',priority,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1); extraout_D0b = (__typeof__(extraout_D0b))__ghidra_result_d0; __c; });
   if (old != (uchar *)0x0) {
     *old = extraout_D0b;
   }
@@ -20159,7 +20174,7 @@ ulong psos_mode(ulong a,ulong b,uchar *old)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = psos_call(' ',a,b,unaff_D2,unaff_D3,in_A0,in_A1);
+  uVar1 = ({ __auto_type __c = psos_call(' ',a,b,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0b = (__typeof__(extraout_D0b))__ghidra_result_d0; __c; });
   if (old != (uchar *)0x0) {
     *old = extraout_D0b;
   }
@@ -20196,7 +20211,7 @@ ulong psos_service_8(ulong a,ulong b,ulong c,ulong d,ulong *out)
   ulong extraout_A0;
   void *in_A1;
   
-  uVar1 = psos_call('\b',d,a,b,c,in_A0,in_A1);
+  uVar1 = ({ __auto_type __c = psos_call('\b',d,a,b,c,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
   if ((uVar1 == 0) && (out != (ulong *)0x0)) {
     *out = extraout_A0;
   }
@@ -20272,7 +20287,7 @@ ulong psos_service_35(ulong a,ulong b,ulong c,ulong *out)
   ulong extraout_A0;
   void *in_A1;
   
-  uVar1 = psos_call('#',b,c,unaff_D2,unaff_D3,(void *)a,in_A1);
+  uVar1 = ({ __auto_type __c = psos_call('#',b,c,unaff_D2,unaff_D3,(void *)a,in_A1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
   if (out != (ulong *)0x0) {
     *out = extraout_A0;
   }
@@ -20312,7 +20327,7 @@ ulong psos_service_37(ulong a,ulong b,ulong *out)
   void *in_A1;
   ulong extraout_A1;
   
-  uVar1 = psos_call('%',b,in_D1,unaff_D2,unaff_D3,(void *)a,in_A1);
+  uVar1 = ({ __auto_type __c = psos_call('%',b,in_D1,unaff_D2,unaff_D3,(void *)a,in_A1); extraout_A1 = (__typeof__(extraout_A1))__ghidra_result_a1; __c; });
   if ((uVar1 == 0) && (out != (ulong *)0x0)) {
     *out = extraout_A1;
   }
@@ -20354,7 +20369,7 @@ ulong psos_create_x(char *name,ulong a,ulong b,ulong *exchange)
   void *a1;
   
   d0 = psos_pack_name();
-  uVar1 = psos_call('\x14',d0,a,b,unaff_D3,a0,a1);
+  uVar1 = ({ __auto_type __c = psos_call('\x14',d0,a,b,unaff_D3,a0,a1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
   if ((uVar1 == 0) && (exchange != (ulong *)0x0)) {
     *exchange = extraout_A0;
   }
@@ -20382,7 +20397,7 @@ ulong psos_service_21(char *name,ulong *out1,ulong *out2,ulong *out3)
   
   d0 = psos_pack_name();
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = psos_call('\x15',d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; });
+  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call('\x15',d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
   if (bVar2) {
     if (out1 != (ulong *)0x0) {
       *out1 = extraout_A0;
@@ -20472,7 +20487,7 @@ ulong psos_service_18(ulong a,ulong b,ulong c,uchar *out1,uchar *out2)
   bool bVar2;
   
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = psos_call('\x12',c,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b); bVar2 = __ghidra_flag(4); __c; });
+  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call('\x12',c,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b); bVar2 = __ghidra_flag(4); __c; }); extraout_D0b = (__typeof__(extraout_D0b))__ghidra_result_d0; extraout_D1b = (__typeof__(extraout_D1b))__ghidra_result_d1; __c; });
   if (bVar2) {
     if (out1 != (uchar *)0x0) {
       *out1 = extraout_D0b;
@@ -20535,7 +20550,7 @@ ulong psos_wait_v(ulong a,ulong b,ulong c,ulong *out)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = psos_call('\x1a',c,a,b,unaff_D3,in_A0,in_A1);
+  uVar1 = ({ __auto_type __c = psos_call('\x1a',c,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; __c; });
   if (out != (ulong *)0x0) {
     *out = extraout_D1;
   }
@@ -20558,7 +20573,7 @@ ulong psos_get_v(ulong a,ulong b,ulong *out)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = psos_call('\x1b',in_D0,a,b,unaff_D3,in_A0,in_A1);
+  uVar1 = ({ __auto_type __c = psos_call('\x1b',in_D0,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; __c; });
   if (out != (ulong *)0x0) {
     *out = extraout_D1;
   }
@@ -20604,7 +20619,7 @@ ulong psos_service_30(ulong *out1,ulong *out2,ushort *out3)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = psos_call('\x1e',in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
+  uVar1 = ({ __auto_type __c = psos_call('\x1e',in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0 = (__typeof__(extraout_D0))__ghidra_result_d0; extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; __c; });
   if (out1 != (ulong *)0x0) {
     *out1 = extraout_D0;
   }
@@ -23060,8 +23075,8 @@ __pforth undefined4 forth_read_line(forth_user_end user /* a5 */,char *input /* 
     __m68k_trap(4);
     return in_D0;
   }
-  psos_call('\x04',(uint)(ushort)((forth_user_area *)(user + -0x28))->iodev,in_D1,unaff_D2,unaff_D3,
-            (void *)0x0,ADJ(user)->tib);
+  ({ __auto_type __c = psos_call('\x04',(uint)(ushort)((forth_user_area *)(user + -0x28))->iodev,in_D1,unaff_D2,unaff_D3,
+            (void *)0x0,ADJ(user)->tib); extraout_D0 = (__typeof__(extraout_D0))__ghidra_result_d0; __c; });
   return extraout_D0;
 }
 

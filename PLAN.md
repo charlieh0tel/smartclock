@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1211 run, 833 agree, 224 reach what the
-     harness does not model and are skipped, and 154 differ, in the
+     original reads them: of 1211 run, 847 agree, 229 reach what the
+     harness does not model and are skipped, and 135 differ, in the
      function or in gcc's callees.  The harness models what lies
      outside memory at its boundary, the same for both calls
      (`docs/firmware/README.md`): `trap #7` runs the image's handler;
@@ -787,7 +787,9 @@ view cannot drift apart.  The library, bottom up:
      `psos_io_call` takes every register, as `psos_call` does, so the
      I/O stubs pass their buffer and length; and gcc keeps a frame
      pointer, which `psos_pack_name` reads its caller's argument
-     through (222 to 154).
+     through (222 to 154).  The kernel's results in D0 to D3, A0 and
+     A1, past the error in D7, reach the C through the bindings'
+     bridges, as the condition codes do (154 to 135).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

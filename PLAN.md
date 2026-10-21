@@ -1276,9 +1276,12 @@ view cannot drift apart.  The library, bottom up:
      the harness read only prototypes on one line, and Ghidra wraps a
      long one, after its result or before its parameters, so 43
      functions had never run; of them 36 agree, 6 the image's own code
-     faults on (skipped), and `clamp_double_to_step_and_limits` differs
-     in `float_status` (1272 agreeing, 7 skipped, 10 known, 1
-     differing).
+     faults on (skipped), and `clamp_double_to_step_and_limits`
+     differed in `float_status`: the decompiler took its step routine's
+     double result for an int and lost D1 (0x325d2), and dropped the
+     steps it returns.  Written by hand, with the step record a
+     `scpi_double_step` and given cases of real ones, it agrees (1273
+     agreeing, 7 skipped, 10 known, none differing).
      Then the plan for regrouping all 1300 C functions, hand-written
      or not, by subject in four layers, platform, devices, services and
      applications, each calling only its own or a lower one:

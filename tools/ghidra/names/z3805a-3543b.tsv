@@ -1599,7 +1599,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x323b2	function	float_max_of	context	the larger of two floats at pointers
 0x323d6	function	float_min_of	context	the smaller of two floats at pointers
 0x3244a	function	clamp_float_to_step_double	context	validate for :GPS:ADELay and the positions: clamps a float and rounds it to its step in double	int32_t clamp_float_to_step_double (float *param_1,undefined4 param_2,float *param_3,float *param_4,int param_5, int param_6)
-0x32596	function	clamp_double_to_step_and_limits	context	clamps a double to its minimum and maximum and rounds it to its step
+0x32596	function	clamp_double_to_step_and_limits	context	clamps a double to its minimum and maximum and rounds it to its step	int32_t clamp_double_to_step_and_limits(double *value, uint32_t index, double *minimum, double *maximum, scpi_double_step *step, int32_t source)
 0x326d2	function	clamp_double_to_limits	context	clamps a double to its minimum and maximum
 0x32b5e	function	nv_slot_valid	context	0 if the current NV slot holds S, a good checksum and the firmware revision 3543B
 0x32e40	function	idn_model_default	context	sets the *IDN? model to Z3805A

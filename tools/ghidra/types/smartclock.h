@@ -1123,6 +1123,19 @@ typedef struct scpi_step {
   scpi_step_function* function; /* +0x04 */
 } scpi_step;
 
+struct scpi_double_step;
+/* A double step's routine: the step for value, the setting at index,
+ * in D0:D1 (0x325c8, both stored at 0x325d2). */
+typedef double scpi_double_step_function(struct scpi_double_step* step,
+                                         double* value, int32_t index);
+/* A double parameter's step, as clamp_double_to_step_and_limits reads
+ * it: its routine follows 8 bytes, where scpi_step's follows 4
+ * (0x325c4). */
+typedef struct scpi_double_step {
+  uint32_t value[2];                   /* +0x00: not read there */
+  scpi_double_step_function* function; /* +0x08 */
+} scpi_double_step;
+
 /* The packed decimal record scpi_number_to_bcd fills and
  * scpi_bcd_to_double reads (docs/scpi/README.md, "Parameters and
  * responses"): two digits a byte, and the exponent of the 16 digits'

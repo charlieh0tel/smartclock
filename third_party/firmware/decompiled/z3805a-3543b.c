@@ -1834,6 +1834,15 @@ struct scpi_decimal {
     int16_t exponent;
 };
 
+typedef struct scpi_double_step scpi_double_step, *Pscpi_double_step;
+
+typedef double (scpi_double_step_function)(struct scpi_double_step *, double *, int32_t);
+
+struct scpi_double_step {
+    uint32_t value[2];
+    scpi_double_step_function *function;
+};
+
 typedef struct scpi_engine_arena scpi_engine_arena, *Pscpi_engine_arena;
 
 struct scpi_engine_arena {
@@ -2595,6 +2604,7 @@ _Static_assert(sizeof(sci_exchange_state) == 56, "sci_exchange_state");
 _Static_assert(sizeof(sci_settings_record) == 6, "sci_settings_record");
 _Static_assert(sizeof(scpi_action_param) == 6, "scpi_action_param");
 _Static_assert(sizeof(scpi_decimal) == 20, "scpi_decimal");
+_Static_assert(sizeof(scpi_double_step) == 12, "scpi_double_step");
 _Static_assert(sizeof(scpi_engine_arena) == 8, "scpi_engine_arena");
 _Static_assert(sizeof(scpi_engine_array) == 8, "scpi_engine_array");
 _Static_assert(sizeof(scpi_engine_array_record) == 6, "scpi_engine_array_record");
@@ -6331,9 +6341,9 @@ float clamp_float_to_step_and_limits
 int32_t clamp_float_to_step_double
                   (float *param_1,uint32_t param_2,float *param_3,float *param_4,int32_t param_5,
                   int32_t param_6);
-void clamp_double_to_step_and_limits
-               (double *param_1,uint32_t param_2,double *param_3,double *param_4,int32_t param_5,
-               uint32_t param_6);
+int32_t clamp_double_to_step_and_limits
+                  (double *value,uint32_t index,double *minimum,double *maximum,
+                  scpi_double_step *step,int32_t source);
 uint64_t
 clamp_double_to_limits(double *param_1,double *param_2,double *param_3,uint32_t param_4);
 void nv_slot_erase(uint8_t param_1);
@@ -56374,12 +56384,13 @@ LAB_0003250c:
 
 
 /* 00032596 */
+#if 0 /* the decompiler's reading; rewritten in scpi.c */
 
 /* clamps a double to its minimum and maximum and rounds it to its step */
 
-void clamp_double_to_step_and_limits
-               (double *param_1,uint32_t param_2,double *param_3,double *param_4,int32_t param_5,
-               uint32_t param_6)
+int32_t clamp_double_to_step_and_limits
+                  (double *value,uint32_t index,double *minimum,double *maximum,
+                  scpi_double_step *step,int32_t source)
 
 {
   int32_t iVar1;
@@ -56394,9 +56405,9 @@ void clamp_double_to_step_and_limits
   double dStack_14;
   uint64_t local_c;
   
-  clamp_double(param_1,&uStack_3c,param_3,param_4,(uint8_t)param_6);
-  dStack_34 = __ghidra_as(double, (**(code **)(param_5 + 8))(param_5,&uStack_3c,param_2));
-  local_c = __ghidra_bits(__ghidra_as(double, CONCAT44(uStack_3c,uStack_38)));
+  clamp_double(value,&uStack_3c,minimum,maximum,(uint8_t)source);
+  dStack_34 = __ghidra_as(double, (*(code *)step->function)(step,&uStack_3c,index));
+  local_c = __ghidra_as(double, CONCAT44(uStack_3c,uStack_38));
   dStack_24 = dStack_34;
   dStack_1c = double_divide_reversed_pointers(&dStack_24,(double *)&local_c);
   iVar1 = double_compare(1000000000.0,dStack_1c);
@@ -56406,7 +56417,7 @@ void clamp_double_to_step_and_limits
   }
   double_multiply_in_place(&dStack_24,1000.0);
 LAB_00032648:
-  iVar1 = double_compare(0.0,__ghidra_as(double, local_c));
+  iVar1 = double_compare(0.0,local_c);
   if (iVar1 < 0) {
     uStack_2c = 0xbfe00000;
   }
@@ -56417,11 +56428,12 @@ LAB_00032648:
   y = double_multiply_pointers(&dStack_24,(double *)&uStack_2c);
   double_add_in_place((double *)&local_c,y);
   double_divide_in_place((double *)&local_c,dStack_24);
-  local_c = __ghidra_bits(modf(__ghidra_as(double, local_c),&dStack_14));
-  double_to_integer(dStack_14);
-  return;
+  local_c = modf(local_c,&dStack_14);
+  iVar1 = double_to_integer(dStack_14);
+  return iVar1;
 }
 
+#endif
 
 /* 000326d2 */
 

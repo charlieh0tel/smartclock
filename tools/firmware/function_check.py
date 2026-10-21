@@ -168,7 +168,16 @@ SPECIAL_DOUBLES = [5e-324, 1e-310, float("inf"), float("nan")]
 # integer power, odd and even, which pow takes the sign of apart
 # (double_is_integer, 0x60e68), and a fraction.
 POWERS = [(-2.0, 3.0), (-2.0, 2.0), (-0.5, 3.0), (2.0, 0.5), (0.0, 2.0)]
+# Double step records as clamp_double_to_step_and_limits reads them
+# (scpi_double_step): a step, then load_double (0x322aa) as the routine,
+# which returns the record's own step; one so fine the steps pass 1e9,
+# which coarsens it (0x32612).
+LOAD_DOUBLE = 0x322AA
+DOUBLE_STEPS = [0.5, 0.001, 1e-12, 100.0]
 GIVEN_CASES = {
+    "clamp_double_to_step_and_limits": [
+        {4: struct.pack(">dI", step, LOAD_DOUBLE)} for step in DOUBLE_STEPS
+    ],
     "pforth_define_word": [{2: arguments, 3: results} for arguments, results in WORD_COUNTS],
     "bytes_equal_n": [dict(enumerate(arguments)) for arguments in SAME_LENGTH],
     "double_to_digits": [{1: count, 5: mode} for count, mode in DIGITS],

@@ -6149,13 +6149,13 @@ undefined4 double_is_integer(uint param_1,uint param_2,uint *param_3);
 double double_truncate_sixteenths(double value);
 double pow(double x,double y);
 double sqrt(double x);
-undefined8 installer_mutex_acquire(void);
-undefined4 installer_mutex_release(void);
+int installer_mutex_acquire(void *mutex) __asm__("c_installer_mutex_acquire");
+int installer_mutex_release(void *mutex) __asm__("c_installer_mutex_release");
 void installer_exception_hook_reset(void);
 void * installer_exception_hook_get(void);
 undefined8 installer_default_exception(void);
 void installer_print_exception(ushort param_1,undefined4 param_2,ushort param_3,undefined4 param_4);
-char * installer_exception_name(ushort param_1);
+char * installer_exception_name(uint16_t vector);
 void installer_periodic_interrupt(void);
 void installer_periodic_interrupt_enable(void);
 void installer_qsm_init(void);
@@ -6163,15 +6163,15 @@ void installer_gpt_init(void);
 void installer_start_nothing(void);
 void installer_system_init(void);
 void installer_start(void);
-void installer_enter_supervisor_mode(void);
-uint16_t installer_set_interrupt_mask(undefined2 param_1);
+uint16_t installer_enter_supervisor_mode(void);
+uint16_t installer_set_interrupt_mask(uint16_t sr);
 undefined2 installer_trap_7(void);
-uint16_t installer_enter_supervisor(void);
+int installer_enter_supervisor(void) __asm__("c_installer_enter_supervisor");
 void installer_float_exception_report(uint param_1,undefined4 param_2);
 void installer_return(void);
 void installer_entry(void);
 void installer_program_exit(uint param_1);
-void installer_program_end_report(uint value);
+void installer_program_end_report(uint value,uint32_t return_address);
 int installer_kernel_dispatch_service();
 void installer_kernel_dispatch_io(char function, int device) __asm__("c_installer_kernel_dispatch_io");
 int installer_kernel_switch_task();
@@ -6230,18 +6230,17 @@ int installer_kernel_queue_remove();
 int installer_kernel_init();
 int installer_kernel_region_init();
 int installer_kernel_return_from_interrupt();
-void installer_psos_call(void);
-undefined4 installer_psos_pack_name(void);
-undefined4 installer_psos_my_pid(void);
-undefined4 installer_psos_delete(undefined4 param_1);
+int installer_psos_call(char service, int d0, int d1, int d2, int d3, void *a0, void *a1) __asm__("c_installer_psos_call");
+int installer_psos_pack_name(void) __asm__("c_installer_psos_pack_name");
+ulong installer_psos_my_pid(void);
+ulong installer_psos_delete(ulong task);
 ulong installer_psos_pause(ulong a);
-undefined4
-installer_psos_create_x(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4);
-undefined4 installer_psos_send_x(undefined4 param_1,undefined4 param_2);
+ulong installer_psos_create_x(char *name,ulong a,ulong b,ulong *exchange);
+ulong installer_psos_send_x(ulong exchange,void *message);
 ulong installer_psos_signal_v(ulong variable,ulong value);
 ulong installer_psos_wait_v(ulong a,ulong b,ulong c,ulong *out);
-undefined4 installer_psos_get_v(undefined4 param_1,undefined4 param_2,undefined4 *param_3);
-undefined4 installer_psos_service_29(void);
+ulong installer_psos_get_v(ulong a,ulong b,ulong *out);
+ulong installer_psos_service_29(void);
 int installer_gp_port_select(char param_1);
 void installer_duartb_mode_from_settings(void);
 void installer_duartb_baud_from_settings(void);
@@ -6249,7 +6248,7 @@ byte installer_duartb_putc_polled(byte param_1);
 undefined4 installer_drtb_getc(void);
 int installer_drtb_gets(byte *param_1,int param_2);
 void installer_drtb_putc(undefined1 param_1);
-int installer_console_write_polled(byte *param_1);
+int installer_console_write_polled(char *s);
 void installer_printf_polled(char *format,...);
 uint installer_duarta_receive(void);
 byte installer_duartb_isr(void);
@@ -6261,20 +6260,20 @@ void installer_fatal_error_with_code
                (char *param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4);
 undefined4 installer_scpi_scan_exponent(undefined4 param_1,int param_2,undefined4 *param_3);
 uint installer_scpi_char_upper(uint param_1);
-short installer_scpi_suffix_compare_tail(int param_1,undefined4 param_2,int param_3);
+short installer_scpi_suffix_compare_tail(char *suffix,int length,char *name);
 undefined4 installer_scpi_multiplier_exponent(undefined2 param_1,short param_2);
-void installer_status_event_set(int param_1,int param_2,undefined4 param_3);
+void installer_status_event_set(status_model *status,status_register *reg,int bits);
 void installer_status_condition_set(int param_1,ushort *param_2,undefined4 param_3);
 void installer_status_condition_clear(int param_1,ushort *param_2,undefined4 param_3);
-void installer_status_propagate(int param_1,int param_2);
-undefined2 installer_status_set_bit(int param_1,int param_2);
-void installer_status_apply_condition(int param_1,int param_2,undefined4 param_3);
-void installer_status_read_event(int param_1,int param_2,ushort *param_3);
-bool installer_error_queue_push(short *param_1,undefined4 param_2,undefined4 param_3);
+void installer_status_propagate(status_model *status,status_register *reg);
+int16_t installer_status_set_bit(status_model *status,int condition,int value);
+void installer_status_apply_condition(status_model *status,int condition,int param_3);
+void installer_status_read_event(status_model *status,int index,uint16_t *event);
+bool installer_error_queue_push(short *error_queue,undefined4 param_2,undefined4 param_3);
 undefined4 installer_error_message_lookup(undefined4 param_1);
 void installer_scpi_prompt(int param_1);
 void installer_status_prompt_refresh(int param_1,int param_2);
-undefined2 installer_record_checksum(int param_1,ushort param_2);
+uint16_t installer_record_checksum(void *record,uint16_t length);
 bool installer_parameter_record_read(void);
 void installer_idn_model_default(void);
 undefined2 installer_identification_record_read(void);
@@ -6282,16 +6281,17 @@ void installer_psos_config_init(void);
 void installer_trap_1(void);
 void installer_float_raise(uint param_1);
 void installer_call_atexit_functions(void);
-undefined1 * installer_memcpy(undefined1 *param_1,undefined1 *param_2,int param_3);
-char * installer_strncpy(char *param_1,char *param_2,int param_3);
+void * installer_memcpy(void *s1,void *s2,uint n);
+char * installer_strncpy(char *s1,char *s2,uint n);
 int installer_strtol(char *param_1,undefined4 *param_2,int param_3);
-int installer_toupper(int param_1);
+int installer_toupper(int c);
 void installer_double_to_digits_multiply(uint *param_1);
-void installer_double_to_digits(uint param_1,int *param_2,uint *param_3,char *param_4,int param_5);
+void installer_double_to_digits
+               (double value,int count,int *exponent,uint *negative,char *digits,int mode);
 undefined8 installer_next_decimal_digit(uint *param_1);
 byte * installer_doprnt(byte *param_1,uint *param_2,undefined *param_3,undefined4 param_4);
 int installer_sprintf(char *s,char *format,...);
-void installer_vsprintf(char *param_1,byte *param_2,uint *param_3);
+int installer_vsprintf(char *s,char *format,void *arg);
 
 /* 00000400 */
 
@@ -81207,58 +81207,295 @@ double sqrt(double x)
 
 
 /* installer::0010043a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the installer's mutex_acquire */
+/* the installer's mutex_acquire
+   Not a C function (register; read): its arguments and results in registers.  In: A1 void *mutex.
+   Out: D7 int error.  Error: D7 0x80 nested hold.  Preserves: D0, D1, A0, A2. */
 
-undefined8 installer_mutex_acquire(void)
+/* out D7 int error; error D7 0x80 nested hold; preserves D0, D1, A0, A2 */
+__regcall int installer_mutex_acquire(void *mutex /* a1 */)
 
 {
-  undefined4 in_D0;
-  undefined4 in_D1;
+  int in_D1;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int iVar1;
+  void *in_A0;
   int extraout_A0;
+  void *a1;
   int extraout_A1;
-  int extraout_A1_00;
-  bool bVar1;
+  bool bVar2;
   
-  installer_psos_call();
-  if (extraout_A0 == *(int *)(extraout_A1 + 8)) {
-    *(int *)(extraout_A1 + 0xc) = *(int *)(extraout_A1 + 0xc) + 1;
+  iVar1 = ({ __auto_type __c = installer_psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
+  if (extraout_A0 == *(int *)((int)a1 + 8)) {
+    iVar1 = CONCAT22((short)((uint)iVar1 >> 0x10),0x80);
+    *(int *)((int)a1 + 0xc) = *(int *)((int)a1 + 0xc) + 1;
   }
-  else if (*(int *)(extraout_A1 + 4) != 0) {
-    bVar1 = false;
-    installer_psos_call();
-    if (bVar1) {
-      *(int *)(extraout_A1_00 + 8) = extraout_A0;
+  else if (*(void **)((int)a1 + 4) == (void *)0x0) {
+    iVar1 = 1;
+  }
+  else {
+    bVar2 = false;
+    iVar1 = ({ __auto_type __c = ({ __auto_type __c = installer_psos_call('\x18',0,0,unaff_D2,unaff_D3,*(void **)((int)a1 + 4),a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A1 = (__typeof__(extraout_A1))__ghidra_result_a1; a1 = (__typeof__(a1))__ghidra_result_a1; __c; });
+    if (bVar2) {
+      *(int *)(extraout_A1 + 8) = extraout_A0;
     }
   }
-  return CONCAT44(in_D0,in_D1);
+  return iVar1;
 }
 
+
+#endif
+__asm__(
+	"	.globl installer_mutex_acquire\n"
+	"	.type installer_mutex_acquire, @function\n"
+	"	.pushsection .text.installer_mutex_acquire.10043a,\"ax\",@progbits\n"
+	"installer_mutex_acquire:\n"
+	"	movem.l %a2/%a0/%d1/%d0,-(%sp)\n"
+	"	moveq #0x0,%d0\n"
+	"	moveq #0x3,%d7\n"
+	"	jsr (installer_psos_call).l\n"
+	"	movea.l %a0,%a2\n"
+	"	cmpa.l (0x8,%a1),%a0\n"
+	"	beq.w .Lg_10047a\n"
+	"	move.l (0x4,%a1),%d0\n"
+	"	beq.w .Lg_100476\n"
+	"	movea.l %d0,%a0\n"
+	"	moveq #0x0,%d0\n"
+	"	moveq #0x0,%d1\n"
+	"	moveq #0x18,%d7\n"
+	"	jsr (installer_psos_call).l\n"
+	"	bne.w .Lg_100470\n"
+	"	move.l %a2,(0x8,%a1)\n"
+	".Lg_100470:\n"
+	"	movem.l (%sp)+,%d0/%d1/%a0/%a2\n"
+	"	rts\n"
+	".Lg_100476:\n"
+	"	moveq #0x1,%d7\n"
+	"	bra.b .Lg_100470\n"
+	".Lg_10047a:\n"
+	"	move.w #0x80,%d7\n"
+	"	addq.l #0x1,(0xc,%a1)\n"
+	"	bra.b .Lg_100470\n"
+	"	.size installer_mutex_acquire, .-installer_mutex_acquire\n"
+	"	.popsection\n"
+);
+/* installer_mutex_acquire from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_installer_mutex_acquire,\"ax\",@progbits\n"
+	"	.globl c_installer_mutex_acquire\n"
+	"	.type c_installer_mutex_acquire, @function\n"
+	"c_installer_mutex_acquire:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a1\n"
+	"	jsr installer_mutex_acquire\n"
+	"	move.l %d7,%d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_installer_mutex_acquire, .-c_installer_mutex_acquire\n"
+	"	.popsection\n"
+);
 
 /* installer::00100484 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the installer's mutex_release */
+/* the installer's mutex_release
+   Not a C function (register; read): its arguments and results in registers.  In: A1 void *mutex.
+   Out: D7 int error.  Error: D7 2 not held, D7 0x80 holds remain.  Preserves: D0, A0. */
 
-undefined4 installer_mutex_release(void)
+/* out D7 int error; error D7 2 not held, D7 0x80 holds remain; preserves D0, A0 */
+__regcall int installer_mutex_release(void *mutex /* a1 */)
 
 {
-  undefined4 in_D0;
+  int in_D1;
+  int d1;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int iVar1;
+  void *in_A0;
   int extraout_A0;
-  int extraout_A1;
+  void *a1;
   
-  installer_psos_call();
-  if (extraout_A0 == *(int *)(extraout_A1 + 8)) {
-    if (*(int *)(extraout_A1 + 0xc) == 0) {
-      *(undefined4 *)(extraout_A1 + 8) = 0;
-      installer_psos_call();
+  iVar1 = ({ __auto_type __c = installer_psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
+  if (extraout_A0 == *(int *)((int)a1 + 8)) {
+    if (*(int *)((int)a1 + 0xc) == 0) {
+      *(undefined4 *)((int)a1 + 8) = 0;
+      iVar1 = ({ __auto_type __c = installer_psos_call('\x17',*(int *)((int)a1 + 4),d1,unaff_D2,unaff_D3,
+                                  (void *)*(int *)((int)a1 + 4),a1); a1 = (__typeof__(a1))__ghidra_result_a1; __c; });
     }
     else {
-      *(int *)(extraout_A1 + 0xc) = *(int *)(extraout_A1 + 0xc) + -1;
+      iVar1 = CONCAT22((short)((uint)iVar1 >> 0x10),0x80);
+      *(int *)((int)a1 + 0xc) = *(int *)((int)a1 + 0xc) + -1;
     }
   }
-  return in_D0;
+  else {
+    iVar1 = 2;
+  }
+  return iVar1;
 }
 
+
+#endif
+__asm__(
+	"	.globl installer_mutex_release\n"
+	"	.type installer_mutex_release, @function\n"
+	"	.pushsection .text.installer_mutex_release.100484,\"ax\",@progbits\n"
+	"installer_mutex_release:\n"
+	"	movem.l %a0/%d0,-(%sp)\n"
+	"	moveq #0x0,%d7\n"
+	"	moveq #0x0,%d0\n"
+	"	moveq #0x3,%d7\n"
+	"	jsr (installer_psos_call).l\n"
+	"	cmpa.l (0x8,%a1),%a0\n"
+	"	bne.w .Lg_1004ba\n"
+	"	tst.l (0xc,%a1)\n"
+	"	bne.b .Lg_1004be\n"
+	"	move.l (0x4,%a1),%d0\n"
+	"	clr.l (0x8,%a1)\n"
+	"	movea.l %d0,%a0\n"
+	"	moveq #0x17,%d7\n"
+	"	jsr (installer_psos_call).l\n"
+	".Lg_1004b4:\n"
+	"	movem.l (%sp)+,%d0/%a0\n"
+	"	rts\n"
+	".Lg_1004ba:\n"
+	"	moveq #0x2,%d7\n"
+	"	bra.b .Lg_1004b4\n"
+	".Lg_1004be:\n"
+	"	move.w #0x80,%d7\n"
+	"	subq.l #0x1,(0xc,%a1)\n"
+	"	bra.b .Lg_1004b4\n"
+	"	.byte 0xc1\n"
+	"	.byte 0x88\n"
+	"	.byte 0x20\n"
+	"	.byte 0x29\n"
+	"	.byte 0x00\n"
+	"	.byte 0x08\n"
+	"	.byte 0xc1\n"
+	"	.byte 0x88\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.byte 0x48\n"
+	"	.byte 0xe7\n"
+	"	.byte 0xc0\n"
+	"	.byte 0x40\n"
+	"	.byte 0x70\n"
+	"	.byte 0x05\n"
+	"	.byte 0x72\n"
+	"	.byte 0x00\n"
+	"	.byte 0x22\n"
+	"	.byte 0xc1\n"
+	"	.byte 0x51\n"
+	"	.byte 0xc8\n"
+	"	.byte 0xff\n"
+	"	.byte 0xfc\n"
+	"	.byte 0x4c\n"
+	"	.byte 0xdf\n"
+	"	.byte 0x02\n"
+	"	.byte 0x03\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x56\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x2f\n"
+	"	.byte 0x07\n"
+	"	.byte 0x4e\n"
+	"	.byte 0xb9\n"
+	"	.byte 0x00\n"
+	"	.byte 0x10\n"
+	"	.byte 0x2a\n"
+	"	.byte 0xa4\n"
+	"	.byte 0x22\n"
+	"	.byte 0x6e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x0c\n"
+	"	.byte 0x61\n"
+	"	.byte 0x00\n"
+	"	.byte 0xff\n"
+	"	.byte 0x08\n"
+	"	.byte 0x20\n"
+	"	.byte 0x07\n"
+	"	.byte 0x2e\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x5e\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x56\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x2f\n"
+	"	.byte 0x07\n"
+	"	.byte 0x22\n"
+	"	.byte 0x6e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x08\n"
+	"	.byte 0x61\n"
+	"	.byte 0x00\n"
+	"	.byte 0xff\n"
+	"	.byte 0x2c\n"
+	"	.byte 0x20\n"
+	"	.byte 0x07\n"
+	"	.byte 0x2e\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x5e\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x56\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x2f\n"
+	"	.byte 0x07\n"
+	"	.byte 0x22\n"
+	"	.byte 0x6e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x08\n"
+	"	.byte 0x61\n"
+	"	.byte 0x00\n"
+	"	.byte 0xff\n"
+	"	.byte 0x60\n"
+	"	.byte 0x20\n"
+	"	.byte 0x07\n"
+	"	.byte 0x2e\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x5e\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.byte 0x22\n"
+	"	.byte 0x6f\n"
+	"	.byte 0x00\n"
+	"	.byte 0x04\n"
+	"	.byte 0x20\n"
+	"	.byte 0x29\n"
+	"	.byte 0x00\n"
+	"	.byte 0x08\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.size installer_mutex_release, .-installer_mutex_release\n"
+	"	.popsection\n"
+);
+/* installer_mutex_release from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_installer_mutex_release,\"ax\",@progbits\n"
+	"	.globl c_installer_mutex_release\n"
+	"	.type c_installer_mutex_release, @function\n"
+	"c_installer_mutex_release:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%a1\n"
+	"	jsr installer_mutex_release\n"
+	"	move.l %d7,%d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_installer_mutex_release, .-c_installer_mutex_release\n"
+	"	.popsection\n"
+);
 
 /* installer::00100538 */
 
@@ -81280,13 +81517,13 @@ void installer_exception_hook_reset(void)
 void * installer_exception_hook_get(void)
 
 {
-  int iVar1;
+  ulong uVar1;
   void *pvVar2;
   
   pvVar2 = (void *)0x0;
   if (installer_exception_hook_per_task != 0) {
-    iVar1 = installer_psos_my_pid();
-    pvVar2 = *(void **)(iVar1 + 0x82);
+    uVar1 = installer_psos_my_pid();
+    pvVar2 = *(void **)(uVar1 + 0x82);
   }
   if (pvVar2 == (void *)0x0) {
     pvVar2 = installer_exception_hook;
@@ -81304,7 +81541,7 @@ undefined8 installer_default_exception(void)
 {
   undefined4 in_D0;
   int iVar1;
-  undefined2 uVar2;
+  char *pcVar2;
   undefined4 in_D1;
   undefined2 in_stack_00000000 = *(undefined2 *)((char *)__builtin_frame_address(0) + 4);
   undefined4 in_stack_00000002 = *(undefined4 *)((char *)__builtin_frame_address(0) + 6);
@@ -81312,25 +81549,26 @@ undefined8 installer_default_exception(void)
   undefined2 in_stack_00000008 = *(undefined2 *)((char *)__builtin_frame_address(0) + 12);
   ushort in_stack_0000000a = *(ushort *)((char *)__builtin_frame_address(0) + 14);
   undefined2 in_stack_0000000e = *(undefined2 *)((char *)__builtin_frame_address(0) + 18);
-  undefined2 uStack_12;
   undefined2 uVar3;
+  undefined2 uStack_12;
   undefined2 uVar4;
+  undefined2 uVar5;
   
-  uVar3 = (undefined2)((uint)in_D1 >> 0x10);
-  uVar4 = (undefined2)in_D1;
-  uVar2 = (undefined2)((uint)in_D0 >> 0x10);
+  uVar4 = (undefined2)((uint)in_D1 >> 0x10);
+  uVar5 = (undefined2)in_D1;
+  uVar3 = (undefined2)((uint)in_D0 >> 0x10);
   uStack_12 = (undefined2)in_D0;
   iVar1 = installer_exception_hook_get();
   if (iVar1 != 0) {
-    return CONCAT62(CONCAT42(CONCAT22(uVar2,uStack_12),uVar3),uVar4);
+    return CONCAT62(CONCAT42(CONCAT22(uVar3,uStack_12),uVar4),uVar5);
   }
   installer_print_exception
             (in_stack_00000000,in_stack_00000002,in_stack_00000006,
              CONCAT22(in_stack_00000008,in_stack_0000000a));
   uVar3 = (undefined2)in_stack_00000002;
   installer_printf_polled(&DAT_installer__00100787);
-  uVar2 = installer_exception_name(in_stack_0000000a);
-  installer_printf_polled(s_Boot___s_installer__0010078a,uVar2);
+  pcVar2 = installer_exception_name(in_stack_0000000a);
+  installer_printf_polled(s_Boot___s_installer__0010078a,(short)pcVar2);
   installer_printf_polled
             (s___PC_____8x__SR_____04x_installer__00100793,
              CONCAT22(in_stack_00000006,in_stack_00000008),uVar3);
@@ -81355,11 +81593,11 @@ undefined8 installer_default_exception(void)
 void installer_print_exception(ushort param_1,undefined4 param_2,ushort param_3,undefined4 param_4)
 
 {
-  undefined2 uVar1;
+  char *pcVar1;
   
   installer_printf_polled(&DAT_installer__00100787);
-  uVar1 = installer_exception_name(param_3);
-  installer_printf_polled(s_Boot___s_installer__0010078a,uVar1);
+  pcVar1 = installer_exception_name(param_3);
+  installer_printf_polled(s_Boot___s_installer__0010078a,(short)pcVar1);
   installer_printf_polled(s___PC_____8x__SR_____04x_installer__00100793,param_2,(uint)param_1);
   if ((param_3 & 0xf000) != 0) {
     installer_printf_polled(s___address_____8x_installer__001007ab,__ghidra_piece(unsigned short, param_4, 2));
@@ -81380,13 +81618,13 @@ void installer_print_exception(ushort param_1,undefined4 param_2,ushort param_3,
 /* WARNING: Unknown calling convention */
 /* the installer's exception_name */
 
-char * installer_exception_name(ushort param_1)
+char * installer_exception_name(uint16_t vector)
 
 {
   char *pcVar1;
   
-  if ((param_1 & 0xfff) < 0xe9) {
-    pcVar1 = *(char **)(s_RESET_to_recover__installer__001007bc + (param_1 & 0xffff0fff) + 0xc);
+  if ((vector & 0xfff) < 0xe9) {
+    pcVar1 = *(char **)(s_RESET_to_recover__installer__001007bc + (vector & 0xffff0fff) + 0xc);
   }
   else {
     pcVar1 = s_Oooh__That_tickles__I_don_t_know_installer__00100b84;
@@ -81526,13 +81764,16 @@ void installer_start(void)
 
 /* installer::00100e80 */
 
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
 /* the installer's enter_supervisor_mode */
 
-void installer_enter_supervisor_mode(void)
+uint16_t installer_enter_supervisor_mode(void)
 
 {
-  installer_enter_supervisor();
-  return;
+  int iVar1;
+  
+  iVar1 = installer_enter_supervisor();
+  return (uint16_t)iVar1;
 }
 
 
@@ -81540,13 +81781,13 @@ void installer_enter_supervisor_mode(void)
 
 /* the installer's set_interrupt_mask */
 
-uint16_t installer_set_interrupt_mask(undefined2 param_1)
+uint16_t installer_set_interrupt_mask(uint16_t sr)
 
 {
-  uint16_t uVar1;
+  int iVar1;
   
-  uVar1 = installer_enter_supervisor();
-  return uVar1;
+  iVar1 = installer_enter_supervisor();
+  return (uint16_t)iVar1;
 }
 
 
@@ -81564,23 +81805,180 @@ undefined2 installer_trap_7(void)
 
 
 /* installer::00100f3a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* WARNING: Unknown calling convention -- yet parameter storage is locked */
-/* the installer's enter_supervisor */
+/* the installer's enter_supervisor
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.  Out: D0 int status.  Preserves: D1, D2, D3, D4, D5, D6, D7, A1, A2, A3, A4, A5, A6. */
 
-uint16_t installer_enter_supervisor(void)
+/* out D0 int status; preserves D1, D2, D3, D4, D5, D6, D7, A1, A2, A3, A4, A5, A6 */
+__naked int installer_enter_supervisor(void)
 
 {
-  uint16_t uVar1;
+  int iVar1;
   code *UNRECOVERED_JUMPTABLE;
   
   __m68k_trap(7);
                     /* WARNING: Could not recover jumptable at 0x00100f3e. Too many branches */
                     /* WARNING: Treating indirect jump as call */
-  uVar1 = (*UNRECOVERED_JUMPTABLE)();
-  return uVar1;
+  iVar1 = (*UNRECOVERED_JUMPTABLE)();
+  return iVar1;
 }
 
+
+#endif
+__asm__(
+	"	.globl installer_enter_supervisor\n"
+	"	.type installer_enter_supervisor, @function\n"
+	"	.pushsection .text.installer_enter_supervisor.100f3a,\"ax\",@progbits\n"
+	"installer_enter_supervisor:\n"
+	"	movea.l (%sp)+,%a0\n"
+	"	trap #0x7\n"
+	"	jmp (%a0)\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x56\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x20\n"
+	"	.byte 0x2e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x08\n"
+	"	.byte 0x60\n"
+	"	.byte 0x10\n"
+	"	.byte 0x22\n"
+	"	.byte 0x3c\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x02\n"
+	"	.byte 0xd9\n"
+	"	.byte 0x48\n"
+	"	.byte 0x41\n"
+	"	.byte 0x48\n"
+	"	.byte 0x41\n"
+	"	.byte 0x53\n"
+	"	.byte 0x41\n"
+	"	.byte 0x66\n"
+	"	.byte 0xf8\n"
+	"	.byte 0x53\n"
+	"	.byte 0x40\n"
+	"	.byte 0x66\n"
+	"	.byte 0xee\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x5e\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.byte 0x2f\n"
+	"	.byte 0x03\n"
+	"	.byte 0x2f\n"
+	"	.byte 0x02\n"
+	"	.byte 0x24\n"
+	"	.byte 0x2f\n"
+	"	.byte 0x00\n"
+	"	.byte 0x0c\n"
+	"	.byte 0x70\n"
+	"	.byte 0x00\n"
+	"	.byte 0x22\n"
+	"	.byte 0x02\n"
+	"	.byte 0x4e\n"
+	"	.byte 0xb9\n"
+	"	.byte 0x00\n"
+	"	.byte 0x10\n"
+	"	.byte 0x89\n"
+	"	.byte 0x3a\n"
+	"	.byte 0x4a\n"
+	"	.byte 0x80\n"
+	"	.byte 0x6f\n"
+	"	.byte 0x08\n"
+	"	.byte 0x24\n"
+	"	.byte 0x3c\n"
+	"	.byte 0x3a\n"
+	"	.byte 0x80\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x60\n"
+	"	.byte 0x18\n"
+	"	.byte 0x22\n"
+	"	.byte 0x3c\n"
+	"	.byte 0x4a\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x20\n"
+	"	.byte 0x02\n"
+	"	.byte 0x4e\n"
+	"	.byte 0xb9\n"
+	"	.byte 0x00\n"
+	"	.byte 0x10\n"
+	"	.byte 0x89\n"
+	"	.byte 0x3a\n"
+	"	.byte 0x4a\n"
+	"	.byte 0x80\n"
+	"	.byte 0x6f\n"
+	"	.byte 0x06\n"
+	"	.byte 0x24\n"
+	"	.byte 0x3c\n"
+	"	.byte 0x4a\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x22\n"
+	"	.byte 0x3c\n"
+	"	.byte 0x44\n"
+	"	.byte 0x80\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x20\n"
+	"	.byte 0x02\n"
+	"	.byte 0x4e\n"
+	"	.byte 0xb9\n"
+	"	.byte 0x00\n"
+	"	.byte 0x10\n"
+	"	.byte 0x8b\n"
+	"	.byte 0x0c\n"
+	"	.byte 0x4e\n"
+	"	.byte 0xb9\n"
+	"	.byte 0x00\n"
+	"	.byte 0x10\n"
+	"	.byte 0x8a\n"
+	"	.byte 0x66\n"
+	"	.byte 0x26\n"
+	"	.byte 0x00\n"
+	"	.byte 0x66\n"
+	"	.byte 0x02\n"
+	"	.byte 0x76\n"
+	"	.byte 0x01\n"
+	"	.byte 0x2f\n"
+	"	.byte 0x03\n"
+	"	.byte 0x4e\n"
+	"	.byte 0xb9\n"
+	"	.byte 0x00\n"
+	"	.byte 0x10\n"
+	"	.byte 0x2b\n"
+	"	.byte 0xca\n"
+	"	.byte 0x58\n"
+	"	.byte 0x8f\n"
+	"	.byte 0x24\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x26\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.size installer_enter_supervisor, .-installer_enter_supervisor\n"
+	"	.popsection\n"
+);
+/* installer_enter_supervisor from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_installer_enter_supervisor,\"ax\",@progbits\n"
+	"	.globl c_installer_enter_supervisor\n"
+	"	.type c_installer_enter_supervisor, @function\n"
+	"c_installer_enter_supervisor:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	jsr installer_enter_supervisor\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_installer_enter_supervisor, .-c_installer_enter_supervisor\n"
+	"	.popsection\n"
+);
 
 /* installer::00100fc0 */
 
@@ -81697,8 +82095,10 @@ void installer_entry(void)
 void installer_program_exit(uint param_1)
 
 {
+  uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
+  
   installer_call_atexit_functions();
-  installer_program_end_report(param_1);
+  installer_program_end_report(param_1,in_stack_00000000);
   do {
                     /* WARNING: Do nothing block with infinite loop */
   } while( true );
@@ -81709,7 +82109,7 @@ void installer_program_exit(uint param_1)
 
 /* the installer's program_end_report */
 
-void installer_program_end_report(uint value)
+void installer_program_end_report(uint value,uint32_t return_address)
 
 {
   uint uVar1;
@@ -81718,7 +82118,6 @@ void installer_program_end_report(uint value)
   uint8_t *puVar4;
   char *pcVar5;
   undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
-  undefined4 in_stack_00000008 = *(undefined4 *)((char *)__builtin_frame_address(0) + 12);
   
   installer_program_end_message = '\0';
   pcVar5 = &DAT_0010aaf3;
@@ -81751,7 +82150,7 @@ void installer_program_end_report(uint value)
     pcVar3 = pcVar3 + 1;
   }
   installer_fatal_error_with_code
-            (&installer_program_end_message,in_stack_00000000,value,in_stack_00000008);
+            (&installer_program_end_message,in_stack_00000000,value,return_address);
   do {
                     /* WARNING: Do nothing block with infinite loop */
   } while( true );
@@ -87775,53 +88174,324 @@ __asm__(
 );
 
 /* installer::00102a72 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's psos_call
+   Not a C function (register; read): its arguments and results in registers.  In: D7 char service,
+   D0 int d0, D1 int d1, D2 int d2, D3 int d3, A0 void *a0, A1 void *a1.  Out: D7 int error.
+   Returns: ccr.  Results: D0, D1, D2, D3, A0, A1.
    psos.md */
 
-void installer_psos_call(void)
+/* out D7 int error; returns ccr; results D0, D1, D2, D3, A0, A1 */
+__regcall int installer_psos_call(char service /* d7 */,int d0 /* d0 */,int d1 /* d1 */,int d2 /* d2 */,int d3 /* d3 */,void *a0 /* a0 */,void *a1 /* a1 */)
 
 {
-  char unaff_D7b = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (char)__entry; });
+  undefined2 local_2;
   
   __m68k_trap(3);
-  if (unaff_D7b != '\0') {
-    return;
+  if (service != '\0') {
+    local_2 = CONCAT11(service,service);
+    return (uint)local_2;
   }
-  return;
+  return 0;
 }
 
+
+#endif
+__asm__(
+	"	.globl installer_psos_call\n"
+	"	.type installer_psos_call, @function\n"
+	"	.pushsection .text.installer_psos_call.102a72,\"ax\",@progbits\n"
+	"installer_psos_call:\n"
+	"	move.b %d7,-(%sp)\n"
+	"	trap #0x3\n"
+	"	tst.b %d7\n"
+	"	beq.b .Lg_102a84\n"
+	"	move.b %d7,(0x1,%sp)\n"
+	"	moveq #0x0,%d7\n"
+	"	move.w (%sp)+,%d7\n"
+	"	rts\n"
+	".Lg_102a84:\n"
+	"	moveq #0x0,%d7\n"
+	"	addq.l #0x2,%sp\n"
+	"	rts\n"
+	"	.byte 0x3f\n"
+	"	.byte 0x00\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x47\n"
+	"	.byte 0x00\n"
+	"	.byte 0x01\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x44\n"
+	"	.byte 0x4a\n"
+	"	.byte 0x07\n"
+	"	.byte 0x67\n"
+	"	.byte 0x08\n"
+	"	.byte 0x48\n"
+	"	.byte 0x47\n"
+	"	.byte 0x3e\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x48\n"
+	"	.byte 0x47\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.byte 0x7e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x54\n"
+	"	.byte 0x8f\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.size installer_psos_call, .-installer_psos_call\n"
+	"	.popsection\n"
+);
+/* installer_psos_call from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_installer_psos_call,\"ax\",@progbits\n"
+	"	.globl c_installer_psos_call\n"
+	"	.type c_installer_psos_call, @function\n"
+	"c_installer_psos_call:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	move.l (48,%sp),%d7\n"
+	"	move.l (52,%sp),%d0\n"
+	"	move.l (56,%sp),%d1\n"
+	"	move.l (60,%sp),%d2\n"
+	"	move.l (64,%sp),%d3\n"
+	"	move.l (68,%sp),%a0\n"
+	"	move.l (72,%sp),%a1\n"
+	"	jsr installer_psos_call\n"
+	"	move.w %ccr,__ghidra_ccr\n"
+	"	move.l %d0,__ghidra_result_d0\n"
+	"	move.l %d1,__ghidra_result_d1\n"
+	"	move.l %d2,__ghidra_result_d2\n"
+	"	move.l %d3,__ghidra_result_d3\n"
+	"	move.l %a0,__ghidra_result_a0\n"
+	"	move.l %a1,__ghidra_result_a1\n"
+	"	move.l %d7,%d0\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_installer_psos_call, .-c_installer_psos_call\n"
+	"	.popsection\n"
+);
 
 /* installer::00102aa4 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* the installer's psos_pack_name
+   Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
+   called.  Out: D0 int name.
    psos.md */
 
-undefined4 installer_psos_pack_name(void)
+/* out D0 int name */
+__naked int installer_psos_pack_name(void)
 
 {
-  undefined4 uVar1;
+  int iVar1;
   int unaff_A6;
   
-  uVar1 = 0;
-  if (*(undefined4 **)(unaff_A6 + 8) != (undefined4 *)0x0) {
-    uVar1 = **(undefined4 **)(unaff_A6 + 8);
+  iVar1 = 0;
+  if (*(int **)(unaff_A6 + 8) != (int *)0x0) {
+    iVar1 = **(int **)(unaff_A6 + 8);
   }
-  return uVar1;
+  return iVar1;
 }
 
+
+#endif
+__asm__(
+	"	.globl installer_psos_pack_name\n"
+	"	.type installer_psos_pack_name, @function\n"
+	"	.pushsection .text.installer_psos_pack_name.102aa4,\"ax\",@progbits\n"
+	"installer_psos_pack_name:\n"
+	"	move.l (0x8,%a6),%d0\n"
+	"	beq.b .Lg_102aba\n"
+	"	movea.l %d0,%a0\n"
+	"	move.b (%a0)+,%d0\n"
+	"	lsl.l #0x8,%d0\n"
+	"	move.b (%a0)+,%d0\n"
+	"	lsl.l #0x8,%d0\n"
+	"	move.b (%a0)+,%d0\n"
+	"	lsl.l #0x8,%d0\n"
+	"	move.b (%a0)+,%d0\n"
+	".Lg_102aba:\n"
+	"	rts\n"
+	"	.byte 0x2f\n"
+	"	.byte 0x07\n"
+	"	.byte 0x7e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x43\n"
+	"	.byte 0x30\n"
+	"	.byte 0x07\n"
+	"	.byte 0x2e\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x56\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x48\n"
+	"	.byte 0xe7\n"
+	"	.byte 0x31\n"
+	"	.byte 0x00\n"
+	"	.byte 0x61\n"
+	"	.byte 0xd2\n"
+	"	.byte 0x22\n"
+	"	.byte 0x2e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x0c\n"
+	"	.byte 0x24\n"
+	"	.byte 0x2e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x10\n"
+	"	.byte 0x36\n"
+	"	.byte 0x2e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x16\n"
+	"	.byte 0x48\n"
+	"	.byte 0x43\n"
+	"	.byte 0x36\n"
+	"	.byte 0x2e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x1a\n"
+	"	.byte 0x20\n"
+	"	.byte 0x6e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x1c\n"
+	"	.byte 0x7e\n"
+	"	.byte 0x01\n"
+	"	.byte 0x61\n"
+	"	.byte 0x86\n"
+	"	.byte 0x20\n"
+	"	.byte 0x07\n"
+	"	.byte 0x66\n"
+	"	.byte 0x0a\n"
+	"	.byte 0x22\n"
+	"	.byte 0x2e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x20\n"
+	"	.byte 0x67\n"
+	"	.byte 0x04\n"
+	"	.byte 0x22\n"
+	"	.byte 0x41\n"
+	"	.byte 0x22\n"
+	"	.byte 0x88\n"
+	"	.byte 0x4c\n"
+	"	.byte 0xdf\n"
+	"	.byte 0x00\n"
+	"	.byte 0x8c\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x5e\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x56\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x2f\n"
+	"	.byte 0x07\n"
+	"	.byte 0x20\n"
+	"	.byte 0x6e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x08\n"
+	"	.byte 0x22\n"
+	"	.byte 0x6e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x0c\n"
+	"	.byte 0x7e\n"
+	"	.byte 0x02\n"
+	"	.byte 0x61\n"
+	"	.byte 0x00\n"
+	"	.byte 0xff\n"
+	"	.byte 0x5e\n"
+	"	.byte 0x20\n"
+	"	.byte 0x07\n"
+	"	.byte 0x2e\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x5e\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x56\n"
+	"	.byte 0x00\n"
+	"	.byte 0x00\n"
+	"	.byte 0x2f\n"
+	"	.byte 0x07\n"
+	"	.byte 0x61\n"
+	"	.byte 0x00\n"
+	"	.byte 0xff\n"
+	"	.byte 0x7e\n"
+	"	.byte 0x7e\n"
+	"	.byte 0x03\n"
+	"	.byte 0x61\n"
+	"	.byte 0x00\n"
+	"	.byte 0xff\n"
+	"	.byte 0x46\n"
+	"	.byte 0x66\n"
+	"	.byte 0x14\n"
+	"	.byte 0x22\n"
+	"	.byte 0x2e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x0c\n"
+	"	.byte 0x67\n"
+	"	.byte 0x04\n"
+	"	.byte 0x22\n"
+	"	.byte 0x41\n"
+	"	.byte 0x22\n"
+	"	.byte 0x88\n"
+	"	.byte 0x22\n"
+	"	.byte 0x2e\n"
+	"	.byte 0x00\n"
+	"	.byte 0x10\n"
+	"	.byte 0x67\n"
+	"	.byte 0x04\n"
+	"	.byte 0x22\n"
+	"	.byte 0x41\n"
+	"	.byte 0x12\n"
+	"	.byte 0x80\n"
+	"	.byte 0x20\n"
+	"	.byte 0x07\n"
+	"	.byte 0x2e\n"
+	"	.byte 0x1f\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x5e\n"
+	"	.byte 0x4e\n"
+	"	.byte 0x75\n"
+	"	.size installer_psos_pack_name, .-installer_psos_pack_name\n"
+	"	.popsection\n"
+);
+/* installer_psos_pack_name from gcc's convention: its arguments from the stack into its registers */
+__asm__(
+	"	.pushsection .text.c_installer_psos_pack_name,\"ax\",@progbits\n"
+	"	.globl c_installer_psos_pack_name\n"
+	"	.type c_installer_psos_pack_name, @function\n"
+	"c_installer_psos_pack_name:\n"
+	"	movem.l %d2-%d7/%a2-%a6,-(%sp)\n"
+	"	jsr installer_psos_pack_name\n"
+	"	movem.l (%sp)+,%d2-%d7/%a2-%a6\n"
+	"	rts\n"
+	"	.size c_installer_psos_pack_name, .-c_installer_psos_pack_name\n"
+	"	.popsection\n"
+);
 
 /* installer::00102b4c */
 
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
 /* the installer's psos_my_pid
    psos.md */
 
-undefined4 installer_psos_my_pid(void)
+ulong installer_psos_my_pid(void)
 
 {
-  undefined4 extraout_A0;
+  int in_D1;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  void *in_A0;
+  ulong extraout_A0;
+  void *in_A1;
   
-  installer_psos_call();
+  ({ __auto_type __c = installer_psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
   return extraout_A0;
 }
 
@@ -87831,11 +88501,18 @@ undefined4 installer_psos_my_pid(void)
 /* the installer's psos_delete, service 4
    psos.md */
 
-undefined4 installer_psos_delete(undefined4 param_1)
+ulong installer_psos_delete(ulong task)
 
 {
-  installer_psos_call();
-  return 4;
+  int in_D0;
+  int in_D1;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  ulong uVar1;
+  void *in_A1;
+  
+  uVar1 = installer_psos_call('\x04',in_D0,in_D1,unaff_D2,unaff_D3,(void *)task,in_A1);
+  return uVar1;
 }
 
 
@@ -87847,25 +88524,39 @@ undefined4 installer_psos_delete(undefined4 param_1)
 ulong installer_psos_pause(ulong a)
 
 {
-  installer_psos_call();
-  return 0x1c;
+  int in_D1;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  ulong uVar1;
+  void *in_A0;
+  void *in_A1;
+  
+  uVar1 = installer_psos_call('\x1c',a,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
+  return uVar1;
 }
 
 
 /* installer::00102d22 */
 
-/* WARNING: Removing unreachable block (ram,0x00102d40) */
-/* WARNING: Removing unreachable block (ram,0x00102d46) */
 /* the installer's psos_create_x, service 20
    psos.md */
 
-undefined4
-installer_psos_create_x(undefined4 param_1,undefined4 param_2,undefined4 param_3,undefined4 param_4)
+ulong installer_psos_create_x(char *name,ulong a,ulong b,ulong *exchange)
 
 {
-  installer_psos_pack_name();
-  installer_psos_call();
-  return 0x14;
+  int d0;
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  ulong uVar1;
+  void *a0;
+  ulong extraout_A0;
+  void *a1;
+  
+  d0 = installer_psos_pack_name();
+  uVar1 = ({ __auto_type __c = installer_psos_call('\x14',d0,a,b,unaff_D3,a0,a1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
+  if ((uVar1 == 0) && (exchange != (ulong *)0x0)) {
+    *exchange = extraout_A0;
+  }
+  return uVar1;
 }
 
 
@@ -87874,11 +88565,17 @@ installer_psos_create_x(undefined4 param_1,undefined4 param_2,undefined4 param_3
 /* the installer's psos_send_x, service 23
    psos.md */
 
-undefined4 installer_psos_send_x(undefined4 param_1,undefined4 param_2)
+ulong installer_psos_send_x(ulong exchange,void *message)
 
 {
-  installer_psos_call();
-  return 0x17;
+  int in_D0;
+  int in_D1;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  ulong uVar1;
+  
+  uVar1 = installer_psos_call('\x17',in_D0,in_D1,unaff_D2,unaff_D3,(void *)exchange,message);
+  return uVar1;
 }
 
 
@@ -87890,8 +88587,14 @@ undefined4 installer_psos_send_x(undefined4 param_1,undefined4 param_2)
 ulong installer_psos_signal_v(ulong variable,ulong value)
 
 {
-  installer_psos_call();
-  return 0x19;
+  int in_D0;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  ulong uVar1;
+  void *in_A1;
+  
+  uVar1 = installer_psos_call('\x19',in_D0,value,unaff_D2,unaff_D3,(void *)variable,in_A1);
+  return uVar1;
 }
 
 
@@ -87904,12 +88607,16 @@ ulong installer_psos_wait_v(ulong a,ulong b,ulong c,ulong *out)
 
 {
   ulong extraout_D1;
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  ulong uVar1;
+  void *in_A0;
+  void *in_A1;
   
-  installer_psos_call();
+  uVar1 = ({ __auto_type __c = installer_psos_call('\x1a',c,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; __c; });
   if (out != (ulong *)0x0) {
     *out = extraout_D1;
   }
-  return 0x1a;
+  return uVar1;
 }
 
 
@@ -87918,29 +88625,43 @@ ulong installer_psos_wait_v(ulong a,ulong b,ulong c,ulong *out)
 /* the installer's psos_get_v, service 27
    psos.md */
 
-undefined4 installer_psos_get_v(undefined4 param_1,undefined4 param_2,undefined4 *param_3)
+ulong installer_psos_get_v(ulong a,ulong b,ulong *out)
 
 {
-  undefined4 extraout_D1;
+  int in_D0;
+  ulong extraout_D1;
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  ulong uVar1;
+  void *in_A0;
+  void *in_A1;
   
-  installer_psos_call();
-  if (param_3 != (undefined4 *)0x0) {
-    *param_3 = extraout_D1;
+  uVar1 = ({ __auto_type __c = installer_psos_call('\x1b',in_D0,a,b,unaff_D3,in_A0,in_A1); extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; __c; });
+  if (out != (ulong *)0x0) {
+    *out = extraout_D1;
   }
-  return 0x1b;
+  return uVar1;
 }
 
 
 /* installer::00102eb0 */
 
+/* WARNING: Unknown calling convention -- yet parameter storage is locked */
 /* the installer's psos_service_29
    psos.md */
 
-undefined4 installer_psos_service_29(void)
+ulong installer_psos_service_29(void)
 
 {
-  installer_psos_call();
-  return 0x1d;
+  int in_D0;
+  int in_D1;
+  int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
+  ulong uVar1;
+  void *in_A0;
+  void *in_A1;
+  
+  uVar1 = installer_psos_call('\x1d',in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
+  return uVar1;
 }
 
 
@@ -88074,7 +88795,7 @@ undefined4 installer_drtb_getc(void)
   undefined3 extraout_var;
   ulong uVar4;
   
-  installer_psos_get_v(0x4000,0,(undefined4 *)0x0);
+  installer_psos_get_v(0x4000,0,(ulong *)0x0);
   if (installer_duartb_ring.write == installer_duartb_ring.read) {
     uVar4 = installer_psos_wait_v(0x4000,0,0,(ulong *)0x0);
     if ((char)uVar4 != '\0') {
@@ -88190,16 +88911,16 @@ LAB_installer__0010334c:
 void installer_drtb_putc(undefined1 param_1)
 
 {
-  char unaff_D7b = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (char)__entry; });
+  int iVar1;
   undefined1 local_6;
   undefined1 local_5;
   
   local_6 = param_1;
   local_5 = 0;
-  installer_mutex_acquire();
-  if (unaff_D7b < '\x01') {
+  iVar1 = installer_mutex_acquire(&installer_duartb.write_token);
+  if ((char)iVar1 < '\x01') {
     func_0x0010313c(&local_6);
-    installer_mutex_release();
+    installer_mutex_release(&installer_duartb.write_token);
   }
   return;
 }
@@ -88209,15 +88930,15 @@ void installer_drtb_putc(undefined1 param_1)
 
 /* the installer's console_write_polled */
 
-int installer_console_write_polled(byte *param_1)
+int installer_console_write_polled(char *s)
 
 {
   int iVar1;
   
   iVar1 = 0;
   installer_enter_supervisor();
-  for (; *param_1 != 0; param_1 = param_1 + 1) {
-    installer_duartb_putc_polled(*param_1);
+  for (; *s != 0; s = s + 1) {
+    installer_duartb_putc_polled(*s);
     iVar1 = iVar1 + 1;
   }
   return iVar1;
@@ -88231,10 +88952,10 @@ int installer_console_write_polled(byte *param_1)
 void installer_printf_polled(char *format,...)
 
 {
-  byte abStack_a4 [160];
+  char acStack_a4 [160];
   
-  installer_vsprintf((char *)abStack_a4,format,&stack0x00000008);
-  installer_console_write_polled(abStack_a4);
+  installer_vsprintf(acStack_a4,format,&stack0x00000008);
+  installer_console_write_polled(acStack_a4);
   return;
 }
 
@@ -88574,17 +89295,16 @@ uint installer_scpi_char_upper(uint param_1)
 
 /* the installer's scpi_suffix_compare_tail */
 
-short installer_scpi_suffix_compare_tail(int param_1,undefined4 param_2,int param_3)
+short installer_scpi_suffix_compare_tail(char *suffix,int length,char *name)
 
 {
   short sVar1;
   
   for (sVar1 = 0;
-      (sVar1 < __ghidra_piece(short, param_2, 2) &&
-      (*(char *)(param_1 + -1 + ((int)__ghidra_piece(short, param_2, 2) - (int)sVar1)) == *(char *)(param_3 + sVar1)));
+      (sVar1 < __ghidra_piece(short, length, 2) && (suffix[((int)__ghidra_piece(short, length, 2) - (int)sVar1) + -1] == name[sVar1]));
       sVar1 = sVar1 + 1) {
   }
-  if (*(char *)(param_3 + sVar1) != '\0') {
+  if (name[sVar1] != '\0') {
     sVar1 = 0;
   }
   return sVar1;
@@ -88617,11 +89337,11 @@ undefined4 installer_scpi_multiplier_exponent(undefined2 param_1,short param_2)
 
 /* the installer's status_event_set */
 
-void installer_status_event_set(int param_1,int param_2,undefined4 param_3)
+void installer_status_event_set(status_model *status,status_register *reg,int bits)
 
 {
-  *(ushort *)(param_2 + 8) = __ghidra_piece(unsigned short, param_3, 2) | *(ushort *)(param_2 + 8);
-  installer_status_propagate(param_1,param_2);
+  reg->event = __ghidra_piece(unsigned short, bits, 2) | reg->event;
+  installer_status_propagate(status,reg);
   return;
 }
 
@@ -88643,7 +89363,7 @@ void installer_status_condition_set(int param_1,ushort *param_2,undefined4 param
     uVar1 = __ghidra_piece(unsigned short, param_3, 2) & param_2[2] & ~*param_2;
     if (uVar1 != 0) {
       param_2[4] = uVar1 | param_2[4];
-      installer_status_propagate(param_1,(int)param_2);
+      installer_status_propagate((status_model *)param_1,(status_register *)param_2);
     }
     *param_2 = __ghidra_piece(unsigned short, param_3, 2) | *param_2;
   }
@@ -88668,7 +89388,7 @@ void installer_status_condition_clear(int param_1,ushort *param_2,undefined4 par
     uVar1 = __ghidra_piece(unsigned short, param_3, 2) & param_2[1] & *param_2;
     if (uVar1 != 0) {
       param_2[4] = uVar1 | param_2[4];
-      installer_status_propagate(param_1,(int)param_2);
+      installer_status_propagate((status_model *)param_1,(status_register *)param_2);
     }
     *param_2 = ~__ghidra_piece(unsigned short, param_3, 2) & *param_2;
   }
@@ -88680,16 +89400,14 @@ void installer_status_condition_clear(int param_1,ushort *param_2,undefined4 par
 
 /* the installer's status_propagate */
 
-void installer_status_propagate(int param_1,int param_2)
+void installer_status_propagate(status_model *status,status_register *reg)
 
 {
-  if ((*(ushort *)(param_2 + 8) & *(ushort *)(param_2 + 6)) == 0) {
-    installer_status_condition_clear
-              (param_1,*(ushort **)(param_2 + 10),(int)*(short *)(param_2 + 0xe));
+  if ((reg->event & reg->enable) == 0) {
+    installer_status_condition_clear((int)status,&reg->parent->condition,(int)reg->parent_bit);
   }
   else {
-    installer_status_condition_set
-              (param_1,*(ushort **)(param_2 + 10),(int)*(short *)(param_2 + 0xe));
+    installer_status_condition_set((int)status,&reg->parent->condition,(int)reg->parent_bit);
   }
   return;
 }
@@ -88699,46 +89417,47 @@ void installer_status_propagate(int param_1,int param_2)
 
 /* the installer's status_set_bit */
 
-undefined2 installer_status_set_bit(int param_1,int param_2)
+int16_t installer_status_set_bit(status_model *status,int condition,int value)
 
 {
   short sVar1;
   short sVar2;
   int iVar3;
-  short *psVar4;
-  undefined2 uVar5;
-  undefined4 in_stack_0000000c = *(undefined4 *)((char *)__builtin_frame_address(0) + 16);
+  undefined3 extraout_var;
+  status_condition *psVar4;
+  bool bVar5;
+  int16_t iVar6;
   
-  uVar5 = 1;
-  if (param_2 < 0) {
-    psVar4 = (short *)(param_2 * -6 + 0x1063ce);
+  iVar6 = 1;
+  if (condition < 0) {
+    psVar4 = (status_condition *)(condition * -6 + 0x1063ce);
   }
   else {
-    psVar4 = (short *)(*(int *)(param_1 + 10) + param_2 * 6);
+    psVar4 = status->conditions + condition;
   }
-  sVar1 = psVar4[1];
-  sVar2 = psVar4[2];
-  iVar3 = (int)*psVar4 - 4;
-  if ((uint)(int)*psVar4 < 4 || iVar3 == 0) {
+  sVar1 = psVar4->register_index;
+  sVar2 = psVar4->bit;
+  iVar3 = (int)psVar4->kind - 4;
+  if ((uint)(int)psVar4->kind < 4 || iVar3 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_installer__00105f12)[(short)iVar3]) {
     case 10:
-      installer_status_event_set
-                (param_1,*(int *)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
+      installer_status_event_set(status,status->registers[sVar1],__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x20:
       installer_status_condition_set
-                (param_1,*(ushort **)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
+                ((int)status,&status->registers[sVar1]->condition,__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x36:
       installer_status_condition_clear
-                (param_1,*(ushort **)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
+                ((int)status,&status->registers[sVar1]->condition,__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x50:
-      uVar5 = installer_error_queue_push(*(short **)(param_1 + 6),(int)sVar1,in_stack_0000000c);
+      bVar5 = installer_error_queue_push(status->queue,(int)sVar1,value);
+      iVar6 = (int16_t)CONCAT31(extraout_var,bVar5);
     }
   }
-  return uVar5;
+  return iVar6;
 }
 
 
@@ -88746,40 +89465,39 @@ undefined2 installer_status_set_bit(int param_1,int param_2)
 
 /* the installer's status_apply_condition */
 
-void installer_status_apply_condition(int param_1,int param_2,undefined4 param_3)
+void installer_status_apply_condition(status_model *status,int condition,int param_3)
 
 {
   short sVar1;
   short sVar2;
   int iVar3;
-  short *psVar4;
+  status_condition *psVar4;
   
-  if (param_2 < 0) {
-    psVar4 = (short *)(param_2 * -6 + 0x1063ce);
+  if (condition < 0) {
+    psVar4 = (status_condition *)(condition * -6 + 0x1063ce);
   }
   else {
-    psVar4 = (short *)(*(int *)(param_1 + 10) + param_2 * 6);
+    psVar4 = status->conditions + condition;
   }
-  sVar1 = psVar4[1];
-  sVar2 = psVar4[2];
-  iVar3 = (int)*psVar4 - 4;
-  if ((uint)(int)*psVar4 < 4 || iVar3 == 0) {
+  sVar1 = psVar4->register_index;
+  sVar2 = psVar4->bit;
+  iVar3 = (int)psVar4->kind - 4;
+  if ((uint)(int)psVar4->kind < 4 || iVar3 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_installer__00105fd4)[(short)iVar3]) {
     case 10:
-      installer_status_event_set
-                (param_1,*(int *)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
+      installer_status_event_set(status,status->registers[sVar1],__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x20:
       installer_status_condition_set
-                (param_1,*(ushort **)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
+                ((int)status,&status->registers[sVar1]->condition,__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x36:
       installer_status_condition_clear
-                (param_1,*(ushort **)(param_1 + 0x12 + sVar1 * 4),__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
+                ((int)status,&status->registers[sVar1]->condition,__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x4c:
-      installer_error_queue_push(*(short **)(param_1 + 6),(int)sVar1,param_3);
+      installer_error_queue_push(status->queue,(int)sVar1,param_3);
     }
   }
   return;
@@ -88790,21 +89508,21 @@ void installer_status_apply_condition(int param_1,int param_2,undefined4 param_3
 
 /* the installer's status_read_event */
 
-void installer_status_read_event(int param_1,int param_2,ushort *param_3)
+void installer_status_read_event(status_model *status,int index,uint16_t *event)
 
 {
-  int iVar1;
-  byte bVar2;
+  status_register *reg;
+  byte bVar1;
   
-  iVar1 = *(int *)(param_1 + 0x12 + param_2 * 4);
-  if (*(short *)(iVar1 + 0xe) == 0) {
-    bVar2 = (**(code **)(*(int *)(*(int *)(param_1 + 2) + 4) + 0x38))(*(undefined4 *)(param_1 + 2));
-    *param_3 = (ushort)bVar2;
+  reg = status->registers[index];
+  if (reg->parent_bit == 0) {
+    bVar1 = (**(code **)(*(int *)((int)status->output + 4) + 0x38))(status->output);
+    *event = (ushort)bVar1;
   }
   else {
-    *param_3 = *(ushort *)(iVar1 + 8);
-    *(undefined2 *)(iVar1 + 8) = 0;
-    installer_status_propagate(param_1,iVar1);
+    *event = reg->event;
+    reg->event = 0;
+    installer_status_propagate(status,reg);
   }
   return;
 }
@@ -88814,52 +89532,52 @@ void installer_status_read_event(int param_1,int param_2,ushort *param_3)
 
 /* the installer's error_queue_push */
 
-bool installer_error_queue_push(short *param_1,undefined4 param_2,undefined4 param_3)
+bool installer_error_queue_push(short *error_queue,undefined4 param_2,undefined4 param_3)
 
 {
-  int iVar1;
-  short sVar2;
-  bool bVar3;
-  int iVar4;
+  status_model *status;
+  short sVar1;
+  bool bVar2;
+  int condition;
   
-  iVar1 = *(int *)(param_1 + 2);
-  sVar2 = param_1[1] - *param_1;
-  if (sVar2 < 1) {
-    sVar2 = param_1[4] + sVar2;
+  status = *(status_model **)(error_queue + 2);
+  sVar1 = error_queue[1] - *error_queue;
+  if (sVar1 < 1) {
+    sVar1 = error_queue[4] + sVar1;
   }
-  if (sVar2 == 1) {
-    bVar3 = true;
+  if (sVar1 == 1) {
+    bVar2 = true;
   }
   else {
-    bVar3 = sVar2 == 2;
-    if (bVar3) {
+    bVar2 = sVar1 == 2;
+    if (bVar2) {
       __ghidra_piece(unsigned short, param_2, 2) = -0x15e;
       param_3 = 0;
     }
-    *param_1 = *param_1 + 1;
-    if (*param_1 == param_1[4]) {
-      *param_1 = 0;
+    *error_queue = *error_queue + 1;
+    if (*error_queue == error_queue[4]) {
+      *error_queue = 0;
     }
-    param_1[*param_1 * 3 + 5] = __ghidra_piece(unsigned short, param_2, 2);
-    *(undefined4 *)(param_1 + *param_1 * 3 + 6) = param_3;
+    error_queue[*error_queue * 3 + 5] = __ghidra_piece(unsigned short, param_2, 2);
+    *(undefined4 *)(error_queue + *error_queue * 3 + 6) = param_3;
   }
   if (__ghidra_piece(short, param_2, 2) < -399) {
-    iVar4 = -4;
+    condition = -4;
   }
   else if ((__ghidra_piece(short, param_2, 2) < -299) || (0 < __ghidra_piece(short, param_2, 2))) {
-    iVar4 = -3;
+    condition = -3;
   }
   else if (__ghidra_piece(short, param_2, 2) < -199) {
-    iVar4 = -2;
+    condition = -2;
   }
   else {
     if (-100 < __ghidra_piece(short, param_2, 2)) goto LAB_installer__0010632e;
-    iVar4 = -1;
+    condition = -1;
   }
-  installer_status_apply_condition(iVar1,iVar4,0);
+  installer_status_apply_condition(status,condition,0);
 LAB_installer__0010632e:
-  installer_status_prompt_refresh(iVar1,(int)__ghidra_piece(short, param_2, 2));
-  return bVar3;
+  installer_status_prompt_refresh((int)status,(int)__ghidra_piece(short, param_2, 2));
+  return bVar2;
 }
 
 
@@ -88931,21 +89649,21 @@ void installer_status_prompt_refresh(int param_1,int param_2)
 /* WARNING: Unknown calling convention */
 /* the installer's record_checksum */
 
-undefined2 installer_record_checksum(int param_1,ushort param_2)
+uint16_t installer_record_checksum(void *record,uint16_t length)
 
 {
-  undefined2 uVar1;
+  uint16_t uVar1;
   byte bVar2;
   ushort uVar3;
   char *pcVar4;
   
   bVar2 = 0;
-  if (param_2 < 2) {
+  if (length < 2) {
     uVar1 = 0;
   }
   else {
-    pcVar4 = (char *)(param_1 + 2);
-    for (uVar3 = 0; uVar3 < (ushort)(param_2 - 2); uVar3 = uVar3 + 1) {
+    pcVar4 = (char *)((int)record + 2);
+    for (uVar3 = 0; uVar3 < (ushort)(length - 2); uVar3 = uVar3 + 1) {
       bVar2 = *pcVar4 + bVar2;
       pcVar4 = pcVar4 + 1;
     }
@@ -88965,10 +89683,10 @@ bool installer_parameter_record_read(void)
   uint16_t uVar1;
   bool bVar2;
   
-  uVar1 = installer_record_checksum(0x400000,0x10);
+  uVar1 = installer_record_checksum(&eeprom_parameter_record,0x10);
   bVar2 = uVar1 != eeprom_parameter_record.checksum;
   if (bVar2) {
-    installer_memcpy(installer_duartb_settings.field_00,&DAT_installer__001081a2,9);
+    installer_memcpy(&installer_duartb_settings,&DAT_installer__001081a2,9);
   }
   else {
     installer_duartb_settings.baud = eeprom_parameter_record.duartb_baud;
@@ -89002,27 +89720,26 @@ void installer_idn_model_default(void)
 undefined2 installer_identification_record_read(void)
 
 {
-  undefined1 extraout_var;
-  undefined1 extraout_var_00;
-  undefined1 uVar1;
-  uint16_t uVar2;
-  bool bVar3;
+  undefined1 uVar2;
+  uint16_t uVar3;
+  char *pcVar1;
+  bool bVar4;
   
-  uVar2 = installer_record_checksum(0x400010,0x30);
-  bVar3 = uVar2 != eeprom_identification_record.checksum;
-  if (bVar3) {
+  uVar3 = installer_record_checksum(&eeprom_identification_record,0x30);
+  bVar4 = uVar3 != eeprom_identification_record.checksum;
+  if (bVar4) {
     installer_idn_model_default();
-    installer_strncpy(installer_idn_serial,&DAT_installer__001082d7,0x12);
+    pcVar1 = installer_strncpy(installer_idn_serial,&DAT_installer__001082d7,0x12);
     installer_idn_suffix = 'A';
-    uVar1 = extraout_var_00;
+    uVar2 = (char)((uint)pcVar1 >> 8);
   }
   else {
     installer_strncpy(installer_idn_model,eeprom_identification_record.model,0x12);
-    installer_strncpy(installer_idn_serial,eeprom_identification_record.serial,0x12);
+    pcVar1 = installer_strncpy(installer_idn_serial,eeprom_identification_record.serial,0x12);
     installer_idn_suffix = eeprom_identification_record.suffix;
-    uVar1 = extraout_var;
+    uVar2 = (char)((uint)pcVar1 >> 8);
   }
-  return CONCAT11(uVar1,!bVar3);
+  return CONCAT11(uVar2,!bVar4);
 }
 
 
@@ -89034,9 +89751,8 @@ undefined2 installer_identification_record_read(void)
 void installer_psos_config_init(void)
 
 {
-  installer_memcpy((undefined1 *)&installer_psos_config,(undefined1 *)&PTR_DAT_installer__001084da,
-                   0x62);
-  installer_memcpy((undefined1 *)&installer_io_table,&LAB_installer__00108578,0x24);
+  installer_memcpy(&installer_psos_config,&PTR_DAT_installer__001084da,0x62);
+  installer_memcpy(&installer_io_table,&LAB_installer__00108578,0x24);
   return;
 }
 
@@ -89288,19 +90004,19 @@ void installer_call_atexit_functions(void)
 /* the installer's memcpy
    libc.md */
 
-undefined1 * installer_memcpy(undefined1 *param_1,undefined1 *param_2,int param_3)
+void * installer_memcpy(void *s1,void *s2,uint n)
 
 {
   undefined1 *puVar1;
   
-  puVar1 = param_1;
-  while (param_3 != 0) {
-    *puVar1 = *param_2;
-    param_3 = param_3 + -1;
-    param_2 = param_2 + 1;
+  puVar1 = s1;
+  while (n != 0) {
+    *puVar1 = *(undefined1 *)s2;
+    n = n - 1;
+    s2 = (undefined1 *)((int)s2 + 1);
     puVar1 = puVar1 + 1;
   }
-  return param_1;
+  return s1;
 }
 
 
@@ -89309,33 +90025,33 @@ undefined1 * installer_memcpy(undefined1 *param_1,undefined1 *param_2,int param_
 /* the installer's strncpy
    libc.md */
 
-char * installer_strncpy(char *param_1,char *param_2,int param_3)
+char * installer_strncpy(char *s1,char *s2,uint n)
 
 {
   char cVar1;
   char *pcVar2;
   char *pcVar3;
   
-  pcVar3 = param_1;
+  pcVar3 = s1;
   do {
-    if (param_3 == 0) {
-      param_3 = 0;
+    if (n == 0) {
+      n = 0;
       pcVar2 = pcVar3;
       break;
     }
-    param_3 = param_3 + -1;
-    cVar1 = *param_2;
+    n = n - 1;
+    cVar1 = *s2;
     pcVar2 = pcVar3 + 1;
     *pcVar3 = cVar1;
     pcVar3 = pcVar2;
-    param_2 = param_2 + 1;
+    s2 = s2 + 1;
   } while (cVar1 != '\0');
-  while (param_3 != 0) {
+  while (n != 0) {
     *pcVar2 = '\0';
-    param_3 = param_3 + -1;
+    n = n - 1;
     pcVar2 = pcVar2 + 1;
   }
-  return param_1;
+  return s1;
 }
 
 
@@ -89454,13 +90170,13 @@ int installer_strtol(char *param_1,undefined4 *param_2,int param_3)
 /* the installer's toupper
    libc.md */
 
-int installer_toupper(int param_1)
+int installer_toupper(int c)
 
 {
-  if ((0x60 < param_1) && (param_1 < 0x7b)) {
-    param_1 = param_1 + -0x20;
+  if ((0x60 < c) && (c < 0x7b)) {
+    c = c + -0x20;
   }
-  return param_1;
+  return c;
 }
 
 
@@ -89574,7 +90290,8 @@ void installer_double_to_digits_multiply(uint *param_1)
 /* the installer's double_to_digits
    libc.md */
 
-void installer_double_to_digits(uint param_1,int *param_2,uint *param_3,char *param_4,int param_5)
+void installer_double_to_digits
+               (double value,int count,int *exponent,uint *negative,char *digits,int mode)
 
 {
   int iVar1;
@@ -89588,38 +90305,36 @@ void installer_double_to_digits(uint param_1,int *param_2,uint *param_3,char *pa
   uint unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint)__entry; });
   short sVar9;
   char *pcVar10;
-  uint in_stack_00000004;
-  uint in_stack_00000008;
-  uint local_26;
+  int local_26;
   uint local_1e;
   uint local_1a [4];
   short local_a;
   ushort local_8;
   short local_6;
   
-  *param_3 = (uint)((int)in_stack_00000004 < 0);
-  local_1e = in_stack_00000008;
-  uVar4 = in_stack_00000004 & 0xfffff;
-  uVar6 = in_stack_00000004 & 0x7ff00000;
-  if (uVar6 == 0) {
-    if (uVar4 == 0) {
-      if (in_stack_00000008 == 0) {
-        if ((int)param_1 < 0) {
-          param_1 = 0;
+  *negative = (uint)((longlong)__ghidra_bits(value) < 0);
+  local_1e = __ghidra_piece(unsigned int, value, 4);
+  uVar4 = __ghidra_piece(unsigned int, value, 0) & 0xfffff;
+  uVar6 = __ghidra_piece(unsigned int, value, 0) & 0x7ff00000;
+  if (((ulonglong)__ghidra_bits(value) & 0x7ff0000000000000) == 0) {
+    if (((ulonglong)__ghidra_bits(value) & 0xfffff00000000) == 0) {
+      if (__ghidra_piece(unsigned int, value, 4) == 0) {
+        if (count < 0) {
+          count = 0;
         }
-        else if (0x15c < param_1) {
-          param_1 = 0x15c;
+        else if (0x15c < (uint)count) {
+          count = 0x15c;
         }
-        while (param_1 != 0) {
-          *param_4 = '0';
-          param_1 = param_1 - 1;
-          param_4 = param_4 + 1;
+        while (count != 0) {
+          *digits = '0';
+          count = count + -1;
+          digits = digits + 1;
         }
-        *param_4 = '\0';
-        *param_2 = 0;
+        *digits = '\0';
+        *exponent = 0;
         return;
       }
-      if (in_stack_00000008 >> 0x10 == 0) {
+      if (__ghidra_piece(unsigned int, value, 4) >> 0x10 == 0) {
         uVar6 = 5;
         uVar4 = 0x8000;
       }
@@ -89627,15 +90342,15 @@ void installer_double_to_digits(uint param_1,int *param_2,uint *param_3,char *pa
         uVar6 = 0xfffffff5;
         uVar4 = 0x80000000;
       }
-      for (; (uVar4 & in_stack_00000008) == 0; uVar4 = uVar4 >> 1) {
+      for (; (uVar4 & __ghidra_piece(unsigned int, value, 4)) == 0; uVar4 = uVar4 >> 1) {
         uVar6 = uVar6 + 1;
       }
       if ((int)uVar6 < 0) {
-        local_1e = __ghidra_shl(in_stack_00000008, (uVar6 + 0x20 & 0x3f));
-        uVar4 = __ghidra_shr(in_stack_00000008, (-uVar6 & 0x3f));
+        local_1e = __ghidra_shl(__ghidra_piece(unsigned int, value, 4), (uVar6 + 0x20 & 0x3f));
+        uVar4 = __ghidra_shr(__ghidra_piece(unsigned int, value, 4), (-uVar6 & 0x3f));
       }
       else {
-        uVar4 = __ghidra_shl(in_stack_00000008, (uVar6 & 0x3f));
+        uVar4 = __ghidra_shl(__ghidra_piece(unsigned int, value, 4), (uVar6 & 0x3f));
         local_1e = 0;
       }
       uVar6 = uVar6 + 0x20;
@@ -89645,30 +90360,30 @@ void installer_double_to_digits(uint param_1,int *param_2,uint *param_3,char *pa
       for (uVar3 = 0x80000; (uVar3 & uVar4) == 0; uVar3 = uVar3 >> 1) {
         uVar6 = uVar6 + 1;
       }
-      uVar4 = __ghidra_shr(in_stack_00000008, (0x20 - uVar6 & 0x3f)) | __ghidra_shl(uVar4, (uVar6 & 0x3f));
-      local_1e = __ghidra_shl(in_stack_00000008, (uVar6 & 0x3f));
+      uVar4 = __ghidra_shr(__ghidra_piece(unsigned int, value, 4), (0x20 - uVar6 & 0x3f)) | __ghidra_shl(uVar4, (uVar6 & 0x3f));
+      local_1e = __ghidra_shl(__ghidra_piece(unsigned int, value, 4), (uVar6 & 0x3f));
     }
     uVar6 = (uVar6 - 1) * -0x100000;
   }
   else if (uVar6 == 0x7ff00000) {
-    if ((in_stack_00000008 == 0) && ((in_stack_00000004 & 0xfffff) == 0)) {
-      if (*param_3 == 0) {
-        *param_4 = '+';
-        param_4[1] = '+';
+    if ((__ghidra_piece(unsigned int, value, 4) == 0) && (((ulonglong)__ghidra_bits(value) & 0xfffff00000000) == 0)) {
+      if (*negative == 0) {
+        *digits = '+';
+        digits[1] = '+';
       }
       else {
-        *param_4 = '-';
-        param_4[1] = '-';
+        *digits = '-';
+        digits[1] = '-';
       }
-      pcVar10 = param_4 + 2;
+      pcVar10 = digits + 2;
       iVar1 = 2;
     }
     else {
-      pcVar10 = param_4 + 1;
-      *param_4 = '?';
+      pcVar10 = digits + 1;
+      *digits = '?';
       iVar1 = 1;
     }
-    *param_2 = iVar1;
+    *exponent = iVar1;
     *pcVar10 = '\0';
     return;
   }
@@ -89678,18 +90393,18 @@ void installer_double_to_digits(uint param_1,int *param_2,uint *param_3,char *pa
     iVar7 = 0x4d11;
   }
   local_a = (short)((uint)(iVar1 * iVar7) >> 0x10);
-  if ((int)param_1 < 0) {
-    param_1 = 0;
+  if (count < 0) {
+    count = 0;
   }
-  if (param_5 == 0) {
-    param_1 = local_a + 1 + param_1;
+  if (mode == 0) {
+    count = local_a + 1 + count;
   }
-  if (0x15c < (int)param_1) {
-    param_1 = 0x15c;
+  if (0x15c < count) {
+    count = 0x15c;
   }
-  local_26 = param_1;
-  if ((int)param_1 < 0x12) {
-    if ((int)param_1 < 0) {
+  local_26 = count;
+  if (count < 0x12) {
+    if (count < 0) {
       local_26 = 0;
     }
   }
@@ -89803,10 +90518,10 @@ LAB_installer__001098f6:
       if (local_1a[1] < *(uint *)(local_26 * 8 + 0x109bf2)) goto LAB_installer__00109956;
       if (local_1a[1] == *(uint *)(local_26 * 8 + 0x109bf2)) {
         local_a = local_a + 1;
-        if (param_5 != 0) {
+        if (mode != 0) {
           if (local_26 != 0) {
-            local_1a[0] = *(uint *)(&DAT_installer__00109bee + (local_26 - 1) * 8);
-            local_1a[1] = *(uint *)((local_26 - 1) * 8 + 0x109bf2);
+            local_1a[0] = *(uint *)(&DAT_installer__00109bee + (local_26 + -1) * 8);
+            local_1a[1] = *(uint *)((local_26 + -1) * 8 + 0x109bf2);
           }
           goto LAB_installer__00109956;
         }
@@ -89814,18 +90529,18 @@ LAB_installer__001098f6:
       }
     }
     local_a = local_a + 1;
-    if (param_5 == 0) {
+    if (mode == 0) {
 LAB_installer__0010994e:
       local_26 = local_26 + 1;
-      param_1 = param_1 + 1;
+      count = count + 1;
 LAB_installer__00109956:
-      if ((int)param_1 < 1) {
-        *param_2 = local_a + 1;
-        *param_4 = '\0';
+      if (count < 1) {
+        *exponent = local_a + 1;
+        *digits = '\0';
       }
       else {
         sVar9 = (short)local_26;
-        pcVar10 = param_4;
+        pcVar10 = digits;
         while (sVar9 = sVar9 + -1, local_1a[0] != 0) {
           *pcVar10 = '0';
           uVar4 = *(uint *)(&DAT_installer__00109bee + sVar9 * 8);
@@ -89842,7 +90557,7 @@ LAB_installer__00109956:
         }
         while (*(int *)(&DAT_installer__00109bee + sVar9 * 8) != 0) {
           sVar9 = sVar9 + -1;
-          if (param_4 < pcVar10) {
+          if (digits < pcVar10) {
             *pcVar10 = '0';
             pcVar10 = pcVar10 + 1;
           }
@@ -89857,7 +90572,7 @@ LAB_installer__00109956:
           sVar9 = sVar9 + -1;
         }
         *pcVar10 = (char)local_1a[1] + '0';
-        iVar1 = param_1 - local_26;
+        iVar1 = count - local_26;
         while( true ) {
           pcVar10 = pcVar10 + 1;
           if (iVar1 == 0) break;
@@ -89865,7 +90580,7 @@ LAB_installer__00109956:
           iVar1 = iVar1 + -1;
         }
         *pcVar10 = '\0';
-        *param_2 = local_a + 1;
+        *exponent = local_a + 1;
       }
       return;
     }
@@ -90082,7 +90797,8 @@ LAB_installer__00109d1a:
         else {
           pcVar13 = (char *)0x11;
         }
-        installer_double_to_digits((uint)pcVar13,&local_20,&local_1c,acStack_1b2 + 1,1);
+        installer_double_to_digits
+                  (*(double *)param_2,(int)pcVar13,&local_20,&local_1c,acStack_1b2 + 1,1);
         goto LAB_installer__0010a2a2;
       case 0x27:
       case 0x47:
@@ -90100,7 +90816,8 @@ LAB_installer__00109d1a:
         if (0x10 < (int)local_1d2) {
           pcVar13 = (char *)0x11;
         }
-        installer_double_to_digits((uint)pcVar13,&local_20,&local_1c,acStack_1b2 + 1,1);
+        installer_double_to_digits
+                  (*(double *)param_2,(int)pcVar13,&local_20,&local_1c,acStack_1b2 + 1,1);
         if (local_30 == 0 && (local_34 & 0x7fffffff) == 0) {
           local_20 = 1;
         }
@@ -90382,7 +91099,8 @@ LAB_installer__0010a474:
         if (0x3b < (int)local_1d2) {
           pcVar13 = "";
         }
-        installer_double_to_digits((uint)pcVar13,&local_20,&local_1c,acStack_1b2 + 1,0);
+        installer_double_to_digits
+                  (*(double *)param_2,(int)pcVar13,&local_20,&local_1c,acStack_1b2 + 1,0);
         goto LAB_installer__0010a474;
       case 0x48:
         bVar1 = true;
@@ -90640,14 +91358,15 @@ int installer_sprintf(char *s,char *format,...)
 /* the installer's vsprintf
    libc.md */
 
-void installer_vsprintf(char *param_1,byte *param_2,uint *param_3)
+int installer_vsprintf(char *s,char *format,void *arg)
 
 {
+  int iVar1;
   sprintf_output output;
   
-  output.cursor = param_1;
-  installer_doprnt(param_2,param_3,&LAB_installer__0010aa6c,&output);
+  output.cursor = s;
+  iVar1 = installer_doprnt((byte *)format,arg,&LAB_installer__0010aa6c,&output);
   *output.cursor = '\0';
-  return;
+  return iVar1;
 }
 

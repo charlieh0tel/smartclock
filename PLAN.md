@@ -1061,7 +1061,16 @@ view cannot drift apart.  The library, bottom up:
      garbage.  The fix is the Ghidra project's, giving each installer
      copy its twin's convention and prototype; with them, the installer's
      profile would need the primary's objects by type, its status object
-     at `0x10ad06`.
+     at `0x10ad06`.  So the names file now gives each installer copy
+     whose instructions match its twin's, mnemonic for mnemonic, the
+     twin's convention and prototype: 29 of them, `installer_psos_call`,
+     `_enter_supervisor`, `_psos_pack_name`, the mutexes, the status
+     system's and `installer_program_end_report` among them.  The
+     installer's: 63 agree, 3 are skipped and 8 differ; 9 bridges agree.
+     Left: the four exception entries run as functions,
+     `installer_duarta_receive`, `_print_exception`, `_program_exit`
+     and `_program_end_report`, and the status system's three, which
+     wait for the installer's status object.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

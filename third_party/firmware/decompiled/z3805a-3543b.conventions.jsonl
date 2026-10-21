@@ -1665,8 +1665,8 @@
 {"address":"00060efa","name":"double_truncate_sixteenths","note":"a double truncated to a multiple of 1/16; pow's","convention":"c","confidence":"read","out":[{"register":"D0:D1","type":"double"}],"copies":"D0:D1","stack":[{"offset":4,"size":8}]}
 {"address":"00060f5e","name":"pow","note":"pow","convention":"c","confidence":"run","out":[{"register":"D0:D1","type":"double"}],"stack":[{"offset":4,"size":8},{"offset":12,"size":8}]}
 {"address":"0006191c","name":"sqrt","note":"square root","convention":"c","confidence":"run","out":[{"register":"D0:D1","type":"double"}],"stack":[{"offset":4,"size":8}]}
-{"address":"installer::0010043a","name":"installer_mutex_acquire","note":"the installer's mutex_acquire","convention":"unknown"}
-{"address":"installer::00100484","name":"installer_mutex_release","note":"the installer's mutex_release","convention":"unknown"}
+{"address":"installer::0010043a","name":"installer_mutex_acquire","note":"the installer's mutex_acquire","convention":"register","confidence":"read","in":[{"register":"A1","type":"void *","name":"mutex"}],"out":[{"register":"D7","type":"int","name":"error"}],"error":[{"register":"D7","value":"0x80","meaning":"nested hold"}],"preserves":["D0","D1","A0","A2"],"family":"mutex"}
+{"address":"installer::00100484","name":"installer_mutex_release","note":"the installer's mutex_release","convention":"register","confidence":"read","in":[{"register":"A1","type":"void *","name":"mutex"}],"out":[{"register":"D7","type":"int","name":"error"}],"error":[{"register":"D7","value":"2","meaning":"not held"},{"register":"D7","value":"0x80","meaning":"holds remain"}],"preserves":["D0","A0"],"family":"mutex"}
 {"address":"installer::00100538","name":"installer_exception_hook_reset","note":"the installer's exception_hook_reset","convention":"unknown"}
 {"address":"installer::0010058e","name":"installer_exception_hook_get","note":"the installer's exception_hook_get","convention":"unknown"}
 {"address":"installer::001005b4","name":"installer_default_exception","note":"the installer's primary_default_exception","convention":"unknown"}
@@ -1682,12 +1682,12 @@
 {"address":"installer::00100e80","name":"installer_enter_supervisor_mode","note":"the installer's enter_supervisor_mode","convention":"unknown"}
 {"address":"installer::00100e90","name":"installer_set_interrupt_mask","note":"the installer's set_interrupt_mask","convention":"unknown","stack":[{"offset":4,"size":2}]}
 {"address":"installer::00100f32","name":"installer_trap_7","note":"the installer's primary_trap_7","convention":"unknown"}
-{"address":"installer::00100f3a","name":"installer_enter_supervisor","note":"the installer's enter_supervisor","convention":"unknown"}
+{"address":"installer::00100f3a","name":"installer_enter_supervisor","note":"the installer's enter_supervisor","convention":"other","confidence":"read","out":[{"register":"D0","type":"int","name":"status"}],"preserves":["D1","D2","D3","D4","D5","D6","D7","A1","A2","A3","A4","A5","A6"],"family":"supervisor"}
 {"address":"installer::00100fc0","name":"installer_float_exception_report","note":"the installer's float_exception_report","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"installer::0010135a","name":"installer_return","note":"a lone rts before installer_entry; nothing calls it","convention":"unknown"}
 {"address":"installer::0010135c","name":"installer_entry","convention":"unknown"}
 {"address":"installer::001013ae","name":"installer_program_exit","note":"the installer's program_exit","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"installer::001013c2","name":"installer_program_end_report","note":"the installer's program_end_report","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::001013c2","name":"installer_program_end_report","note":"the installer's program_end_report","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"installer::001014b4","name":"installer_kernel_dispatch_service","convention":"unknown"}
 {"address":"installer::001014b8","name":"installer_kernel_dispatch_io","convention":"unknown"}
 {"address":"installer::001014bc","name":"installer_kernel_init","convention":"unknown"}
@@ -1750,8 +1750,8 @@
 {"address":"installer::001026de","name":"installer_kernel_init","note":"the installer's copy of kernel_init, at 0x15cd8 plus 0xeca06, byte for byte","convention":"exception","confidence":"read","family":"psos"}
 {"address":"installer::001028d4","name":"installer_kernel_region_init","note":"the installer's copy of kernel_region_init, at 0x15ece plus 0xeca06, byte for byte","convention":"undetermined","confidence":"derived","family":"psos"}
 {"address":"installer::00102990","name":"installer_kernel_return_from_interrupt","note":"the installer's copy of kernel_return_from_interrupt, at 0x15f8a plus 0xeca06, byte for byte","convention":"exception","confidence":"read","family":"psos"}
-{"address":"installer::00102a72","name":"installer_psos_call","note":"the installer's psos_call","convention":"unknown"}
-{"address":"installer::00102aa4","name":"installer_psos_pack_name","note":"the installer's psos_pack_name","convention":"unknown"}
+{"address":"installer::00102a72","name":"installer_psos_call","note":"the installer's psos_call","convention":"register","confidence":"read","in":[{"register":"D7","type":"char","name":"service"},{"register":"D0","type":"int","name":"d0"},{"register":"D1","type":"int","name":"d1"},{"register":"D2","type":"int","name":"d2"},{"register":"D3","type":"int","name":"d3"},{"register":"A0","type":"void *","name":"a0"},{"register":"A1","type":"void *","name":"a1"}],"out":[{"register":"D7","type":"int","name":"error"}],"returns":"ccr","results":["D0","D1","D2","D3","A0","A1"],"family":"psos-binding"}
+{"address":"installer::00102aa4","name":"installer_psos_pack_name","note":"the installer's psos_pack_name","convention":"other","confidence":"read","out":[{"register":"D0","type":"int","name":"name"}],"family":"psos-binding"}
 {"address":"installer::00102b4c","name":"installer_psos_my_pid","note":"the installer's psos_my_pid","convention":"unknown"}
 {"address":"installer::00102b5c","name":"installer_psos_delete","note":"the installer's psos_delete, service 4","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::00102bca","name":"installer_psos_pause","note":"the installer's psos_pause, service 28","convention":"unknown","stack":[{"offset":4,"size":4}]}
@@ -1785,7 +1785,7 @@
 {"address":"installer::00105c96","name":"installer_status_condition_set","note":"the installer's status_condition_set","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00105cf2","name":"installer_status_condition_clear","note":"the installer's status_condition_clear","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00105d52","name":"installer_status_propagate","note":"the installer's status_propagate","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"installer::00105eb8","name":"installer_status_set_bit","note":"the installer's status_set_bit","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"installer::00105eb8","name":"installer_status_set_bit","note":"the installer's status_set_bit","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00105f7c","name":"installer_status_apply_condition","note":"the installer's status_apply_condition","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00106164","name":"installer_status_read_event","note":"the installer's status_read_event","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00106282","name":"installer_error_queue_push","note":"the installer's error_queue_push","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
@@ -1806,7 +1806,7 @@
 {"address":"installer::001091ac","name":"installer_strtol","note":"strtol: a long from a string in a base up to 36, and where it ended","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"installer::00109366","name":"installer_toupper","note":"the installer's toupper","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::0010937e","name":"installer_double_to_digits_multiply","note":"the installer's double_to_digits_multiply","convention":"unknown","stack":[{"offset":4,"size":4}]}
-{"address":"installer::00109562","name":"installer_double_to_digits","note":"the installer's double_to_digits","convention":"unknown","stack":[{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4}]}
+{"address":"installer::00109562","name":"installer_double_to_digits","note":"the installer's double_to_digits","convention":"unknown","stack":[{"offset":4,"size":8},{"offset":12,"size":4},{"offset":16,"size":4},{"offset":20,"size":4},{"offset":24,"size":4},{"offset":28,"size":4}]}
 {"address":"installer::00109c7e","name":"installer_next_decimal_digit","note":"the installer's next_decimal_digit","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"installer::00109cb4","name":"installer_doprnt","note":"the installer's doprnt","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":4}]}
 {"address":"installer::0010aa3e","name":"installer_sprintf","note":"the installer's sprintf","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}

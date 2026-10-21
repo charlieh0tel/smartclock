@@ -1387,6 +1387,11 @@ struct nv_record {
 
 typedef struct nv_settings_fields nv_settings_fields, *Pnv_settings_fields;
 
+typedef enum __attribute__((packed)) robin_format {
+    ROBIN_SHORTS=0,
+    ROBIN_BLOCK=1
+} robin_format;
+
 typedef enum __attribute__((packed)) timecode_format {
     TIMECODE_T1=0,
     TIMECODE_T2_TEST=1,
@@ -1431,7 +1436,7 @@ struct nv_settings_fields {
     int32_t field_b8;
     uint8_t field_bc;
     uint8_t output_state;
-    uint8_t format_data;
+    enum robin_format format_data;
     uint8_t memory_save;
     uint8_t douglas_state_powerup;
     enum timecode_format tcode_format;
@@ -2581,6 +2586,7 @@ _Static_assert(sizeof(qspi_device) == 1, "qspi_device");
 _Static_assert(sizeof(qspi_state) == 78, "qspi_state");
 _Static_assert(sizeof(regression_record) == 26, "regression_record");
 _Static_assert(sizeof(reset_record) == 92, "reset_record");
+_Static_assert(sizeof(robin_format) == 1, "robin_format");
 _Static_assert(sizeof(satellite_kind) == 1, "satellite_kind");
 _Static_assert(sizeof(satellite_list) == 1, "satellite_list");
 _Static_assert(sizeof(satellite_sets) == 42, "satellite_sets");
@@ -5900,7 +5906,7 @@ char return_byte(char b);
 uint32_t long_identity(uint32_t param_1);
 void copy_longs_locked(uint32_t *source,uint32_t *destination,uint8_t count);
 float float_identity(float x);
-void robin_store(scpi_engine_array_record *response,int16_t *points,int32_t count,char format,
+void robin_store(scpi_engine_array_record *response,int16_t *points,int32_t count,robin_format format,
                 uint8_t index);
 int32_t return_zero(void);
 int32_t scpi_query_failed(char code,void *response);
@@ -46711,15 +46717,15 @@ float float_identity(float x)
 
 /* stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36 */
 
-void robin_store(scpi_engine_array_record *response,int16_t *points,int32_t count,char format,
+void robin_store(scpi_engine_array_record *response,int16_t *points,int32_t count,robin_format format,
                 uint8_t index)
 
 {
   int32_t iVar1;
   void *pvVar2;
   
-  iVar1 = format + -1;
-  if (format == 0 || iVar1 == 0) {
+  iVar1 = (char)format + -1;
+  if ((char)format == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_00029a92_index_zero)[(int16_t)iVar1]) {
     case 4:

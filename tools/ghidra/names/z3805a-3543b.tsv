@@ -1541,7 +1541,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x29766	function	arena_set	context	sets an arena's next free byte	void arena_set(void *next, scpi_engine_arena *arena)
 0x29770	function	arena_init	context	makes an arena of a buffer of so many bytes	void arena_init(void *buffer, uint32_t size, scpi_engine_arena **arena)
 0x29a24	function	copy_longs_locked	context	copies so many longs with interrupts held off	void copy_longs_locked(uint32_t *source, uint32_t *destination, uint8_t count)
-0x29a68	function	robin_store	context	stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36	void robin_store(scpi_engine_array_record *response, short *points, long count, char format, uint8_t index)
+0x29a68	function	robin_store	context	stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36	void robin_store(scpi_engine_array_record *response, short *points, long count, robin_format format, uint8_t index)
 0x29b08	function	rtcm_supported	context	0: RTCM corrections are not supported	undefined1 rtcm_supported(void)
 0x29b96	function	scpi_console_read	context	reads up to so many characters from the console, marking the input ended at its end	int32_t scpi_console_read(scpi_port *port, uint8_t *buffer, int32_t length)
 0x29cc6	function	scpi_input_ended	context	marks the SCPI input ended

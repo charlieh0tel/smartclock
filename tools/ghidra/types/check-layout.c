@@ -270,6 +270,7 @@ CHECK_SIZE(log_event_code, 1);
 CHECK_SIZE(serial_baud, 1);
 CHECK_SIZE(serial_parity, 1);
 CHECK_SIZE(timecode_format, 1);
+CHECK_SIZE(robin_format, 1);
 CHECK_SIZE(klok_event_class, 1);
 CHECK_FIELD(mutex, holds, 0x0c);
 CHECK_SIZE(fpga_configuration_entry, 8);

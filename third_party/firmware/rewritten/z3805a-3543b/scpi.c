@@ -2573,17 +2573,10 @@ void copy_longs_locked(uint32_t* source, uint32_t* destination, uint8_t count) {
  * (0x29a62). */
 float float_identity(float x) { return x; }
 
-/* A :ROBin query's response format, by the jump table at 0x29a96: an
- * array of its shorts, or a block of their bytes. */
-enum {
-  SCPI_ROBIN_SHORTS = 0,
-  SCPI_ROBIN_BLOCK = 1,
-};
-
 /* Makes a :ROBin query's response of its points, by its format, in the
  * index'th record of that kind (0x29a68). */
 void robin_store(scpi_engine_array_record* record, int16_t* points,
-                 int32_t count, char format, uint8_t index) {
+                 int32_t count, robin_format format, uint8_t index) {
   /* The :ROBin queries' responses, two of each kind, unnamed in the
    * export: blocks at 0x102a26 and arrays of shorts at 0x102a36
    * (0x29a74, 0x29a7a). */
@@ -2591,7 +2584,7 @@ void robin_store(scpi_engine_array_record* record, int16_t* points,
   static scpi_engine_array* const ROBIN_ARRAYS = (scpi_engine_array*)0x102a36;
 
   switch (format) {
-    case SCPI_ROBIN_BLOCK: {
+    case ROBIN_BLOCK: {
       scpi_engine_block* block = &ROBIN_BLOCKS[index];
 
       block->length = count * sizeof *points;
@@ -2600,7 +2593,7 @@ void robin_store(scpi_engine_array_record* record, int16_t* points,
       record->array = block;
       break;
     }
-    case SCPI_ROBIN_SHORTS: {
+    case ROBIN_SHORTS: {
       scpi_engine_array* array = &ROBIN_ARRAYS[index];
 
       array->count = count;

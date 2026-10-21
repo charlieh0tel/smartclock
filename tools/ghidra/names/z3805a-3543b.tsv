@@ -381,15 +381,20 @@
 0x101f68	label	idn_model	structures.md	*IDN?'s first %s	char[18]
 0x101f7a	label	idn_serial	structures.md	*IDN?'s second %s	char[18]
 0x101f8c	label	idn_suffix	structures.md	*IDN?'s %c after "3543B-"	char
-0x102154	label	fine_y0	structures.md	"y0 = %f, efc =  %d", fine acquisition's intercept	float
+0x102154	label	fine_y0	structures.md	"y0 = %f, efc =  %d", fine acquisition's least-squares slope of ti on i, by which it steers the EFC	float
 0x102544	label	status_summary	structures.md	six bits from status register 6's groups, the last field of the es message	uint8_t
 0x102554	label	efc_gains	structures.md	the EFC's gain and what efc_gain_set derives from it	efc_gain_values
 0x10256c	label	gps_command	structures.md	the GPS command the console's GPS words leave for pllp_task	gps_command_mailbox
 0x102584	label	gps_ack_code	structures.md	"mask angle ack failure: %02X" and eight more	uint8_t
-0x10264c	label	psos_config	structures.md	memcpy'd from ROM 0x5122a, 0x62 bytes; its first long is the data area the supervisor stack starts 200 bytes into
-0x102674	label	psos_supervisor_stack_size	structures.md	">> pSOS system supervisor stack:" divides by it	int32_t
-0x1026b8	label	task_table	structures.md	task_stack_report's tasks, six bytes each, the task first
+0x10264c	label	psos_config	structures.md	the kernel's configuration table, memcpy'd from ROM 0x5122a, 0x62 bytes; the kernel reaches it through the pointer at 0x51226	psos_configuration
+0x1025bc	label	io_table	structures.md	the kernel's I/O table, memcpy'd from ROM 0x5171a, 0x90 bytes; psos_config.io_table points at it	io_device_jumps[4]
+0x1026ae	label	task_name_text	structures.md	task_name copies a task's four-character name here and returns it; its NUL is object_name_text's first byte	char[4]
+0x1026b2	label	object_name_text	structures.md	object_name copies an exchange's four-character name here and returns it; its NUL is task_table's first byte	char[4]
+0x1026b6	label	task_table	structures.md	task_table_build's snapshot of the tasks, the running one first, for task_stack_report and the :DIAG:OS reports; object_name's NUL lands on the first state	task_table_entry[17]
 0x10271c	label	task_count	structures.md	task_stack_report's count of task_table	int32_t
+0x102720	label	task_ticks_total	structures.md	task_table_build's sum of the tasks' tick counts, +0xae of their records; os_report_process divides by it and os_report_process_summary prints it as "Total time"	uint32_t
+0x102724	label	diag_leapsec_argument_1	structures.md	diag_leapsec's first argument's low byte; only written	uint8_t
+0x102726	label	diag_leapsec_argument_2	structures.md	diag_leapsec's second argument; only written	uint32_t
 0x1032fd	label	deferred_text	structures.md	deferred_vprintf's buffer, which deferred_flush prints	char[1025]
 0x1036fe	label	deferred_end	structures.md	deferred_vprintf's write offset into deferred_text	int16_t
 0x103700	label	deferred_start	structures.md	deferred_flush's read offset into deferred_text	int16_t
@@ -497,6 +502,23 @@
 0x10258d	label	selftest_requested	structures.md	the self-test action at 0x46326 sets it; pllp_task then enters PLL_STAGE_DIAG and gps_diag_sequence clears it	uint8_t
 0x10258e	label	leap_recheck_requested	structures.md	set by diag_leapsec and on entering powerup recovery; gps_leap_sequence's wait state then returns to state 1	uint8_t
 0x102590	label	selftest_number	structures.md	the self-test action at 0x46326's argument, which gps_diag_sequence passes to selftest_run	int32_t
+0x102040	label	douglas_log_event	structures.md	the log_event code finish_scpi_cmd logs for a :DOUGlas:STATe change, with status_happening 0x1d or 0x1c: 3 "Survey mode started" when it is cleared, 4 "Position hold mode started" when set from 0; pll_scpi_command clears it	uint8_t
+0x10207a	label	interval_tick_wait	structures.md	set while interval_wait_reading and interval_next_reading wait on event 0x200 with a 1PPS dead; the periodic interrupt then signals pllp 0x199 ticks after the last pps_interrupt	uint8_t
+0x10207b	label	interval_armed_without_pps	structures.md	set when interval_rearm or interval_next_reading arms a reading with a 1PPS dead; interval_wait_reading and interval_next_reading then report no happening 'H' for its being invalid	uint8_t
+0x102144	label	fine_sum_i	structures.md	fine's least-squares sum of i	float
+0x102148	label	fine_sum_i_squared	structures.md	fine's sum of i squared	float
+0x10214c	label	fine_sum_ti	structures.md	fine's sum of pll.fine_d, the time interval	float
+0x102150	label	fine_sum_i_ti	structures.md	fine's sum of i times pll.fine_d	float
+0x102158	label	fine_x0	structures.md	fine's "x0 = %.2e", the least-squares intercept; state 6 refuses a fit off the first reading by over 3e-7 ("Bad TI in frequency measurement")	float
+0x10215c	label	fine_ti_max	structures.md	the largest |pll.fine_d| of fine's fit, which fine compares outside powerup with pll.holdover_duration times pll.frequency_tolerance plus nv_settings.holdover_limit_threshold	float
+0x102160	label	first_satellite_logged	structures.md	powerup sets it on the first satellite in use, with status_happening 0x22 and log_first_satellite, and clears it on a fresh start	uint8_t
+0x102594	label	restart_reference_uptime	structures.md	pll.reference_uptime as pllp_task found it at its start, from which clock_set_from_reference counts with restart_reference_seconds	uint32_t
+0x102598	label	gpsx_sent_count	structures.md	gpsx_send's messages sent; pllp_task clears it; only counted	uint32_t
+0x10259c	label	plla_received_count	structures.md	the messages pllp_task receives from plla; only counted	uint32_t
+0x1025a0	label	plla_unknown_count	structures.md	plla messages neither an acknowledgment, kind 1, nor a completion, kind 2; only counted	uint32_t
+0x1025a4	label	plla_unexpected_count	structures.md	acknowledgments with none awaited, and completions pll_scpi_complete or gps_diag_complete find no reply pending for; only counted	uint32_t
+0x1025a8	label	plla_failed_count	structures.md	plla messages with a nonzero code; only counted	uint32_t
+0x1025ac	label	gpsx_arguments	structures.md	gpsx_send copies its four arguments here and points its gpsx_exchange message at them	uint32_t[4]
 0x46524	function	pll_stage_status	context	by pll.stage, sets two pll flags and the status happenings they imply (0x1a, 0x1b, 0x28, 0x2a, 0x2c), with log_event(6); pllp_task calls it at start and on stage changes
 0x18a74	function	selftest_run	context	runs self-test n, 0 to 13, through selftest_execute and copies its result cells
 0x182ec	function	selftest_execute	context	runs entry n of the test table 0x18458 twice between selftest_begin and selftest_end, with selftest.running set
@@ -1472,7 +1494,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4f6d8	function	oncore_corrections_message	gps.md	decodes the range corrections and averages those of the satellites in use, and their deviation
 0x4f87e	function	oncore_receiver_id_message	gps.md	decodes the receiver ID, @@Cj, and marks it received
 0x4fb86	function	gps_response_match	context	checks a response against the request it answers
-0x51038	function	psos_config_init	psos.md	copies the kernel's configuration and the task table into RAM
+0x51038	function	psos_config_init	psos.md	copies the kernel's configuration and its I/O table into RAM
 0x510aa	function	memory_allocate	psos.md	allocates from region 1 through service 8
 0x510d2	function	memory_free	psos.md	frees a segment through service 9
 #
@@ -1570,7 +1592,6 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 # the installer's DUART driver state, in plain RAM after its image, laid
 # out as the primary's from duartb_applied to duartb's end; and the boot
 # code's cells there; docs/firmware/structures.md, "The installer's RAM"
-0x10ab2c	label	boot_selftest_uart	structures.md	the boot code's selftest.uart: boot_duart_early_init sets 1 if the IVR fails, boot_duartb_loopback_check ORs 0x10 for a character back wrong, 0x20 for none; boot_reset lights OP6 if nonzero	int16_t
 0x10ad3c	label	installer_duartb_applied	structures.md	the installer's duartb_applied: installer_duartb_baud_from_settings and _mode_from_settings copy the settings at 0x10ab32 to 0x10ab37 to it; installer_duartb_isr strips the top bit unless +2 is set	duartb_applied_settings
 0x10ad40	label	installer_duart_shadow	structures.md	the installer's duart_shadow: IMR at +4, MR1B, MR2B and CSRB at +7 to +9	duart_shadow_registers
 0x10ad4d	label	installer_duarta_ring	structures.md	the installer's duarta_ring, which installer_duarta_receive fills; nothing in the installer reads it	serial_ring
@@ -1579,6 +1600,77 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x10af5c	label	installer_duartb	structures.md	the installer's duartb, every field at the primary's offset	duartb_driver
 0x10afb2	label	boot_loopback_send_next	structures.md	the next character boot_duartb_loopback_check sends, from 0x54b, the "DUART" it expects back less its first; just past installer_duartb, as loopback_send_next is past duartb	uint8_t *
 0x10afb6	label	boot_loopback_expect_next	structures.md	the next character boot_duartb_loopback_check expects back; as loopback_expect_next	char *
+#
+# the SCPI console session, the status byte, the early status events,
+# the spooler, the tick and the kernel's start; docs/firmware/structures.md,
+# "The SCPI session" and "The tasks' cells"
+0x102a46	label	scpi_echo_length	structures.md	scpi_console_putc's count of scpi_echo_text; scpi_session_init and, for the console port, scpi_format_response clear it	uint8_t
+0x102a47	label	scpi_echo_text	structures.md	the response characters scpi_console_putc writes, at scpi_echo_length, which wraps at 256 unchecked	char[255]
+0x102b46	label	scpi_last_input	structures.md	console_port_read's last result, a character or 0x101 for an end of line or an error; returned once more after scpi_input_ended	int32_t
+0x102b4a	label	scpi_input_repeat	structures.md	scpi_input_ended sets it; console_port_read then returns scpi_last_input again and clears it	int16_t
+0x102b4c	label	status_byte	structures.md	the Status Byte: status_byte_set_bits and _clear_bits change it, status_update_rqs keeps RQS, 0x40, as its bits under service_request_enable	uint8_t
+0x102b4d	label	service_request_enable	structures.md	status_sre_set sets it	uint8_t
+0x102b4e	label	scpi_input_line	structures.md	console_port_read reads a line of up to 255 characters into it	char[256]
+0x102c4e	label	scpi_input_next	structures.md	console_port_read's next character in scpi_input_line	char *
+0x102c52	label	scpi_input_end	structures.md	the end of the line read; console_port_read prompts and reads another once scpi_input_next passes it	char *
+0x102c56	label	scpi_prompt_text	structures.md	scpi_prompt's "scpi > " or "E%+04d> "	char[10]
+0x102c63	label	scpi_prompt_enabled	structures.md	:SYSTem:COMMunicate:SER1:PROMpt; scpi_task sets it; console_port_read writes scpi_prompt_text before a read while it is set	uint8_t
+0x102c64	label	scpi_echo_response	structures.md	:DIAGnostic:QUERy:RESPonse? copies scpi_echo_text here, NUL-terminated, and returns it	char[256]
+0x102d64	label	scpi_values_SAMPle_IMULtiple	structures.md	scpi_set_SAMPle_IMULtiple copies its four values here and passes their address to pllc_request_d	uint32_t[4]
+0x102d74	label	robin_keyword_code	structures.md	robin_parse stores the matched keyword's code, +0x10 of its table entry; only written	uint8_t
+0x102ebc	label	early_status_reports	structures.md	status_report passes it to status_event_hook before status_ready; happening_flush replays it through status_report	early_status_events
+0x102ec4	label	early_status_happenings	structures.md	status_happening's, replayed through status_happening	early_status_events
+0x1032fc	label	spoo_started	structures.md	spoo_task_create sets it once the spoo task starts; until then spoo_run calls the function itself	uint8_t
+0x103702	label	spoo_message	structures.md	the request spoo_task receives from spoo_exchange and calls	spoo_request
+0x10371a	label	spoo_receive_error	structures.md	request_x's error in spoo_task: 0 runs the request, 0x81 runs deferred_flush	uint32_t
+0x1037cc	label	idle_loops_last_second	structures.md	klok_task stores klok_take_pending's count here each 1PPS; idle_count returns it	uint32_t
+0x1037d0	label	exception_hook	structures.md	the default exception hook, which exception_hook_get returns when the running task has none; set at 0x118d8	void *
+0x1037d4	label	exception_hook_per_task	structures.md	while set, exception_hook_get takes the running task's hook at +0x82 of its record first; set to 0xff at 0x118b6	uint8_t
+0x1037d6	label	hmon_tick_countdown	structures.md	primary_user_66, the periodic interrupt, signals hmon event 1 and reloads it with 10 when it reaches 0, and counts it down each tick	uint8_t
+0x1037d8	label	ticks_since_pps	structures.md	the periodic interrupt counts it, pps_interrupt clears it; at 0x199 with interval_tick_wait set the interrupt signals pllp event 0x200	uint16_t
+0x1037da	label	ticks_since_internal_pps	structures.md	the periodic interrupt counts it, primary_user_81 (the internal 1PPS) clears it; at 1024 the periodic interrupt calls pps_interrupt itself while internal_pps_dead	uint16_t
+0x1037dc	label	kernel_running	structures.md	system_init clears it, root_task sets it; fatal_error, the exception reports, eeprom_lock, eeprom_unlock and nv_save make kernel calls only while it is set	uint8_t
+0x1037de	label	psos_debug_enabled	structures.md	psos_debug_output keeps its argument here; system_init loads it from nv_settings.debug_output and root_task passes it to psos_debug_output	uint8_t
+0x1037df	label	warm_start	structures.md	system_init sets it when it restores the saved state, the region's checksum good, RSR & 0xc0 zero and 0x100002 1, as restart.md gives the warm start; then log_reset_cause runs, exception_record_clear otherwise	uint8_t
+0x1037e8	label	task_console	structures.md	console_init stores console_task_create's result, the p4th task's id; duartb_isr and the SCI's interrupt signal the reader 0x800 for a ^C only when the reader is this task; scpi_task_start clears it	uint32_t
+0x10382c	label	idle_loops	structures.md	root_task's endless loop counts it once its set-up is done; klok_take_pending returns and clears it	uint32_t
+#
+# the installer's cells, laid out as the primary's; docs/firmware/structures.md,
+# "The installer's RAM"
+0x10aad2	label	installer_float_exception_message	structures.md	the installer's float_exception_message, length-prefixed
+0x10aaf2	label	installer_program_end_message	structures.md	installer_program_end_report's "Prog end, returned N", length-prefixed
+0x10ab1f	label	installer_program_end_digits_end	structures.md	installer_program_end_report puts 0xff here and N's digits below it	uint8_t
+0x10ab20	label	boot_selftest	structures.md	the boot code's self-test results; the installer's :DIAGnostic:TEST? 1 to 4 return +0, +2, +4 and +0xc	boot_selftest_results
+0x10ab30	label	installer_duartb_settings	structures.md	the installer's duartb_settings: installer_parameter_record_read loads it from the parameter record, or the defaults at 0x1081a2	duartb_settings_record
+0x10ab3a	label	installer_idn_model	structures.md	the installer's idn_model, from the identification record, or "58000A"	char[18]
+0x10ab4c	label	installer_idn_serial	structures.md	the installer's idn_serial	char[18]
+0x10ab5e	label	installer_idn_suffix	structures.md	the installer's idn_suffix, 'A' without the record	char
+0x10ab60	label	installer_io_table	structures.md	installer_psos_config_init copies it from 0x108578: one device, DUART channel B	io_device_jumps
+0x10ab84	label	installer_psos_config	structures.md	installer_psos_config_init copies it from 0x1084da	psos_configuration
+0x10abe8	label	installer_scpi_last_input	structures.md	as scpi_last_input	int32_t
+0x10abec	label	installer_scpi_input_repeat	structures.md	as scpi_input_repeat	int16_t
+0x10abee	label	installer_status_byte	structures.md	as status_byte	uint8_t
+0x10abef	label	installer_service_request_enable	structures.md	as service_request_enable	uint8_t
+0x10abf0	label	installer_scpi_input_line	structures.md	as scpi_input_line	char[256]
+0x10acf0	label	installer_scpi_input_next	structures.md	as scpi_input_next	char *
+0x10acf4	label	installer_scpi_input_end	structures.md	as scpi_input_end	char *
+0x10acf8	label	installer_scpi_prompt_text	structures.md	installer_scpi_prompt's "scpi > " or "E%+04d> "	char[12]
+0x10ad04	label	installer_status_ready	structures.md	as status_ready: installer_system_init clears it, the status set-up at 0x107a00 sets it, the report at 0x107a86 does nothing without it	uint8_t
+0x10ad06	label	installer_status_object	structures.md	as status_object: the set-up at 0x107a00 passes its address to the status_create at 0x105d98; installer_status_prompt_refresh compares with it	status_model *
+0x10ad0a	label	installer_idn_response	structures.md	the installer's *IDN? answer, "HEWLETT-PACKARD,%s,%s,%s..." of installer_idn_model, installer_idn_serial and installer_idn_suffix	char[50]
+0x10afe0	label	installer_exception_hook	structures.md	as exception_hook	void *
+0x10afe4	label	installer_exception_hook_per_task	structures.md	as exception_hook_per_task	uint8_t
+0x10afe6	label	installer_kernel_running	structures.md	as kernel_running: installer_system_init clears it, the root task at 0x100d40 sets it; installer_default_exception and installer_print_exception pause only while it is set	uint8_t
+0x10aff0	label	installer_task_console	structures.md	as task_console, which installer_duartb_isr compares with the reader for a ^C; only cleared, at 0x100d38	uint32_t
+0x10aff8	label	installer_task_root	structures.md	the root task at 0x100d40 stores its own id here	uint32_t
+0x10affc	label	installer_task_scpi	structures.md	the installer's scpi task, created at 0x107886; installer_duartb_transmit_interrupt signals it 0x20	uint32_t
+0x10b034	label	installer_idle_loops	structures.md	as idle_loops: the root task at 0x100d40 clears it and counts it in its endless loop	uint32_t
+0x10b038	label	installer_float_status	structures.md	as float_status; installer_entry clears it	uint16_t
+0x10b03a	label	installer_float_control	structures.md	as float_control; installer_entry sets 0x7480	uint16_t
+0x10b03c	label	installer_atexit_functions	structures.md	as atexit_functions; installer_call_atexit_functions calls them
+0x10b0bc	label	installer_atexit_count	structures.md	as atexit_count	uint16_t
+0x10b0be	label	installer_rand_seed	structures.md	as rand_seed; installer_entry sets 1	uint32_t
+0x10b0c2	label	installer_errno	structures.md	as errno; installer_float_raise and installer_strtol set it	int32_t
 #
 # the last application routines
 0x110d6	function	oncore_date_unpack	context	the inverse of oncore_date_pack: year << 16 | month << 8 | day back to month << 24 | day << 16 | year; called by nothing

@@ -1517,7 +1517,7 @@
 {"address":"0004fb54","name":"bytes_equal_n","note":"1 if two byte strings have the same nonzero length and bytes","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":2},{"offset":10,"size":4},{"offset":14,"size":2}]}
 {"address":"0004fb86","name":"gps_response_match","note":"checks a response against the request it answers","convention":"unknown","stack":[{"offset":4,"size":2},{"offset":6,"size":4},{"offset":10,"size":1},{"offset":12,"size":1},{"offset":14,"size":2},{"offset":16,"size":4},{"offset":20,"size":2}]}
 {"address":"0004fdca","name":"gps_message_to_text","note":"a message as text for the log: @@, its ID, the rest in hex, <cr><lf>","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1},{"offset":10,"size":4}]}
-{"address":"00051038","name":"psos_config_init","note":"copies the kernel's configuration and the task table into RAM","convention":"unknown"}
+{"address":"00051038","name":"psos_config_init","note":"copies the kernel's configuration and its I/O table into RAM","convention":"unknown"}
 {"address":"000510aa","name":"memory_allocate","note":"allocates from region 1 through service 8","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000510d2","name":"memory_free","note":"frees a segment through service 9","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000510e8","name":"primary_trap_1","convention":"exception","confidence":"derived","family":"exception"}

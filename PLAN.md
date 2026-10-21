@@ -687,8 +687,8 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1212 run, 654 agree, 540 reach the kernel
-     or a peripheral and are skipped, and 18 differ, in the function or
+     original reads them: of 1212 run, 655 agree, 541 reach the kernel
+     or a peripheral and are skipped, and 16 differ, in the function or
      in gcc's callees.
      Unicorn has no CPU32 and the 68020 stands in: the image uses none
      of the CPU32's own instructions (`tbl`, `lpstop`, `bgnd`; a scan of

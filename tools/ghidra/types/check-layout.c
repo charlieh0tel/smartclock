@@ -111,6 +111,50 @@ CHECK_FIELD(duartb_driver, async_allowed, 0x10afaa - 0x10af5c);
 CHECK_FIELD(duartb_driver, echo, 0x10afac - 0x10af5c);
 CHECK_FIELD(duartb_driver, last_terminator, 0x10afb0 - 0x10af5c);
 CHECK_SIZE(duartb_driver, 0x10afb2 - 0x10af5c);
+CHECK_SIZE(duartb_settings_record, 0x10ab39 - 0x10ab30);
+CHECK_SIZE(psos_configuration, 0x10abe6 - 0x10ab84);
+CHECK_SIZE(io_device_jumps, 0x10ab84 - 0x10ab60);
+
+/* The boot code's results, at 0x10ab20, up to the installer's settings. */
+CHECK_SIZE(boot_selftest_results, 0x10ab30 - 0x10ab20);
+CHECK_FIELD(boot_selftest_results, cpu, 0x10ab22 - 0x10ab20);
+CHECK_FIELD(boot_selftest_results, ram, 0x10ab24 - 0x10ab20);
+CHECK_FIELD(boot_selftest_results, ram_data_bits, 0x10ab26 - 0x10ab20);
+CHECK_FIELD(boot_selftest_results, ram_address_lines, 0x10ab28 - 0x10ab20);
+CHECK_FIELD(boot_selftest_results, uart, 0x10ab2c - 0x10ab20);
+CHECK_FIELD(boot_selftest_results, lamp_mask, 0x10ab2e - 0x10ab20);
+
+/* The kernel's configuration and I/O table, as psos_config_init copies
+ * them: 0x62 bytes to 0x10264c and 0x90 to 0x1025bc. */
+CHECK_SIZE(psos_configuration, 0x1026ae - 0x10264c);
+CHECK_FIELD(psos_configuration, data_end, 0x102650 - 0x10264c);
+CHECK_FIELD(psos_configuration, region_2_start, 0x102658 - 0x10264c);
+CHECK_FIELD(psos_configuration, task_records, 0x102664 - 0x10264c);
+CHECK_FIELD(psos_configuration, exchange_records, 0x102666 - 0x10264c);
+CHECK_FIELD(psos_configuration, message_buffers, 0x102668 - 0x10264c);
+CHECK_FIELD(psos_configuration, last_device, 0x10266e - 0x10264c);
+CHECK_FIELD(psos_configuration, io_table, 0x102670 - 0x10264c);
+CHECK_FIELD(psos_configuration, supervisor_stack_size, 0x102674 - 0x10264c);
+CHECK_FIELD(psos_configuration, root_entry, 0x102678 - 0x10264c);
+CHECK_FIELD(psos_configuration, root_priority, 0x102680 - 0x10264c);
+CHECK_FIELD(psos_configuration, start_hook, 0x102682 - 0x10264c);
+CHECK_FIELD(psos_configuration, delete_hook, 0x102686 - 0x10264c);
+CHECK_FIELD(psos_configuration, debug_hooks, 0x10268e - 0x10264c);
+CHECK_FIELD(psos_configuration, task_hooks, 0x102692 - 0x10264c);
+CHECK_SIZE(io_device_jumps[4], 0x10264c - 0x1025bc);
+CHECK_SIZE(io_jump, 6);
+
+/* task_table: the task at 0x1026b8 + 6n, its state at 0x1026b6 + 6n,
+ * 17 entries up to task_count. */
+CHECK_FIELD(task_table_entry, task, 0x1026b8 - 0x1026b6);
+CHECK_SIZE(task_table_entry[17], 0x10271c - 0x1026b6);
+
+CHECK_SIZE(spoo_request, 0x10371a - 0x103702);
+CHECK_FIELD(spoo_request, function, 0x10370a - 0x103702);
+CHECK_FIELD(spoo_request, arguments, 0x10370e - 0x103702);
+CHECK_SIZE(early_status_events, 0x102ec4 - 0x102ebc);
+CHECK_SIZE(early_status_events[2], 0x102ecc - 0x102ebc);
+CHECK_FIELD(early_status_events, events, 0x02);
 
 CHECK_SIZE(efc_gain_values, 0x10256c - 0x102554);
 CHECK_FIELD(efc_gain_values, reciprocal_tau, 0x102560 - 0x102554);

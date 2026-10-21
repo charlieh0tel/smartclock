@@ -556,12 +556,12 @@ that page, and `log_flush` clears it.  `log_erase` (`0x31536`) resets
 them all.
 
 **The tasks' stacks.**  `task_stack_report` (`0x16c44`) prints each task
-in `task_table` (`0x1026b8`, six bytes a task, `task_count` of them) with
-its user and supervisor stacks' top, size and use, measured against a
-`0xabcd` fill, then ">> pSOS system supervisor stack:" from
-`psos_config` (`0x10264c`), the pSOS configuration table copied from
-ROM (`0x5122a`, `0x62` bytes): the stack starts 200 bytes into its
-data area and is `psos_supervisor_stack_size` (`+0x28`) long.
+in `task_table` (`0x1026b6`, `task_table_entry`, six bytes a task,
+`task_count` of them) with its user and supervisor stacks' top, size
+and use, measured against a `0xabcd` fill, then ">> pSOS system
+supervisor stack:" from `psos_config` (`0x10264c`, "The kernel's
+configuration", below): the stack starts 200 bytes into its data area
+and is `supervisor_stack_size` (`+0x28`) long.
 
 **Deferred printing.**  `deferred_vprintf` (`0x20dd2`) formats into
 `deferred_text` (`0x1032fd`) at `deferred_end`, and `deferred_flush`
@@ -593,7 +593,17 @@ is `interval_wait_reading` (`0x4513c`), then `interval_rearm`
 (`0x102584`); "Unable to initialize drtR: %X" and the like print the
 error code `psos_send_x` returns, not anything the token holds.
 `fine_y0` (`0x102154`), `pll.fine_index` and `pll.fine_d` are fine
-acquisition's "y0", "i" and "d" (`loop.md`).
+acquisition's "y0", "i" and "d" (`loop.md`), and `fine_x0`
+(`0x102158`) its "x0", in "i= %d, ti= %.1f, y0= %.2e, x0= %.2e".
+`fine` (`0x4538c`) fits a line to its readings by least squares, `d`
+the time interval and `i` its index: state 5 adds to `fine_sum_i`,
+`fine_sum_i_squared`, `fine_sum_ti` and `fine_sum_i_ti` (`0x102144` to
+`0x102150`), makes `y0` `(Σi Σd - i Σid) / ((Σi)² - i Σi²)`, the
+slope, and `x0` `(Σd - y0 Σi) / i`, the intercept, and keeps the
+largest `|d|` in `fine_ti_max` (`0x10215c`).  State 6 refuses a fit
+whose line misses the first reading by over 3e-7 ("Bad TI in frequency
+measurement"), and the EFC moves by `y0` times
+`efc_gains.reciprocal_fine`.
 
 ## What the words name
 
@@ -889,17 +899,59 @@ receiver: `installer_duarta_receive` (`0x103a44`) fills its ring and
 keeps the least free space at `+9`, but nothing in the installer reads
 the ring, and the overrun flag at `+6` is only written.
 
-The boot code uses cells in the same RAM.  `boot_duart_early_init`
-(`0x4cc`) and `boot_duartb_loopback_check` (`0x400`) report at
-`boot_selftest_uart` (`0x10ab2c`) as the primary's report at
-`selftest.uart`: 1 if the IVR does not read back, `0x10` ORed for a
-character back wrong, `0x20` for none; `boot_reset` lights OP6 if it is
-nonzero.  The loopback check's two cursors in "DUART" (`0x54a`),
+The boot code uses cells in the same RAM.  Its self-test results are
+`boot_selftest` (`0x10ab20`, `boot_selftest_results`, 16 bytes): a
+checksum word, then the fields of `selftest`'s first 14 bytes in their
+order.  `boot_reset` (`0x550`), once a byte-lane sum fails (`restart.md`,
+"Boot check") and it stays out of the primary, ORs 2 and 1 into
+`checksum` for the two lanes of `0x10000` to `0x3ffff` and 8 and 4
+for `0x40000` to `0x7ffff`, sets `cpu` to 1 if its register test
+fails (`0x76e`), and runs the RAM test into `ram`, `ram_data_bits`
+and `ram_address_lines` as `primary_reset` does into `selftest`;
+`boot_duart_early_init` (`0x4cc`) and `boot_duartb_loopback_check`
+(`0x400`) report at `uart` as the primary's report at `selftest.uart`:
+1 if the IVR does not read back, `0x10` ORed for a character back
+wrong, `0x20` for none.  On this path it writes the DUART's reset
+output port bits command with 8, then `0x10`, `0x20` or `0x40` for a
+CPU, RAM or UART failure, OP4 to OP6 as the primary lights them, and
+ORs each into `lamp_mask`, which nothing reads.  The installer's
+`:DIAGnostic:TEST?` (`restart.md`: 1 checksum flags, 2 CPU, 3 RAM, 4
+DUART) returns `checksum`, `cpu`, `ram` with its two details and
+`uart`, and for 0 a bit for each that is nonzero, 1, 2, 4 and 8 (its
+jump table at `0x1080ac`, in the unpacked installer).  The loopback check's two cursors in "DUART" (`0x54a`),
 `boot_loopback_send_next` (`0x10afb2`) and `boot_loopback_expect_next`
 (`0x10afb6`), lie just past `installer_duartb`, as
 `loopback_send_next` (`0x103142`) and `loopback_expect_next`
 (`0x103146`), which `duartb_loopback_check` and the DUART self-tests
 step, lie past `duartb`.
+
+The installer's image ends at `0x10aad2`; past it, before the DUART
+state, its other cells repeat the primary's, used the same way:
+
+| Installer | Primary | What |
+| --------- | ------- | ---- |
+| `0x10aad2`, `0x10aaf2` | `float_exception_message` (`0x100bd4`), `0x100bf4` | `installer_float_exception_report` (`0x100fc0`)'s and `installer_program_end_report` (`0x1013c2`)'s length-prefixed messages, the second's digits written down from the `0xff` at `0x10ab1f` (`0x100c21`), 32 and 45 bytes apart as in the primary |
+| `installer_duartb_settings` (`0x10ab30`) | `duartb_settings` | `installer_parameter_record_read` (`0x1081ac`) loads `+2` to `+8` from the parameter record, or the defaults at `0x1081a2`: 9600, no parity, eight bits, one stop bit, echo on |
+| `installer_idn_model`, `_serial`, `_suffix` (`0x10ab3a`, `0x10ab4c`, `0x10ab5e`) | `idn_model`, `idn_serial`, `idn_suffix` | from the identification record (`installer_identification_record_read`, `0x10824a`), or `58000A` and `A`; `installer_idn_response` (`0x10ad0a`) is `*IDN?`'s "HEWLETT-PACKARD,%s,%s,%s..." of them |
+| `installer_io_table` (`0x10ab60`), `installer_psos_config` (`0x10ab84`) | `io_table`, `psos_config` | `installer_psos_config_init` (`0x1083b6`) copies them from `0x108578` and `0x1084da`: one device, DUART channel B's routines; a data area from `0x10b0c8`, four tasks, exchanges and message buffers, a `0x800` supervisor stack, ROOT at `0x100d40`, no debug hooks |
+| `0x10abe8` to `0x10acf8` | `0x102b46` to `0x102c56` | the SCPI session ("The SCPI session", below), the routines at `0x10742a` to `0x107656`; the installer always prompts |
+| `installer_status_ready`, `installer_status_object` (`0x10ad04`, `0x10ad06`) | `status_ready`, `status_object` | the set-up at `0x107a00` passes the object's address to the `status_create` at `0x105d98` and sets the flag; the report at `0x107a86` does nothing without it |
+| `installer_exception_hook`, `_per_task` (`0x10afe0`, `0x10afe4`) | `exception_hook`, `exception_hook_per_task` | the installer's `exception_hook_reset` and `exception_hook_get` |
+| `installer_kernel_running` (`0x10afe6`) | `kernel_running` | `installer_system_init` (`0x100c7c`) clears it, the root task at `0x100d40` sets it; the exception reports pause only while it is set |
+| `installer_task_console` (`0x10aff0`) | `task_console` | `installer_duartb_isr` (`0x103aa8`) compares the reader with it for a `^C`; only cleared, at `0x100d38`, after the SCPI task is started |
+| `installer_task_root`, `installer_task_scpi` (`0x10aff8`, `0x10affc`) | `task_root`, `task_scpi` | the root task stores its own id; `0x107886`, the installer's `scpi_task_create`, the SCPI task's, which `installer_duartb_transmit_interrupt` (`0x103c90`) signals `0x20` |
+| `installer_idle_loops` (`0x10b034`) | `idle_loops` | the root task's endless loop counts it |
+| `0x10b038` to `0x10b0c2` | `float_status` (`0x1038b0`) to `errno` (`0x10393a`) | float status and control, the atexit functions and their count, `rand_seed` and `errno`, in the primary's order; `installer_entry` (`0x10135c`) sets them as `primary_reset` does, control `0x7480` and the seed 1 |
+
+`0x10abe6` and `0x10abe7` are only cleared, by the installer's
+`scpi_format_response` at `0x1072f0`, as the primary's `0x102c60` is
+(below); the installer keeps no echo of its responses.  The decompiled
+C's `0x10ffe6` to `0x10fffe` are not cells but the start-up stack:
+`primary_reset` and `installer_entry` load SP with `0x10fffe`, push a
+zero, link and push the arguments and return address of their call to
+`primary_start` and `installer_start`, and `boot_reset`'s `0x10fffa`
+is the return address of its call to `boot_unpack_installer`;
+`0x10ffd0` is an address the RAM tests step to.
 
 ## The SCI port's driver
 
@@ -1175,8 +1227,9 @@ pass:
 acknowledgment is awaited; past `0x4b0` it sets `gps_ack_code` 8,
 "GPS acknowledgment timed out".  `restart_reference_seconds`
 (`0x10258c`) is `pll.reference_seconds` as `pllp_task` found it,
-which `clock_set_from_reference` (`0x46290`) counts from, with the
-uptime at `0x102594`.  `clock_gps_mismatch` (`0x102552`) is
+which `clock_set_from_reference` (`0x46290`) counts from, with
+`restart_reference_uptime` (`0x102594`), `pll.reference_uptime` as
+found.  `clock_gps_mismatch` (`0x102552`) is
 `clock_check_against_gps`'s (`0x43f18`) first mismatch, cleared on a
 match or once it has set the clock.  Three are only written:
 `clock_change_armed` (`0x102543`), set by the clock-event stubs at
@@ -1406,3 +1459,167 @@ a row sets `status_snapshots_frozen` (`0x10155a`), after which it takes
 no more, and `gps_print_1pps` (`0x4c9e2`) prints the last two and the
 log's copy instead of "(no GPS receiver errors were logged)".
 `gpsm_task` clears both.
+`gpsx_send` (`0x46636`) copies its four arguments to `gpsx_arguments`
+(`0x1025ac`) and points its message at them.  Five longs `pllp_task`
+clears at its start are only counted: `gpsx_sent_count` (`0x102598`),
+`gpsx_send`'s messages; `plla_received_count` (`0x10259c`), the
+messages it takes from `plla`; `plla_failed_count` (`0x1025a8`), those
+with a nonzero code; `plla_unknown_count` (`0x1025a0`), those neither
+an acknowledgment (kind 1) nor a completion (kind 2); and
+`plla_unexpected_count` (`0x1025a4`), acknowledgments with none awaited
+and the completions `pll_scpi_complete` (`0x433b6`) and
+`gps_diag_complete` (`0x433fc`) find no reply pending for, which they
+count through the pointer they are given.
+
+`douglas_log_event` (`0x102040`) is what a `:DOUGlas:STATe` request
+logs: `pll_scpi_command` clears it, `pll_scpi_needs_loop` (`0x42d78`)
+and `pll_scpi_send_to_loop` (`0x42dc4`) set 4 when the request sets the
+state from 0 and 3 when it clears it, and `finish_scpi_cmd` then calls
+`log_event` with it, 3 "Survey mode started" or 4 "Position hold mode
+started", and `status_happening` with `0x1d` or `0x1c`.
+`first_satellite_logged` (`0x102160`) is set by `powerup` (`0x45e8e`)
+on the first satellite in use, with happening `0x22` and
+`log_first_satellite`, and cleared when it starts afresh.
+
+`interval_wait_reading` (`0x4513c`) and `interval_next_reading`
+(`0x44fbc`) read the counter only while both 1PPS signals are good.
+With one dead, they set `interval_tick_wait` (`0x10207a`) and wait up
+to `0x2800` ticks for event `0x200`, which the periodic interrupt
+(below, "The tasks' cells") signals `0x199` ticks after the last
+`pps_interrupt`; the reading is then invalid.  `interval_next_reading`
+and `interval_rearm` (`0x450c4`) set `interval_armed_without_pps`
+(`0x10207b`) when they arm a reading with a 1PPS dead, and the two
+reading routines then raise no happening `'H'` for its being invalid.
+
+## The kernel's configuration
+
+`psos_config` (`0x10264c`, `psos_configuration`, `0x62` bytes) is the
+kernel's configuration table and `io_table` (`0x1025bc`,
+`io_device_jumps[4]`, `0x90` bytes) its I/O table, both copied from ROM
+(`0x5122a`, `0x5171a`) by `psos_config_init` (`0x51038`).  The kernel
+reaches the table through the pointer at `0x51226`, which the long at
+`0x14ac2` holds, and loads A6 from its first long, the data area
+(`psos.md`, "Inside the kernel"):
+
+| Field | Value | Used by |
+| ----- | ----- | ------- |
+| `data_area` (`+0`), `data_end` (`+4`) | `0x103948`, `0x10fffe` | `kernel_init` (`0x15cd8`) carves the supervisor stack, from `+200`, and the records from the area, fails unless they fit below `data_end`, and gives region 1 the rest; `task_id_valid` (`0x16a20`) and `exchange_id_valid` (`0x169fa`) take an id only between the two |
+| `region_1_minimum` (`+8`), `region_2_start` to `region_2_minimum` (`+0xc` to `+0x14`) | `0x100`; 0, 0, `0x100` | `kernel_init`, at least 18, and `os_report_regions` (`0x16828`); region 2, under 72 bytes, is left empty |
+| `task_records`, `exchange_records`, `message_buffers` (`+0x18` to `+0x1c`, words) | 16, 16, 28 | `kernel_init` makes one task record more than `task_records`, `0xb2` bytes each, and `0x22`-byte exchanges and `0x18`-byte buffers; `os_report_exchange_summary` (`0x166b0`) prints the buffers |
+| `last_device` (`+0x22`), `io_table` (`+0x24`) | 3, `0x1025bc` | `kernel_init` calls each device's function 0; `kernel_dispatch_io` (`0x14c0a`) refuses a device above `last_device` and jumps to `io_table` plus `(device * 6 + function) * 6` |
+| `supervisor_stack_size` (`+0x28`) | `0x1000` | `kernel_init`, `task_stack_report` |
+| `root_entry`, `root_stack_sizes`, `root_priority` (`+0x2c` to `+0x34`) | `root_task`, `0x280` and `0x180`, 1 | `kernel_init` creates ROOT with them, through `kernel_create` (`0x14dac`), whose D2 is the priority and D3 the two sizes, and starts it; IDLE it creates with priority 1 |
+| `start_hook` (`+0x36`) | `stack_fill` (`0x13258`) | `kernel_start` (`0x14ea0`) calls it with the task's record in A0 |
+| `delete_hook` (`+0x3a`) | 0 | `kernel_delete` (`0x14ef8`) |
+| `debug_hooks` (`+0x42`) | `0x16f0e` | a cell holding a hook table's address, its own; `psos_debug_output` (`0x16e5a`) puts the table in the data area at `+0x30`, or 0, and `kernel_dispatch_service` and `kernel_dispatch_io` call its `+4` while it is set; the table's routines count into the running task's record |
+| `task_hooks` (`+0x46`) | 0 | `kernel_init` would call its table's `+4`, `kernel_delete` its `+8` |
+
+`field_1e` and `field_3e` `kernel_init` copies into the data area, at
+`+0x86` and `+0xb4`.  `io_table`'s four devices are DUART channel B
+(`duart_init`, `drtb_lock`, `drtb_unlock`, `drtb_read`, `drtb_write`,
+`duartb_reconfigure`), the QSPI (`qspi_init` to `qspi_control`), the
+console's string device (`string_device_init` to
+`string_device_control`, writing through `drtb_write`) and the SCI
+(`sci_init` to `sci_reconfigure`), each six `jmp.l` instructions,
+functions 0 to 5 as the console's `dev_init` to `dev_ctrl` make them.
+`psos_debug_enabled` (`0x1037de`) is `psos_debug_output`'s argument,
+which `system_init` (`0x12bb4`) loads from `nv_settings.debug_output`
+and `root_task` hands it.
+
+`task_table_build` (`0x16540`) fills `task_table` (`0x1026b6`,
+`task_table_entry[17]`) for the reports: the running task first, then
+the kernel's list, each with a state, 0 when the record's `+0x13` is
+clear, 1 when its `+0x12` is set or `+0x13` has bit 3, as
+`timer_ticks_until` (`0x164f2`) counts, and 2 otherwise, by which
+`os_report_processes` (`0x1675a`) groups them; it sums the tasks' tick
+counts, `+0xae`, into `task_ticks_total` (`0x102720`), by which
+`os_report_process` (`0x162d4`) makes each task's percentage and which
+`os_report_process_summary` prints as "Total time".  `task_name`
+(`0x160a0`) and `object_name` (`0x160de`) copy a four-character name
+into `task_name_text` (`0x1026ae`) and `object_name_text` (`0x1026b2`)
+and return it, each NUL landing on the next one's first byte, the
+second's on `task_table[0].state`, which is 0 anyway.  `diag_leapsec`
+(`0x1c108`) stores its arguments at `0x102724` and `0x102726`, which
+nothing reads.
+
+## The SCPI session
+
+`console_port_read` (`0x29bce`) gives the SCPI parser its input: once
+`scpi_input_next` (`0x102c4e`) passes `scpi_input_end` (`0x102c52`) it
+writes `scpi_prompt_text` (`0x102c56`, `scpi_prompt`'s "scpi > " or
+"E%+04d> ") while `scpi_prompt_enabled` (`0x102c63`,
+`:SYSTem:COMMunicate:SER1:PROMpt`, which `scpi_task` sets) is set, and
+reads a line of up to 255 characters into `scpi_input_line`
+(`0x102b4e`).  It returns a character at a time, `0x101` for the end
+or for a read error, which it reports by the error's bits, `0xc0`,
+`0x10`, `0x20` and 1, as `status_report` `0x15`, `0x16`, `0x14` and
+`0x13`, and keeps it in `scpi_last_input` (`0x102b46`);
+`scpi_input_ended` (`0x29cc6`) sets `scpi_input_repeat` (`0x102b4a`),
+and the next call returns it again.  `scpi_session_init` (`0x29b42`)
+clears them.  `scpi_console_putc` (`0x29cd0`) keeps each response
+character it writes in `scpi_echo_text` (`0x102a47`), counting in
+`scpi_echo_length` (`0x102a46`), which `scpi_format_response`
+(`0x29690`) clears for the console port; `:DIAGnostic:QUERy:RESPonse?`
+(`0x2b91a`) copies them into `scpi_echo_response` (`0x102c64`),
+NUL-terminated, and returns it.  For another port it copies with A2
+to A4 as it found them, and `scpi_format_response` clears `0x102c60`,
+which nothing else uses.
+
+The status byte is `status_byte` (`0x102b4c`) and the service request
+enable `service_request_enable` (`0x102b4d`): `status_byte_set_bits`
+and `_clear_bits` (`0x29d50`, `0x29d62`) and `status_sre_set`
+(`0x29d76`) change them and call `status_update_rqs` (`0x29d98`), which
+sets RQS, `0x40`, and `status_request_service` while a bit other than
+it is in both.  Before `status_ready`, `status_report` (`0x2be9c`) and
+`status_happening` (`0x2f53c`) pass `early_status_reports` and
+`early_status_happenings` (`0x102ebc`, `0x102ec4`,
+`early_status_events`) to `status_event_hook` (`0x2f53a`), which does
+nothing; `happening_flush` (`0x2f6dc`) would replay one as a ring of
+five, `next` its oldest once `count` passes 5, and
+`happening_buffers_clear` (`0x2f668`) clears both.
+
+`scpi_set_SAMPle_IMULtiple` (`0x2e56c`) copies its four values to
+`scpi_values_SAMPle_IMULtiple` (`0x102d64`) and passes their address
+to `pllc_request_d`.  `robin_parse` (`0x2eba8`) stores the matched
+keyword's code, `+0x10` of its entry, in `robin_keyword_code`
+(`0x102d74`), which nothing reads.
+
+## The tasks' cells
+
+The periodic interrupt, `primary_user_66` (`0x11f82`), at 1024 ticks a
+second (`restart.md`), counts down `hmon_tick_countdown` (`0x1037d6`),
+signaling `hmon` event 1 and reloading 10 when it reaches 0.  It counts
+`ticks_since_internal_pps` (`0x1037da`), which the internal 1PPS's
+interrupt, `primary_user_81` (`0x12e04`), clears, and at 1024 calls
+`pps_interrupt` (`0x12db6`) itself while `internal_pps_dead`; and it
+counts `ticks_since_pps` (`0x1037d8`), which `pps_interrupt` clears,
+and at `0x199` signals `pllp` event `0x200` while
+`interval_tick_wait`.
+
+`root_task` (`0x1304a`) ends in a loop that counts `idle_loops`
+(`0x10382c`); each 1PPS `klok_task` (`0x10b1e`) takes and clears the
+count with `klok_take_pending` (`0x1303c`) into
+`idle_loops_last_second` (`0x1037cc`), which `idle_count` (`0x10538`)
+returns.  `kernel_running` (`0x1037dc`), cleared by `system_init` and
+set by `root_task`, gates the kernel calls of `fatal_error`
+(`0x1f176`), the exception reports, `eeprom_lock`, `eeprom_unlock` and
+`nv_save`.  `warm_start` (`0x1037df`) is `system_init`'s warm start
+(`restart.md`): set, it calls `log_reset_cause`, clear,
+`exception_record_clear`.
+
+`exception_hook_get` (`0x118fe`) returns the running task's exception
+hook, at `+0x82` of its record, while `exception_hook_per_task`
+(`0x1037d4`) is set, which `0x118b6` sets to `0xff`, and otherwise, or
+when the task has none, `exception_hook` (`0x1037d0`), which `0x118d8`
+sets; `exception_hook_reset` (`0x118a8`) clears both.  `task_console`
+(`0x1037e8`) is the console's p4th task, which `console_init`
+(`0x12faa`) stores from `console_task_create`; `duartb_isr` and the
+SCI's interrupt signal the reader `0x800` for a `^C` only when the
+reader is it, and `scpi_task_start` (`0x12f30`) clears it.
+
+`spoo_run` (`0x20d66`) calls its function itself until
+`spoo_task_create` sets `spoo_started` (`0x1032fc`), and then sends it
+and three arguments to `spoo_exchange` as a `spoo_request`, which
+`spoo_task` (`0x20e4e`) receives into `spoo_message` (`0x103702`) and
+calls; `request_x`'s error is kept in `spoo_receive_error`
+(`0x10371a`), and `0x81` makes it run `deferred_flush` instead.

@@ -1444,4 +1444,98 @@ typedef struct status_snapshot_record {
 	int32_t douglas_duration;        /* +0x128: nv_settings' */
 	uint16_t hardware_condition;     /* +0x12c: status_hardware_condition's */
 } status_snapshot_record;
+/* One entry of the kernel's I/O table, a "jmp.l routine" instruction:
+ * kernel_dispatch_io jumps into the table at (device * 6 + function) * 6
+ * (docs/firmware/psos.md, "Calls"). */
+typedef struct io_jump {
+	uint16_t opcode;  /* +0x00: 0x4ef9, jmp.l */
+	void *routine;    /* +0x02 */
+} io_jump;
+
+/* A device's six I/O routines, functions 0 to 5 in the order of the
+ * console's dev_init, dev_open, dev_close, dev_read, dev_write and
+ * dev_ctrl.  io_table at 0x1025bc holds four, which psos_config_init
+ * copies from ROM 0x5171a: DUART channel B, the QSPI, the console's
+ * string device and the SCI.  The installer's, at 0x10ab60, holds one. */
+typedef struct io_device_jumps {
+	io_jump function[6];  /* +0x00 */
+} io_device_jumps;
+
+/* The kernel's configuration table, psos_config at 0x10264c, which
+ * psos_config_init copies from ROM 0x5122a; the installer's at 0x10ab84.
+ * The kernel reaches it through the pointer at 0x51226, which the long
+ * at 0x14ac2 holds, and keeps data_area in A6.  kernel_init carves the
+ * data area into the supervisor stack and the records, and gives
+ * region 1 the rest up to data_end. */
+typedef struct psos_configuration {
+	void *data_area;                 /* +0x00: the kernel's state, A6; the supervisor stack starts 200 bytes in */
+	uint32_t data_end;               /* +0x04: region 1's end; kernel_init fails unless its records fit below it; task_id_valid and exchange_id_valid take ids from data_area up to it */
+	uint32_t region_1_minimum;       /* +0x08: at least 18; os_report_regions' "min" */
+	uint32_t region_2_start;         /* +0x0c: 0 */
+	uint32_t region_2_end;           /* +0x10: 0; under 72 bytes, kernel_init leaves region 2 empty */
+	uint32_t region_2_minimum;       /* +0x14 */
+	uint16_t task_records;           /* +0x18: kernel_init makes one more 0xb2-byte task record than this */
+	uint16_t exchange_records;       /* +0x1a: 0x22 bytes each */
+	uint16_t message_buffers;        /* +0x1c: 0x18 bytes each; os_report_exchange_summary's "Msg buffer(s)" total */
+	uint32_t field_1e;               /* +0x1e: kernel_init copies it to the data area's +0x86 */
+	uint16_t last_device;            /* +0x22: kernel_init runs function 0 of each device up to it; kernel_dispatch_io refuses a higher one */
+	io_device_jumps *io_table;       /* +0x24 */
+	uint32_t supervisor_stack_size;  /* +0x28: ">> pSOS system supervisor stack:" divides by it */
+	void *root_entry;                /* +0x2c: where kernel_init starts ROOT, root_task */
+	uint16_t root_stack_sizes[2];    /* +0x30: ROOT's two sizes, kernel_create's D3 */
+	uint16_t root_priority;          /* +0x34: ROOT's priority, kernel_create's D2; IDLE is given 1 */
+	void *start_hook;                /* +0x36: kernel_start calls it with the started task's record in A0: stack_fill */
+	void *delete_hook;               /* +0x3a: kernel_delete calls it while nonzero; 0 */
+	uint32_t field_3e;               /* +0x3e: kernel_init copies it to the data area's +0xb4 */
+	void **debug_hooks;              /* +0x42: a cell holding a hook table's address; psos_debug_output puts the table at the data area's +0x30, whose +4 kernel_dispatch_service and kernel_dispatch_io call */
+	void **task_hooks;               /* +0x46: a cell holding a hook table, whose +4 kernel_init calls and +8 kernel_delete; 0 */
+	uint8_t field_4a[24];
+} psos_configuration;
+
+/* One of the 17 entries of task_table at 0x1026b6, which
+ * task_table_build fills from the running task and the kernel's task
+ * list, the running task first. */
+typedef struct task_table_entry {
+	uint8_t state;     /* +0x00: 0 when the record's +0x13 is clear; 1 when its +0x12 is set or +0x13 has bit 3, as timer_ticks_until counts; 2 otherwise.  os_report_processes lists by it */
+	uint8_t field_01;
+	void *task;        /* +0x02: the task's record */
+} task_table_entry;
+
+/* A routine the spool task runs for a caller, with its three arguments. */
+typedef void spoo_function(uint32_t a, uint32_t b, uint32_t c);
+
+/* A request on the spoo exchange, which spoo_run builds on its stack and
+ * spoo_task receives at 0x103702: a function and its three arguments. */
+typedef struct spoo_request {
+	uint32_t field_00;      /* +0x00: spoo_run does not set it */
+	uint32_t field_04;      /* +0x04: spoo_run clears it */
+	spoo_function *function; /* +0x08 */
+	uint32_t arguments[3];  /* +0x0c */
+} spoo_request;
+
+/* A buffer of the status events reported before the status model is
+ * ready: early_status_reports at 0x102ebc, status_report's, and
+ * early_status_happenings at 0x102ec4, status_happening's.  They pass
+ * it to status_event_hook, which does nothing, so nothing fills them;
+ * happening_flush replays one as a ring of five. */
+typedef struct early_status_events {
+	int8_t count;       /* +0x00: the events reported; above 5 the ring has wrapped */
+	uint8_t next;       /* +0x01: where the next goes, the oldest once wrapped */
+	int8_t events[5];   /* +0x02 */
+	uint8_t field_07;
+} early_status_events;
+
+/* The boot code's self-test results, boot_selftest at 0x10ab20: a
+ * checksum word, then the fields of selftest_results' first 14 bytes in
+ * their order.  The installer's :DIAGnostic:TEST? reads them. */
+typedef struct boot_selftest_results {
+	int16_t checksum;            /* +0x00: boot_reset's byte-lane sums: 2 and 1 for the two lanes of 0x10000 to 0x3ffff, 8 and 4 for 0x40000 to 0x7ffff */
+	int16_t cpu;                 /* +0x02: 1 if the CPU test fails */
+	uint16_t ram;                /* +0x04: bit 0 a pattern failed, bit 1 an address line aliases */
+	uint16_t ram_data_bits;      /* +0x06: the bits that failed a pattern */
+	uint32_t ram_address_lines;  /* +0x08: the address lines that alias */
+	int16_t uart;                /* +0x0c: boot_duart_early_init's IVR and loopback checks; lights OP6 */
+	uint8_t lamp_mask;           /* +0x0e: the DUART output bits boot_reset resets; nothing reads it */
+	uint8_t field_0f;
+} boot_selftest_results;
 

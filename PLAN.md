@@ -1132,6 +1132,11 @@ view cannot drift apart.  The library, bottom up:
      structures (1157 to 1098).  A conversion routine that shifts a
      time's bytes out of the whole (`hms_to_seconds`) keeps it an
      integer: the decompiler does not map those shifts to fields.
+     Then four agents, one a subsystem, typed what they could read from
+     the code, each change checked here in the harness: the clock's,
+     NV records' and drivers' (`calendar_date`; byte and word results;
+     a date or time local where the code works on its bytes; 1098 to
+     1053).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

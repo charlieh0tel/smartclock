@@ -336,7 +336,8 @@ typedef void putc_function(char c);
 typedef struct char_slot {
 	uint8_t value;     /* +0x00: the char */
 	uint8_t field_01;  /* unread: the rest of the original's 2-byte slot */
-	uint16_t field_02; /* unread: the slot above it, a second argument the callee ignores */
+	uint8_t next;      /* +0x02: unread: the next 2-byte slot's char, a second argument the callee ignores; the self-test callers push it with move.b (0x177b6, 0x177dc, 0x18310, 0x18316) */
+	uint8_t field_03;  /* unread: the rest of that slot */
 } char_slot;
 
 /* A self-test, in the tables at 0x18458 and 0x17fe0: run is 1 to run the
@@ -585,6 +586,27 @@ typedef struct gps_request_ring {
 	gps_request_entry *write;    /* +0x86 */
 } gps_request_ring;
 
+/* A time of day as a long holds it, hour << 16 | minute << 8 | second,
+ * by its bytes, which the clock routines add and carry one at a time
+ * (datetime_add, time_next_second). */
+typedef struct time_of_day {
+	uint8_t reserved; /* 0 */
+	uint8_t hour;
+	uint8_t minute;
+	uint8_t second;
+} time_of_day;
+
+/* A date as a long holds it, year << 16 | month << 8 | day, where a
+ * routine keeps it in memory and reads or writes it by its parts:
+ * leap_opportunity_date sets the month and day bytes (0x11648 to
+ * 0x11672), diag_get_time and timecode_update print the year word and
+ * the month and day bytes (0x1b474 to 0x1b484, 0x13e04 to 0x13e14). */
+typedef struct calendar_date {
+	uint16_t year;  /* +0x00: the full year, 1994 on */
+	uint8_t month;  /* +0x02: 1 to 12 */
+	uint8_t day;    /* +0x03: 1 to 31 */
+} calendar_date;
+
 /* A GPS Receiver Command Log entry: what command_log_add takes of a
  * request gpsm_task has sent, and gps_print_command prints as
  * "%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s". */
@@ -598,7 +620,7 @@ typedef struct gps_command_log_entry {
 	uint8_t clock_invalid; /* +0x0a: get_date_time returned 0; printed blank, else e */
 	uint8_t field_0b;      /* never written */
 	uint32_t date;         /* +0x0c: @@Ba's, local; the clock's while clock_invalid */
-	uint32_t time;         /* +0x10: likewise */
+	time_of_day time;      /* +0x10: likewise; gps_print_command passes it to format_time */
 } gps_command_log_entry;
 
 /* The GPS Receiver Command Log, a ring at 0x1017f6, and its copy at
@@ -611,16 +633,6 @@ typedef struct gps_command_log {
 	gps_command_log_entry *read;  /* +0x1a4 */
 	gps_command_log_entry *write; /* +0x1a8 */
 } gps_command_log;
-
-/* A time of day as a long holds it, hour << 16 | minute << 8 | second,
- * by its bytes, which the clock routines add and carry one at a time
- * (datetime_add, time_next_second). */
-typedef struct time_of_day {
-	uint8_t reserved; /* 0 */
-	uint8_t hour;
-	uint8_t minute;
-	uint8_t second;
-} time_of_day;
 
 /* A date and time as datetime_add and datetime_subtract take them: the
  * time's hours, minutes and seconds in its low three bytes, and the date

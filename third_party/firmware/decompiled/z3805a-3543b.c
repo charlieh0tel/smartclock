@@ -33787,14 +33787,10 @@ void diag_cal(uint param_1)
   double accumulator_3;
   double accumulator_4;
   
-  __ghidra_piece(unsigned int, accumulator_1, 0) = 0;
-  __ghidra_piece(unsigned int, accumulator_1, 4) = 0;
-  __ghidra_piece(unsigned int, accumulator_2, 0) = 0;
-  __ghidra_piece(unsigned int, accumulator_2, 4) = 0;
-  __ghidra_piece(unsigned int, accumulator_3, 0) = 0;
-  __ghidra_piece(unsigned int, accumulator_3, 4) = 0;
-  __ghidra_piece(unsigned int, accumulator_4, 0) = 0;
-  __ghidra_piece(unsigned int, accumulator_4, 4) = 0;
+  accumulator_1 = 0.0;
+  accumulator_2 = 0.0;
+  accumulator_3 = 0.0;
+  accumulator_4 = 0.0;
   fVar4 = 0.0;
   for (uVar3 = 0; uVar3 < param_1; uVar3 = uVar3 + 10) {
     uVar1 = adc_read(ADC_CURRENT);
@@ -42338,10 +42334,10 @@ int scpi_parse_float(scpi_number *number,void *param_2,float *value,scpi_unit *u
   if (iVar1 == 0) {
     iVar1 = scpi_number_to_double(number,&parsed,(int)number->scale);
     if (iVar1 == 0) {
-      a = fabs(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, parsed, 0),__ghidra_piece(unsigned int, parsed, 4))));
+      a = fabs(parsed);
       iVar1 = double_compare(a,9.9e+37);
       if (-1 < iVar1) {
-        fVar2 = double_to_float(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, parsed, 0),__ghidra_piece(unsigned int, parsed, 4))));
+        fVar2 = double_to_float(parsed);
         *value = fVar2;
         *(int16_t *)(value + 1) = number->unit;
         return 0;
@@ -47877,8 +47873,7 @@ int scpi_query_DIAGnostic_PTIMe_TINTerval(void *parameters,void *response,void *
     iVar1 = scpi_query_failed(0xc,call);
   }
   else {
-    fVar2 = double_to_float(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
-                                             __ghidra_piece(unsigned int, interval_reading.value, 4))));
+    fVar2 = double_to_float(interval_reading.value);
     *(float *)response = fVar2;
     *(uint16_t *)((int)response + 4) = interval_reading.tag;
     set_interrupt_mask(sr);
@@ -56922,8 +56917,7 @@ void counter_configuration_init(counter_configuration_fields *configuration)
   configuration->calibrate_state = 2;
   configuration->registers_mode = 1;
   configuration->registers_state = 2;
-  __ghidra_piece(unsigned int, interval_reading.value, 0) = 0x47d2a37d;
-  __ghidra_piece(unsigned int, interval_reading.value, 4) = 0xced46143;
+  interval_reading.value = 9.91E37;
   interval_reading.valid = 0;
   return;
 }
@@ -60069,8 +60063,7 @@ uint8_t interval_next_reading(char arm_mode,float *reading)
   efc_history_update();
   uVar1 = interval_reading.valid;
   if (reading != (float *)0x0) {
-    fVar2 = double_to_float(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
-                                             __ghidra_piece(unsigned int, interval_reading.value, 4))));
+    fVar2 = double_to_float(interval_reading.value);
     *reading = fVar2;
   }
   interval_reading.armed = 1;
@@ -60219,8 +60212,7 @@ LAB_0004536e:
         uVar1 = extraout_var_05;
       }
       else {
-        fVar2 = double_to_float(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
-                                                 __ghidra_piece(unsigned int, interval_reading.value, 4))));
+        fVar2 = double_to_float(interval_reading.value);
         float_subtract_in_place(&pll.fine_d,fVar2);
         iVar3 = float_compare(1e-07,pll.fine_d);
         if (0 < iVar3) {
@@ -60308,8 +60300,7 @@ char fine(void)
       }
       else {
         pll.fine_retries = 0;
-        fVar2 = double_to_float(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
-                                                 __ghidra_piece(unsigned int, interval_reading.value, 4))));
+        fVar2 = double_to_float(interval_reading.value);
         cVar4 = sync_perform(fVar2);
         if (cVar4 == 0) {
           pll.fine_state = 4;
@@ -60442,8 +60433,7 @@ char fine(void)
         interval_rearm(0);
         break;
       }
-      fVar2 = double_to_float(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
-                                               __ghidra_piece(unsigned int, interval_reading.value, 4))));
+      fVar2 = double_to_float(interval_reading.value);
       float_subtract_in_place(&pll.fine_d,fVar2);
       float_multiply_in_place(&pll.fine_d,0.02);
       if (pll.stage == PLL_STAGE_POWERUP) {
@@ -60451,8 +60441,7 @@ LAB_00045812:
         fVar2 = float_absolute_on_stack(fine_y0);
         iVar1 = float_compare(fVar2,2e-09);
         if (iVar1 < 0) {
-          fVar2 = double_to_float(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
-                                                   __ghidra_piece(unsigned int, interval_reading.value, 4))));
+          fVar2 = double_to_float(interval_reading.value);
           pll.fine_index = fine_sync_adjust(fVar2);
           if (pll.fine_index == 0) {
             cVar4 = 1;
@@ -60485,8 +60474,7 @@ LAB_00045812:
                             pushed_6);
               task_dmessage(acStack_54);
             }
-            fVar2 = double_to_float(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
-                                                     __ghidra_piece(unsigned int, interval_reading.value, 4))));
+            fVar2 = double_to_float(interval_reading.value);
             cVar4 = sync_perform(fVar2);
             if (cVar4 == 0) {
               pll.fine_state = 3;
@@ -60532,8 +60520,7 @@ LAB_00045812:
         }
       }
       else {
-        fVar2 = double_to_float(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, interval_reading.value, 0),
-                                                 __ghidra_piece(unsigned int, interval_reading.value, 4))));
+        fVar2 = double_to_float(interval_reading.value);
         pll.fine_index = fine_sync_adjust(fVar2);
         if (pll.fine_index == 0) {
           cVar4 = 1;
@@ -61813,14 +61800,12 @@ switchD_0004688c_caseD_0:
     if (douglas_stop_requested != 0) goto LAB_00046d06;
     if (gps.average_count != 0) {
       survey_position[0] =
-           double_to_integer(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_latitude, 0),__ghidra_piece(unsigned int, gps.average_latitude, 4)))
+           double_to_integer(gps.average_latitude
                             );
       survey_position[1] =
-           double_to_integer(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_longitude, 0),
-                                              __ghidra_piece(unsigned int, gps.average_longitude, 4))));
+           double_to_integer(gps.average_longitude);
       survey_position[2] =
-           double_to_integer(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_height_msl, 0),
-                                              __ghidra_piece(unsigned int, gps.average_height_msl, 4))));
+           double_to_integer(gps.average_height_msl);
       if (survey_position_valid == 0) {
         survey_position_valid = 1;
       }
@@ -63348,8 +63333,8 @@ void gps_print_pseudorange_corrections(void)
   } while (bVar3 < 6);
   console_write("\r\nDerived Statistics ___________________________\r\n");
   printf("AVG  %.2f m    STD DEV  %.2f m\r\n",
-         __ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.correction_average, 0),__ghidra_piece(unsigned int, gps.correction_average, 4))),
-         __ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.correction_deviation, 0),__ghidra_piece(unsigned int, gps.correction_deviation, 4))));
+         gps.correction_average,
+         gps.correction_deviation);
   return;
 }
 
@@ -63659,13 +63644,13 @@ void gps_print_average(void)
                                                (short)((uint)__ghidra_piece(unsigned int, gps.average_latitude, 4) >> 0x10)),
                                       (short)__ghidra_piece(int, gps.average_latitude, 4))),1);
   printf("AVG LAT  %+3.6f = %s\r\n",
-         __ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_latitude, 0),__ghidra_piece(unsigned int, gps.average_latitude, 4))),acStack_54);
+         gps.average_latitude,acStack_54);
   format_dms_precise(acStack_54,
                      __ghidra_as(double, CONCAT62(CONCAT42(__ghidra_piece(unsigned int, gps.average_longitude, 0),
                                                (short)((uint)__ghidra_piece(unsigned int, gps.average_longitude, 4) >> 0x10)),
                                       (short)__ghidra_piece(int, gps.average_longitude, 4))),0);
   printf("AVG LON  %+3.6f = %s\r\n",
-         __ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_longitude, 0),__ghidra_piece(unsigned int, gps.average_longitude, 4))),acStack_54);
+         gps.average_longitude,acStack_54);
   param1 = double_divide_reversed_pointer(100.0,&gps.average_height_msl);
   printf("AVG HGT  %+3.6f\r\n",param1);
   if (gps.position_hold == 0) {
@@ -65279,14 +65264,11 @@ void status_snapshot(status_snapshot_record *snapshot)
     }
     else {
       snapshot->position_source = "AVG ";
-      iVar2 = double_to_integer(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_latitude, 0),
-                                                 __ghidra_piece(unsigned int, gps.average_latitude, 4))));
+      iVar2 = double_to_integer(gps.average_latitude);
       snapshot->position[0] = iVar2;
-      iVar2 = double_to_integer(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_longitude, 0),
-                                                 __ghidra_piece(unsigned int, gps.average_longitude, 4))));
+      iVar2 = double_to_integer(gps.average_longitude);
       snapshot->position[1] = iVar2;
-      iVar2 = double_to_integer(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_height_msl, 0),
-                                                 __ghidra_piece(unsigned int, gps.average_height_msl, 4))));
+      iVar2 = double_to_integer(gps.average_height_msl);
       snapshot->position[2] = iVar2;
     }
   }
@@ -68572,10 +68554,8 @@ byte * oncore_corrections_message(byte *param_1,byte *param_2)
   
   poVar5 = gps.corrections.channels;
   bVar3 = 0;
-  __ghidra_piece(unsigned int, accumulator_1, 0) = 0;
-  __ghidra_piece(unsigned int, accumulator_1, 4) = 0;
-  __ghidra_piece(unsigned int, accumulator_2, 0) = 0;
-  __ghidra_piece(unsigned int, accumulator_2, 4) = 0;
+  accumulator_1 = 0.0;
+  accumulator_2 = 0.0;
   pbVar1 = oncore_decode_fields(param_1,param_2,(char *)oncore_corrections_field_codes);
   bVar4 = 1;
   do {
@@ -68600,7 +68580,7 @@ byte * oncore_corrections_message(byte *param_1,byte *param_2)
     dVar6 = double_multiply_pointer(0.01,&accumulator_1);
     dVar7 = unsigned_to_double((uint)bVar3);
     gps.correction_average = double_divide_reversed(dVar7,dVar6);
-    dVar6 = pow(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, accumulator_1, 0),__ghidra_piece(unsigned int, accumulator_1, 4))),2.0);
+    dVar6 = pow(accumulator_1,2.0);
     dVar7 = unsigned_to_double((uint)bVar3);
     dVar6 = double_divide_reversed(dVar7,dVar6);
     dVar6 = double_subtract_reversed_pointer(dVar6,&accumulator_2);
@@ -68610,8 +68590,7 @@ byte * oncore_corrections_message(byte *param_1,byte *param_2)
     gps.correction_deviation = double_multiply(dVar6,0.01);
     dVar6 = gps.correction_average;
   }
-  __ghidra_piece(unsigned int, gps.correction_average, 0) = (undefined4)((ulonglong)__ghidra_bits(dVar6) >> 0x20);
-  __ghidra_piece(unsigned int, gps.correction_average, 4) = SUB84(dVar6,0);
+  gps.correction_average = dVar6;
   return pbVar1;
 }
 

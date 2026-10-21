@@ -745,6 +745,12 @@ decompiler wrote it, and reported.
   `(uint32_t)__ghidra_aggregate_bits(value.time)` of a `time_of_day`;
   and a cast of an integer to a structure only to compare it goes.  The
   tokens give each operand's type, which the text cannot.
+- A double the code moves as its two longs is moved whole: read as
+  `__ghidra_as(double, CONCAT44(...))` of its own two halves it is the
+  double, stored a finite constant's halves the constant
+  (`interval_reading.value = 9.91E37`, SCPI's NaN), and stored another
+  double's, that double.  Only a floating operand, a double where its
+  halves are 4 bytes apart.
 
 `tools/firmware/rebuild_link.py` links it into a rebuilt image: each
 piece of assembly at its own address, where it must be, and is, the

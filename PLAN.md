@@ -1149,6 +1149,8 @@ view cannot drift apart.  The library, bottom up:
      differed.  And a TFOM the code compares by its bits stays a
      `uint32_t`: as a `float` the decompiler writes `ABS(tfom)`, a
      conversion.
+     Then the exporter: a double moved as its two longs, read, stored a
+     constant or another double, is moved whole (1000 to 898).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

@@ -3069,6 +3069,54 @@ public class SmartClockExportC extends GhidraScript {
 				out.replace(start, end, "(" + type + ")__ghidra_bits(" + operand + ")");
 			}
 		}
+		return wholeDoubles(out.toString(), variables, pointers);
+	}
+
+	/** A double's halves as the piece pass writes them: groups the double, and the high half's text. */
+	private static final String HALF = "__ghidra_piece\\(unsigned int, ([^,()]+), ";
+	private static final Pattern HALVES_READ = Pattern.compile(
+		"__ghidra_as\\(double, CONCAT44\\(" + HALF + "0\\),\\s*__ghidra_piece\\(unsigned int, \\1, 4\\)\\)\\)");
+	private static final Pattern HALVES_STORED = Pattern.compile("(?m)^([ \\t]*)" + HALF
+		+ "0\\) = (0x[0-9a-f]+|[0-9]+);\\n\\1__ghidra_piece\\(unsigned int, \\2, 4\\) = (0x[0-9a-f]+|[0-9]+);$");
+	private static final Pattern HALVES_COPIED = Pattern.compile("(?m)^([ \\t]*)" + HALF
+		+ "0\\) = \\(undefined4\\)\\(\\(ulonglong\\)__ghidra_bits\\((\\w+)\\) >> 0x20\\);\\n"
+		+ "\\1__ghidra_piece\\(unsigned int, \\2, 4\\) = SUB84\\(\\3,0\\);$");
+
+	/**
+	 * c with each double the decompiler moves as its two longs, as the
+	 * code does, moved whole: read as
+	 * __ghidra_as(double, CONCAT44(high, low)) of its own halves, it is
+	 * the double; stored a constant's halves, the constant, where it is
+	 * finite; stored another double's, that double.  Only a floating
+	 * operand, a double where its halves are 4 bytes apart.
+	 */
+	private String wholeDoubles(String c, Set<String> variables, Set<String> pointers) {
+		StringBuilder out = new StringBuilder();
+		Matcher read = HALVES_READ.matcher(c);
+		while (read.find()) {
+			read.appendReplacement(out, Matcher.quoteReplacement(
+				floatingOperand(read.group(1), variables, pointers) ? read.group(1) : read.group()));
+		}
+		read.appendTail(out);
+		Matcher stored = HALVES_STORED.matcher(out.toString());
+		out = new StringBuilder();
+		while (stored.find()) {
+			double value = Double.longBitsToDouble(Long.decode(stored.group(3)) << 32 | Long.decode(stored.group(4)));
+			stored.appendReplacement(out, Matcher.quoteReplacement(
+				floatingOperand(stored.group(2), variables, pointers) && Double.isFinite(value)
+					? stored.group(1) + stored.group(2) + " = " + Double.toString(value) + ";"
+					: stored.group()));
+		}
+		stored.appendTail(out);
+		Matcher copied = HALVES_COPIED.matcher(out.toString());
+		out = new StringBuilder();
+		while (copied.find()) {
+			copied.appendReplacement(out, Matcher.quoteReplacement(
+				floatingOperand(copied.group(2), variables, pointers) && variables.contains(copied.group(3))
+					? copied.group(1) + copied.group(2) + " = " + copied.group(3) + ";"
+					: copied.group()));
+		}
+		copied.appendTail(out);
 		return out.toString();
 	}
 

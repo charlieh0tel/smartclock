@@ -9,7 +9,12 @@ original reads them, as Ghidra's storage has them, and gcc's copy as
 gcc's callers lay them, in 4-byte slots.  From the same RAM, the two must give
 the same result, leave RAM the same, and make the same kernel calls and
 device writes in the same order (harness.py), each starting with what
-its callers set where it reads that (ESTABLISHED, SET_UP_REQUESTS).
+its callers set where it reads that (ESTABLISHED, SET_UP_REQUESTS,
+CALLED_FIRST).  After the generated cases come a function's own, the
+arguments its callers pass where the generated ones never reach them
+(GIVEN_CASES); and where no declared argument lies, both copies find
+the same pointers (UNDECLARED), so that a body reading an argument its
+prototype leaves out differs.
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/function_check.py \\
         third_party/firmware/decompiled/z3805a-3543b.c \\
@@ -45,7 +50,10 @@ from harness import (
     CASES,
     FIRST_ARGUMENT,
     MESSAGE_OFFSET,
+    NULL_LONG,
     PLLC_EXCHANGE,
+    POINTER_ALIGNMENT,
+    POINTER_FILLS,
     PRIMARY,
     RECEIVED,
     UNSIGNED,
@@ -71,6 +79,15 @@ from rebuild_link import IMAGE_PREFIX, REBUILT, link, symbols
 
 # The widest argument or result the harness lays out.
 WIDEST = 8
+# What both copies find on the stack where no declared argument lies,
+# between the original's and after the last: the first pointer fill's
+# text, whose every long at an even offset, 0x31303130, points into the
+# pointees, compared after a call.  A function whose prototype leaves
+# out an argument its body reads, which the decompiler then names
+# in_stack_N, a local gcc never sets, reads it in the image's copy and
+# not in gcc's (validate_or_doaction's second, 0x42d40; robin_store's
+# second and third, 0x29aa0 and 0x29aac), so that the two differ.
+UNDECLARED = POINTER_FILLS[0].removesuffix(NULL_LONG)
 # What a function's callers set before they call it, which each case
 # starts with: by function, each variable's name and its value, a name
 # for the image's copy of that C function.  qsort stores its element
@@ -88,12 +105,15 @@ ESTABLISHED = {name: ESTABLISHED_QSORT for name in ("qsort_range", "qsort_swap",
 # the harness's request_x receives from pllc_exchange (harness.RECEIVED);
 # for pll_scpi_do_action, an action's, *TST?'s: its descriptor
 # (0x41348), index 0 and source 0 (docs/firmware/structures.md, "The
-# SCPI action descriptors").
+# SCPI action descriptors").  validate_or_doaction, which
+# pll_scpi_command calls on every request (0x432dc), takes each in
+# turn, by the case: the action's path passes its second argument on
+# to pll_scpi_do_action (0x42d40).
 SET_UP = "get_setup_vars"
 NUMERIC_REQUEST = RECEIVED[PLLC_EXCHANGE]
 ACTION_REQUEST = struct.pack(">IIBBBBII", 0, 0x41348, 0, 0, 0, 0, 0, 0)
 SET_UP_REQUESTS = {
-    "validate_or_doaction": NUMERIC_REQUEST,
+    "validate_or_doaction": (NUMERIC_REQUEST, ACTION_REQUEST),
     "validate_num": NUMERIC_REQUEST,
     "pll_scpi_needs_loop": NUMERIC_REQUEST,
     "pll_scpi_send_to_loop": NUMERIC_REQUEST,
@@ -102,6 +122,53 @@ SET_UP_REQUESTS = {
     "finish_scpi_cmd": NUMERIC_REQUEST,
     "pll_scpi_complete": NUMERIC_REQUEST,
     "pll_scpi_do_action": ACTION_REQUEST,
+}
+# The routines a function's callers call first, which each case starts
+# with as the image's own leaves what they set: by function, the
+# routine's name and its stack arguments, longs.  console_init
+# (0x12faa) allocates the pForth dictionary, pforth_dictionary_init
+# (0x1ad28) through alloc_seg, before it defines a word; with
+# pforth_dictionary_next null, as a fresh RAM has it,
+# pforth_define_word returns at once (0x1ad8a), and so does every
+# definition diag_words_define (0x1c18e) makes.
+DICTIONARY_SIZE = 0x1000
+DICTIONARY_INIT = ("pforth_dictionary_init", (DICTIONARY_SIZE,))
+CALLED_FIRST = {name: DICTIONARY_INIT for name in ("pforth_define_word", "diag_words_define")}
+# Cases of a function's own, after the generated ones, where those never
+# give an argument what its callers do, or a value its body treats
+# apart: by function, each case's arguments by position -- an int or a
+# float, laid out as its parameter's type has it, or bytes, a pointer
+# to a buffer of them -- the other positions keeping the generated
+# case's, which cycle.
+#
+# pforth_define_word's argument and result counts, which console_init
+# passes as 0 and 0 for ps, mem_rep and s_rep and diag_words_define
+# from the table at 0x1c8ac, +0x1e and +0x22 of each 0x26-byte entry:
+# adc_read 1 and 1, hdac_write 2 and 0, wr_eeprom 2 and 1, hdac_all and
+# set_time 6 and 0.  The generated counts, 0, 1, 7 and the like, never
+# reached its loop's second pass while the dictionary was null, and 2 is
+# what found the loop's count read back from a register nothing set.
+WORD_COUNTS = [(0, 0), (1, 1), (2, 0), (2, 1), (6, 0)]
+# bytes_equal_n's two strings of one length, which gpsm_task (0x4c3e8)
+# and gps_response_match (0x4fd78) compare: the generated lengths are
+# never equal, and its loop never ran.  Equal, and differing in the last
+# byte.
+SAME_LENGTH = [(b"@@Ea", 4, b"@@Ea", 4), (b"@@Ea", 4, b"@@Eb", 4)]
+# double_to_digits' digit count and mode as doprnt passes them: at most
+# 17 digits in mode 1 for %e and %g (0x600f2, 0x602c4), and at most 60
+# in mode 0 for %f (0x60436), 6 the default precision.
+DIGITS = [(7, 1), (17, 1), (1, 1), (6, 0), (0, 0), (60, 0)]
+# And the doubles the generated reals never are, which the libc
+# routines take apart: a subnormal, which frexp normalizes (0x609a6, to
+# 0x60962), and an infinity and a NaN, which frexp and modf raise on
+# (0x609ac, 0x60dae) and modf then stores through iptr, float_raise
+# keeping A0 (0x5e940, 0x60e62).
+SPECIAL_DOUBLES = [5e-324, 1e-310, float("inf"), float("nan")]
+GIVEN_CASES = {
+    "pforth_define_word": [{2: arguments, 3: results} for arguments, results in WORD_COUNTS],
+    "bytes_equal_n": [dict(enumerate(arguments)) for arguments in SAME_LENGTH],
+    "double_to_digits": [{1: count, 5: mode} for count, mode in DIGITS],
+    **{name: [{0: value} for value in SPECIAL_DOUBLES] for name in ("frexp", "modf", "sqrt", "log", "fabs")},
 }
 
 
@@ -184,12 +251,14 @@ def functions(c: str, types: Types, conventions: dict, image: str | None) -> tup
 
 
 def original_layout(function: Function, values: list[bytes]) -> bytes:
-    """Arguments where the original reads them, above the return address."""
+    """Arguments where the original reads them, above the return address,
+    UNDECLARED between and after them."""
     end = max((offset + len(value) for offset, value in zip(function.offsets, values)), default=FIRST_ARGUMENT)
-    layout = bytearray(end - FIRST_ARGUMENT)
+    end += (end - FIRST_ARGUMENT) % POINTER_ALIGNMENT
+    layout = bytearray((UNDECLARED * (end // len(UNDECLARED) + 1))[: end - FIRST_ARGUMENT])
     for offset, value in zip(function.offsets, values):
         layout[offset - FIRST_ARGUMENT : offset - FIRST_ARGUMENT + len(value)] = value
-    return bytes(layout)
+    return bytes(layout) + UNDECLARED
 
 
 def result(function: Function, types: Types, run: Run) -> int | None:
@@ -218,38 +287,72 @@ def same_text(m: Machine, function: Function, a: int, b: int) -> bool:
         return False
 
 
-def establish(m: Machine, function: Function, linked_symbols: dict[str, int]) -> None:
-    """Sets the variables ESTABLISHED says a function's callers set, and
-    runs SET_UP on its request for each of SET_UP_REQUESTS."""
+def call_first(m: Machine, linked_symbols: dict[str, int], routine: str, stack_arguments: bytes) -> None:
+    """Runs the image's own routine, a C function's copy or assembly, on
+    its stack arguments, keeping what it leaves in RAM."""
+    reset(m, snapshot(m))
+    run = Run(m, linked_symbols.get(IMAGE_PREFIX + routine, linked_symbols.get(routine)), stack_arguments)
+    if run.stopped is not None or run.ended is not None:
+        raise RuntimeError(f"{routine}: {run.stopped or run.end()}")
+
+
+def establish(m: Machine, function: Function, linked_symbols: dict[str, int], case: int) -> None:
+    """Sets the variables ESTABLISHED says a function's callers set, runs
+    SET_UP on its request for each of SET_UP_REQUESTS, the case'th of
+    those it has, and the routine CALLED_FIRST names."""
     for variable, value in ESTABLISHED.get(function.name, {}).items():
         if isinstance(value, str):
             value = linked_symbols[IMAGE_PREFIX + value]
         m.uc.mem_write(linked_symbols[variable], struct.pack(">I", value))
     if function.name in SET_UP_REQUESTS:
-        request = m.buffer(bytes(MESSAGE_OFFSET) + SET_UP_REQUESTS[function.name])
-        reset(m, snapshot(m))
-        run = Run(m, linked_symbols[IMAGE_PREFIX + SET_UP], struct.pack(">I", request))
-        if run.stopped is not None or run.ended is not None:
-            raise RuntimeError(f"{SET_UP}: {run.stopped or run.end()}")
+        requests = SET_UP_REQUESTS[function.name]
+        if isinstance(requests, bytes):
+            requests = (requests,)
+        request = m.buffer(bytes(MESSAGE_OFFSET) + requests[case % len(requests)])
+        call_first(m, linked_symbols, SET_UP, struct.pack(">I", request))
+    if function.name in CALLED_FIRST:
+        routine, longs = CALLED_FIRST[function.name]
+        call_first(m, linked_symbols, routine, struct.pack(f">{len(longs)}I", *longs))
+
+
+def given(m: Machine, types: Types, kind: str, value: int | float | bytes) -> bytes:
+    """A value of GIVEN_CASES as a parameter of a type has it."""
+    if isinstance(value, bytes):
+        return struct.pack(">I", m.buffer(value))
+    if kind in ("double", "float"):
+        return struct.pack(">d" if kind == "double" else ">f", value)
+    size = types.size(kind)
+    return (value & ((1 << 8 * size) - 1)).to_bytes(size, "big")
+
+
+def cases(function: Function) -> list[tuple[str, int, dict[int, int | float | bytes]]]:
+    """Each case's description, the generated case it starts from and the
+    arguments GIVEN_CASES gives it."""
+    own = GIVEN_CASES.get(function.name, [])
+    return [(f"case {case}", case, {}) for case in range(CASES)] + [
+        (f"given case {i}", i % CASES, values) for i, values in enumerate(own)
+    ]
 
 
 def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int, linked_symbols: dict[str, int]):
     """Yields (description, outcome) for each case: outcome None if gcc's
     copy agrees with the image's, else what differs."""
-    for case in range(CASES):
+    for description, case, values_given in cases(function):
         fresh_ram(m, case)
-        establish(m, function, linked_symbols)
+        establish(m, function, linked_symbols, case)
         values = arguments(m, types, function.parameters, case, function.names, function.name)
+        for position, value in values_given.items():
+            values[position] = given(m, types, function.parameters[position], value)
         memory = snapshot(m)
 
         reset(m, memory)
         original = Run(m, image, original_layout(function, values))
         reset(m, memory)
-        gcc = Run(m, rebuilt, gcc_slots(values))
+        gcc = Run(m, rebuilt, gcc_slots(values) + UNDECLARED)
 
         stopped = stopped_outcome(original, gcc, ("image", "gcc"))
         if stopped:
-            yield f"case {case}", stopped
+            yield description, stopped
             continue
         differences = []
         wanted, got = result(function, types, original), result(function, types, gcc)
@@ -261,7 +364,7 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
         effects_differ = effects_difference(original, gcc, ("image", "gcc"))
         if effects_differ:
             differences.append(effects_differ)
-        yield f"case {case}", "; ".join(differences) or None
+        yield description, "; ".join(differences) or None
 
 
 def main() -> int:

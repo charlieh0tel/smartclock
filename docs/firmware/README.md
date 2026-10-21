@@ -597,7 +597,11 @@ handlers that `trap #4` enters with a frame for its `rte`, which a
 wrapper's `jsr` cannot give.  The
 whole file compiles to an object (`make check-decompiled`, whose flags
 add `-fno-builtin -fno-tree-loop-distribute-patterns`, since the image's
-C library has no `puts`, `strlen` or `strcmp` for gcc to call).  The
+C library has no `puts`, `strlen` or `strcmp` for gcc to call, and
+`-fwrapv`: the decompiler's C counts on signed arithmetic wrapping, as
+the 68k's does, where C leaves overflow undefined and gcc may make a
+loop that doubles a count, `sqrt`'s and `log`'s on a subnormal, one
+that never ends).  The
 decompiler's views of the stack at entry, `stack0xN`, are macros N + 4
 above gcc's frame pointer, which is how the printf family reaches its
 variable arguments; a view into a routine's own frame, or of a
@@ -680,9 +684,13 @@ decompiler wrote it, and reported.
   decompiler made the register's value up, having tracked none, it is
   what the instruction that last wrote the register gave it, a stack
   variable or an immediate, or a `dbf`'s counter less one in its low
-  word, found back through fall-throughs and lone branches (`modf`'s
-  A0, the `iptr` it was loaded from; `pforth_define_word`'s loop count
-  around `forth_compile_code`).
+  word, found back along every path, through fall-throughs and
+  branches, where all of them reach the same value (`modf`'s A0, the
+  `iptr` it was loaded from, which two branches reach;
+  `pforth_define_word`'s loop count around `forth_compile_code`).  A
+  register a function reads at entry whose declaration names it a
+  pointer is read the same way, and A6, the caller's frame pointer,
+  from where gcc's `link` saved it (`setjmp`, `installer_float_raise`).
 - A rotate of a long by a register, which the decompiler writes as two
   shifts, `x << (n & 0x3f) | x >> (0x20 - (n & 0x3f))`, is
   `__ghidra_rotl(x, n)`: the 68k's `rol` rotates by n modulo 32, where
@@ -939,7 +947,25 @@ set with it: `qsort`'s element size and comparator for its sorts and
 swaps, as its one call gives them (2 and `satellite_compare`), and the
 pllc task's request for those that read it after `get_setup_vars`,
 the image's own run on the request `request_x` receives, or for
-`pll_scpi_do_action` on `*TST?`'s action.  A parameter that
+`pll_scpi_do_action` on `*TST?`'s action, and for
+`validate_or_doaction`, which `pll_scpi_command` calls on every
+request, each in turn; and the pForth dictionary for
+`pforth_define_word` and `diag_words_define`, the image's own
+`pforth_dictionary_init` run as `console_init` runs it first, since
+with the dictionary pointer null a definition returns at once.  After
+its eight cases a function may run cases of its own (`GIVEN_CASES`),
+where the generated arguments never reach what its callers pass or
+what its body treats apart: `pforth_define_word`'s argument and result
+counts from `diag_words_define`'s table (`hdac_write` takes 2, which
+found its loop's count read back from a register nothing set),
+`bytes_equal_n`'s two strings of one length, `double_to_digits`'
+digit count and mode as `doprnt` passes them, and a subnormal, an
+infinity and a NaN for `frexp`, `modf`, `sqrt`, `log` and `fabs`.
+And the stack between and above the arguments where the original reads
+them holds the same pointers into the pointees in both calls, the
+seventh case's fill, so that a function whose prototype leaves out an
+argument its body reads, a local `in_stack_N` in gcc's C, differs.
+A parameter that
 points at a routine, of a function typedef whose parameters the C
 declares (`printf_function`, `spoo_function`, `dac_measure`,
 `write_function`), is given a routine of the harness's own at

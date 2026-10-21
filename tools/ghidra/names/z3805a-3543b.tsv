@@ -725,20 +725,20 @@
 #
 # batch 5, by the strings they print
 0x42bc4	function	toggle_change	the firmware's own name, "pll_scpi: toggle_change() -- new value > max value"	applies a change to a PLL setting that toggles, refusing a value above its maximum
-0x42d02	function	validate_or_doaction	the firmware's own name, "pll_scpi: validate_or_doaction() -- unknown structure type"	checks a PLL SCPI request's value against its setting's descriptor, or carries it out
+0x42d02	function	validate_or_doaction	the firmware's own name, "pll_scpi: validate_or_doaction() -- unknown structure type"	checks a PLL SCPI request's value against its setting's descriptor, or carries it out	void validate_or_doaction(char *needs_loop, char *result)
 0x431f4	function	get_setup_vars	the firmware's own name, "pll_scpi: get_setup_vars() -- unknown structure type"	finds the variables behind a PLL SCPI setting, by its descriptor's type	void get_setup_vars(pllc_request *request)
 0x43a90	function	holdover	loop.md's stage; "holdover - Error with measurement"	the loop's holdover stage, steering the oscillator without GPS
 0x43f9a	function	holdover_recovery	loop.md's stage; "holdover recovery - Error with measurement"	the loop's stage that recovers from holdover once GPS returns
 0x4429e	function	startup_pll	loop.md's stage; "startup_pll - Error with measurement"	the loop's start-up stage
-0x451c2	function	coarse	loop.md's power-up step; "coarse - Error with measurement 1"	the power-up step that sets the oscillator's frequency coarsely
+0x451c2	function	coarse	loop.md's power-up step; "coarse - Error with measurement 1"	the power-up step that sets the oscillator's frequency coarsely	uint8_t coarse(void)
 0x4538c	function	fine	loop.md's power-up step and its sub-states; "fine - Error with measurement 1", "fine-sync", "fine-slew"	the power-up step that adjusts the frequency finely, through its sync and slew sub-states
 0x10540	function	clk_do	the firmware's own name, "Clk_do: out of event buffers"	queues an event for the clock task	klok_entry * clk_do(klok_entry *event)
 0x1d6ba	function	drtb_puts	the firmware's own name, "wait_v SIG_SOQ error in _drtb_puts"	writes a string to DUART channel B, waiting for room	int drtb_puts(char *param_1)
-0x1d74a	function	drtb_getc	"wait_v SIG_SIQ error in getc", DUART channel B	reads a character from DUART channel B, waiting for one
+0x1d74a	function	drtb_getc	"wait_v SIG_SIQ error in getc", DUART channel B	reads a character from DUART channel B, waiting for one	uint8_t drtb_getc(void)
 0x1e18a	function	drta_send_message	the firmware's own name, "wait_v SIG_SOQA error in drta_send_message"	sends a message to the GPS engine on DUART channel A
 0x1e238	function	drta_get_byte	the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine with it	reads a byte from the GPS engine on DUART channel A, waiting for one
 0x1f76c	function	sci_puts	the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts"	writes a string to the SCI port, waiting for room	int sci_puts(char *text)
-0x1f7d0	function	sci_getc	"wait_v SIG_SIQ_SCI error in getc"	reads a character from the SCI port, waiting for one
+0x1f7d0	function	sci_getc	"wait_v SIG_SIQ_SCI error in getc"	reads a character from the SCI port, waiting for one	uint8_t sci_getc(void)
 0x17a96	function	selftest_cpu	the self-test table 0x18458's entry 2; "CPU:"	the self-test of the CPU	void selftest_cpu(char_slot run)
 0x179ac	function	selftest_ram	entry 3; "System RAM: D15-D0:", "adr line A18-A1:"	the self-test of system RAM, its data and address lines	void selftest_ram(char_slot run)
 0x17b16	function	selftest_eeprom	entry 4; "EEPROM:"	the self-test of the EEPROM	void selftest_eeprom(char_slot run)
@@ -1540,7 +1540,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x29766	function	arena_set	context	sets an arena's next free byte
 0x29770	function	arena_init	context	makes an arena of a buffer of so many bytes
 0x29a24	function	copy_longs_locked	context	copies so many longs with interrupts held off	void copy_longs_locked(uint32_t *source, uint32_t *destination, uint8_t count)
-0x29a68	function	robin_store	context	stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36
+0x29a68	function	robin_store	context	stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36	void robin_store(char *response, short *points, long count, char format, uint8_t index)
 0x29b08	function	rtcm_supported	context	0: RTCM corrections are not supported	undefined1 rtcm_supported(void)
 0x29b96	function	scpi_console_read	context	reads up to so many characters from the console, marking the input ended at its end
 0x29cc6	function	scpi_input_ended	context	marks the SCPI input ended
@@ -1709,7 +1709,7 @@ installer::0x102ff4	function	installer_gp_port_select	context	the installer's gp
 installer::0x103016	function	installer_duartb_mode_from_settings	context	the installer's duartb_mode_from_settings
 installer::0x1030b4	function	installer_duartb_baud_from_settings	context	the installer's duartb_baud_from_settings
 installer::0x103102	function	installer_duartb_putc_polled	context	the installer's duartb_putc_polled
-installer::0x1031cc	function	installer_drtb_getc	context	the installer's drtb_getc
+installer::0x1031cc	function	installer_drtb_getc	context	the installer's drtb_getc	uint8_t installer_drtb_getc(void)
 installer::0x103266	function	installer_drtb_gets	context	the installer's drtb_gets
 installer::0x103868	function	installer_drtb_putc	context	the installer's drtb_putc
 installer::0x103984	function	installer_console_write_polled	context	the installer's console_write_polled	int installer_console_write_polled(char *s)
@@ -1732,7 +1732,7 @@ installer::0x105d52	function	installer_status_propagate	context	the installer's 
 installer::0x105eb8	function	installer_status_set_bit	context	the installer's status_set_bit	int16_t installer_status_set_bit(status_model *status, int condition, int value)
 installer::0x105f7c	function	installer_status_apply_condition	context	the installer's status_apply_condition	void installer_status_apply_condition(status_model *status, int condition, int param_3)
 installer::0x106164	function	installer_status_read_event	context	the installer's status_read_event	void installer_status_read_event(status_model *status, int index, uint16_t *event)
-installer::0x106282	function	installer_error_queue_push	context	the installer's error_queue_push	bool installer_error_queue_push(short *error_queue, int code, uint32_t value)
+installer::0x106282	function	installer_error_queue_push	context	the installer's error_queue_push	int16_t installer_error_queue_push(short *error_queue, int code, uint32_t value)
 installer::0x106548	function	installer_error_message_lookup	context	the installer's error_message_lookup
 installer::0x1073f6	function	installer_scpi_prompt	context	the installer's scpi_prompt
 installer::0x1076f4	function	installer_status_prompt_refresh	context	the installer's status_prompt_refresh	void installer_status_prompt_refresh(int param_1,undefined4 param_2)
@@ -1863,7 +1863,7 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x27d80	function	scpi_header_resolve	context	resolves a command header to its node and handler, through defaults and numeric suffixes, and takes room for its parameters
 0x27f10	function	scpi_common_header_resolve	context	resolves a common command's header to its node and handler and takes room for its parameters
 0x292d6	function	scpi_interpret	context	the parser's loop: parses each message unit, calls its handler, writes its response and reports errors, until the input ends	undefined4 scpi_interpret(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5, undefined4 param_6,undefined4 param_7,undefined4 param_8,undefined4 param_9)
-0x297c4	function	scpi_long_resolve_bound	context	a long parameter's value: its own, the first or second argument for keyword 0 or 1, else the third; called by nothing
+0x297c4	function	scpi_long_resolve_bound	context	a long parameter's value: its own, the first or second argument for keyword 0 or 1, else the third; called by nothing	int scpi_long_resolve_bound(long low, long high, long value, short *parameter)
 0x298b2	function	scpi_numeric_set_double	context	scpi_numeric_set for a parameter of doubles; called by nothing
 0x29990	function	scpi_numeric_get_double	context	scpi_numeric_get for a parameter of doubles; called by nothing	double scpi_numeric_get_double(scpi_numeric_param *param, int index, short kind, short bound)
 0x29a1e	function	long_identity	context	returns its argument; called by nothing

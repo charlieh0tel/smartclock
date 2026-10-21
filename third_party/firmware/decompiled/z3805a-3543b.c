@@ -5212,7 +5212,7 @@ void duartb_mode_from_settings(void);
 void duartb_baud_from_settings(void);
 byte duartb_putc_polled(byte param_1);
 int drtb_puts(char *param_1);
-undefined4 drtb_getc(void);
+uint8_t drtb_getc(void);
 int drtb_gets(byte *param_1,int param_2);
 void drtb_unlock(char write) __asm__("c_drtb_unlock");
 void drtb_lock(char write) __asm__("c_drtb_lock");
@@ -5280,7 +5280,7 @@ void sci_echo_none(char c);
 void sci_baud_set(char param_1);
 ushort sci_putc_polled(char param_1);
 int sci_puts(char *text);
-undefined4 sci_getc(void);
+uint8_t sci_getc(void);
 int sci_gets(char *param_1,int param_2);
 int primary_user_64();
 char sci_unlock(char write) __asm__("c_sci_unlock");
@@ -5467,7 +5467,7 @@ undefined4 arena_current(undefined4 *param_1);
 void arena_set(undefined4 param_1,undefined4 *param_2);
 void arena_init(int *param_1,uint param_2,int *param_3);
 undefined4 scpi_check_range(int param_1,int param_2,int param_3,byte param_4);
-undefined4 scpi_long_resolve_bound(undefined4 param_1,short *param_2);
+int scpi_long_resolve_bound(long low,long high,long value,short *parameter);
 void scpi_numeric_set(scpi_numeric_param *param,int index,short kind,short bound,
                      uint32_t float_value,int32_t integer_value,uint8_t source);
 void scpi_numeric_set_double
@@ -5479,7 +5479,7 @@ char return_byte(char b);
 undefined4 long_identity(undefined4 param_1);
 void copy_longs_locked(uint32_t *source,uint32_t *destination,uint8_t count);
 float float_identity(float x);
-void robin_store(undefined1 *param_1,char param_2,byte param_3);
+void robin_store(char *response,short *points,long count,char format,uint8_t index);
 int return_zero(void);
 int scpi_query_failed(char code,void *response);
 undefined1 rtcm_supported(void);
@@ -6003,7 +6003,7 @@ void output_state_done(void);
 void pll_scpi_do_action(undefined1 *param_1);
 void toggle_change(undefined1 *param_1);
 void validate_num(void);
-void validate_or_doaction(undefined1 *param_1);
+void validate_or_doaction(char *needs_loop,char *result);
 undefined4 pll_scpi_needs_loop(void);
 undefined4 pll_scpi_send_to_loop(uint8_t param_1,undefined1 *param_2);
 ushort scpi_param_saved_in_nv(void);
@@ -6036,7 +6036,7 @@ undefined1 sync_perform(float param_1);
 uint8_t interval_next_reading(char arm_mode,float *reading);
 void interval_rearm(char param_1);
 void interval_wait_reading(void);
-undefined4 coarse(void);
+uint8_t coarse(void);
 char fine(void);
 void time_zone_changed(void);
 void time_zone_done(void);
@@ -6405,8 +6405,8 @@ int installer_gp_port_select(char param_1);
 void installer_duartb_mode_from_settings(void);
 void installer_duartb_baud_from_settings(void);
 byte installer_duartb_putc_polled(byte param_1);
-undefined4 installer_drtb_getc(void);
-int installer_drtb_gets(byte *param_1,int param_2);
+uint8_t installer_drtb_getc(void);
+int installer_drtb_gets(uint8_t *param_1,int param_2);
 void installer_drtb_putc(undefined1 param_1);
 int installer_console_write_polled(char *s);
 void installer_printf_polled(char *format,...);
@@ -6429,7 +6429,7 @@ void installer_status_propagate(status_model *status,status_register *reg);
 int16_t installer_status_set_bit(status_model *status,int condition,int value);
 void installer_status_apply_condition(status_model *status,int condition,int param_3);
 void installer_status_read_event(status_model *status,int index,uint16_t *event);
-bool installer_error_queue_push(short *error_queue,int code,uint32_t value);
+int16_t installer_error_queue_push(short *error_queue,int code,uint32_t value);
 undefined4 installer_error_message_lookup(undefined4 param_1);
 void installer_scpi_prompt(int param_1);
 void installer_status_prompt_refresh(int param_1,int param_2);
@@ -13328,7 +13328,7 @@ __exception void kernel_dispatch_service(undefined2 param_1)
   undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A6;
+  undefined4 unaff_A6 = (undefined4)*(void **)__builtin_frame_address(0);
   undefined2 *puVar13;
   undefined2 *puVar14;
   undefined2 *in_USP;
@@ -13690,7 +13690,7 @@ __naked void kernel_switch_task(void)
   undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   undefined2 *puVar10;
   undefined2 *puVar11;
   undefined2 *in_USP;
@@ -13845,8 +13845,8 @@ __naked void kernel_process_ticks(void)
   uint uVar3;
   int *piVar4;
   short sVar5;
-  int *unaff_A5;
-  int unaff_A6;
+  int *unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int *)__entry; });
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   kernel_advance_date();
   if (*(int *)(unaff_A6 + 0x30) != 0) {
@@ -14042,7 +14042,7 @@ __regcall void kernel_create(void)
   undefined2 *puVar5;
   undefined4 *puVar6;
   undefined2 *puVar7;
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   if ((unaff_D2b != 0) && (iVar2 = unaff_A6[4], iVar2 != 0)) {
     *(undefined4 *)(iVar2 + 0x20) = 0;
@@ -14218,7 +14218,7 @@ __regcall void kernel_start(void)
   int in_A0;
   void *pvVar1;
   undefined4 extraout_A1;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   undefined1 in_ZF;
   
   pvVar1 = kernel_check_task(in_A0,(void *)*unaff_A6);
@@ -14280,7 +14280,7 @@ __regcall void kernel_ident(void)
 {
   int in_D0;
   int iVar1;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   if (in_D0 != 0) {
     iVar1 = *(int *)(unaff_A6 + 0xc);
@@ -14346,7 +14346,7 @@ __regcall undefined8 kernel_delete(void)
   int extraout_A0_00;
   int *extraout_A1;
   int *piVar4;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   undefined8 *puVar5;
   undefined1 in_ZF;
   bool bVar6;
@@ -14534,7 +14534,7 @@ __regcall void kernel_suspend(void)
   int in_A0;
   void *pvVar1;
   void *extraout_A0;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   undefined1 in_ZF;
   
   pvVar1 = kernel_check_task(in_A0,(void *)*unaff_A6);
@@ -14599,7 +14599,7 @@ __regcall void kernel_resume(void)
   byte bVar1;
   int in_A0;
   void *pvVar2;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   bVar3 = true;
@@ -14671,7 +14671,7 @@ __regcall void kernel_priority(void)
   short in_D1w;
   int in_A0;
   void *pvVar2;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   bVar3 = in_D1w == 0;
@@ -14768,7 +14768,7 @@ __regcall void kernel_allocate_segment(void)
   int *piVar2;
   int iVar3;
   char unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (char)__entry; });
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   undefined1 in_ZF;
   
   puVar1 = (undefined4 *)*unaff_A6;
@@ -14815,8 +14815,8 @@ __naked void kernel_allocate_for_task(void)
   undefined4 *puVar1;
   int iVar2;
   char unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (char)__entry; });
-  int *unaff_A5;
-  int unaff_A6;
+  int *unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int *)__entry; });
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   undefined1 in_ZF;
   
   kernel_allocate();
@@ -14900,7 +14900,7 @@ __regcall void kernel_free_segment(void)
   undefined4 extraout_A0_00;
   int *piVar7;
   int *piVar8;
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   undefined1 in_ZF;
   bool bVar9;
   
@@ -15035,7 +15035,7 @@ __naked void kernel_free_for_task(void)
   int *piVar8;
   int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   undefined4 *puVar9;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   undefined1 in_ZF;
   bool bVar10;
   
@@ -15366,7 +15366,7 @@ __naked void kernel_region_allocate(void)
   short unaff_D6w = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (short)__entry; });
   int *piVar5;
   int *piVar6;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   if (in_D1 < *(uint *)(unaff_A6 + 0x34 + (int)unaff_D6w)) {
     in_D1 = *(uint *)(unaff_A6 + 0x34 + (int)unaff_D6w);
@@ -15505,7 +15505,7 @@ __regcall void kernel_assign_segment(void)
   void *segment;
   int extraout_A1;
   int *piVar2;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   bVar3 = in_A1 == 0;
@@ -15568,7 +15568,7 @@ __regcall void kernel_reclaim_segment(void)
   void *segment;
   int extraout_A1;
   int *piVar3;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar4;
   
   bVar4 = in_A1 == 0;
@@ -15704,7 +15704,7 @@ __regcall void kernel_create_x(void)
   undefined4 in_D0;
   byte in_D1b;
   undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   iVar1 = unaff_A6[6];
   if (iVar1 != 0) {
@@ -15793,7 +15793,7 @@ __regcall void kernel_service_21(void)
   int in_D0;
   undefined4 *extraout_A0;
   undefined4 *puVar2;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   exchange = unaff_A6[5];
@@ -15894,7 +15894,7 @@ __regcall void kernel_delete_x(void)
   int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   undefined4 *puVar3;
   undefined4 *puVar4;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar5;
   
   bVar5 = unaff_A2 == 0;
@@ -16020,8 +16020,8 @@ __regcall void kernel_broadcast_x(void)
   int extraout_A1;
   int extraout_A1_00;
   int *piVar10;
-  int *unaff_A3;
-  undefined4 *unaff_A6;
+  int *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (int *)__entry; });
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar11;
   
   bVar11 = true;
@@ -16231,7 +16231,7 @@ __regcall void kernel_jam_x(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar11;
   
   running = (void *)*unaff_A6;
@@ -16376,7 +16376,7 @@ __regcall void kernel_send_x(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar11;
   
   running = (void *)*unaff_A6;
@@ -16503,7 +16503,7 @@ __naked void kernel_send_for_task(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  void *unaff_A5;
+  void *unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   bool bVar11;
   
   bVar11 = true;
@@ -16731,7 +16731,7 @@ __naked void kernel_copy_message(void)
   undefined4 uVar4;
   undefined4 uVar5;
   int in_A1;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   puVar1 = *(undefined4 **)(unaff_A6 + 0x1c);
   if (puVar1 != (undefined4 *)0x0) {
@@ -16808,7 +16808,7 @@ __regcall void kernel_request_x(void)
   int iVar9;
   int extraout_A1_00;
   int *piVar10;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar11;
   undefined8 uVar12;
   
@@ -17025,7 +17025,7 @@ __regcall void kernel_signal_v(void)
   ushort uVar2;
   int in_A0;
   void *pvVar3;
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   bool bVar4;
   
   bVar4 = in_D1w == 0;
@@ -17098,8 +17098,8 @@ __naked void kernel_signal_task(void)
   ushort uVar2;
   int in_A0;
   void *pvVar3;
-  void *unaff_A5;
-  int *unaff_A6;
+  void *unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (void *)__entry; });
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   bool bVar4;
   
   bVar4 = in_D1w == 0;
@@ -17212,7 +17212,7 @@ __regcall void kernel_get_v(void)
   ushort in_D1w;
   ushort uVar2;
   char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   uVar2 = in_D1w & 0x7fff;
   if (uVar2 != 0) {
@@ -17259,7 +17259,7 @@ __regcall void kernel_wait_v(void)
   ushort uVar5;
   char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
   char unaff_D7b = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (char)__entry; });
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   piVar1 = (int *)*unaff_A6;
   uVar5 = in_D1w & 0x7fff;
@@ -17370,7 +17370,7 @@ __regcall byte kernel_mode(void)
   byte bVar1;
   byte in_D0b;
   byte in_D1b;
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   bVar1 = *(byte *)(*unaff_A6 + 0x11);
   *(byte *)(*unaff_A6 + 0x11) = in_D1b & in_D0b | ~in_D1b & bVar1;
@@ -17446,7 +17446,7 @@ __regcall void kernel_pause(void)
 {
   int iVar1;
   int iVar2;
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   iVar1 = *unaff_A6;
   iVar2 = kernel_queue_remove();
@@ -17505,7 +17505,7 @@ __regcall void kernel_announce_tick(void)
   char cVar2;
   short sVar3;
   int iVar4;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   *(int *)(unaff_A6 + 0x6c) = *(int *)(unaff_A6 + 0x6c) + 1;
   *(short *)(unaff_A6 + 0x70) = *(short *)(unaff_A6 + 0x70) + 1;
@@ -17577,7 +17577,7 @@ __regcall undefined8 kernel_get_time(void)
 
 {
   uint extraout_D1;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   do {
     kernel_advance_date();
@@ -17631,7 +17631,7 @@ __regcall void kernel_set_time(void)
   ushort in_D0w;
   undefined4 in_D1;
   ushort unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (ushort)__entry; });
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   undefined8 uVar1;
   
   if (((((byte)in_D1 < 0x3c) && ((byte)((uint)in_D1 >> 8) < 0x3c)) &&
@@ -17949,7 +17949,7 @@ __naked void kernel_advance_date(void)
   short sVar3;
   undefined2 uVar4;
   undefined3 uVar5;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   int iVar6;
   
   if (0x17 < *(ushort *)(unaff_A6 + 0x72)) {
@@ -18024,7 +18024,7 @@ __naked void kernel_set_leap_year(void)
 {
   uint uVar1;
   uint unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (uint)__entry; });
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   *(undefined1 *)(unaff_A6 + 0x7b) = 0x1c;
   if (((short)((unaff_D6 >> 0x10) << 0xe) == 0) &&
@@ -18354,7 +18354,7 @@ __naked void kernel_timer_insert(void)
   uint uVar4;
   int iVar5;
   int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   uVar4 = in_D0 - 1U;
   iVar5 = unaff_A6;
@@ -18450,9 +18450,9 @@ __naked void kernel_make_ready(void)
 {
   undefined4 *puVar1;
   ushort uVar2;
-  int *unaff_A2;
+  int *unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int *)__entry; });
   int *piVar3;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   uVar2 = *(ushort *)((int)unaff_A2 + 0x12) & 4;
   *(ushort *)((int)unaff_A2 + 0x12) = uVar2;
@@ -18497,9 +18497,9 @@ __naked void kernel_ready_insert(void)
 
 {
   undefined4 *puVar1;
-  int *unaff_A2;
+  int *unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int *)__entry; });
   int *piVar2;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   piVar2 = (int *)(unaff_A6 + 4);
   do {
@@ -18561,7 +18561,7 @@ __naked void kernel_queue_remove(void)
 {
   int iVar1;
   int *piVar2;
-  int *unaff_A5;
+  int *unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int *)__entry; });
   
   iVar1 = *unaff_A5;
   piVar2 = (int *)unaff_A5[1];
@@ -18992,8 +18992,8 @@ __naked void kernel_region_init(void)
   int iVar2;
   uint uVar3;
   int in_A0;
-  undefined4 *unaff_A3;
-  int unaff_A6;
+  undefined4 *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4 *)__entry; });
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   uVar3 = (*(int *)(in_A0 + 4) - (int)unaff_A3) + 1U & 0xfffffffe;
   unaff_A3[3] = uVar3;
@@ -19172,7 +19172,7 @@ __exception void kernel_return_from_interrupt(ushort param_1)
   undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A6;
+  undefined4 unaff_A6 = (undefined4)*(void **)__builtin_frame_address(0);
   undefined2 *puVar9;
   undefined2 *puVar10;
   undefined2 *in_USP;
@@ -20532,7 +20532,7 @@ __naked int psos_pack_name(void)
 
 {
   int iVar1;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   iVar1 = 0;
   if (*(int **)(unaff_A6 + 8) != (int *)0x0) {
@@ -23221,7 +23221,7 @@ __pforth void forth_abort(forth_user_end user,long *sp,char *input)
   void *pvVar1;
   long *sp_00;
   char *pcVar2;
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   
   pvVar1 = ADJ(user)->return_stack_base;
   sp_00 = ADJ(user)->stack_base;
@@ -23280,7 +23280,7 @@ __pforth void forth_interpret(forth_user_end user,long *sp,void *dp)
   code *extraout_A0;
   code *pcVar4;
   int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
-  char *unaff_A3;
+  char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
   undefined4 *puVar5;
   undefined1 uVar6;
   
@@ -23424,7 +23424,7 @@ __pforth undefined4 forth_parse_number(forth_user_end user /* a5 */,long *sp /* 
   undefined2 unaff_D7w = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (undefined2)__entry; });
   char *in_A0;
   char *extraout_A0;
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   bool bVar8;
   undefined8 uVar9;
   
@@ -25851,7 +25851,7 @@ __pforth void forth_check_pairs(long *sp /* a6 */)
   char *pcVar2;
   int in_D0;
   char *s;
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   if (in_D0 != *sp) {
@@ -26082,9 +26082,9 @@ __asm__(
 __pforth void forth_plus_loop(void)
 
 {
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   void *pvVar1;
-  long *unaff_A6;
+  long *unaff_A6 = (long *)*(void **)__builtin_frame_address(0);
   undefined1 uVar2;
   
   forth_check_pairs(unaff_A6);
@@ -26129,7 +26129,7 @@ __asm__(
 __pforth void forth_loop(long *sp)
 
 {
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   void *pvVar1;
   undefined1 uVar2;
   
@@ -26271,8 +26271,8 @@ __asm__(
 __pforth void forth_endif(void)
 
 {
-  void *unaff_A4;
-  long *unaff_A6;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
+  long *unaff_A6 = (long *)*(void **)__builtin_frame_address(0);
   
   forth_check_pairs(unaff_A6);
   forth_resolve_forward(unaff_A6,unaff_A4);
@@ -26391,9 +26391,9 @@ __asm__(
 __pforth void forth_repeat(void)
 
 {
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   void *dp;
-  long *unaff_A6;
+  long *unaff_A6 = (long *)*(void **)__builtin_frame_address(0);
   
   forth_check_pairs(unaff_A6);
   dp = forth_compile_code((uint16_t *)&UNK_00019410,unaff_A4);
@@ -26444,9 +26444,9 @@ __asm__(
 __pforth void forth_again(void)
 
 {
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   void *dp;
-  long *unaff_A6;
+  long *unaff_A6 = (long *)*(void **)__builtin_frame_address(0);
   
   forth_check_pairs(unaff_A6);
   dp = forth_compile_code((uint16_t *)&UNK_00019410,unaff_A4);
@@ -26493,9 +26493,9 @@ __asm__(
 __pforth void forth_until(void)
 
 {
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   void *dp;
-  long *unaff_A6;
+  long *unaff_A6 = (long *)*(void **)__builtin_frame_address(0);
   
   forth_check_pairs(unaff_A6);
   dp = forth_compile_code((uint16_t *)&UNK_00019406,unaff_A4);
@@ -26761,8 +26761,8 @@ __pforth void forth_parse_create_header(void)
   undefined4 unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 *extraout_A1;
   char *pcVar3;
-  char *unaff_A3;
-  undefined4 *unaff_A4;
+  char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
+  undefined4 *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4 *)__entry; });
   char *dp;
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   char *pcVar4;
@@ -26968,9 +26968,9 @@ __asm__(
 __pforth void forth_constant(void)
 
 {
-  undefined2 *unaff_A4;
+  undefined2 *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined2 *)__entry; });
   int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   
   forth_parse_create_header();
   *unaff_A4 = 0x2d3c;
@@ -27094,7 +27094,7 @@ __pforth void forth_mod(long *sp)
   long *sp_00;
   char *pcVar2;
   long extraout_D1;
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   if (*sp != 0) {
@@ -27150,7 +27150,7 @@ __pforth void forth_slash_mod(long *sp)
   void *pvVar1;
   long *sp_00;
   char *pcVar2;
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   undefined8 uVar3;
   
@@ -27208,7 +27208,7 @@ __pforth void forth_star_slash_mod(long *sp)
   void *pvVar1;
   long *sp_00;
   char *pcVar2;
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   undefined8 uVar3;
   
@@ -27270,7 +27270,7 @@ __pforth void forth_star_slash(long *sp)
   long *sp_00;
   char *pcVar2;
   long lVar3;
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   if (*sp != 0) {
@@ -27330,7 +27330,7 @@ __pforth void forth_slash(long *sp)
   long *sp_00;
   char *pcVar2;
   long lVar3;
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   if (*sp != 0) {
@@ -28848,8 +28848,8 @@ __pforth void forth_tick(long *sp)
   long *sp_00;
   char *pcVar2;
   int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
-  char *unaff_A3;
-  void *unaff_A4;
+  char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   undefined1 in_ZF;
   
@@ -28909,7 +28909,7 @@ __pforth void forth_bracket_tick_close_bracket(void *dp)
   long *sp;
   char *pcVar2;
   int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
-  char *unaff_A3;
+  char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   undefined1 in_ZF;
   
@@ -29027,8 +29027,8 @@ __pforth void forth_forget(forth_user_end user,void *dp)
   void *pvVar1;
   long *sp;
   char *pcVar2;
-  undefined4 *unaff_A2;
-  char *unaff_A3;
+  undefined4 *unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (undefined4 *)__entry; });
+  char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
   undefined1 in_ZF;
   
   forth_parse_word(user,unaff_A3);
@@ -29281,7 +29281,7 @@ __pforth void forth_my_pid(long *sp)
 
 {
   long extraout_A0;
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp,unaff_A4);
@@ -29319,7 +29319,7 @@ __asm__(
 __pforth void forth_query_caret_C(void)
 
 {
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   __m68k_trap(3);
   *(undefined4 *)(unaff_A6 + -4) = 0;
@@ -29686,7 +29686,7 @@ __asm__(
 __pforth void forth_does_greater(void)
 
 {
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   
   forth_compile_code((uint16_t *)&UNK_00019dce,unaff_A4);
   return;
@@ -29840,7 +29840,7 @@ __pforth void forth_number(long *sp)
 {
   int in_A1;
   char *extraout_A1;
-  char *unaff_A3;
+  char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   bool bVar1;
   
@@ -29895,8 +29895,8 @@ __pforth undefined1 forth_0x(forth_user_end user,long *sp)
   int iVar4;
   char *pcVar5;
   char *extraout_A0;
-  char *unaff_A3;
-  void *unaff_A4;
+  char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   bool bVar6;
   undefined8 uVar7;
   
@@ -30145,7 +30145,7 @@ __pforth void forth_psos_call(forth_user_end user,long *sp,void *dp)
   uint uVar2;
   void *in_A0;
   void *in_A1;
-  char *unaff_A3;
+  char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
   uint *sp_00;
   
   uVar2 = psos_call(unaff_D7b,in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
@@ -30290,7 +30290,7 @@ __pforth void forth_spawn(forth_user_end user,long *sp,void *dp)
   undefined4 extraout_A0;
   long extraout_A0_00;
   void *a1;
-  char *unaff_A3;
+  char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
   long *plVar4;
   undefined1 in_ZF;
   
@@ -30547,8 +30547,8 @@ __pforth void forth_ident(long *sp)
 
 {
   long extraout_A0;
-  char *unaff_A3;
-  void *unaff_A4;
+  char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_parse_word(unaff_A5,unaff_A3);
@@ -30590,7 +30590,7 @@ __asm__(
 __pforth void forth_delete(long *sp)
 
 {
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 1,unaff_A4);
@@ -30625,7 +30625,7 @@ __asm__(
 __pforth void forth_suspend(long *sp)
 
 {
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 1,unaff_A4);
@@ -30660,7 +30660,7 @@ __asm__(
 __pforth void forth_resume(long *sp)
 
 {
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 1,unaff_A4);
@@ -30696,7 +30696,7 @@ __pforth void forth_priority(long *sp)
 
 {
   uint uVar1;
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   uVar1 = forth_psos_call(unaff_A5,sp + 2,unaff_A4);
@@ -30735,7 +30735,7 @@ __asm__(
 __pforth void forth_jam_x(long *sp)
 
 {
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 2,unaff_A4);
@@ -30772,8 +30772,8 @@ __pforth void forth_create_x(long *sp)
 
 {
   long extraout_A0;
-  char *unaff_A3;
-  void *unaff_A4;
+  char *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (char *)__entry; });
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_parse_word(unaff_A5,unaff_A3);
@@ -30820,7 +30820,7 @@ __asm__(
 __pforth void forth_delete_x(long *sp)
 
 {
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 1,unaff_A4);
@@ -30855,7 +30855,7 @@ __asm__(
 __pforth void forth_send_x(long *sp)
 
 {
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 2,unaff_A4);
@@ -30891,7 +30891,7 @@ __asm__(
 __pforth void forth_request_x(long *sp)
 
 {
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 4,unaff_A4);
@@ -30929,7 +30929,7 @@ __asm__(
 __pforth void forth_signal_v(long *sp)
 
 {
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 2,unaff_A4);
@@ -30967,7 +30967,7 @@ __pforth void forth_wait_v(long *sp)
 
 {
   uint extraout_D1;
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   
   forth_psos_call(unaff_A5,sp + 3,unaff_A4);
@@ -31110,7 +31110,7 @@ __pforth void forth_psos_io_call(long *sp)
   char *pcVar2;
   long in_D0;
   uint unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint)__entry; });
-  void *unaff_A4;
+  void *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   forth_user_end unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (forth_user_end)__entry; });
   uint *sp_01;
   
@@ -34146,32 +34146,28 @@ int drtb_puts(char *param_1)
 /* reads a character from DUART channel B, waiting for one
    "wait_v SIG_SIQ error in getc", DUART channel B */
 
-undefined4 drtb_getc(void)
+uint8_t drtb_getc(void)
 
 {
   uint8_t uVar1;
   uint8_t uVar2;
-  undefined3 uVar3;
-  undefined3 extraout_var;
-  ulong uVar4;
+  ulong uVar3;
   
   psos_get_v(SIG_SIQ,0,(ulong *)0x0);
   if (duartb_ring.write == duartb_ring.read) {
-    uVar4 = psos_wait_v(SIG_SIQ,0,0,(ulong *)0x0);
-    if ((char)uVar4 != 0) {
+    uVar3 = psos_wait_v(SIG_SIQ,0,0,(ulong *)0x0);
+    if ((char)uVar3 != 0) {
       fatal_error("wait_v SIG_SIQ error in getc");
     }
   }
   uVar2 = duartb_ring.read + 1;
-  uVar3 = 0;
   uVar1 = duartb_ring.data[duartb_ring.read];
   duartb_ring.read = uVar2;
-  if ((((duartb.flow & 0x20) != 0) && (uVar3 = 0, 0x10 < (byte)(uVar2 - duartb_ring.write))) &&
+  if ((((duartb.flow & 0x20) != 0) && (0x10 < (byte)(uVar2 - duartb_ring.write))) &&
      (duartb.flow = duartb.flow & 0xdf, duartb.xon_xoff != 0)) {
     drtb_putc(0x11);
-    uVar3 = extraout_var;
   }
-  return CONCAT31(uVar3,uVar1);
+  return uVar1;
 }
 
 
@@ -34182,10 +34178,10 @@ undefined4 drtb_getc(void)
 int drtb_gets(byte *param_1,int param_2)
 
 {
-  byte bVar1;
+  uint8_t uVar1;
   int iVar2;
   int iVar3;
-  byte *pbVar4;
+  uint8_t *puVar4;
   byte *pbVar5;
   undefined1 uVar6;
   
@@ -34207,19 +34203,19 @@ LAB_0001d8d0:
       return iVar3;
     }
     uVar6 = 0x10;
-    bVar1 = drtb_getc();
-    if (0x1f < bVar1) break;
-    if (0x10U < bVar1 - 8) {
+    uVar1 = drtb_getc();
+    if (0x1f < uVar1) break;
+    if (0x10U < uVar1 - 8) {
 switchD_0001d830_caseD_b:
       (*(code *)duartb.echo)();
-      pbVar4 = pbVar5;
+      puVar4 = pbVar5;
       goto LAB_0001d8ca;
     }
                     /* WARNING: Switch is manually overridden */
-    switch((short)(bVar1 - 8)) {
+    switch((short)(uVar1 - 8)) {
     case 0:
       if (iVar3 != iVar2) {
-        pbVar4 = pbVar5 + -1;
+        puVar4 = pbVar5 + -1;
         iVar2 = iVar2 + 1;
         goto LAB_0001d8ca;
       }
@@ -34228,8 +34224,8 @@ switchD_0001d830_caseD_b:
       goto LAB_0001d8c2;
     case 2:
     case 5:
-      if (((duartb.last_terminator == 0xd) && (bVar1 == 10)) ||
-         ((duartb.last_terminator == 10 && (bVar1 == 0xd)))) {
+      if (((duartb.last_terminator == 0xd) && (uVar1 == 10)) ||
+         ((duartb.last_terminator == 10 && (uVar1 == 0xd)))) {
         duartb.last_terminator = 0;
       }
       else {
@@ -34237,7 +34233,7 @@ switchD_0001d830_caseD_b:
         (*(code *)duartb.echo)(uVar6);
         iVar3 = iVar3 - iVar2;
         iVar2 = 0;
-        duartb.last_terminator = bVar1;
+        duartb.last_terminator = uVar1;
       }
       break;
     default:
@@ -34247,19 +34243,19 @@ switchD_0001d830_caseD_b:
     }
   }
 LAB_0001d8c2:
-  pbVar4 = pbVar5 + 1;
-  duartb.last_terminator = bVar1;
-  *pbVar5 = bVar1;
+  puVar4 = pbVar5 + 1;
+  duartb.last_terminator = uVar1;
+  *pbVar5 = uVar1;
   iVar2 = iVar2 + -1;
   goto LAB_0001d8ca;
 switchD_0001d830_caseD_18:
   if (iVar3 != iVar2) {
     (*(code *)duartb.echo)();
     iVar2 = iVar3;
-    pbVar4 = param_1;
+    puVar4 = param_1;
 LAB_0001d8ca:
     (*(code *)duartb.echo)();
-    pbVar5 = pbVar4;
+    pbVar5 = puVar4;
   }
   goto LAB_0001d8d0;
 }
@@ -36473,32 +36469,28 @@ int sci_puts(char *text)
 /* reads a character from the SCI port, waiting for one
    "wait_v SIG_SIQ_SCI error in getc" */
 
-undefined4 sci_getc(void)
+uint8_t sci_getc(void)
 
 {
   uint8_t uVar1;
   uint8_t uVar2;
-  undefined3 uVar3;
-  undefined3 extraout_var;
-  ulong uVar4;
+  ulong uVar3;
   
   psos_get_v(SIG_SIQ_SCI,0,(ulong *)0x0);
   if (sci_ring.write == sci_ring.read) {
-    uVar4 = psos_wait_v(SIG_SIQ_SCI,0,0,(ulong *)0x0);
-    if ((char)uVar4 != 0) {
+    uVar3 = psos_wait_v(SIG_SIQ_SCI,0,0,(ulong *)0x0);
+    if ((char)uVar3 != 0) {
       fatal_error("wait_v SIG_SIQ_SCI error in getc");
     }
   }
   uVar2 = sci_ring.read + 1;
-  uVar3 = 0;
   uVar1 = sci_ring.data[sci_ring.read];
   sci_ring.read = uVar2;
-  if ((((sci.flow & 0x20) != 0) && (uVar3 = 0, 0x10 < (byte)(uVar2 - sci_ring.write))) &&
+  if ((((sci.flow & 0x20) != 0) && (0x10 < (byte)(uVar2 - sci_ring.write))) &&
      (sci.flow = sci.flow & 0xdf, sci.xon_xoff != 0)) {
     sci_putc_polled(0x11);
-    uVar3 = extraout_var;
   }
-  return CONCAT31(uVar3,uVar1);
+  return uVar1;
 }
 
 
@@ -43273,8 +43265,8 @@ int scpi_parse_message_unit(void *context,short *reset_path)
   int iVar2;
   int iVar3;
   int iVar4;
-  void *unaff_D5;
-  short *unaff_D7;
+  void *unaff_D5 = ({ register long __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (void *)__entry; });
+  short *unaff_D7 = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (short *)__entry; });
   undefined4 uVar5;
   undefined4 *local_32;
   short local_2e;
@@ -45514,35 +45506,33 @@ undefined4 scpi_check_range(int param_1,int param_2,int param_3,byte param_4)
 /* a long parameter's value: its own, the first or second argument for keyword 0 or 1, else the
    third; called by nothing */
 
-undefined4 scpi_long_resolve_bound(undefined4 param_1,short *param_2)
+int scpi_long_resolve_bound(long low,long high,long value,short *parameter)
 
 {
   int iVar1;
-  undefined4 in_stack_00000004;
-  undefined4 in_stack_00000008;
   
-  iVar1 = *param_2 + -2;
-  if ((int)*param_2 + 1U < 3U || iVar1 == 0) {
+  iVar1 = *parameter + -2;
+  if ((int)*parameter + 1U < 3U || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_000297e0_index_zero)[(short)iVar1]) {
     case 8:
-      param_1 = *(undefined4 *)(param_2 + 1);
+      value = *(long *)(parameter + 1);
       break;
     case 0x1c:
-      iVar1 = param_2[1] + -1;
-      if (param_2[1] == 0 || iVar1 == 0) {
+      iVar1 = parameter[1] + -1;
+      if (parameter[1] == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
         switch((&switchD_00029812_index_zero)[(short)iVar1]) {
         case 4:
-          param_1 = in_stack_00000004;
+          value = low;
           break;
         case 10:
-          param_1 = in_stack_00000008;
+          value = high;
         }
       }
     }
   }
-  *(undefined4 *)(param_2 + 1) = param_1;
+  *(long *)(parameter + 1) = value;
   return 0;
 }
 
@@ -45736,32 +45726,30 @@ float float_identity(float x)
 
 /* stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36 */
 
-void robin_store(undefined1 *param_1,char param_2,byte param_3)
+void robin_store(char *response,short *points,long count,char format,uint8_t index)
 
 {
   int iVar1;
-  undefined4 in_stack_00000008;
-  int in_stack_0000000c;
   
-  iVar1 = param_2 + -1;
-  if (param_2 == 0 || iVar1 == 0) {
+  iVar1 = format + -1;
+  if (format == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((&switchD_00029a92_index_zero)[(short)iVar1]) {
     case 4:
-      iVar1 = (uint)param_3 * 8;
-      *(int *)(iVar1 + 0x102a26) = in_stack_0000000c * 2;
-      *(undefined4 *)(iVar1 + 0x102a2a) = in_stack_00000008;
-      *param_1 = 0;
+      iVar1 = (uint)index * 8;
+      *(long *)(iVar1 + 0x102a26) = count * 2;
+      *(short **)(iVar1 + 0x102a2a) = points;
+      *response = 0;
       iVar1 = iVar1 + 0x102a26;
       break;
     case 0x22:
-      iVar1 = (uint)param_3 * 8;
-      *(int *)(iVar1 + 0x102a36) = in_stack_0000000c;
-      *(undefined4 *)(iVar1 + 0x102a3a) = in_stack_00000008;
-      *param_1 = 2;
+      iVar1 = (uint)index * 8;
+      *(long *)(iVar1 + 0x102a36) = count;
+      *(short **)(iVar1 + 0x102a3a) = points;
+      *response = 2;
       iVar1 = iVar1 + 0x102a36;
     }
-    *(int *)(param_1 + 2) = iVar1;
+    *(int *)(response + 2) = iVar1;
   }
   return;
 }
@@ -47933,9 +47921,9 @@ int scpi_query_DIAGnostic_QUERy_RESPonse(void *parameters,void *response,void *c
 {
   int iVar1;
   byte bVar2;
-  char *unaff_A2;
-  uint8_t *unaff_A3;
-  char *unaff_A4;
+  char *unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (char *)__entry; });
+  uint8_t *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (uint8_t *)__entry; });
+  char *unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (char *)__entry; });
   
   iVar1 = scpi_console_port();
   if (iVar1 == *(int *)((int)call + 0x12)) {
@@ -51891,7 +51879,9 @@ int scpi_query_ROBin(void *parameters,void *response,void *call)
   uVar2 = return_zero();
   if (iVar1 == 0) {
     robin_point_list((uint16_t *)((uVar2 & 0xff) * 0xa0 + 0x102d76),&local_e,(char)local_c);
-    robin_store(response,nv_settings.format_data,(byte)uVar2);
+    robin_store(response,(short *)((uVar2 & 0xff) * 0xa0 + 0x102d76),
+                CONCAT31(CONCAT21((short)local_e >> 0xf,(char)(local_e >> 8)),(char)local_e),
+                nv_settings.format_data,(uint8_t)uVar2);
     iVar1 = 0;
   }
   else {
@@ -52068,7 +52058,8 @@ int scpi_query_ROBin_TSTamp(void *parameters,void *response,void *call)
       *(undefined2 *)(iVar1 + 0x102d84) = local_a;
       *(undefined2 *)(iVar1 + 0x102d86) = local_8;
       *(undefined2 *)(iVar1 + 0x102d88) = local_6;
-      robin_store(response,nv_settings.format_data,(byte)uVar2);
+      robin_store(response,(short *)((uVar2 & 0xff) * 0xa0 + 0x102d76),10,nv_settings.format_data,
+                  (uint8_t)uVar2);
       return 0;
     }
     iVar1 = scpi_query_failed('\t',call);
@@ -58370,14 +58361,13 @@ void validate_num(void)
 /* checks a PLL SCPI request's value against its setting's descriptor, or carries it out
    the firmware's own name, "pll_scpi: validate_or_doaction() -- unknown structure type" */
 
-void validate_or_doaction(undefined1 *param_1)
+void validate_or_doaction(char *needs_loop,char *result)
 
 {
   int iVar1;
-  undefined1 *in_stack_00000008;
   char *message;
   
-  *param_1 = 0;
+  *needs_loop = 0;
   if (*(char *)((int)pll_scpi_param + 1) < (char)pll_scpi_index) {
     message = "pll_scpi: validate_or_doaction() -- setup index > max index";
   }
@@ -58387,14 +58377,14 @@ void validate_or_doaction(undefined1 *param_1)
                     /* WARNING: Switch is manually overridden */
       switch((&switchD_00042d32_index_zero)[(short)iVar1]) {
       case 8:
-        *param_1 = 0;
-        pll_scpi_do_action(in_stack_00000008);
+        *needs_loop = 0;
+        pll_scpi_do_action(result);
         return;
       case 0x14:
-        toggle_change(param_1);
+        toggle_change(needs_loop);
         return;
       case 0x1c:
-        *param_1 = 1;
+        *needs_loop = 1;
         validate_num();
       }
       return;
@@ -58745,7 +58735,7 @@ void pll_scpi_command(pllc_request *request,uint8_t *reply_pending)
   char local_5;
   
   get_setup_vars(request);
-  validate_or_doaction(&local_6);
+  validate_or_doaction(&local_6,(char *)reply_pending);
   if (local_6 != 0) {
     douglas_log_event = 0;
     cVar1 = pll_scpi_needs_loop();
@@ -60169,56 +60159,44 @@ void interval_wait_reading(void)
 /* the power-up step that sets the oscillator's frequency coarsely
    loop.md's power-up step; "coarse - Error with measurement 1" */
 
-undefined4 coarse(void)
+uint8_t coarse(void)
 
 {
   int pushed_1;
-  undefined3 extraout_var;
-  undefined3 extraout_var_00;
-  undefined3 extraout_var_01;
-  undefined3 extraout_var_02;
-  undefined3 extraout_var_03;
-  undefined3 extraout_var_04;
-  undefined3 extraout_var_05;
-  undefined3 uVar1;
+  uint8_t uVar3;
+  float fVar1;
+  int iVar2;
   uint8_t uVar4;
-  float fVar2;
-  int iVar3;
-  char cVar5;
   double param2;
   char acStack_54 [80];
   
-  cVar5 = 0;
-  iVar3 = (int)(char)pll.coarse_state - 4;
-  if ((uint)(int)(char)pll.coarse_state < 4 || iVar3 == 0) {
+  uVar4 = 0;
+  iVar2 = (int)(char)pll.coarse_state - 4;
+  if ((uint)(int)(char)pll.coarse_state < 4 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&switchD_000451fa_index_zero)[(short)iVar3]) {
+    switch((&switchD_000451fa_index_zero)[(short)iVar2]) {
     case 0xc:
       goto override_jmp_000451fa_case_0;
     case 0x1e:
       interval_next_reading(1,(float *)0x0);
       pll.coarse_state = 2;
-      uVar1 = extraout_var_00;
       break;
     case 0x30:
       interval_next_reading(0,(float *)0x0);
       pll.coarse_state = 3;
       pll.fine_retries = 0;
-      uVar1 = extraout_var_01;
       break;
     case 0x44:
-      uVar4 = interval_next_reading(0,&pll.fine_d);
-      if (uVar4 == 0) {
+      uVar3 = interval_next_reading(0,&pll.fine_d);
+      if (uVar3 == 0) {
         task_dmessage("coarse - Error with measurement 1\r\n");
         pll.fine_retries = pll.fine_retries + 1;
-        uVar1 = extraout_var_03;
         if (9 < pll.fine_retries) {
-          cVar5 = 2;
+          uVar4 = 2;
         }
       }
       else {
         pll.coarse_state = 4;
-        uVar1 = extraout_var_02;
       }
       break;
     case 0x7a:
@@ -60228,41 +60206,39 @@ undefined4 coarse(void)
         pll.fine_retries = pll.fine_retries + 1;
         if (pll.fine_retries < 10) {
           pll.coarse_state = 3;
-          cVar5 = 0;
+          uVar4 = 0;
         }
         else {
-          cVar5 = 2;
+          uVar4 = 2;
         }
 LAB_0004536e:
         interval_rearm(0);
-        uVar1 = extraout_var_05;
       }
       else {
-        fVar2 = double_to_float(interval_reading.value);
-        float_subtract_in_place(&pll.fine_d,fVar2);
-        iVar3 = float_compare(1e-07,pll.fine_d);
-        if (0 < iVar3) {
-          iVar3 = float_compare(pll.fine_d,-1e-07);
-          if (0 < iVar3) {
-            cVar5 = 1;
+        fVar1 = double_to_float(interval_reading.value);
+        float_subtract_in_place(&pll.fine_d,fVar1);
+        iVar2 = float_compare(1e-07,pll.fine_d);
+        if (0 < iVar2) {
+          iVar2 = float_compare(pll.fine_d,-1e-07);
+          if (0 < iVar2) {
+            uVar4 = 1;
             goto LAB_0004536e;
           }
         }
-        fVar2 = float_multiply(pll.fine_d,efc_gains.reciprocal_fine);
-        fVar2 = float_subtract_reversed(fVar2,pll.efc);
-        pll.efc = efc_clamp(fVar2);
+        fVar1 = float_multiply(pll.fine_d,efc_gains.reciprocal_fine);
+        fVar1 = float_subtract_reversed(fVar1,pll.efc);
+        pll.efc = efc_clamp(fVar1);
         if (pll_debug_enabled != 0) {
-          iVar3 = float_to_integer(pll.efc);
-          pushed_1 = iVar3;
-          fVar2 = float_multiply(pll.fine_d,1e+09);
-          param2 = float_to_double(fVar2);
+          iVar2 = float_to_integer(pll.efc);
+          pushed_1 = iVar2;
+          fVar1 = float_multiply(pll.fine_d,1e+09);
+          param2 = float_to_double(fVar1);
           debug_sprintf(acStack_54,"d = %f, efc =  %d\r\n",param2,
                         pushed_1);
           task_dmessage(acStack_54);
         }
         interval_rearm(2);
         pll.coarse_state = 1;
-        uVar1 = extraout_var_04;
       }
     }
   }
@@ -60271,12 +60247,11 @@ LAB_0004536e:
 override_jmp_000451fa_case_0:
     interval_next_reading(2,(float *)0x0);
     pll.coarse_state = 1;
-    uVar1 = extraout_var;
   }
-  if (cVar5 == 2) {
+  if (uVar4 == 2) {
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_TI_ERROR;
   }
-  return CONCAT31(uVar1,cVar5);
+  return uVar4;
 }
 
 
@@ -60980,18 +60955,18 @@ void pwma_force_level(char param_1)
 undefined1 powerup(char param_1)
 
 {
-  char cVar3;
+  uint8_t uVar3;
+  char cVar4;
   uint16_t sr;
   int iVar1;
   uint32_t uVar2;
-  undefined1 uVar4;
-  undefined2 uVar5;
-  uint8_t uVar6;
+  undefined1 uVar5;
+  undefined2 uVar6;
   uint8_t uVar7;
   uint8_t local_6;
   uint8_t uStack_5;
   
-  uVar4 = 0;
+  uVar5 = 0;
   if ((param_1 == 0) || (7 < (char)pll.powerup_state)) {
     memset(&pll.efc_history,0,0x366);
     pll.aging_state = 0;
@@ -61007,11 +60982,11 @@ undefined1 powerup(char param_1)
       goto override_jmp_00045f06_case_0;
     case 0x26:
       interval_next_reading(1,(float *)0x0);
-      cVar3 = oven_warmed_up();
-      if (cVar3 != 0) {
+      cVar4 = oven_warmed_up();
+      if (cVar4 != 0) {
         pll.powerup_state = 2;
-        uVar6 = gpt.portgp;
-        gpt.portgp = uVar6 | 0x20;
+        uVar3 = gpt.portgp;
+        gpt.portgp = uVar3 | 0x20;
         outer_oven_enabled = 1;
       }
       break;
@@ -61031,26 +61006,26 @@ undefined1 powerup(char param_1)
       }
       break;
     case 0xb8:
-      cVar3 = coarse();
-      if (cVar3 == 1) {
+      uVar3 = coarse();
+      if (uVar3 == 1) {
         pll.tfom = 0.001;
         pll.powerup_state = 5;
         pll.fine_state = 0;
       }
-      else if (cVar3 == 2) {
-        uVar4 = 2;
+      else if (uVar3 == 2) {
+        uVar5 = 2;
       }
       break;
     case 0xea:
-      cVar3 = fine();
-      if (cVar3 == 1) {
+      cVar4 = fine();
+      if (cVar4 == 1) {
         pll.tfom = 2e-06;
         if ((gps_reference_good != 0) && (internal_pps_dead == 0)) {
           uVar2 = oncore_date_pack(gps.status.date);
           clock_set(gps.status.time,uVar2);
           status_happening('&');
-          cVar3 = leap_second_near();
-          if (cVar3 == 0) {
+          cVar4 = leap_second_near();
+          if (cVar4 == 0) {
             pll.powerup_state = 7;
             pll.leap_ack_requested = 1;
           }
@@ -61060,18 +61035,18 @@ undefined1 powerup(char param_1)
           }
         }
       }
-      else if (cVar3 == 2) {
-        uVar4 = 2;
+      else if (cVar4 == 2) {
+        uVar5 = 2;
       }
       break;
     case 0x166:
       interval_next_reading(1,(float *)0x0);
       pll.powerup_countdown = pll.powerup_countdown - 1;
       if (pll.powerup_countdown == 0) {
-        cVar3 = leap_ack_pending();
-        if (cVar3 == 0) {
-          cVar3 = clock_check_against_gps();
-          if ((cVar3 == 0) && (clock_gps_mismatch != 0)) {
+        cVar4 = leap_ack_pending();
+        if (cVar4 == 0) {
+          cVar4 = clock_check_against_gps();
+          if ((cVar4 == 0) && (clock_gps_mismatch != 0)) {
             pll.powerup_countdown = 2;
           }
           else {
@@ -61084,7 +61059,7 @@ undefined1 powerup(char param_1)
     case 0x1a6:
       interval_next_reading(1,(float *)0x0);
       if ((pll.leap_ack_requested == 0) && (pll.leap_ack_done != 0)) {
-        uVar4 = 1;
+        uVar5 = 1;
       }
     }
   }
@@ -61103,11 +61078,11 @@ override_jmp_00045f06_case_0:
     if (local_6 != 0) {
       status_happening('\"');
       first_satellite_logged = 1;
-      uVar5 = __ghidra_piece(unsigned short, gps.status.time, 0);
-      uVar6 = gps.status.time.minute;
+      uVar6 = __ghidra_piece(unsigned short, gps.status.time, 0);
+      uVar3 = gps.status.time.minute;
       uVar7 = gps.status.time.second;
       uVar2 = oncore_date_pack(gps.status.date);
-      log_first_satellite(uVar2,CONCAT31(CONCAT21(uVar5,uVar6),uVar7));
+      log_first_satellite(uVar2,CONCAT31(CONCAT21(uVar6,uVar3),uVar7));
     }
   }
   if ((3 < (char)pll.powerup_state) &&
@@ -61117,9 +61092,9 @@ override_jmp_00045f06_case_0:
   }
   if ((pll.powerup_reference_lost != 0) && ((pll.powerup_state != 7 || (pll.leap_ack_done != 0)))) {
     pll.powerup_state = 3;
-    uVar4 = 0;
+    uVar5 = 0;
   }
-  return uVar4;
+  return uVar5;
 }
 
 
@@ -64725,7 +64700,7 @@ void status_screen_position(uint8_t row,status_snapshot_record *snapshot,char *l
   float a;
   int iVar4;
   byte bVar5;
-  char *unaff_D4;
+  char *unaff_D4 = ({ register long __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (char *)__entry; });
   char *pcVar6;
   double dVar7;
   char cVar8;
@@ -69222,7 +69197,7 @@ undefined4 setjmp(undefined4 *param_1)
   undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A6;
+  undefined4 unaff_A6 = (undefined4)*(void **)__builtin_frame_address(0);
   undefined4 in_stack_00000000 = *(undefined4 *)((char *)__builtin_frame_address(0) + 4);
   
   param_1[0xc] = in_A0;
@@ -80419,7 +80394,7 @@ double modf(double value,double *iptr)
     extraout_A0[1] = 0;
   }
   else {
-    dVar4 = __ghidra_as(double, float_raise(0xde4000,__ghidra_piece(unsigned int, value, 0),__ghidra_piece(unsigned int, value, 4)));
+    dVar4 = __ghidra_as(double, ({ __auto_type __c = float_raise(0xde4000,__ghidra_piece(unsigned int, value, 0),__ghidra_piece(unsigned int, value, 4)); extraout_A0_00 = (__typeof__(extraout_A0_00))iptr; __c; }));
     *extraout_A0_00 = dVar4;
   }
   return dVar4;
@@ -82040,7 +82015,7 @@ __exception void installer_kernel_dispatch_service(undefined2 param_1)
   undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A6;
+  undefined4 unaff_A6 = (undefined4)*(void **)__builtin_frame_address(0);
   undefined2 *puVar13;
   undefined2 *puVar14;
   undefined2 *in_USP;
@@ -82373,7 +82348,7 @@ __naked void installer_kernel_switch_task(void)
   undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   undefined2 *puVar10;
   undefined2 *puVar11;
   undefined2 *in_USP;
@@ -82527,8 +82502,8 @@ __naked void installer_kernel_process_ticks(void)
   uint uVar3;
   int *piVar4;
   short sVar5;
-  int *unaff_A5;
-  int unaff_A6;
+  int *unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int *)__entry; });
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   installer_kernel_advance_date();
   if (*(int *)(unaff_A6 + 0x30) != 0) {
@@ -82724,7 +82699,7 @@ __regcall void installer_kernel_create(void)
   undefined2 *puVar5;
   undefined4 *puVar6;
   undefined2 *puVar7;
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   if ((unaff_D2b != 0) && (iVar2 = unaff_A6[4], iVar2 != 0)) {
     *(undefined4 *)(iVar2 + 0x20) = 0;
@@ -82900,7 +82875,7 @@ __regcall void installer_kernel_start(void)
   int in_A0;
   void *pvVar1;
   undefined4 extraout_A1;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   undefined1 in_ZF;
   
   pvVar1 = installer_kernel_check_task(in_A0,(void *)*unaff_A6);
@@ -82962,7 +82937,7 @@ __regcall void installer_kernel_ident(void)
 {
   int in_D0;
   int iVar1;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   if (in_D0 != 0) {
     iVar1 = *(int *)(unaff_A6 + 0xc);
@@ -83029,7 +83004,7 @@ __regcall undefined8 installer_kernel_delete(void)
   int extraout_A0_00;
   int *extraout_A1;
   int *piVar5;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   undefined8 *puVar6;
   undefined1 in_ZF;
   bool bVar7;
@@ -83219,7 +83194,7 @@ __regcall void installer_kernel_suspend(void)
   int in_A0;
   void *pvVar1;
   void *extraout_A0;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   undefined1 in_ZF;
   
   pvVar1 = installer_kernel_check_task(in_A0,(void *)*unaff_A6);
@@ -83284,7 +83259,7 @@ __regcall void installer_kernel_resume(void)
   byte bVar1;
   int in_A0;
   void *pvVar2;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   bVar3 = true;
@@ -83356,7 +83331,7 @@ __regcall void installer_kernel_priority(void)
   short in_D1w;
   int in_A0;
   void *pvVar2;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   bVar3 = in_D1w == 0;
@@ -83453,7 +83428,7 @@ __regcall void installer_kernel_allocate_segment(void)
   int *piVar2;
   int iVar3;
   char unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (char)__entry; });
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   undefined1 in_ZF;
   
   puVar1 = (undefined4 *)*unaff_A6;
@@ -83499,8 +83474,8 @@ __naked void installer_kernel_allocate_for_task(void)
   undefined4 *puVar1;
   int iVar2;
   char unaff_D3b = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (char)__entry; });
-  int *unaff_A5;
-  int unaff_A6;
+  int *unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int *)__entry; });
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   undefined1 in_ZF;
   
   installer_kernel_allocate();
@@ -83583,7 +83558,7 @@ __regcall void installer_kernel_free_segment(void)
   undefined4 extraout_A0_00;
   int *piVar7;
   int *piVar8;
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   undefined1 in_ZF;
   bool bVar9;
   
@@ -83717,7 +83692,7 @@ __naked void installer_kernel_free_for_task(void)
   int *piVar8;
   int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
   undefined4 *puVar9;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   undefined1 in_ZF;
   bool bVar10;
   
@@ -84047,7 +84022,7 @@ __naked void installer_kernel_region_allocate(void)
   short unaff_D6w = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (short)__entry; });
   int *piVar5;
   int *piVar6;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   if (in_D1 < *(uint *)(unaff_A6 + 0x34 + (int)unaff_D6w)) {
     in_D1 = *(uint *)(unaff_A6 + 0x34 + (int)unaff_D6w);
@@ -84185,7 +84160,7 @@ __regcall void installer_kernel_assign_segment(void)
   void *segment;
   int extraout_A1;
   int *piVar2;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   bVar3 = in_A1 == 0;
@@ -84247,7 +84222,7 @@ __regcall void installer_kernel_reclaim_segment(void)
   void *segment;
   int extraout_A1;
   int *piVar3;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar4;
   
   bVar4 = in_A1 == 0;
@@ -84383,7 +84358,7 @@ __regcall void installer_kernel_create_x(void)
   undefined4 in_D0;
   byte in_D1b;
   undefined1 unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined1)__entry; });
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   iVar1 = unaff_A6[6];
   if (iVar1 != 0) {
@@ -84472,7 +84447,7 @@ __regcall void installer_kernel_service_21(void)
   int in_D0;
   undefined4 *extraout_A0;
   undefined4 *puVar2;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar3;
   
   exchange = unaff_A6[5];
@@ -84573,7 +84548,7 @@ __regcall void installer_kernel_delete_x(void)
   int unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   undefined4 *puVar3;
   undefined4 *puVar4;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar5;
   
   bVar5 = unaff_A2 == 0;
@@ -84697,8 +84672,8 @@ __regcall void installer_kernel_broadcast_x(void)
   int extraout_A1;
   int extraout_A1_00;
   int *piVar10;
-  int *unaff_A3;
-  undefined4 *unaff_A6;
+  int *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (int *)__entry; });
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar11;
   
   bVar11 = true;
@@ -84908,7 +84883,7 @@ __regcall void installer_kernel_jam_x(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar11;
   
   running = (void *)*unaff_A6;
@@ -85053,7 +85028,7 @@ __regcall void installer_kernel_send_x(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar11;
   
   running = (void *)*unaff_A6;
@@ -85179,7 +85154,7 @@ __naked void installer_kernel_send_for_task(void)
   int extraout_A1_00;
   int *piVar9;
   int *piVar10;
-  void *unaff_A5;
+  void *unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (void *)__entry; });
   bool bVar11;
   
   bVar11 = true;
@@ -85407,7 +85382,7 @@ __naked void installer_kernel_copy_message(void)
   undefined4 uVar4;
   undefined4 uVar5;
   int in_A1;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   puVar1 = *(undefined4 **)(unaff_A6 + 0x1c);
   if (puVar1 != (undefined4 *)0x0) {
@@ -85484,7 +85459,7 @@ __regcall void installer_kernel_request_x(void)
   int iVar9;
   int extraout_A1_00;
   int *piVar10;
-  undefined4 *unaff_A6;
+  undefined4 *unaff_A6 = (undefined4 *)*(void **)__builtin_frame_address(0);
   bool bVar11;
   undefined8 uVar12;
   
@@ -85701,7 +85676,7 @@ __regcall void installer_kernel_signal_v(void)
   ushort uVar2;
   int in_A0;
   void *pvVar3;
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   bool bVar4;
   
   bVar4 = in_D1w == 0;
@@ -85773,8 +85748,8 @@ __naked void installer_kernel_signal_task(void)
   ushort uVar2;
   int in_A0;
   void *pvVar3;
-  void *unaff_A5;
-  int *unaff_A6;
+  void *unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (void *)__entry; });
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   bool bVar4;
   
   bVar4 = in_D1w == 0;
@@ -85887,7 +85862,7 @@ __regcall void installer_kernel_get_v(void)
   ushort in_D1w;
   ushort uVar2;
   char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   uVar2 = in_D1w & 0x7fff;
   if (uVar2 != 0) {
@@ -85934,7 +85909,7 @@ __regcall void installer_kernel_wait_v(void)
   ushort uVar5;
   char unaff_D2b = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
   char unaff_D7b = ({ register long __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (char)__entry; });
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   piVar1 = (int *)*unaff_A6;
   uVar5 = in_D1w & 0x7fff;
@@ -86044,7 +86019,7 @@ __regcall byte installer_kernel_mode(void)
   byte bVar1;
   byte in_D0b;
   byte in_D1b;
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   bVar1 = *(byte *)(*unaff_A6 + 0x11);
   *(byte *)(*unaff_A6 + 0x11) = in_D1b & in_D0b | ~in_D1b & bVar1;
@@ -86120,7 +86095,7 @@ __regcall void installer_kernel_pause(void)
 {
   int iVar1;
   int iVar2;
-  int *unaff_A6;
+  int *unaff_A6 = (int *)*(void **)__builtin_frame_address(0);
   
   iVar1 = *unaff_A6;
   iVar2 = installer_kernel_queue_remove();
@@ -86178,7 +86153,7 @@ __regcall void installer_kernel_announce_tick(void)
   char cVar2;
   short sVar3;
   int iVar4;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   *(int *)(unaff_A6 + 0x6c) = *(int *)(unaff_A6 + 0x6c) + 1;
   *(short *)(unaff_A6 + 0x70) = *(short *)(unaff_A6 + 0x70) + 1;
@@ -86249,7 +86224,7 @@ __regcall undefined8 installer_kernel_get_time(void)
 
 {
   uint extraout_D1;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   do {
     installer_kernel_advance_date();
@@ -86302,7 +86277,7 @@ __regcall void installer_kernel_set_time(void)
   ushort in_D0w;
   undefined4 in_D1;
   ushort unaff_D2w = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (ushort)__entry; });
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   undefined8 uVar1;
   
   if (((((byte)in_D1 < 0x3c) && ((byte)((uint)in_D1 >> 8) < 0x3c)) &&
@@ -86616,7 +86591,7 @@ __naked void installer_kernel_advance_date(void)
   short sVar3;
   undefined2 uVar4;
   undefined3 uVar5;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   int iVar6;
   
   if (0x17 < *(ushort *)(unaff_A6 + 0x72)) {
@@ -86691,7 +86666,7 @@ __naked void installer_kernel_set_leap_year(void)
 {
   uint uVar1;
   uint unaff_D6 = ({ register long __entry __asm__("d6"); __asm__("" : "=r"(__entry)); (uint)__entry; });
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   *(undefined1 *)(unaff_A6 + 0x7b) = 0x1c;
   if (((short)((unaff_D6 >> 0x10) << 0xe) == 0) &&
@@ -87021,7 +86996,7 @@ __naked void installer_kernel_timer_insert(void)
   uint uVar4;
   int iVar5;
   int unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int)__entry; });
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   uVar4 = in_D0 - 1U;
   iVar5 = unaff_A6;
@@ -87117,9 +87092,9 @@ __naked void installer_kernel_make_ready(void)
 {
   undefined4 *puVar1;
   ushort uVar2;
-  int *unaff_A2;
+  int *unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int *)__entry; });
   int *piVar3;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   uVar2 = *(ushort *)((int)unaff_A2 + 0x12) & 4;
   *(ushort *)((int)unaff_A2 + 0x12) = uVar2;
@@ -87164,9 +87139,9 @@ __naked void installer_kernel_ready_insert(void)
 
 {
   undefined4 *puVar1;
-  int *unaff_A2;
+  int *unaff_A2 = ({ register long __entry __asm__("a2"); __asm__("" : "=r"(__entry)); (int *)__entry; });
   int *piVar2;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   piVar2 = (int *)(unaff_A6 + 4);
   do {
@@ -87228,7 +87203,7 @@ __naked void installer_kernel_queue_remove(void)
 {
   int iVar1;
   int *piVar2;
-  int *unaff_A5;
+  int *unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (int *)__entry; });
   
   iVar1 = *unaff_A5;
   piVar2 = (int *)unaff_A5[1];
@@ -87659,8 +87634,8 @@ __naked void installer_kernel_region_init(void)
   int iVar2;
   uint uVar3;
   int in_A0;
-  undefined4 *unaff_A3;
-  int unaff_A6;
+  undefined4 *unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4 *)__entry; });
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   uVar3 = (*(int *)(in_A0 + 4) - (int)unaff_A3) + 1U & 0xfffffffe;
   unaff_A3[3] = uVar3;
@@ -87814,7 +87789,7 @@ __exception void installer_kernel_return_from_interrupt(ushort param_1)
   undefined4 unaff_A3 = ({ register long __entry __asm__("a3"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A4 = ({ register long __entry __asm__("a4"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
   undefined4 unaff_A5 = ({ register long __entry __asm__("a5"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  undefined4 unaff_A6;
+  undefined4 unaff_A6 = (undefined4)*(void **)__builtin_frame_address(0);
   undefined2 *puVar9;
   undefined2 *puVar10;
   undefined2 *in_USP;
@@ -88117,7 +88092,7 @@ __naked int installer_psos_pack_name(void)
 
 {
   int iVar1;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   
   iVar1 = 0;
   if (*(int **)(unaff_A6 + 8) != (int *)0x0) {
@@ -88613,33 +88588,28 @@ byte installer_duartb_putc_polled(byte param_1)
 
 /* the installer's drtb_getc */
 
-undefined4 installer_drtb_getc(void)
+uint8_t installer_drtb_getc(void)
 
 {
   uint8_t uVar1;
   uint8_t uVar2;
-  undefined3 uVar3;
-  undefined3 extraout_var;
-  ulong uVar4;
+  ulong uVar3;
   
   installer_psos_get_v(SIG_SIQ,0,(ulong *)0x0);
   if (installer_duartb_ring.write == installer_duartb_ring.read) {
-    uVar4 = installer_psos_wait_v(SIG_SIQ,0,0,(ulong *)0x0);
-    if ((char)uVar4 != 0) {
+    uVar3 = installer_psos_wait_v(SIG_SIQ,0,0,(ulong *)0x0);
+    if ((char)uVar3 != 0) {
       installer_fatal_error(s_wait_v_SIG_SIQ_error_in_getc_installer__00103dfc);
     }
   }
   uVar2 = installer_duartb_ring.read + 1;
-  uVar3 = 0;
   uVar1 = installer_duartb_ring.data[installer_duartb_ring.read];
   installer_duartb_ring.read = uVar2;
-  if ((((installer_duartb.flow & 0x20) != 0) &&
-      (uVar3 = 0, 0x10 < (byte)(uVar2 - installer_duartb_ring.write))) &&
-     (installer_duartb.flow = installer_duartb.flow & 0xdf, installer_duartb.xon_xoff != 0)) {
+  if ((((installer_duartb.flow & 0x20) != 0) && (0x10 < (byte)(uVar2 - installer_duartb_ring.write))
+      ) && (installer_duartb.flow = installer_duartb.flow & 0xdf, installer_duartb.xon_xoff != 0)) {
     installer_drtb_putc(0x11);
-    uVar3 = extraout_var;
   }
-  return CONCAT31(uVar3,uVar1);
+  return uVar1;
 }
 
 
@@ -88647,22 +88617,22 @@ undefined4 installer_drtb_getc(void)
 
 /* the installer's drtb_gets */
 
-int installer_drtb_gets(byte *param_1,int param_2)
+int installer_drtb_gets(uint8_t *param_1,int param_2)
 
 {
-  byte bVar1;
+  uint8_t uVar1;
   int iVar2;
-  byte *pbVar3;
-  byte *pbVar4;
+  uint8_t *puVar3;
+  uint8_t *puVar4;
   undefined1 uVar5;
   
   param_2 = param_2 + -1;
   iVar2 = param_2;
-  pbVar4 = param_1;
+  puVar4 = param_1;
 LAB_installer__00103352:
   while( true ) {
     if (param_2 == 0) {
-      *pbVar4 = 0;
+      *puVar4 = 0;
       if (installer_duartb.receive_errors == 0) {
         installer_duartb.read_errors = 0;
       }
@@ -88673,19 +88643,19 @@ LAB_installer__00103352:
       return iVar2;
     }
     uVar5 = 0x92;
-    bVar1 = installer_drtb_getc();
-    if (0x1f < bVar1) break;
-    if (0x10U < bVar1 - 8) {
+    uVar1 = installer_drtb_getc();
+    if (0x1f < uVar1) break;
+    if (0x10U < uVar1 - 8) {
 switchD_installer__001032b2_caseD_b:
       (*(code *)installer_duartb.echo)();
-      pbVar3 = pbVar4;
+      puVar3 = puVar4;
       goto LAB_installer__0010334c;
     }
                     /* WARNING: Switch is manually overridden */
-    switch((short)(bVar1 - 8)) {
+    switch((short)(uVar1 - 8)) {
     case 0:
       if (iVar2 != param_2) {
-        pbVar3 = pbVar4 + -1;
+        puVar3 = puVar4 + -1;
         param_2 = param_2 + 1;
         goto LAB_installer__0010334c;
       }
@@ -88694,8 +88664,8 @@ switchD_installer__001032b2_caseD_b:
       goto LAB_installer__00103344;
     case 2:
     case 5:
-      if (((installer_duartb.last_terminator == 0xd) && (bVar1 == 10)) ||
-         ((installer_duartb.last_terminator == 10 && (bVar1 == 0xd)))) {
+      if (((installer_duartb.last_terminator == 0xd) && (uVar1 == 10)) ||
+         ((installer_duartb.last_terminator == 10 && (uVar1 == 0xd)))) {
         installer_duartb.last_terminator = 0;
       }
       else {
@@ -88703,7 +88673,7 @@ switchD_installer__001032b2_caseD_b:
         (*(code *)installer_duartb.echo)(uVar5);
         iVar2 = iVar2 - param_2;
         param_2 = 0;
-        installer_duartb.last_terminator = bVar1;
+        installer_duartb.last_terminator = uVar1;
       }
       break;
     default:
@@ -88713,19 +88683,19 @@ switchD_installer__001032b2_caseD_b:
     }
   }
 LAB_installer__00103344:
-  pbVar3 = pbVar4 + 1;
-  installer_duartb.last_terminator = bVar1;
-  *pbVar4 = bVar1;
+  puVar3 = puVar4 + 1;
+  installer_duartb.last_terminator = uVar1;
+  *puVar4 = uVar1;
   param_2 = param_2 + -1;
   goto LAB_installer__0010334c;
 switchD_installer__001032b2_caseD_18:
   if (iVar2 != param_2) {
     (*(code *)installer_duartb.echo)();
     param_2 = iVar2;
-    pbVar3 = param_1;
+    puVar3 = param_1;
 LAB_installer__0010334c:
     (*(code *)installer_duartb.echo)();
-    pbVar4 = pbVar3;
+    puVar4 = puVar3;
   }
   goto LAB_installer__00103352;
 }
@@ -89291,12 +89261,10 @@ int16_t installer_status_set_bit(status_model *status,int condition,int value)
   short sVar1;
   short sVar2;
   int iVar3;
-  undefined3 extraout_var;
   status_condition *psVar4;
-  bool bVar5;
-  int16_t iVar6;
+  int16_t iVar5;
   
-  iVar6 = 1;
+  iVar5 = 1;
   if (condition < 0) {
     psVar4 = (status_condition *)(condition * -6 + 0x1063ce);
   }
@@ -89321,11 +89289,10 @@ int16_t installer_status_set_bit(status_model *status,int condition,int value)
                 ((int)status,&status->registers[sVar1]->condition,__ghidra_shl(1, ((int)sVar2 & 0x3fU)));
       break;
     case 0x50:
-      bVar5 = installer_error_queue_push(status->queue,(int)sVar1,value);
-      iVar6 = (int16_t)CONCAT31(extraout_var,bVar5);
+      iVar5 = installer_error_queue_push(status->queue,(int)sVar1,value);
     }
   }
-  return iVar6;
+  return iVar5;
 }
 
 
@@ -89400,13 +89367,13 @@ void installer_status_read_event(status_model *status,int index,uint16_t *event)
 
 /* the installer's error_queue_push */
 
-bool installer_error_queue_push(short *error_queue,int code,uint32_t value)
+int16_t installer_error_queue_push(short *error_queue,int code,uint32_t value)
 
 {
   status_model *status;
   short sVar1;
   short sVar2;
-  bool bVar3;
+  ushort uVar3;
   int condition;
   
   sVar2 = (short)code;
@@ -89416,14 +89383,14 @@ bool installer_error_queue_push(short *error_queue,int code,uint32_t value)
     sVar1 = error_queue[4] + sVar1;
   }
   if (sVar1 == 1) {
-    bVar3 = true;
+    uVar3 = 1;
   }
   else {
-    bVar3 = sVar1 == 2;
-    if (bVar3) {
+    if (sVar1 == 2) {
       sVar2 = -0x15e;
       value = 0;
     }
+    uVar3 = (ushort)(sVar1 == 2);
     *error_queue = *error_queue + 1;
     if (*error_queue == error_queue[4]) {
       *error_queue = 0;
@@ -89447,7 +89414,7 @@ bool installer_error_queue_push(short *error_queue,int code,uint32_t value)
   installer_status_apply_condition(status,condition,0);
 LAB_installer__0010632e:
   installer_status_prompt_refresh((int)status,(int)sVar2);
-  return bVar3;
+  return uVar3;
 }
 
 
@@ -89684,7 +89651,7 @@ void installer_float_raise(uint param_1)
   uint uVar9;
   uint uVar10;
   uint uVar11;
-  int unaff_A6;
+  int unaff_A6 = (int)*(void **)__builtin_frame_address(0);
   uint in_stack_00000008 = *(uint *)((char *)__builtin_frame_address(0) + 12);
   uint in_stack_0000000c = *(uint *)((char *)__builtin_frame_address(0) + 16);
   undefined2 in_stack_00000010 = *(undefined2 *)((char *)__builtin_frame_address(0) + 20);

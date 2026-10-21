@@ -687,9 +687,9 @@ view cannot drift apart.  The library, bottom up:
      `tools/firmware/function_check.py` (`make report-decompiled`) does
      the same for each C function, the image's copy against gcc's, the
      image's arguments where the sidecar's `stack` layout says the
-     original reads them: of 1252 run, 1241 agree, 1 reaches what the
-     harness does not model and is skipped, 10 differ as known, and
-     none differs otherwise.  A known difference is one whose cause is
+     original reads them: of 1252 run, 1240 agree, 1 reaches what the
+     harness does not model and is skipped, 10 differ as known, and 1
+     differs otherwise (`frexp` on a subnormal, below).  A known difference is one whose cause is
      found and is not the C's, `function_check.py`'s `KNOWN`: the
      firmware's own reads of what nothing set (`task_stack_info`'s
      locals, `os_report_processes`' D5) and what C cannot say
@@ -1184,6 +1184,23 @@ view cannot drift apart.  The library, bottom up:
      `#if 0` and includes the file, and the harness checks the hand's
      version as it did the decompiler's (`clock.c`'s time conversions
      first).
+     Then the harness's own blind spots, found by an agent: cases a
+     function's callers make that the generated ones never did
+     (`function_check.py`'s `CALLED_FIRST`, `GIVEN_CASES`, several
+     `SET_UP_REQUESTS`, and the stack around the declared arguments
+     filled so that one the prototype leaves out shows).  They found
+     `pforth_define_word`'s bug again on the C before its fix, and six
+     more: `robin_store`, `validate_or_doaction` and
+     `scpi_long_resolve_bound` read arguments their prototypes left out
+     (now in them); `sqrt` and `log` on a subnormal loop forever under
+     gcc, the decompiler's doubling loop overflowing a signed int
+     (`-fwrapv`); `modf` on a NaN stores through an A0 two branches
+     reach (the walk back now takes every path); and `frexp` on a
+     subnormal calls `double_normalize`, which takes and returns its
+     double in its own stack slots, as plain C, to be written by hand.
+     The scan also found the exporter missing a pointer-typed `unaff_`
+     register and A6, now read, and byte results with garbage above
+     (`drtb_getc`, `sci_getc`, `coarse`, now `uint8_t`).
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

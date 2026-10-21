@@ -1170,7 +1170,9 @@ public class SmartClockExportC extends GhidraScript {
 
 	/** A local the decompiler reads a register's value at entry from: its type, register and width. */
 	private static final Pattern UNAFFECTED = Pattern.compile(
-		"^(  (?!return\\b)[A-Za-z_][\\w ]*?\\**) (unaff_([DA][0-5]|D[67])[bw]?);$", Pattern.MULTILINE);
+		"^(  (?!return\\b)[A-Za-z_][\\w ]*?\\**) (\\**)(unaff_([DA][0-6]|D[67])[bw]?);$", Pattern.MULTILINE);
+	/** The register an unaff_ local is read from that holds the caller's frame pointer. */
+	private static final String FRAME_POINTER = "a6";
 
 	/**
 	 * c with each unaff_ local, the value a register held at entry, given
@@ -1178,16 +1180,23 @@ public class SmartClockExportC extends GhidraScript {
 	 * register its caller left, as a switch with no case for a value
 	 * passes the caller's D2 on, and C left it unset.  A register
 	 * variable reads it at the declaration, before the function's own
-	 * code sets it.  A6, the frame pointer, and A7 are left unset.
+	 * code sets it.  A6, the caller's frame pointer at entry, is the one
+	 * gcc's link saved where its own frame pointer points
+	 * (installer_float_raise reads its caller's return address through
+	 * it).  A7 is left unset.
 	 */
 	private static String entryRegisters(String c) {
 		Matcher local = UNAFFECTED.matcher(c);
 		StringBuilder out = new StringBuilder();
 		while (local.find()) {
-			String register = local.group(3).toLowerCase();
+			String register = local.group(4).toLowerCase();
+			String type = local.group(1).strip() + (local.group(2).isEmpty() ? "" : " " + local.group(2));
+			String value = register.equals(FRAME_POINTER)
+				? "(" + type + ")*(void **)__builtin_frame_address(0)"
+				: "({ register long __entry __asm__(\"" + register + "\"); __asm__(\"\" : \"=r\"(__entry)); ("
+					+ type + ")__entry; })";
 			local.appendReplacement(out, Matcher.quoteReplacement(local.group(1) + " " + local.group(2)
-				+ " = ({ register long __entry __asm__(\"" + register + "\"); __asm__(\"\" : \"=r\"(__entry)); ("
-				+ local.group(1).strip() + ")__entry; });"));
+				+ local.group(3) + " = " + value + ";"));
 		}
 		local.appendTail(out);
 		return out.toString();
@@ -2498,41 +2507,88 @@ public class SmartClockExportC extends GhidraScript {
 
 	/**
 	 * What the last instruction before call to write register wrote: the
-	 * stack variable it read, as the C names it, or the immediate it
-	 * moved; null for anything else, or none.  The way back runs through
-	 * fall-throughs and, into an instruction nothing falls through to,
-	 * the one branch to it, and stops where several paths meet.
+	 * stack variable it read, as the C names it, the immediate it moved,
+	 * or a dbf's count; null for anything else, or none.  The way back
+	 * runs through fall-throughs and branches, every path back, and gives
+	 * a value only if all of them reach the same one (modf's A0 at
+	 * 0x60e58, which two branches reach).
 	 */
 	private String valueWritten(PcodeOp call, Register register, HighFunction high) {
-		Function function = high.getFunction();
 		Instruction at = getInstructionAt(call.getSeqnum().getTarget());
-		for (int step = 0; at != null && step < WALK_LIMIT; step++) {
-			at = predecessor(at);
-			if (at == null || !function.getBody().contains(at.getAddress())) {
-				return null;
+		String value = at == null ? null
+			: writtenBefore(at, register, high, new HashMap<>(), new int[] { WALK_LIMIT });
+		return NO_PATH.equals(value) || NOT_KNOWN.equals(value) ? null : value;
+	}
+
+	/** What writtenBefore gives where no path back constrains the value. */
+	private static final String NO_PATH = "";
+	/** What writtenBefore keeps for an instruction whose value is not known, or is being found. */
+	private static final String NOT_KNOWN = "?";
+	private static final String WALKING = "...";
+
+	/**
+	 * The value every path back from at gives register, as valueWritten
+	 * reads it: NO_PATH if none constrains it, NOT_KNOWN where they differ,
+	 * one reads none it knows, or one reaches the function's entry or
+	 * leaves it.  Each instruction's value is kept in walked, so that a
+	 * path back into one already walked takes its value, and one back
+	 * into the walk in progress, a loop, adds nothing.
+	 */
+	private String writtenBefore(Instruction at, Register register, HighFunction high, Map<Address, String> walked,
+			int[] steps) {
+		Function function = high.getFunction();
+		if (at.getAddress().equals(function.getEntryPoint())) {
+			return NOT_KNOWN;
+		}
+		String value = NO_PATH;
+		for (Instruction before : predecessors(at)) {
+			if (--steps[0] < 0 || !function.getBody().contains(before.getAddress())) {
+				return NOT_KNOWN;
 			}
-			for (Object result : at.getResultObjects()) {
-				if (!(result instanceof Register written)
-					|| !written.getBaseRegister().equals(register.getBaseRegister())) {
-					continue;
-				}
-				if (at.getMnemonicString().startsWith(DECREMENT_AND_BRANCH)) {
-					return decremented(at, register, high);
-				}
-				for (Reference reference : at.getReferencesFrom()) {
-					if (reference instanceof StackReference stack && reference.getReferenceType().isRead()) {
-						Variable variable = function.getStackFrame()
-								.getVariableContaining(stack.getStackOffset());
-						return variable == null ? null : variable.getName();
-					}
-				}
-				Scalar immediate = at.getScalar(0);
-				return at.getNumOperands() == 2 && immediate != null
-						? "0x" + Long.toHexString(immediate.getUnsignedValue())
-						: null;
+			String path = walked.get(before.getAddress());
+			if (path == null) {
+				walked.put(before.getAddress(), WALKING);
+				path = writes(before, register) ? written(before, register, high)
+					: writtenBefore(before, register, high, walked, steps);
+				path = path == null ? NOT_KNOWN : path;
+				walked.put(before.getAddress(), path);
+			}
+			if (path.equals(WALKING) || path.equals(NO_PATH)) {
+				continue;
+			}
+			if (path.equals(NOT_KNOWN) || !value.equals(NO_PATH) && !value.equals(path)) {
+				return NOT_KNOWN;
+			}
+			value = path;
+		}
+		return value;
+	}
+
+	/** Whether an instruction writes a register. */
+	private static boolean writes(Instruction at, Register register) {
+		for (Object result : at.getResultObjects()) {
+			if (result instanceof Register written && written.getBaseRegister().equals(register.getBaseRegister())) {
+				return true;
 			}
 		}
-		return null;
+		return false;
+	}
+
+	/** What an instruction that writes register writes it: as valueWritten reads it, or null. */
+	private String written(Instruction at, Register register, HighFunction high) {
+		if (at.getMnemonicString().startsWith(DECREMENT_AND_BRANCH)) {
+			return decremented(at, register, high);
+		}
+		for (Reference reference : at.getReferencesFrom()) {
+			if (reference instanceof StackReference stack && reference.getReferenceType().isRead()) {
+				Variable variable = high.getFunction().getStackFrame().getVariableContaining(stack.getStackOffset());
+				return variable == null ? null : variable.getName();
+			}
+		}
+		Scalar immediate = at.getScalar(0);
+		return at.getNumOperands() == 2 && immediate != null
+				? "0x" + Long.toHexString(immediate.getUnsignedValue())
+				: null;
 	}
 
 	/** The mnemonics of the 68k's decrement-and-branch, dbf and the rest. */
@@ -2559,20 +2615,21 @@ public class SmartClockExportC extends GhidraScript {
 		return null;
 	}
 
-	/** The one instruction control reaches at from; null if there are several, or none. */
-	private Instruction predecessor(Instruction at) {
+	/** The instructions control reaches at from: the one falling into it, and every branch to it. */
+	private List<Instruction> predecessors(Instruction at) {
+		List<Instruction> found = new ArrayList<>();
 		Instruction before = getInstructionBefore(at.getAddress());
-		boolean fallsInto = before != null && at.getAddress().equals(before.getFallThrough());
-		List<Address> branches = new ArrayList<>();
+		if (before != null && at.getAddress().equals(before.getFallThrough())) {
+			found.add(before);
+		}
 		for (Reference reference : currentProgram.getReferenceManager().getReferencesTo(at.getAddress())) {
-			if (reference.getReferenceType().isFlow()) {
-				branches.add(reference.getFromAddress());
+			Instruction from = reference.getReferenceType().isFlow() && !reference.getReferenceType().isCall()
+				? getInstructionAt(reference.getFromAddress()) : null;
+			if (from != null) {
+				found.add(from);
 			}
 		}
-		if (fallsInto && branches.isEmpty()) {
-			return before;
-		}
-		return !fallsInto && branches.size() == 1 ? getInstructionAt(branches.get(0)) : null;
+		return found;
 	}
 
 	/** A value as the C names it, followed back through copies and casts; null if it has no name. */

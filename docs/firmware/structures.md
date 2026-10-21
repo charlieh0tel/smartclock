@@ -1024,3 +1024,89 @@ another with `clk_do`, keeping its return in `lifetime_event`
 `klok_task_create` (`0x109ae`) passes it to pSOS service 31; `pll_init`
 (`0x473d2`) starts the EFC from `efc` through `efc_clamp`, and
 `:DIAGnostic:LIFetime:COUNt?` (`0x2b3b6`) returns `count`.
+## The health monitor's ADC monitors
+
+`adc_monitors` (`0x101b72`, `adc_monitor[8]`, 48 bytes each, to
+`0x101cf1`) are the health monitor's: `hmon_check_supplies`
+(`0x23d80`) takes one ADC reading a call, stepping `hmon_supply_step`
+(`0x101cf2`) through 0 to 7 by its jump table at `0x23dca`: temperature,
+double oven, +15V, oscillator current, 5V, oven, -15V and antenna
+current, that order in the array.  `monitor_average_add` (`0x23c5a`)
+puts a reading in `samples` at `sample_index` and, once ten are in,
+sets `valid` and keeps their mean in `value`; the oscillator current
+goes through `monitor_filter_add` (`0x23cc4`) instead, 0.9 of the old
+`value` and 0.1 of the new, `valid` from the first.
+`monitor_out_of_range` (`0x23d28`) counts readings outside a range in
+`out_of_range_count`, held at its limit, true once past it; for the
+double oven (above 6.8, only while `outer_oven_enabled`, `0x101b71`),
++15V (14 to 16), 5V (4.5 to 5.5) and -15V (-16 to -14), each limit 5,
+`hmon_check_supplies` keeps `out_of_tolerance` and reports "... is out
+of tolerance" and "... is now within tolerance" as it changes.
+`adc_average` (`0x2410e`) returns a channel's `value`, or a default
+while it is not `valid`.  `monitors_reset` (`0x23c2a`) clears `+0x2c`
+to `+0x2f` of all eight, its loop running 0 to 7, and the step.
+
+## The GPS task's request step
+
+`gpsm_task` runs a script as a list of step pointers; the step at
+`0x101b56`, `gps_request_step` (`gps_script_step`, 20 bytes), is in RAM,
+and the one-step script at `0x50cc2` points at it.  For a request
+`gps_request_class` (`0x4bdba`) puts in class 0, a message, `gpsm_task`
+copies the request's code and a byte into `code` and `argument_mode`
+and its four arguments into `arguments`, and runs that script; for
+class 1, a script, it copies only the arguments.  A step whose
+`argument_mode` is 2 takes its arguments from `gps_request_step`'s,
+from the index in its own first argument.  `raim_request_arguments`
+(`0x4c4e8`) sets the four.
+
+Around it: `raim_suspect_time` (`0x101b4e`) is the uptime at which
+`raim_monitor` (`0x4b01e`) sets `gps.raim_assessment` to 2, an alarm
+detected; four seconds on with the solution still not OK it makes it 3.
+`status_message_arrived` and `traim_message_arrived` (`0x101b54`,
+`0x101b55`) are set by `oncore_position_message` and
+`oncore_traim_message` (`0x4f85c`) and taken by the status monitor in
+`command_monitor` (`0x4b46e`).  The console word `abr_stat`
+(`diag_abr_stat`, `0x1b540`) leaves gps command 7, whose argument
+`gps_command_send` (`0x470aa`) stores in `gps_status_print_interval`
+(`0x101b6a`): `oncore_position_message` prints `gps_debug_status`
+every that many `@@Ba`, counting in `gps_status_print_count`.
+`fpga_programming` (`0x101b6c`) is set while `fpga_program` (`0x22da4`)
+runs, and `gps_pps_check` and `internal_pps_check` skip their checks
+while it is.
+
+## The loop task's flags
+
+`pllp_task` (`0x47528`) clears these at its start and tests them each
+pass:
+
+| Address | Name | Set by | What follows |
+| ------- | ---- | ------ | ------------ |
+| `0x102540` | `pll_restart_requested` | `diag_pll_restart` (`0x1b7c6`) | `pll_restart` |
+| `0x102541` | `pll_debug_enabled` | `diag_pll_debug` (`0x1b7d0`) | the loop routines' debug messages |
+| `0x102542` | `clock_change_applied` | `clock_record_advance` (`0x13502`), applying a pending leap second or offset change | `nv_save(4)` |
+| `0x10254e` | `pll_scpi_reply_pending` | `pll_scpi_command` (`0x432bc`) | `pll_scpi_receive` takes no new request until `pll_scpi_complete` or `gps_diag_complete` clears it |
+| `0x10254f` | `pll_scpi_signal_delay` | the actions at `0x45aaa`, `0x45af0` | `pll_scpi_receive` waits that many passes before signaling the SCPI task |
+| `0x102550` | `gps_reference_good` | `pllp_task`, while `gps.reference_qualified` and not `gps_pps_dead` | status happening `0x1e`, `0x1f` on clearing; clear, the stages add `HOLD_CAUSE_GPS` |
+| `0x102587` | `gps_ack_abandoned` | `pll_restart` and a stage change, while an acknowledgment is awaited | the next acknowledgment or its timeout only clears `gps_ack_awaited` |
+| `0x102588` | `douglas_start_requested` | `:DOUGlas:STATe`'s done routine (`0x46340`), `douglas_state` 0 | `gps_init_sequence` (`0x46838`) returns from state `0x11` to `0xe`, averaging |
+| `0x102589` | `douglas_stop_requested` | the same, `douglas_state` set | states `0xe` to `0x10` go to `0x11` |
+| `0x10258a`, `0x10258b` | `douglas_finish_requested`, `douglas_finish_nv_argument` | the action at `0x4135a`, from `:GPS:POSition` while averaging, and its argument | state `0xe` saves the averaged position, `nv_save` given the argument; 4 otherwise |
+| `0x10258d`, `0x102590` | `selftest_requested`, `selftest_number` | the self-test action at `0x46326` and its argument | `PLL_STAGE_DIAG`; `gps_diag_sequence` (`0x471fc`) runs `selftest_run` on the number |
+| `0x10258e` | `leap_recheck_requested` | `diag_leapsec`, entering powerup recovery | `gps_leap_sequence`'s wait returns to state 1 |
+
+`gps_ack_wait_count` (`0x102582`, a word) counts the passes an
+acknowledgment is awaited; past `0x4b0` it sets `gps_ack_code` 8,
+"GPS acknowledgment timed out".  `restart_reference_seconds`
+(`0x10258c`) is `pll.reference_seconds` as `pllp_task` found it,
+which `clock_set_from_reference` (`0x46290`) counts from, with the
+uptime at `0x102594`.  `clock_gps_mismatch` (`0x102552`) is
+`clock_check_against_gps`'s (`0x43f18`) first mismatch, cleared on a
+match or once it has set the clock.  Three are only written:
+`clock_change_armed` (`0x102543`), set by the clock-event stubs at
+`0x13666`, `0x1366c`, `0x136a2` and `0x136bc` that arm a leap second
+or offset change; `pll_lock` (`0x102546`, a long), 1 from `diag_lock`
+and on entering holdover recovery and PLL startup, 0 on entering
+powerup; and `time_zone_change_pending` (`0x102551`), set by
+`time_zone_changed`, cleared by `:PTIMe:TZONe`'s done routine
+(`0x45a2e`) and `pll_init`.  `0x10253e` and `0x10253f` are only
+cleared, by `pllp_task`.

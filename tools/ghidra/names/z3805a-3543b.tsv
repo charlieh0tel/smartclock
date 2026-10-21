@@ -349,6 +349,15 @@
 0x101cf9	label	gps_pps_skipped_checks	structures.md	gps_pps_check's checks skipped while gps_pps_unconfirmed, to 15	uint8_t
 0x101d1c	label	eepx_token	structures.md	the EEPROM lock's token message: eepx's id, the holder and its nested holds	eeprom_lock_token
 0x101d34	label	eeprom_writing	structures.md	set while eeprom_write_byte or eeprom_write_page writes; eeprom_lock fails at interrupt level while it is set	uint8_t
+0x101b4e	label	raim_suspect_time	structures.md	the uptime raim_monitor stamps when gps.raim_assessment becomes 2; 4 seconds on with the solution still not OK makes it 3	uint32_t
+0x101b54	label	status_message_arrived	structures.md	oncore_position_message sets it on each @@Ba; command_monitor's status monitor takes and clears it	uint8_t
+0x101b55	label	traim_message_arrived	structures.md	oncore_traim_message sets it on each @@Bn; command_monitor's status monitor takes it, setting gps.raim_received	uint8_t
+0x101b56	label	gps_request_step	structures.md	the one-step script at 0x50cc2's step, which gpsm_task fills from a class 0 request; its arguments also a script's	gps_script_step
+0x101b6a	label	gps_status_print_interval	structures.md	abr_stat's argument, through gps_command code 7: oncore_position_message prints gps_debug_status every that many @@Ba, 0 for never	uint8_t
+0x101b6b	label	gps_status_print_count	structures.md	oncore_position_message's count of @@Ba toward gps_status_print_interval	uint8_t
+0x101b6c	label	fpga_programming	structures.md	set while fpga_program runs; gps_pps_check and internal_pps_check skip their checks while it is set	uint8_t
+0x101b71	label	outer_oven_enabled	structures.md	set where powerup and pll_check_reference raise PGP5, the outer oven's enable; hmon_check_supplies checks the double oven only while set; pps_monitors_reset clears it	uint8_t
+0x101b72	label	adc_monitors	structures.md	the health monitor's eight ADC monitors, by hmon_check_supplies' step: temperature, double oven, +15V, oscillator current, 5V, oven, -15V, antenna current	adc_monitor[8]
 0x101d94	label	log_page_buffer	structures.md	log_read loads a page here and formats its entries	log_page
 0x101dd4	label	log_page_number	structures.md	the page log_page_buffer holds	int16_t
 0x102eb6	label	status_request_service	structures.md	the time code's r, the Status Byte's request-for-service summary	uint8_t
@@ -454,6 +463,26 @@
 0x46620	function	gps_ack_received	context	returns gps_ack_ready, clearing gps_ack_awaited once it is set; the ack checker 0x46838 polls it
 0x102585	label	gps_ack_ready	context	gpsx_send clears it; pllp_task sets it with gps_ack_code when the GPS task's answer comes back on plla	uint8_t
 0x102586	label	gps_ack_awaited	context	gpsx_send stores its last argument there	uint8_t
+0x102540	label	pll_restart_requested	structures.md	diag_pll_restart sets it; pllp_task calls pll_restart and clears it	uint8_t
+0x102541	label	pll_debug_enabled	structures.md	diag_pll_debug sets it; while set, efc_history_update, fine and the other loop routines that test it print their debug messages	uint8_t
+0x102542	label	clock_change_applied	structures.md	clock_record_advance sets it when it applies a pending leap second or offset change and clears the leap settings; pllp_task then calls nv_save(4)	uint8_t
+0x102543	label	clock_change_armed	structures.md	set by the clock-event stubs at 0x13666, 0x1366c, 0x136a2 and 0x136bc that arm a leap second or offset change; pllp_task clears it with clock_change_applied; nothing reads it	uint8_t
+0x102546	label	pll_lock	structures.md	only written: 1 by diag_lock and on entering holdover recovery and PLL startup, 0 on entering powerup	int32_t
+0x10254e	label	pll_scpi_reply_pending	structures.md	pll_scpi_command sets it when a request waits on a reply; pll_scpi_receive takes nothing new while it is set; pll_scpi_complete and gps_diag_complete clear it	uint8_t
+0x10254f	label	pll_scpi_signal_delay	structures.md	pll_scpi_receive's passes to wait before signaling the SCPI task; set to 1 by the actions at 0x45aaa and 0x45af0	uint8_t
+0x102550	label	gps_reference_good	structures.md	set while gps.reference_qualified and not gps_pps_dead, by pllp_task, with status_happening 0x1e on setting and 0x1f on clearing; clear, the stages add HOLD_CAUSE_GPS	uint8_t
+0x102551	label	time_zone_change_pending	structures.md	only written: time_zone_changed sets it; :PTIMe:TZONe's done routine at 0x45a2e clears it after clock_record_refresh, and pll_init clears it	uint8_t
+0x102552	label	clock_gps_mismatch	structures.md	clock_check_against_gps sets it on a first mismatch with gps.status and clears it on a match or once it has set the clock	uint8_t
+0x102582	label	gps_ack_wait_count	structures.md	pllp_task's passes waiting for the GPS acknowledgment; past 0x4b0, gps_ack_code 8 and "GPS acknowledgment timed out"	uint16_t
+0x102587	label	gps_ack_abandoned	structures.md	pll_restart and pllp_task's stage change set it while an acknowledgment is awaited and not ready; the next one, or its timeout, then only clears gps_ack_awaited	uint8_t
+0x102588	label	douglas_start_requested	structures.md	the :DOUGlas:STATe done routine at 0x46340 sets it when douglas_state is 0; gps_init_sequence's state 0x11 then returns to 0xe, the position averaging	uint8_t
+0x102589	label	douglas_stop_requested	structures.md	the :DOUGlas:STATe done routine at 0x46340 sets it when douglas_state is set; gps_init_sequence's states 0xe to 0x10 then go to 0x11	uint8_t
+0x10258a	label	douglas_finish_requested	structures.md	the action at 0x4135a, from :GPS:POSition while averaging, sets it; gps_init_sequence's state 0xe then saves the averaged position	uint8_t
+0x10258b	label	douglas_finish_nv_argument	structures.md	the action at 0x4135a's argument, nv_save's when gps_init_sequence saves the averaged position; 4 otherwise	uint8_t
+0x10258c	label	restart_reference_seconds	structures.md	pll.reference_seconds as pllp_task found it at its start; clock_set_from_reference counts from it, with the uptime at 0x102594	uint8_t
+0x10258d	label	selftest_requested	structures.md	the self-test action at 0x46326 sets it; pllp_task then enters PLL_STAGE_DIAG and gps_diag_sequence clears it	uint8_t
+0x10258e	label	leap_recheck_requested	structures.md	set by diag_leapsec and on entering powerup recovery; gps_leap_sequence's wait state then returns to state 1	uint8_t
+0x102590	label	selftest_number	structures.md	the self-test action at 0x46326's argument, which gps_diag_sequence passes to selftest_run	int32_t
 0x46524	function	pll_stage_status	context	by pll.stage, sets two pll flags and the status happenings they imply (0x1a, 0x1b, 0x28, 0x2a, 0x2c), with log_event(6); pllp_task calls it at start and on stage changes
 0x18a74	function	selftest_run	context	runs self-test n, 0 to 13, through selftest_execute and copies its result cells
 0x182ec	function	selftest_execute	context	runs entry n of the test table 0x18458 twice between selftest_begin and selftest_end, with selftest.running set
@@ -1074,7 +1103,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x23c5a	function	monitor_average_add	context	adds a reading to a monitor's 10-sample moving average
 0x23cc4	function	monitor_filter_add	context	adds a reading to a monitor's filter, 0.9 of the old and 0.1 of the new
 0x23d28	function	monitor_out_of_range	context	counts a monitor's readings outside its range, true once past a limit
-0x23c2a	function	monitors_reset	context	clears the health monitor's seven monitors at 0x101b9e
+0x23c2a	function	monitors_reset	context	clears all eight adc_monitors' valid, sample_index, out_of_tolerance and out_of_range_count, and hmon_supply_step
 0x1e126	function	duart_output_bits	context	sets and clears the DUART's output port bits, interrupts held off
 0x242de	function	efc_clamp_reset	context	clears efc_clamp's flags
 0x10b62	function	klok_run_due	context	runs the clock list's due entries and reschedules the periodic ones, under klok_mutex
@@ -1543,7 +1572,7 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 0x4f6a4	function	oncore_dop_message	docs/firmware/oncore	decodes @@Bc, the xDOP table
 0x4f6be	function	oncore_almanac_status_message	docs/firmware/oncore	decodes @@Bd, the almanac status
 0x4f842	function	oncore_extension_message	docs/firmware/oncore	decodes @@Bk, the position/status/data extension
-0x4f85c	function	oncore_traim_message	docs/firmware/oncore	decodes @@Bn, the Time RAIM setup and status, and marks it received at 0x101b55
+0x4f85c	function	oncore_traim_message	docs/firmware/oncore	decodes @@Bn, the Time RAIM setup and status, and sets traim_message_arrived
 0x5112a	function	setjmp	context	saves the registers, return address and stack, and through trap #1 the status register
 0x51158	function	primary_unpack_records	context	the primary's copy of the boot code's record unpacker, pointed at 0, where there is no S: always 1
 #

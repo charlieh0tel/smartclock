@@ -215,9 +215,20 @@ typedef enum __attribute__((packed)) adc_channel {
     ADC_MINUS_15V=6
 } adc_channel;
 
-typedef struct aging_curve_state aging_curve_state, *Paging_curve_state;
+typedef struct adc_monitor adc_monitor, *Padc_monitor;
 
 typedef byte uint8_t;
+
+struct adc_monitor {
+    float samples[10];
+    float value;
+    uint8_t valid;
+    uint8_t sample_index;
+    uint8_t out_of_tolerance;
+    uint8_t out_of_range_count;
+};
+
+typedef struct aging_curve_state aging_curve_state, *Paging_curve_state;
 
 typedef ulong uint32_t;
 
@@ -512,6 +523,15 @@ struct gps_request_ring {
     struct gps_request_entry entries[5];
     struct gps_request_entry *read;
     struct gps_request_entry *write;
+};
+
+typedef struct gps_script_step gps_script_step, *Pgps_script_step;
+
+struct gps_script_step {
+    int16_t code;
+    uint8_t argument_mode;
+    uint8_t field_03;
+    int32_t arguments[4];
 };
 
 typedef struct gps_state gps_state, *Pgps_state;
@@ -1525,6 +1545,7 @@ struct three_point_fit {
 
 /* each type's size in the image, which gcc's layout must give */
 _Static_assert(sizeof(adc_channel) == 1, "adc_channel");
+_Static_assert(sizeof(adc_monitor) == 48, "adc_monitor");
 _Static_assert(sizeof(aging_curve_state) == 42, "aging_curve_state");
 _Static_assert(sizeof(counter_configuration_fields) == 32, "counter_configuration_fields");
 _Static_assert(sizeof(counter_error) == 1, "counter_error");
@@ -1546,6 +1567,7 @@ _Static_assert(sizeof(fpga_bit) == 4, "fpga_bit");
 _Static_assert(sizeof(gps_command_mailbox) == 22, "gps_command_mailbox");
 _Static_assert(sizeof(gps_request_entry) == 26, "gps_request_entry");
 _Static_assert(sizeof(gps_request_ring) == 138, "gps_request_ring");
+_Static_assert(sizeof(gps_script_step) == 20, "gps_script_step");
 _Static_assert(sizeof(gps_state) == 1370, "gps_state");
 _Static_assert(sizeof(gps_statistics) == 54, "gps_statistics");
 _Static_assert(sizeof(gpt_registers) == 46, "gpt_registers");
@@ -1864,9 +1886,18 @@ extern uint8_t gps_receive_state; /* 00101394 */
 extern gps_request_ring gps_requests; /* 0010139e */
 extern gps_statistics gps_counts; /* 001017bc */
 extern void * gps_last_command; /* 001017f2 */
+extern uint32_t raim_suspect_time; /* 00101b4e */
+extern uint8_t status_message_arrived; /* 00101b54 */
+extern uint8_t traim_message_arrived; /* 00101b55 */
+extern gps_script_step gps_request_step; /* 00101b56 */
+extern uint8_t gps_status_print_interval; /* 00101b6a */
+extern uint8_t gps_status_print_count; /* 00101b6b */
+extern uint8_t fpga_programming; /* 00101b6c */
 extern uint8_t gps_pps_dead; /* 00101b6e */
 extern uint8_t internal_pps_dead; /* 00101b6f */
 extern uint8_t internal_pps_count; /* 00101b70 */
+extern uint8_t outer_oven_enabled; /* 00101b71 */
+extern adc_monitor adc_monitors[8]; /* 00101b72 */
 extern uint8_t hmon_supply_step; /* 00101cf2 */
 extern efc_range_state efc_range; /* 00101cf4 */
 extern uint8_t internal_pps_started; /* 00101cf8 */
@@ -1920,13 +1951,33 @@ extern float fine_y0; /* 00102154 */
 extern pll_state pll; /* 00102162 */
 extern float interval_mean; /* 00102538 */
 extern uint8_t interval_mean_flag; /* 0010253c */
+extern uint8_t pll_restart_requested; /* 00102540 */
+extern uint8_t pll_debug_enabled; /* 00102541 */
+extern uint8_t clock_change_applied; /* 00102542 */
+extern uint8_t clock_change_armed; /* 00102543 */
 extern uint8_t status_summary; /* 00102544 */
+extern int32_t pll_lock; /* 00102546 */
 extern float ti_setpoint; /* 0010254a */
+extern uint8_t pll_scpi_reply_pending; /* 0010254e */
+extern uint8_t pll_scpi_signal_delay; /* 0010254f */
+extern uint8_t gps_reference_good; /* 00102550 */
+extern uint8_t time_zone_change_pending; /* 00102551 */
+extern uint8_t clock_gps_mismatch; /* 00102552 */
 extern efc_gain_values efc_gains; /* 00102554 */
 extern gps_command_mailbox gps_command; /* 0010256c */
+extern uint16_t gps_ack_wait_count; /* 00102582 */
 extern uint8_t gps_ack_code; /* 00102584 */
 extern uint8_t gps_ack_ready; /* 00102585 */
 extern uint8_t gps_ack_awaited; /* 00102586 */
+extern uint8_t gps_ack_abandoned; /* 00102587 */
+extern uint8_t douglas_start_requested; /* 00102588 */
+extern uint8_t douglas_stop_requested; /* 00102589 */
+extern uint8_t douglas_finish_requested; /* 0010258a */
+extern uint8_t douglas_finish_nv_argument; /* 0010258b */
+extern uint8_t restart_reference_seconds; /* 0010258c */
+extern uint8_t selftest_requested; /* 0010258d */
+extern uint8_t leap_recheck_requested; /* 0010258e */
+extern int32_t selftest_number; /* 00102590 */
 extern int32_t psos_supervisor_stack_size; /* 00102674 */
 extern int32_t task_count; /* 0010271c */
 extern uint8_t scpi_language; /* 00102c62 */
@@ -2194,21 +2245,6 @@ extern undefined DAT_0010199e; /* 0010199e */
 extern undefined DAT_001019a2; /* 001019a2 */
 extern undefined DAT_00101b46; /* 00101b46 */
 extern undefined DAT_00101b4a; /* 00101b4a */
-extern char DAT_00101b54; /* 00101b54 */
-extern char DAT_00101b55; /* 00101b55 */
-extern short DAT_00101b56; /* 00101b56 */
-extern uint8_t DAT_00101b58; /* 00101b58 */
-extern undefined DAT_00101b5a; /* 00101b5a */
-extern byte DAT_00101b6a; /* 00101b6a */
-extern byte DAT_00101b6b; /* 00101b6b */
-extern char DAT_00101b6c; /* 00101b6c */
-extern char DAT_00101b71; /* 00101b71 */
-extern char DAT_00101b9e; /* 00101b9e */
-extern undefined DAT_00101b9f; /* 00101b9f */
-extern undefined DAT_00101ba0; /* 00101ba0 */
-extern undefined DAT_00101ba1; /* 00101ba1 */
-extern char DAT_00101bce; /* 00101bce */
-extern char DAT_00101bd0; /* 00101bd0 */
 extern undefined DAT_00101d8e; /* 00101d8e */
 extern char DAT_00101dd6; /* 00101dd6 */
 extern char DAT_00101dd7; /* 00101dd7 */
@@ -2243,26 +2279,6 @@ extern undefined DAT_0010215c; /* 0010215c */
 extern char DAT_00102160; /* 00102160 */
 extern undefined1 DAT_0010253e; /* 0010253e */
 extern undefined1 DAT_0010253f; /* 0010253f */
-extern char DAT_00102540; /* 00102540 */
-extern char DAT_00102541; /* 00102541 */
-extern char DAT_00102542; /* 00102542 */
-extern undefined1 DAT_00102543; /* 00102543 */
-extern undefined DAT_00102546; /* 00102546 */
-extern char DAT_0010254e; /* 0010254e */
-extern char DAT_0010254f; /* 0010254f */
-extern char DAT_00102550; /* 00102550 */
-extern undefined1 DAT_00102551; /* 00102551 */
-extern char DAT_00102552; /* 00102552 */
-extern undefined DAT_00102582; /* 00102582 */
-extern char DAT_00102587; /* 00102587 */
-extern char DAT_00102588; /* 00102588 */
-extern char DAT_00102589; /* 00102589 */
-extern char DAT_0010258a; /* 0010258a */
-extern byte DAT_0010258b; /* 0010258b */
-extern byte DAT_0010258c; /* 0010258c */
-extern char DAT_0010258d; /* 0010258d */
-extern char DAT_0010258e; /* 0010258e */
-extern undefined DAT_00102590; /* 00102590 */
 extern undefined DAT_00102594; /* 00102594 */
 extern undefined DAT_00102598; /* 00102598 */
 extern int DAT_0010259c; /* 0010259c */
@@ -2397,10 +2413,10 @@ extern undefined4 *PTR_DAT_00021e32; /* 00021e32 */
 extern undefined4 *PTR_DAT_0004cf80; /* 0004cf80 */
 extern undefined4 *PTR_DAT_0004fece; /* 0004fece */
 extern undefined4 *PTR_DAT_0004fee4; /* 0004fee4 */
-extern undefined4 *PTR_DAT_00050cc2; /* 00050cc2 */
 extern undefined4 *PTR_DAT_00050e5e; /* 00050e5e */
 extern undefined4 *PTR_DAT_00050e66; /* 00050e66 */
 extern undefined4 *PTR_diag_cal_0001c8ac; /* 0001c8ac */
+extern undefined4 *PTR_gps_request_step_00050cc2; /* 00050cc2 */
 extern undefined4 *PTR_lamp_test_command_000186b0; /* 000186b0 */
 extern undefined4 *PTR_long_array_get_byte_0004fed4; /* 0004fed4 */
 extern undefined4 *PTR_s_Self_Test_0004d076; /* 0004d076 */
@@ -2436,22 +2452,6 @@ extern undefined UNK_001007bc; /* 001007bc */
 extern undefined UNK_00100b84; /* 00100b84 */
 extern undefined UNK_001011e0; /* 001011e0 */
 extern short UNK_0010139a; /* 0010139a */
-extern uint32_t UNK_00101b4e; /* 00101b4e */
-extern float UNK_00101b9a; /* 00101b9a */
-extern float UNK_00101bca; /* 00101bca */
-extern float UNK_00101bfa; /* 00101bfa */
-extern char UNK_00101bfe; /* 00101bfe */
-extern char UNK_00101c00; /* 00101c00 */
-extern float UNK_00101c2a; /* 00101c2a */
-extern char UNK_00101c2e; /* 00101c2e */
-extern float UNK_00101c5a; /* 00101c5a */
-extern char UNK_00101c5e; /* 00101c5e */
-extern char UNK_00101c60; /* 00101c60 */
-extern float UNK_00101c8a; /* 00101c8a */
-extern char UNK_00101c8e; /* 00101c8e */
-extern float UNK_00101cba; /* 00101cba */
-extern char UNK_00101cbe; /* 00101cbe */
-extern char UNK_00101cc0; /* 00101cc0 */
 extern undefined UNK_00103dfc; /* 00103dfc */
 extern undefined UNK_00103e93; /* 00103e93 */
 extern undefined UNK_00103eb0; /* 00103eb0 */
@@ -2801,21 +2801,6 @@ __asm__(".set DAT_0010199e, 0x0010199e");
 __asm__(".set DAT_001019a2, 0x001019a2");
 __asm__(".set DAT_00101b46, 0x00101b46");
 __asm__(".set DAT_00101b4a, 0x00101b4a");
-__asm__(".set DAT_00101b54, 0x00101b54");
-__asm__(".set DAT_00101b55, 0x00101b55");
-__asm__(".set DAT_00101b56, 0x00101b56");
-__asm__(".set DAT_00101b58, 0x00101b58");
-__asm__(".set DAT_00101b5a, 0x00101b5a");
-__asm__(".set DAT_00101b6a, 0x00101b6a");
-__asm__(".set DAT_00101b6b, 0x00101b6b");
-__asm__(".set DAT_00101b6c, 0x00101b6c");
-__asm__(".set DAT_00101b71, 0x00101b71");
-__asm__(".set DAT_00101b9e, 0x00101b9e");
-__asm__(".set DAT_00101b9f, 0x00101b9f");
-__asm__(".set DAT_00101ba0, 0x00101ba0");
-__asm__(".set DAT_00101ba1, 0x00101ba1");
-__asm__(".set DAT_00101bce, 0x00101bce");
-__asm__(".set DAT_00101bd0, 0x00101bd0");
 __asm__(".set DAT_00101d8e, 0x00101d8e");
 __asm__(".set DAT_00101dd6, 0x00101dd6");
 __asm__(".set DAT_00101dd7, 0x00101dd7");
@@ -2850,26 +2835,6 @@ __asm__(".set DAT_0010215c, 0x0010215c");
 __asm__(".set DAT_00102160, 0x00102160");
 __asm__(".set DAT_0010253e, 0x0010253e");
 __asm__(".set DAT_0010253f, 0x0010253f");
-__asm__(".set DAT_00102540, 0x00102540");
-__asm__(".set DAT_00102541, 0x00102541");
-__asm__(".set DAT_00102542, 0x00102542");
-__asm__(".set DAT_00102543, 0x00102543");
-__asm__(".set DAT_00102546, 0x00102546");
-__asm__(".set DAT_0010254e, 0x0010254e");
-__asm__(".set DAT_0010254f, 0x0010254f");
-__asm__(".set DAT_00102550, 0x00102550");
-__asm__(".set DAT_00102551, 0x00102551");
-__asm__(".set DAT_00102552, 0x00102552");
-__asm__(".set DAT_00102582, 0x00102582");
-__asm__(".set DAT_00102587, 0x00102587");
-__asm__(".set DAT_00102588, 0x00102588");
-__asm__(".set DAT_00102589, 0x00102589");
-__asm__(".set DAT_0010258a, 0x0010258a");
-__asm__(".set DAT_0010258b, 0x0010258b");
-__asm__(".set DAT_0010258c, 0x0010258c");
-__asm__(".set DAT_0010258d, 0x0010258d");
-__asm__(".set DAT_0010258e, 0x0010258e");
-__asm__(".set DAT_00102590, 0x00102590");
 __asm__(".set DAT_00102594, 0x00102594");
 __asm__(".set DAT_00102598, 0x00102598");
 __asm__(".set DAT_0010259c, 0x0010259c");
@@ -3004,10 +2969,10 @@ __asm__(".set PTR_DAT_00021e32, 0x00021e32");
 __asm__(".set PTR_DAT_0004cf80, 0x0004cf80");
 __asm__(".set PTR_DAT_0004fece, 0x0004fece");
 __asm__(".set PTR_DAT_0004fee4, 0x0004fee4");
-__asm__(".set PTR_DAT_00050cc2, 0x00050cc2");
 __asm__(".set PTR_DAT_00050e5e, 0x00050e5e");
 __asm__(".set PTR_DAT_00050e66, 0x00050e66");
 __asm__(".set PTR_diag_cal_0001c8ac, 0x0001c8ac");
+__asm__(".set PTR_gps_request_step_00050cc2, 0x00050cc2");
 __asm__(".set PTR_lamp_test_command_000186b0, 0x000186b0");
 __asm__(".set PTR_long_array_get_byte_0004fed4, 0x0004fed4");
 __asm__(".set PTR_s_Self_Test_0004d076, 0x0004d076");
@@ -3043,22 +3008,6 @@ __asm__(".set UNK_001007bc, 0x001007bc");
 __asm__(".set UNK_00100b84, 0x00100b84");
 __asm__(".set UNK_001011e0, 0x001011e0");
 __asm__(".set UNK_0010139a, 0x0010139a");
-__asm__(".set UNK_00101b4e, 0x00101b4e");
-__asm__(".set UNK_00101b9a, 0x00101b9a");
-__asm__(".set UNK_00101bca, 0x00101bca");
-__asm__(".set UNK_00101bfa, 0x00101bfa");
-__asm__(".set UNK_00101bfe, 0x00101bfe");
-__asm__(".set UNK_00101c00, 0x00101c00");
-__asm__(".set UNK_00101c2a, 0x00101c2a");
-__asm__(".set UNK_00101c2e, 0x00101c2e");
-__asm__(".set UNK_00101c5a, 0x00101c5a");
-__asm__(".set UNK_00101c5e, 0x00101c5e");
-__asm__(".set UNK_00101c60, 0x00101c60");
-__asm__(".set UNK_00101c8a, 0x00101c8a");
-__asm__(".set UNK_00101c8e, 0x00101c8e");
-__asm__(".set UNK_00101cba, 0x00101cba");
-__asm__(".set UNK_00101cbe, 0x00101cbe");
-__asm__(".set UNK_00101cc0, 0x00101cc0");
 __asm__(".set UNK_00103dfc, 0x00103dfc");
 __asm__(".set UNK_00103e93, 0x00103e93");
 __asm__(".set UNK_00103eb0, 0x00103eb0");
@@ -3206,6 +3155,7 @@ __asm__(".set WORD_0004cf2a, 0x0004cf2a");
 __asm__(".set WORD_0004f0f2, 0x0004f0f2");
 __asm__(".set WORD_0004fc90, 0x0004fc90");
 __asm__(".set WORD_0005ed48, 0x0005ed48");
+__asm__(".set adc_monitors, 0x00101b72");
 __asm__(".set aging_curve, 0x00101fd8");
 __asm__(".set atexit_count, 0x00103934");
 __asm__(".set atexit_functions, 0x001038b4");
@@ -3213,7 +3163,10 @@ __asm__(".set boot_loopback_expect_next, 0x0010afb6");
 __asm__(".set boot_loopback_send_next, 0x0010afb2");
 __asm__(".set boot_selftest_uart, 0x0010ab2c");
 __asm__(".set boot_vectors, 0x00000000");
+__asm__(".set clock_change_applied, 0x00102542");
+__asm__(".set clock_change_armed, 0x00102543");
 __asm__(".set clock_date, 0x001009c2");
+__asm__(".set clock_gps_mismatch, 0x00102552");
 __asm__(".set clock_invalid, 0x001009e7");
 __asm__(".set clock_time, 0x001009be");
 __asm__(".set console_halt_hook_cell, 0x001009fe");
@@ -3232,6 +3185,10 @@ __asm__(".set dmes_pllp, 0x00103814");
 __asm__(".set dmes_root, 0x00103818");
 __asm__(".set dmes_scpi, 0x0010381c");
 __asm__(".set dmes_spoo, 0x00103820");
+__asm__(".set douglas_finish_nv_argument, 0x0010258b");
+__asm__(".set douglas_finish_requested, 0x0010258a");
+__asm__(".set douglas_start_requested, 0x00102588");
+__asm__(".set douglas_stop_requested, 0x00102589");
 __asm__(".set duart, 0x00200000");
 __asm__(".set duart_shadow, 0x00102ed0");
 __asm__(".set duarta, 0x00102fe0");
@@ -3257,10 +3214,13 @@ __asm__(".set float_control, 0x001038b2");
 __asm__(".set float_exception_message, 0x00100bd4");
 __asm__(".set float_status, 0x001038b0");
 __asm__(".set fpga_bit_table, 0x00041310");
+__asm__(".set fpga_programming, 0x00101b6c");
 __asm__(".set gps, 0x00100c6a");
+__asm__(".set gps_ack_abandoned, 0x00102587");
 __asm__(".set gps_ack_awaited, 0x00102586");
 __asm__(".set gps_ack_code, 0x00102584");
 __asm__(".set gps_ack_ready, 0x00102585");
+__asm__(".set gps_ack_wait_count, 0x00102582");
 __asm__(".set gps_command, 0x0010256c");
 __asm__(".set gps_counts, 0x001017bc");
 __asm__(".set gps_date, 0x001009d6");
@@ -3274,9 +3234,13 @@ __asm__(".set gps_pps_skipped_checks, 0x00101cf9");
 __asm__(".set gps_pps_unconfirmed, 0x00101cfa");
 __asm__(".set gps_print_cursor, 0x00101390");
 __asm__(".set gps_receive_state, 0x00101394");
+__asm__(".set gps_reference_good, 0x00102550");
+__asm__(".set gps_request_step, 0x00101b56");
 __asm__(".set gps_requests, 0x0010139e");
 __asm__(".set gps_response_buffer, 0x00101266");
 __asm__(".set gps_response_cursor, 0x0010138c");
+__asm__(".set gps_status_print_count, 0x00101b6b");
+__asm__(".set gps_status_print_interval, 0x00101b6a");
 __asm__(".set gps_time, 0x001009d2");
 __asm__(".set gps_utc_offset, 0x001009e8");
 __asm__(".set gps_utc_offset_valid, 0x001009ea");
@@ -3307,6 +3271,7 @@ __asm__(".set klok_free, 0x00103726");
 __asm__(".set klok_mutex, 0x001037b4");
 __asm__(".set klok_pool, 0x0010372a");
 __asm__(".set last_exception, 0x0010099e");
+__asm__(".set leap_recheck_requested, 0x0010258e");
 __asm__(".set lifetime, 0x00101d00");
 __asm__(".set lifetime_event, 0x00101d14");
 __asm__(".set log_cursor, 0x00101d90");
@@ -3332,11 +3297,17 @@ __asm__(".set nv_setting_params, 0x00032db2");
 __asm__(".set nv_settings, 0x00101e8a");
 __asm__(".set nv_settings_defaults, 0x00030966");
 __asm__(".set nv_slot, 0x00101f62");
+__asm__(".set outer_oven_enabled, 0x00101b71");
 __asm__(".set pll, 0x00102162");
+__asm__(".set pll_debug_enabled, 0x00102541");
+__asm__(".set pll_lock, 0x00102546");
+__asm__(".set pll_restart_requested, 0x00102540");
 __asm__(".set pll_scpi_gps_arguments, 0x00102002");
 __asm__(".set pll_scpi_index, 0x00102016");
 __asm__(".set pll_scpi_param, 0x00102012");
+__asm__(".set pll_scpi_reply_pending, 0x0010254e");
 __asm__(".set pll_scpi_setting, 0x0010201c");
+__asm__(".set pll_scpi_signal_delay, 0x0010254f");
 __asm__(".set pll_scpi_source, 0x00102017");
 __asm__(".set pll_scpi_validated, 0x00102030");
 __asm__(".set pll_scpi_values, 0x00102020");
@@ -3351,9 +3322,11 @@ __asm__(".set qsm, 0x00fffc00");
 __asm__(".set qsort_compare, 0x00103940");
 __asm__(".set qsort_size, 0x00103944");
 __asm__(".set qspi, 0x001032a6");
+__asm__(".set raim_suspect_time, 0x00101b4e");
 __asm__(".set rand_seed, 0x00103936");
 __asm__(".set reference_valid_override_request, 0x00100c68");
 __asm__(".set reset_to_recover_text, 0x00011b8c");
+__asm__(".set restart_reference_seconds, 0x0010258c");
 __asm__(".set s_DUART_test_string_0001ee6e, 0x0001ee6e");
 __asm__(".set sci, 0x0010328a");
 __asm__(".set sci_exchanges, 0x00103150");
@@ -3406,9 +3379,12 @@ __asm__(".set scpi_value_SAMPle_FLOat, 0x00101e18");
 __asm__(".set scpi_value_SAMPle_IARR, 0x00101de8");
 __asm__(".set scpi_value_SAMPle_INTeger, 0x00101de4");
 __asm__(".set selftest, 0x00100c24");
+__asm__(".set selftest_number, 0x00102590");
+__asm__(".set selftest_requested, 0x0010258d");
 __asm__(".set sim, 0x00fffa00");
 __asm__(".set spoo_exchange, 0x001032f8");
 __asm__(".set status_conditions, 0x0002f838");
+__asm__(".set status_message_arrived, 0x00101b54");
 __asm__(".set status_object, 0x00102eb8");
 __asm__(".set status_ready, 0x00102eb7");
 __asm__(".set status_register_setup_table, 0x0002f7ac");
@@ -3430,6 +3406,8 @@ __asm__(".set tcode_length, 0x001038ab");
 __asm__(".set tcode_message, 0x0010386f");
 __asm__(".set tcode_pending, 0x001038ad");
 __asm__(".set ti_setpoint, 0x0010254a");
+__asm__(".set time_zone_change_pending, 0x00102551");
+__asm__(".set traim_message_arrived, 0x00101b55");
 __asm__(".set uptime, 0x001009ba");
 __asm__(".set watchdog_clock, 0x001009b2");
 __asm__(".set watchdog_gps, 0x001009b3");
@@ -4111,12 +4089,6 @@ extern float _DAT_00102158;
 __asm__(".set _DAT_00102158, 0x00102158");
 extern float _DAT_0010215c;
 __asm__(".set _DAT_0010215c, 0x0010215c");
-extern undefined4 _DAT_00102546;
-__asm__(".set _DAT_00102546, 0x00102546");
-extern ushort _DAT_00102582;
-__asm__(".set _DAT_00102582, 0x00102582");
-extern int _DAT_00102590;
-__asm__(".set _DAT_00102590, 0x00102590");
 extern uint _DAT_00102594;
 __asm__(".set _DAT_00102594, 0x00102594");
 extern int _DAT_00102598;
@@ -4209,36 +4181,6 @@ extern undefined4 _interval_mean_flag;
 __asm__(".set _interval_mean_flag, 0x0010253c");
 extern undefined4 _task_table;
 __asm__(".set _task_table, 0x001026b8");
-extern char cRam00101bfe;
-__asm__(".set cRam00101bfe, 0x00101bfe");
-extern char cRam00101c00;
-__asm__(".set cRam00101c00, 0x00101c00");
-extern char cRam00101c2e;
-__asm__(".set cRam00101c2e, 0x00101c2e");
-extern char cRam00101c5e;
-__asm__(".set cRam00101c5e, 0x00101c5e");
-extern char cRam00101c60;
-__asm__(".set cRam00101c60, 0x00101c60");
-extern char cRam00101c8e;
-__asm__(".set cRam00101c8e, 0x00101c8e");
-extern char cRam00101cbe;
-__asm__(".set cRam00101cbe, 0x00101cbe");
-extern char cRam00101cc0;
-__asm__(".set cRam00101cc0, 0x00101cc0");
-extern float fRam00101b9a;
-__asm__(".set fRam00101b9a, 0x00101b9a");
-extern float fRam00101bca;
-__asm__(".set fRam00101bca, 0x00101bca");
-extern float fRam00101bfa;
-__asm__(".set fRam00101bfa, 0x00101bfa");
-extern float fRam00101c2a;
-__asm__(".set fRam00101c2a, 0x00101c2a");
-extern float fRam00101c5a;
-__asm__(".set fRam00101c5a, 0x00101c5a");
-extern float fRam00101c8a;
-__asm__(".set fRam00101c8a, 0x00101c8a");
-extern float fRam00101cba;
-__asm__(".set fRam00101cba, 0x00101cba");
 extern code func_0x0004c9d4;
 __asm__(".set func_0x0004c9d4, 0x0004c9d4");
 extern code func_0x0004f596;
@@ -4371,8 +4313,6 @@ extern uint uRam00100b8c;
 __asm__(".set uRam00100b8c, 0x00100b8c");
 extern uint uRam00100b90;
 __asm__(".set uRam00100b90, 0x00100b90");
-extern uint32_t uRam00101b4e;
-__asm__(".set uRam00101b4e, 0x00101b4e");
 /*
  * The decompiler's views of the stack at entry: stack0xN the bytes N
  * above the return address, so N + 4 above gcc's frame pointer.  A view
@@ -10450,7 +10390,7 @@ __regcall void clock_record_advance(char *record /* a6 */)
   if (record[0x2e] <= cVar2) {
     if (DAT_00100bc8 != '\0') {
       DAT_00100bc8 = '\0';
-      DAT_00102542 = 1;
+      clock_change_applied = 1;
       leap_settings_clear();
       if (record[0x2e] == ';') {
         *(short *)(record + 0x30) = *(short *)(record + 0x30) + -1;
@@ -10490,7 +10430,7 @@ __regcall void clock_record_advance(char *record /* a6 */)
 LAB_000135ba:
   if ((DAT_00100bc9 != '\0') && (*(int *)(record + 6) == _DAT_00100bca)) {
     DAT_00100bc9 = '\0';
-    DAT_00102542 = 1;
+    clock_change_applied = 1;
     leap_settings_clear();
     *(short *)(record + 0x30) = _DAT_00100bce + *(short *)(record + 0x30);
   }
@@ -10514,7 +10454,7 @@ __asm__(
 	"	tst.b (__ghidra_100bc8).l\n"
 	"	beq.b .Lg_13554\n"
 	"	clr.b (__ghidra_100bc8).l\n"
-	"	move.b #0x1,(__ghidra_102542).l\n"
+	"	move.b #0x1,(clock_change_applied).l\n"
 	"	move.l %d0,%d7\n"
 	"	jsr (leap_settings_clear).l\n"
 	"	move.l %d7,%d0\n"
@@ -10570,7 +10510,7 @@ __asm__(
 	"	cmp.l (__ghidra_100bca).l,%d0\n"
 	"	bne.b .Lg_135ee\n"
 	"	clr.b (__ghidra_100bc9).l\n"
-	"	move.b #0x1,(__ghidra_102542).l\n"
+	"	move.b #0x1,(clock_change_applied).l\n"
 	"	jsr (leap_settings_clear).l\n"
 	"	move.w (__ghidra_100bce).l,%d0\n"
 	"	add.w %d0,(0x30,%a6)\n"
@@ -31723,13 +31663,12 @@ void diag_pr_efc(void)
 
 /* 0001b7bc */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the pForth diagnostic word lock */
 
 void diag_lock(void)
 
 {
-  _DAT_00102546 = 1;
+  pll_lock = 1;
   return;
 }
 
@@ -31741,7 +31680,7 @@ void diag_lock(void)
 void diag_pll_restart(void)
 
 {
-  DAT_00102540 = 1;
+  pll_restart_requested = 1;
   return;
 }
 
@@ -31753,7 +31692,7 @@ void diag_pll_restart(void)
 void diag_pll_debug(undefined4 param_1)
 
 {
-  DAT_00102541 = (undefined1)param_1;
+  pll_debug_enabled = (uint8_t)param_1;
   return;
 }
 
@@ -32686,7 +32625,7 @@ void diag_leapsec(undefined4 param_1,undefined4 param_2)
 {
   DAT_00102724 = (undefined1)param_1;
   _DAT_00102726 = param_2;
-  DAT_0010258e = 1;
+  leap_recheck_requested = 1;
   return;
 }
 
@@ -36780,7 +36719,7 @@ undefined1 fpga_program(byte param_1,char param_2)
   if (1 < param_1) {
     return 0;
   }
-  DAT_00101b6c = 1;
+  fpga_programming = 1;
   uVar3 = sim.porte0;
   sim.porte0 = uVar3 & 0xbf;
   uVar3 = sim.portf0;
@@ -36875,7 +36814,7 @@ undefined1 fpga_program(byte param_1,char param_2)
       sim.porte0 = uVar3 & 0xbf;
       uVar3 = sim.porte0;
       sim.porte0 = uVar3 | 0x40;
-      DAT_00101b6c = 0;
+      fpga_programming = 0;
       return uVar6;
     }
     pcVar7 = "ERROR: FPGA INIT did not go high\r\n";
@@ -36898,7 +36837,7 @@ undefined1 fpga_program(byte param_1,char param_2)
     } while (cVar2 != '\0');
   }
   debug_message(acStack_54,param_2);
-  DAT_00101b6c = 0;
+  fpga_programming = 0;
   return 0;
 }
 
@@ -37311,7 +37250,8 @@ undefined1 fpga_verify(byte param_1,char param_2)
 
 /* 00023c2a */
 
-/* clears the health monitor's seven monitors at 0x101b9e */
+/* clears all eight adc_monitors' valid, sample_index, out_of_tolerance and out_of_range_count, and
+   hmon_supply_step */
 
 int monitors_reset(void)
 
@@ -37322,17 +37262,16 @@ int monitors_reset(void)
   
   iVar3 = 0;
   do {
-    iVar2 = iVar3 * 0x30;
-    (&DAT_00101b9e)[iVar2] = 0;
-    (&DAT_00101b9f)[iVar2] = 0;
-    (&DAT_00101ba1)[iVar2] = 0;
-    (&DAT_00101ba0)[iVar2] = 0;
-    iVar2 = iVar3 + 1;
-    iVar1 = iVar3 + -6;
-    iVar3 = iVar2;
-  } while (iVar1 == 0 || iVar2 < 7);
+    adc_monitors[iVar3].valid = 0;
+    adc_monitors[iVar3].sample_index = 0;
+    adc_monitors[iVar3].out_of_range_count = 0;
+    adc_monitors[iVar3].out_of_tolerance = 0;
+    iVar1 = iVar3 + 1;
+    iVar2 = iVar3 + -6;
+    iVar3 = iVar1;
+  } while (iVar2 == 0 || iVar1 < 7);
   hmon_supply_step = 0;
-  return iVar1;
+  return iVar2;
 }
 
 
@@ -37433,125 +37372,126 @@ bool monitor_out_of_range(int param_1,float param_2,float param_3,byte param_4)
 void hmon_check_supplies(void)
 
 {
-  char cVar2;
-  float fVar1;
-  int iVar3;
-  double dVar4;
+  int iVar1;
+  char cVar3;
+  float fVar2;
+  adc_monitor *paVar4;
+  double dVar5;
   char acStack_54 [80];
   
-  iVar3 = hmon_supply_step - 7;
-  if (6 < hmon_supply_step && iVar3 != 0) goto LAB_000240f0;
+  iVar1 = hmon_supply_step - 7;
+  if (6 < hmon_supply_step && iVar1 != 0) goto LAB_000240f0;
                     /* WARNING: Switch is manually overridden */
-  switch((&WORD_00023dd8)[(short)iVar3]) {
+  switch((&WORD_00023dd8)[(short)iVar1]) {
   case 0x10:
-    iVar3 = 0x101b72;
-    fVar1 = read_adc_temp();
+    paVar4 = adc_monitors;
+    fVar2 = read_adc_temp();
     goto LAB_000240e6;
   case 0x1c:
-    fVar1 = read_adc_5v();
-    monitor_average_add(0x101c32,__ghidra_bits(fVar1));
-    cVar2 = monitor_out_of_range(0x101c32,4.5,5.5,5);
-    if (cVar2 == '\0') {
-      if (cRam00101c60 != '\0') {
+    fVar2 = read_adc_5v();
+    monitor_average_add(0x101c32,__ghidra_bits(fVar2));
+    cVar3 = monitor_out_of_range(0x101c32,4.5,5.5,5);
+    if (cVar3 == '\0') {
+      if (adc_monitors[4].out_of_tolerance != 0) {
         task_debug_message("5V is now within tolerance\r\n");
         status_happening(';');
-        cRam00101c60 = '\0';
+        adc_monitors[4].out_of_tolerance = 0;
       }
     }
-    else if (cRam00101c60 == '\0') {
-      fVar1 = adc_average(ADC_5V);
-      dVar4 = float_to_double(fVar1);
-      log_write("5V is out of tolerance, value: %.2f",(char)((ulonglong)__ghidra_bits(dVar4) >> 0x20),
-                SUB81(dVar4,0));
-      dVar4 = float_to_double(fVar1);
-      debug_sprintf(acStack_54,"5V is out of tolerance, value: %.2f\r\n",dVar4);
+    else if (adc_monitors[4].out_of_tolerance == 0) {
+      fVar2 = adc_average(ADC_5V);
+      dVar5 = float_to_double(fVar2);
+      log_write("5V is out of tolerance, value: %.2f",(char)((ulonglong)__ghidra_bits(dVar5) >> 0x20),
+                SUB81(dVar5,0));
+      dVar5 = float_to_double(fVar2);
+      debug_sprintf(acStack_54,"5V is out of tolerance, value: %.2f\r\n",dVar5);
       task_debug_message(acStack_54);
       status_happening(':');
-      cRam00101c60 = '\x01';
+      adc_monitors[4].out_of_tolerance = 1;
     }
     break;
   case 0xce:
-    fVar1 = read_adc_doven();
-    monitor_average_add(0x101ba2,__ghidra_bits(fVar1));
-    if ((DAT_00101b71 == '\0') ||
-       (cVar2 = monitor_out_of_range(0x101ba2,-1e+37,6.8,5), cVar2 == '\0')) {
-      if (DAT_00101bd0 != '\0') {
+    fVar2 = read_adc_doven();
+    monitor_average_add(0x101ba2,__ghidra_bits(fVar2));
+    if ((outer_oven_enabled == 0) ||
+       (cVar3 = monitor_out_of_range(0x101ba2,-1e+37,6.8,5), cVar3 == '\0')) {
+      if (adc_monitors[1].out_of_tolerance != 0) {
         task_debug_message("Secondary oven voltage is now within tolerance\r\n");
         status_happening('?');
-        DAT_00101bd0 = '\0';
+        adc_monitors[1].out_of_tolerance = 0;
       }
     }
-    else if (DAT_00101bd0 == '\0') {
-      fVar1 = adc_average(ADC_DOUBLE_OVEN);
-      dVar4 = float_to_double(fVar1);
+    else if (adc_monitors[1].out_of_tolerance == 0) {
+      fVar2 = adc_average(ADC_DOUBLE_OVEN);
+      dVar5 = float_to_double(fVar2);
       log_write("Secondary oven voltage is out of tolerance, value: %.2f",
-                (char)((ulonglong)__ghidra_bits(dVar4) >> 0x20),SUB81(dVar4,0));
-      dVar4 = float_to_double(fVar1);
-      debug_sprintf(acStack_54,"Secondary oven voltage is out of tolerance, value: %.2f\r\n",dVar4);
+                (char)((ulonglong)__ghidra_bits(dVar5) >> 0x20),SUB81(dVar5,0));
+      dVar5 = float_to_double(fVar2);
+      debug_sprintf(acStack_54,"Secondary oven voltage is out of tolerance, value: %.2f\r\n",dVar5);
       task_debug_message(acStack_54);
       status_happening('>');
-      DAT_00101bd0 = '\x01';
+      adc_monitors[1].out_of_tolerance = 1;
     }
     break;
   case 0x18c:
-    iVar3 = 0x101c62;
-    fVar1 = read_adc_oven();
+    paVar4 = (adc_monitor *)0x101c62;
+    fVar2 = read_adc_oven();
     goto LAB_000240e6;
   case 0x19c:
-    fVar1 = read_adc_p15v();
-    monitor_average_add(0x101bd2,__ghidra_bits(fVar1));
-    cVar2 = monitor_out_of_range(0x101bd2,14.0,16.0,5);
-    if (cVar2 == '\0') {
-      if (cRam00101c00 != '\0') {
+    fVar2 = read_adc_p15v();
+    monitor_average_add(0x101bd2,__ghidra_bits(fVar2));
+    cVar3 = monitor_out_of_range(0x101bd2,14.0,16.0,5);
+    if (cVar3 == '\0') {
+      if (adc_monitors[2].out_of_tolerance != 0) {
         task_debug_message("15V is now within tolerance\r\n");
         status_happening('7');
-        cRam00101c00 = '\0';
+        adc_monitors[2].out_of_tolerance = 0;
       }
     }
-    else if (cRam00101c00 == '\0') {
-      fVar1 = adc_average(ADC_PLUS_15V);
-      dVar4 = float_to_double(fVar1);
-      log_write("15V is out of tolerance, value: %.2f",(char)((ulonglong)__ghidra_bits(dVar4) >> 0x20),
-                SUB81(dVar4,0));
-      dVar4 = float_to_double(fVar1);
-      debug_sprintf(acStack_54,"15V is out of tolerance, value: %.2f\r\n",dVar4);
+    else if (adc_monitors[2].out_of_tolerance == 0) {
+      fVar2 = adc_average(ADC_PLUS_15V);
+      dVar5 = float_to_double(fVar2);
+      log_write("15V is out of tolerance, value: %.2f",(char)((ulonglong)__ghidra_bits(dVar5) >> 0x20),
+                SUB81(dVar5,0));
+      dVar5 = float_to_double(fVar2);
+      debug_sprintf(acStack_54,"15V is out of tolerance, value: %.2f\r\n",dVar5);
       task_debug_message(acStack_54);
       status_happening('6');
-      cRam00101c00 = '\x01';
+      adc_monitors[2].out_of_tolerance = 1;
     }
     break;
   case 0x24e:
-    fVar1 = read_adc_m15v();
-    monitor_average_add(0x101c92,__ghidra_bits(fVar1));
-    cVar2 = monitor_out_of_range(0x101c92,-16.0,-14.0,5);
-    if (cVar2 == '\0') {
-      if (cRam00101cc0 != '\0') {
+    fVar2 = read_adc_m15v();
+    monitor_average_add(0x101c92,__ghidra_bits(fVar2));
+    cVar3 = monitor_out_of_range(0x101c92,-16.0,-14.0,5);
+    if (cVar3 == '\0') {
+      if (adc_monitors[6].out_of_tolerance != 0) {
         task_debug_message("-15V is now within tolerance\r\n");
         status_happening('9');
-        cRam00101cc0 = '\0';
+        adc_monitors[6].out_of_tolerance = 0;
       }
     }
-    else if (cRam00101cc0 == '\0') {
-      fVar1 = adc_average(ADC_MINUS_15V);
-      dVar4 = float_to_double(fVar1);
-      log_write("-15V is out of tolerance, value: %.2f",(char)((ulonglong)__ghidra_bits(dVar4) >> 0x20),
-                SUB81(dVar4,0));
-      dVar4 = float_to_double(fVar1);
-      debug_sprintf(acStack_54,"-15V is out of tolerance, value: %.2f\r\n",dVar4);
+    else if (adc_monitors[6].out_of_tolerance == 0) {
+      fVar2 = adc_average(ADC_MINUS_15V);
+      dVar5 = float_to_double(fVar2);
+      log_write("-15V is out of tolerance, value: %.2f",(char)((ulonglong)__ghidra_bits(dVar5) >> 0x20),
+                SUB81(dVar5,0));
+      dVar5 = float_to_double(fVar2);
+      debug_sprintf(acStack_54,"-15V is out of tolerance, value: %.2f\r\n",dVar5);
       task_debug_message(acStack_54);
       status_happening('8');
-      cRam00101cc0 = '\x01';
+      adc_monitors[6].out_of_tolerance = 1;
     }
     break;
   case 0x2fa:
-    fVar1 = read_adc_osc_curr();
-    monitor_filter_add(0x101c02,fVar1);
+    fVar2 = read_adc_osc_curr();
+    monitor_filter_add(0x101c02,fVar2);
     break;
   case 0x310:
-    iVar3 = 0x101cc2;
-    fVar1 = read_adc_ant_curr();
+    paVar4 = (adc_monitor *)0x101cc2;
+    fVar2 = read_adc_ant_curr();
 LAB_000240e6:
-    monitor_average_add(iVar3,__ghidra_bits(fVar1));
+    monitor_average_add((int)paVar4,__ghidra_bits(fVar2));
   }
 LAB_000240f0:
   hmon_supply_step = hmon_supply_step + 1;
@@ -37579,44 +37519,44 @@ float adc_average(adc_channel channel)
                     /* WARNING: Switch is manually overridden */
     switch((&WORD_00024136)[(short)iVar1]) {
     case 0xe:
-      fVar2 = fRam00101b9a;
-      if (DAT_00101b9e == '\0') {
+      fVar2 = adc_monitors[0].value;
+      if (adc_monitors[0].valid == 0) {
         fVar2 = 42.0;
       }
       break;
     case 0x24:
-      fVar2 = fRam00101c5a;
-      if (cRam00101c5e == '\0') {
+      fVar2 = adc_monitors[4].value;
+      if (adc_monitors[4].valid == 0) {
         fVar2 = 5.0;
       }
       break;
     case 0x38:
-      fVar2 = fRam00101bca;
-      if (DAT_00101bce == '\0') {
+      fVar2 = adc_monitors[1].value;
+      if (adc_monitors[1].valid == 0) {
         fVar2 = 4.0;
       }
       break;
     case 0x4c:
-      fVar2 = fRam00101c8a;
-      if (cRam00101c8e == '\0') {
+      fVar2 = adc_monitors[5].value;
+      if (adc_monitors[5].valid == 0) {
         fVar2 = 4.0;
       }
       break;
     case 0x60:
-      fVar2 = fRam00101bfa;
-      if (cRam00101bfe == '\0') {
+      fVar2 = adc_monitors[2].value;
+      if (adc_monitors[2].valid == 0) {
         fVar2 = 15.0;
       }
       break;
     case 0x74:
-      fVar2 = fRam00101cba;
-      if (cRam00101cbe == '\0') {
+      fVar2 = adc_monitors[6].value;
+      if (adc_monitors[6].valid == 0) {
         fVar2 = -15.0;
       }
       break;
     case 0x88:
-      fVar2 = fRam00101c2a;
-      if (cRam00101c2e == '\0') {
+      fVar2 = adc_monitors[3].value;
+      if (adc_monitors[3].valid == 0) {
         fVar2 = 250.0;
       }
     }
@@ -37898,7 +37838,7 @@ undefined1 gps_pps_check(void)
   bVar3 = false;
   if (gps.pps_check_disabled == 0) {
     if ((gps_pps_unconfirmed == 0) || (0xe < gps_pps_skipped_checks)) {
-      if ((selftest.running == 0) && ((pll.fpga_loaded != 0 && (DAT_00101b6c == '\0')))) {
+      if ((selftest.running == 0) && ((pll.fpga_loaded != 0 && (fpga_programming == 0)))) {
         if (gps_pps_counting != 0) {
           uVar2 = gpt.pacnt;
           cVar1 = uVar2 - gps_pps_last_count;
@@ -37992,7 +37932,7 @@ undefined1 internal_pps_check(void)
 {
   char cVar1;
   
-  if (((selftest.running == 0) && (pll.fpga_loaded != 0)) && (DAT_00101b6c == '\0')) {
+  if (((selftest.running == 0) && (pll.fpga_loaded != 0)) && (fpga_programming == 0)) {
     if (internal_pps_started != 0) {
       cVar1 = internal_pps_count - internal_pps_last_count;
       internal_pps_last_count = internal_pps_count;
@@ -38163,7 +38103,7 @@ void pps_monitors_reset(void)
 {
   gps_pps_monitor_reset();
   internal_pps_monitor_reset();
-  DAT_00101b71 = 0;
+  outer_oven_enabled = 0;
   return;
 }
 
@@ -55210,7 +55150,7 @@ void efc_history_update(void)
       return;
     }
     if (pll.efc_history.summed_count == 0) {
-      if (DAT_00102541 != '\0') {
+      if (pll_debug_enabled != 0) {
         dVar6 = float_to_double(pll.tfom);
         dVar9 = 0.0;
         iVar4 = 0;
@@ -55263,7 +55203,7 @@ void efc_history_update(void)
       else {
         pll.efc_history.logs[pll.efc_history.stop_ptr] = -1.0;
       }
-      if (DAT_00102541 != '\0') {
+      if (pll_debug_enabled != 0) {
         dVar6 = float_to_double(pll.tfom);
         dVar7 = float_to_double(pll.efc_history.logs[pll.efc_history.stop_ptr]);
         param4 = (uint)pll.efc_history.weights[pll.efc_history.stop_ptr];
@@ -55444,7 +55384,7 @@ void aging_fit(void)
     aging_curve.mode = 3;
     fit_quality(&aging_curve);
   }
-  if (DAT_00102541 != '\0') {
+  if (pll_debug_enabled != 0) {
     if (uVar1 == 1) {
       message = "failed line fit\r\n";
     }
@@ -56816,28 +56756,28 @@ void pll_scpi_command(int param_1,char *param_2)
 void pll_scpi_receive(void)
 
 {
-  char cVar1;
+  uint8_t uVar1;
   ulong uVar2;
   undefined1 auStack_1c [24];
   
-  if (DAT_0010254e == '\0') {
-    if (DAT_0010254f == '\0') {
+  if (pll_scpi_reply_pending == 0) {
+    if (pll_scpi_signal_delay == 0) {
       uVar2 = psos_request_x(pllc_exchange,auStack_1c,1,0);
       if ((uVar2 & 0xff) != 0) {
         return;
       }
-      pll_scpi_command((int)auStack_1c,&DAT_0010254e);
-      cVar1 = '\0';
-      if (DAT_0010254e != '\0') {
+      pll_scpi_command((int)auStack_1c,(char *)&pll_scpi_reply_pending);
+      uVar1 = 0;
+      if (pll_scpi_reply_pending != 0) {
         return;
       }
     }
     else {
-      DAT_0010254f = DAT_0010254f + -1;
-      cVar1 = DAT_0010254e;
+      pll_scpi_signal_delay = pll_scpi_signal_delay - 1;
+      uVar1 = pll_scpi_reply_pending;
     }
-    DAT_0010254e = cVar1;
-    if (DAT_0010254f == '\0') {
+    pll_scpi_reply_pending = uVar1;
+    if (pll_scpi_signal_delay == 0) {
       psos_signal_v(pll_scpi_waiting_task,0x20);
     }
   }
@@ -56854,11 +56794,11 @@ void pll_scpi_receive(void)
 void pll_scpi_complete(int *param_1,char param_2)
 
 {
-  if (DAT_0010254e == '\0') {
+  if (pll_scpi_reply_pending == 0) {
     *param_1 = *param_1 + 1;
   }
   else {
-    DAT_0010254e = '\0';
+    pll_scpi_reply_pending = 0;
     if (param_2 == '\0') {
       status_report_from(6,pll_scpi_source);
     }
@@ -56876,11 +56816,11 @@ void pll_scpi_complete(int *param_1,char param_2)
 void gps_diag_complete(int *param_1)
 
 {
-  if (DAT_0010254e == '\0') {
+  if (pll_scpi_reply_pending == 0) {
     *param_1 = *param_1 + 1;
   }
   else {
-    DAT_0010254e = '\0';
+    pll_scpi_reply_pending = 0;
     psos_signal_v(pll_scpi_waiting_task,0x20);
   }
   return;
@@ -57321,7 +57261,7 @@ override_jmp_00043ae6_case_0:
       task_dmessage("holdover - Error with measurement\r\n");
     }
   }
-  else if (DAT_00102550 != '\0') {
+  else if (gps_reference_good != 0) {
     holdover_ti_add(fStack_10);
     fVar2 = float_divide(fStack_10,10.0);
     float_add_in_place(&holdover_steering.ti_mean,fVar2);
@@ -57411,7 +57351,7 @@ override_jmp_00043ae6_case_0:
     fVar2 = float_divide_reversed(fVar2,10.0);
     float_multiply_in_place(&holdover_steering.ti_mean,fVar2);
   }
-  if (DAT_00102541 != '\0') {
+  if (pll_debug_enabled != 0) {
     get_date_time((uint32_t *)&uStack_c,&uStack_8);
     dVar6 = float_to_double(fVar1);
     uVar11 = (undefined2)((ulonglong)__ghidra_bits(dVar6) >> 0x30);
@@ -57441,7 +57381,7 @@ override_jmp_00043ae6_case_0:
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_HARDWARE_FAILURE;
     goto LAB_00043ee6;
   }
-  if (DAT_00102550 == '\0') {
+  if (gps_reference_good == 0) {
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_GPS;
     goto LAB_00043ee6;
   }
@@ -57510,17 +57450,17 @@ undefined4 clock_check_against_gps(void)
   cVar3 = get_gps_datetime(&local_c,&local_8);
   if (((cVar3 == '\0') && (uVar1 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0)), uVar1 == local_c)) &&
      (local_8 == __ghidra_piece(unsigned int, gps.status, 4))) {
-    DAT_00102552 = false;
+    clock_gps_mismatch = 0;
     uVar2 = 1;
   }
   else {
-    bVar4 = DAT_00102552 != '\0';
+    bVar4 = clock_gps_mismatch != 0;
     if (bVar4) {
       uVar1 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
       clock_set(__ghidra_piece(unsigned int, gps.status, 4),uVar1);
       status_happening('L');
     }
-    DAT_00102552 = !bVar4;
+    clock_gps_mismatch = !bVar4;
     uVar2 = 0;
   }
   return uVar2;
@@ -57549,7 +57489,7 @@ char holdover_recovery(char param_1)
   if ((param_1 == '\0') || ('\x05' < (char)pll.recovery_state)) {
     pll.recovery_state = 0;
     holdover_steering.seconds = 0;
-    DAT_00102552 = '\0';
+    clock_gps_mismatch = 0;
   }
   iVar2 = (int)(char)pll.recovery_state - 5;
   if (4 < (uint)(int)(char)pll.recovery_state && iVar2 != 0) {
@@ -57592,7 +57532,7 @@ override_jmp_00043ff8_case_0:
     if ((pll.recovery_countdown != 0) || (cVar4 = leap_ack_pending(), cVar4 != '\0'))
     goto LAB_0004411a;
     cVar4 = clock_check_against_gps();
-    if ((cVar4 == '\0') && (DAT_00102552 != '\0')) {
+    if ((cVar4 == '\0') && (clock_gps_mismatch != 0)) {
       pll.recovery_countdown = 2;
       goto LAB_0004411a;
     }
@@ -57616,7 +57556,7 @@ override_jmp_00043ff8_case_0:
       cVar3 = '\x01';
       goto LAB_0004411a;
     }
-    if (DAT_00102552 != '\0') goto LAB_0004411a;
+    if (clock_gps_mismatch != 0) goto LAB_0004411a;
   }
   pll.recovery_state = 4;
   pll.leap_ack_requested = 1;
@@ -57628,7 +57568,7 @@ LAB_0004411a:
     pwma_force_level('\x01');
     status_happening('.');
   }
-  if (DAT_00102550 == '\0') {
+  if (gps_reference_good == 0) {
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_GPS;
   }
   if (internal_pps_dead != 0) {
@@ -57753,9 +57693,9 @@ char startup_pll(char param_1)
                       (uint)(byte)uStack_8,dVar6);
         task_dmessage(acStack_70);
       }
-      if ((((DAT_00102550 != '\0') && (cVar4 = leap_ack_pending(), cVar4 == '\0')) &&
-          ((DAT_00102552 != '\0' || (uVar3 = get_gps_time(), (uVar3 & 0xff) == 0xe)))) &&
-         ((cVar4 = clock_check_against_gps(), cVar4 == '\0' && (DAT_00102552 == '\0')))) {
+      if ((((gps_reference_good != 0) && (cVar4 = leap_ack_pending(), cVar4 == '\0')) &&
+          ((clock_gps_mismatch != 0 || (uVar3 = get_gps_time(), (uVar3 & 0xff) == 0xe)))) &&
+         ((cVar4 = clock_check_against_gps(), cVar4 == '\0' && (clock_gps_mismatch == 0)))) {
         pll.leap_ack_requested = 1;
       }
     }
@@ -57889,7 +57829,7 @@ char startup_pll(char param_1)
       fVar1 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,local_74);
       fVar1 = float_add(__ghidra_as(float, CONCAT31(CONCAT21(uVar7,uVar10),uVar11)),fVar1);
       pll.efc = __ghidra_as(float, efc_clamp(fVar1));
-      if (DAT_00102541 != '\0') {
+      if (pll_debug_enabled != 0) {
         get_date_time((uint32_t *)&local_c,&uStack_8);
         dVar6 = float_to_double(local_74);
         uVar9 = (undefined2)((ulonglong)__ghidra_bits(dVar6) >> 0x30);
@@ -57917,7 +57857,7 @@ char startup_pll(char param_1)
       loop_steering.measurement_failed = 0;
     }
   }
-  if (DAT_00102550 == '\0') {
+  if (gps_reference_good == 0) {
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_GPS;
   }
   if (internal_pps_dead != 0) {
@@ -58016,9 +57956,9 @@ undefined1 pll_normal(char param_1)
                       (uint)(byte)uStack_8,dVar6);
         task_dmessage(acStack_79);
       }
-      if ((((DAT_00102550 != '\0') && (cVar5 = leap_ack_pending(), cVar5 == '\0')) &&
-          ((DAT_00102552 != '\0' || (uVar4 = get_gps_time(), (uVar4 & 0xff) == 0xe)))) &&
-         ((cVar5 = clock_check_against_gps(), cVar5 == '\0' && (DAT_00102552 == '\0')))) {
+      if ((((gps_reference_good != 0) && (cVar5 = leap_ack_pending(), cVar5 == '\0')) &&
+          ((clock_gps_mismatch != 0 || (uVar4 = get_gps_time(), (uVar4 & 0xff) == 0xe)))) &&
+         ((cVar5 = clock_check_against_gps(), cVar5 == '\0' && (clock_gps_mismatch == 0)))) {
         pll.leap_ack_requested = 1;
       }
     }
@@ -58076,7 +58016,7 @@ undefined1 pll_normal(char param_1)
       fVar2 = float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient,fVar1);
       fVar2 = float_add(__ghidra_as(float, CONCAT31(CONCAT21(uVar7,uVar10),uVar11)),fVar2);
       pll.efc = __ghidra_as(float, efc_clamp(fVar2));
-      if (DAT_00102541 != '\0') {
+      if (pll_debug_enabled != 0) {
         get_date_time((uint32_t *)&local_c,&uStack_8);
         dVar6 = float_to_double(fVar1);
         uVar9 = (undefined2)((ulonglong)__ghidra_bits(dVar6) >> 0x30);
@@ -58104,7 +58044,7 @@ undefined1 pll_normal(char param_1)
       loop_steering.measurement_failed = 0;
     }
   }
-  if (DAT_00102550 == '\0') {
+  if (gps_reference_good == 0) {
     pll.hold_causes = pll.hold_causes | HOLD_CAUSE_GPS;
   }
   if (internal_pps_dead != 0) {
@@ -58190,7 +58130,7 @@ undefined1 sync_perform(float param_1)
   }
   sync_request(3,1);
   pll.sync_requested = 0;
-  if (DAT_00102541 != '\0') {
+  if (pll_debug_enabled != 0) {
     task_dmessage("Peforming sync\r\n");
   }
   return 1;
@@ -58379,7 +58319,7 @@ LAB_0004536e:
         fVar1 = float_multiply(pll.fine_d,efc_gains.reciprocal_fine);
         fVar1 = float_subtract_reversed(fVar1,pll.efc);
         pll.efc = __ghidra_as(float, efc_clamp(fVar1));
-        if (DAT_00102541 != '\0') {
+        if (pll_debug_enabled != 0) {
           iVar2 = float_to_integer(pll.efc);
           uVar5 = (undefined2)((uint)iVar2 >> 0x10);
           uVar6 = (undefined1)((uint)iVar2 >> 8);
@@ -58549,7 +58489,7 @@ char fine(void)
           uVar12 = SUB41(fVar2,0);
           fVar2 = unsigned_to_float((uint)pll.fine_index);
           _DAT_00102158 = float_divide(__ghidra_as(float, CONCAT31(CONCAT21(uVar8,uVar11),uVar12)),fVar2);
-          if (DAT_00102541 != '\0') {
+          if (pll_debug_enabled != 0) {
             dVar6 = float_to_double(_DAT_00102158);
             uVar10 = (undefined2)((ulonglong)__ghidra_bits(dVar6) >> 0x30);
             uVar11 = (undefined1)((ulonglong)__ghidra_bits(dVar6) >> 0x28);
@@ -58640,7 +58580,7 @@ LAB_00045812:
             fVar2 = float_add(fVar2,pll.efc);
             pll.efc = __ghidra_as(float, efc_clamp(fVar2));
             pll.frequency_adjusted = 1;
-            if (DAT_00102541 != '\0') {
+            if (pll_debug_enabled != 0) {
               iVar1 = float_to_integer(pll.efc);
               uVar8 = (undefined2)((uint)iVar1 >> 0x10);
               uVar11 = (undefined1)((uint)iVar1 >> 8);
@@ -58745,7 +58685,7 @@ switchD_000453f0_caseD_0:
 void time_zone_changed(void)
 
 {
-  DAT_00102551 = 1;
+  time_zone_change_pending = 1;
   return;
 }
 
@@ -59038,7 +58978,7 @@ undefined1 powerup(char param_1)
         pll.powerup_state = 2;
         uVar7 = gpt.portgp;
         gpt.portgp = uVar7 | 0x20;
-        DAT_00101b71 = 1;
+        outer_oven_enabled = 1;
       }
       break;
     case 0x56:
@@ -59049,7 +58989,7 @@ undefined1 powerup(char param_1)
     case 0x74:
       interval_next_reading('\x01',(undefined4 *)0x0);
       pll.powerup_reference_lost = 0;
-      if ((((DAT_00102550 != '\0') && (internal_pps_dead == 0)) &&
+      if ((((gps_reference_good != 0) && (internal_pps_dead == 0)) &&
           ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) ==
            ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
              HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|
@@ -59073,7 +59013,7 @@ undefined1 powerup(char param_1)
       cVar4 = fine();
       if (cVar4 == '\x01') {
         pll.tfom = 2e-06;
-        if ((DAT_00102550 != '\0') && (internal_pps_dead == 0)) {
+        if ((gps_reference_good != 0) && (internal_pps_dead == 0)) {
           uVar2 = oncore_date_pack(__ghidra_piece(unsigned int, gps.status, 0));
           clock_set(__ghidra_piece(unsigned int, gps.status, 4),uVar2);
           status_happening('&');
@@ -59099,7 +59039,7 @@ undefined1 powerup(char param_1)
         cVar4 = leap_ack_pending();
         if (cVar4 == '\0') {
           cVar4 = clock_check_against_gps();
-          if ((cVar4 == '\0') && (DAT_00102552 != '\0')) {
+          if ((cVar4 == '\0') && (clock_gps_mismatch != 0)) {
             pll.powerup_countdown = 2;
           }
           else {
@@ -59139,7 +59079,7 @@ override_jmp_00045f06_case_0:
     }
   }
   if (('\x03' < (char)pll.powerup_state) &&
-     (((DAT_00102550 == '\0' || (internal_pps_dead != 0)) ||
+     (((gps_reference_good == 0 || (internal_pps_dead != 0)) ||
       ((pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) !=
        ~(HOLD_CAUSE_GPS_COMMAND_MONITOR|HOLD_CAUSE_1PPS_SELECTION|HOLD_CAUSE_TEMPORARY_MODE|
          HOLD_CAUSE_HARDWARE_FAILURE|HOLD_CAUSE_TI_LIMIT_EXCEEDED|HOLD_CAUSE_TI_ERROR|HOLD_CAUSE_GPS
@@ -59187,7 +59127,7 @@ undefined1 pll_check_reference(char param_1)
       }
       else {
         clock_set_from_reference();
-        if (DAT_00102550 == '\0') {
+        if (gps_reference_good == 0) {
           pll.hold_causes = pll.hold_causes | HOLD_CAUSE_GPS;
         }
         if (internal_pps_dead != 0) {
@@ -59217,7 +59157,7 @@ undefined1 pll_check_reference(char param_1)
       }
       else {
         clock_set_from_reference();
-        if (DAT_00102550 == '\0') {
+        if (gps_reference_good == 0) {
           pll.hold_causes = pll.hold_causes | HOLD_CAUSE_GPS;
         }
         if (internal_pps_dead != 0) {
@@ -59237,7 +59177,7 @@ undefined1 pll_check_reference(char param_1)
 override_jmp_000461bc_case_0:
     uVar2 = gpt.portgp;
     gpt.portgp = uVar2 | 0x20;
-    DAT_00101b71 = 1;
+    outer_oven_enabled = 1;
     interval_rearm('\0');
     pll.reference_check_state = 1;
   }
@@ -59261,15 +59201,15 @@ void clock_set_from_reference(void)
   
   bVar2 = fpga_read_seconds();
   bVar2 = bVar2 & 0xf;
-  DAT_0010258c = DAT_0010258c & 0xf;
-  if (bVar2 <= DAT_0010258c) {
+  restart_reference_seconds = restart_reference_seconds & 0xf;
+  if (bVar2 <= restart_reference_seconds) {
     bVar2 = bVar2 + 0x10;
   }
   uVar1 = get_uptime();
   if (uVar1 < _DAT_00102594) {
     _DAT_00102594 = 0;
   }
-  local_14.time = (_DAT_00102594 - uVar1) + ((uint)bVar2 - (uint)DAT_0010258c);
+  local_14.time = (_DAT_00102594 - uVar1) + ((uint)bVar2 - (uint)restart_reference_seconds);
   if ((int)local_14.time < 0) {
     local_14.time = 0;
   }
@@ -59553,7 +59493,7 @@ undefined1 gpsx_send(undefined2 param_1,undefined1 param_2,int param_3,char para
       gps_ack_code = 1;
       uVar3 = 1;
       _DAT_00102598 = _DAT_00102598 + 1;
-      _DAT_00102582 = 0;
+      gps_ack_wait_count = 0;
     }
   }
   return uVar3;
@@ -59823,7 +59763,7 @@ switchD_0004688c_caseD_0:
     }
     break;
   case 0xe:
-    if (DAT_00102589 != '\0') goto LAB_00046d06;
+    if (douglas_stop_requested != 0) goto LAB_00046d06;
     if (gps.average_count != 0) {
       _DAT_00101e78 =
            double_to_integer(__ghidra_as(double, CONCAT44(__ghidra_piece(unsigned int, gps.average_latitude, 0),__ghidra_piece(unsigned int, gps.average_latitude, 4)))
@@ -59838,19 +59778,19 @@ switchD_0004688c_caseD_0:
         DAT_00101e77 = '\x01';
       }
     }
-    if (((DAT_00101e77 != '\0') && (DAT_0010258a != '\0')) ||
+    if (((DAT_00101e77 != '\0') && (douglas_finish_requested != 0)) ||
        ((nv_settings.douglas_duration_infinite == 0 &&
         ((uint)nv_settings.douglas_duration <= gps.average_count)))) {
       nv_settings.position[0] = _DAT_00101e78;
       nv_settings.position[1] = _DAT_00101e7c;
       nv_settings.position[2] = _DAT_00101e80;
       nv_settings.douglas_state = 1;
-      nv_save(DAT_0010258b);
+      nv_save(douglas_finish_nv_argument);
       pll.gps_init_state = 0xf;
     }
     goto LAB_00046d8a;
   case 0xf:
-    if (DAT_00102589 == '\0') {
+    if (douglas_stop_requested == 0) {
       local_64 = nv_settings.position[0];
       local_60 = nv_settings.position[1];
       local_5c = nv_settings.position[2];
@@ -59868,7 +59808,7 @@ switchD_0004688c_caseD_0:
     if (cVar1 == '\0') {
       return;
     }
-    if (DAT_00102589 == '\0') {
+    if (douglas_stop_requested == 0) {
       if (gps_ack_code == 0) {
         pll.gps_init_state = 0x11;
         log_event(4);
@@ -59884,22 +59824,22 @@ switchD_0004688c_caseD_0:
     }
 LAB_00046d06:
     pll.gps_init_state = 0x11;
-    DAT_00102589 = '\0';
+    douglas_stop_requested = 0;
     break;
   case 0x11:
-    if (DAT_00102589 != '\0') {
-      DAT_00102589 = '\0';
+    if (douglas_stop_requested != 0) {
+      douglas_stop_requested = 0;
     }
-    if (DAT_0010258a != '\0') {
-      DAT_0010258a = '\0';
-      DAT_0010258b = 4;
+    if (douglas_finish_requested != 0) {
+      douglas_finish_requested = 0;
+      douglas_finish_nv_argument = 4;
     }
-    if (DAT_00102588 == '\0') {
+    if (douglas_start_requested == 0) {
       return;
     }
     pll.gps_init_state = 0xe;
 LAB_00046d8a:
-    DAT_00102588 = '\0';
+    douglas_start_requested = 0;
   }
   return;
 }
@@ -59949,10 +59889,10 @@ void gps_leap_sequence(void)
       }
       break;
     case 0x8c:
-      if (DAT_0010258e != '\0') {
+      if (leap_recheck_requested != 0) {
         pll.leap_check_timer = 0;
         pll.leap_check_state = 1;
-        DAT_0010258e = 0;
+        leap_recheck_requested = 0;
         return;
       }
       pll.leap_check_timer = pll.leap_check_timer + 1;
@@ -60154,7 +60094,7 @@ void gps_command_send(void)
     uVar2 = 0x13;
     break;
   case 7:
-    DAT_00101b6a = (undefined1)gps_command.arguments[0];
+    gps_status_print_interval = (uint8_t)gps_command.arguments[0];
   case 0:
 switchD_000470d4_caseD_0:
     bVar1 = false;
@@ -60251,7 +60191,6 @@ switchD_000470d4_caseD_0:
 
 /* 000471fc */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* WARNING: Unknown calling convention */
 /* the GPS diagnostic reset and test; "Error in DIAG GPS RST ack", "TST ack" */
 
@@ -60265,7 +60204,7 @@ undefined1 gps_diag_sequence(char param_1)
   
   uVar3 = 0;
   if ((param_1 == '\0') || ('\x05' < (char)pll.gps_diag_state)) {
-    if ((_DAT_00102590 == 0) || (_DAT_00102590 == 10)) {
+    if ((selftest_number == 0) || (selftest_number == 10)) {
       pll.gps_diag_state = 0;
     }
     else {
@@ -60340,8 +60279,8 @@ undefined1 gps_diag_sequence(char param_1)
       pll.gps_diag_state = 5;
       break;
     case 0x14c:
-      selftest_run(_DAT_00102590);
-      DAT_0010258d = 0;
+      selftest_run(selftest_number);
+      selftest_requested = 0;
       gps_diag_complete(&DAT_001025a4);
       uVar3 = 1;
     }
@@ -60388,11 +60327,11 @@ void pll_init(void)
   pll.manual = 0;
   pll.ti_limit_override = 0;
   pll.fpga_load_pending = 1;
-  DAT_0010258e = 0;
+  leap_recheck_requested = 0;
   pll.tfom = 1.0;
   pll.sync_requested = 0;
-  DAT_00102550 = 0;
-  DAT_00102551 = 0;
+  gps_reference_good = 0;
+  time_zone_change_pending = 0;
   DAT_00101e88 = 0;
   pwma_force_level('\0');
   pll.frequency_tolerance = 1e-07;
@@ -60419,7 +60358,7 @@ void pll_restart(void)
   pll.loop_running = 1;
   if (gps_ack_awaited != 0) {
     if (gps_ack_ready == 0) {
-      DAT_00102587 = 1;
+      gps_ack_abandoned = 1;
     }
     else {
       gps_ack_awaited = 0;
@@ -60482,27 +60421,27 @@ void pllp_task(void)
   DAT_0010207a = 0;
   DAT_0010253e = 0;
   DAT_0010253f = 0;
-  DAT_00102540 = '\0';
-  _DAT_00102582 = 0;
+  pll_restart_requested = 0;
+  gps_ack_wait_count = 0;
   gps_ack_code = 1;
-  DAT_0010254e = 0;
-  DAT_0010254f = 0;
+  pll_scpi_reply_pending = 0;
+  pll_scpi_signal_delay = 0;
   gps_ack_ready = 0;
   gps_ack_awaited = 0;
   local_22 = PLL_STAGE_INVALID;
-  DAT_00102587 = '\0';
-  DAT_00102588 = 0;
-  DAT_00102589 = 0;
-  DAT_0010258a = 0;
-  DAT_0010258b = 4;
-  DAT_0010258d = '\0';
-  DAT_00102542 = '\0';
-  DAT_00102543 = 0;
-  DAT_00102541 = 0;
-  DAT_0010258c = pll.reference_seconds;
+  gps_ack_abandoned = 0;
+  douglas_start_requested = 0;
+  douglas_stop_requested = 0;
+  douglas_finish_requested = 0;
+  douglas_finish_nv_argument = 4;
+  selftest_requested = 0;
+  clock_change_applied = 0;
+  clock_change_armed = 0;
+  pll_debug_enabled = 0;
+  restart_reference_seconds = pll.reference_seconds;
   _DAT_00102594 = pll.reference_uptime;
   interval_mean_flag = 0;
-  DAT_00102552 = 0;
+  clock_gps_mismatch = 0;
   efc_gain_set(6.25e-13);
   if (pll.stage == PLL_STAGE_INVALID) {
     pll.stage = PLL_STAGE_POWERUP;
@@ -60543,12 +60482,12 @@ void pllp_task(void)
   es_enabled = 1;
   pll.loop_running = 1;
   do {
-    if (DAT_00102540 != '\0') {
+    if (pll_restart_requested != 0) {
       pll_restart();
       local_22 = PLL_STAGE_INVALID;
-      DAT_00102540 = '\0';
+      pll_restart_requested = 0;
     }
-    if (DAT_0010258d != '\0') {
+    if (selftest_requested != 0) {
       pll.stage = PLL_STAGE_DIAG;
     }
     if (pll.stage == local_22) {
@@ -60559,24 +60498,24 @@ void pllp_task(void)
       local_22 = pll.stage;
       if (gps_ack_awaited == 5) {
         if (gps_ack_ready == 0) {
-          DAT_00102587 = '\x01';
+          gps_ack_abandoned = 1;
         }
         else {
           gps_ack_awaited = 0;
         }
       }
       pll.sync_requested = 0;
-      DAT_00102552 = 0;
+      clock_gps_mismatch = 0;
     }
     if ((gps.reference_qualified == 0) || (gps_pps_dead != 0)) {
-      if (DAT_00102550 != '\0') {
-        DAT_00102550 = '\0';
+      if (gps_reference_good != 0) {
+        gps_reference_good = 0;
         cVar11 = '\x1f';
         goto LAB_00047758;
       }
     }
-    else if (DAT_00102550 == '\0') {
-      DAT_00102550 = '\x01';
+    else if (gps_reference_good == 0) {
+      gps_reference_good = 1;
       cVar11 = '\x1e';
 LAB_00047758:
       status_happening(cVar11);
@@ -60590,7 +60529,7 @@ LAB_00047758:
     switch((&WORD_00047786)[(short)iVar1]) {
     case 0x12:
       if (!bVar2) {
-        _DAT_00102546 = 0;
+        pll_lock = 0;
         pll_stage_status();
         task_dmessage("PLL powerup\r\n");
       }
@@ -60607,7 +60546,7 @@ LAB_000477b2:
       if (bVar2 == false) {
         pll_stage_status();
         task_dmessage("Went into powerup recovery\r\n");
-        DAT_0010258e = 1;
+        leap_recheck_requested = 1;
       }
       cVar11 = pll_check_reference(bVar2);
       if (cVar11 == '\x01') {
@@ -60628,7 +60567,7 @@ LAB_0004782e:
       break;
     case 0xc0:
       if (bVar2 == false) {
-        _DAT_00102546 = 1;
+        pll_lock = 1;
         pll_stage_status();
         task_dmessage("Went into holdover recovery\r\n");
       }
@@ -60640,7 +60579,7 @@ LAB_0004782e:
       break;
     case 0x100:
       if (bVar2 == false) {
-        _DAT_00102546 = 1;
+        pll_lock = 1;
         pll_stage_status();
         task_dmessage("Went into PLL startup\r\n");
       }
@@ -60691,10 +60630,10 @@ LAB_00047940:
     pll.reference_uptime = get_uptime();
     watchdog_pll = watchdog_pll + 1;
     status_summary_update();
-    if (DAT_00102542 != '\0') {
+    if (clock_change_applied != 0) {
       nv_save(4);
-      DAT_00102542 = '\0';
-      DAT_00102543 = 0;
+      clock_change_applied = 0;
+      clock_change_armed = 0;
     }
     uVar3 = psos_request_x(plla_exchange,auStack_20,1,0);
     if ((char)uVar3 == '\0') {
@@ -60707,8 +60646,8 @@ LAB_00047940:
         }
         gps_ack_code = local_17;
         gps_ack_ready = 1;
-        _DAT_00102582 = 0;
-        if (DAT_00102587 == '\0') {
+        gps_ack_wait_count = 0;
+        if (gps_ack_abandoned == 0) {
           if (gps_ack_awaited == 4) {
             gps_ack_awaited = 0;
             task_dmessage("GPS command completed\r\n");
@@ -60716,7 +60655,7 @@ LAB_00047940:
         }
         else {
           gps_ack_awaited = 0;
-          DAT_00102587 = '\0';
+          gps_ack_abandoned = 0;
         }
       }
       else if (local_18 == '\x02') {
@@ -60728,14 +60667,14 @@ LAB_00047940:
       DAT_0010259c = DAT_0010259c + 1;
     }
     if (gps_ack_awaited != 0) {
-      _DAT_00102582 = _DAT_00102582 + 1;
-      if ((_DAT_00102582 < 0xb) || (gps_ack_ready == 0)) {
-        if (0x4b0 < _DAT_00102582) {
+      gps_ack_wait_count = gps_ack_wait_count + 1;
+      if ((gps_ack_wait_count < 0xb) || (gps_ack_ready == 0)) {
+        if (0x4b0 < gps_ack_wait_count) {
           gps_ack_code = 8;
           gps_ack_ready = 1;
-          _DAT_00102582 = 0;
+          gps_ack_wait_count = 0;
           task_dmessage("GPS acknowledgment timed out\r\n");
-          if (DAT_00102587 == '\0') {
+          if (gps_ack_abandoned == 0) {
             if (gps_ack_awaited == 4) {
               gps_ack_awaited = 0;
               task_dmessage("GPS command completed\r\n");
@@ -60743,7 +60682,7 @@ LAB_00047940:
           }
           else {
             gps_ack_awaited = 0;
-            DAT_00102587 = '\0';
+            gps_ack_abandoned = 0;
           }
         }
       }
@@ -63771,9 +63710,9 @@ uint32_t raim_monitor(void)
     case 8:
       if (gps.raim.solution_status != ONCORE_RAIM_OK) {
         gps.raim_assessment = 2;
-        uRam00101b4e = get_uptime();
+        raim_suspect_time = get_uptime();
         gps_counts.raim_detected = gps_counts.raim_detected + 1;
-        return uRam00101b4e;
+        return raim_suspect_time;
       }
       break;
     case 0x22:
@@ -63781,15 +63720,15 @@ uint32_t raim_monitor(void)
         return uVar1;
       }
       gps.raim_assessment = 2;
-      uRam00101b4e = get_uptime();
+      raim_suspect_time = get_uptime();
       gps_counts.raim_detected = gps_counts.raim_detected + 1;
-      return uRam00101b4e;
+      return raim_suspect_time;
     case 0x3e:
       if (gps.raim.solution_status != ONCORE_RAIM_OK) {
-        cVar3 = uptime_elapsed((uint *)0x101b4e,(int *)&uStack_8);
+        cVar3 = uptime_elapsed(&raim_suspect_time,(int *)&uStack_8);
         if (cVar3 == '\0') {
-          uRam00101b4e = get_uptime();
-          return uRam00101b4e;
+          raim_suspect_time = get_uptime();
+          return raim_suspect_time;
         }
         if (uStack_8 < 4) {
           return uStack_8 - 4;
@@ -64009,7 +63948,7 @@ void command_monitor(void)
 {
   int iVar1;
   bool bVar2;
-  undefined1 *puVar3;
+  uint8_t *puVar3;
   char cVar4;
   uint uStack_8;
   
@@ -64083,26 +64022,26 @@ LAB_0004b4d2:
       if (!bVar2) goto LAB_0004b754;
       gps.status_last_time = 0xffffff;
       gps.status_repeat_count = 0;
-      DAT_00101b54 = '\0';
+      status_message_arrived = 0;
       gps.status_monitor_time = get_uptime();
-      puVar3 = &DAT_00101b55;
+      puVar3 = &traim_message_arrived;
       break;
     case 0x2a:
       if (bVar2) {
         cVar4 = uptime_elapsed(&gps.status_monitor_time,(int *)&uStack_8);
         if (((cVar4 == '\0') || (uStack_8 <= (uint)gps.status_rate * 0xf)) &&
            ((DAT_0010142a < 7 && (gps.status_repeat_count < 0x2d)))) {
-          if ((DAT_00101b54 == '\0') && (DAT_00101b55 == '\0')) {
+          if ((status_message_arrived == 0) && (traim_message_arrived == 0)) {
             if (cVar4 == '\0') {
-              DAT_00101b54 = '\0';
+              status_message_arrived = 0;
               gps.status_monitor_time = get_uptime();
             }
           }
           else {
-            if (DAT_00101b54 != '\0') {
+            if (status_message_arrived != 0) {
               gps.status_monitor_failed = 0;
               gps.status_received = 1;
-              DAT_00101b54 = '\0';
+              status_message_arrived = 0;
               gps.status_monitor_time = get_uptime();
               gps.status_monitor_timed_out = 0;
               if (__ghidra_piece(unsigned int, gps.status, 4) == gps.status_last_time) {
@@ -64122,9 +64061,9 @@ LAB_0004b4d2:
                 }
               }
             }
-            if (DAT_00101b55 != '\0') {
+            if (traim_message_arrived != 0) {
               gps.raim_received = 1;
-              DAT_00101b55 = '\0';
+              traim_message_arrived = 0;
               DAT_0010142a = 0;
             }
           }
@@ -64151,9 +64090,9 @@ LAB_0004b4d2:
       gps.status_monitor_timed_out = 1;
       gps.status_last_time = 0xffffff;
       gps.status_repeat_count = 0;
-      DAT_00101b54 = '\0';
+      status_message_arrived = 0;
       gps.status_monitor_time = get_uptime();
-      DAT_00101b55 = '\0';
+      traim_message_arrived = 0;
       puVar3 = &DAT_0010142a;
     }
     *puVar3 = 0;
@@ -64924,7 +64863,7 @@ void gpsm_task(void)
   char local_33;
   char cStack_32;
   char cStack_31;
-  short *psStack_30;
+  int32_t *piStack_30;
   char cStack_2c;
   byte bStack_2a;
   char acStack_29 [25];
@@ -65010,15 +64949,15 @@ void gpsm_task(void)
             switch((&WORD_0004c0c8)[(short)iVar4]) {
             case 6:
               if (DAT_001011c4 == '\0') {
-                DAT_00101b56 = sStack_a0;
-                DAT_00101b58 = uStack_9e;
+                gps_request_step.code = sStack_a0;
+                gps_request_step.argument_mode = uStack_9e;
                 bVar7 = 0;
                 do {
-                  *(undefined4 *)(&DAT_00101b5a + (uint)bVar7 * 4) =
-                       *(undefined4 *)(CONCAT22(uStack_9c,uStack_9a) + (uint)bVar7 * 4);
+                  gps_request_step.arguments[bVar7] =
+                       *(int32_t *)(CONCAT22(uStack_9c,uStack_9a) + (uint)bVar7 * 4);
                   bVar7 = bVar7 + 1;
                 } while (bVar7 < 4);
-                ppuStack_90 = &PTR_DAT_00050cc2;
+                ppuStack_90 = &PTR_gps_request_step_00050cc2;
                 bStack_10 = 0;
                 bStack_2a = 0;
                 DAT_0010139c = '\x01';
@@ -65029,8 +64968,8 @@ void gpsm_task(void)
               if (DAT_001011c4 == '\0') {
                 bVar7 = 0;
                 do {
-                  *(undefined4 *)(&DAT_00101b5a + (uint)bVar7 * 4) =
-                       *(undefined4 *)(CONCAT22(uStack_9c,uStack_9a) + (uint)bVar7 * 4);
+                  gps_request_step.arguments[bVar7] =
+                       *(int32_t *)(CONCAT22(uStack_9c,uStack_9a) + (uint)bVar7 * 4);
                   bVar7 = bVar7 + 1;
                 } while (bVar7 < 4);
                 ppuStack_90 = (undefined **)gps_script_lookup(sStack_a0);
@@ -65070,12 +65009,12 @@ LAB_0004c17a:
             if (cStack_31 == '\x02') {
               cStack_31 = '\0';
               iVar4 = long_array_get((int)(psVar1 + 2),0);
-              psStack_30 = (short *)(&DAT_00101b5a + iVar4 * 4);
+              piStack_30 = gps_request_step.arguments + iVar4;
             }
             else {
-              psStack_30 = psVar1 + 2;
+              piStack_30 = (int32_t *)(psVar1 + 2);
             }
-            sVar5 = gps_request_build(sVar2,cStack_31,(int)psStack_30,&DAT_001011c6);
+            sVar5 = gps_request_build(sVar2,cStack_31,(int)piStack_30,&DAT_001011c6);
             if (sVar5 < 1) {
               if (sVar5 < 0) goto LAB_0004c1e6;
               if (uStack_9e == 0) {
@@ -66481,11 +66420,13 @@ byte * oncore_position_message(byte *param_1,byte *param_2)
       gps.average_count = gps.average_count + 1;
       gps.surveying = 1;
     }
-    if ((DAT_00101b6a != 0) && (DAT_00101b6b = DAT_00101b6b + 1, DAT_00101b6a <= DAT_00101b6b)) {
-      DAT_00101b6b = 0;
+    if ((gps_status_print_interval != 0) &&
+       (gps_status_print_count = gps_status_print_count + 1,
+       gps_status_print_interval <= gps_status_print_count)) {
+      gps_status_print_count = 0;
       gps_debug_status();
     }
-    DAT_00101b54 = 1;
+    status_message_arrived = 1;
   }
   else {
     channels_reset();
@@ -66613,14 +66554,14 @@ void oncore_extension_message(byte *param_1,byte *param_2)
 
 /* 0004f85c */
 
-/* decodes @@Bn, the Time RAIM setup and status, and marks it received at 0x101b55
+/* decodes @@Bn, the Time RAIM setup and status, and sets traim_message_arrived
    docs/firmware/oncore */
 
 void oncore_traim_message(byte *param_1,byte *param_2)
 
 {
   oncore_decode_fields(param_1,param_2,"\x02");
-  DAT_00101b55 = 1;
+  traim_message_arrived = 1;
   return;
 }
 

@@ -453,6 +453,32 @@ typedef struct gps_command_mailbox {
 	int32_t request;       /* +0x12: code 0x20's request */
 } gps_command_mailbox;
 
+/* One of the health monitor's eight ADC monitors, adc_monitors at
+ * 0x101b72 to 0x101cf1, by hmon_check_supplies' step: temperature,
+ * double oven, +15V, oscillator current, 5V, oven, -15V and antenna
+ * current.  monitor_average_add keeps a 10-sample moving average in it,
+ * monitor_filter_add (the oscillator current's) a 0.9/0.1 filter;
+ * adc_average reads it, and monitors_reset clears +0x2c to +0x2f. */
+typedef struct adc_monitor {
+	float samples[10];         /* +0x00: the last ten readings; monitor_average_add only */
+	float value;               /* +0x28: their mean, or the filtered value */
+	uint8_t valid;             /* +0x2c: set once ten readings are in, or the filter's first; adc_average returns a default and monitor_out_of_range false while clear */
+	uint8_t sample_index;      /* +0x2d: where the next reading goes, 0 to 9 */
+	uint8_t out_of_tolerance;  /* +0x2e: hmon_check_supplies' "is out of tolerance" state; double oven, +15V, 5V and -15V only */
+	uint8_t out_of_range_count; /* +0x2f: monitor_out_of_range's run of readings outside the range, held at its limit */
+} adc_monitor;
+
+/* A GPS script's step, as gpsm_task runs it.  The one at 0x101b56,
+ * gps_request_step, is in RAM: the one-step script at 0x50cc2 points at
+ * it, and gpsm_task fills it from a request gps_request_class puts in
+ * class 0, a message. */
+typedef struct gps_script_step {
+	int16_t code;          /* +0x00: the request code gps_request_build is given */
+	uint8_t argument_mode; /* +0x02: 2 takes the arguments from gps_request_step's, from the index in arguments[0]; otherwise given to gps_request_build */
+	uint8_t field_03;
+	int32_t arguments[4];  /* +0x04: gps_request_step's are also a class 1 request's, a script's, and raim_request_arguments' */
+} gps_script_step;
+
 /* The self-tests' results, at 0x100c24: each test's word nonzero if it
  * failed, and what selftest_run reports for test n, 0 to 13.  The
  * start-up clear begins at 0x100c3c, so the reset code's results

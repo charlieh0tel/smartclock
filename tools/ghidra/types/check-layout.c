@@ -120,6 +120,16 @@ CHECK_FIELD(efc_range_state, near_end_checks, 0x101cf6 - 0x101cf4);
 CHECK_SIZE(gps_command_mailbox, 0x102582 - 0x10256c);
 CHECK_FIELD(gps_command_mailbox, arguments, 0x10256e - 0x10256c);
 CHECK_FIELD(gps_command_mailbox, request, 0x10257e - 0x10256c);
+CHECK_SIZE(adc_monitor, 0x101ba2 - 0x101b72);
+CHECK_SIZE(adc_monitor[8], 0x101cf2 - 0x101b72);
+CHECK_FIELD(adc_monitor, value, 0x101b9a - 0x101b72);
+CHECK_FIELD(adc_monitor, valid, 0x101b9e - 0x101b72);
+CHECK_FIELD(adc_monitor, sample_index, 0x101b9f - 0x101b72);
+CHECK_FIELD(adc_monitor, out_of_tolerance, 0x101bd0 - 0x101ba2);
+CHECK_FIELD(adc_monitor, out_of_range_count, 0x101ba1 - 0x101b72);
+CHECK_SIZE(gps_script_step, 0x101b6a - 0x101b56);
+CHECK_FIELD(gps_script_step, argument_mode, 0x101b58 - 0x101b56);
+CHECK_FIELD(gps_script_step, arguments, 0x101b5a - 0x101b56);
 
 CHECK_SIZE(selftest_results, 0x100c68 - 0x100c24);
 CHECK_FIELD(selftest_results, uart, 0x100c2e - 0x100c24);

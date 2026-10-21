@@ -713,7 +713,7 @@
 {"address":"0002353a","name":"fpga_verify_even","note":"the same for the even frames; \"even: inv read\"","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":1}]}
 {"address":"0002384a","name":"fpga_verify_chip","note":"verifies one chip through the port F lines; \"chip %1d failed compare\"","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":1},{"offset":8,"size":1}]}
 {"address":"00023980","name":"fpga_verify","note":"fpga_verify_chip for chip 0 or 1","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":1}]}
-{"address":"00023c2a","name":"monitors_reset","note":"clears the health monitor's seven monitors at 0x101b9e","convention":"unknown"}
+{"address":"00023c2a","name":"monitors_reset","note":"clears all eight adc_monitors' valid, sample_index, out_of_tolerance and out_of_range_count, and hmon_supply_step","convention":"unknown"}
 {"address":"00023c5a","name":"monitor_average_add","note":"adds a reading to a monitor's 10-sample moving average","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00023cc4","name":"monitor_filter_add","note":"adds a reading to a monitor's filter, 0.9 of the old and 0.1 of the new","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"00023d28","name":"monitor_out_of_range","note":"counts a monitor's readings outside its range, true once past a limit","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4},{"offset":16,"size":1}]}
@@ -1504,7 +1504,7 @@
 {"address":"0004f6be","name":"oncore_almanac_status_message","note":"decodes @@Bd, the almanac status","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0004f6d8","name":"oncore_corrections_message","note":"decodes the range corrections and averages those of the satellites in use, and their deviation","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0004f842","name":"oncore_extension_message","note":"decodes @@Bk, the position/status/data extension","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
-{"address":"0004f85c","name":"oncore_traim_message","note":"decodes @@Bn, the Time RAIM setup and status, and marks it received at 0x101b55","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
+{"address":"0004f85c","name":"oncore_traim_message","note":"decodes @@Bn, the Time RAIM setup and status, and sets traim_message_arrived","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0004f87e","name":"oncore_receiver_id_message","note":"decodes the receiver ID, @@Cj, and marks it received","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0004f8a0","name":"oncore_checksum","note":"the XOR of a message's bytes","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"0004f8b6","name":"gps_parse_options","note":"sets gps.raim_option when the receiver ID's \"OPTIONS LIST \" has an I","convention":"unknown"}

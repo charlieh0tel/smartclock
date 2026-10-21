@@ -26,7 +26,6 @@ __ghidra_100bca = 0x100bca;
 __ghidra_100bce = 0x100bce;
 __ghidra_100bd0 = 0x100bd0;
 __ghidra_100bd2 = 0x100bd2;
-__ghidra_100c24 = 0x100c24;
 __ghidra_100c26 = 0x100c26;
 __ghidra_100c28 = 0x100c28;
 __ghidra_100c2a = 0x100c2a;

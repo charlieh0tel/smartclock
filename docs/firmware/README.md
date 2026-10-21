@@ -610,7 +610,8 @@ decompiler wrote it, and reported.
   (`psos_ident`'s id, `psos_my_pid`); the bridge keeps each listed
   register in `__ghidra_result_d0` and the like right after its `jsr`,
   and each `extraout_` variable the C reads is assigned from it after
-  the call.
+  the call, as is an argument in such a register the C reads again
+  after the call, which the decompiler takes the call to keep.
 - A negative constant an equality test compares with a narrower
   unsigned operand is that operand's value, `!= 0xff`: the decompiler
   prints the byte as -1, but C promotes the operand to int

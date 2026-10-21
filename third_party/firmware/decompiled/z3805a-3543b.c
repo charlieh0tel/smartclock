@@ -7028,10 +7028,10 @@ __regcall void mutex_init(int name /* d0 */,void *mutex /* a1 */)
   bool bVar1;
   
   bVar1 = false;
-  ({ __auto_type __c = psos_call('\x15',name,in_D1,unaff_D2,unaff_D3,in_A0,mutex); bVar1 = __ghidra_flag(4); __c; });
+  ({ __auto_type __c = ({ __auto_type __c = psos_call('\x15',name,in_D1,unaff_D2,unaff_D3,in_A0,mutex); bVar1 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
   if (!bVar1) {
     bVar1 = false;
-    ({ __auto_type __c = psos_call('\x14',d0,0,0,unaff_D3,a0,a1); bVar1 = __ghidra_flag(4); __c; });
+    ({ __auto_type __c = ({ __auto_type __c = psos_call('\x14',d0,0,0,unaff_D3,a0,a1); bVar1 = __ghidra_flag(4); __c; }); unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
     if (bVar1) {
       mutex_clear(mutex_00);
       *(void **)((int)a1_00 + 4) = a0_00;
@@ -7107,7 +7107,7 @@ __regcall int mutex_acquire(void *mutex /* a1 */)
   int extraout_A1;
   bool bVar2;
   
-  iVar1 = ({ __auto_type __c = psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
+  iVar1 = ({ __auto_type __c = psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
   if (extraout_A0 == *(int *)((int)a1 + 8)) {
     iVar1 = CONCAT22((short)((uint)iVar1 >> 0x10),0x80);
     *(int *)((int)a1 + 0xc) = *(int *)((int)a1 + 0xc) + 1;
@@ -7117,7 +7117,7 @@ __regcall int mutex_acquire(void *mutex /* a1 */)
   }
   else {
     bVar2 = false;
-    iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call('\x18',0,0,unaff_D2,unaff_D3,*(void **)((int)a1 + 4),a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A1 = (__typeof__(extraout_A1))__ghidra_result_a1; __c; });
+    iVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call('\x18',0,0,unaff_D2,unaff_D3,*(void **)((int)a1 + 4),a1); bVar2 = __ghidra_flag(4); __c; }); extraout_A1 = (__typeof__(extraout_A1))__ghidra_result_a1; a1 = (__typeof__(a1))__ghidra_result_a1; __c; });
     if (bVar2) {
       *(int *)(extraout_A1 + 8) = extraout_A0;
     }
@@ -7197,12 +7197,12 @@ __regcall int mutex_release(void *mutex /* a1 */)
   int extraout_A0;
   void *a1;
   
-  iVar1 = ({ __auto_type __c = psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
+  iVar1 = ({ __auto_type __c = psos_call('\x03',0,in_D1,unaff_D2,unaff_D3,in_A0,mutex); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; unaff_D3 = (__typeof__(unaff_D3))__ghidra_result_d3; __c; });
   if (extraout_A0 == *(int *)((int)a1 + 8)) {
     if (*(int *)((int)a1 + 0xc) == 0) {
       *(undefined4 *)((int)a1 + 8) = 0;
-      iVar1 = psos_call('\x17',*(int *)((int)a1 + 4),d1,unaff_D2,unaff_D3,
-                        (void *)*(int *)((int)a1 + 4),a1);
+      iVar1 = ({ __auto_type __c = psos_call('\x17',*(int *)((int)a1 + 4),d1,unaff_D2,unaff_D3,
+                        (void *)*(int *)((int)a1 + 4),a1); a1 = (__typeof__(a1))__ghidra_result_a1; __c; });
     }
     else {
       iVar1 = CONCAT22((short)((uint)iVar1 >> 0x10),0x80);
@@ -20397,7 +20397,7 @@ ulong psos_service_21(char *name,ulong *out1,ulong *out2,ulong *out3)
   
   d0 = psos_pack_name();
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call('\x15',d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
+  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call('\x15',d0,d1,unaff_D2,unaff_D3,a0,a1); bVar2 = __ghidra_flag(4); __c; }); extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; __c; });
   if (bVar2) {
     if (out1 != (ulong *)0x0) {
       *out1 = extraout_A0;
@@ -20619,7 +20619,7 @@ ulong psos_service_30(ulong *out1,ulong *out2,ushort *out3)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call('\x1e',in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0 = (__typeof__(extraout_D0))__ghidra_result_d0; extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; __c; });
+  uVar1 = ({ __auto_type __c = psos_call('\x1e',in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0 = (__typeof__(extraout_D0))__ghidra_result_d0; extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; __c; });
   if (out1 != (ulong *)0x0) {
     *out1 = extraout_D0;
   }

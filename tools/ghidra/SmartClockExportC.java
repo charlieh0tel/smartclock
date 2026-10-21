@@ -1379,8 +1379,34 @@ public class SmartClockExportC extends GhidraScript {
 					assignments.add(name + " = (__typeof__(" + name + "))" + RESULT_PREFIX + base.toLowerCase());
 				}
 			}
+			// an argument in a result's register the decompiler takes the
+			// call to keep, read again after it (psos_io_read's length in D2)
+			for (int k = 1; k < call.getNumInputs(); k++) {
+				Varnode argument = call.getInput(k);
+				Register register = argument.isRegister() ? currentProgram.getRegister(argument) : null;
+				String base = register == null ? null : register.getBaseRegister().getName();
+				String name = namedHigh(argument);
+				String assignment = name + " = (__typeof__(" + name + "))" + RESULT_PREFIX
+					+ (base == null ? "" : base.toLowerCase());
+				if (base != null && results.contains(base) && name != null && readAfter(argument, call)
+					&& !assignments.contains(assignment)) {
+					assignments.add(assignment);
+				}
+			}
 			assignAfterCall(tokens, edits, i, call, assignments);
 		}
+	}
+
+	/** Whether a value a call is given is read by an operation after the call. */
+	private static boolean readAfter(Varnode value, PcodeOp call) {
+		Address at = call.getSeqnum().getTarget();
+		for (Iterator<PcodeOp> readers = value.getDescendants(); readers.hasNext();) {
+			PcodeOp reader = readers.next();
+			if (reader != call && reader.getSeqnum().getTarget().compareTo(at) > 0) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** The INDIRECTs at a call, which give the registers the decompiler takes it to change. */

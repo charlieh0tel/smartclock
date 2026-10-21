@@ -249,7 +249,11 @@ KERNEL_SERVICES = {
     10: Service(("A0", "A1")),
     **{number: Service() for number in (11, 12, 13, 14, 15, 17, 34)},
     16: Service(("A0", "A1")),
-    18: Service(("A0", "A1", "D0"), ("D0", "D1")),
+    # broadcast: the exchange, the message through A1, its five longs
+    # from +4 as send_x reads them, and the number of copies in D0's low
+    # byte; the tasks woken in D1's low byte (kernel_broadcast_x, 0x154ae:
+    # 0x154fe, 0x15510)
+    18: Service(("A0", "D0.b"), ("D0", "D1"), reads=("A1", None)),
     19: Service(("A0",), reads=("A1", None)),
     20: Service(("D0", "D1", "D2"), ("A0",)),
     21: Service(("D0",), ("A0", "D1", "D2")),
@@ -262,10 +266,17 @@ KERNEL_SERVICES = {
     28: Service(("D0",)),
     29: Service(),
     30: Service((), ("D0", "D1", "D2")),
-    31: Service(("D0", "D1", "D2")),
-    32: Service(("D0", "D1"), ("D0",)),
+    # set the time of day: the date, the time, whose top byte it
+    # ignores, and the ticks in D2's low word (kernel_set_time,
+    # 0x1599e: 0x159b6, 0x159f4)
+    31: Service(("D0", "D1", "D2.w")),
+    # mode: the new mode and the mask in D0's and D1's low bytes
+    # (kernel_mode, 0x158da: 0x158e2)
+    32: Service(("D0.b", "D1.b"), ("D0",)),
     33: Service(),
-    35: Service(("A0", "D0", "D1"), ("A0",)),
+    # create a partition: the area, the block size and the count of
+    # blocks in D1's low word (kernel_create_partition, 0x15a10: 0x15a32)
+    35: Service(("A0", "D0", "D1.w"), ("A0",)),
     36: Service(("A0", "D0")),
     37: Service(("A0", "D0"), ("A1",)),
     38: Service(("A0", "A1")),

@@ -57,6 +57,36 @@ services, 0 to `0x26`: the variables (`signal_v`, `wait_v`, `get_v`)
 where the brochure has a process event, and others the brochure does
 not name.
 
+The handlers bear the fits out.  9's (`0x15130`) checks the
+segment's stamp and that it is on the caller's list, unlinks it and
+merges it with its free neighbors, and gives the memory to the tasks
+waiting for it: `Free_segment`.  10's (`0x15324`) moves a segment from
+the caller's list to another task's, `Assign_segment`; 16's
+(`0x1532a`) is the same body with the two tasks exchanged
+(`0x15346`), taking a segment back, which the brochure does not name.
+29's (`0x1592e`) counts a tick at `+0x6c` of the data area, which the
+kernel's exit runs (`kernel_switch_task`, `0x14c7e`), and advances the
+time of day a second each time the ticks reach the configured rate
+(`+0x86`): `Announce_tick`, which the periodic interrupt (`0x11f82`)
+makes.  30 (`0x15974`) and 31 (`0x1599e`) keep the date as the year
+in the high word, the month and the day, and the time as the hours,
+the minutes and the seconds, a byte each, as pSOS+'s `tm_get` and
+`tm_set` do, with the ticks into the second.  `Ret_from_interrupt` is
+not a service but trap #5 (`kernel_return_from_interrupt`).
+`Dispatch` is not identified: every service's exit switches tasks when
+the trap came from interrupt mask 0 (`0x14b54`), so any of the
+services that do nothing, 11 to 15, 17 and 34, would serve.  The rest
+are named from pSOS+'s calls, which they match: 18 (`0x154ae`) gives a
+message to every task waiting at an exchange, as `q_broadcast` does,
+and queues copies up to a count; 32's (`0x158da`) mode byte holds
+0x80, which stops the kernel's exit preempting the task (`0x14c9e`),
+and 0x40, time slicing (`0x14d60`), `t_mode`'s `T_NOPREEMPT` and
+`T_TSLICE`; and 35 to 38 (`0x15a10` to `0x15aa2`) make, delete, take
+from and return to a partition of fixed blocks, as `pt_create`,
+`pt_delete`, `pt_getbuf` and `pt_retbuf` do.  33 (`0x158f6`) puts the
+caller in supervisor mode, as trap #7 does (below), which pSOS+ does
+with a `t_mode` bit instead.
+
 ## Calls
 
 A program calls the kernel with `trap #3`, the service's number in D7
@@ -151,10 +181,10 @@ reports an error.  A service no word calls keeps its number.
 | 6 | `0x17038` | `resume` | the task |
 | 7 | `0x17050` | `priority` | the task, the new priority; the old through the last |
 | 8 | `0x170c0` | allocate segment, by the brochure (above) | four longs; a long through the last |
-| 9 | `0x170f4` | free segment, likewise | one long |
-| 10 | `0x1710c` | assign segment, likewise | two longs |
-| 16 | `0x17128` | | two longs |
-| 18 | `0x1728a` | | three longs; two bytes through the next two |
+| 9 | `0x170f4` | free segment, likewise | the segment, as 8 returns it; error 5 one not stamped `0xe1d0`, 1 one not the caller's |
+| 10 | `0x1710c` | assign segment, likewise | the segment, the task (0 the caller): moves the segment from the caller's list to the task's; the task's errors, 1 to 3, then 9's |
+| 16 | `0x17128` | | the segment, the task: 10 the other way, from the task's list to the caller's; 10's errors; nothing calls it |
+| 18 | `0x1728a` | broadcast | the exchange, the message, a count in D0's low byte: gives the message to every task waiting at the exchange, then queues as many copies as the count exceeds the tasks given it; the larger of the count and the tasks given it, and those tasks, a byte each, through the next two; error 7 a message whose first long, `send_x`'s reply exchange, is not 0, 6 the exchange's queue full, 5 no buffer; nothing calls it |
 | 19 | `0x1726e` | `jam_x` | the exchange, the message |
 | 20 | `0x171ce` | `create_x` | name, two longs; the exchange's id through the last |
 | 21 | `0x171fe` | attach exchange, likewise | name; three longs through the next three |
@@ -165,15 +195,15 @@ reports an error.  A service no word calls keeps its number.
 | 26 | `0x17304` | `wait_v` | three longs; a long through the last |
 | 27 | `0x17332` | `get_v` | two longs; a long through the last |
 | 28 | `0x17076` | `pause` | one long |
-| 29 | `0x1735c` | | none |
-| 30 | `0x17370` | get time of day, likewise | none; two longs and a word through three pointers |
-| 31 | `0x173a6` | set time of day, likewise | three longs |
-| 32 | `0x1708e` | `mode` | two longs; the old mode, a byte, through the last |
-| 33 | `0x170b4` | | made by a trap in line, D7 kept |
-| 35 | `0x17144` | | three longs; a long through the last |
-| 36 | `0x1716e` | | two longs |
-| 37 | `0x1718a` | | two longs; a long through the last |
-| 38 | `0x171b2` | | two longs |
+| 29 | `0x1735c` | announce tick, by the brochure | none: counts a tick for the kernel's exit to process and advances the time of day a second every second's worth of ticks; the periodic interrupt, `0x11f82`, calls it |
+| 30 | `0x17370` | get time of day, likewise | none; the date (the year in the high word, the month, the day), the time (the ticks' low byte, the hours, the minutes, the seconds) and the ticks into the second, a word, through three pointers, which the stub stores even on error 1, the time never set; nothing calls it |
+| 31 | `0x173a6` | set time of day, likewise | the date and time as 30 returns them, the time's top byte ignored, and the ticks in D2's low word; error 2 a bad time or tick count, 1 a bad date; `klok_task_create` sets midnight of the date at `0x101d04` |
+| 32 | `0x1708e` | `mode` | the new mode and a mask, low bytes, to set the masked bits of the task's mode byte, `+0x11` of its record: 0x80 no preemption, 0x40 time slicing; the old mode, a byte, through the last; no errors |
+| 33 | `0x170b4` | | none: sets the supervisor bit in the status register the trap returns to, so the caller goes on in supervisor mode, and returns the old in D0's low word; made by a trap in line, D7 kept, since the stack changes; `klok_task` and `spoo_task` open with it |
+| 35 | `0x17144` | create partition | the area, the block size, the count of blocks in D1's low word: a 12-byte header, then the blocks, each after 8 bytes of its own (its next free block or its partition, and the size); the area, the partition's id, through the last; no errors; nothing calls 35 to 38 |
+| 36 | `0x1716e` | delete partition | the partition, its block size; error 1 a size not the partition's, 2 a block not returned |
+| 37 | `0x1718a` | get block | the partition, its block size; a block, from A1, through the last; error 1 a size not the partition's, 2 none free |
+| 38 | `0x171b2` | return block | the partition, the block; error 1 a block not out from that partition |
 
 The console's `dev_init`, `dev_open`, `dev_close`, `dev_read`,
 `dev_write` and `dev_ctrl` make I/O functions 0 to 5 in turn, through

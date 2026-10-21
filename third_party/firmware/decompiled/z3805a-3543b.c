@@ -4753,13 +4753,13 @@ int kernel_free_segment();
 int kernel_free_for_task();
 int kernel_allocate();
 int kernel_region_allocate();
-int kernel_service_10();
-int kernel_service_16();
+int kernel_assign_segment();
+int kernel_reclaim_segment();
 char kernel_service_none(void) __asm__("c_kernel_service_none");
 int kernel_create_x();
 int kernel_service_21();
 int kernel_delete_x();
-int kernel_service_18();
+int kernel_broadcast_x();
 int kernel_jam_x();
 int kernel_send_x();
 int kernel_send_for_task();
@@ -4770,15 +4770,15 @@ int kernel_signal_task();
 int kernel_get_v();
 int kernel_wait_v();
 int kernel_mode();
-int kernel_service_33();
+int kernel_supervisor();
 int kernel_pause();
-int kernel_service_29();
-int kernel_service_30();
-int kernel_service_31();
-int kernel_service_35();
-int kernel_service_36();
-int kernel_service_37();
-int kernel_service_38();
+int kernel_announce_tick();
+int kernel_get_time();
+int kernel_set_time();
+int kernel_create_partition();
+int kernel_delete_partition();
+int kernel_get_block();
+int kernel_return_block();
 int kernel_advance_date();
 int kernel_set_leap_year();
 void *kernel_check_task(int task, void *running) __asm__("c_kernel_check_task");
@@ -4833,29 +4833,29 @@ ulong psos_suspend(ulong task);
 ulong psos_resume(ulong task);
 ulong psos_priority(ulong task,ulong priority,uchar *old);
 ulong psos_pause(ulong a);
-ulong psos_mode(ulong a,ulong b,uchar *old);
-int psos_service_33();
+ulong psos_mode(ulong mode,ulong mask,uchar *old);
+int psos_supervisor();
 ulong psos_service_8(ulong a,ulong b,ulong c,ulong d,ulong *out);
-ulong psos_service_9(ulong a);
-ulong psos_service_10(ulong a,ulong b);
-ulong psos_service_16(ulong a,ulong b);
-ulong psos_service_35(ulong a,ulong b,ulong c,ulong *out);
-ulong psos_service_36(ulong a,ulong b);
-ulong psos_service_37(ulong a,ulong b,ulong *out);
-ulong psos_service_38(ulong a,ulong b);
+ulong psos_free_segment(void *segment);
+ulong psos_assign_segment(void *segment,ulong task);
+ulong psos_reclaim_segment(void *segment,ulong task);
+ulong psos_create_partition(void *area,ulong block_size,ulong count,void **partition);
+ulong psos_delete_partition(void *partition,ulong block_size);
+ulong psos_get_block(void *partition,ulong block_size,void **block);
+ulong psos_return_block(void *partition,void *block);
 ulong psos_create_x(char *name,ulong a,ulong b,ulong *exchange);
 ulong psos_service_21(char *name,ulong *out1,ulong *out2,ulong *out3);
 ulong psos_delete_x(ulong exchange);
 ulong psos_send_x(ulong exchange,void *message);
 ulong psos_jam_x(ulong exchange,void *message);
-ulong psos_service_18(ulong a,ulong b,ulong c,uchar *out1,uchar *out2);
+ulong psos_broadcast_x(ulong exchange,void *message,ulong count,uchar *count_out,uchar *woken);
 ulong psos_request_x(ulong exchange,void *buffer,ulong a,ulong b);
 ulong psos_signal_v(ulong variable,ulong value);
 ulong psos_wait_v(ulong a,ulong b,ulong c,ulong *out);
 ulong psos_get_v(ulong a,ulong b,ulong *out);
-ulong psos_service_29(void);
-ulong psos_service_30(ulong *out1,ulong *out2,ushort *out3);
-ulong psos_service_31(ulong a,ulong b,ulong c);
+ulong psos_announce_tick(void);
+ulong psos_get_time(ulong *date,ulong *time,ushort *ticks);
+ulong psos_set_time(ulong date,ulong time,ulong ticks);
 ulong psos_io_init(ulong device);
 ulong psos_io_open(ulong device,ulong a);
 ulong psos_io_close(ulong device);
@@ -6350,13 +6350,13 @@ int installer_kernel_free_segment();
 int installer_kernel_free_for_task();
 int installer_kernel_allocate();
 int installer_kernel_region_allocate();
-int installer_kernel_service_10();
-int installer_kernel_service_16();
+int installer_kernel_assign_segment();
+int installer_kernel_reclaim_segment();
 char installer_kernel_service_none(void) __asm__("c_installer_kernel_service_none");
 int installer_kernel_create_x();
 int installer_kernel_service_21();
 int installer_kernel_delete_x();
-int installer_kernel_service_18();
+int installer_kernel_broadcast_x();
 int installer_kernel_jam_x();
 int installer_kernel_send_x();
 int installer_kernel_send_for_task();
@@ -6367,15 +6367,15 @@ int installer_kernel_signal_task();
 int installer_kernel_get_v();
 int installer_kernel_wait_v();
 int installer_kernel_mode();
-int installer_kernel_service_33();
+int installer_kernel_supervisor();
 int installer_kernel_pause();
-int installer_kernel_service_29();
-int installer_kernel_service_30();
-int installer_kernel_service_31();
-int installer_kernel_service_35();
-int installer_kernel_service_36();
-int installer_kernel_service_37();
-int installer_kernel_service_38();
+int installer_kernel_announce_tick();
+int installer_kernel_get_time();
+int installer_kernel_set_time();
+int installer_kernel_create_partition();
+int installer_kernel_delete_partition();
+int installer_kernel_get_block();
+int installer_kernel_return_block();
 int installer_kernel_advance_date();
 int installer_kernel_set_leap_year();
 void *installer_kernel_check_task(int task, void *running) __asm__("c_installer_kernel_check_task");
@@ -6400,7 +6400,7 @@ ulong installer_psos_send_x(ulong exchange,void *message);
 ulong installer_psos_signal_v(ulong variable,ulong value);
 ulong installer_psos_wait_v(ulong a,ulong b,ulong c,ulong *out);
 ulong installer_psos_get_v(ulong a,ulong b,ulong *out);
-ulong installer_psos_service_29(void);
+ulong installer_psos_announce_tick(void);
 int installer_gp_port_select(char param_1);
 void installer_duartb_mode_from_settings(void);
 void installer_duartb_baud_from_settings(void);
@@ -8021,7 +8021,7 @@ uint klok_task_create(ulong param_1)
     }
   }
   if (param2 == 0) {
-    psos_service_31(lifetime.date,0,0);
+    psos_set_time(lifetime.date,0,0);
     klok_entries = (klok_entry *)0x0;
     klok_free = klok_pool;
     for (pkVar2 = klok_pool; pkVar2 < (klok_entry *)0x1037ac; pkVar2 = pkVar2 + 1) {
@@ -8072,7 +8072,7 @@ void clock_set(time_of_day time,uint32_t date)
 void klok_task(void)
 
 {
-  psos_service_33();
+  psos_supervisor();
   do {
     pps_wait_time((undefined4 *)0x1037ac,(undefined4 *)0x1037b0,1);
     idle_loops_last_second = klok_take_pending();
@@ -9165,7 +9165,7 @@ char * exception_name(uint16_t vector)
 __exception void primary_user_66(void)
 
 {
-  psos_service_29();
+  psos_announce_tick();
   if (hmon_tick_countdown == 0) {
     psos_signal_v(task_hmon,1);
     hmon_tick_countdown = 10;
@@ -9200,7 +9200,7 @@ __asm__(
 	"	move.l %a2,-(%sp)\n"
 	"	movea.l #0x1037d6,%a2\n"
 	"	movea.l #0x1037da,%a3\n"
-	"	jsr (psos_service_29).l\n"
+	"	jsr (psos_announce_tick).l\n"
 	"	tst.b (%a2)\n"
 	"	bne.b .Lg_11fb6\n"
 	"	pea (0x1).w\n"
@@ -13482,15 +13482,15 @@ __asm__(
 	"	bra.w kernel_priority\n"
 	"	bra.w kernel_allocate_segment\n"
 	"	bra.w kernel_free_segment\n"
-	"	bra.w kernel_service_10\n"
+	"	bra.w kernel_assign_segment\n"
 	"	bra.w kernel_service_none\n"
 	"	bra.w kernel_service_none\n"
 	"	bra.w kernel_service_none\n"
 	"	bra.w kernel_service_none\n"
 	"	bra.w kernel_service_none\n"
-	"	bra.w kernel_service_16\n"
+	"	bra.w kernel_reclaim_segment\n"
 	"	bra.w kernel_service_none\n"
-	"	bra.w kernel_service_18\n"
+	"	bra.w kernel_broadcast_x\n"
 	"	bra.w kernel_jam_x\n"
 	"	bra.w kernel_create_x\n"
 	"	bra.w kernel_service_21\n"
@@ -13501,16 +13501,16 @@ __asm__(
 	"	bra.w kernel_wait_v\n"
 	"	bra.w kernel_get_v\n"
 	"	bra.w kernel_pause\n"
-	"	bra.w kernel_service_29\n"
-	"	bra.w kernel_service_30\n"
-	"	bra.w kernel_service_31\n"
+	"	bra.w kernel_announce_tick\n"
+	"	bra.w kernel_get_time\n"
+	"	bra.w kernel_set_time\n"
 	"	bra.w kernel_mode\n"
-	"	bra.w kernel_service_33\n"
+	"	bra.w kernel_supervisor\n"
 	"	bra.w kernel_service_none\n"
-	"	bra.w kernel_service_35\n"
-	"	bra.w kernel_service_36\n"
-	"	bra.w kernel_service_37\n"
-	"	bra.w kernel_service_38\n"
+	"	bra.w kernel_create_partition\n"
+	"	bra.w kernel_delete_partition\n"
+	"	bra.w kernel_get_block\n"
+	"	bra.w kernel_return_block\n"
 	"	.size kernel_dispatch_service, .-kernel_dispatch_service\n"
 	"	.popsection\n"
 );
@@ -14872,7 +14872,8 @@ __asm__(
 /* 00015130 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* service 9: kernel_free_for_task for the running task
+/* service 9, Free_segment: kernel_free_for_task for the running task; error 5 a bad stamp, 1 a
+   segment not the task's
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
@@ -15480,14 +15481,15 @@ __asm__(
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x00015346) */
-/* service 10
+/* service 10, Assign_segment: moves the segment in A0 from the running task's list to the task in
+   A1's; errors 1 to 3 of the task, 5 a bad segment, 1 one not the running task's
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void kernel_service_10(void)
+__regcall void kernel_assign_segment(void)
 
 {
   void *running;
@@ -15526,30 +15528,31 @@ __regcall void kernel_service_10(void)
 
 #endif
 __asm__(
-	"	.globl kernel_service_10\n"
-	"	.type kernel_service_10, @function\n"
-	"	.pushsection .text.kernel_service_10.15324,\"ax\",@progbits\n"
-	"kernel_service_10:\n"
+	"	.globl kernel_assign_segment\n"
+	"	.type kernel_assign_segment, @function\n"
+	"	.pushsection .text.kernel_assign_segment.15324,\"ax\",@progbits\n"
+	"kernel_assign_segment:\n"
 	"	move.l %a2,-(%sp)\n"
 	"	suba.w %a2,%a2\n"
 	"	.byte 0x60 | bra.b 0x00015330\n"
-	"	.reloc ., R_68K_PC8, kernel_service_16+0x6-1\n"
+	"	.reloc ., R_68K_PC8, kernel_reclaim_segment+0x6-1\n"
 	"	.byte 0\n"
-	"	.size kernel_service_10, .-kernel_service_10\n"
+	"	.size kernel_assign_segment, .-kernel_assign_segment\n"
 	"	.popsection\n"
 );
 
 /* 0001532a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* service 16
+/* service 16: kernel_assign_segment's body with the tasks exchanged (0x15346), moving the segment
+   in A0 from the task in A1's list to the running task's
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void kernel_service_16(void)
+__regcall void kernel_reclaim_segment(void)
 
 {
   int *piVar1;
@@ -15587,10 +15590,10 @@ __regcall void kernel_service_16(void)
 
 #endif
 __asm__(
-	"	.globl kernel_service_16\n"
-	"	.type kernel_service_16, @function\n"
-	"	.pushsection .text.kernel_service_16.1532a,\"ax\",@progbits\n"
-	"kernel_service_16:\n"
+	"	.globl kernel_reclaim_segment\n"
+	"	.type kernel_reclaim_segment, @function\n"
+	"	.pushsection .text.kernel_reclaim_segment.1532a,\"ax\",@progbits\n"
+	"kernel_reclaim_segment:\n"
 	"	move.l %a2,-(%sp)\n"
 	"	movea.w #0x1,%a2\n"
 	"	move.l %a1,-(%sp)\n"
@@ -15628,7 +15631,7 @@ __asm__(
 	"	movea.l (%sp)+,%a1\n"
 	"	movea.l (%sp)+,%a2\n"
 	"	rts\n"
-	"	.size kernel_service_16, .-kernel_service_16\n"
+	"	.size kernel_reclaim_segment, .-kernel_reclaim_segment\n"
 	"	.popsection\n"
 );
 
@@ -15980,14 +15983,16 @@ __asm__(
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x000154b8) */
-/* service 18
+/* service 18, broadcast: gives the message at A1 to every task waiting at the exchange in A0 and
+   queues copies up to D0.b; D0.b the larger of the two, D1.b the tasks given it; error 7 a reply
+   exchange in the message, 6 queue full, 5 no buffer
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void kernel_service_18(void)
+__regcall void kernel_broadcast_x(void)
 
 {
   int iVar1;
@@ -16085,10 +16090,10 @@ LAB_00015576:
 
 #endif
 __asm__(
-	"	.globl kernel_service_18\n"
-	"	.type kernel_service_18, @function\n"
-	"	.pushsection .text.kernel_service_18.154ae,\"ax\",@progbits\n"
-	"kernel_service_18:\n"
+	"	.globl kernel_broadcast_x\n"
+	"	.type kernel_broadcast_x, @function\n"
+	"	.pushsection .text.kernel_broadcast_x.154ae,\"ax\",@progbits\n"
+	"kernel_broadcast_x:\n"
 	"	movea.l (%a6),%a5\n"
 	"	move %sr,%d6\n"
 	"	andi.w #0x700,%d6\n"
@@ -16185,7 +16190,7 @@ __asm__(
 	".Lg_1558c:\n"
 	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%a2/%a3\n"
 	"	rts\n"
-	"	.size kernel_service_18, .-kernel_service_18\n"
+	"	.size kernel_broadcast_x, .-kernel_broadcast_x\n"
 	"	.popsection\n"
 );
 
@@ -17345,7 +17350,8 @@ __asm__(
 /* 000158da */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* service 32, psos_mode
+/* service 32, psos_mode: sets the D1.b-masked bits of the task's mode byte, +0x11, from D0.b (0x80
+   no preemption, 0x40 time slicing); the old in D0.b
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
@@ -17391,14 +17397,14 @@ __asm__(
 /* 000158f6 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* service 33
+/* service 33: sets the supervisor bit in the status register the trap returns to; the old in D0.w
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall undefined2 kernel_service_33(undefined2 param_1)
+__regcall undefined2 kernel_supervisor(undefined2 param_1)
 
 {
   return param_1;
@@ -17407,15 +17413,15 @@ __regcall undefined2 kernel_service_33(undefined2 param_1)
 
 #endif
 __asm__(
-	"	.globl kernel_service_33\n"
-	"	.type kernel_service_33, @function\n"
-	"	.pushsection .text.kernel_service_33.158f6,\"ax\",@progbits\n"
-	"kernel_service_33:\n"
+	"	.globl kernel_supervisor\n"
+	"	.type kernel_supervisor, @function\n"
+	"	.pushsection .text.kernel_supervisor.158f6,\"ax\",@progbits\n"
+	"kernel_supervisor:\n"
 	"	move.w (0x10,%sp),%d0\n"
 	"	ori.w #0x2000,(0x10,%sp)\n"
 	"	clr.w %d7\n"
 	"	rts\n"
-	"	.size kernel_service_33, .-kernel_service_33\n"
+	"	.size kernel_supervisor, .-kernel_supervisor\n"
 	"	.popsection\n"
 );
 
@@ -17478,14 +17484,15 @@ __asm__(
 /* 0001592e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* service 29
+/* service 29, Announce_tick: counts a tick at +0x6c for kernel_switch_task and advances the time of
+   day a second each +0x86 ticks
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void kernel_service_29(void)
+__regcall void kernel_announce_tick(void)
 
 {
   undefined4 uVar1;
@@ -17515,10 +17522,10 @@ __regcall void kernel_service_29(void)
 
 #endif
 __asm__(
-	"	.globl kernel_service_29\n"
-	"	.type kernel_service_29, @function\n"
-	"	.pushsection .text.kernel_service_29.1592e,\"ax\",@progbits\n"
-	"kernel_service_29:\n"
+	"	.globl kernel_announce_tick\n"
+	"	.type kernel_announce_tick, @function\n"
+	"	.pushsection .text.kernel_announce_tick.1592e,\"ax\",@progbits\n"
+	"kernel_announce_tick:\n"
 	"	addq.l #0x1,(0x6c,%a6)\n"
 	"	move %sr,%d6\n"
 	"	ori #0x700,%sr\n"
@@ -17545,21 +17552,22 @@ __asm__(
 	"	move %d6,%sr\n"
 	"	clr.b %d7\n"
 	"	rts\n"
-	"	.size kernel_service_29, .-kernel_service_29\n"
+	"	.size kernel_announce_tick, .-kernel_announce_tick\n"
 	"	.popsection\n"
 );
 
 /* 00015974 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* service 30
+/* service 30, Get_time_of_day: the date in D0, the time in D1 (the ticks' low byte on top), the
+   ticks in D2.w; error 1 never set
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall undefined8 kernel_service_30(void)
+__regcall undefined8 kernel_get_time(void)
 
 {
   uint extraout_D1;
@@ -17575,10 +17583,10 @@ __regcall undefined8 kernel_service_30(void)
 
 #endif
 __asm__(
-	"	.globl kernel_service_30\n"
-	"	.type kernel_service_30, @function\n"
-	"	.pushsection .text.kernel_service_30.15974,\"ax\",@progbits\n"
-	"kernel_service_30:\n"
+	"	.globl kernel_get_time\n"
+	"	.type kernel_get_time, @function\n"
+	"	.pushsection .text.kernel_get_time.15974,\"ax\",@progbits\n"
+	"kernel_get_time:\n"
 	".Lg_15974:\n"
 	"	move.l (0x72,%a6),%d1\n"
 	"	bsr.w kernel_advance_date\n"
@@ -17596,21 +17604,22 @@ __asm__(
 	"	moveq #0x1,%d7\n"
 	".Lg_1599c:\n"
 	"	rts\n"
-	"	.size kernel_service_30, .-kernel_service_30\n"
+	"	.size kernel_get_time, .-kernel_get_time\n"
 	"	.popsection\n"
 );
 
 /* 0001599e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* service 31
+/* service 31, Set_time_of_day: the date in D0 (year, month, day), the time in D1's low 24 bits
+   (hours, minutes, seconds), the ticks in D2.w; error 2 a bad time, 1 a bad date
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void kernel_service_31(void)
+__regcall void kernel_set_time(void)
 
 {
   ushort in_D0w;
@@ -17642,10 +17651,10 @@ __regcall void kernel_service_31(void)
 
 #endif
 __asm__(
-	"	.globl kernel_service_31\n"
-	"	.type kernel_service_31, @function\n"
-	"	.pushsection .text.kernel_service_31.1599e,\"ax\",@progbits\n"
-	"kernel_service_31:\n"
+	"	.globl kernel_set_time\n"
+	"	.type kernel_set_time, @function\n"
+	"	.pushsection .text.kernel_set_time.1599e,\"ax\",@progbits\n"
+	"kernel_set_time:\n"
 	"	move.l %d1,%d7\n"
 	"	cmpi.b #0x3c,%d7\n"
 	"	bcc.b .Lg_15a08\n"
@@ -17691,21 +17700,22 @@ __asm__(
 	"	moveq #0x1,%d7\n"
 	".Lg_15a0e:\n"
 	"	rts\n"
-	"	.size kernel_service_31, .-kernel_service_31\n"
+	"	.size kernel_set_time, .-kernel_set_time\n"
 	"	.popsection\n"
 );
 
 /* 00015a10 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* service 35
+/* service 35, create partition: carves the area at A0 into D1.w blocks of D0 bytes, each after 8
+   bytes of its own, after a 12-byte header; the partition is the area
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall undefined8 kernel_service_35(void)
+__regcall undefined8 kernel_create_partition(void)
 
 {
   int in_D0;
@@ -17735,10 +17745,10 @@ __regcall undefined8 kernel_service_35(void)
 
 #endif
 __asm__(
-	"	.globl kernel_service_35\n"
-	"	.type kernel_service_35, @function\n"
-	"	.pushsection .text.kernel_service_35.15a10,\"ax\",@progbits\n"
-	"kernel_service_35:\n"
+	"	.globl kernel_create_partition\n"
+	"	.type kernel_create_partition, @function\n"
+	"	.pushsection .text.kernel_create_partition.15a10,\"ax\",@progbits\n"
+	"kernel_create_partition:\n"
 	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
 	"	clr.w (0x8,%a0)\n"
 	"	move.l %d0,(0x4,%a0)\n"
@@ -17761,21 +17771,22 @@ __asm__(
 	"	clr.b %d7\n"
 	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
 	"	rts\n"
-	"	.size kernel_service_35, .-kernel_service_35\n"
+	"	.size kernel_create_partition, .-kernel_create_partition\n"
 	"	.popsection\n"
 );
 
 /* 00015a50 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* service 36
+/* service 36, delete partition: the partition in A0, its block size in D0; error 1 a wrong size, 2
+   a block out
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void kernel_service_36(void)
+__regcall void kernel_delete_partition(void)
 
 {
   int in_D0;
@@ -17790,10 +17801,10 @@ __regcall void kernel_service_36(void)
 
 #endif
 __asm__(
-	"	.globl kernel_service_36\n"
-	"	.type kernel_service_36, @function\n"
-	"	.pushsection .text.kernel_service_36.15a50,\"ax\",@progbits\n"
-	"kernel_service_36:\n"
+	"	.globl kernel_delete_partition\n"
+	"	.type kernel_delete_partition, @function\n"
+	"	.pushsection .text.kernel_delete_partition.15a50,\"ax\",@progbits\n"
+	"kernel_delete_partition:\n"
 	"	moveq #0x1,%d7\n"
 	"	cmp.l (0x4,%a0),%d0\n"
 	"	bne.b .Lg_15a74\n"
@@ -17809,21 +17820,22 @@ __asm__(
 	"	moveq #0x2,%d7\n"
 	".Lg_15a74:\n"
 	"	rts\n"
-	"	.size kernel_service_36, .-kernel_service_36\n"
+	"	.size kernel_delete_partition, .-kernel_delete_partition\n"
 	"	.popsection\n"
 );
 
 /* 00015a76 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* service 37
+/* service 37, get block: from the partition in A0, its block size in D0; the block in A1; error 1 a
+   wrong size, 2 none free
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void kernel_service_37(void)
+__regcall void kernel_get_block(void)
 
 {
   int iVar1;
@@ -17841,10 +17853,10 @@ __regcall void kernel_service_37(void)
 
 #endif
 __asm__(
-	"	.globl kernel_service_37\n"
-	"	.type kernel_service_37, @function\n"
-	"	.pushsection .text.kernel_service_37.15a76,\"ax\",@progbits\n"
-	"kernel_service_37:\n"
+	"	.globl kernel_get_block\n"
+	"	.type kernel_get_block, @function\n"
+	"	.pushsection .text.kernel_get_block.15a76,\"ax\",@progbits\n"
+	"kernel_get_block:\n"
 	"	moveq #0x1,%d7\n"
 	"	cmp.l (0x4,%a0),%d0\n"
 	"	bne.b .Lg_15aa0\n"
@@ -17864,21 +17876,21 @@ __asm__(
 	"	moveq #0x2,%d7\n"
 	".Lg_15aa0:\n"
 	"	rts\n"
-	"	.size kernel_service_37, .-kernel_service_37\n"
+	"	.size kernel_get_block, .-kernel_get_block\n"
 	"	.popsection\n"
 );
 
 /* 00015aa2 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* service 38
+/* service 38, return block: the block in A1 to the partition in A0; error 1 a block not out from it
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void kernel_service_38(void)
+__regcall void kernel_return_block(void)
 
 {
   int *in_A0;
@@ -17895,10 +17907,10 @@ __regcall void kernel_service_38(void)
 
 #endif
 __asm__(
-	"	.globl kernel_service_38\n"
-	"	.type kernel_service_38, @function\n"
-	"	.pushsection .text.kernel_service_38.15aa2,\"ax\",@progbits\n"
-	"kernel_service_38:\n"
+	"	.globl kernel_return_block\n"
+	"	.type kernel_return_block, @function\n"
+	"	.pushsection .text.kernel_return_block.15aa2,\"ax\",@progbits\n"
+	"kernel_return_block:\n"
 	"	moveq #0x1,%d7\n"
 	"	cmpa.l (-0x8,%a1),%a0\n"
 	"	bne.b .Lg_15abe\n"
@@ -17911,7 +17923,7 @@ __asm__(
 	"	clr.b %d7\n"
 	".Lg_15abe:\n"
 	"	rts\n"
-	"	.size kernel_service_38, .-kernel_service_38\n"
+	"	.size kernel_return_block, .-kernel_return_block\n"
 	"	.popsection\n"
 );
 
@@ -20768,7 +20780,7 @@ ulong psos_pause(ulong a)
 /* service 32, mode
    psos.md */
 
-ulong psos_mode(ulong a,ulong b,uchar *old)
+ulong psos_mode(ulong mode,ulong mask,uchar *old)
 
 {
   uchar extraout_D0b;
@@ -20778,7 +20790,7 @@ ulong psos_mode(ulong a,ulong b,uchar *old)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call(' ',a,b,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0b = (__typeof__(extraout_D0b))__ghidra_result_d0; __c; });
+  uVar1 = ({ __auto_type __c = psos_call(' ',mode,mask,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0b = (__typeof__(extraout_D0b))__ghidra_result_d0; __c; });
   if (old != (uchar *)0x0) {
     *old = extraout_D0b;
   }
@@ -20789,13 +20801,13 @@ ulong psos_mode(ulong a,ulong b,uchar *old)
 /* 000170b4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* service 33, by a trap in line: pops its return address into A0, keeps D7 in D1 across the trap
-   and jumps back
+/* service 33, supervisor mode, by a trap in line: pops its return address into A0, keeps D7 in D1
+   across the trap and jumps back
    Not a C function (other; read): neither C nor one of the usual kinds; the note says how it is
    called.
    psos.md */
 
-__naked void psos_service_33(void)
+__naked void psos_supervisor(void)
 
 {
   code *UNRECOVERED_JUMPTABLE;
@@ -20810,17 +20822,17 @@ __naked void psos_service_33(void)
 
 #endif
 __asm__(
-	"	.globl psos_service_33\n"
-	"	.type psos_service_33, @function\n"
-	"	.pushsection .text.psos_service_33.170b4,\"ax\",@progbits\n"
-	"psos_service_33:\n"
+	"	.globl psos_supervisor\n"
+	"	.type psos_supervisor, @function\n"
+	"	.pushsection .text.psos_supervisor.170b4,\"ax\",@progbits\n"
+	"psos_supervisor:\n"
 	"	movea.l (%sp)+,%a0\n"
 	"	move.l %d7,%d1\n"
 	"	moveq #0x21,%d7\n"
 	"	trap #0x3\n"
 	"	move.l %d1,%d7\n"
 	"	jmp (%a0)\n"
-	"	.size psos_service_33, .-psos_service_33\n"
+	"	.size psos_supervisor, .-psos_supervisor\n"
 	"	.popsection\n"
 );
 
@@ -20846,9 +20858,10 @@ ulong psos_service_8(ulong a,ulong b,ulong c,ulong d,ulong *out)
 
 /* 000170f4 */
 
-/* psos.md */
+/* service 9, Free_segment
+   psos.md */
 
-ulong psos_service_9(ulong a)
+ulong psos_free_segment(void *segment)
 
 {
   int in_D0;
@@ -20858,16 +20871,17 @@ ulong psos_service_9(ulong a)
   ulong uVar1;
   void *in_A1;
   
-  uVar1 = psos_call('\t',in_D0,in_D1,unaff_D2,unaff_D3,(void *)a,in_A1);
+  uVar1 = psos_call('\t',in_D0,in_D1,unaff_D2,unaff_D3,segment,in_A1);
   return uVar1;
 }
 
 
 /* 0001710c */
 
-/* psos.md */
+/* service 10, Assign_segment
+   psos.md */
 
-ulong psos_service_10(ulong a,ulong b)
+ulong psos_assign_segment(void *segment,ulong task)
 
 {
   int in_D0;
@@ -20876,16 +20890,17 @@ ulong psos_service_10(ulong a,ulong b)
   int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   
-  uVar1 = psos_call('\n',in_D0,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b);
+  uVar1 = psos_call('\n',in_D0,in_D1,unaff_D2,unaff_D3,segment,(void *)task);
   return uVar1;
 }
 
 
 /* 00017128 */
 
-/* psos.md */
+/* service 16, a segment back from a task
+   psos.md */
 
-ulong psos_service_16(ulong a,ulong b)
+ulong psos_reclaim_segment(void *segment,ulong task)
 
 {
   int in_D0;
@@ -20894,27 +20909,28 @@ ulong psos_service_16(ulong a,ulong b)
   int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   
-  uVar1 = psos_call(0x10,in_D0,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b);
+  uVar1 = psos_call(0x10,in_D0,in_D1,unaff_D2,unaff_D3,segment,(void *)task);
   return uVar1;
 }
 
 
 /* 00017144 */
 
-/* psos.md */
+/* service 35, create partition
+   psos.md */
 
-ulong psos_service_35(ulong a,ulong b,ulong c,ulong *out)
+ulong psos_create_partition(void *area,ulong block_size,ulong count,void **partition)
 
 {
   int unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int)__entry; });
   int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
-  ulong extraout_A0;
+  void *extraout_A0;
   void *in_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call('#',b,c,unaff_D2,unaff_D3,(void *)a,in_A1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
-  if (out != (ulong *)0x0) {
-    *out = extraout_A0;
+  uVar1 = ({ __auto_type __c = psos_call('#',block_size,count,unaff_D2,unaff_D3,area,in_A1); extraout_A0 = (__typeof__(extraout_A0))__ghidra_result_a0; __c; });
+  if (partition != (void **)0x0) {
+    *partition = extraout_A0;
   }
   return uVar1;
 }
@@ -20922,9 +20938,10 @@ ulong psos_service_35(ulong a,ulong b,ulong c,ulong *out)
 
 /* 0001716e */
 
-/* psos.md */
+/* service 36, delete partition
+   psos.md */
 
-ulong psos_service_36(ulong a,ulong b)
+ulong psos_delete_partition(void *partition,ulong block_size)
 
 {
   int in_D1;
@@ -20933,16 +20950,17 @@ ulong psos_service_36(ulong a,ulong b)
   ulong uVar1;
   void *in_A1;
   
-  uVar1 = psos_call('$',b,in_D1,unaff_D2,unaff_D3,(void *)a,in_A1);
+  uVar1 = psos_call('$',block_size,in_D1,unaff_D2,unaff_D3,partition,in_A1);
   return uVar1;
 }
 
 
 /* 0001718a */
 
-/* psos.md */
+/* service 37, get block
+   psos.md */
 
-ulong psos_service_37(ulong a,ulong b,ulong *out)
+ulong psos_get_block(void *partition,ulong block_size,void **block)
 
 {
   int in_D1;
@@ -20950,11 +20968,11 @@ ulong psos_service_37(ulong a,ulong b,ulong *out)
   int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   void *in_A1;
-  ulong extraout_A1;
+  void *extraout_A1;
   
-  uVar1 = ({ __auto_type __c = psos_call('%',b,in_D1,unaff_D2,unaff_D3,(void *)a,in_A1); extraout_A1 = (__typeof__(extraout_A1))__ghidra_result_a1; __c; });
-  if ((uVar1 == 0) && (out != (ulong *)0x0)) {
-    *out = extraout_A1;
+  uVar1 = ({ __auto_type __c = psos_call('%',block_size,in_D1,unaff_D2,unaff_D3,partition,in_A1); extraout_A1 = (__typeof__(extraout_A1))__ghidra_result_a1; __c; });
+  if ((uVar1 == 0) && (block != (void **)0x0)) {
+    *block = extraout_A1;
   }
   return uVar1;
 }
@@ -20962,9 +20980,10 @@ ulong psos_service_37(ulong a,ulong b,ulong *out)
 
 /* 000171b2 */
 
-/* psos.md */
+/* service 38, return block
+   psos.md */
 
-ulong psos_service_38(ulong a,ulong b)
+ulong psos_return_block(void *partition,void *block)
 
 {
   int in_D0;
@@ -20973,7 +20992,7 @@ ulong psos_service_38(ulong a,ulong b)
   int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
   ulong uVar1;
   
-  uVar1 = psos_call('&',in_D0,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b);
+  uVar1 = psos_call('&',in_D0,in_D1,unaff_D2,unaff_D3,partition,block);
   return uVar1;
 }
 
@@ -21098,9 +21117,10 @@ ulong psos_jam_x(ulong exchange,void *message)
 
 /* 0001728a */
 
-/* psos.md */
+/* service 18, broadcast
+   psos.md */
 
-ulong psos_service_18(ulong a,ulong b,ulong c,uchar *out1,uchar *out2)
+ulong psos_broadcast_x(ulong exchange,void *message,ulong count,uchar *count_out,uchar *woken)
 
 {
   uchar extraout_D0b;
@@ -21112,13 +21132,13 @@ ulong psos_service_18(ulong a,ulong b,ulong c,uchar *out1,uchar *out2)
   bool bVar2;
   
   bVar2 = false;
-  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x12,c,in_D1,unaff_D2,unaff_D3,(void *)a,(void *)b); bVar2 = __ghidra_flag(4); __c; }); extraout_D0b = (__typeof__(extraout_D0b))__ghidra_result_d0; extraout_D1b = (__typeof__(extraout_D1b))__ghidra_result_d1; __c; });
+  uVar1 = ({ __auto_type __c = ({ __auto_type __c = psos_call(0x12,count,in_D1,unaff_D2,unaff_D3,(void *)exchange,message); bVar2 = __ghidra_flag(4); __c; }); extraout_D0b = (__typeof__(extraout_D0b))__ghidra_result_d0; extraout_D1b = (__typeof__(extraout_D1b))__ghidra_result_d1; __c; });
   if (bVar2) {
-    if (out1 != (uchar *)0x0) {
-      *out1 = extraout_D0b;
+    if (count_out != (uchar *)0x0) {
+      *count_out = extraout_D0b;
     }
-    if (out2 != (uchar *)0x0) {
-      *out2 = extraout_D1b;
+    if (woken != (uchar *)0x0) {
+      *woken = extraout_D1b;
     }
   }
   return uVar1;
@@ -21208,9 +21228,10 @@ ulong psos_get_v(ulong a,ulong b,ulong *out)
 
 /* 0001735c */
 
-/* psos.md */
+/* service 29, Announce_tick; the periodic interrupt's
+   psos.md */
 
-ulong psos_service_29(void)
+ulong psos_announce_tick(void)
 
 {
   int in_D0;
@@ -21228,9 +21249,10 @@ ulong psos_service_29(void)
 
 /* 00017370 */
 
-/* psos.md */
+/* service 30, Get_time_of_day; stores even on error
+   psos.md */
 
-ulong psos_service_30(ulong *out1,ulong *out2,ushort *out3)
+ulong psos_get_time(ulong *date,ulong *time,ushort *ticks)
 
 {
   int in_D0;
@@ -21244,14 +21266,14 @@ ulong psos_service_30(ulong *out1,ulong *out2,ushort *out3)
   void *in_A1;
   
   uVar1 = ({ __auto_type __c = psos_call(0x1e,in_D0,in_D1,unaff_D2,unaff_D3,in_A0,in_A1); extraout_D0 = (__typeof__(extraout_D0))__ghidra_result_d0; extraout_D1 = (__typeof__(extraout_D1))__ghidra_result_d1; unaff_D2 = (__typeof__(unaff_D2))__ghidra_result_d2; __c; });
-  if (out1 != (ulong *)0x0) {
-    *out1 = extraout_D0;
+  if (date != (ulong *)0x0) {
+    *date = extraout_D0;
   }
-  if (out2 != (ulong *)0x0) {
-    *out2 = extraout_D1;
+  if (time != (ulong *)0x0) {
+    *time = extraout_D1;
   }
-  if (out3 != (ushort *)0x0) {
-    *out3 = (ushort)unaff_D2;
+  if (ticks != (ushort *)0x0) {
+    *ticks = (ushort)unaff_D2;
   }
   return uVar1;
 }
@@ -21259,9 +21281,10 @@ ulong psos_service_30(ulong *out1,ulong *out2,ushort *out3)
 
 /* 000173a6 */
 
-/* psos.md */
+/* service 31, Set_time_of_day
+   psos.md */
 
-ulong psos_service_31(ulong a,ulong b,ulong c)
+ulong psos_set_time(ulong date,ulong time,ulong ticks)
 
 {
   int unaff_D3 = ({ register long __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int)__entry; });
@@ -21269,7 +21292,7 @@ ulong psos_service_31(ulong a,ulong b,ulong c)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = psos_call(0x1f,a,b,c,unaff_D3,in_A0,in_A1);
+  uVar1 = psos_call(0x1f,date,time,ticks,unaff_D3,in_A0,in_A1);
   return uVar1;
 }
 
@@ -38615,7 +38638,7 @@ void spoo_task(void)
 {
   ulong uVar1;
   
-  psos_service_33();
+  psos_supervisor();
   do {
     do {
       while( true ) {
@@ -46303,10 +46326,10 @@ void scpi_task(void)
   ulong uVar1;
   int iVar2;
   undefined4 unaff_D2 = ({ register long __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (undefined4)__entry; });
-  ulong local_8;
+  void *local_8;
   
   psos_mode(0x40,0x40,(uchar *)0x0);
-  uVar1 = psos_service_8(2000,0,1,0,&local_8);
+  uVar1 = psos_service_8(2000,0,1,0,(ulong *)&local_8);
   if ((uVar1 & 0xff) == 0) {
     scpi_prompt_enabled = 1;
     iVar2 = scpi_session_init();
@@ -46315,7 +46338,7 @@ void scpi_task(void)
     }
     else {
       scpi_interpret(iVar2,iVar2,local_8,2000,&scpi_main_tree,0x526f6,status_object,0,unaff_D2);
-      psos_service_9(local_8);
+      psos_free_segment(local_8);
       (**(code **)(*(int *)(iVar2 + 4) + 4))(iVar2);
       if (scpi_language == 0) {
         psos_priority(0,0x33,(uchar *)0x0);
@@ -69113,7 +69136,7 @@ ulong memory_allocate(ulong param_1)
 void memory_free(ulong param_1)
 
 {
-  psos_service_9(param_1);
+  psos_free_segment((void *)param_1);
   return;
 }
 
@@ -81399,7 +81422,7 @@ char * installer_exception_name(uint16_t vector)
 __exception void installer_periodic_interrupt(void)
 
 {
-  installer_psos_service_29();
+  installer_psos_announce_tick();
   sim.swsr = 0x55;
   sim.swsr = 0xaa;
   do {
@@ -81416,7 +81439,7 @@ __asm__(
 	"	.pushsection .text.installer_periodic_interrupt.100bb2,\"ax\",@progbits\n"
 	"installer_periodic_interrupt:\n"
 	"	movem.l %a6/%a5/%a1/%a0/%d1/%d0,-(%sp)\n"
-	"	jsr (installer_psos_service_29).l\n"
+	"	jsr (installer_psos_announce_tick).l\n"
 	"	move.b #0x55,(__ghidra_fffa27).l\n"
 	"	move.b #0xaa,(__ghidra_fffa27).l\n"
 	"	movem.l (%sp)+,%d0/%d1/%a0/%a1/%a5/%a6\n"
@@ -82171,15 +82194,15 @@ __asm__(
 	"	bra.w installer_kernel_priority\n"
 	"	bra.w installer_kernel_allocate_segment\n"
 	"	bra.w installer_kernel_free_segment\n"
-	"	bra.w installer_kernel_service_10\n"
+	"	bra.w installer_kernel_assign_segment\n"
 	"	bra.w installer_kernel_service_none\n"
 	"	bra.w installer_kernel_service_none\n"
 	"	bra.w installer_kernel_service_none\n"
 	"	bra.w installer_kernel_service_none\n"
 	"	bra.w installer_kernel_service_none\n"
-	"	bra.w installer_kernel_service_16\n"
+	"	bra.w installer_kernel_reclaim_segment\n"
 	"	bra.w installer_kernel_service_none\n"
-	"	bra.w installer_kernel_service_18\n"
+	"	bra.w installer_kernel_broadcast_x\n"
 	"	bra.w installer_kernel_jam_x\n"
 	"	bra.w installer_kernel_create_x\n"
 	"	bra.w installer_kernel_service_21\n"
@@ -82190,16 +82213,16 @@ __asm__(
 	"	bra.w installer_kernel_wait_v\n"
 	"	bra.w installer_kernel_get_v\n"
 	"	bra.w installer_kernel_pause\n"
-	"	bra.w installer_kernel_service_29\n"
-	"	bra.w installer_kernel_service_30\n"
-	"	bra.w installer_kernel_service_31\n"
+	"	bra.w installer_kernel_announce_tick\n"
+	"	bra.w installer_kernel_get_time\n"
+	"	bra.w installer_kernel_set_time\n"
 	"	bra.w installer_kernel_mode\n"
-	"	bra.w installer_kernel_service_33\n"
+	"	bra.w installer_kernel_supervisor\n"
 	"	bra.w installer_kernel_service_none\n"
-	"	bra.w installer_kernel_service_35\n"
-	"	bra.w installer_kernel_service_36\n"
-	"	bra.w installer_kernel_service_37\n"
-	"	bra.w installer_kernel_service_38\n"
+	"	bra.w installer_kernel_create_partition\n"
+	"	bra.w installer_kernel_delete_partition\n"
+	"	bra.w installer_kernel_get_block\n"
+	"	bra.w installer_kernel_return_block\n"
 	"	.size installer_kernel_dispatch_service, .-installer_kernel_dispatch_service\n"
 	"	.popsection\n"
 );
@@ -84139,14 +84162,14 @@ __asm__(
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x00101d4c) */
-/* the installer's copy of kernel_service_10, at 0x15324 plus 0xeca06, byte for byte
+/* the installer's copy of kernel_assign_segment, at 0x15324 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void installer_kernel_service_10(void)
+__regcall void installer_kernel_assign_segment(void)
 
 {
   void *running;
@@ -84185,30 +84208,30 @@ __regcall void installer_kernel_service_10(void)
 
 #endif
 __asm__(
-	"	.globl installer_kernel_service_10\n"
-	"	.type installer_kernel_service_10, @function\n"
-	"	.pushsection .text.installer_kernel_service_10.101d2a,\"ax\",@progbits\n"
-	"installer_kernel_service_10:\n"
+	"	.globl installer_kernel_assign_segment\n"
+	"	.type installer_kernel_assign_segment, @function\n"
+	"	.pushsection .text.installer_kernel_assign_segment.101d2a,\"ax\",@progbits\n"
+	"installer_kernel_assign_segment:\n"
 	"	move.l %a2,-(%sp)\n"
 	"	suba.w %a2,%a2\n"
 	"	.byte 0x60 | bra.b 0x00101d36\n"
-	"	.reloc ., R_68K_PC8, installer_kernel_service_16+0x6-1\n"
+	"	.reloc ., R_68K_PC8, installer_kernel_reclaim_segment+0x6-1\n"
 	"	.byte 0\n"
-	"	.size installer_kernel_service_10, .-installer_kernel_service_10\n"
+	"	.size installer_kernel_assign_segment, .-installer_kernel_assign_segment\n"
 	"	.popsection\n"
 );
 
 /* installer::00101d30 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the installer's copy of kernel_service_16, at 0x1532a plus 0xeca06, byte for byte
+/* the installer's copy of kernel_reclaim_segment, at 0x1532a plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void installer_kernel_service_16(void)
+__regcall void installer_kernel_reclaim_segment(void)
 
 {
   int *piVar1;
@@ -84246,10 +84269,10 @@ __regcall void installer_kernel_service_16(void)
 
 #endif
 __asm__(
-	"	.globl installer_kernel_service_16\n"
-	"	.type installer_kernel_service_16, @function\n"
-	"	.pushsection .text.installer_kernel_service_16.101d30,\"ax\",@progbits\n"
-	"installer_kernel_service_16:\n"
+	"	.globl installer_kernel_reclaim_segment\n"
+	"	.type installer_kernel_reclaim_segment, @function\n"
+	"	.pushsection .text.installer_kernel_reclaim_segment.101d30,\"ax\",@progbits\n"
+	"installer_kernel_reclaim_segment:\n"
 	"	move.l %a2,-(%sp)\n"
 	"	movea.w #0x1,%a2\n"
 	"	move.l %a1,-(%sp)\n"
@@ -84287,7 +84310,7 @@ __asm__(
 	"	movea.l (%sp)+,%a1\n"
 	"	movea.l (%sp)+,%a2\n"
 	"	rts\n"
-	"	.size installer_kernel_service_16, .-installer_kernel_service_16\n"
+	"	.size installer_kernel_reclaim_segment, .-installer_kernel_reclaim_segment\n"
 	"	.popsection\n"
 );
 
@@ -84639,14 +84662,14 @@ __asm__(
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
 /* WARNING: Removing unreachable block (ram,0x00101ebe) */
-/* the installer's copy of kernel_service_18, at 0x154ae plus 0xeca06, byte for byte
+/* the installer's copy of kernel_broadcast_x, at 0x154ae plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void installer_kernel_service_18(void)
+__regcall void installer_kernel_broadcast_x(void)
 
 {
   int iVar1;
@@ -84744,10 +84767,10 @@ LAB_installer__00101f7c:
 
 #endif
 __asm__(
-	"	.globl installer_kernel_service_18\n"
-	"	.type installer_kernel_service_18, @function\n"
-	"	.pushsection .text.installer_kernel_service_18.101eb4,\"ax\",@progbits\n"
-	"installer_kernel_service_18:\n"
+	"	.globl installer_kernel_broadcast_x\n"
+	"	.type installer_kernel_broadcast_x, @function\n"
+	"	.pushsection .text.installer_kernel_broadcast_x.101eb4,\"ax\",@progbits\n"
+	"installer_kernel_broadcast_x:\n"
 	"	movea.l (%a6),%a5\n"
 	"	move %sr,%d6\n"
 	"	andi.w #0x700,%d6\n"
@@ -84844,7 +84867,7 @@ __asm__(
 	".Lg_101f92:\n"
 	"	movem.l (%sp)+,%d2/%d3/%d4/%d5/%a2/%a3\n"
 	"	rts\n"
-	"	.size installer_kernel_service_18, .-installer_kernel_service_18\n"
+	"	.size installer_kernel_broadcast_x, .-installer_kernel_broadcast_x\n"
 	"	.popsection\n"
 );
 
@@ -86048,14 +86071,14 @@ __asm__(
 /* installer::001022fc */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the installer's copy of kernel_service_33, at 0x158f6 plus 0xeca06, byte for byte
+/* the installer's copy of kernel_supervisor, at 0x158f6 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall undefined2 installer_kernel_service_33(undefined2 param_1)
+__regcall undefined2 installer_kernel_supervisor(undefined2 param_1)
 
 {
   return param_1;
@@ -86064,15 +86087,15 @@ __regcall undefined2 installer_kernel_service_33(undefined2 param_1)
 
 #endif
 __asm__(
-	"	.globl installer_kernel_service_33\n"
-	"	.type installer_kernel_service_33, @function\n"
-	"	.pushsection .text.installer_kernel_service_33.1022fc,\"ax\",@progbits\n"
-	"installer_kernel_service_33:\n"
+	"	.globl installer_kernel_supervisor\n"
+	"	.type installer_kernel_supervisor, @function\n"
+	"	.pushsection .text.installer_kernel_supervisor.1022fc,\"ax\",@progbits\n"
+	"installer_kernel_supervisor:\n"
 	"	move.w (0x10,%sp),%d0\n"
 	"	ori.w #0x2000,(0x10,%sp)\n"
 	"	clr.w %d7\n"
 	"	rts\n"
-	"	.size installer_kernel_service_33, .-installer_kernel_service_33\n"
+	"	.size installer_kernel_supervisor, .-installer_kernel_supervisor\n"
 	"	.popsection\n"
 );
 
@@ -86135,14 +86158,14 @@ __asm__(
 /* installer::00102334 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the installer's copy of kernel_service_29, at 0x1592e plus 0xeca06, byte for byte
+/* the installer's copy of kernel_announce_tick, at 0x1592e plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void installer_kernel_service_29(void)
+__regcall void installer_kernel_announce_tick(void)
 
 {
   undefined4 uVar1;
@@ -86172,10 +86195,10 @@ __regcall void installer_kernel_service_29(void)
 
 #endif
 __asm__(
-	"	.globl installer_kernel_service_29\n"
-	"	.type installer_kernel_service_29, @function\n"
-	"	.pushsection .text.installer_kernel_service_29.102334,\"ax\",@progbits\n"
-	"installer_kernel_service_29:\n"
+	"	.globl installer_kernel_announce_tick\n"
+	"	.type installer_kernel_announce_tick, @function\n"
+	"	.pushsection .text.installer_kernel_announce_tick.102334,\"ax\",@progbits\n"
+	"installer_kernel_announce_tick:\n"
 	"	addq.l #0x1,(0x6c,%a6)\n"
 	"	move %sr,%d6\n"
 	"	ori #0x700,%sr\n"
@@ -86202,21 +86225,21 @@ __asm__(
 	"	move %d6,%sr\n"
 	"	clr.b %d7\n"
 	"	rts\n"
-	"	.size installer_kernel_service_29, .-installer_kernel_service_29\n"
+	"	.size installer_kernel_announce_tick, .-installer_kernel_announce_tick\n"
 	"	.popsection\n"
 );
 
 /* installer::0010237a */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the installer's copy of kernel_service_30, at 0x15974 plus 0xeca06, byte for byte
+/* the installer's copy of kernel_get_time, at 0x15974 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall undefined8 installer_kernel_service_30(void)
+__regcall undefined8 installer_kernel_get_time(void)
 
 {
   uint extraout_D1;
@@ -86232,10 +86255,10 @@ __regcall undefined8 installer_kernel_service_30(void)
 
 #endif
 __asm__(
-	"	.globl installer_kernel_service_30\n"
-	"	.type installer_kernel_service_30, @function\n"
-	"	.pushsection .text.installer_kernel_service_30.10237a,\"ax\",@progbits\n"
-	"installer_kernel_service_30:\n"
+	"	.globl installer_kernel_get_time\n"
+	"	.type installer_kernel_get_time, @function\n"
+	"	.pushsection .text.installer_kernel_get_time.10237a,\"ax\",@progbits\n"
+	"installer_kernel_get_time:\n"
 	".Lg_10237a:\n"
 	"	move.l (0x72,%a6),%d1\n"
 	"	bsr.w installer_kernel_advance_date\n"
@@ -86253,21 +86276,21 @@ __asm__(
 	"	moveq #0x1,%d7\n"
 	".Lg_1023a2:\n"
 	"	rts\n"
-	"	.size installer_kernel_service_30, .-installer_kernel_service_30\n"
+	"	.size installer_kernel_get_time, .-installer_kernel_get_time\n"
 	"	.popsection\n"
 );
 
 /* installer::001023a4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the installer's copy of kernel_service_31, at 0x1599e plus 0xeca06, byte for byte
+/* the installer's copy of kernel_set_time, at 0x1599e plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void installer_kernel_service_31(void)
+__regcall void installer_kernel_set_time(void)
 
 {
   ushort in_D0w;
@@ -86299,10 +86322,10 @@ __regcall void installer_kernel_service_31(void)
 
 #endif
 __asm__(
-	"	.globl installer_kernel_service_31\n"
-	"	.type installer_kernel_service_31, @function\n"
-	"	.pushsection .text.installer_kernel_service_31.1023a4,\"ax\",@progbits\n"
-	"installer_kernel_service_31:\n"
+	"	.globl installer_kernel_set_time\n"
+	"	.type installer_kernel_set_time, @function\n"
+	"	.pushsection .text.installer_kernel_set_time.1023a4,\"ax\",@progbits\n"
+	"installer_kernel_set_time:\n"
 	"	move.l %d1,%d7\n"
 	"	cmpi.b #0x3c,%d7\n"
 	"	bcc.b .Lg_10240e\n"
@@ -86348,21 +86371,21 @@ __asm__(
 	"	moveq #0x1,%d7\n"
 	".Lg_102414:\n"
 	"	rts\n"
-	"	.size installer_kernel_service_31, .-installer_kernel_service_31\n"
+	"	.size installer_kernel_set_time, .-installer_kernel_set_time\n"
 	"	.popsection\n"
 );
 
 /* installer::00102416 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the installer's copy of kernel_service_35, at 0x15a10 plus 0xeca06, byte for byte
+/* the installer's copy of kernel_create_partition, at 0x15a10 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall undefined8 installer_kernel_service_35(void)
+__regcall undefined8 installer_kernel_create_partition(void)
 
 {
   int in_D0;
@@ -86392,10 +86415,10 @@ __regcall undefined8 installer_kernel_service_35(void)
 
 #endif
 __asm__(
-	"	.globl installer_kernel_service_35\n"
-	"	.type installer_kernel_service_35, @function\n"
-	"	.pushsection .text.installer_kernel_service_35.102416,\"ax\",@progbits\n"
-	"installer_kernel_service_35:\n"
+	"	.globl installer_kernel_create_partition\n"
+	"	.type installer_kernel_create_partition, @function\n"
+	"	.pushsection .text.installer_kernel_create_partition.102416,\"ax\",@progbits\n"
+	"installer_kernel_create_partition:\n"
 	"	movem.l %a1/%a0/%d1/%d0,-(%sp)\n"
 	"	clr.w (0x8,%a0)\n"
 	"	move.l %d0,(0x4,%a0)\n"
@@ -86418,21 +86441,21 @@ __asm__(
 	"	clr.b %d7\n"
 	"	movem.l (%sp)+,%d0/%d1/%a0/%a1\n"
 	"	rts\n"
-	"	.size installer_kernel_service_35, .-installer_kernel_service_35\n"
+	"	.size installer_kernel_create_partition, .-installer_kernel_create_partition\n"
 	"	.popsection\n"
 );
 
 /* installer::00102456 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the installer's copy of kernel_service_36, at 0x15a50 plus 0xeca06, byte for byte
+/* the installer's copy of kernel_delete_partition, at 0x15a50 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void installer_kernel_service_36(void)
+__regcall void installer_kernel_delete_partition(void)
 
 {
   int in_D0;
@@ -86447,10 +86470,10 @@ __regcall void installer_kernel_service_36(void)
 
 #endif
 __asm__(
-	"	.globl installer_kernel_service_36\n"
-	"	.type installer_kernel_service_36, @function\n"
-	"	.pushsection .text.installer_kernel_service_36.102456,\"ax\",@progbits\n"
-	"installer_kernel_service_36:\n"
+	"	.globl installer_kernel_delete_partition\n"
+	"	.type installer_kernel_delete_partition, @function\n"
+	"	.pushsection .text.installer_kernel_delete_partition.102456,\"ax\",@progbits\n"
+	"installer_kernel_delete_partition:\n"
 	"	moveq #0x1,%d7\n"
 	"	cmp.l (0x4,%a0),%d0\n"
 	"	bne.b .Lg_10247a\n"
@@ -86466,21 +86489,21 @@ __asm__(
 	"	moveq #0x2,%d7\n"
 	".Lg_10247a:\n"
 	"	rts\n"
-	"	.size installer_kernel_service_36, .-installer_kernel_service_36\n"
+	"	.size installer_kernel_delete_partition, .-installer_kernel_delete_partition\n"
 	"	.popsection\n"
 );
 
 /* installer::0010247c */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the installer's copy of kernel_service_37, at 0x15a76 plus 0xeca06, byte for byte
+/* the installer's copy of kernel_get_block, at 0x15a76 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void installer_kernel_service_37(void)
+__regcall void installer_kernel_get_block(void)
 
 {
   int iVar1;
@@ -86498,10 +86521,10 @@ __regcall void installer_kernel_service_37(void)
 
 #endif
 __asm__(
-	"	.globl installer_kernel_service_37\n"
-	"	.type installer_kernel_service_37, @function\n"
-	"	.pushsection .text.installer_kernel_service_37.10247c,\"ax\",@progbits\n"
-	"installer_kernel_service_37:\n"
+	"	.globl installer_kernel_get_block\n"
+	"	.type installer_kernel_get_block, @function\n"
+	"	.pushsection .text.installer_kernel_get_block.10247c,\"ax\",@progbits\n"
+	"installer_kernel_get_block:\n"
 	"	moveq #0x1,%d7\n"
 	"	cmp.l (0x4,%a0),%d0\n"
 	"	bne.b .Lg_1024a6\n"
@@ -86521,21 +86544,21 @@ __asm__(
 	"	moveq #0x2,%d7\n"
 	".Lg_1024a6:\n"
 	"	rts\n"
-	"	.size installer_kernel_service_37, .-installer_kernel_service_37\n"
+	"	.size installer_kernel_get_block, .-installer_kernel_get_block\n"
 	"	.popsection\n"
 );
 
 /* installer::001024a8 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the installer's copy of kernel_service_38, at 0x15aa2 plus 0xeca06, byte for byte
+/* the installer's copy of kernel_return_block, at 0x15aa2 plus 0xeca06, byte for byte
    Not a C function (psos-service; documented): a pSOS kernel service, reached from trap #3 through
    the kernel's dispatch; its error comes back in D7.b and its results in D0 to D2, A0 and A1.  In:
    D0, D1, D2, D3, A0, A1.  Out: D7 char error.
    psos.md */
 
 /* out D7 char error */
-__regcall void installer_kernel_service_38(void)
+__regcall void installer_kernel_return_block(void)
 
 {
   int *in_A0;
@@ -86552,10 +86575,10 @@ __regcall void installer_kernel_service_38(void)
 
 #endif
 __asm__(
-	"	.globl installer_kernel_service_38\n"
-	"	.type installer_kernel_service_38, @function\n"
-	"	.pushsection .text.installer_kernel_service_38.1024a8,\"ax\",@progbits\n"
-	"installer_kernel_service_38:\n"
+	"	.globl installer_kernel_return_block\n"
+	"	.type installer_kernel_return_block, @function\n"
+	"	.pushsection .text.installer_kernel_return_block.1024a8,\"ax\",@progbits\n"
+	"installer_kernel_return_block:\n"
 	"	moveq #0x1,%d7\n"
 	"	cmpa.l (-0x8,%a1),%a0\n"
 	"	bne.b .Lg_1024c4\n"
@@ -86568,7 +86591,7 @@ __asm__(
 	"	clr.b %d7\n"
 	".Lg_1024c4:\n"
 	"	rts\n"
-	"	.size installer_kernel_service_38, .-installer_kernel_service_38\n"
+	"	.size installer_kernel_return_block, .-installer_kernel_return_block\n"
 	"	.popsection\n"
 );
 
@@ -88446,10 +88469,10 @@ ulong installer_psos_get_v(ulong a,ulong b,ulong *out)
 
 /* installer::00102eb0 */
 
-/* the installer's psos_service_29
+/* the installer's psos_announce_tick
    psos.md */
 
-ulong installer_psos_service_29(void)
+ulong installer_psos_announce_tick(void)
 
 {
   int in_D0;

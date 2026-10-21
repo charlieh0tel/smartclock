@@ -815,7 +815,7 @@ view cannot drift apart.  The library, bottom up:
      three longs and the SCPI step entries the routines that build them
      keep on their stacks are typed; libgcc's soft-float exception
      handler reaches `_fpCCR` through a GOT the link now places and the
-     harness loads; and `psos_service_33`, which pops its return address,
+     harness loads; and `psos_supervisor`, which pops its return address,
      traps and jumps back, is assembly (83 to 51).  A loop to a stack
      record's end, which the decompiler writes as the frame offset where
      it ends, runs to the record's end (51 to 48).  A pointer to an

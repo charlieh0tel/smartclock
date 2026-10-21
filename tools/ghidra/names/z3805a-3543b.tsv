@@ -173,10 +173,10 @@
 0x17038	function	psos_resume	psos.md	service 6, resume	unsigned long psos_resume(unsigned long task)
 0x17050	function	psos_priority	psos.md	service 7, priority	unsigned long psos_priority(unsigned long task, unsigned long priority, unsigned char *old)
 0x170c0	function	psos_service_8	psos.md		unsigned long psos_service_8(unsigned long a, unsigned long b, unsigned long c, unsigned long d, unsigned long *out)
-0x170f4	function	psos_service_9	psos.md		unsigned long psos_service_9(unsigned long a)
-0x1710c	function	psos_service_10	psos.md		unsigned long psos_service_10(unsigned long a, unsigned long b)
-0x17128	function	psos_service_16	psos.md		unsigned long psos_service_16(unsigned long a, unsigned long b)
-0x1728a	function	psos_service_18	psos.md		unsigned long psos_service_18(unsigned long a, unsigned long b, unsigned long c, unsigned char *out1, unsigned char *out2)
+0x170f4	function	psos_free_segment	psos.md	service 9, Free_segment	unsigned long psos_free_segment(void *segment)
+0x1710c	function	psos_assign_segment	psos.md	service 10, Assign_segment	unsigned long psos_assign_segment(void *segment, unsigned long task)
+0x17128	function	psos_reclaim_segment	psos.md	service 16, a segment back from a task	unsigned long psos_reclaim_segment(void *segment, unsigned long task)
+0x1728a	function	psos_broadcast_x	psos.md	service 18, broadcast	unsigned long psos_broadcast_x(unsigned long exchange, void *message, unsigned long count, unsigned char *count_out, unsigned char *woken)
 0x1726e	function	psos_jam_x	psos.md	service 19, jam_x	unsigned long psos_jam_x(unsigned long exchange, void *message)
 0x171ce	function	psos_create_x	psos.md	service 20, create_x	unsigned long psos_create_x(char *name, unsigned long a, unsigned long b, unsigned long *exchange)
 0x171fe	function	psos_service_21	psos.md		unsigned long psos_service_21(char *name, unsigned long *out1, unsigned long *out2, unsigned long *out3)
@@ -187,15 +187,15 @@
 0x17304	function	psos_wait_v	psos.md	service 26, wait_v	unsigned long psos_wait_v(unsigned long a, unsigned long b, unsigned long c, unsigned long *out)
 0x17332	function	psos_get_v	psos.md	service 27, get_v	unsigned long psos_get_v(unsigned long a, unsigned long b, unsigned long *out)
 0x17076	function	psos_pause	psos.md	service 28, pause	unsigned long psos_pause(unsigned long a)
-0x1735c	function	psos_service_29	psos.md		unsigned long psos_service_29(void)
-0x17370	function	psos_service_30	psos.md		unsigned long psos_service_30(unsigned long *out1, unsigned long *out2, unsigned short *out3)
-0x173a6	function	psos_service_31	psos.md		unsigned long psos_service_31(unsigned long a, unsigned long b, unsigned long c)
-0x1708e	function	psos_mode	psos.md	service 32, mode	unsigned long psos_mode(unsigned long a, unsigned long b, unsigned char *old)
-0x170b4	function	psos_service_33	psos.md	service 33, by a trap in line: pops its return address into A0, keeps D7 in D1 across the trap and jumps back		convention=other; confidence=read; family=psos-binding
-0x17144	function	psos_service_35	psos.md		unsigned long psos_service_35(unsigned long a, unsigned long b, unsigned long c, unsigned long *out)
-0x1716e	function	psos_service_36	psos.md		unsigned long psos_service_36(unsigned long a, unsigned long b)
-0x1718a	function	psos_service_37	psos.md		unsigned long psos_service_37(unsigned long a, unsigned long b, unsigned long *out)
-0x171b2	function	psos_service_38	psos.md		unsigned long psos_service_38(unsigned long a, unsigned long b)
+0x1735c	function	psos_announce_tick	psos.md	service 29, Announce_tick; the periodic interrupt's	unsigned long psos_announce_tick(void)
+0x17370	function	psos_get_time	psos.md	service 30, Get_time_of_day; stores even on error	unsigned long psos_get_time(unsigned long *date, unsigned long *time, unsigned short *ticks)
+0x173a6	function	psos_set_time	psos.md	service 31, Set_time_of_day	unsigned long psos_set_time(unsigned long date, unsigned long time, unsigned long ticks)
+0x1708e	function	psos_mode	psos.md	service 32, mode	unsigned long psos_mode(unsigned long mode, unsigned long mask, unsigned char *old)
+0x170b4	function	psos_supervisor	psos.md	service 33, supervisor mode, by a trap in line: pops its return address into A0, keeps D7 in D1 across the trap and jumps back		convention=other; confidence=read; family=psos-binding
+0x17144	function	psos_create_partition	psos.md	service 35, create partition	unsigned long psos_create_partition(void *area, unsigned long block_size, unsigned long count, void **partition)
+0x1716e	function	psos_delete_partition	psos.md	service 36, delete partition	unsigned long psos_delete_partition(void *partition, unsigned long block_size)
+0x1718a	function	psos_get_block	psos.md	service 37, get block	unsigned long psos_get_block(void *partition, unsigned long block_size, void **block)
+0x171b2	function	psos_return_block	psos.md	service 38, return block	unsigned long psos_return_block(void *partition, void *block)
 0x173ca	function	psos_io_init	psos.md	I/O function 0, dev_init	unsigned long psos_io_init(unsigned long device)
 0x173e2	function	psos_io_open	psos.md	I/O function 1, dev_open, !iodev	unsigned long psos_io_open(unsigned long device, unsigned long a)
 0x173fe	function	psos_io_close	psos.md	I/O function 2, dev_close, !iodev	unsigned long psos_io_close(unsigned long device)
@@ -911,17 +911,17 @@
 0x1507a	function	kernel_priority	psos.md	service 7, psos_priority		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 0x150da	function	kernel_allocate_segment	psos.md	service 8: kernel_allocate_for_task for the running task		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 0x150dc	function	kernel_allocate_for_task	psos.md	for the task in A5, allocates from a region through kernel_allocate, or queues the task to wait, with a timeout, when it cannot; kernel_create calls it too		convention=undetermined; confidence=derived; family=psos
-0x15130	function	kernel_free_segment	psos.md	service 9: kernel_free_for_task for the running task		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+0x15130	function	kernel_free_segment	psos.md	service 9, Free_segment: kernel_free_for_task for the running task; error 5 a bad stamp, 1 a segment not the task's		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 0x15132	function	kernel_free_for_task	psos.md	checks a segment by kernel_check_segment and frees it, then satisfies the tasks waiting for memory; kernel_delete calls it		convention=undetermined; confidence=derived; family=psos
 0x15268	function	kernel_allocate	psos.md	allocates D1 bytes from region 0 or 1 as D2 selects, falling back to the other, and links it to the task's list		convention=undetermined; confidence=derived; family=psos
 0x1529c	function	kernel_region_allocate	psos.md	first fit from region D6's free list, stamping the segment 0xe1d0		convention=undetermined; confidence=derived; family=psos
-0x15324	function	kernel_service_10	psos.md	service 10		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-0x1532a	function	kernel_service_16	psos.md	service 16		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+0x15324	function	kernel_assign_segment	psos.md	service 10, Assign_segment: moves the segment in A0 from the running task's list to the task in A1's; errors 1 to 3 of the task, 5 a bad segment, 1 one not the running task's		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+0x1532a	function	kernel_reclaim_segment	psos.md	service 16: kernel_assign_segment's body with the tasks exchanged (0x15346), moving the segment in A0 from the task in A1's list to the running task's		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 0x1537a	function	kernel_service_none	psos.md	services 11 to 15, 17 and 34: clears D7 and returns		convention=psos-service; confidence=read; out=D7 char error; family=psos
 0x1537e	function	kernel_create_x	psos.md	service 20, psos_create_x		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 0x153e0	function	kernel_service_21	psos.md	service 21		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 0x15436	function	kernel_delete_x	psos.md	service 22, psos_delete_x		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-0x154ae	function	kernel_service_18	psos.md	service 18		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+0x154ae	function	kernel_broadcast_x	psos.md	service 18, broadcast: gives the message at A1 to every task waiting at the exchange in A0 and queues copies up to D0.b; D0.b the larger of the two, D1.b the tasks given it; error 7 a reply exchange in the message, 6 queue full, 5 no buffer		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 0x15592	function	kernel_jam_x	psos.md	service 19, psos_jam_x: kernel_send_for_task's body with A4 set, which send_x clears		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 0x1559c	function	kernel_send_x	psos.md	service 23, psos_send_x: kernel_send_for_task for the running task		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 0x1559e	function	kernel_send_for_task	psos.md	gives a message to the first task waiting at the exchange, or queues it in a buffer by kernel_copy_message; kernel_delete calls it		convention=undetermined; confidence=derived; family=psos
@@ -931,16 +931,16 @@
 0x157f0	function	kernel_signal_task	psos.md	checks the task by kernel_check_task, ORs the events in D1 into its pending word at +0x18 and, if they satisfy the wait at +0x16, wakes it; kernel_signal_v and kernel_delete call it		convention=undetermined; confidence=derived; family=psos
 0x1585a	function	kernel_get_v	psos.md	service 27, psos_get_v: clears D7, then kernel_wait_v		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 0x1585c	function	kernel_wait_v	psos.md	service 26, psos_wait_v		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-0x158da	function	kernel_mode	psos.md	service 32, psos_mode		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-0x158f6	function	kernel_service_33	psos.md	service 33		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+0x158da	function	kernel_mode	psos.md	service 32, psos_mode: sets the D1.b-masked bits of the task's mode byte, +0x11, from D0.b (0x80 no preemption, 0x40 time slicing); the old in D0.b		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+0x158f6	function	kernel_supervisor	psos.md	service 33: sets the supervisor bit in the status register the trap returns to; the old in D0.w		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 0x15904	function	kernel_pause	psos.md	service 28, psos_pause		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-0x1592e	function	kernel_service_29	psos.md	service 29		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-0x15974	function	kernel_service_30	psos.md	service 30		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-0x1599e	function	kernel_service_31	psos.md	service 31		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-0x15a10	function	kernel_service_35	psos.md	service 35		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-0x15a50	function	kernel_service_36	psos.md	service 36		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-0x15a76	function	kernel_service_37	psos.md	service 37		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-0x15aa2	function	kernel_service_38	psos.md	service 38		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+0x1592e	function	kernel_announce_tick	psos.md	service 29, Announce_tick: counts a tick at +0x6c for kernel_switch_task and advances the time of day a second each +0x86 ticks		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+0x15974	function	kernel_get_time	psos.md	service 30, Get_time_of_day: the date in D0, the time in D1 (the ticks' low byte on top), the ticks in D2.w; error 1 never set		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+0x1599e	function	kernel_set_time	psos.md	service 31, Set_time_of_day: the date in D0 (year, month, day), the time in D1's low 24 bits (hours, minutes, seconds), the ticks in D2.w; error 2 a bad time, 1 a bad date		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+0x15a10	function	kernel_create_partition	psos.md	service 35, create partition: carves the area at A0 into D1.w blocks of D0 bytes, each after 8 bytes of its own, after a 12-byte header; the partition is the area		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+0x15a50	function	kernel_delete_partition	psos.md	service 36, delete partition: the partition in A0, its block size in D0; error 1 a wrong size, 2 a block out		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+0x15a76	function	kernel_get_block	psos.md	service 37, get block: from the partition in A0, its block size in D0; the block in A1; error 1 a wrong size, 2 none free		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+0x15aa2	function	kernel_return_block	psos.md	service 38, return block: the block in A1 to the partition in A0; error 1 a block not out from it		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 0x15ac0	function	kernel_advance_date	psos.md	each 24 hours of the kernel's clock: the next day, month and year, by the days-in-month table at 0x79 in the configuration		convention=undetermined; confidence=derived; family=psos
 0x15b10	function	kernel_set_leap_year	psos.md	February's days in that table, 28 or 29 by the Gregorian rule		convention=undetermined; confidence=derived; family=psos
 0x15b3a	function	kernel_check_task	psos.md	the task ID in A0, or the running task for 0: error 2 bad ID, 1 deleted, 3 another group's		convention=register; confidence=read; in=A0 int task, A5 void *running; out=A0 void *record; error=D7 2 bad ID, D7 1 deleted, D7 3 another group; family=psos
@@ -976,13 +976,13 @@ installer::0x101b36	function	installer_kernel_free_segment	psos.md	the installer
 installer::0x101b38	function	installer_kernel_free_for_task	psos.md	the installer's copy of kernel_free_for_task, at 0x15132 plus 0xeca06, byte for byte		convention=undetermined; confidence=derived; family=psos
 installer::0x101c6e	function	installer_kernel_allocate	psos.md	the installer's copy of kernel_allocate, at 0x15268 plus 0xeca06, byte for byte		convention=undetermined; confidence=derived; family=psos
 installer::0x101ca2	function	installer_kernel_region_allocate	psos.md	the installer's copy of kernel_region_allocate, at 0x1529c plus 0xeca06, byte for byte		convention=undetermined; confidence=derived; family=psos
-installer::0x101d2a	function	installer_kernel_service_10	psos.md	the installer's copy of kernel_service_10, at 0x15324 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-installer::0x101d30	function	installer_kernel_service_16	psos.md	the installer's copy of kernel_service_16, at 0x1532a plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+installer::0x101d2a	function	installer_kernel_assign_segment	psos.md	the installer's copy of kernel_assign_segment, at 0x15324 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+installer::0x101d30	function	installer_kernel_reclaim_segment	psos.md	the installer's copy of kernel_reclaim_segment, at 0x1532a plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 installer::0x101d80	function	installer_kernel_service_none	psos.md	the installer's copy of kernel_service_none, at 0x1537a plus 0xeca06, byte for byte		convention=psos-service; confidence=read; out=D7 char error; family=psos
 installer::0x101d84	function	installer_kernel_create_x	psos.md	the installer's copy of kernel_create_x, at 0x1537e plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 installer::0x101de6	function	installer_kernel_service_21	psos.md	the installer's copy of kernel_service_21, at 0x153e0 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 installer::0x101e3c	function	installer_kernel_delete_x	psos.md	the installer's copy of kernel_delete_x, at 0x15436 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-installer::0x101eb4	function	installer_kernel_service_18	psos.md	the installer's copy of kernel_service_18, at 0x154ae plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+installer::0x101eb4	function	installer_kernel_broadcast_x	psos.md	the installer's copy of kernel_broadcast_x, at 0x154ae plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 installer::0x101f98	function	installer_kernel_jam_x	psos.md	the installer's copy of kernel_jam_x, at 0x15592 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 installer::0x101fa2	function	installer_kernel_send_x	psos.md	the installer's copy of kernel_send_x, at 0x1559c plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 installer::0x101fa4	function	installer_kernel_send_for_task	psos.md	the installer's copy of kernel_send_for_task, at 0x1559e plus 0xeca06, byte for byte		convention=undetermined; confidence=derived; family=psos
@@ -993,15 +993,15 @@ installer::0x1021f6	function	installer_kernel_signal_task	psos.md	the installer'
 installer::0x102260	function	installer_kernel_get_v	psos.md	the installer's copy of kernel_get_v, at 0x1585a plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 installer::0x102262	function	installer_kernel_wait_v	psos.md	the installer's copy of kernel_wait_v, at 0x1585c plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 installer::0x1022e0	function	installer_kernel_mode	psos.md	the installer's copy of kernel_mode, at 0x158da plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-installer::0x1022fc	function	installer_kernel_service_33	psos.md	the installer's copy of kernel_service_33, at 0x158f6 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+installer::0x1022fc	function	installer_kernel_supervisor	psos.md	the installer's copy of kernel_supervisor, at 0x158f6 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 installer::0x10230a	function	installer_kernel_pause	psos.md	the installer's copy of kernel_pause, at 0x15904 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-installer::0x102334	function	installer_kernel_service_29	psos.md	the installer's copy of kernel_service_29, at 0x1592e plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-installer::0x10237a	function	installer_kernel_service_30	psos.md	the installer's copy of kernel_service_30, at 0x15974 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-installer::0x1023a4	function	installer_kernel_service_31	psos.md	the installer's copy of kernel_service_31, at 0x1599e plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-installer::0x102416	function	installer_kernel_service_35	psos.md	the installer's copy of kernel_service_35, at 0x15a10 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-installer::0x102456	function	installer_kernel_service_36	psos.md	the installer's copy of kernel_service_36, at 0x15a50 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-installer::0x10247c	function	installer_kernel_service_37	psos.md	the installer's copy of kernel_service_37, at 0x15a76 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
-installer::0x1024a8	function	installer_kernel_service_38	psos.md	the installer's copy of kernel_service_38, at 0x15aa2 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+installer::0x102334	function	installer_kernel_announce_tick	psos.md	the installer's copy of kernel_announce_tick, at 0x1592e plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+installer::0x10237a	function	installer_kernel_get_time	psos.md	the installer's copy of kernel_get_time, at 0x15974 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+installer::0x1023a4	function	installer_kernel_set_time	psos.md	the installer's copy of kernel_set_time, at 0x1599e plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+installer::0x102416	function	installer_kernel_create_partition	psos.md	the installer's copy of kernel_create_partition, at 0x15a10 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+installer::0x102456	function	installer_kernel_delete_partition	psos.md	the installer's copy of kernel_delete_partition, at 0x15a50 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+installer::0x10247c	function	installer_kernel_get_block	psos.md	the installer's copy of kernel_get_block, at 0x15a76 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
+installer::0x1024a8	function	installer_kernel_return_block	psos.md	the installer's copy of kernel_return_block, at 0x15aa2 plus 0xeca06, byte for byte		convention=psos-service; confidence=documented; in=D0, D1, D2, D3, A0, A1; out=D7 char error; family=psos
 installer::0x1024c6	function	installer_kernel_advance_date	psos.md	the installer's copy of kernel_advance_date, at 0x15ac0 plus 0xeca06, byte for byte		convention=undetermined; confidence=derived; family=psos
 installer::0x102516	function	installer_kernel_set_leap_year	psos.md	the installer's copy of kernel_set_leap_year, at 0x15b10 plus 0xeca06, byte for byte		convention=undetermined; confidence=derived; family=psos
 installer::0x102540	function	installer_kernel_check_task	psos.md	the installer's copy of kernel_check_task, at 0x15b3a plus 0xeca06, byte for byte		convention=register; confidence=read; in=A0 int task, A5 void *running; out=A0 void *record; error=D7 2 bad ID, D7 1 deleted, D7 3 another group; family=psos
@@ -1704,7 +1704,7 @@ installer::0x102da6	function	installer_psos_send_x	psos.md	the installer's psos_
 installer::0x102e3c	function	installer_psos_signal_v	psos.md	the installer's psos_signal_v, service 25	unsigned long installer_psos_signal_v(unsigned long variable, unsigned long value)
 installer::0x102e58	function	installer_psos_wait_v	psos.md	the installer's psos_wait_v, service 26	unsigned long installer_psos_wait_v(unsigned long a, unsigned long b, unsigned long c, unsigned long *out)
 installer::0x102e86	function	installer_psos_get_v	psos.md	the installer's psos_get_v, service 27	unsigned long installer_psos_get_v(unsigned long a, unsigned long b, unsigned long *out)
-installer::0x102eb0	function	installer_psos_service_29	psos.md	the installer's psos_service_29	unsigned long installer_psos_service_29(void)
+installer::0x102eb0	function	installer_psos_announce_tick	psos.md	the installer's psos_announce_tick	unsigned long installer_psos_announce_tick(void)
 installer::0x102ff4	function	installer_gp_port_select	context	the installer's gp_port_select
 installer::0x103016	function	installer_duartb_mode_from_settings	context	the installer's duartb_mode_from_settings
 installer::0x1030b4	function	installer_duartb_baud_from_settings	context	the installer's duartb_baud_from_settings

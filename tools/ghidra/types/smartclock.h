@@ -575,7 +575,7 @@ typedef struct serial_ring {
 /* DUART channel A's driver, the GPS receiver's link, at 0x102fe0; only
  * the GPS task sends on it.  Its receive ring is at 0x102edd. */
 typedef struct duarta_driver {
-  char* transmit_next;    /* +0x00: drta_send_message's next character */
+  uint8_t* transmit_next; /* +0x00: drta_send_message's next byte */
   int16_t transmit_count; /* +0x04: its characters left; at 0 the GPS task is
                              signaled 0x800 */
   uint8_t overrun;        /* +0x06: the receiver overran ("DRTA receiver overrun
@@ -995,7 +995,11 @@ typedef enum __attribute__((packed)) gps_argument_mode {
  * sign-extends it (movea.w, 0x4be04); gps_running_command's message,
  * the step's code (0x4c242); and the code gps_request_post,
  * gps_message_supported and gps_response_decode take, a word slot
- * (cmpi.w 0x4bd44, 0x4f8fc; ext.l 0x4faae).  Its values are
+ * (cmpi.w 0x4bd44, 0x4f8fc; ext.l 0x4faae), and gps_console_request,
+ * gps_request_build, gps_response_match and gps_response_timed_out
+ * (movea.w 0x4c578; ext.l 0x4f948, 0x4fba2, 0x4b9c0); gps_response_index
+ * (0x101396), which gpsm_task passes as a word (0x4c06a, 0x4c386); and
+ * gps_command_log_entry's code and message (0x4c686, 0x4c68c).  Its values are
  * gps_request_code's; its one name only
  * makes it a signed word, in gcc's packing and in SmartClockSetup.java's
  * sizing of enums alike, and no step holds it. */
@@ -1413,12 +1417,15 @@ typedef struct calendar_date {
  * request gpsm_task has sent, and gps_print_command prints as
  * "%-5s %02d  %-2s %-2s [%s]   %11s  %8s %s". */
 typedef struct gps_command_log_entry {
-  int16_t code;              /* +0x00: the request's +0xa, printed under "ID" */
-  gps_request_sender sender; /* +0x02: the request's; printed PLL, SCPI1,
-                                GPSc and GPSs, else "?" */
-  uint8_t field_03;          /* never written */
-  int16_t message; /* +0x04: the request's +0x1e, its index in the message table
-                      at 0x4fece, whose ID prints */
+  gps_request_code_word code;    /* +0x00: the request's +0xa (move.w 0x4c686),
+                                    printed under "ID" (movea.w 0x4c84a) */
+  gps_request_sender sender;     /* +0x02: the request's; printed PLL, SCPI1,
+                                    GPSc and GPSs, else "?" */
+  uint8_t field_03;              /* never written */
+  gps_request_code_word message; /* +0x04: the request's +0x1e (move.w
+                                    0x4c68c), its index in the message table
+                                    at 0x4fece, whose ID prints (ext.l
+                                    0x4c838) */
   char argument_text[3];   /* +0x06: characters 4 and 5 of gps_message_to_text's
                               text, the first byte after the ID in hex; NUL */
   gps_argument_mode query; /* +0x09: the command's; printed q, else c */
@@ -3289,7 +3296,8 @@ typedef struct pllc_request {
 /* An Oncore argument encoder: puts a request's argument by its index
  * at out, and returns where the next byte goes (long_array_get_byte and
  * its kin). */
-typedef char* oncore_encoder(int32_t* arguments, uint8_t index, char* out);
+typedef uint8_t* oncore_encoder(int32_t* arguments, uint8_t index,
+                                uint8_t* out);
 
 /* An Oncore response decoder: unpacks the message at cursor into
  * record, and returns the cursor past what it read
@@ -3352,7 +3360,8 @@ typedef struct oncore_message_entry {
   oncore_message_kind kind; /* +0x04 */
   uint8_t field_05;
   oncore_encoder* encoders[4]; /* +0x06: to the first zero */
-  char* query;                 /* +0x16: the query form; zero if none */
+  uint8_t* query; /* +0x16: the query form, the bytes after the ID to a NUL,
+                     0xee standing for a zero byte (0x4fa4e); zero if none */
   uint8_t
       timeout; /* +0x1a: gps_response_timed_out's limit on the uptime elapsed */
   uint8_t field_1b;

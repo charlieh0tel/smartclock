@@ -28,7 +28,7 @@ void duart_test_tx_a(void) { duart_test_transmit(&duart.a, IMR_TXRDYA); }
 /* Sends a message to the GPS receiver on DUART channel A by interrupt,
  * waiting until it is out; only the GPS task may, and another gets 1
  * back (0x1e18a). */
-uint8_t drta_send_message(char* message, int16_t length) {
+uint8_t drta_send_message(uint8_t* message, int16_t length) {
   uint16_t sr;
 
   if (psos_my_pid() != task_gpsm) {

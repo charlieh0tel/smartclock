@@ -38,7 +38,7 @@ static void gps_oncore_restart(uint8_t c) {
 /* A response's index in oncore_messages by its ID, and its length;
  * 0, counted, for an ID not there (0x4b7ac). */
 uint32_t gps_response_lookup(char first, char second, int16_t* length,
-                             int16_t* index) {
+                             gps_request_code_word* index) {
   static const int16_t COUNT =
       sizeof oncore_messages / sizeof oncore_messages[0];
 
@@ -146,7 +146,8 @@ uint8_t gps_receive(void) {
 
 /* 1 once more time has passed since sent_time than the message's
  * timeout (0x4b9a6). */
-uint32_t gps_response_timed_out(int16_t message, uint32_t* sent_time) {
+uint32_t gps_response_timed_out(gps_request_code_word message,
+                                uint32_t* sent_time) {
   int32_t elapsed;
 
   return uptime_elapsed(sent_time, &elapsed) &&
@@ -212,9 +213,9 @@ int32_t gps_count_response(gps_request_result kind,
 /* A message as text for the command log: its "@@" and ID, each byte
  * after them in hex, and "<cr><lf>"; empty unless it ends in CR LF.  Its
  * length (0x4fdca). */
-int32_t gps_message_to_text(char* message, uint8_t length, char* text) {
+int32_t gps_message_to_text(uint8_t* message, uint8_t length, char* text) {
   const uint32_t header_length = libc_length("@@") + GPS_ONCORE_ID_LENGTH;
-  const char* end = message + (length - 2);
+  const uint8_t* end = message + (length - 2);
 
   if (message[0] == 0 || end[0] != '\r' || end[1] != '\n') {
     text[0] = 0;
@@ -226,10 +227,10 @@ int32_t gps_message_to_text(char* message, uint8_t length, char* text) {
     memcpy(header, message, header_length);
     header[header_length] = 0;
     hex[0] = 0;
-    for (const char* byte = message + header_length; byte < end; byte++) {
+    for (const uint8_t* byte = message + header_length; byte < end; byte++) {
       char* shown = digits;
 
-      sprintf(digits, "%hx", (uint32_t)(uint8_t)*byte);
+      sprintf(digits, "%hx", (uint32_t)*byte);
       if (libc_length(digits) < 2) {
         digits[2] = 0;
         digits[1] = digits[0];
@@ -260,33 +261,34 @@ void long_array_set(int32_t value, int32_t* array, uint8_t index) {
  * command's bytes go, and which return where the next goes. */
 
 /* An argument's low byte (0x4eec2). */
-char* long_array_get_byte(int32_t* array, uint8_t index, char* out) {
-  *out = (char)long_array_get(array, index);
+uint8_t* long_array_get_byte(int32_t* array, uint8_t index, uint8_t* out) {
+  *out = (uint8_t)long_array_get(array, index);
   return out + 1;
 }
 
 /* An argument's low word, high byte first (0x4eee0). */
-char* long_array_get_word(int32_t* array, uint8_t index, char* out) {
+uint8_t* long_array_get_word(int32_t* array, uint8_t index, uint8_t* out) {
   uint32_t value = (uint32_t)long_array_get(array, index);
 
-  out[0] = (char)(value >> 8);
-  out[1] = (char)value;
+  out[0] = (uint8_t)(value >> 8);
+  out[1] = (uint8_t)value;
   return out + 2;
 }
 
 /* An argument, high byte first (0x4ef02). */
-char* long_array_get_long(int32_t* array, uint8_t index, char* out) {
+uint8_t* long_array_get_long(int32_t* array, uint8_t index, uint8_t* out) {
   uint32_t value = (uint32_t)long_array_get(array, index);
 
-  out[0] = (char)(value >> 24);
-  out[1] = (char)(value >> 16);
-  out[2] = (char)(value >> 8);
-  out[3] = (char)value;
+  out[0] = (uint8_t)(value >> 24);
+  out[1] = (uint8_t)(value >> 16);
+  out[2] = (uint8_t)(value >> 8);
+  out[3] = (uint8_t)value;
   return out + 4;
 }
 
 /* A zero byte, then an argument, high byte first (0x4ef3a). */
-char* long_array_get_long_prefixed(int32_t* array, uint8_t index, char* out) {
+uint8_t* long_array_get_long_prefixed(int32_t* array, uint8_t index,
+                                      uint8_t* out) {
   *out = 0;
   return long_array_get_long(array, index, out + 1);
 }
@@ -527,14 +529,14 @@ static uint8_t* gps_oncore_decode(const oncore_decoder* decoder,
 /* Runs a response's decoders over it, past its "@@" and ID, with
  * preemption off, and gives @@Ba's time to status_snapshot_update; the
  * cursor past what they read (0x4faa2). */
-char* gps_response_decode(gps_request_code_word message, char* response) {
+uint8_t* gps_response_decode(gps_request_code_word message, uint8_t* response) {
   static const uint8_t DECODERS = sizeof oncore_messages[0].decoders /
                                   sizeof oncore_messages[0].decoders[0];
   const oncore_message_entry* entry = &oncore_messages[message];
   uint8_t* cursor;
 
   psos_mode(PSOS_MODE_NO_PREEMPTION, PSOS_MODE_NO_PREEMPTION, NULL);
-  cursor = (uint8_t*)response + libc_length("@@") + libc_length(entry->id);
+  cursor = response + libc_length("@@") + libc_length(entry->id);
   for (uint8_t i = 0; i < DECODERS && entry->decoders[i].decode != NULL; i++) {
     cursor = gps_oncore_decode(&entry->decoders[i], cursor);
   }
@@ -542,15 +544,16 @@ char* gps_response_decode(gps_request_code_word message, char* response) {
   if (message == GPS_REQUEST_POSITION_STATUS) {
     status_snapshot_update(clock_time_bits(gps.status.time));
   }
-  return (char*)cursor;
+  return cursor;
 }
 
 /* Whether a response answers the command sent, by the message's match
  * kind; for those that compare, whether its bytes after the ID are the
  * command's (0x4fb86). */
-gps_match_result gps_response_match(int16_t message, uint8_t* sent,
-                                    uint8_t length, gps_argument_mode mode,
-                                    int16_t index, uint8_t* response,
+gps_match_result gps_response_match(gps_request_code_word message,
+                                    uint8_t* sent, uint8_t length,
+                                    gps_argument_mode mode, int16_t index,
+                                    uint8_t* response,
                                     int16_t response_length) {
   /* @@Ab's offset: sign, hours, minutes. */
   static const uint8_t OFFSET_LENGTH = 3;
@@ -640,9 +643,8 @@ gps_match_result gps_response_match(int16_t message, uint8_t* sent,
       response_count = HOLD_HEIGHT;
     }
   }
-  /* bytes_equal_n takes the bytes as char. */
-  return bytes_equal_n((char*)&sent[sent_start], sent_count,
-                       (char*)&response[response_start], response_count) == 1
+  return bytes_equal_n(&sent[sent_start], sent_count, &response[response_start],
+                       response_count) == 1
              ? GPS_MATCH_ANSWERED
              : GPS_MATCH_DIFFERS;
 }

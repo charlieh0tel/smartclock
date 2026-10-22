@@ -346,7 +346,7 @@
 0x30f10	function	eeprom_init	structures.md	creates eepx, "Unable to create eepx"
 0x30fae	function	eeprom_lock	structures.md	"Unable to acquire eepx token"
 0x3105e	function	eeprom_unlock	structures.md	"Unable to release eepx token"
-0x4c572	function	gps_console_request	structures.md	the GPS task's switch on the console's requests 0x31 to 0x45	void gps_console_request(int16_t code, int32_t *arguments, uint8_t sender)
+0x4c572	function	gps_console_request	structures.md	the GPS task's switch on the console's requests 0x31 to 0x45	void gps_console_request(gps_request_code_word code, int32_t *arguments, uint8_t sender)
 0x49054	function	gps_print_status	structures.md	print_stat's request, 0x32	void gps_print_status(oncore_status_fields *status)
 0x48fac	function	gps_print_visibility	structures.md	print_vis's request, 0x33; Visible Sats
 0x48300	function	gps_print_extension	structures.md	print_ext_msg's request, 0x34; @@Bk's data
@@ -614,7 +614,7 @@
 0x4b800	function	gps_receive_expect	gps_receive, in A4	stores a byte that is the one expected and steps gps_receive_state; else counts gps_counts.frame_errors and, at an @, starts gps_response_buffer again with it at state 1, or gps_response_reset	void gps_receive_expect(uint8_t c, uint8_t expected)
 0x10138c	label	gps_response_cursor	context	where gps_receive stores the next byte	uint8_t *
 0x101394	label	gps_receive_state	context	gps_receive's state; 7 when a message is complete	gps_framing_state
-0x101396	label	gps_response_index	structures.md	gps_response_lookup's index of the response's ID among the 49 at 0x4fece; gpsm_task gives it gps_response_decode and gps_response_match	int16_t
+0x101396	label	gps_response_index	structures.md	gps_response_lookup's index of the response's ID among the 49 at 0x4fece; gpsm_task gives it gps_response_decode and gps_response_match	gps_request_code_word
 0x101398	label	gps_response_length	structures.md	the response's length, from gps_response_lookup's table entry; gps_response_match and the retry compare take it	int16_t
 0x10139a	label	gps_response_remaining	structures.md	gps_receive's count of bytes to the checksum, the length less 6, counted down; at 0 the byte is the checksum	int16_t
 0x10139c	label	gps_task_state	structures.md	gpsm_task's state, which gps_print_process_monitor prints as "Task Idle", "Send Command" or "Wait for Response"; gps_link_reset clears it	gps_process_state
@@ -741,7 +741,7 @@
 0x10540	function	clk_do	the firmware's own name, "Clk_do: out of event buffers"	queues an event for the clock task	klok_entry * clk_do(klok_entry *event)
 0x1d6ba	function	drtb_puts	the firmware's own name, "wait_v SIG_SOQ error in _drtb_puts"	writes a string to DUART channel B, waiting for room	int drtb_puts(char *param_1)
 0x1d74a	function	drtb_getc	"wait_v SIG_SIQ error in getc", DUART channel B	reads a character from DUART channel B, waiting for one	uint8_t drtb_getc(void)
-0x1e18a	function	drta_send_message	the firmware's own name, "wait_v SIG_SOQA error in drta_send_message"	sends a message to the GPS engine on DUART channel A
+0x1e18a	function	drta_send_message	the firmware's own name, "wait_v SIG_SOQA error in drta_send_message"	sends a message to the GPS engine on DUART channel A	uint8_t drta_send_message(uint8_t *message, int16_t length)
 0x1e238	function	drta_get_byte	the firmware's own name, "wait_v SIG_SIQ error in drta_get_byte"; gps_receive reads the engine with it	reads a byte from the GPS engine on DUART channel A, waiting for one
 0x1f76c	function	sci_puts	the firmware's own name, "wait_v SIG_SOQ_SCI error in _sci_puts"	writes a string to the SCI port, waiting for room	int sci_puts(char *text)
 0x1f7d0	function	sci_getc	"wait_v SIG_SIQ_SCI error in getc"	reads a character from the SCI port, waiting for one	uint8_t sci_getc(void)
@@ -1041,7 +1041,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x25fa6	function	scpi_parse_float	docs/scpi/README.md, read	the suffix, then a float within 9.9e37, else -11	int scpi_parse_float(scpi_number *number, void *param_2, float *value, scpi_unit *units)
 0x25fa6	local	parsed	read	the double scpi_number_to_double gives (0x25fc8), compared with 9.9e37 and made a float (0x25fe0, 0x26008)	double @ -0xc
 0x2602e	function	scpi_parse_double	docs/scpi/README.md, read	the suffix, then a double within 9.9e37, else -11	int scpi_parse_double(scpi_number *number, void *param_2, double *value, scpi_unit *units)
-0x25d8c	function	scpi_parse_boolean	docs/scpi/README.md, read	ON as 1, OFF as 0	uint32_t scpi_parse_boolean(int16_t *token, void *unused, uint16_t *value)
+0x25d8c	function	scpi_parse_boolean	docs/scpi/README.md, read	ON as 1, OFF as 0	uint32_t scpi_parse_boolean(scpi_keyword *token, void *unused, uint16_t *value)
 0x25de0	function	scpi_parse_boolean_number	docs/scpi/README.md, read	a number as a boolean by scpi_number_to_boolean; -9 with a suffix	int scpi_parse_boolean_number(scpi_number *number, void *param_2, uint16_t *value, void *param_4)
 0x25e42	function	scpi_parse_choice	docs/scpi/README.md, read	the index of the keyword in the node's list, or the value mapped to it; -28 with no list, -27 for no match	uint32_t scpi_parse_choice(scpi_keyword *token, void *unused, int16_t *value, scpi_choices *choices)
 0x25d4a	function	scpi_parse_text	docs/scpi/README.md, read	the string's text, -21 if it holds a NUL; the string parameters' converter	uint32_t scpi_parse_text(scpi_token_string *token, void *unused, char **value)
@@ -1219,12 +1219,12 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4be04	function	gps_script_lookup	context	a script index from 0x47 on to its script, the first also resetting gps	gps_script_step ** gps_script_lookup(gps_request_code_word code)
 0x4bdba	function	gps_request_class	context	a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3 otherwise	gps_code_class gps_request_class(gps_request_code_word code, gps_argument_mode argument_mode)
 0x4bc74	function	gps_request_queue	context	queues a new request: the step index 0x45 flushes the ring, others are queued unless one is waiting already	void gps_request_queue(char param_1, gps_request_entry *request, gps_request_entry *param_3)
-0x4f932	function	gps_request_build	context	builds a request's text: @@, its ID, then each argument through the message's encoders	int16_t gps_request_build(int16_t message, gps_argument_mode mode, int32_t *arguments, char *out)
-0x4faa2	function	gps_response_decode	context	runs a response's decoders from the table at 0x4feee, with preemption off, and hands @@Ea's time to status_snapshot_update	char *gps_response_decode(gps_request_code_word message, char *response)
-0x4b7ac	function	gps_response_lookup	context	a response's two-character ID to its index among 49, counting unknown_response	uint32_t gps_response_lookup(char first, char second, int16_t *length, int16_t *index)
-0x4b9a6	function	gps_response_timed_out	context	1 once more time has passed than the message's timeout
+0x4f932	function	gps_request_build	context	builds a request's text: @@, its ID, then each argument through the message's encoders	int16_t gps_request_build(gps_request_code_word message, gps_argument_mode mode, int32_t *arguments, uint8_t *out)
+0x4faa2	function	gps_response_decode	context	runs a response's decoders from the table at 0x4feee, with preemption off, and hands @@Ea's time to status_snapshot_update	uint8_t *gps_response_decode(gps_request_code_word message, uint8_t *response)
+0x4b7ac	function	gps_response_lookup	context	a response's two-character ID to its index among 49, counting unknown_response	uint32_t gps_response_lookup(char first, char second, int16_t *length, gps_request_code_word *index)
+0x4b9a6	function	gps_response_timed_out	context	1 once more time has passed than the message's timeout	uint32_t gps_response_timed_out(gps_request_code_word message, uint32_t *start)
 0x4f8a0	function	oncore_checksum	context	the XOR of a message's bytes
-0x4fdca	function	gps_message_to_text	context	a message as text for the log: @@, its ID, the rest in hex, <cr><lf>
+0x4fdca	function	gps_message_to_text	context	a message as text for the log: @@, its ID, the rest in hex, <cr><lf>	int32_t gps_message_to_text(uint8_t *message, uint8_t length, char *text)
 0x4bef6	function	gps_init	structures.md's gps	clears gps and resets the receiver status and the command monitor
 0x4bf3a	function	gps_link_reset	context	resets the response framing and empties the request ring
 0x4b01e	function	raim_monitor	context	the RAIM alarm's state machine, counting raim_detected	void raim_monitor(void)
@@ -1241,7 +1241,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1019a2	label	command_log_snapshot	structures.md	command_log as status_snapshot_update copied it with the snapshot at 0x10168e, which gps_print_1pps prints	gps_command_log
 0x4c9d4	function	gps_print_commands	structures.md	the pr_gps_cmds word's: prints command_log, emptying it	void gps_print_commands(void)
 0x4f118	function	channel_position_satellite	context	a channel's satellite if it is valid and used for position, else 0
-0x4f162	function	satellite_used_for_position	context	1 if a channel uses the satellite for position
+0x4f162	function	satellite_used_for_position	context	1 if a channel uses the satellite for position	uint32_t satellite_used_for_position(uint8_t satellite)
 0x4f18c	function	channels_reset	context	sets every channel's mode to code search
 0x4f1f8	function	visible_satellites	context	the set and count of visible GPS satellites, from gps.visibility	bool visible_satellites(uint8_t *count, uint32_t *set)
 0x4f32c	function	satellite_find	context	finds a satellite by ID in a table of 10-byte entries, by bisection	oncore_visible_satellite *satellite_find(uint8_t id, gps_visibility_record *record)
@@ -1264,8 +1264,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1e222	function	duarta_rx_pending	context	1 if DUART channel A's receive ring is not empty
 0x4ee8c	function	long_array_get	context	a long from an array by index	long long_array_get(long *array, uint8_t index)
 0x4eeac	function	long_array_set	context	stores a long into an array by index	void long_array_set(long value, long *array, uint8_t index)
-0x4eec2	function	long_array_get_byte	context	a long's low byte from an array by index, stored and the pointer advanced	char * long_array_get_byte(long *array, uint8_t index, char *out)
-0x4fb54	function	bytes_equal_n	context	1 if two byte strings have the same nonzero length and bytes
+0x4eec2	function	long_array_get_byte	context	a long's low byte from an array by index, stored and the pointer advanced	uint8_t * long_array_get_byte(long *array, uint8_t index, uint8_t *out)
+0x4fb54	function	bytes_equal_n	context	1 if two byte strings have the same nonzero length and bytes	uint32_t bytes_equal_n(uint8_t *a, int16_t a_length, uint8_t *b, int16_t b_length)
 #
 # the root, curv, hmon, klok and scpi tasks' routines
 0x12faa	function	console_init	console.md	allocates the pForth dictionary, defines ps, mem_rep, s_rep and the diagnostic words, opens the console's device and starts its task
@@ -1650,9 +1650,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4a4ec	function	bits_8_9_any	context	1 if bit 8 or 9 is set
 0x4afd6	function	status_screen_print	context	prints the status screen, for :SYSTem:PRINt?	void status_screen_print(undefined1 param_1, write_function *write, printf_function *print)
 0x4f596	function	status_screen_length	scpi_query_SYSTem_PRINt_LENGth	returns 23, :SYSTem:PRINt:LENGth?'s answer	uint8_t status_screen_length(void)
-0x4eee0	function	long_array_get_word	context	a long's low word from an array by index, stored high byte first and the pointer advanced	char * long_array_get_word(long *array, uint8_t index, char *out)
-0x4ef02	function	long_array_get_long	context	a long from an array by index, stored high byte first and the pointer advanced	char * long_array_get_long(long *array, uint8_t index, char *out)
-0x4ef3a	function	long_array_get_long_prefixed	context	a zero byte, then long_array_get_long	char *long_array_get_long_prefixed(int32_t *array, uint8_t index, char *out)
+0x4eee0	function	long_array_get_word	context	a long's low word from an array by index, stored high byte first and the pointer advanced	uint8_t * long_array_get_word(long *array, uint8_t index, uint8_t *out)
+0x4ef02	function	long_array_get_long	context	a long from an array by index, stored high byte first and the pointer advanced	uint8_t * long_array_get_long(long *array, uint8_t index, uint8_t *out)
+0x4ef3a	function	long_array_get_long_prefixed	context	a zero byte, then long_array_get_long	uint8_t *long_array_get_long_prefixed(int32_t *array, uint8_t index, uint8_t *out)
 0x4ef54	function	byte_copy_optional	context	copies a byte if there is somewhere to put it	uint8_t *byte_copy_optional(uint8_t *source, uint8_t *destination)
 0x4ef70	function	word_copy_advance	context	copies a word and advances the source
 0x4ef8e	function	bytes_to_long	context	four bytes, high first, as a long
@@ -1668,7 +1668,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4f682	function	oncore_visibility_message	gps.md	decodes the visible satellites, @@Bb, and marks them received	uint8_t *oncore_visibility_message(uint8_t *cursor, uint8_t *record)
 0x4f6d8	function	oncore_corrections_message	gps.md	decodes the range corrections and averages those of the satellites in use, and their deviation
 0x4f87e	function	oncore_receiver_id_message	gps.md	decodes the receiver ID, @@Cj, and marks it received	uint8_t *oncore_receiver_id_message(uint8_t *cursor, uint8_t *record)
-0x4fb86	function	gps_response_match	context	checks a response against the request it answers	gps_match_result gps_response_match(int16_t message, uint8_t *sent, uint8_t length, gps_argument_mode mode, int16_t index, uint8_t *response, int16_t response_length)
+0x4fb86	function	gps_response_match	context	checks a response against the request it answers	gps_match_result gps_response_match(gps_request_code_word message, uint8_t *sent, uint8_t length, gps_argument_mode mode, int16_t index, uint8_t *response, int16_t response_length)
 0x51038	function	psos_config_init	psos.md	copies the kernel's configuration and its I/O table into RAM
 0x510aa	function	memory_allocate	psos.md	allocates from region 1 through service 8	void *memory_allocate(uint32_t size)
 0x510d2	function	memory_free	psos.md	frees a segment through service 9	void memory_free(void *segment)

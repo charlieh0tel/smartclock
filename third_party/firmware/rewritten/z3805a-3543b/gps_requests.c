@@ -258,11 +258,12 @@ void gps_parse_options(void) {
  * image's own routines, which return where the next byte goes in D0
  * alone, where gcc takes a pointer result from A0; so it is called as
  * returning a long. */
-static char* gps_requests_encode(oncore_encoder* encoder, int32_t* arguments,
-                                 uint8_t index, char* out) {
-  typedef uint32_t encode_in_d0(int32_t* arguments, uint8_t index, char* out);
+static uint8_t* gps_requests_encode(oncore_encoder* encoder, int32_t* arguments,
+                                    uint8_t index, uint8_t* out) {
+  typedef uint32_t encode_in_d0(int32_t* arguments, uint8_t index,
+                                uint8_t* out);
 
-  return (char*)((encode_in_d0*)encoder)(arguments, index, out);
+  return (uint8_t*)((encode_in_d0*)encoder)(arguments, index, out);
 }
 
 /* Builds a request's message at out: "@@" and its ID, then its
@@ -270,19 +271,21 @@ static char* gps_requests_encode(oncore_encoder* encoder, int32_t* arguments,
  * checksum and CR LF.  Its length; 0, out empty, for a message the task
  * does not send or a query of one without a query form; -1 for one the
  * receiver does not take (0x4f932). */
-int16_t gps_request_build(int16_t message, gps_argument_mode mode,
-                          int32_t* arguments, char* out) {
+int16_t gps_request_build(gps_request_code_word message, gps_argument_mode mode,
+                          int32_t* arguments, uint8_t* out) {
   static const uint8_t ENCODERS = sizeof oncore_messages[0].encoders /
                                   sizeof oncore_messages[0].encoders[0];
   /* A query form's stand-in for a zero byte, which would end it. */
-  static const char QUERY_ZERO = (char)0xee;
+  static const uint8_t QUERY_ZERO = 0xee;
   /* @@Bn's fields after those its encoders send: nnn and mdyyhms, not
    * used (VPCommands.pdf, Time RAIM Setup and Status), as the image
    * sends them. */
-  static const char TRAIM_UNUSED[] = {0, 0, 1, 0, 0, 0, 0, 0, 0, 0};
+  static const uint8_t TRAIM_UNUSED[] = {0, 0, 1, 0, 0, 0, 0, 0, 0, 0};
   const oncore_message_entry* entry = &oncore_messages[message];
+  /* The message starts as text, its "@@" and ID. */
+  char* text = (char*)out;
   uint8_t supported = 0;
-  char* next;
+  uint8_t* next;
 
   if (gps_message_supported(message, &supported) == 0 || supported == 0) {
     return -1;
@@ -291,26 +294,26 @@ int16_t gps_request_build(int16_t message, gps_argument_mode mode,
   if (entry->kind != ONCORE_KIND_SENT && entry->kind != ONCORE_KIND_EXCHANGED) {
     return 0;
   }
-  strcat(out, "@@");
-  strcat(out, entry->id);
-  next = out + libc_length(out);
+  strcat(text, "@@");
+  strcat(text, entry->id);
+  next = out + libc_length(text);
   if (mode == GPS_ARGUMENTS_SET) {
     for (uint8_t i = 0; i < ENCODERS && entry->encoders[i] != NULL; i++) {
       next = gps_requests_encode(entry->encoders[i], arguments, i, next);
     }
     if (message == GPS_REQUEST_POSITION_STATUS) {
       /* The rate asked for, @@Ba's first argument, as it is sent. */
-      char rate;
+      uint8_t rate;
 
       gps_requests_encode(entry->encoders[0], arguments, 0, &rate);
-      gps.status_rate = (uint8_t)rate;
+      gps.status_rate = rate;
     } else if (message == GPS_REQUEST_TRAIM) {
       for (uint32_t i = 0; i < sizeof TRAIM_UNUSED; i++) {
         *next++ = TRAIM_UNUSED[i];
       }
     }
   } else {
-    const char* form = entry->query;
+    const uint8_t* form = entry->query;
 
     if (form == NULL) {
       *out = 0;
@@ -325,8 +328,7 @@ int16_t gps_request_build(int16_t message, gps_argument_mode mode,
     }
   }
   /* The checksum covers the ID on. */
-  *next =
-      (char)oncore_checksum((uint8_t*)out + libc_length("@@"), (uint8_t*)next);
+  *next = oncore_checksum(out + libc_length("@@"), next);
   next++;
   *next++ = '\r';
   *next++ = '\n';

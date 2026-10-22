@@ -168,7 +168,8 @@ uint8_t* bytes_to_long(uint8_t* bytes, uint32_t* value) {
 
 /* Whether two byte strings have the same nonzero length and bytes
  * (0x4fb54). */
-uint32_t bytes_equal_n(char* a, int16_t a_length, char* b, int16_t b_length) {
+uint32_t bytes_equal_n(uint8_t* a, int16_t a_length, uint8_t* b,
+                       int16_t b_length) {
   if (a_length != b_length || a_length == 0) {
     return 0;
   }

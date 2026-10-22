@@ -27,11 +27,10 @@ uint32_t scpi_parse_string(uint16_t* token, void* unused, uint32_t* value) {
   return 0;
 }
 
-/* A keyword, ON or OFF, as a boolean (0x25d8c).  The token is a
- * scpi_keyword, its text ended with a NUL here. */
-uint32_t scpi_parse_boolean(int16_t* token, void* unused, uint16_t* value) {
-  scpi_keyword* keyword = (scpi_keyword*)token;
-
+/* A keyword, ON or OFF, as a boolean, its text ended with a NUL here
+ * (0x25d8c). */
+uint32_t scpi_parse_boolean(scpi_keyword* keyword, void* unused,
+                            uint16_t* value) {
   keyword->text[keyword->length] = 0;
   if (scpi_parameters_same(keyword->text, "ON")) {
     *value = 1;

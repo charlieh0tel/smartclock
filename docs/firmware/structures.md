@@ -1456,7 +1456,11 @@ compares signed, `0x4c1c6` to `0x4c1d2`; so is the request's own
 code, `gps_request_entry`'s `+0x0a`, which `gps_request_class`
 compares signed and `gps_script_lookup` sign-extends, the running
 command's `message` at `+0x1e`, and the code `gps_request_post`,
-`gps_message_supported` and `gps_response_decode` take); for
+`gps_message_supported` and `gps_response_decode` take, and
+`gps_console_request`, `gps_request_build`, `gps_response_match` and
+`gps_response_timed_out`, which sign-extend it (`0x4c578`, `0x4f948`,
+`0x4fba2`, `0x4b9c0`), `gps_response_index`, and the command log's
+`code` and `message`, `0x4c686` and `0x4c68c`); for
 class 1, a script, it copies only the arguments.  A step whose
 `argument_mode` is 2 takes its arguments from `gps_request_step`'s,
 from the index in its own first argument.  `raim_request_arguments`

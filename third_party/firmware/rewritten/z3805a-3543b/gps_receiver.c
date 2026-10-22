@@ -66,10 +66,10 @@ uint8_t channel_position_satellite(uint8_t channel) {
 }
 
 /* Whether a channel uses the satellite for position (0x4f162). */
-uint32_t satellite_used_for_position(char satellite) {
+uint32_t satellite_used_for_position(uint8_t satellite) {
   if (satellite != 0) {
     for (uint8_t channel = 1; channel <= GPS_RECEIVER_CHANNELS; channel++) {
-      if (channel_position_satellite(channel) == (uint8_t)satellite) {
+      if (channel_position_satellite(channel) == satellite) {
         return 1;
       }
     }

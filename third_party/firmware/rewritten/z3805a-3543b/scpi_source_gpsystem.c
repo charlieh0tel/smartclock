@@ -113,14 +113,6 @@ typedef struct scpi_source_gpsystem_location_items {
  * longitude in milliarcseconds, height in centimeters. */
 #define SCPI_SOURCE_GPSYSTEM_POSITION_LONGS 3
 
-/* The longs a setter of several values sends pllc the address of, three
- * for each source, at 0x102a0e, which the names file does not name: the
- * pllc_request's values[0], its index the last of them (structures.md,
- * "The pllc task's SCPI requests"). */
-static int32_t (*const SCPI_SOURCE_GPSYSTEM_STAGED)
-    [SCPI_SOURCE_GPSYSTEM_POSITION_LONGS] =
-        (int32_t (*)[SCPI_SOURCE_GPSYSTEM_POSITION_LONGS])0x102a0e;
-
 /* A float's bits, which a scpi_step holds as its value. */
 static uint32_t scpi_source_gpsystem_float_bits(float value) {
   union libc_float step = {.value = value};
@@ -227,7 +219,7 @@ static void scpi_source_gpsystem_initial_set(scpi_numeric_param* param,
     status_report_from(STATUS_SETTINGS_CONFLICT, source);
     return;
   }
-  int32_t* staged = SCPI_SOURCE_GPSYSTEM_STAGED[source];
+  int32_t* staged = scpi_staged[source];
 
   for (uint8_t field = 0; field < SCPI_SOURCE_GPSYSTEM_POSITION_LONGS;
        field++) {
@@ -336,13 +328,12 @@ static void scpi_source_gpsystem_location(
 
 /* :GPS:INITial:POSition <location>: its latitude, longitude and height
  * to pllc, each by its own descriptor, unless the receiver holds its
- * position or surveys, -221, Settings conflict (0x2c494).  The latitude's
- * and the height's descriptors, 0x33862 and 0x338ce, are numeric ones the
- * export names only as labels. */
+ * position or surveys, -221, Settings conflict (0x2c494). */
 int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void* parameters,
                                                   void* response,
                                                   scpi_call* call) {
-  scpi_numeric_param* height_param = (scpi_numeric_param*)&LAB_000338ce;
+  scpi_numeric_param* height_param =
+      &scpi_param_SOURce_GPSystem_INITial_POSition_height;
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);
   /* The image tests the result's low byte (0x2c4d2). */
   bool settable = (uint8_t)position_settable() != 0;
@@ -356,7 +347,8 @@ int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void* parameters,
 
   scpi_source_gpsystem_location(parameters, height_param, 0,
                                 return_zero(call->input), position);
-  pllc_request_c(&LAB_00033862, 0, position[0], 0, return_zero(call->input));
+  pllc_request_c(&scpi_param_SOURce_GPSystem_INITial_POSition_latitude, 0,
+                 position[0], 0, return_zero(call->input));
   pllc_request_c(&scpi_param_SOURce_GPSystem_INITial_POSition_longitude, 0,
                  position[1], 0, return_zero(call->input));
   pllc_request_c(height_param, 0, position[2], 0, return_zero(call->input));
@@ -396,7 +388,7 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void* parameters, void* response,
   scpi_source_gpsystem_location_parameters* location = parameters;
   int16_t first = location->latitude.hemisphere.keyword;
   uint8_t source = return_zero(call->input);
-  int32_t* staged = SCPI_SOURCE_GPSYSTEM_STAGED[source];
+  int32_t* staged = scpi_staged[source];
 
   if (first == SCPI_SOURCE_GPSYSTEM_LAST ||
       first == SCPI_SOURCE_GPSYSTEM_SURVEY) {
@@ -645,14 +637,9 @@ uint8_t satellites_in_mask(uint32_t mask, uint8_t count, int16_t* list,
   return listed;
 }
 
-/* The SCPI task's satellite lists, 32 numbers for each source, at
- * 0x10295e, which the names file does not name: a list query writes its
- * source's and answers it as a scpi_array. */
-#define SCPI_SOURCE_GPSYSTEM_LIST_SIZE 32
-
-static int16_t (*const SCPI_SOURCE_GPSYSTEM_LISTS)
-    [SCPI_SOURCE_GPSYSTEM_LIST_SIZE] =
-        (int16_t (*)[SCPI_SOURCE_GPSYSTEM_LIST_SIZE])0x10295e;
+/* A satellite list's numbers, scpi_response_list's. */
+#define SCPI_SOURCE_GPSYSTEM_LIST_SIZE \
+  (sizeof(scpi_response_list) / sizeof(int16_t))
 
 /* Answers a list of so many satellites, or for none the list 0
  * (097-z3801-01, page 4-7). */
@@ -673,7 +660,7 @@ static void scpi_source_gpsystem_list_answer(int16_t* list, uint32_t listed,
 int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking(void* parameters,
                                                       void* response,
                                                       scpi_call* call) {
-  int16_t* list = SCPI_SOURCE_GPSYSTEM_LISTS[(uint8_t)return_zero(call->input)];
+  int16_t* list = scpi_response_lists[(uint8_t)return_zero(call->input)];
   uint8_t count;
   uint8_t pseudolite_count;
   uint32_t set;
@@ -770,7 +757,7 @@ static uint8_t scpi_source_gpsystem_mask_list(uint32_t mask, int16_t* list) {
 int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore(void* parameters,
                                                              void* response,
                                                              scpi_call* call) {
-  int16_t* list = SCPI_SOURCE_GPSYSTEM_LISTS[(uint8_t)return_zero(call->input)];
+  int16_t* list = scpi_response_lists[(uint8_t)return_zero(call->input)];
 
   scpi_source_gpsystem_list_answer(
       list,
@@ -851,7 +838,7 @@ int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_INCLude(void* parameters,
 int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude(void* parameters,
                                                               void* response,
                                                               scpi_call* call) {
-  int16_t* list = SCPI_SOURCE_GPSYSTEM_LISTS[(uint8_t)return_zero(call->input)];
+  int16_t* list = scpi_response_lists[(uint8_t)return_zero(call->input)];
 
   scpi_source_gpsystem_list_answer(
       list,
@@ -874,7 +861,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude_COUNt(
  * unknown (0x2d7f6).  The image tests the result's low byte. */
 int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted(
     void* parameters, void* response, scpi_call* call) {
-  int16_t* list = SCPI_SOURCE_GPSYSTEM_LISTS[(uint8_t)return_zero(call->input)];
+  int16_t* list = scpi_response_lists[(uint8_t)return_zero(call->input)];
   uint8_t count;
   uint32_t set;
   uint8_t id_count;

@@ -299,11 +299,11 @@
 0x334de	label	scpi_param_SAMPle_INTeger	structures.md	the descriptor scpi_numeric_get and _set are given for SAMPle_INTeger	scpi_numeric_param
 0x101de4	label	scpi_value_SAMPle_INTeger	structures.md	the descriptor's value	int32_t
 0x3354e	label	scpi_param_SAMPle_IARR	structures.md	the descriptor scpi_numeric_get and _set are given for SAMPle_IARR	scpi_numeric_param
-0x101de8	label	scpi_value_SAMPle_IARR	structures.md	the descriptor's value	int32_t
+0x101de8	label	scpi_value_SAMPle_IARR	structures.md	the descriptor's four values	int32_t[4]
 0x3367a	label	scpi_param_SAMPle_FLOat	structures.md	the descriptor scpi_numeric_get and _set are given for SAMPle_FLOat	scpi_numeric_param
 0x101e18	label	scpi_value_SAMPle_FLOat	structures.md	the descriptor's value	float
 0x336da	label	scpi_param_SAMPle_FARR	structures.md	the descriptor scpi_numeric_get and _set are given for SAMPle_FARR	scpi_numeric_param
-0x101e1c	label	scpi_value_SAMPle_FARR	structures.md	the descriptor's value	float
+0x101e1c	label	scpi_value_SAMPle_FARR	structures.md	the descriptor's three values	float[3]
 0x101ddc	label	scpi_value_SAMPle_BOOLean	structures.md	the value of the setting descriptor at 0x33454, which :SAMPle:BOOLean's setter gives pllc_request_a; its query returns it	uint8_t
 0x101ddd	label	scpi_value_SAMPle_BARR	structures.md	the values of the setting descriptor at 0x33472, last index 1; :SAMPle:BARR? returns the one its index names	uint8_t[2]
 0x101ddf	label	scpi_value_SAMPle_TOGGle	structures.md	the value of the setting descriptor at 0x33490; :SAMPle:TOGGle? reads it	uint8_t
@@ -2111,3 +2111,28 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x400060	label	eeprom_lifetime_record	structures.md	the EEPROM's lifetime record, 32 bytes	lifetime_record
 0x400080	label	eeprom_calibration_block	structures.md	the EEPROM's calibration block, 64 bytes	calibration_block
 0x4001c0	label	eeprom_reset_records	structures.md	the EEPROM's reset-cause log, 32 reset_records of 0x5c bytes to 0x400d40: reset_record_count checks 0x20 slots (0x33114), log_count calls it full past 0x1f, and reset_record_write writes the next at 0x4001c0 + n * 0x5c	reset_record[32]
+#
+# the SCPI task's response areas, the serial and :SAMPle descriptors and
+# the bytes the C reached by address
+0x10272a	label	scpi_response_texts	context	a query writes its text response into its source's, return_zero's, and answers its address	scpi_response_text[2]
+0x10295e	label	scpi_response_lists	context	the satellite lists and :ROBin:POINts?' counts, by source, each answered as a scpi_array	scpi_response_list[2]
+0x1029de	label	robin_overflows	context	:ROBin:MEMory:OVERflow:COUNt?'s counts, by source	robin_overflow_counts[2]
+0x102a0e	label	scpi_staged	context	the values a setter of several sends pllc the address of, by source	scpi_staged_values[2]
+0x102d76	label	robin_points	context	:ROBin? and :ROBin:TSTamp?'s points, by source	robin_point_record[2]
+0x101e30	label	scpi_value_SAMPle_DARR	context	:SAMPle:DARRay's three doubles, after scpi_value_SAMPle_DOUBle (0x2e6a6)	double[3]
+0x1037ac	label	klok_now	context	the time, then the date, of the 1PPS klok_task last received, the now klok_run_due compares each entry with	uint32_t[2]
+0x10253e	label	pll_unread_flag_1	context	pllp_task clears it on starting; nothing reads it	uint8_t
+0x10253f	label	pll_unread_flag_2	context	pllp_task clears it on starting; nothing reads it	uint8_t
+0x102c60	label	scpi_port_echo_length	context	scpi_format_response clears it for a port other than the console, as it does scpi_echo_length for the console; nothing reads it	uint8_t
+0x33328	label	scpi_param_SYSTem_COMMunicate_SER1_RECeive_BAUD	context	SERial1's baud setting, which :BAUD's setter requests	scpi_setting_param
+0x33aa2	label	scpi_param_SYSTem_COMMunicate_SER2_RECeive_BAUD	context	SERial2's, the SCI's	scpi_setting_param
+0x33346	label	scpi_param_SYSTem_COMMunicate_SER1_RECeive_PACE	context	SERial1's pacing setting, which :PACE's setter requests	scpi_setting_param
+0x33ac0	label	scpi_param_SYSTem_COMMunicate_SER2_RECeive_PACE	context	SERial2's, the SCI's	scpi_setting_param
+0x333dc	label	scpi_param_SYSTem_COMMunicate_SER1_FDUPlex	context	SERial1's echo setting, which :FDUPlex's setter requests	scpi_setting_param
+0x33afc	label	scpi_param_SYSTem_COMMunicate_SER2_FDUPlex	context	SERial2's, the SCI's	scpi_setting_param
+0x33454	label	scpi_param_SAMPle_BOOLean	context	the setting scpi_value_SAMPle_BOOLean holds the value of	scpi_setting_param
+0x33472	label	scpi_param_SAMPle_BARR	context	the setting scpi_value_SAMPle_BARR holds the values of	scpi_setting_param
+0x335be	label	scpi_param_SAMPle_IMULtiple	context	the descriptor scpi_value_SAMPle_IMULtiple holds the values of	scpi_numeric_param
+0x33904	label	scpi_param_SYSTem_PRINt	context	the descriptor :SYSTem:PRINt? requests, its value scpi_value_SAMPle_INTeger's (0x30796)	scpi_numeric_param
+0x33862	label	scpi_param_SOURce_GPSystem_INITial_POSition_latitude	context	the first of the three descriptors its setter gives pllc_request_c	scpi_numeric_param
+0x338ce	label	scpi_param_SOURce_GPSystem_INITial_POSition_height	context	the third, after scpi_param_SOURce_GPSystem_INITial_POSition_longitude	scpi_numeric_param

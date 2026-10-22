@@ -1435,6 +1435,11 @@ view cannot drift apart.  The library, bottom up:
      `drtb_write` and `sci_write` are (buffer in A1, length in D2), so
      no longer C; `scpi_context_init` the context's fields, written by
      hand.
+     And the data the C reached by address is labeled: the SCPI task's
+     response areas, a record for each of two sources (structures.md,
+     "The SCPI task's response areas"), the serial, `:SAMPle`,
+     `:PRINt` and `:INITial:POSition` descriptors, `klok_now`, and three
+     bytes nothing reads.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

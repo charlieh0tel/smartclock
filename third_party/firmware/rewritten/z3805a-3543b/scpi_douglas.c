@@ -45,14 +45,6 @@ enum {
 /* SCPI's infinity, 9.9E37, which a duration of INF is. */
 static const float SCPI_DOUGLAS_INFINITE = 9.9e37f;
 
-/* The SCPI task's text responses, one of 0x11a bytes for each source,
- * at 0x10272a, which the names file does not name: a query writes the
- * text into its source's and answers its address. */
-#define SCPI_DOUGLAS_TEXT_SIZE 0x11a
-
-static char (*const SCPI_DOUGLAS_TEXTS)[SCPI_DOUGLAS_TEXT_SIZE] =
-    (char (*)[SCPI_DOUGLAS_TEXT_SIZE])0x10272a;
-
 /* :DOUGlas:DURation: INF, or a number that is SCPI's infinity, sets the
  * duration infinite; else the number, as a long, or MAX or MIN, to pllc
  * (0x2ced0). */
@@ -97,7 +89,7 @@ int32_t scpi_query_DOUGlas_DURation(void* parameters, void* response,
 int32_t scpi_query_DOUGlas_PROGress(void* parameters, void* response,
                                     scpi_call* call) {
   char** text = response;
-  char* progress = SCPI_DOUGLAS_TEXTS[(uint8_t)return_zero(call->input)];
+  char* progress = scpi_response_texts[(uint8_t)return_zero(call->input)];
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);
   /* The image tests the result's low byte (0x2cfea). */
   uint8_t running = survey_progress_text(progress);

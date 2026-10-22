@@ -11,20 +11,6 @@
  * adds (an ARRay node's index), then each parameter's kind word and its
  * value; a number's value is scpi_engine_long_parameter's. */
 
-/* The settings no name is exported for (the handlers' references). */
-static scpi_setting_param* const SCPI_SAMPLE_BOOLEAN =
-    (scpi_setting_param*)0x33454;
-
-static scpi_setting_param* const SCPI_SAMPLE_BARR =
-    (scpi_setting_param*)0x33472;
-
-static scpi_numeric_param* const SCPI_SAMPLE_IMULTIPLE =
-    (scpi_numeric_param*)0x335be;
-
-/* :SAMPle:DARRay's three doubles, after scpi_value_SAMPle_DOUBle; no
- * name is exported for them (0x2e6a6). */
-static double* const SCPI_SAMPLE_DARR_VALUES = (double*)0x101e30;
-
 /* A boolean or choice parameter: its kind word, then its value. */
 typedef struct scpi_sample_word_parameter {
   int16_t kind;   /* +0x00 */
@@ -82,7 +68,7 @@ int32_t scpi_set_SAMPle_BOOLean(void* parameters, void* response,
   scpi_sample_word_parameter* given = parameters;
   uint8_t source = return_zero(call->input);
 
-  pllc_request_a(SCPI_SAMPLE_BOOLEAN, 0, (uint8_t)given->value, source);
+  pllc_request_a(&scpi_param_SAMPle_BOOLean, 0, (uint8_t)given->value, source);
   return 0;
 }
 
@@ -101,7 +87,7 @@ int32_t scpi_set_SAMPle_BARR(void* parameters, void* response,
   scpi_sample_indexed_word* given = parameters;
   uint8_t source = return_zero(call->input);
 
-  pllc_request_a(SCPI_SAMPLE_BARR, (uint8_t)given->index,
+  pllc_request_a(&scpi_param_SAMPle_BARR, (uint8_t)given->index,
                  (uint8_t)given->given.value, source);
   return 0;
 }
@@ -171,12 +157,11 @@ int32_t scpi_set_SAMPle_IARR(void* parameters, void* response,
   return 0;
 }
 
-/* :SAMPle:IARRay? (0x2e556).  The export declares the first of its four
- * longs. */
+/* :SAMPle:IARRay? (0x2e556). */
 int32_t scpi_query_SAMPle_IARR(void* parameters, void* response,
                                scpi_call* call) {
   int16_t* index = parameters;
-  int32_t* values = &scpi_value_SAMPle_IARR;
+  int32_t* values = scpi_value_SAMPle_IARR;
   int32_t* value = response;
 
   *value = values[*index];
@@ -195,7 +180,7 @@ int32_t scpi_set_SAMPle_IMULtiple(void* parameters, void* response,
   }
   uint8_t source = return_zero(call->input);
 
-  pllc_request_d(SCPI_SAMPLE_IMULTIPLE, SCPI_SAMPLE_IMULTIPLE_COUNT - 1,
+  pllc_request_d(&scpi_param_SAMPle_IMULtiple, SCPI_SAMPLE_IMULTIPLE_COUNT - 1,
                  (uint32_t)scpi_values_SAMPle_IMULtiple, source);
   return 0;
 }
@@ -284,7 +269,7 @@ int32_t scpi_query_SAMPle_DARR(void* parameters, void* response,
   int16_t* index = parameters;
   double* value = response;
 
-  *value = SCPI_SAMPLE_DARR_VALUES[*index];
+  *value = scpi_value_SAMPle_DARR[*index];
   return 0;
 }
 

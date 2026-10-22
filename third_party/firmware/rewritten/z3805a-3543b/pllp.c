@@ -603,8 +603,8 @@ void pllp_task(void) {
 
   watchdog_pll++;
   interval_tick_wait = 0;
-  DAT_0010253e = 0;
-  DAT_0010253f = 0;
+  pll_unread_flag_1 = 0;
+  pll_unread_flag_2 = 0;
   pll_restart_requested = 0;
   gps_ack_wait_count = 0;
   gps_ack_code = 1;

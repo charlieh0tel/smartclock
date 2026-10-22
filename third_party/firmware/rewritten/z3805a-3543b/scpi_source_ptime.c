@@ -69,24 +69,6 @@ static void scpi_source_ptime_date_items(uint32_t date,
   fields->third.value = date & BYTE_MASK;
 }
 
-/* The SCPI task's text responses, one of 0x11a bytes for each source,
- * at 0x10272a, which the names file does not name: a query writes the
- * text into its source's and answers its address. */
-#define SCPI_SOURCE_PTIME_TEXT_SIZE 0x11a
-
-static char (*const SCPI_SOURCE_PTIME_TEXTS)[SCPI_SOURCE_PTIME_TEXT_SIZE] =
-    (char (*)[SCPI_SOURCE_PTIME_TEXT_SIZE])0x10272a;
-
-/* The longs a setter of several values sends pllc the address of, three
- * for each source, at 0x102a0e, which the names file does not name: the
- * pllc_request's values[0], its index the last of them (structures.md,
- * "The pllc task's SCPI requests"). */
-#define SCPI_SOURCE_PTIME_STAGED_COUNT 3
-
-static int32_t (*const
-                    SCPI_SOURCE_PTIME_STAGED)[SCPI_SOURCE_PTIME_STAGED_COUNT] =
-    (int32_t (*)[SCPI_SOURCE_PTIME_STAGED_COUNT])0x102a0e;
-
 /* :PTIMe:PPS:EDGE: a stub; -113, Undefined header (0x2dc68). */
 int32_t scpi_set_SOURce_PTIMe_PPS_EDGE(void* parameters, void* response,
                                        scpi_call* call) {
@@ -187,7 +169,7 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime(void* parameters,
                                                    void* response,
                                                    scpi_call* call) {
   char** answer = response;
-  char* text = SCPI_SOURCE_PTIME_TEXTS[(uint8_t)return_zero(call->input)];
+  char* text = scpi_response_texts[(uint8_t)return_zero(call->input)];
   int32_t gps_time = leap_gps_time();
 
   sprintf(text, "#H%08X", gps_time);
@@ -301,7 +283,7 @@ int32_t scpi_query_SOURce_PTIMe_TIME(void* parameters, void* response,
 int32_t scpi_query_SOURce_PTIMe_TIME_STRing(void* parameters, void* response,
                                             scpi_call* call) {
   char** answer = response;
-  char* text = SCPI_SOURCE_PTIME_TEXTS[(uint8_t)return_zero(call->input)];
+  char* text = scpi_response_texts[(uint8_t)return_zero(call->input)];
   time_of_day time;
 
   if ((uint8_t)get_date_time(0, &time) != 0) {
@@ -322,7 +304,7 @@ int32_t scpi_set_SOURce_PTIMe_TZONe(void* parameters, void* response,
   /* The values pllc takes: hours and minutes. */
   static const uint8_t LAST_VALUE = 1;
   scpi_source_ptime_short_parameter* zone = parameters;
-  int32_t* staged = SCPI_SOURCE_PTIME_STAGED[(uint8_t)return_zero(call->input)];
+  int32_t* staged = scpi_staged[(uint8_t)return_zero(call->input)];
 
   staged[0] = zone[0].value;
   staged[1] = zone[1].kind == SCPI_NONE ? 0 : zone[1].value;

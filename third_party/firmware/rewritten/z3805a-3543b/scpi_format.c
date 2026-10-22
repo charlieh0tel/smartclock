@@ -375,7 +375,7 @@ int32_t scpi_format_response(scpi_port* output, scpi_response_item* item,
   if (output == scpi_console_port()) {
     scpi_echo_length = 0;
   } else {
-    DAT_00102c60 = 0;
+    scpi_port_echo_length = 0;
   }
   for (int16_t offset = 0;; item++) {
     int32_t error =

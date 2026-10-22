@@ -29,24 +29,6 @@ static const int16_t SCPI_ROBIN_FIRST_POINTS = 4;
 /* What the parser answers for a name it does not take. */
 static const int32_t SCPI_ROBIN_INVALID = STATUS_SCPI_INVALID_STRING;
 
-/* The responses' values, a record to each source return_zero gives, in
- * RAM the export names no label for. */
-#define SCPI_ROBIN_POINT_SLOTS 80
-
-#define SCPI_ROBIN_COUNT_SLOTS 32
-
-/* :ROBin? and :TSTamp?'s points (0x102d76, 0xa0 bytes a record). */
-static int16_t (*const SCPI_ROBIN_POINTS)[SCPI_ROBIN_POINT_SLOTS] =
-    (int16_t (*)[SCPI_ROBIN_POINT_SLOTS])0x102d76;
-
-/* :POINts?' counts (0x10295e, 0x40 bytes a record). */
-static int16_t (*const SCPI_ROBIN_COUNTS)[SCPI_ROBIN_COUNT_SLOTS] =
-    (int16_t (*)[SCPI_ROBIN_COUNT_SLOTS])0x10295e;
-
-/* :MEMory:OVERflow:COUNt?'s counts (0x1029de, 0x18 bytes a record). */
-static double (*const SCPI_ROBIN_OVERFLOWS)[SCPI_ROBIN_INPUTS] =
-    (double (*)[SCPI_ROBIN_INPUTS])0x1029de;
-
 /* A :ROBin handler's parameters: a data set's name, and :TSTamp?'s
  * entry. */
 typedef struct scpi_robin_parameters {
@@ -340,7 +322,7 @@ int32_t scpi_query_ROBin(void* parameters, void* response, scpi_call* call) {
   uint32_t second;
   int32_t error = robin_parse(given->name, &kind, &second);
   uint8_t source = return_zero(call->input);
-  int16_t* points = SCPI_ROBIN_POINTS[source];
+  int16_t* points = robin_points[source];
   uint16_t count;
 
   if (error != 0) {
@@ -377,7 +359,7 @@ int32_t scpi_query_ROBin_MEMory_OVERflow_COUNt(void* parameters, void* response,
   scpi_robin_parameters* given = parameters;
   scpi_array* array = response;
   uint8_t source = return_zero(call->input);
-  double* counts = SCPI_ROBIN_OVERFLOWS[source];
+  double* counts = robin_overflows[source];
   uint32_t kind;
   uint32_t second;
 
@@ -422,7 +404,7 @@ int32_t scpi_query_ROBin_POINts(void* parameters, void* response,
   scpi_robin_parameters* given = parameters;
   scpi_array* array = response;
   uint8_t source = return_zero(call->input);
-  int16_t* counts = SCPI_ROBIN_COUNTS[source];
+  int16_t* counts = scpi_response_lists[source];
   uint32_t kind;
   uint32_t second;
 
@@ -455,7 +437,7 @@ int32_t scpi_query_ROBin_TSTamp(void* parameters, void* response,
   uint32_t second;
   int32_t error = robin_parse(given->name, &kind, &second);
   uint8_t source = return_zero(call->input);
-  int16_t* points = SCPI_ROBIN_POINTS[source];
+  int16_t* points = robin_points[source];
   int16_t values[TIMESTAMP_VALUES];
 
   if (error != 0) {

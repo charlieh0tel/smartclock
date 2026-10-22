@@ -6,14 +6,6 @@
  * this file after its own, so the types and prototypes it declares are
  * in scope; each function here keeps its generated prototype. */
 
-/* A query handler's text, one buffer to a source, at 0x10272a; the
- * export labels none there. */
-#define SCPI_COMMON_TEXT_SIZE 0x11a
-
-typedef char scpi_common_text[SCPI_COMMON_TEXT_SIZE];
-
-static scpi_common_text* const SCPI_COMMON_TEXTS = (scpi_common_text*)0x10272a;
-
 /* The registers the common commands read and enable
  * (status_register_index STATUS_BYTE and STANDARD_EVENT). */
 static const int16_t SCPI_COMMON_STATUS_BYTE = 0;
@@ -90,7 +82,7 @@ int32_t scpi_query_common_ESR(void* parameters, void* response,
 int32_t scpi_query_common_IDN(void* parameters, void* response,
                               scpi_call* call) {
   scpi_token_string* identification = response;
-  char* text = SCPI_COMMON_TEXTS[(uint8_t)return_zero(call->input)];
+  char* text = scpi_response_texts[(uint8_t)return_zero(call->input)];
 
   sprintf(text, "HEWLETT-PACKARD,%s,%s,%s-%c", idn_model, idn_serial,
           RECORDS_FIRMWARE_REVISION, idn_suffix);

@@ -2152,6 +2152,10 @@ struct reset_record {
     char text[80];
 };
 
+typedef double robin_overflow_counts[3];
+
+typedef int16_t robin_point_record[80];
+
 typedef enum __attribute__((packed)) satellite_kind {
     SATELLITE_GPS=0,
     SATELLITE_PSEUDOLITE=1,
@@ -2578,6 +2582,10 @@ struct scpi_resolution_array {
     int16_t *resolutions;
 };
 
+typedef int16_t scpi_response_list[32];
+
+typedef char scpi_response_text[282];
+
 typedef struct scpi_root_children scpi_root_children, *Pscpi_root_children;
 
 struct scpi_root_children {
@@ -2603,6 +2611,8 @@ struct scpi_setting_param {
     uint8_t field_17;
     void *group_cell;
 };
+
+typedef int32_t scpi_staged_values[3];
 
 typedef struct scpi_step scpi_step, *Pscpi_step;
 
@@ -3441,23 +3451,35 @@ extern float powers_of_ten_float_21[43]; /* 00032700 */
 extern scpi_numeric_param * nv_numeric_params[21]; /* 00032d5e */
 extern scpi_setting_param * nv_setting_params[18]; /* 00032db2 */
 extern char identification_tag[2]; /* 00032ff5 */
+extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER1_RECeive_BAUD; /* 00033328 */
+extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER1_RECeive_PACE; /* 00033346 */
 extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER1_RECeive_BITS; /* 000333a0 */
 extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER1_RECeive_SBITs; /* 000333be */
+extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER1_FDUPlex; /* 000333dc */
+extern scpi_setting_param scpi_param_SAMPle_BOOLean; /* 00033454 */
+extern scpi_setting_param scpi_param_SAMPle_BARR; /* 00033472 */
 extern scpi_setting_param scpi_param_SAMPle_TOGGle; /* 00033490 */
 extern scpi_setting_param scpi_param_SAMPle_TARR; /* 000334b0 */
 extern scpi_numeric_param scpi_param_SAMPle_INTeger; /* 000334de */
 extern scpi_numeric_param scpi_param_SAMPle_IARR; /* 0003354e */
+extern scpi_numeric_param scpi_param_SAMPle_IMULtiple; /* 000335be */
 extern scpi_numeric_param scpi_param_SAMPle_FLOat; /* 0003367a */
 extern scpi_numeric_param scpi_param_SAMPle_FARR; /* 000336da */
 extern scpi_numeric_param scpi_param_SOURce_GPSystem_INITial_DATE; /* 000337e4 */
 extern scpi_numeric_param scpi_param_SOURce_GPSystem_INITial_TIME; /* 0003382c */
+extern scpi_numeric_param scpi_param_SOURce_GPSystem_INITial_POSition_latitude; /* 00033862 */
 extern scpi_numeric_param scpi_param_SOURce_GPSystem_INITial_POSition_longitude; /* 00033898 */
+extern scpi_numeric_param scpi_param_SOURce_GPSystem_INITial_POSition_height; /* 000338ce */
+extern scpi_numeric_param scpi_param_SYSTem_PRINt; /* 00033904 */
 extern scpi_numeric_param scpi_param_DOUGlas_STATe_request; /* 0003393a */
 extern scpi_setting_param scpi_param_OUTPut_STATe; /* 00033968 */
 extern scpi_setting_param scpi_param_SOURce_PULSe_CONTinuous_STATe; /* 00033986 */
 extern scpi_numeric_param scpi_param_SOURce_PULSe_CONTinuous_PERiod; /* 000339b4 */
 extern scpi_numeric_param scpi_param_SOURce_PULSe_STARt_TIME; /* 00033a14 */
 extern scpi_numeric_param scpi_param_SOURce_PULSe_STARt_DATE; /* 00033a74 */
+extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER2_RECeive_BAUD; /* 00033aa2 */
+extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER2_RECeive_PACE; /* 00033ac0 */
+extern scpi_setting_param scpi_param_SYSTem_COMMunicate_SER2_FDUPlex; /* 00033afc */
 extern scpi_setting_param scpi_param_STATus_QUEStionable_USER; /* 00033b1a */
 extern scpi_numeric_param scpi_param_STATus_ENABle; /* 00033bae */
 extern scpi_numeric_param scpi_param_STATus_PTRansition; /* 00033c30 */
@@ -3692,11 +3714,12 @@ extern uint8_t scpi_value_SAMPle_BARR[2]; /* 00101ddd */
 extern uint8_t scpi_value_SAMPle_TOGGle; /* 00101ddf */
 extern uint8_t scpi_value_SAMPle_TARR[3]; /* 00101de0 */
 extern int32_t scpi_value_SAMPle_INTeger; /* 00101de4 */
-extern int32_t scpi_value_SAMPle_IARR; /* 00101de8 */
+extern int32_t scpi_value_SAMPle_IARR[4]; /* 00101de8 */
 extern int32_t scpi_value_SAMPle_IMULtiple[4]; /* 00101df8 */
 extern float scpi_value_SAMPle_FLOat; /* 00101e18 */
-extern float scpi_value_SAMPle_FARR; /* 00101e1c */
+extern float scpi_value_SAMPle_FARR[3]; /* 00101e1c */
 extern double scpi_value_SAMPle_DOUBle; /* 00101e28 */
+extern double scpi_value_SAMPle_DARR[3]; /* 00101e30 */
 extern uint8_t led_alarm; /* 00101e72 */
 extern uint8_t led_active; /* 00101e74 */
 extern uint8_t led_enabled; /* 00101e75 */
@@ -3744,6 +3767,8 @@ extern uint8_t first_satellite_logged; /* 00102160 */
 extern pll_state pll; /* 00102162 */
 extern float interval_mean; /* 00102538 */
 extern uint8_t interval_mean_flag; /* 0010253c */
+extern uint8_t pll_unread_flag_1; /* 0010253e */
+extern uint8_t pll_unread_flag_2; /* 0010253f */
 extern uint8_t pll_restart_requested; /* 00102540 */
 extern uint8_t pll_debug_enabled; /* 00102541 */
 extern uint8_t clock_change_applied; /* 00102542 */
@@ -3787,6 +3812,10 @@ extern int32_t task_count; /* 0010271c */
 extern uint32_t task_ticks_total; /* 00102720 */
 extern uint8_t diag_leapsec_argument_1; /* 00102724 */
 extern uint32_t diag_leapsec_argument_2; /* 00102726 */
+extern scpi_response_text scpi_response_texts[2]; /* 0010272a */
+extern scpi_response_list scpi_response_lists[2]; /* 0010295e */
+extern robin_overflow_counts robin_overflows[2]; /* 001029de */
+extern scpi_staged_values scpi_staged[2]; /* 00102a0e */
 extern scpi_block robin_blocks[2]; /* 00102a26 */
 extern scpi_array robin_arrays[2]; /* 00102a36 */
 extern uint8_t scpi_echo_length; /* 00102a46 */
@@ -3799,11 +3828,13 @@ extern char scpi_input_line[256]; /* 00102b4e */
 extern char * scpi_input_next; /* 00102c4e */
 extern char * scpi_input_end; /* 00102c52 */
 extern char scpi_prompt_text[10]; /* 00102c56 */
+extern uint8_t scpi_port_echo_length; /* 00102c60 */
 extern uint8_t scpi_language; /* 00102c62 */
 extern uint8_t scpi_prompt_enabled; /* 00102c63 */
 extern char scpi_echo_response[256]; /* 00102c64 */
 extern uint32_t scpi_values_SAMPle_IMULtiple[4]; /* 00102d64 */
 extern uint8_t robin_keyword_code; /* 00102d74 */
+extern robin_point_record robin_points[2]; /* 00102d76 */
 extern uint8_t status_request_service; /* 00102eb6 */
 extern char status_ready; /* 00102eb7 */
 extern status_model * status_object; /* 00102eb8 */
@@ -3834,6 +3865,7 @@ extern uint32_t task_klok; /* 0010371e */
 extern klok_entry * klok_entries; /* 00103722 */
 extern klok_entry * klok_free; /* 00103726 */
 extern klok_entry klok_pool[5]; /* 0010372a */
+extern uint32_t klok_now[2]; /* 001037ac */
 extern mutex klok_mutex; /* 001037b4 */
 extern uint32_t idle_loops_last_second; /* 001037cc */
 extern void * exception_hook; /* 001037d0 */
@@ -3937,9 +3969,6 @@ extern volatile qsm_registers qsm; /* 00fffc00 */
 #define ADJ(p) _Generic((p), forth_user_end: (forth_user_area *)((char *)(p) - 40))
 
 extern uint8_t DAT_0004cfc0; /* 0004cfc0 */
-extern uint8_t DAT_0010253e; /* 0010253e */
-extern uint8_t DAT_0010253f; /* 0010253f */
-extern uint8_t DAT_00102c60; /* 00102c60 */
 extern uint32_t DAT_0010ffe6; /* 0010ffe6 */
 extern uint32_t DAT_0010ffea; /* 0010ffea */
 extern uint32_t DAT_0010ffee; /* 0010ffee */
@@ -3948,12 +3977,6 @@ extern uint32_t DAT_0010fff6; /* 0010fff6 */
 extern uint32_t DAT_0010fffa; /* 0010fffa */
 extern uint8_t DAT_00700000; /* 00700000 */
 extern uint8_t LAB_000277ec; /* 000277ec */
-extern uint8_t LAB_00033454; /* 00033454 */
-extern uint8_t LAB_00033472; /* 00033472 */
-extern uint8_t LAB_000335be; /* 000335be */
-extern uint8_t LAB_00033862; /* 00033862 */
-extern uint8_t LAB_000338ce; /* 000338ce */
-extern uint8_t LAB_00033904; /* 00033904 */
 extern uint32_t *PTR_DAT_0004cf80; /* 0004cf80 */
 extern uint32_t *PTR_DAT_00050e5e; /* 00050e5e */
 extern uint32_t *PTR_diag_cal_0001c8ac; /* 0001c8ac */
@@ -4121,9 +4144,6 @@ extern word switchD_0005ed40_index_zero; /* 0005ed48 */
 extern uint8_t uint8_t_0010142a; /* 0010142a */
 
 __asm__(".set DAT_0004cfc0, 0x0004cfc0");
-__asm__(".set DAT_0010253e, 0x0010253e");
-__asm__(".set DAT_0010253f, 0x0010253f");
-__asm__(".set DAT_00102c60, 0x00102c60");
 __asm__(".set DAT_0010ffe6, 0x0010ffe6");
 __asm__(".set DAT_0010ffea, 0x0010ffea");
 __asm__(".set DAT_0010ffee, 0x0010ffee");
@@ -4132,12 +4152,6 @@ __asm__(".set DAT_0010fff6, 0x0010fff6");
 __asm__(".set DAT_0010fffa, 0x0010fffa");
 __asm__(".set DAT_00700000, 0x00700000");
 __asm__(".set LAB_000277ec, 0x000277ec");
-__asm__(".set LAB_00033454, 0x00033454");
-__asm__(".set LAB_00033472, 0x00033472");
-__asm__(".set LAB_000335be, 0x000335be");
-__asm__(".set LAB_00033862, 0x00033862");
-__asm__(".set LAB_000338ce, 0x000338ce");
-__asm__(".set LAB_00033904, 0x00033904");
 __asm__(".set PTR_DAT_0004cf80, 0x0004cf80");
 __asm__(".set PTR_DAT_00050e5e, 0x00050e5e");
 __asm__(".set PTR_diag_cal_0001c8ac, 0x0001c8ac");
@@ -4428,6 +4442,7 @@ __asm__(".set kernel_running, 0x001037dc");
 __asm__(".set klok_entries, 0x00103722");
 __asm__(".set klok_free, 0x00103726");
 __asm__(".set klok_mutex, 0x001037b4");
+__asm__(".set klok_now, 0x001037ac");
 __asm__(".set klok_pool, 0x0010372a");
 __asm__(".set lamp_latch, 0x00300000");
 __asm__(".set last_exception, 0x0010099e");
@@ -4522,6 +4537,8 @@ __asm__(".set pll_scpi_source, 0x00102017");
 __asm__(".set pll_scpi_validated, 0x00102030");
 __asm__(".set pll_scpi_values, 0x00102020");
 __asm__(".set pll_scpi_waiting_task, 0x00102018");
+__asm__(".set pll_unread_flag_1, 0x0010253e");
+__asm__(".set pll_unread_flag_2, 0x0010253f");
 __asm__(".set plla_exchange, 0x00103800");
 __asm__(".set plla_failed_count, 0x001025a8");
 __asm__(".set plla_received_count, 0x0010259c");
@@ -4572,6 +4589,8 @@ __asm__(".set retained_block_defaults, 0x0003094c");
 __asm__(".set robin_arrays, 0x00102a36");
 __asm__(".set robin_blocks, 0x00102a26");
 __asm__(".set robin_keyword_code, 0x00102d74");
+__asm__(".set robin_overflows, 0x001029de");
+__asm__(".set robin_points, 0x00102d76");
 __asm__(".set sample_values_defaults, 0x000308b6");
 __asm__(".set satellite_status_blank_entry, 0x0004e016");
 __asm__(".set sci, 0x0010328a");
@@ -4627,15 +4646,20 @@ __asm__(".set scpi_param_LED_ACTive, 0x00033cc6");
 __asm__(".set scpi_param_LED_ENABled, 0x00033d20");
 __asm__(".set scpi_param_OUTPut_STATe, 0x00033968");
 __asm__(".set scpi_param_ROBin_MEMory_SAVE, 0x00034260");
+__asm__(".set scpi_param_SAMPle_BARR, 0x00033472");
+__asm__(".set scpi_param_SAMPle_BOOLean, 0x00033454");
 __asm__(".set scpi_param_SAMPle_FARR, 0x000336da");
 __asm__(".set scpi_param_SAMPle_FLOat, 0x0003367a");
 __asm__(".set scpi_param_SAMPle_IARR, 0x0003354e");
+__asm__(".set scpi_param_SAMPle_IMULtiple, 0x000335be");
 __asm__(".set scpi_param_SAMPle_INTeger, 0x000334de");
 __asm__(".set scpi_param_SAMPle_TARR, 0x000334b0");
 __asm__(".set scpi_param_SAMPle_TOGGle, 0x00033490");
 __asm__(".set scpi_param_SOURce_GPSystem_ADELay, 0x00033f94");
 __asm__(".set scpi_param_SOURce_GPSystem_EMANgle, 0x00033f56");
 __asm__(".set scpi_param_SOURce_GPSystem_INITial_DATE, 0x000337e4");
+__asm__(".set scpi_param_SOURce_GPSystem_INITial_POSition_height, 0x000338ce");
+__asm__(".set scpi_param_SOURce_GPSystem_INITial_POSition_latitude, 0x00033862");
 __asm__(".set scpi_param_SOURce_GPSystem_INITial_POSition_longitude, 0x00033898");
 __asm__(".set scpi_param_SOURce_GPSystem_INITial_TIME, 0x0003382c");
 __asm__(".set scpi_param_SOURce_GPSystem_POSition, 0x00034178");
@@ -4656,18 +4680,30 @@ __asm__(".set scpi_param_STATus_ENABle, 0x00033bae");
 __asm__(".set scpi_param_STATus_NTRansition, 0x00033c5c");
 __asm__(".set scpi_param_STATus_PTRansition, 0x00033c30");
 __asm__(".set scpi_param_STATus_QUEStionable_USER, 0x00033b1a");
+__asm__(".set scpi_param_SYSTem_COMMunicate_SER1_FDUPlex, 0x000333dc");
+__asm__(".set scpi_param_SYSTem_COMMunicate_SER1_RECeive_BAUD, 0x00033328");
 __asm__(".set scpi_param_SYSTem_COMMunicate_SER1_RECeive_BITS, 0x000333a0");
+__asm__(".set scpi_param_SYSTem_COMMunicate_SER1_RECeive_PACE, 0x00033346");
 __asm__(".set scpi_param_SYSTem_COMMunicate_SER1_RECeive_SBITs, 0x000333be");
+__asm__(".set scpi_param_SYSTem_COMMunicate_SER2_FDUPlex, 0x00033afc");
+__asm__(".set scpi_param_SYSTem_COMMunicate_SER2_RECeive_BAUD, 0x00033aa2");
+__asm__(".set scpi_param_SYSTem_COMMunicate_SER2_RECeive_PACE, 0x00033ac0");
+__asm__(".set scpi_param_SYSTem_PRINt, 0x00033904");
 __asm__(".set scpi_parameter_kind_errors, 0x000279ca");
+__asm__(".set scpi_port_echo_length, 0x00102c60");
 __asm__(".set scpi_powers_of_ten, 0x000256ae");
 __asm__(".set scpi_powers_of_ten_64, 0x00025b36");
 __asm__(".set scpi_prompt_enabled, 0x00102c63");
 __asm__(".set scpi_prompt_text, 0x00102c56");
 __asm__(".set scpi_response_begin_code, 0x00029636");
+__asm__(".set scpi_response_lists, 0x0010295e");
+__asm__(".set scpi_response_texts, 0x0010272a");
+__asm__(".set scpi_staged, 0x00102a0e");
 __asm__(".set scpi_value_DIAGnostic_ROSCillator_TCOefficient, 0x00101d0c");
 __asm__(".set scpi_value_DIAGnostic_TOFFset, 0x00101d10");
 __asm__(".set scpi_value_SAMPle_BARR, 0x00101ddd");
 __asm__(".set scpi_value_SAMPle_BOOLean, 0x00101ddc");
+__asm__(".set scpi_value_SAMPle_DARR, 0x00101e30");
 __asm__(".set scpi_value_SAMPle_DOUBle, 0x00101e28");
 __asm__(".set scpi_value_SAMPle_FARR, 0x00101e1c");
 __asm__(".set scpi_value_SAMPle_FLOat, 0x00101e18");
@@ -9048,7 +9084,7 @@ uint32_t klok_task_create(uint32_t param_1)
     psos_set_time(lifetime.date,0,0);
     klok_entries = (klok_entry *)0x0;
     klok_free = klok_pool;
-    for (pkVar2 = klok_pool; pkVar2 < (klok_entry *)0x1037ac; pkVar2 = pkVar2 + 1) {
+    for (pkVar2 = klok_pool; pkVar2 < klok_now; pkVar2 = pkVar2 + 1) {
       pkVar2->period_date = 0;
       pkVar2->date = 0;
       pkVar2->period_time = 0;
@@ -9102,7 +9138,7 @@ void klok_task(void)
 {
   psos_supervisor();
   do {
-    pps_wait_time((uint32_t *)0x1037ac,(uint32_t *)0x1037b0,1);
+    pps_wait_time(klok_now,klok_now + 1,1);
     idle_loops_last_second = klok_take_pending();
     if (klok_entries != (klok_entry *)0x0) {
       klok_run_due();
@@ -9126,8 +9162,8 @@ void klok_run_due(void)
   
   entry = klok_entries;
   mutex_lock(&klok_mutex);
-  while ((entry != (klok_entry *)0x0 &&
-         (order = datetime_compare(&entry->time,(uint32_t *)0x1037ac), order < 1))) {
+  while ((entry != (klok_entry *)0x0 && (order = datetime_compare(&entry->time,klok_now), order < 1)
+         )) {
     if ((order == 0) && (entry->function != (uint8_t *)0x0)) {
       spoo_run((spoo_function *)entry->function,0,0,0);
     }
@@ -47159,7 +47195,7 @@ int32_t scpi_format_response(scpi_port *output,scpi_response_item *items,scpi_ca
     scpi_echo_length = 0;
   }
   else {
-    DAT_00102c60 = 0;
+    scpi_port_echo_length = 0;
   }
   while( true ) {
     iVar2 = (*(code *)items->format)(output,call->response + sVar3,items->argument,call);
@@ -48353,11 +48389,11 @@ int32_t scpi_query_common_IDN(void *parameters,void *response,scpi_call *call)
   char *pcVar4;
   
   zero = return_zero(call->input);
-  sprintf((char *)((zero & 0xff) * 0x11a + 0x10272a),"HEWLETT-PACKARD,%s,%s,%s-%c",idn_model,
-          idn_serial,"3543B",idn_suffix);
-  pcVar4 = (char *)((zero & 0xff) * 0x11a + 0x10272a);
-  *(char **)((int32_t)response + 2) = pcVar4;
+  sprintf(scpi_response_texts[zero & 0xff],"HEWLETT-PACKARD,%s,%s,%s-%c",idn_model,idn_serial,
+          "3543B",idn_suffix);
+  *(scpi_response_text **)((int32_t)response + 2) = scpi_response_texts + (zero & 0xff);
   sVar3 = -1;
+  pcVar4 = scpi_response_texts[zero & 0xff];
   do {
     sVar3 = sVar3 + 1;
     cVar1 = *pcVar4;
@@ -49731,7 +49767,7 @@ int32_t scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,scpi_call
   zero = return_zero(call->input);
   local_11e[0] = 0;
   local_1f[0] = 0;
-  *(uint8_t *)((zero & 0xff) * 0x11a + 0x10272a) = 0;
+  scpi_response_texts[zero & 0xff][0] = 0;
   if (*(int16_t *)parameters == 0) {
     sVar4 = log_entry_total((uint8_t *)0x0);
   }
@@ -49755,10 +49791,10 @@ int32_t scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,scpi_call
       sVar4 = log_entry_text((int32_t)sVar4,local_11e,local_1f);
     }
     if (sVar4 == 0) {
-      strcat((char *)((zero & 0xff) * 0x11a + 0x10272a),local_1f);
-      strcat((char *)((zero & 0xff) * 0x11a + 0x10272a),": ");
-      strcat((char *)((zero & 0xff) * 0x11a + 0x10272a),local_11e);
-      *(uint32_t *)response = (zero & 0xff) * 0x11a + 0x10272a;
+      strcat(scpi_response_texts[zero & 0xff],local_1f);
+      strcat(scpi_response_texts[zero & 0xff],": ");
+      strcat(scpi_response_texts[zero & 0xff],local_11e);
+      *(scpi_response_text **)response = scpi_response_texts + (zero & 0xff);
       return 0;
     }
   }
@@ -50796,16 +50832,16 @@ int32_t scpi_set_SOURce_GPSystem_INITial_DATE(void *parameters,void *response,sc
 {
   uint32_t zero;
   char clock_set;
-  int32_t iVar2;
+  uint32_t uVar2;
   
   zero = return_zero(call->input);
   clock_set = time_valid();
   if (clock_set == 0) {
-    iVar2 = (zero & 0xff) * 0xc;
-    *(int32_t *)(iVar2 + 0x102a0e) = (int32_t)*(int16_t *)((int32_t)parameters + 2);
-    *(int32_t *)(iVar2 + 0x102a12) = (int32_t)*(int16_t *)((int32_t)parameters + 8);
-    *(int32_t *)(iVar2 + 0x102a16) = (int32_t)*(int16_t *)((int32_t)parameters + 0xe);
-    pllc_request_d(&scpi_param_SOURce_GPSystem_INITial_DATE,2,iVar2 + 0x102a0e,(uint8_t)zero);
+    uVar2 = zero & 0xff;
+    scpi_staged[uVar2][0] = (int32_t)*(int16_t *)((int32_t)parameters + 2);
+    scpi_staged[uVar2][1] = (int32_t)*(int16_t *)((int32_t)parameters + 8);
+    scpi_staged[uVar2][2] = (int32_t)*(int16_t *)((int32_t)parameters + 0xe);
+    pllc_request_d(&scpi_param_SOURce_GPSystem_INITial_DATE,2,scpi_staged + uVar2,(uint8_t)zero);
   }
   else {
     status_report_from(8,(uint8_t)zero);
@@ -50825,16 +50861,16 @@ int32_t scpi_set_SOURce_GPSystem_INITial_TIME(void *parameters,void *response,sc
 {
   uint32_t zero;
   char clock_set;
-  int32_t iVar2;
+  uint32_t uVar2;
   
   zero = return_zero(call->input);
   clock_set = time_valid();
   if (clock_set == 0) {
-    iVar2 = (zero & 0xff) * 0xc;
-    *(int32_t *)(iVar2 + 0x102a0e) = (int32_t)*(int16_t *)((int32_t)parameters + 2);
-    *(int32_t *)(iVar2 + 0x102a12) = (int32_t)*(int16_t *)((int32_t)parameters + 8);
-    *(int32_t *)(iVar2 + 0x102a16) = (int32_t)*(int16_t *)((int32_t)parameters + 0xe);
-    pllc_request_d(&scpi_param_SOURce_GPSystem_INITial_TIME,2,iVar2 + 0x102a0e,(uint8_t)zero);
+    uVar2 = zero & 0xff;
+    scpi_staged[uVar2][0] = (int32_t)*(int16_t *)((int32_t)parameters + 2);
+    scpi_staged[uVar2][1] = (int32_t)*(int16_t *)((int32_t)parameters + 8);
+    scpi_staged[uVar2][2] = (int32_t)*(int16_t *)((int32_t)parameters + 0xe);
+    pllc_request_d(&scpi_param_SOURce_GPSystem_INITial_TIME,2,scpi_staged + uVar2,(uint8_t)zero);
   }
   else {
     status_report_from(8,(uint8_t)zero);
@@ -50967,12 +51003,14 @@ int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *respons
       local_3e = -local_3e;
     }
     zero = return_zero(call->input);
-    pllc_request_c(&LAB_00033862,0,local_42,(uint32_t *)0x0,(char)zero);
+    pllc_request_c(&scpi_param_SOURce_GPSystem_INITial_POSition_latitude,0,local_42,
+                   (uint32_t *)0x0,(char)zero);
     zero = return_zero(call->input);
     pllc_request_c(&scpi_param_SOURce_GPSystem_INITial_POSition_longitude,0,local_3e,
                    (uint32_t *)0x0,(char)zero);
     zero = return_zero(call->input);
-    pllc_request_c(&LAB_000338ce,0,local_3a,(uint32_t *)0x0,(char)zero);
+    pllc_request_c(&scpi_param_SOURce_GPSystem_INITial_POSition_height,0,local_3a,(uint32_t *)0x0,
+                   (char)zero);
   }
   else {
     zero = return_zero(call->input);
@@ -50993,11 +51031,12 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,scpi_c
 {
   uint8_t source;
   uint32_t zero;
-  int32_t iVar2;
   int32_t clamped;
-  float fVar4;
-  uint8_t bVar5;
-  double dVar6;
+  int32_t iVar3;
+  uint32_t uVar4;
+  float fVar5;
+  uint8_t bVar6;
+  double dVar7;
   int32_t local_40;
   int32_t local_3c;
   int32_t local_38;
@@ -51024,8 +51063,8 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,scpi_c
       return 0;
     }
     if (*(int16_t *)((int32_t)parameters + 2) == 2) {
-      copy_longs_locked((uint32_t *)nv_settings.position,
-                        (uint32_t *)((zero & 0xff) * 0xc + 0x102a0e),3);
+      copy_longs_locked((uint32_t *)nv_settings.position,(uint32_t *)(scpi_staged + (zero & 0xff)),
+                        3);
     }
     else {
       if (survey_position_valid == 0) {
@@ -51036,8 +51075,7 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,scpi_c
         pllc_request_b(&scpi_action_SOURce_GPSystem_POSition,0,source);
         return 0;
       }
-      copy_longs_locked((uint32_t *)survey_position,(uint32_t *)((zero & 0xff) * 0xc + 0x102a0e),3)
-      ;
+      copy_longs_locked((uint32_t *)survey_position,(uint32_t *)(scpi_staged + (zero & 0xff)),3);
     }
   }
   else {
@@ -51056,11 +51094,11 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,scpi_c
     milli_step.function = load_long;
     local_1c = 0;
     local_18 = 0x5a;
-    iVar2 = clamp_to_limits((int32_t *)((int32_t)parameters + 6),0,&local_1c,&local_18,&unit_step,
+    clamped = clamp_to_limits((int32_t *)((int32_t)parameters + 6),0,&local_1c,&local_18,&unit_step,
                             zero & 0xff);
-    if (iVar2 == local_18) {
-      bVar5 = 0;
-      fVar4 = 0.0;
+    if (clamped == local_18) {
+      bVar6 = 0;
+      fVar5 = 0.0;
       if (*(int32_t *)((int32_t)parameters + 0xe) != 0) {
         status_report_from(9,source);
       }
@@ -51071,24 +51109,24 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,scpi_c
     else {
       local_1c = 0;
       local_18 = 0x3b;
-      clamped = clamp_to_limits((int32_t *)((int32_t)parameters + 0xe),0,&local_1c,&local_18,&unit_step,
+      iVar3 = clamp_to_limits((int32_t *)((int32_t)parameters + 0xe),0,&local_1c,&local_18,&unit_step,
                               zero & 0xff);
       local_14 = 0.0;
       local_10 = 59.999;
-      fVar4 = clamp_float_to_step_and_limits
+      fVar5 = clamp_float_to_step_and_limits
                         ((float *)((int32_t)parameters + 0x16),0,&local_14,&local_10,&milli_step,
                          zero & 0xff);
-      bVar5 = (uint8_t)clamped;
+      bVar6 = (uint8_t)iVar3;
     }
-    dVar6 = float_to_double(fVar4);
-    dms_to_mas(&local_40,(uint16_t)iVar2,bVar5,dVar6);
+    dVar7 = float_to_double(fVar5);
+    dms_to_mas(&local_40,(uint16_t)clamped,bVar6,dVar7);
     local_1c = 0;
     local_18 = 0xb4;
-    iVar2 = clamp_to_limits((int32_t *)((int32_t)parameters + 0x22),0,&local_1c,&local_18,&unit_step,
+    clamped = clamp_to_limits((int32_t *)((int32_t)parameters + 0x22),0,&local_1c,&local_18,&unit_step,
                             zero & 0xff);
-    if (iVar2 == local_18) {
-      bVar5 = 0;
-      fVar4 = 0.0;
+    if (clamped == local_18) {
+      bVar6 = 0;
+      fVar5 = 0.0;
       if (*(int32_t *)((int32_t)parameters + 0x2a) != 0) {
         status_report_from(9,source);
       }
@@ -51099,23 +51137,23 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,scpi_c
     else {
       local_1c = 0;
       local_18 = 0x3b;
-      clamped = clamp_to_limits((int32_t *)((int32_t)parameters + 0x2a),0,&local_1c,&local_18,&unit_step,
+      iVar3 = clamp_to_limits((int32_t *)((int32_t)parameters + 0x2a),0,&local_1c,&local_18,&unit_step,
                               zero & 0xff);
       local_14 = 0.0;
       local_10 = 59.999;
-      fVar4 = clamp_float_to_step_and_limits
+      fVar5 = clamp_float_to_step_and_limits
                         ((float *)((int32_t)parameters + 0x32),0,&local_14,&local_10,&milli_step,
                          zero & 0xff);
-      bVar5 = (uint8_t)clamped;
+      bVar6 = (uint8_t)iVar3;
     }
-    dVar6 = float_to_double(fVar4);
-    dms_to_mas(&local_3c,(uint16_t)iVar2,bVar5,dVar6);
+    dVar7 = float_to_double(fVar5);
+    dms_to_mas(&local_3c,(uint16_t)clamped,bVar6,dVar7);
     centi_step.value = 0x3c23d70a;
     centi_step.function = load_long;
-    fVar4 = integer_to_float(-100000);
-    local_c = float_multiply(fVar4,0.01);
-    fVar4 = integer_to_float(1800000);
-    local_8 = float_multiply(fVar4,0.01);
+    fVar5 = integer_to_float(-100000);
+    local_c = float_multiply(fVar5,0.01);
+    fVar5 = integer_to_float(1800000);
+    local_8 = float_multiply(fVar5,0.01);
     local_38 = clamp_float_to_step_double
                          ((float *)((int32_t)parameters + 0x3a),0,&local_c,&local_8,&centi_step,
                           zero & 0xff);
@@ -51125,12 +51163,12 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,scpi_c
     if (*(int16_t *)((int32_t)parameters + 0x1e) == 3) {
       local_3c = -local_3c;
     }
-    iVar2 = (zero & 0xff) * 0xc;
-    *(int32_t *)(iVar2 + 0x102a0e) = local_40;
-    *(int32_t *)(iVar2 + 0x102a12) = local_3c;
-    *(int32_t *)(iVar2 + 0x102a16) = local_38;
+    uVar4 = zero & 0xff;
+    scpi_staged[uVar4][0] = local_40;
+    scpi_staged[uVar4][1] = local_3c;
+    scpi_staged[uVar4][2] = local_38;
   }
-  pllc_request_d(&scpi_param_SOURce_GPSystem_POSition,2,(zero & 0xff) * 0xc + 0x102a0e,source);
+  pllc_request_d(&scpi_param_SOURce_GPSystem_POSition,2,scpi_staged + (zero & 0xff),source);
   pllc_request_a(&scpi_param_DOUGlas_STATe,0,1,source);
   return 0;
 }
@@ -51415,10 +51453,10 @@ int32_t scpi_query_DOUGlas_PROGress(void *parameters,void *response,scpi_call *c
   
   zero = return_zero(call->input);
   sr = set_interrupt_mask(0x100);
-  bVar3 = survey_progress_text((char *)((zero & 0xff) * 0x11a + 0x10272a));
+  bVar3 = survey_progress_text(scpi_response_texts[zero & 0xff]);
   set_interrupt_mask(sr);
   if (bVar3) {
-    *(uint32_t *)response = (zero & 0xff) * 0x11a + 0x10272a;
+    *(scpi_response_text **)response = scpi_response_texts + (zero & 0xff);
     iVar2 = 0;
   }
   else {
@@ -51733,18 +51771,16 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking(void *parameters,void *res
   if (bVar3) {
     set_interrupt_mask(sr);
     satellite_list_limits(SATELLITE_LIST_TRACKING,&local_7,&uStack_6,&local_5);
-    listed = satellites_in_mask(local_e,local_7,(int16_t *)((zero & 0xff) * 0x40 + 0x10295e),local_9,
-                               local_5);
+    listed = satellites_in_mask(local_e,local_7,scpi_response_lists[zero & 0xff],local_9,local_5);
     satellite_list_limits(SATELLITE_LIST_TRACKING_PSEUDOLITES,&local_7,&uStack_6,&local_5);
-    bVar5 = satellites_in_mask((uint32_t)local_a,local_7,
-                               (int16_t *)((uint32_t)listed * 2 + (zero & 0xff) * 0x40 + 0x10295e),local_8
-                               ,local_5);
+    bVar5 = satellites_in_mask((uint32_t)local_a,local_7,scpi_response_lists[zero & 0xff] + listed,
+                               local_8,local_5);
     *(uint32_t *)response = (uint32_t)bVar5 + (uint32_t)listed;
     if ((uint32_t)bVar5 + (uint32_t)listed == 0) {
       *(uint32_t *)response = 1;
-      *(uint16_t *)((zero & 0xff) * 0x40 + 0x10295e) = 0;
+      scpi_response_lists[zero & 0xff][0] = 0;
     }
-    *(uint32_t *)((int32_t)response + 4) = (zero & 0xff) * 0x40 + 0x10295e;
+    *(scpi_response_list **)((int32_t)response + 4) = scpi_response_lists + (zero & 0xff);
     iVar2 = 0;
   }
   else {
@@ -51862,13 +51898,13 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore
   zero = return_zero(call->input);
   satellite_list_limits(SATELLITE_LIST_ALL,&local_8,&local_7,local_6);
   listed = satellites_in_mask(nv_settings.ignored_satellites,local_8,
-                             (int16_t *)((zero & 0xff) * 0x40 + 0x10295e),local_7,local_6[0]);
+                             scpi_response_lists[zero & 0xff],local_7,local_6[0]);
   *(uint32_t *)response = (uint32_t)listed;
   if (listed == 0) {
     *(uint32_t *)response = 1;
-    *(uint16_t *)((zero & 0xff) * 0x40 + 0x10295e) = 0;
+    scpi_response_lists[zero & 0xff][0] = 0;
   }
-  *(uint32_t *)((int32_t)response + 4) = (zero & 0xff) * 0x40 + 0x10295e;
+  *(scpi_response_list **)((int32_t)response + 4) = scpi_response_lists + (zero & 0xff);
   return 0;
 }
 
@@ -52028,13 +52064,13 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude
   zero = return_zero(call->input);
   satellite_list_limits(SATELLITE_LIST_ALL,&local_8,&local_7,local_6);
   listed = satellites_in_mask(~nv_settings.ignored_satellites,local_8,
-                             (int16_t *)((zero & 0xff) * 0x40 + 0x10295e),local_7,local_6[0]);
+                             scpi_response_lists[zero & 0xff],local_7,local_6[0]);
   *(uint32_t *)response = (uint32_t)listed;
   if (listed == 0) {
     *(uint32_t *)response = 1;
-    *(uint16_t *)((zero & 0xff) * 0x40 + 0x10295e) = 0;
+    scpi_response_lists[zero & 0xff][0] = 0;
   }
-  *(uint32_t *)((int32_t)response + 4) = (zero & 0xff) * 0x40 + 0x10295e;
+  *(scpi_response_list **)((int32_t)response + 4) = scpi_response_lists + (zero & 0xff);
   return 0;
 }
 
@@ -52089,14 +52125,13 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted
   if (bVar3) {
     set_interrupt_mask(sr);
     satellite_list_limits(SATELLITE_LIST_VISIBLE,&local_7,&uStack_6,&local_5);
-    listed = satellites_in_mask(local_c,local_7,(int16_t *)((zero & 0xff) * 0x40 + 0x10295e),local_8,
-                               local_5);
+    listed = satellites_in_mask(local_c,local_7,scpi_response_lists[zero & 0xff],local_8,local_5);
     *(uint32_t *)response = (uint32_t)listed;
     if (listed == 0) {
       *(uint32_t *)response = 1;
-      *(uint16_t *)((zero & 0xff) * 0x40 + 0x10295e) = 0;
+      scpi_response_lists[zero & 0xff][0] = 0;
     }
-    *(uint32_t *)((int32_t)response + 4) = (zero & 0xff) * 0x40 + 0x10295e;
+    *(scpi_response_list **)((int32_t)response + 4) = scpi_response_lists + (zero & 0xff);
     iVar2 = 0;
   }
   else {
@@ -52432,11 +52467,10 @@ int32_t scpi_set_SOURce_PULSe_STARt_DATE(void *parameters,void *response,scpi_ca
   zero = return_zero(call->input);
   bVar2 = 0;
   do {
-    *(int32_t *)((uint32_t)bVar2 * 4 + (zero & 0xff) * 0xc + 0x102a0e) =
-         (int32_t)*(int16_t *)((int32_t)parameters + (uint32_t)bVar2 * 6 + 2);
+    scpi_staged[zero & 0xff][bVar2] = (int32_t)*(int16_t *)((int32_t)parameters + (uint32_t)bVar2 * 6 + 2);
     bVar2 = bVar2 + 1;
   } while (bVar2 < 3);
-  pllc_request_d(&scpi_param_SOURce_PULSe_STARt_DATE,2,(zero & 0xff) * 0xc + 0x102a0e,(char)zero);
+  pllc_request_d(&scpi_param_SOURce_PULSe_STARt_DATE,2,scpi_staged + (zero & 0xff),(char)zero);
   return 0;
 }
 
@@ -52472,11 +52506,10 @@ int32_t scpi_set_SOURce_PULSe_STARt_TIME(void *parameters,void *response,scpi_ca
   zero = return_zero(call->input);
   bVar2 = 0;
   do {
-    *(int32_t *)((uint32_t)bVar2 * 4 + (zero & 0xff) * 0xc + 0x102a0e) =
-         (int32_t)*(int16_t *)((int32_t)parameters + (uint32_t)bVar2 * 6 + 2);
+    scpi_staged[zero & 0xff][bVar2] = (int32_t)*(int16_t *)((int32_t)parameters + (uint32_t)bVar2 * 6 + 2);
     bVar2 = bVar2 + 1;
   } while (bVar2 < 3);
-  pllc_request_d(&scpi_param_SOURce_PULSe_STARt_TIME,2,(zero & 0xff) * 0xc + 0x102a0e,(char)zero);
+  pllc_request_d(&scpi_param_SOURce_PULSe_STARt_TIME,2,scpi_staged + (zero & 0xff),(char)zero);
   return 0;
 }
 
@@ -52715,8 +52748,8 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime(void *parameters,void *respon
   
   zero = return_zero(call->input);
   leap_seconds = leap_gps_time();
-  sprintf((char *)((zero & 0xff) * 0x11a + 0x10272a),"#H%08X",leap_seconds);
-  *(uint32_t *)response = (zero & 0xff) * 0x11a + 0x10272a;
+  sprintf(scpi_response_texts[zero & 0xff],"#H%08X",leap_seconds);
+  *(scpi_response_text **)response = scpi_response_texts + (zero & 0xff);
   if (leap_seconds == 0) {
     iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
@@ -52958,9 +52991,9 @@ int32_t scpi_query_SOURce_PTIMe_TIME_STRing(void *parameters,void *response,scpi
     iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   else {
-    bVar3 = format_time(local_8,(char *)((zero & 0xff) * 0x11a + 0x10272a));
+    bVar3 = format_time(local_8,scpi_response_texts[zero & 0xff]);
     if (bVar3) {
-      *(uint32_t *)response = (zero & 0xff) * 0x11a + 0x10272a;
+      *(scpi_response_text **)response = scpi_response_texts + (zero & 0xff);
       iVar2 = 0;
     }
     else {
@@ -52982,20 +53015,18 @@ int32_t scpi_set_SOURce_PTIMe_TZONe(void *parameters,void *response,scpi_call *c
 {
   uint32_t zero;
   int32_t iVar2;
-  int32_t iVar3;
   
   zero = return_zero(call->input);
-  iVar2 = (zero & 0xff) * 0xc;
-  *(int32_t *)(iVar2 + 0x102a0e) = (int32_t)*(int16_t *)((int32_t)parameters + 2);
+  scpi_staged[zero & 0xff][0] = (int32_t)*(int16_t *)((int32_t)parameters + 2);
   if (*(int16_t *)((int32_t)parameters + 6) == -1) {
-    *(uint32_t *)(iVar2 + 0x102a12) = 0;
+    scpi_staged[zero & 0xff][1] = 0;
   }
   else {
-    *(int32_t *)((zero & 0xff) * 0xc + 0x102a12) = (int32_t)*(int16_t *)((int32_t)parameters + 8);
+    scpi_staged[zero & 0xff][1] = (int32_t)*(int16_t *)((int32_t)parameters + 8);
   }
   time_zone_changed();
-  iVar3 = return_zero(call->input);
-  pllc_request_d(&scpi_param_SOURce_PTIMe_TZONe,1,(zero & 0xff) * 0xc + 0x102a0e,(char)iVar3);
+  iVar2 = return_zero(call->input);
+  pllc_request_d(&scpi_param_SOURce_PTIMe_TZONe,1,scpi_staged + (zero & 0xff),(char)iVar2);
   return 0;
 }
 
@@ -53074,7 +53105,8 @@ int32_t scpi_set_SAMPle_BOOLean(void *parameters,void *response,scpi_call *call)
   int32_t zero;
   
   zero = return_zero(call->input);
-  pllc_request_a(&LAB_00033454,0,(char)*(uint16_t *)((int32_t)parameters + 2),(char)zero);
+  pllc_request_a(&scpi_param_SAMPle_BOOLean,0,(char)*(uint16_t *)((int32_t)parameters + 2),(char)zero
+                );
   return 0;
 }
 
@@ -53105,7 +53137,7 @@ int32_t scpi_set_SAMPle_BARR(void *parameters,void *response,scpi_call *call)
   int32_t zero;
   
   zero = return_zero(call->input);
-  pllc_request_a(&LAB_00033472,(char)*(uint16_t *)parameters,
+  pllc_request_a(&scpi_param_SAMPle_BARR,(char)*(uint16_t *)parameters,
                  (char)*(uint16_t *)((int32_t)parameters + 4),(char)zero);
   return 0;
 }
@@ -53293,7 +53325,7 @@ int32_t scpi_set_SAMPle_IARR(void *parameters,void *response,scpi_call *call)
 int32_t scpi_query_SAMPle_IARR(void *parameters,void *response,scpi_call *call)
 
 {
-  *(int32_t *)response = (&scpi_value_SAMPle_IARR)[*(int16_t *)parameters];
+  *(int32_t *)response = scpi_value_SAMPle_IARR[*(int16_t *)parameters];
   return 0;
 }
 
@@ -53314,7 +53346,7 @@ int32_t scpi_set_SAMPle_IMULtiple(void *parameters,void *response,scpi_call *cal
   scpi_values_SAMPle_IMULtiple[2] = *(uint32_t *)((int32_t)parameters + 0x12);
   scpi_values_SAMPle_IMULtiple[3] = *(uint32_t *)((int32_t)parameters + 0x1a);
   zero = return_zero(call->input);
-  pllc_request_d(&LAB_000335be,3,scpi_values_SAMPle_IMULtiple,(char)zero);
+  pllc_request_d(&scpi_param_SAMPle_IMULtiple,3,scpi_values_SAMPle_IMULtiple,(char)zero);
   return 0;
 }
 
@@ -53458,8 +53490,8 @@ int32_t scpi_query_SAMPle_DARR(void *parameters,void *response,scpi_call *call)
   int16_t sVar1;
   
   sVar1 = *(int16_t *)parameters;
-  *(uint32_t *)response = *(uint32_t *)(sVar1 * 8 + 0x101e30);
-  *(uint32_t *)((int32_t)response + 4) = *(uint32_t *)(sVar1 * 8 + 0x101e34);
+  *(uint32_t *)response = *(uint32_t *)(scpi_value_SAMPle_DARR + sVar1);
+  *(uint32_t *)((int32_t)response + 4) = *(uint32_t *)((int32_t)scpi_value_SAMPle_DARR + sVar1 * 8 + 4);
   return 0;
 }
 
@@ -54230,8 +54262,8 @@ int32_t scpi_query_ROBin(void *parameters,void *response,scpi_call *call)
   iVar1 = robin_parse(*(char **)((int32_t)parameters + 2),&local_c,&uStack_8);
   zero = return_zero(call->input);
   if (iVar1 == 0) {
-    robin_point_list((uint16_t *)((zero & 0xff) * 0xa0 + 0x102d76),&local_e,(char)local_c);
-    robin_store(response,(int16_t *)((zero & 0xff) * 0xa0 + 0x102d76),
+    robin_point_list((uint16_t *)(robin_points + (zero & 0xff)),&local_e,(char)local_c);
+    robin_store(response,robin_points[zero & 0xff],
                 CONCAT31(CONCAT21((int16_t)local_e >> 0xf,(char)(local_e >> 8)),(char)local_e),
                 nv_settings.format_data,(uint8_t)zero);
     iVar1 = 0;
@@ -54284,28 +54316,26 @@ int32_t scpi_query_ROBin_MEMory_OVERflow_COUNt(void *parameters,void *response,s
 
 {
   uint32_t zero;
-  int32_t iVar2;
   int32_t error;
+  int32_t iVar3;
   uint32_t local_c;
   uint32_t uStack_8;
   
   zero = return_zero(call->input);
   if (*(int16_t *)parameters == -1) {
     *(uint32_t *)response = 3;
-    iVar2 = (zero & 0xff) * 0x18;
-    *(int32_t *)((int32_t)response + 4) = iVar2 + 0x1029de;
-    robin_overflow_count('@',(double *)(iVar2 + 0x1029de));
+    *(robin_overflow_counts **)((int32_t)response + 4) = robin_overflows + (zero & 0xff);
+    robin_overflow_count('@',robin_overflows[zero & 0xff]);
   }
   else {
-    iVar2 = robin_parse(*(char **)((int32_t)parameters + 2),&local_c,&uStack_8);
-    if (iVar2 != 0) {
-      error = scpi_query_failed(STATUS_ILLEGAL_PARAMETER_VALUE,call);
-      return error;
+    error = robin_parse(*(char **)((int32_t)parameters + 2),&local_c,&uStack_8);
+    if (error != 0) {
+      iVar3 = scpi_query_failed(STATUS_ILLEGAL_PARAMETER_VALUE,call);
+      return iVar3;
     }
     *(uint32_t *)response = 1;
-    iVar2 = (zero & 0xff) * 0x18;
-    *(int32_t *)((int32_t)response + 4) = iVar2 + 0x1029de;
-    robin_overflow_count((char)local_c,(double *)(iVar2 + 0x1029de));
+    *(robin_overflow_counts **)((int32_t)response + 4) = robin_overflows + (zero & 0xff);
+    robin_overflow_count((char)local_c,robin_overflows[zero & 0xff]);
   }
   return 0;
 }
@@ -54364,20 +54394,18 @@ int32_t scpi_query_ROBin_POINts(void *parameters,void *response,scpi_call *call)
   zero = return_zero(call->input);
   if (*(int16_t *)parameters == -1) {
     *(uint32_t *)response = 3;
-    iVar3 = (zero & 0xff) * 0x40;
-    *(int32_t *)((int32_t)response + 4) = iVar3 + 0x10295e;
-    robin_point_count('@',(int16_t *)(iVar3 + 0x10295e));
+    *(scpi_response_list **)((int32_t)response + 4) = scpi_response_lists + (zero & 0xff);
+    robin_point_count('@',scpi_response_lists[zero & 0xff]);
   }
   else {
-    iVar3 = robin_parse(*(char **)((int32_t)parameters + 2),&local_c,&uStack_8);
-    if (iVar3 != 0) {
-      error = scpi_query_failed(STATUS_ILLEGAL_PARAMETER_VALUE,call);
-      return error;
+    error = robin_parse(*(char **)((int32_t)parameters + 2),&local_c,&uStack_8);
+    if (error != 0) {
+      iVar3 = scpi_query_failed(STATUS_ILLEGAL_PARAMETER_VALUE,call);
+      return iVar3;
     }
     *(uint32_t *)response = 1;
-    iVar3 = (zero & 0xff) * 0x40;
-    *(int32_t *)((int32_t)response + 4) = iVar3 + 0x10295e;
-    robin_point_count((char)local_c,(int16_t *)(iVar3 + 0x10295e));
+    *(scpi_response_list **)((int32_t)response + 4) = scpi_response_lists + (zero & 0xff);
+    robin_point_count((char)local_c,scpi_response_lists[zero & 0xff]);
   }
   return 0;
 }
@@ -54392,49 +54420,49 @@ int32_t scpi_query_ROBin_POINts(void *parameters,void *response,scpi_call *call)
 int32_t scpi_query_ROBin_TSTamp(void *parameters,void *response,scpi_call *call)
 
 {
-  int32_t iVar1;
+  int32_t error;
   uint32_t zero;
   char extraout_D0b;
+  uint32_t uVar3;
   uint32_t local_20;
   uint32_t uStack_1c;
   int16_t local_18;
-  uint16_t local_16;
-  uint16_t local_14;
-  uint16_t local_12;
-  uint16_t local_10;
-  uint16_t local_e;
-  uint16_t local_c;
-  uint16_t local_a;
-  uint16_t local_8;
-  uint16_t local_6;
+  int16_t local_16;
+  int16_t local_14;
+  int16_t local_12;
+  int16_t local_10;
+  int16_t local_e;
+  int16_t local_c;
+  int16_t local_a;
+  int16_t local_8;
+  int16_t local_6;
   
-  iVar1 = robin_parse(*(char **)((int32_t)parameters + 2),&local_20,&uStack_1c);
+  error = robin_parse(*(char **)((int32_t)parameters + 2),&local_20,&uStack_1c);
   zero = return_zero(call->input);
-  if (iVar1 == 0) {
+  if (error == 0) {
     if (((0 < *(int16_t *)((int32_t)parameters + 8)) && (*(int16_t *)((int32_t)parameters + 8) < 0x101)) &&
        (robin_timestamp_values((int8_t)local_20,*(int16_t *)((int32_t)parameters + 8),&local_18),
        extraout_D0b != 0)) {
-      iVar1 = (zero & 0xff) * 0xa0;
-      *(int16_t *)(iVar1 + 0x102d76) = local_18;
-      *(uint16_t *)(iVar1 + 0x102d78) = local_16;
-      *(uint16_t *)(iVar1 + 0x102d7a) = local_14;
-      *(uint16_t *)(iVar1 + 0x102d7c) = local_12;
-      *(uint16_t *)(iVar1 + 0x102d7e) = local_10;
-      *(uint16_t *)(iVar1 + 0x102d80) = local_e;
-      *(uint16_t *)(iVar1 + 0x102d82) = local_c;
-      *(uint16_t *)(iVar1 + 0x102d84) = local_a;
-      *(uint16_t *)(iVar1 + 0x102d86) = local_8;
-      *(uint16_t *)(iVar1 + 0x102d88) = local_6;
-      robin_store(response,(int16_t *)((zero & 0xff) * 0xa0 + 0x102d76),10,nv_settings.format_data,
-                  (uint8_t)zero);
+      uVar3 = zero & 0xff;
+      robin_points[uVar3][0] = local_18;
+      robin_points[uVar3][1] = local_16;
+      robin_points[uVar3][2] = local_14;
+      robin_points[uVar3][3] = local_12;
+      robin_points[uVar3][4] = local_10;
+      robin_points[uVar3][5] = local_e;
+      robin_points[uVar3][6] = local_c;
+      robin_points[uVar3][7] = local_a;
+      robin_points[uVar3][8] = local_8;
+      robin_points[uVar3][9] = local_6;
+      robin_store(response,robin_points[zero & 0xff],10,nv_settings.format_data,(uint8_t)zero);
       return 0;
     }
-    iVar1 = scpi_query_failed(STATUS_DATA_OUT_OF_RANGE,call);
+    error = scpi_query_failed(STATUS_DATA_OUT_OF_RANGE,call);
   }
   else {
-    iVar1 = scpi_query_failed(STATUS_ILLEGAL_PARAMETER_VALUE,call);
+    error = scpi_query_failed(STATUS_ILLEGAL_PARAMETER_VALUE,call);
   }
-  return iVar1;
+  return error;
 }
 
 #endif
@@ -56186,7 +56214,7 @@ int32_t scpi_query_SYSTem_PRINt(void *parameters,void *response,scpi_call *call)
   scpi_port *port;
   
   zero = return_zero(call->input);
-  pllc_request_c(&LAB_00033904,0,0,(uint32_t *)0x0,(char)zero);
+  pllc_request_c(&scpi_param_SYSTem_PRINt,0,0,(uint32_t *)0x0,(char)zero);
   *(uint16_t *)response = 0;
   port = scpi_console_port();
   if (port == call->input) {
@@ -65440,8 +65468,8 @@ void pllp_task(void)
   local_6 = false;
   watchdog_pll = watchdog_pll + 1;
   interval_tick_wait = 0;
-  DAT_0010253e = 0;
-  DAT_0010253f = 0;
+  pll_unread_flag_1 = 0;
+  pll_unread_flag_2 = 0;
   pll_restart_requested = 0;
   gps_ack_wait_count = 0;
   gps_ack_code = 1;

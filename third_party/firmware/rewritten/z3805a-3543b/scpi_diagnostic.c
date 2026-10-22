@@ -8,15 +8,6 @@
  * its own, so the types and prototypes it declares are in scope; each
  * function here keeps its generated prototype. */
 
-/* A query handler's text, one buffer to a source, at 0x10272a; the
- * export labels none there. */
-#define SCPI_DIAGNOSTIC_TEXT_SIZE 0x11a
-
-typedef char scpi_diagnostic_text[SCPI_DIAGNOSTIC_TEXT_SIZE];
-
-static scpi_diagnostic_text* const SCPI_DIAGNOSTIC_TEXTS =
-    (scpi_diagnostic_text*)0x10272a;
-
 /* A response's short, scpi_format_short's 4 bytes. */
 typedef struct scpi_diagnostic_short {
   int16_t value;   /* +0x00 */
@@ -465,7 +456,7 @@ int32_t scpi_query_DIAGnostic_LOG_READ(void* parameters, void* response,
   enum { TEXT_SIZE = 255, HEADING_SIZE = 27 };
   const scpi_diagnostic_indexed_word* given = parameters;
   char** entry = response;
-  char* line = SCPI_DIAGNOSTIC_TEXTS[(uint8_t)return_zero(call->input)];
+  char* line = scpi_response_texts[(uint8_t)return_zero(call->input)];
   char text[TEXT_SIZE];
   char heading[HEADING_SIZE];
 

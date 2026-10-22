@@ -21,11 +21,6 @@ static const uint32_t KLOK_POOL_SIZE = 5;
 /* An array size, so #define. */
 #define KLOK_MESSAGE_SIZE 80
 
-/* The time, then the date, of the 1PPS klok_task last received, at
- * 0x1037ac, which the names file does not name: the "now" klok_run_due
- * compares each entry with. */
-static uint32_t* const KLOK_NOW = (uint32_t*)0x1037ac;
-
 /* A clock entry's time and date, laid out as a packed_datetime is, which
  * datetime_add and datetime_subtract take; the image passes the entry's
  * +4 (0x10bca) as one. */
@@ -217,7 +212,7 @@ void klok_task(void) {
 
   psos_supervisor();
   for (;;) {
-    pps_wait_time(&KLOK_NOW[0], &KLOK_NOW[1], WAIT);
+    pps_wait_time(&klok_now[0], &klok_now[1], WAIT);
     idle_loops_last_second = klok_take_pending();
     if (klok_entries != NULL) {
       klok_run_due();
@@ -236,7 +231,7 @@ void klok_run_due(void) {
 
   mutex_lock(&klok_mutex);
   while (entry != NULL &&
-         (order = datetime_compare(&entry->time, KLOK_NOW)) <= 0) {
+         (order = datetime_compare(&entry->time, klok_now)) <= 0) {
     if (order == 0 && entry->function != NULL) {
       spoo_run(entry->function, 0, 0, 0);
     }

@@ -112,19 +112,12 @@ typedef struct scpi_source_pulse_short_item {
   int16_t unused; /* +0x02 */
 } scpi_source_pulse_short_item;
 
-/* The longs a setter of several values sends pllc the address of, three
- * for each source, at 0x102a0e, which the names file does not name: the
- * pllc_request's values[0], its index the last of them (structures.md,
- * "The pllc task's SCPI requests"). */
-static int32_t (*const SCPI_SOURCE_PULSE_STAGED)[SCPI_SOURCE_PULSE_FIELDS] =
-    (int32_t (*)[SCPI_SOURCE_PULSE_FIELDS])0x102a0e;
-
 /* The start's date or time, its three fields, to pllc through its
  * source's staged longs. */
 static void scpi_source_pulse_start_set(
     scpi_numeric_param* param, scpi_source_pulse_short_parameter* fields,
     uint8_t source) {
-  int32_t* staged = SCPI_SOURCE_PULSE_STAGED[source];
+  int32_t* staged = scpi_staged[source];
 
   for (uint8_t field = 0; field < SCPI_SOURCE_PULSE_FIELDS; field++) {
     staged[field] = fields[field].value;

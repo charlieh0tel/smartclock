@@ -18,31 +18,6 @@ enum {
   SCPI_SYSTEM_SERIAL1 = 0,
 };
 
-/* The serial settings no name is exported for, SERial1's and
- * SERial2's (the setters' references). */
-static scpi_setting_param* const SCPI_SYSTEM_SERIAL1_BAUD =
-    (scpi_setting_param*)0x33328;
-
-static scpi_setting_param* const SCPI_SYSTEM_SERIAL2_BAUD =
-    (scpi_setting_param*)0x33aa2;
-
-static scpi_setting_param* const SCPI_SYSTEM_SERIAL1_PACE =
-    (scpi_setting_param*)0x33346;
-
-static scpi_setting_param* const SCPI_SYSTEM_SERIAL2_PACE =
-    (scpi_setting_param*)0x33ac0;
-
-static scpi_setting_param* const SCPI_SYSTEM_SERIAL1_FDUPLEX =
-    (scpi_setting_param*)0x333dc;
-
-static scpi_setting_param* const SCPI_SYSTEM_SERIAL2_FDUPLEX =
-    (scpi_setting_param*)0x33afc;
-
-/* The numeric descriptor :SYSTem:PRINt? requests, its value
- * scpi_value_SAMPle_INTeger's; no name is exported for it (0x30796). */
-static scpi_numeric_param* const SCPI_SYSTEM_PRINT =
-    (scpi_numeric_param*)0x33904;
-
 /* The rates :BAUD takes, each a serial_baud's (0x3022e, 0x302c4). */
 static const int32_t SCPI_SYSTEM_BAUD_1200 = 1200;
 
@@ -110,9 +85,10 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_FDUPlex(void* parameters,
                                                  void* response,
                                                  scpi_call* call) {
   scpi_system_port_word* given = parameters;
-  scpi_setting_param* setting = given->port == SCPI_SYSTEM_SERIAL1
-                                    ? SCPI_SYSTEM_SERIAL1_FDUPLEX
-                                    : SCPI_SYSTEM_SERIAL2_FDUPLEX;
+  scpi_setting_param* setting =
+      given->port == SCPI_SYSTEM_SERIAL1
+          ? &scpi_param_SYSTem_COMMunicate_SER1_FDUPlex
+          : &scpi_param_SYSTem_COMMunicate_SER2_FDUPlex;
   uint8_t source = return_zero(call->input);
 
   pllc_request_a(setting, 0, (uint8_t)given->value, source);
@@ -193,9 +169,10 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_BAUD(void* parameters,
   } else {
     baud = SERIAL_BAUD_19200;
   }
-  scpi_setting_param* setting = given->port == SCPI_SYSTEM_SERIAL1
-                                    ? SCPI_SYSTEM_SERIAL1_BAUD
-                                    : SCPI_SYSTEM_SERIAL2_BAUD;
+  scpi_setting_param* setting =
+      given->port == SCPI_SYSTEM_SERIAL1
+          ? &scpi_param_SYSTem_COMMunicate_SER1_RECeive_BAUD
+          : &scpi_param_SYSTem_COMMunicate_SER2_RECeive_BAUD;
   uint8_t source = return_zero(call->input);
 
   pllc_request_a(setting, 0, baud, source);
@@ -297,9 +274,10 @@ int32_t scpi_set_SYSTem_COMMunicate_SER1_RECeive_PACE(void* parameters,
                                                       void* response,
                                                       scpi_call* call) {
   scpi_system_port_word* given = parameters;
-  scpi_setting_param* setting = given->port == SCPI_SYSTEM_SERIAL1
-                                    ? SCPI_SYSTEM_SERIAL1_PACE
-                                    : SCPI_SYSTEM_SERIAL2_PACE;
+  scpi_setting_param* setting =
+      given->port == SCPI_SYSTEM_SERIAL1
+          ? &scpi_param_SYSTem_COMMunicate_SER1_RECeive_PACE
+          : &scpi_param_SYSTem_COMMunicate_SER2_RECeive_PACE;
   uint8_t source = return_zero(call->input);
 
   pllc_request_a(setting, 0, (uint8_t)given->value, source);
@@ -457,14 +435,14 @@ int32_t scpi_set_SYSTem_PRESet(void* parameters, void* response,
   return 0;
 }
 
-/* :PRINt?: requests SCPI_SYSTEM_PRINT with no value, answers 0, and on
+/* :PRINt?: requests scpi_param_SYSTem_PRINt with no value, answers 0, and on
  * the console prints the status screen (0x30796). */
 int32_t scpi_query_SYSTem_PRINt(void* parameters, void* response,
                                 scpi_call* call) {
   uint16_t* answer = response;
   uint8_t source = return_zero(call->input);
 
-  pllc_request_c(SCPI_SYSTEM_PRINT, 0, 0, 0, source);
+  pllc_request_c(&scpi_param_SYSTem_PRINt, 0, 0, 0, source);
   *answer = 0;
   if (scpi_system_from_console(call)) {
     /* printf returns an int32_t, a long, and printf_function an int */

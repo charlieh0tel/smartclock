@@ -1822,6 +1822,18 @@ second's on `task_table[0].state`, which is 0 anyway.  `diag_leapsec`
 (`0x1c108`) stores its arguments at `0x102724` and `0x102726`, which
 nothing reads.
 
+## The SCPI task's response areas
+
+From `0x10272a`, end to end, the SCPI task keeps a record for each
+source `return_zero` gives, two of each, as `robin_blocks` and
+`robin_arrays` (`0x102a26`, `0x102a36`) hold two: `scpi_response_texts`,
+0x11a bytes of text a query writes and answers the address of;
+`scpi_response_lists` (`0x10295e`), 32 shorts, the satellite lists and
+`:ROBin:POINts?`' counts; `robin_overflows` (`0x1029de`), three doubles;
+and `scpi_staged` (`0x102a0e`), the three longs a setter of several
+values sends `pllc` the address of.  `robin_points` (`0x102d76`), 80
+shorts each, holds `:ROBin?` and `:ROBin:TSTamp?`'s points.
+
 ## The SCPI session
 
 `console_port_read` (`0x29bce`) gives the SCPI parser its input: once

@@ -1540,6 +1540,17 @@ view cannot drift apart.  The library, bottom up:
      are unchanged.  `cpu_enter_supervisor` stays, an asm statement, so
      that `set_interrupt_mask`'s result keeps its caller's condition
      codes; as a C call it differs as the installer's does.
+     Then the installer's `set_interrupt_mask` enters supervisor mode
+     the same way (`cpu_installer_enter_supervisor`) and agrees, its
+     `KNOWN` entry gone.  `psos_start` passes no mode: the kernel's
+     start reads only the task and its entry (`0x14ea0`), and every
+     task starts in user mode with its interrupts unmasked, from its
+     record's `+0x44`, which `kernel_create` clears (`0x14e5c`).  The
+     tasks that open with service 33, `klok_task` and `spoo_task` and
+     the installer's, run on in supervisor mode, so what only they
+     reach is no longer started in user mode (610 and 40 functions of
+     the two images in place of 621 and 42); and no SCPI handler is
+     reached but through the tree's slots, from the SCPI task.
      Then a survey of ROM that is neither code nor typed data: about
      110 KB, two thirds of it erased.  The GPS scripts' ROM steps, the
      Oncore ID pool, the pForth headers' head, the diagnostic words'

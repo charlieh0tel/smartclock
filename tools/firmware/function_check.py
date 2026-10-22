@@ -523,8 +523,13 @@ IDLE_LOOPS = 101
 COUNTED_LOOPS = {"root_task": ("idle_loops", IDLE_LOOPS)}
 # The status register a function starts with that runs only in a task,
 # as a task does, in user mode, its interrupts unmasked, rather than
-# harness.SUPERVISOR: root_task, which kernel_init creates in mode 0
-# (0x15e70), enters supervisor mode with trap #7 to enable the periodic
+# harness.SUPERVISOR.  Every task starts with the status register in its
+# record's +0x44, which kernel_create clears (0x14e5c); its bit 12 marks
+# a stack of the task's own, and the switch clears it before it pushes
+# the word as the status register (0x16046, 0x1605a).  Only IDLE's is
+# set, to supervisor mode (kernel_init, 0x15eb4); service 2, the start,
+# reads the task and its entry and no mode (kernel_start, 0x14ea0).
+# root_task enters supervisor mode with trap #7 to enable the periodic
 # interrupt and moves its status register back (0x13082 to 0x13098).
 # Which functions run only in a task is found from the export's calls
 # (task_context).  A case whose two copies both stop at a privilege
@@ -535,8 +540,12 @@ PRIVILEGE_VIOLATION = 8
 # The task entries: what kernel_init starts as ROOT, the configuration's
 # root_entry (psos_configuration, +0x2c), and what a task's start,
 # service 2, is given (psos_start, 0x16fae, and the installer's copy).
+# A task that opens with service 33 runs on in supervisor mode, as
+# klok_task (0x10b1e), spoo_task (0x20e5e) and the installer's spoo_task
+# do, so what only it reaches is not task code in user mode.
 ROOT_ENTRY = "((psos_configuration *)0)->root_entry"
 TASK_START = re.compile(r"\b(?:installer_)?psos_start\s*\(\s*\w+\s*,\s*(\w+)\s*\)")
+SUPERVISOR_SERVICES = {"psos_supervisor", "installer_psos_supervisor"}
 # A function's block in the export, from the line giving its address to
 # the next; a direct call in its C, the decompiler's reading of the
 # image's (kept for a function written by hand), or in its assembly; a
@@ -548,9 +557,12 @@ THUNK = re.compile(r'\.set (\w+), (\w+)"')
 COMMENT = re.compile(r"/\*.*?\*/", re.S)
 # A prototype, its result, name and parameters, a long one wrapped; and
 # an SCPI handler's parameters (scpi_handler_function), with which the
-# engine calls it through the command tree, in the SCPI task.
+# engine calls it through the command tree, in the SCPI task: the
+# image's only references to a handler are its node's setter and query
+# slots, which only scpi_call_handler (0x29642) calls through, from
+# scpi_interpret (0x293d4), from scpi_task (0x2a0de).
 PROTOTYPE = re.compile(r"^([A-Za-z_][\w \*]*?)\n?\b(\w+)\n?\s*\(([^()]*)\);$", re.M)
-SCPI_HANDLER = re.compile(r"^[^,]+,[^,]+,\s*scpi_call \*\s*\w*$")
+SCPI_HANDLER = re.compile(r"^void \*\s*\w*,\s*void \*\s*\w*,\s*scpi_call \*\s*\w*$")
 
 
 @dataclass(frozen=True)
@@ -783,11 +795,6 @@ KNOWN = {
         r"^one stopped: image None, gcc Invalid memory read \(UC_ERR_READ_UNMAPPED\) of fffff000 ",
     ),
     "log_erase": Known("log_erase checksums a pointer's bytes", r"^RAM differs from 101d50$"),
-    "installer_set_interrupt_mask": Known(
-        "the status register it returns holds its caller's condition codes, "
-        "which gcc's copy of its narrow argument sets first",
-        r"^result ([0-9a-f]*?)[0-9a-f]{2}, image's \1[0-9a-f]{2}$",
-    ),
 }
 
 
@@ -833,11 +840,12 @@ def functions(c: str, types: Types, conventions: dict, image: str | None) -> tup
 
 
 def task_context(c: str, conventions: dict, roots: set[str]) -> set[str]:
-    """The functions that run only in a task: those a task entry, one of
-    roots, an entry psos_start is given, or an SCPI handler reaches by
-    direct calls, and no other function nobody calls (an interrupt
-    handler, the reset, a console word, a routine reached only through a
-    table) reaches."""
+    """The functions that run only in a task in user mode: those a task
+    entry, one of roots, an entry psos_start is given, or an SCPI handler
+    reaches by direct calls, and no other function nobody calls (an
+    interrupt handler, the reset, a console word, a routine reached only
+    through a table) and no task entry that enters supervisor mode for
+    good (SUPERVISOR_SERVICES) reaches."""
     names = {convention["address"]: name for name, convention in conventions.items()}
     calls: dict[str, set[str]] = {name: set() for name in conventions}
     blocks = EXPORT_BLOCK.split(c)
@@ -861,7 +869,8 @@ def task_context(c: str, conventions: dict, roots: set[str]) -> set[str]:
                 pending.append(callee)
         return found
 
-    return reached(entries) - reached(calls.keys() - called - entries)
+    supervisor = {entry for entry in entries if calls[entry] & SUPERVISOR_SERVICES}
+    return reached(entries - supervisor) - reached((calls.keys() - called - entries) | supervisor)
 
 
 def root_function(m: Machine, located: dict[str, tuple[int, int]], conventions: dict) -> str | None:

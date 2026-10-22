@@ -995,14 +995,24 @@ interrupt mask, the same.  A function that runs only in a task starts
 as a task does, in user mode with its interrupts unmasked
 (`TASK_STATUS`), its exceptions taken on a supervisor stack of the
 harness's, so that its `trap #7` and move back of its status register
-show (`root_task`'s, `0x13082` to `0x13098`).  Which functions those are
-the export's direct calls give (`task_context`): those reached from a
-task's entry -- the configuration's `root_entry`, `root_task`, each
-entry `psos_start` is given, and each SCPI handler, which the engine
-calls through the tree in the SCPI task -- and from no other function
-that nothing calls, an interrupt handler, the reset, a console word or
-a routine reached only through a table; of the functions run, 621 of
-the primary's and 42 of the installer's.  A case of one whose copies both stop at a
+show (`root_task`'s, `0x13082` to `0x13098`).  Every task starts so:
+its status register is its record's `+0x44`, which `kernel_create`
+clears (`0x14e5c`) and the kernel's start, service 2, does not set,
+since it takes no mode (`kernel_start`, `0x14ea0`, reads the task and
+its entry); only IDLE's is set, to supervisor mode (`0x15eb4`).  Which
+functions those are the export's direct calls give (`task_context`):
+those reached from a task's entry -- the configuration's `root_entry`,
+`root_task`, each entry `psos_start` is given, and each SCPI handler,
+which the engine calls through the tree in the SCPI task -- and from no
+other function that nothing calls, an interrupt handler, the reset, a
+console word or a routine reached only through a table, nor from a task
+that opens with service 33 and runs on in supervisor mode, `klok_task`
+(`0x10b1e`) and `spoo_task` (`0x20e5e`) and the installer's
+`spoo_task`; of the functions run, 610 of the primary's and 40 of the
+installer's.  The image refers to a handler only from its node's setter
+or query slot, 499 slots in 459 nodes, which only `scpi_call_handler`
+(`0x29642`) calls through, from `scpi_interpret`, from `scpi_task`: no
+console word, spooled request or timer reaches one.  A case of one whose copies both stop at a
 privilege violation is run again in supervisor mode, as a caller in
 supervisor mode would run it; none does.  Two of the processor's ways
 the harness keeps for such a task: kernel service 33, which

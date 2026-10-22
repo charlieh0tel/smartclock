@@ -44,12 +44,24 @@ static inline void cpu_sr_write(uint16_t sr) {
  * the export declares, gcc may first copy an argument the caller goes on
  * to use, which sets them: set_interrupt_mask's narrow mask, so that the
  * low byte of the status register it returns differs from the image's
- * (docs/firmware/quirks.md). */
-static inline uint32_t cpu_enter_supervisor(void) {
-  register uint32_t sr __asm__("d0");
+ * (docs/firmware/quirks.md).  CPU_ENTER_SUPERVISOR calls routine, the
+ * primary's or the installer's copy (installer::0x100f3a), so. */
+#define CPU_ENTER_SUPERVISOR(routine)               \
+  ({                                                \
+    register uint32_t cpu_entered_sr __asm__("d0"); \
+    __asm__ volatile("jsr " routine                 \
+                     : "=r"(cpu_entered_sr)         \
+                     :                              \
+                     : "a0", "memory", "cc");       \
+    cpu_entered_sr;                                 \
+  })
 
-  __asm__ volatile("jsr enter_supervisor" : "=r"(sr) : : "a0", "memory", "cc");
-  return sr;
+static inline uint32_t cpu_enter_supervisor(void) {
+  return CPU_ENTER_SUPERVISOR("enter_supervisor");
+}
+
+static inline uint32_t cpu_installer_enter_supervisor(void) {
+  return CPU_ENTER_SUPERVISOR("installer_enter_supervisor");
 }
 
 /* Raises the interrupt mask by ORing bits into it; returns the status

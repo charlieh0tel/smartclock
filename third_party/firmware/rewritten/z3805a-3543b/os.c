@@ -45,7 +45,10 @@ uint32_t psos_create(char* name, uint32_t a, uint32_t priority,
   return error;
 }
 
-/* Starts a created task at its entry (0x16fae). */
+/* Starts a created task at its entry (0x16fae).  The image's stub
+ * passes D0 to D3 on as its caller left them, but the kernel's start
+ * reads only the task and the entry (0x14ea0) and takes no mode: the
+ * task starts in user mode (docs/firmware/psos.md, "Services"). */
 uint32_t psos_start(uint32_t task, void* entry) {
   return psos_call(PSOS_SERVICE_START, 0, 0, 0, 0, (void*)task, entry);
 }

@@ -180,7 +180,7 @@ reports an error.  A service no word calls keeps its number.
 | ------- | ---- | ---- | -------------------------------- |
 | 0 | | `ver` | returns the version in D7 |
 | 1 | `0x16f74` | `spawn` (create) | name, a long, the priority, two stack sizes in words (supervisor and user, as `t_create`'s, above), a long; the task's id through the last |
-| 2 | `0x16fae` | `spawn` (start) | the task, its entry point |
+| 2 | `0x16fae` | `spawn` (start) | the task, its entry point, and no mode, which pSOS+'s `t_start` takes (000-5070-002, `t_start`): `kernel_start` (`0x14ea0`) reads only A0 and A1, so the D0 to D3 the stub passes on as its caller left them go unread, and the task starts in user mode with its interrupts unmasked, the status register its record's `+0x44`, which `kernel_create` clears (`0x14e5c`) and only `kernel_init` sets, for IDLE, to supervisor mode (`0x15eb4`) |
 | 3 | `0x16fca` | `ident`, `my_pid` | name; the id and a byte through the next two; `0x16ff8` passes no name and returns the caller's own |
 | 4 | `0x17008` | `delete` | the task |
 | 5 | `0x17020` | `suspend` | the task |

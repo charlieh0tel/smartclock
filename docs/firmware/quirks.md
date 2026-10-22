@@ -151,13 +151,12 @@ function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.
   it (`0x41170`, `0x41190`); the C does the same.
 - **`set_interrupt_mask` (`0x13378`) and its installer copy** return
   the status register trap #7 saved, whose condition codes are their
-  caller's.  The primary's C enters supervisor mode first, with
-  `cpu.h`'s `cpu_enter_supervisor`, an asm statement, and agrees; the
-  installer's calls `installer_enter_supervisor` as C, as the export
-  declares it, with no wrapper, and gcc copies its narrow argument
-  before the call, which sets
-  them, so that the low byte of its result can differ.  The primary's,
-  calling `enter_supervisor` as C, differs the same way.
+  caller's.  The C enters supervisor mode first, with `cpu.h`'s
+  `cpu_enter_supervisor` and `cpu_installer_enter_supervisor`, asm
+  statements, and agrees.  Called as C, as the export declares them,
+  `enter_supervisor` and `installer_enter_supervisor` come after gcc's
+  copy of the narrow argument, which sets them, so that the low byte of
+  the result can differ.
 - **`setjmp`** reads its caller's registers.  No call or table in
   either image names it or `longjmp`.
 

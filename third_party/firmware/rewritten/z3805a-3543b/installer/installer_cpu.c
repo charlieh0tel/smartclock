@@ -18,7 +18,7 @@ uint16_t installer_enter_supervisor_mode(void) {
 uint16_t installer_set_interrupt_mask(uint16_t mask) {
   /* First, so that the status register it returns keeps the caller's
    * condition codes, as the image's does. */
-  const uint16_t saved = installer_enter_supervisor();
+  const uint16_t saved = cpu_installer_enter_supervisor();
 
   return cpu_interrupt_mask_set(saved, mask);
 }

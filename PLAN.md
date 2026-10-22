@@ -1385,7 +1385,11 @@ view cannot drift apart.  The library, bottom up:
   routine and its callers.
 
   Also later: the SCPI command table as C, generated from the image,
-  each subtree's nodes in its tree's file beside their handlers; and
+  each subtree's nodes in its tree's file beside their handlers: the
+  ROM's table exactly, every node, list, keyword, descriptor and entry
+  in its order, the unused and unsupported ones too, and a check that
+  the compiled table is the ROM's bytes, its pointers compared by what
+  they point at; and
   the pForth words, which are hand-written assembly, not C (one
   branches into another's body; A6 is the data stack), as assembly
   files beside the hand-written C rather than the export's listing.

@@ -26,6 +26,14 @@ typedef long long int64_t;
  * SmartClockSetup.java sizes them so in Ghidra, whose C parser makes
  * every enum 4 bytes. */
 
+/* Proposed enums: a rewrite that needs a record field's or a global's
+ * coded values adds their enum here, packed and with its evidence, and
+ * reports the fields and prototypes it should type.  The lead moves each
+ * to its subject below, types them, and empties this section on
+ * merging. */
+/* BEGIN PROPOSED ENUMS */
+/* END PROPOSED ENUMS */
+
 /* The loop's stage, pll.stage: the console's "PLL state: " strings
  * (docs/firmware/loop.md, "The stages"). */
 typedef enum __attribute__((packed)) pll_stage {

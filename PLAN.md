@@ -1447,6 +1447,9 @@ view cannot drift apart.  The library, bottom up:
      in place of 22 private copies, and `smartclock.h`'s
      `status_register_layout`, whose table `status_register_layouts`
      (`0x2f79e`) status.c and scpi_status.c both read.
+     A rewrite that needs a field's coded values adds their enum to
+     smartclock.h's marked proposed section, never one of its own; the
+     lead moves it to its subject and types the fields on merging.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

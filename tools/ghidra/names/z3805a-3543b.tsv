@@ -233,7 +233,7 @@
 0x10381c	label	dmes_scpi	context	set by the console's dmes_scpi	uint32_t
 0x103820	label	dmes_spoo	context	set by the console's dmes_spoo	uint32_t
 0x103824	label	dmes_curv	context	set by the console's dmes_curv	uint32_t
-0x136fe	function	get_date_time	context	:PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns 1 while clock.set is clear, the clock not set since power-up	int get_date_time(uint32_t *date, time_of_day *time)
+0x136fe	function	get_date_time	context	:PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns 1 while clock.set is clear, the clock not set since power-up	bool get_date_time(uint32_t *date, time_of_day *time)
 0x1009b8	label	clock	structures.md	the clock record the clock_record_ routines are given in A6, or reach through A4: uptime, date and time, GPS date and time, their month tables, the minute's length, the GPS-UTC offset; once the labels uptime, clock_time, clock_date, gps_time, gps_date, clock_invalid, gps_utc_offset and gps_utc_offset_valid	clock_record
 0x2410e	function	adc_average	context	diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a default when there is no reading	float adc_average(adc_channel channel)	convention=c; confidence=documented; out=D0 float
 0x1043a	function	mutex_acquire	context	recursive lock, owner at +8, count at +0xc, a token through request_x when not already owned		convention=register; confidence=read; in=A1 mutex *lock; out=D7 int error; error=D7 0x80 nested hold; preserves=D0, D1, A0, A2; family=mutex
@@ -449,7 +449,7 @@
 0x139e4	function	tcode_checksum	structures.md	the time code's cc, printed %02X and appended
 0x1399a	function	time_valid	structures.md	the time code's v is 0 when it returns nonzero
 0x13a48	function	tfom_code	structures.md	the time code's t, from pll.tfom; given pll.tfom, a float, which it passes on whole (0x13a48)	short tfom_code(uint32_t tfom)
-0x42a18	function	get_ffom	structures.md	the time code's f; pll_rep's "ffom = %1d"	uint32_t get_ffom(frequency_figure_of_merit *ffom)
+0x42a18	function	get_ffom	structures.md	the time code's f; pll_rep's "ffom = %1d"	bool get_ffom(frequency_figure_of_merit *ffom)
 0x107ee	function	klok_print_entries	structures.md	"at:", "period:", "function address:", "event class:" for each klok entry
 0x31762	function	log_read	structures.md	formats a log entry, "Log %03d:%04d%02d%02d.%02d:%02d:%02d"	int32_t log_read(int32_t number, char *text, char *heading)
 0x31bba	function	log_page_clear	structures.md	memset of a log page, 0x40 bytes
@@ -851,7 +851,7 @@
 0x417c6	function	aging_fit	loop.md's aging fit, in curv: "failed line fit", "pts= %d a= %.1f b= %.1f c= %.1f rms= %.1f", "HQ= %.1e mode= %d"	fits the oscillator's aging curve, for the curv task
 0x40556	function	interpolator_sample	context	sets HDAC channels 2 and 3 and takes both interpolator readings; "First-time interp test."	void interpolator_sample(interpolator_calibration *calibration)
 0x49a6e	function	format_satellite_cell	context	a satellite's status screen cell: "%2d %3d", "Ignore", "Not OK", "Acq"
-0x49e5a	function	format_time	context	a packed time as "%02d:%02d:%02d", or "--:--:--"	int format_time(time_of_day time, char *text)
+0x49e5a	function	format_time	context	a packed time as "%02d:%02d:%02d", or "--:--:--"	bool format_time(time_of_day time, char *text)
 0x49eb4	function	format_date	context	a date as "%02d %s %04d", or "-- --- ----"
 0x49f30	function	status_screen_time	context	the screen's time with its reference, "GPS", "UTC", "LOCL GPS" or "LOCAL"	void status_screen_time(status_snapshot_record *snapshot, char *line)
 0x4816c	function	format_duration	context	seconds as "%02d:%02d:%04.1f [%s]"	void format_duration(double param_1,char *param_2)
@@ -1233,7 +1233,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4f118	function	channel_position_satellite	context	a channel's satellite if it is valid and used for position, else 0
 0x4f162	function	satellite_used_for_position	context	1 if a channel uses the satellite for position
 0x4f18c	function	channels_reset	context	sets every channel's mode to code search
-0x4f1f8	function	visible_satellites	context	the set and count of visible GPS satellites, from gps.visibility	undefined4 visible_satellites(undefined1 *param_1,uint32_t *param_2)
+0x4f1f8	function	visible_satellites	context	the set and count of visible GPS satellites, from gps.visibility	bool visible_satellites(uint8_t *count, uint32_t *set)
 0x4f32c	function	satellite_find	context	finds a satellite by ID in a table of 10-byte entries, by bisection	oncore_visible_satellite *satellite_find(uint8_t id, void *table)
 0x49654	function	satellite_elevation_azimuth	context	a satellite's elevation and azimuth, valid below 91 and 360	void satellite_elevation_azimuth(oncore_visible_satellite *satellite, uint8_t *entry)
 0x49474	function	satellite_sets_build	context	for status_snapshot: the sets of GPS and pseudolite satellites visible, used and tracked, and the tracked by @@Ba channel mode	void satellite_sets_build(oncore_channel_status *channels, satellite_sets *sets)
@@ -1243,8 +1243,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4a636	function	status_snapshot	context	gathers the loop's stage, mode and suffix indexes, the TI, TFOM, FFOM, holdover, time zone, date and satellites into a record, under a raised interrupt mask	void status_snapshot(status_snapshot_record *snapshot)
 0x45c18	function	recovery_suffix_index	screen-format-strings.md, "Mode suffixes"	in holdover recovery's first state: 1 fine freq adj, 2 phase alignment; pll_powerup_suffix_index's companion	pll_recovery_suffix recovery_suffix_index(void)
 0x45c48	function	holdover_waiting_reason	context	for :HOLDover:WAITing?: which fault bit holds the loop in holdover, 0x10, 2 or 8
-0x4299c	function	kenneth_present_get	undocumented.md, ":KENneth"	for :KENneth:PRESent?: in holdover or its recovery, pll.tfom, resolution 1e-7	uint32_t kenneth_present_get(float *value, uint8_t *resolution)
-0x429c6	function	kenneth_predicted_get	undocumented.md, ":KENneth"	for :KENneth:PREDicted?: from startup PLL on, the float at pll +0x3a, resolution 1e-7, and whether in holdover	uint32_t kenneth_predicted_get(float *value, uint8_t *resolution, uint8_t *holdover)
+0x4299c	function	kenneth_present_get	undocumented.md, ":KENneth"	for :KENneth:PRESent?: in holdover or its recovery, pll.tfom, resolution 1e-7	bool kenneth_present_get(float *value, int8_t *resolution)
+0x429c6	function	kenneth_predicted_get	undocumented.md, ":KENneth"	for :KENneth:PREDicted?: from startup PLL on, the float at pll +0x3a, resolution 1e-7, and whether in holdover	bool kenneth_predicted_get(float *value, int8_t *resolution, uint8_t *holdover)
 0x49b06	function	status_screen_height	context	the status screen's height line, HGT and %+9.2f m (MSL)	void status_screen_height(status_snapshot_record *snapshot, char *line)
 0x49d14	function	format_duration_short	context	a duration as minutes and seconds or hours and minutes, or 1000+ hr
 0x499f2	function	format_satellite_number	context	a satellite number as %2d, or blanks for none
@@ -1455,7 +1455,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1d922	function	drtb_lock	context	takes channel B's read or write mutex, D0 choosing		convention=register; confidence=read; in=D0 char write; family=drtb
 0x1dc7e	function	duartb_reconfigure	context	resets DUART channel B and applies the serial settings' mode and baud rate
 0x1dd98	function	drtb_write	context	devices 0's and 2's write: drtb_puts under the write lock, unless the byte at 0x10313a is set		convention=register; confidence=read; in=A0 char *buffer; out=D7 char error, D2 int count, A0 char *end; family=device
-0x1ddd6	function	drtb_read	context	the console device's read: drtb_gets
+0x1ddd6	function	drtb_read	context	the console device's read: drtb_gets		convention=register; confidence=read; in=A1 char *buffer, D2 int length; out=D7 char error, D2 int count, A1 char *end; family=device
 0x1ddf6	function	drtb_putc	context	writes a character to channel B under the write lock
 0x1d570	function	duartb_echo_none	duartb_driver: echo	a bare rts: duart_init and duartb_reconfigure put it in duartb.echo when the settings' echo is off, drtb_putc when it is on	void duartb_echo_none(char c)
 0x1de32	function	drtb_send_async	context	queues a block for channel B to send by interrupt
@@ -1480,7 +1480,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1f71a	function	sci_putc_polled	context	waits for the SCI's transmitter and writes a character, with the parity bit if set
 0x1fffa	function	sci_reconfigure	context	resets the SCI and applies the serial settings' baud rate and mode	void sci_reconfigure(void)
 0x20152	function	sci_write	context	the SCI device's write: sci_puts under its lock, unless the byte at 0x10329c is set		convention=register; confidence=read; in=A0 char *buffer; out=D7 char error, D2 int count, A0 char *end; family=device
-0x20190	function	sci_read	context	the SCI device's read: sci_gets
+0x20190	function	sci_read	context	the SCI device's read: sci_gets		convention=register; confidence=read; in=A1 char *buffer, D2 int length; out=D7 char error, D2 int count, A1 char *end; family=device
 0x201b0	function	sci_putc	context	writes a character to the SCI under its lock
 0x201e0	function	sci_send_async	context	queues a block for the SCI to send by interrupt
 0x2021a	function	sci_port_write	context	writes a string to the SCI device, 3
@@ -1489,7 +1489,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x202f6	function	sci_printf_polled	context	formats into 80 bytes and writes to the SCI by polling; called by nothing	void sci_printf_polled(char *format, ...)
 #
 # the QSPI driver, the 1PPS monitors and the SCPI parser
-0x20578	function	qspi_queue_setup	context	writes a QSPI device's transfer into the QSM's queue RAM and command words, by the device's number
+0x20578	function	qspi_queue_setup	context	writes a QSPI device's transfer into the QSM's queue RAM and command words, by the device's number	uint8_t qspi_queue_setup(qspi_device device, uint16_t *transmit, uint16_t count, uint8_t read, uint16_t *spcr1)
 0x2081e	function	qspi_start	context	sets a transfer up and starts it, or releases the QSPI, and waits until it is done	void qspi_start(qspi_device device, uint16_t *transmit, uint16_t count, char read)
 0x20902	function	qspi_init	context	the QSPI device's init, device 1's function 0: clears the QSM's queue RAM and sets SPCR0 to SPCR3 up		convention=register; confidence=read; preserves=D0, D1, A0, A1; family=device
 0x20a62	function	qspi_transfer_raw	context	takes the QSPI and runs a transfer, D0 the device, A1 the buffers and D2 the count		convention=register; confidence=read; in=D0 char device, A1 void *buffers, D2 short count; family=qspi
@@ -1499,7 +1499,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2458c	function	gps_pps_monitor_reset	context	clears the GPS 1PPS monitor's state
 0x2470c	function	internal_pps_monitor_reset	context	clears the internal 1PPS monitor's state
 0x24984	function	pps_monitors_reset	context	clears both 1PPS monitors
-0x26a80	function	scpi_context_init	context	fills a parser context's eight fields; called by nothing
+0x26a80	function	scpi_context_init	context	fills a parser context's eight fields; called by nothing	int32_t scpi_context_init(scpi_context *context, scpi_port *input, uint32_t word, scpi_path *path, scpi_call *call, scpi_arena *arena, uint32_t field_1e, scpi_child_list *main_tree, scpi_child_list *common_list)
 0x26ab6	function	scpi_parse_message_unit	context	parses one program message unit: its header, then its parameters, token by token; sets *reset_path, which has scpi_interpret reset the path before the next	int scpi_parse_message_unit(scpi_context *context, short *reset_path)
 0x26ab6	local	token	read	the lexer's token, which scpi_scan_token fills (0x26ad8) and the header routines and converters read (0x26ba0, 0x26c98); 0x26 bytes, to the word at -0x2 of A6	scpi_token @ -0x2c
 0x27388	function	scpi_skip_to_terminator	context	reads characters until a message terminator	void scpi_skip_to_terminator(scpi_port *input)
@@ -1569,7 +1569,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2e8ee	function	robin_parse_arguments	context	parses the numbers after a ROBin keyword, by its kind	int32_t robin_parse_arguments(char **cursor, uint32_t form, uint32_t *first, uint32_t *second)
 0x2eba8	function	robin_parse	context	the ROBin queries' argument parser: upper case, trimmed, prefix stripped, keyword and numbers
 0x2ec40	function	robin_point_list	context	fills a ROBin point list with fixed indexes	void robin_point_list(uint16_t *points, uint16_t *count, char kind)
-0x2ecf8	function	robin_timestamp_values	context	fills a ROBin timestamp from fixed values, from 1994 on: test data	void robin_timestamp_values(char param_1,short param_2,short *param_3)
+0x2ecf8	function	robin_timestamp_values	context	fills a ROBin timestamp from fixed values, from 1994 on: test data	void robin_timestamp_values(int8_t kind, int16_t entry, int16_t *values)
 0x2ed7a	function	robin_point_count	context	a ROBin kind's fixed point count, 4 to 7
 0x2edde	function	robin_overflow_count	context	a ROBin kind's fixed overflow count, 4.0 on (a double each, 0x2ee4a to 0x2ee4e)	void robin_overflow_count(char kind, double *count)
 0x2ee66	function	robin_clear	context	does nothing: :ROBin:CLEar's work
@@ -1647,13 +1647,13 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4ef70	function	word_copy_advance	context	copies a word and advances the source
 0x4ef8e	function	bytes_to_long	context	four bytes, high first, as a long
 0x4f002	function	word_copy_14_bits	context	copies a word's low 14 bits and advances the source
-0x4f28e	function	satellites_in_use	context	the sets and counts of GPS and pseudolite satellites the channels use for position	int satellites_in_use(uint8_t *count, uint8_t *pseudolite_count, uint32_t *set, uint8_t *pseudolite_set)
-0x4f39a	function	position_settable	context	1 unless the receiver holds its position or is surveying
+0x4f28e	function	satellites_in_use	context	the sets and counts of GPS and pseudolite satellites the channels use for position	bool satellites_in_use(uint8_t *count, uint8_t *pseudolite_count, uint32_t *set, uint8_t *pseudolite_set)
+0x4f39a	function	position_settable	context	1 unless the receiver holds its position or is surveying	bool position_settable(void)
 0x4f3b2	function	gps_position_get	context	the receiver's latitude, longitude and MSL height, if it has reported them
 0x4f3de	function	gps_time_local_get	context	the receiver's date and time, in local time, if it has reported them; the time through the first pointer, the date through the second	bool gps_time_local_get(time_of_day *time, uint32_t *date)
 0x2b0ae	local	time	read	:DIAGnostic:GPSystem:TIME?'s time from gps_time_local_get (0x2b0ca); hour, minute and second read as bytes (0x2b0e8, 0x2b0f0, 0x2b0fa)	time_of_day @ -0xc
 0x4f42e	function	survey_progress_percent	context	the survey's progress, positions averaged against the duration, in percent
-0x4f4ca	function	survey_progress_text	context	the survey's progress as text, for :DOUGlas:PROGress?
+0x4f4ca	function	survey_progress_text	context	the survey's progress as text, for :DOUGlas:PROGress?	bool survey_progress_text(char *text)
 0x4f59a	function	oncore_position_message	gps.md	decodes the position and status message, and while surveying averages its position
 0x4f682	function	oncore_visibility_message	gps.md	decodes the visible satellites, @@Bb, and marks them received
 0x4f6d8	function	oncore_corrections_message	gps.md	decodes the range corrections and averages those of the satellites in use, and their deviation

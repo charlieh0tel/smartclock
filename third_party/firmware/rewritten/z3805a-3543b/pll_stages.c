@@ -58,7 +58,7 @@ static void pll_stages_first_satellite(void) {
   }
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);
 
-  if ((uint8_t)satellites_in_use(&count, &pseudolite_count, NULL, NULL) == 0) {
+  if (satellites_in_use(&count, &pseudolite_count, NULL, NULL) == 0) {
     count = 0;
   }
   set_interrupt_mask(sr);

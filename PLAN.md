@@ -1426,6 +1426,15 @@ view cannot drift apart.  The library, bottom up:
      own types, the step routines `scpi_step_function`'s three; with
      real step records the three the harness skipped run (1280
      agreeing, 5 skipped, 5 known), and all of them are written by hand.
+     Then the results callers read as a byte: `qspi_queue_setup`'s,
+     which sets only `D0`'s low byte, a `uint8_t`, and the truth values
+     (`get_ffom`, `kenneth_*_get`, `get_date_time`, `format_time`,
+     `visible_satellites`, `satellites_in_use`, `position_settable`,
+     `survey_progress_text`) `bool`; the :KENneth resolution, -7, an
+     `int8_t`; `drtb_read` and `sci_read` the register routines
+     `drtb_write` and `sci_write` are (buffer in A1, length in D2), so
+     no longer C; `scpi_context_init` the context's fields, written by
+     hand.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

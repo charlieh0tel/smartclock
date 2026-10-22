@@ -345,7 +345,7 @@ uint32_t leap_ack_pending(void) {
 
 /* The time code's FFOM, by the stage: 0 locked, 1 settling, 2 in
  * holdover or its recovery, 3 otherwise; always 1 (0x42a18). */
-uint32_t get_ffom(frequency_figure_of_merit* ffom) {
+bool get_ffom(frequency_figure_of_merit* ffom) {
   switch (pll.stage) {
     case PLL_STAGE_NORMAL_PLL:
       *ffom = FFOM_STABILIZED;
@@ -361,7 +361,7 @@ uint32_t get_ffom(frequency_figure_of_merit* ffom) {
       *ffom = FFOM_UNLOCKED;
       break;
   }
-  return 1;
+  return true;
 }
 
 /* The :KENneth queries' resolution, a power of ten. */
@@ -375,28 +375,27 @@ static bool pllp_holding(void) {
 
 /* For :KENneth:PRESent?: in holdover or its recovery, the TFOM and its
  * resolution; whether it was (0x4299c). */
-uint32_t kenneth_present_get(float* value, uint8_t* resolution) {
+bool kenneth_present_get(float* value, int8_t* resolution) {
   if (!pllp_holding()) {
-    return 0;
+    return false;
   }
   *value = pll.tfom;
   *resolution = PLLP_KENNETH_RESOLUTION;
-  return 1;
+  return true;
 }
 
 /* For :KENneth:PREDicted?: from start-up PLL on, the HQ and its
  * resolution; whether in holdover through holding, and whether there
  * was a value (0x429c6). */
-uint32_t kenneth_predicted_get(float* value, uint8_t* resolution,
-                               uint8_t* holding) {
+bool kenneth_predicted_get(float* value, int8_t* resolution, uint8_t* holding) {
   *holding = pllp_holding();
   if (pll.stage != PLL_STAGE_STARTUP_PLL && pll.stage != PLL_STAGE_NORMAL_PLL &&
       !pllp_holding()) {
-    return 0;
+    return false;
   }
   *value = pll.predicted_uncertainty;
   *resolution = PLLP_KENNETH_RESOLUTION;
-  return 1;
+  return true;
 }
 
 /* An acknowledgment has come or timed out: an abandoned one is dropped,

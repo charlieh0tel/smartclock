@@ -21,7 +21,7 @@ typedef struct scpi_kenneth_predicted {
 int32_t scpi_query_KENneth_PREDicted(void* parameters, void* response,
                                      scpi_call* call) {
   scpi_kenneth_predicted* predicted = response;
-  uint8_t resolution;
+  int8_t resolution;
   uint8_t holdover;
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);
   uint8_t known =
@@ -32,7 +32,7 @@ int32_t scpi_query_KENneth_PREDicted(void* parameters, void* response,
     return scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE, call);
   }
   /* A power of ten, signed (0x2fde8). */
-  predicted->error.resolution = (int8_t)resolution;
+  predicted->error.resolution = resolution;
   predicted->holdover = holdover;
   return 0;
 }
@@ -80,15 +80,15 @@ int32_t scpi_query_KENneth_PREDicted_DURation(void* parameters, void* response,
 int32_t scpi_query_KENneth_PRESent(void* parameters, void* response,
                                    scpi_call* call) {
   scpi_float_resolution* error = response;
-  uint8_t resolution;
+  int8_t resolution;
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);
-  uint8_t in_holdover = kenneth_present_get(&error->value, &resolution);
+  bool in_holdover = kenneth_present_get(&error->value, &resolution);
 
   set_interrupt_mask(sr);
   if (in_holdover == 0) {
     return scpi_query_failed(STATUS_SETTINGS_CONFLICT, call);
   }
   /* A power of ten, signed. */
-  error->resolution = (int8_t)resolution;
+  error->resolution = resolution;
   return 0;
 }

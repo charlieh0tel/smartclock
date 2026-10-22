@@ -4030,7 +4030,6 @@ extern word switchD_0001f502_index_zero; /* 0001f510 */
 extern word switchD_0001f556_index_zero; /* 0001f564 */
 extern word switchD_0001f6e2_index_zero; /* 0001f6ec */
 extern word switchD_00020088_index_zero; /* 00020092 */
-extern word switchD_000205c0; /* 000205c4 */
 extern word switchD_00023dc6_index_zero; /* 00023dd8 */
 extern word switchD_00024126_index_zero; /* 00024136 */
 extern word switchD_000267d8_index_zero; /* 000267e0 */
@@ -4730,7 +4729,6 @@ __asm__(".set switchD_0001f502_index_zero, 0x0001f510");
 __asm__(".set switchD_0001f556_index_zero, 0x0001f564");
 __asm__(".set switchD_0001f6e2_index_zero, 0x0001f6ec");
 __asm__(".set switchD_00020088_index_zero, 0x00020092");
-__asm__(".set switchD_000205c0, 0x000205c4");
 __asm__(".set switchD_00023dc6_index_zero, 0x00023dd8");
 __asm__(".set switchD_00024126_index_zero, 0x00024136");
 __asm__(".set switchD_000267d8_index_zero, 0x000267e0");
@@ -5670,7 +5668,7 @@ uint32_t get_clock_time(void);
 uint32_t get_gps_date(void);
 uint32_t get_gps_time(void);
 uint32_t get_uptime(void);
-int32_t get_date_time(uint32_t *date,time_of_day *time);
+bool get_date_time(uint32_t *date,time_of_day *time);
 bool get_gps_datetime(uint32_t *date,time_of_day *time);
 void clock_record_refresh(void);
 int32_t set_timedate_unflagged();
@@ -6188,7 +6186,7 @@ void drtb_lock(char write) __asm__("c_drtb_lock");
 int32_t duart_init();
 void duartb_reconfigure(void);
 int32_t drtb_write();
-void drtb_read(void);
+int32_t drtb_read();
 void drtb_putc(char param_1);
 void drtb_send_async(char *param_1,uint8_t param_2);
 uint32_t console_write(char *s);
@@ -6257,7 +6255,7 @@ char sci_lock(char write) __asm__("c_sci_lock");
 int32_t sci_init();
 void sci_reconfigure(void);
 int32_t sci_write();
-void sci_read(void);
+int32_t sci_read();
 void sci_putc(char param_1);
 void sci_send_async(char *param_1,uint8_t param_2);
 uint32_t sci_port_write(void *param_1);
@@ -6266,8 +6264,8 @@ void sci_settings_done(void);
 int32_t sci_puts_polled(char *param_1);
 void sci_printf_polled(char *format,...);
 void qspi_release(void);
-uint32_t
-qspi_queue_setup(uint8_t param_1,uint16_t *param_2,uint16_t param_3,char param_4,uint16_t *param_5);
+uint8_t qspi_queue_setup(qspi_device device,uint16_t *transmit,uint16_t count,uint8_t read,
+                        uint16_t *spcr1);
 void qspi_start(qspi_device device,uint16_t *transmit,uint16_t count,char read);
 void qspi_acquire(void);
 int32_t qspi_control(void) __asm__("c_qspi_control");
@@ -6364,10 +6362,9 @@ int32_t scpi_format_float(scpi_port *output,float *value);
 int32_t scpi_format_double_precision(scpi_port *output,scpi_precise_double *value);
 int32_t scpi_format_double_resolution(scpi_port *output,double *value,int16_t *resolution);
 int32_t scpi_format_float_resolution(scpi_port *output,scpi_float_resolution *value);
-uint32_t
-scpi_context_init(uint32_t *param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4,
-                 uint32_t param_5,uint32_t param_6,uint32_t param_7,uint32_t param_8,
-                 uint32_t param_9);
+int32_t scpi_context_init(scpi_context *context,scpi_port *input,uint32_t word,scpi_path *path,
+                         scpi_call *call,scpi_arena *arena,uint32_t field_1e,
+                         scpi_child_list *main_tree,scpi_child_list *common_list);
 int32_t scpi_parse_message_unit(scpi_context *context,int16_t *reset_path);
 int32_t scpi_scan_token(scpi_port *input,scpi_token *token,scpi_arena *arena);
 void scpi_skip_to_terminator(scpi_port *input);
@@ -6729,7 +6726,7 @@ uint32_t robin_lookup(char **cursor,uint32_t *code,uint32_t *form);
 int32_t robin_parse_arguments(char **cursor,uint32_t form,uint32_t *first,uint32_t *second);
 int32_t robin_parse(char *param_1,uint32_t *param_2,uint32_t *param_3);
 void robin_point_list(uint16_t *points,uint16_t *count,char kind);
-void robin_timestamp_values(char param_1,int16_t param_2,int16_t *param_3);
+void robin_timestamp_values(int8_t kind,int16_t entry,int16_t *values);
 void robin_point_count(char param_1,int16_t *param_2);
 void robin_overflow_count(char kind,double *count);
 void robin_clear(uint8_t param_1);
@@ -6983,9 +6980,9 @@ int32_t fit_three_point(three_point_fit *fit);
 int32_t linear_regression(regression_record *record,int32_t with_slope);
 float float_abs(float param_1);
 void fit_quality(aging_curve_state *curve);
-uint32_t kenneth_present_get(float *value,uint8_t *resolution);
-uint32_t kenneth_predicted_get(float *value,uint8_t *resolution,uint8_t *holdover);
-uint32_t get_ffom(frequency_figure_of_merit *ffom);
+bool kenneth_present_get(float *value,int8_t *resolution);
+bool kenneth_predicted_get(float *value,int8_t *resolution,uint8_t *holdover);
+bool get_ffom(frequency_figure_of_merit *ffom);
 void output_state_program(uint8_t param_1);
 void pulse_program(time_of_day time,calendar_date date,uint8_t state,int32_t period);
 void pulse_settings_done(void);
@@ -7109,7 +7106,7 @@ void status_screen_height(status_snapshot_record *snapshot,char *line);
 void format_si(double value,char resolution,uint8_t digits,char *unit,char *text);
 void format_duration_short(uint32_t param_1,char *param_2);
 void status_screen_sync(status_snapshot_record *snapshot,char *line);
-int32_t format_time(time_of_day time,char *text);
+bool format_time(time_of_day time,char *text);
 uint32_t format_date(uint16_t param_1,uint8_t param_2,uint8_t param_3,char *param_4);
 void status_screen_time(status_snapshot_record *snapshot,char *line);
 void status_screen_position(uint8_t row,status_snapshot_record *snapshot,char *line);
@@ -7183,15 +7180,15 @@ uint32_t satellite_used_for_position(char param_1);
 void channels_reset(void);
 void satellite_add_to_set(satellite_kind kind,uint8_t id,uint32_t *mask);
 char count_bits(uint32_t param_1);
-uint32_t visible_satellites(uint8_t *param_1,uint32_t *param_2);
-int32_t satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set,uint8_t *pseudolite_set
-                     );
+bool visible_satellites(uint8_t *count,uint32_t *set);
+bool satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set,
+                      uint8_t *pseudolite_set);
 oncore_visible_satellite * satellite_find(uint8_t id,void *table);
-uint32_t position_settable(void);
+bool position_settable(void);
 bool gps_position_get(int32_t *param_1,int32_t *param_2,int32_t *param_3);
 bool gps_time_local_get(time_of_day *time,uint32_t *date);
 uint32_t survey_progress_percent(uint16_t *param_1);
-uint32_t survey_progress_text(char *param_1);
+bool survey_progress_text(char *text);
 uint8_t status_screen_length(void);
 uint8_t * oncore_position_message(uint8_t *param_1,uint8_t *param_2);
 void oncore_visibility_message(uint8_t *param_1,uint8_t *param_2);
@@ -12427,7 +12424,7 @@ uint32_t get_uptime(void)
 /* :PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns 1 while clock.set is clear,
    the clock not set since power-up */
 
-int32_t get_date_time(uint32_t *date,time_of_day *time)
+bool get_date_time(uint32_t *date,time_of_day *time)
 
 {
   time_of_day tVar1;
@@ -12439,7 +12436,7 @@ int32_t get_date_time(uint32_t *date,time_of_day *time)
   if (time != (time_of_day *)0x0) {
     *time = tVar1;
   }
-  return (uint32_t)(clock.set == 0);
+  return clock.set == 0;
 }
 
 #endif
@@ -33783,7 +33780,7 @@ void diag_efc_rep(void)
 void diag_get_time(void)
 
 {
-  uint32_t not_set;
+  bool not_set;
   uint8_t clock_set;
   calendar_date date;
   time_of_day tStack_8;
@@ -33791,8 +33788,8 @@ void diag_get_time(void)
   not_set = get_date_time((uint32_t *)&date,&tStack_8);
   clock_set = time_valid();
   printf("%02d/%02d/%04d\t%02d:%02d:%02d, %1d, valid: %1d\r\n",(uint32_t)date.month,(uint32_t)date.day,
-         (uint32_t)date.year,(uint32_t)tStack_8.hour,(uint32_t)tStack_8.minute,(uint32_t)tStack_8.second,
-         not_set & 0xff,(uint32_t)clock_set);
+         (uint32_t)date.year,(uint32_t)tStack_8.hour,(uint32_t)tStack_8.minute,(uint32_t)tStack_8.second,(uint32_t)not_set
+         ,(uint32_t)clock_set);
   return;
 }
 
@@ -36195,10 +36192,14 @@ __asm__(
 );
 
 /* 0001ddd6 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the console device's read: drtb_gets */
+/* the console device's read: drtb_gets
+   Not a C function (register; read): its arguments and results in registers.  In: A1 char *buffer,
+   D2 int length.  Out: D7 char error, D2 int count, A1 char *end. */
 
-void drtb_read(void)
+/* out D7 char error, D2 int count, A1 char *end */
+__regcall void drtb_read(void)
 
 {
   int32_t unaff_D2 = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
@@ -36208,6 +36209,28 @@ void drtb_read(void)
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl drtb_read\n"
+	"	.type drtb_read, @function\n"
+	"	.pushsection .text.drtb_read.1ddd6,\"ax\",@progbits\n"
+	"drtb_read:\n"
+	"	link.w %a6,#-0x4\n"
+	"	move.l %a1,(-0x4,%a6)\n"
+	"	move.l %d2,-(%sp)\n"
+	"	move.l %a1,-(%sp)\n"
+	"	jsr (drtb_gets:w,%pc)\n"
+	"	addq.l #0x8,%sp\n"
+	"	move.l %d0,%d2\n"
+	"	movea.l (-0x4,%a6),%a1\n"
+	"	adda.l %d2,%a1\n"
+	"	moveq #0x0,%d7\n"
+	"	unlk %a6\n"
+	"	rts\n"
+	"	.size drtb_read, .-drtb_read\n"
+	"	.popsection\n"
+);
 
 /* 0001ddf6 */
 #if 0 /* the decompiler's reading; rewritten in duartb.c */
@@ -39117,10 +39140,14 @@ __asm__(
 );
 
 /* 00020190 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
 
-/* the SCI device's read: sci_gets */
+/* the SCI device's read: sci_gets
+   Not a C function (register; read): its arguments and results in registers.  In: A1 char *buffer,
+   D2 int length.  Out: D7 char error, D2 int count, A1 char *end. */
 
-void sci_read(void)
+/* out D7 char error, D2 int count, A1 char *end */
+__regcall void sci_read(void)
 
 {
   int32_t unaff_D2 = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
@@ -39130,6 +39157,28 @@ void sci_read(void)
   return;
 }
 
+
+#endif
+__asm__(
+	"	.globl sci_read\n"
+	"	.type sci_read, @function\n"
+	"	.pushsection .text.sci_read.20190,\"ax\",@progbits\n"
+	"sci_read:\n"
+	"	link.w %a6,#-0x4\n"
+	"	move.l %a1,(-0x4,%a6)\n"
+	"	move.l %d2,-(%sp)\n"
+	"	move.l %a1,-(%sp)\n"
+	"	jsr (sci_gets:w,%pc)\n"
+	"	addq.l #0x8,%sp\n"
+	"	move.l %d0,%d2\n"
+	"	movea.l (-0x4,%a6),%a1\n"
+	"	adda.l %d2,%a1\n"
+	"	moveq #0x0,%d7\n"
+	"	unlk %a6\n"
+	"	rts\n"
+	"	.size sci_read, .-sci_read\n"
+	"	.popsection\n"
+);
 
 /* 000201b0 */
 #if 0 /* the decompiler's reading; rewritten in sci.c */
@@ -39289,28 +39338,24 @@ void qspi_release(void)
 /* writes a QSPI device's transfer into the QSM's queue RAM and command words, by the device's
    number */
 
-uint32_t
-qspi_queue_setup(uint8_t param_1,uint16_t *param_2,uint16_t param_3,char param_4,uint16_t *param_5)
+uint8_t qspi_queue_setup(qspi_device device,uint16_t *transmit,uint16_t count,uint8_t read,
+                        uint16_t *spcr1)
 
 {
-  uint32_t uVar1;
-  uint32_t uVar2;
-  uint8_t uVar3;
-  uint16_t *puVar4;
-  uint8_t *puVar5;
+  uint8_t uVar1;
+  uint16_t *puVar2;
+  uint8_t *puVar3;
   uint16_t uStack_6;
   
-  uVar3 = 0;
-  uVar1 = (uint32_t)param_1;
-  if (0xc < uVar1) goto override_jmp_000205c0_case_3;
-  uVar1 = (uint32_t)(&switchD_000205c0)[(int16_t)(uint16_t)param_1];
+  uVar1 = 0;
+  if (QSPI_FPGA_READBACK < device) goto override_jmp_000205c0_case_3;
                     /* WARNING: Switch is manually overridden */
-  switch((uint16_t)param_1) {
+  switch(device) {
   case 0:
-    if (param_4 == 0) {
-      qsm.tr[0] = *param_2;
-      qsm.tr[1] = param_2[1];
-      qsm.tr[2] = param_2[2];
+    if (read == 0) {
+      qsm.tr[0] = *transmit;
+      qsm.tr[1] = transmit[1];
+      qsm.tr[2] = transmit[2];
     }
     else {
       qsm.tr[0] = 0;
@@ -39322,23 +39367,23 @@ qspi_queue_setup(uint8_t param_1,uint16_t *param_2,uint16_t param_3,char param_4
     qsm.cr[2] = 0x40;
     qsm.spcr0 = 0xb311;
     qsm.spcr2 = 0x8200;
-    *param_5 = 0x8101;
+    *spcr1 = 0x8101;
     break;
-  case 1:
-    qsm.tr[0] = *param_2;
+  case QSPI_ADC:
+    qsm.tr[0] = *transmit;
     qsm.cr[0] = 0x41;
     qsm.spcr0 = 0x8318;
     qsm.spcr2 = SPCR2_SPIFIE;
-    *param_5 = 0x8101;
+    *spcr1 = 0x8101;
     break;
-  case 2:
-    qsm.tr[0] = *param_2;
-    qsm.tr[1] = param_2[1];
-    qsm.tr[2] = param_2[2];
+  case QSPI_HDAC:
+    qsm.tr[0] = *transmit;
+    qsm.tr[1] = transmit[1];
+    qsm.tr[2] = transmit[2];
     qsm.cr[0] = 0xc2;
     qsm.cr[1] = 0xc2;
     qsm.cr[2] = 0x42;
-    if (param_4 == 0) {
+    if (read == 0) {
       qsm.spcr0 = 0xb246;
       qspi.running = 1;
     }
@@ -39346,26 +39391,26 @@ qspi_queue_setup(uint8_t param_1,uint16_t *param_2,uint16_t param_3,char param_4
       qsm.spcr0 = 0xb346;
     }
     qsm.spcr2 = 0x8200;
-    *param_5 = 0x8101;
+    *spcr1 = 0x8101;
     break;
   case 4:
-    qsm.tr[0] = *param_2;
+    qsm.tr[0] = *transmit;
     qsm.cr[0] = 0x44;
-    if (param_4 == 0) {
+    if (read == 0) {
       qsm.spcr0 = 0x8308;
     }
     else {
       qsm.spcr0 = 0x8208;
     }
     qsm.spcr2 = 0x8100;
-    *param_5 = 0x8101;
+    *spcr1 = 0x8101;
     break;
   case 5:
-    qsm.tr[0] = *param_2;
-    qsm.tr[1] = param_2[1];
+    qsm.tr[0] = *transmit;
+    qsm.tr[1] = transmit[1];
     qsm.cr[0] = 0xc5;
     qsm.cr[1] = 0x45;
-    if (param_4 == 0) {
+    if (read == 0) {
       qsm.spcr0 = 0x8202;
       qspi.running = 1;
     }
@@ -39373,42 +39418,41 @@ qspi_queue_setup(uint8_t param_1,uint16_t *param_2,uint16_t param_3,char param_4
       qsm.spcr0 = 0x8205;
     }
     qsm.spcr2 = 0x8100;
-    *param_5 = 0x8101;
+    *spcr1 = 0x8101;
     break;
-  case 6:
-    if (param_3 != 0) {
-      if (0x10 < param_3) {
-        param_3 = 0x10;
+  case QSPI_FPGA_BLOCK:
+    if (count != 0) {
+      if (0x10 < count) {
+        count = 0x10;
       }
-      puVar4 = qsm.tr;
-      puVar5 = qsm.cr;
-      for (uStack_6 = 0; uStack_6 < param_3; uStack_6 = uStack_6 + 1) {
-        *puVar4 = *param_2;
-        *puVar5 = 0xc6;
-        param_2 = param_2 + 1;
-        puVar4 = puVar4 + 1;
-        puVar5 = puVar5 + 1;
+      puVar2 = qsm.tr;
+      puVar3 = qsm.cr;
+      for (uStack_6 = 0; uStack_6 < count; uStack_6 = uStack_6 + 1) {
+        *puVar2 = *transmit;
+        *puVar3 = 0xc6;
+        transmit = transmit + 1;
+        puVar2 = puVar2 + 1;
+        puVar3 = puVar3 + 1;
       }
-      puVar5[-1] = 0x46;
-      if (param_4 == 0) {
+      puVar3[-1] = 0x46;
+      if (read == 0) {
         qsm.spcr0 = 0x8202;
       }
       else {
         qsm.spcr0 = 0x8209;
       }
-      uVar1 = (param_3 - 1) * 0x100 | 0x8000;
-      qsm.spcr2 = (uint16_t)uVar1;
-      *param_5 = 0x8101;
-      break;
+      qsm.spcr2 = (count - 1) * 0x100 | SPCR2_SPIFIE;
+      *spcr1 = 0x8101;
+      return 0;
     }
   default:
 override_jmp_000205c0_case_3:
-    uVar3 = 1;
+    uVar1 = 1;
     break;
-  case 7:
-    qsm.tr[0] = *param_2;
+  case QSPI_EFC:
+    qsm.tr[0] = *transmit;
     qsm.cr[0] = 0x47;
-    if (param_4 == 0) {
+    if (read == 0) {
       qsm.spcr0 = 0x8308;
       qspi.running = 1;
     }
@@ -39416,64 +39460,62 @@ override_jmp_000205c0_case_3:
       qsm.spcr0 = 0x8208;
     }
     qsm.spcr2 = SPCR2_SPIFIE;
-    *param_5 = 0x8101;
+    *spcr1 = 0x8101;
     break;
-  case 9:
-    qsm.tr[0] = *param_2;
-    qsm.tr[1] = param_2[1];
+  case QSPI_FPGA_TAIL:
+    qsm.tr[0] = *transmit;
+    qsm.tr[1] = transmit[1];
     qsm.cr[0] = 0xc6;
     qsm.cr[1] = 0x46;
-    if (param_4 == 0) {
+    if (read == 0) {
       qsm.spcr0 = 0x8202;
     }
     else {
       qsm.spcr0 = 0x8209;
     }
     qsm.spcr2 = 0x8100;
-    *param_5 = 0x8101;
+    *spcr1 = 0x8101;
     break;
   case 10:
-    qsm.tr[0] = *param_2;
+    qsm.tr[0] = *transmit;
     qsm.cr[0] = 0x46;
-    if (param_4 == 0) {
+    if (read == 0) {
       qsm.spcr0 = 0x8202;
     }
     else {
       qsm.spcr0 = 0x8209;
     }
     qsm.spcr2 = SPCR2_SPIFIE;
-    *param_5 = 0x8101;
+    *spcr1 = 0x8101;
     break;
   case 0xb:
-    qsm.tr[0] = *param_2;
+    qsm.tr[0] = *transmit;
     qsm.cr[0] = 0x46;
-    if (param_4 == 0) {
+    if (read == 0) {
       qsm.spcr0 = 0xa202;
     }
     else {
       qsm.spcr0 = 0xa209;
     }
     qsm.spcr2 = SPCR2_SPIFIE;
-    *param_5 = 0x8101;
+    *spcr1 = 0x8101;
     break;
-  case 0xc:
-    if (param_3 < 0x11) {
-      if (param_3 < 8) {
-        param_3 = 8;
+  case QSPI_FPGA_READBACK:
+    if (count < 0x11) {
+      if (count < 8) {
+        count = 8;
       }
     }
     else {
-      param_3 = 0;
+      count = 0;
     }
-    qsm.tr[0] = *param_2;
+    qsm.tr[0] = *transmit;
     qsm.cr[0] = 0x46;
-    uVar2 = (uint32_t)(param_3 & 0xf) << 10;
-    uVar1 = uVar2 | 0x8209;
-    qsm.spcr0 = (uint16_t)uVar2 | 0x8209;
+    qsm.spcr0 = (count & 0xf) << 10 | 0x8209;
     qsm.spcr2 = SPCR2_SPIFIE;
-    *param_5 = 0x8101;
+    *spcr1 = 0x8101;
   }
-  return CONCAT31((int3)(uVar1 >> 8),uVar3);
+  return uVar1;
 }
 
 
@@ -39485,7 +39527,7 @@ override_jmp_000205c0_case_3:
 void qspi_start(qspi_device device,uint16_t *transmit,uint16_t count,char read)
 
 {
-  char unknown_device;
+  uint8_t unknown_device;
   uint16_t local_8 [2];
   
   qspi.running = 0;
@@ -39960,29 +40002,28 @@ void qspi_send(qspi_device device,uint16_t *transmit,uint16_t count)
 
 {
   uint16_t uVar1;
-  uint8_t uVar2;
-  uint32_t uVar3;
-  char unknown_device;
+  uint32_t uVar2;
+  uint8_t uVar3;
   uint16_t local_8;
   uint16_t local_6;
   
-  uVar3 = enter_supervisor();
-  local_6 = (uint16_t)uVar3;
+  uVar2 = enter_supervisor();
+  local_6 = (uint16_t)uVar2;
   qspi.field_00 = 1;
   do {
     uVar1 = qsm.spcr1;
   } while ((uVar1 & SPCR1_SPE) != 0);
-  uVar2 = qsm.spsr;
-  if ((uVar2 & SPSR_SPIF) != 0) {
+  uVar3 = qsm.spsr;
+  if ((uVar3 & SPSR_SPIF) != 0) {
     qspi_isr();
   }
-  unknown_device = qspi_queue_setup(device,transmit,count,0,&local_8);
-  if (unknown_device == 0) {
+  uVar3 = qspi_queue_setup(device,transmit,count,0,&local_8);
+  if (uVar3 == 0) {
     qsm.spcr1 = local_8;
     do {
-      uVar2 = qsm.spsr;
-    } while ((uVar2 & SPSR_SPIF) == 0);
-    uVar2 = qsm.spsr;
+      uVar3 = qsm.spsr;
+    } while ((uVar3 & SPSR_SPIF) == 0);
+    uVar3 = qsm.spsr;
     qsm.spsr = 0;
   }
   return;
@@ -39999,44 +40040,43 @@ void qspi_transfer(qspi_device device,qspi_buffers *buffers,uint16_t count)
 
 {
   uint16_t uVar1;
-  uint8_t uVar2;
-  uint32_t uVar3;
-  char unknown_device;
+  uint32_t uVar2;
+  uint8_t uVar3;
+  uint16_t *puVar4;
   uint16_t *puVar5;
   uint16_t *puVar6;
-  uint16_t *puVar7;
   uint16_t local_8;
   uint16_t local_6;
   
-  puVar5 = qsm.rr;
-  puVar6 = buffers->receive;
-  uVar3 = enter_supervisor();
-  local_6 = (uint16_t)uVar3;
+  puVar4 = qsm.rr;
+  puVar5 = buffers->receive;
+  uVar2 = enter_supervisor();
+  local_6 = (uint16_t)uVar2;
   qspi.field_00 = 1;
   do {
     uVar1 = qsm.spcr1;
   } while ((uVar1 & SPCR1_SPE) != 0);
-  uVar2 = qsm.spsr;
-  if ((uVar2 & SPSR_SPIF) != 0) {
+  uVar3 = qsm.spsr;
+  if ((uVar3 & SPSR_SPIF) != 0) {
     qspi_isr();
   }
-  unknown_device = qspi_queue_setup(device,buffers->transmit,count,1,&local_8);
-  if (unknown_device == 0) {
+  uVar3 = qspi_queue_setup(device,buffers->transmit,count,1,&local_8);
+  if (uVar3 == 0) {
     qsm.spcr1 = local_8;
     do {
-      uVar2 = qsm.spsr;
-    } while ((uVar2 & SPSR_SPIF) == 0);
+      uVar3 = qsm.spsr;
+    } while ((uVar3 & SPSR_SPIF) == 0);
     if (device == QSPI_FPGA_READBACK) {
-      puVar7 = puVar6 + 1;
+      puVar6 = puVar5 + 1;
     }
     else {
-      puVar7 = puVar6 + count;
+      puVar6 = puVar5 + count;
     }
-    for (; puVar6 < puVar7; puVar6 = puVar6 + 1) {
-      *puVar6 = *puVar5;
-      puVar5 = puVar5 + 1;
+    for (; puVar5 < puVar6; puVar5 = puVar5 + 1) {
+      *puVar5 = *puVar4;
+      puVar4 = puVar4 + 1;
     }
-    uVar2 = qsm.spsr;
+    uVar3 = qsm.spsr;
     qsm.spsr = 0;
   }
   return;
@@ -44878,26 +44918,27 @@ int32_t scpi_format_float_resolution(scpi_port *output,scpi_float_resolution *va
 #endif
 
 /* 00026a80 */
+#if 0 /* the decompiler's reading; rewritten in scpi_engine.c */
 
 /* fills a parser context's eight fields; called by nothing */
 
-uint32_t
-scpi_context_init(uint32_t *param_1,uint32_t param_2,uint32_t param_3,uint32_t param_4,
-                 uint32_t param_5,uint32_t param_6,uint32_t param_7,uint32_t param_8,
-                 uint32_t param_9)
+int32_t scpi_context_init(scpi_context *context,scpi_port *input,uint32_t word,scpi_path *path,
+                         scpi_call *call,scpi_arena *arena,uint32_t field_1e,
+                         scpi_child_list *main_tree,scpi_child_list *common_list)
 
 {
-  *param_1 = param_2;
-  *(uint16_t *)(param_1 + 1) = __ghidra_piece(uint16_t, param_3, 2);
-  *(uint32_t *)((int32_t)param_1 + 6) = param_4;
-  *(uint32_t *)((int32_t)param_1 + 10) = param_5;
-  *(uint32_t *)((int32_t)param_1 + 0xe) = param_6;
-  *(uint32_t *)((int32_t)param_1 + 0x1e) = param_7;
-  *(uint32_t *)((int32_t)param_1 + 0x12) = param_8;
-  *(uint32_t *)((int32_t)param_1 + 0x16) = param_9;
+  context->input = input;
+  context->word = __ghidra_piece(uint16_t, word, 2);
+  context->path = path;
+  context->call = call;
+  context->arena = arena;
+  context->field_1e = field_1e;
+  context->main_tree = main_tree;
+  context->common_list = common_list;
   return 0;
 }
 
+#endif
 
 /* 00026ab6 */
 #if 0 /* the decompiler's reading; rewritten in scpi_engine.c */
@@ -46944,8 +46985,8 @@ scpi_interpret(int32_t param_1,int32_t param_2,void *param_3,uint32_t param_4,sc
   local_56 = param_6;
   local_48 = 0;
   local_46 = param_9;
-  scpi_context_init(&sStack_26.input,param_1,0,&sStack_92,&local_7c,local_3c,local_38,param_5,
-                    param_6);
+  scpi_context_init(&sStack_26,(scpi_port *)param_1,0,&sStack_92,&local_7c,local_3c,local_38,param_5
+                    ,param_6);
   local_3e = 1;
   bVar1 = false;
 LAB_0002937c:
@@ -50812,7 +50853,7 @@ int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *respons
 
 {
   uint16_t sr;
-  char cVar5;
+  bool bVar5;
   int32_t zero;
   uint32_t uVar2;
   int32_t clamped;
@@ -50835,8 +50876,8 @@ int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *respons
   float local_8;
   
   sr = set_interrupt_mask(0x100);
-  cVar5 = position_settable();
-  local_36 = cVar5 == 0;
+  bVar5 = position_settable();
+  local_36 = !bVar5;
   set_interrupt_mask(sr);
   if (local_36 == 0) {
     unit_step.value = 1;
@@ -51369,19 +51410,19 @@ int32_t scpi_query_DOUGlas_PROGress(void *parameters,void *response,scpi_call *c
 {
   uint32_t zero;
   uint16_t sr;
-  char cVar3;
+  bool bVar3;
   int32_t iVar2;
   
   zero = return_zero(call->input);
   sr = set_interrupt_mask(0x100);
-  cVar3 = survey_progress_text((char *)((zero & 0xff) * 0x11a + 0x10272a));
+  bVar3 = survey_progress_text((char *)((zero & 0xff) * 0x11a + 0x10272a));
   set_interrupt_mask(sr);
-  if (cVar3 == 0) {
-    iVar2 = scpi_query_failed(STATUS_SETTINGS_CONFLICT,call);
-  }
-  else {
+  if (bVar3) {
     *(uint32_t *)response = (zero & 0xff) * 0x11a + 0x10272a;
     iVar2 = 0;
+  }
+  else {
+    iVar2 = scpi_query_failed(STATUS_SETTINGS_CONFLICT,call);
   }
   return iVar2;
 }
@@ -51674,9 +51715,10 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking(void *parameters,void *res
 {
   uint32_t zero;
   uint16_t sr;
+  bool bVar3;
   int32_t iVar2;
   uint8_t listed;
-  uint8_t bVar4;
+  uint8_t bVar5;
   uint32_t local_e;
   uint8_t local_a;
   uint8_t local_9;
@@ -51687,27 +51729,27 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking(void *parameters,void *res
   
   zero = return_zero(call->input);
   sr = set_interrupt_mask(0x100);
-  iVar2 = satellites_in_use(&local_9,&local_8,&local_e,&local_a);
-  if ((char)iVar2 == 0) {
-    set_interrupt_mask(sr);
-    iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
-  }
-  else {
+  bVar3 = satellites_in_use(&local_9,&local_8,&local_e,&local_a);
+  if (bVar3) {
     set_interrupt_mask(sr);
     satellite_list_limits(SATELLITE_LIST_TRACKING,&local_7,&uStack_6,&local_5);
     listed = satellites_in_mask(local_e,local_7,(int16_t *)((zero & 0xff) * 0x40 + 0x10295e),local_9,
                                local_5);
     satellite_list_limits(SATELLITE_LIST_TRACKING_PSEUDOLITES,&local_7,&uStack_6,&local_5);
-    bVar4 = satellites_in_mask((uint32_t)local_a,local_7,
+    bVar5 = satellites_in_mask((uint32_t)local_a,local_7,
                                (int16_t *)((uint32_t)listed * 2 + (zero & 0xff) * 0x40 + 0x10295e),local_8
                                ,local_5);
-    *(uint32_t *)response = (uint32_t)bVar4 + (uint32_t)listed;
-    if ((uint32_t)bVar4 + (uint32_t)listed == 0) {
+    *(uint32_t *)response = (uint32_t)bVar5 + (uint32_t)listed;
+    if ((uint32_t)bVar5 + (uint32_t)listed == 0) {
       *(uint32_t *)response = 1;
       *(uint16_t *)((zero & 0xff) * 0x40 + 0x10295e) = 0;
     }
     *(uint32_t *)((int32_t)response + 4) = (zero & 0xff) * 0x40 + 0x10295e;
     iVar2 = 0;
+  }
+  else {
+    set_interrupt_mask(sr);
+    iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   return iVar2;
 }
@@ -51724,20 +51766,21 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_COUNt
 
 {
   uint16_t sr;
+  bool bVar2;
   int32_t iVar1;
   uint8_t local_6;
   uint8_t local_5;
   
   sr = set_interrupt_mask(0x100);
-  iVar1 = satellites_in_use(&local_6,&local_5,(uint32_t *)0x0,(uint8_t *)0x0);
-  if ((char)iVar1 == 0) {
-    set_interrupt_mask(sr);
-    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
-  }
-  else {
+  bVar2 = satellites_in_use(&local_6,&local_5,(uint32_t *)0x0,(uint8_t *)0x0);
+  if (bVar2) {
     set_interrupt_mask(sr);
     *(uint16_t *)response = (uint16_t)local_5 + (uint16_t)local_6;
     iVar1 = 0;
+  }
+  else {
+    set_interrupt_mask(sr);
+    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   return iVar1;
 }
@@ -52031,8 +52074,8 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted
 {
   uint32_t zero;
   uint16_t sr;
-  uint32_t uVar2;
-  int32_t iVar3;
+  bool bVar3;
+  int32_t iVar2;
   uint8_t listed;
   uint32_t local_c;
   uint8_t local_8;
@@ -52042,12 +52085,8 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted
   
   zero = return_zero(call->input);
   sr = set_interrupt_mask(0x100);
-  uVar2 = visible_satellites(&local_8,&local_c);
-  if ((char)uVar2 == 0) {
-    set_interrupt_mask(sr);
-    iVar3 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
-  }
-  else {
+  bVar3 = visible_satellites(&local_8,&local_c);
+  if (bVar3) {
     set_interrupt_mask(sr);
     satellite_list_limits(SATELLITE_LIST_VISIBLE,&local_7,&uStack_6,&local_5);
     listed = satellites_in_mask(local_c,local_7,(int16_t *)((zero & 0xff) * 0x40 + 0x10295e),local_8,
@@ -52058,9 +52097,13 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted
       *(uint16_t *)((zero & 0xff) * 0x40 + 0x10295e) = 0;
     }
     *(uint32_t *)((int32_t)response + 4) = (zero & 0xff) * 0x40 + 0x10295e;
-    iVar3 = 0;
+    iVar2 = 0;
   }
-  return iVar3;
+  else {
+    set_interrupt_mask(sr);
+    iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
+  }
+  return iVar2;
 }
 
 #endif
@@ -52075,22 +52118,22 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt
 
 {
   uint16_t sr;
-  uint32_t uVar1;
-  int32_t iVar2;
+  bool bVar2;
+  int32_t iVar1;
   uint8_t local_6 [2];
   
   sr = set_interrupt_mask(0x100);
-  uVar1 = visible_satellites(local_6,(uint32_t *)0x0);
-  if ((char)uVar1 == 0) {
+  bVar2 = visible_satellites(local_6,(uint32_t *)0x0);
+  if (bVar2) {
     set_interrupt_mask(sr);
-    iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
+    *(uint16_t *)response = (uint16_t)local_6[0];
+    iVar1 = 0;
   }
   else {
     set_interrupt_mask(sr);
-    *(uint16_t *)response = (uint16_t)local_6[0];
-    iVar2 = 0;
+    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
-  return iVar2;
+  return iVar1;
 }
 
 #endif
@@ -52525,20 +52568,21 @@ int32_t scpi_query_SOURce_PULSe_REFerence_EDGE(void *parameters,void *response,s
 int32_t scpi_query_SOURce_PTIMe_DATE(void *parameters,void *response,scpi_call *call)
 
 {
+  bool not_set;
   int32_t iVar1;
   uint16_t local_8;
   uint8_t local_6;
   uint8_t local_5;
   
-  iVar1 = get_date_time((uint32_t *)&local_8,(time_of_day *)0x0);
-  if ((char)iVar1 == 0) {
+  not_set = get_date_time((uint32_t *)&local_8,(time_of_day *)0x0);
+  if (not_set) {
+    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
+  }
+  else {
     *(uint16_t *)response = local_8;
     *(uint16_t *)((int32_t)response + 4) = (uint16_t)local_6;
     *(uint16_t *)((int32_t)response + 8) = (uint16_t)local_5;
     iVar1 = 0;
-  }
-  else {
-    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   return iVar1;
 }
@@ -52829,18 +52873,19 @@ int32_t scpi_query_SOURce_PTIMe_TCODe_FORMat(void *parameters,void *response,scp
 int32_t scpi_query_SOURce_PTIMe_TIME(void *parameters,void *response,scpi_call *call)
 
 {
+  bool not_set;
   int32_t iVar1;
   time_of_day tStack_8;
   
-  iVar1 = get_date_time((uint32_t *)0x0,&tStack_8);
-  if ((char)iVar1 == 0) {
+  not_set = get_date_time((uint32_t *)0x0,&tStack_8);
+  if (not_set) {
+    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
+  }
+  else {
     *(uint16_t *)response = (uint16_t)tStack_8.hour;
     *(uint16_t *)((int32_t)response + 4) = (uint16_t)tStack_8.minute;
     *(uint16_t *)((int32_t)response + 8) = (uint16_t)tStack_8.second;
     iVar1 = 0;
-  }
-  else {
-    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
   return iVar1;
 }
@@ -52903,23 +52948,24 @@ int32_t scpi_query_SOURce_PTIMe_TIME_STRing(void *parameters,void *response,scpi
 
 {
   uint32_t zero;
+  bool bVar3;
   int32_t iVar2;
   time_of_day local_8;
   
   zero = return_zero(call->input);
-  iVar2 = get_date_time((uint32_t *)0x0,&local_8);
-  if ((char)iVar2 == 0) {
-    iVar2 = format_time(local_8,(char *)((zero & 0xff) * 0x11a + 0x10272a));
-    if ((char)iVar2 == 0) {
-      iVar2 = scpi_query_failed(STATUS_DEVICE_SPECIFIC_ERROR,call);
-    }
-    else {
+  bVar3 = get_date_time((uint32_t *)0x0,&local_8);
+  if (bVar3) {
+    iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
+  }
+  else {
+    bVar3 = format_time(local_8,(char *)((zero & 0xff) * 0x11a + 0x10272a));
+    if (bVar3) {
       *(uint32_t *)response = (zero & 0xff) * 0x11a + 0x10272a;
       iVar2 = 0;
     }
-  }
-  else {
-    iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
+    else {
+      iVar2 = scpi_query_failed(STATUS_DEVICE_SPECIFIC_ERROR,call);
+    }
   }
   return iVar2;
 }
@@ -53985,22 +54031,22 @@ void robin_point_list(uint16_t *points,uint16_t *count,char kind)
 
 /* fills a ROBin timestamp from fixed values, from 1994 on: test data */
 
-void robin_timestamp_values(char param_1,int16_t param_2,int16_t *param_3)
+void robin_timestamp_values(int8_t kind,int16_t entry,int16_t *values)
 
 {
   int16_t sVar1;
   
-  sVar1 = param_2 + param_1;
-  *param_3 = sVar1 + 0x7ca;
-  param_3[1] = sVar1 + 8;
-  param_3[2] = param_1 + param_2 + 3;
-  param_3[3] = param_1 + 9 + param_2;
-  param_3[4] = param_1 + 0xf + param_2;
-  param_3[5] = param_1 + 0x1e + param_2;
-  sVar1 = param_2 + param_1;
-  param_3[6] = sVar1 + 700;
-  param_3[7] = sVar1 + 800;
-  param_3[8] = sVar1 + 900;
+  sVar1 = entry + kind;
+  *values = sVar1 + 0x7ca;
+  values[1] = sVar1 + 8;
+  values[2] = kind + entry + 3;
+  values[3] = kind + 9 + entry;
+  values[4] = kind + 0xf + entry;
+  values[5] = kind + 0x1e + entry;
+  sVar1 = entry + kind;
+  values[6] = sVar1 + 700;
+  values[7] = sVar1 + 800;
+  values[8] = sVar1 + 900;
   return;
 }
 
@@ -54366,7 +54412,7 @@ int32_t scpi_query_ROBin_TSTamp(void *parameters,void *response,scpi_call *call)
   zero = return_zero(call->input);
   if (iVar1 == 0) {
     if (((0 < *(int16_t *)((int32_t)parameters + 8)) && (*(int16_t *)((int32_t)parameters + 8) < 0x101)) &&
-       (robin_timestamp_values((char)local_20,*(int16_t *)((int32_t)parameters + 8),&local_18),
+       (robin_timestamp_values((int8_t)local_20,*(int16_t *)((int32_t)parameters + 8),&local_18),
        extraout_D0b != 0)) {
       iVar1 = (zero & 0xff) * 0xa0;
       *(int16_t *)(iVar1 + 0x102d76) = local_18;
@@ -55182,23 +55228,23 @@ int32_t scpi_query_KENneth_PREDicted(void *parameters,void *response,scpi_call *
 
 {
   uint16_t sr;
-  uint32_t valid;
-  int32_t iVar2;
-  uint8_t local_6;
+  bool valid;
+  int32_t iVar1;
+  int8_t local_6;
   uint8_t local_5;
   
   sr = set_interrupt_mask(0x100);
   valid = kenneth_predicted_get(response,&local_6,&local_5);
   set_interrupt_mask(sr);
-  if ((char)valid == 0) {
-    iVar2 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
+  if (valid) {
+    *(int16_t *)((int32_t)response + 4) = (int16_t)local_6;
+    *(uint16_t *)((int32_t)response + 6) = (uint16_t)local_5;
+    iVar1 = 0;
   }
   else {
-    *(int16_t *)((int32_t)response + 4) = (int16_t)(char)local_6;
-    *(uint16_t *)((int32_t)response + 6) = (uint16_t)local_5;
-    iVar2 = 0;
+    iVar1 = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
   }
-  return iVar2;
+  return iVar1;
 }
 
 #endif
@@ -55251,21 +55297,21 @@ int32_t scpi_query_KENneth_PRESent(void *parameters,void *response,scpi_call *ca
 
 {
   uint16_t sr;
-  uint32_t valid;
-  int32_t iVar2;
-  uint8_t local_6 [2];
+  bool valid;
+  int32_t iVar1;
+  int8_t local_6 [2];
   
   sr = set_interrupt_mask(0x100);
   valid = kenneth_present_get(response,local_6);
   set_interrupt_mask(sr);
-  if ((char)valid == 0) {
-    iVar2 = scpi_query_failed(STATUS_SETTINGS_CONFLICT,call);
+  if (valid) {
+    *(int16_t *)((int32_t)response + 4) = (int16_t)local_6[0];
+    iVar1 = 0;
   }
   else {
-    *(int16_t *)((int32_t)response + 4) = (int16_t)(char)local_6[0];
-    iVar2 = 0;
+    iVar1 = scpi_query_failed(STATUS_SETTINGS_CONFLICT,call);
   }
-  return iVar2;
+  return iVar1;
 }
 
 #endif
@@ -55417,23 +55463,23 @@ int32_t scpi_query_RSST(void *parameters,void *response,scpi_call *call)
 int32_t scpi_query_SOURce_PTIMe_FFOMerit(void *parameters,void *response,scpi_call *call)
 
 {
-  uint32_t valid;
+  bool valid;
   int32_t error;
-  uint16_t uVar3;
+  uint16_t uVar2;
   frequency_figure_of_merit local_6 [2];
   
   if (*(int16_t *)parameters == 0) {
     valid = get_ffom(local_6);
-    if ((char)valid == 0) {
+    if (!valid) {
       error = scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE,call);
       return error;
     }
-    uVar3 = (uint16_t)local_6[0];
+    uVar2 = (uint16_t)local_6[0];
   }
   else {
-    uVar3 = tfom_code((uint32_t)__ghidra_bits(pll.tfom));
+    uVar2 = tfom_code((uint32_t)__ghidra_bits(pll.tfom));
   }
-  *(uint16_t *)response = uVar3;
+  *(uint16_t *)response = uVar2;
   return 0;
 }
 
@@ -60891,20 +60937,20 @@ LAB_0004298e:
 /* for :KENneth:PRESent?: in holdover or its recovery, pll.tfom, resolution 1e-7
    undocumented.md, ":KENneth" */
 
-uint32_t kenneth_present_get(float *value,uint8_t *resolution)
+bool kenneth_present_get(float *value,int8_t *resolution)
 
 {
-  uint32_t uVar1;
+  bool bVar1;
   
   if ((pll.stage == PLL_STAGE_HOLDOVER) || (pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)) {
     *value = pll.tfom;
-    *resolution = 0xf9;
-    uVar1 = 1;
+    *resolution = -7;
+    bVar1 = true;
   }
   else {
-    uVar1 = 0;
+    bVar1 = false;
   }
-  return uVar1;
+  return bVar1;
 }
 
 #endif
@@ -60916,10 +60962,10 @@ uint32_t kenneth_present_get(float *value,uint8_t *resolution)
    whether in holdover
    undocumented.md, ":KENneth" */
 
-uint32_t kenneth_predicted_get(float *value,uint8_t *resolution,uint8_t *holdover)
+bool kenneth_predicted_get(float *value,int8_t *resolution,uint8_t *holdover)
 
 {
-  uint32_t uVar1;
+  bool bVar1;
   
   if ((pll.stage == PLL_STAGE_HOLDOVER) || (pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)) {
     *holdover = 1;
@@ -60930,13 +60976,13 @@ uint32_t kenneth_predicted_get(float *value,uint8_t *resolution,uint8_t *holdove
   if ((((pll.stage == PLL_STAGE_STARTUP_PLL) || (pll.stage == PLL_STAGE_NORMAL_PLL)) ||
       (pll.stage == PLL_STAGE_HOLDOVER)) || (pll.stage == PLL_STAGE_HOLDOVER_RECOVERY)) {
     *value = pll.predicted_uncertainty;
-    *resolution = 0xf9;
-    uVar1 = 1;
+    *resolution = -7;
+    bVar1 = true;
   }
   else {
-    uVar1 = 0;
+    bVar1 = false;
   }
-  return uVar1;
+  return bVar1;
 }
 
 #endif
@@ -60947,7 +60993,7 @@ uint32_t kenneth_predicted_get(float *value,uint8_t *resolution,uint8_t *holdove
 /* the time code's f; pll_rep's "ffom = %1d"
    structures.md */
 
-uint32_t get_ffom(frequency_figure_of_merit *ffom)
+bool get_ffom(frequency_figure_of_merit *ffom)
 
 {
   int32_t iVar1;
@@ -60969,7 +61015,7 @@ uint32_t get_ffom(frequency_figure_of_merit *ffom)
   else {
     *ffom = FFOM_UNLOCKED;
   }
-  return 1;
+  return true;
 }
 
 #endif
@@ -63833,19 +63879,20 @@ void pwma_force_level(char param_1)
 pll_stage_result powerup(bool same_stage)
 
 {
+  int32_t iVar1;
   pll_stage_result pVar3;
   char cVar4;
   uint16_t sr;
-  int32_t iVar1;
+  bool bVar5;
   uint32_t uVar2;
-  pll_stage_result pVar5;
-  uint16_t uVar6;
-  uint8_t uVar7;
+  pll_stage_result pVar6;
+  uint16_t uVar7;
   uint8_t uVar8;
+  uint8_t uVar9;
   uint8_t local_6;
   uint8_t uStack_5;
   
-  pVar5 = PLL_STAGE_RESULT_RUNNING;
+  pVar6 = PLL_STAGE_RESULT_RUNNING;
   if ((!same_stage) || (7 < (char)pll.powerup_state)) {
     memset(&pll.efc_history,0,0x366);
     pll.aging_state = PLL_AGING_START;
@@ -63864,8 +63911,8 @@ pll_stage_result powerup(bool same_stage)
       cVar4 = oven_warmed_up();
       if (cVar4 != 0) {
         pll.powerup_state = PLL_POWERUP_OUTER_OVEN;
-        uVar7 = gpt.portgp;
-        gpt.portgp = uVar7 | 0x20;
+        uVar8 = gpt.portgp;
+        gpt.portgp = uVar8 | 0x20;
         outer_oven_enabled = 1;
       }
       break;
@@ -63892,7 +63939,7 @@ pll_stage_result powerup(bool same_stage)
         pll.fine_state = 0;
       }
       else if (pVar3 == PLL_STAGE_RESULT_FAILED) {
-        pVar5 = PLL_STAGE_RESULT_FAILED;
+        pVar6 = PLL_STAGE_RESULT_FAILED;
       }
       break;
     case 0xea:
@@ -63915,7 +63962,7 @@ pll_stage_result powerup(bool same_stage)
         }
       }
       else if (pVar3 == PLL_STAGE_RESULT_FAILED) {
-        pVar5 = PLL_STAGE_RESULT_FAILED;
+        pVar6 = PLL_STAGE_RESULT_FAILED;
       }
       break;
     case 0x166:
@@ -63938,7 +63985,7 @@ pll_stage_result powerup(bool same_stage)
     case 0x1a6:
       interval_next_reading(INTERVAL_ARM_PLAIN,(float *)0x0);
       if ((pll.leap_ack_requested == 0) && (pll.leap_ack_done != 0)) {
-        pVar5 = PLL_STAGE_RESULT_DONE;
+        pVar6 = PLL_STAGE_RESULT_DONE;
       }
     }
   }
@@ -63949,19 +63996,19 @@ override_jmp_00045f06_case_0:
   }
   if (first_satellite_logged == 0) {
     sr = set_interrupt_mask(0x100);
-    iVar1 = satellites_in_use(&local_6,&uStack_5,(uint32_t *)0x0,(uint8_t *)0x0);
-    if ((char)iVar1 == 0) {
+    bVar5 = satellites_in_use(&local_6,&uStack_5,(uint32_t *)0x0,(uint8_t *)0x0);
+    if (!bVar5) {
       local_6 = 0;
     }
     set_interrupt_mask(sr);
     if (local_6 != 0) {
       status_happening(STATUS_FIRST_SATELLITE_SET);
       first_satellite_logged = 1;
-      uVar6 = __ghidra_piece(uint16_t, gps.status.time, 0);
-      uVar7 = gps.status.time.minute;
-      uVar8 = gps.status.time.second;
+      uVar7 = __ghidra_piece(uint16_t, gps.status.time, 0);
+      uVar8 = gps.status.time.minute;
+      uVar9 = gps.status.time.second;
       uVar2 = oncore_date_pack(gps.status.date);
-      log_first_satellite(uVar2,CONCAT31(CONCAT21(uVar6,uVar7),uVar8));
+      log_first_satellite(uVar2,CONCAT31(CONCAT21(uVar7,uVar8),uVar9));
     }
   }
   if ((3 < (char)pll.powerup_state) &&
@@ -63972,9 +64019,9 @@ override_jmp_00045f06_case_0:
   if ((pll.powerup_reference_lost != 0) &&
      ((pll.powerup_state != PLL_POWERUP_LEAP_SECONDS || (pll.leap_ack_done != 0)))) {
     pll.powerup_state = PLL_POWERUP_WAITING_FOR_GPS;
-    pVar5 = PLL_STAGE_RESULT_RUNNING;
+    pVar6 = PLL_STAGE_RESULT_RUNNING;
   }
-  return pVar5;
+  return pVar6;
 }
 
 #endif
@@ -66797,55 +66844,56 @@ void satellite_sets_build(oncore_channel_status *channels,satellite_sets *sets)
   uint8_t id;
   uint8_t bVar1;
   uint32_t uVar2;
-  uint32_t uVar3;
-  int32_t iVar4;
-  oncore_channel_status *poVar5;
+  bool bVar4;
+  bool bVar5;
+  int32_t iVar3;
+  oncore_channel_status *poVar6;
   uint32_t *mask;
   
   memset(sets,0,0x2a);
-  uVar3 = visible_satellites(&sets->visible_count,&sets->visible);
-  iVar4 = satellites_in_use(&sets->used_count,&sets->pseudolites_used_count,&sets->used,
+  bVar4 = visible_satellites(&sets->visible_count,&sets->visible);
+  bVar5 = satellites_in_use(&sets->used_count,&sets->pseudolites_used_count,&sets->used,
                             &sets->pseudolites_used);
-  if (((char)uVar3 != 0) && (poVar5 = channels, (char)iVar4 != 0)) {
-    for (; poVar5 < channels + 6; poVar5 = poVar5 + 1) {
-      id = poVar5->satellite;
-      iVar4 = satellite_id_valid(SATELLITE_GPS,id);
-      if ((char)iVar4 == 0) {
-        iVar4 = satellite_id_valid(SATELLITE_PSEUDOLITE,id);
-        if (((char)iVar4 != 0) &&
+  if ((bVar4) && (poVar6 = channels, bVar5)) {
+    for (; poVar6 < channels + 6; poVar6 = poVar6 + 1) {
+      id = poVar6->satellite;
+      iVar3 = satellite_id_valid(SATELLITE_GPS,id);
+      if ((char)iVar3 == 0) {
+        iVar3 = satellite_id_valid(SATELLITE_PSEUDOLITE,id);
+        if (((char)iVar3 != 0) &&
            (satellite_add_to_set(SATELLITE_PSEUDOLITE,id,(uint32_t *)&sets->pseudolites_tracked),
-           0 < (char)poVar5->mode)) {
-          if ((char)poVar5->mode < 5) {
+           0 < (char)poVar6->mode)) {
+          if ((char)poVar6->mode < 5) {
             mask = (uint32_t *)&sets->pseudolites_acquiring;
           }
-          else if ((char)poVar5->mode < 7) {
+          else if ((char)poVar6->mode < 7) {
             mask = (uint32_t *)&sets->pseudolites_synchronized;
           }
           else {
             mask = (uint32_t *)&sets->pseudolites_ephemeris;
           }
-          iVar4 = CONCAT13(1,(uint3)id << 8);
+          iVar3 = CONCAT13(1,(uint3)id << 8);
           goto LAB_00049570;
         }
       }
       else {
         satellite_add_to_set(SATELLITE_GPS,id,&sets->tracked);
-        if (0 < (char)poVar5->mode) {
-          if ((char)poVar5->mode < 5) {
+        if (0 < (char)poVar6->mode) {
+          if ((char)poVar6->mode < 5) {
             mask = &sets->acquiring;
-            iVar4 = (uint32_t)id << 8;
+            iVar3 = (uint32_t)id << 8;
           }
-          else if ((char)poVar5->mode < 7) {
+          else if ((char)poVar6->mode < 7) {
             mask = &sets->synchronized;
-            iVar4 = (uint32_t)id << 8;
+            iVar3 = (uint32_t)id << 8;
           }
           else {
             mask = &sets->ephemeris;
-            iVar4 = (uint32_t)id << 8;
+            iVar3 = (uint32_t)id << 8;
           }
 LAB_00049570:
           satellite_add_to_set
-                    ((satellite_kind)((uint32_t)iVar4 >> 0x18),(uint8_t)((uint32_t)iVar4 >> 8),mask);
+                    ((satellite_kind)((uint32_t)iVar3 >> 0x18),(uint8_t)((uint32_t)iVar3 >> 8),mask);
         }
       }
     }
@@ -67524,16 +67572,16 @@ void status_screen_sync(status_snapshot_record *snapshot,char *line)
 
 /* a packed time as "%02d:%02d:%02d", or "--:--:--" */
 
-int32_t format_time(time_of_day time,char *text)
+bool format_time(time_of_day time,char *text)
 
 {
   char cVar1;
-  int32_t iVar2;
+  bool bVar2;
   char *pcVar3;
   
   if (((time.hour < 0x18) && (time.minute < 0x3c)) && (time.second < 0x3d)) {
     sprintf(text,"%02d:%02d:%02d",(uint32_t)time.hour,(uint32_t)time.minute,(uint32_t)__ghidra_aggregate_bits(time) & 0xff);
-    iVar2 = 1;
+    bVar2 = true;
   }
   else {
     pcVar3 = "--:--:--";
@@ -67543,9 +67591,9 @@ int32_t format_time(time_of_day time,char *text)
       pcVar3 = pcVar3 + 1;
       text = text + 1;
     } while (cVar1 != 0);
-    iVar2 = 0;
+    bVar2 = false;
   }
-  return iVar2;
+  return bVar2;
 }
 
 
@@ -68097,11 +68145,12 @@ void status_snapshot(status_snapshot_record *snapshot)
   pll_screen_mode pVar5;
   pll_powerup_suffix suffix;
   pll_recovery_suffix pVar7;
-  uint32_t uVar2;
+  bool bVar8;
   uint8_t reason;
-  int32_t iVar3;
-  uint8_t uVar9;
+  uint32_t uVar2;
+  uint8_t uVar10;
   uint16_t uVar4;
+  int32_t iVar3;
   time_of_day local_e;
   uint32_t local_a;
   uint8_t auStack_6 [2];
@@ -68124,12 +68173,13 @@ void status_snapshot(status_snapshot_record *snapshot)
   snapshot->interval_mean = interval_mean;
   snapshot->interval_mean_flag = _interval_mean_flag;
   snapshot->tfom = pll.tfom;
-  uVar2 = get_ffom(&snapshot->ffom);
-  snapshot->ffom_valid = (uint8_t)uVar2;
-  uVar2 = kenneth_present_get(&snapshot->kenneth_present,&snapshot->field_02b);
-  snapshot->kenneth_present_valid = (uint8_t)uVar2;
-  uVar2 = kenneth_predicted_get(&snapshot->kenneth_predicted,&snapshot->field_031,auStack_6);
-  snapshot->kenneth_predicted_valid = (uint8_t)uVar2;
+  bVar8 = get_ffom(&snapshot->ffom);
+  snapshot->ffom_valid = bVar8;
+  bVar8 = kenneth_present_get(&snapshot->kenneth_present,(int8_t *)&snapshot->field_02b);
+  snapshot->kenneth_present_valid = bVar8;
+  bVar8 = kenneth_predicted_get
+                    (&snapshot->kenneth_predicted,(int8_t *)&snapshot->field_031,auStack_6);
+  snapshot->kenneth_predicted_valid = bVar8;
   reason = holdover_waiting_reason();
   snapshot->holdover_waiting_reason = reason;
   snapshot->holdover_duration = pll.holdover_duration;
@@ -68137,23 +68187,23 @@ void status_snapshot(status_snapshot_record *snapshot)
   snapshot->holdover_limit_threshold = nv_settings.holdover_limit_threshold;
   snapshot->time_zone[0] = nv_settings.time_zone[0];
   snapshot->time_zone[1] = nv_settings.time_zone[1];
-  iVar3 = get_date_time(&local_a,&local_e);
-  if ((char)iVar3 == 0) {
-    snapshot->clock_invalid = 1;
-    snapshot->time = local_e;
-    snapshot->date = local_a;
-  }
-  else {
+  bVar8 = get_date_time(&local_a,&local_e);
+  if (bVar8) {
     snapshot->clock_invalid = 0;
     snapshot->time = gps.status.time;
     uVar2 = oncore_date_pack(gps.status.date);
     snapshot->date = uVar2;
     utc_to_local(&snapshot->date,&snapshot->time);
   }
+  else {
+    snapshot->clock_invalid = 1;
+    snapshot->time = local_e;
+    snapshot->date = local_a;
+  }
   snapshot->pll_field_3d5 = pll.field_3d5;
   gps_receiver_status_update(0,0);
-  uVar9 = gps_status_alternate();
-  gps_receiver_status_update(1,uVar9);
+  uVar10 = gps_status_alternate();
+  gps_receiver_status_update(1,uVar10);
   snapshot->douglas_duration_infinite = nv_settings.douglas_duration_infinite;
   uVar4 = status_hardware_condition();
   snapshot->hardware_condition = uVar4;
@@ -70225,7 +70275,7 @@ int32_t command_log_add(gps_running_command *command,char *text)
   gps_request_sender gVar3;
   char cVar4;
   char cVar5;
-  int32_t not_set;
+  bool not_set;
   gps_command_log *pgVar7;
   gps_command_log_entry entry;
   uint32_t local_c;
@@ -70238,14 +70288,14 @@ int32_t command_log_add(gps_running_command *command,char *text)
   cVar5 = text[5];
   entry.query = command->query;
   not_set = get_date_time(&local_c,&local_8);
-  if ((char)not_set == 0) {
-    entry.clock_invalid = 1;
-  }
-  else {
+  if (not_set) {
     entry.clock_invalid = 0;
     local_c = oncore_date_pack(gps.status.date);
     local_8 = gps.status.time;
     utc_to_local(&local_c,&local_8);
+  }
+  else {
+    entry.clock_invalid = 1;
   }
   entry.clock_invalid = entry.clock_invalid;
   entry.field_0b = entry.field_0b;
@@ -71092,42 +71142,41 @@ char count_bits(uint32_t param_1)
 
 /* the set and count of visible GPS satellites, from gps.visibility */
 
-uint32_t visible_satellites(uint8_t *param_1,uint32_t *param_2)
+bool visible_satellites(uint8_t *count,uint32_t *set)
 
 {
-  uint8_t id;
   int32_t iVar1;
-  uint8_t bVar3;
-  char cVar4;
-  uint32_t uVar2;
+  uint8_t bVar2;
+  uint8_t uVar3;
+  bool bVar4;
   uint8_t bVar5;
   uint32_t local_8;
   
   if (gps.visibility_received == 0) {
-    uVar2 = 0;
+    bVar4 = false;
   }
   else {
     bVar5 = 0;
     local_8 = 0;
-    bVar3 = gps.visibility.count;
+    bVar2 = gps.visibility.count;
     if (0xb < gps.visibility.count) {
-      bVar3 = 0xc;
+      bVar2 = 0xc;
     }
-    for (; bVar5 < bVar3; bVar5 = bVar5 + 1) {
-      id = gps.visibility.satellites[bVar5].satellite;
-      iVar1 = satellite_id_valid(SATELLITE_GPS,id);
+    for (; bVar5 < bVar2; bVar5 = bVar5 + 1) {
+      uVar3 = gps.visibility.satellites[bVar5].satellite;
+      iVar1 = satellite_id_valid(SATELLITE_GPS,uVar3);
       if ((char)iVar1 != 0) {
-        satellite_add_to_set(SATELLITE_GPS,id,&local_8);
+        satellite_add_to_set(SATELLITE_GPS,uVar3,&local_8);
       }
     }
-    cVar4 = count_bits(local_8);
-    *param_1 = cVar4;
-    if (param_2 != (uint32_t *)0x0) {
-      *param_2 = local_8;
+    uVar3 = count_bits(local_8);
+    *count = uVar3;
+    if (set != (uint32_t *)0x0) {
+      *set = local_8;
     }
-    uVar2 = 1;
+    bVar4 = true;
   }
-  return uVar2;
+  return bVar4;
 }
 
 
@@ -71135,13 +71184,13 @@ uint32_t visible_satellites(uint8_t *param_1,uint32_t *param_2)
 
 /* the sets and counts of GPS and pseudolite satellites the channels use for position */
 
-int32_t satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set,uint8_t *pseudolite_set
-                     )
+bool satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set,
+                      uint8_t *pseudolite_set)
 
 {
   uint8_t id;
-  uint8_t uVar2;
-  int32_t iVar1;
+  uint8_t uVar1;
+  bool bVar2;
   uint8_t bVar3;
   uint16_t uVar4;
   uint8_t uVar5;
@@ -71150,7 +71199,7 @@ int32_t satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set
   uint8_t local_6 [2];
   
   if (gps.status_received == 0) {
-    iVar1 = 0;
+    bVar2 = false;
   }
   else {
     local_a = 0;
@@ -71171,19 +71220,19 @@ int32_t satellites_in_use(uint8_t *count,uint8_t *pseudolite_count,uint32_t *set
         satellite_add_to_set(0x20 < id,id,(uint32_t *)CONCAT31(CONCAT21(uVar4,uVar5),uVar6));
       }
     }
-    uVar2 = count_bits(local_a);
-    *count = uVar2;
-    uVar2 = count_bits((uint32_t)local_6[0]);
-    *pseudolite_count = uVar2;
+    uVar1 = count_bits(local_a);
+    *count = uVar1;
+    uVar1 = count_bits((uint32_t)local_6[0]);
+    *pseudolite_count = uVar1;
     if (set != (uint32_t *)0x0) {
       *set = local_a;
     }
     if (pseudolite_set != (uint8_t *)0x0) {
       *pseudolite_set = local_6[0];
     }
-    iVar1 = 1;
+    bVar2 = true;
   }
-  return iVar1;
+  return bVar2;
 }
 
 
@@ -71225,18 +71274,18 @@ oncore_visible_satellite * satellite_find(uint8_t id,void *table)
 
 /* 1 unless the receiver holds its position or is surveying */
 
-uint32_t position_settable(void)
+bool position_settable(void)
 
 {
-  uint32_t uVar1;
+  bool bVar1;
   
   if ((gps.position_hold == 0) && (gps.surveying == 0)) {
-    uVar1 = 1;
+    bVar1 = true;
   }
   else {
-    uVar1 = 0;
+    bVar1 = false;
   }
-  return uVar1;
+  return bVar1;
 }
 
 
@@ -71336,13 +71385,13 @@ uint32_t survey_progress_percent(uint16_t *param_1)
 
 /* the survey's progress as text, for :DOUGlas:PROGress? */
 
-uint32_t survey_progress_text(char *param_1)
+bool survey_progress_text(char *text)
 
 {
   uint32_t u;
   float a;
   int32_t iVar1;
-  uint32_t uVar2;
+  bool bVar2;
   float fVar3;
   double param2;
   
@@ -71371,14 +71420,14 @@ uint32_t survey_progress_text(char *param_1)
       }
     }
     param2 = float_to_double(fVar3);
-    sprintf(param_1,"%+.1f",param2);
-    uVar2 = 1;
+    sprintf(text,"%+.1f",param2);
+    bVar2 = true;
   }
   else {
-    *param_1 = 0;
-    uVar2 = 0;
+    *text = 0;
+    bVar2 = false;
   }
-  return uVar2;
+  return bVar2;
 }
 
 

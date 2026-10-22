@@ -38,8 +38,7 @@ void qspi_start(qspi_device device, uint16_t* transmit, uint16_t count,
   uint16_t spcr1;
 
   qspi.running = 0;
-  /* qspi_queue_setup's low byte is nonzero for a device it does not know */
-  if ((uint8_t)qspi_queue_setup(device, transmit, count, read, &spcr1) == 0) {
+  if (qspi_queue_setup(device, transmit, count, read, &spcr1) == 0) {
     qsm.spcr1 = spcr1;
   } else {
     qspi_release();
@@ -112,7 +111,7 @@ void qspi_send(qspi_device device, uint16_t* transmit, uint16_t count) {
   if ((qsm.spsr & SPSR_SPIF) != 0) {
     qspi_isr();
   }
-  if ((uint8_t)qspi_queue_setup(device, transmit, count, 0, &spcr1) == 0) {
+  if (qspi_queue_setup(device, transmit, count, 0, &spcr1) == 0) {
     qsm.spcr1 = spcr1;
     while ((qsm.spsr & SPSR_SPIF) == 0) {
     }
@@ -139,8 +138,7 @@ void qspi_transfer(qspi_device device, qspi_buffers* buffers, uint16_t count) {
   if ((qsm.spsr & SPSR_SPIF) != 0) {
     qspi_isr();
   }
-  if ((uint8_t)qspi_queue_setup(device, buffers->transmit, count, 1, &spcr1) ==
-      0) {
+  if (qspi_queue_setup(device, buffers->transmit, count, 1, &spcr1) == 0) {
     uint16_t* end = to + (device == QSPI_FPGA_READBACK ? 1 : count);
 
     qsm.spcr1 = spcr1;

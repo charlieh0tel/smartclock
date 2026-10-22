@@ -117,6 +117,24 @@ static int32_t scpi_engine_convert(scpi_context* context, scpi_token* token,
   return 0;
 }
 
+/* Fills a parser context, the word from its long's low half; nothing
+ * calls it (0x26a80). */
+int32_t scpi_context_init(scpi_context* context, scpi_port* input,
+                          uint32_t word, scpi_path* path, scpi_call* call,
+                          scpi_arena* arena, uint32_t field_1e,
+                          scpi_child_list* main_tree,
+                          scpi_child_list* common_list) {
+  context->input = input;
+  context->word = word;
+  context->path = path;
+  context->call = call;
+  context->arena = arena;
+  context->field_1e = field_1e;
+  context->main_tree = main_tree;
+  context->common_list = common_list;
+  return 0;
+}
+
 /* Parses one program message unit: its header, then its parameters into
  * the call's buffer, token by token; *reset_path says whether the next
  * unit starts at the root, after a newline (0x26ab6).  On an error it

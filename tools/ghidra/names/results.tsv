@@ -114,7 +114,7 @@ sci_getc	character	the character read
 sci_gets	count	the characters read
 sci_port_write	length	the length written
 sci_puts_polled	count	the characters written
-qspi_queue_setup	unknown_device	its low byte, 1 for a device it does not know
+qspi_queue_setup	unknown_device	1 for a device it does not know
 spoo_task_create	error	the kernel's error, or 1 for a spool task already there
 spoo_run	result	1 when run at once, else send_x's error; 0 for no function
 deferred_vprintf	count	vsprintf's count, -1 with no room

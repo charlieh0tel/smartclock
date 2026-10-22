@@ -293,7 +293,7 @@ void robin_point_list(uint16_t* points, uint16_t* count, char kind) {
  * 09:15:30.700800900, each plus the input and the entry; not the tenth
  * value, the TFOM (0x2ecf8).  It leaves the eighth's low byte in D0,
  * which scpi_query_ROBin_TSTamp tests. */
-void robin_timestamp_values(char kind, int16_t entry, int16_t* values) {
+void robin_timestamp_values(int8_t kind, int16_t entry, int16_t* values) {
   static const int16_t TIMESTAMP[] = {1994, 8, 3, 9, 15, 30, 700, 800, 900};
 
   for (uint8_t index = 0; index < sizeof TIMESTAMP / sizeof *TIMESTAMP;

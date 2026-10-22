@@ -140,7 +140,7 @@ static uint32_t clock_read(const time_of_day* time, const uint32_t* date,
 /* The clock's date and time through pointers, either NULL to skip it; 1
  * unless clock.set (0x136fe).  :PTIM:DATE? passes the first,
  * :PTIM:TIME? the second. */
-int32_t get_date_time(uint32_t* date, time_of_day* time) {
+bool get_date_time(uint32_t* date, time_of_day* time) {
   uint32_t date_read;
   uint32_t time_read = clock_read(&clock.time, &clock.date, &date_read);
 

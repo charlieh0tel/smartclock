@@ -1407,6 +1407,20 @@ view cannot drift apart.  The library, bottom up:
   renaming them is a names-file change, through the pipeline, of each
   routine and its callers.
 
+  Decided 2026-10-21: a register the image's code uses as its caller
+  left it (D2, D3, D5, D6) is read at entry by one inline-asm helper in
+  `cpu.h`, commented at each use and listed in `quirks.md`; the
+  bridges' result registers are named `psos_result_d0` and on, not
+  `__ghidra_`; a firmware fault the C can reproduce, it does, even
+  where its callers are then skipped; a hook keeping a module's own
+  state sits with that module; `clock` +0x2f is `set` (written by
+  `set_timedate` and cleared by `clock_init`; `get_date_time` returns 1
+  for not set); `holdover_limit_exceeded` is `holdover_within_limit`;
+  the kernel's records are `smartclock.h`'s `psos_*`; `doprnt` is
+  written once `vsprintf` has cases of its every path,
+  `set_interrupt_mask` stays assembly, and `hmon_task` and
+  `interpolator_verify` are written with the register helper.
+
   Also later: the SCPI command table as C, generated from the image,
   each subtree's nodes in its tree's file beside their handlers: the
   ROM's table exactly, every node, list, keyword, descriptor and entry

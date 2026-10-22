@@ -12,15 +12,6 @@
 /* The loop's first time constant. */
 static const float PLLP_FIRST_TIME_CONSTANT = 150.0f;
 
-/* The fine sub-states that slew the phase, fine slew to fine fine slew
- * (docs/screen-format-strings.md, "Mode suffixes"). */
-static const int8_t PLLP_FINE_SLEW_FIRST = 7;
-
-static const int8_t PLLP_FINE_SLEW_LAST = 9;
-
-/* holdover_recovery's fine sub-state, pll.recovery_state. */
-static const uint8_t PLLP_RECOVERY_FINE = 1;
-
 /* Clears pll and sets its defaults: the EFC the lifetime record saved,
  * a TFOM of 1 s, the first time constant and tolerance (0x473d2). */
 void pll_init(void) {
@@ -29,7 +20,7 @@ void pll_init(void) {
 
   memset(&pll, 0, sizeof pll);
   pll.stage = PLL_STAGE_INVALID;
-  pll.gps_init_state = PLL_GPS_CONTROL_INIT_START;
+  pll.gps_init_state = PLL_GPS_INIT_START;
   pll.aging_state = PLL_AGING_START;
   pll.efc = efc_clamp(lifetime.efc);
   pll.loop_time_constant = PLLP_FIRST_TIME_CONSTANT;
@@ -54,7 +45,7 @@ static void pllp_abandon_ack(void) {
   if (gps_ack_ready == 0) {
     gps_ack_abandoned = 1;
   } else {
-    gps_ack_awaited = PLL_GPS_CONTROL_AWAITED_NONE;
+    gps_ack_awaited = GPS_ACK_NONE;
   }
 }
 
@@ -69,7 +60,7 @@ void pll_restart(void) {
   pll.fpga_configuration = fpga_configuration;
   pll.fpga_loaded = fpga_loaded;
   pll.loop_running = 1;
-  if (gps_ack_awaited != PLL_GPS_CONTROL_AWAITED_NONE) {
+  if (gps_ack_awaited != GPS_ACK_NONE) {
     pllp_abandon_ack();
   }
   pll.stage = PLL_STAGE_POWERUP;
@@ -135,55 +126,47 @@ void clock_set_from_reference(void) {
   set_timedate_unflagged(now.date, clock_time_bits(now.time));
 }
 
-/* pll_check_reference's states, pll.reference_check_state. */
-enum {
-  PLLP_REFERENCE_START = 0,
-  PLLP_REFERENCE_FIRST = 1,
-  PLLP_REFERENCE_AGAIN = 2,
-};
-
 /* The power-up recovery stage: turns the outer oven on, waits for a
  * reading, after a failed one for another, and sets the clock from the
  * reference; done unless a hold cause, failed if one (0x46188). */
-uint8_t pll_check_reference(char same_stage) {
-  uint8_t result = PLL_STAGES_RUNNING;
+pll_stage_result pll_check_reference(bool same_stage) {
+  pll_stage_result result = PLL_STAGE_RESULT_RUNNING;
 
-  if (same_stage == 0 ||
-      (int8_t)pll.reference_check_state > PLLP_REFERENCE_AGAIN) {
-    pll.reference_check_state = PLLP_REFERENCE_START;
+  if (!same_stage || (int8_t)pll.reference_check_state > PLL_REFERENCE_AGAIN) {
+    pll.reference_check_state = PLL_REFERENCE_START;
   }
   switch (pll.reference_check_state) {
-    case PLLP_REFERENCE_FIRST:
+    case PLL_REFERENCE_FIRST:
       interval_wait_reading();
       if (interval_reading.valid == 0) {
         counter_reset();
-        pll.reference_check_state = PLLP_REFERENCE_AGAIN;
-        result = PLL_STAGES_RUNNING;
+        pll.reference_check_state = PLL_REFERENCE_AGAIN;
+        result = PLL_STAGE_RESULT_RUNNING;
       } else {
         clock_set_from_reference();
-        result = pll_stages_check_causes(PLL_STAGES_DONE);
+        result = pll_stages_check_causes(PLL_STAGE_RESULT_DONE);
       }
       interval_rearm(INTERVAL_ARM_CALIBRATE);
       break;
-    case PLLP_REFERENCE_AGAIN:
+    case PLL_REFERENCE_AGAIN:
       if (interval_next_reading(INTERVAL_ARM_CALIBRATE, NULL) == 0) {
         if (internal_pps_dead == 0) {
           pll.hold_causes |= HOLD_CAUSE_TI_ERROR;
         } else {
           pll.hold_causes |= HOLD_CAUSE_HARDWARE_FAILURE;
         }
-        result = PLL_STAGES_FAILED;
+        result = PLL_STAGE_RESULT_FAILED;
       } else {
         clock_set_from_reference();
-        result = pll_stages_check_causes(PLL_STAGES_DONE);
+        result = pll_stages_check_causes(PLL_STAGE_RESULT_DONE);
       }
       break;
-    case PLLP_REFERENCE_START:
+    case PLL_REFERENCE_START:
     default:
       gpt.portgp |= PLL_STAGES_OUTER_OVEN_ENABLE;
       outer_oven_enabled = 1;
       interval_rearm(INTERVAL_ARM_CALIBRATE);
-      pll.reference_check_state = PLLP_REFERENCE_FIRST;
+      pll.reference_check_state = PLL_REFERENCE_FIRST;
       break;
   }
   return result;
@@ -274,90 +257,64 @@ void pll_stage_status(void) {
   }
 }
 
-/* What pllp_task's stage gives the status screen, the HOLDover queries
- * and HOLD:INIT: the mode line marked (docs/screen-format-strings.md,
- * "Mode suffixes"). */
-enum {
-  PLLP_MODE_NONE = 0,
-  PLLP_MODE_HOLDOVER_MANUAL = 1,
-  PLLP_MODE_HOLDOVER = 2,
-  PLLP_MODE_RECOVERY = 3,
-  PLLP_MODE_POWERUP = 4,
-  PLLP_MODE_LOCKED = 5,
-};
-
 /* The status screen's mode, from the stage and pll.manual (0x45b70). */
-uint8_t pll_mode(void) {
+pll_screen_mode pll_mode(void) {
   switch (pll.stage) {
     case PLL_STAGE_POWERUP:
-      return PLLP_MODE_POWERUP;
+      return PLL_MODE_POWERUP;
     case PLL_STAGE_HOLDOVER:
-      return pll.manual == 0 ? PLLP_MODE_HOLDOVER : PLLP_MODE_HOLDOVER_MANUAL;
+      return pll.manual == 0 ? PLL_MODE_HOLDOVER : PLL_MODE_HOLDOVER_MANUAL;
     case PLL_STAGE_HOLDOVER_RECOVERY:
-      return PLLP_MODE_RECOVERY;
+      return PLL_MODE_RECOVERY;
     case PLL_STAGE_STARTUP_PLL:
     case PLL_STAGE_NORMAL_PLL:
-      return PLLP_MODE_LOCKED;
+      return PLL_MODE_LOCKED;
     default:
-      return PLLP_MODE_NONE;
+      return PLL_MODE_NONE;
   }
 }
 
 /* Whether the fine sub-state slews the phase. */
 static bool pllp_fine_slewing(void) {
-  return (int8_t)pll.fine_state >= PLLP_FINE_SLEW_FIRST &&
-         (int8_t)pll.fine_state <= PLLP_FINE_SLEW_LAST;
+  return (int8_t)pll.fine_state >= PLL_FINE_SLEW_FIRST &&
+         (int8_t)pll.fine_state <= PLL_FINE_SLEW_LAST;
 }
 
 /* The power-up mode's suffix, the screen's ladder: 0 none, OCXO
  * warm-up, GPS acquisition, coarse, fine frequency, phase alignment, leap
  * second determination (0x45bb8). */
-uint8_t pll_powerup_suffix_index(void) {
-  enum {
-    NONE = 0,
-    WARM_UP = 1,
-    GPS_ACQUISITION = 2,
-    COARSE = 3,
-    FINE_FREQUENCY = 4,
-    PHASE_ALIGNMENT = 5,
-    LEAP_SECOND = 6,
-  };
-
+pll_powerup_suffix pll_powerup_suffix_index(void) {
   if (pll.stage != PLL_STAGE_POWERUP) {
-    return NONE;
+    return PLL_POWERUP_SUFFIX_NONE;
   }
   switch (pll.powerup_state) {
-    case PLL_STAGES_POWERUP_INNER_OVEN:
-    case PLL_STAGES_POWERUP_OUTER_OVEN:
-      return WARM_UP;
-    case PLL_STAGES_POWERUP_WAITING_FOR_GPS:
-      return GPS_ACQUISITION;
-    case PLL_STAGES_POWERUP_COARSE:
-      return COARSE;
-    case PLL_STAGES_POWERUP_FINE:
-      return pllp_fine_slewing() ? PHASE_ALIGNMENT : FINE_FREQUENCY;
-    case PLL_STAGES_POWERUP_WAITING:
-    case PLL_STAGES_POWERUP_LEAP_SECONDS:
-      return LEAP_SECOND;
+    case PLL_POWERUP_INNER_OVEN:
+    case PLL_POWERUP_OUTER_OVEN:
+      return PLL_POWERUP_SUFFIX_WARM_UP;
+    case PLL_POWERUP_WAITING_FOR_GPS:
+      return PLL_POWERUP_SUFFIX_GPS_ACQUISITION;
+    case PLL_POWERUP_COARSE:
+      return PLL_POWERUP_SUFFIX_COARSE;
+    case PLL_POWERUP_FINE:
+      return pllp_fine_slewing() ? PLL_POWERUP_SUFFIX_PHASE_ALIGNMENT
+                                 : PLL_POWERUP_SUFFIX_FINE_FREQUENCY;
+    case PLL_POWERUP_WAITING:
+    case PLL_POWERUP_LEAP_SECONDS:
+      return PLL_POWERUP_SUFFIX_LEAP_SECOND;
     default:
-      return NONE;
+      return PLL_POWERUP_SUFFIX_NONE;
   }
 }
 
 /* The recovery mode's suffix while it sets the frequency finely: 1 fine
  * frequency, 2 phase alignment; else 0 (0x45c18). */
-uint8_t recovery_suffix_index(void) {
-  enum {
-    NONE = 0,
-    FINE_FREQUENCY = 1,
-    PHASE_ALIGNMENT = 2,
-  };
-
+pll_recovery_suffix recovery_suffix_index(void) {
   if (pll.stage != PLL_STAGE_HOLDOVER_RECOVERY ||
-      pll.recovery_state != PLLP_RECOVERY_FINE) {
-    return NONE;
+      pll.recovery_state != PLL_RECOVERY_FINE) {
+    return PLL_RECOVERY_SUFFIX_NONE;
   }
-  return pllp_fine_slewing() ? PHASE_ALIGNMENT : FINE_FREQUENCY;
+  return pllp_fine_slewing() ? PLL_RECOVERY_SUFFIX_PHASE_ALIGNMENT
+                             : PLL_RECOVERY_SUFFIX_FINE_FREQUENCY;
 }
 
 /* For :HOLDover:WAITing?: in holdover, the hold cause it waits on,
@@ -383,33 +340,25 @@ uint8_t holdover_waiting_reason(void) {
 /* Whether the leap second's acknowledgment is asked for or under way
  * (0x47078). */
 uint32_t leap_ack_pending(void) {
-  return pll.leap_ack_state != PLL_GPS_CONTROL_LEAP_ACK_IDLE ||
-         pll.leap_ack_requested != 0;
+  return pll.leap_ack_state != PLL_LEAP_ACK_IDLE || pll.leap_ack_requested != 0;
 }
 
 /* The time code's FFOM, by the stage: 0 locked, 1 settling, 2 in
  * holdover or its recovery, 3 otherwise; always 1 (0x42a18). */
-uint32_t get_ffom(uint8_t* ffom) {
-  enum {
-    LOCKED = 0,
-    SETTLING = 1,
-    HOLDOVER = 2,
-    UNLOCKED = 3,
-  };
-
+uint32_t get_ffom(frequency_figure_of_merit* ffom) {
   switch (pll.stage) {
     case PLL_STAGE_NORMAL_PLL:
-      *ffom = LOCKED;
+      *ffom = FFOM_STABILIZED;
       break;
     case PLL_STAGE_STARTUP_PLL:
-      *ffom = SETTLING;
+      *ffom = FFOM_STABILIZING;
       break;
     case PLL_STAGE_HOLDOVER:
     case PLL_STAGE_HOLDOVER_RECOVERY:
-      *ffom = HOLDOVER;
+      *ffom = FFOM_HOLDOVER;
       break;
     default:
-      *ffom = UNLOCKED;
+      *ffom = FFOM_UNLOCKED;
       break;
   }
   return 1;
@@ -454,10 +403,10 @@ uint32_t kenneth_predicted_get(float* value, uint8_t* resolution,
  * a GPS command's is no longer awaited. */
 static void pllp_ack_done(void) {
   if (gps_ack_abandoned != 0) {
-    gps_ack_awaited = PLL_GPS_CONTROL_AWAITED_NONE;
+    gps_ack_awaited = GPS_ACK_NONE;
     gps_ack_abandoned = 0;
-  } else if (gps_ack_awaited == PLL_GPS_CONTROL_AWAITED_COMMAND) {
-    gps_ack_awaited = PLL_GPS_CONTROL_AWAITED_NONE;
+  } else if (gps_ack_awaited == GPS_ACK_COMMAND) {
+    gps_ack_awaited = GPS_ACK_NONE;
     task_dmessage("GPS command completed\r\n");
   }
 }
@@ -474,7 +423,7 @@ static void pllp_take_reply(void) {
     plla_failed_count++;
   }
   if (reply.sender == GPS_SENDER_SEQUENCE) {
-    if (gps_ack_awaited == PLL_GPS_CONTROL_AWAITED_NONE) {
+    if (gps_ack_awaited == GPS_ACK_NONE) {
       plla_unexpected_count++;
     }
     gps_ack_code = reply.result;
@@ -496,12 +445,12 @@ static void pllp_ack_wait(void) {
   static const uint16_t READY_SECONDS = 10;
   static const uint16_t TIMEOUT_SECONDS = 1200;
 
-  if (gps_ack_awaited == PLL_GPS_CONTROL_AWAITED_NONE) {
+  if (gps_ack_awaited == GPS_ACK_NONE) {
     return;
   }
   gps_ack_wait_count++;
   if (gps_ack_wait_count > READY_SECONDS && gps_ack_ready != 0) {
-    gps_ack_awaited = PLL_GPS_CONTROL_AWAITED_NONE;
+    gps_ack_awaited = GPS_ACK_NONE;
   } else if (gps_ack_wait_count > TIMEOUT_SECONDS) {
     gps_ack_code = PLL_GPS_CONTROL_ACK_TIMED_OUT;
     gps_ack_ready = 1;
@@ -537,11 +486,11 @@ static void pllp_step_stage(bool same_stage) {
         pll_stage_status();
         task_dmessage("PLL powerup\r\n");
       }
-      uint8_t result = powerup(same_stage);
+      pll_stage_result result = powerup(same_stage);
 
-      if (result == PLL_STAGES_DONE) {
+      if (result == PLL_STAGE_RESULT_DONE) {
         pll.stage = PLL_STAGE_STARTUP_PLL;
-      } else if (result == PLL_STAGES_FAILED) {
+      } else if (result == PLL_STAGE_RESULT_FAILED) {
         pll_restart();
       }
       return;
@@ -552,11 +501,11 @@ static void pllp_step_stage(bool same_stage) {
         task_dmessage("Went into powerup recovery\r\n");
         leap_recheck_requested = 1;
       }
-      uint8_t result = pll_check_reference(same_stage);
+      pll_stage_result result = pll_check_reference(same_stage);
 
-      if (result == PLL_STAGES_DONE) {
+      if (result == PLL_STAGE_RESULT_DONE) {
         pll.stage = PLL_STAGE_HOLDOVER_RECOVERY;
-      } else if (result == PLL_STAGES_FAILED) {
+      } else if (result == PLL_STAGE_RESULT_FAILED) {
         enter_holdover();
       }
       return;
@@ -566,7 +515,7 @@ static void pllp_step_stage(bool same_stage) {
         pll_stage_status();
         task_dmessage("Went into holdover\r\n");
       }
-      if (holdover(same_stage) == PLL_STAGES_DONE) {
+      if (holdover(same_stage) == PLL_STAGE_RESULT_DONE) {
         pll.stage = PLL_STAGE_HOLDOVER_RECOVERY;
       }
       return;
@@ -576,11 +525,11 @@ static void pllp_step_stage(bool same_stage) {
         pll_stage_status();
         task_dmessage("Went into holdover recovery\r\n");
       }
-      char result = holdover_recovery(same_stage);
+      pll_stage_result result = holdover_recovery(same_stage);
 
-      if (result == PLL_STAGES_DONE) {
+      if (result == PLL_STAGE_RESULT_DONE) {
         pll.stage = PLL_STAGE_STARTUP_PLL;
-      } else if (result == PLL_STAGES_FAILED) {
+      } else if (result == PLL_STAGE_RESULT_FAILED) {
         enter_holdover();
       }
       return;
@@ -591,11 +540,11 @@ static void pllp_step_stage(bool same_stage) {
         pll_stage_status();
         task_dmessage("Went into PLL startup\r\n");
       }
-      char result = startup_pll(same_stage);
+      pll_stage_result result = startup_pll(same_stage);
 
-      if (result == PLL_STAGES_DONE) {
+      if (result == PLL_STAGE_RESULT_DONE) {
         pll.stage = PLL_STAGE_NORMAL_PLL;
-      } else if (result == PLL_STAGES_FAILED) {
+      } else if (result == PLL_STAGE_RESULT_FAILED) {
         enter_holdover();
       }
       return;
@@ -605,7 +554,7 @@ static void pllp_step_stage(bool same_stage) {
         pll_stage_status();
         task_dmessage("Went into PLL normal\r\n");
       }
-      if (pll_normal(same_stage) == PLL_STAGES_FAILED) {
+      if (pll_normal(same_stage) == PLL_STAGE_RESULT_FAILED) {
         enter_holdover();
       }
       return;
@@ -663,7 +612,7 @@ void pllp_task(void) {
   pll_scpi_reply_pending = 0;
   pll_scpi_signal_delay = 0;
   gps_ack_ready = 0;
-  gps_ack_awaited = PLL_GPS_CONTROL_AWAITED_NONE;
+  gps_ack_awaited = GPS_ACK_NONE;
   last_stage = PLL_STAGE_INVALID;
   gps_ack_abandoned = 0;
   douglas_start_requested = 0;
@@ -728,7 +677,7 @@ void pllp_task(void) {
 
     if (!same_stage) {
       last_stage = pll.stage;
-      if (gps_ack_awaited == PLL_GPS_CONTROL_AWAITED_SELFTEST) {
+      if (gps_ack_awaited == GPS_ACK_SELFTEST) {
         pllp_abandon_ack();
       }
       pll.sync_requested = 0;
@@ -748,12 +697,11 @@ void pllp_task(void) {
     pllp_take_reply();
     pllp_ack_wait();
     gps_init_sequence();
-    if ((int8_t)pll.gps_init_state > PLL_GPS_CONTROL_HOLD_OFF_ACK) {
+    if ((int8_t)pll.gps_init_state > PLL_GPS_INIT_HOLD_OFF_ACK) {
       gps_leap_ack();
     }
     gps_leap_sequence();
-    if (gps_command.code != 0 &&
-        gps_ack_awaited == PLL_GPS_CONTROL_AWAITED_NONE) {
+    if (gps_command.code != 0 && gps_ack_awaited == GPS_ACK_NONE) {
       gps_command_send();
     }
     pll_scpi_receive();

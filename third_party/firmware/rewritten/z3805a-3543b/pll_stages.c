@@ -74,111 +74,110 @@ static void pll_stages_first_satellite(void) {
  * for GPS, sets the frequency coarsely and finely and the clock from
  * GPS, then waits out a near leap second and the leap second's
  * acknowledgment; back to waiting for GPS while it is lost (0x45e8e). */
-uint8_t powerup(char same_stage) {
+pll_stage_result powerup(bool same_stage) {
   static const float COARSE_TFOM = 0.001f;
   static const float FINE_TFOM = 2e-06f;
-  uint8_t result = PLL_STAGES_RUNNING;
+  pll_stage_result result = PLL_STAGE_RESULT_RUNNING;
 
-  if (same_stage == 0 ||
-      (int8_t)pll.powerup_state > PLL_STAGES_POWERUP_LEAP_SECONDS) {
+  if (!same_stage || (int8_t)pll.powerup_state > PLL_POWERUP_LEAP_SECONDS) {
     memset(&pll.efc_history, 0, sizeof pll.efc_history);
     pll.aging_state = PLL_AGING_START;
     pll.efc_history.loop_settled = 0;
     first_satellite_logged = 0;
-    pll.powerup_state = PLL_STAGES_POWERUP_START;
+    pll.powerup_state = PLL_POWERUP_START;
   }
   switch (pll.powerup_state) {
-    case PLL_STAGES_POWERUP_INNER_OVEN:
+    case PLL_POWERUP_INNER_OVEN:
       interval_next_reading(INTERVAL_ARM_PLAIN, NULL);
       if (oven_warmed_up()) {
-        pll.powerup_state = PLL_STAGES_POWERUP_OUTER_OVEN;
+        pll.powerup_state = PLL_POWERUP_OUTER_OVEN;
         gpt.portgp |= PLL_STAGES_OUTER_OVEN_ENABLE;
         outer_oven_enabled = 1;
       }
       break;
-    case PLL_STAGES_POWERUP_OUTER_OVEN:
+    case PLL_POWERUP_OUTER_OVEN:
       interval_next_reading(INTERVAL_ARM_PLAIN, NULL);
-      pll.powerup_state = PLL_STAGES_POWERUP_WAITING_FOR_GPS;
+      pll.powerup_state = PLL_POWERUP_WAITING_FOR_GPS;
       status_happening(STATUS_OVEN_WARMED_SET);
       break;
-    case PLL_STAGES_POWERUP_WAITING_FOR_GPS:
+    case PLL_POWERUP_WAITING_FOR_GPS:
       interval_next_reading(INTERVAL_ARM_PLAIN, NULL);
       pll.powerup_reference_lost = 0;
       if (gps_reference_good != 0 && internal_pps_dead == 0 &&
           (pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) == HOLD_CAUSE_NONE &&
-          (int8_t)pll.gps_init_state > PLL_GPS_CONTROL_HOLD_OFF_ACK) {
-        pll.powerup_state = PLL_STAGES_POWERUP_COARSE;
+          (int8_t)pll.gps_init_state > PLL_GPS_INIT_HOLD_OFF_ACK) {
+        pll.powerup_state = PLL_POWERUP_COARSE;
         pll.coarse_state = 0;
       }
       break;
-    case PLL_STAGES_POWERUP_COARSE: {
-      uint8_t coarse_result = coarse();
+    case PLL_POWERUP_COARSE: {
+      pll_stage_result coarse_result = coarse();
 
-      if (coarse_result == PLL_STAGES_DONE) {
+      if (coarse_result == PLL_STAGE_RESULT_DONE) {
         pll.tfom = COARSE_TFOM;
-        pll.powerup_state = PLL_STAGES_POWERUP_FINE;
+        pll.powerup_state = PLL_POWERUP_FINE;
         pll.fine_state = 0;
-      } else if (coarse_result == PLL_STAGES_FAILED) {
-        result = PLL_STAGES_FAILED;
+      } else if (coarse_result == PLL_STAGE_RESULT_FAILED) {
+        result = PLL_STAGE_RESULT_FAILED;
       }
       break;
     }
-    case PLL_STAGES_POWERUP_FINE: {
+    case PLL_POWERUP_FINE: {
       char fine_result = fine();
 
-      if (fine_result == PLL_STAGES_DONE) {
+      if (fine_result == PLL_STAGE_RESULT_DONE) {
         pll.tfom = FINE_TFOM;
         if (gps_reference_good != 0 && internal_pps_dead == 0) {
           clock_set(gps.status.time, oncore_date_pack(gps.status.date));
           status_happening(STATUS_DATE_TIME_VALID_SET);
           if (leap_second_near() == 0) {
-            pll.powerup_state = PLL_STAGES_POWERUP_LEAP_SECONDS;
+            pll.powerup_state = PLL_POWERUP_LEAP_SECONDS;
             pll.leap_ack_requested = 1;
           } else {
             pll.powerup_countdown = PLL_STAGES_CLOCK_CHECK_DELAY;
-            pll.powerup_state = PLL_STAGES_POWERUP_WAITING;
+            pll.powerup_state = PLL_POWERUP_WAITING;
           }
         }
-      } else if (fine_result == PLL_STAGES_FAILED) {
-        result = PLL_STAGES_FAILED;
+      } else if (fine_result == PLL_STAGE_RESULT_FAILED) {
+        result = PLL_STAGE_RESULT_FAILED;
       }
       break;
     }
-    case PLL_STAGES_POWERUP_WAITING:
+    case PLL_POWERUP_WAITING:
       interval_next_reading(INTERVAL_ARM_PLAIN, NULL);
       pll.powerup_countdown--;
       if (pll.powerup_countdown == 0 && leap_ack_pending() == 0) {
         if ((char)clock_check_against_gps() == 0 && clock_gps_mismatch != 0) {
           pll.powerup_countdown = PLL_STAGES_CLOCK_RECHECK_DELAY;
         } else {
-          pll.powerup_state = PLL_STAGES_POWERUP_LEAP_SECONDS;
+          pll.powerup_state = PLL_POWERUP_LEAP_SECONDS;
           pll.leap_ack_requested = 1;
         }
       }
       break;
-    case PLL_STAGES_POWERUP_LEAP_SECONDS:
+    case PLL_POWERUP_LEAP_SECONDS:
       interval_next_reading(INTERVAL_ARM_PLAIN, NULL);
       if (pll.leap_ack_requested == 0 && pll.leap_ack_done != 0) {
-        result = PLL_STAGES_DONE;
+        result = PLL_STAGE_RESULT_DONE;
       }
       break;
-    case PLL_STAGES_POWERUP_START:
+    case PLL_POWERUP_START:
     default:
       interval_rearm(INTERVAL_ARM_PLAIN);
-      pll.powerup_state = PLL_STAGES_POWERUP_INNER_OVEN;
+      pll.powerup_state = PLL_POWERUP_INNER_OVEN;
       break;
   }
   pll_stages_first_satellite();
-  if ((int8_t)pll.powerup_state > PLL_STAGES_POWERUP_WAITING_FOR_GPS &&
+  if ((int8_t)pll.powerup_state > PLL_POWERUP_WAITING_FOR_GPS &&
       (gps_reference_good == 0 || internal_pps_dead != 0 ||
        (pll.hold_causes & HOLD_CAUSE_TEMPORARY_MODE) != HOLD_CAUSE_NONE)) {
     pll.powerup_reference_lost = 1;
   }
   if (pll.powerup_reference_lost != 0 &&
-      (pll.powerup_state != PLL_STAGES_POWERUP_LEAP_SECONDS ||
+      (pll.powerup_state != PLL_POWERUP_LEAP_SECONDS ||
        pll.leap_ack_done != 0)) {
-    pll.powerup_state = PLL_STAGES_POWERUP_WAITING_FOR_GPS;
-    result = PLL_STAGES_RUNNING;
+    pll.powerup_state = PLL_POWERUP_WAITING_FOR_GPS;
+    result = PLL_STAGE_RESULT_RUNNING;
   }
   return result;
 }
@@ -190,48 +189,41 @@ static const uint16_t PLL_STAGES_MOST_RETRIES = 9;
 /* The coarse frequency setting: syncs the counter, then measures the TI
  * across a second and moves the EFC by the change until it is within
  * 100 ns (0x451c2). */
-uint8_t coarse(void) {
-  enum {
-    SYNC = 0,
-    SETTLE = 1,
-    CALIBRATE = 2,
-    FIRST = 3,
-    SECOND = 4,
-  };
+pll_stage_result coarse(void) {
   static const float CLOSE_ENOUGH = 1e-07f;
-  uint8_t result = PLL_STAGES_RUNNING;
+  pll_stage_result result = PLL_STAGE_RESULT_RUNNING;
 
   switch (pll.coarse_state) {
-    case SETTLE:
+    case PLL_COARSE_SETTLE:
       interval_next_reading(INTERVAL_ARM_PLAIN, NULL);
-      pll.coarse_state = CALIBRATE;
+      pll.coarse_state = PLL_COARSE_CALIBRATE;
       break;
-    case CALIBRATE:
+    case PLL_COARSE_CALIBRATE:
       interval_next_reading(INTERVAL_ARM_CALIBRATE, NULL);
-      pll.coarse_state = FIRST;
+      pll.coarse_state = PLL_COARSE_FIRST;
       pll.fine_retries = 0;
       break;
-    case FIRST:
+    case PLL_COARSE_FIRST:
       if (interval_next_reading(INTERVAL_ARM_CALIBRATE, &pll.fine_d) == 0) {
         task_dmessage("coarse - Error with measurement 1\r\n");
         pll.fine_retries++;
         if (pll.fine_retries > PLL_STAGES_MOST_RETRIES) {
-          result = PLL_STAGES_FAILED;
+          result = PLL_STAGE_RESULT_FAILED;
         }
       } else {
-        pll.coarse_state = SECOND;
+        pll.coarse_state = PLL_COARSE_SECOND;
       }
       break;
-    case SECOND:
+    case PLL_COARSE_SECOND:
       interval_wait_reading();
       if (interval_reading.valid == 0) {
         task_dmessage("coarse - Error with measurement 2\r\n");
         pll.fine_retries++;
         if (pll.fine_retries <= PLL_STAGES_MOST_RETRIES) {
-          pll.coarse_state = FIRST;
-          result = PLL_STAGES_RUNNING;
+          pll.coarse_state = PLL_COARSE_FIRST;
+          result = PLL_STAGE_RESULT_RUNNING;
         } else {
-          result = PLL_STAGES_FAILED;
+          result = PLL_STAGE_RESULT_FAILED;
         }
         interval_rearm(INTERVAL_ARM_CALIBRATE);
         break;
@@ -240,7 +232,7 @@ uint8_t coarse(void) {
                               double_to_float(interval_reading.value));
       if (float_compare(CLOSE_ENOUGH, pll.fine_d) > 0 &&
           float_compare(pll.fine_d, pll_stages_negate(CLOSE_ENOUGH)) > 0) {
-        result = PLL_STAGES_DONE;
+        result = PLL_STAGE_RESULT_DONE;
         interval_rearm(INTERVAL_ARM_CALIBRATE);
         break;
       }
@@ -256,16 +248,16 @@ uint8_t coarse(void) {
         task_dmessage(message);
       }
       interval_rearm(INTERVAL_ARM_SYNC);
-      pll.coarse_state = SETTLE;
+      pll.coarse_state = PLL_COARSE_SETTLE;
       break;
-    case SYNC:
+    case PLL_COARSE_SYNC:
     default:
-      pll.coarse_state = SYNC;
+      pll.coarse_state = PLL_COARSE_SYNC;
       interval_next_reading(INTERVAL_ARM_SYNC, NULL);
-      pll.coarse_state = SETTLE;
+      pll.coarse_state = PLL_COARSE_SETTLE;
       break;
   }
-  if (result == PLL_STAGES_FAILED) {
+  if (result == PLL_STAGE_RESULT_FAILED) {
     pll.hold_causes |= HOLD_CAUSE_TI_ERROR;
   }
   return result;
@@ -500,23 +492,18 @@ static void pll_stages_rescale_integral(float previous_tau) {
  * whose time constant grows 5 s a block to max_loop_time, settling once
  * 15 blocks in a row are within 150 ns and the EFC history has its
  * first entries; done at the full time constant (0x4429e). */
-char startup_pll(char same_stage) {
-  enum {
-    SETTLING = 1,
-    WAITING_FOR_HISTORY = 2,
-    LENGTHENING = 3,
-  };
+pll_stage_result startup_pll(bool same_stage) {
   static const int32_t SETTLED_BLOCKS = 15;
   static const double SETTLED_TI = 1.5e-07;
   static const float SETTLED_TFOM = 1e-06f;
   static const uint8_t FIRST_ENTRIES = 3;
   static const float TAU_STEP = 5.0f;
   static const float MINUS_TAU_STEP = -5.0f;
-  char result = PLL_STAGES_RUNNING;
+  pll_stage_result result = PLL_STAGE_RESULT_RUNNING;
   float ti;
   float current = adc_average(ADC_CURRENT);
 
-  if (same_stage == 0 || (int8_t)pll.startup_state > LENGTHENING) {
+  if (!same_stage || (int8_t)pll.startup_state > PLL_STARTUP_LENGTHENING) {
     pll.frequency_adjusted = 0;
     pll.ti_filtered = 0.0f;
     loop_steering.integral = 0.0f;
@@ -527,7 +514,7 @@ char startup_pll(char same_stage) {
     loop_steering.measurement_failed = 0;
     loop_steering.large_offset_blocks = 0;
     interval_next_reading(INTERVAL_ARM_CALIBRATE, NULL);
-    pll.startup_state = SETTLING;
+    pll.startup_state = PLL_STARTUP_SETTLING;
     return pll_stages_check_causes(result);
   }
   uint8_t valid = interval_next_reading(INTERVAL_ARM_CALIBRATE, &ti);
@@ -539,10 +526,10 @@ char startup_pll(char same_stage) {
     return pll_stages_check_causes(result);
   }
   if (!pll_stages_loop_mean()) {
-    result = PLL_STAGES_FAILED;
+    result = PLL_STAGE_RESULT_FAILED;
   }
   switch (pll.startup_state) {
-    case SETTLING:
+    case PLL_STARTUP_SETTLING:
       if (loop_steering.large_offset_blocks < SETTLED_BLOCKS) {
         if (double_compare(
                 float_to_double(float_absolute_on_stack(loop_steering.ti_sum)),
@@ -552,26 +539,26 @@ char startup_pll(char same_stage) {
           loop_steering.large_offset_blocks++;
         }
       } else if (pll.aging_state == PLL_AGING_COLLECTING) {
-        pll.startup_state = LENGTHENING;
+        pll.startup_state = PLL_STARTUP_LENGTHENING;
       } else {
         pll.tfom = SETTLED_TFOM;
         pll.efc_history.loop_settled = 1;
-        pll.startup_state = WAITING_FOR_HISTORY;
+        pll.startup_state = PLL_STARTUP_WAITING_FOR_HISTORY;
       }
       break;
-    case WAITING_FOR_HISTORY:
+    case PLL_STARTUP_WAITING_FOR_HISTORY:
       if (pll.efc_history.stop_ptr == FIRST_ENTRIES &&
           pll.efc_history.start_ptr == 0) {
-        pll.startup_state = LENGTHENING;
+        pll.startup_state = PLL_STARTUP_LENGTHENING;
       }
       break;
-    case LENGTHENING:
+    case PLL_STARTUP_LENGTHENING:
       if (float_compare(float_add(max_loop_time, MINUS_TAU_STEP),
                         pll.loop_time_constant) <= 0) {
-        if (result != PLL_STAGES_FAILED) {
+        if (result != PLL_STAGE_RESULT_FAILED) {
           pll.loop_time_constant = max_loop_time;
           pll_stages_rescale_integral(float_add(max_loop_time, MINUS_TAU_STEP));
-          result = PLL_STAGES_DONE;
+          result = PLL_STAGE_RESULT_DONE;
         }
       } else {
         float_add_in_place(&pll.loop_time_constant, TAU_STEP);
@@ -589,16 +576,13 @@ char startup_pll(char same_stage) {
 
 /* The normal loop: the start-up loop's at max_loop_time, its gains kept
  * in loop_steering (0x448fc). */
-uint8_t pll_normal(char same_stage) {
-  enum {
-    RUNNING = 1,
-  };
+pll_stage_result pll_normal(bool same_stage) {
   static const float NORMAL_TFOM = 1e-06f;
   static const float FREQUENCY_TOLERANCE = 1e-08f;
   float ti;
   float current = adc_average(ADC_CURRENT);
 
-  if (same_stage == 0 || (int8_t)pll.normal_state > RUNNING) {
+  if (!same_stage || (int8_t)pll.normal_state > PLL_NORMAL_RUNNING) {
     pll.frequency_adjusted = 0;
     pll.tfom = NORMAL_TFOM;
     loop_steering.ti_sum = 0.0f;
@@ -606,7 +590,7 @@ uint8_t pll_normal(char same_stage) {
     loop_steering.seconds = 0;
     loop_steering.measurement_failed = 0;
     interval_next_reading(INTERVAL_ARM_CALIBRATE, NULL);
-    pll.normal_state = RUNNING;
+    pll.normal_state = PLL_NORMAL_RUNNING;
     pll_stages_gains gains = pll_stages_gains_for(max_loop_time);
 
     loop_steering.proportional_gain = gains.proportional;
@@ -632,7 +616,7 @@ uint8_t pll_normal(char same_stage) {
       pll_stages_steer(gains, current, max_loop_time);
     }
   }
-  return pll_stages_check_causes(PLL_STAGES_RUNNING);
+  return pll_stages_check_causes(PLL_STAGE_RESULT_RUNNING);
 }
 
 /* Clears holdover's TI statistics (0x43804). */
@@ -747,11 +731,7 @@ static float pll_stages_predicted_efc(float current) {
  * seconds the TFOM from the HQ and the holdover's age, and the hold
  * causes from the TI's block: done once none is left and the holdover
  * is not manual (0x43a90). */
-uint8_t holdover(char same_stage) {
-  enum {
-    START = 0,
-    HOLDING = 1,
-  };
+pll_stage_result holdover(bool same_stage) {
   static const float AGING_LIMIT = 2e-09f;
   static const float AGING_LIMIT_PER_SECOND = 2.3148148e-14f;
   static const float BLOCK = 10.0f;
@@ -759,14 +739,14 @@ uint8_t holdover(char same_stage) {
   static const float HALF = 0.5f;
   static const float SECONDS_PER_DAY_SQUARED = 7.46496e+09f;
   static const float LEAST_TFOM = 1e-06f;
-  uint8_t result = PLL_STAGES_RUNNING;
+  pll_stage_result result = PLL_STAGE_RESULT_RUNNING;
   float ti;
   float current = adc_average(ADC_CURRENT);
 
-  if (same_stage == 0 || (int8_t)pll.holdover_state > HOLDING) {
-    pll.holdover_state = START;
+  if (!same_stage || (int8_t)pll.holdover_state > PLL_HOLDOVER_HOLDING) {
+    pll.holdover_state = PLL_HOLDOVER_START;
   }
-  if (pll.holdover_state != HOLDING) {
+  if (pll.holdover_state != PLL_HOLDOVER_HOLDING) {
     holdover_ti_reset();
     if (pll_aging_is_zero(pll.efc_history.fit_a)) {
       pll.efc_history.fit_a = pll_stages_efc_less_temperature(current);
@@ -784,12 +764,12 @@ uint8_t holdover(char same_stage) {
     /* holdover_start_time holds a time_of_day as its long. */
     get_date_time(&pll.holdover_start_date,
                   (time_of_day*)&pll.holdover_start_time);
-    pll.holdover_state = HOLDING;
+    pll.holdover_state = PLL_HOLDOVER_HOLDING;
     holdover_steering.field_06 = 0;
     holdover_steering.seconds = 0;
     holdover_steering.readings = 0;
     holdover_steering.ti_mean = 0.0f;
-    return PLL_STAGES_RUNNING;
+    return PLL_STAGE_RESULT_RUNNING;
   }
   pll_stages_holdover_second();
   if (interval_next_reading(INTERVAL_ARM_CALIBRATE, &ti) == 0) {
@@ -803,7 +783,7 @@ uint8_t holdover(char same_stage) {
   }
   holdover_steering.seconds++;
   if (holdover_steering.seconds < PLL_STAGES_BLOCK_SECONDS) {
-    return PLL_STAGES_RUNNING;
+    return PLL_STAGE_RESULT_RUNNING;
   }
   float duration = unsigned_to_float(pll.holdover_duration);
   float duration_squared =
@@ -866,7 +846,7 @@ uint8_t holdover(char same_stage) {
     }
   }
   if (pll.manual == 0 && pll.hold_causes == HOLD_CAUSE_NONE) {
-    result = PLL_STAGES_DONE;
+    result = PLL_STAGE_RESULT_DONE;
     pll.ti_limit_override = 0;
   }
   holdover_steering.ti_mean = 0.0f;
@@ -882,42 +862,35 @@ uint8_t holdover(char same_stage) {
  * second's acknowledgment; done when the clock agrees, unless the
  * offset is unknown or, after more than 500 s of holdover, the TI is
  * past 500 ns, which restarts the loop's time constant (0x43f9a). */
-char holdover_recovery(char same_stage) {
-  enum {
-    WAITING = 0,
-    FINE = 1,
-    CHECK_DELAY = 3,
-    LEAP_ACK = 4,
-    CLOCK_CHECK = 5,
-  };
+pll_stage_result holdover_recovery(bool same_stage) {
   static const uint8_t MOST_FAILURES = 5;
   static const float SHORT_HOLDOVER = 500.0f;
   static const double CLOSE_TI = 5e-07;
   static const float FIRST_TIME_CONSTANT = 150.0f;
-  char result = PLL_STAGES_RUNNING;
+  pll_stage_result result = PLL_STAGE_RESULT_RUNNING;
   uint8_t valid = 0;
   float ti;
   bool ask_leap_ack = false;
 
-  if (same_stage == 0 || (int8_t)pll.recovery_state > CLOCK_CHECK) {
-    pll.recovery_state = WAITING;
+  if (!same_stage || (int8_t)pll.recovery_state > PLL_RECOVERY_CLOCK_CHECK) {
+    pll.recovery_state = PLL_RECOVERY_WAITING;
     holdover_steering.seconds = 0;
     clock_gps_mismatch = 0;
   }
   switch (pll.recovery_state) {
-    case FINE:
+    case PLL_RECOVERY_FINE:
       result = fine();
-      if (result == PLL_STAGES_DONE) {
+      if (result == PLL_STAGE_RESULT_DONE) {
         if (pll.leap_ack_again == 0) {
-          pll.recovery_state = CLOCK_CHECK;
+          pll.recovery_state = PLL_RECOVERY_CLOCK_CHECK;
         } else {
-          pll.recovery_state = LEAP_ACK;
+          pll.recovery_state = PLL_RECOVERY_LEAP_ACK;
           pll.leap_ack_requested = 1;
         }
-        result = PLL_STAGES_RUNNING;
+        result = PLL_STAGE_RESULT_RUNNING;
       }
       break;
-    case CHECK_DELAY:
+    case PLL_RECOVERY_CHECK_DELAY:
       valid = interval_next_reading(INTERVAL_ARM_PLAIN, &ti);
       pll.recovery_countdown--;
       if (pll.recovery_countdown != 0 || leap_ack_pending() != 0) {
@@ -929,72 +902,72 @@ char holdover_recovery(char same_stage) {
       }
       ask_leap_ack = true;
       break;
-    case LEAP_ACK:
+    case PLL_RECOVERY_LEAP_ACK:
       valid = interval_next_reading(INTERVAL_ARM_PLAIN, &ti);
       if (pll.leap_ack_requested == 0 && pll.leap_ack_done != 0) {
-        pll.recovery_state = CLOCK_CHECK;
+        pll.recovery_state = PLL_RECOVERY_CLOCK_CHECK;
       } else if (gps.command_monitor_failed != 0) {
         pll.hold_causes |= HOLD_CAUSE_GPS_COMMAND_MONITOR;
         pll.leap_ack_again = 1;
       }
       break;
-    case CLOCK_CHECK:
+    case PLL_RECOVERY_CLOCK_CHECK:
       valid = interval_next_reading(INTERVAL_ARM_CALIBRATE, &ti);
       if (leap_ack_pending() != 0) {
         break;
       }
       if ((char)clock_check_against_gps() != 0) {
-        result = PLL_STAGES_DONE;
+        result = PLL_STAGE_RESULT_DONE;
         break;
       }
       if (clock_gps_mismatch == 0) {
         ask_leap_ack = true;
       }
       break;
-    case WAITING:
+    case PLL_RECOVERY_WAITING:
     default:
       valid = interval_next_reading(INTERVAL_ARM_CALIBRATE, &ti);
       if (valid == 0) {
         task_dmessage("holdover recovery - Error with measurement\r\n");
         holdover_steering.seconds++;
         if (holdover_steering.seconds > MOST_FAILURES) {
-          result = PLL_STAGES_FAILED;
+          result = PLL_STAGE_RESULT_FAILED;
           pll.hold_causes |= HOLD_CAUSE_TI_ERROR;
         }
       } else {
         pll.fine_state = 0;
-        pll.recovery_state = FINE;
+        pll.recovery_state = PLL_RECOVERY_FINE;
       }
       break;
   }
   if (ask_leap_ack) {
-    pll.recovery_state = LEAP_ACK;
+    pll.recovery_state = PLL_RECOVERY_LEAP_ACK;
     pll.leap_ack_requested = 1;
   }
   pll_stages_holdover_second();
   result = pll_stages_check_causes(result);
-  if (result != PLL_STAGES_DONE) {
+  if (result != PLL_STAGE_RESULT_DONE) {
     return result;
   }
   if (leap_second_near() != 0) {
-    pll.recovery_state = CHECK_DELAY;
+    pll.recovery_state = PLL_RECOVERY_CHECK_DELAY;
     pll.recovery_countdown = PLL_STAGES_CLOCK_CHECK_DELAY;
-    return PLL_STAGES_RUNNING;
+    return PLL_STAGE_RESULT_RUNNING;
   }
   if (get_gps_utc_offset(NULL) == 0) {
-    pll.recovery_state = LEAP_ACK;
+    pll.recovery_state = PLL_RECOVERY_LEAP_ACK;
     pll.leap_ack_requested = 1;
-    return PLL_STAGES_RUNNING;
+    return PLL_STAGE_RESULT_RUNNING;
   }
   if (valid == 0) {
     pll.hold_causes |= HOLD_CAUSE_TI_ERROR;
-    return PLL_STAGES_FAILED;
+    return PLL_STAGE_RESULT_FAILED;
   }
   if (float_compare(unsigned_to_float(pll.holdover_duration), SHORT_HOLDOVER) <=
           0 &&
       double_compare(float_to_double(float_absolute_on_stack(ti)), CLOSE_TI) >=
           0) {
-    return PLL_STAGES_DONE;
+    return PLL_STAGE_RESULT_DONE;
   }
   pll.loop_time_constant = FIRST_TIME_CONSTANT;
   return result;

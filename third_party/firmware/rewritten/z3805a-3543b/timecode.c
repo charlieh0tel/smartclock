@@ -209,7 +209,7 @@ void timecode_update(void) {
     uint32_t bits;
   } tfom = {.value = pll.tfom};
   uint8_t tfom_digit = tfom_code(tfom.bits);
-  uint8_t ffom;
+  frequency_figure_of_merit ffom;
 
   get_ffom(&ffom);
   char leap = '0';

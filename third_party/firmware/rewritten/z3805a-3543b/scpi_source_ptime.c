@@ -363,7 +363,7 @@ int32_t scpi_query_SOURce_PTIMe_FFOMerit(void* parameters, void* response,
   uint16_t* merit = response;
 
   if (*path_word == FREQUENCY) {
-    uint8_t ffom;
+    frequency_figure_of_merit ffom;
 
     if ((uint8_t)get_ffom(&ffom) == 0) {
       return scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE, call);

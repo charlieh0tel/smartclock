@@ -1740,12 +1740,22 @@ typedef struct efc_ring {
   float fit_c;       /* +0x362 */
 } efc_ring;
 
+/* The fit aging_fit made, aging_curve_state.mode ("mode= %d"), which
+ * fit_quality's constants go by. */
+typedef enum __attribute__((packed)) aging_fit_mode {
+  AGING_FIT_CONSTANT = 0, /* fewer than 3 entries */
+  AGING_FIT_FEW = 1,      /* a line through fewer than 10 */
+  AGING_FIT_LOG = 2,      /* a log curve */
+  AGING_FIT_LINE = 3,     /* a line */
+  AGING_FIT_HALVES = 4,   /* a line from a full history's halves */
+} aging_fit_mode;
+
 /* The curv task's aging fit, at 0x101fd8: the curve a + b y + c w
  * aging_fit fits to the EFC history's weighted entries, which
  * aging_fit_collect copies into pll.  aging_fit fits a second one on
  * its stack for the three-term fit, and keeps it when it fits better. */
 typedef struct aging_curve_state {
-  uint8_t mode; /* +0x00: 0 to 4, "mode= %d"; fit_quality's constants by it */
+  aging_fit_mode mode;    /* +0x00 */
   uint8_t minimum_weight; /* +0x01: only entries of this weight or more are
                              fitted, 1 or 2 */
   uint32_t oldest_time;   /* +0x02: fit_span's, the fitted entries' least time,
@@ -2120,6 +2130,191 @@ typedef struct fpga_configuration_table {
   fpga_configuration_entry entries[1]; /* +0x02 */
 } fpga_configuration_table;
 
+/* What a stage of the loop gives pllp_task each pass: go on in it, it is
+ * done (pllp_task moves to the next stage), or it failed. */
+typedef enum __attribute__((packed)) pll_stage_result {
+  PLL_STAGE_RESULT_RUNNING = 0,
+  PLL_STAGE_RESULT_DONE = 1,
+  PLL_STAGE_RESULT_FAILED = 2,
+} pll_stage_result;
+
+/* powerup's sub-states, pll.powerup_state: the status screen's ladder
+ * (docs/screen-format-strings.md, "Mode suffixes"). */
+typedef enum __attribute__((packed)) pll_powerup_state {
+  PLL_POWERUP_START = 0,
+  PLL_POWERUP_INNER_OVEN = 1,
+  PLL_POWERUP_OUTER_OVEN = 2,
+  PLL_POWERUP_WAITING_FOR_GPS = 3,
+  PLL_POWERUP_COARSE = 4,
+  PLL_POWERUP_FINE = 5,
+  PLL_POWERUP_WAITING = 6,
+  PLL_POWERUP_LEAP_SECONDS = 7,
+} pll_powerup_state;
+
+/* pll_check_reference's states, pll.reference_check_state. */
+typedef enum __attribute__((packed)) pll_reference_check_state {
+  PLL_REFERENCE_START = 0,
+  PLL_REFERENCE_FIRST = 1,
+  PLL_REFERENCE_AGAIN = 2,
+} pll_reference_check_state;
+
+/* startup_pll's states, pll.startup_state; any other starts it again. */
+typedef enum __attribute__((packed)) pll_startup_state {
+  PLL_STARTUP_SETTLING = 1,
+  PLL_STARTUP_WAITING_FOR_HISTORY = 2,
+  PLL_STARTUP_LENGTHENING = 3,
+} pll_startup_state;
+
+/* pll_normal's states, pll.normal_state. */
+typedef enum __attribute__((packed)) pll_normal_state {
+  PLL_NORMAL_RUNNING = 1,
+} pll_normal_state;
+
+/* holdover's states, pll.holdover_state. */
+typedef enum __attribute__((packed)) pll_holdover_state {
+  PLL_HOLDOVER_START = 0,
+  PLL_HOLDOVER_HOLDING = 1,
+} pll_holdover_state;
+
+/* holdover_recovery's states, pll.recovery_state; nothing sets 2, and any
+ * state past PLL_RECOVERY_CLOCK_CHECK starts it again. */
+typedef enum __attribute__((packed)) pll_recovery_state {
+  PLL_RECOVERY_WAITING = 0,
+  PLL_RECOVERY_FINE = 1,
+  PLL_RECOVERY_CHECK_DELAY = 3,
+  PLL_RECOVERY_LEAP_ACK = 4,
+  PLL_RECOVERY_CLOCK_CHECK = 5,
+} pll_recovery_state;
+
+/* coarse's states, pll.coarse_state. */
+typedef enum __attribute__((packed)) pll_coarse_state {
+  PLL_COARSE_SYNC = 0,
+  PLL_COARSE_SETTLE = 1,
+  PLL_COARSE_CALIBRATE = 2,
+  PLL_COARSE_FIRST = 3,
+  PLL_COARSE_SECOND = 4,
+} pll_coarse_state;
+
+/* efc_history_update's states, pll.aging_state: the aging fit holds
+ * from PLL_AGING_COLLECTING. */
+typedef enum __attribute__((packed)) pll_aging_state {
+  PLL_AGING_START = 0,
+  PLL_AGING_SETTLING = 1,
+  PLL_AGING_IDLE = 2,
+  PLL_AGING_COLLECTING = 3,
+} pll_aging_state;
+
+/* gps_diag_sequence's states, pll.gps_diag_state. */
+typedef enum __attribute__((packed)) pll_gps_diag_state {
+  PLL_GPS_DIAG_RESET_SEND = 0,
+  PLL_GPS_DIAG_RESET_ACK = 1,
+  PLL_GPS_DIAG_TEST_SEND = 2,
+  PLL_GPS_DIAG_TEST_ACK = 3,
+  PLL_GPS_DIAG_SETTLE = 4,
+  PLL_GPS_DIAG_RUN = 5,
+} pll_gps_diag_state;
+
+/* gps_init_sequence's states, pll.gps_init_state, as
+ * print_gps_init_state names them: each setting sent, then its
+ * acknowledgment awaited. */
+typedef enum __attribute__((packed)) pll_gps_init_state {
+  PLL_GPS_INIT_START = 0x00,
+  PLL_GPS_INIT_ACK = 0x01,
+  PLL_GPS_INIT_UTC_SEND = 0x02,
+  PLL_GPS_INIT_UTC_ACK = 0x03,
+  PLL_GPS_INIT_MASK_ANGLE_SEND = 0x04,
+  PLL_GPS_INIT_MASK_ANGLE_ACK = 0x05,
+  PLL_GPS_INIT_ANTENNA_DELAY_SEND = 0x06,
+  PLL_GPS_INIT_ANTENNA_DELAY_ACK = 0x07,
+  PLL_GPS_INIT_IGNORE_SEND = 0x08,
+  PLL_GPS_INIT_IGNORE_ACK = 0x09,
+  PLL_GPS_INIT_POSITION_SEND = 0x0a,
+  PLL_GPS_INIT_POSITION_ACK = 0x0b,
+  PLL_GPS_INIT_HOLD_OFF_SEND = 0x0c,
+  PLL_GPS_INIT_HOLD_OFF_ACK = 0x0d,
+  PLL_GPS_INIT_SURVEY = 0x0e,
+  PLL_GPS_INIT_SURVEY_POSITION_SEND = 0x0f,
+  PLL_GPS_INIT_SURVEY_POSITION_ACK = 0x10,
+  PLL_GPS_INIT_DONE = 0x11,
+} pll_gps_init_state;
+
+/* gps_leap_sequence's states, pll.leap_check_state, as
+ * print_leap_check_state names them. */
+typedef enum __attribute__((packed)) pll_leap_check_state {
+  PLL_LEAP_CHECK_START = 0,
+  PLL_LEAP_CHECK_PENDING_SEND = 1,
+  PLL_LEAP_CHECK_PENDING_ACK = 2,
+  PLL_LEAP_CHECK_WAIT = 3,
+} pll_leap_check_state;
+
+/* gps_leap_ack's states, pll.leap_ack_state: the engine's time mode
+ * switched with @@Aw to measure the GPS-UTC offset, then switched back. */
+typedef enum __attribute__((packed)) pll_leap_ack_state {
+  PLL_LEAP_ACK_IDLE = 0,
+  PLL_LEAP_ACK_CHECK = 1,
+  PLL_LEAP_ACK_MODE_SEND = 2,
+  PLL_LEAP_ACK_MODE_ACK = 3,
+  PLL_LEAP_ACK_SWITCH_SEND = 4,
+  PLL_LEAP_ACK_SWITCH_ACK = 5,
+  PLL_LEAP_ACK_BACK_SEND = 6,
+  PLL_LEAP_ACK_BACK_ACK = 7,
+} pll_leap_ack_state;
+
+/* The status screen's mode, pll_mode's result from the stage and
+ * pll.manual (0x45b70), which the screen and the :ROSCillator:HOLDover
+ * queries read (docs/screen-format-strings.md, "Mode suffixes"). */
+typedef enum __attribute__((packed)) pll_screen_mode {
+  PLL_MODE_NONE = 0,
+  PLL_MODE_HOLDOVER_MANUAL = 1,
+  PLL_MODE_HOLDOVER = 2,
+  PLL_MODE_RECOVERY = 3,
+  PLL_MODE_POWERUP = 4,
+  PLL_MODE_LOCKED = 5,
+} pll_screen_mode;
+
+/* The power-up mode's suffix on the status screen, pll_powerup_suffix_index's
+ * result by powerup's sub-state (docs/screen-format-strings.md, "Mode
+ * suffixes"). */
+typedef enum __attribute__((packed)) pll_powerup_suffix {
+  PLL_POWERUP_SUFFIX_NONE = 0,
+  PLL_POWERUP_SUFFIX_WARM_UP = 1, /* OCXO warm-up */
+  PLL_POWERUP_SUFFIX_GPS_ACQUISITION = 2,
+  PLL_POWERUP_SUFFIX_COARSE = 3,
+  PLL_POWERUP_SUFFIX_FINE_FREQUENCY = 4,
+  PLL_POWERUP_SUFFIX_PHASE_ALIGNMENT = 5,
+  PLL_POWERUP_SUFFIX_LEAP_SECOND = 6, /* leap second determination */
+} pll_powerup_suffix;
+
+/* The recovery mode's suffix, recovery_suffix_index's result while
+ * holdover_recovery sets the frequency finely. */
+typedef enum __attribute__((packed)) pll_recovery_suffix {
+  PLL_RECOVERY_SUFFIX_NONE = 0,
+  PLL_RECOVERY_SUFFIX_FINE_FREQUENCY = 1,
+  PLL_RECOVERY_SUFFIX_PHASE_ALIGNMENT = 2,
+} pll_recovery_suffix;
+
+/* The Frequency Figure of Merit, get_ffom's by the loop's stage
+ * (097-z3801-01, 3-14, "FFOM Value"), :PTIMe:FFOMerit? and the time
+ * code's. */
+typedef enum __attribute__((packed)) frequency_figure_of_merit {
+  FFOM_STABILIZED = 0,  /* PLL stabilized, 10 MHz within specification */
+  FFOM_STABILIZING = 1, /* PLL stabilizing */
+  FFOM_HOLDOVER = 2,    /* PLL unlocked, in holdover */
+  FFOM_UNLOCKED = 3,    /* PLL unlocked, not in holdover: do not use */
+} frequency_figure_of_merit;
+
+/* Which GPS sequence waits for the acknowledgment of the request it sent,
+ * gps_ack_awaited, gpsx_send's last argument; pllp_task's reply handling
+ * tells the console command's and the self-test's apart. */
+typedef enum __attribute__((packed)) gps_ack_awaited_kind {
+  GPS_ACK_NONE = 0,
+  GPS_ACK_INIT = 1,
+  GPS_ACK_LEAP_ACK = 2,
+  GPS_ACK_LEAP_CHECK = 3,
+  GPS_ACK_COMMAND = 4,
+  GPS_ACK_SELFTEST = 5,
+} gps_ack_awaited_kind;
+
 /* The disciplining loop's state block: the stage the status screen
  * shows (docs/screen-format-strings.md, "Mode suffixes") and the PLL's
  * values.  Cleared as one, memset(&pll, 0, 0x3d6). */
@@ -2128,48 +2323,50 @@ typedef struct pll_state {
   pll_stage previous_stage;  /* +0x01: pllp_task's copy of stage */
   uint8_t powerup_countdown; /* +0x02: readings left before powerup checks the
                                 clock against GPS, 25 then 2 */
-  uint8_t powerup_state;     /* +0x03: powerup's sub-state,
-                                screen-format-strings.md's ladder */
-  uint8_t powerup_reference_lost; /* +0x04: GPS or its PPS went, or temporary
-                                     mode; powerup goes back to state 3 */
+  pll_powerup_state powerup_state; /* +0x03: powerup's sub-state,
+                            screen-format-strings.md's ladder */
+  uint8_t powerup_reference_lost;  /* +0x04: GPS or its PPS went, or temporary
+                                      mode; powerup goes back to state 3 */
   uint8_t field_005;
-  uint8_t reference_check_state; /* +0x06: pll_check_reference's */
+  pll_reference_check_state
+      reference_check_state; /* +0x06: pll_check_reference's */
   uint8_t field_007[5];
-  uint8_t startup_state; /* +0x0c: startup_pll's */
+  pll_startup_state startup_state; /* +0x0c: startup_pll's */
   uint8_t field_00d;
-  uint8_t normal_state; /* +0x0e: pll_normal's */
+  pll_normal_state normal_state; /* +0x0e: pll_normal's */
   uint8_t field_00f;
-  uint8_t holdover_state;     /* +0x10: holdover's */
-  pll_hold_cause hold_causes; /* +0x11: a set of pll_hold_cause bits */
-  uint8_t manual;             /* +0x12 */
-  uint8_t ti_limit_override;  /* +0x13: holdover checks the TI limit while 0;
-                                 holdover_recovery_limit_ignore sets it */
+  pll_holdover_state holdover_state; /* +0x10: holdover's */
+  pll_hold_cause hold_causes;        /* +0x11: a set of pll_hold_cause bits */
+  uint8_t manual;                    /* +0x12 */
+  uint8_t ti_limit_override; /* +0x13: holdover checks the TI limit while 0;
+                                holdover_recovery_limit_ignore sets it */
   uint8_t
       recovery_countdown; /* +0x14: holdover_recovery's, as powerup_countdown */
-  uint8_t recovery_state; /* +0x15 */
-  uint8_t coarse_state;   /* +0x16: coarse's */
-  uint8_t fine_state;     /* +0x17 */
+  pll_recovery_state recovery_state; /* +0x15 */
+  pll_coarse_state coarse_state;     /* +0x16: coarse's */
+  uint8_t fine_state;                /* +0x17: fine's; 7 to 9 slew the phase
+                                        (PLL_FINE_SLEW_FIRST, _LAST) */
   uint8_t frequency_adjusted; /* +0x18: fine applied a frequency correction */
   uint8_t fine_index;         /* fine acquisition's "i= %d" */
   uint16_t fine_retries; /* +0x1a: fine's failed attempts, given up past 9 */
   float fine_d;          /* fine acquisition's "d = %f" */
-  uint8_t
+  pll_aging_state
       aging_state; /* +0x20: efc_history_update's; 3 once the aging fit holds */
   uint8_t field_021[3];
-  uint8_t gps_diag_state;    /* +0x24: gps_diag_sequence's */
-  uint8_t gps_diag_substate; /* +0x25 */
-  uint8_t
+  pll_gps_diag_state gps_diag_state; /* +0x24: gps_diag_sequence's */
+  uint8_t gps_diag_substate;         /* +0x25 */
+  pll_gps_init_state
       gps_init_state; /* +0x26: gps_init_sequence's, print_gps_init_state's */
   uint8_t field_027;
   uint16_t leap_check_timer;    /* +0x28: gps_leap_sequence checks again when it
                                    wraps */
   uint8_t leap_check_requested; /* +0x2a: pll_stage_status sets it */
-  uint8_t leap_check_state;     /* +0x2b: gps_leap_sequence's,
-                                   print_leap_check_state's */
-  uint8_t leap_ack_state; /* +0x2c: gps_leap_ack's, measuring the GPS-UTC offset
-                             by switching @@Aw */
-  uint8_t leap_ack_requested; /* +0x2d */
-  uint8_t leap_ack_done;      /* +0x2e: the offset is set */
+  pll_leap_check_state leap_check_state; /* +0x2b: gps_leap_sequence's,
+                               print_leap_check_state's */
+  pll_leap_ack_state leap_ack_state;     /* +0x2c: gps_leap_ack's, measuring the
+                                 GPS-UTC offset     by switching @@Aw */
+  uint8_t leap_ack_requested;            /* +0x2d */
+  uint8_t leap_ack_done;                 /* +0x2e: the offset is set */
   uint8_t field_02f;
   uint8_t
       leap_ack_again; /* +0x30: holdover_recovery measures again after fine */

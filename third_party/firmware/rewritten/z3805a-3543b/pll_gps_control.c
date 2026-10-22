@@ -26,7 +26,7 @@ uint8_t gpsx_send(int16_t code, uint8_t argument_mode, int32_t* arguments,
                   uint8_t ack_awaited) {
   gps_request_entry request;
 
-  if (gps_ack_awaited != PLL_GPS_CONTROL_AWAITED_NONE) {
+  if (gps_ack_awaited != GPS_ACK_NONE) {
     return 0;
   }
   for (int32_t i = 0; i < 4; i++) {
@@ -54,7 +54,7 @@ uint8_t gpsx_send(int16_t code, uint8_t argument_mode, int32_t* arguments,
  * once it has (0x46620). */
 uint8_t gps_ack_received(void) {
   if (gps_ack_ready != 0) {
-    gps_ack_awaited = PLL_GPS_CONTROL_AWAITED_NONE;
+    gps_ack_awaited = GPS_ACK_NONE;
   }
   return gps_ack_ready;
 }
@@ -66,8 +66,7 @@ uint8_t gps_ack_received(void) {
 static void pll_gps_control_selftest_send(int16_t code, int32_t* arguments) {
   uint8_t tries = 20;
 
-  while (gpsx_send(code, 0, arguments, PLL_GPS_CONTROL_AWAITED_SELFTEST) == 0 &&
-         tries != 0) {
+  while (gpsx_send(code, 0, arguments, GPS_ACK_SELFTEST) == 0 && tries != 0) {
     psos_pause(PLL_GPS_CONTROL_RETRY_TICKS);
     watchdog_pll++;
     tries--;
@@ -83,7 +82,7 @@ static void pll_gps_control_selftest_send(int16_t code, int32_t* arguments) {
 static void pll_gps_control_selftest_reply(uint8_t tries) {
   gps_request_entry reply;
 
-  if (gps_ack_awaited == PLL_GPS_CONTROL_AWAITED_NONE) {
+  if (gps_ack_awaited == GPS_ACK_NONE) {
     return;
   }
   while ((uint8_t)psos_request_x(plla_exchange, &reply, 1, 0) != 0 &&
@@ -112,19 +111,19 @@ void gps_selftest_run(void) {
 
   pll_gps_control_selftest_send(GPS_STEP_LINK_RESET, arguments);
   pll_gps_control_selftest_reply(RESET_REPLY_TRIES);
-  gps_ack_awaited = PLL_GPS_CONTROL_AWAITED_NONE;
+  gps_ack_awaited = GPS_ACK_NONE;
   if (selftest.gps == 0) {
     pll_gps_control_selftest_send(GPS_SCRIPT_ENGINE_SELFTEST, arguments);
     pll_gps_control_selftest_reply(SELFTEST_REPLY_TRIES);
   }
-  gps_ack_awaited = PLL_GPS_CONTROL_AWAITED_NONE;
+  gps_ack_awaited = GPS_ACK_NONE;
 }
 
 /* Sends an initialization request awaiting its acknowledgment, and
  * moves to the state that waits for it. */
 static void pll_gps_control_init_send(int16_t code, int32_t* arguments,
                                       uint8_t ack_state) {
-  if (gpsx_send(code, 0, arguments, PLL_GPS_CONTROL_AWAITED_INIT) != 0) {
+  if (gpsx_send(code, 0, arguments, GPS_ACK_INIT) != 0) {
     pll.gps_init_state = ack_state;
   }
 }
@@ -176,7 +175,7 @@ static void pll_gps_control_survey(void) {
     nv_settings.position[2] = survey_position[2];
     nv_settings.douglas_state = 1;
     nv_save(douglas_finish_nv_argument);
-    pll.gps_init_state = PLL_GPS_CONTROL_SURVEY_POSITION_SEND;
+    pll.gps_init_state = PLL_GPS_INIT_SURVEY_POSITION_SEND;
   }
 }
 
@@ -190,123 +189,123 @@ void gps_init_sequence(void) {
   int32_t arguments[4];
 
   switch (*state) {
-    case PLL_GPS_CONTROL_INIT_ACK:
-      if (pll_gps_control_acked(state, PLL_GPS_CONTROL_INIT_START,
+    case PLL_GPS_INIT_ACK:
+      if (pll_gps_control_acked(state, PLL_GPS_INIT_START,
                                 "gps init ack failure: %02X\r\n")) {
-        *state = PLL_GPS_CONTROL_UTC_SEND;
+        *state = PLL_GPS_INIT_UTC_SEND;
       }
       break;
-    case PLL_GPS_CONTROL_UTC_SEND:
+    case PLL_GPS_INIT_UTC_SEND:
       arguments[0] = (int8_t)nv_settings.gps_utc;
       pll_gps_control_init_send(GPS_REQUEST_UTC_SELECT, arguments,
-                                PLL_GPS_CONTROL_UTC_ACK);
+                                PLL_GPS_INIT_UTC_ACK);
       break;
-    case PLL_GPS_CONTROL_UTC_ACK:
-      if (pll_gps_control_acked(state, PLL_GPS_CONTROL_UTC_SEND,
+    case PLL_GPS_INIT_UTC_ACK:
+      if (pll_gps_control_acked(state, PLL_GPS_INIT_UTC_SEND,
                                 "utc corr ack failure: %02X\r\n")) {
-        *state = PLL_GPS_CONTROL_MASK_ANGLE_SEND;
+        *state = PLL_GPS_INIT_MASK_ANGLE_SEND;
       }
       break;
-    case PLL_GPS_CONTROL_MASK_ANGLE_SEND:
+    case PLL_GPS_INIT_MASK_ANGLE_SEND:
       arguments[0] = nv_settings.elevation_mask;
       pll_gps_control_init_send(GPS_REQUEST_MASK_ANGLE, arguments,
-                                PLL_GPS_CONTROL_MASK_ANGLE_ACK);
+                                PLL_GPS_INIT_MASK_ANGLE_ACK);
       break;
-    case PLL_GPS_CONTROL_MASK_ANGLE_ACK:
-      if (pll_gps_control_acked(state, PLL_GPS_CONTROL_MASK_ANGLE_SEND,
+    case PLL_GPS_INIT_MASK_ANGLE_ACK:
+      if (pll_gps_control_acked(state, PLL_GPS_INIT_MASK_ANGLE_SEND,
                                 "mask angle ack failure: %02X\r\n")) {
-        *state = PLL_GPS_CONTROL_ANTENNA_DELAY_SEND;
+        *state = PLL_GPS_INIT_ANTENNA_DELAY_SEND;
       }
       break;
-    case PLL_GPS_CONTROL_ANTENNA_DELAY_SEND:
+    case PLL_GPS_INIT_ANTENNA_DELAY_SEND:
       arguments[0] = nv_settings.antenna_delay;
       pll_gps_control_init_send(GPS_REQUEST_CABLE_DELAY, arguments,
-                                PLL_GPS_CONTROL_ANTENNA_DELAY_ACK);
+                                PLL_GPS_INIT_ANTENNA_DELAY_ACK);
       break;
-    case PLL_GPS_CONTROL_ANTENNA_DELAY_ACK:
-      if (pll_gps_control_acked(state, PLL_GPS_CONTROL_ANTENNA_DELAY_SEND,
+    case PLL_GPS_INIT_ANTENNA_DELAY_ACK:
+      if (pll_gps_control_acked(state, PLL_GPS_INIT_ANTENNA_DELAY_SEND,
                                 "ant delay ack failure: %02X\r\n")) {
-        *state = PLL_GPS_CONTROL_IGNORE_SEND;
+        *state = PLL_GPS_INIT_IGNORE_SEND;
       }
       break;
-    case PLL_GPS_CONTROL_IGNORE_SEND:
+    case PLL_GPS_INIT_IGNORE_SEND:
       arguments[0] = nv_settings.ignored_satellites;
       pll_gps_control_init_send(GPS_REQUEST_IGNORE_LIST, arguments,
-                                PLL_GPS_CONTROL_IGNORE_ACK);
+                                PLL_GPS_INIT_IGNORE_ACK);
       break;
-    case PLL_GPS_CONTROL_IGNORE_ACK:
-      if (pll_gps_control_acked(state, PLL_GPS_CONTROL_IGNORE_SEND,
+    case PLL_GPS_INIT_IGNORE_ACK:
+      if (pll_gps_control_acked(state, PLL_GPS_INIT_IGNORE_SEND,
                                 "sat ign ack failure: %02X\r\n")) {
-        *state = nv_settings.douglas_state == 0 ? PLL_GPS_CONTROL_HOLD_OFF_SEND
-                                                : PLL_GPS_CONTROL_POSITION_SEND;
+        *state = nv_settings.douglas_state == 0 ? PLL_GPS_INIT_HOLD_OFF_SEND
+                                                : PLL_GPS_INIT_POSITION_SEND;
       }
       break;
-    case PLL_GPS_CONTROL_POSITION_SEND:
+    case PLL_GPS_INIT_POSITION_SEND:
       pll_gps_control_position_arguments(arguments);
       pll_gps_control_init_send(GPS_SCRIPT_HOLD_AT, arguments,
-                                PLL_GPS_CONTROL_POSITION_ACK);
+                                PLL_GPS_INIT_POSITION_ACK);
       break;
-    case PLL_GPS_CONTROL_POSITION_ACK:
-      if (pll_gps_control_acked(state, PLL_GPS_CONTROL_POSITION_SEND,
+    case PLL_GPS_INIT_POSITION_ACK:
+      if (pll_gps_control_acked(state, PLL_GPS_INIT_POSITION_SEND,
                                 "pos location ack failure: %02X\r\n")) {
         status_happening(STATUS_POSITION_HOLD_SET);
-        *state = PLL_GPS_CONTROL_INIT_DONE;
+        *state = PLL_GPS_INIT_DONE;
       }
       break;
-    case PLL_GPS_CONTROL_HOLD_OFF_SEND:
+    case PLL_GPS_INIT_HOLD_OFF_SEND:
       arguments[0] = 0;
       pll_gps_control_init_send(GPS_SCRIPT_HOLD_SELECT, arguments,
-                                PLL_GPS_CONTROL_HOLD_OFF_ACK);
+                                PLL_GPS_INIT_HOLD_OFF_ACK);
       break;
-    case PLL_GPS_CONTROL_HOLD_OFF_ACK:
-      if (pll_gps_control_acked(state, PLL_GPS_CONTROL_HOLD_OFF_SEND,
+    case PLL_GPS_INIT_HOLD_OFF_ACK:
+      if (pll_gps_control_acked(state, PLL_GPS_INIT_HOLD_OFF_SEND,
                                 "disable pos hold ack failure: %02X\r\n")) {
         status_happening(STATUS_POSITION_HOLD_CLEARED);
-        *state = PLL_GPS_CONTROL_SURVEY;
+        *state = PLL_GPS_INIT_SURVEY;
       }
       break;
-    case PLL_GPS_CONTROL_SURVEY:
+    case PLL_GPS_INIT_SURVEY:
       if (douglas_stop_requested != 0) {
-        *state = PLL_GPS_CONTROL_INIT_DONE;
+        *state = PLL_GPS_INIT_DONE;
         douglas_stop_requested = 0;
         break;
       }
       pll_gps_control_survey();
       douglas_start_requested = 0;
       break;
-    case PLL_GPS_CONTROL_SURVEY_POSITION_SEND:
+    case PLL_GPS_INIT_SURVEY_POSITION_SEND:
       if (douglas_stop_requested != 0) {
-        *state = PLL_GPS_CONTROL_INIT_DONE;
+        *state = PLL_GPS_INIT_DONE;
         douglas_stop_requested = 0;
         break;
       }
       pll_gps_control_position_arguments(arguments);
       pll_gps_control_init_send(GPS_SCRIPT_HOLD_AT_QUIET, arguments,
-                                PLL_GPS_CONTROL_SURVEY_POSITION_ACK);
+                                PLL_GPS_INIT_SURVEY_POSITION_ACK);
       break;
-    case PLL_GPS_CONTROL_SURVEY_POSITION_ACK:
+    case PLL_GPS_INIT_SURVEY_POSITION_ACK:
       if (gps_ack_received() == 0) {
         break;
       }
       if (douglas_stop_requested != 0) {
-        *state = PLL_GPS_CONTROL_INIT_DONE;
+        *state = PLL_GPS_INIT_DONE;
         douglas_stop_requested = 0;
         break;
       }
       if (gps_ack_code == PLL_GPS_CONTROL_ACK_OK) {
-        *state = PLL_GPS_CONTROL_INIT_DONE;
+        *state = PLL_GPS_INIT_DONE;
         log_event(LOG_POSITION_HOLD_STARTED);
         status_happening(STATUS_POSITION_HOLD_SET);
       } else {
         char message[80];
 
-        *state = PLL_GPS_CONTROL_SURVEY_POSITION_SEND;
+        *state = PLL_GPS_INIT_SURVEY_POSITION_SEND;
         debug_sprintf(message, "set survey location ack failure: %02X\r\n",
                       (int32_t)gps_ack_code);
         task_dmessage(message);
       }
       break;
-    case PLL_GPS_CONTROL_INIT_DONE:
+    case PLL_GPS_INIT_DONE:
       if (douglas_stop_requested != 0) {
         douglas_stop_requested = 0;
       }
@@ -315,27 +314,17 @@ void gps_init_sequence(void) {
         douglas_finish_nv_argument = SURVEY_NV_SOURCE;
       }
       if (douglas_start_requested != 0) {
-        *state = PLL_GPS_CONTROL_SURVEY;
+        *state = PLL_GPS_INIT_SURVEY;
         douglas_start_requested = 0;
       }
       break;
-    case PLL_GPS_CONTROL_INIT_START:
+    case PLL_GPS_INIT_START:
     default:
       arguments[0] = 0;
-      pll_gps_control_init_send(GPS_SCRIPT_INIT, arguments,
-                                PLL_GPS_CONTROL_INIT_ACK);
+      pll_gps_control_init_send(GPS_SCRIPT_INIT, arguments, PLL_GPS_INIT_ACK);
       break;
   }
 }
-
-/* gps_leap_sequence's states, pll.leap_check_state, as
- * print_leap_check_state names them. */
-enum {
-  PLL_GPS_CONTROL_LEAP_START = 0,
-  PLL_GPS_CONTROL_LEAP_PENDING_SEND = 1,
-  PLL_GPS_CONTROL_LEAP_PENDING_ACK = 2,
-  PLL_GPS_CONTROL_LEAP_WAIT = 3,
-};
 
 /* Steps the leap second check: once asked, @@Bj, the pending leap
  * second, and from its answer the leap event; then again each time the
@@ -345,44 +334,44 @@ void gps_leap_sequence(void) {
   char message[80];
 
   switch (pll.leap_check_state) {
-    case PLL_GPS_CONTROL_LEAP_PENDING_SEND:
+    case PLL_LEAP_CHECK_PENDING_SEND:
       arguments[0] = 0;
       if (gpsx_send(GPS_REQUEST_LEAP_SECOND_PENDING, 0, arguments,
-                    PLL_GPS_CONTROL_AWAITED_LEAP_CHECK) != 0) {
-        pll.leap_check_state = PLL_GPS_CONTROL_LEAP_PENDING_ACK;
+                    GPS_ACK_LEAP_CHECK) != 0) {
+        pll.leap_check_state = PLL_LEAP_CHECK_PENDING_ACK;
       }
       break;
-    case PLL_GPS_CONTROL_LEAP_PENDING_ACK:
+    case PLL_LEAP_CHECK_PENDING_ACK:
       if (gps_ack_received() == 0) {
         break;
       }
       if (gps_ack_code == PLL_GPS_CONTROL_ACK_OK) {
         leap_event_create();
         pll.leap_check_timer = 0;
-        pll.leap_check_state = PLL_GPS_CONTROL_LEAP_WAIT;
+        pll.leap_check_state = PLL_LEAP_CHECK_WAIT;
       } else {
-        pll.leap_check_state = PLL_GPS_CONTROL_LEAP_PENDING_SEND;
+        pll.leap_check_state = PLL_LEAP_CHECK_PENDING_SEND;
         debug_sprintf(message, "leap pending ack failure: %02X\r\n",
                       (int32_t)gps_ack_code);
         task_dmessage(message);
       }
       break;
-    case PLL_GPS_CONTROL_LEAP_WAIT:
+    case PLL_LEAP_CHECK_WAIT:
       if (leap_recheck_requested != 0) {
         pll.leap_check_timer = 0;
-        pll.leap_check_state = PLL_GPS_CONTROL_LEAP_PENDING_SEND;
+        pll.leap_check_state = PLL_LEAP_CHECK_PENDING_SEND;
         leap_recheck_requested = 0;
         break;
       }
       pll.leap_check_timer++;
       if (pll.leap_check_timer == 0) {
-        pll.leap_check_state = PLL_GPS_CONTROL_LEAP_PENDING_SEND;
+        pll.leap_check_state = PLL_LEAP_CHECK_PENDING_SEND;
       }
       break;
-    case PLL_GPS_CONTROL_LEAP_START:
+    case PLL_LEAP_CHECK_START:
     default:
       if (pll.leap_check_requested != 0) {
-        pll.leap_check_state = PLL_GPS_CONTROL_LEAP_PENDING_SEND;
+        pll.leap_check_state = PLL_LEAP_CHECK_PENDING_SEND;
       }
       break;
   }
@@ -418,73 +407,71 @@ void gps_leap_ack(void) {
   int32_t arguments[4];
 
   switch (*state) {
-    case PLL_GPS_CONTROL_LEAP_ACK_CHECK: {
+    case PLL_LEAP_ACK_CHECK: {
       bool mode_set =
           (gps.utc_time == ONCORE_TIME_UTC && nv_settings.gps_utc != 0) ||
           (gps.utc_time == ONCORE_TIME_GPS && nv_settings.gps_utc == 0);
 
-      *state = mode_set ? PLL_GPS_CONTROL_LEAP_ACK_SWITCH_SEND
-                        : PLL_GPS_CONTROL_LEAP_ACK_MODE_SEND;
+      *state = mode_set ? PLL_LEAP_ACK_SWITCH_SEND : PLL_LEAP_ACK_MODE_SEND;
       return;
     }
-    case PLL_GPS_CONTROL_LEAP_ACK_MODE_SEND:
+    case PLL_LEAP_ACK_MODE_SEND:
       arguments[0] = (int8_t)nv_settings.gps_utc;
-      if (gpsx_send(GPS_REQUEST_UTC_SELECT, 0, arguments,
-                    PLL_GPS_CONTROL_AWAITED_LEAP_ACK) != 0) {
-        *state = PLL_GPS_CONTROL_LEAP_ACK_MODE_ACK;
+      if (gpsx_send(GPS_REQUEST_UTC_SELECT, 0, arguments, GPS_ACK_LEAP_ACK) !=
+          0) {
+        *state = PLL_LEAP_ACK_MODE_ACK;
       }
       return;
-    case PLL_GPS_CONTROL_LEAP_ACK_MODE_ACK:
+    case PLL_LEAP_ACK_MODE_ACK:
       if (gps_ack_received() == 0) {
         return;
       }
       if (gps_ack_code != PLL_GPS_CONTROL_ACK_OK) {
-        *state = PLL_GPS_CONTROL_LEAP_ACK_MODE_SEND;
+        *state = PLL_LEAP_ACK_MODE_SEND;
         break;
       }
-      *state = PLL_GPS_CONTROL_LEAP_ACK_SWITCH_SEND;
+      *state = PLL_LEAP_ACK_SWITCH_SEND;
       return;
-    case PLL_GPS_CONTROL_LEAP_ACK_SWITCH_SEND:
+    case PLL_LEAP_ACK_SWITCH_SEND:
       arguments[0] = gps.utc_time == ONCORE_TIME_GPS;
-      if (gpsx_send(GPS_SCRIPT_UTC_SET, 0, arguments,
-                    PLL_GPS_CONTROL_AWAITED_LEAP_ACK) != 0) {
-        *state = PLL_GPS_CONTROL_LEAP_ACK_SWITCH_ACK;
+      if (gpsx_send(GPS_SCRIPT_UTC_SET, 0, arguments, GPS_ACK_LEAP_ACK) != 0) {
+        *state = PLL_LEAP_ACK_SWITCH_ACK;
       }
       return;
-    case PLL_GPS_CONTROL_LEAP_ACK_SWITCH_ACK:
+    case PLL_LEAP_ACK_SWITCH_ACK:
       if (gps_ack_received() == 0) {
         return;
       }
       if (gps_ack_code != PLL_GPS_CONTROL_ACK_OK) {
-        *state = PLL_GPS_CONTROL_LEAP_ACK_CHECK;
+        *state = PLL_LEAP_ACK_CHECK;
         break;
       }
       set_gps_utc_offset(pll_gps_control_utc_offset());
-      *state = PLL_GPS_CONTROL_LEAP_ACK_BACK_SEND;
+      *state = PLL_LEAP_ACK_BACK_SEND;
       return;
-    case PLL_GPS_CONTROL_LEAP_ACK_BACK_SEND:
+    case PLL_LEAP_ACK_BACK_SEND:
       arguments[0] = gps.utc_time == ONCORE_TIME_GPS;
-      if (gpsx_send(GPS_REQUEST_UTC_SELECT, 0, arguments,
-                    PLL_GPS_CONTROL_AWAITED_LEAP_ACK) != 0) {
-        *state = PLL_GPS_CONTROL_LEAP_ACK_BACK_ACK;
+      if (gpsx_send(GPS_REQUEST_UTC_SELECT, 0, arguments, GPS_ACK_LEAP_ACK) !=
+          0) {
+        *state = PLL_LEAP_ACK_BACK_ACK;
       }
       return;
-    case PLL_GPS_CONTROL_LEAP_ACK_BACK_ACK:
+    case PLL_LEAP_ACK_BACK_ACK:
       if (gps_ack_received() == 0) {
         return;
       }
       if (gps_ack_code != PLL_GPS_CONTROL_ACK_OK) {
-        *state = PLL_GPS_CONTROL_LEAP_ACK_BACK_SEND;
+        *state = PLL_LEAP_ACK_BACK_SEND;
         break;
       }
-      *state = PLL_GPS_CONTROL_LEAP_ACK_IDLE;
+      *state = PLL_LEAP_ACK_IDLE;
       pll.leap_ack_done = 1;
       pll.leap_ack_again = 0;
       return;
-    case PLL_GPS_CONTROL_LEAP_ACK_IDLE:
+    case PLL_LEAP_ACK_IDLE:
     default:
       if (pll.leap_ack_requested != 0) {
-        *state = PLL_GPS_CONTROL_LEAP_ACK_CHECK;
+        *state = PLL_LEAP_ACK_CHECK;
         pll.leap_ack_requested = 0;
         pll.leap_ack_done = 0;
       }
@@ -606,20 +593,9 @@ void gps_command_send(void) {
       gps_command.code = 0;
       return;
   }
-  gpsx_send(code, argument_mode, gps_command.arguments,
-            PLL_GPS_CONTROL_AWAITED_COMMAND);
+  gpsx_send(code, argument_mode, gps_command.arguments, GPS_ACK_COMMAND);
   gps_command.code = 0;
 }
-
-/* gps_diag_sequence's states, pll.gps_diag_state. */
-enum {
-  PLL_GPS_CONTROL_DIAG_RESET_SEND = 0,
-  PLL_GPS_CONTROL_DIAG_RESET_ACK = 1,
-  PLL_GPS_CONTROL_DIAG_TEST_SEND = 2,
-  PLL_GPS_CONTROL_DIAG_TEST_ACK = 3,
-  PLL_GPS_CONTROL_DIAG_SETTLE = 4,
-  PLL_GPS_CONTROL_DIAG_RUN = 5,
-};
 
 /* A diagnostic send or acknowledgment wait that has not succeeded: one
  * more second, and past tries the GPS's self-test fails. */
@@ -627,7 +603,7 @@ static void pll_gps_control_diag_retry(uint8_t tries) {
   pll.gps_diag_substate++;
   if (pll.gps_diag_substate > tries) {
     selftest.gps = PLL_GPS_CONTROL_SELFTEST_NO_ANSWER;
-    pll.gps_diag_state = PLL_GPS_CONTROL_DIAG_SETTLE;
+    pll.gps_diag_state = PLL_GPS_DIAG_SETTLE;
   }
 }
 
@@ -638,7 +614,7 @@ static void pll_gps_control_diag_send(int16_t code, int32_t* arguments,
   static const uint8_t SEND_TRIES = 20;
 
   interval_next_reading(INTERVAL_ARM_PLAIN, NULL);
-  if (gpsx_send(code, 0, arguments, PLL_GPS_CONTROL_AWAITED_SELFTEST) == 0) {
+  if (gpsx_send(code, 0, arguments, GPS_ACK_SELFTEST) == 0) {
     pll_gps_control_diag_retry(SEND_TRIES);
   } else {
     pll.gps_diag_state = ack_state;
@@ -670,26 +646,26 @@ bool gps_diag_sequence(bool same_stage) {
 
   /* A state the image takes as signed: one of 0x80 or more is not
    * reset, but runs as the first. */
-  if (!same_stage || (int8_t)pll.gps_diag_state > PLL_GPS_CONTROL_DIAG_RUN) {
+  if (!same_stage || (int8_t)pll.gps_diag_state > PLL_GPS_DIAG_RUN) {
     pll.gps_diag_state = selftest_number == 0 || selftest_number == SELFTEST_GPS
-                             ? PLL_GPS_CONTROL_DIAG_RESET_SEND
-                             : PLL_GPS_CONTROL_DIAG_SETTLE;
+                             ? PLL_GPS_DIAG_RESET_SEND
+                             : PLL_GPS_DIAG_SETTLE;
     pll.gps_diag_substate = 0;
   }
   switch (pll.gps_diag_state) {
-    case PLL_GPS_CONTROL_DIAG_RESET_ACK:
+    case PLL_GPS_DIAG_RESET_ACK:
       if (pll_gps_control_diag_acked()) {
         if (gps_ack_code != PLL_GPS_CONTROL_ACK_OK) {
           task_dmessage("Error in DIAG GPS RST ack\r\n");
         }
-        pll.gps_diag_state = PLL_GPS_CONTROL_DIAG_TEST_SEND;
+        pll.gps_diag_state = PLL_GPS_DIAG_TEST_SEND;
       }
       break;
-    case PLL_GPS_CONTROL_DIAG_TEST_SEND:
+    case PLL_GPS_DIAG_TEST_SEND:
       pll_gps_control_diag_send(GPS_SCRIPT_ENGINE_SELFTEST, arguments,
-                                PLL_GPS_CONTROL_DIAG_TEST_ACK);
+                                PLL_GPS_DIAG_TEST_ACK);
       break;
-    case PLL_GPS_CONTROL_DIAG_TEST_ACK:
+    case PLL_GPS_DIAG_TEST_ACK:
       if (pll_gps_control_diag_acked()) {
         if (gps_ack_code == PLL_GPS_CONTROL_ACK_OK) {
           selftest.gps = gps.self_test;
@@ -699,22 +675,22 @@ bool gps_diag_sequence(bool same_stage) {
           task_dmessage("Error in DIAG GPS TST ack\r\n");
           selftest.gps = PLL_GPS_CONTROL_SELFTEST_NO_ANSWER;
         }
-        pll.gps_diag_state = PLL_GPS_CONTROL_DIAG_SETTLE;
+        pll.gps_diag_state = PLL_GPS_DIAG_SETTLE;
       }
       break;
-    case PLL_GPS_CONTROL_DIAG_SETTLE:
+    case PLL_GPS_DIAG_SETTLE:
       interval_wait_reading();
-      pll.gps_diag_state = PLL_GPS_CONTROL_DIAG_RUN;
+      pll.gps_diag_state = PLL_GPS_DIAG_RUN;
       break;
-    case PLL_GPS_CONTROL_DIAG_RUN:
+    case PLL_GPS_DIAG_RUN:
       selftest_run(selftest_number);
       selftest_requested = 0;
       gps_diag_complete((int32_t*)&plla_unexpected_count);
       return true;
-    case PLL_GPS_CONTROL_DIAG_RESET_SEND:
+    case PLL_GPS_DIAG_RESET_SEND:
     default:
       pll_gps_control_diag_send(GPS_STEP_LINK_RESET, arguments,
-                                PLL_GPS_CONTROL_DIAG_RESET_ACK);
+                                PLL_GPS_DIAG_RESET_ACK);
       break;
   }
   return false;

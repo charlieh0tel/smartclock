@@ -84,7 +84,7 @@
 0x102c62	label	scpi_language	restart.md	language byte, 0 PFORTH, 1 INSTALL	uint8_t
 #
 # the interval, docs/firmware/interval.md, "In every image"
-0x448fc	function	pll_normal	the firmware's own name, "pll_normal - Error with measurement"; interval.md's averaging routine, which counts readings to ten and stores the mean	the loop's normal stage: averages interval readings, counting them to ten and storing the mean
+0x448fc	function	pll_normal	the firmware's own name, "pll_normal - Error with measurement"; interval.md's averaging routine, which counts readings to ten and stores the mean	the loop's normal stage: averages interval readings, counting them to ten and storing the mean	pll_stage_result pll_normal(bool same_stage)
 0x102538	label	interval_mean	interval.md	mean of ten one-second readings	float
 0x10253c	label	interval_mean_flag	interval.md	the mean's flag	uint8_t
 0x101f9c	label	interval_reading	interval.md	latest one-second reading	interval_reading_fields
@@ -292,7 +292,7 @@
 0x29f60	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
 0x29f94	function	pllc_request_e	structures.md	request_and_wait to pllc_exchange with a pllc_request: the descriptor, index, source and both values through a pointer
 0x29f94	local	request	structures.md	the message it sends pllc_exchange	pllc_request @ -0x1c
-0x46636	function	gpsx_send	structures.md	copies four longs and sends them to gpsx_exchange	uint8_t gpsx_send(int16_t code, uint8_t argument_mode, int32_t *arguments, uint8_t ack_awaited)
+0x46636	function	gpsx_send	structures.md	copies four longs and sends them to gpsx_exchange	uint8_t gpsx_send(int16_t code, uint8_t argument_mode, int32_t *arguments, gps_ack_awaited_kind ack_awaited)
 0x46636	local	request	structures.md	the request it sends gpsx_exchange	gps_request_entry @ -0x1e
 0x3082e	function	record_checksum	structures.md	the sum and its complement of an EEPROM record's bytes after the first two	uint16_t record_checksum(void *record, uint16_t length)
 0x1f53a	function	hdac_set	structures.md	a 6-bit value into one half of an hdac word, written with device1_write; hdac_write leads here
@@ -449,7 +449,7 @@
 0x139e4	function	tcode_checksum	structures.md	the time code's cc, printed %02X and appended
 0x1399a	function	time_valid	structures.md	the time code's v is 0 when it returns nonzero
 0x13a48	function	tfom_code	structures.md	the time code's t, from pll.tfom; given pll.tfom, a float, which it passes on whole (0x13a48)	short tfom_code(uint32_t tfom)
-0x42a18	function	get_ffom	structures.md	the time code's f; pll_rep's "ffom = %1d"
+0x42a18	function	get_ffom	structures.md	the time code's f; pll_rep's "ffom = %1d"	uint32_t get_ffom(frequency_figure_of_merit *ffom)
 0x107ee	function	klok_print_entries	structures.md	"at:", "period:", "function address:", "event class:" for each klok entry
 0x31762	function	log_read	structures.md	formats a log entry, "Log %03d:%04d%02d%02d.%02d:%02d:%02d"	int32_t log_read(int32_t number, char *text, char *heading)
 0x31bba	function	log_page_clear	structures.md	memset of a log page, 0x40 bytes
@@ -482,7 +482,7 @@
 0x31128	function	eeprom_write_byte	structures.md	the wr_eeprom word's: writes a byte, polls until it reads back, retries five times
 0x3281a	function	clear_nv	structures.md	the clear_nv word's
 0x40a64	function	sync_request	structures.md	the clk_synch and sync_imm words': stores a mode and a time and sets two states to 2
-0x45b70	function	pll_mode	screen-format-strings.md, "Mode suffixes"	the status screen's mode accessor, from pll.stage and pll.manual; the HOLDover queries and HOLD:INIT test it; a byte in D0 (0x45bb4)	uint8_t pll_mode(void)
+0x45b70	function	pll_mode	screen-format-strings.md, "Mode suffixes"	the status screen's mode accessor, from pll.stage and pll.manual; the HOLDover queries and HOLD:INIT test it; a byte in D0 (0x45bb4)	pll_screen_mode pll_mode(void)
 0x4c918	function	clear_gps_debug	structures.md	the clr_gps_debug word's: clears gps_counts, gps_last_command and gps_last_program_message
 0x330ee	function	log_count	structures.md	"Log status: %-3d entries"; sets *full when more than 31	int log_count(uint8_t *full)
 0x101f8e	label	log_entry_count	structures.md	log_count returns it	int16_t
@@ -508,7 +508,7 @@
 0x4b9e6	function	gps_count_response	context	counts a GPS response by its kind in gps_counts: successes, rejects, aborts, unknown_sender, unknown_command, busy and the rest	int gps_count_response(char kind, gps_request_entry *request)
 0x46620	function	gps_ack_received	context	returns gps_ack_ready, clearing gps_ack_awaited once it is set; the ack checker 0x46838 polls it
 0x102585	label	gps_ack_ready	context	gpsx_send clears it; pllp_task sets it with gps_ack_code when the GPS task's answer comes back on plla	uint8_t
-0x102586	label	gps_ack_awaited	context	gpsx_send stores its last argument there	uint8_t
+0x102586	label	gps_ack_awaited	context	gpsx_send stores its last argument there	gps_ack_awaited_kind
 0x102540	label	pll_restart_requested	structures.md	diag_pll_restart sets it; pllp_task calls pll_restart and clears it	uint8_t
 0x102541	label	pll_debug_enabled	structures.md	diag_pll_debug sets it; while set, efc_history_update, fine and the other loop routines that test it print their debug messages	uint8_t
 0x102542	label	clock_change_applied	structures.md	clock_record_advance sets it when it applies a pending leap second or offset change and clears the leap settings; pllp_task then calls nv_save(4)	uint8_t
@@ -727,11 +727,11 @@
 0x42bc4	function	toggle_change	the firmware's own name, "pll_scpi: toggle_change() -- new value > max value"	applies a change to a PLL setting that toggles, refusing a value above its maximum
 0x42d02	function	validate_or_doaction	the firmware's own name, "pll_scpi: validate_or_doaction() -- unknown structure type"	checks a PLL SCPI request's value against its setting's descriptor, or carries it out	void validate_or_doaction(char *needs_loop, char *result)
 0x431f4	function	get_setup_vars	the firmware's own name, "pll_scpi: get_setup_vars() -- unknown structure type"	finds the variables behind a PLL SCPI setting, by its descriptor's type	void get_setup_vars(pllc_request *request)
-0x43a90	function	holdover	loop.md's stage; "holdover - Error with measurement"	the loop's holdover stage, steering the oscillator without GPS
-0x43f9a	function	holdover_recovery	loop.md's stage; "holdover recovery - Error with measurement"	the loop's stage that recovers from holdover once GPS returns
-0x4429e	function	startup_pll	loop.md's stage; "startup_pll - Error with measurement"	the loop's start-up stage
-0x451c2	function	coarse	loop.md's power-up step; "coarse - Error with measurement 1"	the power-up step that sets the oscillator's frequency coarsely	uint8_t coarse(void)
-0x4538c	function	fine	loop.md's power-up step and its sub-states; "fine - Error with measurement 1", "fine-sync", "fine-slew"	the power-up step that adjusts the frequency finely, through its sync and slew sub-states
+0x43a90	function	holdover	loop.md's stage; "holdover - Error with measurement"	the loop's holdover stage, steering the oscillator without GPS	pll_stage_result holdover(bool same_stage)
+0x43f9a	function	holdover_recovery	loop.md's stage; "holdover recovery - Error with measurement"	the loop's stage that recovers from holdover once GPS returns	pll_stage_result holdover_recovery(bool same_stage)
+0x4429e	function	startup_pll	loop.md's stage; "startup_pll - Error with measurement"	the loop's start-up stage	pll_stage_result startup_pll(bool same_stage)
+0x451c2	function	coarse	loop.md's power-up step; "coarse - Error with measurement 1"	the power-up step that sets the oscillator's frequency coarsely	pll_stage_result coarse(void)
+0x4538c	function	fine	loop.md's power-up step and its sub-states; "fine - Error with measurement 1", "fine-sync", "fine-slew"	the power-up step that adjusts the frequency finely, through its sync and slew sub-states	pll_stage_result fine(void)
 0x10540	function	clk_do	the firmware's own name, "Clk_do: out of event buffers"	queues an event for the clock task	klok_entry * clk_do(klok_entry *event)
 0x1d6ba	function	drtb_puts	the firmware's own name, "wait_v SIG_SOQ error in _drtb_puts"	writes a string to DUART channel B, waiting for room	int drtb_puts(char *param_1)
 0x1d74a	function	drtb_getc	"wait_v SIG_SIQ error in getc", DUART channel B	reads a character from DUART channel B, waiting for one	uint8_t drtb_getc(void)
@@ -793,7 +793,7 @@
 0x46394	function	leap_event_delete	"Error in deleting old leapsecond event"	deletes the pending leap second event
 0x463c2	function	leap_event_create	"Error in creating leapsecond event"	creates the leap second event
 0x44f5e	function	sync_perform	"Peforming sync"	synchronizes the outputs to GPS time
-0x45bb8	function	pll_powerup_suffix_index	screen-format-strings.md's ladder: the power-up sub-state's suffix index	the power-up sub-state, as the status screen's suffix index
+0x45bb8	function	pll_powerup_suffix_index	screen-format-strings.md's ladder: the power-up sub-state's suffix index	the power-up sub-state, as the status screen's suffix index	pll_powerup_suffix pll_powerup_suffix_index(void)
 0x4a8ea	function	status_screen	"Receiver Status", "[ Outputs Valid ]", "HEALTH MONITOR", "Satellite Status"	prints the receiver status screen; clear 1 clears the terminal first (0x4a908)	void status_screen(status_snapshot_record *snapshot, char clear, write_function *write, printf_function *print)
 0x4a8ea	local	raim_option	read	gps_message_supported's answer for @@Bn, cleared first (0x4a904)	uint8_t @ -0x7e
 0x4a8ea	local	line	read	the line it builds and prints: a mode line, the holdover line, a right-hand column, the health monitor's tests, with a | at 15 (0x4af8e) without Time RAIM	char[80] @ -0x7d
@@ -1118,8 +1118,8 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x30c60	local	block	read	the calibration block it builds and writes	calibration_block @ -0x44
 #
 # the PLL task's routines, loop.md
-0x45e8e	function	powerup	loop.md's power-up stage	the power-up stage: steps its sub-state, pll +3, through start, the oven warm-ups and waiting for GPS, then coarse and fine, setting tfom to 1e-3 and then 2e-6
-0x4397a	function	enter_holdover	loop.md's holdover stage	sets the stage to holdover and the manual flag from fault bit 0, and logs the cause: a code for each fault bit at pll +0x11, the GPS receiver's status for bit 1
+0x45e8e	function	powerup	loop.md's power-up stage	the power-up stage: steps its sub-state, pll +3, through start, the oven warm-ups and waiting for GPS, then coarse and fine, setting tfom to 1e-3 and then 2e-6	pll_stage_result powerup(bool same_stage)
+0x4397a	function	enter_holdover	loop.md's holdover stage	sets the stage to holdover and the manual flag from fault bit 0, and logs the cause: a code for each fault bit at pll +0x11, the GPS receiver's status for bit 1	void enter_holdover(void)
 0x473d2	function	pll_init	structures.md's pll	clears pll, sets its stage invalid, its EFC from the saved value, tfom 1.0 and its defaults
 0x47466	function	pll_restart	context	re-initializes pll, keeping two bytes, reports event /, and starts the power-up stage
 0x43f18	function	clock_check_against_gps	context	compares the clock's date and time with gps.status, and on a second mismatch running sets the clock from GPS and reports event L
@@ -1130,7 +1130,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x43804	function	holdover_ti_reset	context	clears holdover's TI statistics
 0x4381e	function	holdover_ti_add	context	adds a TI reading to holdover's statistics: a sum, a sum weighted by count, the count and the largest magnitude
 0x43916	function	holdover_ti_max	context	the largest TI magnitude holdover has seen, for holdover_limit_exceeded; a float in D0 (0x43916)	float holdover_ti_max(void)
-0x46188	function	pll_check_reference	context	waits for an interval reading, sets fault bits at pll +0x11 (2 no GPS, 4 no reading, 0x10 internal 1PPS dead) and sets the clock from the reference; 1 if all is well, 2 if faulted
+0x46188	function	pll_check_reference	context	waits for an interval reading, sets fault bits at pll +0x11 (2 no GPS, 4 no reading, 0x10 internal 1PPS dead) and sets the clock from the reference; 1 if all is well, 2 if faulted	pll_stage_result pll_check_reference(bool same_stage)
 0x44e8e	function	fine_sync_adjust	context	for a TI beyond 1e-7 requests a sync of one to three steps of 100 ns, and returns the steps, 4 for beyond 3e-7; fine stores it as pll.fine_index
 0x46290	function	clock_set_from_reference	context	takes the seconds from an FPGA count and the uptime, clamped to 0 to 59, adds them to the clock's time and sets it
 0x4173e	function	aging_fit_collect	context	if the curv task has signaled 0x100, copies its fit's results into pll; efc_history_update calls it first
@@ -1241,7 +1241,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x49612	function	satellite_track_class	context	a track record's class, 1 to 3	uint8_t satellite_track_class(oncore_visible_satellite *satellite)
 0x497c8	function	satellite_status_list	context	for status_snapshot: the screen's list of satellites, built and sorted
 0x4a636	function	status_snapshot	context	gathers the loop's stage, mode and suffix indexes, the TI, TFOM, FFOM, holdover, time zone, date and satellites into a record, under a raised interrupt mask	void status_snapshot(status_snapshot_record *snapshot)
-0x45c18	function	recovery_suffix_index	screen-format-strings.md, "Mode suffixes"	in holdover recovery's first state: 1 fine freq adj, 2 phase alignment; pll_powerup_suffix_index's companion
+0x45c18	function	recovery_suffix_index	screen-format-strings.md, "Mode suffixes"	in holdover recovery's first state: 1 fine freq adj, 2 phase alignment; pll_powerup_suffix_index's companion	pll_recovery_suffix recovery_suffix_index(void)
 0x45c48	function	holdover_waiting_reason	context	for :HOLDover:WAITing?: which fault bit holds the loop in holdover, 0x10, 2 or 8
 0x4299c	function	kenneth_present_get	undocumented.md, ":KENneth"	for :KENneth:PRESent?: in holdover or its recovery, pll.tfom, resolution 1e-7
 0x429c6	function	kenneth_predicted_get	undocumented.md, ":KENneth"	for :KENneth:PREDicted?: from startup PLL on, the float at pll +0x3a, resolution 1e-7, and whether in holdover

@@ -1389,6 +1389,13 @@ view cannot drift apart.  The library, bottom up:
      `pll_aging.c`, `pll_gps_control.c`), all agreeing, what its files
      share in `pll.h`; `fine` waits on a label for its readings at
      `0x10207c`, `enter_holdover` on a `void` prototype.
+     Then the loop's values where its records hold them: a stage's
+     result (`pll_stage_result`) and its `bool same_stage`, each `pll`
+     state field's own enum (`pll_coarse_state`, `pll_startup_state`,
+     ...), the screen's mode and suffixes, the FFOM by 097-z3801-01's
+     table, the aging fit's mode and the GPS acknowledgment awaited, in
+     `smartclock.h` and typed there, not as enums inside the functions
+     that write them.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

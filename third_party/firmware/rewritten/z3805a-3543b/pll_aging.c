@@ -10,15 +10,6 @@
  * float_subtract_reversed(a, b) b - a, and double_compare(a, b) is
  * negative when b < a. */
 
-/* aging_curve.mode, which fit aging_fit made ("mode= %d"). */
-enum {
-  PLL_AGING_MODE_CONSTANT = 0, /* fewer than 3 entries */
-  PLL_AGING_MODE_FEW = 1,      /* a line through fewer than 10 */
-  PLL_AGING_MODE_LOG = 2,      /* a log curve */
-  PLL_AGING_MODE_LINE = 3,     /* a line */
-  PLL_AGING_MODE_HALVES = 4,   /* a line from a full history's halves */
-};
-
 /* Samples, one a second, to an entry; an entry's time is the uptime in
  * these. */
 static const uint16_t PLL_AGING_SAMPLES = 2700;
@@ -663,7 +654,7 @@ void fit_quality(aging_curve_state* curve) {
                      SECONDS_PER_DAY),
       PLL_AGING_ENTRIES_PER_DAY);
 
-  if (curve->mode == PLL_AGING_MODE_LOG) {
+  if (curve->mode == AGING_FIT_LOG) {
     double noise = sqrt(float_to_double(float_divide_reversed(
         float_add(integer_to_float(steps), HALF_DEGREE), variation)));
     double rate = double_divide_reversed(
@@ -675,8 +666,7 @@ void fit_quality(aging_curve_state* curve) {
 
     aging_term = double_to_float(double_divide_reversed(growth, rate));
     span_weight = LOG_SPAN_WEIGHT;
-  } else if (curve->mode == PLL_AGING_MODE_LINE ||
-             curve->mode == PLL_AGING_MODE_HALVES) {
+  } else if (curve->mode == AGING_FIT_LINE || curve->mode == AGING_FIT_HALVES) {
     double noise = sqrt(float_to_double(float_divide_reversed(
         float_add(integer_to_float(steps), HALF_DEGREE), variation)));
     double rate = double_divide_reversed(
@@ -718,7 +708,7 @@ static uint32_t pll_aging_fit_best(uint8_t minimum_weight,
   uint32_t line_failed = fit_linear(&aging_curve);
   uint32_t failed = fit_logarithmic(&candidate) | line_failed;
 
-  aging_curve.mode = PLL_AGING_MODE_LINE;
+  aging_curve.mode = AGING_FIT_LINE;
   if (float_compare(float_multiply(aging_curve.rms, LINE_ADVANTAGE),
                     candidate.rms) > 0 ||
       well_weighted < ENOUGH_FOR_LINE) {
@@ -726,7 +716,7 @@ static uint32_t pll_aging_fit_best(uint8_t minimum_weight,
     aging_curve.b = candidate.b;
     aging_curve.c = candidate.c;
     aging_curve.rms = candidate.rms;
-    aging_curve.mode = PLL_AGING_MODE_LOG;
+    aging_curve.mode = AGING_FIT_LOG;
   }
   fit_quality(&aging_curve);
   return failed;
@@ -762,7 +752,7 @@ void aging_fit(void) {
       aging_curve.newest_time > FOUR_DAYS) {
     aging_curve.minimum_weight = PLL_AGING_WEIGHT_MOST;
     failed = fit_linear_halves(&aging_curve);
-    aging_curve.mode = PLL_AGING_MODE_HALVES;
+    aging_curve.mode = AGING_FIT_HALVES;
     fit_quality(&aging_curve);
   } else if (aging_curve.oldest_time <= FOUR_DAYS ||
              well_weighted < FEW_WELL_WEIGHTED) {
@@ -778,13 +768,13 @@ void aging_fit(void) {
         failed = fit_linear(&aging_curve);
       }
       aging_curve.mode =
-          entries < FEW_ENTRIES ? PLL_AGING_MODE_CONSTANT : PLL_AGING_MODE_FEW;
+          entries < FEW_ENTRIES ? AGING_FIT_CONSTANT : AGING_FIT_FEW;
       aging_curve.predicted_uncertainty = PLL_AGING_UNFITTED_UNCERTAINTY;
     }
   } else {
     aging_curve.minimum_weight = PLL_AGING_WEIGHT_MOST;
     failed = fit_linear(&aging_curve);
-    aging_curve.mode = PLL_AGING_MODE_LINE;
+    aging_curve.mode = AGING_FIT_LINE;
     fit_quality(&aging_curve);
   }
   if (pll_debug_enabled == 0) {

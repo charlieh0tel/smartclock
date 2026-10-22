@@ -1384,6 +1384,12 @@ view cannot drift apart.  The library, bottom up:
   renaming them is a names-file change, through the pipeline, of each
   routine and its callers.
 
+  Also later: the SCPI command table as C, generated from the image,
+  each subtree's nodes in its tree's file beside their handlers; and
+  the pForth words, which are hand-written assembly, not C (one
+  branches into another's body; A6 is the data stack), as assembly
+  files beside the hand-written C rather than the export's listing.
+
 - **Editing notes from the web view**, through the daemon socket.
   Needs POST bodies in `smartclock-http`, `/api/notes` returning each
   note's `id`, and edit requests keyed by it.

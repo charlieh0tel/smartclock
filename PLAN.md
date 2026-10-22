@@ -1517,6 +1517,22 @@ view cannot drift apart.  The library, bottom up:
   decompiled functions that are wrong in ways only running them shows.
   A whole image is proven only on a unit or a model of the board.
 
+  Decided 2026-10-22: the SCPI command tree becomes C data, every node,
+  child list, keyword pair, handler entry, parameter, response item and
+  choice list, generated, not written by hand, by `smartclock-cli
+  dump-scpi`, which already finds each image's tree by its shape: a
+  `--c` output for the C and a `--names` output of label and type rows
+  for Ghidra's Setup, records named by their command path
+  (`scpi_node_SYSTem_LANGuage`).  It is for every image, not only this
+  one, so it refuses a record it cannot check rather than guess, and
+  `cargo test` pins its output for each image as it pins `models.md`.
+  The firmware C reads the generated tree in place of ROM's (the
+  exporter drops the `.set` of a global the C defines), and the harness
+  maps an address in the C's tree to its twin in ROM's, so that the
+  parser's functions, which return nodes and lists, are proven on it.
+  Costs: thousands of generated lines in `rewritten/`; the harness's
+  address map; the records `dump-scpi` does not yet read.
+
   Left for a later pass: the firmware routines' names do not carry
   their file's prefix as the hand-written helpers do (`ti.c`'s
   `counter_arm` and `interpolator_calibrate` beside `ti_measure_both`);

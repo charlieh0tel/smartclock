@@ -41659,6 +41659,7 @@ uint8_t internal_pps_check(void)
 #endif
 
 /* 000247d4 */
+#if 0 /* the decompiler's reading; rewritten in monitors.c */
 
 /* root_task starts hmon here
    structures.md */
@@ -41776,6 +41777,7 @@ void hmon_task(void)
   } while( true );
 }
 
+#endif
 
 /* 00024976 */
 #if 0 /* the decompiler's reading; rewritten in ti.c */
@@ -59045,6 +59047,7 @@ uint8_t interpolator_calibrate(interpolator_calibration *calibration)
 #endif
 
 /* 0004047c */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* sets both DACs, measures both ends of the interpolator against [1, 25] and [201, 225], and
    retries with the saved DACs if they fail */
@@ -59096,6 +59099,7 @@ uint8_t interpolator_verify(interpolator_calibration *calibration)
   return 1;
 }
 
+#endif
 
 /* 00040556 */
 #if 0 /* the decompiler's reading; rewritten in ti.c */

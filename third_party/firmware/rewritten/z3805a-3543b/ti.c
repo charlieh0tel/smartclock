@@ -477,6 +477,40 @@ uint8_t interpolator_calibrate(interpolator_calibration* calibration) {
   return calibrated;
 }
 
+/* Whether both references read in their ranges. */
+static bool ti_readings_in_range(const interpolator_calibration* calibration) {
+  return ti_low_in_range(calibration->reading_low) &&
+         ti_high_in_range(calibration->reading_high);
+}
+
+/* Sets both DACs and checks both references read in their ranges,
+ * again with the last good DACs if not; 1 if so, 0 for a calibration
+ * never initialized (0x4047c).  On a failure it returns D2's low byte as
+ * its caller left it (docs/firmware/quirks.md). */
+uint8_t interpolator_verify(interpolator_calibration* calibration) {
+  const uint8_t caller_d2 = CPU_CALLERS_REGISTER(uint32_t, "d2");
+
+  if (calibration->initialized == 0) {
+    return 0;
+  }
+  calibration->calibrated = 0;
+  interpolator_prepare();
+  ti_measure_both(calibration);
+  if (!ti_readings_in_range(calibration)) {
+    if (calibration->result_valid == 0) {
+      return caller_d2;
+    }
+    calibration->hdac_2 = calibration->result_hdac_2;
+    calibration->hdac_3 = calibration->result_hdac_3;
+    ti_measure_both(calibration);
+    if (!ti_readings_in_range(calibration)) {
+      return caller_d2;
+    }
+  }
+  calibration->calibrated = 1;
+  return 1;
+}
+
 /* Runs interpolator_calibrate, up to 20 times, when the configuration
  * asks, and keeps the low reading and the spread as the reading's
  * offset and scale (0x405bc). */

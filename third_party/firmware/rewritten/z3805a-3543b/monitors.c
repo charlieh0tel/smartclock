@@ -338,6 +338,10 @@ void hmon_check_efc(void) {
   }
 }
 
+/* The reports, after a full one, for which the health monitor services
+ * the watchdog. */
+static const int16_t MONITORS_WATCHDOG_GRACE = 8;
+
 /* Checks the tasks' watchdog counts, printing them if one is short,
  * and services the watchdog while the grace lasts; then clears them
  * (0x2437a). */
@@ -348,12 +352,11 @@ void watchdog_report(void) {
    * the last report is enough, and for eight reports after. */
   static const uint8_t WATCHDOG_GPS_LEAST = 21;
   static const uint8_t WATCHDOG_MONITOR_LEAST = 51;
-  static const int16_t WATCHDOG_GRACE = 8;
 
   if (watchdog_clock != 0 && watchdog_gps >= WATCHDOG_GPS_LEAST &&
       watchdog_monitor >= WATCHDOG_MONITOR_LEAST && watchdog_spool != 0 &&
       watchdog_pll != 0) {
-    watchdog_countdown = WATCHDOG_GRACE;
+    watchdog_countdown = MONITORS_WATCHDOG_GRACE;
   } else {
     debug_printf(
         "watchdog: clock: %4d gps: %4d pll: %4d mon: %4d spool %4d\r\n",
@@ -519,4 +522,116 @@ void pps_monitors_reset(void) {
   gps_pps_monitor_reset();
   internal_pps_monitor_reset();
   outer_oven_enabled = 0;
+}
+
+/* Counts down a period of ticks: true, and the count started again, as
+ * it reaches the period. */
+static bool monitors_period_up(uint16_t* count, uint16_t period) {
+  (*count)++;
+  if (*count < period) {
+    return false;
+  }
+  *count = 0;
+  return true;
+}
+
+/* The health monitor's task, which root_task starts: on each event the
+ * clock tick's interrupt signals, every tenth tick (user_66, 0x11f82),
+ * it writes the EFC, counts its pass for the watchdog, toggles the
+ * heartbeat LED and reports the watchdog, checks both 1PPS, reporting
+ * each one's failure once it has lasted and its end, and the supplies
+ * and the EFC (0x247d4).  Both 1PPS tests read one result, D4 in the
+ * image: the last check's of either, and before any its caller's
+ * (docs/firmware/quirks.md). */
+void hmon_task(void) {
+  static const uint32_t TICK_EVENT = 1;
+  static const uint16_t HEARTBEAT_TICKS = 112;
+  static const uint16_t PPS_CHECK_TICKS = 204;
+  /* Checks a dead 1PPS lasts before its failure is reported. */
+  static const uint16_t GPS_PPS_FAILED_CHECKS = 513;
+  static const uint16_t INTERNAL_PPS_FAILED_CHECKS = 717;
+  static const uint16_t SUPPLY_TICKS = 10;
+  static const uint16_t EFC_TICKS = 1024;
+  uint8_t checked = CPU_CALLERS_REGISTER(uint32_t, "d4");
+  bool heartbeat_on = false;
+  uint16_t heartbeat_ticks = 0;
+  uint16_t gps_check_ticks = 0;
+  uint16_t internal_check_ticks = 0;
+  uint16_t supply_ticks = 0;
+  uint16_t efc_ticks = 0;
+  uint16_t gps_dead_checks = 0;
+  uint16_t internal_dead_checks = 0;
+  bool gps_failure = false;
+  bool internal_failure = false;
+
+  watchdog_countdown = MONITORS_WATCHDOG_GRACE;
+  monitors_reset();
+  efc_clamp_reset();
+  psos_get_v(TICK_EVENT, 0, NULL);
+  for (;;) {
+    uint32_t error = psos_wait_v(TICK_EVENT, 0, 0, NULL);
+
+    efc_write_dithered();
+    if ((uint8_t)error == 0) {
+      watchdog_monitor++;
+    }
+    if (monitors_period_up(&heartbeat_ticks, HEARTBEAT_TICKS)) {
+      watchdog_report();
+      heartbeat_on = !heartbeat_on;
+      if (heartbeat_on) {
+        duart_output_bits(BOARD_LED_HEARTBEAT, 0);
+      } else {
+        duart_output_bits(0, BOARD_LED_HEARTBEAT);
+      }
+    }
+    if (gps.pps_check_disabled != 0) {
+      gps_pps_unconfirmed = 1;
+      gps_pps_skipped_checks = 0;
+      gps_pps_dead = 1;
+    }
+    if (monitors_period_up(&gps_check_ticks, PPS_CHECK_TICKS)) {
+      checked = gps_pps_check();
+    }
+    if (checked != 0) {
+      if (gps_pps_dead == 0 || gps.reference_qualified == 0) {
+        gps_dead_checks = 0;
+        if (gps_failure) {
+          status_happening(STATUS_GPS_PPS_FAILURE_CLEARED);
+          gps_failure = false;
+        }
+      } else if (gps_dead_checks < GPS_PPS_FAILED_CHECKS) {
+        gps_dead_checks++;
+      } else if (gps_pps_unconfirmed == 0 && !gps_failure) {
+        status_happening(STATUS_GPS_PPS_FAILURE_SET);
+        gps_failure = true;
+      }
+    }
+    if (monitors_period_up(&internal_check_ticks, PPS_CHECK_TICKS)) {
+      checked = internal_pps_check();
+    }
+    if (checked != 0) {
+      if (internal_pps_dead == 0) {
+        internal_dead_checks = 0;
+        if (internal_failure) {
+          status_happening(STATUS_INTERNAL_REFERENCE_CLEARED);
+          internal_failure = false;
+        }
+      } else if (internal_dead_checks < INTERNAL_PPS_FAILED_CHECKS) {
+        internal_dead_checks++;
+      } else if (!internal_failure) {
+        status_happening(STATUS_INTERNAL_REFERENCE_SET);
+        internal_failure = true;
+      }
+    }
+    if (supply_ticks == 0) {
+      hmon_check_supplies();
+      supply_ticks = SUPPLY_TICKS;
+    }
+    supply_ticks--;
+    if (efc_ticks == 0) {
+      hmon_check_efc();
+      efc_ticks = EFC_TICKS;
+    }
+    efc_ticks--;
+  }
 }

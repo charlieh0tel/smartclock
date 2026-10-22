@@ -37,6 +37,9 @@ routine and the address that shows it.
   `0x1643e`).
 - **`interpolator_verify`** returns, on its failure paths, D2 as its
   caller left it.
+- **`hmon_task`** tests both 1PPS checks' results through one register,
+  D4: each tick, whichever check last ran's, both after either, and
+  until the first, 204 ticks in, its caller's.
 - **`finish_scpi_cmd`** passes each changed hook a byte of its caller's
   D3, which it never sets (`0x430b6`, `0x43114`, `0x4315c`).
 - **The six `:STATus` enable and transition setters** take D2's low

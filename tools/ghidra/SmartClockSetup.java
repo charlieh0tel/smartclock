@@ -38,7 +38,8 @@
 //
 // After the names, the pForth kernel's word headers are typed, from the
 // one the names file labels forth_header_user by link to NULL, and each
-// labeled forth_header_WORD, its word spelled as the pforth= names are.
+// labeled forth_header_WORD, its word spelled as the pforth= names are,
+// and its name forth_header_WORD_name.
 //
 // Sources: MC68331 User's Manual (third_party/motorola/MC68331UM.pdf)
 // Tables D-2 (GPT), D-3 (SIM), D-13 (QSM) and 5-2 (vectors); the chip
@@ -282,12 +283,13 @@ public class SmartClockSetup extends GhidraScript {
 	 * names file labels, the type smartclock.h gives a header, its size
 	 * before the name, and the label each header gets, forth_header_WORD:
 	 * a prefix, so that no header takes a routine's name (forth_create_header
-	 * is one).
+	 * is one); its name's label adds a suffix, forth_header_WORD_name.
 	 */
 	private static final String PFORTH_HEAD = "forth_header_user";
 	private static final String PFORTH_HEADER_TYPE = "pforth_word_header";
 	private static final int PFORTH_HEADER_SIZE = 12;
 	private static final String PFORTH_HEADER_PREFIX = "forth_header_";
+	private static final String PFORTH_NAME_SUFFIX = "_name";
 	/** The name's NUL is padded to an even address with this byte. */
 	private static final int PFORTH_NAME_PAD = 0xff;
 	/**
@@ -580,7 +582,8 @@ public class SmartClockSetup extends GhidraScript {
 	 * Types the pForth kernel's word headers: from the one labeled
 	 * PFORTH_HEAD, by link to NULL, each a pforth_word_header and its name
 	 * a char[] of the NUL and the padding, labeled forth_header_WORD with
-	 * the word spelled as the pforth= names spell it.  A header that
+	 * the word spelled as the pforth= names spell it, and its name
+	 * forth_header_WORD_name.  A header that
 	 * overlaps a function, or a link that leaves initialized memory, odd
 	 * or back to a header already typed, is reported and not typed; the
 	 * walk goes on past an overlap, but stops at a bad link.
@@ -627,7 +630,9 @@ public class SmartClockSetup extends GhidraScript {
 				applyDataType(header, PFORTH_HEADER_TYPE);
 				applyDataType(name, "char[" + nameSize + "]");
 				String word = new String(text, StandardCharsets.ISO_8859_1);
-				label(header, PFORTH_HEADER_PREFIX + spell(word), counts);
+				String headerName = PFORTH_HEADER_PREFIX + spell(word);
+				label(header, headerName, counts);
+				label(name, headerName + PFORTH_NAME_SUFFIX, counts);
 				typed++;
 			}
 			long link = getInt(header) & 0xffffffffL;

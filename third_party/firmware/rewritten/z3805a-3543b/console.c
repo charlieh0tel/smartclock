@@ -139,7 +139,8 @@ uint32_t pforth_define_word(char* name, uint32_t code, int32_t argument_count,
 }
 
 /* The console's words ps, mem_rep and s_rep: the kernel's process, memory
- * and stack reports (0x12f86, 0x12f92, 0x12f9e). */
+ * and stack reports (0x12f86, 0x12f92, 0x12f9e).  The console passes
+ * SCPI's source, 0, as the image does (clr.b -(sp)). */
 void ps_word(void) { os_process_report(REQUEST_SOURCE_SCPI); }
 
 void mem_rep_word(void) { os_memory_report(REQUEST_SOURCE_SCPI); }

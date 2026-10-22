@@ -631,7 +631,7 @@
 0x1011c6	label	gps_command_message	structures.md	gps_request_build's message, which gpsm_task sends with drta_send_message and turns into gps_last_program_message	uint8_t[80]
 0x20b0c	function	qspi_send	context	qspi_transfer without the copy back from receive RAM	void qspi_send(qspi_device device, uint16_t *transmit, uint16_t count)
 0x4f0d6	function	satellite_id_valid	context	kind 0 accepts 1 to 32, kind 1 33 to 37, the VP reference's pseudolites, kind 2 either	int satellite_id_valid(satellite_kind kind, uint8_t id)
-0x4f8fc	function	gps_message_supported	context	@@Bn, message 0x28, needs the receiver ID and its Time RAIM option, gps.raim_option; any other is supported
+0x4f8fc	function	gps_message_supported	context	@@Bn, message 0x28, needs the receiver ID and its Time RAIM option, gps.raim_option; any other is supported	uint32_t gps_message_supported(gps_request_code_word code, uint8_t *supported)
 0x4f8b6	function	gps_parse_options	context	sets gps.raim_option when the receiver ID's "OPTIONS LIST " has an I
 0x49b88	function	format_si	context	formats a double with an SI prefix from "pnum kMG" by its exponent / 3; "ANT DLY %s"; the double at SP+4 goes to scpi_real_to_text with the resolution exponent at +0xc and the significant digits at +0xe, 0 for 15 (0x49b8c to 0x49bb8); unit appended (0x49cf2); text at +0x14 (0x49b90)	void format_si(double value, char resolution, uint8_t digits, char *unit, char *text)
 0x101fae	label	counter_configuration	context	the configuration counter_calibrate, counter_arm and counter_read are given: fconf_regs' four values at +0, the calibration double at +4, the interpolator's offset and scale at +0x18 and +0x1c	counter_configuration_fields
@@ -1043,7 +1043,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2602e	function	scpi_parse_double	docs/scpi/README.md, read	the suffix, then a double within 9.9e37, else -11	int scpi_parse_double(scpi_number *number, void *param_2, double *value, scpi_unit *units)
 0x25d8c	function	scpi_parse_boolean	docs/scpi/README.md, read	ON as 1, OFF as 0	uint32_t scpi_parse_boolean(int16_t *token, void *unused, uint16_t *value)
 0x25de0	function	scpi_parse_boolean_number	docs/scpi/README.md, read	a number as a boolean by scpi_number_to_boolean; -9 with a suffix	int scpi_parse_boolean_number(scpi_number *number, void *param_2, uint16_t *value, void *param_4)
-0x25e42	function	scpi_parse_choice	docs/scpi/README.md, read	the index of the keyword in the node's list, or the value mapped to it; -28 with no list, -27 for no match	uint32_t scpi_parse_choice(int16_t *token, void *unused, int16_t *value, scpi_choices *choices)
+0x25e42	function	scpi_parse_choice	docs/scpi/README.md, read	the index of the keyword in the node's list, or the value mapped to it; -28 with no list, -27 for no match	uint32_t scpi_parse_choice(scpi_keyword *token, void *unused, int16_t *value, scpi_choices *choices)
 0x25d4a	function	scpi_parse_text	docs/scpi/README.md, read	the string's text, -21 if it holds a NUL; the string parameters' converter	uint32_t scpi_parse_text(scpi_token_string *token, void *unused, char **value)
 0x25d70	function	scpi_parse_string	docs/scpi/README.md, read	the string's pointer and length	uint32_t scpi_parse_string(uint16_t *token, void *unused, uint32_t *value)
 0x27ae4	function	scpi_apply_suffix	docs/scpi/README.md, read	matches the token's units suffix against the node's table, setting its scale and unit; -9 if none is allowed, -31 if unknown	int scpi_apply_suffix(scpi_number *number, scpi_unit *units)
@@ -1213,14 +1213,14 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4bb9a	function	request_ring_empty	context	1 if the request ring is empty
 0x4bbb0	function	request_ring_full	context	1 if the request ring is full
 0x4bbd6	function	request_ring_contains	context	1 if a request with the ID is waiting in the ring
-0x4bd2c	function	gps_request_post	gps.md, "Requests"	builds a request, its kind, index and arguments, and sends it to the GPS task's exchange	bool gps_request_post(gps_request_sender sender, int16_t code, int32_t *arguments, uint8_t sent)
+0x4bd2c	function	gps_request_post	gps.md, "Requests"	builds a request, its kind, index and arguments, and sends it to the GPS task's exchange	bool gps_request_post(gps_request_sender sender, gps_request_code_word code, int32_t *arguments, uint8_t sent)
 0x4bd2c	local	request	structures.md	the request it sends gpsx_exchange	gps_request_entry @ -0x1e
 0x4bc58	function	request_kind_valid	context	1 for request kinds 1 to 4	uint32_t request_kind_valid(gps_request_sender sender)
-0x4be04	function	gps_script_lookup	context	a script index from 0x47 on to its script, the first also resetting gps
-0x4bdba	function	gps_request_class	context	a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3 otherwise	gps_code_class gps_request_class(int16_t code, gps_argument_mode argument_mode)
+0x4be04	function	gps_script_lookup	context	a script index from 0x47 on to its script, the first also resetting gps	gps_script_step ** gps_script_lookup(gps_request_code_word code)
+0x4bdba	function	gps_request_class	context	a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3 otherwise	gps_code_class gps_request_class(gps_request_code_word code, gps_argument_mode argument_mode)
 0x4bc74	function	gps_request_queue	context	queues a new request: the step index 0x45 flushes the ring, others are queued unless one is waiting already	void gps_request_queue(char param_1, gps_request_entry *request, gps_request_entry *param_3)
 0x4f932	function	gps_request_build	context	builds a request's text: @@, its ID, then each argument through the message's encoders	int16_t gps_request_build(int16_t message, gps_argument_mode mode, int32_t *arguments, char *out)
-0x4faa2	function	gps_response_decode	context	runs a response's decoders from the table at 0x4feee, with preemption off, and hands @@Ea's time to status_snapshot_update	char *gps_response_decode(int16_t message, char *response)
+0x4faa2	function	gps_response_decode	context	runs a response's decoders from the table at 0x4feee, with preemption off, and hands @@Ea's time to status_snapshot_update	char *gps_response_decode(gps_request_code_word message, char *response)
 0x4b7ac	function	gps_response_lookup	context	a response's two-character ID to its index among 49, counting unknown_response	uint32_t gps_response_lookup(char first, char second, int16_t *length, int16_t *index)
 0x4b9a6	function	gps_response_timed_out	context	1 once more time has passed than the message's timeout
 0x4f8a0	function	oncore_checksum	context	the XOR of a message's bytes
@@ -1690,6 +1690,16 @@ installer::0x1005d2	function	installer_print_exception	context	the installer's p
 installer::0x1005f8	call	installer_printf_polled	read	the exception's name, installer_exception_name's result	void installer_printf_polled(char *format, char *name)
 installer::0x100626	call	installer_printf_polled	read	the exception's address, the long at the frame's +0x10	void installer_printf_polled(char *format, uint32_t address)
 installer::0x100658	function	installer_exception_name	context	the installer's exception_name	char * installer_exception_name(uint16_t vector)
+installer::0x100686	function	installer_m68000_bus_error	context	the installer's m68000_bus_error, byte for byte but its branch, to installer_default_exception (0x1005b4); no vector table or call names it		convention=exception; confidence=read; family=exception
+installer::0x1006a0	function	installer_m68000_address_error	context	the installer's m68000_address_error, byte for byte but its branch, to installer_default_exception (0x1005b4); no vector table or call names it		convention=exception; confidence=read; family=exception
+installer::0x1006ba	function	installer_m68000_illegal_instruction	context	the installer's m68000_illegal_instruction, byte for byte but its branch, to installer_default_exception (0x1005b4); no vector table or call names it		convention=exception; confidence=read; family=exception
+installer::0x1006d2	function	installer_m68000_zero_division	context	the installer's m68000_zero_division, byte for byte but its branch, to installer_default_exception (0x1005b4); no vector table or call names it		convention=exception; confidence=read; family=exception
+installer::0x1006ea	function	installer_m68000_chk	context	the installer's m68000_chk, byte for byte but its branch, to installer_default_exception (0x1005b4); no vector table or call names it		convention=exception; confidence=read; family=exception
+installer::0x100702	function	installer_m68000_trapcc	context	the installer's m68000_trapcc, byte for byte but its branch, to installer_default_exception (0x1005b4); no vector table or call names it		convention=exception; confidence=read; family=exception
+installer::0x10071a	function	installer_m68000_privilege_violation	context	the installer's m68000_privilege_violation, byte for byte but its branch, to installer_default_exception (0x1005b4); no vector table or call names it		convention=exception; confidence=read; family=exception
+installer::0x100732	function	installer_m68000_trace	context	the installer's m68000_trace, byte for byte but its branch, to installer_default_exception (0x1005b4); no vector table or call names it		convention=exception; confidence=read; family=exception
+installer::0x10074a	function	installer_m68000_line_a	context	the installer's m68000_line_a, byte for byte but its branch, to installer_default_exception (0x1005b4); no vector table or call names it		convention=exception; confidence=read; family=exception
+installer::0x100762	function	installer_m68000_line_f	context	the installer's m68000_line_f, byte for byte but its branch, to installer_default_exception (0x1005b4); no vector table or call names it		convention=exception; confidence=read; family=exception
 installer::0x100bb2	function	installer_periodic_interrupt	context	the periodic interrupt, as primary_user_66 without its counters: announces the tick with service 29, services the watchdog and returns through trap #5		convention=exception; confidence=read; family=exception
 installer::0x100bd2	function	installer_periodic_interrupt_enable	context	the installer's periodic_interrupt_enable	void installer_periodic_interrupt_enable(char enable)
 installer::0x100bf4	function	installer_qsm_init	context	the installer's qsm_init
@@ -2252,7 +2262,6 @@ installer::0x10aaa6	local	output	structures.md	installer_vsprintf's record for s
 0x20f18	label	fpga_bitstream	outputs.md	the FPGA's configuration, an XC3000-family bitstream, ff 20 07 86 on; fpga_configurations' one entry, to 0x21e2c	uint8_t[3860]
 0x21e36	label	fpga_readback_mask_header	outputs.md	the second 3860-byte block's 40-bit header, ff 20 07 86 ef; fpga_verify_chip reads the block from fpga_readback_mask, 5 bytes on	uint8_t[5]
 0x1ad0e	label	forth_header_user	structures.md	the header of the kernel's latest word, user, which links the other 153 down to 0x1a296; pforth_dictionary_init stores it in pforth_latest_word and user pushes it	pforth_word_header
-0x1ad1a	label	forth_header_user_name	structures.md	"user", the name after forth_header_user, padded with 0xff	char[6]
 0x1c8ac	label	diag_words	structures.md	the diagnostic words diag_words_define defines, 85 and an entry of zeros, its NULL code ending them	diag_word_entry[86]
 0x195f6	label	forth_until_tag	console.md	"\"until\"\r\n": until pushes it for forth_check_pairs (0x19600)	char[10]
 0x11b59	label	exception_newline	read	"\r\n", which print_exception prints first (0x119b0)	char[3]

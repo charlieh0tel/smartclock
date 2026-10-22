@@ -527,7 +527,7 @@ static uint8_t* gps_oncore_decode(const oncore_decoder* decoder,
 /* Runs a response's decoders over it, past its "@@" and ID, with
  * preemption off, and gives @@Ba's time to status_snapshot_update; the
  * cursor past what they read (0x4faa2). */
-char* gps_response_decode(int16_t message, char* response) {
+char* gps_response_decode(gps_request_code_word message, char* response) {
   static const uint8_t DECODERS = sizeof oncore_messages[0].decoders /
                                   sizeof oncore_messages[0].decoders[0];
   const oncore_message_entry* entry = &oncore_messages[message];

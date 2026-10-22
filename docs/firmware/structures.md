@@ -595,7 +595,10 @@ them, nor does any call, in this image or any other here: the CPU32
 pushes its own format word, and the primary table sends vectors 2 to
 11 straight to `0x11924`.  The same ten follow each image's
 common entry (the Z3816A 4001 at `0x21b20`, to `0x219ec`), and the
-installer's copies follow `installer_exception_name` (`0x100686` on).
+installer's copies, `installer_m68000_bus_error` to
+`installer_m68000_line_f`, follow `installer_exception_name`
+(`0x100686` to `0x10077a`), byte for byte but their branches, to
+`installer_default_exception` (`0x1005b4`).
 
 **The clock and the log.**  The `klok` task's entries (`klok_entry`,
 `0x1a` bytes) are what `print_clk_list` prints (`klok_print_entries`,
@@ -1449,7 +1452,11 @@ copies the request's code and a byte into `code` and `argument_mode`
 and its four arguments into `arguments`, and runs that script
 (`code` is a `gps_request_code` in a signed word,
 `gps_request_code_word`, which the task reads with `move.w` and
-compares signed, `0x4c1c6` to `0x4c1d2`); for
+compares signed, `0x4c1c6` to `0x4c1d2`; so is the request's own
+code, `gps_request_entry`'s `+0x0a`, which `gps_request_class`
+compares signed and `gps_script_lookup` sign-extends, the running
+command's `message` at `+0x1e`, and the code `gps_request_post`,
+`gps_message_supported` and `gps_response_decode` take); for
 class 1, a script, it copies only the arguments.  A step whose
 `argument_mode` is 2 takes its arguments from `gps_request_step`'s,
 from the index in its own first argument.  `raim_request_arguments`
@@ -1790,7 +1797,8 @@ and `forth_user` (`0x1ad20`), which pushes the latest,
 null link.  `SmartClockSetup.java` walks the links from
 `forth_header_user` after the names and types each header and its name,
 labeling it `forth_header_WORD`, the word spelled as the `pforth=`
-names spell it (`forth_over_header` at `0x1a296`); it refuses a header
+names spell it (`forth_header_over` at `0x1a296`), and its name
+`forth_header_WORD_name`; it refuses a header
 that overlaps a function.  Each header's code is the routine the
 word list (`docs/firmware/pforth/z3805a-3543b.txt`) gives its word.  The diagnostic words are a table instead, `diag_words`
 (`0x1c8ac`, `diag_word_entry`, `0x26` bytes): the code, a 26-byte

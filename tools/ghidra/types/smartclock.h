@@ -989,7 +989,14 @@ typedef enum __attribute__((packed)) gps_argument_mode {
 /* gps_request_code_word: a gps_request_code in a word, gps_script_step's
  * code and its shorter forms', which gpsm_task reads with move.w and
  * compares signed (0x4c1c6 to 0x4c1d2) and fills from the request's
- * word (0x4c0d4).  Its values are gps_request_code's; its one name only
+ * word (0x4c0d4); gps_request_entry's code, which gpsm_task gives
+ * gps_request_class (0x4bfd4, 0x4c0a4), which compares it signed
+ * (0x4bdc0 to 0x4bdf6), and gps_script_lookup (0x4c140), which
+ * sign-extends it (movea.w, 0x4be04); gps_running_command's message,
+ * the step's code (0x4c242); and the code gps_request_post,
+ * gps_message_supported and gps_response_decode take, a word slot
+ * (cmpi.w 0x4bd44, 0x4f8fc; ext.l 0x4faae).  Its values are
+ * gps_request_code's; its one name only
  * makes it a signed word, in gcc's packing and in SmartClockSetup.java's
  * sizing of enums alike, and no step holds it. */
 typedef enum __attribute__((packed)) gps_request_code_word {
@@ -1330,14 +1337,15 @@ typedef struct gps_request_entry {
   uint32_t
       field_04; /* +0x04: the senders clear it; kernel_send_for_task refuses a
                    nonzero one other than the exchange's id, error 4 */
-  gps_request_sender sender; /* +0x08: one with the same sender waiting is
-                                not queued again; the monitors' may be
-                                replaced */
-  gps_request_result result; /* +0x09: 1 as sent; gps_count_response's kind as
-                     it comes back, which pllp_task takes as gps_ack_code or
-                     pll_scpi_complete's success */
-  int16_t code; /* +0x0a: the request, gps_request_class's index; 0x45 empties
-                   the ring before it is queued */
+  gps_request_sender sender;  /* +0x08: one with the same sender waiting is
+                                 not queued again; the monitors' may be
+                                 replaced */
+  gps_request_result result;  /* +0x09: 1 as sent; gps_count_response's kind as
+                      it comes back, which pllp_task takes as gps_ack_code or
+                      pll_scpi_complete's success */
+  gps_request_code_word code; /* +0x0a: the request, gps_request_class's
+                                 index; 0x45 empties the ring before it is
+                                 queued */
   gps_argument_mode argument_mode; /* +0x0c: gps_request_class's second
                                       argument, copied to gps_request_step's */
   uint8_t field_0d;
@@ -1365,16 +1373,17 @@ typedef struct gps_request_ring {
  * and command_log_add logs.  gps_last_command points at it.  0x72
  * bytes. */
 typedef struct gps_running_command {
-  gps_request_entry request; /* +0x00: copied from the ring's oldest */
-  gps_script_step** script;  /* +0x1a: the step it runs; the next after each
-                                matched response, a null one ending the script */
-  int16_t message; /* +0x1e: the step's code, an index of oncore_messages, which
-                      gps_request_build built */
-  gps_argument_mode query; /* +0x20: the step's, as gps_request_build was
-                              given it; the log prints q, else c */
-  uint8_t length;          /* +0x21: the built message's bytes */
-  uint8_t sent[80];        /* +0x22: the message as sent, copied from
-                              gps_command_message */
+  gps_request_entry request;     /* +0x00: copied from the ring's oldest */
+  gps_script_step** script;      /* +0x1a: the step it runs; the next after each
+                                    matched response, a null one ending the script */
+  gps_request_code_word message; /* +0x1e: the step's code, an index of
+                                    oncore_messages, which gps_request_build
+                                    built */
+  gps_argument_mode query;       /* +0x20: the step's, as gps_request_build was
+                                    given it; the log prints q, else c */
+  uint8_t length;                /* +0x21: the built message's bytes */
+  uint8_t sent[80];              /* +0x22: the message as sent, copied from
+                                    gps_command_message */
 } gps_running_command;
 
 /* A time of day as a long holds it, hour << 16 | minute << 8 | second,

@@ -972,7 +972,7 @@ struct gps_request_entry {
     uint32_t field_04;
     enum gps_request_sender sender;
     enum gps_request_result result;
-    int16_t code;
+    enum gps_request_code_word code;
     enum gps_argument_mode argument_mode;
     uint8_t field_0d;
     int32_t *arguments;
@@ -1002,7 +1002,7 @@ struct gps_script_step {
 struct gps_running_command {
     struct gps_request_entry request;
     struct gps_script_step **script;
-    int16_t message;
+    enum gps_request_code_word message;
     enum gps_argument_mode query;
     uint8_t length;
     uint8_t sent[80];
@@ -4060,158 +4060,311 @@ extern char forth_while_tag[10]; /* 0001956a */
 extern char forth_until_tag[10]; /* 000195f6 */
 extern int32_t forth_sine_table[91]; /* 00019a2c */
 extern pforth_word_header forth_header_over; /* 0001a296 */
+extern char forth_header_over_name[6]; /* 0001a2a2 */
 extern pforth_word_header forth_header_abs; /* 0001a2a8 */
+extern char forth_header_abs_name[4]; /* 0001a2b4 */
 extern pforth_word_header forth_header_max; /* 0001a2b8 */
+extern char forth_header_max_name[4]; /* 0001a2c4 */
 extern pforth_word_header forth_header_min; /* 0001a2c8 */
+extern char forth_header_min_name[4]; /* 0001a2d4 */
 extern pforth_word_header forth_header_w_fetch; /* 0001a2d8 */
+extern char forth_header_w_fetch_name[4]; /* 0001a2e4 */
 extern pforth_word_header forth_header_w_store; /* 0001a2e8 */
+extern char forth_header_w_store_name[4]; /* 0001a2f4 */
 extern pforth_word_header forth_header_c_fetch; /* 0001a2f8 */
+extern char forth_header_c_fetch_name[4]; /* 0001a304 */
 extern pforth_word_header forth_header_c_store; /* 0001a308 */
+extern char forth_header_c_store_name[4]; /* 0001a314 */
 extern pforth_word_header forth_header_negate; /* 0001a318 */
+extern char forth_header_negate_name[8]; /* 0001a324 */
 extern pforth_word_header forth_header_here; /* 0001a32c */
+extern char forth_header_here_name[6]; /* 0001a338 */
 extern pforth_word_header forth_header_greater_r; /* 0001a33e */
+extern char forth_header_greater_r_name[4]; /* 0001a34a */
 extern pforth_word_header forth_header_r_greater; /* 0001a34e */
+extern char forth_header_r_greater_name[4]; /* 0001a35a */
 extern pforth_word_header forth_header_fill; /* 0001a35e */
+extern char forth_header_fill_name[6]; /* 0001a36a */
 extern pforth_word_header forth_header_pick; /* 0001a370 */
+extern char forth_header_pick_name[6]; /* 0001a37c */
 extern pforth_word_header forth_header_comma; /* 0001a382 */
+extern char forth_header_comma_name[2]; /* 0001a38e */
 extern pforth_word_header forth_header_w_comma; /* 0001a390 */
+extern char forth_header_w_comma_name[4]; /* 0001a39c */
 extern pforth_word_header forth_header_c_comma; /* 0001a3a0 */
+extern char forth_header_c_comma_name[4]; /* 0001a3ac */
 extern pforth_word_header forth_header_rot; /* 0001a3b0 */
+extern char forth_header_rot_name[4]; /* 0001a3bc */
 extern pforth_word_header forth_header_minus_rot; /* 0001a3c0 */
+extern char forth_header_minus_rot_name[6]; /* 0001a3cc */
 extern pforth_word_header forth_header_allot; /* 0001a3d2 */
+extern char forth_header_allot_name[6]; /* 0001a3de */
 extern pforth_word_header forth_header_2dup; /* 0001a3e4 */
+extern char forth_header_2dup_name[6]; /* 0001a3f0 */
 extern pforth_word_header forth_header_2swap; /* 0001a3f6 */
+extern char forth_header_2swap_name[6]; /* 0001a402 */
 extern pforth_word_header forth_header_paren; /* 0001a408 */
+extern char forth_header_paren_name[2]; /* 0001a414 */
 extern pforth_word_header forth_header_abort; /* 0001a416 */
+extern char forth_header_abort_name[6]; /* 0001a422 */
 extern pforth_word_header forth_header_halt; /* 0001a428 */
+extern char forth_header_halt_name[6]; /* 0001a434 */
 extern pforth_word_header forth_header_false; /* 0001a43a */
+extern char forth_header_false_name[6]; /* 0001a446 */
 extern pforth_word_header forth_header_true; /* 0001a44c */
+extern char forth_header_true_name[6]; /* 0001a458 */
 extern pforth_word_header forth_header_or; /* 0001a45e */
+extern char forth_header_or_name[4]; /* 0001a46a */
 extern pforth_word_header forth_header_and; /* 0001a46e */
+extern char forth_header_and_name[4]; /* 0001a47a */
 extern pforth_word_header forth_header_not; /* 0001a47e */
+extern char forth_header_not_name[4]; /* 0001a48a */
 extern pforth_word_header forth_header_xor; /* 0001a48e */
+extern char forth_header_xor_name[4]; /* 0001a49a */
 extern pforth_word_header forth_header_equal; /* 0001a49e */
+extern char forth_header_equal_name[2]; /* 0001a4aa */
 extern pforth_word_header forth_header_greater; /* 0001a4ac */
+extern char forth_header_greater_name[2]; /* 0001a4b8 */
 extern pforth_word_header forth_header_less; /* 0001a4ba */
+extern char forth_header_less_name[2]; /* 0001a4c6 */
 extern pforth_word_header forth_header_0_less; /* 0001a4c8 */
+extern char forth_header_0_less_name[4]; /* 0001a4d4 */
 extern pforth_word_header forth_header_0_equal; /* 0001a4d8 */
+extern char forth_header_0_equal_name[4]; /* 0001a4e4 */
 extern pforth_word_header forth_header_0_greater; /* 0001a4e8 */
+extern char forth_header_0_greater_name[4]; /* 0001a4f4 */
 extern pforth_word_header forth_header_query_dup; /* 0001a4f8 */
+extern char forth_header_query_dup_name[6]; /* 0001a504 */
 extern pforth_word_header forth_header_cmove; /* 0001a50a */
+extern char forth_header_cmove_name[6]; /* 0001a516 */
 extern pforth_word_header forth_header_cmove_greater; /* 0001a51c */
+extern char forth_header_cmove_greater_name[8]; /* 0001a528 */
 extern pforth_word_header forth_header_2drop; /* 0001a530 */
+extern char forth_header_2drop_name[6]; /* 0001a53c */
 extern pforth_word_header forth_header_drop; /* 0001a542 */
+extern char forth_header_drop_name[6]; /* 0001a54e */
 extern pforth_word_header forth_header_swap; /* 0001a554 */
+extern char forth_header_swap_name[6]; /* 0001a560 */
 extern pforth_word_header forth_header_dup; /* 0001a566 */
+extern char forth_header_dup_name[4]; /* 0001a572 */
 extern pforth_word_header forth_header_depth; /* 0001a576 */
+extern char forth_header_depth_name[6]; /* 0001a582 */
 extern pforth_word_header forth_header_if; /* 0001a588 */
+extern char forth_header_if_name[4]; /* 0001a594 */
 extern pforth_word_header forth_header_else; /* 0001a598 */
+extern char forth_header_else_name[6]; /* 0001a5a4 */
 extern pforth_word_header forth_header_then; /* 0001a5aa */
+extern char forth_header_then_name[6]; /* 0001a5b6 */
 extern pforth_word_header forth_header_endif; /* 0001a5bc */
+extern char forth_header_endif_name[6]; /* 0001a5c8 */
 extern pforth_word_header forth_header_begin; /* 0001a5ce */
+extern char forth_header_begin_name[6]; /* 0001a5da */
 extern pforth_word_header forth_header_while; /* 0001a5e0 */
+extern char forth_header_while_name[6]; /* 0001a5ec */
 extern pforth_word_header forth_header_repeat; /* 0001a5f2 */
+extern char forth_header_repeat_name[8]; /* 0001a5fe */
 extern pforth_word_header forth_header_again; /* 0001a606 */
+extern char forth_header_again_name[6]; /* 0001a612 */
 extern pforth_word_header forth_header_until; /* 0001a618 */
+extern char forth_header_until_name[6]; /* 0001a624 */
 extern pforth_word_header forth_header_do; /* 0001a62a */
+extern char forth_header_do_name[4]; /* 0001a636 */
 extern pforth_word_header forth_header_query_do; /* 0001a63a */
+extern char forth_header_query_do_name[4]; /* 0001a646 */
 extern pforth_word_header forth_header_loop; /* 0001a64a */
+extern char forth_header_loop_name[6]; /* 0001a656 */
 extern pforth_word_header forth_header_plus_loop; /* 0001a65c */
+extern char forth_header_plus_loop_name[6]; /* 0001a668 */
 extern pforth_word_header forth_header_leave; /* 0001a66e */
+extern char forth_header_leave_name[6]; /* 0001a67a */
 extern pforth_word_header forth_header_k; /* 0001a680 */
+extern char forth_header_k_name[2]; /* 0001a68c */
 extern pforth_word_header forth_header_j; /* 0001a68e */
+extern char forth_header_j_name[2]; /* 0001a69a */
 extern pforth_word_header forth_header_i; /* 0001a69c */
+extern char forth_header_i_name[2]; /* 0001a6a8 */
 extern pforth_word_header forth_header_fetch; /* 0001a6aa */
+extern char forth_header_fetch_name[2]; /* 0001a6b6 */
 extern pforth_word_header forth_header_store; /* 0001a6b8 */
+extern char forth_header_store_name[2]; /* 0001a6c4 */
 extern pforth_word_header forth_header_variable; /* 0001a6c6 */
+extern char forth_header_variable_name[10]; /* 0001a6d2 */
 extern pforth_word_header forth_header_create; /* 0001a6dc */
+extern char forth_header_create_name[8]; /* 0001a6e8 */
 extern pforth_word_header forth_header_constant; /* 0001a6f0 */
+extern char forth_header_constant_name[10]; /* 0001a6fc */
 extern pforth_word_header forth_header_literal; /* 0001a706 */
+extern char forth_header_literal_name[8]; /* 0001a712 */
 extern pforth_word_header forth_header_colon; /* 0001a71a */
+extern char forth_header_colon_name[2]; /* 0001a726 */
 extern pforth_word_header forth_header_semicolon; /* 0001a728 */
+extern char forth_header_semicolon_name[2]; /* 0001a734 */
 extern pforth_word_header forth_header_mod; /* 0001a736 */
+extern char forth_header_mod_name[4]; /* 0001a742 */
 extern pforth_word_header forth_header_slash_mod; /* 0001a746 */
+extern char forth_header_slash_mod_name[6]; /* 0001a752 */
 extern pforth_word_header forth_header_star_slash_mod; /* 0001a758 */
+extern char forth_header_star_slash_mod_name[6]; /* 0001a764 */
 extern pforth_word_header forth_header_star_slash; /* 0001a76a */
+extern char forth_header_star_slash_name[4]; /* 0001a776 */
 extern pforth_word_header forth_header_slash; /* 0001a77a */
+extern char forth_header_slash_name[2]; /* 0001a786 */
 extern pforth_word_header forth_header_star; /* 0001a788 */
+extern char forth_header_star_name[2]; /* 0001a794 */
 extern pforth_word_header forth_header_minus; /* 0001a796 */
+extern char forth_header_minus_name[2]; /* 0001a7a2 */
 extern pforth_word_header forth_header_plus; /* 0001a7a4 */
+extern char forth_header_plus_name[2]; /* 0001a7b0 */
 extern pforth_word_header forth_header_plus_store; /* 0001a7b2 */
+extern char forth_header_plus_store_name[4]; /* 0001a7be */
 extern pforth_word_header forth_header_1_plus; /* 0001a7c2 */
+extern char forth_header_1_plus_name[4]; /* 0001a7ce */
 extern pforth_word_header forth_header_1_minus; /* 0001a7d2 */
+extern char forth_header_1_minus_name[4]; /* 0001a7de */
 extern pforth_word_header forth_header_2_plus; /* 0001a7e2 */
+extern char forth_header_2_plus_name[4]; /* 0001a7ee */
 extern pforth_word_header forth_header_2_minus; /* 0001a7f2 */
+extern char forth_header_2_minus_name[4]; /* 0001a7fe */
 extern pforth_word_header forth_header_2_slash; /* 0001a802 */
+extern char forth_header_2_slash_name[4]; /* 0001a80e */
 extern pforth_word_header forth_header_2_star; /* 0001a812 */
+extern char forth_header_2_star_name[4]; /* 0001a81e */
 extern pforth_word_header forth_header_less_less; /* 0001a822 */
+extern char forth_header_less_less_name[4]; /* 0001a82e */
 extern pforth_word_header forth_header_greater_greater; /* 0001a832 */
+extern char forth_header_greater_greater_name[4]; /* 0001a83e */
 extern pforth_word_header forth_header_sin; /* 0001a842 */
+extern char forth_header_sin_name[4]; /* 0001a84e */
 extern pforth_word_header forth_header_cos; /* 0001a852 */
+extern char forth_header_cos_name[4]; /* 0001a85e */
 extern pforth_word_header forth_header_emit; /* 0001a862 */
+extern char forth_header_emit_name[6]; /* 0001a86e */
 extern pforth_word_header forth_header_space; /* 0001a874 */
+extern char forth_header_space_name[6]; /* 0001a880 */
 extern pforth_word_header forth_header_spaces; /* 0001a886 */
+extern char forth_header_spaces_name[8]; /* 0001a892 */
 extern pforth_word_header forth_header_cr; /* 0001a89a */
+extern char forth_header_cr_name[4]; /* 0001a8a6 */
 extern pforth_word_header forth_header_dot_quote; /* 0001a8aa */
+extern char forth_header_dot_quote_name[4]; /* 0001a8b6 */
 extern pforth_word_header forth_header_paren_dot_quote_close_paren; /* 0001a8ba */
+extern char forth_header_paren_dot_quote_close_paren_name[6]; /* 0001a8c6 */
 extern pforth_word_header forth_header_dot; /* 0001a8cc */
+extern char forth_header_dot_name[2]; /* 0001a8d8 */
 extern pforth_word_header forth_header_u_dot; /* 0001a8da */
+extern char forth_header_u_dot_name[4]; /* 0001a8e6 */
 extern pforth_word_header forth_header_u_dot_x; /* 0001a8ea */
+extern char forth_header_u_dot_x_name[4]; /* 0001a8f6 */
 extern pforth_word_header forth_header_dot_s; /* 0001a8fa */
+extern char forth_header_dot_s_name[4]; /* 0001a906 */
 extern pforth_word_header forth_header_decimal; /* 0001a90a */
+extern char forth_header_decimal_name[8]; /* 0001a916 */
 extern pforth_word_header forth_header_hex; /* 0001a91e */
+extern char forth_header_hex_name[4]; /* 0001a92a */
 extern pforth_word_header forth_header_base; /* 0001a92e */
+extern char forth_header_base_name[6]; /* 0001a93a */
 extern pforth_word_header forth_header_state; /* 0001a940 */
+extern char forth_header_state_name[6]; /* 0001a94c */
 extern pforth_word_header forth_header_tick; /* 0001a952 */
+extern char forth_header_tick_name[2]; /* 0001a95e */
 extern pforth_word_header forth_header_bracket_tick_close_bracket; /* 0001a960 */
+extern char forth_header_bracket_tick_close_bracket_name[4]; /* 0001a96c */
 extern pforth_word_header forth_header_bracket; /* 0001a970 */
+extern char forth_header_bracket_name[2]; /* 0001a97c */
 extern pforth_word_header forth_header_close_bracket; /* 0001a97e */
+extern char forth_header_close_bracket_name[2]; /* 0001a98a */
 extern pforth_word_header forth_header_forget; /* 0001a98c */
+extern char forth_header_forget_name[8]; /* 0001a998 */
 extern pforth_word_header forth_header_words; /* 0001a9a0 */
+extern char forth_header_words_name[6]; /* 0001a9ac */
 extern pforth_word_header forth_header_startup; /* 0001a9b2 */
+extern char forth_header_startup_name[8]; /* 0001a9be */
 extern pforth_word_header forth_header_interpret; /* 0001a9c6 */
+extern char forth_header_interpret_name[10]; /* 0001a9d2 */
 extern pforth_word_header forth_header_expect; /* 0001a9dc */
+extern char forth_header_expect_name[8]; /* 0001a9e8 */
 extern pforth_word_header forth_header_type; /* 0001a9f0 */
+extern char forth_header_type_name[6]; /* 0001a9fc */
 extern pforth_word_header forth_header_word; /* 0001aa02 */
+extern char forth_header_word_name[6]; /* 0001aa0e */
 extern pforth_word_header forth_header_count; /* 0001aa14 */
+extern char forth_header_count_name[6]; /* 0001aa20 */
 extern pforth_word_header forth_header_tib; /* 0001aa26 */
+extern char forth_header_tib_name[4]; /* 0001aa32 */
 extern pforth_word_header forth_header_pad; /* 0001aa36 */
+extern char forth_header_pad_name[4]; /* 0001aa42 */
 extern pforth_word_header forth_header_does_greater; /* 0001aa46 */
+extern char forth_header_does_greater_name[6]; /* 0001aa52 */
 extern pforth_word_header forth_header_recurse; /* 0001aa58 */
+extern char forth_header_recurse_name[8]; /* 0001aa64 */
 extern pforth_word_header forth_header_immediate; /* 0001aa6c */
+extern char forth_header_immediate_name[10]; /* 0001aa78 */
 extern pforth_word_header forth_header_fence; /* 0001aa82 */
+extern char forth_header_fence_name[6]; /* 0001aa8e */
 extern pforth_word_header forth_header_unfence; /* 0001aa94 */
+extern char forth_header_unfence_name[8]; /* 0001aaa0 */
 extern pforth_word_header forth_header_number; /* 0001aaa8 */
+extern char forth_header_number_name[8]; /* 0001aab4 */
 extern pforth_word_header forth_header_0x; /* 0001aabc */
+extern char forth_header_0x_name[4]; /* 0001aac8 */
 extern pforth_word_header forth_header_execute; /* 0001aacc */
+extern char forth_header_execute_name[8]; /* 0001aad8 */
 extern pforth_word_header forth_header_watch; /* 0001aae0 */
+extern char forth_header_watch_name[6]; /* 0001aaec */
 extern pforth_word_header forth_header_root; /* 0001aaf2 */
+extern char forth_header_root_name[6]; /* 0001aafe */
 extern pforth_word_header forth_header_my_pid; /* 0001ab04 */
+extern char forth_header_my_pid_name[8]; /* 0001ab10 */
 extern pforth_word_header forth_header_query_caret_C; /* 0001ab18 */
+extern char forth_header_query_caret_C_name[4]; /* 0001ab24 */
 extern pforth_word_header forth_header_spawn; /* 0001ab28 */
+extern char forth_header_spawn_name[6]; /* 0001ab34 */
 extern pforth_word_header forth_header_ver; /* 0001ab3a */
+extern char forth_header_ver_name[4]; /* 0001ab46 */
 extern pforth_word_header forth_header_delete; /* 0001ab4a */
+extern char forth_header_delete_name[8]; /* 0001ab56 */
 extern pforth_word_header forth_header_suspend; /* 0001ab5e */
+extern char forth_header_suspend_name[8]; /* 0001ab6a */
 extern pforth_word_header forth_header_resume; /* 0001ab72 */
+extern char forth_header_resume_name[8]; /* 0001ab7e */
 extern pforth_word_header forth_header_priority; /* 0001ab86 */
+extern char forth_header_priority_name[10]; /* 0001ab92 */
 extern pforth_word_header forth_header_jam_x; /* 0001ab9c */
+extern char forth_header_jam_x_name[6]; /* 0001aba8 */
 extern pforth_word_header forth_header_create_x; /* 0001abae */
+extern char forth_header_create_x_name[10]; /* 0001abba */
 extern pforth_word_header forth_header_delete_x; /* 0001abc4 */
+extern char forth_header_delete_x_name[10]; /* 0001abd0 */
 extern pforth_word_header forth_header_send_x; /* 0001abda */
+extern char forth_header_send_x_name[8]; /* 0001abe6 */
 extern pforth_word_header forth_header_request_x; /* 0001abee */
+extern char forth_header_request_x_name[10]; /* 0001abfa */
 extern pforth_word_header forth_header_signal_v; /* 0001ac04 */
+extern char forth_header_signal_v_name[10]; /* 0001ac10 */
 extern pforth_word_header forth_header_wait_v; /* 0001ac1a */
+extern char forth_header_wait_v_name[8]; /* 0001ac26 */
 extern pforth_word_header forth_header_get_v; /* 0001ac2e */
+extern char forth_header_get_v_name[6]; /* 0001ac3a */
 extern pforth_word_header forth_header_pause; /* 0001ac40 */
+extern char forth_header_pause_name[6]; /* 0001ac4c */
 extern pforth_word_header forth_header_mode; /* 0001ac52 */
+extern char forth_header_mode_name[6]; /* 0001ac5e */
 extern pforth_word_header forth_header_ident; /* 0001ac64 */
+extern char forth_header_ident_name[6]; /* 0001ac70 */
 extern pforth_word_header forth_header_dev_init; /* 0001ac76 */
+extern char forth_header_dev_init_name[10]; /* 0001ac82 */
 extern pforth_word_header forth_header_dev_open; /* 0001ac8c */
+extern char forth_header_dev_open_name[10]; /* 0001ac98 */
 extern pforth_word_header forth_header_dev_close; /* 0001aca2 */
+extern char forth_header_dev_close_name[10]; /* 0001acae */
 extern pforth_word_header forth_header_dev_read; /* 0001acb8 */
+extern char forth_header_dev_read_name[10]; /* 0001acc4 */
 extern pforth_word_header forth_header_dev_write; /* 0001acce */
+extern char forth_header_dev_write_name[10]; /* 0001acda */
 extern pforth_word_header forth_header_dev_ctrl; /* 0001ace4 */
+extern char forth_header_dev_ctrl_name[10]; /* 0001acf0 */
 extern pforth_word_header forth_header_store_iodev; /* 0001acfa */
+extern char forth_header_store_iodev_name[8]; /* 0001ad06 */
 extern pforth_word_header forth_header_user; /* 0001ad0e */
 extern char forth_header_user_name[6]; /* 0001ad1a */
 extern diag_word_entry diag_words[86]; /* 0001c8ac */
@@ -7308,160 +7461,313 @@ __asm__(".set forth_begin_tag, 0x00019556");
 __asm__(".set forth_character_classes, 0x00018de2");
 __asm__(".set forth_do_tag, 0x0001942d");
 __asm__(".set forth_header_0_equal, 0x0001a4d8");
+__asm__(".set forth_header_0_equal_name, 0x0001a4e4");
 __asm__(".set forth_header_0_greater, 0x0001a4e8");
+__asm__(".set forth_header_0_greater_name, 0x0001a4f4");
 __asm__(".set forth_header_0_less, 0x0001a4c8");
+__asm__(".set forth_header_0_less_name, 0x0001a4d4");
 __asm__(".set forth_header_0x, 0x0001aabc");
+__asm__(".set forth_header_0x_name, 0x0001aac8");
 __asm__(".set forth_header_1_minus, 0x0001a7d2");
+__asm__(".set forth_header_1_minus_name, 0x0001a7de");
 __asm__(".set forth_header_1_plus, 0x0001a7c2");
+__asm__(".set forth_header_1_plus_name, 0x0001a7ce");
 __asm__(".set forth_header_2_minus, 0x0001a7f2");
+__asm__(".set forth_header_2_minus_name, 0x0001a7fe");
 __asm__(".set forth_header_2_plus, 0x0001a7e2");
+__asm__(".set forth_header_2_plus_name, 0x0001a7ee");
 __asm__(".set forth_header_2_slash, 0x0001a802");
+__asm__(".set forth_header_2_slash_name, 0x0001a80e");
 __asm__(".set forth_header_2_star, 0x0001a812");
+__asm__(".set forth_header_2_star_name, 0x0001a81e");
 __asm__(".set forth_header_2drop, 0x0001a530");
+__asm__(".set forth_header_2drop_name, 0x0001a53c");
 __asm__(".set forth_header_2dup, 0x0001a3e4");
+__asm__(".set forth_header_2dup_name, 0x0001a3f0");
 __asm__(".set forth_header_2swap, 0x0001a3f6");
+__asm__(".set forth_header_2swap_name, 0x0001a402");
 __asm__(".set forth_header_abort, 0x0001a416");
+__asm__(".set forth_header_abort_name, 0x0001a422");
 __asm__(".set forth_header_abs, 0x0001a2a8");
+__asm__(".set forth_header_abs_name, 0x0001a2b4");
 __asm__(".set forth_header_again, 0x0001a606");
+__asm__(".set forth_header_again_name, 0x0001a612");
 __asm__(".set forth_header_allot, 0x0001a3d2");
+__asm__(".set forth_header_allot_name, 0x0001a3de");
 __asm__(".set forth_header_and, 0x0001a46e");
+__asm__(".set forth_header_and_name, 0x0001a47a");
 __asm__(".set forth_header_base, 0x0001a92e");
+__asm__(".set forth_header_base_name, 0x0001a93a");
 __asm__(".set forth_header_begin, 0x0001a5ce");
+__asm__(".set forth_header_begin_name, 0x0001a5da");
 __asm__(".set forth_header_bracket, 0x0001a970");
+__asm__(".set forth_header_bracket_name, 0x0001a97c");
 __asm__(".set forth_header_bracket_tick_close_bracket, 0x0001a960");
+__asm__(".set forth_header_bracket_tick_close_bracket_name, 0x0001a96c");
 __asm__(".set forth_header_c_comma, 0x0001a3a0");
+__asm__(".set forth_header_c_comma_name, 0x0001a3ac");
 __asm__(".set forth_header_c_fetch, 0x0001a2f8");
+__asm__(".set forth_header_c_fetch_name, 0x0001a304");
 __asm__(".set forth_header_c_store, 0x0001a308");
+__asm__(".set forth_header_c_store_name, 0x0001a314");
 __asm__(".set forth_header_close_bracket, 0x0001a97e");
+__asm__(".set forth_header_close_bracket_name, 0x0001a98a");
 __asm__(".set forth_header_cmove, 0x0001a50a");
 __asm__(".set forth_header_cmove_greater, 0x0001a51c");
+__asm__(".set forth_header_cmove_greater_name, 0x0001a528");
+__asm__(".set forth_header_cmove_name, 0x0001a516");
 __asm__(".set forth_header_colon, 0x0001a71a");
+__asm__(".set forth_header_colon_name, 0x0001a726");
 __asm__(".set forth_header_comma, 0x0001a382");
+__asm__(".set forth_header_comma_name, 0x0001a38e");
 __asm__(".set forth_header_constant, 0x0001a6f0");
+__asm__(".set forth_header_constant_name, 0x0001a6fc");
 __asm__(".set forth_header_cos, 0x0001a852");
+__asm__(".set forth_header_cos_name, 0x0001a85e");
 __asm__(".set forth_header_count, 0x0001aa14");
+__asm__(".set forth_header_count_name, 0x0001aa20");
 __asm__(".set forth_header_cr, 0x0001a89a");
+__asm__(".set forth_header_cr_name, 0x0001a8a6");
 __asm__(".set forth_header_create, 0x0001a6dc");
+__asm__(".set forth_header_create_name, 0x0001a6e8");
 __asm__(".set forth_header_create_x, 0x0001abae");
+__asm__(".set forth_header_create_x_name, 0x0001abba");
 __asm__(".set forth_header_decimal, 0x0001a90a");
+__asm__(".set forth_header_decimal_name, 0x0001a916");
 __asm__(".set forth_header_delete, 0x0001ab4a");
+__asm__(".set forth_header_delete_name, 0x0001ab56");
 __asm__(".set forth_header_delete_x, 0x0001abc4");
+__asm__(".set forth_header_delete_x_name, 0x0001abd0");
 __asm__(".set forth_header_depth, 0x0001a576");
+__asm__(".set forth_header_depth_name, 0x0001a582");
 __asm__(".set forth_header_dev_close, 0x0001aca2");
+__asm__(".set forth_header_dev_close_name, 0x0001acae");
 __asm__(".set forth_header_dev_ctrl, 0x0001ace4");
+__asm__(".set forth_header_dev_ctrl_name, 0x0001acf0");
 __asm__(".set forth_header_dev_init, 0x0001ac76");
+__asm__(".set forth_header_dev_init_name, 0x0001ac82");
 __asm__(".set forth_header_dev_open, 0x0001ac8c");
+__asm__(".set forth_header_dev_open_name, 0x0001ac98");
 __asm__(".set forth_header_dev_read, 0x0001acb8");
+__asm__(".set forth_header_dev_read_name, 0x0001acc4");
 __asm__(".set forth_header_dev_write, 0x0001acce");
+__asm__(".set forth_header_dev_write_name, 0x0001acda");
 __asm__(".set forth_header_do, 0x0001a62a");
+__asm__(".set forth_header_do_name, 0x0001a636");
 __asm__(".set forth_header_does_greater, 0x0001aa46");
+__asm__(".set forth_header_does_greater_name, 0x0001aa52");
 __asm__(".set forth_header_dot, 0x0001a8cc");
+__asm__(".set forth_header_dot_name, 0x0001a8d8");
 __asm__(".set forth_header_dot_quote, 0x0001a8aa");
+__asm__(".set forth_header_dot_quote_name, 0x0001a8b6");
 __asm__(".set forth_header_dot_s, 0x0001a8fa");
+__asm__(".set forth_header_dot_s_name, 0x0001a906");
 __asm__(".set forth_header_drop, 0x0001a542");
+__asm__(".set forth_header_drop_name, 0x0001a54e");
 __asm__(".set forth_header_dup, 0x0001a566");
+__asm__(".set forth_header_dup_name, 0x0001a572");
 __asm__(".set forth_header_else, 0x0001a598");
+__asm__(".set forth_header_else_name, 0x0001a5a4");
 __asm__(".set forth_header_emit, 0x0001a862");
+__asm__(".set forth_header_emit_name, 0x0001a86e");
 __asm__(".set forth_header_endif, 0x0001a5bc");
+__asm__(".set forth_header_endif_name, 0x0001a5c8");
 __asm__(".set forth_header_equal, 0x0001a49e");
+__asm__(".set forth_header_equal_name, 0x0001a4aa");
 __asm__(".set forth_header_execute, 0x0001aacc");
+__asm__(".set forth_header_execute_name, 0x0001aad8");
 __asm__(".set forth_header_expect, 0x0001a9dc");
+__asm__(".set forth_header_expect_name, 0x0001a9e8");
 __asm__(".set forth_header_false, 0x0001a43a");
+__asm__(".set forth_header_false_name, 0x0001a446");
 __asm__(".set forth_header_fence, 0x0001aa82");
+__asm__(".set forth_header_fence_name, 0x0001aa8e");
 __asm__(".set forth_header_fetch, 0x0001a6aa");
+__asm__(".set forth_header_fetch_name, 0x0001a6b6");
 __asm__(".set forth_header_fill, 0x0001a35e");
+__asm__(".set forth_header_fill_name, 0x0001a36a");
 __asm__(".set forth_header_forget, 0x0001a98c");
+__asm__(".set forth_header_forget_name, 0x0001a998");
 __asm__(".set forth_header_get_v, 0x0001ac2e");
+__asm__(".set forth_header_get_v_name, 0x0001ac3a");
 __asm__(".set forth_header_greater, 0x0001a4ac");
 __asm__(".set forth_header_greater_greater, 0x0001a832");
+__asm__(".set forth_header_greater_greater_name, 0x0001a83e");
+__asm__(".set forth_header_greater_name, 0x0001a4b8");
 __asm__(".set forth_header_greater_r, 0x0001a33e");
+__asm__(".set forth_header_greater_r_name, 0x0001a34a");
 __asm__(".set forth_header_halt, 0x0001a428");
+__asm__(".set forth_header_halt_name, 0x0001a434");
 __asm__(".set forth_header_here, 0x0001a32c");
+__asm__(".set forth_header_here_name, 0x0001a338");
 __asm__(".set forth_header_hex, 0x0001a91e");
+__asm__(".set forth_header_hex_name, 0x0001a92a");
 __asm__(".set forth_header_i, 0x0001a69c");
+__asm__(".set forth_header_i_name, 0x0001a6a8");
 __asm__(".set forth_header_ident, 0x0001ac64");
+__asm__(".set forth_header_ident_name, 0x0001ac70");
 __asm__(".set forth_header_if, 0x0001a588");
+__asm__(".set forth_header_if_name, 0x0001a594");
 __asm__(".set forth_header_immediate, 0x0001aa6c");
+__asm__(".set forth_header_immediate_name, 0x0001aa78");
 __asm__(".set forth_header_interpret, 0x0001a9c6");
+__asm__(".set forth_header_interpret_name, 0x0001a9d2");
 __asm__(".set forth_header_j, 0x0001a68e");
+__asm__(".set forth_header_j_name, 0x0001a69a");
 __asm__(".set forth_header_jam_x, 0x0001ab9c");
+__asm__(".set forth_header_jam_x_name, 0x0001aba8");
 __asm__(".set forth_header_k, 0x0001a680");
+__asm__(".set forth_header_k_name, 0x0001a68c");
 __asm__(".set forth_header_leave, 0x0001a66e");
+__asm__(".set forth_header_leave_name, 0x0001a67a");
 __asm__(".set forth_header_less, 0x0001a4ba");
 __asm__(".set forth_header_less_less, 0x0001a822");
+__asm__(".set forth_header_less_less_name, 0x0001a82e");
+__asm__(".set forth_header_less_name, 0x0001a4c6");
 __asm__(".set forth_header_literal, 0x0001a706");
+__asm__(".set forth_header_literal_name, 0x0001a712");
 __asm__(".set forth_header_loop, 0x0001a64a");
+__asm__(".set forth_header_loop_name, 0x0001a656");
 __asm__(".set forth_header_max, 0x0001a2b8");
+__asm__(".set forth_header_max_name, 0x0001a2c4");
 __asm__(".set forth_header_min, 0x0001a2c8");
+__asm__(".set forth_header_min_name, 0x0001a2d4");
 __asm__(".set forth_header_minus, 0x0001a796");
+__asm__(".set forth_header_minus_name, 0x0001a7a2");
 __asm__(".set forth_header_minus_rot, 0x0001a3c0");
+__asm__(".set forth_header_minus_rot_name, 0x0001a3cc");
 __asm__(".set forth_header_mod, 0x0001a736");
+__asm__(".set forth_header_mod_name, 0x0001a742");
 __asm__(".set forth_header_mode, 0x0001ac52");
+__asm__(".set forth_header_mode_name, 0x0001ac5e");
 __asm__(".set forth_header_my_pid, 0x0001ab04");
+__asm__(".set forth_header_my_pid_name, 0x0001ab10");
 __asm__(".set forth_header_negate, 0x0001a318");
+__asm__(".set forth_header_negate_name, 0x0001a324");
 __asm__(".set forth_header_not, 0x0001a47e");
+__asm__(".set forth_header_not_name, 0x0001a48a");
 __asm__(".set forth_header_number, 0x0001aaa8");
+__asm__(".set forth_header_number_name, 0x0001aab4");
 __asm__(".set forth_header_or, 0x0001a45e");
+__asm__(".set forth_header_or_name, 0x0001a46a");
 __asm__(".set forth_header_over, 0x0001a296");
+__asm__(".set forth_header_over_name, 0x0001a2a2");
 __asm__(".set forth_header_pad, 0x0001aa36");
+__asm__(".set forth_header_pad_name, 0x0001aa42");
 __asm__(".set forth_header_paren, 0x0001a408");
 __asm__(".set forth_header_paren_dot_quote_close_paren, 0x0001a8ba");
+__asm__(".set forth_header_paren_dot_quote_close_paren_name, 0x0001a8c6");
+__asm__(".set forth_header_paren_name, 0x0001a414");
 __asm__(".set forth_header_pause, 0x0001ac40");
+__asm__(".set forth_header_pause_name, 0x0001ac4c");
 __asm__(".set forth_header_pick, 0x0001a370");
+__asm__(".set forth_header_pick_name, 0x0001a37c");
 __asm__(".set forth_header_plus, 0x0001a7a4");
 __asm__(".set forth_header_plus_loop, 0x0001a65c");
+__asm__(".set forth_header_plus_loop_name, 0x0001a668");
+__asm__(".set forth_header_plus_name, 0x0001a7b0");
 __asm__(".set forth_header_plus_store, 0x0001a7b2");
+__asm__(".set forth_header_plus_store_name, 0x0001a7be");
 __asm__(".set forth_header_priority, 0x0001ab86");
+__asm__(".set forth_header_priority_name, 0x0001ab92");
 __asm__(".set forth_header_query_caret_C, 0x0001ab18");
+__asm__(".set forth_header_query_caret_C_name, 0x0001ab24");
 __asm__(".set forth_header_query_do, 0x0001a63a");
+__asm__(".set forth_header_query_do_name, 0x0001a646");
 __asm__(".set forth_header_query_dup, 0x0001a4f8");
+__asm__(".set forth_header_query_dup_name, 0x0001a504");
 __asm__(".set forth_header_r_greater, 0x0001a34e");
+__asm__(".set forth_header_r_greater_name, 0x0001a35a");
 __asm__(".set forth_header_recurse, 0x0001aa58");
+__asm__(".set forth_header_recurse_name, 0x0001aa64");
 __asm__(".set forth_header_repeat, 0x0001a5f2");
+__asm__(".set forth_header_repeat_name, 0x0001a5fe");
 __asm__(".set forth_header_request_x, 0x0001abee");
+__asm__(".set forth_header_request_x_name, 0x0001abfa");
 __asm__(".set forth_header_resume, 0x0001ab72");
+__asm__(".set forth_header_resume_name, 0x0001ab7e");
 __asm__(".set forth_header_root, 0x0001aaf2");
+__asm__(".set forth_header_root_name, 0x0001aafe");
 __asm__(".set forth_header_rot, 0x0001a3b0");
+__asm__(".set forth_header_rot_name, 0x0001a3bc");
 __asm__(".set forth_header_semicolon, 0x0001a728");
+__asm__(".set forth_header_semicolon_name, 0x0001a734");
 __asm__(".set forth_header_send_x, 0x0001abda");
+__asm__(".set forth_header_send_x_name, 0x0001abe6");
 __asm__(".set forth_header_signal_v, 0x0001ac04");
+__asm__(".set forth_header_signal_v_name, 0x0001ac10");
 __asm__(".set forth_header_sin, 0x0001a842");
+__asm__(".set forth_header_sin_name, 0x0001a84e");
 __asm__(".set forth_header_slash, 0x0001a77a");
 __asm__(".set forth_header_slash_mod, 0x0001a746");
+__asm__(".set forth_header_slash_mod_name, 0x0001a752");
+__asm__(".set forth_header_slash_name, 0x0001a786");
 __asm__(".set forth_header_space, 0x0001a874");
+__asm__(".set forth_header_space_name, 0x0001a880");
 __asm__(".set forth_header_spaces, 0x0001a886");
+__asm__(".set forth_header_spaces_name, 0x0001a892");
 __asm__(".set forth_header_spawn, 0x0001ab28");
+__asm__(".set forth_header_spawn_name, 0x0001ab34");
 __asm__(".set forth_header_star, 0x0001a788");
+__asm__(".set forth_header_star_name, 0x0001a794");
 __asm__(".set forth_header_star_slash, 0x0001a76a");
 __asm__(".set forth_header_star_slash_mod, 0x0001a758");
+__asm__(".set forth_header_star_slash_mod_name, 0x0001a764");
+__asm__(".set forth_header_star_slash_name, 0x0001a776");
 __asm__(".set forth_header_startup, 0x0001a9b2");
+__asm__(".set forth_header_startup_name, 0x0001a9be");
 __asm__(".set forth_header_state, 0x0001a940");
+__asm__(".set forth_header_state_name, 0x0001a94c");
 __asm__(".set forth_header_store, 0x0001a6b8");
 __asm__(".set forth_header_store_iodev, 0x0001acfa");
+__asm__(".set forth_header_store_iodev_name, 0x0001ad06");
+__asm__(".set forth_header_store_name, 0x0001a6c4");
 __asm__(".set forth_header_suspend, 0x0001ab5e");
+__asm__(".set forth_header_suspend_name, 0x0001ab6a");
 __asm__(".set forth_header_swap, 0x0001a554");
+__asm__(".set forth_header_swap_name, 0x0001a560");
 __asm__(".set forth_header_then, 0x0001a5aa");
+__asm__(".set forth_header_then_name, 0x0001a5b6");
 __asm__(".set forth_header_tib, 0x0001aa26");
+__asm__(".set forth_header_tib_name, 0x0001aa32");
 __asm__(".set forth_header_tick, 0x0001a952");
+__asm__(".set forth_header_tick_name, 0x0001a95e");
 __asm__(".set forth_header_true, 0x0001a44c");
+__asm__(".set forth_header_true_name, 0x0001a458");
 __asm__(".set forth_header_type, 0x0001a9f0");
+__asm__(".set forth_header_type_name, 0x0001a9fc");
 __asm__(".set forth_header_u_dot, 0x0001a8da");
+__asm__(".set forth_header_u_dot_name, 0x0001a8e6");
 __asm__(".set forth_header_u_dot_x, 0x0001a8ea");
+__asm__(".set forth_header_u_dot_x_name, 0x0001a8f6");
 __asm__(".set forth_header_unfence, 0x0001aa94");
+__asm__(".set forth_header_unfence_name, 0x0001aaa0");
 __asm__(".set forth_header_until, 0x0001a618");
+__asm__(".set forth_header_until_name, 0x0001a624");
 __asm__(".set forth_header_user, 0x0001ad0e");
 __asm__(".set forth_header_user_name, 0x0001ad1a");
 __asm__(".set forth_header_variable, 0x0001a6c6");
+__asm__(".set forth_header_variable_name, 0x0001a6d2");
 __asm__(".set forth_header_ver, 0x0001ab3a");
+__asm__(".set forth_header_ver_name, 0x0001ab46");
 __asm__(".set forth_header_w_comma, 0x0001a390");
+__asm__(".set forth_header_w_comma_name, 0x0001a39c");
 __asm__(".set forth_header_w_fetch, 0x0001a2d8");
+__asm__(".set forth_header_w_fetch_name, 0x0001a2e4");
 __asm__(".set forth_header_w_store, 0x0001a2e8");
+__asm__(".set forth_header_w_store_name, 0x0001a2f4");
 __asm__(".set forth_header_wait_v, 0x0001ac1a");
+__asm__(".set forth_header_wait_v_name, 0x0001ac26");
 __asm__(".set forth_header_watch, 0x0001aae0");
+__asm__(".set forth_header_watch_name, 0x0001aaec");
 __asm__(".set forth_header_while, 0x0001a5e0");
+__asm__(".set forth_header_while_name, 0x0001a5ec");
 __asm__(".set forth_header_word, 0x0001aa02");
+__asm__(".set forth_header_word_name, 0x0001aa0e");
 __asm__(".set forth_header_words, 0x0001a9a0");
+__asm__(".set forth_header_words_name, 0x0001a9ac");
 __asm__(".set forth_header_xor, 0x0001a48e");
+__asm__(".set forth_header_xor_name, 0x0001a49a");
 __asm__(".set forth_if_tag, 0x000194de");
 __asm__(".set forth_pad_buffer, 0x00100a8a");
 __asm__(".set forth_prompt, 0x00100b14");
@@ -9785,7 +10091,7 @@ uint32_t scpi_parse_text(scpi_token_string *token,void *unused,char **value);
 uint32_t scpi_parse_string(uint16_t *token,void *unused,uint32_t *value);
 uint32_t scpi_parse_boolean(int16_t *token,void *unused,uint16_t *value);
 int32_t scpi_parse_boolean_number(scpi_number *number,void *param_2,uint16_t *value,void *param_4);
-uint32_t scpi_parse_choice(int16_t *token,void *unused,int16_t *value,scpi_choices *choices);
+uint32_t scpi_parse_choice(scpi_keyword *token,void *unused,int16_t *value,scpi_choices *choices);
 int32_t scpi_parse_short(scpi_number *number,void *param_2,int16_t *value,scpi_unit *units);
 int32_t scpi_parse_unsigned_short(scpi_number *number,void *param_2,uint16_t *value,scpi_unit *units);
 int32_t scpi_parse_long(scpi_number *number,void *param_2,int32_t *value,scpi_unit *units);
@@ -10603,9 +10909,10 @@ uint32_t request_ring_contains(char param_1,char param_2,char param_3);
 uint32_t request_ring_newest_replaceable(void);
 uint32_t request_kind_valid(gps_request_sender sender);
 void gps_request_queue(char param_1,gps_request_entry *request,gps_request_entry *param_3);
-bool gps_request_post(gps_request_sender sender,int16_t code,int32_t *arguments,uint8_t sent);
-gps_code_class gps_request_class(int16_t code,gps_argument_mode argument_mode);
-gps_script_step ** gps_script_lookup(int16_t param_1);
+bool gps_request_post(gps_request_sender sender,gps_request_code_word code,int32_t *arguments,
+                     uint8_t sent);
+gps_code_class gps_request_class(gps_request_code_word code,gps_argument_mode argument_mode);
+gps_script_step ** gps_script_lookup(gps_request_code_word code);
 void gps_init(void);
 void gps_link_reset(void);
 void gpsm_task(void);
@@ -10659,9 +10966,9 @@ uint8_t * oncore_traim_message(uint8_t *cursor,uint8_t *record);
 uint8_t * oncore_receiver_id_message(uint8_t *cursor,uint8_t *record);
 uint8_t oncore_checksum(uint8_t *param_1,uint8_t *param_2);
 void gps_parse_options(void);
-uint32_t gps_message_supported(int16_t param_1,uint8_t *param_2);
+uint32_t gps_message_supported(gps_request_code_word code,uint8_t *supported);
 int16_t gps_request_build(int16_t message,gps_argument_mode mode,int32_t *arguments,char *out);
-char * gps_response_decode(int16_t message,char *response);
+char * gps_response_decode(gps_request_code_word message,char *response);
 uint32_t bytes_equal_n(char *param_1,int16_t param_2,char *param_3,int16_t param_4);
 gps_match_result
 gps_response_match(int16_t message,uint8_t *sent,uint8_t length,gps_argument_mode mode,int16_t index
@@ -10763,6 +11070,16 @@ void * installer_exception_hook_get(void);
 int32_t installer_default_exception();
 void installer_print_exception(uint16_t param_1,uint32_t param_2,uint16_t param_3,uint32_t param_4);
 char * installer_exception_name(uint16_t vector);
+int32_t installer_m68000_bus_error();
+int32_t installer_m68000_address_error();
+int32_t installer_m68000_illegal_instruction();
+int32_t installer_m68000_zero_division();
+int32_t installer_m68000_chk();
+int32_t installer_m68000_trapcc();
+int32_t installer_m68000_privilege_violation();
+int32_t installer_m68000_trace();
+int32_t installer_m68000_line_a();
+int32_t installer_m68000_line_f();
 int32_t installer_periodic_interrupt();
 void installer_periodic_interrupt_enable(char enable);
 void installer_qsm_init(void);
@@ -48336,7 +48653,7 @@ int32_t scpi_parse_boolean_number(scpi_number *number,void *param_2,uint16_t *va
    no match
    docs/scpi/README.md, read */
 
-uint32_t scpi_parse_choice(int16_t *token,void *unused,int16_t *value,scpi_choices *choices)
+uint32_t scpi_parse_choice(scpi_keyword *token,void *unused,int16_t *value,scpi_choices *choices)
 
 {
   char **ppcVar1;
@@ -48350,7 +48667,7 @@ uint32_t scpi_parse_choice(int16_t *token,void *unused,int16_t *value,scpi_choic
   }
   else {
     for (; ppcVar1[sVar4] != (char *)0x0; sVar4 = sVar4 + 1) {
-      order = scpi_keyword_compare((char *)(token + 1),(int32_t)*token,ppcVar1[sVar4]);
+      order = scpi_keyword_compare(token->text,(int32_t)token->length,ppcVar1[sVar4]);
       if (order == 0) {
         if (choices->values == (int16_t *)0x0) {
           *value = sVar4;
@@ -53496,14 +53813,14 @@ int32_t scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe
 {
   request_source source;
   int32_t zero;
-  char known;
+  uint32_t known;
   uint32_t uVar3;
-  char local_6 [2];
+  uint8_t local_6 [2];
   
   zero = return_zero(call->input);
   source = (request_source)zero;
   known = gps_message_supported(0x28,local_6);
-  if (known == 0) {
+  if ((char)known == 0) {
     uVar3 = CONCAT22(6,(uint16_t)source << 8);
   }
   else {
@@ -53530,13 +53847,13 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe
               (void *parameters,void *response,scpi_call *call)
 
 {
-  char known;
+  uint32_t known;
   int32_t error;
   status_condition_code code;
-  char local_6 [2];
+  uint8_t local_6 [2];
   
   known = gps_message_supported(0x28,local_6);
-  if (known == 0) {
+  if ((char)known == 0) {
     code = STATUS_DATA_CORRUPT_OR_STALE;
   }
   else {
@@ -53562,13 +53879,13 @@ int32_t scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold
 
 {
   int32_t zero;
-  char known;
+  uint32_t known;
   int16_t code;
-  char local_6 [2];
+  uint8_t local_6 [2];
   
   zero = return_zero(call->input);
   known = gps_message_supported(0x28,local_6);
-  if (known == 0) {
+  if ((char)known == 0) {
     code = 6;
   }
   else {
@@ -53597,15 +53914,15 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold
 
 {
   int16_t sVar1;
-  char known;
+  uint32_t known;
   float value;
-  int32_t iVar2;
+  int32_t iVar3;
   int32_t error;
   status_condition_code code;
-  char local_6 [2];
+  uint8_t local_6 [2];
   
   known = gps_message_supported(0x28,local_6);
-  if (known == 0) {
+  if ((char)known == 0) {
     code = STATUS_DATA_CORRUPT_OR_STALE;
   }
   else {
@@ -53614,8 +53931,8 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold
       value = scpi_numeric_get(&scpi_param_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold,
                            CONCAT31(CONCAT21(sVar1 >> 0xf,(char)((uint16_t)sVar1 >> 8)),(char)sVar1),
                            *(int16_t *)((int32_t)parameters + 2),*(int16_t *)((int32_t)parameters + 4));
-      iVar2 = float_to_integer(value);
-      *(int32_t *)response = iVar2;
+      iVar3 = float_to_integer(value);
+      *(int32_t *)response = iVar3;
       return 0;
     }
     code = STATUS_HARDWARE_MISSING;
@@ -65818,7 +66135,7 @@ uint32_t pll_scpi_send_to_loop(gps_request_sender sender,uint8_t *status)
   else {
     cVar2 = *(char *)((int32_t)pll_scpi_param + 0x20);
   }
-  request.code = (int16_t)cVar2;
+  request.code = (gps_request_code_word)cVar2;
   *status = 0;
   if (request.code < 0x18) {
     if (request.code < 5) {
@@ -72932,24 +73249,25 @@ void status_screen(status_snapshot_record *snapshot,char clear,write_function *w
                   printf_function *print)
 
 {
-  int32_t iVar1;
-  uint32_t uVar2;
-  char *pcVar3;
+  char cVar1;
+  int32_t iVar2;
+  uint32_t uVar3;
+  char *pcVar4;
   bool marked;
-  bool bVar5;
-  char cVar6;
+  bool bVar7;
+  uint32_t known;
   uint32_t unaff_D2 = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   status_screen_line line_00;
-  satellite_list_entry *psVar7;
-  uint8_t **ppuVar8;
-  char *pcVar9;
+  satellite_list_entry *psVar8;
+  uint8_t **ppuVar9;
   char *pcVar10;
-  double dVar11;
-  int8_t iVar12;
-  uint8_t uVar13;
-  uint16_t uVar14;
-  uint8_t uVar15;
+  char *pcVar11;
+  double dVar12;
+  int8_t iVar13;
+  uint8_t uVar14;
+  uint16_t uVar15;
   uint8_t uVar16;
+  uint8_t uVar17;
   uint8_t local_c0;
   satellite_list_entry *local_b2;
   uint8_t local_ae;
@@ -72974,17 +73292,17 @@ void status_screen(status_snapshot_record *snapshot,char clear,write_function *w
   (*write)("------------------------------- Receiver Status -------------------------------\r\n");
   (*write)(" \r\n");
   (*write)("SYNCHRONIZATION ............................");
-  iVar1 = (char)snapshot->stage + -9;
-  if ((int32_t)(char)snapshot->stage - 1U < 8U || iVar1 == 0) {
+  iVar2 = (char)snapshot->stage + -9;
+  if ((int32_t)(char)snapshot->stage - 1U < 8U || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&switchD_0004a96c_index_zero)[(int16_t)iVar1]) {
+    switch((&switchD_0004a96c_index_zero)[(int16_t)iVar2]) {
     case 0x12:
       local_7f = 0;
-      pcVar9 = "............... [ Outputs Invalid ]";
+      pcVar10 = "............... [ Outputs Invalid ]";
       break;
     case 0x1e:
       local_7f = 1;
-      pcVar9 = "................. [ Outputs Valid ]";
+      pcVar10 = "................. [ Outputs Valid ]";
       break;
     case 0x2c:
       goto override_jmp_0004a96c_case_1;
@@ -72993,14 +73311,14 @@ void status_screen(status_snapshot_record *snapshot,char clear,write_function *w
   else {
 override_jmp_0004a96c_case_1:
     local_7f = 0;
-    pcVar9 = " [ Outputs Valid/Reduced Accuracy ]";
+    pcVar10 = " [ Outputs Valid/Reduced Accuracy ]";
   }
-  (*print)("%s\r\n",pcVar9);
+  (*print)("%s\r\n",pcVar10);
   (*write)("SmartClock Mode ___________________________   Reference Outputs _______________\r\n");
-  iVar1 = (int32_t)(char)snapshot->mode - 5;
-  if ((uint32_t)(int32_t)(char)snapshot->mode < 5 || iVar1 == 0) {
+  iVar2 = (int32_t)(char)snapshot->mode - 5;
+  if ((uint32_t)(int32_t)(char)snapshot->mode < 5 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&switchD_0004a9d0_index_zero)[(int16_t)iVar1]) {
+    switch((&switchD_0004a9d0_index_zero)[(int16_t)iVar2]) {
     case 0xc:
       line_00 = STATUS_SCREEN_LINE_POWERUP;
       break;
@@ -73025,38 +73343,38 @@ override_jmp_0004a9d0_case_0:
   for (local_84 = status_screen_mode_lines; local_84->text != (char *)0x0; local_84 = local_84 + 1)
   {
     if (line_00 != local_84->mode) {
-      pcVar9 = "   ";
+      pcVar10 = "   ";
       goto LAB_0004ab0e;
     }
-    pcVar9 = ">> ";
+    pcVar10 = ">> ";
     if (line_00 == STATUS_SCREEN_LINE_LOCKED) {
       if (snapshot->pll_field_3d5 == 0) {
-        pcVar3 = "GPS";
+        pcVar4 = "GPS";
       }
       else {
-        pcVar3 = "Ext";
+        pcVar4 = "Ext";
       }
-      pcVar10 = acStack_2d;
+      pcVar11 = acStack_2d;
       do {
-        cVar6 = *pcVar3;
-        *pcVar10 = cVar6;
-        pcVar3 = pcVar3 + 1;
-        pcVar10 = pcVar10 + 1;
-      } while (cVar6 != 0);
+        cVar1 = *pcVar4;
+        *pcVar11 = cVar1;
+        pcVar4 = pcVar4 + 1;
+        pcVar11 = pcVar11 + 1;
+      } while (cVar1 != 0);
       if (local_7f == 0) {
-        pcVar3 = ": stabilizing frequency";
+        pcVar4 = ": stabilizing frequency";
       }
       else {
-        pcVar3 = "";
+        pcVar4 = "";
       }
-      strcat(acStack_2d,pcVar3);
-      pcVar3 = acStack_2d;
+      strcat(acStack_2d,pcVar4);
+      pcVar4 = acStack_2d;
       goto LAB_0004ab10;
     }
     if (line_00 == STATUS_SCREEN_LINE_RECOVERY) {
 LAB_0004aa66:
       status_screen_mode_suffix(line_00,snapshot,acStack_2d);
-      pcVar3 = acStack_2d;
+      pcVar4 = acStack_2d;
     }
     else {
       if (line_00 != STATUS_SCREEN_LINE_HOLDOVER) {
@@ -73065,83 +73383,83 @@ LAB_0004aa66:
       }
       if (snapshot->mode == 1) {
 override_jmp_0004aaaa_case_0:
-        pcVar3 = ": manually initiated";
+        pcVar4 = ": manually initiated";
         goto LAB_0004ab10;
       }
-      uVar2 = snapshot->holdover_waiting_reason - 1;
-      if (uVar2 < 0x10) {
+      uVar3 = snapshot->holdover_waiting_reason - 1;
+      if (uVar3 < 0x10) {
                     /* WARNING: Switch is manually overridden */
-        switch((int16_t)uVar2) {
+        switch((int16_t)uVar3) {
         case 0:
           goto override_jmp_0004aaaa_case_0;
         case 1:
           if (snapshot->pll_field_3d5 == 0) {
-            pcVar3 = ": GPS 1PPS CLK invalid";
+            pcVar4 = ": GPS 1PPS CLK invalid";
           }
           else {
-            pcVar3 = ": EXT 1PPS CLK invalid";
+            pcVar4 = ": EXT 1PPS CLK invalid";
           }
           break;
         default:
           goto LAB_0004ab0e;
         case 3: case 0xf:
-          pcVar3 = ": internal hardware problem";
+          pcVar4 = ": internal hardware problem";
           break;
         case 7:
-          pcVar3 = ": 1PPS TI exceeds hold threshold";
+          pcVar4 = ": 1PPS TI exceeds hold threshold";
         }
       }
       else {
 LAB_0004ab0e:
-        pcVar3 = "";
+        pcVar4 = "";
       }
     }
 LAB_0004ab10:
-    pcVar10 = line;
+    pcVar11 = line;
     do {
-      cVar6 = *pcVar9;
-      *pcVar10 = cVar6;
-      pcVar9 = pcVar9 + 1;
+      cVar1 = *pcVar10;
+      *pcVar11 = cVar1;
       pcVar10 = pcVar10 + 1;
-    } while (cVar6 != 0);
+      pcVar11 = pcVar11 + 1;
+    } while (cVar1 != 0);
     strcat(line,local_84->text);
-    strcat(line,pcVar3);
+    strcat(line,pcVar4);
     (*print)("%-46.46s",line);
     status_screen_tfom(local_ae,snapshot,line);
     (*print)("%s\r\n",line);
     local_ae = local_ae + 1;
   }
   if (snapshot->kenneth_predicted_valid == 0) {
-    pcVar9 = " --";
-    pcVar3 = acStack_2d;
+    pcVar10 = " --";
+    pcVar4 = acStack_2d;
     do {
-      cVar6 = *pcVar9;
-      *pcVar3 = cVar6;
-      pcVar9 = pcVar9 + 1;
-      pcVar3 = pcVar3 + 1;
-    } while (cVar6 != 0);
+      cVar1 = *pcVar10;
+      *pcVar4 = cVar1;
+      pcVar10 = pcVar10 + 1;
+      pcVar4 = pcVar4 + 1;
+    } while (cVar1 != 0);
   }
   else {
-    pcVar9 = acStack_2d;
+    pcVar10 = acStack_2d;
+    uVar15 = 4;
+    uVar16 = 0xe1;
+    uVar17 = 0xe4;
     uVar14 = 4;
-    uVar15 = 0xe1;
-    uVar16 = 0xe4;
-    uVar13 = 4;
-    iVar12 = snapshot->kenneth_predicted_resolution;
-    dVar11 = float_to_double(snapshot->kenneth_predicted);
-    format_si(dVar11,iVar12,uVar13,(char *)CONCAT31(CONCAT21(uVar14,uVar15),uVar16),pcVar9);
+    iVar13 = snapshot->kenneth_predicted_resolution;
+    dVar12 = float_to_double(snapshot->kenneth_predicted);
+    format_si(dVar12,iVar13,uVar14,(char *)CONCAT31(CONCAT21(uVar15,uVar16),uVar17),pcVar10);
     strcat(acStack_2d,"/initial 24 hrs");
   }
   (*print)("%43s   Predict  %s\r\n","",acStack_2d + 1);
   if ((line_00 == STATUS_SCREEN_LINE_HOLDOVER) || (line_00 == STATUS_SCREEN_LINE_RECOVERY)) {
-    pcVar9 = "Holdover Duration:";
-    pcVar3 = line;
+    pcVar10 = "Holdover Duration:";
+    pcVar4 = line;
     do {
-      cVar6 = *pcVar9;
-      *pcVar3 = cVar6;
-      pcVar9 = pcVar9 + 1;
-      pcVar3 = pcVar3 + 1;
-    } while (cVar6 != 0);
+      cVar1 = *pcVar10;
+      *pcVar4 = cVar1;
+      pcVar10 = pcVar10 + 1;
+      pcVar4 = pcVar4 + 1;
+    } while (cVar1 != 0);
     format_duration_short(snapshot->holdover_duration,acStack_2d);
     strcat(line,acStack_2d);
   }
@@ -73150,151 +73468,151 @@ LAB_0004ab10:
     line[1] = 0;
   }
   if (snapshot->kenneth_present_valid == 0) {
-    pcVar10 = "";
-    pcVar9 = " ";
-    pcVar3 = acStack_2d;
+    pcVar11 = "";
+    pcVar10 = " ";
+    pcVar4 = acStack_2d;
     do {
-      cVar6 = *pcVar9;
-      *pcVar3 = cVar6;
-      pcVar9 = pcVar9 + 1;
-      pcVar3 = pcVar3 + 1;
-    } while (cVar6 != 0);
+      cVar1 = *pcVar10;
+      *pcVar4 = cVar1;
+      pcVar10 = pcVar10 + 1;
+      pcVar4 = pcVar4 + 1;
+    } while (cVar1 != 0);
   }
   else {
-    pcVar10 = "Present";
-    pcVar9 = acStack_2d;
+    pcVar11 = "Present";
+    pcVar10 = acStack_2d;
+    uVar15 = 4;
+    uVar16 = 0xe1;
+    uVar17 = 0xe4;
     uVar14 = 4;
-    uVar15 = 0xe1;
-    uVar16 = 0xe4;
-    uVar13 = 4;
-    iVar12 = snapshot->kenneth_present_resolution;
-    dVar11 = float_to_double(snapshot->kenneth_present);
-    format_si(dVar11,iVar12,uVar13,(char *)CONCAT31(CONCAT21(uVar14,uVar15),uVar16),pcVar9);
+    iVar13 = snapshot->kenneth_present_resolution;
+    dVar12 = float_to_double(snapshot->kenneth_present);
+    format_si(dVar12,iVar13,uVar14,(char *)CONCAT31(CONCAT21(uVar15,uVar16),uVar17),pcVar10);
   }
-  (*print)("%43s   %s  %s\r\n",line,pcVar10,acStack_2d + 1);
+  (*print)("%43s   %s  %s\r\n",line,pcVar11,acStack_2d + 1);
   (*write)("ACQUISITION ..........................................");
   if (snapshot->pll_field_3d5 == 0) {
     if ((snapshot->reference_valid == 0) || (snapshot->pps_dead != 0)) {
-      pcVar9 = " [ GPS 1PPS CLK Invalid ]";
+      pcVar10 = " [ GPS 1PPS CLK Invalid ]";
     }
     else {
-      pcVar9 = ".. [ GPS 1PPS CLK Valid ]";
+      pcVar10 = ".. [ GPS 1PPS CLK Valid ]";
     }
   }
   else if ((snapshot->gps_field_532[0] == 0) || (snapshot->gps_field_532[1] != 0)) {
-    pcVar9 = " [ EXT 1PPS CLK Invalid ]";
+    pcVar10 = " [ EXT 1PPS CLK Invalid ]";
   }
   else {
-    pcVar9 = ".. [ EXT 1PPS CLK Valid ]";
+    pcVar10 = ".. [ EXT 1PPS CLK Valid ]";
   }
-  (*print)("%s\r\n",pcVar9);
-  iVar1 = (int32_t)(char)snapshot->leap_second_pending - 2;
-  if ((uint32_t)(int32_t)(char)snapshot->leap_second_pending < 2 || iVar1 == 0) {
+  (*print)("%s\r\n",pcVar10);
+  iVar2 = (int32_t)(char)snapshot->leap_second_pending - 2;
+  if ((uint32_t)(int32_t)(char)snapshot->leap_second_pending < 2 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
-    switch((&switchD_0004acdc_index_zero)[(int16_t)iVar1]) {
+    switch((&switchD_0004acdc_index_zero)[(int16_t)iVar2]) {
     case 6:
       goto override_jmp_0004acdc_case_0;
     case 0xe:
-      pcVar9 = " +1 leap second pending";
+      pcVar10 = " +1 leap second pending";
       break;
     case 0x16:
-      pcVar9 = " -1 leap second pending";
+      pcVar10 = " -1 leap second pending";
     }
   }
   else {
 override_jmp_0004acdc_case_0:
-    pcVar9 = "_______________________";
+    pcVar10 = "_______________________";
   }
   (*write)("Satellite Status __________________________   ");
-  (*print)("Time _____%s\r\n",pcVar9);
+  (*print)("Time _____%s\r\n",pcVar10);
   (*print)("Tracking: %d        Not Tracking: %-2d%11s",(uint32_t)snapshot->tracked_count,
            (uint32_t)snapshot->not_tracked_count,"");
   status_screen_time(snapshot,line);
   (*print)("%s\r\n",line);
   if (snapshot->tracked_count == 0) {
-    pcVar9 = "";
-  }
-  else {
-    pcVar9 = "PRN  El  Az   SS";
-  }
-  if (snapshot->not_tracked_count == 0) {
-    pcVar3 = "";
-  }
-  else {
-    pcVar3 = "PRN  El  Az";
-  }
-  if (snapshot->not_tracked_count < 7) {
     pcVar10 = "";
   }
   else {
-    pcVar10 = "PRN  El  Az";
+    pcVar10 = "PRN  El  Az   SS";
   }
-  (*print)("%-16.16s   %-11.11s  %-11.11s%3s",pcVar9,pcVar3,pcVar10,"");
-  if (snapshot->pll_field_3d5 == 0) {
-    pcVar9 = "1PPS CLK";
+  if (snapshot->not_tracked_count == 0) {
+    pcVar4 = "";
   }
   else {
-    pcVar9 = "GPS 1PPS";
+    pcVar4 = "PRN  El  Az";
+  }
+  if (snapshot->not_tracked_count < 7) {
+    pcVar11 = "";
+  }
+  else {
+    pcVar11 = "PRN  El  Az";
+  }
+  (*print)("%-16.16s   %-11.11s  %-11.11s%3s",pcVar10,pcVar4,pcVar11,"");
+  if (snapshot->pll_field_3d5 == 0) {
+    pcVar10 = "1PPS CLK";
+  }
+  else {
+    pcVar10 = "GPS 1PPS";
   }
   status_screen_sync(snapshot,acStack_2d);
-  (*print)("%s %s\r\n",pcVar9,acStack_2d);
+  (*print)("%s %s\r\n",pcVar10,acStack_2d);
   local_b2 = snapshot->tracked;
-  psVar7 = snapshot->not_tracked;
+  psVar8 = snapshot->not_tracked;
   local_ae = 0;
   local_c0 = 0;
   while (local_ae = local_ae + 1, local_ae < 7) {
     format_satellite_number(local_b2->satellite,acStack_ad);
     format_level(local_b2->level,acStack_a8);
     format_satellite_cell(local_b2->cell,acStack_a4);
-    format_satellite_number(psVar7->satellite,acStack_9d);
-    marked = mark_flag(psVar7->attempting,acStack_9d);
-    format_satellite_cell(psVar7->cell,acStack_98);
-    format_satellite_number(psVar7[6].satellite,acStack_91);
-    bVar5 = mark_flag(psVar7[6].attempting,acStack_91);
-    local_c0 = bVar5 | marked | local_c0;
-    format_satellite_cell(psVar7[6].cell,acStack_8c);
+    format_satellite_number(psVar8->satellite,acStack_9d);
+    marked = mark_flag(psVar8->attempting,acStack_9d);
+    format_satellite_cell(psVar8->cell,acStack_98);
+    format_satellite_number(psVar8[6].satellite,acStack_91);
+    bVar7 = mark_flag(psVar8[6].attempting,acStack_91);
+    local_c0 = bVar7 | marked | local_c0;
+    format_satellite_cell(psVar8[6].cell,acStack_8c);
     status_screen_position(local_ae,snapshot,line);
     (*print)("%3.3s  %6.6s  %3.3s   %3.3s  %6.6s  %3.3s  %6.6s%3s%s\r\n",acStack_ad,acStack_a4,
              acStack_a8,acStack_9d,acStack_98,acStack_91,acStack_8c,"",line);
     local_b2 = local_b2 + 1;
-    psVar7 = psVar7 + 1;
+    psVar8 = psVar8 + 1;
   }
   if (local_c0 == 0) {
-    pcVar9 = "";
+    pcVar10 = "";
   }
   else {
-    pcVar9 = "*attempting to track";
+    pcVar10 = "*attempting to track";
   }
-  (*print)("ELEV MASK %2d deg%3s%-25.25s%2s",(uint32_t)snapshot->mask_angle,"",pcVar9,"");
+  (*print)("ELEV MASK %2d deg%3s%-25.25s%2s",(uint32_t)snapshot->mask_angle,"",pcVar10,"");
   status_screen_height(snapshot,line);
   (*print)("%s\r\n",line);
   line[0] = 0;
   local_80 = 0;
-  for (ppuVar8 = &PTR_s_Self_Test_0004d076; *ppuVar8 != (uint8_t *)0x0;
-      ppuVar8 = (uint8_t **)((int32_t)ppuVar8 + 0xe)) {
-    uVar13 = (*(code *)ppuVar8[1])(*(uint16_t *)(ppuVar8 + 2),(uint16_t)unaff_D2);
-    if (uVar13 == 0) {
-      pcVar9 = "OK";
+  for (ppuVar9 = &PTR_s_Self_Test_0004d076; *ppuVar9 != (uint8_t *)0x0;
+      ppuVar9 = (uint8_t **)((int32_t)ppuVar9 + 0xe)) {
+    uVar14 = (*(code *)ppuVar9[1])(*(uint16_t *)(ppuVar9 + 2),(uint16_t)unaff_D2);
+    if (uVar14 == 0) {
+      pcVar10 = "OK";
     }
     else {
-      pcVar9 = "Err";
+      pcVar10 = "Err";
       local_80 = 1;
     }
-    sprintf(acStack_2d,"%s: %-3s%s",*ppuVar8,pcVar9,*(char **)((int32_t)ppuVar8 + 10));
+    sprintf(acStack_2d,"%s: %-3s%s",*ppuVar9,pcVar10,*(char **)((int32_t)ppuVar9 + 10));
     strcat(line,acStack_2d);
   }
-  cVar6 = gps_message_supported(0x28,&raim_option);
-  if ((cVar6 == 0) || (raim_option == 0)) {
+  known = gps_message_supported(0x28,&raim_option);
+  if (((char)known == 0) || (raim_option == 0)) {
     line[0xf] = '|';
   }
   (*write)("HEALTH MONITOR ......................................................");
   if (local_80 == 0) {
-    pcVar9 = "... [ OK ]";
+    pcVar10 = "... [ OK ]";
   }
   else {
-    pcVar9 = " [ ERROR ]";
+    pcVar10 = " [ ERROR ]";
   }
-  (*print)("%s\r\n",pcVar9);
+  (*print)("%s\r\n",pcVar10);
   (*print)("%s",line);
   return;
 }
@@ -74077,7 +74395,7 @@ bool request_ring_put(gps_request_entry *entry)
 
 {
   gps_request_result gVar1;
-  int16_t iVar2;
+  gps_request_code_word gVar2;
   gps_request_ring *pgVar3;
   bool bVar4;
   
@@ -74090,10 +74408,10 @@ bool request_ring_put(gps_request_entry *entry)
     (gps_requests.write)->field_00 = entry->field_00;
     (gps_requests.write)->field_04 = entry->field_04;
     gVar1 = entry->result;
-    iVar2 = entry->code;
+    gVar2 = entry->code;
     (gps_requests.write)->sender = entry->sender;
     (gps_requests.write)->result = gVar1;
-    (gps_requests.write)->code = iVar2;
+    (gps_requests.write)->code = gVar2;
     *(uint32_t *)&(gps_requests.write)->argument_mode = *(uint32_t *)&entry->argument_mode;
     *(uint32_t *)((int32_t)&(gps_requests.write)->arguments + 2) =
          *(uint32_t *)((int32_t)&entry->arguments + 2);
@@ -74116,7 +74434,7 @@ int32_t request_ring_get(gps_request_entry *entry)
 
 {
   gps_request_result gVar1;
-  int16_t iVar2;
+  gps_request_code_word gVar2;
   gps_request_entry *pgVar3;
   int32_t iVar4;
   uint32_t *puVar5;
@@ -74130,10 +74448,10 @@ int32_t request_ring_get(gps_request_entry *entry)
     entry->field_00 = (gps_requests.read)->field_00;
     entry->field_04 = *puVar5;
     gVar1 = pgVar3->result;
-    iVar2 = pgVar3->code;
+    gVar2 = pgVar3->code;
     entry->sender = pgVar3->sender;
     entry->result = gVar1;
-    entry->code = iVar2;
+    entry->code = gVar2;
     *(uint32_t *)&entry->argument_mode = *(uint32_t *)&pgVar3->argument_mode;
     *(uint32_t *)((int32_t)&entry->arguments + 2) = *(uint32_t *)((int32_t)&pgVar3->arguments + 2);
     *(uint32_t *)(entry->field_13 + 1) = *(uint32_t *)(pgVar3->field_13 + 1);
@@ -74158,7 +74476,7 @@ int32_t request_ring_unput(gps_request_entry *entry)
 
 {
   gps_request_result gVar1;
-  int16_t iVar2;
+  gps_request_code_word gVar2;
   gps_request_entry *pgVar3;
   int32_t iVar4;
   uint32_t *puVar5;
@@ -74178,10 +74496,10 @@ int32_t request_ring_unput(gps_request_entry *entry)
     entry->field_00 = (gps_requests.write)->field_00;
     entry->field_04 = *puVar5;
     gVar1 = pgVar3->result;
-    iVar2 = pgVar3->code;
+    gVar2 = pgVar3->code;
     entry->sender = pgVar3->sender;
     entry->result = gVar1;
-    entry->code = iVar2;
+    entry->code = gVar2;
     *(uint32_t *)&entry->argument_mode = *(uint32_t *)&pgVar3->argument_mode;
     *(uint32_t *)((int32_t)&entry->arguments + 2) = *(uint32_t *)((int32_t)&pgVar3->arguments + 2);
     *(uint32_t *)(entry->field_13 + 1) = *(uint32_t *)(pgVar3->field_13 + 1);
@@ -74371,7 +74689,8 @@ LAB_0004bd18:
 /* builds a request, its kind, index and arguments, and sends it to the GPS task's exchange
    gps.md, "Requests" */
 
-bool gps_request_post(gps_request_sender sender,int16_t code,int32_t *arguments,uint8_t sent)
+bool gps_request_post(gps_request_sender sender,gps_request_code_word code,int32_t *arguments,
+                     uint8_t sent)
 
 {
   uint32_t error;
@@ -74381,7 +74700,7 @@ bool gps_request_post(gps_request_sender sender,int16_t code,int32_t *arguments,
   request.field_04 = 0;
   request.sender = sender;
   if (code == 4) {
-    request.code = *(int16_t *)*arguments;
+    request.code = *(gps_request_code_word *)*arguments;
     request.argument_mode = *(gps_argument_mode *)(*arguments + 2);
     request.arguments = (int32_t *)(*arguments + 4);
   }
@@ -74410,7 +74729,7 @@ bool gps_request_post(gps_request_sender sender,int16_t code,int32_t *arguments,
 /* a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3
    otherwise */
 
-gps_code_class gps_request_class(int16_t code,gps_argument_mode argument_mode)
+gps_code_class gps_request_class(gps_request_code_word code,gps_argument_mode argument_mode)
 
 {
   gps_code_class gVar1;
@@ -74442,14 +74761,14 @@ gps_code_class gps_request_class(int16_t code,gps_argument_mode argument_mode)
 
 /* a script index from 0x47 on to its script, the first also resetting gps */
 
-gps_script_step ** gps_script_lookup(int16_t param_1)
+gps_script_step ** gps_script_lookup(gps_request_code_word code)
 
 {
   gps_script_step **ppgVar1;
   
-  if ((int32_t)param_1 - 0x47U < 0x13U) {
+  if ((int32_t)code - 0x47U < 0x13U) {
                     /* WARNING: Switch is manually overridden */
-    switch((int16_t)((int32_t)param_1 - 0x47U)) {
+    switch((int16_t)((int32_t)code - 0x47U)) {
     case 0:
       gps_init();
       ppgVar1 = gps_script_47;
@@ -74693,7 +75012,7 @@ void gpsm_task(void)
                         (uint32_t)bVar9 * 4);
                   bVar9 = bVar9 + 1;
                 } while (bVar9 < 4);
-                command.script = (gps_script_step **)gps_script_lookup(command.request.code);
+                command.script = gps_script_lookup(command.request.code);
                 bStack_10 = 0;
                 bStack_2a = 0;
                 gps_task_state = GPS_PROCESS_SEND_COMMAND;
@@ -74991,8 +75310,8 @@ void command_log_clear(void)
 int32_t command_log_add(gps_running_command *command,char *text)
 
 {
-  int16_t iVar1;
-  int16_t iVar2;
+  gps_request_code_word gVar1;
+  gps_request_code_word gVar2;
   gps_request_sender gVar3;
   char cVar4;
   char cVar5;
@@ -75003,8 +75322,8 @@ int32_t command_log_add(gps_running_command *command,char *text)
   time_of_day local_8;
   
   gVar3 = (command->request).sender;
-  iVar1 = (command->request).code;
-  iVar2 = command->message;
+  gVar1 = (command->request).code;
+  gVar2 = command->message;
   cVar4 = text[4];
   cVar5 = text[5];
   entry.query = command->query;
@@ -75030,10 +75349,10 @@ int32_t command_log_add(gps_running_command *command,char *text)
      &command_log.entries[0x14].time.second < command_log.read)) {
     command_log.read = command_log.entries;
   }
-  (command_log.write)->code = iVar1;
+  (command_log.write)->code = gVar1;
   (command_log.write)->sender = gVar3;
   (command_log.write)->field_03 = entry.field_03;
-  (command_log.write)->message = iVar2;
+  (command_log.write)->message = gVar2;
   (command_log.write)->argument_text[0] = cVar4;
   (command_log.write)->argument_text[1] = cVar5;
   *(uint32_t *)((command_log.write)->argument_text + 2) = __ghidra_piece(uint32_t, entry, 8);
@@ -76491,17 +76810,17 @@ void gps_parse_options(void)
 /* @@Bn, message 0x28, needs the receiver ID and its Time RAIM option, gps.raim_option; any other is
    supported */
 
-uint32_t gps_message_supported(int16_t param_1,uint8_t *param_2)
+uint32_t gps_message_supported(gps_request_code_word code,uint8_t *supported)
 
 {
-  if (param_1 == 0x28) {
+  if (code == 0x28) {
     if (gps.receiver_id_received == 0) {
       return 0;
     }
-    *param_2 = gps.raim_option != 0;
+    *supported = gps.raim_option != 0;
   }
   else {
-    *param_2 = 1;
+    *supported = 1;
   }
   return 1;
 }
@@ -76516,42 +76835,43 @@ uint32_t gps_message_supported(int16_t param_1,uint8_t *param_2)
 int16_t gps_request_build(int16_t message,gps_argument_mode mode,int32_t *arguments,char *out)
 
 {
-  int32_t iVar1;
-  char cVar4;
-  int16_t sVar3;
+  char cVar1;
   int32_t iVar2;
-  uint8_t bVar5;
-  uint8_t *pbVar6;
-  char *pcVar7;
+  uint32_t known;
+  int16_t sVar5;
+  int32_t iVar4;
+  uint8_t bVar6;
+  uint8_t *pbVar7;
+  char *pcVar8;
   uint8_t *out_00;
   uint8_t local_8 [2];
-  char local_6 [2];
+  uint8_t local_6 [2];
   
-  iVar1 = (int32_t)message;
+  iVar2 = (int32_t)message;
   local_6[0] = 0;
-  cVar4 = gps_message_supported(message,local_6);
-  if ((cVar4 == 0) || (local_6[0] == 0)) {
-    sVar3 = -1;
+  known = gps_message_supported(message,local_6);
+  if (((char)known == 0) || (local_6[0] == 0)) {
+    sVar5 = -1;
   }
   else {
     *out = 0;
-    sVar3 = (int16_t)out;
-    if ((oncore_messages[iVar1].kind == ONCORE_KIND_SENT) ||
-       (oncore_messages[iVar1].kind == ONCORE_KIND_EXCHANGED)) {
+    sVar5 = (int16_t)out;
+    if ((oncore_messages[iVar2].kind == ONCORE_KIND_SENT) ||
+       (oncore_messages[iVar2].kind == ONCORE_KIND_EXCHANGED)) {
       strcat(out,"@@");
-      strcat(out,oncore_messages[iVar1].id);
-      iVar2 = -1;
-      pcVar7 = out;
+      strcat(out,oncore_messages[iVar2].id);
+      iVar4 = -1;
+      pcVar8 = out;
       do {
-        iVar2 = iVar2 + 1;
-        cVar4 = *pcVar7;
-        pcVar7 = pcVar7 + 1;
-      } while (cVar4 != 0);
-      out_00 = (uint8_t *)(out + iVar2);
+        iVar4 = iVar4 + 1;
+        cVar1 = *pcVar8;
+        pcVar8 = pcVar8 + 1;
+      } while (cVar1 != 0);
+      out_00 = (uint8_t *)(out + iVar4);
       if (mode == GPS_ARGUMENTS_SET) {
-        for (bVar5 = 0; (*(int32_t *)(iVar1 * 0x38 + 0x4fed4 + (uint32_t)bVar5 * 4) != 0 && (bVar5 < 4));
-            bVar5 = bVar5 + 1) {
-          out_00 = (uint8_t *)(**(code **)(iVar1 * 0x38 + 0x4fed4 + (uint32_t)bVar5 * 4))((int16_t)arguments)
+        for (bVar6 = 0; (*(int32_t *)(iVar2 * 0x38 + 0x4fed4 + (uint32_t)bVar6 * 4) != 0 && (bVar6 < 4));
+            bVar6 = bVar6 + 1) {
+          out_00 = (uint8_t *)(**(code **)(iVar2 * 0x38 + 0x4fed4 + (uint32_t)bVar6 * 4))((int16_t)arguments)
           ;
         }
         if (message == 0x1e) {
@@ -76562,52 +76882,52 @@ int16_t gps_request_build(int16_t message,gps_argument_mode mode,int32_t *argume
           *out_00 = 0;
           out_00[1] = 0;
           out_00[2] = 1;
-          bVar5 = 1;
-          pbVar6 = out_00 + 3;
+          bVar6 = 1;
+          pbVar7 = out_00 + 3;
           do {
-            out_00 = pbVar6 + 1;
-            *pbVar6 = 0;
-            bVar5 = bVar5 + 1;
-            pbVar6 = out_00;
-          } while (bVar5 < 8);
+            out_00 = pbVar7 + 1;
+            *pbVar7 = 0;
+            bVar6 = bVar6 + 1;
+            pbVar7 = out_00;
+          } while (bVar6 < 8);
         }
       }
       else {
-        pbVar6 = (uint8_t *)oncore_messages[iVar1].query;
-        if (pbVar6 == (uint8_t *)0x0) {
+        pbVar7 = (uint8_t *)oncore_messages[iVar2].query;
+        if (pbVar7 == (uint8_t *)0x0) {
           *out = 0;
           return 0;
         }
         if (message == 8) {
           out_00 = (uint8_t *)long_array_get_byte(arguments,0,(char *)out_00);
         }
-        for (; *pbVar6 != 0; pbVar6 = pbVar6 + 1) {
-          if (*pbVar6 == 0xee) {
-            bVar5 = 0;
+        for (; *pbVar7 != 0; pbVar7 = pbVar7 + 1) {
+          if (*pbVar7 == 0xee) {
+            bVar6 = 0;
           }
           else {
-            bVar5 = *pbVar6;
+            bVar6 = *pbVar7;
           }
-          *out_00 = bVar5;
+          *out_00 = bVar6;
           out_00 = out_00 + 1;
         }
       }
-      bVar5 = 0xff;
-      pcVar7 = "@@";
+      bVar6 = 0xff;
+      pcVar8 = "@@";
       do {
-        bVar5 = bVar5 + 1;
-        cVar4 = *pcVar7;
-        pcVar7 = pcVar7 + 1;
-      } while (cVar4 != 0);
-      bVar5 = oncore_checksum((uint8_t *)(out + bVar5),out_00);
-      *out_00 = bVar5;
+        bVar6 = bVar6 + 1;
+        cVar1 = *pcVar8;
+        pcVar8 = pcVar8 + 1;
+      } while (cVar1 != 0);
+      bVar6 = oncore_checksum((uint8_t *)(out + bVar6),out_00);
+      *out_00 = bVar6;
       out_00[1] = 0xd;
       out = (char *)(out_00 + 3);
       out_00[2] = 10;
     }
-    sVar3 = (int16_t)out - sVar3;
+    sVar5 = (int16_t)out - sVar5;
   }
-  return sVar3;
+  return sVar5;
 }
 
 #endif
@@ -76618,7 +76938,7 @@ int16_t gps_request_build(int16_t message,gps_argument_mode mode,int32_t *argume
 /* runs a response's decoders from the table at 0x4feee, with preemption off, and hands @@Ea's time
    to status_snapshot_update */
 
-char * gps_response_decode(int16_t message,char *response)
+char * gps_response_decode(gps_request_code_word message,char *response)
 
 {
   char cVar1;
@@ -89290,6 +89610,314 @@ char * installer_exception_name(uint16_t vector)
 }
 
 #endif
+
+/* installer::00100686 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the installer's m68000_bus_error, byte for byte but its branch, to installer_default_exception
+   (0x1005b4); no vector table or call names it
+   Not a C function (exception; read): entered by the processor, not called. */
+
+__exception void installer_m68000_bus_error(uint16_t param_1,uint16_t param_2,uint16_t param_3)
+
+{
+  uint16_t uStack00000006;
+  
+  uStack00000006 = param_1;
+  installer_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl installer_m68000_bus_error\n"
+	"	.type installer_m68000_bus_error, @function\n"
+	"	.pushsection .text.installer_m68000_bus_error.100686,\"ax\",@progbits\n"
+	"installer_m68000_bus_error:\n"
+	"	addq.w #0x8,%sp\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x8,(0x6,%sp)\n"
+	"	bra.w installer_default_exception\n"
+	"	.size installer_m68000_bus_error, .-installer_m68000_bus_error\n"
+	"	.popsection\n"
+);
+
+/* installer::001006a0 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the installer's m68000_address_error, byte for byte but its branch, to
+   installer_default_exception (0x1005b4); no vector table or call names it
+   Not a C function (exception; read): entered by the processor, not called. */
+
+__exception void installer_m68000_address_error(uint16_t param_1,uint16_t param_2,uint16_t param_3)
+
+{
+  uint16_t uStack00000006;
+  
+  uStack00000006 = param_1;
+  installer_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl installer_m68000_address_error\n"
+	"	.type installer_m68000_address_error, @function\n"
+	"	.pushsection .text.installer_m68000_address_error.1006a0,\"ax\",@progbits\n"
+	"installer_m68000_address_error:\n"
+	"	addq.w #0x8,%sp\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0xc,(0x6,%sp)\n"
+	"	bra.w installer_default_exception\n"
+	"	.size installer_m68000_address_error, .-installer_m68000_address_error\n"
+	"	.popsection\n"
+);
+
+/* installer::001006ba */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the installer's m68000_illegal_instruction, byte for byte but its branch, to
+   installer_default_exception (0x1005b4); no vector table or call names it
+   Not a C function (exception; read): entered by the processor, not called. */
+
+__exception void installer_m68000_illegal_instruction(uint16_t param_1)
+
+{
+  installer_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl installer_m68000_illegal_instruction\n"
+	"	.type installer_m68000_illegal_instruction, @function\n"
+	"	.pushsection .text.installer_m68000_illegal_instruction.1006ba,\"ax\",@progbits\n"
+	"installer_m68000_illegal_instruction:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x10,(0x6,%sp)\n"
+	"	bra.w installer_default_exception\n"
+	"	.size installer_m68000_illegal_instruction, .-installer_m68000_illegal_instruction\n"
+	"	.popsection\n"
+);
+
+/* installer::001006d2 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the installer's m68000_zero_division, byte for byte but its branch, to
+   installer_default_exception (0x1005b4); no vector table or call names it
+   Not a C function (exception; read): entered by the processor, not called. */
+
+__exception void installer_m68000_zero_division(uint16_t param_1)
+
+{
+  installer_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl installer_m68000_zero_division\n"
+	"	.type installer_m68000_zero_division, @function\n"
+	"	.pushsection .text.installer_m68000_zero_division.1006d2,\"ax\",@progbits\n"
+	"installer_m68000_zero_division:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x14,(0x6,%sp)\n"
+	"	bra.w installer_default_exception\n"
+	"	.size installer_m68000_zero_division, .-installer_m68000_zero_division\n"
+	"	.popsection\n"
+);
+
+/* installer::001006ea */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the installer's m68000_chk, byte for byte but its branch, to installer_default_exception
+   (0x1005b4); no vector table or call names it
+   Not a C function (exception; read): entered by the processor, not called. */
+
+__exception void installer_m68000_chk(uint16_t param_1)
+
+{
+  installer_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl installer_m68000_chk\n"
+	"	.type installer_m68000_chk, @function\n"
+	"	.pushsection .text.installer_m68000_chk.1006ea,\"ax\",@progbits\n"
+	"installer_m68000_chk:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x18,(0x6,%sp)\n"
+	"	bra.w installer_default_exception\n"
+	"	.size installer_m68000_chk, .-installer_m68000_chk\n"
+	"	.popsection\n"
+);
+
+/* installer::00100702 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the installer's m68000_trapcc, byte for byte but its branch, to installer_default_exception
+   (0x1005b4); no vector table or call names it
+   Not a C function (exception; read): entered by the processor, not called. */
+
+__exception void installer_m68000_trapcc(uint16_t param_1)
+
+{
+  installer_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl installer_m68000_trapcc\n"
+	"	.type installer_m68000_trapcc, @function\n"
+	"	.pushsection .text.installer_m68000_trapcc.100702,\"ax\",@progbits\n"
+	"installer_m68000_trapcc:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x1c,(0x6,%sp)\n"
+	"	bra.w installer_default_exception\n"
+	"	.size installer_m68000_trapcc, .-installer_m68000_trapcc\n"
+	"	.popsection\n"
+);
+
+/* installer::0010071a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the installer's m68000_privilege_violation, byte for byte but its branch, to
+   installer_default_exception (0x1005b4); no vector table or call names it
+   Not a C function (exception; read): entered by the processor, not called. */
+
+__exception void installer_m68000_privilege_violation(uint16_t param_1)
+
+{
+  installer_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl installer_m68000_privilege_violation\n"
+	"	.type installer_m68000_privilege_violation, @function\n"
+	"	.pushsection .text.installer_m68000_privilege_violation.10071a,\"ax\",@progbits\n"
+	"installer_m68000_privilege_violation:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x20,(0x6,%sp)\n"
+	"	bra.w installer_default_exception\n"
+	"	.size installer_m68000_privilege_violation, .-installer_m68000_privilege_violation\n"
+	"	.popsection\n"
+);
+
+/* installer::00100732 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the installer's m68000_trace, byte for byte but its branch, to installer_default_exception
+   (0x1005b4); no vector table or call names it
+   Not a C function (exception; read): entered by the processor, not called. */
+
+__exception void installer_m68000_trace(uint16_t param_1)
+
+{
+  installer_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl installer_m68000_trace\n"
+	"	.type installer_m68000_trace, @function\n"
+	"	.pushsection .text.installer_m68000_trace.100732,\"ax\",@progbits\n"
+	"installer_m68000_trace:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x24,(0x6,%sp)\n"
+	"	bra.w installer_default_exception\n"
+	"	.size installer_m68000_trace, .-installer_m68000_trace\n"
+	"	.popsection\n"
+);
+
+/* installer::0010074a */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the installer's m68000_line_a, byte for byte but its branch, to installer_default_exception
+   (0x1005b4); no vector table or call names it
+   Not a C function (exception; read): entered by the processor, not called. */
+
+__exception void installer_m68000_line_a(uint16_t param_1)
+
+{
+  installer_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl installer_m68000_line_a\n"
+	"	.type installer_m68000_line_a, @function\n"
+	"	.pushsection .text.installer_m68000_line_a.10074a,\"ax\",@progbits\n"
+	"installer_m68000_line_a:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x28,(0x6,%sp)\n"
+	"	bra.w installer_default_exception\n"
+	"	.size installer_m68000_line_a, .-installer_m68000_line_a\n"
+	"	.popsection\n"
+);
+
+/* installer::00100762 */
+#if 0 /* the decompiler's reading; the routine is the assembly after it */
+
+/* the installer's m68000_line_f, byte for byte but its branch, to installer_default_exception
+   (0x1005b4); no vector table or call names it
+   Not a C function (exception; read): entered by the processor, not called. */
+
+__exception void installer_m68000_line_f(uint16_t param_1)
+
+{
+  installer_default_exception();
+  return;
+}
+
+
+#endif
+__asm__(
+	"	.globl installer_m68000_line_f\n"
+	"	.type installer_m68000_line_f, @function\n"
+	"	.pushsection .text.installer_m68000_line_f.100762,\"ax\",@progbits\n"
+	"installer_m68000_line_f:\n"
+	"	move.w (%sp),-(%sp)\n"
+	"	move.w (0x4,%sp),(0x2,%sp)\n"
+	"	move.w (0x6,%sp),(0x4,%sp)\n"
+	"	move.w #0x2c,(0x6,%sp)\n"
+	"	bra.w installer_default_exception\n"
+	"	.size installer_m68000_line_f, .-installer_m68000_line_f\n"
+	"	.popsection\n"
+);
 
 /* installer::00100bb2 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */

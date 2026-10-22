@@ -28,7 +28,7 @@ uint32_t request_kind_valid(gps_request_sender sender) {
 
 /* A request code's class, by its range and, for a message, its argument
  * mode, 0 to send it and 1 to query it (0x4bdba). */
-gps_code_class gps_request_class(int16_t code,
+gps_code_class gps_request_class(gps_request_code_word code,
                                  gps_argument_mode argument_mode) {
   if (code >= GPS_REQUEST_TIME_OF_DAY && code <= GPS_REQUEST_RECEIVER_ID &&
       (argument_mode == GPS_ARGUMENTS_SET ||
@@ -176,7 +176,7 @@ void gps_request_queue(char state, gps_request_entry* request,
 /* Sends a monitor's request to the task's exchange, marking its result
  * pending: the code's, without arguments, or for GPS_POST_STEP the code, mode
  * and arguments of the step arguments[0] points at (0x4bd2c). */
-bool gps_request_post(gps_request_sender sender, int16_t code,
+bool gps_request_post(gps_request_sender sender, gps_request_code_word code,
                       int32_t* arguments, uint8_t sent) {
   gps_request_entry request;
 
@@ -214,7 +214,7 @@ static gps_script_step** const gps_requests_scripts[] = {
 
 /* A script code's steps, the empty script for any other; the first
  * script also resets gps (0x4be04). */
-gps_script_step** gps_script_lookup(int16_t code) {
+gps_script_step** gps_script_lookup(gps_request_code_word code) {
   static const uint32_t COUNT =
       sizeof gps_requests_scripts / sizeof gps_requests_scripts[0];
   uint32_t index = (uint32_t)(code - GPS_SCRIPT_INIT_DEFAULTS);
@@ -231,7 +231,7 @@ gps_script_step** gps_script_lookup(int16_t code) {
 /* 1 unless the message is @@Bn without the receiver's ID yet; and
  * through supported, whether the receiver takes it: @@Bn only with its
  * Time RAIM option (0x4f8fc). */
-uint32_t gps_message_supported(int16_t code, uint8_t* supported) {
+uint32_t gps_message_supported(gps_request_code_word code, uint8_t* supported) {
   if (code == GPS_REQUEST_TRAIM) {
     if (gps.receiver_id_received == 0) {
       return 0;

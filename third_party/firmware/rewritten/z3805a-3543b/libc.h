@@ -553,11 +553,6 @@ enum {
 #define LIBC_RAISE_CODE(routine, cause) \
   ((uint32_t)(LIBC_RAISE_MATH | (routine)) << LIBC_WORD_BITS / 2 | (cause))
 
-/* The long above a routine's first argument in its frame: A6's saved
- * value, the return address and the argument come first; what
- * float_exception_report passes fatal_error_with_code as its code. */
-static const int32_t LIBC_FRAME_LONG_ABOVE_CODE = 3;
-
 /* float_exception_report's and its installer copy's body: builds
  * float_raise's report, "fp <cause>: <routine>", a length byte and its
  * text, in message (libc.md, "Exception codes"). */
@@ -669,12 +664,6 @@ static void libc_raise_operands(va_list list,
  * through the caller's frame pointer (0x5e99a), as one of its reports'
  * addresses. */
 #define LIBC_CALLERS_RETURN() (((const uint32_t*)__builtin_frame_address(1))[1])
-
-/* float_exception_report as float_raise calls it: the image pushes the
- * report's address before the code, which the report passes on as the
- * long above its code (LIBC_FRAME_LONG_ABOVE_CODE), where the report's
- * prototype has the code alone (0x5ec8c). */
-typedef void libc_raise_report(uint32_t code, uint32_t address);
 
 /* A long shifted right by a count, as lsr.l shifts by a register: the
  * count modulo 64, nothing left from 32 on (MC68000PRM, LSR). */

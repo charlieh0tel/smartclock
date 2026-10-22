@@ -43,7 +43,7 @@ static double gps_reports_scaled_unsigned(uint32_t value, float divisor) {
 /* An angle in milliarcseconds as "%c%4d:%02d:%06.3f": its hemisphere,
  * N or S for a latitude, E or W for a longitude, and its degrees,
  * minutes and seconds, each of the first two taken as a byte (0x480c2). */
-void format_angle(char* text, int32_t mas, char latitude) {
+void format_angle(char* text, int32_t mas, uint8_t latitude) {
   char hemisphere;
 
   if (mas < 0) {
@@ -714,7 +714,7 @@ void gps_print_pseudorange_corrections(void) {
 }
 
 /* Copies "Enabled" for 1, "Disabled" for 0, else "?" (0x48964). */
-void enabled_string(char enabled, char* text) {
+void enabled_string(uint8_t enabled, char* text) {
   const char* name;
 
   if (enabled == 1) {

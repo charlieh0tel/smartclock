@@ -159,7 +159,7 @@
 {"address":"00014020","name":"primary_user_86","convention":"exception","confidence":"derived","family":"exception"}
 {"address":"0001406a","name":"es_schedule","note":"sets output compare 4 to fire an ES message character a delay after the 1PPS capture","convention":"unknown","stack":[{"offset":4,"size":4}]}
 {"address":"000140e4","name":"primary_user_87","convention":"exception","confidence":"derived","family":"exception"}
-{"address":"0001412e","name":"float_exception_report","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"0001412e","name":"float_exception_report","note":"float_raise's report: the code, and the address float_raise pushes before it (0x5ec8c), which it passes fatal_error_with_code as the code it prints","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"000144c8","name":"primary_spurious_interrupt","convention":"exception","confidence":"derived","family":"exception"}
 {"address":"000144ca","name":"primary_reset","convention":"exception","confidence":"derived","family":"exception"}
 {"address":"00014974","name":"primary_trap_11","convention":"exception","confidence":"derived","family":"exception"}
@@ -1720,7 +1720,7 @@
 {"address":"installer::00100e90","name":"installer_set_interrupt_mask","note":"the installer's set_interrupt_mask","convention":"unknown","stack":[{"offset":4,"size":2}]}
 {"address":"installer::00100f32","name":"installer_trap_7","note":"the installer's primary_trap_7, byte for byte: the boot vector table's vector 39, trap #7","convention":"exception","confidence":"read","family":"exception"}
 {"address":"installer::00100f3a","name":"installer_enter_supervisor","note":"the installer's enter_supervisor","convention":"other","confidence":"read","out":[{"register":"D0","type":"int","name":"status"}],"preserves":["D1","D2","D3","D4","D5","D6","D7","A1","A2","A3","A4","A5","A6"],"family":"supervisor"}
-{"address":"installer::00100fc0","name":"installer_float_exception_report","note":"the installer's float_exception_report","convention":"unknown","stack":[{"offset":4,"size":4}]}
+{"address":"installer::00100fc0","name":"installer_float_exception_report","note":"the installer's float_exception_report","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4}]}
 {"address":"installer::0010135a","name":"installer_spurious_interrupt","note":"the installer's primary_spurious_interrupt, a lone rte, byte for byte: the boot vector table's vector 24, the spurious interrupt","convention":"exception","confidence":"read","family":"exception"}
 {"address":"installer::0010135c","name":"installer_entry","note":"the installer's entry from the boot code, as primary_reset's end (0x14922): the stack at 0x10fffe and a null frame, the float library's state, atexit's count, errno and rand's seed, then installer_start and installer_program_exit with its result","convention":"other","confidence":"read"}
 {"address":"installer::001013ae","name":"installer_program_exit","note":"the installer's program_exit","convention":"unknown","stack":[{"offset":4,"size":4}]}

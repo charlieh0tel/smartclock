@@ -151,7 +151,7 @@
 0x5ecf0	function	call_atexit_functions	libc.md
 0x1038b4	label	atexit_functions	libc.md		atexit_function *[32]
 0x103934	label	atexit_count	libc.md		uint16_t
-0x1412e	function	float_exception_report	libc.md		void float_exception_report(uint32_t code)
+0x1412e	function	float_exception_report	libc.md	float_raise's report: the code, and the address float_raise pushes before it (0x5ec8c), which it passes fatal_error_with_code as the code it prints	void float_exception_report(uint32_t code, uint32_t address)
 0x100bd4	label	float_exception_message	libc.md, structures.md	length-prefixed: its length, then the text from 0x100bd5, at most 30 characters, to program_end_message	uint8_t[32]
 0x100bf4	label	program_end_message	structures.md	program_end_report's "Prog end, returned N", length-prefixed, for fatal_error_with_code; the digits built backward from the 0xff it stores at 0x100c21	uint8_t[46]
 0x5dbde	function	double_divide_operand_error	libc.md, read	exception code 0xe2000; a tail the divide branches to (0x5d9b0, 0x5d9f2), leaving through its epilogue at 0x5db8c, which pops the D2-D7 it pushed		convention=other; confidence=read; family=softfloat
@@ -579,7 +579,7 @@
 0x4a42c	function	bit_is_set	context	value & 1 << bit
 0x4f1da	function	count_bits	context	counts a word's set bits	char count_bits(uint param_1)
 0x4f02a	function	oncore_decode_fields	structures.md	the field-table byte code the GPS task's decoders run	uint8_t *oncore_decode_fields(uint8_t *source, uint8_t *destination, uint8_t *program)
-0x480c2	function	format_angle	context	an angle in mas as N, S, E or W by its sign and whether it is a latitude, then degrees and minutes
+0x480c2	function	format_angle	context	an angle in mas as N, S, E or W by its sign and whether it is a latitude, then degrees and minutes	void format_angle(char *text, int32_t mas, uint8_t latitude)
 0x47e32	function	mas_to_dms	context	mas into degrees (/ 3600000), minutes (/ 60000) and seconds (the rest / 1000.0); the position queries
 0x322b4	function	clamp_to_limits	context	clamps *value to *min and *max, reporting through report_clamped	int clamp_to_limits(int32_t *value, int index, int32_t *minimum, int32_t *maximum, scpi_step *step, int source)
 0x31ff8	function	report_clamped	context	"Value too small, set to min limit" or "too large, set to max limit", and status_report_from(9)	void report_clamped(char too_large, request_source source)
@@ -829,7 +829,7 @@
 0x47f14	function	format_dms	"%c%4d:%02d:%06.3f", degrees, minutes and seconds	formats an angle as degrees, minutes and seconds to milliseconds
 0x47f14	local	seconds	read	mas_to_dms's seconds	double @ -0xc
 0x47fb6	function	format_dms_precise	"%c%4d:%02d:%06.7f"	formats an angle as degrees, minutes and seconds to 0.1 microseconds	void format_dms_precise(char *text, double mas, char latitude)
-0x48964	function	enabled_string	"Enabled", "Disabled"	"Enabled" or "Disabled" for a flag
+0x48964	function	enabled_string	"Enabled", "Disabled"	"Enabled" or "Disabled" for a flag	void enabled_string(uint8_t enabled, char *text)
 0x29b0e	function	scpi_prompt	"scpi > ", "E%+04d> "	makes the SCPI prompt, with the latest error when there is one
 0x31ba2	function	log_first_satellite	log_write("First satellite tracked at %04d%02d%02d.%02d:%02d:%02d")	logs the time the first satellite was tracked	void log_first_satellite(undefined4 param_1,undefined4 param_2)
 0x3305e	function	log_clear	"Log cleared"	clears the event log
@@ -1218,7 +1218,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4bc58	function	request_kind_valid	context	1 for request kinds 1 to 4	uint32_t request_kind_valid(gps_request_sender sender)
 0x4be04	function	gps_script_lookup	context	a script index from 0x47 on to its script, the first also resetting gps	gps_script_step ** gps_script_lookup(gps_request_code_word code)
 0x4bdba	function	gps_request_class	context	a request index's class: 0 a message (0 to 48), 2 for 49 to 70, 1 a script (71 to 89), 3 otherwise	gps_code_class gps_request_class(gps_request_code_word code, gps_argument_mode argument_mode)
-0x4bc74	function	gps_request_queue	context	queues a new request: the step index 0x45 flushes the ring, others are queued unless one is waiting already	void gps_request_queue(char param_1, gps_request_entry *request, gps_request_entry *param_3)
+0x4bc74	function	gps_request_queue	context	queues a new request: the step index 0x45 flushes the ring, others are queued unless one is waiting already	void gps_request_queue(uint8_t state, gps_request_entry *request, gps_request_entry *running)
 0x4f932	function	gps_request_build	context	builds a request's text: @@, its ID, then each argument through the message's encoders	int16_t gps_request_build(gps_request_code_word message, gps_argument_mode mode, int32_t *arguments, uint8_t *out)
 0x4faa2	function	gps_response_decode	context	runs a response's decoders from the table at 0x4feee, with preemption off, and hands @@Ea's time to status_snapshot_update	uint8_t *gps_response_decode(gps_request_code_word message, uint8_t *response)
 0x4b7ac	function	gps_response_lookup	context	a response's two-character ID to its index among 49, counting unknown_response	uint32_t gps_response_lookup(char first, char second, int16_t *length, gps_request_code_word *index)
@@ -1247,9 +1247,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4f32c	function	satellite_find	context	finds a satellite by ID in a table of 10-byte entries, by bisection	oncore_visible_satellite *satellite_find(uint8_t id, gps_visibility_record *record)
 0x49654	function	satellite_elevation_azimuth	context	a satellite's elevation and azimuth, valid below 91 and 360	void satellite_elevation_azimuth(oncore_visible_satellite *satellite, satellite_cell *cell)
 0x49474	function	satellite_sets_build	context	for status_snapshot: the sets of GPS and pseudolite satellites visible, used and tracked, and the tracked by @@Ba channel mode	void satellite_sets_build(oncore_channel_status *channels, satellite_sets *sets)
-0x49688	function	satellite_status	context	for status_snapshot: a satellite's status code for the screen	void satellite_status(char tracked, uint8_t id, satellite_sets *sets, gps_visibility_record *visibility, satellite_cell *cell)
+0x49688	function	satellite_status	context	for status_snapshot: a satellite's status code for the screen	void satellite_status(uint8_t tracked, uint8_t id, satellite_sets *sets, gps_visibility_record *visibility, satellite_cell *cell)
 0x49612	function	satellite_track_class	context	a track record's class, 1 to 3	satellite_health_class satellite_track_class(oncore_visible_satellite *satellite)
-0x497c8	function	satellite_status_list	context	for status_snapshot: the screen's list of satellites, built and sorted	void satellite_status_list(char tracked, uint8_t entries, satellite_sets *sets, oncore_channel_status *channels, gps_visibility_record *visibility, satellite_list_entry *list, uint8_t *count)
+0x497c8	function	satellite_status_list	context	for status_snapshot: the screen's list of satellites, built and sorted	void satellite_status_list(uint8_t tracked, uint8_t entries, satellite_sets *sets, oncore_channel_status *channels, gps_visibility_record *visibility, satellite_list_entry *list, uint8_t *count)
 0x4a636	function	status_snapshot	context	gathers the loop's stage, mode and suffix indexes, the TI, TFOM, FFOM, holdover, time zone, date and satellites into a record, under a raised interrupt mask	void status_snapshot(status_snapshot_record *snapshot)
 0x45c18	function	recovery_suffix_index	screen-format-strings.md, "Mode suffixes"	in holdover recovery's first state: 1 fine freq adj, 2 phase alignment; pll_powerup_suffix_index's companion	pll_recovery_suffix recovery_suffix_index(void)
 0x45c48	function	holdover_waiting_reason	context	for :HOLDover:WAITing?: which fault bit holds the loop in holdover, 0x10, 2 or 8
@@ -1668,7 +1668,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x4f682	function	oncore_visibility_message	gps.md	decodes the visible satellites, @@Bb, and marks them received	uint8_t *oncore_visibility_message(uint8_t *cursor, uint8_t *record)
 0x4f6d8	function	oncore_corrections_message	gps.md	decodes the range corrections and averages those of the satellites in use, and their deviation
 0x4f87e	function	oncore_receiver_id_message	gps.md	decodes the receiver ID, @@Cj, and marks it received	uint8_t *oncore_receiver_id_message(uint8_t *cursor, uint8_t *record)
-0x4fb86	function	gps_response_match	context	checks a response against the request it answers	gps_match_result gps_response_match(gps_request_code_word message, uint8_t *sent, uint8_t length, gps_argument_mode mode, int16_t index, uint8_t *response, int16_t response_length)
+0x4fb86	function	gps_response_match	context	checks a response against the request it answers	gps_match_result gps_response_match(gps_request_code_word message, uint8_t *sent, uint8_t length, gps_argument_mode mode, gps_request_code_word index, uint8_t *response, int16_t response_length)
 0x51038	function	psos_config_init	psos.md	copies the kernel's configuration and its I/O table into RAM
 0x510aa	function	memory_allocate	psos.md	allocates from region 1 through service 8	void *memory_allocate(uint32_t size)
 0x510d2	function	memory_free	psos.md	frees a segment through service 9	void memory_free(void *segment)
@@ -1711,7 +1711,7 @@ installer::0x100e80	function	installer_enter_supervisor_mode	context	the install
 installer::0x100e90	function	installer_set_interrupt_mask	context	the installer's set_interrupt_mask	uint16_t installer_set_interrupt_mask(uint16_t sr)
 installer::0x100f32	function	installer_trap_7	context	the installer's primary_trap_7, byte for byte: the boot vector table's vector 39, trap #7		convention=exception; confidence=read; family=exception
 installer::0x100f3a	function	installer_enter_supervisor	context	the installer's enter_supervisor		convention=other; confidence=read; out=D0 int status; preserves=D1, D2, D3, D4, D5, D6, D7, A1, A2, A3, A4, A5, A6; family=supervisor
-installer::0x100fc0	function	installer_float_exception_report	context	the installer's float_exception_report	void installer_float_exception_report(uint32_t code)
+installer::0x100fc0	function	installer_float_exception_report	context	the installer's float_exception_report	void installer_float_exception_report(uint32_t code, uint32_t address)
 installer::0x10135a	function	installer_spurious_interrupt	context	the installer's primary_spurious_interrupt, a lone rte, byte for byte: the boot vector table's vector 24, the spurious interrupt		convention=exception; confidence=read; family=exception
 installer::0x10135c	function	installer_entry	read	the installer's entry from the boot code, as primary_reset's end (0x14922): the stack at 0x10fffe and a null frame, the float library's state, atexit's count, errno and rand's seed, then installer_start and installer_program_exit with its result		convention=other; confidence=read
 installer::0x1013ae	function	installer_program_exit	context	the installer's program_exit	void installer_program_exit(undefined4 param_1)
@@ -1814,7 +1814,7 @@ installer::0x106236	function	installer_error_queue_create	context	the installer'
 installer::0x106282	function	installer_error_queue_push	context	the installer's error_queue_push	int16_t installer_error_queue_push(status_error_queue *queue, int32_t code, uint32_t value)
 installer::0x10634c	function	installer_error_queue_pop	context	the installer's error_queue_pop, byte for byte but for its jsr.l's target, installer_status_prompt_refresh	void installer_error_queue_pop(status_error_queue *error_queue, int *code, uint32_t *value)
 installer::0x106548	function	installer_error_message_lookup	context	the installer's error_message_lookup	char *installer_error_message_lookup(int32_t code)
-installer::0x106f30	function	installer_scpi_interpret	context	the installer's scpi_interpret	undefined4 installer_scpi_interpret(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5, undefined4 param_6,undefined4 param_7,undefined4 param_8,undefined4 param_9)
+installer::0x106f30	function	installer_scpi_interpret	context	the installer's scpi_interpret	uint32_t installer_scpi_interpret(scpi_port *input, scpi_port *output, void *buffer, uint32_t size, scpi_child_list *main_tree, scpi_child_list *common_list, status_model *status, uint32_t unused, uint32_t last_argument)
 installer::0x10729c	function	installer_scpi_call_handler	context	the installer's scpi_call_handler	int installer_scpi_call_handler(scpi_call *call, void **response)
 installer::0x1072ea	function	installer_scpi_format_response	context	the installer's scpi_format_response	int installer_scpi_format_response(scpi_port *output, scpi_response_item *items, scpi_call *call)
 installer::0x10735a	function	installer_arena_alloc	context	the installer's arena_alloc	void *installer_arena_alloc(int size, scpi_arena *arena)
@@ -1917,6 +1917,9 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 installer::0x1007d0	label	installer_exception_names	read	the installer's exception_names, at its "\r\nRESET to recover." text plus 0x14 as the primary's, which installer_exception_name indexes by the vector offset less 8	char *[57]
 installer::0x10549a	label	installer_scpi_char_classes	read	the installer's scpi_char_classes, the same bytes, which installer_scpi_char_upper indexes unchecked	scpi_char_class[262]
 installer::0x1063ce	label	installer_status_negative_conditions	read	the installer's status_negative_conditions, the same 63 entries, which installer_status_set_bit and installer_status_apply_condition take by a negative number at -6 times it	status_condition[63]
+installer::0x107290	label	installer_scpi_response_begin_code	read	the installer's scpi_response_begin_code, 8, which installer_scpi_interpret passes the output port's method +0x28 before a message's first response (installer::0x1070bc)	uint32_t
+installer::0x107294	label	installer_scpi_message_end_code	read	the installer's scpi_message_end_code, 7, which installer_scpi_interpret passes the output port's method +0x28 at a message's end (installer::0x10715c)	uint32_t
+installer::0x107298	label	installer_scpi_input_end_code	read	the installer's scpi_input_end_code, 6, which installer_scpi_interpret passes the input port's method +0x28 when the input ends or for errors -12 and -13 (installer::0x1071f6, installer::0x107262)	uint32_t
 installer::0x1076d0	label	installer_console_port	read	the installer's console port's object, which installer_scpi_console_port returns	scpi_port
 installer::0x107ad6	label	installer_status_register_layouts	read	the installer's two status registers' layouts, which installer_status_init sets register 1 up from	installer_status_register_layout[2]
 installer::0x107aea	label	installer_status_conditions	read	the installer's status conditions, which installer_status_init gives installer_status_create: 0 nothing, 1 to 4 the errors -360 to -363	status_condition[5]
@@ -1983,7 +1986,7 @@ installer::0x108578	label	installer_io_table_defaults	structures.md	installer_ps
 0x2797a	function	scpi_parameters_finish	context	marks the descriptors left 0xffff, omitted, unless one is required	uint32_t scpi_parameters_finish(scpi_parameter **parameter, scpi_call *call, short *offset)
 0x27d80	function	scpi_header_resolve	context	resolves a command header to its node and handler, through defaults and numeric suffixes, and takes room for its parameters	uint32_t scpi_header_resolve(scpi_keyword *keyword, scpi_call *call, int16_t *offset, scpi_parameter **parameters, scpi_path *path, uint16_t unused, int16_t query, scpi_arena *arena, void *unused_2)
 0x27f10	function	scpi_common_header_resolve	context	resolves a common command's header to its node and handler and takes room for its parameters	uint32_t scpi_common_header_resolve(scpi_keyword *keyword, scpi_call *call, int16_t *offset, scpi_parameter **parameters, uint16_t unused, int16_t query, scpi_arena *arena, scpi_child_list *list)
-0x292d6	function	scpi_interpret	context	the parser's loop: parses each message unit, calls its handler, writes its response and reports errors, until the input ends	undefined4 scpi_interpret(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5, undefined4 param_6,undefined4 param_7,undefined4 param_8,undefined4 param_9)
+0x292d6	function	scpi_interpret	context	the parser's loop: parses each message unit, calls its handler, writes its response and reports errors, until the input ends	uint32_t scpi_interpret(scpi_port *input, scpi_port *output, void *buffer, uint32_t size, scpi_child_list *main_tree, scpi_child_list *common_list, status_model *status, uint32_t unused, uint32_t last_argument)
 0x297c4	function	scpi_long_resolve_bound	context	a long parameter's value: its own, the first or second argument for keyword 0 or 1, else the third; called by nothing	int scpi_long_resolve_bound(long low, long high, long value, short *parameter)
 0x298b2	function	scpi_numeric_set_double	context	scpi_numeric_set for a parameter of doubles; called by nothing	void scpi_numeric_set_double(int32_t param, int32_t index, int16_t kind, int16_t bound, uint32_t *value, request_source source)
 0x29990	function	scpi_numeric_get_double	context	scpi_numeric_get for a parameter of doubles; called by nothing	double scpi_numeric_get_double(scpi_numeric_param *param, int index, short kind, short bound)

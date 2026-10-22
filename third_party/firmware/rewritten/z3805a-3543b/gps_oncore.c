@@ -552,7 +552,8 @@ uint8_t* gps_response_decode(gps_request_code_word message, uint8_t* response) {
  * command's (0x4fb86). */
 gps_match_result gps_response_match(gps_request_code_word message,
                                     uint8_t* sent, uint8_t length,
-                                    gps_argument_mode mode, int16_t index,
+                                    gps_argument_mode mode,
+                                    gps_request_code_word index,
                                     uint8_t* response,
                                     int16_t response_length) {
   /* @@Ab's offset: sign, hours, minutes. */

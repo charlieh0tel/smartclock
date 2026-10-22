@@ -142,7 +142,7 @@ uint32_t request_ring_newest_replaceable(void) {
  * refused as busy while one from its sender runs or waits, or when the
  * ring is full, unless it can replace the newest, which is answered busy
  * in its place (0x4bc74). */
-void gps_request_queue(char state, gps_request_entry* request,
+void gps_request_queue(uint8_t state, gps_request_entry* request,
                        gps_request_entry* running) {
   gps_request_entry waiting;
 

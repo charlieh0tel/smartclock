@@ -22,8 +22,7 @@ uint64_t installer_float_raise(uint32_t code, ...) {
       libc_float_raise(code, callers_d1, operand, LIBC_CALLERS_RETURN(), state);
 
   if (raised.report) {
-    ((libc_raise_report*)installer_float_exception_report)(code,
-                                                           raised.address);
+    installer_float_exception_report(code, raised.address);
   }
   return (uint64_t)raised.high << LIBC_WORD_BITS | raised.low;
 }
@@ -32,13 +31,11 @@ uint64_t installer_float_raise(uint32_t code, ...) {
  * installer_float_exception_message and stops with
  * installer_fatal_error_with_code, as float_exception_report does;
  * never returns (installer::0x100fc0). */
-void installer_float_exception_report(uint32_t code) {
-  const uint32_t* frame = __builtin_frame_address(0);
-
+void installer_float_exception_report(uint32_t code, uint32_t address) {
   libc_float_exception_message(installer_float_exception_message, code);
   installer_fatal_error_with_code((char*)installer_float_exception_message,
                                   (uint32_t)__builtin_return_address(0), code,
-                                  frame[LIBC_FRAME_LONG_ABOVE_CODE]);
+                                  address);
   for (;;) {
   }
 }

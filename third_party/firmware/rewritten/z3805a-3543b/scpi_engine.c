@@ -50,17 +50,17 @@ static const scpi_engine_routines scpi_engine_primary = {
 /* The parser's loop: parses each message unit of input, calls its
  * handler, writes a query's response to output and reports errors to
  * status, its arena in buffer, until a handler ends the session; its
- * result then unset, -1 if the port fails (0x292d6).  Its ports come as
- * longs, as its prototype has them; the eighth argument is unread. */
-uint32_t scpi_interpret(int32_t input, int32_t output, void* buffer,
+ * result then unset, -1 if the port fails (0x292d6).  The eighth
+ * argument is unread. */
+uint32_t scpi_interpret(scpi_port* input, scpi_port* output, void* buffer,
                         uint32_t size, scpi_child_list* main_tree,
                         scpi_child_list* common_list, status_model* status,
                         uint32_t unused, uint32_t last_argument) {
   const int32_t handled = CPU_CALLERS_REGISTER(int32_t, "d3");
 
-  return scpi_engine_interpret(&scpi_engine_primary, handled, (scpi_port*)input,
-                               (scpi_port*)output, buffer, size, main_tree,
-                               common_list, status, last_argument);
+  return scpi_engine_interpret(&scpi_engine_primary, handled, input, output,
+                               buffer, size, main_tree, common_list, status,
+                               last_argument);
 }
 
 /* Calls a node's setter or query with the call's parameters, its
@@ -185,9 +185,8 @@ void scpi_task(void) {
     console_write("scpi: error opening stream\n");
     return;
   }
-  scpi_interpret((int32_t)port, (int32_t)port, arena, ARENA_SIZE,
-                 scpi_trees.main, scpi_trees.common, status_object, 0,
-                 caller_d2);
+  scpi_interpret(port, port, arena, ARENA_SIZE, scpi_trees.main,
+                 scpi_trees.common, status_object, 0, caller_d2);
   psos_free_segment(arena);
   port->methods->close(port);
   if (scpi_language == SCPI_LANGUAGE_PFORTH) {

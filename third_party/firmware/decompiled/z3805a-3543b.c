@@ -2700,6 +2700,12 @@ typedef struct status_model status_model, *Pstatus_model;
 
 typedef struct scpi_child_list scpi_child_list, *Pscpi_child_list;
 
+typedef enum __attribute__((packed)) scpi_call_responding {
+    SCPI_CALL_NO_RESPONSE=0,
+    SCPI_CALL_RESPONDING=1,
+    SCPI_CALL_INDEFINITE=2
+} scpi_call_responding;
+
 typedef struct scpi_handler scpi_handler, *Pscpi_handler;
 
 typedef struct scpi_response_item scpi_response_item, *Pscpi_response_item;
@@ -2729,6 +2735,8 @@ typedef void (scpi_port_unread_function)(struct scpi_port *);
 typedef void (scpi_port_put_function)(struct scpi_port *, int);
 
 typedef void (scpi_port_write_function)(struct scpi_port *, char *, int);
+
+typedef int32_t (scpi_port_signal_function)(struct scpi_port *, uint32_t *);
 
 typedef void (scpi_port_bits_function)(struct scpi_port *, int);
 
@@ -2764,7 +2772,7 @@ struct scpi_port_methods {
     scpi_port_write_function *write_block;
     void *field_20;
     void *field_24;
-    void *signal;
+    scpi_port_signal_function *signal;
     void *field_2c;
     scpi_port_bits_function *status_set_bits;
     scpi_port_bits_function *status_clear_bits;
@@ -2814,6 +2822,13 @@ struct scpi_call {
     struct scpi_port *input;
     struct scpi_port *output;
     struct status_model *status;
+    uint32_t result;
+    struct scpi_child_list *main_tree;
+    struct scpi_child_list *common_list;
+    enum scpi_call_responding responding;
+    uint8_t field_2b[9];
+    uint16_t field_34;
+    uint32_t last_argument;
 };
 
 struct status_model {
@@ -3780,7 +3795,8 @@ _Static_assert(sizeof(scpi_array) == 8, "scpi_array");
 _Static_assert(sizeof(scpi_array_record) == 6, "scpi_array_record");
 _Static_assert(sizeof(scpi_bcd) == 12, "scpi_bcd");
 _Static_assert(sizeof(scpi_block) == 8, "scpi_block");
-_Static_assert(sizeof(scpi_call) == 30, "scpi_call");
+_Static_assert(sizeof(scpi_call) == 58, "scpi_call");
+_Static_assert(sizeof(scpi_call_responding) == 1, "scpi_call_responding");
 _Static_assert(sizeof(scpi_char_class) == 1, "scpi_char_class");
 _Static_assert(sizeof(scpi_child_list) == 6, "scpi_child_list");
 _Static_assert(sizeof(scpi_choices) == 8, "scpi_choices");
@@ -7138,6 +7154,9 @@ extern volatile qsm_registers qsm; /* 00fffc00 */
 extern char * installer_exception_names[57]; /* installer::001007d0 */
 extern scpi_char_class installer_scpi_char_classes[262]; /* installer::0010549a */
 extern status_condition installer_status_negative_conditions[63]; /* installer::001063ce */
+extern uint32_t installer_scpi_response_begin_code; /* installer::00107290 */
+extern uint32_t installer_scpi_message_end_code; /* installer::00107294 */
+extern uint32_t installer_scpi_input_end_code; /* installer::00107298 */
 extern scpi_port installer_console_port; /* installer::001076d0 */
 extern installer_status_register_layout installer_status_register_layouts[2]; /* installer::00107ad6 */
 extern status_condition installer_status_conditions[5]; /* installer::00107aea */
@@ -7215,9 +7234,6 @@ extern uint8_t UNK_00105c72; /* 00105c72 */
 extern uint8_t UNK_00105f12; /* 00105f12 */
 extern uint8_t UNK_00105fd4; /* 00105fd4 */
 extern uint8_t UNK_0010656a; /* 0010656a */
-extern uint8_t UNK_00107290; /* 00107290 */
-extern uint8_t UNK_00107294; /* 00107294 */
-extern uint8_t UNK_00107298; /* 00107298 */
 extern uint8_t UNK_001076d8; /* 001076d8 */
 extern uint8_t UNK_001076e1; /* 001076e1 */
 extern uint8_t UNK_001079bc; /* 001079bc */
@@ -7383,9 +7399,6 @@ __asm__(".set UNK_00105c72, 0x00105c72");
 __asm__(".set UNK_00105f12, 0x00105f12");
 __asm__(".set UNK_00105fd4, 0x00105fd4");
 __asm__(".set UNK_0010656a, 0x0010656a");
-__asm__(".set UNK_00107290, 0x00107290");
-__asm__(".set UNK_00107294, 0x00107294");
-__asm__(".set UNK_00107298, 0x00107298");
 __asm__(".set UNK_001076d8, 0x001076d8");
 __asm__(".set UNK_001076e1, 0x001076e1");
 __asm__(".set UNK_001079bc, 0x001079bc");
@@ -8028,12 +8041,15 @@ __asm__(".set installer_records, 0x00000bbc");
 __asm__(".set installer_scpi_char_classes, 0x0010549a");
 __asm__(".set installer_scpi_echo_length, 0x0010abe6");
 __asm__(".set installer_scpi_input_end, 0x0010acf4");
+__asm__(".set installer_scpi_input_end_code, 0x00107298");
 __asm__(".set installer_scpi_input_line, 0x0010abf0");
 __asm__(".set installer_scpi_input_next, 0x0010acf0");
 __asm__(".set installer_scpi_input_repeat, 0x0010abec");
 __asm__(".set installer_scpi_last_input, 0x0010abe8");
+__asm__(".set installer_scpi_message_end_code, 0x00107294");
 __asm__(".set installer_scpi_port_echo_length, 0x0010abe7");
 __asm__(".set installer_scpi_prompt_text, 0x0010acf8");
+__asm__(".set installer_scpi_response_begin_code, 0x00107290");
 __asm__(".set installer_service_request_enable, 0x0010abef");
 __asm__(".set installer_spoo_exchange, 0x0010afbe");
 __asm__(".set installer_spoo_message, 0x0010afc4");
@@ -8606,12 +8622,6 @@ extern uint8_t DAT_installer__00105c72;
 __asm__(".set DAT_installer__00105c72, 0x00105c72");
 extern uint8_t DAT_installer__0010656a;
 __asm__(".set DAT_installer__0010656a, 0x0010656a");
-extern uint8_t DAT_installer__00107290;
-__asm__(".set DAT_installer__00107290, 0x00107290");
-extern uint8_t DAT_installer__00107294;
-__asm__(".set DAT_installer__00107294, 0x00107294");
-extern uint8_t DAT_installer__00107298;
-__asm__(".set DAT_installer__00107298, 0x00107298");
 extern uint8_t DAT_installer__001076e1;
 __asm__(".set DAT_installer__001076e1, 0x001076e1");
 extern uint8_t DAT_installer__00108164;
@@ -9002,8 +9012,12 @@ extern uint8_t LAB_0005e772;
 __asm__(".set LAB_0005e772, 0x0005e772");
 extern uint8_t LAB_0005e77c;
 __asm__(".set LAB_0005e77c, 0x0005e77c");
+extern uint8_t LAB_0005e986;
+__asm__(".set LAB_0005e986, 0x0005e986");
 extern uint8_t LAB_0005eafe;
 __asm__(".set LAB_0005eafe, 0x0005eafe");
+extern uint8_t LAB_0005ebdc;
+__asm__(".set LAB_0005ebdc, 0x0005ebdc");
 extern uint8_t LAB_0005ec84;
 __asm__(".set LAB_0005ec84, 0x0005ec84");
 extern uint8_t LAB_0005ef40;
@@ -9156,8 +9170,12 @@ extern uint8_t LAB_installer__0010727c;
 __asm__(".set LAB_installer__0010727c, 0x0010727c");
 extern uint8_t LAB_installer__00107e66;
 __asm__(".set LAB_installer__00107e66, 0x00107e66");
+extern uint8_t LAB_installer__00108cf2;
+__asm__(".set LAB_installer__00108cf2, 0x00108cf2");
 extern uint8_t LAB_installer__00108e6a;
 __asm__(".set LAB_installer__00108e6a, 0x00108e6a");
+extern uint8_t LAB_installer__00108f48;
+__asm__(".set LAB_installer__00108f48, 0x00108f48");
 extern uint8_t LAB_installer__00108ff0;
 __asm__(".set LAB_installer__00108ff0, 0x00108ff0");
 extern uint8_t LAB_installer__00109802;
@@ -9529,7 +9547,7 @@ void timecode_schedule(uint32_t param_1);
 int32_t primary_user_86();
 void es_schedule(uint32_t param_1);
 int32_t primary_user_87();
-void float_exception_report(uint32_t code);
+void float_exception_report(uint32_t code,uint32_t address);
 int32_t primary_spurious_interrupt();
 int32_t primary_reset();
 int32_t primary_trap_11();
@@ -10271,9 +10289,9 @@ void status_register_set_ntr(status_model *status,int32_t index,uint32_t filter)
 void status_register_get_ptr(status_model *status,int32_t index,uint16_t *filter);
 void status_register_get_ntr(status_model *status,int32_t index,uint16_t *filter);
 char * error_message_lookup(int32_t code);
-uint32_t
-scpi_interpret(int32_t param_1,int32_t param_2,void *param_3,uint32_t param_4,scpi_child_list *param_5,
-              scpi_child_list *param_6,status_model *param_7,uint32_t param_8,uint32_t param_9);
+uint32_t scpi_interpret(scpi_port *input,scpi_port *output,void *buffer,uint32_t size,
+                       scpi_child_list *main_tree,scpi_child_list *common_list,status_model *status,
+                       uint32_t unused,uint32_t last_argument);
 int32_t scpi_call_handler(scpi_call *call,void **response);
 int32_t scpi_format_response(scpi_port *output,scpi_response_item *items,scpi_call *call);
 void * arena_alloc(int32_t size,scpi_arena *arena);
@@ -10927,13 +10945,13 @@ void mas_to_dms(int32_t param_1,uint16_t *param_2,uint8_t *param_3,double *param
 void dms_to_mas(int32_t *mas,uint16_t degrees,uint8_t minutes,double seconds);
 void format_dms(int32_t param_1,char param_2,char *param_3);
 void format_dms_precise(char *text,double mas,char latitude);
-void format_angle(char *param_1,int32_t param_2,char param_3);
+void format_angle(char *text,int32_t mas,uint8_t latitude);
 void format_duration(double param_1,char *param_2);
 void gps_print_best_combinations(void);
 void gps_print_extension(void);
 void gps_print_time_raim(void);
 void gps_print_pseudorange_corrections(void);
-void enabled_string(char param_1,char *param_2);
+void enabled_string(uint8_t enabled,char *text);
 void gps_print_instrument_state(void);
 void gps_print_average(void);
 void gps_print_visibility(void);
@@ -10944,12 +10962,12 @@ void satellite_sets_build(oncore_channel_status *channels,satellite_sets *sets);
 int32_t satellite_in_set(satellite_kind kind,uint8_t id,uint32_t mask);
 satellite_health_class satellite_track_class(oncore_visible_satellite *satellite);
 void satellite_elevation_azimuth(oncore_visible_satellite *satellite,satellite_cell *cell);
-void satellite_status(char tracked,uint8_t id,satellite_sets *sets,gps_visibility_record *visibility
-                     ,satellite_cell *cell);
+void satellite_status(uint8_t tracked,uint8_t id,satellite_sets *sets,
+                     gps_visibility_record *visibility,satellite_cell *cell);
 int32_t satellite_compare(void *first,void *second);
 void satellite_status_list
-               (char tracked,uint8_t entries,satellite_sets *sets,oncore_channel_status *channels,
-               gps_visibility_record *visibility,satellite_list_entry *list,uint8_t *count);
+               (uint8_t tracked,uint8_t entries,satellite_sets *sets,oncore_channel_status *channels
+               ,gps_visibility_record *visibility,satellite_list_entry *list,uint8_t *count);
 void format_satellite_number(char param_1,char *param_2);
 bool mark_flag(char flag,char *text);
 void format_level(int16_t param_1,char *param_2);
@@ -10995,7 +11013,7 @@ bool request_ring_full(void);
 uint32_t request_ring_contains(char param_1,char param_2,char param_3);
 uint32_t request_ring_newest_replaceable(void);
 uint32_t request_kind_valid(gps_request_sender sender);
-void gps_request_queue(char param_1,gps_request_entry *request,gps_request_entry *param_3);
+void gps_request_queue(uint8_t state,gps_request_entry *request,gps_request_entry *running);
 bool gps_request_post(gps_request_sender sender,gps_request_code_word code,int32_t *arguments,
                      uint8_t sent);
 gps_code_class gps_request_class(gps_request_code_word code,gps_argument_mode argument_mode);
@@ -11060,7 +11078,7 @@ uint8_t * gps_response_decode(gps_request_code_word message,uint8_t *response);
 uint32_t bytes_equal_n(uint8_t *a,int16_t a_length,uint8_t *b,int16_t b_length);
 gps_match_result
 gps_response_match(gps_request_code_word message,uint8_t *sent,uint8_t length,gps_argument_mode mode
-                  ,int16_t index,uint8_t *response,int16_t response_length);
+                  ,gps_request_code_word index,uint8_t *response,int16_t response_length);
 int32_t gps_message_to_text(uint8_t *message,uint8_t length,char *text);
 void psos_config_init(void);
 void * memory_allocate(uint32_t size);
@@ -11182,7 +11200,7 @@ uint16_t installer_enter_supervisor_mode(void);
 uint16_t installer_set_interrupt_mask(uint16_t sr);
 int32_t installer_trap_7();
 int32_t installer_enter_supervisor(void);
-void installer_float_exception_report(uint32_t code);
+void installer_float_exception_report(uint32_t code,uint32_t address);
 int32_t installer_spurious_interrupt();
 int32_t installer_entry();
 void installer_program_exit(uint32_t param_1);
@@ -11361,10 +11379,10 @@ uint32_t installer_error_queue_create(status_error_queue **queue,int32_t capacit
 int16_t installer_error_queue_push(status_error_queue *queue,int32_t code,uint32_t value);
 void installer_error_queue_pop(status_error_queue *error_queue,int32_t *code,uint32_t *value);
 char * installer_error_message_lookup(int32_t code);
-uint32_t
-installer_scpi_interpret
-          (int32_t param_1,int32_t param_2,void *param_3,uint32_t param_4,scpi_child_list *param_5,
-          scpi_child_list *param_6,status_model *param_7,uint32_t param_8,uint32_t param_9);
+uint32_t installer_scpi_interpret
+                   (scpi_port *input,scpi_port *output,void *buffer,uint32_t size,
+                   scpi_child_list *main_tree,scpi_child_list *common_list,status_model *status,
+                   uint32_t unused,uint32_t last_argument);
 int32_t installer_scpi_call_handler(scpi_call *call,void **response);
 int32_t installer_scpi_format_response(scpi_port *output,scpi_response_item *items,scpi_call *call);
 void * installer_arena_alloc(int32_t size,scpi_arena *arena);
@@ -17859,9 +17877,11 @@ __asm__(
 /* 0001412e */
 #if 0 /* the decompiler's reading; rewritten in math.c */
 
-/* libc.md */
+/* float_raise's report: the code, and the address float_raise pushes before it (0x5ec8c), which it
+   passes fatal_error_with_code as the code it prints
+   libc.md */
 
-void float_exception_report(uint32_t code)
+void float_exception_report(uint32_t code,uint32_t address)
 
 {
   uint16_t uVar1;
@@ -17871,7 +17891,6 @@ void float_exception_report(uint32_t code)
   uint8_t *puVar5;
   uint8_t *puVar6;
   uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
-  uint32_t in_stack_00000008 = *(uint32_t *)((char *)__builtin_frame_address(0) + 12);
   
   float_exception_message[0] = 0;
   puVar5 = float_exception_message + 1;
@@ -17922,7 +17941,7 @@ void float_exception_report(uint32_t code)
     sVar2 = sVar2 + -1;
     puVar5 = puVar6;
   } while (sVar2 != -1);
-  fatal_error_with_code((char *)float_exception_message,in_stack_00000000,code,in_stack_00000008);
+  fatal_error_with_code((char *)float_exception_message,in_stack_00000000,code,address);
   do {
                     /* WARNING: Do nothing block with infinite loop */
   } while( true );
@@ -51883,9 +51902,9 @@ char * error_message_lookup(int32_t code)
 /* the parser's loop: parses each message unit, calls its handler, writes its response and reports
    errors, until the input ends */
 
-uint32_t
-scpi_interpret(int32_t param_1,int32_t param_2,void *param_3,uint32_t param_4,scpi_child_list *param_5,
-              scpi_child_list *param_6,status_model *param_7,uint32_t param_8,uint32_t param_9)
+uint32_t scpi_interpret(scpi_port *input,scpi_port *output,void *buffer,uint32_t size,
+                       scpi_child_list *main_tree,scpi_child_list *common_list,status_model *status,
+                       uint32_t unused,uint32_t last_argument)
 
 {
   bool bVar1;
@@ -51898,12 +51917,6 @@ scpi_interpret(int32_t param_1,int32_t param_2,void *param_3,uint32_t param_4,sc
   uint32_t uVar7;
   scpi_path sStack_92;
   scpi_call local_7c;
-  uint32_t local_5e;
-  scpi_child_list *local_5a;
-  scpi_child_list *local_56;
-  char local_52;
-  uint16_t local_48;
-  uint32_t local_46;
   int32_t local_42;
   int16_t local_3e;
   scpi_arena *local_3c;
@@ -51914,29 +51927,29 @@ scpi_interpret(int32_t param_1,int32_t param_2,void *param_3,uint32_t param_4,sc
   scpi_response_item *local_2a;
   scpi_context sStack_26;
   
-  arena_init(param_3,param_4,&local_3c);
+  arena_init(buffer,size,&local_3c);
   local_34 = arena_current(local_3c);
-  local_30 = scpi_trg_defined(param_6,&local_2c);
-  local_7c.input = (scpi_port *)param_1;
-  local_7c.output = (scpi_port *)param_2;
-  local_7c.status = param_7;
+  local_30 = scpi_trg_defined(common_list,&local_2c);
+  local_7c.input = input;
+  local_7c.output = output;
+  local_7c.status = status;
   local_7c.arena = local_3c;
-  local_5a = param_5;
-  local_56 = param_6;
-  local_48 = 0;
-  local_46 = param_9;
-  scpi_context_init(&sStack_26,(scpi_port *)param_1,0,&sStack_92,&local_7c,local_3c,local_38,param_5
-                    ,param_6);
+  local_7c.main_tree = main_tree;
+  local_7c.common_list = common_list;
+  local_7c.field_34 = 0;
+  local_7c.last_argument = last_argument;
+  scpi_context_init(&sStack_26,input,0,&sStack_92,&local_7c,local_3c,local_38,main_tree,common_list)
+  ;
   local_3e = 1;
   bVar1 = false;
 LAB_0002937c:
   if (local_3e != 0) {
-    local_52 = 0;
-    scpi_path_reset(&sStack_92,param_5);
+    local_7c.responding = SCPI_CALL_NO_RESPONSE;
+    scpi_path_reset(&sStack_92,main_tree);
     arena_set(local_34,local_3c);
   }
   if (bVar1) {
-    scpi_skip_to_terminator((scpi_port *)param_1);
+    scpi_skip_to_terminator(input);
     bVar1 = false;
   }
   iVar2 = scpi_parse_message_unit(&sStack_26,&local_3e);
@@ -51946,29 +51959,29 @@ LAB_0002937c:
     if (unaff_D3 == 0) {
 LAB_00029436:
       if (local_7c.query != 0) {
-        if (local_52 == 2) {
-          status_clear_bit(param_7,-0xf);
+        if (local_7c.responding == SCPI_CALL_INDEFINITE) {
+          status_clear_bit(status,-0xf);
         }
         else {
-          if (local_52 == 0) {
-            local_52 = 1;
+          if (local_7c.responding == SCPI_CALL_NO_RESPONSE) {
+            local_7c.responding = SCPI_CALL_RESPONDING;
             puVar6 = &scpi_response_begin_code;
-            pcVar4 = *(code **)(*(int32_t *)(param_2 + 4) + 0x28);
+            pcVar4 = (code *)output->methods->signal;
           }
           else {
             puVar6 = (uint32_t *)0x3b;
-            pcVar4 = *(code **)(*(int32_t *)(param_2 + 4) + 0x14);
+            pcVar4 = (code *)output->methods->put;
           }
-          (*pcVar4)(param_2,puVar6);
+          (*pcVar4)(output,puVar6);
           local_2a = (local_7c.node)->response_items;
-          iVar3 = scpi_format_response((scpi_port *)param_2,local_2a,&local_7c);
+          iVar3 = scpi_format_response(output,local_2a,&local_7c);
           if (iVar3 != 0) {
             if (iVar3 != -0x5a) {
-              status_clear_bit(param_7,iVar3);
+              status_clear_bit(status,iVar3);
               scpi_message_done();
               goto LAB_0002961c;
             }
-            local_52 = 2;
+            local_7c.responding = SCPI_CALL_INDEFINITE;
           }
         }
       }
@@ -51979,22 +51992,21 @@ LAB_000294de:
           uVar7 = 0;
           psVar5 = &local_7c;
           local_42 = scpi_message_done();
-          iVar2 = (**(code **)(*(int32_t *)(param_2 + 4) + 0x28))
-                            (param_2,&scpi_message_end_code,psVar5,uVar7);
+          iVar2 = (*(code *)output->methods->signal)(output,&scpi_message_end_code,psVar5,uVar7);
           if (iVar2 == 0) {
-            if (local_52 != 0) {
-              (**(code **)(*(int32_t *)(param_2 + 4) + 0x14))(param_2,0x10a);
+            if (local_7c.responding != SCPI_CALL_NO_RESPONSE) {
+              (*(code *)output->methods->put)(output,0x10a);
             }
           }
           else if (iVar2 != -0xe) {
-            status_clear_bit(param_7,iVar2);
+            status_clear_bit(status,iVar2);
             iVar2 = condition_is_command_error(iVar2);
             if (iVar2 != 0) {
               bVar1 = true;
             }
           }
           if (local_42 != 0) {
-            status_clear_bit(param_7,local_42);
+            status_clear_bit(status,local_42);
             iVar2 = condition_is_command_error(local_42);
             if (iVar2 != 0) {
               bVar1 = true;
@@ -52010,10 +52022,10 @@ LAB_000294de:
     }
     else if (unaff_D3 != -0x3e) {
       if (unaff_D3 == -0x3d) {
-        scpi_path_reset(&sStack_92,param_5);
+        scpi_path_reset(&sStack_92,main_tree);
       }
       else if (unaff_D3 != -0x3c) {
-        status_clear_bit(param_7,unaff_D3);
+        status_clear_bit(status,unaff_D3);
         iVar3 = condition_is_command_error(unaff_D3);
         if ((iVar3 != 0) && (local_3e == 0)) {
           bVar1 = true;
@@ -52026,15 +52038,15 @@ LAB_000294de:
     local_7c.query = local_2c;
   } while( true );
   if (iVar2 == -0x66) {
-    (**(code **)(*(int32_t *)(param_1 + 4) + 0x28))(param_1,&scpi_input_end_code);
+    (*(code *)input->methods->signal)(input,&scpi_input_end_code);
     scpi_input_closed();
   }
   else if (iVar2 == -0x67) {
     unaff_D3 = -0x3c;
-    local_5e = 0xffffffff;
+    local_7c.result = 0xffffffff;
   }
   else {
-    status_clear_bit(param_7,iVar2);
+    status_clear_bit(status,iVar2);
     iVar3 = condition_is_command_error(iVar2);
     if (iVar3 != 0) {
       bVar1 = true;
@@ -52042,13 +52054,13 @@ LAB_000294de:
       local_3e = 1;
     }
     if ((iVar2 != -0xc) && (iVar2 != -0xd)) goto LAB_00029622;
-    (**(code **)(*(int32_t *)(param_1 + 4) + 0x28))(param_1,&scpi_input_end_code);
+    (*(code *)input->methods->signal)(input,&scpi_input_end_code);
   }
 LAB_0002961c:
   local_3e = 1;
 LAB_00029622:
   if (unaff_D3 == -0x3c) {
-    return local_5e;
+    return local_7c.result;
   }
   goto LAB_0002937c;
 }
@@ -53150,8 +53162,8 @@ void scpi_task(void)
       console_write("scpi: error opening stream\n");
     }
     else {
-      scpi_interpret((int32_t)port,(int32_t)port,local_8,2000,&scpi_main_tree,&scpi_common_list,
-                     status_object,0,unaff_D2);
+      scpi_interpret(port,port,local_8,2000,&scpi_main_tree,&scpi_common_list,status_object,0,
+                     unaff_D2);
       psos_free_segment(local_8);
       (*(code *)port->methods->close)(port);
       if (scpi_language == SCPI_LANGUAGE_PFORTH) {
@@ -70979,7 +70991,7 @@ void format_dms_precise(char *text,double mas,char latitude)
 /* an angle in mas as N, S, E or W by its sign and whether it is a latitude, then degrees and
    minutes */
 
-void format_angle(char *param_1,int32_t param_2,char param_3)
+void format_angle(char *text,int32_t mas,uint8_t latitude)
 
 {
   int32_t iVar1;
@@ -70988,27 +71000,27 @@ void format_angle(char *param_1,int32_t param_2,char param_3)
   float fVar3;
   double param5;
   
-  if (param_2 < 0) {
-    if (param_3 == 0) {
+  if (mas < 0) {
+    if (latitude == 0) {
       param2 = 'W';
     }
     else {
       param2 = 'S';
     }
-    param_2 = -param_2;
+    mas = -mas;
   }
-  else if (param_3 == 0) {
+  else if (latitude == 0) {
     param2 = 'E';
   }
   else {
     param2 = 'N';
   }
-  iVar1 = param_2 + (param_2 / 3600000 & 0xffU) * -3600000;
+  iVar1 = mas + (mas / 3600000 & 0xffU) * -3600000;
   uVar2 = iVar1 / 60000;
   fVar3 = integer_to_float(iVar1 + (uVar2 & 0xff) * -60000);
   fVar3 = float_divide(fVar3,1000.0);
   param5 = float_to_double(fVar3);
-  sprintf(param_1,"%c%4d:%02d:%06.3f",param2,param_2 / 3600000 & 0xff,uVar2 & 0xff,param5);
+  sprintf(text,"%c%4d:%02d:%06.3f",param2,mas / 3600000 & 0xff,uVar2 & 0xff,param5);
   return;
 }
 
@@ -71373,15 +71385,15 @@ void gps_print_pseudorange_corrections(void)
 /* "Enabled" or "Disabled" for a flag
    "Enabled", "Disabled" */
 
-void enabled_string(char param_1,char *param_2)
+void enabled_string(uint8_t enabled,char *text)
 
 {
   char cVar1;
   int32_t iVar2;
   char *pcVar3;
   
-  iVar2 = param_1 + -1;
-  if (param_1 == 0 || iVar2 == 0) {
+  iVar2 = (char)enabled + -1;
+  if ((char)enabled == 0 || iVar2 == 0) {
                     /* WARNING: Switch is manually overridden */
     switch((int16_t)iVar2) {
     case 0:
@@ -71396,9 +71408,9 @@ void enabled_string(char param_1,char *param_2)
   }
   do {
     cVar1 = *pcVar3;
-    *param_2 = cVar1;
+    *text = cVar1;
     pcVar3 = pcVar3 + 1;
-    param_2 = param_2 + 1;
+    text = text + 1;
   } while (cVar1 != 0);
   return;
 }
@@ -72070,8 +72082,8 @@ void satellite_elevation_azimuth(oncore_visible_satellite *satellite,satellite_c
 
 /* for status_snapshot: a satellite's status code for the screen */
 
-void satellite_status(char tracked,uint8_t id,satellite_sets *sets,gps_visibility_record *visibility
-                     ,satellite_cell *cell)
+void satellite_status(uint8_t tracked,uint8_t id,satellite_sets *sets,
+                     gps_visibility_record *visibility,satellite_cell *cell)
 
 {
   int32_t iVar1;
@@ -72161,8 +72173,8 @@ LAB_000497a6:
 /* for status_snapshot: the screen's list of satellites, built and sorted */
 
 void satellite_status_list
-               (char tracked,uint8_t entries,satellite_sets *sets,oncore_channel_status *channels,
-               gps_visibility_record *visibility,satellite_list_entry *list,uint8_t *count)
+               (uint8_t tracked,uint8_t entries,satellite_sets *sets,oncore_channel_status *channels
+               ,gps_visibility_record *visibility,satellite_list_entry *list,uint8_t *count)
 
 {
   uint8_t bVar3;
@@ -74779,7 +74791,7 @@ uint32_t request_kind_valid(gps_request_sender sender)
 /* queues a new request: the step index 0x45 flushes the ring, others are queued unless one is
    waiting already */
 
-void gps_request_queue(char param_1,gps_request_entry *request,gps_request_entry *param_3)
+void gps_request_queue(uint8_t state,gps_request_entry *request,gps_request_entry *running)
 
 {
   int32_t got;
@@ -74790,7 +74802,7 @@ void gps_request_queue(char param_1,gps_request_entry *request,gps_request_entry
   
   puVar4 = (uint32_t *)&stack0xffffffd6;
   if (request->code == 0x45) {
-    if (param_1 == 0) goto LAB_0004bcac;
+    if (state == 0) goto LAB_0004bcac;
     puVar3 = (uint32_t *)&stack0xffffffd2;
     while( true ) {
       *(uint8_t *)((int32_t)puVar3 + -2) = 2;
@@ -74811,7 +74823,7 @@ LAB_0004bcac:
     gps_task_state = GPS_PROCESS_TASK_IDLE;
     return;
   }
-  cVar2 = request_ring_contains(param_1,request->sender,param_3->sender);
+  cVar2 = request_ring_contains(state,request->sender,running->sender);
   if (cVar2 == 0) {
     cVar2 = request_ring_empty();
     if (cVar2 == 0) {
@@ -77166,7 +77178,7 @@ uint32_t bytes_equal_n(uint8_t *a,int16_t a_length,uint8_t *b,int16_t b_length)
 
 gps_match_result
 gps_response_match(gps_request_code_word message,uint8_t *sent,uint8_t length,gps_argument_mode mode
-                  ,int16_t index,uint8_t *response,int16_t response_length)
+                  ,gps_request_code_word index,uint8_t *response,int16_t response_length)
 
 {
   uint8_t *s2;
@@ -86616,187 +86628,219 @@ __asm__(
 uint64_t float_raise(uint32_t code,...)
 
 {
-  uint8_t bVar1;
+  uint32_t uVar1;
   uint32_t uVar2;
-  uint32_t uVar3;
-  uint32_t uVar4;
   uint32_t extraout_D0;
   uint32_t in_D1;
-  uint32_t uVar5;
+  uint32_t uVar3;
   uint32_t extraout_D1;
-  int16_t sVar6;
+  int16_t sVar4;
+  uint32_t uVar5;
+  uint32_t uVar6;
   uint32_t uVar7;
-  bool bVar8;
+  uint32_t uVar8;
+  int32_t unaff_A6 = (int32_t)*(void **)__builtin_frame_address(0);
+  bool bVar9;
   uint32_t in_stack_00000008 = *(uint32_t *)((char *)__builtin_frame_address(0) + 12);
   uint32_t in_stack_0000000c = *(uint32_t *)((char *)__builtin_frame_address(0) + 16);
   uint32_t in_stack_00000010 = *(uint32_t *)((char *)__builtin_frame_address(0) + 20);
-  uint32_t in_stack_00000014 = *(uint32_t *)((char *)__builtin_frame_address(0) + 24);
+  uint16_t uStack00000014;
   
   uVar3 = CONCAT22((int16_t)((uint32_t)in_D1 >> 0x10),(int16_t)code);
-  if ((int16_t)code != 0) {
-    uVar4 = code >> 0x10;
+  if ((int16_t)code == 0) {
+LAB_0005e986:
+    uVar8 = 0;
+  }
+  else {
+    uVar2 = code >> 0x10;
     if ((code & 0x4000) == 0) {
+      uVar8 = in_stack_00000008;
       if ((code & 0x2000) == 0) {
         if ((code & 0x1000) == 0) {
           if ((code & 0x800) == 0) {
-            if ((code & 0x400) != 0) {
+            if ((code & 0x400) == 0) {
+              if ((code & 0x200) != 0) goto LAB_0005ebdc;
+              if ((code & 0x80) == 0) goto LAB_0005e986;
+              if ((uVar2 & 0x80) == 0) {
+                in_stack_00000008 = *(uint32_t *)(unaff_A6 + 4);
+              }
+              float_status = float_status | 0x280;
+              uVar8 = in_stack_00000008;
+              if ((((uint8_t)float_control & 0x80) == 0) && ((__ghidra_piece(uint8_t, float_control, 0) & 2) == 0)) {
+                uVar2 = 0x7fffffff;
+                uVar3 = 0xffffffff;
+                goto LAB_0005ec84;
+              }
+            }
+            else {
               float_status = float_status | 0x400;
-              if ((uVar4 & 0x80) != 0) {
+              if ((uVar2 & 0x80) != 0) {
+                uVar8 = *(uint32_t *)(unaff_A6 + 4);
                 errno = 0x22;
               }
-              bVar1 = __ghidra_piece(uint8_t, float_control, 0) & 4;
-              goto joined_r0x0005eb86;
-            }
-            if ((((code & 0x200) == 0) && ((code & 0x80) != 0)) &&
-               ((float_status = float_status | 0x280, ((uint8_t)float_control & 0x80) == 0 &&
-                ((__ghidra_piece(uint8_t, float_control, 0) & 2) == 0)))) {
-              in_stack_00000008 = 0x7fffffff;
-              in_stack_0000000c = 0xffffffff;
-              goto LAB_0005ec84;
+              if ((__ghidra_piece(uint8_t, float_control, 0) & 4) == 0) goto joined_r0x0005eb8e;
             }
           }
           else {
-            sVar6 = (int16_t)in_stack_00000008;
-            if ((uVar4 & 1) == 0) {
-              in_stack_0000000c = in_stack_0000000c & 0xfffff | 0x100000;
-              if (sVar6 < 0x20) {
-                uVar7 = __ghidra_shr(0xffffffff, (in_stack_00000008 & 0x3f));
-                uVar2 = __ghidra_shl(in_stack_0000000c, 0x20 - (in_stack_00000008 & 0x3f)) |
-                        __ghidra_shr(in_stack_0000000c, (in_stack_00000008 & 0x3f));
-                uVar5 = __ghidra_shl(in_stack_00000010, 0x20 - (in_stack_00000008 & 0x3f)) |
+            sVar4 = (int16_t)in_stack_00000008;
+            if ((uVar2 & 1) == 0) {
+              uVar8 = _uStack00000014;
+              if ((uVar2 & 0x80) == 0) {
+                uVar8 = *(uint32_t *)(unaff_A6 + 4);
+              }
+              uVar3 = in_stack_0000000c & 0xfffff | 0x100000;
+              if (sVar4 < 0x20) {
+                uVar6 = __ghidra_shr(0xffffffff, (in_stack_00000008 & 0x3f));
+                uVar3 = __ghidra_shl(uVar3, 0x20 - (in_stack_00000008 & 0x3f)) |
+                        __ghidra_shr(uVar3, (in_stack_00000008 & 0x3f));
+                uVar1 = __ghidra_shl(in_stack_00000010, 0x20 - (in_stack_00000008 & 0x3f)) |
                         __ghidra_shr(in_stack_00000010, (in_stack_00000008 & 0x3f));
-                uVar3 = uVar7 & uVar2;
-                uVar4 = ~uVar7;
-                in_stack_0000000c = uVar4 & uVar2 | uVar7 & uVar5;
-                in_stack_00000010 = uVar4 & uVar5 | __ghidra_shr(in_stack_00000014, (in_stack_00000008 & 0x3f));
-                if (((__ghidra_shl(uVar4, (in_stack_00000008 & 0x3f)) |
-                     __ghidra_shr(uVar4, 0x20 - (in_stack_00000008 & 0x3f))) & in_stack_00000014) != 0) {
+                uVar2 = uVar6 & uVar3;
+                uVar5 = ~uVar6;
+                uVar3 = uVar5 & uVar3 | uVar6 & uVar1;
+                in_stack_00000010 = uVar5 & uVar1 | __ghidra_shr(_uStack00000014, (in_stack_00000008 & 0x3f));
+                if (((__ghidra_shl(uVar5, (in_stack_00000008 & 0x3f)) |
+                     __ghidra_shr(uVar5, 0x20 - (in_stack_00000008 & 0x3f))) & _uStack00000014) != 0) {
                   in_stack_00000010 = in_stack_00000010 | 1;
                 }
               }
               else {
-                uVar3 = in_stack_00000014;
-                if (sVar6 != 0x20) {
-                  if (0x37 < sVar6) goto LAB_0005eafe;
-                  uVar5 = (uint32_t)(uint16_t)(sVar6 - 0x20);
-                  uVar7 = __ghidra_shr(0xffffffff, (uVar5 & 0x3f));
-                  uVar3 = __ghidra_shl(in_stack_0000000c, 0x20 - (uVar5 & 0x3f)) |
-                          __ghidra_shr(in_stack_0000000c, (uVar5 & 0x3f));
-                  uVar2 = __ghidra_shl(in_stack_00000010, 0x20 - (uVar5 & 0x3f)) |
-                          __ghidra_shr(in_stack_00000010, (uVar5 & 0x3f));
-                  in_stack_0000000c = uVar7 & uVar3;
-                  uVar4 = ~uVar7;
-                  in_stack_00000010 = uVar4 & uVar3 | uVar7 & uVar2;
-                  uVar3 = uVar4 & uVar2 | __ghidra_shr(in_stack_00000014, (uVar5 & 0x3f));
-                  if (((__ghidra_rotl(uVar4, uVar5 & 0x3f)) &
-                      in_stack_00000014) != 0) {
-                    uVar3 = uVar3 | 1;
+                uVar2 = _uStack00000014;
+                if (sVar4 != 0x20) {
+                  if (0x37 < sVar4) goto LAB_0005eafe;
+                  uVar6 = (uint32_t)(uint16_t)(sVar4 - 0x20);
+                  uVar7 = __ghidra_shr(0xffffffff, (uVar6 & 0x3f));
+                  uVar2 = __ghidra_shl(uVar3, 0x20 - (uVar6 & 0x3f)) | __ghidra_shr(uVar3, (uVar6 & 0x3f));
+                  uVar1 = __ghidra_shl(in_stack_00000010, 0x20 - (uVar6 & 0x3f)) |
+                          __ghidra_shr(in_stack_00000010, (uVar6 & 0x3f));
+                  uVar3 = uVar7 & uVar2;
+                  uVar5 = ~uVar7;
+                  in_stack_00000010 = uVar5 & uVar2 | uVar7 & uVar1;
+                  uVar2 = uVar5 & uVar1 | __ghidra_shr(_uStack00000014, (uVar6 & 0x3f));
+                  if (((__ghidra_rotl(uVar5, uVar6 & 0x3f)) & _uStack00000014)
+                      != 0) {
+                    uVar2 = uVar2 | 1;
                   }
                 }
-                if (uVar3 != 0) {
+                if (uVar2 != 0) {
                   in_stack_00000010 = in_stack_00000010 | 1;
                 }
-                uVar3 = 0;
+                uVar2 = 0;
               }
-              in_stack_00000008 = uVar3 & 0xffefffff;
+              uVar2 = uVar2 & 0xffefffff;
               if (in_stack_00000010 == 0) goto LAB_0005ec84;
               float_status = float_status | 0x200;
               if ((CARRY4(in_stack_00000010,in_stack_00000010)) &&
-                 ((((in_stack_00000010 & 0x7fffffff) != 0 || ((in_stack_0000000c & 1) != 0)) &&
-                  (bVar8 = in_stack_0000000c == 0xffffffff,
-                  in_stack_0000000c = in_stack_0000000c + 1, bVar8)))) {
-                in_stack_00000008 = in_stack_00000008 + 1;
-              }
-            }
-            else if (sVar6 < 0x19) {
-              uVar3 = in_stack_0000000c & 0x7fffff | 0x800000;
-              uVar4 = __ghidra_shr(uVar3, (in_stack_00000008 & 0x3f));
-              in_stack_0000000c = ~(__ghidra_shl(-1, (in_stack_00000008 & 0x3f)));
-              uVar3 = in_stack_0000000c & uVar3;
-              uVar3 = __ghidra_shl(uVar3, 0x20 - (in_stack_00000008 & 0x3f)) |
-                      __ghidra_shr(uVar3, (in_stack_00000008 & 0x3f)) |
-                      __ghidra_shr(in_stack_00000010, (in_stack_00000008 & 0x3f));
-              in_stack_0000000c = in_stack_0000000c & in_stack_00000010;
-              if (in_stack_0000000c != 0) {
-                uVar3 = uVar3 | 1;
-              }
-              in_stack_00000008 = uVar4 & 0xff7fffff;
-              if (uVar3 == 0) goto LAB_0005ec84;
-              float_status = float_status | 0x200;
-              if ((CARRY4(uVar3,uVar3)) && (((uVar3 & 0x7fffffff) != 0 || ((uVar4 & 1) != 0)))) {
-                in_stack_00000008 = in_stack_00000008 + 1;
+                 ((((in_stack_00000010 & 0x7fffffff) != 0 || ((uVar3 & 1) != 0)) &&
+                  (bVar9 = uVar3 == 0xffffffff, uVar3 = uVar3 + 1, bVar9)))) {
+                uVar2 = uVar2 + 1;
               }
             }
             else {
-LAB_0005eafe:
-              if ((code & 0x800000) != 0) {
-                errno = 0x22;
+              uVar8 = CONCAT22(__ghidra_piece(uint16_t, in_stack_00000010, 2),uStack00000014);
+              if ((uVar2 & 0x80) == 0) {
+                uVar8 = *(uint32_t *)(unaff_A6 + 4);
               }
-              in_stack_00000008 = 0;
-              in_stack_0000000c = 0;
+              if (sVar4 < 0x19) {
+                uVar2 = in_stack_0000000c & 0x7fffff | 0x800000;
+                uVar1 = __ghidra_shr(uVar2, (in_stack_00000008 & 0x3f));
+                uVar3 = ~(__ghidra_shl(-1, (in_stack_00000008 & 0x3f)));
+                uVar2 = uVar3 & uVar2;
+                uVar5 = __ghidra_shl(uVar2, 0x20 - (in_stack_00000008 & 0x3f)) |
+                        __ghidra_shr(uVar2, (in_stack_00000008 & 0x3f)) |
+                        __ghidra_shr(in_stack_00000010, (in_stack_00000008 & 0x3f));
+                uVar3 = uVar3 & in_stack_00000010;
+                if (uVar3 != 0) {
+                  uVar5 = uVar5 | 1;
+                }
+                uVar2 = uVar1 & 0xff7fffff;
+                if (uVar5 == 0) goto LAB_0005ec84;
+                float_status = float_status | 0x200;
+                if ((CARRY4(uVar5,uVar5)) && (((uVar5 & 0x7fffffff) != 0 || ((uVar1 & 1) != 0)))) {
+                  uVar2 = uVar2 + 1;
+                }
+              }
+              else {
+LAB_0005eafe:
+                if ((code & 0x800000) != 0) {
+                  errno = 0x22;
+                }
+                uVar2 = 0;
+                uVar3 = 0;
+              }
             }
             float_status = float_status | 0xa00;
             if ((__ghidra_piece(uint8_t, float_control, 0) & 8) == 0) {
-              bVar1 = __ghidra_piece(uint8_t, float_control, 0) & 2;
-              goto joined_r0x0005ec1e;
+              if ((__ghidra_piece(uint8_t, float_control, 0) & 2) == 0) goto LAB_0005ec84;
+              goto LAB_0005ebdc;
             }
           }
         }
         else {
           float_status = float_status | 0x1200;
-          if ((uVar4 & 0x80) != 0) {
+          if ((uVar2 & 0x80) != 0) {
+            uVar8 = *(uint32_t *)(unaff_A6 + 4);
             errno = 0x22;
           }
           if ((__ghidra_piece(uint8_t, float_control, 0) & 0x10) == 0) {
-            bVar1 = __ghidra_piece(uint8_t, float_control, 0) & 2;
-joined_r0x0005eb86:
-            if (bVar1 == 0) {
-              if ((uVar4 & 1) == 0) {
-                in_stack_00000008 = 0x7ff00000;
-                in_stack_0000000c = 0;
+            if ((__ghidra_piece(uint8_t, float_control, 0) & 2) == 0) {
+joined_r0x0005eb8e:
+              if ((uVar2 & 1) == 0) {
+                uVar2 = 0x7ff00000;
+                uVar3 = 0;
               }
               else {
-                in_stack_00000008 = 0x7f800000;
-                in_stack_0000000c = uVar3;
+                uVar2 = 0x7f800000;
               }
               goto LAB_0005ec84;
+            }
+LAB_0005ebdc:
+            uVar8 = in_stack_00000008;
+            if ((uVar2 & 0x80) == 0) {
+              uVar8 = *(uint32_t *)(unaff_A6 + 4);
             }
           }
         }
       }
       else {
         float_status = float_status | 0x2000;
-        if ((uVar4 & 0x80) != 0) {
+        if ((uVar2 & 0x80) != 0) {
+          uVar8 = *(uint32_t *)(unaff_A6 + 4);
           errno = 0x21;
         }
         if ((__ghidra_piece(uint8_t, float_control, 0) & 0x20) == 0) {
-          in_stack_00000008 = 0x7fffffff;
-          in_stack_0000000c = 0xffffffff;
+          uVar2 = 0x7fffffff;
+          uVar3 = 0xffffffff;
           goto LAB_0005ec84;
         }
       }
     }
     else {
-      if ((uVar4 & 1) == 0) {
+      if ((uVar2 & 1) == 0) {
+        uVar2 = in_stack_00000008;
+        uVar3 = in_stack_0000000c;
         if ((in_stack_00000008 & 0x80000) != 0) goto LAB_0005ec84;
-        in_stack_00000008 = in_stack_00000008 | 0x80000;
+        uVar2 = in_stack_00000008 | 0x80000;
+        uVar8 = in_stack_00000010;
       }
       else {
-        in_stack_0000000c = uVar3;
+        uVar2 = in_stack_00000008;
         if ((in_stack_00000008 & 0x400000) != 0) goto LAB_0005ec84;
-        in_stack_00000008 = in_stack_00000008 | 0x400000;
+        uVar2 = in_stack_00000008 | 0x400000;
+        uVar8 = in_stack_0000000c;
       }
       float_status = float_status | 0x2000;
-      bVar1 = __ghidra_piece(uint8_t, float_control, 0) & 0x20;
-joined_r0x0005ec1e:
-      if (bVar1 == 0) goto LAB_0005ec84;
+      if ((__ghidra_piece(uint8_t, float_control, 0) & 0x20) == 0) goto LAB_0005ec84;
+      if ((code & 0x80) == 0) {
+        uVar8 = *(uint32_t *)(unaff_A6 + 4);
+      }
     }
   }
-  float_exception_report(code);
-  in_stack_00000008 = extraout_D0;
-  in_stack_0000000c = extraout_D1;
+  float_exception_report(code,uVar8);
+  uVar2 = extraout_D0;
+  uVar3 = extraout_D1;
 LAB_0005ec84:
-  return CONCAT44(in_stack_00000008,in_stack_0000000c);
+  return CONCAT44(uVar2,uVar3);
 }
 
 #endif
@@ -90596,7 +90640,7 @@ __asm__(
 
 /* the installer's float_exception_report */
 
-void installer_float_exception_report(uint32_t code)
+void installer_float_exception_report(uint32_t code,uint32_t address)
 
 {
   uint16_t uVar1;
@@ -90606,7 +90650,6 @@ void installer_float_exception_report(uint32_t code)
   uint8_t *puVar5;
   uint8_t *puVar6;
   uint32_t in_stack_00000000 = *(uint32_t *)((char *)__builtin_frame_address(0) + 4);
-  uint32_t in_stack_00000008 = *(uint32_t *)((char *)__builtin_frame_address(0) + 12);
   
   installer_float_exception_message[0] = 0;
   puVar5 = installer_float_exception_message + 1;
@@ -90653,7 +90696,7 @@ void installer_float_exception_report(uint32_t code)
     puVar5 = puVar6;
   } while (sVar2 != -1);
   installer_fatal_error_with_code
-            ((char *)installer_float_exception_message,in_stack_00000000,code,in_stack_00000008);
+            ((char *)installer_float_exception_message,in_stack_00000000,code,address);
   do {
                     /* WARNING: Do nothing block with infinite loop */
   } while( true );
@@ -100523,10 +100566,10 @@ char * installer_error_message_lookup(int32_t code)
 
 /* the installer's scpi_interpret */
 
-uint32_t
-installer_scpi_interpret
-          (int32_t param_1,int32_t param_2,void *param_3,uint32_t param_4,scpi_child_list *param_5,
-          scpi_child_list *param_6,status_model *param_7,uint32_t param_8,uint32_t param_9)
+uint32_t installer_scpi_interpret
+                   (scpi_port *input,scpi_port *output,void *buffer,uint32_t size,
+                   scpi_child_list *main_tree,scpi_child_list *common_list,status_model *status,
+                   uint32_t unused,uint32_t last_argument)
 
 {
   bool bVar1;
@@ -100536,16 +100579,10 @@ installer_scpi_interpret
   int32_t unaff_D3 = ({ register int32_t __entry __asm__("d3"); __asm__("" : "=r"(__entry)); (int32_t)__entry; });
   code *pcVar4;
   scpi_call *psVar5;
-  uint8_t *puVar6;
+  uint32_t *puVar6;
   uint32_t uVar7;
   scpi_path sStack_92;
   scpi_call local_7c;
-  uint32_t local_5e;
-  scpi_child_list *local_5a;
-  scpi_child_list *local_56;
-  char local_52;
-  uint16_t local_48;
-  uint32_t local_46;
   uint32_t local_42;
   int16_t local_3e;
   scpi_arena *local_3c;
@@ -100556,30 +100593,29 @@ installer_scpi_interpret
   scpi_response_item *local_2a;
   scpi_context sStack_26;
   
-  installer_arena_init(param_3,param_4,&local_3c);
+  installer_arena_init(buffer,size,&local_3c);
   local_34 = installer_arena_current(local_3c);
-  local_30 = installer_scpi_trg_defined(param_6,&local_2c);
-  local_7c.input = (scpi_port *)param_1;
-  local_7c.output = (scpi_port *)param_2;
-  local_7c.status = param_7;
+  local_30 = installer_scpi_trg_defined(common_list,&local_2c);
+  local_7c.input = input;
+  local_7c.output = output;
+  local_7c.status = status;
   local_7c.arena = local_3c;
-  local_5a = param_5;
-  local_56 = param_6;
-  local_48 = 0;
-  local_46 = param_9;
+  local_7c.main_tree = main_tree;
+  local_7c.common_list = common_list;
+  local_7c.field_34 = 0;
+  local_7c.last_argument = last_argument;
   installer_scpi_context_init
-            (&sStack_26,(scpi_port *)param_1,0,&sStack_92,&local_7c,local_3c,local_38,param_5,
-             param_6);
+            (&sStack_26,input,0,&sStack_92,&local_7c,local_3c,local_38,main_tree,common_list);
   local_3e = 1;
   bVar1 = false;
 LAB_installer__00106fd6:
   if (local_3e != 0) {
-    local_52 = 0;
-    installer_scpi_path_reset(&sStack_92,param_5);
+    local_7c.responding = SCPI_CALL_NO_RESPONSE;
+    installer_scpi_path_reset(&sStack_92,main_tree);
     installer_arena_set(local_34,local_3c);
   }
   if (bVar1) {
-    installer_scpi_skip_to_terminator((scpi_port *)param_1);
+    installer_scpi_skip_to_terminator(input);
     bVar1 = false;
   }
   iVar2 = installer_scpi_parse_message_unit(&sStack_26,&local_3e);
@@ -100589,29 +100625,29 @@ LAB_installer__00106fd6:
     if (unaff_D3 == 0) {
 LAB_installer__00107090:
       if (local_7c.query != 0) {
-        if (local_52 == 2) {
-          installer_status_clear_bit(param_7,-0xf);
+        if (local_7c.responding == SCPI_CALL_INDEFINITE) {
+          installer_status_clear_bit(status,-0xf);
         }
         else {
-          if (local_52 == 0) {
-            local_52 = 1;
-            puVar6 = &DAT_installer__00107290;
-            pcVar4 = *(code **)(*(int32_t *)(param_2 + 4) + 0x28);
+          if (local_7c.responding == SCPI_CALL_NO_RESPONSE) {
+            local_7c.responding = SCPI_CALL_RESPONDING;
+            puVar6 = &installer_scpi_response_begin_code;
+            pcVar4 = (code *)output->methods->signal;
           }
           else {
-            puVar6 = (uint8_t *)0x3b;
-            pcVar4 = *(code **)(*(int32_t *)(param_2 + 4) + 0x14);
+            puVar6 = (uint32_t *)0x3b;
+            pcVar4 = (code *)output->methods->put;
           }
-          (*pcVar4)(param_2,puVar6);
+          (*pcVar4)(output,puVar6);
           local_2a = (local_7c.node)->response_items;
-          condition = installer_scpi_format_response((scpi_port *)param_2,local_2a,&local_7c);
+          condition = installer_scpi_format_response(output,local_2a,&local_7c);
           if (condition != 0) {
             if (condition != -0x5a) {
-              installer_status_clear_bit(param_7,condition);
+              installer_status_clear_bit(status,condition);
               installer_scpi_message_done();
               goto LAB_installer__00107276;
             }
-            local_52 = 2;
+            local_7c.responding = SCPI_CALL_INDEFINITE;
           }
         }
       }
@@ -100622,22 +100658,22 @@ LAB_installer__00107138:
           uVar7 = 0;
           psVar5 = &local_7c;
           local_42 = installer_scpi_message_done();
-          iVar2 = (**(code **)(*(int32_t *)(param_2 + 4) + 0x28))
-                            (param_2,&DAT_installer__00107294,psVar5,uVar7);
+          iVar2 = (*(code *)output->methods->signal)
+                            (output,&installer_scpi_message_end_code,psVar5,uVar7);
           if (iVar2 == 0) {
-            if (local_52 != 0) {
-              (**(code **)(*(int32_t *)(param_2 + 4) + 0x14))(param_2,0x10a);
+            if (local_7c.responding != SCPI_CALL_NO_RESPONSE) {
+              (*(code *)output->methods->put)(output,0x10a);
             }
           }
           else if (iVar2 != -0xe) {
-            installer_status_clear_bit(param_7,iVar2);
+            installer_status_clear_bit(status,iVar2);
             uVar3 = installer_condition_is_command_error(iVar2);
             if (uVar3 != 0) {
               bVar1 = true;
             }
           }
           if (local_42 != 0) {
-            installer_status_clear_bit(param_7,local_42);
+            installer_status_clear_bit(status,local_42);
             uVar3 = installer_condition_is_command_error(local_42);
             if (uVar3 != 0) {
               bVar1 = true;
@@ -100653,10 +100689,10 @@ LAB_installer__00107138:
     }
     else if (unaff_D3 != -0x3e) {
       if (unaff_D3 == -0x3d) {
-        installer_scpi_path_reset(&sStack_92,param_5);
+        installer_scpi_path_reset(&sStack_92,main_tree);
       }
       else if (unaff_D3 != -0x3c) {
-        installer_status_clear_bit(param_7,unaff_D3);
+        installer_status_clear_bit(status,unaff_D3);
         uVar3 = installer_condition_is_command_error(unaff_D3);
         if ((uVar3 != 0) && (local_3e == 0)) {
           bVar1 = true;
@@ -100669,15 +100705,15 @@ LAB_installer__00107138:
     local_7c.query = local_2c;
   } while( true );
   if (iVar2 == -0x66) {
-    (**(code **)(*(int32_t *)(param_1 + 4) + 0x28))(param_1,&DAT_installer__00107298);
+    (*(code *)input->methods->signal)(input,&installer_scpi_input_end_code);
     installer_scpi_input_closed();
   }
   else if (iVar2 == -0x67) {
     unaff_D3 = -0x3c;
-    local_5e = 0xffffffff;
+    local_7c.result = 0xffffffff;
   }
   else {
-    installer_status_clear_bit(param_7,iVar2);
+    installer_status_clear_bit(status,iVar2);
     uVar3 = installer_condition_is_command_error(iVar2);
     if (uVar3 != 0) {
       bVar1 = true;
@@ -100685,13 +100721,13 @@ LAB_installer__00107138:
       local_3e = 1;
     }
     if ((iVar2 != -0xc) && (iVar2 != -0xd)) goto LAB_installer__0010727c;
-    (**(code **)(*(int32_t *)(param_1 + 4) + 0x28))(param_1,&DAT_installer__00107298);
+    (*(code *)input->methods->signal)(input,&installer_scpi_input_end_code);
   }
 LAB_installer__00107276:
   local_3e = 1;
 LAB_installer__0010727c:
   if (unaff_D3 == -0x3c) {
-    return local_5e;
+    return local_7c.result;
   }
   goto LAB_installer__00106fd6;
 }
@@ -101007,23 +101043,23 @@ void installer_scpi_task(void)
 
 {
   uint32_t uVar1;
-  scpi_port *psVar2;
+  scpi_port *input;
   uint32_t unaff_D2 = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   void *local_8;
   
   installer_psos_mode(0x40,0x40,(uint8_t *)0x0);
   uVar1 = installer_psos_service_8(0x5dc,0,1,0,(uint32_t *)&local_8);
   if ((uVar1 & 0xff) == 0) {
-    psVar2 = installer_scpi_session_init();
-    if (psVar2 == (scpi_port *)0x0) {
+    input = installer_scpi_session_init();
+    if (input == (scpi_port *)0x0) {
       installer_console_write(s_scpi__error_opening_stream_installer__001079e3);
     }
     else {
       installer_scpi_interpret
-                ((int32_t)psVar2,(int32_t)psVar2,local_8,0x5dc,installer_scpi_trees.main,
-                 installer_scpi_trees.common,installer_status_object,0,unaff_D2);
+                (input,input,local_8,0x5dc,installer_scpi_trees.main,installer_scpi_trees.common,
+                 installer_status_object,0,unaff_D2);
       installer_psos_free_segment(local_8);
-      (*(code *)psVar2->methods->close)(psVar2);
+      (*(code *)input->methods->close)(input);
       installer_restart();
       installer_psos_delete(0);
     }
@@ -101751,188 +101787,220 @@ __asm__(
 uint64_t installer_float_raise(uint32_t code,...)
 
 {
-  uint8_t bVar1;
+  uint32_t uVar1;
   uint32_t uVar2;
-  uint32_t uVar3;
-  uint32_t uVar4;
   uint32_t extraout_D0;
   uint32_t in_D1;
-  uint32_t uVar5;
+  uint32_t uVar3;
   uint32_t extraout_D1;
-  int16_t sVar6;
+  int16_t sVar4;
+  uint32_t uVar5;
+  uint32_t uVar6;
   uint32_t uVar7;
-  bool bVar8;
+  uint32_t uVar8;
+  int32_t unaff_A6 = (int32_t)*(void **)__builtin_frame_address(0);
+  bool bVar9;
   uint32_t in_stack_00000008 = *(uint32_t *)((char *)__builtin_frame_address(0) + 12);
   uint32_t in_stack_0000000c = *(uint32_t *)((char *)__builtin_frame_address(0) + 16);
   uint32_t in_stack_00000010 = *(uint32_t *)((char *)__builtin_frame_address(0) + 20);
-  uint32_t in_stack_00000014 = *(uint32_t *)((char *)__builtin_frame_address(0) + 24);
+  uint16_t uStack00000014;
   
   uVar3 = CONCAT22((int16_t)((uint32_t)in_D1 >> 0x10),(int16_t)code);
-  if ((int16_t)code != 0) {
-    uVar4 = code >> 0x10;
+  if ((int16_t)code == 0) {
+LAB_installer__00108cf2:
+    uVar8 = 0;
+  }
+  else {
+    uVar2 = code >> 0x10;
     if ((code & 0x4000) == 0) {
+      uVar8 = in_stack_00000008;
       if ((code & 0x2000) == 0) {
         if ((code & 0x1000) == 0) {
           if ((code & 0x800) == 0) {
-            if ((code & 0x400) != 0) {
+            if ((code & 0x400) == 0) {
+              if ((code & 0x200) != 0) goto LAB_installer__00108f48;
+              if ((code & 0x80) == 0) goto LAB_installer__00108cf2;
+              if ((uVar2 & 0x80) == 0) {
+                in_stack_00000008 = *(uint32_t *)(unaff_A6 + 4);
+              }
+              installer_float_status = installer_float_status | 0x280;
+              uVar8 = in_stack_00000008;
+              if ((((uint8_t)installer_float_control & 0x80) == 0) &&
+                 ((__ghidra_piece(uint8_t, installer_float_control, 0) & 2) == 0)) {
+                uVar2 = 0x7fffffff;
+                uVar3 = 0xffffffff;
+                goto LAB_installer__00108ff0;
+              }
+            }
+            else {
               installer_float_status = installer_float_status | 0x400;
-              if ((uVar4 & 0x80) != 0) {
+              if ((uVar2 & 0x80) != 0) {
+                uVar8 = *(uint32_t *)(unaff_A6 + 4);
                 installer_errno = 0x22;
               }
-              bVar1 = __ghidra_piece(uint8_t, installer_float_control, 0) & 4;
-              goto joined_r0x00108ef2;
-            }
-            if ((((code & 0x200) == 0) && ((code & 0x80) != 0)) &&
-               ((installer_float_status = installer_float_status | 0x280,
-                ((uint8_t)installer_float_control & 0x80) == 0 &&
-                ((__ghidra_piece(uint8_t, installer_float_control, 0) & 2) == 0)))) {
-              in_stack_00000008 = 0x7fffffff;
-              in_stack_0000000c = 0xffffffff;
-              goto LAB_installer__00108ff0;
+              if ((__ghidra_piece(uint8_t, installer_float_control, 0) & 4) == 0) goto joined_r0x00108efa;
             }
           }
           else {
-            sVar6 = (int16_t)in_stack_00000008;
-            if ((uVar4 & 1) == 0) {
-              in_stack_0000000c = in_stack_0000000c & 0xfffff | 0x100000;
-              if (sVar6 < 0x20) {
-                uVar7 = __ghidra_shr(0xffffffff, (in_stack_00000008 & 0x3f));
-                uVar2 = __ghidra_shl(in_stack_0000000c, 0x20 - (in_stack_00000008 & 0x3f)) |
-                        __ghidra_shr(in_stack_0000000c, (in_stack_00000008 & 0x3f));
-                uVar5 = __ghidra_shl(in_stack_00000010, 0x20 - (in_stack_00000008 & 0x3f)) |
+            sVar4 = (int16_t)in_stack_00000008;
+            if ((uVar2 & 1) == 0) {
+              uVar8 = _uStack00000014;
+              if ((uVar2 & 0x80) == 0) {
+                uVar8 = *(uint32_t *)(unaff_A6 + 4);
+              }
+              uVar3 = in_stack_0000000c & 0xfffff | 0x100000;
+              if (sVar4 < 0x20) {
+                uVar6 = __ghidra_shr(0xffffffff, (in_stack_00000008 & 0x3f));
+                uVar3 = __ghidra_shl(uVar3, 0x20 - (in_stack_00000008 & 0x3f)) |
+                        __ghidra_shr(uVar3, (in_stack_00000008 & 0x3f));
+                uVar1 = __ghidra_shl(in_stack_00000010, 0x20 - (in_stack_00000008 & 0x3f)) |
                         __ghidra_shr(in_stack_00000010, (in_stack_00000008 & 0x3f));
-                uVar3 = uVar7 & uVar2;
-                uVar4 = ~uVar7;
-                in_stack_0000000c = uVar4 & uVar2 | uVar7 & uVar5;
-                in_stack_00000010 = uVar4 & uVar5 | __ghidra_shr(in_stack_00000014, (in_stack_00000008 & 0x3f));
-                if (((__ghidra_shl(uVar4, (in_stack_00000008 & 0x3f)) |
-                     __ghidra_shr(uVar4, 0x20 - (in_stack_00000008 & 0x3f))) & in_stack_00000014) != 0) {
+                uVar2 = uVar6 & uVar3;
+                uVar5 = ~uVar6;
+                uVar3 = uVar5 & uVar3 | uVar6 & uVar1;
+                in_stack_00000010 = uVar5 & uVar1 | __ghidra_shr(_uStack00000014, (in_stack_00000008 & 0x3f));
+                if (((__ghidra_shl(uVar5, (in_stack_00000008 & 0x3f)) |
+                     __ghidra_shr(uVar5, 0x20 - (in_stack_00000008 & 0x3f))) & _uStack00000014) != 0) {
                   in_stack_00000010 = in_stack_00000010 | 1;
                 }
               }
               else {
-                uVar3 = in_stack_00000014;
-                if (sVar6 != 0x20) {
-                  if (0x37 < sVar6) goto LAB_installer__00108e6a;
-                  uVar5 = (uint32_t)(uint16_t)(sVar6 - 0x20);
-                  uVar7 = __ghidra_shr(0xffffffff, (uVar5 & 0x3f));
-                  uVar3 = __ghidra_shl(in_stack_0000000c, 0x20 - (uVar5 & 0x3f)) |
-                          __ghidra_shr(in_stack_0000000c, (uVar5 & 0x3f));
-                  uVar2 = __ghidra_shl(in_stack_00000010, 0x20 - (uVar5 & 0x3f)) |
-                          __ghidra_shr(in_stack_00000010, (uVar5 & 0x3f));
-                  in_stack_0000000c = uVar7 & uVar3;
-                  uVar4 = ~uVar7;
-                  in_stack_00000010 = uVar4 & uVar3 | uVar7 & uVar2;
-                  uVar3 = uVar4 & uVar2 | __ghidra_shr(in_stack_00000014, (uVar5 & 0x3f));
-                  if (((__ghidra_rotl(uVar4, uVar5 & 0x3f)) &
-                      in_stack_00000014) != 0) {
-                    uVar3 = uVar3 | 1;
+                uVar2 = _uStack00000014;
+                if (sVar4 != 0x20) {
+                  if (0x37 < sVar4) goto LAB_installer__00108e6a;
+                  uVar6 = (uint32_t)(uint16_t)(sVar4 - 0x20);
+                  uVar7 = __ghidra_shr(0xffffffff, (uVar6 & 0x3f));
+                  uVar2 = __ghidra_shl(uVar3, 0x20 - (uVar6 & 0x3f)) | __ghidra_shr(uVar3, (uVar6 & 0x3f));
+                  uVar1 = __ghidra_shl(in_stack_00000010, 0x20 - (uVar6 & 0x3f)) |
+                          __ghidra_shr(in_stack_00000010, (uVar6 & 0x3f));
+                  uVar3 = uVar7 & uVar2;
+                  uVar5 = ~uVar7;
+                  in_stack_00000010 = uVar5 & uVar2 | uVar7 & uVar1;
+                  uVar2 = uVar5 & uVar1 | __ghidra_shr(_uStack00000014, (uVar6 & 0x3f));
+                  if (((__ghidra_rotl(uVar5, uVar6 & 0x3f)) & _uStack00000014)
+                      != 0) {
+                    uVar2 = uVar2 | 1;
                   }
                 }
-                if (uVar3 != 0) {
+                if (uVar2 != 0) {
                   in_stack_00000010 = in_stack_00000010 | 1;
                 }
-                uVar3 = 0;
+                uVar2 = 0;
               }
-              in_stack_00000008 = uVar3 & 0xffefffff;
+              uVar2 = uVar2 & 0xffefffff;
               if (in_stack_00000010 == 0) goto LAB_installer__00108ff0;
               installer_float_status = installer_float_status | 0x200;
               if ((CARRY4(in_stack_00000010,in_stack_00000010)) &&
-                 ((((in_stack_00000010 & 0x7fffffff) != 0 || ((in_stack_0000000c & 1) != 0)) &&
-                  (bVar8 = in_stack_0000000c == 0xffffffff,
-                  in_stack_0000000c = in_stack_0000000c + 1, bVar8)))) {
-                in_stack_00000008 = in_stack_00000008 + 1;
-              }
-            }
-            else if (sVar6 < 0x19) {
-              uVar3 = in_stack_0000000c & 0x7fffff | 0x800000;
-              uVar4 = __ghidra_shr(uVar3, (in_stack_00000008 & 0x3f));
-              in_stack_0000000c = ~(__ghidra_shl(-1, (in_stack_00000008 & 0x3f)));
-              uVar3 = in_stack_0000000c & uVar3;
-              uVar3 = __ghidra_shl(uVar3, 0x20 - (in_stack_00000008 & 0x3f)) |
-                      __ghidra_shr(uVar3, (in_stack_00000008 & 0x3f)) |
-                      __ghidra_shr(in_stack_00000010, (in_stack_00000008 & 0x3f));
-              in_stack_0000000c = in_stack_0000000c & in_stack_00000010;
-              if (in_stack_0000000c != 0) {
-                uVar3 = uVar3 | 1;
-              }
-              in_stack_00000008 = uVar4 & 0xff7fffff;
-              if (uVar3 == 0) goto LAB_installer__00108ff0;
-              installer_float_status = installer_float_status | 0x200;
-              if ((CARRY4(uVar3,uVar3)) && (((uVar3 & 0x7fffffff) != 0 || ((uVar4 & 1) != 0)))) {
-                in_stack_00000008 = in_stack_00000008 + 1;
+                 ((((in_stack_00000010 & 0x7fffffff) != 0 || ((uVar3 & 1) != 0)) &&
+                  (bVar9 = uVar3 == 0xffffffff, uVar3 = uVar3 + 1, bVar9)))) {
+                uVar2 = uVar2 + 1;
               }
             }
             else {
-LAB_installer__00108e6a:
-              if ((code & 0x800000) != 0) {
-                installer_errno = 0x22;
+              uVar8 = CONCAT22(__ghidra_piece(uint16_t, in_stack_00000010, 2),uStack00000014);
+              if ((uVar2 & 0x80) == 0) {
+                uVar8 = *(uint32_t *)(unaff_A6 + 4);
               }
-              in_stack_00000008 = 0;
-              in_stack_0000000c = 0;
+              if (sVar4 < 0x19) {
+                uVar2 = in_stack_0000000c & 0x7fffff | 0x800000;
+                uVar1 = __ghidra_shr(uVar2, (in_stack_00000008 & 0x3f));
+                uVar3 = ~(__ghidra_shl(-1, (in_stack_00000008 & 0x3f)));
+                uVar2 = uVar3 & uVar2;
+                uVar5 = __ghidra_shl(uVar2, 0x20 - (in_stack_00000008 & 0x3f)) |
+                        __ghidra_shr(uVar2, (in_stack_00000008 & 0x3f)) |
+                        __ghidra_shr(in_stack_00000010, (in_stack_00000008 & 0x3f));
+                uVar3 = uVar3 & in_stack_00000010;
+                if (uVar3 != 0) {
+                  uVar5 = uVar5 | 1;
+                }
+                uVar2 = uVar1 & 0xff7fffff;
+                if (uVar5 == 0) goto LAB_installer__00108ff0;
+                installer_float_status = installer_float_status | 0x200;
+                if ((CARRY4(uVar5,uVar5)) && (((uVar5 & 0x7fffffff) != 0 || ((uVar1 & 1) != 0)))) {
+                  uVar2 = uVar2 + 1;
+                }
+              }
+              else {
+LAB_installer__00108e6a:
+                if ((code & 0x800000) != 0) {
+                  installer_errno = 0x22;
+                }
+                uVar2 = 0;
+                uVar3 = 0;
+              }
             }
             installer_float_status = installer_float_status | 0xa00;
             if ((__ghidra_piece(uint8_t, installer_float_control, 0) & 8) == 0) {
-              bVar1 = __ghidra_piece(uint8_t, installer_float_control, 0) & 2;
-              goto joined_r0x00108f8a;
+              if ((__ghidra_piece(uint8_t, installer_float_control, 0) & 2) == 0) goto LAB_installer__00108ff0;
+              goto LAB_installer__00108f48;
             }
           }
         }
         else {
           installer_float_status = installer_float_status | 0x1200;
-          if ((uVar4 & 0x80) != 0) {
+          if ((uVar2 & 0x80) != 0) {
+            uVar8 = *(uint32_t *)(unaff_A6 + 4);
             installer_errno = 0x22;
           }
           if ((__ghidra_piece(uint8_t, installer_float_control, 0) & 0x10) == 0) {
-            bVar1 = __ghidra_piece(uint8_t, installer_float_control, 0) & 2;
-joined_r0x00108ef2:
-            if (bVar1 == 0) {
-              if ((uVar4 & 1) == 0) {
-                in_stack_00000008 = 0x7ff00000;
-                in_stack_0000000c = 0;
+            if ((__ghidra_piece(uint8_t, installer_float_control, 0) & 2) == 0) {
+joined_r0x00108efa:
+              if ((uVar2 & 1) == 0) {
+                uVar2 = 0x7ff00000;
+                uVar3 = 0;
               }
               else {
-                in_stack_00000008 = 0x7f800000;
-                in_stack_0000000c = uVar3;
+                uVar2 = 0x7f800000;
               }
               goto LAB_installer__00108ff0;
+            }
+LAB_installer__00108f48:
+            uVar8 = in_stack_00000008;
+            if ((uVar2 & 0x80) == 0) {
+              uVar8 = *(uint32_t *)(unaff_A6 + 4);
             }
           }
         }
       }
       else {
         installer_float_status = installer_float_status | 0x2000;
-        if ((uVar4 & 0x80) != 0) {
+        if ((uVar2 & 0x80) != 0) {
+          uVar8 = *(uint32_t *)(unaff_A6 + 4);
           installer_errno = 0x21;
         }
         if ((__ghidra_piece(uint8_t, installer_float_control, 0) & 0x20) == 0) {
-          in_stack_00000008 = 0x7fffffff;
-          in_stack_0000000c = 0xffffffff;
+          uVar2 = 0x7fffffff;
+          uVar3 = 0xffffffff;
           goto LAB_installer__00108ff0;
         }
       }
     }
     else {
-      if ((uVar4 & 1) == 0) {
+      if ((uVar2 & 1) == 0) {
+        uVar2 = in_stack_00000008;
+        uVar3 = in_stack_0000000c;
         if ((in_stack_00000008 & 0x80000) != 0) goto LAB_installer__00108ff0;
-        in_stack_00000008 = in_stack_00000008 | 0x80000;
+        uVar2 = in_stack_00000008 | 0x80000;
+        uVar8 = in_stack_00000010;
       }
       else {
-        in_stack_0000000c = uVar3;
+        uVar2 = in_stack_00000008;
         if ((in_stack_00000008 & 0x400000) != 0) goto LAB_installer__00108ff0;
-        in_stack_00000008 = in_stack_00000008 | 0x400000;
+        uVar2 = in_stack_00000008 | 0x400000;
+        uVar8 = in_stack_0000000c;
       }
       installer_float_status = installer_float_status | 0x2000;
-      bVar1 = __ghidra_piece(uint8_t, installer_float_control, 0) & 0x20;
-joined_r0x00108f8a:
-      if (bVar1 == 0) goto LAB_installer__00108ff0;
+      if ((__ghidra_piece(uint8_t, installer_float_control, 0) & 0x20) == 0) goto LAB_installer__00108ff0;
+      if ((code & 0x80) == 0) {
+        uVar8 = *(uint32_t *)(unaff_A6 + 4);
+      }
     }
   }
-  installer_float_exception_report(code);
-  in_stack_00000008 = extraout_D0;
-  in_stack_0000000c = extraout_D1;
+  installer_float_exception_report(code,uVar8);
+  uVar2 = extraout_D0;
+  uVar3 = extraout_D1;
 LAB_installer__00108ff0:
-  return CONCAT44(in_stack_00000008,in_stack_0000000c);
+  return CONCAT44(uVar2,uVar3);
 }
 
 #endif

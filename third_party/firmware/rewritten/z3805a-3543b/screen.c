@@ -182,7 +182,7 @@ oncore_visible_satellite* satellite_find(uint8_t id,
 /* A satellite's cell: none for an ID not a satellite's; for one not
  * tracked, ignored, unhealthy or acquiring, by its health and its
  * channel's band, if any; else its elevation and azimuth (0x49688). */
-void satellite_status(char tracked, uint8_t id, satellite_sets* sets,
+void satellite_status(uint8_t tracked, uint8_t id, satellite_sets* sets,
                       gps_visibility_record* visibility, satellite_cell* cell) {
   oncore_visible_satellite* satellite;
 
@@ -229,7 +229,8 @@ void satellite_status(char tracked, uint8_t id, satellite_sets* sets,
  * with its cell, then blank entries to the list's end; count the
  * satellites listed.  When more than SHOWN are not tracked, those on a
  * channel are kept, then the highest of the rest (0x497c8). */
-void satellite_status_list(char tracked, uint8_t entries, satellite_sets* sets,
+void satellite_status_list(uint8_t tracked, uint8_t entries,
+                           satellite_sets* sets,
                            oncore_channel_status* channels,
                            gps_visibility_record* visibility,
                            satellite_list_entry* list, uint8_t* count) {

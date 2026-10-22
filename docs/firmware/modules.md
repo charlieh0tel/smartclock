@@ -2,14 +2,14 @@
 
 The plan for regrouping the Z3805A 3543B's hand-written C
 (`third_party/firmware/rewritten/z3805a-3543b/`, README.md, "Hand-written
-C") by subject.  `tools/ghidra/names/modules.tsv` puts each of the 1301
-functions the exported C (`third_party/firmware/decompiled/z3805a-3543b.c`)
-gives as C in a module, 387 hand-written among them; the assembly
-routines, the pForth kernel (`0x18ed6` to `0x1ad27`) and the installer's
-copies are left out.  The evidence is the exported C's direct calls,
-read from each function's body; a call through a pointer, a descriptor's
-hook or a vector, is not among them, and those that matter are listed
-under "Indirect calls".
+C") by subject.  `tools/ghidra/names/modules.tsv` puts each of 1314
+functions of the exported C (`third_party/firmware/decompiled/z3805a-3543b.c`)
+in a module, all 1312 it gives as C written by hand and two, `drtb_read`
+and `sci_read`, assembly; the other assembly routines, the pForth kernel
+(`0x18ed6` to `0x1ad27`) and the installer's copies are left out.  The
+evidence is the exported C's direct calls, read from each function's
+body; a call through a pointer, a descriptor's hook or a vector, is not
+among them, and those that matter are listed under "Indirect calls".
 
 ## Layers
 
@@ -18,10 +18,10 @@ for the calls under "Calls the wrong way".
 
 | Layer | Functions | What it holds |
 | ----- | --------: | ------------- |
-| platform | 180 | start-up, the CPU, the kernel's calls and tasks, the debug output, the C library and arithmetic |
-| devices | 131 | a module to a chip or a QSPI device |
+| platform | 184 | start-up, the CPU, the kernel's calls and tasks, the debug output, the C library and arithmetic |
+| devices | 142 | a module to a chip or a QSPI device |
 | services | 194 | what the tasks share: the spooler, the status model, the EEPROM's records and logs, time, the 1PPS and the health monitor |
-| applications | 796 | the tasks that make the receiver: SCPI, the loop, the GPS engine's protocol, the self-test, the status screen and the console |
+| applications | 794 | the tasks that make the receiver: SCPI, the loop, the GPS engine's protocol, the self-test, the status screen and the console |
 
 Where the approved layering named a module and the code says otherwise
 (these four names approved 2026-10-21: `platform/debug`,
@@ -72,8 +72,9 @@ Where the approved layering named a module and the code says otherwise
   to `pps_exchange`, which `klok_task` waits on: a service, not a timer.
 - **`applications/pll/pll_scpi`.**  The pllc task's settings server is
   the firmware's own `pll_scpi` ("pll_scpi: finish_scpi_cmd() --
-  unknown structure type", `0x4306a`); with it go the descriptors'
-  validators, clamps and hooks it runs.
+  unknown structure type", `0x4306a`); with it go `validate_num` and
+  the descriptors' hooks it runs, the validators and clamps it calls
+  through them being `applications/scpi/validators`'.
 - **`applications/pll/gps_control`.**  `gps_init_sequence` (`0x46838`),
   `gps_leap_sequence`, `gps_diag_sequence` and their kin are
   `pllp_task`'s steps, among the loop's code (`0x46620` to `0x471fc`),
@@ -95,17 +96,17 @@ Where the approved layering named a module and the code says otherwise
 | `stdlib` | 15 | `abs`, `div`, `atoi`, `rand`, `qsort`, `setjmp`, `longjmp`, `program_exit`; `atexit_functions` |
 | `stdio` | 10 | `vsprintf`, `sprintf`, `doprnt`, `double_to_digits`, `printf`, and `console_write`/`console_read`, pSOS device 0 |
 | `math` | 10 | `fabs`, `frexp`, `modf`, `log`, `sqrt`, `pow`, `float_raise`; `errno` |
-| `arithmetic` | 28 | the C parts of the arithmetic: 64-bit (`int64_add`, `int64_to_double`), rounding, powers of ten, bit counts, `random_dither`.  The soft float itself (`softfloat.md`) is assembly |
+| `arithmetic` | 32 | the C parts of the arithmetic: 64-bit (`int64_add`, `int64_to_double`), rounding, powers of ten, bit counts, `random_dither`.  The soft float itself (`softfloat.md`) is assembly |
 
 ## Devices
 
 | Module | Functions | Subject; entry points; data |
 | ------ | --------: | --------------------------- |
-| `duart` | 8 | what both channels share: `duart_early_init`, `duart_output_bits` (8 callers), `duart_test`, `duart_stop`; `duart`, `duart_shadow` |
+| `duart` | 11 | what both channels share: `duart_early_init`, `duart_output_bits` (8 callers), `duart_test`, `duart_stop`; `duart`, `duart_shadow` |
 | `duarta` | 8 | channel A, the link to the GPS engine: `drta_send_message`, `drta_get_byte`, `duarta_isr`, its self-tests; `duarta_ring` |
 | `duartb` | 23 | channel B, the console and SCPI port (device 0): `drtb_putc`, `drtb_gets`, `duartb_reconfigure`, `console_write_polled`, `duartb_isr`, its self-tests and settings hooks; `duartb`, `duartb_ring` |
-| `sci` | 15 | the SCI, device 3: `sci_putc`, `sci_gets`, `sci_reconfigure`, `sci_send_async`; `sci`, `sci_ring` |
-| `qspi` | 9 | the QSPI and its owner queue: `qspi_transfer`, `qspi_send`, `qspi_write`, `qspi_read`, `qspi_isr`; `qspi` |
+| `sci` | 16 | the SCI, device 3: `sci_putc`, `sci_gets`, `sci_reconfigure`, `sci_send_async`; `sci`, `sci_ring` |
+| `qspi` | 14 | the QSPI and its owner queue: `qspi_transfer`, `qspi_send`, `qspi_write`, `qspi_read`, `qspi_isr`; `qspi` |
 | `adc` | 9 | `adc_read` and the `read_adc_*` readings |
 | `dac` | 6 | `hdac_set`, `hdac_write_all`, `hdac_update`, `efc_write`, `efc_write_dithered`; `hdac_shadow` |
 | `fpga` | 17 | loading and verifying the configuration (`fpga_setup`, `fpga_program`, `fpga_verify`) and its registers (`fpga_write`, `fpga_read`, `fpga_set_bit`); `fpga_bit_table`, `fconf_regs` |
@@ -146,12 +147,12 @@ Where the approved layering named a module and the code says otherwise
 | `scpi/convert` | 8 | numbers to and from text: `scpi_real_to_text`, `scpi_number_to_*` (with the BCD routines in assembly, `0x24d42` to `0x254fe`) |
 | `scpi/format` | 21 | the response formatters, `scpi_format_response` |
 | `scpi/requests` | 7 | the SCPI task's side of `pllc_exchange`: `pllc_request_a` to `_e` |
-| `scpi/handlers/*` | 289 | a module to a root keyword: `common` (`*` commands, 13), `status` (20), `system` (22), `source_gpsystem` (32), `source_ptime` (19), `source_pulse` (10), `source_roscillator` (23), `output` (8), `led` (11), `format` (2), `sense` (2), `diagnostic` (48), `sample` (23, the test tree), `douglas` (7), `kenneth` (4), `robin` (18, with its parser), `stubs` (24, the four-letter entries that fail, `scpi/undocumented.md`), `misc` (3, `:DANA?`, which reads the error queue, and `:RTCM?`) |
+| `scpi/handlers/*` | 305 | a module to a root keyword: `common` (`*` commands, 13), `status` (20), `system` (22), `source_gpsystem` (34), `source_ptime` (23), `source_pulse` (12), `source_roscillator` (26), `output` (10), `led` (11), `format` (2), `sense` (2), `diagnostic` (48), `sample` (24, the test tree), `douglas` (9), `kenneth` (4), `robin` (18, with its parser), `stubs` (24, the four-letter entries that fail, `scpi/undocumented.md`), `misc` (3, `:DANA?`, which reads the error queue, and `:RTCM?`) |
 | `pll/pllp` | 18 | the pllp task and its state: `pll_init`, `pllp_task`, `pll_check_reference`, `pll_stage_status`, `pll_mode`, `get_ffom`; `pll` |
 | `pll/reading` | 3 | `interval_next_reading` (9 callers), the loop's one-second reading |
 | `pll/stages` | 15 | `loop.md`'s stages: `powerup`, `coarse`, `fine`, `startup_pll`, `pll_normal`, `holdover`, `holdover_recovery` |
 | `pll/aging` | 17 | the curv task's aging fit: `efc_history_update`, `curv_task`, `aging_fit` |
-| `pll/pll_scpi` | 55 | the pllc task: `pll_scpi_receive`, `pll_scpi_command`, `validate_or_doaction`, `finish_scpi_cmd`, the clamps and the descriptors' hooks |
+| `pll/pll_scpi` | 20 | the pllc task: `pll_scpi_receive`, `pll_scpi_command`, `validate_or_doaction`, `finish_scpi_cmd` and the descriptors' hooks |
 | `pll/gps_control` | 8 | `gpsx_send`, `gps_init_sequence`, `gps_leap_sequence`, `gps_diag_sequence`, `gps_selftest_run` |
 | `gps/task` | 7 | the gpsm task: `gps_init`, `gpsm_task`, `gps_console_request`, `status_snapshot_update` |
 | `gps/requests` | 16 | the request ring and the requests' text (`gps.md`, "Requests"): `gps_request_queue`, `gps_request_build`, `gps_message_supported` |

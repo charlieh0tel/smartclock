@@ -49,12 +49,6 @@ typedef struct scpi_system_port_number {
   scpi_engine_long_parameter number; /* +0x02 */
 } scpi_system_port_number;
 
-/* A string parameter: its kind word, then its text. */
-typedef struct scpi_system_string_parameter {
-  int16_t kind; /* +0x00 */
-  char* text;   /* +0x02 */
-} scpi_system_string_parameter;
-
 /* Whether the call came in on the console port. */
 static bool scpi_system_from_console(const scpi_call* call) {
   return scpi_console_port() == call->input;
@@ -421,10 +415,7 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_RECeive_SBITs(void* parameters,
  * a byte (0x30680). */
 int32_t scpi_set_SYSTem_LANGuage(void* parameters, void* response,
                                  scpi_call* call) {
-  /* What ends scpi_interpret's session; status_condition_code names
-   * none. */
-  static const int32_t SESSION_END = -60;
-  scpi_system_string_parameter* given = parameters;
+  scpi_text_parameter* given = parameters;
 
   for (int8_t i = 0; given->text[i] != 0; i++) {
     given->text[i] = (char)toupper(given->text[i]);
@@ -434,11 +425,11 @@ int32_t scpi_set_SYSTem_LANGuage(void* parameters, void* response,
   }
   if (scpi_parameters_same(given->text, "PFORTH")) {
     scpi_language = SCPI_LANGUAGE_PFORTH;
-    return SESSION_END;
+    return SCPI_ENGINE_SESSION_END;
   }
   if (scpi_parameters_same(given->text, "INSTALL")) {
     scpi_language = SCPI_LANGUAGE_INSTALL;
-    return SESSION_END;
+    return SCPI_ENGINE_SESSION_END;
   }
   if (scpi_parameters_same(given->text, "PRIMARY")) {
     return 0;

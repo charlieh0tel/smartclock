@@ -1729,6 +1729,11 @@ typedef void scpi_port_write_function(struct scpi_port* port, char* text,
 typedef void scpi_port_bits_function(struct scpi_port* port, int bits);
 typedef uint8_t scpi_port_byte_function(struct scpi_port* port);
 typedef void scpi_port_close_function(struct scpi_port* port);
+/* A port's signal: given one of scpi_interpret's codes (0x29636 to
+ * 0x2963e), its error, which scpi_interpret reports at a message's end
+ * (0x29502 to 0x29528); scpi_console_return_zero gives 0. */
+typedef int32_t scpi_port_signal_function(struct scpi_port* port,
+                                          uint32_t* code);
 
 /* A port's method table, the console's at 0x29dd4: what the SCPI parser
  * reads commands through, the formatters write responses through, and
@@ -1752,10 +1757,11 @@ typedef struct scpi_port_methods {
       write_block; /* +0x1c: scpi_console_write; scpi_format_block's */
   void* field_20;  /* +0x20: scpi_console_return_zero */
   void* field_24;  /* +0x24: scpi_console_return_zero */
-  void* signal;    /* +0x28: scpi_console_return_zero; scpi_interpret passes it
-                      scpi_response_begin_code, scpi_message_end_code or
-                      scpi_input_end_code */
-  void* field_2c;  /* +0x2c: scpi_console_return_zero */
+  scpi_port_signal_function*
+      signal;     /* +0x28: scpi_console_return_zero; scpi_interpret passes it
+                     scpi_response_begin_code, scpi_message_end_code or
+                     scpi_input_end_code (0x29462, 0x29502, 0x2959c) */
+  void* field_2c; /* +0x2c: scpi_console_return_zero */
   scpi_port_bits_function*
       status_set_bits; /* +0x30: status_byte_set_bits; status_condition_set's */
   scpi_port_bits_function* status_clear_bits; /* +0x34: status_byte_clear_bits;
@@ -1924,8 +1930,22 @@ typedef struct scpi_path {
 } scpi_path;
 
 struct status_model;
-/* The call record scpi_interpret builds for a handler, on its stack
- * (docs/firmware/README.md, "Hand-written C"; 0x29322 to 0x2932e). */
+/* scpi_call's responding: what a message's queries have responded so
+ * far, which scpi_interpret clears at each message's start (0x29382):
+ * nothing, so that the first response is preceded by the output port's
+ * begin signal (0x29456 to 0x2946e); a response, so that the next is
+ * preceded by a ';' (0x29474); an indefinite response, which
+ * scpi_format_response reports as -90 (0x294a6 to 0x294ac), after which
+ * every query is reported as -15 (0x2943e to 0x2944e). */
+typedef enum __attribute__((packed)) scpi_call_responding {
+  SCPI_CALL_NO_RESPONSE = 0,
+  SCPI_CALL_RESPONDING = 1,
+  SCPI_CALL_INDEFINITE = 2,
+} scpi_call_responding;
+
+/* The call record scpi_interpret builds for a handler, on its stack at
+ * -0x78(a6) (docs/firmware/README.md, "Hand-written C"; 0x29322 to
+ * 0x29344), which every handler is given. */
 typedef struct scpi_call {
   scpi_node* node;   /* +0x00 */
   uint16_t query;    /* +0x04: 0 the setter, 1 the query, the handler's index */
@@ -1936,6 +1956,15 @@ typedef struct scpi_call {
   struct scpi_port* input;     /* +0x12 */
   struct scpi_port* output;    /* +0x16 */
   struct status_model* status; /* +0x1a */
+  uint32_t result; /* +0x1e: scpi_interpret's result, -1 when its port fails
+                      (0x295c6), else unset (0x2962a) */
+  scpi_child_list* main_tree;      /* +0x22: scpi_interpret's (0x29334) */
+  scpi_child_list* common_list;    /* +0x26: scpi_interpret's (0x2933a) */
+  scpi_call_responding responding; /* +0x2a */
+  uint8_t field_2b[9];             /* +0x2b: unset */
+  uint16_t field_34; /* +0x34: cleared (0x29340), which scpi_interpret does not
+                        read */
+  uint32_t last_argument; /* +0x36: scpi_interpret's last (0x29344) */
 } scpi_call;
 
 /* The SCPI task's response areas, end to end from 0x10272a: a record

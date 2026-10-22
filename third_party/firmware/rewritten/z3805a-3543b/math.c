@@ -658,7 +658,7 @@ uint64_t float_raise(uint32_t code, ...) {
       libc_float_raise(code, callers_d1, operand, LIBC_CALLERS_RETURN(), state);
 
   if (raised.report) {
-    ((libc_raise_report*)float_exception_report)(code, raised.address);
+    float_exception_report(code, raised.address);
   }
   return (uint64_t)raised.high << LIBC_WORD_BITS | raised.low;
 }
@@ -667,15 +667,13 @@ uint64_t float_raise(uint32_t code, ...) {
  * float_exception_message and stops with fatal_error_with_code
  * (libc.md, "Exception codes"); never returns (0x1412e).  The image
  * pushes only the message, so that fatal_error_with_code's other
- * arguments are its return address, code and the long above code in
- * its caller's frame, which it prints as the code. */
-void float_exception_report(uint32_t code) {
-  const uint32_t* frame = __builtin_frame_address(0);
-
+ * arguments are its return address, code and address, which it prints
+ * as the code; float_raise pushes the address before the code
+ * (0x5ec8c). */
+void float_exception_report(uint32_t code, uint32_t address) {
   libc_float_exception_message(float_exception_message, code);
   fatal_error_with_code((char*)float_exception_message,
-                        (uint32_t)__builtin_return_address(0), code,
-                        frame[LIBC_FRAME_LONG_ABOVE_CODE]);
+                        (uint32_t)__builtin_return_address(0), code, address);
   for (;;) {
   }
 }

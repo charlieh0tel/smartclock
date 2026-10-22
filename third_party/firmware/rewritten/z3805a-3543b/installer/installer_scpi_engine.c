@@ -113,13 +113,6 @@ int32_t installer_scpi_call_handler(scpi_call* call, void** response) {
   return scpi_engine_call_handler(call, response);
 }
 
-/* The installer's signal codes, its copies of scpi_response_begin_code,
- * scpi_message_end_code and scpi_input_end_code, 8, 7 and 6, as at
- * installer::0x107290 (the primary's 0x29636). */
-static const uint32_t installer_scpi_response_begin_code = 8;
-static const uint32_t installer_scpi_message_end_code = 7;
-static const uint32_t installer_scpi_input_end_code = 6;
-
 /* The installer's copies of the routines scpi_interpret calls. */
 static const scpi_engine_routines installer_scpi_engine = {
     .arena_init = installer_arena_init,
@@ -142,16 +135,17 @@ static const scpi_engine_routines installer_scpi_engine = {
 };
 
 /* The installer's parser loop, as scpi_interpret's (installer::0x106f30). */
-uint32_t installer_scpi_interpret(int32_t input, int32_t output, void* buffer,
-                                  uint32_t size, scpi_child_list* main_tree,
+uint32_t installer_scpi_interpret(scpi_port* input, scpi_port* output,
+                                  void* buffer, uint32_t size,
+                                  scpi_child_list* main_tree,
                                   scpi_child_list* common_list,
                                   status_model* status, uint32_t unused,
                                   uint32_t last_argument) {
   const int32_t handled = CPU_CALLERS_REGISTER(int32_t, "d3");
 
-  return scpi_engine_interpret(
-      &installer_scpi_engine, handled, (scpi_port*)input, (scpi_port*)output,
-      buffer, size, main_tree, common_list, status, last_argument);
+  return scpi_engine_interpret(&installer_scpi_engine, handled, input, output,
+                               buffer, size, main_tree, common_list, status,
+                               last_argument);
 }
 
 /* The installer's SCPI task: time sliced, takes a 1500-byte segment for
@@ -181,10 +175,9 @@ void installer_scpi_task(void) {
     installer_console_write("scpi: error opening stream\n");
     return;
   }
-  installer_scpi_interpret((int32_t)port, (int32_t)port, arena, ARENA_SIZE,
-                           installer_scpi_trees.main,
-                           installer_scpi_trees.common, installer_status_object,
-                           0, caller_d2);
+  installer_scpi_interpret(
+      port, port, arena, ARENA_SIZE, installer_scpi_trees.main,
+      installer_scpi_trees.common, installer_status_object, 0, caller_d2);
   installer_psos_free_segment(arena);
   port->methods->close(port);
   installer_restart();

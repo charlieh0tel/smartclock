@@ -38,8 +38,8 @@ state.  Each is by the routine and the address that shows it.
   (`0x5ebe0`).  A float's infinity and its quieted NaN return D1 as it
   was, the cause in its low word and its caller's in its high
   (`0x5e948`).  Its report pushes the address before the code
-  (`0x5ec8c`), which `float_exception_report` prints as its code; the
-  C calls it with both, through `libc.h`'s `libc_raise_report`.
+  (`0x5ec8c`), which `float_exception_report` prints as its code; its
+  prototype takes both.
 - **The installer's `:DIAGnostic:ERASe` (`installer::0x107e6e`) and
   its flash word programmer (`installer::0x107c18`)** count their
   tries and report failure, -200, when the count reaches five
@@ -116,8 +116,8 @@ state.  Each is by the routine and the address that shows it.
   local they never set as the context's `field_1e` (`-0x34(a6)`,
   `0x29352`); and, when a handler ends the session, return the call
   record's `+0x1e`, set only when the port fails (`0x295c6`).  The
-  C keeps the record as the image lays it out, `scpi_engine.h`'s
-  `scpi_engine_record`, past smartclock.h's `scpi_call`.
+  C keeps the record as the image lays it out, smartclock.h's
+  `scpi_call`, to its `+0x3a`.
 - **`happening_flush` (`0x2f6dc`)**, given a buffer that is neither
   early buffer, replays it in the mode of D2's low byte as its caller
   left it, setting a mode only for those two (`0x2f6f2`, `0x2f6fe`).

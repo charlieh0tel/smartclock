@@ -37,3 +37,7 @@ static uint8_t records_byte_sum(const uint8_t* bytes, uint32_t count) {
 static uint16_t records_sum_and_complement(uint8_t sum) {
   return (uint16_t)(sum << RECORDS_FIELD_BITS | (uint8_t)~sum);
 }
+
+/* The firmware revision the NV register's tag carries, which *IDN?
+ * answers too. */
+static const char RECORDS_FIRMWARE_REVISION[] = "3543B";

@@ -1382,6 +1382,9 @@ view cannot drift apart.  The library, bottom up:
      `:FORMat:DATA`'s setting is `data_format`, ASCii or INTeger, by
      097-59551-02, not ROBin's: ROBin's queries are only its users;
      `:FORMat` and `:SENSe` take a file each.
+     And `:DIAGnostic`, `:STATus` and the common commands (78), and
+     `:GPS`, `:PTIMe`, `:PULSe`, `:KENneth` and `:DOUGlas` (72), all
+     agreeing; the firmware revision moves to `records.h` for `*IDN?`.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

@@ -7,8 +7,6 @@
 
 static const uint32_t RECORDS_ERASED_LONG = 0xffffffffu;
 
-static const char RECORDS_FIRMWARE_REVISION[] = "3543B";
-
 /* The NV register's settings, packed into longs most significant bit
  * first; a value that would cross a long's end starts the next. */
 typedef struct records_bit_stream {

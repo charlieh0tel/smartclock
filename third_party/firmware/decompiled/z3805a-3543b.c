@@ -47780,6 +47780,7 @@ void scpi_task(void)
 
 
 /* 0002a18c */
+#if 0 /* the decompiler's reading; rewritten in scpi_common.c */
 
 /* the setter for *CLS */
 
@@ -47795,6 +47796,7 @@ int32_t scpi_set_common_CLS(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002a1be */
 #if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
@@ -47829,6 +47831,7 @@ int32_t scpi_query_CEQU(void *parameters,void *response,void *call)
 #endif
 
 /* 0002a1e2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_common.c */
 
 /* the setter for *ESE */
 
@@ -47849,8 +47852,10 @@ int32_t scpi_set_common_ESE(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002a268 */
+#if 0 /* the decompiler's reading; rewritten in scpi_common.c */
 
 /* the query handler for *ESE? */
 
@@ -47867,8 +47872,10 @@ int32_t scpi_query_common_ESE(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002a2ae */
+#if 0 /* the decompiler's reading; rewritten in scpi_common.c */
 
 /* the query handler for *ESR? */
 
@@ -47879,8 +47886,10 @@ int32_t scpi_query_common_ESR(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002a2ca */
+#if 0 /* the decompiler's reading; rewritten in scpi_common.c */
 
 /* the query handler for *IDN? */
 
@@ -47907,6 +47916,7 @@ int32_t scpi_query_common_IDN(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002a344 */
 #if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
@@ -47925,6 +47935,7 @@ int32_t scpi_query_RWHO(void *parameters,void *response,void *call)
 #endif
 
 /* 0002a356 */
+#if 0 /* the decompiler's reading; rewritten in scpi_common.c */
 
 /* the setter for *OPC */
 
@@ -47934,8 +47945,10 @@ int32_t scpi_set_common_OPC(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002a35a */
+#if 0 /* the decompiler's reading; rewritten in scpi_common.c */
 
 /* the query handler for *OPC? */
 
@@ -47946,8 +47959,10 @@ int32_t scpi_query_common_OPC(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002a368 */
+#if 0 /* the decompiler's reading; rewritten in scpi_common.c */
 
 /* the setter for *RST */
 
@@ -47957,8 +47972,10 @@ int32_t scpi_set_common_RST(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002a36c */
+#if 0 /* the decompiler's reading; rewritten in scpi_common.c */
 
 /* the setter for *SRE */
 
@@ -47979,8 +47996,10 @@ int32_t scpi_set_common_SRE(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002a3ee */
+#if 0 /* the decompiler's reading; rewritten in scpi_common.c */
 
 /* the query handler for *SRE? */
 
@@ -47997,8 +48016,10 @@ int32_t scpi_query_common_SRE(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002a432 */
+#if 0 /* the decompiler's reading; rewritten in scpi_common.c */
 
 /* the query handler for *STB? */
 
@@ -48009,8 +48030,10 @@ int32_t scpi_query_common_STB(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002a44c */
+#if 0 /* the decompiler's reading; rewritten in scpi_common.c */
 
 /* the query handler for *TST? */
 
@@ -48025,8 +48048,10 @@ int32_t scpi_query_common_TST(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002a47c */
+#if 0 /* the decompiler's reading; rewritten in scpi_common.c */
 
 /* the setter for *WAI */
 
@@ -48036,8 +48061,10 @@ int32_t scpi_set_common_WAI(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002a480 */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the query handler for :STATus:OPERation:EVENt? */
 
@@ -48048,8 +48075,10 @@ int32_t scpi_query_STATus_OPERation_EVENt(void *parameters,void *response,void *
   return 0;
 }
 
+#endif
 
 /* 0002a4a0 */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the query handler for :STATus:OPERation:CONDition? */
 
@@ -48060,6 +48089,7 @@ int32_t scpi_query_STATus_OPERation_CONDition(void *parameters,void *response,vo
   return 0;
 }
 
+#endif
 
 /* 0002a4c0 */
 #if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
@@ -48078,6 +48108,7 @@ int32_t scpi_query_RAST(void *parameters,void *response,void *call)
 #endif
 
 /* 0002a4d2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the setter for :STATus:QUEStionable:CONDition:USER */
 
@@ -48092,8 +48123,10 @@ int32_t scpi_set_STATus_QUEStionable_CONDition_USER(void *parameters,void *respo
   return 0;
 }
 
+#endif
 
 /* 0002a502 */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the setter for :STATus:QUEStionable:EVENt:USER */
 
@@ -48120,8 +48153,10 @@ int32_t scpi_set_STATus_QUEStionable_EVENt_USER(void *parameters,void *response,
   return 0;
 }
 
+#endif
 
 /* 0002a580 */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the setter for :STATus:OPERation:ENABle */
 
@@ -48152,8 +48187,10 @@ int32_t scpi_set_STATus_OPERation_ENABle(void *parameters,void *response,void *c
   return 0;
 }
 
+#endif
 
 /* 0002a63a */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the query handler for :STATus:OPERation:ENABle? */
 
@@ -48170,8 +48207,10 @@ int32_t scpi_query_STATus_OPERation_ENABle(void *parameters,void *response,void 
   return 0;
 }
 
+#endif
 
 /* 0002a68e */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the setter for :STATus:OPERation:PTRansition */
 
@@ -48202,8 +48241,10 @@ int32_t scpi_set_STATus_OPERation_PTRansition(void *parameters,void *response,vo
   return 0;
 }
 
+#endif
 
 /* 0002a74c */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the query handler for :STATus:OPERation:PTRansition? */
 
@@ -48220,8 +48261,10 @@ int32_t scpi_query_STATus_OPERation_PTRansition(void *parameters,void *response,
   return 0;
 }
 
+#endif
 
 /* 0002a7a0 */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the setter for :STATus:OPERation:NTRansition */
 
@@ -48252,8 +48295,10 @@ int32_t scpi_set_STATus_OPERation_NTRansition(void *parameters,void *response,vo
   return 0;
 }
 
+#endif
 
 /* 0002a85e */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the query handler for :STATus:OPERation:NTRansition? */
 
@@ -48271,8 +48316,10 @@ int32_t scpi_query_STATus_OPERation_NTRansition(void *parameters,void *response,
   return 0;
 }
 
+#endif
 
 /* 0002a8b2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the query handler for :STATus:OPERation:HARDware:EVENt? */
 
@@ -48283,8 +48330,10 @@ int32_t scpi_query_STATus_OPERation_HARDware_EVENt(void *parameters,void *respon
   return 0;
 }
 
+#endif
 
 /* 0002a8d4 */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the query handler for :STATus:OPERation:HARDware:CONDition? */
 
@@ -48295,8 +48344,10 @@ int32_t scpi_query_STATus_OPERation_HARDware_CONDition(void *parameters,void *re
   return 0;
 }
 
+#endif
 
 /* 0002a8f6 */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the setter for :STATus:OPERation:HARDware:ENABle */
 
@@ -48329,8 +48380,10 @@ int32_t scpi_set_STATus_OPERation_HARDware_ENABle(void *parameters,void *respons
   return 0;
 }
 
+#endif
 
 /* 0002a9b8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the query handler for :STATus:OPERation:HARDware:ENABle? */
 
@@ -48347,8 +48400,10 @@ int32_t scpi_query_STATus_OPERation_HARDware_ENABle(void *parameters,void *respo
   return 0;
 }
 
+#endif
 
 /* 0002aa10 */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the setter for :STATus:OPERation:HARDware:PTRansition */
 
@@ -48381,8 +48436,10 @@ int32_t scpi_set_STATus_OPERation_HARDware_PTRansition(void *parameters,void *re
   return 0;
 }
 
+#endif
 
 /* 0002aad6 */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the query handler for :STATus:OPERation:HARDware:PTRansition? */
 
@@ -48399,8 +48456,10 @@ int32_t scpi_query_STATus_OPERation_HARDware_PTRansition(void *parameters,void *
   return 0;
 }
 
+#endif
 
 /* 0002ab2e */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the setter for :STATus:OPERation:HARDware:NTRansition */
 
@@ -48433,8 +48492,10 @@ int32_t scpi_set_STATus_OPERation_HARDware_NTRansition(void *parameters,void *re
   return 0;
 }
 
+#endif
 
 /* 0002abf4 */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the query handler for :STATus:OPERation:HARDware:NTRansition? */
 
@@ -48452,8 +48513,10 @@ int32_t scpi_query_STATus_OPERation_HARDware_NTRansition(void *parameters,void *
   return 0;
 }
 
+#endif
 
 /* 0002ac4c */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the setter for :STATus:PRESet */
 
@@ -48467,8 +48530,10 @@ int32_t scpi_set_STATus_PRESet(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002ac72 */
+#if 0 /* the decompiler's reading; rewritten in scpi_status.c */
 
 /* the setter for :STATus:PRESet:ALARm */
 
@@ -48482,8 +48547,10 @@ int32_t scpi_set_STATus_PRESet_ALARm(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002acb8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:GPSystem:POSition:HOLD:RAIM:STATe */
 
@@ -48516,8 +48583,10 @@ int32_t scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe
   return 0;
 }
 
+#endif
 
 /* 0002ad30 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:GPSystem:POSition:HOLD:RAIM:STATe? */
 
@@ -48545,8 +48614,10 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_STATe
   return error;
 }
 
+#endif
 
 /* 0002ad8c */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:GPSystem:POSition:HOLD:RAIM:THReshold */
 
@@ -48578,8 +48649,10 @@ int32_t scpi_set_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold
   return 0;
 }
 
+#endif
 
 /* 0002ae10 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:GPSystem:POSition:HOLD:RAIM:THReshold? */
 
@@ -48614,8 +48687,10 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold
   return iVar2;
 }
 
+#endif
 
 /* 0002ae86 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:POSition:ACTual? */
 
@@ -48672,8 +48747,10 @@ int32_t scpi_query_SOURce_GPSystem_POSition_ACTual(void *parameters,void *respon
   return iVar2;
 }
 
+#endif
 
 /* 0002afa2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:GPSystem:POSition:MSEConds? */
 
@@ -48697,8 +48774,10 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_MSEConds(void *parameters,void *
   return iVar1;
 }
 
+#endif
 
 /* 0002b02c */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:GPSystem:POSition:DEGRees? */
 
@@ -48740,8 +48819,10 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_DEGRees(void *parameters,void *r
   return 0;
 }
 
+#endif
 
 /* 0002b0ae */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:GPSystem:TIME? */
 
@@ -48774,8 +48855,10 @@ int32_t scpi_query_DIAGnostic_GPSystem_TIME(void *parameters,void *response,void
   return iVar1;
 }
 
+#endif
 
 /* 0002b13a */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:GPSystem:UTC */
 
@@ -48790,8 +48873,10 @@ int32_t scpi_set_DIAGnostic_GPSystem_UTC(void *parameters,void *response,void *c
   return 0;
 }
 
+#endif
 
 /* 0002b16a */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:GPSystem:UTC? */
 
@@ -48802,8 +48887,10 @@ int32_t scpi_query_DIAGnostic_GPSystem_UTC(void *parameters,void *response,void 
   return 0;
 }
 
+#endif
 
 /* 0002b17c */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:IDENtification:DEFault? */
 
@@ -48815,8 +48902,10 @@ int32_t scpi_query_DIAGnostic_IDENtification_DEFault(void *parameters,void *resp
   return 0;
 }
 
+#endif
 
 /* 0002b196 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:IDENtification:GPSystem? */
 
@@ -48844,8 +48933,10 @@ int32_t scpi_query_DIAGnostic_IDENtification_GPSystem(void *parameters,void *res
   return iVar1;
 }
 
+#endif
 
 /* 0002b20e */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:IDENtification:HARDware */
 
@@ -48882,8 +48973,10 @@ int32_t scpi_set_DIAGnostic_IDENtification_HARDware(void *parameters,void *respo
   return 0;
 }
 
+#endif
 
 /* 0002b27e */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:IDENtification:MODel */
 
@@ -48925,8 +49018,10 @@ int32_t scpi_set_DIAGnostic_IDENtification_MODel(void *parameters,void *response
   return 0;
 }
 
+#endif
 
 /* 0002b31a */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:IDENtification:SERial */
 
@@ -48968,8 +49063,10 @@ int32_t scpi_set_DIAGnostic_IDENtification_SERial(void *parameters,void *respons
   return 0;
 }
 
+#endif
 
 /* 0002b3b6 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:LIFetime:COUNt? */
 
@@ -48980,8 +49077,10 @@ int32_t scpi_query_DIAGnostic_LIFetime_COUNt(void *parameters,void *response,voi
   return 0;
 }
 
+#endif
 
 /* 0002b3c4 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:LOG:CLEar */
 
@@ -49017,8 +49116,10 @@ int32_t scpi_set_DIAGnostic_LOG_CLEar(void *parameters,void *response,void *call
   return 0;
 }
 
+#endif
 
 /* 0002b44e */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:SLOG:CLEar */
 
@@ -49036,8 +49137,10 @@ int32_t scpi_set_DIAGnostic_SLOG_CLEar(void *parameters,void *response,void *cal
   return 0;
 }
 
+#endif
 
 /* 0002b47c */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:LOG:COUNt? */
 
@@ -49064,6 +49167,7 @@ int32_t scpi_query_DIAGnostic_LOG_COUNt(void *parameters,void *response,void *ca
   return iVar1;
 }
 
+#endif
 
 /* 0002b4c2 */
 #if 0 /* the decompiler's reading; rewritten in log.c */
@@ -49154,6 +49258,7 @@ void log_print(char param_1,write_function *write,printf_function *print)
 #endif
 
 /* 0002b632 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:LOG:READ? */
 
@@ -49205,8 +49310,10 @@ int32_t scpi_query_DIAGnostic_LOG_READ(void *parameters,void *response,void *cal
   return iVar3;
 }
 
+#endif
 
 /* 0002b762 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:LOG:READ:ALL? */
 
@@ -49223,8 +49330,10 @@ int32_t scpi_query_DIAGnostic_LOG_READ_ALL(void *parameters,void *response,void 
   return 0;
 }
 
+#endif
 
 /* 0002b798 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:LOG:WRITe */
 
@@ -49255,8 +49364,10 @@ int32_t scpi_set_DIAGnostic_LOG_WRITe(void *parameters,void *response,void *call
   return 0;
 }
 
+#endif
 
 /* 0002b816 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:ME */
 
@@ -49266,8 +49377,10 @@ int32_t scpi_set_DIAGnostic_ME(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002b81a */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:ME? */
 
@@ -49281,8 +49394,10 @@ int32_t scpi_query_DIAGnostic_ME(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002b830 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:OS:MEMory? */
 
@@ -49297,8 +49412,10 @@ int32_t scpi_query_DIAGnostic_OS_MEMory(void *parameters,void *response,void *ca
   return 0;
 }
 
+#endif
 
 /* 0002b852 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:OS:PROCess? */
 
@@ -49313,6 +49430,7 @@ int32_t scpi_query_DIAGnostic_OS_PROCess(void *parameters,void *response,void *c
   return 0;
 }
 
+#endif
 
 /* 0002b874 */
 
@@ -49331,6 +49449,7 @@ int32_t scpi_query_DIAGnostic_OS_STACk(void *parameters,void *response,void *cal
 
 
 /* 0002b896 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:PTIMe:TINTerval? */
 
@@ -49358,6 +49477,7 @@ int32_t scpi_query_DIAGnostic_PTIMe_TINTerval(void *parameters,void *response,vo
   return iVar1;
 }
 
+#endif
 
 /* 0002b91a */
 
@@ -49420,6 +49540,7 @@ int32_t scpi_query_SYSTem_COMMunicate_SER1_PROMpt(void *parameters,void *respons
 #endif
 
 /* 0002b99c */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:SER1:RESTricted */
 
@@ -49434,8 +49555,10 @@ int32_t scpi_set_DIAGnostic_SER1_RESTricted(void *parameters,void *response,void
   return 0;
 }
 
+#endif
 
 /* 0002b9cc */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:SER1:RESTricted? */
 
@@ -49449,8 +49572,10 @@ int32_t scpi_query_DIAGnostic_SER1_RESTricted(void *parameters,void *response,vo
   return 0;
 }
 
+#endif
 
 /* 0002b9e6 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:SER1:EGResponse */
 
@@ -49460,8 +49585,10 @@ int32_t scpi_set_DIAGnostic_SER1_EGResponse(void *parameters,void *response,void
   return -0x20;
 }
 
+#endif
 
 /* 0002b9ea */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:SER1:EGResponse? */
 
@@ -49474,8 +49601,10 @@ int32_t scpi_query_DIAGnostic_SER1_EGResponse(void *parameters,void *response,vo
   return error;
 }
 
+#endif
 
 /* 0002b9fc */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:ROSCillator:CURRent? */
 
@@ -49489,8 +49618,10 @@ int32_t scpi_query_DIAGnostic_ROSCillator_CURRent(void *parameters,void *respons
   return 0;
 }
 
+#endif
 
 /* 0002ba0c */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:ROSCillator:EFControl:RELative? */
 
@@ -49510,8 +49641,10 @@ int32_t scpi_query_DIAGnostic_ROSCillator_EFControl_RELative(void *parameters,vo
   return 0;
 }
 
+#endif
 
 /* 0002ba5a */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:ROSCillator:EFControl:ABSolute? */
 
@@ -49527,8 +49660,10 @@ int32_t scpi_query_DIAGnostic_ROSCillator_EFControl_ABSolute(void *parameters,vo
   return 0;
 }
 
+#endif
 
 /* 0002ba78 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:ROSCillator:TCOefficient */
 
@@ -49544,8 +49679,10 @@ int32_t scpi_set_DIAGnostic_ROSCillator_TCOefficient(void *parameters,void *resp
   return 0;
 }
 
+#endif
 
 /* 0002bab2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:ROSCillator:TCOefficient? */
 
@@ -49560,8 +49697,10 @@ int32_t scpi_query_DIAGnostic_ROSCillator_TCOefficient(void *parameters,void *re
   return 0;
 }
 
+#endif
 
 /* 0002bad8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:STATus:ERRor */
 
@@ -49582,8 +49721,10 @@ int32_t scpi_set_DIAGnostic_STATus_ERRor(void *parameters,void *response,void *c
   return 0;
 }
 
+#endif
 
 /* 0002bb2e */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:STATus:HAPPening */
 
@@ -49602,8 +49743,10 @@ int32_t scpi_set_DIAGnostic_STATus_HAPPening(void *parameters,void *response,voi
   return 0;
 }
 
+#endif
 
 /* 0002bb76 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:SYSTem:DOUTput */
 
@@ -49621,8 +49764,10 @@ int32_t scpi_set_DIAGnostic_SYSTem_DOUTput(void *parameters,void *response,void 
   return 0;
 }
 
+#endif
 
 /* 0002bbca */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:SYSTem:DOUTput? */
 
@@ -49633,8 +49778,10 @@ int32_t scpi_query_DIAGnostic_SYSTem_DOUTput(void *parameters,void *response,voi
   return 0;
 }
 
+#endif
 
 /* 0002bbdc */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:SYSTem:PSTartup */
 
@@ -49649,8 +49796,10 @@ int32_t scpi_set_DIAGnostic_SYSTem_PSTartup(void *parameters,void *response,void
   return 0;
 }
 
+#endif
 
 /* 0002bc0c */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:SYSTem:PSTartup? */
 
@@ -49661,8 +49810,10 @@ int32_t scpi_query_DIAGnostic_SYSTem_PSTartup(void *parameters,void *response,vo
   return 0;
 }
 
+#endif
 
 /* 0002bc1e */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:TEMPerature? */
 
@@ -49676,8 +49827,10 @@ int32_t scpi_query_DIAGnostic_TEMPerature(void *parameters,void *response,void *
   return 0;
 }
 
+#endif
 
 /* 0002bc2e */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:TEST? */
 
@@ -49741,8 +49894,10 @@ int32_t scpi_query_DIAGnostic_TEST(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002bce4 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:TEST:RESult? */
 
@@ -49799,8 +49954,10 @@ int32_t scpi_query_DIAGnostic_TEST_RESult(void *parameters,void *response,void *
   return 0;
 }
 
+#endif
 
 /* 0002bd96 */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the setter for :DIAGnostic:TOFFset */
 
@@ -49818,8 +49975,10 @@ int32_t scpi_set_DIAGnostic_TOFFset(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002bdee */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* the query handler for :DIAGnostic:TOFFset? */
 
@@ -49834,6 +49993,7 @@ int32_t scpi_query_DIAGnostic_TOFFset(void *parameters,void *response,void *call
   return 0;
 }
 
+#endif
 
 /* 0002be9c */
 #if 0 /* the decompiler's reading; rewritten in status.c */
@@ -50052,6 +50212,7 @@ int32_t scpi_query_RSSU(void *parameters,void *response,void *call)
 #endif
 
 /* 0002c1ee */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the setter for :SOURce:GPSystem:ADELay */
 
@@ -50093,8 +50254,10 @@ int32_t scpi_set_SOURce_GPSystem_ADELay(void *parameters,void *response,void *ca
   return 0;
 }
 
+#endif
 
 /* 0002c2e4 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:ADELay? */
 
@@ -50110,6 +50273,7 @@ int32_t scpi_query_SOURce_GPSystem_ADELay(void *parameters,void *response,void *
   return 0;
 }
 
+#endif
 
 /* 0002c316 */
 #if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
@@ -50128,6 +50292,7 @@ int32_t scpi_query_RACD(void *parameters,void *response,void *call)
 #endif
 
 /* 0002c328 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the setter for :SOURce:GPSystem:EMANgle */
 
@@ -50143,8 +50308,10 @@ int32_t scpi_set_SOURce_GPSystem_EMANgle(void *parameters,void *response,void *c
   return 0;
 }
 
+#endif
 
 /* 0002c364 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:EMANgle? */
 
@@ -50161,8 +50328,10 @@ int32_t scpi_query_SOURce_GPSystem_EMANgle(void *parameters,void *response,void 
   return 0;
 }
 
+#endif
 
 /* 0002c390 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the setter for :SOURce:GPSystem:INITial:DATE */
 
@@ -50188,8 +50357,10 @@ int32_t scpi_set_SOURce_GPSystem_INITial_DATE(void *parameters,void *response,vo
   return 0;
 }
 
+#endif
 
 /* 0002c412 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the setter for :SOURce:GPSystem:INITial:TIME */
 
@@ -50215,8 +50386,10 @@ int32_t scpi_set_SOURce_GPSystem_INITial_TIME(void *parameters,void *response,vo
   return 0;
 }
 
+#endif
 
 /* 0002c494 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the setter for :SOURce:GPSystem:INITial:POSition */
 
@@ -50351,8 +50524,10 @@ int32_t scpi_set_SOURce_GPSystem_INITial_POSition(void *parameters,void *respons
   return 0;
 }
 
+#endif
 
 /* 0002c810 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the setter for :SOURce:GPSystem:POSition */
 
@@ -50503,8 +50678,10 @@ int32_t scpi_set_SOURce_GPSystem_POSition(void *parameters,void *response,void *
   return 0;
 }
 
+#endif
 
 /* 0002cc54 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:POSition? */
 
@@ -50596,8 +50773,10 @@ int32_t scpi_query_SOURce_GPSystem_POSition(void *parameters,void *response,void
   return 0;
 }
 
+#endif
 
 /* 0002cd94 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:POSition:HOLD:LAST? */
 
@@ -50659,6 +50838,7 @@ int32_t scpi_query_SOURce_GPSystem_POSition_HOLD_LAST(void *parameters,void *res
   return 0;
 }
 
+#endif
 
 /* 0002ce92 */
 #if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
@@ -50677,6 +50857,7 @@ int32_t scpi_query_RLOC(void *parameters,void *response,void *call)
 #endif
 
 /* 0002cea4 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:POSition:HOLD:STATe? */
 
@@ -50690,6 +50871,7 @@ int32_t scpi_query_SOURce_GPSystem_POSition_HOLD_STATe(void *parameters,void *re
   return 0;
 }
 
+#endif
 
 /* 0002cebe */
 #if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
@@ -50708,6 +50890,7 @@ int32_t scpi_query_RPHS(void *parameters,void *response,void *call)
 #endif
 
 /* 0002ced0 */
+#if 0 /* the decompiler's reading; rewritten in scpi_douglas.c */
 
 /* the setter for :DOUGlas:DURation */
 
@@ -50735,8 +50918,10 @@ LAB_0002cefe:
   return 0;
 }
 
+#endif
 
 /* 0002cf66 */
+#if 0 /* the decompiler's reading; rewritten in scpi_douglas.c */
 
 /* the query handler for :DOUGlas:DURation? */
 
@@ -50756,8 +50941,10 @@ int32_t scpi_query_DOUGlas_DURation(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002cfa6 */
+#if 0 /* the decompiler's reading; rewritten in scpi_douglas.c */
 
 /* the query handler for :DOUGlas:PROGress? */
 
@@ -50783,6 +50970,7 @@ int32_t scpi_query_DOUGlas_PROGress(void *parameters,void *response,void *call)
   return iVar2;
 }
 
+#endif
 
 /* 0002d01e */
 #if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
@@ -50801,6 +50989,7 @@ int32_t scpi_query_RSPR(void *parameters,void *response,void *call)
 #endif
 
 /* 0002d030 */
+#if 0 /* the decompiler's reading; rewritten in scpi_douglas.c */
 
 /* the setter for :DOUGlas:STATe */
 
@@ -50822,6 +51011,7 @@ int32_t scpi_set_DOUGlas_STATe(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002d096 */
 #if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
@@ -50840,6 +51030,7 @@ int32_t scpi_query_IPSU(void *parameters,void *response,void *call)
 #endif
 
 /* 0002d0a8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_douglas.c */
 
 /* the query handler for :DOUGlas:STATe? */
 
@@ -50858,8 +51049,10 @@ int32_t scpi_query_DOUGlas_STATe(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002d0d8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_douglas.c */
 
 /* the setter for :DOUGlas:STATe:POWerup */
 
@@ -50874,8 +51067,10 @@ int32_t scpi_set_DOUGlas_STATe_POWerup(void *parameters,void *response,void *cal
   return 0;
 }
 
+#endif
 
 /* 0002d108 */
+#if 0 /* the decompiler's reading; rewritten in scpi_douglas.c */
 
 /* the query handler for :DOUGlas:STATe:POWerup? */
 
@@ -50889,8 +51084,10 @@ int32_t scpi_query_DOUGlas_STATe_POWerup(void *parameters,void *response,void *c
   return 0;
 }
 
+#endif
 
 /* 0002d122 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:REFerence:VALid? */
 
@@ -50906,8 +51103,10 @@ int32_t scpi_query_SOURce_GPSystem_REFerence_VALid(void *parameters,void *respon
   return 0;
 }
 
+#endif
 
 /* 0002d148 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* 1 for a satellite number from 1 to 32 */
 
@@ -50925,8 +51124,10 @@ uint32_t satellite_number_valid(uint8_t param_1)
   return uVar1;
 }
 
+#endif
 
 /* 0002d160 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* 1 if a satellite's bit is set in a mask */
 
@@ -50936,42 +51137,48 @@ bool satellite_in_mask(char param_1,uint32_t param_2)
   return (param_2 & __ghidra_shl(1, (param_1 - 1U & 0x3f))) != 0;
 }
 
+#endif
 
 /* 0002d17a */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* sets a valid satellite's bit in a mask */
 
 bool satellite_mask_add(char param_1,uint32_t *param_2)
 
 {
-  char cVar1;
+  char valid;
   
-  cVar1 = satellite_number_valid(param_1);
-  if (cVar1 != 0) {
+  valid = satellite_number_valid(param_1);
+  if (valid != 0) {
     *param_2 = __ghidra_shl(1, (param_1 - 1U & 0x3f)) | *param_2;
   }
-  return cVar1 != 0;
+  return valid != 0;
 }
 
+#endif
 
 /* 0002d1a2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* clears a valid satellite's bit in a mask */
 
 bool satellite_mask_remove(char param_1,uint32_t *param_2)
 
 {
-  char cVar1;
+  char valid;
   
-  cVar1 = satellite_number_valid(param_1);
-  if (cVar1 != 0) {
+  valid = satellite_number_valid(param_1);
+  if (valid != 0) {
     *param_2 = ~(__ghidra_shl(1, (param_1 - 1U & 0x3f))) & *param_2;
   }
-  return cVar1 != 0;
+  return valid != 0;
 }
 
+#endif
 
 /* 0002d1cc */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the ID count, the most listed and the ID base for satellites_in_mask: kind 0 :SAT:TRAC? (32, 6),
    1 its pseudolites (5, 6, from 0x20), 2 :SAT:VIS:PRED? (32, 12), 3 the ignore and include lists
@@ -51009,23 +51216,25 @@ void satellite_list_limits
   return;
 }
 
+#endif
 
 /* 0002d226 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* lists the PRNs whose bits are set; the SAT:TRAC:IGN? and INCL? queries */
 
 uint8_t satellites_in_mask(uint32_t param_1,uint8_t param_2,int16_t *param_3,uint8_t param_4,uint8_t param_5)
 
 {
-  char cVar1;
+  char set;
   uint8_t bVar2;
   uint8_t bVar3;
   
   bVar2 = 1;
   bVar3 = 0;
   while ((bVar2 <= param_2 && (bVar3 < param_4))) {
-    cVar1 = satellite_in_mask(bVar2,param_1);
-    if (cVar1 != 0) {
+    set = satellite_in_mask(bVar2,param_1);
+    if (set != 0) {
       if (param_3 != (int16_t *)0x0) {
         *param_3 = (uint16_t)param_5 + (uint16_t)bVar2;
         param_3 = param_3 + 1;
@@ -51037,8 +51246,10 @@ uint8_t satellites_in_mask(uint32_t param_1,uint8_t param_2,int16_t *param_3,uin
   return bVar3;
 }
 
+#endif
 
 /* 0002d272 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:SATellite:TRACking? */
 
@@ -51048,7 +51259,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking(void *parameters,void *res
   uint32_t zero;
   uint16_t sr;
   int32_t iVar2;
-  uint8_t bVar3;
+  uint8_t listed;
   uint8_t bVar4;
   uint32_t local_e;
   uint8_t local_a;
@@ -51068,14 +51279,14 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking(void *parameters,void *res
   else {
     set_interrupt_mask(sr);
     satellite_list_limits(SATELLITE_LIST_TRACKING,&local_7,&uStack_6,&local_5);
-    bVar3 = satellites_in_mask(local_e,local_7,(int16_t *)((zero & 0xff) * 0x40 + 0x10295e),local_9,
+    listed = satellites_in_mask(local_e,local_7,(int16_t *)((zero & 0xff) * 0x40 + 0x10295e),local_9,
                                local_5);
     satellite_list_limits(SATELLITE_LIST_TRACKING_PSEUDOLITES,&local_7,&uStack_6,&local_5);
     bVar4 = satellites_in_mask((uint32_t)local_a,local_7,
-                               (int16_t *)((uint32_t)bVar3 * 2 + (zero & 0xff) * 0x40 + 0x10295e),local_8
+                               (int16_t *)((uint32_t)listed * 2 + (zero & 0xff) * 0x40 + 0x10295e),local_8
                                ,local_5);
-    *(uint32_t *)response = (uint32_t)bVar4 + (uint32_t)bVar3;
-    if ((uint32_t)bVar4 + (uint32_t)bVar3 == 0) {
+    *(uint32_t *)response = (uint32_t)bVar4 + (uint32_t)listed;
+    if ((uint32_t)bVar4 + (uint32_t)listed == 0) {
       *(uint32_t *)response = 1;
       *(uint16_t *)((zero & 0xff) * 0x40 + 0x10295e) = 0;
     }
@@ -51085,8 +51296,10 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking(void *parameters,void *res
   return iVar2;
 }
 
+#endif
 
 /* 0002d384 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:SATellite:TRACking:COUNt? */
 
@@ -51112,6 +51325,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_COUNt(void *parameters,voi
   return iVar1;
 }
 
+#endif
 
 /* 0002d3ee */
 #if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
@@ -51130,26 +51344,27 @@ int32_t scpi_query_RTSA(void *parameters,void *response,void *call)
 #endif
 
 /* 0002d400 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the setter for :SOURce:GPSystem:SATellite:TRACking:IGNore */
 
 int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore(void *parameters,void *response,void *call)
 
 {
-  char cVar2;
+  char valid;
   int32_t zero;
   uint8_t bVar3;
   bool bVar4;
   uint32_t local_8;
   
   local_8 = nv_settings.ignored_satellites;
-  cVar2 = satellite_mask_add((char)*(uint16_t *)((int32_t)parameters + 2),&local_8);
-  bVar4 = cVar2 == 0;
+  valid = satellite_mask_add((char)*(uint16_t *)((int32_t)parameters + 2),&local_8);
+  bVar4 = valid == 0;
   bVar3 = 0;
   while ((bVar3 < 0x1f && (*(int16_t *)((int32_t)parameters + (uint32_t)bVar3 * 6 + 6) == 0))) {
-    cVar2 = satellite_mask_add((char)*(uint16_t *)((int32_t)parameters + (uint32_t)bVar3 * 6 + 8),&local_8
+    valid = satellite_mask_add((char)*(uint16_t *)((int32_t)parameters + (uint32_t)bVar3 * 6 + 8),&local_8
                               );
-    if (cVar2 == 0) {
+    if (valid == 0) {
       bVar4 = true;
     }
     bVar3 = bVar3 + 1;
@@ -51166,8 +51381,10 @@ int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore(void *parameters,void
   return 0;
 }
 
+#endif
 
 /* 0002d4c4 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:SATellite:TRACking:IGNore? */
 
@@ -51175,17 +51392,17 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore(void *parameters,vo
 
 {
   uint32_t zero;
-  uint8_t bVar2;
+  uint8_t listed;
   uint8_t local_8;
   uint8_t local_7;
   uint8_t local_6 [2];
   
   zero = return_zero();
   satellite_list_limits(SATELLITE_LIST_ALL,&local_8,&local_7,local_6);
-  bVar2 = satellites_in_mask(nv_settings.ignored_satellites,local_8,
+  listed = satellites_in_mask(nv_settings.ignored_satellites,local_8,
                              (int16_t *)((zero & 0xff) * 0x40 + 0x10295e),local_7,local_6[0]);
-  *(uint32_t *)response = (uint32_t)bVar2;
-  if (bVar2 == 0) {
+  *(uint32_t *)response = (uint32_t)listed;
+  if (listed == 0) {
     *(uint32_t *)response = 1;
     *(uint16_t *)((zero & 0xff) * 0x40 + 0x10295e) = 0;
   }
@@ -51193,8 +51410,10 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore(void *parameters,vo
   return 0;
 }
 
+#endif
 
 /* 0002d54e */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the setter for :SOURce:GPSystem:SATellite:TRACking:IGNore:ALL */
 
@@ -51210,8 +51429,10 @@ int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_ALL
   return 0;
 }
 
+#endif
 
 /* 0002d57a */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:SATellite:TRACking:IGNore:COUNt? */
 
@@ -51219,20 +51440,22 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_COUNt
               (void *parameters,void *response,void *call)
 
 {
-  uint8_t bVar1;
+  uint8_t listed;
   uint8_t local_8;
   uint8_t local_7;
   uint8_t local_6 [2];
   
   satellite_list_limits(SATELLITE_LIST_ALL,&local_8,&local_7,local_6);
-  bVar1 = satellites_in_mask(nv_settings.ignored_satellites,local_8,(int16_t *)0x0,local_7,local_6[0])
+  listed = satellites_in_mask(nv_settings.ignored_satellites,local_8,(int16_t *)0x0,local_7,local_6[0])
   ;
-  *(uint16_t *)response = (uint16_t)bVar1;
+  *(uint16_t *)response = (uint16_t)listed;
   return 0;
 }
 
+#endif
 
 /* 0002d5c0 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the setter for :SOURce:GPSystem:SATellite:TRACking:IGNore:NONE */
 
@@ -51248,8 +51471,10 @@ int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_NONE
   return 0;
 }
 
+#endif
 
 /* 0002d5ea */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:SATellite:TRACking:IGNore:STATe? */
 
@@ -51280,28 +51505,30 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_IGNore_STATe
   return iVar2;
 }
 
+#endif
 
 /* 0002d65a */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the setter for :SOURce:GPSystem:SATellite:TRACking:INCLude */
 
 int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_INCLude(void *parameters,void *response,void *call)
 
 {
-  char cVar2;
+  char valid;
   int32_t zero;
   uint8_t bVar3;
   bool bVar4;
   uint32_t local_8;
   
   local_8 = nv_settings.ignored_satellites;
-  cVar2 = satellite_mask_remove((char)*(uint16_t *)((int32_t)parameters + 2),&local_8);
-  bVar4 = cVar2 == 0;
+  valid = satellite_mask_remove((char)*(uint16_t *)((int32_t)parameters + 2),&local_8);
+  bVar4 = valid == 0;
   bVar3 = 0;
   while ((bVar3 < 0x1f && (*(int16_t *)((int32_t)parameters + (uint32_t)bVar3 * 6 + 6) == 0))) {
-    cVar2 = satellite_mask_remove
+    valid = satellite_mask_remove
                       ((char)*(uint16_t *)((int32_t)parameters + (uint32_t)bVar3 * 6 + 8),&local_8);
-    if (cVar2 == 0) {
+    if (valid == 0) {
       bVar4 = true;
     }
     bVar3 = bVar3 + 1;
@@ -51318,8 +51545,10 @@ int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_INCLude(void *parameters,voi
   return 0;
 }
 
+#endif
 
 /* 0002d71e */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:SATellite:TRACking:INCLude? */
 
@@ -51328,17 +51557,17 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude
 
 {
   uint32_t zero;
-  uint8_t bVar2;
+  uint8_t listed;
   uint8_t local_8;
   uint8_t local_7;
   uint8_t local_6 [2];
   
   zero = return_zero();
   satellite_list_limits(SATELLITE_LIST_ALL,&local_8,&local_7,local_6);
-  bVar2 = satellites_in_mask(~nv_settings.ignored_satellites,local_8,
+  listed = satellites_in_mask(~nv_settings.ignored_satellites,local_8,
                              (int16_t *)((zero & 0xff) * 0x40 + 0x10295e),local_7,local_6[0]);
-  *(uint32_t *)response = (uint32_t)bVar2;
-  if (bVar2 == 0) {
+  *(uint32_t *)response = (uint32_t)listed;
+  if (listed == 0) {
     *(uint32_t *)response = 1;
     *(uint16_t *)((zero & 0xff) * 0x40 + 0x10295e) = 0;
   }
@@ -51346,8 +51575,10 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude
   return 0;
 }
 
+#endif
 
 /* 0002d7ac */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:SATellite:TRACking:INCLude:COUNt? */
 
@@ -51355,20 +51586,22 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_INCLude_COUNt
               (void *parameters,void *response,void *call)
 
 {
-  uint8_t bVar1;
+  uint8_t listed;
   uint8_t local_8;
   uint8_t local_7;
   uint8_t local_6 [2];
   
   satellite_list_limits(SATELLITE_LIST_ALL,&local_8,&local_7,local_6);
-  bVar1 = satellites_in_mask(~nv_settings.ignored_satellites,local_8,(int16_t *)0x0,local_7,local_6[0]
+  listed = satellites_in_mask(~nv_settings.ignored_satellites,local_8,(int16_t *)0x0,local_7,local_6[0]
                             );
-  *(uint16_t *)response = (uint16_t)bVar1;
+  *(uint16_t *)response = (uint16_t)listed;
   return 0;
 }
 
+#endif
 
 /* 0002d7f6 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:SATellite:VISible:PREDicted? */
 
@@ -51380,7 +51613,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted
   uint16_t sr;
   uint32_t uVar2;
   int32_t iVar3;
-  uint8_t bVar4;
+  uint8_t listed;
   uint32_t local_c;
   uint8_t local_8;
   uint8_t local_7;
@@ -51397,10 +51630,10 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted
   else {
     set_interrupt_mask(sr);
     satellite_list_limits(SATELLITE_LIST_VISIBLE,&local_7,&uStack_6,&local_5);
-    bVar4 = satellites_in_mask(local_c,local_7,(int16_t *)((zero & 0xff) * 0x40 + 0x10295e),local_8,
+    listed = satellites_in_mask(local_c,local_7,(int16_t *)((zero & 0xff) * 0x40 + 0x10295e),local_8,
                                local_5);
-    *(uint32_t *)response = (uint32_t)bVar4;
-    if (bVar4 == 0) {
+    *(uint32_t *)response = (uint32_t)listed;
+    if (listed == 0) {
       *(uint32_t *)response = 1;
       *(uint16_t *)((zero & 0xff) * 0x40 + 0x10295e) = 0;
     }
@@ -51410,8 +51643,10 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted
   return iVar3;
 }
 
+#endif
 
 /* 0002d8bc */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_gpsystem.c */
 
 /* the query handler for :SOURce:GPSystem:SATellite:VISible:PREDicted:COUNt? */
 
@@ -51438,6 +51673,7 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt
   return iVar2;
 }
 
+#endif
 
 /* 0002d920 */
 #if 0 /* the decompiler's reading; rewritten in scpi_led.c */
@@ -51649,6 +51885,7 @@ int32_t scpi_query_OUTPut_STATe(void *parameters,void *response,void *call)
 #endif
 
 /* 0002da78 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_pulse.c */
 
 /* the setter for :SOURce:PULSe:CONTinuous:PERiod */
 
@@ -51664,8 +51901,10 @@ int32_t scpi_set_SOURce_PULSe_CONTinuous_PERiod(void *parameters,void *response,
   return 0;
 }
 
+#endif
 
 /* 0002dab2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_pulse.c */
 
 /* the query handler for :SOURce:PULSe:CONTinuous:PERiod? */
 
@@ -51682,8 +51921,10 @@ int32_t scpi_query_SOURce_PULSe_CONTinuous_PERiod(void *parameters,void *respons
   return 0;
 }
 
+#endif
 
 /* 0002dade */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_pulse.c */
 
 /* the setter for :SOURce:PULSe:CONTinuous:STATe */
 
@@ -51698,8 +51939,10 @@ int32_t scpi_set_SOURce_PULSe_CONTinuous_STATe(void *parameters,void *response,v
   return 0;
 }
 
+#endif
 
 /* 0002db0e */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_pulse.c */
 
 /* the query handler for :SOURce:PULSe:CONTinuous:STATe? */
 
@@ -51710,8 +51953,10 @@ int32_t scpi_query_SOURce_PULSe_CONTinuous_STATe(void *parameters,void *response
   return 0;
 }
 
+#endif
 
 /* 0002db20 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_pulse.c */
 
 /* the setter for :SOURce:PULSe:STARt:DATE */
 
@@ -51732,8 +51977,10 @@ int32_t scpi_set_SOURce_PULSe_STARt_DATE(void *parameters,void *response,void *c
   return 0;
 }
 
+#endif
 
 /* 0002dba2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_pulse.c */
 
 /* the query handler for :SOURce:PULSe:STARt:DATE? */
 
@@ -51746,8 +51993,10 @@ int32_t scpi_query_SOURce_PULSe_STARt_DATE(void *parameters,void *response,void 
   return 0;
 }
 
+#endif
 
 /* 0002dbc4 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_pulse.c */
 
 /* the setter for :SOURce:PULSe:STARt:TIME */
 
@@ -51768,8 +52017,10 @@ int32_t scpi_set_SOURce_PULSe_STARt_TIME(void *parameters,void *response,void *c
   return 0;
 }
 
+#endif
 
 /* 0002dc46 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_pulse.c */
 
 /* the query handler for :SOURce:PULSe:STARt:TIME? */
 
@@ -51782,8 +52033,10 @@ int32_t scpi_query_SOURce_PULSe_STARt_TIME(void *parameters,void *response,void 
   return 0;
 }
 
+#endif
 
 /* 0002dc68 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the setter for :SOURce:PTIMe:PPS:EDGE */
 
@@ -51797,8 +52050,10 @@ int32_t scpi_set_SOURce_PTIMe_PPS_EDGE(void *parameters,void *response,void *cal
   return 0;
 }
 
+#endif
 
 /* 0002dc88 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the query handler for :SOURce:PTIMe:PPS:EDGE? */
 
@@ -51809,8 +52064,10 @@ int32_t scpi_query_SOURce_PTIMe_PPS_EDGE(void *parameters,void *response,void *c
   return 0;
 }
 
+#endif
 
 /* 0002dc9c */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_pulse.c */
 
 /* the setter for :SOURce:PULSe:REFerence:EDGE */
 
@@ -51824,8 +52081,10 @@ int32_t scpi_set_SOURce_PULSe_REFerence_EDGE(void *parameters,void *response,voi
   return 0;
 }
 
+#endif
 
 /* 0002dcbc */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_pulse.c */
 
 /* the query handler for :SOURce:PULSe:REFerence:EDGE? */
 
@@ -51836,8 +52095,10 @@ int32_t scpi_query_SOURce_PULSe_REFerence_EDGE(void *parameters,void *response,v
   return 0;
 }
 
+#endif
 
 /* 0002dcd0 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the query handler for :SOURce:PTIMe:DATE? */
 
@@ -51862,8 +52123,10 @@ int32_t scpi_query_SOURce_PTIMe_DATE(void *parameters,void *response,void *call)
   return iVar1;
 }
 
+#endif
 
 /* 0002dd1e */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the query handler for :SOURce:PTIMe:LEAPsecond:ACCumulated? */
 
@@ -51888,8 +52151,10 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_ACCumulated(void *parameters,void *re
   return iVar1;
 }
 
+#endif
 
 /* 0002dd6e */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the setter for :SOURce:PTIMe:LEAPsecond:ACCumulated:CALCulate */
 
@@ -51904,8 +52169,10 @@ int32_t scpi_set_SOURce_PTIMe_LEAPsecond_ACCumulated_CALCulate
   return 0;
 }
 
+#endif
 
 /* 0002dd94 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the query handler for :SOURce:PTIMe:LEAPsecond:DATE? */
 
@@ -51939,8 +52206,10 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_DATE(void *parameters,void *response,
   return iVar3;
 }
 
+#endif
 
 /* 0002ddfc */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the query handler for :SOURce:PTIMe:LEAPsecond:DURation? */
 
@@ -51966,8 +52235,10 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_DURation(void *parameters,void *respo
   return iVar3;
 }
 
+#endif
 
 /* 0002de48 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the query handler for :SOURce:PTIMe:LEAPsecond:GPSTime? */
 
@@ -51991,8 +52262,10 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_GPSTime(void *parameters,void *respon
   return iVar2;
 }
 
+#endif
 
 /* 0002deb8 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the query handler for :SOURce:PTIMe:LEAPsecond:STATe? */
 
@@ -52006,8 +52279,10 @@ int32_t scpi_query_SOURce_PTIMe_LEAPsecond_STATe(void *parameters,void *response
   return 0;
 }
 
+#endif
 
 /* 0002ded2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the query handler for :SOURce:PTIMe:TCODe? */
 
@@ -52033,6 +52308,7 @@ int32_t scpi_query_SOURce_PTIMe_TCODe(void *parameters,void *response,void *call
   return 0;
 }
 
+#endif
 
 /* 0002df46 */
 #if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
@@ -52071,6 +52347,7 @@ int32_t scpi_query_RTCM(void *parameters,void *response,void *call)
 #endif
 
 /* 0002dff6 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the setter for :SOURce:PTIMe:TCODe:FORMat */
 
@@ -52096,8 +52373,10 @@ int32_t scpi_set_SOURce_PTIMe_TCODe_FORMat(void *parameters,void *response,void 
   return 0;
 }
 
+#endif
 
 /* 0002e054 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the query handler for :SOURce:PTIMe:TCODe:FORMat? */
 
@@ -52120,8 +52399,10 @@ int32_t scpi_query_SOURce_PTIMe_TCODe_FORMat(void *parameters,void *response,voi
   return 0;
 }
 
+#endif
 
 /* 0002e086 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the query handler for :SOURce:PTIMe:TIME? */
 
@@ -52144,6 +52425,7 @@ int32_t scpi_query_SOURce_PTIMe_TIME(void *parameters,void *response,void *call)
   return iVar1;
 }
 
+#endif
 
 /* 0002e0d8 */
 #if 0 /* the decompiler's reading; rewritten in calendar.c */
@@ -52193,6 +52475,7 @@ int32_t scpi_query_RTAD(void *parameters,void *response,void *call)
 #endif
 
 /* 0002e164 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the query handler for :SOURce:PTIMe:TIME:STRing? */
 
@@ -52221,8 +52504,10 @@ int32_t scpi_query_SOURce_PTIMe_TIME_STRing(void *parameters,void *response,void
   return iVar2;
 }
 
+#endif
 
 /* 0002e1f2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the setter for :SOURce:PTIMe:TZONe */
 
@@ -52247,8 +52532,10 @@ int32_t scpi_set_SOURce_PTIMe_TZONe(void *parameters,void *response,void *call)
   return 0;
 }
 
+#endif
 
 /* 0002e28c */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the query handler for :SOURce:PTIMe:TZONe? */
 
@@ -52274,6 +52561,7 @@ int32_t scpi_query_SOURce_PTIMe_TZONe(void *parameters,void *response,void *call
   return 0;
 }
 
+#endif
 
 /* 0002e2ec */
 #if 0 /* the decompiler's reading; rewritten in scpi_unsupported.c */
@@ -54447,6 +54735,7 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_LIMit_IGNore
 #endif
 
 /* 0002fdaa */
+#if 0 /* the decompiler's reading; rewritten in scpi_kenneth.c */
 
 /* the query handler for :KENneth:PREDicted? */
 
@@ -54473,8 +54762,10 @@ int32_t scpi_query_KENneth_PREDicted(void *parameters,void *response,void *call)
   return iVar1;
 }
 
+#endif
 
 /* 0002fe16 */
+#if 0 /* the decompiler's reading; rewritten in scpi_kenneth.c */
 
 /* the setter for :KENneth:PREDicted:DURation */
 
@@ -54490,8 +54781,10 @@ int32_t scpi_set_KENneth_PREDicted_DURation(void *parameters,void *response,void
   return 0;
 }
 
+#endif
 
 /* 0002fe50 */
+#if 0 /* the decompiler's reading; rewritten in scpi_kenneth.c */
 
 /* the query handler for :KENneth:PREDicted:DURation? */
 
@@ -54508,8 +54801,10 @@ int32_t scpi_query_KENneth_PREDicted_DURation(void *parameters,void *response,vo
   return 0;
 }
 
+#endif
 
 /* 0002fe7c */
+#if 0 /* the decompiler's reading; rewritten in scpi_kenneth.c */
 
 /* the query handler for :KENneth:PRESent? */
 
@@ -54534,6 +54829,7 @@ int32_t scpi_query_KENneth_PRESent(void *parameters,void *response,void *call)
   return iVar1;
 }
 
+#endif
 
 /* 0002feda */
 #if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
@@ -54675,6 +54971,7 @@ int32_t scpi_query_RSST(void *parameters,void *response,void *call)
 #endif
 
 /* 0003005a */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the query handler for :SOURce:PTIMe:FFOMerit? */
 
@@ -54701,8 +54998,10 @@ int32_t scpi_query_SOURce_PTIMe_FFOMerit(void *parameters,void *response,void *c
   return 0;
 }
 
+#endif
 
 /* 000300b2 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the query handler for :SOURce:PTIMe:TINTerval? */
 
@@ -54726,8 +55025,10 @@ int32_t scpi_query_SOURce_PTIMe_TINTerval(void *parameters,void *response,void *
   return iVar1;
 }
 
+#endif
 
 /* 00030108 */
+#if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
 
 /* the setter for :SOURce:PTIMe:SYNChronization:IMMediate */
 
@@ -54741,6 +55042,7 @@ int32_t scpi_set_SOURce_PTIMe_SYNChronization_IMMediate(void *parameters,void *r
   return 0;
 }
 
+#endif
 
 /* 0003012e */
 #if 0 /* the decompiler's reading; rewritten in scpi_system.c */
@@ -93443,7 +93745,11 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/sci.c"
 
+#include "../rewritten/z3805a-3543b/scpi_common.c"
+
 #include "../rewritten/z3805a-3543b/scpi_convert.c"
+
+#include "../rewritten/z3805a-3543b/scpi_diagnostic.c"
 
 #include "../rewritten/z3805a-3543b/scpi_douglas.c"
 
@@ -93452,6 +93758,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 #include "../rewritten/z3805a-3543b/scpi_format.c"
 
 #include "../rewritten/z3805a-3543b/scpi_format_data.c"
+
+#include "../rewritten/z3805a-3543b/scpi_kenneth.c"
 
 #include "../rewritten/z3805a-3543b/scpi_led.c"
 
@@ -93478,6 +93786,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 #include "../rewritten/z3805a-3543b/scpi_source_pulse.c"
 
 #include "../rewritten/z3805a-3543b/scpi_source_roscillator.c"
+
+#include "../rewritten/z3805a-3543b/scpi_status.c"
 
 #include "../rewritten/z3805a-3543b/scpi_system.c"
 

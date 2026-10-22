@@ -1352,6 +1352,12 @@ view cannot drift apart.  The library, bottom up:
   decompiled functions that are wrong in ways only running them shows.
   A whole image is proven only on a unit or a model of the board.
 
+  Left for a later pass: the firmware routines' names do not carry
+  their file's prefix as the hand-written helpers do (`ti.c`'s
+  `counter_arm` and `interpolator_calibrate` beside `ti_measure_both`);
+  renaming them is a names-file change, through the pipeline, of each
+  routine and its callers.
+
 - **Editing notes from the web view**, through the daemon socket.
   Needs POST bodies in `smartclock-http`, `/api/notes` returning each
   note's `id`, and edit requests keyed by it.

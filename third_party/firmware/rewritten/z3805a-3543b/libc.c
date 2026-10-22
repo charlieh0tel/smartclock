@@ -92,17 +92,47 @@ static int32_t libc_normalize(uint64_t* mantissa) {
 /* |j| (0x5ec9e). */
 int32_t abs(int32_t j) { return j < 0 ? -j : j; }
 
+/* ctype_table's bits, by the characters that carry them (libc.md). */
+enum {
+  LIBC_CTYPE_UPPER = 0x01, /* A to Z */
+  LIBC_CTYPE_LOWER = 0x02, /* a to z */
+  LIBC_CTYPE_DIGIT = 0x04,
+  LIBC_CTYPE_SPACE = 0x08,       /* tab to carriage return, and space */
+  LIBC_CTYPE_PUNCTUATION = 0x10, /* the printing characters but these */
+  LIBC_CTYPE_CONTROL = 0x20,     /* 0 to 0x1f and 0x7f */
+  LIBC_CTYPE_BLANK = 0x40,       /* space alone */
+  LIBC_CTYPE_HEX = 0x80,         /* 0 to 9, A to F, a to f */
+};
+
+/* Each character's ctype bits, indexed by the character plus one, so
+ * that EOF, -1, has a slot, and 0 above 0x7f: the image's table at
+ * 0x5ed98, which atoi and, through the export's extern, gps_receive
+ * and doprnt read. */
+const uint8_t ctype_table[257] = {
+    [1 + 0x00 ... 1 + 0x08] = LIBC_CTYPE_CONTROL,
+    [1 + 0x09 ... 1 + 0x0d] = LIBC_CTYPE_SPACE | LIBC_CTYPE_CONTROL,
+    [1 + 0x0e ... 1 + 0x1f] = LIBC_CTYPE_CONTROL,
+    [1 + ' '] = LIBC_CTYPE_SPACE | LIBC_CTYPE_BLANK,
+    [1 + '!' ... 1 + '/'] = LIBC_CTYPE_PUNCTUATION,
+    [1 + '0' ... 1 + '9'] = LIBC_CTYPE_DIGIT | LIBC_CTYPE_HEX,
+    [1 + ':' ... 1 + '@'] = LIBC_CTYPE_PUNCTUATION,
+    [1 + 'A' ... 1 + 'F'] = LIBC_CTYPE_UPPER | LIBC_CTYPE_HEX,
+    [1 + 'G' ... 1 + 'Z'] = LIBC_CTYPE_UPPER,
+    [1 + '[' ... 1 + '`'] = LIBC_CTYPE_PUNCTUATION,
+    [1 + 'a' ... 1 + 'f'] = LIBC_CTYPE_LOWER | LIBC_CTYPE_HEX,
+    [1 + 'g' ... 1 + 'z'] = LIBC_CTYPE_LOWER,
+    [1 + '{' ... 1 + '~'] = LIBC_CTYPE_PUNCTUATION,
+    [1 + 0x7f] = LIBC_CTYPE_CONTROL,
+};
+
 /* A decimal integer after any spaces and a sign (0x5ecfa).  It counts
  * down from zero, so that the most negative int parses. */
 int32_t atoi(char* s) {
-  /* ctype_table's bits (libc.md). */
-  static const uint8_t CTYPE_DIGIT = 0x04;
-  static const uint8_t CTYPE_SPACE = 0x08;
   bool negative = false;
   int32_t c = *s;
 
-  if ((ctype_table[c + 1] & CTYPE_DIGIT) == 0) {
-    while ((ctype_table[c + 1] & CTYPE_SPACE) != 0) {
+  if ((ctype_table[c + 1] & LIBC_CTYPE_DIGIT) == 0) {
+    while ((ctype_table[c + 1] & LIBC_CTYPE_SPACE) != 0) {
       c = *++s;
     }
     if (c == '-') {
@@ -111,13 +141,13 @@ int32_t atoi(char* s) {
     } else if (c == '+') {
       c = *++s;
     }
-    if ((ctype_table[c + 1] & CTYPE_DIGIT) == 0) {
+    if ((ctype_table[c + 1] & LIBC_CTYPE_DIGIT) == 0) {
       return 0;
     }
   }
   int32_t value = '0' - c;
 
-  for (c = *++s; (ctype_table[c + 1] & CTYPE_DIGIT) != 0; c = *++s) {
+  for (c = *++s; (ctype_table[c + 1] & LIBC_CTYPE_DIGIT) != 0; c = *++s) {
     value = value * 10 + ('0' - c);
   }
   return negative ? value : -value;

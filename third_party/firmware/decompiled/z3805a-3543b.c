@@ -3019,7 +3019,7 @@ extern char os_report_format[3]; /* 00051382 */
 extern char os_report_comma[2]; /* 00051385 */
 extern io_device_jumps io_table_defaults[4]; /* 0005171a */
 extern scpi_root_children scpi_main_tree; /* 00053034 */
-extern uint8_t ctype_table[257]; /* 0005ed98 */
+extern const uint8_t ctype_table[257]; /* 0005ed98 */
 extern uint32_t powers_of_ten_by_25_mantissas[54]; /* 0005f860 */
 extern int16_t powers_of_ten_by_25_exponents[27]; /* 0005f938 */
 extern uint32_t powers_of_ten_1_to_24_mantissas[48]; /* 0005f96e */
@@ -3679,7 +3679,6 @@ __asm__(".set console_halt_hook_cell, 0x001009fe");
 __asm__(".set console_task_id, 0x00100b10");
 __asm__(".set counter_configuration, 0x00101fae");
 __asm__(".set crash_message, 0x0010094e");
-__asm__(".set ctype_table, 0x0005ed98");
 __asm__(".set days_before_month, 0x0001186c");
 __asm__(".set days_before_month_leap, 0x00011884");
 __asm__(".set debug_enabled, 0x001037dd");

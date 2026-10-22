@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1080,6 +1081,9 @@ public class SmartClockExportC extends GhidraScript {
 		}
 		writer.println();
 		for (Map.Entry<String, String> global : declared.entrySet()) {
+			if (rewrittenData().contains(global.getKey())) {
+				continue;
+			}
 			writer.println("__asm__(\".set " + global.getKey() + ", 0x"
 				+ global.getValue().replaceFirst("^.*:", "") + "\");");
 		}
@@ -4170,6 +4174,42 @@ public class SmartClockExportC extends GhidraScript {
 	/** A function's definition in hand-written C: its name, at a line's start, its body's brace on the next. */
 	private static final Pattern DEFINITION =
 		Pattern.compile("(?m)^[A-Za-z_][\\w \\*]*?\\b(\\w+)\\([^;{}]*\\)\\s*\\{");
+	/** A table's definition in hand-written C: const, at a line's start, then its name before its bounds or =. */
+	private static final Pattern DATA_DEFINITION =
+		Pattern.compile("(?m)^const [A-Za-z_][\\w ]*?\\b(\\w+)(?:\\[[^\\]]*\\])*\\s*=");
+
+	/** The globals the rewritten= folder's .c files define. */
+	private Set<String> rewrittenData;
+
+	/**
+	 * The globals the rewritten= folder's .c files define, tables in ROM
+	 * that hand-written C keeps for the decompiler's functions too: their
+	 * extern is const, and they get no .set, so that the decompiler's
+	 * functions read the C's (docs/firmware/README.md, "Hand-written C").
+	 */
+	private Set<String> rewrittenData() {
+		if (rewrittenData == null) {
+			rewrittenData = new TreeSet<>();
+			for (String arg : getScriptArgs()) {
+				if (!arg.startsWith(REWRITTEN)) {
+					continue;
+				}
+				File[] files = new File(arg.substring(REWRITTEN.length())).listFiles((dir, name) -> name.endsWith(".c"));
+				for (File file : files) {
+					try {
+						Matcher definition = DATA_DEFINITION.matcher(Files.readString(file.toPath()));
+						while (definition.find()) {
+							rewrittenData.add(definition.group(1));
+						}
+					} catch (IOException e) {
+						throw new UncheckedIOException(e);
+					}
+				}
+			}
+		}
+		return rewrittenData;
+	}
+
 	/** Each hand-written function's file, by its name, from the rewritten= folder. */
 	private Map<String, File> rewritten;
 
@@ -4329,6 +4369,7 @@ public class SmartClockExportC extends GhidraScript {
 				continue;
 			}
 			writer.println(externFor(symbol.getAddress())
+				+ (rewrittenData().contains(symbol.getName()) ? "const " : "")
 				+ declaration(data, data.getDataType(), symbol.getName())
 				+ "; /* " + symbol.getAddress() + " */");
 			declared.put(symbol.getName(), symbol.getAddress().toString());

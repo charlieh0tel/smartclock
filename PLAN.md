@@ -1302,6 +1302,10 @@ view cannot drift apart.  The library, bottom up:
      coefficients.  The image indexes `fpga_bit_table` unchecked, so
      the harness passes `fpga_set_bit` and `fpga_set_field` only its
      six entries (`IN_RANGE`).
+     And `ctype_table`, which the decompiler's `gps_receive` and
+     `doprnt` read too, is `libc.c`'s, its bits named: the exporter
+     declares a table the hand-written C defines `const` and gives it
+     no `.set`.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

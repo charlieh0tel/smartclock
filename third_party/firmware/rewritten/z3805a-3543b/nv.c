@@ -175,7 +175,7 @@ void nv_restore(void) {
       .serial_restricted = 1,
       .pad_9b = 0xff,
       .pulse_period = 1,
-      .format_data = ROBIN_SHORTS,
+      .format_data = FORMAT_ASCII,
       .douglas_state_powerup = 1,
       .tcode_format = TIMECODE_T1,
   };

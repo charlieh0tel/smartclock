@@ -1379,6 +1379,9 @@ view cannot drift apart.  The library, bottom up:
      agreeing; the names they shared through the include order moved to
      `scpi.h`, and the exporter finds a definition whose result type
      clang-format put on the line before.
+     `:FORMat:DATA`'s setting is `data_format`, ASCii or INTeger, by
+     097-59551-02, not ROBin's: ROBin's queries are only its users;
+     `:FORMat` and `:SENSe` take a file each.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

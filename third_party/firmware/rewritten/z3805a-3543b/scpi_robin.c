@@ -23,6 +23,7 @@ enum {
 /* The inputs SCPI_ROBIN_ALL_INPUTS answers for, and the last one a name
  * selects. */
 #define SCPI_ROBIN_INPUTS 3
+
 static const int8_t SCPI_ROBIN_LAST_INPUT = 3;
 
 /* The points each input is made up to hold, more than its index. */
@@ -34,6 +35,7 @@ static const int32_t SCPI_ROBIN_INVALID = STATUS_SCPI_INVALID_STRING;
 /* The responses' values, a record to each source return_zero gives, in
  * RAM the export names no label for. */
 #define SCPI_ROBIN_POINT_SLOTS 80
+
 #define SCPI_ROBIN_COUNT_SLOTS 32
 
 /* :ROBin? and :TSTamp?'s points (0x102d76, 0xa0 bytes a record). */
@@ -87,9 +89,11 @@ static const scpi_robin_keyword SCPI_ROBIN_TSTAMP[] = {
     {"TST", "TSTAMP", 0, 3},
     {"", "", SCPI_ROBIN_END, SCPI_ROBIN_END},
 };
+
 static const scpi_robin_keyword SCPI_ROBIN_NO_NAME[] = {
     {"", "", SCPI_ROBIN_END, SCPI_ROBIN_END},
 };
+
 static const scpi_robin_keyword* const SCPI_ROBIN_NAMES[] = {
     SCPI_ROBIN_TSTAMP,
     SCPI_ROBIN_NO_NAME,
@@ -474,9 +478,9 @@ int32_t scpi_query_ROBin_TSTamp(void* parameters, void* response, void* call) {
 /* Makes a :ROBin query's response of its points, by its format, in the
  * index'th record of that kind (0x29a68). */
 void robin_store(scpi_array_record* record, int16_t* points, int32_t count,
-                 robin_format format, uint8_t index) {
+                 data_format format, uint8_t index) {
   switch (format) {
-    case ROBIN_BLOCK: {
+    case FORMAT_INTEGER: {
       scpi_block* block = &robin_blocks[index];
 
       block->length = count * sizeof *points;
@@ -485,7 +489,7 @@ void robin_store(scpi_array_record* record, int16_t* points, int32_t count,
       record->array = block;
       break;
     }
-    case ROBIN_SHORTS: {
+    case FORMAT_ASCII: {
       scpi_array* array = &robin_arrays[index];
 
       array->count = count;

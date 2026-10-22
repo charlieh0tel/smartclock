@@ -22,14 +22,19 @@ enum {
  * SERial2's (the setters' references). */
 static scpi_setting_param* const SCPI_SYSTEM_SERIAL1_BAUD =
     (scpi_setting_param*)0x33328;
+
 static scpi_setting_param* const SCPI_SYSTEM_SERIAL2_BAUD =
     (scpi_setting_param*)0x33aa2;
+
 static scpi_setting_param* const SCPI_SYSTEM_SERIAL1_PACE =
     (scpi_setting_param*)0x33346;
+
 static scpi_setting_param* const SCPI_SYSTEM_SERIAL2_PACE =
     (scpi_setting_param*)0x33ac0;
+
 static scpi_setting_param* const SCPI_SYSTEM_SERIAL1_FDUPLEX =
     (scpi_setting_param*)0x333dc;
+
 static scpi_setting_param* const SCPI_SYSTEM_SERIAL2_FDUPLEX =
     (scpi_setting_param*)0x33afc;
 
@@ -40,14 +45,20 @@ static scpi_numeric_param* const SCPI_SYSTEM_PRINT =
 
 /* The rates :BAUD takes, each a serial_baud's (0x3022e, 0x302c4). */
 static const int32_t SCPI_SYSTEM_BAUD_1200 = 1200;
+
 static const int32_t SCPI_SYSTEM_BAUD_2400 = 2400;
+
 static const int32_t SCPI_SYSTEM_BAUD_9600 = 9600;
+
 static const int32_t SCPI_SYSTEM_BAUD_19200 = 19200;
 
 /* The data bits and stop bits the ports take. */
 static const int32_t SCPI_SYSTEM_SEVEN_BITS = 7;
+
 static const int32_t SCPI_SYSTEM_EIGHT_BITS = 8;
+
 static const int32_t SCPI_SYSTEM_ONE_STOP_BIT = 1;
+
 static const int32_t SCPI_SYSTEM_TWO_STOP_BITS = 2;
 
 /* A port's boolean or choice parameter. */

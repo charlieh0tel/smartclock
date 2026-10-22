@@ -365,6 +365,11 @@ typedef enum __attribute__((packed)) counter_error {
 
 typedef uint8_t (dac_measure)(struct char_slot);
 
+typedef enum __attribute__((packed)) data_format {
+    FORMAT_ASCII=0,
+    FORMAT_INTEGER=1
+} data_format;
+
 typedef struct duart_channel duart_channel, *Pduart_channel;
 
 struct duart_channel {
@@ -1477,11 +1482,6 @@ struct nv_record {
 
 typedef struct nv_settings_fields nv_settings_fields, *Pnv_settings_fields;
 
-typedef enum __attribute__((packed)) robin_format {
-    ROBIN_SHORTS=0,
-    ROBIN_BLOCK=1
-} robin_format;
-
 typedef enum __attribute__((packed)) timecode_format {
     TIMECODE_T1=0,
     TIMECODE_T2_TEST=1,
@@ -1526,7 +1526,7 @@ struct nv_settings_fields {
     int32_t field_b8;
     uint8_t field_bc;
     uint8_t output_state;
-    enum robin_format format_data;
+    enum data_format format_data;
     uint8_t memory_save;
     uint8_t douglas_state_powerup;
     enum timecode_format tcode_format;
@@ -2665,6 +2665,7 @@ _Static_assert(sizeof(char_slot) == 4, "char_slot");
 _Static_assert(sizeof(clock_record) == 51, "clock_record");
 _Static_assert(sizeof(counter_configuration_fields) == 32, "counter_configuration_fields");
 _Static_assert(sizeof(counter_error) == 1, "counter_error");
+_Static_assert(sizeof(data_format) == 1, "data_format");
 _Static_assert(sizeof(duart_channel) == 8, "duart_channel");
 _Static_assert(sizeof(duart_registers) == 32, "duart_registers");
 _Static_assert(sizeof(duart_shadow_registers) == 13, "duart_shadow_registers");
@@ -2767,7 +2768,6 @@ _Static_assert(sizeof(qspi_device) == 1, "qspi_device");
 _Static_assert(sizeof(qspi_state) == 78, "qspi_state");
 _Static_assert(sizeof(regression_record) == 26, "regression_record");
 _Static_assert(sizeof(reset_record) == 92, "reset_record");
-_Static_assert(sizeof(robin_format) == 1, "robin_format");
 _Static_assert(sizeof(satellite_kind) == 1, "satellite_kind");
 _Static_assert(sizeof(satellite_list) == 1, "satellite_list");
 _Static_assert(sizeof(satellite_sets) == 42, "satellite_sets");
@@ -6087,7 +6087,7 @@ char return_byte(char b);
 uint32_t long_identity(uint32_t param_1);
 void copy_longs_locked(uint32_t *source,uint32_t *destination,uint8_t count);
 float float_identity(float x);
-void robin_store(scpi_array_record *response,int16_t *points,int32_t count,robin_format format,
+void robin_store(scpi_array_record *response,int16_t *points,int32_t count,data_format format,
                 uint8_t index);
 int32_t return_zero(void);
 int32_t scpi_query_failed(status_condition_code code,void *response);
@@ -47089,7 +47089,7 @@ float float_identity(float x)
 
 /* stores the ROBin queries' timestamp pair at 0x102a26 or 0x102a36 */
 
-void robin_store(scpi_array_record *response,int16_t *points,int32_t count,robin_format format,
+void robin_store(scpi_array_record *response,int16_t *points,int32_t count,data_format format,
                 uint8_t index)
 
 {
@@ -53424,7 +53424,7 @@ int32_t scpi_set_FORMat_DATA(void *parameters,void *response,void *call)
 
 
 /* 0002eeb8 */
-#if 0 /* the decompiler's reading; rewritten in scpi_sense_format.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_format_data.c */
 
 /* the query handler for :FORMat:DATA? */
 
@@ -53673,7 +53673,7 @@ int32_t scpi_query_ROBin_TSTamp(void *parameters,void *response,void *call)
 #endif
 
 /* 0002f2ae */
-#if 0 /* the decompiler's reading; rewritten in scpi_sense_format.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_sense.c */
 
 /* the setter for :SENSe:TST1:EDGE */
 
@@ -53690,7 +53690,7 @@ int32_t scpi_set_SENSe_TST1_EDGE(void *parameters,void *response,void *call)
 #endif
 
 /* 0002f2ce */
-#if 0 /* the decompiler's reading; rewritten in scpi_sense_format.c */
+#if 0 /* the decompiler's reading; rewritten in scpi_sense.c */
 
 /* the query handler for :SENSe:TST1:EDGE? */
 
@@ -93451,6 +93451,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/scpi_format.c"
 
+#include "../rewritten/z3805a-3543b/scpi_format_data.c"
+
 #include "../rewritten/z3805a-3543b/scpi_led.c"
 
 #include "../rewritten/z3805a-3543b/scpi_lexer.c"
@@ -93467,7 +93469,7 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/scpi_sample.c"
 
-#include "../rewritten/z3805a-3543b/scpi_sense_format.c"
+#include "../rewritten/z3805a-3543b/scpi_sense.c"
 
 #include "../rewritten/z3805a-3543b/scpi_source_gpsystem.c"
 

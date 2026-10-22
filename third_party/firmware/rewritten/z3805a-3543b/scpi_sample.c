@@ -14,8 +14,10 @@
 /* The settings no name is exported for (the handlers' references). */
 static scpi_setting_param* const SCPI_SAMPLE_BOOLEAN =
     (scpi_setting_param*)0x33454;
+
 static scpi_setting_param* const SCPI_SAMPLE_BARR =
     (scpi_setting_param*)0x33472;
+
 static scpi_numeric_param* const SCPI_SAMPLE_IMULTIPLE =
     (scpi_numeric_param*)0x335be;
 
@@ -57,6 +59,7 @@ typedef struct scpi_sample_long_response {
 
 _Static_assert(sizeof(scpi_sample_listed_number) == 8,
                "scpi_sample_listed_number");
+
 _Static_assert(sizeof(scpi_sample_long_response) == 6,
                "scpi_sample_long_response");
 

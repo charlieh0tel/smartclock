@@ -304,13 +304,14 @@ typedef enum io_device {
   IO_DEVICE_SCI = 0x300,
 } io_device;
 
-/* A :ROBin query's response format, :FORMat:DATA, which robin_store
- * (0x29a68) takes by its jump table at 0x29a96: an array of the points'
- * shorts, or a block of their bytes. */
-typedef enum __attribute__((packed)) robin_format {
-  ROBIN_SHORTS = 0,
-  ROBIN_BLOCK = 1,
-} robin_format;
+/* The data format :FORMat:DATA sets, ASCii or INTeger (097-59551-02,
+ * "Reading Time Stamps"), which only the :ROBin queries' responses use:
+ * robin_store (0x29a68) gives ASCii as an array of the points' shorts
+ * and INTeger as a block of their bytes, by its jump table at 0x29a96. */
+typedef enum __attribute__((packed)) data_format {
+  FORMAT_ASCII = 0,
+  FORMAT_INTEGER = 1,
+} data_format;
 
 /* The time code's format, :PTIMe:TCODe:FORMat, which tcode_request
  * takes: T1, the GPS seconds; T2 with a test prefix; T2. */
@@ -2478,7 +2479,7 @@ typedef struct nv_settings_fields {
   int32_t field_b8;              /* 0 to 50000; only its descriptor */
   uint8_t field_bc;              /* only its descriptor refers to it */
   uint8_t output_state;          /* :OUTPut:STATe */
-  robin_format format_data;      /* :FORMat:DATA */
+  data_format format_data;       /* :FORMat:DATA */
   uint8_t memory_save;           /* :ROBin:MEMory:SAVE */
   uint8_t douglas_state_powerup; /* :DOUGlas:STATe:POWerup */
   timecode_format tcode_format;  /* :PTIMe:TCODe:FORMat */

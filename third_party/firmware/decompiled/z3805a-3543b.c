@@ -8191,6 +8191,7 @@ uint32_t mutex_unlock(mutex *lock)
 #endif
 
 /* 0001052e */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* a mutex's owner, at +8 */
 
@@ -8200,6 +8201,7 @@ uint32_t mutex_owner(void *mutex)
   return *(uint32_t *)((int32_t)mutex + 8);
 }
 
+#endif
 
 /* 00010538 */
 #if 0 /* the decompiler's reading; rewritten in os.c */
@@ -8664,6 +8666,7 @@ void klok_run_due(void)
 #endif
 
 /* 00010c10 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* removes an item from a singly linked list; -2 if it is not there */
 
@@ -8681,6 +8684,7 @@ int32_t list_unlink(klok_entry **list,klok_entry *entry)
   return 0;
 }
 
+#endif
 
 /* 00010c34 */
 
@@ -8703,6 +8707,7 @@ void klok_insert_sorted(klok_entry **list,klok_entry *entry)
 
 
 /* 00010c68 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* pushes an item onto a singly linked list */
 
@@ -8714,6 +8719,7 @@ void list_push(klok_entry **list,klok_entry *entry)
   return;
 }
 
+#endif
 
 /* 00010db6 */
 #if 0 /* the decompiler's reading; rewritten in calendar.c */
@@ -9543,6 +9549,7 @@ void exception_hook_reset(void)
 #endif
 
 /* 000118c2 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* stores the running task's exception hook, at +0x82 of its record, and returns 0; the console task
    passes console_exception_hook; exception_hook_get reads it only while the byte at 0x1037d4 is
@@ -9551,28 +9558,30 @@ void exception_hook_reset(void)
 int32_t exception_hook_set_task(void *hook)
 
 {
-  uint32_t uVar1;
+  uint32_t task;
   
-  uVar1 = psos_my_pid();
-  *(void **)(uVar1 + 0x82) = hook;
+  task = psos_my_pid();
+  *(void **)(task + 0x82) = hook;
   return 0;
 }
 
+#endif
 
 /* 000118fe */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* the exception hook: the running task's, at +0x82 of its record, or the global one */
 
 void * exception_hook_get(void)
 
 {
-  uint32_t uVar1;
+  uint32_t task;
   void *pvVar2;
   
   pvVar2 = (void *)0x0;
   if (exception_hook_per_task != 0) {
-    uVar1 = psos_my_pid();
-    pvVar2 = *(void **)(uVar1 + 0x82);
+    task = psos_my_pid();
+    pvVar2 = *(void **)(task + 0x82);
   }
   if (pvVar2 == (void *)0x0) {
     pvVar2 = exception_hook;
@@ -9580,6 +9589,7 @@ void * exception_hook_get(void)
   return pvVar2;
 }
 
+#endif
 
 /* 00011924 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -10802,6 +10812,7 @@ void root_task(void)
 
 
 /* 0001321a */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* a task's supervisor and user stacks, each the used part of its size, for stack_usage_report */
 
@@ -10819,6 +10830,7 @@ int32_t stack_measure(void *task,uint32_t *usage)
   return 0;
 }
 
+#endif
 
 /* 00013258 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -20043,6 +20055,7 @@ __asm__(
 );
 
 /* 0001606c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* prints the free CPU cycles counted and the share they make
    "Free CPU cycles: count 0x%08X, approx %2d%%"; os_process_report calls it */
@@ -20058,8 +20071,10 @@ void os_report_cpu(printf_function *print)
   return;
 }
 
+#endif
 
 /* 000160a0 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* the 4-character name at offset 0x24 of a task's record */
 
@@ -20079,8 +20094,10 @@ char * task_name(void *task)
   return pcVar1;
 }
 
+#endif
 
 /* 000160de */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* a task's or exchange's four-character name, from its record at +0x14 */
 
@@ -20100,8 +20117,10 @@ char * object_name(void *object)
   return pcVar1;
 }
 
+#endif
 
 /* 00016118 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* prints one exchange's line of the kernel report
    an exchange's line, "fifo", "prio" */
@@ -20160,8 +20179,10 @@ void os_report_exchange(uint32_t *param_1,printf_function *print)
   return;
 }
 
+#endif
 
 /* 000161f6 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* the four-letter name of a task's state
    "susp", "paus", "vblk", "xblk", "mblk", "spwn" */
@@ -20210,8 +20231,10 @@ char * task_status_name(void *task)
   return pcVar1;
 }
 
+#endif
 
 /* 00016280 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* prints one memory region's line of the kernel report */
 
@@ -20223,8 +20246,10 @@ void os_report_region_line(char *name,uint32_t *param_2,printf_function *print)
   return;
 }
 
+#endif
 
 /* 000162b2 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* the segment of a region that holds an address */
 
@@ -20241,8 +20266,10 @@ void * region_segment_containing(void *region,uint32_t address)
   return puVar1;
 }
 
+#endif
 
 /* 000162d4 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* prints one process's line of the kernel report, with its resources and events
    a process's line, ">> RESOURCES:", ">> EVENTS: W(0x%04x) S(0x%04x)" */
@@ -20253,7 +20280,7 @@ void os_report_process(void *param_1,char *param_2,int32_t param_3,uint32_t para
 {
   char cVar1;
   char *pcVar2;
-  void *pvVar3;
+  void *segment;
   int32_t iVar4;
   int32_t iVar5;
   uint32_t unaff_D5 = ({ register int32_t __entry __asm__("d5"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
@@ -20284,8 +20311,8 @@ void os_report_process(void *param_1,char *param_2,int32_t param_3,uint32_t para
     unaff_D6 = puVar9[3] + unaff_D6;
   }
   iVar5 = *(int32_t *)((int32_t)param_1 + 0x3a);
-  pvVar3 = region_segment_containing(param_1,*(uint32_t *)((int32_t)param_1 + 0x36));
-  if (pvVar3 != (void *)0x0) {
+  segment = region_segment_containing(param_1,*(uint32_t *)((int32_t)param_1 + 0x36));
+  if (segment != (void *)0x0) {
     uVar6 = (*(int32_t *)((int32_t)param_1 + 0x8a) - *(int32_t *)((int32_t)param_1 + 0x8e)) - 4;
     if (uVar6 == 0) {
       uVar6 = *(int32_t *)((int32_t)param_1 + 0x8e) - *(int32_t *)((int32_t)param_1 + 0x92);
@@ -20355,8 +20382,10 @@ LAB_000164c2:
   return;
 }
 
+#endif
 
 /* 000164f2 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* the ticks until a task's delay expires: the sum of the delta list's ticks up to it */
 
@@ -20378,8 +20407,10 @@ int32_t timer_ticks_until(void *task)
   return iVar1;
 }
 
+#endif
 
 /* 00016540 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* snapshots the kernel's tasks and their states into task_table for the reports */
 
@@ -20424,8 +20455,10 @@ int32_t task_table_build(void)
   return iVar2;
 }
 
+#endif
 
 /* 0001660a */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* prints how many processes there are and the time they have used
    "%d Process(s) (%d avail); Total time: %-d ticks." */
@@ -20458,8 +20491,10 @@ void os_report_process_summary(printf_function *print)
   return;
 }
 
+#endif
 
 /* 0001665e */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* prints the kernel's exchanges, one line each
    "xid   XNAME  TYPE  ACC  maxQ  Qlen BLOCKED" */
@@ -20490,8 +20525,10 @@ void os_report_exchanges(printf_function *print)
   return;
 }
 
+#endif
 
 /* 000166b0 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* prints how many exchanges and message buffers there are and are free
    "%d Exchange(s) (%d avail).", "%d Msg buffer(s)" */
@@ -20526,8 +20563,10 @@ void os_report_exchange_summary(printf_function *print)
   return;
 }
 
+#endif
 
 /* 00016730 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* a task's place in the ready queue; -1 if it is not there */
 
@@ -20548,8 +20587,10 @@ int32_t ready_queue_position(uint32_t *param_1)
   return iVar1;
 }
 
+#endif
 
 /* 0001675a */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* prints the kernel's processes, one line each
    "pid   PNAME  STAT/M PRI GID POS  TIX MEMORY STK CP" */
@@ -20561,7 +20602,7 @@ int32_t os_report_processes(printf_function *print)
   bool bVar1;
   int32_t iVar2;
   uint32_t uVar3;
-  char *pcVar4;
+  char *status;
   int32_t iVar5;
   int32_t iVar6;
   printf_function *print_00;
@@ -20584,8 +20625,8 @@ int32_t os_report_processes(printf_function *print)
           uVar3 = (uint32_t)*(uint16_t *)((int32_t)task + 0x1a);
         }
         print_00 = print;
-        pcVar4 = task_status_name(task);
-        os_report_process(task,pcVar4,iVar2,uVar3,print_00);
+        status = task_status_name(task);
+        os_report_process(task,status,iVar2,uVar3,print_00);
         bVar1 = true;
       }
     }
@@ -20599,8 +20640,10 @@ int32_t os_report_processes(printf_function *print)
   return iVar2;
 }
 
+#endif
 
 /* 00016828 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* prints the kernel's memory regions and their use
    "Region strt       end  min     max    pend   USED" */
@@ -20691,8 +20734,10 @@ LAB_000169e4:
   return;
 }
 
+#endif
 
 /* 000169fa */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* 1 if an exchange ID is one, by the swapped address its record holds; called by nothing */
 
@@ -20711,8 +20756,10 @@ uint32_t exchange_id_valid(uint32_t param_1)
   return uVar1;
 }
 
+#endif
 
 /* 00016a20 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* 1 if a task ID is one, by the complemented address its record holds; called by nothing */
 
@@ -20731,6 +20778,7 @@ uint32_t task_id_valid(uint32_t param_1)
   return uVar1;
 }
 
+#endif
 
 /* 00016a4c */
 
@@ -20807,6 +20855,7 @@ void os_memory_report(uint8_t param_1)
 
 
 /* 00016bb6 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* measures a task's stacks for the stack report
    "no system stack found"; task_stack_report's per-task stacks */
@@ -20841,6 +20890,7 @@ void task_stack_info(void *task,uint32_t *user_top,uint32_t *user_pointer,uint32
   return;
 }
 
+#endif
 
 /* 00016c44 */
 
@@ -20852,7 +20902,7 @@ void task_stack_report(uint8_t param_1)
 {
   void *task;
   uint32_t param5;
-  char *param2;
+  char *name;
   uint32_t unaff_D2 = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   uint16_t uVar1;
   int16_t sVar2;
@@ -20908,8 +20958,8 @@ LAB_00016d52:
       psVar5 = local_c;
       param7 = local_1c;
       param8 = unaff_D2;
-      param2 = task_name(task);
-      printf("$%08X %4s $%08X $%-5X %3u%% $%08X $%-5X %3u%%\r\n",(uint32_t)task,param2,(uint32_t)psVar3,
+      name = task_name(task);
+      printf("$%08X %4s $%08X $%-5X %3u%% $%08X $%-5X %3u%%\r\n",(uint32_t)task,name,(uint32_t)psVar3,
              param4,param5,(uint32_t)psVar5,param7,param8);
       printf("               $%08X (TOS)       $%08X (TOS)\r\n",local_14,local_10);
     }
@@ -20940,6 +20990,7 @@ LAB_00016dfc:
 
 
 /* 00016e5a */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* the debug_psos word's and :DIAG:SYST:DOUT's switch
    structures.md */
@@ -20967,6 +21018,7 @@ void psos_debug_output(char param_1)
   return;
 }
 
+#endif
 
 /* 00016eb6 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -21036,6 +21088,7 @@ __asm__(
 );
 
 /* 00016ee6 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* counts a tick to the running task, at +0xae of its record; called by nothing */
 
@@ -21047,6 +21100,7 @@ void task_count_tick(void)
   return;
 }
 
+#endif
 
 /* 00016f1e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -21285,6 +21339,7 @@ uint32_t psos_create(char *name,uint32_t a,uint32_t priority,uint32_t stack_a,ui
 
 
 /* 00016fae */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 2, spawn's start
    psos.md */
@@ -21302,8 +21357,10 @@ uint32_t psos_start(uint32_t task,void *entry)
   return uVar1;
 }
 
+#endif
 
 /* 00016fca */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 3, ident
    psos.md */
@@ -21336,8 +21393,10 @@ uint32_t psos_ident(char *name,uint32_t *id,uint8_t *b)
   return uVar1;
 }
 
+#endif
 
 /* 00016ff8 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 3 with no name, my_pid
    psos.md */
@@ -21356,8 +21415,10 @@ uint32_t psos_my_pid(void)
   return extraout_A0;
 }
 
+#endif
 
 /* 00017008 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 4, delete
    psos.md */
@@ -21376,8 +21437,10 @@ uint32_t psos_delete(uint32_t task)
   return uVar1;
 }
 
+#endif
 
 /* 00017020 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 5, suspend
    psos.md */
@@ -21396,8 +21459,10 @@ uint32_t psos_suspend(uint32_t task)
   return uVar1;
 }
 
+#endif
 
 /* 00017038 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 6, resume
    psos.md */
@@ -21416,8 +21481,10 @@ uint32_t psos_resume(uint32_t task)
   return uVar1;
 }
 
+#endif
 
 /* 00017050 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 7, priority
    psos.md */
@@ -21439,8 +21506,10 @@ uint32_t psos_priority(uint32_t task,uint32_t priority,uint8_t *old)
   return uVar1;
 }
 
+#endif
 
 /* 00017076 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 28, pause
    psos.md */
@@ -21459,8 +21528,10 @@ uint32_t psos_pause(uint32_t a)
   return uVar1;
 }
 
+#endif
 
 /* 0001708e */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 32, mode
    psos.md */
@@ -21482,6 +21553,7 @@ uint32_t psos_mode(uint32_t mode,uint32_t mask,uint8_t *old)
   return uVar1;
 }
 
+#endif
 
 /* 000170b4 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -21522,6 +21594,7 @@ __asm__(
 );
 
 /* 000170c0 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* psos.md */
 
@@ -21540,8 +21613,10 @@ uint32_t psos_service_8(uint32_t a,uint32_t b,uint32_t c,uint32_t d,uint32_t *ou
   return uVar1;
 }
 
+#endif
 
 /* 000170f4 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 9, Free_segment
    psos.md */
@@ -21560,8 +21635,10 @@ uint32_t psos_free_segment(void *segment)
   return uVar1;
 }
 
+#endif
 
 /* 0001710c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 10, Assign_segment
    psos.md */
@@ -21579,8 +21656,10 @@ uint32_t psos_assign_segment(void *segment,uint32_t task)
   return uVar1;
 }
 
+#endif
 
 /* 00017128 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 16, a segment back from a task
    psos.md */
@@ -21598,8 +21677,10 @@ uint32_t psos_reclaim_segment(void *segment,uint32_t task)
   return uVar1;
 }
 
+#endif
 
 /* 00017144 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 35, create partition
    psos.md */
@@ -21620,8 +21701,10 @@ uint32_t psos_create_partition(void *area,uint32_t block_size,uint32_t count,voi
   return uVar1;
 }
 
+#endif
 
 /* 0001716e */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 36, delete partition
    psos.md */
@@ -21639,8 +21722,10 @@ uint32_t psos_delete_partition(void *partition,uint32_t block_size)
   return uVar1;
 }
 
+#endif
 
 /* 0001718a */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 37, get block
    psos.md */
@@ -21662,8 +21747,10 @@ uint32_t psos_get_block(void *partition,uint32_t block_size,void **block)
   return uVar1;
 }
 
+#endif
 
 /* 000171b2 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 38, return block
    psos.md */
@@ -21681,8 +21768,10 @@ uint32_t psos_return_block(void *partition,void *block)
   return uVar1;
 }
 
+#endif
 
 /* 000171ce */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 20, create_x
    psos.md */
@@ -21705,8 +21794,10 @@ uint32_t psos_create_x(char *name,uint32_t a,uint32_t b,uint32_t *exchange)
   return uVar1;
 }
 
+#endif
 
 /* 000171fe */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* psos.md */
 
@@ -21741,8 +21832,10 @@ uint32_t psos_service_21(char *name,uint32_t *out1,uint32_t *out2,uint32_t *out3
   return uVar1;
 }
 
+#endif
 
 /* 0001723a */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 22, delete_x
    psos.md */
@@ -21761,8 +21854,10 @@ uint32_t psos_delete_x(uint32_t exchange)
   return uVar1;
 }
 
+#endif
 
 /* 00017252 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 23, send_x
    psos.md */
@@ -21780,8 +21875,10 @@ uint32_t psos_send_x(uint32_t exchange,void *message)
   return uVar1;
 }
 
+#endif
 
 /* 0001726e */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 19, jam_x
    psos.md */
@@ -21799,8 +21896,10 @@ uint32_t psos_jam_x(uint32_t exchange,void *message)
   return uVar1;
 }
 
+#endif
 
 /* 0001728a */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 18, broadcast
    psos.md */
@@ -21829,8 +21928,10 @@ uint32_t psos_broadcast_x(uint32_t exchange,void *message,uint32_t count,uint8_t
   return uVar1;
 }
 
+#endif
 
 /* 000172c4 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 24, request_x
    psos.md */
@@ -21846,8 +21947,10 @@ uint32_t psos_request_x(uint32_t exchange,void *buffer,uint32_t a,uint32_t b)
   return uVar1;
 }
 
+#endif
 
 /* 000172e8 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 25, signal_v
    psos.md */
@@ -21865,8 +21968,10 @@ uint32_t psos_signal_v(uint32_t variable,uint32_t value)
   return uVar1;
 }
 
+#endif
 
 /* 00017304 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 26, wait_v
    psos.md */
@@ -21887,8 +21992,10 @@ uint32_t psos_wait_v(uint32_t a,uint32_t b,uint32_t c,uint32_t *out)
   return uVar1;
 }
 
+#endif
 
 /* 00017332 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 27, get_v
    psos.md */
@@ -21910,8 +22017,10 @@ uint32_t psos_get_v(uint32_t a,uint32_t b,uint32_t *out)
   return uVar1;
 }
 
+#endif
 
 /* 0001735c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 29, Announce_tick; the periodic interrupt's
    psos.md */
@@ -21931,8 +22040,10 @@ uint32_t psos_announce_tick(void)
   return uVar1;
 }
 
+#endif
 
 /* 00017370 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 30, Get_time_of_day; stores even on error
    psos.md */
@@ -21963,8 +22074,10 @@ uint32_t psos_get_time(uint32_t *date,uint32_t *time,uint16_t *ticks)
   return uVar1;
 }
 
+#endif
 
 /* 000173a6 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* service 31, Set_time_of_day
    psos.md */
@@ -21981,8 +22094,10 @@ uint32_t psos_set_time(uint32_t date,uint32_t time,uint32_t ticks)
   return uVar1;
 }
 
+#endif
 
 /* 000173ca */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* I/O function 0, dev_init
    psos.md */
@@ -22001,8 +22116,10 @@ uint32_t psos_io_init(uint32_t device)
   return uVar1;
 }
 
+#endif
 
 /* 000173e2 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* I/O function 1, dev_open, !iodev
    psos.md */
@@ -22020,6 +22137,7 @@ uint32_t psos_io_open(uint32_t device,uint32_t a)
   return uVar1;
 }
 
+#endif
 
 /* 000173fe */
 
@@ -22042,6 +22160,7 @@ uint32_t psos_io_close(uint32_t device)
 
 
 /* 00017416 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* I/O function 3, dev_read, expect
    psos.md */
@@ -22062,8 +22181,10 @@ uint32_t psos_io_read(uint32_t device,void *buffer,uint32_t *length)
   return uVar1;
 }
 
+#endif
 
 /* 00017448 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* I/O function 4, dev_write
    psos.md */
@@ -22084,6 +22205,7 @@ uint32_t psos_io_write(uint32_t device,void *buffer,uint32_t *length)
   return uVar1;
 }
 
+#endif
 
 /* 0001747a */
 
@@ -34812,7 +34934,7 @@ int32_t drtb_puts(char *param_1)
 
 {
   char cVar1;
-  uint32_t uVar2;
+  uint32_t error;
   char *pcVar3;
   
   psos_get_v(SIG_SOQ,0,(uint32_t *)0x0);
@@ -34828,8 +34950,8 @@ int32_t drtb_puts(char *param_1)
     duart_shadow.imr = duart_shadow.imr | IMR_TXRDYB;
     duart.isr_imr = duart_shadow.imr;
   }
-  uVar2 = psos_wait_v(SIG_SOQ,0,0,(uint32_t *)0x0);
-  if ((char)uVar2 != 0) {
+  error = psos_wait_v(SIG_SOQ,0,0,(uint32_t *)0x0);
+  if ((char)error != 0) {
     fatal_error("wait_v SIG_SOQ error in _drtb_puts");
   }
   return (int32_t)duartb.transmit_next - (int32_t)param_1;
@@ -34848,12 +34970,12 @@ uint8_t drtb_getc(void)
 {
   uint8_t uVar1;
   uint8_t uVar2;
-  uint32_t uVar3;
+  uint32_t error;
   
   psos_get_v(SIG_SIQ,0,(uint32_t *)0x0);
   if (duartb_ring.write == duartb_ring.read) {
-    uVar3 = psos_wait_v(SIG_SIQ,0,0,(uint32_t *)0x0);
-    if ((char)uVar3 != 0) {
+    error = psos_wait_v(SIG_SIQ,0,0,(uint32_t *)0x0);
+    if ((char)error != 0) {
       fatal_error("wait_v SIG_SIQ error in getc");
     }
   }
@@ -35082,7 +35204,7 @@ __regcall uint64_t duart_init(void)
 {
   uint8_t uVar1;
   uint32_t in_D0;
-  uint32_t uVar2;
+  uint32_t error;
   uint32_t in_D1;
   uint32_t uVar3;
   char acStack_64 [80];
@@ -35138,32 +35260,32 @@ __regcall uint64_t duart_init(void)
   while (uVar1 = duart.b.sr_csr, (uVar1 & 1) != 0) {
     uVar1 = duart.b.rb_tb;
   }
-  uVar2 = psos_create_x("drtR",0,0,&duartb.read_exchange);
-  if ((char)uVar2 != 0) {
-    sprintf(acStack_64,"Unable to create drtR: %X",uVar2 & 0xff);
+  error = psos_create_x("drtR",0,0,&duartb.read_exchange);
+  if ((char)error != 0) {
+    sprintf(acStack_64,"Unable to create drtR: %X",error & 0xff);
     fatal_error(acStack_64);
   }
   duartb.read_token.status = 0;
   duartb.read_token.exchange = duartb.read_exchange;
   duartb.read_token.task = 0;
   duartb.read_token.field_0c = 0;
-  uVar2 = psos_send_x(duartb.read_exchange,&duartb.read_token);
-  if ((char)uVar2 != 0) {
-    sprintf(acStack_64,"Unable to initialize drtR: %X",uVar2 & 0xff);
+  error = psos_send_x(duartb.read_exchange,&duartb.read_token);
+  if ((char)error != 0) {
+    sprintf(acStack_64,"Unable to initialize drtR: %X",error & 0xff);
     fatal_error(acStack_64);
   }
-  uVar2 = psos_create_x("drtW",0,0,&duartb.write_exchange);
-  if ((char)uVar2 != 0) {
-    sprintf(acStack_64,"Unable to create drtW: %X",uVar2 & 0xff);
+  error = psos_create_x("drtW",0,0,&duartb.write_exchange);
+  if ((char)error != 0) {
+    sprintf(acStack_64,"Unable to create drtW: %X",error & 0xff);
     fatal_error(acStack_64);
   }
   duartb.write_token.status = 0;
   duartb.write_token.exchange = duartb.write_exchange;
   duartb.write_token.task = 0;
   duartb.write_token.field_0c = 0;
-  uVar2 = psos_send_x(duartb.write_exchange,&duartb.write_token);
-  if ((char)uVar2 != 0) {
-    sprintf(acStack_64,"Unable to initialize drtW: %X",uVar2 & 0xff);
+  error = psos_send_x(duartb.write_exchange,&duartb.write_token);
+  if ((char)error != 0) {
+    sprintf(acStack_64,"Unable to initialize drtW: %X",error & 0xff);
     fatal_error(acStack_64);
   }
   duarta.transmit_next = "";
@@ -35877,7 +35999,7 @@ uint8_t drta_get_byte(char *param_1)
 
 {
   uint8_t uVar1;
-  uint32_t uVar2;
+  uint32_t error;
   
   if (param_1 != (char *)0x0) {
     *param_1 = duarta.overrun;
@@ -35888,8 +36010,8 @@ uint8_t drta_get_byte(char *param_1)
   duarta.overrun = 0;
   psos_get_v(SIG_SIQ,0,(uint32_t *)0x0);
   if (duarta_ring.write == duarta_ring.read) {
-    uVar2 = psos_wait_v(SIG_SIQ,0,0,(uint32_t *)0x0);
-    if ((char)uVar2 != 0) {
+    error = psos_wait_v(SIG_SIQ,0,0,(uint32_t *)0x0);
+    if ((char)error != 0) {
       fatal_error("wait_v SIG_SIQ error in drta_get_byte");
     }
   }
@@ -36198,7 +36320,7 @@ uint8_t duarta_isr(void)
 {
   uint8_t uVar1;
   uint32_t uVar2;
-  uint32_t uVar3;
+  uint32_t error;
   
   while (uVar1 = duart.a.sr_csr, (uVar1 & 1) != 0) {
     uVar2 = (uint32_t)duarta_ring.write;
@@ -36206,8 +36328,8 @@ uint8_t duarta_isr(void)
     duarta_ring.write = duarta_ring.write + 1;
     duarta_ring.data[uVar2] = uVar1;
     if (task_gpsm != 0) {
-      uVar3 = psos_signal_v(task_gpsm,SIG_SIQ);
-      if ((char)uVar3 != 0) {
+      error = psos_signal_v(task_gpsm,SIG_SIQ);
+      if ((char)error != 0) {
         fatal_error("DUARTA isr signaling SIG_SIQ");
       }
     }
@@ -36236,7 +36358,7 @@ uint8_t duartb_isr(void)
   uint8_t uVar1;
   bool bVar2;
   uint32_t uVar3;
-  uint32_t uVar4;
+  uint32_t error;
   uint8_t bVar5;
   
   bVar2 = false;
@@ -36251,8 +36373,8 @@ uint8_t duartb_isr(void)
     }
     if ((bVar5 == 3) && (duartb.read_token.task == task_console)) {
       if (duartb.read_token.task != 0) {
-        uVar4 = psos_signal_v(duartb.read_token.task,SIGINTR);
-        if ((char)uVar4 != 0) {
+        error = psos_signal_v(duartb.read_token.task,SIGINTR);
+        if ((char)error != 0) {
           fatal_error("DUARTB isr signaling SIGINTR");
         }
       }
@@ -36296,8 +36418,8 @@ uint8_t duartb_isr(void)
     }
   }
   if (bVar2) {
-    uVar4 = psos_signal_v(duartb.read_token.task,SIG_SIQ);
-    if ((char)uVar4 != 0) {
+    error = psos_signal_v(duartb.read_token.task,SIG_SIQ);
+    if ((char)error != 0) {
       fatal_error("DUARTB isr signaling SIG_SIQ");
     }
   }
@@ -36343,7 +36465,7 @@ void duarta_tx_interrupt(void)
 void duartb_transmit_interrupt(void)
 
 {
-  uint32_t uVar1;
+  uint32_t error;
   
   duartb.in_transmit_interrupt = 1;
   if (duartb.async_count == 0) {
@@ -36351,8 +36473,8 @@ void duartb_transmit_interrupt(void)
       duart_shadow.imr = duart_shadow.imr & ~IMR_TXRDYB;
       duart.isr_imr = duart_shadow.imr;
       if (duartb.write_token.task != 0) {
-        uVar1 = psos_signal_v(duartb.write_token.task,SIG_SOQ);
-        if ((char)uVar1 != 0) {
+        error = psos_signal_v(duartb.write_token.task,SIG_SOQ);
+        if ((char)error != 0) {
           fatal_error("DUARTB isr signaling SIG_SOQ");
         }
       }
@@ -36715,18 +36837,18 @@ void debug_printf(char *format,...)
 void task_debug_message(char *message)
 
 {
-  uint32_t uVar1;
-  char *param1;
+  uint32_t error;
+  char *name;
   void *local_a;
   uint8_t auStack_6 [2];
   
   if (debug_enabled != 0) {
-    uVar1 = psos_ident((char *)0x0,(uint32_t *)&local_a,auStack_6);
-    if ((uVar1 & 0xff) != 0) {
+    error = psos_ident((char *)0x0,(uint32_t *)&local_a,auStack_6);
+    if ((error & 0xff) != 0) {
       fatal_error("dmessage");
     }
-    param1 = task_name(local_a);
-    debug_printf("%s: %s",param1,message);
+    name = task_name(local_a);
+    debug_printf("%s: %s",name,message);
   }
   return;
 }
@@ -36742,14 +36864,14 @@ void task_dmessage(char *message)
 
 {
   bool bVar1;
-  uint32_t uVar2;
-  char *param1;
+  uint32_t error;
+  char *name;
   void *local_a;
   uint8_t auStack_6 [2];
   
   if (debug_enabled != 0) {
-    uVar2 = psos_ident((char *)0x0,(uint32_t *)&local_a,auStack_6);
-    if ((uVar2 & 0xff) != 0) {
+    error = psos_ident((char *)0x0,(uint32_t *)&local_a,auStack_6);
+    if ((error & 0xff) != 0) {
       fatal_error("dmessage");
     }
     bVar1 = false;
@@ -36764,8 +36886,8 @@ void task_dmessage(char *message)
       bVar1 = true;
     }
     if (bVar1) {
-      param1 = task_name(local_a);
-      debug_printf("%s: %s",param1,message);
+      name = task_name(local_a);
+      debug_printf("%s: %s",name,message);
     }
   }
   return;
@@ -36783,7 +36905,7 @@ void fatal_error(char *message)
 
 {
   char cVar1;
-  uint32_t uVar2;
+  uint32_t error;
   char *pcVar3;
   uint32_t uVar4;
   uint16_t uVar5;
@@ -36793,8 +36915,8 @@ void fatal_error(char *message)
   strncpy(crash_message,message,0x50);
   crash_message[0x4f] = 0;
   if (kernel_running != 0) {
-    uVar2 = psos_ident((char *)0x0,(uint32_t *)&local_8,(uint8_t *)0x0);
-    if ((char)uVar2 == 0) {
+    error = psos_ident((char *)0x0,(uint32_t *)&local_8,(uint8_t *)0x0);
+    if ((char)error == 0) {
       uVar4 = 0xffffffff;
       pcVar3 = crash_message;
       do {
@@ -37250,7 +37372,7 @@ int32_t sci_puts(char *text)
 {
   int32_t iVar1;
   uint16_t uVar2;
-  uint32_t uVar3;
+  uint32_t error;
   
   psos_get_v(SIG_SOQ_SCI,0,(uint32_t *)0x0);
   sci.transmit_next = text;
@@ -37258,8 +37380,8 @@ int32_t sci_puts(char *text)
     uVar2 = qsm.sccr1;
     qsm.sccr1 = uVar2 | SCCR1_TIE;
   }
-  uVar3 = psos_wait_v(SIG_SOQ_SCI,0,0,(uint32_t *)0x0);
-  if ((char)uVar3 != 0) {
+  error = psos_wait_v(SIG_SOQ_SCI,0,0,(uint32_t *)0x0);
+  if ((char)error != 0) {
     fatal_error("wait_v SIG_SOQ_SCI error in _sci_puts");
   }
   iVar1 = (int32_t)sci.transmit_next - (int32_t)text;
@@ -37280,12 +37402,12 @@ uint8_t sci_getc(void)
 {
   uint8_t uVar1;
   uint8_t uVar2;
-  uint32_t uVar3;
+  uint32_t error;
   
   psos_get_v(SIG_SIQ_SCI,0,(uint32_t *)0x0);
   if (sci_ring.write == sci_ring.read) {
-    uVar3 = psos_wait_v(SIG_SIQ_SCI,0,0,(uint32_t *)0x0);
-    if ((char)uVar3 != 0) {
+    error = psos_wait_v(SIG_SIQ_SCI,0,0,(uint32_t *)0x0);
+    if ((char)error != 0) {
       fatal_error("wait_v SIG_SIQ_SCI error in getc");
     }
   }
@@ -37404,7 +37526,7 @@ __exception void primary_user_64(void)
 {
   uint16_t uVar1;
   uint16_t uVar2;
-  uint32_t uVar3;
+  uint32_t error;
   uint32_t uVar4;
   uint8_t local_6;
   
@@ -37418,7 +37540,7 @@ __exception void primary_user_64(void)
     }
     if ((local_6 == 3) && (sci_exchanges.read_token.task == task_console)) {
       if ((sci_exchanges.read_token.task != 0) &&
-         (uVar3 = psos_signal_v(sci_exchanges.read_token.task,0x800), (char)uVar3 != 0)) {
+         (error = psos_signal_v(sci_exchanges.read_token.task,0x800), (char)error != 0)) {
         fatal_error("SCI isr signaling SIGINTR");
       }
       if (sci.xon_xoff != 0) {
@@ -37452,8 +37574,8 @@ __exception void primary_user_64(void)
          (sci.flow = sci.flow | 0x20, sci.xon_xoff != 0)) {
         sci_putc_polled(0x13);
       }
-      uVar3 = psos_signal_v(sci_exchanges.read_token.task,0x40);
-      if ((char)uVar3 != 0) {
+      error = psos_signal_v(sci_exchanges.read_token.task,0x40);
+      if ((char)error != 0) {
         fatal_error("SCI isr signaling SIG_SIQ_SCI");
       }
     }
@@ -37469,7 +37591,7 @@ __exception void primary_user_64(void)
         uVar2 = qsm.sccr1;
         qsm.sccr1 = uVar2 & 0xff7f;
         if ((sci_exchanges.write_token.task != 0) &&
-           (uVar3 = psos_signal_v(sci_exchanges.write_token.task,0x200), (char)uVar3 != 0)) {
+           (error = psos_signal_v(sci_exchanges.write_token.task,0x200), (char)error != 0)) {
           fatal_error("SCI isr signaling SIG_SOQ_SCI");
         }
       }
@@ -37892,7 +38014,7 @@ __regcall char sci_lock(char write /* d0 */)
 
 {
   uint32_t uVar1;
-  uint32_t uVar2;
+  uint32_t error;
   uint32_t exchange;
   uint32_t unaff_D7 = ({ register int32_t __entry __asm__("d7"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   exchange_token *buffer;
@@ -37913,9 +38035,9 @@ __regcall char sci_lock(char write /* d0 */)
     buffer->field_0c = buffer->field_0c + 1;
   }
   else {
-    uVar2 = psos_request_x(exchange,buffer,0,0);
-    if ((uVar2 & 0xff) != 0) {
-      sprintf(acStack_64,"Unable to acquire SCI token: %X",uVar2 & 0xff);
+    error = psos_request_x(exchange,buffer,0,0);
+    if ((error & 0xff) != 0) {
+      sprintf(acStack_64,"Unable to acquire SCI token: %X",error & 0xff);
       fatal_error(acStack_64);
     }
     buffer->task = uVar1;
@@ -38018,7 +38140,7 @@ __regcall uint64_t sci_init(void)
 {
   uint16_t uVar1;
   uint32_t in_D0;
-  uint32_t uVar2;
+  uint32_t error;
   uint32_t in_D1;
   int32_t iVar3;
   char acStack_64 [80];
@@ -38050,32 +38172,32 @@ __regcall uint64_t sci_init(void)
   } while (iVar3 < 100000);
   uVar1 = qsm.scsr;
   uVar1 = qsm.scdr;
-  uVar2 = psos_create_x("sciR",0,0,&sci_exchanges.read_exchange);
-  if ((uVar2 & 0xff) != 0) {
-    sprintf(acStack_64,"Unable to create sciR: %X",uVar2 & 0xff);
+  error = psos_create_x("sciR",0,0,&sci_exchanges.read_exchange);
+  if ((error & 0xff) != 0) {
+    sprintf(acStack_64,"Unable to create sciR: %X",error & 0xff);
     fatal_error(acStack_64);
   }
   sci_exchanges.read_token.status = 0;
   sci_exchanges.read_token.exchange = sci_exchanges.read_exchange;
   sci_exchanges.read_token.task = 0;
   sci_exchanges.read_token.field_0c = 0;
-  uVar2 = psos_send_x(sci_exchanges.read_exchange,&sci_exchanges.read_token);
-  if ((uVar2 & 0xff) != 0) {
-    sprintf(acStack_64,"Unable to initialize sciR: %X",uVar2 & 0xff);
+  error = psos_send_x(sci_exchanges.read_exchange,&sci_exchanges.read_token);
+  if ((error & 0xff) != 0) {
+    sprintf(acStack_64,"Unable to initialize sciR: %X",error & 0xff);
     fatal_error(acStack_64);
   }
-  uVar2 = psos_create_x("sciW",0,0,&sci_exchanges.write_exchange);
-  if ((uVar2 & 0xff) != 0) {
-    sprintf(acStack_64,"Unable to create sciW: %X",uVar2 & 0xff);
+  error = psos_create_x("sciW",0,0,&sci_exchanges.write_exchange);
+  if ((error & 0xff) != 0) {
+    sprintf(acStack_64,"Unable to create sciW: %X",error & 0xff);
     fatal_error(acStack_64);
   }
   sci_exchanges.write_token.status = 0;
   sci_exchanges.write_token.exchange = sci_exchanges.write_exchange;
   sci_exchanges.write_token.task = 0;
   sci_exchanges.write_token.field_0c = 0;
-  uVar2 = psos_send_x(sci_exchanges.write_exchange,&sci_exchanges.write_token);
-  if ((uVar2 & 0xff) != 0) {
-    sprintf(acStack_64,"Unable to initialize sciW: %X",uVar2 & 0xff);
+  error = psos_send_x(sci_exchanges.write_exchange,&sci_exchanges.write_token);
+  if ((error & 0xff) != 0) {
+    sprintf(acStack_64,"Unable to initialize sciW: %X",error & 0xff);
     fatal_error(acStack_64);
   }
   sci.async_next = "";
@@ -38579,14 +38701,14 @@ void sci_printf_polled(char *format,...)
 void qspi_release(void)
 
 {
-  uint32_t uVar1;
+  uint32_t error;
   
   if (qspi.write == qspi.read) {
     qspi.busy = 0;
   }
   else {
-    uVar1 = psos_signal_v(qspi.waiting[qspi.read],SIG_QSPI);
-    if ((char)uVar1 != 0) {
+    error = psos_signal_v(qspi.waiting[qspi.read],SIG_QSPI);
+    if ((char)error != 0) {
       fatal_error("SPI isr signaling SPI owner");
     }
     qspi.read = qspi.read + 1 & 0xf;
@@ -39007,7 +39129,7 @@ void qspi_isr(void)
 {
   uint16_t *puVar1;
   uint8_t uVar2;
-  uint32_t uVar3;
+  uint32_t error;
   uint16_t *puVar4;
   uint16_t *puVar5;
   
@@ -39025,8 +39147,8 @@ void qspi_isr(void)
     qspi.busy = 0;
   }
   else {
-    uVar3 = psos_signal_v(qspi.waiting[qspi.read],SIG_QSPI);
-    if ((char)uVar3 != 0) {
+    error = psos_signal_v(qspi.waiting[qspi.read],SIG_QSPI);
+    if ((char)error != 0) {
       fatal_error("SPI isr signaling SPI owner");
     }
     qspi.read = qspi.read + 1 & 0xf;
@@ -39401,7 +39523,7 @@ uint32_t spoo_run(spoo_function *function,uint32_t a,uint32_t b,uint32_t c)
 
 {
   uint32_t uVar1;
-  uint32_t uVar2;
+  uint32_t error;
   uint8_t auStack_1c [4];
   uint32_t local_18;
   spoo_function *local_14;
@@ -39422,8 +39544,8 @@ uint32_t spoo_run(spoo_function *function,uint32_t a,uint32_t b,uint32_t c)
     local_10 = a;
     local_c = b;
     local_8 = c;
-    uVar2 = psos_send_x(spoo_exchange,auStack_1c);
-    uVar1 = uVar2 & 0xff;
+    error = psos_send_x(spoo_exchange,auStack_1c);
+    uVar1 = error & 0xff;
   }
   return uVar1;
 }
@@ -39467,14 +39589,14 @@ int32_t deferred_vprintf(char *format,void *arguments)
 void spoo_task(void)
 
 {
-  uint32_t uVar1;
+  uint32_t error;
   
   psos_supervisor();
   do {
     do {
       while( true ) {
-        uVar1 = psos_request_x(spoo_exchange,&spoo_message,0,0x400);
-        spoo_receive_error = uVar1 & 0xff;
+        error = psos_request_x(spoo_exchange,&spoo_message,0,0x400);
+        spoo_receive_error = error & 0xff;
         watchdog_spool = watchdog_spool + 1;
         if (spoo_receive_error != 0) break;
         (*(code *)spoo_message.function)
@@ -40864,7 +40986,7 @@ void hmon_task(void)
   bool bVar1;
   bool bVar2;
   bool bVar3;
-  uint32_t uVar4;
+  uint32_t error;
   char unaff_D4b = ({ register int32_t __entry __asm__("d4"); __asm__("" : "=r"(__entry)); (char)__entry; });
   uint16_t uVar5;
   uint16_t uVar6;
@@ -40891,9 +41013,9 @@ void hmon_task(void)
   efc_clamp_reset();
   psos_get_v(1,0,(uint32_t *)0x0);
   do {
-    uVar4 = psos_wait_v(1,0,0,(uint32_t *)0x0);
+    error = psos_wait_v(1,0,0,(uint32_t *)0x0);
     efc_write_dithered();
-    if ((uVar4 & 0xff) == 0) {
+    if ((error & 0xff) == 0) {
       watchdog_monitor = watchdog_monitor + 1;
     }
     local_e = local_e + 1;
@@ -45624,14 +45746,14 @@ uint32_t status_create(status_model **model,int32_t register_count,int32_t queue
                       status_condition *conditions,uint32_t reserved)
 
 {
-  status_model *psVar1;
+  status_model *segment;
   uint32_t uVar2;
   status_register *psVar3;
   int16_t sVar4;
   
-  psVar1 = memory_allocate(register_count * 4 + 0x16);
-  *model = psVar1;
-  if (psVar1 == (status_model *)0x0) {
+  segment = memory_allocate(register_count * 4 + 0x16);
+  *model = segment;
+  if (segment == (status_model *)0x0) {
 LAB_0002810c:
     uVar2 = 0xffffffc8;
   }
@@ -45998,13 +46120,13 @@ void error_queue_read(status_model *status,int32_t *code,uint32_t *message)
 uint32_t error_queue_create(status_error_queue **queue,int32_t capacity,status_model *status)
 
 {
-  status_error_queue *psVar1;
+  status_error_queue *segment;
   uint32_t uVar2;
   int16_t sVar3;
   
-  psVar1 = memory_allocate(capacity * 6 + 0x10);
-  *queue = psVar1;
-  if (psVar1 == (status_error_queue *)0x0) {
+  segment = memory_allocate(capacity * 6 + 0x10);
+  *queue = segment;
+  if (segment == (status_error_queue *)0x0) {
     uVar2 = 0xffffffc8;
   }
   else {
@@ -47260,11 +47382,11 @@ void status_prompt_refresh(status_model *param_1,int32_t param_2)
 void send_x_retry(uint32_t exchange,void *message,uint32_t ticks)
 
 {
-  uint32_t uVar1;
+  uint32_t error;
   
   while( true ) {
-    uVar1 = psos_send_x(exchange,message);
-    if ((char)uVar1 == 0) break;
+    error = psos_send_x(exchange,message);
+    if ((char)error == 0) break;
     psos_pause(ticks);
   }
   return;
@@ -47445,14 +47567,14 @@ uint32_t scpi_task_create(uint32_t param_1)
 void scpi_task(void)
 
 {
-  uint32_t uVar1;
+  uint32_t error;
   scpi_port *port;
   uint32_t unaff_D2 = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (uint32_t)__entry; });
   void *local_8;
   
   psos_mode(0x40,0x40,(uint8_t *)0x0);
-  uVar1 = psos_service_8(2000,0,1,0,(uint32_t *)&local_8);
-  if ((uVar1 & 0xff) == 0) {
+  error = psos_service_8(2000,0,1,0,(uint32_t *)&local_8);
+  if ((error & 0xff) == 0) {
     scpi_prompt_enabled = 1;
     port = scpi_session_init();
     if (port == (scpi_port *)0x0) {
@@ -47474,7 +47596,7 @@ void scpi_task(void)
     }
   }
   else {
-    printf("scpi: alloc_seg error %#0x\n",uVar1 & 0xff);
+    printf("scpi: alloc_seg error %#0x\n",error & 0xff);
   }
   return;
 }
@@ -55245,21 +55367,21 @@ void eeprom_lock_init(void)
 void eeprom_init(void)
 
 {
-  uint32_t uVar1;
+  uint32_t error;
   char acStack_54 [80];
   
-  uVar1 = psos_create_x("eepx",0,0,&eepx_exchange);
-  if ((char)uVar1 != 0) {
-    sprintf(acStack_54,"Unable to create eepx: %X",uVar1 & 0xff);
+  error = psos_create_x("eepx",0,0,&eepx_exchange);
+  if ((char)error != 0) {
+    sprintf(acStack_54,"Unable to create eepx: %X",error & 0xff);
     fatal_error(acStack_54);
   }
   eepx_token.status = 0;
   eepx_token.exchange = eepx_exchange;
   eepx_token.owner = 0;
   eepx_token.depth = 0;
-  uVar1 = psos_send_x(eepx_exchange,&eepx_token);
-  if ((char)uVar1 != 0) {
-    sprintf(acStack_54,"Unable to initialize eepx: %X",uVar1 & 0xff);
+  error = psos_send_x(eepx_exchange,&eepx_token);
+  if ((char)error != 0) {
+    sprintf(acStack_54,"Unable to initialize eepx: %X",error & 0xff);
     fatal_error(acStack_54);
   }
   return;
@@ -55277,8 +55399,8 @@ char eeprom_lock(void)
 
 {
   uint32_t uVar1;
-  uint32_t uVar2;
-  uint32_t uVar3;
+  uint32_t task;
+  uint32_t error;
   char cVar4;
   char acStack_56 [80];
   uint16_t local_6;
@@ -55287,22 +55409,22 @@ char eeprom_lock(void)
   local_6 = (uint16_t)uVar1;
   if (kernel_running != 0) {
     if ((uVar1 & 0x700) == 0) {
-      uVar2 = psos_my_pid();
-      if (uVar2 == eepx_token.owner) {
+      task = psos_my_pid();
+      if (task == eepx_token.owner) {
         eepx_token.depth = eepx_token.depth + 1;
         return 0;
       }
-      uVar3 = psos_request_x(eepx_exchange,&eepx_token,0,0x2800);
-      cVar4 = (char)uVar3;
+      error = psos_request_x(eepx_exchange,&eepx_token,0,0x2800);
+      cVar4 = (char)error;
       if (cVar4 == 0) {
-        eepx_token.owner = uVar2;
+        eepx_token.owner = task;
         eepx_token.depth = 0;
         return 0;
       }
       if (cVar4 == -0x7f) {
         return -0x7f;
       }
-      sprintf(acStack_56,"Unable to acquire eepx token: %X",uVar3 & 0xff);
+      sprintf(acStack_56,"Unable to acquire eepx token: %X",error & 0xff);
       fatal_error(acStack_56);
       return cVar4;
     }
@@ -58596,10 +58718,10 @@ void curv_signal(void)
 void aging_fit_collect(void)
 
 {
-  uint32_t uVar1;
+  uint32_t error;
   
-  uVar1 = psos_get_v(0x100,0,(uint32_t *)0x0);
-  if ((char)uVar1 == 0) {
+  error = psos_get_v(0x100,0,(uint32_t *)0x0);
+  if ((char)error == 0) {
     pll.efc_history.fit_a = aging_curve.a;
     pll.efc_history.fit_b = aging_curve.b;
     pll.efc_history.fit_c = aging_curve.c;
@@ -59747,7 +59869,7 @@ uint32_t pll_scpi_send_to_loop(uint8_t param_1,uint8_t *param_2)
 
 {
   char cVar2;
-  uint32_t uVar1;
+  uint32_t error;
   gps_request_entry request;
   
   if (*(char *)pll_scpi_param == 1) {
@@ -59851,8 +59973,8 @@ LAB_00042fca:
   request.result = 1;
   request.sender = param_1;
   request.arguments = (int32_t *)pll_scpi_gps_arguments;
-  uVar1 = psos_send_x(gpsx_exchange,&request);
-  if ((char)uVar1 == 0) {
+  error = psos_send_x(gpsx_exchange,&request);
+  if ((char)error == 0) {
     *param_2 = 0;
     return 1;
   }
@@ -60080,13 +60202,13 @@ void pll_scpi_receive(void)
 
 {
   uint8_t uVar1;
-  uint32_t uVar2;
+  uint32_t error;
   pllc_request request;
   
   if (pll_scpi_reply_pending == 0) {
     if (pll_scpi_signal_delay == 0) {
-      uVar2 = psos_request_x(pllc_exchange,&request,1,0);
-      if ((uVar2 & 0xff) != 0) {
+      error = psos_request_x(pllc_exchange,&request,1,0);
+      if ((error & 0xff) != 0) {
         return;
       }
       pll_scpi_command(&request,&pll_scpi_reply_pending);
@@ -62829,7 +62951,7 @@ uint8_t gps_ack_received(void)
 uint8_t gpsx_send(int16_t code,uint8_t argument_mode,int32_t *arguments,uint8_t ack_awaited)
 
 {
-  uint32_t uVar1;
+  uint32_t error;
   int32_t iVar2;
   uint8_t uVar3;
   gps_request_entry request;
@@ -62848,8 +62970,8 @@ uint8_t gpsx_send(int16_t code,uint8_t argument_mode,int32_t *arguments,uint8_t 
     request.result = 1;
     request.sender = 1;
     request.arguments = (int32_t *)gpsx_arguments;
-    uVar1 = psos_send_x(gpsx_exchange,&request);
-    if ((char)uVar1 == 0) {
+    error = psos_send_x(gpsx_exchange,&request);
+    if ((char)error == 0) {
       gps_ack_awaited = ack_awaited;
       gps_ack_ready = 0;
       gps_ack_code = 1;
@@ -62871,7 +62993,7 @@ void gps_selftest_run(void)
 
 {
   uint8_t uVar2;
-  uint32_t uVar1;
+  uint32_t error;
   char cVar3;
   gps_request_entry reply;
   int32_t aiStack_14 [4];
@@ -62886,7 +63008,7 @@ void gps_selftest_run(void)
   }
   if (gps_ack_awaited != 0) {
     for (cVar3 = -0x7e;
-        (uVar1 = psos_request_x(plla_exchange,&reply,1,0), (char)uVar1 != 0 && (cVar3 != 0));
+        (error = psos_request_x(plla_exchange,&reply,1,0), (char)error != 0 && (cVar3 != 0));
         cVar3 = cVar3 + -1) {
       psos_pause(0x400);
       watchdog_pll = watchdog_pll + 1;
@@ -62913,7 +63035,7 @@ void gps_selftest_run(void)
     }
     if (gps_ack_awaited != 0) {
       for (cVar3 = 0x1e;
-          (uVar1 = psos_request_x(plla_exchange,&reply,1,0), (char)uVar1 != 0 && (cVar3 != 0))
+          (error = psos_request_x(plla_exchange,&reply,1,0), (char)error != 0 && (cVar3 != 0))
           ; cVar3 = cVar3 + -1) {
         psos_pause(0x400);
         watchdog_pll = watchdog_pll + 1;
@@ -63765,7 +63887,7 @@ void pllp_task(void)
   pll_state *ppVar7;
   char cVar9;
   bool bVar10;
-  uint32_t uVar8;
+  uint32_t error;
   int16_t sVar11;
   gps_state *pgVar12;
   pll_state *ppVar14;
@@ -63997,8 +64119,8 @@ LAB_00047940:
       clock_change_applied = 0;
       clock_change_armed = 0;
     }
-    uVar8 = psos_request_x(plla_exchange,&reply,1,0);
-    if ((char)uVar8 == 0) {
+    error = psos_request_x(plla_exchange,&reply,1,0);
+    if ((char)error == 0) {
       if (reply.result != 0) {
         plla_failed_count = plla_failed_count + 1;
       }
@@ -67646,7 +67768,7 @@ int32_t gps_count_response(char kind,gps_request_entry *request)
 
 {
   int32_t iVar1;
-  uint32_t uVar2;
+  uint32_t error;
   char cVar3;
   
   iVar1 = (int32_t)kind - 8;
@@ -67691,8 +67813,8 @@ int32_t gps_count_response(char kind,gps_request_entry *request)
   }
   else {
     request->result = kind;
-    uVar2 = psos_send_x(plla_exchange,request);
-    cVar3 = (char)uVar2;
+    error = psos_send_x(plla_exchange,request);
+    cVar3 = (char)error;
   }
   if (cVar3 == 0) {
     gps_counts.sent = gps_counts.sent + 1;
@@ -68006,7 +68128,7 @@ LAB_0004bd18:
 bool gps_request_post(char param_1,int16_t param_2,int32_t *param_3,uint8_t param_4)
 
 {
-  uint32_t uVar1;
+  uint32_t error;
   gps_request_entry request;
   
   request.field_00 = 0;
@@ -68030,8 +68152,8 @@ bool gps_request_post(char param_1,int16_t param_2,int32_t *param_3,uint8_t para
   else {
     status_monitor_result = 9;
   }
-  uVar1 = psos_send_x(gpsx_exchange,&request);
-  return (char)uVar1 == 0;
+  error = psos_send_x(gpsx_exchange,&request);
+  return (char)error == 0;
 }
 
 
@@ -68188,7 +68310,7 @@ void gpsm_task(void)
 {
   gps_script_step *pgVar1;
   int16_t sVar2;
-  uint32_t uVar3;
+  uint32_t error;
   char cVar7;
   int32_t lVar4;
   int16_t sVar6;
@@ -68221,8 +68343,8 @@ void gpsm_task(void)
   status_snapshot_last_time = 0;
   do {
     watchdog_gps = watchdog_gps + 1;
-    uVar3 = psos_request_x(gpsx_exchange,&received,0,10);
-    if ((char)uVar3 == 0) {
+    error = psos_request_x(gpsx_exchange,&received,0,10);
+    if ((char)error == 0) {
       gps_counts.received = gps_counts.received + 1;
       cVar7 = request_kind_valid(received.sender);
       if (cVar7 == 0) {
@@ -68238,7 +68360,7 @@ void gpsm_task(void)
         }
       }
     }
-    else if ((char)uVar3 != -0x7f) {
+    else if ((char)error != -0x7f) {
       gps_counts.received_errors = gps_counts.received_errors + 1;
     }
     if ((gps_task_state == GPS_PROCESS_TASK_IDLE) && (cVar7 = request_ring_empty(), cVar7 == 0))
@@ -70404,6 +70526,7 @@ int32_t gps_message_to_text(char *param_1,uint8_t param_2,char *param_3)
 
 
 /* 00051038 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* copies the kernel's configuration and its I/O table into RAM
    psos.md */
@@ -70416,8 +70539,10 @@ void psos_config_init(void)
   return;
 }
 
+#endif
 
 /* 000510aa */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* allocates from region 1 through service 8
    psos.md */
@@ -70431,8 +70556,10 @@ void * memory_allocate(uint32_t size)
   return local_8;
 }
 
+#endif
 
 /* 000510d2 */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* frees a segment through service 9
    psos.md */
@@ -70444,6 +70571,7 @@ void memory_free(void *segment)
   return;
 }
 
+#endif
 
 /* 000510e8 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */

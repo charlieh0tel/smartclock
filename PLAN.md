@@ -1347,6 +1347,10 @@ view cannot drift apart.  The library, bottom up:
      (`clock.h`, `duart.h`, `libc.h`, `monitors.h`, `records.h`,
      `scpi.h`), the bodies unchanged: gcc's code is the same to the
      byte.
+     Then the modules by hand, five agents at a time: `platform/os`,
+     64 more in `os.c` (the pSOS binding, the kernel's records, the
+     `:DIAG:OS` reports), its task, exchange, segment and kernel records
+     local to it until they move to `smartclock.h`.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

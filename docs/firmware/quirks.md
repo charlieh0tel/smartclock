@@ -28,10 +28,12 @@ routine and the address that shows it.
 ## Reads of what nothing set
 
 - **`task_stack_info`** reads two locals it never sets ("no system
-  stack found", `0x16c28` to `0x16c32`).
+  stack found", `0x16c28` to `0x16c32`); the C reads them from the
+  frame too, so that both fault on the harness's filled frame.
 - **`os_report_process`** prints D5 as a task's stack share, which
   `os_report_processes` leaves holding the address of `"%s"`
-  (`0x16768`).
+  (`0x16768`), and sums memory onto its caller's D6 (`0x1632e`,
+  `0x1643e`).
 - **`interpolator_verify`** returns, on its failure paths, D2 as its
   caller left it.
 - **`log_erase`** checksums a pointer's bytes.

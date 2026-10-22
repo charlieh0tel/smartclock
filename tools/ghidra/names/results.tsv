@@ -316,3 +316,48 @@ fpga_read_seconds	seconds	register 0's high nibble, modulo 16
 selftest_fpga_with_lamp	failures	selftest.fpga
 # A double parameter's validate, 0x32596 (rewritten/z3805a-3543b/pllc.c)
 clamp_double_to_step_and_limits	steps	the clamped value in steps, rounded half away from zero
+# The kernel's binding and records, platform/os (rewritten/z3805a-3543b/os.c)
+psos_start	error	0, or the service in the high byte and the kernel's error in the low
+psos_ident	error	0, or the service and the kernel's error
+psos_my_pid	task	the running task's id
+psos_delete	error	0, or the service and the kernel's error
+psos_suspend	error	0, or the service and the kernel's error
+psos_resume	error	0, or the service and the kernel's error
+psos_priority	error	0, or the service and the kernel's error
+psos_pause	error	0, or the service and the kernel's error
+psos_mode	error	0, or the service and the kernel's error
+psos_service_8	error	0, or the service and the kernel's error
+psos_free_segment	error	0, or the service and the kernel's error
+psos_assign_segment	error	0, or the service and the kernel's error
+psos_reclaim_segment	error	0, or the service and the kernel's error
+psos_create_partition	error	0, or the service and the kernel's error
+psos_delete_partition	error	0, or the service and the kernel's error
+psos_get_block	error	0, or the service and the kernel's error
+psos_return_block	error	0, or the service and the kernel's error
+psos_create_x	error	0, or the service and the kernel's error
+psos_service_21	error	0, or the service and the kernel's error
+psos_delete_x	error	0, or the service and the kernel's error
+psos_send_x	error	0, or the service and the kernel's error
+psos_jam_x	error	0, or the service and the kernel's error
+psos_broadcast_x	error	0, or the service and the kernel's error
+psos_request_x	error	0, or the service and the kernel's error
+psos_signal_v	error	0, or the service and the kernel's error
+psos_wait_v	error	0, or the service and the kernel's error
+psos_get_v	error	0, or the service and the kernel's error
+psos_announce_tick	error	0, or the service and the kernel's error
+psos_get_time	error	0, or the service and the kernel's error
+psos_set_time	error	0, or the service and the kernel's error
+psos_io_init	error	0, or the function in the high byte and the device's error in the low
+psos_io_open	error	0, or the function and the device's error
+psos_io_read	error	0, or the function and the device's error
+psos_io_write	error	0, or the function and the device's error
+memory_allocate	segment	service 8's segment
+exchange_id_valid	valid	1 for an exchange's id
+task_id_valid	valid	1 for a task's id
+task_table_build	count	the tasks in task_table
+task_name	name	task_name_text, or null
+object_name	name	object_name_text, or null
+task_status_name	status	the report's four characters
+region_segment_containing	segment	the task's segment holding the address, or null
+ready_queue_position	position	from 0, or -1 off the ready queue
+timer_ticks_until	ticks	the delay list's ticks up to the task

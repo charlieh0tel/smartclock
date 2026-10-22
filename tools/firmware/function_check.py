@@ -216,19 +216,13 @@ IN_RANGE = {name: {0: 6} for name in ("fpga_set_bit", "fpga_set_field")}
 # The differences whose cause is found and is not the C's (PLAN.md,
 # "A rebuild that runs"), each counted as known while every failing case
 # is that difference, so that another in the same routine still fails.
-# The firmware's own: task_stack_info reads two locals it never sets
-# ("no system stack found", 0x16c28 to 0x16c32), which gcc takes as 0
-# where the image faults on the filled frame; os_report_processes holds
+# The firmware's own: os_report_processes holds
 # the address of "%s" in D5 across its calls (0x16768), which
 # os_report_process prints as a task's stack share.  And what C cannot
 # say: setjmp reads its caller's registers; int64_divide and
 # uint64_divide, on a quotient too wide for 32 bits, return the
 # dividend's low long, as divs.l leaves it; log_erase checksums a
 # pointer's bytes.
-UNSET_LOCALS = Known(
-    "task_stack_info reads two locals it never sets (0x16c28 to 0x16c32), the image faulting on the filled frame",
-    r"^one stopped: image Invalid memory read .* at 16c32, gcc None$",
-)
 D5_SHARE = Known(
     "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x16768)",
     r"^effect \d+ trap #4 service 4 ",
@@ -238,7 +232,6 @@ WIDE_QUOTIENT = Known(
     r"^result [0-9a-f]+, image's [0-9a-f]+$",
 )
 KNOWN = {
-    **{name: UNSET_LOCALS for name in ("task_stack_report", "s_rep_word", "scpi_query_DIAGnostic_OS_STACk")},
     **{name: D5_SHARE for name in ("os_process_report", "ps_word", "scpi_query_DIAGnostic_OS_PROCess")},
     "int64_divide": WIDE_QUOTIENT,
     "uint64_divide": WIDE_QUOTIENT,

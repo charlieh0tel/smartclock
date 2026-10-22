@@ -186,8 +186,9 @@ int32_t drtb_gets(char* buffer, int32_t length) {
 }
 
 /* Resets DUART channel B and applies the serial settings: mode, baud
- * rate, flow control and echo (0x1dc7e). */
-void duartb_reconfigure(void) {
+ * rate, flow control and echo, as channel B's I/O control function
+ * (0x1dc7e).  duartb_reconfigure is this, then no error. */
+static __attribute__((used, noipa)) void duartb_reconfigure_settings(void) {
   uint16_t sr = cpu_interrupts_raise(CPU_IPL_2);
 
   duartb.reconfiguring = 1;
@@ -224,6 +225,8 @@ void duartb_reconfigure(void) {
   duartb.reconfiguring = 0;
   cpu_sr_write(sr);
 }
+
+CPU_IO_FUNCTION(duartb_reconfigure, duartb_reconfigure_settings);
 
 /* Writes a character to channel B under the write lock, if it can take
  * it (0x1ddf6). */

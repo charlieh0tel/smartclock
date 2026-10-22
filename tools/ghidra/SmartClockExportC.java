@@ -4202,6 +4202,13 @@ public class SmartClockExportC extends GhidraScript {
 	private static final Pattern DEFINITION =
 		Pattern.compile("(?m)^(?:[A-Za-z_][\\w \\*]*?\\b)?(\\w+)\\([^;{}]*\\)\\s*\\{");
 	/**
+	 * A routine cpu.h's wrapper macros define in assembly around a C body,
+	 * at a line's start: CPU_KEEPING_A0_A1(float_raise, ...) or
+	 * CPU_IO_FUNCTION(sci_reconfigure, ...), its name the first argument.
+	 */
+	private static final Pattern WRAPPED_DEFINITION =
+		Pattern.compile("(?m)^CPU_[A-Z0-9_]+\\(\\s*(\\w+)\\s*,");
+	/**
 	 * A table's definition in hand-written or generated C, at a line's
 	 * start: const and its type, or a pointer type and const, a table of
 	 * const pointers; then any attribute, as the generated SCPI tree's
@@ -4306,9 +4313,12 @@ public class SmartClockExportC extends GhidraScript {
 					continue;
 				}
 				for (File file : rewrittenFiles(arg, ".c")) {
-					Matcher definition = DEFINITION.matcher(Files.readString(file.toPath()));
-					while (definition.find()) {
-						rewritten.put(definition.group(1), file);
+					String text = Files.readString(file.toPath());
+					for (Pattern pattern : List.of(DEFINITION, WRAPPED_DEFINITION)) {
+						Matcher definition = pattern.matcher(text);
+						while (definition.find()) {
+							rewritten.put(definition.group(1), file);
+						}
 					}
 				}
 			}

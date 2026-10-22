@@ -112,9 +112,10 @@ int32_t sci_gets(char* buffer, int32_t length) {
 }
 
 /* Applies the serial settings to the SCI: waits for its transmitter to
- * drain, then sets baud rate, parity, flow control and echo
- * (0x1fffa). */
-void sci_reconfigure(void) {
+ * drain, then sets baud rate, parity, flow control and echo, as the
+ * SCI's I/O control function (0x1fffa).  sci_reconfigure is this, then
+ * no error. */
+static __attribute__((used, noipa)) void sci_reconfigure_settings(void) {
   /* How long it spins for the last frame to go, after the drain. */
   static const int32_t COMPLETE_SPINS = 5000;
   static const uint16_t INTERRUPTS_AND_RECEIVER =
@@ -171,6 +172,8 @@ void sci_reconfigure(void) {
   qsm.sccr1 |= INTERRUPTS_AND_RECEIVER | SCCR1_TE;
   sci.reconfiguring = 0;
 }
+
+CPU_IO_FUNCTION(sci_reconfigure, sci_reconfigure_settings);
 
 /* Writes a character to the SCI under its write lock, if it can take
  * it (0x201b0). */

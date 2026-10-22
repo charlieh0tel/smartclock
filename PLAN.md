@@ -1587,6 +1587,34 @@ view cannot drift apart.  The library, bottom up:
      `:DOWNload` are read in `restart.md`, "The installer"; the harness
      runs them only to their first flash write.  Counts unchanged:
      the primary's 1308 agree, 4 known; the installer's 155, 1 skipped.
+     Then the harness compares what its cases had not.  The registers
+     a function's convention keeps for its caller, D2 to D7 and A2 to
+     A6 for C and those the sidecar's `preserves` adds, are compared
+     after both copies return (`harness.preserved_registers`): three
+     hand-written functions did not keep what the image's do --
+     `float_raise` and its installer copy A0 and A1, for the soft-float
+     routines, and `duartb_reconfigure` and `sci_reconfigure`, I/O
+     control functions, which return no error in D7 -- and are now a
+     C body inside an asm wrapper (`cpu.h`'s `CPU_KEEPING_A0_A1` and
+     `CPU_IO_FUNCTION`); `gps_debug_status` clears its own saved A4's
+     low byte when a channel's text is empty, the firmware's, known
+     (`quirks.md`).  The SCPI parser's lookups are drawn from the whole
+     tree, not its root: a path, a child list and a keyword from any of
+     the 121 lists, `scpi_header_step` a case for each of the 147 nodes
+     with children, and the sessions a query below every list, so that
+     a node's child list planted wrong fails `scpi_header_step` and
+     `scpi_interpret`, and the installer's `installer_scpi_interpret`,
+     whose sessions had read the C's tree in both copies.  A pointer
+     into an object with a twin is the same only as its twin's, not as
+     an empty text.  A handler's choice parameter is in range, and the
+     installer's handlers get call records; the installer's sessions
+     end with its `"PRIMARY"`.  `console_task` and the tasks `spawn`
+     starts are task entries, and a function `spoo_run` is given runs
+     in the spool task's supervisor mode too: a function that a task in
+     user mode and code in supervisor mode both reach runs every other
+     case in each (225 of the primary's, 20 of the installer's).  The
+     primary's 1307 agree, 5 known; the installer's 155, 1 skipped;
+     about the same 2 minutes 15.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

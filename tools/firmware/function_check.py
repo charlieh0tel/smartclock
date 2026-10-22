@@ -19,11 +19,13 @@ the same pointers (UNDECLARED), so that a body reading an argument its
 prototype leaves out differs.  A function may start from states its
 zeroed RAM never reaches, drawn for each case, with routines it calls
 answered in their place and their calls compared (STATES); find no
-task by name (IDENT_FAILS); start in user mode, as a task, if it
-runs only in one (TASK_STATUS, task_context); end its endless loop at
-a count (COUNTED_LOOPS); and, for the stack report, find the running
-task's stacks (TASK_STACKS).  Both copies must leave the status register's system
-byte the same.
+task by name (IDENT_FAILS); start in user mode, as a task, if it runs
+in one, every case, or every other if supervisor code runs it too
+(TASK_STATUS, task_context); end its endless loop at a count
+(COUNTED_LOOPS); and, for the stack report, find the running task's
+stacks (TASK_STACKS).  Both copies must leave the status register's
+system byte the same, and the registers the function's convention
+keeps for its caller (harness.preserved_registers).
 
     DECOMPILED_CFLAGS='...' uv run tools/firmware/function_check.py \\
         third_party/firmware/decompiled/z3805a-3543b.c \\
@@ -64,6 +66,8 @@ from unicorn.m68k_const import UC_M68K_REG_A7, UC_M68K_REG_D0, UC_M68K_REG_PC
 from harness import (
     CASES,
     FIRST_ARGUMENT,
+    HANDLER_ENTRIES,
+    HANDLER_ENTRY_SIZE,
     MESSAGE_OFFSET,
     NULL_LONG,
     OVERLAY_SEPARATOR,
@@ -87,17 +91,21 @@ from harness import (
     fresh_ram,
     gcc_slots,
     give_twins,
+    header_text,
     image_labels,
     installer_profile,
     overlay,
     pointer_at,
+    preserved_registers,
     protect_code,
     ram_difference,
     rebuilt_machine,
     report,
+    registers_difference,
     reset,
     snapshot,
     stopped_outcome,
+    tree_steps,
     twin_arguments,
     twins,
 )
@@ -475,9 +483,11 @@ class ScpiSession:
     port's methods its table at the object's +4 (docs/firmware/
     structures.md, "The SCPI session"); the pair of trees, main and
     common, whose two pointers it passes; the arena's size, a segment
-    of which it takes from the kernel; and the console's line buffer and
+    of which it takes from the kernel; the console's line buffer and
     its two pointers, the next character and the line's end, which the
-    port reads from before it reads the console."""
+    port reads from before it reads the console; the language whose
+    :SYSTem:LANGuage ends the session, its handler's -60; and the lines
+    of its own, after SCPI_LINES."""
 
     port: int
     trees: tuple[int, int] | str
@@ -485,6 +495,8 @@ class ScpiSession:
     line: str
     next: str
     end: str
+    language: bytes
+    lines: tuple[bytes, ...]
 
 
 # The sessions' lines, each read whole as the console's one line, then
@@ -492,23 +504,46 @@ class ScpiSession:
 # console: the line starts at its buffer's second byte, the first a NUL,
 # which console_port_read (0x29bce) gives again for each empty read, so
 # that the input ends, -102, and the loop reads on.  Most end the
-# session as :SYSTem:LANGuage "PFORTH" does, its handler's -60, which
-# returns (0x29622); one runs on to the kernel call limit.  A common
-# query and a command, an error query, a bad header, a query with
-# parameters, a compound message with a relative header, a query whose
-# response queues and one in a message that errs part way.
+# session with :SYSTem:LANGuage, its handler's -60, which returns
+# (0x29622): "PFORTH" the primary's (0x30680) and "PRIMARY" the
+# installer's (installer::0x107f92), its session's language; one runs
+# on to the kernel call limit.  A common query and a command, an error
+# query, a bad header, a query with parameters, a compound message with
+# a relative header, a query whose response queues and one in a message
+# that errs part way.  Each session's own then: the primary's
+# "PRIMARY", which its handler takes and does nothing for, a query
+# whose handler fails, :LED:ALARm:MINor?'s undefined header
+# (scpi_led.c), and the messages after it, and :DIAGnostic:TEST? on a
+# choice; the installer's "PFORTH", an execution error, and its
+# :DIAGnostic:TEST? on a test and past the last.  And from the
+# session's tree, lines that reach every child list (tree_lines).
+# LANGUAGE in a line is its session's language; ENDING the message
+# that ends it.
+LANGUAGE = b"{language}"
+ENDING = b":SYST:LANG " + LANGUAGE + b"\n"
 SCPI_LINES = [
-    b'*IDN?\n:SYST:LANG "PFORTH"\n',
-    b':SYST:ERR?;*CLS\n:SYST:LANG "PFORTH"\n',
-    b':NOPE:HEADER 3\n:SYST:ERR?\n:SYST:LANG "PFORTH"\n',
-    b'*ESE 16;*ESE?;:STAT:OPER:ENAB 4;ENAB?\n:SYST:LANG "PFORTH"\n',
-    b':SYST:ERR?;:SYST:ERR?;*OPC?\n:SYST:LANG "PFORTH"\n',
-    b':SYST:LANG "PFORTH" junk\n:SYST:LANG "PFORTH"\n',
+    b"*IDN?\n" + ENDING,
+    b":SYST:ERR?;*CLS\n" + ENDING,
+    b":NOPE:HEADER 3\n:SYST:ERR?\n" + ENDING,
+    b"*ESE 16;*ESE?;:STAT:OPER:ENAB 4;ENAB?\n" + ENDING,
+    b":SYST:ERR?;:SYST:ERR?;*OPC?\n" + ENDING,
+    b":SYST:LANG " + LANGUAGE + b" junk\n" + ENDING,
     b"*IDN?;\n",
 ]
 SCPI_SESSIONS = {
     "scpi_interpret": ScpiSession(
-        CONSOLE_PORT, (SCPI_MAIN_TREE, SCPI_COMMON_LIST), 2000, "scpi_input_line", "scpi_input_next", "scpi_input_end"
+        CONSOLE_PORT,
+        (SCPI_MAIN_TREE, SCPI_COMMON_LIST),
+        2000,
+        "scpi_input_line",
+        "scpi_input_next",
+        "scpi_input_end",
+        b'"PFORTH"',
+        (
+            b':SYST:LANG "PRIMARY";:SYST:LANG?\n:SYST:ERR?\n' + ENDING,
+            b":LED:ALAR:MIN?;*IDN?\n:SYST:ERR?;:LED:ALAR:USER?\n:SYST:ERR?\n" + ENDING,
+            b":DIAG:TEST? EEPR;:DIAG:TEST:RES?\n:SYST:ERR?\n" + ENDING,
+        ),
     ),
     "installer_scpi_interpret": ScpiSession(
         0x1076D0,
@@ -517,8 +552,27 @@ SCPI_SESSIONS = {
         "installer_scpi_input_line",
         "installer_scpi_input_next",
         "installer_scpi_input_end",
+        b'"PRIMARY"',
+        (
+            b':SYST:LANG "PFORTH"\n:SYST:ERR?;:SYST:LANG?\n' + ENDING,
+            b":DIAG:TEST? 3\n:DIAG:TEST? 9\n:SYST:ERR?\n" + ENDING,
+        ),
     ),
 }
+# The lines that reach every child list of a session's tree below its
+# root: for each, the header of the shortest path to it and one of its
+# nodes, one with a query handler, at the node's +0x12, where it has
+# one, which a header resolved otherwise does not reach, the query, then
+# the error query, each a message of its own, whose
+# response the session writes, so that a header the C's tree resolves
+# otherwise shows in what it writes; short forms, and every
+# TREE_LONG_EVERY'th long, each line as many as the console's line
+# buffer holds (scpi_input_line, 256 bytes with its two NULs).
+TREE_QUERY = b"?\n:SYST:ERR?\n"
+QUERY_HANDLER = HANDLER_ENTRIES + HANDLER_ENTRY_SIZE
+TREE_LONG_EVERY = 3
+LINE_BUFFER = 256
+LINE_ROOM = LINE_BUFFER - 2
 # A session case's line's index, among its arguments; and the
 # positions of the loop's arguments a session gives.
 SCPI_LINE = "line"
@@ -526,12 +580,52 @@ SESSION_INPUT, SESSION_OUTPUT, SESSION_ARENA, SESSION_SIZE, SESSION_MAIN, SESSIO
 SESSION_UNREAD = (7, 8)
 
 
-def session_cases(function: "Function") -> list[tuple[str, int, dict]]:
+def tree_lines(m: Machine) -> list[bytes]:
+    """The lines that reach each child list of the machine's tree below
+    its root, each ended by ENDING."""
+    longest = ENDING.replace(LANGUAGE, max((s.language for s in SCPI_SESSIONS.values()), key=len))
+    messages = []
+    for i, tree in enumerate(t for t in m.tree if t.path):
+        queried = [node for node in tree.nodes if pointer_at(m, node + QUERY_HANDLER)] or tree.nodes
+        node = queried[i % len(queried)]
+        messages.append(header_text(m, tree.path + (node,), i % TREE_LONG_EVERY == 0) + TREE_QUERY)
+    lines, line = [], b""
+    for message in messages:
+        if line and len(line) + len(message) + len(longest) > LINE_ROOM:
+            lines.append(line + ENDING)
+            line = b""
+        line += message
+    return lines + ([line + ENDING] if line else [])
+
+
+def session_lines(m: Machine, function: "Function") -> list[bytes]:
+    """A session's lines: SCPI_LINES, its own and its tree's, in each
+    its language for LANGUAGE."""
+    session = SCPI_SESSIONS[function.name]
+    return [line.replace(LANGUAGE, session.language) for line in SCPI_LINES + list(session.lines) + tree_lines(m)]
+
+
+def session_cases(m: Machine, function: "Function") -> list[tuple[str, int, dict]]:
     """The parser's loop's session cases, as cases gives them, each with
     its line's index under SCPI_LINE."""
     if function.name not in SCPI_SESSIONS:
         return []
-    return [(f"session case {i}", i % CASES, {SCPI_LINE: i}) for i in range(len(SCPI_LINES))]
+    return [(f"session case {i}", i % CASES, {SCPI_LINE: i}) for i in range(len(session_lines(m, function)))]
+
+
+# The routines that step into a node's children, which run a case for
+# every node of their profile's tree that has them (harness.tree_steps),
+# by the index of its step among their arguments.
+STEPPERS = {"scpi_header_step", "installer_scpi_header_step"}
+TREE_STEP = "step"
+
+
+def step_cases(m: Machine, function: "Function") -> list[tuple[str, int, dict]]:
+    """A stepper's cases, as cases gives them, each with its step's index
+    under TREE_STEP."""
+    if function.name not in STEPPERS:
+        return []
+    return [(f"step case {i}", i % CASES, {TREE_STEP: i}) for i in range(len(tree_steps(m)))]
 
 
 def scpi_session(m: Machine, function: "Function", linked_symbols: dict[str, int], line: int) -> dict[int, int]:
@@ -539,15 +633,16 @@ def scpi_session(m: Machine, function: "Function", linked_symbols: dict[str, int
     the loop's arguments, by position, the status model's left as the
     generated case's."""
     session = SCPI_SESSIONS[function.name]
-    text = SCPI_LINES[line]
+    text = session_lines(m, function)[line]
     buffer = linked_symbols[session.line]
     m.uc.mem_write(buffer, b"\0" + text + b"\0")
     m.uc.mem_write(linked_symbols[session.next], struct.pack(">I", buffer + 1))
     m.uc.mem_write(linked_symbols[session.end], struct.pack(">I", buffer + 1 + len(text)))
     trees = session.trees if isinstance(session.trees, tuple) else None
     if trees is None:
-        at = linked_symbols[session.trees]
-        # a scpi_tree_pair: the common list first, then the main tree
+        # the image's scpi_tree_pair, the C's twin, gcc's copy given the
+        # C's lists: the common list first, then the main tree
+        at = m.twins.image_address(linked_symbols[session.trees])
         trees = (pointer_at(m, at + POINTER_SIZE), pointer_at(m, at))
     return {
         SESSION_INPUT: session.port,
@@ -653,7 +748,8 @@ LOG_EVENT = Hook("log_event")
 PLL_HOOKS = (COUNTER_READ, LOG_EVENT)
 PLL_CASES = 2000
 # The last functions' states: for the variadic (VARIADIC_CASES),
-# whether debug output is on, which the debug routines test first;
+# whether debug output is on, which the debug routines test first, and
+# gps_debug_status's debug_sprintf (EMPTY_PART);
 # float_raise's trap enables, float_control's high byte's bits 1 to 5 by
 # cause and its low byte's bit 7 (0x5eae2 to 0x5ec70), none, one and
 # all; and the event log's cursor, which log_append (0x31c42) writes
@@ -669,7 +765,10 @@ LOG_CURSORS = (0x101D52, 0x101D66, 0x101D7A)
 LOCK_EXCHANGES = (0x6B000010, 0x6B000010, 0)
 SCI_FLOWS = (0, 0x20, 0x80, 0xA0)
 STRAGGLER_STATES = {
-    **{name: States(presets=(DEBUG_ENABLED,)) for name in ("debug_printf", "debug_printf_polled", "debug_sprintf")},
+    **{
+        name: States(presets=(DEBUG_ENABLED,))
+        for name in ("debug_printf", "debug_printf_polled", "debug_sprintf", "gps_debug_status")
+    },
     "log_write": States(presets=(Preset("log_cursor", LOG_CURSORS), Preset("log_mutex.exchange", LOCK_EXCHANGES))),
     "sci_transmit_allowed": States(presets=(Preset("sci.flow", SCI_FLOWS),)),
     "float_raise": States(presets=(Preset("float_control", FLOAT_CONTROLS),)),
@@ -763,21 +862,34 @@ COUNTED_LOOPS = {"root_task": ("idle_loops", IDLE_LOOPS)}
 # reads the task and its entry and no mode (kernel_start, 0x14ea0).
 # root_task enters supervisor mode with trap #7 to enable the periodic
 # interrupt and moves its status register back (0x13082 to 0x13098).
-# Which functions run only in a task is found from the export's calls
-# (task_context).  A case whose two copies both stop at a privilege
-# violation, an instruction a caller in supervisor mode runs it for, is
-# run again in supervisor mode.
+# Which functions run in a task in user mode is found from the export's
+# calls (task_context): one that only such a task reaches runs its cases
+# so, and one that code in supervisor mode reaches too runs every other
+# case so, the first among them, and the rest in supervisor mode.  A
+# case whose two copies both stop at a privilege violation, an
+# instruction a caller in supervisor mode runs it for, is run again in
+# supervisor mode.
 TASK_STATUS = 0
 PRIVILEGE_VIOLATION = 8
 # The task entries: what kernel_init starts as ROOT, the configuration's
-# root_entry (psos_configuration, +0x2c), and what a task's start,
-# service 2, is given (psos_start, 0x16fae, and the installer's copy).
-# A task that opens with service 33 runs on in supervisor mode, as
-# klok_task (0x10b1e), spoo_task (0x20e5e) and the installer's spoo_task
-# do, so what only it reaches is not task code in user mode.
+# root_entry (psos_configuration, +0x2c), what a task's start, service
+# 2, is given (psos_start, 0x16fae, and the installer's copy), and the
+# entries the pForth code starts its tasks at with service 2 in line,
+# which C cannot say, each in user mode as every task starts:
+# console_task (0x1aedc), which console_task_create starts (A1 from
+# 0x1aebe, the trap at 0x1aec6), and forth_spawned_task (0x19f42), at
+# which spawn, forth_spawn, starts a task (A1 from 0x1a00a, service 2
+# through 0x19ed0 at 0x1a012).  A task that opens with service 33 runs
+# on in supervisor mode, as klok_task (0x10b1e), spoo_task (0x20e5e) and
+# the installer's spoo_task do; so does a function spoo_run (0x20d66)
+# is given, which it calls itself, in its caller's mode, before the
+# spool task starts, and after sends to the spool task, which calls it
+# in supervisor mode.
 ROOT_ENTRY = "((psos_configuration *)0)->root_entry"
 TASK_START = re.compile(r"\b(?:installer_)?psos_start\s*\(\s*\w+\s*,\s*(\w+)\s*\)")
+FORTH_TASK_ENTRIES = {"console_task", "forth_spawned_task"}
 SUPERVISOR_SERVICES = {"psos_supervisor", "installer_psos_supervisor"}
+SPOOLED = re.compile(r"\b(?:installer_)?spoo_run\s*\(\s*(?:\([^()]*\)\s*)?(\w+)")
 # A function's block in the export, from the line giving its address to
 # the next; a direct call in its C, the decompiler's reading of the
 # image's (kept for a function written by hand), or in its assembly; a
@@ -1019,9 +1131,19 @@ D5_SHARE = Known(
     "os_report_process prints D5, which os_report_processes leaves holding the address of \"%s\" (0x16768)",
     r"^effect \d+ trap #4 service 4 ",
 )
+# And gps_debug_status, which cuts the last comma from its last
+# channel's text by clearing the byte before the text's end (0x49384):
+# with debug output off, debug_sprintf leaves the text empty, and the
+# byte cleared is the one below the buffer, the lowest of the A4 its
+# movem saved (0x49214), which it returns with.
+EMPTY_PART = Known(
+    "gps_debug_status clears the byte below an empty part, its saved A4's lowest (0x49384)",
+    r"^register A4 5a5a000c, image's 5a5a0000$",
+)
 KNOWN = {
     **{name: D5_SHARE for name in ("os_process_report", "ps_word", "scpi_query_DIAGnostic_OS_PROCess")},
     "log_erase": Known("log_erase checksums a pointer's bytes", r"^RAM differs from 101d50$"),
+    "gps_debug_status": EMPTY_PART,
 }
 
 
@@ -1029,7 +1151,9 @@ KNOWN = {
 class Function:
     """A C function: its prototype's parameter and result types, each
     parameter's offset in the original's stack, its parameters' names,
-    and whether a variable list follows them (VARIADIC_CASES)."""
+    whether a variable list follows them (VARIADIC_CASES), and the
+    registers its convention keeps for its caller
+    (harness.preserved_registers)."""
 
     name: str
     result: str
@@ -1037,6 +1161,7 @@ class Function:
     offsets: list[int]
     names: list[str]
     variadic: bool = False
+    preserves: tuple[str, ...] = ()
 
 
 def functions(c: str, types: Types, conventions: dict, image: str | None) -> tuple[list[Function], int]:
@@ -1066,7 +1191,8 @@ def functions(c: str, types: Types, conventions: dict, image: str | None) -> tup
             unrunnable += 1
             continue
         names = [re.search(r"\w*$", p).group() for p in declared]
-        found.append(Function(name, result, kinds, [item["offset"] for item in stack], names, variadic))
+        offsets = [item["offset"] for item in stack]
+        found.append(Function(name, result, kinds, offsets, names, variadic, preserved_registers(convention)))
     return found, unrunnable
 
 
@@ -1079,15 +1205,19 @@ def variadic_layable(stack: list[dict]) -> bool:
     ]
 
 
-def task_context(c: str, conventions: dict, roots: set[str]) -> set[str]:
-    """The functions that run only in a task in user mode: those a task
-    entry, one of roots, an entry psos_start is given, or an SCPI handler
-    reaches by direct calls, and no other function nobody calls (an
-    interrupt handler, the reset, a console word, a routine reached only
-    through a table) and no task entry that enters supervisor mode for
-    good (SUPERVISOR_SERVICES) reaches."""
+def task_context(c: str, conventions: dict, roots: set[str]) -> tuple[set[str], set[str]]:
+    """The functions that run in a task in user mode, those a task entry,
+    one of roots, an entry psos_start is given, one of
+    FORTH_TASK_ENTRIES, or an SCPI handler reaches by direct calls, as
+    two sets: those that only such a task reaches, and those that a
+    function nobody calls (an interrupt handler, the reset, a console
+    word, a routine reached only through a table), a task entry that
+    enters supervisor mode for good (SUPERVISOR_SERVICES) or a function
+    the spool task runs (SPOOLED) reaches too.  A function spoo_run is
+    given is its caller's callee as well."""
     names = {convention["address"]: name for name, convention in conventions.items()}
     calls: dict[str, set[str]] = {name: set() for name in conventions}
+    spooled: set[str] = set()
     blocks = EXPORT_BLOCK.split(c)
     for address, block in zip(blocks[1::2], blocks[2::2]):
         caller = names.get(address)
@@ -1096,9 +1226,11 @@ def task_context(c: str, conventions: dict, roots: set[str]) -> set[str]:
         text = COMMENT.sub("", block)
         callees = set(C_CALL.findall(text)) | set(ASSEMBLY_CALL.findall(text))
         callees |= {target for _, target in THUNK.findall(block)}
+        spooled |= set(SPOOLED.findall(text)) & calls.keys()
+        callees |= set(SPOOLED.findall(text))
         calls[caller] |= {name for name in callees if name in calls and name != caller}
     handlers = {name for _, name, parameters in PROTOTYPE.findall(c) if SCPI_HANDLER.match(parameters)}
-    entries = (roots | set(TASK_START.findall(c)) | handlers) & calls.keys()
+    entries = (roots | set(TASK_START.findall(c)) | FORTH_TASK_ENTRIES | handlers) & calls.keys()
     called = set().union(*calls.values())
 
     def reached(starts: set[str]) -> set[str]:
@@ -1110,7 +1242,9 @@ def task_context(c: str, conventions: dict, roots: set[str]) -> set[str]:
         return found
 
     supervisor = {entry for entry in entries if calls[entry] & SUPERVISOR_SERVICES}
-    return reached(entries - supervisor) - reached((calls.keys() - called - entries) | supervisor)
+    user = reached(entries - supervisor)
+    both = user & reached((calls.keys() - called - entries) | supervisor | spooled)
+    return user - both, both
 
 
 def root_function(m: Machine, located: dict[str, tuple[int, int]], conventions: dict) -> str | None:
@@ -1229,7 +1363,7 @@ def given(m: Machine, types: Types, kind: str, value: int | float | bytes) -> by
     return (value & ((1 << 8 * size) - 1)).to_bytes(size, "big")
 
 
-def cases(function: Function) -> list[tuple[str, int, dict[int, int | float | bytes]]]:
+def cases(m: Machine, function: Function) -> list[tuple[str, int, dict[int, int | float | bytes]]]:
     """Each case's description, the generated case it starts from and the
     arguments GIVEN_CASES gives it."""
     own = GIVEN_CASES.get(function.name, [])
@@ -1238,7 +1372,8 @@ def cases(function: Function) -> list[tuple[str, int, dict[int, int | float | by
         [(f"case {case}", case, {}) for case in range(CASES)]
         + [(f"given case {i}", i % CASES, values) for i, values in enumerate(own)]
         + variadic_cases(function)
-        + session_cases(function)
+        + session_cases(m, function)
+        + step_cases(m, function)
         + [(f"state case {i}", i % CASES, {}) for i in range(states.cases)]
     )
 
@@ -1247,12 +1382,14 @@ def cases(function: Function) -> list[tuple[str, int, dict[int, int | float | by
 class Context:
     """What a check finds beyond the function: the link's symbols, each
     Preset target's address and size, the runnable functions, by name,
-    for a Hook's prototype, and the functions that run only in a task."""
+    for a Hook's prototype, and the functions that run in a task in user
+    mode, only so and in both modes (task_context)."""
 
     linked_symbols: dict[str, int]
     located: dict[str, tuple[int, int]]
     by_name: dict[str, Function]
     in_task: set[str]
+    both_modes: set[str]
 
 
 def install_hooks(m: Machine, types: Types, states: States, context: Context, drawn: list[Drawn]) -> list[int]:
@@ -1288,7 +1425,6 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
     handles = install_hooks(m, types, states, context, drawn)
     counter = COUNTED_LOOPS.get(function.name)
     m.counter = (linked_symbols[counter[0]], counter[1]) if counter else None
-    m.starting_status = TASK_STATUS if function.name in context.in_task else SUPERVISOR
     try:
         yield from check_cases(m, types, function, image, rebuilt, context, states, drawn)
     finally:
@@ -1335,10 +1471,13 @@ def check_cases(
     """check's cases, with its hooks in place, each drawing its States
     into drawn."""
     linked_symbols = context.linked_symbols
-    for description, case, values_given in cases(function):
+    for ordinal, (description, case, values_given) in enumerate(cases(m, function)):
+        in_task = function.name in context.in_task or function.name in context.both_modes and ordinal % 2 == 0
+        m.starting_status = TASK_STATUS if in_task else SUPERVISOR
         values_given = dict(values_given)
         listed = values_given.pop(VARIADIC, b"")
         line = values_given.pop(SCPI_LINE, None)
+        step = values_given.pop(TREE_STEP, None)
         drawn[:] = [draw(states, context.located, function.name, description)]
         m.ident_fails = case in IDENT_FAILS.get(function.name, ())
         m.frame_fill = None
@@ -1350,7 +1489,8 @@ def check_cases(
             task_stacks(m, context.located, case)
         for address, contents in drawn[0].presets.items():
             m.uc.mem_write(address, contents)
-        values = arguments(m, types, function.parameters, case, function.names, function.name)
+        target = None if step is None else tree_steps(m)[step]
+        values = arguments(m, types, function.parameters, case, function.names, function.name, target)
         for position, count in IN_RANGE.get(function.name, {}).items():
             values[position] = given(m, types, function.parameters[position], case % count)
         for position, value in values_given.items():
@@ -1378,6 +1518,9 @@ def check_cases(
             differences.append(f"result {got:x}, image's {wanted:x}")
         if original.status & SYSTEM_BYTE != gcc.status & SYSTEM_BYTE:
             differences.append(f"status register {gcc.status:04x}, image's {original.status:04x}")
+        registers_differ = registers_difference(m, original, gcc, function.preserves)
+        if registers_differ:
+            differences.append(registers_differ)
         ram_differs = ram_difference(m, original, gcc)
         if ram_differs:
             differences.append(ram_differs)
@@ -1424,8 +1567,9 @@ def main() -> int:
         )
         protect_code(machine)
         runnable, unrunnable = functions(c, types, conventions, profile.overlay)
-        in_task = task_context(c, conventions, {root_function(machine, located, conventions)})
-        context = Context(linked_symbols, located, {function.name: function for function in runnable}, in_task)
+        in_task, both_modes = task_context(c, conventions, {root_function(machine, located, conventions)})
+        by_name = {function.name: function for function in runnable}
+        context = Context(linked_symbols, located, by_name, in_task, both_modes)
         counts = {"agreeing": 0, "skipped": 0, "known": 0, "failed": 0}
         for function in runnable:
             image = linked_symbols.get(IMAGE_PREFIX + function.name)

@@ -55,6 +55,13 @@ state.  Each is by the routine and the address that shows it.
   1024 or more over its saved frame pointer and return address.  The C
   copies it the same way, into a 512-byte array; the harness's texts
   are short.
+- **`gps_debug_status` (`0x49210`)** cuts the last comma from its last
+  channel's text by clearing the byte before the text's end
+  (`0x49384`); with debug output off `debug_sprintf` leaves the text
+  empty, and the byte cleared is the one below the buffer, the lowest
+  of the A4 its `movem` saved (`0x49214`), which it then returns to
+  `oncore_position_message` (`0x4f662`).  The C clears `part[-1]`,
+  which gcc's frame puts elsewhere (`KNOWN`).
 
 ## Reads of what nothing set
 
@@ -192,6 +199,19 @@ function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.
   `enter_supervisor` and `installer_enter_supervisor` come after gcc's
   copy of the narrow argument, which sets them, so that the low byte of
   the result can differ.
+- **`float_raise` (`0x5e93c`) and its installer copy** keep A0 and A1
+  for their callers (`movem` at `0x5e940`), which the m68k C
+  convention does not, for the soft-float routines that hold a value
+  in them across the call.  The C is the body, and `cpu.h`'s
+  `CPU_KEEPING_A0_A1` defines `float_raise` as a wrapper of it that
+  saves and restores them, and agrees.
+- **`duartb_reconfigure` (`0x1dc7e`) and `sci_reconfigure`
+  (`0x1fffa`)**, the I/O control functions of DUART channel B and the
+  SCI in the kernel's I/O table (`0x5173a`, `0x517a6`), return no error
+  in D7 (`0x1dd8a`, `0x2014a`), which `kernel_dispatch_io` returns to
+  the trap's caller (`0x14c64`), where the C convention keeps D7.  The C
+  is the body, and `cpu.h`'s `CPU_IO_FUNCTION` defines each as a
+  wrapper of it that clears D7 after, and agrees.
 - **`setjmp` and `longjmp` (`0x5112a`, `0x51100`)** save and restore
   their caller's registers, frame and stack, which C has no names for:
   the C is the image's instructions in an asm statement after gcc's

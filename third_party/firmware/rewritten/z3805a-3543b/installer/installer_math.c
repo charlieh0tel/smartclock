@@ -6,8 +6,10 @@
 
 /* Raises a floating-point exception, as float_raise does, on the
  * installer's float_status, float_control and errno
- * (installer::0x108ca8). */
-uint64_t installer_float_raise(uint32_t code, ...) {
+ * (installer::0x108ca8).  installer_float_raise is this, keeping A0 and
+ * A1 for its caller, as float_raise does. */
+static __attribute__((used, noipa)) uint64_t
+installer_float_raise_kept(uint32_t code, ...) {
   const uint32_t callers_d1 = CPU_CALLERS_REGISTER(uint32_t, "d1");
   uint32_t operand[LIBC_RAISE_OPERANDS];
   va_list list;
@@ -26,6 +28,9 @@ uint64_t installer_float_raise(uint32_t code, ...) {
   }
   return (uint64_t)raised.high << LIBC_WORD_BITS | raised.low;
 }
+
+CPU_KEEPING_A0_A1(installer_float_raise, installer_float_raise_kept,
+                  LIBC_RAISE_ARGUMENTS);
 
 /* Builds float_raise's report, "fp <cause>: <routine>", in
  * installer_float_exception_message and stops with

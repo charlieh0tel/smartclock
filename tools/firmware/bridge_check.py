@@ -37,6 +37,7 @@ import tempfile
 from dataclasses import dataclass
 
 from harness import (
+    CALLEE_SAVED,
     CASES,
     PRIMARY,
     REGISTERS,
@@ -62,8 +63,6 @@ from rebuild_link import link, symbols
 
 # The sidecar's convention of a routine a trap or interrupt enters.
 EXCEPTION = "exception"
-# The registers gcc's callee must keep.
-CALLEE_SAVED = ["D2", "D3", "D4", "D5", "D6", "D7", "A2", "A3", "A4", "A5", "A6"]
 
 
 @dataclass

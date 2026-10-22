@@ -630,6 +630,8 @@ static const int32_t LIBC_EDOM = 33;
  * in three longs and a float's in two; and, for the math library, the
  * address its report gives, after those.  An array size, so #define. */
 #define LIBC_RAISE_OPERANDS 4
+/* And its stack arguments, the code first, as many as it reads. */
+#define LIBC_RAISE_ARGUMENTS (1 + LIBC_RAISE_OPERANDS)
 
 /* What float_raise's body decides: the double it returns, its bits in
  * D0:D1, high first, and whether it reports instead, with the address

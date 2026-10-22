@@ -643,8 +643,10 @@ double pow(double x, double y) {
  * math routines: records its cause in float_status and returns the
  * double to give, or, where float_control enables the cause, reports it
  * (0x5e93c).  Variadic in name: whatever the code, it reads the
- * LIBC_RAISE_OPERANDS longs after it, and D1 as its caller left it. */
-uint64_t float_raise(uint32_t code, ...) {
+ * LIBC_RAISE_OPERANDS longs after it, and D1 as its caller left it.
+ * float_raise is this, keeping A0 and A1 for its caller. */
+static __attribute__((used, noipa)) uint64_t
+libc_float_raise_kept(uint32_t code, ...) {
   const uint32_t callers_d1 = CPU_CALLERS_REGISTER(uint32_t, "d1");
   uint32_t operand[LIBC_RAISE_OPERANDS];
   va_list list;
@@ -662,6 +664,8 @@ uint64_t float_raise(uint32_t code, ...) {
   }
   return (uint64_t)raised.high << LIBC_WORD_BITS | raised.low;
 }
+
+CPU_KEEPING_A0_A1(float_raise, libc_float_raise_kept, LIBC_RAISE_ARGUMENTS);
 
 /* Builds float_raise's report, "fp <cause>: <routine>", in
  * float_exception_message and stops with fatal_error_with_code

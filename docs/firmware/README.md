@@ -1010,8 +1010,14 @@ where it counts to a count of the function's (`COUNTED_LOOPS`):
 loop counting by more passes it.  Two calls that end the same way are
 compared as if they had returned, but for their result, and both
 leave the status register's system byte, its supervisor bit and
-interrupt mask, the same.  A function that runs only in a task starts
-as a task does, in user mode with its interrupts unmasked
+interrupt mask, the same.  Two calls that return leave alike the
+registers the function's convention keeps for its caller
+(`harness.preserved_registers`): a C function's, the m68k C
+convention's D2 to D7 and A2 to A6, and those its sidecar row's
+`preserves` adds, `float_raise`'s A0 and A1, which its `movem` saves
+(`0x5e940`) for the soft-float routines that call it; another
+convention's only those its `preserves` names, or every one for
+`all`.  A function that runs in a task starts as a task does, in user mode with its interrupts unmasked
 (`TASK_STATUS`), its exceptions taken on a supervisor stack of the
 harness's, so that its `trap #7` and move back of its status register
 show (`root_task`'s, `0x13082` to `0x13098`).  Every task starts so:
@@ -1021,14 +1027,23 @@ since it takes no mode (`kernel_start`, `0x14ea0`, reads the task and
 its entry); only IDLE's is set, to supervisor mode (`0x15eb4`).  Which
 functions those are the export's direct calls give (`task_context`):
 those reached from a task's entry -- the configuration's `root_entry`,
-`root_task`, each entry `psos_start` is given, and each SCPI handler,
-which the engine calls through the tree in the SCPI task -- and from no
-other function that nothing calls, an interrupt handler, the reset, a
-console word or a routine reached only through a table, nor from a task
-that opens with service 33 and runs on in supervisor mode, `klok_task`
-(`0x10b1e`) and `spoo_task` (`0x20e5e`) and the installer's
-`spoo_task`; of the functions run, 610 of the primary's and 40 of the
-installer's.  The image refers to a handler only from its node's setter
+`root_task`, each entry `psos_start` is given, the two the pForth code
+starts with service 2 in line, `console_task` (`0x1aedc`, from
+`console_task_create`'s trap at `0x1aec6`) and `forth_spawned_task`
+(`0x19f42`, from `spawn`'s at `0x1a012`), and each SCPI handler, which
+the engine calls through the tree in the SCPI task.  One that nothing
+else reaches runs every case in user mode; one that code in supervisor
+mode may reach too runs every other case in user mode and the rest in
+supervisor mode: a function that nothing calls, an interrupt handler,
+the reset, a console word or a routine reached only through a table, a
+task that opens with service 33 and runs on in supervisor mode,
+`klok_task` (`0x10b1e`) and `spoo_task` (`0x20e5e`) and the
+installer's `spoo_task`, and a function `spoo_run` (`0x20d66`) is
+given, which it calls in its caller's mode before the spool task
+starts and sends to the spool task after (`console_init`, from
+`root_task` and spooled from `scpi_task`).  Of the functions run, 606
+of the primary's and 59 of the installer's run in user mode alone, and
+225 and 20 in both.  The image refers to a handler only from its node's setter
 or query slot, 499 slots in 459 nodes, which only `scpi_call_handler`
 (`0x29642`) calls through, from `scpi_interpret`, from `scpi_task`: no
 console word, spooled request or timer reaches one.  A case of one whose copies both stop at a
@@ -1064,14 +1079,29 @@ the EEPROM, is filled for each call, compared after it as RAM is, and
 holds no code, so that a jump into either faults.  Some parameters are
 given the image's own object their callers pass: by its name, an SCPI
 formatter's `output` and the lexer's `input`, the console port's
-object (`0x29e18`), and a header `path`, a buffer set back to the main
-tree's root list (`0x53034`), as `scpi_path_reset` does; by its type, a
-`scpi_keyword *` token, by the case a keyword of the main tree's root,
-short or long, of `:SOURce`, which the root's default child reaches, or
-of neither, so that a lookup finds a node, directly or through the
-default, or none, and a generated tree that differs from ROM's shows
-(the header resolvers' query, which indexes a node's two handlers, is
-in range, 0 or 1); and by its
+object (`0x29e18`), and a header `path`, a buffer set back to a list
+of the tree, as `scpi_path_reset` does, and a `scpi_child_list *`
+that list; and a header's `keyword`, a `scpi_keyword *`, one looked
+up in it: the list and the keyword drawn from the profile's tree as
+the image holds it, every child list from the root down
+(`harness.tree_lists`), by the function's name and the case
+(`harness.header_target`), the keyword one of the list's nodes', short
+or long, one of the list its default child holds, which a lookup
+reaches through the default, or of none, so that a lookup finds a
+node, directly or through the default, or none, below the root as
+much as at it, and a generated tree that differs from ROM's shows (the
+header resolvers' query, which indexes a node's two handlers, is in
+range, 0 or 1).  `scpi_header_step`, which steps into a node's
+children, and the installer's copy run a case more for every node of
+their tree that has children, its list and its keyword
+(`harness.tree_steps`, `STEPPERS`), so that each node's child list
+pointer is read: 147 in the primary's tree and 2 in the installer's.
+A parameter's token, a `scpi_keyword *` named otherwise, is by the
+case a keyword of the main tree's root, short or long, of `:SOURce`,
+or of neither.  A pointer into an object with a twin is the same only
+as one to its twin's place, never as a literal, so that a list or node
+of the C's that is not the twin of the image's differs, where both
+start with a NUL, an empty text.  And by its
 type, `status_object`'s model, one of its registers by the case, its
 queue for a `status_error_queue *`, `aging_curve` for an
 `aging_curve_state *`, `status_screen_snapshot` for a
@@ -1087,6 +1117,13 @@ indexes of the `:STATus` queries (`:OPERation:HARDware` is 2 and 6);
 and its record holds its node, its index, 0 for the setter or 1 for
 the query, an arena, the parameters, the response, the console port as
 input and output and the status model, as `scpi_task` passes them.
+After the path's words, a parameter the node's handler entry takes
+from a choice list holds its kind word, its converter's index, and an
+index into the list's keywords in range, by the case, as
+`scpi_parse_choice` (`0x26460`) gives it, `:DIAGnostic:TEST?`'s test
+among them; and the installer's `:DIAGnostic:TEST?` one of its five
+tests (`HANDLER_VALUES`).  The installer's handlers get such a record
+too, from its tree, its console port and its status model.
 The parser's own routines get such a record for
 `:STATus:OPERation:HARDware:ENABle?` by the names `call`, `items` (its
 node's response items, for `scpi_format_response`), `response` (the
@@ -1145,10 +1182,20 @@ and not, and underflows' shift counts and mantissas that round, with
 (`SCPI_SESSIONS`): the console port as its input and output, an arena,
 the trees, and a line of messages in the console's line buffer, which
 the port reads before an empty read of the console, so that the input
-ends; most end the session with `:SYSTem:LANGuage "PFORTH"`, whose
-handler returns, and the rest run to the kernel call limit.  The
-installer's handlers never end a session, so its sessions all run to
-the limit, compared up to there.
+ends; most end the session with `:SYSTem:LANGuage`, whose handler
+returns, `"PFORTH"` for the primary and `"PRIMARY"` for the installer
+(`installer::0x107f92`), and one runs to the kernel call limit.  Each
+session has lines of its own, the primary's `"PRIMARY"`, which does
+nothing, a query whose handler fails, `:LED:ALARm:MINor?`, and what
+follows it, and `:DIAGnostic:TEST?`, the installer's `"PFORTH"`, an
+execution error, and its `:DIAGnostic:TEST?` in range and out; and
+lines from its tree, a query of a node of every child list below the
+root, one with a query handler where the list has one, each by the
+shortest header that reaches it, short forms and every third long,
+each followed by `:SYSTem:ERRor?`, each a message of its own, so that
+a header the C's tree resolves otherwise shows in what the session
+writes (`tree_lines`).  The installer's tree pair is the image's, the
+C's twin, gcc's copy given the C's.
 And the stack between and above the arguments where the original reads
 them holds the same pointers into the pointees in both calls, the
 seventh case's fill, so that a function whose prototype leaves out an
@@ -1196,7 +1243,8 @@ the unpacked image is a place literals lie, as ROM is, and is kept
 read-only: Unicorn protects whole 4 KB pages, and the image shares its
 first and last with the vectors and its data, so a write there is
 undone and ends the call as one to ROM does.  The primary's other objects,
-the console port to the SCPI handlers' records, are not given.
+from `aging_curve` to the kernel's exchanges, are not given; an SCPI
+handler's record is, from the installer's tree.
 
 In the Z3805A 3543B image this gives 1813 functions, and every one but
 the ten thunks decompiles.  137 switches are recovered; `0x24ff2` and `0x25140`, a

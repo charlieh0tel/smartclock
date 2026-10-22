@@ -30,6 +30,7 @@ the instructions either has alone (PLAN.md, "A rebuild that runs").
 import bisect
 import re
 import struct
+import zlib
 from dataclasses import dataclass
 
 from unicorn import (
@@ -88,6 +89,17 @@ REGISTERS = {
     "A5": UC_M68K_REG_A5,
     "A6": UC_M68K_REG_A6,
 }
+# The registers the m68k C convention has a callee keep, which the
+# original's compiler and gcc both save where a function uses them; a
+# sidecar convention's preserves names others a routine keeps too
+# (float_raise's A0 and A1, which its movem at 0x5e940 saves for the
+# soft-float routines that call it), or, as PRESERVES_ALL, every one.
+# A routine of another convention keeps only those its preserves
+# names.  An unknown convention is a C function's the decompiler laid
+# out.
+CALLEE_SAVED = ("D2", "D3", "D4", "D5", "D6", "D7", "A2", "A3", "A4", "A5", "A6")
+C_CONVENTIONS = {"c", "unknown"}
+PRESERVES_ALL = "all"
 # The status register a call starts with: supervisor, interrupts masked;
 # and its supervisor bit.
 SUPERVISOR = 0x2700
@@ -643,19 +655,23 @@ CONSOLE_PORT = 0x29E18
 OUTPUT = "output"
 INPUT = "input"
 # And an SCPI header path, a fresh buffer, as scpi_path_reset (0x27efe)
-# sets one back: the long at +0 the main tree's root list,
-# scpi_main_tree (0x53034), which scpi_interpret is given, and the
-# word at +4, the suffixes it holds, 0 (docs/scpi/README.md).
+# sets one back: the long at +0 a list of the tree, the main tree's root
+# list, scpi_main_tree (0x53034), which scpi_interpret is given, or, for
+# a header's lookup, the case's (header_target), and the word at +4, the
+# suffixes it holds, 0 (docs/scpi/README.md); and a child list, the
+# case's.
 PATH = "path"
+CHILD_LIST = "scpi_child_list *"
 SCPI_MAIN_TREE = 0x53034
 RESET_PATH_SUFFIXES = struct.pack(">H", 0)
 RESET_PATH_LIST = 0
 # And a keyword token, scpi_keyword: its length at +0 and its text from
-# +2 (smartclock.h), by the case one of KEYWORDS: of the main tree's
-# root list, short and long, of :SOURce's, which the root's default
-# child reaches, and of neither, so that a lookup from the root finds a
-# node directly, through the default, or none.
+# +2 (smartclock.h).  A header's, a lookup's keyword, the case's
+# (header_target); a parameter's, a token, by the case one of KEYWORDS:
+# of the main tree's root list, short and long, of :SOURce's, which the
+# root's default child reaches, and of neither.
 KEYWORD = "scpi_keyword *"
+HEADER_KEYWORD = "keyword"
 KEYWORDS = [b"SYST", b"STATUS", b"PTIM", b"GPSYSTEM", b"DIAG", b"OUTP", b"CALA", b"NONE"]
 KEYWORD_LENGTH = struct.Struct(">h")
 # And by its type: the status model status_init builds (INITIALIZERS),
@@ -703,8 +719,31 @@ DESCRIPTOR_STEPS = 0x28
 # its child list at +4 and its response's items at +0x1c; a child list's
 # count is at +2, its nodes' pointers from +6 (docs/scpi/README.md).  An
 # arena, as arena_init (0x29770) makes one of a buffer, holds its next
-# free byte at +0, from +8, and its last at +4.
-HANDLER = re.compile(r"scpi_(query|set)_(\w+)$")
+# free byte at +0, from +8, and its last at +4.  The parsed parameters
+# are the handler's in order, from its entry's list at +4, each linked
+# at +0 to the next and its descriptor at +4 (smartclock.h,
+# scpi_parameter), as scpi_parameter_match (0x278f4) lays them: a kind
+# word, the index of the descriptor's converter at +0xc that took it,
+# then the value, as many bytes as the descriptor's +0 says.  A choice's
+# value, a word, an index into the keywords of the choice list at the
+# descriptor's +8, to a NULL, is in range, by the case, as the parser
+# gives it (scpi_parse_choice, 0x26460): every handler's choices, of
+# which :DIAGnostic:TEST?'s picks its test; so too, by HANDLER_VALUES, a
+# value a handler's switch takes, the installer's :DIAGnostic:TEST?'s
+# test, installer_test's five (smartclock.h).  The installer's handlers
+# get their records as the primary's do, from its tree.
+HANDLER = re.compile(r"(?:installer_)?scpi_(query|set)_(\w+)$")
+HANDLER_ENTRIES = 8
+HANDLER_ENTRY_SIZE = 10
+ENTRY_PARAMETERS = 4
+PARAMETER_NEXT = 0
+PARAMETER_KINDS = 4
+KINDS_SIZE = 0
+KINDS_CHOICES = 8
+KINDS_CONVERTERS = 0xC
+CONVERTERS = 6
+WORD = struct.Struct(">H")
+HANDLER_VALUES = {"installer_scpi_query_DIAGnostic_TEST": 5}
 HANDLER_NAMES = ["parameters", "response", "call"]
 QUERY = "query"
 COMMON_PREFIX = "common_"
@@ -1093,6 +1132,9 @@ class RebuiltMachine(Machine):
         self.initialized_ram = profile.ram
         # the routines at ROUTINES, by the address each records at
         self.stubs: dict[int, Stub] = {}
+        # the child lists of the profile's main SCPI tree, as the image
+        # holds them (tree_lists)
+        self.tree: list[TreeList] = []
         self.uc.mem_map(ROUTINES, ROUTINES_SIZE)
         self.uc.hook_add(UC_HOOK_CODE, self.routine_call, begin=ROUTINES, end=ROUTINES + ROUTINES_SIZE - 1)
         for base, contents in ((ROM, image), (RAM, profile.ram)):
@@ -1207,6 +1249,8 @@ def rebuilt_machine(
             raise RuntimeError(f"initializer {routine:x}: {run.stopped or run.end()}")
         m.first_allocation = m.next_allocation
         m.initialized_ram = run.memory[RAM]
+    fresh_ram(m)
+    m.tree = tree_lists(m, profile.scpi.main_tree)
     return m
 
 
@@ -1295,26 +1339,32 @@ def arguments(
     case: int,
     names: list[str] | None = None,
     function: str | None = None,
+    target: "HeaderTarget | None" = None,
 ) -> list[bytes]:
     """A case's arguments, each position taking a different value, or,
     where the profile gives them, the image's object for its name or
-    type; an SCPI handler's as scpi_call_handler gives them."""
+    type, a header's lookup target's, the case's unless given; an SCPI
+    handler's as scpi_call_handler gives them."""
     fill = pointer_fill(case) if case >= PLAIN_CASES else None
     objects = m.profile.objects
+    target = target or header_target(m, function or "", case)
     values = []
     for i, (kind, name) in enumerate(zip(kinds, names or [None] * len(kinds))):
         at = (
             exchange(m, case)
             if objects and EXCHANGE_PARAMETERS.get(function) == i
-            else image_object(m, kind, name, case + POSITION_STRIDE * i)
+            else image_object(m, kind, name, case + POSITION_STRIDE * i, target)
         )
         values.append(
             argument(m, types, kind, case + POSITION_STRIDE * i, fill, i) if at is None else struct.pack(">I", at)
         )
-    handler = HANDLER.match(function or "") if objects else None
+    handler = HANDLER.match(function or "")
     if handler and names == HANDLER_NAMES:
         parameters, response, call = (struct.unpack(">I", value)[0] for value in values)
-        call_record(m, handler.group(1) == QUERY, handler.group(2), parameters, response, call)
+        query = handler.group(1) == QUERY
+        ids = call_record(m, query, handler.group(2), parameters, response, call)
+        if ids is not None:
+            parsed_parameters(m, query, call, parameters + WORD.size * ids, HANDLER_VALUES.get(function), case)
     elif names and (CALL in names or CONTEXT in names):
         record = sample_call(m)
         node = pointer_at(m, record + CALL_NODE)
@@ -1328,15 +1378,16 @@ def arguments(
     return values
 
 
-def call_record(m: RebuiltMachine, query: bool, path: str, parameters: int, response: int, record: int) -> bool:
+def call_record(m: RebuiltMachine, query: bool, path: str, parameters: int, response: int, record: int) -> int | None:
     """Makes record, a buffer, what scpi_interpret's call record holds for
     a handler's path, and parameters what scpi_header_resolve starts
-    them with; False, leaving them, for a path not in the tree."""
+    them with; how many words those are, or None, leaving them, for a
+    path not in the tree."""
     scpi = m.profile.scpi
     common = path.startswith(COMMON_PREFIX)
     nodes = header_nodes(m, scpi.common_list if common else scpi.main_tree, path.removeprefix(COMMON_PREFIX))
     if not nodes:
-        return False
+        return None
     ids = [i for i in (struct.unpack(">H", m.read(node + NODE_ID, 2))[0] for node in nodes) if i != NO_ID]
     m.uc.mem_write(parameters, struct.pack(f">{len(ids)}H", *ids))
     for offset, value in (
@@ -1352,14 +1403,41 @@ def call_record(m: RebuiltMachine, query: bool, path: str, parameters: int, resp
     ):
         give(m, record + offset, value)
     m.uc.mem_write(record + CALL_INDEX, struct.pack(">H", int(query)))
-    return True
+    return len(ids)
+
+
+def parsed_parameters(m: RebuiltMachine, query: bool, record: int, at: int, values: int | None, case: int) -> None:
+    """Gives a call record's handler, its parameters from at, its
+    choices, and its values where values counts them, the case'th in
+    range."""
+    entry = pointer_at(m, record + CALL_NODE) + HANDLER_ENTRIES + HANDLER_ENTRY_SIZE * query
+    parameter = pointer_at(m, entry + ENTRY_PARAMETERS)
+    while parameter:
+        kinds = pointer_at(m, parameter + PARAMETER_KINDS)
+        size = struct.unpack(">h", m.read(kinds + KINDS_SIZE, WORD.size))[0]
+        choices = pointer_at(m, kinds + KINDS_CHOICES)
+        converters = struct.unpack(f">{CONVERTERS}I", m.read(kinds + KINDS_CONVERTERS, CONVERTERS * POINTER_SIZE))
+        kind = next((i for i, converter in enumerate(converters) if converter), 0)
+        count = choice_count(m, choices) if choices else values
+        if count:
+            m.uc.mem_write(at, WORD.pack(kind) + WORD.pack(case % count))
+        at += WORD.size + size
+        parameter = pointer_at(m, parameter + PARAMETER_NEXT)
+
+
+def choice_count(m: Machine, choices: int) -> int:
+    """How many keywords a choice list has, to its NULL."""
+    keywords, count = pointer_at(m, choices), 0
+    while pointer_at(m, keywords + POINTER_SIZE * count):
+        count += 1
+    return count
 
 
 def sample_call(m: RebuiltMachine) -> int:
     """A fresh call record for the profile's sample call, as SAMPLE_CALL,
     with fresh parameters and response."""
     record = m.buffer()
-    if not call_record(m, *m.profile.scpi.sample_call, m.buffer(), m.buffer(), record):
+    if call_record(m, *m.profile.scpi.sample_call, m.buffer(), m.buffer(), record) is None:
         raise RuntimeError(f"no node for {m.profile.scpi.sample_call}")
     return record
 
@@ -1388,11 +1466,12 @@ def parser_context(m: RebuiltMachine, record: int) -> int:
     return context
 
 
-def reset_path(m: RebuiltMachine) -> int:
-    """A fresh header path, as scpi_path_reset sets one back."""
-    main_tree = m.profile.scpi.main_tree
-    path = m.buffer(struct.pack(">I", main_tree) + RESET_PATH_SUFFIXES)
-    give(m, path + RESET_PATH_LIST, main_tree)
+def reset_path(m: RebuiltMachine, at: int | None = None) -> int:
+    """A fresh header path, as scpi_path_reset sets one back, to the main
+    tree's root list or another."""
+    at = m.profile.scpi.main_tree if at is None else at
+    path = m.buffer(struct.pack(">I", at) + RESET_PATH_SUFFIXES)
+    give(m, path + RESET_PATH_LIST, at)
     return path
 
 
@@ -1447,18 +1526,122 @@ def keyword_text(m: Machine, node: int) -> str:
     return (short + rest).decode("ascii", "replace")
 
 
-def image_object(m: RebuiltMachine, kind: str, name: str | None, case: int) -> int | None:
+@dataclass(frozen=True)
+class TreeList:
+    """A child list of a profile's SCPI tree, as the image holds it: its
+    address, the nodes of the shortest header that reaches it from the
+    root list, the last the node whose list it is, none for the root
+    list's own; its nodes; and the index of its default child, NO_DEFAULT
+    for none (smartclock.h, scpi_child_list)."""
+
+    address: int
+    path: tuple[int, ...]
+    nodes: tuple[int, ...]
+    default: int
+
+
+NO_DEFAULT = -1
+
+
+def tree_lists(m: Machine, root: int) -> list[TreeList]:
+    """Every child list the tree from a root list reaches, each once,
+    the shallowest first, each header's lists in their nodes' order."""
+    found: dict[int, TreeList] = {}
+    pending = [(root, ())]
+    while pending:
+        at, path = pending.pop(0)
+        if at in found:
+            continue
+        count, default = struct.unpack(">hh", m.read(at + LIST_COUNT, 4))
+        nodes = struct.unpack(f">{count}I", m.read(at + LIST_NODES, count * POINTER_SIZE))
+        found[at] = TreeList(at, path, nodes, default)
+        pending += [(children, path + (node,)) for node in nodes if (children := pointer_at(m, node + NODE_CHILDREN))]
+    return list(found.values())
+
+
+def keyword_forms(m: Machine, node: int) -> tuple[bytes, bytes]:
+    """A node's keyword, short and long, in upper case, as a header
+    gives either."""
+    text = keyword_text(m, node).upper().encode("ascii")
+    return text[: len(m.string(pointer_at(m, node)))], text
+
+
+def header_text(m: Machine, nodes: tuple[int, ...], long: bool) -> bytes:
+    """An absolute header naming nodes, each by its short or long form."""
+    return b"".join(b":" + keyword_forms(m, node)[long] for node in nodes)
+
+
+# A keyword token's choice among a tree's lists, by the case, for a
+# lookup in one (header_target): a node of the list's, short or long; a
+# node of the list of its default child's, which a lookup reaches
+# through the default; and a keyword of none.  Each case looks in a list
+# of the tree, drawn by the function and the case, below the root as
+# much as at it, so that a child list the C's tree points at wrongly
+# shows.
+SHORT_FORM, LONG_FORM, THROUGH_DEFAULT, NO_NODE = range(4)
+HEADER_VARIANTS = 4
+NO_KEYWORD = b"NONE"
+
+
+@dataclass(frozen=True)
+class HeaderTarget:
+    """A lookup a case gives: the list, and the keyword looked up in it."""
+
+    list: int
+    keyword: bytes
+
+
+def tree_steps(m: RebuiltMachine) -> list[HeaderTarget]:
+    """A step down to each node's children, of every node of the
+    profile's tree that has them: its list and its keyword, short and
+    long in turn, so that a case of each, of a routine that steps into
+    a node's children (scpi_header_step), reads every node's child
+    list pointer."""
+    return [
+        HeaderTarget(tree.address, keyword_forms(m, node)[i % 2 == 1])
+        for i, (tree, node) in enumerate(
+            (tree, node) for tree in m.tree for node in tree.nodes if pointer_at(m, node + NODE_CHILDREN)
+        )
+    ]
+
+
+def header_target(m: RebuiltMachine, function: str, case: int) -> HeaderTarget:
+    """The list and keyword a function's case looks up, drawn from the
+    profile's tree (tree_lists) by the function's name and the case."""
+    lists = m.tree
+    seed = zlib.crc32(function.encode())
+    variant = case % HEADER_VARIANTS
+    through = [
+        tree
+        for tree in lists
+        if tree.default != NO_DEFAULT and pointer_at(m, tree.nodes[tree.default] + NODE_CHILDREN)
+    ]
+    if variant == THROUGH_DEFAULT and through:
+        chosen = through[(seed + case) % len(through)]
+        children = next(t for t in lists if t.address == pointer_at(m, chosen.nodes[chosen.default] + NODE_CHILDREN))
+        node = children.nodes[(seed + case) % len(children.nodes)]
+        return HeaderTarget(chosen.address, keyword_forms(m, node)[True])
+    chosen = lists[(seed + case) % len(lists)]
+    if variant in (SHORT_FORM, LONG_FORM):
+        node = chosen.nodes[(seed // len(lists) + case) % len(chosen.nodes)]
+        return HeaderTarget(chosen.address, keyword_forms(m, node)[variant == LONG_FORM])
+    return HeaderTarget(chosen.address, NO_KEYWORD)
+
+
+def image_object(m: RebuiltMachine, kind: str, name: str | None, case: int, target: HeaderTarget) -> int | None:
     """The image's object a parameter of a name and type is given, the
-    case'th of those it may be; None if it is given none.  Every profile
-    gives its status model's and its SCPI parser's; only one with objects
-    the rest."""
+    case'th of those it may be, a header's lookup's the case's target;
+    None if it is given none.  Every profile gives its status model's
+    and its SCPI parser's; only one with objects the rest."""
     scpi = m.profile.scpi
     if name in (OUTPUT, INPUT):
         return scpi.console_port
     if name == PATH:
-        return reset_path(m)
+        return reset_path(m, target.list)
+    if kind == CHILD_LIST:
+        return target.list
     if kind == KEYWORD:
-        text = scpi.keywords[case % len(scpi.keywords)]
+        text = target.keyword if name == HEADER_KEYWORD else scpi.keywords[case % len(scpi.keywords)]
         return m.buffer(KEYWORD_LENGTH.pack(len(text)) + text + b"\0")
     if m.profile.objects:
         if kind in VARIABLES:
@@ -1881,14 +2064,16 @@ def same_pointer(m: RebuiltMachine, a: int, b: int) -> bool:
     """Whether two pointers name the same thing in the two copies: the
     same literal, the same C function, the image's copy and gcc's (a
     driver's echo routine it stores), or the same place in an image
-    object and its twin among the C's (Twins)."""
-    return (
-        (a, b) in m.copies
-        or (b, a) in m.copies
-        or a == m.twins.image_address(b)
-        or b == m.twins.image_address(a)
-        or same_literal(m, a, b)
-    )
+    object and its twin among the C's (Twins).  A pointer into an object
+    with a twin is the same only as one to its twin's place, never as a
+    literal: a child list or node of the C's tree that is not the twin of
+    the image's would otherwise pass as the same empty text."""
+    if (a, b) in m.copies or (b, a) in m.copies:
+        return True
+    twinned = (m.twins.image_address(b), m.twins.image_address(a), m.twins.c_address(a), m.twins.c_address(b))
+    if any(at is not None for at in twinned):
+        return a == twinned[0] or b == twinned[1]
+    return same_literal(m, a, b)
 
 
 def pointers_difference(m: RebuiltMachine, a: bytes, b: bytes) -> int | None:
@@ -1929,6 +2114,32 @@ def ram_difference(m: RebuiltMachine, a: Run, b: Run) -> str | None:
         if first is not None:
             return f"{name} differs from {start + first:x}"
     return None
+
+
+def preserved_registers(convention: dict) -> tuple[str, ...]:
+    """The registers a routine keeps for its caller, as its sidecar
+    convention says (CALLEE_SAVED), in REGISTERS' order."""
+    listed = set(convention.get("preserves", []))
+    if PRESERVES_ALL in listed:
+        return tuple(REGISTERS)
+    if convention["convention"] in C_CONVENTIONS:
+        listed |= set(CALLEE_SAVED)
+    return tuple(name for name in REGISTERS if name in listed)
+
+
+def registers_difference(m: RebuiltMachine, a: Run, b: Run, registers: tuple[str, ...]) -> str | None:
+    """None if two calls that returned left each of registers alike, a
+    pointer the same as one to the same thing (same_pointer); else
+    those they did not, b's and a's.  A call that ended without
+    returning keeps none."""
+    if a.ended is not None or b.ended is not None:
+        return None
+    differing = [
+        f"{name} {b.registers[name]:x}, image's {a.registers[name]:x}"
+        for name in registers
+        if a.registers[name] != b.registers[name] and not same_pointer(m, a.registers[name], b.registers[name])
+    ]
+    return "register " + ", ".join(differing) if differing else None
 
 
 def effects_difference(a: Run, b: Run, names: tuple[str, str]) -> str | None:

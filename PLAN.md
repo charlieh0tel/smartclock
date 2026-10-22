@@ -1693,6 +1693,16 @@ view cannot drift apart.  The library, bottom up:
   Left: Setup taking the generated rows, so that Ghidra labels each
   record and the exporter declares it.
 
+  Decided 2026-10-22: the pForth kernel's 183 primitives stay the
+  image's assembly, exact by construction (check-decompiled proves the
+  bytes); the C diagnostic words are tested further by pForth console
+  sessions in the harness (the real interpreter on input lines, its
+  output, stack and dictionary compared), and every image gets a
+  generated table of its words' stack effects, flags and use in
+  docs/firmware/pforth/, checked as module_figures checks modules.md.
+  Both after the bridge rework (option B: register-bound inline asm in
+  place of the exporter's bridges, Scc for a returns=ccr result).
+
   Left for a later pass: the firmware routines' names do not carry
   their file's prefix as the hand-written helpers do (`ti.c`'s
   `counter_arm` and `interpolator_calibrate` beside `ti_measure_both`);

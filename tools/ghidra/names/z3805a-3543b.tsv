@@ -1764,10 +1764,10 @@ installer::0x1056ba	function	installer_scpi_multiplier_exponent	context	the inst
 installer::0x105858	function	installer_scpi_node_find	context	the installer's scpi_node_find	scpi_node *installer_scpi_node_find(scpi_child_list *list, scpi_keyword *keyword)
 installer::0x1058d0	function	installer_scpi_node_find_with_defaults	context	the installer's scpi_node_find_with_defaults	scpi_node *installer_scpi_node_find_with_defaults(scpi_path *path, scpi_keyword *keyword, void *unused)
 installer::0x105942	function	installer_scpi_node_find_numbered	context	the installer's scpi_node_find_numbered	scpi_node *installer_scpi_node_find_numbered(scpi_path *path, scpi_keyword *keyword, void *unused)
-installer::0x105a2e	function	installer_scpi_header_resolve	context	the installer's scpi_header_resolve	
+installer::0x105a2e	function	installer_scpi_header_resolve	context	the installer's scpi_header_resolve	uint32_t installer_scpi_header_resolve(scpi_keyword *keyword, scpi_call *call, int16_t *offset, scpi_parameter **parameters, scpi_path *path, uint16_t unused, int16_t query, scpi_arena *arena, void *unused_2)
 installer::0x105b4c	function	installer_scpi_header_step	context	the installer's scpi_header_step	uint32_t installer_scpi_header_step(scpi_keyword *keyword, scpi_path *path, void *unused)
 installer::0x105bac	function	installer_scpi_path_reset	context	the installer's scpi_path_reset	void installer_scpi_path_reset(scpi_path *path, scpi_child_list *list)
-installer::0x105bbe	function	installer_scpi_common_header_resolve	context	the installer's scpi_common_header_resolve	
+installer::0x105bbe	function	installer_scpi_common_header_resolve	context	the installer's scpi_common_header_resolve	uint32_t installer_scpi_common_header_resolve(scpi_keyword *keyword, scpi_call *call, int16_t *offset, scpi_parameter **parameters, uint16_t unused, int16_t query, scpi_arena *arena, scpi_child_list *list)
 installer::0x105c2c	function	installer_scpi_trg_defined	context	the installer's scpi_trg_defined	scpi_node *installer_scpi_trg_defined(scpi_child_list *list, uint16_t *no_setter)
 installer::0x105c78	function	installer_status_event_set	context	the installer's status_event_set	void installer_status_event_set(status_model *status, status_register *reg, uint32_t bits)
 installer::0x105c96	function	installer_status_condition_set	context	the installer's status_condition_set	void installer_status_condition_set(status_model *status, status_register *reg, int32_t bits)
@@ -1826,6 +1826,8 @@ installer::0x10aaa6	function	installer_vsprintf	libc.md	the installer's vsprintf
 # the installer's DUART driver state, in plain RAM after its image, laid
 # out as the primary's from duartb_applied to duartb's end; and the boot
 # code's cells there; docs/firmware/structures.md, "The installer's RAM"
+0x10abe6	label	installer_scpi_echo_length	read	the installer's scpi_echo_length, which installer_scpi_session_init clears	uint8_t
+0x10abe7	label	installer_scpi_port_echo_length	read	the installer's scpi_port_echo_length, which installer_scpi_format_response clears for a port other than the console	uint8_t
 0x10ad3c	label	installer_duartb_applied	structures.md	the installer's duartb_applied: installer_duartb_baud_from_settings and _mode_from_settings copy the settings at 0x10ab32 to 0x10ab37 to it; installer_duartb_isr strips the top bit unless +2 is set	duartb_applied_settings
 0x10ad40	label	installer_duart_shadow	structures.md	the installer's duart_shadow: IMR at +4, MR1B, MR2B and CSRB at +7 to +9	duart_shadow_registers
 0x10ad4d	label	installer_duarta_ring	structures.md	the installer's duarta_ring, which installer_duarta_receive fills; nothing in the installer reads it	serial_ring
@@ -1906,6 +1908,8 @@ installer::0x108578	label	installer_io_table_defaults	structures.md	installer_ps
 0x10afba	label	installer_task_spoo	read	the installer's task_spoo	uint32_t
 0x10afbe	label	installer_spoo_exchange	read	the installer's spoo_exchange	uint32_t
 0x10afc2	label	installer_spoo_started	read	the installer's spoo_started	uint8_t
+0x10afc4	label	installer_spoo_message	read	the installer's spoo_message, which installer_spoo_task receives into	spoo_request
+0x10afdc	label	installer_spoo_receive_error	read	the installer's spoo_receive_error: request_x's error, its low byte	uint32_t
 0x10afe0	label	installer_exception_hook	structures.md	as exception_hook	void *
 0x10afe4	label	installer_exception_hook_per_task	structures.md	as exception_hook_per_task	uint8_t
 0x10afe6	label	installer_kernel_running	structures.md	as kernel_running: installer_system_init clears it, the root task at 0x100d40 sets it; installer_default_exception and installer_print_exception pause only while it is set	uint8_t
@@ -1943,8 +1947,8 @@ installer::0x108578	label	installer_io_table_defaults	structures.md	installer_ps
 0x20ab0	function	qspi_device_write	psos.md	the QSPI device's write: queues for the QSPI, then runs the transfer		convention=register; confidence=read; in=D0 char device, A0 void *buffers, D2 short count; family=device
 0x278f4	function	scpi_parameter_match	context	finds the next parameter descriptor that takes a parameter of the kind, marking optional ones it passes 0xffff; the kind a long whose low word it reads (0x27900)	int scpi_parameter_match(scpi_parameter **parameter, int kind, scpi_call *call, short *offset)
 0x2797a	function	scpi_parameters_finish	context	marks the descriptors left 0xffff, omitted, unless one is required	uint32_t scpi_parameters_finish(scpi_parameter **parameter, scpi_call *call, short *offset)
-0x27d80	function	scpi_header_resolve	context	resolves a command header to its node and handler, through defaults and numeric suffixes, and takes room for its parameters
-0x27f10	function	scpi_common_header_resolve	context	resolves a common command's header to its node and handler and takes room for its parameters
+0x27d80	function	scpi_header_resolve	context	resolves a command header to its node and handler, through defaults and numeric suffixes, and takes room for its parameters	uint32_t scpi_header_resolve(scpi_keyword *keyword, scpi_call *call, int16_t *offset, scpi_parameter **parameters, scpi_path *path, uint16_t unused, int16_t query, scpi_arena *arena, void *unused_2)
+0x27f10	function	scpi_common_header_resolve	context	resolves a common command's header to its node and handler and takes room for its parameters	uint32_t scpi_common_header_resolve(scpi_keyword *keyword, scpi_call *call, int16_t *offset, scpi_parameter **parameters, uint16_t unused, int16_t query, scpi_arena *arena, scpi_child_list *list)
 0x292d6	function	scpi_interpret	context	the parser's loop: parses each message unit, calls its handler, writes its response and reports errors, until the input ends	undefined4 scpi_interpret(int param_1,int param_2,undefined4 param_3,undefined4 param_4,undefined4 param_5, undefined4 param_6,undefined4 param_7,undefined4 param_8,undefined4 param_9)
 0x297c4	function	scpi_long_resolve_bound	context	a long parameter's value: its own, the first or second argument for keyword 0 or 1, else the third; called by nothing	int scpi_long_resolve_bound(long low, long high, long value, short *parameter)
 0x298b2	function	scpi_numeric_set_double	context	scpi_numeric_set for a parameter of doubles; called by nothing

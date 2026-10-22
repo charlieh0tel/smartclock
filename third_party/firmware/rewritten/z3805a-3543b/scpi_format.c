@@ -34,9 +34,6 @@ static const int16_t SCPI_DIGITS_END = 16 + 1;
 
 #define SCPI_DIGITS_SIZE 20
 
-/* The character a response's text puts between its values. */
-static const char SCPI_SEPARATOR = ',';
-
 /* A double as NR3 text, through scpi_real_to_text, which takes its bits
  * as two longs, high first. */
 static uint32_t scpi_engine_real_to_text(double value, char* text,

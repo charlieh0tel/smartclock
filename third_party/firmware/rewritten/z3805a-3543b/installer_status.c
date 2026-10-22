@@ -235,3 +235,15 @@ uint32_t installer_status_report(int16_t code) {
   installer_status_set_bit(installer_status_object, code, (int32_t)message);
   return 0;
 }
+
+/* installer_status_set_bit with 0 (installer::0x106036). */
+int16_t installer_status_clear_bit(status_model* status, int32_t condition) {
+  return installer_status_set_bit(status, condition, 0);
+}
+
+/* 1 for a negative condition that queues a command error, -100 to -199
+ * (installer::0x10604a). */
+uint32_t installer_condition_is_command_error(int32_t condition) {
+  return status_model_command_error(installer_status_negative_conditions,
+                                    condition);
+}

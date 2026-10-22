@@ -260,3 +260,20 @@ static void status_model_register_setup(status_model* status, int32_t index,
     reg->parent = status->registers[parent_index];
   }
 }
+
+/* condition_is_command_error's and its installer copy's body: 1 for a
+ * negative condition that queues a command error, -100 to -199, by its
+ * image's negative conditions. */
+static uint32_t status_model_command_error(const status_condition* negatives,
+                                           int32_t condition) {
+  static const int16_t ERROR_COMMAND_LEAST = -199;
+
+  if (condition >= 0) {
+    return 0;
+  }
+  const status_condition* entry = &negatives[-condition];
+
+  return entry->kind == STATUS_KIND_ERROR &&
+         entry->register_index >= ERROR_COMMAND_LEAST &&
+         entry->register_index <= STATUS_COMMAND_ERROR_GREATEST;
+}

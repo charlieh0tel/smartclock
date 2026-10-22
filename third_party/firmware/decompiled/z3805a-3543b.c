@@ -4382,6 +4382,8 @@ extern char installer_idn_serial[18]; /* 0010ab4c */
 extern char installer_idn_suffix; /* 0010ab5e */
 extern io_device_jumps installer_io_table; /* 0010ab60 */
 extern psos_configuration installer_psos_config; /* 0010ab84 */
+extern uint8_t installer_scpi_echo_length; /* 0010abe6 */
+extern uint8_t installer_scpi_port_echo_length; /* 0010abe7 */
 extern int32_t installer_scpi_last_input; /* 0010abe8 */
 extern int16_t installer_scpi_input_repeat; /* 0010abec */
 extern uint8_t installer_status_byte; /* 0010abee */
@@ -4404,6 +4406,8 @@ extern char * boot_loopback_expect_next; /* 0010afb6 */
 extern uint32_t installer_task_spoo; /* 0010afba */
 extern uint32_t installer_spoo_exchange; /* 0010afbe */
 extern uint8_t installer_spoo_started; /* 0010afc2 */
+extern spoo_request installer_spoo_message; /* 0010afc4 */
+extern uint32_t installer_spoo_receive_error; /* 0010afdc */
 extern void * installer_exception_hook; /* 0010afe0 */
 extern uint8_t installer_exception_hook_per_task; /* 0010afe4 */
 extern uint8_t installer_kernel_running; /* 0010afe6 */
@@ -4444,14 +4448,6 @@ extern io_device_jumps installer_io_table_defaults; /* installer::00108578 */
 #define ADJ(p) _Generic((p), forth_user_end: (forth_user_area *)((char *)(p) - 40))
 
 extern uint8_t DAT_0004cfc0; /* 0004cfc0 */
-extern uint8_t DAT_0010abe6; /* 0010abe6 */
-extern uint8_t DAT_0010abe7; /* 0010abe7 */
-extern uint8_t DAT_0010afc4; /* 0010afc4 */
-extern code *DAT_0010afcc; /* 0010afcc */
-extern uint32_t DAT_0010afd0; /* 0010afd0 */
-extern uint32_t DAT_0010afd4; /* 0010afd4 */
-extern uint32_t DAT_0010afd8; /* 0010afd8 */
-extern uint8_t DAT_0010afdc; /* 0010afdc */
 extern uint8_t DAT_00700000; /* 00700000 */
 extern uint32_t *PTR_DAT_0004cf80; /* 0004cf80 */
 extern uint32_t *PTR_DAT_00050e5e; /* 00050e5e */
@@ -4620,14 +4616,6 @@ extern word switchD_0005ed40_index_zero; /* 0005ed48 */
 extern uint8_t uint8_t_0010142a; /* 0010142a */
 
 __asm__(".set DAT_0004cfc0, 0x0004cfc0");
-__asm__(".set DAT_0010abe6, 0x0010abe6");
-__asm__(".set DAT_0010abe7, 0x0010abe7");
-__asm__(".set DAT_0010afc4, 0x0010afc4");
-__asm__(".set DAT_0010afcc, 0x0010afcc");
-__asm__(".set DAT_0010afd0, 0x0010afd0");
-__asm__(".set DAT_0010afd4, 0x0010afd4");
-__asm__(".set DAT_0010afd8, 0x0010afd8");
-__asm__(".set DAT_0010afdc, 0x0010afdc");
 __asm__(".set DAT_00700000, 0x00700000");
 __asm__(".set PTR_DAT_0004cf80, 0x0004cf80");
 __asm__(".set PTR_DAT_00050e5e, 0x00050e5e");
@@ -4900,14 +4888,18 @@ __asm__(".set installer_psos_config_defaults, 0x001084da");
 __asm__(".set installer_rand_seed, 0x0010b0be");
 __asm__(".set installer_records, 0x00000bbc");
 __asm__(".set installer_scpi_char_classes, 0x0010549a");
+__asm__(".set installer_scpi_echo_length, 0x0010abe6");
 __asm__(".set installer_scpi_input_end, 0x0010acf4");
 __asm__(".set installer_scpi_input_line, 0x0010abf0");
 __asm__(".set installer_scpi_input_next, 0x0010acf0");
 __asm__(".set installer_scpi_input_repeat, 0x0010abec");
 __asm__(".set installer_scpi_last_input, 0x0010abe8");
+__asm__(".set installer_scpi_port_echo_length, 0x0010abe7");
 __asm__(".set installer_scpi_prompt_text, 0x0010acf8");
 __asm__(".set installer_service_request_enable, 0x0010abef");
 __asm__(".set installer_spoo_exchange, 0x0010afbe");
+__asm__(".set installer_spoo_message, 0x0010afc4");
+__asm__(".set installer_spoo_receive_error, 0x0010afdc");
 __asm__(".set installer_spoo_started, 0x0010afc2");
 __asm__(".set installer_status_byte, 0x0010abee");
 __asm__(".set installer_status_conditions, 0x00107aea");
@@ -6003,8 +5995,6 @@ extern word WORD_installer__00105fd4;
 __asm__(".set WORD_installer__00105fd4, 0x00105fd4");
 extern word WORD_installer__0010921e;
 __asm__(".set WORD_installer__0010921e, 0x0010921e");
-extern uint32_t _DAT_0010afdc;
-__asm__(".set _DAT_0010afdc, 0x0010afdc");
 extern uint32_t _DAT_00700000;
 __asm__(".set _DAT_00700000, 0x00700000");
 extern uint32_t _interval_mean_flag;
@@ -6996,16 +6986,15 @@ int16_t scpi_keyword_compare(char *token,int32_t length,char *keyword);
 scpi_node * scpi_node_find(scpi_child_list *list,scpi_keyword *keyword);
 scpi_node * scpi_node_find_with_defaults(scpi_path *path,scpi_keyword *keyword,void *unused);
 scpi_node * scpi_node_find_numbered(scpi_path *path,scpi_keyword *keyword,void *unused);
-uint32_t
-scpi_header_resolve(scpi_keyword *param_1,int32_t *param_2,int16_t *param_3,uint32_t *param_4,
-                   uint32_t *param_5,uint16_t param_6,int16_t param_7,scpi_arena *param_8,
-                   void *param_9);
+uint32_t scpi_header_resolve(scpi_keyword *keyword,scpi_call *call,int16_t *offset,
+                            scpi_parameter **parameters,scpi_path *path,uint16_t unused,
+                            int16_t query,scpi_arena *arena,void *unused_2);
 uint32_t scpi_header_step(scpi_keyword *keyword,scpi_path *path,void *unused);
 void scpi_path_reset(scpi_path *path,scpi_child_list *list);
-uint32_t
-scpi_common_header_resolve
-          (scpi_keyword *param_1,int32_t *param_2,uint16_t *param_3,int32_t *param_4,uint16_t param_5,
-          int16_t param_6,scpi_arena *param_7,scpi_child_list *param_8);
+uint32_t scpi_common_header_resolve
+                   (scpi_keyword *keyword,scpi_call *call,int16_t *offset,
+                   scpi_parameter **parameters,uint16_t unused,int16_t query,scpi_arena *arena,
+                   scpi_child_list *list);
 scpi_node * scpi_trg_defined(scpi_child_list *list,uint16_t *no_setter);
 void status_event_set(status_model *status,status_register *reg,uint32_t bits);
 void status_condition_set(status_model *status,status_register *reg,int32_t bits);
@@ -8069,16 +8058,16 @@ scpi_node * installer_scpi_node_find(scpi_child_list *list,scpi_keyword *keyword
 scpi_node *
 installer_scpi_node_find_with_defaults(scpi_path *path,scpi_keyword *keyword,void *unused);
 scpi_node * installer_scpi_node_find_numbered(scpi_path *path,scpi_keyword *keyword,void *unused);
-uint32_t
-installer_scpi_header_resolve
-          (int16_t *param_1,int32_t *param_2,int16_t *param_3,uint32_t *param_4,int32_t *param_5,
-          uint16_t param_6,int16_t param_7,scpi_arena *param_8,void *param_9);
+uint32_t installer_scpi_header_resolve
+                   (scpi_keyword *keyword,scpi_call *call,int16_t *offset,
+                   scpi_parameter **parameters,scpi_path *path,uint16_t unused,int16_t query,
+                   scpi_arena *arena,void *unused_2);
 uint32_t installer_scpi_header_step(scpi_keyword *keyword,scpi_path *path,void *unused);
 void installer_scpi_path_reset(scpi_path *path,scpi_child_list *list);
-uint32_t
-installer_scpi_common_header_resolve
-          (int16_t *param_1,int32_t *param_2,uint16_t *param_3,int32_t *param_4,uint16_t param_5,
-          int16_t param_6,scpi_arena *param_7,int32_t param_8);
+uint32_t installer_scpi_common_header_resolve
+                   (scpi_keyword *keyword,scpi_call *call,int16_t *offset,
+                   scpi_parameter **parameters,uint16_t unused,int16_t query,scpi_arena *arena,
+                   scpi_child_list *list);
 scpi_node * installer_scpi_trg_defined(scpi_child_list *list,uint16_t *no_setter);
 void installer_status_event_set(status_model *status,status_register *reg,uint32_t bits);
 void installer_status_condition_set(status_model *status,status_register *reg,int32_t bits);
@@ -45973,9 +45962,8 @@ LAB_00026b6e:
         kind = scpi_scan_token(context->input,&token,context->arena);
       }
       if (0x12 < (int32_t)kind) {
-        uVar4 = scpi_header_resolve(&token,(int32_t *)context->call,&local_2e,&local_32,
-                                    &context->path->list,0,(uint16_t)(kind == 0x14),context->arena,
-                                    unaff_D5);
+        uVar4 = scpi_header_resolve(&token.keyword,context->call,&local_2e,&local_32,context->path,0
+                                    ,(uint16_t)(kind == 0x14),context->arena,unaff_D5);
 LAB_00026bae:
         if (uVar4 != 0) goto LAB_00026e5a;
         kind = scpi_scan_token(context->input,&token,context->arena);
@@ -46049,8 +46037,8 @@ LAB_00026b32:
       kind = scpi_scan_token(context->input,&token,context->arena);
       if ((kind != 0x13) && (kind != 0x14)) goto LAB_00026b32;
       uVar4 = scpi_common_header_resolve
-                        (&token,(int32_t *)context->call,&local_2e,(int32_t *)&local_32,0,
-                         (uint16_t)(kind == 0x14),context->arena,context->common_list);
+                        (&token.keyword,context->call,&local_2e,&local_32,0,(uint16_t)(kind == 0x14),
+                         context->arena,context->common_list);
       goto LAB_00026bae;
     }
     if (kind == 3) {
@@ -47054,38 +47042,38 @@ scpi_node * scpi_node_find_numbered(scpi_path *path,scpi_keyword *keyword,void *
 #endif
 
 /* 00027d80 */
+#if 0 /* the decompiler's reading; rewritten in scpi_tree.c */
 
 /* resolves a command header to its node and handler, through defaults and numeric suffixes, and
    takes room for its parameters */
 
-uint32_t
-scpi_header_resolve(scpi_keyword *param_1,int32_t *param_2,int16_t *param_3,uint32_t *param_4,
-                   uint32_t *param_5,uint16_t param_6,int16_t param_7,scpi_arena *param_8,
-                   void *param_9)
+uint32_t scpi_header_resolve(scpi_keyword *keyword,scpi_call *call,int16_t *offset,
+                            scpi_parameter **parameters,scpi_path *path,uint16_t unused,
+                            int16_t query,scpi_arena *arena,void *unused_2)
 
 {
   scpi_child_list *psVar1;
   int32_t iVar2;
   scpi_node *psVar3;
   uint32_t uVar4;
-  void *start;
+  uint8_t *start;
   int16_t sVar6;
   uint16_t auStackY_10014 [32743];
   scpi_path local_1a;
   
-  local_1a.list = (scpi_child_list *)*param_5;
-  local_1a.count = *(int16_t *)(param_5 + 1);
+  local_1a.list = path->list;
+  local_1a.count = path->count;
   for (sVar6 = 0; sVar6 < local_1a.count; sVar6 = sVar6 + 1) {
-    local_1a.words[sVar6] = *(uint16_t *)((int32_t)param_5 + sVar6 * 2 + 6);
+    local_1a.words[sVar6] = path->words[sVar6];
   }
-  psVar3 = scpi_node_find_with_defaults(&local_1a,param_1,param_9);
+  psVar3 = scpi_node_find_with_defaults(&local_1a,keyword,unused_2);
   if (psVar3 != (scpi_node *)0x0) goto LAB_00027e0c;
-  psVar3 = scpi_node_find_numbered(&local_1a,param_1,param_9);
+  psVar3 = scpi_node_find_numbered(&local_1a,keyword,unused_2);
   if (psVar3 == (scpi_node *)0x0) {
     uVar4 = 0xffffffe0;
   }
   else {
-    while (iVar2 = (int32_t)param_7, psVar3->handlers[iVar2].function == (uint8_t *)0x0) {
+    while (iVar2 = (int32_t)query, psVar3->handlers[iVar2].function == (uint8_t *)0x0) {
       psVar1 = psVar3->children;
       if ((psVar1 == (scpi_child_list *)0x0) || (psVar1->default_child == -1)) {
         return 0xffffffdf;
@@ -47097,20 +47085,20 @@ LAB_00027e0c:
         local_1a.count = local_1a.count + 1;
       }
     }
-    start = arena_alloc((int32_t)psVar3->handlers[iVar2].parameters_size,param_8);
-    *(void **)((int32_t)param_2 + 10) = start;
-    if (start == (void *)0x0) {
+    start = arena_alloc((int32_t)psVar3->handlers[iVar2].parameters_size,arena);
+    call->parameters = start;
+    if (start == (uint8_t *)0x0) {
       uVar4 = 0xffffffc8;
     }
     else {
-      *(int16_t *)(param_2 + 1) = param_7;
-      *param_2 = (int32_t)psVar3;
-      *param_4 = psVar3->handlers[iVar2].parameters;
-      *param_3 = 0;
+      call->query = query;
+      call->node = psVar3;
+      *parameters = psVar3->handlers[iVar2].parameters;
+      *offset = 0;
       if (local_1a.count != 0) {
         for (sVar6 = 0; sVar6 < local_1a.count; sVar6 = sVar6 + 1) {
-          *(uint16_t *)(*(int32_t *)((int32_t)param_2 + 10) + (int32_t)*param_3) = local_1a.words[sVar6];
-          *param_3 = *param_3 + 2;
+          *(uint16_t *)(call->parameters + *offset) = local_1a.words[sVar6];
+          *offset = *offset + 2;
         }
       }
       uVar4 = 0;
@@ -47119,6 +47107,7 @@ LAB_00027e0c:
   return uVar4;
 }
 
+#endif
 
 /* 00027e9e */
 #if 0 /* the decompiler's reading; rewritten in scpi_tree.c */
@@ -47178,37 +47167,37 @@ void scpi_path_reset(scpi_path *path,scpi_child_list *list)
 
 /* resolves a common command's header to its node and handler and takes room for its parameters */
 
-uint32_t
-scpi_common_header_resolve
-          (scpi_keyword *param_1,int32_t *param_2,uint16_t *param_3,int32_t *param_4,uint16_t param_5,
-          int16_t param_6,scpi_arena *param_7,scpi_child_list *param_8)
+uint32_t scpi_common_header_resolve
+                   (scpi_keyword *keyword,scpi_call *call,int16_t *offset,
+                   scpi_parameter **parameters,uint16_t unused,int16_t query,scpi_arena *arena,
+                   scpi_child_list *list)
 
 {
   scpi_handler *psVar1;
-  scpi_node *node;
+  scpi_node *psVar2;
   uint32_t uVar3;
-  void *start;
+  uint8_t *start;
   
-  node = scpi_node_find(param_8,param_1);
-  if (node == (scpi_node *)0x0) {
+  psVar2 = scpi_node_find(list,keyword);
+  if (psVar2 == (scpi_node *)0x0) {
     uVar3 = 0xffffffe0;
   }
   else {
-    psVar1 = node->handlers + param_6;
+    psVar1 = psVar2->handlers + query;
     if (psVar1->function == (uint8_t *)0x0) {
       uVar3 = 0xffffffdf;
     }
     else {
-      start = arena_alloc((int32_t)psVar1->parameters_size,param_7);
-      *(void **)((int32_t)param_2 + 10) = start;
-      if (start == (void *)0x0) {
+      start = arena_alloc((int32_t)psVar1->parameters_size,arena);
+      call->parameters = start;
+      if (start == (uint8_t *)0x0) {
         uVar3 = 0xffffffc8;
       }
       else {
-        *(int16_t *)(param_2 + 1) = param_6;
-        *param_2 = (int32_t)node;
-        *param_4 = (int32_t)psVar1->parameters;
-        *param_3 = 0;
+        call->query = query;
+        call->node = psVar2;
+        *parameters = psVar1->parameters;
+        *offset = 0;
         uVar3 = 0;
       }
     }
@@ -85887,6 +85876,7 @@ void installer_start(void)
 #endif
 
 /* installer::00100d1c */
+#if 0 /* the decompiler's reading; rewritten in installer_os.c */
 
 /* trap #12, the restart, where the primary's enter_installer has trap #11
    restart.md */
@@ -85898,6 +85888,7 @@ void installer_restart(void)
   return;
 }
 
+#endif
 
 /* installer::00100d20 */
 #if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
@@ -92862,6 +92853,7 @@ uint32_t installer_psos_pause(uint32_t a)
 #endif
 
 /* installer::00102be2 */
+#if 0 /* the decompiler's reading; rewritten in installer_os.c */
 
 /* the installer's psos_mode */
 
@@ -92882,6 +92874,7 @@ uint32_t installer_psos_mode(uint32_t mode,uint32_t mask,uint8_t *old)
   return uVar1;
 }
 
+#endif
 
 /* installer::00102c08 */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -92942,6 +92935,7 @@ uint32_t installer_psos_service_8(uint32_t a,uint32_t b,uint32_t c,uint32_t d,ui
 #endif
 
 /* installer::00102c48 */
+#if 0 /* the decompiler's reading; rewritten in installer_os.c */
 
 /* the installer's psos_free_segment */
 
@@ -92959,6 +92953,7 @@ uint32_t installer_psos_free_segment(void *segment)
   return uVar1;
 }
 
+#endif
 
 /* installer::00102d22 */
 #if 0 /* the decompiler's reading; rewritten in installer_os.c */
@@ -93008,6 +93003,7 @@ uint32_t installer_psos_send_x(uint32_t exchange,void *message)
 #endif
 
 /* installer::00102e18 */
+#if 0 /* the decompiler's reading; rewritten in installer_os.c */
 
 /* the installer's psos_request_x */
 
@@ -93022,6 +93018,7 @@ uint32_t installer_psos_request_x(uint32_t exchange,void *buffer,uint32_t no_wai
   return uVar1;
 }
 
+#endif
 
 /* installer::00102e3c */
 #if 0 /* the decompiler's reading; rewritten in installer_os.c */
@@ -93117,6 +93114,7 @@ uint32_t installer_psos_announce_tick(void)
 #endif
 
 /* installer::00102f36 */
+#if 0 /* the decompiler's reading; rewritten in installer_os.c */
 
 /* the installer's psos_io_open */
 
@@ -93133,6 +93131,7 @@ uint32_t installer_psos_io_open(uint32_t device,uint32_t a)
   return uVar1;
 }
 
+#endif
 
 /* installer::00102f6a */
 #if 0 /* the decompiler's reading; rewritten in installer_os.c */
@@ -93638,6 +93637,7 @@ uint32_t installer_console_read(void *buffer,uint32_t length,uint8_t *errors)
 #endif
 
 /* installer::00103958 */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_port.c */
 
 /* the installer's scpi_port_open */
 
@@ -93648,6 +93648,7 @@ void installer_scpi_port_open(void)
   return;
 }
 
+#endif
 
 /* installer::00103984 */
 #if 0 /* the decompiler's reading; rewritten in installer_duartb.c */
@@ -94071,8 +94072,8 @@ uint32_t installer_spoo_run(spoo_function *function,uint32_t a,uint32_t b,uint32
 #endif
 
 /* installer::0010403a */
+#if 0 /* the decompiler's reading; rewritten in installer_spool.c */
 
-/* WARNING: Globals starting with '_' overlap smaller symbols at the same address */
 /* the installer's spoo_task, which installer_spoo_task_create starts */
 
 void installer_spoo_task(void)
@@ -94083,13 +94084,16 @@ void installer_spoo_task(void)
   installer_psos_supervisor();
   do {
     do {
-      uVar1 = installer_psos_request_x(installer_spoo_exchange,&DAT_0010afc4,0,0x400);
-      _DAT_0010afdc = uVar1 & 0xff;
-    } while (_DAT_0010afdc != 0);
-    (*DAT_0010afcc)(DAT_0010afd0,DAT_0010afd4,DAT_0010afd8);
+      uVar1 = installer_psos_request_x(installer_spoo_exchange,&installer_spoo_message,0,0x400);
+      installer_spoo_receive_error = uVar1 & 0xff;
+    } while (installer_spoo_receive_error != 0);
+    (*(code *)installer_spoo_message.function)
+              (installer_spoo_message.arguments[0],installer_spoo_message.arguments[1],
+               installer_spoo_message.arguments[2]);
   } while( true );
 }
 
+#endif
 
 /* installer::001040a2 */
 #if 0 /* the decompiler's reading; rewritten in installer_debug.c */
@@ -94111,6 +94115,7 @@ void installer_fatal_error_with_code
 #endif
 
 /* installer::0010472e */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
 
 /* the installer's scpi_context_init */
 
@@ -94131,8 +94136,10 @@ int32_t installer_scpi_context_init
   return 0;
 }
 
+#endif
 
 /* installer::00104764 */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
 
 /* the installer's scpi_parse_message_unit */
 
@@ -94170,8 +94177,8 @@ LAB_installer__0010481c:
       }
       if (0x12 < (int32_t)uVar2) {
         uVar4 = installer_scpi_header_resolve
-                          (&sStack_2c.digit,(int32_t *)context->call,&local_2e,&local_32,
-                           (int32_t *)context->path,0,(uint16_t)(uVar2 == 0x14),context->arena,unaff_D5);
+                          (&sStack_2c.keyword,context->call,&local_2e,&local_32,context->path,0,
+                           (uint16_t)(uVar2 == 0x14),context->arena,unaff_D5);
 LAB_installer__0010485c:
         if (uVar4 != 0) goto LAB_installer__00104b08;
         uVar2 = installer_scpi_scan_token(context->input,&sStack_2c,context->arena);
@@ -94246,8 +94253,8 @@ LAB_installer__001047e0:
       uVar2 = installer_scpi_scan_token(context->input,&sStack_2c,context->arena);
       if ((uVar2 != 0x13) && (uVar2 != 0x14)) goto LAB_installer__001047e0;
       uVar4 = installer_scpi_common_header_resolve
-                        (&sStack_2c.digit,(int32_t *)context->call,&local_2e,(int32_t *)&local_32,0,
-                         (uint16_t)(uVar2 == 0x14),context->arena,(int32_t)context->common_list);
+                        (&sStack_2c.keyword,context->call,&local_2e,&local_32,0,
+                         (uint16_t)(uVar2 == 0x14),context->arena,context->common_list);
       goto LAB_installer__0010485c;
     }
     if (uVar2 == 3) {
@@ -94298,8 +94305,10 @@ LAB_installer__00104b08:
   return uVar4;
 }
 
+#endif
 
 /* installer::00104b8e */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_lexer.c */
 
 /* the installer's scpi_scan_token */
 
@@ -94569,8 +94578,10 @@ LAB_installer__00104f54:
   goto switchD_installer__00104bca_caseD_1b;
 }
 
+#endif
 
 /* installer::00105036 */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_lexer.c */
 
 /* the installer's scpi_skip_to_terminator */
 
@@ -94589,8 +94600,10 @@ void installer_scpi_skip_to_terminator(scpi_port *input)
   return;
 }
 
+#endif
 
 /* installer::0010507a */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_lexer.c */
 
 /* WARNING: Type propagation algorithm not settling */
 /* the installer's scpi_scan_number */
@@ -94751,6 +94764,7 @@ joined_r0x001051c2:
   return -0xc;
 }
 
+#endif
 
 /* installer::0010531c */
 #if 0 /* the decompiler's reading; rewritten in installer_scpi_lexer.c */
@@ -94845,6 +94859,7 @@ uint32_t installer_scpi_char_upper(uint32_t param_1)
 #endif
 
 /* installer::001055a2 */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_parameters.c */
 
 /* the installer's scpi_parameter_match */
 
@@ -94880,8 +94895,10 @@ int32_t installer_scpi_parameter_match
   return 0;
 }
 
+#endif
 
 /* installer::00105628 */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_parameters.c */
 
 /* the installer's scpi_parameters_finish */
 
@@ -94906,6 +94923,7 @@ uint32_t installer_scpi_parameters_finish(scpi_parameter **parameter,scpi_call *
   return 0xffffffdb;
 }
 
+#endif
 
 /* installer::00105684 */
 #if 0 /* the decompiler's reading; rewritten in installer_scpi_lexer.c */
@@ -94952,6 +94970,7 @@ int8_t installer_scpi_multiplier_exponent(int32_t name)
 #endif
 
 /* installer::00105858 */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_tree.c */
 
 /* the installer's scpi_node_find */
 
@@ -95001,8 +95020,10 @@ LAB_installer__001058c0:
   } while( true );
 }
 
+#endif
 
 /* installer::001058d0 */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_tree.c */
 
 /* the installer's scpi_node_find_with_defaults */
 
@@ -95040,8 +95061,10 @@ LAB_installer__00105936:
   return psVar4;
 }
 
+#endif
 
 /* installer::00105942 */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_tree.c */
 
 /* the installer's scpi_node_find_numbered */
 
@@ -95109,39 +95132,41 @@ scpi_node * installer_scpi_node_find_numbered(scpi_path *path,scpi_keyword *keyw
   return psVar2;
 }
 
+#endif
 
 /* installer::00105a2e */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_tree.c */
 
 /* the installer's scpi_header_resolve */
 
-uint32_t
-installer_scpi_header_resolve
-          (int16_t *param_1,int32_t *param_2,int16_t *param_3,uint32_t *param_4,int32_t *param_5,
-          uint16_t param_6,int16_t param_7,scpi_arena *param_8,void *param_9)
+uint32_t installer_scpi_header_resolve
+                   (scpi_keyword *keyword,scpi_call *call,int16_t *offset,
+                   scpi_parameter **parameters,scpi_path *path,uint16_t unused,int16_t query,
+                   scpi_arena *arena,void *unused_2)
 
 {
   scpi_child_list *psVar1;
   int32_t iVar2;
   scpi_node *psVar3;
   uint32_t uVar4;
-  void *pvVar5;
+  uint8_t *puVar5;
   int16_t sVar6;
   uint16_t auStackY_10014 [32743];
   scpi_path local_1a;
   
-  local_1a.list = (scpi_child_list *)*param_5;
-  local_1a.count = *(int16_t *)(param_5 + 1);
+  local_1a.list = path->list;
+  local_1a.count = path->count;
   for (sVar6 = 0; sVar6 < local_1a.count; sVar6 = sVar6 + 1) {
-    local_1a.words[sVar6] = *(uint16_t *)((int32_t)param_5 + sVar6 * 2 + 6);
+    local_1a.words[sVar6] = path->words[sVar6];
   }
-  psVar3 = installer_scpi_node_find_with_defaults(&local_1a,(scpi_keyword *)param_1,param_9);
+  psVar3 = installer_scpi_node_find_with_defaults(&local_1a,keyword,unused_2);
   if (psVar3 != (scpi_node *)0x0) goto LAB_installer__00105aba;
-  psVar3 = installer_scpi_node_find_numbered(&local_1a,(scpi_keyword *)param_1,param_9);
+  psVar3 = installer_scpi_node_find_numbered(&local_1a,keyword,unused_2);
   if (psVar3 == (scpi_node *)0x0) {
     uVar4 = 0xffffffe0;
   }
   else {
-    while (iVar2 = (int32_t)param_7, psVar3->handlers[iVar2].function == (uint8_t *)0x0) {
+    while (iVar2 = (int32_t)query, psVar3->handlers[iVar2].function == (uint8_t *)0x0) {
       psVar1 = psVar3->children;
       if ((psVar1 == (scpi_child_list *)0x0) || (psVar1->default_child == -1)) {
         return 0xffffffdf;
@@ -95153,20 +95178,20 @@ LAB_installer__00105aba:
         local_1a.count = local_1a.count + 1;
       }
     }
-    pvVar5 = installer_arena_alloc((int32_t)psVar3->handlers[iVar2].parameters_size,param_8);
-    *(void **)((int32_t)param_2 + 10) = pvVar5;
-    if (pvVar5 == (void *)0x0) {
+    puVar5 = installer_arena_alloc((int32_t)psVar3->handlers[iVar2].parameters_size,arena);
+    call->parameters = puVar5;
+    if (puVar5 == (uint8_t *)0x0) {
       uVar4 = 0xffffffc8;
     }
     else {
-      *(int16_t *)(param_2 + 1) = param_7;
-      *param_2 = (int32_t)psVar3;
-      *param_4 = psVar3->handlers[iVar2].parameters;
-      *param_3 = 0;
+      call->query = query;
+      call->node = psVar3;
+      *parameters = psVar3->handlers[iVar2].parameters;
+      *offset = 0;
       if (local_1a.count != 0) {
         for (sVar6 = 0; sVar6 < local_1a.count; sVar6 = sVar6 + 1) {
-          *(uint16_t *)(*(int32_t *)((int32_t)param_2 + 10) + (int32_t)*param_3) = local_1a.words[sVar6];
-          *param_3 = *param_3 + 2;
+          *(uint16_t *)(call->parameters + *offset) = local_1a.words[sVar6];
+          *offset = *offset + 2;
         }
       }
       uVar4 = 0;
@@ -95175,8 +95200,10 @@ LAB_installer__00105aba:
   return uVar4;
 }
 
+#endif
 
 /* installer::00105b4c */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_tree.c */
 
 /* the installer's scpi_header_step */
 
@@ -95211,8 +95238,10 @@ uint32_t installer_scpi_header_step(scpi_keyword *keyword,scpi_path *path,void *
   return uVar4;
 }
 
+#endif
 
 /* installer::00105bac */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_tree.c */
 
 /* the installer's scpi_path_reset */
 
@@ -95224,42 +95253,44 @@ void installer_scpi_path_reset(scpi_path *path,scpi_child_list *list)
   return;
 }
 
+#endif
 
 /* installer::00105bbe */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_tree.c */
 
 /* the installer's scpi_common_header_resolve */
 
-uint32_t
-installer_scpi_common_header_resolve
-          (int16_t *param_1,int32_t *param_2,uint16_t *param_3,int32_t *param_4,uint16_t param_5,
-          int16_t param_6,scpi_arena *param_7,int32_t param_8)
+uint32_t installer_scpi_common_header_resolve
+                   (scpi_keyword *keyword,scpi_call *call,int16_t *offset,
+                   scpi_parameter **parameters,uint16_t unused,int16_t query,scpi_arena *arena,
+                   scpi_child_list *list)
 
 {
   scpi_handler *psVar1;
   scpi_node *psVar2;
   uint32_t uVar3;
-  void *pvVar4;
+  uint8_t *puVar4;
   
-  psVar2 = installer_scpi_node_find((scpi_child_list *)param_8,(scpi_keyword *)param_1);
+  psVar2 = installer_scpi_node_find(list,keyword);
   if (psVar2 == (scpi_node *)0x0) {
     uVar3 = 0xffffffe0;
   }
   else {
-    psVar1 = psVar2->handlers + param_6;
+    psVar1 = psVar2->handlers + query;
     if (psVar1->function == (uint8_t *)0x0) {
       uVar3 = 0xffffffdf;
     }
     else {
-      pvVar4 = installer_arena_alloc((int32_t)psVar1->parameters_size,param_7);
-      *(void **)((int32_t)param_2 + 10) = pvVar4;
-      if (pvVar4 == (void *)0x0) {
+      puVar4 = installer_arena_alloc((int32_t)psVar1->parameters_size,arena);
+      call->parameters = puVar4;
+      if (puVar4 == (uint8_t *)0x0) {
         uVar3 = 0xffffffc8;
       }
       else {
-        *(int16_t *)(param_2 + 1) = param_6;
-        *param_2 = (int32_t)psVar2;
-        *param_4 = (int32_t)psVar1->parameters;
-        *param_3 = 0;
+        call->query = query;
+        call->node = psVar2;
+        *parameters = psVar1->parameters;
+        *offset = 0;
         uVar3 = 0;
       }
     }
@@ -95267,8 +95298,10 @@ installer_scpi_common_header_resolve
   return uVar3;
 }
 
+#endif
 
 /* installer::00105c2c */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_tree.c */
 
 /* the installer's scpi_trg_defined */
 
@@ -95297,6 +95330,7 @@ scpi_node * installer_scpi_trg_defined(scpi_child_list *list,uint16_t *no_setter
   return psVar2;
 }
 
+#endif
 
 /* installer::00105c78 */
 #if 0 /* the decompiler's reading; rewritten in installer_status.c */
@@ -95546,6 +95580,7 @@ void installer_status_apply_condition(status_model *status,int32_t condition,int
 #endif
 
 /* installer::00106036 */
+#if 0 /* the decompiler's reading; rewritten in installer_status.c */
 
 /* the installer's status_clear_bit */
 
@@ -95558,8 +95593,10 @@ int16_t installer_status_clear_bit(status_model *status,int32_t condition)
   return iVar1;
 }
 
+#endif
 
 /* installer::0010604a */
+#if 0 /* the decompiler's reading; rewritten in installer_status.c */
 
 /* the installer's condition_is_command_error */
 
@@ -95579,6 +95616,7 @@ uint32_t installer_condition_is_command_error(int32_t param_1)
   return uVar1;
 }
 
+#endif
 
 /* installer::00106164 */
 #if 0 /* the decompiler's reading; rewritten in installer_status.c */
@@ -95895,6 +95933,7 @@ LAB_installer__0010727c:
 
 
 /* installer::0010729c */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
 
 /* the installer's scpi_call_handler */
 
@@ -95917,8 +95956,10 @@ int32_t installer_scpi_call_handler(scpi_call *call,void **response)
   return iVar3;
 }
 
+#endif
 
 /* installer::001072ea */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_format.c */
 
 /* the installer's scpi_format_response */
 
@@ -95932,10 +95973,10 @@ int32_t installer_scpi_format_response(scpi_port *output,scpi_response_item *ite
   sVar3 = 0;
   psVar1 = installer_scpi_console_port();
   if (output == psVar1) {
-    DAT_0010abe6 = 0;
+    installer_scpi_echo_length = 0;
   }
   else {
-    DAT_0010abe7 = 0;
+    installer_scpi_port_echo_length = 0;
   }
   while( true ) {
     iVar2 = (*(code *)items->format)(output,call->response + sVar3,items->argument,call);
@@ -95950,8 +95991,10 @@ int32_t installer_scpi_format_response(scpi_port *output,scpi_response_item *ite
   return 0;
 }
 
+#endif
 
 /* installer::0010735a */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
 
 /* the installer's arena_alloc */
 
@@ -95972,8 +96015,10 @@ void * installer_arena_alloc(int32_t size,scpi_arena *arena)
   return puVar1;
 }
 
+#endif
 
 /* installer::0010739c */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
 
 /* the installer's arena_take */
 
@@ -95984,8 +96029,10 @@ void * installer_arena_take(void *buffer,int32_t size,scpi_arena *arena)
   return buffer;
 }
 
+#endif
 
 /* installer::001073b8 */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
 
 /* the installer's arena_current */
 
@@ -95995,8 +96042,10 @@ void * installer_arena_current(scpi_arena *arena)
   return arena->next;
 }
 
+#endif
 
 /* installer::001073c0 */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
 
 /* the installer's arena_set */
 
@@ -96007,8 +96056,10 @@ void installer_arena_set(void *next,scpi_arena *arena)
   return;
 }
 
+#endif
 
 /* installer::001073ca */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
 
 /* the installer's arena_init */
 
@@ -96021,6 +96072,7 @@ void installer_arena_init(void *buffer,uint32_t size,scpi_arena **arena)
   return;
 }
 
+#endif
 
 /* installer::001073f6 */
 #if 0 /* the decompiler's reading; rewritten in installer_scpi_port.c */
@@ -96053,13 +96105,14 @@ void installer_scpi_prompt(int32_t param_1)
 #endif
 
 /* installer::0010742a */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
 
 /* the installer's scpi_session_init */
 
 scpi_port * installer_scpi_session_init(void)
 
 {
-  DAT_0010abe6 = 0;
+  installer_scpi_echo_length = 0;
   installer_scpi_input_repeat = 0;
   installer_scpi_input_end = installer_scpi_input_line;
   installer_scpi_input_next = installer_scpi_input_line;
@@ -96070,6 +96123,7 @@ scpi_port * installer_scpi_session_init(void)
   return &installer_console_port;
 }
 
+#endif
 
 /* installer::0010746a */
 #if 0 /* the decompiler's reading; rewritten in installer_scpi_port.c */
@@ -96085,6 +96139,7 @@ scpi_port * installer_scpi_console_port(void)
 #endif
 
 /* installer::00107656 */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_port.c */
 
 /* the installer's status_update_rqs */
 
@@ -96102,8 +96157,10 @@ void installer_status_update_rqs(void)
   return;
 }
 
+#endif
 
 /* installer::001076ec */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
 
 /* the installer's scpi_message_done */
 
@@ -96113,8 +96170,10 @@ uint32_t installer_scpi_message_done(void)
   return 0;
 }
 
+#endif
 
 /* installer::001076f0 */
+#if 0 /* the decompiler's reading; rewritten in installer_scpi_engine.c */
 
 /* the installer's scpi_input_closed */
 
@@ -96124,6 +96183,7 @@ uint32_t installer_scpi_input_closed(void)
   return 0;
 }
 
+#endif
 
 /* installer::001076f4 */
 #if 0 /* the decompiler's reading; rewritten in installer_scpi_port.c */
@@ -98048,6 +98108,14 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/scpi.h"
 
+#include "../rewritten/z3805a-3543b/scpi_engine.h"
+
+#include "../rewritten/z3805a-3543b/scpi_lexer.h"
+
+#include "../rewritten/z3805a-3543b/scpi_parameters.h"
+
+#include "../rewritten/z3805a-3543b/scpi_tree.h"
+
 #include "../rewritten/z3805a-3543b/startup.h"
 
 #include "../rewritten/z3805a-3543b/status.h"
@@ -98110,9 +98178,15 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/installer_scpi_engine.c"
 
+#include "../rewritten/z3805a-3543b/installer_scpi_format.c"
+
 #include "../rewritten/z3805a-3543b/installer_scpi_lexer.c"
 
+#include "../rewritten/z3805a-3543b/installer_scpi_parameters.c"
+
 #include "../rewritten/z3805a-3543b/installer_scpi_port.c"
+
+#include "../rewritten/z3805a-3543b/installer_scpi_tree.c"
 
 #include "../rewritten/z3805a-3543b/installer_spool.c"
 

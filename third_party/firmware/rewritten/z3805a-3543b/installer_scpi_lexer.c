@@ -1,8 +1,8 @@
 /* The installer's copies of the SCPI lexer's routines
  * (`applications/scpi/lexer`; scpi_lexer.c has the primary's), whose
- * bodies, scpi.h's, both share.  Written by hand in place of the
- * decompiler's (docs/firmware/README.md, "Hand-written C"); each keeps
- * its generated prototype. */
+ * bodies, scpi.h's and scpi_lexer.h's, both share.  Written by hand in place of
+ * the decompiler's (docs/firmware/README.md, "Hand-written C"); each keeps its
+ * generated prototype. */
 
 /* Scans a number's exponent, E and a signed integer, after its
  * mantissa; an E with no digits after it starts the suffix
@@ -29,4 +29,26 @@ int16_t installer_scpi_suffix_compare_tail(char* suffix, int32_t length,
  * SCPI_NO_MULTIPLIER for none (installer::0x1056ba). */
 int8_t installer_scpi_multiplier_exponent(int32_t name) {
   return scpi_engine_multiplier(name);
+}
+
+/* The SCPI lexer: the next token from the input, its kind or an error
+ * (installer::0x104b8e). */
+int32_t installer_scpi_scan_token(scpi_port* input, scpi_token* token,
+                                  scpi_arena* arena) {
+  return scpi_engine_scan_token(installer_scpi_char_classes, input, token,
+                                arena);
+}
+
+/* Reads to the next newline or an end, then gives the last value back
+ * (installer::0x105036). */
+void installer_scpi_skip_to_terminator(scpi_port* input) {
+  scpi_engine_skip_to_terminator(input);
+}
+
+/* Scans a decimal number's mantissa, exponent and units suffix into a
+ * parsed number; SCPI_TOKEN_DECIMAL, or an error (installer::0x10507a). */
+int32_t installer_scpi_scan_number(scpi_number* number, int32_t have_character,
+                                   int32_t character, scpi_port* input) {
+  return scpi_engine_scan_number(installer_scpi_char_classes, number,
+                                 have_character, character, input);
 }

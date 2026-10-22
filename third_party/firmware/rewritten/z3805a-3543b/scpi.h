@@ -186,6 +186,9 @@ static int16_t scpi_compare_suffix_tail(char* suffix, int32_t length, char* name
   return name[matched] == 0 ? matched : 0;
 }
 
+/* The character a response's text puts between its values. */
+static const char SCPI_SEPARATOR = ',';
+
 /* The lexer's, which its installer copies share (scpi_lexer.c,
  * installer_scpi_lexer.c). */
 
@@ -374,4 +377,44 @@ static int8_t scpi_engine_multiplier(int32_t name) {
     entry++;
   } while (entry->name != 0);
   return SCPI_NO_MULTIPLIER;
+}
+
+/* The arena's, which its installer copies share (scpi_engine.c,
+ * installer_scpi_engine.c). */
+
+/* A size rounded up to even, as the arena hands out room. */
+static uint32_t scpi_arena_even(int32_t size) { return (size + 1U) & ~1U; }
+
+/* arena_alloc's and its installer copy's body: takes size bytes,
+ * rounded up to even, from an arena; 0 when it does not hold them. */
+static void* scpi_arena_alloc(int32_t size, scpi_arena* arena) {
+  uint8_t* start = arena->next;
+  uint8_t* end = start + scpi_arena_even(size);
+
+  if (arena->last < end) {
+    return 0;
+  }
+  arena->next = end;
+  return start;
+}
+
+/* arena_take's and its installer copy's body: takes size bytes,
+ * rounded up to even, from a buffer: the buffer, the arena's next free
+ * byte the one after them. */
+static void* scpi_arena_take(void* buffer, int32_t size, scpi_arena* arena) {
+  uint8_t* start = buffer;
+
+  arena->next = start + scpi_arena_even(size);
+  return start;
+}
+
+/* arena_init's and its installer copy's body: makes an arena of a
+ * buffer of size bytes, at its start, into its slot. */
+static void scpi_arena_init(void* buffer, uint32_t size, scpi_arena** slot) {
+  scpi_arena* arena = buffer;
+  uint8_t* bytes = buffer;
+
+  *slot = arena;
+  arena->next = bytes + sizeof *arena;
+  arena->last = bytes + (size & ~1U) - 1;
 }

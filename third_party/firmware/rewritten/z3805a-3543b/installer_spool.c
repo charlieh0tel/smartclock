@@ -62,3 +62,23 @@ uint32_t installer_spoo_run(spoo_function* function, uint32_t a, uint32_t b,
   request.arguments[2] = c;
   return (uint8_t)installer_psos_send_x(installer_spoo_exchange, &request);
 }
+
+/* The installer's spool task: runs each function installer_spoo_run
+ * sends.  Unlike spoo_task it services no watchdog and prints no
+ * deferred messages, and keeps the request's error as a long
+ * (installer::0x10403a). */
+void installer_spoo_task(void) {
+  /* The ticks it waits for a message before it asks again. */
+  static const uint32_t WAIT_TICKS = 0x400;
+
+  installer_psos_supervisor();
+  for (;;) {
+    installer_spoo_receive_error = (uint8_t)installer_psos_request_x(
+        installer_spoo_exchange, &installer_spoo_message, 0, WAIT_TICKS);
+    if (installer_spoo_receive_error == 0) {
+      installer_spoo_message.function(installer_spoo_message.arguments[0],
+                                      installer_spoo_message.arguments[1],
+                                      installer_spoo_message.arguments[2]);
+    }
+  }
+}

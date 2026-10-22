@@ -195,3 +195,39 @@ uint32_t installer_psos_io_write(uint32_t device, void* buffer,
   }
   return error;
 }
+
+/* Sets the masked bits of the running task's mode; the old mode, even on
+ * an error (installer::0x102be2). */
+uint32_t installer_psos_mode(uint32_t mode, uint32_t mask, uint8_t* old) {
+  uint32_t error =
+      installer_psos_call(PSOS_SERVICE_MODE, mode, mask, 0, 0, NULL, NULL);
+
+  if (old != NULL) {
+    *old = bridge_result_d0;
+  }
+  return error;
+}
+
+/* Frees a segment (installer::0x102c48). */
+uint32_t installer_psos_free_segment(void* segment) {
+  return installer_psos_call(PSOS_SERVICE_FREE_SEGMENT, 0, 0, 0, 0, segment,
+                             NULL);
+}
+
+/* Receives a message from an exchange into a buffer, waiting, unless
+ * no_wait, up to ticks, 0 without end (installer::0x102e18). */
+uint32_t installer_psos_request_x(uint32_t exchange, void* buffer,
+                                  uint32_t no_wait, uint32_t ticks) {
+  return installer_psos_call(PSOS_SERVICE_REQUEST_X, ticks, no_wait, 0, 0,
+                             (void*)exchange, buffer);
+}
+
+/* Opens a device with a long (installer::0x102f36). */
+uint32_t installer_psos_io_open(uint32_t device, uint32_t a) {
+  return installer_psos_io_call(PSOS_IO_OPEN, device, a, 0, 0, NULL, NULL);
+}
+
+/* Restarts the processor through trap #12 (docs/firmware/restart.md),
+ * where the primary's enter_installer has trap #11
+ * (installer::0x100d1c). */
+void installer_restart(void) { __asm__ volatile("trap #12"); }

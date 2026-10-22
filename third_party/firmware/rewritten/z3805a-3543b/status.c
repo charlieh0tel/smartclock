@@ -117,16 +117,7 @@ int16_t status_clear_bit(status_model* status, int32_t condition) {
 /* 1 for a negative condition that queues a command error, -100 to -199
  * (0x2839c). */
 uint32_t condition_is_command_error(int32_t condition) {
-  static const int16_t ERROR_COMMAND_LEAST = -199;
-
-  if (condition >= 0) {
-    return 0;
-  }
-  status_condition* entry = &status_negative_conditions[-condition];
-
-  return entry->kind == STATUS_KIND_ERROR &&
-         entry->register_index >= ERROR_COMMAND_LEAST &&
-         entry->register_index <= STATUS_COMMAND_ERROR_GREATEST;
+  return status_model_command_error(status_negative_conditions, condition);
 }
 
 /* A condition's bit in its register's condition word, inverted for one

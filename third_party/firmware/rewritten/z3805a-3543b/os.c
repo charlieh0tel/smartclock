@@ -320,6 +320,11 @@ uint32_t psos_io_open(uint32_t device, uint32_t a) {
   return psos_io_call(PSOS_IO_OPEN, device, a, 0, 0, NULL, NULL);
 }
 
+/* Closes a device (0x173fe). */
+uint32_t psos_io_close(uint32_t device) {
+  return psos_io_call(PSOS_IO_CLOSE, device, 0, 0, 0, NULL, NULL);
+}
+
 /* Reads up to a length from a device; on success the length read
  * (0x17416). */
 uint32_t psos_io_read(uint32_t device, void* buffer, uint32_t* length) {
@@ -342,6 +347,11 @@ uint32_t psos_io_write(uint32_t device, void* buffer, uint32_t* length) {
     *length = bridge_result_d2;
   }
   return error;
+}
+
+/* Controls a device with two longs (0x1747a). */
+uint32_t psos_io_control(uint32_t device, uint32_t a, uint32_t b) {
+  return psos_io_call(PSOS_IO_CONTROL, device, 0, a, b, NULL, NULL);
 }
 
 /* Packs the name and creates the mutex as an exchange of that name;
@@ -918,6 +928,64 @@ void os_report_region_line(char* name, uint32_t* record,
   print("%4s 0x%08x %7d   0x%08x  0x%08x  0x%08x 0x%04x\r\n", name, segment,
         segment->size, segment->next, segment->field_04, segment->field_08,
         segment->flags);
+}
+
+/* The rule that opens and closes the reports. */
+static char* const os_report_rule =
+    "=================================================================\r\n";
+
+/* :DIAG:OS:PROC?'s report: the CPU, the tasks, the exchanges and the
+ * regions; the source is unused (0x16a4c). */
+void os_process_report(uint8_t source) {
+  printf("%s", "\r\n");
+  printf("%s", os_report_rule);
+  printf("%s", "\r\n");
+  os_report_cpu((printf_function*)printf);
+  task_count = task_table_build();
+  printf("%s", "\r\n");
+  os_report_processes((printf_function*)printf);
+  os_report_process_summary((printf_function*)printf);
+  printf("%s", "\r\n");
+  os_report_exchanges((printf_function*)printf);
+  os_report_exchange_summary((printf_function*)printf);
+  printf("%s", "\r\n");
+  os_report_regions((printf_function*)printf);
+  printf("%s", os_report_rule);
+}
+
+/* :DIAG:OS:MEM?'s report: each task's segments, each region's free
+ * segments, then the regions; the source is unused (0x16ace). */
+void os_memory_report(uint8_t source) {
+  printf("%s", "\r\n");
+  printf("%s", os_report_rule);
+  task_count = task_table_build();
+  printf("%s", "\r\n");
+  printf("%s",
+         "Process  Memseg size(bytes)     next        last    neighbor   "
+         "key\r\n");
+  for (int32_t entry = 0; entry < task_count; entry++) {
+    psos_task* task = task_table[entry].task;
+
+    for (psos_segment* segment = task->segments; segment != NULL;
+         segment = segment->next) {
+      os_report_region_line(task_name(task), (uint32_t*)segment,
+                            (printf_function*)printf);
+    }
+  }
+  for (int32_t region = 0; region < OS_REGIONS; region++) {
+    psos_segment* segment = os_kernel_data()->region_free[region];
+
+    if (segment != NULL) {
+      printf(">> Free memory - region: %d\r\n", region);
+    }
+    for (; segment != NULL; segment = segment->next) {
+      os_report_region_line("****", (uint32_t*)segment,
+                            (printf_function*)printf);
+    }
+  }
+  printf("%s", "\r\n");
+  os_report_regions((printf_function*)printf);
+  printf("%s", os_report_rule);
 }
 
 /* stack_measure's user stack's use and size, then its supervisor

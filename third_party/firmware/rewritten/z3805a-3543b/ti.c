@@ -63,12 +63,6 @@ static const int32_t TI_SPREAD = 200;
  * interpolator_calibrate. */
 static const int32_t TI_CALIBRATE_TRIES = 20;
 
-/* A mode and state pair's values (counter_configuration_fields). */
-enum {
-  TI_STATE_DONE = 1,
-  TI_STATE_WANTED = 2,
-};
-
 /* The interpolator's calibration's defaults, both DACs in the middle
  * (0x40000). */
 void interpolator_calibration_init(interpolator_calibration* calibration) {
@@ -94,10 +88,10 @@ void counter_configuration_init(counter_configuration_fields* configuration) {
   fpga_fields_to_registers(fields, fconf_regs);
   configuration->calibration = 0.4000003; /* the image's, 0x3fd9999adbb8f8da */
   configuration->interpolator_scale = TI_SPREAD;
-  configuration->calibrate_mode = 3;
-  configuration->calibrate_state = TI_STATE_WANTED;
-  configuration->registers_mode = 1;
-  configuration->registers_state = TI_STATE_WANTED;
+  configuration->calibrate_mode = COUNTER_CALIBRATE_ALWAYS;
+  configuration->calibrate_state = COUNTER_WORK_WANTED;
+  configuration->registers_mode = COUNTER_REGISTERS_WHEN_WANTED;
+  configuration->registers_state = COUNTER_WORK_WANTED;
   interval_reading.value = TI_NOT_A_NUMBER;
   interval_reading.valid = 0;
 }
@@ -117,14 +111,14 @@ static void ti_registers_load(counter_configuration_fields* configuration) {
     fconf_regs[reg] = configuration->fpga_registers[reg];
     fpga_write(reg, fconf_regs[reg]);
   }
-  configuration->registers_state = TI_STATE_DONE;
+  configuration->registers_state = COUNTER_WORK_DONE;
 }
 
 /* Writes the configuration's registers if it asks for them. */
 static void ti_registers_load_wanted(
     counter_configuration_fields* configuration) {
-  if (configuration->registers_mode == 1 &&
-      configuration->registers_state == TI_STATE_WANTED) {
+  if (configuration->registers_mode == COUNTER_REGISTERS_WHEN_WANTED &&
+      configuration->registers_state == COUNTER_WORK_WANTED) {
     ti_registers_load(configuration);
   }
 }
@@ -135,6 +129,15 @@ static void ti_registers_load_wanted(
 int32_t counter_load_registers(void) {
   ti_registers_load(&counter_configuration);
   return 0;
+}
+
+/* Asks counter_arm to sync the counter count times by a kind, the
+ * loop's steps and the console's clk_synch and sync_imm (0x40a64). */
+void sync_request(counter_sync_kind kind, int32_t count) {
+  counter_configuration.sync_kind = kind;
+  counter_configuration.sync_count = count;
+  counter_configuration.sync_mode = COUNTER_SYNC_WHEN_WANTED;
+  counter_configuration.sync_state = COUNTER_WORK_WANTED;
 }
 
 /* Sets fconf_regs[3]'s sync bits, fpga_bits entry 5, to a
@@ -163,12 +166,12 @@ void counter_arm(interval_reading_fields* reading,
   fpga_set_field(FPGA_BIT_MODE, 0); /* count */
   fpga_set_bit(FPGA_BIT_START, 0);
   fpga_set_field(FPGA_BIT_ADDRESS, 0);
-  if (configuration->sync_mode == 2 &&
-      configuration->sync_state == TI_STATE_WANTED) {
+  if (configuration->sync_mode == COUNTER_SYNC_WHEN_WANTED &&
+      configuration->sync_state == COUNTER_WORK_WANTED) {
     counter_set_sync(configuration->sync_kind);
     configuration->sync_count--;
     if (configuration->sync_count < 1) {
-      configuration->sync_state = TI_STATE_DONE;
+      configuration->sync_state = COUNTER_WORK_DONE;
     }
   }
   fpga_set_bit(FPGA_BIT_PRESET, 0);
@@ -522,9 +525,9 @@ void counter_calibrate(interval_reading_fields* reading,
     reading->errors |= COUNTER_MEASUREMENT_ABORTED;
   }
   if (reading->errors != 0 ||
-      !(configuration->calibrate_mode == 3 ||
-        (configuration->calibrate_mode == 1 &&
-         configuration->calibrate_state == TI_STATE_WANTED))) {
+      !(configuration->calibrate_mode == COUNTER_CALIBRATE_ALWAYS ||
+        (configuration->calibrate_mode == COUNTER_CALIBRATE_WHEN_WANTED &&
+         configuration->calibrate_state == COUNTER_WORK_WANTED))) {
     return;
   }
   for (int32_t tries = 0;
@@ -541,7 +544,7 @@ void counter_calibrate(interval_reading_fields* reading,
     configuration->interpolator_scale =
         interpolator_calibration_state.reading_high -
         interpolator_calibration_state.reading_low;
-    configuration->calibrate_state = TI_STATE_DONE;
+    configuration->calibrate_state = COUNTER_WORK_DONE;
   } else {
     configuration->interpolator_scale = TI_SPREAD;
     configuration->interpolator_offset = 0;

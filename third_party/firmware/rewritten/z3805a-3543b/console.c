@@ -422,31 +422,27 @@ void diag_dmessage(char* message) {
 
 /* The words dmes_gpsm to dmes_curv: a task's debug messages on or off
  * (0x1be18 to 0x1be5e). */
-void diag_dmes_gpsm(uint32_t on) { dmes_gpsm = on; }
+void diag_dmes_gpsm(uint32_t on) { dmes[DMES_GPSM] = on; }
 
-void diag_dmes_hmon(uint32_t on) { dmes_hmon = on; }
+void diag_dmes_hmon(uint32_t on) { dmes[DMES_HMON] = on; }
 
-void diag_dmes_klok(uint32_t on) { dmes_klok = on; }
+void diag_dmes_klok(uint32_t on) { dmes[DMES_KLOK] = on; }
 
-void diag_dmes_pllp(uint32_t on) { dmes_pllp = on; }
+void diag_dmes_pllp(uint32_t on) { dmes[DMES_PLLP] = on; }
 
-void diag_dmes_root(uint32_t on) { dmes_root = on; }
+void diag_dmes_root(uint32_t on) { dmes[DMES_ROOT] = on; }
 
-void diag_dmes_scpi(uint32_t on) { dmes_scpi = on; }
+void diag_dmes_scpi(uint32_t on) { dmes[DMES_SCPI] = on; }
 
-void diag_dmes_spoo(uint32_t on) { dmes_spoo = on; }
+void diag_dmes_spoo(uint32_t on) { dmes[DMES_SPOO] = on; }
 
-void diag_dmes_curv(uint32_t on) { dmes_curv = on; }
+void diag_dmes_curv(uint32_t on) { dmes[DMES_CURV] = on; }
 
 /* The word dmes_all: every task's debug messages on or off, the nine
- * longs from dmes_gpsm, the eight named ones and the unnamed one after
- * dmes_curv at 0x103828 (0x1be68). */
+ * flags of dmes (0x1be68). */
 void diag_dmes_all(uint32_t on) {
-  static const uint8_t FLAGS = 9;
-  uint32_t* flags = &dmes_gpsm;
-
-  for (uint8_t i = 0; i < FLAGS; i++) {
-    flags[i] = on;
+  for (uint8_t i = 0; i < sizeof dmes / sizeof dmes[0]; i++) {
+    dmes[i] = on;
   }
 }
 

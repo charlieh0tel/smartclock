@@ -14,8 +14,8 @@
 /* The FPGA's lines on the MC68331's ports: PROGRAM, driven on port E;
  * INIT, read as PACTL's PCLKS, the PCLK pin's state (MC68331UM, D.2.7);
  * DONE, on port F, read there and driven low while PROGRAM is; and a
- * chip's readback line on port F (smartclock.h's fpga_chip). */
-static const uint8_t FPGA_PROGRAM = 0x40;         /* PORTE bit 6 */
+ * chip's readback line on port F (smartclock.h's fpga_chip).  PROGRAM
+ * is fpga.h's. */
 static const uint8_t FPGA_INIT = 0x08;            /* PACTL bit 3 */
 static const uint8_t FPGA_DONE = 0x08;            /* PORTF bit 3 */
 static const uint8_t FPGA_READBACK_FIRST = 0x40;  /* PORTF bit 6 */

@@ -165,6 +165,24 @@ float float_min_of(float* a, float* b) {
   return float_compare(*b, *a) > 0 ? *a : *b;
 }
 
+/* A double clamped to its minimum and maximum into *clamped, reporting a
+ * clamp: 1 if it clamped (0x32104). */
+uint32_t clamp_double(double* value, double* clamped, double* minimum,
+                      double* maximum, uint8_t source) {
+  if (double_compare(*value, *minimum) > 0) {
+    report_clamped(0, source);
+    *clamped = *minimum;
+    return 1;
+  }
+  if (double_compare(*maximum, *value) > 0) {
+    report_clamped(1, source);
+    *clamped = *maximum;
+    return 1;
+  }
+  *clamped = *value;
+  return 0;
+}
+
 /* A double clamped to its minimum and maximum, then divided by its step
  * and rounded half away from zero, the step a thousand times coarser
  * beyond 1e9 steps: the steps, as an int (0x32596). */

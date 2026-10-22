@@ -18,6 +18,13 @@
 /* selftest_ram's line of text, the original's 60 bytes. */
 #define SELFTEST_LINE_LENGTH 60
 
+/* selftest_report_fail's line of text, the original's 80 bytes. */
+#define SELFTEST_REPORT_LENGTH 80
+
+/* selftest_print_failure's "FAIL: " and the longest check's name,
+ * "INT_REF", with its end: the original's 14 bytes. */
+#define SELFTEST_FAILURE_LENGTH 14
+
 /* qspi_hex_dac_test's words, the hex DAC's 36 bits, and its patterns. */
 #define SELFTEST_HEX_DAC_WORDS 3
 #define SELFTEST_HEX_DAC_PATTERNS 2
@@ -279,6 +286,18 @@ void qspi_tests_run(void) {
 void selftest_qspi_run(void) {
   selftest.qspi = 0;
   qspi_tests_run();
+}
+
+/* Prints "NAME FAIL" when failed is nonzero and the self-test was not
+ * aborted, without the line's end when continued (0x1833c). */
+void selftest_report_fail(int32_t failed, char* name, char continued) {
+  char text[SELFTEST_REPORT_LENGTH];
+
+  if (failed == 0 || selftest_aborted()) {
+    return;
+  }
+  sprintf(text, "%s %s", name, "FAIL");
+  debug_printf(continued ? "%s" : "%s\r\n", text);
 }
 
 /* The self-test of the CPU, entry 2: runs cpu_register_test, and
@@ -576,6 +595,74 @@ void selftest_execute(selftest_test_number test) {
   selftest.running = 0;
 }
 
+/* Runs self-test n for *TST? or :DIAGnostic:TEST? and leaves its result
+ * and details for the reply; one past 13 runs nothing (0x18a74). */
+void selftest_run(uint32_t number) {
+  /* the test is the argument's low byte (0x18a7c) */
+  const selftest_test_number test = (selftest_test_number)number;
+
+  selftest.in_run = 1;
+  selftest.result = 0;
+  selftest.details[0] = 0;
+  selftest.details[1] = 0;
+  selftest.test = test;
+  if (test > SELFTEST_TEST_INTERPOLATOR_SAMPLE) {
+    selftest.in_run = 0;
+    return;
+  }
+  selftest_execute(test);
+  switch (test) {
+    case SELFTEST_TEST_ALL:
+      selftest.result = selftest.summary;
+      break;
+    case SELFTEST_TEST_DISPLAY:
+      selftest.result = 0;
+      break;
+    case SELFTEST_TEST_PROCESSOR:
+      selftest.result = (uint16_t)selftest.cpu;
+      break;
+    case SELFTEST_TEST_RAM:
+      selftest.result = selftest.ram;
+      selftest.details[0] = selftest.ram_data_bits;
+      selftest.details[1] = selftest.ram_address_lines;
+      break;
+    case SELFTEST_TEST_EEPROM:
+      selftest.result = (uint16_t)selftest.eeprom;
+      break;
+    case SELFTEST_TEST_UART:
+      selftest.result = (uint16_t)selftest.uart;
+      break;
+    case SELFTEST_TEST_QSPI:
+      selftest.result = (uint16_t)selftest.qspi;
+      break;
+    case SELFTEST_TEST_FPGA:
+      selftest.result = (uint16_t)selftest.fpga;
+      break;
+    case SELFTEST_TEST_INTERPOLATOR:
+      selftest.result = (uint16_t)selftest.interpolator;
+      break;
+    case SELFTEST_TEST_INTERNAL_REFERENCE:
+      selftest.result = (uint16_t)selftest.internal_reference;
+      break;
+    case SELFTEST_TEST_GPS:
+      selftest.result = (uint16_t)selftest.gps;
+      break;
+    case SELFTEST_TEST_POWER:
+      selftest.result = (uint16_t)selftest.power;
+      break;
+    case SELFTEST_TEST_INTERPOLATOR_CALIBRATION:
+      selftest.result = (uint16_t)selftest.interpolator;
+      selftest.details[0] = selftest.interpolator_tries;
+      selftest.details[1] = selftest.interpolator_calibrated;
+      break;
+    case SELFTEST_TEST_INTERPOLATOR_SAMPLE:
+      selftest.result = (uint16_t)selftest.interpolator;
+      selftest.details[0] = selftest.interpolator_readings[0];
+      selftest.details[1] = selftest.interpolator_readings[1];
+      break;
+  }
+}
+
 /* The power-up checks, selftest_print_failure's table at 0x186b0: each
  * runs its test, lighting a lamp on a failure, and returns its word. */
 
@@ -606,12 +693,12 @@ uint32_t selftest_uart_with_lamp(void) {
 
 /* "QSPI": the QSPI tests, lighting OP7 on a failure; selftest.qspi
  * (0x18c9c). */
-int16_t selftest_qspi_with_lamp(void) {
+uint32_t selftest_qspi_with_lamp(void) {
   selftest_qspi_run();
   if (selftest.qspi != 0) {
     duart_output_bits(BOARD_LED_SELFTEST, 0);
   }
-  return selftest.qspi;
+  return (uint16_t)selftest.qspi;
 }
 
 /* "FPGA": counter_selftest, lighting OP7 on a failure; selftest.fpga
@@ -626,24 +713,24 @@ uint32_t selftest_fpga_with_lamp(void) {
 
 /* "INTERP": the interpolator test, lighting OP7 on a failure;
  * selftest.interpolator (0x18cec). */
-int16_t selftest_interpolator_with_lamp(void) {
+uint32_t selftest_interpolator_with_lamp(void) {
   selftest.interpolator = 0;
   interpolator_selftest();
   if (selftest.interpolator != 0) {
     duart_output_bits(BOARD_LED_SELFTEST, 0);
   }
-  return selftest.interpolator;
+  return (uint16_t)selftest.interpolator;
 }
 
 /* "INT_REF": the internal 1PPS test, lighting OP7 on a failure;
  * selftest.internal_reference (0x18d16). */
-int16_t selftest_internal_reference_with_lamp(void) {
+uint32_t selftest_internal_reference_with_lamp(void) {
   selftest.internal_reference = 0;
   internal_pps_test();
   if (selftest.internal_reference != 0) {
     duart_output_bits(BOARD_LED_SELFTEST, 0);
   }
-  return selftest.internal_reference;
+  return (uint16_t)selftest.internal_reference;
 }
 
 /* "GPS": gps_selftest_run, lighting OP7 on a failure; selftest.gps
@@ -664,6 +751,64 @@ uint32_t selftest_power_with_lamp(void) {
     duart_output_bits(BOARD_LED_SELFTEST, 0);
   }
   return (uint16_t)selftest.power;
+}
+
+/* A power-up check: runs its test and returns its failures, 0 if
+ * none. */
+typedef uint32_t selftest_check_function(void);
+
+/* An entry of selftest_print_failure's table. */
+typedef struct selftest_check {
+  selftest_check_function* run; /* +0x00 */
+  char* name;                   /* +0x04: what a failure prints */
+} selftest_check;
+
+/* The power-up checks in order, the image's table at 0x186b0, which
+ * ends with a null entry. */
+static const selftest_check selftest_checks[] = {
+    {lamp_test_command, "DISP"},
+    {selftest_cpu_result, "PROC"},
+    {selftest_ram_result, "RAM"},
+    {selftest_eeprom_result, "EEPROM"},
+    {selftest_uart_with_lamp, "UART"},
+    {selftest_qspi_with_lamp, "QSPI"},
+    {selftest_fpga_with_lamp, "FPGA"},
+    {selftest_interpolator_with_lamp, "INTERP"},
+    {selftest_internal_reference_with_lamp, "INT_REF"},
+    {selftest_gps_with_lamp, "GPS"},
+    {selftest_power_with_lamp, "POWER"},
+};
+
+/* The power-up self-test: runs each check, printing the name and code
+ * of each that fails, then summarizes and logs a failure; clear_eeprom
+ * clears the EEPROM's result first (0x18600). */
+void selftest_print_failure(char clear_eeprom) {
+  static const uint32_t CHECKS =
+      sizeof(selftest_checks) / sizeof(selftest_check);
+  char text[SELFTEST_FAILURE_LENGTH];
+
+  selftest.passed = 1;
+  if (clear_eeprom != 0) {
+    selftest.eeprom = 0;
+  }
+  selftest.running = 1;
+  for (uint32_t check = 0; check < CHECKS; check++) {
+    const uint32_t code = selftest_checks[check].run();
+    if (code != 0) {
+      selftest.passed = 0;
+      libc_copy(text, "FAIL: ");
+      strcat(text, selftest_checks[check].name);
+      debug_printf("%s, error code: %02X\r\n", text, code);
+    }
+    watchdog_pll++;
+  }
+  selftest_summary();
+  selftest.result = selftest.summary;
+  selftest.test = SELFTEST_TEST_ALL;
+  selftest.running = 0;
+  if (selftest.passed == 0) {
+    log_event(LOG_SELFTEST_FAILED);
+  }
 }
 
 /* Sums a ROM's two byte lanes, the even bytes and the odd, over count

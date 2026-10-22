@@ -118,10 +118,10 @@ typedef struct spool_task_flag {
 
 /* The tasks task_dmessage prints for, in the order it checks them. */
 static const spool_task_flag spool_task_flags[] = {
-    {&task_gpsm, &dmes_gpsm}, {&task_hmon, &dmes_hmon},
-    {&task_klok, &dmes_klok}, {&task_pllp, &dmes_pllp},
-    {&task_root, &dmes_root}, {&task_scpi, &dmes_scpi},
-    {&task_spoo, &dmes_spoo}, {&task_curv, &dmes_curv},
+    {&task_gpsm, &dmes[DMES_GPSM]}, {&task_hmon, &dmes[DMES_HMON]},
+    {&task_klok, &dmes[DMES_KLOK]}, {&task_pllp, &dmes[DMES_PLLP]},
+    {&task_root, &dmes[DMES_ROOT]}, {&task_scpi, &dmes[DMES_SCPI]},
+    {&task_spoo, &dmes[DMES_SPOO]}, {&task_curv, &dmes[DMES_CURV]},
 };
 
 /* Prints "task: message" with the calling task's name, while debug

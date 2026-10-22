@@ -31,6 +31,10 @@ static const uint8_t SCPI_NUMBER_DIGITS = 16;
 
 static const uint8_t SCPI_NUMBER_BASE = 10;
 
+/* scpi_real_to_text's resolution for every digit asked for, below a
+ * double's least exponent, and which it converts zero at too. */
+static const int16_t SCPI_REAL_EVERY_DIGIT = -308;
+
 enum {
   SCPI_ARRAY_BLOCK = 0,
   SCPI_ARRAY_DOUBLES = 1,

@@ -363,7 +363,25 @@ typedef enum __attribute__((packed)) console_crash_kind {
     CONSOLE_CRASH_FATAL_ERROR=4
 } console_crash_kind;
 
+typedef enum __attribute__((packed)) counter_calibrate_mode {
+    COUNTER_CALIBRATE_WHEN_WANTED=1,
+    COUNTER_CALIBRATE_ALWAYS=3
+} counter_calibrate_mode;
+
 typedef struct counter_configuration_fields counter_configuration_fields, *Pcounter_configuration_fields;
+
+typedef enum __attribute__((packed)) counter_registers_mode {
+    COUNTER_REGISTERS_WHEN_WANTED=1
+} counter_registers_mode;
+
+typedef enum __attribute__((packed)) counter_work_state {
+    COUNTER_WORK_DONE=1,
+    COUNTER_WORK_WANTED=2
+} counter_work_state;
+
+typedef enum __attribute__((packed)) counter_sync_mode {
+    COUNTER_SYNC_WHEN_WANTED=2
+} counter_sync_mode;
 
 typedef enum __attribute__((packed)) counter_sync_kind {
     COUNTER_SYNC_POSITIVE=1,
@@ -374,12 +392,12 @@ typedef enum __attribute__((packed)) counter_sync_kind {
 struct counter_configuration_fields {
     uint8_t fpga_registers[4];
     double calibration;
-    uint8_t registers_mode;
-    uint8_t registers_state;
-    uint8_t calibrate_mode;
-    uint8_t calibrate_state;
-    uint8_t sync_mode;
-    uint8_t sync_state;
+    enum counter_registers_mode registers_mode;
+    enum counter_work_state registers_state;
+    enum counter_calibrate_mode calibrate_mode;
+    enum counter_work_state calibrate_state;
+    enum counter_sync_mode sync_mode;
+    enum counter_work_state sync_state;
     enum counter_sync_kind sync_kind;
     uint8_t pad_13;
     int32_t sync_count;
@@ -2271,8 +2289,10 @@ typedef enum __attribute__((packed)) psos_error {
 typedef enum __attribute__((packed)) psos_io_function {
     PSOS_IO_INIT=0,
     PSOS_IO_OPEN=1,
+    PSOS_IO_CLOSE=2,
     PSOS_IO_READ=3,
-    PSOS_IO_WRITE=4
+    PSOS_IO_WRITE=4,
+    PSOS_IO_CONTROL=5
 } psos_io_function;
 
 typedef enum __attribute__((packed)) psos_service {
@@ -3330,6 +3350,11 @@ struct status_register_layout {
     uint32_t *negative;
 };
 
+typedef enum __attribute__((packed)) status_replay_mode {
+    STATUS_REPLAY_REPORTS=0,
+    STATUS_REPLAY_HAPPENINGS=1
+} status_replay_mode;
+
 typedef enum __attribute__((packed)) status_screen_line {
     STATUS_SCREEN_LINE_POWERUP=0,
     STATUS_SCREEN_LINE_HOLDOVER=1,
@@ -3405,6 +3430,18 @@ struct status_snapshot_record {
     uint16_t hardware_condition;
 };
 
+typedef enum __attribute__((packed)) task_debug_flag {
+    DMES_GPSM=0,
+    DMES_HMON=1,
+    DMES_KLOK=2,
+    DMES_PLLP=3,
+    DMES_ROOT=4,
+    DMES_SCPI=5,
+    DMES_SPOO=6,
+    DMES_CURV=7,
+    DMES_UNNAMED=8
+} task_debug_flag;
+
 typedef struct task_table_entry task_table_entry, *Ptask_table_entry;
 
 struct task_table_entry {
@@ -3440,9 +3477,13 @@ _Static_assert(sizeof(calibration_block) == 64, "calibration_block");
 _Static_assert(sizeof(char_slot) == 4, "char_slot");
 _Static_assert(sizeof(clock_record) == 51, "clock_record");
 _Static_assert(sizeof(console_crash_kind) == 1, "console_crash_kind");
+_Static_assert(sizeof(counter_calibrate_mode) == 1, "counter_calibrate_mode");
 _Static_assert(sizeof(counter_configuration_fields) == 32, "counter_configuration_fields");
 _Static_assert(sizeof(counter_error) == 1, "counter_error");
+_Static_assert(sizeof(counter_registers_mode) == 1, "counter_registers_mode");
 _Static_assert(sizeof(counter_sync_kind) == 1, "counter_sync_kind");
+_Static_assert(sizeof(counter_sync_mode) == 1, "counter_sync_mode");
+_Static_assert(sizeof(counter_work_state) == 1, "counter_work_state");
 _Static_assert(sizeof(data_format) == 1, "data_format");
 _Static_assert(sizeof(duart_channel) == 8, "duart_channel");
 _Static_assert(sizeof(duart_registers) == 32, "duart_registers");
@@ -3674,9 +3715,11 @@ _Static_assert(sizeof(status_error_queue) == 10, "status_error_queue");
 _Static_assert(sizeof(status_model) == 46, "status_model");
 _Static_assert(sizeof(status_register) == 16, "status_register");
 _Static_assert(sizeof(status_register_layout) == 22, "status_register_layout");
+_Static_assert(sizeof(status_replay_mode) == 1, "status_replay_mode");
 _Static_assert(sizeof(status_screen_line) == 1, "status_screen_line");
 _Static_assert(sizeof(status_screen_mode_line) == 6, "status_screen_mode_line");
 _Static_assert(sizeof(status_snapshot_record) == 302, "status_snapshot_record");
+_Static_assert(sizeof(task_debug_flag) == 1, "task_debug_flag");
 _Static_assert(sizeof(task_table_entry) == 6, "task_table_entry");
 _Static_assert(sizeof(three_point_fit) == 16, "three_point_fit");
 _Static_assert(sizeof(time_of_day) == 4, "time_of_day");
@@ -4137,7 +4180,7 @@ extern uint8_t gps_commands_blocked; /* 001011c4 */
 extern int8_t status_screen_print_interval; /* 001011c5 */
 extern uint8_t gps_command_message[80]; /* 001011c6 */
 extern char gps_last_program_message[80]; /* 00101216 */
-extern uint8_t gps_response_buffer[20]; /* 00101266 */
+extern uint8_t gps_response_buffer[294]; /* 00101266 */
 extern uint8_t * gps_response_cursor; /* 0010138c */
 extern uint8_t * gps_print_cursor; /* 00101390 */
 extern gps_framing_state gps_receive_state; /* 00101394 */
@@ -4195,6 +4238,7 @@ extern int16_t log_page_number; /* 00101dd4 */
 extern uint8_t log_full; /* 00101dd6 */
 extern uint8_t log_write_page_open; /* 00101dd7 */
 extern int16_t log_entries; /* 00101dd8 */
+extern uint8_t sample_values[2]; /* 00101dda */
 extern uint8_t scpi_value_SAMPle_BOOLean; /* 00101ddc */
 extern uint8_t scpi_value_SAMPle_BARR[2]; /* 00101ddd */
 extern uint8_t scpi_value_SAMPle_TOGGle; /* 00101ddf */
@@ -4374,14 +4418,8 @@ extern uint32_t task_curv; /* 001037f8 */
 extern uint32_t gpsx_exchange; /* 001037fc */
 extern uint32_t plla_exchange; /* 00103800 */
 extern uint32_t pllc_exchange; /* 00103804 */
-extern uint32_t dmes_gpsm; /* 00103808 */
-extern uint32_t dmes_hmon; /* 0010380c */
-extern uint32_t dmes_klok; /* 00103810 */
-extern uint32_t dmes_pllp; /* 00103814 */
-extern uint32_t dmes_root; /* 00103818 */
-extern uint32_t dmes_scpi; /* 0010381c */
-extern uint32_t dmes_spoo; /* 00103820 */
-extern uint32_t dmes_curv; /* 00103824 */
+extern uint32_t dmes_gpsm[9]; /* 00103808 */
+extern uint32_t dmes[9]; /* 00103808 */
 extern uint32_t idle_loops; /* 0010382c */
 extern uint8_t es_ascii; /* 00103830 */
 extern uint8_t es_enabled; /* 00103831 */
@@ -4730,14 +4768,8 @@ __asm__(".set deferred_text, 0x001032fd");
 __asm__(".set diag_leapsec_argument_1, 0x00102724");
 __asm__(".set diag_leapsec_argument_2, 0x00102726");
 __asm__(".set dither_table, 0x00012b32");
-__asm__(".set dmes_curv, 0x00103824");
+__asm__(".set dmes, 0x00103808");
 __asm__(".set dmes_gpsm, 0x00103808");
-__asm__(".set dmes_hmon, 0x0010380c");
-__asm__(".set dmes_klok, 0x00103810");
-__asm__(".set dmes_pllp, 0x00103814");
-__asm__(".set dmes_root, 0x00103818");
-__asm__(".set dmes_scpi, 0x0010381c");
-__asm__(".set dmes_spoo, 0x00103820");
 __asm__(".set doprnt_hex_prefix, 0x00060890");
 __asm__(".set doprnt_minus, 0x00060868");
 __asm__(".set doprnt_plus, 0x0006086a");
@@ -5100,6 +5132,7 @@ __asm__(".set robin_blocks, 0x00102a26");
 __asm__(".set robin_keyword_code, 0x00102d74");
 __asm__(".set robin_overflows, 0x001029de");
 __asm__(".set robin_points, 0x00102d76");
+__asm__(".set sample_values, 0x00101dda");
 __asm__(".set sample_values_defaults, 0x000308b6");
 __asm__(".set satellite_status_blank_entry, 0x0004e016");
 __asm__(".set sci, 0x0010328a");
@@ -6505,10 +6538,10 @@ void selftest_run(uint32_t param_1);
 void ram_pattern_test_locked(void);
 void selftest_nv_slot(void);
 void selftest_qspi_run(void);
-int16_t selftest_qspi_with_lamp(void);
+uint32_t selftest_qspi_with_lamp(void);
 uint32_t selftest_fpga_with_lamp(void);
-int16_t selftest_interpolator_with_lamp(void);
-int16_t selftest_internal_reference_with_lamp(void);
+uint32_t selftest_interpolator_with_lamp(void);
+uint32_t selftest_internal_reference_with_lamp(void);
 uint32_t lamp_test_command(void);
 uint32_t selftest_uart_with_lamp(void);
 uint32_t selftest_gps_with_lamp(void);
@@ -7377,7 +7410,7 @@ void status_happening(status_condition_code condition);
 uint16_t status_hardware_condition(void);
 void happening_buffer_clear(uint8_t *param_1);
 void happening_buffers_clear(void);
-void happening_replay(char *events,char mode,char first,char last);
+void happening_replay(char *events,status_replay_mode mode,char first,char last);
 void happening_flush(char *param_1);
 int32_t scpi_query_SOURce_ROSCillator_HOLDover_DURation(void *parameters,void *response,scpi_call *call);
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_DURation_MEASurement_THReshold
@@ -11559,6 +11592,7 @@ void start_nothing(void)
 #endif
 
 /* 00012bb4 */
+#if 0 /* the decompiler's reading; rewritten in main.c */
 
 /* the start-up's setup: status, NV settings restored, debug flags, the battery-backed RAM's
    checksum and the reset's cause */
@@ -11589,7 +11623,7 @@ void system_init(void)
   parameter_record_read();
   identification_record_read();
   hmon_tick_countdown = 0;
-  memcpy((void *)0x101dda,sample_values_defaults,0x94);
+  memcpy(sample_values,sample_values_defaults,0x94);
   nv_restore();
   debug_enabled = nv_settings.debug_output;
   psos_debug_enabled = nv_settings.debug_output;
@@ -11597,7 +11631,7 @@ void system_init(void)
   clock_init(selftest.eeprom);
   cVar9 = 0;
   do {
-    (&dmes_gpsm)[cVar9] = 1;
+    dmes[cVar9] = 1;
     cVar9 = cVar9 + 1;
   } while (cVar9 < '\t');
   uVar7 = record_checksum(&preserved_region,0x94e);
@@ -11675,6 +11709,7 @@ void system_init(void)
   return;
 }
 
+#endif
 
 /* 00012d6e */
 #if 0 /* the decompiler's reading; rewritten in startup.c */
@@ -11999,6 +12034,7 @@ uint32_t klok_take_pending(void)
 #endif
 
 /* 0001304a */
+#if 0 /* the decompiler's reading; rewritten in main.c */
 
 /* stores its own task id in task_root, sets up the status system, creates the exchanges and tasks
    and starts them
@@ -12044,6 +12080,7 @@ void root_task(void)
   } while( true );
 }
 
+#endif
 
 /* 0001321a */
 #if 0 /* the decompiler's reading; rewritten in os.c */
@@ -22043,6 +22080,7 @@ uint32_t task_id_valid(uint32_t param_1)
 #endif
 
 /* 00016a4c */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* :DIAG:OS:PROC?'s report of the tasks
    structures.md */
@@ -22067,8 +22105,10 @@ void os_process_report(uint8_t param_1)
   return;
 }
 
+#endif
 
 /* 00016ace */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* :DIAG:OS:MEM?'s report, "Process Memseg size(bytes) next last neighbor key"
    structures.md */
@@ -22114,6 +22154,7 @@ void os_memory_report(uint8_t param_1)
   return;
 }
 
+#endif
 
 /* 00016bb6 */
 #if 0 /* the decompiler's reading; rewritten in os.c */
@@ -23413,6 +23454,7 @@ uint32_t psos_io_open(uint32_t device,uint32_t a)
 #endif
 
 /* 000173fe */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* I/O function 2, dev_close, !iodev
    psos.md */
@@ -23427,10 +23469,11 @@ uint32_t psos_io_close(uint32_t device)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = psos_io_call(2,device,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
+  uVar1 = psos_io_call(PSOS_IO_CLOSE,device,in_D1,unaff_D2,unaff_D3,in_A0,in_A1);
   return uVar1;
 }
 
+#endif
 
 /* 00017416 */
 #if 0 /* the decompiler's reading; rewritten in os.c */
@@ -23481,6 +23524,7 @@ uint32_t psos_io_write(uint32_t device,void *buffer,uint32_t *length)
 #endif
 
 /* 0001747a */
+#if 0 /* the decompiler's reading; rewritten in os.c */
 
 /* I/O function 5, dev_ctrl
    psos.md */
@@ -23493,10 +23537,11 @@ uint32_t psos_io_control(uint32_t device,uint32_t a,uint32_t b)
   void *in_A0;
   void *in_A1;
   
-  uVar1 = psos_io_call(PSOS_IO_WRITE|PSOS_IO_OPEN,device,in_D1,a,b,in_A0,in_A1);
+  uVar1 = psos_io_call(PSOS_IO_CONTROL,device,in_D1,a,b,in_A0,in_A1);
   return uVar1;
 }
 
+#endif
 
 /* 0001749e */
 #if 0 /* the decompiler's reading; the routine is the assembly after it */
@@ -24570,6 +24615,7 @@ char debug_is_enabled(void)
 #endif
 
 /* 0001833c */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* prints "%s FAIL" when its test failed and selftest_aborted is false */
 
@@ -24596,6 +24642,7 @@ void selftest_report_fail(int32_t param_1,char *param_2,char param_3)
   return;
 }
 
+#endif
 
 /* 00018396 */
 #if 0 /* the decompiler's reading; rewritten in selftest.c */
@@ -24823,6 +24870,7 @@ uint32_t selftest_eeprom_result(void)
 #endif
 
 /* 00018600 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* prints a failed self-test's name and error code
    "FAIL:", "%s, error code: %02X" */
@@ -24870,6 +24918,7 @@ void selftest_print_failure(char param_1)
   return;
 }
 
+#endif
 
 /* 0001876c */
 #if 0 /* the decompiler's reading; rewritten in selftest.c */
@@ -25065,6 +25114,7 @@ void qspi_tests_run(void)
 #endif
 
 /* 00018a74 */
+#if 0 /* the decompiler's reading; rewritten in selftest.c */
 
 /* runs self-test n, 0 to 13, through selftest_execute and copies its result cells */
 
@@ -25149,6 +25199,7 @@ void selftest_run(uint32_t param_1)
   return;
 }
 
+#endif
 
 /* 00018c48 */
 #if 0 /* the decompiler's reading; rewritten in selftest.c */
@@ -25211,7 +25262,7 @@ void selftest_qspi_run(void)
 /* the QSPI tests, lighting OP7 on a failure; selftest_print_failure's check "QSPI" in its table at
    0x186b0 */
 
-int16_t selftest_qspi_with_lamp(void)
+uint32_t selftest_qspi_with_lamp(void)
 
 {
   selftest.qspi = 0;
@@ -25219,7 +25270,7 @@ int16_t selftest_qspi_with_lamp(void)
   if (selftest.qspi != 0) {
     duart_output_bits(BOARD_LED_SELFTEST,0);
   }
-  return selftest.qspi;
+  return (uint32_t)(uint16_t)selftest.qspi;
 }
 
 #endif
@@ -25248,7 +25299,7 @@ uint32_t selftest_fpga_with_lamp(void)
 /* the interpolator test, lighting OP7 on a failure; the check "INTERP" in selftest_print_failure's
    table */
 
-int16_t selftest_interpolator_with_lamp(void)
+uint32_t selftest_interpolator_with_lamp(void)
 
 {
   selftest.interpolator = 0;
@@ -25256,7 +25307,7 @@ int16_t selftest_interpolator_with_lamp(void)
   if (selftest.interpolator != 0) {
     duart_output_bits(BOARD_LED_SELFTEST,0);
   }
-  return selftest.interpolator;
+  return (uint32_t)(uint16_t)selftest.interpolator;
 }
 
 #endif
@@ -25267,7 +25318,7 @@ int16_t selftest_interpolator_with_lamp(void)
 /* the internal 1PPS test, lighting OP7 on a failure; the check "INT_REF" in
    selftest_print_failure's table */
 
-int16_t selftest_internal_reference_with_lamp(void)
+uint32_t selftest_internal_reference_with_lamp(void)
 
 {
   selftest.internal_reference = 0;
@@ -25275,7 +25326,7 @@ int16_t selftest_internal_reference_with_lamp(void)
   if (selftest.internal_reference != 0) {
     duart_output_bits(BOARD_LED_SELFTEST,0);
   }
-  return selftest.internal_reference;
+  return (uint32_t)(uint16_t)selftest.internal_reference;
 }
 
 #endif
@@ -35961,7 +36012,7 @@ void diag_dmessage(char *param_1)
 void diag_dmes_gpsm(uint32_t param_1)
 
 {
-  dmes_gpsm = param_1;
+  dmes[0] = param_1;
   return;
 }
 
@@ -35975,7 +36026,7 @@ void diag_dmes_gpsm(uint32_t param_1)
 void diag_dmes_hmon(uint32_t param_1)
 
 {
-  dmes_hmon = param_1;
+  dmes[1] = param_1;
   return;
 }
 
@@ -35989,7 +36040,7 @@ void diag_dmes_hmon(uint32_t param_1)
 void diag_dmes_klok(uint32_t param_1)
 
 {
-  dmes_klok = param_1;
+  dmes[2] = param_1;
   return;
 }
 
@@ -36003,7 +36054,7 @@ void diag_dmes_klok(uint32_t param_1)
 void diag_dmes_pllp(uint32_t param_1)
 
 {
-  dmes_pllp = param_1;
+  dmes[3] = param_1;
   return;
 }
 
@@ -36017,7 +36068,7 @@ void diag_dmes_pllp(uint32_t param_1)
 void diag_dmes_root(uint32_t param_1)
 
 {
-  dmes_root = param_1;
+  dmes[4] = param_1;
   return;
 }
 
@@ -36031,7 +36082,7 @@ void diag_dmes_root(uint32_t param_1)
 void diag_dmes_scpi(uint32_t param_1)
 
 {
-  dmes_scpi = param_1;
+  dmes[5] = param_1;
   return;
 }
 
@@ -36045,7 +36096,7 @@ void diag_dmes_scpi(uint32_t param_1)
 void diag_dmes_spoo(uint32_t param_1)
 
 {
-  dmes_spoo = param_1;
+  dmes[6] = param_1;
   return;
 }
 
@@ -36059,7 +36110,7 @@ void diag_dmes_spoo(uint32_t param_1)
 void diag_dmes_curv(uint32_t param_1)
 
 {
-  dmes_curv = param_1;
+  dmes[7] = param_1;
   return;
 }
 
@@ -36077,7 +36128,7 @@ void diag_dmes_all(uint32_t param_1)
   
   cVar1 = 0;
   do {
-    (&dmes_gpsm)[cVar1] = param_1;
+    dmes[cVar1] = param_1;
     cVar1 = cVar1 + 1;
   } while (cVar1 < '\t');
   return;
@@ -38468,14 +38519,14 @@ void task_dmessage(char *message)
       fatal_error("dmessage");
     }
     bVar1 = false;
-    if (((((((local_a == (void *)task_gpsm) && (dmes_gpsm != 0)) ||
-           ((local_a == (void *)task_hmon && (dmes_hmon != 0)))) ||
-          ((local_a == (void *)task_klok && (dmes_klok != 0)))) ||
-         ((local_a == (void *)task_pllp && (dmes_pllp != 0)))) ||
-        ((((local_a == (void *)task_root && (dmes_root != 0)) ||
-          ((local_a == (void *)task_scpi && (dmes_scpi != 0)))) ||
-         ((local_a == (void *)task_spoo && (dmes_spoo != 0)))))) ||
-       ((local_a == (void *)task_curv && (dmes_curv != 0)))) {
+    if (((((((local_a == (void *)task_gpsm) && (dmes[0] != 0)) ||
+           ((local_a == (void *)task_hmon && (dmes[1] != 0)))) ||
+          ((local_a == (void *)task_klok && (dmes[2] != 0)))) ||
+         ((local_a == (void *)task_pllp && (dmes[3] != 0)))) ||
+        ((((local_a == (void *)task_root && (dmes[4] != 0)) ||
+          ((local_a == (void *)task_scpi && (dmes[5] != 0)))) ||
+         ((local_a == (void *)task_spoo && (dmes[6] != 0)))))) ||
+       ((local_a == (void *)task_curv && (dmes[7] != 0)))) {
       bVar1 = true;
     }
     if (bVar1) {
@@ -40340,6 +40391,7 @@ void qspi_release(void)
 #endif
 
 /* 00020578 */
+#if 0 /* the decompiler's reading; rewritten in qspi.c */
 
 /* writes a QSPI device's transfer into the QSM's queue RAM and command words, by the device's
    number */
@@ -40524,6 +40576,7 @@ override_jmp_000205c0_case_3:
   return uVar1;
 }
 
+#endif
 
 /* 0002081e */
 #if 0 /* the decompiler's reading; rewritten in qspi.c */
@@ -44649,6 +44702,7 @@ __asm__(
 );
 
 /* 0002553a */
+#if 0 /* the decompiler's reading; rewritten in scpi_convert.c */
 
 /* a double as NR3 text, so many significant digits and no digit below the resolution given; -308
    keeps them all
@@ -44778,6 +44832,7 @@ LAB_00025618:
   return 1;
 }
 
+#endif
 
 /* 00025d70 */
 #if 0 /* the decompiler's reading; rewritten in scpi_parameters.c */
@@ -51508,6 +51563,7 @@ uint32_t status_report(int16_t param_1)
 #endif
 
 /* 0002bf00 */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* status_report(code) for a command from source 0 or 2, not 1, 3 or 4; every caller passes
    return_zero(call->input) */
@@ -51530,6 +51586,7 @@ void status_report_from(int16_t code,uint8_t source)
   return;
 }
 
+#endif
 
 /* 0002c148 */
 #if 0 /* the decompiler's reading; rewritten in scpi_output.c */
@@ -54504,6 +54561,7 @@ void string_upper(char *text)
 #endif
 
 /* 0002e6fc */
+#if 0 /* the decompiler's reading; rewritten in string.c */
 
 /* advances a char ** past spaces */
 
@@ -54520,8 +54578,10 @@ void skip_spaces(char **cursor)
   return;
 }
 
+#endif
 
 /* 0002e714 */
+#if 0 /* the decompiler's reading; rewritten in string.c */
 
 /* strips a string's trailing spaces */
 
@@ -54538,6 +54598,7 @@ void string_trim_right(char **text)
   return;
 }
 
+#endif
 
 /* 0002e730 */
 #if 0 /* the decompiler's reading; rewritten in scpi_robin.c */
@@ -55717,14 +55778,14 @@ void happening_buffers_clear(void)
 
 /* replays buffered status events through status_report or status_happening */
 
-void happening_replay(char *events,char mode,char first,char last)
+void happening_replay(char *events,status_replay_mode mode,char first,char last)
 
 {
   int32_t iVar1;
   
   for (; first <= last; first = first + 1) {
-    iVar1 = mode + -1;
-    if (mode == 0 || iVar1 == 0) {
+    iVar1 = (char)mode + -1;
+    if ((char)mode == 0 || iVar1 == 0) {
                     /* WARNING: Switch is manually overridden */
       switch((&switchD_0002f6ae_index_zero)[(int16_t)iVar1]) {
       case 4:
@@ -55741,6 +55802,7 @@ void happening_replay(char *events,char mode,char first,char last)
 #endif
 
 /* 0002f6dc */
+#if 0 /* the decompiler's reading; rewritten in status.c */
 
 /* replays one of the two buffers of early status events */
 
@@ -55748,13 +55810,13 @@ void happening_flush(char *param_1)
 
 {
   char cVar1;
-  char unaff_D2b = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (char)__entry; });
+  status_replay_mode unaff_D2b = ({ register int32_t __entry __asm__("d2"); __asm__("" : "=r"(__entry)); (status_replay_mode)__entry; });
   
   if ((early_status_events *)param_1 == &early_status_reports) {
-    unaff_D2b = 0;
+    unaff_D2b = STATUS_REPLAY_REPORTS;
   }
   else if ((early_status_events *)param_1 == &early_status_happenings) {
-    unaff_D2b = 1;
+    unaff_D2b = STATUS_REPLAY_HAPPENINGS;
   }
   if (*param_1 < 6) {
     cVar1 = *param_1;
@@ -55772,6 +55834,7 @@ void happening_flush(char *param_1)
   return;
 }
 
+#endif
 
 /* 0002fa12 */
 #if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
@@ -58598,6 +58661,7 @@ uint32_t clamp_float(float *param_1,float *param_2,float *param_3,float *param_4
 #endif
 
 /* 00032104 */
+#if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
 
 /* clamps a double to its minimum and maximum, reporting each clamp; 1 if it clamped */
 
@@ -58631,6 +58695,7 @@ uint32_t clamp_double(double *value,double *clamped,double *minimum,double *maxi
   return uVar2;
 }
 
+#endif
 
 /* 0003217e */
 #if 0 /* the decompiler's reading; rewritten in scpi_validators.c */
@@ -59874,14 +59939,15 @@ uint32_t interpolator_prepare(void)
 {
   int32_t iVar1;
   
-  if ((counter_configuration.registers_mode == 1) && (counter_configuration.registers_state == 2)) {
+  if ((counter_configuration.registers_mode == COUNTER_REGISTERS_WHEN_WANTED) &&
+     (counter_configuration.registers_state == COUNTER_WORK_WANTED)) {
     iVar1 = 0;
     do {
       fconf_regs[iVar1] = counter_configuration.fpga_registers[iVar1];
       fpga_write((uint8_t)iVar1,fconf_regs[iVar1]);
       iVar1 = iVar1 + 1;
     } while (iVar1 < 4);
-    counter_configuration.registers_state = 1;
+    counter_configuration.registers_state = COUNTER_WORK_DONE;
   }
   fpga_set_bit(FPGA_BIT_PRESET,8);
   fpga_set_field(FPGA_BIT_MODE,3);
@@ -60089,8 +60155,9 @@ void counter_calibrate(interval_reading_fields *reading,counter_configuration_fi
     reading->errors = reading->errors | COUNTER_MEASUREMENT_ABORTED;
   }
   if ((reading->errors == 0) &&
-     ((configuration->calibrate_mode == 3 ||
-      ((configuration->calibrate_mode == 1 && (configuration->calibrate_state == 2)))))) {
+     ((configuration->calibrate_mode == COUNTER_CALIBRATE_ALWAYS ||
+      ((configuration->calibrate_mode == COUNTER_CALIBRATE_WHEN_WANTED &&
+       (configuration->calibrate_state == COUNTER_WORK_WANTED)))))) {
     uVar1 = 0;
     iVar2 = 0;
     while (((iVar2 < 0x14 && (interval_reading.armed != 0)) && (uVar1 == 0))) {
@@ -60105,7 +60172,7 @@ void counter_calibrate(interval_reading_fields *reading,counter_configuration_fi
       configuration->interpolator_scale =
            (uint32_t)interpolator_calibration_state.reading_high -
            (uint32_t)interpolator_calibration_state.reading_low;
-      configuration->calibrate_state = 1;
+      configuration->calibrate_state = COUNTER_WORK_DONE;
     }
     else {
       configuration->interpolator_scale = 200;
@@ -60385,6 +60452,7 @@ void fpga_set_field(fpga_bit_index field,uint8_t value)
 #endif
 
 /* 00040a64 */
+#if 0 /* the decompiler's reading; rewritten in ti.c */
 
 /* the clk_synch and sync_imm words': stores a mode and a time and sets two states to 2
    structures.md */
@@ -60394,11 +60462,12 @@ void sync_request(counter_sync_kind kind,int32_t count)
 {
   counter_configuration.sync_kind = kind;
   counter_configuration.sync_count = count;
-  counter_configuration.sync_mode = 2;
-  counter_configuration.sync_state = 2;
+  counter_configuration.sync_mode = COUNTER_SYNC_WHEN_WANTED;
+  counter_configuration.sync_state = COUNTER_WORK_WANTED;
   return;
 }
 
+#endif
 
 /* 00040a84 */
 #if 0 /* the decompiler's reading; rewritten in ti.c */
@@ -60556,24 +60625,26 @@ void counter_arm(interval_reading_fields *reading,counter_configuration_fields *
     reading->errors = reading->errors | COUNTER_MEASUREMENT_ABORTED;
   }
   if (reading->errors == 0) {
-    if ((configuration->registers_mode == 1) && (configuration->registers_state == 2)) {
+    if ((configuration->registers_mode == COUNTER_REGISTERS_WHEN_WANTED) &&
+       (configuration->registers_state == COUNTER_WORK_WANTED)) {
       iVar1 = 0;
       do {
         fconf_regs[iVar1] = configuration->fpga_registers[iVar1];
         fpga_write((uint8_t)iVar1,fconf_regs[iVar1]);
         iVar1 = iVar1 + 1;
       } while (iVar1 < 4);
-      configuration->registers_state = 1;
+      configuration->registers_state = COUNTER_WORK_DONE;
     }
     fpga_set_bit(FPGA_BIT_PRESET,8);
     fpga_set_field(FPGA_BIT_MODE,0);
     fpga_set_bit(FPGA_BIT_START,0);
     fpga_set_field(FPGA_BIT_ADDRESS,0);
-    if ((configuration->sync_mode == 2) && (configuration->sync_state == 2)) {
+    if ((configuration->sync_mode == COUNTER_SYNC_WHEN_WANTED) &&
+       (configuration->sync_state == COUNTER_WORK_WANTED)) {
       counter_set_sync(configuration->sync_kind);
       configuration->sync_count = configuration->sync_count + -1;
       if (configuration->sync_count < 1) {
-        configuration->sync_state = 1;
+        configuration->sync_state = COUNTER_WORK_DONE;
       }
     }
     fpga_set_bit(FPGA_BIT_PRESET,0);
@@ -60669,7 +60740,7 @@ int32_t counter_load_registers(void)
     iVar2 = iVar3 + -3;
     iVar3 = iVar1;
   } while (iVar1 < 4);
-  counter_configuration.registers_state = 1;
+  counter_configuration.registers_state = COUNTER_WORK_DONE;
   return iVar2;
 }
 
@@ -60702,10 +60773,10 @@ void counter_configuration_init(counter_configuration_fields *configuration)
   *(uint32_t *)&configuration->calibration = 0x3fd9999a;
   *(uint32_t *)((int32_t)&configuration->calibration + 4) = 0xdbb8f8da;
   configuration->interpolator_scale = 200;
-  configuration->calibrate_mode = 3;
-  configuration->calibrate_state = 2;
-  configuration->registers_mode = 1;
-  configuration->registers_state = 2;
+  configuration->calibrate_mode = COUNTER_CALIBRATE_ALWAYS;
+  configuration->calibrate_state = COUNTER_WORK_WANTED;
+  configuration->registers_mode = COUNTER_REGISTERS_WHEN_WANTED;
+  configuration->registers_state = COUNTER_WORK_WANTED;
   interval_reading.value = 9.91E37;
   interval_reading.valid = 0;
   return;
@@ -62979,6 +63050,7 @@ uint32_t holdover_within_limit(float param_1)
 #endif
 
 /* 0004397a */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* sets the stage to holdover and the manual flag from fault bit 0, and logs the cause: a code for
    each fault bit at pll +0x11, the GPS receiver's status for bit 1
@@ -63067,6 +63139,7 @@ LAB_00043a88:
   return;
 }
 
+#endif
 
 /* 00043a90 */
 #if 0 /* the decompiler's reading; rewritten in pll_stages.c */
@@ -64157,6 +64230,7 @@ override_jmp_000451fa_case_0:
 #endif
 
 /* 0004538c */
+#if 0 /* the decompiler's reading; rewritten in pll_stages.c */
 
 /* WARNING: Removing unreachable block (ram,0x0004577c) */
 /* the power-up step that adjusts the frequency finely, through its sync and slew sub-states
@@ -64461,6 +64535,7 @@ switchD_000453f0_caseD_0:
   return pVar5;
 }
 
+#endif
 
 /* 00045a24 */
 #if 0 /* the decompiler's reading; rewritten in scpi_source_ptime.c */
@@ -64493,6 +64568,7 @@ void time_zone_done(void)
 #endif
 
 /* 00045a3c */
+#if 0 /* the decompiler's reading; rewritten in scpi_diagnostic.c */
 
 /* antenna_delay_done, clearing the temporary-mode hold cause, then save_calibration_block given its
    two stack arguments, which finish_scpi_cmd does not push for a numeric done hook
@@ -64506,6 +64582,7 @@ void time_offset_done(int32_t a,int32_t b)
   return;
 }
 
+#endif
 
 /* 00045a5c */
 #if 0 /* the decompiler's reading; rewritten in scpi_source_roscillator.c */
@@ -64895,7 +64972,7 @@ pll_stage_result powerup(bool same_stage)
 
 {
   int32_t iVar1;
-  pll_stage_result pVar3;
+  pll_stage_result result;
   char cVar4;
   uint16_t sr;
   bool received;
@@ -64947,19 +65024,19 @@ pll_stage_result powerup(bool same_stage)
       }
       break;
     case 0xb8:
-      pVar3 = coarse();
-      if (pVar3 == PLL_STAGE_RESULT_DONE) {
+      result = coarse();
+      if (result == PLL_STAGE_RESULT_DONE) {
         pll.tfom = 0.001;
         pll.powerup_state = PLL_POWERUP_FINE;
         pll.fine_state = PLL_FINE_START;
       }
-      else if (pVar3 == PLL_STAGE_RESULT_FAILED) {
+      else if (result == PLL_STAGE_RESULT_FAILED) {
         pVar6 = PLL_STAGE_RESULT_FAILED;
       }
       break;
     case 0xea:
-      pVar3 = fine();
-      if (pVar3 == PLL_STAGE_RESULT_DONE) {
+      result = fine();
+      if (result == PLL_STAGE_RESULT_DONE) {
         pll.tfom = 2e-06;
         if ((gps_reference_good != 0) && (internal_pps_dead == 0)) {
           uVar2 = oncore_date_pack(gps.status.date);
@@ -64976,7 +65053,7 @@ pll_stage_result powerup(bool same_stage)
           }
         }
       }
-      else if (pVar3 == PLL_STAGE_RESULT_FAILED) {
+      else if (result == PLL_STAGE_RESULT_FAILED) {
         pVar6 = PLL_STAGE_RESULT_FAILED;
       }
       break;
@@ -71842,7 +71919,7 @@ void gps_print_process_monitor(void)
   }
   console_write("Response Buffer:  ");
   local_2d[0] = 0;
-  for (gps_print_cursor = gps_response_buffer; gps_print_cursor < (uint8_t *)0x10127a;
+  for (gps_print_cursor = gps_response_buffer; gps_print_cursor < gps_response_buffer + 0x14;
       gps_print_cursor = gps_print_cursor + 1) {
     sprintf(local_32,"%hx",(uint16_t)*gps_print_cursor);
     pcVar6 = local_32;
@@ -98171,6 +98248,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 
 #include "../rewritten/z3805a-3543b/duart.h"
 
+#include "../rewritten/z3805a-3543b/fpga.h"
+
 #include "../rewritten/z3805a-3543b/gps.h"
 
 #include "../rewritten/z3805a-3543b/libc.h"
@@ -98286,6 +98365,8 @@ int32_t installer_vsprintf(char *s,char *format,void *arg)
 #include "../rewritten/z3805a-3543b/leds.c"
 
 #include "../rewritten/z3805a-3543b/log.c"
+
+#include "../rewritten/z3805a-3543b/main.c"
 
 #include "../rewritten/z3805a-3543b/math.c"
 

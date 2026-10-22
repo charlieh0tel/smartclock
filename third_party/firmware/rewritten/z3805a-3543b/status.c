@@ -525,6 +525,17 @@ uint32_t status_report(int16_t code) {
   return 0;
 }
 
+/* status_report for a source that reports, 0 or 2; 1, 3, 4 and any
+ * past 4 do not (0x2bf00). */
+void status_report_from(int16_t code, uint8_t source) {
+  /* Whether each source reports, by the jump table at 0x2bf16. */
+  static const bool SOURCE_REPORTS[] = {true, false, true, false, false};
+
+  if (source < sizeof SOURCE_REPORTS && SOURCE_REPORTS[source]) {
+    status_report(code);
+  }
+}
+
 /* Raises a status condition once the status system is ready; entering
  * one of the lock and holdover states clears the other three
  * (0x2f53c).  STATUS_INPUT_OVERRUN, which :DIAG:STAT:HAPP 0 raises,
@@ -581,15 +592,9 @@ void happening_buffers_clear(void) {
   happening_buffer_clear((uint8_t*)&early_status_happenings);
 }
 
-/* What happening_replay replays a buffer's codes as, by the jump table
- * at 0x2f6b2. */
-enum {
-  STATUS_REPLAY_REPORTS = 0,    /* by status_report */
-  STATUS_REPLAY_HAPPENINGS = 1, /* by status_happening */
-};
-
 /* Replays a buffer's codes from first to last (0x2f680). */
-void happening_replay(char* events, char mode, char first, char last) {
+void happening_replay(char* events, status_replay_mode mode, char first,
+                      char last) {
   for (int8_t index = first; index <= last; index++) {
     switch (mode) {
       case STATUS_REPLAY_REPORTS:
@@ -600,6 +605,32 @@ void happening_replay(char* events, char mode, char first, char last) {
         break;
     }
   }
+}
+
+/* Replays one of the two early buffers, a ring of five: from the oldest
+ * once it has wrapped, then from its start, and empties both.  For a
+ * buffer neither, the mode is D2's low byte as the caller left it
+ * (0x2f6dc). */
+void happening_flush(char* bytes) {
+  /* The register as the caller left it, which the image reads. */
+  status_replay_mode mode =
+      (status_replay_mode)CPU_CALLERS_REGISTER(int32_t, "d2");
+  static const int8_t RING_SIZE = sizeof early_status_reports.events;
+  early_status_events* buffer = (early_status_events*)bytes;
+
+  if (buffer == &early_status_reports) {
+    mode = STATUS_REPLAY_REPORTS;
+  } else if (buffer == &early_status_happenings) {
+    mode = STATUS_REPLAY_HAPPENINGS;
+  }
+  int8_t last = (buffer->count > RING_SIZE ? RING_SIZE : buffer->count) - 1;
+
+  if (buffer->count > RING_SIZE && buffer->next != 0) {
+    happening_replay((char*)buffer->events, mode, buffer->next, last);
+    last = buffer->next - 1;
+  }
+  happening_replay((char*)buffer->events, mode, 0, last);
+  happening_buffers_clear();
 }
 
 /* :STATus:OPERation:HARDware's condition word (0x2f626). */

@@ -239,6 +239,54 @@ SETUP_CASES = [
 EMPTY_IN_ROM = 0x2F76E
 RETURN_ZERO = 0x29ADA
 ARRAY_RECORD_KINDS = [0, 1, 2, -1]
+# scpi_real_to_text's arguments, a double, its significant digits, its
+# exponent's digits, the resolution and the point, as its callers pass
+# them (scpi_format_double 0x26870: 15, 3, -308 and 1; format_si
+# 0x49b88: 2 and 0) and around them, which the generated doubles, two
+# longs, never are: positive and negative (0x255c8), digits copied
+# (0x25612) and one digit with and without the point (0x25600,
+# 0x255fc); a resolution that rounds and cuts the digits (0x25594,
+# 0x255b2), one above the double's exponent (0x2557e) and one it rounds
+# up to (0x255a6); zero converted at -308 and written at any other
+# (0x2568a), with and without the point; a negative exponent (0x25624),
+# a width that takes three digits, one that refuses the hundreds'
+# (0x25668), a width of 4 that skips none (0x2565c); hundreds from 100,
+# which read past decimal_digit_pairs (0x25640, quirks.md), and -32768,
+# whose divu.w overflows (0x2562e); no digits (0x25562), and an
+# infinity, which scpi_double_to_decimal refuses (0x2556e).
+REAL_TEXT_CASES = [
+    (1.5, 15, 3, -308, 1),
+    (123.456, 6, 3, -308, 1),
+    (-2.25, 6, 3, -308, 1),
+    (5.0, 1, 3, -308, 0),
+    (5.0, 1, 3, -308, 1),
+    (123.456, 15, 3, -2, 1),
+    (0.004, 15, 3, -2, 1),
+    (0.006, 15, 3, -2, 1),
+    (0.0, 15, 3, -308, 1),
+    (0.0, 15, 3, -3, 1),
+    (0.0, 6, 2, 0, 0),
+    (1e-5, 15, 3, -308, 1),
+    (1e300, 15, 3, -308, 1),
+    (12.345, 4, 2, -3, 0),
+    (1.5, 15, 1, -308, 1),
+    (1e100, 15, 1, -308, 1),
+    (1e100, 15, 4, -308, 1),
+    (0.0, 6, 3, 12000, 1),
+    (0.0, 6, 4, -32767, 0),
+    (0.0, 6, 4, -32768, 0),
+    (1.5, 0, 3, -308, 1),
+    (float("inf"), 15, 3, -308, 1),
+]
+# qspi_queue_setup's devices, each written and read, the generated ones
+# reaching only 0, 3 and those above 12 (0x205c0's table); an FPGA
+# block's word counts, none, some and more than the queue's 16
+# (0x206d6), and the readback's bits, fewer than 8, some and more than
+# 16 (0x2072c).
+QSPI_DEVICES = range(14)
+QSPI_FPGA_BLOCK = 6
+QSPI_FPGA_READBACK = 0xC
+QSPI_COUNTS = [0, 3, 10, 20]
 GIVEN_CASES = {
     "vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
     "installer_vsprintf": [{1: text, 2: arguments} for text, arguments in FORMATS],
@@ -264,6 +312,22 @@ GIVEN_CASES = {
     ],
     "scpi_format_resolution_array_record": [
         {1: struct.pack(">bBII", kind, 0, EMPTY_IN_ROM, RETURN_ZERO)} for kind in ARRAY_RECORD_KINDS
+    ],
+    "scpi_real_to_text": [
+        {
+            **dict(enumerate(struct.unpack(">ii", struct.pack(">d", value)))),
+            3: digits,
+            4: width,
+            5: resolution,
+            6: point,
+        }
+        for value, digits, width, resolution, point in REAL_TEXT_CASES
+    ],
+    "qspi_queue_setup": [
+        {0: device, 2: count, 3: read}
+        for device in QSPI_DEVICES
+        for count in (QSPI_COUNTS if device in (QSPI_FPGA_BLOCK, QSPI_FPGA_READBACK) else [3])
+        for read in (0, 1)
     ],
 }
 
@@ -398,10 +462,33 @@ def call_first(m: Machine, linked_symbols: dict[str, int], routine: str, stack_a
         raise RuntimeError(f"{routine}: {run.stopped or run.end()}")
 
 
+# system_init's battery-backed region (preserved_region, 0x94e bytes: a
+# checksum word, the restore word, then the rest), which RAM's zeros fail
+# the checksum of, so that only the cold start after a bad region would
+# run: by case, a good checksum with restore 1, the warm start, or 0, the
+# cold start that clears it, and a bad one (0x12c74 to 0x12d34).
+PRESERVED_LENGTH = 0x94E
+
+
+def preserved_region(case: int) -> bytes:
+    """preserved_region's bytes for a case of system_init."""
+    body = bytearray((i * 7 + case * 13 + 1) & 0xFF for i in range(PRESERVED_LENGTH - 2))
+    body[0:2] = struct.pack(">H", 0 if case % 4 == 1 else 1)
+    total = sum(body) & 0xFF
+    checksum = total << 8 | (~total & 0xFF)
+    if case % 4 == 3:
+        checksum ^= 1
+    return struct.pack(">H", checksum) + bytes(body)
+
+
+REGIONS = {"system_init": ("preserved_region", preserved_region)}
+
+
 def establish(m: Machine, function: Function, linked_symbols: dict[str, int], case: int) -> None:
     """Sets the variables ESTABLISHED says a function's callers set, runs
     SET_UP on its request for each of SET_UP_REQUESTS, the case'th of
-    those it has, and the routine CALLED_FIRST names."""
+    those it has, the routine CALLED_FIRST names, and a region's bytes
+    by REGIONS."""
     for variable, value in ESTABLISHED.get(function.name, {}).items():
         if isinstance(value, str):
             value = linked_symbols[IMAGE_PREFIX + value]
@@ -415,6 +502,9 @@ def establish(m: Machine, function: Function, linked_symbols: dict[str, int], ca
     if function.name in CALLED_FIRST:
         routine, longs = CALLED_FIRST[function.name]
         call_first(m, linked_symbols, routine, struct.pack(f">{len(longs)}I", *longs))
+    if function.name in REGIONS:
+        variable, contents = REGIONS[function.name]
+        m.uc.mem_write(linked_symbols[variable], contents(case))
 
 
 def given(m: Machine, types: Types, kind: str, value: int | float | bytes) -> bytes:

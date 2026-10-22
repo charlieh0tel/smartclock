@@ -516,8 +516,10 @@ ring, whose `+8`, `+0xa` and `+0xc` the page prints as `Sender`,
 message it last sent -- its code, query form, length and bytes, from
 `+0x1e` -- which `gps_response_match` matches each response against
 and `command_log_add` logs; `gps_last_program_message` (`0x101216`) is the "Last Rcvr
-Prgm Msg", `(none issued)` when empty, and `gps_response_buffer`, 20
-bytes from `0x101266`, the "Response Buffer", in hex.  `gps_receive`
+Prgm Msg", `(none issued)` when empty, and the first 20 bytes of
+`gps_response_buffer` (`0x101266`), the "Response Buffer", in hex; the
+buffer runs to `gps_response_cursor` (`0x10138c`), 294 bytes, the
+longest response's, `@@Cj`'s.  `gps_receive`
 (`0x4b846`) frames the engine's messages into it from their `@`,
 through `gps_response_cursor`, counting frame errors.
 

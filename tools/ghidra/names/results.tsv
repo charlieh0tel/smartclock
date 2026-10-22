@@ -764,3 +764,9 @@ survey_progress_percent	surveying	whether a finite survey runs
 survey_progress_text	surveying	whether a finite survey runs
 command_log_add	logged	1
 gps_print_command	printed	0 when the log is empty, else 1
+# Wave 4, os: the remaining I/O stubs (rewritten/z3805a-3543b/os.c)
+psos_io_close	error	0, or the function and the device's error
+psos_io_control	error	0, or the function and the device's error
+# wave 4, pll: the fine stage and its neighbors
+fine	result	a stage's: 0 running, 1 done, 2 failed
+clamp_double	clamped	1 when the value was clamped

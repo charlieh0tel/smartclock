@@ -53,11 +53,24 @@ routine and the address that shows it.
 - **`:DIAGnostic:QUERy:RESPonse?`** from a port other than the console
   copies A3's count of A4's bytes to A2, all three as its caller left
   them (`0x2b91a`).
-
+- **`time_offset_done`** (`0x45a3c`), `:DIAGnostic:TOFFset`'s done hook,
+  passes `save_calibration_block` two longs from its stack arguments,
+  which `finish_scpi_cmd` does not push for a numeric hook: whatever
+  its frame holds there.
+- **`happening_flush` (`0x2f6dc`)**, given a buffer that is neither
+  early buffer, replays it in the mode of D2's low byte as its caller
+  left it, setting a mode only for those two (`0x2f6f2`, `0x2f6fe`).
 - **`log_erase`** checksums a pointer's bytes.
 
 The C reads such a register as the image does, first thing in the
 function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.
+
+## Loops that stop early
+
+- **`fine` (`0x4538c`)** checks the fit against its readings in a loop
+  it leaves after the first either way (`0x45756`), so that only
+  reading 1 is checked against the fitted line (`0x45708` to
+  `0x4577c`).
 
 ## Reads past a table
 
@@ -75,6 +88,14 @@ function, with `cpu.h`'s `CPU_CALLERS_REGISTER`.
   digits from `decimal_digit_pairs` (`0x25c82`) unchecked, so that a
   resolution of 10000 or more reads past the table into the code after
   it, which is not digits, and the conversion fails.
+- **`scpi_real_to_text`**, for an exponent of -32768, overflows its
+  `divu.w` (`0x2562e`) and takes pair 0 and the word before
+  `decimal_digit_pairs`; and it takes the exponent's width as its low
+  byte, signed (`0x25658`): a negative one checks bytes above its
+  exponent's digits, in its own frame and its caller's (`0x25662`), and
+  one above `0xff` copies the whole width (`0x25674`).  The C does the
+  first; the second it cannot, and gives 1 for a negative width and
+  copies the low byte's count, where no caller passes such a width.
 - **`exception_name` (`0x11a2a`)** indexes `exception_names` by a frame's
   vector offset, unchecked below vector 2 and unaligned, as bytes.
 - **The status system** indexes `status_negative_conditions`

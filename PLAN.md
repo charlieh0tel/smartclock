@@ -1501,6 +1501,17 @@ view cannot drift apart.  The library, bottom up:
      formats, six of them new: strings, argument widths and
      precisions, zero padding, the alternate forms and three-digit
      exponents.
+     Wave 4, the stragglers: the kernel's I/O close and control and
+     the OS reports, the QSPI queue and `scpi_real_to_text`, the
+     self-test's failure report and its run, the loop's `fine` and
+     `enter_holdover`, and the system's start, `system_init` and
+     `root_task`, in a `main.c` of their own.  `system_init`'s cases
+     give the preserved region a good checksum, restored or not, and a
+     bad one, so that the warm start runs; `fine` and `enter_holdover`
+     were also run from random loop states outside the harness, 11200
+     cases with none differing.  The nine debug flags are one array,
+     `dmes`, by `task_debug_flag`, and the counter's mode and state
+     pairs are enums.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

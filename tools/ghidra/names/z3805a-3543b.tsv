@@ -102,6 +102,7 @@
 0x100b10	label	console_task_id	console.md	console_task_create stores the p4th task's id from service 1 here; the word root pushes its address	uint32_t
 0x100b14	label	forth_prompt	console.md	forth_build_prompt's "p4th", a space and the base's letter, then " > " or ">> " and a NUL; forth_refill prints it	char[10]
 0x100ba8	label	string_device_cursor	console.md	the string console_read_from_string reads, advanced as it reads; string_device_init clears it, string_device_control sets it	char *
+0x101dda	label	sample_values	structures.md	the start of the :SAMPle and :INITial values, 0x101dda to 0x101e6d, which system_init fills whole from sample_values_defaults; the descriptors' own labels, scpi_value_SAMPle_BOOLean on, split the rest, so only the first two bytes are this label's	uint8_t[2]
 0x101e70	label	retained_block	structures.md	the 0x19 bytes system_init and pllp_task copy whole with preserved_region; its own cells have their own labels, so untyped
 0x29fce	function	scpi_task_create	console.md	creator of the SCPI task
 #
@@ -226,14 +227,7 @@
 0x1037f4	label	task_scpi	context	task id paired with dmes_scpi; scpi_task_create stores the scpi task's id here	uint32_t
 0x1032f4	label	task_spoo	context	task id paired with dmes_spoo in task_dmessage	uint32_t
 0x1037f8	label	task_curv	context	task id paired with dmes_curv in task_dmessage	uint32_t
-0x103808	label	dmes_gpsm	context	set by the console's dmes_gpsm	uint32_t
-0x10380c	label	dmes_hmon	context	set by the console's dmes_hmon	uint32_t
-0x103810	label	dmes_klok	context	set by the console's dmes_klok	uint32_t
-0x103814	label	dmes_pllp	context	set by the console's dmes_pllp	uint32_t
-0x103818	label	dmes_root	context	set by the console's dmes_root	uint32_t
-0x10381c	label	dmes_scpi	context	set by the console's dmes_scpi	uint32_t
-0x103820	label	dmes_spoo	context	set by the console's dmes_spoo	uint32_t
-0x103824	label	dmes_curv	context	set by the console's dmes_curv	uint32_t
+0x103808	label	dmes	context	each task's debug messages on or off, by task_debug_flag: the console's dmes_gpsm to dmes_curv set one each, dmes_all and system_init all nine, task_dmessage reads the eight named	uint32_t[9]
 0x136fe	function	get_date_time	context	:PTIM:DATE? passes the first pointer, :PTIM:TIME? the second; returns 1 while clock.set is clear, the clock not set since power-up	bool get_date_time(uint32_t *date, time_of_day *time)
 0x1009b8	label	clock	structures.md	the clock record the clock_record_ routines are given in A6, or reach through A4: uptime, date and time, GPS date and time, their month tables, the minute's length, the GPS-UTC offset; once the labels uptime, clock_time, clock_date, gps_time, gps_date, clock_invalid, gps_utc_offset and gps_utc_offset_valid	clock_record
 0x2410e	function	adc_average	context	diag_pr_adc_avg prints temperature, 5V, +15V, -15V, oven, double oven and oven current from it; a default when there is no reading	float adc_average(adc_channel channel)	convention=c; confidence=documented; out=D0 float
@@ -458,7 +452,7 @@
 0x31bd0	function	log_page_free_entry	structures.md	the first entry of a page with no format	log_entry *log_page_free_entry(log_page *page)
 0x4ca6c	function	gps_print_process_monitor	structures.md	"GPS Process Monitor", gps_counts
 0x4076a	function	fpga_read	structures.md	sets the register in fconf_regs[1]'s address bits, reads 0x304000, restores them; "old_addr, fconf_regs[1] = %x"	uint8_t fpga_read(uint8_t reg)
-0x101266	label	gps_response_buffer	structures.md	the GPS Process Monitor's "Response Buffer", printed %hx; gps_receive frames bytes from the engine into it	uint8_t[20]
+0x101266	label	gps_response_buffer	structures.md	where gps_receive frames a response from the engine, room for the longest, @@Cj's 294 bytes, to gps_response_cursor; the GPS Process Monitor prints its first 20 bytes, %hx, as its "Response Buffer"	uint8_t[294]
 0x101390	label	gps_print_cursor	structures.md	gps_print_process_monitor walks gps_response_buffer with it	uint8_t *
 #
 # functions the console words and SCPI handlers name, by calling them alone
@@ -1439,9 +1433,9 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x1876c	function	shift_right_36	context	shifts three 12-bit words right one bit as a 36-bit number
 0x18c48	function	ram_pattern_test_locked	context	ram_pattern_test with interrupts held off, unless the self-test is aborted
 0x18c8e	function	selftest_qspi_run	context	clears the QSPI failure bits and runs the tests
-0x18c9c	function	selftest_qspi_with_lamp	context	the QSPI tests, lighting OP7 on a failure; selftest_print_failure's check "QSPI" in its table at 0x186b0
-0x18cec	function	selftest_interpolator_with_lamp	context	the interpolator test, lighting OP7 on a failure; the check "INTERP" in selftest_print_failure's table
-0x18d16	function	selftest_internal_reference_with_lamp	context	the internal 1PPS test, lighting OP7 on a failure; the check "INT_REF" in selftest_print_failure's table
+0x18c9c	function	selftest_qspi_with_lamp	context	the QSPI tests, lighting OP7 on a failure; selftest_print_failure's check "QSPI" in its table at 0x186b0	uint32_t selftest_qspi_with_lamp(void)
+0x18cec	function	selftest_interpolator_with_lamp	context	the interpolator test, lighting OP7 on a failure; the check "INTERP" in selftest_print_failure's table	uint32_t selftest_interpolator_with_lamp(void)
+0x18d16	function	selftest_internal_reference_with_lamp	context	the internal 1PPS test, lighting OP7 on a failure; the check "INT_REF" in selftest_print_failure's table	uint32_t selftest_internal_reference_with_lamp(void)
 0x185e2	function	selftest_cpu_result	selftest_print_failure's table 0x186b0, "PROC"	returns selftest.cpu, the reset code's CPU test	uint32_t selftest_cpu_result(void)
 0x185ec	function	selftest_ram_result	table 0x186b0, "RAM"	returns selftest.ram, the reset code's RAM test	uint32_t selftest_ram_result(void)
 0x185f6	function	selftest_eeprom_result	table 0x186b0, "EEPROM"	returns selftest.eeprom	uint32_t selftest_eeprom_result(void)
@@ -1582,7 +1576,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x2f40c	function	status_transitions_init	context	sets registers 2 to 6's transition filters to their defaults from the setup table
 0x2f64a	function	happening_buffer_clear	context	clears a buffer of status events kept before the status model is ready
 0x2f668	function	happening_buffers_clear	context	clears both buffers of early status events
-0x2f680	function	happening_replay	context	replays buffered status events through status_report or status_happening	void happening_replay(char *events, char mode, char first, char last)
+0x2f680	function	happening_replay	context	replays buffered status events through status_report or status_happening	void happening_replay(char *events, status_replay_mode mode, char first, char last)
 0x2f6dc	function	happening_flush	context	replays one of the two buffers of early status events
 0x30a3e	function	lifetime_record_read	context	reads the lifetime record from EEPROM 0x400060, or sets its defaults: 1994-01-01 and the EFC at mid-scale (a char result, 0x30aac)	uint8_t lifetime_record_read(void)
 0x101d00	label	lifetime	structures.md	the lifetime record in RAM, its EFC, date and count, which lifetime_record_read loads from EEPROM 0x400060	lifetime_state

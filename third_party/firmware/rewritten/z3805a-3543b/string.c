@@ -85,3 +85,26 @@ void string_upper(char* text) {
     text[i] = toupper(text[i]);
   }
 }
+
+/* Advances a cursor past spaces, storing it at each step (0x2e6fc). */
+void skip_spaces(char** cursor) {
+  char* text = *cursor;
+
+  while (*text == ' ') {
+    *cursor = ++text;
+  }
+}
+
+/* Clears a string's trailing spaces; like the image, it does not stop
+ * at the string's start, so that one all spaces clears the spaces
+ * before it too (0x2e714). */
+void string_trim_right(char** text) {
+  char* end = *text;
+
+  while (*end != '\0') {
+    end++;
+  }
+  while (*--end == ' ') {
+    *end = '\0';
+  }
+}

@@ -10,8 +10,7 @@
  * is calls to the image's soft-float routines (docs/firmware/
  * softfloat.md): float_divide_reversed(a, b) is b / a,
  * float_subtract_reversed(a, b) b - a, and double_compare(a, b) is
- * negative when b < a.  fine (0x4538c) stays the decompiler's: it keeps
- * its readings in fine_readings. */
+ * negative when b < a. */
 
 /* A TI reading in seconds as the debug messages print it, in ns. */
 static const float PLL_STAGES_NANOSECONDS = 1e+09f;
@@ -263,13 +262,16 @@ pll_stage_result coarse(void) {
   return result;
 }
 
+/* fine_sync_adjust's steps for a TI 300 ns or more off, which it meets
+ * with one step and fine with another slew. */
+static const uint8_t PLL_STAGES_SYNC_TOO_FAR = 4;
+
 /* For a TI of 100 ns or more, asks for that many 100 ns steps against
  * it, the steps; one and 4 for 300 ns or more; 0 within 100 ns
  * (0x44e8e). */
 uint8_t fine_sync_adjust(float ti) {
   static const float STEP = 1e-07f;
   static const float MOST = 3e-07f;
-  static const uint8_t TOO_FAR = 4;
 
   if (float_compare(ti, STEP) < 0) {
     if (float_compare(pll_stages_negate(STEP), ti) < 0) {
@@ -283,7 +285,7 @@ uint8_t fine_sync_adjust(float ti) {
       return steps;
     }
     sync_request(COUNTER_SYNC_NEGATIVE, 1);
-    return TOO_FAR;
+    return PLL_STAGES_SYNC_TOO_FAR;
   }
   if (float_compare(ti, MOST) < 0) {
     uint32_t steps = float_to_unsigned(float_divide(ti, STEP));
@@ -292,7 +294,7 @@ uint8_t fine_sync_adjust(float ti) {
     return steps;
   }
   sync_request(COUNTER_SYNC_POSITIVE, 1);
-  return TOO_FAR;
+  return PLL_STAGES_SYNC_TOO_FAR;
 }
 
 /* Syncs the outputs to GPS when the TI passes the limit threshold or a
@@ -309,6 +311,268 @@ uint8_t sync_perform(float ti) {
     task_dmessage("Peforming sync\r\n");
   }
   return 1;
+}
+
+/* fine's readings to its fit, fine_readings' entries. */
+static const uint8_t PLL_STAGES_FINE_READINGS =
+    sizeof fine_readings / sizeof fine_readings[0];
+
+/* A failed measurement of fine's, its message printed: failed past the
+ * most retries. */
+static pll_stage_result pll_stages_fine_retry(char* message) {
+  task_dmessage(message);
+  pll.fine_retries++;
+  return pll.fine_retries > PLL_STAGES_MOST_RETRIES ? PLL_STAGE_RESULT_FAILED
+                                                    : PLL_STAGE_RESULT_RUNNING;
+}
+
+/* Starts fine's fit again from its first reading; the largest TI is
+ * kept. */
+static void pll_stages_fine_fit_restart(void) {
+  pll.fine_index = 1;
+  fine_sum_i = 0.0f;
+  fine_sum_i_squared = 0.0f;
+  fine_sum_ti = 0.0f;
+  fine_sum_i_ti = 0.0f;
+}
+
+/* Adds reading i, pll.fine_d, to fine's least-squares line through the
+ * readings against their index, TI = x0 + y0 i: its sums, then the slope
+ * y0, the fractional frequency (0 when the sums give no slope), and the
+ * intercept x0; the largest TI magnitude kept in fine_ti_max. */
+static void pll_stages_fine_fit_add(void) {
+  uint8_t i = pll.fine_index;
+
+  if (float_compare(float_absolute_on_stack(pll.fine_d), fine_ti_max) > 0) {
+    fine_ti_max = float_absolute_on_stack(pll.fine_d);
+  }
+  fine_readings[i - 1] = pll.fine_d;
+  float_add_in_place(&fine_sum_i, integer_to_float(i));
+  float_add_in_place(&fine_sum_i_squared, integer_to_float(i * i));
+  float_add_in_place(&fine_sum_ti, pll.fine_d);
+  float_add_in_place(&fine_sum_i_ti,
+                     float_multiply(unsigned_to_float(i), pll.fine_d));
+  float n_sum_i_squared =
+      float_multiply(unsigned_to_float(i), fine_sum_i_squared);
+
+  fine_y0 =
+      float_subtract(float_multiply(fine_sum_i, fine_sum_i), n_sum_i_squared);
+  if (pll_aging_is_zero(fine_y0)) {
+    fine_y0 = 0.0f;
+  } else {
+    float n_sum_i_ti = float_multiply(unsigned_to_float(i), fine_sum_i_ti);
+
+    fine_y0 = float_divide(
+        float_subtract(float_multiply(fine_sum_i, fine_sum_ti), n_sum_i_ti),
+        fine_y0);
+  }
+  float sum_ti_less_slope =
+      float_subtract_reversed(float_multiply(fine_sum_i, fine_y0), fine_sum_ti);
+
+  fine_x0 = float_divide(sum_ti_less_slope, unsigned_to_float(i));
+  if (pll_debug_enabled != 0) {
+    char message[80];
+    double x0 = float_to_double(fine_x0);
+    double y0 = float_to_double(fine_y0);
+    double ti = double_multiply((double)PLL_STAGES_NANOSECONDS,
+                                float_to_double(pll.fine_d));
+
+    debug_sprintf(message, "i= %d, ti= %.1f, y0= %.2e, x0= %.2e\r\n",
+                  (uint32_t)i, ti, y0, x0);
+    task_dmessage(message);
+  }
+}
+
+/* After the fit's readings, whether the first lies within 300 ns of the
+ * line; measures again, a retry counted, if not.  The image's check is
+ * a loop over the readings that leaves after the first either way
+ * (0x45756), so only the first is checked. */
+static void pll_stages_fine_fit_check(void) {
+  static const float BAD_TI = 3e-07f;
+
+  pll.fine_index = 1;
+  float fitted = float_add(
+      float_multiply(unsigned_to_float(pll.fine_index), fine_y0), fine_x0);
+  float residual =
+      float_subtract_reversed(fitted, fine_readings[pll.fine_index - 1]);
+
+  if (float_compare(float_absolute_on_stack(residual), BAD_TI) > 0) {
+    task_dmessage("Bad TI in frequency measurement\r\n");
+    pll.fine_state = PLL_FINE_MEASURE_1;
+    pll.fine_retries++;
+  }
+}
+
+/* Slews the phase toward a TI: done within 100 ns, else fine_sync_adjust's
+ * steps of 100 ns, one a second, or a slew again when it is 300 ns or
+ * more off. */
+static pll_stage_result pll_stages_fine_slew(float ti) {
+  pll.fine_index = fine_sync_adjust(ti);
+  if (pll.fine_index == 0) {
+    return PLL_STAGE_RESULT_DONE;
+  }
+  if (pll.fine_index < PLL_STAGES_SYNC_TOO_FAR) {
+    pll.fine_state = PLL_FINE_FINE_SLEW;
+  } else {
+    pll.fine_retries = 0;
+    pll.fine_state = PLL_FINE_SLEW;
+  }
+  return PLL_STAGE_RESULT_RUNNING;
+}
+
+/* After the fit, the TI's change across the readings, per second, into
+ * pll.fine_d.  Out of power-up, failed when the largest TI passes
+ * holdover's limit, its threshold and its frequency tolerance over its
+ * duration, unless the limit is off or the holdover long.  Then a
+ * frequency within 2e-9 slews the phase; one within the frequency
+ * tolerance, or any in a long holdover, moves the EFC by it and syncs
+ * if the TI asks; another fails. */
+static pll_stage_result pll_stages_fine_frequency(void) {
+  static const float PER_SECOND = 0.02f;
+  static const float SLEW_FREQUENCY = 2e-09f;
+  bool long_holdover = (uint32_t)nv_settings.holdover_measurement_threshold <=
+                       pll.holdover_duration;
+
+  float_subtract_in_place(&pll.fine_d, double_to_float(interval_reading.value));
+  float_multiply_in_place(&pll.fine_d, PER_SECOND);
+  if (pll.stage != PLL_STAGE_POWERUP) {
+    float limit =
+        float_add(float_multiply(unsigned_to_float(pll.holdover_duration),
+                                 pll.frequency_tolerance),
+                  nv_settings.holdover_limit_threshold);
+
+    if (float_compare(limit, fine_ti_max) < 0 && !long_holdover &&
+        nv_settings.holdover_limit_state == 0) {
+      task_dmessage("fine - ti too far off\r\n");
+      return PLL_STAGE_RESULT_FAILED;
+    }
+  }
+  if (float_compare(float_absolute_on_stack(fine_y0), SLEW_FREQUENCY) < 0) {
+    return pll_stages_fine_slew(double_to_float(interval_reading.value));
+  }
+  if (float_compare(float_absolute_on_stack(fine_y0), pll.frequency_tolerance) >
+          0 &&
+      !long_holdover) {
+    task_dmessage("fine - frequency too far off\r\n");
+    return PLL_STAGE_RESULT_FAILED;
+  }
+  pll.efc = efc_clamp(
+      float_add(float_multiply(fine_y0, efc_gains.reciprocal_fine), pll.efc));
+  pll.frequency_adjusted = 1;
+  if (pll_debug_enabled != 0) {
+    char message[80];
+    int32_t efc = float_to_integer(pll.efc);
+    double y0 =
+        float_to_double(float_multiply(fine_y0, PLL_STAGES_NANOSECONDS));
+
+    debug_sprintf(message, "y0 = %f, efc =  %d\r\n", y0, efc);
+    task_dmessage(message);
+  }
+  pll.fine_state = sync_perform(double_to_float(interval_reading.value))
+                       ? PLL_FINE_SYNC_1
+                       : PLL_FINE_SYNC_2;
+  return PLL_STAGE_RESULT_RUNNING;
+}
+
+/* The fine frequency setting: syncs the outputs if the TI asks, fits a
+ * line to 50 readings for the frequency, then moves the EFC by it and
+ * measures again, or slews the phase once the frequency is within 2e-9;
+ * a sync asked for starts it again but while it fine-slews (0x4538c). */
+pll_stage_result fine(void) {
+  pll_stage_result result = PLL_STAGE_RESULT_RUNNING;
+
+  if (pll.sync_requested != 0 && pll.fine_state != PLL_FINE_FINE_SLEW) {
+    pll.fine_state = PLL_FINE_SYNC_MEASURE;
+  }
+  switch (pll.fine_state) {
+    case PLL_FINE_SYNC_MEASURE:
+      interval_wait_reading();
+      if (interval_reading.valid == 0) {
+        result =
+            pll_stages_fine_retry("fine-sync - Error with measurement\r\n");
+      } else {
+        pll.fine_retries = 0;
+        pll.fine_state = sync_perform(double_to_float(interval_reading.value))
+                             ? PLL_FINE_SYNC_1
+                             : PLL_FINE_MEASURE_1;
+      }
+      interval_rearm(INTERVAL_ARM_CALIBRATE);
+      break;
+    case PLL_FINE_SYNC_1:
+      interval_next_reading(INTERVAL_ARM_PLAIN, NULL);
+      pll.fine_state = PLL_FINE_SYNC_2;
+      break;
+    case PLL_FINE_SYNC_2:
+      interval_next_reading(INTERVAL_ARM_CALIBRATE, NULL);
+      pll.fine_state = PLL_FINE_MEASURE_1;
+      break;
+    case PLL_FINE_MEASURE_1:
+      interval_next_reading(INTERVAL_ARM_PLAIN, NULL);
+      pll.fine_state = PLL_FINE_MEASURE_DELAY;
+      pll.fine_retries = 0;
+      pll_stages_fine_fit_restart();
+      fine_ti_max = 0.0f;
+      break;
+    case PLL_FINE_MEASURE_DELAY:
+      if (pll.fine_index > PLL_STAGES_FINE_READINGS) {
+        interval_next_reading(INTERVAL_ARM_CALIBRATE, NULL);
+        pll.fine_state = PLL_FINE_MEASURE_2;
+        pll_stages_fine_fit_check();
+      } else if (interval_next_reading(INTERVAL_ARM_CALIBRATE, &pll.fine_d) ==
+                 0) {
+        result = pll_stages_fine_retry("fine - Error with measurement 1\r\n");
+        pll_stages_fine_fit_restart();
+      } else {
+        pll_stages_fine_fit_add();
+        pll.fine_index++;
+      }
+      break;
+    case PLL_FINE_MEASURE_2:
+      interval_wait_reading();
+      if (interval_reading.valid == 0) {
+        result = pll_stages_fine_retry("fine - Error with measurement 2\r\n");
+        if (result != PLL_STAGE_RESULT_FAILED) {
+          pll.fine_state = PLL_FINE_MEASURE_1;
+        }
+        interval_rearm(INTERVAL_ARM_CALIBRATE);
+        break;
+      }
+      result = pll_stages_fine_frequency();
+      interval_rearm(INTERVAL_ARM_PLAIN);
+      break;
+    case PLL_FINE_SLEW:
+      interval_next_reading(INTERVAL_ARM_CALIBRATE, NULL);
+      pll.fine_retries = 0;
+      pll.fine_state = PLL_FINE_SLEW_MEASURE;
+      break;
+    case PLL_FINE_SLEW_MEASURE:
+      interval_wait_reading();
+      if (interval_reading.valid == 0) {
+        result =
+            pll_stages_fine_retry("fine-slew - Error with measurement\r\n");
+      } else {
+        result = pll_stages_fine_slew(double_to_float(interval_reading.value));
+      }
+      interval_rearm(INTERVAL_ARM_CALIBRATE);
+      break;
+    case PLL_FINE_FINE_SLEW:
+      interval_next_reading(INTERVAL_ARM_PLAIN, NULL);
+      pll.fine_index--;
+      if (pll.fine_index == 0) {
+        result = PLL_STAGE_RESULT_DONE;
+      }
+      break;
+    case PLL_FINE_START:
+    default:
+      interval_next_reading(INTERVAL_ARM_CALIBRATE, NULL);
+      pll.fine_retries = 0;
+      pll.fine_state = PLL_FINE_SYNC_MEASURE;
+      break;
+  }
+  if (result == PLL_STAGE_RESULT_FAILED) {
+    pll.hold_causes |= HOLD_CAUSE_TI_ERROR;
+  }
+  return result;
 }
 
 /* A loop's one-second reading: summed into the block within the hold
@@ -717,6 +981,71 @@ static float pll_stages_predicted_efc(float current) {
       float_multiply(scpi_value_DIAGnostic_ROSCillator_TCOefficient, current);
 
   return double_to_float(double_add(float_to_double(correction), fitted));
+}
+
+/* The log event for holdover on the GPS's loss, by the receiver status
+ * it last reported (the jump table at 0x439f6); any other status is the
+ * GPS's 1PPS, dead or lost. */
+static log_event_code pll_stages_gps_holdover_event(void) {
+  switch (gps.status_reported) {
+    case GPS_SYNC_RECEIVER_ERROR:
+      return LOG_HOLDOVER_GPS_ALARM;
+    case GPS_SYNC_NOT_TRACKING:
+    case GPS_SYNC_INACCURATE_POSITION:
+      return LOG_HOLDOVER_NOT_TRACKING;
+    case GPS_SYNC_RAIM_ERROR:
+      return LOG_HOLDOVER_RAIM_ALARM;
+    default:
+      return gps_pps_dead != 0 ? LOG_HOLDOVER_INVALID_GPS_PPS
+                               : LOG_HOLDOVER_GPS;
+  }
+}
+
+/* The log event for holdover by its first hold cause in the image's
+ * order. */
+static log_event_code pll_stages_holdover_event(void) {
+  pll_hold_cause causes = pll.hold_causes;
+
+  if ((causes & HOLD_CAUSE_MANUAL) != HOLD_CAUSE_NONE) {
+    return LOG_HOLDOVER_MANUAL;
+  }
+  if ((causes & HOLD_CAUSE_GPS) != HOLD_CAUSE_NONE) {
+    return pll_stages_gps_holdover_event();
+  }
+  if ((causes & HOLD_CAUSE_TI_ERROR) != HOLD_CAUSE_NONE) {
+    return LOG_HOLDOVER_TI_ERROR;
+  }
+  if ((causes & HOLD_CAUSE_TI_LIMIT_EXCEEDED) != HOLD_CAUSE_NONE) {
+    return LOG_HOLDOVER_TI_LIMIT;
+  }
+  if ((causes & HOLD_CAUSE_TEMPORARY_MODE) != HOLD_CAUSE_NONE) {
+    return LOG_HOLDOVER_TEMPORARY;
+  }
+  if ((causes & HOLD_CAUSE_HARDWARE_FAILURE) != HOLD_CAUSE_NONE) {
+    return LOG_HOLDOVER_HW_ERROR;
+  }
+  if ((causes & HOLD_CAUSE_1PPS_SELECTION) != HOLD_CAUSE_NONE) {
+    return LOG_HOLDOVER_SELECTING_PPS;
+  }
+  if ((causes & HOLD_CAUSE_GPS_COMMAND_MONITOR) != HOLD_CAUSE_NONE) {
+    return LOG_HOLDOVER_GPS_ALARM;
+  }
+  return LOG_HOLDOVER_STARTED;
+}
+
+/* Enters holdover: its duration restarted but from recovery, manual
+ * when a manual hold cause or no automatic recovery asks it, and a new
+ * holdover logged by its cause (0x4397a). */
+void enter_holdover(void) {
+  if (pll.stage != PLL_STAGE_HOLDOVER_RECOVERY) {
+    pll.holdover_duration = 0;
+  }
+  pll.manual = (pll.hold_causes & HOLD_CAUSE_MANUAL) != HOLD_CAUSE_NONE ||
+               holdover_recovery_auto == 0;
+  pll.stage = PLL_STAGE_HOLDOVER;
+  if (pll.holdover_duration == 0) {
+    log_event(pll_stages_holdover_event());
+  }
 }
 
 /* The holdover stage: steers the EFC by the aging fit, and each 10

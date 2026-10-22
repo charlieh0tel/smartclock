@@ -31,6 +31,21 @@ typedef long long int64_t;
  * reports the fields and prototypes it should type.  The lead moves each
  * to its subject below, types them, and empties this section on
  * merging. */
+/* A task's debug flag's index in dmes (0x103808), in the order of the
+ * console's dmes_ words and task_dmessage's table; the ninth no word
+ * names, though system_init and dmes_all set it with the rest. */
+typedef enum __attribute__((packed)) task_debug_flag {
+  DMES_GPSM = 0,
+  DMES_HMON = 1,
+  DMES_KLOK = 2,
+  DMES_PLLP = 3,
+  DMES_ROOT = 4,
+  DMES_SCPI = 5,
+  DMES_SPOO = 6,
+  DMES_CURV = 7,
+  DMES_UNNAMED = 8,
+} task_debug_flag;
+
 /* BEGIN PROPOSED ENUMS */
 /* END PROPOSED ENUMS */
 
@@ -3288,20 +3303,46 @@ typedef struct interval_reading_fields {
   uint8_t armed; /* clear, the routines report a measurement aborted */
 } interval_reading_fields;
 
+/* A counter_configuration_fields work's state: asked for, or done. */
+typedef enum __attribute__((packed)) counter_work_state {
+  COUNTER_WORK_DONE = 1,
+  COUNTER_WORK_WANTED = 2,
+} counter_work_state;
+
+/* counter_configuration_fields.registers_mode: when counter_arm loads
+ * fpga_registers; any other value never. */
+typedef enum __attribute__((packed)) counter_registers_mode {
+  COUNTER_REGISTERS_WHEN_WANTED = 1,
+} counter_registers_mode;
+
+/* counter_configuration_fields.calibrate_mode: when counter_read
+ * calibrates the interpolator; any other value never. */
+typedef enum __attribute__((packed)) counter_calibrate_mode {
+  COUNTER_CALIBRATE_WHEN_WANTED = 1,
+  COUNTER_CALIBRATE_ALWAYS = 3,
+} counter_calibrate_mode;
+
+/* counter_configuration_fields.sync_mode: when counter_arm syncs the
+ * counter, as sync_request (0x40a64) asks; any other value never. */
+typedef enum __attribute__((packed)) counter_sync_mode {
+  COUNTER_SYNC_WHEN_WANTED = 2,
+} counter_sync_mode;
+
 /* The time-interval counter's configuration, counter_configuration, which
  * counter_arm, counter_calibrate and counter_read are given.  A mode and
- * a state go in pairs: a state of 2 asks for the work, 1 says it is done.
+ * a state go in pairs: the mode says when the work is done, the state
+ * asks for it or says it is done.
  * 0x20 bytes, interpolator_calibration_state after them. */
 typedef struct counter_configuration_fields {
-  uint8_t fpga_registers[4];   /* counter_arm copies them into fconf_regs */
-  double calibration;          /* s, which counter_read subtracts */
-  uint8_t registers_mode;      /* 1: load fpga_registers ... */
-  uint8_t registers_state;     /* ... when this is 2 */
-  uint8_t calibrate_mode;      /* 3: always calibrate; 1: ... */
-  uint8_t calibrate_state;     /* ... when this is 2 */
-  uint8_t sync_mode;           /* 2: counter_arm syncs ... */
-  uint8_t sync_state;          /* ... when this is 2; sync_request sets both */
-  counter_sync_kind sync_kind; /* sync_request's first; into fconf_regs[3] */
+  uint8_t fpga_registers[4]; /* counter_arm copies them into fconf_regs */
+  double calibration;        /* s, which counter_read subtracts */
+  counter_registers_mode registers_mode; /* when fpga_registers load */
+  counter_work_state registers_state;
+  counter_calibrate_mode calibrate_mode; /* when the interpolator calibrates */
+  counter_work_state calibrate_state;
+  counter_sync_mode sync_mode;   /* when counter_arm syncs */
+  counter_work_state sync_state; /* sync_request sets both */
+  counter_sync_kind sync_kind;   /* sync_request's first; into fconf_regs[3] */
   uint8_t pad_13;
   int32_t sync_count;          /* sync_request's second; counted down */
   int32_t interpolator_offset; /* reading_low, subtracted from the reading */
@@ -3601,12 +3642,15 @@ typedef enum __attribute__((packed)) psos_service {
   PSOS_SERVICE_RETURN_BLOCK = 38,
 } psos_service;
 
-/* The I/O functions, trap #4's D7 (psos.md, "Calls"). */
+/* The I/O functions, trap #4's D7 (psos.md, "Calls" and its I/O
+ * functions' table: close's stub 0x173fe, control's 0x1747a). */
 typedef enum __attribute__((packed)) psos_io_function {
   PSOS_IO_INIT = 0,
   PSOS_IO_OPEN = 1,
+  PSOS_IO_CLOSE = 2,
   PSOS_IO_READ = 3,
   PSOS_IO_WRITE = 4,
+  PSOS_IO_CONTROL = 5,
 } psos_io_function;
 
 typedef struct psos_task psos_task;
@@ -3795,6 +3839,15 @@ typedef struct early_status_events {
   int8_t events[5]; /* +0x02 */
   uint8_t field_07;
 } early_status_events;
+
+/* What happening_replay replays a buffer's codes
+ * as, by its jump table at 0x2f6b2; happening_flush passes the first
+ * for early_status_reports and the second for early_status_happenings
+ * (0x2f6f2, 0x2f6fe). */
+typedef enum __attribute__((packed)) status_replay_mode {
+  STATUS_REPLAY_REPORTS = 0,    /* by status_report */
+  STATUS_REPLAY_HAPPENINGS = 1, /* by status_happening */
+} status_replay_mode;
 
 /* The boot code's self-test results, boot_selftest at 0x10ab20: a
  * checksum word, then the fields of selftest_results' first 14 bytes in

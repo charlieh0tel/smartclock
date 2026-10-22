@@ -311,13 +311,14 @@ void gps_print_process_monitor(void) {
   /* Each byte as two hex digits; the loop that would strip a third
    * digit's leading 0 or f never finds one. */
   char hex[5];
-  char bytes[41];
+  /* The buffer's first 20 bytes, two digits each. */
+  static const uint32_t SHOWN = 20;
+  char bytes[2 * 20 + 1];
 
   console_write("Response Buffer:  ");
   bytes[0] = 0;
   for (gps_print_cursor = gps_response_buffer;
-       gps_print_cursor < gps_response_buffer + sizeof gps_response_buffer;
-       gps_print_cursor++) {
+       gps_print_cursor < gps_response_buffer + SHOWN; gps_print_cursor++) {
     char* digits = hex;
 
     sprintf(hex, "%hx", (uint16_t)*gps_print_cursor);

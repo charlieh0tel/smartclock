@@ -861,6 +861,16 @@ int32_t scpi_set_DIAGnostic_TOFFset(void* parameters, void* response,
   return 0;
 }
 
+/* :DIAGnostic:TOFFset's done hook: clears the temporary-mode hold cause
+ * as the antenna delay's does and saves the calibration block (0x45a3c).
+ * It passes save_calibration_block the low bytes of its own two stack
+ * arguments, sign-extended, which finish_scpi_cmd does not push for a
+ * numeric done hook: what its frame holds there. */
+void time_offset_done(int32_t index, int32_t source) {
+  antenna_delay_done();
+  save_calibration_block((int8_t)index, (int8_t)source);
+}
+
 /* :DIAGnostic:TOFFset?, or its bound (0x2bdee). */
 int32_t scpi_query_DIAGnostic_TOFFset(void* parameters, void* response,
                                       scpi_call* call) {

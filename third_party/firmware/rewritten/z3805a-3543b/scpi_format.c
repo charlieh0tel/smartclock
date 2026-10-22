@@ -13,15 +13,14 @@ enum {
 };
 
 /* What scpi_real_to_text is given: 15 significant digits for a double,
- * 6 for a float, and the resolution -308 for every digit (its exponent
- * digits and point in scpi_engine_real_to_text); and the text's length
+ * 6 for a float, and SCPI_REAL_EVERY_DIGIT (scpi.h) for the resolution
+ * (its exponent digits and point in scpi_engine_real_to_text); and the
+ * text's length
  * with every digit, the sign, the point, "E", the exponent's sign and
  * three digits.  The text's size is an array's, so #define. */
 static const int16_t SCPI_REAL_DOUBLE_DIGITS = 15;
 
 static const int16_t SCPI_REAL_FLOAT_DIGITS = 6;
-
-static const int16_t SCPI_REAL_EVERY_DIGIT = -308;
 
 static const int16_t SCPI_REAL_TEXT_OVERHEAD = 4 + 3;
 

@@ -7,17 +7,11 @@
  * its LED's byte through return_byte, a short; each setter hands pllc
  * the new state. */
 
-/* An :LED setter's parameters: a boolean's kind word and value. */
-typedef struct scpi_led_parameters {
-  int16_t kind;   /* +0x00 */
-  uint16_t state; /* +0x02: 0 off, 1 on */
-} scpi_led_parameters;
-
 /* :LED:ACTive, "Sets or queries Active LED" (0x2d920). */
 int32_t scpi_set_LED_ACTive(void* parameters, void* response, scpi_call* call) {
-  scpi_led_parameters* given = parameters;
+  scpi_word_parameter* given = parameters;
 
-  pllc_request_a(&scpi_param_LED_ACTive, 0, given->state,
+  pllc_request_a(&scpi_param_LED_ACTive, 0, given->value,
                  return_zero(call->input));
   return 0;
 }
@@ -64,9 +58,9 @@ int32_t scpi_query_LED_ALARm_USER(void* parameters, void* response,
 /* :LED:ENABled, "Sets or queries Enabled LED" (0x2d99e). */
 int32_t scpi_set_LED_ENABled(void* parameters, void* response,
                              scpi_call* call) {
-  scpi_led_parameters* given = parameters;
+  scpi_word_parameter* given = parameters;
 
-  pllc_request_a(&scpi_param_LED_ENABled, 0, given->state,
+  pllc_request_a(&scpi_param_LED_ENABled, 0, given->value,
                  return_zero(call->input));
   return 0;
 }

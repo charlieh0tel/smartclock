@@ -29,25 +29,12 @@ void pulse_settings_done(void) {
                 nv_settings.pulse_period);
 }
 
-/* A long numeric parameter as the parsers leave it in the call's buffer:
- * its kind, then a number's value or MAX's or MIN's value in the node's
- * list, then the unit (scpi_parse_long, scpi_parse_choice). */
-typedef struct scpi_source_pulse_numeric {
-  int16_t kind; /* +0x00: SCPI_PARAMETER_DECIMAL, _CHARACTER, or SCPI_NONE
-                   for a query's left out */
-  union {
-    int32_t value;   /* +0x02: a number's */
-    int16_t keyword; /* +0x02: MAX 0, MIN 1 (0x53d40) */
-  };
-  int16_t unit; /* +0x06 */
-} scpi_source_pulse_numeric;
-
 /* :PULSe:CONTinuous:PERiod: the number, or MAX or MIN, to pllc
  * (0x2da78). */
 int32_t scpi_set_SOURce_PULSe_CONTinuous_PERiod(void* parameters,
                                                 void* response,
                                                 scpi_call* call) {
-  scpi_source_pulse_numeric* period = parameters;
+  scpi_long_parameter* period = parameters;
 
   scpi_numeric_set(&scpi_param_SOURce_PULSe_CONTinuous_PERiod, 0, period->kind,
                    period->keyword, 0, period->value, return_zero(call->input));
@@ -59,7 +46,7 @@ int32_t scpi_set_SOURce_PULSe_CONTinuous_PERiod(void* parameters,
 int32_t scpi_query_SOURce_PULSe_CONTinuous_PERiod(void* parameters,
                                                   void* response,
                                                   scpi_call* call) {
-  scpi_source_pulse_numeric* bound = parameters;
+  scpi_long_parameter* bound = parameters;
   int32_t* period = response;
 
   *period = float_to_integer(
@@ -68,17 +55,10 @@ int32_t scpi_query_SOURce_PULSe_CONTinuous_PERiod(void* parameters,
   return 0;
 }
 
-/* A boolean parameter: its kind, then its value (scpi_parse_boolean,
- * scpi_parse_boolean_number). */
-typedef struct scpi_source_pulse_boolean {
-  int16_t kind;   /* +0x00 */
-  uint16_t value; /* +0x02 */
-} scpi_source_pulse_boolean;
-
 /* :PULSe:CONTinuous:STATe: the pulse on or off, to pllc (0x2dade). */
 int32_t scpi_set_SOURce_PULSe_CONTinuous_STATe(void* parameters, void* response,
                                                scpi_call* call) {
-  scpi_source_pulse_boolean* state = parameters;
+  scpi_word_parameter* state = parameters;
 
   pllc_request_a(&scpi_param_SOURce_PULSe_CONTinuous_STATe, 0,
                  (uint8_t)state->value, return_zero(call->input));
@@ -101,22 +81,11 @@ int32_t scpi_query_SOURce_PULSe_CONTinuous_STATe(void* parameters,
  * after a parameter's kind word (scpi_parse_short, scpi_format_short). */
 #define SCPI_SOURCE_PULSE_FIELDS 3
 
-typedef struct scpi_source_pulse_short_parameter {
-  int16_t kind;  /* +0x00 */
-  int16_t value; /* +0x02 */
-  int16_t unit;  /* +0x04 */
-} scpi_source_pulse_short_parameter;
-
-typedef struct scpi_source_pulse_short_item {
-  int16_t value;  /* +0x00 */
-  int16_t unused; /* +0x02 */
-} scpi_source_pulse_short_item;
-
 /* The start's date or time, its three fields, to pllc through its
  * source's staged longs. */
-static void scpi_source_pulse_start_set(
-    scpi_numeric_param* param, scpi_source_pulse_short_parameter* fields,
-    uint8_t source) {
+static void scpi_source_pulse_start_set(scpi_numeric_param* param,
+                                        scpi_short_parameter* fields,
+                                        uint8_t source) {
   int32_t* staged = scpi_staged[source];
 
   for (uint8_t field = 0; field < SCPI_SOURCE_PULSE_FIELDS; field++) {
@@ -128,7 +97,7 @@ static void scpi_source_pulse_start_set(
 /* The start's date or time as response items, each long truncated to a
  * short. */
 static void scpi_source_pulse_start_get(const int32_t* start,
-                                        scpi_source_pulse_short_item* items) {
+                                        scpi_short_item* items) {
   for (uint8_t field = 0; field < SCPI_SOURCE_PULSE_FIELDS; field++) {
     items[field].value = (int16_t)start[field];
   }

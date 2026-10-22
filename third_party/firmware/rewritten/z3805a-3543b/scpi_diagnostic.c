@@ -8,12 +8,6 @@
  * its own, so the types and prototypes it declares are in scope; each
  * function here keeps its generated prototype. */
 
-/* A response's short, scpi_format_short's 4 bytes. */
-typedef struct scpi_diagnostic_short {
-  int16_t value;   /* +0x00 */
-  uint16_t unused; /* +0x02 */
-} scpi_diagnostic_short;
-
 /* A response's long, scpi_format_long's and _unsigned_long's 6 bytes. */
 typedef struct scpi_diagnostic_long {
   int32_t value;   /* +0x00 */
@@ -107,8 +101,8 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_DEGRees(void* parameters,
   }* given = parameters;
   struct {
     int16_t hemisphere;            /* +0x00 */
-    scpi_diagnostic_short degrees; /* +0x02 */
-    scpi_diagnostic_short minutes; /* +0x06 */
+    scpi_short_item degrees;       /* +0x02 */
+    scpi_short_item minutes;       /* +0x06 */
     scpi_diagnostic_float seconds; /* +0x0a */
   }* angle = response;
   uint16_t degrees;
@@ -237,12 +231,12 @@ int32_t scpi_query_DIAGnostic_GPSystem_POSition_HOLD_RAIM_THReshold(
 int32_t scpi_query_DIAGnostic_GPSystem_TIME(void* parameters, void* response,
                                             scpi_call* call) {
   struct {
-    scpi_diagnostic_short hour;   /* +0x00 */
-    scpi_diagnostic_short minute; /* +0x04 */
-    scpi_diagnostic_short second; /* +0x08 */
-    scpi_diagnostic_short year;   /* +0x0c */
-    scpi_diagnostic_short month;  /* +0x10 */
-    scpi_diagnostic_short day;    /* +0x14 */
+    scpi_short_item hour;   /* +0x00 */
+    scpi_short_item minute; /* +0x04 */
+    scpi_short_item second; /* +0x08 */
+    scpi_short_item year;   /* +0x0c */
+    scpi_short_item month;  /* +0x10 */
+    scpi_short_item day;    /* +0x14 */
   }* now = response;
   time_of_day time;
   /* The date as a long, which gps_time_local_get fills by its parts. */
@@ -437,7 +431,7 @@ static int16_t scpi_diagnostic_log_entries(int16_t log) {
 int32_t scpi_query_DIAGnostic_LOG_COUNt(void* parameters, void* response,
                                         scpi_call* call) {
   const int16_t* log = parameters;
-  scpi_diagnostic_short* count = response;
+  scpi_short_item* count = response;
   int16_t entries = scpi_diagnostic_log_entries(*log);
 
   if (entries < 0) {

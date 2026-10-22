@@ -79,7 +79,7 @@ below, gives the message.  `gpsx_send` (`0x46636`) sends a
 `status_create` (`0x280ea`) allocates `0x16` bytes plus four a register
 and a 16-byte record for each register, and builds a queue with room
 for `0x1e` entries at `+0x06`.  `status_init` then sets each register
-up from the 22-byte entries at `0x2f7ac` with `status_register_setup`
+up from the 22-byte entries of `status_register_layouts` (`0x2f79e`) with `status_register_setup`
 (`0x2819c`), and sets `status_ready` (`0x102eb7`), without which
 `status_report` (`0x2be9c`) does nothing.
 

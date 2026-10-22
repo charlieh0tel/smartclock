@@ -37,24 +37,11 @@ int32_t scpi_query_KENneth_PREDicted(void* parameters, void* response,
   return 0;
 }
 
-/* A long numeric parameter as the parsers leave it in the call's buffer:
- * its kind, then a number's value or MAX's or MIN's value in the node's
- * list, then the unit (scpi_parse_long, scpi_parse_choice). */
-typedef struct scpi_kenneth_numeric {
-  int16_t kind; /* +0x00: SCPI_PARAMETER_DECIMAL, _CHARACTER, or SCPI_NONE
-                   for a query's left out */
-  union {
-    int32_t value;   /* +0x02: a number's */
-    int16_t keyword; /* +0x02: MAX 0, MIN 1 (0x53d40) */
-  };
-  int16_t unit; /* +0x06 */
-} scpi_kenneth_numeric;
-
 /* :KENneth:PREDicted:DURation: the number, or MAX or MIN, to pllc
  * (0x2fe16). */
 int32_t scpi_set_KENneth_PREDicted_DURation(void* parameters, void* response,
                                             scpi_call* call) {
-  scpi_kenneth_numeric* duration = parameters;
+  scpi_long_parameter* duration = parameters;
 
   scpi_numeric_set(&scpi_param_KENneth_PREDicted_DURation, 0, duration->kind,
                    duration->keyword, 0, duration->value,
@@ -66,7 +53,7 @@ int32_t scpi_set_KENneth_PREDicted_DURation(void* parameters, void* response,
  * long (0x2fe50). */
 int32_t scpi_query_KENneth_PREDicted_DURation(void* parameters, void* response,
                                               scpi_call* call) {
-  scpi_kenneth_numeric* bound = parameters;
+  scpi_long_parameter* bound = parameters;
   int32_t* duration = response;
 
   *duration = float_to_integer(scpi_numeric_get(

@@ -1440,6 +1440,13 @@ view cannot drift apart.  The library, bottom up:
      "The SCPI task's response areas"), the serial, `:SAMPle`,
      `:PRINt` and `:INITial:POSition` descriptors, `klok_now`, and three
      bytes nothing reads.
+     And the shapes the handler files each declared are shared:
+     `scpi.h`'s parameter and response item records
+     (`scpi_word_parameter`, `scpi_short_parameter`,
+     `scpi_float_parameter`, `scpi_long_parameter`, `scpi_short_item`)
+     in place of 22 private copies, and `smartclock.h`'s
+     `status_register_layout`, whose table `status_register_layouts`
+     (`0x2f79e`) status.c and scpi_status.c both read.
 
   Costs: the wrappers, the harness and the link; then the long tail of
   decompiled functions that are wrong in ways only running them shows.

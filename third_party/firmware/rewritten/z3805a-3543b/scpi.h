@@ -99,6 +99,51 @@ typedef struct scpi_engine_long_parameter {
   };
 } scpi_engine_long_parameter;
 
+/* The parameters as the parsers leave them in the call's buffer, each
+ * its kind -- SCPI_PARAMETER_DECIMAL, _CHARACTER for a keyword, or
+ * SCPI_NONE for an optional one left out -- then its value and, for a
+ * number, its unit (scpi_parse_short, _long, _float, scpi_parse_boolean,
+ * scpi_parse_choice).  A short, a boolean, or a keyword's value in the
+ * node's list: */
+typedef struct scpi_word_parameter {
+  int16_t kind;  /* +0x00 */
+  int16_t value; /* +0x02 */
+} scpi_word_parameter;
+
+/* A short number and its unit. */
+typedef struct scpi_short_parameter {
+  int16_t kind;  /* +0x00 */
+  int16_t value; /* +0x02 */
+  int16_t unit;  /* +0x04 */
+} scpi_short_parameter;
+
+/* A real number or a keyword, and the unit. */
+typedef struct scpi_float_parameter {
+  int16_t kind; /* +0x00 */
+  union {
+    float value;     /* +0x02: a number's */
+    int16_t keyword; /* +0x02: a keyword's value in the node's list */
+  };
+  int16_t unit; /* +0x06 */
+} scpi_float_parameter;
+
+/* A long number or a keyword, and the unit. */
+typedef struct scpi_long_parameter {
+  int16_t kind; /* +0x00 */
+  union {
+    int32_t value;   /* +0x02: a number's */
+    int16_t keyword; /* +0x02: a keyword's value in the node's list */
+  };
+  int16_t unit; /* +0x06 */
+} scpi_long_parameter;
+
+/* A short response item, as scpi_format_short reads it: 4 bytes, a
+ * float's size. */
+typedef struct scpi_short_item {
+  int16_t value;  /* +0x00 */
+  int16_t unused; /* +0x02 */
+} scpi_short_item;
+
 /* A numeric parameter's kind, as scpi_numeric_set, _get and
  * scpi_long_resolve_bound read it: a number, or MINimum or MAXimum, by
  * the bound after it. */

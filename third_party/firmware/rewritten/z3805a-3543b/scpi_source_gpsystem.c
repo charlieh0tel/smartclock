@@ -18,43 +18,12 @@ void douglas_finish_request(int32_t index, int32_t source) {
   douglas_finish_nv_argument = (uint8_t)source;
 }
 
-/* The parameters as the parsers leave them in the call's buffer, each
- * its kind -- SCPI_PARAMETER_DECIMAL, _CHARACTER for a keyword, or
- * SCPI_NONE for an optional one left out -- then its value and, for a
- * number, its unit (scpi_parse_short, _long, _float, scpi_parse_choice). */
-typedef struct scpi_source_gpsystem_choice {
-  int16_t kind;    /* +0x00 */
-  int16_t keyword; /* +0x02: its value in the node's list */
-} scpi_source_gpsystem_choice;
-
-typedef struct scpi_source_gpsystem_short {
-  int16_t kind;  /* +0x00 */
-  int16_t value; /* +0x02 */
-  int16_t unit;  /* +0x04 */
-} scpi_source_gpsystem_short;
-
-typedef struct scpi_source_gpsystem_long {
-  int16_t kind;  /* +0x00 */
-  int32_t value; /* +0x02 */
-  int16_t unit;  /* +0x06 */
-} scpi_source_gpsystem_long;
-
-/* A real, or MAX or MIN by its keyword's value, 0 or 1 (0x53d40). */
-typedef struct scpi_source_gpsystem_real {
-  int16_t kind; /* +0x00 */
-  union {
-    float value;     /* +0x02 */
-    int16_t keyword; /* +0x02 */
-  };
-  int16_t unit; /* +0x06 */
-} scpi_source_gpsystem_real;
-
 /* An angle: its hemisphere, then degrees, minutes and seconds. */
 typedef struct scpi_source_gpsystem_angle_parameters {
-  scpi_source_gpsystem_choice hemisphere; /* +0x00 */
-  scpi_source_gpsystem_long degrees;      /* +0x04 */
-  scpi_source_gpsystem_long minutes;      /* +0x0c */
-  scpi_source_gpsystem_real seconds;      /* +0x14 */
+  scpi_word_parameter hemisphere; /* +0x00 */
+  scpi_long_parameter degrees;    /* +0x04 */
+  scpi_long_parameter minutes;    /* +0x0c */
+  scpi_float_parameter seconds;   /* +0x14 */
 } scpi_source_gpsystem_angle_parameters;
 
 /* A <location> (097-z3801-01, page 4-6), :POSition's and
@@ -64,7 +33,7 @@ typedef struct scpi_source_gpsystem_angle_parameters {
 typedef struct scpi_source_gpsystem_location_parameters {
   scpi_source_gpsystem_angle_parameters latitude;  /* +0x00 */
   scpi_source_gpsystem_angle_parameters longitude; /* +0x1c */
-  scpi_source_gpsystem_real height;                /* +0x38 */
+  scpi_float_parameter height;                     /* +0x38 */
 } scpi_source_gpsystem_location_parameters;
 
 /* The hemisphere keywords' values in the nodes' lists: N and S
@@ -84,21 +53,16 @@ static const int16_t SCPI_SOURCE_GPSYSTEM_MINIMUM = 1;
 
 /* The response items, as the formatters read them: a short and a float
  * each take two bytes more (scpi_format_short, scpi_format_float). */
-typedef struct scpi_source_gpsystem_short_item {
-  int16_t value;  /* +0x00 */
-  int16_t unused; /* +0x02 */
-} scpi_source_gpsystem_short_item;
-
 typedef struct scpi_source_gpsystem_real_item {
   float value;    /* +0x00 */
   int16_t unused; /* +0x04 */
 } scpi_source_gpsystem_real_item;
 
 typedef struct scpi_source_gpsystem_angle_items {
-  int16_t hemisphere;                      /* +0x00 */
-  scpi_source_gpsystem_short_item degrees; /* +0x02 */
-  scpi_source_gpsystem_short_item minutes; /* +0x06 */
-  scpi_source_gpsystem_real_item seconds;  /* +0x0a */
+  int16_t hemisphere;                     /* +0x00 */
+  scpi_short_item degrees;                /* +0x02 */
+  scpi_short_item minutes;                /* +0x06 */
+  scpi_source_gpsystem_real_item seconds; /* +0x0a */
 } scpi_source_gpsystem_angle_items;
 
 /* A <location> as the position queries answer it (their nodes' items,
@@ -152,7 +116,7 @@ static int32_t scpi_source_gpsystem_steps(float* value,
 int32_t scpi_set_SOURce_GPSystem_ADELay(void* parameters, void* response,
                                         scpi_call* call) {
   static const float NANOSECOND = 1e-9f;
-  scpi_source_gpsystem_real* delay = parameters;
+  scpi_float_parameter* delay = parameters;
   scpi_numeric_param* param = &scpi_param_SOURce_GPSystem_ADELay;
   int32_t nanoseconds;
 
@@ -176,11 +140,11 @@ int32_t scpi_set_SOURce_GPSystem_ADELay(void* parameters, void* response,
 int32_t scpi_query_SOURce_GPSystem_ADELay(void* parameters, void* response,
                                           scpi_call* call) {
   static const float NANOSECOND = 1e-9f;
-  scpi_source_gpsystem_choice* bound = parameters;
+  scpi_word_parameter* bound = parameters;
   float* seconds = response;
 
   *seconds = float_multiply(scpi_numeric_get(&scpi_param_SOURce_GPSystem_ADELay,
-                                             0, bound->kind, bound->keyword),
+                                             0, bound->kind, bound->value),
                             NANOSECOND);
   return 0;
 }
@@ -189,7 +153,7 @@ int32_t scpi_query_SOURce_GPSystem_ADELay(void* parameters, void* response,
  * (0x2c328). */
 int32_t scpi_set_SOURce_GPSystem_EMANgle(void* parameters, void* response,
                                          scpi_call* call) {
-  scpi_source_gpsystem_short* angle = parameters;
+  scpi_short_parameter* angle = parameters;
 
   scpi_numeric_set(&scpi_param_SOURce_GPSystem_EMANgle, 0, angle->kind,
                    angle->value, 0, angle->value, return_zero(call->input));
@@ -199,11 +163,11 @@ int32_t scpi_set_SOURce_GPSystem_EMANgle(void* parameters, void* response,
 /* :GPS:EMANgle? (0x2c364). */
 int32_t scpi_query_SOURce_GPSystem_EMANgle(void* parameters, void* response,
                                            scpi_call* call) {
-  scpi_source_gpsystem_choice* bound = parameters;
+  scpi_word_parameter* bound = parameters;
   int16_t* angle = response;
 
   *angle = (int16_t)float_to_integer(scpi_numeric_get(
-      &scpi_param_SOURce_GPSystem_EMANgle, 0, bound->kind, bound->keyword));
+      &scpi_param_SOURce_GPSystem_EMANgle, 0, bound->kind, bound->value));
   return 0;
 }
 
@@ -211,7 +175,7 @@ int32_t scpi_query_SOURce_GPSystem_EMANgle(void* parameters, void* response,
  * source's staged longs, while time_valid gives 0; -221, Settings
  * conflict, else. */
 static void scpi_source_gpsystem_initial_set(scpi_numeric_param* param,
-                                             scpi_source_gpsystem_short* fields,
+                                             scpi_short_parameter* fields,
                                              scpi_port* input) {
   uint8_t source = return_zero(input);
 
@@ -318,10 +282,10 @@ static void scpi_source_gpsystem_location(
   position[2] = scpi_source_gpsystem_steps(
       &location->height.value, height_param, height_index,
       SCPI_SOURCE_GPSYSTEM_CENTIMETER, source);
-  if (location->latitude.hemisphere.keyword == SCPI_SOURCE_GPSYSTEM_SOUTH) {
+  if (location->latitude.hemisphere.value == SCPI_SOURCE_GPSYSTEM_SOUTH) {
     position[0] = -position[0];
   }
-  if (location->longitude.hemisphere.keyword == SCPI_SOURCE_GPSYSTEM_WEST) {
+  if (location->longitude.hemisphere.value == SCPI_SOURCE_GPSYSTEM_WEST) {
     position[1] = -position[1];
   }
 }
@@ -386,7 +350,7 @@ static uint8_t scpi_source_gpsystem_left_out(
 int32_t scpi_set_SOURce_GPSystem_POSition(void* parameters, void* response,
                                           scpi_call* call) {
   scpi_source_gpsystem_location_parameters* location = parameters;
-  int16_t first = location->latitude.hemisphere.keyword;
+  int16_t first = location->latitude.hemisphere.value;
   uint8_t source = return_zero(call->input);
   int32_t* staged = scpi_staged[source];
 
@@ -713,9 +677,10 @@ int32_t scpi_query_SOURce_GPSystem_SATellite_TRACking_COUNt(void* parameters,
  * required and the rest while given, each added to the mask or removed
  * from it; all to pllc if each was a satellite number, else -222, Data
  * out of range, and none.  :INCLude sends the ignore list too. */
-static void scpi_source_gpsystem_ignore_edit(
-    scpi_source_gpsystem_short* satellites,
-    bool (*edit)(char number, uint32_t* mask), scpi_port* input) {
+static void scpi_source_gpsystem_ignore_edit(scpi_short_parameter* satellites,
+                                             bool (*edit)(char number,
+                                                          uint32_t* mask),
+                                             scpi_port* input) {
   uint32_t mask = nv_settings.ignored_satellites;
   bool invalid = !edit(satellites[0].value, &mask);
 
@@ -800,8 +765,8 @@ int32_t scpi_set_SOURce_GPSystem_SATellite_TRACking_IGNore_NONE(
 /* :IGNore:STATe?'s and :INCLude:STATe?'s parameters: the path word
  * their nodes add, then the satellite. */
 typedef struct scpi_source_gpsystem_state_parameters {
-  uint16_t path_word;                   /* +0x00: :INCLude's 0, :IGNore's 1 */
-  scpi_source_gpsystem_short satellite; /* +0x02 */
+  uint16_t path_word;             /* +0x00: :INCLude's 0, :IGNore's 1 */
+  scpi_short_parameter satellite; /* +0x02 */
 } scpi_source_gpsystem_state_parameters;
 
 /* :GPS:SATellite:TRACking:IGNore:STATe? n and :INCLude:STATe? n, by the

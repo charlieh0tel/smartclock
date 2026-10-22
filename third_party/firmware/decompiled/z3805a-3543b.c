@@ -2933,6 +2933,20 @@ typedef enum __attribute__((packed)) status_condition_code {
     STATUS_USER_REPORTED_CLEARED=78
 } status_condition_code;
 
+typedef struct status_register_layout status_register_layout, *Pstatus_register_layout;
+
+struct status_register_layout {
+    uint8_t parent_index;
+    uint8_t unused;
+    uint16_t parent_bit;
+    uint16_t maximum;
+    uint16_t minimum;
+    uint16_t defined_bits;
+    uint32_t *enable;
+    uint32_t *positive;
+    uint32_t *negative;
+};
+
 typedef struct status_screen_mode_line status_screen_mode_line, *Pstatus_screen_mode_line;
 
 struct status_screen_mode_line {
@@ -3227,6 +3241,7 @@ _Static_assert(sizeof(status_error_entry) == 6, "status_error_entry");
 _Static_assert(sizeof(status_error_queue) == 10, "status_error_queue");
 _Static_assert(sizeof(status_model) == 46, "status_model");
 _Static_assert(sizeof(status_register) == 16, "status_register");
+_Static_assert(sizeof(status_register_layout) == 22, "status_register_layout");
 _Static_assert(sizeof(status_screen_mode_line) == 6, "status_screen_mode_line");
 _Static_assert(sizeof(status_snapshot_record) == 302, "status_snapshot_record");
 _Static_assert(sizeof(task_table_entry) == 6, "task_table_entry");
@@ -3466,7 +3481,7 @@ extern char log_print_newline[3]; /* 0002be7d */
 extern char * status_report_messages[23]; /* 0002bf30 */
 extern char douglas_state_text_0[2]; /* 0002d918 */
 extern char douglas_state_text_once[5]; /* 0002d91a */
-extern uint16_t status_register_setup_table; /* 0002f7ac */
+extern status_register_layout status_register_layouts[7]; /* 0002f79e */
 extern status_condition status_conditions[79]; /* 0002f838 */
 extern char error_message_none[1]; /* 00030816 */
 extern uint8_t sample_values_defaults[148]; /* 000308b6 */
@@ -4060,12 +4075,6 @@ extern uint16_t USHORT_0002f76e; /* 0002f76e */
 extern uint16_t USHORT_0002f77c; /* 0002f77c */
 extern uint16_t USHORT_0002f78a; /* 0002f78a */
 extern uint16_t USHORT_0002f794; /* 0002f794 */
-extern uint16_t USHORT_0002f79e; /* 0002f79e */
-extern uint16_t USHORT_0002f7a0; /* 0002f7a0 */
-extern uint16_t USHORT_0002f7a2; /* 0002f7a2 */
-extern uint16_t USHORT_0002f7a4; /* 0002f7a4 */
-extern uint16_t USHORT_0002f7a8; /* 0002f7a8 */
-extern uint16_t USHORT_0002f7b0; /* 0002f7b0 */
 extern uint8_t installer_atexit_functions; /* 0010b03c */
 extern uint8_t reference_valid_override_request; /* 00100c68 */
 extern uint8_t retained_block; /* 00101e70 */
@@ -4234,12 +4243,6 @@ __asm__(".set USHORT_0002f76e, 0x0002f76e");
 __asm__(".set USHORT_0002f77c, 0x0002f77c");
 __asm__(".set USHORT_0002f78a, 0x0002f78a");
 __asm__(".set USHORT_0002f794, 0x0002f794");
-__asm__(".set USHORT_0002f79e, 0x0002f79e");
-__asm__(".set USHORT_0002f7a0, 0x0002f7a0");
-__asm__(".set USHORT_0002f7a2, 0x0002f7a2");
-__asm__(".set USHORT_0002f7a4, 0x0002f7a4");
-__asm__(".set USHORT_0002f7a8, 0x0002f7a8");
-__asm__(".set USHORT_0002f7b0, 0x0002f7b0");
 __asm__(".set adc_monitors, 0x00101b72");
 __asm__(".set aging_curve, 0x00101fd8");
 __asm__(".set atexit_count, 0x00103934");
@@ -4766,7 +4769,7 @@ __asm__(".set status_monitor_result, 0x00101429");
 __asm__(".set status_negative_conditions, 0x00028720");
 __asm__(".set status_object, 0x00102eb8");
 __asm__(".set status_ready, 0x00102eb7");
-__asm__(".set status_register_setup_table, 0x0002f7ac");
+__asm__(".set status_register_layouts, 0x0002f79e");
 __asm__(".set status_report_messages, 0x0002bf30");
 __asm__(".set status_request_service, 0x00102eb6");
 __asm__(".set status_screen_blank, 0x0004d10b");
@@ -48695,8 +48698,9 @@ int32_t scpi_set_STATus_OPERation_ENABle(void *parameters,void *response,scpi_ca
     unaff_D2w = *(int16_t *)((int32_t)parameters + 4);
   }
   zero = return_zero(call->input);
-  in_range = scpi_check_range((uint32_t)(&USHORT_0002f7a4)[*(int16_t *)parameters * 0xb],(int32_t)unaff_D2w,
-                           (uint32_t)(&USHORT_0002f7a2)[*(int16_t *)parameters * 0xb],(uint8_t)zero);
+  in_range = scpi_check_range((uint32_t)status_register_layouts[*(int16_t *)parameters].minimum,
+                           (int32_t)unaff_D2w,
+                           (uint32_t)status_register_layouts[*(int16_t *)parameters].maximum,(uint8_t)zero);
   if (in_range != 0) {
     zero = return_zero(call->input);
     pllc_request_c(&scpi_param_STATus_ENABle,(char)*(uint16_t *)parameters,(int32_t)unaff_D2w,
@@ -48749,8 +48753,9 @@ int32_t scpi_set_STATus_OPERation_PTRansition(void *parameters,void *response,sc
     unaff_D2w = *(int16_t *)((int32_t)parameters + 4);
   }
   zero = return_zero(call->input);
-  in_range = scpi_check_range((uint32_t)(&USHORT_0002f7a4)[*(int16_t *)parameters * 0xb],(int32_t)unaff_D2w,
-                           (uint32_t)(&USHORT_0002f7a2)[*(int16_t *)parameters * 0xb],(uint8_t)zero);
+  in_range = scpi_check_range((uint32_t)status_register_layouts[*(int16_t *)parameters].minimum,
+                           (int32_t)unaff_D2w,
+                           (uint32_t)status_register_layouts[*(int16_t *)parameters].maximum,(uint8_t)zero);
   if (in_range != 0) {
     zero = return_zero(call->input);
     pllc_request_c(&scpi_param_STATus_PTRansition,(char)*(uint16_t *)parameters + -2,
@@ -48803,8 +48808,9 @@ int32_t scpi_set_STATus_OPERation_NTRansition(void *parameters,void *response,sc
     unaff_D2w = *(int16_t *)((int32_t)parameters + 4);
   }
   zero = return_zero(call->input);
-  in_range = scpi_check_range((uint32_t)(&USHORT_0002f7a4)[*(int16_t *)parameters * 0xb],(int32_t)unaff_D2w,
-                           (uint32_t)(&USHORT_0002f7a2)[*(int16_t *)parameters * 0xb],(uint8_t)zero);
+  in_range = scpi_check_range((uint32_t)status_register_layouts[*(int16_t *)parameters].minimum,
+                           (int32_t)unaff_D2w,
+                           (uint32_t)status_register_layouts[*(int16_t *)parameters].maximum,(uint8_t)zero);
   if (in_range != 0) {
     zero = return_zero(call->input);
     pllc_request_c(&scpi_param_STATus_NTRansition,(char)*(uint16_t *)parameters + -2,
@@ -48886,9 +48892,9 @@ int32_t scpi_set_STATus_OPERation_HARDware_ENABle(void *parameters,void *respons
     unaff_D2w = *(int16_t *)((int32_t)parameters + 6);
   }
   zero = return_zero(call->input);
-  in_range = scpi_check_range((uint32_t)(&USHORT_0002f7a4)[*(int16_t *)((int32_t)parameters + 2) * 0xb],
+  in_range = scpi_check_range((uint32_t)status_register_layouts[*(int16_t *)((int32_t)parameters + 2)].minimum,
                            (int32_t)unaff_D2w,
-                           (uint32_t)(&USHORT_0002f7a2)[*(int16_t *)((int32_t)parameters + 2) * 0xb],
+                           (uint32_t)status_register_layouts[*(int16_t *)((int32_t)parameters + 2)].maximum,
                            (uint8_t)zero);
   if (in_range != 0) {
     zero = return_zero(call->input);
@@ -48942,9 +48948,9 @@ int32_t scpi_set_STATus_OPERation_HARDware_PTRansition(void *parameters,void *re
     unaff_D2w = *(int16_t *)((int32_t)parameters + 6);
   }
   zero = return_zero(call->input);
-  in_range = scpi_check_range((uint32_t)(&USHORT_0002f7a4)[*(int16_t *)((int32_t)parameters + 2) * 0xb],
+  in_range = scpi_check_range((uint32_t)status_register_layouts[*(int16_t *)((int32_t)parameters + 2)].minimum,
                            (int32_t)unaff_D2w,
-                           (uint32_t)(&USHORT_0002f7a2)[*(int16_t *)((int32_t)parameters + 2) * 0xb],
+                           (uint32_t)status_register_layouts[*(int16_t *)((int32_t)parameters + 2)].maximum,
                            (uint8_t)zero);
   if (in_range != 0) {
     zero = return_zero(call->input);
@@ -48999,9 +49005,9 @@ int32_t scpi_set_STATus_OPERation_HARDware_NTRansition(void *parameters,void *re
     unaff_D2w = *(int16_t *)((int32_t)parameters + 6);
   }
   zero = return_zero(call->input);
-  in_range = scpi_check_range((uint32_t)(&USHORT_0002f7a4)[*(int16_t *)((int32_t)parameters + 2) * 0xb],
+  in_range = scpi_check_range((uint32_t)status_register_layouts[*(int16_t *)((int32_t)parameters + 2)].minimum,
                            (int32_t)unaff_D2w,
-                           (uint32_t)(&USHORT_0002f7a2)[*(int16_t *)((int32_t)parameters + 2) * 0xb],
+                           (uint32_t)status_register_layouts[*(int16_t *)((int32_t)parameters + 2)].maximum,
                            (uint8_t)zero);
   if (in_range != 0) {
     zero = return_zero(call->input);
@@ -54570,7 +54576,7 @@ uint32_t status_preset_register(char param_1,char param_2,int16_t param_3,int16_
 /* 0002f3d0 */
 #if 0 /* the decompiler's reading; rewritten in status.c */
 
-/* sets the seven status registers' enable masks from the table at 0x2f7a8 */
+/* sets the seven status registers' enable masks from status_register_layouts */
 
 void status_enables_init(void)
 
@@ -54579,8 +54585,7 @@ void status_enables_init(void)
   
   bVar1 = 0;
   do {
-    status_register_set_enable
-              (status_object,(uint32_t)bVar1,**(int32_t **)(&USHORT_0002f7a8 + (uint32_t)bVar1 * 0xb));
+    status_register_set_enable(status_object,(uint32_t)bVar1,*status_register_layouts[bVar1].enable);
     bVar1 = bVar1 + 1;
   } while (bVar1 < 7);
   return;
@@ -54600,11 +54605,8 @@ void status_transitions_init(void)
   
   bVar1 = 2;
   do {
-    status_register_set_ptr
-              (status_object,(uint32_t)bVar1,
-               **(uint32_t **)(&status_register_setup_table + (uint32_t)bVar1 * 0xb));
-    status_register_set_ntr
-              (status_object,(uint32_t)bVar1,**(uint32_t **)(&USHORT_0002f7b0 + (uint32_t)bVar1 * 0xb));
+    status_register_set_ptr(status_object,(uint32_t)bVar1,*status_register_layouts[bVar1].positive);
+    status_register_set_ntr(status_object,(uint32_t)bVar1,*status_register_layouts[bVar1].negative);
     bVar1 = bVar1 + 1;
   } while (bVar1 < 7);
   return;
@@ -54635,11 +54637,10 @@ uint32_t status_init(void)
     do {
       uVar3 = (uint32_t)bVar4;
       status_register_setup
-                ((int32_t)status_object,uVar3,
-                 **(uint32_t **)(&status_register_setup_table + uVar3 * 0xb),
-                 **(uint32_t **)(&USHORT_0002f7b0 + uVar3 * 0xb),
-                 (uint32_t)*(uint8_t *)(&USHORT_0002f79e + uVar3 * 0xb),
-                 (uint32_t)(&USHORT_0002f7a0)[uVar3 * 0xb],0);
+                ((int32_t)status_object,uVar3,*status_register_layouts[uVar3].positive,
+                 *status_register_layouts[uVar3].negative,
+                 (uint32_t)status_register_layouts[uVar3].parent_index,
+                 (uint32_t)status_register_layouts[uVar3].parent_bit,0);
       bVar4 = bVar4 + 1;
     } while (bVar4 < 7);
     status_enables_init();

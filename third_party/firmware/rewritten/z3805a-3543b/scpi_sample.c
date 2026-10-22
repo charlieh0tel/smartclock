@@ -11,17 +11,11 @@
  * adds (an ARRay node's index), then each parameter's kind word and its
  * value; a number's value is scpi_engine_long_parameter's. */
 
-/* A boolean or choice parameter: its kind word, then its value. */
-typedef struct scpi_sample_word_parameter {
-  int16_t kind;   /* +0x00 */
-  uint16_t value; /* +0x02 */
-} scpi_sample_word_parameter;
-
 /* An ARRay node's parameters: its index, the path's word, then its
  * value. */
 typedef struct scpi_sample_indexed_word {
-  int16_t index;                    /* +0x00 */
-  scpi_sample_word_parameter given; /* +0x02 */
+  int16_t index;             /* +0x00 */
+  scpi_word_parameter given; /* +0x02 */
 } scpi_sample_indexed_word;
 
 typedef struct scpi_sample_indexed_number {
@@ -65,7 +59,7 @@ int32_t scpi_set_SAMPle_ACTion(void* parameters, void* response,
 /* :SAMPle:BOOLean: sets the boolean (0x2e334). */
 int32_t scpi_set_SAMPle_BOOLean(void* parameters, void* response,
                                 scpi_call* call) {
-  scpi_sample_word_parameter* given = parameters;
+  scpi_word_parameter* given = parameters;
   uint8_t source = return_zero(call->input);
 
   pllc_request_a(&scpi_param_SAMPle_BOOLean, 0, (uint8_t)given->value, source);

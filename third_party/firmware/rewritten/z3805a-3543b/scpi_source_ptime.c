@@ -33,27 +33,11 @@ void leap_ack_request(int32_t index, int32_t source) {
   }
 }
 
-/* A short parameter as scpi_parse_short leaves it in the call's buffer:
- * its kind, SCPI_NONE for an optional one left out, its value and its
- * unit. */
-typedef struct scpi_source_ptime_short_parameter {
-  int16_t kind;  /* +0x00 */
-  int16_t value; /* +0x02 */
-  int16_t unit;  /* +0x04 */
-} scpi_source_ptime_short_parameter;
-
-/* A short response item, as scpi_format_short reads it: 4 bytes, the
- * short in the first two. */
-typedef struct scpi_source_ptime_short_item {
-  int16_t value;  /* +0x00 */
-  int16_t unused; /* +0x02 */
-} scpi_source_ptime_short_item;
-
 /* A date's or time of day's response items. */
 typedef struct scpi_source_ptime_fields {
-  scpi_source_ptime_short_item first;  /* +0x00: the year, or the hour */
-  scpi_source_ptime_short_item second; /* +0x04: the month, or the minute */
-  scpi_source_ptime_short_item third;  /* +0x08: the day, or the second */
+  scpi_short_item first;  /* +0x00: the year, or the hour */
+  scpi_short_item second; /* +0x04: the month, or the minute */
+  scpi_short_item third;  /* +0x08: the day, or the second */
 } scpi_source_ptime_fields;
 
 /* A packed date, year << 16 | month << 8 | day (calendar_date), as
@@ -224,22 +208,15 @@ enum {
   SCPI_SOURCE_PTIME_F2 = 1,
 };
 
-/* A keyword parameter as scpi_parse_choice leaves it: its kind, then
- * its index or value in the node's list. */
-typedef struct scpi_source_ptime_choice {
-  int16_t kind;    /* +0x00 */
-  int16_t keyword; /* +0x02 */
-} scpi_source_ptime_choice;
-
 /* :PTIMe:TCODe:FORMat F1 or F2: T1 or T2, to pllc (0x2dff6). */
 int32_t scpi_set_SOURce_PTIMe_TCODe_FORMat(void* parameters, void* response,
                                            scpi_call* call) {
-  scpi_source_ptime_choice* format = parameters;
+  scpi_word_parameter* format = parameters;
 
-  if (format->keyword == SCPI_SOURCE_PTIME_F1) {
+  if (format->value == SCPI_SOURCE_PTIME_F1) {
     pllc_request_a(&scpi_param_SOURce_PTIMe_TCODe_FORMat, 0, TIMECODE_T1,
                    return_zero(call->input));
-  } else if (format->keyword == SCPI_SOURCE_PTIME_F2) {
+  } else if (format->value == SCPI_SOURCE_PTIME_F2) {
     pllc_request_a(&scpi_param_SOURce_PTIMe_TCODe_FORMat, 0, TIMECODE_T2,
                    return_zero(call->input));
   }
@@ -303,7 +280,7 @@ int32_t scpi_set_SOURce_PTIMe_TZONe(void* parameters, void* response,
                                     scpi_call* call) {
   /* The values pllc takes: hours and minutes. */
   static const uint8_t LAST_VALUE = 1;
-  scpi_source_ptime_short_parameter* zone = parameters;
+  scpi_short_parameter* zone = parameters;
   int32_t* staged = scpi_staged[(uint8_t)return_zero(call->input)];
 
   staged[0] = zone[0].value;
@@ -318,7 +295,7 @@ int32_t scpi_set_SOURce_PTIMe_TZONe(void* parameters, void* response,
  * of Greenwich (0x2e28c). */
 int32_t scpi_query_SOURce_PTIMe_TZONe(void* parameters, void* response,
                                       scpi_call* call) {
-  scpi_source_ptime_short_item* items = response;
+  scpi_short_item* items = response;
   int8_t hours;
   int8_t minutes;
   int8_t sign =

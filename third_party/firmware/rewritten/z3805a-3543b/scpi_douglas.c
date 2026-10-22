@@ -21,19 +21,6 @@ void douglas_state_done(void) {
   douglas_start_requested = nv_settings.douglas_state == 0;
 }
 
-/* A numeric parameter as the parsers leave it in the call's buffer: its
- * kind, then a number's value or a keyword's value in the node's list,
- * then the unit (scpi_parse_float, scpi_parse_choice). */
-typedef struct scpi_douglas_numeric {
-  int16_t kind; /* +0x00: SCPI_PARAMETER_DECIMAL, _CHARACTER, or SCPI_NONE
-                   for a query's left out */
-  union {
-    float value;     /* +0x02: a number's */
-    int16_t keyword; /* +0x02: SCPI_DOUGLAS_MAXIMUM, _MINIMUM or _INFINITY */
-  };
-  int16_t unit; /* +0x06 */
-} scpi_douglas_numeric;
-
 /* The keywords :DOUGlas:DURation takes, by their values in its list
  * (0x53d28): MAX, MIN and INF. */
 enum {
@@ -50,7 +37,7 @@ static const float SCPI_DOUGLAS_INFINITE = 9.9e37f;
  * (0x2ced0). */
 int32_t scpi_set_DOUGlas_DURation(void* parameters, void* response,
                                   scpi_call* call) {
-  scpi_douglas_numeric* duration = parameters;
+  scpi_float_parameter* duration = parameters;
   uint8_t source = return_zero(call->input);
 
   if ((duration->kind == SCPI_PARAMETER_CHARACTER &&
@@ -72,7 +59,7 @@ int32_t scpi_set_DOUGlas_DURation(void* parameters, void* response,
  * MAX or MIN, else the duration, or its MAX or MIN (0x2cf66). */
 int32_t scpi_query_DOUGlas_DURation(void* parameters, void* response,
                                     scpi_call* call) {
-  scpi_douglas_numeric* bound = parameters;
+  scpi_float_parameter* bound = parameters;
   float* seconds = response;
 
   if (bound->kind == SCPI_NONE && nv_settings.douglas_duration_infinite != 0) {
@@ -125,18 +112,11 @@ int32_t scpi_query_DOUGlas_STATe(void* parameters, void* response,
   return 0;
 }
 
-/* A boolean parameter: its kind, then its value
- * (scpi_parse_boolean, scpi_parse_boolean_number). */
-typedef struct scpi_douglas_boolean {
-  int16_t kind;   /* +0x00 */
-  uint16_t value; /* +0x02 */
-} scpi_douglas_boolean;
-
 /* :DOUGlas:STATe:POWerup: whether a survey starts at power-up, to pllc
  * (0x2d0d8). */
 int32_t scpi_set_DOUGlas_STATe_POWerup(void* parameters, void* response,
                                        scpi_call* call) {
-  scpi_douglas_boolean* state = parameters;
+  scpi_word_parameter* state = parameters;
 
   pllc_request_a(&scpi_param_DOUGlas_STATe_POWerup, 0, (uint8_t)state->value,
                  return_zero(call->input));

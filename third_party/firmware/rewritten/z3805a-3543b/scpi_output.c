@@ -8,12 +8,6 @@
  * (097-z3801-01, table 4-2); this firmware refuses its pins' settings
  * and keeps :STATe, which it does nothing with. */
 
-/* :OUTPut:STATe's parameter: a boolean's kind word and value. */
-typedef struct scpi_output_parameters {
-  int16_t kind;   /* +0x00 */
-  uint16_t state; /* +0x02 */
-} scpi_output_parameters;
-
 /* :OUTPut:PIN1:DELay, refused (0x2c148). */
 int32_t scpi_set_OUTPut_PIN1_DELay(void* parameters, void* response,
                                    scpi_call* call) {
@@ -56,9 +50,9 @@ int32_t scpi_query_OUTPut_PIN1_FREQuency(void* parameters, void* response,
 /* :OUTPut:STATe: hands pllc the new state (0x2da36). */
 int32_t scpi_set_OUTPut_STATe(void* parameters, void* response,
                               scpi_call* call) {
-  scpi_output_parameters* given = parameters;
+  scpi_word_parameter* given = parameters;
 
-  pllc_request_a(&scpi_param_OUTPut_STATe, 0, given->state,
+  pllc_request_a(&scpi_param_OUTPut_STATe, 0, given->value,
                  return_zero(call->input));
   return 0;
 }

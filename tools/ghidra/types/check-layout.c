@@ -772,3 +772,4 @@ CHECK_FIELD(psos_task, ticks, 0xae);
 CHECK_SIZE(psos_task, 0xb2);
 CHECK_SIZE(psos_exchange, 0x22);
 CHECK_FIELD(psos_kernel, region_waiting, 0x64);
+CHECK_SIZE(status_register_layout, 22);

@@ -38,12 +38,6 @@ typedef struct scpi_robin_parameters {
   int16_t entry;      /* +0x08: 1 to 256 */
 } scpi_robin_parameters;
 
-/* :ROBin:MEMory:SAVE's parameter: a boolean's kind word and value. */
-typedef struct scpi_robin_save_parameter {
-  int16_t kind;   /* +0x00 */
-  uint16_t state; /* +0x02 */
-} scpi_robin_save_parameter;
-
 /* A keyword of a data set's name, as robin_lookup and
  * robin_keyword_match read it.  24 bytes. */
 typedef struct scpi_robin_keyword {
@@ -381,9 +375,9 @@ int32_t scpi_query_ROBin_MEMory_OVERflow_COUNt(void* parameters, void* response,
 /* :ROBin:MEMory:SAVE, FIRSt or LAST (0x2f0ac). */
 int32_t scpi_set_ROBin_MEMory_SAVE(void* parameters, void* response,
                                    scpi_call* call) {
-  scpi_robin_save_parameter* given = parameters;
+  scpi_word_parameter* given = parameters;
 
-  pllc_request_a(&scpi_param_ROBin_MEMory_SAVE, 0, given->state,
+  pllc_request_a(&scpi_param_ROBin_MEMory_SAVE, 0, given->value,
                  return_zero(call->input));
   return 0;
 }

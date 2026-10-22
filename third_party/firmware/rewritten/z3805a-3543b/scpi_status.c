@@ -9,27 +9,6 @@
  * prototypes it declares are in scope; each function here keeps its
  * generated prototype. */
 
-/* One register's entry in the image's table at 0x2f79e, as status.c's
- * status_register_layout reads it; the setters check a value against
- * its bounds.  22 bytes. */
-typedef struct scpi_status_layout {
-  uint8_t parent_index;  /* +0x00 */
-  uint8_t unused;        /* +0x01 */
-  uint16_t parent_bit;   /* +0x02 */
-  uint16_t maximum;      /* +0x04: the greatest enable or filter */
-  uint16_t minimum;      /* +0x06 */
-  uint16_t defined_bits; /* +0x08 */
-  uint32_t* enable;      /* +0x0a */
-  uint32_t* positive;    /* +0x0e */
-  uint32_t* negative;    /* +0x12 */
-} scpi_status_layout;
-
-_Static_assert(sizeof(scpi_status_layout) == 22, "scpi_status_layout");
-
-/* The table, the image's, by register index (0x2a5c6, 0x2a5d6). */
-static const scpi_status_layout* const SCPI_STATUS_LAYOUTS =
-    (const scpi_status_layout*)0x2f79e;
-
 /* The first register with transition filters, :OPERation
  * (status_register_index STATUS_OPERATION); nv_settings' filters start
  * with it. */
@@ -96,7 +75,7 @@ static int16_t scpi_status_value(const scpi_status_number* number,
  * it is not. */
 static bool scpi_status_in_range(int16_t index, int16_t value,
                                  scpi_port* input) {
-  const scpi_status_layout* layout = &SCPI_STATUS_LAYOUTS[index];
+  const status_register_layout* layout = &status_register_layouts[index];
 
   return scpi_check_range(layout->minimum, value, layout->maximum,
                           return_zero(input)) != 0;

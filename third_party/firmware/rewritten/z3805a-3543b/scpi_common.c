@@ -15,15 +15,10 @@ static const int16_t SCPI_COMMON_STANDARD_EVENT = 1;
 /* The greatest *ESE or *SRE mask. */
 static const int32_t SCPI_COMMON_MASK_MAXIMUM = 0xff;
 
-/* *ESE's and *SRE's parameter: a number's kind, then its value. */
-typedef struct scpi_common_mask {
-  int16_t kind;  /* +0x00 */
-  int16_t value; /* +0x02 */
-} scpi_common_mask;
-
 /* Sets a register's enable, through pllc, from a mask within 0 to
  * 0xff, else reports -222. */
-static void scpi_common_enable_set(int16_t index, const scpi_common_mask* mask,
+static void scpi_common_enable_set(int16_t index,
+                                   const scpi_word_parameter* mask,
                                    scpi_port* input) {
   if (scpi_check_range(0, mask->value, SCPI_COMMON_MASK_MAXIMUM,
                        return_zero(input)) != 0) {

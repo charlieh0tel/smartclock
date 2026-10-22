@@ -14,12 +14,6 @@
  * holdover recovery, 4 power-up, 5 locked, in startup or normal PLL
  * (0x45b70, its jump table at 0x45b8a). */
 
-/* A boolean parameter: its kind word, then its value. */
-typedef struct scpi_source_roscillator_boolean {
-  int16_t kind;   /* +0x00 */
-  uint16_t value; /* +0x02 */
-} scpi_source_roscillator_boolean;
-
 /* :HOLDover:DURation?'s response: the duration, the resolution word its
  * formatter reads after it, left as it is, and whether in holdover. */
 typedef struct scpi_source_roscillator_duration {
@@ -170,7 +164,7 @@ int32_t scpi_set_SOURce_ROSCillator_HOLDover_INITiate(void* parameters,
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_LIMit_STATe(void* parameters,
                                                          void* response,
                                                          scpi_call* call) {
-  scpi_source_roscillator_boolean* given = parameters;
+  scpi_word_parameter* given = parameters;
   uint8_t disabled = given->value == 0;
   uint8_t source = return_zero(call->input);
 
@@ -219,7 +213,7 @@ int32_t scpi_query_SOURce_ROSCillator_HOLDover_LIMit_THReshold(
 int32_t scpi_set_SOURce_ROSCillator_HOLDover_RECovery_AUTO(void* parameters,
                                                            void* response,
                                                            scpi_call* call) {
-  scpi_source_roscillator_boolean* given = parameters;
+  scpi_word_parameter* given = parameters;
   uint8_t source = return_zero(call->input);
 
   pllc_request_a(&scpi_param_SOURce_ROSCillator_HOLDover_RECovery_AUTO, 0,

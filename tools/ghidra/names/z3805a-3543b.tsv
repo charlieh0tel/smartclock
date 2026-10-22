@@ -261,7 +261,7 @@
 0x102eb8	label	status_object	structures.md	status_init passes its address to status_create	status_model *
 0x102eb7	label	status_ready	structures.md	status_init sets it; status_report does nothing without it	char
 0x2f838	label	status_conditions	structures.md	status_create's condition table, status_set_bit's entries	status_condition[79]
-0x2f7ac	label	status_register_setup_table	structures.md	status_init's 22-byte entries, one a register, for status_register_setup
+0x2f79e	label	status_register_layouts	structures.md	the seven status registers' layouts, which status_init sets them up from and the :STATus setters check a value against	status_register_layout[7]
 0x2f480	function	status_init	structures.md	builds status_object with status_create, sets each register up, sets status_ready
 0x280ea	function	status_create	structures.md	allocates the status model and its registers, builds the queue	uint32_t status_create(status_model **model, int register_count, int queue_capacity, status_condition *conditions, uint32_t reserved)
 0x2819c	function	status_register_setup	structures.md	one register's fields and its parent
@@ -1284,7 +1284,7 @@ installer::0x102990	function	installer_kernel_return_from_interrupt	psos.md	the 
 0x33028	function	reset_record_valid	context	1 if a reset-cause record's checksum holds (a char result, 0x33058)	uint8_t reset_record_valid(uint8_t index)
 0x32ffa	function	reset_record_checksum	context	a reset-cause record's checksum: the sum of its 0x58 bytes and its complement	uint16_t reset_record_checksum(reset_record *record)
 0x2842c	function	status_register_set_enable	context	sets one status register's enable mask, as :ENABle and *ESE do	void status_register_set_enable(status_model *status, int index, int enable)
-0x2f3d0	function	status_enables_init	context	sets the seven status registers' enable masks from the table at 0x2f7a8
+0x2f3d0	function	status_enables_init	context	sets the seven status registers' enable masks from status_register_layouts
 0x42390	function	linear_regression	loop.md's aging fit	the means, Sxx and Sxy of the weighted entries of two arrays	int linear_regression(regression_record *record, int with_slope)
 0x42092	local	regression	read	fit_log_residuals's record for linear_regression	regression_record @ -0x1e
 0x41e32	local	regression	read	fit_log_initial's record for linear_regression	regression_record @ -0x1e

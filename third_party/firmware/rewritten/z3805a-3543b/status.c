@@ -525,29 +525,6 @@ char* error_message_lookup(int32_t code) {
   return 0;
 }
 
-/* One register's entry in the image's table at 0x2f79e, seven of them,
- * which status_init sets the registers up from (0x2f4ec to 0x2f4fe) and
- * the :STATus enable and transition setters check a value against
- * (scpi_check_range's bounds, +0x04 and +0x06).  22 bytes. */
-typedef struct status_register_layout {
-  uint8_t parent_index;  /* +0x00: the register it reports into */
-  uint8_t unused;        /* +0x01 */
-  uint16_t parent_bit;   /* +0x02: at this bit; 0 for the Status Byte */
-  uint16_t maximum;      /* +0x04: the greatest enable or filter */
-  uint16_t minimum;      /* +0x06 */
-  uint16_t defined_bits; /* +0x08: the bits the register has */
-  uint32_t* enable;      /* +0x0a: its nv_settings.status_enable */
-  uint32_t* positive;    /* +0x0e: its nv_settings filters, NULL for the */
-  uint32_t* negative;    /* +0x12: Status Byte and Standard Event */
-} status_register_layout;
-
-_Static_assert(sizeof(status_register_layout) == 22, "status_register_layout");
-
-/* The table, which the SCPI handlers read too, so it stays the image's;
- * the export labels 0x2f7ac, the first entry's positive. */
-static const status_register_layout* const STATUS_LAYOUTS =
-    (const status_register_layout*)0x2f79e;
-
 /* The registers status_create makes (structures.md, "The status
  * system"). */
 static const uint8_t STATUS_REGISTERS = 7;
@@ -583,7 +560,7 @@ void status_register_setup(int32_t model, int32_t index, uint32_t positive,
   }
 }
 
-/* Builds the status model, sets its registers up from STATUS_LAYOUTS
+/* Builds the status model, sets its registers up from status_register_layouts
  * and the saved enables, and marks the status system ready;
  * status_create's error (0x2f480).  The Standard Event register's
  * filter pointers are NULL, so its filters are ROM's first long's low
@@ -601,7 +578,7 @@ uint32_t status_init(void) {
   status_register_setup((int32_t)status_object, 0, 0, 0, 0, 0,
                         (int32_t)scpi_console_port());
   for (uint8_t index = 1; index < STATUS_REGISTERS; index++) {
-    const status_register_layout* layout = &STATUS_LAYOUTS[index];
+    const status_register_layout* layout = &status_register_layouts[index];
 
     status_register_setup((int32_t)status_object, index, *layout->positive,
                           *layout->negative, layout->parent_index,
@@ -617,7 +594,7 @@ uint32_t status_init(void) {
 void status_enables_init(void) {
   for (uint8_t index = 0; index < STATUS_REGISTERS; index++) {
     status_register_set_enable(status_object, index,
-                               *STATUS_LAYOUTS[index].enable);
+                               *status_register_layouts[index].enable);
   }
 }
 
@@ -627,9 +604,9 @@ void status_transitions_init(void) {
   for (uint8_t index = STATUS_FIRST_FILTERED; index < STATUS_REGISTERS;
        index++) {
     status_register_set_ptr(status_object, index,
-                            *STATUS_LAYOUTS[index].positive);
+                            *status_register_layouts[index].positive);
     status_register_set_ntr(status_object, index,
-                            *STATUS_LAYOUTS[index].negative);
+                            *status_register_layouts[index].negative);
   }
 }
 

@@ -1149,7 +1149,7 @@
 {"address":"0002f2ae","name":"scpi_set_SENSe_TST1_EDGE","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0002f2ce","name":"scpi_query_SENSe_TST1_EDGE","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":4},{"offset":12,"size":4}]}
 {"address":"0002f34e","name":"status_preset_register","note":"sets a status register's enable or transition filter, as :STATus:PRESet does","convention":"unknown","stack":[{"offset":4,"size":1},{"offset":6,"size":1},{"offset":8,"size":2},{"offset":10,"size":2}]}
-{"address":"0002f3d0","name":"status_enables_init","note":"sets the seven status registers' enable masks from the table at 0x2f7a8","convention":"unknown"}
+{"address":"0002f3d0","name":"status_enables_init","note":"sets the seven status registers' enable masks from status_register_layouts","convention":"unknown"}
 {"address":"0002f40c","name":"status_transitions_init","note":"sets registers 2 to 6's transition filters to their defaults from the setup table","convention":"unknown"}
 {"address":"0002f480","name":"status_init","note":"builds status_object with status_create, sets each register up, sets status_ready","convention":"unknown"}
 {"address":"0002f53a","name":"status_event_hook","note":"does nothing; status_report and status_happening pass it each event","convention":"unknown","stack":[{"offset":4,"size":4},{"offset":8,"size":1}]}
